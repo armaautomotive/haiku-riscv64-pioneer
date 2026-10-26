@@ -1,0 +1,27 @@
+EVIDENCE /private/tmp/pioneer-q38-dense-prepare-20261026-b.log
+PASS host DATA Mean2562000/512000software-binary64 additions,75null/misalignment/wrap/overlap refusals;NOT device/native reference feedback
+PASS ACTUAL QDP1 local27B RV32 preparation positives23/refusals2071/maxSteps478413/maxStack1236;ALL24Q/4KV heads,6x[Q256,gate256] interleaving,learnedRMS256/partialRoPE64+unrotated192/F16K-V BITEXACT independent double/sqrtf/fmaf/_Float16 observer;NO NoC/GDDR/KV commit/native/fullattention/token loop/inference timing
+
+EVIDENCE /private/tmp/pioneer-q38-dense-gates-20261026-final.log
+PASS local dense-prepare role/build gates239/exact IMAGE/defined0+late native-CPU-Work-component aliases/16ambient builders refuse BEFORE SDK/output access;NO native/L1/GDDR/producer grant
+
+EVIDENCE /private/tmp/pioneer-q38-dense-continue-gates-20261026-final.log
+PASS continuation role/build gates226/exact offline role/defined0+late native/CPU/Work/old component aliases/15 ambient build entries refuse BEFORE SDK/output access;NO L1/GDDR reservation/device grant
+
+EVIDENCE /private/tmp/pioneer-q38-dense-native69-regression-20261026-a.log
+PASS ACTUAL whole PioneerSessionIO/PioneerStoreContext/KernelExport ABI/native factories+all controller templates/clean destructor/retention+END compile;maxNewFrame=1456
+PASS NO conventional driver ABI exports;ALL5 renamed entries machine-code-identical to inert constant-return controls;NO PCI/module/guard/sem/card IO from entries
+9fcf1f7fa56cbcda1e02d3f4d504bd60e0c5173028f51002174d8b5d35ba6d70  /private/tmp/pioneer-q38-dense-native69-regression-20261026-a/context-NODRV-control/resident-layer-context-NODRV.o
+Old65 BYTE-IDENTICAL61faa093;REFUSING COMPILE OBJECT ONLY;NO link/install/public compute/Work/CPU-reference/device/speed qualification
+PASS ACTUAL production DEBUG69/namespace20/fixed6521088-byte QLV1/closed10-operation dispatcher;conventional ABI,NO test/NODRV/old68 alias;maxNewFrame=1456
+b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7  /private/tmp/pioneer-q38-dense-native69-regression-20261026-a/tenstorrent_pci_probe-resident-layer-DEBUG69
+BUILT ONLY;public-control/source/client containment and physical qualification REQUIRED BEFORE Work;NO full-model or inference-speed grant
+
+EVIDENCE /private/tmp/pioneer-q38-dense-native69-regression-20261026-clean-c.log
+PASS ACTUAL whole PioneerSessionIO/PioneerStoreContext/KernelExport ABI/native factories+all controller templates/clean destructor/retention+END compile;maxNewFrame=1456
+PASS NO conventional driver ABI exports;ALL5 renamed entries machine-code-identical to inert constant-return controls;NO PCI/module/guard/sem/card IO from entries
+9fcf1f7fa56cbcda1e02d3f4d504bd60e0c5173028f51002174d8b5d35ba6d70  /private/tmp/pioneer-q38-dense-native69-regression-20261026-clean-c/context-NODRV-control/resident-layer-context-NODRV.o
+Old65 BYTE-IDENTICAL61faa093;REFUSING COMPILE OBJECT ONLY;NO link/install/public compute/Work/CPU-reference/device/speed qualification
+PASS ACTUAL production DEBUG69/namespace20/fixed6521088-byte QLV1/closed10-operation dispatcher;conventional ABI,NO test/NODRV/old68 alias;maxNewFrame=1456
+b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7  /private/tmp/pioneer-q38-dense-native69-regression-20261026-clean-c/tenstorrent_pci_probe-resident-layer-DEBUG69
+BUILT ONLY;public-control/source/client containment and physical qualification REQUIRED BEFORE Work;NO full-model or inference-speed grant

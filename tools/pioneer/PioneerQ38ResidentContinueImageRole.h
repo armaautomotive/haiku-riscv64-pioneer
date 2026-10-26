@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_DENSE_PREPARE_IMAGE
+#error Local dense-prepare IMAGE is not a continuation IMAGE
+#endif
 // No guard: exact separate OFFLINE continuation role,including reinclusion.
 #if !defined(PIONEER_Q38_RESIDENT_CONTINUE_IMAGE) || PIONEER_Q38_RESIDENT_CONTINUE_IMAGE != 1
 #error Exact separate continuation IMAGE required

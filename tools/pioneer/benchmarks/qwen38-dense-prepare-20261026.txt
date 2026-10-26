@@ -1,0 +1,114 @@
+Qwen3.8-27B: new on-card dense-attention Q/K preparation component
+2026-10-26 UTC; OFFLINE instruction correctness,NOT inference throughput
+
+Implemented
+-----------
+NEW separate QDP1 local component for the downloaded model's qwen35
+geometry:24 query heads,four KV heads,width256,partial rotary width64.
+Each invocation handles six interleaved [Q256,gate256] heads and one K/V
+head. It performs learned per-head RMS256,rotates only dimensions0..63,
+preserves192 unrotated dimensions,keeps gate bits separate and unchanged,
+and packs the new K and V as IEEE binary16 RNE. There is no accidental
+first6144-query/last6144-gate split,no extra1 added to converted GGUF norm
+weights,and no use of the old small-model128-wide attention geometry.
+
+RMS uses the existing software-binary64 positive reduction with a NEW
+exact power-of-two Mean256. Sqrt/division and fused rotation use existing
+qualified integer implementations,not unsupported BRISC instructions or
+host learned arithmetic. The explicit bounded normal-domain checks refuse
+unqualified inputs instead of silently flushing or accepting nonfinite
+results. Partial output on arithmetic failure is LOCAL scratch only.
+
+The component currently consumes a64-float cos/sin table in local memory.
+The intended resident text path owes a fixed8192-position table uploaded
+ONCE at model initialization(2MiB),then device-only position-bound reads.
+That table owner/upload/position binding is NOT implemented here. Offline
+tests provide raw table DATA,not per-token runtime CPU preparation. Text
+positions have identical temporal/spatial indices; multimodal positions
+require separate qualification and are not claimed by this component.
+
+Tests and exact executable
+--------------------------
+Main and independent clean source-tree builds and tests PASS,process0.
+Their complete numerical-test stdout is identical,SHA256
+234ef9823b4520a0d2d900f4a8e92b171b30d26b9d91875d8d04431a25d5310a.
+23 actual emitted-instruction positive cases cover all24 Q/four KV heads,
+positions0,1,17,1023,8191,normal/extreme/tiny/signed-zero raw vectors.
+All3328 output words are written exactly once and checked bit-for-bit
+against independent double-reduction/sqrtf/fmaf/_Float16 observers.
+Input/header bits and canaries remain unchanged. No reference product is
+supplied to the actual instruction machine. These raw weights/vectors are
+SYNTHETIC,not original learned weights or actual preceding model outputs.
+
+2071 instruction refusals cover malformed header fields/reserved bits,
+nonfinite/subnormal/out-of-bound raw inputs/weights/table and a valid-raw
+late K arithmetic failure after3072 Q/gate LOCAL writes. That late failure
+does not write any packed K/V or invent a successful result. Parked
+execution is inert. The instruction machine permits only code/input reads,
+stack/local-output/terminal stores:NoC/CSR/PCI/reset/GDDR access refuses.
+Independent host DATA tests pass2000 Mean256 comparisons/512000 software
+binary64 additions plus75 null/misalignment/wrap/overlap refusals.
+Warnings-as-errors,ASan/UBSan and disabled FP contraction are used.
+Maximum actual instruction count478413,observed ROOT stack1236 bytes;
+neither is an inference-time or hardware-throughput measurement.
+
+boot.bin4B SHA256
+d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+code.bin4836B SHA256
+ff39e984f76fe0d0591e9a48ea1137a231ecdaf2390b14223a8a8922b8e2488a
+program.elf14036B SHA256
+d36992ecfda92a613bf06ab7dcf0378e304dfac7f603322594b1bfde00daaaf2
+Main/clean ELF bytes are identical;maximum new static frame1152 bytes.
+No undefined symbols,writable globals/GOT,CSR operations,division/sqrt,
+high multiply,hardware FMA,FP-to-integer conversion or EBREAK are emitted.
+
+Containment and regressions
+---------------------------
+239 new role/build gates pass:exact IMAGE only,defined0/late native/CPU/
+Work/other-component mixing refused,16 ambient build entries refuse BEFORE
+SDK or output access. Continuation226,DEBUG69 native585,client146 and CPU
+reference72 gates still pass. Production driver rejects the new flag before
+headers,including defined0;no driver selector or native reservation added.
+Both main and clean SDK regressions reproduce unchanged DEBUG69 SHA256
+b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7,
+old65=61faa093 and inert NODRV=9fcf1f7f. Existing .cpp line numbering is
+preserved by extending its existing gate rather than inserting new lines.
+The refusing NODRV entries remain machine-code-identical constant returns.
+All27 changed/new implementation/test/build files match the clean tree.
+
+Offline failures preserved
+--------------------------
+The first host test compile rejected mixed enum/integer initializer-list
+deduction;explicit unsigned arrays fixed only the test. The new build gate
+caught ambient dense IMAGE=0 reaching an old SDK lookup;explicit front-door
+defined checks fixed the affected older builders. The first clean native
+regression lacked archived kernel/config headers;it refused before linking.
+Archiving those unchanged tracked headers allowed the clean regression.
+None of these failures touched or quarantined the physical accelerator.
+
+Reproduction and primary algorithm references
+---------------------------------------------
+python3 tools/pioneer/build_qwen38_dense_prepare_image.py \
+  /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/NEW_ABSOLUTE_OUTPUT
+python3 tools/pioneer/tests/run_pioneer_q38_dense_prepare_tests.py \
+  /private/tmp/NEW_ABSOLUTE_OUTPUT
+python3 tools/pioneer/tests/pioneer_q38_dense_prepare_gates_test.py
+Downloaded original GGUF metadata and strict PioneerQwen38Gguf.h establish
+the fixed geometry. Primary upstream references establish the per-head
+Q/gate view,partial rotation and converted learned norm convention:
+https://raw.githubusercontent.com/huggingface/transformers/v5.13.0/src/transformers/models/qwen3_5/modeling_qwen3_5.py
+https://github.com/ggml-org/llama.cpp/blob/master/conversion/qwen.py
+https://github.com/ggml-org/llama.cpp/blob/master/src/models/qwen35.cpp
+
+Remaining final scope
+---------------------
+No image/driver installed;no GPU access,power/SD/mains/hardware or working
+Assistant change. QDP1 is NOT complete dense attention,softmax,attention
+gating,KV prefix ownership/provisional token commit or an original-model
+native producer. Next:device-owned input/table transfer,wide on-card
+attention reduction and gating,canonical KV/token commit,then integrate
+all64 layers,vocabulary/sampling and the persistent token loop under a
+genuine new authenticated joint source/init/clock/host/journal/STOP/restore
+owner. Keep no-CPU-reference FAST Work separate from validation. Last
+measured WHOLE MODEL remains0.207893161tok/s;20tok/s is UNMET. No speedup
+is inferred from local arithmetic tests,compile results or step counts.

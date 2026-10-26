@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_DENSE_PREPARE_IMAGE
+#error Local dense-prepare IMAGE cannot contain independent CPU references
+#endif
 #ifdef PIONEER_Q38_RESIDENT_CONTINUE_IMAGE
 #error Continuation IMAGE has no existing native/CPU/Work/component role
 #endif
