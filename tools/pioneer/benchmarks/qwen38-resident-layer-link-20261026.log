@@ -1,0 +1,35 @@
+2026-10-26 layer-link OFFLINE qualification; NOT physical/inference timing.
+Exact programs and limitations are documented in the sibling .txt.
+
+MAIN JOINED ACTUAL PROGRAMS (clean repeat byte-identical; both exit0)
+BEGIN ACTUAL complete recurrent layer->next learned RMS one uninterrupted ROOT/ALL119retained peers;SYNTHETIC raw/learned inputs only
+ACTUAL_LAYER_PREFIX_DONE Conv640/GDN96/QOL24/matrix119 ALL5120rows observed;NO CPU products fed back
+ACTUAL_LAYER_NORM_DONE ALL5120 residual+normalized BITEXACT independent observer;only actual device output consumed next
+ACTUAL_LAYER_FFN_MATRIX role0 worker119 seq3;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role0 worker1 seq6;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role1 worker119 seq4;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role1 worker1 seq7;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role2 worker119 seq5;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role2 worker1 seq9;NOT_NATIVE_TIME
+PASS ACTUAL saved-prefix/norm/FFN handoff QLP2:independent BEFORE+AFTER/currentcommand/actual earlier receipts/249nontiming-word corruptions refused;DATA only,NOT native cleanup permission
+PASS ACTUAL ALL119 full Conv/GDN/output/FFN peer counter chains+7616last-proof-word corruptions;ACTUAL68saved recurrent receipts preserved acrossSiLU,remaining28actual peer receipts unmodified;unheld WAIT/sequence DATA only,NOT native reset/restore authority
+ACTUAL_JOINED_LAYER_RETURNED_TO_LINK all5120hidden observed/ALL119peer sequences retained;NO host arithmetic feedback/readback/relaunch
+PASS ACTUAL joined layer->next-input device handoff ALL5120 normalized+raw BITEXACT independent CPU observer/8NoC packets/ALL119peers unchanged/no CPU product injection/no host roundtrip/no relaunch/maxStack6376;NOT native/original-model/silicon/full64layer/token-rate qualification
+
+DIRECT LINK INSTRUCTIONS (main/clean byte-identical; both exit0)
+PASS ACTUAL link+retained norm instructions:4 boundary/domain positives ALL5120 normalized+raw BITEXACT independent CPU observer/384receipt mutations/4duplicate refusals/52 packet-source-manifest-parent-counter-command-math-predecessor faults;NO CPU feedback/no native/full-layer/silicon/rate claim
+
+CANONICAL PLAN (main/clean exit0)
+PASS layer-link canonical DATA:96 next-layer recipes including dense-attention boundaries/128 descriptor mutations/960 actual-page missing-or-foreign refusals/foreign canonical pointer/one-shot binding;NO initialized or native producer/IO grant
+
+NEW ROLE/BUILD GATES (main/clean byte-identical; both exit0)
+PASS layer-link role/build gates184/defined0+late native69/old58/CPU/Work/component aliases/13 ambient build entries rejected BEFORE SDK/output access;NO native/device grant
+
+EXISTING DEBUG69 ROLE (main/clean exit0)
+PASS exact DEBUG69 role gates585/complete parents/old native+DEBUG+Work+CPU+image+compile67+client aliases/late changes/ABI alias+internal-witness spoofing/bare reserved tags;preprocessing ONLY,NO native/card grant
+
+EXISTING CPU CLIENT ROLE (main/clean exit0)
+PASS ACTUAL DEBUG69 client gates146/exact CPU+client roles/native+image+old client+Work+kernel+fast-math defined0 refusal/late reinclusion;NO device execution
+
+EXISTING ORIGINAL CPU OBSERVER ROLE (main/clean exit0)
+PASS complete-layer original CPU observer gates72:exact/missing/defined0/mixed/late roles;NO native/device/Work capability

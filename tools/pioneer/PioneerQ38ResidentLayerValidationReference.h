@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // Gates precede the guard: late mixed-role inclusion is also forbidden.
+#ifdef PIONEER_Q38_RESIDENT_LAYER_LINK_IMAGE
+#error On-card link IMAGE cannot contain independent CPU reference products
+#endif
 #if !defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_REFERENCE) || PIONEER_Q38_RESIDENT_LAYER_VALIDATION_REFERENCE != 1 || !defined(PIONEER_Q38_CPU_VALIDATION) || PIONEER_Q38_CPU_VALIDATION != 1
 #error Complete-layer ORIGINAL reference requires the separate exact CPU observer role
 #endif

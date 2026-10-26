@@ -1,0 +1,101 @@
+Qwen3.8-27B: on-card complete-layer -> next learned-normalization link
+2026-10-26; OFFLINE implementation/qualification, NOT an inference benchmark
+
+Purpose and actual implementation
+---------------------------------
+One uninterrupted device call chain captures a new immutable next-layer
+recipe, runs the actual qualified complete recurrent-layer coordinator,
+and consumes THAT invocation's GDDR final hidden vector for the next
+layer's learned RMS. It preserves the raw residual and publishes the
+normalized input in device GDDR. No CPU numeric product, host readback,
+native CLOSE/relaunch, reset, or old native58 producer alias is used.
+
+The new wrapper reuses the original layer object, rather than recompiling
+or changing its coordinator. ALL five old Conv/matrix/cohort/norm/FFN
+sections and ALL119 companion peer programs remain byte-identical.
+The separate QLK1/QLKF terminal and new L1 link data are NOT accepted as
+QLR1/native69 completion. No new driver selector or ABI was introduced.
+
+Canonical DATA plan
+-------------------
+The pointer-bound plan reconstructs the NEXT layer's exact role0 F32
+norm, position, token, workspace, identity, source seal and phase from
+the retained canonical/parent recipes. It checks the added five actual
+upload-ledger pages, but NEVER treats that check as proof of the parent's
+pages, initialized state, model authentication or completed execution.
+96 recipes include GDN-to-dense-attention input boundaries; this does NOT
+implement the dense-attention layer itself. 128 descriptor mutations,
+960 missing/foreign-page cases, foreign canonical pointers and duplicate
+binding all refuse. Shape-valid foreign learned addresses also refuse.
+
+Compiled program identities
+---------------------------
+program.elf SHA256
+270b3e3722792c229dc8d044e0c7d2061c1c5f52ada2e7c6dae1015cf9bae090
+text.bin 128B SHA256
+a5b5e13516a96e24d5029ebcf916ab6b44ea1052bf484a8bad73cb8d1a225724
+link.bin 5976B SHA256
+fb9e6d3368601f65883b49c3f964257370712acac9e37112cda4a16dc041e8b6
+New component max frame304B; actual joined interpreter max stack6376B.
+No writable globals/GOT, unsupported division/sqrt/FMA, or CSR writes.
+Only the six existing read-only matrix cycle CSR samples remain.
+Main and independent clean-checkout ELF files are byte-identical.
+
+Actual instruction qualification (simulated CPU byte endpoints ONLY)
+-------------------------------------------------------------------
+Main full joined test: PASS, process exit0. It executes the actual ROOT
+and all119 retained peer programs through Conv/GDN/output/residual RMS/
+all357 FFN matrix jobs/88 producers/final residual, then the NEW link.
+The independent observer first checks actual complete-layer products and
+249 saved-receipt +7616 peer-proof mutations. It supplies no intermediate
+numeric output. The actual link then performs eight device NoC packets;
+all5120 normalized AND raw values match the separate FP64-reduce/sqrtf
+CPU observer bit-for-bit, with all119 peer sequences unchanged.
+Main full joined stdout SHA256
+724f38af4a21934a5fca60b1d9ff8d12dee3e191498ed70c829917d04db117c3
+
+Main and clean direct-subroutine tests: PASS, process exit0. Four boundary/
+domain positives,384 receipt mutations,four duplicate refusals,52 injected
+packet/source/descriptor/parent/counter/command/math/predecessor failures.
+Failure retries issue no subsequent packet. These direct tests use
+synthetic predecessor DATA and do NOT prove a preceding layer ran; the
+separate full joined test above supplies that execution qualification.
+
+Independent clean full joined repeat: PASS, process exit0. Its COMPLETE
+stdout is byte-identical to the main run (same724f38af SHA above), including
+actual first-layer products,ALL119 proof chains and the new next-input
+handoff. Both actual max stacks are6376B,within the retained8KiB stack.
+
+184 new role/build gates refuse defined0, late role changes and13 ambient
+build entries before SDK/output access. Prior DEBUG69 role585/client146/
+original-observer72 gates still pass. No CPU observer enters this image.
+Main AND independent clean full SDK DEBUG69 regression builds are
+byte-identical to qualified
+b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7;
+old65 remains61faa093 and NODRV remains9fcf1f7f/inert. SDK is read-only.
+
+Offline build refusals preserved
+--------------------------------
+The first build refused enum comparisons under -Werror; explicit unsigned
+constant comparisons fixed the warning. The next two builds refused
+shared-section byte changes caused by COMDAT/constant relocations when
+recompiling the parent. The final design links the unchanged parent object
+and places the new wrapper separately. No byte-equality gate was weakened.
+None of these offline failures touched or quarantined the card.
+
+Physical status and remaining work
+----------------------------------
+NO new program/driver was installed and NO power/SD/hardware action was
+performed. Read-only SSH postflight: Haiku, working041fef189829c58791a7e4a
+86e2b15b182fa1a6c9cc9f03a91037ba15b353403/tag2026102100010012/generation4,
+quiesced0/cold0/active_owner0/open_count1/guard1; CPU metadata only.
+
+The native journal/typed joint producer/initialization/source/clock/host
+lifetime for this NEW footprint remain OWED before hardware selection.
+This is not another host-mediated per-layer final Work path, but it is
+also NOT a complete second layer or full model implementation. Remaining:
+all64 layers, resident next projections and state commits, dense attention/
+KV, vocabulary/sampling, persistent token loop and no-CPU-reference Work/
+Assistant integration. No token-rate claim follows from interpreter time,
+instruction counts, the earlier first-layer physical pass or this link.
+Last measured WHOLE-MODEL rate remains0.207893161tok/s;20tok/s is UNMET.

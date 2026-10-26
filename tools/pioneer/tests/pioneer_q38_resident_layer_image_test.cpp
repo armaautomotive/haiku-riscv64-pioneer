@@ -206,9 +206,9 @@ struct LayerFabric:OutputCohortFabric {
   }else ffnProducers++;
  }
  bool RunLayer(){while(pc!=parkPc && !(unknown && l1[Index(pc)]==0x0000006f))StepRoot();return !unknown;}
- void VerifyLayer(){
+ void VerifyLayer(bool terminal=true){
   assert(prefixDone && normDone && ffnStarted && !unknown && !pending && layerCaptures==3520 && ffnCaptures==3456);
-  assert(Mem(0x17ffc8)==TT_Q38_RESIDENT_LAYER_MARKER && Mem(0x17ffc4)==5120 && Mem(0x17ffc0)==donePc);
+  if(terminal)assert(Mem(0x17ffc8)==TT_Q38_RESIDENT_LAYER_MARKER && Mem(0x17ffc4)==5120 && Mem(0x17ffc0)==donePc);
   assert(ffnMatrices==357 && ffnProducers==88 && residualPackets==6 && finalSumStores==5120);
   for(unsigned role=0;role<3;role++){
    assert(assembled[role]==expected[role].size());unsigned offset=role==0?30848:role==1?100480:274880;
