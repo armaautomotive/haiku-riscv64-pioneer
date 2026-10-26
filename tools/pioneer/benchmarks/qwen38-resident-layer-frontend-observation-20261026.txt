@@ -1,13 +1,14 @@
 Resident-layer frontend observation policy — 2026-10-26 UTC
 =========================================================
 
-STATUS: Complete OFFLINE qualification;single physical attempt C started
-after the qualified checkpoint was pushed. Physical result still PENDING.
+STATUS: Complete OFFLINE qualification and ONE physical C terminal0/PASS.
+Independent instruction-policy numeric validation and actual clean END
+passed. Working041 was explicitly restored from clean idle metadata.
 Main44068 and clean39777 full original public-control tests BOTH terminal0,
 as is native86872 including all17 failure-containment cases. The preceding
 04:05 checkpoint correctly left them LIVE;each SAME handle was retained
 until its actual terminal result. No silicon/full-model/rate pass claimed.
-Working041 is preserved;newb554/tag69/gen3 was cleanly installed for C.
+Current installed driver is working041/tag12/gen4/cold0/owner0.
 Last actual whole-model0.207893161tok/s unchanged;
 20tok/s/full-card inference remain UNMET.
 
@@ -129,8 +130,8 @@ explicit user approval,standard ProcessController-deskbar and NetworkStatus
 count2/names correct;both paths persisted in183B saved list. Exact prior
 clearing cause remains unknown;user requested returning focus to Qwen.
 
-Physical C: started once,NOT a completed result
------------------------------------------------
+Physical C: terminal0,numeric validation and clean END
+-------------------------------------------------------
 Complete qualification evidence0ce0f70ccd was pushed and remote-verified
 before staging. Initial modern SCP/SFTP transfers all refused the missing
 subsystem;read-only checks confirmed no files were created. Legacy SCP-O
@@ -142,21 +143,56 @@ guard1,no compute parent. NEW immutablee115 guarded apply27712 terminal0:
 quiesced old12 -> new69/gen3/cold0/owner0/open1/guard1,
 HOT_RELOAD_VERIFIED. No reboot or GPU arithmetic during replacement.
 
-Exclusive launcher C was invoked ONCE,SSH handle33602 remains LIVE:
+Exclusive launcher C was invoked ONCE;SAME SSH handle33602 completed0:
   /boot/home/pioneer-p100a-hot-reload-20261019-a/resident-layer-debug69-physical-20261026-c
 Passive serial capture offset74416888 was saved before invocation.
-Latest observed client701 is in pre-GPU full-model authentication/reference
-preparation;only the initial fixed-diagnostic line is logged. No exit
-marker,no native or CPU-numerical result yet. Poll SAME33602 and C's log;
-never repeat the launcher or infer failure from elapsed observation time.
+The CPU hash subprocess702 demonstrably advanced while parent701 waited;
+no observation timeout caused a restart. Full same-file authentication,
+independent references and sealing finished BEFORE the FD. All68603pages/
+300 upload spans and SPAN_END passed,then the SAME fixed8a10 native call
+completed. Kernel CPU time advanced during initialization/compute/readback/
+restore;no extra card status/PC queries or resets were introduced.
 
-If actual completion fails,save captured CPU/passive evidence ONLY;no
-post-failure device peek/reset/retry/unload/restore. If recovery is needed,
-follow standing OFF-once/allow-a-few-minutes/ON-once policy;no SD/mains
-change. Only after a fresh clean epoch may immutablee115 restore b554
-to041. Old7cb maps9609 ONLY and must never be used for b554 recovery.
-If strict diagnostic PASS/clean_end1/explicit END and clean idle metadata
-are proven,an explicit guarded e115 restore may be used without reboot.
+Final620-line client log,remote and independent local copy SHA256 equal:
+  c5e3e87f181b2b0e76c71b02791e1ed05caa0f6668a8c621c30b10e3dfc43889
+  /private/tmp/pioneer-q38-layer-frontend-physical-20261026-c.log
+Exact completed result:
+  instruction_policy_passed1 final_bits0 max_abs0
+  ideal_libm_strict_passed0 final_bits3423 max_abs5.96046447754e-8
+  ideal relative_l2 4.08732743835e-8 (separate report,NOT strict bit equality)
+  PASS_DEBUG69 token0/layer0/source_pages68603/spans300/readback1630208
+  clean_end1;actual BANK_END7bf6 returned0;process exit0
+The client checks the full fixed64-word completion/restore/geometry header,
+ALL1630208 values and END's closed/PCI-restored/host-released metadata.
+Saved raw log independently audits300 successful span completions,one
+explicit END,one PASS and zero failure records.
+
+Passive serial after byte74416888 reported:
+  FRONTEND unexpected37 outside37 rejected0 first00058e58 poll172
+These are RAW speculative snapshots,not corrected/executed addresses.
+This physical pass supports the no-marker observation policy for THIS
+joined first-layer lifetime. It does not weaken positive terminal/code/
+counter/source/STOP/restoration proofs or certify other controllers.
+
+Reported execution_readback_restore_us468444879 includes initialization,
+predecessor programs,code snapshot/install,arithmetic,readback and restore.
+It is NOT isolated compute time,full-model inference or a token rate.
+No new whole-model tokens/sec measurement is claimed.
+
+After PASS and actual END,CPU-only admin was new69/gen3/quiesced0/cold0/
+owner0/open1/guard1;no compute parent. Installedb554 and immutablee115 were
+independently rehashed. ONLY then guarded restore26995 terminal0:
+quiesced69/gen3 -> working041/tag12/gen4/cold0/owner0/open1/guard1,
+HOT_RELOAD_VERIFIED. Separate final installed hash/status checks passed.
+No reboot,power pulse,SD/mains/hardware change or recovery was needed.
+Haiku remains64CPU/RAMmax137034936320B;Deskbar live indicators2/error0.
+All physical/qualification handles are now terminal;do not repoll/restart.
+
+Remaining full objective is still UNMET:all64-layer scheduling,dense
+attention/KV,current-state commits,vocabulary/sampling,persistent token
+loop,no-CPU-reference FAST Work/Assistant integration and honest end-to-end
+performance qualification. The proven first layer is a prerequisite,not a
+replacement objective or a completed self-hosted model.
 
 Full objective remains unchanged:full64-layer scheduling,dense attention
 and KV,current-state commits,vocabulary/sampling,persistent whole-token

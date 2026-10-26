@@ -47,7 +47,7 @@ PASS actual one-shot C launcher 18 filesystem/hash/symlink/metadata/success/clie
 a10a6a63ef80963af36f4428fa6023d32281f658a3243ddf11946a5a305183d8  /private/tmp/pioneer-q38-debug69-physical-20261026-c.sh
 DESKBAR user-approved restore19203terminal0:no reboot/live shelf2/namesProcessController+NetworkStatus/error0/saved183Bbothapp paths. Prior disappearance cause unproven.
 
-PHYSICAL_C_STARTED_ONCE;PENDING,NO native/numeric/rate pass claimed:
+PHYSICAL_C_STARTED_ONCE;UPDATE:TERMINAL0/POLICY_NUMERIC_PASS/ACTUAL_END,NOT fullmodel/rate:
 Qualification checkpoint0ce0f70ccdaa2e07e871d68cf49efaab8288d1d2 pushed/remoteverified BEFORE staging.
 ModernSCP3subsystem-refusals/pathsabsentverified;LegacySCP-O3terminal0/new immutable paths/independentremotehashesexactb554,e115,a10.
 P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
@@ -61,3 +61,28 @@ Passive serial offset74416888;ONE launcher C/SSH33602 LIVE:
 DEBUG69_FRONTEND_PHYSICAL_SINGLE_ATTEMPT_STARTED
 DEBUG69_FIXED_TOKEN0_POSITION0_LAYER0_COMPLETE_CONV_GDN_OUTPUT_NORM_FFN_FINAL;CPU_OBSERVER_SEPARATE;NOT_WORK_OR_FULL_MODEL_INFERENCE
 Observed clientteam701 wait/UTime5ms/KTime26ms;no exit.status,pre-GPU authentication/references. No retry/reset/restore/power action.
+
+SAME33602 terminal0,after genuine SHA/reference/upload/native execution/readback/restore/numeric comparison/END:
+DEBUG69_FRONTEND_PHYSICAL_SINGLE_ATTEMPT_EXIT_0
+c5e3e87f181b2b0e76c71b02791e1ed05caa0f6668a8c621c30b10e3dfc43889  /private/tmp/pioneer-q38-layer-frontend-physical-20261026-c.log
+Remote sameSHA620lines;local audit spans=300 explicit_end=1 passes=1 failures=0
+DEBUG69_IOCTL_BEGIN op00008a10 bytes6521088
+DEBUG69_IOCTL_END op00008a10 status0 errno0
+DEBUG69_IOCTL_BEGIN op00007bf6 bytes64
+DEBUG69_IOCTL_END op00007bf6 status0 errno0
+DEBUG69_CPU_OBSERVERS ideal_libm_strict_passed0 final_bits3423 max_abs5.96046447754e-08 relative_l24.08732743835e-08;instruction_policy_passed1 final_bits0 max_abs0;DISTINCT_REPORTS_NOT_WORK_OR_RATE
+PASS_DEBUG69 token0 layer0 original_upload_pages68603 spans300 fixed_readback_words1630208 clean_end1 execution_readback_restore_us468444879;NOT_FULL_MODEL_OR_TOKEN_RATE
+PASSIVE SERIAL EXISTING READS ONLY:
+Q38-LAYER-DEBUG:FRONTEND unexpected37 outside37 rejected0 first00058e58 poll172;RAW_SPECULATIVE_SNAPSHOTS_NOT_EXECUTION_OR_COMPLETION;CPU_ONLY_EXISTING_READS
+POST_END CPUmetadata ONLY:
+P100A_RELOAD driver55 tag2026102600010069 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+RESTORE26995terminal0,EXPLICIT after proven PASS/cleanEND/idle:
+P100A_RELOAD driver55 tag2026102600010069 generation3 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+P100A_RELOAD driver55 tag2026102100010012 generation4 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_HOT_SWAP_COMPLETE_NO_REBOOT
+INDEPENDENT final postflight:
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+P100A_RELOAD driver55 tag2026102100010012 generation4 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Haiku64CPUs/RAMmax137034936320B/free133777330176B/DeskbarShelfCount2/error0;NO reboot/power/SD/mains/hardware change.
