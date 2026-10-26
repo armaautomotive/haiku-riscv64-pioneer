@@ -13,6 +13,7 @@
 #include "PioneerQ38ResidentLayerPlan.h"
 #include "PioneerQ38ResidentLayerProof.h"
 #include "PioneerQ38ResidentLayerReadbackPlan.h"
+#include "PioneerQ38ResidentLayerRunObservation.h"
 // HEAP ONLY. Full NEW first-layer Conv/GDN/output/residual+RMS/FFN/final-residual lifetime.
 // This is the actual execution/STOP/restore controller,not a boot-only smoke test.
 // A genuine NEW native state/factory/IO scope and original-GGUF qualification
@@ -53,6 +54,7 @@ class PioneerQ38ResidentLayerOwner {
  bool running[120]={},accepted[120]={},stopped[119]={};
  uint32_t token=UINT32_MAX,position=UINT32_MAX,bank=7,phase=0;
  uint64_t began=0;bool started=false,ready=false,unsafe=false,closed=false,ran=false,traffic=false,rootVerified=false;
+ PioneerQ38ResidentLayerRunObservation runObservation; // CPU-only existing-read evidence,NEVER permission
  bool Bound(bool closedState=false)const{
   if(!started || unsafe || closed!=closedState || !projection || !input || !memory || memory->unsafe || memory->closed!=closedState
    || !previousMemory || previousMemory->Unsafe() || !previousMemory->Closed() || !history || !recurrent || !proof || !banks || !cohort
@@ -100,6 +102,9 @@ class PioneerQ38ResidentLayerOwner {
   if(graph)graph->Fault();
   if(banks && cohort)PioneerQ38DispatchQuarantine(*cohort,*banks);
   io.QuarantineHostPage();io.ResidentLayerRetainHostOwners();return false; // MEMORY ONLY;NO following IO/reset/restore/retry
+ }
+ template<class IO> bool RunFail(IO& io,PioneerQ38ResidentLayerResult& r,PioneerQ38ResidentLayerRunObservation::Failure first){
+  runObservation.Fail(first);return Fail(io,r); // CPU record first;the SAME retention path,NO additional reads
  }
  template<class IO> bool Guard(IO& io,unsigned w){
   if(w>=120 || !Scope(io) || !io.SelectRuntimeCore(w) || !io.Q38PanelMappingStable() || !io.ResidentLayerMemoryMappingStable(w)
@@ -167,9 +172,10 @@ class PioneerQ38ResidentLayerOwner {
   return finished==119;
  }
  template<class IO> bool RootPhysical(IO& io){
-  uint32_t status[3],pc[2];for(unsigned i=0;i<3;i++)status[i]=io.RuntimeStatusRead(i);
-  for(unsigned i=0;i<2;i++){io.Pause();pc[i]=io.RuntimePcRead();if(!PioneerQ38ResidentLayerRootTerminalPc(pc[i]))return false;}
-  return PioneerQ38ResidentLayerRootPhysical(status,pc,io.ResetRead());
+  uint32_t status[3],pc[2];for(unsigned i=0;i<3;i++){status[i]=io.RuntimeStatusRead(i);runObservation.Status(i,status[i]);}
+  for(unsigned i=0;i<2;i++){io.Pause();pc[i]=io.RuntimePcRead();runObservation.Pc(pc[i]);if(!PioneerQ38ResidentLayerRootTerminalPc(pc[i]))return false;}
+  const uint32_t reset=io.ResetRead();runObservation.Reset(reset);
+  return PioneerQ38ResidentLayerRootPhysical(status,pc,reset);
  }
  template<class IO> bool RootReceipt(IO& io,PioneerQ38ResidentLayerResult& r){
   if(!Guard(io,0) || !RootPhysical(io) || !PioneerQ38GraphCsrIdle(io) || !Image(io,0))return false;
@@ -234,6 +240,7 @@ public:
  PioneerQ38ResidentLayerOwner& operator=(const PioneerQ38ResidentLayerOwner&)=delete;
  bool Unsafe()const{return unsafe;}bool Closed()const{return closed;}
  bool Claimed()const{return started;} // CPU metadata ONLY,never an IO grant
+ const PioneerQ38ResidentLayerRunObservation& RunObservation()const{return runObservation;} // CPU ONLY,even after quarantine
  bool Completed()const{return ready && ran && !unsafe && !closed;} // private lineage still REQUIRED by every consumer
  bool MatchesNativeOwner(const PioneerQ38ProjectionGraphOwner& producer,const PioneerQ38ResidentLayerMemory& code)const{
   return projection==&producer && memory==&code && Bound(); // CPU binding ONLY,not native scope/IO authority
@@ -297,23 +304,33 @@ public:
   // Recheck the actual retained upload ledger before the first RUN MMIO.
   // A caller cannot remove learned pages between PREPARE and RUN and keep
   // the earlier canonical recipe as a substitute for current ownership.
-  if(!Scope(io) || !operation.LearnedPagesPresent(ledger,PioneerResidentBanks::Pages))return Fail(io,r);
-  if(!Guard(io,0) || !Budget(io,began))return Fail(io,r);
-  for(unsigned i=0;i<3;i++){io.RuntimeStatusWrite(i,0);if(io.RuntimeStatusRead(i))return Fail(io,r);}
-  running[0]=cohort->rootRunning=cohort->worker[0].image.running=true;resets[0]=0x87ffff;r.phase=5;io.RuntimeResetWrite(resets[0]);io.Pause();if(!Guard(io,0))return Fail(io,r);
+  using Failure=PioneerQ38ResidentLayerRunObservation;
+  if(!Scope(io))return RunFail(io,r,Failure::Scope);
+  if(!operation.LearnedPagesPresent(ledger,PioneerResidentBanks::Pages))return RunFail(io,r,Failure::LearnedPages);
+  if(!Guard(io,0))return RunFail(io,r,Failure::InitialGuard);
+  if(!Budget(io,began))return RunFail(io,r,Failure::InitialBudget);
+  for(unsigned i=0;i<3;i++){io.RuntimeStatusWrite(i,0);const uint32_t value=io.RuntimeStatusRead(i);runObservation.Status(i,value);if(value)return RunFail(io,r,Failure::Marker);}
+  running[0]=cohort->rootRunning=cohort->worker[0].image.running=true;resets[0]=0x87ffff;r.phase=5;io.RuntimeResetWrite(resets[0]);io.Pause();if(!Guard(io,0))return RunFail(io,r,Failure::ArmGuard);
   traffic=true;resets[0]=0x46800;io.RuntimeResetWrite(resets[0]);r.rootStarts++;
   bool done=false;
   for(unsigned attempt=0;attempt<65536;attempt++){
-   if(!Guard(io,0) || !Budget(io,began))return Fail(io,r);
-   uint32_t marker=io.RuntimeStatusRead(2);
-   if(marker && marker!=TT_Q38_RESIDENT_LAYER_MARKER)return Fail(io,r);
-   if(marker){if(!RootReceipt(io,r))return Fail(io,r);done=true;break;}
-   io.Pause();uint32_t pc=io.RuntimePcRead();if(!PioneerQ38ResidentLayerProgramImmutable(0,pc) || PioneerQ38ResidentLayerRootRejectedPc(pc))return Fail(io,r);
+   runObservation.Poll();
+   if(!Guard(io,0))return RunFail(io,r,Failure::PollGuard);
+   if(!Budget(io,began))return RunFail(io,r,Failure::PollBudget);
+   uint32_t marker=io.RuntimeStatusRead(2);runObservation.Status(2,marker);
+   if(marker && marker!=TT_Q38_RESIDENT_LAYER_MARKER)return RunFail(io,r,Failure::Marker);
+   if(marker){if(!RootReceipt(io,r))return RunFail(io,r,Failure::Receipt);done=true;break;}
+   io.Pause();uint32_t pc=io.RuntimePcRead();runObservation.Pc(pc);
+   if(!PioneerQ38ResidentLayerProgramImmutable(0,pc))return RunFail(io,r,Failure::PcOutsideImage);
+   if(PioneerQ38ResidentLayerRootRejectedPc(pc))return RunFail(io,r,Failure::PcRejected);
   }
-  if(!done)return Fail(io,r);
+  if(!done)return RunFail(io,r,Failure::PollsExhausted);
   r.phase=6;
-  for(unsigned w=1;w<120;w++){r.worker=w;if(!Budget(io,began) || !AcceptPeer(io,w,r))return Fail(io,r);}
-  if(!Guard(io,0) || !RootPhysical(io) || !Budget(io,began) || !Hold(io,0))return Fail(io,r);
+  for(unsigned w=1;w<120;w++){r.worker=w;if(!Budget(io,began))return RunFail(io,r,Failure::PeerBudget);if(!AcceptPeer(io,w,r))return RunFail(io,r,Failure::PeerReceipt);}
+  if(!Guard(io,0))return RunFail(io,r,Failure::FinalGuard);
+  if(!RootPhysical(io))return RunFail(io,r,Failure::FinalPhysical);
+  if(!Budget(io,began))return RunFail(io,r,Failure::FinalBudget);
+  if(!Hold(io,0))return RunFail(io,r,Failure::FinalHold);
   r.rootHolds++;ran=true;history->residentLayerNextPublished=recurrent->residentLayerNextPublished=true;r.phase=7;return true;
  }
 private:

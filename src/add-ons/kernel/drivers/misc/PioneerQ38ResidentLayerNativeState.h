@@ -73,6 +73,7 @@ class PioneerQ38ResidentLayerNativeState {
    && h->MatchesInitializationOwner(banks,proof,identity) && !h->OwnsInitializationLease(&historyZero);
  }
 public:
+ const PioneerQ38ResidentLayerRunObservation& RunObservation()const{return layer.RunObservation();} // CPU ONLY;not a scope/cleanup grant
  PioneerQ38ResidentLayerNativeState(const PioneerQ38ResidentLayerNativeState&)=delete;
  PioneerQ38ResidentLayerNativeState& operator=(const PioneerQ38ResidentLayerNativeState&)=delete;
  bool MatchesBinding(const PioneerStoreContext& c,const PioneerQ38EmbeddingNativeState& m,const void* fd,

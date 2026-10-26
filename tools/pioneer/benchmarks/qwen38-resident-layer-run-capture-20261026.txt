@@ -1,0 +1,117 @@
+Resident-layer coordinator failure capture — 2026-10-26 UTC
+=========================================================
+
+STATUS: OFFLINE diagnostic revision; not staged or installed. Main and
+independent clean full original-model public-control tests BOTH terminal0.
+Supporting branch, SDK, role and updater checks pass. The previous physical
+trial remains FAILED. No new inference rate or numerical pass is claimed.
+Last measured whole-model rate is 0.207893161 tokens/sec; 20 remains unmet.
+
+Why this change is needed
+------------------------
+Pushed a834ead18d preserves the ONE failed DEBUG69 trial and its exact log
+SHA256 9ee124613bae9e7fdc4b50112e4ec3487ae16d1ddaed5ea0f801cf8ab14c2bd2.
+The earlier four-projection pipeline closed and restored cleanly, but the
+new coordinator stopped in launch/run phase 5. Its output was not returned
+as a valid completed layer. The old report did not distinguish a guard,
+deadline, bad marker, bad program counter, receipt or polling exhaustion.
+It is not evidence of a numerical mismatch or a model performance result.
+
+CPU-only capture, with no new device reads
+-----------------------------------------
+The private owner now retains a 52-byte observation record: first failing
+Run branch, poll count, the last already-read status words and validity/read
+counts, the two most recent already-read PCs, and an already-read reset
+value/count. The real native context exposes only a const CPU-memory view.
+On failure the fixed diagnostic prints that view, even after quarantine.
+There is no pointer/address/ready flag in the public request or reply.
+
+The first recorded Run failure freezes the observation. Repeated refused
+Run calls cannot overwrite it. This record grants no IO, ownership,
+completion, initialized-state, reset, retry, release or cleanup permission.
+The existing 30-second budget, 65536-poll limit, all numerical/physical
+predicates and the real retention/quarantine path remain unchanged.
+The CPU observer and all arithmetic remain separate; Work gains no CPU
+references, logging, device peeks or validation fallback.
+
+Completed checks, not silicon qualification
+-------------------------------------------
+Main and clean ASAN/UBSAN branch tests pass 283 cases each. They extract
+the actual current Run/RootPhysical methods and compare against the frozen
+pre-change methods from a834ead18d using disposable CPU branch endpoints.
+Results and the complete IO-event order are equal. Every injectable guard,
+budget, peer and receipt refusal, malformed status/PC/reset, polling
+exhaustion, inert precondition and first-failure freeze is checked.
+These endpoint tests are NOT actual native owner/cleanup qualification.
+
+Main and clean real Haiku SDK builds are terminal0 and byte-identical:
+  driver: 960971c38107ccc707cb0cdeb7f04a9b4cddc053c3f6e429f94e7dfc21518d8f
+  NODRV: 91721c41d964956d38ca14909b0d36b569c81162bc4e4c961196092d5bee59af
+Maximum new kernel frame remains 1456 bytes. Old65 remains byte-exact
+61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821.
+Conventional driver ABI and separate CPU/test-symbol audits pass. NODRV
+entry points remain constant-return inert. Physical role admission581
+passes. No SDK or dirty llama.cpp modification was made.
+
+The same role69/tag2026102600010069/namespace20 is retained: a role/tag is
+NOT byte identity. The new source updater pins ONLY exact960971c3 <-> exact
+working041, using candidate filename ending -960971c3 and immutable helper
+SHA256 7cb6e492df5ce1f9a0e2491100d7ccdf8cd5a3066121b90b921cd0c1980bc1d7.
+Main and clean updater tests pass 298 cases each across new69 and old68
+pairs, including rejection of OLD beeaf bytes BEFORE administrative open.
+Hash-qualified backups, generation handshake, parent inventory and all
+symlink/idle/unknown-state checks remain. No automatic rollback or reset.
+
+The full original public-control regressions BOTH completed terminal0:
+  main40710: /private/tmp/pioneer-q38-layer-run-capture-original-20261026-a.log
+  clean86307: /private/tmp/pioneer-q38-layer-run-capture-original-20261026-clean-a.log
+Both use actual emitted programs and independent original GGUF references,
+with simulated OS/NoC endpoints, not the card. Each completed ALL1630208
+readback words,1592 fixed reads,full44MB restoration/second proof,final-copy
+failure containment,inert duplicate refusal and actual sealed native END.
+All14 numerical/current-state corruptions were refused. Instruction-policy
+comparison has0 final differences; the separate ideal-libm report retains
+3423 differing final words/max5.96046447754e-8 and is NOT a strict pass.
+The exact two final logs match SHA256
+ec4777c22ed6c85275eb5c281233acb5dfa1048f26bb99dbffe7f2f2cdcf0257.
+The handles are terminal;do not restart or repoll them.
+Clean source: /private/tmp/pioneer-layer-run-capture-clean.cYhx7O4f,
+archive of a834ead18d plus the seven explicit task-source changes.
+
+Controlled recovery of the FAILED previous image
+-------------------------------------------------
+ONE OFF58543 completed0 after evidence preservation and successful sync.
+The user then confirmed actual fans/LEDs off; only then ONE ON15426 completed0.
+Fresh pinned Linux6.1.31 boot_id49cfd9c1-58a3-478e-a737-b042e6080441 reported
+all64 CPUs, MemTotal131976904kB, rootNVMe0n1p3 and kexec_loaded0.
+Default SSH identity was rejected; the explicit existing project identity
+worked with the separate saved Linux host pin. No trust bypass or key edit.
+
+Hash-pinned helper9cfc6dc3 prepared9770 terminal0 and booted9940 terminal0
+session q38-layer69-recover-20261026-a,64 CPUs, with profile
+memory128-spin-idle7-top-page-nosd-control. Clean read-only BFS check and
+all source/image/platform/disk/inactive-accelerator guards passed. No journal
+override, disk repair, SD/mains/cable change or default NVMe boot edit.
+An early Haiku SSH timeout caused NO restart or additional power pulse.
+
+Fresh Haiku uptime0:05,64 CPUs and RAMmax137034936320 were verified, with
+app_server/Tracker/Deskbar/input_server present and no compute parent.
+Old installed beeaf was independently hashed; admin/guard/IMMUTABLE0d0f
+helper hashes matched. CPU-only status was role69/generation1/cold0/owner0.
+This is a NEW power/hardware/OS epoch, not an in-place quarantine clear.
+
+ONLY preserved helper0d0f3f9c was used to restore the OLD beeaf image.
+Restore71063 terminal0: old69/gen1 -> quiesced -> working041/tag12/gen2,
+cold0/owner0/guard1, HOT_RELOAD_VERIFIED, no reboot or GPU execution.
+The new7cb6 helper MUST NOT be used to restore beeaf: it correctly rejects
+those bytes before administrative open. The two immutable mappings remain
+distinct. The new9609 image has not been staged, installed or executed.
+
+Remaining work
+---------------
+Save/push the qualified source checkpoint before any new guarded physical
+single-attempt trial. Full64-layer scheduling, dense attention/KV,
+current-state commit, vocabulary/sampling, persistent token loop and
+no-CPU-reference FAST Work/Assistant integration remain incomplete.
+A captured first-layer error or eventual layer pass is NOT full-model
+inference or a 20-token/sec measurement. The full goal remains ACTIVE.

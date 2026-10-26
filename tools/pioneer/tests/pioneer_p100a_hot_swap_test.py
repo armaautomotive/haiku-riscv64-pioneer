@@ -367,6 +367,15 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
                 put('candidate_decoder_validation', previous)
             else:
                 installed.write_bytes(previous)
+        if fault == 'previous-layer69':
+            # The unchanged role/tag69 cannot identify the new captured-read
+            # image. Refuse old beeaf bytes BEFORE any administrative open.
+            assert mode in ('--apply-resident-layer-validation', '--restore-resident-layer-validation')
+            previous = b'test-beeaf6b0c5eb5af1f1992a357abc0ceefcc3614aa2f81741d8eb86a432b094d2'
+            if mode == '--apply-resident-layer-validation':
+                put('candidate_resident_layer_validation', previous)
+            else:
+                installed.write_bytes(previous)
         before = installed.read_bytes()
         if fault == 'previous-debug52':
             assert mode in ('--apply-conv-silu-precision-validation', '--restore-conv-silu-precision-validation')
@@ -450,7 +459,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
             assert backup_target.stat().st_ino == backup_inode, (mode, fault, 'VALID_BACKUP_REPLACED')
         if fault:
             assert result.returncode != 0, (mode, fault, result.stdout, result.stderr)
-            if fault in ('previous-debug44', 'previous-capture-debug44', 'previous-debug52'):
+            if fault in ('previous-debug44', 'previous-capture-debug44', 'previous-debug52', 'previous-layer69'):
                 assert not (root / 'calls').exists(), (mode, fault, 'ADMIN_OPEN_WITH_PREVIOUS_IMAGE')
             if fault in ('backup', 'backup-link') and mode != '--bootstrap':
                 assert (root / 'calls').read_text().splitlines() == ['--status'], (mode, fault, 'QUIESCED_WITH_UNPROVEN_BACKUP')
@@ -805,6 +814,8 @@ if __name__ == '__main__':
         previous_image = ['previous-debug44', 'previous-capture-debug44'] if mode in ('--apply-decoder-validation', '--restore-decoder-validation') else []
         if mode in ('--apply-conv-silu-precision-validation', '--restore-conv-silu-precision-validation'):
             previous_image.append('previous-debug52')
+        if mode in ('--apply-resident-layer-validation', '--restore-resident-layer-validation'):
+            previous_image.append('previous-layer69')
         hash_backup_mode = mode in ('--apply-decoder-validation', '--restore-decoder-validation', '--apply-gdn-input-validation', '--restore-gdn-input-validation', '--apply-gdn-recurrent-validation', '--restore-gdn-recurrent-validation', '--apply-gdn-rendezvous-validation', '--restore-gdn-rendezvous-validation', '--apply-conv-silu-precision-validation', '--restore-conv-silu-precision-validation', '--apply-resident-output-validation', '--restore-resident-output-validation', '--apply-resident-layer-validation', '--restore-resident-layer-validation')
         backup_links = ['backup-link'] if hash_backup_mode else []
         for fault in [None] + common + candidate + candidate_links + parents + previous_image + backup_links + (['loaded'] if mode == '--bootstrap' else hot):

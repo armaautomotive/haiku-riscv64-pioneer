@@ -1,0 +1,98 @@
+OFFLINE capture revision: SUPPORTING checks and FULL original public40710/86307 BOTH terminal0.
+No physical rerun of 9609; old beeaf physical trial remains FAILED.
+One OFF / user-verified off / one ON / pinned SD-free boot / fresh clean context / old immutable helper restoration.
+Selected completed outputs and exact supporting/source hashes:
+ec4777c22ed6c85275eb5c281233acb5dfa1048f26bb99dbffe7f2f2cdcf0257  /private/tmp/pioneer-q38-layer-run-capture-original-20261026-a.log
+ec4777c22ed6c85275eb5c281233acb5dfa1048f26bb99dbffe7f2f2cdcf0257  /private/tmp/pioneer-q38-layer-run-capture-original-20261026-clean-a.log
+ORIGINAL_COMBINED_FULL_SHA_AND_INDEPENDENT_REFERENCES_BEFORE_NATIVE_CONTEXT
+PASS ACTUAL DEBUG69 public inert-refusals313/root-team-copy/complete fixed request/missing ALL56 layer0 norm+FFN+projection+Conv+GDN+output stripes;ZERO IO/epoch/model publication
+BEGIN ACTUAL DEBUG69 public call:source scope/ALL initialization/prefix/new combined programs/readback/restore/copy
+NEW_NATIVE_GDN_ACTUAL_ZERO runs96/pages10544;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs192/pages21072;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs288/pages31600;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs384/pages42144;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs480/pages52672;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs576/pages63200;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs672/pages73728;NO publication before clean CLOSE
+ACTUAL_LAYER_PREFIX_DONE Conv640/GDN96/QOL24/matrix119 ALL5120rows observed;NO CPU products fed back
+ACTUAL_LAYER_NORM_DONE ALL5120 residual+normalized BITEXACT independent observer;only actual device output consumed next
+ACTUAL_LAYER_FFN_MATRIX role0 worker119 seq3;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role0 worker1 seq6;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role1 worker119 seq4;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role1 worker1 seq7;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role2 worker119 seq5;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role2 worker1 seq9;NOT_NATIVE_TIME
+DEBUG69_ACTUAL_FULL_PIPELINE_READBACK_RESTORE_COMPLETE_BEFORE_USER_COPY;forking final-copy failure
+PASS ACTUAL DEBUG69 final-user-copy failure AFTER full native compute/readback/restore:ALL owners/maps/snapshots/clock/hosts retained,call seal released,ZERO laterIO-reset-restore-retry-END
+DEBUG69_ORIGINAL_DUAL_REFERENCE idealStrict0 idealFinalBits3423 idealMaxAbs5.96046447754e-08 policyStrict1 policyFinalBits0;NOT_FULLMODEL_OR_RATE
+PASS ORIGINAL token0 ACTUAL DEBUG69 full-layer machine:authenticated sameGGUF/ALL independent Conv+history+next-state+gated checks/ALL5120final+projectionwords/14nonfinite-or-current-state corruptions refused;NO CPU products fed to native code
+DEBUG69_DUPLICATE_STATUS status-11 cold0 unsafe0 deviceDelta0/0 thread-1;CPU_METADATA_ONLY
+PASS ORIGINAL token0 ACTUAL DEBUG69 public/native complete lifetime/1592fixed reads+ALL1630208words/full44MB restore+secondproof/independent original-GGUF observer/reply copy+failure containment/one-shot refusal/actual END;OS+physical endpoints TEST,NOT silicon/full64layer/tokenloop/Work/rate qualification
+ORIGINAL_COMBINED_FULL_SHA_AND_INDEPENDENT_REFERENCES_BEFORE_NATIVE_CONTEXT
+PASS ACTUAL DEBUG69 public inert-refusals313/root-team-copy/complete fixed request/missing ALL56 layer0 norm+FFN+projection+Conv+GDN+output stripes;ZERO IO/epoch/model publication
+BEGIN ACTUAL DEBUG69 public call:source scope/ALL initialization/prefix/new combined programs/readback/restore/copy
+NEW_NATIVE_GDN_ACTUAL_ZERO runs96/pages10544;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs192/pages21072;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs288/pages31600;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs384/pages42144;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs480/pages52672;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs576/pages63200;NO publication before clean CLOSE
+NEW_NATIVE_GDN_ACTUAL_ZERO runs672/pages73728;NO publication before clean CLOSE
+ACTUAL_LAYER_PREFIX_DONE Conv640/GDN96/QOL24/matrix119 ALL5120rows observed;NO CPU products fed back
+ACTUAL_LAYER_NORM_DONE ALL5120 residual+normalized BITEXACT independent observer;only actual device output consumed next
+ACTUAL_LAYER_FFN_MATRIX role0 worker119 seq3;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role0 worker1 seq6;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role1 worker119 seq4;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role1 worker1 seq7;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role2 worker119 seq5;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role2 worker1 seq9;NOT_NATIVE_TIME
+DEBUG69_ACTUAL_FULL_PIPELINE_READBACK_RESTORE_COMPLETE_BEFORE_USER_COPY;forking final-copy failure
+PASS ACTUAL DEBUG69 final-user-copy failure AFTER full native compute/readback/restore:ALL owners/maps/snapshots/clock/hosts retained,call seal released,ZERO laterIO-reset-restore-retry-END
+DEBUG69_ORIGINAL_DUAL_REFERENCE idealStrict0 idealFinalBits3423 idealMaxAbs5.96046447754e-08 policyStrict1 policyFinalBits0;NOT_FULLMODEL_OR_RATE
+PASS ORIGINAL token0 ACTUAL DEBUG69 full-layer machine:authenticated sameGGUF/ALL independent Conv+history+next-state+gated checks/ALL5120final+projectionwords/14nonfinite-or-current-state corruptions refused;NO CPU products fed to native code
+DEBUG69_DUPLICATE_STATUS status-11 cold0 unsafe0 deviceDelta0/0 thread-1;CPU_METADATA_ONLY
+PASS ORIGINAL token0 ACTUAL DEBUG69 public/native complete lifetime/1592fixed reads+ALL1630208words/full44MB restore+secondproof/independent original-GGUF observer/reply copy+failure containment/one-shot refusal/actual END;OS+physical endpoints TEST,NOT silicon/full64layer/tokenloop/Work/rate qualification
+c5c1627e0f021d00ca5052b0fcb10e4c036c7952aa5b91b73b2fe68cc31e5314  /private/tmp/pioneer-q38-layer-run-capture-branch-20261026-a.log
+c5c1627e0f021d00ca5052b0fcb10e4c036c7952aa5b91b73b2fe68cc31e5314  /private/tmp/pioneer-q38-layer-run-capture-branch-20261026-clean-a.log
+94671f06a702261982e26c72295a84e53f44f1dc49f03f391ab3f13d643cc53e  /private/tmp/pioneer-q38-layer-run-capture-sdk-20261026-a.log
+c63569d7818ca124dd290bd30c4b88f032bc44dc01657ec25cbec0c8cb5e507b  /private/tmp/pioneer-q38-layer-run-capture-sdk-20261026-clean-a.log
+aba49fc79e5ba93508103c438ba6f6abdb486705e9c56997ffcf7ae6d9d2a2ce  /private/tmp/pioneer-q38-layer-run-capture-hotswap-20261026-a.log
+aba49fc79e5ba93508103c438ba6f6abdb486705e9c56997ffcf7ae6d9d2a2ce  /private/tmp/pioneer-q38-layer-run-capture-hotswap-20261026-clean-a.log
+36cf7a1825a6167b529da6c7d250fd785573c1dcd401a51be13bd5237778fd7b  /private/tmp/pioneer-q38-layer-run-capture-role-gates-20261026-a.log
+81dcd8c7e720717d14149c7b76ee31931fc1326cff4faa0e416bbbcbdf4145c7  /private/tmp/pioneer-q38-layer-debug69-recovery-restore-20261026-a.log
+77d6dbf989f50a012b15dd45db5a69d9d8300e6b0682d539cd4f25fb3244abf9  /private/tmp/pioneer-q38-layer-debug69-recovery-postflight-20261026-a.log
+PASS actual Run/RootPhysical CPU observation: 283 branch/refusal/freeze cases;exact BEFORE/AFTER IO-event order+results;NO added reads/retries after failure;TEST branches ONLY,NOT native/device/cleanup/Work/speed qualification
+PASS actual Run/RootPhysical CPU observation: 283 branch/refusal/freeze cases;exact BEFORE/AFTER IO-event order+results;NO added reads/retries after failure;TEST branches ONLY,NOT native/device/cleanup/Work/speed qualification
+PASS ACTUAL whole PioneerSessionIO/PioneerStoreContext/KernelExport ABI/native factories+all controller templates/clean destructor/retention+END compile;maxNewFrame=1456
+PASS NO conventional driver ABI exports;ALL5 renamed entries machine-code-identical to inert constant-return controls;NO PCI/module/guard/sem/card IO from entries
+91721c41d964956d38ca14909b0d36b569c81162bc4e4c961196092d5bee59af  /private/tmp/pioneer-q38-layer-run-capture-driver-20261026-a/context-NODRV-control/resident-layer-context-NODRV.o
+Old65 BYTE-IDENTICAL61faa093;REFUSING COMPILE OBJECT ONLY;NO link/install/public compute/Work/CPU-reference/device/speed qualification
+PASS ACTUAL production DEBUG69/namespace20/fixed6521088-byte QLV1/closed10-operation dispatcher;conventional ABI,NO test/NODRV/old68 alias;maxNewFrame=1456
+960971c38107ccc707cb0cdeb7f04a9b4cddc053c3f6e429f94e7dfc21518d8f  /private/tmp/pioneer-q38-layer-run-capture-driver-20261026-a/tenstorrent_pci_probe-resident-layer-DEBUG69
+BUILT ONLY;public-control/source/client containment and physical qualification REQUIRED BEFORE Work;NO full-model or inference-speed grant
+PASS ACTUAL whole PioneerSessionIO/PioneerStoreContext/KernelExport ABI/native factories+all controller templates/clean destructor/retention+END compile;maxNewFrame=1456
+PASS NO conventional driver ABI exports;ALL5 renamed entries machine-code-identical to inert constant-return controls;NO PCI/module/guard/sem/card IO from entries
+91721c41d964956d38ca14909b0d36b569c81162bc4e4c961196092d5bee59af  /private/tmp/pioneer-q38-layer-run-capture-driver-20261026-clean-a/context-NODRV-control/resident-layer-context-NODRV.o
+Old65 BYTE-IDENTICAL61faa093;REFUSING COMPILE OBJECT ONLY;NO link/install/public compute/Work/CPU-reference/device/speed qualification
+PASS ACTUAL production DEBUG69/namespace20/fixed6521088-byte QLV1/closed10-operation dispatcher;conventional ABI,NO test/NODRV/old68 alias;maxNewFrame=1456
+960971c38107ccc707cb0cdeb7f04a9b4cddc053c3f6e429f94e7dfc21518d8f  /private/tmp/pioneer-q38-layer-run-capture-driver-20261026-clean-a/tenstorrent_pci_probe-resident-layer-DEBUG69
+BUILT ONLY;public-control/source/client containment and physical qualification REQUIRED BEFORE Work;NO full-model or inference-speed grant
+PASS 298 actual updater filesystem/handshake/hash/symlink/owner/failure cases;NO native reload/reset or automatic rollback
+PASS 298 actual updater filesystem/handshake/hash/symlink/owner/failure cases;NO native reload/reset or automatic rollback
+PASS exact DEBUG69 role gates581/complete parents/old native+DEBUG+Work+CPU+image+compile67+client aliases/late changes/ABI alias+internal-witness spoofing/bare reserved tags;preprocessing ONLY,NO native/card grant
+P100A_RELOAD driver55 tag2026102600010069 generation1 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102600010069 generation1 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_HOT_SWAP_COMPLETE_NO_REBOOT
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+ 00:03:53  up   0:07,  0 users
+06ed4bbdaefce7fc5587ff5d6acb699479e5b7984d9463d3062549106cda7f3d  src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerOwner.h
+a38ee3f866362edd4c80351f1a051e2d2cb33aa3137ab8c811dff19f44a42fc0  src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerNativeState.h
+ed4497dd283ff750af2b1c7d7a555570153d09b1a67d69e111260e657a685bfe  src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerValidationControl.h
+997f8eecf66d3d406fda45d5101dfb5d738eadc55ca1b84ada6628c9df04526c  src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerRunObservation.h
+ce089c562d87e3ba38e907e75e1ab836b761c867f0caee2cb9ceb23bd7e3aca3  tools/pioneer/tests/pioneer_q38_resident_layer_run_observation_test.py
+7cb6e492df5ce1f9a0e2491100d7ccdf8cd5a3066121b90b921cd0c1980bc1d7  tools/pioneer/pioneer_p100a_hot_swap.sh
+748ab8c5c3077cc661b9c6a1efe4f4e32b9d4cb912d383a0f801388f223469d8  tools/pioneer/tests/pioneer_p100a_hot_swap_test.py

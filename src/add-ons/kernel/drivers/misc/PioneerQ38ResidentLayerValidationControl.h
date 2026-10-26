@@ -101,6 +101,12 @@ static status_t Q38ResidentLayerValidationControl(PioneerProbeCookie* cookie,uin
    projection.worker,projection.word,projection.runs,projection.stopped,projection.held,projection.rootStarts,projection.rootHolds,
    projection.closed,projection.memory.phase,projection.memory.worker,projection.memory.word,projection.memory.savedWords,
    projection.memory.verifiedOriginalWords,projection.memory.restoredWords);
+  if(native){
+   const auto& observed=native->RunObservation();
+   dprintf("Q38-LAYER-DEBUG:RUN failure%u polls%u status%08x/%08x/%08x valid%u reads%u pc%08x/%08x reads%u reset%08x reads%u;CAPTURED_EXISTING_READS_ONLY_NO_POST_FAILURE_DEVICE_IO\n",
+    unsigned(observed.failure),observed.polls,observed.status[0],observed.status[1],observed.status[2],observed.statusValid,observed.statusReads,
+    observed.pc[0],observed.pc[1],observed.pcReads,observed.reset,observed.resetReads);
+  }
   memset(reinterpret_cast<uint8*>(reply)+sizeof(reply->metadata),0,sizeof(*reply)-sizeof(reply->metadata));
  }
  status=user_memcpy(data,reply,sizeof(*reply));delete reply;
