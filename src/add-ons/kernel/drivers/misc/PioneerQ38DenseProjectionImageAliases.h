@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #if !defined(PIONEER_Q38_DENSE_PROJECTION_IMAGE) || PIONEER_Q38_DENSE_PROJECTION_IMAGE != 1 \
  || defined(PIONEER_Q38_PROJECTION_NEXT_ROOT) || defined(PIONEER_Q38_PROJECTION_RESULT_STASH) || defined(PIONEER_Q38_GDN_OUTPUT_GRAPH_ROOT) \
- || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(_KERNEL_MODE)
+ || defined(PIONEER_Q38_DENSE_PARTITION_IMAGE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(_KERNEL_MODE)
 #error Separate dense projection IMAGE/emulator adapter only,not existing native or Work grammar
 #endif
 #ifndef PIONEER_Q38_DENSE_PROJECTION_IMAGE_ALIASES_H

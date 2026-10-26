@@ -1,0 +1,151 @@
+Qwen3.8-27B: partitioned96-worker attention kernel
+2026-10-26 UTC; OFFLINE correctness and traffic counts, NOT native throughput
+
+Purpose and implemented path
+-----------------------------
+A serial six-head batch would reuse KV but leave too few compute workers.
+NEW QDW1 instead divides each of four KV groups over24 sequence partitions:
+96 worker bindings,each calculating six queries against its OWN prefix slice.
+Each K/V chunk is fetched ONCE and reused across those six heads. Current
+token K/V is overlaid from provisional input,never read stale from the cache.
+Only prior canonical-prefix positions are read. NO canonical KV write,
+token/state commit,host-output endpoint or CPU numerical fallback exists.
+
+The ACTUAL emitted worker implements a persistent THREE-phase protocol:
+1. Capture six prepared queries/current KV into private scratch. Compute
+   local QK scores and six local maxima,using token-parallel32-lane SFPU.
+2. After a separate controller supplies the six GLOBAL maxima,compute
+   exponentials and exact software-binary64 LOCAL denominator records.
+3. After the controller supplies the six GLOBAL inverses,round probabilities
+   to F16,read V once per chunk,and retain six256-wide compensated high/low
+   partial PV vectors for controller merging/gating.
+An actual private sequence enforces1->2->3->STOP. Duplicate waiting requests
+are inert;skips/stale jobs fail. STOP is accepted only after phase3. Failed
+or partial phases do not invent cleanup permission or successful completion.
+A future native owner still owes quarantine/holds/restoration on failure.
+
+Every prefix packet seals the immutable frame,all16 source words,the job,
+and (for PV) global parameters,before AND after the packet. Counter models
+include wraparound and the real shared counter2/6 register alias. Wrong
+commands/counters/source/frame/job/parameters/timeouts cannot issue a later
+packet or publish a successful private completion. These are structural
+checks,not CPU numeric validation. The no-CPU-reference Work path remains
+distinct from offline CPU observers and the existing separate DEBUG client.
+
+Partition geometry and qualification
+-------------------------------------
+For N tokens,each group uses24 contiguous partitions of ceil(N/24),with
+only the last nonempty partition shortened. All8192 supported lengths are
+checked:196608 data ranges,exact one-cover and prior-only cache reads.
+All96 physical routes are unique. Maximum slice342 tokens fits384 slots.
+Inactive partitions make no NoC/SFPU requests and return zero PV partials;
+they still participate in the private phase protocol. No dynamic/adaptive
+worker-count scheduling is claimed by this fixed96-worker component.
+
+Main and independent clean-tree full tests both exit0 with identical stdout:
+6168c35a453f8fc06f022f949d875974df4455a2006277e347a5c2e631c1d6df
+408 successful worker lifecycles cover all96 bindings/four KV groups at
+N1,33,65,257,plus one COMPLETE N8192 six-head group with24 retained workers.
+Each worker retains its private state/counters across all three phases and
+STOP,without a PC/register/tensor/source/NoC reset between phases.
+Every tested raw QK score,exponential and F16 probability matches the prior
+whole-head device program BIT-FOR-BIT. LOCAL binary64 sum records match an
+independent binary64 observer exactly. Observer-merged PV has max relative
+L2=2.75511358e-8,including2.47930665e-8 in the8192-token group.
+Max observed stack872B;max interpreted worker steps26867238. Neither is
+silicon timing or inference throughput. Warnings-as-errors,ASan/UBSan and
+disabled FP contraction are used.
+
+133 refusals/detections cover first/middle/last packets in BOTH READ phases,
+source/counter/timeout/header/job/parameter changes,invalid frame/source/
+query/KV values,all16 malformed job words,all10 command-readback words,
+bad global parameters/private sequences and SFPU acknowledgement failure.
+Injected arithmetic/lane corruption is caught by the OFFLINE observer,
+not an invented CPU-validation operation inside Work. Fault/WAIT/STOP
+inertness,input retention,fresh score slots and L1 canaries are checked.
+
+Important qualification limit: global maxima/inverses and prepared queries
+used by this test come from ACTUAL existing QDA/QDP instructions,not CPU
+oracle feedback. The endpoint fabric COPIES those bytes only. However the
+CONTROL sequencer is SYNTHETIC. The NEW actual96-worker global-reduction/
+barrier/merge controller is NOT implemented by this checkpoint. The old
+QDA qualification producer repeats preparation/whole-head attention;it is
+not the proposed production scheduler or a performance optimization.
+
+Traffic result,not speed result
+--------------------------------
+For the complete8192-token six-head group,the emitted worker requests
+8387584 prior-KV bytes in528 READ packets across24 partitions,instead of
+50325504 bytes for six independent heads. Thus the KV PAYLOAD is6x smaller.
+Packet count is not exactly6x smaller because each partition rounds its
+chunks separately. At short lengths,fixed partitioning can INCREASE packet/
+control overhead;this is not a blanket latency gain or6x speedup claim.
+Real controller/data-transfer costs and physical timing remain unmeasured.
+
+Images,containment and regressions
+-----------------------------------
+NEW standalone code entry0x40000 and wait load/branch0x40064/0x40068 have
+their OWN QDW1 marker and protocol. They are not old QDA/QFP/Next/GDN/native
+scope aliases. This standalone layout does NOT prove a disjoint combined
+decoder layout:the old ROOT advance matrix also uses0x40000 on its ROOT.
+Logical-role-specific linker/scratch/journal ownership is still REQUIRED.
+
+Main/clean program ELF is byte-identical;all33 implementation/test/build
+sources cmp-identical across the independent tree. Dirty llama.cpp and
+unrelated FlashNext files were excluded and remain untouched.
+boot.bin4B 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+code.bin10804B ecc4bd29fa2517a61737ad67e59cfce942b6363f96370774648a429476224419
+program.elf20220B 47c53a5f144bb0ffdebec933ff9300b8e01fc74dc3c6123c70c1249f18383e8f
+Max static frame720B. No undefined symbols,writable globals/GOT,CSR,
+division/sqrt/high-multiply/hardware FMA/FP-to-int/EBREAK. Code DOES use
+NoC/SFPU/tensor/configuration state;no old journal authenticates it.
+
+302 new role/build gates pass;19 ambient builders refuse the new flag,
+including defined0,before any SDK/output access. Prior projection316/
+attention260/preparation251/continuation242 gates pass. Existing DEBUG69
+role585/client162/reference80 gates pass;the client now explicitly requires
+all FOUR dense roles in its35-name refusal set. Driver/source .cpp line
+numbers are unchanged. Main/clean SDK compile reproduces DEBUG69
+b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7,
+old65=61faa093 and inert NODRV=9fcf1f7f.
+Rebuilt continuation ELF91f5cb27b7ab075a5309693d02446a56c350215893be079b721b4abe16cfa620,
+projection ELF446d14aede1f1bd68ccc4c12a8677343ac3807a188a466e689b33faf92a87b26,
+attention ELFb86f8fd4edd928a29340bb1643289a0d1251799dbb9903203aab8f41ce3f51d5 are unchanged.
+Prior projection plan448recipes/4604mutations and ROOT64cases/115faults
+still pass. Prior default attention43positives/77refusals still pass.
+
+Offline development failures retained
+--------------------------------------
+The first device compile refused stdint.h:the freestanding SDK has no such
+header. The layout now follows the established freestanding math typedef
+contract. One host fault-fixture initializer mixed enum/int element types;
+an explicitly typed unsigned array fixes it. No arithmetic check was
+weakened. Initial positive image B passed,then the final image added
+per-packet job/parameter seals before the full main/clean/fault runs.
+
+Reproduction
+-------------
+python3 tools/pioneer/build_qwen38_dense_partition_image.py \
+  /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/NEW_ABSOLUTE_OUTPUT
+python3 tools/pioneer/tests/run_pioneer_q38_dense_partition_tests.py \
+  /private/tmp/NEW_ABSOLUTE_OUTPUT /private/tmp/EXACT_PINNED_QDA_IMAGE --full
+python3 tools/pioneer/tests/pioneer_q38_dense_partition_gates_test.py
+
+Full goal remains incomplete
+-----------------------------
+No GPU compute/driver install/power/SD/mains/hardware/Assistant change.
+Read-only19:11:40 UTC status remains normal driver55/tag2026102100010012/
+generation4/quiesced0/cold0/active_owner0/open_count1/guard1;CPU_METADATA_ONLY.
+SDK remains read-only. No hardware resource is quarantined by these tests.
+
+Implement the ACTUAL on-card96-worker controller:four genuine reused QDP
+producers,query/KV distribution,physical/private phase handoffs,global max
+and software-binary64 denominator/inverse reductions,PV merge/gating and
+the real attention output/input producer for QDM1 Q6-O/residual/norm/FFN.
+Then integrate all64 layers,recurrent/provisional-KV/token commits and
+vocabulary/sampling/persistent decoding. A GENUINELY NEW authenticated
+source/init/clock/host/joint L1-GDDR-tensor-NoC lifetime,arbitrary-original
+journals,current physical proofs and exact STOP/holds/restoration must
+precede native or Work use. Original-GGUF whole-model correctness and
+physical inference benchmarks are still OWED.
+Last measured WHOLE MODEL remains0.207893161tok/s.20tok/s is UNMET.

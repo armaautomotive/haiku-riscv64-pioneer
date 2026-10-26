@@ -145,6 +145,7 @@ struct DenseAttentionMachine:DensePrepareMachine {
   return error;
  }
 };
+#ifndef PIONEER_Q38_DENSE_ATTENTION_MACHINE_ONLY
 int main(int argc,char** argv){
  (void)&D::Run; // included HOST helper is not executed or used as feedback
  assert(argc==2 || (argc==3 && !strcmp(argv[2],"--full")));setvbuf(stdout,nullptr,_IOLBF,0);
@@ -199,3 +200,4 @@ int main(int argc,char** argv){
  }
  printf("PASS ACTUAL QDA1 wide256 streaming QDP/QK/softmax/PV/sigmoid positives%u/refusals%u/maxSteps%u/maxStack%u/maxIndependentL2%.9g;24heads/4KV,currenttokenKV PROVISIONAL fromactualprep,READONLY priorprefix;NO original-model/native/committed64layer-token/Work/silicon/inference-speed grant\n",positives,refusals,maxSteps,maxStack,maximum);
 }
+#endif

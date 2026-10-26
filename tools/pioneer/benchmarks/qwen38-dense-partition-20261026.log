@@ -1,0 +1,119 @@
+OFFLINE partition-kernel correctness/traffic counts ONLY; no GPU inference timing.
+Main/clean full stdout identical,all tests exit0. Global parameters are ACTUAL QDA results;CONTROL synthetic,NOT a NEW actual Root controller.
+
+=== immutable image build ===
+32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca boot.bin bytes4
+ecc4bd29fa2517a61737ad67e59cfce942b6363f96370774648a429476224419 code.bin bytes10804
+47c53a5f144bb0ffdebec933ff9300b8e01fc74dc3c6123c70c1249f18383e8f program.elf bytes20220
+PASS COMPILED NEW QDW1 partition kernel/96workers/fourKVgroups/sixheadreuse/threephases/maxFrame720;globalRoot/provenproducer/native/journals/KV-tokencommit/full64/speed STILL OWED
+
+=== actual worker/full8192 qualification; main/clean stdout identical ===
+PASS partition DATA ranges196608/ALL8192lengths/exact one-cover/no currentKV prefix read/all96unique physical routes/max342tokens;NOT native owner
+START ACTUAL partition group0 tokens1;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group0 tokens1 trial0/24retained workers/6heads,threephases/PRIORbytes0 packets0 vs six independent heads bytes0/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L20;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group0 tokens33;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group0 tokens33 trial0/24retained workers/6heads,threephases/PRIORbytes32768 packets32 vs six independent heads bytes196608/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.63661091e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group0 tokens65;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group0 tokens65 trial0/24retained workers/6heads,threephases/PRIORbytes65536 packets44 vs six independent heads bytes393216/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.64163166e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group0 tokens257;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group0 tokens257 trial0/24retained workers/6heads,threephases/PRIORbytes262144 packets48 vs six independent heads bytes1572864/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.58241691e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group1 tokens1;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group1 tokens1 trial0/24retained workers/6heads,threephases/PRIORbytes0 packets0 vs six independent heads bytes0/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L20;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group1 tokens33;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group1 tokens33 trial0/24retained workers/6heads,threephases/PRIORbytes32768 packets32 vs six independent heads bytes196608/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.47610042e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group1 tokens65;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group1 tokens65 trial0/24retained workers/6heads,threephases/PRIORbytes65536 packets44 vs six independent heads bytes393216/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.57241546e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group1 tokens257;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group1 tokens257 trial0/24retained workers/6heads,threephases/PRIORbytes262144 packets48 vs six independent heads bytes1572864/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.75511358e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group2 tokens1;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group2 tokens1 trial0/24retained workers/6heads,threephases/PRIORbytes0 packets0 vs six independent heads bytes0/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L20;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group2 tokens33;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group2 tokens33 trial0/24retained workers/6heads,threephases/PRIORbytes32768 packets32 vs six independent heads bytes196608/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.56397051e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group2 tokens65;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group2 tokens65 trial0/24retained workers/6heads,threephases/PRIORbytes65536 packets44 vs six independent heads bytes393216/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.45462549e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group2 tokens257;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group2 tokens257 trial0/24retained workers/6heads,threephases/PRIORbytes262144 packets48 vs six independent heads bytes1572864/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.51502058e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group3 tokens1;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group3 tokens1 trial0/24retained workers/6heads,threephases/PRIORbytes0 packets0 vs six independent heads bytes0/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L20;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group3 tokens33;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group3 tokens33 trial0/24retained workers/6heads,threephases/PRIORbytes32768 packets32 vs six independent heads bytes196608/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.69205969e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group3 tokens65;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group3 tokens65 trial0/24retained workers/6heads,threephases/PRIORbytes65536 packets44 vs six independent heads bytes393216/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.50447575e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START ACTUAL partition group3 tokens257;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group3 tokens257 trial0/24retained workers/6heads,threephases/PRIORbytes262144 packets48 vs six independent heads bytes1572864/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.61739796e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+START partition refusal suite/three-packet slices/globalparams fromACTUAL_QDA;NOT_SILICON_TIME
+PASS partition refusals/detections133/header+private-sequence+job+params+NoC-source-counters-timeouts/no following packets/UNKNOWN inert;numeric corruption caught ONLY by offline observer
+START ACTUAL FULL8192 partitioned group3/sixheads/24workers,GLOBALPARAMSfromACTUALsixQDAheads;NOT_SILICON_TIME
+PASS ACTUAL QDW1 group3 tokens8192 trial0/24retained workers/6heads,threephases/PRIORbytes8387584 packets528 vs six independent heads bytes50325504/EVERY QK-exp-F16prob bit+local binary64 sum exact/mergedPV L22.47930665e-08;GLOBALPARAMS fromACTUAL_QDA,CONTROL_SYNTHETIC_NOT_NATIVE_OR_TIME
+PASS OFFLINE ACTUAL QDW1 partition positives408/refusals133/maxStepsPerWorker26867238/maxStack872/maxMergedL22.75511358e-08;ALL96bindings/fourKVgroups/sharedsix-headKV/privatephase1-2-3-STOP/NO CPU numeric feedback. Coordinator CONTROL+endpoints SYNTHETIC;ACTUAL96workerRootreduction/native/full64/model/Work/speed STILL OWED
+
+=== new partition role/build containment ===
+PASS local dense-partition role/build gates302/exact IMAGE/defined0+late native-CPU-Work-Next-GDN-component aliases/19ambient builders refuse BEFORE SDK/output;NO native/L1/GDDR/source/init/producer grant
+
+=== prior projection containment ===
+PASS local dense-projection role/build gates316/exact IMAGE/defined0+late native-CPU-Work-Next-GDN aliases/18ambient builders refuse BEFORE SDK/output;NO native/L1/GDDR/source/init/producer grant
+
+=== prior attention containment ===
+PASS local dense-attention role/build gates260/exact IMAGE/defined0+late native-CPU-Work-component aliases/17ambient builders refuse BEFORE SDK/output access;NO native/L1/GDDR/producer grant
+
+=== prior preparation containment ===
+PASS local dense-prepare role/build gates251/exact IMAGE/defined0+late native-CPU-Work-component aliases/16ambient builders refuse BEFORE SDK/output access;NO native/L1/GDDR/producer grant
+
+=== prior continuation containment ===
+PASS continuation role/build gates242/exact offline role/defined0+late native/CPU/Work/old component aliases/15 ambient build entries refuse BEFORE SDK/output access;NO L1/GDDR reservation/device grant
+
+=== native DEBUG69 containment ===
+PASS exact DEBUG69 role gates585/complete parents/old native+DEBUG+Work+CPU+image+compile67+client aliases/late changes/ABI alias+internal-witness spoofing/bare reserved tags;preprocessing ONLY,NO native/card grant
+
+=== CPU client containment ===
+PASS ACTUAL DEBUG69 client gates162/exact CPU+client roles/native+image+old client+Work+kernel+fast-math defined0 refusal/late reinclusion;NO device execution
+
+=== CPU reference containment ===
+PASS complete-layer original CPU observer gates80:exact/missing/defined0/mixed/late roles;NO native/device/Work capability
+
+=== prior dense-projection ROOT/plan regression ===
+PASS canonical denseQG/K/V/Q6-O DATA recipes448/16layers7banks4roles/mutations4604/absent-or-foreign-page+layer-refusals14/foreigncanonical+duplicatebuild/ZERO immutable sequences andSEPARATE runtime grammar;NO source/init/inputproducer/native/Work grant
+PASS ACTUAL QDM1 ROOT cases64/globalrows311296/faults115/maxStack5704;ALL16dense layersQG/K/V/Q6-O distinctslots,NoCPU-readback endpoints;SYNTHETIC peer products/status,NOT arithmetic/native/original-model/speed qualification
+
+=== prior attention default regression ===
+PASS ACTUAL wide attention head0 tokens1/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head1 tokens17/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head2 tokens33/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head3 tokens1/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head4 tokens17/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head5 tokens33/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head6 tokens1/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head7 tokens17/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head8 tokens33/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head9 tokens1/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head10 tokens17/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head11 tokens33/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head12 tokens1/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head13 tokens17/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head14 tokens33/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head15 tokens1/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head16 tokens17/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head17 tokens33/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head18 tokens1/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head19 tokens17/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head20 tokens33/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head21 tokens1/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head22 tokens17/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide attention head23 tokens33/currKVfromACTUAL-QDP/noKVwrite;NOT inference timing
+PASS ACTUAL wide boundary tokens2;NOT inference timing
+PASS ACTUAL wide boundary tokens31;NOT inference timing
+PASS ACTUAL wide boundary tokens32;NOT inference timing
+PASS ACTUAL wide boundary tokens65;NOT inference timing
+PASS ACTUAL wide boundary tokens128;NOT inference timing
+PASS ACTUAL wide boundary tokens257;NOT inference timing
+PASS ACTUAL wide numeric trial1 tokens129/per-tokenQK+probability bits/whole-output oracle
+PASS ACTUAL wide numeric trial2 tokens129/per-tokenQK+probability bits/whole-output oracle
+PASS ACTUAL wide numeric trial3 tokens129/per-tokenQK+probability bits/whole-output oracle
+PASS ACTUAL wide numeric trial4 tokens129/per-tokenQK+probability bits/whole-output oracle
+PASS ACTUAL wide numeric trial5 tokens129/per-tokenQK+probability bits/whole-output oracle
+PASS ACTUAL QDA1 wide256 streaming QDP/QK/softmax/PV/sigmoid positives43/refusals77/maxSteps4529355/maxStack1764/maxIndependentL20;24heads/4KV,currenttokenKV PROVISIONAL fromactualprep,READONLY priorprefix;NO original-model/native/committed64layer-token/Work/silicon/inference-speed grant
+
+33 implementation/test/build sources cmp-identical/main-clean ELF bytes identical.
+Main/clean SDK DEBUG69 b554d37d.../old65 61faa093/NODRV 9fcf1f7f unchanged;not installed.
+19:11:40 UTC physical status: P100A_RELOAD driver55 tag2026102100010012 generation4 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+NO native/actualRoot/full64/original-model/FAST Work/inference-speed grant. Last whole-model0.207893161tok/s;20tok/s UNMET.
