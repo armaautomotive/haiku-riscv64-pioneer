@@ -1,0 +1,224 @@
+Original-weight complete-layer instruction connection — 2026-10-26 UTC
+====================================================================
+
+STATUS: complete ORIGINAL learned-byte import and fixed CPU comparison
+implemented and tested. Initial full native/instruction runs completed every
+stage/readback/restore/END but FAILED ideal-libm strict final-bit comparison.
+The panel-order error is corrected. The corrected run isolates the remaining
+difference to the specified fast SiLU arithmetic. A SECOND independent
+instruction-contract reference is implemented. Full ORIGINAL dual-reference
+main67118 and independent clean13422 BOTH EXIT0:strict instruction-policy
+final equality and ALL5 stage fingerprints match after readback/restore/END.
+Ideal-libm strict comparison remains passed0 and is reported separately.
+NOT a physical/new-driver/model-speed qualification.
+Full64-layer/token-loop/Work integration and20 tokens/sec remain UNMET.
+Last actual whole-model rate remains0.207893161 tokens/sec; no speed change.
+
+Original-byte connection
+------------------------
+The new TEST byte importer covers all640 Conv packets,192 GDN A/bias,
+96 learned norms, and the two residual learned-norm transfers:930 requests,
+245760 bytes. Each of the3 FFN roles loads its original tiled2304-byte rows
+for all119 workers, totaling65280 tiles. Existing output projection import
+covers61440 original576-byte tiles. A present source MUST satisfy every
+request; missing/expired sources abort, NEVER fall back to synthetic data.
+Matrix caches publish atomically only after all source requests succeed.
+
+The execution machine imports all original Conv/GDN/norm data, then each
+actual persistent peer imports original FFN tiles on its real matrix job.
+Original-prefix-plus-synthetic-FFN is no longer the test's execution path.
+The same genuine initialization, QPE1/QRN1/fourQPS1, complete joined ROOT,
+ALL119 physical/counter proofs, fresh STOPs/all holds,1592 canonical reads,
+44003552-byte restoration, second proof and native END remain required.
+
+Independent ORIGINAL references finish before the native context exists.
+Only original learned embedding/norm/tile BYTES enter endpoint fixtures.
+No reference vector, fake ready flag, producer receipt or numerical product
+is supplied to device instructions. The native test collects observations
+only after genuine END, then calls the separate CPU observer translation
+unit. This is simulated OS/PCI/NoC behavior, NOT physical card evidence.
+
+Comparison API
+--------------
+The NEW fixed QLV1 layout contains1630208 words, not the old1629120-word
+prefix payload. Every final/Conv/history/gated/projection/current/next word
+is checked. The72-byte no-padding report separates successful report
+generation from numerical PASS. Current state must be exact+0; references
+and results must be finite. Prior qualified GDN error bounds are retained;
+output projection and final hidden require strict bit equality. No bound
+has been widened or fitted to observed output. CPU products stay private.
+New virtual metadata/report methods are appended, preserving prior slots.
+No public driver request, native selector, Assistant or Work registration.
+
+First genuine ORIGINAL full-layer result
+----------------------------------------
+Main80164 and independent clean19315 both returned failure solely at the
+strict CPU final equality assertion AFTER full computation, readback,
+restoration and native END. Both observed exactly:
+ checked1630208 nonfinite0 conv0 history0 gated0 projectionBits0
+ current0 next0 finalBits4842 projectionMaxAbs0
+ finalMaxAbs1.90734863281e-6 finalRelativeL22.23903006697e-7 passed0
+They do not count as numerical passes. No real card fault or recovery.
+
+Source diagnosis identified an incorrect reference assumption: the frozen
+direct-SrcB peer builder explicitly rejects PIONEER_Q38_Q4_GROUP32, and
+blackhole_qwen38_rows.cpp accumulates each16-lane panel unless the separate
+incompatible GROUP32 role is enabled. The CPU reference had paired32 lanes.
+Its arithmetic now follows the actual16-lane contract. No GPU code, original
+weights, CPU input, numerical tolerance or completion proof was changed.
+The old3ff61f7a1342ae7e CPU fingerprint is superseded by2a4fa2f65bf75fb8.
+
+Corrected16-panel main28657 and clean6484 returned EXIT1 AFTER genuine END.
+Both reproduce the SAME result. Normalized,
+gate and up fingerprints now match the observed instruction stores. The
+first remaining difference is activated SiLU, then down/final. Its retained
+ideal-libm strict comparison is NOT a bit-equality pass:
+ checked1630208 nonfinite0 conv0 history0 gated0 projectionBits0
+ current0 next0 finalBits3423 projectionMaxAbs0
+ finalMaxAbs5.96046447754e-8 finalRelativeL24.08732743835e-8 passed0
+The diagnostic old32 replay44361 separately returned EXIT1 and reproduces
+the older4842 differences. Its trace must not be confused with clean6484.
+
+The first strengthened unit used power-of-two data which concealed the
+rounding distinction, and correctly failed its own sensitivity assertion.
+Non-dyadic inputs now make the exact16-lane oracle distinguish15 paired32
+rounding cases. Main10941 and clean84228 EXIT0:all3 complete matrix sizes,
+exact selected-row FP32 contract, independent FP64 bounds,32 quantization
+domains,2817 post-GDN reads and29 atomic refusals. No tolerance was relaxed.
+
+Stage diagnostics added
+------------------------
+CPU pre-context fingerprints for normalized/gate/up/activated/down vectors
+are compared with observed emitted-store fingerprints after native END.
+Actual activation stores are captured before later scratch reuse; their
+coverage must be exactly once per68 blocks. These are TEST observations,
+never inputs/readiness/ownership or a production shader change. The ideal
+libm SiLU reference remains independent and its strict failure is retained.
+
+Distinct SiLU instruction-policy observer
+----------------------------------------
+The frozen producer uses PioneerGraphSiluFast:degree8 range-reduced exp,
+separately rounded FP32 operations and correctly rounded positive division.
+An independent CPU description uses host floor/ldexp/IEEE division rather
+than including/calling the shader, its divider or native quantizer. Every
+policy activation MUST satisfy the EXISTING3e-6 relative bound against the
+ideal libm activation before it can be published. No bound was fitted or
+widened. The original libm pipeline/comparison remains separate, unchanged.
+
+The policy then independently computes down/final from ORIGINAL packed
+weights, requiring320 extra pre-context reads. Preparation now finishes4810
+reference reads BEFORE any accelerator context. Both311296-byte product
+sets stay private. Only metadata fingerprints and post-return reports are
+appended to the CPU observer interface; no numeric reference enters native
+instructions. Ideal fingerprint2a4fa2f65bf75fb8 is retained unchanged; new
+instruction-policy fingerprinta112dfb4adcf47e1 is a DIFFERENT DATA receipt.
+
+Main29896 and independent clean59529 units EXIT0:262144 independent policy
+cases including range-reduction neighbors, signed zero, both domain ends
+and random inputs;53706 differ from libm but ALL retain the prior3e-6 bound.
+The arithmetic description is bit-equal to the separate producer arithmetic
+in those tests. Both references are atomically published;48 refusals include
+bad pointers/overlap/domain/rounding/last-read failure. All3 full Q4 matrices,
+15 explicit16-vs32 rounding differences and FP64 row bounds also pass.
+Real original source main51571 and clean59529 EXIT0 reproduce BOTH distinct
+fingerprints/4810reads, bad report request refusals and unchanged source seal.
+
+The new full emitted-instruction test retains/prints the strict ideal-libm
+report, then independently requires strict instruction-policy final-word
+equality and matching observed stage fingerprints AFTER genuine native END.
+A policy PASS never relabels the libm report or grants physical/Work readiness.
+
+FULL ORIGINAL emitted-instruction qualification PASSED
+------------------------------------------------------
+Main67118 and independent clean13422 terminal EXIT0,with ALL original
+embedding/norm/projection/Conv/GDN/output/FFN bytes from the authenticated
+same GGUF. Every original reference finishes BEFORE the native context.
+Both observe the complete ROOT pipeline,ALL119 peers' counter ancestry,
+fresh119 STOPs/ALL120 holds,1592 fixed reads/1630208 words,full44003552-byte
+restoration,second cleanup proof and genuine native END before comparison.
+No CPU result/receipt/readiness is injected into the instruction endpoints.
+
+Both reports are EXACTLY identical:
+ Instruction policy:checked1630208 nonfinite0 conv0 history0 gated0
+ projectionBits0 current0 next0 finalBits0 finalMaxAbs0 passed1
+ Ideal libm:checked1630208 nonfinite0 conv0 history0 gated0 projectionBits0
+ current0 next0 finalBits3423 finalMaxAbs5.96046447754e-8
+ finalRelativeL24.08732743835e-8 passed0
+ALL5 instruction-policy stage fingerprints match the observed stores:
+ normalized007b26bf8d25e1c4 gate962610171bb20fb8 upc348e4bc06ce223c
+ activated0fca525421ae8586 downb9338d670a63dd6f
+Fingerprints are diagnostic DATA receipts,not proof of physical execution,
+native ownership,initialization or a mathematical substitute for word reads.
+The complete final projection/hidden comparison checks ALL words strictly.
+The ideal libm failure is retained; it has NOT been transformed into a PASS.
+This qualifies one layer0/position0 emitted-instruction/native-lifetime test
+with simulated OS/PCI/NoC endpoints,NOT real silicon or full-model inference.
+
+Completed supporting tests
+--------------------------
+All-original byte unit99360 and clean46075 EXIT0:all65280 FFN tiles/930
+other requests/53 absent-expired-shape refusals, no synthetic fallback.
+CPU comparison46648 and clean3091 EXIT0:all7 regions/all1630208words,
+43 corrupted-data cases,19 atomic refusals, exact-current-zero, finite
+references, old-payload/alignment/overflow/alias/rounding rejection.
+Final main65761 and clean31836 EXIT0 also reject6 single-bit/one-ULP
+projection/final changes:49 total corruption cases,still strict bit equality.
+New CPU reference role68 gates69359 and actual source-TU86 gates37099 EXIT0.
+Real original source/4490 reads/strict comparison API88062 EXIT0.
+Existing synthetic full native readback regression54807 EXIT0.
+Older clean controller suite80515 finally EXIT0:positive plus20 complete
+failure-containment cases; its earlier benchmark record now reflects this.
+Final prior-source regression95048 EXIT0:all3 old modes retain1672 reference
+reads/seal semantics; old FFN observer retains1673/all21stripes/36720pages,
+42 first-last reads and126 refusals,without new routes or CPU fallback.
+
+Main/clean Haiku SDK CPU-client builds3147/14069 EXIT0. Panel16 builds46778
+and54030 EXIT0. Final dual-reference builds82473 and10071 EXIT0, identical:
+ client db1b171e320bb84f8529e7f68bb895eb9685f159c1264b9dee20866536a6e54e
+ oldclient.o e4e00fdf17aabe46b8dad987b681d3632e39f32b5b2b42f52c30e502b9d757e4
+ CPUoriginal.o 3ce63f7f4596ee125af8ce961401ba975e5ef3998336e7ddd6e97d0c6cc094f8
+Existing client.o remains byte-identical. This is a separate diagnostic
+client, NOT a driver or Work build. SDK read-only; nothing installed.
+
+Final regression PASSED
+------------------------
+57739 EXIT0:existing synthetic full native readback regression with stage
+tracing,complete instruction pipeline/ALL119 proofs/STOPs/1592 reads/44MB
+restoration/second proof/genuine END. All listed runtime/build/gate handles
+are now terminal,not running. All19 final task source files are byte-compared
+to the clean repeat. Do not repoll/restart these completed handles.
+Observation timeouts were never treated as failure or reset authority.
+
+Reproduction inputs for the new native runner
+--------------------------------------------
+Run with python3 tools/pioneer/tests/run_pioneer_q38_resident_layer_original_native_tests.py
+and these SEVEN positional paths in order (no physical accelerator access):
+ /private/tmp/pioneer-q38-projection-stash-image-20261022-c
+ /private/tmp/pioneer-q38-projection-family.DGLYM4co/peer-n
+ /private/tmp/pioneer-q38-resident-input-zero.rx9Gfebd/image
+ /private/tmp/pioneer-q38-embedding-image-20261022-b
+ /private/tmp/pioneer-q38-learned-rms-image-20261022-c
+ /private/tmp/pioneer-q38-layer-receipt-image-20261025-b
+ /Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf
+The runner authenticates frozen ROOT/peer images and compiles the independent
+CPU observer as a SEPARATE translation unit without native roles. The exact
+same emitted programs and complete native lifetime execute original bytes.
+Clean repeat uses /private/tmp/pioneer-layer-original-native-clean.jtWvk2tN
+and independently frozen /private/tmp/pioneer-q38-layer-owner-clean-image-20261025-a.
+Actual GGUF SHA256:c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+
+Hardware and remaining objective
+--------------------------------
+No real card/PCI write, driver install, power action, SD/mains/cable change,
+Assistant restart or network configuration occurred. Read-only SSH verified
+Haiku up7h05,10.0.0.247,1000BASE-T,zero link errors; no power action needed.
+Known working Haiku,
+boot,64 CPUs,128GB and041fef18 driver remain unchanged. No user action needed.
+Dirty llama.cpp and unrelated FlashNext remain unread/unmodified/unstaged.
+
+The ORIGINAL first-layer instruction-contract/native-lifetime qualification
+above has now passed. Next is a separately gated physical prototype/client
+and real silicon correctness/timing,not loading the refusing NODRV witness.
+A successful first recurrent layer is not64-layer/model inference. Dense attention/KV, remaining
+layer scheduling, vocabulary/sampling, state commits, persistent token loop,
+FAST no-CPU-reference Work integration and measured20t/s remain required.

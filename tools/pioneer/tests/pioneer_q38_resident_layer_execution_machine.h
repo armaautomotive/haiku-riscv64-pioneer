@@ -15,5 +15,6 @@ public:
  void Start(unsigned w);void Advance(unsigned w);unsigned Pc(unsigned w)const;
  unsigned Boots()const;unsigned Stops()const;
  void VerifyOutput();void Diagnostic()const; // captured model state ONLY
+ void StageFingerprints(uint64_t*)const; // actual emitted intermediate stores,TEST DATA ONLY
 };
 #endif

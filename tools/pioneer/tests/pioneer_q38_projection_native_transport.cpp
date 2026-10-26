@@ -478,7 +478,7 @@ ProjectionNativeTransport::~ProjectionNativeTransport(){delete implementation;}
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
 void ProjectionNativeTransport::ResidentLayerSources(const char* root,const char* peer,ResidentLayerNativeStateBytes& bytes){
- auto& p=*implementation;assert(!p.resident && p.machine->Stops()==119 && !p.learned);
+ auto& p=*implementation;assert(!p.resident && p.machine->Stops()==119 && (!p.learned || p.learned->Ready()));
  for(unsigned w=0;w<120;w++)assert(p.core[w]->coreReset==0x47800);
  p.residentExtra.resize(ResidentEndpointLayout::SavedWords);
  for(unsigned i=0;i<p.residentExtra.size();i++)p.residentExtra[i]=0x3c5a7091U^(i*0x9e3779b9U);
@@ -495,6 +495,10 @@ unsigned ProjectionNativeTransport::ResidentLayerBoots()const{return implementat
 unsigned ProjectionNativeTransport::ResidentLayerStops()const{return implementation->resident?implementation->resident->Stops():0;}
 unsigned ProjectionNativeTransport::ResidentLayerFrontendSamples()const{return implementation->residentFrontendSamples;}
 void ProjectionNativeTransport::VerifyResidentLayer(){assert(implementation->resident);implementation->resident->VerifyOutput();}
+void ProjectionNativeTransport::ResidentLayerDiagnostic()const{if(implementation->resident)implementation->resident->Diagnostic();}
+void ProjectionNativeTransport::ResidentLayerStageFingerprints(uint64_t* out)const{
+ assert(implementation->resident);implementation->resident->StageFingerprints(out);
+}
 void ProjectionNativeTransport::ResidentLayerFault(unsigned kind,const PioneerQ38ResidentLayerResult& result){auto& p=*implementation;
  assert(p.resident && !p.residentInjected);p.residentFault=kind;p.residentResult=&result;
 }

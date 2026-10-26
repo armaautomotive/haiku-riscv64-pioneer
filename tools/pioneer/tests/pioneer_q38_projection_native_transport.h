@@ -52,6 +52,8 @@ public:
  uint32_t ResidentLayerRead(uint32_t);void ResidentLayerWrite(uint32_t,uint32_t);
  unsigned ResidentLayerBoots()const;unsigned ResidentLayerStops()const;void VerifyResidentLayer();
  unsigned ResidentLayerFrontendSamples()const;
+ void ResidentLayerDiagnostic()const;
+ void ResidentLayerStageFingerprints(uint64_t*)const;
  void ResidentLayerFault(unsigned,const PioneerQ38ResidentLayerResult&);
  bool ResidentLayerFaultInjected()const;unsigned ResidentLayerFaultFence()const;
  void ResidentLayerRunTerminalCheckpoint(void (*callback)(void*),void* context); // TEST fork after ACTUAL completed instructions,never a ready/producer setter

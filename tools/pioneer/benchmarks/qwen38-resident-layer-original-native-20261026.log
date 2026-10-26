@@ -1,0 +1,145 @@
+ORIGINAL COMPLETE FIRST-LAYER LEARNED-BYTE / DUAL CPU OBSERVER CHECKPOINT — 2026-10-26 UTC
+FINAL full dual-reference main67118 and clean13422 BOTH terminal EXIT0.
+Instruction policy strict comparison passed1;ideal-libm strict comparison remains passed0.
+Supporting tests below are terminal EXIT0;
+the two earlier ideal-libm native logs explicitly FAILED strict final equality AFTER END.
+Their lifecycle PASS lines are not numerical/physical/full-model/performance passes.
+No real card/PCI/driver/power/SD/mains/Assistant/network configuration write.
+Last actual whole-model0.207893161 tokens/sec;20t/s/full64-layer/Work UNMET.
+
+563b906f957edf34a3469e7792d5137ed76f28621f2a8774ac2c80689536ce39  /private/tmp/pioneer-q38-layer-reference-policy-20261026-b.log
+PASS separate ORIGINAL row-major complete-layer CPU reference:quantizationDomains32/ALL3fullQ4matrices/EXACT16laneFp32/paired32RoundingDifferences15/FP64selectedrowbounds/2817ideal+320instructionReads/independentSiluPolicy262144/libmDifferences53706/prior3e-6relativeBound/atomicRefusals48;ideal-libm and instruction-contract references DISTINCT,NO device/controller/ready/upload/Work/fallback or speed claim
+563b906f957edf34a3469e7792d5137ed76f28621f2a8774ac2c80689536ce39  /private/tmp/pioneer-q38-layer-reference-policy-20261026-clean-a.log
+PASS separate ORIGINAL row-major complete-layer CPU reference:quantizationDomains32/ALL3fullQ4matrices/EXACT16laneFp32/paired32RoundingDifferences15/FP64selectedrowbounds/2817ideal+320instructionReads/independentSiluPolicy262144/libmDifferences53706/prior3e-6relativeBound/atomicRefusals48;ideal-libm and instruction-contract references DISTINCT,NO device/controller/ready/upload/Work/fallback or speed claim
+316e8467692e6f41cf05646fe49cf717f8ab022c55f9fe8dd87b403f964db49c  /private/tmp/pioneer-q38-layer-policy-source-20261026-b.log
+PASS ORIGINAL fullSAME c600de03 SHA/all851tensor schema/ALLfirstlayer learned cache/independent CPU embedding+RMS+4projections+Conv+GDN+output+residualNorm+3FFNmatrices+libmSiLU+finalHidden BEFOREcontext:4810referenceReads idealFingerprint2a4fa2f65bf75fb8 instructionFingerprinta112dfb4adcf47e1;TWOdistinct private numeric references NEVER exposed as native input,NO device/originalGPUcomparison/Work/fullmodel/TPS qualification
+316e8467692e6f41cf05646fe49cf717f8ab022c55f9fe8dd87b403f964db49c  /private/tmp/pioneer-q38-layer-policy-source-20261026-clean-a.log
+PASS ORIGINAL fullSAME c600de03 SHA/all851tensor schema/ALLfirstlayer learned cache/independent CPU embedding+RMS+4projections+Conv+GDN+output+residualNorm+3FFNmatrices+libmSiLU+finalHidden BEFOREcontext:4810referenceReads idealFingerprint2a4fa2f65bf75fb8 instructionFingerprinta112dfb4adcf47e1;TWOdistinct private numeric references NEVER exposed as native input,NO device/originalGPUcomparison/Work/fullmodel/TPS qualification
+9010aa8795aaf59166290ab823821c3e7806716dc83158b122f83e8cf607bd6b  /private/tmp/pioneer-q38-layer-policy-comparison-20261026-b.log
+PASS NEW QLV1 ORIGINAL CPU comparison:ALL1630208words/7sections/49corruptions/19atomicRefusals/exactCURRENT+0/finite references+results;strict ideal projection+final bits and prior GDN bounds,report generation is NOT numerical pass or native/Work authority
+9010aa8795aaf59166290ab823821c3e7806716dc83158b122f83e8cf607bd6b  /private/tmp/pioneer-q38-layer-policy-comparison-20261026-clean-b.log
+PASS NEW QLV1 ORIGINAL CPU comparison:ALL1630208words/7sections/49corruptions/19atomicRefusals/exactCURRENT+0/finite references+results;strict ideal projection+final bits and prior GDN bounds,report generation is NOT numerical pass or native/Work authority
+e2dab29c90359e46bcaac0c1332101c7f540898c951108b5c8a3845877bf97cd  /private/tmp/pioneer-q38-layer-policy-bytes-20261026-a.log
+PASS NEW complete-layer learned BYTE import:930Conv/GDN/norm packets/245760bytes;ALL3roles+119workers/65280original-layout2304Btiles/53refusals,atomic matrix cache/no synthetic fallback;NO CPU product/owner/native grant
+PASS ORIGINAL fullsameSHA/schema/cache/precontext4810CPUreference:ALL learnedConv/GDN/norm+65280fullFFNtiles through SAME authenticated source;BYTES ONLY,NO instruction execution/physical/inference or rate claim
+e2dab29c90359e46bcaac0c1332101c7f540898c951108b5c8a3845877bf97cd  /private/tmp/pioneer-q38-layer-policy-bytes-20261026-clean-a.log
+PASS NEW complete-layer learned BYTE import:930Conv/GDN/norm packets/245760bytes;ALL3roles+119workers/65280original-layout2304Btiles/53refusals,atomic matrix cache/no synthetic fallback;NO CPU product/owner/native grant
+PASS ORIGINAL fullsameSHA/schema/cache/precontext4810CPUreference:ALL learnedConv/GDN/norm+65280fullFFNtiles through SAME authenticated source;BYTES ONLY,NO instruction execution/physical/inference or rate claim
+917c8f6ff2a24d83448df1f1fe0e5da00046478d6197e9f6200c6bb95f371e2b  /private/tmp/pioneer-q38-layer-policy-reference-gates-20261026-a.log
+PASS complete-layer original CPU observer gates68:exact/missing/defined0/mixed/late roles;NO native/device/Work capability
+917c8f6ff2a24d83448df1f1fe0e5da00046478d6197e9f6200c6bb95f371e2b  /private/tmp/pioneer-q38-layer-policy-reference-gates-20261026-clean-a.log
+PASS complete-layer original CPU observer gates68:exact/missing/defined0/mixed/late roles;NO native/device/Work capability
+c9c6961c2073030405cc6958c1e53660c216b9ec9b0e9125a88785d047c74af9  /private/tmp/pioneer-q38-layer-policy-source-gates-20261026-a.log
+PASS ACTUAL original-source CPU TU gates86/defined-zero native68+owner+image+Work+kernel+fast-math refusal;preprocessing ONLY
+c9c6961c2073030405cc6958c1e53660c216b9ec9b0e9125a88785d047c74af9  /private/tmp/pioneer-q38-layer-policy-source-gates-20261026-clean-a.log
+PASS ACTUAL original-source CPU TU gates86/defined-zero native68+owner+image+Work+kernel+fast-math refusal;preprocessing ONLY
+dbe5cf4a28f175a75f7234011e89703321c0ff99c2344a67e989f89aaccb439d  /private/tmp/pioneer-q38-layer-policy-sdk-20261026-a.log
+db1b171e320bb84f8529e7f68bb895eb9685f159c1264b9dee20866536a6e54e  /private/tmp/pioneer-q38-layer-policy-sdk-client-20261026-a
+e4e00fdf17aabe46b8dad987b681d3632e39f32b5b2b42f52c30e502b9d757e4  /private/tmp/pioneer-q38-output-debug68-client.JLVibD1S/client.o
+3ce63f7f4596ee125af8ce961401ba975e5ef3998336e7ddd6e97d0c6cc094f8  /private/tmp/pioneer-q38-output-debug68-client.JLVibD1S/original.o
+DEBUG68 client built only;objects retained at /private/tmp/pioneer-q38-output-debug68-client.JLVibD1S;NO installation or device access
+3e05e245fcfb348ce5983348610672592c9f28560c328b070644cc009d90f1de  /private/tmp/pioneer-q38-layer-policy-sdk-20261026-clean-a.log
+db1b171e320bb84f8529e7f68bb895eb9685f159c1264b9dee20866536a6e54e  /private/tmp/pioneer-q38-layer-policy-sdk-client-20261026-clean-a
+e4e00fdf17aabe46b8dad987b681d3632e39f32b5b2b42f52c30e502b9d757e4  /private/tmp/pioneer-q38-output-debug68-client.10UV2wgS/client.o
+3ce63f7f4596ee125af8ce961401ba975e5ef3998336e7ddd6e97d0c6cc094f8  /private/tmp/pioneer-q38-output-debug68-client.10UV2wgS/original.o
+DEBUG68 client built only;objects retained at /private/tmp/pioneer-q38-output-debug68-client.10UV2wgS;NO installation or device access
+089f8d971573726621db837b237cef111d9594dd27989853f63372aa252bb277  /private/tmp/pioneer-q38-layer-original-native-20261026-c.log
+ORIGINAL_COMPLETE_LAYER_FULL_SHA_AND_4490_REFERENCE_READS_BEFORE_ANY_NATIVE_CONTEXT
+PASS ACTUAL saved-prefix/norm/FFN handoff QLP2:independent BEFORE+AFTER/currentcommand/actual earlier receipts/249nontiming-word corruptions refused;DATA only,NOT native cleanup permission
+PASS ACTUAL ALL119 full Conv/GDN/output/FFN peer counter chains+7616last-proof-word corruptions;ACTUAL68saved recurrent receipts preserved acrossSiLU,remaining28actual peer receipts unmodified;unheld WAIT/sequence DATA only,NOT native reset/restore authority
+PASS ACTUAL NEW native zero/QPE1/QRN1/4QPS1->oneROOT Conv/GDN/output/norm/FFN/final5120residual->ALL119STOP/ALL120holds->1592 canonical fixed4KiB transfers/ALL1630208 genuine emitted VM workspace+BOTHslots words/exact counter ancestry->full44003552B snapshot restore/secondproof/genuine closed native lineage/actual END;NO old-prefix payload alias,NO physical/ORIGINAL-model/full64layer/Work/rate qualification
+ORIGINAL_STAGE_FINGERPRINT stage0 reference007b26bf8d25e1c4 actual007b26bf8d25e1c4 equal1;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_STAGE_FINGERPRINT stage1 reference962610171bb20fb8 actual962610171bb20fb8 equal1;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_STAGE_FINGERPRINT stage2 referencec348e4bc06ce223c actualc348e4bc06ce223c equal1;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_STAGE_FINGERPRINT stage3 referencec609e3084b1103f1 actual0fca525421ae8586 equal0;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_STAGE_FINGERPRINT stage4 reference72b69e132f43eebf actualb9338d670a63dd6f equal0;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_QLV1_COMPARE checked1630208 nonfinite0 conv0 history0 gated0 projectionBits0 current0 next0 finalBits3423 projectionMaxAbs0 finalMaxAbs5.96046447754e-08 finalRelativeL24.08732743835e-08 passed0;PRE_CONTEXT_REFERENCES_NEVER_SEEDED_FROM_GPU
+Assertion failed: (comparison.passed), function main, file pioneer_q38_resident_layer_original_native_test.cpp, line 52.
+d71d08faf2da4377a2ee8c063e1e83756c1887e766d25392aeefa25a4c98cf59  /private/tmp/pioneer-q38-layer-original-native-20261026-clean-b.log
+ORIGINAL_COMPLETE_LAYER_FULL_SHA_AND_4490_REFERENCE_READS_BEFORE_ANY_NATIVE_CONTEXT
+PASS ACTUAL saved-prefix/norm/FFN handoff QLP2:independent BEFORE+AFTER/currentcommand/actual earlier receipts/249nontiming-word corruptions refused;DATA only,NOT native cleanup permission
+PASS ACTUAL ALL119 full Conv/GDN/output/FFN peer counter chains+7616last-proof-word corruptions;ACTUAL68saved recurrent receipts preserved acrossSiLU,remaining28actual peer receipts unmodified;unheld WAIT/sequence DATA only,NOT native reset/restore authority
+PASS ACTUAL NEW native zero/QPE1/QRN1/4QPS1->oneROOT Conv/GDN/output/norm/FFN/final5120residual->ALL119STOP/ALL120holds->1592 canonical fixed4KiB transfers/ALL1630208 genuine emitted VM workspace+BOTHslots words/exact counter ancestry->full44003552B snapshot restore/secondproof/genuine closed native lineage/actual END;NO old-prefix payload alias,NO physical/ORIGINAL-model/full64layer/Work/rate qualification
+ORIGINAL_STAGE_FINGERPRINT stage0 reference007b26bf8d25e1c4 actual007b26bf8d25e1c4 equal1;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_STAGE_FINGERPRINT stage1 reference962610171bb20fb8 actual962610171bb20fb8 equal1;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_STAGE_FINGERPRINT stage2 referencec348e4bc06ce223c actualc348e4bc06ce223c equal1;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_STAGE_FINGERPRINT stage3 referencec609e3084b1103f1 actual0fca525421ae8586 equal0;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_STAGE_FINGERPRINT stage4 reference72b69e132f43eebf actualb9338d670a63dd6f equal0;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_QLV1_COMPARE checked1630208 nonfinite0 conv0 history0 gated0 projectionBits0 current0 next0 finalBits3423 projectionMaxAbs0 finalMaxAbs5.96046447754e-08 finalRelativeL24.08732743835e-08 passed0;PRE_CONTEXT_REFERENCES_NEVER_SEEDED_FROM_GPU
+Assertion failed: (comparison.passed), function main, file pioneer_q38_resident_layer_original_native_test.cpp, line 52.
+
+PRIOR OBSERVER REGRESSIONS95048 EXIT0 (separate old modes + old FFN observer)
+33412719d918d4e37ca18de0223104e236ecf23fb55b2fffce683aa7d0926ab3  /private/tmp/pioneer-q38-layer-policy-old-modes-20261026-a.log
+7653d9474f2fe1993137aa6247b8911c752aeff1049929af8deeab889a156037  /private/tmp/pioneer-q38-layer-policy-old-ffn-20261026-a.log
+PASS OLD original observer mode0/reference1672/sealonce/NO new norm data-oracle or512byte route
+PASS OLD original observer mode1/reference1672/sealonce/NO new norm data-oracle or512byte route
+PASS OLD original observer mode2/reference1672/sealonce/NO new norm data-oracle or512byte route
+PASS3 original-model prior observer modes unchanged;NO native context/device/Work
+PASS ORIGINAL fullSAME c600de03 SHA/all851tensor schema/ALL21FFNstripes+36720pages cached BEFORE context/42first-last2304B reads/126refusals/no reference-product input or synthetic fallback;NO native/device/speed claim
+Original FFN-byte cache evidence:/private/tmp/pioneer-q38-ffn-original-source.fCeOlpzg;NO device access
+
+FINAL ORIGINAL dual-reference emitted-instruction runs67118+13422 EXIT0
+4240b876c524f46d4bb4cd5c6bfe4eab75cffc4a2ed10c5c1e6c4f057d327f7c  /private/tmp/pioneer-q38-layer-original-native-20261026-d.log
+ORIGINAL_COMPLETE_LAYER_FULL_SHA_AND_4810_IDEAL_AND_INSTRUCTION_REFERENCE_READS_BEFORE_ANY_NATIVE_CONTEXT
+PASS ACTUAL saved-prefix/norm/FFN handoff QLP2:independent BEFORE+AFTER/currentcommand/actual earlier receipts/249nontiming-word corruptions refused;DATA only,NOT native cleanup permission
+PASS ACTUAL ALL119 full Conv/GDN/output/FFN peer counter chains+7616last-proof-word corruptions;ACTUAL68saved recurrent receipts preserved acrossSiLU,remaining28actual peer receipts unmodified;unheld WAIT/sequence DATA only,NOT native reset/restore authority
+PASS ACTUAL NEW native zero/QPE1/QRN1/4QPS1->oneROOT Conv/GDN/output/norm/FFN/final5120residual->ALL119STOP/ALL120holds->1592 canonical fixed4KiB transfers/ALL1630208 genuine emitted VM workspace+BOTHslots words/exact counter ancestry->full44003552B snapshot restore/secondproof/genuine closed native lineage/actual END;NO old-prefix payload alias,NO physical/ORIGINAL-model/full64layer/Work/rate qualification
+ORIGINAL_STAGE_FINGERPRINT stage0 reference007b26bf8d25e1c4 actual007b26bf8d25e1c4 equal1;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_STAGE_FINGERPRINT stage1 reference962610171bb20fb8 actual962610171bb20fb8 equal1;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_STAGE_FINGERPRINT stage2 referencec348e4bc06ce223c actualc348e4bc06ce223c equal1;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_STAGE_FINGERPRINT stage3 referencec609e3084b1103f1 actual0fca525421ae8586 equal0;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_STAGE_FINGERPRINT stage4 reference72b69e132f43eebf actualb9338d670a63dd6f equal0;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_QLV1_COMPARE checked1630208 nonfinite0 conv0 history0 gated0 projectionBits0 current0 next0 finalBits3423 projectionMaxAbs0 finalMaxAbs5.96046447754e-08 finalRelativeL24.08732743835e-08 passed0;PRE_CONTEXT_REFERENCES_NEVER_SEEDED_FROM_GPU
+ORIGINAL_INSTRUCTION_STAGE stage0 reference007b26bf8d25e1c4 actual007b26bf8d25e1c4 equal1;DISTINCT_FROM_IDEAL_LIBM
+ORIGINAL_INSTRUCTION_STAGE stage1 reference962610171bb20fb8 actual962610171bb20fb8 equal1;DISTINCT_FROM_IDEAL_LIBM
+ORIGINAL_INSTRUCTION_STAGE stage2 referencec348e4bc06ce223c actualc348e4bc06ce223c equal1;DISTINCT_FROM_IDEAL_LIBM
+ORIGINAL_INSTRUCTION_STAGE stage3 reference0fca525421ae8586 actual0fca525421ae8586 equal1;DISTINCT_FROM_IDEAL_LIBM
+ORIGINAL_INSTRUCTION_STAGE stage4 referenceb9338d670a63dd6f actualb9338d670a63dd6f equal1;DISTINCT_FROM_IDEAL_LIBM
+ORIGINAL_INSTRUCTION_QLV1_COMPARE checked1630208 nonfinite0 conv0 history0 gated0 projectionBits0 current0 next0 finalBits0 finalMaxAbs0 passed1;IDEAL_LIBM_STRICT_PASSED0
+PASS ORIGINAL authenticated complete FIRST recurrent layer/fullNEWnativecontext+allprograms/QLV1/restore/END/independent precontext instruction-contract CPU reference;IDEAL_LIBM_REPORT_RETAINED_SEPARATELY;SIMULATED OS/byte endpoints,NOT physical/full64model/Work/inference-rate qualification
+4240b876c524f46d4bb4cd5c6bfe4eab75cffc4a2ed10c5c1e6c4f057d327f7c  /private/tmp/pioneer-q38-layer-original-native-20261026-clean-c.log
+ORIGINAL_COMPLETE_LAYER_FULL_SHA_AND_4810_IDEAL_AND_INSTRUCTION_REFERENCE_READS_BEFORE_ANY_NATIVE_CONTEXT
+PASS ACTUAL saved-prefix/norm/FFN handoff QLP2:independent BEFORE+AFTER/currentcommand/actual earlier receipts/249nontiming-word corruptions refused;DATA only,NOT native cleanup permission
+PASS ACTUAL ALL119 full Conv/GDN/output/FFN peer counter chains+7616last-proof-word corruptions;ACTUAL68saved recurrent receipts preserved acrossSiLU,remaining28actual peer receipts unmodified;unheld WAIT/sequence DATA only,NOT native reset/restore authority
+PASS ACTUAL NEW native zero/QPE1/QRN1/4QPS1->oneROOT Conv/GDN/output/norm/FFN/final5120residual->ALL119STOP/ALL120holds->1592 canonical fixed4KiB transfers/ALL1630208 genuine emitted VM workspace+BOTHslots words/exact counter ancestry->full44003552B snapshot restore/secondproof/genuine closed native lineage/actual END;NO old-prefix payload alias,NO physical/ORIGINAL-model/full64layer/Work/rate qualification
+ORIGINAL_STAGE_FINGERPRINT stage0 reference007b26bf8d25e1c4 actual007b26bf8d25e1c4 equal1;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_STAGE_FINGERPRINT stage1 reference962610171bb20fb8 actual962610171bb20fb8 equal1;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_STAGE_FINGERPRINT stage2 referencec348e4bc06ce223c actualc348e4bc06ce223c equal1;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_STAGE_FINGERPRINT stage3 referencec609e3084b1103f1 actual0fca525421ae8586 equal0;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_STAGE_FINGERPRINT stage4 reference72b69e132f43eebf actualb9338d670a63dd6f equal0;OBSERVED_STORES_ONLY_NOT_GPU_INPUT
+ORIGINAL_QLV1_COMPARE checked1630208 nonfinite0 conv0 history0 gated0 projectionBits0 current0 next0 finalBits3423 projectionMaxAbs0 finalMaxAbs5.96046447754e-08 finalRelativeL24.08732743835e-08 passed0;PRE_CONTEXT_REFERENCES_NEVER_SEEDED_FROM_GPU
+ORIGINAL_INSTRUCTION_STAGE stage0 reference007b26bf8d25e1c4 actual007b26bf8d25e1c4 equal1;DISTINCT_FROM_IDEAL_LIBM
+ORIGINAL_INSTRUCTION_STAGE stage1 reference962610171bb20fb8 actual962610171bb20fb8 equal1;DISTINCT_FROM_IDEAL_LIBM
+ORIGINAL_INSTRUCTION_STAGE stage2 referencec348e4bc06ce223c actualc348e4bc06ce223c equal1;DISTINCT_FROM_IDEAL_LIBM
+ORIGINAL_INSTRUCTION_STAGE stage3 reference0fca525421ae8586 actual0fca525421ae8586 equal1;DISTINCT_FROM_IDEAL_LIBM
+ORIGINAL_INSTRUCTION_STAGE stage4 referenceb9338d670a63dd6f actualb9338d670a63dd6f equal1;DISTINCT_FROM_IDEAL_LIBM
+ORIGINAL_INSTRUCTION_QLV1_COMPARE checked1630208 nonfinite0 conv0 history0 gated0 projectionBits0 current0 next0 finalBits0 finalMaxAbs0 passed1;IDEAL_LIBM_STRICT_PASSED0
+PASS ORIGINAL authenticated complete FIRST recurrent layer/fullNEWnativecontext+allprograms/QLV1/restore/END/independent precontext instruction-contract CPU reference;IDEAL_LIBM_REPORT_RETAINED_SEPARATELY;SIMULATED OS/byte endpoints,NOT physical/full64model/Work/inference-rate qualification
+
+FINAL synthetic native readback regression57739 EXIT0
+57caf844f75f096339c413b2383e530bd7f7e5652ad77f4c7dc68e98fc6d49c4  /private/tmp/pioneer-q38-layer-policy-synthetic-20261026-a.log
+PASS ACTUAL saved-prefix/norm/FFN handoff QLP2:independent BEFORE+AFTER/currentcommand/actual earlier receipts/249nontiming-word corruptions refused;DATA only,NOT native cleanup permission
+PASS ACTUAL ALL119 full Conv/GDN/output/FFN peer counter chains+7616last-proof-word corruptions;ACTUAL68saved recurrent receipts preserved acrossSiLU,remaining28actual peer receipts unmodified;unheld WAIT/sequence DATA only,NOT native reset/restore authority
+ACTUAL_NEW_NATIVE_COMPLETE_LAYER_COMPUTATION_PROOFS_ROOTHELD;BEGIN_SAME_OWNER_QLV1
+PASS ACTUAL NEW native zero/QPE1/QRN1/4QPS1->oneROOT Conv/GDN/output/norm/FFN/final5120residual->ALL119STOP/ALL120holds->1592 canonical fixed4KiB transfers/ALL1630208 genuine emitted VM workspace+BOTHslots words/exact counter ancestry->full44003552B snapshot restore/secondproof/genuine closed native lineage/actual END;NO old-prefix payload alias,NO physical/ORIGINAL-model/full64layer/Work/rate qualification
+
+EXACT TASK SOURCE SHA256 (comments-only clarification after native compilation; no executable change)
+fc17d15e08df4618084535b44ad50c80c04ba78069267316ef790bff8b958d40  tools/pioneer/PioneerQ38OriginalSource.h
+7c16b90afccf297695770de2c2971359544ee5e9d9df0bfeac039c5af980ece4  tools/pioneer/PioneerQ38ResidentLayerValidationReference.h
+767351dce98e6a2456855cd70549b5d1175a3cc30259ec2b36eb9c7731e6860c  tools/pioneer/PioneerQ38ResidentLayerComparison.h
+fe8710aa31c13f8134caad8f0e59d9d6b2999c4f46c81e30ce1c8ba58a30f7d7  tools/pioneer/pioneer_q38_original_source.cpp
+5fec6d546b28c73930060bc95836c77dcd424916575a38065a99027577f827f1  tools/pioneer/tests/pioneer_q38_projection_native_transport.cpp
+767f293f242d9e14d97d9f5637653c122f850f901b970a55cbd53dc1f991d700  tools/pioneer/tests/pioneer_q38_projection_native_transport.h
+d4f029615913b6aa9f5eb08fc91f82a6d5f09f66bdc84e7426fd34eae4332e44  tools/pioneer/tests/pioneer_q38_resident_layer_execution_machine.cpp
+eff37d27bc364b0b25c9781023d6c89f48cbdd45d426ec0c182782c8878472e3  tools/pioneer/tests/pioneer_q38_resident_layer_image_test.cpp
+ae9d867f53e86c5a1d3653883d94c7c863ead037ef4c8911a3582aac5dcd359b  tools/pioneer/tests/pioneer_q38_resident_layer_native_readback_test.cpp
+569160ff7bc3ba36a979c62a836ee1821ec0e467eb4628d0957dc9546c16e05b  tools/pioneer/tests/pioneer_q38_resident_layer_original_source_test.cpp
+b2ad5d6c1118cfc3988218b92cdf689b7ee90c6e26986cbdf58fafef34135461  tools/pioneer/tests/pioneer_q38_resident_layer_comparison_test.cpp
+6859098f783acd6f6a87d1ec2ed654f0d66f3496231405c5676197c8997d70bd  tools/pioneer/tests/pioneer_q38_resident_layer_learned_bytes.h
+dbd76978b8b0ef3456152c60fc6a84dfaef481695ae9b9afebdbc4de7eb4e136  tools/pioneer/tests/pioneer_q38_resident_layer_learned_bytes_test.cpp
+65218d55daff3c19d45c8a1f3a78bcd845869244995d8a551b0374b0cea49417  tools/pioneer/tests/pioneer_q38_resident_layer_original_native_test.cpp
+d1f2bb9151f531fd16f4c9bf020a0b8675efa2b96c39663fb13334637f66c995  tools/pioneer/tests/run_pioneer_q38_resident_layer_comparison_tests.sh
+0ab15e762ddd8f76ca4ffb7b4289fc6b211acffe3fb4254d09ceb1023aa7d85c  tools/pioneer/tests/run_pioneer_q38_resident_layer_learned_bytes_tests.sh
+1550811dad976a4525c89809daa10897130c81c7fd59fac65f73bf965f52d1df  tools/pioneer/tests/run_pioneer_q38_resident_layer_original_native_tests.py
+203df64ca8d119f1af810df9622eb63a8aea4acdea058759fb8b706b4dd10f1f  tools/pioneer/tests/pioneer_q38_resident_layer_execution_machine.h
+19e98c3789e1cbe9e0e1312a87a70a057aa266fc2a7e378735eccd0b6aba3ed4  tools/pioneer/tests/pioneer_q38_resident_layer_reference_test.cpp

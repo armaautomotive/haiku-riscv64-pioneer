@@ -111,3 +111,16 @@ PASS ACTUAL whole PioneerSessionIO/PioneerStoreContext/KernelExport ABI/native f
 PASS NO conventional driver ABI exports;ALL5 renamed entries machine-code-identical to inert constant-return controls;NO PCI/module/guard/sem/card IO from entries
 59ecbf0a81d74d2c5a0752a4e5a862f167e4b44181a722f1795b1852cf36135f  /private/tmp/pioneer-q38-layer-owner-native65-control-20261025-a/resident-output-context-REFUSING-COMPILE-ONLY.o
 Old65 BYTE-IDENTICAL61faa093;REFUSING COMPILE OBJECT ONLY;NO link/install/public compute/Work/CPU-reference/device/speed qualification
+
+FINAL COMPLETE CLEAN CONTROLLER SUITE80515 EXIT0:positive+20faults;simulated endpoints,NOT native/card/rate qualification.
+67ec1615d460f284b1ea0e71a5c5b563fb582f5e8bc31fb0e35b37808f0c75a6  /private/tmp/pioneer-q38-layer-owner-all-20261025-clean-a.log
+ACTUAL_LAYER_FFN_MATRIX role1 worker1 seq7;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role2 worker119 seq5;NOT_NATIVE_TIME
+ACTUAL_LAYER_FFN_MATRIX role2 worker1 seq9;NOT_NATIVE_TIME
+PASS ACTUAL saved-prefix/norm/FFN handoff QLP2:independent BEFORE+AFTER/currentcommand/actual earlier receipts/249nontiming-word corruptions refused;DATA only,NOT native cleanup permission
+PASS ACTUAL ALL119 full Conv/GDN/output/FFN peer counter chains+7616last-proof-word corruptions;ACTUAL68saved recurrent receipts preserved acrossSiLU,remaining28actual peer receipts unmodified;unheld WAIT/sequence DATA only,NOT native reset/restore authority
+LAYER_NEW_CONTROLLER_FULL_ACTUAL_ARITHMETIC_COMPLETE;BEGIN_STOP_AND_RESTORE
+PASS actual new full-layer controller fault19 phase11/worker0;ALL owners and44MB journal retained,ZERO following IO/reset/STOP/restore/retry;TEST endpoints NOT native
+LAYER_NEW_CONTROLLER_ALL119_ACTUAL_BOOT_AND_WAIT;BEGIN_FULL_RUN
+PASS actual new full-layer controller fault20 phase4/worker119;ALL owners and44MB journal retained,ZERO following IO/reset/STOP/restore/retry;TEST endpoints NOT native
+PASS complete new controller ACTUAL successful pipeline/STOP/44MB restore plus20 failure-containment cases;NOT native or rate qualification

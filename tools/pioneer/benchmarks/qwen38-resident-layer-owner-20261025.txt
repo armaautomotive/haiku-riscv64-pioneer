@@ -49,7 +49,7 @@ all preserve failure/inertness after genuine prefix execution. No complete
 QLP2 is published, FFN matrices/final residual do not begin, and no STOP,
 reset, retry or cleanup is invented after uncertainty.
 
-NEW private controller (first full execution passed; broader qualification running)
+NEW private controller (complete21-case execution qualification passed)
 ----------------------------------------------------
 PioneerQ38ResidentLayerOwner consumes the genuine four-QPS1 private input,
 separately claims initialized history/recurrent state, and excludes the
@@ -76,7 +76,7 @@ CPU intermediate product or injected completion is used. This positive
 uses the same production owner/plan/proof headers but predates the final
 fixture-only assertion that an OLD owner is inert after the NEW claim.
 That assertion is included in the already-passed clean pre-start cases
-and the still-running final clean complete-lifetime suite.
+and the final clean complete-lifetime suite, which has now passed.
 
 Additional completed checks
 ---------------------------
@@ -113,18 +113,19 @@ page after PREPARE all retain owners with ZERO following IO/retry. These
 cases use genuinely initialized state and the real four-QPS1 input;
 NONE starts ROOT. They do not qualify failures during/after full execution.
 
-RUNNING, NOT YET PASS CLAIMS:
- - Final clean controller complete positive plus 20 fault cases 80515.
+FINAL COMPLETE SUITE PASSED:
+ - Clean controller complete positive plus20 fault cases80515 EXIT0.
 Clean whole instruction repeat 5229 has since finished EXIT0, with identical
 ROOT109532090/packets50607/FFNTensix2088960/observed stack6360 counts.
-The final clean controller suite has passed its positive including the
-exclusive-old-owner assertion and pre-start cases, but the complete
-21-case handle 80515 remains running; do NOT call that whole suite passed.
+The final clean controller suite passed its positive including the
+exclusive-old-owner assertion and ALL20 failure-containment cases. Every
+case uses actual emitted programs and the genuine producer; no ready state
+or model intermediate is injected. Its endpoints are simulated, not silicon.
 Logs use /private/tmp/pioneer-q38-layer-owner-*-20261025-*.log.
 Selected completed outputs and their source-log SHA256 values are retained
 in the sibling qwen38-resident-layer-owner-20261025.log evidence file.
-Continue polling these SAME handles; an observation timeout is not a
-terminal outcome or a reason for power/reset/restarting the test.
+The listed handles are terminal; do not restart or repoll them. Observation
+timeouts during execution were never treated as failures or reset authority.
 
 Fixture development findings
 ----------------------------
@@ -135,7 +136,10 @@ no manufactured producer/vector/readiness shortcut was introduced.
 The new execution machine intentionally refuses original learned-byte
 imports: an original prefix plus synthetic FFN would not qualify the
 original complete layer. A separate complete original-model observer is
-still required before any physical expanded-driver test.
+still required before any physical expanded-driver test. Subsequent work
+has connected the separate native context and readback, and now imports
+ALL original norm+FFN bytes; see the newer native-context/readback/original
+reference records. This paragraph describes the earlier fixture checkpoint.
 
 Hardware and remaining work
 ----------------------------

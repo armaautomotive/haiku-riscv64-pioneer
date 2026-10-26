@@ -5,6 +5,7 @@
 #include <vector>
 #include <memory>
 struct tt_q38_resident_output_validation;
+struct PioneerQ38ResidentLayerComparison;
 class PioneerQwen38Gguf;
 class PioneerQwen38PackedPlan;
 // Original-byte endpoints and independent CPU OBSERVER only. The
@@ -71,6 +72,15 @@ struct DecoderOriginalSource:ProjectionExecutionLearnedBytes {
  // slot. Private CPU products never become native inputs or Work fallback.
  virtual bool ResidentLayerReferenceReady()const{return false;}
  virtual uint64_t ResidentLayerReferenceFingerprint()const{return 0;}
+ // true means a report was produced;caller MUST separately inspect its
+ // passed field. Neither result grants native execution/cleanup authority.
+ virtual bool CompareResidentLayer(const uint32_t*,unsigned,PioneerQ38ResidentLayerComparison*)const{return false;}
+ virtual bool ResidentLayerStageFingerprint(unsigned,uint64_t&)const{return false;}
+ // Explicit SECOND observer for the frozen SiLU instruction policy.
+ // Never aliases/relabels the ideal-libm comparison or native permission.
+ virtual uint64_t ResidentLayerInstructionReferenceFingerprint()const{return 0;}
+ virtual bool CompareResidentLayerInstruction(const uint32_t*,unsigned,PioneerQ38ResidentLayerComparison*)const{return false;}
+ virtual bool ResidentLayerInstructionStageFingerprint(unsigned,uint64_t&)const{return false;}
 };
 std::unique_ptr<DecoderOriginalSource> OpenDecoderOriginalSource(const char* path);
 std::unique_ptr<DecoderOriginalSource> OpenGdnInputOriginalSource(const char* path);

@@ -5,6 +5,7 @@
 #define PIONEER_Q38_CPU_VALIDATION 1
 #include "../PioneerQ38ResidentLayerValidationReference.h"
 #include "pioneer_qwen38_activation_reference.h"
+#include "../PioneerQ38FfnActivation.h" // TEST comparison ONLY,never included by the independent reference
 #include <cassert>
 #include <cstdio>
 #include <string>
@@ -47,7 +48,39 @@ struct LayerReferenceSource {
 };
 int main(){
  using namespace PioneerQ38ResidentLayerReferenceDetail;setvbuf(stdout,nullptr,_IOLBF,0);assert(std::fegetround()==FE_TONEAREST);
- unsigned domains=0,refusals=0;uint32_t random=0x514c5631;
+ unsigned domains=0,refusals=0,pairedRoundingDifferences=0,policyCases=0,policyDifferences=0;uint32_t random=0x514c5631;
+ for(unsigned trial=0;trial<1024;trial++){
+  float gate[256],up[256],actual[256];PioneerQ38ActivationK quantized;
+  for(unsigned i=0;i<256;i++){
+   random=random*1664525+1013904223;gate[i]=float(int(random%6400001)-3200000)*.00001f;
+   random=random*1664525+1013904223;up[i]=float(int(random%2000001)-1000000)*.00001f;
+   if(!trial){gate[i]=i&1?-32.f:32.f;up[i]=i&2?-0x1p20f:0x1p20f;}
+   if(trial==1){gate[i]=i&1?-0x1p-40f:0x1p-40f;up[i]=i&2?-0x1p-40f:0x1p-40f;}
+   if(trial==2){gate[i]=Float(i&1?0x80000000:0);up[i]=i&2?-1.f:1.f;}
+   // Range-reduction half-integer boundaries and adjacent FP32 inputs.
+   if(trial>=3 && trial<9){float x=(float(int(i%91)-45)+.5f)/1.4426950408889634f;
+    gate[i]=trial%3==0?x:std::nextafter(x,trial%3==1?INFINITY:-INFINITY);}
+  }
+  // These checks exercise arithmetic only; native packing's separate scale
+  // domain need not accept the tiny-value trial.
+  for(unsigned i=0;i<256;i++){
+   actual[i]=PioneerGraphSiluFast(gate[i])*up[i];uint32_t result=0xdeadbeef;
+   assert(SiluInstructionReference(Bits(gate[i]),Bits(up[i]),result) && result==Bits(actual[i]));
+   double x=gate[i],e=std::exp(-std::fabs(x));float ideal=float(x*(x>=0?1/(1+e):e/(1+e)))*up[i];
+   assert(std::fabs(double(actual[i])-ideal)<=3e-6*std::fabs(double(ideal)));
+   policyDifferences+=result!=Bits(ideal);policyCases++;
+  }
+  if(trial==3)assert(PioneerQ38FfnActivation(gate,up,256,actual,&quantized));
+ }
+ for(uint32_t bad:{1U,0x80000001U,0x2b7fffffU,0x42000001U,0x7f800000U,0x7fc00000U}){
+  uint32_t result=0xdeadbeef;assert(!SiluInstructionReference(bad,Bits(1.f),result) && result==0xdeadbeef);refusals++;
+ }
+ for(uint32_t bad:{1U,0x2b7fffffU,0x49800001U,0xff800000U,0x7fc00000U}){
+  uint32_t result=0xdeadbeef;assert(!SiluInstructionReference(Bits(1.f),bad,result) && result==0xdeadbeef);refusals++;
+ }
+ {uint32_t result=0xdeadbeef;assert(!std::fesetround(FE_DOWNWARD));
+  assert(!SiluInstructionReference(Bits(1.f),Bits(1.f),result) && result==0xdeadbeef);assert(!std::fesetround(FE_TONEAREST));refusals++;}
+ assert(policyDifferences);
  for(unsigned n:{5120U,17408U})for(unsigned trial=0;trial<16;trial++){
   std::vector<uint32_t> x(n);for(auto& v:x){random=random*1664525+1013904223;v=Bits(float(int((random>>8)%25301)-12650)*.00031f);}
   if(!trial)for(unsigned i=0;i<n;i++)x[i]=i&1?0x80000000:0;
@@ -65,14 +98,33 @@ int main(){
  }
  for(unsigned role:{0U,1U,2U}){
   unsigned n=role==2?17408:5120,rows=role==2?5120:17408;
-  std::vector<uint32_t> input(n),output(rows,0xdeadbeef);std::vector<float> activation(n);
-  for(unsigned i=0;i<n;i++)input[i]=Bits(float(int((i*29+17)%255)-127)*.00390625f);
+  std::vector<uint32_t> input(n),output(rows,0xdeadbeef);std::vector<float> activation(n),blockScale(n/256);std::vector<int> quant(n);
+  // Non-dyadic scales make panel16 vs paired32 rounding observably
+  // different; power-of-two fixtures can accidentally hide that contract.
+  for(unsigned i=0;i<n;i++)input[i]=Bits(float(int((i*29+17)%25301)-12650)*.000031f);
   for(unsigned b=0;b<n/256;b++){
    float x[256];uint32_t q[73];for(unsigned i=0;i<256;i++)x[i]=Float(input[b*256+i]);Q38ActivationReference(x,q);
-   for(unsigned i=0;i<256;i++){unsigned v=(q[1+i/4]>>((i%4)*8))&255;activation[b*256+i]=Float(q[0])*float(int(v)-int((v&128)*2));}
+   blockScale[b]=Float(q[0]);
+   for(unsigned i=0;i<256;i++){unsigned v=(q[1+i/4]>>((i%4)*8))&255;quant[b*256+i]=int(v)-int((v&128)*2);activation[b*256+i]=Float(q[0])*float(quant[b*256+i]);}
   }
   LayerReferenceSource source;assert(MatrixK(source,role,input.data(),output.data()) && source.reads==rows/16);
   for(unsigned row:{0U,15U,16U,rows/2,rows-1}){
+   float exact=0,paired=0;
+   for(unsigned b=0;b<n/256;b++)for(unsigned group=0;group<8;group++){
+    int total32=0,dot32=0;
+    for(unsigned piece=0;piece<2;piece++){
+     int total=0,dot=0;for(unsigned i=0;i<16;i++){
+      unsigned at=group*32+piece*16+i;int x=quant[b*256+at];total+=x;dot+=int(LayerReferenceSource::Quant(row,b,at))*x;
+     }
+     float c=(0x1p-12f*float(LayerReferenceSource::Scale(row,b,group)))*blockScale[b];
+     float m=(-0x1p-13f*float(LayerReferenceSource::Minimum(row,b,group)))*blockScale[b];
+     float product=c*float(dot),correction=m*float(total);exact+=product+correction;total32+=total;dot32+=dot;
+    }
+    float c=(0x1p-12f*float(LayerReferenceSource::Scale(row,b,group)))*blockScale[b];
+    float m=(-0x1p-13f*float(LayerReferenceSource::Minimum(row,b,group)))*blockScale[b];
+    float product=c*float(dot32),correction=m*float(total32);paired+=product+correction;
+   }
+   assert(output[row]==Bits(exact));pairedRoundingDifferences+=Bits(exact)!=Bits(paired);
    double expected=0,absolute=0;for(unsigned i=0;i<n;i++){
     unsigned block=i/256,group=(i%256)/32;double weight=0x1p-12*LayerReferenceSource::Scale(row,block,group)*LayerReferenceSource::Quant(row,block,i%256)
      -0x1p-13*LayerReferenceSource::Minimum(row,block,group);
@@ -96,6 +148,18 @@ int main(){
  for(unsigned i=0;i<5120;i++)assert(!result->projection[i] && result->residual[i]==raw[i] && result->normalized[i]==Bits(Float(raw[i])*scale)
   && !result->down[i] && result->finalHidden[i]==raw[i]);
  for(unsigned i=0;i<17408;i++)assert(!result->gate[i] && !result->up[i] && !result->activated[i]);
+ auto policy=std::make_unique<PioneerQ38ResidentLayerReferenceProducts>();
+ assert(PioneerQ38ResidentLayerInstructionReference(zero,*result,policy.get()) && zero.reads==3137
+  && !std::memcmp(result.get(),policy.get(),sizeof(*result)));
+ for(unsigned kind=0;kind<7;kind++){
+  LayerReferenceSource bad;bad.zero=true;std::memset(policy.get(),0xa5,sizeof(*policy));auto ideal=*result;
+  auto* out=policy.get();if(kind==0)out=nullptr;if(kind==1)out=&ideal;
+  if(kind==2)out=reinterpret_cast<PioneerQ38ResidentLayerReferenceProducts*>(UINTPTR_MAX-3);
+  if(kind==3)ideal.gate[0]=0x7f800000;if(kind==4)ideal.activated[0]=Bits(1.f);
+  if(kind==5)bad.failRead=1;if(kind==6)bad.failRead=320;
+  assert(!PioneerQ38ResidentLayerInstructionReference(bad,ideal,out));
+  const auto* bytes=reinterpret_cast<const uint8_t*>(policy.get());for(unsigned i=0;i<sizeof(*policy);i++)assert(bytes[i]==0xa5);refusals++;
+ }
  for(unsigned kind=0;kind<10;kind++){
   LayerReferenceSource bad;auto* out=result.get();const auto* r=raw.data();const auto* g=gated.data();
   if(kind==0)r=nullptr;if(kind==1)g=nullptr;if(kind==2)out=nullptr;
@@ -113,5 +177,6 @@ int main(){
   assert(!PioneerQ38ResidentLayerOriginalReference(bad,raw.data(),gated.data(),result.get()) && bad.reads==at);
   const auto* bytes=reinterpret_cast<const uint8_t*>(result.get());for(unsigned i=0;i<sizeof(*result);i++)assert(bytes[i]==0xa5);refusals++;
  }
- printf("PASS separate ORIGINAL row-major complete-layer CPU reference:quantizationDomains%u/ALL3fullQ4matrices/FP64selectedrowbounds/2817completepostGDNreads/atomicRefusals%u;libmSiLU reference only,NO device/controller/ready/upload/Work/fallback or speed claim\n",domains,refusals);
+ assert(pairedRoundingDifferences);
+ printf("PASS separate ORIGINAL row-major complete-layer CPU reference:quantizationDomains%u/ALL3fullQ4matrices/EXACT16laneFp32/paired32RoundingDifferences%u/FP64selectedrowbounds/2817ideal+320instructionReads/independentSiluPolicy%u/libmDifferences%u/prior3e-6relativeBound/atomicRefusals%u;ideal-libm and instruction-contract references DISTINCT,NO device/controller/ready/upload/Work/fallback or speed claim\n",domains,pairedRoundingDifferences,policyCases,policyDifferences,refusals);
 }

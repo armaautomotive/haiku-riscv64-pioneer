@@ -7,6 +7,18 @@ SDK compilation/linking. NOT original-model GPU comparison or a new driver.
 Full64-layer/token-loop/Work integration and20 tokens/sec remain UNMET.
 No inference speed change measured; last actual whole-model0.207893161 t/s.
 
+2026-10-26 CORRECTION discovered by the subsequent full-instruction test:
+the frozen direct-SrcB peer FORBIDS GROUP32 and accumulates16-lane panels.
+The initial CPU reference below paired32 lanes, so its3ff61f7a1342ae7e
+fingerprint is superseded, NOT a native arithmetic oracle. Its first actual
+full-layer comparison correctly failed final bit equality after clean END:
+4842 differing final words, max absolute1.90734863281e-6, relativeL2
+2.23903006697e-7; all earlier readback regions passed. The reference now
+matches the emitted16-lane contract, without changing tolerances. New
+non-dyadic test inputs explicitly distinguish both accumulation orders.
+Corrected CPU fingerprint2a4fa2f65bf75fb8; full native reruns remain required.
+See the newer original-native evidence for final qualification status.
+
 This checkpoint also records successful completion of the preceding NEW
 native readback main44040 (positive+16 faults) and clean62126 (positive).
 See qwen38-resident-layer-native-readback-20261025.txt/.log for those actual

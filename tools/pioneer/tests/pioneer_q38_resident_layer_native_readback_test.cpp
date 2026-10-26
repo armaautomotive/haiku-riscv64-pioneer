@@ -5,7 +5,7 @@
 #define PIONEER_Q38_LAYER_EXECUTION_FIXTURE_ONLY
 #include "pioneer_q38_resident_layer_native_execution_test.cpp"
 static void FinishLayerReadback(NativeBindingFixture& f,ProjectionNativeTransport& transport,PioneerQ38ResidentLayerResult& output,
- unsigned fault,unsigned page,unsigned word){
+ unsigned fault,unsigned page,unsigned word,std::vector<uint32_t>* observed=nullptr){
  auto& c=*f.c;auto* state=c.q38ResidentLayerNative;
  std::vector<uint32_t> values(PioneerQ38ResidentLayerReadbackPlan::Words,0xdeadbeef);PioneerQ38ResidentLayerReadbackResult readback;
  unsigned touches=f.io.touches,device=transport.Touches();
@@ -48,8 +48,10 @@ static void FinishLayerReadback(NativeBindingFixture& f,ProjectionNativeTranspor
  assert(!CloseQ38ResidentLayerNativeForValidation(c,output,values.data(),unsigned(values.size()),readback)
   && !CloseQ38ResidentLayerNative(c,output) && f.io.touches==touches && transport.Touches()==device);
  assert(EndFactory(c) && !state->Unsafe() && !c.dispatchOwnerRetained && !c.Unsafe());
+ if(observed)*observed=std::move(values); // TEST artifact only,AFTER genuine native END;NEVER an input/ready setter
  puts("PASS ACTUAL NEW native zero/QPE1/QRN1/4QPS1->oneROOT Conv/GDN/output/norm/FFN/final5120residual->ALL119STOP/ALL120holds->1592 canonical fixed4KiB transfers/ALL1630208 genuine emitted VM workspace+BOTHslots words/exact counter ancestry->full44003552B snapshot restore/secondproof/genuine closed native lineage/actual END;NO old-prefix payload alias,NO physical/ORIGINAL-model/full64layer/Work/rate qualification");
 }
+#ifndef PIONEER_Q38_LAYER_READBACK_FIXTURE_ONLY
 int main(int argc,char** argv){
  assert(argc==9 && (!strcmp(argv[8],"--all") || !strcmp(argv[8],"--positive")));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
@@ -84,3 +86,4 @@ int main(int argc,char** argv){
  }
  FinishLayerReadback(f,transport,output,0,0,0);
 }
+#endif

@@ -85,7 +85,7 @@ class OriginalSource final:public DecoderOriginalSource {
  bool nextOutput=false;uint64_t nextOutputReads=0;
  bool nextResidualRms=false;uint64_t nextResidualReads=0;std::array<uint32_t,5120> nextPostNorm={};
  bool nextFfn=false;uint64_t nextFfnReads=0;
- bool residentLayer=false;std::unique_ptr<PioneerQ38ResidentLayerReferenceProducts> layerReference;
+ bool residentLayer=false;std::unique_ptr<PioneerQ38ResidentLayerReferenceProducts> layerReference,layerInstructionReference;
  std::array<uint32_t,48> nextNegativeA={},nextDtBias={};std::array<uint32_t,128> nextGdnNorm={};
  std::array<uint32_t,48> negativeA={},dtBias={};std::vector<uint32_t> gdnReferences;
  std::vector<uint32_t> recurrentReferences; // ALL references computed BEFORE context,never fed into controller
@@ -309,19 +309,66 @@ public:
    layerReference=std::make_unique<PioneerQ38ResidentLayerReferenceProducts>();
    if(!PioneerQ38ResidentLayerOriginalReference(reference,raw.data(),gdnNormReferences.data(),layerReference.get())
     || referenceReads!=4490)return false;
+   layerInstructionReference=std::make_unique<PioneerQ38ResidentLayerReferenceProducts>();
+   if(!PioneerQ38ResidentLayerInstructionReference(reference,*layerReference,layerInstructionReference.get())
+    || referenceReads!=4810)return false;
   }
   preparedToken=token;prepared=true;return Ready();
  }
- bool SealBeforeNativeContext()override{if(!Ready() || sealed || referenceReads!=(residentLayer?4490U:gdnNorm?1673U:1672U) || projectionReads || convolutionReads || gdnInputReads
+ bool SealBeforeNativeContext()override{if(!Ready() || sealed || referenceReads!=(residentLayer?4810U:gdnNorm?1673U:1672U) || projectionReads || convolutionReads || gdnInputReads
   || (gdnInputs && !gdnReferencesReady) || (gdnNorm && gdnNormReferences.size()!=6144))return false;
   sealed=true;return true;}
- bool ResidentLayerReferenceReady()const override{return residentLayer && layerReference && sealed && Ready() && referenceReads==4490;}
+ bool ResidentLayerReferenceReady()const override{return residentLayer && layerReference && layerInstructionReference && sealed && Ready() && referenceReads==4810;}
  uint64_t ResidentLayerReferenceFingerprint()const override{
   if(!ResidentLayerReferenceReady())return 0;
   uint64_t hash=UINT64_C(14695981039346656037);
   const auto* bytes=reinterpret_cast<const uint8_t*>(layerReference.get());
   for(unsigned i=0;i<sizeof(*layerReference);i++){hash^=bytes[i];hash*=UINT64_C(1099511628211);}return hash;
  } // deterministic DATA receipt only,not a source hash, numeric product or device grant
+ bool CompareResidentLayer(const uint32_t* values,unsigned words,PioneerQ38ResidentLayerComparison* output)const override{
+  if(!ResidentLayerReferenceReady() || !values || !output || words!=PioneerQ38ResidentLayerComparison::Words)return false;
+  const uintptr_t in=reinterpret_cast<uintptr_t>(values),out=reinterpret_cast<uintptr_t>(output);
+  if((in&3) || (out&(alignof(PioneerQ38ResidentLayerComparison)-1)) || in>UINTPTR_MAX-uint64_t(words)*4
+   || out>UINTPTR_MAX-sizeof(*output) || (in<out+sizeof(*output) && out<in+uint64_t(words)*4))return false;
+  PioneerQ38ResidentLayerComparison stage;
+  if(!PioneerQ38CompareResidentLayer(values,words,convolution,gdnNormReferences,recurrentReferences,*layerReference,&stage)
+   || !ResidentLayerReferenceReady())return false;
+  *output=stage;return true;
+ } // pre-context ORIGINAL references only,NEVER recomputed from returned device values
+ bool ResidentLayerStageFingerprint(unsigned stage,uint64_t& result)const override{
+  if(!ResidentLayerReferenceReady() || stage>=5)return false;
+  const uint32_t* data[]={layerReference->normalized,layerReference->gate,layerReference->up,layerReference->activated,layerReference->down};
+  const unsigned words[]={5120,17408,17408,17408,5120};uint64_t hash=UINT64_C(14695981039346656037);
+  for(unsigned i=0;i<words[stage];i++)for(unsigned b=0;b<4;b++){hash^=uint8_t(data[stage][i]>>(b*8));hash*=UINT64_C(1099511628211);}
+  if(!ResidentLayerReferenceReady())return false;
+  result=hash;return true;
+ } // CPU DATA receipt only;numeric reference vectors remain private
+ uint64_t ResidentLayerInstructionReferenceFingerprint()const override{
+  if(!ResidentLayerReferenceReady())return 0;
+  uint64_t hash=UINT64_C(14695981039346656037);
+  const auto* bytes=reinterpret_cast<const uint8_t*>(layerInstructionReference.get());
+  for(unsigned i=0;i<sizeof(*layerInstructionReference);i++){hash^=bytes[i];hash*=UINT64_C(1099511628211);}return hash;
+ }
+ bool CompareResidentLayerInstruction(const uint32_t* values,unsigned words,PioneerQ38ResidentLayerComparison* output)const override{
+  if(!ResidentLayerReferenceReady() || !values || !output || words!=PioneerQ38ResidentLayerComparison::Words)return false;
+  PioneerQ38ResidentLayerComparison stage;
+  // Validate caller ranges/aliasing before using a temporary report.
+  uintptr_t in=reinterpret_cast<uintptr_t>(values),out=reinterpret_cast<uintptr_t>(output);
+  if((in&3) || (out&(alignof(PioneerQ38ResidentLayerComparison)-1)) || in>UINTPTR_MAX-uint64_t(words)*4
+   || out>UINTPTR_MAX-sizeof(*output) || (in<out+sizeof(*output) && out<in+uint64_t(words)*4))return false;
+  if(!PioneerQ38CompareResidentLayer(values,words,convolution,gdnNormReferences,recurrentReferences,*layerInstructionReference,&stage)
+   || !ResidentLayerReferenceReady())return false;
+  *output=stage;return true;
+ }
+ bool ResidentLayerInstructionStageFingerprint(unsigned stage,uint64_t& result)const override{
+  if(!ResidentLayerReferenceReady() || stage>=5)return false;
+  const uint32_t* data[]={layerInstructionReference->normalized,layerInstructionReference->gate,layerInstructionReference->up,
+   layerInstructionReference->activated,layerInstructionReference->down};
+  const unsigned words[]={5120,17408,17408,17408,5120};uint64_t hash=UINT64_C(14695981039346656037);
+  for(unsigned i=0;i<words[stage];i++)for(unsigned b=0;b<4;b++){hash^=uint8_t(data[stage][i]>>(b*8));hash*=UINT64_C(1099511628211);}
+  if(!ResidentLayerReferenceReady())return false;
+  result=hash;return true;
+ }
  const uint8_t* EmbeddingTile()const override{return Ready()?embedding.data():nullptr;}
  const uint32_t* LearnedNorm()const override{return Ready()?norm.data():nullptr;}
  const uint32_t* GdnLearnedNorm()const override{return gdnNorm && Ready()?gdnLearnedNorm.data():nullptr;}

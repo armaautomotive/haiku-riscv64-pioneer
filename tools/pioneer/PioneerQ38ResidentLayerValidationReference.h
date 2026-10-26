@@ -11,12 +11,14 @@
 #include "PioneerQ38NextGdnOutputValidationReference.h" // generic independent IEEE/half/Q8 DATA helpers ONLY
 #include <array>
 #include <vector>
+#include "PioneerQ38ResidentLayerComparison.h"
 // CPU-only reference PRODUCTS. Compute from ORIGINAL CPU embedding/GDN
 // references BEFORE any accelerator FD. Never provide these to a native
 // controller, byte endpoint, initialization, upload, owner or Work mode.
-// This predicts the ideal libm-SiLU quantized pipeline, not a claim that
-// the separately bounded device polynomial is bit-identical. Real model
-// instruction/readback comparison is still required, never assumed.
+// The primary pipeline predicts ideal libm SiLU. A SECOND explicitly named
+// reference predicts the frozen device polynomial after bounding every
+// activation against libm. Their reports/fingerprints remain distinct.
+// Real model instruction/readback comparison is required,never assumed.
 struct PioneerQ38ResidentLayerReferenceProducts {
  uint32_t projection[5120],residual[5120],normalized[5120];
  uint32_t gate[17408],up[17408],activated[17408],down[5120],finalHidden[5120];
@@ -48,8 +50,9 @@ inline bool InputK(const uint32_t* x,unsigned words,std::vector<int>& quant,std:
  }return true;
 }
 // ORIGINAL row-major Q4_K bytes, NOT tiled panel unpack/native quantizer
-// or card results. Explicit32-lane affine grouping matches the qualified
-// matrix arithmetic contract; every integer dot is exact. Host IEEE/libm
+// or card results. The frozen direct-SrcB peer explicitly FORBIDS GROUP32:
+// apply affine/accumulation to each16-lane panel,not paired32-lane dots.
+// Every integer dot is exact. Host IEEE/libm
 // conversion/division/rounding is independent of the device bit policies.
 template<class Source>bool MatrixK(Source& source,unsigned role,const uint32_t* input,uint32_t* output){
  if(role>=3 || !input || !output || !source.Ready() || std::fegetround()!=FE_TONEAREST)return false;
@@ -69,16 +72,17 @@ template<class Source>bool MatrixK(Source& source,unsigned role,const uint32_t* 
  for(unsigned first=0;first<rows;first+=16){
   if(!current() || !source.ReadReferencePacked(index,uint64_t(first)*rowBytes,unsigned(bytes.size()),bytes.data(),unsigned(bytes.size())) || !current())return false;
   float sums[16]={};
-  for(unsigned b=0;b<blocks;b++)for(unsigned group=0;group<8;group++){
-   int total=0;for(unsigned k=0;k<32;k++)total+=quant[b*256+group*32+k];
+  for(unsigned b=0;b<blocks;b++)for(unsigned panel=0;panel<16;panel++){
+   const unsigned group=panel/2;
+   int total=0;for(unsigned k=0;k<16;k++)total+=quant[b*256+panel*16+k];
    for(unsigned row=0;row<16;row++){
     const auto* p=bytes.data()+size_t(row)*rowBytes+b*144;const auto* s=p+4;
     uint16_t dh=uint16_t(p[0]|(unsigned(p[1])<<8)),mh=uint16_t(p[2]|(unsigned(p[3])<<8));
     if((dh&0x7c00)==0x7c00 || (mh&0x7c00)==0x7c00)return false;
     unsigned d=group<4?s[group]&63:(s[group+4]&15)|((s[group-4]>>6)<<4);
     unsigned m=group<4?s[group+4]&63:(s[group+4]>>4)|((s[group]>>6)<<4);
-    int dot=0;for(unsigned k=0;k<32;k++){
-     unsigned packed=p[16+(group/2)*32+k],q=(packed>>((group%2)*4))&15;dot+=int(q)*quant[b*256+group*32+k];
+    int dot=0;for(unsigned k=0;k<16;k++){
+     unsigned packed=p[16+(group/2)*32+(panel%2)*16+k],q=(packed>>((group%2)*4))&15;dot+=int(q)*quant[b*256+panel*16+k];
     }
     float coefficient=HalfFloat(dh)*float(d),minimum=HalfFloat(mh)*-float(m);
     float c=coefficient*scales[b],v=minimum*scales[b],product=c*float(dot),correction=v*float(total);
@@ -119,6 +123,26 @@ template<class Source>bool OutputProjection(Source& source,const uint32_t* gated
  }
  if(!current())return false;
  std::memcpy(output,stage->values,5120*4);return true;
+}
+// Independent host description of the frozen degree8 SiLU contract.
+// No production shader/math helper, software divider, native quantizer or
+// observed output is used. Host IEEE division/ldexp/floor predict the
+// specified rounded operations; the ideal libm pipeline stays separate.
+inline bool SiluInstructionReference(uint32_t gate,uint32_t up,uint32_t& output){
+ const unsigned g=gate&0x7fffffff,u=up&0x7fffffff;
+ if(std::fegetround()!=FE_TONEAREST || (g && (g<0x2b800000 || g>0x42000000))
+  || (u && (u<0x2b800000 || u>0x49800000)))return false;
+ float x=Float(gate),argument=-x,t=std::fabs(argument)*1.4426950408889634f;
+ int power=int(std::floor(double(t)+.5));if(std::signbit(argument))power=-power;
+ float n=float(power),high=n*.693359375f,low=n*(-.00021219444005469058f);
+ float reduced=(argument-high)-low;
+ const float coefficients[]={1.f,1.f,.5f,1.f/6.f,1.f/24.f,1.f/120.f,1.f/720.f,1.f/5040.f,1.f/40320.f};
+ float polynomial=coefficients[8];
+ for(int i=7;i>=0;i--){float product=polynomial*reduced;polynomial=product+coefficients[i];}
+ float exponential=std::ldexp(polynomial,power),denominator=1.f+exponential;
+ float silu=std::copysign(std::fabs(x)/denominator,x),value=silu*Float(up);
+ if(!Domain(Bits(value)) || std::fegetround()!=FE_TONEAREST)return false;
+ output=Bits(value);return true;
 }
 }
 template<class Source>bool PioneerQ38ResidentLayerOriginalReference(Source& source,const uint32_t* raw,const uint32_t* gated,
@@ -164,5 +188,82 @@ template<class Source>bool PioneerQ38ResidentLayerOriginalReference(Source& sour
  }
  if(!source.Ready() || std::fegetround()!=FE_TONEAREST)return false;
  std::memcpy(output,stage.get(),sizeof(*output));return true; // atomic CPU-only publication,NEVER a device input
+}
+// A SECOND named reference,not a replacement for the independent libm
+// reference or its strict comparison. Both finish before any native FD.
+// Only the activation policy differs; its per-value error MUST satisfy the
+// already-qualified 3e-6 relative SiLU bound against libm before publication.
+template<class Source>bool PioneerQ38ResidentLayerInstructionReference(Source& source,
+ const PioneerQ38ResidentLayerReferenceProducts& ideal,PioneerQ38ResidentLayerReferenceProducts* output){
+ using namespace PioneerQ38ResidentLayerReferenceDetail;
+ const uintptr_t in=reinterpret_cast<uintptr_t>(&ideal),out=reinterpret_cast<uintptr_t>(output);
+ if(!output || (out&3) || in>UINTPTR_MAX-sizeof(ideal) || out>UINTPTR_MAX-sizeof(*output)
+  || (in<out+sizeof(*output) && out<in+sizeof(ideal)) || !source.Ready() || std::fegetround()!=FE_TONEAREST)return false;
+ auto stage=std::make_unique<PioneerQ38ResidentLayerReferenceProducts>(ideal);
+ for(unsigned i=0;i<17408;i++){
+  if(!SiluInstructionReference(ideal.gate[i],ideal.up[i],stage->activated[i]) || !Domain(ideal.activated[i]))return false;
+  double expected=Float(ideal.activated[i]),actual=Float(stage->activated[i]);
+  if(std::fabs(actual-expected)>3e-6*std::fabs(expected))return false;
+ }
+ if(!MatrixK(source,2,stage->activated,stage->down))return false;
+ for(unsigned i=0;i<5120;i++){
+  if(!Domain(ideal.residual[i]))return false;
+  float value=Float(ideal.residual[i])+Float(stage->down[i]);if(!Domain(Bits(value)))return false;stage->finalHidden[i]=Bits(value);
+ }
+ if(!source.Ready() || std::fegetround()!=FE_TONEAREST)return false;
+ std::memcpy(output,stage.get(),sizeof(*output));return true;
+}
+// Post-return measurement of NEW fixed QLV1 bytes against references that
+// ALREADY existed before the accelerator context. No actual card value
+// seeds/recomputes an expected result. Strict projection/final bit equality
+// is deliberately distinct from the previously qualified GDN error bounds.
+// A successfully produced report is NOT a passing model comparison:inspect
+// report.passed. Ideal libm vs device-polynomial rounding can fail it and
+// must be diagnosed,not accepted by fitting a tolerance to observed values.
+static inline bool PioneerQ38CompareResidentLayer(const uint32_t* values,unsigned words,
+ const std::vector<uint32_t>& convolution,const std::vector<uint32_t>& gated,
+ const std::vector<uint32_t>& recurrent,const PioneerQ38ResidentLayerReferenceProducts& expected,
+ PioneerQ38ResidentLayerComparison* output){
+ using namespace PioneerQ38ResidentLayerReferenceDetail;
+ using C=PioneerQ38ResidentLayerComparison;
+ if(!values || !output || words!=C::Words || convolution.size()!=40960 || gated.size()!=6144 || recurrent.size()!=96*8578
+  || std::fegetround()!=FE_TONEAREST)return false;
+ uintptr_t in=reinterpret_cast<uintptr_t>(values),out=reinterpret_cast<uintptr_t>(output);
+ if((in&3) || (out&(alignof(C)-1)) || in>UINTPTR_MAX-uint64_t(words)*4 || out>UINTPTR_MAX-sizeof(C)
+  || (in<out+sizeof(C) && out<in+uint64_t(words)*4))return false;
+ for(auto v:convolution)if((v&0x7fffffff)>=0x7f800000)return false;
+ for(auto v:gated)if((v&0x7fffffff)>=0x7f800000)return false;
+ for(unsigned half=0;half<96;half++)for(unsigned i=0;i<8192;i++)if((recurrent[half*8578+322+i]&0x7fffffff)>=0x7f800000)return false;
+ for(unsigned i=0;i<5120;i++)if((expected.projection[i]&0x7fffffff)>=0x7f800000 || (expected.finalHidden[i]&0x7fffffff)>=0x7f800000)return false;
+ C r;double error2=0,reference2=0;
+ for(unsigned i=0;i<words;i++)if((values[i]&0x7fffffff)>=0x7f800000)r.nonfinite++;
+ for(unsigned i=0;i<10240;i++){
+  double e=Float(convolution[i]),a=Float(values[C::Conv+i]);
+  if(!std::isfinite(a) || std::fabs(a-e)>3e-6*(1+std::fabs(e)))r.convErrors++;
+ }
+ for(unsigned i=0;i<30720;i++)if(values[C::History+i]!=convolution[10240+i])r.historyErrors++;
+ for(unsigned i=0;i<6144;i++){
+  double e=Float(gated[i]),a=Float(values[C::Gated+i]),d=std::fabs(a-e);
+  if(!std::isfinite(a) || d>3e-6*(1+std::fabs(e))
+   || (std::fabs(e)>=double(Float(0x00800000))?d>3e-6*std::fabs(e):a!=0))r.gatedErrors++;
+ }
+ for(unsigned half=0;half<96;half++)for(unsigned i=0;i<8192;i++){
+  unsigned at=half*8192+i;double e=Float(recurrent[half*8578+322+i]),a=Float(values[C::Next+at]);
+  if(values[C::Current+at])r.currentErrors++;
+  if(!std::isfinite(a) || std::fabs(a-e)>3e-6*(1+std::fabs(e)))r.nextErrors++;
+ }
+ for(unsigned i=0;i<5120;i++){
+  double e=Float(expected.projection[i]),a=Float(values[C::Projection+i]);
+  if(values[C::Projection+i]!=expected.projection[i])r.projectionDifferences++;
+  if(std::isfinite(a))r.projectionMaxAbsolute=std::fmax(r.projectionMaxAbsolute,std::fabs(a-e));
+  e=Float(expected.finalHidden[i]);a=Float(values[C::Final+i]);
+  if(values[C::Final+i]!=expected.finalHidden[i])r.finalDifferences++;
+  if(std::isfinite(a)){double d=a-e;r.finalMaxAbsolute=std::fmax(r.finalMaxAbsolute,std::fabs(d));error2+=d*d;reference2+=e*e;}
+ }
+ r.checked=words;r.finalRelativeL2=std::sqrt(error2/(reference2+1e-300));
+ r.passed=!(r.nonfinite || r.convErrors || r.historyErrors || r.gatedErrors || r.projectionDifferences
+  || r.currentErrors || r.nextErrors || r.finalDifferences);
+ if(std::fegetround()!=FE_TONEAREST)return false;
+ *output=r;return true; // report ONLY;no data uploaded,reference products exposed or native permission
 }
 #endif

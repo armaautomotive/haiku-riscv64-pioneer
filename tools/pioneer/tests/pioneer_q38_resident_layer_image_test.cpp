@@ -8,6 +8,7 @@
 #include "pioneer_q38_resident_output_cohort_image_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerPlan.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerProof.h"
+#include "pioneer_q38_resident_layer_learned_bytes.h"
 struct LayerFabric;
 struct LayerPeer:CohortPeer {
  LayerFabric* layerFabric=nullptr;
@@ -26,6 +27,7 @@ struct LayerFabric:OutputCohortFabric {
  std::array<std::vector<uint8_t>,2> extra;
  std::unique_ptr<PioneerQ38ResidentLayerPlan> plan=std::make_unique<PioneerQ38ResidentLayerPlan>();
  std::array<uint32_t,5120> rawBefore={},projected={},normalized={},residual={},down={};
+ std::array<uint32_t,17408> observedActivation={};std::array<unsigned,68> activationCoverage={};
  std::array<uint32_t,8> initialNoc={};
  std::array<std::array<uint32_t,8>,119> initialPeerNoc={};
  std::array<std::vector<uint32_t>,3> expected;
@@ -280,8 +282,11 @@ void LayerPeer::PrepareFfn(unsigned role){
  for(unsigned i=0;i<16;i++)assert(memory.at(0x74000+i*4)==job[i]);
  type=12;inputs=r[3];RowsMachine::groups=part[2];base=part[0];count=256;
  vector.resize(inputs);scales.resize(inputs/256);tile.assign(2304,0);tiles.assign(RowsMachine::groups*(inputs/256),tile);
- // ORIGINAL SYNTHETIC INPUT weights only;never a matrix result or wire.
- for(unsigned t=0;t<tiles.size();t++)for(unsigned row=0;row<16;row++){
+ // Original byte source MUST cover the complete FFN,never a synthetic
+ // continuation after an original prefix. No numerical products enter.
+ if(layerFabric->originalBytes){
+  assert(ResidentLayerImportFfnMatrixBytes(*layerFabric->plan,role,logicalWorker,*layerFabric->originalBytes,tiles));
+ }else for(unsigned t=0;t<tiles.size();t++)for(unsigned row=0;row<16;row++){
   unsigned q=1+(t+row+logicalWorker+role)%3;uint16_t d=uint16_t(role==2?0x0100:role==0?0x0800:0x0c00);
   uint8_t raw[144]={};raw[0]=uint8_t(d);raw[1]=uint8_t(d>>8);
   for(unsigned i=0;i<4;i++)raw[4+i]=raw[12+i]=1;
@@ -331,7 +336,10 @@ void LayerPeer::StepBlock(){
  CohortPeer::StepBlock();if(!ffn || !active || pc!=TT_Q38_PEER_WAIT_LOAD || memory.at(0x74144)!=ffnPrepared)return;
  assert(!pending && memory.at(0x74140)==ffnPrepared && !memory.at(0x74148));ClearTensorState();
  if(!activation){assert(requests==packets.size() && CorrectRows() && !dotProbeReads);matrixJobs++;ffnArithmetic+=matrixInstructions;}
- else {if(inputFfn)VerifyInputFfn();else VerifyActivation();producerJobs++;}
+ else {if(inputFfn)VerifyInputFfn();else {
+   VerifyActivation();unsigned block=descriptor[5];assert(block<68 && !layerFabric->activationCoverage[block]++);
+   for(unsigned i=0;i<256;i++)layerFabric->observedActivation[block*256+i]=memory.at(0x90800+i*4);
+  }producerJobs++;}
  ffnVerified=ffnPrepared;active=false;layerFabric->RecordFfn(*this);
 }
 #ifndef PIONEER_Q38_RESIDENT_LAYER_MACHINE_ONLY

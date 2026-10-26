@@ -69,10 +69,11 @@ struct ResidentLayerExecutionMachine::Impl {
    }
   }
   for(unsigned i=0;i<5120;i++)f.rawBefore[i]=f.Gddr(route,base+98304+i*4);
-  // This endpoint test has synthetic norm/FFN bytes. Importing an original
-  // prefix alone would create misleading mixed-model qualification.
-  // The future original-model observer must cover the COMPLETE layer.
-  assert(!endpoint.LearnedBytes());
+  if(auto* original=endpoint.LearnedBytes()){
+   assert(original->Ready() && ResidentLayerImportLearnedBytes(*f.plan,*original,
+    [&](unsigned route,uint32_t address,uint32_t value){f.Put(route,address,value);}));
+   f.originalBytes=original;
+  } // ALL original Conv/GDN/output/norm/FFN bytes or abort;no CPU products/synthetic fallback
  }
  void Sync(unsigned w){
   auto& f=*machine;
@@ -148,3 +149,13 @@ void ResidentLayerExecutionMachine::Diagnostic()const{
  const auto& p=*implementation;if(!p.machine)return;const auto& f=*p.machine;
  fprintf(stderr,"LAYER_CAPTURED pc%08x steps%u packets%u conv%u gdn%u output%u matrix%u\n",f.pc,f.steps,f.packets,f.convLaunches,f.gdnLaunches,f.outputLaunches,f.matrixLaunches);
 }
+void ResidentLayerExecutionMachine::StageFingerprints(uint64_t* out)const{
+ const auto& p=*implementation;assert(out && p.machine && p.exported && p.stops==119);const auto& f=*p.machine;
+ for(unsigned count:f.activationCoverage)assert(count==1);
+ const uint32_t* data[]={f.normalized.data(),f.expected[0].data(),f.expected[1].data(),f.observedActivation.data(),f.expected[2].data()};
+ const unsigned words[]={5120,17408,17408,17408,5120};
+ for(unsigned stage=0;stage<5;stage++){
+  uint64_t hash=UINT64_C(14695981039346656037);
+  for(unsigned i=0;i<words[stage];i++)for(unsigned b=0;b<4;b++){hash^=uint8_t(data[stage][i]>>(b*8));hash*=UINT64_C(1099511628211);}out[stage]=hash;
+ }
+} // observation AFTER actual complete instructions/STOP,never a numerical input or ready setter
