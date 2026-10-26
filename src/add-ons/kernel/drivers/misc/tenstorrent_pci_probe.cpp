@@ -4,7 +4,7 @@
  * Optional, root-only Pioneer experiments. Only fixed owned host-buffer DMA;
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
-#if defined(PIONEER_Q38_RESIDENT_CONTINUE_IMAGE) || defined(PIONEER_Q38_DENSE_PREPARE_IMAGE)
+#if defined(PIONEER_Q38_RESIDENT_CONTINUE_IMAGE) || defined(PIONEER_Q38_DENSE_PREPARE_IMAGE) || defined(PIONEER_Q38_DENSE_ATTENTION_IMAGE)
 #error Continuation/local dense IMAGE has no existing native/CPU/Work/component role
 #endif
 #ifdef PIONEER_Q38_RESIDENT_ADVANCE_IMAGE

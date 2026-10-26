@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_DENSE_ATTENTION_IMAGE
+#error Dense preparation IMAGE cannot alias the new streaming attention IMAGE
+#endif
 // Deliberately no guard: exact offline role,including late reinclusion.
 #if !defined(PIONEER_Q38_DENSE_PREPARE_IMAGE) || PIONEER_Q38_DENSE_PREPARE_IMAGE != 1
 #error Exact separate dense-prepare IMAGE required

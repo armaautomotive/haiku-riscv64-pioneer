@@ -1,0 +1,125 @@
+Qwen3.8-27B: wide resident attention instruction implementation
+2026-10-26 UTC; OFFLINE synthetic correctness,NOT inference throughput
+
+Implemented device path
+------------------------
+NEW QDA1 component executes ACTUAL six-head QDP preparation first,selects
+one of24 normalized/partially-rotated query heads and its untouched gate,
+and retains its actual new packed K/V in provisional local memory. No
+host-computed normalized Q,gate sigmoid,current K/V or expected product
+is supplied at this handoff. Raw learned/state/input bytes remain synthetic.
+
+The selected256-wide head streams prior KV in32-token chunks. QK runs on
+32 token-parallel SFPU lanes using exact half products and compensated
+high/low reductions,with scale1/16. Softmax runs on the card's RISC core,
+not the host CPU,and probabilities are rounded to IEEE binary16. PV uses
+eight32-dimensional SFPU blocks,retaining all256 high/low pairs between
+chunks in local scratch. Each V chunk is fetched ONCE,not eight times.
+Stable on-card sigmoid gates the final vector. NORMAL exp(-80..-87) is
+preserved;only genuine binary32 subnormal results flush to zero.
+
+Only PRIOR positions are read from GDDR. The current position is overlaid
+inside the last local chunk with ACTUAL QDP K/V,never stale cache bytes.
+There is NO canonical KV write or premature token commit. At8192 tokens,
+512 READ packets/131056 flits transfer8387584 prior-prefix bytes per head;
+all eight physical-counter MODEL deltas,source bits,header and commands
+are checked. UNKNOWN/source/header/counter/timeout stops issue no later
+packet,reset or retry. This is actual emitted code with simulated NoC,
+not proof of physical hardware/source ownership or safe native cleanup.
+
+Important performance/integration limit: this combined qualification
+entry recomputes the six-head group preparation for each selected head.
+The production cohort MUST reuse four genuine group preparations across
+24 attention heads. The current entry is NOT presented as optimized Work.
+It is also not a tensor-matrix-unit performance benchmark:attention uses
+SFPU lanes plus card-side scalar control. No measured speedup is claimed.
+
+Qualification results
+----------------------
+Main and independent clean-tree tests both PASS,process exit0. Full output
+is identical,SHA256
+862c345fcf37e42566d043a557221e144d38d757d5503d0f049f279f51c26955.
+46 positives cover all24 heads/four KV groups,chunk boundaries1/2/17/31/
+32/33/65/128/257,extreme/tiny/signed-zero/uniform/subnormal input variants,
+and sigmoid gates-80,-81,-84,-87,-88,+80,+65504,-65504. Three FULL8192
+cases cover ordinary,uniform and half-subnormal prior-state inputs.
+Every tested raw QK score and final F16 probability matches an independent
+double-reduction/expf/_Float16 reference BIT-FOR-BIT. Max independent
+whole-vector PV relative L2=0 for THESE fixtures. Gates additionally pass
+relative3e-6 accuracy for every normal result;zero is required only when
+the corresponding true binary32 product is subnormal/zero. Actual selected
+Q/gate/provisional K/V bits are independently checked after execution.
+Reference values are observations only,never supplied to device code.
+
+77 refusals/detections cover prefix READ timeouts/counter/header/source
+changes at first/middle/last packets,invalid header/source fields,first/
+last K/V infinities,SFPU acknowledgement timeout and injected product/
+lane-layout corruption. Numeric corruption is detected by the OFFLINE
+observer,not an invented in-device CPU-validation path. Tests prohibit
+code/header/PCI/reset/canonical-KV writes,check canaries,parked inertness,
+retained learned/input bytes and exact before/after NoC counters. A failure
+can leave LOCAL scratch/config/tensor state partial;future native owner
+quarantine/STOP/restore obligations are NOT waived by these tests.
+Warnings-as-errors,ASan/UBSan and disabled FP contraction are used.
+Max173383764 interpreted instructions;observed ROOT stack1764 bytes.
+Neither number is silicon timing or a tokens/sec measurement.
+
+Immutable executable and regressions
+-------------------------------------
+boot.bin4B SHA256
+d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+code.bin14428B SHA256
+e33cb65be5c53d77f486ee7ea2371a2ffc78638e5ed72bfa8b2fe2bf8cf19736
+program.elf24088B SHA256
+b86f8fd4edd928a29340bb1643289a0d1251799dbb9903203aab8f41ce3f51d5
+Main/clean ELF bytes identical;max static frame1152B. No undefined symbols,
+writable globals/GOT,RISC CSR opcode,division/sqrt/high multiply/hardware
+FMA/FP-to-int conversion/EBREAK. The NEW program DOES use local NoC/SFPU
+MMIO and modifies tensor/configuration state;no old journal reserves it.
+
+252 new role/build gates and239 prior QDP gates pass;17 scoped ambient
+builders reject the new flag BEFORE SDK/output access,including defined0.
+Old continuation234/native585/client154/reference76 gates pass. The client
+test now explicitly requires BOTH new dense roles in its33-name refusal
+set,not a silently loosened count. Existing driver/source .cpp line numbers
+remain unchanged. Main/clean full SDK regression reproduces DEBUG69
+b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7,
+old65=61faa093 and inert NODRV=9fcf1f7f. Rebuilt two-layer continuation ELF
+remains91f5cb27b7ab075a5309693d02446a56c350215893be079b721b4abe16cfa620.
+Prior QDP23 positives/2071 refusals still pass with unchanged program bytes.
+All30 implementation/test/build files match the independent clean tree.
+
+Offline failures preserved
+--------------------------
+First device compile refused misleading-indentation warnings and volatile
+scratch-pointer conversion;explicit lines/raw local pointers corrected it.
+First host compile refused an included but unused helper;the test marks
+its address used without executing it. The first fault fixture asked for
+packet6 at65 tokens,which has only64 PRIOR tokens and four reads;using66
+tokens correctly exercises six reads. The immutable emitter did not change.
+The first role test referenced the old QDP header;it now checks QDA's own
+role. The old client test caught its obsolete31-name list;33 explicit names
+and all defined0/late refusal cases now pass. No hardware was touched.
+
+Reproduction
+-------------
+python3 tools/pioneer/build_qwen38_dense_attention_image.py \
+  /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/NEW_ABSOLUTE_OUTPUT
+python3 tools/pioneer/tests/run_pioneer_q38_dense_attention_tests.py \
+  /private/tmp/NEW_ABSOLUTE_OUTPUT --full
+python3 tools/pioneer/tests/pioneer_q38_dense_attention_gates_test.py
+
+Remaining actual goal
+----------------------
+No driver/image installed,no GPU compute/power/SD/mains/hardware/Assistant
+change. This component's raw weights/state/prefix endpoints are SYNTHETIC;
+it is NOT original-model/native/silicon/full64-layer or FAST Work authority.
+The geometry-only addresses/identities do not authenticate a canonical KV
+prefix. Full-model dense Q8 projections,input/table transfers and real
+preceding-layer producers,four-prep/24-head cohort reuse,canonical KV and
+recurrent/token commits,vocabulary/sampling/persistent token loop remain.
+A genuine new authenticated source/init/clock/host/joint L1-GDDR-tensor/
+NoC owner with arbitrary-original journals,current physical proofs and
+exact STOP/holds/restoration is OWED before silicon or Work selection.
+Last measured WHOLE MODEL remains0.207893161tok/s.20tok/s is UNMET;continue
+the full scope,not merely this passing component or a relabeled old owner.

@@ -94,6 +94,7 @@ struct DensePrepareMachine:ScalarMachine {
   }
  }
 };
+#ifndef PIONEER_Q38_DENSE_PREPARE_MACHINE_ONLY
 static void HostMathAndPointers(){
  uint32_t random=0x635cf19;unsigned means=0;
  for(unsigned trial=0;trial<2000;trial++){
@@ -150,3 +151,4 @@ int main(int argc,char** argv){
  for(unsigned i=3072;i<3328;i++)assert(!late.writes[i]);refusals++;
  printf("PASS ACTUAL QDP1 local27B RV32 preparation positives%u/refusals%u/maxSteps%u/maxStack%u;ALL24Q/4KV heads,6x[Q256,gate256] interleaving,learnedRMS256/partialRoPE64+unrotated192/F16K-V BITEXACT independent double/sqrtf/fmaf/_Float16 observer;NO NoC/GDDR/KV commit/native/fullattention/token loop/inference timing\n",positives,refusals,maxSteps,maxStack);
 }
+#endif

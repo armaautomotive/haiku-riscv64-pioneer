@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#ifdef PIONEER_Q38_DENSE_PREPARE_IMAGE
+#if defined(PIONEER_Q38_DENSE_PREPARE_IMAGE) || defined(PIONEER_Q38_DENSE_ATTENTION_IMAGE)
 #error Local dense-prepare IMAGE is not an advance IMAGE
 #endif
 #ifdef PIONEER_Q38_RESIDENT_CONTINUE_IMAGE
