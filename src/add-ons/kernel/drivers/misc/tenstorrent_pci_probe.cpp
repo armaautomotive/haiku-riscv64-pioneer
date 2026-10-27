@@ -16,6 +16,18 @@
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x5152424e4f445256ULL && !PIONEER_Q38_RECURRENT_BLOCK_NATIVE_ROLE_TAG_OK
 #error Reserved QRBNODRV tag needs its exact renamed-ABI compile perimeter
 #endif
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_PHYSICAL_ROLE_TAG_OK
+#error Internal recurrent physical-role witness cannot be supplied by the caller
+#endif
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_NATIVE
+#include "PioneerQ38RecurrentBlockValidationRole.h"
+#define PIONEER_Q38_RECURRENT_BLOCK_PHYSICAL_ROLE_TAG_OK 1
+#else
+#define PIONEER_Q38_RECURRENT_BLOCK_PHYSICAL_ROLE_TAG_OK 0
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102700010071ULL && !PIONEER_Q38_RECURRENT_BLOCK_PHYSICAL_ROLE_TAG_OK
+#error Reserved tag71 needs its exact separate recurrent physical validation role
+#endif
 #if defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_RESIDENT_CONTINUE_IMAGE) || defined(PIONEER_Q38_DENSE_PREPARE_IMAGE) || defined(PIONEER_Q38_DENSE_ATTENTION_IMAGE) || defined(PIONEER_Q38_DENSE_PROJECTION_IMAGE) || defined(PIONEER_Q38_DENSE_PARTITION_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_WORKER_IMAGE) || defined(PIONEER_Q38_MIXED_CAPSULE_IMAGE)
 #error Continuation/local dense IMAGE has no existing native/CPU/Work/component role
 #endif
@@ -4835,6 +4847,9 @@ public:
 #ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_NATIVE
 #include "PioneerQ38MixedLiveValidationControl.h"
 #endif
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_NATIVE
+#include "PioneerQ38RecurrentBlockValidationControl.h"
+#endif
 #ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
 // PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE_CONTROL_BEGIN
 struct PioneerQ38GdnRecurrentValidationResults {
@@ -8139,9 +8154,14 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #include "PioneerQ38MixedLiveNativeRouting.inc"
 #ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
  // Retain genuine constructors in the PRIVATE renamed compile body.
- // No new/public compute selector,old diagnostic promotion or Work route.
+ // Only the separately qualified physical role gets its fixed diagnostic
+ // selector;the QRBNODRV branch retains NO public compute or Work route.
  if(operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
   return DriverReloadControl(instance,operation,data,length);
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_NATIVE
+ if(operation==TT_PCI_PROBE_Q38_RECURRENT_BLOCK_VALIDATION_SUPPORT || operation==TT_PCI_PROBE_Q38_RECURRENT_BLOCK_VALIDATE)
+  return Q38RecurrentBlockValidationControl(instance,operation,data,length);
+#endif
  if(operation==TT_PCI_PROBE_Q38_BANK_SUPPORT || operation==TT_PCI_PROBE_Q38_BANK_BEGIN || operation==TT_PCI_PROBE_Q38_BANK_END)
   return Q38BankControl(instance,operation,data,length);
  if(operation==TT_PCI_PROBE_Q38_SPAN_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD || operation==TT_PCI_PROBE_Q38_SPAN_END)

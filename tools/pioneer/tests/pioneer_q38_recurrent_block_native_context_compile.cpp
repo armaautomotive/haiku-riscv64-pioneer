@@ -56,6 +56,12 @@ extern "C" bool pioneer_recurrent_context_scoped_execution(PioneerProbeCookie* c
   && PrepareQ38RecurrentBlockNativeHeld(*c,memory) && PrepareQ38RecurrentBlockNativeExecution(*c,execution)
   && RunQ38RecurrentBlockNativeExecution(*c,execution) && CloseQ38RecurrentBlockNativeExecution(*c,execution,memory);
 } // actual complete body must compile,NEVER linked/installed/invoked here
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_READBACK
+extern "C" bool pioneer_recurrent_context_scoped_readback(PioneerProbeCookie* cookie,PioneerQ38RecurrentBlockResult& execution,
+ PioneerQ38RecurrentBlockMemoryResult& memory,uint32_t* values,unsigned words,PioneerQ38RecurrentBlockReadbackResult& out){
+ PioneerQ38GdnCallScope scope(cookie);auto* c=scope.Context();return c && CloseQ38RecurrentBlockNativeValidation(*c,execution,memory,values,words,out);
+} // actual same-owner readback body,compile/inspect ONLY;NO public selector
+#endif
 extern "C" bool pioneer_recurrent_context_scoped_dispatch_end(PioneerProbeCookie* cookie,tt_resident_session_result& result,bool& clean){
  PioneerQ38GdnCallScope scope(cookie);auto* c=scope.Context();return c && EndQ38DispatchOwnership(*c,result,clean);
 } // not a complete final bank-END/VM/clock/PCI/host disposal qualification

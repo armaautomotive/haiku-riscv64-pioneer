@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: MIT */
-// No guard: reject late/defined0 changes in this DISTINCT compile perimeter.
+// No guard: recheck late/defined0 changes. The distinct physical role is
+// checked independently;it NEVER promotes the renamed QRBNODRV perimeter.
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_NATIVE
+#include "PioneerQ38RecurrentBlockValidationRole.h"
+#else
 #if !defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT) || PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT != 1 \
  || !defined(PIONEER_Q38_RECURRENT_BLOCK_CONTEXT_COMPILE_ONLY) || PIONEER_Q38_RECURRENT_BLOCK_CONTEXT_COMPILE_ONLY != 1 \
  || !defined(PIONEER_Q38_RECURRENT_BLOCK_EMIT_CONTEXT_BODY) || PIONEER_Q38_RECURRENT_BLOCK_EMIT_CONTEXT_BODY != 1 \
@@ -49,4 +53,5 @@
  || defined(PIONEER_Q38_WORK_POSTED_STAGE) || defined(PIONEER_Q38_WORK_COHORT_CACHE) \
  || defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) || defined(PIONEER_Q38_WORK_OUTPUT_DMA) || defined(__FAST_MATH__)
 #error QRBNODRV is not an old native/image/CPU/Work role,including defined0
+#endif
 #endif

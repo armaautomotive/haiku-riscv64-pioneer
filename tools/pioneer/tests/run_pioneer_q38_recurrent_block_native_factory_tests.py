@@ -9,12 +9,15 @@ import subprocess
 import sys
 import tempfile
 original_model=None
-if len(sys.argv)==7 and sys.argv[5]=='--original-model':
+control=len(sys.argv)==6 and sys.argv[5]=='--control'
+readback=control or len(sys.argv)>=6 and sys.argv[5] in ('--fresh-readback-end','--readback-original-model')
+if len(sys.argv)==7 and sys.argv[5] in ('--original-model','--readback-original-model'):
  original_model=pathlib.Path(sys.argv[6]);assert original_model.is_absolute() and original_model.stat().st_size==18973870528
  options=['--fresh-execute-end']
 else:
- assert len(sys.argv) in (5,6) and (len(sys.argv)==5 or sys.argv[5] in ('--execute','--faults','--fresh-held-end','--fresh-execute-end'))
+ assert len(sys.argv) in (5,6) and (len(sys.argv)==5 or sys.argv[5] in ('--execute','--faults','--fresh-held-end','--fresh-execute-end','--fresh-readback-end','--control'))
  options=sys.argv[5:]
+ if readback:options=['--fresh-execute-end']
 fresh=bool(options) and options[0].startswith('--fresh-')
 here=pathlib.Path(__file__).resolve().parent;kernel=here.parents[2]/'src/add-ons/kernel/drivers/misc'
 zero,embedding,root,worker=map(pathlib.Path,sys.argv[1:5])
@@ -29,11 +32,12 @@ tree=ast.parse((here/'run_pioneer_q38_mixed_worker_tests.py').read_text())
 pins=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='PINS' for t in n.targets))
 for name,size,digest in pins:
  data=(worker/name).read_bytes();assert len(data)==size and hashlib.sha256(data).hexdigest()==digest
-role=(kernel/'PioneerQ38RecurrentBlockNativeRole.h').read_text()
-parents=set(re.findall(r'!defined\(([A-Z][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b',role));assert len(parents)==21
-defines={key:'1' for key in parents};defines['PIONEER_DRIVER_BUILD_TAG']='0x5152424e4f445256ULL'
-defines.update({key:'pioneer_recurrent_factory_test_'+key for key in ('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')})
+role=(kernel/('PioneerQ38RecurrentBlockValidationRole.h' if control else 'PioneerQ38RecurrentBlockNativeRole.h')).read_text()
+parents=set(re.findall(r'!defined\(([A-Z][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b',role));assert len(parents)==(22 if control else 21)
+defines={key:'1' for key in parents};defines['PIONEER_DRIVER_BUILD_TAG']='0x2026102700010071ULL' if control else '0x5152424e4f445256ULL'
+if not control:defines.update({key:'pioneer_recurrent_factory_test_'+key for key in ('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')})
 if fresh:defines.update({'PIONEER_Q38_RECURRENT_BLOCK_END_FIXTURE':'1','PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE':'1','PIONEER_Q38_RECURRENT_BLOCK_FRESH_FINAL_TEST':'1'})
+if readback:defines['PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_READBACK']='1'
 if original_model:defines['PIONEER_Q38_RECURRENT_BLOCK_ORIGINAL_NATIVE_TEST']='1'
 source=(kernel/'tenstorrent_pci_probe.cpp').read_text()
 with tempfile.TemporaryDirectory(prefix='pioneer-qrb-native-factory-',dir='/private/tmp') as temporary:
@@ -54,6 +58,11 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qrb-native-factory-',dir='/priv
   return source[start:end]+'\n'
  (base/'recurrent_block_zero_callbacks.inc').write_text(''.join(method(s) for s in (
   'bool PioneerSessionIO::StateZeroBeforeCohort()', 'bool PioneerSessionIO::StateZeroOtherCoresHeld()', 'bool PioneerSessionIO::NonRootHeldOwner()')))
+ if control:
+  begin='static status_t\nProbeControl(';assert source.count(begin)==1
+  route=source.split(begin,1)[1].split('#ifdef TT_PIONEER_DRIVER_RELOAD',1)[0]
+  assert 'Q38RecurrentBlockValidationControl(instance,operation,data,length)' in route and 'return B_NOT_ALLOWED;' in route
+  (base/'native_recurrent_control_routing.inc').write_text(begin+route+'return B_NOT_ALLOWED;\n}\n')
  if fresh:
   begin,end='// PIONEER_Q38_CLOCK_SERVICE_BEGIN','// PIONEER_Q38_CLOCK_SERVICE_END'
   assert source.count(begin)==source.count(end)==1
@@ -83,9 +92,10 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qrb-native-factory-',dir='/priv
  common=[os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off','-fsanitize=address,undefined']
  transport=base/'transport.o';binary=base/'test'
  flags=re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?',(here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
+ if readback:flags+=['-DPIONEER_Q38_RECURRENT_BLOCK_VALIDATION_READBACK=1']
  subprocess.run([*common,*flags,'-c',str(here/'pioneer_q38_recurrent_block_native_transport.cpp'),'-o',str(transport)],check=True)
  native_flags=[*['-D'+k+'='+v for k,v in sorted(defines.items())],'-I'+str(base),'-I'+str(kernel)]
- sources=[here/'pioneer_q38_recurrent_block_native_factory_test.cpp',here/'pioneer_q38_embedding_execution_bridge.cpp',
+ sources=[here/('pioneer_q38_recurrent_block_validation_control_test.cpp' if control else 'pioneer_q38_recurrent_block_native_factory_test.cpp'),here/'pioneer_q38_embedding_execution_bridge.cpp',
   *([here/'pioneer_q38_mixed_live_native_clock.cpp',here/'pioneer_q38_mixed_live_final_audit.cpp'] if fresh else [])]
  if original_model:
   # Original file/source coordinator MUST NOT see native or operand/image
@@ -98,5 +108,5 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qrb-native-factory-',dir='/priv
   run_args=[str(original_model),*sys.argv[1:5]]
  else:
   subprocess.run([*common,*native_flags,*map(str,sources),str(transport),'-o',str(binary)],check=True)
-  run_args=[*sys.argv[1:5],*options]
+  run_args=[*sys.argv[1:5],*([] if control else options)]
  subprocess.run([str(binary),*run_args],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})

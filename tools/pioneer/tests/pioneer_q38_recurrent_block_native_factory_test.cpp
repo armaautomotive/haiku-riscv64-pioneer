@@ -47,6 +47,7 @@ template<class Check> static void RecurrentNativeFork(Check check){
  fflush(nullptr);pid_t child=fork();assert(child>=0);if(!child){check();_exit(0);}
  int status=0;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
 }
+#ifndef PIONEER_Q38_RECURRENT_BLOCK_CONTROL_FIXTURE_ONLY
 #ifdef PIONEER_Q38_RECURRENT_BLOCK_ORIGINAL_NATIVE_TEST
 int ExecuteRecurrentOriginalNativeScenario(const char* const* images,RecurrentBlockRawLearnedBytes& original,uint32_t* output,unsigned outputWords,RecurrentOriginalStageSink* stageSink){
  if(!images || !output || outputWords!=5120 || (uintptr_t(output)&3) || uintptr_t(output)>UINTPTR_MAX-20480 || !original.Ready())return 1;
@@ -86,6 +87,10 @@ int main(int argc,char** argv){
   && state->InitializationsClosed(c.banks,c.baseline.baseline.baseline.baseline.dram));
  puts("PASS QRB genuine native SAME completed QPE1 producer + actual672GDN/336history zero instruction leases/private clean publication;NO transferred ready facade");
  RecurrentBlockNativeTransport transport(argv[3],argv[4]);
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_READBACK
+ assert(execute);transport.EnableValidationReadback();
+ std::vector<uint32_t> validationCapture(5120,0xdeadbeef);PioneerQ38RecurrentBlockReadbackResult validation;
+#endif
 #ifdef PIONEER_Q38_RECURRENT_BLOCK_ORIGINAL_NATIVE_TEST
  assert(original.Ready() && transport.AttachOriginalLearned(original));
  puts("STAGED ORIGINAL token0 packed QPE1 tile+ALL14 recurrent layer0 tensors/raw57spans;synthetic learned fallback DISABLED,NO expected products/native ready grant");
@@ -125,23 +130,68 @@ int main(int argc,char** argv){
   bool ran=RunQ38RecurrentBlockNativeExecution(c,execution);
   if(!ran){fprintf(stderr,"QRB_NATIVE_RUN_FAILED phase%u worker%u word%u\n",execution.phase,execution.worker,execution.word);transport.Diagnostic();}
   assert(ran);transport.VerifyRun();
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_READBACK
+  auto inert=[&](uint32_t* values,unsigned words){auto physical=transport.Touches(),touches=io.touches;
+   assert(!CloseQ38RecurrentBlockNativeValidation(c,execution,memory,values,words,validation)
+    && !state->Closed() && !state->Unsafe() && !validation.started
+    && physical==transport.Touches() && touches==io.touches && !transport.ValidationReadbackPackets());
+  };
+  inert(nullptr,5120);inert(validationCapture.data(),5119);inert(reinterpret_cast<uint32_t*>(&c),5120);
+  inert(reinterpret_cast<uint32_t*>(state),5120);inert(reinterpret_cast<uint32_t*>(c.q38EmbeddingModel),5120);
+  inert(reinterpret_cast<uint32_t*>(&execution),5120);inert(reinterpret_cast<uint32_t*>(&memory),5120);inert(reinterpret_cast<uint32_t*>(&validation),5120);
+  puts("PASS actual native validation request8 inert CPU refusals AFTER genuine whole RUN;NO physical IO/phase change/retention or output publication");
+#endif
   for(unsigned bad=0;bad<6;bad++)RecurrentNativeFork([&]{
    if(bad==0)io.q38MutableContext=nullptr;if(bad==1)sRuntimeOwner=nullptr;if(bad==2)c.hashes=nullptr;
    if(bad==3)currentTeam++;if(bad==4)f.transfer.ready=false;if(bad==5)c.span.closed=false;
    auto physical=transport.Touches(),touches=io.touches,resets=transport.Resets();
-   assert(!CloseQ38RecurrentBlockNativeExecution(c,execution,memory) && state->Unsafe() && c.dispatchOwnerRetained
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_READBACK
+   auto close=[&]{return CloseQ38RecurrentBlockNativeValidation(c,execution,memory,validationCapture.data(),unsigned(validationCapture.size()),validation);};
+#else
+   auto close=[&]{return CloseQ38RecurrentBlockNativeExecution(c,execution,memory);};
+#endif
+   assert(!close() && state->Unsafe() && c.dispatchOwnerRetained
     && c.banks.Quarantined() && c.q38Clock.quarantined && f.transfer.quarantined && f.wide.quarantined && sColdRecoveryRequired);
-   assert(!CloseQ38RecurrentBlockNativeExecution(c,execution,memory) && !EndFactory(c)
+   assert(!close() && !EndFactory(c)
     && physical==transport.Touches() && touches==io.touches && resets==transport.Resets());
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_READBACK
+   assert(!validation.started && !validation.completed && !transport.ValidationReadbackPackets());
+   for(auto value:validationCapture)assert(value==0xdeadbeef);
+#endif
   });
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_READBACK
+  for(unsigned fault=1;fault<=3;fault++)RecurrentNativeFork([&]{
+   transport.FailValidationReadback(fault);
+   auto close=[&]{return CloseQ38RecurrentBlockNativeValidation(c,execution,memory,validationCapture.data(),unsigned(validationCapture.size()),validation);};
+   assert(!close() && transport.ValidationReadbackFaultObserved() && transport.ValidationReadbackPackets()==1
+    && state->Unsafe() && c.dispatchOwnerRetained && c.banks.Quarantined() && c.q38Clock.quarantined
+    && f.transfer.quarantined && f.wide.quarantined && sColdRecoveryRequired && validation.started && !validation.completed
+    && execution.stopped==119 && execution.held==120 && !memory.restoredWords);
+   for(auto value:validationCapture)assert(value==0xdeadbeef);
+   auto physical=transport.Touches(),touches=io.touches,resets=transport.Resets();
+   assert(!close() && !CloseQ38RecurrentBlockNativeExecution(c,execution,memory) && !EndFactory(c)
+    && physical==transport.Touches() && touches==io.touches && resets==transport.Resets());
+   printf("PASS actual native readback fault%u AFTER real119STOP+120holds/FD+clock+hosts retained/ZERO following physical IO/restore/retry or caller publication\n",fault);
+  });
+  bool closed=CloseQ38RecurrentBlockNativeValidation(c,execution,memory,validationCapture.data(),unsigned(validationCapture.size()),validation);
+#else
   bool closed=CloseQ38RecurrentBlockNativeExecution(c,execution,memory);
+#endif
   if(!closed){fprintf(stderr,"QRB_NATIVE_CLOSE_FAILED phase%u worker%u word%u holds%u stopped%u\n",execution.phase,execution.worker,execution.word,execution.held,execution.stopped);transport.Diagnostic();}
   assert(closed && execution.completed==119 && execution.stopped==119 && execution.held==120);transport.VerifyClosed();
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_READBACK
+  assert(validation.completed && validation.pages==5 && validation.words==5120);transport.VerifyValidationReadback(validationCapture.data(),unsigned(validationCapture.size()));
+  puts("PASS SAME actual native owner/FD+team+thread+clock+leases/private scoped5READ/5120 actual GDDR output bits AFTER realSTOP+120holds/full11406904 restoration+secondproof;RAW endpoints SIMULATED,NOT physical card/Work/TPS");
+#endif
  }else assert(CloseQ38RecurrentBlockNativeHeld(c,memory) && !transport.Resets());
  assert(state->Closed() && !state->Unsafe() && memory.restoredWords==TT_Q38_RECURRENT_BLOCK_SAVED_WORDS
   && memory.verifiedOriginalWords==2*TT_Q38_RECURRENT_BLOCK_SAVED_WORDS);
 #ifdef PIONEER_Q38_RECURRENT_BLOCK_ORIGINAL_NATIVE_TEST
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_READBACK
+ assert(original.Ready() && validation.completed);std::memcpy(originalCapture.data(),validationCapture.data(),sizeof(originalCapture));
+#else
  assert(original.Ready() && transport.CaptureOriginalOutput(originalCapture.data(),unsigned(originalCapture.size())));
+#endif
 #endif
  bool ended=EndFactory(c);
  if(!ended)fprintf(stderr,"QRB_NATIVE_DISPATCH_END_FAILED phase%u worker%u detail%08x/%08x/%08x\n",c.q38Dispatch->closePhase,c.q38Dispatch->closeWorker,c.q38Dispatch->closeDetail[0],c.q38Dispatch->closeDetail[1],c.q38Dispatch->closeDetail[2]);
@@ -158,3 +208,4 @@ int main(int argc,char** argv){
  std::memcpy(output,originalCapture.data(),sizeof(originalCapture));return 0;
 #endif
 }
+#endif

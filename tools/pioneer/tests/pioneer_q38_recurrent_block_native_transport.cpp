@@ -79,7 +79,20 @@ struct NativeRecurrentLearnedMachine:RecurrentBlockMachine {
 };
 struct RecurrentBlockNativeTransport::Impl:RecurrentOwnerActualIOBase<NativeRecurrentLearnedMachine> {
  using OwnerIO=RecurrentOwnerActualIOBase<NativeRecurrentLearnedMachine>;
- unsigned resets=0;bool configured=false;
+ unsigned resets=0;bool configured=false,validationReadback=false;
+ unsigned readbackPackets=0,readbackFault=0,readbackFaultFence=0;
+ bool AtValidationReadback()const{return validationReadback && execution && execution->phase==7 && holds==120;}
+ bool ReadbackScratch(uint32_t a)const{return a>=0x80000 && a<0x81000;}
+ void ValidationReadbackPacket(uint32_t value){
+  assert(AtValidationReadback() && !current && value==1 && readbackPackets<5 && execution->stopped==119 && execution->held==120);
+  for(unsigned w=0;w<120;w++)assert(core[w]->coreReset==0x47800);
+  const auto* o=machine.block->Outer();const unsigned expected[]={o[9]+RB::FinalOffset+readbackPackets*4096,0,o[8],0x80000,0,129,0,0,4096,0};
+  for(unsigned i=0;i<10;i++)assert(C().command[i]==expected[i]);
+  // The endpoint copies ONLY actual emitted-instruction output bytes. No
+  // CPU arithmetic/reference products or native ready/STOP/hold setters.
+  if(readbackFault!=1)for(unsigned i=0;i<1024;i++)PhysicalWrite(0,0x80000+i*4,machine.Get(o[8],expected[0]+i*4));
+  auto& c=C();c.counters[0]+=readbackFault==2?2:1;c.counters[1]+=64;c.counters[3]++;c.accepted++;readbackPackets++;
+ }
  Impl(const char* root,const char* worker):OwnerIO(root,worker){
   (void)&RecurrentOwnerUnusedInput;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;
   (void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;(void)&Refusals;(void)&LateRefusals;(void)&RunPersistentGdnPair;
@@ -87,7 +100,11 @@ struct RecurrentBlockNativeTransport::Impl:RecurrentOwnerActualIOBase<NativeRecu
  }
  uint32_t ReadLocal(uint32_t a){
   if(a==(current?unsigned(M::Status):unsigned(RB::Status)))Advance(current);
-  if(PioneerQ38RecurrentBlockSnapshotContains(current,a))return PhysicalRead(current,a);
+  if(PioneerQ38RecurrentBlockSnapshotContains(current,a)){
+   auto value=PhysicalRead(current,a);
+   if(AtValidationReadback() && readbackPackets && readbackFault==1 && ReadbackScratch(a))readbackFaultFence=touches;
+   return value;
+  }
   if(!current && a>=0x64000 && a<0x6e000)return prefix.at(PrefixIndex(current,a));
   if(a>=TT_Q38_PANEL_VIEW_BASE && a<TT_Q38_PANEL_VIEW_BASE+TT_Q38_PANEL_VIEW_BYTES)return C().Q38PanelRead(a);
   assert(a>=0x17e000 && a<0x180000);return C().ResidentL1Read((a-0x17e000)/4);
@@ -131,7 +148,13 @@ uint32_t RecurrentBlockNativeTransport::Read32(Read kind,unsigned a,unsigned b,u
   case Code:assert(!a);return p.ReadLocal(0x6000);
   case Control:return p.C().RuntimeControlRead(a);
   case Status:return p.ReadLocal(0x17ffc0+a*4);
-  case Noc:return p.C().ResidentNocRead(a);
+  case Noc:{
+   auto value=p.C().ResidentNocRead(a);
+   if(p.AtValidationReadback() && p.readbackPackets){
+    if(p.readbackFault==2 && a==PioneerQ38PanelCounter(0))p.readbackFaultFence=p.touches;
+    if(p.readbackFault==3 && a==0x840){p.readbackFaultFence=p.touches;return 1;}
+   }return value;
+  }
   case Panel:return p.ReadLocal(a);
   case Pci:return p.C().HostPciRead(a,uint16_t(b),uint8_t(c));
   case Pc:return p.RuntimePcRead();
@@ -144,7 +167,10 @@ void RecurrentBlockNativeTransport::Write32(Write kind,unsigned a,uint32_t value
   case SetLocal:p.WriteLocal(0x17e000+a*4,value);return;
   case SetCode:assert(!a);p.WriteLocal(0x6000,value);return;
   case SetStatus:p.WriteLocal(0x17ffc0+a*4,value);return;
-  case SetNoc:if(a==0x40){p.ResidentNocWrite(a,value);return;}p.C().ResidentNocWrite(a,value);return;
+  case SetNoc:if(a==0x40){
+   if(p.AtValidationReadback() && !p.C().command[7])p.ValidationReadbackPacket(value);
+   else p.ResidentNocWrite(a,value);return;
+  }p.C().ResidentNocWrite(a,value);return;
   case SetPanel:p.WriteLocal(a,value);return;
   case SetReset:p.resets++;p.RuntimeResetWrite(value);return;
  }assert(false);
@@ -232,6 +258,21 @@ bool RecurrentBlockNativeTransport::PublishOriginalStages(RecurrentOriginalStage
  for(unsigned i=0;i<PioneerRecurrentStageCount;i++)if(!m.original->Ready() || !sink.Publish(PioneerRecurrentOriginalStage(i),m.captured[i].data(),unsigned(m.captured[i].size())))return false;
  return m.original->Ready();
 } // native scenario invokes ONLY after successful full final-END/context destruction
+void RecurrentBlockNativeTransport::EnableValidationReadback(){auto& p=*implementation;
+ assert(!p.configured && !p.execution && !p.starts && !p.validationReadback);p.validationReadback=true;
+}
+void RecurrentBlockNativeTransport::FailValidationReadback(unsigned fault){auto& p=*implementation;
+ assert(p.validationReadback && p.execution && p.execution->phase==5 && !p.holds && !p.readbackPackets && !p.readbackFault && fault>=1 && fault<=3);p.readbackFault=fault;
+}
+unsigned RecurrentBlockNativeTransport::ValidationReadbackPackets()const{return implementation->readbackPackets;}
+bool RecurrentBlockNativeTransport::ValidationReadbackFaultObserved()const{const auto& p=*implementation;
+ return p.readbackFault && p.readbackFaultFence && p.readbackFaultFence==p.touches;
+}
+void RecurrentBlockNativeTransport::VerifyValidationReadback(const uint32_t* values,unsigned words){auto& p=*implementation;
+ assert(p.validationReadback && !p.readbackFault && p.readbackPackets==5 && values && words==5120 && p.execution && p.execution->closed
+  && p.execution->held==120 && p.execution->stopped==119 && p.holds==120 && p.machine.stopStarts==119);
+ const auto* o=p.machine.block->Outer();for(unsigned i=0;i<words;i++)assert(values[i]==p.machine.Get(o[8],o[9]+RB::FinalOffset+i*4));
+} // TEST assertion only,never publishes a CPU result into execution
 void RecurrentBlockNativeTransport::Diagnostic(){auto& p=*implementation;
  fprintf(stderr,"QRB_NATIVE_MACHINE rootPC%08x starts%u holds%u matrices%u phase%u packets%u stops%u\n",p.machine.pc,p.starts,p.holds,p.machine.matrixStarts,p.machine.Phase(),p.machine.packets,p.machine.stopStarts);
 }

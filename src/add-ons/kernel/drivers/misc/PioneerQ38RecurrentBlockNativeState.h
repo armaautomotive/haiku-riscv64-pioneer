@@ -19,6 +19,10 @@ struct PioneerStoreContext;struct PioneerSessionIO;
 [[maybe_unused]] static bool PrepareQ38RecurrentBlockNativeExecution(PioneerStoreContext&,PioneerQ38RecurrentBlockResult&);
 [[maybe_unused]] static bool RunQ38RecurrentBlockNativeExecution(PioneerStoreContext&,PioneerQ38RecurrentBlockResult&);
 [[maybe_unused]] static bool CloseQ38RecurrentBlockNativeExecution(PioneerStoreContext&,PioneerQ38RecurrentBlockResult&,PioneerQ38RecurrentBlockMemoryResult&);
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_READBACK
+[[maybe_unused]] static bool CloseQ38RecurrentBlockNativeValidation(PioneerStoreContext&,PioneerQ38RecurrentBlockResult&,PioneerQ38RecurrentBlockMemoryResult&,
+ uint32_t*,unsigned,PioneerQ38RecurrentBlockReadbackResult&);
+#endif
 // Genuine retained context,NOT a caller-ready bit or old dense scope alias.
 // State/history init use private leases on this SAME real completed
 // embedding context. A DISTINCT execution owner proves QRB1 RUN/counters/
@@ -34,6 +38,10 @@ class PioneerQ38RecurrentBlockNativeState {
  friend bool PrepareQ38RecurrentBlockNativeExecution(PioneerStoreContext&,PioneerQ38RecurrentBlockResult&);
  friend bool RunQ38RecurrentBlockNativeExecution(PioneerStoreContext&,PioneerQ38RecurrentBlockResult&);
  friend bool CloseQ38RecurrentBlockNativeExecution(PioneerStoreContext&,PioneerQ38RecurrentBlockResult&,PioneerQ38RecurrentBlockMemoryResult&);
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_READBACK
+ friend bool CloseQ38RecurrentBlockNativeValidation(PioneerStoreContext&,PioneerQ38RecurrentBlockResult&,PioneerQ38RecurrentBlockMemoryResult&,
+  uint32_t*,unsigned,PioneerQ38RecurrentBlockReadbackResult&);
+#endif
  enum Phase {Bound,RecurrentZeroing,RecurrentClosing,HistoryZeroing,HistoryClosing,DispatchPreparing,MemoryPreparing,MemoryInstalled,
   ExecutionPreparing,ExecutionReady,ExecutionComplete,ExecutionClosing,MemoryClosing,MemoryClosed};
  PioneerStoreContext* const context;PioneerQ38EmbeddingNativeState* const prefix;

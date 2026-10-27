@@ -1,8 +1,9 @@
 # Native build status
 
-## Current: recurrent native execution and final-disposal qualification
+## Current: recurrent readback and separate physical diagnostic interface (WIP)
 
-October 27, 2026. Source-qualification checkpoint, not installed on the card.
+October 27, 2026. Source/compile checkpoint, NOT runtime-complete or installed.
+Previous pushed numerical checkpoint: `5903f8aaf0f6407f6984c2e1954c21fd94584d92`.
 The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2d69`.
 
 - Complete execution-owner/real STOP/120 holds/full original restoration
@@ -47,25 +48,42 @@ The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2
   7.45058059692e-9 and 2.38418579102e-7 respectively); these are NOT silently
   promoted to bit-exact state or persistent token correctness. No NaN/Inf.
   OS/register/GDDR endpoints are SIMULATED: not physical readback/full64/Work.
-- Separate same-owner validation readback is local WIP, not part of the
-  original-comparison checkpoint. Main/clean Haiku SDK compiles passed with
+- Separate same-owner validation readback is implemented, still runtime WIP.
+  Five fixed result READs follow real STOP/120 holds; output is withheld until
+  full original restoration and its second proof. Failures retain every owner
+  and block subsequent IO/retry. Main/clean Haiku SDK compiles passed with
   identical object `b0e608455394c0519b6ceda31c5eeb0b10f868bb244500477662701fcc8250ad`;
-  actual native runtime/readback/fault and original-weight runs remain LIVE.
-  No public opcode/loadable role or physical execution is enabled by this WIP.
+  maximum new frame 768 bytes. Native original-weight/failure tests remain LIVE;
+  their result must NOT be inferred from compilation or prior non-readback runs.
+- A distinct DEBUG71/tag2026102700010071/namespace22 diagnostic interface is
+  implemented: fixed token0/position0/layer0, pointer-free 20800-byte payload,
+  real call scope/QPE1/672 recurrent+336 history initializers/whole QRB1/readback.
+  Main/clean SDK objects are identical
+  `490e0db8ff43dd51422dc562fcd959896bed4ef225a349722ae9a3120cf14243`,
+  maximum new frame 832 bytes, conventional ABI but NO CPU reference/Work path.
+  The QRBNODRV object remains byte-identical; it has not been retagged/promoted.
+- Main/clean tests passed all 20800 request-byte mutations, 492 exact physical
+  role gates, 430 unchanged-NODRV gates and 93 readback selection gates.
+  Actual-handler preflight passed 112 missing learned endpoints, 80 malformed
+  header words and 65526 closed opcodes with zero model/epoch/card IO. Handler
+  whole-run, final user-copy failure and explicit-END tests are LIVE, not passed.
+  No module link/install, client execution, silicon readback or speed result.
 
 Remaining before full-offload Work is ready:
 
-1. Assess the intermediate rounding differences; finish same-owner validation
-   readback and its runtime/failure tests, then qualify a distinct physical
-   role/client and validate execution/final disposal on the P100A.
+1. Assess intermediate rounding differences; finish original-weight readback
+   and native/public-handler runtime/failure/END tests. Implement and qualify
+   the authenticated original-weight diagnostic client, link the distinct
+   physical module, then validate execution/readback/final disposal on the P100A.
 2. Connect valid embedding/recurrent layers 0..2 through dense layer 3 and all
    64 layers, with correct persistent KV/recurrent/history and token commit.
 3. Complete final normalization, vocabulary projection and on-card sampling.
 4. Integrate persistent no-CPU-reference Work/Assistant; keep validation separate.
 5. Measure and optimize loading, prefill and decode toward 20 tokens/sec.
 
-Last read-only board check: 64 CPUs, max RAM 137034936320 bytes, driver55 /
-tag2026102100010012 / generation6 / cold0 / active_owner0. No driver install,
+Fresh read-only board check: 64 CPUs, max RAM 137034936320 bytes, free RAM
+129602080768 bytes, driver55 / tag2026102100010012 / generation6 / cold0 /
+active_owner0 / quiesced0 / open_count1 / guard1. No driver install,
 card compute, restart, power, SD, mains, Assistant or network changes.
 Last measured full-model rate is still **0.207893161 tokens/sec**; target unmet.
 

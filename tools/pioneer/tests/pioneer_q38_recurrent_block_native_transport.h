@@ -33,6 +33,11 @@ public:
  bool AttachOriginalLearned(RecurrentBlockRawLearnedBytes&);
  bool CaptureOriginalOutput(uint32_t*,unsigned);
  bool PublishOriginalStages(RecurrentOriginalStageSink&);
+ void EnableValidationReadback();
+ void FailValidationReadback(unsigned); // raw endpoint failures only;never changes native phase/seals
+ unsigned ValidationReadbackPackets()const;
+ bool ValidationReadbackFaultObserved()const;
+ void VerifyValidationReadback(const uint32_t*,unsigned);
  void Observe(const PioneerQ38RecurrentBlockResult&); // asserts reset/hold ordering,NEVER sets private progress
  void VerifyRun();void VerifyClosed();void Diagnostic();
 };

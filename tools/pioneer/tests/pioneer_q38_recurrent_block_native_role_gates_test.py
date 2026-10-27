@@ -33,6 +33,7 @@ for tag in ('0','0x2026102700010070ULL','0x51524c4e4f445256ULL','0x51424c4e4f445
  check(include,{**valid,'PIONEER_DRIVER_BUILD_TAG':tag},False)
  check(include+'#undef PIONEER_DRIVER_BUILD_TAG\n#define PIONEER_DRIVER_BUILD_TAG '+tag+'\n'+include,valid,False)
 aliases=set(re.findall(r'defined\(([^)]+)\)',body))-parents-{'PIONEER_DRIVER_BUILD_TAG',*names}
+aliases.add('PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_NATIVE') # #ifdef branch must NOT promote NODRV
 for key in sorted(aliases):
  for value in ('0','1'):
   check(include,{**valid,key:value},False);check(include+'#define '+key+' '+value+'\n'+include,valid,False)

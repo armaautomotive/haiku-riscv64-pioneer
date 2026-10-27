@@ -30,4 +30,24 @@
  if(okay)state->phase=PioneerQ38RecurrentBlockNativeState::MemoryClosed;
  else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
 } // private renamed NODRV only;NO public launch/Work/native token commit
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_READBACK
+static bool Q38RecurrentReadbackNativeOverlap(const void* output,size_t bytes,const void* object,size_t size){
+ const uintptr_t a=reinterpret_cast<uintptr_t>(output),b=reinterpret_cast<uintptr_t>(object);
+ return !output || !object || a>UINTPTR_MAX-bytes || b>UINTPTR_MAX-size || (a<b+size && b<a+bytes);
+}
+[[maybe_unused]] static bool CloseQ38RecurrentBlockNativeValidation(PioneerStoreContext& c,PioneerQ38RecurrentBlockResult& r,PioneerQ38RecurrentBlockMemoryResult& memory,
+ uint32_t* values,unsigned words,PioneerQ38RecurrentBlockReadbackResult& out){
+ auto* state=c.q38RecurrentBlockNative;
+ if(!state || !c.q38EmbeddingModel || words!=TT_Q38_RECURRENT_BLOCK_READBACK_WORDS
+  || state->phase!=PioneerQ38RecurrentBlockNativeState::ExecutionComplete || !state->execution || state->Unsafe())return false;
+ const void* objects[]={&c,state,c.q38EmbeddingModel};const size_t sizes[]={sizeof(c),sizeof(*state),sizeof(*c.q38EmbeddingModel)};
+ for(unsigned i=0;i<3;i++)if(Q38RecurrentReadbackNativeOverlap(values,words*4,objects[i],sizes[i])
+  || Q38RecurrentReadbackNativeOverlap(&out,sizeof(out),objects[i],sizes[i]))return false;
+ if(!state->execution->CanCloseForValidation(values,words,out,r,memory))return false;
+ state->phase=PioneerQ38RecurrentBlockNativeState::ExecutionClosing;
+ bool okay=c.io.RecurrentBlockBaseScope() && state->execution->CloseForValidation(c.io,r,memory,values,words,out);
+ if(okay)state->phase=PioneerQ38RecurrentBlockNativeState::MemoryClosed;
+ else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
+} // trusted kernel output allocation only;no public control or Work grant
+#endif
 #endif

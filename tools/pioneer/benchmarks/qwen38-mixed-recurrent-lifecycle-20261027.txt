@@ -677,3 +677,85 @@ whole-model rate0.207893161tok/s unchanged;20UNMET/goalACTIVE. Next finish
 runtime readback/native/final-END qualification,then distinct physical
 driver+client and original silicon comparison,then full64/persistent state
 and token path/no-CPU-reference Work+Assistant and real speed measurements.
+
+Recurrent result-readback + distinct DEBUG71 source/compile checkpoint
+----------------------------------------------------------------------
+Previous original numerical evidence5903f8aaf0 pushed and remote exact.
+NEW SAME execution-owner validation readback copies5fixed FINAL pages only
+AFTER real119STOP+ROOT/120holds,checks exact READ command/counter delta/
+sources/clock/FD/team/thread/PCI/held code,poisons all scratch words,retains
+20KiB capture on HEAP,and publishes ONLY after full11406904 original-word
+restoration+second proof. Unknown mapping/data/counter/source/scope/reset
+or timeout retains ALL owners and prohibits later IO/restore/retry. This
+is separate validation,not CPU-reference Work or an arbitrary read capability.
+Native output preflight also rejects aliases into context/private state/
+embedding model plus all retained owner/journal/plan/result/ledger objects.
+Owner layout rejects late readback selection/removal. Source/math/frozen
+ROOT/QMW1 images and the strict original final comparison are unchanged.
+
+Main88471/clean73549 SDK BOTH TERMINAL0/exact b0e608455394c0519b6ceda31c5eeb0b10f868bb244500477662701fcc8250ad/
+maxNewFrame768. New physical compile repeats this NODRV object UNCHANGED;
+it is never a loadable conventional driver or a retagged physical grant.
+Distinct DEBUG71 physical role22exact parents/tag2026102700010071/
+namespace22/fixed20800B80header+5120words is now IMPLEMENTED. Physical
+selection forbids NODRV compile-only/body/ABI renames,all old dense/native/
+image/CPU-reference/Work aliases,including defined0/late changes. Reserved
+tag and internal-witness gates prevent partial/caller-supplied selection.
+Only root-owned fixed SUPPORT/VALIDATE plus existing guarded bank/span/
+reload setup and explicit END are routed;NO old public compute/Work path.
+The actual fixed handler binds original-required layer0 pages BEFORE model
+publication,then real QPE1+672GDN/336history private producers/held journal/
+whole QRB1/STOP/holds/readback/restoration. Failed request/reply copying
+never grants END or post-failure cleanup. All large replies/results HEAP.
+
+Physical SDK main75545/clean82784 BOTH TERMINAL0/exact object
+490e0db8ff43dd51422dc562fcd959896bed4ef225a349722ae9a3120cf14243,
+maxNewFrame832. ALL conventional ABI names present;NO private CPU oracle,
+old dense owner/handler,Work dispatcher or NODRV entry alias. This is
+COMPILE/INSPECTION ONLY:NOT linked,installed,invoked or silicon-qualified.
+Main75463/clean40184 protocol tests ALL20800 byte mutations PASS; main87238/
+clean40184 physical492role gates PASS. Final main47892/clean11563 BOTH0:
+430NODRV +93readback gates PASS,including the new #ifdef physical selector
+refusal under an incomplete component or NODRV selection. Paired evidence
+logs are archived with readback-physical-* names alongside this record.
+
+LIVE current final runtime qualification -- DO NOT restart on observation timeout
+15788 /private/tmp/pioneer-qrb1-readback-actual-20261027-a.log
+Actual whole owner/QRB1/QMW1 then16genuine readback failures+positive full
+readback/restoration. Predates ONLY extra DATA geometry+late include interlock;
+production readback algorithm is identical. Reached RUN and10fault passes,
+not yet a complete passing suite. Endpoint registers/learned data simulated.
+2269 /private/tmp/pioneer-qrb1-readback-actual-clean-20261027-a.log
+Independent clean actual-owner suite,including35page geometries/896mutations.
+82693 /private/tmp/pioneer-qrb1-readback-original-native-20261027-b.log
+91605 /private/tmp/pioneer-qrb1-readback-original-native-clean-20261027-c.log
+Final native ORIGINAL same authenticated raw57spans/private pre-context CPU
+reference,actual init/QPE1/QRB1,8inert alias requests,6native lifetime faults,
+3genuine raw readback faults,positive5READ/full restoration/fresh locked END,
+and strict post-END independent18stage/final comparison. LIVE,not passed.
+61072 /private/tmp/pioneer-qrb1-physical-control-20261027-a.log
+77933 /private/tmp/pioneer-qrb1-physical-control-clean-20261027-a.log
+Actual public routing/handler under exact physical-role macros. Both have
+passed ALL112 missing learned endpoints/80header mutations/65526closed
+opcodes/copy+root preflight with ZERO model/epoch/card IO. Actual full init/
+QRB1/readback/failed final user-copy/duplicate refusal/explicit END is LIVE.
+These use synthetic learned and rawOS/register endpoints,not silicon proof.
+
+Older pilot16581 and original pilots6871/75744 remain live at last poll;
+NOT final qualification. They predate the TEST-only raw scratch fault1
+tracker fix (scratch uses Q38PanelRead,not just MappedRead) and the oldest
+pilot also predates matching component readback selection in its endpoint
+TU. Final82693/91605 use the shared raw ReadLocal tracker and consistent
+owner layout. No native guard,readback algorithm,ready/nonce/PC/hold/phase
+or expected numerical product was changed or manufactured to fix the test.
+Keep/poll exact older handles until authoritative terminal;do not silently
+restart or treat their observation timeouts as termination.
+
+Fresh read-only SSH:64CPUs/max137034936320B/free129602080768B,stable55/
+tag2026102100010012/gen6/quiesced0/cold0/owner0/open1/guard1. NO install,
+physical GPU execution,restart,power/SD/mains/Assistant/network changes;
+dirty llama.cpp/FlashNext untouched. Last real full-model0.207893161tok/s
+unchanged/20UNMET/goalACTIVE. Physical authenticated client/module link/
+silicon comparison still REQUIRED;then valid recurrent0..2->dense3/all64,
+correct per-layer persistent KV/recurrent/history/token commit,finalnorm/
+vocabulary/sampling,persistent no-CPU-reference Work+Assistant,performance.
