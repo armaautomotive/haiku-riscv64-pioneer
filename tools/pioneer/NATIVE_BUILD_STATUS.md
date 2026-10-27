@@ -1,5 +1,13 @@
 # Native build status
 
+October27UTC2026:per-call KV metadata lookup preserves ALL5132288 command
+words/2465 legacy mutation decisions and all physical/scope guards,while
+reducing192 model scans to8 per Shape/Build call (NO persistent cache).
+Host-only100Matches test ~6.7x faster;NOT model/card TPS. Main+clean original
+geometry,held/fresh-END84cases and actual SDK checks pass;working install
+untouched. See benchmarks/qwen38-mixed-live-plan-lookup-20261027.txt.
+Whole-model0.207893161tok/s remains unchanged;20tok/s/full offload UNMET.
+
 October27UTC2026:OFFLINE mixed dense validation/lifecycle qualification,
 NOT a new deployed driver or speedup. Original-weight standalone layer3
 ALL18 stages/final5120 words pass BIT-EXACT in emitted-instruction tests.

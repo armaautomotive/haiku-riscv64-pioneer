@@ -36,6 +36,13 @@ class PioneerQ38MixedLiveBlockPlan {
   }
   return found;
  }
+ static bool DenseKv(const PioneerQ38CanonicalModelPlan& c,unsigned layer,unsigned (&banks)[8],unsigned (&addresses)[8]){
+  // A Shape/Build call needs eight distinct rows,not two new full-model
+  // scans for each of its96 replicated descriptors. Revalidate EVERY row
+  // on EVERY call;these are stack locals,NEVER a persistent ready cache.
+  for(unsigned g=0;g<4;g++)if(!Kv(c,layer,g,banks[g],addresses[g]) || !Kv(c,layer,g+4,banks[g+4],addresses[g+4]))return false;
+  return true;
+ }
  static void Pack(uint32_t* out,const uint32_t* d,const uint32_t* h,const uint32_t (*p)[8],const uint32_t* rows,const uint32_t* banks){
   for(unsigned i=0;i<64;i++)out[i]=d[i];
   for(unsigned i=0;i<16;i++)out[64+i]=h[i];
@@ -76,9 +83,10 @@ class PioneerQ38MixedLiveBlockPlan {
   }
   return true;
  }
- bool DescribeDense(unsigned g,unsigned o,uint32_t* d)const{
+ bool DescribeDense(unsigned g,unsigned o,uint32_t* d,const unsigned (&banks)[8],const unsigned (&addresses)[8])const{
   namespace W=PioneerQ38DensePartitionLayout;
-  unsigned kb=7,vb=7,ka=0,va=0;if(!Kv(*canonical,outer[3],g,kb,ka) || !Kv(*canonical,outer[3],g+4,vb,va))return false;
+  if(g>=4 || o>=24)return false;
+  unsigned kb=banks[g],vb=banks[g+4],ka=addresses[g],va=addresses[g+4];
   for(unsigned i=0;i<64;i++)d[i]=0;
   unsigned w=g*24+o,position=outer[4];
   const unsigned h[]={W::Magic,1,64,outer[3],position,g,o,position+1,ka,va,kb,vb,W::Route(kb),W::Route(vb),W::Peer(w+1),w+1};
@@ -112,8 +120,9 @@ class PioneerQ38MixedLiveBlockPlan {
    }else if(!PioneerQ38BlockFfnRecipe(r,r+64,r+1151,reinterpret_cast<const uint32_t(*)[8]>(r+80),r+1032))return false;
    for(unsigned i=1159;i<1280;i++)if(r[i])return false;
   }
+  unsigned kvBanks[8],kvAddresses[8];if(!DenseKv(*canonical,outer[3],kvBanks,kvAddresses))return false;
   for(unsigned w=0;w<96;w++){
-   uint32_t expected[64];if(!DescribeDense(w/24,w%24,expected))return false;
+   uint32_t expected[64];if(!DescribeDense(w/24,w%24,expected,kvBanks,kvAddresses))return false;
    for(unsigned i=0;i<64;i++)if(dense[w][i]!=expected[i])return false;
   }
   return true;
@@ -169,7 +178,8 @@ public:
     q[0]=c.Base+p->offset;q[1]=p->bank;q[2]=p->groups;q[4]=PioneerQ38ProjectionRoute(p->bank);q[5]=sources[(w+1)*16];d[1032+w]=p->firstRow;
    }
   }
-  for(unsigned w=0;w<96;w++)if(!DescribeDense(w/24,w%24,dense[w]))return false;
+  unsigned kvBanks[8],kvAddresses[8];if(!DenseKv(c,layer,kvBanks,kvAddresses))return false;
+  for(unsigned w=0;w<96;w++)if(!DescribeDense(w/24,w%24,dense[w],kvBanks,kvAddresses))return false;
   for(unsigned i=0;i<128;i++)boundOuter[i]=outer[i];
   ready=Shape();return ready;
  }

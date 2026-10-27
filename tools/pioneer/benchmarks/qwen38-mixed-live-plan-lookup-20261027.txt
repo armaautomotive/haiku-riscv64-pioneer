@@ -1,0 +1,82 @@
+Qwen27B: per-call KV layout lookup,NO persistent cache or reduced guards
+2026-10-27 -- HOST METADATA ONLY;NO measured card inference speedup
+
+Evidence-driven optimization
+------------------------------
+After complete arithmetic,the old native validation spent substantial CPU
+time in per-word readback guards. A one-second sample of our own local
+test98731 found157/157 samples inside ValidationReadback/Guard and nested
+Shape/DescribeDense/Kv checks. Both original paired runs subsequently
+completed successfully at checkpoint7793998d92. The sample did not show a
+deadlock,and its elapsed time is NOT a hardware throughput measurement.
+
+Previously each Shape/Build call reconstructed96 dense descriptors and
+rescanned the whole canonical model twice for each descriptor:192 scans
+for only eight distinct K/V rows. The new code revalidates all eight rows
+once per call into64 bytes of stack locals,then reconstructs/checks ALL96
+descriptors exactly as before. Duplicate/missing row,role/type/geometry/
+bank checks still use the SAME Kv function. No check is omitted,no source
+or native owner is granted,and nothing is cached across Shape/Build calls.
+All per-MMIO physical/scope/ownership guards remain in place. There is no
+CPU reference-model computation in this production change.
+
+Differential qualification -- main+independent clean TERMINAL0
+---------------------------------------------------------------
+Frozen preoptimization header SHA256
+2e8e94c0fe9213c04c6b171301d5f741d81d4d2480057f126076cbd5b2527446
+is pinned in tests/reference and renamed ONLY in the differential test.
+Production candidate header SHA256
+51a67e437174b7de8c270ce518f596af0842f83beaf38586eaf51debae8523ec.
+
+Main19031/clean97861 ASAN+UBSAN:224 plans,ALL16 dense layers/seven banks/
+both context endpoints;ALL5132288 emitted command words agree exactly,
+payload fingerprint db407e1aba157ae5. All2465 single-bit mutations across
+the eleven fields of all seven layer3 KV stripes plus a duplicate stripe
+have the SAME old/new decisions:479 legacy accepts,1986 refusals. Accepted
+mutations include fields irrelevant to this DATA-only KV lookup;this is
+NOT a new claim of source authentication or arbitrary-plan acceptance.
+The two semantic PASS lines are identical. Timing lines intentionally vary.
+
+100 repeated Matches calls,host ASAN microseconds (NOT card timing):
+ main baseline448528 -> candidate66571;clean474169 ->70850.
+Approximately6.7x faster for THIS HOST METADATA TEST ONLY. No model token
+rate,load-time improvement on the Pioneer or release-build speed is claimed.
+The original isolated prototype448918 ->66709 is consistent,not silicon data.
+
+Independent original-GGUF geometry/SDK tests main93978/clean1067 both
+TERMINAL0 and byte-identical:224plans/1568matrices/1327plan mutations/
+330learned-page+geometry refusals;actual RISC-V max static frame1216B.
+This test reads original descriptor geometry,NOT the CPU source-authentication
+or original-model numerical comparison. Plan object layout is unchanged.
+
+Native held/fresh END main55493/clean17494 both TERMINAL0 and stdout
+identical to the prior9760d6fe... log,including84 failures/refusals,
+real private clock,actual caller seal and fresh audit/final disposal.
+Actual kernel-context SDK main57250/clean37504 both TERMINAL0 and object
+BYTE-IDENTICALefcf8bf36403cb0301ef71ac20bc8fcffe72e8236b1cf19985fe56fe5eade465.
+Normal ABI absent,independent inert controls retained,old65/oldNODRV controls
+unchanged. This host-helper change legitimately changes the selected mixed
+context object;do NOT claim its former0274... hash remains unchanged.
+Clean tree:/private/tmp/pioneer-mixed-lookup-clean.uk64Jbn3.
+
+Scope and next
+-----------------
+No new full instruction execution was rerun solely for this equivalent DATA
+lookup. The complete instruction/readback/fresh-END run is checkpoint7793998d92;
+the candidate has identical emitted command words and the same metadata
+mutation decisions,plus new actual native held/SDK checks. No installed
+driver or emitted card arithmetic program was changed. Distinct authenticated
+original-GGUF native validation/client and physical comparison remain owed,
+then valid full64-layer/state/token/sampling/Work integration and benchmarking.
+
+No driver/Assistant/model/boot/relay/power/SD/mains/hardware/disk action.
+SDK read-only;outputs /private/tmp;dirty llama.cpp/unrelated FlashNext
+untouched. Last real whole-model0.207893161tok/s UNCHANGED;20tok/s UNMET.
+Goal ACTIVE. No card/model speedup is established by these host measurements.
+
+Saved terminal logs:qwen38-mixed-live-plan-lookup-{main,clean}-20261027.log,
+qwen38-mixed-live-plan-lookup-original-sdk-20261027.log,
+qwen38-mixed-live-plan-lookup-context-{main,clean}-20261027.log.
+The profile log is a scoped call-stack excerpt from the one-second sample
+of our own test,not unrelated process/user data. Timing rows are intentionally
+not part of a byte-identical stdout claim;the semantic PASS row is identical.

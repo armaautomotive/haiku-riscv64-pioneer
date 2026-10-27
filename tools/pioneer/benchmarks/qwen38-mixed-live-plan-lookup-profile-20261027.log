@@ -1,0 +1,20 @@
+    157 Thread_113053296   DispatchQueue_1: com.apple.main-thread  (serial)
+      157 start  (in dyld) + 6076  [0x19aa8eb98]
+        157 main  (in test) + 13688  [0x100d7e208]  pioneer_q38_mixed_live_native_factory_test.cpp:197
+          157 CloseQ38MixedLiveNativeValidation(PioneerStoreContext&, PioneerQ38MixedLiveResult&, PioneerQ38MixedLiveMemoryResult&, unsigned int*, unsigned int, PioneerQ38MixedLiveReadbackResult&)  (in test) + 456  [0x100d89558]  PioneerQ38MixedLiveNative.inc:182
+            157 PioneerQ38MixedLiveOwner::CloseImpl<PioneerSessionIO>(PioneerSessionIO&, PioneerQ38MixedLiveResult&, PioneerQ38MixedLiveMemoryResult&, unsigned int*, PioneerQ38MixedLiveReadbackResult*)  (in test) + 2612  [0x100e5d1b4]  PioneerQ38MixedLiveOwner.h:314
+              80 PioneerQ38MixedLiveOwner::ValidationReadback<PioneerSessionIO>(PioneerSessionIO&, PioneerQ38MixedLiveReadbackResult&, PioneerQ38MixedLiveResult&)  (in test) + 988  [0x100e5f5a8]  PioneerQ38MixedLiveValidationReadback.inc:60
+              + 80 PioneerQ38MixedLiveOwner::Guard<PioneerSessionIO>(PioneerSessionIO&, unsigned int)  (in test) + 92  [0x100e53538]  PioneerQ38MixedLiveOwner.h:65
+              +   32 PioneerSessionIO::MixedLiveBaseScope()  (in test) + 16556  [0x100d74544]  PioneerQ38MixedLiveNative.inc:50
+              +   ! 32 PioneerStoreContext::Unsafe(bool, bool, bool)  (in test) + 328  [0x100d68c58]  PioneerQ38MixedLiveNativeCohortUnsafe.inc:3
+              +   !   19 PioneerQ38MixedLiveOwner::Bound() const  (in test) + 1256  [0x100dad068]  PioneerQ38MixedLiveOwner.h:46
+              +   !   : 18 PioneerQ38MixedLiveBlockPlan::Shape() const  (in test) + 6844  [0x100d96000]  PioneerQ38MixedLiveBlockPlan.h:116
+              +   !   : | 10 PioneerQ38MixedLiveBlockPlan::DescribeDense(unsigned int, unsigned int, unsigned int*) const  (in test) + 484  [0x100da3260]  PioneerQ38MixedLiveBlockPlan.h:81
+              +   !   : | + 6 PioneerQ38MixedLiveBlockPlan::Kv(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int&, unsigned int&)  (in test) + 232  [0x100dab99c]  PioneerQ38MixedLiveBlockPlan.h:33
+              +   !   : | + ! 6 PioneerQ38CanonicalModelPlan::Part(unsigned int) const  (in test) + 96,132,...  [0x100d848e8,0x100d8490c,...]  PioneerQ38CanonicalModelPlan.h:98
+              +   !   : | + 2 PioneerQ38MixedLiveBlockPlan::Kv(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int&, unsigned int&)  (in test) + 156,172  [0x100dab950,0x100dab960]  PioneerQ38MixedLiveBlockPlan.h:32
+              +   !   : | + 2 PioneerQ38MixedLiveBlockPlan::Kv(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int&, unsigned int&)  (in test) + 232  [0x100dab99c]  PioneerQ38MixedLiveBlockPlan.h:33
+              +   !   : | 8 PioneerQ38MixedLiveBlockPlan::DescribeDense(unsigned int, unsigned int, unsigned int*) const  (in test) + 404  [0x100da3210]  PioneerQ38MixedLiveBlockPlan.h:81
+              +   !   : |   4 PioneerQ38MixedLiveBlockPlan::Kv(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int&, unsigned int&)  (in test) + 172,132,...  [0x100dab960,0x100dab938,...]  PioneerQ38MixedLiveBlockPlan.h:32
+              +   !   : |   4 PioneerQ38MixedLiveBlockPlan::Kv(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int&, unsigned int&)  (in test) + 232  [0x100dab99c]  PioneerQ38MixedLiveBlockPlan.h:33
+              +   !   : |     4 PioneerQ38CanonicalModelPlan::Part(unsigned int) const  (in test) + 96,28,...  [0x100d848e8,0x100d848a4,...]  PioneerQ38CanonicalModelPlan.h:98
