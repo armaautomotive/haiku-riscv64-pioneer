@@ -31,5 +31,20 @@ int main(){
    bad==9?nullptr:source.data(),bad==10?7:0,bad==11?address+1:address));
   assert(!p->Outer() && !p->Recipe(0) && !p->Conv() && !p->Gdn() && !p->Boot(0));
  }
+ namespace L=PioneerQ38MixedRecurrentBlockRootLayout;
+ std::array<uint32_t,128> stop={};stop[0]=L::Magic;stop[1]=1;stop[2]=128;stop[5]=129;
+ stop[16]=1;for(unsigned i=32;i<40;i+=2)stop[i]=1;stop[48]=2;stop[49]=119;stop[72]=L::Stop;
+ assert(L::StopShape(stop.data()) && !L::OuterShape(stop.data()) && !L::StopShape(nullptr));
+ unsigned stopRefusals=0;
+ for(unsigned i=0;i<128;i++){
+  if(i>=16 && i<40)continue;auto changed=stop;changed[i]^=0x80000000U;
+  assert(!L::StopShape(changed.data()));stopRefusals++;
+ }
+ for(unsigned value:{0U,1U,0x7fffffffU,~0U}){auto changed=stop;changed[48]=value;assert(!L::StopShape(changed.data()));stopRefusals++;}
+ for(unsigned request:{0x7ffffffeU,0x7fffffffU,~0U}){
+  auto p=std::make_unique<P>();unsigned address=c->Base+c->Workspace(0)->offset+0x600000;
+  assert(!p->Build(*c,0,0,0,0,0,1001,request,{1,2,3,4},source.data(),0,address) && !p->Outer());stopRefusals++;
+ }
+ printf("PASS QRB1 distinct STOP grammar/refusals%u/identity binding and completed-layer precondition remain ROOT obligations;NO native disposal grant\n",stopRefusals);
  printf("PASS QRB1 immutable complete recurrent HEAP DATA plans%u/mutations%u/refusals12/bytes%zu/all8canonical matrices+split cohort+norm+boot;NO producer/native/IO/commit grant\n",cases,mutations,sizeof(P));
 }

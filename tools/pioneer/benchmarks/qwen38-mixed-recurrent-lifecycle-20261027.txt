@@ -1,0 +1,277 @@
+QRB1 retained lifecycle / native preparation -- 2026-10-27 -- WIP
+NOT a new qualified/deployed driver,full-model offload or speed result.
+
+Saved checkpoint
+-----------------
+Previous complete recurrent-layer qualification committed and pushed:
+b72ea48dfd1547b506fead2546b07a84175cc7db
+Independent git ls-remote verified the exact same authorized branch SHA.
+85 files include the independently qualified original-layer arithmetic and
+all20 successful evidence logs. Subsequent lifecycle work below is WIP.
+
+Implemented candidate -- qualification IN PROGRESS
+--------------------------------------------------
+Explicit new128word STOP grammar,only after an actual completed layer.
+Keep the private final matrix frame;the STOP request cannot supply a fake
+upstream recipe/job/nonce. Reserve one ROOT request AND each worker nonce
+for STOP. Audit ALL119 closed jobs/boots/sources/counters BEFORE the first
+STOP write. Stage119 exact jobs,release119 actual worker STOP commands,
+then require their real STOP status PLUS two positive terminal PC samples,
+boot/job/doorbell/counter identity. Speculative PC alone is NOT completion.
+Preserve original hidden,final recipes/native inputs and matrix metadata.
+Only after all proofs does a separate QRB1 STOP receipt publish and ROOT
+enter its distinct40060 terminal loop. Unknown work parks without cleanup.
+This is an unload/end operation,not a host validation round trip per token.
+Native lifetimes/HOLD/restoration/disposal are still separately required.
+
+New instruction test starts119 genuinely virgin workers,not fabricated
+prior receipts. It requests3 complete blocks on the SAME processors:
+layer0/pos0/bank0/slot0 -> layer1/pos0/bank0/slot1 ->
+layer62/pos8191/bank6/slot1. The subsequent hidden input is the previous
+ACTUAL device final output. Only observer counters/caller-owned metadata
+and primitive learned/prior-state endpoints are restaged;no processor PC,
+private nonce,registers,configuration,LRegs or physical tensor state reset.
+Synthetic raw learned/current/history remain;this is NOT a valid model
+prefix or recurrent token-state commit. Adds128 STOP-command mutations,
+early STOP and genuine reached-phase unknown audit/write/release/status,
+held-peer,counter/source/late-boot/original-hidden faults. Full result is
+PENDING;early refusal/projection progress is NOT a passing complete run.
+
+Final candidate pins -- independently built,TERMINAL0
+-----------------------------------------------------
+Main86216 and independent clean43332 BOTH TERMINAL0:
+ /private/tmp/pioneer-qrb1-stop-20261027-d
+ /private/tmp/pioneer-qrb1-stop-20261027-clean-a
+ boot4 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text52596 6da8623de3970219ca10fa092adf0d4c08e7275f92f6eec436bb99c6f333da17
+ conv7500 16ff564dc406a72a918f7c67c40f6815a7430f6d02161a0be0b26ec56cde7f65
+ ELF75184 dfaee3da2e38471333b9bfef3d031ef06cffbe0b6ea29df5adae8391df662f2f
+Static maxFrame2112/unchanged8KiB limit. Actual complete new stack/lifecycle
+is still being qualified. Both builds and complete stdout byte-identical:
+ SHA256 caad00c1e8da64c8db7d23911cf82639681e5f820740adf4994400ecacf1b05b.
+Builders/runners enforce exact pins. Initial builds a/c deliberately stopped
+on obsolete prior pins after successful compilation/audits;no pin or bound
+was bypassed. Pilot a/b image used cb0c78c5...text/a13de520...ELF before the
+ROOT request-reservation correction;do NOT confuse it with final d/clean-a.
+
+Finished main+clean DATA/role qualification
+-------------------------------------------
+Metadata8949/10122 BOTH TERMINAL0,entire stdout identical:
+111 distinct STOP/sequence-boundary refusals;16 canonical endpoint plans,
+11136 mutations/12 bad builds,heap1383152B,actual RISC-V kernel DATA methods
+maxFrame784. SHA25610eddcf9864ff53a637302c72374a92d47931f3af1ae9e9b102daf10152445fb.
+Role gates99394/70967 BOTH TERMINAL0,587 checks/27builders/old valid baselines,
+late/defined0/CPU/Work/native refusal,stdout identical23ae05f252807ff7807d0dbfa30c8c9008e515091cd1e14594f2683b56879998.
+
+NEW distinct immutable L1 footprint/program DATA,not old dense geometry:
+the separate ROOT Conv capsule64000..6c000 was NOT in the old dense ROOT
+journal. Now describe all120 arbitrary-original snapshot words11406904
+(45627616B HEAP ONLY),including the whole bounded Conv window/padding,
+stack/runtime/metadata/shadows/trailer. All11 pinned sections/2632668 code
+words match original artifacts at every address;no executable holes.
+Generated header SHA3835c3de5793cfdd377c2f5921caed26aec75a2dcfe0e74a9b61f8f39cc9e5c6.
+Main47615/clean19694 BOTH TERMINAL0/complete stdout identical:
+all code/snapshot words,independent generation,13 corrupt binary/ELF cases
+and existing-output refusal (14 total). This is GEOMETRY/DATA ONLY,not a
+native journal,source/init/clock/PCI/NoC/Tensix/host or launch permission.
+SHA256af7c829fd864bafb19c0fa34b1f76a6133b18ee09c9eec723449a68a63b0ace3.
+Eight successful build/plan/footprint/gate logs archived beside this file.
+
+Distinct held journal and close-counter preparation -- qualified separately
+----------------------------------------------------------------------------
+NEW PioneerQ38RecurrentBlockMemory,not a typedef/extension of the old dense
+memory owner. ALL120 arbitrary original words are captured,then checked in
+a SECOND complete pass BEFORE the first code install. Exact11 sections
+install/read back,then all originals restore and independently recheck.
+Includes64000Conv/padding/stack/runtime/shadows/trailer. No boot/reset/NoC
+submission/clock/END or public post-launch clean setter exists. A future
+distinct execution owner must prove actual STOP/all120 holds/restoration;
+new genuine native source/cookie/model/clock/host/mapping scope is still OWED.
+This one-time setup/unload journal is NOT per-token CPU validation.
+
+Main65126 and independent clean35676 BOTH TERMINAL0/entire stdout IDENTICAL:
+ saved11406904/installed2632668/restored11406904/verifiedOriginal22813808.
+46 fault cases and29 inert precondition refusals cover all7 phases,first/
+last workers,Conv actual code+padding endpoints,source/PCI/counter/command/
+mapping/alias/scope failures,failed/dropped writes and whole-owner retention.
+No subsequent IO/restore/retry after UNKNOWN. Actual RISC-V SDK TEMPLATE
+instantiation maxFrame880B (45.6MB journal is HEAP ONLY). Deliberately
+undefined IO hooks/no conventional driver ABI prove this is NOT a genuine
+native context or a linked/loadable candidate. Complete log SHA256:
+ 6d333d5c45b914c286d9077a40c6e5e6cfa770659bd7ece636aed147f68ce040.
+Initial test93270 TERMINAL1 selected an UNCHANGED padding word for a silent
+drop test;there was no changed value to detect. Corrected that injection
+to an actually replaced Conv CODE word;all padding failure tests remain.
+Next attempt failed a const-only TEST inspection at compile time;fixed
+without production changes. Attempts85471/49924 passed all host cases but
+their standalone SDK witness lacked stddef/NULL from transitive headers.
+Made the new header self-contained;final65126/35676 pass with no suppression,
+bound/numerical relaxation or old-driver changes.
+
+NEW counter DATA helper prepares the future native end-of-layer proof:
+all8 matrices+5/6Conv groups+GDN imports/CURRENT/NEXT/gated traffic,including
+genuine1..256 rendezvous polls and modulo32-bit wrapped baselines. Infers
+only a bounded poll count and checks ALL8 correlated deltas;never accepts
+arbitrary observed counters or presumes one poll. Main74575/clean60933 BOTH
+TERMINAL0/identical:952 independent packet-by-packet geometry cases and
+7632 atomic refusals,ALL119/3-small/39-40Conv/96-97GDN/before-down+final,
+both layer0 and62. These are DATA/packet observers,NOT emitted-instruction
+correlation,physical source/STOP/native/numerical or Work authority.
+Complete log SHA256:
+ 5669ad31d74eb5c14bd071ab8122831235d1c861ccc046a13bd35101da6a5c8e.
+An initial compile refused a missing explicit mutable-state TEST interlock;
+added the existing exact test selection,not a new permission or guard bypass.
+
+Native regression63768 TERMINAL0:old DEBUG70module11d24d92.../native6b3db5d8...,
+old65 61faa093... and both NODRV9fcf1f7f.../efcf8bf3... are BYTE-UNCHANGED.
+Input qualified SDK /private/tmp/pioneer-q38-native64-sdk-20261024-d;
+output /private/tmp/pioneer-qrb1-stop-native-regression-20261027-a.
+Nineteen successful complete logs (including separately labeled pilots)
+were archived before the new genuine native binding/init work below.
+
+Completed final lifecycle and ORIGINAL-model instruction qualification
+----------------------------------------------------------------------
+FINAL main lifecycle18194:
+ /private/tmp/pioneer-qrb1-stop-lifecycle-20261027-b.log
+FINAL independent clean lifecycle47767:
+ /private/tmp/pioneer-qrb1-stop-lifecycle-clean-20261027-a.log
+Both TERMINAL0:all3 actual blocks/SAME workers/2160matrixjobs/1920Conv/
+288GDN/real119STOP+ROOT/ROOTstack5384.138refusals include128STOP mutations
+and9genuinely reached stop-phase faults. ALL stdout identical SHA256:
+88b4f5cb0fe0a7b037cce87e5ce42d0d4012e8f7101a04775f2f0b96a19d32d4
+Archived instructions-main.log/instructions-clean.log.
+
+OLDER pilot lifecycle70206:
+ /private/tmp/pioneer-qrb1-stop-lifecycle-20261027-a.log
+Uses cb0c78c5... image and earlier test binary WITHOUT new STOP faults.
+TERMINAL0:all3blocks+STOP/stack5384,NO later STOP-fault additions. Archived
+lifecycle-pilot.log,SHA c33809fbb07731f8576bdebcab13e26dc109601b43072ef2deb5651891041bf2.
+NOT final-pin evidence;final runs above are separately qualified.
+OLDER pilot ORIGINAL31282:
+ /private/tmp/pioneer-qrb1-stop-original-20261027-a.log
+Uses cb0c78c5... image,authenticated same full c600 source/all14 raw layer0
+tensors/56spans/280925056B,NO synthetic learned fallback. TERMINAL0:
+whole recurrent layer0/all720 jobs/Conv/GDN/RMS/residual/FFN/final5120 PASS,
+ROOTstack5384B. Supplied hidden is NOT an embedding/valid prefix. Its full
+stdout SHA a7fa20d00967a7ea261ca13a1ed4f148f470c10bd80cd74763f9605fa03eab91
+is archived as original-pilot.log,NOT final-pin original evidence.
+FINAL ORIGINAL main5903:
+ /private/tmp/pioneer-qrb1-stop-original-20261027-b.log
+FINAL ORIGINAL independent clean56184:
+ /private/tmp/pioneer-qrb1-stop-original-clean-20261027-a.log
+Both TERMINAL0:same full c600 authentication/ALL56raw layer0 spans/
+280925056B/68591pages,whole720matrixjobs/640Conv/96GDN/RMS/residual/FFN/
+final5120 PASS. NO synthetic learned fallback/host intermediates. Supplied
+hidden is NOT a genuine embedding/valid model prefix or physical proof.
+ALL stdout identical SHA a7fa20d00967a7ea261ca13a1ed4f148f470c10bd80cd74763f9605fa03eab91.
+Archived original-main.log/original-clean.log.
+Plan pilot7063 TERMINAL0 is superseded by final111-refusal8949/10122.
+No qualification job has been abandoned/restarted due to observation expiry.
+
+Distinct genuine native binding and state initialization -- WIP
+----------------------------------------------------------------
+NEW private QRBNODRV exact21parents/ALL6ABI-renamed role;old dense native,
+old decoder-native init,CPU observer,Work and image flag aliases REFUSED.
+Real PioneerStoreContext/PioneerSessionIO/FD+team+thread/cookie/source/
+completed embedding/model/learned-ledger/normal-clock/ALLhost scopes and
+new4alias full journal bindings are implemented. Bind requires actual
+closed QPE1 input;ALL14 layer0tensors/56extents must exist BEFORE prefix
+claims/epoch/execution. No public post-launch clean bit or selector.
+
+Held native SDK76154/49889 BOTH TERMINAL0/exact objecte993ca48/maxFrame768
+before initialization additions.426exact-role gates68728/45024 BOTH0.
+Post-hooks old DEBUG70module11d24d92/native6b3db5d8/old65+bothNODRV68513
+TERMINAL0 unchanged. These compile/binding checks are NOT execution proof.
+Binding74370 TERMINAL0 with460inert/mismatch/competing-owner/learned-page
+refusals,actual emitted zero+embedding instructions/private completed
+producer/actual Unsafe+retention+incomplete-END;ZERO post-failure IO.
+OS/MMIO/learned byte endpoints are simulated,NOT original arithmetic.
+
+NEW same-context recurrent+history init owns its OWN private leases AFTER
+completed embedding;does NOT select old decoder/state-init/output roles.
+Actual frozen zero controller must prove672regions/BOTHslots73728pages,
+then336history regions1680pages;private publication ONLY after real full
+coverage/code+scratch/source/held CLOSE. InitializationsClosed is necessary
+metadata,NOT a new model/token/compute/END grant. Repeat/wrong-order/team/
+thread/generation/clock/host/competing-owner refusals stay inert. Unknown
+retains model/banks/clock/ALLhosts and latches cold recovery,NO later IO.
+No QRB1 RUN/STOP/HOLD/final native restore owner or public control exists.
+
+Actual SDK init41824/16120 BOTH TERMINAL0/maxNewFrame768/exact object SHA:
+71924fd47a417118c1d0428ef7db84628347abada22450df640ce4a4391bd696
+Older6072 TERMINAL1 on GCC indentation warning,
+fixed with source formatting;5763/37524 TERMINAL1 because new initializers
+were fully inlined and the strict frame inspector required their bodies.
+Added noinline to these model-initialization-only functions,NOT inference
+or observer bounds. No suppressed warnings/role/physical/numeric gates.
+Native binding main74370/clean61273 BOTH TERMINAL0/stdout identical:
+4cbee3a774c79be07af72c77996e004292cfdb405a91f45a68a2b69805c7e159
+Init faults39980/2754 TERMINAL0:actual zero first-packet/nonroot-not-held/
+team-loss failures retain ALL owners,NO publication/cleanup/retry/laterIO.
+Final-source main fault9797/clean17242 BOTH TERMINAL0/stdout identical:
+80bf5acb0c445a376a70b26040daaf3177ee8450818782adf97a5273ec8ec64a
+Older full instruction-init52148/59536 BOTH TERMINAL0:
+ /private/tmp/pioneer-qrb1-native-init-instructions-20261027-a.log
+ /private/tmp/pioneer-qrb1-native-init-instructions-clean-20261027-a.log
+These pilots predate ONLY the noinline/unused TEST fault-field cleanup.
+FINAL SOURCE main54919/clean11983 BOTH TERMINAL0:
+ /private/tmp/pioneer-qrb1-native-init-instructions-20261027-b.log
+ /private/tmp/pioneer-qrb1-native-init-instructions-clean-20261027-b.log
+ALL672GDN/BOTHslots73728pages+336history1680pages/private clean CLOSE/
+initialized publication,ALL original panel/scratch/entry restored,actual
+prior embedding and learned ledger UNCHANGED/no BME or host release.
+Entire stdout identical SHA256:
+e8fc42c16a2dcffc498accef245d80e5692c1420f6d28e869db6cf49260517b5
+All37 task source files compare MAIN/CLEAN byte-exact. SIMULATED OS/PCI/
+MMIO/device byte endpoints;NOT a physical init/QRB1 launch/fullmodel proof.
+Old DEBUG70/65/bothNODRV37585 TERMINAL0/bytes unchanged;old embedding
+51386/83931 TERMINAL0/7positives+7faults.426role gates53539/5202 BOTH0.
+The38 terminal-success logs,including separately labeled pilots,are saved
+beside this evidence record. No live log was archived as passing evidence.
+
+Completed original early/late regression handles
+--------------------------------------------------
+22462 /private/tmp/pioneer-qrb1-stop-full-20261027-a.log
+1261  /private/tmp/pioneer-qrb1-stop-full-clean-20261027-a.log
+78699 /private/tmp/pioneer-qrb1-stop-late-20261027-a.log
+79030 /private/tmp/pioneer-qrb1-stop-late-clean-20261027-a.log
+All4 TERMINAL0:24early/10genuinely reached late failures plus complete
+720matrix/640Conv/96GDN/RMS/residual/FFN/final5120 positive chain PASS.
+Main/clean full log SHA be15ebd859268a3459f21b5160576d6100c0a558ce2dc41b4082df5be37945ee.
+Main/clean late log SHA fd524b7b4b2a14f0a7b5452c7c3b46ec297f39d097b78d9c564d3b63fe2bf9a1.
+
+Current live -- production counter helper vs actual worker instructions
+------------------------------------------------------------------------
+96159 /private/tmp/pioneer-qrb1-counter-correlation-20261027-a.log
+98104 /private/tmp/pioneer-qrb1-counter-correlation-clean-20261027-a.log
+ALL119 physical counter baselines captured before layer;after real whole
+chain the production helper must match actual before-down and after-down
+receipts,all8 actual register deltas AND independently counted GDN polls.
+Each8single-channel mutation must refuse atomically (952cases). Lifecycle
+observer baseline also re-samples before each next layer,NEVER changing
+physical counters/PC/nonce/processor state. These new assertions are
+COMPILED/RUNNING,not yet qualified;old full/lifecycle proofs above remain
+their prior exact scopes. No physical/source/STOP/native cleanup grant.
+Observation timeout is NOT termination;poll both exact handles to terminal.
+
+Clean export and next obligations
+----------------------------------
+ /private/tmp/pioneer-qrb1-stop-clean.10UBdgf5
+Started from git archive of the qualified checkpoint,selected source trees
+only,then exact task source updates;generated immutable DATA independently.
+No dirty llama.cpp or unrelated FlashNext content read/edited/built/staged.
+
+Next poll the explicit live handles above through authoritative terminal
+status. Fix real failures and finish actual-stream counter correlation.
+Then distinct genuine execution owner/counter correlation/STOP/HOLD/full
+restoration+END/driver/client and physical ORIGINAL
+comparison,valid embedding/recurrent0..2->dense3/all64/state+KV/history+
+token commit/finalnorm/vocab/sampling,persistent no-CPU-reference Work+
+Assistant and real loading/prefill/decode optimization toward20tok/s.
+The held-journal algorithm and genuine native bindings above do NOT imply
+execution+counter correlation/STOP/HOLD/restoration/END qualification.
+
+Fresh read-only board check:64 CPUs,max137034936320B RAM,stable driver55/
+tag2026102100010012/gen6/quiesced0/cold0/active_owner0/open1/guard1.
+No install/card execution/reboot/power/SD/mains/Assistant/network changes.
+Last full27B measured0.207893161tok/s unchanged;20 remains UNMET/goal ACTIVE.

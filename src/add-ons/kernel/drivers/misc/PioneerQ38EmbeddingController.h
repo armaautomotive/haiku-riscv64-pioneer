@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+#include "PioneerQ38RecurrentBlockNativeRole.h"
+#endif
 #ifndef PIONEER_Q38_EMBEDDING_CONTROLLER_H
 #define PIONEER_Q38_EMBEDDING_CONTROLLER_H
 #include "PioneerQ38ProjectionMutableBanks.h"
@@ -20,6 +23,9 @@ struct PioneerQ38EmbeddingResult {
 };
 class PioneerQ38EmbeddingController {
  friend class PioneerQ38ProjectionGraphOwner;
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+ friend class PioneerQ38RecurrentBlockNativeState;
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
  friend class PioneerQ38MixedLiveNativeState;
 #endif

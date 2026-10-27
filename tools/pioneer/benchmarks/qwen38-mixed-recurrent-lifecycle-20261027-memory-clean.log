@@ -1,0 +1,3 @@
+PASS DISTINCT QRB1 held journal ALL120/saved11406904/installed2632668/restored11406904/secondOriginal22813808/arbitrary+UINT32_MAX/64000Conv+padding+fullstacks+runtime+shadows+trailers;NO reset,start,NoC,compute,native or Work grant
+PASS DISTINCT QRB1 held journal faults46/preconditionRefusals29/Conv-window+padding endpoints+all7phases/ALL originals twice BEFORE firstwrite/FIRST unknown retains all snapshots+hosts,NO following IO/retry/restore;SIMULATED endpoints,NOT genuine native/compute/Work/TPS
+PASS actual RISC-V SDK QRB1 journal TEMPLATE instantiation/maxStaticFrame880/explicit undefined IO hooks/no conventional driver ABI;NOT a genuine native context or linkable driver

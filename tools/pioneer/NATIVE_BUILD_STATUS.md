@@ -1,5 +1,61 @@
 # Native build status
 
+October27UTC2026 CURRENT:QRB1 retained3-layer/119STOP+ROOT lifecycle final
+main18194/clean47767 BOTH TERMINAL0,138refusals/ROOTstack5384;whole stdout
+identical88b4f5cb. Final original-model layer0 main5903/clean56184 BOTH
+TERMINAL0/identicala7fa20d0,not embedding/full64/token or physical proof.
+Older70206/31282 pilots also ended0;old LIVE labels below are historical.
+NEW genuine QRBNODRV binding+incomplete-END test74370 TERMINAL0:
+460refusals/ALL14layer0tensors56extents/actual zero+QPE1 producer,ALLhosts
+retained/zero later IO. Native init now IMPLEMENTED using SAME completed
+embedding owner/private recurrent+history zero leases;no old role aliases.
+Actual SDK41824/16120 BOTH TERMINAL0/maxNewFrame768/exact object71924fd4.
+FINAL native init54919/11983 BOTH TERMINAL0/all672GDN+336history regions/
+ALL original code+scratch restored/embedding+learned unchanged/stdout
+identicale8fc42c1;final3faults9797/17242 BOTH0/identical80bf5acb. All37task
+code files MAIN/CLEAN byte-identical. Prior full/late QRB1 regressions
+22462/1261/78699/79030 ALL TERMINAL0/exact paired logs;426role gates/old
+DEBUG70+65+bothNODRV/oldembedding7positives+7faults PASS. NEW actual-stream
+counter correlation96159/98104 LIVE,NOT yet qualified. No QRB1 execution owner,
+physical test,full64/state+KV/history/token commit/finalnorm/vocab/sampling
+or persistent Work+Assistant integration. No install/power/SD/Assistant
+change;whole27B0.207893161tok/s unchanged/20UNMET/goalACTIVE. Next finish
+counter correlation then real private execution/STOP/HOLD/restore/END.
+Details:benchmarks/qwen38-mixed-recurrent-lifecycle-20261027.txt.
+
+The entries below are chronological snapshots,not current live statuses.
+
+October27UTC2026:NEW distinct recurrent HELD journal main65126/clean35676
+BOTH TERMINAL0/entire stdout identical. ALL11406904 arbitrary words saved,
+second pass BEFORE first install,2632668 signed code words/readback,full
+restore/second proof;46faults/29inert refusals,SDK TEMPLATE maxFrame880.
+No boot/reset/NoC/clock/END or public post-launch clean hint. Undefined IO
+hooks/no conventional ABI:NOT a genuine native context/driver yet. New
+bounded1..256-poll close-counter DATA main74575/clean60933 BOTH TERMINAL0:
+952packet-observer cases/7632atomic refusals/ALL119/wrapped baselines,
+NOT emitted-instruction/physical authority. Old DEBUG70/65/bothNODRV bytes
+rebuild UNCHANGED63768. Older-pin original pilot31282 TERMINAL0/full layer0
+PASS/stack5384;FINAL original5903/56184 LIVE,NOT qualified. Final lifecycle
+18194/47767 first full layer PASS/second in progress;older pilot70206 third
+layer in progress. No card/install/power/Assistant action;whole27B0.207893161
+unchanged/20UNMET. Details+exact live handles:
+benchmarks/qwen38-mixed-recurrent-lifecycle-20261027.txt.
+
+October27UTC2026:prior complete recurrent checkpointb72ea48dfd pushed and
+exact remote verified. NEW retained QRB1 lifecycle/real119STOP+ROOT code
+and distinct full L1/program DATA implemented,but long instruction suites
+18194/47767 are LIVE,NOT qualified or deployed. Main/clean pinned builds,
+111 STOP/data refusals+16plans/11136mutations/kernel maxFrame784,587role
+gates and ALL11signed sections/11406904snapshot words/14generator refusals
+PASS TERMINAL0 with byte-identical logs. Separate64000..6c000 ROOT Conv
+window is NOT covered by old dense native journal;new geometry grants NO
+native authority. Two older pilot handles70206/31282 remain live;they use
+older cb0c78c5...pins and MUST NOT be counted as final6da8623d...evidence.
+Fresh SSH64CPU/fullRAM/stable55/tag12/gen6/cold0/owner0;no hardware/Assistant
+change. Whole27B0.207893161tok/s unchanged/20UNMET. Poll exact handles and
+finish lifecycle/original/regressions before native integration/card tests.
+Details:benchmarks/qwen38-mixed-recurrent-lifecycle-20261027.txt.
+
 October27UTC2026: NEW QRB1 COMPLETE RECURRENT layer OFFLINE QUALIFIED with
 ORIGINAL learned bytes;NOT a native/full64/token/Work driver or speed result.
 Main39135/clean12951 BOTH TERMINAL0/entire stdout identical699a721b...:

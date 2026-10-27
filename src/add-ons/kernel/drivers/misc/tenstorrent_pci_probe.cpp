@@ -4,6 +4,18 @@
  * Optional, root-only Pioneer experiments. Only fixed owned host-buffer DMA;
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_ROLE_TAG_OK
+#error Internal recurrent NODRV role witness cannot be supplied by the caller
+#endif
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+#include "PioneerQ38RecurrentBlockNativeRole.h"
+#define PIONEER_Q38_RECURRENT_BLOCK_NATIVE_ROLE_TAG_OK 1
+#else
+#define PIONEER_Q38_RECURRENT_BLOCK_NATIVE_ROLE_TAG_OK 0
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x5152424e4f445256ULL && !PIONEER_Q38_RECURRENT_BLOCK_NATIVE_ROLE_TAG_OK
+#error Reserved QRBNODRV tag needs its exact renamed-ABI compile perimeter
+#endif
 #if defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_RESIDENT_CONTINUE_IMAGE) || defined(PIONEER_Q38_DENSE_PREPARE_IMAGE) || defined(PIONEER_Q38_DENSE_ATTENTION_IMAGE) || defined(PIONEER_Q38_DENSE_PROJECTION_IMAGE) || defined(PIONEER_Q38_DENSE_PARTITION_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_WORKER_IMAGE) || defined(PIONEER_Q38_MIXED_CAPSULE_IMAGE)
 #error Continuation/local dense IMAGE has no existing native/CPU/Work/component role
 #endif
@@ -234,7 +246,7 @@ extern "C" {
 #endif
 #ifdef PIONEER_Q38_DECODER_RUNTIME
 #ifndef PIONEER_Q38_RESIDENT_DECODER_NATIVE
-#if !defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT)
+#if !defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT) && !PIONEER_Q38_RECURRENT_BLOCK_NATIVE_ROLE_TAG_OK
 #ifndef PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY
 #ifndef PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE
 #ifndef PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE
@@ -521,7 +533,7 @@ extern "C" {
 #error Persistent full FFN owner is OFFLINE until its separate actual native model/input/clock/host adapter is qualified
 #endif
 #ifdef PIONEER_Q38_FFN_NATIVE_GRAPH
-#if PIONEER_Q38_FFN_NATIVE_GRAPH != 1 || !defined(PIONEER_Q38_FFN_PERSISTENT_GRAPH) || PIONEER_Q38_FFN_PERSISTENT_GRAPH != 1 || !defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) || PIONEER_Q38_FFN_GRAPH_INPUT_ROOT != 1 || !defined(PIONEER_Q38_FFN_MODEL_INIT) || PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010036ULL && !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK && !PIONEER_Q38_PROJECTION_ROLE_TAG_OK && !PIONEER_Q38_DECODER_ROLE_TAG_OK && !defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT) && !PIONEER_Q38_RESIDENT_OUTPUT_PHYSICAL_ROLE_TAG_OK && !PIONEER_Q38_RESIDENT_LAYER_PHYSICAL_ROLE_TAG_OK && !(defined(PIONEER_Q38_FFN_HOST_PROFILE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL || (defined(PIONEER_Q38_FFN_SEALED_PROOF) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010038ULL)))) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC)
+#if PIONEER_Q38_FFN_NATIVE_GRAPH != 1 || !defined(PIONEER_Q38_FFN_PERSISTENT_GRAPH) || PIONEER_Q38_FFN_PERSISTENT_GRAPH != 1 || !defined(PIONEER_Q38_FFN_GRAPH_INPUT_ROOT) || PIONEER_Q38_FFN_GRAPH_INPUT_ROOT != 1 || !defined(PIONEER_Q38_FFN_MODEL_INIT) || PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010036ULL && !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK && !PIONEER_Q38_PROJECTION_ROLE_TAG_OK && !PIONEER_Q38_DECODER_ROLE_TAG_OK && !defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT) && !PIONEER_Q38_RECURRENT_BLOCK_NATIVE_ROLE_TAG_OK && !PIONEER_Q38_RESIDENT_OUTPUT_PHYSICAL_ROLE_TAG_OK && !PIONEER_Q38_RESIDENT_LAYER_PHYSICAL_ROLE_TAG_OK && !(defined(PIONEER_Q38_FFN_HOST_PROFILE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL || (defined(PIONEER_Q38_FFN_SEALED_PROOF) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010038ULL)))) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_ROOT_LIFETIME_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_PEER_LIFETIME_DIAGNOSTIC)
 #error Persistent full FFN native execution requires its separate exact tag36 model-bound role
 #endif
 #include "PioneerQ38FfnPersistentGraphOwner.h"
@@ -537,7 +549,7 @@ extern "C" {
 #error Reserved tag36 identifies ONLY the persistent full FFN native adapter
 #endif
 #ifdef PIONEER_Q38_FFN_MODEL_INIT
-#if PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(PIONEER_Q38_GDN_MUTABLE_STATE) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST) || !defined(PIONEER_Q38_LOCAL_DELTA_PROBE) || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010035ULL && !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK && !PIONEER_Q38_PROJECTION_ROLE_TAG_OK && !PIONEER_Q38_DECODER_ROLE_TAG_OK && !defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT) && !PIONEER_Q38_RESIDENT_OUTPUT_PHYSICAL_ROLE_TAG_OK && !PIONEER_Q38_RESIDENT_LAYER_PHYSICAL_ROLE_TAG_OK && !(defined(PIONEER_Q38_FFN_NATIVE_GRAPH) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010036ULL || (defined(PIONEER_Q38_FFN_HOST_PROFILE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL || (defined(PIONEER_Q38_FFN_SEALED_PROOF) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010038ULL)))))) || defined(PIONEER_Q38_GDN_ZERO_DIAGNOSTIC) || defined(PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
+#if PIONEER_Q38_FFN_MODEL_INIT != 1 || !defined(PIONEER_Q38_GDN_MUTABLE_STATE) || !defined(PIONEER_Q38_NORMAL_CLOCK) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST) || !defined(PIONEER_Q38_LOCAL_DELTA_PROBE) || !defined(TT_PIONEER_DRIVER_RELOAD) || (PIONEER_DRIVER_BUILD_TAG != 0x2026102200010035ULL && !PIONEER_Q38_EMBEDDING_ROLE_TAG_OK && !PIONEER_Q38_PROJECTION_ROLE_TAG_OK && !PIONEER_Q38_DECODER_ROLE_TAG_OK && !defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT) && !PIONEER_Q38_RECURRENT_BLOCK_NATIVE_ROLE_TAG_OK && !PIONEER_Q38_RESIDENT_OUTPUT_PHYSICAL_ROLE_TAG_OK && !PIONEER_Q38_RESIDENT_LAYER_PHYSICAL_ROLE_TAG_OK && !(defined(PIONEER_Q38_FFN_NATIVE_GRAPH) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010036ULL || (defined(PIONEER_Q38_FFN_HOST_PROFILE) && (PIONEER_DRIVER_BUILD_TAG == 0x2026102200010037ULL || (defined(PIONEER_Q38_FFN_SEALED_PROOF) && PIONEER_DRIVER_BUILD_TAG == 0x2026102200010038ULL)))))) || defined(PIONEER_Q38_GDN_ZERO_DIAGNOSTIC) || defined(PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC) || defined(PIONEER_Q38_FFN_CODE_DIAGNOSTIC) || defined(PIONEER_Q38_GRAPH_CSR_DIAGNOSTIC) || defined(TT_PIONEER_Q38_DISPATCH_PROFILE)
 #error Canonical FFN model init requires its separate exact tag35 retained-owner role,not old GDN/code/Work promotion
 #endif
 #include "PioneerQ38GraphMutableBanks.h"
@@ -695,12 +707,12 @@ extern "C" {
 #include "PioneerQ38ResidentGdnRootController.h"
 #endif
 #ifdef PIONEER_Q38_NORMAL_CLOCK
-#if (!PIONEER_Q38_MIXED_LIVE_PHYSICAL_ROLE_TAG_OK && (!defined(PIONEER_Q38_WORK_SPARSE_EXPORT) || !defined(TT_PIONEER_Q38_WORK_MODE))) || !defined(TT_PIONEER_DRIVER_RELOAD) || !defined(PIONEER_Q38_SPAN_PRELOAD)
+#if (!PIONEER_Q38_MIXED_LIVE_PHYSICAL_ROLE_TAG_OK && !PIONEER_Q38_RECURRENT_BLOCK_NATIVE_ROLE_TAG_OK && (!defined(PIONEER_Q38_WORK_SPARSE_EXPORT) || !defined(TT_PIONEER_Q38_WORK_MODE))) || !defined(TT_PIONEER_DRIVER_RELOAD) || !defined(PIONEER_Q38_SPAN_PRELOAD)
 #error Normal Q38 clocks require the retained-owner reloadable sparse Work driver
 #endif
 #include "PioneerQ38ClockLease.h"
 #endif
-#if defined(PIONEER_Q38_LOCAL_DELTA_PROBE) && (!defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || !defined(TT_PIONEER_DRIVER_RELOAD) || (!PIONEER_Q38_MIXED_LIVE_PHYSICAL_ROLE_TAG_OK && !defined(TT_PIONEER_Q38_WORK_MODE)))
+#if defined(PIONEER_Q38_LOCAL_DELTA_PROBE) && (!defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || !defined(TT_PIONEER_DRIVER_RELOAD) || (!PIONEER_Q38_MIXED_LIVE_PHYSICAL_ROLE_TAG_OK && !PIONEER_Q38_RECURRENT_BLOCK_NATIVE_ROLE_TAG_OK && !defined(TT_PIONEER_Q38_WORK_MODE)))
 #error LOCAL vector delta probe requires the retained-owner reloadable vector Work driver
 #endif
 #if defined(PIONEER_Q38_LOCAL_DELTA_GGML) && (!defined(PIONEER_Q38_LOCAL_DELTA_PROBE) || !defined(PIONEER_Q38_NORMAL_CLOCK))
@@ -2268,6 +2280,7 @@ struct PioneerHostWriteIO : PioneerHostReadIO {
 	}
 };
 #include "PioneerQ38MixedLiveNativeState.h"
+#include "PioneerQ38RecurrentBlockNativeState.h"
 struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOutputIO {
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
  bool ResidentLayerCallScopeMatches();bool ResidentLayerBindSourceScope();
@@ -2444,6 +2457,9 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 #endif
 #endif
 #include "PioneerQ38MixedLiveNativeMapDestroy.inc"
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+  for(auto area:q38RecurrentBlockMemoryArea)if(area>=B_OK)delete_area(area); // known-clean destruction ONLY
+#endif
 		if (attentionArea>=B_OK) delete_area(attentionArea);
 		if (bulkArea>=B_OK) delete_area(bulkArea);
 		if (coordinatorArea>=B_OK) delete_area(coordinatorArea);
@@ -2829,6 +2845,7 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 		runtimeMapped=true; return true;
 	}
 #include "PioneerQ38MixedLiveNativeMapping.inc"
+#include "PioneerQ38RecurrentBlockNativeMapping.inc"
 	// views is not a core reset or NIU transaction, even during rollback.
 	bool SelectRuntimeCore(unsigned core) {
 		if (core>=TT_PIONEER_WORKERS || (!fleetEnabled && core>1)) return false;
@@ -3144,6 +3161,9 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // explicit END or the final close of this FD. No firmware/core start is
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+ PioneerQ38RecurrentBlockNativeState* q38RecurrentBlockNative=NULL;
+#endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
  PioneerQ38ResidentLayerNativeState* q38ResidentLayerNative=NULL; // independent NEW full-layer lifetime
 #endif
@@ -3270,6 +3290,9 @@ struct PioneerStoreContext {
 		hashes=(uint32*)calloc(capacity/4096,sizeof(uint32));
 	}
 	~PioneerStoreContext() {
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+  delete q38RecurrentBlockNative; // clean END only,before borrowed prefix/graph/hosts
+#endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
   delete q38ResidentLayerNative; // known-clean END ONLY,before its borrowed prefix/graph/banks/hosts
 #endif
@@ -3341,6 +3364,10 @@ struct PioneerStoreContext {
 #endif
 #ifdef PIONEER_Q38_EMBEDDING_NATIVE
 #include "PioneerQ38MixedLiveNativeUnsafe.inc" // PIONEER_Q38_EMBEDDING_NATIVE_UNSAFE_BEGIN
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+  if(io.q38RecurrentBlockMemoryMapAttempted && (!q38RecurrentBlockNative || !q38RecurrentBlockNative->memory))return true;
+  if(q38RecurrentBlockNative && (q38RecurrentBlockNative->Unsafe() || (!controlledEmbedding && !q38RecurrentBlockNative->Closed())))return true;
+#endif
 		if (q38EmbeddingModel) {
 			if (q38EmbeddingModel->Unsafe() || (!controlledEmbedding && !q38EmbeddingModel->Closed())) return true;
 		} else if (io.q38EmbeddingMemoryMapAttempted
@@ -3560,7 +3587,10 @@ RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result
 #endif
 	if (c.q38Dispatch) PioneerQ38DispatchQuarantine(*c.q38Dispatch,c.banks);
 	c.banks.Quarantine(); c.lease.recovery_required=true; c.io.QuarantineHostPage();
-#if defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER)
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+ if(c.q38RecurrentBlockNative)c.q38RecurrentBlockNative->Fault(); // MEMORY ONLY;never clean up unknown aliases
+#endif
+#if defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT) || defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER)
  c.bulk.unsafe=true; // same retained bulk snapshot/lease;NEVER restore/reuse after decoder uncertainty
 #endif
 	if (c.bulkHost.allocated && !c.bulkHost.released) { c.bulkHost.ready=false; c.bulkHost.quarantined=true; }
@@ -3580,6 +3610,17 @@ RetainQ38DispatchOwner(PioneerStoreContext& c,tt_resident_session_result& result
 static bool
 EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean)
 {
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+ if(c.q38RecurrentBlockNative || c.io.q38RecurrentBlockMemoryMapAttempted){
+  auto* state=c.q38RecurrentBlockNative;auto* m=c.q38EmbeddingModel;
+  if(!state || !m || !sRuntimeOwner || c.bytes!=PioneerResidentBanks::Total || c.runtimeCoreMode!=1
+   || !c.io.RecurrentBlockCallScopeMatches() || !state->Closed()
+   || !state->MatchesBinding(c,*m,sRuntimeOwner,c.hashes,sRuntimeOwner->team,c.initialized,sReloadGeneration)
+   || !c.io.RecurrentBlockMemoryMappingStable(0)){
+   clean=false;RetainQ38DispatchOwner(c,result);return false;
+  }
+ }
+#endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
 #include "PioneerQ38ResidentLayerNativeEnd.inc"
 #endif
@@ -3746,6 +3787,7 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 // PIONEER_Q38_DISPATCH_RETAIN_END
 #endif
 #include "PioneerQ38MixedLiveNative.inc"
+#include "PioneerQ38RecurrentBlockNative.inc"
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 // PIONEER_Q38_STATE_ZERO_NATIVE_ADAPTER_BEGIN
 // Private native adapter,selected ONLY by the separate fixed zero diagnostic
@@ -4131,7 +4173,7 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
  }
  if(denseTensors!=11 || denseParts!=53){delete m;return false;}
 #endif
-#if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT) || defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE)
  // Match the existing native handoff's COMPLETE layer0 upload contract
  // BEFORE epoch/reservation/model publication. A partial prefix must not
  // execute and only then discover missing norm/FFN/output/Conv/GDN pages.
@@ -4556,6 +4598,9 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
 // PIONEER_Q38_STATE_ZERO_NATIVE_SCOPE_BEGIN
 bool PioneerSessionIO::StateZeroBeforeCohort()
 {
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+ return RecurrentBlockInitializationScope(false,false);
+#else
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
  if(q38MutableContext && q38MutableContext->q38ResidentLayerNative)return ResidentLayerInitializationSourceScope(false,false);
 #endif
@@ -4629,6 +4674,7 @@ bool PioneerSessionIO::StateZeroBeforeCohort()
 	return !c->Unsafe(true) && c->q38GdnBanks->MatchesInitializationOwner(c->banks,dram,c->q38GdnIdentity)
 		&& c->q38GdnBanks->InitializeSpan(c->q38GdnIdentity,0,0,1,probe);
 #endif
+#endif
 }
 #ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
 // PIONEER_Q38_RGDN_ROOT_NATIVE_SCOPE_BEGIN
@@ -4670,6 +4716,9 @@ bool PioneerSessionIO::ResidentGdnBeforeRoot()
 // PIONEER_Q38_NONROOT_NATIVE_OWNER_BEGIN
 bool PioneerSessionIO::NonRootHeldOwner() {
 	return StateZeroBeforeCohort()
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+  || RecurrentBlockInitializationScope(true,false)
+#endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
   || ResidentLayerInitializationSourceScope(true,false)
 #endif
@@ -4695,6 +4744,9 @@ bool PioneerSessionIO::NonRootHeldMappingStable()
 // PIONEER_Q38_NONROOT_NATIVE_OWNER_END
 bool PioneerSessionIO::StateZeroOtherCoresHeld()
 {
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+ return RecurrentBlockInitializationOtherCoresHeld(false);
+#else
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
  if(q38MutableContext && q38MutableContext->q38ResidentLayerNative)return ResidentLayerInitializationOtherCoresHeld(false);
 #endif
@@ -4706,6 +4758,7 @@ bool PioneerSessionIO::StateZeroOtherCoresHeld()
 	// First physical readback mismatch:full MEMORY-ONLY context quarantine,
 	// including clock/cookie/PCI/ALL host leases,BEFORE returning to caller.
 	tt_resident_session_result result={}; RetainQ38DispatchOwner(*q38MutableContext,result); return false;
+#endif
 #endif
 }
 #ifdef PIONEER_Q38_RESIDENT_GDN_ROOT_DIAGNOSTIC
@@ -8073,6 +8126,17 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	PioneerProbeCookie* instance=(PioneerProbeCookie*)cookie;
 	if (geteuid() != 0 || instance==NULL || instance->magic!=0x50313030)
 #include "PioneerQ38MixedLiveNativeRouting.inc"
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+ // Retain genuine constructors in the PRIVATE renamed compile body.
+ // No new/public compute selector,old diagnostic promotion or Work route.
+ if(operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
+  return DriverReloadControl(instance,operation,data,length);
+ if(operation==TT_PCI_PROBE_Q38_BANK_SUPPORT || operation==TT_PCI_PROBE_Q38_BANK_BEGIN || operation==TT_PCI_PROBE_Q38_BANK_END)
+  return Q38BankControl(instance,operation,data,length);
+ if(operation==TT_PCI_PROBE_Q38_SPAN_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD || operation==TT_PCI_PROBE_Q38_SPAN_END)
+  return Q38SpanControl(instance,operation,data,length);
+ return B_NOT_ALLOWED;
+#endif
 #ifdef TT_PIONEER_DRIVER_RELOAD
 	if (operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
 		return DriverReloadControl(instance,operation,data,length);

@@ -5,6 +5,7 @@
 #include "blackhole_qwen38_mixed_recurrent_cohort.cpp"
 #include "PioneerQ38ResidualRms.h"
 extern "C" unsigned mixed_recurrent_block_wait(unsigned);
+extern "C" void mixed_recurrent_block_stopped() __attribute__((noreturn));
 namespace RecurrentBlock {
 namespace R=PioneerQ38MixedRecurrentBlockRootLayout;
 namespace C=PioneerQ38MixedRecurrentCohortLayout;
@@ -125,13 +126,77 @@ static void Finish(R::PrivateSeal* p){
   Transfer(p->outer[9]+R::FinalOffset+at,p->outer[8],R::Scratch,n,true,tracked);}
  OriginalSeal();q38_mixed_root_seal();if(!Quiet())scalar_fault_park();
 }
+static void EndSeal(R::PrivateSeal* p){
+ RecipeSeal(3);Projection::InputsSeal(p->frame);
+ for(unsigned w=0;w<119;w++)DensePartitionRoot::FrameSeal(w);
+}
+static void StopJob(const uint32_t* d,unsigned w,unsigned n){
+ namespace M=PioneerQ38MixedWorkerLayout;
+ for(unsigned i=0;i<64;i++)Words(R::Scratch)[i]=0;
+ const unsigned head[]={M::Magic,n,unsigned(M::Stop),w+1,M::Peer(w+1),d[42],d[40],d[6]+1};
+ for(unsigned i=0;i<8;i++){Words(R::Scratch)[i]=head[i];Words(R::Scratch)[8+i]=d[32+i];}
+}
+static void Stopped(const uint32_t* d,uint32_t* tracked,unsigned w){
+ using namespace DensePartitionRoot;
+ const unsigned n=Words(R::Nonces)[w];bool done=false;
+ for(unsigned poll=0;poll<65536;poll++){
+  if(Register(d,tracked,w,0xffb121b0)!=0x46800)scalar_fault_park();
+  DensePartitionRoot::Transfer(d,tracked,w,M::Status,64,false);
+  uint32_t s[16];for(unsigned i=0;i<16;i++)s[i]=Words(R::Scratch)[i];
+  if(s[2] || s[3]!=M::Magic || s[0]<n-1 || s[0]>n || s[1]<n-1 || s[1]>s[0] || (s[4] && s[4]!=M::Stop)
+   || s[5] || s[6]!=d[42] || s[7]!=d[40])scalar_fault_park();
+  for(unsigned i=8;i<16;i++)if(s[i])scalar_fault_park();
+  if(s[0]!=n || s[1]!=n || s[4]!=M::Stop)continue;
+  unsigned a=Register(d,tracked,w,0xffb13140);
+  if(Register(d,tracked,w,0xffb121b0)!=0x46800)scalar_fault_park();
+  unsigned b=Register(d,tracked,w,0xffb13140);
+  // A speculative frontend PC is never completion by itself. Require the
+  // actual STOP record AND two positive terminal samples,not a range guess.
+  if((a!=0x20060 && a!=0x20064) || (b!=0x20060 && b!=0x20064))continue;
+  done=true;break;
+ }
+ if(!done)scalar_fault_park();
+ BootSeal(d,tracked,w);DensePartitionRoot::Transfer(d,tracked,w,M::Job,256,false);
+ for(unsigned i=0;i<64;i++)if(Words(R::Scratch)[i]!=Words(R::PeerJobs+w*256)[i])scalar_fault_park();
+ if(Register(d,tracked,w,M::Doorbell)!=n)scalar_fault_park();
+ for(unsigned i=0;i<8;i++)if(Register(d,tracked,w,0xffb20000+Counter(i))!=Words(R::Counters)[w*8+i])scalar_fault_park();
+}
+static void Stop(R::PrivateSeal* p,unsigned previous){
+ using namespace DensePartitionRoot;
+ const auto* d=p->frame;
+ if(!PioneerQ38MixedRecurrentProjectionRootLayout::Shape(d) || d[43]!=4 || d[48]!=previous)scalar_fault_park();
+ Phase(p,15);Words(R::Status)[0]=p->outer[48];Words(R::Status)[4]=2;EndSeal(p);
+ uint32_t tracked[8];for(unsigned i=0;i<8;i++)tracked[i]=*Words(0xffb20000+Counter(i));
+ // Prove every existing closed chain BEFORE the first peer STOP write.
+ for(unsigned w=0;w<119;w++){
+  if(Words(R::Nonces)[w]>=0x7ffffffe)scalar_fault_park();
+  Wait(d,tracked,w,0);BootSeal(d,tracked,w);ClosedJob(d,tracked,w,false);
+  for(unsigned i=0;i<8;i++)if(Register(d,tracked,w,0xffb20000+Counter(i))!=Words(R::Counters)[w*8+i])scalar_fault_park();
+ }
+ for(unsigned w=0;w<119;w++){
+  StopJob(d,w,Words(R::Nonces)[w]+1);Copy(R::PeerJobs+w*256,R::Scratch,64);
+  DensePartitionRoot::Transfer(d,tracked,w,M::Job,256,true);
+ }
+ for(unsigned w=0;w<119;w++){
+  *Words(R::Scratch)=Words(R::Nonces)[w]+1;
+  DensePartitionRoot::Transfer(d,tracked,w,M::Doorbell,4,true);Words(R::Nonces)[w]++;
+ }
+ for(unsigned w=0;w<119;w++)Stopped(d,tracked,w);
+ EndSeal(p);if(!Quiet())scalar_fault_park();
+ auto* s=Words(R::StopSummary);for(unsigned i=0;i<64;i++)s[i]=0;
+ const unsigned head[]={0,p->outer[48],previous,119,d[42],d[40],129,1};
+ for(unsigned i=0;i<8;i++){s[i]=head[i];s[8+i]=tracked[i];s[26+i]=d[32+i];}
+ for(unsigned i=0;i<10;i++)s[16+i]=Words(0xffb20000)[i];
+ for(unsigned i=0;i<16;i++)s[34+i]=p->boot[16+i];
+ Fence();s[0]=R::StopMagic;Fence();Words(R::Status)[1]=p->outer[48];Fence();mixed_recurrent_block_stopped();
+}
 }
 extern "C" const uint32_t* q38_mixed_recurrent_frame(){return RecurrentBlock::Private()->frame;}
 extern "C" void q38_mixed_root_seal(){
  using namespace RecurrentBlock;const auto* p=Private();
  for(unsigned i=0;i<64;i++)if(Words(R::Boot)[i]!=p->boot[i] || Words(R::Header)[i]!=p->frame[i])scalar_fault_park();
  for(unsigned i=0;i<128;i++)if(Words(R::Outer)[i]!=p->outer[i])scalar_fault_park();
- if(!p->phase || p->phase>14 || *Words(R::Doorbell)!=p->outer[48])scalar_fault_park();
+ if(!p->phase || p->phase>15 || (p->phase==15 && !R::StopShape(p->outer)) || *Words(R::Doorbell)!=p->outer[48])scalar_fault_park();
  for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+Source(i))!=p->boot[16+i])scalar_fault_park();
 }
 extern "C" void mixed_recurrent_block_main(){
@@ -143,12 +208,15 @@ extern "C" void mixed_recurrent_block_main(){
  if(counters[2]!=counters[6])scalar_fault_park();
  asm volatile("mv s11,%0"::"r"(&seal):"s11","memory");
  for(unsigned i=0;i<16;i++)Words(R::Status)[i]=0;
+ for(unsigned i=0;i<64;i++)Words(R::StopSummary)[i]=0;
  Words(R::Status)[3]=R::Magic;Fence();unsigned previous=0;
  for(;;){
   unsigned n=mixed_recurrent_block_wait(previous);for(unsigned i=0;i<128;i++)seal.outer[i]=Words(R::Outer)[i];
-  const auto* o=seal.outer;if(n!=previous+1 || o[48]!=n || !R::OuterShape(o))scalar_fault_park();
+  const auto* o=seal.outer;bool stop=o[72]==R::Stop;
+  if(n!=previous+1 || o[48]!=n || (stop?!previous || !R::StopShape(o):!R::OuterShape(o)))scalar_fault_park();
   for(unsigned i=0;i<16;i++)if(o[16+i]!=seal.boot[16+i])scalar_fault_park();
   for(unsigned i=0;i<8;i++)if(o[32+i]!=seal.boot[8+i] || *Words(0xffb20000+Counter(i))!=counters[i])scalar_fault_park();
+  if(stop)Stop(&seal,previous);
   for(unsigned i=0;i<64;i++){seal.frame[i]=Words(R::Header)[i]=0;Words(R::JointSummary)[i]=0;}
   Words(R::Status)[0]=n;Words(R::Status)[4]=1;Phase(&seal,1);
   Read(o[69],PioneerQ38ProjectionRoute(o[68]),R::Original,20480);Copy(R::OriginalCopy,R::Original,5120);Norm(&seal,0);CaptureRecipes(&seal,0,4);

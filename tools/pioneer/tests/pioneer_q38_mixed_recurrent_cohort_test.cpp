@@ -22,7 +22,8 @@ struct NewCohortPeer:MixedPeer {
  using MixedPeer::MixedPeer;
  void Received(){
   assert(!active && (pc==waitPC || pc==waitPC+4));ClearTensorState();
-  unsigned next=memory.at(M::Job+4),op=memory.at(M::Job+8);assert(next==sequence+1 && (op==1 || op==7 || op==8));
+  unsigned next=memory.at(M::Job+4),op=memory.at(M::Job+8);assert(next==sequence+1 && (op==1 || op==2 || op==7 || op==8));
+  if(op==2){sequence=next;active=true;return;} // execute the actual STOP;no tensor or counter rewrite
   if(op==1){MatrixReceived();return;}
   uint32_t physical[8];for(unsigned i=0;i<8;i++)physical[i]=Count(i);
   sequence=next;denseActive=outputActive=false;activation=true;convActive=op==7;gdnActive=op==8;
@@ -117,7 +118,7 @@ struct NewCohortMachine:ScalarMachine,CohortBytes {
  void Put(unsigned route,unsigned address,uint32_t v)override{dram[Key(route,address)]=v;}
  uint64_t Clock()const override{return cycles;}
  uint32_t RootWord(unsigned address)const override{return memory.at(address);}
- NewCohortMachine(const char* image,const char* worker,bool seedPrimitiveOutputs=true):ScalarMachine(0,0){
+ NewCohortMachine(const char* image,const char* worker,bool seedPrimitiveOutputs=true,bool virgin=false):ScalarMachine(0,0){
   assert(canonical->Build());bootRom=Read((std::string(image)+"/boot.bin").c_str());text=Read((std::string(image)+"/text.bin").c_str());
   convRom=Read((std::string(image)+"/conv.bin").c_str());l1[0]=Word(bootRom,0);counts.fill(0xfffffff8);
   std::array<uint32_t,1920> sources;
@@ -127,7 +128,7 @@ struct NewCohortMachine:ScalarMachine,CohortBytes {
    // Distinct physical source registers and boot bytes BEFORE first boot.
    for(unsigned i=0;i<16;i++)p.boot[16+i]=sources[(w+1)*16+i]=p.source[i]+=w*0x100;
    p.boot[5]=p.source[0];for(unsigned i=0;i<64;i++)p.memory[M::Boot+i*4]=p.boot[i];
-   assert(p.BootMixed());for(unsigned job=0;job<1+w%3;job++){if(job)FreshInputs(p);assert(p.MatrixMixed());}
+   assert(p.BootMixed());if(!virgin)for(unsigned job=0;job<1+w%3;job++){if(job)FreshInputs(p);assert(p.MatrixMixed());}
    initial[w]=p.sequence;
   }
   assert(plan->Build(*canonical,0,0,0,0,0,1001,1,{1,2,3,4},sources.data()));
@@ -197,7 +198,7 @@ struct NewCohortMachine:ScalarMachine,CohortBytes {
  }
  void Tick(){
   for(auto& p:child)if(p->active)for(unsigned i=0;i<64;i++){
-   if(p->GdnFaulted() || p->GdnFinished(p->sequence)){p->active=false;break;}
+   if(p->GdnFaulted() || p->GdnFinished(p->sequence) || p->pc==p->stopPC){p->active=false;break;}
    cycles+=19;p->StepBlock();
   }
  }

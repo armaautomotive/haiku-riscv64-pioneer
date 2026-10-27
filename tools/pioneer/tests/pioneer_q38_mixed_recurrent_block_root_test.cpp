@@ -5,6 +5,7 @@
 #define PIONEER_Q38_MIXED_RECURRENT_COHORT_MACHINE_ONLY
 #include "pioneer_q38_mixed_recurrent_cohort_test.cpp"
 #include "../PioneerQ38MixedRecurrentBlockPlan.h"
+#include "../PioneerQ38MixedRecurrentBlockCounters.h"
 #include "pioneer_q38_projection_input_reference.h"
 namespace RB=PioneerQ38MixedRecurrentBlockRootLayout;
 struct RecurrentBlockMachine:NewCohortMachine {
@@ -13,10 +14,14 @@ struct RecurrentBlockMachine:NewCohortMachine {
  std::unique_ptr<PioneerQ38MixedRecurrentBlockPlan> block=std::make_unique<PioneerQ38MixedRecurrentBlockPlan>();
  std::array<uint32_t,128> outer={};unsigned matrixStarts=0,matrixChecks=0,observed=0,finalWords=0;
  unsigned initialNorm=0,postNorm=0,activationChecks=0,gatedChecks=0,numericCohortChecks=0;
- unsigned outerFaultPacket=0,rootBootFaultPacket=0;
- RecurrentBlockMachine(const char* image,const char* worker):NewCohortMachine(image,worker,false){
+ unsigned outerFaultPacket=0,rootBootFaultPacket=0,stopJobs=0,stopStarts=0;
+ uint32_t peerCounterBaseline[119][8]={}; // observed physical registers,never private completion state
+ RecurrentBlockMachine(const char* image,const char* worker,bool virgin=false):NewCohortMachine(image,worker,false,virgin){
   std::array<uint32_t,1920> sources;for(unsigned i=0;i<16;i++)sources[i]=source[i];
-  for(unsigned w=0;w<119;w++)for(unsigned i=0;i<16;i++)sources[(w+1)*16+i]=child[w]->source[i];
+  for(unsigned w=0;w<119;w++){
+   for(unsigned i=0;i<16;i++)sources[(w+1)*16+i]=child[w]->source[i];
+   for(unsigned i=0;i<8;i++)peerCounterBaseline[w][i]=child[w]->Count(i);
+  }
   const auto* workspace=canonical->Workspace(0);unsigned input=canonical->Base+workspace->offset+0x600000;
   assert(block->Build(*canonical,0,0,0,0,0,1001,1,{1,2,3,4},sources.data(),0,input) && block->Matches(*canonical));
   for(unsigned i=0;i<128;i++){outer[i]=block->Outer()[i];memory[RB::Outer+i*4]=outer[i];}
@@ -56,12 +61,12 @@ struct RecurrentBlockMachine:NewCohortMachine {
   }
   return result;
  }
- void SeedRaw(){
+ void SeedRaw(bool seedHidden=true){
   unsigned route=outer[8],base=outer[9];
   for(unsigned i=0;i<5120;i++){
-   Put(PioneerQ38ProjectionRoute(outer[68]),outer[69]+i*4,Bits(float(sin(i*.017+.27))));
+   if(seedHidden)Put(PioneerQ38ProjectionRoute(outer[68]),outer[69]+i*4,Bits(float(sin(i*.017+.27))));
    for(unsigned n=0;n<2;n++)Put(PioneerQ38ProjectionRoute(outer[64+n*2]),outer[65+n*2]+i*4,Bits(float(1+sin(i*.017+n*.37)*.1)));
-   Put(route,base+RB::FinalOffset+i*4,0x7fc00000);
+   if(seedHidden || outer[68]!=outer[7] || outer[69]!=base+RB::FinalOffset)Put(route,base+RB::FinalOffset+i*4,0x7fc00000);
   }
   for(unsigned w=0;w<120;w++)for(unsigned job=0;job<PioneerQ38ConvBatchCount(w);job++){
    const auto* d=block->Conv()+w*384+job*64;
@@ -97,7 +102,7 @@ struct RecurrentBlockMachine:NewCohortMachine {
    || Range(a,RB::Native,17408*2) || Range(a,RB::Scales,768) || Range(a,RB::Projected,17408*4)
    || Range(a,RB::Parts,119*32) || Range(a,RB::Rows,119*4) || Range(a,RB::Banks,32) || Range(a,RB::MatrixHeader,64)
    || Range(a,RB::RecipeShadow,256) || Range(a,0x76d00,0x11e0) || Range(a,RB::QuantizedChunk,576) || Range(a,0x92000,2048)
-   || Range(a,RB::Header,256);
+   || Range(a,RB::Header,256) || Range(a,RB::StopSummary,256);
   if(allowed){assert(!pending);memory[a]=value;return;}
   if(a==RB::Status+8 && value==RB::Fault)unknown=true;
   NewCohortMachine::Store(a,value);
@@ -167,14 +172,20 @@ struct RecurrentBlockMachine:NewCohortMachine {
   packets++;if(packets==failPacket){pending=true;return;}
   if(write){
    assert(!p.active && ((remote==M::Job && n==256) || (remote==M::Doorbell && n==4)));
-   if(remote==M::Job)ObserveMatrix();for(unsigned i=0;i<n/4;i++)p.memory[remote+i*4]=memory.at(local+i*4);
-   if(remote==M::Doorbell)p.Received();peerWrites++;
-  }else if(remote==0xffb121b0){assert(n==4);memory[local]=0x46800;}
+   if(remote==M::Job){
+    if(Phase()==15){assert(n==256 && memory.at(local+8)==M::Stop);stopJobs++;}else ObserveMatrix();
+   }
+   for(unsigned i=0;i<n/4;i++)p.memory[remote+i*4]=memory.at(local+i*4);
+   if(remote==M::Doorbell){if(Phase()==15){assert(stopJobs==119);stopStarts++;}p.Received();}peerWrites++;
+  }else if(remote==0xffb121b0){assert(n==4);memory[local]=badResetWorker==w+1?0x46801:0x46800;}
   else if(remote==0xffb13140){assert(n==4);memory[local]=p.pc;}
   else if(Range(remote,0xffb20000,0x2000)){
    unsigned off=remote-0xffb20000;bool found=false;
    for(unsigned i=0;i<16;i++)if(off==BlackholeDramSourceOffset(i)){memory[local]=p.source[i];found=true;}
-   for(unsigned i=0;i<8;i++)if(off==FfnPersistentPeer::CounterOffset(i)){memory[local]=p.Count(i);found=true;break;}assert(found);
+   for(unsigned i=0;i<8;i++)if(off==FfnPersistentPeer::CounterOffset(i)){memory[local]=p.Count(i);found=true;break;}
+   for(unsigned i=0;i<4;i++)if(off==0x40+i*0x800){p.ClearTensorState();memory[local]=i?0:unsigned(p.pending);found=true;}
+   if(off>=0x240 && off<0x2c0){p.ClearTensorState();assert(!p.pending);memory[local]=0;found=true;}
+   assert(found);
   }else if(remote==0x83f00){
    for(unsigned i=0;i<64;i++)memory[local+i*4]=p.memory.at(remote+i*4);
    if(n>256){assert(!p.active && p.memory.at(M::Job+8)==1 && p.CorrectRows() && !p.dotProbeReads && p.requests==p.packets.size());matrixChecks++;
@@ -212,7 +223,27 @@ struct RecurrentBlockMachine:NewCohortMachine {
    && activationChecks==1 && gatedChecks==1 && numericCohortChecks==1 && memory.at(RB::JointSummary)==RB::Magic && minStack>=0x6e000);
   for(unsigned i=0;i<5120;i++)assert(Get(outer[8],outer[9]+RB::FinalOffset+i*4)==Bits(Float(Get(outer[8],outer[9]+PioneerQ38MixedRecurrentOffset(4)+i*4))+Float(memory.at(RB::PostResidual+i*4)))
    && memory.at(RB::Original+i*4)==memory.at(RB::OriginalCopy+i*4));
-  for(unsigned w=0;w<119;w++)assert(!child[w]->active && child[w]->sequence==initial[w]+PioneerQ38MixedRecurrentBlockProjectionLayout::RunDelta(w));
+  unsigned counterRefusals=0;
+  for(unsigned w=0;w<119;w++){
+   auto& p=*child[w];assert(!p.active && p.sequence==initial[w]+PioneerQ38MixedRecurrentBlockProjectionLayout::RunDelta(w));
+   uint32_t actual[8],beforeDown[8];for(unsigned i=0;i<8;i++){
+    actual[i]=p.Count(i);beforeDown[i]=p.memory.at(0x83f00+i*4);
+    assert(p.memory.at(0x83f00+(8+i)*4)==actual[i]);
+   }
+   unsigned polls=UINT32_MAX,priorPolls=UINT32_MAX;
+   assert(PioneerQ38RecurrentBlockCounterProof(*block,*canonical,w+1,peerCounterBaseline[w],actual,false,polls)
+    && PioneerQ38RecurrentBlockCounterProof(*block,*canonical,w+1,peerCounterBaseline[w],beforeDown,true,priorPolls)
+    && polls==priorPolls && polls==(w<96?p.gdnPolls:0));
+   // Correlate the production DATA helper with ALL actual emitted matrix,
+   // Conv and GDN packets and the real final-job receipt. The helper is
+   // never a substitute for current source/status/STOP/lifetime checks.
+   for(unsigned i=0;i<8;i++){
+    actual[i]++;unsigned unchanged=0xa55aa55a;
+    assert(!PioneerQ38RecurrentBlockCounterProof(*block,*canonical,w+1,peerCounterBaseline[w],actual,false,unchanged)
+     && unchanged==0xa55aa55a);actual[i]--;counterRefusals++;
+   }
+  }
+  printf("PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/%u channel refusals;NOT native STOP/cleanup authority\n",counterRefusals);
  }
 };
 static unsigned Refusals(RecurrentBlockMachine& base){

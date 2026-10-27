@@ -8,6 +8,9 @@
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveNativeState.h"
 #endif
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38RecurrentBlockNativeState.h"
+#endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeState.h"
 #endif
@@ -16,7 +19,7 @@
 #endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38NonRootHeld.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchBootstrap.h"
-#if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT)
+#if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT) || defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT)
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputLearned.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GraphMutableBanks.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnZeroController.h"
@@ -121,6 +124,22 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  }
 #endif
  PioneerStoreContext* q38MutableContext=nullptr;
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+ // Binding-only endpoint fixture: NO recurrent mapping or execution.
+ bool q38RecurrentBlockMemoryMapAttempted=false;
+ bool RecurrentBlockCallScopeMatches();bool RecurrentBlockBaseScope();
+ bool RecurrentBlockMemoryMappingStable(unsigned){assert(false && "binding-only fixture cannot map/close execution");return false;}
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_INITIALIZATION_FIXTURE
+ bool RecurrentBlockInitializationScope(bool,bool);bool RecurrentBlockInitializationOtherCoresHeld(bool);
+ bool StateZeroBeforeCohort();bool StateZeroOtherCoresHeld();bool ConvHistoryZeroBeforeCohort();bool ConvHistoryZeroOtherCoresHeld();
+ std::vector<uint32> recurrentBlockGdnWords,recurrentBlockHistoryWords;
+ std::vector<unsigned> recurrentBlockGdnTouched,recurrentBlockHistoryTouched;
+ PioneerQ38GdnBankExtent recurrentBlockGdnExtents[672]={};PioneerQ38ConvHistoryExtent recurrentBlockHistoryExtents[336]={};
+ unsigned recurrentBlockGdnFirst[672]={},recurrentBlockGdnPages=0,recurrentBlockGdnRuns=0,recurrentBlockHistoryRuns=0;
+ unsigned recurrentBlockFailRun=0,recurrentBlockHistoryFailRun=0,recurrentBlockLoseTeamRun=0;
+ bool recurrentBlockNonrootFault=false;
+#endif
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
  MixedLiveNativeTransport* mixedLiveTransport=nullptr;
@@ -323,6 +342,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
   const PioneerQ38CanonicalModelPlan&,const PioneerQ38ProjectionIdentity&,const uint8_t*,unsigned);
  bool EmbeddingOtherCoresHeld();void EmbeddingRetainHostOwners();
  bool EmbeddingMode()const;
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_INITIALIZATION_FIXTURE
+ bool NonRootHeldOwner();
+#else
  bool NonRootHeldOwner(){return EmbeddingSourceScope(false)
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
   || ResidentLayerInitializationSourceScope(false,false) || ResidentLayerInitializationSourceScope(true,false)
@@ -337,6 +359,7 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
   || LearnedRmsSourceScope(false)
 #endif
   ;}
+#endif
  bool NonRootHeldMappingStable(){return !coreMapLost && NonRootHeldOwner();}
  void DramTlbWrite(unsigned slot,unsigned word,uint32 value){
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
@@ -375,6 +398,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
   for(bool readOnly:{false,true}){bool same=true;for(unsigned w=0;w<3;w++)same&=ProjectionZeroIO::tlb[1][w]==BlackholeDramFixedTlbWord(0xffa00000,1,2,readOnly,w);root|=same;}
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
   if(!root && outputNonrootFault)return 0x46800;
+#endif
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_INITIALIZATION_FIXTURE
+  if(!root && recurrentBlockNonrootFault)return 0x46800;
 #endif
   return root?coreReset:0x47800;
  }
@@ -585,6 +611,9 @@ struct FactoryClock{
 #endif
 struct PioneerStoreContext {
  PioneerSessionIO& io;PioneerQ38EmbeddingNativeState* q38EmbeddingModel=nullptr;
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+ PioneerQ38RecurrentBlockNativeState* q38RecurrentBlockNative=nullptr;
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
  PioneerQ38MixedLiveNativeState* q38MixedLiveNative=nullptr;
 #endif
@@ -606,7 +635,7 @@ struct PioneerStoreContext {
 #endif
  };B3 baseline;
  uint8* initialized;uint32 hash=0,*hashes=&hash;
-#if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT)
+#if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT) || defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT)
  // Real production pointee types for complete-role CPU END/retention
  // gates. This role never constructs any competing legacy FFN owner.
  PioneerQ38CanonicalModelPlan* q38FfnModelPlan=nullptr;PioneerQ38GraphMutableBanks* q38GraphMutable=nullptr;
@@ -647,6 +676,9 @@ struct PioneerStoreContext {
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveNativeDestroy.inc"
   finalDestroyed++;
 #else
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+  delete q38RecurrentBlockNative;
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
   delete q38MixedLiveNative;
 #endif
@@ -693,7 +725,7 @@ static uint64 sReloadGeneration=4;
 static const void* sQ38LocalDeltaOwner=nullptr;
 #endif
 static int currentThread=42;static int find_thread(void*){return currentThread;}
-#if defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT)
+#if defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT) || defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT)
 static int currentTeam=7;static bool failThreadInfo=false;
 struct thread_info{int team=-1;};
 static int get_thread_info(int thread,thread_info* info){if(failThreadInfo || thread!=currentThread || !info)return -1;info->team=currentTeam;return B_OK;}
@@ -735,6 +767,13 @@ static void release_sem(int lock){assert(lock==sLock && finalLockHeld);finalLock
 #endif
 #endif
 #include "embedding_factory_factory.inc"
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+#include "recurrent_block_factory_bind.inc"
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_INITIALIZATION_FIXTURE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38RecurrentBlockNativeInitialize.inc"
+#include "recurrent_block_zero_callbacks.inc"
+#endif
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveNative.inc"
@@ -758,6 +797,9 @@ static bool EndFactory(PioneerStoreContext& c){bool clean=true;tt_resident_sessi
 }
 #else
 static bool EndFactory(PioneerStoreContext& c){bool clean=true;tt_resident_session_result result={};
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+#include "recurrent_block_factory_end.inc"
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveNativeEnd.inc"
 #endif
@@ -887,6 +929,49 @@ bool PioneerSessionIO::WriteState(unsigned bank,uint32_t address,const uint32_t*
 }
 #endif
 void PioneerSessionIO::RuntimeResetWrite(uint32 value){
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_INITIALIZATION_FIXTURE
+ auto* blockState=q38MutableContext?q38MutableContext->q38RecurrentBlockNative:nullptr;
+ if(blockState){
+  bool gdn=blockState->phase==PioneerQ38RecurrentBlockNativeState::RecurrentZeroing;
+  bool history=blockState->phase==PioneerQ38RecurrentBlockNativeState::HistoryZeroing;
+  bool closing=blockState->phase==PioneerQ38RecurrentBlockNativeState::RecurrentClosing
+   || blockState->phase==PioneerQ38RecurrentBlockNativeState::HistoryClosing;
+  if(gdn || history || closing){
+   // Device-byte bridge ONLY:execute the actual frozen image and observe
+   // its output. Never fabricate completion,coverage,publication or seals.
+   auto* m=q38MutableContext->q38EmbeddingModel;unsigned region=0,first=0,words=0;
+   if(value==0x46800){
+    assert(!closing && !publicationCounterFabricOnly);
+    region=(gdn?blockState->recurrentZero.nonce:blockState->historyZero.nonce)-1;
+    if(gdn){
+     if(recurrentBlockGdnWords.empty()){recurrentBlockGdnWords.assign(73728*1024,0xa55aa55a);recurrentBlockGdnTouched.assign(73728,0);}
+     auto* g=m->graph.Recurrent(m->identity);unsigned pages=0;
+     assert(g && region<672 && g->InitializationPages(m->identity,region,pages)
+      && g->InitializeSpan(m->identity,region,0,pages,recurrentBlockGdnExtents[region]));
+     const auto& e=recurrentBlockGdnExtents[region];assert(e.bank==l1[7] && e.address==l1[5] && e.bytes==l1[4] && e.route==l1[8]);
+     first=recurrentBlockGdnPages;recurrentBlockGdnFirst[region]=first;words=pages*1024;recurrentBlockGdnRuns++;
+     if(recurrentBlockGdnRuns==recurrentBlockFailRun)packetFault=1;
+    }else{
+     if(recurrentBlockHistoryWords.empty()){recurrentBlockHistoryWords.assign(1680*1024,0xa55aa55a);recurrentBlockHistoryTouched.assign(1680,0);}
+     auto* h=m->graph.ConvHistory(m->identity);assert(h && region<336 && h->InitializeSpan(m->identity,region,0,5,recurrentBlockHistoryExtents[region]));
+     const auto& e=recurrentBlockHistoryExtents[region];assert(e.bank==l1[7] && e.address==l1[5] && e.bytes==l1[4] && e.route==l1[8]);
+     first=region*5;words=5120;recurrentBlockHistoryRuns++;if(recurrentBlockHistoryRuns==recurrentBlockHistoryFailRun)packetFault=1;
+    }
+   }
+   ZeroControlIO::RuntimeResetWrite(value);
+   if(value==0x46800){
+    assert(lastDeviceWords.size()==words);auto& bytes=gdn?recurrentBlockGdnWords:recurrentBlockHistoryWords;
+    auto& touched=gdn?recurrentBlockGdnTouched:recurrentBlockHistoryTouched;
+    for(unsigned i=0;i<words;i++)bytes[first*1024+i]=lastDeviceWords[i];
+    for(unsigned i=first;i<first+words/1024;i++)touched[i]++;
+    if(gdn){recurrentBlockGdnPages+=words/1024;
+     if(recurrentBlockGdnRuns%96==0)printf("QRB_NATIVE_ACTUAL_ZERO GDN%u/pages%u;NO publication before clean CLOSE\n",recurrentBlockGdnRuns,recurrentBlockGdnPages);}
+    if(recurrentBlockLoseTeamRun && (gdn?recurrentBlockGdnRuns:recurrentBlockHistoryRuns)==recurrentBlockLoseTeamRun)currentTeam++;
+   }
+   return;
+  }
+ }
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
  if(UseMixedLiveIO()){mixedLiveTransport->Write32(MixedLiveNativeTransport::SetReset,0,value);return;}
 #endif

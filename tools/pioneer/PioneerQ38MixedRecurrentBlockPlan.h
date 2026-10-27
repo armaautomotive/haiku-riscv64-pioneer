@@ -41,7 +41,7 @@ public:
   if(attempted)return false;
   attempted=true;
   if(!c.Ready() || layer>=64 || layer%4==3 || position>=8192 || token>=248320 || bank>=7 || slot>1 || !phase || phase>=0x7ffffff0
-   || !request || request>=0x7fffffff || !id.Valid() || !sources || inputBank>=7 || inputAddress<c.Base
+   || !request || request>=0x7ffffffe || !id.Valid() || !sources || inputBank>=7 || inputAddress<c.Base
    || uint64_t(inputAddress)+20480>uint64_t(c.Base)+c.Capacity || (inputAddress&63))return false;
   for(unsigned w=0;w<120;w++)if(!sources[w*16])return false;
   for(unsigned i=0;i<8;i++)if(!matrices[i].Build(c,layer,L::Role(i),position,token,bank,phase+L::PhaseDelta(i),request,id,sources))return false;
