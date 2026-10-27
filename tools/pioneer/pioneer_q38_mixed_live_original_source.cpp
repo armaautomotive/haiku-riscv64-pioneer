@@ -65,14 +65,18 @@ public:
   return Ready() && original.ReadWeightPage(plan,part,page,output,capacity) && Ready();
  } // ORIGINAL tiled BYTES from the SAME private fixed blueprint, not CPU products
  bool CompareFinal(const uint32_t* values,unsigned words,PioneerQ38MixedLiveReferenceComparison* output)const override{
+  return CompareStage(PioneerQ38MixedFinal,values,words,output);
+ }
+ bool CompareStage(PioneerQ38MixedLiveReferenceStage which,const uint32_t* values,unsigned words,PioneerQ38MixedLiveReferenceComparison* output)const override{
   if(!Ready() || !output)return false;
   PioneerQ38MixedLiveReferenceComparison stage;
   // Preserve the reference comparison's pointer/overlap refusals on the
   // actual caller output, before staging an atomic external publication.
-  uintptr_t a=reinterpret_cast<uintptr_t>(values),o=reinterpret_cast<uintptr_t>(output);
+  uintptr_t a=reinterpret_cast<uintptr_t>(values),o=reinterpret_cast<uintptr_t>(output),r=reinterpret_cast<uintptr_t>(reference.get());
   if(o%alignof(PioneerQ38MixedLiveReferenceComparison) || o>UINTPTR_MAX-sizeof(*output)
+   || (o<r+sizeof(*reference) && r<o+sizeof(*output))
    || (values && (a>UINTPTR_MAX-uint64_t(words)*4 || (a<o+sizeof(*output) && o<a+uint64_t(words)*4))))return false;
-  if(!PioneerQ38CompareMixedLiveFinal(values,words,*reference,&stage) || !Ready())return false;
+  if(!PioneerQ38CompareMixedLiveStage(values,words,*reference,which,&stage) || !Ready())return false;
   *output=stage;return true;
  }
  uint64_t ReferenceReads()const override{return reads;}

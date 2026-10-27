@@ -118,6 +118,36 @@ int main(){
    && !PioneerQ38CompareMixedLiveFinal(actual.data(),5120,*output,nullptr)
    && !PioneerQ38CompareMixedLiveFinal(actual.data(),5120,*output,reinterpret_cast<PioneerQ38MixedLiveReferenceComparison*>(actual.data()))
    && !PioneerQ38CompareMixedLiveFinal(actual.data(),5120,*output,reinterpret_cast<PioneerQ38MixedLiveReferenceComparison*>(output.get())) && report.checked==0xdeadbeef);refusals+=5;
+  const uint32_t* expectedStages[]={output->embedding,output->normalized,output->qg,output->key,output->value,output->query,output->gate,
+   output->halfKey,output->halfValue,output->attention,output->projection,output->residual,output->postNormalized,output->ffnGate,
+   output->ffnUp,output->activated,output->down,output->finalHidden};
+  const unsigned stageWords[]={5120,5120,12288,1024,1024,6144,6144,1024,1024,6144,5120,5120,5120,17408,17408,17408,5120,5120};
+  static_assert(sizeof(expectedStages)/sizeof(*expectedStages)==PioneerQ38MixedStageCount,"all private stages");
+  for(unsigned i=0;i<PioneerQ38MixedStageCount;i++){
+   auto stage=PioneerQ38MixedLiveReferenceStage(i);unsigned words=stageWords[i];std::vector<uint32_t> values(expectedStages[i],expectedStages[i]+words);
+   assert(PioneerQ38CompareMixedLiveStage(values.data(),words,*output,stage,&report) && report.passed && report.checked==words);
+   values[words-1]^=1;
+   assert(PioneerQ38CompareMixedLiveStage(values.data(),words,*output,stage,&report) && !report.passed && report.differences==1);
+   values[0]=0x7fc00000;
+   assert(PioneerQ38CompareMixedLiveStage(values.data(),words,*output,stage,&report) && !report.passed && report.nonfinite==1
+    && !std::isfinite(report.relativeL2));
+   report.checked=0xdeadbeef;
+   assert(!PioneerQ38CompareMixedLiveStage(values.data(),words-1,*output,stage,&report)
+    && !PioneerQ38CompareMixedLiveStage(nullptr,words,*output,stage,&report)
+    && !PioneerQ38CompareMixedLiveStage(reinterpret_cast<const uint32_t*>(1),words,*output,stage,&report)
+    && !PioneerQ38CompareMixedLiveStage(reinterpret_cast<const uint32_t*>(UINTPTR_MAX-3),words,*output,stage,&report)
+    && !PioneerQ38CompareMixedLiveStage(values.data(),words,*output,stage,nullptr)
+    && !PioneerQ38CompareMixedLiveStage(values.data(),words,*output,stage,reinterpret_cast<PioneerQ38MixedLiveReferenceComparison*>(values.data()))
+    && !PioneerQ38CompareMixedLiveStage(values.data(),words,*output,stage,reinterpret_cast<PioneerQ38MixedLiveReferenceComparison*>(output.get()))
+    && report.checked==0xdeadbeef);refusals+=7;
+   assert(!std::fesetround(FE_DOWNWARD));
+   assert(!PioneerQ38CompareMixedLiveStage(values.data(),words,*output,stage,&report) && report.checked==0xdeadbeef);refusals++;
+   assert(!std::fesetround(FE_TONEAREST));
+  }
+  for(unsigned invalid:{unsigned(PioneerQ38MixedStageCount),UINT32_MAX}){
+   report.checked=0xdeadbeef;assert(!PioneerQ38CompareMixedLiveStage(actual.data(),5120,*output,PioneerQ38MixedLiveReferenceStage(invalid),&report)
+    && report.checked==0xdeadbeef);refusals++;
+  }
  }
  printf("PASS independent dense CPU reference half%u/quant%u/typedmatrices%u/refusals%u/atomic publication and global metadata/epoch/rounding seal;NOT original-file or native/card/Work/full64/TPS qualification\n",halfCases,quantCases,matrices,refusals);
 }

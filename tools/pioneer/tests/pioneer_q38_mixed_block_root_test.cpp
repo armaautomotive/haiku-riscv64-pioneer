@@ -35,14 +35,14 @@ struct BlockRootMachine:JoinedRootMachine {
    assert(memory.at(output+i*4)==Bits((x*scale)*weight));
   }
  }
- void ObserveInitial(){
+ virtual void ObserveInitial(){
   assert(!initialNorm && !projections);RmsObserver(B::Original,B::Raw,0);
   for(unsigned i=0;i<5120;i++)assert(memory.at(B::Original+i*4)==memory.at(B::OriginalCopy+i*4)
    && memory.at(B::Raw+i*4)==memory.at(B::RawCopy+i*4) && memory.at(B::Input+i*4)==memory.at(B::Raw+i*4));
   initialNorm++;
   puts("OBSERVED ACTUAL QBR1 initial RMS ALL5120 BIT-EXACT;original residual input preserved separately");
  }
- void ObservePost(){
+ virtual void ObservePost(){
   assert(!postNorm && projections==4);
   for(unsigned i=0;i<5120;i++){
    float x=Float(memory.at(B::Original+i*4)),projected=Float(WordAt(outer[8],outer[9]+TT_Q38_DENSE_O+i*4));
@@ -51,7 +51,7 @@ struct BlockRootMachine:JoinedRootMachine {
   RmsObserver(B::PostResidual,B::PostNormalized,1);postNorm++;
   puts("OBSERVED ACTUAL QBR1 O+ORIGINAL residual and post-RMS ALL5120 BIT-EXACT;not normalized-input residual");
  }
- void ObserveActivation(){
+ virtual void ObserveActivation(){
   assert(!activation && projections==6);double delta=0,norm=0;
   for(unsigned i=0;i<17408;i++){
    float gate=Float(WordAt(outer[8],outer[9]+B::GateOffset+i*4)),up=Float(WordAt(outer[8],outer[9]+B::UpOffset+i*4));

@@ -73,7 +73,7 @@ struct JoinedRootMachine:ProjectionRootMachine {
    oracle[g]=std::move(data);for(unsigned w=0;w<24;w++)child[g*24+w]->input=oracle[g].get();
   }
  }
- void ObservePrepared(){
+ virtual void ObservePrepared(){
   assert(observed && prepareReads==15);
   for(unsigned g=0;g<4;g++){
    DensePrepareMachine check(qdpImage,g,outer[4]);
@@ -93,7 +93,7 @@ struct JoinedRootMachine:ProjectionRootMachine {
   }
   puts("OBSERVED ACTUAL ROOT prepare ALL4 groups BIT-EXACT with separate QDP observer;NO observer products supplied");
  }
- void ObserveAttention(){
+ virtual void ObserveAttention(){
   assert(prepared==1 && projections==3);double delta=0,norm=0;
   for(unsigned g=0;g<4;g++)for(unsigned h=0;h<6;h++){
    assert(memory.at(J::Parameters+(g*16+h)*4)==oracle[g]->maximum[h]

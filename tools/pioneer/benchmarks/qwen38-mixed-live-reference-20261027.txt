@@ -85,11 +85,20 @@ process was restarted for an observation timeout. Saved raw runtime output:
 qwen38-mixed-live-reference-haiku-20261027.log. This is cross-CPU reference
 agreement, NOT a physical P100A comparison or inference-speed measurement.
 
-Still required: original-byte instruction-machine/card numerical comparison,
+Still required: passing original-byte instruction-machine/card numerical comparison,
 distinct guarded native validation readback/entry/client and actual final
 clock/host lifetime qualification. NODRV must not become a loadable Work alias.
 Then valid64-layer GDN+dense scheduling, state/token commits, final norm/
 vocabulary/sampling, Work/Assistant integration and real speed optimization.
+
+Update:the original-byte standalone instruction comparison has now run to
+completion twice, with actual119STOP+ROOT and no nonfinite values, but it
+FAILS strict final parity:5120 differences,relativeL20.000126620363555.
+The ideal reference fingerprint/arithmetic is unchanged. A new separate
+post-return18-stage report API adds diagnosis without exposing expected
+vectors or recomputing the reference from observed values. No tolerance
+was fitted or Work/native role expanded. Full stage traces remain pending;
+see qwen38-mixed-live-original-instructions-20261027.txt.
 
 Read-only Pioneer status:driver55/tag2026102100010012/generation4/cold0/
 quiesced0/active_owner0. No driver/Assistant replacement, relay, SD/mains/

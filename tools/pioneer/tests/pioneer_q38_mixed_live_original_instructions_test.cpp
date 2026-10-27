@@ -17,6 +17,7 @@ struct FaultOriginalSource final:PioneerQ38MixedLiveOriginalSource {
   return Ready() && base.ReadWeightPage(part,page,out,capacity);
  }
  bool CompareFinal(const uint32_t*,unsigned,PioneerQ38MixedLiveReferenceComparison*)const override{return false;}
+ bool CompareStage(PioneerQ38MixedLiveReferenceStage,const uint32_t*,unsigned,PioneerQ38MixedLiveReferenceComparison*)const override{return false;}
  uint64_t ReferenceReads()const override{return base.ReferenceReads();}
  uint64_t ReferenceFingerprint()const override{return Ready()?base.ReferenceFingerprint():0;}
 };
@@ -71,7 +72,19 @@ int main(int argc,char** argv){
  if(argc==8)return 0;
  std::array<uint32_t,5120> embedding,final;
  ExecuteMixedOriginalEmbedding(argv[2],bytes,embedding.data(),unsigned(embedding.size()));
- ExecuteMixedOriginalBlock(argv[3],argv[4],argv[5],argv[6],bytes,embedding.data(),unsigned(embedding.size()),final.data());
+ MixedOriginalInstructionTrace trace;
+ ExecuteMixedOriginalBlock(argv[3],argv[4],argv[5],argv[6],bytes,embedding.data(),unsigned(embedding.size()),final.data(),trace);
+ // These CPU comparisons occur ONLY after actual119STOP+ROOT terminal
+ // and return from the instruction TU. Reports cannot feed its arithmetic.
+ const char* names[]={"embedding","normalized","qg","key","value","query","gate","halfKey","halfValue","attention",
+  "projection","residual","postNormalized","ffnGate","ffnUp","activated","down","final"};
+ static_assert(sizeof(names)/sizeof(*names)==PioneerQ38MixedStageCount,"all diagnostic stages");
+ for(unsigned i=0;i<PioneerQ38MixedStageCount;i++){
+  const auto& actual=trace.actual[i];PioneerQ38MixedLiveReferenceComparison stage;
+  assert(source->CompareStage(PioneerQ38MixedLiveReferenceStage(i),actual.data(),unsigned(actual.size()),&stage));
+  printf("ORIGINAL_STAGE %s/checked%u/differences%u/nonfinite%u/maxAbsolute%.12g/relativeL2%.12g/exactPassed%u\n",
+   names[i],stage.checked,stage.differences,stage.nonfinite,stage.maxAbsolute,stage.relativeL2,stage.passed);
+ }
  PioneerQ38MixedLiveReferenceComparison report;assert(source->CompareFinal(final.data(),unsigned(final.size()),&report));
  printf("ORIGINAL_INSTRUCTION_COMPARISON checked%u/differences%u/nonfinite%u/maxAbsolute%.12g/relativeL2%.12g/exactPassed%u;NOT silicon TPS\n",
   report.checked,report.differences,report.nonfinite,report.maxAbsolute,report.relativeL2,report.passed);

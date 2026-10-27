@@ -124,6 +124,11 @@ Driver/runtime readiness checklist -- still required
     The real Haiku CPU run matches the Mac reference fingerprint exactly.
     This is NOT a physical GPU comparison. See
     qwen38-mixed-live-reference-20261027.txt for scope and remaining work.
+    The new original-byte standalone instruction run now completes ALL7
+    matrices/actual119STOP+ROOT, but main+clean reproduce a strict final
+    numerical FAILURE:5120 differences,relativeL20.000126620363555.
+    It is NOT promoted;18-stage diagnosis is underway. See
+    qwen38-mixed-live-original-instructions-20261027.txt.
 [ ] Integrate the valid64-layer sequence: all GDN and dense layers, genuine
     next-hidden producer, persistent recurrent/KV state and atomic token
     boundaries. A layer3->7 lifecycle is NOT a model prefix.

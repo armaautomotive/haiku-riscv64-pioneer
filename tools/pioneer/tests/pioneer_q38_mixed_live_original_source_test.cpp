@@ -20,5 +20,16 @@ int main(int argc,char** argv){
  assert(!source->CompareFinal(nullptr,5120,&report) && !source->CompareFinal(values.data(),5119,&report)
   && !source->CompareFinal(values.data(),5120,nullptr)
   && !source->CompareFinal(values.data(),5120,reinterpret_cast<PioneerQ38MixedLiveReferenceComparison*>(values.data())));
+ const unsigned stageWords[]={5120,5120,12288,1024,1024,6144,6144,1024,1024,6144,5120,5120,5120,17408,17408,17408,5120,5120};
+ std::array<uint32_t,17408> zeros={};
+ for(unsigned i=0;i<PioneerQ38MixedStageCount;i++){
+  auto stage=PioneerQ38MixedLiveReferenceStage(i);unsigned words=stageWords[i];
+  assert(source->CompareStage(stage,zeros.data(),words,&report) && report.checked==words && !report.passed && report.differences && !report.nonfinite);
+  report.checked=0xdeadbeef;
+  assert(!source->CompareStage(stage,zeros.data(),words-1,&report) && !source->CompareStage(stage,nullptr,words,&report)
+   && !source->CompareStage(stage,zeros.data(),words,nullptr)
+   && !source->CompareStage(stage,zeros.data(),words,reinterpret_cast<PioneerQ38MixedLiveReferenceComparison*>(zeros.data())) && report.checked==0xdeadbeef);
+ }
+ assert(!source->CompareStage(PioneerQ38MixedStageCount,zeros.data(),5120,&report) && report.checked==0xdeadbeef && source->ReferenceReads()==3717);
  printf("PASS separate ORIGINAL dense CPU source/FULL c600de03 SHA/3717referenceReads/private fingerprint%016llx/prepare->seal BEFOREcontext/ONLY original weight pages+postreturn comparison exposed/no numeric products or caller plan/NO accelerator,Work,fullmodel or TPS\n",(unsigned long long)source->ReferenceFingerprint());
 }

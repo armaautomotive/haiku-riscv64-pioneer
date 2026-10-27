@@ -23,6 +23,7 @@ public:
  virtual const PioneerQwen38Gguf* SealedModel()const=0;
  virtual bool ReadWeightPage(unsigned part,unsigned page,uint8_t*,unsigned capacity)=0;
  virtual bool CompareFinal(const uint32_t*,unsigned,PioneerQ38MixedLiveReferenceComparison*)const=0;
+ virtual bool CompareStage(PioneerQ38MixedLiveReferenceStage,const uint32_t*,unsigned,PioneerQ38MixedLiveReferenceComparison*)const=0;
  virtual uint64_t ReferenceReads()const=0;virtual uint64_t ReferenceFingerprint()const=0;
 };
 // Haiku opens only the fixed authenticated model path. The path argument

@@ -270,25 +270,54 @@ template<class Source>bool PioneerQ38MixedLiveOriginalReference(Source& source,u
 // No tolerance is invented from observed hardware values. Ideal-libm vs a
 // device instruction-policy difference remains a failure to diagnose, never
 // a reason to relabel expected products or promote an unqualified Work path.
-inline bool PioneerQ38CompareMixedLiveFinal(const uint32_t* values,unsigned words,
- const PioneerQ38MixedLiveReferenceProducts& reference,PioneerQ38MixedLiveReferenceComparison* output){
+inline bool PioneerQ38CompareMixedLiveStage(const uint32_t* values,unsigned words,
+ const PioneerQ38MixedLiveReferenceProducts& reference,PioneerQ38MixedLiveReferenceStage stage,PioneerQ38MixedLiveReferenceComparison* output){
  using namespace PioneerQ38MixedLiveReferenceDetail;
+ const uint32_t* expected=nullptr;unsigned count=0;
+#define PIONEER_MIXED_REFERENCE_STAGE(tag,field) case tag:expected=reference.field;count=unsigned(sizeof(reference.field)/4);break
+ switch(stage){
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedEmbedding,embedding);
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedNormalized,normalized);
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedQg,qg);
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedKey,key);
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedValue,value);
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedQuery,query);
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedGate,gate);
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedHalfKey,halfKey);
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedHalfValue,halfValue);
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedAttention,attention);
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedProjection,projection);
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedResidual,residual);
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedPostNormalized,postNormalized);
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedFfnGate,ffnGate);
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedFfnUp,ffnUp);
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedActivated,activated);
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedDown,down);
+  PIONEER_MIXED_REFERENCE_STAGE(PioneerQ38MixedFinal,finalHidden);
+  default:return false;
+ }
+#undef PIONEER_MIXED_REFERENCE_STAGE
+ const unsigned bytes=count*4;
  uintptr_t a=reinterpret_cast<uintptr_t>(values),r=reinterpret_cast<uintptr_t>(&reference),o=reinterpret_cast<uintptr_t>(output);
- if(!values || !output || words!=5120 || (a&3) || o%alignof(PioneerQ38MixedLiveReferenceComparison)
-  || a>UINTPTR_MAX-20480 || r>UINTPTR_MAX-sizeof(reference) || o>UINTPTR_MAX-sizeof(*output)
-  || (a<o+sizeof(*output) && o<a+20480) || (r<o+sizeof(*output) && o<r+sizeof(reference))
+ if(!values || !output || words!=count || (a&3) || o%alignof(PioneerQ38MixedLiveReferenceComparison)
+  || a>UINTPTR_MAX-bytes || r>UINTPTR_MAX-sizeof(reference) || o>UINTPTR_MAX-sizeof(*output)
+  || (a<o+sizeof(*output) && o<a+bytes) || (r<o+sizeof(*output) && o<r+sizeof(reference))
   || std::fegetround()!=FE_TONEAREST)return false;
- for(unsigned i=0;i<5120;i++)if(!Domain(reference.finalHidden[i]))return false;
+ for(unsigned i=0;i<count;i++)if(!Domain(expected[i]))return false;
  PioneerQ38MixedLiveReferenceComparison result;double error=0,norm=0;
- for(unsigned i=0;i<5120;i++){
-  double e=Float(reference.finalHidden[i]),v=Float(values[i]);norm+=e*e;
-  result.differences+=values[i]!=reference.finalHidden[i];
+ for(unsigned i=0;i<count;i++){
+  double e=Float(expected[i]),v=Float(values[i]);norm+=e*e;
+  result.differences+=values[i]!=expected[i];
   if(!std::isfinite(v)){result.nonfinite++;continue;}
   double d=v-e;error+=d*d;result.maxAbsolute=std::fmax(result.maxAbsolute,std::fabs(d));
  }
- result.checked=5120;result.relativeL2=std::sqrt(error/(norm+1e-300));result.passed=!(result.nonfinite || result.differences);
+ result.checked=count;result.relativeL2=std::sqrt(error/(norm+1e-300));result.passed=!(result.nonfinite || result.differences);
  if(result.nonfinite)result.relativeL2=result.maxAbsolute=std::numeric_limits<double>::infinity();
  if(std::fegetround()!=FE_TONEAREST)return false;
  *output=result;return true;
+}
+inline bool PioneerQ38CompareMixedLiveFinal(const uint32_t* values,unsigned words,
+ const PioneerQ38MixedLiveReferenceProducts& reference,PioneerQ38MixedLiveReferenceComparison* output){
+ return PioneerQ38CompareMixedLiveStage(values,words,reference,PioneerQ38MixedFinal,output);
 }
 #endif
