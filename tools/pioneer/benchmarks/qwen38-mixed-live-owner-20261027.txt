@@ -131,8 +131,9 @@ Driver/runtime readiness checklist -- still required
     difference at attention gating (ALL9 earlier stages bit-exact). An
     isolated compensated sigmoid now passes the complete original block:
     main+clean/all18stages+final BIT-EXACT,actual119STOP+ROOT/stack5428B.
-    The selected native program data/SDK/HELD faults pass;full native RUN
-    qualification is pending. Physical comparison remains owed. See
+    The selected native program data/SDK/HELD faults and full actual-native
+    factory RUN/119STOP/ALL120holds/restore/Dispatch END now pass main+clean
+    with simulated OS/MMIO endpoints. Physical comparison remains owed. See
     qwen38-mixed-live-sigmoid-precision-20261027.txt.
 [ ] Integrate the valid64-layer sequence: all GDN and dense layers, genuine
     next-hidden producer, persistent recurrent/KV state and atomic token

@@ -62,9 +62,17 @@ Raw data-selection gates:qwen38-mixed-live-program-selection-gates-20261027.log
  SHA256d9aefc9082416b8e278adbe33c1d05af4b3db38c81581014de3100659dadfdcc
 
 Full new-program native-factory RUN/actual119STOP/ALL120holds/restore/END
-instruction runs remain LIVE on main+clean. Poll the SAME handles;do not
-restart for observation expiry. No full native-run PASS is claimed yet.
-Its learned byte endpoints are SYNTHETIC,not a physical original-model run.
+instruction runs are now BOTH terminal0/PASS,with byte-identical complete
+stdout. The SAME actual native factories/scopes execute the selected code
+through120 real instruction machines,then119 genuine STOP records+ROOT
+terminal precede the FIRST hold. All11398712 original words restore and
+pass a second complete proof;sealed Dispatch END restores old roles/leases.
+Eight additional post-RUN lifetime-loss forks quarantine ALL hosts+clock
+with ZERO following MMIO,STOP,hold,restore or retry (56 total with the48
+no-launch/fault cases). Its learned byte endpoints and OS/MMIO/clock are
+SYNTHETIC,not a physical original-model run or a final ARC/host teardown.
+Raw full run:qwen38-mixed-live-sigmoid-native-actual-20261027.log
+ SHA256d211719d27cff2efa551535c64d7fe8bf0d5ddf052a837ea3aa3927b03aedf90
 
 Still required before real use
 -------------------------------
