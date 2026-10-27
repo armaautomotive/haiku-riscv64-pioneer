@@ -41,6 +41,10 @@
 #endif
 #include <array>
 #include <new>
+#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+#include "pioneer_q38_mixed_live_native_clock.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveFinalPciState.h" // pure necessary CPU predicate,NOT final release authority
+#endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
 #include "pioneer_q38_projection_native_transport.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchClose.h"
@@ -187,6 +191,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
 #endif
 #endif
  unsigned runtimeCore=0;bool fleetEnabled=false,runtimeMapped=true,q38SpanAllowed=true;
+#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+ bool q38MixedLiveFinalUnmapAttempted=false; // simulated VM transaction endpoint DATA,not a closed-owner setter
+#endif
  std::array<uint32,10240> prefix;
  volatile uint32* runtimeEntry=&entry;volatile uint32* scratchData=destination;unsigned payloadBytes=8192;
  struct{uint64 bar0_host_start=Bar;}profile;
@@ -498,12 +505,21 @@ static area_id map_physical_memory(const char*,uint64 physical,unsigned bytes,in
  *view=activeIO->nullMap?nullptr:activeIO->prefix.data();return 23;
 }
 struct FactoryFlags{bool saved=false,dirty=false,ready=false,running=false,unsafe=false,awaiting=false,closed=false;};
+#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+using FactoryClock=MixedLiveNativeClock;
+struct NativeClockFields{
+ NativeClockFields& control=*this;
+ tt_arc_scratch_result arc=MixedLiveNativeClock::Arc();
+ tt_arc_telemetry_result telemetry=MixedLiveNativeClock::Health();
+};
+#else
 struct FactoryClock{
  tt_arc_clock_guard_result value={};bool required=true,quarantined=false;
  FactoryClock(){value.state=TT_ARC_CLOCK_BUSY_VERIFIED;value.busy_requested=value.busy_acknowledged=1;}
  const auto& Snapshot()const{return value;}bool RequiresExplicitEnd()const{return required;}
  void Quarantine(){quarantined=true;}
 };
+#endif
 struct PioneerStoreContext {
  PioneerSessionIO& io;PioneerQ38EmbeddingNativeState* q38EmbeddingModel=nullptr;
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
@@ -517,7 +533,15 @@ struct PioneerStoreContext {
 #endif
  PioneerResidentBanks& banks;PioneerResidentLease& lease;PioneerBulkUploadLease& bulk;
  PioneerOutputBufferLease& bulkHost;PioneerWideOutputLease& wideHost;tt_host_page_result& host;
- struct D{tt_dram_samples_result& dram;};struct B1{D baseline;tt_compute_noc_result& noc;};struct B2{B1 baseline;};struct B3{B2 baseline;};B3 baseline;
+ struct D{tt_dram_samples_result& dram;
+#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+ NativeClockFields control={};
+#endif
+ };struct B1{D baseline;tt_compute_noc_result& noc;};struct B2{B1 baseline;};struct B3{B2 baseline;
+#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+ tt_host_dma_audit_result audit={};
+#endif
+ };B3 baseline;
  uint8* initialized;uint32 hash=0,*hashes=&hash;
 #if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT)
  // Real production pointee types for complete-role CPU END/retention
@@ -539,6 +563,10 @@ struct PioneerStoreContext {
 #endif
  int runtimeCoreMode=-1,q38GdnCallThread=42;uint64 bytes=PioneerResidentBanks::Total;
  bool bankStorageOnly=true,dispatchOwnerRetained=false,otherUnsafe=false,q38DispatchRoutes=false;
+#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+ tt_pioneer_mmio_result pci={};tt_pioneer_mmio_transaction transaction={};unsigned q38EndPhase=0;
+ auto& Pci(){return pci;}
+#endif
  PioneerStoreContext(PioneerSessionIO& native,PanelOwners& owner,PioneerBulkUploadLease& b,PioneerOutputBufferLease& output,
   PioneerWideOutputLease& wide,uint8* bitmap):io(native),banks(owner.banks),lease(owner.store),bulk(b),bulkHost(output),wideHost(wide),host(owner.host),
    baseline{{{{owner.dram},owner.noc}}},initialized(bitmap){
@@ -574,6 +602,10 @@ struct PioneerStoreContext {
   if(q38Dispatch && PioneerQ38DispatchUnsafe(*q38Dispatch))return true;
 #endif
   return otherUnsafe || banks.Quarantined() || q38Clock.quarantined || bulk.unsafe || bulkHost.quarantined || wideHost.quarantined
+#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+   || q38Clock.Unsafe()
+   || PioneerQ38MixedLiveFinalPciUncertain(*this)
+#endif
    || lease.recovery_required || (q38EmbeddingModel && !zero && q38EmbeddingModel->zero.running);
  }
 };
@@ -908,6 +940,11 @@ void PioneerSessionIO::RuntimeResetWrite(uint32 value){
 #endif
  if(embeddingSummaryFault<32)RawSlot(TT_Q38_FFN_RESIDENT_SUMMARY+embeddingSummaryFault*4)^=1;
 }
+#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+static void dprintf(const char*,...) {} // diagnostic metadata only
+#include "native_clock_service.inc"
+#include "native_bulk_close.inc"
+#endif
 struct NativeFactoryFixture {
  PioneerSessionIO io;PanelOwners owner;
  PioneerOutputBufferLease transfer;PioneerBulkUploadLease bulk;PioneerWideOutputLease wide;
@@ -926,6 +963,12 @@ struct NativeFactoryFixture {
   }
   c.reset(new PioneerStoreContext(io,owner,bulk,transfer,wide,learned.data()));cookie.context=c.get();
   activeIO=&io;sRuntimeOwner=&cookie;sColdRecoveryRequired=sReloadQuiesced=false;sBankStorageOnly=true;currentThread=42;
+#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+  // Initial simulated baseline proof DATA,not a private clock/producer
+  // publication. ACTUAL Begin must create its private lease via messages.
+  owner.dram.cores_checked=120;c->baseline.audit.version=1;c->baseline.audit.state=TT_HOST_DMA_AUDIT_PASSED;c->baseline.audit.tlb_restored=1;
+  c->q38Span=nullptr;assert(BeginQ38NormalClock(*c));c->q38Span=&c->span;
+#endif
  }
  bool Bind(){return BindQ38EmbeddingModel(*c,token,8191,bank);}
  bool Initialize(){return InitializeQ38EmbeddingModel(*c,zero);}

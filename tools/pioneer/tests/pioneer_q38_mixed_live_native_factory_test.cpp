@@ -7,26 +7,51 @@
 #include "pioneer_q38_embedding_native_factory_test.cpp"
 #include <sys/wait.h>
 #include <unistd.h>
+#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchMmioEnd.h"
+struct NativeClockPciFailureEndpoint{
+ PioneerStoreContext& c;unsigned attempts=0;
+ bool Unmap(){
+  attempts++;assert(!PioneerQ38MixedLiveFinalPciUncertain(c) && !c.Unsafe() && !c.pci.restored);
+  c.io.q38MixedLiveFinalUnmapAttempted=true;return false; // simulated first VM deletion failure ONLY
+ }
+ void CardWrite(unsigned,unsigned,uint32){assert(false && "no PCI write after Unmap failure");}
+ void RootWrite(unsigned,unsigned,uint32){assert(false && "no PCI write after Unmap failure");}
+ uint32 CardRead(unsigned,unsigned){assert(false && "no PCI read after Unmap failure");return 0;}
+ uint32 RootRead(unsigned,unsigned){assert(false && "no PCI read after Unmap failure");return 0;}
+};
+#endif
 template<class Check> static void NativeFactoryFork(Check check){
  fflush(nullptr);pid_t pid=fork();assert(pid>=0);if(!pid){check();_exit(0);}
  int status=0;assert(waitpid(pid,&status,0)==pid && WIFEXITED(status) && !WEXITSTATUS(status));
 }
 int main(int argc,char** argv){
- assert(argc==7 || (argc==8 && (!strcmp(argv[7],"--execute") || !strcmp(argv[7],"--faults") || !strcmp(argv[7],"--validation-readback"))));setvbuf(stdout,nullptr,_IOLBF,0);
+ assert(argc==7 || (argc==8 && (!strcmp(argv[7],"--execute") || !strcmp(argv[7],"--faults") || !strcmp(argv[7],"--validation-readback") || !strcmp(argv[7],"--clock-end"))));setvbuf(stdout,nullptr,_IOLBF,0);
  bool readback=argc==8 && !strcmp(argv[7],"--validation-readback");
  bool execute=readback || (argc==8 && !strcmp(argv[7],"--execute")),faults=argc==8 && !strcmp(argv[7],"--faults");unsigned refused=0;
 #ifndef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
  assert(!readback);
 #endif
+#ifndef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+ assert(argc!=8 || strcmp(argv[7],"--clock-end")); // a held-only binary must not impersonate the clock test
+#endif
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;
  (void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
  NativeFactoryFixture f(argv[1],argv[2]);auto& c=*f.c;auto& io=f.io;
  auto loseScope=[&](unsigned bad){
-  if(bad==0)io.q38MutableContext=nullptr;if(bad==1)sRuntimeOwner=nullptr;if(bad==2)c.q38Clock.value.busy_mhz=0;
+  if(bad==0)io.q38MutableContext=nullptr;if(bad==1)sRuntimeOwner=nullptr;
+#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+  if(bad==2)c.q38Clock.Quarantine();
+#else
+  if(bad==2)c.q38Clock.value.busy_mhz=0;
+#endif
   if(bad==3)c.q38EmbeddingModel->token++;if(bad==4)c.hashes=nullptr;if(bad==5)currentTeam++;
   if(bad==6)f.transfer.ready=false;if(bad==7)c.span.closed=false;
  };
- c.q38Clock.value.busy_mhz=1400;auto plan=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(plan->Build());
+#ifndef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+ c.q38Clock.value.busy_mhz=1400;
+#endif
+ auto plan=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(plan->Build());
  for(unsigned i=0;i<plan->Count();i++){
   const auto* p=plan->Part(i);if(p->kind!=plan->WeightKind || p->layer!=3)continue;
   unsigned first=p->bank*unsigned(plan->Capacity/4096)+p->offset/4096;
@@ -149,5 +174,29 @@ int main(int argc,char** argv){
   && c.q38Dispatch->worker[w].Store().tlb_restored);
  printf("PASS actual native %s/full11398712word restore+secondproof/complete sealed Dispatch END/legacy roles+peer leases restored/learned unchanged;SIMULATED endpoints/NOT physical hardware,full64model,Work or TPS\n",execute?"RUN+real119STOP+ALL120terminals before holds":"HELD no-launch close");
  if(faults)printf("PASS actual native factory refusals%u/ALL12memory+16execution-result fields/8partial-map failures+retention/8native lifetime losses/4closed-END misbindings;ZERO following physical IO/reset/retry/restore\n",refused);
+#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+ assert(argc==8 && !strcmp(argv[7],"--clock-end") && !execute && !faults);
+ assert(CloseBulkScratch(c,true) && !c.bulk.ready && !c.bulk.dirty && !c.bulk.unsafe);
+ assert(PioneerQ38DispatchPeerLeaseEnd(io,c.baseline.baseline.baseline.noc,c.lease) && !c.lease.ready && c.lease.niu_restored && c.lease.tlb_restored && c.lease.l1_restored);
+ for(unsigned fault=0;fault<5;fault++)NativeFactoryFork([&]{
+  c.q38Clock.Fault(fault);auto physical=transport.Touches();auto before=c.q38Clock.IO();
+  assert(!FinishQ38NormalClock(c,true) && c.q38Clock.Unsafe());
+  auto after=c.q38Clock.IO();assert(after>=before && !FinishQ38NormalClock(c,true) && c.q38Clock.IO()==after && transport.Touches()==physical);
+ });
+ assert(FinishQ38NormalClock(c,true) && !c.q38Clock.RequiresExplicitEnd() && !c.q38Clock.Unsafe()
+  && c.q38Clock.Snapshot().state==TT_ARC_CLOCK_RESTORED && c.q38Clock.Snapshot().restored
+  && c.q38Clock.Snapshot().after_mhz==800 && c.q38Clock.Notifications()==5 && c.q38Clock.Unmaps()==1);
+ // The ACTUAL PCI transaction creates its own pessimistic status marker
+ // across the REAL closed-native+ended-clock boundary. No private setter.
+ c.q38EndPhase=50;c.transaction.map_attempted=c.transaction.config_attempted=true;c.pci.version=1;c.pci.state=TT_PIONEER_MMIO_READ_OK;
+ auto clockIO=c.q38Clock.IO(),physical=transport.Touches();
+ NativeClockPciFailureEndpoint endpoint{c};
+ assert(!PioneerQ38DispatchMmioEnd(endpoint,c.pci,c.transaction) && endpoint.attempts==1 && !c.transaction.config_attempted
+  && PioneerQ38MixedLiveFinalPciUncertain(c) && c.Unsafe() && c.pci.state==TT_PIONEER_MMIO_RESTORE_FAILED && !c.pci.restored);
+ assert(!PioneerQ38DispatchMmioEnd(endpoint,c.pci,c.transaction) && endpoint.attempts==1);
+ assert(c.q38Clock.IO()==clockIO && transport.Touches()==physical); // necessary predicate itself performs ZERO clock/card IO
+ puts("PASS ACTUAL native held-state/Dispatch END/bulk+root lease CLOSE -> ACTUAL FinishNormalClock/private clock lease IDLE+800MHz/5messages+1virtualUnmap;5 raw ARC/VM/unknown failures fence further clock+compute IO;SIMULATED OS/MMIO/mailbox,NO ready setter/full final PCI-host-context release or physical proof");
+ puts("PASS actual DispatchMmioEnd marker+necessary predicate with GENUINE private closed native+ended clock:pre-Unmap marker admitted/simulated first VM failure remains unsafe/PCI status NEVER cleared/ZERO later PCI,card,clock or retry IO;NOT complete final Unmap/host-release authority");
+#endif
  io.mixedLiveTransport=nullptr;
 }

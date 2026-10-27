@@ -17,6 +17,9 @@
 #include "PioneerQ38MixedLiveFinalReleaseRole.h"
 #endif
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+#include "PioneerQ38MixedLiveFinalPciState.h"
+#endif
 #if defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY)
 #ifdef PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE
 #include "PioneerQ38ResidentLayerValidationRole.h"
@@ -3419,7 +3422,11 @@ struct PioneerStoreContext {
 			|| secondLease.pending || secondLease.recovery_required || secondNoc.recovery_required
 			|| lease.pending || lease.recovery_required || idle.recovery_required || baseline.audit.recovery_required || baseline.baseline.path.recovery_required
 			|| baseline.baseline.baseline.noc.recovery_required || baseline.baseline.baseline.baseline.dram.recovery_required
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+			|| PioneerQ38MixedLiveFinalPciUncertain(*this);
+#else
 			|| Pci().state==TT_PIONEER_MMIO_RESTORE_FAILED;
+#endif
 	}
 	void Snapshot(tt_resident_session_result& r) {
 		r={}; r.version=1; r.state=TT_RESIDENT_SESSION_READY; r.active=1; r.bytes=bytes;

@@ -76,6 +76,14 @@ instruction runs were not restarted merely to restate existing evidence.
 
 Remaining gate before physical use
 ----------------------------------
+The compile-only scope initially had a PCI phase contradiction:the strict
+PCI transaction deliberately sets RESTORE_FAILED before Unmap,but the
+generic Unsafe predicate rejected it. A distinct necessary CPU predicate
+now recognizes ONLY that closed-native/ended-clock/pre-Unmap boundary,
+without clearing status or any other unsafe term. Real private clock END
+and the actual PCI marker/failure boundary now pass main+clean runtime
+qualification. The earlier3517f0 SDK object above is superseded byb2878e9;
+see qwen38-mixed-live-clock-pci-boundary-20261027.txt for precise coverage.
 Execute/qualify the combined ACTUAL closed-native->normal-clock END->PCI
 transaction->host release->context destruction path,including failure
 containment,with real private state and simulated OS endpoints. The final

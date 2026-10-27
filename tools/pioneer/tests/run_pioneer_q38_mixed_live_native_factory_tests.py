@@ -10,8 +10,9 @@ import sys
 import tempfile
 assert len(sys.argv)>=7
 options=sys.argv[7:]
-assert len(set(options))==len(options) and set(options)<={'--execute','--faults','--sigmoid-candidate','--validation-readback'}
-assert len(set(options)&{'--execute','--faults','--validation-readback'})<=1
+assert len(set(options))==len(options) and set(options)<={'--execute','--faults','--sigmoid-candidate','--validation-readback','--clock-end'}
+assert len(set(options)&{'--execute','--faults','--validation-readback','--clock-end'})<=1
+clock_end='--clock-end' in options
 readback='--validation-readback' in options
 sigmoid='--sigmoid-candidate' in options or readback
 here=pathlib.Path(__file__).resolve().parent
@@ -36,6 +37,7 @@ if sigmoid:defines['PIONEER_Q38_MIXED_LIVE_SIGMOID_PROGRAMS']='1'
 if readback:
  defines['PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK']='1'
  program_flags+=['-DPIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK=1']
+if clock_end:defines['PIONEER_Q38_MIXED_LIVE_END_FIXTURE']='1'
 defines.update({key:'pioneer_mixed_factory_test_'+key for key in ('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')})
 source=(kernel/'tenstorrent_pci_probe.cpp').read_text()
 with tempfile.TemporaryDirectory(prefix='pioneer-mixed-native-factory-',dir='/private/tmp') as temporary:
@@ -49,6 +51,13 @@ with tempfile.TemporaryDirectory(prefix='pioneer-mixed-native-factory-',dir='/pr
  end='// PIONEER_Q38_DISPATCH_RETAIN_END'
  assert source.count(begin)==source.count(end)==1
  (base/'projection_factory_complete_end.inc').write_text(begin+source.split(begin,1)[1].split(end,1)[0])
+ if clock_end:
+  begin,end='// PIONEER_Q38_CLOCK_SERVICE_BEGIN','// PIONEER_Q38_CLOCK_SERVICE_END'
+  assert source.count(begin)==source.count(end)==1
+  (base/'native_clock_service.inc').write_text(source.split(begin,1)[1].split(end,1)[0])
+  begin,end='static bool\nCloseBulkScratch(','static bool\nFleetHeld('
+  assert source.count(begin)==source.count(end)==1
+  (base/'native_bulk_close.inc').write_text(begin+source.split(begin,1)[1].split(end,1)[0])
  binary=base/'test'
  # Transport is a separate TU: only RAW physical endpoints cross it. The
  # actual native role, source gates, private phases and factories stay here.
@@ -59,5 +68,6 @@ with tempfile.TemporaryDirectory(prefix='pioneer-mixed-native-factory-',dir='/pr
  subprocess.run([*common,
   *['-D'+k+'='+v for k,v in sorted(defines.items())],'-I'+str(base),'-I'+str(kernel),
   str(here/'pioneer_q38_mixed_live_native_factory_test.cpp'),str(here/'pioneer_q38_embedding_execution_bridge.cpp'),
+  *([str(here/'pioneer_q38_mixed_live_native_clock.cpp')] if clock_end else []),
   str(transport),'-o',str(binary)],check=True)
  subprocess.run([str(binary),*sys.argv[1:7],*[o for o in options if o!='--sigmoid-candidate']],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})

@@ -21,7 +21,7 @@ defines.update({key:'pioneer_mixed_final_test_'+key for key in ('api_version','i
 common=[os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-fsanitize=address,undefined']
 with tempfile.TemporaryDirectory(prefix='pioneer-mixed-final-unmap-',dir='/private/tmp') as temp:
  base=pathlib.Path(temp);(base/'session_unmap.inc').write_text(method+'\n')
- for name,flags in [('generic_unmap_characterization',['-DPIONEER_Q38_EMBEDDING_NATIVE=1']),('final_unmap',['-D'+k+'='+v for k,v in sorted(defines.items())])]:
+ for name,flags in [('generic_unmap_characterization',['-DPIONEER_Q38_EMBEDDING_NATIVE=1']),('final_unmap',['-D'+k+'='+v for k,v in sorted(defines.items())]),('final_pci_state',['-D'+k+'='+v for k,v in sorted(defines.items())])]:
   binary=base/name
   subprocess.run([*common,*flags,'-I'+str(base),str(here/('pioneer_q38_mixed_live_'+name+'_test.cpp')),'-o',str(binary)],check=True)
   subprocess.run([str(binary)],check=True,env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})

@@ -1,0 +1,86 @@
+Qwen27B:real private clock END and terminal PCI marker boundary
+2026-10-27 UTC -- OFFLINE NODRV ONLY;NO deployment or speedup
+
+Source defect found before hardware
+------------------------------------
+PioneerQ38DispatchMmioEnd intentionally sets PCI RESTORE_FAILED/restored0
+BEFORE Unmap,and clears config_attempted for its one terminal attempt.
+The previous final Unmap scope simultaneously required that marker AND
+!context.Unsafe(),whose last term unconditionally rejected that marker.
+Thus an otherwise clean final Unmap would self-refuse. A retained compile
+body alone did NOT prove that the complete runtime conditions could pass.
+
+The new necessary CPU predicate excludes ONLY the expected pre-Unmap
+marker at phase50,while the same native owner is genuinely closed,the
+private clock lease has ended/restored,call scope matches,mixed maps exist,
+map_attempted remains true and no final Unmap attempt has begun. ALL other
+Unsafe terms stay unchanged. After any attempted Unmap,wrong transaction,
+open/unknown native or clock owner,or lost call scope,the marker remains
+unsafe. The PCI result itself is NEVER cleared or marked restored by this
+predicate. Actual successful PCI publication still belongs exclusively to
+the completed strict PCI transaction. The predicate is DATA ONLY,not native
+or disposal authority;production selection still requires the exact extra
+final-release/QBLNODRV perimeter,not a public Work/client/old DEBUG alias.
+
+Native held/clock runtime segment
+---------------------------------
+The new --clock-end harness uses the SAME actual zero+QPE1 input producer,
+native binding/ALL120 held factories/full11398712word memory journal and
+install/restore+second proof/sealed Dispatch END. It then executes actual
+CloseBulkScratch and strict root lease END followed by ACTUAL native
+FinishQ38NormalClock. No dense RUN is claimed for this held/no-launch path.
+
+A separate TEST TU owns a REAL PioneerQ38ClockLease and real strict private
+ARC queue,driven by simulated mailbox/virtual-map endpoints. Actual native
+BeginQ38NormalClock creates its private busy lease;Finish sends normal IDLE
+and verifies800MHz. The bridge has NO mutable snapshot or success/ready
+setter. Initial held/DMA baseline records are explicit simulated fixture
+DATA,not physical or new native-source grants. The framework context is
+the existing semantic fixture with real production private controller types.
+
+Positive path:5 actual messages,one virtual clock Unmap,private ended state,
+TT_ARC_CLOCK_RESTORED and800MHz.5 raw timeout/reply/restore/unmap/unknown
+faults refuse further clock operations with ZERO compute/clock retry IO.
+
+The actual strict PCI transaction then creates its own pessimistic marker
+across that genuine private closed-native+ended-clock boundary. A simulated
+first VM failure observes the necessary predicate admit the PRE-attempt
+marker;AFTER the attempt,the marker remains unsafe and every later PCI,
+card,clock operation or retry is fenced. No successful final view/host/
+context release is fabricated by this test.
+
+Completed evidence -- main+independent clean
+---------------------------------------------
+- ASAN+UBSAN native held/clock/PCI-marker segment:both terminal0 and complete
+  stdout BYTE-IDENTICAL:qwen38-mixed-live-native-clock-end-20261027.log
+  SHA256fb3da2b36f1c3e4456ef866af8508beffb88c102d191add8c512a3d50ce2051f
+- Actual VM-only routing+30VM/11PCI failures and555 handle refusals still
+  pass. Additional pure-CPU predicate15 refusals never mutate PCI status:
+  qwen38-mixed-live-pci-marker-20261027.log
+  SHA256f55aea7c2189fc04c0ca52bc84481ba697606dffb93c1a79831c88a726b6cf14
+- Actual full kernel-context SDK objects main+clean terminal0/identical:
+  b2878e937309ab47b30b623bbba7ca924081a6b9f7ce0ff9d4b882eef0e8d085
+  Max new frame1200B;genuine final scope/Unmap/END bodies retained,NO normal
+  driver ABI,all independent inert entry controls preserved. Compile ONLY.
+- Old native held/fault harness48 refusals remains terminal0 with unchanged
+  stdout SHA5535e225484dc043da212ac53cb307cc7afcb89651c0b3ca150efa8bfe3e3fd1.
+- Default0b55dd8d20b7d81a8b97cc6608c5496d9b2633a4c1ef698a74010feb933b90e8,
+  sigmoid374ec650c173e5b23b73d0a0a09ba7f8785add27f14584268d033c834cdbd224,
+  readback4b1e6e4473150e50e10526d161a7d5bb67a466b718e9bf216dbb810b10279e9b,
+  old65=61faa093 and old NODRV=9fcf1f7f objects remain BYTE-IDENTICAL.
+
+Still owed
+------------
+Join this real closed-native/clock segment to the complete actual final
+scope/30-view Unmap,PCI success,all host releases and context destruction,
+including first-failure containment and actual END call sealing. The full
+final scope and final disposal flow remain runtime-unqualified;do NOT
+promote to a loadable driver yet. Then add distinct original-GGUF numerical
+validation entry/client and physical comparison. Full64 GDN+dense/state/KV/
+token commit/final norm/vocabulary/sampling/Work/Assistant+measured speed
+remain unfinished. A standalone layer3 block is NOT a valid model prefix.
+
+Installed driver/Assistant/boot/64CPU/128GB untouched. No relay/power/SD/
+mains/hardware/model/disk change. SDK read-only;outputs in/private/tmp.
+Dirty llama.cpp/unrelated FlashNext untouched. Real whole-model rate
+0.207893161tok/s unchanged;20tok/s UNMET. Goal ACTIVE.
