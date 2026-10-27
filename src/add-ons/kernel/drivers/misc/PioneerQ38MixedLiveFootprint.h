@@ -1,4 +1,18 @@
 /* SPDX-License-Identifier: MIT */
+// Compile-time program DATA selection only,never a native/launch grant.
+// Preserve the first selection across late inclusion/undefinition too.
+#ifdef PIONEER_Q38_MIXED_LIVE_SIGMOID_PROGRAMS
+#if PIONEER_Q38_MIXED_LIVE_SIGMOID_PROGRAMS != 1
+#error Exact distinct sigmoid program DATA selection required,including defined0
+#endif
+#ifdef PIONEER_Q38_MIXED_LIVE_FOOTPRINT_H
+static_assert(TT_Q38_MIXED_LIVE_SIGMOID_SELECTION==1,"late program DATA selection change");
+#endif
+#else
+#ifdef PIONEER_Q38_MIXED_LIVE_FOOTPRINT_H
+static_assert(TT_Q38_MIXED_LIVE_SIGMOID_SELECTION==0,"late program DATA selection removal");
+#endif
+#endif
 #ifndef PIONEER_Q38_MIXED_LIVE_FOOTPRINT_H
 #define PIONEER_Q38_MIXED_LIVE_FOOTPRINT_H
 #include <stdint.h>
@@ -9,9 +23,16 @@
 // complete restore/second proof and genuine native END. L1 ONLY: actual
 // NoC/Tensix/PCI/host/GDDR ownership and journals are separately required.
 struct PioneerQ38MixedLiveSpan {uint32_t address,words;};
+enum {TT_Q38_MIXED_LIVE_SIGMOID_SELECTION=
+#ifdef PIONEER_Q38_MIXED_LIVE_SIGMOID_PROGRAMS
+ 1
+#else
+ 0
+#endif
+};
 enum {TT_Q38_MIXED_LIVE_ROOT_SAVED_WORDS=308745,TT_Q38_MIXED_LIVE_PEER_SAVED_WORDS=93193,
- TT_Q38_MIXED_LIVE_SAVED_WORDS=11398712,TT_Q38_MIXED_LIVE_ROOT_CODE_WORDS=12581,
- TT_Q38_MIXED_LIVE_PEER_CODE_WORDS=21997,TT_Q38_MIXED_LIVE_CODE_WORDS=2630224};
+ TT_Q38_MIXED_LIVE_SAVED_WORDS=11398712,TT_Q38_MIXED_LIVE_ROOT_CODE_WORDS=12581+171*TT_Q38_MIXED_LIVE_SIGMOID_SELECTION,
+ TT_Q38_MIXED_LIVE_PEER_CODE_WORDS=21997,TT_Q38_MIXED_LIVE_CODE_WORDS=2630224+171*TT_Q38_MIXED_LIVE_SIGMOID_SELECTION};
 static inline unsigned PioneerQ38MixedLiveSnapshotSpans(unsigned w){return w>=120?0:w?7:5;}
 static inline PioneerQ38MixedLiveSpan PioneerQ38MixedLiveSnapshotSpan(unsigned w,unsigned span){
  if(w>=120 || span>=PioneerQ38MixedLiveSnapshotSpans(w))return {UINT32_MAX,0};
@@ -53,7 +74,7 @@ static inline unsigned PioneerQ38MixedLiveCodeSpans(unsigned w){return w>=120?0:
 static inline PioneerQ38MixedLiveSpan PioneerQ38MixedLiveCodeSpan(unsigned w,unsigned span){
  if(w>=120 || span>=PioneerQ38MixedLiveCodeSpans(w))return {UINT32_MAX,0};
  if(!span)return {0x6000,1};
- if(!w)return {0x40000,12580};
+ if(!w)return {0x40000,TT_Q38_MIXED_LIVE_ROOT_CODE_WORDS-1};
  switch(span){
   case 1:return {0x20000,1100};
   case 2:return {0x40000,2583};

@@ -8,13 +8,17 @@ import re
 import subprocess
 import sys
 import tempfile
-assert len(sys.argv)==7 or len(sys.argv)==8 and sys.argv[-1] in ('--execute','--faults')
+assert len(sys.argv)>=7
+options=sys.argv[7:]
+assert len(set(options))==len(options) and set(options)<={'--execute','--faults','--sigmoid-candidate'}
+assert not {'--execute','--faults'}<=set(options)
+sigmoid='--sigmoid-candidate' in options
 here=pathlib.Path(__file__).resolve().parent
 kernel=here.parents[2]/'src/add-ons/kernel/drivers/misc'
 for path,name,digest in ((pathlib.Path(sys.argv[1]),'text.bin','39817b679f4358e47c0e6602fb5ae184831206c11dab0b63fe9b7173c410df8b'),
  (pathlib.Path(sys.argv[2]),'code.bin','c754b24f767f33a00e61d2789cea3bda8ae656f6d58a2d20517311673a5aaaa1'),
  (pathlib.Path(sys.argv[3]),'boot.bin','32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
- (pathlib.Path(sys.argv[3]),'code.bin','50009c46fcdefb427dc1b31b68cc9b2403b4ba8e06b377ebd66a88bf7ce254c8'),
+ (pathlib.Path(sys.argv[3]),'code.bin','668a72ed92b42044d6fa8263bba8c63ff19ce31b1533b67e4a4d9799b9a2047e' if sigmoid else '50009c46fcdefb427dc1b31b68cc9b2403b4ba8e06b377ebd66a88bf7ce254c8'),
  (pathlib.Path(sys.argv[5]),'code.bin','ff39e984f76fe0d0591e9a48ea1137a231ecdaf2390b14223a8a8922b8e2488a'),
  (pathlib.Path(sys.argv[6]),'code.bin','e33cb65be5c53d77f486ee7ea2371a2ffc78638e5ed72bfa8b2fe2bf8cf19736')):
  assert hashlib.sha256((path/name).read_bytes()).hexdigest()==digest
@@ -26,6 +30,8 @@ role=(kernel/'PioneerQ38MixedLiveNativeRole.h').read_text()
 parents=set(re.findall(r'!defined\(([A-Z][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b',role));assert len(parents)==20
 defines={key:'1' for key in parents};defines['PIONEER_DRIVER_BUILD_TAG']='0x51424c4e4f445256ULL'
 defines['PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE']='1'
+program_flags=['-DPIONEER_Q38_MIXED_LIVE_SIGMOID_PROGRAMS=1'] if sigmoid else []
+if sigmoid:defines['PIONEER_Q38_MIXED_LIVE_SIGMOID_PROGRAMS']='1'
 defines.update({key:'pioneer_mixed_factory_test_'+key for key in ('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')})
 source=(kernel/'tenstorrent_pci_probe.cpp').read_text()
 with tempfile.TemporaryDirectory(prefix='pioneer-mixed-native-factory-',dir='/private/tmp') as temporary:
@@ -45,9 +51,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-mixed-native-factory-',dir='/pr
  common=[os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-ffp-contract=off','-Wall','-Wextra','-Werror','-fsanitize=address,undefined']
  transport=base/'transport.o'
  flags=re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?',(here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
- subprocess.run([*common,*flags,'-c',str(here/'pioneer_q38_mixed_live_native_transport.cpp'),'-o',str(transport)],check=True)
+ subprocess.run([*common,*flags,*program_flags,'-c',str(here/'pioneer_q38_mixed_live_native_transport.cpp'),'-o',str(transport)],check=True)
  subprocess.run([*common,
   *['-D'+k+'='+v for k,v in sorted(defines.items())],'-I'+str(base),'-I'+str(kernel),
   str(here/'pioneer_q38_mixed_live_native_factory_test.cpp'),str(here/'pioneer_q38_embedding_execution_bridge.cpp'),
   str(transport),'-o',str(binary)],check=True)
- subprocess.run([str(binary),*sys.argv[1:]],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
+ subprocess.run([str(binary),*sys.argv[1:7],*[o for o in options if o!='--sigmoid-candidate']],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})

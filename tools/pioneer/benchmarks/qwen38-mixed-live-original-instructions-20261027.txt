@@ -106,9 +106,10 @@ Update:both18-stage runs are now terminal1/byte-identical. FIRST difference
 is attention gating;ALL9 earlier stages are bit-exact. A distinct compensated
 sigmoid primitive matches23552 original gate inputs in emitted LOCAL QSG1
 instructions. This is NOT a full-block or native grant. New explicitly
-pinned root-candidate main+clean whole-block runs remain live/pending;
-see qwen38-mixed-live-sigmoid-precision-20261027.txt. Keep strict comparison;
-do not restart live jobs for observation expiry or promote provisional data.
+pinned root-candidate main+clean whole-block runs are now terminal0,with
+ALL18 stages/final5120words BIT-EXACT and actual119STOP+ROOT terminal.
+See qwen38-mixed-live-sigmoid-precision-20261027.txt. The selected native
+context is still separately qualifying;physical comparison is not yet done.
 Then finish original-byte/native validation entry/readback and final
 resource-release qualification before physical testing, followed by the
 full64-layer/state/token/sampling/Work integration and measured optimization.

@@ -129,8 +129,10 @@ Driver/runtime readiness checklist -- still required
     numerical FAILURE:5120 differences,relativeL20.000126620363555.
     It is NOT promoted;18-stage main+clean diagnosis locates the FIRST
     difference at attention gating (ALL9 earlier stages bit-exact). An
-    isolated compensated sigmoid passes original primitive inputs;new
-    root-candidate full-block runs are pending. See
+    isolated compensated sigmoid now passes the complete original block:
+    main+clean/all18stages+final BIT-EXACT,actual119STOP+ROOT/stack5428B.
+    The selected native program data/SDK/HELD faults pass;full native RUN
+    qualification is pending. Physical comparison remains owed. See
     qwen38-mixed-live-sigmoid-precision-20261027.txt.
 [ ] Integrate the valid64-layer sequence: all GDN and dense layers, genuine
     next-hidden producer, persistent recurrent/KV state and atomic token

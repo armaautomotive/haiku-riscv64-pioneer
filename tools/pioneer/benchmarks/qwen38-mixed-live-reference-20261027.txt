@@ -99,8 +99,10 @@ post-return18-stage report API adds diagnosis without exposing expected
 vectors or recomputing the reference from observed values. No tolerance
 was fitted or Work/native role expanded. Full stage traces now reproduce
 the first difference at attention gating,with ALL9 earlier stages bit-exact.
-A separate compensated sigmoid matches the original primitive gate inputs,
-but new root-candidate full-block runs are pending;see
+A separate compensated sigmoid now matches ALL18 stages and final5120words
+in main+clean complete original-block instruction runs (both terminal0).
+Native program-data qualification is underway;physical comparison remains
+owed. The ideal reference and strict tolerance were never changed. See
 qwen38-mixed-live-sigmoid-precision-20261027.txt.
 
 Read-only Pioneer status:driver55/tag2026102100010012/generation4/cold0/

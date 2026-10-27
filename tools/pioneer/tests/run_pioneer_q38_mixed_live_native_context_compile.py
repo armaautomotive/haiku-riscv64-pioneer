@@ -6,8 +6,9 @@ import re
 import runpy
 import subprocess
 import sys
-assert len(sys.argv)==3
-qualified,out=map(pathlib.Path,sys.argv[1:])
+assert len(sys.argv)==3 or len(sys.argv)==4 and sys.argv[3]=='--sigmoid-candidate'
+sigmoid=len(sys.argv)==4
+qualified,out=map(pathlib.Path,sys.argv[1:3])
 assert out.is_absolute() and not out.exists() and not out.is_symlink()
 out.mkdir(mode=0o700)
 here=pathlib.Path(__file__).resolve().parent
@@ -18,6 +19,7 @@ try:
 finally:
  sys.argv=saved
 args=base['args'][:]
+if sigmoid:args+=['-DPIONEER_Q38_MIXED_LIVE_SIGMOID_PROGRAMS=1']
 tags=[i for i,a in enumerate(args) if a.startswith('-DPIONEER_DRIVER_BUILD_TAG=')];assert len(tags)==1
 args[tags[0]]='-DPIONEER_DRIVER_BUILD_TAG=0x51424c4e4f445256ULL'
 obj=out/'mixed-live-context-NODRV.o'

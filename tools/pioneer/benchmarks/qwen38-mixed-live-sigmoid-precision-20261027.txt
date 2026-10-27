@@ -54,12 +54,12 @@ on-card producers,a full block or a native/hardware-model qualification.
 The complete block test below still uses genuine QPE1/device intermediate
 outputs and uploads NO expected products.
 
-Explicit root candidate -- full operator STILL PENDING
-------------------------------------------------------
+Explicit root candidate -- original instruction operator NOW PASSES
+------------------------------------------------------------------
 Only the new separate root builder defines the sigmoid candidate flag.
 All default ancestor programs and the existing50320B QBL1 are reproduced
 BYTE-IDENTICAL by the existing pinned builders,including the old ELF.
-The native program registry remains unchanged:
+At the isolated-primitive checkpoint the native program registry was unchanged:
  b39d4a4a4083a62078d90cc3ca887827e1b106a0cc08eb775ad936cf71d7793d.
 Main+clean NEW root bytes are also identical:
  boot4B SHA25632791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
@@ -71,12 +71,21 @@ Default and candidate test selections have DIFFERENT frozen artifact pins.
 Eight selector tests reject cross-selection,duplicate,mixed,Work and unknown
 options BEFORE execution;main+clean PASS.
 
-New main+clean full original-block actual-instruction runs are LIVE at this
-checkpoint. Their final numerical result and actual stack are NOT yet known.
-They still use the sealed private ideal reference and strict18-stage/final
-comparisons ONLY after real119STOP+ROOT terminal. Poll the SAME handles;
-observation timeout is not terminal. Do NOT install or promote from the
-primitive result,or assume the first-stage correction resolves the block.
+Main+clean full ORIGINAL block runs are now BOTH terminal0/PASS,with
+byte-identical complete stdout. ALL18 stages are BIT-EXACT to the unchanged
+private ideal reference. Final:checked5120,differences0,nonfinite0,maxAbs0,
+relativeL20,exactPassed1. All7 matrices,actual119STOP+ROOT terminal and
+actual stack5428B pass. Reports are computed ONLY after STOP/return;no CPU
+expected product is supplied to the complete-block instruction machines.
+Saved:qwen38-mixed-live-sigmoid-original-20261027.log
+ SHA256d86c8c825ee8f45c140d2330de80624007ee72414aada0abb85d34d5fffed747
+This confirms the gating correction for this standalone layer3/position0
+operator. It does NOT establish a GDN0..2/model prefix,full64-layer sequence,
+physical P100A comparison,native cleanup or inference rate.
+
+The following separately selected program-DATA/native-context checkpoint
+is recorded in qwen38-mixed-live-sigmoid-native-programs-20261027.txt.
+It preserves default compiled code;it is not a new loadable driver role.
 
 Saved terminal qualification logs
 ---------------------------------

@@ -1,9 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 // Mechanically generated from COMPLETE authenticated artifacts. Immutable DATA ONLY.
 // No code/source/init/clock/host/map/journal/owner or execution capability.
+#include "PioneerQ38MixedLiveFootprint.h"
 #ifndef PIONEER_Q38_MIXED_LIVE_PROGRAMS_H
 #define PIONEER_Q38_MIXED_LIVE_PROGRAMS_H
-#include "PioneerQ38MixedLiveFootprint.h"
+#ifdef PIONEER_Q38_MIXED_LIVE_SIGMOID_PROGRAMS
+#include "PioneerQ38MixedLiveSigmoidPrograms.h"
+#endif
 // SHA256 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
 static const uint32_t PioneerQ38MixedLiveRootBoot[]={
  0x0003a06fU,
@@ -4376,7 +4379,11 @@ static inline bool PioneerQ38MixedLiveProgramWord(unsigned w,uint32_t address,ui
  for(unsigned section=0;section<PioneerQ38MixedLiveCodeSpans(w);section++){
   const auto span=PioneerQ38MixedLiveCodeSpan(w,section);if(address<span.address || address-span.address>=span.words*4)continue;
   const uint32_t* data=nullptr;
+#ifdef PIONEER_Q38_MIXED_LIVE_SIGMOID_PROGRAMS
+  if(!w)data=section?PioneerQ38MixedLiveSigmoidRootCode:PioneerQ38MixedLiveRootBoot;
+#else
   if(!w)data=section?PioneerQ38MixedLiveRootCode:PioneerQ38MixedLiveRootBoot;
+#endif
   else switch(section){
    case 0:data=PioneerQ38MixedLivePeerBoot;break;
    case 1:data=PioneerQ38MixedLivePeerMixed;break;

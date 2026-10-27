@@ -1,0 +1,80 @@
+Qwen27B: qualified sigmoid program DATA in the guarded native controller
+2026-10-27 UTC -- NO driver installation,physical execution or speedup
+
+Original numerical prerequisite is now complete for the STANDALONE block:
+main+clean emitted QPE1/QBL1/SAME119,all18 stages/final5120words BIT-EXACT,
+real119STOP+ROOT terminal,stack5428B;both terminal0/byte-identical stdout.
+See qwen38-mixed-live-sigmoid-precision-20261027.txt and its raw log.
+
+Separate immutable program DATA,not a native grant
+-------------------------------------------------
+PIONEER_Q38_MIXED_LIVE_SIGMOID_PROGRAMS=1 selects the COMPLETE authenticated
+51004B ROOT code. Default still selects the existing50320B ROOT. No worker
+bytes change. The full131072B ROOT code snapshot window already covers the
+new code. Saved words11398712/45594848B stay unchanged;ROOT installed words
+become12752 and total installed words2630395 (default12581/2630224).
+No padding is treated as code. Default and sigmoid data generators recheck
+COMPLETE pinned artifacts before emitting;generated headers reproduce.
+Default registry source now contains the EXPLICIT conditional selection:
+ SHA25649efd71d3fd4963aaa7d0aedf1cc4e2dd08f43b6eedf4c65975161247e7bbd24
+Separate sigmoid ROOT registry DATA:
+ SHA256267e9cac20bde1f0a7aeb8648295310cc90216aebf0cae1e683e9e1f08a65165
+
+Main+clean selected geometry verifies ALL2630395 installed words against
+the raw root+worker binaries and ALL11398712 snapshot words. Default
+geometry verifies its unchanged2630224 words on main+clean too.16 compile-selection
+gates pass main+clean:exact counts/arrays,defined0/unknown and late cached-
+header selection changes/removals reject. A data flag is NOT source,bank,
+initialization,producer,NoC,clock,host,FD,model,ownership or launch authority.
+
+Actual native source compile -- NOT a loadable module
+----------------------------------------------------
+The existing QBLNODRV perimeter remains unchanged:ALL20 exact parents,
+ALL6 ABI names renamed,independent inert controls,no public execution or
+Work selector.165 native interlocks still PASS. The new selector changes
+only immutable program data/counts,not that refusing/native-source perimeter.
+
+Main+clean actual native-context SDK objects are terminal0/byte-identical:
+ SHA256374ec650c173e5b23b73d0a0a09ba7f8785add27f14584268d033c834cdbd224
+Max new static frame1200B;genuine source/cookie/team/callthread/model/clock/
+hosts/scopes/held journal/RUN/STOP/ALL120holds/restore/END bodies instantiate.
+No conventional driver ABI is exported;all independent inert controls match.
+Default context object remains BYTE-IDENTICAL to its prior checkpoint:
+ SHA2560b55dd8d20b7d81a8b97cc6608c5496d9b2633a4c1ef698a74010feb933b90e8
+Old65=61faa093 and old NODRV=9fcf1f7f controls remain byte-identical.
+The first clean SDK attempt lacked vm/vm.h because the arithmetic clean
+tree contained only tools+misc sources. Archived tracked headers/configs
+were added;the final clean SDK run passes without source/warning weakening.
+These are inspected COMPILE objects only,never linked/installed/invoked.
+
+Actual native factory qualification with SIMULATED endpoints
+-----------------------------------------------------------
+Main+clean HELD/no-launch close and fault runs are terminal0/PASS,with
+byte-identical complete stdout. ALL120 genuine probes/peer preparation,
+four mappings,full11398712word original journal,selected code install,
+complete restore+second proof and sealed Dispatch END pass.48 result/map/
+lifetime/END refusals retain ALL owners and allow ZERO following physical
+IO/reset/retry/restore. No reset is sent by the no-launch positive path.
+These use actual factory/scope bodies and simulated OS/MMIO endpoints.
+Raw no-launch/fault log:qwen38-mixed-live-sigmoid-native-faults-20261027.log
+ SHA2565535e225484dc043da212ac53cb307cc7afcb89651c0b3ca150efa8bfe3e3fd1
+Raw data-selection gates:qwen38-mixed-live-program-selection-gates-20261027.log
+ SHA256d9aefc9082416b8e278adbe33c1d05af4b3db38c81581014de3100659dadfdcc
+
+Full new-program native-factory RUN/actual119STOP/ALL120holds/restore/END
+instruction runs remain LIVE on main+clean. Poll the SAME handles;do not
+restart for observation expiry. No full native-run PASS is claimed yet.
+Its learned byte endpoints are SYNTHETIC,not a physical original-model run.
+
+Still required before real use
+-------------------------------
+Guarded original-weight native validation entry/client and fixed readback,
+final real ARC/host/map/context release qualification,then controlled
+physical comparison. Follow with valid64-layer GDN+dense sequencing,state/
+KV/token commits,final norm/vocabulary/sampling,Work/Assistant integration
+and measured optimization. No NODRV->Work/public ABI promotion is implied.
+
+Installed driver/Assistant/boot/CPUs/RAM untouched;no relay,SD,mains,hardware
+connection,model or disk change. SDK read-only;outputs/private clean trees
+in/tmp. Dirty llama.cpp/unrelated untracked FlashNext untouched. Whole-model
+0.207893161tok/s unchanged;20tok/s UNMET. Goal ACTIVE.
