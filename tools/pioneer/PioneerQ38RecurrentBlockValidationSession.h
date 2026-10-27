@@ -2,7 +2,7 @@
 // Recheck after every include,including late/defined0 selections.
 #if !defined(PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_CLIENT) || PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_CLIENT != 1 \
  || !defined(PIONEER_Q38_CPU_VALIDATION) || PIONEER_Q38_CPU_VALIDATION != 1
-#error Exact separate recurrent DEBUG71 CPU validation client required
+#error Exact separate recurrent DEBUG72 CPU validation client required
 #endif
 #if defined(_KERNEL_MODE) || defined(PIONEER_ATTENTION_FREESTANDING) || defined(__FAST_MATH__) \
  || defined(PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_NATIVE) || defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT) \
@@ -22,7 +22,7 @@
  || defined(PIONEER_Q38_RESIDENT_CONTINUE_IMAGE) || defined(PIONEER_Q38_RESIDENT_ADVANCE_IMAGE) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) \
  || defined(PIONEER_Q38_GDN_MUTABLE_STATE)
-#error Recurrent DEBUG71 client is not a native,image,old dense/kernel or Work role,including defined0
+#error Recurrent DEBUG72 client is not a native,image,old dense/kernel or Work role,including defined0
 #endif
 #ifndef PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_SESSION_H
 #define PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_SESSION_H
@@ -87,11 +87,11 @@ public:
   tt_pioneer_driver_reload reload={};reload.version=1;
   if(!Call(TT_PCI_PROBE_RELOAD_STATUS,reload) || !PioneerDriverReloadRequest(reload) || reload.expected_tag || reload.expected_generation
    || reload.driver!=55 || reload.guard_version!=1
-   || reload.build_tag!=UINT64_C(0x2026102700010071) || !reload.generation || reload.quiesced || reload.cold
+   || reload.build_tag!=TT_Q38_RECURRENT_BLOCK_VALIDATION_BUILD_TAG || !reload.generation || reload.quiesced || reload.cold
    || reload.active_owner || reload.open_count!=1)return Stop("driver_identity");
   generation=reload.generation;tt_q38_embedding_support support={};
   if(!Call(TT_PCI_PROBE_Q38_RECURRENT_BLOCK_VALIDATION_SUPPORT,support) || support.version!=1 || support.driver!=55
-   || support.model_namespace!=22 || support.inputs!=5120 || support.vocabulary!=248320 || support.runtime_pages!=512
+   || support.model_namespace!=TT_Q38_RECURRENT_BLOCK_VALIDATION_NAMESPACE || support.inputs!=5120 || support.vocabulary!=248320 || support.runtime_pages!=512
    || support.no_cpu_reference || support.model_inference)return Stop("diagnostic_identity");
   tt_q38_bank_support storage={};tt_q38_span_support span={};
   if(!Call(TT_PCI_PROBE_Q38_BANK_SUPPORT,storage) || storage.driver!=45 || storage.version!=1 || storage.banks!=7

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build/inspect separate CPU-reference DEBUG71 client;NEVER run/install."""
+"""Build/inspect separate CPU-reference DEBUG72 client;NEVER run/install."""
 import hashlib
 import os
 import pathlib
@@ -20,7 +20,7 @@ objects=[]
 for name,path,selection in [('original',here/'pioneer_q38_recurrent_block_original_source.cpp',[]),
  ('client',here/'pioneer_q38_recurrent_block_validation.cpp',['-DPIONEER_Q38_RECURRENT_BLOCK_VALIDATION_CLIENT=1','-DPIONEER_Q38_CPU_VALIDATION=1'])]:
  obj=out/(name+'.o');subprocess.run([cxx,*flags,*selection,*includes,'-c',str(path),'-o',str(obj)],check=True);objects.append(obj)
-binary=out/'pioneer-q38-recurrent-DEBUG71-VALIDATION-ONLY'
+binary=out/'pioneer-q38-recurrent-DEBUG72-VALIDATION-ONLY'
 subprocess.run([cxx,*includes,*libraries,'-B'+str(release/'system/glue')+'/',
  '-L'+str(release/'system/libroot'),*map(str,objects),'-o',str(binary)],check=True)
 symbols=subprocess.check_output([str(tool)+'nm','-C',str(binary)],text=True)
@@ -34,6 +34,6 @@ assert 'PioneerRecurrentOriginalSource' in symbols and 'PioneerQ38RecurrentBlock
 sizes=[int(line.split('\t')[1]) for path in out.glob('*.su') for line in path.read_text().splitlines() if len(line.split('\t'))==3]
 assert sizes and max(sizes)<=32768 # CPU reference USER stack,never a kernel frame
 for path in [*objects,binary]:print(hashlib.sha256(path.read_bytes()).hexdigest()+' '+path.name)
-print('PASS separate Haiku riscv64 DEBUG71 CPU-reference/source+actual-ioctl client compile/link/max USER frame'+str(max(sizes)))
+print('PASS separate Haiku riscv64 DEBUG72 CPU-reference/source+actual-ioctl client compile/link/max USER frame'+str(max(sizes)))
 print('PASS client object has NO inline private CPU products,native context,canonical mutable-bank geometry or GDN-owner implementation')
 print('BUILD/INSPECT ONLY;NO installation,execution,device access,physical/full-model/Work/TPS qualification')

@@ -1,0 +1,1 @@
+PASS 302 actual updater filesystem/handshake/hash/symlink/owner/failure cases;NO native reload/reset or automatic rollback

@@ -15,5 +15,6 @@ int main(){
  static_assert(TT_PCI_PROBE_Q38_RECURRENT_BLOCK_VALIDATE!=TT_PCI_PROBE_Q38_MIXED_LIVE_VALIDATE,"no old dense opcode alias");
  static_assert(sizeof(tt_q38_recurrent_block_validation)!=sizeof(tt_q38_mixed_live_validation),"no old dense payload alias");
  static_assert(TT_Q38_RECURRENT_BLOCK_VALIDATION_NAMESPACE!=TT_Q38_MIXED_LIVE_VALIDATION_NAMESPACE,"distinct model namespace");
- puts("PASS DEBUG71 fixed20800B pointer-free request/ALL20800 single-byte mutations refused/token0-position0-layer0/namespace22/no old dense ABI alias;NO native or physical authority");
+ static_assert(TT_Q38_RECURRENT_BLOCK_VALIDATION_NAMESPACE==23 && TT_Q38_RECURRENT_BLOCK_VALIDATION_BUILD_TAG==UINT64_C(0x2026102700010072),"new exact identity,never old71/22");
+ puts("PASS DEBUG72 fixed20800B pointer-free request/ALL20800 single-byte mutations refused/token0-position0-layer0/namespace23/no old dense ABI alias;NO native or physical authority");
 }

@@ -20,7 +20,7 @@ parents=set(re.findall(r'!defined\(([A-Z][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b',r
 args=[a for a in base['args'] if a!='-DTT_PIONEER_Q38_WORK_MODE'
  and not a.startswith(('-DTT_PIONEER_Q38_WORK_MODE=','-DPIONEER_Q38_'))]
 tags=[i for i,a in enumerate(args) if a.startswith('-DPIONEER_DRIVER_BUILD_TAG=')];assert len(tags)==1
-args[tags[0]]='-DPIONEER_DRIVER_BUILD_TAG=0x2026102700010071ULL';obj=out/'recurrent-block-validation71.o'
+args[tags[0]]='-DPIONEER_DRIVER_BUILD_TAG=0x2026102700010072ULL';obj=out/'recurrent-block-validation72.o'
 args[args.index('-c')+1]=str(kernel/'tenstorrent_pci_probe.cpp');args[args.index('-o')+1]=str(obj)
 for name in sorted(parents):
  if not any(a=='-D'+name or a.startswith('-D'+name+'=') for a in args):args+=['-D'+name+'=1']
@@ -39,6 +39,6 @@ for forbidden in ('OriginalSource','ReferenceProducts','CompareFinal','Q38WorkCo
  'PioneerQ38MixedLiveNativeState','pioneer_q38_recurrent_context_only'):
  assert forbidden not in symbols,forbidden
 selected=[size for name,size in frames.items() if 'RecurrentBlock' in name or 'recurrent_block' in name]
-print('PASS actual DEBUG71 conventional ABI/control/native scopes/QPE1+672GDN+336history+RUN+readback+finalEND SDK object;maxNewFrame'+str(max(selected)))
+print('PASS actual DEBUG72 conventional ABI/control/native scopes/QPE1+672GDN+336history+RUN+readback+finalEND SDK object;maxNewFrame'+str(max(selected)))
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+'  '+str(obj))
 print('COMPILE/INSPECTION ONLY;NOT linked,installed,invoked,public-handler/runtime/client/physical qualified or a full-model/Work/speed claim')

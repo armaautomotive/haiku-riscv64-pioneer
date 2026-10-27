@@ -67,7 +67,7 @@ static status_t Q38RecurrentBlockValidationControl(PioneerProbeCookie* cookie,ui
   reply->saved_words=m.savedWords;reply->verified_words=m.verifiedOriginalWords;reply->installed_words=m.installedWords;reply->restored_words=m.restoredWords;
   reply->readback_pages=b.pages;reply->readback_words=b.words;reply->final_rows=5120;
  }else{
-  dprintf("Q38-RECURRENT-DEBUG71:FAIL zero%u embedding%u gdn%u/%u history%u/%u memory%u/%u/%u execution%u/%u/%u readback%u/%u;CPU_METADATA_ONLY_NO_POST_FAILURE_DEVICE_IO\n",
+  dprintf("Q38-RECURRENT-DEBUG72:FAIL zero%u embedding%u gdn%u/%u history%u/%u memory%u/%u/%u execution%u/%u/%08x readback%u/%u;CPU_METADATA_ONLY_NO_POST_FAILURE_DEVICE_IO\n",
    z.phase,e.phase,g.phase,g.nonce,h.phase,h.nonce,m.phase,m.worker,m.word,x.phase,x.worker,x.word,b.pages,b.words);
   memset(reinterpret_cast<uint8*>(reply)+sizeof(reply->metadata),0,sizeof(*reply)-sizeof(reply->metadata));
  }

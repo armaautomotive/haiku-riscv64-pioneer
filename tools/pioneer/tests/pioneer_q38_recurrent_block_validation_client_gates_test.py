@@ -35,4 +35,4 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qrb-client-gates-',dir='/privat
   for value in ('0','1',''):
    result=subprocess.run([sys.executable,str(builder),str(pathlib.Path(tmp)/'NO_SDK'),str(out)],env={**clean,key:value},capture_output=True,timeout=5)
    assert result.returncode==2 and not result.stdout and not result.stderr and not out.exists();count+=1
-print('PASS distinct DEBUG71 CPU-client gates'+str(count)+'/exact2roles/defined0+late/native+mutable-owner+image+inline-private-oracle+old dense+Work refusal/inert builder;NO device/full-model/native authority')
+print('PASS distinct DEBUG72 CPU-client gates'+str(count)+'/exact2roles/defined0+late/native+mutable-owner+image+inline-private-oracle+old dense+Work refusal/inert builder;NO device/full-model/native authority')

@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
-// Separate fixed layer0 DEBUG71 physical diagnostic. No include guard:
+// Separate fixed layer0 DEBUG72 per-transition-deadline physical diagnostic.
+// Failed DEBUG71 stays frozen at its old source/module hash. No include guard:
 // recheck defined0/late changes;NEVER promote the QRBNODRV compile role.
 #if !defined(PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_NATIVE) || PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_NATIVE != 1 \
  || !defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT) || PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT != 1 \
@@ -23,8 +24,8 @@
  || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR != 1 \
  || !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) || TT_PIONEER_EXPERIMENTAL_Q38_STREAM != 1 \
  || !defined(TT_PIONEER_DRIVER_RELOAD) || TT_PIONEER_DRIVER_RELOAD != 1 \
- || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026102700010071ULL
-#error Exact separate tag71 recurrent physical validation and ALL native parents required
+ || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026102700010072ULL
+#error Exact separate tag72 recurrent physical validation and ALL native parents required
 #endif
 #if defined(PIONEER_Q38_RECURRENT_BLOCK_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RECURRENT_BLOCK_EMIT_CONTEXT_BODY) \
  || defined(PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_CLIENT) || defined(PIONEER_Q38_RECURRENT_BLOCK_ORIGINAL_NATIVE_TEST) \
@@ -53,8 +54,8 @@
  || defined(PIONEER_Q38_WORK_POSTED_STAGE) || defined(PIONEER_Q38_WORK_COHORT_CACHE) || defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) \
  || defined(PIONEER_Q38_WORK_OUTPUT_DMA) || defined(PIONEER_Q38_WORK_SPARSE_EXPORT) || defined(PIONEER_Q38_WORK_COMPACT_OUTPUT) \
  || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) || defined(__FAST_MATH__)
-#error Recurrent DEBUG71 is not NODRV,old dense/image/CPU reference or Work,including defined0
+#error Recurrent DEBUG72 is not NODRV,old dense/image/CPU reference or Work,including defined0
 #endif
 #if defined(api_version) || defined(init_hardware) || defined(init_driver) || defined(uninit_driver) || defined(publish_devices) || defined(find_device)
-#error Recurrent DEBUG71 requires the conventional driver ABI,not entry aliases
+#error Recurrent DEBUG72 requires the conventional driver ABI,not entry aliases
 #endif

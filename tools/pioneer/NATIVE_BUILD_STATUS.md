@@ -1,6 +1,6 @@
 # Native build status
 
-## Current: DEBUG71 physical startup failed; stable driver restored; history prototype passed
+## Current: distinct DEBUG72 built/staged; full runtime qualification still running
 
 October 27, 2026. Offline qualification is NOT physical-card qualification.
 The original-weight DEBUG71 physical trial uploaded all 300 calls/68603 pages,
@@ -10,6 +10,19 @@ is a hypothesis, not a confirmed hardware diagnosis. Controlled OFF-once / ON-on
 recovery, pinned top-page7/64-CPU/full-memory Haiku boot and guarded stable041
 restoration completed. Current driver55/tag12/generation2 is cold0/owner0/guard1.
 See benchmarks/qwen38-recurrent-debug71-physical-20261027.txt.
+
+The corrected source now has a NEW exact tag2026102700010072/namespace23,
+not another byte-distinct71. Main/clean linked modules match3e00974c and
+separate validation clients match2f322603. Protocol20800 mutations, role495/
+client179/NODRV430/readback93 gates,451 client failure cases, actual original
+c600 preflight and guarded swap236+236/legacy302 cases all passed.
+The helper retires failed71 apply while preserving known-clean restore;
+only exact stable041 <-> new3e00/72 is added. Files are SHA-verified in a
+separate non-watched Haiku folder, NOT installed/invoked. Stable041 remains.
+New72 actual public-handler tests94469/41404 and current original-weight
+native readback tests93742/38351 are LIVE; do not promote partial results.
+Earlier71/deadline controls2894/11492 are also still LIVE at this snapshot.
+See benchmarks/qwen38-recurrent-debug72-preparation-20261027.txt.
 
 The shared startup-deadline defect is now independently reproduced offline:
 119 actual virgin boots with simulated0.3s CPU image checks falsely fail at

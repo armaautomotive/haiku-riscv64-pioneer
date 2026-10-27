@@ -6,6 +6,9 @@ set -eu
 if [ "$#" = 1 ] && [ "$1" = --apply-raw-unpack-cache-qualification ]; then
  echo 'STOP_RAW_CACHE_FAILED_NATIVE:tag22 Q4 completion failed;NO install/retry/reset/automatic rollback' >&2;exit 2
 fi
+if [ "$#" = 1 ] && [ "$1" = --apply-recurrent-block-validation ]; then
+ echo 'STOP_RECURRENT71_FAILED_NATIVE:worker114 startup failed;use separately qualified72 ONLY;NO install/retry/reset/automatic rollback' >&2;exit 2
+fi
 [ "$#" = 1 ] && [ "$(uname -s)" = Haiku ] || exit 2
 case "$1" in
  --apply-postscale-delta|--restore-postscale-delta) mode=$1;;
@@ -39,6 +42,7 @@ case "$1" in
  --apply-resident-layer-validation|--restore-resident-layer-validation) mode=$1;;
  --apply-mixed-live-validation|--restore-mixed-live-validation) mode=$1;;
  --apply-recurrent-block-validation|--restore-recurrent-block-validation) mode=$1;;
+ --apply-recurrent-deadline-validation|--restore-recurrent-deadline-validation) mode=$1;;
  --apply-host-phase-diagnostic|--restore-host-phase-diagnostic) mode=$1;;
  --apply-batch4-fetch-qualification|--restore-batch4-fetch-qualification) mode=$1;;
  --apply-batch-raw-qualification|--restore-batch-raw-qualification) mode=$1;;
@@ -136,6 +140,7 @@ candidate_resident_output_validation=$stage/tenstorrent_pci_probe-resident-outpu
 candidate_resident_layer_validation=$stage/tenstorrent_pci_probe-resident-layer-validation-b554d37d
 candidate_mixed_live_validation=$stage/tenstorrent_pci_probe-mixed-live-validation-11d24d92
 candidate_recurrent_block_validation=$stage/tenstorrent_pci_probe-recurrent-block-validation-87d0c4e0
+candidate_recurrent_deadline_validation=$stage/tenstorrent_pci_probe-recurrent-deadline-validation-3e00974c
 candidate_host_phase_diagnostic=$stage/tenstorrent_pci_probe-host-phase-diagnostic-acf33ea4
 candidate_batch4_fetch_qualification=$stage/tenstorrent_pci_probe-batch4-fetch-qualification-2fcf0b27
 candidate_batch_raw_qualification=$stage/tenstorrent_pci_probe-batch-raw-qualification-c38e258c
@@ -221,6 +226,7 @@ hash_resident_output_validation=58064edee490bb5335fa135122a8d89588987a56c0451d75
 hash_resident_layer_validation=b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7
 hash_mixed_live_validation=11d24d92c9ee05f1e3664ee13796f8621f378bb738eb5c62b622314f846a3e29
 hash_recurrent_block_validation=87d0c4e005d7df937e22c2806051cd0aa99d736c0fb2c0199fde40d8eb1d7cb4
+hash_recurrent_deadline_validation=3e00974c4476f2755341fbcea034340652e976e292cb017344f4a70f896c652e
 hash_host_phase_diagnostic=acf33ea4279ca6d36cbc4b90ae56e6da1fed219b431ae7c80c2693b3f1591583
 hash_batch4_fetch_qualification=2fcf0b27039ed8e8e8114c632d51ba2f75ed2e6c28ef4a7081dd347d39cba9da
 hash_batch_raw_qualification=c38e258cb76bf8013a721cacb73e98b1d7eb191badbfaed6076655284543d379
@@ -304,6 +310,7 @@ tag_resident_output_validation=2026102500010068
 tag_resident_layer_validation=2026102600010069
 tag_mixed_live_validation=2026102700010070
 tag_recurrent_block_validation=2026102700010071
+tag_recurrent_deadline_validation=2026102700010072
 tag_host_phase_diagnostic=2026102100010018
 tag_batch4_fetch_qualification=2026102100010019
 tag_batch_raw_qualification=2026102100010020
@@ -524,6 +531,11 @@ else
  # owner/quarantine/reload fences. UNKNOWN cannot restore or retry.
  elif [ "$mode" = --apply-recurrent-block-validation ]; then source=$candidate_recurrent_block_validation; expected=$hash_scale_reuse_qualification; result=$hash_recurrent_block_validation; oldtag=$tag_scale_reuse_qualification; newtag=$tag_recurrent_block_validation
  elif [ "$mode" = --restore-recurrent-block-validation ]; then source=$candidate_scale_reuse_qualification; expected=$hash_recurrent_block_validation; result=$hash_scale_reuse_qualification; oldtag=$tag_recurrent_block_validation; newtag=$tag_scale_reuse_qualification
+ # Distinct DEBUG72/namespace23 with qualified per-transition deadlines.
+ # Only stable041 <-> exact3e00;never substitute old71 or cold recovery.
+ # Runtime/original-model qualification remains REQUIRED before invocation.
+ elif [ "$mode" = --apply-recurrent-deadline-validation ]; then source=$candidate_recurrent_deadline_validation; expected=$hash_scale_reuse_qualification; result=$hash_recurrent_deadline_validation; oldtag=$tag_scale_reuse_qualification; newtag=$tag_recurrent_deadline_validation
+ elif [ "$mode" = --restore-recurrent-deadline-validation ]; then source=$candidate_scale_reuse_qualification; expected=$hash_recurrent_deadline_validation; result=$hash_scale_reuse_qualification; oldtag=$tag_recurrent_deadline_validation; newtag=$tag_scale_reuse_qualification
  elif [ "$mode" = --apply-host-phase-diagnostic ]; then source=$candidate_host_phase_diagnostic; expected=$hash_sentinel_poll_qualification; result=$hash_host_phase_diagnostic; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_host_phase_diagnostic
  elif [ "$mode" = --restore-host-phase-diagnostic ]; then source=$candidate_sentinel_poll_qualification; expected=$hash_host_phase_diagnostic; result=$hash_sentinel_poll_qualification; oldtag=$tag_host_phase_diagnostic; newtag=$tag_sentinel_poll_qualification
  elif [ "$mode" = --apply-batch4-fetch-qualification ]; then source=$candidate_batch4_fetch_qualification; expected=$hash_sentinel_poll_qualification; result=$hash_batch4_fetch_qualification; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_batch4_fetch_qualification
@@ -562,7 +574,7 @@ else
  generationhex=$(printf '%016x' "$generation")
  reload_backup=$stage/qualified-reload-$oldtag
  case "$mode" in
-  --apply-mixed-live-validation|--restore-mixed-live-validation|--apply-recurrent-block-validation|--restore-recurrent-block-validation) reload_backup=$reload_backup-$expected;;
+  --apply-mixed-live-validation|--restore-mixed-live-validation|--apply-recurrent-block-validation|--restore-recurrent-block-validation|--apply-recurrent-deadline-validation|--restore-recurrent-deadline-validation) reload_backup=$reload_backup-$expected;;
   # DEBUG44 has two byte-distinct images. Preserve the previous tag-only
   # backup; never overwrite it or confuse it with this exact input image.
   --apply-decoder-validation|--restore-decoder-validation|--apply-gdn-input-validation|--restore-gdn-input-validation|--apply-gdn-recurrent-validation|--restore-gdn-recurrent-validation|--apply-gdn-rendezvous-validation|--restore-gdn-rendezvous-validation|--apply-conv-silu-precision-validation|--restore-conv-silu-precision-validation|--apply-resident-output-validation|--restore-resident-output-validation|--apply-resident-layer-validation|--restore-resident-layer-validation) reload_backup=$reload_backup-$expected;;

@@ -21,6 +21,6 @@ int main(int argc,char** argv){
   && source->Ready() && source->ReferenceReads()==3853 && source->Spans()==57 && source->Pages()==68603 && source->Bytes()==280971136
   && !session->uploaded_pages && !session->upload_spans && !session->reply_captured && !session->comparison.checked);
  session->Abort();assert(!session->Validate() && !session->Finish() && io.opens==1);
- printf("PASS actual DEBUG71 client ORIGINAL fullc600 authentication/private3853-read reference+seal/ALL57 raw extent routes+addresses+no-overlap+68603pages280971136bytes BEFORE unavailable Open/private fingerprint%016llx;NO device FD,context,upload,compute,native/physical/full-model/TPS qualification\n",
+ printf("PASS actual DEBUG72 client ORIGINAL fullc600 authentication/private3853-read reference+seal/ALL57 raw extent routes+addresses+no-overlap+68603pages280971136bytes BEFORE unavailable Open/private fingerprint%016llx;NO device FD,context,upload,compute,native/physical/full-model/TPS qualification\n",
   (unsigned long long)source->ReferenceFingerprint());
 }

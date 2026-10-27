@@ -54,6 +54,7 @@ struct RecurrentClientIO {
  RecurrentClientSource& source;
  unsigned opens=0,closes=0,calls=0,begins=0,spans=0,spanEnds=0,runs=0,ends=0,uploaded=0,partAt=0,pageAt=0,expectedSpans=0;
  unsigned failCall=0,sourceDrop=0,identityDrop=0,badHeader=~0U,badCall=0,badOffset=0;
+ uint64_t replyBuildTag=UINT64_C(0x2026102700010072);unsigned replyNamespace=23;
  bool openFail=false,closeFail=false;bool(*earlyFinish)(void*)=nullptr;void* client=nullptr;
  explicit RecurrentClientIO(RecurrentClientSource& s):source(s){for(const auto& e:s.extents)expectedSpans+=(e.pages+255)/256;}
  int Open(){assert(source.Ready() && source.extentCalls==57 && !source.gpu && !opens++);if(openFail)return -1;source.gpu=true;return 71;}
@@ -63,9 +64,9 @@ struct RecurrentClientIO {
   if(earlyFinish){unsigned before=calls;assert(!earlyFinish(client) && calls==before);}
   switch(op){
    case TT_PCI_PROBE_RELOAD_STATUS:{assert(bytes==sizeof(tt_pioneer_driver_reload));auto& r=*static_cast<tt_pioneer_driver_reload*>(data);
-    assert(r.version==1);r.driver=55;r.guard_version=1;r.generation=4;r.open_count=1;r.build_tag=UINT64_C(0x2026102700010071);break;}
+    assert(r.version==1);r.driver=55;r.guard_version=1;r.generation=4;r.open_count=1;r.build_tag=replyBuildTag;break;}
    case TT_PCI_PROBE_Q38_RECURRENT_BLOCK_VALIDATION_SUPPORT:
-    assert(bytes==sizeof(tt_q38_embedding_support));*static_cast<tt_q38_embedding_support*>(data)={1,55,22,5120,248320,512,0,0};break;
+    assert(bytes==sizeof(tt_q38_embedding_support));*static_cast<tt_q38_embedding_support*>(data)={1,55,replyNamespace,5120,248320,512,0,0};break;
    case TT_PCI_PROBE_Q38_BANK_SUPPORT:*static_cast<tt_q38_bank_support*>(data)={45,1,7,4096,4,1,UINT64_C(3)*1024*1024*1024};break;
    case TT_PCI_PROBE_Q38_SPAN_WORK_SUPPORT:*static_cast<tt_q38_span_support*>(data)={55,1,7,4096,1048576,1,1,0};break;
    case TT_PCI_PROBE_Q38_BANK_BEGIN:{begins++;auto& r=static_cast<tt_q38_bank_session*>(data)->result;assert(!source.observers);
@@ -105,8 +106,21 @@ int main(){
   assert(!s->Finish() && !s->Validate(1) && !s->Validate(0,1) && !io.opens);
   assert(s->Validate() && source.reads==68603 && source.observers==1);io.earlyFinish=nullptr;
   assert(s->Finish() && io.ends==1 && io.closes==1);totalCalls=io.calls;
-  assert(!s->Validate() && !s->Finish());printf("PASS DEBUG71 actual client seal+57RAW extent checks BEFORE FD/68603pages/%uuploads/%ucalls/ALL raw tails zero/strict comparison BEFORE explicit END;SYNTHETIC endpoints ONLY\n",io.spans,totalCalls);
+  assert(!s->Validate() && !s->Finish());printf("PASS DEBUG72 actual client seal+57RAW extent checks BEFORE FD/68603pages/%uuploads/%ucalls/ALL raw tails zero/strict comparison BEFORE explicit END;SYNTHETIC endpoints ONLY\n",io.spans,totalCalls);
  }
+ for(uint64_t tag:{UINT64_C(0),UINT64_C(0x2026102700010071),UINT64_C(0x2026102700010070),UINT64_C(0x2026102100010012)}){
+  RecurrentClientSource source;RecurrentClientIO io(source);io.replyBuildTag=tag;auto s=std::make_unique<Session>(io,source);
+  assert(!s->Validate() && !strcmp(s->failure,"driver_identity") && io.opens==1 && io.closes==1 && io.calls==1
+   && !io.begins && !io.spans && !io.runs && !io.ends);
+  s->Abort();assert(!s->Validate() && !s->Finish() && io.calls==1 && io.closes==1);failures++;
+ }
+ for(unsigned modelNamespace:{0U,21U,22U,24U}){
+  RecurrentClientSource source;RecurrentClientIO io(source);io.replyNamespace=modelNamespace;auto s=std::make_unique<Session>(io,source);
+  assert(!s->Validate() && !strcmp(s->failure,"diagnostic_identity") && io.opens==1 && io.closes==1 && io.calls==2
+   && !io.begins && !io.spans && !io.runs && !io.ends);
+  s->Abort();assert(!s->Validate() && !s->Finish() && io.calls==2 && io.closes==1);failures++;
+ }
+ puts("PASS DEBUG72 rejects8 old/foreign buildtag+namespace pairs BEFORE BANK_BEGIN/upload/compute;no legacy71/22 fallback");
  auto check=[&](unsigned kind,unsigned at){
   RecurrentClientSource source;RecurrentClientIO io(source);
   if(kind==0)io.failCall=at;if(kind==1)io.sourceDrop=at;if(kind==2)io.identityDrop=at;if(kind==3)source.failRead=at;
@@ -119,12 +133,12 @@ int main(){
   }
   assert(io.closes==unsigned(io.opens && !io.openFail));if(kind==12)assert(!io.opens && !io.calls);failures++;
  };
- for(unsigned at=1;at<=totalCalls;at++){check(0,at);if(!(at%64))printf("DEBUG71_CLIENT_FAULT_PROGRESS %u/%u\n",at,totalCalls);}
+ for(unsigned at=1;at<=totalCalls;at++){check(0,at);if(!(at%64))printf("DEBUG72_CLIENT_FAULT_PROGRESS %u/%u\n",at,totalCalls);}
  for(unsigned at:{1U,5U,6U,totalCalls/2,totalCalls-2,totalCalls-1,totalCalls}){check(1,at);check(2,at);}
  for(unsigned at:{1U,12U,13U,32768U,68603U})check(3,at);
  for(unsigned at=0;at<80;at++)if(at!=9 && at!=13)check(4,at);
  for(unsigned kind:{5U,6U,8U,9U,10U,11U})check(kind,0);
  for(unsigned metric=1;metric<=6;metric++)check(7,metric);
  for(unsigned extent=0;extent<57;extent++)check(12,extent);
- printf("PASS DEBUG71 actual client%u failure cases/ALL%ucalls/source+identity loss/partial raw reads/78header corruptions/6strict metrics/ALL57extent refusals BEFORE FD/open-close-prepare-seal;terminal CLOSE ONLY,no END/reset/peek/retry after uncertainty;NOT original numerical/native/silicon/TPS proof\n",failures,totalCalls);
+ printf("PASS DEBUG72 actual client%u failure cases/ALL%ucalls/source+identity loss/partial raw reads/78header corruptions/6strict metrics/ALL57extent refusals BEFORE FD/open-close-prepare-seal;terminal CLOSE ONLY,no END/reset/peek/retry after uncertainty;NOT original numerical/native/silicon/TPS proof\n",failures,totalCalls);
 }

@@ -3,12 +3,14 @@
 #define PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_PROTOCOL_H
 #include <stddef.h>
 #include "PioneerQ38EmbeddingProtocol.h"
-// Distinct DEBUG71/namespace22. Fixed token0,position0,layer0,bank0.
+// Distinct DEBUG72/namespace23, not the failed DEBUG71/namespace22.
+// Fixed token0,position0,layer0,bank0. Identical pointer-free payload shape.
 // Pointer/address/threshold/code-free. ALL reply bytes MUST be zero input.
 // A reply is NOT a state/token commit or permission to clean an unknown run.
 #define TT_PCI_PROBE_Q38_RECURRENT_BLOCK_VALIDATION_SUPPORT (B_DEVICE_OP_CODES_END+0x6402)
 #define TT_PCI_PROBE_Q38_RECURRENT_BLOCK_VALIDATE (B_DEVICE_OP_CODES_END+0x6403)
-enum {TT_Q38_RECURRENT_BLOCK_VALIDATION_NAMESPACE=22,TT_Q38_RECURRENT_BLOCK_VALIDATION_WORDS=5120,
+static constexpr uint64_t TT_Q38_RECURRENT_BLOCK_VALIDATION_BUILD_TAG=UINT64_C(0x2026102700010072);
+enum {TT_Q38_RECURRENT_BLOCK_VALIDATION_NAMESPACE=23,TT_Q38_RECURRENT_BLOCK_VALIDATION_WORDS=5120,
  TT_Q38_RECURRENT_BLOCK_VALIDATION_PAGES=5};
 struct tt_q38_recurrent_block_validation {
  tt_q38_embedding_produce metadata;

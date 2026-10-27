@@ -1,0 +1,8 @@
+PASS DEBUG72 actual client seal+57RAW extent checks BEFORE FD/68603pages/269uploads/277calls/ALL raw tails zero/strict comparison BEFORE explicit END;SYNTHETIC endpoints ONLY
+PASS DEBUG72 rejects8 old/foreign buildtag+namespace pairs BEFORE BANK_BEGIN/upload/compute;no legacy71/22 fallback
+DEBUG72_CLIENT_FAULT_PROGRESS 64/277
+DEBUG72_CLIENT_FAULT_PROGRESS 128/277
+DEBUG72_CLIENT_FAULT_PROGRESS 192/277
+DEBUG72_CLIENT_FAULT_PROGRESS 256/277
+PASS DEBUG72 actual client451 failure cases/ALL277calls/source+identity loss/partial raw reads/78header corruptions/6strict metrics/ALL57extent refusals BEFORE FD/open-close-prepare-seal;terminal CLOSE ONLY,no END/reset/peek/retry after uncertainty;NOT original numerical/native/silicon/TPS proof
+Client TEST binary retained: /private/tmp/pioneer-recurrent-validation-client.Tc9N3rTl/test

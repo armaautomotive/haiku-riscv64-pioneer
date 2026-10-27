@@ -1,0 +1,122 @@
+Distinct recurrent DEBUG72/namespace23 diagnostic preparation
+October 27, 2026
+STATUS: built/tested/staged ONLY; full runtime/original readback STILL LIVE.
+Previous pushed source: add343caa7c06e941feee2d64aa537155e09bb33.
+
+New identity / unchanged boundaries
+-----------------------------------
+Exact physical role now requires tag2026102700010072, never failed71 or a
+retagged old dense/NODRV/Work role. Namespace23 is distinct from frozen71/22.
+Both tags71 and72 remain reserved against unproven use; old71 cannot compile
+the new physical role. All22 native parents/role/refusal boundaries unchanged.
+Same fixed20800B pointer-free token0/position0/layer0/bank0 diagnostic payload.
+Support still explicitly model_inference0/no_cpu_reference0: NOT Work.
+New client requires exact72 and23 BEFORE BANK_BEGIN/upload, no legacy fallback.
+Failure serial logging prints retained execution.word in hex to distinguish
+clock/guard/status failures; no additional post-failure card IO is performed.
+Actual public-handler test now checks the namespace23 support reply with
+zero model/epoch/card IO before whole execution. No arithmetic/image change.
+
+Completed independent builds / SHA256
+-------------------------------------
+Main module29083/clean40712 BOTH0; linked modules exact cmp:
+3e00974c4476f2755341fbcea034340652e976e292cb017344f4a70f896c652e
+SDK object ba1750eec583a32ccbc8e3ddbd66b06f292b08dfcf9a55303b5d6d08e603027c
+Maximum new kernel frame832; native context768. Conventional driver ABI;
+no private CPU oracle/Work dispatcher/old dense/NODRV entry alias.
+Private NODRV object2903f89a is byte-identical to the deadline checkpoint;
+old65 inert controls unchanged61faa093. No new arithmetic code was selected.
+Module directories /private/tmp/pioneer-qrb72-module-{,clean-}20261027-a
+(main actual name pioneer-qrb72-module-20261027-a; clean module-clean-20261027-a).
+
+Main client76116/clean47718 BOTH0; binary and both objects exact cmp:
+binary2f322603020b97d4a9eb3696c3bd550606d64a1531545a48e111f80298ee1f40
+client72f48dc03ca55b78eacb35911d1abd32a457d46467ba4c8de43416df963a5933
+originalb4da9de0059dcf192abce3fca821a156c3628f24e24e0620c3a9590bcfd28dae
+Original object also cmp matches frozen71 client: independent CPU reference
+and source unchanged. USER frame17552, NOT a kernel frame. Client object has
+no inline private CPU products/native context/canonical mutable-bank/GDN owner.
+Client directories /private/tmp/pioneer-qrb72-client-20261027-a and
+/private/tmp/pioneer-qrb72-client-clean-20261027-a.
+
+Completed host/source qualification (NOT physical)
+--------------------------------------------------
+Main68144 and fresh paired perimeter71774/81800 passed:
+20800 request-byte mutations;495 exact physical-role gates (includes old71
+refusal);179 client gates;430 NODRV gates;93 readback gates. Both complete
+perimeter stdout logs are exact cmp. No owner/role/final-END guard relaxed.
+Main75519/clean95021 client sessions BOTH0,451 failure cases each, core
+stdout identical except final disposable-binary path. Eight new cases reject
+old/foreign build tags/namespaces before BANK_BEGIN/upload/compute. Existing
+source/identity loss/partial raw reads/78 header corruptions/six strict metrics/
+57 geometry refusals/terminal CLOSE-only/no retry/reset/implicit END retained.
+269 upload calls are SYNTHETIC fixture geometry, NOT the original model's300.
+Main42914/clean75524 actual c600 preflight BOTH0, exact stdout SHA
+95f65e3329229be410f455e69c3361f39286de4451b6c19a177ff103f6451aa7.
+Full18973870528B source authentication,private3853-read reference/seal,
+57 raw extents/68603pages/280971136B, fingerprintbb911e57059b179f before
+intentionally unavailable Open. NO device FD/context/upload/P100A arithmetic proof.
+
+Guarded swap helper
+--------------------
+New --apply-recurrent-deadline-validation / --restore-recurrent-deadline-validation
+map ONLY stable041/tag12 <-> exact3e00/tag72. Existing guard/admin/symlink/
+parent/sole-FD/owner/cold/generation/backup pins unchanged. No reset/force/
+automatic rollback or cold-recovery authority. Failed71 apply now exits2
+BEFORE platform/filesystem/device access. Known-clean old71 restore remains.
+Helper d560bf3e6284a9eef1f04528be9cc973519ba76455de04a43b6c49c41e1546b8
+Test 8985e41c1fc6dbd3d6b5738ee479a92fbdd4c75eba367616fd65128a9afa2f65
+Final main87896/clean32392 BOTH0/236 cases each; old mixed-live/stable regression
+56026 exited0/302 cases. Actual /bin/sh helper in fake filesystems only.
+Tests additionally assert exact --quiesce OLD tag and --wait NEW tag/generation
+arguments; old71 image/metadata and live72 parents are explicitly refused.
+Earlier a-runs96825/88173/86680 also0 before these stronger argument checks;
+use final b-run logs for current qualification. Main/clean helper+test cmp exact.
+
+Staging / Pioneer preserved
+----------------------------
+Fresh /boot/home/pioneer-q38-recurrent-debug72-qualification-20261027-a.
+Remote SHA256 verifies module3e00/client2f32/helperd560. All are regular files
+in this separate non-watched directory. None invoked/loaded/installed.
+Installed stable driver still SHA041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Fresh sysinfo64CPUs/max137034936320B/free133806415872B. No new P100A open,
+card compute/reset/reload, Assistant/boot/network/power/SD/mains/hardware change.
+Last clean driver metadata from recovery remains tag12/gen2; no new probe
+was used merely to verify staging. Do not treat file hash as fresh loaded-tag
+or current owner evidence. Future deployment MUST make a fresh guarded check.
+When qualified, helper must be copied under its new immutable SHA name in
+standard pioneer-p100a-hot-reload stage: executing it from pioneer-q... would
+correctly self-match the parent guard. Do not weaken that guard.
+
+Exact live qualification / next actions
+----------------------------------------
+Unchanged deadline algorithm controls2894/11492 (compiled71 snapshot) are LIVE
+at matrix8. New72 public-handler94469/41404 LIVE at matrix5. Exact logs:
+/private/tmp/pioneer-qrb1-deadline-control-{main,clean}-20261027-a.log
+/private/tmp/pioneer-qrb72-control-{main,clean}-20261027-a.log
+New CURRENT source actual original readback93742/38351 LIVE, logs:
+/private/tmp/pioneer-qrb72-original-native-{main,clean}-20261027-a.log
+All use exact factory runner, actual emitted instructions and private native
+scopes. Raw OS/register/GDDR endpoints simulated; never physical proof.
+Source clean export /private/tmp/pioneer-qrb72-clean.zsdvp49x; all18 changed
+code/test/helper files cmp exact. Older deadline export NAz63inT remains
+frozen for its existing71 jobs, not silently upgraded to72. No job restarted
+merely for observation timeout. Host32GiB; four earlier simulators each about
+1.3GiB before two original tests began; bounded single-layer jobs, not64 models.
+
+Wait exact handles through whole RUN/STOP/120holds/readback/full restoration/
+actual final-copy failure/duplicate refusal/fresh final END in BOTH copies;
+also original numerical/reference/final-END comparisons. Archive terminal
+evidence before hardware. Only then fresh known-clean041/no parents/exact
+guarded72 deployment and ONE fixed-original diagnostic; any unknown retains
+all/no retry/force/automatic hot rollback. Controlled recovery if necessary.
+No native72 calculation or speedup is yet established. All64/persistent
+GDN+history+KV/token commit/on-card finalnorm/vocab/sampling/no-CPU-reference
+Work+Assistant remain OWED. Whole27B0.207893161tok/s unchanged,20UNMET,
+goal ACTIVE. This continuation is PROGRESS, NOT completion or blocking.
+
+Archived completed logs: qwen38-recurrent-debug72-{module,client,session,
+perimeter,preflight,hot-swap}-{main,clean}-20261027.log plus hot-swap-regression.
+Session fixtures/perimeters use ASan/UBSan where applicable; compile-time
+preprocessor gates are NOT runtime sanitizers. All completed evidence is
+scoped to its actual endpoint, never substituted for physical or token rate.

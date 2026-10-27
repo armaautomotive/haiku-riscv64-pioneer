@@ -34,7 +34,7 @@ for name,size,digest in pins:
  data=(worker/name).read_bytes();assert len(data)==size and hashlib.sha256(data).hexdigest()==digest
 role=(kernel/('PioneerQ38RecurrentBlockValidationRole.h' if control else 'PioneerQ38RecurrentBlockNativeRole.h')).read_text()
 parents=set(re.findall(r'!defined\(([A-Z][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b',role));assert len(parents)==(22 if control else 21)
-defines={key:'1' for key in parents};defines['PIONEER_DRIVER_BUILD_TAG']='0x2026102700010071ULL' if control else '0x5152424e4f445256ULL'
+defines={key:'1' for key in parents};defines['PIONEER_DRIVER_BUILD_TAG']='0x2026102700010072ULL' if control else '0x5152424e4f445256ULL'
 if not control:defines.update({key:'pioneer_recurrent_factory_test_'+key for key in ('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')})
 if fresh:defines.update({'PIONEER_Q38_RECURRENT_BLOCK_END_FIXTURE':'1','PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE':'1','PIONEER_Q38_RECURRENT_BLOCK_FRESH_FINAL_TEST':'1'})
 if readback:defines['PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_READBACK']='1'

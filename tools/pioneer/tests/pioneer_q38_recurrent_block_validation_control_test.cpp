@@ -65,6 +65,11 @@ int main(int argc,char** argv){
  RecurrentBlockNativeTransport transport(argv[3],argv[4]);transport.EnableValidationReadback();io.recurrentTransport=&transport;copyTransport=&transport;
  auto plan=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(plan->Build());unsigned missing=0;
  auto touches=io.touches,physical=transport.Touches();auto epoch=sQ38EmbeddingModelEpoch;
+ tt_q38_embedding_support support={};
+ assert(ProbeControl(&f.cookie,TT_PCI_PROBE_Q38_RECURRENT_BLOCK_VALIDATION_SUPPORT,&support,sizeof(support))==B_OK
+  && support.version==1 && support.driver==55 && support.model_namespace==23 && support.inputs==5120
+  && support.vocabulary==248320 && support.runtime_pages==512 && !support.no_cpu_reference && !support.model_inference
+  && io.touches==touches && transport.Touches()==physical && sQ38EmbeddingModelEpoch==epoch);
  for(unsigned i=0;i<plan->Count();i++){
   const auto* p=plan->Part(i);if(p->kind!=plan->WeightKind || p->layer)continue;
   unsigned first=p->bank*unsigned(plan->Capacity/4096)+p->offset/4096;
@@ -92,7 +97,7 @@ int main(int argc,char** argv){
  assert(ProbeControl(&f.cookie,TT_PCI_PROBE_Q38_RECURRENT_BLOCK_VALIDATE,reply.get(),sizeof(*reply))==B_BAD_VALUE);failCopy=0;
  callerUid=1;assert(ProbeControl(&f.cookie,TT_PCI_PROBE_Q38_RECURRENT_BLOCK_VALIDATE,reply.get(),sizeof(*reply))==B_NOT_ALLOWED);callerUid=0;
  assert(!c.q38EmbeddingModel && io.touches==touches && transport.Touches()==physical);
- puts("PASS DEBUG71 actual public preflight/ALL112 missing learned endpoints/80header mutations/65526closed opcodes/copy+root admission;ZERO model publication,epoch advance or card IO");
+ puts("PASS DEBUG72 actual public preflight/ALL112 missing learned endpoints/80header mutations/65526closed opcodes/copy+root admission;ZERO model publication,epoch advance or card IO");
  status_t status=ProbeControl(&f.cookie,TT_PCI_PROBE_Q38_RECURRENT_BLOCK_VALIDATE,reply.get(),sizeof(*reply));
  if(copyChild){
   assert(status==B_BAD_VALUE && !memcmp(reply.get(),pristine.get(),sizeof(*reply)) && c.dispatchOwnerRetained && sColdRecoveryRequired
@@ -101,9 +106,9 @@ int main(int argc,char** argv){
   auto retry=Request();assert(ProbeControl(&f.cookie,TT_PCI_PROBE_Q38_RECURRENT_BLOCK_VALIDATE,retry.get(),sizeof(*retry))!=B_OK);
   tt_resident_session_result ignored={};assert(NativeSealedFinalEnd(&f.cookie,ignored)!=B_OK || ignored.state!=TT_RESIDENT_SESSION_CLOSED);
   assert(io.touches==copyTouches && transport.Touches()==copyDevice && c.dispatchOwnerRetained);
-  puts("PASS DEBUG71 user-copy failure AFTER real instruction/native readback/restore:ALL owners retained/ZERO following card IO,END,reset or retry");fflush(nullptr);_exit(0);
+  puts("PASS DEBUG72 user-copy failure AFTER real instruction/native readback/restore:ALL owners retained/ZERO following card IO,END,reset or retry");fflush(nullptr);_exit(0);
  }
- if(status!=B_OK || !reply->metadata.closed)fprintf(stderr,"DEBUG71_HANDLER_FAILED status%d state%u closed%u recovery%u\n",status,reply->metadata.state,reply->metadata.closed,reply->metadata.recovery_required);
+ if(status!=B_OK || !reply->metadata.closed)fprintf(stderr,"DEBUG72_HANDLER_FAILED status%d state%u closed%u recovery%u\n",status,reply->metadata.state,reply->metadata.closed,reply->metadata.recovery_required);
  assert(status==B_OK && copyForked && reply->metadata.closed && reply->metadata.input_ready && !reply->metadata.recovery_required
   && reply->recurrent_regions==672 && reply->history_regions==336 && reply->recurrent_pages==73728 && reply->history_pages==1680
   && reply->cohort_completed==119 && reply->cohort_stopped==119 && reply->cohort_held==120 && reply->root_runs==1 && reply->root_holds==1
@@ -115,12 +120,12 @@ int main(int argc,char** argv){
  auto before=transport.Touches();auto clockBefore=c.q38Clock.IO();auto duplicate=Request();
  assert(ProbeControl(&f.cookie,TT_PCI_PROBE_Q38_RECURRENT_BLOCK_VALIDATE,duplicate.get(),sizeof(*duplicate))!=B_OK
   && !c.dispatchOwnerRetained && transport.Touches()==before && c.q38Clock.IO()==clockBefore);
- puts("PASS DEBUG71 actual public handler/real callscope/QPE1+672GDN+336history/wholeQRB/119STOP+ROOT/120holds/5READ/full restore+secondproof/duplicate inert;SYNTHETIC raw learned/OS endpoints,NOT physical/original/Work/TPS");
+ puts("PASS DEBUG72 actual public handler/real callscope/QPE1+672GDN+336history/wholeQRB/119STOP+ROOT/120holds/5READ/full restore+secondproof/duplicate inert;SYNTHETIC raw learned/OS endpoints,NOT physical/original/Work/TPS");
  io.InitFinalVmViews();c.transaction.map_attempted=c.transaction.config_attempted=true;c.pci.version=1;c.pci.state=TT_PIONEER_MMIO_READ_OK;
  for(unsigned i=0;i<6;i++)c.pci.bars_before[i]=i%2?0:0x0c;c.pci.bridge_before[0]=0x1fff1;c.pci.node_id[0]=0x18611002;
  assert(f.c.release()==&c);tt_resident_session_result end={};assert(NativeSealedFinalEnd(&f.cookie,end)==B_OK);
  assert(!f.cookie.context && !sRuntimeOwner && finalDestroyed==1 && finalUnreserved==1 && finalRemoved.size()==33
   && end.state==TT_RESIDENT_SESSION_CLOSED && end.host_released && end.pci_restored && !end.cold && !finalLockHeld);
- puts("PASS DEBUG71 actual explicit END seal/real clock/fresh audit/final VM+PCI+host/context release;NOT physical/full-model/TPS qualification");
+ puts("PASS DEBUG72 actual explicit END seal/real clock/fresh audit/final VM+PCI+host/context release;NOT physical/full-model/TPS qualification");
  io.recurrentTransport=nullptr;
 }
