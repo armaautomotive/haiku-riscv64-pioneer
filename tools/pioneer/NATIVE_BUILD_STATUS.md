@@ -1,5 +1,15 @@
 # Native build status
 
+October27UTC2026:ORIGINAL GGUF through actual native factory/scoped
+instruction/readback/fresh-END scenario main+clean TERMINAL0/identical.
+ALL5120 captured final values BIT-EXACT vs separately sealed CPU reference;
+raw original weights ONLY cross the TU boundary,not expected products.
+OS/GDDR/baseline remain simulated;standalone dense layer3/position0 is NOT
+a valid GDN0..2 prefix/full64 model or physical/card-speed qualification.
+Next distinct physical validation role/client and card comparison. Evidence:
+benchmarks/qwen38-mixed-live-original-native-20261027.txt. Working install
+untouched;whole-model0.207893161tok/s unchanged/20tok/s UNMET.
+
 October27UTC2026:per-call KV metadata lookup preserves ALL5132288 command
 words/2465 legacy mutation decisions and all physical/scope guards,while
 reducing192 model scans to8 per Shape/Build call (NO persistent cache).

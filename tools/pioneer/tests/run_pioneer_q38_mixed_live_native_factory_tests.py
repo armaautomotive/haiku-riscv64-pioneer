@@ -10,6 +10,14 @@ import sys
 import tempfile
 assert len(sys.argv)>=7
 options=sys.argv[7:]
+original_model=None
+if '--original-model' in options:
+ assert options.count('--original-model')==1
+ at=options.index('--original-model');assert at+1<len(options)
+ original_model=pathlib.Path(options[at+1]);del options[at:at+2]
+ assert original_model.is_absolute() and original_model.stat().st_size==18973870528
+ assert not options,'original-model test selects its own exact fresh-validation-end mode'
+ options=['--fresh-validation-end']
 assert len(set(options))==len(options) and set(options)<={'--execute','--faults','--sigmoid-candidate','--validation-readback','--clock-end','--final-end','--fresh-final-end','--fresh-validation-end'}
 assert len(set(options)&{'--execute','--faults','--validation-readback','--clock-end','--final-end','--fresh-final-end','--fresh-validation-end'})<=1
 fresh=bool(set(options)&{'--fresh-final-end','--fresh-validation-end'})
@@ -42,6 +50,9 @@ if readback:
 if clock_end:defines['PIONEER_Q38_MIXED_LIVE_END_FIXTURE']='1'
 if final_end:defines['PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE']='1'
 if fresh:defines['PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST']='1'
+if original_model:
+ defines['PIONEER_Q38_MIXED_LIVE_ORIGINAL_NATIVE_TEST']='1'
+ program_flags+=['-DPIONEER_Q38_MIXED_LIVE_ORIGINAL_NATIVE_TEST=1']
 defines.update({key:'pioneer_mixed_factory_test_'+key for key in ('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')})
 source=(kernel/'tenstorrent_pci_probe.cpp').read_text()
 with tempfile.TemporaryDirectory(prefix='pioneer-mixed-native-factory-',dir='/private/tmp') as temporary:
@@ -93,10 +104,20 @@ with tempfile.TemporaryDirectory(prefix='pioneer-mixed-native-factory-',dir='/pr
  transport=base/'transport.o'
  flags=re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?',(here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
  subprocess.run([*common,*flags,*program_flags,'-c',str(here/'pioneer_q38_mixed_live_native_transport.cpp'),'-o',str(transport)],check=True)
- subprocess.run([*common,
-  *['-D'+k+'='+v for k,v in sorted(defines.items())],'-I'+str(base),'-I'+str(kernel),
-  str(here/'pioneer_q38_mixed_live_native_factory_test.cpp'),str(here/'pioneer_q38_embedding_execution_bridge.cpp'),
-  *([str(here/'pioneer_q38_mixed_live_native_clock.cpp')] if clock_end else []),
-  *([str(here/'pioneer_q38_mixed_live_final_audit.cpp')] if fresh else []),
-  str(transport),'-o',str(binary)],check=True)
- subprocess.run([str(binary),*sys.argv[1:7],*[o for o in options if o!='--sigmoid-candidate']],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
+ native_flags=[*['-D'+k+'='+v for k,v in sorted(defines.items())],'-I'+str(base),'-I'+str(kernel)]
+ native_sources=[here/'pioneer_q38_mixed_live_native_factory_test.cpp',here/'pioneer_q38_embedding_execution_bridge.cpp',
+  *([here/'pioneer_q38_mixed_live_native_clock.cpp'] if clock_end else []),
+  *([here/'pioneer_q38_mixed_live_final_audit.cpp'] if fresh else [])]
+ if original_model:
+  # The CPU oracle and coordinator MUST NOT see native/kernel/image flags.
+  # Only the neutral original-BYTES virtual interface crosses these TUs.
+  objects=[transport]
+  for path,flags in [(path,native_flags) for path in native_sources]+[
+   (here/'pioneer_q38_mixed_live_original_native_test.cpp',[]),(here.parent/'pioneer_q38_mixed_live_original_source.cpp',[])]:
+   obj=base/(path.stem+'.o');subprocess.run([*common,*flags,'-c',str(path),'-o',str(obj)],check=True);objects.append(obj)
+  subprocess.run([*common,*map(str,objects),'-o',str(binary)],check=True)
+  run_args=[str(original_model),*sys.argv[1:7]]
+ else:
+  subprocess.run([*common,*native_flags,*map(str,native_sources),str(transport),'-o',str(binary)],check=True)
+  run_args=[*sys.argv[1:7],*[o for o in options if o!='--sigmoid-candidate']]
+ subprocess.run([str(binary),*run_args],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})

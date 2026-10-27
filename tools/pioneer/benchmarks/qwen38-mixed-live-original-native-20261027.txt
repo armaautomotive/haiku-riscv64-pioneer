@@ -1,0 +1,94 @@
+Qwen27B: ORIGINAL bytes through genuine native factories/instructions/END
+2026-10-27 -- OFFLINE TEST ONLY;NO physical driver or speedup
+
+The same authenticated original GGUF c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+(18973870528bytes) now drives the genuine native factory/scoped-controller
+scenario,not only the earlier direct instruction-machine test. Main55266
+and independent clean77448 BOTH completed TERMINAL0 with BYTE-IDENTICAL
+complete stdout. Strict original-reference comparison after return:
+ checked5120,differences0,nonfinite0,maxAbsolute0,relativeL20,exactPassed1.
+Saved:qwen38-mixed-live-original-native-{main,clean}-20261027.log
+ SHA25668355a9b9c34e00116672b7995e6dea9c6f097951d0c69010832b4ec28f89005
+Clean tree:/private/tmp/pioneer-original-native-clean.QfuiRsxD.
+
+Provenance / separation
+-------------------------
+The CPU coordinator authenticates the full file,prepares its private
+reference (3717reads/ec4e50bb1a601765),seals it and stages259120128 original
+bytes in63266 bounded pages BEFORE constructing a native test context.
+The existing byte-cache guard captures/checks all selected descriptors.
+Only the neutral ProjectionExecutionLearnedBytes interface crosses into
+the native/instruction TUs;it exposes no reference products,expected input
+vectors or private/native readiness/ownership grant. Its Ready describes
+the raw byte cache ONLY. The CPU oracle has separate compile flags/TU and
+cannot be included by the native scenario's role.
+
+Actual QPE1 instructions consume the original46080-byte sixteen-row token0
+embedding tile. The resulting genuine device-produced5120 input words feed
+the actual native block. All seven matrix endpoints read original packed
+weight bytes. Four original F32 normalization WEIGHT tensors (10752words/
+43008bytes) replace synthetic raw coefficients;these are NOT CPU-computed
+normalized vectors. Norm bytes stage completely before the raw endpoint
+publishes its source. No CPU expected numeric products are uploaded.
+
+The same actual native bindings/factories/scopes,ALL120 preparations,
+ROOT+119 workers,seven matrices,119 real STOPs+ROOT terminal,ALL120holds,
+fixed5page actual GDDR capture,11398712word restore+second proof,sealed
+Dispatch END,real clock lease,authentic call-scope release/locked END,
+fresh recheck=true and final VM/PCI/host/context disposal execute. The84
+END failure/refusal cases and8 post-RUN lifetime losses remain exercised.
+Caller result words publish only after the complete successful END. The
+independent original CPU comparison occurs ONLY after native return.
+
+The early STAGED...RAW synthetic log line describes initial canonical
+command/endpoints construction. The subsequent STAGED ORIGINAL line marks
+replacement of ALL learned raw endpoints before arithmetic. No synthetic
+learned coefficients supply the original numerical result. Command geometry
+and position0 RoPE constants are not CPU reference products.
+
+New --original-model absolute-GGUF option selects the already qualified
+fresh-validation-end/sigmoid/readback test perimeter. All20/23 native
+parents,six conventional ABI renames and QBLNODRV tag remain mandatory.
+The helper is explicitly TEST-only and rejects kernel/CPU-oracle/image/
+Work roles,including defined0 and late inclusion. It is NOT a loadable
+validation driver/client or a public assistant inference selector.
+
+Other completed evidence
+---------------------------
+Main92978/clean59269 raw staging checks TERMINAL0/identical:10 cases,
+including four partial norm reads,four post-read readiness losses,initially
+not ready and one-shot attachment after successful retry. Failed attachment
+does not publish the byte-source pointer;L1 remains unchanged and no MMIO
+or launch occurs. This is raw TEST endpoint behavior,not native numerical
+success,source authentication,or physical-failure recovery.
+ qwen38-mixed-live-original-native-stage-20261027.log
+ SHA256fcddfb53431b067d93e5b63d578b20c07f652d8da46657b8fa657d3e105df9b5
+Main+clean26 header/role gates TERMINAL0/identical:
+ qwen38-mixed-live-original-native-gates-20261027.log
+ SHA2560b4eef475804917b0363081ad68be6a9d6ad042009e8e4079cc8a743f07b0c98
+Unselected old modes remain unchanged:held/fresh-END36255 stdout9760d6fe...
+and native48-refusal16465 stdout5535e225... both TERMINAL0. No production
+kernel/driver code or program image was changed by this checkpoint;the
+previous SDK/native-selection evidence is not relabeled a new hardware run.
+
+Limitations / next
+---------------------
+OS/MMIO/GDDR/time and initial baseline/upload-ledger metadata remain
+simulated. The context framework omits the initial metadata-only Snapshot
+and uses named actual destructor fragments,not the complete kernel class.
+This is ORIGINAL standalone layer3/position0 from a genuine embedding,
+NOT a valid GDN0..2 model prefix/full64-layer inference/token commit or TPS.
+The physical validation client must compare AFTER capture but BEFORE its
+explicit BANK_END,retaining/quarantining on mismatch. This offline helper's
+post-END CPU comparison is NOT that physical protocol or permission to free
+real resources before a validation decision.
+
+Next:distinct guarded physical validation role/control/client,actual
+original-model card comparison,then valid full64-layer GDN+dense/recurrent+
+KV/token/finalnorm/vocabulary/sampling/Work+Assistant integration and real
+inference benchmarks. Do not relax the refusing NODRV role to deploy it.
+
+No Pioneer driver/Assistant/model/boot/relay/power/SD/mains/hardware/storage
+action. SDK read-only;outputs /private/tmp;dirty llama.cpp/unrelated
+FlashNext files untouched. Last real WHOLE-model0.207893161tok/s UNCHANGED;
+20tok/s UNMET. Goal ACTIVE;no card inference speedup is established.

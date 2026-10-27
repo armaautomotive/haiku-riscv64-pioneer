@@ -7,6 +7,9 @@
 #include "pioneer_q38_embedding_native_factory_test.cpp"
 #include <sys/wait.h>
 #include <unistd.h>
+#ifdef PIONEER_Q38_MIXED_LIVE_ORIGINAL_NATIVE_TEST
+#include "pioneer_q38_mixed_live_original_native.h"
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchMmioEnd.h"
 static unsigned finalUnreserved=0;
@@ -59,7 +62,19 @@ template<class Check> static void NativeFactoryFork(Check check){
  fflush(nullptr);pid_t pid=fork();assert(pid>=0);if(!pid){check();_exit(0);}
  int status=0;assert(waitpid(pid,&status,0)==pid && WIFEXITED(status) && !WEXITSTATUS(status));
 }
+#ifdef PIONEER_Q38_MIXED_LIVE_ORIGINAL_NATIVE_TEST
+int ExecuteMixedOriginalNativeScenario(const char* const* images,ProjectionExecutionLearnedBytes& original,uint32_t* output,unsigned outputWords){
+ if(!images || !output || outputWords!=5120 || uintptr_t(output)%alignof(uint32_t)
+  || uintptr_t(output)>UINTPTR_MAX-20480 || !original.Ready())return 1;
+ for(unsigned i=0;i<6;i++)if(!images[i] || !*images[i])return 1;
+ const int argc=8;const char* argv[]={"original-native",images[0],images[1],images[2],images[3],images[4],images[5],"--fresh-validation-end"};
+ auto originalPlan=std::make_unique<PioneerQ38CanonicalModelPlan>();if(!originalPlan->Build())return 1;
+ const auto* embeddingTile=originalPlan->ProjectionStripe(64,0,0);std::vector<uint8_t> embeddingBytes(46080);
+ if(!embeddingTile || embeddingTile->firstRow || !original.Read(PioneerQ38ProjectionRoute(embeddingTile->bank),originalPlan->Base+embeddingTile->offset,embeddingBytes.data(),unsigned(embeddingBytes.size())) || !original.Ready())return 1;
+ std::vector<uint32_t> originalCapture; // caller output remains untouched until successful complete END
+#else
 int main(int argc,char** argv){
+#endif
  assert(argc==7 || (argc==8 && (!strcmp(argv[7],"--execute") || !strcmp(argv[7],"--faults") || !strcmp(argv[7],"--validation-readback") || !strcmp(argv[7],"--clock-end") || !strcmp(argv[7],"--final-end") || !strcmp(argv[7],"--fresh-final-end") || !strcmp(argv[7],"--fresh-validation-end"))));setvbuf(stdout,nullptr,_IOLBF,0);
  bool readback=argc==8 && (!strcmp(argv[7],"--validation-readback") || !strcmp(argv[7],"--fresh-validation-end"));
  bool execute=readback || (argc==8 && !strcmp(argv[7],"--execute")),faults=argc==8 && !strcmp(argv[7],"--faults");unsigned refused=0;
@@ -79,6 +94,9 @@ int main(int argc,char** argv){
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;
  (void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
  NativeFactoryFixture f(argv[1],argv[2]);auto& c=*f.c;auto& io=f.io;
+#ifdef PIONEER_Q38_MIXED_LIVE_ORIGINAL_NATIVE_TEST
+ io.originalEmbeddingWeights=embeddingBytes.data(); // packed original BYTES,not embedding products
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
  (void)&AcquireQ38DeltaLock; // sibling from the VERBATIM lock block,not invoked by this role
  auto computeScope=std::make_unique<PioneerQ38GdnCallScope>(&f.cookie);
@@ -118,6 +136,10 @@ int main(int argc,char** argv){
  for(unsigned i=0;i<10;i++)command[i]=io.command[i];
  for(unsigned i=0;i<8;i++)counts[i]=io.PanelIO::ResidentNocRead(PioneerQ38PanelCounter(i));
  transport.SeedRoot(addresses.data(),values.data(),unsigned(addresses.size()),source,command,counts);
+#ifdef PIONEER_Q38_MIXED_LIVE_ORIGINAL_NATIVE_TEST
+ assert(original.Ready() && transport.AttachOriginalLearned(original));
+ puts("STAGED ORIGINAL token0 packed QPE1 tile+ALL4 dense F32 norms/ALL7 matrices via neutral original-BYTES endpoint;NO CPU products/native ready grant");
+#endif
  auto before=transport.Fingerprint();auto learned=f.learned;
  io.mixedLiveTransport=&transport;
  assert(BindQ38MixedLiveNative(c));auto* state=c.q38MixedLiveNative;
@@ -196,6 +218,9 @@ int main(int argc,char** argv){
     && touches==io.touches && physical==transport.Touches() && !capture.started);
    closed=CloseQ38MixedLiveNativeValidation(c,execution,result,values.data(),unsigned(values.size()),capture);
    assert(closed && capture.completed && capture.pages==5 && capture.words==5120);transport.VerifyReadback(values.data(),unsigned(values.size()));
+#ifdef PIONEER_Q38_MIXED_LIVE_ORIGINAL_NATIVE_TEST
+   assert(original.Ready());originalCapture=values;
+#endif
    puts("PASS actual native fixed5page/5120word validation readback from REAL instruction-produced GDDR AFTER119STOP+ROOT/ALL120holds;atomic output after full restore+secondproof;NO CPU expected products supplied");
   }else
 #endif
@@ -326,4 +351,9 @@ int main(int argc,char** argv){
 #endif
 #endif
  io.mixedLiveTransport=nullptr;
+#ifdef PIONEER_Q38_MIXED_LIVE_ORIGINAL_NATIVE_TEST
+ assert(original.Ready() && originalCapture.size()==5120 && !f.cookie.context && !sRuntimeOwner && !sColdRecoveryRequired);
+ std::memcpy(output,originalCapture.data(),20480); // ONLY genuine captured output AFTER complete successful END
+#endif
+ return 0;
 }

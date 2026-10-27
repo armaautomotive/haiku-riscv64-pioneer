@@ -93,6 +93,10 @@ The context/Snapshot/destructor scope limitations stated above still apply.
 
 Remaining:distinct authenticated original-GGUF native validation
 entry/client and physical comparison.
+Follow-up:original GGUF bytes now pass the offline genuine native scenario
+and independent final comparison main+clean,as recorded in
+qwen38-mixed-live-original-native-20261027.txt. OS/endpoints remain simulated;
+the distinct physical role/control/client and card comparison are still owed.
 Standalone layer3/position0 is NOT a valid GDN0..2/model prefix. Full64-layer
 GDN+dense/recurrent+KV/token commit/final norm/vocabulary/sampling/Work/
 Assistant integration and measured optimization remain incomplete.

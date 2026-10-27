@@ -120,6 +120,29 @@ void MixedLiveNativeTransport::Configure(const PioneerQ38MixedLiveBlockPlan& pla
   m.wantedInput[i]=input[i];m.dram[CanonicalLiveMachine::Key(PioneerQ38ProjectionRoute(plan.Outer()[73]),plan.Outer()[74]+i*4)]=input[i];
  }
 }
+#ifdef PIONEER_Q38_MIXED_LIVE_ORIGINAL_NATIVE_TEST
+bool MixedLiveNativeTransport::AttachOriginalLearned(ProjectionExecutionLearnedBytes& bytes){
+ auto& p=*implementation;auto& m=p.machine;
+ if(!bytes.Ready() || p.starts || p.execution || m.originalLearned)return false;
+ struct Word{uint64_t key;uint32_t value;};std::vector<Word> staged;unsigned norms=0;
+ for(unsigned i=0;i<m.canonical->Count();i++){
+  const auto* part=m.canonical->Part(i);
+  if(part->kind!=m.canonical->WeightKind || part->layer!=3 || part->type)continue;
+  if(part->rows!=1 || (part->bytes!=20480 && part->bytes!=1024))return false;
+  unsigned route=PioneerQ38ProjectionRoute(part->bank),base=m.canonical->Base+part->offset;
+  std::vector<uint8_t> raw(part->bytes);
+  if(!bytes.Ready() || !bytes.Read(route,base,raw.data(),unsigned(raw.size())) || !bytes.Ready())return false;
+  for(unsigned at=0;at<raw.size();at+=4){
+   uint32_t value=uint32_t(raw[at])|(uint32_t(raw[at+1])<<8)|(uint32_t(raw[at+2])<<16)|(uint32_t(raw[at+3])<<24);
+   staged.push_back({CanonicalLiveMachine::Key(route,base+at),value});
+  }
+  norms++;
+ }
+ if(norms!=4 || staged.size()!=10752 || !bytes.Ready())return false;
+ for(const auto& word:staged)m.dram[word.key]=word.value;
+ m.originalLearned=&bytes;return true;
+} // ORIGINAL norm/matrix raw endpoints;no expected products/private/native phase is published
+#endif
 void MixedLiveNativeTransport::Observe(const PioneerQ38MixedLiveResult& result){auto& p=*implementation;assert(!p.execution);p.execution=&result;}
 void MixedLiveNativeTransport::VerifyRun(){implementation->machine.VerifyLive();}
 void MixedLiveNativeTransport::VerifyClosed(){auto& p=*implementation;assert(p.starts==120 && p.holds==120 && p.machine.stops==119);}

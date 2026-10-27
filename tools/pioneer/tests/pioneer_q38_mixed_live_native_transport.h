@@ -4,6 +4,7 @@
 #include <stdint.h>
 struct PioneerQ38MixedLiveResult;
 class PioneerQ38MixedLiveBlockPlan;
+struct ProjectionExecutionLearnedBytes;
 // TEST physical byte endpoints only. No native context, phase, permission,
 // completed producer or prepared lease is supplied by this transport.
 class MixedLiveNativeTransport {
@@ -24,6 +25,9 @@ public:
  unsigned Touches()const;unsigned Resets()const;
  uint64_t Fingerprint();
  void Configure(const PioneerQ38MixedLiveBlockPlan&,const uint32_t*,unsigned);
+#ifdef PIONEER_Q38_MIXED_LIVE_ORIGINAL_NATIVE_TEST
+ bool AttachOriginalLearned(ProjectionExecutionLearnedBytes&); // RAW test weight endpoint ONLY,not a model/native-ready setter
+#endif
  void Observe(const PioneerQ38MixedLiveResult&); // TEST reset/terminal assertions only
  void VerifyRun();void VerifyClosed();void Diagnostic();
 #ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
