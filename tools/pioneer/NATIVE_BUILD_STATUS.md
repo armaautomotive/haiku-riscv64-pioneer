@@ -24,6 +24,14 @@ native readback tests93742/38351 are LIVE; do not promote partial results.
 Earlier71/deadline controls2894/11492 are also still LIVE at this snapshot.
 See benchmarks/qwen38-recurrent-debug72-preparation-20261027.txt.
 
+Latest wait audit: all six exact jobs still LIVE. A scoped two-second host
+profile of earlier handle2894 shows actual post-RUN/STOP/120hold readback
+poison guards and whole-plan checks, not an idle wait. This is validation
+overhead, NOT full Work inference time or terminal qualification. Both72
+controls reached matrix7; original-weight runs reached matrix3. No tests
+restarted or guards weakened. See
+benchmarks/qwen38-recurrent-validation-wait-profile-20261027.txt.
+
 The shared startup-deadline defect is now independently reproduced offline:
 119 actual virgin boots with simulated0.3s CPU image checks falsely fail at
 worker100. The new per-transition30s waits pass all119 plus12 clock/stall/

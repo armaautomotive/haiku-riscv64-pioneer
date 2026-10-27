@@ -1,0 +1,52 @@
+Recurrent qualification: verified live wait and readback CPU profile
+October27UTC2026,23:09:42 profile /23:11:48 latest handle audit
+STATUS: six exact tests LIVE; no new hardware qualification or token rate.
+
+Previous goal turn was PROGRESS: distinct72/23 preparation36eccc15b4 pushed.
+This continuation re-polled all exact handles; observation yields are NOT
+terminal failures and none was restarted, killed or replaced.
+
+2894/11492: earlier deadline algorithm/control snapshot, compiled71.
+94469/41404: current72 actual public handler/support23/full lifecycle.
+93742/38351: CURRENT source full ORIGINAL c600 reference/native/readback/END.
+All six returned live session handles at23:11:48UTC. Both72 controls advanced
+to matrix7; both original tests passed real672GDN/336history initialization
+and held-memory preparation and entered original matrix3. Original raw source
+authentication/private fingerprintbb911e57059b179f passed in both copies.
+No completed whole-handler/strict-final-original comparison/END claimed yet.
+
+Scoped process inventory also confirms all six project test executables live,
+each actively consuming about one CPU. This is host instruction simulation,
+not a Pioneer or P100A benchmark. CPU activity alone is not completion proof.
+
+One two-second /usr/bin/sample of the already-running project PID89549
+(handle2894) completed without stopping/restarting it.315 main-thread samples
+are in actual CloseQ38RecurrentBlockNativeValidation -> Owner::CloseImpl ->
+ValidationReadback line60 -> Guard, split158/157 across two call sites.
+Descendants include Bound/BaseScope/Unsafe and whole-plan Matches, including
+Conv/GDN descriptor reconstruction. Private full profile remains at:
+/private/tmp/pioneer-qrb72-deadline-validation-profile-20261027-a.txt
+No kernel debugger, card register/memory read or Pioneer driver open used.
+
+Source corroboration: CloseImpl reaches this readback only after successful
+whole RUN, real119STOP+ROOT and120holds. ValidationReadback's per-word poison
+loop performs Guard before write and again before read. Guard does multiple
+whole immutable-plan checks; previous native CPU-only measurement13.7ms/check
+helps explain the long silent interval, but this profile is NOT a measurement
+of total readback time or a throughput prediction. Later restoration/final
+copy/duplicate/final-END and original numerical gates still need their OWN
+terminal evidence. A sampled call stack is not a substitute for those gates.
+
+No guards, original comparisons, numerical bounds, deadlines, role gates or
+native source were changed to shorten the tests. These reference/readback
+checks belong to validation and must remain separate from no-CPU-reference
+Work. No CPU-reference fallback is added to Work. Do not infer a Work/model
+speed from validation CPU overhead, process CPU percentage or emulator time.
+
+Pioneer remains on recovered stable041;72 files merely staged. No new driver
+installation/card calculation, reboot/power/SD/mains/Assistant/network change.
+Next: wait SAME six handles through actual runtime/strict-original/final-END;
+archive successful terminal proof, then separately guarded ONE physical72
+original diagnostic if all gates pass. All64/persistent state/history/KV/
+token commit/finalnorm/vocabulary/sampling/noCPUrefWork+Assistant still owed.
+Last measured whole27B0.207893161tok/s unchanged;20UNMET; goal ACTIVE.
