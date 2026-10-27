@@ -26,6 +26,10 @@
 #endif
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeArcClockGuard.h"
 #include "pioneer_q38_embedding_execution_bridge.h"
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
+#include "pioneer_q38_mixed_live_native_transport.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchClose.h"
+#endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
 #include "pioneer_q38_projection_native_transport.h"
 #endif
@@ -97,9 +101,36 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
 #endif
  PioneerStoreContext* q38MutableContext=nullptr;
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
+ MixedLiveNativeTransport* mixedLiveTransport=nullptr;
+ bool UseMixedLiveIO()const;
+ void ConfigureMixedLiveTestTransport();
+ std::array<std::vector<uint32>,4> mixedLiveAliases;
+ int mixedLiveFailMap=-1,mixedLiveNullMap=-1;unsigned mixedLiveMapFaultFence=0;
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveNativeMapping.inc"
+ bool MapRuntime(){return runtimeMapped;}
+ bool MapQ38Panel(){return UseMixedLiveIO()?mixedLiveTransport->MapPanel():ProjectionZeroIO::MapQ38Panel();}
+ bool Q38PanelMappingStable(){return UseMixedLiveIO()?mixedLiveTransport->PanelStable():ProjectionZeroIO::Q38PanelMappingStable();}
+ uint32* Q38PanelSavedWords(){return UseMixedLiveIO()?mixedLiveTransport->PanelSaved():ProjectionZeroIO::Q38PanelSavedWords();}
+ uint32* HostReadBackup(unsigned n){return UseMixedLiveIO()?mixedLiveTransport->Backup(n):ProjectionZeroIO::HostReadBackup(n);}
+ uint32 ComputeNocRead(uint32 a){assert(UseMixedLiveIO());return mixedLiveTransport->Read32(MixedLiveNativeTransport::ComputeNoc,a);}
+ uint32 HostPciRead(unsigned p,uint16_t a,uint8 n){return UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Pci,p,a,n):ProjectionZeroIO::HostPciRead(p,a,n);}
+ uint32 Q38PanelRead(uint32 a){return UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Panel,a):ProjectionZeroIO::Q38PanelRead(a);}
+ void Q38PanelWrite(uint32 a,uint32 v){if(UseMixedLiveIO())mixedLiveTransport->Write32(MixedLiveNativeTransport::SetPanel,a,v);else ProjectionZeroIO::Q38PanelWrite(a,v);}
+ uint32 RuntimeCodeRead(unsigned i){return UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Code,i):ProjectionZeroIO::RuntimeCodeRead(i);}
+ void RuntimeCodeWrite(unsigned i,uint32 v){if(UseMixedLiveIO())mixedLiveTransport->Write32(MixedLiveNativeTransport::SetCode,i,v);else ProjectionZeroIO::RuntimeCodeWrite(i,v);}
+ uint32 RuntimeControlRead(unsigned i){return UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Control,i):ProjectionZeroIO::RuntimeControlRead(i);}
+ uint32 RuntimeStatusRead(unsigned i){return UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Status,i):ProjectionZeroIO::RuntimeStatusRead(i);}
+ void RuntimeStatusWrite(unsigned i,uint32 v){if(UseMixedLiveIO())mixedLiveTransport->Write32(MixedLiveNativeTransport::SetStatus,i,v);else ProjectionZeroIO::RuntimeStatusWrite(i,v);}
+ void Pause(){if(UseMixedLiveIO())mixedLiveTransport->Pause();else ProjectionZeroIO::Pause();}
+ uint64 Q38CohortNow(){return UseMixedLiveIO()?mixedLiveTransport->Now():ProjectionZeroIO::Q38CohortNow();}
+ uint32 ResidentNocRead(uint32 a){return UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Noc,a):ProjectionZeroIO::ResidentNocRead(a);}
+ void ResidentNocWrite(uint32 a,uint32 v){if(UseMixedLiveIO())mixedLiveTransport->Write32(MixedLiveNativeTransport::SetNoc,a,v);else ProjectionZeroIO::ResidentNocWrite(a,v);}
+#else
  bool q38MixedLiveMemoryMapAttempted=false;
  bool MixedLiveCallScopeMatches();bool MixedLiveBaseScope();
  bool MixedLiveMemoryMappingStable(unsigned){assert(false && "binding-only fixture never admits mapping/closed execution");return false;}
+#endif
 #endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
  bool ResidentLayerCallScopeMatches();bool ResidentLayerBindSourceScope();
@@ -253,16 +284,25 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
   ;}
  bool NonRootHeldMappingStable(){return !coreMapLost && NonRootHeldOwner();}
  void DramTlbWrite(unsigned slot,unsigned word,uint32 value){
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
+  if(UseMixedLiveIO()){mixedLiveTransport->Write32(MixedLiveNativeTransport::SetTlb,slot,value,word);return;}
+#endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
   if(UseProjectionIO()){projectionTransport->Write32(ProjectionNativeTransport::SetTlb,slot,value,word);return;}
 #endif
   Touch();StoreMock::DramTlbWrite(slot,word,value);}
  uint32 DramTlbRead(unsigned slot,unsigned word){
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
+  if(UseMixedLiveIO())return mixedLiveTransport->Read32(MixedLiveNativeTransport::Tlb,slot,word);
+#endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
   if(UseProjectionIO())return projectionTransport->Read32(ProjectionNativeTransport::Tlb,slot,word);
 #endif
   Touch();return StoreMock::DramTlbRead(slot,word);}
  bool SelectRuntimeCore(unsigned core){
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
+  if(UseMixedLiveIO()){if(core>=120 || (!fleetEnabled && core))return false;bool okay=mixedLiveTransport->Select(core);if(okay)runtimeCore=core;return okay;}
+#endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
   if(UseProjectionIO()){if(core>=120 || (!fleetEnabled && core))return false;bool okay=projectionTransport->Select(core);if(okay)runtimeCore=core;return okay;}
 #endif
@@ -270,6 +310,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
   return BlackholeDramConfigure(*this,0,0,1,2,false) && BlackholeDramConfigure(*this,1,0xffa00000,1,2,false);
  }
  uint32 ResetRead(){
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
+  if(UseMixedLiveIO())return mixedLiveTransport->Read32(MixedLiveNativeTransport::Reset);
+#endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
   if(UseProjectionIO())return projectionTransport->Read32(ProjectionNativeTransport::Reset);
 #endif
@@ -281,21 +324,33 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
   return root?coreReset:0x47800;
  }
  uint32 SourceRead(unsigned word){
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
+  if(UseMixedLiveIO())return mixedLiveTransport->Read32(MixedLiveNativeTransport::Source,word);
+#endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
   if(UseProjectionIO())return projectionTransport->Read32(ProjectionNativeTransport::Source,word);
 #endif
   Touch();return ProjectionZeroIO::SourceRead(word);}
  uint32 ResidentL1Read(unsigned word){
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
+  if(UseMixedLiveIO())return mixedLiveTransport->Read32(MixedLiveNativeTransport::Local,word);
+#endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
   if(UseProjectionIO())return projectionTransport->Read32(ProjectionNativeTransport::Local,word);
 #endif
   Touch();assert(word<2048);return destination[word];}
  void ResidentL1Write(unsigned word,uint32 value){
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
+  if(UseMixedLiveIO()){mixedLiveTransport->Write32(MixedLiveNativeTransport::SetLocal,word,value);return;}
+#endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
   if(UseProjectionIO()){projectionTransport->Write32(ProjectionNativeTransport::SetLocal,word,value);return;}
 #endif
   Touch();assert(word<2048);destination[word]=value;}
  uint32 RuntimePcRead(){
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
+  if(UseMixedLiveIO())return mixedLiveTransport->Read32(MixedLiveNativeTransport::Pc);
+#endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
   if(UseProjectionIO())return projectionTransport->Read32(ProjectionNativeTransport::Pc);
 #endif
@@ -305,6 +360,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
   return EmbeddingMode()?(Touch(),embeddingPc):ProjectionZeroIO::RuntimePcRead();}
  void RuntimeResetWrite(uint32 value);
  void QuarantineHostPage(){
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
+  if(mixedLiveTransport)mixedLiveTransport->Quarantine();
+#endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
   if(projectionTransport)projectionTransport->Quarantine();
 #endif
@@ -331,6 +389,13 @@ static bool ProjectionPointerAddress(const volatile uint32* p,uint32& address){
 }
 #endif
 static uint32 PioneerRead32(const volatile uint32* p){assert(activeIO);activeIO->Touch();activeIO->nativeReads++;
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
+ if(activeIO->UseMixedLiveIO()){
+  const unsigned offsets[]={0x20000,0x40000,0x60000,0xac000};
+  for(unsigned i=0;i<4;i++){const auto& alias=activeIO->mixedLiveAliases[i];uintptr_t at=reinterpret_cast<uintptr_t>(p),first=reinterpret_cast<uintptr_t>(alias.data());
+   if(at>=first && at-first<alias.size()*4 && !((at-first)&3))return activeIO->mixedLiveTransport->MappedRead(offsets[i]+unsigned(at-first));}
+ }
+#endif
 #if defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT) && defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE)
  if(activeIO->projectionTransport && activeIO->q38ResidentLayerMemoryMapAttempted){
   const volatile uint32* base[]={activeIO->layerPrefixAlias.data(),activeIO->layerSuffixAlias.data()};
@@ -354,6 +419,13 @@ static uint32 PioneerRead32(const volatile uint32* p){assert(activeIO);activeIO-
 #endif
  return *p;}
 static void PioneerWrite32(volatile uint32* p,uint32 value){assert(activeIO);activeIO->Touch();activeIO->nativeWrites++;
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
+ if(activeIO->UseMixedLiveIO()){
+  const unsigned offsets[]={0x20000,0x40000,0x60000,0xac000};
+  for(unsigned i=0;i<4;i++){const auto& alias=activeIO->mixedLiveAliases[i];uintptr_t at=reinterpret_cast<uintptr_t>(p),first=reinterpret_cast<uintptr_t>(alias.data());
+   if(at>=first && at-first<alias.size()*4 && !((at-first)&3)){activeIO->mixedLiveTransport->MappedWrite(offsets[i]+unsigned(at-first),value);return;}}
+ }
+#endif
 #if defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT) && defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE)
  if(activeIO->projectionTransport && activeIO->q38ResidentLayerMemoryMapAttempted){
   const volatile uint32* base[]={activeIO->layerPrefixAlias.data(),activeIO->layerSuffixAlias.data()};
@@ -377,6 +449,16 @@ static void PioneerWrite32(volatile uint32* p,uint32 value){assert(activeIO);act
  *p=value;}
 static area_id map_physical_memory(const char*,uint64 physical,unsigned bytes,int placement,unsigned flags,void** view){
  assert(activeIO);activeIO->Touch();activeIO->mapCalls++;
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
+ if(activeIO->UseMixedLiveIO()){
+  const unsigned offsets[]={0x19020000,0x19040000,0x19060000,0x190ac000},sizes[]={8192,131072,57344,868352};
+  unsigned i=0;while(i<4 && physical!=Bar+offsets[i])i++;
+  assert(i<4 && bytes==sizes[i] && placement==B_ANY_KERNEL_ADDRESS && flags==(B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY));
+  if(int(i)==activeIO->mixedLiveFailMap){activeIO->mixedLiveMapFaultFence=activeIO->touches;return -1;}
+  activeIO->mixedLiveAliases[i].resize(bytes/4);*view=int(i)==activeIO->mixedLiveNullMap?nullptr:activeIO->mixedLiveAliases[i].data();
+  if(!*view)activeIO->mixedLiveMapFaultFence=activeIO->touches;return 50+i;
+ }
+#endif
 #if defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT) && defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE)
  if(activeIO->projectionTransport && activeIO->q38ResidentLayerMemoryMapAttempted){
   assert(placement==B_ANY_KERNEL_ADDRESS && flags==(B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY));
@@ -450,7 +532,7 @@ struct PioneerStoreContext {
  PioneerQ38DispatchLease* q38Dispatch=nullptr;void *q38Cohort=nullptr,*fleet=nullptr;
  PioneerQ38ProjectionIdentity q38FfnModelIdentity={},q38GdnIdentity={};
  FactoryFlags span,panelProbe,streamProbe;FactoryFlags* q38Span=&span;FactoryClock q38Clock;
-#if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE)
  PioneerQ38DeltaProbeLease q38Delta;
 #else
  FactoryFlags q38Delta;
@@ -535,7 +617,11 @@ static int get_thread_info(int thread,thread_info* info){if(failThreadInfo || th
 #endif
 #include "embedding_factory_factory.inc"
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveNative.inc"
+#else
 #include "mixed_live_factory_bind.inc"
+#endif
 #endif
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
 #include "rms_factory_factory.inc"
@@ -546,7 +632,7 @@ static int get_thread_info(int thread,thread_info* info){if(failThreadInfo || th
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
 #include "decoder_factory_factory.inc"
 #endif
-#ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
+#if defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE)
 #include "projection_factory_complete_end.inc"
 static bool EndFactory(PioneerStoreContext& c){bool clean=true;tt_resident_session_result result={};
  return EndQ38DispatchOwnership(c,result,clean) && clean;
@@ -565,6 +651,17 @@ static bool EndFactory(PioneerStoreContext& c){bool clean=true;tt_resident_sessi
 #include "embedding_factory_end.inc"
  return clean;
 }
+#endif
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
+bool PioneerSessionIO::UseMixedLiveIO()const{
+ auto* c=q38MutableContext;auto* state=c?c->q38MixedLiveNative:nullptr;
+ return mixedLiveTransport && state && state->phase>=PioneerQ38MixedLiveNativeState::DispatchPreparing;
+} // TEST byte endpoint selection observes genuine private phase; NEVER sets it
+void PioneerSessionIO::ConfigureMixedLiveTestTransport(){
+ auto* state=q38MutableContext?q38MutableContext->q38MixedLiveNative:nullptr;
+ assert(state && state->phase==PioneerQ38MixedLiveNativeState::MemoryInstalled && state->plan && mixedLiveTransport);
+ mixedLiveTransport->Configure(*state->plan,wholeWorkspace.data(),5120);
+} // TEST observer/RAW device bytes only; not a production setter or numerical grant
 #endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
 bool PioneerSessionIO::UseProjectionIO()const{
@@ -671,6 +768,9 @@ bool PioneerSessionIO::WriteState(unsigned bank,uint32_t address,const uint32_t*
 }
 #endif
 void PioneerSessionIO::RuntimeResetWrite(uint32 value){
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
+ if(UseMixedLiveIO()){mixedLiveTransport->Write32(MixedLiveNativeTransport::SetReset,0,value);return;}
+#endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
  auto* outputState=q38MutableContext?q38MutableContext->q38ResidentOutputNative:nullptr;
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
@@ -787,7 +887,7 @@ void PioneerSessionIO::RuntimeResetWrite(uint32 value){
  assert(value==0x46800 && coreReset==0x87ffff);coreReset=value;embeddingStarts++;
  EmbeddingExecutionBridge t;t.l1.resize(73737);
  t.originalTiledWeights=originalEmbeddingWeights;
-#ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
+#if defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE)
  t.boundedEmbedding=true;
 #endif
  // Emulator transport:clone EXACT installed bytes,not host arithmetic.

@@ -31,7 +31,7 @@ Completed checks so far
   refusals pass in main+clean, covering every result field, identity and learned pages.
   Semantic endpoints remain simulated; these are not native source grants.
 - Main+clean actual kernel-context compile object is byte-identical:
-  b81c4d687b9a8dd32e8ded4da2c665d37ab9231a4fa4be3f7b876e795de0a386
+  0b55dd8d20b7d81a8b97cc6608c5496d9b2633a4c1ef698a74010feb933b90e8
   Max new static frame1200B. Old65=61faa093 and NODRV=9fcf1f7f preserved.
 - Mapping roundtrip11398712words/988 refusals and native-role165 gates pass.
 - Current registry held-memory faults50/precondition refusals29 pass. Live,
@@ -53,7 +53,10 @@ BOTH terminal0/PASS, with byte-identical stdout. All7 matrices, original-input
 RMS/residuals, attention and17408 SiLU values pass independent observers.
 The complete11398712-word restoration and second proof of originals pass.
 This connects the actual host algorithm to actual program instructions,
-but native source/model/clock/host authentication remains separately owed.
+but native source/model/clock/host authentication was still separately owed
+at that component checkpoint. The later native-factory semantic qualification
+connects those actual scope/factory bodies with simulated OS/MMIO endpoints;
+see qwen38-mixed-live-native-factory-20261027.txt. Physical grants remain owed.
 
 The main+clean speculative-PC endpoint tests are BOTH terminal0/PASS. They alternate
 outside-image/misaligned/fault-region observations with real samples while
@@ -108,9 +111,11 @@ Driver/runtime readiness checklist -- still required
     actual zero+embedding producers with simulated OS/MMIO endpoints; see
     qwen38-mixed-live-native-binding-20261027.txt. This found and fixed a
     valid-but-wrong producer-selector gap, not a physical card failure.
-[ ] Qualify the complete genuine native held/execution factories, lifetime/
-    fault containment and sealed END through all120 instruction machines;
-    initial binding tests and compile-only bodies are not that evidence.
+[x] Exercise the complete actual native held/execution factories, lifetime/
+    fault containment and sealed Dispatch END through all120 instruction
+    machines:main+clean terminal0,56 new refusals. OS/MMIO/clock endpoints
+    are simulated, not physical grants. Real ARC/host release/destruction
+    beyond Dispatch END remains compile-only. See the native-factory record.
 [ ] Add a separate guarded original-weight numerical-validation entry/client,
     then verify this complete dense operator on physical P100A hardware.
     No default Work/Assistant promotion before that passes.

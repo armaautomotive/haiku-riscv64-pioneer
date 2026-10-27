@@ -124,6 +124,7 @@ struct LiveActualIO:MixedLiveMemoryIO {
   C().coreReset=value;
  }
 };
+#ifndef PIONEER_Q38_MIXED_LIVE_OWNER_ACTUAL_FIXTURE_ONLY
 int main(int argc,char** argv){
  assert(argc==5);setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&LiveActualUnusedInput;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
@@ -154,3 +155,4 @@ int main(int argc,char** argv){
   && journal.restoredWords==TT_Q38_MIXED_LIVE_SAVED_WORDS && journal.verifiedOriginalWords==2*TT_Q38_MIXED_LIVE_SAVED_WORDS);
  puts("PASS actual owner+QBL1/QMW1 RUN/real119STOP/ALL120actualterminals BEFORE FIRSThold/complete11398712word restore+secondproof;RAW synthetic weights/MMIO/time only,NOT native original-model or silicon TPS");
 }
+#endif

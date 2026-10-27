@@ -60,10 +60,12 @@ before any mixed bind/map/launch. Main/clean corrected tests pass.
 
 Next -- still required
 ----------------------
-Connect the genuine native held/execution factories and sealed END to the
-complete120-core instruction/byte transport, including ownership transitions
-and containment faults. Then add the separate guarded original-weight
-validation entry/client and qualify on physical hardware. Full64-layer
+The subsequent native-factory checkpoint completes the actual held/execution
+factory and sealed Dispatch END semantic tests through all120 instruction
+machines, with simulated OS/MMIO endpoints and56 new containment refusals;
+see qwen38-mixed-live-native-factory-20261027.txt. Physical grants and actual
+ARC/host destruction are not proved by that fixture. Next add the separate
+guarded original-weight validation entry/client and qualify on hardware. Full64-layer
 GDN+dense scheduling, recurrent/KV/token commits, final norm/vocabulary/
 sampling, no-reference Work/Assistant integration and real performance
 optimization/measurement remain unfinished. Do not promote this to Work.

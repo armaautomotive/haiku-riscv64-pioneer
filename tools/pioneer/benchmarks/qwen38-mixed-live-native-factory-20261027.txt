@@ -1,0 +1,99 @@
+Qwen27B: complete native factory instruction/byte qualification
+2026-10-27 UTC -- OFFLINE ONLY; NO physical driver installation or speedup
+
+Result and scope
+----------------
+Exact-current-source main and independent clean RUN/STOP/restore/END tests
+are BOTH terminal0/PASS, with byte-identical stdout. The complete native
+factory bodies now connect the genuine completed zero/QPE1 input producer
+to ALL120 held preparation, the QBL1 ROOT and SAME119 QMW1 instruction
+machines, actual STOPs/holds, complete L1 restoration and the actual full
+EndQ38DispatchOwnership body. No caller phase, ready flag or completed
+producer is fabricated. OS/FD/team/thread, physical PCI/TLB/L1/GDDR bytes,
+clock metadata and time are SIMULATED; this is not a physical native grant.
+
+This is still a position0/layer3 standalone dense operator from embedding,
+NOT GDN0..2, a valid64-layer prefix, token commit or generation. Device
+programs and production driver sources are unchanged from65d4ea7cb3.
+The strict20-parent NODRV role remains compile-only with all6 ABI names
+renamed; no loadable entry, Work selector or Assistant build was added.
+Whole-kernel SDK compilation is separate evidence from the earlier producer
+checkpoint. The real driver's final ARC/host release, map destruction and
+context destruction are NOT runtime-qualified by this fixture's teardown.
+
+Last real whole-model throughput remains0.207893161tok/s. Target20 UNMET.
+
+Connected execution
+-------------------
+- Actual Bind/Initialize/Run embedding factories execute the frozen zero
+  and QPE1 instructions and privately complete their genuine producer.
+- Raw post-QPE1 root bytes/source/NoC counters/commands are handed to a
+  distinct physical-byte transport. The actual native plan supplies TEST
+  observer geometry only. Actual produced GDDR input is copied, never a
+  CPU expected vector or norm/attention/FFN product.
+- Actual native held factory runs all120 reset audits,119 fresh source
+  probes/peer leases,120 role preparations,4 new mapping adapters and the
+  complete11398712-word original journal/code install. No reset occurs.
+- Actual native execution factories release fresh119 worker boot programs,
+  then ROOT. All7 matrices, original-input/residual preservation, initial
+  and post RMS, dense prepare/attention and17408 SiLU values pass independent
+  observers; products remain provisional until completion and cleanup.
+- Actual STOP program closes ALL119 chains. Independent instruction endpoints
+  assert ALL120 real terminals BEFORE the FIRST hold. The full11398712-word
+  restore and second original-word proof pass. Actual sealed Dispatch END
+  restores the outer legacy role images and peer source/TLB leases.
+
+Fault containment / regressions
+------------------------------
+Main+clean --faults runs BOTH terminal0, identical stdout:48 refusals.
+12 held-result and16 execution-result fields reject before IO/publication;
+8 partial-map error/null cases retain every partial alias;8 native held
+lifetime losses and4 closed-END misbindings quarantine all hosts/clock and
+permit ZERO following physical IO/reset/restore/retry. In the full RUN test,
+8 additional forked native lifetime losses occur AFTER actual computation,
+while SAME119 remain running. They retain the actual owner with ZERO further
+MMIO/STOP/holds/restoration/retry; the parent then completes genuine cleanup.
+
+Producer binding281 refusals, native-role165 interlocks and unchanged
+embedding-factory7 positive banks+7 faults all remain terminal0/PASS.
+
+Fixture defects found, contained offline
+---------------------------------------
+1. Different operand simulator configurations shared global TEST machine
+   names across TUs, coalescing incompatible constructors/layouts and causing
+   a UBSAN division-by-zero. Distinct TEST base-machine names fix that; no
+   production type, role, program, algorithm or bound was changed.
+2. The old synthetic embedding weights produced values outside the existing
+   RMS domain. This full-path fixture now uses the existing bounded RAW
+   embedding-weight generator. The actual QPE1 still computes its output;
+   no expected input vector is substituted, and no device domain is widened.
+3. Early clean runs were dispatched before archive extraction completed and
+   exited2 for a missing runner. Final clean runs started only after the
+   archive/copy process was terminal0. No live test was restarted for timeout.
+
+Evidence / reproduction
+-----------------------
+qwen38-mixed-live-native-factory-20261027.log
+ SHA256be497baf278bb058f8599ec506abc4ce7f96bdbf34aef6395470df21ce004c94
+qwen38-mixed-live-native-factory-faults-20261027.log
+ SHA2565535e225484dc043da212ac53cb307cc7afcb89651c0b3ca150efa8bfe3e3fd1
+
+python3 tools/pioneer/tests/run_pioneer_q38_mixed_live_native_factory_tests.py \
+ ZERO_IMAGE QPE1_IMAGE QBL1_IMAGE QMW1_IMAGE QDP_IMAGE QDA_IMAGE --execute
+Use --faults for held factory/refusal/END qualification; omit the option
+for positive held-only setup/restore/END. Artifact pins are checked first.
+All modes use ASAN/UBSAN and -ffp-contract=off. No silicon TPS can be inferred.
+
+Next / preservation
+-------------------
+Add a DISTINCT guarded original-GGUF numerical-validation entry/client,
+readback and independent dense-block CPU reference, then qualify the complete
+operator on physical P100A. Do not relax NODRV or reuse an old69 capability.
+Valid64-layer GDN+dense scheduling, recurrent/KV/token commits, final norm/
+vocabulary/sampling, no-reference Work/Assistant integration and measured
+performance optimization remain unfinished. ROOT still has serial work.
+
+Read-only Pioneer status during this checkpoint:driver55/tag2026102100010012,
+generation4/quiesced0/cold0/active_owner0. No experimental installation,
+relay, SD/mains/hardware or disk changes. SDK inputs remain read-only.
+Dirty llama.cpp and unrelated untracked FlashNext files remain untouched.
