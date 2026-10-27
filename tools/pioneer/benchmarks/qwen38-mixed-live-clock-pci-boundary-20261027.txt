@@ -71,6 +71,12 @@ Completed evidence -- main+independent clean
 
 Still owed
 ------------
+Follow-up:the held/no-launch actual owned END prefix/footer,real clock,
+final scope,30VM/11PCI/3host release and context-destruction composition now
+passes main+clean with57 failure/refusal forks. See
+qwen38-mixed-live-final-disposal-20261027.txt. Actual END call-seal entry
+and fresh recheck=true remain owed;this is NOT a loadable driver grant.
+
 Join this real closed-native/clock segment to the complete actual final
 scope/30-view Unmap,PCI success,all host releases and context destruction,
 including first-failure containment and actual END call sealing. The full

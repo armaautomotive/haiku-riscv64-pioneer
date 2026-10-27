@@ -1,0 +1,47 @@
+Qwen27B: genuine native closed state through actual owned END disposal
+2026-10-27 -- OFFLINE ASAN/UBSAN qualification, NOT a loadable driver
+
+The --final-end mode joins the existing genuine zero/QPE1 producer,
+ALL120 native held factories,11398712-word restore+second proof and sealed
+Dispatch END to the VERBATIM owned EndResidentSession prefix and footer.
+The runner extracts the actual production bodies,not a copied successful
+implementation. The real private clock lease ends via five ARC messages,
+verifies800MHz and releases its own virtual map. Actual final release scope,
+strict30-view Unmap and11-write/readback PCI transaction then precede the
+actual wide/output/primary host-release methods,unreserve,cookie/global
+clear and mixed-before-borrowed-prefix destruction fragments.
+
+OS/VM/PCI and legacy probe layout are explicit simulated endpoints/DATA.
+The test does not supply a source-ready/closed/clock/final-scope setter.
+The context framework is a semantic fixture,NOT the complete kernel class.
+The initial call-thread seal remains fixture metadata;the full actual END
+call-seal entry is NOT yet qualified. recheck=false is used:the fresh
+diagnostic probe chain and recheck=true branch are NOT yet qualified.
+No dense RUN is claimed by this held/no-launch disposal test.
+
+57 failure/refusal forks:8 source/binding/FD/team/generation losses,
+5 clock faults,30 virtual-view plus3 host-release failures,and11 PCI
+write/readback faults. The real footer retains context and reservation;
+all later disposal/clock/PCI retry operations remain fenced. ASAN checks
+the positive context destruction without later dereference/double-free.
+
+Main33200 and independent clean57431 both TERMINAL0;complete stdout is
+BYTE-IDENTICAL. Saved:qwen38-mixed-live-final-disposal-20261027.log
+SHA256 cc9f18ee437aaa6f217d0327092a9ff3d9086d9afe1acdf3df3a8f090cb57be7
+Independent tree:/private/tmp/pioneer-mixed-dispose-clean.MOEWh9MZ
+No production driver code changed in this checkpoint.
+Old clock/PCI-marker10307 and native48-refusal19939 regressions both
+TERMINAL0 with unchanged stdout SHA256 fb3da2b36f1c3e4456ef866af8508beffb88c102d191add8c512a3d50ce2051f
+and5535e225484dc043da212ac53cb307cc7afcb89651c0b3ca150efa8bfe3e3fd1.
+
+Next gates before physical use:proper actual bank-END call sealing,
+fresh diagnostic recheck=true,distinct original-GGUF validation entry/client
+and full execution/readback/cleanup composition. Then physical numerical
+comparison,valid64-layer GDN+dense/state/KV/token/finalnorm/vocabulary/
+sampling/Work/Assistant integration and measured performance optimization.
+This qualification is NOT full model generation or silicon timing.
+
+Installed driver/Assistant/boot/64CPUs/128GB unchanged;no relay,power,SD,
+mains,hardware,model or disk operation. SDK read-only;outputs /private/tmp.
+Dirty llama.cpp and unrelated FlashNext files untouched. Last real whole-
+model throughput0.207893161tok/s UNCHANGED;20tok/s UNMET. Goal ACTIVE.

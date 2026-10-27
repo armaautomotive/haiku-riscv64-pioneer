@@ -10,10 +10,11 @@ import sys
 import tempfile
 assert len(sys.argv)>=7
 options=sys.argv[7:]
-assert len(set(options))==len(options) and set(options)<={'--execute','--faults','--sigmoid-candidate','--validation-readback','--clock-end'}
-assert len(set(options)&{'--execute','--faults','--validation-readback','--clock-end'})<=1
-clock_end='--clock-end' in options
-readback='--validation-readback' in options
+assert len(set(options))==len(options) and set(options)<={'--execute','--faults','--sigmoid-candidate','--validation-readback','--clock-end','--final-end'}
+assert len(set(options)&{'--execute','--faults','--validation-readback','--clock-end','--final-end'})<=1
+final_end='--final-end' in options
+clock_end='--clock-end' in options or final_end
+readback='--validation-readback' in options or final_end
 sigmoid='--sigmoid-candidate' in options or readback
 here=pathlib.Path(__file__).resolve().parent
 kernel=here.parents[2]/'src/add-ons/kernel/drivers/misc'
@@ -38,6 +39,7 @@ if readback:
  defines['PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK']='1'
  program_flags+=['-DPIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK=1']
 if clock_end:defines['PIONEER_Q38_MIXED_LIVE_END_FIXTURE']='1'
+if final_end:defines['PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE']='1'
 defines.update({key:'pioneer_mixed_factory_test_'+key for key in ('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')})
 source=(kernel/'tenstorrent_pci_probe.cpp').read_text()
 with tempfile.TemporaryDirectory(prefix='pioneer-mixed-native-factory-',dir='/private/tmp') as temporary:
@@ -58,6 +60,24 @@ with tempfile.TemporaryDirectory(prefix='pioneer-mixed-native-factory-',dir='/pr
   begin,end='static bool\nCloseBulkScratch(','static bool\nFleetHeld('
   assert source.count(begin)==source.count(end)==1
   (base/'native_bulk_close.inc').write_text(begin+source.split(begin,1)[1].split(end,1)[0])
+ if final_end:
+  def method(class_name,signature):
+   part=source.split('struct '+class_name+' ',1)[1];start=part.index(signature);at=part.index('{',start);depth=1;end=at+1
+   while depth:
+    depth+=(part[end]=='{')-(part[end]=='}');end+=1
+   return part[start:end]+'\n'
+  for name,owner,signature in [('host','PioneerHostPageIO','int32 ReleaseHostPage()'),('output','PioneerOutputBufferIO','int32 ReleaseOutputBuffer()'),('wide','PioneerWideOutputIO','int32 ReleaseWideOutput()')]:
+   (base/('native_release_'+name+'.inc')).write_text(method(owner,signature))
+  (base/'native_session_unmap.inc').write_text(method('PioneerSessionIO','bool Unmap()'))
+  # VERBATIM actual owned-path footer. Prefix closure/clock state is
+  # provided by the genuine factories,never a manufactured ready object.
+  begin='q38_dispatch_owned_restored:';end='// PIONEER_Q38_DISPATCH_COOKIE_RELEASE_BEGIN'
+  assert source.count(begin)==source.count(end)==1
+  (base/'native_final_tail.inc').write_text('#ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH\n'+begin+source.split(begin,1)[1].split(end,1)[0])
+  part=source.split('static void\nEndResidentSession(',1)[1].split(end,1)[0]
+  prefix=part.split('bool clean=!sColdRecoveryRequired && !context->Unsafe();',1)[1].split('#ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT',1)[0]
+  assert 'goto q38_dispatch_owned_restored;' in prefix and 'CloseBulkScratch' in prefix and 'EndQ38DispatchOwnership' in prefix
+  (base/'native_final_prefix.inc').write_text(prefix)
  binary=base/'test'
  # Transport is a separate TU: only RAW physical endpoints cross it. The
  # actual native role, source gates, private phases and factories stay here.

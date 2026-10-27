@@ -57,8 +57,21 @@ static PioneerSessionIO* activeIO=nullptr;
 static uint32 PioneerRead32(const volatile uint32*);
 static void PioneerWrite32(volatile uint32*,uint32);
 static area_id map_physical_memory(const char*,uint64,unsigned,int,unsigned,void**);
-struct PioneerHostPageIO{bool quarantined=false;};
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+#include "PioneerQ38MixedFinalNativeLayout.h"
+using int32=int32_t;using status_t=int;
+static constexpr int B_BAD_VALUE=-2;
+#endif
+struct PioneerHostPageIO{bool quarantined=false;
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+ area_id area=9001;volatile uint32* page=&finalAlias;bool releaseAttempted=false;
+#include "native_release_host.inc"
+#endif
+};
 struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+ ,MixedFinalNativeLayout
+#endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
  ,ResidentLayerNativeStateBytes
 #elif defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER)
@@ -118,7 +131,11 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  uint32* Q38PanelSavedWords(){return UseMixedLiveIO()?mixedLiveTransport->PanelSaved():ProjectionZeroIO::Q38PanelSavedWords();}
  uint32* HostReadBackup(unsigned n){return UseMixedLiveIO()?mixedLiveTransport->Backup(n):ProjectionZeroIO::HostReadBackup(n);}
  uint32 ComputeNocRead(uint32 a){assert(UseMixedLiveIO());return mixedLiveTransport->Read32(MixedLiveNativeTransport::ComputeNoc,a);}
- uint32 HostPciRead(unsigned p,uint16_t a,uint8 n){return UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Pci,p,a,n):ProjectionZeroIO::HostPciRead(p,a,n);}
+ uint32 HostPciRead(unsigned p,uint16_t a,uint8 n){
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+  if(q38MixedLiveFinalUnmapped)return p?RootRead(a,n):CardRead(a,n);
+#endif
+  return UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Pci,p,a,n):ProjectionZeroIO::HostPciRead(p,a,n);}
  uint32 Q38PanelRead(uint32 a){return UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Panel,a):ProjectionZeroIO::Q38PanelRead(a);}
  void Q38PanelWrite(uint32 a,uint32 v){if(UseMixedLiveIO())mixedLiveTransport->Write32(MixedLiveNativeTransport::SetPanel,a,v);else ProjectionZeroIO::Q38PanelWrite(a,v);}
  uint32 RuntimeCodeRead(unsigned i){return UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Code,i):ProjectionZeroIO::RuntimeCodeRead(i);}
@@ -191,7 +208,7 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
 #endif
 #endif
  unsigned runtimeCore=0;bool fleetEnabled=false,runtimeMapped=true,q38SpanAllowed=true;
-#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+#if defined(PIONEER_Q38_MIXED_LIVE_END_FIXTURE) && !defined(PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE)
  bool q38MixedLiveFinalUnmapAttempted=false; // simulated VM transaction endpoint DATA,not a closed-owner setter
 #endif
  std::array<uint32,10240> prefix;
@@ -263,9 +280,17 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  uint32 ResidentNocRead(uint32 offset){if(offset==0x40 && validationPending){Touch();return 1;}return ProjectionZeroIO::ResidentNocRead(offset);}
  void ResidentNocWrite(uint32 offset,uint32 value);
 #endif
- struct DramAlias{const tt_dram_samples_result* target=nullptr;const tt_dram_samples_result* operator&()const{return target;}
+ struct DramAlias{const tt_dram_samples_result* target=nullptr;
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+  uint32 tlb_restored=1,data_restored=1,recovery_required=0;
+#endif
+  const tt_dram_samples_result* operator&()const{return target;}
   operator const tt_dram_samples_result&()const{assert(target);return *target;}}dram;
- struct NocAlias{const tt_compute_noc_result* target=nullptr;operator const tt_compute_noc_result&()const{assert(target);return *target;}}noc;
+ struct NocAlias{const tt_compute_noc_result* target=nullptr;
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+  uint32 tlb_restored=1,recovery_required=0;
+#endif
+  operator const tt_compute_noc_result&()const{assert(target);return *target;}}noc;
  explicit PioneerSessionIO(const char* zero,const char* embedding):ProjectionZeroIO(zero),embeddingImage(embedding){
   for(unsigned i=0;i<prefix.size();i++)prefix[i]=i%17?0x9e3779b9U*(i+1):UINT32_MAX;
  }
@@ -324,7 +349,7 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
   if(UseProjectionIO())return projectionTransport->Read32(ProjectionNativeTransport::Reset);
 #endif
   Touch();bool root=false;
-  for(bool readOnly:{false,true}){bool same=true;for(unsigned w=0;w<3;w++)same&=tlb[1][w]==BlackholeDramFixedTlbWord(0xffa00000,1,2,readOnly,w);root|=same;}
+  for(bool readOnly:{false,true}){bool same=true;for(unsigned w=0;w<3;w++)same&=ProjectionZeroIO::tlb[1][w]==BlackholeDramFixedTlbWord(0xffa00000,1,2,readOnly,w);root|=same;}
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
   if(!root && outputNonrootFault)return 0x46800;
 #endif
@@ -382,6 +407,21 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
   return destination[0x1fc0/4+(a-0x17ffc0)/4];
  }
 #include "embedding_factory_mapping.inc"
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+#include "native_session_unmap.inc"
+#include "native_release_output.inc"
+#include "native_release_wide.inc"
+ int32 ReleaseHostPage(){return PioneerHostPageIO::ReleaseHostPage();}
+ void InitFinalVmViews(){
+  area_id* views[]={&q38MixedLiveMemoryArea[0],&q38MixedLiveMemoryArea[1],&q38MixedLiveMemoryArea[2],&q38MixedLiveMemoryArea[3],&q38EmbeddingMemoryArea,
+   &q38PanelArea,&q38FfnCodeArea,&runtimeAreas[0],&runtimeAreas[1],&runtimeAreas[2],&runtimeAreas[3],&runtimeAreas[4],&attentionArea,&bulkArea,&coordinatorArea,&layerArea,&fleetArea,
+   &this->PioneerHostReadIO::scratchArea,&this->PioneerHostReadIO::writeArea,&hdmaArea,&inboundArea,&siiArea,&nocArea,&dataArea,&dramArea,&resetArea,&csmArea,&this->PioneerArcIO::scratchArea,&tlbArea,&this->PioneerMmioIO::area};
+  for(unsigned i=0;i<30;i++)if(*views[i]<B_OK)*views[i]=2000+int(i); // simulated OS handles,not permission or device data
+ }
+ ~PioneerSessionIO(){
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveNativeMapDestroy.inc"
+ }
+#endif
 };
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
 static bool ProjectionPointerAddress(const volatile uint32* p,uint32& address){
@@ -565,6 +605,7 @@ struct PioneerStoreContext {
  bool bankStorageOnly=true,dispatchOwnerRetained=false,otherUnsafe=false,q38DispatchRoutes=false;
 #ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
  tt_pioneer_mmio_result pci={};tt_pioneer_mmio_transaction transaction={};unsigned q38EndPhase=0;
+ tt_resident_session_idle_result idle={};
  auto& Pci(){return pci;}
 #endif
  PioneerStoreContext(PioneerSessionIO& native,PanelOwners& owner,PioneerBulkUploadLease& b,PioneerOutputBufferLease& output,
@@ -573,6 +614,10 @@ struct PioneerStoreContext {
   span.closed=true;io.q38MutableContext=this;io.dram.target=&owner.dram;io.noc.target=&owner.noc;
  }
  ~PioneerStoreContext(){
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveNativeDestroy.inc"
+  finalDestroyed++;
+#else
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
   delete q38MixedLiveNative;
 #endif
@@ -582,7 +627,9 @@ struct PioneerStoreContext {
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
   delete q38ResidentOutputNative;
 #endif
-  delete q38EmbeddingModel;delete q38Dispatch;
+  delete q38EmbeddingModel;
+#endif
+  delete q38Dispatch;
  } // SIMULATED context;real unknown contexts are retained,never destroyed
  bool Unsafe(bool zero=false,bool graph=false,bool controlledEmbedding=false){
   (void)zero;(void)graph;
