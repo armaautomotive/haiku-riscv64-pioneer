@@ -1,0 +1,88 @@
+P100A standalone dense DEBUG70 original-model card comparison
+2026-10-27 -- PHYSICAL ORIGINAL-BYTE PASS / NOT A TOKEN-RATE CLAIM
+
+Qualified source checkpointf25811236827a84639341c19c3c1acba119a2e2c
+committed,pushed and exact remote branch SHA independently verified.
+Offline main22038+clean16520 BOTH TERMINAL0/full stdout c37f54d9...;
+qualified module11d24d92...,client96945e8b...,updater4934e3ad... are the
+SAME remotely staged,byte-verified files. Full hashes and scope/limits:
+ qwen38-mixed-live-validation70-20261027.txt
+
+Read-only preflight confirmed Haiku,64CPUs/max137034936320RAM bytes,
+installed041fef18...,guardd1ce2a...,adminb0c851... and model file18973870528B.
+Haiku login is baron with saved Pioneer-specific identity/host pin,NOT root.
+
+ONE guarded apply21154 completed TERMINAL0. Exact original working
+041/tag2026102100010012/generation4/cold0/owner0/open1 was quiesced and
+closed,byte-qualified backup preserved,one watched rename selected module
+11d24d92c9ee05f1e3664ee13796f8621f378bb738eb5c62b622314f846a3e29.
+New metadata verified DEBUG70/tag2026102700010070/generation5/quiesced0/
+cold0/active_owner0/open_count1/guard1. No reboot/power/SD/mains/Assistant
+or hardware-connection change. Complete apply log:
+ /private/tmp/pioneer-q38-mixed-validation70-hot-apply-20261027-a.log
+
+ONE physical client83291 TERMINAL0,remote PID32977:
+ /private/tmp/pioneer-q38-mixed-validation70-physical-20261027-a.log
+Exact fixed command:qualified pioneer-q38-mixed-live-validation-96945e8b
+ --validate-token0-dense3
+It authenticates/seals original c600 GGUF and prepares the separate private
+CPU reference BEFORE accelerator compute FD/context. Only raw learned bytes
+upload. User comparison must pass BEFORE explicit BANK_END. No per-run
+CPU reference is allowed in Work;this client is an isolated diagnostic.
+
+Actual outcome
+-----------------
+Full same-file c600 SHA/original references/seal completed BEFORE the client
+opened its compute FD. All63266 original pages in271 uploads returned exact
+successful metadata/nonces;SPAN_END passed. No expected numeric products,
+activation vectors or CPU-normalized data were uploaded. The actual driver
+performed QPE1 embedding followed by the complete standalone dense layer3
+operator:seven matrices,attention,normalizations,residuals and full FFN on
+the card. Its native119STOP+ROOT/120holds/five-page5120word capture,full L1
+restore+second proof and exact64-word reply contract all passed.
+
+ONLY AFTER capture returned did the separately compiled original CPU source
+compare ALL5120 final words BIT-EXACT:checked5120,differences0,nonfinite0,
+maxAbsolute0,relativeL20. Only then explicit BANK_END returned status0 with
+CLOSED/pciRestored/hostReleased and close succeeded. Final native line:
+ PASS_DEBUG70 original_pages63266 spans271 checked5120 differences0
+ nonfinite0 max_abs0 relative_l20 clean_end1 diagnostic_us283609777;NOT_TOKEN_RATE
+
+283.609777seconds includes diagnostic initialization/embedding/dense setup+
+execution/readback/restoration. It EXCLUDES full-SHA/reference preparation,
+original weight upload,post-return CPU comparison and explicit final END.
+No per-stage device timings,steady-state token latency or inference speedup
+are inferred. The raw log's stage BEGIN/END pairs do not provide such timing.
+
+Complete562-line native log archived byte-exact:
+ qwen38-mixed-live-validation70-card-20261027.log
+ SHA2565f4308979269c08ba95035515c1e3ee4428bc67d5b5af857bfdf4ef2f327e033
+
+NOT a full-model prefix:token0 embedding -> standalone layer3,without GDN
+layers0..2. This comparison proves no64-layer/state/token-loop/Work/Assistant
+integration or throughput. Never divide diagnostic time into a token rate.
+Last measured whole-model0.207893161tok/s remains unchanged;20tok/s UNMET.
+
+Successful guarded restoration
+--------------------------------
+After original comparison and clean END,ONE restore10888 TERMINAL0 used the
+SAME byte-pinned helper's --restore-mixed-live-validation. Exact70/gen5/
+cold0/owner0 was quiesced and closed;one watched rename restored exact041.
+New metadata:driver55/tag2026102100010012/generation6/quiesced0/cold0/
+active_owner0/open_count1/guard1. Full post-restore installed driver SHA:
+ 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+Fresh SSH sysinfo reports64 CPUs/max137034936320RAM bytes. No reboot,
+power/SD/mains/hardware/Assistant/network-setting changes or recovery needed.
+
+Apply/restore logs archived byte-exact:
+ qwen38-mixed-live-validation70-hot-apply-20261027.log
+ SHA25681414ed0bd9e5d6a4af3c302ec099b2d799cc5dce53668530572c9e9381467b4
+ qwen38-mixed-live-validation70-hot-restore-20261027.log
+ SHA256e8340222616e6f52ed1286359495ad5a059a73e146d13b9f0aaaf248edc8f687
+Original local captures retain their /private/tmp/pioneer-q38-mixed-validation70- prefix.
+
+Next:correctly sequenced original hidden producer through GDN0..2 and dense
+layer3,then all64 layers,state/KV commits,final normalization/vocabulary/
+sampling and persistent no-CPU-reference Work+Assistant integration. This
+physical milestone does not discharge those requirements. Real whole-model
+benchmarks must establish performance;20tok/s remains unmet. Goal ACTIVE.

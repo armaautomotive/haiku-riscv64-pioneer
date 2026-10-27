@@ -1,5 +1,19 @@
 # Native build status
 
+October27UTC2026: ACTUAL P100A standalone dense DEBUG70 ORIGINAL PASS.
+Qualified checkpointf25811236827a84639341c19c3c1acba119a2e2c pushed and
+remote verified. ONE native client83291 TERMINAL0:full original SHA/reference
+before FD,63266raw original pages/271spans,actual embedding+dense layer3,
+ALL5120 final words BIT-EXACT/zero differences+nonfinite,clean explicit END.
+283609777us is diagnostic setup/execution/capture/restoration,NOT token rate.
+Guarded apply21154 and restore10888 BOTH TERMINAL0,041/tag12/gen4 ->70/gen5
+-> exact041/tag12/gen6/cold0/owner0. Fresh SSH confirms64CPUs/full maximum
+RAM137034936320B. NO reboot/power/SD/hardware/Assistant change. This is NOT
+a valid GDN0..2 prefix/full64-layer/token-loop/Work integration or speedup.
+Next correct hidden-producer prefix/all64/state+KV/token/sampling/persistent
+Work+Assistant integration. Whole27B0.207893161tok/s unchanged/20 UNMET.
+Evidence:benchmarks/qwen38-mixed-live-validation70-card-20261027.txt.
+
 October27UTC2026: separate standalone-dense DEBUG70 driver and CPU-only
 validation client OFFLINE QUALIFIED/BUILT ONLY. Main+independent clean-tree
 driver/client binaries are byte-identical. New role rejects old Work flags;
