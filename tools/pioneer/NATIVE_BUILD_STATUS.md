@@ -1,9 +1,9 @@
 # Native build status
 
-## Current: recurrent readback and separate physical diagnostic interface (WIP)
+## Current: recurrent validation client/module built; native qualification pending
 
 October 27, 2026. Source/compile checkpoint, NOT runtime-complete or installed.
-Previous pushed numerical checkpoint: `5903f8aaf0f6407f6984c2e1954c21fd94584d92`.
+Previous pushed interface checkpoint: `9d6e39a97403c15151c49cab5a9ffc0fce0bdab3`.
 The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2d69`.
 
 - Complete execution-owner/real STOP/120 holds/full original restoration
@@ -67,14 +67,40 @@ The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2
   Actual-handler preflight passed 112 missing learned endpoints, 80 malformed
   header words and 65526 closed opcodes with zero model/epoch/card IO. Handler
   whole-run, final user-copy failure and explicit-END tests are LIVE, not passed.
-  No module link/install, client execution, silicon readback or speed result.
+  The native handler/final-copy/END tests remain LIVE, not a physical result.
+- Main15788/clean2269 actual readback-owner suites BOTH passed (terminal 0):
+  real emitted whole QRB1/119 workers/STOP/120 holds, all 16 readback failures,
+  five successful READs/5120-word capture/full original restoration+second proof.
+  Core stdout matches after excluding the clean run's added DATA-geometry line.
+  Raw OS/register/learned endpoints are simulated, not genuine native/silicon proof.
+- Authenticated original DEBUG71 client is implemented and built, separately
+  from its private CPU-reference/source object. Full c600 authentication and
+  reference preparation/seal precede device Open. Only 57 raw extents/pages
+  upload; all tails are zeroed. Strict final comparison MUST precede explicit
+  END; any uncertainty closes only, with no END/reset/peek/retry fallback.
+  Main/clean session tests passed 443 failures, and 179 client role gates passed.
+  Both real-original client preflight runs passed all 57 extents/68603 pages
+  before an intentionally unavailable Open; no device FD or context was created.
+- Main/clean Haiku client binaries are identical
+  `1e62b010515c2dea5300fae2b23a043c606a0987c07b8d972ab1edc9c079eaab`,
+  max USER frame 17552. The client object has no inline private CPU products,
+  native context, canonical mutable-bank or GDN-owner implementation.
+  Main/clean linked DEBUG71 modules are identical
+  `87d0c4e005d7df937e22c2806051cd0aa99d736c0fb2c0199fde40d8eb1d7cb4`;
+  conventional ABI/no private CPU oracle/Work/old dense/NODRV alias. NOT loaded.
+- A separately inspected CPU-only source unit (no ioctl/native owner symbols)
+  was copied to a project test directory and actually passed on Haiku, including
+  full c600 source authentication, all raw extents and private CPU reference.
+  Its fingerprint `bb911e57059b179f` matches the host runs. This is CPU/source
+  qualification, NOT P100A arithmetic, full-model inference or token performance.
+  Driver/Assistant/boot files were not installed or changed.
 
 Remaining before full-offload Work is ready:
 
 1. Assess intermediate rounding differences; finish original-weight readback
-   and native/public-handler runtime/failure/END tests. Implement and qualify
-   the authenticated original-weight diagnostic client, link the distinct
-   physical module, then validate execution/readback/final disposal on the P100A.
+   and native/public-handler runtime/failure/END tests. Then qualify controlled
+   deployment of the built diagnostic client/module and validate original-weight
+   execution/readback/final disposal on the physical P100A.
 2. Connect valid embedding/recurrent layers 0..2 through dense layer 3 and all
    64 layers, with correct persistent KV/recurrent/history and token commit.
 3. Complete final normalization, vocabulary projection and on-card sampling.
@@ -82,9 +108,10 @@ Remaining before full-offload Work is ready:
 5. Measure and optimize loading, prefill and decode toward 20 tokens/sec.
 
 Fresh read-only board check: 64 CPUs, max RAM 137034936320 bytes, free RAM
-129602080768 bytes, driver55 / tag2026102100010012 / generation6 / cold0 /
-active_owner0 / quiesced0 / open_count1 / guard1. No driver install,
-card compute, restart, power, SD, mains, Assistant or network changes.
+129635860480 bytes, driver55 / tag2026102100010012 / generation6 / cold0 /
+active_owner0 / quiesced0 / open_count1 / guard1, rechecked AFTER the CPU-only
+test. No new driver install, card compute, restart, power, SD, mains,
+Assistant or network changes; only the isolated CPU test was copied/run.
 Last measured full-model rate is still **0.207893161 tokens/sec**; target unmet.
 
 The dated entries below are historical snapshots. Their LIVE labels are not

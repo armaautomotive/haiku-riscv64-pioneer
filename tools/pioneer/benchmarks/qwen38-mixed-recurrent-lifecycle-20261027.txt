@@ -759,3 +759,107 @@ unchanged/20UNMET/goalACTIVE. Physical authenticated client/module link/
 silicon comparison still REQUIRED;then valid recurrent0..2->dense3/all64,
 correct per-layer persistent KV/recurrent/history/token commit,finalnorm/
 vocabulary/sampling,persistent no-CPU-reference Work+Assistant,performance.
+
+Authenticated DEBUG71 client + reproducible module + target CPU source check
+----------------------------------------------------------------------
+Prior interface checkpoint9d6e39a974 pushed/remote exact. NEW CPU-only
+Source::Extent publishes sealed immutable RAW bank/route/address/bytes/
+page geometry,not Model/FILE/native-ready or expected numeric products.
+It rejects owner/private-reference output aliases and invalid/unsealed/
+packet-active indices atomically. Original CPU arithmetic,raw bytes and
+native bridge interface are unchanged. Client TU imports NO canonical
+mutable-bank/GDN/native owner or private CPU product implementation;the
+private reference is in a separate source object compiled WITHOUT client,
+native,image or mutable-owner flags. All preparation/full c600 SHA/seal
+and all57extent/route/address/no-overlap/280971136raw-byte/68603page checks
+precede Open. Uploads request only original extent bytes and leave every
+physical-page tail zero. No expected products enter native input metadata.
+
+The client requires exact driver55/tag2026102700010071/namespace22/generation/
+sole FD/guard/cold0/owner0 and exact bank/span capabilities. It uploads raw
+pages,closes span upload,calls ONLY fixed token0-position0-layer0,checks ALL
+80reply words except variable nonzero session/time,then requires strict
+independent FINAL5120 equality BEFORE explicit BANK_END. Any source/identity/
+copy/metadata/numerical/transport uncertainty is terminal CLOSE ONLY:never
+another END,peek,reset,retry or legacy Work/old dense fallback. Diagnostic
+elapsed time is explicitly NOT a token rate. No Assistant/Work integration.
+
+Host actual client session main54994/clean45245 BOTH TERMINAL0:positive
+57synthetic RAW extents/68603pages/269uploads/277calls;443failures covering
+EVERY call,source+identity loss,partial raw reads,78header corruptions,
+6strict report metrics,ALL57pre-FD extent refusals and prepare/seal/open/
+close failures. Zero tails and comparison-before-END/terminal close-only
+ordering independently checked. These are SYNTHETIC transport/extents,not
+original arithmetic or silicon. Core stdout (excluding retained TEMP test
+binary path) identical412a45ff7d5ba6236e654bb8187723bc74f879a32e0bc9c0467f457aec1aad56.
+Main23386/clean45671 BOTH0:179exact client role/inherited-environment/late/
+defined0/inline-private-oracle/native/mutable-owner/image/Work refusals.
+
+Actual c600 original Source::Extent/source/reference unit main55332 and
+clean47027 BOTH TERMINAL0,all57valid extents/invalid index+owner alias/
+atomic refusals/private3853reads/fingerprintbb911e57059b179f. Actual client
+ORIGINAL preflight main55323/clean27301 BOTH TERMINAL0:full authentication/
+reference+seal followed by ALL57actual RAW extent geometry checks BEFORE
+an intentionally unavailable Open;NO device FD/context/IO. Paired complete
+source/preflight/gate stdout identical. No CPU/numerical bound was weakened.
+
+Main62481/clean28332 Haiku actual-ioctl client build/inspect BOTH TERMINAL0:
+original.o b4da9de0059dcf192abce3fca821a156c3628f24e24e0620c3a9590bcfd28dae,
+client.o e5a93b51ccd50150bad9643db59968a9f33de670c5d5678ba066e503c9108019,
+binary1e62b010515c2dea5300fae2b23a043c606a0987c07b8d972ab1edc9c079eaab,
+max USER frame17552. Client object symbol inspection rejects private CPU
+products,canonical mutable-bank/GDN owner,native context. Binary includes
+only the intended separate private CPU source/reference and actual ioctl
+transport,NOT kernel owners,old dense session or Work dispatcher.
+First86344 failed missing transitive route/mutable-bank definitions. A
+temporary build with generic mutable-bank geometry passed97487,but was
+superseded by neutral authenticated RAW extents;final client rejects that
+flag. First2305 synthetic session fixture failed its OWN total-byte assert;
+only its synthetic tail padding was corrected to match the already fixed
+280971136bytes/68603pages invariant. No actual source/observer was fitted.
+
+Module main92616/clean92040 BOTH TERMINAL0. Actual SDK object remains
+490e0db8ff43dd51422dc562fcd959896bed4ef225a349722ae9a3120cf14243/max832;
+linked conventional ABI DEBUG71 module exact
+87d0c4e005d7df937e22c2806051cd0aa99d736c0fb2c0199fde40d8eb1d7cb4.
+No CPU oracle,Work,old dense or NODRV ABI alias. Built ONLY,never loaded.
+
+Source-only Haiku unit94232 build/inspect TERMINAL0:original.o above,
+source-unit.o d88dbc5b9c58a59549af65ae0e8ccb0d7ed6d3e20562dab4c150fdaf53fe4bf8,
+binary4456db6c3af9e3f0983f507f4f17e26d06e852ab2ca8cd4b115e0891c45f3ec3,
+max USER frame24752,NO ioctl/native-owner symbols. Copied ONLY this unit to
+/boot/home/pioneer-q38-recurrent-cpu-check-20261027-a/source-unit and remote
+SHA256 verified exact BEFORE execution. Actual Haiku81587 TERMINAL0/full
+c600 file/source/cache/extents/reference/invalid+alias+nonfinite cases PASS,
+private3853reads/fingerprintbb911e57059b179f matching host. The original
+build's compile-only/NEVER-INSTALLED filename described that build step;
+the later isolated CPU test copy/run is explicit here. No GPU FD was opened,
+driver module installed,Assistant updated or hardware state changed.
+
+Prior generic actual readback main15788/clean2269 NOW BOTH TERMINAL0:
+whole actual QRB1+119workers,realSTOP+120holds,ALL16readback faults+5inert
+aliases,successful5READ/5120capture/full11406904original restore+secondproof.
+Main core stdout3f7fcbad8adfe6c54d9eafbbc67c7f6b0a61a046d9d1aadadd5fce290bcd531d
+equals clean after removing ONLY the clean's new DATA geometry PASS line.
+This is actual production-owner/instruction qualification over SIMULATED
+raw endpoints,NOT genuine native/private FD or physical/Work/TPS proof.
+
+Current final native ORIGINAL82693/91605 and actual physical-role public
+handler61072/77933 remain LIVE at exact last handle polls. Main82693 has
+passed8inert aliases+6native lifetime branches+ALL3genuine raw readback
+faults after full original-weight RUN. Positive readback/restoration/fresh
+END/strict original comparison and public final user-copy/END still OWED;
+do NOT promote partial output to a complete passing suite. Older16581/
+6871/75744 are NOW authoritative TERMINAL1 at the known superseded TEST
+fault-observer assertion;they predate the shared Panel/Mapped scratch
+tracker fix and are NOT final qualification. No replacement/restart was
+caused by an observation timeout;final corrected handles remain live.
+
+After target CPU test,fresh readonly SSH64CPUs/max137034936320B/free
+129635860480B,stable55/tag2026102100010012/gen6/quiesced0/cold0/owner0/
+open1/guard1. No GPU compute/new driver install,restart,power/SD/mains/
+Assistant/network change. Unrelated dirty llama.cpp/FlashNext untouched.
+Last real full27B0.207893161tok/s unchanged;20UNMET/goalACTIVE. Finish native
+and handler runtime gates,then controlled deployment+ORIGINAL silicon
+comparison/finalEND;then full64+correct persistent KV/recurrent/history/
+token commit/finalnorm/vocab/sampling/noCPUreference Work+Assistant/speed.

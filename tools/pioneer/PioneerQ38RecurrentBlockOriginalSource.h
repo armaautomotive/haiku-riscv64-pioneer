@@ -14,12 +14,16 @@
 // Private independent CPU products are never exposed. Only authenticated
 // raw learned bytes and post-return comparisons cross this interface.
 // Prepare+seal BEFORE creating any native/accelerator context.
+struct PioneerRecurrentOriginalExtent {
+ uint32_t bank=7,route=0,address=0,bytes=0,pages=0;
+}; // immutable RAW byte geometry ONLY,never expected numerical products
 class PioneerQ38RecurrentBlockOriginalSource:public RecurrentBlockRawLearnedBytes {
 public:
  virtual bool Prepare()=0;virtual bool SealBeforeNativeContext()=0;
  virtual bool CompareStage(PioneerRecurrentOriginalStage,const uint32_t*,unsigned,PioneerRecurrentOriginalComparison*)const=0;
  virtual uint64_t ReferenceReads()const=0;virtual uint64_t ReferenceFingerprint()const=0;
  virtual uint64_t Bytes()const=0;virtual unsigned Pages()const=0;virtual unsigned Spans()const=0;
+ virtual bool Extent(unsigned,PioneerRecurrentOriginalExtent&)const=0;
 };
 std::unique_ptr<PioneerQ38RecurrentBlockOriginalSource> OpenPioneerQ38RecurrentBlockOriginalSource(const char* path=nullptr);
 #endif

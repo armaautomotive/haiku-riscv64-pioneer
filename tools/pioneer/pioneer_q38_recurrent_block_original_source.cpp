@@ -4,6 +4,7 @@
 #include "PioneerQ38RecurrentBlockValidationReference.h"
 #include <cassert>
 #include <cstdio>
+#include <iterator>
 #include <unistd.h>
 namespace {
 #ifndef __HAIKU__
@@ -88,6 +89,17 @@ public:
  uint64_t Bytes()const override{return Ready()?raw.Bytes():0;}
  unsigned Pages()const override{return Ready()?raw.Pages():0;}
  unsigned Spans()const override{return Ready()?raw.Spans():0;}
+ bool Extent(unsigned index,PioneerRecurrentOriginalExtent& output)const override{
+  const uintptr_t out=reinterpret_cast<uintptr_t>(&output),owner=reinterpret_cast<uintptr_t>(this),expected=reinterpret_cast<uintptr_t>(reference.get());
+  if(out>UINTPTR_MAX-sizeof(output) || (out<owner+sizeof(*this) && owner<out+sizeof(output))
+   || (reference && out<expected+sizeof(*reference) && expected<out+sizeof(output)) || !Ready() || packet || index>=raw.spans.size())return false;
+  auto found=raw.spans.begin();std::advance(found,index);const auto& span=found->second;
+  PioneerRecurrentOriginalExtent value;value.route=span.route;value.address=span.address;value.bytes=unsigned(span.bytes.size());
+  value.pages=(value.bytes+4095)/4096;
+  for(unsigned bank=0;bank<7;bank++)if(PioneerQ38ProjectionRoute(bank)==span.route)value.bank=bank;
+  if(value.bank>=7 || !value.bytes || !raw.Contains(value.route,value.address,value.bytes) || !Ready())return false;
+  output=value;return true;
+ } // sealed RAW extent only;no model/FILE/reference/native state accessor
 };
 std::unique_ptr<PioneerQ38RecurrentBlockOriginalSource> OpenPioneerQ38RecurrentBlockOriginalSource(const char* path){
 #ifdef __HAIKU__

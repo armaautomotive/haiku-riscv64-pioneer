@@ -1,0 +1,4 @@
+b4da9de0059dcf192abce3fca821a156c3628f24e24e0620c3a9590bcfd28dae original.o
+d88dbc5b9c58a59549af65ae0e8ccb0d7ed6d3e20562dab4c150fdaf53fe4bf8 source-unit.o
+4456db6c3af9e3f0983f507f4f17e26d06e852ab2ca8cd4b115e0891c45f3ec3 recurrent-original-CPU-SOURCE-UNIT-NEVER-INSTALLED
+PASS Haiku riscv64 CPU-only original source/reference+source-unit compile/link/maxFrame24752;NO native owner,driver IO,installation,execution or physical/numerical/TPS qualification

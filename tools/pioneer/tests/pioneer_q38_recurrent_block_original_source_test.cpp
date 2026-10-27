@@ -3,13 +3,22 @@
 #include <array>
 #include <cassert>
 #include <cstdio>
+#include <cstring>
 #include <limits>
 int main(int argc,char** argv){
  assert(argc==2);setvbuf(stdout,nullptr,_IOLBF,0);
  puts("START independent ORIGINAL recurrent CPU source/authentication/cache/reference BEFORE native context;NO device entry");
  auto source=OpenPioneerQ38RecurrentBlockOriginalSource(argv[1]);assert(source && !source->Ready() && !source->SealBeforeNativeContext());
+ PioneerRecurrentOriginalExtent extent,unchanged=extent;assert(!source->Extent(0,extent) && !memcmp(&extent,&unchanged,sizeof(extent)));
  assert(source->Prepare() && !source->Ready() && !source->Prepare() && source->SealBeforeNativeContext() && source->Ready()
   && !source->SealBeforeNativeContext() && source->Spans()==57 && source->Pages()==68603 && source->Bytes()==280971136);
+ uint64_t rawBytes=0;unsigned rawPages=0;
+ for(unsigned i=0;i<57;i++){
+  assert(source->Extent(i,extent) && extent.bank<7 && extent.bytes && extent.pages==(extent.bytes+4095)/4096
+   && source->Contains(extent.route,extent.address,extent.bytes));rawBytes+=extent.bytes;rawPages+=extent.pages;
+ }
+ unchanged=extent;assert(!source->Extent(57,extent) && !memcmp(&extent,&unchanged,sizeof(extent)) && rawBytes==280971136 && rawPages==68603);
+ assert(!source->Extent(0,*reinterpret_cast<PioneerRecurrentOriginalExtent*>(source.get())) && source->Ready());
  std::array<uint32_t,5120> values;values.fill(0xdeadbeef);PioneerRecurrentOriginalComparison report;report.checked=0x12345678;
  assert(!source->CompareStage(PioneerRecurrentFinal,values.data(),5119,&report) && report.checked==0x12345678);
  assert(!source->CompareStage(PioneerRecurrentStageCount,values.data(),5120,&report) && report.checked==0x12345678);

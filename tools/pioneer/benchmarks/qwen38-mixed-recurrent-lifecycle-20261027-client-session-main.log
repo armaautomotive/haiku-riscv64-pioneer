@@ -1,0 +1,7 @@
+PASS DEBUG71 actual client seal+57RAW extent checks BEFORE FD/68603pages/269uploads/277calls/ALL raw tails zero/strict comparison BEFORE explicit END;SYNTHETIC endpoints ONLY
+DEBUG71_CLIENT_FAULT_PROGRESS 64/277
+DEBUG71_CLIENT_FAULT_PROGRESS 128/277
+DEBUG71_CLIENT_FAULT_PROGRESS 192/277
+DEBUG71_CLIENT_FAULT_PROGRESS 256/277
+PASS DEBUG71 actual client443 failure cases/ALL277calls/source+identity loss/partial raw reads/78header corruptions/6strict metrics/ALL57extent refusals BEFORE FD/open-close-prepare-seal;terminal CLOSE ONLY,no END/reset/peek/retry after uncertainty;NOT original numerical/native/silicon/TPS proof
+Client TEST binary retained: /private/tmp/pioneer-recurrent-validation-client.Q3YlSiMG/test

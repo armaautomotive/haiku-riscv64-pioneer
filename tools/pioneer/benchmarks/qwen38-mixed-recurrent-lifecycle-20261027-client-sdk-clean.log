@@ -1,0 +1,6 @@
+b4da9de0059dcf192abce3fca821a156c3628f24e24e0620c3a9590bcfd28dae original.o
+e5a93b51ccd50150bad9643db59968a9f33de670c5d5678ba066e503c9108019 client.o
+1e62b010515c2dea5300fae2b23a043c606a0987c07b8d972ab1edc9c079eaab pioneer-q38-recurrent-DEBUG71-VALIDATION-ONLY
+PASS separate Haiku riscv64 DEBUG71 CPU-reference/source+actual-ioctl client compile/link/max USER frame17552
+PASS client object has NO inline private CPU products,native context,canonical mutable-bank geometry or GDN-owner implementation
+BUILD/INSPECT ONLY;NO installation,execution,device access,physical/full-model/Work/TPS qualification

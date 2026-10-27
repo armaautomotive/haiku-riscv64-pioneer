@@ -1,0 +1,32 @@
+START QRB1 actual matrix1 role10 stage2/prior closed matrix jobs0
+PASS QRB1 actual initial RMS5120 BIT-EXACT -> alpha/beta/Z/QKV
+START QRB1 actual matrix2 role11 stage3/prior closed matrix jobs3
+START QRB1 actual matrix3 role5 stage4/prior closed matrix jobs6
+START QRB1 actual matrix4 role6 stage5/prior closed matrix jobs125
+PASS QRB1 actual QKV ->640 Conv groups ->96 paired GDN/private NEXT+6144 gated;independent arithmetic
+START QRB1 actual matrix5 role13 stage8/prior closed matrix jobs244
+PASS QRB1 actual6144 gated F32 -> actual ROOT Q8 quantization/output projection;NO host intermediate
+START QRB1 actual matrix6 role2 stage10/prior closed matrix jobs363
+PASS QRB1 original residual+post-RMS5120 BIT-EXACT -> actual Q4 gate/up
+START QRB1 actual matrix7 role3 stage11/prior closed matrix jobs482
+START QRB1 actual matrix8 role4 stage13/prior closed matrix jobs601
+PASS QRB1 actual SiLU(gate)*up17408/strict independent error bound -> actual Q4 down
+PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/952 channel refusals;NOT native STOP/cleanup authority
+PASS actual QRB whole instruction RUN BEFORE any validation readback/STOP/hold/fault;NO fabricated ready context
+PASS actual QRB readback fault1/real STOP+120holds/ALL owners retained ZERO following IO/restore/retry/caller output
+PASS actual QRB readback fault2/real STOP+120holds/ALL owners retained ZERO following IO/restore/retry/caller output
+PASS actual QRB readback fault3/real STOP+120holds/ALL owners retained ZERO following IO/restore/retry/caller output
+PASS actual QRB readback fault4/real STOP+120holds/ALL owners retained ZERO following IO/restore/retry/caller output
+PASS actual QRB readback fault5/real STOP+120holds/ALL owners retained ZERO following IO/restore/retry/caller output
+PASS actual QRB readback fault6/real STOP+120holds/ALL owners retained ZERO following IO/restore/retry/caller output
+PASS actual QRB readback fault7/real STOP+120holds/ALL owners retained ZERO following IO/restore/retry/caller output
+PASS actual QRB readback fault8/real STOP+120holds/ALL owners retained ZERO following IO/restore/retry/caller output
+PASS actual QRB readback fault9/real STOP+120holds/ALL owners retained ZERO following IO/restore/retry/caller output
+PASS actual QRB readback fault10/real STOP+120holds/ALL owners retained ZERO following IO/restore/retry/caller output
+PASS actual QRB readback fault11/real STOP+120holds/ALL owners retained ZERO following IO/restore/retry/caller output
+PASS actual QRB readback fault12/real STOP+120holds/ALL owners retained ZERO following IO/restore/retry/caller output
+PASS actual QRB readback fault13/real STOP+120holds/ALL owners retained ZERO following IO/restore/retry/caller output
+PASS actual QRB readback fault14/real STOP+120holds/ALL owners retained ZERO following IO/restore/retry/caller output
+PASS actual QRB readback fault15/real STOP+120holds/ALL owners retained ZERO following IO/restore/retry/caller output
+PASS actual QRB readback fault16/real STOP+120holds/ALL owners retained ZERO following IO/restore/retry/caller output
+PASS DISTINCT recurrent validation readback/ACTUAL whole instruction owner+STOP+120holds/5fixed NoC READ packets/capture5120/full original restoration+second proof/16genuine readback faults+5inert aliases;RAW endpoints SIMULATED,NOT genuine native/card/Work/TPS qualification
