@@ -7,8 +7,9 @@ Main fresh-boot lifecycle test terminal0/PASS: two complete dense blocks,
 N1/layer3 then N33/layer7, SAME ROOT and119 actual QMW1 instruction workers,
 283 refusal branches, real119 STOP jobs and a separate ROOT stop receipt.
 Independent clean lifecycle run also terminal0/PASS, byte-identical stdout.
-New canonical-command main/clean actual-instruction runs are also LIVE;
-do not report them as passed until their own terminal0 results arrive.
+Canonical-command main/clean actual-instruction runs also terminal0/PASS,
+with byte-identical stdout: two whole blocks plus119 real STOPs and ROOT
+terminal, using the exact canonical recipes and cache HEAD-major addresses.
 Last actual whole-model rate remains0.207893161tok/s;20tok/s is UNMET.
 
 Changes
@@ -50,8 +51,8 @@ UINT32_MAX), performs a complete second physical pass BEFORE first write,
 installs/verifies all code, and supports complete never-launched restore
 with another full proof. Main+clean positive and50 fault/29 precondition
 refusal checks pass using simulated IO. This is not execution/STOP cleanup.
-The actual PioneerSessionIO does not supply the new MixedLiveMemoryScope
-methods; this component cannot borrow old69 native permission.
+The subsequent native held-context integration below supplies DISTINCT
+MixedLiveMemoryScope methods; this component never borrows old69 permission.
 
 Canonical command plan
 ----------------------
@@ -75,6 +76,9 @@ objects are heap members, not25KiB kernel locals. The compiler caught an
 existing misleading-indentation warning in DenseProjectionPlan; adding
 braces on the SAME line fixes it without shifting kernel prefix locations.
 Canonical-command device-instruction tests are tracked separately.
+Their completed main/clean raw stdout is
+qwen38-mixed-live-canonical-20261027.log, SHA256
+0e4a7d38cbf0e26ddae49be67b0acd466814453aafe838869a19aa3650221c8f.
 
 Completed main raw lifecycle stdout:
 qwen38-mixed-live-block-root-20261027.log, SHA256
@@ -97,8 +101,10 @@ Unchanged oldQMP1 instruction regression terminal0:8matrices/142refusals.
 
 Remaining work -- do NOT promote this checkpoint to Work
 ------------------------------------------------------
-Genuine native source/input-producer binding, complete current physical
-mapping/exclusivity, GDDR/NoC/Tensix/host/PCI/clock journals and lifetime,
+The initial genuine native held context and mapping are implemented and
+compiled below, but their binding/held-factory semantic runtime and fault
+qualification are still owed. Complete execution/input-producer handoff,
+GDDR/NoC/Tensix/host/PCI/clock journals and lifetime,
 launch/real STOP/all120holds/restore/sealed END still need integration and
 qualification. A public flag, layout, test result or old closed prefix is
 not a substitute. Full64-layer GDN+dense scheduling, recurrent/KV/token
@@ -108,6 +114,54 @@ speculative-frontend nature of0xffb13140. Current offline byte fixtures
 return executed PCs; they do not establish that every non-wait silicon
 snapshot is a valid negative execution proof. No hardware failure from
 this new image has been observed, since it has not been installed/run.
+
+Native held-context integration -- NOT a driver or execution result
+-----------------------------------------------------------------
+Distinct private PioneerQ38MixedLiveNativeState retains the SAME actual
+FD/context/hash+upload ledgers, model identity, token/bank, team/call-thread,
+completed genuine embedding producer, normal BUSY clock and ALL host
+leases. Constructor/destructor/phase fields are private. Source checks are
+actual PioneerSessionIO/PioneerStoreContext implementations, not ready bits
+or an old69 scope. Fixed layer3/position0 command DATA deliberately exercises
+only a standalone dense operator from genuine embedding input; it does NOT
+claim that preceding GDN layers executed or publish a model token.
+
+Actual class-body L1 mapping covers four exact new physical aliases:
+19020000/8192,19040000/131072,19060000/57344,190ac000/868352.
+Logical per-word ROOT/peer snapshot bounds remain narrower than aliases;
+existing stack/panel/trailer mappings are separately retained. Read/write
+reject selected-core/BAR/map drift, foreign words and partial maps. The
+all120 mapping test passes11398712 exact word roundtrips and988 inert
+refusals, including UINT32_MAX originals and all8 partial-map failures.
+Main+independent clean outputs are identical. No retry on map failure.
+
+Native prepare creates the real held dispatch/NoC leases, derives canonical
+commands from actual participant sources, maps and invokes the new complete
+held L1 journal. Close is ONLY CloseHeldNoLaunch. Unsafe()/retention/END and
+clean destructor lifetimes are integrated. There is NO mixed RUN, reset/
+start or block publication entry; full execution/STOP/HOLD ownership is next.
+Failure follows the existing memory-only context/graph/clock/host quarantine;
+the new state also observes the faulted genuine prefix, retaining every map.
+
+Actual kernel SDK compile passes in main and independent clean trees with
+identical object000d0e26ce617d890cafdf7b169010d05ac103b101a5b5d9451bce17517a6c60,
+max new frame1200B. All conventional driver ABI symbols are absent. Private
+renamed ACTUAL setup and closed storage bodies are retained, so real scope
+checks cannot optimize into constant false. Five independent inert controls
+are machine-code-identical to refusal/null/return controls. Scope instruction
+bodies are explicitly checked NOT to be those constant controls. Private
+actual setup bodies WOULD perform IO if invoked: tools only compile/inspect
+this object, never link, install or invoke it. NODRV is not native runtime
+qualification. Role interlocks pass165 cases/20 parents, six renamed ABI
+names, exact compile tag, defined0 and late reinclusion/CPU/Work/image/old69
+refusals. Initial dead-global constant-false compile witness was rejected and
+replaced; an unrelated existing large legacy dispatcher was excluded by
+the new closed storage-only routing rather than relaxing frame limits.
+A genuine PioneerQ38GdnCallScope->actual zero+embedding->new native held
+prepare/close chain is also instantiated from the real cookie, without
+caller assignments to private call-thread/global-FD/readiness fields.
+It is compiled/inspected only, not invoked; positive native binding/held
+execution and containment tests are still required before any card use.
 
 No card program/driver install, relay, mains, SD or hardware change was
 performed for this checkpoint. Read-only physical status at00:52 UTC:

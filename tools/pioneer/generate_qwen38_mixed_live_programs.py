@@ -36,7 +36,7 @@ lines+=['static inline bool PioneerQ38MixedLiveProgramWord(unsigned w,uint32_t a
  '  const uint32_t* data=nullptr;','  if(!w)data=section?PioneerQ38MixedLiveRootCode:PioneerQ38MixedLiveRootBoot;',
  '  else switch(section){']
 for i,(_,_,_,label) in enumerate(units[2:]):lines+=['   case '+str(i)+':data=PioneerQ38MixedLive'+label+';break;']
-lines+=['  }','  if(!data)return false;output=data[(address-span.address)/4];return true;',' }',
+lines+=['  }','  if(!data){return false;}output=data[(address-span.address)/4];return true;',' }',
  ' return false; // caller output untouched;NO zero-filled gaps','}','#endif','']
 out.write_text('\n'.join(lines))
 print(hashlib.sha256(out.read_bytes()).hexdigest()+' '+str(out)+';DATA ONLY/ALL10 complete sections/NO native or launch grant')

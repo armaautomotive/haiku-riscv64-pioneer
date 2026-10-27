@@ -4396,7 +4396,7 @@ static inline bool PioneerQ38MixedLiveProgramWord(unsigned w,uint32_t address,ui
    case 6:data=PioneerQ38MixedLivePeerService;break;
    case 7:data=PioneerQ38MixedLivePeerGdn;break;
   }
-  if(!data)return false;output=data[(address-span.address)/4];return true;
+  if(!data){return false;}output=data[(address-span.address)/4];return true;
  }
  return false; // caller output untouched;NO zero-filled gaps
 }
