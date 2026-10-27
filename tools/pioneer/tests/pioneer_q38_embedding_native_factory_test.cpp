@@ -5,6 +5,9 @@
 #define PIONEER_Q38_PROJECTION_ZERO_FIXTURE_ONLY
 #include "pioneer_q38_projection_zero_controller_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38EmbeddingNativeState.h"
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveNativeState.h"
+#endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeState.h"
 #endif
@@ -13,7 +16,7 @@
 #endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38NonRootHeld.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchBootstrap.h"
-#if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT)
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputLearned.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GraphMutableBanks.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnZeroController.h"
@@ -93,6 +96,11 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  }
 #endif
  PioneerStoreContext* q38MutableContext=nullptr;
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
+ bool q38MixedLiveMemoryMapAttempted=false;
+ bool MixedLiveCallScopeMatches();bool MixedLiveBaseScope();
+ bool MixedLiveMemoryMappingStable(unsigned){assert(false && "binding-only fixture never admits mapping/closed execution");return false;}
+#endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
  bool ResidentLayerCallScopeMatches();bool ResidentLayerBindSourceScope();
  bool ResidentLayerInitializationBaseScope();bool ResidentLayerInitializationSourceScope(bool,bool);
@@ -416,6 +424,9 @@ struct FactoryClock{
 };
 struct PioneerStoreContext {
  PioneerSessionIO& io;PioneerQ38EmbeddingNativeState* q38EmbeddingModel=nullptr;
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
+ PioneerQ38MixedLiveNativeState* q38MixedLiveNative=nullptr;
+#endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
  PioneerQ38ResidentLayerNativeState* q38ResidentLayerNative=nullptr;
 #endif
@@ -426,7 +437,7 @@ struct PioneerStoreContext {
  PioneerOutputBufferLease& bulkHost;PioneerWideOutputLease& wideHost;tt_host_page_result& host;
  struct D{tt_dram_samples_result& dram;};struct B1{D baseline;tt_compute_noc_result& noc;};struct B2{B1 baseline;};struct B3{B2 baseline;};B3 baseline;
  uint8* initialized;uint32 hash=0,*hashes=&hash;
-#if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE)
+#if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT)
  // Real production pointee types for complete-role CPU END/retention
  // gates. This role never constructs any competing legacy FFN owner.
  PioneerQ38CanonicalModelPlan* q38FfnModelPlan=nullptr;PioneerQ38GraphMutableBanks* q38GraphMutable=nullptr;
@@ -452,6 +463,9 @@ struct PioneerStoreContext {
   span.closed=true;io.q38MutableContext=this;io.dram.target=&owner.dram;io.noc.target=&owner.noc;
  }
  ~PioneerStoreContext(){
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
+  delete q38MixedLiveNative;
+#endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
   delete q38ResidentLayerNative;
 #endif
@@ -462,6 +476,10 @@ struct PioneerStoreContext {
  } // SIMULATED context;real unknown contexts are retained,never destroyed
  bool Unsafe(bool zero=false,bool graph=false,bool controlledEmbedding=false){
   (void)zero;(void)graph;
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveNativeUnsafe.inc"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveNativeCohortUnsafe.inc"
+#endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerNativeUnsafe.inc"
 #endif
@@ -482,7 +500,7 @@ static PioneerProbeCookie* sRuntimeOwner=nullptr;
 static bool sColdRecoveryRequired=false,sReloadQuiesced=false,sBankStorageOnly=true;
 static uint64 sReloadGeneration=4;static const void* sQ38LocalDeltaOwner=nullptr;
 static int currentThread=42;static int find_thread(void*){return currentThread;}
-#if defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER)
+#if defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT)
 static int currentTeam=7;static bool failThreadInfo=false;
 struct thread_info{int team=-1;};
 static int get_thread_info(int thread,thread_info* info){if(failThreadInfo || thread!=currentThread || !info)return -1;info->team=currentTeam;return B_OK;}
@@ -516,6 +534,9 @@ static int get_thread_info(int thread,thread_info* info){if(failThreadInfo || th
 #endif
 #endif
 #include "embedding_factory_factory.inc"
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
+#include "mixed_live_factory_bind.inc"
+#endif
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
 #include "rms_factory_factory.inc"
 #endif
@@ -532,6 +553,9 @@ static bool EndFactory(PioneerStoreContext& c){bool clean=true;tt_resident_sessi
 }
 #else
 static bool EndFactory(PioneerStoreContext& c){bool clean=true;tt_resident_session_result result={};
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveNativeEnd.inc"
+#endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerNativeEnd.inc"
 #endif

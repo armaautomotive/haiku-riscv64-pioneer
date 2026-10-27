@@ -16,6 +16,7 @@ bool PioneerSessionIO::MixedLiveBaseScope(){
   || runtimeCore>=120 || !runtimeMapped || q38SpanAllowed || c->dispatchOwnerRetained || !c->initialized || !c->hashes
   || m->ledger!=c->initialized || !m->identity.Valid() || m->identity.driverGeneration!=sReloadGeneration
   || m->position || m->token>=248320 || m->bank>=7 || m->phase!=PioneerQ38EmbeddingNativeState::Complete || !m->Closed()
+  || !PioneerQ38MixedLiveNativeState::CompletedInputMatches(*m)
   || !m->embedding.Completed() || !m->embedding.MatchesNativeOwner(dram,noc,c->banks,m->graph,m->plan,m->identity,c->initialized,PioneerResidentBanks::Pages)
   || !m->zero.saved || !m->zero.closed || m->zero.dirty || m->zero.ready || m->zero.running || m->zero.unsafe || m->zero.nonce!=2
   || m->zero.owner!=m->graph.Projection(m->identity) || m->zero.banks!=&c->banks || m->zero.proof!=&dram || !(m->zero.identity==m->identity)
@@ -34,13 +35,13 @@ bool PioneerSessionIO::MixedLiveBaseScope(){
   || c->wideHost.pending || c->wideHost.quarantined || c->wideHost.released || wideQuarantined)return false;
  if(state){
   if(!state->MatchesBinding(*c,*m,sRuntimeOwner,c->hashes,sRuntimeOwner->team,c->initialized,sReloadGeneration))return false;
-  if(state->phase==PioneerQ38MixedLiveNativeState::Bound){if(c->q38Dispatch || c->q38DispatchRoutes || fleetEnabled)return false;}
+  if(state->phase==PioneerQ38MixedLiveNativeState::Bound){if(runtimeCore || c->q38Dispatch || c->q38DispatchRoutes || fleetEnabled)return false;}
   else if(!c->q38Dispatch || c->q38Dispatch->worker[0].master!=&c->lease || !fleetEnabled || c->q38Dispatch->unsafe
    || c->q38Dispatch->closed || c->q38Dispatch->booted || c->q38Dispatch->bootAttempted)return false;
   if(c->q38Dispatch && c->q38Dispatch->rootRunning && !state->ControlsCohort(c->q38Dispatch))return false;
   if(state->phase>=PioneerQ38MixedLiveNativeState::MemoryPreparing
    && (!state->memory || !state->plan || !c->q38DispatchRoutes || c->q38Dispatch->prepared!=120 || !state->plan->Matches(m->plan)))return false;
- }else if(c->q38Dispatch || c->q38DispatchRoutes || fleetEnabled || q38MixedLiveMemoryMapAttempted)return false;
+ }else if(runtimeCore || c->q38Dispatch || c->q38DispatchRoutes || fleetEnabled || q38MixedLiveMemoryMapAttempted)return false;
  const auto& clock=c->q38Clock.Snapshot();
  return c->q38Clock.RequiresExplicitEnd() && clock.state==TT_ARC_CLOCK_BUSY_VERIFIED && clock.busy_requested && clock.busy_acknowledged
   && !clock.restored && clock.busy_mhz && clock.busy_mhz<=1400 && !c->Unsafe(true,false,true);

@@ -20,6 +20,9 @@ struct PioneerQ38EmbeddingResult {
 };
 class PioneerQ38EmbeddingController {
  friend class PioneerQ38ProjectionGraphOwner;
+#ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
+ friend class PioneerQ38MixedLiveNativeState;
+#endif
 #ifdef PIONEER_Q38_LEARNED_RMS_NATIVE
  friend class PioneerQ38LearnedRmsController;
 #endif

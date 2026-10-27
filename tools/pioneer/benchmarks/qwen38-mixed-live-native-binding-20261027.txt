@@ -1,0 +1,76 @@
+Qwen27B: exact native input-producer binding
+2026-10-27 UTC -- source/semantic checkpoint, NOT a physical driver run
+
+Result
+------
+Main and independent clean tests both terminal0/PASS, byte-identical stdout:
+281 refusals, real retained zero+QPE1 controllers and emitted instructions,
+actual NEW native bind/base/Unsafe/incomplete-END bodies. OS, mapping,
+clock and physical byte endpoints remain simulated. No mixed mapping,
+mixed launch, complete native factory/END or silicon throughput is proved.
+Last real whole-model0.207893161tok/s unchanged;20tok/s remains UNMET.
+
+Bug reproduced and fixed
+------------------------
+After actual embedding completion, changing the prefix's selected token
+from0 to the valid value1 still made MixedLiveBaseScope return true. The
+previous native check authenticated the controller/source/initialization,
+but did not compare those mutable selectors with the opaque completed
+producer's own token/position/bank. A new bind could otherwise capture
+selector DATA that did not describe its genuine input producer. This new
+path was compile-only and never installed; no card failure is claimed.
+
+PioneerQ38MixedLiveNativeState now privately checks the actual embedding
+controller's MatchesCompleted proof for the SAME graph, plan, identity,
+token, position and bank. Both the initial scope and later retained binding
+require that match. Only this new, gated native state receives conditional
+friend access; no public producer setter, ready flag or CPU product exists.
+Unbound and Bound scopes also require ROOT0 until the genuine cohort starts
+preparation; other cores are not admitted merely because their index<120.
+
+Coverage
+--------
+The test reaches completion through actual BindQ38EmbeddingModel,
+InitializeQ38EmbeddingModel and RunQ38EmbeddingModel, never by setting a
+completed/ready/phase facade. It then exercises valid-but-wrong token/bank,
+all source/cookie/team/thread/identity/clock/host/lease/competing-owner gates,
+exact learned-page byte1 for every extent of all11 dense-layer tensors,
+and post-bind replacement cookie/hash address/selector/identity rejection.
+Private construction/destruction/copy restrictions compile-check. A new
+unfinished native owner refuses END before mapping or legacy cleanup;
+the actual retention body quarantines prefix/clock/all host owners with
+ZERO following device MMIO/map/reset/read/write/retry. The binding-only test
+mapping callback asserts if reached; it never supplies a mapping grant.
+Ordinary simulated-fixture teardown is not native destruction qualification.
+
+Existing embedding factory regression: all7 source banks/rotated workspace
+banks pass full zero/QPE1/root restore/clean old END, plus7 fault cases.
+Native-role165 interlock cases pass. Actual whole kernel-context main+clean
+objects are byte-identical, max new frame1200B; old65=61faa093 and inert
+NODRV=9fcf1f7f controls remain identical. No device program bytes changed.
+
+Evidence
+--------
+qwen38-mixed-live-native-binding-20261027.log
+ SHA256254f81c27d5cfa84bbff22fc3df042bc8a34693bb0e4785d8d88574dac3e8758
+qwen38-mixed-live-native-producer-sdk-20261027.log
+ main+clean object SHA2560b55dd8d20b7d81a8b97cc6608c5496d9b2633a4c1ef698a74010feb933b90e8
+Initial failing source test reports UNEXPECTED_NATIVE_BASE_SCOPE refusal0
+before any mixed bind/map/launch. Main/clean corrected tests pass.
+
+Next -- still required
+----------------------
+Connect the genuine native held/execution factories and sealed END to the
+complete120-core instruction/byte transport, including ownership transitions
+and containment faults. Then add the separate guarded original-weight
+validation entry/client and qualify on physical hardware. Full64-layer
+GDN+dense scheduling, recurrent/KV/token commits, final norm/vocabulary/
+sampling, no-reference Work/Assistant integration and real performance
+optimization/measurement remain unfinished. Do not promote this to Work.
+
+Preservation
+------------
+Read-only SSH status during this checkpoint: driver55/tag2026102100010012,
+generation4/quiesced0/cold0/active_owner0. No driver installation, relay,
+SD/mains/hardware/disk changes. SDK inputs read-only; output in/private/tmp.
+Dirty llama.cpp and unrelated untracked FlashNext files untouched.

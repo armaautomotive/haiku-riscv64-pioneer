@@ -29,6 +29,9 @@ class PioneerQ38MixedLiveNativeState {
  friend bool PrepareQ38MixedLiveNativeExecution(PioneerStoreContext&,PioneerQ38MixedLiveResult&);
  friend bool RunQ38MixedLiveNativeExecution(PioneerStoreContext&,PioneerQ38MixedLiveResult&);
  friend bool CloseQ38MixedLiveNativeExecution(PioneerStoreContext&,PioneerQ38MixedLiveResult&,PioneerQ38MixedLiveMemoryResult&);
+ static bool CompletedInputMatches(const PioneerQ38EmbeddingNativeState& m){
+  return m.embedding.MatchesCompleted(m.graph,m.plan,m.identity,m.token,m.position,m.bank);
+ } // actual opaque producer proof; selector DATA alone cannot retarget it
  enum Phase {Bound,DispatchPreparing,MemoryPreparing,MemoryInstalled,ExecutionPreparing,ExecutionReady,ExecutionComplete,ExecutionClosing,MemoryClosing,MemoryClosed};
  PioneerStoreContext* const context;
  PioneerQ38EmbeddingNativeState* const prefix;
@@ -59,7 +62,8 @@ public:
   return context==&c && prefix==&m && cookie==fd && fd && hashes==h && h && team==owner && owner>=0
    && ledger==learned && learned && m.ledger==ledger && m.identity==identity && identity.Valid()
    && identity.driverGeneration==generation && generation && m.token==token && token<248320 && !m.position
-   && m.bank==bank && bank<7 && m.phase==PioneerQ38EmbeddingNativeState::Complete && m.Closed() && !Unsafe();
+   && m.bank==bank && bank<7 && m.phase==PioneerQ38EmbeddingNativeState::Complete && m.Closed()
+   && CompletedInputMatches(m) && !Unsafe();
  } // necessary binding only; authentic native scope and physical guards ALSO mandatory
  void Fault(){unsafe=true;if(memory)memory->Fault();} // MEMORY ONLY;retain all maps,source,clock,hosts
 };

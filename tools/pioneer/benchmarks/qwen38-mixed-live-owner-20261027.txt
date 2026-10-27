@@ -104,8 +104,13 @@ Driver/runtime readiness checklist -- still required
 ---------------------------------------------------
 [x] Finish exact-current-source main+clean actual-owner and PC-observation
     instruction tests, plus final clean fault/precondition checks.
-[ ] Qualify genuine native binding, lifetime/fault containment and sealed END
-    semantics; compile-only scope bodies are not runtime evidence.
+[x] Qualify initial native binding/incomplete-END semantic refusals against
+    actual zero+embedding producers with simulated OS/MMIO endpoints; see
+    qwen38-mixed-live-native-binding-20261027.txt. This found and fixed a
+    valid-but-wrong producer-selector gap, not a physical card failure.
+[ ] Qualify the complete genuine native held/execution factories, lifetime/
+    fault containment and sealed END through all120 instruction machines;
+    initial binding tests and compile-only bodies are not that evidence.
 [ ] Add a separate guarded original-weight numerical-validation entry/client,
     then verify this complete dense operator on physical P100A hardware.
     No default Work/Assistant promotion before that passes.
