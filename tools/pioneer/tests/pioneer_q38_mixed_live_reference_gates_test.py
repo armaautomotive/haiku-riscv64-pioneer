@@ -37,4 +37,11 @@ for key in sorted(set(re.findall(r'defined\(([^)]+)\)',interface_prefix))):
 source_include='#include "'+str(interface)+'"\n'
 check({},True,source_include)
 check({},False,source_include+'#define PIONEER_Q38_WORK_INFERENCE 0\n'+source_include)
+raw_adapter=here/'pioneer_q38_mixed_live_original_bytes.h'
+raw_include='#include "'+str(raw_adapter)+'"\n'
+check({},True,raw_include)
+for key in sorted(set(re.findall(r'defined\(([^)]+)\)',interface_prefix))):
+ for value in ('0','1'):
+  check({key:value},False,raw_include)
+  check({},False,raw_include+'#define '+key+' '+value+'\n'+raw_include)
 print('PASS distinct dense ORIGINAL CPU reference gates'+str(count)+'/exact missing defined0 mixed late roles;NO native/image/client/oldDEBUG/Work capability')

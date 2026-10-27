@@ -1,0 +1,3 @@
+START original model SHA/source/reference preparation;NO accelerator context or Work mode
+READY authenticated original raw bytes259120128/pages63266/referenceReads3717/private reference fingerprintec4e50bb1a601765;NO expected products exposed
+PASS original-byte source refusals4702/partial-read failure atomically unpublished/ALL12 descriptor mutations+all7fields/overflow+cross-end+unselected tensors+state+workspace;NO device IO

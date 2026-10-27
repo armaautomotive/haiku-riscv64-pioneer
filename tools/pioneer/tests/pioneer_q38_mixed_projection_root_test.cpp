@@ -6,8 +6,10 @@
 #include "../PioneerQ38MixedProjectionRootLayout.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DenseProjectionPlan.h"
 #include "pioneer_q38_projection_input_reference.h"
+#include "../PioneerQ38OriginalWeightBytes.h"
 namespace Q=PioneerQ38MixedProjectionRootLayout;
 struct ProjectionRootMachine:MixedRootMachine {
+ ProjectionExecutionLearnedBytes* originalLearned=nullptr; // TEST raw source only; never numeric products
  std::unique_ptr<PioneerQ38CanonicalModelPlan> canonical;
  std::array<uint32_t,64> descriptor={};
  std::array<std::array<uint32_t,8>,119> parts={};std::array<uint32_t,119> rows={};
@@ -54,7 +56,10 @@ struct ProjectionRootMachine:MixedRootMachine {
   for(unsigned i=0;i<k;i++)p.vector[i]=uint16_t(p.root.at(Q::Native+i/2*4)>>((i%2)*16));
   for(unsigned i=0;i<p.scales.size();i++)p.scales[i]=p.root.at(Q::Scales+i*4);
   for(unsigned t=0;t<p.tiles.size();t++){
-   for(unsigned row=0;row<16;row++){
+   if(originalLearned){
+    assert(originalLearned->Ready() && originalLearned->Read(route,base+t*unsigned(p.tile.size()),p.tiles[t].data(),unsigned(p.tile.size()))
+     && originalLearned->Ready());
+   }else for(unsigned row=0;row<16;row++){
     unsigned global=rows[w]+t/(k/p.count)*16+row;std::vector<uint8_t> raw(PioneerQ38BlockBytes(type),0);uint16_t half=uint16_t(0x0800+(global%4)*0x80);
     if(type==8){raw[0]=uint8_t(half);raw[1]=uint8_t(half>>8);for(unsigned i=0;i<32;i++)raw[2+i]=uint8_t(int((t*17+global*19+i*37)%255)-127);}
     else if(type==12){

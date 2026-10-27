@@ -1,0 +1,72 @@
+Qwen27B: original-weight instruction comparison harness
+2026-10-27 UTC -- OFFLINE TEST ONLY; NO driver replacement or speedup
+
+Completed byte-source qualification
+----------------------------------
+The new unflagged coordinator authenticates the SAME full original GGUF
+through the existing separate CPU-source TU, prepares/seals its private
+reference BEFORE any instruction machine, and stages259120128 original
+learned bytes in63266 bounded page reads. These are the token0 sixteen-row
+embedding tile and ALL54 selected spans (embedding+53 dense-layer3 spans).
+All12 descriptor snapshots are captured BEFORE the first page read and
+bracket every page/read publication, including later/not-yet-used tensors.
+NO CPU expected vector is exposed to the coordinator or instruction TUs.
+Reference fingerprint remains ec4e50bb1a601765;reference reads remain3717.
+
+Main and independent clean byte-source runs are BOTH terminal0/PASS, with
+byte-identical stdout.4702 refusals cover partial source-read failures,
+all12 descriptors/all7 identity/geometry fields, pointer/address overflow,
+cross-end reads, the second embedding tile, unselected tensors and ALL
+state/workspace proposals. Failed staging is atomically unpublished.
+Main and clean role isolation checks BOTH pass177 cases, including late
+and defined0 native/kernel/image/Work inclusion of the new raw adapter.
+The instruction TU accepts only the neutral original-BYTES interface.
+
+Saved terminal raw logs, alongside this record:
+qwen38-mixed-live-original-bytes-20261027.log
+ SHA2563e73773368518959e6942e80fc9e7cbab851d40d5af4e4b9cd596cc694a95786
+qwen38-mixed-live-original-byte-gates-20261027.log
+ SHA2560e1effddc600afae3a2038e0798b812d0d5ec2f7d36d511883b235166e4a523f
+
+Complete numerical comparison -- STILL PENDING
+---------------------------------------------
+Two actual-instruction runs are live at this checkpoint; no terminal result
+or complete-block numerical PASS is claimed. The earlier main coordinator
+predates the added refusal checks; its actual math/raw transport is the
+same. The independent clean run includes the final refusal checks. Their
+process/session handles are retained for continuation; observation timeout
+is NOT terminal and is not a reason to restart them.
+
+Both runs so far execute actual original-weight QPE1 embedding and QBL1/
+SAME119 QMW1 instruction programs. Query/key/value/output projections,
+attention, original residual addition and post-attention RMS pass their
+component observers. Feed-forward completion, real119STOP/ROOT terminal and
+the final comparison against the private original CPU reference remain
+pending. No expected products are uploaded at any stage. The initial
+canonical-staging log says synthetic because the old fixture first stages
+its command geometry; the new harness replaces ALL learned norm/matrix
+endpoints and original input bytes before execution.
+
+The runner pins the root+worker images and QPE1/QDP/QDA code AND boot bytes.
+Separate TUs keep operand-dependent VM layouts distinct and retain ASAN,
+UBSAN,strict warnings and ffp-contract=off. A final numerical mismatch
+returns failure. No tolerance is fitted from observed results; ideal-libm
+versus instruction-policy differences still need separate diagnosis.
+
+Scope / preservation / next action
+----------------------------------
+This is a standalone layer3/position0 operator from a genuine instruction-
+produced embedding, NOT a valid GDN0..2/model prefix, native factory grant,
+physical P100A comparison, full64-layer inference, Work or silicon timing.
+Last real whole-model rate remains0.207893161tok/s;20tok/s remains UNMET.
+
+Read-only Pioneer SSH confirms driver55/tag2026102100010012/generation4/
+quiesced0/cold0/active_owner0/open_count1/guard1. NO new driver,Assistant,
+model,relay,SD,mains,hardware connection or disk change. SDK untouched.
+Dirty llama.cpp and unrelated untracked FlashNext files remain untouched.
+
+Next:poll the SAME live instruction-test handles; inspect the actual final
+comparison. Do not promote or install on a provisional component result.
+Then finish original-byte/native validation entry/readback and final
+resource-release qualification before physical testing, followed by the
+full64-layer/state/token/sampling/Work integration and measured optimization.
