@@ -78,10 +78,12 @@ qwen38-mixed-live-reference-gates-20261027.log
 Remaining work / physical preservation
 -------------------------------------
 Only the CPU checker was copied into its own new Pioneer diagnostic directory.
-Its Haiku smoke test is running (parent2927/hash2929;SSH handle tracked in
-q38MixedLiveReferenceWork20261027). It reads the existing model and opens NO
-accelerator context. At this record, cross-architecture runtime completion
-is NOT yet claimed; its process must be polled, not restarted for a timeout.
+The Haiku run is now terminal0/PASS:3717 reads and the SAMEec4e50bb1a601765
+fingerprint as both Mac runs. It read the existing original model and opened
+NO accelerator context. The actual SSH/test handle reached terminal0; no
+process was restarted for an observation timeout. Saved raw runtime output:
+qwen38-mixed-live-reference-haiku-20261027.log. This is cross-CPU reference
+agreement, NOT a physical P100A comparison or inference-speed measurement.
 
 Still required: original-byte instruction-machine/card numerical comparison,
 distinct guarded native validation readback/entry/client and actual final

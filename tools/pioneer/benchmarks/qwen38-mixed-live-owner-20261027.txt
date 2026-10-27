@@ -121,6 +121,7 @@ Driver/runtime readiness checklist -- still required
     No default Work/Assistant promotion before that passes.
     CPU-reference substep now passes original-file main+clean qualification;
     separate private source and identical Haiku SDK CPU checker also pass.
+    The real Haiku CPU run matches the Mac reference fingerprint exactly.
     This is NOT a physical GPU comparison. See
     qwen38-mixed-live-reference-20261027.txt for scope and remaining work.
 [ ] Integrate the valid64-layer sequence: all GDN and dense layers, genuine
