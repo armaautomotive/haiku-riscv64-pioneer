@@ -1,0 +1,2 @@
+PASS ORIGINAL fixed c600de03 FULL SHA/open file identity/all851 tensor schema;NO accelerator context
+PASS ORIGINAL dense-block ideal CPU reference/3717reads/12sealed tensors/actual Q8_0 QG+K+V/Q6_K O/Q4_K FFN/embedding+RMS+position0attention+originalresidual+FFN+final fingerprintec4e50bb1a601765 embeddingMax0.121606588 finalMax30.4298229;STANDALONE layer3fromembedding,NOT GDN0..2/full64/token/cardcomparison/Work/TPS

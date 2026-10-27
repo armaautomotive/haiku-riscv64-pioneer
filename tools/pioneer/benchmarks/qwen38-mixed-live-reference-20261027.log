@@ -1,0 +1,3 @@
+PASS independent dense ORIGINAL-row CPU pipeline zero0/3717reads/12sealedtensors/7matrices/Q8_0+Q6_K+Q4_K/embedding+RMS+position0attention+FFN+final fingerprintfd0f77c5aa71640c;NO device/reference feedback
+PASS independent dense ORIGINAL-row CPU pipeline zero1/3717reads/12sealedtensors/7matrices/Q8_0+Q6_K+Q4_K/embedding+RMS+position0attention+FFN+final fingerprint7d8a69419ab2f4b5;NO device/reference feedback
+PASS independent dense CPU reference half163488/quant48/typedmatrices3/refusals137/atomic publication and global metadata/epoch/rounding seal;NOT original-file or native/card/Work/full64/TPS qualification

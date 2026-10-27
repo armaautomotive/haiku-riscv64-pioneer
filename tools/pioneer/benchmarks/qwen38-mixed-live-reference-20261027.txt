@@ -1,0 +1,95 @@
+Qwen27B: independent ORIGINAL dense-block CPU reference and sealed source
+2026-10-27 UTC -- VALIDATION ONLY; NO new driver, GPU result or speedup
+
+Scope / result
+--------------
+Main and independent clean host tests are terminal0/PASS and byte-identical.
+The fixed full original GGUF is authenticated through the existing same-FD
+FULL SHA256 verifier and851-tensor schema, then an independent CPU reference
+computes embedding, initial RMS, Q/G/K/V, head norms, position0 attention,
+output projection, ORIGINAL residual/post-RMS, gate/up/SiLU/down and final
+hidden. It performs3717 bounded original-row reads, not a tiled/native input
+or expected-product upload. Final private fingerprint:ec4e50bb1a601765.
+
+This is the SAME standalone layer3/position0 operator used by the new native
+qualification, starting from embedding. It is NOT a valid GDN0..2/model
+prefix,64-layer execution, token generation or a physical P100A comparison.
+No CPU reference was added to Work and no default driver was changed.
+Last real whole-model0.207893161tok/s remains unchanged;20 UNMET.
+
+Important format correction
+---------------------------
+The actual original+canonical schemas use Q8_0 for Q/G,K,V, Q6_K for O and
+Q4_K for the FFN. Earlier informal notes calling every matrix Q4 were wrong.
+The new reference follows the authenticated actual schema and all3 formats.
+
+Independent arithmetic / source lifetime
+---------------------------------------
+- Original row-major Q4_K/Q6_K/Q8_0 decoding and panel16 accumulation use no
+  device unpacker, quantizer, RMS helper, software divider or sigmoid helper.
+  Q8_0 uses positive F16-rounded scales/ties-away; Q4_K/Q6_K use signed F32
+  scales/first absolute maximum/ties-even. No paired32 rounding substitution.
+- Host libm/IEEE half conversion, binary64 reduction and explicit host FMA
+  provide independent arithmetic. Position0 RoPE retains signed-zero FMA
+  semantics. Single-current-token attention uses F16 K/V and ideal-libm gates.
+- ALL12 descriptor snapshots (embedding+11dense tensors), model/vector
+  identity, epoch, source readiness and RNE are bracketed around EVERY read.
+  A mutation of a later/not-yet-read tensor cannot silently retarget it.
+- Full CPU results publish atomically after complete success. Strict final
+  comparison reports bit differences, nonfinite values, maximum error and
+  relative L2. passed requires exact equality: no tolerance is fitted from
+  observed card data. Ideal-vs-instruction-policy differences must be diagnosed
+  separately before any promotion, not relabeled as matching references.
+- A distinct CPU-only source TU privately owns the expected products. Its
+  consumer receives ONLY fixed-plan original weight pages, sealed original
+  metadata, a fingerprint and post-return reports. No expected vector getter,
+  caller plan, numeric input, accelerator FD or native permission is exposed.
+  Prepare+seal precedes context; repeats and premature reads/comparisons refuse.
+
+Tests / build
+-------------
+Host main+clean:163488 independent half cases,48 format/rounding cases,
+3 original-row typed matrix cases with independent panel16/high-precision
+checks,8 RMS/position0 signed-zero cases,137 source/metadata/rounding/pointer/
+atomic-comparison refusals,2 complete synthetic pipelines;136 role interlocks.
+Original-file and sealed-source main+clean runs both authenticate the fixed
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747 model,
+perform3717 reads and produce the sameec4e50bb1a601765 reference fingerprint.
+
+Haiku/RISC-V CPU-only diagnostic main+clean SDK builds are terminal0 and
+byte-identical. Initial GCC strict-warning failures were formatting/parenthesis
+warnings in the new code; repaired without disabling warnings or changing
+arithmetic. SDK inputs stayed read-only, output/private objects are in/tmp.
+ELF SHA2564bcfe7115f2f308b7313039bf9e5b6371b3891d39b5d494d77cc0571552507a3
+check.o SHA256fbf29e9424a3b4d96f90a3e813ca6f0597a547ba432721097c79b792ab03551b
+source.o SHA256da4093ac38ec1592e5742f07034f96be84101a6fbc31de97867a942402381f6e
+
+Saved raw logs / SHA256
+----------------------
+qwen38-mixed-live-reference-20261027.log
+ 816b4707a42cb81a5900b7daec170e0aabe48a3bd59c5687800ae4059fa692ad
+qwen38-mixed-live-original-reference-20261027.log
+ 3157397d4916638e5771149922c08b591dacafcce49be4e2d74c29ca76a0b249
+qwen38-mixed-live-original-source-20261027.log
+ 1bcd48d07c3ed0d491c6ae0597fe88c49cf541429196fc57241dc8b6b6665855
+qwen38-mixed-live-reference-gates-20261027.log
+ e0838458815d33b0eb2c2c505434084fda41b5778f4d10f734342d822983496c
+
+Remaining work / physical preservation
+-------------------------------------
+Only the CPU checker was copied into its own new Pioneer diagnostic directory.
+Its Haiku smoke test is running (parent2927/hash2929;SSH handle tracked in
+q38MixedLiveReferenceWork20261027). It reads the existing model and opens NO
+accelerator context. At this record, cross-architecture runtime completion
+is NOT yet claimed; its process must be polled, not restarted for a timeout.
+
+Still required: original-byte instruction-machine/card numerical comparison,
+distinct guarded native validation readback/entry/client and actual final
+clock/host lifetime qualification. NODRV must not become a loadable Work alias.
+Then valid64-layer GDN+dense scheduling, state/token commits, final norm/
+vocabulary/sampling, Work/Assistant integration and real speed optimization.
+
+Read-only Pioneer status:driver55/tag2026102100010012/generation4/cold0/
+quiesced0/active_owner0. No driver/Assistant replacement, relay, SD/mains/
+hardware connection or model-file change. Dirty llama.cpp and unrelated
+untracked FlashNext files remain untouched. Goal ACTIVE,20tok/s still UNMET.
