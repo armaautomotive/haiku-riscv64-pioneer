@@ -164,6 +164,7 @@ struct LiveOwnerFixture {
   unsigned touches=io.touches;assert(!PrepareOwner() && !RunOwner() && !CloseOwner() && io.touches==touches);
  }
 };
+#ifndef PIONEER_Q38_MIXED_LIVE_OWNER_FIXTURE_ONLY
 int main(int argc,char** argv){
  (void)&LiveOwnerUnusedInput;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
  assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--faults") || !strcmp(argv[1],"--preconditions"))));setvbuf(stdout,nullptr,_IOLBF,0);
@@ -215,3 +216,4 @@ int main(int argc,char** argv){
  }
  printf("PASS actual host owner synthetic endpoint faults%u/FIRST failed map/read/write retains journal+ALLhosts/NO laterIO/reset/restore/retry;NO native or arithmetic qualification\n",faults);
 }
+#endif

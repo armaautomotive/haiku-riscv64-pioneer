@@ -15,6 +15,10 @@ struct PioneerSessionIO;
 [[maybe_unused]] static bool PrepareQ38MixedLiveNativeExecution(PioneerStoreContext&,PioneerQ38MixedLiveResult&);
 [[maybe_unused]] static bool RunQ38MixedLiveNativeExecution(PioneerStoreContext&,PioneerQ38MixedLiveResult&);
 [[maybe_unused]] static bool CloseQ38MixedLiveNativeExecution(PioneerStoreContext&,PioneerQ38MixedLiveResult&,PioneerQ38MixedLiveMemoryResult&);
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+[[maybe_unused]] static bool CloseQ38MixedLiveNativeValidation(PioneerStoreContext&,PioneerQ38MixedLiveResult&,PioneerQ38MixedLiveMemoryResult&,
+ uint32_t*,unsigned,PioneerQ38MixedLiveReadbackResult&);
+#endif
 // Real retained context/source/cookie/team/thread/clock/host perimeter.
 // Private RUN/STOP/ALL120-holds/restore controller integration is compiled
 // only in the refusing NODRV qualification unit. No public execution entry,
@@ -29,6 +33,10 @@ class PioneerQ38MixedLiveNativeState {
  friend bool PrepareQ38MixedLiveNativeExecution(PioneerStoreContext&,PioneerQ38MixedLiveResult&);
  friend bool RunQ38MixedLiveNativeExecution(PioneerStoreContext&,PioneerQ38MixedLiveResult&);
  friend bool CloseQ38MixedLiveNativeExecution(PioneerStoreContext&,PioneerQ38MixedLiveResult&,PioneerQ38MixedLiveMemoryResult&);
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+ friend bool CloseQ38MixedLiveNativeValidation(PioneerStoreContext&,PioneerQ38MixedLiveResult&,PioneerQ38MixedLiveMemoryResult&,
+  uint32_t*,unsigned,PioneerQ38MixedLiveReadbackResult&);
+#endif
  static bool CompletedInputMatches(const PioneerQ38EmbeddingNativeState& m){
   return m.embedding.MatchesCompleted(m.graph,m.plan,m.identity,m.token,m.position,m.bank);
  } // actual opaque producer proof; selector DATA alone cannot retarget it

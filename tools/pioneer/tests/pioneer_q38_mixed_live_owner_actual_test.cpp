@@ -14,6 +14,9 @@ struct LiveActualIO:MixedLiveMemoryIO {
  const char* workerPath;
  const PioneerQ38MixedLiveResult* execution=nullptr;
  bool live[120]={};unsigned starts=0,holds=0;
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+ unsigned readbackPackets=0;
+#endif
  LiveActualIO(const char* root,const char* worker,const char* qdp,const char* qda)
   :machine(root,worker,qdp,qda),workerPath(worker){
   // Canonical staging uses the MMIO fabric's valid DRAM-routing table,
@@ -78,6 +81,21 @@ struct LiveActualIO:MixedLiveMemoryIO {
  void ResidentNocWrite(uint32_t a,uint32_t value){
   if(!execution){BootstrapIO::ResidentNocWrite(a,value);return;}
   Touch();if(a<40){C().command[a/4]=value;return;}
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+  if(!current && live[0] && !C().command[7]){
+   assert(a==0x40 && value==1 && holds==120 && execution->phase==7 && execution->stopped==119 && execution->held==120 && readbackPackets<5);
+   assert(machine.pc==0x40060 && machine.memory.at(T::Status+16)==2 && !machine.pending);
+   for(unsigned w=0;w<120;w++)assert(core[w]->coreReset==0x47800);
+   for(const auto& peer:machine.child)assert(peer->pc==0x20060 && peer->memory.at(M::Status+16)==2 && !peer->pending);
+   auto& c=C();const auto& o=machine.blockOuter;
+   const unsigned next[]={o[9]+T::FinalOffset+readbackPackets*4096,0,o[8],0x80000,0,129,0,0,4096,0};
+   for(unsigned i=0;i<10;i++)assert(c.command[i]==next[i]);
+   // ONLY actual GDDR bytes written by genuine graph instructions. No
+   // oracle products or synthesized completion/status/nonce/ready record.
+   for(unsigned i=0;i<1024;i++)PhysicalWrite(0,0x80000+i*4,machine.dram.at(CanonicalLiveMachine::Key(next[2],next[0]+i*4)));
+   c.counters[0]++;c.counters[1]+=64;c.counters[3]++;c.accepted++;readbackPackets++;return;
+  }
+#endif
   // Real host setup transfer, not a graph instruction or a CPU product.
   assert(!current && !live[0] && a==0x40 && value==1);auto& c=C();
   assert(c.command[7]==0x212 && c.command[2]==129 && !c.command[1] && !c.command[4] && !c.command[6] && !c.command[9]);

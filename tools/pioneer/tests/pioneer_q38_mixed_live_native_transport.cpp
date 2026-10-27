@@ -123,6 +123,13 @@ void MixedLiveNativeTransport::Configure(const PioneerQ38MixedLiveBlockPlan& pla
 void MixedLiveNativeTransport::Observe(const PioneerQ38MixedLiveResult& result){auto& p=*implementation;assert(!p.execution);p.execution=&result;}
 void MixedLiveNativeTransport::VerifyRun(){implementation->machine.VerifyLive();}
 void MixedLiveNativeTransport::VerifyClosed(){auto& p=*implementation;assert(p.starts==120 && p.holds==120 && p.machine.stops==119);}
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+void MixedLiveNativeTransport::VerifyReadback(const uint32_t* values,unsigned words){
+ auto& p=*implementation;assert(values && words==5120 && p.readbackPackets==5 && p.execution && p.execution->closed && p.holds==120);
+ const auto& o=p.machine.blockOuter;
+ for(unsigned i=0;i<words;i++)assert(values[i]==p.machine.dram.at(CanonicalLiveMachine::Key(o[8],o[9]+T::FinalOffset+i*4)));
+} // no expected products supplied to the owner before/during execution
+#endif
 void MixedLiveNativeTransport::Diagnostic(){auto& p=*implementation;
  fprintf(stderr,"NATIVE_MACHINE rootPC%08x starts%u holds%u projections%u phase%u packets%u stops%u\n",p.machine.pc,p.starts,p.holds,p.machine.projections,p.machine.Phase(),p.machine.packets,p.machine.stops);
 }

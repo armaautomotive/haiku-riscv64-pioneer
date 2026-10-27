@@ -169,4 +169,16 @@ void PioneerSessionIO::MixedLiveRetainHostOwners(){
  if(okay)state->phase=PioneerQ38MixedLiveNativeState::MemoryClosed;
  else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
 }
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+[[maybe_unused]] static bool CloseQ38MixedLiveNativeValidation(PioneerStoreContext& c,PioneerQ38MixedLiveResult& r,PioneerQ38MixedLiveMemoryResult& memory,
+ uint32_t* values,unsigned words,PioneerQ38MixedLiveReadbackResult& out){
+ auto* state=c.q38MixedLiveNative;
+ if(!state || state->phase!=PioneerQ38MixedLiveNativeState::ExecutionComplete || !state->execution || state->Unsafe()
+  || !state->execution->CanCloseForValidation(values,words,out,r,memory))return false; // BEFORE any state change/IO
+ state->phase=PioneerQ38MixedLiveNativeState::ExecutionClosing;
+ bool okay=c.io.MixedLiveBaseScope() && state->execution->CloseForValidation(c.io,r,memory,values,words,out);
+ if(okay)state->phase=PioneerQ38MixedLiveNativeState::MemoryClosed;
+ else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
+} // private NODRV compile path ONLY;no public ioctl/Work promotion
+#endif
 #endif

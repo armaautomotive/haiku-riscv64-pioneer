@@ -54,6 +54,16 @@ extern "C" bool pioneer_live_context_scoped_execute(PioneerProbeCookie* cookie,u
   && BindQ38MixedLiveNative(*c) && PrepareQ38MixedLiveNativeHeld(*c,memory) && PrepareQ38MixedLiveNativeExecution(*c,execution)
   && RunQ38MixedLiveNativeExecution(*c,execution) && CloseQ38MixedLiveNativeExecution(*c,execution,memory);
 } // compile ONLY. Genuine native execution/containment/ORIGINAL-weight qualification required before card use.
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+extern "C" bool pioneer_live_context_scoped_validation(PioneerProbeCookie* cookie,unsigned token,
+ PioneerQ38ProjectionZeroResult& z,PioneerQ38EmbeddingResult& e,PioneerQ38MixedLiveMemoryResult& memory,PioneerQ38MixedLiveResult& execution,
+ uint32_t* values,unsigned words,PioneerQ38MixedLiveReadbackResult& readback){
+ PioneerQ38GdnCallScope scope(cookie);auto* c=scope.Context();
+ return c && BindQ38EmbeddingModel(*c,token,0,0) && InitializeQ38EmbeddingModel(*c,z) && RunQ38EmbeddingModel(*c,e)
+  && BindQ38MixedLiveNative(*c) && PrepareQ38MixedLiveNativeHeld(*c,memory) && PrepareQ38MixedLiveNativeExecution(*c,execution)
+  && RunQ38MixedLiveNativeExecution(*c,execution) && CloseQ38MixedLiveNativeValidation(*c,execution,memory,values,words,readback);
+} // COMPILE ONLY;trusted kernel storage,not a direct user buffer or loadable validation entry
+#endif
 extern "C" bool pioneer_live_context_end(PioneerStoreContext& c,tt_resident_session_result& r,bool& clean){return EndQ38DispatchOwnership(c,r,clean);}
 extern "C" void pioneer_live_context_retain(PioneerStoreContext& c,tt_resident_session_result& r){RetainQ38DispatchOwner(c,r);}
 extern "C" void pioneer_live_context_destroy_clean(PioneerStoreContext* c){delete c;}

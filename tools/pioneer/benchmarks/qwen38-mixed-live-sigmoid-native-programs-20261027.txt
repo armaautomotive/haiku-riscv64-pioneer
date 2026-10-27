@@ -76,11 +76,15 @@ Raw full run:qwen38-mixed-live-sigmoid-native-actual-20261027.log
 
 Still required before real use
 -------------------------------
-Guarded original-weight native validation entry/client and fixed readback,
+Guarded original-weight native validation entry/client,
 final real ARC/host/map/context release qualification,then controlled
 physical comparison. Follow with valid64-layer GDN+dense sequencing,state/
 KV/token commits,final norm/vocabulary/sampling,Work/Assistant integration
 and measured optimization. No NODRV->Work/public ABI promotion is implied.
+The conditional fixed5page FINAL readback is now qualified;main+clean host
+fault/geometry/isolation/actual SDK compile AND actual-native instruction
+readback/fullrestore+secondproof/sealed END are terminal0/byte-identical.
+See qwen38-mixed-live-readback-20261027.txt for current scoped evidence.
 
 Installed driver/Assistant/boot/CPUs/RAM untouched;no relay,SD,mains,hardware
 connection,model or disk change. SDK read-only;outputs/private clean trees

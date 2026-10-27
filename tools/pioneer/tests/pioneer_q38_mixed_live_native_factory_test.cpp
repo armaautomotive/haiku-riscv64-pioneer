@@ -12,8 +12,12 @@ template<class Check> static void NativeFactoryFork(Check check){
  int status=0;assert(waitpid(pid,&status,0)==pid && WIFEXITED(status) && !WEXITSTATUS(status));
 }
 int main(int argc,char** argv){
- assert(argc==7 || (argc==8 && (!strcmp(argv[7],"--execute") || !strcmp(argv[7],"--faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
- bool execute=argc==8 && !strcmp(argv[7],"--execute"),faults=argc==8 && !strcmp(argv[7],"--faults");unsigned refused=0;
+ assert(argc==7 || (argc==8 && (!strcmp(argv[7],"--execute") || !strcmp(argv[7],"--faults") || !strcmp(argv[7],"--validation-readback"))));setvbuf(stdout,nullptr,_IOLBF,0);
+ bool readback=argc==8 && !strcmp(argv[7],"--validation-readback");
+ bool execute=readback || (argc==8 && !strcmp(argv[7],"--execute")),faults=argc==8 && !strcmp(argv[7],"--faults");unsigned refused=0;
+#ifndef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+ assert(!readback);
+#endif
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;
  (void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
  NativeFactoryFixture f(argv[1],argv[2]);auto& c=*f.c;auto& io=f.io;
@@ -110,7 +114,21 @@ int main(int argc,char** argv){
     && transport.Touches()==physical && io.touches==touches && transport.Resets()==resets);
   });
   puts("PASS actual native post-RUN lifetime refusals8/real completed block and still-running SAME119 retained/ALLhosts+clock quarantined/ZERO following MMIO,STOP,hold,restore or retry");
-  bool closed=CloseQ38MixedLiveNativeExecution(c,execution,result);
+  bool closed=false;
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+  if(readback){
+   std::vector<uint32_t> values(5120,0xdeadbeef);PioneerQ38MixedLiveReadbackResult capture;
+   // Native CPU-invalid requests MUST NOT consume ExecutionComplete or
+   // quarantine an otherwise valid owner. No physical endpoint is touched.
+   auto touches=io.touches,physical=transport.Touches();
+   assert(!CloseQ38MixedLiveNativeValidation(c,execution,result,values.data(),5119,capture) && !state->Unsafe()
+    && touches==io.touches && physical==transport.Touches() && !capture.started);
+   closed=CloseQ38MixedLiveNativeValidation(c,execution,result,values.data(),unsigned(values.size()),capture);
+   assert(closed && capture.completed && capture.pages==5 && capture.words==5120);transport.VerifyReadback(values.data(),unsigned(values.size()));
+   puts("PASS actual native fixed5page/5120word validation readback from REAL instruction-produced GDDR AFTER119STOP+ROOT/ALL120holds;atomic output after full restore+secondproof;NO CPU expected products supplied");
+  }else
+#endif
+  closed=CloseQ38MixedLiveNativeExecution(c,execution,result);
   if(!closed){fprintf(stderr,"NATIVE_EXECUTION_CLOSE_FAILURE phase%u worker%u word%u\n",execution.phase,execution.worker,execution.word);transport.Diagnostic();}
   assert(closed && execution.completed==119 && execution.stopped==119 && execution.held==120);transport.VerifyClosed();
  }else assert(CloseQ38MixedLiveNativeHeld(c,result) && !transport.Resets());

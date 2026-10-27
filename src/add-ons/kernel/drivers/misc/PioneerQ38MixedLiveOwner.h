@@ -1,8 +1,29 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+#include "PioneerQ38MixedLiveReadbackRole.h"
+#ifdef PIONEER_Q38_MIXED_LIVE_OWNER_H
+static_assert(TT_Q38_MIXED_LIVE_READBACK_SELECTION==1,"late readback selection change");
+#endif
+#else
+#ifdef PIONEER_Q38_MIXED_LIVE_OWNER_H
+static_assert(TT_Q38_MIXED_LIVE_READBACK_SELECTION==0,"late readback selection removal");
+#endif
+#endif
 #ifndef PIONEER_Q38_MIXED_LIVE_OWNER_H
 #define PIONEER_Q38_MIXED_LIVE_OWNER_H
 #include "PioneerQ38MixedLiveMemory.h"
 #include "../../../../../tools/pioneer/PioneerQ38MixedLiveBlockPlan.h"
+enum {TT_Q38_MIXED_LIVE_READBACK_SELECTION=
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+ 1
+#else
+ 0
+#endif
+};
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+#include "PioneerQ38MixedLiveReadbackPlan.h"
+static_assert(TT_Q38_MIXED_LIVE_SIGMOID_SELECTION==1,"readback needs qualified program DATA,not a late macro");
+#endif
 // Complete native controller for one fixed position0 standalone dense
 // operator. NO public launch or whole-model/token publication authority.
 // Native IO scope must retain the genuine input/model/FD/clock/all hosts.
@@ -46,6 +67,9 @@ class PioneerQ38MixedLiveOwner {
   for(unsigned i=0;i<16;i++)if(io.ResidentNocRead(BlackholeDramSourceOffset(i))!=plan->Boot(w)[16+i])return false;
   for(unsigned i=0;i<TT_DRAM_SOURCE_WORDS;i++)if(io.SourceRead(i)!=proof->source[i])return false;
   for(unsigned p=0;p<2;p++)if(!PioneerQ38GraphCsrPciQuiet(io,p))return false;
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+  if(!w && readbackTraffic)return ReadbackTransferGuard(io);
+#endif
   if(!w && traffic)return true; // only the SAME owned ROOT may have genuine in-flight packets
   if(!PioneerQ38GraphCsrIdle(io))return false;
   for(unsigned i=0;i<10;i++)if(io.ResidentNocRead(i*4)!=command[w][i])return false;
@@ -185,6 +209,9 @@ class PioneerQ38MixedLiveOwner {
   }
   return false;
  }
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+#include "PioneerQ38MixedLiveValidationReadback.inc"
+#endif
 public:
  PioneerQ38MixedLiveOwner()=default;
  PioneerQ38MixedLiveOwner(const PioneerQ38MixedLiveOwner&)=delete;
@@ -256,7 +283,13 @@ public:
   if(r.completed!=119 || !Guard(io,0))return Fail(io,r);
   ran=true;r.phase=5;return true; // provisional standalone block result,NEVER a canonical model/token commit
  }
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+private:
+ template<class IO> bool CloseImpl(IO& io,PioneerQ38MixedLiveResult& r,PioneerQ38MixedLiveMemoryResult& saved,
+  uint32_t* values,PioneerQ38MixedLiveReadbackResult* readback){
+#else
  template<class IO> bool Close(IO& io,PioneerQ38MixedLiveResult& r,PioneerQ38MixedLiveMemoryResult& saved){
+#endif
   namespace L=PioneerQ38MixedLiveBlockRootLayout;
   if(!ran || unsafe || closed || !r.prepared || r.completed!=119 || r.stopped || r.held || r.closed || saved.restoredWords)return false;
   if(!Guard(io,0))return Fail(io,r);
@@ -277,6 +310,9 @@ public:
   for(unsigned w=0;w<120;w++){
    r.worker=w;if(!Hold(io,w))return Fail(io,r);r.held++;if(!w)r.rootHolds++;
   }
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+  if(readback && !ValidationReadback(io,*readback,r))return Fail(io,r);
+#endif
   r.phase=8;
   for(unsigned w=0;w<120;w++){
    r.worker=w;if(!Guard(io,w) || !Image(io,w))return Fail(io,r);
@@ -294,7 +330,24 @@ public:
   for(unsigned w=0;w<120;w++){r.worker=w;if(!Guard(io,w) || !memory->VerifyOriginal(io,w,saved) || !Guard(io,w))return Fail(io,r);}
   if(!allStopped || r.held!=120 || saved.restoredWords!=TT_Q38_MIXED_LIVE_SAVED_WORDS
    || saved.verifiedOriginalWords!=2*TT_Q38_MIXED_LIVE_SAVED_WORDS || !Guard(io,0))return Fail(io,r);
-  memory->closed=closed=true;memory->installed=false;saved.closed=r.closed=1;return true;
+  memory->closed=closed=true;memory->installed=false;saved.closed=r.closed=1;
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+  if(readback){for(unsigned i=0;i<TT_Q38_MIXED_LIVE_READBACK_WORDS;i++)values[i]=readbackValues[i];readback->completed=1;}
+#endif
+  return true;
  }
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+public:
+ template<class IO> __attribute__((noinline)) bool Close(IO& io,PioneerQ38MixedLiveResult& r,PioneerQ38MixedLiveMemoryResult& saved){return CloseImpl(io,r,saved,nullptr,nullptr);}
+ bool CanCloseForValidation(uint32_t* values,unsigned words,const PioneerQ38MixedLiveReadbackResult& out,
+  const PioneerQ38MixedLiveResult& r,const PioneerQ38MixedLiveMemoryResult& saved)const{return ReadbackRequest(values,words,out,r,saved);}
+ // Necessary CPU metadata only,NEVER a source/STOP/HOLD/native IO grant.
+ template<class IO> __attribute__((noinline)) bool CloseForValidation(IO& io,PioneerQ38MixedLiveResult& r,PioneerQ38MixedLiveMemoryResult& saved,
+  uint32_t* values,unsigned words,PioneerQ38MixedLiveReadbackResult& out){
+  if(!ReadbackRequest(values,words,out,r,saved))return false; // inert CPU precondition refusal
+  if(!Scope(io) || !readbackPlan.Build(*canonical,*plan))return Fail(io,r);
+  out.started=1;return CloseImpl(io,r,saved,values,&out);
+ }
+#endif
 };
 #endif

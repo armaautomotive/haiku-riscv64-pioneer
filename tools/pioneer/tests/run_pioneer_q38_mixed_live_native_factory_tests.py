@@ -10,9 +10,10 @@ import sys
 import tempfile
 assert len(sys.argv)>=7
 options=sys.argv[7:]
-assert len(set(options))==len(options) and set(options)<={'--execute','--faults','--sigmoid-candidate'}
-assert not {'--execute','--faults'}<=set(options)
-sigmoid='--sigmoid-candidate' in options
+assert len(set(options))==len(options) and set(options)<={'--execute','--faults','--sigmoid-candidate','--validation-readback'}
+assert len(set(options)&{'--execute','--faults','--validation-readback'})<=1
+readback='--validation-readback' in options
+sigmoid='--sigmoid-candidate' in options or readback
 here=pathlib.Path(__file__).resolve().parent
 kernel=here.parents[2]/'src/add-ons/kernel/drivers/misc'
 for path,name,digest in ((pathlib.Path(sys.argv[1]),'text.bin','39817b679f4358e47c0e6602fb5ae184831206c11dab0b63fe9b7173c410df8b'),
@@ -32,6 +33,9 @@ defines={key:'1' for key in parents};defines['PIONEER_DRIVER_BUILD_TAG']='0x5142
 defines['PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE']='1'
 program_flags=['-DPIONEER_Q38_MIXED_LIVE_SIGMOID_PROGRAMS=1'] if sigmoid else []
 if sigmoid:defines['PIONEER_Q38_MIXED_LIVE_SIGMOID_PROGRAMS']='1'
+if readback:
+ defines['PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK']='1'
+ program_flags+=['-DPIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK=1']
 defines.update({key:'pioneer_mixed_factory_test_'+key for key in ('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')})
 source=(kernel/'tenstorrent_pci_probe.cpp').read_text()
 with tempfile.TemporaryDirectory(prefix='pioneer-mixed-native-factory-',dir='/private/tmp') as temporary:

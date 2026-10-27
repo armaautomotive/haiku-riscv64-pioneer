@@ -1,0 +1,92 @@
+Qwen27B fixed guarded FINAL readback -- 2026-10-27 UTC
+OFFLINE DEVELOPMENT CHECKPOINT;NO installation,physical comparison or TPS gain
+
+Implementation
+--------------
+PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK=1 requires the separately qualified
+sigmoid program DATA selection. It does not relax the20-parent/six-renamed-ABI
+QBLNODRV perimeter or grant a public ioctl,loadable driver,CPU oracle or Work
+mode. Defined0/unknown/late selection and old DEBUG/image aliases refuse.
+
+The SAME actual execution owner closes its genuine119 workers+ROOT,proves
+ALL terminals before the FIRST hold,and holds ALL120 before reading ANY
+result. An immutable DATA plan admits ONLY the canonical layer3/position0
+FINAL5120 words in5 complete4KiB pages. No caller address/route/count exists.
+The0x80000 scratch page is inside the already owned complete L1 journal.
+
+Each scratch word is poisoned/read back. Fixed NoC READ packets have exact
+command and bounded counter-delta checks,with bounded polling,retained native
+source/model/cookie/team/callthread/clock/host/map scope and held/reset proofs.
+Actual scalar words must satisfy the ROOT's exact RMS domain;NaN poison and
+Inf/subnormal/out-of-domain output refuse BEFORE the next physical access.
+These are format/domain checks,not a CPU-model reference or model correctness
+claim. No numerical expected vector is uploaded to the owner.
+
+The5120 captured words stay PRIVATE in the HEAP owner until ALL11398712
+original L1 words restore and pass the second complete proof. Caller output
+is untouched on ANY failure,including a late restore/verification failure.
+Pristine progress/count/alignment/overflow/retained-object aliases are checked
+BEFORE any IO or native phase change. A first failure quarantines/retains ALL
+owners and allows ZERO following IO,reset,restore or retry.
+
+The private actual native CloseForValidation wrapper uses the same binding
+and ExecutionClosing->MemoryClosed transition as ordinary close. Its progress
+completed flag means capture+L1 restore ONLY,NOT final Dispatch END,ARC/host/
+map/context teardown,full-model validity or a committed token.
+
+Qualification currently complete
+--------------------------------
+[x] Final main+clean ASAN+UBSAN actual-owner/synthetic-endpoint positive and18 failure
+    cases:map/read/write,poison mismatch,Inf/too-small/too-large,missing DMA,
+    foreign counters,timeout/other busy NIU/command,scope loss after packet
+    and after first scalar,mutated plan/reset,late restore/second-proof read.
+    All failures leave caller values unchanged and retain ALL without later
+    IO.18 inert CPU refusals also pass.35 fixed page geometries across ALL7
+    workspace banks,source-mutation/out-of-range refusals and every scratch
+    word's complete journal coverage pass. Both runs are terminal0 with
+    byte-identical stdout:qwen38-mixed-live-readback-owner-20261027.log
+    SHA256255cf11aaa2e58b6ed30c86a3f60ba9e93818281aa74034119d53b945a3845bf
+[x] Main+clean117 compile-selection/old-role/late-header isolation gates.
+    qwen38-mixed-live-readback-gates-20261027.log
+    SHA2563326664400726865c2a3bef752dd5916280dace439d0afc5dab21dad35279e54
+[x] Unchanged native perimeter165 gates.
+    qwen38-mixed-live-readback-native-gates-20261027.log
+    SHA256d55f6bff8fc5416f63014871ef34f64b85a45f5f7fa4891d791a4e17aff3c680
+[x] Main+clean actual Haiku SDK context objects BYTE-IDENTICAL:
+    4b1e6e4473150e50e10526d161a7d5bb67a466b718e9bf216dbb810b10279e9b
+    Max new frame1200B;private actual guarded readback/close bodies retained.
+    No conventional ABI exports;all independent inert entry controls remain.
+[x] Default native object unchanged0b55dd8d20b7d81a8b97cc6608c5496d9b2633a4c1ef698a74010feb933b90e8
+    Selected sigmoid/no-readback unchanged374ec650c173e5b23b73d0a0a09ba7f8785add27f14584268d033c834cdbd224
+    Old65=61faa093 and old NODRV=9fcf1f7f unchanged too.
+[x] Default actual-owner RUN/119STOP/ALL120holds/full restore+second proof
+    regression remains terminal0.
+
+Full actual-native instruction/readback qualification -- TERMINAL0
+------------------------------------------------------------------
+[x] Main+clean actual native factories+120 actual instruction machines:
+    read back ONLY genuine graph-produced FINAL GDDR bytes after genuine
+   119STOP+ROOT/ALL120holds,then fullrestore/secondproof/sealed Dispatch END.
+    Endpoint copies/OS/MMIO/clock and learned RAW tensors remain simulated;
+    this is NOT a physical or original-model native comparison.
+    ALL7 matrices,119 real STOPs+ROOT terminal,ALL120holds,exact5120 actual
+    output words,full11398712word restoration/second proof and complete
+    sealed Dispatch END pass. The8 post-RUN lifetime-loss cases retain ALL
+    without later MMIO/STOP/hold/restore/retry. Native invalid output count
+    is inert before consuming ExecutionComplete;the next valid close works.
+    Main+clean are BOTH terminal0 with byte-identical complete stdout:
+    qwen38-mixed-live-readback-native-20261027.log
+    SHA2565d216510876612237ea02798aa3d874befe2bd47a11552ef7f166eb9c4a1262f
+
+Still owed before real use
+----------------------------
+Separate guarded original-weight validation entry/client;final real ARC/
+host/map/context teardown qualification;physical comparison. Then valid
+64-layer GDN+dense sequencing/recurrent+KV state/token commit,final norm/
+vocabulary/sampling,Work/Assistant integration and measured optimization.
+This remains a standalone layer3/position0 operator,not a valid model prefix.
+
+Installed driver/Assistant/boot/64CPU/128GB untouched. No power/relay/SD/mains/
+hardware connection/model/disk change. SDK read-only;outputs in/private/tmp.
+Dirty llama.cpp/unrelated FlashNext untouched. Last real whole-model
+0.207893161tok/s unchanged;20tok/s UNMET. Goal ACTIVE.

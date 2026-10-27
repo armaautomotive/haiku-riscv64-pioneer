@@ -1,0 +1,3 @@
+PASS immutable final readback geometry35/all7banks/exact5pages/source mutation and out-of-range refusals/scratch fully journalled
+PASS readback inert CPU refusals18/null,count,alignment,overflow,all progress fields,retained-object+journal aliases
+PASS guarded fixed5page/5120word readback AFTER ALL120holds/BEFORE restore;atomic publication ONLY after full11398712word restore+second proof;faults18 retain ALL with ZERO following IO/restore/retry;SYNTHETIC endpoints ONLY,NO native/physical/model/TPS qualification

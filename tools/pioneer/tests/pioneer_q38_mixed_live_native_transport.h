@@ -26,5 +26,8 @@ public:
  void Configure(const PioneerQ38MixedLiveBlockPlan&,const uint32_t*,unsigned);
  void Observe(const PioneerQ38MixedLiveResult&); // TEST reset/terminal assertions only
  void VerifyRun();void VerifyClosed();void Diagnostic();
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK
+ void VerifyReadback(const uint32_t*,unsigned); // observer ONLY after complete capture+restore
+#endif
 };
 #endif

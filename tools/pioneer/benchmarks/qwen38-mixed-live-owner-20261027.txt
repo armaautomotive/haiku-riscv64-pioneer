@@ -135,6 +135,12 @@ Driver/runtime readiness checklist -- still required
     factory RUN/119STOP/ALL120holds/restore/Dispatch END now pass main+clean
     with simulated OS/MMIO endpoints. Physical comparison remains owed. See
     qwen38-mixed-live-sigmoid-precision-20261027.txt.
+    Fixed validation-only5page FINAL readback is now implemented inside the
+    SAME owner between ALL120holds and full restore. Main+clean host faults,
+    all7-bank geometry,isolation/SDK/default-byte-preservation checks pass.
+    Actual-native instruction runs also pass terminal0/byte-identical:
+    fixed5120 instruction-produced words/fullrestore+secondproof/sealed END.
+    See qwen38-mixed-live-readback-20261027.txt;not a physical GPU promotion.
 [ ] Integrate the valid64-layer sequence: all GDN and dense layers, genuine
     next-hidden producer, persistent recurrent/KV state and atomic token
     boundaries. A layer3->7 lifecycle is NOT a model prefix.
