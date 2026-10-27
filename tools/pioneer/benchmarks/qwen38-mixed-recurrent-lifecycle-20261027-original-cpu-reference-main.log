@@ -1,0 +1,2 @@
+PASS independent recurrent original CPU reference/zero learned case ALL18stages+786432state words/3853row-major reads/analytical constant1 Q8+Q4 matrices/first+last source-loss atomic refusal/last-tensor metadata refusal/strict postreturn comparison/rounding refusal;NO native or accelerator products
+PASS separate recurrent CPU-reference gates256/missing+defined0+late/NO old role aliases or native/image/Work authority

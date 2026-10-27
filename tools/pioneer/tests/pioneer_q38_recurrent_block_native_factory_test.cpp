@@ -9,6 +9,9 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "pioneer_q38_recurrent_block_native_final_fixture.inc"
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_ORIGINAL_NATIVE_TEST
+#include "pioneer_q38_recurrent_block_original_native.h"
+#endif
 bool PioneerSessionIO::UseRecurrentBlockIO()const{
  auto* c=q38MutableContext;auto* state=c?c->q38RecurrentBlockNative:nullptr;
  return recurrentTransport && state && state->phase>=PioneerQ38RecurrentBlockNativeState::DispatchPreparing;
@@ -44,11 +47,30 @@ template<class Check> static void RecurrentNativeFork(Check check){
  fflush(nullptr);pid_t child=fork();assert(child>=0);if(!child){check();_exit(0);}
  int status=0;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
 }
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_ORIGINAL_NATIVE_TEST
+int ExecuteRecurrentOriginalNativeScenario(const char* const* images,RecurrentBlockRawLearnedBytes& original,uint32_t* output,unsigned outputWords,RecurrentOriginalStageSink* stageSink){
+ if(!images || !output || outputWords!=5120 || (uintptr_t(output)&3) || uintptr_t(output)>UINTPTR_MAX-20480 || !original.Ready())return 1;
+ for(unsigned i=0;i<4;i++)if(!images[i] || !*images[i])return 1;
+ const int argc=6;const char* argv[]={"original-native",images[0],images[1],images[2],images[3],"--fresh-execute-end"};
+ auto sourcePlan=std::make_unique<PioneerQ38CanonicalModelPlan>();if(!sourcePlan->Build())return 1;
+ const auto* tile=sourcePlan->ProjectionStripe(64,0,0);std::vector<uint8_t> embeddingBytes(46080);
+ if(!tile || tile->firstRow)return 1;
+ for(unsigned at=0;at<embeddingBytes.size();at+=16384){
+  unsigned count=unsigned(embeddingBytes.size())-at;if(count>16384)count=16384;
+  if(!original.Ready() || !original.Read(PioneerQ38ProjectionRoute(tile->bank),sourcePlan->Base+tile->offset+at,embeddingBytes.data()+at,count))return 1;
+ }
+ if(!original.Ready())return 1;
+ std::array<uint32_t,5120> originalCapture; // caller output untouched until complete positive END
+#else
 int main(int argc,char** argv){
+#endif
  assert(argc==5 || (argc==6 && (!strcmp(argv[5],"--execute") || !strcmp(argv[5],"--faults") || !strcmp(argv[5],"--fresh-held-end") || !strcmp(argv[5],"--fresh-execute-end"))));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
  bool execute=argc==6 && (!strcmp(argv[5],"--execute") || !strcmp(argv[5],"--fresh-execute-end")),faults=argc==6 && !strcmp(argv[5],"--faults");
  RecurrentBindingFixture f(argv[1],argv[2]);auto& c=*f.c;auto& io=f.io;
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_ORIGINAL_NATIVE_TEST
+ io.originalEmbeddingWeights=embeddingBytes.data(); // original PACKED BYTES,never embedding products
+#endif
 #ifdef PIONEER_Q38_RECURRENT_BLOCK_FRESH_FINAL_TEST
  assert(argc==6 && (!strcmp(argv[5],"--fresh-held-end") || !strcmp(argv[5],"--fresh-execute-end")));
  (void)&AcquireQ38DeltaLock;
@@ -64,6 +86,10 @@ int main(int argc,char** argv){
   && state->InitializationsClosed(c.banks,c.baseline.baseline.baseline.baseline.dram));
  puts("PASS QRB genuine native SAME completed QPE1 producer + actual672GDN/336history zero instruction leases/private clean publication;NO transferred ready facade");
  RecurrentBlockNativeTransport transport(argv[3],argv[4]);
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_ORIGINAL_NATIVE_TEST
+ assert(original.Ready() && transport.AttachOriginalLearned(original));
+ puts("STAGED ORIGINAL token0 packed QPE1 tile+ALL14 recurrent layer0 tensors/raw57spans;synthetic learned fallback DISABLED,NO expected products/native ready grant");
+#endif
  std::vector<uint32> addresses,values;auto seed=[&](uint32 a,uint32 v){addresses.push_back(a);values.push_back(v);};
  seed(0x6000,io.entry);for(unsigned i=0;i<io.prefix.size();i++)seed(0x64000+i*4,io.prefix[i]);
  for(unsigned i=0;i<io.view.size();i++)seed(TT_Q38_PANEL_VIEW_BASE+i*4,io.view[i]);
@@ -114,6 +140,9 @@ int main(int argc,char** argv){
  }else assert(CloseQ38RecurrentBlockNativeHeld(c,memory) && !transport.Resets());
  assert(state->Closed() && !state->Unsafe() && memory.restoredWords==TT_Q38_RECURRENT_BLOCK_SAVED_WORDS
   && memory.verifiedOriginalWords==2*TT_Q38_RECURRENT_BLOCK_SAVED_WORDS);
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_ORIGINAL_NATIVE_TEST
+ assert(original.Ready() && transport.CaptureOriginalOutput(originalCapture.data(),unsigned(originalCapture.size())));
+#endif
  bool ended=EndFactory(c);
  if(!ended)fprintf(stderr,"QRB_NATIVE_DISPATCH_END_FAILED phase%u worker%u detail%08x/%08x/%08x\n",c.q38Dispatch->closePhase,c.q38Dispatch->closeWorker,c.q38Dispatch->closeDetail[0],c.q38Dispatch->closeDetail[1],c.q38Dispatch->closeDetail[2]);
  assert(ended && c.q38Dispatch->closed && state->Closed() && !c.dispatchOwnerRetained && !sColdRecoveryRequired
@@ -123,4 +152,9 @@ int main(int argc,char** argv){
 #include "pioneer_q38_recurrent_block_native_final_checks.inc"
 #endif
  io.recurrentTransport=nullptr;
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_ORIGINAL_NATIVE_TEST
+ assert(original.Ready() && !f.cookie.context && !sRuntimeOwner && !sColdRecoveryRequired);
+ if(stageSink && !transport.PublishOriginalStages(*stageSink))return 1;
+ std::memcpy(output,originalCapture.data(),sizeof(originalCapture));return 0;
+#endif
 }

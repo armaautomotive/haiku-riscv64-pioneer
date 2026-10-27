@@ -10,9 +10,77 @@
 #define PIONEER_Q38_RECURRENT_BLOCK_OWNER_ACTUAL_FIXTURE_ONLY
 #include "pioneer_q38_recurrent_block_owner_actual_test.cpp"
 #include "pioneer_q38_recurrent_block_native_transport.h"
-struct RecurrentBlockNativeTransport::Impl:RecurrentOwnerActualIO {
+#include "../PioneerQ38RecurrentOriginalWeightBytes.h"
+#include "../PioneerQ38RecurrentBlockComparison.h"
+struct NativeRecurrentLearnedMachine:RecurrentBlockMachine {
+ RecurrentBlockRawLearnedBytes* original=nullptr;
+ std::array<std::vector<uint32_t>,PioneerRecurrentStageCount> captured;
+ NativeRecurrentLearnedMachine(const char* root,const char* worker,bool virgin):RecurrentBlockMachine(root,worker,virgin){}
+ bool Attach(RecurrentBlockRawLearnedBytes& bytes){
+  if(original || !bytes.Ready())return false;
+  unsigned spans=0;uint64_t length=0;
+  for(unsigned i=0;i<canonical->Count();i++){
+   const auto* p=canonical->Part(i);if(p->kind!=canonical->WeightKind || p->layer)continue;
+   if(!bytes.Contains(PioneerQ38ProjectionRoute(p->bank),canonical->Base+p->offset,p->bytes))return false;
+   spans++;length+=p->bytes;
+  }
+  if(spans!=56 || length!=280925056 || !bytes.Ready())return false;
+  // Remove ALL synthetic F32/Conv/GDN learned words. Matrix fallback is
+  // also disabled in Get below,including a missing original span.
+  for(auto i=dram.begin();i!=dram.end();){
+   if(bytes.Contains(unsigned(i->first>>32),unsigned(i->first),4))i=dram.erase(i);else ++i;
+  }
+  original=&bytes;return true;
+ }
+ uint32_t Get(unsigned route,unsigned address)const override{
+  if(!original)return RecurrentBlockMachine::Get(route,address);
+  if(original->Contains(route,address,4)){uint32_t value;assert(original->Word(route,address,value));return value;}
+  auto raw=dram.find(Key(route,address));assert(raw!=dram.end());return raw->second;
+ }
+ void Submit()override{
+  if(original)assert(original->BeginRawPacket());
+  RecurrentBlockMachine::Submit();
+  if(original)assert(original->EndRawPacket());
+ }
+ void LocalCapture(PioneerRecurrentOriginalStage stage,unsigned address,unsigned words){
+  auto& out=captured[stage];assert(out.empty());out.resize(words);for(unsigned i=0;i<words;i++)out[i]=memory.at(address+i*4);
+ }
+ void RemoteCapture(PioneerRecurrentOriginalStage stage,unsigned role,unsigned words){
+  auto& out=captured[stage];assert(out.empty());out.resize(words);for(unsigned i=0;i<words;i++)out[i]=Get(outer[8],outer[9]+PioneerQ38MixedRecurrentOffset(role)+i*4);
+ }
+ void ObserveMatrix()override{
+  bool fresh=Phase()!=observed;RecurrentBlockMachine::ObserveMatrix();if(!original || !fresh)return;
+  switch(Phase()){
+   case 2:LocalCapture(PioneerRecurrentEmbedding,RB::OriginalCopy,5120);LocalCapture(PioneerRecurrentNormalized,RB::Input,5120);break;
+   case 8:{
+    RemoteCapture(PioneerRecurrentAlpha,10,48);RemoteCapture(PioneerRecurrentBeta,11,48);RemoteCapture(PioneerRecurrentZ,5,6144);RemoteCapture(PioneerRecurrentQkv,6,10240);
+    auto& conv=captured[PioneerRecurrentConv];conv.resize(10240,0x7fc00000);
+    for(unsigned w=0;w<120;w++)for(unsigned batch=0;batch<PioneerQ38ConvBatchCount(w);batch++){
+     const auto* d=block->Conv()+w*384+batch*64;for(unsigned i=0;i<16;i++)conv.at(d[7]+i)=Get(d[8],d[4]+d[43]+i*4);
+    }
+    auto& state=captured[PioneerRecurrentState];state.resize(786432,0x7fc00000);
+    auto& raw=captured[PioneerRecurrentRaw];raw.resize(6144,0x7fc00000);
+    for(unsigned w=0;w<96;w++){
+     const auto* d=block->Gdn()+w*192+64;unsigned head=w/2,half=w%2;
+     for(unsigned key=0;key<128;key++)for(unsigned value=0;value<64;value++)state[head*16384+key*128+half*64+value]=Get(d[13],d[7]+(key*64+value)*4);
+     for(unsigned i=0;i<64;i++)raw[head*128+half*64+i]=child[w]->memory.at(0x8e800+i*4);
+    }
+    auto& gated=captured[PioneerRecurrentGated];gated.resize(6144);for(unsigned i=0;i<6144;i++)gated[i]=Get(outer[8],outer[9]+TT_Q38_GDN_GATED_OUTPUT+i*4);
+    break;
+   }
+   case 10:RemoteCapture(PioneerRecurrentProjection,13,5120);LocalCapture(PioneerRecurrentResidual,RB::PostResidual,5120);LocalCapture(PioneerRecurrentPostNormalized,RB::PostNormalized,5120);break;
+   case 13:RemoteCapture(PioneerRecurrentFfnGate,2,17408);RemoteCapture(PioneerRecurrentFfnUp,3,17408);LocalCapture(PioneerRecurrentActivated,RB::Input,17408);break;
+  }
+ } // read ONLY genuinely produced instruction bytes;NEVER supplies products to the owner
+ void CaptureFinal(){
+  if(!original)return;RemoteCapture(PioneerRecurrentDown,4,5120);auto& out=captured[PioneerRecurrentFinal];assert(out.empty());out.resize(5120);
+  for(unsigned i=0;i<5120;i++)out[i]=Get(outer[8],outer[9]+RB::FinalOffset+i*4);
+ }
+};
+struct RecurrentBlockNativeTransport::Impl:RecurrentOwnerActualIOBase<NativeRecurrentLearnedMachine> {
+ using OwnerIO=RecurrentOwnerActualIOBase<NativeRecurrentLearnedMachine>;
  unsigned resets=0;bool configured=false;
- Impl(const char* root,const char* worker):RecurrentOwnerActualIO(root,worker){
+ Impl(const char* root,const char* worker):OwnerIO(root,worker){
   (void)&RecurrentOwnerUnusedInput;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;
   (void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;(void)&Refusals;(void)&LateRefusals;(void)&RunPersistentGdnPair;
   assert(CodeIO::SelectRuntimeCore(0));track=true;
@@ -44,7 +112,7 @@ void RecurrentBlockNativeTransport::SeedRoot(const uint32_t* a,const uint32_t* v
  c.counters[0]=counts[0];c.counters[1]=counts[1];c.accepted=counts[2];c.counters[3]=counts[3];
  c.writeCounters[0]=counts[4];c.writeCounters[1]=counts[5];c.writeCounters[3]=counts[7];
 }
-bool RecurrentBlockNativeTransport::Select(unsigned w){return implementation->RecurrentOwnerActualIO::SelectRuntimeCore(w);}
+bool RecurrentBlockNativeTransport::Select(unsigned w){return implementation->OwnerIO::SelectRuntimeCore(w);}
 bool RecurrentBlockNativeTransport::MapPanel(){auto& p=*implementation;p.Touch();return p.C().mapping;}
 bool RecurrentBlockNativeTransport::PanelStable(){return implementation->C().mapping;}
 uint32_t RecurrentBlockNativeTransport::Read32(Read kind,unsigned a,unsigned b,unsigned c){
@@ -139,8 +207,31 @@ bool RecurrentBlockNativeTransport::Configure(const PioneerQ38MixedRecurrentBloc
  p.configured=true;return true;
 }
 void RecurrentBlockNativeTransport::Observe(const PioneerQ38RecurrentBlockResult& result){auto& p=*implementation;assert(p.configured && !p.execution);p.execution=&result;}
-void RecurrentBlockNativeTransport::VerifyRun(){implementation->machine.VerifyBlock();}
+void RecurrentBlockNativeTransport::VerifyRun(){implementation->machine.VerifyBlock();implementation->machine.CaptureFinal();}
 void RecurrentBlockNativeTransport::VerifyClosed(){auto& p=*implementation;assert(p.starts==120 && p.holds==120 && p.machine.stopStarts==119);}
+bool RecurrentBlockNativeTransport::AttachOriginalLearned(RecurrentBlockRawLearnedBytes& bytes){
+ auto& p=*implementation;return !p.configured && !p.starts && !p.execution && p.machine.Attach(bytes);
+}
+bool RecurrentBlockNativeTransport::CaptureOriginalOutput(uint32_t* output,unsigned words){
+ auto& p=*implementation;auto& m=p.machine;
+ if(!output || words!=5120 || (uintptr_t(output)&3) || uintptr_t(output)>UINTPTR_MAX-20480 || !m.original || !m.original->Ready()
+  || !p.execution || !p.execution->closed || p.execution->unsafe || p.execution->held!=120 || p.execution->stopped!=119
+  || p.starts!=120 || p.holds!=120 || m.stopStarts!=119 || !m.block)return false;
+ std::array<uint32_t,5120> captured;const auto* o=m.block->Outer();
+ for(unsigned i=0;i<5120;i++){
+  auto found=m.dram.find(m.Key(o[8],o[9]+RB::FinalOffset+i*4));if(found==m.dram.end())return false;captured[i]=found->second;
+ }
+ if(!m.original->Ready())return false;
+ std::memcpy(output,captured.data(),sizeof(captured));return true;
+} // simulated raw GDDR capture AFTER real native STOP/holds/restore,NOT physical DMA
+bool RecurrentBlockNativeTransport::PublishOriginalStages(RecurrentOriginalStageSink& sink){
+ auto& p=*implementation;auto& m=p.machine;
+ if(!m.original || !m.original->Ready() || !p.execution || !p.execution->closed || p.execution->unsafe || p.holds!=120 || p.starts!=120 || m.stopStarts!=119)return false;
+ const unsigned counts[]={5120,5120,48,48,6144,10240,10240,786432,6144,6144,5120,5120,5120,17408,17408,17408,5120,5120};
+ for(unsigned i=0;i<PioneerRecurrentStageCount;i++)if(m.captured[i].size()!=counts[i])return false;
+ for(unsigned i=0;i<PioneerRecurrentStageCount;i++)if(!m.original->Ready() || !sink.Publish(PioneerRecurrentOriginalStage(i),m.captured[i].data(),unsigned(m.captured[i].size())))return false;
+ return m.original->Ready();
+} // native scenario invokes ONLY after successful full final-END/context destruction
 void RecurrentBlockNativeTransport::Diagnostic(){auto& p=*implementation;
  fprintf(stderr,"QRB_NATIVE_MACHINE rootPC%08x starts%u holds%u matrices%u phase%u packets%u stops%u\n",p.machine.pc,p.starts,p.holds,p.machine.matrixStarts,p.machine.Phase(),p.machine.packets,p.machine.stopStarts);
 }

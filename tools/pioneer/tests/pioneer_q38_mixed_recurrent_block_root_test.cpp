@@ -112,7 +112,7 @@ struct RecurrentBlockMachine:NewCohortMachine {
   float scale=1.f/sqrtf(float(sum/5120.0)+1e-6f);
   for(unsigned i=0;i<5120;i++)assert(memory.at(output+i*4)==Bits((Float(memory.at(input+i*4))*scale)*Float(Get(PioneerQ38ProjectionRoute(outer[64+norm*2]),outer[65+norm*2]+i*4))));
  }
- void ObserveMatrix(){
+ virtual void ObserveMatrix(){
   unsigned phase=Phase();if(phase==observed)return;observed=phase;
   const unsigned phases[]={2,3,4,5,8,10,11,13};assert(matrixStarts<8 && phase==phases[matrixStarts]);
   const auto* expected=block->Recipe(matrixStarts);assert(memory.at(RB::Header+43*4)==expected[43]);

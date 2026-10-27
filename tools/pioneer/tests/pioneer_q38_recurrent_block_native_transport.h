@@ -4,6 +4,8 @@
 #include <stdint.h>
 class PioneerQ38MixedRecurrentBlockPlan;
 struct PioneerQ38RecurrentBlockResult;
+struct RecurrentBlockRawLearnedBytes;
+struct RecurrentOriginalStageSink;
 // TEST raw byte boundary ONLY. Never transfers native context,permission,
 // initialized/complete seals,clock,leases or processor ready/progress bits.
 struct RecurrentInitializedByteSource {
@@ -28,6 +30,9 @@ public:
  void Quarantine();void Pause();uint64_t Now()const;
  unsigned Touches()const;unsigned Resets()const;uint64_t Fingerprint();
  bool Configure(const PioneerQ38MixedRecurrentBlockPlan&,const uint32_t*,unsigned,const RecurrentInitializedByteSource&);
+ bool AttachOriginalLearned(RecurrentBlockRawLearnedBytes&);
+ bool CaptureOriginalOutput(uint32_t*,unsigned);
+ bool PublishOriginalStages(RecurrentOriginalStageSink&);
  void Observe(const PioneerQ38RecurrentBlockResult&); // asserts reset/hold ordering,NEVER sets private progress
  void VerifyRun();void VerifyClosed();void Diagnostic();
 };

@@ -7,11 +7,13 @@
 #ifndef PIONEER_Q38_MIXED_RECURRENT_BLOCK_ORIGINAL_BYTES_TEST_H
 #define PIONEER_Q38_MIXED_RECURRENT_BLOCK_ORIGINAL_BYTES_TEST_H
 #include "../PioneerQ38OriginalWeightBytes.h"
+#include "../PioneerQ38RecurrentOriginalWeightBytes.h"
 #include "../PioneerQ38PublicModelSource.h"
 #include "../PioneerQ38MixedRecurrentBlockRootLayout.h"
 #include <array>
 #include <map>
-class RecurrentBlockOriginalBytes final:public ProjectionExecutionLearnedBytes {
+class RecurrentBlockOriginalBytes final:public RecurrentBlockRawLearnedBytes {
+ friend class PioneerRecurrentOriginalSource; // separate CPU-only source TU;NO public model/reference accessor
  struct Span {unsigned route;uint32_t address;std::vector<uint8_t> bytes;};
  struct Descriptor {unsigned index;PioneerQ38Tensor tensor;};
  PioneerQ38PublicModelSource source;PioneerQwen38PackedPlan plan;
@@ -33,27 +35,29 @@ class RecurrentBlockOriginalBytes final:public ProjectionExecutionLearnedBytes {
   return true;
  }
 public:
- bool Prepare(){
+ bool Prepare(bool embedding=false){
   if(attempted || prepared)return false;
   attempted=true;if(!source.Open() || !source.Ready() || !plan.Build(source.Model(),8192,true,true))return false;
   epoch=source.Model().Epoch();
-  for(const auto& p:plan.Parts())if(p.kind==PIONEER_Q38_WEIGHT && !p.layer){
+  auto selected=[&](const auto& p){return p.kind==PIONEER_Q38_WEIGHT && (!p.layer || (embedding && p.layer==64 && !p.role && !p.firstRow));};
+  for(const auto& p:plan.Parts())if(selected(p)){
    bool found=false;for(const auto& d:descriptors)found |= d.index==p.tensor;
    if(!found)descriptors.push_back({p.tensor,source.Model().Tensors()[p.tensor]});
   }
-  if(descriptors.size()!=14 || !Current())return false;
+  if(descriptors.size()!=(embedding?15U:14U) || !Current())return false;
   std::map<uint64_t,Span> stage;uint64_t bytes=0;unsigned count=0;
   for(unsigned i=0;i<plan.Parts().size();i++){
-   const auto& p=plan.Parts()[i];if(p.kind!=PIONEER_Q38_WEIGHT || p.layer)continue;
-   Span span{PioneerQ38ProjectionRoute(p.bank),p.proposedAddress,std::vector<uint8_t>(p.bytes)};
+   const auto& p=plan.Parts()[i];if(!selected(p))continue;
+   unsigned length=p.layer==64?46080:p.bytes;if(length>p.bytes || p.bank>=7)return false;
+   Span span{PioneerQ38ProjectionRoute(p.bank),p.proposedAddress,std::vector<uint8_t>(length)};
    std::array<uint8_t,4096> page;
-   for(unsigned at=0;at<p.bytes;at+=4096){
+   for(unsigned at=0;at<length;at+=4096){
     if(!Current() || !source.ReadWeightPage(plan,i,at/4096,page.data(),4096) || !Current())return false;
-    std::memcpy(span.bytes.data()+at,page.data(),std::min(4096U,p.bytes-at));count++;
+    std::memcpy(span.bytes.data()+at,page.data(),std::min(4096U,length-at));count++;
    }
-   bytes+=p.bytes;if(!stage.emplace(Key(span.route,span.address),std::move(span)).second)return false;
+   bytes+=length;if(!stage.emplace(Key(span.route,span.address),std::move(span)).second)return false;
   }
-  if(stage.size()!=56 || bytes!=280925056 || !Current())return false;
+  if(stage.size()!=(embedding?57U:56U) || bytes!=UINT64_C(280925056)+(embedding?46080U:0U) || !Current())return false;
   spans=std::move(stage);total=bytes;pages=count;prepared=true;return Ready();
  }
  bool Ready()const override{return prepared && Current();}
@@ -66,14 +70,18 @@ public:
   // here; no reference, upload, input or device callback is performed.
   std::memcpy(output,s->bytes.data()+address-s->address,bytes);return true;
  }
- bool Contains(unsigned route,uint32_t address,unsigned bytes)const{return prepared && Find(route,address,bytes);}
- bool BeginRawPacket(){if(leased || !Ready())return false;leased=true;return true;}
- bool EndRawPacket(){if(!leased)return false;bool okay=Ready();leased=false;return okay;}
- bool Word(unsigned route,uint32_t address,uint32_t& output)const{
+ bool Contains(unsigned route,uint32_t address,unsigned bytes)const override{return prepared && Find(route,address,bytes);}
+ bool BeginRawPacket()override{if(leased || !Ready())return false;
+ leased=true;return true;}
+ bool EndRawPacket()override{if(!leased)return false;
+ bool okay=Ready();leased=false;return okay;}
+ bool Word(unsigned route,uint32_t address,uint32_t& output)const override{
   if(!prepared || (address&3) || (!leased && !Ready()))return false;
-  const auto* s=Find(route,address,4);if(!s)return false;const auto* p=s->bytes.data()+address-s->address;
+  const auto* s=Find(route,address,4);if(!s)return false;
+  const auto* p=s->bytes.data()+address-s->address;
   uint32_t value=uint32_t(p[0])|(uint32_t(p[1])<<8)|(uint32_t(p[2])<<16)|(uint32_t(p[3])<<24);
-  if(!leased && !Ready())return false;output=value;return true;
+  if(!leased && !Ready())return false;
+  output=value;return true;
  }
  uint64_t Bytes()const{return Ready()?total:0;}
  unsigned Pages()const{return Ready()?pages:0;}

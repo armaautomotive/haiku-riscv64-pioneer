@@ -492,3 +492,149 @@ workers ->6post-RUN lifetime failures -> real119STOP+ROOT/120holds/full
 restoration -> complete fresh locked END+84final faults described above.
 LIVE,NOT passing evidence. Do not restart any of these on observation
 timeout. Scope remains synthetic raw learned bytes,not original GGUF.
+
+Original-model continuation -- native lifecycle COMPLETE offline
+--------------------------------------------------------------------
+Previous goal continuation was PROGRESS:private final-disposal path and
+HELD+full fresh END main/clean qualified and pushed/exact remote verified
+73f1ccdc4901567ae79f0e1e63cc49eede95c688. This continuation is PROGRESS too,
+not merely a wait/status:actual native whole computation finished,original
+byte coupling and separate independent CPU reference are implemented.
+
+16931/main and13813/clean NOW BOTH authoritative TERMINAL0. Complete stdout
+identical150df1040c2307b7007d3f3f8068463b0b6c90c5167344219ac9443a4b2b36ca.
+Actual SAME private native context/QPE1+672GDN/336history init ->120probe/
+peer leases/four mappings/full new journal ->119real virgin boots/QRB1whole
+8matrices720jobs/Conv640/GDN96/RMS/residual/FFN/final5120/counters ->6actual
+post-RUN lifetime losses with NO subsequent IO ->real119STOP+ROOT ->ALL120
+holds ->full11406904original restores+secondproof ->complete DispatchEND
+->actual locked call seal/private clock/fresh7-parent audit/PCIquiet+idle
+->30VM/11PCI/3host releases/unreserve+cookieclear/private destruction plus
+84genuine final-END failures. Raw learned/OS/register endpoints SIMULATED.
+NOT original GGUF/full64/token/physical/Work/TPS proof. These runs use the
+73f1ccdc production owner/factories and predate ONLY newer TEST original
+byte/capture extensions. No production driver or frozen image changed.
+Older PID53175/53206 now both ABSENT (ps exit1/empty);full final PASS stdout
+seen,no exact exit code recovered. Its narrower --execute scope is covered
+by the two newly observed terminal0 runs above;no replacement/restart.
+
+New raw original byte boundary and actual native scenario
+---------------------------------------------------------
+RecurrentBlockOriginalBytes::Prepare(true) authenticates the complete c600
+GGUF on ONE open FD before context,then caches ALL14layer0 tensors plus
+token0's original sixteen-row embedding tile:15tensors/57spans/68603pages/
+280971136B. Default Prepare() retains prior14tensors/56span behavior.
+Neutral virtual byte interface carries ONLY Ready/Read/Contains/Word and
+raw packet liveness,never source/model/initialized/complete native seals.
+Actual QPE1 consumes the original packed tile;new transport consumes ALL
+original learned spans and disables EVERY synthetic learned fallback.
+Actual QPE1 output and actual zero-machine state/history output bytes feed
+QRB1,not host intermediate results or inferred zeros from a ready facade.
+Owner TEST byte model is parameterized,not a new production owner alias.
+Signed image pins and ALL production native code remain UNCHANGED.
+
+Read-only instruction observation captures18produced stages,including the
+786432 private NEXT state words in logical head/key/value order. No PC,
+register,nonce,ready,completion or numerical product is rewritten. ONLY
+after actual STOP/holds/restoration/complete fresh END/context destruction
+may the native scenario publish those raw captured bytes to CPU observer.
+This is a simulated raw GDDR/L1 capture,NOT physical DMA/readback authority.
+
+First transport-regression16329 TERMINAL0:actual native held+allinit/full
+restoration/dispatch END;before new read-only virtual stage capture only.
+Owner21inert/source-boundary regression68191 TERMINAL0 after TEST template
+parameterization. Initial transport attempt terminal1 because its new
+scenario header correctly refused the operand simulator's existing Work
+macro. FIX:split the neutral byte TYPE from the guarded scenario entry;
+never undefine a role or weaken the actual native/CPU/image/Work interlock.
+
+Independent CPU reference -- separate role and TU,NEVER Work
+------------------------------------------------------------
+PioneerQ38RecurrentBlockValidationReference requires ONLY exact NEW CPU
+reference+CPU validation selections;all old native/client/image/Work and
+old dense-reference selections (including defined0/late) are refused.
+Independent row-major GGUF dequantization/host libm/rounding ->embedding,
+RMS,Q8alpha/beta/Z/QKV,zero-history Conv4,zero-current GDN+private NEXT,
+128value gated norm,output projection/residual/post RMS,Q4gate/up/SiLU/down
+and final5120. No card quantizer,learned products or device call is reused.
+The SAME already-authenticated open FD supplies raw tiled bytes AND the
+private row-major reference,BEFORE native context. No pathname reopen or
+reference/product/model accessor. Sealing permanently disables reference
+byte reads;native TU sees ONLY neutral learned bytes and post-END output
+sink. Reference comparisons NEVER flow back into execution or cleanup.
+
+Main source62571 and independent clean20842 BOTH TERMINAL0;entire stdout
+identical375ac0e420ddb71428f0f002ec4311c13e98bff1d63b9bfe861604edf976991d.
+3853actual row-major reference reads/private fingerprintbb911e57059b179f;
+all57spans/68603pages/280971136bytes/prepare->seal/nonfinite/invalid/overlap
+and packet-liveness refusals PASS. Initial source-unit19368 terminal1
+because the TEST included a kernel-private geometry header without its
+required native mutable owner. Removed that inappropriate dependency;
+unit now uses independent literal token0 route786/base04000000,NOT any
+native flag/owner gate bypass. CPU source/production gates unchanged.
+
+Final unit main36725 and independent clean91978 BOTH TERMINAL0/full stdout
+identical9ce05da1e20de5f7f64311bb15451a2007d793ecedebebd44ba28ae0ae8f1797.
+Analytical constant1 Q8 matrix5119.6875 and Q4matrix5120,zero learned whole
+18stage/state786432/3853reads,first+last actual source-loss atomic refusal,
+last-tensor metadata/rounding refusal,strict postreturn comparison PASS.
+256exact separate CPU-role missing/defined0/late/native/image/oldaliases
+refusals PASS. Earlier70449/11987 unit pilots also terminal0 before ONLY
+new constant1 cases/extra perimeter refusals,not final-source evidence.
+18new/modified task sources MAIN/CLEAN byte-identical. All new numerical
+code is CPU TEST/reference or simulated-byte integration,not installed.
+
+CURRENT LIVE original-model instructions -- poll exact handles
+---------------------------------------------------------------
+49584 /private/tmp/pioneer-qrb1-original-native-20261027-a.log
+Older ORIGINAL raw57span native init/QPE1/wholeQRB/STOP/restore/freshEND
+pilot;per-stage instruction observers+finite capture/fingerprint ONLY.
+It predates separate CPU reference and post-END18stage captures and MUST
+NOT be called a final independent original-model numerical comparison.
+9799 /private/tmp/pioneer-qrb1-original-native-20261027-b.log
+Main complete same native scenario +original raw learned and actual QPE1,
+then18captured stage comparisons AFTER full END to separate private CPU
+reference and STRICT final5120 equality. Live,NOT numerically qualified.
+Predates ONLY extra CPU-role refusal guards/analytical unit cases/private
+postreturn reference-read-count assert/__HAIKU__ unused-variable guard;
+current arithmetic,capture and final numerical predicate are identical.
+91456 /private/tmp/pioneer-qrb1-original-native-clean-20261027-b.log
+Independent CLEAN same --original-model with current exact18task sources.
+All3confirmed live by their tool handles. No timeout or live-job restart.
+
+No physical driver/compute/power/restart/SD/mains/Assistant/network change.
+No dirty llama.cpp/FlashNext access or subagents. Stable last read-only
+board sample remains64CPUs/fullRAM/55-tag12-gen6/cold0/owner0. Last measured
+whole27B0.207893161tok/s unchanged;20UNMET/goalACTIVE. Native runtime
+qualification above is NOT card/model-speed success. Next finish actual
+original final comparison and diagnose any real mismatch WITHOUT fitting
+or weakening observers;then distinct guarded physical role/client,then
+valid recurrent0..2->dense3/all64/state+KV/history/token commit/finalnorm/
+vocab/sampling/persistent noCPUreference Work+Assistant/performance.
+
+Haiku CPU-source target qualification -- same continuation
+----------------------------------------------------------
+New source compile/link runner19th task file reads the SDK ONLY and writes
+fresh absolute outputs under/private/tmp. NO execution,installation/card
+access. Main9112 andclean42183 BOTH TERMINAL0;original.o exact
+ba5145d8fbaba665ee9850fc058cc4c7d55bbe3b2f795860901ffef890259c75,
+source-unit.o a067427254c5c9acac254d0bad5e518ef5c3f9d17c42f13afc32352b68a77d5a,
+CPU-only linked unit cd6a29fe847556d569db72eb4e29acb2735c9f8d627708591553ba7ffb8b71dd.
+Maximum USER-SPACE CPU-reference frame24688 (not a kernel/GPU stack).
+Symbol inspection rejects native context/owner/Work/driver-ioctl symbols.
+First73766 terminal1 on GCC -Werror=misleading-indentation in new CPU
+reference/source and prior raw-byte Word. Repaired ONLY whitespace/newlines;
+mechanically verified source tokens identical after stripping whitespace.
+No warning suppression,arithmetic,source,role or numerical bound changed.
+Host original main9799/clean91456 binaries predate ONLY these formatting
+fixes in addition to the explicitly noted non-numerical changes above.
+Source and unit qualification remains its exact original scope;target
+compile/link is NOT a target CPU execution,native/full-model or speed proof.
+
+Older original raw-byte pilot49584 NOW authoritative TERMINAL0. It ran all
+original57span learned bytes and real QPE1/zero/private native factories/
+wholeQRB+119workers/STOP+120holds/full original restoration/fresh END and
+published5120finite/nonzero words,fingerprintde0ec5a2c3e7085d. This is useful
+actual ORIGINAL instruction/native-lifecycle evidence,but its fingerprint
+is NOT an independent numerical comparison and NEVER a physical or token
+rate proof. Main9799/clean91456 remain the live independent reference tests.

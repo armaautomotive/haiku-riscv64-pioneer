@@ -3,7 +3,7 @@
 ## Current: recurrent native execution and final-disposal qualification
 
 October 27, 2026. Source-qualification checkpoint, not installed on the card.
-The previously pushed baseline is `20f114372f50e698a447b370bf194cdd014ee448`.
+The previously pushed baseline is `73f1ccdc4901567ae79f0e1e63cc49eede95c688`.
 
 - Complete execution-owner/real STOP/120 holds/full original restoration
   passed in the clean export (60994, terminal 0); main output is identical.
@@ -22,21 +22,39 @@ The previously pushed baseline is `20f114372f50e698a447b370bf194cdd014ee448`.
   actual call-seal release/reacquisition, the private clock lease, all seven
   fresh audit parents, quiet PCI/resident idle, 30 VM/11 PCI/3 host releases,
   unreserve and context destruction, plus 84 actual final-disposal failures.
-- Combined native computation remains running. New main/clean computation
-  plus complete final-END tests are live at 16931/13813; not yet qualified.
-  Exact handles/PIDs and scope are in the lifecycle evidence record below.
+- Main/clean complete native COMPUTATION plus final-END tests now passed
+  (16931/13813, both terminal 0, identical stdout `150df104...`): same genuine
+  embedding/init/owner, whole recurrent layer, all 119 worker STOPs, 120 holds,
+  full restoration, six post-RUN lifetime failures and 84 final-END failures.
+  Learned bytes/registers/OS are simulated: not original-model or silicon proof.
+- Original-weight integration now uses only authenticated raw learned bytes;
+  synthetic learned fallback is disabled. A separate private CPU reference
+  computes all 18 layer0 stages from the SAME authenticated open file before
+  the native context. Only post-END comparisons are exposed, never products.
+- Main/clean CPU-reference tests passed: zero case/all state words, analytical
+  constant Q8/Q4 matrices, atomic source-loss refusals and 256 role refusals.
+  Both actual original-file source tests passed, 3853 reference reads, private
+  fingerprint `bb911e57059b179f`, identical stdout `375ac0e4...`.
+- The CPU-only reference/source unit also compiles and links for Haiku RISC-V
+  in main/clean builds: exact binary `cd6a29fe...`, max user-space frame 24688
+  bytes, no native owner or driver IO symbols. Built only, never installed/run.
+- Original-model native comparisons are LIVE: main9799/clean91456. They compare
+  18 genuinely produced stages only after complete native END and require
+  strict final equality. No independent final numerical result is yet claimed.
+  Older raw-byte pilot49584 passed (terminal 0): actual original weights through
+  native computation/STOP/restoration/full END, but no independent final reference.
 
 Remaining before full-offload Work is ready:
 
-1. Finish native execution/final-disposal qualification and original-weight
-   comparison, then validate that path on the physical P100A.
+1. Finish the original-weight numerical comparison, then validate the qualified
+   native execution/final-disposal path on the physical P100A.
 2. Connect valid embedding/recurrent layers 0..2 through dense layer 3 and all
    64 layers, with correct persistent KV/recurrent/history and token commit.
 3. Complete final normalization, vocabulary projection and on-card sampling.
 4. Integrate persistent no-CPU-reference Work/Assistant; keep validation separate.
 5. Measure and optimize loading, prefill and decode toward 20 tokens/sec.
 
-Fresh read-only board check: 64 CPUs, max RAM 137034936320 bytes, driver55 /
+Last read-only board check: 64 CPUs, max RAM 137034936320 bytes, driver55 /
 tag2026102100010012 / generation6 / cold0 / active_owner0. No driver install,
 card compute, restart, power, SD, mains, Assistant or network changes.
 Last measured full-model rate is still **0.207893161 tokens/sec**; target unmet.

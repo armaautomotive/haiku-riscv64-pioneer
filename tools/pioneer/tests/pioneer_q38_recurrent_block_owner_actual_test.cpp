@@ -10,11 +10,11 @@
 #include "pioneer_q38_mixed_recurrent_block_root_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38RecurrentBlockOwner.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchClose.h"
-struct RecurrentOwnerActualIO:RecurrentMemoryIO {
- RecurrentBlockMachine machine;const char* workerPath;
+template<class BlockMachine=RecurrentBlockMachine> struct RecurrentOwnerActualIOBase:RecurrentMemoryIO {
+ BlockMachine machine;const char* workerPath;
  const PioneerQ38RecurrentBlockResult* execution=nullptr;
  bool live[120]={};unsigned starts=0,holds=0;
- RecurrentOwnerActualIO(const char* root,const char* worker):machine(root,worker,true),workerPath(worker){
+ RecurrentOwnerActualIOBase(const char* root,const char* worker):machine(root,worker,true),workerPath(worker){
   // Staging-only descriptor/source bytes,not processor progress. Replace
   // every staging peer by a NEW never-booted machine on actual release.
   std::array<uint32_t,1920> sources;
@@ -123,6 +123,7 @@ struct RecurrentOwnerActualIO:RecurrentMemoryIO {
   C().coreReset=value;
  }
 };
+using RecurrentOwnerActualIO=RecurrentOwnerActualIOBase<>;
 #ifndef PIONEER_Q38_RECURRENT_BLOCK_OWNER_ACTUAL_FIXTURE_ONLY
 int main(int argc,char** argv){
  assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);
