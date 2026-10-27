@@ -278,10 +278,20 @@ static void Inverse(){
  }
 }
 static float Flush(float x){unsigned b=PioneerAttentionBits(x);return b&0x7f800000?x:PioneerAttentionFloat(b&0x80000000);}
+#ifdef PIONEER_Q38_SIGMOID_PRECISION_IMAGE
+#if !defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE != 1
+#error New sigmoid is selected only by the separately built LOCAL live-root candidate
+#endif
+#include "PioneerQ38SigmoidPrecision.h"
+#endif
 static float Sigmoid(float x){
+#ifdef PIONEER_Q38_SIGMOID_PRECISION_IMAGE
+ float result;if(!PioneerQ38SigmoidPrecision(x,result))scalar_fault_park();return result;
+#else
  float a=-PioneerAttentionFloat(PioneerAttentionBits(x)&0x7fffffff),e;
  if(a> -80)e=PioneerGraphExp(a);else if(a<=-104)e=0;else {float half=PioneerGraphExp(a*.5f);e=Flush(half*half);}
  return PioneerGraphDividePositive(x>=0?1.f:e,1.f+e);
+#endif
 }
 static void Merge(const uint32_t* d,uint32_t* tracked){
  for(unsigned i=0;i<12288;i++)Words(L::Accumulate)[i]=0;

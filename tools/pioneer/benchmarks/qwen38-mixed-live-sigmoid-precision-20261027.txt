@@ -1,0 +1,98 @@
+Qwen27B: first numerical divergence and isolated compensated sigmoid
+2026-10-27 UTC -- OFFLINE CORRECTNESS CANDIDATE; NO driver or speedup
+
+First divergence, now measured
+------------------------------
+The18-stage main+clean diagnostic runs are BOTH terminal1, with byte-identical
+complete stdout. Actual original QPE1/QBL1/SAME119 instructions execute ALL7
+matrices and real119STOP+ROOT terminal. Nine stages are BIT-EXACT to the
+unchanged independent original reference:embedding,initial RMS,QG,K,V,
+query,gate,current half K,current half V. First difference is attention:
+ 1762/6144 words,nonfinite0,maxAbs4.76837158203e-7,relativeL24.8950170507e-8.
+Errors stay small through O/residual/post-RMS/FFN/activation, then grow at
+the final quantized down projection:relativeL22.19224961473e-4. Final stays
+the same strict FAILURE:5120 differences,relativeL21.26620363555e-4.
+The failed ideal-reference result was NOT relabeled or given a tolerance.
+Saved full trace:qwen38-mixed-live-original-stages-20261027.log
+ SHA25632dcf54645338cd3fbe17300bafd4e163e1c409222abbecc0a0dba46e1939382
+
+An additional CPU-only original-input check passes:the independent and
+production arithmetic quantizers agree for all33792 lanes and every scale/
+padding field of the four distinct expected inputs covering ALL7 matrix
+roles. This is NOT parity on the diverging actual later-stage inputs.
+
+Isolated precision candidate, not a CPU fallback
+-----------------------------------------------
+The existing gate rounds exp and 1+exp to F32 before division. The distinct
+PioneerQ38SigmoidPrecision candidate preserves the split degree10 exponential
+and denominator, then applies a compensated division correction. No hardware,
+source/producer/native/Work permission is attached to this arithmetic helper.
+It retains the old final-SIGMOID-result FTZ policy, not fused subnormal
+sigmoid-times-large-PV semantics. No universal correct-rounding claim is made.
+
+Main+clean HOST tests are terminal0/PASS,byte-identical:313082 cases,
+0differences/maxUlp0 against independent libm,7 domain/output-atomicity
+refusals. Role isolation passes50 cases,including missing,defined0,late and
+mixed CPU/oldSiLU/native/kernel/Work roles. These are HOST checks only.
+
+Distinct LOCAL QSG1 image,NOT the old QSP1 SiLU or a native completion:
+ boot4B SHA256d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+ code2856B SHA2564e587f314dcfba4f3df72cc01cb02e416ef2402c29793a633f75b45f9f4101d2
+ ELF12060B SHA2560ba8f128dc597429ad6caa1c52aeea4f9bdee6569f4cd6fef0410cfe98fbdf1e
+Main+clean emitted bytes agree. No undefined symbols,writable globals,
+unsupported arithmetic or controller CSR instructions;max static frame352B.
+Actual instruction tests BOTH terminal0/PASS,byte-identical:96 batches/
+6144 values,1040 header/early+late domain refusals,maxUlp0,maxStack416B,
+maxSteps84802. All arithmetic before output;input/header/guards immutable;
+terminal inert;NO MMIO beyond simulated local status,data and stack.
+
+The same pinned emitted QSG1 also matches ALL23552 original standalone
+operator gate inputs BIT-EXACT to independent libm:6144 attention and17408
+FFN. Gate ranges[-6.31962252,48.3553047],[-8.7288866,6.40288591]. These
+isolated primitive INPUTS come from the CPU reference:they are NOT genuine
+on-card producers,a full block or a native/hardware-model qualification.
+The complete block test below still uses genuine QPE1/device intermediate
+outputs and uploads NO expected products.
+
+Explicit root candidate -- full operator STILL PENDING
+------------------------------------------------------
+Only the new separate root builder defines the sigmoid candidate flag.
+All default ancestor programs and the existing50320B QBL1 are reproduced
+BYTE-IDENTICAL by the existing pinned builders,including the old ELF.
+The native program registry remains unchanged:
+ b39d4a4a4083a62078d90cc3ca887827e1b106a0cc08eb775ad936cf71d7793d.
+Main+clean NEW root bytes are also identical:
+ boot4B SHA25632791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ code51004B SHA256668a72ed92b42044d6fa8263bba8c63ff19ce31b1533b67e4a4d9799b9a2047e
+ ELF63436B SHA2565649a36db5e3a6b02b411b14c98ecadca0c4384c35fcfdf50662dd0f76160be6
+Max static frame2448B;fixed entry/WAIT/STOP/fault and reserved s11 checks
+remain enforced. No old native memory registry is granted for these bytes.
+Default and candidate test selections have DIFFERENT frozen artifact pins.
+Eight selector tests reject cross-selection,duplicate,mixed,Work and unknown
+options BEFORE execution;main+clean PASS.
+
+New main+clean full original-block actual-instruction runs are LIVE at this
+checkpoint. Their final numerical result and actual stack are NOT yet known.
+They still use the sealed private ideal reference and strict18-stage/final
+comparisons ONLY after real119STOP+ROOT terminal. Poll the SAME handles;
+observation timeout is not terminal. Do NOT install or promote from the
+primitive result,or assume the first-stage correction resolves the block.
+
+Saved terminal qualification logs
+---------------------------------
+qwen38-sigmoid-precision-host-20261027.log
+ SHA256a9a35355f44938dc39004be56b810ec127b061c8b05f412ae7aae73f427eeca5
+qwen38-sigmoid-precision-gates-20261027.log
+ SHA256d8d6ef45375079c741de47fe8b5daa346faf33d4d02f72109d308de5d565b0f9
+qwen38-sigmoid-precision-actual-20261027.log
+ SHA25621c5ef0e8008c370ad5f5777b010e06cf60b211917e84335ef343403c48cbb79
+qwen38-mixed-live-sigmoid-selection-20261027.log
+ SHA2569a4a14a01b55f0047da59adfcd7c044e54edbc75dc020c55ea965c47c420dc55
+
+NO new driver/Assistant/model/relay/SD/mains/hardware/disk changes. SDK
+read-only;new build/test outputs in/private/tmp. Dirty llama.cpp and
+unrelated untracked FlashNext files untouched. Last measured WHOLE-model
+0.207893161tok/s is UNCHANGED;20tok/s remains UNMET. Still owed after
+correctness:guarded native validation/readback and final resource teardown,
+physical comparison,valid64-layer/state/token/sampling/Work integration and
+real measured optimization. Goal remains ACTIVE.

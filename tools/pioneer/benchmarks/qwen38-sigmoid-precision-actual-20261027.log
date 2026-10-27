@@ -1,0 +1,11 @@
+PASS ACTUAL isolated QSG1 RV32IMF batches96/values6144/refusals1040/maxUlp0/maxStack416/maxSteps84802/input+header+guards immutable/atomic output+inert terminal/NO MMIO,native,Work,physical timing or model grant
+PASS ORIGINAL fixed c600de03 FULL SHA/open file identity/all851 tensor schema;NO accelerator context
+PASS ORIGINAL dense-block ideal CPU reference/3717reads/12sealed tensors/actual Q8_0 QG+K+V/Q6_K O/Q4_K FFN/embedding+RMS+position0attention+originalresidual+FFN+final fingerprintec4e50bb1a601765 embeddingMax0.121606588 finalMax30.4298229;STANDALONE layer3fromembedding,NOT GDN0..2/full64/token/cardcomparison/Work/TPS
+ORIGINAL_EXPECTED_INPUT_QUANTIZER QG/K/V/type8/words5120/laneDifferences0/scaleDifferences0;CPU arithmetic parity only,NOT actual instructions
+ORIGINAL_EXPECTED_INPUT_QUANTIZER O/type14/words6144/laneDifferences0/scaleDifferences0;CPU arithmetic parity only,NOT actual instructions
+ORIGINAL_EXPECTED_INPUT_QUANTIZER FFNgate/up/type12/words5120/laneDifferences0/scaleDifferences0;CPU arithmetic parity only,NOT actual instructions
+ORIGINAL_EXPECTED_INPUT_QUANTIZER FFNdown/type12/words17408/laneDifferences0/scaleDifferences0;CPU arithmetic parity only,NOT actual instructions
+ORIGINAL_SIGMOID_PRECISION_HOST attention/words6144/differences0/maxUlp0/gateRange[-6.31962252,48.3553047];HOST candidate,NOT emitted instructions or driver
+ORIGINAL_SIGMOID_PRECISION_EMITTED attention/values6144/differences0/ACTUAL QSG1 local RV32 instructions;CPU supplied primitive INPUTS only,NOT genuine producer/fullblock/native/card/Work/TPS
+ORIGINAL_SIGMOID_PRECISION_HOST FFN/words17408/differences0/maxUlp0/gateRange[-8.7288866,6.40288591];HOST candidate,NOT emitted instructions or driver
+ORIGINAL_SIGMOID_PRECISION_EMITTED FFN/values17408/differences0/ACTUAL QSG1 local RV32 instructions;CPU supplied primitive INPUTS only,NOT genuine producer/fullblock/native/card/Work/TPS

@@ -102,12 +102,13 @@ quiesced0/cold0/active_owner0/open_count1/guard1. NO new driver,Assistant,
 model,relay,SD,mains,hardware connection or disk change. SDK untouched.
 Dirty llama.cpp and unrelated untracked FlashNext files remain untouched.
 
-Next:new main+clean diagnostic runs retain in-memory actual snapshots of18 stages,
-then compare against the same private independent reference ONLY after
-real119STOP+ROOT terminal and return. Diagnose the FIRST diverging stage;
-do not fit a tolerance or relabel an instruction-policy match as the ideal
-reference. These new runs are still pending. Do not restart live jobs for
-observation expiry or promote/install on provisional component results.
+Update:both18-stage runs are now terminal1/byte-identical. FIRST difference
+is attention gating;ALL9 earlier stages are bit-exact. A distinct compensated
+sigmoid primitive matches23552 original gate inputs in emitted LOCAL QSG1
+instructions. This is NOT a full-block or native grant. New explicitly
+pinned root-candidate main+clean whole-block runs remain live/pending;
+see qwen38-mixed-live-sigmoid-precision-20261027.txt. Keep strict comparison;
+do not restart live jobs for observation expiry or promote provisional data.
 Then finish original-byte/native validation entry/readback and final
 resource-release qualification before physical testing, followed by the
 full64-layer/state/token/sampling/Work integration and measured optimization.
