@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
 #include "PioneerQ38MixedLiveNativeRole.h"
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+#include "PioneerQ38MixedLiveFinalReleaseScope.inc"
+#endif
 bool PioneerSessionIO::MixedLiveCallScopeMatches(){
  auto* c=q38MutableContext;auto* fd=sRuntimeOwner;
  if(!c || &c->io!=this || !fd || fd->magic!=0x50313030 || fd->context!=c || fd->team<0

@@ -65,6 +65,10 @@ extern "C" bool pioneer_live_context_scoped_validation(PioneerProbeCookie* cooki
 } // COMPILE ONLY;trusted kernel storage,not a direct user buffer or loadable validation entry
 #endif
 extern "C" bool pioneer_live_context_end(PioneerStoreContext& c,tt_resident_session_result& r,bool& clean){return EndQ38DispatchOwnership(c,r,clean);}
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+extern "C" void pioneer_live_context_final_end(PioneerProbeCookie* cookie,tt_resident_session_result& r){EndResidentSession(cookie,r,true);}
+// Compile ONLY;the real caller still owes its authentic locked call seal.
+#endif
 extern "C" void pioneer_live_context_retain(PioneerStoreContext& c,tt_resident_session_result& r){RetainQ38DispatchOwner(c,r);}
 extern "C" void pioneer_live_context_destroy_clean(PioneerStoreContext* c){delete c;}
 extern "C" status_t pioneer_live_context_expected_refusal(){return B_NOT_ALLOWED;}

@@ -6,9 +6,10 @@ import re
 import runpy
 import subprocess
 import sys
-assert len(sys.argv)==3 or len(sys.argv)==4 and sys.argv[3] in ('--sigmoid-candidate','--validation-readback')
+assert len(sys.argv)==3 or len(sys.argv)==4 and sys.argv[3] in ('--sigmoid-candidate','--validation-readback','--final-release')
 sigmoid=len(sys.argv)==4
-readback=sigmoid and sys.argv[3]=='--validation-readback'
+readback=sigmoid and sys.argv[3] in ('--validation-readback','--final-release')
+final_release=sigmoid and sys.argv[3]=='--final-release'
 qualified,out=map(pathlib.Path,sys.argv[1:3])
 assert out.is_absolute() and not out.exists() and not out.is_symlink()
 out.mkdir(mode=0o700)
@@ -22,6 +23,7 @@ finally:
 args=base['args'][:]
 if sigmoid:args+=['-DPIONEER_Q38_MIXED_LIVE_SIGMOID_PROGRAMS=1']
 if readback:args+=['-DPIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK=1']
+if final_release:args+=['-DPIONEER_Q38_MIXED_LIVE_FINAL_RELEASE=1']
 tags=[i for i,a in enumerate(args) if a.startswith('-DPIONEER_DRIVER_BUILD_TAG=')];assert len(tags)==1
 args[tags[0]]='-DPIONEER_DRIVER_BUILD_TAG=0x51424c4e4f445256ULL'
 obj=out/'mixed-live-context-NODRV.o'
@@ -40,6 +42,9 @@ if readback:
  for required in ('pioneer_live_context_scoped_validation(', 'PioneerQ38MixedLiveOwner::CloseForValidation(',
   'PioneerQ38MixedLiveOwner::CloseImpl(', 'PioneerQ38MixedLiveOwner::ValidationReadback('):
   assert any(required in name for name in frames),(required,'real guarded readback must be instantiated')
+if final_release:
+ for required in ('pioneer_live_context_final_end(', 'MixedLiveFinalReleaseScope(', 'MixedLiveFinalUnmap('):
+  assert any(required in name for name in frames),(required,'actual closed-source final release must be instantiated')
 nm=str(pathlib.Path(args[0]).parent/'riscv64-unknown-haiku-nm')
 table=subprocess.check_output([nm,'--defined-only',str(obj)],text=True)
 names={r[-1] for r in map(str.split,table.splitlines()) if r}
@@ -69,9 +74,13 @@ for n in ('publish_devices','find_device'):
 assert code('pioneer_q38_live_context_only_uninit_driver')==code('pioneer_live_context_expected_inert')
 for scope in ('_ZN16PioneerSessionIO25MixedLiveCallScopeMatchesEv','_ZN16PioneerSessionIO18MixedLiveBaseScopeEv'):
  assert len(code(scope))>16 and code(scope)!=code('pioneer_live_context_expected_null'),(scope,'scope must contain genuine runtime checks,not optimized constant false')
+if final_release:
+ scope='_ZN16PioneerSessionIO26MixedLiveFinalReleaseScopeEv'
+ assert len(code(scope))>16 and code(scope)!=code('pioneer_live_context_expected_null'),(scope,'final release needs genuine closed-context checks')
 sizes=[v for k,v in frames.items() if any(n in k for n in ('MixedLive','mixed_live','pioneer_live_context_'))]
 print('PASS ACTUAL native context/FD+team+callthread/source+embedding/retained model/clock+hosts/new L1 aliases+held journal/private RUN+STOP+ALL120holds+restore/retention+END compile;maxNewFrame'+str(max(sizes)))
 print('PASS NO conventional ABI exports/ALL5 independent inert controls byte-identical/private ACTUAL setup+closed-storage bodies retained/scopes NOT constant false;NO public mixed execution entry')
 if readback:print('PASS separate guarded validation fixed5page readback retained;HEAP staging/atomic capture+restore;NO loadable driver/client/physical qualification')
+if final_release:print('PASS actual final-release scope/30VM-only Unmap/EndResidentSession compile;NO default path promotion or complete runtime teardown claim')
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+'  '+str(obj))
 print('COMPILE ONLY;private actual setup bodies WOULD perform IO if invoked;tool only compiles+inspects,never links/installs/invokes. Genuine mixed execution/STOP/restore/native numerical qualification and full-model integration STILL OWED;NO card/speed claim')

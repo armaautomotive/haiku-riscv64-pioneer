@@ -1,0 +1,91 @@
+Qwen27B:strict final virtual-view release --2026-10-27 UTC
+OFFLINE/PRIVATE NODRV ONLY;NO installation,physical execution or TPS gain
+
+Why a separate path
+--------------------
+The actual generic PioneerSessionIO::Unmap method was extracted verbatim
+and executed with EXPLICIT simulated VM endpoints. It makes7 direct view
+deletions and calls inherited diagnostic cleanup even after an early
+deletion fails;the4 mixed aliases are deferred to destruction. Those old
+diagnostic semantics are preserved,not relabelled as new native teardown.
+
+The NEW PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE=1 selection is additional to
+the exact qualified sigmoid/readback selections and the existing20-parent,
+6-renamed-ABI,QBLNODRV tag perimeter.210 exact/defined0/late/old projection
+map/CPU/Work/image gates pass. No public ioctl,loadable driver or Work mode
+is added. Generic TT arithmetic options remain DATA,not Work permission.
+
+Actual native integration -- COMPILE ONLY
+-----------------------------------------
+The final scope uses the SAME genuine private CLOSED native model/source,
+FD/team/callthread/generation,closed Dispatch/span,fully restored root and
+bulk leases,retained hosts and unchanged memory aliases. It additionally
+requires the actual private clock lease's completed normal IDLE/800MHz
+restore,with no explicit END remaining and no recovery flag. The fixed
+END phase50/terminal PCI transaction is required. It performs CPU checks
+ONLY;it cannot synthesize closed owners,clock completion or physical proof.
+
+In the actual SessionIO Unmap routing,the selected mixed context uses a
+fixed30-handle VM-only path instead of inherited diagnostic cleanup. ALL
+handle validity/duplicates/host-buffer aliases are checked before the FIRST
+deletion. Each successful deletion invalidates its handle;the FIRST failure
+stops ALL later deletions. No retry occurs. Beginning this release makes
+the entire mixed memory alias set unusable,even if deletion later fails.
+All device-view pointers are cleared on complete success. Wired input/
+output/wide host buffers and CPU journals stay owned;final PCI restoration
+must still succeed before the existing END caller can release them.
+
+Main+clean actual Haiku SDK objects are terminal0/BYTE-IDENTICAL:
+ SHA2563517f0b054c19b0d9bbf9800fd9439148e3ace61224b069b4c928a34543a359b
+The actual final scope,30-view Unmap and complete EndResidentSession bodies
+instantiate;scope is NOT optimized to constant false. Max new frame1200B.
+No conventional ABI exports;independent inert entry controls still match.
+This remains a refusing compile object,never linked/installed/invoked.
+
+Runtime component/transaction qualification -- SIMULATED ENDPOINTS
+-----------------------------------------------------------------
+Main+clean ASAN+UBSAN tests are BOTH terminal0/byte-identical. The new
+helper and VERBATIM actual production Unmap routing execute,not a copied
+replacement. Coverage includes ALL30 deletion-failure positions,555
+duplicate/negative/host-buffer-alias refusals,30 single-absent handle
+layouts,exact success deletion order,all pointer invalidations,retained
+host buffers,and inert repeat calls. The component's scope endpoint is
+EXPLICITLY simulated;it does NOT create native permission or a closed GPU.
+
+The SAME actual routing/helper is composed with the production
+PioneerQ38DispatchMmioEnd transaction:ALL30 VM failures fence EVERY PCI
+write/read;ALL11 PCI write/readback failures fence following operations;
+repeat attempts are inert and ALL host buffers remain retained. PCI and
+VM endpoints are simulated. This is NOT a complete native END or silicon
+claim and does not substitute for real private ARC/host lifetime testing.
+
+Raw main+clean byte-identical logs:
+ qwen38-mixed-live-final-unmap-20261027.log
+ SHA2565a8d800db48ae8d4ee25432f78457c5110f43152725704bf95f4496836f05dd1
+ qwen38-mixed-live-final-release-gates-20261027.log
+ SHA256bc48652288cba9f30694529268297a45881e980212da419395900fb89b4026f0
+
+Preserved control objects
+--------------------------
+Default0b55dd8d20b7d81a8b97cc6608c5496d9b2633a4c1ef698a74010feb933b90e8
+Sigmoid374ec650c173e5b23b73d0a0a09ba7f8785add27f14584268d033c834cdbd224
+Readback4b1e6e4473150e50e10526d161a7d5bb67a466b718e9bf216dbb810b10279e9b
+Old65=61faa093 and old NODRV=9fcf1f7f also remain byte-identical. No emitted
+card program or numerical operator changed;the already-completed long
+instruction runs were not restarted merely to restate existing evidence.
+
+Remaining gate before physical use
+----------------------------------
+Execute/qualify the combined ACTUAL closed-native->normal-clock END->PCI
+transaction->host release->context destruction path,including failure
+containment,with real private state and simulated OS endpoints. The final
+scope itself is currently SDK-compile-qualified only. Then add the distinct
+original-weight validation entry/client and perform physical comparison.
+Valid64-layer GDN+dense sequencing/recurrent+KV state/token commits,final
+norm/vocabulary/sampling,Work/Assistant integration and measured speedup
+remain unfinished. Standalone layer3/position0 is NOT a valid model prefix.
+
+Installed driver/Assistant/boot/64CPU/128GB untouched. No relay/power/SD/
+mains/hardware connection/model/disk change. SDK read-only;outputs in/tmp.
+Dirty llama.cpp/unrelated FlashNext untouched. Last real whole-model
+0.207893161tok/s unchanged;20tok/s UNMET. Goal ACTIVE.

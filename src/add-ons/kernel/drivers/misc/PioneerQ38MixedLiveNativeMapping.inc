@@ -12,6 +12,9 @@ volatile uint32* q38MixedLiveMemoryView[4]={NULL,NULL,NULL,NULL};
 bool q38MixedLiveMemoryMapAttempted=false;
 uint64 q38MixedLiveMemoryBar=0;
 bool MixedLiveMemoryMappingStable(unsigned w){
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+ if(q38MixedLiveFinalUnmapAttempted)return false; // never reuse ANY alias after release begins,even on a partial failure
+#endif
  if(w>=120 || runtimeCore!=w || !fleetEnabled || !runtimeMapped || !runtimeEntry || !scratchData || payloadBytes!=8192
   || !Q38PanelMappingStable() || !q38MixedLiveMemoryMapAttempted || profile.bar0_host_start!=q38MixedLiveMemoryBar
   || profile.bar0_host_start>UINT64_MAX-UINT64_C(0x19180000) || TT_Q38_PANEL_VIEW_BASE!=0x6e000 || TT_Q38_PANEL_VIEW_BYTES<0x3e000)return false;
@@ -57,5 +60,8 @@ bool MixedLiveMemoryWrite(unsigned w,uint32 a,uint32 value){
  else PioneerWrite32(q38MixedLiveMemoryView[3]+(a-0xac000)/4,value);
  return true;
 }
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+#include "PioneerQ38MixedLiveFinalUnmap.inc"
+#endif
 #endif
 // Only these two fixed coordinates exist. Switching the owned PCIe TLB

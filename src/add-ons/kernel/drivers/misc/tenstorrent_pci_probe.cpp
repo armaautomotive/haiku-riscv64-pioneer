@@ -13,6 +13,9 @@
 #if defined(PIONEER_Q38_RESIDENT_LAYER_LINK_IMAGE) || defined(PIONEER_Q38_RESIDENT_LAYER_ROOT_IMAGE) || defined(PIONEER_Q38_RESIDENT_LAYER_NORM_IMAGE) || defined(PIONEER_Q38_RESIDENT_LAYER_FFN_IMAGE) || (defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_COMPONENT) && !defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE))
 #error OFFLINE complete layer IMAGE has no existing native or Work driver role
 #endif
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+#include "PioneerQ38MixedLiveFinalReleaseRole.h"
+#endif
 #include "tenstorrent_pci_probe.h"
 #if defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY)
 #ifdef PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE
@@ -2907,6 +2910,9 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool Unmap() {
 		bool okay=true;
 #ifdef PIONEER_Q38_EMBEDDING_NATIVE
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+  if(q38MixedLiveMemoryMapAttempted || q38MixedLiveFinalUnmapAttempted)return MixedLiveFinalUnmap();
+#endif
 		if (q38EmbeddingMemoryArea>=B_OK) {
 			if (delete_area(q38EmbeddingMemoryArea)==B_OK) q38EmbeddingMemoryArea=-1;
 			else okay=false;

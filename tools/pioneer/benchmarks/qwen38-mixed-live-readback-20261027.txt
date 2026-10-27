@@ -85,6 +85,11 @@ host/map/context teardown qualification;physical comparison. Then valid
 64-layer GDN+dense sequencing/recurrent+KV state/token commit,final norm/
 vocabulary/sampling,Work/Assistant integration and measured optimization.
 This remains a standalone layer3/position0 operator,not a valid model prefix.
+The additional private final-release selection now supplies a VM-only,
+first-failure-stopping30-view Unmap. Its real SDK scope and simulated
+actual Unmap+PCI transaction checks pass main+clean;combined actual native
+clock/host/context runtime qualification remains owed. See
+qwen38-mixed-live-final-release-20261027.txt;no loadable promotion is implied.
 
 Installed driver/Assistant/boot/64CPU/128GB untouched. No power/relay/SD/mains/
 hardware connection/model/disk change. SDK read-only;outputs in/private/tmp.
