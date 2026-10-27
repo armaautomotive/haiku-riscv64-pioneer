@@ -38,7 +38,7 @@ struct MixedRootMachine:ScalarMachine {
  unsigned failPacket=0,counterFaultPacket=0,sourceFaultPacket=0,frameFaultPacket=0,bootFaultPacket=0,headerFaultPacket=0;
  unsigned badWorker=0,badPhase=0,badKind=0,heldPCReads=0,badReadback=0,readbacks=0;
  bool pending=false;
- MixedRootMachine(const char* image,const char* worker,const char* qdp,const char* qda,unsigned romLimit=32764):ScalarMachine(image,0,0,romLimit),qdpImage(qdp),qdaImage(qda){
+ MixedRootMachine(const char* image,const char* worker,const char* qdp,const char* qda,unsigned romLimit=32764,bool bootstrapHistories=true):ScalarMachine(image,0,0,romLimit),qdpImage(qdp),qdaImage(qda){
   memory.clear();counts.fill(0xfffffff8);
   boot[0]=R::Magic;boot[1]=1;boot[2]=64;boot[3]=129;boot[4]=0x16005;boot[5]=119;boot[6]=8192;boot[7]=64;
   for(unsigned i=0;i<4;i++)boot[8+i*2]=i+1;
@@ -50,9 +50,9 @@ struct MixedRootMachine:ScalarMachine {
    auto& p=*child[w];assert(p.BootMixed());
    // Actual arithmetic closes different nonzero private job histories.
    // No nonce/PC/register/status or tensor array is set by this fixture.
-   for(unsigned i=0;i<1+w%3;i++){if(i)FreshInputs(p);assert(p.MatrixMixed());}
+   if(bootstrapHistories)for(unsigned i=0;i<1+w%3;i++){if(i)FreshInputs(p);assert(p.MatrixMixed());}
   }
-  for(unsigned head:{0U,31U,47U}){
+  if(bootstrapHistories)for(unsigned head:{0U,31U,47U}){
    auto& a=*child[head*2];auto& b=*child[head*2+1];
    // Bring the pair to the SAME real sequence using actual extra matrix
    // jobs only; never write the worker's private/current sequence.

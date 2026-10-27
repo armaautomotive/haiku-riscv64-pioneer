@@ -85,9 +85,16 @@ extern "C" void q38_mixed_root_seal(){
  if(reinterpret_cast<unsigned>(p)<0x6e000 || reinterpret_cast<unsigned>(p)>0x70000-sizeof(*p))scalar_fault_park();
  for(unsigned i=0;i<64;i++)if(Words(L::Boot)[i]!=p->boot[i] || Words(L::Header)[i]!=p->frame[i])scalar_fault_park();
  for(unsigned i=0;i<L::OuterWords;i++)if(Words(L::Outer)[i]!=p->outer[i])scalar_fault_park();
- if(!p->phase || p->phase>12 || *Words(L::Doorbell)!=p->outer[48])scalar_fault_park();
+ if(!p->phase || p->phase>
+#ifdef PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE
+ 13
+#else
+ 12
+#endif
+ || *Words(L::Doorbell)!=p->outer[48])scalar_fault_park();
  for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+Source(i))!=p->boot[16+i])scalar_fault_park();
 }
+#ifndef PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE
 extern "C" void mixed_block_main(){
  using namespace DensePartitionRoot;L::PrivateSeal seal;uint32_t counters[8];
  for(unsigned i=0;i<64;i++)seal.boot[i]=Words(L::Boot)[i];
@@ -128,3 +135,4 @@ extern "C" void mixed_block_main(){
   Words(L::Status)[4]=0;Words(L::Status)[5]=12;Words(L::Status)[6]=o[3];Words(L::Status)[7]=o[4];Fence();Words(L::Status)[1]=n;Fence();
  }
 }
+#endif

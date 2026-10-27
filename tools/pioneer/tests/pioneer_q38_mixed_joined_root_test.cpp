@@ -9,8 +9,8 @@ struct JoinedRootMachine:ProjectionRootMachine {
  std::array<uint32_t,64> outer={};std::map<uint64_t,uint32_t> dram;
  unsigned projections=0,acceptedJobs=0,prepareReads=0,prepared=0,attentionChecks=0,scatterWords=0;
  bool observed=false,suppressObservers=false;double maxError=0;
- JoinedRootMachine(const char* root,const char* worker,const char* qdp,const char* qda)
-  :ProjectionRootMachine(root,worker,qdp,qda,131072){
+ JoinedRootMachine(const char* root,const char* worker,const char* qdp,const char* qda,bool bootstrapHistories=true)
+  :ProjectionRootMachine(root,worker,qdp,qda,131072,bootstrapHistories){
   boot[0]=J::Magic;memory[J::Boot]=J::Magic;
   for(auto range:std::array<std::pair<unsigned,unsigned>,6>{{{J::Outer,256},{J::JointSummary,256},
    {J::Recipes,4*J::RecipeStride},{J::RecipeCopies,4*J::RecipeStride},{J::DenseCopies,96*256},{J::RawCopy,5120*4}}})

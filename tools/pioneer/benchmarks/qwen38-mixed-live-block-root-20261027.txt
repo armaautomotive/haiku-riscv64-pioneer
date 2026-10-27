@@ -1,0 +1,116 @@
+Qwen27B: device-input persistent dense-block lifecycle QBL1
+2026-10-27 UTC -- OFFLINE, NOT a new installed driver or measured speed
+
+Status
+------
+Main fresh-boot lifecycle test terminal0/PASS: two complete dense blocks,
+N1/layer3 then N33/layer7, SAME ROOT and119 actual QMW1 instruction workers,
+283 refusal branches, real119 STOP jobs and a separate ROOT stop receipt.
+Independent clean lifecycle run also terminal0/PASS, byte-identical stdout.
+New canonical-command main/clean actual-instruction runs are also LIVE;
+do not report them as passed until their own terminal0 results arrive.
+Last actual whole-model rate remains0.207893161tok/s;20tok/s is UNMET.
+
+Changes
+-------
+ROOT itself reads the original5120-element hidden input from GDDR, in two
+real NoC reads. It then runs initial learned RMS, Q/G,K,V, learned Q/K norm
+and RoPE, four-group attention, O, ORIGINAL-input residual plus post RMS,
+Q4 gate/up, SiLU, Q4 down and final residual. The next block consumes the
+actual preceding final GDDR output bytes, not an observer-produced vector.
+This layer3->7 test is a lifecycle test, NOT a valid64-layer model prefix:
+the intervening GDN layers are not claimed to have executed.
+
+The first request admits genuinely fresh QMW1 workers with real zero jobs,
+zero sequence/doorbell and idle status. No prior arithmetic receipt is
+invented/read as though it existed. Current source/reset/PC/quiet queues,
+code boot seals and counters are still observed. Later admissions require
+the actual closed previous job. Per-worker nonce headroom reserves an
+entire complete block AND a subsequent real STOP.
+
+STOP is only legal after a completed block. It audits ALL119 existing
+closed chains before the first STOP write, submits actual next jobs and
+doorbells, verifies actual STOP status, two STOP-PC observations, sources,
+boots, jobs, doorbells and counters, then publishes a separate QLS1 receipt
+and enters ROOT40060. It never relabels an earlier block summary as STOP.
+Partial block GDDR output remains provisional; there is no token/state/KV
+commit authority and no cleanup/reset/retry after an uncertain IO failure.
+
+Independent layout/program/L1-journal checks
+------------------------------------------
+Complete new L1 footprint: ROOT308745 words, each peer93193 words,
+total11398712 words/45594848bytes. Covers new20000/40000/60000 code,
+complete8KiB stacks, ROOT runtime through17f800 and each trailer. The old
+native69 journal is NOT extended or reused as permission for this layout.
+
+All10 SHA-pinned binary sections are registered exactly:2630300 code words
+across120 participants. No implicit code holes or reconstructed originals.
+The held-only heap journal captures arbitrary original words (including
+UINT32_MAX), performs a complete second physical pass BEFORE first write,
+installs/verifies all code, and supports complete never-launched restore
+with another full proof. Main+clean positive and50 fault/29 precondition
+refusal checks pass using simulated IO. This is not execution/STOP cleanup.
+The actual PioneerSessionIO does not supply the new MixedLiveMemoryScope
+methods; this component cannot borrow old69 native permission.
+
+Canonical command plan
+----------------------
+PioneerQ38MixedLiveBlockPlan constructs all seven canonical matrix records,
+120 boot seals, complete128-word outer command and96 canonical KV worker
+frames from the fixed model layout, not caller weight coordinates. Live
+sequences remain zero recipe placeholders until the device controller
+observes/binds actual workers. Its explicit NEW cache convention is
+K rows0..3 and V rows4..7; this does not reinterpret a committed old cache.
+All11 learned tensors are checked against exact byte1 in the retained
+upload ledger, including both RMS and both Q/K norm tensors.
+
+Main and independent clean metadata checks pass224 plans/1568 matrices:
+16 dense layers,7 workspace banks and positions0/8191, compared with the
+independent tiled host loader's ORIGINAL local public GGUF metadata and
+119-worker jobs.1327 encoded-word mutations and330 learned-page/geometry
+refusals pass. This metadata read is NOT full-file SHA authentication or
+original-weight numerical inference. Main+clean actual RISC-V kernel
+compiler instantiations pass with max static frame1200B. Complete job
+objects are heap members, not25KiB kernel locals. The compiler caught an
+existing misleading-indentation warning in DenseProjectionPlan; adding
+braces on the SAME line fixes it without shifting kernel prefix locations.
+Canonical-command device-instruction tests are tracked separately.
+
+Completed main raw lifecycle stdout:
+qwen38-mixed-live-block-root-20261027.log, SHA256
+d5d9f286b0bc0238e791ed00575252c205c2ea775163e2ceedfd7158bc551489.
+Main+clean identical canonical-plan+SDK stdout:
+qwen38-mixed-live-plan-20261027.log, SHA256
+c58fd64e1c76b7285f80c143dedc2460ff2a2ca8666aa6121f75262bea9fb472.
+
+Frozen executable pins (main and independent clean identical)
+-----------------------------------------------------------
+boot.bin4B 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+code.bin50624B 8a05f3fa62bf8674f23783f3cb9aa0ffba7c564fc03b5b4b56ee267cc2fc06bc
+program.elf62908B 2a90609c9033331430abcf054f637b65134d43bbf9fbf41672a194c5fd5a3bbc
+Max static frame2448B; observed ROOT stack5428B of8192B. Every builder
+first reproduces the unchanged QBR1/QJR1/QMP1/QMR1/QDR1 ancestor images.
+Main+clean native SDK builds preserve DEBUG69b554d37d0e74204a2ab9e521c6f535ea7c697879295ff2d418def6afabe9f8c7,
+old65=61faa093 and inertNODRV=9fcf1f7f; kernel prefix line count unchanged.
+Role gates:463 live,463 block,463 joined,190 client,94 reference PASS.
+Unchanged oldQMP1 instruction regression terminal0:8matrices/142refusals.
+
+Remaining work -- do NOT promote this checkpoint to Work
+------------------------------------------------------
+Genuine native source/input-producer binding, complete current physical
+mapping/exclusivity, GDDR/NoC/Tensix/host/PCI/clock journals and lifetime,
+launch/real STOP/all120holds/restore/sealed END still need integration and
+qualification. A public flag, layout, test result or old closed prefix is
+not a substitute. Full64-layer GDN+dense scheduling, recurrent/KV/token
+commits, vocabulary/sampling and real original-model throughput are owed.
+Before physical promotion, worker polling must also respect the documented
+speculative-frontend nature of0xffb13140. Current offline byte fixtures
+return executed PCs; they do not establish that every non-wait silicon
+snapshot is a valid negative execution proof. No hardware failure from
+this new image has been observed, since it has not been installed/run.
+
+No card program/driver install, relay, mains, SD or hardware change was
+performed for this checkpoint. Read-only physical status at00:52 UTC:
+working driver55/tag2026102100010012/gen4/quiesced0/cold0/active_owner0.
+SDK inputs were read-only; outputs went to/private/tmp. Dirty llama.cpp
+and unrelated untracked FlashNext files were neither read nor changed.

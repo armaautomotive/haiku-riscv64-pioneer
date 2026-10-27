@@ -18,7 +18,7 @@ public:
  static unsigned Role(unsigned slot){return slot<3?5+slot:slot==3?10:~0U;}
  bool Build(const PioneerQ38CanonicalModelPlan& c,unsigned selected,unsigned pos,unsigned inputToken,unsigned workspaceBank,
   unsigned firstPhase,const PioneerQ38GdnIdentity& id,const uint32_t* source){
-  if(attempted)return false;attempted=true;
+  if(attempted){return false;}attempted=true;
   if(!c.Ready() || selected>=64 || selected%4!=3 || pos>=8192 || inputToken>=248320 || workspaceBank>=7
    || !firstPhase || firstPhase>=0x7ffffffb || !id.Valid() || !source)return false;
   for(unsigned w=0;w<120;w++)if(!source[w*16])return false;

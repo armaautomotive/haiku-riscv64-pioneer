@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#if defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
 #error Complete block never aliases the joined-only image
 #endif
 #if defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)

@@ -13,8 +13,8 @@ struct ProjectionRootMachine:MixedRootMachine {
  std::array<std::array<uint32_t,8>,119> parts={};std::array<uint32_t,119> rows={};
  std::vector<uint32_t> scattered;unsigned active=0,scatterPackets=0,quantWrites=0,completedGathers=0;
  unsigned badProofWord=~0U,inputFaultPacket=0,nativeFaultPacket=0,scaleFaultPacket=0,recipeFaultPacket=0;
- ProjectionRootMachine(const char* image,const char* worker,const char* qdp,const char* qda,unsigned romLimit=32764)
-  :MixedRootMachine(image,worker,qdp,qda,romLimit),canonical(new PioneerQ38CanonicalModelPlan){
+ ProjectionRootMachine(const char* image,const char* worker,const char* qdp,const char* qda,unsigned romLimit=32764,bool bootstrapHistories=true)
+  :MixedRootMachine(image,worker,qdp,qda,romLimit,bootstrapHistories),canonical(new PioneerQ38CanonicalModelPlan){
   assert(canonical->Build());boot[0]=Q::Magic;memory[Q::Boot]=Q::Magic;
   for(auto r:std::array<std::pair<unsigned,unsigned>,10>{{{Q::Parts,119*32},{Q::Rows,119*4},{Q::Banks,32},{Q::MatrixHeader,64},
    {Q::RecipeShadow,256},{Q::HeaderShadow,64},{Q::BankShadow,32},{Q::RowsShadow,119*4},{Q::PartsShadow,119*32},{Q::QuantizedChunk,576}}})

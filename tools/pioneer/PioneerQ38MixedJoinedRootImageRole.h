@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-#if defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
 #error Joint image never retags the standalone projection controller
 #endif
 // No guard. NEW joined controller, not an old image/source/native grant.

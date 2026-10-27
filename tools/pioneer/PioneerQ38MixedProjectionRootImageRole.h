@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 // No guard. NEW returning projection controller, not an old image grant.
-#if defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
 #error Standalone projection ROOT is not the joined graph role
 #endif
 #if defined(PIONEER_Q38_NEXT_RMS_NATIVE) || defined(PIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE) || defined(PIONEER_Q38_RESIDENT_GDN_OUTPUT_OPERATOR_IMAGE) || defined(PIONEER_Q38_DENSE_PARTITION_ROOT_IMAGE)

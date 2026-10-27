@@ -67,12 +67,15 @@ static void ClosedJob(const uint32_t* d,uint32_t* tracked,unsigned w,bool captur
 }
 static void Admit(const uint32_t* d,uint32_t* tracked,unsigned w){
  Wait(d,tracked,w,0,true);
+#ifdef PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE
+ if(L::FirstMatrix(d) && Words(L::Nonces)[w]>0x7ffffffd-L::RunDelta(w))scalar_fault_park(); // reserve the entire block AND a real STOP
+#endif
  if(w<96 && Words(L::Nonces)[w]>0x7ffffffb)scalar_fault_park();
  Transfer(d,tracked,w,M::Boot,256,false);Copy(L::PeerBoots+w*256,L::Scratch,64);
  const auto* b=Boot(w);
  if(!M::BootShape(b) || b[3]!=w+1 || b[4]!=M::Peer(w+1))scalar_fault_park();
  for(unsigned i=0;i<8;i++)if(b[8+i]!=d[32+i])scalar_fault_park();
-#if defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE)
+#if defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE)
  if(d[0]==PioneerQ38MixedProjectionRootLayout::Magic){
   if(w<d[7] && b[16]!=Words(L::PartsShadow+w*32)[5])scalar_fault_park();
  }else if(w<96)for(unsigned i=0;i<16;i++)if(b[16+i]!=Frame(w)[16+i])scalar_fault_park();
@@ -81,7 +84,28 @@ static void Admit(const uint32_t* d,uint32_t* tracked,unsigned w){
 #else
  if(w<96)for(unsigned i=0;i<16;i++)if(b[16+i]!=Frame(w)[16+i])scalar_fault_park();
 #endif
- PhysicalSource(d,tracked,w);ClosedJob(d,tracked,w,true);
+ PhysicalSource(d,tracked,w);
+#ifdef PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE
+ if(!Words(L::Nonces)[w]){
+  if(!L::Virgin(d))scalar_fault_park(); // exact FIRST root request/QG only,never recaptured later
+  Transfer(d,tracked,w,M::Job,256,false);
+  for(unsigned i=0;i<64;i++)if(Words(L::Scratch)[i])scalar_fault_park();
+  Copy(L::PeerJobs+w*256,L::Scratch,64);
+  if(Register(d,tracked,w,M::Doorbell))scalar_fault_park();
+  Transfer(d,tracked,w,M::Status,64,false);
+  for(unsigned i=0;i<16;i++)if(Words(L::Scratch)[i]!=(i==3?unsigned(M::Magic):0U))scalar_fault_park();
+  // A virgin loop has NO arithmetic receipt. Observe real quiet queues
+  // and counters;never read/fabricate an uninitialized proof/nonce.
+  for(unsigned i=0;i<4;i++)if(Register(d,tracked,w,0xffb20040+i*0x800))scalar_fault_park();
+  for(unsigned i=0;i<32;i++)if(Register(d,tracked,w,0xffb20240+i*4)&255)scalar_fault_park();
+  for(unsigned i=0;i<8;i++)Words(L::Counters)[w*8+i]=Register(d,tracked,w,0xffb20000+Counter(i));
+  if(Words(L::Counters)[w*8+2]!=Words(L::Counters)[w*8+6])scalar_fault_park();
+  BootSeal(d,tracked,w);ClosedJob(d,tracked,w,false);
+  for(unsigned i=0;i<8;i++)if(Register(d,tracked,w,0xffb20000+Counter(i))!=Words(L::Counters)[w*8+i])scalar_fault_park();
+  return;
+ }
+#endif
+ ClosedJob(d,tracked,w,true);
  const auto* previous=reinterpret_cast<const uint32_t*>(L::PeerJobs+w*256);
  bool dense=previous[2]==M::DenseValues;
  Transfer(d,tracked,w,dense?unsigned(W::Summary):0x83f00U,256,false);

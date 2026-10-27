@@ -10,7 +10,7 @@ struct BlockRootMachine:JoinedRootMachine {
  std::array<uint32_t,128> blockOuter={};
  unsigned initialNorm=0,postNorm=0,activation=0,finalWords=0,quantized=0,lastInputPhase=0;
  double activationError=0;
- BlockRootMachine(const char* root,const char* worker,const char* qdp,const char* qda):JoinedRootMachine(root,worker,qdp,qda){
+ BlockRootMachine(const char* root,const char* worker,const char* qdp,const char* qda,bool bootstrapHistories=true):JoinedRootMachine(root,worker,qdp,qda,bootstrapHistories){
   boot[0]=B::Magic;memory[B::Boot]=B::Magic;
   for(auto span:std::array<std::pair<unsigned,unsigned>,15>{{{B::Outer,512},{B::OriginalCopy,20480},{B::Raw,20480},{B::RawCopy,20480},
    {B::Weight,20480},{B::InputShadow,17408*4},{B::Native,17408*2},{B::NativeShadow,17408*2},{B::ScaleShadow,640},

@@ -98,7 +98,7 @@ static void BindDense(L::PrivateSeal* p){
  p->phase=5;Words(L::Status)[5]=5;Fence();q38_mixed_root_seal();
 }
 }
-#ifndef PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE
+#if !defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) && !defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE)
 extern "C" void q38_mixed_root_seal(){
  using namespace DensePartitionRoot;const auto* p=Joined::Private();
  if(reinterpret_cast<unsigned>(p)<0x6e000 || reinterpret_cast<unsigned>(p)>0x70000-sizeof(*p))scalar_fault_park();
