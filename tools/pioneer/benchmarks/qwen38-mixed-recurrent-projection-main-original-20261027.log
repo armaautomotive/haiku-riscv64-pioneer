@@ -1,0 +1,11 @@
+START authenticate full SAME original c600 GGUF and cache raw eight-role layer0 weights BEFORE instruction machine
+READY original raw learned bytes280719360/pages68536/spans44;NO numeric reference products uploaded
+PASS ORIGINAL actual QRP1 layer0 role10 rows48/card quantization and matrix outputs vs independent arithmetic/SAME119 lifetime
+PASS ORIGINAL actual QRP1 layer0 role11 rows48/card quantization and matrix outputs vs independent arithmetic/SAME119 lifetime
+PASS ORIGINAL actual QRP1 layer0 role5 rows6144/card quantization and matrix outputs vs independent arithmetic/SAME119 lifetime
+PASS ORIGINAL actual QRP1 layer0 role6 rows10240/card quantization and matrix outputs vs independent arithmetic/SAME119 lifetime
+PASS ORIGINAL actual QRP1 layer0 role13 rows5120/card quantization and matrix outputs vs independent arithmetic/SAME119 lifetime
+PASS ORIGINAL actual QRP1 layer0 role2 rows17408/card quantization and matrix outputs vs independent arithmetic/SAME119 lifetime
+PASS ORIGINAL actual QRP1 layer0 role3 rows17408/card quantization and matrix outputs vs independent arithmetic/SAME119 lifetime
+PASS ORIGINAL actual QRP1 layer0 role4 rows5120/card quantization and matrix outputs vs independent arithmetic/SAME119 lifetime
+PASS ORIGINAL recurrent matrices8/checked61536/ROOTstack3556;supplied inputs,NOT recurrent chain/native/physical/fullmodel/TPS

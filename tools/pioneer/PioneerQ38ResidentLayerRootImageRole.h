@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE
+#error Separate recurrent projection image cannot select an existing image role
+#endif
 // No guard:component roles are revalidated on every inclusion.
 #include "PioneerQ38ResidentOutputRootImageRole.h"
 #if !defined(PIONEER_Q38_RESIDENT_LAYER_ROOT_IMAGE) || PIONEER_Q38_RESIDENT_LAYER_ROOT_IMAGE != 1

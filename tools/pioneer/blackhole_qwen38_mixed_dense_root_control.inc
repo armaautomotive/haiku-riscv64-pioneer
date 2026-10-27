@@ -87,7 +87,7 @@ static void Admit(const uint32_t* d,uint32_t* tracked,unsigned w){
  if(d[0]==PioneerQ38MixedProjectionRootLayout::Magic){
   if(w<d[7] && b[16]!=Words(L::PartsShadow+w*32)[5])scalar_fault_park();
  }else if(w<96)for(unsigned i=0;i<16;i++)if(b[16+i]!=Frame(w)[16+i])scalar_fault_park();
-#elif defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE)
+#elif defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
  if(w<d[7] && b[16]!=Words(L::PartsShadow+w*32)[5])scalar_fault_park();
 #else
  if(w<96)for(unsigned i=0;i<16;i++)if(b[16+i]!=Frame(w)[16+i])scalar_fault_park();

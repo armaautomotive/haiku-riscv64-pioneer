@@ -1,0 +1,2 @@
+PASS recurrent projection DATA plans5376/48layers8roles7banks2positions/independent ORIGINAL GGUF-fleet384/all-word-mutations9272/page+geometry-refusals278;NO IO/source-auth/producer/native/fullmodel/TPS
+PASS actual RISC-V kernel DATA-plan instantiation/heap-only jobs/maxStaticFrame464;NO driver linkage/IO/native authority

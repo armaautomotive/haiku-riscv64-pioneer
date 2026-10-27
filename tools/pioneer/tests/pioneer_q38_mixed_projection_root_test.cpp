@@ -7,7 +7,12 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DenseProjectionPlan.h"
 #include "pioneer_q38_projection_input_reference.h"
 #include "../PioneerQ38OriginalWeightBytes.h"
+#ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_TEST
+#include "../PioneerQ38MixedRecurrentProjectionPlan.h"
+namespace Q=PioneerQ38MixedRecurrentProjectionRootLayout;
+#else
 namespace Q=PioneerQ38MixedProjectionRootLayout;
+#endif
 struct ProjectionRootMachine:MixedRootMachine {
  ProjectionExecutionLearnedBytes* originalLearned=nullptr; // TEST raw source only; never numeric products
  std::unique_ptr<PioneerQ38CanonicalModelPlan> canonical;
@@ -23,6 +28,11 @@ struct ProjectionRootMachine:MixedRootMachine {
    for(unsigned a=r.first;a<r.first+r.second;a+=4)memory[a]=0x7fc00001;
   for(unsigned a=Q::Native;a<Q::Native+12288+224;a+=4)memory[a]=0x7fc00001;
   for(unsigned a=Q::Scales;a<Q::Scales+1024;a+=4)memory[a]=0x7fc00001;
+#ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_TEST
+  for(auto r:std::array<std::pair<unsigned,unsigned>,6>{{{Q::InputShadow,17408*4},{Q::NativeShadow,17408*2},
+   {Q::ScaleShadow,768},{Q::Native,17408*2},{Q::Scales,768},{Q::Projected,17408*4}}})
+   for(unsigned a=r.first;a<r.first+r.second;a+=4)memory[a]=0x7fc00001;
+#endif
  }
  unsigned Index(uint32_t a)override{if(a==0x6000)return 0;assert(Range(a,Q::Code,unsigned(code.size())) && !(a&3));return 1+(a-Q::Code)/4;}
  bool CodeAddress(uint32_t a)const override{return a==0x6000 || Range(a,Q::Code,unsigned(code.size()));}
@@ -35,6 +45,10 @@ struct ProjectionRootMachine:MixedRootMachine {
   bool extra=Range(a,Q::RecipeShadow,256) || Range(a,Q::HeaderShadow,64) || Range(a,Q::BankShadow,32) || Range(a,Q::RowsShadow,119*4)
    || Range(a,Q::PartsShadow,119*32) || Range(a,Q::QuantizedChunk,576) || Range(a,Q::Native,12288+224) || Range(a,Q::Scales,1024)
    || Range(a,Q::Projected,49152);
+#ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_TEST
+  extra |= Range(a,Q::InputShadow,17408*4) || Range(a,Q::NativeShadow,17408*2) || Range(a,Q::ScaleShadow,768)
+   || Range(a,Q::Native,17408*2) || Range(a,Q::Scales,768) || Range(a,Q::Projected,17408*4);
+#endif
   if(extra){assert(!pending);memory[a]=value;if(Range(a,Q::Native,12288))quantWrites++;return;}
   MixedRootMachine::Store(a,value);
  }
@@ -165,20 +179,42 @@ struct ProjectionRootMachine:MixedRootMachine {
   }
   assert(completedGathers==active && !pending && !scatterPackets);
  }
+#ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_TEST
+ void StageProjection(unsigned role,unsigned changed,unsigned layer=0){
+#else
  void StageProjection(unsigned role,unsigned changed,unsigned layer=3){
+#endif
   sequence++;doorbells=scatterPackets=quantWrites=completedGathers=0;
+#ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_TEST
+  auto plan=std::make_unique<PioneerQ38MixedRecurrentProjectionPlan>();uint32_t sources[1920];
+#else
   auto plan=std::make_unique<PioneerQ38DenseProjectionPlan>();uint32_t sources[1920];
+#endif
   for(unsigned i=0;i<16;i++)sources[i]=source[i];for(unsigned w=0;w<119;w++)for(unsigned i=0;i<16;i++)sources[(w+1)*16+i]=child[w]->source[i];
+#ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_TEST
+  assert(plan->Build(*canonical,layer,role,changed?8191:0,changed?248319:123,layer%7,1000+sequence,sequence,PioneerQ38GdnIdentity{1,2,3,4},sources));
+  for(unsigned i=0;i<64;i++)descriptor[i]=plan->Frame()[i];
+#else
   assert(plan->Build(*canonical,layer,changed?1:0,123,layer%7,1000+sequence,PioneerQ38GdnIdentity{1,2,3,4},sources));
   unsigned slot=role==10?3:role-5;for(unsigned i=0;i<64;i++)descriptor[i]=plan->Frame(slot)[i];
   descriptor[0]=Q::Magic;descriptor[13]=Q::Rows;descriptor[48]=sequence;descriptor[49]=119;descriptor[50]=Q::Parts;descriptor[51]=Q::MatrixHeader;
   descriptor[52]=Q::Banks;descriptor[53]=role==10?Q::Output:Q::Input;descriptor[54]=Q::Projected;descriptor[55]=Q::PeerJobs;descriptor[56]=Q::Nonces;descriptor[57]=Q::PeerBoots;
+#endif
   assert(Q::Shape(descriptor.data()));active=descriptor[7];scattered.assign(descriptor[11],0x7fc00001);
   for(unsigned i=0;i<64;i++)memory[Q::Header+i*4]=descriptor[i];
+#ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_TEST
+  for(unsigned i=0;i<16;i++)memory[Q::MatrixHeader+i*4]=plan->Header()[i];for(unsigned i=0;i<8;i++)memory[Q::Banks+i*4]=plan->Banks()[i];
+#else
   for(unsigned i=0;i<16;i++)memory[Q::MatrixHeader+i*4]=plan->Header(slot)[i];for(unsigned i=0;i<8;i++)memory[Q::Banks+i*4]=plan->Banks()[i];
+#endif
   for(unsigned w=0;w<119;w++){
+#ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_TEST
+   firstNonce[w]=child[w]->memory.at(M::Status+4);rows[w]=plan->Rows()[w];memory[Q::Rows+w*4]=rows[w];
+   for(unsigned i=0;i<8;i++)memory[Q::Parts+w*32+i*4]=parts[w][i]=plan->Parts()[w][i];
+#else
    firstNonce[w]=child[w]->memory.at(M::Status+4);rows[w]=plan->Rows(slot)[w];memory[Q::Rows+w*4]=rows[w];
    for(unsigned i=0;i<8;i++)memory[Q::Parts+w*32+i*4]=parts[w][i]=plan->Parts(slot)[w][i];
+#endif
   }
   for(unsigned i=0;i<descriptor[14];i++)memory[descriptor[53]+i*4]=Bits(float(int((i*37+changed*41)%257)-128)*.03125f);
   for(unsigned i=0;i<descriptor[11];i++)memory[Q::Projected+i*4]=0x7fc00001;
@@ -200,13 +236,18 @@ struct ProjectionRootMachine:MixedRootMachine {
  }
 };
 static unsigned ProjectionRefusals(ProjectionRootMachine& base,bool full){
+#ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_TEST
+ constexpr unsigned RefusalRole=10;
+#else
+ constexpr unsigned RefusalRole=6;
+#endif
  unsigned refused=0;
  auto branch=[&](unsigned kind,unsigned arg,bool staged=false){
   // OS snapshot of an ALREADY EXECUTED world, never an emulated reset,
   // changed private nonce, tensor-state substitution or expected product.
   fflush(nullptr);pid_t pid=fork();assert(pid>=0);
   if(!pid){
-   auto& m=base;if(!staged)m.StageProjection(6,0);
+   auto& m=base;if(!staged)m.StageProjection(RefusalRole,0);
    if(kind==0)m.failPacket=1;
    if(kind==1)m.counterFaultPacket=1;
    if(kind==2)m.sourceFaultPacket=1;
@@ -249,7 +290,7 @@ static unsigned ProjectionRefusals(ProjectionRootMachine& base,bool full){
  for(unsigned i=0;i<8;i++)if(i!=6)branch(10,i);
  for(unsigned w:{0U,63U,118U})branch(11,w);
  branch(12,0);
- base.StageProjection(6,0);base.BeforeProof();
+ base.StageProjection(RefusalRole,0);base.BeforeProof();
  // Reuse ONLY the OS snapshot of this actual continuation, AFTER real
  // quantization, admission, job dispatch and worker arithmetic. Each child
  // executes the still-pending actual submit; no products are cached/seeded.

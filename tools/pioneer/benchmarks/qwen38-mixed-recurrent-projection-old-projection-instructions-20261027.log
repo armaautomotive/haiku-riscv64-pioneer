@@ -1,0 +1,11 @@
+START actual QMP1/119 QMW1 boot ONCE and diverse actual matrix+GDN histories;NOT silicon timing
+PASS ACTUAL QMP1 refusals142/no current success/fault park inert/ALL119 source+receipt admission/held reset rejected BEFORE PC/failed GDDR writes stay PROVISIONAL
+PASS ACTUAL QMP1 canonical role5 rows12288 changed0 ROOT quantize/dynamic119nonces/matrix/gather/GDDRscatter SAME119 lifetime;NOT native timing
+PASS ACTUAL QMP1 canonical role6 rows1024 changed0 ROOT quantize/dynamic119nonces/matrix/gather/GDDRscatter SAME119 lifetime;NOT native timing
+PASS ACTUAL QMP1 canonical role7 rows1024 changed0 ROOT quantize/dynamic119nonces/matrix/gather/GDDRscatter SAME119 lifetime;NOT native timing
+PASS ACTUAL QMP1 canonical role10 rows5120 changed0 ROOT quantize/dynamic119nonces/matrix/gather/GDDRscatter SAME119 lifetime;NOT native timing
+PASS ACTUAL QMP1 canonical role5 rows12288 changed1 ROOT quantize/dynamic119nonces/matrix/gather/GDDRscatter SAME119 lifetime;NOT native timing
+PASS ACTUAL QMP1 canonical role6 rows1024 changed1 ROOT quantize/dynamic119nonces/matrix/gather/GDDRscatter SAME119 lifetime;NOT native timing
+PASS ACTUAL QMP1 canonical role7 rows1024 changed1 ROOT quantize/dynamic119nonces/matrix/gather/GDDRscatter SAME119 lifetime;NOT native timing
+PASS ACTUAL QMP1 canonical role10 rows5120 changed1 ROOT quantize/dynamic119nonces/matrix/gather/GDDRscatter SAME119 lifetime;NOT native timing
+PASS new mixed projections matrices8/refusals142/119bootsONCE/noSTOP/noReset/card-native input bytes+independent matrix output/ROOTstack3556;SYNTHETIC weights/byte endpoints ONLY

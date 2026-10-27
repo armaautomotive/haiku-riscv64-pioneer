@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE
+#error Separate recurrent projection image cannot select an existing image role
+#endif
 // Rechecked on EVERY include. A separate OFFLINE ROOT,not a peer image.
 #include "PioneerQ38ResidentOperatorImageRole.h"
 #if !defined(PIONEER_Q38_RESIDENT_COHORT_ROOT_IMAGE) || PIONEER_Q38_RESIDENT_COHORT_ROOT_IMAGE != 1

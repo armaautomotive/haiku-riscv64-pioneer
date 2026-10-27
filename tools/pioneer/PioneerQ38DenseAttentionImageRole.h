@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE
+#error Separate recurrent projection image cannot select an existing image role
+#endif
 // No guard: a genuinely separate offline component,not an old native alias.
 #if !defined(PIONEER_Q38_DENSE_ATTENTION_IMAGE) || PIONEER_Q38_DENSE_ATTENTION_IMAGE != 1
 #error Exact separate dense-attention IMAGE required

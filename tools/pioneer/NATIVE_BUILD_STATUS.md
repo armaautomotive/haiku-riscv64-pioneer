@@ -1,5 +1,29 @@
 # Native build status
 
+October27UTC2026: separate QRP1 mixed RECURRENT returning matrix controller
+OFFLINE QUALIFIED,NOT deployed or native/Work selected.
+Eight roles10/11/5/6/13/2/3/4 now use SAME119 QMW1 workers with on-card
+quantization,Tensix,gather and disjoint GDDR outputs.5376 canonical plans
+(48layers/eightroles/sevenbanks/twopositions),384 independent ORIGINAL GGUF
+fleet mappings,9272 all-word mutations,278 page/geometry refusals,464 role/
+builder gates and actual RISC-V DATA-plan compile pass main+clean. New
+controller image main/clean byte-identical c9fdb4ea...,16856B/maxFrame2112.
+Old projection regression8matrices+142faults PASS;old physical-qualified
+sigmoid dense image668a72ed... and DEBUG70 module11d24d92... BYTE-UNCHANGED.
+Authenticated ORIGINAL main24165/clean91445 now BOTH TERMINAL0/identical:
+all8 layer0 matrices/61536 rows/ROOTstack3556,strict unchanged FP32/independent
+row-reference checks;supplied activations,NOT a recurrent chain. Full NEW
+16-case main89026/clean46067 BOTH TERMINAL0/identical:all8 matrix roles at
+layer0/position0 and layer62/position8191,142 actual fault branches,119 peers
+booted once/noSTOP/noReset,executed ROOTstack3556B within old8KiB.
+No native/public/Work selection,hardware
+deployment or speed claim. Latest fresh SSH64CPU/fullRAM and stable041/
+tag12/gen6/cold0/owner0. No reboot/power/SD/hardware/Assistant changes.
+See benchmarks/qwen38-mixed-recurrent-projection-20261027.txt for live
+terminal handles/logs,corrected NEW routing and scale-shadow fixture issues,and
+explicit limits. Full recurrent0..2->dense3/all64/state+KV/token/persistent
+Work+Assistant integration still OWED;whole27B0.207893161tok/s unchanged.
+
 October27UTC2026: ACTUAL P100A standalone dense DEBUG70 ORIGINAL PASS.
 Qualified checkpointf25811236827a84639341c19c3c1acba119a2e2c pushed and
 remote verified. ONE native client83291 TERMINAL0:full original SHA/reference

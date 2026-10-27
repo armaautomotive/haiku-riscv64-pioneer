@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE
+#error Recurrent projection image is separate from CPU validation
+#endif
 // Gates BEFORE guard: late role changes/defined0 must not become aliases.
 #if !defined(PIONEER_Q38_MIXED_LIVE_VALIDATION_CLIENT) || PIONEER_Q38_MIXED_LIVE_VALIDATION_CLIENT != 1 \
  || !defined(PIONEER_Q38_CPU_VALIDATION) || PIONEER_Q38_CPU_VALIDATION != 1

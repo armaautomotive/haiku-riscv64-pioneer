@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE
+#error Separate recurrent projection image cannot select an existing image role
+#endif
 // Deliberately no include guard: late role changes must still fail.
 #include "PioneerQ38ResidentGdnOperatorImageRole.h"
 #if !defined(PIONEER_Q38_RESIDENT_GDN_OUTPUT_OPERATOR_IMAGE) || PIONEER_Q38_RESIDENT_GDN_OUTPUT_OPERATOR_IMAGE != 1

@@ -1,0 +1,135 @@
+QRP1 recurrent returning matrix controller -- 2026-10-27
+OFFLINE QUALIFIED / NOT DEPLOYED / NOT A FULL-MODEL OR SPEED CLAIM
+
+This is a required building block for a correctly sequenced recurrent0..2
+to dense3 producer chain,NOT a full recurrent block,full model or speedup.
+The new standalone image executes all eight recurrent learned matrix roles:
+alpha48,beta48,gate6144,QKV10240,output5120,FFN gate17408/up17408/down5120.
+All original input quantization,matrix execution,gather and result scatter
+run in the emitted ROOT/QMW1 instructions with the SAME119 retained peers.
+The canonical recipes carry ZERO caller sequence placeholders;the controller
+admits actual boot/source/closed-job/counter histories and binds real next
+nonces. No worker reboot,STOP or reset occurs between these matrix requests.
+Small48-row matrices use3 workers;the other matrices use119. Distinct fixed
+GDDR result slots preserve all four upstream recurrent projection products.
+
+New recipe/plan/layout/image-role definitions are separate from old dense,
+resident,CPU validation,native and Work capabilities. The driver prefix and
+existing image/CPU roles reject the new image flag,including defined0 and
+late inclusion. Old builders reject this environment flag before output.
+There is NO native/public driver dispatcher selecting QRP1.
+
+Authoritative completed offline evidence
+----------------------------------------
+Main build63887 TERMINAL0:
+ /private/tmp/pioneer-q38-recurrent-build-20261027-d.log
+Independent clean build46028 TERMINAL0:
+ /private/tmp/pioneer-q38-recurrent-build-clean-20261027.log
+Both exact pins:
+ boot.bin4B ce5f73f31ecb80edc4dd267e1f46b0534a0201b837ba6d6231a5d4271df10102
+ code.bin16856B c9fdb4ea5bf82707d78ae015ed95f5b189ef608f5c406367d3419e3b6a2a474b
+ program.elf27208B 86826199f23aedb418a23a882902476ee729b9f6c2a47e28669b5f9b48a9b147
+Maximum reported controller frame2112B;full executed stack3556B in BOTH
+completed16-case instruction suites (old8KiB bound). No writable globals/GOT,CSR,
+integer division,unsupported floating instructions or undefined symbols.
+
+Main plan36761/clean93109 TERMINAL0,identical semantic stdout:
+ /private/tmp/pioneer-q38-recurrent-plan-sdk-20261027.log
+ /private/tmp/pioneer-q38-recurrent-plan-sdk-clean-20261027.log
+5376 plans/all48 recurrent layers/eight roles/seven banks/positions0+8191;
+384 independent ORIGINAL GGUF/fleet job comparisons,9272 all-word mutations,
+278 missing/non-one endpoint page+geometry refusals,foreign canonical-plan
+binding refusal. Actual RISC-V kernel instantiation maximum frame464B.
+These prove canonical DATA only,NOT original-body SHA/numerical execution.
+
+Main new-role84674/clean33590 TERMINAL0:464 cases/24 builders.
+ /private/tmp/pioneer-q38-recurrent-gates-20261027-final.log
+ /private/tmp/pioneer-q38-recurrent-gates-clean-20261027.log
+Old projection roles56640 TERMINAL0:427 cases/23 builders.
+Old DEBUG70 client54779 TERMINAL0:87 cases.
+Old actual projection instructions75917 TERMINAL0:8 matrices/142 actual
+fault branches/119bootONCE/noSTOP/noReset/ROOTstack3556B.
+ /private/tmp/pioneer-q38-recurrent-old-projection-tests-20261027.log
+Old live-sigmoid builder18656 TERMINAL0:ALL ancestor/default images and
+physical-qualified code668a72ed92b42044d6fa8263bba8c63ff19ce31b1533b67e4a4d9799b9a2047e
+BYTE-UNCHANGED. Main native70 rebuild3112 and clean26503 TERMINAL0:
+ module11d24d92c9ee05f1e3664ee13796f8621f378bb738eb5c62b622314f846a3e29
+ object6b3db5d8f388e31f30806f41f940051991b717e8026f388bddd4997ce247ce21
+ ALL old65/layer-NODRV/mixed-NODRV controls byte-identical too.
+ /private/tmp/pioneer-q38-recurrent-unchanged-native70-20261027.log
+ /private/tmp/pioneer-q38-recurrent-unchanged-native70-clean-20261027-c.log
+
+NEW numerical/lifetime qualification -- ALL TERMINAL0
+------------------------------------------------------
+Main synthetic instruction suite89026 TERMINAL0:
+ /private/tmp/pioneer-q38-recurrent-instructions-20261027-d.log
+Clean synthetic instruction suite46067 TERMINAL0:
+ /private/tmp/pioneer-q38-recurrent-instructions-clean-20261027.log
+Both PASS16 matrix cases (all8 roles at layer0/position0 and layer62/
+position8191) plus142 actual fault branches in one retained worker lifetime.
+Complete stdout IDENTICAL and both executed ROOTstack3556B. They use
+supplied deterministic input vectors/synthetic learned weights.
+
+Main ORIGINAL instruction suite24165 TERMINAL0:
+ /private/tmp/pioneer-q38-recurrent-original-20261027-b.log
+Clean ORIGINAL instruction suite91445 TERMINAL0:
+ /private/tmp/pioneer-q38-recurrent-original-clean-20261027.log
+Each authenticated the full SAME c600 GGUF before constructing the machine,
+then cached44 raw learned spans/280719360bytes/68536 pages for all8 layer0
+matrices. No CPU numeric products were supplied to endpoints. Final expected
+61536 output rows PASS independent input quantization/matrix arithmetic.
+Both complete logs are identical;executed ROOT stack3556B. Exact FP32 row
+parity remains mandatory,plus the existing independent FP64 row observer;
+no bound was widened. This is still supplied activation inputs/learned
+matrix arithmetic,NOT a valid recurrent model chain or physical-card pass.
+All completed logs are archived byte-exact under this benchmark prefix;
+ALL test/build handles above are terminal;no pending test is being counted
+as a pass. No physical GPU run was performed for QRP1.
+
+Development failures honestly retained
+----------------------------------------
+First builder60231 failed in newly generated Python glue (wrong loop cut);
+fixed before any new controller image existed. First instruction12495 found
+an actual NEW compile-branch bug:Transfer selected d[5]/0 rather than the
+root route d[9]/129. Fixed the NEW #elif branch only;old bytes unchanged.
+Corrected code intentionally failed its old candidate pin in build10360;
+reviewed/re-pinned,then main+clean builds reproduced c9fdb4ea above.
+
+Instruction11895 and original17367 terminated on the same NEW TEST map
+omission:Q8 output projection has6144 inputs,192 scales/768B,not160/640B.
+The emitted controller's actual scale writes remained inside disjoint L1
+fab00..fae00. Corrected the new layout assertion and fixture extent to768B;
+no production fault check,numeric bound,physical mapping or old image was
+relaxed. The replacement runs are89026/24165 (and independent clean runs).
+
+Full-index export15647 hit unrelated case-colliding localization paths on
+macOS;replaced with a successful selected subtree export. Initial clean
+native attempts A/B lacked exported build/config_headers,not a source error;
+after exporting tracked dependencies,clean C26503 passes unchanged pins.
+Clean tree:/private/tmp/pioneer-recurrent-subtree-clean.F2yHnLWK
+All56 selected authored code files compare byte-for-byte with the staged
+main index. Dirty src/libs/llama.cpp and unrelated FlashNext files were NOT
+read,changed,exported or staged. This record and the byte-exact completed
+logs accompany the separately scoped tested code checkpoint.
+
+Preserved board and remaining full objective
+--------------------------------------------
+Fresh read-only SSH confirms Haiku64CPUs/max137034936320RAM bytes and
+working041/tag2026102100010012/generation6/quiesced0/cold0/owner0/open1/guard1.
+No driver install,GPU run,power/reboot/relay/SD/mains/hardware connection,
+Assistant or network configuration change occurred in this qualification.
+
+Current QRP1 requires actual NONZERO closed worker histories,not virgin
+initial bootstrap. Each matrix test supplies its own deterministic float
+inputs:NOT a valid embedding/RMS/Conv/GDN/FFN/recurrent0..2->dense3 chain.
+OS/NoC/GDDR are instruction-model endpoints,NOT physical card execution.
+Original-body tests cover real weights but still supplied activation inputs.
+No driver-ready,whole-model,persistent Work,Assistant or throughput claim.
+Last whole27B rate0.207893161tok/s unchanged;20tok/s remains UNMET.
+
+Next:commit/push this tested scoped checkpoint. Then build the real QMW1
+recurrent coordinator with valid input,
+convolution/GDN/state/output/residual/FFN flow into subsequent layers,
+all64 layers,state/KV/token commits,final norm/vocabulary/sampling,persistent
+no-CPU-reference Work+Assistant,and measured whole-model optimization.
+Goal ACTIVE;not narrowed to this intermediate matrix-controller milestone.

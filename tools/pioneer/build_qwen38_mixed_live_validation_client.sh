@@ -1,4 +1,5 @@
 #!/bin/sh
+[ "${PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE+x}" != x ] || exit 2
 set -eu
 # Build ONLY. Observer and client are separate TUs;NO native/Work flags.
 python3 -c 'import os,sys; sys.exit(0 if not any(k.startswith(("PIONEER_","TT_PIONEER_")) for k in os.environ) else 2)' || exit 2

@@ -1,0 +1,28 @@
+49beea42a964dc73343fca928d59be0eb6a6d28e4c1354b47894f3f60ef4a31a boot.bin bytes4
+a8aa43b88af5d821a50498d0e79a75025ca672490fa6d4ead51be8442013bf8c code.bin bytes12140
+213afbc1746516e470fe8e9614a2723f3a0e4a00c8dfc3d562513d9cf69d36af program.elf bytes21528
+PASS COMPILED NEW QDR1 actual96workerROOT/NoC/privatephases/globalmax-binary64sum-exactF32inverse/PVmerge-gate/maxFrame496;producer/native/journals/KV-tokencommit/full64/speed STILL OWED
+49beea42a964dc73343fca928d59be0eb6a6d28e4c1354b47894f3f60ef4a31a boot.bin bytes4
+53e9e2d8dfceb756ae6dd6de2b72996b01b188eff13d4741bd2a6da8581fa06d code.bin bytes17488
+f09227e3972bf02dad64cd9ea318d4371ca33c56646de7a490885c6e0b1e7e77 program.elf bytes27600
+PASS NEW persistent QMR1 ROOT/all119 live admission/dynamic QMW1 nonces/96 returning dense workers/global max+sum+inverse+merge/no worker boots or STOP/maxFrame848;native/full-model/original producer/speed still OWED
+ce5f73f31ecb80edc4dd267e1f46b0534a0201b837ba6d6231a5d4271df10102 boot.bin bytes4
+f84c41dd22582d170086d2cac98286d0d8e208d2e7c7ee58ce828436b57a0192 code.bin bytes16580
+e1b9bbc183a31b503b6b9ce89cb4f7329901cb335fe267b6d2aa5732027411b7 program.elf bytes26840
+PASS NEW QMP1/all119 live nonces/canonical immutable ZERO-sequence recipes/card quantize+matrix+gather+GDDRscatter/no peer boots or STOP/maxFrame2112;NO native/fullmodel/speed grant
+32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca boot.bin bytes4
+27c5a3685683db74d8b18d1112aa06f82f9599cae2b03e4b550c3b57615108e5 code.bin bytes36160
+9dc2716e040a0430e456112feca01d452612edbca02a77e4eec5503ae7dc0b69 program.elf bytes47736
+PASS NEW QJR1/single persistent ROOT/QG-K-V -> four on-card prepare groups -> retained attention -> real6144 O input/no peer reset or STOP/maxFrame2112;NO native/full64/speed grant
+32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca boot.bin bytes4
+61aada5043559c58827b205f8a0cb637822376e445b366d1217b783418443e4b code.bin bytes44664
+51498d12a94d782e817a42d92b0f1cc76bb35cec91aaea367481e8655066e311 program.elf bytes56876
+PASS NEW QBR1/original input RMS -> dense attention -> original residual RMS -> Q4 gate/up/SiLU/down -> final residual/SAME ROOT+119/maxFrame2112;NO native/full64/speed grant
+32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca boot.bin bytes4
+50009c46fcdefb427dc1b31b68cc9b2403b4ba8e06b377ebd66a88bf7ce254c8 code.bin bytes50320
+4c9392c44cb470c648d49f8c7209f9cbb2a3e84fe879f355fa75622b551ffe47 program.elf bytes62528
+PASS NEW QBL1/device-input/verified virgin loops/persistent complete dense block/real119 STOP+ROOT terminal/maxFrame2448;native ownership+journals/full64/model/speed STILL OWED
+32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca boot.bin bytes4
+668a72ed92b42044d6fa8263bba8c63ff19ce31b1533b67e4a4d9799b9a2047e code.bin bytes51004
+5649a36db5e3a6b02b411b14c98ecadca0c4384c35fcfdf50662dd0f76160be6 program.elf bytes63436
+BUILT isolated sigmoid QBL1 candidate/default ancestors+live BYTE_UNCHANGED/maxFrame2448;NOT executed,native memory registry,Work,physical driver or TPS

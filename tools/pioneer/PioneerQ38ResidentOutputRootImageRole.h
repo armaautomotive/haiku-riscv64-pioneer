@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE
+#error Separate recurrent projection image cannot select an existing image role
+#endif
 // No guard: late role changes must not select a different owner.
 #include "PioneerQ38ResidentCohortImageRole.h"
 #if !defined(PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE) || PIONEER_Q38_RESIDENT_OUTPUT_ROOT_IMAGE != 1

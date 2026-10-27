@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE
+#error Separate recurrent projection image cannot select an existing image role
+#endif
 // No guard:late role changes are rechecked on every inclusion.
 #if !defined(PIONEER_Q38_RESIDENT_LAYER_FFN_IMAGE) || PIONEER_Q38_RESIDENT_LAYER_FFN_IMAGE != 1 \
  || !defined(PIONEER_Q38_FFN_GRAPH_ROOT) || PIONEER_Q38_FFN_GRAPH_ROOT != 1 \
