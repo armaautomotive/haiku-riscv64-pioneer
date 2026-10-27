@@ -163,7 +163,7 @@ struct RecurrentBlockMachine:NewCohortMachine {
    if(Phase()==7 && !numericCohortChecks)VerifyCohort();
    packets++;if(packets==failPacket){pending=true;return;}
    for(unsigned i=0;i<n/4;i++)if(write)Put(route,remote+i*4,memory.at(local+i*4));else memory[local+i*4]=Get(route,remote+i*4);
-   if(write && Phase()==14)finalWords+=n/4;
+   if(write && Phase()==14 && remote>=outer[9]+RB::FinalOffset && remote+n<=outer[9]+RB::FinalOffset+20480)finalWords+=n/4;
    unsigned at=write?4:0;counts[at]++;counts[at+1]+=n/64;counts[at+3]++;counts[2]++;counts[6]++;Inject();return;
   }
   if(memory.at(RB::Header)==RC::Magic || Range(pc,RC::ConvCode,unsigned(convRom.size()))){NewCohortMachine::Submit();return;}

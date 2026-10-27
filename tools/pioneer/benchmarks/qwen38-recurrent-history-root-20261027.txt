@@ -1,0 +1,50 @@
+Experimental per-layer recurrent convolution-history staging
+October 27, 2026
+STATUS: MAIN+CLEAN full instruction simulations TERMINAL0; NOT native/installed.
+
+Scope
+-----
+Separate gated image preserves actual Conv NEXT history on-card before the
+next layer reuses scratch.48 fixed disjoint workspace slots at8MiB plus
+ordinal(layer)*128KiB,122880B each. Eight bounded existing NoC read/write
+pairs per layer, then provisional receipt. No host numeric intermediate,
+caller address, public entry, current-history publication, state-slot flip,
+token commit or Work authority. GDN NEXT already has canonical per-layer
+opposite slots; only convolution NEXT required this shared-scratch fix.
+
+Completed evidence
+------------------
+Main20218 and independent clean8170 BOTH exited0, identical complete49-line
+stdout SHAee7eb807cb083dad2ee3f2ec485abd2cdc6622d54fde0e82fcd9bc6ef94a9261:
+qwen38-recurrent-history-root-main-20261027.log
+qwen38-recurrent-history-root-clean-20261027.log
+Actual emitted ROOT and SAME119 workers execute two whole blocks0->1.
+Layer0 history survives layer1 scratch reuse; both122880B copies match the
+actual Conv-produced bytes. Real terminal STOP completes.
+Eight reached-phase fault children cover unknown/counter/source first read,
+unknown first write, unknown/counter/source last write, changed original
+hidden before close. Each proves inert2048 with no later IO, final hidden,
+receipt, retry or commit. QRB1_FAULT lines are intentional passing children.
+Role gates183 with56 inherited forbids pass main/clean; geometry105 cases
+cover all48 slots/bounds/refusal. Both reran after recovery and passed.
+ASan/UBSan enabled for host runtime and geometry tests.
+
+MAIN70820/CLEAN89956 builds BOTH0, all four artifacts byte-identical:
+boot.bin4B SHA32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+text.bin53084B SHA6ad600096827d4f60b4cc73b7901a6999bd5c75c5311b32e2763fe700e6b7652
+conv.bin7500B SHA16ff564dc406a72a918f7c67c40f6815a7430f6d02161a0be0b26ec56cde7f65
+program.elf75184B SHAa1ae94663803c6cfc760ef242275658008cda99b5611e193a11a9958a3375339
+Max emitted stack frame2112. Baseline conditional-off build48574 exited0:
+all old image pins unchanged, text6da8623d/ELFdfaee3da. Old native module
+does NOT select the new image or accept its nonzero history receipt tail.
+
+Limits / next integration
+-------------------------
+Raw learned/input/prior-state bytes are SYNTHETIC. The inherited StageNext
+stress changes token metadata while using actual preceding hidden; it is
+NOT a coherent original token0 prefix. No native ownership, physical P100A,
+current-history publication, slot flip, token commit/full model/TPS proof.
+No history prototype files were copied to the Pioneer. Stable041 is restored.
+Next integrate genuinely owned history into recurrent->attention/all64 layers
+and whole-token commit, then native qualification before physical use.
+Whole27B0.207893161tok/s unchanged;20tok/s UNMET; full goal ACTIVE.

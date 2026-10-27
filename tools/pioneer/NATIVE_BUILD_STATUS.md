@@ -1,8 +1,22 @@
 # Native build status
 
-## Current: original recurrent readback and repaired public-handler tests passed
+## Current: DEBUG71 physical startup failed; stable driver restored; history prototype passed
 
-October 27, 2026. Partial runtime qualification, NOT physical-card qualified or installed.
+October 27, 2026. Offline qualification is NOT physical-card qualification.
+The original-weight DEBUG71 physical trial uploaded all 300 calls/68603 pages,
+then failed execution preparation at worker114 BEFORE the full recurrent ROOT
+RUN. No numeric comparison or clean END occurred. A shared startup deadline
+is a hypothesis, not a confirmed hardware diagnosis. Controlled OFF-once / ON-once
+recovery, pinned top-page7/64-CPU/full-memory Haiku boot and guarded stable041
+restoration completed. Current driver55/tag12/generation2 is cold0/owner0/guard1.
+See benchmarks/qwen38-recurrent-debug71-physical-20261027.txt.
+
+The separately gated per-layer convolution-history staging image also passed
+both independent complete two-block instruction-simulation runs, all eight
+reached-phase faults and real STOP. It is NOT installed or integrated with
+native state ownership/current-history publication/token commit. See
+benchmarks/qwen38-recurrent-history-root-20261027.txt. The build/test bullets
+below describe their individual qualification checkpoints, not current liveness.
 Previous pushed interface checkpoint: `9d6e39a97403c15151c49cab5a9ffc0fce0bdab3`.
 The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2d69`.
 
@@ -103,7 +117,8 @@ The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2
   native context, canonical mutable-bank or GDN-owner implementation.
   Main/clean linked DEBUG71 modules are identical
   `87d0c4e005d7df937e22c2806051cd0aa99d736c0fb2c0199fde40d8eb1d7cb4`;
-  conventional ABI/no private CPU oracle/Work/old dense/NODRV alias. NOT loaded.
+  conventional ABI/no private CPU oracle/Work/old dense/NODRV alias. The later
+  physical trial failed startup and was recovered; stable041 is restored.
 - A separately inspected CPU-only source unit (no ioctl/native owner symbols)
   was copied to a project test directory and actually passed on Haiku, including
   full c600 source authentication, all raw extents and private CPU reference.
@@ -115,8 +130,9 @@ The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2
   generation/symlink fences. Main/clean new-mode tests passed 152 cases each;
   existing mixed-live/stable mappings passed 298 regression cases. These are
   filesystem/handshake tests, NOT native reload permission or runtime proof.
-  Candidate driver/client/helper copies are SHA-verified in a separate home
-  test folder on Haiku, NOT in the installed driver path and NEVER invoked.
+  Candidate driver/client/helper copies were SHA-verified before the later
+  guarded physical trial. That trial failed at startup, not numerical compare;
+  do not mistake successful staging/hot reload for physical arithmetic proof.
   Evidence: benchmarks/qwen38-recurrent-original-readback-20261027.txt.
 - A CPU-only timing executable with no device-open/ioctl/native-owner
   symbols now builds identically in main/clean and passed on Haiku. Eight
@@ -128,21 +144,21 @@ The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2
 
 Remaining before full-offload Work is ready:
 
-1. Assess intermediate rounding differences; original native readback and repaired
-   public-handler runtime/failure/END tests now passed. Qualify controlled
-   deployment of the built diagnostic client/module and validate original-weight
-   execution/readback/final disposal on the physical P100A.
+1. Diagnose/fix the physical worker-startup failure with a targeted regression,
+   then qualify a separately pinned candidate on the physical P100A, including
+   original-weight execution/readback/final disposal. Assess intermediate
+   rounding differences; offline handler/readback/END tests are not silicon proof.
 2. Connect valid embedding/recurrent layers 0..2 through dense layer 3 and all
    64 layers, with correct persistent KV/recurrent/history and token commit.
 3. Complete final normalization, vocabulary projection and on-card sampling.
 4. Integrate persistent no-CPU-reference Work/Assistant; keep validation separate.
 5. Measure and optimize loading, prefill and decode toward 20 tokens/sec.
 
-Fresh read-only board check: 64 CPUs, max RAM 137034936320 bytes, free RAM
-129598685184 bytes, driver55 / tag2026102100010012 / generation6 / cold0 /
-active_owner0 / quiesced0 / open_count1 / guard1. CPU/RAM were checked before
-staging; driver metadata was rechecked afterward. No new driver install, card compute, restart, power, SD,
-mains, Assistant or network changes; only isolated project test files copied.
+Fresh post-recovery board check: 64 CPUs, max RAM 137034936320 bytes, free RAM
+133813653504 bytes, driver55 / tag2026102100010012 / generation2 / cold0 /
+active_owner0 / quiesced0 / open_count1 / guard1. Installed stable driver SHA
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+No SD, mains or hardware-connection changes. No GPU job since recovery.
 Last measured full-model rate is still **0.207893161 tokens/sec**; target unmet.
 
 The dated entries below are historical snapshots. Their LIVE labels are not

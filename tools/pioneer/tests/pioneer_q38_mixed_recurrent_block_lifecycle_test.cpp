@@ -82,6 +82,7 @@ template<class Change> static void StopFault(RecurrentLifecycleMachine& base,con
  }
  int status=0;assert(waitpid(pid,&status,0)==pid && WIFEXITED(status) && !WEXITSTATUS(status));
 }
+#ifndef PIONEER_Q38_RECURRENT_LIFECYCLE_FIXTURE_ONLY
 int main(int argc,char** argv){
  assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;(void)&Refusals;(void)&LateRefusals;
  puts("START QRB1 virgin119/3actual complete recurrent blocks/changed layer+position+bank+slot/previous ACTUAL hidden/realSTOP;synthetic primitive bytes,NOT fullmodel/native/hardware");
@@ -115,3 +116,4 @@ int main(int argc,char** argv){
  assert(m->WaitStop());m->VerifyStop();
  printf("PASS QRB1 3complete blocks/2160matrix jobs+1920Conv+288GDN/real119STOP+ROOT/inert2048/refusals%u/ROOTstack%u;NO state-token commit/native/physical/TPS\n",refused,0x70000-m->minStack);
 }
+#endif

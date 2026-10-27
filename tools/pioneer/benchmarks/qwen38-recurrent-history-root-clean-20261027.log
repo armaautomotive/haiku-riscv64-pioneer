@@ -1,0 +1,49 @@
+PASS experimental history-image role gates183/required exact3/inherited forbids56/defined0+late includes;NO native or Work grant
+START QRB1 actual matrix1 role10 stage2/prior closed matrix jobs0
+PASS QRB1 actual initial RMS5120 BIT-EXACT -> alpha/beta/Z/QKV
+START QRB1 actual matrix2 role11 stage3/prior closed matrix jobs3
+START QRB1 actual matrix3 role5 stage4/prior closed matrix jobs6
+START QRB1 actual matrix4 role6 stage5/prior closed matrix jobs125
+PASS QRB1 actual QKV ->640 Conv groups ->96 paired GDN/private NEXT+6144 gated;independent arithmetic
+START QRB1 actual matrix5 role13 stage8/prior closed matrix jobs244
+PASS QRB1 actual6144 gated F32 -> actual ROOT Q8 quantization/output projection;NO host intermediate
+START QRB1 actual matrix6 role2 stage10/prior closed matrix jobs363
+PASS QRB1 original residual+post-RMS5120 BIT-EXACT -> actual Q4 gate/up
+START QRB1 actual matrix7 role3 stage11/prior closed matrix jobs482
+START QRB1 actual matrix8 role4 stage13/prior closed matrix jobs601
+PASS QRB1 actual SiLU(gate)*up17408/strict independent error bound -> actual Q4 down
+QRB1_FAULT phase14 matrices8 Conv119 GDN96 packets136572 SP6f840
+PASS actual history-staging refusal unknown first history read/inert2048/no later packet,final hidden,receipt,retry or commit
+QRB1_FAULT phase14 matrices8 Conv119 GDN96 packets136572 SP6f840
+PASS actual history-staging refusal counter discontinuity at first read/inert2048/no later packet,final hidden,receipt,retry or commit
+QRB1_FAULT phase14 matrices8 Conv119 GDN96 packets136572 SP6f830
+PASS actual history-staging refusal source discontinuity at first read/inert2048/no later packet,final hidden,receipt,retry or commit
+QRB1_FAULT phase14 matrices8 Conv119 GDN96 packets136573 SP6f840
+PASS actual history-staging refusal unknown first staging write/inert2048/no later packet,final hidden,receipt,retry or commit
+QRB1_FAULT phase14 matrices8 Conv119 GDN96 packets136587 SP6f840
+PASS actual history-staging refusal unknown final staging write/inert2048/no later packet,final hidden,receipt,retry or commit
+QRB1_FAULT phase14 matrices8 Conv119 GDN96 packets136587 SP6f840
+PASS actual history-staging refusal counter discontinuity at final write/inert2048/no later packet,final hidden,receipt,retry or commit
+QRB1_FAULT phase14 matrices8 Conv119 GDN96 packets136587 SP6f830
+PASS actual history-staging refusal source discontinuity at final write/inert2048/no later packet,final hidden,receipt,retry or commit
+QRB1_FAULT phase14 matrices8 Conv119 GDN96 packets136587 SP6f8c0
+PASS actual history-staging refusal changed original hidden before staging closes/inert2048/no later packet,final hidden,receipt,retry or commit
+PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/952 channel refusals;NOT native STOP/cleanup authority
+PASS actual card instructions preserved layer0 history122880 bytes/receipt1;NO host arithmetic or current-history commit
+PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/952 channel refusals;NOT native STOP/cleanup authority
+START QRB1 actual matrix1 role10 stage2/prior closed matrix jobs0
+PASS QRB1 actual initial RMS5120 BIT-EXACT -> alpha/beta/Z/QKV
+START QRB1 actual matrix2 role11 stage3/prior closed matrix jobs3
+START QRB1 actual matrix3 role5 stage4/prior closed matrix jobs6
+START QRB1 actual matrix4 role6 stage5/prior closed matrix jobs125
+PASS QRB1 actual QKV ->640 Conv groups ->96 paired GDN/private NEXT+6144 gated;independent arithmetic
+START QRB1 actual matrix5 role13 stage8/prior closed matrix jobs244
+PASS QRB1 actual6144 gated F32 -> actual ROOT Q8 quantization/output projection;NO host intermediate
+START QRB1 actual matrix6 role2 stage10/prior closed matrix jobs363
+PASS QRB1 original residual+post-RMS5120 BIT-EXACT -> actual Q4 gate/up
+START QRB1 actual matrix7 role3 stage11/prior closed matrix jobs482
+START QRB1 actual matrix8 role4 stage13/prior closed matrix jobs601
+PASS QRB1 actual SiLU(gate)*up17408/strict independent error bound -> actual Q4 down
+PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/952 channel refusals;NOT native STOP/cleanup authority
+PASS actual card instructions preserved layer1 history122880 bytes/receipt2;NO host arithmetic or current-history commit
+PASS history-staging ROOT/2actual complete blocks0->1/SAME119/8actual reached-phase faults/earlier history survives scratch reuse/realSTOP;SYNTHETIC raw inputs,NOT original/native/physical/current-slot/token commit/fullmodel/TPS

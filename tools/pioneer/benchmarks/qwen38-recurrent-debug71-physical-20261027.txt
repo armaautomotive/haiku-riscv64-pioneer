@@ -1,0 +1,62 @@
+Original-weight recurrent DEBUG71 physical trial and controlled recovery
+October 27, 2026
+STATUS: PHYSICAL STARTUP FAILURE; known-good stable041 RESTORED.
+
+Frozen candidate module87d0c4e005d7df937e22c2806051cd0aa99d736c0fb2c0199fde40d8eb1d7cb4
+Client1e62b010515c2dea5300fae2b23a043c606a0987c07b8d972ab1edc9c079eaab
+Helper5cebdc56956141f66ea8fd01d81f68bc12d7efb7e093dc52116c335a257a240f
+Source checkpoint b526b72089aad7c00aa4c9be46bda9f641462452.
+The independent experimental history-staging image was NOT used.
+
+Physical evidence
+-----------------
+Guarded hot reload passed: stable041/tag12/gen6 -> DEBUG71/tag71/gen7,
+cold0/owner0/guard1, no forced reset or fence relaxation.
+Fixed original c600 model SHA/source/private reference preparation completed
+before GPU Open. All57 raw extents/68603 pages uploaded in300 actual calls;
+269 was ONLY the synthetic client-fixture distribution, not physical evidence.
+All upload calls and SPAN_END returned0. VALIDATE8b12 returned status0 but
+reply state5/recovery1; client exited1, reason reply_metadata, checked0,
+clean_end0. No numeric comparison, arithmetic result or clean END was proved.
+Zero differences/max_abs0 in the failed summary means NOT CHECKED, not exact.
+
+Existing serial capture, line1165614, records the actual failure:
+Q38-RECURRENT-DEBUG71:FAIL zero466956 embedding7 gdn466956/672 history466956/336 memory4/119/21996 execution2/114/0 readback0/0;CPU_METADATA_ONLY_NO_POST_FAILURE_DEVICE_IO
+
+Actual handler short-circuit ordering proves embedding and672/336 initializers
+and held-memory preparation succeeded. Failure is execution preparation at
+worker114, before the full recurrent ROOT RUN. Guard/time/status failures are
+not distinguished by this old result. ONE30s deadline covers all119 startup
+waits plus prior CPU/image checks; CPU whole-plan timing is13.7ms/check.
+Deadline accounting is a plausible hypothesis ONLY, not a confirmed cause.
+
+Client log qwen38-recurrent-debug71-physical-20261027.log,628 lines, SHA256
+88de58663ec1366803c155567aa51507046984e38ba5a1cfb826976001e568df.
+CPU-only metadata after failure was cold1/owner1; no retry, forced reset,
+automatic hot rollback, or second card client followed the failure.
+
+Recovery
+--------
+Haiku sync completed. OFF once at22:18:10UTC, >199s plus unreachable SSH
+with no contrary power evidence, then ON once at22:22:31UTC. No repeated OFF,
+mains/SD/card/cable changes. Linux6.1.31/64CPUs/MemTotal131976904KiB returned.
+Project SSH key authenticated as milkv; sudo -n works. Samsung capacity,
+serial, BFS UUID/offset/unmounted identity passed; journal CLEAN434c454e,
+kexec0. No journal repair was needed.
+Native top-page7 helper SHA9cfc6dc326c938b8d611c8c8622a9a6686ed530270dde768b1f01362f4f61f6e
+prepared/booted qrb71-recovery-20261027-a,64CPUs,
+memory128-spin-idle7-top-page-nosd-control. All input hashes passed and
+normal Linux shutdown/kexec completed; default NVMe boot remained unchanged.
+Fresh Haiku verified64CPUs/max137034936320B, DEBUG71/tag71/gen1/cold0/owner0.
+No compute parents. Exact helper then guarded restore71->12/gen2 completed:
+qwen38-recurrent-debug71-restore-20261027.log. Final installed SHA
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+driver55/tag2026102100010012/gen2/quiesced0/cold0/owner0/open1/guard1.
+Haiku still64CPUs/max137034936320B/free133813653504B. No GPU job since recovery.
+
+Next: targeted startup-time regression and retained failure classification,
+then a distinct built/tested/pinned diagnostic candidate. Do not blindly
+increase a global timeout or remove source/owner/STOP/recovery guards.
+All64 layers/persistent state+history+KV/token commit/finalnorm/vocabulary/
+sampling/no-CPU-reference Work+Assistant remain owed. Last actual whole27B
+0.207893161tok/s unchanged; target20tok/s UNMET; goal ACTIVE.
