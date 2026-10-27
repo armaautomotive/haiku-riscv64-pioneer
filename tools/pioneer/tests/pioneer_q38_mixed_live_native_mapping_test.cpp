@@ -8,7 +8,7 @@
 #include <memory>
 #include <vector>
 using uint32=uint32_t;using uint64=uint64_t;using area_id=int;
-class PioneerQ38MixedLiveMemory;class PioneerQ38CanonicalModelPlan;struct PioneerQ38GdnIdentity;
+class PioneerQ38MixedLiveMemory;class PioneerQ38MixedLiveOwner;class PioneerQ38MixedLiveBlockPlan;class PioneerQ38CanonicalModelPlan;struct PioneerQ38GdnIdentity;
 static constexpr int B_OK=0,B_ANY_KERNEL_ADDRESS=1,B_KERNEL_READ_AREA=2,B_KERNEL_WRITE_AREA=4,B_UNCACHED_MEMORY=8;
 enum {TT_Q38_PANEL_VIEW_BASE=0x6e000,TT_Q38_PANEL_VIEW_BYTES=0x42000};
 static const unsigned offsets[]={0x19020000,0x19040000,0x19060000,0x190ac000},sizes[]={8192,131072,57344,868352};

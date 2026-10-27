@@ -34,15 +34,59 @@ struct CanonicalLiveMachine:LiveBlockMachine {
   puts("STAGED immutable canonical QBL1 plan/ALL7matrix recipes+120boot seals match independently staged bytes/96canonical KV frames;RAW synthetic tensors only");
  }
 };
+#ifdef PIONEER_Q38_TEST_FRONTEND_ENDPOINTS
+struct FrontendLiveMachine:CanonicalLiveMachine {
+ using CanonicalLiveMachine::CanonicalLiveMachine;
+ unsigned pcSamples=0,speculative=0,badRecord=0;
+ void Store(uint32_t a,uint32_t v)override{
+  bool packet=a==0xffb20040,read=packet && !command[7];
+  unsigned remote=read?command[0]:0,local=read?command[3]:0;
+  CanonicalLiveMachine::Store(a,v);
+  if(read && remote==0xffb13140){
+   // TEST CSR endpoint observations ONLY. Actual child PC/registers/jobs,
+   // counters/nonces/status/tensor bytes and execution are NOT modified.
+   const uint32_t snapshots[]={0x12004c,0xfffffff1,0x2009c};
+   // Include consecutive real observations: the actual STOP protocol
+   // deliberately requires TWO positive samples. A 3-bad/1-real cycle
+   // would make STOP impossible by construction, not test speculation.
+   unsigned slot=pcSamples++%6;if(slot<3){memory[local]=snapshots[slot];speculative++;}
+  }
+  if(read && remote==M::Status && badRecord){
+   if(badRecord==1)memory[local+8]=M::Fault;
+   if(badRecord==2)memory[local+12]^=1;
+   if(badRecord==3)memory[local]=0x7fffffff;
+   if(badRecord==4)memory[local+60]=1;
+  }
+ }
+};
+using CanonicalTestMachine=FrontendLiveMachine;
+#else
+using CanonicalTestMachine=CanonicalLiveMachine;
+#endif
+#ifndef PIONEER_Q38_MIXED_LIVE_CANONICAL_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==5);(void)&BlockInitialRefusals;(void)&BlockLaterRefusals;(void)&JoinedRefusals;(void)&ProjectionRefusals;
  (void)&Refusals;(void)&Group;(void)&Geometry;(void)&Faults;(void)&D::Run;setvbuf(stdout,nullptr,_IOLBF,0);
  puts("START actual QBL1 canonical DATA plan/device instructions/SAME fresh119/2fullblocks+STOP;NOT native or original-GGUF arithmetic");
- auto m=std::make_unique<CanonicalLiveMachine>(argv[1],argv[2],argv[3],argv[4]);assert(m->WaitLive(0));
+ auto m=std::make_unique<CanonicalTestMachine>(argv[1],argv[2],argv[3],argv[4]);assert(m->WaitLive(0));
  for(unsigned trial=0;trial<2;trial++){
-  m->StageCanonical(trial?33:1,trial,trial?7:3);assert(m->WaitLive(m->sequence));m->VerifyLive();
+  m->StageCanonical(trial?33:1,trial,trial?7:3);
+#ifdef PIONEER_Q38_TEST_FRONTEND_ENDPOINTS
+  if(!trial){
+   unsigned refused=0;
+   for(unsigned bad=1;bad<=4;bad++)LiveRefusal(*m,refused,[&](LiveBlockMachine&){m->badRecord=bad;},false,false);
+   assert(refused==4);
+   puts("PASS LIVE actual status fault/magic/nonce/reserved-word refusals remain authoritative despite speculative PC policy");
+  }
+#endif
+  assert(m->WaitLive(m->sequence));m->VerifyLive();
   printf("PASS actual canonical command plan frame%u/N%u/layer%u/complete block+device output input/SAME119/stack%u\n",m->sequence,trial?33:1,trial?7:3,0x70000-m->minStack);
  }
  m->StageStop();assert(m->WaitLive(m->sequence,true));m->VerifyStop();
  puts("PASS canonical QBL1 plan actual instructions/2wholeblocks+real119STOP/rootterminal;SYNTHETIC RAW arithmetic endpoints/NO native/full64/tokencommit/silicon-speed grant");
+#ifdef PIONEER_Q38_TEST_FRONTEND_ENDPOINTS
+ assert(m->speculative && m->pcSamples>m->speculative);
+ printf("PASS actual LIVE program speculative-frontend observations%u/%u including outside-image/misaligned/fault-region;NO PC masking or actual worker state edits;only real status+positive WAIT/STOP closes;NO native/speed grant\n",m->speculative,m->pcSamples);
+#endif
 }
+#endif

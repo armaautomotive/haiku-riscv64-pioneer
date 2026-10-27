@@ -47,6 +47,13 @@ extern "C" bool pioneer_live_context_scoped_held(PioneerProbeCookie* cookie,unsi
  return c && BindQ38EmbeddingModel(*c,token,0,0) && InitializeQ38EmbeddingModel(*c,z) && RunQ38EmbeddingModel(*c,e)
   && BindQ38MixedLiveNative(*c) && PrepareQ38MixedLiveNativeHeld(*c,r) && CloseQ38MixedLiveNativeHeld(*c,r);
 }
+extern "C" bool pioneer_live_context_scoped_execute(PioneerProbeCookie* cookie,unsigned token,
+ PioneerQ38ProjectionZeroResult& z,PioneerQ38EmbeddingResult& e,PioneerQ38MixedLiveMemoryResult& memory,PioneerQ38MixedLiveResult& execution){
+ PioneerQ38GdnCallScope scope(cookie);auto* c=scope.Context();
+ return c && BindQ38EmbeddingModel(*c,token,0,0) && InitializeQ38EmbeddingModel(*c,z) && RunQ38EmbeddingModel(*c,e)
+  && BindQ38MixedLiveNative(*c) && PrepareQ38MixedLiveNativeHeld(*c,memory) && PrepareQ38MixedLiveNativeExecution(*c,execution)
+  && RunQ38MixedLiveNativeExecution(*c,execution) && CloseQ38MixedLiveNativeExecution(*c,execution,memory);
+} // compile ONLY. Genuine native execution/containment/ORIGINAL-weight qualification required before card use.
 extern "C" bool pioneer_live_context_end(PioneerStoreContext& c,tt_resident_session_result& r,bool& clean){return EndQ38DispatchOwnership(c,r,clean);}
 extern "C" void pioneer_live_context_retain(PioneerStoreContext& c,tt_resident_session_result& r){RetainQ38DispatchOwner(c,r);}
 extern "C" void pioneer_live_context_destroy_clean(PioneerStoreContext* c){delete c;}

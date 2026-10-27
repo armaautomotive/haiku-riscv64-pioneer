@@ -5,6 +5,8 @@ bool MixedLiveCallScopeMatches();bool MixedLiveBaseScope();bool MixedLiveMapping
 bool MixedLiveMemoryScope(const PioneerQ38MixedLiveMemory&,const PioneerQ38CanonicalModelPlan&,
  const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
 void MixedLiveRetainHostOwners();
+bool MixedLiveExecutionScope(const PioneerQ38MixedLiveOwner&,const PioneerQ38MixedLiveMemory&,const PioneerQ38CanonicalModelPlan&,
+ const PioneerQ38MixedLiveBlockPlan&,const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
 area_id q38MixedLiveMemoryArea[4]={-1,-1,-1,-1};
 volatile uint32* q38MixedLiveMemoryView[4]={NULL,NULL,NULL,NULL};
 bool q38MixedLiveMemoryMapAttempted=false;

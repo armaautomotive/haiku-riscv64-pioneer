@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Real native QBL1 source/perimeter/L1 held journal;NO driver/launch grant."""
+"""Native QBL1 source/perimeter/L1/owner compile;NO runtime/launch grant."""
 import hashlib
 import pathlib
 import re
@@ -28,7 +28,9 @@ frames=base['frames'](obj.with_suffix('.su'));assert frames
 for name,size in frames.items():
  assert size<=2048 or name in base['previous'] and size<=base['previous'][name],(name,size)
 for required in ('PrepareHeld(', 'CloseHeldNoLaunch(', 'pioneer_live_context_prepare_held(', 'MixedLiveBaseScope(',
- 'MixedLiveMemoryReadChecked(', 'MixedLiveMemoryWrite(', 'pioneer_live_context_scoped_held(', 'pioneer_live_context_end(', 'pioneer_live_context_destroy_clean('):
+ 'MixedLiveMemoryReadChecked(', 'MixedLiveMemoryWrite(', 'pioneer_live_context_scoped_held(', 'pioneer_live_context_scoped_execute(',
+ 'PioneerQ38MixedLiveOwner::Prepare(', 'PioneerQ38MixedLiveOwner::Run(', 'PioneerQ38MixedLiveOwner::Close(',
+ 'pioneer_live_context_end(', 'pioneer_live_context_destroy_clean('):
  assert any(required in name for name in frames),(required,'genuine native implementation must be instantiated')
 nm=str(pathlib.Path(args[0]).parent/'riscv64-unknown-haiku-nm')
 table=subprocess.check_output([nm,'--defined-only',str(obj)],text=True)
@@ -60,7 +62,7 @@ assert code('pioneer_q38_live_context_only_uninit_driver')==code('pioneer_live_c
 for scope in ('_ZN16PioneerSessionIO25MixedLiveCallScopeMatchesEv','_ZN16PioneerSessionIO18MixedLiveBaseScopeEv'):
  assert len(code(scope))>16 and code(scope)!=code('pioneer_live_context_expected_null'),(scope,'scope must contain genuine runtime checks,not optimized constant false')
 sizes=[v for k,v in frames.items() if any(n in k for n in ('MixedLive','mixed_live','pioneer_live_context_'))]
-print('PASS ACTUAL native context/FD+team+callthread/source+embedding/retained model/clock+hosts/new L1 aliases+held journal/retention+END;maxNewFrame'+str(max(sizes)))
-print('PASS NO conventional ABI exports/ALL5 independent inert controls byte-identical/private ACTUAL setup+closed-storage bodies retained/scopes NOT constant false/new mixed factory HELD ONLY')
+print('PASS ACTUAL native context/FD+team+callthread/source+embedding/retained model/clock+hosts/new L1 aliases+held journal/private RUN+STOP+ALL120holds+restore/retention+END compile;maxNewFrame'+str(max(sizes)))
+print('PASS NO conventional ABI exports/ALL5 independent inert controls byte-identical/private ACTUAL setup+closed-storage bodies retained/scopes NOT constant false;NO public mixed execution entry')
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+'  '+str(obj))
 print('COMPILE ONLY;private actual setup bodies WOULD perform IO if invoked;tool only compiles+inspects,never links/installs/invokes. Genuine mixed execution/STOP/restore/native numerical qualification and full-model integration STILL OWED;NO card/speed claim')

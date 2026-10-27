@@ -10,8 +10,8 @@
 // NoC/Tensix/PCI/host/GDDR ownership and journals are separately required.
 struct PioneerQ38MixedLiveSpan {uint32_t address,words;};
 enum {TT_Q38_MIXED_LIVE_ROOT_SAVED_WORDS=308745,TT_Q38_MIXED_LIVE_PEER_SAVED_WORDS=93193,
- TT_Q38_MIXED_LIVE_SAVED_WORDS=11398712,TT_Q38_MIXED_LIVE_ROOT_CODE_WORDS=12657,
- TT_Q38_MIXED_LIVE_PEER_CODE_WORDS=21997,TT_Q38_MIXED_LIVE_CODE_WORDS=2630300};
+ TT_Q38_MIXED_LIVE_SAVED_WORDS=11398712,TT_Q38_MIXED_LIVE_ROOT_CODE_WORDS=12581,
+ TT_Q38_MIXED_LIVE_PEER_CODE_WORDS=21997,TT_Q38_MIXED_LIVE_CODE_WORDS=2630224};
 static inline unsigned PioneerQ38MixedLiveSnapshotSpans(unsigned w){return w>=120?0:w?7:5;}
 static inline PioneerQ38MixedLiveSpan PioneerQ38MixedLiveSnapshotSpan(unsigned w,unsigned span){
  if(w>=120 || span>=PioneerQ38MixedLiveSnapshotSpans(w))return {UINT32_MAX,0};
@@ -53,7 +53,7 @@ static inline unsigned PioneerQ38MixedLiveCodeSpans(unsigned w){return w>=120?0:
 static inline PioneerQ38MixedLiveSpan PioneerQ38MixedLiveCodeSpan(unsigned w,unsigned span){
  if(w>=120 || span>=PioneerQ38MixedLiveCodeSpans(w))return {UINT32_MAX,0};
  if(!span)return {0x6000,1};
- if(!w)return {0x40000,12656};
+ if(!w)return {0x40000,12580};
  switch(span){
   case 1:return {0x20000,1100};
   case 2:return {0x40000,2583};

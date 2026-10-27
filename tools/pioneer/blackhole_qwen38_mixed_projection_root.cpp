@@ -82,7 +82,10 @@ static void MatrixWait(const uint32_t* d,uint32_t* tracked,unsigned w){
   Transfer(d,tracked,w,M::Status,64,false);uint32_t s[16];for(unsigned i=0;i<16;i++)s[i]=Words(L::Scratch)[i];
   if(s[3]!=M::Magic || s[2] || s[0]<n-1 || s[0]>n || s[1]<n-1 || s[1]>n || s[4]>1 || s[5])scalar_fault_park();
   for(unsigned i=8;i<16;i++)if(s[i])scalar_fault_park();
-  unsigned pc=Register(d,tracked,w,0xffb13140);if(!Executing(pc))scalar_fault_park();
+  unsigned pc=Register(d,tracked,w,0xffb13140);
+#ifndef PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE
+  if(!Executing(pc))scalar_fault_park();
+#endif
   if(s[0]!=n || s[1]!=n)continue;
   if(s[4] || s[6]!=d[42] || s[7]!=d[40])scalar_fault_park();
   if(pc==0x2004c || pc==0x20050)return;

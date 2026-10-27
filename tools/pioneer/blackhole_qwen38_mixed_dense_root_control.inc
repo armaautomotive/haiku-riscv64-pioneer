@@ -2,6 +2,7 @@
 // Included INSIDE the new ROOT namespace. All peer observations are real
 // NoC reads; no caller nonce/ready setter or old fresh-boot grammar.
 static const uint32_t* Boot(unsigned w){return reinterpret_cast<const uint32_t*>(L::PeerBoots+w*256);}
+#ifndef PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE
 static bool Executing(unsigned pc){
  if(pc&3)return false;
  if(pc>=0x20060 && pc<0x200a4)return false; // STOP/fault, never completion
@@ -10,6 +11,7 @@ static bool Executing(unsigned pc){
   || (pc>=0x70b00 && pc<0x71ff0) || (pc>=0x72000 && pc<0x73760)
   || (pc>=0xb8000 && pc<0xc0aec);
 }
+#endif
 static void Wait(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned phase,bool admission=false){
  unsigned sequence=admission?0:Words(L::Nonces)[w];
  for(unsigned poll=0;poll<65536;poll++){
@@ -18,7 +20,13 @@ static void Wait(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned phase,b
   if(s[3]!=M::Magic || s[2] || s[0]>=0x7fffffff || s[1]>=0x7fffffff || s[5]>3 || s[6]>=64 || s[7]>=8192)scalar_fault_park();
   for(unsigned i=8;i<16;i++)if(s[i])scalar_fault_park();
   unsigned pc=Register(d,tracked,w,0xffb13140);
+#ifndef PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE
   if(!Executing(pc))scalar_fault_park();
+#endif
+  // LIVE: this CSR samples the speculative frontend,not retirement.
+  // Non-WAIT samples grant nothing;only a real coherent completion and
+  // positive WAIT below can finish this finite poll. Status faults still
+  // fail immediately. Never mask/repair a PC or infer success from one.
   if(admission){
    if(s[4] || s[5] || s[0]!=s[1])scalar_fault_park();
    sequence=s[1];

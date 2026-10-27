@@ -51,8 +51,8 @@ for i,row in enumerate(rows):
  if m and 'ALLOC' in rows[i+1]:assert m[1] in ('.boot','.text'),row
 PINS=(
  ('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
- ('code.bin',50624,'8a05f3fa62bf8674f23783f3cb9aa0ffba7c564fc03b5b4b56ee267cc2fc06bc'),
- ('program.elf',62908,'2a90609c9033331430abcf054f637b65134d43bbf9fbf41672a194c5fd5a3bbc'))
+ ('code.bin',50320,'50009c46fcdefb427dc1b31b68cc9b2403b4ba8e06b377ebd66a88bf7ce254c8'),
+ ('program.elf',62528,'4c9392c44cb470c648d49f8c7209f9cbb2a3e84fe879f355fa75622b551ffe47'))
 for name,size,digest in PINS:
  data=(out/name).read_bytes();assert len(data)==size and hashlib.sha256(data).hexdigest()==digest,name
  print(digest+' '+name+' bytes'+str(size))

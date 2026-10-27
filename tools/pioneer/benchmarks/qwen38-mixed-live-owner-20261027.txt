@@ -1,0 +1,133 @@
+Qwen27B: native persistent dense-block execution owner
+2026-10-27 UTC -- OFFLINE CHECKPOINT; NO new physical driver or inference rate
+
+Scope and honest status
+----------------------
+The candidate is one position0/layer3 dense operator, not a64-layer model
+prefix or token generator. Its native factory binds the genuine embedding
+producer; it does NOT claim that GDN layers0..2 have executed. There is no
+new public opcode, Work inference selection or Assistant installation.
+Last measured whole-model throughput remains0.207893161tok/s;20 is UNMET.
+
+The production owner now implements private prepare/RUN/real STOP/ALL120
+holds/full L1 restore. It retains the SAME native source/model/FD/team/
+call-thread/clock/host context and distinct memory journal. The actual
+PioneerSessionIO/PioneerStoreContext instantiation compiles with all public
+driver ABI symbols absent. The private setup bodies WOULD perform IO if
+called; the qualification tool only compiles/inspects, never invokes them.
+
+Completed checks so far
+----------------------
+- Main+clean code builds reproduce the50320B QBL1 image below, including
+  byte-identical unchanged ancestor programs. No worker firmware changed.
+- Existing actual-instruction two-block/SAME119/real119STOP lifecycle:
+  terminal0,283 refusal branches. This is synthetic RAW arithmetic input,
+  not original-GGUF/native hardware or a silicon throughput measurement.
+- Actual host owner with EXPLICIT synthetic endpoints: RUN/119STOP,
+  ALL120 terminals before FIRST hold,11398712-word complete restoration
+  and a second complete proof of originals. Main positive passes.
+- Expanded host fault suite:26 map/read/write/reset/source/PCI/command/
+  counter/time/scope/status/job faults pass in main+clean.21 CPU precondition
+  refusals pass in main+clean, covering every result field, identity and learned pages.
+  Semantic endpoints remain simulated; these are not native source grants.
+- Main+clean actual kernel-context compile object is byte-identical:
+  b81c4d687b9a8dd32e8ded4da2c665d37ab9231a4fa4be3f7b876e795de0a386
+  Max new static frame1200B. Old65=61faa093 and NODRV=9fcf1f7f preserved.
+- Mapping roundtrip11398712words/988 refusals and native-role165 gates pass.
+- Current registry held-memory faults50/precondition refusals29 pass. Live,
+  block and joined image isolation gates each pass463 cases/26builders.
+- Unchanged DEBUG69 client406 fault cases and separate original-model CPU
+  reference regression pass. No CPU reference was added to Work execution.
+
+Completed actual-instruction qualification -- NOT native hardware
+----------------------------------------------------------------
+The new bridge connects the SAME production host owner directly to the
+actual QBL1 and119QMW1 instruction machines. Host setup transfers copy
+only RAW metadata/position0 RoPE constants, not numeric products. Fresh
+worker machines execute their own installed boot instructions; completions,
+private nonces, receipts and STOP records are never synthesized. The bridge
+asserts artifact fetch bytes equal the installed registry, and independently
+requires actual ROOT+ALL119 terminals before the first hold. Exact-current-
+source main and independent clean complete-block/RUN/STOP/restore runs are
+BOTH terminal0/PASS, with byte-identical stdout. All7 matrices, original-input
+RMS/residuals, attention and17408 SiLU values pass independent observers.
+The complete11398712-word restoration and second proof of originals pass.
+This connects the actual host algorithm to actual program instructions,
+but native source/model/clock/host authentication remains separately owed.
+
+The main+clean speculative-PC endpoint tests are BOTH terminal0/PASS. They alternate
+outside-image/misaligned/fault-region observations with real samples while
+preserving actual worker execution and status. A test-fixture error initially
+offered only one real sample per cycle, making the unchanged TWO-positive-
+sample STOP requirement impossible. That fixture was corrected; the actual
+STOP requirement and finite polling bounds were NOT weakened or enlarged.
+Two complete blocks use the SAME119 workers;119 genuine STOPs and ROOT
+terminal close the run.67872 of135743 PC observations are intentionally
+speculative. Actual status fault/magic/nonce/reserved-word refusals pass.
+
+Byte-identical main+clean raw stdout, saved alongside this record:
+qwen38-mixed-live-owner-actual-20261027.log
+ SHA2560c42fd723d585593a2adb3aba91e006552e1a735b30ada647a33b5bcd81a87de
+qwen38-mixed-live-pc-observation-20261027.log
+ SHA256d244cee640ff0d95593eabda483db25489e054d82368d17a082da19ae8dc8268
+Compile/fault/precondition/memory-fault raw logs also accompany this record.
+
+Code fixes found by qualification
+--------------------------------
+1. The owner initially compared completed worker NoC commands to boot-time
+   commands. Expected final down-projection commands now come independently
+   from the immutable canonical recipe, never from accepting observed bytes.
+2. A malformed job record was followed by another read before comparison.
+   Known boot/job/receipt/outer words are now checked before the NEXT read.
+   First failed IO or mismatched known word retains the complete owner and
+   permits no subsequent reset/restore/read/write/retry.
+3. Native prepare rejects nonpristine execution results BEFORE publishing an
+   execution owner or doing IO; CPU-invalid requests cannot consume it.
+4. The instruction bridge originally resynchronized stale emulator NoC
+   registers even after their core was held, overwriting host restore writes.
+   Only RUNNING machines may update these physical register aliases now.
+   The initial connected run passed full arithmetic but failed cleanup;
+   three specifically identified superseded offline tests were terminated
+   after confirming this fixture defect. Final corrected main+clean runs
+   pass the complete cleanup; no physical card was involved.
+
+Frozen candidate program DATA
+-----------------------------
+boot.bin4B SHA25632791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+code.bin50320B SHA25650009c46fcdefb427dc1b31b68cc9b2403b4ba8e06b377ebd66a88bf7ce254c8
+program.elf62528B SHA2564c9392c44cb470c648d49f8c7209f9cbb2a3e84fe879f355fa75622b551ffe47
+Registry SHA256b39d4a4a4083a62078d90cc3ca887827e1b106a0cc08eb775ad936cf71d7793d
+2630224 installed code words;11398712 saved original words/45594848bytes.
+Native held L1 alias geometry is unchanged. Program DATA is not authority.
+
+Driver/runtime readiness checklist -- still required
+---------------------------------------------------
+[x] Finish exact-current-source main+clean actual-owner and PC-observation
+    instruction tests, plus final clean fault/precondition checks.
+[ ] Qualify genuine native binding, lifetime/fault containment and sealed END
+    semantics; compile-only scope bodies are not runtime evidence.
+[ ] Add a separate guarded original-weight numerical-validation entry/client,
+    then verify this complete dense operator on physical P100A hardware.
+    No default Work/Assistant promotion before that passes.
+[ ] Integrate the valid64-layer sequence: all GDN and dense layers, genuine
+    next-hidden producer, persistent recurrent/KV state and atomic token
+    boundaries. A layer3->7 lifecycle is NOT a model prefix.
+[ ] Integrate final normalization, vocabulary projection and token sampling
+    into the resident pipeline and prove repeated coherent generation.
+[ ] Expose the qualified path in Assistant with distinct Work/validation,
+    load/unload/cancel/driver-update behavior and safe rollback.
+[ ] Profile the complete path and eliminate remaining serial/control/transfer
+    bottlenecks. ROOT still performs serial SiLU and input quantization;
+    card residence alone does not establish20tok/s. Retained workers and
+    batched/parallel work need measured whole-model qualification.
+[ ] Benchmark original27B Q4_K_M end-to-end: fixed prompt/context, loading,
+    prefill, first-token latency, steady decode rate and long-run stability;
+    preserve Haiku boot/64CPU/128GB and push tested source checkpoints.
+
+Physical status / preservation
+------------------------------
+Read-only SSH status at02:34UTC:
+driver55/tag2026102100010012/generation4/quiesced0/cold0/active_owner0.
+No experimental installation, relay action, SD/mains/hardware connection or
+disk change. SDK inputs remain read-only; outputs are in/private/tmp.
+Dirty llama.cpp and unrelated untracked FlashNext files remain untouched.

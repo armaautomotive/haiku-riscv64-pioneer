@@ -36,7 +36,8 @@ bool PioneerSessionIO::MixedLiveBaseScope(){
   if(!state->MatchesBinding(*c,*m,sRuntimeOwner,c->hashes,sRuntimeOwner->team,c->initialized,sReloadGeneration))return false;
   if(state->phase==PioneerQ38MixedLiveNativeState::Bound){if(c->q38Dispatch || c->q38DispatchRoutes || fleetEnabled)return false;}
   else if(!c->q38Dispatch || c->q38Dispatch->worker[0].master!=&c->lease || !fleetEnabled || c->q38Dispatch->unsafe
-   || c->q38Dispatch->closed || c->q38Dispatch->rootRunning || c->q38Dispatch->booted || c->q38Dispatch->bootAttempted)return false;
+   || c->q38Dispatch->closed || c->q38Dispatch->booted || c->q38Dispatch->bootAttempted)return false;
+  if(c->q38Dispatch && c->q38Dispatch->rootRunning && !state->ControlsCohort(c->q38Dispatch))return false;
   if(state->phase>=PioneerQ38MixedLiveNativeState::MemoryPreparing
    && (!state->memory || !state->plan || !c->q38DispatchRoutes || c->q38Dispatch->prepared!=120 || !state->plan->Matches(m->plan)))return false;
  }else if(c->q38Dispatch || c->q38DispatchRoutes || fleetEnabled || q38MixedLiveMemoryMapAttempted)return false;
@@ -56,6 +57,15 @@ bool PioneerSessionIO::MixedLiveMemoryScope(const PioneerQ38MixedLiveMemory& mem
   && pages==PioneerResidentBanks::Pages && (state->phase==PioneerQ38MixedLiveNativeState::MemoryPreparing
    || state->phase==PioneerQ38MixedLiveNativeState::MemoryInstalled || state->phase==PioneerQ38MixedLiveNativeState::MemoryClosing)
   && MixedLiveBaseScope();
+}
+bool PioneerSessionIO::MixedLiveExecutionScope(const PioneerQ38MixedLiveOwner& execution,const PioneerQ38MixedLiveMemory& memory,
+ const PioneerQ38CanonicalModelPlan& canonical,const PioneerQ38MixedLiveBlockPlan& plan,const PioneerQ38GdnIdentity& id,const uint8_t* learned,unsigned pages){
+ auto* c=q38MutableContext;auto* state=c?c->q38MixedLiveNative:NULL;auto* m=c?c->q38EmbeddingModel:NULL;
+ return state && m && state->execution==&execution && state->memory==&memory && state->plan==&plan && &canonical==&m->plan
+  && id==m->identity && learned==c->initialized && pages==PioneerResidentBanks::Pages
+  && (state->phase==PioneerQ38MixedLiveNativeState::ExecutionPreparing || state->phase==PioneerQ38MixedLiveNativeState::ExecutionReady
+   || state->phase==PioneerQ38MixedLiveNativeState::ExecutionComplete || state->phase==PioneerQ38MixedLiveNativeState::ExecutionClosing)
+  && execution.MatchesNativeOwner(memory,plan) && MixedLiveBaseScope();
 }
 void PioneerSessionIO::MixedLiveRetainHostOwners(){
  if(q38MutableContext){tt_resident_session_result retained={};RetainQ38DispatchOwner(*q38MutableContext,retained);}
@@ -122,9 +132,39 @@ void PioneerSessionIO::MixedLiveRetainHostOwners(){
 } // real native held preparation only; no reset/start/NoC arithmetic/Work or token publication
 [[maybe_unused]] static bool CloseQ38MixedLiveNativeHeld(PioneerStoreContext& c,PioneerQ38MixedLiveMemoryResult& r){
  auto* state=c.q38MixedLiveNative;
- if(!state || state->phase!=PioneerQ38MixedLiveNativeState::MemoryInstalled || !state->memory || state->Unsafe())return false;
+ if(!state || state->phase!=PioneerQ38MixedLiveNativeState::MemoryInstalled || !state->memory || state->execution || state->Unsafe())return false;
  state->phase=PioneerQ38MixedLiveNativeState::MemoryClosing;
  bool okay=c.io.MixedLiveBaseScope() && state->memory->CloseHeldNoLaunch(c.io,r);
+ if(okay)state->phase=PioneerQ38MixedLiveNativeState::MemoryClosed;
+ else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
+}
+[[maybe_unused]] static bool PrepareQ38MixedLiveNativeExecution(PioneerStoreContext& c,PioneerQ38MixedLiveResult& r){
+ auto* state=c.q38MixedLiveNative;auto* m=c.q38EmbeddingModel;
+ const PioneerQ38MixedLiveResult pristine;
+ const auto* actual=reinterpret_cast<const unsigned char*>(&r);const auto* initial=reinterpret_cast<const unsigned char*>(&pristine);
+ static_assert(sizeof(r)==16*sizeof(uint32_t),"every execution result byte has an explicit initial value");
+ for(unsigned i=0;i<sizeof(r);i++)if(actual[i]!=initial[i])return false; // BEFORE publishing an owner or any IO
+ if(!state || !m || state->phase!=PioneerQ38MixedLiveNativeState::MemoryInstalled || state->execution || !state->memory || !state->plan
+  || !c.q38Dispatch || !c.io.MixedLiveBaseScope())return false;
+ auto* execution=new(std::nothrow) PioneerQ38MixedLiveOwner;if(!execution)return false;
+ state->execution=execution;state->phase=PioneerQ38MixedLiveNativeState::ExecutionPreparing;
+ bool okay=execution->Prepare(c.io,c.baseline.baseline.baseline.baseline.dram,c.banks,*c.q38Dispatch,*state->memory,m->plan,*state->plan,
+  m->identity,c.initialized,PioneerResidentBanks::Pages,r);
+ if(okay)state->phase=PioneerQ38MixedLiveNativeState::ExecutionReady;
+ else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
+}
+[[maybe_unused]] static bool RunQ38MixedLiveNativeExecution(PioneerStoreContext& c,PioneerQ38MixedLiveResult& r){
+ auto* state=c.q38MixedLiveNative;
+ if(!state || state->phase!=PioneerQ38MixedLiveNativeState::ExecutionReady || !state->execution || state->Unsafe())return false;
+ bool okay=c.io.MixedLiveBaseScope() && state->execution->Run(c.io,r);
+ if(okay)state->phase=PioneerQ38MixedLiveNativeState::ExecutionComplete;
+ else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
+}
+[[maybe_unused]] static bool CloseQ38MixedLiveNativeExecution(PioneerStoreContext& c,PioneerQ38MixedLiveResult& r,PioneerQ38MixedLiveMemoryResult& memory){
+ auto* state=c.q38MixedLiveNative;
+ if(!state || state->phase!=PioneerQ38MixedLiveNativeState::ExecutionComplete || !state->execution || state->Unsafe())return false;
+ state->phase=PioneerQ38MixedLiveNativeState::ExecutionClosing;
+ bool okay=c.io.MixedLiveBaseScope() && state->execution->Close(c.io,r,memory);
  if(okay)state->phase=PioneerQ38MixedLiveNativeState::MemoryClosed;
  else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
 }

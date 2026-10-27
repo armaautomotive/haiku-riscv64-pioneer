@@ -3386,7 +3386,7 @@ struct PioneerStoreContext {
 		} else
 		// PIONEER_Q38_PROJECTION_EXECUTION_NATIVE_UNSAFE_END
 #endif
-		if (q38Dispatch && PioneerQ38DispatchUnsafe(*q38Dispatch)) return true;
+#include "PioneerQ38MixedLiveNativeCohortUnsafe.inc"
 #endif
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_COHORT
 		if (q38Cohort) {
