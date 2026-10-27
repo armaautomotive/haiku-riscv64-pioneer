@@ -66,8 +66,12 @@ extern "C" bool pioneer_live_context_scoped_validation(PioneerProbeCookie* cooki
 #endif
 extern "C" bool pioneer_live_context_end(PioneerStoreContext& c,tt_resident_session_result& r,bool& clean){return EndQ38DispatchOwnership(c,r,clean);}
 #ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
-extern "C" void pioneer_live_context_final_end(PioneerProbeCookie* cookie,tt_resident_session_result& r){EndResidentSession(cookie,r,true);}
-// Compile ONLY;the real caller still owes its authentic locked call seal.
+extern "C" status_t pioneer_live_context_final_end(PioneerProbeCookie* cookie,tt_resident_session_result& r){
+ status_t status=AcquireQ38GdnSessionLock(cookie);if(status!=B_OK)return status;
+ struct{tt_resident_session_result result;}request={};
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveFinalEndCall.inc"
+ r=request.result;release_sem(sLock);return status;
+} // Compile ONLY;ACTUAL lock+caller seal+END,true recheck,retained-or-destroyed postcondition.
 #endif
 extern "C" void pioneer_live_context_retain(PioneerStoreContext& c,tt_resident_session_result& r){RetainQ38DispatchOwner(c,r);}
 extern "C" void pioneer_live_context_destroy_clean(PioneerStoreContext* c){delete c;}

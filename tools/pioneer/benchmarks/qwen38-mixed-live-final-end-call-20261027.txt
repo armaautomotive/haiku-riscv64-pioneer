@@ -1,0 +1,69 @@
+Qwen27B: actual locked bank-END caller seal for private final-release path
+2026-10-27 -- OFFLINE NODRV ONLY;no deployment or speedup
+
+The prior private final-release context required the FD/team/call-thread
+seal,but its actual bank-END entry still directly called EndResidentSession
+without establishing that seal. The held disposal harness supplied initial
+call-thread metadata;that was NOT proof of the actual destructive END entry.
+
+The actual bank-END branch now selects a distinct additional guarded call
+block ONLY for PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE. Its header revalidates
+ALL23 exact parents,six ABI renames and QBLNODRV tag;no loadable/public/
+CPU-reference/Work role is enabled. All other bank-END paths are unchanged.
+With the actual global lock held,it validates context/FD/team/thread and
+creates only the temporary CPU call seal. Actual EndResidentSession(true)
+still owes every private source/closed/clock/fresh-audit/disposal proof.
+After END it clears ONLY the seal of a still-live SAME context. A destroyed
+context is NEVER dereferenced. Owner/thread/magic loss or a foreign retained
+context is quarantined;no existing unsafe/clock/owner state is cleared.
+
+The SDK witness now acquires the actual private lock,includes this actual
+call block and balances semaphore release,instead of directly calling END.
+Actual control code and this witness compile to nonconstant genuine bodies.
+
+Main+independent clean evidence
+--------------------------------
+CPU metadata lifecycle18 cases plus old DEBUG69's unchanged14 cases:both
+TERMINAL0 and stdout BYTE-IDENTICAL. ASAN/UBSAN check destroyed context,
+retained and replaced contexts,wrong ownership/thread/team/magic,missing
+context and NULL cookie. This is CPU CALLER-LIFECYCLE qualification ONLY,
+not a native owner,fresh audit,physical cleanup or original-model result.
+ qwen38-mixed-live-final-end-call-tests-20261027.log
+ SHA2568094c53e599435614c7cc51af9353ff1487976ab7fff0210f28cf0e631fb8a05
+
+420 role AND actual-call-body gate checks:both TERMINAL0/identical,
+including missing/zero/wrong/late parents,old tags and competing roles.
+ qwen38-mixed-live-final-end-call-gates-20261027.log
+ SHA256dd2843cfae8e5913ac19d0d70f92de0c447fa6022296cb478b5612a797fcc0dc
+
+Actual Haiku kernel-context SDK main33791/clean1727:both TERMINAL0 and
+object BYTE-IDENTICAL5c2a96bd428331c904d7c2d1100983a6a7aae26b27d31d02abd8a44c7fa67cf6.
+Max new frame1200B;all independent inert controls/absence of normal ABI
+exports preserved. This is COMPILE ONLY,not a loadable driver or runtime
+fresh-recheck proof. Clean tree:/private/tmp/pioneer-mixed-endcall-clean.lWU7pwRO.
+
+Next required qualification
+-----------------------------
+Join actual compute-call scope release plus this locked destructive END
+entry to the SAME genuine native closed state and real clock,and execute
+the complete fresh inherited diagnostic chain/recheck=true before final
+disposal. The prior --final-end harness uses recheck=false and initial
+call-thread fixture metadata;do not relabel its passing57 fault cases as
+the missing complete fresh native call/END path. Then finish distinct
+original-GGUF validation entry/client and execution/readback/cleanup
+composition before physical comparison. Valid64-layer GDN+dense/state/KV/
+token/finalnorm/vocabulary/sampling/Work/Assistant and real speed still owed.
+
+No driver/Assistant/model/boot/relay/power/SD/mains/hardware/disk action.
+SDK read-only;outputs /private/tmp;dirty llama.cpp/unrelated FlashNext
+untouched. Whole-model0.207893161tok/s UNCHANGED;20tok/s UNMET. Goal ACTIVE.
+
+Regression preservation:main49326/clean90608 actual held disposal both
+TERMINAL0 and identical to the saved cc9f18ee... log;its scope limitations
+remain unchanged. Default14317,sigmoid9586,readback95097 SDK controls all
+TERMINAL0 with unchanged object SHA256, respectively:
+0b55dd8d20b7d81a8b97cc6608c5496d9b2633a4c1ef698a74010feb933b90e8
+374ec650c173e5b23b73d0a0a09ba7f8785add27f14584268d033c834cdbd224
+4b1e6e4473150e50e10526d161a7d5bb67a466b718e9bf216dbb810b10279e9b
+Old65=61faa093 and oldNODRV=9fcf1f7f controls also remain unchanged.
+Saved actual SDK logs:qwen38-mixed-live-final-end-call-sdk-{main,clean}-20261027.log.

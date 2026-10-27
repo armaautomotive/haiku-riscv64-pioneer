@@ -6332,6 +6332,8 @@ Q38BankControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 #endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE
 #include "PioneerQ38ResidentLayerValidationEndCall.inc"
+#elif defined(PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE)
+#include "PioneerQ38MixedLiveFinalEndCall.inc"
 #else
 			EndResidentSession(cookie,request.result,true);
 #endif

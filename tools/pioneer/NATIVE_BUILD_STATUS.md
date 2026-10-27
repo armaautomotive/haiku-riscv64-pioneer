@@ -1,5 +1,20 @@
 # Native build status
 
+October27UTC2026:OFFLINE mixed dense validation/lifecycle qualification,
+NOT a new deployed driver or speedup. Original-weight standalone layer3
+ALL18 stages/final5120 words pass BIT-EXACT in emitted-instruction tests.
+Genuine native held state now passes actual owned END prefix/footer,
+real clock,30VM/11PCI/3host disposal and57 failure/refusal cases on main
+and clean trees. Separate actual bank-END caller-seal block passes18
+CPU lifecycle cases/420 role gates and main+clean SDK compilation.
+The complete genuine native call/END with fresh diagnostic recheck=true
+is STILL OWED;held recheck=false tests are NOT that proof. Then distinct
+original-model native validation/client,physical comparison,full64-layer
+state/token/sampling/Work integration and measured optimization remain.
+Evidence:benchmarks/qwen38-mixed-live-final-{disposal,end-call}-20261027.txt.
+No new hardware/Assistant/boot action;last whole27B0.207893161tok/s unchanged;
+20tok/s UNMET. See dated evidence rather than historical state claims below.
+
 October25UTC2026:ACTUAL combined-output DEBUG68 P100A PASS. Both original
 instruction-machine regressions agree BYTE-EXACT;separate native client,
 402failure cases,110client+58source gates and guarded update qualified.

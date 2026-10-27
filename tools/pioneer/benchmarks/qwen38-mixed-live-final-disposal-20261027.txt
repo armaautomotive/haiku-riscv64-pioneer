@@ -35,6 +35,9 @@ TERMINAL0 with unchanged stdout SHA256 fb3da2b36f1c3e4456ef866af8508beffb88c102d
 and5535e225484dc043da212ac53cb307cc7afcb89651c0b3ca150efa8bfe3e3fd1.
 
 Next gates before physical use:proper actual bank-END call sealing,
+whose guarded production block and CPU lifecycle/SDK evidence are now
+recorded in qwen38-mixed-live-final-end-call-20261027.txt (NOT yet the
+complete fresh native call/END runtime composition),
 fresh diagnostic recheck=true,distinct original-GGUF validation entry/client
 and full execution/readback/cleanup composition. Then physical numerical
 comparison,valid64-layer GDN+dense/state/KV/token/finalnorm/vocabulary/

@@ -26,9 +26,18 @@ static void EndResidentSession(Cookie* cookie,Result&,bool explicitEnd){
  if(behavior==1){delete cookie->context;cookie->context=nullptr;sRuntimeOwner=nullptr;}
  if(behavior==2)cookie->context->q38GdnCallThread++;
  if(behavior==3)cookie->context=replacement;
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_END_CALL_TEST
+ if(behavior==4)sRuntimeOwner=nullptr;
+ if(behavior==5)currentThread++;
+ if(behavior==6)cookie->magic=0;
+#endif
 }
 static status_t Invoke(Cookie* cookie){Request request;status_t status=B_OK;
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_END_CALL_TEST
+ #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveFinalEndCall.inc"
+#else
  #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentLayerValidationEndCall.inc"
+#endif
  return status;
 }
 int main(){unsigned passed=0;
@@ -43,7 +52,13 @@ int main(){unsigned passed=0;
   delete context;passed++;
  }
  currentThread=42;currentTeam=7;sBankStorageOnly=true;infoFail=false;
- for(behavior=0;behavior<4;behavior++){
+ for(behavior=0;behavior<
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_END_CALL_TEST
+  7
+#else
+  4
+#endif
+  ;behavior++){
   auto* context=new Context;Cookie owner;owner.context=context;sRuntimeOwner=&owner;
   replacement=new Context;endCalls=retains=0;
   const int result=Invoke(&owner);assert(endCalls==1);
@@ -51,7 +66,16 @@ int main(){unsigned passed=0;
   if(behavior==1)assert(result==B_OK && !owner.context && !sRuntimeOwner && !retains); // ASAN proves no freed-context dereference
   if(behavior==2)assert(result==B_DEV_NOT_READY && retains==1 && context->unsafe);
   if(behavior==3)assert(result==B_DEV_NOT_READY && retains==1 && replacement->unsafe);
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_END_CALL_TEST
+  if(behavior>=4)assert(result==B_DEV_NOT_READY && retains==1 && context->unsafe);
+  currentThread=42;
+#endif
   if(behavior!=1)delete context;delete replacement;passed++;
  }
+#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_END_CALL_TEST
+ endCalls=retains=0;assert(Invoke(nullptr)==B_NOT_ALLOWED && !endCalls && !retains);passed++;
+ printf("PASS ACTUAL private QBLNODRV bank-END call-seal block:%u CPU-only metadata/refusal/retained/destroyed/foreign-context/owner-thread-magic-change cases;ASAN no use-after-free,unsafe NEVER cleared;NO native/IO/recheck/cleanup qualification\n",passed);
+#else
  printf("PASS ACTUAL DEBUG69 bank-END call-seal block:%u CPU-only metadata/refusal/retained/destroyed-context/thread-change/foreign-context cases;ASAN no use-after-free,unsafe NEVER cleared;NO native/IO/cleanup qualification\n",passed);
+#endif
 }

@@ -77,10 +77,13 @@ for scope in ('_ZN16PioneerSessionIO25MixedLiveCallScopeMatchesEv','_ZN16Pioneer
 if final_release:
  scope='_ZN16PioneerSessionIO26MixedLiveFinalReleaseScopeEv'
  assert len(code(scope))>16 and code(scope)!=code('pioneer_live_context_expected_null'),(scope,'final release needs genuine closed-context checks')
+ assert len(code('pioneer_live_context_final_end'))>16, 'actual locked END caller must not fold to a constant refusal'
+ caller=(here/'pioneer_q38_mixed_live_native_context_compile.cpp').read_text().split('extern "C" status_t pioneer_live_context_final_end(',1)[1].split('#endif',1)[0]
+ assert 'AcquireQ38GdnSessionLock(cookie)' in caller and '#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveFinalEndCall.inc"' in caller and 'release_sem(sLock)' in caller
 sizes=[v for k,v in frames.items() if any(n in k for n in ('MixedLive','mixed_live','pioneer_live_context_'))]
 print('PASS ACTUAL native context/FD+team+callthread/source+embedding/retained model/clock+hosts/new L1 aliases+held journal/private RUN+STOP+ALL120holds+restore/retention+END compile;maxNewFrame'+str(max(sizes)))
 print('PASS NO conventional ABI exports/ALL5 independent inert controls byte-identical/private ACTUAL setup+closed-storage bodies retained/scopes NOT constant false;NO public mixed execution entry')
 if readback:print('PASS separate guarded validation fixed5page readback retained;HEAP staging/atomic capture+restore;NO loadable driver/client/physical qualification')
-if final_release:print('PASS actual final-release scope/30VM-only Unmap/EndResidentSession compile;NO default path promotion or complete runtime teardown claim')
+if final_release:print('PASS actual final-release scope/30VM-only Unmap/EndResidentSession+locked actual bank-END caller seal compile/body NOT constant refusal;NO default path promotion/fresh recheck or complete runtime teardown claim')
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+'  '+str(obj))
 print('COMPILE ONLY;private actual setup bodies WOULD perform IO if invoked;tool only compiles+inspects,never links/installs/invokes. Genuine mixed execution/STOP/restore/native numerical qualification and full-model integration STILL OWED;NO card/speed claim')
