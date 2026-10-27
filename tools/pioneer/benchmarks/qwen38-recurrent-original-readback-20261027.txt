@@ -1,0 +1,101 @@
+Qwen3.8-27B: original native recurrent readback qualification
+Date: 2026-10-27
+Classification: PROGRESS; physical-card/full64/persistent Work NOT qualified
+Source baseline: 99d92d87a18ee13f5d7960a20841c462635146db
+
+COMPLETED ORIGINAL-WEIGHT RUNTIME QUALIFICATION
+
+Exact long-running handles main82693/clean91605 both returned terminal0.
+The clean export was /private/tmp/pioneer-qrb-readback-clean.oWiN4w58.
+Runner: tools/pioneer/tests/run_pioneer_q38_recurrent_block_native_factory_tests.py
+Mode: --readback-original-model; actual authenticated c600 GGUF, 18973870528B.
+The complete 52-line stdout files are byte-identical, SHA256:
+5e920fdcd543bc5bea04b3a923437cef7b0022d204e244f84384316ab0de0ef4
+
+Archived logs:
+qwen38-recurrent-original-readback-native-main-20261027.log
+qwen38-recurrent-original-readback-native-clean-20261027.log
+
+Scope: real private native factories/scopes, QPE1 embedding, 672 recurrent
+and 336 history initialization instruction leases, actual whole recurrent
+layer0 instruction streams and 119 new worker machines, original raw learned
+bytes only (57 spans/280971136B), actual STOP/120holds/readback/restoration.
+Includes eight inert output aliases, six native lifetime failures, all three
+raw-readback failures with retained owners and ZERO following device IO,
+five successful READs/5120 words, full11406904-word original restoration
+plus second proof, fresh locked explicit END and all84 final-disposal failures.
+Private independent row-major/libm reference prepared BEFORE native context;
+no expected products are supplied to native execution.
+
+All5120 final layer0 words match the independent CPU reference BIT-FOR-BIT
+AFTER full final-END/context destruction; nonfinite0. Fifteen of18 stages
+are exact. The following intermediate differences remain, as previously
+reported; no tolerance was relaxed and no persistent-state claim is made:
+stage7:143241/786432 differ; maxAbs4.76837158203e-7
+stage8:901/6144 differ; maxAbs7.45058059692e-9
+stage9:3563/6144 differ; maxAbs2.38418579102e-7
+
+Raw OS/register/GDDR endpoints are SIMULATED. This is NOT physical-card
+arithmetic/readback, full64, token-state commit, Work, Assistant or TPS proof.
+
+PUBLIC HANDLER: STILL INCOMPLETE
+
+Initial main61072/clean77933 both ended1 under AddressSanitizer after the
+actual final-user-copy failure child passed. The TEST transport retained
+an execution-result pointer after Q38RecurrentBlockValidationControl deleted
+its temporary result set. Post-return VerifyValidationReadback dereferenced
+that stale pointer. No physical card was involved. The production execution
+owner does not retain a pointer to this result set. A test-observer repair is
+being qualified separately; this checkpoint does NOT assert that it passed.
+Do NOT invoke hot-swap or physical execution until the entire repaired actual
+handler/user-copy/duplicate/fresh explicit-END test has passed in both copies.
+
+GUARDED HOT-SWAP PREPARATION
+
+New modes: --apply-recurrent-block-validation,
+           --restore-recurrent-block-validation
+ONLY stable041/tag2026102100010012 <-> recurrent87d0/tag2026102700010071.
+Full expected hashes, exact guard/client/source/device-link pins, parent/owner
+admission, sole FD, cold0, quiesce and increasing generation remain required.
+Backups include BOTH tag and full old SHA. No reset, force, native IO, automatic
+rollback, retained-owner recovery or Work/dense/NODRV alias is introduced.
+
+Helper SHA256:
+5cebdc56956141f66ea8fd01d81f68bc12d7efb7e093dc52116c335a257a240f
+Test SHA256:
+c04a1b02ed606d9ceaa3440291b5c9f2afe496f408b0e6b02cc73293bc294974
+sh -n: PASS; main/clean helper and test sources: exact cmp PASS.
+New apply/restore: main30082 and fresh24022 terminal0, 152 cases each;
+clean complete stdout exactly matches. Existing mixed-live apply/restore
+plus stable scale-reuse apply/restore: 298 regression cases passed.
+These execute the actual /bin/sh helper against isolated fake filesystems,
+handshakes/hash/symlink/owner failures; NO native reload/reset occurs.
+Archived logs:
+qwen38-recurrent-hot-swap-main-20261027.log
+qwen38-recurrent-hot-swap-clean-20261027.log
+qwen38-recurrent-hot-swap-regression-20261027.log
+
+STAGED ONLY / PIONEER UNCHANGED
+
+Separate non-watched home directory (not installed driver path):
+/boot/home/pioneer-q38-recurrent-debug71-qualification-20261027-b
+Remote SHA256 verified after copy:
+driver87d0c4e005d7df937e22c2806051cd0aa99d736c0fb2c0199fde40d8eb1d7cb4
+client1e62b010515c2dea5300fae2b23a043c606a0987c07b8d972ab1edc9c079eaab
+helper5cebdc56956141f66ea8fd01d81f68bc12d7efb7e093dc52116c335a257a240f
+None of these staged programs was invoked/loaded/installed.
+Fresh metadata before/after copy: driver55/tag2026102100010012/gen6,
+quiesced0/cold0/active_owner0/open_count1/guard1. CPUs64, maxRAM137034936320B,
+free129598685184B. No Assistant/boot/network config/restart/power/SD/mains/
+hardware connection change. Unrelated dirty llama.cpp/FlashNext untouched.
+
+FULL OBJECTIVE REMAINS ACTIVE
+
+Next: complete repaired public-handler tests, then controlled physical
+original-weight DEBUG71 validation with strict final compare BEFORE explicit
+BANK_END and known-clean verified restore only. Any uncertainty quarantines;
+no retry/force/automatic rollback. Then valid embedding->recurrent0..2->dense3
+and all64 layers, correct persistent per-layer KV/recurrent/history/token
+commit, finalnorm/vocabulary/sampling ON CARD, persistent no-CPU-reference
+Work+Assistant (validation separate), and real loading/prefill/decode tuning.
+Last measured whole27B remains0.207893161tok/s; target20tok/s UNMET.

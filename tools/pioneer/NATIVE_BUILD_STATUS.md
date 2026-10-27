@@ -1,8 +1,8 @@
 # Native build status
 
-## Current: recurrent validation client/module built; native qualification pending
+## Current: original recurrent readback passed; public-handler qualification pending
 
-October 27, 2026. Source/compile checkpoint, NOT runtime-complete or installed.
+October 27, 2026. Partial runtime qualification, NOT physical-card qualified or installed.
 Previous pushed interface checkpoint: `9d6e39a97403c15151c49cab5a9ffc0fce0bdab3`.
 The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2d69`.
 
@@ -53,8 +53,14 @@ The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2
   full original restoration and its second proof. Failures retain every owner
   and block subsequent IO/retry. Main/clean Haiku SDK compiles passed with
   identical object `b0e608455394c0519b6ceda31c5eeb0b10f868bb244500477662701fcc8250ad`;
-  maximum new frame 768 bytes. Native original-weight/failure tests remain LIVE;
-  their result must NOT be inferred from compilation or prior non-readback runs.
+  maximum new frame 768 bytes. Native original-weight/readback/failure/final-END
+  tests now passed in main82693/clean91605 (both terminal 0), identical complete
+  stdout `5e920fdcd543bc5bea04b3a923437cef7b0022d204e244f84384316ab0de0ef4`.
+  They include all three raw-readback failures, five successful READs, full
+  restoration and fresh final END with 84 disposal failures. All 5120 final
+  output words again match the independent reference bit-for-bit. The same
+  three intermediate rounding differences remain; persistent state is NOT
+  thereby qualified. Raw OS/register/GDDR endpoints remain SIMULATED.
 - A distinct DEBUG71/tag2026102700010071/namespace22 diagnostic interface is
   implemented: fixed token0/position0/layer0, pointer-free 20800-byte payload,
   real call scope/QPE1/672 recurrent+336 history initializers/whole QRB1/readback.
@@ -66,8 +72,12 @@ The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2
   role gates, 430 unchanged-NODRV gates and 93 readback selection gates.
   Actual-handler preflight passed 112 missing learned endpoints, 80 malformed
   header words and 65526 closed opcodes with zero model/epoch/card IO. Handler
-  whole-run, final user-copy failure and explicit-END tests are LIVE, not passed.
-  The native handler/final-copy/END tests remain LIVE, not a physical result.
+  whole-run reached final user-copy; its failure child passed. Both first
+  public-handler runs then stopped on a TEST observer use-after-free: it kept
+  a pointer to the handler's temporary result after that result was deleted.
+  Public-handler qualification remains incomplete until the repaired observer
+  passes the entire post-return/duplicate/explicit-END sequence. This was an
+  offline sanitizer failure, not a Pioneer/card crash or a physical result.
 - Main15788/clean2269 actual readback-owner suites BOTH passed (terminal 0):
   real emitted whole QRB1/119 workers/STOP/120 holds, all 16 readback failures,
   five successful READs/5120-word capture/full original restoration+second proof.
@@ -94,11 +104,19 @@ The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2
   Its fingerprint `bb911e57059b179f` matches the host runs. This is CPU/source
   qualification, NOT P100A arithmetic, full-model inference or token performance.
   Driver/Assistant/boot files were not installed or changed.
+- Guarded hot-swap mappings now cover only exact stable041/tag12 <->
+  recurrent87d0/tag71, with hash-qualified backups and unchanged owner/cold/
+  generation/symlink fences. Main/clean new-mode tests passed 152 cases each;
+  existing mixed-live/stable mappings passed 298 regression cases. These are
+  filesystem/handshake tests, NOT native reload permission or runtime proof.
+  Candidate driver/client/helper copies are SHA-verified in a separate home
+  test folder on Haiku, NOT in the installed driver path and NEVER invoked.
+  Evidence: benchmarks/qwen38-recurrent-original-readback-20261027.txt.
 
 Remaining before full-offload Work is ready:
 
-1. Assess intermediate rounding differences; finish original-weight readback
-   and native/public-handler runtime/failure/END tests. Then qualify controlled
+1. Assess intermediate rounding differences; finish repaired public-handler
+   runtime/failure/END tests (original native readback now passed). Then qualify controlled
    deployment of the built diagnostic client/module and validate original-weight
    execution/readback/final disposal on the physical P100A.
 2. Connect valid embedding/recurrent layers 0..2 through dense layer 3 and all
@@ -108,10 +126,10 @@ Remaining before full-offload Work is ready:
 5. Measure and optimize loading, prefill and decode toward 20 tokens/sec.
 
 Fresh read-only board check: 64 CPUs, max RAM 137034936320 bytes, free RAM
-129635860480 bytes, driver55 / tag2026102100010012 / generation6 / cold0 /
-active_owner0 / quiesced0 / open_count1 / guard1, rechecked AFTER the CPU-only
-test. No new driver install, card compute, restart, power, SD, mains,
-Assistant or network changes; only the isolated CPU test was copied/run.
+129598685184 bytes, driver55 / tag2026102100010012 / generation6 / cold0 /
+active_owner0 / quiesced0 / open_count1 / guard1. CPU/RAM were checked before
+staging; driver metadata was rechecked afterward. No new driver install, card compute, restart, power, SD,
+mains, Assistant or network changes; only isolated project test files copied.
 Last measured full-model rate is still **0.207893161 tokens/sec**; target unmet.
 
 The dated entries below are historical snapshots. Their LIVE labels are not
