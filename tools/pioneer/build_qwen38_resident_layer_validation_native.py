@@ -12,6 +12,9 @@ import runpy
 import subprocess
 import sys
 
+if 'PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE' in os.environ:
+    raise SystemExit(2)
+
 if any(k in os.environ for k in ('PIONEER_Q38_MIXED_RECURRENT_COHORT_ROOT_IMAGE','PIONEER_Q38_MIXED_ROOT_CAPSULE_IMAGE')):
     raise SystemExit(2)
 

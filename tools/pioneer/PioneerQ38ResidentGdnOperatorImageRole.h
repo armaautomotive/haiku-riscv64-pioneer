@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE
+#error A separate recurrent BLOCK parent cannot select an existing image role
+#endif
 #if defined(PIONEER_Q38_MIXED_RECURRENT_COHORT_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_ROOT_CAPSULE_IMAGE)
 #error New recurrent ROOT/cohort capsule cannot select an existing image role
 #endif

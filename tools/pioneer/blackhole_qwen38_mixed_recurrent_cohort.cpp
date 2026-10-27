@@ -1,7 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 // Returning on-card Conv->GDN coordinator for SAME retained QMW1 workers.
 // Separate offline image;original/init/clock/native/lifecycle ownership owed.
+#ifdef PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE
+#include "PioneerQ38MixedRecurrentBlockRootImageRole.h"
+#else
 #include "PioneerQ38MixedRecurrentCohortRootImageRole.h"
+#endif
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerAttentionMath.h"
 #include "PioneerQ38MixedRecurrentCohortLayout.h"
@@ -10,12 +14,14 @@ extern "C" unsigned mixed_recurrent_cohort_wait(unsigned);
 extern "C" unsigned q38_mixed_recurrent_root_conv();
 extern "C" __attribute__((noinline)) void q38_mixed_root_seal();
 extern "C" __attribute__((noinline)) const uint32_t* q38_mixed_recurrent_frame();
+#ifndef PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE
 extern "C" void* memset(void* target,int value,__SIZE_TYPE__ bytes){
  if(value || ((reinterpret_cast<unsigned>(target)|bytes)&3))scalar_fault_park();
  volatile uint32_t* out=static_cast<volatile uint32_t*>(target);
  for(unsigned i=0;i<bytes/4;i++)out[i]=0;
  return target;
 }
+#endif
 namespace MixedRecurrentCohort {
 namespace L=PioneerQ38MixedRecurrentCohortLayout;
 namespace M=PioneerQ38MixedWorkerLayout;
@@ -237,6 +243,7 @@ extern "C" unsigned q38_mixed_recurrent_cohort(){
  s[1]=d[48];s[2]=d[3];s[3]=d[4];s[7]=6144;s[56]=d[5];s[57]=d[6];s[58]=d[14];
  Fence();s[0]=L::Magic;Fence();return 6144; // private NEXT/gated data,NOT state-slot/token commit
 }
+#ifndef PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE
 extern "C" void q38_mixed_root_seal(){
  using namespace MixedRecurrentCohort;const L::PrivateSeal* p;asm volatile("mv %0,s11":"=r"(p));
  if(reinterpret_cast<unsigned>(p)<0x6e000 || reinterpret_cast<unsigned>(p)>0x70000-sizeof(*p))scalar_fault_park();
@@ -271,3 +278,4 @@ extern "C" void mixed_recurrent_cohort_main(){
   previous=n;Words(L::Status)[6]=d[3];Words(L::Status)[7]=d[4];Words(L::Status)[4]=0;Fence();Words(L::Status)[1]=n;Fence();
  }
 }
+#endif // standalone cohort owns ONLY its own private frame and entry loop

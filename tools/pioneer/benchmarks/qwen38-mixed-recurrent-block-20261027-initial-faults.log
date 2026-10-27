@@ -1,0 +1,50 @@
+START QRB1 actual whole recurrent chain/SAME119/NO supplied intermediate products;synthetic raw learned/hidden/prior-state bytes,NOT hardware
+QRB1_FAULT phase0 matrices0 Conv0 GDN0 packets0 SP6f950
+PASS QRB1 refusal sealed/invalid outer/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase0 matrices0 Conv0 GDN0 packets0 SP6f950
+PASS QRB1 refusal sealed/invalid outer/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase0 matrices0 Conv0 GDN0 packets0 SP6f950
+PASS QRB1 refusal sealed/invalid outer/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase0 matrices0 Conv0 GDN0 packets0 SP6f950
+PASS QRB1 refusal sealed/invalid outer/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase0 matrices0 Conv0 GDN0 packets0 SP6f950
+PASS QRB1 refusal sealed/invalid outer/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase0 matrices0 Conv0 GDN0 packets0 SP6f950
+PASS QRB1 refusal sealed/invalid outer/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase0 matrices0 Conv0 GDN0 packets0 SP6f950
+PASS QRB1 refusal sealed/invalid outer/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase0 matrices0 Conv0 GDN0 packets0 SP6f950
+PASS QRB1 refusal sealed/invalid outer/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase0 matrices0 Conv0 GDN0 packets0 SP6f950
+PASS QRB1 refusal sealed/invalid outer/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase0 matrices0 Conv0 GDN0 packets0 SP6f950
+PASS QRB1 refusal invalid geometry/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase0 matrices0 Conv0 GDN0 packets0 SP6f950
+PASS QRB1 refusal invalid geometry/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase0 matrices0 Conv0 GDN0 packets0 SP6f950
+PASS QRB1 refusal invalid geometry/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase0 matrices0 Conv0 GDN0 packets0 SP6f950
+PASS QRB1 refusal invalid geometry/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase0 matrices0 Conv0 GDN0 packets0 SP6f950
+PASS QRB1 refusal invalid geometry/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase0 matrices0 Conv0 GDN0 packets0 SP6f950
+PASS QRB1 refusal invalid geometry/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase1 matrices0 Conv0 GDN0 packets0 SP6f940
+PASS QRB1 refusal ROOT boot after private capture/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase1 matrices0 Conv0 GDN0 packets0 SP6f940
+PASS QRB1 refusal physical source before first IO/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase1 matrices0 Conv0 GDN0 packets1 SP6f880
+PASS QRB1 refusal unknown first owned read/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase1 matrices0 Conv0 GDN0 packets1 SP6f880
+PASS QRB1 refusal counter discontinuity/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase1 matrices0 Conv0 GDN0 packets1 SP6f870
+PASS QRB1 refusal source discontinuity/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase1 matrices0 Conv0 GDN0 packets1 SP6f880
+PASS QRB1 refusal command readback discontinuity/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase1 matrices0 Conv0 GDN0 packets1 SP6f870
+PASS QRB1 refusal outer changed after owned read/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase1 matrices0 Conv0 GDN0 packets1 SP6f870
+PASS QRB1 refusal boot changed after owned read/inert ROOT/no peer launch,reset or commit
+QRB1_FAULT phase1 matrices0 Conv0 GDN0 packets5 SP6f900
+PASS QRB1 refusal bad learned recipe before first peer write/inert ROOT/no peer launch,reset or commit
+PASS QRB1 initial fault cases24;positive whole chain deliberately NOT run

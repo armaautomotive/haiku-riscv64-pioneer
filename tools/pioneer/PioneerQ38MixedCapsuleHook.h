@@ -5,13 +5,28 @@
 #error The root hook witness is private to this header
 #endif
 #if defined(PIONEER_Q38_MIXED_ROOT_CAPSULE_IMAGE)
-#if PIONEER_Q38_MIXED_ROOT_CAPSULE_IMAGE != 1 || !defined(PIONEER_Q38_MIXED_RECURRENT_COHORT_ROOT_IMAGE) || PIONEER_Q38_MIXED_RECURRENT_COHORT_ROOT_IMAGE != 1 || defined(PIONEER_Q38_MIXED_CAPSULE_IMAGE) || defined(_KERNEL_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(__FAST_MATH__)
+#if PIONEER_Q38_MIXED_ROOT_CAPSULE_IMAGE != 1 || defined(PIONEER_Q38_MIXED_CAPSULE_IMAGE) || defined(_KERNEL_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(__FAST_MATH__)
 #error Exact separate recurrent ROOT numeric capsule only
+#endif
+#if defined(PIONEER_Q38_MIXED_RECURRENT_COHORT_ROOT_IMAGE) && defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
+#error Exactly one private ROOT parent is required
+#elif defined(PIONEER_Q38_MIXED_RECURRENT_COHORT_ROOT_IMAGE)
+#include "PioneerQ38MixedRecurrentCohortRootImageRole.h"
+#if PIONEER_Q38_MIXED_RECURRENT_COHORT_ROOT_IMAGE != 1
+#error Exact cohort ROOT parent required
+#endif
+#elif defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
+#include "PioneerQ38MixedRecurrentBlockRootImageRole.h"
+#if PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE != 1
+#error Exact recurrent BLOCK ROOT parent required
+#endif
+#else
+#error A numeric capsule has no implicit ROOT parent
 #endif
 #if defined(PIONEER_Q38_MIXED_CAPSULE_HOOK_H) && !defined(PIONEER_Q38_MIXED_ROOT_SEAL_BOUND)
 #error A previously selected no-op or worker hook is not a root seal
 #endif
-#elif defined(PIONEER_Q38_MIXED_ROOT_SEAL_BOUND) || defined(PIONEER_Q38_MIXED_RECURRENT_COHORT_ROOT_IMAGE)
+#elif defined(PIONEER_Q38_MIXED_ROOT_SEAL_BOUND) || defined(PIONEER_Q38_MIXED_RECURRENT_COHORT_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
 #error The recurrent ROOT capsule requires its explicit unchanged root hook
 #endif
 #ifndef PIONEER_Q38_MIXED_CAPSULE_HOOK_H

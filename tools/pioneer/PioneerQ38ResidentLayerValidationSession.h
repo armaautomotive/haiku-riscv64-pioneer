@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE
+#error Recurrent BLOCK IMAGE is not a native driver or CPU reference
+#endif
 #if defined(PIONEER_Q38_MIXED_RECURRENT_COHORT_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_ROOT_CAPSULE_IMAGE)
 #error New recurrent ROOT/capsule is not a CPU reference or validation client
 #endif

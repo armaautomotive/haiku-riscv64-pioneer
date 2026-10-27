@@ -2,7 +2,7 @@
 // Included INSIDE the new ROOT namespace. All peer observations are real
 // NoC reads; no caller nonce/ready setter or old fresh-boot grammar.
 static const uint32_t* Boot(unsigned w){return reinterpret_cast<const uint32_t*>(L::PeerBoots+w*256);}
-#ifndef PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE
+#if !defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) && !defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
 static bool Executing(unsigned pc){
  if(pc&3)return false;
  if(pc>=0x20060 && pc<0x200a4)return false; // STOP/fault, never completion
@@ -20,7 +20,7 @@ static void Wait(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned phase,b
   if(s[3]!=M::Magic || s[2] || s[0]>=0x7fffffff || s[1]>=0x7fffffff || s[5]>3 || s[6]>=64 || s[7]>=8192)scalar_fault_park();
   for(unsigned i=8;i<16;i++)if(s[i])scalar_fault_park();
   unsigned pc=Register(d,tracked,w,0xffb13140);
-#ifndef PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE
+#if !defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) && !defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
   if(!Executing(pc))scalar_fault_park();
 #endif
   // LIVE: this CSR samples the speculative frontend,not retirement.
@@ -75,7 +75,7 @@ static void ClosedJob(const uint32_t* d,uint32_t* tracked,unsigned w,bool captur
 }
 static void Admit(const uint32_t* d,uint32_t* tracked,unsigned w){
  Wait(d,tracked,w,0,true);
-#ifdef PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
  if(L::FirstMatrix(d) && Words(L::Nonces)[w]>0x7ffffffd-L::RunDelta(w))scalar_fault_park(); // reserve the entire block AND a real STOP
 #endif
  if(w<96 && Words(L::Nonces)[w]>0x7ffffffb)scalar_fault_park();
@@ -87,15 +87,15 @@ static void Admit(const uint32_t* d,uint32_t* tracked,unsigned w){
  if(d[0]==PioneerQ38MixedProjectionRootLayout::Magic){
   if(w<d[7] && b[16]!=Words(L::PartsShadow+w*32)[5])scalar_fault_park();
  }else if(w<96)for(unsigned i=0;i<16;i++)if(b[16+i]!=Frame(w)[16+i])scalar_fault_park();
-#elif defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
+#elif defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
  if(w<d[7] && b[16]!=Words(L::PartsShadow+w*32)[5])scalar_fault_park();
 #else
  if(w<96)for(unsigned i=0;i<16;i++)if(b[16+i]!=Frame(w)[16+i])scalar_fault_park();
 #endif
  PhysicalSource(d,tracked,w);
-#ifdef PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE
+#if defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
  if(!Words(L::Nonces)[w]){
-  if(!L::Virgin(d))scalar_fault_park(); // exact FIRST root request/QG only,never recaptured later
+   if(!L::Virgin(d))scalar_fault_park(); // exact FIRST request/roles of THIS image,never recaptured later
   Transfer(d,tracked,w,M::Job,256,false);
   for(unsigned i=0;i<64;i++)if(Words(L::Scratch)[i])scalar_fault_park();
   Copy(L::PeerJobs+w*256,L::Scratch,64);

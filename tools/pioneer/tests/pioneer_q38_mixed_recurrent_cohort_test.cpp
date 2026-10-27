@@ -15,13 +15,15 @@ struct CohortBytes {
  virtual uint32_t Get(unsigned route,unsigned address)const=0;
  virtual void Put(unsigned route,unsigned address,uint32_t value)=0;
  virtual uint64_t Clock()const=0;
+ virtual uint32_t RootWord(unsigned address)const=0;
 };
 struct NewCohortPeer:MixedPeer {
  CohortBytes* bytes=nullptr;bool active=false;
  using MixedPeer::MixedPeer;
  void Received(){
   assert(!active && (pc==waitPC || pc==waitPC+4));ClearTensorState();
-  unsigned next=memory.at(M::Job+4),op=memory.at(M::Job+8);assert(next==sequence+1 && (op==7 || op==8));
+  unsigned next=memory.at(M::Job+4),op=memory.at(M::Job+8);assert(next==sequence+1 && (op==1 || op==7 || op==8));
+  if(op==1){MatrixReceived();return;}
   uint32_t physical[8];for(unsigned i=0;i<8;i++)physical[i]=Count(i);
   sequence=next;denseActive=outputActive=false;activation=true;convActive=op==7;gdnActive=op==8;
   for(unsigned i=0;i<8;i++)countBase[i]=physical[i];
@@ -37,6 +39,29 @@ struct NewCohortPeer:MixedPeer {
    for(unsigned i=0;i<8;i++)gdnBefore[i]=physical[i];
   }
   active=true;
+ }
+ void MatrixReceived(){
+  ClearTensorState();uint32_t physical[8];for(unsigned i=0;i<8;i++)physical[i]=Count(i);
+  sequence=memory.at(M::Job+4);denseActive=gdnActive=convActive=outputActive=activation=false;
+  type=memory.at(M::Job+17*4);inputs=memory.at(M::Job+21*4);FfnPersistentPeer::groups=memory.at(M::Job+23*4);
+  base=memory.at(M::Job+22*4);unsigned route=memory.at(M::Job+24*4);count=type==8?32:256;
+  assert((type==8 || type==12) && FfnPersistentPeer::groups && FfnPersistentPeer::groups<=16);
+  for(unsigned i=0;i<8;i++)countBase[i]=physical[i];requests=responses=matrixInstructions=0;doorbellRead=false;
+  tile.assign(PioneerQ38PanelTileBytes(type),0);tiles.assign(FfnPersistentPeer::groups*(inputs/count),tile);vector.resize(inputs);scales.resize(inputs/count);
+  packets.clear();root.clear();unsigned scaleBytes=(unsigned(scales.size()*4)+63)&~63U;
+  for(unsigned at=0;at<inputs*2;at+=16384)packets.push_back({0xa0000+at,129,0xa0000+at,std::min(16384U,inputs*2-at),-1});
+  packets.push_back({0xab000,129,0x94000,scaleBytes,-1});inputReads=unsigned(packets.size());
+  for(unsigned i=0;i<inputs/2;i++)root[0xa0000+i*4]=bytes->RootWord(0xa0000+i*4);
+  for(unsigned i=0;i<scaleBytes/4;i++)root[0xab000+i*4]=bytes->RootWord(0xab000+i*4);
+  for(unsigned i=0;i<inputs;i++)vector[i]=uint16_t(root.at(0xa0000+i/2*4)>>((i%2)*16));
+  for(unsigned i=0;i<scales.size();i++)scales[i]=root.at(0xab000+i*4);
+  for(unsigned t=0;t<tiles.size();t++){
+   for(unsigned i=0;i<tile.size();i+=4){unsigned value=bytes->Get(route,base+t*unsigned(tile.size())+i);for(unsigned b=0;b<4;b++)tiles[t][i+b]=uint8_t(value>>(b*8));}
+   packets.push_back({base+t*unsigned(tile.size()),route,0x90000,unsigned(tile.size()),int(t)});
+  }
+  // These poison only scratch/cache observer sentinels, never PC/registers,
+  // private nonce, configuration, LRegs or physical tensor accumulators.
+  Poison();PoisonTail();for(unsigned i=0;i<4096;i++)buffers[4096+i]=0x7fc00000;active=true;
  }
  void SubmitConvBytes(){
   ClearTensorState();unsigned n=PioneerQ38ConvBatchCount(logicalWorker),j=convPackets/5,p=convPackets%5;assert(j<n);convPackets++;
@@ -91,7 +116,8 @@ struct NewCohortMachine:ScalarMachine,CohortBytes {
  uint32_t Get(unsigned route,unsigned address)const override{return dram.at(Key(route,address));}
  void Put(unsigned route,unsigned address,uint32_t v)override{dram[Key(route,address)]=v;}
  uint64_t Clock()const override{return cycles;}
- NewCohortMachine(const char* image,const char* worker):ScalarMachine(0,0){
+ uint32_t RootWord(unsigned address)const override{return memory.at(address);}
+ NewCohortMachine(const char* image,const char* worker,bool seedPrimitiveOutputs=true):ScalarMachine(0,0){
   assert(canonical->Build());bootRom=Read((std::string(image)+"/boot.bin").c_str());text=Read((std::string(image)+"/text.bin").c_str());
   convRom=Read((std::string(image)+"/conv.bin").c_str());l1[0]=Word(bootRom,0);counts.fill(0xfffffff8);
   std::array<uint32_t,1920> sources;
@@ -117,7 +143,7 @@ struct NewCohortMachine:ScalarMachine,CohortBytes {
   for(unsigned i=0;i<RC::ConvWords;i++)memory[RC::Conv+i*4]=plan->Conv()[i];
   for(unsigned i=0;i<RC::GdnWords;i++)memory[RC::Gdn+i*4]=plan->Gdn()[i];
   for(unsigned a=0x74200;a<0x74e00;a+=4)if(!Range(a,RC::Header,256))memory[a]=0x7fc00001;
-  Seed();for(unsigned w=0;w<96;w++)child[w]->peer=child[w^1].get();
+  if(seedPrimitiveOutputs)Seed();for(unsigned w=0;w<96;w++)child[w]->peer=child[w^1].get();
  }
  void Seed(){
   unsigned base=header[8],route=header[9];
@@ -165,6 +191,7 @@ struct NewCohortMachine:ScalarMachine,CohortBytes {
    || Range(a,RC::ConvShadow,RC::ConvWords*4) || Range(a,RC::GdnShadow,RC::GdnWords*4)
    || Range(a,RC::Counters,119*32) || Range(a,RC::Nonces,119*4) || Range(a,RC::PeerBoots,119*256) || Range(a,RC::PeerJobs,119*256)
    || Range(a,TT_Q38_CONV_BATCH_TABLE,1536) || Range(a,TT_Q38_FFN_RESIDENT_SUMMARY,128) || Range(a,0x80000,0x1100);
+  if(!allowed)fprintf(stderr,"UNMAPPED ROOT STORE address%08x value%08x PC%08x\n",a,value,pc);
   assert(allowed);if(Range(a,0x6e000,8192))minStack=std::min(minStack,unsigned(a));
   memory[a]=value;if(a==RC::Status+8 && value==RC::Fault)unknown=true;
  }
@@ -175,7 +202,7 @@ struct NewCohortMachine:ScalarMachine,CohortBytes {
   }
  }
  void Step(){cycles+=19;StepScalar();if(!(steps&255))Tick();}
- void Submit(){
+ virtual void Submit(){
   packets++;if(packets==failPacket){pending=true;return;}
   bool write=command[7]==0x212;unsigned route=write?command[5]:command[2],remote=write?command[3]:command[0],local=write?command[0]:command[3],bytes=command[8];
   assert(!command[1] && !command[4] && !command[6] && !command[9] && (write?command[2]:command[5])==129 && (write || !command[7]));
@@ -250,6 +277,7 @@ struct NewCohortMachine:ScalarMachine,CohortBytes {
   }
  }
 };
+#ifndef PIONEER_Q38_MIXED_RECURRENT_COHORT_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;
  puts("START actual QRC1 ROOT+SAME119 QMW1/unequal real matrix histories/ROOT6Conv+119Conv->96GDN;synthetic primitive bytes,NOT full model");
@@ -291,3 +319,4 @@ int main(int argc,char** argv){
  m->Stage();assert(m->Wait(1));m->Verify();
  printf("PASS actual emitted QRC1/120Conv/640groups/96GDN/all6144gated+privateNEXT/119bootONCE/noReset/noHostMath/ROOTstack%u/packets%u/refusals%u;NOT original/native/physical/fullmodel/TPS\n",0x70000-m->minStack,m->packets,cases);
 }
+#endif

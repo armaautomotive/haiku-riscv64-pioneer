@@ -1,0 +1,158 @@
+QRB1 complete returning recurrent layer -- 2026-10-27
+OFFLINE INSTRUCTION EVIDENCE, NOT A NATIVE/FULL-MODEL SPEED RESULT
+
+Implemented actual data flow
+-----------------------------
+The NEW separate recurrent parent consumes raw5120 hidden values from GDDR,
+preserves ORIGINAL hidden outside all phased table aliases, computes learned
+RMS, executes recurrent matrices10/11/5/6 on the SAME119 retained workers,
+loads and closes the returning QRC1 cohort (ROOT0six +119peer Conv,96GDN),
+retires its table/shadow phase, reads6144 actual gated F32 values directly
+into the output-projection input, executes matrix13, performs ORIGINAL
+residual/post-RMS, executes Q4 gate/up, precise SiLU*up, Q4 down and the final
+ORIGINAL residual. Success is published only after all5120 final values are
+written; partial GDDR bytes on a fault are NOT a completed layer result.
+No CPU intermediate products are supplied to this chain.
+All720 matrix jobs, all640 Conv groups and all96 GDN halves execute their
+actual emitted instructions. The host provides primitive raw bytes and
+models hardware/register/clock/ISA endpoints, not successful products/PCs/
+nonces or a physical accelerator. This is not a token-generation benchmark.
+
+Original hidden bc000..c1000 and its immutable copy c2000..c7000 survive the
+Conv primary c8000..f5000. Shared matrix nonces/counters/boot/job records are
+preserved. Four prefix recipes have separate primary/shadow storage; after
+that phase closes, output and FFN recipes are loaded only when needed. The
+cohort shadows are audited and discarded BEFORE output/residual/FFN buffers
+reuse the same bytes. The private1028B parent seal is NOT the standalone
+cohort's512B frame; its callback supplies the correct private frame to the
+returning coordinator and numeric ROOT Conv capsule.
+
+The new image explicitly selects its own role and the qualified precision
+sigmoid, never retags old image/native/Work roles. Before-guard role/hook
+checks refuse late no-op/worker hook selection, mixed parents, defined0,
+old native tags, CPU reference and Work aliases. No device permission is
+created by a canonical metadata plan or by a successful image build.
+
+Pinned image and actual stack
+------------------------------
+boot.bin4:
+ 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+text.bin49944:
+ ac951cbb85a6dd769291e18dcecda0ae0da2b49ee665c4958e6e78a9f681e2e4
+conv.bin7500:
+ 16ff564dc406a72a918f7c67c40f6815a7430f6d02161a0be0b26ec56cde7f65
+program.elf74952:
+ 5b4d803ac9efed921680b4bb53cac02d0f8118c24dc505a313839db5a1a9c463
+All four main/clean artifacts and complete builder stdout are byte-identical;
+the builder and runners independently enforce their exact pins. One private
+s11 producer/one private reader; no undefined symbols, writable globals/GOT,
+ROOT CSR or unsupported instructions. Max static function frame2112B;
+executed complete ROOT stack5320B remains inside the unchanged8KiB bound.
+
+Main and independent clean synthetic qualification
+----------------------------------------------------
+Main39135 and clean12951 BOTH TERMINAL0. Complete stdout is byte-identical,
+SHA256699a721b1f5e8452192ce1a8d307c77605a6f98f0224cb8e9672ccddf7b2fa66.
+ /private/tmp/pioneer-q38-mixed-recurrent-block-instructions-20261027-c.log
+ /private/tmp/pioneer-q38-mixed-recurrent-block-instructions-clean-20261027-a.log
+The SAME119 workers boot ONCE, have unequal genuine matrix histories, then
+execute the entire layer without any reset/boot/private nonce replacement.
+Initial/post RMS and ORIGINAL residuals are checked bit-exact. All8 native
+quantizers and720 matrix results are checked independently; all640 Conv
+groups/history updates,96 paired GDN/NEXT/gated values and all17408 FFN
+activation values meet their unchanged strict arithmetic bounds. The actual
+6144 gated output is consumed directly by the actual output quantizer;
+there is no old separate24-worker quantization/compact-scale gather stage.
+ROOT issues114460 packets; this is a diagnostic on-card packet count, NOT
+PCIe traffic, elapsed hardware time, a speedup or a Work-mode cost estimate.
+
+Both runs include24 initial fault cases: invalid/sealed outer fields and
+geometry, changed private boot or physical source, unknown first read,
+counter/source/command discontinuity, late outer/boot mutation, bad learned
+recipe before the first peer write. Faulted ROOT executes2048 genuine park
+instructions after another host doorbell without later packet/reset/false
+completion. Partial output or unknown peers never imply STOP/restore grant.
+
+Main81547/clean55317 metadata tests BOTH TERMINAL0,stdout identical:
+16 endpoint plans,11136 full-word mutations,12 bad builds,HEAP1383152B.
+All8 matrices/split cohort/norm/source/boot relations are canonical and
+single-attempt. Actual RISC-V kernel DATA-plan instantiation maxFrame784B,
+never a megabyte kernel-stack local or native authority. Main16315/clean45526
+role/build gates BOTH TERMINAL0:587 checks/27 builders,valid old-role
+baselines before late/defined0 refusals. Final pinned-builder gate reruns
+65590/77859 BOTH TERMINAL0 and reproduce the same587 checks/stdout.
+
+Original full-layer and late-fault evidence -- main+clean qualified
+------------------------------------------------------------------
+Main ORIGINAL13058 and independent clean50248 BOTH TERMINAL0:
+ /private/tmp/pioneer-q38-mixed-recurrent-block-original-20261027-a.log
+ /private/tmp/pioneer-q38-mixed-recurrent-block-original-clean-20261027-a.log
+The SAME already-open full18973870528B GGUF is authenticated against c600
+SHA before the instruction context. All14 ORIGINAL layer0 tensors are
+cached as RAW bytes only:56 spans,280925056 bytes,68591 page reads. Synthetic
+learned endpoints are removed, missing original spans cannot fall back to a
+synthetic matrix generator, and each raw packet is bracketed with fresh
+source/descriptor/epoch checks. Non-packet Conv/GDN reads check the same
+retained source. Position0 CURRENT state/history are explicitly zero.
+Supplied raw hidden5120 is NOT an embedding or a valid full-model prefix.
+All intermediate values, all720 actual matrix jobs, Conv/GDN, direct gated
+input, RMS/residual/FFN and final5120 values pass with ORIGINAL learned bytes.
+Entire main/clean stdout is byte-identical, not merely its final PASS line:
+ SHA2561bd0f2fe85aae7f0d5a2feb0ebb0e910e1bc274e2a43447b0860ce14faabc2e3.
+
+Main late-fault23029 and independent clean29528 BOTH TERMINAL0. These
+fork ONLY at genuinely reached submit instructions, never set PC/registers/
+nonces/products to jump to a phase. They cover captured Conv primary/outer
+mutation, unknown gated read/source change, post-RMS counter/command change,
+unknown activation read/original-hidden change, and unknown SECOND final
+write/late boot change. Partial final publication must not publish completion
+or permit another packet/reset/cleanup. All10 late cases and the following
+complete positive chain pass. Entire main/clean stdout is byte-identical:
+ SHA25653f93dcd38bebe4a11a656ee5f74973fbb543dd48014df21489efa6eceb04b00.
+All20 successful complete logs are archived byte-exact beside this record;
+there are no live qualification handles left for this checkpoint.
+
+Corrections and unchanged controls
+------------------------------------
+An initial strict compiler check caught new formatting/enum ambiguity;
+the source was corrected without suppressing diagnostics. A later builder
+pin-tuple typo failed before SDK/output creation and was corrected before
+successful pinned main/clean builds. No bound or arithmetic guard relaxed.
+
+The first integrated test stopped at a missing fixture write extent, not a
+numerical/card failure. Diagnostic rerun86301 TERMINAL1 positively recorded
+c8000/value31564351/PC4aa8c AFTER all244 prefix matrix jobs closed. Unlike the
+standalone cohort, THIS parent loads primary tables from owned GDDR. The
+fixture now permits those exact primary ranges ONLY phase6, before any
+Conv/GDN release, with all244 genuine prefix jobs closed/header bound/no
+pending IO/all119 genuinely waiting. Writes later in phase6 still refuse,
+including aliases with matrix scratch. Production image bytes did not
+change for this correction. The subsequent main+clean full runs both pass.
+
+All prior QMW1/ancestors, old QRP1c9fdb4ea...,QRC1 6e31ae59.../9674113d...,
+old dense sigmoid668a72ed... and DEBUG70module11d24d92.../native6b3db5d8...,
+old65 and both NODRV controls rebuild BYTE-UNCHANGED. Old QRC1 actual complete
+instruction+18fault suite81847 TERMINAL0 reproduces its prior complete stdout
+exactly. New parent role additions create no existing native selector.
+
+Source export /private/tmp/pioneer-qrb1-clean.mL5CsEdF contains all63 staged
+code/test files byte-exact; later evidence/docs will be staged separately.
+Dirty llama.cpp and unrelated FlashNext files remain untouched/unread/
+unbuilt/unstaged. The installed driver55/tag12/generation6/cold0/owner0 and
+64 CPUs/full maximum137034936320B RAM were freshly read-only verified. No
+physical GPU run, install/reload, reboot/power/SD/mains/Assistant/network
+configuration change occurred. This candidate is NOT deployed.
+
+Full objective and remaining gates
+-----------------------------------
+Keep the full20tok/s/self-hosted27B objective ACTIVE, not redefined as this
+passing layer. Last full-model measured0.207893161tok/s is unchanged.
+Still required: actual virgin and repeated/changed-position/layer cases;
+real119 STOP+ROOT terminal;
+full touched-memory/Tensix/NoC/source/host/native lifetimes and restoration;
+valid embedding/recurrent0..2->dense3 and all64 layers; recurrent+KV/history
+and token commits; final normalization/vocabulary/sampling; separate native
+driver/client and physical original comparisons; persistent no-CPU-reference
+Work+Assistant integration; real loading/prefill/decode benchmarks and hot
+path optimization. No native/physical/full64/token/Work/speed grant exists
+merely because the complete recurrent layer now executes correctly offline.

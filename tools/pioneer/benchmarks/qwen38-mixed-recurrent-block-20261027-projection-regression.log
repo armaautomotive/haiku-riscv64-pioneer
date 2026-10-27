@@ -1,0 +1,16 @@
+49beea42a964dc73343fca928d59be0eb6a6d28e4c1354b47894f3f60ef4a31a boot.bin bytes4
+a8aa43b88af5d821a50498d0e79a75025ca672490fa6d4ead51be8442013bf8c code.bin bytes12140
+213afbc1746516e470fe8e9614a2723f3a0e4a00c8dfc3d562513d9cf69d36af program.elf bytes21528
+PASS COMPILED NEW QDR1 actual96workerROOT/NoC/privatephases/globalmax-binary64sum-exactF32inverse/PVmerge-gate/maxFrame496;producer/native/journals/KV-tokencommit/full64/speed STILL OWED
+49beea42a964dc73343fca928d59be0eb6a6d28e4c1354b47894f3f60ef4a31a boot.bin bytes4
+53e9e2d8dfceb756ae6dd6de2b72996b01b188eff13d4741bd2a6da8581fa06d code.bin bytes17488
+f09227e3972bf02dad64cd9ea318d4371ca33c56646de7a490885c6e0b1e7e77 program.elf bytes27600
+PASS NEW persistent QMR1 ROOT/all119 live admission/dynamic QMW1 nonces/96 returning dense workers/global max+sum+inverse+merge/no worker boots or STOP/maxFrame848;native/full-model/original producer/speed still OWED
+ce5f73f31ecb80edc4dd267e1f46b0534a0201b837ba6d6231a5d4271df10102 boot.bin bytes4
+f84c41dd22582d170086d2cac98286d0d8e208d2e7c7ee58ce828436b57a0192 code.bin bytes16580
+e1b9bbc183a31b503b6b9ce89cb4f7329901cb335fe267b6d2aa5732027411b7 program.elf bytes26840
+PASS NEW QMP1/all119 live nonces/canonical immutable ZERO-sequence recipes/card quantize+matrix+gather+GDDRscatter/no peer boots or STOP/maxFrame2112;NO native/fullmodel/speed grant
+ce5f73f31ecb80edc4dd267e1f46b0534a0201b837ba6d6231a5d4271df10102 boot.bin bytes4
+c9fdb4ea5bf82707d78ae015ed95f5b189ef608f5c406367d3419e3b6a2a474b code.bin bytes16856
+86826199f23aedb418a23a882902476ee729b9f6c2a47e28669b5f9b48a9b147 program.elf bytes27208
+PASS separate QRP1/all eight recurrent matrices/card quantize+Tensix+gather+GDDRscatter/same119 live workers/maxFrame2112;NO native/fullmodel/speed grant

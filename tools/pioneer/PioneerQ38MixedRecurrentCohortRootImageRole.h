@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE
+#error A separate recurrent BLOCK parent cannot select an existing image role
+#endif
 // No guard. Separate QRC1 returning Conv/GDN coordinator; no native/Work grant.
 #if defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
 #error Recurrent cohort ROOT is not a projection or dense graph role

@@ -1,5 +1,33 @@
 # Native build status
 
+October27UTC2026: NEW QRB1 COMPLETE RECURRENT layer OFFLINE QUALIFIED with
+ORIGINAL learned bytes;NOT a native/full64/token/Work driver or speed result.
+Main39135/clean12951 BOTH TERMINAL0/entire stdout identical699a721b...:
+raw hidden -> actual learned RMS -> QRP10/11/5/6 -> ROOTsix+119Conv/96GDN ->
+direct6144gated F32/QRP13 -> ORIGINAL residual/postRMS -> Q4gate/up+precise
+SiLU*up/down -> ORIGINAL final5120. SAME119 workers boot ONCE/no resets,
+720actual matrix jobs/640Conv groups/96GDN,executed ROOTstack5320B inside8KiB.
+Main ORIGINAL13058/clean50248 BOTH TERMINAL0/identical1bd0f2fe...:
+full c600GGUF authenticated BEFORE instruction context,all14layer0 learned
+tensors as RAW56spans/280925056B/68591pages,zero pos0 CURRENT state/history,
+no synthetic learned fallback or host intermediate products. Supplied raw
+hidden is NOT embedding/valid full-model prefix. All8matrix/Conv/GDN/direct
+gated/RMS/residual/FFN/final values pass unchanged strict observers.
+24initial faults +10genuinely reached late faults23029/29528 BOTH TERMINAL0,
+identical53f93dcd...;unknown SECOND final write never publishes completion,
+issues another packet/reset or grants cleanup.16canonicalendpoint plans,
+11136mutations/12badbuilds/kernel DATA maxFrame784,587gates/27builders pass
+main+clean. All63code files and all4image pins ac951cbb...text49944+
+16ff564d...rootConv7500 are clean-export identical;maxStaticFrame2112.
+Prior QMW1/QRP1/QRC1/dense668a72ed.../DEBUG70module11d24d92... and old native
+controls BYTE-UNCHANGED. Fresh SSH64CPU/max137034936320B,stable55/tag12/gen6/
+cold0/owner0. No card execution/install,reboot/power/SD/Assistant/network
+change. Next real virgin/repeat/STOP+lifetime/native journals,valid0..2->
+dense3/all64/state+KV/history/token/finalnorm/vocab/sampling,persistent
+no-CPU-reference Work+Assistant and physical inference benchmarks. Full27B
+0.207893161tok/s unchanged;20UNMET. Detailed evidence+remaining gates:
+benchmarks/qwen38-mixed-recurrent-block-20261027.txt.
+
 October27UTC2026: actual returning QRC1 Conv->GDN ROOT OFFLINE QUALIFIED,
 NOT a native/full-model driver. Main13081/clean90191 BOTH TERMINAL0 with
 identical complete stdout: SAME119 QMW1 workers booted ONCE,unequal real
