@@ -10,6 +10,8 @@ import sys
 import tempfile
 assert len(sys.argv)>=7
 options=sys.argv[7:]
+control=options==['--validation-control']
+if control:options=['--fresh-validation-end']
 original_model=None
 if '--original-model' in options:
  assert options.count('--original-model')==1
@@ -38,9 +40,9 @@ tree=ast.parse((here/'run_pioneer_q38_mixed_worker_tests.py').read_text())
 pins=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='PINS' for t in n.targets))
 for name,size,digest in pins:
  data=(pathlib.Path(sys.argv[4])/name).read_bytes();assert len(data)==size and hashlib.sha256(data).hexdigest()==digest
-role=(kernel/'PioneerQ38MixedLiveNativeRole.h').read_text()
-parents=set(re.findall(r'!defined\(([A-Z][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b',role));assert len(parents)==20
-defines={key:'1' for key in parents};defines['PIONEER_DRIVER_BUILD_TAG']='0x51424c4e4f445256ULL'
+role=(kernel/('PioneerQ38MixedLiveValidationRole.h' if control else 'PioneerQ38MixedLiveNativeRole.h')).read_text()
+parents=set(re.findall(r'!defined\(([A-Z][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b',role));assert len(parents)==(23 if control else 20)
+defines={key:'1' for key in parents};defines['PIONEER_DRIVER_BUILD_TAG']='0x2026102700010070ULL' if control else '0x51424c4e4f445256ULL'
 defines['PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE']='1'
 program_flags=['-DPIONEER_Q38_MIXED_LIVE_SIGMOID_PROGRAMS=1'] if sigmoid else []
 if sigmoid:defines['PIONEER_Q38_MIXED_LIVE_SIGMOID_PROGRAMS']='1'
@@ -53,7 +55,7 @@ if fresh:defines['PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST']='1'
 if original_model:
  defines['PIONEER_Q38_MIXED_LIVE_ORIGINAL_NATIVE_TEST']='1'
  program_flags+=['-DPIONEER_Q38_MIXED_LIVE_ORIGINAL_NATIVE_TEST=1']
-defines.update({key:'pioneer_mixed_factory_test_'+key for key in ('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')})
+if not control:defines.update({key:'pioneer_mixed_factory_test_'+key for key in ('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')})
 source=(kernel/'tenstorrent_pci_probe.cpp').read_text()
 with tempfile.TemporaryDirectory(prefix='pioneer-mixed-native-factory-',dir='/private/tmp') as temporary:
  base=pathlib.Path(temporary)
@@ -73,6 +75,12 @@ with tempfile.TemporaryDirectory(prefix='pioneer-mixed-native-factory-',dir='/pr
   begin,end='static bool\nCloseBulkScratch(','static bool\nFleetHeld('
   assert source.count(begin)==source.count(end)==1
   (base/'native_bulk_close.inc').write_text(begin+source.split(begin,1)[1].split(end,1)[0])
+ if control:
+  begin='static status_t\nProbeControl('
+  end='#include "PioneerQ38MixedLiveNativeRouting.inc"'
+  assert source.count(begin)==source.count(end)==1
+  prefix=begin+source.split(begin,1)[1].split(end,1)[0]+end+'\n}\n'
+  (base/'native_mixed_control_routing.inc').write_text(prefix)
  if final_end:
   def method(class_name,signature):
    part=source.split('struct '+class_name+' ',1)[1];start=part.index(signature);at=part.index('{',start);depth=1;end=at+1
@@ -105,7 +113,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-mixed-native-factory-',dir='/pr
  flags=re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?',(here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
  subprocess.run([*common,*flags,*program_flags,'-c',str(here/'pioneer_q38_mixed_live_native_transport.cpp'),'-o',str(transport)],check=True)
  native_flags=[*['-D'+k+'='+v for k,v in sorted(defines.items())],'-I'+str(base),'-I'+str(kernel)]
- native_sources=[here/'pioneer_q38_mixed_live_native_factory_test.cpp',here/'pioneer_q38_embedding_execution_bridge.cpp',
+ native_sources=[here/('pioneer_q38_mixed_live_validation_control_test.cpp' if control else 'pioneer_q38_mixed_live_native_factory_test.cpp'),here/'pioneer_q38_embedding_execution_bridge.cpp',
   *([here/'pioneer_q38_mixed_live_native_clock.cpp'] if clock_end else []),
   *([here/'pioneer_q38_mixed_live_final_audit.cpp'] if fresh else [])]
  if original_model:
@@ -119,5 +127,5 @@ with tempfile.TemporaryDirectory(prefix='pioneer-mixed-native-factory-',dir='/pr
   run_args=[str(original_model),*sys.argv[1:7]]
  else:
   subprocess.run([*common,*native_flags,*map(str,native_sources),str(transport),'-o',str(binary)],check=True)
-  run_args=[*sys.argv[1:7],*[o for o in options if o!='--sigmoid-candidate']]
+  run_args=[*sys.argv[1:7],*(() if control else [o for o in options if o!='--sigmoid-candidate'])]
  subprocess.run([str(binary),*run_args],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})

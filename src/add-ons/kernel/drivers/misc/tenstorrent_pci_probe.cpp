@@ -20,6 +20,19 @@
 #ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
 #include "PioneerQ38MixedLiveFinalPciState.h"
 #endif
+#ifdef PIONEER_Q38_MIXED_LIVE_PHYSICAL_ROLE_TAG_OK
+#error Internal dense physical-role witness cannot be supplied by the caller
+#endif
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_NATIVE
+#include "PioneerQ38MixedLiveValidationRole.h"
+#include "PioneerQ38MixedLiveValidationProtocol.h"
+#define PIONEER_Q38_MIXED_LIVE_PHYSICAL_ROLE_TAG_OK 1
+#else
+#define PIONEER_Q38_MIXED_LIVE_PHYSICAL_ROLE_TAG_OK 0
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102700010070ULL && !PIONEER_Q38_MIXED_LIVE_PHYSICAL_ROLE_TAG_OK
+#error Reserved tag70 requires ONLY its exact separate dense physical validation role
+#endif
 #if defined(PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY)
 #ifdef PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE
 #include "PioneerQ38ResidentLayerValidationRole.h"
@@ -676,12 +689,12 @@ extern "C" {
 #include "PioneerQ38ResidentGdnRootController.h"
 #endif
 #ifdef PIONEER_Q38_NORMAL_CLOCK
-#if !defined(PIONEER_Q38_WORK_SPARSE_EXPORT) || !defined(TT_PIONEER_Q38_WORK_MODE) || !defined(TT_PIONEER_DRIVER_RELOAD) || !defined(PIONEER_Q38_SPAN_PRELOAD)
+#if (!PIONEER_Q38_MIXED_LIVE_PHYSICAL_ROLE_TAG_OK && (!defined(PIONEER_Q38_WORK_SPARSE_EXPORT) || !defined(TT_PIONEER_Q38_WORK_MODE))) || !defined(TT_PIONEER_DRIVER_RELOAD) || !defined(PIONEER_Q38_SPAN_PRELOAD)
 #error Normal Q38 clocks require the retained-owner reloadable sparse Work driver
 #endif
 #include "PioneerQ38ClockLease.h"
 #endif
-#if defined(PIONEER_Q38_LOCAL_DELTA_PROBE) && (!defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || !defined(TT_PIONEER_DRIVER_RELOAD) || !defined(TT_PIONEER_Q38_WORK_MODE))
+#if defined(PIONEER_Q38_LOCAL_DELTA_PROBE) && (!defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || !defined(TT_PIONEER_DRIVER_RELOAD) || (!PIONEER_Q38_MIXED_LIVE_PHYSICAL_ROLE_TAG_OK && !defined(TT_PIONEER_Q38_WORK_MODE)))
 #error LOCAL vector delta probe requires the retained-owner reloadable vector Work driver
 #endif
 #if defined(PIONEER_Q38_LOCAL_DELTA_GGML) && (!defined(PIONEER_Q38_LOCAL_DELTA_PROBE) || !defined(PIONEER_Q38_NORMAL_CLOCK))
@@ -4100,6 +4113,18 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
 	PioneerQ38EmbeddingPlan check;
 	if (!m->plan.Build() || !check.Build(m->plan,token,position,bank,m->identity,source,1)
 		|| !check.LearnedPagesPresent(c.initialized,PioneerResidentBanks::Pages)) {delete m;return false;} // NO claim/IO
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_NATIVE
+ // ALL original layer3 learned pages must exist BEFORE the embedding
+ // producer can execute,not only when the later dense bind is attempted.
+ unsigned denseTensors=0,denseParts=0;
+ for(unsigned i=0;i<m->plan.Count();i++){
+  const auto* p=m->plan.Part(i);if(p->kind!=m->plan.WeightKind || p->layer!=3)continue;
+  if(!p->firstRow)denseTensors++;
+  denseParts++;unsigned first=p->bank*unsigned(m->plan.Capacity/4096)+p->offset/4096;
+  for(unsigned j=0;j<p->allocated/4096;j++)if(c.initialized[first+j]!=1){delete m;return false;}
+ }
+ if(denseTensors!=11 || denseParts!=53){delete m;return false;}
+#endif
 #if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE)
  // Match the existing native handoff's COMPLETE layer0 upload contract
  // BEFORE epoch/reservation/model publication. A partial prefix must not
@@ -4738,6 +4763,9 @@ public:
 #endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE
 #include "PioneerQ38ResidentLayerValidationControl.h"
+#endif
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_NATIVE
+#include "PioneerQ38MixedLiveValidationControl.h"
 #endif
 #ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
 // PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE_CONTROL_BEGIN

@@ -1,0 +1,7 @@
+PASS DEBUG70 actual client original-source seal BEFORE FD/54raw spans/63266pages/271uploads/279calls/zeroed embedding tail/compare BEFORE END;SYNTHETIC endpoints only
+DEBUG70_CLIENT_FAULT_PROGRESS 64/279
+DEBUG70_CLIENT_FAULT_PROGRESS 128/279
+DEBUG70_CLIENT_FAULT_PROGRESS 192/279
+DEBUG70_CLIENT_FAULT_PROGRESS 256/279
+PASS DEBUG70 actual client failure cases367/ALL279call failures/changed source+epoch/partial raw pages/62header corruptions/strict observer failure+drop+differences/open-close-prepare-seal;CLOSE ONLY,no END/reset/retry after uncertainty;NOT original numeric or physical qualification
+Test binary retained: /private/tmp/pioneer-mixed-validation-client.sRNvhPmh/test

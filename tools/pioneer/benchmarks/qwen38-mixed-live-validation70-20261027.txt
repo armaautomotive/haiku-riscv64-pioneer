@@ -1,0 +1,125 @@
+Qwen27B: separate standalone dense physical-validation candidate70
+2026-10-27 -- OFFLINE QUALIFIED / BUILT ONLY / NOT DEPLOYED
+
+Base18a461ae88931cdefab9f9ec26d3ba7080a0c330 is committed,pushed and
+independently verified on GitHub pioneer-riscv64. This checkpoint adds the
+separate qualified diagnostic and client. No new card inference or speed
+measurement is established;the physical original-model comparison is next.
+
+Implementation
+----------------
+New exact native role70/tag2026102700010070/namespace21 requires23 native
+parents,qualified sigmoid programs,validation readback and final release.
+It requires conventional driver ABI and refuses NODRV compile flags/ABI
+aliases,old69,CPU-reference/image/Work modes. The historical SDK trace's
+ENTIRE PIONEER_Q38 image/Work flag chain is removed;only explicit new-role
+parents are added. Exact checked physical-role witness permits the shared
+clock/local-delta infrastructure without advertising the old Work selector.
+No old role gate is relaxed;SDK control objects remain byte-identical.
+
+Closed10-operation dispatcher adds ONLY fixed support and fixed20736-byte
+token0/position0/standalone-layer3 capture. No numeric input,address,code,
+threshold,ready/owner or END grant is accepted. ALL53 dense learned spans
+must exist BEFORE the embedding epoch/model is published or QPE1 launches.
+Result objects/reply are heap allocations. Actual call scope/QPE1/native
+factories/RUN/STOP/HOLD/readback/restore are used. Failure or failed final
+user-copy retains/quarantines. Successful capture does NOT implicitly END.
+
+Separate user client authenticates/seals original file+CPU reference BEFORE
+FD,uploads ONLY selected54 original spans/63266 pages in271 bounded uploads,
+zeroes3072 adjacent-tile padding bytes of the last embedding page,closes
+the span service and invokes the fixed diagnostic. Actual5120 returned
+words must compare exactly against the separate original CPU source BEFORE
+explicit BANK_END. Uncertainty performs CLOSE ONLY,no reset/peek/retry/END.
+This is a standalone dense operator,NOT the valid GDN0..2/model prefix.
+
+Completed qualification (all named sessions TERMINAL0)
+------------------------------------------------------
+Actual Haiku SDK compile76839 and linked module3047,clean linked36371:
+ object6b3db5d8f388e31f30806f41f940051991b717e8026f388bddd4997ce247ce21
+ module11d24d92c9ee05f1e3664ee13796f8621f378bb738eb5c62b622314f846a3e29
+Main/clean modules compared BYTE-IDENTICAL. Max new mixed frame1216 bytes.
+Old65=61faa093...,old layer NODRV=9fcf1f7f...,old mixed final NODRV=
+ efcf8bf36403cb0301ef71ac20bc8fcffe72e8236b1cf19985fe56fe5eade465
+remain exact. Conventional ABI present;no CPU oracle or old Work dispatcher.
+
+Client SDK44248/clean37257 also BYTE-IDENTICAL:
+ binary96945e8bd97dba379ac3a3c1632b287a0f0ac14c3d7b6471fb13441cad6d7b0b
+ client objectcbdf359dc9492d2210e0bc7c2e8930e07dd15acc373958dcd070770e3e559d2e
+ original source object523d45b167a714dc21faa99344f2cea46e3d0981af6297b4b1007044a9df5de9
+Original observer TU has NO client/native/kernel/Work compile flags.
+
+ASan/UBSan actual client lifecycle88242/clean38572:1 positive/367 failures,
+ALL279 transport calls can fail,source+epoch/partial pages/62 fixed header
+corruptions/strict observer/open-close/prepare-seal failures all fence later
+IO/END/retry. SYNTHETIC source/OS only,NOT original arithmetic proof. Semantic
+stdout identical excluding final temporary test-binary path line.
+Native-role258 gates/client-role87/old-NODRV165/protocol20736 single-byte
+mutations all pass on main+clean. Updater46071/clean59039=148 cases and
+old69 updater66308=152 cases pass;new mapping byte-pins exact041<->70 and
+hash-qualified backups,never UNKNOWN recovery/automatic rollback.
+
+Completed actual public-handler qualification
+-----------------------------------------------
+Earlier main22911 and clean52772 BOTH TERMINAL1:all arithmetic,capture/
+restore and final-copy-failure containment passed,but final END refused.
+Cause:the NEW TEST omitted the existing final-END fixture's initial raw
+OS/PCI mapping baseline metadata (VM handles,transaction/bars/node ID).
+Corrected ONLY the test to provide that same explicitly simulated baseline,
+NOT a native ready/clock/STOP/closed setter or a production guard relaxation.
+Actual initial kernel bank-session construction remains outside this fixture.
+
+Corrected main22038 /private/tmp/pioneer-q38-mixed-validation70-control-20261027-d.log
+Corrected clean16520 /private/tmp/pioneer-q38-mixed-validation70-control-20261027-clean-b.log
+BOTH TERMINAL0/complete stdout BYTE-IDENTICAL:
+ c37f54d951a11c054f11eb27363c97e6154bd96e422ab5f4dd08adaf8f3d5b6f
+Archived qwen38-mixed-live-validation70-control-{main,clean}-20261027.log.
+Actual public preflight106 missing learned
+first/last endpoints,64 header mutations,65526 closed opcodes and copy/root
+admission pass with ZERO device IO/model publication/epoch consumption.
+Corrected runs complete ALL7 matrices,119STOP+ROOT/120holds,five-page5120
+capture/full11398712word restore+second proof,duplicate-call inert refusal,
+final-copy-failure containment and actual explicit fresh END including real
+clock,30VM/11PCI/3host cleanup and context destruction. Test weights and
+OS/registers are simulated. TEST-only wrappers hand off genuine post-QPE1 raw endpoint
+bytes and attach a read-only result observer;native functions run unchanged,
+no private phase/ready/producer setters or expected products are supplied.
+No CPU products enter the native pipeline. Original-byte numerical proof
+belongs to the previous separate NODRV test;this physical-role public test
+does NOT relabel synthetic weights as original or prove real silicon.
+
+Paths / next
+---------------
+Fresh read-only Pioneer preflight:SSH OS=Haiku;documented account baron
+with existing haiku_pioneer_ed25519 identity and known_hosts.haiku pin.
+Root/default-key attempts were rejected;NO account/key/config change was
+needed. Reload metadata:driver55/tag2026102100010012/generation4/quiesced0/
+cold0/active_owner0/open_count1/guard1. Actual installed041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+guardd1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229,
+adminb0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f
+all match working pins. sysinfo reports64 CPUs/max137034936320RAM bytes.
+Fixed original model file18973870528B present;not rehashed separately here
+and not yet authenticated by the NEW native diagnostic client. No actual
+CPU/RAM stress or inference benchmark is claimed by these inventory reads.
+
+Three NEW files staged ONLY outside watched driver directories,after exact
+nonexistent/non-symlink destination checks. Remote SHA matches local module,
+client and updater4934e3ad740de2710cd326ef1bfe503ec55bde492260be6d979882cd91faa522:
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-mixed-live-validation-11d24d92
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-mixed-live-validation-96945e8b
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-hot-swap-mixed70-4934e3ad.sh
+No candidate execution/installation. Recheck still shows exact working041/
+tag12/generation4/cold0/owner0. Existing files and helpers NOT overwritten.
+
+Clean tree:/private/tmp/pioneer-mixed-validation70-clean.EmVuXLh4
+Builds:/private/tmp/pioneer-q38-mixed-validation70-build-20261027-{a,clean-a}
+SDK/client/updater/protocol/gate logs share /private/tmp/pioneer-q38-mixed-validation70- prefix.
+All tests now terminal;archive evidence,commit+push,then ONE guarded
+ORIGINAL model physical comparison. Offline qualification is not a physical
+pass. Then valid full64-layer/state/KV/token/finalnorm/vocabulary/
+sampling/persistent Work+Assistant integration and real throughput tuning.
+
+Working Pioneer driver/Assistant/boot/network/power/SD/cards untouched;ONLY
+the three new unwatched candidate files staged+verified,NOT loaded. SDK
+read-only;outputs /private/tmp. Dirty llama.cpp/FlashNext untouched. Last
+real whole-model0.207893161tok/s UNCHANGED;20tok/s/full offload UNMET. Goal ACTIVE.

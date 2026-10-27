@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // No guard: validate the DISTINCT genuine native perimeter on reinclusion.
+#ifdef PIONEER_Q38_MIXED_LIVE_VALIDATION_NATIVE
+#include "PioneerQ38MixedLiveValidationRole.h"
+#else
 #if !defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT) || PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT != 1 \
  || !defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) || PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY != 1 \
  || !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY) || PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY != 1 \
@@ -43,3 +46,4 @@
  || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_WORKER_IMAGE)
 #error QBL native lifetime is not an old69/embedding DEBUG/image/CPU/Work capability alias,including defined0
 #endif
+#endif // distinct physical validation OR unchanged refusing NODRV perimeter

@@ -1,0 +1,68 @@
+/* SPDX-License-Identifier: MIT */
+#include "PioneerQ38MixedLiveValidationRole.h"
+#include "PioneerQ38MixedLiveValidationProtocol.h"
+static_assert(unsigned(TT_Q38_MIXED_LIVE_VALIDATION_WORDS)==unsigned(PioneerQ38MixedLiveReadbackPlan::Words)
+ && unsigned(TT_Q38_MIXED_LIVE_VALIDATION_PAGES)==unsigned(PioneerQ38MixedLiveReadbackPlan::Pages),"fixed private readback ONLY");
+struct PioneerQ38MixedLiveValidationResults {
+ PioneerQ38ProjectionZeroResult zero;PioneerQ38EmbeddingResult embedding;
+ PioneerQ38MixedLiveMemoryResult memory;PioneerQ38MixedLiveResult execution;PioneerQ38MixedLiveReadbackResult readback;
+}; // ALL result records on HEAP,never a large kernel frame
+static status_t Q38MixedLiveValidationControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length){
+ if(!cookie || cookie->magic!=0x50313030 || !data)return B_BAD_VALUE;
+ thread_info thread={};status_t status=get_thread_info(find_thread(NULL),&thread);
+ if(status!=B_OK || thread.team!=cookie->team)return status!=B_OK?status:B_NOT_ALLOWED;
+ if(operation==TT_PCI_PROBE_Q38_MIXED_LIVE_VALIDATION_SUPPORT){
+  if(length!=sizeof(tt_q38_embedding_support))return B_BAD_VALUE;
+  status=AcquireQ38GdnSessionLock(cookie);if(status!=B_OK)return status;
+  const tt_q38_embedding_support support={1,55,TT_Q38_MIXED_LIVE_VALIDATION_NAMESPACE,
+   TT_Q38_MIXED_LIVE_VALIDATION_WORDS,248320,512,0,0};
+  status=user_memcpy(data,&support,sizeof(support));release_sem(sLock);return status;
+ }
+ if(operation!=TT_PCI_PROBE_Q38_MIXED_LIVE_VALIDATE || length!=sizeof(tt_q38_mixed_live_validation))return B_BAD_VALUE;
+ auto* reply=new(std::nothrow) tt_q38_mixed_live_validation;if(!reply)return B_NO_MEMORY;
+ status=user_memcpy(reply,data,sizeof(*reply));
+ if(status!=B_OK || !PioneerQ38MixedLiveValidationRequest(*reply)){delete reply;return status!=B_OK?status:B_BAD_VALUE;}
+ auto* results=new(std::nothrow) PioneerQ38MixedLiveValidationResults();
+ if(!results){delete reply;return B_NO_MEMORY;}
+ PioneerQ38GdnCallScope scope(cookie);auto* c=scope.Context();
+ const bool hadModel=c && c->q38EmbeddingModel;
+ if(!c || !BindQ38EmbeddingModel(*c,0,0,0)){
+  if(c && !hadModel && c->q38EmbeddingModel){tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);}
+  delete results;delete reply;return scope.Status()!=B_OK?scope.Status():B_NOT_ALLOWED;
+ }
+ auto& z=results->zero;auto& e=results->embedding;auto& m=results->memory;
+ auto& x=results->execution;auto& b=results->readback;
+ const uint64 began=uint64(system_time());
+ bool okay=InitializeQ38EmbeddingModel(*c,z) && RunQ38EmbeddingModel(*c,e) && BindQ38MixedLiveNative(*c)
+  && PrepareQ38MixedLiveNativeHeld(*c,m) && PrepareQ38MixedLiveNativeExecution(*c,x)
+  && RunQ38MixedLiveNativeExecution(*c,x)
+  && CloseQ38MixedLiveNativeValidation(*c,x,m,reply->values,TT_Q38_MIXED_LIVE_VALIDATION_WORDS,b);
+ const uint64 ended=uint64(system_time());auto* input=c->q38EmbeddingModel;auto* native=c->q38MixedLiveNative;
+ okay=okay && ended>=began && input && native && !c->Unsafe() && !input->Unsafe() && input->Closed() && native->Closed()
+  && input->zero.closed && !input->zero.unsafe && z.nonce==2 && z.completed && z.held && !z.recovery_required
+  && e.closed && !e.unsafe && e.completed==1 && e.held==1
+  && m.closed && !m.unsafe && m.savedWords==TT_Q38_MIXED_LIVE_SAVED_WORDS
+  && m.verifiedOriginalWords==2*TT_Q38_MIXED_LIVE_SAVED_WORDS && m.installedWords==TT_Q38_MIXED_LIVE_CODE_WORDS
+  && m.restoredWords==TT_Q38_MIXED_LIVE_SAVED_WORDS && x.closed && !x.unsafe && x.prepared==1 && x.completed==119
+  && x.armed==119 && x.released==119 && x.stopped==119 && x.held==120 && x.rootStarts==1 && x.rootHolds==1 && x.packets==4
+  && b.started && b.completed && b.pages==TT_Q38_MIXED_LIVE_VALIDATION_PAGES && b.words==TT_Q38_MIXED_LIVE_VALIDATION_WORDS;
+ auto& r=reply->metadata;r.state=okay?TT_RUNTIME_PASSED:TT_RUNTIME_COMPLETION_FAILED;
+ r.closed=r.input_ready=okay?1:0;r.recovery_required=okay?0:1;
+ r.session=input?input->identity.session:0;r.driver_generation=input?input->identity.driverGeneration:0;r.elapsed_us=okay?ended-began:0;
+ if(okay){
+  for(unsigned i=0;i<PioneerResidentBanks::Pages;i++)if(c->initialized[i]==1)r.source_pages++;
+  r.workspace_pages=512;r.saved_words=e.savedWords+m.savedWords;r.restored_words=e.restoredWords+m.restoredWords;
+  reply->zero_runs=z.nonce;reply->embedding_roots=e.completed;reply->cohort_prepared=x.prepared;reply->cohort_completed=x.completed;
+  reply->cohort_stopped=x.stopped;reply->cohort_held=x.held;reply->root_runs=x.rootStarts;reply->root_holds=x.rootHolds;
+  reply->packets=x.packets;reply->saved_words=m.savedWords;reply->verified_words=m.verifiedOriginalWords;
+  reply->installed_words=m.installedWords;reply->restored_words=m.restoredWords;
+  reply->readback_pages=b.pages;reply->readback_words=b.words;reply->final_rows=5120;
+ }else{
+  dprintf("Q38-DENSE-DEBUG70:FAIL zero%u embedding%u memory%u/%u/%u execution%u/%u/%u readback%u/%u;CPU_METADATA_ONLY_NO_POST_FAILURE_DEVICE_IO\n",
+   z.phase,e.phase,m.phase,m.worker,m.word,x.phase,x.worker,x.word,b.pages,b.words);
+  memset(reinterpret_cast<uint8*>(reply)+sizeof(reply->metadata),0,sizeof(*reply)-sizeof(reply->metadata));
+ }
+ status=user_memcpy(data,reply,sizeof(*reply));delete reply;
+ if(!okay || status!=B_OK || c->Unsafe()){tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);}
+ delete results;return status;
+} // capture returns while ALL owners retained. Client MUST compare BEFORE explicit BANK_END.

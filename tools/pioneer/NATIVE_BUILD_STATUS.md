@@ -1,5 +1,21 @@
 # Native build status
 
+October27UTC2026: separate standalone-dense DEBUG70 driver and CPU-only
+validation client OFFLINE QUALIFIED/BUILT ONLY. Main+independent clean-tree
+driver/client binaries are byte-identical. New role rejects old Work flags;
+23 native parents/exact tag70/conventional ABI only. Client367 failure
+cases,258 native-role gates,87 client-role gates,20736 request-byte mutations
+and148 updater cases pass; old NODRV/65 objects and old69 updater preserved.
+Corrected public-handler main22038/independent clean16520 BOTH TERMINAL0,
+complete stdout IDENTICAL c37f54d9:actual QPE1/ALL7 matrices/119STOP+ROOT/
+120holds/5page capture/full restore/copy-failure containment/fresh END with
+clock/VM/PCI/hosts/context release. Initial TEST baseline omission fixed,
+NOT a production guard relaxation. Weights/OS are simulated,not physical.
+Candidate files staged+hash verified ONLY;working041 remains generation4/
+cold0/owner0. Next guarded ORIGINAL model card comparison. Full64/token/Work integration
+still pending;whole27B0.207893161tok/s unchanged/20tok/s UNMET. Details:
+benchmarks/qwen38-mixed-live-validation70-20261027.txt.
+
 October27UTC2026:ORIGINAL GGUF through actual native factory/scoped
 instruction/readback/fresh-END scenario main+clean TERMINAL0/identical.
 ALL5120 captured final values BIT-EXACT vs separately sealed CPU reference;

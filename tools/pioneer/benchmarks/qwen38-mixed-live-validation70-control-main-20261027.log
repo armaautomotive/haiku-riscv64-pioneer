@@ -1,0 +1,18 @@
+STAGED immutable canonical QBL1 plan/ALL7matrix recipes+120boot seals match independently staged bytes/96canonical KV frames;RAW synthetic tensors only
+PASS DEBUG70 actual public control preflight:ALL106missing learned endpoints/64header mutations/65526closed opcodes/copy+root admission;ZERO model publication,epoch advance or card IO
+OBSERVED QBL1 ALL5120 original input words loaded by ACTUAL ROOT GDDR reads;no host L1 input products
+OBSERVED ACTUAL QBR1 initial RMS ALL5120 BIT-EXACT;original residual input preserved separately
+OBSERVED ACTUAL QJR1 projection role5 all12288 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QJR1 projection role6 all1024 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QJR1 projection role7 all1024 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL ROOT prepare ALL4 groups BIT-EXACT with separate QDP observer;NO observer products supplied
+OBSERVED ACTUAL attention6144/max-inverse+EVERY finalF16 probability vs QDA observer/L20 -> O input
+OBSERVED ACTUAL QJR1 projection role10 all5120 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QBR1 O+ORIGINAL residual and post-RMS ALL5120 BIT-EXACT;not normalized-input residual
+OBSERVED ACTUAL QJR1 projection role2 all17408 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QJR1 projection role3 all17408 rows gathered/scattered from SAME119 workers;PROVISIONAL
+OBSERVED ACTUAL QBR1 SiLU(gate)*up ALL17408/L20 -> actual down input;NO CPU products supplied
+OBSERVED ACTUAL QJR1 projection role4 all5120 rows gathered/scattered from SAME119 workers;PROVISIONAL
+PASS DEBUG70 final user-copy failure AFTER real full instruction/readback/restore:ALL owners quarantined/NO subsequent device IO,END,reset or retry
+PASS DEBUG70 actual public handler/REAL call scope/QPE1/ALL7matrices/119STOP+ROOT/120holds/5page5120capture/full restore+second proof;duplicate inert;SYNTHETIC raw weights/OS ONLY
+PASS DEBUG70 actual explicit END seal/real clock/fresh audit/final VM+PCI+host/context release;NOT original-byte or physical/full-model/TPS qualification

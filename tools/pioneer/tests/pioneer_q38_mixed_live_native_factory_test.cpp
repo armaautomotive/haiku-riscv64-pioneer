@@ -62,6 +62,7 @@ template<class Check> static void NativeFactoryFork(Check check){
  fflush(nullptr);pid_t pid=fork();assert(pid>=0);if(!pid){check();_exit(0);}
  int status=0;assert(waitpid(pid,&status,0)==pid && WIFEXITED(status) && !WEXITSTATUS(status));
 }
+#ifndef PIONEER_Q38_MIXED_LIVE_CONTROL_FIXTURE_ONLY
 #ifdef PIONEER_Q38_MIXED_LIVE_ORIGINAL_NATIVE_TEST
 int ExecuteMixedOriginalNativeScenario(const char* const* images,ProjectionExecutionLearnedBytes& original,uint32_t* output,unsigned outputWords){
  if(!images || !output || outputWords!=5120 || uintptr_t(output)%alignof(uint32_t)
@@ -357,3 +358,4 @@ int main(int argc,char** argv){
 #endif
  return 0;
 }
+#endif // standalone native scenario OR reusable actual fixture
