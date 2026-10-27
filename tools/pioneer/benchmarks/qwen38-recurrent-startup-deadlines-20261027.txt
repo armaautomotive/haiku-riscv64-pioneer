@@ -1,0 +1,88 @@
+Recurrent per-transition wait accounting / actual virgin-worker boot regression
+October 27, 2026
+STATUS: targeted startup and SDK PASS; whole native control/END STILL LIVE.
+This is a development checkpoint, NOT a deployed/physical/full-offload driver.
+
+Reproduced defect (no physical P100A)
+------------------------------------
+Source owner from b0be01d03ecbc1664ad0b5ac7f9e436190436255, SHA
+b6f8fa508aa7ed3bdea16e0c1d25004ff3cb1f07a9f3cabbe9b7236785b00323.
+Actual production Prepare plus genuinely NEW never-booted QMW1 machines;
+only CPU elapsed-time endpoint is charged0.3s per worker image validation.
+No fabricated ready/status/PC/nonce or numeric products. The old shared30s
+deadline fails atworker100 after30000298 simulated microseconds, retains
+ALL owners and rejects subsequent IO/retry. This demonstrates a source defect,
+NOT proof that the physical worker114 failure had exactly this cause.
+Exact baseline66927 exited0. Reproducible source fixture and runner archived
+as qwen38-recurrent-startup-baseline-{fixture-20261027.cpp,runner-20261027.py}.txt;
+copy them to their original tests/ filenames in a clean b0be01d03e export.
+Fixture SHAc76ebaadb4b95de5c8f7c0dc58efc209be84dcf66704b86cdfc6df9ea80e5177.
+Baseline private export: /private/tmp/pioneer-qrb-deadline-baseline.lz71i989.
+Runner arguments: ROOT WORKER --startup-deadlines --expect-shared-timeout.
+
+Implementation
+--------------
+Each worker boot gets its OWN30s timer immediately BEFORE actual release,
+after CPU image/source checks. ROOT boot and ROOT RUN/STOP doorbells have
+distinct timers; later peer completion observations no longer spend the
+same budget on all preceding CPU/image validation. A wait never rearms
+inside its poll loop and no retry is added. Same30s/65536poll bounds, ALL
+source/owner/PCI/NoC/counter/status/PC/image proofs and fail-closed retention.
+Clock overflow is refused BEFORE release; backwards/expired clock, bad
+status and scope guard failures retain CPU-only reason in result.word:
+57540001 overflow,57540002 guard,57540003 backwards,57540004 deadline,
+57540005 status,57540006 poll limit. No post-failure diagnostic card IO.
+Poll-limit constant is unchanged; new stalled-worker cases hit the clock
+deadline, not the65536poll branch. No claim of new branch coverage for it.
+
+Completed targeted qualification
+--------------------------------
+Main73165 and independent clean4522 BOTH TERMINAL0, identical13-line stdout
+SHAde42e39404e062920c91db424459be4c42b06ba5321798997750d7b875e7fff7:
+qwen38-recurrent-startup-deadlines-{main,clean}-20261027.log.
+Positive case releases119 real virgin workers despite35700357 simulated us
+CPU checks. ROOT remains held; every worker reaches its genuine wait PC and
+status. This is startup ONLY, not RUN/STOP/full-model or physical proof.
+Twelve genuinely reached cases atworker1 and119: overflow before release,
+backwards clock, exact30s expiry, genuinely non-progressing virgin worker,
+corrupt raw status and denied source scope. Every failure retainsALL120,
+no holds/restoration and ZERO later IO/start/reset/retry. No fake READY.
+Both refusal tests37975/44646 exited0:21 inert preconditions and genuine
+scope denial, untouched result ABI64B. ASan/UBSan enabled for these host tests.
+
+SDK main39717/clean38889 BOTH TERMINAL0; exact objects cmp:
+physical-interface COMPILE ONLY a9c2959913306c216fdd4f19f74c8a3e4f849b6c5044520eaa3874e429c13e02
+private NODRV context2903f89a9e7ab3aa3b94b83853b6565e966042cf9c9263d5cd9663501ec48abb
+max new kernel frame832/768. Old65 inert control unchanged61faa093.
+Initial SDK6714/76045 ended1 on -Werror=misleading-indentation. Splitting
+the if-return and following Pause onto separate lines fixed formatting only;
+no warning was suppressed or condition changed. Runtime jobs were compiled
+before this formatting-only split; final SDK compiles use the split source.
+Successful build/refusal logs archived alongside this report.
+Unchanged perimeter regressions also passed:492 physical-role gates,
+430 NODRV-role gates and93 readback-selection gates. No role was relaxed.
+
+Live whole-pipeline qualification / hardware boundary
+----------------------------------------------------
+Main2894: /private/tmp/pioneer-qrb1-deadline-control-main-20261027-a.log
+Clean11492: /private/tmp/pioneer-qrb1-deadline-control-clean-20261027-a.log
+Exact --control native factory runner. Both completed actual672GDN initializer
+instructions and entered genuine recurrent matrix RUN; full recurrent RUN/
+readback/final-user-copy/END STILL PENDING.
+Do NOT restart because an observation yields. Poll the same handles.
+Independent source export /private/tmp/pioneer-qrb-deadline-clean.NAz63inT;
+three changed files main/clean cmp exact, except the documented earlier
+format-only compilation snapshot. SDK/header now exact in both trees.
+ROOT /private/tmp/pioneer-qrb1-stop-20261027-d;
+WORKER /private/tmp/pioneer-q38-mixed-worker-20261026-e;
+ZERO /private/tmp/pioneer-q38-resident-input-zero.rx9Gfebd/image;
+QPE1 /private/tmp/pioneer-q38-embedding-image-20261027-readback-a.
+
+No new module linked/copied/installed or physical card accessed. The new SDK
+object is NOT the frozen87d0 diagnostic: never put it behind the old tag71
+helper/hash. Before hardware use require whole-runtime completion, original
+qualification and a DISTINCT pinned candidate/role/client/guarded mapping.
+Pioneer remains recovered stable041/tag12/gen2/cold0/owner0/64CPU/fullRAM.
+All64 layers/persistent state/history/KV/token commit/finalnorm/vocab/sampling/
+no-CPU-reference Work+Assistant remain owed. Last whole27B0.207893161tok/s,
+20tok/s UNMET, goal ACTIVE. This turn PROGRESS, not completion or blocking.

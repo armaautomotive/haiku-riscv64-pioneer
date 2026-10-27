@@ -11,6 +11,16 @@ recovery, pinned top-page7/64-CPU/full-memory Haiku boot and guarded stable041
 restoration completed. Current driver55/tag12/generation2 is cold0/owner0/guard1.
 See benchmarks/qwen38-recurrent-debug71-physical-20261027.txt.
 
+The shared startup-deadline defect is now independently reproduced offline:
+119 actual virgin boots with simulated0.3s CPU image checks falsely fail at
+worker100. The new per-transition30s waits pass all119 plus12 clock/stall/
+status/scope faults in BOTH main and clean; source/owner/counter/hold/restore
+guards and65536poll limit remain. Main/clean native SDK objects also match.
+Whole public-handler/RUN/readback/final-END regressions are STILL LIVE in
+exact handles2894/11492; no hardware deployment permission follows these
+partial results. New code needs a distinct pinned candidate before card use.
+See benchmarks/qwen38-recurrent-startup-deadlines-20261027.txt.
+
 The separately gated per-layer convolution-history staging image also passed
 both independent complete two-block instruction-simulation runs, all eight
 reached-phase faults and real STOP. It is NOT installed or integrated with

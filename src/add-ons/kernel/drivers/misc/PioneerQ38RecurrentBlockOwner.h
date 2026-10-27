@@ -27,6 +27,11 @@ enum {TT_Q38_RECURRENT_BLOCK_READBACK_SELECTION=
 // products,public post-launch restore hint,model/token/state-slot commit.
 // The native scope MUST prove the same real completed embedding producer,
 // initialized recurrent/history leases,FD/thread/source/clock/ALL hosts.
+enum PioneerQ38RecurrentWaitFailure {
+ TT_Q38_RECURRENT_WAIT_CLOCK_OVERFLOW=0x57540001,TT_Q38_RECURRENT_WAIT_GUARD=0x57540002,
+ TT_Q38_RECURRENT_WAIT_CLOCK_BACKWARDS=0x57540003,TT_Q38_RECURRENT_WAIT_DEADLINE=0x57540004,
+ TT_Q38_RECURRENT_WAIT_STATUS=0x57540005,TT_Q38_RECURRENT_WAIT_POLL_LIMIT=0x57540006
+}; // retained CPU-only result.word diagnostics, NOT a device query or recovery grant
 struct PioneerQ38RecurrentBlockResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,prepared=0,completed=0,stopped=0,held=0,closed=0;
  uint32_t armed=0,released=0,rootStarts=0,rootHolds=0,packets=0;
@@ -91,6 +96,11 @@ class PioneerQ38RecurrentBlockOwner {
  }
  template<class IO> bool Image(IO& io,unsigned w){PioneerQ38RecurrentBlockMemoryResult ignored;return memory->VerifyImage(io,w,ignored);}
  template<class IO> bool Budget(IO& io,uint64_t at){uint64_t now=io.Q38CohortNow();return now>=at && now-at<UINT64_C(30000000);}
+ template<class IO> bool BeginWait(IO& io,PioneerQ38RecurrentBlockResult& r){
+  began=io.Q38CohortNow();
+  if(began>UINT64_MAX-UINT64_C(30000000)){r.word=TT_Q38_RECURRENT_WAIT_CLOCK_OVERFLOW;return false;}
+  return true;
+ } // SAME30s bound per real transition, never rearmed inside a wait/retry
  template<class IO> bool Packet(IO& io,unsigned address,unsigned bytes,PioneerQ38RecurrentBlockResult& r){
   namespace L=PioneerQ38MixedRecurrentBlockRootLayout;
   if(!bytes || (bytes&63) || bytes>16384 || !Guard(io,0))return false;
@@ -133,12 +143,18 @@ class PioneerQ38RecurrentBlockOwner {
   }
   return 1;
  }
- template<class IO> bool Poll(IO& io,unsigned w,unsigned nonce,bool stopped,uint64_t at){
+ template<class IO> bool Poll(IO& io,unsigned w,unsigned nonce,bool stopped,PioneerQ38RecurrentBlockResult& r){
   for(unsigned i=0;i<65536;i++){
-   if(!Guard(io,w) || !Budget(io,at))return false;
-   int observed=Wait(io,w,nonce,stopped);if(observed<0)return false;if(observed==1)return true;io.Pause();
+   if(!Guard(io,w)){r.word=TT_Q38_RECURRENT_WAIT_GUARD;return false;}
+   const uint64_t now=io.Q38CohortNow();
+   if(now<began){r.word=TT_Q38_RECURRENT_WAIT_CLOCK_BACKWARDS;return false;}
+   if(now-began>=UINT64_C(30000000)){r.word=TT_Q38_RECURRENT_WAIT_DEADLINE;return false;}
+   int observed=Wait(io,w,nonce,stopped);
+   if(observed<0){r.word=TT_Q38_RECURRENT_WAIT_STATUS;return false;}
+   if(observed==1)return true;
+   io.Pause();
   }
-  return false;
+  r.word=TT_Q38_RECURRENT_WAIT_POLL_LIMIT;return false;
  }
  void PeerCommand(unsigned w,uint32_t* out)const{
   namespace M=PioneerQ38MixedWorkerLayout;const auto* p=plan->Recipe(7)+80+(w-1)*8;
@@ -250,13 +266,15 @@ public:
    unsigned n=sizes[table]-at;if(n>4096)n=4096;
    if(!Stage(io,0,L::Scratch,tables[table]+at,n) || !Packet(io,remote[table]+at*4,n*4,r))return Fail(io,r);
   }
-  began=io.Q38CohortNow();if(began>UINT64_MAX-UINT64_C(30000000))return Fail(io,r);
   launched=mem.launched=true;r.phase=2;
   for(unsigned w=1;w<120;w++){
    r.worker=w;if(!Guard(io,w) || !Image(io,w))return Fail(io,r);
    resets[w]=0x87ffff;io.RuntimeResetWrite(resets[w]);r.armed++;io.Pause();if(!Guard(io,w))return Fail(io,r);
+   // Earlier workers and slow CPU image/source validation are not this
+   // virgin worker's boot latency. Start its bounded wait BEFORE release.
+   if(!BeginWait(io,r))return Fail(io,r);
    resets[w]=0x46800;running[w]=participants.worker[w].image.running=true;io.RuntimeResetWrite(resets[w]);r.released++;
-   if(!Poll(io,w,0,false,began))return Fail(io,r);
+   if(!Poll(io,w,0,false,r))return Fail(io,r);
   }
   r.prepared=1;r.phase=3;return true;
  }
@@ -265,16 +283,16 @@ public:
   if(!r.prepared || r.unsafe || r.completed || ran || rootCompleted || closed || unsafe || !launched || running[0])return false;
   r.worker=r.word=0;
   if(!Scope(io) || !plan->LearnedPagesPresent(ledger,PioneerResidentBanks::Pages) || !Guard(io,0) || !Image(io,0))return Fail(io,r);
-  began=io.Q38CohortNow();if(began>UINT64_MAX-UINT64_C(30000000))return Fail(io,r);
   resets[0]=0x87ffff;io.RuntimeResetWrite(resets[0]);io.Pause();if(!Guard(io,0))return Fail(io,r);
+  if(!BeginWait(io,r))return Fail(io,r);
   resets[0]=0x46800;running[0]=cohort->rootRunning=cohort->worker[0].image.running=true;io.RuntimeResetWrite(resets[0]);r.rootStarts++;
-  if(!Poll(io,0,0,false,began))return Fail(io,r);
+  if(!Poll(io,0,0,false,r))return Fail(io,r);
   uint32_t nonce=1;traffic=true;r.phase=4;
-  if(!Stage(io,0,L::Doorbell,&nonce,1) || !Poll(io,0,1,false,began) || !RootReceipt(io,false))return Fail(io,r);
+  if(!BeginWait(io,r) || !Stage(io,0,L::Doorbell,&nonce,1) || !Poll(io,0,1,false,r) || !RootReceipt(io,false))return Fail(io,r);
   rootCompleted=true;
   for(unsigned w=1;w<120;w++){
    r.worker=w;observingPeer=w;
-   if(!Poll(io,w,PioneerQ38MixedRecurrentBlockProjectionLayout::RunDelta(w-1),false,began))return Fail(io,r);
+   if(!BeginWait(io,r) || !Poll(io,w,PioneerQ38MixedRecurrentBlockProjectionLayout::RunDelta(w-1),false,r))return Fail(io,r);
    uint32_t actual[8];for(unsigned i=0;i<8;i++)actual[i]=io.ResidentNocRead(PioneerQ38PanelCounter(i));
    if(!PioneerQ38RecurrentBlockCounterProof(*plan,*canonical,w,memory->counters[w],actual,false,polls[w]))return Fail(io,r);
    for(unsigned i=0;i<8;i++)counts[w][i]=actual[i];
@@ -301,13 +319,12 @@ private:
   stop[0]=L::Magic;stop[1]=1;stop[2]=128;stop[5]=129;stop[48]=2;stop[49]=119;stop[72]=L::Stop;
   for(unsigned i=16;i<40;i++)stop[i]=plan->Outer()[i];
   if(!L::StopShape(stop))return Fail(io,r);
-  began=io.Q38CohortNow();if(began>UINT64_MAX-UINT64_C(30000000))return Fail(io,r);
   uint32_t nonce=2;r.phase=6;
   if(!Stage(io,0,L::Outer,stop,128))return Fail(io,r);
   traffic=true;
-  if(!Stage(io,0,L::Doorbell,&nonce,1) || !Poll(io,0,2,true,began) || !RootReceipt(io,true))return Fail(io,r);
+  if(!BeginWait(io,r) || !Stage(io,0,L::Doorbell,&nonce,1) || !Poll(io,0,2,true,r) || !RootReceipt(io,true))return Fail(io,r);
   for(unsigned w=1;w<120;w++){
-   r.worker=w;if(!Poll(io,w,PioneerQ38MixedRecurrentBlockProjectionLayout::RunDelta(w-1)+1,true,began)
+   r.worker=w;if(!BeginWait(io,r) || !Poll(io,w,PioneerQ38MixedRecurrentBlockProjectionLayout::RunDelta(w-1)+1,true,r)
     || !Peer(io,w,true) || !Image(io,w) || !Guard(io,w))return Fail(io,r);
    r.stopped++;
   }

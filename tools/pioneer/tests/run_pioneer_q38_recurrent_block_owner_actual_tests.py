@@ -8,7 +8,8 @@ import re
 import subprocess
 import sys
 import tempfile
-assert len(sys.argv) in (3,4) and (len(sys.argv)==3 or sys.argv[3] in ('--prepare-faults','--end-faults','--readback','--readback-plan'))
+assert len(sys.argv) in (3,4,5) and (len(sys.argv)==3 or sys.argv[3] in ('--prepare-faults','--end-faults','--readback','--readback-plan','--startup-deadlines'))
+assert len(sys.argv)!=5 or sys.argv[3:]==['--startup-deadlines','--expect-shared-timeout']
 here=pathlib.Path(__file__).resolve().parent
 root,worker=map(pathlib.Path,sys.argv[1:3])
 def pin(directory,pins):
@@ -24,7 +25,8 @@ flags=re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?',(here/'run_pioneer_q38_ffn_per
 with tempfile.TemporaryDirectory(prefix='pioneer-qrb-owner-actual-',dir='/private/tmp') as tmp:
  binary=pathlib.Path(tmp)/'test'
  subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off',
-  '-fsanitize=address,undefined',*flags,str(here/('pioneer_q38_recurrent_block_readback_test.cpp' if sys.argv[-1] in ('--readback','--readback-plan') else
+  '-fsanitize=address,undefined',*flags,str(here/('pioneer_q38_recurrent_block_startup_deadline_test.cpp' if len(sys.argv)>=4 and sys.argv[3]=='--startup-deadlines' else
+   'pioneer_q38_recurrent_block_readback_test.cpp' if sys.argv[-1] in ('--readback','--readback-plan') else
    'pioneer_q38_recurrent_block_owner_end_fault_test.cpp' if sys.argv[-1]=='--end-faults' else
    'pioneer_q38_recurrent_block_owner_fault_test.cpp' if len(sys.argv)==4 else 'pioneer_q38_recurrent_block_owner_actual_test.cpp')),'-o',str(binary)],check=True)
- subprocess.run([str(binary),str(root),str(worker),*(['--plan-only'] if sys.argv[-1]=='--readback-plan' else [])],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
+ subprocess.run([str(binary),str(root),str(worker),*(['--plan-only'] if sys.argv[-1]=='--readback-plan' else ['--expect-shared-timeout'] if len(sys.argv)==5 else [])],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})

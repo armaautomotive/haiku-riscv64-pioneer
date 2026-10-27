@@ -1,0 +1,13 @@
+PASS startup fault1/worker1/reason57540001/real boots0/ALL120 retained/no post-failure IO,hold,restore or retry
+PASS startup fault2/worker1/reason57540003/real boots1/ALL120 retained/no post-failure IO,hold,restore or retry
+PASS startup fault3/worker1/reason57540004/real boots1/ALL120 retained/no post-failure IO,hold,restore or retry
+PASS startup fault4/worker1/reason57540004/real boots1/ALL120 retained/no post-failure IO,hold,restore or retry
+PASS startup fault5/worker1/reason57540005/real boots1/ALL120 retained/no post-failure IO,hold,restore or retry
+PASS startup fault6/worker1/reason57540002/real boots1/ALL120 retained/no post-failure IO,hold,restore or retry
+PASS startup fault1/worker119/reason57540001/real boots118/ALL120 retained/no post-failure IO,hold,restore or retry
+PASS startup fault2/worker119/reason57540003/real boots119/ALL120 retained/no post-failure IO,hold,restore or retry
+PASS startup fault3/worker119/reason57540004/real boots119/ALL120 retained/no post-failure IO,hold,restore or retry
+PASS startup fault4/worker119/reason57540004/real boots119/ALL120 retained/no post-failure IO,hold,restore or retry
+PASS startup fault5/worker119/reason57540005/real boots119/ALL120 retained/no post-failure IO,hold,restore or retry
+PASS startup fault6/worker119/reason57540002/real boots119/ALL120 retained/no post-failure IO,hold,restore or retry
+PASS per-worker startup deadlines/119 real virgin boots/119 CPU charges/elapsed35700357 greater than30s/ROOT held/no manufactured readiness;NOT RUN/STOP/native/physical/TPS
