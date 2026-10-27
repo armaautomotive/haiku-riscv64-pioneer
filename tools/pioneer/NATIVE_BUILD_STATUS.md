@@ -1,6 +1,6 @@
 # Native build status
 
-## Current: distinct DEBUG72 built/staged; full runtime qualification still running
+## Current: DEBUG72 public lifecycle passed; original-weight comparison still running
 
 October 27, 2026. Offline qualification is NOT physical-card qualification.
 The original-weight DEBUG71 physical trial uploaded all 300 calls/68603 pages,
@@ -8,7 +8,8 @@ then failed execution preparation at worker114 BEFORE the full recurrent ROOT
 RUN. No numeric comparison or clean END occurred. A shared startup deadline
 is a hypothesis, not a confirmed hardware diagnosis. Controlled OFF-once / ON-once
 recovery, pinned top-page7/64-CPU/full-memory Haiku boot and guarded stable041
-restoration completed. Current driver55/tag12/generation2 is cold0/owner0/guard1.
+restoration completed. Last recovery metadata: driver55/tag12/generation2,
+cold0/owner0/guard1. Future deployment still requires a fresh ownership check.
 See benchmarks/qwen38-recurrent-debug71-physical-20261027.txt.
 
 The corrected source now has a NEW exact tag2026102700010072/namespace23,
@@ -19,28 +20,32 @@ c600 preflight and guarded swap236+236/legacy302 cases all passed.
 The helper retires failed71 apply while preserving known-clean restore;
 only exact stable041 <-> new3e00/72 is added. Files are SHA-verified in a
 separate non-watched Haiku folder, NOT installed/invoked. Stable041 remains.
-New72 actual public-handler tests94469/41404 and current original-weight
-native readback tests93742/38351 are LIVE; do not promote partial results.
+New72 actual public-handler tests94469/41404 BOTH TERMINAL0: complete24-line
+stdout exact8e34bce3, actual support23/wholeRUN/STOP/120holds/readback/full
+restore/copy-failure/duplicate/fresh-END all passed. Evidence:
+benchmarks/qwen38-recurrent-debug72-control-20261027.txt.
+Current original-weight native readback tests93742/38351 remain LIVE. They
+passed all three readback-failure cases; strict final output comparison and
+fresh-END gates are still pending. No hardware deployment yet.
 Earlier71/deadline controls2894/11492 now BOTH TERMINAL0, complete24-line
 stdout identicalac309859 and identical to the pre-deadline handler baseline.
 This validates the corrected owner algorithm, NOT the failed87d0 image.
-Four current72/original jobs remain LIVE. See
+Only the two original-weight jobs remain LIVE. See
 benchmarks/qwen38-recurrent-startup-whole-control-20261027.txt.
 See benchmarks/qwen38-recurrent-debug72-preparation-20261027.txt.
 
-Latest wait audit: all six exact jobs still LIVE. A scoped two-second host
-profile of earlier handle2894 shows actual post-RUN/STOP/120hold readback
-poison guards and whole-plan checks, not an idle wait. This is validation
-overhead, NOT full Work inference time or terminal qualification. Both72
-controls reached matrix7; original-weight runs reached matrix3. No tests
-restarted or guards weakened. See
+Historical scoped profiles captured post-RUN/STOP/120hold readback poison
+guards and whole-plan checking, not an idle wait. Both earlier71 controls
+and current72 controls have now completed0; do not poll their old handles.
+This was validation overhead, NOT full Work inference time. No tests were
+restarted or guards weakened. Dated observations:
 benchmarks/qwen38-recurrent-validation-wait-profile-20261027.txt.
 
 23:24:56UTC scoped profile also confirms CURRENT72 handle94469 has reached
 the actual post-RUN/119STOP+ROOT/120hold readback poison guards (315 samples).
-This is not just the earlier71 snapshot. Strict readback/restoration/final
-copy/fresh-END and original numerical gates remain PENDING; no installation
-or physical/Work/full64/speed qualification is inferred.
+This was not just the earlier71 snapshot. Current72 readback/restoration/
+final-copy/fresh-END now passed in BOTH copies. Original numerical gates
+remain PENDING; no physical/Work/full64/speed qualification is inferred.
 
 The shared startup-deadline defect is now independently reproduced offline:
 119 actual virgin boots with simulated0.3s CPU image checks falsely fail at
@@ -49,8 +54,8 @@ status/scope faults in BOTH main and clean; source/owner/counter/hold/restore
 guards and65536poll limit remain. Main/clean native SDK objects also match.
 Whole public-handler/RUN/readback/final-END regressions2894/11492 BOTH passed
 for the corrected owner compiled with the previous diagnostic identity.
-Current72 public-handler and original-weight qualification remain pending;
-no hardware deployment permission follows partial results.
+Current72 public-handler qualification also passed; current original-weight
+qualification remains pending. No hardware permission follows partial results.
 See benchmarks/qwen38-recurrent-startup-deadlines-20261027.txt.
 
 The separately gated per-layer convolution-history staging image also passed

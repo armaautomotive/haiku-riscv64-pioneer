@@ -1,0 +1,59 @@
+CURRENT DEBUG72/namespace23 whole public-handler and final-END qualification
+October27UTC2026; terminal observation23:44:38UTC
+STATUS: main94469/clean41404 BOTH TERMINAL0. Original strict gate STILL LIVE.
+
+Source/artifact boundary
+-------------------------
+Current code36eccc15b4b80ae774c308dfca940c3c0d1154ff, independent export
+/private/tmp/pioneer-qrb72-clean.zsdvp49x. Exact per-transition-deadline owner,
+CURRENT72 role/namespace23/protocol/control route, not a retagged old binary.
+Built paired module3e00974c4476f2755341fbcea034340652e976e292cb017344f4a70f896c652e
+and client2f322603020b97d4a9eb3696c3bd550606d64a1531545a48e111f80298ee1f40
+remain staged ONLY. No source/image/guard change or process restart to pass.
+
+Completed runtime evidence
+--------------------------
+Exact original tool handles exited0; all24 stdout lines inspected.
+Main/clean byte-identical SHA256:
+8e34bce392fcdf3186dfb9658778ed8fa5e2281481cee445229fbfae1015d7d1
+Archived logs qwen38-recurrent-debug72-control-{main,clean}-20261027.log.
+Replacing ONLY output label DEBUG72 with DEBUG71 gives exact cmp with the
+completed deadline-algorithm baseline ac309859. No output/tolerance bound
+was relaxed; this comparison is not an implementation-byte-identity claim.
+
+Actual production public route/handler/native scopes/controller exercised:
+-Support reply driver55/namespace23/input5120/vocab248320/pages512,
+ no_cpu_reference0/model_inference0, zero model/epoch/device IO.
+-112 missing raw learned endpoints/80 malformed header words/65526 closed
+ opcodes/failed-copy/non-root admission without model publication/epoch/IO.
+-Actual QPE1 producer,672GDN+336history initialization instruction leases,
+ whole emitted QRB1/eight matrices/640Conv/96GDN/RMS/residual/FFN/final hidden.
+-Real119 STOPs+ROOT,120holds,five READs/5120-word capture,full11406904-word
+ journal restoration+second proof. User-copy failure AFTER real closure
+ retains every owner with zero subsequent IO/END/reset/retry. Parent proves
+ raw post-return closed observation after temporary results are destroyed.
+-Duplicate refusal without additional physical or clock access; fresh locked
+ explicit END with actual clock/fresh audit/final VM+PCI+host/context release.
+Raw learned/OS/register/GDDR endpoints are SIMULATED. NOT physical P100A,
+original final numerical comparison, all64, Work, persistent token or TPS proof.
+
+Remaining exact handles / no premature hardware use
+---------------------------------------------------
+Original-c600 native/readback/final-END93742/38351 remain LIVE; BOTH reached
+genuine whole RUN/119-worker counter correlation and8 inert output refusals.
+All3 genuinely reached readback-failure cases passed after real119STOP+ROOT/
+120holds; FD/clock/hosts retained and zero following IO/restore/retry or output
+publication. Positive readback/full restoration, strict final5120 comparison
+and fresh-END still require their own terminal evidence. No sampler/token-
+quality/full-model inference claim follows from a layer0 simulation.
+Never re-poll/restart the now-completed controls94469/41404 or2894/11492.
+
+Pioneer remains on known-good041; new72 files separate non-watched staging.
+No install/new card IO,Assistant/boot/network/restart/power/SD/mains/hardware
+change. Before ONE physical72 original diagnostic require both remaining
+original tests0, archive/review all numerics/END, then fresh no-parents/clean
+ownership/sysinfo/exact files and guarded mapping. Strict physical comparison
+BEFORE explicit END; any unknown retains/no retry/reset/automatic hot restore.
+All64/persistent state/history/KV/token commit/finalnorm/vocab/sampling/
+noCPUreferenceWork+Assistant still OWED. Whole27B0.207893161tok/s unchanged;
+20UNMET, goal ACTIVE. This continuation PROGRESS, not completion or blocking.

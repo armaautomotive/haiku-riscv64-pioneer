@@ -6,6 +6,10 @@ CONTINUATION23:32:43UTC: earlier deadline controls2894/11492 BOTH TERMINAL0,
 not LIVE now. Current72 controls94469/41404 and originals93742/38351 remain
 LIVE; do not poll/restart the completed earlier pair. Detailed new evidence:
 qwen38-recurrent-startup-whole-control-20261027.txt.
+CONTINUATION23:44:38UTC: CURRENT72 controls94469/41404 BOTH TERMINAL0,
+complete24-line stdout exact8e34bce3. Only originals93742/38351 remain LIVE;
+all3 readback-failure cases passed, final strict comparison/END pending.
+See qwen38-recurrent-debug72-control-20261027.txt. No hardware deployment.
 
 New identity / unchanged boundaries
 -----------------------------------
