@@ -638,3 +638,42 @@ published5120finite/nonzero words,fingerprintde0ec5a2c3e7085d. This is useful
 actual ORIGINAL instruction/native-lifecycle evidence,but its fingerprint
 is NOT an independent numerical comparison and NEVER a physical or token
 rate proof. Main9799/clean91456 remain the live independent reference tests.
+
+ORIGINAL final numerical comparison completed -- supersedes LIVE above
+----------------------------------------------------------------------
+Main9799 and independent clean91456 BOTH authoritative TERMINAL0. Entire
+stdout identical SHA256
+06e2e5014d392b23e821b1e9532d4469e595dbf459e0c601cc66d079d1673423.
+Archived as this record's original-native-final-main.log and
+original-native-final-clean.log. SAME fully c600-authenticated open GGUF,
+57raw spans/280971136B/68603pages; separate private3853-read CPU reference
+prepared and sealed BEFORE native context. Real QPE1+672GDN/336history
+initializers,ALL120 held journal,119 actual virgin workers,whole layer0/
+720matrix jobs/Conv640/GDN96,119STOP+ROOT/120holds/full11406904 restoration
+and second proof/fresh locked final END/context destruction precede ALL
+18stage comparisons. No CPU products supplied as native inputs.
+
+Final5120 words: differences0/nonfinite0/maxAbsolute0/relativeL20,
+exactPassed1. Stages0..6 and10..17 exact;15of18 total. Stage7 NEXT state:
+786432words/143241bit differences/maxAbsolute4.76837158203e-7/
+relativeL2 3.52535741896e-8. Stage8 raw recurrent6144words/901differences/
+maxAbsolute7.45058059692e-9/relativeL2 1.36695056776e-8. Stage9 gated:
+6144words/3563differences/maxAbsolute2.38418579102e-7/
+relativeL2 7.9343173981e-8. ALL finite. Do NOT call these intermediate
+arrays bit-exact or use aggregate relativeL2 as a pointwise-relative proof.
+Existing instruction observers and strict final predicate UNCHANGED.
+
+This is ORIGINAL one-layer OFFLINE instruction/native-lifecycle evidence;
+OS/register/GDDR endpoints are simulated,NOT physical result DMA,full64,
+persistent state/KV/history/token commit,finalnorm/vocab/sampling or Work.
+Local separate validation-readback WIP is NOT staged with this original
+numerical checkpoint: SDK main88471/clean73549 BOTH0,object identical
+b0e608455394c0519b6ceda31c5eeb0b10f868bb244500477662701fcc8250ad,
+maxNewFrame768. Component/native actual-instruction+original/fault suites
+remain LIVE;no public selector/loadable role,install or hardware use.
+
+No Pioneer hardware/Assistant/boot/network/power/SD/mains changes. Last real
+whole-model rate0.207893161tok/s unchanged;20UNMET/goalACTIVE. Next finish
+runtime readback/native/final-END qualification,then distinct physical
+driver+client and original silicon comparison,then full64/persistent state
+and token path/no-CPU-reference Work+Assistant and real speed measurements.

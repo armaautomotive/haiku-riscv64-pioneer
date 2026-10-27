@@ -3,7 +3,7 @@
 ## Current: recurrent native execution and final-disposal qualification
 
 October 27, 2026. Source-qualification checkpoint, not installed on the card.
-The previously pushed baseline is `73f1ccdc4901567ae79f0e1e63cc49eede95c688`.
+The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2d69`.
 
 - Complete execution-owner/real STOP/120 holds/full original restoration
   passed in the clean export (60994, terminal 0); main output is identical.
@@ -38,16 +38,26 @@ The previously pushed baseline is `73f1ccdc4901567ae79f0e1e63cc49eede95c688`.
 - The CPU-only reference/source unit also compiles and links for Haiku RISC-V
   in main/clean builds: exact binary `cd6a29fe...`, max user-space frame 24688
   bytes, no native owner or driver IO symbols. Built only, never installed/run.
-- Original-model native comparisons are LIVE: main9799/clean91456. They compare
-  18 genuinely produced stages only after complete native END and require
-  strict final equality. No independent final numerical result is yet claimed.
-  Older raw-byte pilot49584 passed (terminal 0): actual original weights through
-  native computation/STOP/restoration/full END, but no independent final reference.
+- Original-model native comparisons main9799/clean91456 BOTH passed (terminal
+  0), identical complete stdout `06e2e5014d392b23e821b1e9532d4469e595dbf459e0c601cc66d079d1673423`.
+  All 5,120 final layer0 output words match the independent CPU reference
+  BIT-FOR-BIT, after whole original-weight execution and complete native END.
+  Fifteen of 18 stages are exact. NEXT state/raw recurrent/gated arrays have
+  small rounding differences (maximum absolute errors 4.76837158203e-7,
+  7.45058059692e-9 and 2.38418579102e-7 respectively); these are NOT silently
+  promoted to bit-exact state or persistent token correctness. No NaN/Inf.
+  OS/register/GDDR endpoints are SIMULATED: not physical readback/full64/Work.
+- Separate same-owner validation readback is local WIP, not part of the
+  original-comparison checkpoint. Main/clean Haiku SDK compiles passed with
+  identical object `b0e608455394c0519b6ceda31c5eeb0b10f868bb244500477662701fcc8250ad`;
+  actual native runtime/readback/fault and original-weight runs remain LIVE.
+  No public opcode/loadable role or physical execution is enabled by this WIP.
 
 Remaining before full-offload Work is ready:
 
-1. Finish the original-weight numerical comparison, then validate the qualified
-   native execution/final-disposal path on the physical P100A.
+1. Assess the intermediate rounding differences; finish same-owner validation
+   readback and its runtime/failure tests, then qualify a distinct physical
+   role/client and validate execution/final disposal on the P100A.
 2. Connect valid embedding/recurrent layers 0..2 through dense layer 3 and all
    64 layers, with correct persistent KV/recurrent/history and token commit.
 3. Complete final normalization, vocabulary projection and on-card sampling.
