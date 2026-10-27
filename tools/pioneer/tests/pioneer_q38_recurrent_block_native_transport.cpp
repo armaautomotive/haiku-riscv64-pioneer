@@ -81,6 +81,7 @@ struct RecurrentBlockNativeTransport::Impl:RecurrentOwnerActualIOBase<NativeRecu
  using OwnerIO=RecurrentOwnerActualIOBase<NativeRecurrentLearnedMachine>;
  unsigned resets=0;bool configured=false,validationReadback=false;
  unsigned readbackPackets=0,readbackFault=0,readbackFaultFence=0;
+ PioneerQ38RecurrentBlockResult closedObservation;
  bool AtValidationReadback()const{return validationReadback && execution && execution->phase==7 && holds==120;}
  bool ReadbackScratch(uint32_t a)const{return a>=0x80000 && a<0x81000;}
  void ValidationReadbackPacket(uint32_t value){
@@ -270,9 +271,19 @@ bool RecurrentBlockNativeTransport::ValidationReadbackFaultObserved()const{const
 }
 void RecurrentBlockNativeTransport::VerifyValidationReadback(const uint32_t* values,unsigned words){auto& p=*implementation;
  assert(p.validationReadback && !p.readbackFault && p.readbackPackets==5 && values && words==5120 && p.execution && p.execution->closed
-  && p.execution->held==120 && p.execution->stopped==119 && p.holds==120 && p.machine.stopStarts==119);
+  && !p.execution->unsafe && p.execution->held==120 && p.execution->stopped==119 && p.holds==120 && p.machine.stopStarts==119);
  const auto* o=p.machine.block->Outer();for(unsigned i=0;i<words;i++)assert(values[i]==p.machine.Get(o[8],o[9]+RB::FinalOffset+i*4));
 } // TEST assertion only,never publishes a CPU result into execution
+void RecurrentBlockNativeTransport::PreserveClosedValidationObservation(const uint32_t* values,unsigned words){auto& p=*implementation;
+ assert(p.execution && p.execution!=&p.closedObservation);
+ VerifyValidationReadback(values,words);
+ // The actual handler owns and deletes its temporary result after the
+ // final user copy. Preserve its ALREADY CLOSED result verbatim while
+ // alive; never leave a borrowed pointer for post-return/final-END tests.
+ // This copy is private to the raw endpoint observer,not a native owner,
+ // producer grant,phase setter or result supplied to production code.
+ p.closedObservation=*p.execution;p.execution=&p.closedObservation;
+}
 void RecurrentBlockNativeTransport::Diagnostic(){auto& p=*implementation;
  fprintf(stderr,"QRB_NATIVE_MACHINE rootPC%08x starts%u holds%u matrices%u phase%u packets%u stops%u\n",p.machine.pc,p.starts,p.holds,p.machine.matrixStarts,p.machine.Phase(),p.machine.packets,p.machine.stopStarts);
 }

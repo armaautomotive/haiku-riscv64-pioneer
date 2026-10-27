@@ -14,6 +14,8 @@ static status_t user_memcpy(void* out,const void* in,size_t bytes){
  if(finalLockHeld && !copyChild && !copyForked && bytes==sizeof(tt_q38_recurrent_block_validation)
   && static_cast<const tt_q38_recurrent_block_validation*>(in)->metadata.state==TT_RUNTIME_PASSED){
   assert(activeIO && copyTransport);copyTouches=activeIO->touches;copyDevice=copyTransport->Touches();
+  copyTransport->PreserveClosedValidationObservation(static_cast<const tt_q38_recurrent_block_validation*>(in)->values,5120);
+  assert(activeIO->touches==copyTouches && copyTransport->Touches()==copyDevice);
   pid_t pid=fork();assert(pid>=0);if(!pid){copyChild=true;failCopy=copies;}
   else{int status=0;assert(waitpid(pid,&status,0)==pid && WIFEXITED(status) && !WEXITSTATUS(status));copyForked=true;}
  }
@@ -107,6 +109,8 @@ int main(int argc,char** argv){
   && reply->cohort_completed==119 && reply->cohort_stopped==119 && reply->cohort_held==120 && reply->root_runs==1 && reply->root_holds==1
   && reply->readback_pages==5 && reply->readback_words==5120 && reply->packets==25 && c.q38RecurrentBlockNative->Closed()
   && !c.dispatchOwnerRetained && !sColdRecoveryRequired && !finalLockHeld && c.q38GdnCallThread==-1);
+ // The handler has deleted its result set. The observer must now use its
+ // exact closed snapshot,not a stale pointer into that freed allocation.
  transport.VerifyClosed();transport.VerifyValidationReadback(reply->values,5120);
  auto before=transport.Touches();auto clockBefore=c.q38Clock.IO();auto duplicate=Request();
  assert(ProbeControl(&f.cookie,TT_PCI_PROBE_Q38_RECURRENT_BLOCK_VALIDATE,duplicate.get(),sizeof(*duplicate))!=B_OK

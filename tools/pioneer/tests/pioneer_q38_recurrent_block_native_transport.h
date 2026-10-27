@@ -38,6 +38,7 @@ public:
  unsigned ValidationReadbackPackets()const;
  bool ValidationReadbackFaultObserved()const;
  void VerifyValidationReadback(const uint32_t*,unsigned);
+ void PreserveClosedValidationObservation(const uint32_t*,unsigned); // TEST copy before handler-owned result destruction
  void Observe(const PioneerQ38RecurrentBlockResult&); // asserts reset/hold ordering,NEVER sets private progress
  void VerifyRun();void VerifyClosed();void Diagnostic();
 };

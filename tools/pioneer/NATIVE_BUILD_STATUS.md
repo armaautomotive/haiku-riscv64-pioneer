@@ -1,6 +1,6 @@
 # Native build status
 
-## Current: original recurrent readback passed; public-handler qualification pending
+## Current: original recurrent readback and repaired public-handler tests passed
 
 October 27, 2026. Partial runtime qualification, NOT physical-card qualified or installed.
 Previous pushed interface checkpoint: `9d6e39a97403c15151c49cab5a9ffc0fce0bdab3`.
@@ -75,9 +75,15 @@ The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2
   whole-run reached final user-copy; its failure child passed. Both first
   public-handler runs then stopped on a TEST observer use-after-free: it kept
   a pointer to the handler's temporary result after that result was deleted.
-  Public-handler qualification remains incomplete until the repaired observer
-  passes the entire post-return/duplicate/explicit-END sequence. This was an
-  offline sanitizer failure, not a Pioneer/card crash or a physical result.
+  The observer now verifies raw output while the actual result is alive and
+  preserves an exact ALREADY CLOSED result copy for post-return checks; no
+  native owner/progress/permission or production driver code changed.
+  Repaired main64940/clean6879 BOTH passed (terminal0), identical complete
+  stdout `ac309859cb72068f35538ce3b56d96889061bf169940cf065e73d370b4420a94`.
+  Actual final-copy failure retains all owners and forbids later IO; positive
+  post-return readback, duplicate refusal and fresh explicit END all passed.
+  Raw learned/OS/register/GDDR endpoints remain SIMULATED, not physical proof.
+  Evidence: benchmarks/qwen38-recurrent-handler-lifetime-20261027.txt.
 - Main15788/clean2269 actual readback-owner suites BOTH passed (terminal 0):
   real emitted whole QRB1/119 workers/STOP/120 holds, all 16 readback failures,
   five successful READs/5120-word capture/full original restoration+second proof.
@@ -122,8 +128,8 @@ The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2
 
 Remaining before full-offload Work is ready:
 
-1. Assess intermediate rounding differences; finish repaired public-handler
-   runtime/failure/END tests (original native readback now passed). Then qualify controlled
+1. Assess intermediate rounding differences; original native readback and repaired
+   public-handler runtime/failure/END tests now passed. Qualify controlled
    deployment of the built diagnostic client/module and validate original-weight
    execution/readback/final disposal on the physical P100A.
 2. Connect valid embedding/recurrent layers 0..2 through dense layer 3 and all

@@ -1,0 +1,67 @@
+Recurrent DEBUG71: repaired actual public-handler qualification
+Date: 2026-10-27
+STATUS: main64940/clean6879 BOTH TERMINAL0; PHYSICAL-CARD RESULT STILL OWED.
+Source baseline114f19a8a78e144e07da1f4a451856a16a953bbb + three TEST observer
+files, also compatible with CPU-only diagnostic checkpoint5c977e0283.
+The separate history-staging prototype is NOT part of this qualification.
+
+Failure and repair
+-------------------
+Initial handler runs61072/77933 both stopped under AddressSanitizer in the
+TEST transport's VerifyValidationReadback after the real handler deleted
+its temporary results. The TEST observer had retained a borrowed pointer.
+Production owners do not retain that result reference; no production driver,
+native scope/phase, permission, readback, numerical bound or END was changed.
+
+At the actual successful final user-copy boundary, the observer now verifies
+all5120 raw readback words while the actual execution result is alive, then
+copies that ALREADY CLOSED result verbatim into its own private storage.
+The copy is never supplied to a native owner or used as a production grant.
+The same exact readback verification STILL runs after the handler returns
+and deletes its temporary results. Observing/copying performs zero device IO.
+The deliberately failed user-copy child still proves owner quarantine and
+zero following card IO, END, reset or retry. Nothing was bypassed to pass.
+
+Completed qualification
+------------------------
+Runner: tests/run_pioneer_q38_recurrent_block_native_factory_tests.py --control
+Independent clean tree: /private/tmp/pioneer-qrb-readback-clean.oWiN4w58
+Both runs used AddressSanitizer/UndefinedBehaviorSanitizer; both exited0.
+Complete24-line stdout files are identical, SHA256:
+ac309859cb72068f35538ce3b56d96889061bf169940cf065e73d370b4420a94
+Archived logs:
+qwen38-recurrent-handler-lifetime-main-20261027.log
+qwen38-recurrent-handler-lifetime-clean-20261027.log
+
+The actual public routing/handler, genuine native call scope and actual
+instruction/owner pipeline were exercised, not replacement success stubs:
+-112 missing learned endpoints/80 header mutations/65526 closed opcodes,
+ failed request copy/non-root admission: zero model/epoch/card IO.
+-Real QPE1 embedding,672 recurrent+336 history initializers, whole QRB1,
+ eight matrices/119 workers/Conv/GDN/RMS/residual/FFN/final hidden.
+-Actual STOP119+ROOT,120holds,five READs/full original restoration and
+ second proof, final-copy failure retention, exact post-return5120 capture,
+ duplicate refusal without later physical IO or clock access.
+-Fresh locked explicit END: real clock restoration/audit, final VM, PCI,
+ host release, context destruction, unreserve and global/cookie clear.
+Raw learned/OS/register/GDDR endpoints are SIMULATED. Actual original c600
+native numerical/readback/failure/final-END qualification is separate and
+also passed; see qwen38-recurrent-original-readback-20261027.txt.
+Neither test substitutes for physical original-weight P100A verification.
+
+Next physical candidate (unchanged)
+------------------------------------
+Module87d0c4e005d7df937e22c2806051cd0aa99d736c0fb2c0199fde40d8eb1d7cb4
+Client1e62b010515c2dea5300fae2b23a043c606a0987c07b8d972ab1edc9c079eaab
+Guarded helper5cebdc56956141f66ea8fd01d81f68bc12d7efb7e093dc52116c335a257a240f
+Require fresh exact files/symlink, no compute parents, known-clean idle
+stable041/tag12/guard1 before swap; no force/reset/automatic rollback.
+The physical client compares original output BEFORE explicit BANK_END;
+any uncertainty CLOSES ONLY and requires controlled recovery, not a retry.
+
+This checkpoint itself has no new driver install/card calculation, boot,
+Assistant, network, restart, power, SD, mains or hardware-connection action.
+Separate CPU-only diagnostic and staged project files remain as recorded.
+Full64 layers/persistent state+history+KV/token commit/on-card finalnorm,
+vocabulary and sampling/no-CPU-reference Work+Assistant remain OWED.
+Whole27B0.207893161tok/s unchanged;20tok/s target UNMET;goal ACTIVE.
