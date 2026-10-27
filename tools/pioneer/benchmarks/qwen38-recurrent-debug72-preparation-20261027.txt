@@ -2,6 +2,10 @@ Distinct recurrent DEBUG72/namespace23 diagnostic preparation
 October 27, 2026
 STATUS: built/tested/staged ONLY; full runtime/original readback STILL LIVE.
 Previous pushed source: add343caa7c06e941feee2d64aa537155e09bb33.
+CONTINUATION23:32:43UTC: earlier deadline controls2894/11492 BOTH TERMINAL0,
+not LIVE now. Current72 controls94469/41404 and originals93742/38351 remain
+LIVE; do not poll/restart the completed earlier pair. Detailed new evidence:
+qwen38-recurrent-startup-whole-control-20261027.txt.
 
 New identity / unchanged boundaries
 -----------------------------------

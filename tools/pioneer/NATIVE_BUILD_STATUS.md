@@ -21,7 +21,11 @@ only exact stable041 <-> new3e00/72 is added. Files are SHA-verified in a
 separate non-watched Haiku folder, NOT installed/invoked. Stable041 remains.
 New72 actual public-handler tests94469/41404 and current original-weight
 native readback tests93742/38351 are LIVE; do not promote partial results.
-Earlier71/deadline controls2894/11492 are also still LIVE at this snapshot.
+Earlier71/deadline controls2894/11492 now BOTH TERMINAL0, complete24-line
+stdout identicalac309859 and identical to the pre-deadline handler baseline.
+This validates the corrected owner algorithm, NOT the failed87d0 image.
+Four current72/original jobs remain LIVE. See
+benchmarks/qwen38-recurrent-startup-whole-control-20261027.txt.
 See benchmarks/qwen38-recurrent-debug72-preparation-20261027.txt.
 
 Latest wait audit: all six exact jobs still LIVE. A scoped two-second host
@@ -43,9 +47,10 @@ The shared startup-deadline defect is now independently reproduced offline:
 worker100. The new per-transition30s waits pass all119 plus12 clock/stall/
 status/scope faults in BOTH main and clean; source/owner/counter/hold/restore
 guards and65536poll limit remain. Main/clean native SDK objects also match.
-Whole public-handler/RUN/readback/final-END regressions are STILL LIVE in
-exact handles2894/11492; no hardware deployment permission follows these
-partial results. New code needs a distinct pinned candidate before card use.
+Whole public-handler/RUN/readback/final-END regressions2894/11492 BOTH passed
+for the corrected owner compiled with the previous diagnostic identity.
+Current72 public-handler and original-weight qualification remain pending;
+no hardware deployment permission follows partial results.
 See benchmarks/qwen38-recurrent-startup-deadlines-20261027.txt.
 
 The separately gated per-layer convolution-history staging image also passed

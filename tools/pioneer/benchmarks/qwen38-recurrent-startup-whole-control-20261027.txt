@@ -1,0 +1,59 @@
+Corrected per-transition deadlines: whole native public-control regression
+October27UTC2026; terminal observation23:32:43UTC
+STATUS: main2894/clean11492 BOTH TERMINAL0. NOT physical or full-model proof.
+
+Completed execution
+-------------------
+The EXACT previously live handles returned exit0; no observation timeout
+was treated as failure and no process was restarted/killed/replaced.
+Independent export /private/tmp/pioneer-qrb-deadline-clean.NAz63inT.
+Source algorithm is add343caa7; runtime TUs were compiled before the
+documented formatting-only if/Pause line split, no semantic difference.
+The corrected owner was compiled with the previous71 identity for this
+algorithm regression. It is NOT frozen failed module87d0 and cannot
+re-enable that module's retired hardware apply route.
+
+Complete24-line stdout main/clean exact cmp; SHA256:
+ac309859cb72068f35538ce3b56d96889061bf169940cf065e73d370b4420a94
+It also cmp matches the earlier pre-deadline repaired-handler stdout,
+qwen38-recurrent-handler-lifetime-main-20261027.log. This is output-level
+regression evidence, not a claim of byte-identical changed implementations.
+Archived new logs:
+qwen38-recurrent-startup-whole-control-main-20261027.log
+qwen38-recurrent-startup-whole-control-clean-20261027.log
+
+Actual production route/call scopes/controller/owner exercised:
+-112 missing learned endpoints,80 header mutations,65526 closed opcodes,
+ bad copy/non-root admission:zero model/epoch/card IO.
+-Genuine QPE1,672 recurrent+336 history initializers, held journal and
+ whole emitted QRB1/eight matrices/Conv/GDN/RMS/residual/FFN/final hidden.
+-Real119 worker STOPs+ROOT,120 holds,five READs/5120 output words,full
+ original restoration+second proof, final-user-copy failure retention,
+ zero following IO/END/reset/retry, exact closed post-return observation,
+ duplicate refusal with no additional card or clock access.
+-Fresh locked explicit END: actual clock restoration,audit,VM,PCI,host,
+ context release/unreserve. These are complete scoped runtime tests,
+ not compile-only or a substitute success transport.
+Raw learned, OS/register/GDDR endpoints are SIMULATED; no physical P100A,
+original final numerics, full64/persistent token or throughput qualification.
+
+Current remaining gates / preserved hardware
+---------------------------------------------
+Current72 actual public-handler94469/41404 and CURRENT original-c600
+native/readback93742/38351 remain LIVE. The original pair has completed
+the whole test RUN and119-worker counter correlation plus8 inert output
+refusals; final strict output/reference comparison, readback/restoration and
+fresh final-END gates are still pending. Source prefix/numeric staging
+progress is not terminal proof. Do not deploy until BOTH copies finish.
+Current72 profile separately confirms post-RUN/119STOP+ROOT/120holds readback;
+its final-copy/duplicate/END also need terminal proof. Never infer permission
+from a sampled stack, caller result flag or simulated learned numerics.
+
+No code/guard/bounds/role change to shorten validation. No72 installation,
+native card compute/reset/reload, Assistant/boot/network/power/SD/mains or
+hardware-connection change. Known-good041 remains installed;72 files staged.
+Next: await SAME four remaining handles, archive strict original and72
+public-lifecycle results, then fresh guarded ONE physical72 original test.
+All64/persistent state/history/KV/token commit/finalnorm/vocab/sampling/
+noCPUreferenceWork+Assistant still owed. Last whole27B0.207893161tok/s,
+20UNMET, goal ACTIVE. This continuation is PROGRESS, not completion.

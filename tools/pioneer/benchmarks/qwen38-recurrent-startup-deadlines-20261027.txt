@@ -2,6 +2,10 @@ Recurrent per-transition wait accounting / actual virgin-worker boot regression
 October 27, 2026
 STATUS: targeted startup and SDK PASS; whole native control/END STILL LIVE.
 This is a development checkpoint, NOT a deployed/physical/full-offload driver.
+CONTINUATION23:32:43UTC: whole controls2894/11492 now BOTH TERMINAL0; see
+qwen38-recurrent-startup-whole-control-20261027.txt. LIVE labels below describe
+the original checkpoint, not current handle status. Current72/original gates
+are still pending; no hardware qualification is thereby inferred.
 
 Reproduced defect (no physical P100A)
 ------------------------------------
