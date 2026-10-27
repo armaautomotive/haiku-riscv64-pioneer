@@ -1,0 +1,3 @@
+c4e6755ea1f7051cec3bec73d24b02efc9b80786bed85813be1eb6821db502dc cpu-timing.o
+c7db4e67ad687dfe81fd87797f5184a9f75cce3dcbdc5ffcfb9f2527bcc1649a q38-immutable-plan-CPU-TIMING-ONLY
+PASS Haiku CPU-only immutable-plan timing compile/link/no device-open-or-ioctl/native-owner symbols/maxUSERframe7840;NOT executed/model/TPS proof

@@ -1,0 +1,3 @@
+c7db4e67ad687dfe81fd87797f5184a9f75cce3dcbdc5ffcfb9f2527bcc1649a  /boot/home/pioneer-q38-recurrent-debug71-qualification-20261027-b/q38-immutable-plan-CPU-TIMING-ONLY-c7db4e67
+CPU_METADATA_ONLY immutable_plan_checks8 total_us109553 us_per_check13694.125;NO_GPU_OPEN_OR_NATIVE_OWNER_OR_MODEL_IO_NOT_TOKEN_RATE
+P100A_RELOAD driver55 tag2026102100010012 generation6 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY

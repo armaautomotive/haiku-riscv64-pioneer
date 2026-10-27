@@ -1,0 +1,65 @@
+CPU-only recurrent immutable-plan cost, 2026-10-27
+STATUS: CPU diagnostic COMPLETE; NOT P100A arithmetic/inference/TPS proof.
+
+Why this was measured
+---------------------
+The still-running actual DEBUG71 handler sanitizer tests were profiled,
+without stopping/restarting them. A one-second sample of the main test
+showed all734 samples inside native validation Close/ValidationReadback.
+Repeated Guard/BaseScope/whole-plan Matches/Conv and GDN canonical lookup
+accounted for the sampled work. This is evidence of expensive software
+checking, not a terminal/hung test or a physical-card failure.
+The raw sample stays in /private/tmp; it is not published here.
+
+Inspected current readback code poisons/verifies each scratch word and
+captures each result word under full guards. The packet's30s budget applies
+to its completion poll; the bulk poison/capture loops are outside that
+poll budget. Do not infer a timeout or a successful physical qualification
+from this CPU timing. Keep the separate strict validation path out of the
+eventual persistent no-CPU-reference Work execution hot path.
+
+CPU-only implementation
+-----------------------
+tests/pioneer_q38_recurrent_plan_cpu_timing.cpp constructs immutable fixed
+canonical/block DATA on the heap and calls Matches eight times. A compiler
+memory barrier prevents invariant-call hoisting. It does not open a model,
+device or driver, create native/session/compute owners, initialize memory
+on the P100A, or claim source/readiness/state/launch permissions.
+The timing includes only the eight Matches calls, not plan construction.
+This tiny warm microbenchmark is NOT a sustained benchmark, full native
+Guard timing, card latency, CPU-vs-GPU comparison or token-rate estimate.
+
+Main and clean read-only Haiku RV64 SDK builds both exited0; objects and
+linked binaries match byte-for-byte. Symbol inspection excludes direct
+open/fopen/ioctl/mmap/map_physical_memory and native/session/Work owners.
+CPU-timing object SHA256:
+c4e6755ea1f7051cec3bec73d24b02efc9b80786bed85813be1eb6821db502dc
+CPU-only executable SHA256:
+c7db4e67ad687dfe81fd87797f5184a9f75cce3dcbdc5ffcfb9f2527bcc1649a
+Maximum USER frame7840B; this is NOT a kernel unit.
+The same source also compiled and passed on the Mac host.
+
+Actual Haiku execution
+----------------------
+Only this inspected binary was copied to a fresh isolated test filename:
+/boot/home/pioneer-q38-recurrent-debug71-qualification-20261027-b/q38-immutable-plan-CPU-TIMING-ONLY-c7db4e67
+Its complete remote SHA was checked before execution. SSH command exited0.
+Eight checks: total109553us, average13694.125us (~13.7ms per Matches).
+This is a CPU metadata measurement, NEVER model tokens/sec.
+After execution, driver55/tag2026102100010012/generation6 remained
+quiesced0/cold0/active_owner0/open_count1/guard1. No new driver was installed
+or loaded, and no card calculation, Assistant/boot/network configuration,
+restart, power, SD, mains or hardware-connection change occurred.
+
+Archived evidence
+------------------
+qwen38-recurrent-plan-cpu-main-build-20261027.log
+qwen38-recurrent-plan-cpu-clean-build-20261027.log
+qwen38-recurrent-plan-cpu-haiku-20261027.log
+
+Full objective remains ACTIVE. Handler repair qualification and the new
+history-staging instruction tests are still live; neither was replaced by
+this CPU-only check. Physical original-weight execution, all64 layers,
+persistent state/history/KV/token commit, final norm/vocabulary/sampling,
+no-CPU-reference Work/Assistant and sustained performance tuning remain
+owed. Last actual whole27B rate0.207893161tok/s;20tok/s target UNMET.

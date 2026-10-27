@@ -112,6 +112,13 @@ The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2
   Candidate driver/client/helper copies are SHA-verified in a separate home
   test folder on Haiku, NOT in the installed driver path and NEVER invoked.
   Evidence: benchmarks/qwen38-recurrent-original-readback-20261027.txt.
+- A CPU-only timing executable with no device-open/ioctl/native-owner
+  symbols now builds identically in main/clean and passed on Haiku. Eight
+  immutable whole-plan Matches calls took 109553us (13694.125us/check).
+  This helps explain strict readback validation cost; it is NOT GPU math,
+  full native Guard timing, a token rate or a Work-mode performance result.
+  Driver55/tag12/generation6 stayed clean and unchanged after this CPU test.
+  Evidence: benchmarks/qwen38-recurrent-plan-cpu-timing-20261027.txt.
 
 Remaining before full-offload Work is ready:
 
