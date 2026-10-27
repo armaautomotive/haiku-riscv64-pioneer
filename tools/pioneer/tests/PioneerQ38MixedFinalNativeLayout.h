@@ -5,6 +5,21 @@ static uint32 finalAlias=0x12345678;
 static std::vector<area_id> finalRemoved;
 static unsigned finalDeleteFailure=0,finalPciFailure=0,finalDestroyed=0;
 static bool finalDeleteFailed=false,finalPciFailed=false;
+#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+#include "pioneer_q38_mixed_live_final_audit.h"
+static bool FinalFreshAudit(uint32);
+static unsigned finalAuditCalls=0,finalAuditReads[12]={},finalAuditWrites=0;
+static int finalAuditFailureKind=-1;
+static unsigned finalAuditFailureOrdinal=1;
+static bool finalAuditReturned=false,finalQuietFailure=false,finalIdleFailure=false;
+static unsigned finalQuietReads=0;
+static int finalAuditDropRestoreWord=-1;
+static uint32 finalAuditBeforeTlb[2][3]={};
+template<class T> struct FinalAuditField {
+ const T* const* target;uint32 T::* member;
+ operator uint32()const{assert(*target);return (*target)->*member;}
+};
+#endif
 static int delete_area(area_id view){
  assert(!finalDeleteFailed && !finalPciFailed);finalRemoved.push_back(view);
  if(finalRemoved.size()==finalDeleteFailure){finalDeleteFailed=true;return -1;}return B_OK;
@@ -17,7 +32,13 @@ struct PioneerDramSamplesIO:PioneerTensixIO{area_id dataArea=-1,dramArea=-1;cons
 struct PioneerComputeNocIO:PioneerDramSamplesIO{area_id nocArea=-1;const volatile uint32* nocRegisters=&finalAlias;};
 struct PioneerHostPathIO:PioneerComputeNocIO{area_id inboundArea=-1,siiArea=-1;const volatile uint32* inbound=&finalAlias;const volatile uint32* sii=&finalAlias;};
 struct PioneerHostDmaAuditIO:PioneerHostPathIO{area_id hdmaArea=-1;const volatile uint32* hdma=&finalAlias;
- bool AfterNodeId(uint32){assert(false && "fresh diagnostic recheck is not yet supplied by this raw endpoint fixture");return false;}};
+ bool AfterNodeId(uint32 id){
+#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+  return FinalFreshAudit(id); // raw bridge executes VERBATIM complete production chain
+#else
+  (void)id;assert(false && "fresh diagnostic recheck is not yet supplied by this raw endpoint fixture");return false;
+#endif
+ }};
 struct PioneerHostReadIO:PioneerHostDmaAuditIO{area_id scratchArea=-1,writeArea=-1;volatile uint32* scratchData=&finalAlias;volatile uint32* niuWrite=&finalAlias;};
 struct PioneerHostWriteIO:PioneerHostReadIO{bool Unmap(){assert(false && "NO inherited diagnostic cleanup");return false;}};
 struct MixedFinalNativeLayout:PioneerHostWriteIO{

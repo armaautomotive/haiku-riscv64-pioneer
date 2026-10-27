@@ -7,8 +7,13 @@ Genuine native held state now passes actual owned END prefix/footer,
 real clock,30VM/11PCI/3host disposal and57 failure/refusal cases on main
 and clean trees. Separate actual bank-END caller-seal block passes18
 CPU lifecycle cases/420 role gates and main+clean SDK compilation.
-The complete genuine native call/END with fresh diagnostic recheck=true
-is STILL OWED;held recheck=false tests are NOT that proof. Then distinct
+Follow-up main+clean actual RUN/119STOP+ROOT/120holds/5page readback/full
+restore+second proof now compose with genuine call-scope release/locked
+END/real clock/fresh recheck=true/final disposal and84 fault cases,all
+terminal0/byte-identical. Early geometry-loss refusal was moved before
+clock/audit IO. Context/OS/registers remain a semantic fixture;NOT hardware
+or original-model native arithmetic. Evidence:
+benchmarks/qwen38-mixed-live-fresh-final-audit-20261027.txt. Distinct
 original-model native validation/client,physical comparison,full64-layer
 state/token/sampling/Work integration and measured optimization remain.
 Evidence:benchmarks/qwen38-mixed-live-final-{disposal,end-call}-20261027.txt.

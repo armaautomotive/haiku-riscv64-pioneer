@@ -61,6 +61,10 @@ static area_id map_physical_memory(const char*,uint64,unsigned,int,unsigned,void
 #include "PioneerQ38MixedFinalNativeLayout.h"
 using int32=int32_t;using status_t=int;
 static constexpr int B_BAD_VALUE=-2;
+#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+using thread_id=int;
+static constexpr int B_BUSY=-3,B_DEV_NOT_READY=-4,B_NOT_ALLOWED=-5;
+#endif
 #endif
 struct PioneerHostPageIO{bool quarantined=false;
 #ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
@@ -135,7 +139,11 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
 #ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
   if(q38MixedLiveFinalUnmapped)return p?RootRead(a,n):CardRead(a,n);
 #endif
-  return UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Pci,p,a,n):ProjectionZeroIO::HostPciRead(p,a,n);}
+  uint32 value=UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Pci,p,a,n):ProjectionZeroIO::HostPciRead(p,a,n);
+#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+  if(finalAuditReturned){finalQuietReads++;if(finalQuietFailure && a==4)return 0x406;}
+#endif
+  return value;}
  uint32 Q38PanelRead(uint32 a){return UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Panel,a):ProjectionZeroIO::Q38PanelRead(a);}
  void Q38PanelWrite(uint32 a,uint32 v){if(UseMixedLiveIO())mixedLiveTransport->Write32(MixedLiveNativeTransport::SetPanel,a,v);else ProjectionZeroIO::Q38PanelWrite(a,v);}
  uint32 RuntimeCodeRead(unsigned i){return UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Code,i):ProjectionZeroIO::RuntimeCodeRead(i);}
@@ -145,7 +153,12 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  void RuntimeStatusWrite(unsigned i,uint32 v){if(UseMixedLiveIO())mixedLiveTransport->Write32(MixedLiveNativeTransport::SetStatus,i,v);else ProjectionZeroIO::RuntimeStatusWrite(i,v);}
  void Pause(){if(UseMixedLiveIO())mixedLiveTransport->Pause();else ProjectionZeroIO::Pause();}
  uint64 Q38CohortNow(){return UseMixedLiveIO()?mixedLiveTransport->Now():ProjectionZeroIO::Q38CohortNow();}
- uint32 ResidentNocRead(uint32 a){return UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Noc,a):ProjectionZeroIO::ResidentNocRead(a);}
+ uint32 ResidentNocRead(uint32 a){
+  uint32 value=UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Noc,a):ProjectionZeroIO::ResidentNocRead(a);
+#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+  if(finalAuditReturned && finalIdleFailure && a==0x178)return value|1;
+#endif
+  return value;}
  void ResidentNocWrite(uint32 a,uint32 v){if(UseMixedLiveIO())mixedLiveTransport->Write32(MixedLiveNativeTransport::SetNoc,a,v);else ProjectionZeroIO::ResidentNocWrite(a,v);}
 #else
  bool q38MixedLiveMemoryMapAttempted=false;
@@ -282,13 +295,23 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
 #endif
  struct DramAlias{const tt_dram_samples_result* target=nullptr;
 #ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+  FinalAuditField<tt_dram_samples_result> tlb_restored{&target,&tt_dram_samples_result::tlb_restored},
+   data_restored{&target,&tt_dram_samples_result::data_restored},recovery_required{&target,&tt_dram_samples_result::recovery_required};
+#else
   uint32 tlb_restored=1,data_restored=1,recovery_required=0;
+#endif
 #endif
   const tt_dram_samples_result* operator&()const{return target;}
   operator const tt_dram_samples_result&()const{assert(target);return *target;}}dram;
  struct NocAlias{const tt_compute_noc_result* target=nullptr;
 #ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+  FinalAuditField<tt_compute_noc_result> tlb_restored{&target,&tt_compute_noc_result::tlb_restored},
+   recovery_required{&target,&tt_compute_noc_result::recovery_required};
+#else
   uint32 tlb_restored=1,recovery_required=0;
+#endif
 #endif
   operator const tt_compute_noc_result&()const{assert(target);return *target;}}noc;
  explicit PioneerSessionIO(const char* zero,const char* embedding):ProjectionZeroIO(zero),embeddingImage(embedding){
@@ -601,7 +624,13 @@ struct PioneerStoreContext {
 #else
  FactoryFlags q38Delta;
 #endif
- int runtimeCoreMode=-1,q38GdnCallThread=42;uint64 bytes=PioneerResidentBanks::Total;
+ int runtimeCoreMode=-1;
+#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+ int q38GdnCallThread=-1; // ACTUAL call scope must acquire the seal;never fixture-assigned
+#else
+ int q38GdnCallThread=42;
+#endif
+ uint64 bytes=PioneerResidentBanks::Total;
  bool bankStorageOnly=true,dispatchOwnerRetained=false,otherUnsafe=false,q38DispatchRoutes=false;
 #ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
  tt_pioneer_mmio_result pci={};tt_pioneer_mmio_transaction transaction={};unsigned q38EndPhase=0;
@@ -659,7 +688,10 @@ struct PioneerStoreContext {
 struct PioneerProbeCookie{PioneerStoreContext* context;uint32 magic=0x50313030;int team=7;};
 static PioneerProbeCookie* sRuntimeOwner=nullptr;
 static bool sColdRecoveryRequired=false,sReloadQuiesced=false,sBankStorageOnly=true;
-static uint64 sReloadGeneration=4;static const void* sQ38LocalDeltaOwner=nullptr;
+static uint64 sReloadGeneration=4;
+#ifndef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+static const void* sQ38LocalDeltaOwner=nullptr;
+#endif
 static int currentThread=42;static int find_thread(void*){return currentThread;}
 #if defined(PIONEER_Q38_RESIDENT_DECODER_NATIVE) || defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT)
 static int currentTeam=7;static bool failThreadInfo=false;
@@ -668,6 +700,14 @@ static int get_thread_info(int thread,thread_info* info){if(failThreadInfo || th
 #endif
 // Use actual native MEMORY-ONLY retention body,not a simulated ready seal.
 #include "embedding_factory_retain.inc"
+#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+static int sLock=1;static bool finalLockHeld=false;
+static unsigned finalLockAcquired=0,finalLockReleased=0;
+static status_t acquire_sem(int lock){assert(lock==sLock);if(finalLockHeld)return B_BUSY;finalLockHeld=true;finalLockAcquired++;return B_OK;}
+static void release_sem(int lock){assert(lock==sLock && finalLockHeld);finalLockHeld=false;finalLockReleased++;}
+#include "native_probe_lock.inc"
+#include "native_call_scope.inc"
+#endif
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_OWNER
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeBind.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentOutputNativeInitialize.inc"
@@ -991,6 +1031,58 @@ void PioneerSessionIO::RuntimeResetWrite(uint32 value){
 static void dprintf(const char*,...) {} // diagnostic metadata only
 #include "native_clock_service.inc"
 #include "native_bulk_close.inc"
+#endif
+#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+static uint32 FinalAuditRead(void* object,MixedFinalAuditEndpoints::Kind kind,unsigned a,unsigned b,unsigned n){
+ auto& io=*static_cast<PioneerSessionIO*>(object);assert(&io==activeIO && io.UseMixedLiveIO() && !finalDeleteFailed && !finalPciFailed);
+ unsigned count=++finalAuditReads[kind];
+ if(int(kind)==finalAuditFailureKind && count==finalAuditFailureOrdinal)return UINT32_MAX;
+ using E=MixedFinalAuditEndpoints;
+ auto selected=[&](unsigned slot,auto word){for(unsigned w=0;w<3;w++)assert(io.DramTlbRead(slot,w)==word(w));};
+ switch(kind){
+  case E::Tlb:return io.DramTlbRead(a,b);
+  case E::Niu:return io.SourceRead(0);
+  case E::Reset:return io.ResetRead();
+  case E::Source:return io.SourceRead(a);
+  case E::Compute:return io.ComputeNocRead(a);
+  case E::Pci:return io.HostPciRead(a,uint16_t(b),uint8(n));
+  case E::Scratch:selected(1,BlackholeArcScratchTlbWord);switch(a){case 2:return 5;case 4:return 0;case 11:return 0x10003000;case 12:return 0x10002000;case 13:return 0x10001000;default:assert(false);return 0;}
+  case E::Csm:{
+   selected(1,BlackholeTelemetryTlbWord);
+   if(a==0x10001000)return 0x10000;if(a==0x10001004)return TT_ARC_TELEMETRY_COUNT;
+   if(a>=0x10001008 && a<0x10001008+TT_ARC_TELEMETRY_COUNT*4){unsigned i=(a-0x10001008)/4;return (i<<16)|BlackholeTelemetryTag(i);}
+   assert(a>=0x10002000 && a<0x10002000+TT_ARC_TELEMETRY_COUNT*4);
+   static constexpr uint32 values[]={0x12050001,0,0,0,0,0,0xf7,0x5515,0,0xfff,0,0};return values[(a-0x10002000)/4];
+  }
+  case E::DramId:{
+   const unsigned ys[]={12,15,18,12,15,18,21};
+   for(unsigned bank=0;bank<7;bank++){
+    bool same=true;for(unsigned w=0;w<3;w++)same&=io.DramTlbRead(1,w)==BlackholeDramFixedTlbWord(0xffa00000,bank<3?18:17,ys[bank],true,w);
+    if(!same)continue;assert(a<TT_DRAM_ID_WORDS);uint32 xy=BlackholeDramPhysicalX(bank)|(BlackholeDramPhysicalY(bank)<<6);
+    if(a==0)return 0x1c611000|xy;if(a==1)return 0x80000|BlackholeDramBank(bank);return a==2?0xe005:xy;
+   }assert(false && "raw DRAM ID requires its actual selected TLB");return 0;
+  }
+  case E::Inbound:assert(a<2);return a?0:0x2f;
+  case E::Sii:selected(0,BlackholeHostSiiTlbWord);assert(a<8);return a?0:0x400000;
+  case E::Hdma:selected(0,BlackholeHostDbiTlbWord);assert(a<4);return a%2?3:0;
+ }assert(false);return 0;
+}
+static void FinalAuditTlbWrite(void* object,unsigned slot,unsigned word,uint32 value){
+ auto& io=*static_cast<PioneerSessionIO*>(object);assert(&io==activeIO && !finalDeleteFailed && !finalPciFailed);finalAuditWrites++;
+ if(slot==1 && int(word)==finalAuditDropRestoreWord && value==finalAuditBeforeTlb[slot][word])return; // raw dropped control write,never a result setter
+ io.DramTlbWrite(slot,word,value);
+}
+static bool FinalFreshAudit(uint32 id){
+ auto& io=*activeIO;auto* c=io.q38MutableContext;assert(c && &c->io==&io && finalLockHeld);finalAuditCalls++;
+ assert(c->q38Clock.Snapshot().state==TT_ARC_CLOCK_RESTORED && c->q38Clock.Snapshot().after_mhz==800 && !c->q38Clock.RequiresExplicitEnd());
+ auto& dram=c->baseline.baseline.baseline.baseline.dram;auto& noc=c->baseline.baseline.baseline.noc;
+ assert(&dram==io.dram.target && &noc==io.noc.target);
+ MixedFinalAuditEndpoints endpoints{&io,FinalAuditRead,FinalAuditTlbWrite};
+ MixedFinalAuditResults results{io.arc,io.telemetry,io.tensix,dram,noc,io.path,io.audit,io.PioneerArcIO::dirty,
+  io.telemetryAttempted,io.resetAttempted,io.dramAttempted,io.nocAttempted,io.pathAttempted,io.auditAttempted};
+ for(unsigned slot=0;slot<2;slot++)for(unsigned word=0;word<3;word++)finalAuditBeforeTlb[slot][word]=io.DramTlbRead(slot,word);
+ bool passed=ExecuteMixedFinalAudit(endpoints,results,id);finalAuditReturned=true;return passed;
+}
 #endif
 struct NativeFactoryFixture {
  PioneerSessionIO io;PanelOwners owner;

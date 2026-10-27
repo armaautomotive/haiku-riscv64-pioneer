@@ -44,6 +44,12 @@ fresh-recheck proof. Clean tree:/private/tmp/pioneer-mixed-endcall-clean.lWU7pwR
 
 Next required qualification
 -----------------------------
+Follow-up:the real compute-call scope release/locked END/recheck=true
+composition now passes main+clean,including actual instructions/readback
+and84 refusal/failure cases. See qwen38-mixed-live-fresh-final-audit-20261027.txt.
+That offline semantic fixture is NOT a physical/original-model native or
+loadable-driver qualification. The following records the earlier boundary.
+
 Join actual compute-call scope release plus this locked destructive END
 entry to the SAME genuine native closed state and real clock,and execute
 the complete fresh inherited diagnostic chain/recheck=true before final

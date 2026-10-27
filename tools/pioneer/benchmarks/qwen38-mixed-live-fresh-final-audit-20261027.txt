@@ -1,0 +1,103 @@
+Qwen27B: genuine call scope through fresh audit and final disposal
+2026-10-27 -- OFFLINE NODRV qualification;NO deployment or speedup
+
+Production defect found by the new composition
+-----------------------------------------------
+Changing the bound capacity after native CLOSE caused actual END to retain
+resources,but only AFTER clock traffic and a fresh audit. The recorded
+case4 failure had clock IO631->1052 and transport IO95179580->95188519,
+with context/reservation retained and no VM/PCI release. Final Unmap's
+geometry checks were too late to enforce this CPU-only refusal boundary.
+PioneerQ38MixedLiveNativeEnd.inc now refuses changed capacity/core mode
+BEFORE bulk/root/clock/audit operations,ONLY under the additional private
+FINAL_RELEASE selection. All other compiled selections remain unchanged.
+
+Actual held/no-launch composition -- main+clean TERMINAL0
+----------------------------------------------------------
+The --fresh-final-end test starts q38GdnCallThread=-1. The VERBATIM actual
+probe lock and compute-call scope establish its seal. Real zero/QPE1 and
+ALL120 native held factories install,restore11398712 original words and
+complete the second proof/explicit sealed Dispatch END. The compute scope
+then clears its own seal and releases the simulated OS semaphore.
+
+Actual private bank-END reacquires the real lock policy and establishes its
+destructive call seal. The VERBATIM owned END prefix/footer closes bulk/root,
+ends the REAL private clock lease and performs the fresh recheck=true path:
+seven VERBATIM inherited AfterNodeId methods (ARC,telemetry,Tensix,DRAM,
+NoC,host path,HDMA),actual PCI-quiet policy and resident-idle transaction.
+Then actual final scope/30VM Unmap/11PCI writes+proof/3host release methods,
+unreserve,cookie/global clear and mixed-before-borrowed-prefix destruction
+fragments execute. Unreserve asserts actual idle/TLB proof,ended800MHz
+clock,completed fresh audit and still-held call lock. No dead context is
+dereferenced;no compute RAII scope surrounds destructive END.
+
+The separate audit TU has actual production method bodies and policy types,
+with raw callbacks to the SAME native TLB/source/reset/NoC/PCI transport.
+ARC scratch/CSM,DRAM IDs,inbound/SII/HDMA register bytes are explicitly
+simulated fixture hardware data;selected windows are checked at reads.
+Result references update the SAME retained DRAM/NoC baseline. Native IO
+aliases read those actual result fields,not independent "restored" flags.
+No source-ready/closed/clock/native-permission setter is provided.
+
+84 cases:11 early caller refusals,7 native binding/geometry losses,12 audit
+register-read failures,3 dropped TLB-restore words,late PCI-quiet and
+resident-idle failures,5 clock faults,33 VM/host-release and11 PCI failures.
+Every failed native END retains context/reservation;later retry performs
+ZERO card/clock/cleanup IO. Early caller refusals do not quarantine an
+otherwise valid owner. Balanced lock release is checked on all returns.
+Main79802/clean50758 are both TERMINAL0;stdout BYTE-IDENTICAL:
+ qwen38-mixed-live-fresh-final-held-20261027.log
+ SHA2569760d6fef004c5894723b6fb17959a4e7221a3753c10ed9972c587cfcd16b502
+Clean tree:/private/tmp/pioneer-mixed-fresh-clean.C8kTE7dU.
+
+The context/virtual-map layout and OS/PCI endpoints remain a semantic
+fixture,NOT the complete kernel class. The actual initial metadata-only
+Snapshot is omitted;actual native lifecycle/END policies and named disposal
+methods/fragments are exercised. No held test claims dense RUN,original-
+model native arithmetic,physical hardware,full64-model inference or TPS.
+
+Build/isolation/regression evidence
+-------------------------------------
+Main2711/clean15813 actual Haiku context SDK both TERMINAL0 and object
+BYTE-IDENTICAL0274cc3100ee4d28016fd9185e513b6aeef3a7efc2e7f527f93c238bd506adbb;
+max new frame1200B. Actual bodies retained,normal ABI absent,independent
+inert controls unchanged. Compile ONLY,not permission to load this role.
+Main74697/clean83889 both TERMINAL0/identical:420 role/body gates,new18
+CPU caller lifecycle cases and old DEBUG69's unchanged14 cases.
+ qwen38-mixed-live-fresh-final-gates-20261027.log
+ SHA256b99da7dad2872e178fb1a784c794d91e33e8f47f7b5d26718af2aca03565f714
+Old actual57-disposal30450 and48-native-refusal86517 runs TERMINAL0 with
+unchanged stdout cc9f18ee... and5535e225... respectively. SDK controls
+default29497,sigmoid18614,readback21348 all TERMINAL0 and byte-unchanged:
+0b55dd8d20b7d81a8b97cc6608c5496d9b2633a4c1ef698a74010feb933b90e8
+374ec650c173e5b23b73d0a0a09ba7f8785add27f14584268d033c834cdbd224
+4b1e6e4473150e50e10526d161a7d5bb67a466b718e9bf216dbb810b10279e9b
+Old65=61faa093 and oldNODRV=9fcf1f7f also unchanged.
+
+Combined instruction execution/readback/fresh END -- TERMINAL0
+---------------------------------------------------------------
+The new --fresh-validation-end mode combines actual native RUN/119STOP+
+ROOT,ALL120holds,fixed5page result capture/full restore+second proof with
+the above fresh END composition. Main11287 and clean91681 BOTH completed
+TERMINAL0 against the frozen source and pinned program bytes. Complete
+stdout is BYTE-IDENTICAL;ALL7 matrices,actual119STOP+ROOT terminal,
+ALL120holds,genuine instruction-produced FINAL5120word/5page capture,
+11398712word restore+second proof,real call-scope release and the fresh
+END/84failure cases pass in the SAME native lifetime. The8 post-RUN
+lifetime losses and inert5119-word output request remain correctly fenced.
+ qwen38-mixed-live-fresh-final-execution-{main,clean}-20261027.log
+ SHA256535c6d7386f267ec461e979258dba075cd4e06a194608fd500032dca285f383d
+Learned raw tensors/OS/register endpoints are simulated;this is NOT the
+original-GGUF native arithmetic/physical comparison or full-model proof.
+The context/Snapshot/destructor scope limitations stated above still apply.
+
+Remaining:distinct authenticated original-GGUF native validation
+entry/client and physical comparison.
+Standalone layer3/position0 is NOT a valid GDN0..2/model prefix. Full64-layer
+GDN+dense/recurrent+KV/token commit/final norm/vocabulary/sampling/Work/
+Assistant integration and measured optimization remain incomplete.
+
+No driver/Assistant/model/boot/relay/power/SD/mains/hardware/disk action.
+SDK read-only;outputs /private/tmp;dirty llama.cpp/unrelated FlashNext
+untouched. Real whole-model0.207893161tok/s UNCHANGED;20tok/s UNMET.
+Goal ACTIVE;these changes are not promoted to a loadable driver.

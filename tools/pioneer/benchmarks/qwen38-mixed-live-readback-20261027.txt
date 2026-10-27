@@ -80,6 +80,12 @@ Full actual-native instruction/readback qualification -- TERMINAL0
 
 Still owed before real use
 ----------------------------
+Follow-up:the actual native RUN/readback/restore/sealed Dispatch END plus
+real clock,fresh recheck=true,caller seal and final disposal now compose
+in main+clean terminal0 runs with identical stdout and84 failure cases.
+See qwen38-mixed-live-fresh-final-audit-20261027.txt. Context/OS/registers
+are simulated;original-model native and physical qualification remain owed.
+
 Separate guarded original-weight validation entry/client;final real ARC/
 host/map/context teardown qualification;physical comparison. Then valid
 64-layer GDN+dense sequencing/recurrent+KV state/token commit,final norm/

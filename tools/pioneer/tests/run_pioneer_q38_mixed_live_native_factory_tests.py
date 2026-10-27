@@ -10,9 +10,10 @@ import sys
 import tempfile
 assert len(sys.argv)>=7
 options=sys.argv[7:]
-assert len(set(options))==len(options) and set(options)<={'--execute','--faults','--sigmoid-candidate','--validation-readback','--clock-end','--final-end'}
-assert len(set(options)&{'--execute','--faults','--validation-readback','--clock-end','--final-end'})<=1
-final_end='--final-end' in options
+assert len(set(options))==len(options) and set(options)<={'--execute','--faults','--sigmoid-candidate','--validation-readback','--clock-end','--final-end','--fresh-final-end','--fresh-validation-end'}
+assert len(set(options)&{'--execute','--faults','--validation-readback','--clock-end','--final-end','--fresh-final-end','--fresh-validation-end'})<=1
+fresh=bool(set(options)&{'--fresh-final-end','--fresh-validation-end'})
+final_end='--final-end' in options or fresh
 clock_end='--clock-end' in options or final_end
 readback='--validation-readback' in options or final_end
 sigmoid='--sigmoid-candidate' in options or readback
@@ -40,6 +41,7 @@ if readback:
  program_flags+=['-DPIONEER_Q38_MIXED_LIVE_VALIDATION_READBACK=1']
 if clock_end:defines['PIONEER_Q38_MIXED_LIVE_END_FIXTURE']='1'
 if final_end:defines['PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE']='1'
+if fresh:defines['PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST']='1'
 defines.update({key:'pioneer_mixed_factory_test_'+key for key in ('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')})
 source=(kernel/'tenstorrent_pci_probe.cpp').read_text()
 with tempfile.TemporaryDirectory(prefix='pioneer-mixed-native-factory-',dir='/private/tmp') as temporary:
@@ -69,6 +71,12 @@ with tempfile.TemporaryDirectory(prefix='pioneer-mixed-native-factory-',dir='/pr
   for name,owner,signature in [('host','PioneerHostPageIO','int32 ReleaseHostPage()'),('output','PioneerOutputBufferIO','int32 ReleaseOutputBuffer()'),('wide','PioneerWideOutputIO','int32 ReleaseWideOutput()')]:
    (base/('native_release_'+name+'.inc')).write_text(method(owner,signature))
   (base/'native_session_unmap.inc').write_text(method('PioneerSessionIO','bool Unmap()'))
+  if fresh:
+   for owner in ('Arc','Telemetry','Tensix','DramSamples','ComputeNoc','HostPath','HostDmaAudit'):
+    (base/('native_audit_'+owner+'.inc')).write_text(method('Pioneer'+owner+'IO','bool AfterNodeId(uint32 id)'))
+   for name,marker in (('probe_lock','PIONEER_PROBE_LOCK'),('call_scope','PIONEER_Q38_GDN_CALL_SCOPE')):
+    begin,end='// '+marker+'_BEGIN','// '+marker+'_END';assert source.count(begin)==source.count(end)==1
+    (base/('native_'+name+'.inc')).write_text(source.split(begin,1)[1].split(end,1)[0])
   # VERBATIM actual owned-path footer. Prefix closure/clock state is
   # provided by the genuine factories,never a manufactured ready object.
   begin='q38_dispatch_owned_restored:';end='// PIONEER_Q38_DISPATCH_COOKIE_RELEASE_BEGIN'
@@ -89,5 +97,6 @@ with tempfile.TemporaryDirectory(prefix='pioneer-mixed-native-factory-',dir='/pr
   *['-D'+k+'='+v for k,v in sorted(defines.items())],'-I'+str(base),'-I'+str(kernel),
   str(here/'pioneer_q38_mixed_live_native_factory_test.cpp'),str(here/'pioneer_q38_embedding_execution_bridge.cpp'),
   *([str(here/'pioneer_q38_mixed_live_native_clock.cpp')] if clock_end else []),
+  *([str(here/'pioneer_q38_mixed_live_final_audit.cpp')] if fresh else []),
   str(transport),'-o',str(binary)],check=True)
  subprocess.run([str(binary),*sys.argv[1:7],*[o for o in options if o!='--sigmoid-candidate']],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
