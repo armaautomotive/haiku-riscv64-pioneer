@@ -38,7 +38,8 @@ bool PioneerSessionIO::RecurrentBlockBaseScope(){
   if(!state->MatchesBinding(*c,*m,sRuntimeOwner,c->hashes,sRuntimeOwner->team,c->initialized,sReloadGeneration))return false;
   if(state->phase<=PioneerQ38RecurrentBlockNativeState::HistoryClosing){if(runtimeCore || c->q38Dispatch || c->q38DispatchRoutes || fleetEnabled || q38RecurrentBlockMemoryMapAttempted)return false;}
   else if(!c->q38Dispatch || c->q38Dispatch->worker[0].master!=&c->lease || !fleetEnabled || c->q38Dispatch->unsafe
-   || c->q38Dispatch->closed || c->q38Dispatch->booted || c->q38Dispatch->bootAttempted || c->q38Dispatch->rootRunning)return false;
+   || c->q38Dispatch->closed || c->q38Dispatch->booted || c->q38Dispatch->bootAttempted)return false;
+  if(c->q38Dispatch && c->q38Dispatch->rootRunning && !state->ControlsCohort(c->q38Dispatch))return false;
   if(state->phase>=PioneerQ38RecurrentBlockNativeState::MemoryPreparing
    && (!state->memory || !state->plan || !c->q38DispatchRoutes || c->q38Dispatch->prepared!=120 || !state->plan->Matches(m->plan)))return false;
  }else if(runtimeCore || c->q38Dispatch || c->q38DispatchRoutes || fleetEnabled || q38RecurrentBlockMemoryMapAttempted)return false;
@@ -60,6 +61,8 @@ bool PioneerSessionIO::RecurrentBlockMemoryAccessScope(){
   && c->q38GdnCallThread==find_thread(NULL) && !c->dispatchOwnerRetained && !sColdRecoveryRequired && !sReloadQuiesced
   && c->bytes==PioneerResidentBanks::Total && c->runtimeCoreMode==1 && state->memory && !state->memory->Unsafe() && !state->memory->Closed()
   && (state->phase==PioneerQ38RecurrentBlockNativeState::MemoryPreparing || state->phase==PioneerQ38RecurrentBlockNativeState::MemoryInstalled
+   || state->phase==PioneerQ38RecurrentBlockNativeState::ExecutionPreparing || state->phase==PioneerQ38RecurrentBlockNativeState::ExecutionReady
+   || state->phase==PioneerQ38RecurrentBlockNativeState::ExecutionComplete || state->phase==PioneerQ38RecurrentBlockNativeState::ExecutionClosing
    || state->phase==PioneerQ38RecurrentBlockNativeState::MemoryClosing)
   && state->MatchesBinding(*c,*m,fd,c->hashes,fd->team,c->initialized,sReloadGeneration);
 }
@@ -69,6 +72,15 @@ bool PioneerSessionIO::RecurrentBlockMemoryScope(const PioneerQ38RecurrentBlockM
  return state && m && state->memory==&memory && &canonical==&m->plan && id==m->identity && learned==c->initialized
   && pages==PioneerResidentBanks::Pages && RecurrentBlockMemoryAccessScope() && RecurrentBlockBaseScope();
 }
+bool PioneerSessionIO::RecurrentBlockExecutionScope(const PioneerQ38RecurrentBlockOwner& execution,const PioneerQ38RecurrentBlockMemory& memory,
+ const PioneerQ38CanonicalModelPlan& canonical,const PioneerQ38MixedRecurrentBlockPlan& plan,const PioneerQ38GdnIdentity& id,const uint8_t* learned,unsigned pages){
+ auto* c=q38MutableContext;auto* state=c?c->q38RecurrentBlockNative:NULL;auto* m=c?c->q38EmbeddingModel:NULL;
+ return state && m && state->execution==&execution && state->memory==&memory && state->plan==&plan && &canonical==&m->plan
+  && id==m->identity && learned==c->initialized && pages==PioneerResidentBanks::Pages && state->InitializationsClosed(c->banks,dram)
+  && (state->phase==PioneerQ38RecurrentBlockNativeState::ExecutionPreparing || state->phase==PioneerQ38RecurrentBlockNativeState::ExecutionReady
+   || state->phase==PioneerQ38RecurrentBlockNativeState::ExecutionComplete || state->phase==PioneerQ38RecurrentBlockNativeState::ExecutionClosing)
+  && execution.MatchesNativeOwner(memory,plan) && RecurrentBlockBaseScope();
+} // real same-owner init seals,not a canonical-data or old native-role alias
 void PioneerSessionIO::RecurrentBlockRetainHostOwners(){
  if(q38MutableContext){tt_resident_session_result retained={};RetainQ38DispatchOwner(*q38MutableContext,retained);}
 }
@@ -118,10 +130,14 @@ void PioneerSessionIO::RecurrentBlockRetainHostOwners(){
 }
 [[maybe_unused]] static bool CloseQ38RecurrentBlockNativeHeld(PioneerStoreContext& c,PioneerQ38RecurrentBlockMemoryResult& r){
  auto* state=c.q38RecurrentBlockNative;
- if(!state || state->phase!=PioneerQ38RecurrentBlockNativeState::MemoryInstalled || !state->memory || state->Unsafe())return false;
+ if(!state || state->phase!=PioneerQ38RecurrentBlockNativeState::MemoryInstalled || !state->memory || state->execution || state->Unsafe())return false;
  state->phase=PioneerQ38RecurrentBlockNativeState::MemoryClosing;
  bool okay=c.io.RecurrentBlockBaseScope() && state->memory->CloseHeldNoLaunch(c.io,r);
  if(okay)state->phase=PioneerQ38RecurrentBlockNativeState::MemoryClosed;
  else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
 }
+#include "PioneerQ38RecurrentBlockNativeExecution.inc"
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE
+#include "PioneerQ38RecurrentBlockFinalReleaseScope.inc"
+#endif
 #endif

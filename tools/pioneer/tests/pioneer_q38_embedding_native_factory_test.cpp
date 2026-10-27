@@ -29,6 +29,10 @@
 #endif
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeArcClockGuard.h"
 #include "pioneer_q38_embedding_execution_bridge.h"
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE
+#include "pioneer_q38_recurrent_block_native_transport.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchClose.h"
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
 #include "pioneer_q38_mixed_live_native_transport.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38DispatchClose.h"
@@ -44,9 +48,13 @@
 #endif
 #include <array>
 #include <new>
-#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+#if defined(PIONEER_Q38_MIXED_LIVE_END_FIXTURE) || defined(PIONEER_Q38_RECURRENT_BLOCK_END_FIXTURE)
 #include "pioneer_q38_mixed_live_native_clock.h"
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38RecurrentBlockFinalPciState.h"
+#else
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveFinalPciState.h" // pure necessary CPU predicate,NOT final release authority
+#endif
 #endif
 #ifdef PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE
 #include "pioneer_q38_projection_native_transport.h"
@@ -60,23 +68,23 @@ static PioneerSessionIO* activeIO=nullptr;
 static uint32 PioneerRead32(const volatile uint32*);
 static void PioneerWrite32(volatile uint32*,uint32);
 static area_id map_physical_memory(const char*,uint64,unsigned,int,unsigned,void**);
-#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+#if defined(PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE) || defined(PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE)
 #include "PioneerQ38MixedFinalNativeLayout.h"
 using int32=int32_t;using status_t=int;
 static constexpr int B_BAD_VALUE=-2;
-#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+#if defined(PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST) || defined(PIONEER_Q38_RECURRENT_BLOCK_FRESH_FINAL_TEST)
 using thread_id=int;
 static constexpr int B_BUSY=-3,B_DEV_NOT_READY=-4,B_NOT_ALLOWED=-5;
 #endif
 #endif
 struct PioneerHostPageIO{bool quarantined=false;
-#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+#if defined(PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE) || defined(PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE)
  area_id area=9001;volatile uint32* page=&finalAlias;bool releaseAttempted=false;
 #include "native_release_host.inc"
 #endif
 };
 struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
-#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+#if defined(PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE) || defined(PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE)
  ,MixedFinalNativeLayout
 #endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
@@ -125,13 +133,20 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
 #endif
  PioneerStoreContext* q38MutableContext=nullptr;
 #ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE
+#include "pioneer_q38_recurrent_block_native_fixture_io.inc"
+#else
  // Binding-only endpoint fixture: NO recurrent mapping or execution.
  bool q38RecurrentBlockMemoryMapAttempted=false;
  bool RecurrentBlockCallScopeMatches();bool RecurrentBlockBaseScope();
  bool RecurrentBlockMemoryMappingStable(unsigned){assert(false && "binding-only fixture cannot map/close execution");return false;}
+#endif
 #ifdef PIONEER_Q38_RECURRENT_BLOCK_INITIALIZATION_FIXTURE
+#ifndef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE
  bool RecurrentBlockInitializationScope(bool,bool);bool RecurrentBlockInitializationOtherCoresHeld(bool);
- bool StateZeroBeforeCohort();bool StateZeroOtherCoresHeld();bool ConvHistoryZeroBeforeCohort();bool ConvHistoryZeroOtherCoresHeld();
+ bool ConvHistoryZeroBeforeCohort();bool ConvHistoryZeroOtherCoresHeld();
+#endif
+ bool StateZeroBeforeCohort();bool StateZeroOtherCoresHeld();
  std::vector<uint32> recurrentBlockGdnWords,recurrentBlockHistoryWords;
  std::vector<unsigned> recurrentBlockGdnTouched,recurrentBlockHistoryTouched;
  PioneerQ38GdnBankExtent recurrentBlockGdnExtents[672]={};PioneerQ38ConvHistoryExtent recurrentBlockHistoryExtents[336]={};
@@ -155,11 +170,11 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  uint32* HostReadBackup(unsigned n){return UseMixedLiveIO()?mixedLiveTransport->Backup(n):ProjectionZeroIO::HostReadBackup(n);}
  uint32 ComputeNocRead(uint32 a){assert(UseMixedLiveIO());return mixedLiveTransport->Read32(MixedLiveNativeTransport::ComputeNoc,a);}
  uint32 HostPciRead(unsigned p,uint16_t a,uint8 n){
-#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+#if defined(PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE) || defined(PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE)
   if(q38MixedLiveFinalUnmapped)return p?RootRead(a,n):CardRead(a,n);
 #endif
   uint32 value=UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Pci,p,a,n):ProjectionZeroIO::HostPciRead(p,a,n);
-#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+#if defined(PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST) || defined(PIONEER_Q38_RECURRENT_BLOCK_FRESH_FINAL_TEST)
   if(finalAuditReturned){finalQuietReads++;if(finalQuietFailure && a==4)return 0x406;}
 #endif
   return value;}
@@ -174,7 +189,7 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  uint64 Q38CohortNow(){return UseMixedLiveIO()?mixedLiveTransport->Now():ProjectionZeroIO::Q38CohortNow();}
  uint32 ResidentNocRead(uint32 a){
   uint32 value=UseMixedLiveIO()?mixedLiveTransport->Read32(MixedLiveNativeTransport::Noc,a):ProjectionZeroIO::ResidentNocRead(a);
-#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+#if defined(PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST) || defined(PIONEER_Q38_RECURRENT_BLOCK_FRESH_FINAL_TEST)
   if(finalAuditReturned && finalIdleFailure && a==0x178)return value|1;
 #endif
   return value;}
@@ -240,7 +255,7 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
 #endif
 #endif
  unsigned runtimeCore=0;bool fleetEnabled=false,runtimeMapped=true,q38SpanAllowed=true;
-#if defined(PIONEER_Q38_MIXED_LIVE_END_FIXTURE) && !defined(PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE)
+#if (defined(PIONEER_Q38_MIXED_LIVE_END_FIXTURE) || defined(PIONEER_Q38_RECURRENT_BLOCK_END_FIXTURE)) && !(defined(PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE) || defined(PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE))
  bool q38MixedLiveFinalUnmapAttempted=false; // simulated VM transaction endpoint DATA,not a closed-owner setter
 #endif
  std::array<uint32,10240> prefix;
@@ -313,8 +328,8 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  void ResidentNocWrite(uint32 offset,uint32 value);
 #endif
  struct DramAlias{const tt_dram_samples_result* target=nullptr;
-#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
-#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+#if defined(PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE) || defined(PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE)
+#if defined(PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST) || defined(PIONEER_Q38_RECURRENT_BLOCK_FRESH_FINAL_TEST)
   FinalAuditField<tt_dram_samples_result> tlb_restored{&target,&tt_dram_samples_result::tlb_restored},
    data_restored{&target,&tt_dram_samples_result::data_restored},recovery_required{&target,&tt_dram_samples_result::recovery_required};
 #else
@@ -324,8 +339,8 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
   const tt_dram_samples_result* operator&()const{return target;}
   operator const tt_dram_samples_result&()const{assert(target);return *target;}}dram;
  struct NocAlias{const tt_compute_noc_result* target=nullptr;
-#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
-#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+#if defined(PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE) || defined(PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE)
+#if defined(PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST) || defined(PIONEER_Q38_RECURRENT_BLOCK_FRESH_FINAL_TEST)
   FinalAuditField<tt_compute_noc_result> tlb_restored{&target,&tt_compute_noc_result::tlb_restored},
    recovery_required{&target,&tt_compute_noc_result::recovery_required};
 #else
@@ -362,6 +377,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
 #endif
  bool NonRootHeldMappingStable(){return !coreMapLost && NonRootHeldOwner();}
  void DramTlbWrite(unsigned slot,unsigned word,uint32 value){
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE
+  if(UseRecurrentBlockIO()){recurrentTransport->Write32(RecurrentBlockNativeTransport::SetTlb,slot,value,word);return;}
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
   if(UseMixedLiveIO()){mixedLiveTransport->Write32(MixedLiveNativeTransport::SetTlb,slot,value,word);return;}
 #endif
@@ -370,6 +388,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
 #endif
   Touch();StoreMock::DramTlbWrite(slot,word,value);}
  uint32 DramTlbRead(unsigned slot,unsigned word){
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE
+  if(UseRecurrentBlockIO())return recurrentTransport->Read32(RecurrentBlockNativeTransport::Tlb,slot,word);
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
   if(UseMixedLiveIO())return mixedLiveTransport->Read32(MixedLiveNativeTransport::Tlb,slot,word);
 #endif
@@ -378,6 +399,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
 #endif
   Touch();return StoreMock::DramTlbRead(slot,word);}
  bool SelectRuntimeCore(unsigned core){
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE
+  if(UseRecurrentBlockIO()){if(core>=120 || (!fleetEnabled && core))return false;bool okay=recurrentTransport->Select(core);if(okay)runtimeCore=core;return okay;}
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
   if(UseMixedLiveIO()){if(core>=120 || (!fleetEnabled && core))return false;bool okay=mixedLiveTransport->Select(core);if(okay)runtimeCore=core;return okay;}
 #endif
@@ -388,6 +412,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
   return BlackholeDramConfigure(*this,0,0,1,2,false) && BlackholeDramConfigure(*this,1,0xffa00000,1,2,false);
  }
  uint32 ResetRead(){
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE
+  if(UseRecurrentBlockIO())return recurrentTransport->Read32(RecurrentBlockNativeTransport::Reset);
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
   if(UseMixedLiveIO())return mixedLiveTransport->Read32(MixedLiveNativeTransport::Reset);
 #endif
@@ -405,6 +432,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
   return root?coreReset:0x47800;
  }
  uint32 SourceRead(unsigned word){
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE
+  if(UseRecurrentBlockIO())return recurrentTransport->Read32(RecurrentBlockNativeTransport::Source,word);
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
   if(UseMixedLiveIO())return mixedLiveTransport->Read32(MixedLiveNativeTransport::Source,word);
 #endif
@@ -413,6 +443,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
 #endif
   Touch();return ProjectionZeroIO::SourceRead(word);}
  uint32 ResidentL1Read(unsigned word){
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE
+  if(UseRecurrentBlockIO())return recurrentTransport->Read32(RecurrentBlockNativeTransport::Local,word);
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
   if(UseMixedLiveIO())return mixedLiveTransport->Read32(MixedLiveNativeTransport::Local,word);
 #endif
@@ -421,6 +454,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
 #endif
   Touch();assert(word<2048);return destination[word];}
  void ResidentL1Write(unsigned word,uint32 value){
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE
+  if(UseRecurrentBlockIO()){recurrentTransport->Write32(RecurrentBlockNativeTransport::SetLocal,word,value);return;}
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
   if(UseMixedLiveIO()){mixedLiveTransport->Write32(MixedLiveNativeTransport::SetLocal,word,value);return;}
 #endif
@@ -429,6 +465,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
 #endif
   Touch();assert(word<2048);destination[word]=value;}
  uint32 RuntimePcRead(){
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE
+  if(UseRecurrentBlockIO())return recurrentTransport->Read32(RecurrentBlockNativeTransport::Pc);
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
   if(UseMixedLiveIO())return mixedLiveTransport->Read32(MixedLiveNativeTransport::Pc);
 #endif
@@ -441,6 +480,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
   return EmbeddingMode()?(Touch(),embeddingPc):ProjectionZeroIO::RuntimePcRead();}
  void RuntimeResetWrite(uint32 value);
  void QuarantineHostPage(){
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE
+  if(recurrentTransport)recurrentTransport->Quarantine();
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
   if(mixedLiveTransport)mixedLiveTransport->Quarantine();
 #endif
@@ -456,19 +498,30 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
   return destination[0x1fc0/4+(a-0x17ffc0)/4];
  }
 #include "embedding_factory_mapping.inc"
-#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+#if defined(PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE) || defined(PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE)
 #include "native_session_unmap.inc"
 #include "native_release_output.inc"
 #include "native_release_wide.inc"
  int32 ReleaseHostPage(){return PioneerHostPageIO::ReleaseHostPage();}
  void InitFinalVmViews(){
-  area_id* views[]={&q38MixedLiveMemoryArea[0],&q38MixedLiveMemoryArea[1],&q38MixedLiveMemoryArea[2],&q38MixedLiveMemoryArea[3],&q38EmbeddingMemoryArea,
+  area_id* views[]={
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE
+   &q38RecurrentBlockMemoryArea[0],&q38RecurrentBlockMemoryArea[1],&q38RecurrentBlockMemoryArea[2],&q38RecurrentBlockMemoryArea[3],
+#else
+   &q38MixedLiveMemoryArea[0],&q38MixedLiveMemoryArea[1],&q38MixedLiveMemoryArea[2],&q38MixedLiveMemoryArea[3],
+#endif
+   &q38EmbeddingMemoryArea,
    &q38PanelArea,&q38FfnCodeArea,&runtimeAreas[0],&runtimeAreas[1],&runtimeAreas[2],&runtimeAreas[3],&runtimeAreas[4],&attentionArea,&bulkArea,&coordinatorArea,&layerArea,&fleetArea,
    &this->PioneerHostReadIO::scratchArea,&this->PioneerHostReadIO::writeArea,&hdmaArea,&inboundArea,&siiArea,&nocArea,&dataArea,&dramArea,&resetArea,&csmArea,&this->PioneerArcIO::scratchArea,&tlbArea,&this->PioneerMmioIO::area};
   for(unsigned i=0;i<30;i++)if(*views[i]<B_OK)*views[i]=2000+int(i); // simulated OS handles,not permission or device data
  }
  ~PioneerSessionIO(){
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE
+  assert(finalDestroyed && q38RecurrentBlockFinalUnmapped && q38EmbeddingMemoryArea==-1);
+  for(auto a:q38RecurrentBlockMemoryArea)assert(a==-1);
+#else
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveNativeMapDestroy.inc"
+#endif
  }
 #endif
 };
@@ -485,6 +538,13 @@ static bool ProjectionPointerAddress(const volatile uint32* p,uint32& address){
 }
 #endif
 static uint32 PioneerRead32(const volatile uint32* p){assert(activeIO);activeIO->Touch();activeIO->nativeReads++;
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE
+ if(activeIO->UseRecurrentBlockIO()){
+  const unsigned offsets[]={0x20000,0x40000,0x60000,0xac000};
+  for(unsigned i=0;i<4;i++){const auto& alias=activeIO->recurrentAliases[i];uintptr_t at=reinterpret_cast<uintptr_t>(p),first=reinterpret_cast<uintptr_t>(alias.data());
+   if(at>=first && at-first<alias.size()*4 && !((at-first)&3))return activeIO->recurrentTransport->MappedRead(offsets[i]+unsigned(at-first));}
+ }
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
  if(activeIO->UseMixedLiveIO()){
   const unsigned offsets[]={0x20000,0x40000,0x60000,0xac000};
@@ -515,6 +575,13 @@ static uint32 PioneerRead32(const volatile uint32* p){assert(activeIO);activeIO-
 #endif
  return *p;}
 static void PioneerWrite32(volatile uint32* p,uint32 value){assert(activeIO);activeIO->Touch();activeIO->nativeWrites++;
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE
+ if(activeIO->UseRecurrentBlockIO()){
+  const unsigned offsets[]={0x20000,0x40000,0x60000,0xac000};
+  for(unsigned i=0;i<4;i++){const auto& alias=activeIO->recurrentAliases[i];uintptr_t at=reinterpret_cast<uintptr_t>(p),first=reinterpret_cast<uintptr_t>(alias.data());
+   if(at>=first && at-first<alias.size()*4 && !((at-first)&3)){activeIO->recurrentTransport->MappedWrite(offsets[i]+unsigned(at-first),value);return;}}
+ }
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
  if(activeIO->UseMixedLiveIO()){
   const unsigned offsets[]={0x20000,0x40000,0x60000,0xac000};
@@ -545,6 +612,16 @@ static void PioneerWrite32(volatile uint32* p,uint32 value){assert(activeIO);act
  *p=value;}
 static area_id map_physical_memory(const char*,uint64 physical,unsigned bytes,int placement,unsigned flags,void** view){
  assert(activeIO);activeIO->Touch();activeIO->mapCalls++;
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE
+ if(activeIO->UseRecurrentBlockIO()){
+  const unsigned offsets[]={0x19020000,0x19040000,0x19060000,0x190ac000},sizes[]={8192,131072,57344,868352};
+  unsigned i=0;while(i<4 && physical!=Bar+offsets[i])i++;
+  assert(i<4 && bytes==sizes[i] && placement==B_ANY_KERNEL_ADDRESS && flags==(B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY));
+  if(int(i)==activeIO->recurrentFailMap){activeIO->recurrentMapFaultFence=activeIO->touches;return -1;}
+  activeIO->recurrentAliases[i].resize(bytes/4);*view=int(i)==activeIO->recurrentNullMap?nullptr:activeIO->recurrentAliases[i].data();
+  if(!*view)activeIO->recurrentMapFaultFence=activeIO->touches;return 60+i;
+ }
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
  if(activeIO->UseMixedLiveIO()){
   const unsigned offsets[]={0x19020000,0x19040000,0x19060000,0x190ac000},sizes[]={8192,131072,57344,868352};
@@ -594,7 +671,7 @@ static area_id map_physical_memory(const char*,uint64 physical,unsigned bytes,in
  *view=activeIO->nullMap?nullptr:activeIO->prefix.data();return 23;
 }
 struct FactoryFlags{bool saved=false,dirty=false,ready=false,running=false,unsafe=false,awaiting=false,closed=false;};
-#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+#if defined(PIONEER_Q38_MIXED_LIVE_END_FIXTURE) || defined(PIONEER_Q38_RECURRENT_BLOCK_END_FIXTURE)
 using FactoryClock=MixedLiveNativeClock;
 struct NativeClockFields{
  NativeClockFields& control=*this;
@@ -626,11 +703,11 @@ struct PioneerStoreContext {
  PioneerResidentBanks& banks;PioneerResidentLease& lease;PioneerBulkUploadLease& bulk;
  PioneerOutputBufferLease& bulkHost;PioneerWideOutputLease& wideHost;tt_host_page_result& host;
  struct D{tt_dram_samples_result& dram;
-#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+#if defined(PIONEER_Q38_MIXED_LIVE_END_FIXTURE) || defined(PIONEER_Q38_RECURRENT_BLOCK_END_FIXTURE)
  NativeClockFields control={};
 #endif
  };struct B1{D baseline;tt_compute_noc_result& noc;};struct B2{B1 baseline;};struct B3{B2 baseline;
-#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+#if defined(PIONEER_Q38_MIXED_LIVE_END_FIXTURE) || defined(PIONEER_Q38_RECURRENT_BLOCK_END_FIXTURE)
  tt_host_dma_audit_result audit={};
 #endif
  };B3 baseline;
@@ -648,20 +725,20 @@ struct PioneerStoreContext {
  PioneerQ38DispatchLease* q38Dispatch=nullptr;void *q38Cohort=nullptr,*fleet=nullptr;
  PioneerQ38ProjectionIdentity q38FfnModelIdentity={},q38GdnIdentity={};
  FactoryFlags span,panelProbe,streamProbe;FactoryFlags* q38Span=&span;FactoryClock q38Clock;
-#if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE)
+#if defined(PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE) || defined(PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE) || defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE)
  PioneerQ38DeltaProbeLease q38Delta;
 #else
  FactoryFlags q38Delta;
 #endif
  int runtimeCoreMode=-1;
-#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+#if defined(PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST) || defined(PIONEER_Q38_RECURRENT_BLOCK_FRESH_FINAL_TEST)
  int q38GdnCallThread=-1; // ACTUAL call scope must acquire the seal;never fixture-assigned
 #else
  int q38GdnCallThread=42;
 #endif
  uint64 bytes=PioneerResidentBanks::Total;
  bool bankStorageOnly=true,dispatchOwnerRetained=false,otherUnsafe=false,q38DispatchRoutes=false;
-#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+#if defined(PIONEER_Q38_MIXED_LIVE_END_FIXTURE) || defined(PIONEER_Q38_RECURRENT_BLOCK_END_FIXTURE)
  tt_pioneer_mmio_result pci={};tt_pioneer_mmio_transaction transaction={};unsigned q38EndPhase=0;
  tt_resident_session_idle_result idle={};
  auto& Pci(){return pci;}
@@ -672,8 +749,12 @@ struct PioneerStoreContext {
   span.closed=true;io.q38MutableContext=this;io.dram.target=&owner.dram;io.noc.target=&owner.noc;
  }
  ~PioneerStoreContext(){
-#ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
+#if defined(PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE) || defined(PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE)
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE
+  delete q38RecurrentBlockNative;delete q38EmbeddingModel;
+#else
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveNativeDestroy.inc"
+#endif
   finalDestroyed++;
 #else
 #ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
@@ -696,6 +777,8 @@ struct PioneerStoreContext {
   (void)zero;(void)graph;
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveNativeUnsafe.inc"
+#endif
+#if defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT) || defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT)
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedLiveNativeCohortUnsafe.inc"
 #endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
@@ -710,9 +793,13 @@ struct PioneerStoreContext {
   if(q38Dispatch && PioneerQ38DispatchUnsafe(*q38Dispatch))return true;
 #endif
   return otherUnsafe || banks.Quarantined() || q38Clock.quarantined || bulk.unsafe || bulkHost.quarantined || wideHost.quarantined
-#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+#if defined(PIONEER_Q38_MIXED_LIVE_END_FIXTURE) || defined(PIONEER_Q38_RECURRENT_BLOCK_END_FIXTURE)
    || q38Clock.Unsafe()
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE
+   || PioneerQ38RecurrentBlockFinalPciUncertain(*this)
+#else
    || PioneerQ38MixedLiveFinalPciUncertain(*this)
+#endif
 #endif
    || lease.recovery_required || (q38EmbeddingModel && !zero && q38EmbeddingModel->zero.running);
  }
@@ -721,7 +808,7 @@ struct PioneerProbeCookie{PioneerStoreContext* context;uint32 magic=0x50313030;i
 static PioneerProbeCookie* sRuntimeOwner=nullptr;
 static bool sColdRecoveryRequired=false,sReloadQuiesced=false,sBankStorageOnly=true;
 static uint64 sReloadGeneration=4;
-#ifndef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+#if !defined(PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST) && !defined(PIONEER_Q38_RECURRENT_BLOCK_FRESH_FINAL_TEST)
 static const void* sQ38LocalDeltaOwner=nullptr;
 #endif
 static int currentThread=42;static int find_thread(void*){return currentThread;}
@@ -732,7 +819,7 @@ static int get_thread_info(int thread,thread_info* info){if(failThreadInfo || th
 #endif
 // Use actual native MEMORY-ONLY retention body,not a simulated ready seal.
 #include "embedding_factory_retain.inc"
-#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+#if defined(PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST) || defined(PIONEER_Q38_RECURRENT_BLOCK_FRESH_FINAL_TEST)
 static int sLock=1;static bool finalLockHeld=false;
 static unsigned finalLockAcquired=0,finalLockReleased=0;
 static status_t acquire_sem(int lock){assert(lock==sLock);if(finalLockHeld)return B_BUSY;finalLockHeld=true;finalLockAcquired++;return B_OK;}
@@ -768,9 +855,15 @@ static void release_sem(int lock){assert(lock==sLock && finalLockHeld);finalLock
 #endif
 #include "embedding_factory_factory.inc"
 #ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38RecurrentBlockNative.inc"
+#else
 #include "recurrent_block_factory_bind.inc"
 #ifdef PIONEER_Q38_RECURRENT_BLOCK_INITIALIZATION_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38RecurrentBlockNativeInitialize.inc"
+#endif
+#endif
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_INITIALIZATION_FIXTURE
 #include "recurrent_block_zero_callbacks.inc"
 #endif
 #endif
@@ -790,7 +883,7 @@ static void release_sem(int lock){assert(lock==sLock && finalLockHeld);finalLock
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
 #include "decoder_factory_factory.inc"
 #endif
-#if defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE)
+#if defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE) || defined(PIONEER_Q38_PROJECTION_NATIVE_FACTORY_FIXTURE) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE)
 #include "projection_factory_complete_end.inc"
 static bool EndFactory(PioneerStoreContext& c){bool clean=true;tt_resident_session_result result={};
  return EndQ38DispatchOwnership(c,result,clean) && clean;
@@ -972,6 +1065,9 @@ void PioneerSessionIO::RuntimeResetWrite(uint32 value){
   }
  }
 #endif
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE
+ if(UseRecurrentBlockIO()){recurrentTransport->Write32(RecurrentBlockNativeTransport::SetReset,0,value);return;}
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE
  if(UseMixedLiveIO()){mixedLiveTransport->Write32(MixedLiveNativeTransport::SetReset,0,value);return;}
 #endif
@@ -1091,7 +1187,7 @@ void PioneerSessionIO::RuntimeResetWrite(uint32 value){
  assert(value==0x46800 && coreReset==0x87ffff);coreReset=value;embeddingStarts++;
  EmbeddingExecutionBridge t;t.l1.resize(73737);
  t.originalTiledWeights=originalEmbeddingWeights;
-#if defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE)
+#if defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_FACTORY_FIXTURE) || defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_FACTORY_FIXTURE)
  t.boundedEmbedding=true;
 #endif
  // Emulator transport:clone EXACT installed bytes,not host arithmetic.
@@ -1112,14 +1208,19 @@ void PioneerSessionIO::RuntimeResetWrite(uint32 value){
 #endif
  if(embeddingSummaryFault<32)RawSlot(TT_Q38_FFN_RESIDENT_SUMMARY+embeddingSummaryFault*4)^=1;
 }
-#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+#if defined(PIONEER_Q38_MIXED_LIVE_END_FIXTURE) || defined(PIONEER_Q38_RECURRENT_BLOCK_END_FIXTURE)
 static void dprintf(const char*,...) {} // diagnostic metadata only
 #include "native_clock_service.inc"
 #include "native_bulk_close.inc"
 #endif
-#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+#if defined(PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST) || defined(PIONEER_Q38_RECURRENT_BLOCK_FRESH_FINAL_TEST)
 static uint32 FinalAuditRead(void* object,MixedFinalAuditEndpoints::Kind kind,unsigned a,unsigned b,unsigned n){
- auto& io=*static_cast<PioneerSessionIO*>(object);assert(&io==activeIO && io.UseMixedLiveIO() && !finalDeleteFailed && !finalPciFailed);
+ auto& io=*static_cast<PioneerSessionIO*>(object);assert(&io==activeIO && !finalDeleteFailed && !finalPciFailed);
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_FRESH_FINAL_TEST
+ assert(io.UseRecurrentBlockIO());
+#else
+ assert(io.UseMixedLiveIO());
+#endif
  unsigned count=++finalAuditReads[kind];
  if(int(kind)==finalAuditFailureKind && count==finalAuditFailureOrdinal)return UINT32_MAX;
  using E=MixedFinalAuditEndpoints;
@@ -1187,7 +1288,7 @@ struct NativeFactoryFixture {
   }
   c.reset(new PioneerStoreContext(io,owner,bulk,transfer,wide,learned.data()));cookie.context=c.get();
   activeIO=&io;sRuntimeOwner=&cookie;sColdRecoveryRequired=sReloadQuiesced=false;sBankStorageOnly=true;currentThread=42;
-#ifdef PIONEER_Q38_MIXED_LIVE_END_FIXTURE
+#if defined(PIONEER_Q38_MIXED_LIVE_END_FIXTURE) || defined(PIONEER_Q38_RECURRENT_BLOCK_END_FIXTURE)
   // Initial simulated baseline proof DATA,not a private clock/producer
   // publication. ACTUAL Begin must create its private lease via messages.
   owner.dram.cores_checked=120;c->baseline.audit.version=1;c->baseline.audit.state=TT_HOST_DMA_AUDIT_PASSED;c->baseline.audit.tlb_restored=1;

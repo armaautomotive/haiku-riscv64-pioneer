@@ -27,7 +27,8 @@ static inline bool PioneerQ38RecurrentBlockCounterDelta(const PioneerQ38MixedRec
   const unsigned gdn[]={polls+12,polls+556,polls+15,polls+12,3,516,polls+15,3};
   for(unsigned i=0;i<8;i++)delta[i]+=gdn[i];
  }
- for(unsigned i=0;i<8;i++)output[i]=delta[i];return true;
+ for(unsigned i=0;i<8;i++)output[i]=delta[i];
+ return true;
 }
 static inline bool PioneerQ38RecurrentBlockCounterProof(const PioneerQ38MixedRecurrentBlockPlan& plan,
  const PioneerQ38CanonicalModelPlan& canonical,unsigned worker,const uint32_t* before,const uint32_t* after,

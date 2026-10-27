@@ -12,7 +12,9 @@ static_assert(!std::is_destructible<PioneerQ38RecurrentBlockNativeState>::value,
 static_assert(!std::is_copy_constructible<PioneerQ38RecurrentBlockNativeState>::value,"no native capability copies");
 struct RecurrentBindingFixture:NativeFactoryFixture {
  RecurrentBindingFixture(const char* zero,const char* embedding):NativeFactoryFixture(zero,embedding){
+#ifndef PIONEER_Q38_RECURRENT_BLOCK_END_FIXTURE
   c->q38Clock.value.busy_mhz=1400; // simulated clock endpoint metadata, NOT a producer completion seal
+#endif
   auto plan=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(plan->Build());
   for(unsigned i=0;i<plan->Count();i++){
    const auto* p=plan->Part(i);if(p->kind!=plan->WeightKind || p->layer)continue;

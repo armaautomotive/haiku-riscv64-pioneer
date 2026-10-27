@@ -5,10 +5,15 @@ bool RecurrentBlockCallScopeMatches();bool RecurrentBlockBaseScope();bool Recurr
 bool RecurrentBlockInitializationScope(bool history,bool beginning);bool RecurrentBlockInitializationOtherCoresHeld(bool history);
 bool ConvHistoryZeroBeforeCohort();bool ConvHistoryZeroOtherCoresHeld();
 bool RecurrentBlockMemoryScope(const PioneerQ38RecurrentBlockMemory&,const PioneerQ38CanonicalModelPlan&,const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
+bool RecurrentBlockExecutionScope(const PioneerQ38RecurrentBlockOwner&,const PioneerQ38RecurrentBlockMemory&,
+ const PioneerQ38CanonicalModelPlan&,const PioneerQ38MixedRecurrentBlockPlan&,const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
 void RecurrentBlockRetainHostOwners();
 area_id q38RecurrentBlockMemoryArea[4]={-1,-1,-1,-1};
 volatile uint32* q38RecurrentBlockMemoryView[4]={NULL,NULL,NULL,NULL};
 bool q38RecurrentBlockMemoryMapAttempted=false;uint64 q38RecurrentBlockMemoryBar=0;
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE
+#include "PioneerQ38RecurrentBlockFinalUnmap.inc"
+#endif
 bool RecurrentBlockMemoryMappingStable(unsigned w){
  if(w>=120 || runtimeCore!=w || !fleetEnabled || !runtimeMapped || !runtimeEntry || !scratchData || payloadBytes!=8192
   || !Q38PanelMappingStable() || !q38RecurrentBlockMemoryMapAttempted || profile.bar0_host_start!=q38RecurrentBlockMemoryBar

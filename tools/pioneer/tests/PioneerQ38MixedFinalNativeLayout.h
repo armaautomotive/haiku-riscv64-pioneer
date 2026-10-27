@@ -5,7 +5,7 @@ static uint32 finalAlias=0x12345678;
 static std::vector<area_id> finalRemoved;
 static unsigned finalDeleteFailure=0,finalPciFailure=0,finalDestroyed=0;
 static bool finalDeleteFailed=false,finalPciFailed=false;
-#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+#if defined(PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST) || defined(PIONEER_Q38_RECURRENT_BLOCK_FRESH_FINAL_TEST)
 #include "pioneer_q38_mixed_live_final_audit.h"
 static bool FinalFreshAudit(uint32);
 static unsigned finalAuditCalls=0,finalAuditReads[12]={},finalAuditWrites=0;
@@ -33,7 +33,7 @@ struct PioneerComputeNocIO:PioneerDramSamplesIO{area_id nocArea=-1;const volatil
 struct PioneerHostPathIO:PioneerComputeNocIO{area_id inboundArea=-1,siiArea=-1;const volatile uint32* inbound=&finalAlias;const volatile uint32* sii=&finalAlias;};
 struct PioneerHostDmaAuditIO:PioneerHostPathIO{area_id hdmaArea=-1;const volatile uint32* hdma=&finalAlias;
  bool AfterNodeId(uint32 id){
-#ifdef PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST
+#if defined(PIONEER_Q38_MIXED_LIVE_FRESH_FINAL_TEST) || defined(PIONEER_Q38_RECURRENT_BLOCK_FRESH_FINAL_TEST)
   return FinalFreshAudit(id); // raw bridge executes VERBATIM complete production chain
 #else
   (void)id;assert(false && "fresh diagnostic recheck is not yet supplied by this raw endpoint fixture");return false;

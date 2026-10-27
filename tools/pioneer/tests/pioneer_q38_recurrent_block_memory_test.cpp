@@ -88,6 +88,7 @@ struct RecurrentMemoryFixture {
   assert(!PrepareMemory() && !CloseMemory() && touches==io.touches && reads==io.reads && writes==io.writes);
  }
 };
+#ifndef PIONEER_Q38_RECURRENT_BLOCK_MEMORY_FIXTURE_ONLY
 int main(int argc,char** argv){
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
  assert(argc==1 || (argc==2 && !strcmp(argv[1],"--faults")));setvbuf(stdout,nullptr,_IOLBF,0);
@@ -157,3 +158,4 @@ int main(int argc,char** argv){
  }
  printf("PASS DISTINCT QRB1 held journal faults%u/preconditionRefusals%u/Conv-window+padding endpoints+all7phases/ALL originals twice BEFORE firstwrite/FIRST unknown retains all snapshots+hosts,NO following IO/retry/restore;SIMULATED endpoints,NOT genuine native/compute/Work/TPS\n",faults,refusals);
 }
+#endif

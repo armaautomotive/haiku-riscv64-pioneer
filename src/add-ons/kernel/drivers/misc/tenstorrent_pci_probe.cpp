@@ -35,6 +35,10 @@
 #include "PioneerQ38MixedLiveFinalReleaseRole.h"
 #endif
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE
+#include "PioneerQ38RecurrentBlockFinalReleaseRole.h"
+#include "PioneerQ38RecurrentBlockFinalPciState.h"
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
 #include "PioneerQ38MixedLiveFinalPciState.h"
 #endif
@@ -2948,6 +2952,9 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	void RuntimeStatusWrite(unsigned w,uint32 value) { if (w<3) ResidentL1Write((0x1fc0/4)+w,value); }
 	bool Unmap() {
 		bool okay=true;
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE
+  if(q38RecurrentBlockMemoryMapAttempted || q38RecurrentBlockFinalUnmapAttempted)return RecurrentBlockFinalUnmap();
+#endif
 #ifdef PIONEER_Q38_EMBEDDING_NATIVE
 #ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
   if(q38MixedLiveMemoryMapAttempted || q38MixedLiveFinalUnmapAttempted)return MixedLiveFinalUnmap();
@@ -3470,6 +3477,8 @@ struct PioneerStoreContext {
 			|| baseline.baseline.baseline.noc.recovery_required || baseline.baseline.baseline.baseline.dram.recovery_required
 #ifdef PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE
 			|| PioneerQ38MixedLiveFinalPciUncertain(*this);
+#elif defined(PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE)
+   || PioneerQ38RecurrentBlockFinalPciUncertain(*this);
 #else
 			|| Pci().state==TT_PIONEER_MMIO_RESTORE_FAILED;
 #endif
@@ -6419,6 +6428,8 @@ Q38BankControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 #endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_VALIDATION_NATIVE
 #include "PioneerQ38ResidentLayerValidationEndCall.inc"
+#elif defined(PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE)
+#include "PioneerQ38RecurrentBlockFinalEndCall.inc"
 #elif defined(PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE)
 #include "PioneerQ38MixedLiveFinalEndCall.inc"
 #else

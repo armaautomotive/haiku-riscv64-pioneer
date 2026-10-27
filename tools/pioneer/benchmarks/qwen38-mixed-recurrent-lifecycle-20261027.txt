@@ -275,3 +275,220 @@ Fresh read-only board check:64 CPUs,max137034936320B RAM,stable driver55/
 tag2026102100010012/gen6/quiesced0/cold0/active_owner0/open1/guard1.
 No install/card execution/reboot/power/SD/mains/Assistant/network changes.
 Last full27B measured0.207893161tok/s unchanged;20 remains UNMET/goal ACTIVE.
+
+Execution-owner continuation -- 2026-10-27 -- WIP,NOT deployed
+-------------------------------------------------------------
+Prior development checkpoint20f114372f50e698a447b370bf194cdd014ee448
+was pushed to authorized pioneer-riscv64 and exact remote SHA verified.
+The new execution-owner work below remains LOCAL/UNQUALIFIED until its
+required actual instruction/native lifecycle tests finish. No public ABI,
+Work selection or physical compute path has been added or installed.
+
+Counter correlation96159/98104 BOTH TERMINAL0:production helper matches
+ALL119 real emitted full-layer instruction streams/before+after down
+receipts/independent bounded GDN polls/952single-channel atomic refusals.
+Entire logs identical SHA515911dbc25d3ee1933bda08ba9b3532b4f0578eb71a1c9b7f14f2ef556caae4.
+Earlier LIVE status above is superseded by this terminal evidence.
+
+NEW DISTINCT PioneerQ38RecurrentBlockOwner owns the exact new QRB1 journal
+and immutable complete block plan. Stages ONLY8recipes+Conv/GDN metadata,
+NO host numerical products. All119 QMW1 processors start from genuine
+virgin boot instructions;ROOT runs its complete8matrices/Conv/GDN/RMS/
+residual/FFN/final producer. Per-worker ALL8 packet deltas must match the
+new finite-poll helper and actual closed job/boot/doorbell/receipt/PC/code.
+Only after actual ROOT completion may one peer's changed counters be
+observed;no arbitrary baseline recapture. Actual real STOP/status PLUS
+2positive terminal PCs/closed metadata/counters on ALL120 precede FIRST
+hold. ALL120 verified holds precede FIRST arbitrary original restore.
+Full11406904word restoration+second proof precede private Closed. First
+unknown retains snapshots/model/banks/ALLhosts and prohibits all later IO.
+No caller clean/STOP bit,public post-launch journal restoration,old dense
+owner/native role alias,state-slot/token commit or full-model prefix grant.
+
+Native state now owns a separate HEAP execution object. Actual same FD/
+team/thread/source/model/completed-embedding/private672+336init leases/
+clock/ALLhosts/mapping scopes are required;native Scope and ordinary
+Unsafe interlock admit ONLY this exact privately bound running cohort.
+Missing/other/unsafe owners still fall through the legacy refusal. Held
+no-launch CLOSE cannot be used once an execution owner exists. A later
+known-clean legacy dispatch CLOSE does not erase already-proven execution
+closure;it still needs its OWN current native final-disposal proof.
+
+Final SDK97053/main-e and13007/clean-c BOTH TERMINAL0/maxNewFrame768:
+672006a24e8b5b61bd29cc861be307fc4a77057dce9e83f392b3bfadbdf47e74
+The complete Prepare/RUN/Close/STOP/restore/native scoped call bodies are
+retained,ALL6conventional ABI renamed/5independent inert controls exactly
+unchanged;no CPU observer/old Work/native aliases. COMPILE/INSPECT ONLY,
+never linked/installed/invoked. Older22036 TERMINAL1 solely on GCC's
+misleading-indentation warning in counter helper;fixed newline,NO bound
+change or warning suppression.86535/84225 and4917 also TERMINAL0 on older
+owner text.19616/51069 TERMINAL0 before final closed-binding predicate.
+Old DEBUG70+65+bothNODRV50871 TERMINAL0/old module11d24d92/native6b3db5d8
+UNCHANGED. Binding26409 TERMINAL0/460refusals;426role gates51842 TERMINAL0.
+
+Owner precondition55529/main-b and84643/clean-a BOTH TERMINAL0:
+21inert invalid result/identity/learned/cohort/order refusals;first actual
+source-scope denial retains ALL120/journal with ZERO reset/start/packet/
+restore/retry/post-failure IO. Whole logs identical330d708df3460430af17fdbfa1044ebdb208e46037522384c81bbde8a5294ae7.
+First refusal test was TERMINAL1 on const-only TEST Store access;fixed
+read-only conditional reference,NO production scope weakened.
+
+Actual preparation faults6176/main-a and76672/clean-a BOTH TERMINAL0:
+scope loss/metadata write/mapping/unknown boot-status/global source faults,
+including after1,59,118genuine virgin boots,ALL owners retained/ZERO later
+IO/hold/restore/retry. The boot-status failure occurs only AFTER actual
+boot instructions reach their real WAIT,NEVER a fabricated ready record.
+Whole logs identical02947c34746b699c6001aabe3f2cf978ca0ac8913760a2a8c75f5ca00319b89a.
+
+Authoritative LIVE whole-owner handles -- poll exact handles
+-------------------------------------------------------------
+84322 /private/tmp/pioneer-qrb1-owner-actual-20261027-a.log -- TERMINAL0
+76782 /private/tmp/pioneer-qrb1-owner-actual-clean-20261027-a.log
+Both production owner + genuine NEW119boot machines. Main84322 TERMINAL0:
+whole8matrices/720jobs+640Conv+96GDN/RMS/residual/FFN/final5120/ALL119
+counter proofs,actual real119STOP+ROOT,ALL120holds before first restore,
+full11406904arbitrary original-word restoration+second proof PASS. Main
+pilot log archived separately;clean76782 still LIVE. NO fake status/nonce/
+PC/ready or CPU products. Not a native/card/whole-model execution proof.
+These pilots predate ONLY ROOT diagnostic-index reset and final closure
+predicate for a later clean legacy dispatch CLOSE;NOT final-source proof.
+27350 /private/tmp/pioneer-qrb1-owner-end-faults-20261027-a.log
+26753 /private/tmp/pioneer-qrb1-owner-end-faults-clean-20261027-a.log
+Each first executes the COMPLETE actual owner+instruction chain,then forks
+that genuinely reached post-RUN state for7STOP/hold/restore/second-proof
+faults and an unmodified positive parent CLOSE. Neither PC/registers nor
+private progress/ready bits are rewritten to manufacture a close phase.
+These predate ONLY final later-clean-dispatch closure predicate.27350/
+26753 and76782 confirmed LIVE by write_stdin;no observation-expiry restart.
+FINAL main28549 /private/tmp/pioneer-qrb1-owner-actual-20261027-b.log is
+also LIVE,using final owner source and adds the ACTUAL existing dispatch
+CLOSE after verified new owner CLOSE. Its byte endpoint switches to the
+real legacy control restoration path only after the actual private result
+closed;NO manufactured closed state or public native cleanup authority.
+Final clean run must start AFTER older76782 is terminal,not on timeout.
+Final-source complete owner/closure proof remains REQUIRED,including
+genuine native init+embedding coupling,full END and original-model/card.
+
+Fresh SSH read-only:64CPUs,max137034936320B/free128611983360B at sample;
+driver55/tag2026102100010012/gen6/quiesced0/cold0/active_owner0/open1/guard1.
+No installed driver/GPU compute/reboot/power/SD/mains/Assistant/network
+change this turn. Unrelated dirty llama.cpp/FlashNext not read/edited/
+built/staged. Whole27B0.207893161tok/s unchanged,20UNMET,goalACTIVE.
+
+NEXT finish all4live handles/final-source owner+native coupled lifecycle,
+strict native final disposal and original-model/card validation,then valid
+recurrent0..2->dense3/all64/persistent KV+recurrent+history/token commit/
+final norm/vocab/sampling/no-CPU-reference Work+Assistant,real performance
+optimization. This owner checkpoint is NOT the requested final state.
+
+Native coupling/final disposal continuation -- October27 -- LOCAL WIP
+--------------------------------------------------------------------
+Prior goal turn was a requested status/checklist answer (no implementation
+progress). This continuation makes code/test progress;goal remains ACTIVE.
+The earlier LIVE labels are superseded only by the exact evidence below.
+
+Clean older owner76782 and end-fault27350/26753 ended0 (previous observed
+terminal results). All7 genuine post-RUN failures fence later IO,STOP,
+holds,restoration,second proof and retry;unmodified parent also closes.
+End-fault complete main/clean stdout identical:
+4acb3427f4b56beb4a49c0398f8ad80959405a92785d3475b86127d68a4a45bb.
+Final clean whole owner60994 observed TERMINAL0 in THIS continuation;
+main28549 handle is missing,not restarted. Full stdout is byte-identical
+to clean7a2322753b4c483387fe65d626cb9af43588dcee35200669bf61d73ef8eeda36.
+This proves its completed PASS output,not a newly observed main exit code.
+Clean actual whole8matrices/720jobs/Conv640/GDN96/RMS/residual/FFN/final5120,
+119STOP+ROOT/120holds/full11406904original restores+secondproof and ACTUAL
+legacy DispatchClose compatibility PASS;synthetic raw learned/MMIO only.
+
+NEW genuine native coupling fixture uses the SAME real completed QPE1
+owner/private actual672GDN+336history zero-instruction init leases,all120
+real probes/peer leases/role preparations/four mapping aliases/full new
+journal+11signed code sections. Separate neutral raw-byte transport TU
+has NO native flags or ready/permission setter. Actual init output bytes
+(BOTH current+next GDN slots/current Conv history) and actual QPE1 output
+feed QRB1;NO CPU intermediate products or inferred-zero ready facade.
+Default held main4852 was observed TERMINAL0;stdout
+e2816861dd5d01fac09cb2ca264d8c72f199aefbb38f91d05f93170a656164d5.
+It proves actual native init+held+full restore+complete dispatch END only,
+NOT final clock/VM/PCI/host destruction or physical/original-model proof.
+Older coupled mapping-fault and clean-held launch results lost their tool
+handles during compaction. Their Python PIDs53178/53183 are now absent and
+logs contain the final PASS with no exception;do NOT invent an exit code.
+They are superseded where applicable by final-source tests below.
+
+NEW DISTINCT private PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE selection
+keeps exact QRBNODRV tag/21parents/ALL6renamed ABI;it is NOT old dense
+native/final/readback/Work/image authority and cannot load a driver.
+Own final scope requires actual private Closed/binding/closed Dispatch,
+restored ROOT+bulk/clock/FD/team/callthread/ALL hosts/baseline audit results.
+Own fixed30view VM-only Unmap inspects ALL handles BEFORE first deletion,
+rejects foreign host/duplicate/invalid handles,stops first failure without
+inherited hardware diagnostic cleanup or retry. Actual PCI END follows
+Unmap;ONLY then actual3host release/unreserve/cookie-clear/destruction.
+Actual bank-END uses a separate recurrent FD/team/thread seal under the
+real global lock,not a compute RAII object outliving deleted context.
+
+Final component30383 TERMINAL0:555handle refusals/all30VM/all11PCI faults,
+all15necessary PCI-phase refusals and54exact final-role refusals PASS.
+Actual SDK final1565/main and45694/clean BOTH TERMINAL0/exact object
+faf724d944f833388fba1d1d6b0e60eb14e2c5f58f97b0dc550557d7ff9c69ac;
+maxNewFrame768,all5independent inert controls unchanged;actual full native
+body and locked END seal compiled/inspected,NEVER linked/installed/invoked.
+36scoped code files MAIN/CLEAN byte-identical after copying to independent
+/private/tmp/pioneer-qrb1-stop-clean.10UBdgf5. No dirty llama/FlashNext access.
+Final426role regression6537,oldembedding positives7/58795 andfaults7/6841,
+actual460binding refusals40172,and old fixed30view/PCI10993 ALL TERMINAL0.
+Only terminal-success logs above archived;live runs NOT labeled passing.
+
+Current LIVE,confirmed by exact tool handles or actual OS PID:
+13497 /private/tmp/pioneer-qrb1-native-final-held-20261027-a.log
+78009 /private/tmp/pioneer-qrb1-native-final-held-clean-20261027-a.log
+Both actual init/HELD/restoration then COMPLETE fresh locked END plus84
+genuinely reached early/binding/audit/restore/quiet/idle/clock/VMhost/PCI
+failures and unmodified positive parent;NO final scope completion yet.
+PID53175 child53206 /private/tmp/pioneer-qrb1-native-factory-execute-20261027-a.log
+Observed live by ps,executing actual ROOT+119 workers (at matrix6 on last
+log sample). Its original tool handle is unavailable:track this SAME PID,
+not a replacement. NO timeout-based restart. This predates new optional
+final-release bodies (which are not selected in that binary). It still
+owes full native execution/close result and final-source full-END coverage.
+41142 /private/tmp/pioneer-qrb1-final-unmap-clean-20261027-a.log
+Component clean independent repeat;not counted until terminal observed.
+
+Fresh authorized READ-ONLY SSH:64CPUs/max137034936320B/free128584286208B,
+stable55/tag2026102100010012/gen6/quiesced0/cold0/active_owner0/open1/guard1.
+NO install/physical compute/power/restart/SD/mains/Assistant/network writes.
+No speed claim:full-model0.207893161tok/s unchanged,target20UNMET.
+Next finish exact running jobs,fix real failures,then original weights and
+separate guarded physical validation;all64/state+KV/history/token commit/
+finalnorm/vocab/sampling/persistent noCPUreference Work+Assistant remain.
+
+FINAL held native END -- supersedes live13497/78009/41142 above
+--------------------------------------------------------------------
+13497/main and78009/clean BOTH authoritative TERMINAL0 THIS continuation.
+Full stdout byte-identical:
+fd66850305ca71726b9b6139dca2f134575fd3e14d8d5726b6d880858c4e17e4.
+Same native actual QPE1+672/336initialization -> held preparation and full
+new journal restore -> complete dispatch END -> release actual compute
+call seal -> acquire actual global-lock/bank-END FD/team/thread seal ->
+verbatim owned EndResidentSession prefix+footer/bulk+root closure -> real
+private clock END -> fresh verbatim7-parent AfterNodeId+PCIquiet+resident
+idle -> real new recurrent final scope+30VM/11PCI/3host release -> actual
+unreserve+cookie/global clear+private recurrent/prefix/context destruction.
+84 genuinely reached final-path failures fence all later IO/disposal/
+retry:11early,7binding,12audit,3auditrestore,quiet,idle,5clock,33VMhost,11PCI.
+ALL learning bytes unchanged;no manufactured native completion/ready bit.
+EXPLICIT simulated OS/register/physical byte endpoints and learned bytes;
+HELD-only:NOT a native RUN/STOP/full64/original-model/card/Work/TPS proof.
+Clean component41142 TERMINAL0;full main/clean output identical
+7a0dad9591a1e2d4536c1acbe98157e86b75977a19ac47922f10f762fb6ded7d.
+
+NEW actual final-source complete native RUN+STOP+END runs started:
+16931 /private/tmp/pioneer-qrb1-native-final-execute-20261027-a.log
+13813 /private/tmp/pioneer-qrb1-native-final-execute-clean-20261027-a.log
+Both --fresh-execute-end,not a replacement for older livePID53175/53206.
+They must run original actual init+QPE1 -> actual whole layer+SAME119
+workers ->6post-RUN lifetime failures -> real119STOP+ROOT/120holds/full
+restoration -> complete fresh locked END+84final faults described above.
+LIVE,NOT passing evidence. Do not restart any of these on observation
+timeout. Scope remains synthetic raw learned bytes,not original GGUF.

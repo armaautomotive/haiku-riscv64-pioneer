@@ -1,0 +1,8 @@
+PASS ACTUAL native factory sourcebank0->workspace3:unclaimed->bind->actual zero2MiB/native callbacks->actual map/QPE1->private close/END,ALL73737 root words restored,learned unchanged,NO BME
+PASS ACTUAL native factory sourcebank1->workspace4:unclaimed->bind->actual zero2MiB/native callbacks->actual map/QPE1->private close/END,ALL73737 root words restored,learned unchanged,NO BME
+PASS ACTUAL native factory sourcebank2->workspace5:unclaimed->bind->actual zero2MiB/native callbacks->actual map/QPE1->private close/END,ALL73737 root words restored,learned unchanged,NO BME
+PASS ACTUAL native factory sourcebank3->workspace6:unclaimed->bind->actual zero2MiB/native callbacks->actual map/QPE1->private close/END,ALL73737 root words restored,learned unchanged,NO BME
+PASS ACTUAL native factory sourcebank4->workspace0:unclaimed->bind->actual zero2MiB/native callbacks->actual map/QPE1->private close/END,ALL73737 root words restored,learned unchanged,NO BME
+PASS ACTUAL native factory sourcebank5->workspace1:unclaimed->bind->actual zero2MiB/native callbacks->actual map/QPE1->private close/END,ALL73737 root words restored,learned unchanged,NO BME
+PASS ACTUAL native factory sourcebank6->workspace2:unclaimed->bind->actual zero2MiB/native callbacks->actual map/QPE1->private close/END,ALL73737 root words restored,learned unchanged,NO BME
+PASS ACTUAL native embedding FACTORY integration positives7/faults0;REAL native state/actual source+zero+scope+mapping+retention+END/all instructions,unclaimed banks,NO copied ready facade;SIMULATED_HARDWARE_NOT_CARD_OR_MODEL_SPEED

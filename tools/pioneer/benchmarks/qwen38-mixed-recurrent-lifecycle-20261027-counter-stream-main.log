@@ -1,0 +1,16 @@
+START QRB1 actual whole recurrent chain/SAME119/NO supplied intermediate products;synthetic raw learned/hidden/prior-state bytes,NOT hardware
+START QRB1 actual matrix1 role10 stage2/prior closed matrix jobs0
+PASS QRB1 actual initial RMS5120 BIT-EXACT -> alpha/beta/Z/QKV
+START QRB1 actual matrix2 role11 stage3/prior closed matrix jobs3
+START QRB1 actual matrix3 role5 stage4/prior closed matrix jobs6
+START QRB1 actual matrix4 role6 stage5/prior closed matrix jobs125
+PASS QRB1 actual QKV ->640 Conv groups ->96 paired GDN/private NEXT+6144 gated;independent arithmetic
+START QRB1 actual matrix5 role13 stage8/prior closed matrix jobs244
+PASS QRB1 actual6144 gated F32 -> actual ROOT Q8 quantization/output projection;NO host intermediate
+START QRB1 actual matrix6 role2 stage10/prior closed matrix jobs363
+PASS QRB1 original residual+post-RMS5120 BIT-EXACT -> actual Q4 gate/up
+START QRB1 actual matrix7 role3 stage11/prior closed matrix jobs482
+START QRB1 actual matrix8 role4 stage13/prior closed matrix jobs601
+PASS QRB1 actual SiLU(gate)*up17408/strict independent error bound -> actual Q4 down
+PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/952 channel refusals;NOT native STOP/cleanup authority
+PASS QRB1 whole recurrent8matrices/720 actual matrix jobs+120Conv+96GDN/direct6144/initial+postRMS/residual+FFN+final5120/ROOTstack5384/packets114460;NOT ORIGINAL/native/fullmodel/TPS

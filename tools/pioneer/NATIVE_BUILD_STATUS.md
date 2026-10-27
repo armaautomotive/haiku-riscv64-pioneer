@@ -1,5 +1,73 @@
 # Native build status
 
+## Current: recurrent native execution and final-disposal qualification
+
+October 27, 2026. Source-qualification checkpoint, not installed on the card.
+The previously pushed baseline is `20f114372f50e698a447b370bf194cdd014ee448`.
+
+- Complete execution-owner/real STOP/120 holds/full original restoration
+  passed in the clean export (60994, terminal 0); main output is identical.
+- Both seven-case, genuinely reached STOP/hold/restore fault suites passed.
+- Genuine native embedding plus all 672 recurrent and 336 history initializers
+  now feed the new held-owner path; the main held/dispatch-END test passed.
+- A separate QRBNODRV final-disposal route is implemented: real closed-owner,
+  FD/team/thread and clock requirements; 30 VM-only alias deletions; PCI restore
+  before host release; no inherited diagnostic-cleanup retry.
+- Main/clean actual Haiku SDK compiles passed with identical object
+  `faf724d944f833388fba1d1d6b0e60eb14e2c5f58f97b0dc550557d7ff9c69ac`,
+  maximum new frame 768 bytes. Component tests passed 555 handle refusals,
+  all 30 VM failures, 11 PCI failures, 15 PCI-phase and 54 role refusals.
+- Main/clean genuine native held-state COMPLETE final-END tests passed
+  (13497/78009, both terminal 0, identical stdout `fd668503...`). They cover
+  actual call-seal release/reacquisition, the private clock lease, all seven
+  fresh audit parents, quiet PCI/resident idle, 30 VM/11 PCI/3 host releases,
+  unreserve and context destruction, plus 84 actual final-disposal failures.
+- Combined native computation remains running. New main/clean computation
+  plus complete final-END tests are live at 16931/13813; not yet qualified.
+  Exact handles/PIDs and scope are in the lifecycle evidence record below.
+
+Remaining before full-offload Work is ready:
+
+1. Finish native execution/final-disposal qualification and original-weight
+   comparison, then validate that path on the physical P100A.
+2. Connect valid embedding/recurrent layers 0..2 through dense layer 3 and all
+   64 layers, with correct persistent KV/recurrent/history and token commit.
+3. Complete final normalization, vocabulary projection and on-card sampling.
+4. Integrate persistent no-CPU-reference Work/Assistant; keep validation separate.
+5. Measure and optimize loading, prefill and decode toward 20 tokens/sec.
+
+Fresh read-only board check: 64 CPUs, max RAM 137034936320 bytes, driver55 /
+tag2026102100010012 / generation6 / cold0 / active_owner0. No driver install,
+card compute, restart, power, SD, mains, Assistant or network changes.
+Last measured full-model rate is still **0.207893161 tokens/sec**; target unmet.
+
+The dated entries below are historical snapshots. Their LIVE labels are not
+current process status; use the latest continuation in the evidence record.
+
+October27UTC2026 CURRENT EXECUTION WIP:previous development checkpoint
+20f114372f50e698a447b370bf194cdd014ee448 is pushed/exact remote verified.
+Production counter helper vs ALL119 actual complete QRB1 instruction
+streams96159/98104 BOTH TERMINAL0/identical515911db;actual before/after
+down receipts+bounded GDN poll counts/952channel refusals PASS. DISTINCT
+PioneerQ38RecurrentBlockOwner and SAME actual native private execution
+factories/scopes now IMPLEMENTED:metadata-only stage/119virgin boot/RUN/
+8channel counter proof/real119STOP+ROOT/ALL120holds/full journal restore.
+NO CPU numeric products,state/token commit,public ABI/Work or deployment.
+Final SDK97053/13007 BOTH0/exact672006a2/maxNewFrame768;old DEBUG70/65/
+bothNODRV50871 unchanged.21inert refusals55529/84643 BOTH0;5actual prepare
+faults6176/76672 BOTH0/after0,1,59,118fresh boots/ZERO post-failure IO.
+Binding26409/426role gates51842 PASS.17changed task sources MAIN/CLEAN
+byte-identical. FIRST whole-owner pilot84322 TERMINAL0/full layer+real119
+STOP+ROOT/120holds/11406904original restores+secondproof PASS. Clean pilot
+76782 and genuinely reached end-fault27350/26753 remain LIVE. These predate
+ONLY final closed-binding tolerance of later clean dispatch CLOSE;pilots
+also predate ROOT diagnostic-index reset. Final main28549 is LIVE and adds
+ACTUAL legacy dispatch cleanup after owner CLOSE. Poll all4live handles;
+final-source whole execution/close+native init/coupling/END still OWED.
+Fresh SSH64CPUs/max137034936320B/driver55-tag12-gen6/cold0/owner0 stable;
+NO install/compute/power/SD/Assistant/network changes.0.207893161tok/s
+unchanged/20UNMET/goalACTIVE. Details+live logs in lifecycle evidence.
+
 October27UTC2026 CURRENT:QRB1 retained3-layer/119STOP+ROOT lifecycle final
 main18194/clean47767 BOTH TERMINAL0,138refusals/ROOTstack5384;whole stdout
 identical88b4f5cb. Final original-model layer0 main5903/clean56184 BOTH

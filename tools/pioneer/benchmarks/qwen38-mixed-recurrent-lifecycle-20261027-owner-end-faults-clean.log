@@ -1,0 +1,23 @@
+START QRB1 actual matrix1 role10 stage2/prior closed matrix jobs0
+PASS QRB1 actual initial RMS5120 BIT-EXACT -> alpha/beta/Z/QKV
+START QRB1 actual matrix2 role11 stage3/prior closed matrix jobs3
+START QRB1 actual matrix3 role5 stage4/prior closed matrix jobs6
+START QRB1 actual matrix4 role6 stage5/prior closed matrix jobs125
+PASS QRB1 actual QKV ->640 Conv groups ->96 paired GDN/private NEXT+6144 gated;independent arithmetic
+START QRB1 actual matrix5 role13 stage8/prior closed matrix jobs244
+PASS QRB1 actual6144 gated F32 -> actual ROOT Q8 quantization/output projection;NO host intermediate
+START QRB1 actual matrix6 role2 stage10/prior closed matrix jobs363
+PASS QRB1 original residual+post-RMS5120 BIT-EXACT -> actual Q4 gate/up
+START QRB1 actual matrix7 role3 stage11/prior closed matrix jobs482
+START QRB1 actual matrix8 role4 stage13/prior closed matrix jobs601
+PASS QRB1 actual SiLU(gate)*up17408/strict independent error bound -> actual Q4 down
+PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/952 channel refusals;NOT native STOP/cleanup authority
+PASS QRB actual owner reached full real RUN/counter proofs before ANY cleanup fault injection
+PASS QRB owner genuinely reached close fault6/phase6/worker0/holds0/restored0/ALL retained ZERO later IO/reset/restore/retry
+PASS QRB owner genuinely reached close fault7/phase6/worker0/holds0/restored0/ALL retained ZERO later IO/reset/restore/retry
+PASS QRB owner genuinely reached close fault8/phase6/worker119/holds0/restored0/ALL retained ZERO later IO/reset/restore/retry
+PASS QRB owner genuinely reached close fault9/phase7/worker60/holds60/restored0/ALL retained ZERO later IO/reset/restore/retry
+PASS QRB owner genuinely reached close fault10/phase8/worker0/holds120/restored32769/ALL retained ZERO later IO/reset/restore/retry
+PASS QRB owner genuinely reached close fault11/phase9/worker119/holds120/restored11406904/ALL retained ZERO later IO/reset/restore/retry
+PASS QRB owner genuinely reached close fault12/phase6/worker60/holds0/restored0/ALL retained ZERO later IO/reset/restore/retry
+PASS QRB owner 7genuine post-RUN close faults + actual unmodified parent119STOP/120holds/full restore+secondproof;SIMULATED physical endpoints/NOT native or TPS

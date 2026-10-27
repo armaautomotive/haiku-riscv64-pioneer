@@ -47,9 +47,26 @@ extern "C" bool pioneer_recurrent_context_scoped_held(PioneerProbeCookie* cookie
  return c && BindQ38EmbeddingModel(*c,token,0,0) && InitializeQ38EmbeddingModel(*c,zero) && RunQ38EmbeddingModel(*c,embedding)
   && BindQ38RecurrentBlockNative(*c) && PrepareQ38RecurrentBlockNativeHeld(*c,memory) && CloseQ38RecurrentBlockNativeHeld(*c,memory);
 } // genuine bodies WOULD perform IO if invoked;tools only compile+inspect
+extern "C" bool pioneer_recurrent_context_scoped_execution(PioneerProbeCookie* cookie,unsigned token,
+ PioneerQ38ProjectionZeroResult& zero,PioneerQ38EmbeddingResult& embedding,PioneerQ38StateZeroResult& state,
+ PioneerQ38ConvHistoryZeroResult& history,PioneerQ38RecurrentBlockMemoryResult& memory,PioneerQ38RecurrentBlockResult& execution){
+ PioneerQ38GdnCallScope scope(cookie);auto* c=scope.Context();
+ return c && BindQ38EmbeddingModel(*c,token,0,0) && InitializeQ38EmbeddingModel(*c,zero) && RunQ38EmbeddingModel(*c,embedding)
+  && BindQ38RecurrentBlockNative(*c) && InitializeQ38RecurrentBlockState(*c,state) && InitializeQ38RecurrentBlockHistory(*c,history)
+  && PrepareQ38RecurrentBlockNativeHeld(*c,memory) && PrepareQ38RecurrentBlockNativeExecution(*c,execution)
+  && RunQ38RecurrentBlockNativeExecution(*c,execution) && CloseQ38RecurrentBlockNativeExecution(*c,execution,memory);
+} // actual complete body must compile,NEVER linked/installed/invoked here
 extern "C" bool pioneer_recurrent_context_scoped_dispatch_end(PioneerProbeCookie* cookie,tt_resident_session_result& result,bool& clean){
  PioneerQ38GdnCallScope scope(cookie);auto* c=scope.Context();return c && EndQ38DispatchOwnership(*c,result,clean);
 } // not a complete final bank-END/VM/clock/PCI/host disposal qualification
+#ifdef PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE
+extern "C" status_t pioneer_recurrent_context_locked_end(PioneerProbeCookie* cookie,tt_resident_session_result& result){
+ status_t status=AcquireQ38GdnSessionLock(cookie);if(status!=B_OK)return status;
+ struct{tt_resident_session_result result;}request={};
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38RecurrentBlockFinalEndCall.inc"
+ result=request.result;release_sem(sLock);return status;
+} // compile/inspect actual owned END+call seal,NEVER invoked by this test
+#endif
 extern "C" void pioneer_recurrent_context_retain(PioneerStoreContext& c,tt_resident_session_result& result){RetainQ38DispatchOwner(c,result);}
 extern "C" void pioneer_recurrent_context_destroy_clean(PioneerStoreContext* c){delete c;}
 extern "C" status_t pioneer_recurrent_context_expected_refusal(){return B_NOT_ALLOWED;}

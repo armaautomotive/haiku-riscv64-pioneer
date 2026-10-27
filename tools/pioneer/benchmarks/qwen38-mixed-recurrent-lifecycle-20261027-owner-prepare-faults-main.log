@@ -1,0 +1,5 @@
+PASS QRB owner actual preparation fault1/phase1/worker119/real virgin boots0/ALL120 retained/ZERO post-failure IO,hold,restore or retry;NOT native recovery
+PASS QRB owner actual preparation fault2/phase2/worker119/real virgin boots118/ALL120 retained/ZERO post-failure IO,hold,restore or retry;NOT native recovery
+PASS QRB owner actual preparation fault3/phase1/worker0/real virgin boots0/ALL120 retained/ZERO post-failure IO,hold,restore or retry;NOT native recovery
+PASS QRB owner actual preparation fault4/phase2/worker1/real virgin boots1/ALL120 retained/ZERO post-failure IO,hold,restore or retry;NOT native recovery
+PASS QRB owner actual preparation fault5/phase2/worker60/real virgin boots59/ALL120 retained/ZERO post-failure IO,hold,restore or retry;NOT native recovery
