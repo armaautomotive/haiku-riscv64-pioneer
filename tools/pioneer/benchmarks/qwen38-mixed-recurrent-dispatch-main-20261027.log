@@ -1,0 +1,7 @@
+PASS dispatch ACTUAL mixed Conv/GDN unequal closed histories/head0/independent arithmetic/real matrix continuation+STOP
+PASS dispatch ACTUAL mixed Conv/GDN unequal closed histories/head1/independent arithmetic/real matrix continuation+STOP
+PASS dispatch ACTUAL mixed Conv/GDN unequal closed histories/head19/independent arithmetic/real matrix continuation+STOP
+PASS dispatch ACTUAL mixed Conv/GDN unequal closed histories/head31/independent arithmetic/real matrix continuation+STOP
+PASS dispatch ACTUAL mixed Conv/GDN unequal closed histories/head47/independent arithmetic/real matrix continuation+STOP
+PASS dispatch pairs5/atomic source+identity refusals7280/stack5060;host DATA bridge+actual worker instructions,NOT ROOT coordinator/native/physical/fullmodel/TPS
+PASS returning RV32 dispatch DATA object bd038ffb9469800046f0f3e6d64b8af51e3c8d501e3f312f0292791051ccb8fb/maxFrame544/no undefined symbols/CSR/s11;NOT linked ROOT/native execution

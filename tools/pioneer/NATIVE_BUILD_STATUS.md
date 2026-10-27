@@ -1,5 +1,20 @@
 # Native build status
 
+October27UTC2026: recurrent Conv/GDN QMW1 command bridge DATA is main+clean
+qualified.31490/91699 BOTH TERMINAL0/identical:five actual worker pairs
+(heads0,1,19,31,47),7280 atomic metadata/pointer refusals,unequal REAL private
+job histories (including3/4 small-projection asymmetry and39/40 Conv5/6
+boundary),actual Conv+GDN arithmetic,matrix continuation and STOP. Same
+unchanged QMW1 images;workerstack5060B. Returning RV32 metadata object
+bd038ffb... main/clean EXACT/maxFrame544/no undefined/CSR/s11. These are
+host-executed DATA builders plus actual worker instructions,NOT an emitted
+ROOT coordinator or physical/native/Work/token loop. Real ROOT lifecycle,
+valid hidden flow and full recurrent/all64 integration remain OWED.
+Prior recurrent projection checkpointad4eb38df4b98c69265f97a171ff709273f2d4fd
+pushed/exact remote verified. No hardware/Assistant/power change;whole27B
+0.207893161tok/s unchanged/20UNMET. Evidence:
+benchmarks/qwen38-mixed-recurrent-dispatch-20261027.txt.
+
 October27UTC2026: separate QRP1 mixed RECURRENT returning matrix controller
 OFFLINE QUALIFIED,NOT deployed or native/Work selected.
 Eight roles10/11/5/6/13/2/3/4 now use SAME119 QMW1 workers with on-card

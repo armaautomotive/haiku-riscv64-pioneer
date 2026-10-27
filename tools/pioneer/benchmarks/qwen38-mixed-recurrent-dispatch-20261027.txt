@@ -1,0 +1,77 @@
+QMW1 recurrent Conv/GDN command bridge DATA -- 2026-10-27
+MAIN+CLEAN QUALIFIED / NOT A ROOT COORDINATOR OR NATIVE/WORK GRANT
+
+The next on-card recurrent coordinator must use the SAME retained QMW1
+workers as the dense controller,not write old QFP2 external mailboxes and
+pretend they are compatible. This new DATA bridge builds the exact64-word
+QMW1 envelope for the unchanged private Conv7/GDN8 numeric capsules. It
+checks the exact boot schema,source/identity relation,complete Conv/GDN
+descriptor grammar,sequence overflow/phase bounds and disjoint output.
+Failed builds leave the supplied output unchanged. It never reads hardware,
+sets private worker counters,releases a worker,initializes a state slot or
+grants original-source/native/Work/cleanup authority. observedPrevious is
+DATA;the future real owner still owes coherent live closed-chain admission.
+
+Actual instruction evidence
+-----------------------------
+Main31490 and independent clean91699 BOTH TERMINAL0;full stdout identical.
+ /private/tmp/pioneer-q38-recurrent-dispatch-sdk-20261027-b.log
+ /private/tmp/pioneer-q38-recurrent-dispatch-sdk-clean-20261027.log
+The two complete7-line logs are archived byte-exact beside this record.
+Each starts ten actual unchanged mixed workers ONCE,five pairs at heads
+0,1,19,31,47. Different histories arise ONLY from actual matrix jobs,never
+rewriting private nonces,PC/registers/tensor state or successful receipts.
+Head1 gives worker3 two extra actual jobs to model the alpha/beta48-row
+projection asymmetry. Head19 crosses worker39/40's six/five Conv groups.
+The new bridge's envelopes drive actual Conv/GDN instructions,independent
+arithmetic/proof checks,real matrix continuation and real STOP. Executed
+worker stack5060B stays inside the existing8KiB bound. All7280 atomic
+metadata/source/identity/descriptor/pointer/null/overflow refusals pass.
+All prior arithmetic bounds remain unchanged;no expected products were
+supplied to the workers. Input/weight/state endpoints remain SYNTHETIC.
+
+An initial host compile rejected an unused inherited test helper;only the
+test's explicit unused-function reference was added,not warning suppression
+or production behavior. Early three-pair evidence35688/61466/26943 passed,
+then coverage was extended to the two important boundary pairs above.
+
+Returning RV32 DATA object
+---------------------------
+Main and clean SDK compile the same freestanding command builders:
+ bd038ffb9469800046f0f3e6d64b8af51e3c8d501e3f312f0292791051ccb8fb
+Static frames448B(Conv),544B(GDN),all static and <=1024B. No undefined
+symbols,CSR,unsupported divide/FPU instruction or reserved s11 use.
+This is an UNLINKED command-DATA fragment,NOT execution of an emitted ROOT
+coordinator. The bridge ran on the HOST in these tests;only the worker
+programs executed their actual emitted instructions. No image/native/public
+dispatcher,device path,Work mode,CPU reference or Assistant was selected.
+
+Reproduction
+--------------
+python3 tools/pioneer/tests/run_pioneer_q38_mixed_recurrent_dispatch_tests.py
+ --sdk /Volumes/HaikuBuildLocal/generated.riscv64
+ /private/tmp/pioneer-q38-mixed-worker-20261026-e
+(Arguments form one command.) The SDK is read-only,outputs temporary.
+Clean source export:/private/tmp/pioneer-recurrent-subtree-clean.F2yHnLWK
+All four new source/test files compare byte-exact with the staged main
+files;dirty llama.cpp and unrelated FlashNext files remain untouched.
+
+Full objective remains active
+-------------------------------
+The qualified recurrent matrix checkpointad4eb38df4b98c69265f97a171ff709273f2d4fd
+was pushed and exact remote SHA verified. Neither that checkpoint nor this
+DATA bridge creates a valid embedding/RMS/Conv/GDN/residual/FFN recurrent
+layer chain,a physical new driver,all64 layers,state/KV/token commits,
+final normalization/vocabulary/sampling,persistent no-CPU-reference Work,
+Assistant integration or a throughput improvement.
+
+Next integrate this bridge into the actual on-card recurrent coordinator
+with ROOT0's six Conv groups,ALL119 peer Conv,96 paired GDN,valid immutable
+input/table/source/phase/lifetime binding and the shared matrix controller.
+The shared matrix controller can quantize6144 gated F32 outputs directly,
+so the future chain need not retain the old separate24-worker quantization
+and compact-scale gather stage. That removal is NOT implemented here and
+no speedup is inferred from it. Whole27B0.207893161tok/s remains the last
+measured rate;20tok/s and complete card-resident inference remain UNMET.
+No driver install,GPU run,power/reboot/relay/SD/mains/hardware connection,
+Assistant or network configuration change occurred. Goal ACTIVE.
