@@ -50,3 +50,17 @@ archive successful terminal proof, then separately guarded ONE physical72
 original diagnostic if all gates pass. All64/persistent state/history/KV/
 token commit/finalnorm/vocabulary/sampling/noCPUrefWork+Assistant still owed.
 Last measured whole27B0.207893161tok/s unchanged;20UNMET; goal ACTIVE.
+
+Additional CURRENT DEBUG72 observation,23:24:56UTC
+-------------------------------------------------
+The exact command of PID93723 was rechecked before a second independent
+two-second non-interrupting sample. This is CURRENT72 handle94469, not the
+older71 snapshot.315 samples: actual public handler line101 -> native
+CloseForValidation -> CloseImpl -> ValidationReadback line60 poison guards,
+split159/156 across two sites. Thus the NEW72 handler has genuinely reached
+post-RUN/119STOP+ROOT/120hold readback. All source/control code is unchanged.
+Private profile /private/tmp/pioneer-qrb72-live-readback-profile-20261027-a.txt;
+profile tool handle94424 completed0. No kernel debugger or P100A IO used.
+Final capture/publication/restoration/final-copy/duplicate/fresh-END gates
+remain PENDING; no whole-run PASS, original final comparison, physical-card,
+Work, full64 or throughput claim follows from a sampled intermediate stack.

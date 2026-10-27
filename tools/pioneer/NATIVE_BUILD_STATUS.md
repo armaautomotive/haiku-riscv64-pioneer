@@ -32,6 +32,12 @@ controls reached matrix7; original-weight runs reached matrix3. No tests
 restarted or guards weakened. See
 benchmarks/qwen38-recurrent-validation-wait-profile-20261027.txt.
 
+23:24:56UTC scoped profile also confirms CURRENT72 handle94469 has reached
+the actual post-RUN/119STOP+ROOT/120hold readback poison guards (315 samples).
+This is not just the earlier71 snapshot. Strict readback/restoration/final
+copy/fresh-END and original numerical gates remain PENDING; no installation
+or physical/Work/full64/speed qualification is inferred.
+
 The shared startup-deadline defect is now independently reproduced offline:
 119 actual virgin boots with simulated0.3s CPU image checks falsely fail at
 worker100. The new per-transition30s waits pass all119 plus12 clock/stall/
