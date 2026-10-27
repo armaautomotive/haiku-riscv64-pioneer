@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_MIXED_RECURRENT_COHORT_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_ROOT_CAPSULE_IMAGE)
+#error New recurrent ROOT/cohort capsule cannot select an existing image role
+#endif
 #ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE
 #error Separate recurrent projection image cannot select an existing image role
 #endif

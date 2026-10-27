@@ -1,0 +1,2 @@
+PASS QRC1 immutable HEAP DATA plans384/mutations3136/refusals10/bytes1013776/disjoint shared peer state;NO IO/native/source/producer/fullmodel grant
+PASS actual RISC-V kernel QRC1 DATA-plan instantiation/heap-only/maxStaticFrame768;NO driver linkage/IO/native authority

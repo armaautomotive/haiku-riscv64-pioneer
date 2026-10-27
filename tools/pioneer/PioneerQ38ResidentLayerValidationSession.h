@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_MIXED_RECURRENT_COHORT_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_ROOT_CAPSULE_IMAGE)
+#error New recurrent ROOT/capsule is not a CPU reference or validation client
+#endif
 #ifdef PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE
 #error Recurrent projection image is separate from CPU validation
 #endif

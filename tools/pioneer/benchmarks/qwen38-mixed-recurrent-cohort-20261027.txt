@@ -1,0 +1,132 @@
+QRC1 actual returning recurrent Conv/GDN ROOT -- 2026-10-27
+OFFLINE INSTRUCTION QUALIFICATION; NOT NATIVE/HARDWARE/FULL-MODEL SPEED
+
+Scope and actual implementation
+-------------------------------
+The new returning q38_mixed_recurrent_cohort executes on the ROOT alongside
+the SAME119 retained QMW1 workers. It admits real nonzero closed K5120 Q8
+matrix predecessors at the requested layer/position, reads coherent status
+and exact WAIT after observing reset FIRST, and verifies actual boot,
+doorbell/job/proof/source/counter continuity. No observedPrevious DATA is
+mistaken for a physical admission proof. Unequal private worker histories
+are retained. No worker boot/reset/private nonce write occurs in the cohort.
+
+The ROOT snapshots and checks all120 Conv and96 GDN tables before peer IO.
+After admission, it stages and releases all119 actual Conv envelopes. ROOT0
+runs its own six missing groups through the same precise returning numeric
+capsule. All640 groups must close with genuine summaries and counters before
+ANY GDN starts. The ROOT stages all96 GDN jobs, clears and reads back ALL96
+ready cells before the first release, and verifies every actual input,
+state, gated-output and card-clock receipt. It returns6144 private gated
+values plus private NEXT state; this is NOT a state-slot/token commit.
+
+Split primary/shadow tables preserve shared matrix Counters122000,
+Nonces123000,PeerBoots170000 and PeerJobs178000. The old contiguous recurrent
+table layout overwrote those live records and is NOT used here. Shadows
+intentionally reuse only closed matrix/FFN buffers; the future complete
+parent must close this phase before reusing output/residual/FFN storage.
+
+ROOT Conv has a separate explicit private-root-seal hook, not the worker
+seal or a no-op hook. Before-guard checks reject late role selection,
+defined0, dropped/changed roles and a supplied private witness. All numeric
+TUs reserve s11. Existing native/CPU/Work/image/build roles refuse both new
+image selectors, including a defined0 or empty environment value.
+
+Pinned image
+--------------
+boot.bin4:
+ 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+text.bin23448:
+ 6e31ae597aa9b3491e34daa389d6b19eb724a9db18efc37ee00f43699f36b8ef
+conv.bin7500:
+ 9674113d7c69cf7290b03e4bef133a8aa30cb1e6193dc7411b7941bae603cc78
+program.elf43876:
+ b177dfbee14d830a56d286e1eb0eb9c22143d63d542d08e0ca7b869c9a13777e
+Max static function frame1744B; executed complete ROOT stack4192B stays
+inside the unchanged8KiB bound. No undefined symbols, writable globals/GOT,
+unsupported instructions or ROOT CSR accesses. Exactly one private s11
+producer and two private readers across both TUs.
+
+Qualification evidence
+-----------------------
+Main instruction13081 TERMINAL0:
+ /private/tmp/pioneer-q38-mixed-recurrent-cohort-instructions-20261027-b.log
+ SHA256 2b645efd41b6246224fc493e5483aea950bf95014454df58888d921aaec3c8ed
+Actual ROOT and119 actual worker programs, booted once, each with1..3
+genuine prior matrix jobs. No successful PC/status/nonce/product is seeded.
+The fabric models raw memory/register/clock endpoints and ISA arithmetic,
+not physical hardware. Projection primitive outputs, Conv learned weights,
+prior history/state and GDN parameters remain SYNTHETIC. Every one of640
+Conv groups is independently checked, including all30720 history values;
+all96 GDN arithmetic/proofs and6144 gated writebacks are checked. ROOT issues
+18214 actual packets including its30 numeric Conv packets.
+
+All18 actual refusal branches pass: malformed last tables/header, changed
+private ROOT boot, reset held on first/last peer without speculative PC
+reads, changed last peer source/predecessor proof, unknown packet, ROOT
+counter/source/command discontinuity, late primary-table mutation before
+release, unknown ROOT Conv packet, bad closed Conv proof, lost last ready
+clear, unknown first GDN release and corrupt last GDN proof. ROOT parks
+without another packet/reset/cleanup or successful completion, including
+2048 actual parked instructions after a new host doorbell. Unknown live
+peers are NOT fabricated as stopped and no restore authority is inferred.
+
+Main metadata77265 TERMINAL0:384 canonical split plans across all48 recurrent
+layers, both endpoint workspace banks/positions/current slots,3136 all-word
+mutations and10 bad builds. Heap plan1013776B, single attempt/canonical
+binding/page check; actual RISC-V kernel DATA instantiation maxFrame768.
+Main role/build gates15270 TERMINAL0:844 checks/26 builders. Valid old-role
+baselines are required before defined0 and late-mixing refusals count.
+
+Clean source export /private/tmp/pioneer-qrc1-clean.Xo367kmb contains all53
+staged code files byte-exact. Separate SDK image clean build TERMINAL0,
+all four artifacts and build stdout identical. Clean gates24313, instruction
+90191 and metadata16822 are ALL TERMINAL0. Entire main/clean stdout is
+byte-identical for all three suites, not merely the final PASS line. Exact
+logs are archived beside this record with main/clean suffixes. Instruction
+SHA2562b645efd...,metadata d6c2e5c2...,gates8d427750...,image79adb3e1....
+
+Early compile/link checks caught misleading indentation and an absent
+freestanding zero-fill helper; they were fixed before successful imageC.
+The later gate suite initially omitted transitive parent requirements from
+one OLD valid baseline. The fixture now collects the actual role include
+chain before testing isolation; no production refusal was weakened. No
+instruction/numerical/fault bound was relaxed to obtain a passing test.
+
+Regression and preserved system
+--------------------------------
+Unchanged complete QMW1/ancestor builder37024 TERMINAL0: all8 sections plus
+ELF reproduce prior exact pins. Isolated old sigmoid dense ROOT58245
+TERMINAL0: code668a72ed...51004B and all ancestors byte-unchanged. Existing
+DEBUG70 native build44436 TERMINAL0: module11d24d92...,object6b3db5d8...,
+old65/oldNODRV/mixedNODRV controls unchanged. These are compile regressions,
+NOT new native/controller/card qualification.
+
+Fresh read-only SSH metadata confirms64 CPUs, max137034936320B RAM, stable
+driver55/tag2026102100010012/generation6/cold0/quiesced0/active_owner0.
+No card run, driver install/reload, reboot/power/relay, SD/mains/hardware,
+Assistant or network configuration changes occurred. Dirty llama.cpp and
+unrelated FlashNext files are neither included nor touched.
+
+Remaining full-offload readiness tasks (objective unchanged)
+------------------------------------------------------------
+1. Connect real on-card hidden/RMS and four recurrent projections10/11/5/6
+   to this returning cohort, without host-supplied intermediate products.
+2. Consume gated6144 F32 directly in recurrent projection13; finish original
+   residual/post-RMS, Q4 gate/up/SiLU/down and final residual. Preserve raw
+   hidden outside the phased Conv tables. Verify the entire recurrent layer
+   against ORIGINAL weights and an independent validation reference.
+3. Add valid recurrent0..2 -> dense3 flow and all64 layers, recurrent/KV state,
+   atomic token/slot commits, final norm/vocabulary/sampling on the card.
+4. Complete actual virgin bootstrap,119 real STOPs+ROOT terminal, full new
+   touched-memory/Tensix/NoC journals and safe source/host/native lifetime.
+   Current standalone QRC1 has NO virgin or STOP/native restore grant.
+5. Qualify a DISTINCT native owner/driver/client scope before any card use;
+   compare complete real generations and repeated/long sessions on hardware.
+6. Integrate persistent no-CPU-reference Work into Assistant separately from
+   validation, measure full-model loading/prefill/decode and optimize the
+   real hot path. No component timing is a whole-model token rate.
+
+Full27B last measured0.207893161tok/s remains unchanged.20tok/s and complete
+card-resident model generation remain UNMET. Goal ACTIVE, not narrowed to
+this passing component. Next work is the actual complete recurrent parent.

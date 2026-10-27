@@ -1,0 +1,20 @@
+START actual QRC1 ROOT+SAME119 QMW1/unequal real matrix histories/ROOT6Conv+119Conv->96GDN;synthetic primitive bytes,NOT full model
+PASS refusal reserved header/ROOTpark/no later packet or reset
+PASS refusal private ROOT boot changed/ROOTpark/no later packet or reset
+PASS refusal last Conv table reserved word/ROOTpark/no later packet or reset
+PASS refusal last GDN table reserved word/ROOTpark/no later packet or reset
+PASS refusal held reset before PC/ROOTpark/no later packet or reset
+PASS refusal held reset before PC/ROOTpark/no later packet or reset
+PASS refusal last peer physical source changed/ROOTpark/no later packet or reset
+PASS refusal last predecessor proof changed/ROOTpark/no later packet or reset
+PASS refusal unknown first packet/ROOTpark/no later packet or reset
+PASS refusal ROOT counter discontinuity/ROOTpark/no later packet or reset
+PASS refusal ROOT physical source changed/ROOTpark/no later packet or reset
+PASS refusal ROOT command readback changed/ROOTpark/no later packet or reset
+PASS refusal primary table changed after capture/ROOTpark/no later packet or reset
+PASS refusal unknown ROOT Conv packet/ROOTpark/no later packet or reset
+PASS refusal closed Conv proof changed/ROOTpark/no later packet or reset
+PASS refusal last ready clear lost/ROOTpark/no later packet or reset
+PASS refusal unknown first GDN release/ROOTpark/no later packet or reset
+PASS refusal last GDN proof changed/ROOTpark/no later packet or reset
+PASS actual emitted QRC1/120Conv/640groups/96GDN/all6144gated+privateNEXT/119bootONCE/noReset/noHostMath/ROOTstack4192/packets18214/refusals18;NOT original/native/physical/fullmodel/TPS

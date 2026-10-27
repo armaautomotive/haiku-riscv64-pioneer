@@ -1,5 +1,29 @@
 # Native build status
 
+October27UTC2026: actual returning QRC1 Conv->GDN ROOT OFFLINE QUALIFIED,
+NOT a native/full-model driver. Main13081/clean90191 BOTH TERMINAL0 with
+identical complete stdout: SAME119 QMW1 workers booted ONCE,unequal real
+matrix histories,ROOTsix+119peer Conv/all640groups,96GDN/all6144gated/private
+NEXT,18 actual fault branches/inert ROOT/no cleanup after UNKNOWN.
+ROOTstack4192B within unchanged8KiB. Main77265/clean16822 BOTH TERMINAL0:
+384canonical plans/all48recurrent layers/3136mutations/10refusals/actual
+kernel DATA-plan maxFrame768. Gates844/26builders main15270/clean24313
+BOTH TERMINAL0. All53code files clean-export identical;exact image pins
+6e31ae59...text23448+9674113d...rootConv7500/maxFrame1744. Split tables avoid
+overwriting shared peer nonces/counters. Before-guard private ROOT capsule
+checks prevent late no-op/worker-hook selection. Existing QMW1,old dense
+sigmoid668a72ed... and DEBUG70module11d24d92... rebuild BYTE-UNCHANGED.
+Primitive projections/learned/state endpoints remain SYNTHETIC;this is
+actual emitted ROOT+worker instructions,NOT original full recurrent flow,
+physical execution,virgin/STOP/native journals,state-slot/token commit or
+Work. Next connect real hidden/RMS+four projections -> this cohort ->
+projection13+residual/RMS+FFN,then valid0..2->dense3/all64/state+KV/token/
+final norm/vocabulary/sampling,persistent native Work+Assistant. Fresh SSH
+64CPU/max137034936320B and stable55/tag12/gen6/cold0/owner0. No hardware,
+Assistant,power/SD/mains/network change;whole27B0.207893161tok/s unchanged,
+20UNMET. Evidence+remaining checklist:
+benchmarks/qwen38-mixed-recurrent-cohort-20261027.txt.
+
 October27UTC2026: recurrent Conv/GDN QMW1 command bridge DATA is main+clean
 qualified.31490/91699 BOTH TERMINAL0/identical:five actual worker pairs
 (heads0,1,19,31,47),7280 atomic metadata/pointer refusals,unequal REAL private
