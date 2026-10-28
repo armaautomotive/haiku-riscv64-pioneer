@@ -1,0 +1,104 @@
+Qwen 27B: returning on-card recurrent and attention/FFN components
+2026-10-28 UTC. COMPILE/DATA qualification only; no new physical execution.
+
+Purpose and actual change
+-------------------------
+The standalone recurrent and dense controllers each owned a host command
+loop. A common whole-model device scheduler must call both arithmetic
+families and receive control back, keeping the SAME workers, nonces and
+GDDR intermediate hidden vector. It must not close/reopen an old native
+owner or transfer hidden products through the CPU between layer families.
+
+New q38_return_recurrent_layer() and q38_return_dense_layer() contain the
+real existing arithmetic calls, not stubs. They load QLC1 boot/outer DATA,
+take their OWN correctly typed private snapshots, bind s11 during arithmetic
+and restore the parent's s11 before returning 5120. Minimum parent/local
+private ranges must be aligned, in the existing stack window and disjoint.
+No recurrent private type is cast into a dense type or native owner.
+
+Recurrent arithmetic includes normalization, eight projections, Conv/GDN,
+residual/FFN and final hidden write. It additionally copies the actual Conv
+NEXT bytes into per-layer provisional history slots ON CARD before returning;
+this is not a current-history slot flip or whole-token state commit.
+Dense arithmetic uses real on-card input, Q/K/V, attention and FFN. Both
+retain existing source/metadata/NoC checks and the same worker-chain/hidden-
+slot ADDRESSES. Runtime preservation of those chains is still unqualified.
+
+The families compile separately so their layout aliases/private seals do
+not collide. The recurrent Conv capsule calls its own renamed recurrent
+seal. One checked device-zero helper also resolves compiler-emitted memset;
+there is no host library/allocator or private CPU numerical oracle.
+All existing production/diagnostic source files are UNMODIFIED.
+
+Separate role and bounded artifact
+----------------------------------
+PIONEER_Q38_LAYER_RETURN_COMPONENT_IMAGE=1 requires exactly one exact family
+and its returning arithmetic parent plus precise sigmoid. Prefix/history
+image aliases, native/kernel/client/oracle/Work roles and defined0/late
+changes are refused. This is not a new physical tag or driver namespace.
+QLC1 boot magic/marker is distinct from QRB1/QBL1/QPX1; old boots are refused.
+
+The builder emits only a RELOCATABLE layer-components-NOBOOT.o, with both
+real entry bodies retained by ld -r section roots. There is NO boot, reset
+entry, host wait, STOP or old controller main in that capsule. Its sole
+unresolved symbol is scalar_fault_park, for the future common scheduler.
+Relocatable ld keeps dead extern names after section GC: the builder proves
+there are NO relocations to old waits/STOPs before stripping only those dead
+declarations; it does not hide a referenced dependency or weaken closure.
+
+Main/clean final build handles 81054/74305 both direct terminal exit 0.
+Both first unpinned qualification outputs and final pinned outputs match:
+recurrent.o 145120 bytes:
+4b1550f36d8bf6e225684db0a97ba62ad885817c1497d78226443b0c7867533f
+dense.o 115164 bytes:
+29204d287e38fe0ead7fd24c2de44aad7b46d2bcb38e23daa4b55d1cebb6c8e9
+layer-components-NOBOOT.o 228380 bytes:
+78cf19c422c773a8c9c47c180df78ecd66609e4614dd75ee2d66344cab0ea25c
+Actual retained ROOT sections total 93044/131072 bytes; Conv 7500/32768.
+Max compiled per-function frame 2112/4096 bytes. These limits are unchanged;
+full scheduler call-path stack usage is NOT proved by a per-function bound.
+No writable globals, disallowed controller instructions/CSRs or old main ABI.
+
+Main/clean test handles 17519/17306 both direct terminal exit 0 (ASan+UBSan).
+Each passes 202 role gates and 16 real canonical DATA frame combinations:
+recurrent layers0+62/dense3+63, banks0+6 and positions0+8191. There are 32768
+reached boot-bit refusals, 12288 source/identity bit refusals, 144 stack-bound/
+overlap cases, null/family separation and old-boot refusal checks. These
+tests never execute the device arithmetic or prove a completed predecessor.
+
+Earlier failures repaired, not waived: freestanding typedef/include order;
+enum comparisons under -Werror; Conv's renamed seal dependency; compiler
+memset lowering; and ld -r's unreferenced extern declarations. No memory,
+instruction, undefined-dependency or stack limit was raised to make it pass.
+
+Other native runtime gates newly completed
+------------------------------------------
+Actual routed-control simulation: 92911 MAIN / 21992 CLEAN both direct exit 0,
+identical 57-line stdout SHA-256:
+461ec29e49ef8e71f5daf08ad96a610a772391a641ed59233ccc8b059b413c0d
+This traverses public admission -> ACTUAL diagnostic handler -> real private
+QPE1/init/three-layer RUN/readback/restore/fresh final END/context destruction
+before caller copy, with post-END copy failure and retry refusal. Other
+administrative/upload handlers are explicit refusals and never called.
+
+Private frozen actual-control MAIN 40917 also direct terminal exit 0, 57 lines:
+195f403a1c77ac080c78a85de74b39b2315c8c1d77dad5d974716f3da903dd15
+CLEAN 17954 is still running, not passed. Endpoint/OS/learned data in these
+control tests are SIMULATED; they are not original-model physical, full64,
+Work, inference-rate or new returning-component execution qualification.
+
+Next required, not implemented or qualified here
+------------------------------------------------
+Execute both new component bodies in the instruction model, including
+private-parent restoration, real chained-worker receipts and history bytes.
+Link them into a NEW common ROOT orchestrator with real recurrent0..2 ->
+dense3 hidden handoff and canonical metadata staged on card, then all64.
+Do not substitute a host-side call/restart for that device handoff.
+Persistent KV/GDN/history, whole-token commit, final norm/vocabulary/sampling,
+native Work ownership and Assistant integration remain separate requirements.
+
+Continue exact existing original/readback/control runtime handles without
+restart. No current source/client/helper/sole-owner physical gates are waived.
+No card operation, driver deployment, Assistant/boot/network/power/SD/mains
+change. Last whole-model speed remains 0.207893161 tok/s; full offload and
+20 tok/s are UNMET. Goal ACTIVE. Only completed logs are archived here.

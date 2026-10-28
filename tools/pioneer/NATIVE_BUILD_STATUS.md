@@ -1,5 +1,33 @@
 # Native build status
 
+## Current: returning recurrent and attention layers compile together
+
+October 28, 2026. Two new DEVICE returning functions reuse the real layer
+arithmetic with separate correctly typed private snapshots and s11 bind/
+restore. They retain common worker-chain/hidden-slot addresses and stage
+recurrent Conv NEXT history on card. Existing source/images are unmodified.
+This is a foundation for a common on-card scheduler, NOT that scheduler or
+a connected recurrent0..2 -> dense3 pipeline yet.
+
+Main/clean build and ASan+UBSan DATA tests pass: 202 role gates, 16 boundary
+frame combinations, 32768 boot-bit and 12288 binding refusals, 144 stack/
+overlap cases. Pinned relocatable capsule `78cf19c4` has both actual bodies,
+no boot/host wait/STOP/old main, sole unresolved fault park; ROOT 93044 B,
+Conv 7500 B, max per-function frame 2112 B, within unchanged bounds. No new
+component arithmetic has executed yet, and no physical driver is installed.
+
+Earlier actual public-control runtimes now BOTH finish 0 (`92911/21992`,
+identical `461ec29e`). Frozen actual-control MAIN `40917` also finishes 0;
+CLEAN `17954` remains live. These use simulated endpoints/learned bytes and
+do not establish original-model, returning-component, physical or Work speed.
+Original native readback and both original public-control variants remain
+running. Next: qualify actual component instructions and a genuinely on-card
+handoff, while those same exact existing runtimes finish.
+
+Evidence: [returning layer components](benchmarks/qwen38-returning-layer-components-20261028.txt).
+Full64/persistent-state/output/sampling/Work/Assistant remain unfinished;
+last whole-model **0.207893161 tokens/sec**, 20 tokens/sec target unmet.
+
 ## Current: private native frozen-data path qualified for offline tests
 
 October 28, 2026. The genuine renamed NODRV execution owner now has an opt-in

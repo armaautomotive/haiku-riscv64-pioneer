@@ -1,0 +1,5 @@
+4b1550f36d8bf6e225684db0a97ba62ad885817c1497d78226443b0c7867533f recurrent.o bytes145120
+29204d287e38fe0ead7fd24c2de44aad7b46d2bcb38e23daa4b55d1cebb6c8e9 dense.o bytes115164
+78cf19c422c773a8c9c47c180df78ecd66609e4614dd75ee2d66344cab0ea25c layer-components-NOBOOT.o bytes228380
+PASS both ACTUAL returning layer bodies retained, separate private seal types/s11 bind+restore, same worker-chain/hidden-slot ADDRESSES;ROOTbytes93044/131072 Convbytes7500/32768 maxFrame2112
+RELOCATABLE COMPONENTS ONLY/NO boot or host wait/STOP/old main/native ABI;sole unresolved fault park. NOT a connected pipeline,initialized state,token commit,physical/Work or throughput qualification. DO NOT INSTALL
