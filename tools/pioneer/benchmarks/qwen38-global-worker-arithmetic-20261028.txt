@@ -1,0 +1,119 @@
+QGW1 actual vocabulary-worker arithmetic: SYNTHETIC + ORIGINAL COMPLETE OFFLINE
+2026-10-28. No physical card/native driver/boot/Assistant action or new TPS.
+
+Previously the distinct global-output worker had only BUILD/DATA/initial-
+fault qualification. It now has positive actual-instruction arithmetic,
+private job-order/partial publication/fault/next-position/terminal evidence.
+Existing immutable QGW1 ELF fc8ade5b... and all9 literal build pins remain
+unchanged. Both old-worker and new-worker pins are checked BEFORE every
+test compilation. The old primitive ISA fixture installs ALL new immutable
+ROM BEFORE its first instruction,never replaces code or private state live.
+
+New test uses FOUR independent fresh workers1/21/22/119,NOT a joint119 ROOT
+cohort. EACH actually executes64 Q4_K/17408 down jobs before its8/9 Q6_K/5120
+canonical vocabulary jobs. No private modelLayer/position/wave/PC/nonce,
+Tensix array,completed product or CPU model result is transplanted. Packet
+observer lists are retired between closed jobs with EXACT cumulative
+physical counter continuity. Derived L1 scratch/output is poisoned,not seeded
+with products;actual emitted instructions must regenerate every result.
+
+These64 down jobs are NECESSARY worker ordering ONLY. They do NOT execute
+every operator of64 model layers or supply a normalized final-hidden producer.
+Primitive native input vectors/scales are TEST inputs and change across jobs,
+including output waves. This is NOT one common-input248320-row vocabulary
+projection,full-model inference,all973 runtime jobs or an actual token.
+
+Final ASan+UBSan SYNTHETIC main80209 / clean21900 BOTH direct terminal0:
+55 identical lines SHA8cd34e24681867c13d3e17fe8fa35c8646630554ed66a0cd80203b603cdc102b.
+Command:
+ python3 tools/pioneer/tests/run_pioneer_q38_global_worker_arithmetic_tests.py \
+  /private/tmp/pioneer-q38-mixed-worker-20261026-e \
+  /private/tmp/pioneer-q38-global-globalbuild-{main,clean}-20261028-e
+
+Final ASan+UBSan ORIGINAL main57563 / clean35640 BOTH direct terminal0:
+57 identical lines SHAc3a9ce0acca28af0b29e6a97512f48cabe4e70b9c65aca023f41c02534cb4514.
+Same command PLUS:
+ /Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf
+Separate host TEST byte-source TU uses the production PublicModelSource
+FULL SAME open-file18973870528B SHA256:
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+and file identity/epoch/all851 tensor schema BEFORE any worker exists.
+Only the test pathname and Mac shasum command are adapted;digest/schema/
+identity are not mocked. ReadReferencePacked supplies original RAW Q6_K
+bytes,not numeric oracle products. Output5120x248320/type14/full byte size
+are independently required. Every tile is transposed from the same checked
+open file,with source Ready bracketing every read and no partial tile output
+on failure. Production SAME-FILE stdio fork barriers are used before test
+branches. End-of-test source remains Ready. No llama tree is read or built.
+
+BOTH final suites independently check ALL matrix outputs against the existing
+bit-exact FP32 plus separately decoded FP64 observers.34 accepted canonical
+output jobs cover8656 rows across selected workers,including three240-row
+tails. Each actual worker scans ALL its produced finite rows and publishes
+its own QGP1 maximum. ALL64 words of each partial (row/value/count/identity/
+source/counter/last command/reserved fields) match an independent observer
+that uses float comparisons rather than the candidate Better helper.
+No numeric tolerance,device poll bound,stack or ROM extent was relaxed.
+
+Per suite:32 reached post-down-frontier refusals (wrong wave/position,
+premature global STOP/layer shortcut,boot/source/counter/nonce corruption),
+ZERO additional NoC/arithmetic/partial writes,unchanged completed nonce,
+and inert2048. FOUR late failures mutate the job AFTER actual arithmetic
+and partial magic publication;the final private seal rejects WITHOUT an
+acknowledged new job,then remains inert2048. IMPORTANT for future ROOT:
+partial magic ALONE is NOT a completion/closed-chain/native/token grant.
+It must require the genuine final job acknowledgement and full current
+boot/job/source/counter/terminal ownership checks before accepting a partial.
+
+FOUR separate branches genuinely execute position1/layer0's first down job
+after all position0 output waves,then reject premature position1 output.
+This is a necessary position transition ONLY,NOT multi-token KV/GDN/Conv
+history or token commit. Each unmodified parent performs REAL global STOP,
+no later NoC/math and inert2048. Maximum WRITTEN worker stack2160/8192;
+this fixture does NOT separately measure lowest reserved SP.
+
+Updated initial-guard regression main43443 / clean80546 BOTH direct0:
+same15 refusals/ZERO NoC/inert2048/old ABI exclusion,exact unchanged1-line
+SHAd94ecb1e702863fbfe1ccc3ff5d4d878df21e5a2b6a368795ae4859031163776.
+The reusable initial fixture now accepts a default-preserving worker id and
+can be included without its test main. No initial guard was removed.
+
+Development repair: first compile refused a duplicate mutable-state macro;
+removed it because the included primitive fixture already defines it. The
+new123-store partial-order observer matches the actual zero/header/
+interleaved counter+id/command/source/magic sequence. Earlier synthetic
+B58129 and C5862/1763 also terminated0,but the final E/D suites above prove
+the CURRENT source,including the separate authenticated byte-source TU.
+
+FULL64 unchanged-QCH1 observer runs17092/81011 are still LIVE. BOTH now
+genuinely complete layer0 at EXACT old count843721110,reservedSP7248/
+written7240,and proceed into layer1 with the new64bit observation windows.
+This verifies the first real rebase boundary,not full64 completion. Raw
+profile snapshots are explicitly PARTIAL. Each first-layer profile has78
+functions;top exclusive ROOT instruction counts:
+ 464707548 q38_layer_return_recurrent_seal
+ 149489362 DensePartitionRoot::Seal
+  66066414 DensePartitionRoot::Transfer
+  48631884 DensePartitionRoot::Quiet
+  45551588 DensePartitionRoot::FrameSeal
+The top TWO seal routines account for72.7962% of that OFFLINE ROOT count.
+Counts include SIMULATED polling,not physical cycles,Tensix utilization,
+model latency or tokens/sec. This identifies redundant controller validation
+scans as a performance candidate,NOT permission to remove source/ownership/
+live fault checks or claim a measured speedup. Any distinct fast path still
+needs actual complete validation and physical inference measurements.
+
+Next required integration: fresh qualified G-cohort/matching ROOT and all
+64 actual operators,final normalization+ALL973 output jobs/9waves/coverage/
+global reduction+sampling,persistent token/state commit,NEW genuine native
+owner/initialized footprint/source/journal/terminal/client/helper lifecycle,
+original whole-model+physical stability,Work without CPU references and
+Assistant deployment. The old ROOT consumes QMW1 magic/boot/jobs/status and
+must NOT be retagged to launch QGW1 or splice these independent lifetimes.
+The current chain's final dense entry performs STOP;global integration must
+instead genuinely return layer63 under a new qualified parent before output.
+
+GoalACTIVE. Last real whole-model0.207893161tok/s,target20 still UNMET.
+No new driver installed,no physical benchmark/no speedup claim. No power,
+SD,mains,network settings,CPU/RAM/boot or Assistant changes;unrelated local
+llama/FlashNext changes remain unread/untouched.

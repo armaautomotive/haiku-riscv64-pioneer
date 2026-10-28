@@ -1,0 +1,35 @@
+START ACTUAL ALL64 QCH1 instructions/SAME119 genuinely virgin peers/ONE GDDR map/ONLY raw learned+initial hidden+zero prior state;NO CPU products or worker state transplant
+OBSERVED connected layer0 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer0 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer0 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer0 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer0 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer0 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer0 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer0 matrix8 role4/actual quantized input/same workers
+PASS ALL64 connected layer0/final5120/ALL119 genuine closed chains/actual on-card hidden for next layer/ROOTinstructions843721110/reservedStack7248/writtenStack7240
+ROOT_INSTRUCTION_PROFILE total843721110/functions78/EXCLUSIVE actual PCs incl SIMULATED polling/NOT physical cycles or token speed
+ROOT_INSTRUCTION_FUNCTION 464707548 q38_layer_return_recurrent_seal
+ROOT_INSTRUCTION_FUNCTION 149489362 DensePartitionRoot::Seal(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 66066414 DensePartitionRoot::Transfer(unsigned int const*, unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+ROOT_INSTRUCTION_FUNCTION 48631884 DensePartitionRoot::Quiet()
+ROOT_INSTRUCTION_FUNCTION 45551588 DensePartitionRoot::FrameSeal(unsigned int) [clone .part.0]
+ROOT_INSTRUCTION_FUNCTION 12175446 DensePartitionRoot::PioneerQ38SigmoidDetail::ExpReduced(float, int&)
+ROOT_INSTRUCTION_FUNCTION 10602388 MixedRecurrentCohort::Packet(unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+ROOT_INSTRUCTION_FUNCTION 6884212 PioneerGraphDividePositive(float, float)
+ROOT_INSTRUCTION_FUNCTION 5926730 PioneerQ38ProjectionQuantize(unsigned int, float const*, unsigned int, PioneerQ38ProjectionInput*) [clone .constprop.0]
+ROOT_INSTRUCTION_FUNCTION 3653387 Projection::Run(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 3096704 MixedRecurrentCohort::Audit()
+ROOT_INSTRUCTION_FUNCTION 2170054 PioneerQ38ConvBatchShape(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 2001920 DensePartitionRoot::PioneerQ38SigmoidPrecision(float, float&)
+ROOT_INSTRUCTION_FUNCTION 1897472 DensePartitionRoot::PioneerQ38SigmoidDetail::Divide(PioneerAttentionWide, PioneerAttentionWide)
+ROOT_INSTRUCTION_FUNCTION 1866319 RecurrentBlock::Private()
+ROOT_INSTRUCTION_FUNCTION 1503605 DensePartitionRoot::ClosedJob(unsigned int const*, unsigned int*, unsigned int, bool)
+ROOT_INSTRUCTION_FUNCTION 1469300 DensePartitionRoot::Admit(unsigned int const*, unsigned int*, unsigned int)
+ROOT_INSTRUCTION_FUNCTION 1458434 PioneerQ38MixedRecurrentRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 1272198 Projection::InputsSeal(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 1201900 DensePartitionRoot::PhysicalSource(unsigned int const*, unsigned int*, unsigned int)
+OBSERVED connected layer1 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer1 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer1 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer1 matrix4 role6/actual quantized input/same workers

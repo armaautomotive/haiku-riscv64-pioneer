@@ -7,7 +7,7 @@
 #include <unistd.h>
 namespace G=PioneerQ38GlobalWorkerLayout;
 struct GlobalInitialPeer:MixedPeer {
- GlobalInitialPeer(const char* old,const char* image):MixedPeer(old,1,12,17408,1){
+ GlobalInitialPeer(const char* old,const char* image,unsigned worker=1):MixedPeer(old,worker,12,17408,1){
   assert(!steps && pc==0x6000); // replace immutable initial ROM BEFORE first boot ONLY
   code=Read((std::string(image)+"/text.bin").c_str());front=Read((std::string(image)+"/globalworker.bin").c_str());
   dense=Read((std::string(image)+"/dense.bin").c_str());helper=Read((std::string(image)+"/ffn.bin").c_str());
@@ -24,7 +24,7 @@ struct GlobalInitialPeer:MixedPeer {
   assert(pc==waitPC && !sequence && !requests && !responses && !pending && memory.at(M::Status+12)==G::Magic && !memory.at(M::Status+8));
  }
  std::array<uint32_t,64> Command(bool global=true)const{
-  std::array<uint32_t,64> j={};const unsigned h[]={G::Magic,1,global?unsigned(G::GlobalMatrix):1U,1,selfRoute,global?64U:0U,0,2025};
+  std::array<uint32_t,64> j={};const unsigned h[]={G::Magic,1,global?unsigned(G::GlobalMatrix):1U,boot[3],selfRoute,global?64U:0U,0,2025};
   for(unsigned i=0;i<8;i++){j[i]=h[i];j[8+i]=boot[8+i];}
   if(global){
    const unsigned m[]={0x31483851,14,3392,0,0,5120,0x04000000,1,PioneerQ38ProjectionRoute(0),1};
@@ -39,6 +39,7 @@ struct GlobalInitialPeer:MixedPeer {
   for(unsigned i=0;i<2048;i++)StepBlock();assert(pc==faultPC && !requests && !responses && !matrixInstructions);
  }
 };
+#ifndef PIONEER_Q38_GLOBAL_WORKER_INITIAL_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;
  auto m=std::make_unique<GlobalInitialPeer>(argv[1],argv[2]);m->BootGlobal();
@@ -58,3 +59,4 @@ int main(int argc,char** argv){
  }
  puts("PASS ACTUAL QGW1 virgin boot/private frontier rejects15 premature global+globalSTOP/fakecompleted/layer63 shortcut/position jump/oldABI/source+boot+job faults/ZERO NoC or matrix products/inert2048;NO positive arithmetic,all64 producer,output ROOT,native,physical,Work,token or TPS proof");
 }
+#endif

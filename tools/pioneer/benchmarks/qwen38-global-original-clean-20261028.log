@@ -1,0 +1,57 @@
+START authenticate full SAME open public c600 GGUF BEFORE any worker exists
+PASS ORIGINAL c600de03 FULL SHA/same open file identity/all851 tensor schema/output Q6_K5120x248320;raw bytes ONLY,NO completed producer or native grant
+START QGW1 standalone worker arithmetic/64 actual down jobs are NECESSARY ordering ONLY,NOT all model operators or ROOT producer
+PASS ACTUAL QGW1 worker1 genuine down frontier16/NO other model operators claimed
+PASS ACTUAL QGW1 worker1 genuine down frontier32/NO other model operators claimed
+PASS ACTUAL QGW1 worker1 genuine down frontier48/NO other model operators claimed
+PASS ACTUAL QGW1 worker1 genuine down frontier64/NO other model operators claimed
+PASS ACTUAL QGW1 worker1 wave0/rows177408+256/local maximum177634/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker1 wave1/rows181760+256/local maximum181783/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker1 wave2/rows186112+256/local maximum186267/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker1 wave3/rows190464+256/local maximum190610/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker1 wave4/rows194816+256/local maximum194973/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker1 wave5/rows199168+256/local maximum199291/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker1 wave6/rows203520+256/local maximum203575/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker1 wave7/rows207872+256/local maximum207929/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker1 wave8/rows212144+240/local maximum212161/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+START QGW1 standalone worker arithmetic/64 actual down jobs are NECESSARY ordering ONLY,NOT all model operators or ROOT producer
+PASS ACTUAL QGW1 worker21 genuine down frontier16/NO other model operators claimed
+PASS ACTUAL QGW1 worker21 genuine down frontier32/NO other model operators claimed
+PASS ACTUAL QGW1 worker21 genuine down frontier48/NO other model operators claimed
+PASS ACTUAL QGW1 worker21 genuine down frontier64/NO other model operators claimed
+PASS ACTUAL QGW1 worker21 wave0/rows142464+256/local maximum142509/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker21 wave1/rows146816+256/local maximum146885/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker21 wave2/rows151168+256/local maximum151364/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker21 wave3/rows155520+256/local maximum155773/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker21 wave4/rows159872+256/local maximum160119/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker21 wave5/rows164224+256/local maximum164440/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker21 wave6/rows168576+256/local maximum168594/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker21 wave7/rows172928+256/local maximum173113/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker21 wave8/rows177168+240/local maximum177399/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+START QGW1 standalone worker arithmetic/64 actual down jobs are NECESSARY ordering ONLY,NOT all model operators or ROOT producer
+PASS ACTUAL QGW1 worker22 genuine down frontier16/NO other model operators claimed
+PASS ACTUAL QGW1 worker22 genuine down frontier32/NO other model operators claimed
+PASS ACTUAL QGW1 worker22 genuine down frontier48/NO other model operators claimed
+PASS ACTUAL QGW1 worker22 genuine down frontier64/NO other model operators claimed
+PASS ACTUAL QGW1 worker22 wave0/rows178176+256/local maximum178422/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker22 wave1/rows182528+256/local maximum182707/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker22 wave2/rows186880+256/local maximum186988/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker22 wave3/rows191232+256/local maximum191386/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker22 wave4/rows195584+256/local maximum195741/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker22 wave5/rows199936+256/local maximum200064/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker22 wave6/rows204288+256/local maximum204495/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker22 wave7/rows208640+256/local maximum208781/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+START QGW1 standalone worker arithmetic/64 actual down jobs are NECESSARY ordering ONLY,NOT all model operators or ROOT producer
+PASS ACTUAL QGW1 worker119 genuine down frontier16/NO other model operators claimed
+PASS ACTUAL QGW1 worker119 genuine down frontier32/NO other model operators claimed
+PASS ACTUAL QGW1 worker119 genuine down frontier48/NO other model operators claimed
+PASS ACTUAL QGW1 worker119 genuine down frontier64/NO other model operators claimed
+PASS ACTUAL QGW1 worker119 wave0/rows146048+256/local maximum146058/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker119 wave1/rows150400+256/local maximum150457/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker119 wave2/rows154752+256/local maximum154837/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker119 wave3/rows159104+256/local maximum159239/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker119 wave4/rows163456+256/local maximum163528/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker119 wave5/rows167808+256/local maximum167967/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker119 wave6/rows172160+256/local maximum172346/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 worker119 wave7/rows176448+240/local maximum176552/ALL64 partial words independently checked/ORIGINAL RAW weights/SAME private instruction history
+PASS ACTUAL QGW1 standalone4 workers/256 genuine down jobs/34 canonical output jobs+independent matrix and partial checks/32 frontier refusals/4 post-partial seal faults/4 genuine next-position first-down+premature-output refusals/8+9-wave boundaries/REAL global STOP/inert2048/written stack2160/8192;NO all64 model,normalized producer,ROOT,native,physical,multi-token-state,Work or TPS proof
