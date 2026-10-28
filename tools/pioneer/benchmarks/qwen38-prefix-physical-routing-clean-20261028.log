@@ -1,0 +1,2 @@
+PASS VERBATIM prefix NODRV routing/8 allowed/65528 denied opcodes/ALL65536 wrongUID+nullFD+badMagic refusals before handlers;NO old layer0,dense,Work or arbitrary-address fallback;HANDLER STUBS ONLY,NOT native/runtime/physical qualification
+PASS VERBATIM prefix physical73 routing/10 allowed/65526 denied opcodes/ALL65536 wrongUID+nullFD+badMagic refusals before handlers;NO old layer0,dense,Work or arbitrary-address fallback;HANDLER STUBS ONLY,NOT native/runtime/physical qualification

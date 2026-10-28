@@ -13,10 +13,11 @@ if len(sys.argv)==7 and sys.argv[5] in ('--original-model','--original-model-rea
  original_model=pathlib.Path(sys.argv[6]);assert original_model.is_absolute() and original_model.stat().st_size==18973870528
  readback=sys.argv[5]=='--original-model-readback';options=['--fresh-readback-end' if readback else '--fresh-execute-end']
 else:
- assert len(sys.argv) in (5,6) and (len(sys.argv)==5 or sys.argv[5] in ('--execute','--faults','--fresh-held-end','--fresh-execute-end','--fresh-readback-end','--control-preflight','--control-execute'))
+ assert len(sys.argv) in (5,6) and (len(sys.argv)==5 or sys.argv[5] in ('--execute','--faults','--fresh-held-end','--fresh-execute-end','--fresh-readback-end','--control-preflight','--control-execute','--control-routing-preflight','--control-routing-execute'))
  options=sys.argv[5:]
  readback=options==['--fresh-readback-end']
 control=bool(options) and options[0].startswith('--control-')
+routed_control=control and options[0].startswith('--control-routing-')
 fresh=control or bool(options) and options[0].startswith('--fresh-')
 readback=readback or control
 here=pathlib.Path(__file__).resolve().parent;kernel=here.parents[2]/'src/add-ons/kernel/drivers/misc'
@@ -36,6 +37,7 @@ defines.update({key:'pioneer_prefix_factory_test_'+key for key in ('api_version'
 if fresh:defines.update({'PIONEER_Q38_RECURRENT_PREFIX_END_FIXTURE':'1','PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE':'1','PIONEER_Q38_RECURRENT_PREFIX_FRESH_FINAL_TEST':'1'})
 if readback:defines['PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK']='1'
 if control:defines['PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_CONTROL_COMPILE_ONLY']='1'
+if routed_control:defines['PIONEER_Q38_RECURRENT_PREFIX_ROUTED_CONTROL_TEST']='1'
 if original_model:defines['PIONEER_Q38_RECURRENT_PREFIX_ORIGINAL_NATIVE_TEST']='1'
 source=(kernel/'tenstorrent_pci_probe.cpp').read_text()
 with tempfile.TemporaryDirectory(prefix='pioneer-qpx-native-factory-',dir='/private/tmp') as temporary:
@@ -85,6 +87,19 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qpx-native-factory-',dir='/priv
    constants=protocol.split('#define TT_PIONEER_CAP_NATIVE_Q8_UNPACK ',1)[1].split('\n\nstruct tt_arc_query_support',1)[0]
    assert '#define TT_PIONEER_RESIDENT_CAPABILITIES ' in constants
    (base/'native_prefix_snapshot_protocol.inc').write_text('#define TT_PIONEER_CAP_NATIVE_Q8_UNPACK '+constants+'\n')
+   if routed_control:
+    start=source.index('static status_t\nProbeControl(');branch=source.index('#ifdef PIONEER_Q38_RECURRENT_PREFIX_NATIVE_CONTEXT',start)
+    head=source[start:branch];assert 'geteuid() != 0' in head and 'PioneerQ38MixedLiveNativeRouting.inc' in head
+    depth=0;selected=[]
+    for line in source[branch:].splitlines(keepends=True):
+     text=line.lstrip()
+     if text.startswith(('#if ','#if\t','#ifdef ','#ifndef ')):depth+=1
+     selected.append(line)
+     if text.startswith('#endif'):
+      depth-=1
+      if not depth:break
+    assert depth==0 and 'Q38RecurrentPrefixValidationControl(instance,operation,data,length)' in ''.join(selected)
+    (base/'native_prefix_public_routing.inc').write_text(head+''.join(selected)+'\n}\n')
   (base/'native_session_unmap.inc').write_text(member('PioneerSessionIO','bool Unmap()'))
   for owner in ('Arc','Telemetry','Tensix','DramSamples','ComputeNoc','HostPath','HostDmaAudit'):
    (base/('native_audit_'+owner+'.inc')).write_text(member('Pioneer'+owner+'IO','bool AfterNodeId(uint32 id)'))

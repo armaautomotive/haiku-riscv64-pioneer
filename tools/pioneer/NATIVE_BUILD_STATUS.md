@@ -1,6 +1,40 @@
 # Native build status
 
-## Current: DEBUG72 physical original-weight layer0 passed; stable driver restored
+## Current offline work: distinct three-layer DEBUG73 built; not installed
+
+October 28, 2026. The new prefix diagnostic now has its own exact physical
+role, tag2026102800010073/namespace24, conventional driver ABI and closed
+public dispatcher. Main/clean linked modules are identical4ae7b6ea; actual
+control/native3layer/readback/final-END bodies compile with max new kernel
+frame896B. The renamed NODRV control remains byte-identical4a8a0a01 and old65
+remains61faa093. BUILD/inspection is NOT physical execution qualification.
+
+Physical-role568/NODRV330/readback118/control459 compile gates pass in main
+and clean. Verbatim routing over explicit handler stubs allows only ten
+operations in73 and eight in NODRV, refusing all65536 wrong-UID/null-FD/
+bad-magic requests before handlers. A separate composed test routes to the
+ACTUAL diagnostic control: main/clean preflight passes336 missing learned
+endpoints,96 malformed headers and the actual root admission refusals with
+zero model publication or raw IO. Its complete native execution remains
+RUNNING, not passed; the other administrative/upload handlers in this test
+are explicit refusals, not proof of a complete physical session.
+
+New hot-swap modes pin ONLY clean stable041 <-> exact4ae7/73, preserve
+hash-qualified backups and refuse71/72/same-tag wrong bytes, live parents,
+unknown owners and cold state. Main/clean new-mode168 tests pass; legacy
+mode regression is recorded separately. Nothing staged or installed on the
+Pioneer; stable041 remains the last verified physical baseline.
+
+Still required before a hardware trial: finish native readback and complete
+control/routed-control runtimes; combined original-model+readback main/clean;
+current client/helper/source qualification and fresh sole-owner audit.
+Then test the three-layer pipeline on the card before dense3/all64 layers,
+persistent state+KV/history,whole-token commit,final norm/vocabulary/sampling
+and no-CPU-reference Work/Assistant integration. Last whole-model measured
+rate remains0.207893161tok/s;20tok/s target UNMET. Detailed evidence:
+benchmarks/qwen38-recurrent-prefix-physical-build-20261028.txt.
+
+## Last physical result: DEBUG72 original-weight layer0 passed; stable restored
 
 October 28, 2026. Offline qualification is NOT physical-card qualification.
 The fully pinned DEBUG72 physical client78087 completed0: all5120 final

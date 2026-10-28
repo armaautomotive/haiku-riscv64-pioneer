@@ -16,6 +16,18 @@
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x5152504e4f445256ULL && !PIONEER_Q38_RECURRENT_PREFIX_NATIVE_ROLE_TAG_OK
 #error Reserved QRPNODRV tag needs its exact renamed-ABI compile perimeter
 #endif
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_PHYSICAL_ROLE_TAG_OK
+#error Internal prefix physical-role witness cannot be supplied by the caller
+#endif
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_NATIVE
+#include "PioneerQ38RecurrentPrefixValidationRole.h"
+#define PIONEER_Q38_RECURRENT_PREFIX_PHYSICAL_ROLE_TAG_OK 1
+#else
+#define PIONEER_Q38_RECURRENT_PREFIX_PHYSICAL_ROLE_TAG_OK 0
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026102800010073ULL && !PIONEER_Q38_RECURRENT_PREFIX_PHYSICAL_ROLE_TAG_OK
+#error Reserved prefix tag73 needs its exact distinct physical validation role
+#endif
 #ifdef PIONEER_Q38_RECURRENT_PREFIX_SCHEDULER_IMAGE
 #error Offline autonomous prefix IMAGE is not a native driver role
 #endif
@@ -4921,6 +4933,9 @@ public:
 #ifdef PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_NATIVE
 #include "PioneerQ38RecurrentBlockValidationControl.h"
 #endif
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_NATIVE
+#include "PioneerQ38RecurrentPrefixValidationControl.h"
+#endif
 #ifdef PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE
 // PIONEER_Q38_GDN_RECURRENT_VALIDATION_NATIVE_CONTROL_BEGIN
 struct PioneerQ38GdnRecurrentValidationResults {
@@ -8226,10 +8241,14 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	if (geteuid() != 0 || instance==NULL || instance->magic!=0x50313030)
 #include "PioneerQ38MixedLiveNativeRouting.inc"
 #ifdef PIONEER_Q38_RECURRENT_PREFIX_NATIVE_CONTEXT
- // Only retain the real bank/source constructors in this private renamed
- // compile body. No old compute dispatcher or prefix launch opcode.
+ // Distinct physical role gets ONLY its fixed prefix diagnostic;NODRV
+ // retains private source constructors but NO compute/Work selector.
  if(operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
   return DriverReloadControl(instance,operation,data,length);
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_NATIVE
+ if(operation==TT_PCI_PROBE_Q38_RECURRENT_PREFIX_VALIDATION_SUPPORT || operation==TT_PCI_PROBE_Q38_RECURRENT_PREFIX_VALIDATE)
+  return Q38RecurrentPrefixValidationControl(instance,operation,data,length);
+#endif
  if(operation==TT_PCI_PROBE_Q38_BANK_SUPPORT || operation==TT_PCI_PROBE_Q38_BANK_BEGIN || operation==TT_PCI_PROBE_Q38_BANK_END)
   return Q38BankControl(instance,operation,data,length);
  if(operation==TT_PCI_PROBE_Q38_SPAN_WORK_SUPPORT || operation==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD || operation==TT_PCI_PROBE_Q38_SPAN_END)

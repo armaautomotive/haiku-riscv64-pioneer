@@ -1,0 +1,108 @@
+Distinct three-layer DEBUG73 diagnostic module and deployment boundary
+October28UTC2026;BUILD/LOCAL TESTS ONLY,NO Pioneer installation or execution
+
+Progress,not a full-offload or speed claim
+----------------------------------------
+The prior goal response only answered the user's checklist question;it did
+not advance implementation. This continuation re-polled the four exact live
+local runtime handles and implemented the separately pinned hot-swap path,
+extended composed actual-control tests through verbatim public routing,and
+completed fresh distinct-module/role builds in both main and clean.
+
+Own physical role and module
+---------------------------
+PioneerQ38RecurrentPrefixValidationRole.h requires22 exact native parents,
+physical tag2026102800010073,readback+final-release and conventional6-entry
+driver ABI. It refuses renamed NODRV,old71/72,TEST/oracle/image/Work aliases,
+including late/defined0 forms. Routed-control TEST selection is explicitly
+forbidden in the physical role;its fixture selects ONLY a verbatim routing
+fragment around a NODRV test body,never the production physical role.
+
+NativeRole/ReadbackRole/ControlRole/FinalReleaseRole independently recheck
+their physical or NODRV perimeter. The production dispatcher retains8 prior
+reload/bank/span operations and adds ONLY the fixed support+validate pair.
+Root/FD/magic admission is unchanged. No arbitrary-address,old layer0,dense
+or Work fallback is reachable in this role. Actual control is included only
+for the physical selection;the complete math/owner body is not replaced by
+an old role or CPU reference. The new forward END declaration is required
+by the production include order and does not change the NODRV object.
+
+Fresh SDK/link handles50043/10565 BOTH TERMINAL0,current sources:
+module4ae7b6ea4217c0ee45303aab37e6793c9c17fe18a2acbbece8a7556332f92a3c
+object981d2e794a2ec97082b96cdf98c61ac7a6b1f247a8cb8e9b24baaf3946a5ea59
+NODRV4a8a0a01f12e7520fe62f649af14faab6a9fa72caa5cec8b3db0f84282d1426e
+old65 remains61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821.
+Actual complete control/end/native init+run+readback bodies instantiate;
+max new kernel frame896B. Exact authenticated7-piece legacy link,no-undefined,
+normal6ABI and absence of oracle/Work/old-layer0/NODRV aliases checked.
+Compilation/linking is NOT permission to invoke the candidate on hardware.
+
+Fresh compile-role and routing evidence
+--------------------------------------
+568 physical-role gates main6773/clean5104 BOTH0;all22parents,late+defined0,
+oldtags,conventionalABI requirements and caller-witness forgery refusals.
+330 NODRV main77429/clean27837 BOTH0.
+118 readback main14801/clean9398 BOTH0.
+459 NODRV control main42776/clean32198 BOTH0.
+Verbatim dispatcher tests exercise all65536 opcodes in physical/NODRV
+fragment selections:10/8 allowed,65526/65528 denied;all65536 wrongUID,
+nullFD and badMagic requests refused before handlers. Those particular
+handler endpoints are STUBS,not native producers or runtime qualification.
+
+Actual diagnostic control composed with public dispatcher
+--------------------------------------------------------
+Runner now accepts --control-routing-preflight/--control-routing-execute.
+It extracts the production admission+prefix branch verbatim. The diagnostic
+handler is the ACTUAL control over genuine native scopes/private producers,
+not the stub from the independent exhaustive opcode test. Unused reload,
+bank and span handlers explicitly refuse and must never be called. This is
+a NODRV OS/MMIO simulation,not physical-role or physical-session authority.
+
+Main92499/clean52013 preflight BOTH TERMINAL0:all65536 wrongUID/nullFD/
+badMagic refused BEFORE actual diagnostic control or user copy;valid support
+and336 missing first/last endpoints across168 learned stripes/all3layers,
+96 malformed header words,copy/team/null/old-op and locked-END rebinding
+refusals pass with ZERO native model publication,epoch advance or raw IO.
+This does not qualify actual RUN/readback/full END. Full composed execution
+92911(main)/21992(clean) is RUNNING;follow these exact handles,not new copies.
+
+Hot-swap helper preparation,not native reload qualification
+---------------------------------------------------------
+New --apply-recurrent-prefix-validation and --restore-recurrent-prefix-validation
+pin the exact4ae7 module,tag73 and clean stable041/tag12;hash-qualified backups
+cannot overwrite an unrelated tag-only or byte-distinct backup. Prior72 and
+retired71 mappings are preserved. CPU-authentication/pre-open parent lifetimes
+are included in existing fail-closed parent inventory;idle metadata alone
+does not authorize replacing code while a model parent is still alive.
+Current helper SHA:
+f2038ad79ba7c881b788f13383a86ff2eeee23d9f4a81ef0285cb5ff1e12f58c.
+
+Main47160/clean2973 new-mode tests BOTH0:168 disposable fake-Haiku filesystem/
+handshake cases each,including old71/72/same-tag wrong bytes/metadata,
+symlinks/hash failures/live hyphen+underscore/pre-open parents,unknown/cold/
+foreign owners,existing backups,quiesce/wait errors. No automatic rollback
+after an unproven replacement. Main58535/clean21735 legacy sample regression
+BOTH0/552cases each. These tests perform
+NO device open/native reload/reset and do not authorize bypassing runtime
+qualification. No new helper or candidate was copied to the Pioneer.
+
+Unfinished runtime and complete objective
+----------------------------------------
+43038/80015 genuine native3RUN+5readback+3faults+fresh-END main/clean remain
+LIVE;both have reported readback faults1+2 passed.26684/93171 actual NODRV
+complete-control runtimes LIVE.92911/21992 composed routed-control runtimes
+LIVE. Poll these exact handles;quiet output/observation timeout is not a
+terminal state. Never restart live work just to obtain new output.
+Combined original-model-readback mode is implemented but NOT launched or
+qualified. Original-native main/clean finals15360words BITEXACT and complete
+native+fresh-END gates already passed separately;that is not the combined
+proof and does not grant physical use.
+
+After local runtime/source/client/helper gates:controlled actual original
+three-layer card comparison+complete END,then dense3/all64,persistent KV+
+GDN+history/atomic whole-token update/finalnorm/vocab/on-card sampling,
+persistent no-CPU-reference Work+Assistant and REAL inference benchmarks.
+Last measured WHOLE27B0.207893161tok/s unchanged;20tok/s target/full offload
+UNMET. Stable041/64CPU/fullRAM is last verified physical baseline,not freshly
+re-probed. No board driver/image,Assistant,boot,power,SD,mains,network or
+hardware-connection changes. Goal remains ACTIVE.

@@ -59,16 +59,52 @@ static bool ObservePrefixReadbackThenClose(PioneerStoreContext& c,PioneerQ38Recu
 #undef CloseQ38RecurrentPrefixNativeValidation
 #undef PrepareQ38RecurrentPrefixNativeExecution
 #undef PrepareQ38RecurrentPrefixNativeHeld
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_ROUTED_CONTROL_TEST
+// The kernel body above remains the renamed NODRV test role. Select ONLY
+// the verbatim routing fragment below,not a physical native role or ABI.
+// Its diagnostic operations call the ACTUAL control,not a handler stub.
+// Unused administrative/upload handlers explicitly refuse all operations.
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38BankProtocol.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
+static int routingUid=0;static unsigned unrelatedHandlers=0;
+static status_t DriverReloadControl(PioneerProbeCookie*,uint32,void*,size_t){unrelatedHandlers++;return B_NOT_ALLOWED;}
+static status_t Q38BankControl(PioneerProbeCookie*,uint32,void*,size_t){unrelatedHandlers++;return B_NOT_ALLOWED;}
+static status_t Q38SpanControl(PioneerProbeCookie*,uint32,void*,size_t){unrelatedHandlers++;return B_NOT_ALLOWED;}
+#define geteuid() routingUid
+#define PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_NATIVE 1
+#include "native_prefix_public_routing.inc"
+#undef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_NATIVE
+#undef geteuid
+static status_t ControlUnderTest(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t bytes){return ProbeControl(cookie,operation,data,bytes);}
+static constexpr status_t nullCookieStatus=B_NOT_ALLOWED,unknownOperationStatus=B_NOT_ALLOWED;
+#else
+static status_t ControlUnderTest(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t bytes){return Q38RecurrentPrefixValidationControl(cookie,operation,data,bytes);}
+static constexpr status_t nullCookieStatus=B_BAD_VALUE,unknownOperationStatus=B_BAD_VALUE;
+#endif
+#define Q38RecurrentPrefixValidationControl ControlUnderTest
 static std::unique_ptr<tt_q38_recurrent_prefix_validation> Request(){
  auto r=std::make_unique<tt_q38_recurrent_prefix_validation>();r->metadata.version=1;return r;
 }
 int main(int argc,char** argv){
- assert(argc==6 && (!strcmp(argv[5],"--control-preflight") || !strcmp(argv[5],"--control-execute")));setvbuf(stdout,nullptr,_IOLBF,0);
+ assert(argc==6 && (!strcmp(argv[5],"--control-preflight") || !strcmp(argv[5],"--control-execute")
+  || !strcmp(argv[5],"--control-routing-preflight") || !strcmp(argv[5],"--control-routing-execute")));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
  (void)&AcquireQ38DeltaLock;(void)&NativeSealedFinalEnd;
  RecurrentBindingFixture f(argv[1],argv[2]);auto& c=*f.c;auto& io=f.io;
  RecurrentPrefixNativeTransport transport(argv[3],argv[4]);io.recurrentTransport=&transport;copyTransport=&transport;
  auto touches=io.touches,physical=transport.Touches();auto epoch=sQ38EmbeddingModelEpoch;
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_ROUTED_CONTROL_TEST
+ auto routingRequest=Request();auto beforeCopies=copies;
+ for(unsigned op=0;op<65536;op++){
+  routingUid=1;assert(ProbeControl(&f.cookie,op,routingRequest.get(),sizeof(*routingRequest))==B_NOT_ALLOWED);routingUid=0;
+  assert(ProbeControl(nullptr,op,routingRequest.get(),sizeof(*routingRequest))==B_NOT_ALLOWED);
+  f.cookie.magic=0;assert(ProbeControl(&f.cookie,op,routingRequest.get(),sizeof(*routingRequest))==B_NOT_ALLOWED);f.cookie.magic=0x50313030;
+ }
+ assert(copies==beforeCopies && !unrelatedHandlers && io.touches==touches && transport.Touches()==physical
+  && sQ38EmbeddingModelEpoch==epoch && !c.q38EmbeddingModel && !c.q38RecurrentPrefixNative);
+ puts("PASS VERBATIM public prefix root admission/ALL65536 wrongUID+nullFD+badMagic refusals BEFORE actual diagnostic control/copy/native publication or raw IO;NODRV test body,NOT physical-role authority");
+#endif
  tt_q38_embedding_support support={};
  assert(Q38RecurrentPrefixValidationControl(&f.cookie,TT_PCI_PROBE_Q38_RECURRENT_PREFIX_VALIDATION_SUPPORT,&support,sizeof(support))==B_OK
   && support.version==1 && support.driver==55 && support.model_namespace==24 && support.inputs==5120 && support.vocabulary==248320
@@ -93,17 +129,17 @@ int main(int argc,char** argv){
  }
  auto request=Request();failCopy=copies+1;
  assert(Q38RecurrentPrefixValidationControl(&f.cookie,TT_PCI_PROBE_Q38_RECURRENT_PREFIX_VALIDATE,request.get(),sizeof(*request))==B_BAD_VALUE);failCopy=0;
- assert(Q38RecurrentPrefixValidationControl(nullptr,TT_PCI_PROBE_Q38_RECURRENT_PREFIX_VALIDATE,request.get(),sizeof(*request))==B_BAD_VALUE);
+ assert(Q38RecurrentPrefixValidationControl(nullptr,TT_PCI_PROBE_Q38_RECURRENT_PREFIX_VALIDATE,request.get(),sizeof(*request))==nullCookieStatus);
  assert(Q38RecurrentPrefixValidationControl(&f.cookie,TT_PCI_PROBE_Q38_RECURRENT_PREFIX_VALIDATE,nullptr,sizeof(*request))==B_BAD_VALUE);
  for(unsigned op:{0U,1000U+0x6402,1000U+0x6403,UINT32_MAX})
-  assert(Q38RecurrentPrefixValidationControl(&f.cookie,op,request.get(),sizeof(*request))==B_BAD_VALUE);
+  assert(Q38RecurrentPrefixValidationControl(&f.cookie,op,request.get(),sizeof(*request))==unknownOperationStatus);
  currentTeam++;assert(Q38RecurrentPrefixValidationControl(&f.cookie,TT_PCI_PROBE_Q38_RECURRENT_PREFIX_VALIDATE,request.get(),sizeof(*request))==B_NOT_ALLOWED);currentTeam--;
  assert(!c.q38EmbeddingModel && !c.q38RecurrentPrefixNative && !finalLockHeld && c.q38GdnCallThread==-1
   && io.touches==touches && transport.Touches()==physical && sQ38EmbeddingModelEpoch==epoch);
  tt_resident_session_result ignored={};assert(Q38RecurrentPrefixValidationEnd(&f.cookie,nullptr,{1,2,3,4},ignored)==B_NOT_ALLOWED
   && !ignored.state && !c.dispatchOwnerRetained && !finalLockHeld && io.touches==touches && transport.Touches()==physical);
  puts("PASS QPX actual NODRV control preflight/336 ALL3layer learned endpoints/96header mutations/copy+team+null+old-op refusal/locked END context rebinding;ZERO model publication,epoch advance or card IO;NOT public routing/native RUN/physical qualification");
- if(!strcmp(argv[5],"--control-preflight")){
+ if(!strcmp(argv[5],"--control-preflight") || !strcmp(argv[5],"--control-routing-preflight")){
   // The shared full-END fixture deliberately asserts on ordinary C++
   // destruction unless actual END ran. Preflight performed ZERO device IO
   // and created NO native model. Exit this OS simulation without forging
@@ -129,5 +165,9 @@ int main(int argc,char** argv){
  transport.VerifyClosed();transport.VerifyReadback(request->values,5120);
  auto before=transport.Touches();auto retry=Request();assert(Q38RecurrentPrefixValidationControl(&f.cookie,TT_PCI_PROBE_Q38_RECURRENT_PREFIX_VALIDATE,retry.get(),sizeof(*retry))!=B_OK && transport.Touches()==before);
  puts("PASS ACTUAL QPX NODRV control/SAME private native QPE1+672GDN+336history/3RUN+realSTOP+120holds+5READ/fullrestore/release actual compute seal/locked final-END+fresh audit+clock+30VM+PCI+3hosts+context destruction BEFORE user copy;SIMULATED raw learned/OS,NOT original-model,physical,Work or TPS qualification");
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_ROUTED_CONTROL_TEST
+ assert(!unrelatedHandlers);
+ puts("PASS VERBATIM public diagnostic routing -> ACTUAL control -> native3RUN/readback/full END -> post-END caller copy and retry refusal;administrative/upload handlers NEVER called;SIMULATED endpoints/NODRV body,NOT physical execution or TPS");
+#endif
  io.recurrentTransport=nullptr;
 }

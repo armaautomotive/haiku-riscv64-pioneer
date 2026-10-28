@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
-// No guard: reject late and defined0 role changes. Distinct compile-only
-// QPX1 native bindings; no conventional loadable ABI or physical selection.
+// No guard: independently check the distinct physical selection. It NEVER
+// promotes the renamed QRPNODRV compile-only perimeter.
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_NATIVE
+#include "PioneerQ38RecurrentPrefixValidationRole.h"
+#else
 #if !defined(PIONEER_Q38_RECURRENT_PREFIX_NATIVE_CONTEXT) || PIONEER_Q38_RECURRENT_PREFIX_NATIVE_CONTEXT != 1 \
  || !defined(PIONEER_Q38_RECURRENT_PREFIX_CONTEXT_COMPILE_ONLY) || PIONEER_Q38_RECURRENT_PREFIX_CONTEXT_COMPILE_ONLY != 1 \
  || !defined(PIONEER_Q38_RECURRENT_PREFIX_EMIT_CONTEXT_BODY) || PIONEER_Q38_RECURRENT_PREFIX_EMIT_CONTEXT_BODY != 1 \
@@ -70,3 +73,4 @@
 #error Exact separate prefix validation-readback selection required,including defined0
 #endif
 #endif
+#endif // physical selection OR exact renamed NODRV,never both

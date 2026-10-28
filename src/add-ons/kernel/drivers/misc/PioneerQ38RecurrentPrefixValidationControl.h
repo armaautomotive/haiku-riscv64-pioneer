@@ -8,6 +8,7 @@ struct PioneerQ38RecurrentPrefixValidationResults {
  PioneerQ38StateZeroResult recurrent;PioneerQ38ConvHistoryZeroResult history;
  PioneerQ38RecurrentPrefixMemoryResult memory;PioneerQ38RecurrentPrefixResult execution;PioneerQ38RecurrentPrefixReadbackResult readback;
 }; // HEAP ONLY;no20KiB request/results on a kernel stack
+static void EndResidentSession(PioneerProbeCookie*,tt_resident_session_result&,bool);
 // The compute-call seal must be gone BEFORE END may destroy its context.
 // Reacquire the actual lock and rebind the exact context+model identity to
 // refuse replacement/ABA contexts before any END IO. Never retain a foreign
@@ -111,4 +112,4 @@ struct PioneerQ38RecurrentPrefixValidationResults {
  }
  status_t copied=user_memcpy(data,reply,sizeof(*reply));delete results;delete reply;
  return copied!=B_OK?copied:status;
-} // ACTUAL body,COMPILE-TEST ONLY;NO ProbeControl routing/loadable module/Work
+} // ACTUAL diagnostic body;physical selection has its OWN exact role;NEVER Work
