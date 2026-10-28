@@ -1,5 +1,29 @@
 # Native build status
 
+## Latest: original-weight optimized three-layer control passes both trees
+
+October 28, 2026. Original frozen public-control runs `81578/50119` now both
+finish 0, identical 117-line `fc5ebae3`. Full c600 file authentication, genuine
+native producer/init/private capture, all three real instruction-produced
+layers, readback/full restoration/fresh END/context destruction and post-END
+caller copy complete before the independent CPU comparisons are published.
+All THREE final hidden vectors are bit-exact (15360 words/nonfinite0).
+45/54 stages are exact; nine GDN intermediates remain finite but non-bit-exact.
+Final exactness is NOT persistent-state or later-token correctness. Private
+CPU source/coordinator remain unflagged and separate from the native path.
+
+OS/NoC endpoints remain SIMULATED. This is not physical upload/compute/Work
+or token-speed qualification, and it does not permit retagging DEBUG73 or
+installing the NODRV body. Existing original native-readback `58646/88658`
+and feature-off original public-control `68414/77070` are still live. No new
+card action. Evidence:
+[original frozen control results](benchmarks/qwen38-original-frozen-control-results-20261028.txt).
+
+Both new returning arithmetic families also pass their SINGLE-layer synthetic
+instruction runs. Next is a common on-card scheduler/real recurrent-to-dense
+handoff, all64/persistent-state/output/sampling/Work/Assistant and hardware
+qualification. Last whole-model **0.207893161 tokens/sec**, 20 target unmet.
+
 ## Latest: both returning arithmetic families pass main and clean
 
 October 28, 2026. All four actual returning-component instruction runs now

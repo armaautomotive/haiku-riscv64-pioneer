@@ -1,0 +1,68 @@
+Qwen 27B: original-weight private-frozen public-control numerical results
+2026-10-28 UTC. Instruction/OS/NoC simulation, NOT a physical-card benchmark.
+
+81578 MAIN / 50119 CLEAN both direct terminal exit 0. Each was launched with
+--original-model-frozen-routed-control WITHOUT --build-only, using the genuine
+private frozen execution-owner binding and actual public diagnostic control.
+Both completed 117-line logs are byte-identical, SHA-256:
+fc5ebae35ef9dfeff7d63c945fe6e58c46b26b74abb8ac7b13a7cd08fad40605
+
+Original model/source fidelity
+------------------------------
+The full 18973870528-byte GGUF is authenticated through the existing c600
+SHA/cache path before native contexts. One SAME authenticated file supplies
+169 raw spans/842821248 bytes/205785 pages: QPE1 packed46080 bytes plus all
+168 learned extents/842775168 bytes. Synthetic learned fallback is DISABLED.
+The private chained CPU reference performs 11557 reads, in separate unflagged
+source/coordinator translation units. Native/operand objects contain no
+private oracle symbols; CPU objects contain no native/frozen owners.
+No expected CPU products flow into the native producer or device program.
+
+Actual admitted control and lifetime
+------------------------------------
+The verbatim public root admission and actual diagnostic handler run before
+genuine QPE1, 672 GDN and 336 history initializations, same-owner maps/leases,
+the three-layer plan and private inline frozen capture. Actual native RUN
+executes all three layers with the SAME119 worker instruction streams and
+on-card hidden/metadata handoff, not host intermediate products.
+The test reaches actual119 STOP/all120 holds, five fixed last-layer READs,
+full journal restoration and second proof, real compute-call seal release,
+locked rebound/fresh final END with clock/VM/PCI/host/context destruction,
+THEN caller copy. Post-END user-copy failure and no later IO/retry are tested.
+The public reply equals separately captured instruction-produced final bytes.
+Administrative/upload handlers in this routing fixture are explicit refusals
+and never called: this is NOT a full physical upload/client/session test.
+
+Numerical results and non-results
+---------------------------------
+Only AFTER complete native END are 54 independent stage observations and
+the caller output compared against the private chained original reference.
+All THREE final5120 vectors are BIT-EXACT: 15360 words, zero differences and
+zero nonfinite values, with the original strict final acceptance unchanged.
+45/54 stages are bit-exact. The remaining nine are GDN stages7/8/9 in layers
+0/1/2; all are finite but NOT bit-exact. Their recorded maximum absolute
+difference is 4.76837158203e-7 and maximum relative L2 is 1.58987950547e-7.
+No tolerance, reference data or acceptance rule was changed to fit results.
+Exact final hidden output does NOT establish exact next-state data, later
+tokens, persistent KV/GDN/history or permission to publish a token commit.
+
+The frozen path retains all mutable source/FD/team/thread/generation/model/
+host/clock/bank/cohort/NoC guards. The snapshot replaces only repeated exact
+immutable geometry reconstruction in the genuine private execution lifetime.
+This result is not permission to enable the host prototype, retag DEBUG73,
+reuse QRPNODRV as a physical driver, or infer current GPU ownership.
+
+Still required
+---------------
+Existing original native+readback 58646/88658 and feature-off original public
+control 68414/77070 remain live; do not restart them for quiet progress.
+No optimized physical variant is selected or installed. Before any physical
+trial: qualify its own unused exact role/tag/namespace, current source/client/
+helper pins and sole-FD/ownership/source audit; no existing gate is waived.
+The separate new returning recurrent and dense functions have passed their
+SINGLE-layer synthetic instruction tests in both trees, but still need one
+on-card recurrent-to-dense scheduler, then all64, persistent state/token
+commit, final norm/vocabulary/sampling, no-CPU-reference Work and Assistant.
+No card/driver/power/SD/mains/boot/network/Assistant change. Last measured
+whole-model speed remains 0.207893161 tok/s; full offload and 20 tok/s UNMET.
+Goal ACTIVE. No inference speedup is claimed from this simulation result.
