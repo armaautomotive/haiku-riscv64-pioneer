@@ -7,6 +7,7 @@
 #include "../PioneerQ38LayerChainPackage.h"
 #include "PioneerQ38InstructionWindows.h"
 #include "PioneerQ38InstructionProfile.h"
+#include "PioneerQ38InstructionFault.h"
 namespace CL=PioneerQ38LayerChainLayout;
 namespace DL=PioneerQ38MixedLiveBlockRootLayout;
 struct ChainPeer:NewCohortPeer {
@@ -384,12 +385,14 @@ struct ChainInstruction64Machine:ScalarMachine,CohortBytes {
   StepScalar();assert(observation.Total(steps)==before+1 && profile.Total()==before+1);
  }
  bool Run(){
+  unsigned previousPC=0;
   while(pc!=0x60000 && pc!=0x60004){
    uint64_t before=observation.Total(steps);assert(before<PioneerQ38InstructionWindows::TotalLimit);
-   cycles+=19;ObservedStep();
+   previousPC=pc;cycles+=19;ObservedStep();
    if(!(steps&255))for(unsigned w=0;w<119;w++)Advance(w,64);
   }
   if(pc==0x60000)fprintf(stderr,"CHAIN_FAULT layer%u completed%u phase%u matrices%u jobs%u Conv%u GDN%u dense%u packets%u SP%x\n",layer,completed,Phase(),matrices,matrixJobs,convJobs,gdnJobs,denseJobs,packets,regs[2]);
+  if(pc==0x60000)PioneerQ38InstructionFault::Dump(*this,previousPC,RB::Projected,RB::PostResidual,RB::Final,RB::Original);
   return pc==0x60004;
  }
  void Verify(){
@@ -408,6 +411,7 @@ struct ChainInstruction64Machine:ScalarMachine,CohortBytes {
   printf("PASS ACTUAL ALL64 connected layers/ONE ROOT+SAME119+ONE byte fabric/496matrices46128jobs+Conv+GDN+attention/final5120/all48 provisional Conv+GDN NEXT retained EXACT/all119 REAL STOP/inert2048/combined ROOT reserved stack%u/written%u/8192;SYNTHETIC raw bytes,NOT original/native/physical/multi-token-state/token/Work/TPS\n",0x70000-minSp,0x70000-minStack);
  }
 };
+#ifndef PIONEER_Q38_LAYER_CHAIN64_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3 || (argc==4 && (!strcmp(argv[3],"--refusals") || !strcmp(argv[3],"--prepare-only"))));setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;(void)&Refusals;(void)&LateRefusals;
  puts("START ACTUAL ALL64 QCH1 instructions/SAME119 genuinely virgin peers/ONE GDDR map/ONLY raw learned+initial hidden+zero prior state;NO CPU products or worker state transplant");
@@ -437,3 +441,4 @@ int main(int argc,char** argv){
  }
  assert(m->Run());m->Verify();
 }
+#endif

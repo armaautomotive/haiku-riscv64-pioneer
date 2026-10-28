@@ -1,0 +1,130 @@
+Experimental on-card current-KV append: BUILD/bootstrap passed, FULL PENDING
+2026-10-28 19:19UTC. No hardware/SSH/driver install/power/boot/UI/SD/mains IO.
+Goal ACTIVE. Last real whole-model0.207893161tok/s; target20 remains UNMET.
+
+Evidence changing the next action
+---------------------------------
+Prior active goal work added read-only fault capture and started genuine
+legacy diagnosis. This continuation made concrete progress: original new
+full run35426 is now terminal1 at token0/layer3/phase5, UNMAPPED RAW0x3d2/
+0xa9560000 after three projections and actual prepared/attention work.
+It completed only layers0..2, not a model token. The next observer expects
+the current canonical KV row. Source proves the dense attention component
+uses the current row in L1 and returns without a canonical append; the token
+parent incorrectly assumed that append. No current-cache bytes may be
+supplied by CPU reference, fake zero ranges, product caches or private-state
+transplants to turn this failure into a pass.
+
+Actual code change
+-------------------
+Only the distinct returning dense token component enables the new
+PIONEER_Q38_GLOBAL_CHAIN_TOKEN_KV_APPEND=1 role. After genuine joined
+attention returns, BEFORE the next projection/FFN reuses prepared-row L1,
+AppendTokenKv validates the actual retained dense frames/parent/source and
+copies each of four groups' current packed K/V rows to canonical GDDR.
+Each512B write checks the actual command, bounded completion and all8 NoC
+counters, then performs a real readback and compares the128 exact words
+against a private snapshot AND still-retained prepared source/shadow.
+All8 rows are ordered group0K/V through group3K/V. Previous rows are not
+rewritten; addresses are current position within8192x512B canonical caches.
+The written current row is PROVISIONAL, beyond the committed frontier. A
+partial failure poisons the lifetime; there is no rollback/retry or forged
+completion. The later actual full-token commit alone advances the frontier.
+All transfers stay on card. This supplies no native launch/ownership grant.
+
+The old builder runs FIRST and still verifies all unchanged old pins. The
+new dense object is explicitly linked into the actual persistent parent;
+build audits require its real retained AppendTokenKv function. No old native
+owner or component is retagged as a new complete owner. The new flag rejects
+zero/wrong-role/late contamination and is excluded from old/default parents,
+workers, feedback, recurrent component and native/Work roles.
+
+Independent builds, literal BUILD pins (NOT runtime qualification)
+-----------------------------------------------------------------
+Main7332 and clean34664 BOTH direct0 with --inspect-candidate:
+ /private/tmp/pioneer-q38-token-root-{main,clean}-20261028-kv-a
+Exact identical artifacts in both independent builds:
+ recurrent.o159428 45263bb08b5cee6af697e2163cdf570b3ad2a86e1234a8927148674e9e25e60a
+ dense.o120792 38e7bc8cc2e8d00c33eb9ee0424891e9a8c2099fbb767701420b57d347270278
+ token-components-NOBOOT.o248836 d3838c28e675d0e399267a63d6259498ccd26b9b47382117685f0e3482aa5839
+ boot.bin4 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text.bin128868 4a110bff8be856fdf02011750bbb2ecf083c2d4a3e6e1c9decd92253018742c7
+ terminal.bin8 6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5
+ conv.bin19752 efb5924c156faafe3a66f7afbc70e253667cad25197d81f82f58789841a8d9bf
+ program.elf176516 505eac1b08bee2a6841e5946252ef83d0b05def6bdcad9036b761bd08ea298ed
+Root128868/131072; auxiliary19752/32768. Parent maxFrame1616, component
+maxFrame2112/4096. Actual full combined8192-byte stack bound UNCHANGED and
+still must be proved by the real whole runs. BUILD pins are now frozen and
+checked before actual test execution, not a driver/native permission.
+
+Passing narrow tests (ALL ASan+UBSan except preprocessor/build audits)
+----------------------------------------------------------------------
+Role isolation main67541/clean60422 BOTH direct0,898 BUILD-only gates each.
+RAW prepare main6227/clean1291 BOTH direct0:128 canonical cache rows match
+independent canonical parts and all3 candidate current rows are unseeded;
+ONE fabric+119 genuine virgin workers, ZERO ROOT instructions/NoC/commit.
+Bootstrap main91052/clean57973 BOTH direct0: real first embedding5120 exactly,
+20 source reads+2 writes+2 readbacks; actual session/prompt/current first
+frame/all8 recipes/720Conv/96GDN; first returning entry reached, no peer jobs.
+8 real early session/prompt faults and8 real packet/counter/source/header/
+outer/write/readback corruptions each park and remain inert2048. Bootstrap
+reserved stack2992/written2984. NOT append/all64/commit/multiple tokens/STOP.
+
+Read-only fault capture
+-----------------------
+PioneerQ38InstructionFault.h observes only existing host memory/regs/command/
+counters, NEVER Load/Get/Step/CSR or a modeled device action. It prints actual
+previous PC, RA, SP, all32 registers and numeric-vector finite/domain/sum
+statistics only AFTER an actual emulated scalar fault. Values/statistics
+are not themselves a claim of the fault callsite or numerical cause.
+ASan+UBSan units main28344/clean28242 BOTH direct0:12 domain edges, missing/
+NaN/sum classifications and exact map+all machine fields unchanged.
+It is integrated into next actual legacy/global/token fault lifetimes.
+Old running processes were not restarted to acquire this diagnostic.
+
+Legacy fault reproduction session79400 is the SAME fresh from-reset pinned
+QCH1+QMW1 history, HOST-O2 without sanitizers explicitly for diagnosis ONLY,
+not a qualification or throughput benchmark. Its layer0 count843721110 and
+reserved7248/written7240 exactly match the old failed run. At19:19UTC it is
+freshly live, progressed into layer6, with no terminal fault capture yet. The old
+layer15/phase12 root-fault cause is STILL UNDETERMINED. Do not widen numeric
+guards, clip values or change initial inputs merely to force a pass.
+
+Full qualification RUNNING, NOT a pass
+-------------------------------------
+Main94923 / clean26724, freshly confirmed live19:19UTC:
+ python3 tools/pioneer/tests/run_pioneer_q38_token_flow_tests.py \
+  /private/tmp/pioneer-q38-token-root-{main,clean}-20261028-kv-a \
+  /private/tmp/pioneer-q38-mixed-worker-20261026-e \
+  /private/tmp/pioneer-q38-global-globalbuild-{main,clean}-20261028-e
+Logs /private/tmp/pioneer-q38-token-kv-flow-{main,clean}-20261028-a.log
+Follow SAME handles; observation quiet/timeout is NOT terminal/restart cause.
+Both have actual bootstrap/first-layer progress. No first append or complete
+model token is proved yet. The fixture requires actual ordered write/readback
+for all128 current KV rows per token, unchanged previous prefixes, all64
+layers+973 head jobs, real nonzero GDN/Conv state retained across3 tokens,
+one genuine frontier flip/token record each and final119STOP/inert2048.
+
+After the first actual KV write ONLY,9 forked corruption lifetimes resume
+that genuine executed ROOT+119 history independently. The original parent
+waits unchanged. Cases corrupt GDDR write, readback, NoC counter, physical
+source, command, outer frame, prepared source, prepared shadow or metadata.
+Each must reach real ROM scalar_fault_park before a second row write/later
+projection/token commit and remain NoC+peer inert2048. Numeric host observation
+is disabled ONLY in deliberately corrupted children, so it cannot hide an
+absent device guard by asserting first. Positive parent checks stay enabled.
+These9 late tests are IMPLEMENTED/PENDING, not passed by the early16 above.
+
+Remaining before physical use / requested end state
+---------------------------------------------------
+Finish and inspect BOTH whole flows; diagnose/repair real failures without
+transplants or reference uploads. Resolve the separate legacy layer15 fault.
+Qualify late state commit/admission/publication/terminal failure and bounded
+cancellation. Verify original-GGUF full generations, not just synthetic data.
+Implement/audit genuine new authenticated851-tensor/native ownership, exact
+initialization/reservation ledger, sole-FD/journal/source/clock/cache/session/
+prompt/L1/auxiliary lifetimes, terminal cleanup/client/helper and quarantine.
+Then qualify the physical card, preserve boot/Assistant/64CPU/full RAM,
+integrate no-CPU-reference Work separately from validation and measure real
+sustained27B inference. No new speedup or20tok/s claim. Dirty llama.cpp and
+unrelated FlashNext work are unread/untouched/unstaged. Goal stays ACTIVE.

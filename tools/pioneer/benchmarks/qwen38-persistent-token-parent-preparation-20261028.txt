@@ -150,3 +150,9 @@ Required next for the real objective
 4 Qualify on the physical card,integrate no-CPU-reference Work/Assistant,
   preserve existing CPU/RAM/boot/UI,and benchmark actual sustained27B tokens.
 Target20 remains UNMET. No new measured speedup. Goal ACTIVE.
+
+19:19UTC follow-up: the original parent above exposed a missing canonical
+current-KV append during its actual whole flow. Its old BUILD pins are
+historical, not current. See qwen38-token-kv-append-preparation-20261028.txt
+for replacement literal pins, narrow passing tests and PENDING full flows.
+No physical qualification, native/Work readiness or new speedup is claimed.

@@ -1,7 +1,8 @@
-Persistent parent FULL3-token qualification: RUNNING, NOT a pass
+Persistent parent FULL3-token qualification: OLD run FAILED; replacement RUNNING, NOT a pass
 2026-10-28. No hardware/SSH/driver/boot/power/Assistant/SD/mains action.
-Parent/worker literal images unchanged from3072b8f306. Last real whole-model
-rate0.207893161tok/s;target20 remains UNMET. No new speedup measurement.
+Original run below used literal images from3072b8f306. Replacement parent
+pins and results are in the19:19UTC follow-up and KV-append preparation note.
+Last real whole-model rate0.207893161tok/s;target20 UNMET. No new speedup.
 
 Implemented whole-flow fixture
 ------------------------------
@@ -132,3 +133,37 @@ next failing lifetime/obtain a genuine diagnostic reproduction as needed.
 The six existing QGC1 one-pass tests and new35426 remain separate live runs.
 Shared dense arithmetic means the old failure must be investigated before
 claiming full-model qualification. Hardware remains untouched.
+
+19:19UTC follow-up: missing actual KV append, replacement images
+--------------------------------------------------------------
+The original35426 run is terminal1, NOT live. It passed token0/layers0..2,
+then its attention observer read route0x3d2/address0xa9560000 at layer3/phase5
+and the shared byte fabric asserted UNMAPPED RAW. This is a host observer
+assertion, NOT scalar_fault_park or evidence of a running-driver failure.
+The complete failed log is preserved as
+ qwen38-persistent-token-flow-missing-kv-failure-20261028.log
+
+Source tracing found that the returning attention component consumes the
+current K/V directly from prepared L1 but intentionally never appends those
+rows to the canonical cache. The persistent parent's commit comment assumed
+that append existed. The fixture MUST NOT supply CPU products or zeros to
+hide this defect. A distinct dense token component now performs all8 actual
+512B GDDR row writes+readbacks after attention and BEFORE subsequent matrix/
+FFN scratch reuse. They remain provisional until genuine full-token commit.
+Old default global/legacy images remain byte-identical; no installed image,
+hardware, native capability or Work/Assistant path is changed.
+
+New actual persistent runs94923(main)/26724(clean) were freshly confirmed
+live at19:19UTC, using independent identical new literal-pinned images.
+Both have reached actual bootstrap/first-layer arithmetic. Neither has yet
+proved even the first KV append, much less all64 or a complete model token.
+Follow the SAME handles; quiet is not a failure or a reason to restart.
+The first genuine KV write will fork9 independent corruption lifetimes,
+each resuming the executed ROOT+119 history and requiring actual ROM fault
+and inert2048;the unchanged parent then continues the full3-token test.
+These9 cases are IMPLEMENTED/PENDING, NOT passed by bootstrap tests.
+
+See qwen38-token-kv-append-preparation-20261028.txt for exact new pins, scopes
+and remaining gates. Legacy layer15 diagnosis79400 and six earlier global
+one-pass tests remain independent histories. Last physical whole-model rate
+is still0.207893161tok/s; no speedup measured, target20 UNMET. Goal ACTIVE.

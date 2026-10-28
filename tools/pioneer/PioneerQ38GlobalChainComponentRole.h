@@ -17,6 +17,12 @@
 #error Cross-token output admission belongs ONLY to the exact returning recurrent component
 #endif
 #endif
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_TOKEN_KV_APPEND
+#if PIONEER_Q38_GLOBAL_CHAIN_TOKEN_KV_APPEND != 1 || !defined(PIONEER_Q38_LAYER_COMPONENT_DENSE) \
+ || defined(PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT)
+#error Token KV append belongs ONLY to the exact returning dense component
+#endif
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL
 #if PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL != 1 || defined(PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE)
 #error Exact optional check-loop code generation for returning components only

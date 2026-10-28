@@ -2,6 +2,9 @@
 // Persistent device-input block lifecycle. Native ownership/journals are
 // separately mandatory; this code/geometry is NEVER a launch capability.
 #include "blackhole_qwen38_mixed_block_root.cpp"
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_TOKEN_KV_APPEND
+#include "blackhole_qwen38_token_kv_append.inc"
+#endif
 extern "C" unsigned mixed_live_block_wait(unsigned);
 extern "C" void mixed_live_block_stopped() __attribute__((noreturn));
 namespace LiveBlock {
@@ -19,6 +22,12 @@ static void Compute(L::PrivateSeal* p){
  Block::Norm(p->outer,0);Joined::Capture(p->outer);Copy(L::Input,L::RawCopy,5120);
  for(unsigned slot=0;slot<3;slot++){Joined::BindProjection(p,slot);if(Projection::Run(p->frame)!=(slot?1024U:12288U))scalar_fault_park();}
  Joined::Prepare(p);Joined::BindDense(p);if(q38_joined_dense_frame()!=6144)scalar_fault_park();
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_TOKEN_KV_APPEND
+ // The attention component consumes the current row directly from L1; it
+ // deliberately does NOT own canonical cache publication. Append/read back
+ // here, before the following projection/FFN reuses the prepared-row L1.
+ Joined::AppendTokenKv(p);
+#endif
  Joined::BindProjection(p,3);if(Projection::Run(p->frame)!=5120)scalar_fault_park();
  p->phase=7;Words(L::Status)[5]=7;Block::Norm(p->outer,1);Block::CaptureFfn(p->outer);
  for(unsigned slot=0;slot<2;slot++){Block::BindFfn(p,slot);if(Projection::Run(p->frame)!=17408)scalar_fault_park();}

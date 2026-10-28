@@ -36,7 +36,7 @@ old_roles={
  'PioneerQ38MixedLiveBlockRootImageRole.h':{'PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE':1,'PIONEER_Q38_SIGMOID_PRECISION_IMAGE':1}}
 for header,flags in old_roles.items():
  check(header,flags,True)
- for name in ('PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE','PIONEER_Q38_GLOBAL_CHAIN_ROOT_IMAGE','PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE','PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE'):
+ for name in ('PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE','PIONEER_Q38_GLOBAL_CHAIN_ROOT_IMAGE','PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE','PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE','PIONEER_Q38_GLOBAL_CHAIN_TOKEN_KV_APPEND'):
   check(header,{**flags,name:0},False)
 unroll='PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL'
 for flags in (r,d):
@@ -72,4 +72,14 @@ for name in root.keys() | r.keys() | d.keys() | conv.keys() | {unroll,cross,'PIO
  if name not in token:
   check('PioneerQ38TokenImageRole.h',{**token,name:0},False)
   check('PioneerQ38TokenImageRole.h',token,False,late=name)
+append='PIONEER_Q38_GLOBAL_CHAIN_TOKEN_KV_APPEND'
+check('PioneerQ38GlobalChainComponentRole.h',{**d,append:1},True)
+for value in (0,2):check('PioneerQ38GlobalChainComponentRole.h',{**d,append:value},False)
+check('PioneerQ38GlobalChainComponentRole.h',d,False,late=append)
+for value in (0,1):
+ for flags in (r,conv,{**d,cross:1}):check('PioneerQ38GlobalChainComponentRole.h',{**flags,append:value},False)
+ for header,flags in [('PioneerQ38TokenImageRole.h',token),('PioneerQ38GlobalChainImageRole.h',root),('PioneerQ38GlobalFeedbackComponentRole.h',feedback)]:
+  check(header,{**flags,append:value},False)
+for header,flags in [('PioneerQ38TokenImageRole.h',token),('PioneerQ38GlobalChainImageRole.h',root),('PioneerQ38GlobalFeedbackComponentRole.h',feedback)]:
+ check(header,flags,False,late=append)
 print('PASS QGC1 exact6 BUILD-only roles/late+defined0+missing flags/old native+worker+chain exclusion/gates'+str(gates)+';NO code,source,native,physical,Work or launch grant')

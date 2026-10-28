@@ -21,6 +21,8 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
  unsigned embedded=0,embeddingTarget=0,embeddingToken=0,embeddingStage=0,embeddingReads=0,embeddingWrites=0,embeddingBack=0;
  unsigned copyLayer=0,copySpan=0,copyAt=0,copyPhase=0,copyBytes=0,recordPhase=0;
  unsigned sourceCopies=0,stateWrites=0,stateReadbacks=0,tokenPublications=0;
+ unsigned kvPhase=0,kvWrites=0,kvReadbacks=0;
+ unsigned kvFaults=0,kvFault=0;bool kvInjected=false;
  std::array<uint32_t,5120> expectedEmbedding={};
  static uint16_t ToHalf(float value){_Float16 h=_Float16(value);uint16_t bits;memcpy(&bits,&h,2);return bits;}
  static float FromHalf(uint16_t bits){_Float16 h;memcpy(&h,&bits,2);return float(h);}
@@ -47,6 +49,23 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
    Put(PioneerQ38ProjectionRoute(0),workspace+DL::RopeOffset+p*256+i*8,Bits(cosf(angle)));
    Put(PioneerQ38ProjectionRoute(0),workspace+DL::RopeOffset+p*256+i*8+4,Bits(sinf(angle)));
   }
+  // No cache row is supplied as a CPU product or filled with convenient
+  // zeros. Only the actual future dense-body append can create these bytes.
+  unsigned rows=0;
+  for(unsigned selected=3;selected<64;selected+=4)for(unsigned g=0;g<4;g++)for(unsigned which=0;which<2;which++){
+   const auto* f=dense[selected]->Dense(g*24);bool canonicalRow=false;
+   for(unsigned n=0;n<canonical->Count();n++){
+    const auto* part=canonical->Part(n);unsigned row=g+which*4;
+    if(part->kind==canonical->KvKind && part->layer==selected && row>=part->firstRow && row-part->firstRow<part->rows){
+     assert(!canonicalRow && f[12+which]==PioneerQ38ProjectionRoute(part->bank)
+      && f[8+which]==canonical->Base+part->offset+(row-part->firstRow)*4194304);canonicalRow=true;
+    }
+   }
+   assert(canonicalRow);
+   for(unsigned pos=0;pos<Tokens;pos++)for(unsigned i=0;i<128;i++)assert(!dram.count(Key(f[12+which],f[8+which]+pos*512+i*4)));
+   rows++;
+  }
+  assert(rows==128 && !kvPhase && !kvWrites && !kvReadbacks);
  }
  unsigned Private(unsigned index)const{assert(parent>=0x6e000 && parent<=0x70000-1028);return parent+(192+index)*4;}
  unsigned ActualPrivate(unsigned index)const{return memory.at(Private(index));}
@@ -102,7 +121,7 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
   for(unsigned i=0;i<128;i++){outer[i]=memory.at(RB::Outer+i*4);assert(outer[i]==expected[i]);}
   if(!parent){parent=regs[27];assert(ActualPrivate(18)==0 && ActualPrivate(19)==0);}
   assert(regs[27]==parent && ActualPrivate(16)==position && ActualPrivate(17)==currentToken && ActualPrivate(18)==position && ActualPrivate(19)==(position&1));
-  matrices=lastMatrix=finalWords=inputReads=0;
+  matrices=lastMatrix=finalWords=inputReads=kvPhase=0;
   printf("BEGIN actual persistent token%u/layer%u/inputToken%u/previous committed%u/SAME119 histories\n",position,layer,currentToken,committed);
  }
  std::array<float,256> Prepared(unsigned g,unsigned h,bool key){
@@ -142,7 +161,7 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
   return FromHalf(uint16_t(word>>((i&1)*16)));
  }
  void ObserveAttention(){
-  assert(CL::Dense(layer) && matrices==3);double delta=0,norm=0;
+  assert(CL::Dense(layer) && matrices==3 && kvPhase==16);double delta=0,norm=0;
   for(unsigned g=0;g<4;g++)for(unsigned which=0;which<2;which++)for(unsigned i=0;i<128;i++){
    const auto* d=dense[layer]->Dense(g*24);
    assert(Get(d[12+which],d[8+which]+position*512+i*4)==memory.at((which?DL::NewV:DL::NewK)+g*512+i*4));
@@ -185,6 +204,7 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
     }
    }
   }else{
+   assert(kvPhase==16);
    unsigned at=0;
    for(unsigned g=0;g<4;g++)for(unsigned which=0;which<2;which++)for(unsigned t=0;t<position;t++)for(unsigned i=0;i<128;i++){
     const auto* d=dense[layer]->Dense(g*24);assert(Get(d[12+which],d[8+which]+t*512+i*4)==priorKv.at(at++));
@@ -275,9 +295,28 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
   else assert(recordPhase==3 && !write && bytes==256);
   for(unsigned i=0;i<bytes/4;i++)assert((write?memory.at(local+i*4):Get(route,remote+i*4))==expected[i]);
   if(++recordPhase==4){
+   assert(kvWrites==(position+1)*128 && kvReadbacks==kvWrites);
    committed++;tokenPublications++;
    printf("PASS actual MODEL token%u committed/greedy%u/all48 Conv copies+readbacks/one GDN slot flip/KV frontier/token marker actual readback;cohort STILL OWNED,NOT native cleanup\n",position,bestRow);
   }
+ }
+ void KvPacket(unsigned route,unsigned remote,unsigned bytes,unsigned local,bool write){
+  if(!releases || !CL::Dense(layer))return;
+  bool row=false;
+  for(unsigned g=0;g<4;g++)for(unsigned which=0;which<2;which++){
+   const auto* f=dense[layer]->Dense(g*24);
+   if(route==f[12+which] && remote>=f[8+which] && uint64_t(remote)<uint64_t(f[8+which])+4194304)row=true;
+  }
+  if(!row)return;
+  assert(matrices==3 && kvPhase<16 && bytes==512 && local==RB::Scratch);
+  unsigned group=kvPhase/4,which=(kvPhase/2)&1;
+  const auto* f=dense[layer]->Dense(group*24);
+  assert(route==f[12+which] && remote==f[8+which]+position*512 && write==!(kvPhase&1));
+  unsigned from=(which?DL::NewV:DL::NewK)+group*512;
+  // Deliberately corrupted child lifetimes must reach the ACTUAL device
+  // guard, not be stopped by this host-only numeric observer first.
+  if(!kvFault)for(unsigned i=0;i<128;i++)assert((write?memory.at(local+i*4):Get(route,remote+i*4))==memory.at(from+i*4));
+  if(write)kvWrites++;else kvReadbacks++;kvPhase++;
  }
  void SubmitToken(){
   packets++;const bool write=command[7]==0x212;unsigned local=write?command[0]:command[3],remote=write?command[3]:command[0];
@@ -289,6 +328,7 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
    assert(local==RB::Scratch+(remote&31) || (Range(pc,0x64000,unsigned(conv.size())) && Range(local,0x80000,0x1100)));
    const bool embedding=EmbeddingPacket(route,remote,bytes,local,write);
    const bool state=StatePacket(route,remote,bytes,local,write);assert(!embedding || !state);
+   KvPacket(route,remote,bytes,local,write);
    TokenPacket(route,remote,bytes,local,write);
    if(releases && !write && remote==(!CL::Dense(layer)?outer[69]:outer[74])+inputReads*4 && (Phase()==1 || Phase()==2)){
     assert(inputReads+bytes/4<=5120);for(unsigned i=0;i<bytes/4;i++)assert(Get(route,remote+i*4)==input[inputReads+i]);inputReads+=bytes/4;
@@ -337,6 +377,7 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
    }else for(unsigned i=0;i<bytes/4;i++)memory[local+i*4]=p.memory.at(remote+i*4);
   }
   counts[write?4:0]++;counts[write?5:1]+=(bytes+63)>>6;counts[write?7:3]++;counts[2]++;counts[6]++;
+  if(kvFault==2 && !kvInjected && !write && kvPhase==2){memory[local]^=1;kvInjected=true;}
  }
  void Store(uint32_t a,uint32_t value)override{
   if(a==0xffb20040){assert(value==1 && !pending);SubmitToken();return;}
@@ -354,12 +395,47 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
  void StepToken(){
   uint64_t before=window.Total(steps);assert(before<PioneerQ38InstructionWindowSet<Tokens*64>::TotalLimit);profile.Record(pc);
   StepScalar();assert(window.Total(steps)==before+1 && profile.Total()==before+1);
+  if(!kvFaults && !position && layer==3 && kvPhase==1){
+   // Fork the genuine executed history AFTER its first real KV write.
+   // No PC/register/private state is transplanted or replaced. The parent
+   // waits unchanged while each child independently resumes the real ROM.
+   assert(allLayers==3 && matrices==3 && kvWrites==1 && !kvReadbacks && !committed);
+   kvFaults=1;fflush(nullptr);
+   for(unsigned fault=1;fault<=9;fault++){
+    pid_t pid=fork();assert(pid>=0);
+    if(!pid){
+     kvFault=fault;kvInjected=fault!=2;
+     const auto* f=dense[layer]->Dense(0);
+     if(fault==1)Put(f[12],f[8],Get(f[12],f[8])^1);
+     if(fault==3)counts[7]++;
+     if(fault==4)source[11]^=1;
+     if(fault==5)command[5]^=1;
+     if(fault==6)memory[RB::Outer+4*4]^=1;
+     if(fault==7)memory[DL::NewK]^=1;
+     if(fault==8)memory[DL::InputShadow+24576]^=1;
+     if(fault==9)memory[DL::DenseCopies+8*4]^=64;
+     return;
+    }
+    int status=0;assert(waitpid(pid,&status,0)==pid && WIFEXITED(status) && !WEXITSTATUS(status));
+   }
+   puts("PASS ACTUAL 9 KV append faults AFTER genuine first on-card row write/from SAME executed ROOT+119 histories/no forged processor state/parent unchanged;not whole-token or terminal proof");
+  }
  }
  bool RunTokens(){
-  while(pc!=0x60000 && pc!=0x60004){cycles+=19;StepToken();if(!(steps&255))for(unsigned w=0;w<119;w++)Advance(w,64);}
+  unsigned previousPC=0;
+  while(pc!=0x60000 && pc!=0x60004){previousPC=pc;cycles+=19;StepToken();if(!(steps&255))for(unsigned w=0;w<119;w++)Advance(w,64);}
   if(pc==0x60000)fprintf(stderr,"TOKEN_FAULT position%u layer%u completed%u phase%u matrices%u global%u/%u committed%u copy%u/%u/%u/%u packets%u SP%x\n",
    position,layer,completed,Phase(),matrices,globalJobs,globalPartials,committed,copyLayer,copySpan,copyAt,copyPhase,packets,regs[2]);
+  if(pc==0x60000 && !kvFault)PioneerQ38InstructionFault::Dump(*this,previousPC,RB::Projected,RB::PostResidual,RB::Final,RB::Original);
   return pc==0x60004;
+ }
+ void VerifyKvFault(){
+  assert(kvFault && kvInjected && kvFaults==1 && pc==0x60000 && !position && layer==3 && allLayers==3 && matrices==3
+   && kvWrites==1 && kvReadbacks<=1 && kvPhase<=2 && !committed && !flips && !stopJobs);
+  unsigned before=packets,writes=peerWrites;auto commands=command;auto physical=counts;
+  for(unsigned i=0;i<2048;i++)StepToken();
+  assert(pc==0x60000 && packets==before && peerWrites==writes && command==commands && counts==physical);
+  printf("PASS ACTUAL KV fault%u/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048\n",kvFault);fflush(nullptr);
  }
  void VerifyTokens(){
   assert(pc==0x60004 && position==Tokens-1 && completed==64 && releases==Tokens*64 && allLayers==Tokens*64 && window.Closed()==Tokens*64
@@ -367,7 +443,8 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
    && matrixJobs==Tokens*46128 && convJobs==Tokens*5712 && gdnJobs==Tokens*4608 && denseJobs==Tokens*4608 && stopJobs==119
    && globalJobs==973 && globalPartials==973 && globalRows==248320 && headQuant==1 && rmsChecks==Tokens*128 && quantChecks==Tokens*496
    && activationChecks==Tokens*64 && gdnChecks==Tokens*48 && attentionChecks==Tokens*16 && prepared==Tokens*16
-   && sourceCopies==Tokens*672 && stateWrites==sourceCopies && stateReadbacks==sourceCopies && minSp>=0x6e000 && minStack>=0x6e000);
+   && sourceCopies==Tokens*672 && stateWrites==sourceCopies && stateReadbacks==sourceCopies && kvWrites==Tokens*128 && kvReadbacks==kvWrites
+   && kvFaults==1 && !kvFault && minSp>=0x6e000 && minStack>=0x6e000);
   const unsigned terminal[]={TL::TerminalMagic,1,1,Tokens,Tokens-1,119,64,973,Tokens&1,1};
   for(unsigned i=0;i<10;i++)assert(memory.at(TL::TerminalLocal+i*4)==terminal[i]);
   for(unsigned i=0;i<8;i++)assert(memory.at(TL::TerminalLocal+(12+i)*4)==boot[8+i] && memory.at(TL::TerminalLocal+(36+i)*4)==counts[i]);
@@ -392,5 +469,6 @@ int main(int argc,char** argv){
   puts("PASS RAW persistent fixture/3 positions/2 prompt IDs/disjoint canonical state-copy DATA/raw RoPE constants/SAME119 virgin/no products or completed owner supplied;ZERO ROOT instructions,NOT positive qualification");return 0;
  }
  puts("START actual persistent3token flow/ONE ROOT+SAME119+ONE byte fabric/ONLY RAW learned+initial state+prompt data;no private-state transplant or CPU product upload");
- assert(m->RunTokens());m->VerifyTokens();
+ bool okay=m->RunTokens();if(m->kvFault){assert(!okay);m->VerifyKvFault();_exit(0);}
+ assert(okay);m->VerifyTokens();
 }

@@ -23,9 +23,13 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_
  '-DPIONEER_Q38_LAYER_RETURN_COMPONENT_IMAGE=1','-DPIONEER_Q38_LAYER_COMPONENT_RECURRENT=1',
  '-DPIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL=1',
  '-DPIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT=1','-c',here/'blackhole_qwen38_return_recurrent_layer.cpp','-o',out/'recurrent.o')
+run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
+ '-DPIONEER_Q38_LAYER_RETURN_COMPONENT_IMAGE=1','-DPIONEER_Q38_LAYER_COMPONENT_DENSE=1',
+ '-DPIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_TOKEN_KV_APPEND=1',
+ '-c',here/'blackhole_qwen38_return_dense_layer.cpp','-o',out/'dense.o')
 raw=out/'token-components-raw.o';capsule=out/'token-components-NOBOOT.o';old=out/'unchanged-feedback'
 run(tool+'ld','-m','elf32lriscv','--no-relax','-r','--gc-sections','-u','q38_return_recurrent_layer','-u','q38_return_dense_layer',
- '-u','q38_global_chain_learned_rms','-u','q38_global_chain_quantize14',out/'recurrent.o',old/'dense.o',old/'root_conv_sections.o','-o',raw)
+ '-u','q38_global_chain_learned_rms','-u','q38_global_chain_quantize14',out/'recurrent.o',out/'dense.o',old/'root_conv_sections.o','-o',raw)
 dead=('mixed_recurrent_block_wait','mixed_recurrent_block_stopped','mixed_live_block_wait','mixed_live_block_stopped')
 relocations=subprocess.check_output([tool+'objdump','-r',str(raw)],text=True)
 for name in dead:assert not re.search(r'\b'+name+r'\b',relocations),name
@@ -35,6 +39,7 @@ assert subprocess.check_output([tool+'nm','-u',str(capsule)],text=True).split()=
 for name in ('q38_return_recurrent_layer','q38_return_dense_layer','q38_global_chain_learned_rms','q38_global_chain_quantize14'):
  assert re.search(r' T '+name+r'$',symbols,re.M),name
 assert 'DensePartitionRoot::AdmitGlobalOutput(' in symbols,'the REAL returning admission path must retain the new code'
+assert 'Joined::AppendTokenKv(' in symbols,'the real dense body must retain current-row GDDR append/readback'
 for name in (*dead,'mixed_recurrent_block_main','mixed_live_block_main','q38_global_chain_main','q38_run_final_dense_and_stop','_start','scalar_entry'):
  assert not re.search(r'\b'+name+r'\b',symbols),name
 assert not re.search(r'^[0-9a-f]+ [bBdDgGsS] ',symbols,re.M)
@@ -44,7 +49,7 @@ for line in dis.splitlines():
  m=re.match(r'\s*[0-9a-f]+:\s+([0-9a-f]{8})\s',line)
  if m:assert int(m[1],16)&127!=0x73,'no controller CSR'
 assert len([s for s in dis.splitlines() if re.search(r'\bmv\s+s11,\w+\s*$',s)])==4,'two existing bind/restore pairs only'
-frames=[int(line.split('\t')[1]) for path in (out/'recurrent.su',old/'dense.su',old/'root_conv.su') for line in path.read_text().splitlines()]
+frames=[int(line.split('\t')[1]) for path in (out/'recurrent.su',out/'dense.su',old/'root_conv.su') for line in path.read_text().splitlines()]
 assert frames and max(frames)<=4096,max(frames)
 sections=subprocess.check_output([tool+'objdump','-h',str(capsule)],text=True).splitlines();text=conv=0
 for i,row in enumerate(sections):
@@ -56,9 +61,10 @@ for i,row in enumerate(sections):
 assert text<=131072 and conv<=32768,(text,conv)
 (out/'components.symbols').write_text(symbols);(out/'components.disassembly').write_text(dis)
 PINS=(('recurrent.o',159428,'45263bb08b5cee6af697e2163cdf570b3ad2a86e1234a8927148674e9e25e60a'),
- ('token-components-NOBOOT.o',245884,'5fe6a8c6b4cac23e622f45fb045492a811f5483d59ab76d583a6fbe1ef623a79'))
+ ('dense.o',120792,'38e7bc8cc2e8d00c33eb9ee0424891e9a8c2099fbb767701420b57d347270278'),
+ ('token-components-NOBOOT.o',248836,'d3838c28e675d0e399267a63d6259498ccd26b9b47382117685f0e3482aa5839'))
 observed=[]
-for name in ('recurrent.o','token-components-NOBOOT.o'):
+for name in ('recurrent.o','dense.o','token-components-NOBOOT.o'):
  data=(out/name).read_bytes();item=(name,len(data),hashlib.sha256(data).hexdigest());observed.append(item);print(repr(item),flush=True)
 if len(sys.argv)==3:assert PINS and tuple(observed)==PINS,'unqualified components; inspect/freeze first'
 print('BUILD ONLY actual returning recurrent path includes strict previous-global output admission;ROOTbytes'+str(text)+'/131072 Conv'+str(conv)+'/32768 maxFrame'+str(max(frames))+

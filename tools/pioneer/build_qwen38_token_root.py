@@ -16,7 +16,7 @@ def run(*args):subprocess.run([str(a) for a in args],check=True)
 # Reproduce the strict returning components and unchanged whole feedback
 # image FIRST. Neither an old native owner nor a component alone can launch.
 components=out/'qualified-components'
-run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components)
+run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if len(sys.argv)==4 else []))
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
@@ -34,7 +34,7 @@ for name,address in (('_start',0x6000),('scalar_entry',0x40000),('scalar_fault_p
  assert re.search('^'+format(address,'08x')+' T '+name+'$',symbols,re.M),name
 for name in ('q38_global_chain_main','q38_return_recurrent_layer','q38_return_dense_layer','q38_global_chain_feedback_decode'):
  assert re.search(r'^[0-9a-f]+ T '+name+'$',symbols,re.M),name
-for name in ('GlobalChain::CommitState(', 'GlobalChain::PublishToken(', 'GlobalChain::Bootstrap(', 'DensePartitionRoot::AdmitGlobalOutput('):
+for name in ('GlobalChain::CommitState(', 'GlobalChain::PublishToken(', 'GlobalChain::Bootstrap(', 'DensePartitionRoot::AdmitGlobalOutput(', 'Joined::AppendTokenKv('):
  assert name in symbols,name
 for name in ('q38_layer_chain_main','q38_run_final_dense_and_stop','mixed_recurrent_block_main','mixed_live_block_main',
  'mixed_live_block_stopped','mixed_recurrent_block_stopped','mixed_recurrent_block_wait','mixed_live_block_wait','q38_feedback_unbound_embedding_main'):
@@ -72,10 +72,10 @@ for i,row in enumerate(sections):
 (out/'program.symbols').write_text(subprocess.check_output([tool+'nm','-n',str(out/'program.elf')],text=True))
 (out/'program.disassembly').write_text(dis)
 PINS=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
- ('text.bin',129132,'ddee168900500c69e1deb18409dfd9bab95a2d7a50054e84c394374b87c8acb6'),
+ ('text.bin',128868,'4a110bff8be856fdf02011750bbb2ecf083c2d4a3e6e1c9decd92253018742c7'),
  ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
- ('conv.bin',18232,'c74fe77e9e6dcb2a480e74cad6010eb5f35cb32401388a509536d7b796b53558'),
- ('program.elf',174888,'597fb41f089903ca7a6f1483ca37f0eeb9743884dbad3e1ebacff5982d860b80'))
+ ('conv.bin',19752,'efb5924c156faafe3a66f7afbc70e253667cad25197d81f82f58789841a8d9bf'),
+ ('program.elf',176516,'505eac1b08bee2a6841e5946252ef83d0b05def6bdcad9036b761bd08ea298ed'))
 observed=[]
 for name in ('boot.bin','text.bin','terminal.bin','conv.bin','program.elf'):
  data=(out/name).read_bytes();item=(name,len(data),hashlib.sha256(data).hexdigest());observed.append(item);print(repr(item),flush=True)

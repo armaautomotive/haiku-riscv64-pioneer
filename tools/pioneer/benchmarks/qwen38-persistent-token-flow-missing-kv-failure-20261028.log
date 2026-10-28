@@ -1,0 +1,44 @@
+START actual persistent3token flow/ONE ROOT+SAME119+ONE byte fabric/ONLY RAW learned+initial state+prompt data;no private-state transplant or CPU product upload
+PASS actual next embedding position0/token248319/5120 bit-exact/20raw+2writes+2readbacks/no CPU product upload
+BEGIN actual persistent token0/layer0/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer0 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer0 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer0 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer0 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer0 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer0 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer0 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer0 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer0/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions608831251/reservedStack6496/writtenStack6488
+BEGIN actual persistent token0/layer1/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer1 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer1 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer1 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer1 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer1 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer1 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer1 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer1 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer1/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions1126416540/reservedStack6496/writtenStack6488
+BEGIN actual persistent token0/layer2/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer2 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer2 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer2 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer2 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer2 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer2 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer2 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer2 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer2/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions1643987341/reservedStack6496/writtenStack6488
+BEGIN actual persistent token0/layer3/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer3 matrix1 role5/actual quantized input/same workers
+OBSERVED connected layer3 matrix2 role6/actual quantized input/same workers
+OBSERVED connected layer3 matrix3 role7/actual quantized input/same workers
+UNMAPPED RAW route3d2 addressa9560000 layer3 phase5
+Assertion failed: (s.route==route && address>=s.base && address-s.base<s.bytes && !(address&3)), function Get, file pioneer_q38_global_chain_instruction_test.cpp, line 130.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_flow_tests.py", line 44, in <module>
+    subprocess.run([str(binary),*sys.argv[1:]],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1','PIONEER_TEST_ROOT_PROFILE_MAP':str(profile)})
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-token-flow-s9m65z8h/test', '/private/tmp/pioneer-q38-token-root-main-20261028-h', '/private/tmp/pioneer-q38-mixed-worker-20261026-e', '/private/tmp/pioneer-q38-global-globalbuild-main-20261028-e']' died with <Signals.SIGABRT: 6>.

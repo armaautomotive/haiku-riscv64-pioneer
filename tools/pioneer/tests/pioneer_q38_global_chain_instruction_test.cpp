@@ -11,6 +11,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38EmbeddingPlan.h"
 #include "PioneerQ38InstructionWindows.h"
 #include "PioneerQ38InstructionProfile.h"
+#include "PioneerQ38InstructionFault.h"
 namespace CL=PioneerQ38GlobalChainLayout;
 namespace G=PioneerQ38GlobalWorkerLayout;
 namespace H=PioneerQ38GlobalHeadLayout;
@@ -496,12 +497,14 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
   StepScalar();assert(observation.Total(steps)==before+1 && profile.Total()==before+1);
  }
  bool Run(){
+  unsigned previousPC=0;
   while(pc!=0x60000 && pc!=0x60004){
    uint64_t before=observation.Total(steps);assert(before<PioneerQ38InstructionWindows::TotalLimit);
-   cycles+=19;ObservedStep();
+   previousPC=pc;cycles+=19;ObservedStep();
    if(!(steps&255))for(unsigned w=0;w<119;w++)Advance(w,64);
   }
   if(pc==0x60000)fprintf(stderr,"CHAIN_FAULT layer%u completed%u phase%u matrices%u jobs%u Conv%u GDN%u dense%u packets%u SP%x\n",layer,completed,Phase(),matrices,matrixJobs,convJobs,gdnJobs,denseJobs,packets,regs[2]);
+  if(pc==0x60000)PioneerQ38InstructionFault::Dump(*this,previousPC,RB::Projected,RB::PostResidual,RB::Final,RB::Original);
   return pc==0x60004;
  }
  void Verify(){

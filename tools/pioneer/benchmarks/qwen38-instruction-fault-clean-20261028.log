@@ -1,0 +1,1 @@
+PASS read-only FAULT diagnostic/actual-PC+RA+SP+register/finite-range+sum/missing+NaN classification/12 domain edges/map+all fields UNCHANGED;UNIT DATA ONLY,no model/owner/device/launch authority
