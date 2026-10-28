@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_ROOT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE)
+#error Use the distinct global-chain component role,not an old IMAGE
+#endif
 #ifdef PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE
 #error A separate recurrent BLOCK parent cannot select an existing image role
 #endif

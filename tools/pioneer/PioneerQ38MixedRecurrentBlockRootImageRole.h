@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_ROOT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE)
+#error Use the distinct global-chain component role,not an old IMAGE
+#endif
 // No guard: a NEW complete recurrent parent, not an older image/native ABI.
 #if !defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE != 1
 #error Exact separate OFFLINE recurrent BLOCK ROOT required

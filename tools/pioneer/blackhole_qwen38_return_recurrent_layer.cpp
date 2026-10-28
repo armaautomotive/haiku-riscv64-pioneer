@@ -2,12 +2,19 @@
 // Returning device arithmetic only. No boot, host wait, STOP, native owner or
 // whole-token publication. A future scheduler must stage exact canonical DATA
 // and prove the preceding embedding/layer and current state independently.
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE
+#include "PioneerQ38GlobalChainComponentRole.h"
+#else
 #include "PioneerQ38LayerReturnComponentRole.h"
+#endif
 #ifndef PIONEER_Q38_LAYER_COMPONENT_RECURRENT
 #error Recurrent returning translation unit requires its own family
 #endif
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerAttentionMath.h"
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE
+#include "PioneerQ38GlobalChainLayout.h"
+#endif
 #include "PioneerQ38LayerReturnComponentLayout.h"
 #include "PioneerQ38RecurrentHistoryLayout.h"
 // Separate TUs retain their own genuine private seal TYPES. Do not cast a
@@ -25,8 +32,23 @@
 extern "C" void* memset(void* target,int value,__SIZE_TYPE__ bytes){
  return q38_layer_return_recurrent_zero(target,value,bytes);
 }
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE
+// Arithmetic capsule ONLY. Its NEW parent separately proves the real final
+// hidden/learned norm/current exclusive lifetime before and after this call.
+extern "C" bool q38_global_chain_learned_rms(const float* input,const float* weight,float* output){
+ return PioneerQ38LearnedRms(input,weight,output);
+}
+extern "C" bool q38_global_chain_quantize14(const float* input,void* output){
+ return PioneerQ38ProjectionQuantize(14,input,256,static_cast<PioneerQ38ProjectionInput*>(output));
+}
+#endif
 extern "C" __attribute__((noinline)) unsigned q38_return_recurrent_layer(){
- using namespace RecurrentBlock;namespace A=PioneerQ38LayerReturnComponentLayout;
+ using namespace RecurrentBlock;
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE
+ namespace A=PioneerQ38GlobalChainLayout;
+#else
+ namespace A=PioneerQ38LayerReturnComponentLayout;
+#endif
  R::PrivateSeal seal;unsigned parent;
  asm volatile("mv %0,s11":"=r"(parent));
  if(!A::PrivateFrames(parent,reinterpret_cast<unsigned>(&seal)))scalar_fault_park();

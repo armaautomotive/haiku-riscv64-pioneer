@@ -1,7 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 // Returning on-card Conv->GDN coordinator for SAME retained QMW1 workers.
 // Separate offline image;original/init/clock/native/lifecycle ownership owed.
-#ifdef PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE
+#include "PioneerQ38GlobalChainComponentRole.h"
+#include "PioneerQ38GlobalRecurrentDispatch.h"
+#elif defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
 #include "PioneerQ38MixedRecurrentBlockRootImageRole.h"
 #else
 #include "PioneerQ38MixedRecurrentCohortRootImageRole.h"
@@ -24,8 +27,13 @@ extern "C" void* memset(void* target,int value,__SIZE_TYPE__ bytes){
 #endif
 namespace MixedRecurrentCohort {
 namespace L=PioneerQ38MixedRecurrentCohortLayout;
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE
+namespace M=PioneerQ38GlobalWorkerLayout;
+namespace Dispatch=PioneerQ38GlobalRecurrentDispatch;
+#else
 namespace M=PioneerQ38MixedWorkerLayout;
 namespace Dispatch=PioneerQ38MixedRecurrentDispatch;
+#endif
 static volatile uint32_t* Words(unsigned a){return reinterpret_cast<volatile uint32_t*>(a);}
 static const uint32_t* Data(unsigned a){return reinterpret_cast<const uint32_t*>(a);}
 static const uint32_t* Frame(){return q38_mixed_recurrent_frame();}

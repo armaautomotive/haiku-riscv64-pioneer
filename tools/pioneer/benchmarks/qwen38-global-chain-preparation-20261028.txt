@@ -1,0 +1,140 @@
+DISTINCT QGC1 connected all64+vocabulary firmware: BUILD/DATA/GUARDS, RUNTIME LIVE
+2026-10-28. No physical card,driver install,boot,power or Assistant action.
+
+IMPLEMENTED new on-card control flow,not a host loop across standalone tests:
+SAME new parent ->64 returning recurrent/dense bodies (INCLUDING dense63) ->
+actual final5120 read -> original learned final norm -> native Q8_K input ->
+973 canonical Q6_K vocabulary jobs/9waves -> current closed partials ->
+global greedy candidate -> ALL119 actual global STOP. State/token commit is
+INTENTIONALLY NOT claimed or published:the own QVX1 record explicitly has
+committed0 and diagnostic1. It is not an inference Work/native permission.
+
+New QGC1 boot/source identity and private parent,NEW G-worker dispatch/
+boot/job/status interpretation. Old numeric outer/recipe DATA and actual
+math code are reused,not old native owners/image grants. The old final-
+dense nonreturning STOP entry is absent;dense63 genuinely returns before
+output. No caller completed64/clean/status hint creates the parent control
+flow. All components retain separate private seal types and s11 bind/restore.
+RMS/quantization reuse existing emitted arithmetic capsules,not host numeric
+products or a second quantizer. All execution still needs whole qualification.
+
+New512B QVH1 immutable head data binds final norm plus7 canonical vocabulary
+stripes. Bounded integer job construction avoids forbidden divide/high-mul
+instructions. ALL973 descriptions match the independently implemented old
+canonical scheduler exactly. Every bank's rows occur exactly once;last wave
+has21 workers and each active partition is15/16 groups. Serialized layer
+packages keep the old numerical bytes but expose ONLY new QGC1 boot data.
+These are DATA factories,not authenticated files,initialized pages,completed
+inputs,hardware routes,private lifetimes or launch grants.
+
+Output controller checks its real completed parent/source/metadata scope,
+exact NoC command/readback/counter completion/quiet and unchanged65536 poll
+bound. It checks normalized/native/scale shadows around each output wave.
+Each gathered job is recomputed from immutable canonical header+the actual
+tracked nonce. A partial alone grants nothing:require real status+WAIT,
+same boot/job/doorbell/source/current counters,exact matrix receipt/delta,
+finite in-range local maximum and all partial identity/source fields before
+reduction. Whole accepted count973/row count248320 and all119 real STOP
+records must precede the own diagnostic candidate. Unknown faults park;
+no later packet/retry/reset/restore is granted. Actual combined-stack,
+all64 arithmetic/output,original full-model and physical proof remain OWED.
+
+FINAL PINNED BUILD main24004 / clean86026 BOTH direct terminal0. Command:
+ python3 tools/pioneer/build_qwen38_global_chain_root.py \
+  /Volumes/HaikuBuildLocal/generated.riscv64 \
+  /private/tmp/pioneer-q38-global-chain-{main,clean}-20261028-h
+Identical logs SHAdab98929c9a3101fa17a9c7ab9385be896e495ebbc545d945447de57e358c10a.
+All5 literal pins:
+ boot4 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text113840 6f458ba36e34a427a08b2c199ffc3fedc235c6dbfe55d355c131d2a37e6eb7ce
+ terminal8 6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5
+ conv7500 5fce4465b4d1f30a616311e97f9216d06e4aaf6a09d79de34b1e4ea31b0b004a
+ ELF145552 43cf308d15a7db38cde9e80804d78870a2222788612b8ccf11806e05a21ebc44
+Unchanged ROOT131072B/Conv32768B bounds;no unresolved/writable globals/GOT/
+unexported allocated sections/forbidden scalar ISA/CSR. Exact5 s11 writes:
+one new parent+two returning bind/restore pairs,NO final-dense STOP bind.
+Root main1632/head1808,all new controller functions<=2048. Existing returning
+numeric component cap4096 remains unchanged (quantizer2112). Neither per-
+function accounting nor this build proves actual combined reserved SP.
+
+Final DATA/roles main89935 / clean37158 BOTH direct0,2 identical lines SHA
+0b7f2b234dbcceb72638915fd45c27a1236e7199f0f4917cc39c7070965827cf.
+Command:python3 tools/pioneer/tests/run_pioneer_q38_global_chain_data_tests.py
+ASan+UBSan:532 exact/late/defined0/missing/old-role refusal gates;6811 jobs
+across7 banks,ALL248320 rows exactly once x7,896 header mutations,1505 NEW
+G Conv/GDN envelopes vs old numeric descriptor checks,old boot/envelope
+exclusion,no-alias/no-partial-output. All64 new package frames/first512+
+last64 byte reads and self-alias refusals are checked. No Root instructions
+or native/source/producer privilege is inferred from these DATA tests.
+
+CURRENT actual initial guards main68666 / clean59869 BOTH direct0:
+12 boot/outer/source/doorbell refusals,ZERO NoC/worker products,inert2048,
+SAME119 genuinely new virgin G histories. Identical14-line logs SHA
+927910f8329f1c2a3e2fa457a60536fc27d3c07ebeb3aaf098c0a371526a7ddf.
+Command:
+ python3 tools/pioneer/tests/run_pioneer_q38_global_chain_instruction_tests.py \
+  /private/tmp/pioneer-q38-global-chain-{main,clean}-20261028-g \
+  /private/tmp/pioneer-q38-mixed-worker-20261026-e \
+  /private/tmp/pioneer-q38-global-globalbuild-{main,clean}-20261028-e --refusals
+G artifacts have the SAME5 literal pins as final H. Worker symbols are checked
+against nm output from the literal-pinned worker ELF before use,not trusted
+as external completion state. No positive connected output result yet.
+Correct-tag RAW preparation43129/95350 also BOTH direct0:all64 canonical
+packages/new119 virgin G boots/shared raw-zero bounds+write precedence;
+ZERO Root instructions. This mode never grants completed arithmetic.
+
+Compatibility:both builds FIRST reproduce all old returning component pins
+4b1550f3/29204d28/78cf19c4. Old FULL64 QCH1 rebuild11894/78676 BOTH direct0,
+all5 unchanged pins including ELF95f7a714... . Current global-worker rebuild
+28828/53343 BOTH direct0,ALL9 QGW1 pins unchanged (ELFfc8ade5b...) and ALL9
+old mixed-worker pins exact first. Native feature-OFF SDK17113/17143 BOTH0:
+full old QPX control object4a8a0a01f12e7520fe62f649af14faab6a9fa72caa5cec8b3db0f84282d1426e
+plus old65/resident inert controls byte-identical. Raw native/worker logs
+differ only by owned output paths;do not claim their text hashes identical.
+Kernel change ONLY appends new-role refusals to ONE existing preprocessor
+line,no runtime body or line shift. New images cannot select old/native/
+oracle/client/Work roles,including defined0. No new native ABI was added.
+
+Development repairs:freestanding types moved after attention-math setup;
+fixed misleading-indentation errors without weakening -Werror. Compiler
+initially merged head into main3360;explicit noninline head and reuse of
+existing quantization capsule restored unchanged2048 controller bound,
+without widening8192 stack. Role audit found NEW unpublished head/result
+tags duplicated old QGH1/QGT1 GDN tags. Renamed these to QVH1 0x31485651 /
+QVX1 0x31585651 and added a static regression. Exactly5 text bytes changed,
+no code-size/Conv/math change;all new pins were independently rebuilt before
+freezing. Existing QGW1 address+job-bound partial DATA contract is unchanged;
+its partial word ALONE is never any GDN preparation/completion authority.
+
+OBSOLETE unpublished-tag positive9375/81224 were freshly confirmed LIVE,
+then exact childPIDs36480/36483 deliberately TERM'ed ONCE for that concrete
+contract correction,NOT quiet output. Both parents direct1 manual cancel,
+NOT a positive completion or hardware failure. Preserved partial logs show
+actual layer0 completed on SAME119 G workers/Conv+GDN+FFN/final5120/closed
+chains at846030684 ROOT instructions,reservedSP6512/written6504;then layer1.
+That is partial old-tag evidence ONLY,not current whole-run qualification.
+
+CURRENT correct-tag FULL positive main61179 / clean96440 are LIVE:
+ /private/tmp/pioneer-q38-global-chain-positive-main-20261028-b.log
+ /private/tmp/pioneer-q38-global-chain-positive-clean-20261028-b.log
+SAME119/ONE shared byte fabric from virgin boot through all64+output;
+NO private PC/nonce/Tensix/tensor/counter history transplant and NO CPU
+products uploaded. Raw learned/initial hidden/zero current-state inputs are
+SYNTHETIC. Independent observers check emitted matrix/Conv/GDN/attention/
+RMS/FFN outputs.
+NoC/time/OS primitive endpoints are SIMULATED. Instruction counts include
+simulated polling,NOT physical cycles or token speed. Observer also checks
+all provisional state retention,final norm/quantization,ALL973 vocabulary
+jobs/248320 rows/independent greedy result and actual STOP/stack. FULL
+positive terminal outcome is STILL UNPROVEN. Follow SAME handles,never
+restart for quiet/observation timeout. Old QCH1 positives17092/81011 also
+remain LIVE as separate old-image evidence;do not splice their lifetimes.
+
+Still required:complete this exact positive test and original full-model
+validation;real persistent multi-token KV/GDN/Conv state/token commit;
+NEW genuine native owner/memory/source/initialized ledger/journal/terminal/
+client/helper and physical qualification;no-reference Work and Assistant;
+remove redundant controller overhead and benchmark REAL inference honestly.
+GoalACTIVE,last whole-model0.207893161tok/s,target20 UNMET. NO measured
+new speedup,NO driver install. CPU/RAM/boot/Assistant untouched;no power,
+SD,mains or hardware actions. Dirty llama/FlashNext changes unread/untouched.

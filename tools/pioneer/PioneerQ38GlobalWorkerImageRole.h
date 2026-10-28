@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_ROOT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE)
+#error A fresh global worker image is separate from its new ROOT/component image
+#endif
 // No include guard: late/defined-zero role contamination must also fail.
 #if !defined(PIONEER_Q38_GLOBAL_WORKER_IMAGE) || PIONEER_Q38_GLOBAL_WORKER_IMAGE != 1
 #error Exact separate OFFLINE global-output worker image required

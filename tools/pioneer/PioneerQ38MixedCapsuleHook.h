@@ -16,7 +16,11 @@
 #error Exact cohort ROOT parent required
 #endif
 #elif defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE
+#include "PioneerQ38GlobalChainComponentRole.h"
+#else
 #include "PioneerQ38MixedRecurrentBlockRootImageRole.h"
+#endif
 #if PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE != 1
 #error Exact recurrent BLOCK ROOT parent required
 #endif

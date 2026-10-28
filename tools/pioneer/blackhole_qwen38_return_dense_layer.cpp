@@ -1,12 +1,19 @@
 /* SPDX-License-Identifier: MIT */
 // Returning device attention/FFN arithmetic. No host loop or completion hint
 // is substituted for a real predecessor, persistent KV or native lifetime.
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE
+#include "PioneerQ38GlobalChainComponentRole.h"
+#else
 #include "PioneerQ38LayerReturnComponentRole.h"
+#endif
 #ifndef PIONEER_Q38_LAYER_COMPONENT_DENSE
 #error Dense returning translation unit requires its own family
 #endif
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerAttentionMath.h"
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE
+#include "PioneerQ38GlobalChainLayout.h"
+#endif
 #include "PioneerQ38LayerReturnComponentLayout.h"
 #define q38_mixed_root_seal q38_layer_return_dense_seal
 #define memset q38_layer_return_dense_zero
@@ -20,7 +27,12 @@
 #undef memset
 #undef q38_mixed_root_seal
 extern "C" __attribute__((noinline)) unsigned q38_return_dense_layer(){
- using namespace DensePartitionRoot;namespace A=PioneerQ38LayerReturnComponentLayout;
+ using namespace DensePartitionRoot;
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE
+ namespace A=PioneerQ38GlobalChainLayout;
+#else
+ namespace A=PioneerQ38LayerReturnComponentLayout;
+#endif
  L::PrivateSeal seal;unsigned parent;
  asm volatile("mv %0,s11":"=r"(parent));
  if(!A::PrivateFrames(parent,reinterpret_cast<unsigned>(&seal)))scalar_fault_park();

@@ -2,7 +2,10 @@
 // NEW QDR1: actual96-worker card controller. Local prepared inputs are
 // supplied by FOUR real QDP producers in the joined qualification. Native
 // source/init/clock/host/joint-memory/Tensix/NoC ownership remains OWED.
-#if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE)
+#include "PioneerQ38GlobalChainComponentRole.h"
+#include "PioneerQ38GlobalWorkerLayout.h"
+#elif defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
 #include "PioneerQ38MixedRecurrentBlockRootImageRole.h"
 #elif defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
 #include "PioneerQ38MixedRecurrentProjectionRootImageRole.h"
@@ -58,7 +61,11 @@ namespace L=PioneerQ38MixedProjectionRootLayout;
 #else
 namespace L=PioneerQ38MixedDenseRootLayout;
 #endif
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE
+namespace M=PioneerQ38GlobalWorkerLayout;
+#else
 namespace M=PioneerQ38MixedWorkerLayout;
+#endif
 #else
 namespace L=PioneerQ38DensePartitionRootLayout;
 #endif

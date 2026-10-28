@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_ROOT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE)
+#error The old chain cannot select a new global-chain image
+#endif
 // No guard: an OFFLINE scheduler image, never native/source/Work permission.
 #if !defined(PIONEER_Q38_LAYER_CHAIN_SCHEDULER_IMAGE) || PIONEER_Q38_LAYER_CHAIN_SCHEDULER_IMAGE != 1
 #error Exact separate layer-chain scheduler IMAGE required

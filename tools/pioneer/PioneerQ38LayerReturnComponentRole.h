@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_ROOT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE)
+#error The old returning IMAGE is never the distinct global-chain role
+#endif
 // No guard: returning DEVICE arithmetic, not a standalone or native image.
 #if !defined(PIONEER_Q38_LAYER_RETURN_COMPONENT_IMAGE) || PIONEER_Q38_LAYER_RETURN_COMPONENT_IMAGE != 1
 #error Exact separately selected layer-return component required

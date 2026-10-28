@@ -1,0 +1,56 @@
+e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b  /private/tmp/pioneer-q38-gchain-worker-regression-clean-20261028-a/qualified-math/unchanged-worker/unchanged-worker/unchanged-matrix-conv/unchanged-qfp3/boot.bin
+783bd17e5f1114365bac3e7fa0589f205d70a225a2223a4de7089503ef90a615  /private/tmp/pioneer-q38-gchain-worker-regression-clean-20261028-a/qualified-math/unchanged-worker/unchanged-worker/unchanged-matrix-conv/unchanged-qfp3/text.bin
+a55331eeab74b50a50012a62c0d476e9a247f653eefe2211a08d0a75b2da85ca  /private/tmp/pioneer-q38-gchain-worker-regression-clean-20261028-a/qualified-math/unchanged-worker/unchanged-worker/unchanged-matrix-conv/unchanged-qfp3/affine.bin
+f17def1072f3e9ceaff2a7f1f66596ca34efc4d7ed9e3ea0d52dbc4cf9a7acb9  /private/tmp/pioneer-q38-gchain-worker-regression-clean-20261028-a/qualified-math/unchanged-worker/unchanged-worker/unchanged-matrix-conv/unchanged-qfp3/ffn.bin
+OFFLINE NEW QFP3 projection-input op5 peer ONLY;COMPLETE image hash pin still required,old boot marker is NOT an op5 grant;NO native/coordinator/model/speed qualification: /private/tmp/pioneer-q38-gchain-worker-regression-clean-20261028-a/qualified-math/unchanged-worker/unchanged-worker/unchanged-matrix-conv/unchanged-qfp3
+PASS actual QGT1 opcode audit:3 READ-only CSRRS mcycleh/mcycle/mcycleh,x0;NO CSR/control/counter writes
+3a99ac89d98236b7e3dac5e1cf433223961fdb1b7f0f6f80dd81d541a47b0284  /private/tmp/pioneer-q38-gchain-worker-regression-clean-20261028-a/qualified-math/unchanged-worker/unchanged-worker/unchanged-qgt1/code.bin
+d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6  /private/tmp/pioneer-q38-gchain-worker-regression-clean-20261028-a/qualified-math/unchanged-worker/unchanged-worker/unchanged-qgt1/boot.bin
+OFFLINE QGT1 card-clock rendezvous/NO native install/card/physical-time claim:/private/tmp/pioneer-q38-gchain-worker-regression-clean-20261028-a/qualified-math/unchanged-worker/unchanged-worker/unchanged-qgt1
+PASS actual QGT1 opcode audit:3 READ-only CSRRS mcycleh/mcycle/mcycleh,x0;NO CSR/control/counter writes
+PASS actual QGT1 opcode audit:3 READ-only CSRRS mcycleh/mcycle/mcycleh,x0;NO CSR/control/counter writes
+PASS actual QGT1 opcode audit:3 READ-only CSRRS mcycleh/mcycle/mcycleh,x0;NO CSR/control/counter writes
+PASS actual QGT1 opcode audit:3 READ-only CSRRS mcycleh/mcycle/mcycleh,x0;NO CSR/control/counter writes
+e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b  /private/tmp/pioneer-q38-gchain-worker-regression-clean-20261028-a/qualified-math/unchanged-worker/unchanged-worker/unchanged-matrix-conv/boot.bin bytes4
+ea6245c426a2707f76dc58cf329d838f40d4dd0b48ff4b4509fffc9b5122a1fb  /private/tmp/pioneer-q38-gchain-worker-regression-clean-20261028-a/qualified-math/unchanged-worker/unchanged-worker/unchanged-matrix-conv/text.bin bytes7868
+8c496193e749e8933e927f82c7785b097bc375f54f61971e4c7f454efc8bbaca  /private/tmp/pioneer-q38-gchain-worker-regression-clean-20261028-a/qualified-math/unchanged-worker/unchanged-worker/unchanged-matrix-conv/affine.bin bytes5276
+f17def1072f3e9ceaff2a7f1f66596ca34efc4d7ed9e3ea0d52dbc4cf9a7acb9  /private/tmp/pioneer-q38-gchain-worker-regression-clean-20261028-a/qualified-math/unchanged-worker/unchanged-worker/unchanged-matrix-conv/ffn.bin bytes16352
+1e015c2bea109f36a08da5a651e582d9d8aee81e5c4f29a7eda7eb614d702c92  /private/tmp/pioneer-q38-gchain-worker-regression-clean-20261028-a/qualified-math/unchanged-worker/unchanged-worker/unchanged-matrix-conv/service.bin bytes10300
+PASS OFFLINE resident operator service compile/maxNewFunctionFrame1920/inheritedNongrowingMax3056/old QFP3 EXACT;SAME persistent sequence/matrix+op7 precise Conv;NO CPU ref/host callback/reset between operations
+NEW68000..6e000 service is NOT in existing ALL119 native snapshots;NO native selector/install/device/full model or speed qualification
+e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b boot bytes4
+47ff39e8f9709f9e87469e44919b374ccfbea3edd3f1f1f1b3020ecfd545c30b text bytes7912
+d8734c6a6e1cea65e8abac370292033f8be1406fa063c0f84501646aaaedca5c affine bytes5360
+f17def1072f3e9ceaff2a7f1f66596ca34efc4d7ed9e3ea0d52dbc4cf9a7acb9 ffn bytes16352
+3498f0507019f44b4c76101ca8df2df84dc4d57e3a288703c437fb441fa0eb43 service bytes10300
+67f202ea9afbf902488af532418c876c8983e146b21d272b1cbf88108b412648 gdn bytes29860
+PASS OFFLINE returning GDN/matrix/Conv IMAGE compile/maxNewFrame1456/prior service+QFP3+standaloneQGT1 ALL EXACT;NEW GDN local mailbox74700 preserves persistent command74000
+Proposed GDN ROM b8000..c8000 and service68000..6e000 need NEW joint native footprint;NO native/device/ROOT/fullmodel or speed grant
+e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b boot bytes4
+d726337fe94d7d94812aaf5e67f3d4e328a21873cb27aa982dc5315bb6294b07 text bytes7940
+fcdf8ec5b607550db93fda5a86830951e2518d5580b11f4538fb6eead0eb3b7b affine bytes5360
+f17def1072f3e9ceaff2a7f1f66596ca34efc4d7ed9e3ea0d52dbc4cf9a7acb9 ffn bytes16352
+d00147de57e51e096760da0e6d25476692646807bcb0dc52d5a02b1263657254 service bytes10300
+36458af185c3500d1cd1b1170672c2138910aff836bd8a6a407b07c68a80b93d gdn bytes35396
+PASS OFFLINE all-layer GDN-output/matrix/Conv/GDN IMAGE compile/maxNewFrame720/old SIX sections EXACT FIRST/ALL allocated bytes exported
+NEW immutable pins + joint native footprint/ROOT consumer still required;NO device/fullmodel/current-slot commit or speed grant
+a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c boot.bin bytes4
+daae5eab80a4e423d9b33a1eff84b39de6d29b7b4d85fe52a7e00e24bc3178f2 mixed.bin bytes4400
+cef405cc7405eea6001e47e9a6c9db73ca790bcac985f09d2bb964de8c68045f dense.bin bytes10332
+3a8ffe4f7e885f992f210bd1cc0887a1309159972409403b3082535b1916dab1 text.bin bytes5984
+47c52fee6ccfb0a8847fe17a9d43d4016e7cfc6c68cc1427673f6869cd287b78 affine.bin bytes5360
+f6ef5d614091b5ed12365e1945daa2dad04d37c432ac9dd5f859f857bba83e52 ffn.bin bytes16456
+b9fb256a75546dfe9be4a7805ef170913b2b1eecab1fbf1afb3b6d7c098c9262 service.bin bytes9888
+eeaa084e659efbc5f2b7c9922a9de862057b2ed624bf85b03b8ccde2c02c5c74 gdn.bin bytes35564
+6a74556d6f4095353b0bffd0f44fe3d35706c21ea304f5233d034e47702117ea program.elf bytes121680
+PASS NEW OFFLINE QMW1 front end/ONE global nonce/returning matrix+Conv+GDN+three-phase dense/capsules reserve s11/private stack seal/no reset between jobs;NO native install/model/speed grant
+a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c boot.bin bytes4
+bdbd801a4482188efed0dea19d3a31f8c383208ea33447c842fd8312674872ba globalworker.bin bytes6264
+cfb3b570f61baf7010e14a4072fbe496014ef2ad792d53145ef1b794ff73233a dense.bin bytes10332
+e9b643d504dc6b1e2e8d744de9c425603fa9b785ef8dab14a9e47b4249f94553 text.bin bytes5984
+47c52fee6ccfb0a8847fe17a9d43d4016e7cfc6c68cc1427673f6869cd287b78 affine.bin bytes5360
+102283280e44bb8e614ff84447825fe5126f9fcd7da032f1fa8da20fc619a6d4 ffn.bin bytes16456
+ee3f68158d9609cc3667ef9812dbe3da11666dc01baa9b4fe1baf5bfd317d2c0 service.bin bytes9888
+a56acbed91ca3728a6e2cef4cf8566be39ae8c710fe0ad62a80b8c2032573762 gdn.bin bytes35564
+fc8ade5bdbc69a6be95846d40ee26025d43e559ef53c7beedd52071f75e83c4f program.elf bytes121836
+BUILD ONLY distinct QGW1/own boot+job+STOP/global layer64/type14/actual private down-job+wave progression/local ALL finite-row greedy partial/maxFrontFrame1536;NO connected64/output ROOT/canonical input or wave coverage/native/physical/Work/token/TPS qualification. DO NOT INSTALL
