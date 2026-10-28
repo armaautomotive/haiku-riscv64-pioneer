@@ -1,0 +1,79 @@
+HOST-ONLY exact canonical/prefix data mirror experiment
+October28UTC2026;NOT integrated into native driver,Work or a card program
+
+Problem and scope
+-----------------
+The previous turn was a verified wait on eight exact live local handles,
+with a read-only investigation of recurrent0..2 -> dense3/fullROOT handoff.
+This turn implemented and tested an independent diagnostic-plan optimization
+while preserving every running job and the pinned physical candidate.
+The prior passive sample places actual-control CPU time in repeated full
+immutable recipe reconstruction during readback. No card stall is implied.
+
+The new PioneerQ38RecurrentPrefixPlanMirror is standalone HEAP DATA ONLY.
+Capture requires the SAME actual canonical/prefix objects and TWO full
+original Matches calls,then verifies its captured bytes still equal both.
+The objects' original Matches dependency graph retains only inline data and
+pointers into those same plan/canonical objects. Canonical parts,recurrent
+regions/FFN indices/workspaces/used/count/ready state and ALL nested prefix
+plans,descriptors,identities,boots and source copies are captured inline.
+Trivially-copyable requirements are statically checked;that trait alone is
+not a proof of pointer closure,the dependency graph was also inspected.
+
+Each lookup checks exact object pointer identity and memcmp of ALL287336
+canonical bytes and ALL4180232 prefix bytes. It does not accept a digest,
+epoch hint,caller ready bit or a subset of headers. Padding/unused bytes are
+intentionally stricter than semantic reconstruction. Objects must remain
+alive and exclusively protected by the caller;this DATA comparison confers
+no FD/team/source/clock/model/NoC/host/Tensix/producer/launch/cleanup authority.
+Capture is one-shot even on failure;storage overlap is conservatively refused.
+The storage-overlap branches are not claimed as separately reached tests.
+
+The header explicitly refuses native/kernel/NODRV/client/oracle/image/Work
+roles,including defined0+late changes. There is NO production include or
+replacement of the existing native plan checks. A future private native
+adapter must independently retain exact owners/lifetimes and every dynamic
+source/context/device guard;never promote this object to a ready facade.
+
+Qualification and timing
+------------------------
+Initial main60960 TERMINAL0 established the experiment;after extra role and
+overlap exclusions,current main3613/clean23323 BOTH TERMINAL0.
+97 preprocessor gates each;439244 reached byte-or-word mutations each:
+EVERY live canonical part byte,EVERY serialized word across ALL3 recurrent
+layers,all120x64 boot words and private representation pages. Mutated bytes
+are rejected and then restored;full original Matches is rechecked afterward.
+Cold/one-shot failure and foreign object identities are refused;all7 banks
+build/capture/match. Raw pointer-byte probes never dereference the deliberately
+mutated pointer. ASan+UBSan are enabled and final source copies match exactly.
+
+Same executable/compiler flags,with a compiler memory barrier per iteration:
+MAIN original3 calls217988166ns (72662722ns/call),mirror128 calls25573417ns
+(199792ns/call). CLEAN original3 calls217229667ns (72409889ns/call),mirror128
+calls26159875ns (204374ns/call). About350-360x less CPU time for THIS data
+predicate in this local experiment. These timings are not token generation,
+full Guard cost,model loading,Haiku/RISC-V or physical-card measurements.
+No integrated speedup or20tok/s claim follows. Benchmark stdout differs only
+in timing;do not claim byte-identical complete output across both trees.
+
+Still active and unqualified
+---------------------------
+LOCAL handles43038/80015(native readback),26684/93171(actual control),
+92911/21992(routed control),58646/88658(original native+readback) remain LIVE.
+Original runs were launched independently in parallel after verified local
+capacity32GiB/10CPU;both original sources fully authenticated169spans/
+842821248bytes/205785pages/private11557reference reads and passed genuine
+QPE1+672GDN+336history initialization plus program installation. Their numeric
+final/readback/full END results are not yet passed. All earlier required
+synthetic/original/control gates still apply before hardware. Initial nice
+was sandbox-denied;only verified original PIDs8184/8191 were reniced10 and
+that priority was read back. No live process was restarted or interrupted.
+
+Physical candidate73 module4ae7/helperf2038/client7eeef9 are BUILD-qualified
+only. Stable041 remains installed;fresh64CPU/fullRAM OS check was recorded
+previously. No physical driver/image/Assistant/boot/power/SD/mains/network/
+hardware change. WHOLE27B last measured0.207893161tok/s unchanged;full offload
+and20tok/s unmet. Complete all actual readback/control/original/end gates,
+then qualified original routed-control/card comparison and dense3/all64/
+persistent state+KV/history/token commit/finalnorm/vocab/sampling/no-CPU-
+reference Work+Assistant and real performance optimization. Goal ACTIVE.

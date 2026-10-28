@@ -1,5 +1,27 @@
 # Native build status
 
+## Latest host-only optimization: exact immutable-data mirror qualified offline
+
+October28UTC2026. A separate HOST-ONLY plan-mirror experiment passes main/
+clean ASan+UBSan:97 role refusals and439244 reached byte/word mutations each,
+covering all3 layers' serialized metadata,all120 boots,all live canonical
+part bytes and private representation pages. It captures only after two
+complete original Matches checks and compares EVERY byte of the SAME exact
+canonical+prefix objects on every lookup,no digest/ready/epoch shortcut.
+Immutable geometry only:dynamic FD/team/source/clock/owners/device guards
+remain separate and mandatory. Native/kernel/client/oracle/image/Work roles
+are explicitly refused,including defined0 and late aliases.
+
+On this Mac,in the same instrumented executable,original data Matches took
+about72ms/call versus0.20ms/mirror comparison in BOTH trees. This is a HOST
+diagnostic-predicate result,NOT an integrated driver or inference speedup.
+The current driver/images/clients and eight running native/control/original
+tests are unchanged. No new driver is installed or qualified by this test.
+Later integration requires a genuine private native lifetime binding and
+all current dynamic checks;do not enable the prototype in a kernel/Work
+build or use a cached boolean as launch permission. Evidence:
+benchmarks/qwen38-recurrent-prefix-exact-mirror-20261028.txt.
+
 ## Current offline work: distinct three-layer DEBUG73 built; not installed
 
 October 28, 2026. The new prefix diagnostic now has its own exact physical
