@@ -38,6 +38,13 @@ class PioneerQ38ObservedTrace {
  static float Float(uint32_t bits){float value;std::memcpy(&value,&bits,4);return value;}
  static bool Finite(const uint32_t* words,unsigned count){if(!words)return false;for(unsigned i=0;i<count;i++)if(!std::isfinite(Float(words[i])))return false;return true;}
  static bool Word(FILE* file,uint32_t word){uint8_t bytes[4];for(unsigned i=0;i<4;i++)bytes[i]=uint8_t(word>>(i*8));return fwrite(bytes,1,4,file)==4;}
+ static int Directory(const char* directory){
+  if(!directory || directory[0]!='/')return -1;
+  struct stat named={},opened={};if(lstat(directory,&named) || !S_ISDIR(named.st_mode))return -1;
+  int fd=open(directory,O_RDONLY|O_DIRECTORY|O_NOFOLLOW);if(fd<0)return -1;
+  if(fstat(fd,&opened) || opened.st_dev!=named.st_dev || opened.st_ino!=named.st_ino){close(fd);return -1;}
+  return fd;
+ }
 public:
  static constexpr uint32_t TokenMagic=0x31435451; // DATA format,not a capability
  bool Embedding(unsigned position,unsigned input,const uint32_t* actual,unsigned words){
@@ -75,12 +82,28 @@ public:
  bool Complete()const{return !failed && !saved && embeddings==3 && commits==3;}
  unsigned Embeddings()const{return embeddings;}
  unsigned Layers(unsigned position)const{return position<3?token[position].layers:0;}
+ // Distinct, deliberately INCOMPLETE diagnostic. The caller must observe
+ // the real first verified layer; this does NOT assert a token, STOP,
+ // terminal capability, initialized native owner or reusable resources.
+ // No full-token reader accepts this family/name/length as a complete trace.
+ bool SaveFirstLayerDiagnostic(const char* directory){
+  const auto& t=token[0];
+  if(failed || saved || embeddings!=1 || commits || !t.embedded || t.layers!=1 || t.rows || t.committed)return Refuse();
+  int directoryFd=Directory(directory);if(directoryFd<0)return Refuse();
+  int fd=openat(directoryFd,"prefix-0.bin",O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600);
+  if(fd<0){close(directoryFd);return Refuse();}
+  FILE* f=fdopen(fd,"wb");if(!f){close(fd);close(directoryFd);return Refuse();}
+  const uint32_t header[]={0x31504f51,1,0,t.input,2,5120,1,0,0,0,0,0,0,0,0,0};
+  bool okay=true;for(auto word:header)okay=Word(f,word)&&okay;
+  for(unsigned i=0;i<2*5120;i++)okay=Word(f,t.hidden[i])&&okay;
+  okay=Word(f,0x454e4450)&&okay;okay=!fflush(f)&&!ferror(f)&&okay;
+  int closed=fclose(f),directoryClosed=close(directoryFd);
+  if(!okay || closed || directoryClosed)return Refuse();
+  saved=true;return true;
+ }
  bool Save(const char* directory){
-  if(!Complete() || !directory || directory[0]!='/')return Refuse();
-  struct stat st={};if(lstat(directory,&st) || !S_ISDIR(st.st_mode))return Refuse();
-  int directoryFd=open(directory,O_RDONLY|O_DIRECTORY|O_NOFOLLOW);if(directoryFd<0)return Refuse();
-  struct stat opened={};
-  if(fstat(directoryFd,&opened) || opened.st_dev!=st.st_dev || opened.st_ino!=st.st_ino){close(directoryFd);return Refuse();}
+  if(!Complete())return Refuse();
+  int directoryFd=Directory(directory);if(directoryFd<0)return Refuse();
   for(unsigned position=0;position<3;position++){
    const auto& t=token[position];std::string name="token-"+std::to_string(position)+".bin";
    int fd=openat(directoryFd,name.c_str(),O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600);if(fd<0){close(directoryFd);return Refuse();}

@@ -6,6 +6,7 @@
 #include "pioneer_q38_global_chain_instruction_test.cpp"
 #include "../PioneerQ38TokenStatePlan.h"
 #include "../PioneerQ38TokenLayout.h"
+#include "../PioneerQ38TokenStartupPlan.h"
 namespace TL=PioneerQ38TokenLayout;namespace TS=PioneerQ38TokenStateLayout;
 struct TokenFlowMachine:GlobalChainInstructionMachine {
 #ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
@@ -37,18 +38,58 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
   for(unsigned i=0;i<16;i++)sources[i]=source[i];
   for(unsigned w=0;w<119;w++)for(unsigned i=0;i<16;i++)sources[(w+1)*16+i]=child[w]->boot[16+i];
   unsigned workspace=outer[9];
+  auto startup=std::make_unique<PioneerQ38TokenStartupPlan>();
+  assert(startup->Build(*canonical,0,{1,2,3,4},sources.data(),prompt.data(),Prompts,Tokens,false,248318,248317)
+   && startup->MatchesBinding(*canonical,0,{1,2,3,4},sources.data()));
+  for(unsigned i=0;i<64;i++)assert(startup->Boot()[i]==boot[i]);
+  for(unsigned worker=0;worker<120;worker++){
+   std::array<uint32_t,64> actual;assert(startup->ReadBoot(worker,actual.data()));
+   for(unsigned i=0;i<64;i++)assert(actual[i]==(worker?child[worker-1]->boot[i]:boot[i]));
+  }
   for(unsigned selected=0;selected<64;selected++)if(!CL::Dense(selected)){
    statePlan[selected]=std::make_unique<PioneerQ38TokenStatePlan>();assert(statePlan[selected]->Build(*canonical,selected,0));
    unsigned package=0;assert(CL::Address(workspace,selected,package));
-   for(unsigned i=0;i<64;i++)Put(outer[8],package+TS::Offset+i*4,statePlan[selected]->Data()[i]);
+   std::array<uint8_t,256> raw;assert(startup->ReadPackage(selected,TS::Offset,raw.data(),raw.size()));
+   for(unsigned i=0;i<64;i++){
+    uint32_t word=uint32_t(raw[i*4])|uint32_t(raw[i*4+1])<<8|uint32_t(raw[i*4+2])<<16|uint32_t(raw[i*4+3])<<24;
+    assert(word==statePlan[selected]->Data()[i]);Put(outer[8],package+TS::Offset+i*4,word);
+   }
   }
-  uint32_t session[128]={};const unsigned h[]={TL::Magic,1,128,0,workspace,Tokens,Prompts,prompt[0]};
-  for(unsigned i=0;i<8;i++){session[i]=h[i];session[24+i]=boot[8+i];}
-  for(unsigned i=0;i<16;i++)session[8+i]=source[i];
-  session[33]=248318;session[34]=248317;session[35]=8192; // EOS disabled: qualify all three positions
+  // Check ALL full packages against the already-loaded canonical numeric
+  // bytes and state spans before the FIRST ROOT instruction. Padding is
+  // verified zero but never inserted as synthetic model/cache products.
+  unsigned packageWords=0;
+  for(unsigned selected=0;selected<64;selected++){
+   unsigned package=0;assert(CL::Address(workspace,selected,package));std::array<uint8_t,16384> raw;
+   for(unsigned at=0;at<CL::Stride;at+=raw.size()){
+    assert(startup->ReadPackage(selected,at,raw.data(),raw.size()));
+    for(unsigned i=0;i<raw.size();i+=4){
+     uint32_t word=uint32_t(raw[i])|uint32_t(raw[i+1])<<8|uint32_t(raw[i+2])<<16|uint32_t(raw[i+3])<<24;
+     unsigned offset=at+i;
+     if(offset<CL::Bytes(selected) || (!CL::Dense(selected) && offset>=TS::Offset && offset<TS::Offset+TS::Bytes))
+      assert(word==Get(outer[8],package+offset));
+     else assert(!word);
+     packageWords++;
+    }
+   }
+  }
+  std::array<uint8_t,512> rawSession,rawHead;
+  assert(startup->ReadSession(0,rawSession.data(),rawSession.size()) && startup->ReadHead(0,rawHead.data(),rawHead.size()));
+  uint32_t session[128];
+  for(unsigned i=0;i<128;i++){
+   session[i]=uint32_t(rawSession[i*4])|uint32_t(rawSession[i*4+1])<<8|uint32_t(rawSession[i*4+2])<<16|uint32_t(rawSession[i*4+3])<<24;
+   uint32_t word=uint32_t(rawHead[i*4])|uint32_t(rawHead[i*4+1])<<8|uint32_t(rawHead[i*4+2])<<16|uint32_t(rawHead[i*4+3])<<24;
+   assert(word==Get(outer[8],workspace+CL::HeadOffset+i*4));
+  }
   assert(TL::Session(session,boot.data(),0,workspace));
   for(unsigned i=0;i<128;i++)Put(outer[8],workspace+TL::SessionOffset+i*4,session[i]);
-  for(unsigned i=0;i<16;i++)Put(outer[8],workspace+TL::PromptOffset+i*4,i<Prompts?prompt[i]:0);
+  std::array<uint8_t,64> rawPrompt;assert(startup->ReadPrompt(0,rawPrompt.data(),rawPrompt.size()));
+  for(unsigned i=0;i<16;i++){
+   uint32_t word=uint32_t(rawPrompt[i*4])|uint32_t(rawPrompt[i*4+1])<<8|uint32_t(rawPrompt[i*4+2])<<16|uint32_t(rawPrompt[i*4+3])<<24;
+   assert(word==(i<Prompts?prompt[i]:0));Put(outer[8],workspace+TL::PromptOffset+i*4,word);
+  }
+  assert(packageWords==8388608 && startup->Matches(*canonical) && !steps && !packets && !peerWrites);
+  puts("PASS distinct full-token startup builder/ALL64x512KiB packets+state spans+ZERO slack/root+head EXACT vs prior independently loaded numeric metadata/actual session+prompt initialized from builder/ZERO ROOT instructions;geometry NOT native ownership or model products");
   // Immutable RAW positional constants, not normalized/rotated products.
   for(unsigned p=0;p<Tokens;p++)for(unsigned i=0;i<32;i++){
    float angle=float(p)*powf(10000000.f,-float(i)/32);

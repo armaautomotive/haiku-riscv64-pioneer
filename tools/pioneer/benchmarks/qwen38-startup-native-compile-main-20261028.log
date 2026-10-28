@@ -1,0 +1,3 @@
+PASS RISC-V C++11 full startup DATA builder+serializer+page coverage/destructor instantiated/64 static frames/newMax368B/allMax1216B/NO conventional driver ABI/device IO/CPU reference/prefix-owner alias
+864436eddebea7449ff49c6a329d2e87fff9790a23330d14cac0057c51bb82d2 token-startup-DATA-NODRV.o
+COMPILE ONLY: not a complete native context,upload authentication,launch/STOP/physical/Work/TPS qualification

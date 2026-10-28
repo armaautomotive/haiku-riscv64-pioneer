@@ -5,7 +5,7 @@
 #include <limits>
 static uint32_t Bits(float value){uint32_t b;std::memcpy(&b,&value,4);return b;}
 int main(int argc,char** argv){
- assert(argc==2);setvbuf(stdout,nullptr,_IOLBF,0);PioneerQ38ObservedTrace trace;
+ assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);PioneerQ38ObservedTrace trace;
  std::array<uint32_t,5120> actual={};std::vector<uint32_t> logits(248320);logits[17]=Bits(1.f);
  for(unsigned i=0;i<actual.size();i++)actual[i]=Bits(float(i%13)*.125f);
  assert(trace.Embedding(0,248319,actual.data(),5120));
@@ -26,6 +26,17 @@ int main(int argc,char** argv){
   assert(trace.Commit(position,record.data(),64));
  }
  assert(trace.Complete() && trace.Save(argv[1]) && !trace.Complete() && !trace.Save(argv[1]));
+ PioneerQ38ObservedTrace prefix;
+ assert(prefix.Embedding(0,248319,actual.data(),5120) && prefix.Layer(0,0,actual.data(),5120)
+  && !prefix.Complete() && prefix.SaveFirstLayerDiagnostic(argv[2]) && !prefix.Complete()
+  && !prefix.SaveFirstLayerDiagnostic(argv[2]) && !prefix.Save(argv[2]));
+ for(unsigned bad=0;bad<3;bad++){
+  PioneerQ38ObservedTrace partial;
+  if(bad)assert(partial.Embedding(0,248319,actual.data(),5120));
+  if(bad==2)for(unsigned layer=0;layer<2;layer++)assert(partial.Layer(0,layer,actual.data(),5120));
+  assert(!partial.SaveFirstLayerDiagnostic(argv[2]) && !partial.Complete());
+ }
+ puts("PASS distinct first-layer diagnostic/exclusive partial file/NO complete token trace or STOP assertion/3 wrong-boundary refusals/no repeated save or full-trace promotion;SYNTHETIC DATA only");
  for(unsigned bad=0;bad<7;bad++){
   PioneerQ38ObservedTrace rejected;actual.fill(0);
   if(bad==0)assert(!rejected.Layer(0,0,actual.data(),5120));

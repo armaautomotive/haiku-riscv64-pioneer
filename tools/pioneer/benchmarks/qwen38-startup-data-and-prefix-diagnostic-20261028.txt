@@ -1,0 +1,108 @@
+Full-token startup DATA and early numeric observation
+2026-10-28 23:22UTC checkpoint. Goal ACTIVE. No hardware/SSH/power/driver/
+kernel/Assistant/boot/CPU/RAM/network/SD/mains changes. Last physical whole
+27B rate remains0.207893161tok/s;20 target UNMET. No new speedup claimed.
+
+Distinct complete startup builder,not the old three-layer owner
+--------------------------------------------------------------
+PioneerQ38TokenStartupPlan owns ALL64 canonical token packages on the heap,
+root+119 distinct QGW1 boot DATA,head/session/immutable prompt serialization,
+all1920 physical-source words and the full64-bit session/sequence/model/
+generation identity. It is one-shot/noncopyable. No native owner/launch/RUN/
+STOP/cleanup authority is created by building or reading this geometry.
+
+The full learned-page check covers ALL3551 learned parts/851 tensors,
+including embedding,vocabulary and final norm,not only layers0..2. Ledger
+values must be exactly1 through allocated padding. This is PRESENCE only,
+not SAME-file upload authentication or initialized recurrent/history/KV state.
+The future genuine native owner still owes those independent bindings.
+
+Read APIs refuse invalid ranges and self/canonical/any-owned-layer output
+aliases. Boot serialization checks the equivalent underlying old boot grammar
+before adding the fixed QGW1 witnesses,avoiding an extra256B stack temporary.
+It does not retag an old native execution owner or use old source readiness.
+
+The actual token instruction harness now initializes its session/prompt and
+canonical Conv-current spans from this builder. Before the FIRST ROOT
+instruction,it compares ALL64x512KiB serialized packets,including zero slack,
+against the independently loaded existing canonical metadata and state spans;
+root/head DATA must also agree. Numeric model products/hidden/cache bytes
+are never supplied by this metadata builder. Latest source additionally
+compares all120 proposed boot records to the actual fresh worker headers.
+
+Main49041/clean48570 original27B startup bootstrap BOTH0:ALL8388608 package
+words agree;entire original source authenticated and synthetic learned words/
+recipes removed;real embedding5120/20raw reads+2writes+2readbacks/first
+returning entry/SAME119 still virgin/ROOT4749932/stack2992reserved2984written.
+These binaries predate the added all120 boot comparison and fail-fast nonzero
+source precheck;their full packet/session/prompt/embedding behavior is unchanged.
+They are NOT a complete model layer/token or native/physical execution proof.
+
+Final native DATA compile main69796/clean87451 BOTH0,identical object SHA:
+864436eddebea7449ff49c6a329d2e87fff9790a23330d14cac0057c51bb82d2
+RISC-V C++11 complete builder/serializer/page coverage/destructor emitted;
+64 static function frames,new max368B/all max1216B. This is a per-function
+compile bound,NOT a combined runtime stack measurement or full native context.
+No conventional driver ABI/device IO/CPU oracle/old prefix owner is emitted.
+Initial SDK include-path attempts and an alias-fixture const-cast compile typo
+were corrected. The first arbitrary1024B aggregate gate exposed existing
+1072/1216B helper frames;the final gate retains the repository2048B bound and
+requires NEW functions<=512B. A real624B new boot frame was reduced to368B
+by eliminating the duplicate temporary,not by relaxing the new-function gate.
+
+Startup runtime tests STILL RUNNING,not passed:
+ main59308/clean60733 initial exhaustive all7banks/all64 package comparisons;
+ main80485/clean94681 final exhaustive variant with all120 boots/max prompt;
+Final main80485 has completed bank0/all64 packet copies and entered bank1;
+that is NOT all7-bank completion. Separate binding-only main30682/clean87301
+BOTH0 ASan+UBSan:all7 banks/all120 boots/root+head+session+prompt/high64-bit
+identity+all1920 source binding,full851 page-presence checks,202 refusals with
+unchanged output,EOS-disabled3-position case and maximum8192 raw prompt.
+The binding-only run explicitly copies ZERO full layer packages and cannot
+replace the still-running exhaustive packet comparison histories.
+Follow the SAME live handles. Do not replace full coverage with the narrower
+binding test or restart a quiet process. The distinct native ownership/init/
+mapping/code upload/journal/session/source+clock+host/sole-FD/terminal/client/
+quarantine path remains unfinished and this DATA helper cannot substitute it.
+
+Early actual first-layer observation,not a shortened full-model pass
+------------------------------------------------------------------
+The host recorder can now emit a DISTINCT incomplete prefix-0.bin only after
+one observed embedding+one observed layer,zero vocab rows and zero commits.
+Its QOP1 family/name/length/footer are different from complete token traces.
+Save consumes this recorder and cannot promote it to a full trace. Bound
+directoryFD/exclusive/no-follow writes are retained. There is no expected
+CPU input,device callback,native capability or ownership check bypass.
+
+--first-layer-only executes the SAME pinned original-weight ROOT/119-worker
+instructions and scheduler from RESET until the first genuinely verified
+layer boundary. It does NOT invent STOP or mark resources reusable. The
+posthoc comparer authenticates the SAME fixed CPU controls,then reports
+embedding/layer0 bit differences,max absolute error and relativeL2. Default
+exit0 requires those two vectors bit-exact;even that is NOT a full-token,
+full-model,terminal,native,physical,Work or TPS qualification.
+
+Recorder main25137/clean38074 BOTH0 ASan+UBSan:existing full3-token recorder
+checks still pass;distinct partial format/exclusive file/three wrong-boundary
+refusals/no repeated save or full promotion independently parsed in Python.
+Comparison main32206/clean84937 BOTH0:existing9 full-trace bad cases plus10
+prefix length/family/version/position/input/dimensions/reserved/NaN/footer
+refusals;full reader rejects prefix. Real fixed CPU controls authenticate;
+changed numeric CPU word still refuses. Synthetic format tests are NOT an
+actual emitted-vs-CPU numerical comparison.
+Exact role gates main90288/clean55891 BOTH0/all42 cases.
+
+Actual original first-layer probes main70530/clean97141 are STILL RUNNING,
+logs /private/tmp/pioneer-q38-original-prefix-{main,clean}-20261028-a.log,
+outputs /private/tmp/pioneer-q38-original-prefix-{main,clean}-20261028-a.
+They predate startup-builder integration and intentionally preserve the
+earlier canonical byte history. Do NOT restart/transplant them for source edits.
+At23:18 they reach layer0matrix7. No prefix numeric comparison exists yet.
+
+Complete observed histories60499/55839 and the earlier seven full histories
+remain separate. No complete emitted trace or complete3-position numerical
+match exists yet. After prefix files exist,run the separate comparer with
+ --first-layer-only against the fixed CPU trace directory. Preserve real
+differences;diagnostic-only exit0 is NOT numerical acceptance. Then follow
+the full-model histories,remaining late/cancellation gates,actual native
+integration and real card correctness/stability+performance qualification.

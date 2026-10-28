@@ -4,10 +4,11 @@
 int main(int argc,char** argv){
  assert(argc>=5 && argc<=8);const char* mode=nullptr;const char* traceDirectory=nullptr;
  for(int i=5;i<argc;i++){
-  if(!strcmp(argv[i],"--prepare-only") || !strcmp(argv[i],"--bootstrap-only")){assert(!mode);mode=argv[i];}
+  if(!strcmp(argv[i],"--prepare-only") || !strcmp(argv[i],"--bootstrap-only") || !strcmp(argv[i],"--first-layer-only")){assert(!mode);mode=argv[i];}
   else{assert(!strcmp(argv[i],"--observed-trace") && !traceDirectory && i+1<argc);traceDirectory=argv[++i];}
  }
- assert(!mode || !traceDirectory || !strcmp(mode,"--bootstrap-only"));
+ assert(!mode || !traceDirectory || strcmp(mode,"--prepare-only"));
+ assert(!mode || strcmp(mode,"--first-layer-only") || traceDirectory);
  setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;(void)&Refusals;(void)&LateRefusals;
  puts("START authenticate entire SAME-open original27B GGUF BEFORE ROOT construction;no CPU product/native owner/physical IO");
  WholeModelOriginalBytes original;assert(original.Open(argv[4]) && original.Ready());
@@ -40,6 +41,25 @@ int main(int argc,char** argv){
  if(traceDirectory){observed=std::make_unique<PioneerQ38ObservedTrace>();m->observed=observed.get();}
 #endif
  if(mode && !strcmp(mode,"--prepare-only"))return 0;
+ if(mode && !strcmp(mode,"--first-layer-only")){
+#ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
+  assert(observed);
+  // SAME scheduler and real instructions as RunTokens. Stop this HOST-only
+  // diagnostic at the actual verified layer boundary, not by supplying PC,
+  // registers, numeric products or fabricated worker/STOP state.
+  while(!m->allLayers && m->pc!=0x60000 && m->pc!=0x60004){
+   m->cycles+=19;m->StepToken();if(!(m->steps&255))for(unsigned w=0;w<119;w++)m->Advance(w,64);
+  }
+  assert(m->pc!=0x60000 && m->pc!=0x60004 && m->allLayers==1 && m->completed==1 && m->releases==1
+   && !m->position && !m->layer && !m->committed && !m->flips && !m->tokenPublications && !m->stopJobs
+   && observed->Embeddings()==1 && observed->Layers(0)==1 && !observed->Complete() && original.Ready());
+  assert(observed->SaveFirstLayerDiagnostic(traceDirectory));
+  puts("SAVED FIRST_LAYER_DIAGNOSTIC actual original embedding+layer0 hidden words ONLY/real verified layer+SAME119 closed/no token committed/NO STOP or terminal capability/NOT full-model/native/physical/Work/TPS qualification");
+  return 0;
+#else
+  assert(false && "first-layer observation requires exact HOST recorder role");
+#endif
+ }
  if(mode){
   unsigned entry=0;std::ifstream symbols(std::string(argv[1])+"/program.symbols");std::string addressText,kind,name;
   while(symbols>>addressText>>kind>>name)if(name=="q38_return_recurrent_layer")entry=unsigned(std::stoul(addressText,nullptr,16));

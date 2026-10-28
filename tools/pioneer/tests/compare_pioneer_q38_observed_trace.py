@@ -77,6 +77,23 @@ def difference(expected, actual, first, count):
     maximum = max(abs(float(af[i])-ef[i]) for i in range(first, first+count))
     return differences, maximum, math.sqrt(error/(norm+1e-300))
 
+def decode_prefix(data):
+    require(len(data) == (16+2*5120+1)*4, 'prefix diagnostic length')
+    words = array.array('I')
+    require(words.itemsize == 4, '32-bit word host required')
+    words.frombytes(data)
+    if sys.byteorder != 'little':
+        words.byteswap()
+    require(list(words[:16]) == [0x31504f51, 1, 0, 248319, 2, 5120, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], 'prefix diagnostic family/version/position/input/dimensions/reserved')
+    require(words[-1] == 0x454e4450, 'prefix diagnostic footer, NOT token terminal')
+    floats = array.array('f')
+    require(floats.itemsize == 4, 'binary32 host required')
+    floats.frombytes(data[64:-4])
+    if sys.byteorder != 'little':
+        floats.byteswap()
+    require(all(math.isfinite(x) for x in floats), 'nonfinite prefix diagnostic')
+    return {'bits': words[16:-1], 'floats': floats}
+
 def load_cpu(directory):
     traces = []
     for position in range(3):
@@ -90,11 +107,24 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('cpu', type=pathlib.Path)
     parser.add_argument('observed', type=pathlib.Path)
+    parser.add_argument('--first-layer-only', action='store_true', help='Compare ONLY an incomplete embedding+layer0 diagnostic; no token/STOP/full-model qualification')
     parser.add_argument('--diagnostic-only', action='store_true', help='Permit exit0 for a valid report with numeric differences; NEVER a numerical pass')
     args = parser.parse_args(argv)
     require(args.cpu.is_absolute() and args.observed.is_absolute(), 'absolute trace directories required')
     require(not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ), 'unexpected role overrides')
     cpu, observed = load_cpu(args.cpu), []
+    if args.first_layer_only:
+        actual = decode_prefix(stable_bytes(args.observed/'prefix-0.bin', (16+2*5120+1)*4))
+        exact = True
+        for layer in range(2):
+            diff, maximum, relative = difference(cpu[0], actual, layer*5120, 5120)
+            exact = exact and diff == 0
+            print(f'COMPARE_PREFIX position0/embeddingOrLayer{layer}/words5120/bitDifferences{diff}/maxAbs{maximum:.12g}/relativeL2{relative:.12g}')
+        print(f'FIRST_LAYER_DIAGNOSTIC NUMERICAL_BITEXACT={int(exact)} NO_TOLERANCE_USED;NO token/STOP/full-model/native/physical/Work/TPS qualification')
+        if args.diagnostic_only:
+            print('DIAGNOSTIC_ONLY exit0 is NOT a numerical acceptance or hardware permission')
+            return 0
+        return 0 if exact else 1
     for position in range(3):
         data = stable_bytes(args.observed/f'token-{position}.bin', (16+HIDDEN_WORDS+VOCAB_WORDS+64+1)*4)
         observed.append(decode_trace(data, position, True))

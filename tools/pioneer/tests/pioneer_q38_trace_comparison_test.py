@@ -59,6 +59,31 @@ for bad in range(9):
         continue
     raise AssertionError(f'bad trace accepted: {bad}')
 print('PASS posthoc trace format/bitexact+one-word metrics/9 truncation+extra+family+dimension+greedy+record+reserved+NaN+terminal refusals;SYNTHETIC DATA only,CPU authentication in main is NOT bypassed')
+prefix_words = [0x31504f51, 1, 0, 248319, 2, 5120, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]+[0]*(2*5120)+[0x454e4450]
+prefix_bytes = bytearray(struct.pack(f'<{len(prefix_words)}I', *prefix_words))
+prefix = module.decode_prefix(prefix_bytes)
+assert module.difference(cpu, prefix, 0, 2*5120) == (0, 0, 0)
+for bad in range(10):
+    data = prefix_bytes.copy()
+    if bad == 0:
+        data.pop()
+    elif bad == 1:
+        data += b'\0'
+    else:
+        word, value = ((0, 0x31444f51), (1, 2), (2, 1), (3, 17), (4, 65), (7, 1), (16, 0x7fc00001), (len(prefix_words)-1, 0x454e444f))[bad-2]
+        struct.pack_into('<I', data, word*4, value)
+    try:
+        module.decode_prefix(data)
+    except ValueError:
+        continue
+    raise AssertionError(f'bad prefix diagnostic accepted: {bad}')
+try:
+    module.decode_trace(prefix_bytes, 0, True)
+except ValueError:
+    pass
+else:
+    raise AssertionError('incomplete prefix diagnostic promoted to full token trace')
+print('PASS distinct first-layer diagnostic/10 length+family+version+position+input+dimensions+reserved+NaN+footer refusals/NO promotion to full token trace;SYNTHETIC DATA only')
 assert len(sys.argv) in (1, 2)
 if len(sys.argv) == 2:
     directory = pathlib.Path(sys.argv[1])

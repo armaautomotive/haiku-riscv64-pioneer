@@ -16,9 +16,10 @@ if '--observed-trace' in options:
     observed = pathlib.Path(options[at+1])
     options = options[:at]+options[at+2:]
     assert observed.is_absolute() and not observed.exists() and not observed.is_symlink()
-assert 5 <= len(sys.argv) <= 9 and len(set(options)) == len(options) and set(options) <= {'--prepare-only', '--bootstrap-only', '--fast-root-memory'}
-assert not {'--prepare-only', '--bootstrap-only'} <= set(options)
+assert 5 <= len(sys.argv) <= 9 and len(set(options)) == len(options) and set(options) <= {'--prepare-only', '--bootstrap-only', '--first-layer-only', '--fast-root-memory'}
+assert sum(o in options for o in ('--prepare-only', '--bootstrap-only', '--first-layer-only')) <= 1
 assert observed is None or '--prepare-only' not in options
+assert '--first-layer-only' not in options or observed is not None
 image, old, worker, model = map(pathlib.Path, sys.argv[1:5])
 assert all(p.is_absolute() for p in (image, old, worker, model))
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
@@ -66,3 +67,5 @@ with tempfile.TemporaryDirectory(prefix='pioneer-original-token-flow-', dir='/pr
                    env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1', 'PIONEER_TEST_ROOT_PROFILE_MAP':str(profile)})
     if observed is not None and '--bootstrap-only' in options:
         assert not list(observed.iterdir()), 'partial observations MUST NOT publish a complete token trace'
+    if '--first-layer-only' in options:
+        assert sorted(p.name for p in observed.iterdir()) == ['prefix-0.bin'], 'first-layer diagnostic MUST NOT publish complete token traces'
