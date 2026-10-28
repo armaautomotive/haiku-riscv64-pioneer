@@ -1,0 +1,11 @@
+4b1550f36d8bf6e225684db0a97ba62ad885817c1497d78226443b0c7867533f recurrent.o bytes145120
+29204d287e38fe0ead7fd24c2de44aad7b46d2bcb38e23daa4b55d1cebb6c8e9 dense.o bytes115164
+78cf19c422c773a8c9c47c180df78ecd66609e4614dd75ee2d66344cab0ea25c layer-components-NOBOOT.o bytes228380
+PASS both ACTUAL returning layer bodies retained, separate private seal types/s11 bind+restore, same worker-chain/hidden-slot ADDRESSES;ROOTbytes93044/131072 Convbytes7500/32768 maxFrame2112
+RELOCATABLE COMPONENTS ONLY/NO boot or host wait/STOP/old main/native ABI;sole unresolved fault park. NOT a connected pipeline,initialized state,token commit,physical/Work or throughput qualification. DO NOT INSTALL
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 114404, '6add798d20f27889783f50c54285ac9129624335711943fb690c188097ed40fd')
+('terminal.bin', 8, '6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5')
+('conv.bin', 7500, '5fce4465b4d1f30a616311e97f9216d06e4aaf6a09d79de34b1e4ea31b0b004a')
+('program.elf', 145552, '167f7b32faafdfecb393b9e632af88ff0647d62df164e4e772884179debab561')
+BUILD/INSPECT ONLY NEW QGC1/all64 returning arithmetic+final norm+973 vocab jobs+greedy candidate+real global STOP/maxFrame1808/explicit unrolled seals;NO runtime/combined reserved stack/original model/native/physical/token commit/multi-token/Work/TPS qualification. DO NOT INSTALL

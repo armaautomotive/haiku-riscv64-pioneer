@@ -11,6 +11,12 @@
  || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE)
 #error Global components never include the old terminal STOP or another parent
 #endif
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT
+#if PIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT != 1 || !defined(PIONEER_Q38_LAYER_COMPONENT_RECURRENT) \
+ || defined(PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE)
+#error Cross-token output admission belongs ONLY to the exact returning recurrent component
+#endif
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL
 #if PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL != 1 || defined(PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE)
 #error Exact optional check-loop code generation for returning components only

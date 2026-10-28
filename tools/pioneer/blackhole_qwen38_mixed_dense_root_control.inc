@@ -17,7 +17,13 @@ static void Wait(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned phase,b
  for(unsigned poll=0;poll<65536;poll++){
   if(Register(d,tracked,w,0xffb121b0)!=0x46800)scalar_fault_park();
   Transfer(d,tracked,w,M::Status,64,false);uint32_t s[16];for(unsigned i=0;i<16;i++)s[i]=Words(L::Scratch)[i];
-  if(s[3]!=M::Magic || s[2] || s[0]>=0x7fffffff || s[1]>=0x7fffffff || s[5]>3 || s[6]>=64 || s[7]>=8192)scalar_fault_park();
+  if(s[3]!=M::Magic || s[2] || s[0]>=0x7fffffff || s[1]>=0x7fffffff || s[5]>3 ||
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT
+   (s[6]>=64 && (s[6]!=64 || phase || !PioneerQ38GlobalOutputClosure::Current(d,w+1) || s[7]+1!=d[40])) ||
+#else
+   s[6]>=64 ||
+#endif
+   s[7]>=8192)scalar_fault_park();
   for(unsigned i=8;i<16;i++)if(s[i])scalar_fault_park();
   unsigned pc=Register(d,tracked,w,0xffb13140);
 #if !defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) && !defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
@@ -73,6 +79,28 @@ static void ClosedJob(const uint32_t* d,uint32_t* tracked,unsigned w,bool captur
   || Words(L::Scratch)[7]!=(n?Words(L::PeerJobs+w*256)[6]:0))scalar_fault_park();
  for(unsigned i=8;i<16;i++)if(Words(L::Scratch)[i])scalar_fault_park();
 }
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT
+static void GlobalHeaderSeal(const uint32_t* d,const uint32_t* h){
+ Seal(d);for(unsigned i=0;i<128;i++)if(Words(PioneerQ38GlobalChainLayout::Head)[i]!=h[i])scalar_fault_park();
+}
+static __attribute__((noinline)) void AdmitGlobalOutput(const uint32_t* d,uint32_t* tracked,unsigned w){
+ uint32_t header[128],payload[128],status[16],physical[8];
+ for(unsigned i=0;i<128;i++)header[i]=Words(PioneerQ38GlobalChainLayout::Head)[i];
+ const auto* root=reinterpret_cast<const uint32_t*>(L::Boot);
+ const auto* job=reinterpret_cast<const uint32_t*>(L::PeerJobs+w*256);
+ if(!PioneerQ38GlobalOutputClosure::Job(header,root,Boot(w),d,Words(L::Nonces)[w],job))scalar_fault_park();
+ GlobalHeaderSeal(d,header);Transfer(d,tracked,w,M::Partial,512,false);GlobalHeaderSeal(d,header);
+ for(unsigned i=0;i<128;i++)payload[i]=Words(L::Scratch)[i];
+ Transfer(d,tracked,w,M::Status,64,false);GlobalHeaderSeal(d,header);
+ for(unsigned i=0;i<16;i++)status[i]=Words(L::Scratch)[i];
+ for(unsigned i=0;i<8;i++){
+  physical[i]=Register(d,tracked,w,0xffb20000+Counter(i));GlobalHeaderSeal(d,header);
+  if(physical[i]!=Words(L::Counters)[w*8+i])scalar_fault_park(); // never recapture a new baseline
+ }
+ if(!PioneerQ38GlobalOutputClosure::Validate(header,root,Boot(w),d,Words(L::Nonces)[w],job,payload,payload+64,status,physical))scalar_fault_park();
+ ClosedJob(d,tracked,w,false);GlobalHeaderSeal(d,header);
+}
+#endif
 static void Admit(const uint32_t* d,uint32_t* tracked,unsigned w){
  Wait(d,tracked,w,0,true);
 #if defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
@@ -115,6 +143,9 @@ static void Admit(const uint32_t* d,uint32_t* tracked,unsigned w){
 #endif
  ClosedJob(d,tracked,w,true);
  const auto* previous=reinterpret_cast<const uint32_t*>(L::PeerJobs+w*256);
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT
+ if(previous[2]==M::GlobalMatrix){AdmitGlobalOutput(d,tracked,w);return;}
+#endif
  bool dense=previous[2]==M::DenseValues;
  Transfer(d,tracked,w,dense?unsigned(W::Summary):0x83f00U,256,false);
  const auto* p=Words(L::Scratch);unsigned after=dense?16:8;

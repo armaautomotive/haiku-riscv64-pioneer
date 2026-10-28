@@ -44,6 +44,12 @@
 extern "C" void q38_mixed_root_seal();
 #endif
 extern "C" void scalar_fault_park() __attribute__((noreturn));
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT
+#if PIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT != 1 || !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) || !defined(PIONEER_Q38_LAYER_COMPONENT_RECURRENT)
+#error Exact returning global recurrent component required for cross-token admission
+#endif
+#include "PioneerQ38GlobalOutputClosure.h"
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL
 #if PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL != 1 || !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) || PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE != 1
 #error Unrolled seals are only an explicit NEW global-chain component variant

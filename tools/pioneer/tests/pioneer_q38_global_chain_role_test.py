@@ -56,4 +56,12 @@ check('PioneerQ38GlobalChainImageRole.h',root,False,late='PIONEER_Q38_GLOBAL_CHA
 for name in root.keys() | r.keys() | d.keys() | conv.keys() | {unroll}:
  if name not in feedback:
   check('PioneerQ38GlobalFeedbackComponentRole.h',{**feedback,name:0},False)
+cross='PIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT'
+check('PioneerQ38GlobalChainComponentRole.h',{**r,cross:1},True)
+for value in (0,2):check('PioneerQ38GlobalChainComponentRole.h',{**r,cross:value},False)
+check('PioneerQ38GlobalChainComponentRole.h',r,False,late=cross)
+for value in (0,1):
+ for flags in (d,conv):check('PioneerQ38GlobalChainComponentRole.h',{**flags,cross:value},False)
+ check('PioneerQ38GlobalChainImageRole.h',{**root,cross:value},False)
+ check('PioneerQ38GlobalFeedbackComponentRole.h',{**feedback,cross:value},False)
 print('PASS QGC1 exact5 BUILD-only roles/late+defined0+missing flags/old native+worker+chain exclusion/gates'+str(gates)+';NO code,source,native,physical,Work or launch grant')

@@ -106,6 +106,7 @@ struct GlobalArithmeticPeer:GlobalInitialPeer {
   for(unsigned i=0;i<2048;i++)StepBlock();assert(pc==stopPC && requests==reads && matrixInstructions==math);
  }
 };
+#ifndef PIONEER_Q38_GLOBAL_WORKER_ARITHMETIC_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3 || argc==4);setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();assert(canonical->Build());
@@ -175,3 +176,4 @@ int main(int argc,char** argv){
  if(original)assert(original->Ready());
  printf("PASS ACTUAL QGW1 standalone4 workers/256 genuine down jobs/%u canonical output jobs+independent matrix and partial checks/%u frontier refusals/%u post-partial seal faults/%u genuine next-position first-down+premature-output refusals/8+9-wave boundaries/REAL global STOP/inert2048/written stack%u/8192;NO all64 model,normalized producer,ROOT,native,physical,multi-token-state,Work or TPS proof\n",checked,refusals,lateFaults,nextPositions,stack);
 }
+#endif

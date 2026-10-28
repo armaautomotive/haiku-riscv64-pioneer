@@ -1,0 +1,124 @@
+Cross-token global-output admission: returning components, NOT a bootable driver
+2026-10-28. No card/SSH/driver install/boot/power/Assistant/SD/mains action.
+
+Concrete integration blockers found
+----------------------------------
+The old returning admission loop rejects status.layer>=64, but a genuinely
+closed vocabulary job reports layer64. Its generic matrix-proof path also
+expects proof[48]==previous.operation for operations other than ordinary
+matrix1; the new GlobalMatrix12 producer deliberately clears proof[48..63].
+Thus a future next-token parent cannot simply reuse the old admission path.
+This is a next-token integration blocker, NOT a failure of the currently
+installed driver or the still-running one-pass qualification images.
+
+Implemented returning path
+-------------------------
+An explicit PIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT=1 selects this
+code ONLY in the exact NEW global returning RECURRENT component. It cannot
+be selected by the existing ROOT, dense or embedding/Conv capsules, even
+as defined0. Existing default images do not select it and remain exact.
+
+Layer64 status is accepted ONLY for a checked next-position layer0 frame:
+position1..8191, request=position*64+1, phase=1001+position*1024+roleOffset.
+Workers1..3 must enter at alpha; other workers may still be inactive through
+alpha/beta before their first Z projection. Wrong roles, phases, positions,
+workers or ordinary dense phases still fail. No broad >=64 exception.
+
+After the existing real WAIT/boot/physical-source/closed-job checks, the new
+path recomputes the worker's exact canonical FINAL vocabulary job (wave8 for
+workers1..21, wave7 otherwise). It requires prior position=current-1, same
+nonce/boot/source/epoch and all64 job fields, then reads the real partial+
+matrix receipt and coherent status. All source/identity/reserved fields,
+last command, row bounds/finite local maximum, exact before/after counter
+deltas and physical counter aliases must match. The live physical counters
+must ALSO equal the previously stored closed-chain counters; this is NOT
+recapture of an unknown counter baseline. Marker alone never completes it.
+The128-word global header is privately captured and rechecked around each
+new packet along with the ordinary private ROOT/frame/source/quiet seals.
+Unknown faults park; no retry/reset/cleanup permission is introduced.
+
+PioneerQ38GlobalOutputClosure is ordinary receipt DATA validation only. Its
+use of the old head factory reuses canonical matrix coordinates, NOT an old
+normalized-input, position, all-model, state-commit or native permission.
+The actual previous position is separately bound by job/status/partial.
+One worker's final receipt proves neither all973 outputs nor the selected
+global token. The persistent parent still owes those AND all state commits.
+
+Independent pinned component builds
+-----------------------------------
+ python3 tools/pioneer/build_qwen38_global_token_components.py \
+  /Volumes/HaikuBuildLocal/generated.riscv64 \
+  /private/tmp/pioneer-q38-global-token-components-{main,clean}-20261028-c
+Main2376 / clean75628 BOTH direct terminal0. Independent inspect builds
+26337/7962 BOTH0 first. Literal pins:
+ recurrent.o159412 3c4537b03dd01fb17b9d66bf12990222f8495c8d1b253d915880d06bc7b750f6
+ token-components-NOBOOT.o245868 8e600b590deb326bd1d2f6690e06152a0026148ea85c6c6dd8f1651cd231bd3a
+Identical build-log SHA:
+ c8bb124afe8ecaf6b4e5f754c33e154a21c842c239781228700912008e161e4f
+The REAL returning R admission retains AdmitGlobalOutput, not an uncalled
+helper. Both returning bodies plus learned norm/quantization are retained;
+only scalar_fault_park is unresolved. No boot/main/host wait/terminal/native
+ABI, writable globals,GOT or unsupported scalar ISA/CSR. Exactly two s11
+bind/restore pairs. ROOT code/data100596<=131072, Conv7500<=32768 and max
+function frame2112<=4096. Admission frame1360; job-check frame672. These are
+NOT proof of combined stack under a future persistent parent.
+
+Actual worker receipts + DATA qualification
+------------------------------------------
+ python3 tools/pioneer/tests/run_pioneer_q38_global_output_closure_tests.py \
+  /private/tmp/pioneer-q38-global-token-components-{main,clean}-20261028-b \
+  /private/tmp/pioneer-q38-mixed-worker-20261026-e \
+  /private/tmp/pioneer-q38-global-globalbuild-{main,clean}-20261028-e
+B components have the SAME literal pins as C. Main85939/clean41612 BOTH0,
+ASan+UBSan. Identical logs SHA:
+ 645a76d88d8389dbec6385fe091dbdcf4f64f25c56ad96a410cad37d9ba8bc4c
+Four independent genuinely booted QGW1 workers1/21/22/119 each execute64
+actual down-projection jobs followed by their actual8/9 output waves. No
+private PC/register/nonce/tensor history is transplanted or completed-state
+record supplied. All34 output jobs retain independent matrix arithmetic and
+all64 partial-word checks from the qualified worker harness. EACH actual
+final job/status/partial/proof/live counter tuple passes the new DATA checks.
+All53,924 one-bit/bounds/nonce/nonfinite corruptions refuse. Each worker then
+performs a real global STOP and stays inert2048.
+
+Important scope: this uses synthetic raw weights/primitive input vectors,
+not original whole-model activations. 64 down jobs are necessary worker
+ordering ONLY, not all64 model operators or973-vocabulary coverage. The new
+ROOT NoC admission routine itself has NOT been executed by this test. Its
+conditional source path is compiled/retained, and its receipt checks consume
+real worker products, but full persistent-parent runtime/stack proof remains
+required. No fabricated completed ROOT owner is used to claim that proof.
+Tests explicitly show an in-range finite partial value can satisfy receipt
+DATA checks without proving its numerical maximum: numerical provenance
+comes from the actual immutable worker execution and native exclusive owner,
+not a magic word or this bool helper. No CPU reference is added to Work.
+
+Regression and preserved state
+------------------------------
+Roles/data main43432/clean72508 BOTH0:708 exact/late/defined-zero/missing
+role gates plus unchanged6811 jobs/896 mutations/1505 Conv+GDN envelopes/
+all64 package checks. Identical log SHA:
+ 7e047cbc961d49e97e8a3cf7007dc7fb27b9f0e73771533853dc940a6626850a
+Every token-component build FIRST rebuilds the current --feedback whole
+image and checks all5 literal pins, plus all3 old returning-object pins.
+Default builds56607/72212 and unrolled75591/83526 ALL direct0, all5 respective
+pins byte-exact. Default/unrolled log SHAs remain82a59d57... /27ce18f6... .
+No current global image, kernel/runtime/native ABI or installed driver changed.
+
+The existing eight whole-flow processes remain separate tests: feedback
+46023/12070, unrolled34193/84893, baseline61179/96440, oldQCH1 17092/81011.
+Continue the SAME handles; quiet output/timeouts are not terminal. Their
+partial results cannot be spliced into a completed cross-token history.
+
+Still required for the objective
+-------------------------------
+Build and execute the genuine persistent parent with position-dependent
+metadata, ALL48 GDN/Conv history commits, correct append-only KV frontier,
+resident embedding handoff and repeated full tokens without STOP/relaunch.
+Prove the new admission routine in that actual lifetime, including late
+faults and real combined stack. Complete original full-model and physical
+qualification, new native ownership/source/init/clock/journal/terminal/client
+audits, fast no-reference Work/Assistant integration and real throughput.
+Last measured whole-model0.207893161 tokens/sec; target20 remains UNMET.
+Goal ACTIVE. No speedup/deployment or driver-ready claim. Unrelated dirty
+llama.cpp/FlashNext remains unread/untouched/unstaged.
