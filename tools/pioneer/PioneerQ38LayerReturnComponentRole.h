@@ -30,3 +30,11 @@
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_CPU_VALIDATION)
 #error Returning arithmetic creates no prefix, native, oracle, client or Work authority, including defined0
 #endif
+#ifdef PIONEER_Q38_LAYER_COMPONENT_DENSE_STOP
+#if PIONEER_Q38_LAYER_COMPONENT_DENSE_STOP != 1 || !defined(PIONEER_Q38_LAYER_COMPONENT_DENSE) || PIONEER_Q38_LAYER_COMPONENT_DENSE != 1 \
+ || !defined(PIONEER_Q38_LAYER_COMPONENT_CHAIN_LAYERS) || (PIONEER_Q38_LAYER_COMPONENT_CHAIN_LAYERS != 64 && PIONEER_Q38_LAYER_COMPONENT_CHAIN_LAYERS != 4)
+#error Exact separately selected final-dense STOP profile required
+#endif
+#elif defined(PIONEER_Q38_LAYER_COMPONENT_CHAIN_LAYERS)
+#error Chain length cannot select a STOP path without its exact component role
+#endif

@@ -1,0 +1,2 @@
+PASS distinct scheduler IMAGE gates324/all64 vs explicit prefix4/late+defined0/native+oracle+old-image+Work isolation;NO runtime grant
+PASS QCH1 canonical package DATA/all64 layers/rotating ALL7banks/48recurrent+16dense/serializedwords3837952/exact independent plans/mutations384/refusals21/no-alias+no-partial-output;NO model-auth/producer/state/native/device/Work or TPS grant/packages64

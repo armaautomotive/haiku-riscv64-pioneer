@@ -1,0 +1,66 @@
+QCH1 common on-card layer scheduler: BUILD / DATA qualification only
+2026-10-28. No physical card or installed driver action; no inference timing.
+
+Implemented distinct all64 scheduler and explicit prefix4 TEST image roles,
+canonical per-layer serialized package DATA, same-workspace hidden handoff,
+source/current-frame/phase/completed-count checks, bounded NoC transfers,
+actual returning recurrent/dense calls and actual final dense + all119 STOP.
+The final entry performs its own arithmetic before constructing its STOP
+frame; no caller completion hint or fabricated old owner/receipt is used.
+
+Final -e builds: main64 session24820, clean64 session70801, main4 session44645,
+clean4 session77393 all direct exit0. Main/clean images are byte-identical.
+SDK /Volumes/HaikuBuildLocal/generated.riscv64 (read only).
+Clean source export /private/tmp/pioneer-q38-prefix-native-clean.Cipnmdpc.
+Each command:
+ python3 tools/pioneer/build_qwen38_layer_chain_root.py SDK OUT
+Prefix4 adds --prefix4-test. Build scripts do not install or execute images.
+
+all64 text103620:
+ 625fb65e3b9f0a340033ef941a22ebf0df7081544236d7246277b4b9ac46db1f
+all64 Conv7500:
+ 96cbee95485ba5bd768abc6d27c5c9207fd26a5004c2563778d88f64353b787e
+all64 ELF136572:
+ 95f7a714f05f84a15f56835cc620bdeb3999540975f675b0c2f9f54f96a1e9ff
+prefix4 text103056:
+ 815ec2fa11434f4407ae72d139532d366e23514f1a61ba45a35e170bffc588b1
+prefix4 Conv7500:
+ 9ffb41efc2d89443d0e1d4d086bb343ac019b98e8ede997ca0099855e596eab9
+prefix4 ELF136516:
+ 2963e12cdc3d64bac2c4f5bbd368964fcfd635696c70a90261fb5d3bf5fb251a
+Shared boot4 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+Shared terminal8 6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5
+
+ROOT maximum per-function frame1632/2048, component2112/4096 unchanged.
+Combined call-path stack NOT measured yet. No unresolved symbols/writable
+globals/controller CSR or forbidden scalar instructions. Own boot/terminal
+and fault addresses; old host wait/main/standalone owner symbols not retained.
+Earlier -d builds intentionally failed stale literal text pins after adding
+the stricter live phase/frame binding; main/clean newly emitted bytes matched
+before pins were updated. Final -e builds pass the new literal pins. No guard,
+stack/window/poll bound, arithmetic reference or tolerance was relaxed.
+
+Data/role -b tests main79582 / clean63003 direct exit0:
+ python3 tools/pioneer/tests/run_pioneer_q38_layer_chain_data_tests.py
+324 role gates, all64 packages / all7 rotating banks / 48 recurrent+16 dense,
+3,837,952 serialized words, separate independent canonical plans,
+384 reached mutations / 21 build/read/alias/partial-output refusals.
+ASan+UBSan. No model-auth, producer, state, native or runtime grant.
+
+Optional final-dense STOP role gates: main73062 / clean59001 direct exit0;
+242 component role gates and unchanged 16 DATA frames /32768 boot-bit /
+12288 binding-bit /144 stack-overlap cases. Feature-OFF default component
+builds main34934 / clean9860 direct exit0, old dense29204d28 and NOBOOT
+capsule78cf19c4 unchanged. STOP-enabled builds retain actual STOP arithmetic
+and terminal bodies but have NOT yet executed the connected instructions.
+
+Metadata slots16..48MiB fit existing64MiB workspace, separate from provisional
+Conv history8..14MiB. Full chain is pos0/token0 only. Final dense STOP is not
+a token commit, persistent-state proof, native cleanup grant or Work ABI.
+
+NEXT: execute recurrent0->1->2->dense3 using one ROOT and SAME119 workers,
+one shared byte fabric (never transplant private PC/nonces/tensor products
+between fixtures), independent numerical observers, genuine final STOP and
+measured full stack. Then all64, multi-token state, output/sampling, native
+owner/client lifecycle, original/physical validation, Work/Assistant and real
+inference performance. Last whole-model0.207893161tok/s; no speedup measured.

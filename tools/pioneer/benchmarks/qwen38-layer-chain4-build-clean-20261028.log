@@ -1,0 +1,11 @@
+4b1550f36d8bf6e225684db0a97ba62ad885817c1497d78226443b0c7867533f recurrent.o bytes145120
+a168e2b7f00ecb957709e729bae1029adfed7774d4c81eb747567a87d53bfd5e dense.o bytes118360
+e29b67b6af82723344dbaa13955447ba974ce49fb5e55471f2b37d334178d917 layer-components-NOBOOT.o bytes235700
+PASS both ACTUAL returning layer bodies retained, separate private seal types/s11 bind+restore, same worker-chain/hidden-slot ADDRESSES;ROOTbytes96364/131072 Convbytes7500/32768 maxFrame2112
+PINNED BUILD ONLY chain4 actual FINAL dense ->ALL119 STOP body retained;NO boot/host wait/old main/native ABI. Unresolved own terminal+fault only. NOT connected/runtime/native/physical/Work/TPS qualified. DO NOT INSTALL
+32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca boot.bin bytes4
+815ec2fa11434f4407ae72d139532d366e23514f1a61ba45a35e170bffc588b1 text.bin bytes103056
+6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5 terminal.bin bytes8
+9ffb41efc2d89443d0e1d4d086bb343ac019b98e8ede997ca0099855e596eab9 conv.bin bytes7500
+2963e12cdc3d64bac2c4f5bbd368964fcfd635696c70a90261fb5d3bf5fb251a program.elf bytes136516
+PINNED BUILD ONLY chain4 SAME on-card scheduler/actual returning recurrent+dense+final dense STOP bodies/maxROOTframe1632;NO token output/head/sampling/state commit/native/physical/Work/TPS qualification. Connected runtime/combined stack/STOP STILL OWED. DO NOT INSTALL

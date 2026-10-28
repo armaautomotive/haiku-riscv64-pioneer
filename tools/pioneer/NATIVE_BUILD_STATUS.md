@@ -1,5 +1,28 @@
 # Native build status
 
+## Latest: common all64 scheduler and genuine final-dense STOP build qualified
+
+October 28, 2026. A distinct on-card scheduler now links the actual returning
+recurrent/dense bodies and a final-dense entry that itself performs arithmetic
+before the real all119 STOP audit. No caller-supplied completed/clean hint is
+accepted. Separate all64 and prefix4 TEST profiles compile/link identically in
+main/clean; all four final builds finish 0. ROOT frame 1632 B stays below the
+unchanged 2048 B bound. This does NOT prove the combined runtime stack.
+
+Canonical all64 package serialization passes main/clean ASan+UBSan, with 324
+image-role gates, all seven banks, 3,837,952 words, 384 reached mutations and
+21 refusals. Existing component gates (242) and feature-off byte controls pass.
+The final frame/current source/phase/completed-layer binding is rechecked on
+every scheduler transfer. Literal image pins include that stricter check.
+
+This is BUILD/DATA qualification ONLY. Connected recurrent0->1->2->dense3
+instructions on the SAME119 workers/GDDR, genuine final STOP and full runtime
+stack are next; no new image was installed or executed on the physical card.
+First-token chain only: persistent state, all64 runtime, output head, sampling,
+native lifecycle, no-reference Work and Assistant remain unfinished. Last
+whole-model **0.207893161 tokens/sec**; no measured speedup and 20 target unmet.
+Evidence: [common scheduler build qualification](benchmarks/qwen38-layer-chain-build-20261028.txt).
+
 ## Latest: original-weight optimized three-layer control passes both trees
 
 October 28, 2026. Original frozen public-control runs `81578/50119` now both

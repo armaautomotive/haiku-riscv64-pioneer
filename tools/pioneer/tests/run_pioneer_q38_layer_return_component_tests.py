@@ -17,6 +17,20 @@ def check(defines,tail,okay):
 for family,parent in (('RECURRENT','PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE'),('DENSE','PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE')):
  kind='PIONEER_Q38_LAYER_COMPONENT_'+family
  base={selector:'1',kind:'1',parent:'1',sigmoid:'1'};check(base,'',True)
+ stop='PIONEER_Q38_LAYER_COMPONENT_DENSE_STOP';length='PIONEER_Q38_LAYER_COMPONENT_CHAIN_LAYERS'
+ for count in ('4','64'):
+  selected={**base,stop:'1',length:count};check(selected,'',family=='DENSE')
+  check(base,'#define '+stop+' 1\n#define '+length+' '+count+'\n#include "'+str(role)+'"\n',family=='DENSE')
+  if family=='DENSE':
+   for value in (None,'0','2','63','65'):
+    changed={k:v for k,v in selected.items() if k!=length}
+    if value is not None:changed[length]=value
+    check(changed,'',False)
+    check(selected,'#undef '+length+'\n'+('' if value is None else '#define '+length+' '+value+'\n')+'#include "'+str(role)+'"\n',False)
+ for value in ('0','2'):
+  check({**base,stop:value,length:'64'},'',False)
+  check(base,'#define '+stop+' '+value+'\n#define '+length+' 64\n#include "'+str(role)+'"\n',False)
+ check({**base,length:'64'},'',False);check({**base,stop:'1'},'',False)
  for required in base:
   for value in (None,'0','2',''):
    changed={k:v for k,v in base.items() if k!=required}

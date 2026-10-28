@@ -6,8 +6,9 @@ import pathlib
 import re
 import subprocess
 import sys
-if len(sys.argv)!=3 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):raise SystemExit(2)
-sdk,out=map(pathlib.Path,sys.argv[1:]);here=pathlib.Path(__file__).resolve().parent
+if len(sys.argv) not in (3,4) or len(sys.argv)==4 and sys.argv[3] not in ('--chain-stop','--chain-stop-prefix4') or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):raise SystemExit(2)
+chain=len(sys.argv)==4;layers=4 if chain and sys.argv[3]=='--chain-stop-prefix4' else 64
+sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
 cross=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku');assert pathlib.Path(cross+'-g++').is_file()
 out.mkdir(mode=0o700)
@@ -17,7 +18,9 @@ flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exc
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 for kind,parent in (('recurrent','PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE'),('dense','PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE')):
  run(cross+'-g++',*flags,'-DPIONEER_Q38_LAYER_RETURN_COMPONENT_IMAGE=1','-DPIONEER_Q38_LAYER_COMPONENT_'+kind.upper()+'=1',
-  '-D'+parent+'=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1','-c',here/('blackhole_qwen38_return_'+kind+'_layer.cpp'),'-o',out/(kind+'.o'))
+  '-D'+parent+'=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
+  *(['-DPIONEER_Q38_LAYER_COMPONENT_DENSE_STOP=1','-DPIONEER_Q38_LAYER_COMPONENT_CHAIN_LAYERS='+str(layers)] if chain and kind=='dense' else []),
+  '-c',here/('blackhole_qwen38_return_'+kind+'_layer.cpp'),'-o',out/(kind+'.o'))
 run(cross+'-g++',*flags,'-DPIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
  '-DPIONEER_Q38_MIXED_ROOT_CAPSULE_IMAGE=1','-Dscalar_main=q38_mixed_recurrent_root_conv',
  '-Dq38_mixed_root_seal=q38_layer_return_recurrent_seal',
@@ -25,7 +28,7 @@ run(cross+'-g++',*flags,'-DPIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE=1','-DPI
 run(cross+'-objcopy','--prefix-alloc-sections','.conv',out/'root_conv.o',out/'root_conv_sections.o')
 raw=out/'layer-components-raw.o';capsule=out/'layer-components-NOBOOT.o'
 run(cross+'-ld','-m','elf32lriscv','--no-relax','-r','--gc-sections','-u','q38_return_recurrent_layer','-u','q38_return_dense_layer',
- out/'recurrent.o',out/'dense.o',out/'root_conv_sections.o','-o',raw)
+ *(['-u','q38_run_final_dense_and_stop'] if chain else []),out/'recurrent.o',out/'dense.o',out/'root_conv_sections.o','-o',raw)
 # A relocatable ld -r keeps dead extern declarations after section GC. Prove
 # no remaining relocation can call any old wait/STOP, THEN strip only those
 # unused names. objcopy itself refuses stripping a referenced symbol.
@@ -35,9 +38,10 @@ for name in dead:assert not re.search(r'\b'+name+r'\b',relocations),name
 run(cross+'-objcopy',*['--strip-symbol='+name for name in dead],raw,capsule)
 symbols=subprocess.check_output([cross+'-nm','-C',str(capsule)],text=True)
 undefined=subprocess.check_output([cross+'-nm','-u',str(capsule)],text=True)
-assert undefined.split()==['U','scalar_fault_park'],undefined
+assert undefined.split()==(['U','q38_layer_chain_stopped','U','scalar_fault_park'] if chain else ['U','scalar_fault_park']),undefined
 for required in ('q38_return_recurrent_layer','q38_return_dense_layer','q38_layer_return_recurrent_seal','q38_layer_return_dense_seal','q38_mixed_recurrent_root_conv'):
  assert re.search(r' T '+required+r'$',symbols,re.M),required
+if chain:assert re.search(r' T q38_run_final_dense_and_stop$',symbols,re.M)
 for forbidden in ('mixed_recurrent_block_main','mixed_live_block_main','mixed_recurrent_block_wait','mixed_live_block_wait',
  'mixed_recurrent_block_stopped','mixed_live_block_stopped','q38_mixed_root_seal','_start','scalar_entry'):
  assert not re.search(r'\b'+forbidden+r'\b',symbols),forbidden
@@ -48,7 +52,7 @@ for line in dis.splitlines():
  m=re.match(r'\s*[0-9a-f]+:\s+([0-9a-f]{8})\s',line)
  if m:assert int(m[1],16)&127!=0x73,'no controller CSR'
 reserved=[s for s in dis.splitlines() if re.search(r'\bmv\s+s11,\w+\s*$',s)]
-assert len(reserved)==4,'exact two private bind/restore pairs; no component owns the parent loop'
+assert len(reserved)==(5 if chain else 4),'exact two private bind/restore pairs plus optional terminal final-dense bind'
 frames=[int(s.split('\t')[1]) for name in ('recurrent','dense','root_conv') for s in (out/(name+'.su')).read_text().splitlines()]
 assert frames and max(frames)<=4096
 sections=subprocess.check_output([cross+'-objdump','-h',str(capsule)],text=True).splitlines();text=conv=0
@@ -63,9 +67,14 @@ assert text<=0x20000 and conv<=0x8000,(text,conv,'unchanged ROOT/Conv memory bou
 PINS=(('recurrent.o',145120,'4b1550f36d8bf6e225684db0a97ba62ad885817c1497d78226443b0c7867533f'),
  ('dense.o',115164,'29204d287e38fe0ead7fd24c2de44aad7b46d2bcb38e23daa4b55d1cebb6c8e9'),
  ('layer-components-NOBOOT.o',228380,'78cf19c422c773a8c9c47c180df78ecd66609e4614dd75ee2d66344cab0ea25c'))
-for name,size,digest in PINS:
+CHAIN64_PINS=(PINS[0],('dense.o',118364,'decc0a8fbd2508c20fd6190d706b1a5d91c3ec6570a1c8e575d058fc65981213'),
+ ('layer-components-NOBOOT.o',235704,'2e21be2ca0fe1b0b002b88ca74a4428a18aaa409a12f164e6a204fa83ae975b6'))
+CHAIN4_PINS=(PINS[0],('dense.o',118360,'a168e2b7f00ecb957709e729bae1029adfed7774d4c81eb747567a87d53bfd5e'),
+ ('layer-components-NOBOOT.o',235700,'e29b67b6af82723344dbaa13955447ba974ce49fb5e55471f2b37d334178d917'))
+for name,size,digest in (CHAIN4_PINS if chain and layers==4 else CHAIN64_PINS if chain else PINS):
  data=(out/name).read_bytes();actual=hashlib.sha256(data).hexdigest()
  assert len(data)==size and actual==digest,name
  print(actual+' '+name+' bytes'+str(len(data)))
 print('PASS both ACTUAL returning layer bodies retained, separate private seal types/s11 bind+restore, same worker-chain/hidden-slot ADDRESSES;ROOTbytes'+str(text)+'/131072 Convbytes'+str(conv)+'/32768 maxFrame'+str(max(frames)))
-print('RELOCATABLE COMPONENTS ONLY/NO boot or host wait/STOP/old main/native ABI;sole unresolved fault park. NOT a connected pipeline,initialized state,token commit,physical/Work or throughput qualification. DO NOT INSTALL')
+if chain:print('PINNED BUILD ONLY chain'+str(layers)+' actual FINAL dense ->ALL119 STOP body retained;NO boot/host wait/old main/native ABI. Unresolved own terminal+fault only. NOT connected/runtime/native/physical/Work/TPS qualified. DO NOT INSTALL')
+else:print('RELOCATABLE COMPONENTS ONLY/NO boot or host wait/STOP/old main/native ABI;sole unresolved fault park. NOT a connected pipeline,initialized state,token commit,physical/Work or throughput qualification. DO NOT INSTALL')
