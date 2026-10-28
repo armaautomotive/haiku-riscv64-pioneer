@@ -1,6 +1,46 @@
 DEBUG72 single original-weight physical trial
 October28UTC2026
-STATUS: CLIENT78087 LIVE; no physical arithmetic/END/result qualification yet.
+STATUS: CLIENT78087 TERMINAL0; strict physical layer0 result+END passed.
+Stable041 restored cleanly/tag12/generation4; NO reboot required.
+
+COMPLETED RESULT (supersedes the dated live observations below)
+--------------------------------------------------------------
+The complete619-line remote and copied local logs have identical SHA256:
+b6d3cdf50e04cd173b252500fd436491bc87fec021d1f3580a4b7670e20360eb
+Durable exit file0; SSH78087 terminal0. All619 lines were reviewed by a
+strict full-log parser: one start banner, one after-auth GPU_OPEN marker,
+308 correctly paired ioctl calls, all status0/errno0,300 raw uploads, exactly
+one compute20800 and one explicit bank-END64, and one exact final PASS.
+No unexpected/orphan/error line. Log:
+qwen38-recurrent-debug72-physical-full-20261028.log.
+PASS_DEBUG72 original_pages68603 uploads300 checked5120 differences0 nonfinite0 max_abs0 relative_l20 clean_end1 diagnostic_us1456395210;NOT_TOKEN_RATE
+
+The frozen client also checked every fixed metadata/header field against its
+strict expected values before comparing the returned final5120 words, then
+explicitly ended/released the native session. Its private reference was
+prepared/sealed before Open; only authenticated raw learned bytes uploaded.
+This proves the new candidate completed the physical startup/whole recurrent
+layer0/readback/restoration/clean-END path that failed at worker114 in71.
+It supports the deadline fix's effectiveness, not unique proof that the
+shared deadline was the sole cause of the earlier failure. Failed71 apply
+remains retired. No retry/reset/failed-image rerun was used.
+
+Diagnostic1456395210us includes initialization/snapshots/strict guards/
+restoration, not sustained inference; NEVER divide this into tokens/sec.
+Only final layer0 output was numerically read back, NOT all intermediate
+state words or later layers/tokens. No full27B inference/Work/performance
+qualification follows this single token0/layer0 diagnostic.
+
+Fresh simple process inventory confirmed client/parent exited. Qualified
+helper --restore-recurrent-deadline-validation then independently required
+tag72/gen3/cold0/owner0/open_count1/guard1, quiesced it once, and verified
+stable041/tag2026102100010012/gen4/quiesced0/cold0/owner0/open_count1/guard1.
+Restore terminal0; full log qwen38-recurrent-debug72-restore-20261028.log.
+Postcheck installed SHA041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403;
+64CPUs/max137034936320B/free133787156480B. Assistant/boot/network files,
+power/SD/mains/hardware connections were not changed. No new GPU workload
+was started after this clean restore. Dated LIVE/selected72 entries below
+describe the trial before completion, not current hardware state.
 
 Completed prerequisites, not inferred from partial tests
 -------------------------------------------------------
@@ -33,7 +73,7 @@ Selected module SHA3e00974c4476f2755341fbcea034340652e976e292cb017344f4a70f896c6
 Helper SHAd560bf3e6284a9eef1f04528be9cc973519ba76455de04a43b6c49c41e1546b8
 Stable041 is NOT the currently selected driver while this trial runs.
 
-Exactly ONE physical client, still live
+Exactly ONE physical client (historical live observation)
 ---------------------------------------
 Client file2f322603020b97d4a9eb3696c3bd550606d64a1531545a48e111f80298ee1f40
 was rechecked regular/non-symlink/executable/exact SHA before invocation.

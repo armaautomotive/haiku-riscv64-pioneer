@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Experimental history-staging ROOT/SAME119/2 real layers. No device IO."""
+"""History-staging ROOT/SAME119/three token-zero prefix layers. No device IO."""
 import ast
 import hashlib
 import os

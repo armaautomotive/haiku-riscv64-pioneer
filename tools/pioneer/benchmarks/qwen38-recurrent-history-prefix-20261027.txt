@@ -1,0 +1,72 @@
+Same-token recurrent history prefix qualification
+Started October27UTC2026; continuation October28UTC2026
+STATUS October28UTC: MAIN87321/CLEAN60515/LEGACY75367 ALL TERMINAL0.
+Complete main/clean68-line stdout is byte-identical SHA256
+5d863fae95c6516e40c54bb63f4e286edc5908272a98326395a9007c41331bd3.
+All three actual blocks0->1->2 preserve token0/position0/slot0; every current
+Conv/GDN word is checked zero before its RUN. Both runs pass all8 reached
+history-copy faults, all3 actual122880B history/receipt checks, earlier
+history survival after scratch reuse, and actual119STOP+ROOT/inert2048.
+Legacy3blocks/2160matrix+1920Conv+288GDN/138STOP refusals also passed0,
+full-log audit found no unexpected lines; actual max ROOT stack5384B.
+Archived qwen38-recurrent-history-prefix-{main,clean,legacy}-20261028.log.
+Dated LIVE/pending observations below are historical, not current status.
+
+Why this changes the next integration gate
+-----------------------------------------
+The previous history-image simulation deliberately stressed changed token
+metadata and nonzero synthetic prior states. It was not a consistent first
+token prefix. The new fixture instead runs layer0 -> layer1 -> layer2 with
+token0/position0/read-slot0 throughout. All current Conv history and current
+GDN state words for each reached layer are zero before RUN; NEXT destinations
+remain poisoned. Only primitive learned bytes and initial hidden are synthetic.
+Later layers consume the actual preceding card-instruction-produced final
+hidden, never CPU-computed intermediate products. The SAME119 workers retain
+their real instruction/register/nonce/Tensix state across all three blocks.
+
+Each completed122880B Conv NEXT history copy and its provisional receipt are
+checked against the actual emitted producer. Saved earlier histories are only
+observer comparisons, never supplied to the execution: each must survive
+every later layer's scratch reuse. Existing eight reached-phase history-copy
+faults and real terminal STOP/inert2048 checks remain mandatory.
+
+The shared fixture's legacy defaults still request token248319 and nonzero
+synthetic prior state; the new token/zero-current choices are explicit options.
+Their existing changed-layer/position/bank/slot lifecycle regression is also
+running. No refusal, arithmetic bound, hardware owner or native guard changed.
+
+Exact live jobs / reproducibility
+---------------------------------
+Main87321 / clean60515:
+/private/tmp/pioneer-q38-history-prefix-main-20261027-a.log
+/private/tmp/pioneer-q38-history-prefix-clean-20261027-a.log
+Clean export /private/tmp/pioneer-q38-history-prefix-clean.oQUOKf9p
+exported from849088bd1d4659955d711515a17872e1d3866217; the four changed
+test/runner files were copied and cmp-verified before either clean compile.
+Both role-gate suites passed183; positive complete three-block runtime results
+remain PENDING. ASan/UBSan and strict floating-point build flags are retained.
+Legacy regression75367:
+/private/tmp/pioneer-q38-history-prefix-legacy-regression-20261027-a.log
+Use the SAME exact live handles; an observation timeout is not terminal.
+
+Unchanged selected images
+--------------------------
+Main /private/tmp/pioneer-q38-history-root-20261027-c
+Clean /private/tmp/pioneer-q38-history-root-clean-20261027-a
+Existing separate history-staging ROOT text6ad60009/ELFa1ae9466 and frozen
+mixed worker remain pinned by the runner. No new image or native role is
+selected. DEBUG72 module3e00974c/client2f322603/helperd560bf3e are unchanged;
+their original numerical jobs93742/38351 are separate and still LIVE.
+
+Limits / next real integration
+------------------------------
+Synthetic raw learned+initial-hidden data, simulated OS/register/GDDR endpoints.
+Host fixture still stages per-layer metadata: NOT autonomous on-card scheduling,
+authenticated original prefix, native initialized-state/history ownership,
+physical P100A, current-history publication, slot flip, whole-token commit,
+all64 layers, Work/Assistant or a performance result. This candidate must not
+be promoted on partial test output. Native history reservation/ownership and
+coherent recurrent0..2 -> dense3 -> all64/persistent KV+state+history/token
+commit/finalnorm+vocabulary+sampling still must be implemented and qualified.
+No CPU-reference Work promotion or shortcut is made by these tests.
+Last actual whole27B0.207893161tok/s unchanged;20tok/s unmet;goal ACTIVE.

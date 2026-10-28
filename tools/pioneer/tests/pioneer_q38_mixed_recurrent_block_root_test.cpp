@@ -16,7 +16,7 @@ struct RecurrentBlockMachine:NewCohortMachine {
  unsigned initialNorm=0,postNorm=0,activationChecks=0,gatedChecks=0,numericCohortChecks=0;
  unsigned outerFaultPacket=0,rootBootFaultPacket=0,stopJobs=0,stopStarts=0;
  uint32_t peerCounterBaseline[119][8]={}; // observed physical registers,never private completion state
- RecurrentBlockMachine(const char* image,const char* worker,bool virgin=false):NewCohortMachine(image,worker,false,virgin){
+ RecurrentBlockMachine(const char* image,const char* worker,bool virgin=false,bool zeroCurrent=false):NewCohortMachine(image,worker,false,virgin){
   std::array<uint32_t,1920> sources;for(unsigned i=0;i<16;i++)sources[i]=source[i];
   for(unsigned w=0;w<119;w++){
    for(unsigned i=0;i<16;i++)sources[(w+1)*16+i]=child[w]->source[i];
@@ -46,7 +46,7 @@ struct RecurrentBlockMachine:NewCohortMachine {
   }
   for(unsigned i=0;i<RC::ConvWords;i++)Put(outer[8],outer[58]+i*4,block->Conv()[i]);
   for(unsigned i=0;i<RC::GdnWords;i++)Put(outer[8],outer[59]+i*4,block->Gdn()[i]);
-  SeedRaw();
+  SeedRaw(true,zeroCurrent);
  }
  uint32_t Get(unsigned route,unsigned address)const override{
   auto raw=dram.find(Key(route,address));if(raw!=dram.end())return raw->second;
@@ -61,7 +61,7 @@ struct RecurrentBlockMachine:NewCohortMachine {
   }
   return result;
  }
- void SeedRaw(bool seedHidden=true){
+ void SeedRaw(bool seedHidden=true,bool zeroCurrent=false){
   unsigned route=outer[8],base=outer[9];
   for(unsigned i=0;i<5120;i++){
    if(seedHidden)Put(PioneerQ38ProjectionRoute(outer[68]),outer[69]+i*4,Bits(float(sin(i*.017+.27))));
@@ -72,7 +72,7 @@ struct RecurrentBlockMachine:NewCohortMachine {
    const auto* d=block->Conv()+w*384+job*64;
    for(unsigned c=0;c<16;c++){
     for(unsigned t=0;t<4;t++)Put(d[13],d[12]+(c*4+t)*4,Bits(float(int(((d[7]+c)*7+t*11)%29)-14)*.03125f));
-    for(unsigned t=0;t<3;t++)Put(d[41],d[15]+(c*3+t)*4,Bits(float(cos((d[7]+c)*.013+t*.117+.031))));
+    for(unsigned t=0;t<3;t++)Put(d[41],d[15]+(c*3+t)*4,zeroCurrent?0U:Bits(float(cos((d[7]+c)*.013+t*.117+.031))));
     Put(d[8],d[4]+d[43]+c*4,0x7fc00000);
    }
   }
@@ -80,7 +80,7 @@ struct RecurrentBlockMachine:NewCohortMachine {
    const auto* in=block->Gdn()+w*192;const auto* st=in+64;const auto* ga=in+128;
    for(unsigned i=0;i<16;i++){Put(in[13],in[12]+i*4,Bits(-float(i+1)*.25f));Put(in[41],in[15]+i*4,Bits(float(i+1)*.01f));}
    for(unsigned i=0;i<128;i++)Put(ga[13],ga[12]+i*4,Bits(float(.5+sin(i*.07)*.3)));
-   for(unsigned i=0;i<8192;i++){Put(st[12],st[5]+i*4,Bits(float(sin((i+w*8192)*.003))*0.0001f));Put(st[13],st[7]+i*4,0x7fc00000);}
+   for(unsigned i=0;i<8192;i++){Put(st[12],st[5]+i*4,zeroCurrent?0U:Bits(float(sin((i+w*8192)*.003))*0.0001f));Put(st[13],st[7]+i*4,0x7fc00000);}
    for(unsigned i=0;i<16;i++)child[w]->memory[TT_Q38_GDN_GATED_READY+i*4]=0xfeed0000+w*16+i;
   }
  }

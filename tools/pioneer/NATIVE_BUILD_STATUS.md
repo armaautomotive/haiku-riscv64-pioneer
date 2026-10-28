@@ -1,14 +1,18 @@
 # Native build status
 
-## Current: DEBUG72 physical original-weight trial running; offline gates passed
+## Current: DEBUG72 physical original-weight layer0 passed; stable driver restored
 
 October 28, 2026. Offline qualification is NOT physical-card qualification.
-The fully pinned DEBUG72 module is NOW selected after a clean guarded swap:
-tag2026102700010072/generation3, apply terminal0. ONE authenticated original
-physical client is LIVE (SSH78087, remote client636); last log observation
-was its CPU source-authentication phase before GPU_OPEN. No other card open/
-status/reload may occur while it or its pre-Open parent lives. Only OS/log
-reads are allowed. No physical numeric comparison/END/speed result yet.
+The fully pinned DEBUG72 physical client78087 completed0: all5120 final
+layer0 output words match the independent original-file CPU reference exactly,
+nonfinite0, and explicit END/close completed cleanly. Complete619-line log
+SHAb6d3cdf5 has308 paired successful ioctls/300raw uploads/no unknown lines.
+The qualified helper restored stable041/tag12/generation4, cold0/owner0/guard1,
+without a reboot. Fresh sysinfo64CPUs/max137034936320B and installed041 SHA
+are verified. No other card open occurred while the client lived.
+This clears the candidate's prior startup/physical layer0 gate, NOT later
+layers/persistent state/full27B Work or performance. Diagnostic elapsed time
+is NOT token rate. The last real whole-model0.207893161tok/s is unchanged.
 See benchmarks/qwen38-recurrent-debug72-physical-20261028.txt.
 The original-weight DEBUG71 physical trial uploaded all 300 calls/68603 pages,
 then failed execution preparation at worker114 BEFORE the full recurrent ROOT
@@ -27,7 +31,7 @@ c600 preflight and guarded swap236+236/legacy302 cases all passed.
 The helper retires failed71 apply while preserving known-clean restore;
 only exact stable041 <-> new3e00/72 is added. Files are SHA-verified in a
 separate non-watched Haiku folder before the later qualified guarded apply.
-Stable041 remains the restore target, NOT the currently selected trial driver.
+Stable041 is again selected after the completed clean physical trial/restore.
 New72 actual public-handler tests94469/41404 BOTH TERMINAL0: complete24-line
 stdout exact8e34bce3, actual support23/wholeRUN/STOP/120holds/readback/full
 restore/copy-failure/duplicate/fresh-END all passed. Evidence:
@@ -37,7 +41,8 @@ complete52-line stdout exact5e920fdc. All5120 final words match the independent
 reference bit-for-bit;15/18 stages are exact and the same three intermediate
 rounding differences remain. All three readback failures, five positive READs,
 full restoration+second proof and fresh END+84 faults pass. Raw OS/register/
-GDDR endpoints are SIMULATED; the separate physical trial is now LIVE. See
+GDDR endpoints in those offline tests are SIMULATED; the separate physical
+trial now passed final layer0 output/clean END. See
 benchmarks/qwen38-recurrent-debug72-original-20261028.txt. Do not poll these
 completed handles.
 Earlier71/deadline controls2894/11492 now BOTH TERMINAL0, complete24-line
@@ -77,10 +82,13 @@ Fresh known-clean board ownership and exact pinned files are still required
 before the physical trial; offline tests are not physical arithmetic proof.
 See benchmarks/qwen38-recurrent-startup-deadlines-20261027.txt.
 
-The separately gated per-layer convolution-history staging image also passed
-both independent complete two-block instruction-simulation runs, all eight
-reached-phase faults and real STOP. It is NOT installed or integrated with
+The separately gated history image now also passed both complete three-block
+same-token0/position0/slot0 instruction simulations, zero raw current state,
+all eight reached-phase history faults and real STOP. Earlier histories
+survive later scratch reuse. Legacy changed-layer/position/bank/slot coverage
+also passed3blocks/138STOP refusals. It is NOT installed or integrated with
 native state ownership/current-history publication/token commit. See
+benchmarks/qwen38-recurrent-history-prefix-20261027.txt and
 benchmarks/qwen38-recurrent-history-root-20261027.txt. The build/test bullets
 below describe their individual qualification checkpoints, not current liveness.
 Previous pushed interface checkpoint: `9d6e39a97403c15151c49cab5a9ffc0fce0bdab3`.
@@ -210,10 +218,10 @@ The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2
 
 Remaining before full-offload Work is ready:
 
-1. Diagnose/fix the physical worker-startup failure with a targeted regression,
-   then qualify a separately pinned candidate on the physical P100A, including
-   original-weight execution/readback/final disposal. Assess intermediate
-   rounding differences; offline handler/readback/END tests are not silicon proof.
+1. Physical layer0 startup/execution/readback/clean-END is now qualified for
+   the pinned72 diagnostic. Extend that proof to genuine multi-layer producers
+   and persistent state; intermediate rounding and later-token correctness
+   remain separate obligations, not implied by exact layer0 final output.
 2. Connect valid embedding/recurrent layers 0..2 through dense layer 3 and all
    64 layers, with correct persistent KV/recurrent/history and token commit.
 3. Complete final normalization, vocabulary projection and on-card sampling.

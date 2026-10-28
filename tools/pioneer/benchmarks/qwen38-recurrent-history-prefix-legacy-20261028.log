@@ -1,0 +1,187 @@
+START QRB1 virgin119/3actual complete recurrent blocks/changed layer+position+bank+slot/previous ACTUAL hidden/realSTOP;synthetic primitive bytes,NOT fullmodel/native/hardware
+PASS QRB1 STOP refusal STOP before any completed layer/inert2048/no later packet,reset,terminal receipt or disposal grant
+START QRB1 actual matrix1 role10 stage2/prior closed matrix jobs0
+PASS QRB1 actual initial RMS5120 BIT-EXACT -> alpha/beta/Z/QKV
+START QRB1 actual matrix2 role11 stage3/prior closed matrix jobs3
+START QRB1 actual matrix3 role5 stage4/prior closed matrix jobs6
+START QRB1 actual matrix4 role6 stage5/prior closed matrix jobs125
+PASS QRB1 actual QKV ->640 Conv groups ->96 paired GDN/private NEXT+6144 gated;independent arithmetic
+START QRB1 actual matrix5 role13 stage8/prior closed matrix jobs244
+PASS QRB1 actual6144 gated F32 -> actual ROOT Q8 quantization/output projection;NO host intermediate
+START QRB1 actual matrix6 role2 stage10/prior closed matrix jobs363
+PASS QRB1 original residual+post-RMS5120 BIT-EXACT -> actual Q4 gate/up
+START QRB1 actual matrix7 role3 stage11/prior closed matrix jobs482
+START QRB1 actual matrix8 role4 stage13/prior closed matrix jobs601
+PASS QRB1 actual SiLU(gate)*up17408/strict independent error bound -> actual Q4 down
+PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/952 channel refusals;NOT native STOP/cleanup authority
+PASS QRB1 FIRST actual full block/virgin small alpha+beta THEN Z/all119;NO fabricated receipt or initial matrix
+PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/952 channel refusals;NOT native STOP/cleanup authority
+START QRB1 actual matrix1 role10 stage2/prior closed matrix jobs0
+PASS QRB1 actual initial RMS5120 BIT-EXACT -> alpha/beta/Z/QKV
+START QRB1 actual matrix2 role11 stage3/prior closed matrix jobs3
+START QRB1 actual matrix3 role5 stage4/prior closed matrix jobs6
+START QRB1 actual matrix4 role6 stage5/prior closed matrix jobs125
+PASS QRB1 actual QKV ->640 Conv groups ->96 paired GDN/private NEXT+6144 gated;independent arithmetic
+START QRB1 actual matrix5 role13 stage8/prior closed matrix jobs244
+PASS QRB1 actual6144 gated F32 -> actual ROOT Q8 quantization/output projection;NO host intermediate
+START QRB1 actual matrix6 role2 stage10/prior closed matrix jobs363
+PASS QRB1 original residual+post-RMS5120 BIT-EXACT -> actual Q4 gate/up
+START QRB1 actual matrix7 role3 stage11/prior closed matrix jobs482
+START QRB1 actual matrix8 role4 stage13/prior closed matrix jobs601
+PASS QRB1 actual SiLU(gate)*up17408/strict independent error bound -> actual Q4 down
+PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/952 channel refusals;NOT native STOP/cleanup authority
+PASS QRB1 retained119 block2/layer1/position0/bank0/slot1/actual preceding final hidden;NO processor reset or product seeding
+PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/952 channel refusals;NOT native STOP/cleanup authority
+START QRB1 actual matrix1 role10 stage2/prior closed matrix jobs0
+PASS QRB1 actual initial RMS5120 BIT-EXACT -> alpha/beta/Z/QKV
+START QRB1 actual matrix2 role11 stage3/prior closed matrix jobs3
+START QRB1 actual matrix3 role5 stage4/prior closed matrix jobs6
+START QRB1 actual matrix4 role6 stage5/prior closed matrix jobs125
+PASS QRB1 actual QKV ->640 Conv groups ->96 paired GDN/private NEXT+6144 gated;independent arithmetic
+START QRB1 actual matrix5 role13 stage8/prior closed matrix jobs244
+PASS QRB1 actual6144 gated F32 -> actual ROOT Q8 quantization/output projection;NO host intermediate
+START QRB1 actual matrix6 role2 stage10/prior closed matrix jobs363
+PASS QRB1 original residual+post-RMS5120 BIT-EXACT -> actual Q4 gate/up
+START QRB1 actual matrix7 role3 stage11/prior closed matrix jobs482
+START QRB1 actual matrix8 role4 stage13/prior closed matrix jobs601
+PASS QRB1 actual SiLU(gate)*up17408/strict independent error bound -> actual Q4 down
+PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/952 channel refusals;NOT native STOP/cleanup authority
+PASS QRB1 retained119 block3/layer62/position8191/bank6/slot1/actual preceding final hidden;NO processor reset or product seeding
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal changed STOP command/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal unknown pre-STOP audit/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal held peer before first STOP write/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal counter changed in audit/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal unknown first STOP metadata write/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal source changed at first STOP write/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal unknown first STOP release/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal unknown terminal-status read/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal late peer boot change/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 STOP refusal late original-hidden change/inert2048/no later packet,reset,terminal receipt or disposal grant
+PASS QRB1 3complete blocks/2160matrix jobs+1920Conv+288GDN/real119STOP+ROOT/inert2048/refusals138/ROOTstack5384;NO state-token commit/native/physical/TPS

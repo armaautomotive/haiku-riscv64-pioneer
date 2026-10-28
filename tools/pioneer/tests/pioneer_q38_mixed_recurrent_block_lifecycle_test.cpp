@@ -6,7 +6,7 @@
 struct RecurrentLifecycleMachine:RecurrentBlockMachine {
  unsigned request=1,runs=0;
  using RecurrentBlockMachine::RecurrentBlockMachine;
- void StageNext(unsigned layer,unsigned position,unsigned bank,unsigned slot){
+ void StageNext(unsigned layer,unsigned position,unsigned bank,unsigned slot,unsigned token=248319,bool zeroCurrent=false){
   VerifyBlock();runs++;unsigned fromBank=outer[7],from=outer[9]+RB::FinalOffset;
   std::array<uint32_t,5120> previous;
   for(unsigned i=0;i<5120;i++)previous[i]=Get(PioneerQ38ProjectionRoute(fromBank),from+i*4);
@@ -22,7 +22,7 @@ struct RecurrentLifecycleMachine:RecurrentBlockMachine {
   matrixStarts=matrixChecks=observed=finalWords=initialNorm=postNorm=activationChecks=gatedChecks=numericCohortChecks=0;
   convStarts=gdnStarts=rootConvPackets=0;cleared.fill(false);verified.fill(false);weights.clear();
   request++;block=std::make_unique<PioneerQ38MixedRecurrentBlockPlan>();
-  assert(block->Build(*canonical,layer,position,248319,bank,slot,1001+request*16,request,{1,2,3,4},sources.data(),fromBank,from)
+  assert(block->Build(*canonical,layer,position,token,bank,slot,1001+request*16,request,{1,2,3,4},sources.data(),fromBank,from)
    && block->Matches(*canonical));
   for(unsigned i=0;i<128;i++)memory[RB::Outer+i*4]=outer[i]=block->Outer()[i];
   for(unsigned n=0;n<8;n++){
@@ -35,7 +35,7 @@ struct RecurrentLifecycleMachine:RecurrentBlockMachine {
   }
   for(unsigned i=0;i<RC::ConvWords;i++)Put(outer[8],outer[58]+i*4,block->Conv()[i]);
   for(unsigned i=0;i<RC::GdnWords;i++)Put(outer[8],outer[59]+i*4,block->Gdn()[i]);
-  SeedRaw(false);
+  SeedRaw(false,zeroCurrent);
   for(unsigned i=0;i<5120;i++)assert(Get(PioneerQ38ProjectionRoute(fromBank),from+i*4)==previous[i]);
   memory[RB::Doorbell]=request;
  }
