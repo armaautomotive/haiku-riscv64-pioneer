@@ -100,10 +100,25 @@ actual recurrent0->1->2, SAME119 workers, ROOT-only metadata/frame/release
 changes, retained earlier Conv+GDN NEXT, and realSTOP. Its distinct QPX1
 boot/role is NOT selected by any native/Work driver. Main/clean builds and
 196role/8078DATA refusals pass; conditional-off old image pins stay exact.
-Main39reached-fault children have passed, but BOTH full fault-suite parents
-are STILL LIVE; no complete fault/native/current-state/token/full64/TPS gate
-is inferred. This prototype was NEVER copied/installed on the Pioneer.
+Main13554 full fault parent now TERMINAL0:39 reached failures+all3 actual
+blocks+realSTOP; complete85-line log8c2bb004, arithmetic prefix exactly matches
+the qualified positive. Clean15283 is STILL LIVE; no BOTH-copy fault/native/
+current-state/token/full64/TPS gate is inferred. This prototype was NEVER
+copied/installed on the Pioneer.
 See benchmarks/qwen38-recurrent-autonomous-prefix-20261028.txt.
+
+The separate original-prefix CPU reference/source now passed main+clean:
+actual layer0/1/2 weights, ONE token0 embedding and independent preceding
+CPU final hidden. All54-stage unit coverage/288 role refusals, full c600
+source169RAWspans/205785pages/842821248B/11557 reference reads,60 source-role
+refusals and identical Haiku RISC-V source/unit builds passed. Layer0 private
+fingerprint stays EXACTbb911e57059b179f; frozen72 reference/source unchanged.
+No expected arrays/model/FILE escape the CPU TU; raw bytes+comparison only.
+New actual-original instruction integration main46358/clean57860 is LIVE,
+not passed. It executes original QPE1 before one autonomous prefix start,
+disables synthetic learned fallback and compares only AFTER3blocks+realSTOP.
+It remains OFFLINE, not native/physical/Work/full64/persistent token or TPS.
+See benchmarks/qwen38-recurrent-prefix-original-source-20261028.txt.
 
 - Complete execution-owner/real STOP/120 holds/full original restoration
   passed in the clean export (60994, terminal 0); main output is identical.

@@ -1,7 +1,7 @@
 Experimental autonomous three-layer recurrent scheduler
 October28UTC2026
 STATUS: main/clean BUILDS+DATA/ROLE/POSITIVE RUNTIMES ALL0.
-MAIN/CLEAN FULL REACHED-FAULT RUNTIMES STILL LIVE. NO NATIVE QUALIFICATION.
+MAIN FULL REACHED-FAULT RUNTIME0; CLEAN STILL LIVE. NO NATIVE QUALIFICATION.
 This prototype was NEVER copied to or installed on the Pioneer.
 
 Actual implementation, not native/Work promotion
@@ -89,9 +89,19 @@ Its whole-parent positive continuation/STOP remains LIVE, as does clean15283.
 All39 main case logs were counted only after their child waitpid success;
 this is NOT terminal whole-suite or clean-copy qualification.
 
+Main13554 subsequently TERMINAL0 at02:16UTC: complete85-line log SHA256
+8c2bb004d75f333018ef77c06b2defd3e46671fec448d78d94ae46affbdb0e88.
+All39 reached children AND the actual3block parent/realSTOP passed. The45
+arithmetic/layer-completion lines, after removing fault children, are exactly
+the qualified positive log's45-line arithmetic prefix; terminal line requires
+all39 fault waits and same119/3ROOT releases/retained earlier Conv+GDN.
+Full log reviewed with strict length/count/prefix/terminal checks. Clean15283
+still LIVE; do not infer BOTH-copy qualification or poll closed13554 again.
+
 Archived completed evidence: qwen38-recurrent-autonomous-{positive,build,
 geometry}-{main,clean}-20261028.log and the separate original/history-image
-regression logs. Unfinished fault logs are not archived as terminal evidence.
+regression logs, plus autonomous-faults-main-20261028.log. Unfinished clean
+fault log is not archived as terminal evidence.
 No record here substitutes simulated endpoints for physical-card proof.
 
 Original-reference integration constraint found in the current source:
@@ -101,6 +111,10 @@ prefix reference must select each actual layer and use the preceding CPU
 reference final hidden as its next input. Repeating embedding or relabeling
 an old producer would NOT validate this prefix. Preserve the frozen72 source/
 reference baseline; never admit those CPU products into native/Work code.
+That separate reference and authenticated RAW3layer source are now implemented
+and main+clean CPU/source/build qualified; original emitted-instruction tests
+46358/57860 are LIVE, not passed. See
+qwen38-recurrent-prefix-original-source-20261028.txt for exact scope/evidence.
 
 Full goal remains: original authenticated prefix/native history ownership,
 recurrent0..2 -> dense3 -> all64 layers, persistent KV/GDN/history + atomic

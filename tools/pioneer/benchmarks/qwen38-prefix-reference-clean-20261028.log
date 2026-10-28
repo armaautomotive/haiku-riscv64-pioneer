@@ -1,0 +1,4 @@
+PASS separate prefix CPU reference gates288/required3+defined0+late/NO native/image/client/Work alias
+PASS prefix CPU reference ALL3 zero layers/54stages+all NEXT words/11557row reads/ONE embedding read/actual layer selection
+PASS nonzero distinct FFN residuals/preceding CPU final feeds next layer BIT-EXACT/no repeated embedding/qualified old layer0 ALL18stages bit-identical
+PASS prefix CPU first+last source loss/earlier-layer metadata changed during later layer/last tensor+duplicate+epoch+rounding refusals/whole-output atomic publication;NO native/device/Work products

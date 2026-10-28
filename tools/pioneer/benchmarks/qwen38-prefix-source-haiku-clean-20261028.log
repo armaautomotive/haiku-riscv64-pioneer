@@ -1,0 +1,4 @@
+03f3465442037a2a4386a05a2d18f12dd9b8e4878a3fff2f47795686eb584f89 prefix-original.o
+01fadb75f4123f2c434cee12a245c01e4502b7e40a64bbaa214e5d320d718057 prefix-source-unit.o
+88ec1af51fd00ab762705addb5e65668a5d17df6b39a93c773e4f949bc6d2348 recurrent-prefix-CPU-SOURCE-UNIT-NEVER-INSTALLED
+PASS Haiku riscv64 separate prefix original CPU source+reference/source-unit compile/link/maxFrame24800;NO driver IO,native owner,installation,execution,physical proof or TPS

@@ -1,0 +1,109 @@
+Independent original-file recurrent-prefix reference and RAW source
+October28UTC2026
+STATUS: main/clean CPU arithmetic, ORIGINAL source, source-boundary gates and
+Haiku RISC-V compile/link ALL TERMINAL0. Original instruction integration is
+RUNNING, NOT qualified. No new program/driver was installed on the Pioneer.
+
+Separate CPU reference, not a Work fallback
+------------------------------------------
+PioneerQ38RecurrentPrefixValidationReference.h binds actual blk.0/1/2 tensors.
+Only layer0 reads token0 embedding; each later layer receives the preceding
+INDEPENDENT CPU final hidden, never an observed accelerator output. All3
+views bind before reads and are rechecked before/after each layer. Caller
+output is published only after all3 complete with unchanged source identity,
+epoch, descriptors and FE_TONEAREST. First-token/position0/zero-current-state
+ONLY; NOT later-token or persistent-state correctness.
+The qualified old layer0 reference/source are UNCHANGED. Shared pure host
+math is independent of the device quantizer/emitted program. New reference
+roles cannot enter native/image/client/Work, including defined0+late includes.
+
+Main3249 / clean20958 both0; complete4-line stdout cmp exact. ASan+UBSan,
+Wall/Wextra/Werror and ffp-contract=off retained. Evidence includes288 role
+refusals, all54 stages/all state words in the zero case, nonzero distinct
+layer-specific FFN residuals and exact preceding-hidden chaining. All18
+layer0 products are bit-identical to the unchanged old reference on the SAME
+nonzero synthetic case. First/last source-read loss, earlier-layer descriptor
+mutation DURING a later layer, last-tensor shape, duplicate name, zero epoch
+and rounding faults refuse without changing the caller's sentinel output.
+
+Authenticated original model / neutral RAW-byte boundary
+------------------------------------------------------
+New pioneer_q38_recurrent_prefix_original_source.cpp authenticates the WHOLE
+18973870528B c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+already-open description using the existing public source. SAME open file
+supplies row-major independent CPU math and tiled RAW learned bytes. Select
+ALL14 learned tensors per layer0..2 plus the first global embedding tile:
+43 descriptors/169 spans/205785 pages/842821248 RAW bytes across7banks.
+11557 independent row reads =3853+3852+3852, ONE embedding read.
+Private per-layer reference fingerprints:
+0 bb911e57059b179f (EXACT frozen physically qualified layer0 reference)
+1 0ccdfab72b2dd8e6
+2 09ade8ca16dc4749
+Fingerprints are evidence, NOT an expected-vector or execution capability.
+
+Preparation and seal precede any context. Reference arrays/model/FILE remain
+private; only immutable raw-byte geometry/reads and post-return comparison
+reports cross the interface. No ready/native producer/slot/cleanup capability
+is minted. No synthetic learned fallback. Raw packets require fresh source
+checks at their boundaries. All-span pointer overlap refusals use a private
+immutable address-interval index; this avoids scanning169 ranges for every
+raw word without weakening the refusal. No driver performance claim follows.
+
+Final source main57321 / clean13833 both0, full2-line stdout cmp exact.
+Earlier source36831/38217 also passed before the equivalent interval-index
+implementation; final-b logs are authoritative for current source.
+Source tests cover all extent geometry, private product/owner/output overlap,
+invalid layer/stage/count/null, nonfinite reports, packet state and rounding
+refusals. Source-boundary main83424/clean33447 both0:60 kernel/image/native/
+client/Work refusals, including defined0 and late includes; stdout exact.
+
+Haiku RISC-V build-only qualification
+------------------------------------
+Main48204 / clean73173 both0, all artifacts AND complete4-line stdout cmp exact:
+prefix-original.o SHA03f3465442037a2a4386a05a2d18f12dd9b8e4878a3fff2f47795686eb584f89
+prefix-source-unit.o SHA01fadb75f4123f2c434cee12a245c01e4502b7e40a64bbaa214e5d320d718057
+binary SHA88ec1af51fd00ab762705addb5e65668a5d17df6b39a93c773e4f949bc6d2348
+Max static USER-space frame24800B, NOT kernel stack. No native owner/session/
+driver IO symbols. SDK read-only /Volumes/HaikuBuildLocal/generated.riscv64.
+Binary built only, NEVER copied/installed/run on Haiku. Preliminary main84710/
+clean10211 both0 pre-interval-index builds are superseded, not current pins.
+Clean export /private/tmp/pioneer-q38-prefix-reference-clean.h4WS6ABB from
+461f52b579 plus cmp-verified new source/test files; no dirty llama/FlashNext.
+
+Original emitted-instruction integration: LIVE, not passed
+---------------------------------------------------------
+New separate instruction TU consumes only sealed RecurrentBlockRawLearnedBytes
+and actual QPE1 output. A separate unflagged QPE1 bridge reads the original
+46080 packed bytes with bounded reads, executes pinned embedding instructions
+and independently observes their result. No CPU expected embedding is supplied.
+All synthetic learned endpoints across3layers are removed; missing raw spans
+cannot fall back to a generator. All initial current states are zero before
+ONE prefix host start; ROOT alone stages/releases subsequent layers and STOP.
+Actual observations capture all54 stages including logical GDN NEXT. Earlier
+Conv/GDN snapshots must survive later reuse. These observed arrays NEVER feed
+back into instruction input or native ownership.
+Coordinator compares ONLY AFTER all3 actual blocks and real119STOP+ROOT return;
+strict final comparison is not fitted to observed output. Instruction TU has
+no CPU source/reference interface. Different scalar class names avoid weak ODR
+collisions with the separately compiled unflagged QPE1 bridge.
+
+At02:14UTC main46358 and clean57860 are LIVE; main has completed original QPE1
+and is entering the prefix. No complete original3layer numeric result exists.
+Logs /private/tmp/pioneer-q38-prefix-original-instructions-{main,clean}-20261028-a.log.
+Follow SAME handles; never infer success/restart from quiet output/timeouts.
+Exact root/worker/QPE1 byte pins are checked before compile/run. Root:
+/private/tmp/pioneer-q38-prefix-scheduler-20261028-c (main),
+/private/tmp/pioneer-q38-prefix-scheduler-clean-20261028-a (clean).
+Worker /private/tmp/pioneer-q38-mixed-worker-20261026-e;
+QPE1 /private/tmp/pioneer-q38-embedding-image-20261027-readback-a.
+
+No native prefix owner/current-history publication/whole-token commit or
+physical3layer qualification follows CPU/source/build or simulated endpoints.
+Separate synthetic fault13554 is now TERMINAL0/complete85-line8c2bb004:
+39 reached children+all3 real blocks+STOP, arithmetic prefix exactly the
+qualified positive. Clean15283 remains LIVE after39 successful children.
+BOTH terminal0/full comparison is still required before paired qualification.
+Physical72's single original layer0 passed; stable041/tag12/gen4 restored.
+No power/SD/mains/hardware/network/Assistant change here. Last whole27B
+0.207893161tok/s unchanged,20tok/s unmet. Full64/persistent KV+GDN+Conv/token
+commit/finalnorm/vocabulary/sampling/noCPUreference Work+Assistant remain owed.
