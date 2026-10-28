@@ -1,0 +1,38 @@
+DEBUG72 standard guarded-reload staging
+October 27, 2026
+STATUS: file copies verified; NOT installed, invoked or physical qualification.
+
+The separate qualification folder was checked for regular, non-symlink
+source files. Both standard destination filenames were absent before copy.
+Copies used no-clobber and were rechecked as regular, non-symlink files with
+the exact expected SHA256. No watched driver path was written.
+
+Standard stage: /boot/home/pioneer-p100a-hot-reload-20261019-a
+tenstorrent_pci_probe-recurrent-deadline-validation-3e00974c
+SHA256 3e00974c4476f2755341fbcea034340652e976e292cb017344f4a70f896c652e
+pioneer_p100a_hot_swap-recurrent-deadline-d560bf3e.sh
+SHA256 d560bf3e6284a9eef1f04528be9cc973519ba76455de04a43b6c49c41e1546b8
+
+The installed file remained stable041:
+/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+SHA256 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+The staging SSH command exited0. It did NOT invoke the helper, open the
+P100A, install/reload/reset a driver, change Assistant/boot/network, or use
+power/SD/mains/hardware controls. A file hash is not fresh loaded-driver
+identity or current owner evidence.
+
+Current72 public lifecycle main/clean already passed0 (see control report).
+Original-weight numerical/readback/final-END sessions93742/38351 remain LIVE
+as of23:56:27UTC; no deployment permission follows staging. Their exact
+host simulator children32877/32904 were observed at about100%CPU, not a
+terminal status. Continue the SAME jobs; quiet validation is not a restart
+reason. Both complete original numerical/END results still must pass, be
+reviewed and archived before a fresh guarded known-clean041 ownership check,
+controlled72 replacement and ONE physical original-weight diagnostic.
+
+Separate host-only history-prefix test work is unqualified until its own
+main/clean results finish. It does not change this candidate module, client,
+helper or their pinned image, and confers no native/physical/Work readiness.
+Full64/persistent state+history+KV/token commit/on-card finalnorm+vocabulary+
+sampling/no-CPU-reference Work+Assistant and honest inference benchmarks
+remain required. Last whole27B rate0.207893161tok/s;20tok/s unmet;goal ACTIVE.

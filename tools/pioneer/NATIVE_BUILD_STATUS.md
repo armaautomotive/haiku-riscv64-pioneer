@@ -33,6 +33,11 @@ This validates the corrected owner algorithm, NOT the failed87d0 image.
 Only the two original-weight jobs remain LIVE. See
 benchmarks/qwen38-recurrent-startup-whole-control-20261027.txt.
 See benchmarks/qwen38-recurrent-debug72-preparation-20261027.txt.
+The candidate and helper are now also SHA-verified under new immutable names
+in the standard guarded-reload staging folder. This is file staging ONLY,
+not installation/helper invocation/card IO or fresh loaded-owner evidence.
+Stable041's installed file hash is unchanged. See
+benchmarks/qwen38-recurrent-debug72-standard-stage-20261027.txt.
 
 Historical scoped profiles captured post-RUN/STOP/120hold readback poison
 guards and whole-plan checking, not an idle wait. Both earlier71 controls
