@@ -1,0 +1,152 @@
+Persistent Qwen27B parent: IMPLEMENTED, partial offline qualification only
+2026-10-28. No card/SSH/driver installation/boot/power/Assistant/SD/mains action.
+Not a ready driver. Last measured whole-model0.207893161tok/s; target20 UNMET.
+
+Actual new control flow, not a host loop
+--------------------------------------
+blackhole_qwen38_token_root.cpp owns a genuine private parent from reset.
+It reads an immutable session/prompt, decodes the FIRST prompt embedding
+on-card from original-format Q4_K bytes, stages position-aware metadata,
+calls the64 existing real returning recurrent/dense bodies, normalizes the
+actual final hidden vector, executes973 vocabulary jobs and chooses a token.
+During prompt processing the next immutable prompt token is used; afterward
+the actual greedy candidate is decoded on-card for the next model input.
+
+After the actual closed output jobs, the new CommitState path copies all48
+staged convolution histories to their CANONICAL current-history destinations,
+reads each destination back and compares every word. Only after all copies
+does its private GDN slot flip ONCE and the logical committed KV frontier
+advance. Inactive GDN slots/current KV rows are produced by the returning
+bodies. A partial-copy fault poisons the context; there is no rollback/retry.
+The new QTC1 model-token record is written/read back with marker0, then its
+marker is written/read back separately. It does NOT release workers/memory.
+The next full pass uses the still-owned cohort without STOP/relaunch.
+Limit/EOS ends through all119 actual STOPs and a distinct QTT1 terminal.
+
+This describes implemented control flow, NOT a passed repeated-token test.
+Actual all64/state-copy/token-publication/next-admission/final-STOP runtime
+qualification of THIS new parent is still required. Cancellation is not yet
+implemented. New native ownership/source/init/ledger/lifetime/client/terminal
+qualification is also required; DATA geometry and record magic grant none.
+
+Position/state metadata and immutable DATA
+-----------------------------------------
+PioneerQ38TokenMetadata transforms immutable pos0 templates ON CARD: outer
+token/position/phase/request, all matrix recipes, convolution positions,
+GDN double-buffer addresses/routes/slot, and dense cache partition ranges.
+GDN staging uses12288B chunks so no768B descriptor triple is split.
+PioneerQ38TokenStatePlan describes the seven canonical convolution-current
+spans per recurrent layer. PioneerQ38TokenPackage adds these256B tables in
+each existing512KiB layer slot's slack, preserving original numerical bytes.
+Session/prompt/output regions are disjoint within the existing64MiB workspace.
+They do not authenticate learned bytes, reserve pages or grant initialization.
+
+ASan+UBSan metadata main12899 and clean61651 BOTH direct0:
+ 4480 outer /34720 recipes /2419200 Conv /322560 GDN triples /107520 dense
+ EXACT against independently rebuilt canonical plans:all64 layers,7 banks,
+10 positions including8191,both state slots;2352 canonical spans;25088
+refusal/no-partial-output checks. Identical log SHA
+5e41f05a980f86aaab39bb5cd57e9de8d05a42bf1720403ece396ff143384bab.
+No execution authority inferred.
+
+Package/session/job DATA main28735 and clean2074 BOTH direct0:
+ 76 complete512KiB packages /9961472 words exact, including zero slack and
+canonical tables; self/canonical alias refusals. ALL34055 position-aware
+vocabulary jobs across7 banks and positions0/1/24/4095/8191 match independent
+PioneerQ38GlobalOutputPlan instances;35325 refusals. Final handoffs at selected
+workers/positions also reject a deliberately wrong previous output phase.
+Identical log SHA85bf3a5b905e9ccc70bac5f563d1ff58886038a059cc40ac3441b0ed2df9901a.
+
+Real bug caught by the independent comparison
+--------------------------------------------
+The provisional vocabulary factory/handoff only changed job.position and
+left job.phase at its pos0 value. Canonical output jobs require
+2025+position*4096+wave. Fixed BOTH the new persistent job generator and
+the returning closed-output handoff. Existing pos0 images are unchanged.
+This was not a failure of the installed driver. Earlier unpublished E/F
+parent builds are superseded; their bootstrap passes are not final evidence.
+
+Pinned final builds; no widened memory/stack limits
+--------------------------------------------------
+ python3 tools/pioneer/build_qwen38_token_root.py \
+  /Volumes/HaikuBuildLocal/generated.riscv64 \
+  /private/tmp/pioneer-q38-token-root-{main,clean}-20261028-h
+Main27897/clean37257 BOTH direct0; independent inspection G73126/42099
+also BOTH0 with identical bytes. Literal pins:
+ boot4 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text129132 ddee168900500c69e1deb18409dfd9bab95a2d7a50054e84c394374b87c8acb6
+ terminal8 6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5
+ conv18232 c74fe77e9e6dcb2a480e74cad6010eb5f35cb32401388a509536d7b796b53558
+ ELF174888 597fb41f089903ca7a6f1483ca37f0eeb9743884dbad3e1ebacff5982d860b80
+Identical build-log SHA53099f427ec3b81392a00fa950b96d205a94d1b52f189ddbeb9023e17953312c.
+Max new-parent function frame1616<=2048; returning components retain4096
+cap. ROOT131072/auxiliary32768/combined stack8192 unchanged. New control
+functions use unused auxiliary code space; old arithmetic is not rewritten.
+No unresolved symbols/writable globals/GOT/controller CSR/unsupported scalar
+instructions; exactly one parent +two component s11 bind/restore pairs.
+Verifier uses ELF STT_FUNC intervals, not nm section letters:read-only data
+in executable output sections otherwise masquerades as instructions.
+
+The phase fix changes ONLY the new opt-in returning component pins:
+ recurrent.o159428 45263bb08b5cee6af697e2163cdf570b3ad2a86e1234a8927148674e9e25e60a
+ token-components-NOBOOT.o245884 5fe6a8c6b4cac23e622f45fb045492a811f5483d59ab76d583a6fbe1ef623a79
+Both independently inspected D builds38228/73253 direct0; every final H
+parent build reproduces these pins normally before linking. Components
+alone have no boot or launch. Actual-worker closure regression42905/47393
+BOTH direct0:four independent genuinely booted workers each execute64 down
+jobs then8/9 global jobs,34 total outputs with independent matrix/partial
+checks;53924 receipt DATA refusals;real STOP+inert2048. Synthetic raw weights,
+NOT actual all64 operators/973coverage/new ROOT admission execution. All
+actual receipts are previous-position0; later-position checks above are
+DATA against independent factories, not a transplanted worker history.
+Identical log SHA645a76d88d8389dbec6385fe091dbdcf4f64f25c56ad96a410cad37d9ba8bc4c.
+
+Actual first-stage instructions and fault behavior
+--------------------------------------------------
+ python3 tools/pioneer/tests/run_pioneer_q38_token_bootstrap_tests.py \
+  /private/tmp/pioneer-q38-token-root-{main,clean}-20261028-g \
+  /private/tmp/pioneer-q38-mixed-worker-20261026-e \
+  /private/tmp/pioneer-q38-global-globalbuild-{main,clean}-20261028-e
+G has the SAME final literal pins as H. Main40875/clean64988 BOTH direct0.
+ASan+UBSan,one virgin ROOT+all119 genuinely booted virgin G workers/one fabric.
+Eight invalid session/prompt inputs refuse before embedding or peer work.
+Eight injected packet/counter/source/session/header/outer/write/readback
+corruptions stop before/after actual provisional writes, with no later
+packet/retry/peer work and2048 inert fault instructions. No completed owner
+or host numeric product is supplied to the parent.
+The positive executes the actual parent from reset through first returning
+entry:token248319 ->20 raw Q4_K reads ->5120 independently bit-exact values
+BEFORE writes ->2writes+2actual readbacks ->actual outer/all8recipes/720Conv/
+96GDN triples staged EXACT vs canonical plan. All119 workers still virgin;
+no model operators have run yet. Actual reserved stack2992/written2984.
+Identical log SHA5d1c8d73592885f5161f9a31933d2d673ecd7835480263a3031d3f07d3edd204.
+This is bootstrap/metadata proof, NOT all64/commit/multiple tokens/STOP proof.
+
+Preservation
+------------
+Roles main19808/clean19470 BOTH0:873 exact/late/defined-zero/missing flag
+gates. New parent mutually excludes old parent/worker/component/native/Work.
+Default12166/82857 and unrolled2507/45969 ALL direct0,all5 existing literal
+pins exact. Every new build first reproduces the feedback image's5 pins and
+all3 old returning-object pins too. No installed driver or kernel runtime
+body,Assistant,CPU/RAM,boot,hardware,SD or mains state was changed.
+Unrelated dirty llama.cpp/FlashNext work remains unread/untouched/unstaged.
+Eight prior whole-flow histories remain separate live tests;do not splice
+them into a completed new-parent lifetime or restart for quiet output.
+
+Required next for the real objective
+------------------------------------
+1 Extend the shared-fabric whole-model fixture for THIS genuine persistent
+  parent and repeated full tokens/prompt positions. Observe actual state
+  copies/readbacks/slot flips/KV frontier/token records/next admissions and
+  final119STOP,including nonzero prior state and real combined stack. NEVER
+  seed a completed owner or transplant processor/nonce/tensor history.
+2 Test late faults in commit/admission/publication/terminal and add bounded
+  cancellation. Complete original-GGUF whole-model/generation qualification.
+3 Implement/audit the new genuine native owner:authenticated same-open851
+  tensor source,initialization/reservation ledger,expanded auxiliary image,
+  session/prompt/cache lifetimes,sole-FD/ownership,journal,clock,terminal,
+  client/helper and unknown-resource quarantine. Do not retag an old owner.
+4 Qualify on the physical card,integrate no-CPU-reference Work/Assistant,
+  preserve existing CPU/RAM/boot/UI,and benchmark actual sustained27B tokens.
+Target20 remains UNMET. No new measured speedup. Goal ACTIVE.

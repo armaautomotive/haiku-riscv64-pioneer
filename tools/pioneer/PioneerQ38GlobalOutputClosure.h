@@ -27,6 +27,7 @@ static inline bool Job(const uint32_t* h,const uint32_t* rootBoot,const uint32_t
  if(nonce<65+wave)return false; // necessary64 down frontiers +8/9 outputs,NOT a full-model proof
  uint32_t expected[64];if(!H::Job(h,ordinal,nonce-1,boot,expected))return false;
  expected[6]=d[40]-1;
+ expected[7]+=(d[40]-1)*4096;
  if(!G::JobShape(expected,boot,nonce-1,0))return false;
  for(unsigned i=0;i<64;i++)if(job[i]!=expected[i])return false;
  return true;

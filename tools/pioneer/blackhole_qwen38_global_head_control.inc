@@ -5,7 +5,13 @@ namespace H=PioneerQ38GlobalHeadLayout;namespace G=PioneerQ38GlobalWorkerLayout;
 static const uint32_t* PeerBoot(unsigned w){return reinterpret_cast<const uint32_t*>(R::PeerBoots+w*256);}
 static const uint32_t* PeerJob(unsigned w){return reinterpret_cast<const uint32_t*>(R::PeerJobs+w*256);}
 static void HeadSeal(const uint32_t* h,bool counters=true){
- Scope(counters);if(Owner()->phase!=4 || Owner()->state[Completed]!=64 || Owner()->state[Layer]!=63)scalar_fault_park();
+ Scope(counters);
+#ifdef PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE
+ if(Owner()->phase==5){if(Owner()->state[Completed] || Owner()->state[Layer])scalar_fault_park();}
+ else if((Owner()->phase!=4 && Owner()->phase!=6) || Owner()->state[Completed]!=64 || Owner()->state[Layer]!=63)scalar_fault_park();
+#else
+ if(Owner()->phase!=4 || Owner()->state[Completed]!=64 || Owner()->state[Layer]!=63)scalar_fault_park();
+#endif
  for(unsigned i=0;i<128;i++)if(Words(L::Head)[i]!=h[i])scalar_fault_park();
 }
 static void Packet(const uint32_t* h,unsigned route,unsigned remote,unsigned bytes,bool write){
@@ -78,7 +84,13 @@ static void Wait(const uint32_t* h,unsigned w,bool stopped){
   if(Register(h,w,0xffb121b0)!=0x46800)scalar_fault_park();
   PeerPacket(h,w,G::Status,64,false);uint32_t s[16];for(unsigned i=0;i<16;i++)s[i]=Words(R::Scratch)[i];
   if(s[2] || s[3]!=G::Magic || s[0]<n-1 || s[0]>n || s[1]<n-1 || s[1]>s[0]
-   || (s[4] && s[4]!=j[2]) || s[5] || s[6]>64 || s[7])scalar_fault_park();
+   || (s[4] && s[4]!=j[2]) || s[5] || s[6]>64
+#ifdef PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE
+   || s[7]>=8192
+#else
+   || s[7]
+#endif
+  )scalar_fault_park();
   for(unsigned i=8;i<16;i++)if(s[i])scalar_fault_park();
   unsigned pc=Register(h,w,0xffb13140);
   if(s[0]!=n || s[1]!=n)continue;
@@ -112,12 +124,22 @@ static void Release(const uint32_t* h,unsigned w){
 }
 static void Gather(const uint32_t* h,unsigned w,unsigned ordinal,unsigned& bestRow,unsigned& bestBits,unsigned& rows){
  uint32_t expectedJob[64];unsigned n=Words(R::Nonces)[w];
+#ifdef PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE
+ if(!n || !T::Job(h,Owner()->state[Position],ordinal,n-1,PeerBoot(w),expectedJob))scalar_fault_park();
+#else
  if(!n || !H::Job(h,ordinal,n-1,PeerBoot(w),expectedJob))scalar_fault_park();
+#endif
  for(unsigned i=0;i<64;i++)if(PeerJob(w)[i]!=expectedJob[i])scalar_fault_park();
  Wait(h,w,false);const auto* j=PeerJob(w);const auto* b=PeerBoot(w);
  PeerPacket(h,w,G::Partial,512,false);uint32_t p[64];for(unsigned i=0;i<64;i++)p[i]=Words(R::Scratch)[i];
  const auto* proof=Words(R::Scratch+256);const unsigned groups=j[23],reads=groups*20+2,flits=groups*1060+162;
- const unsigned expected[]={G::PartialMagic,j[1],64,0,w+1,j[27],j[28],groups*16,p[8],p[9],1,j[7],248320,5120,14,1};
+ const unsigned expected[]={G::PartialMagic,j[1],64,
+#ifdef PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE
+  j[6],
+#else
+  0,
+#endif
+  w+1,j[27],j[28],groups*16,p[8],p[9],1,j[7],248320,5120,14,1};
  for(unsigned i=0;i<16;i++)if(p[i]!=expected[i])scalar_fault_park();
  if((p[9]&0x7f800000)==0x7f800000 || p[8]<j[28] || p[8]>=j[28]+groups*16 || j[2]!=G::GlobalMatrix)scalar_fault_park();
  if(proof[16]!=groups*320 || proof[17]!=j[1] || proof[18]!=w+1 || proof[19]!=0x32504651 || proof[30]!=b[16] || proof[31]!=b[4])scalar_fault_park();
@@ -140,6 +162,9 @@ static void Gather(const uint32_t* h,unsigned w,unsigned ordinal,unsigned& bestR
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_FEEDBACK
 #include "blackhole_qwen38_global_feedback_control.inc"
 #endif
+#ifdef PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE
+#include "blackhole_qwen38_token_head_control.inc"
+#else
 static __attribute__((noreturn,noinline)) void RunHead(){
  uint32_t header[128];auto* owner=Owner();unsigned workspace=owner->state[Workspace],bank=owner->state[Bank];
  Transfer(workspace+L::HeadOffset,512,false);
@@ -188,3 +213,4 @@ static __attribute__((noreturn,noinline)) void RunHead(){
  for(unsigned i=0;i<16;i++)Words(L::Summary)[28+i]=owner->boot[16+i];
  Fence();Words(L::Summary)[0]=L::CandidateMagic;Fence();q38_global_chain_stopped();
 }
+#endif

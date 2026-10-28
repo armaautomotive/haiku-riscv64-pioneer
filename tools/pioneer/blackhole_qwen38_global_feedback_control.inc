@@ -10,7 +10,13 @@ static void FeedbackSeal(const uint32_t* h){
 }
 static __attribute__((noinline)) void Feedback(const uint32_t* h,unsigned token,uint32_t* result){
  auto* owner=Owner();uint32_t plan[8];
- if(!F::Describe(token,owner->outer[4]+1,owner->state[Bank],owner->state[Workspace],plan))scalar_fault_park();
+ if(!F::Describe(token,
+#ifdef PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE
+  owner->phase==5?0:owner->outer[4]+1,
+#else
+  owner->outer[4]+1,
+#endif
+  owner->state[Bank],owner->state[Workspace],plan))scalar_fault_park();
  InputSeal();HeadSeal(h);Words(R::Status)[5]=0x300;
  // ALL20 original tiles are decoded and checked BEFORE either output write.
  for(unsigned block=0;block<20;block++){
@@ -35,6 +41,7 @@ static __attribute__((noinline)) void Feedback(const uint32_t* h,unsigned token,
  const unsigned completed[]={F::Magic,1,token,plan[1],plan[2],plan[3],plan[4],plan[5],plan[6],5120,22,2,1040,320,0,1};
  for(unsigned i=0;i<16;i++)result[i]=completed[i];
 }
+#ifndef PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE
 static void PublishFeedback(const uint32_t* h,const uint32_t* result){
  // Reached only AFTER actual global STOP of all119 workers. The record is
  // explicitly DIAGNOSTIC/uncommitted; no next-state or inference grant.
@@ -46,3 +53,4 @@ static void PublishFeedback(const uint32_t* h,const uint32_t* result){
  }
  Fence();Words(F::Receipt)[0]=F::Magic;Fence();
 }
+#endif

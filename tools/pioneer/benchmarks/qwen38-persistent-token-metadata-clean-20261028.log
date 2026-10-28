@@ -1,0 +1,1 @@
+PASS token metadata DATA: 4480 outer/34720 recipes/2419200 Conv/322560 GDN triples/107520 dense frames EXACT vs independently rebuilt canonical plans;7 banks/all64 layers/10 positions incl8191/both state slots; 2352 canonical Conv spans/25088 refusal+no-partial-output checks;NO execution/state-commit/source/native/physical/Work/TPS grant

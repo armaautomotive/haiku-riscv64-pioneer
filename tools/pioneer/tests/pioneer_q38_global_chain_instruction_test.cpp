@@ -535,6 +535,7 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
   printf("PASS ACTUAL NEW QGC1 ALL64+final norm+973 vocab jobs/ALL248320 rows+independent greedy candidate/ONE ROOT+SAME119+ONE byte fabric/all48 provisional Conv+GDN NEXT retained EXACT/all119 REAL global STOP/inert2048/combined ROOT reserved stack%u/written%u/8192;SYNTHETIC raw bytes,NOT original/native/physical/multi-token-state/token commit/Work/TPS\n",0x70000-minSp,0x70000-minStack);
  }
 };
+#ifndef PIONEER_Q38_GLOBAL_CHAIN_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==4 || (argc==5 && (!strcmp(argv[4],"--refusals") || !strcmp(argv[4],"--prepare-only"))));setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;(void)&Refusals;(void)&LateRefusals;
  puts("START ACTUAL NEW QGC1 ALL64+global instructions/SAME119 genuinely virgin peers/ONE GDDR map/ONLY raw learned+initial hidden+zero prior state;NO CPU products or private worker state transplant");
@@ -564,3 +565,4 @@ int main(int argc,char** argv){
  }
  assert(m->Run());m->Verify();
 }
+#endif

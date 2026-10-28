@@ -55,8 +55,8 @@ for i,row in enumerate(sections):
  else:text+=size
 assert text<=131072 and conv<=32768,(text,conv)
 (out/'components.symbols').write_text(symbols);(out/'components.disassembly').write_text(dis)
-PINS=(('recurrent.o',159412,'3c4537b03dd01fb17b9d66bf12990222f8495c8d1b253d915880d06bc7b750f6'),
- ('token-components-NOBOOT.o',245868,'8e600b590deb326bd1d2f6690e06152a0026148ea85c6c6dd8f1651cd231bd3a'))
+PINS=(('recurrent.o',159428,'45263bb08b5cee6af697e2163cdf570b3ad2a86e1234a8927148674e9e25e60a'),
+ ('token-components-NOBOOT.o',245884,'5fe6a8c6b4cac23e622f45fb045492a811f5483d59ab76d583a6fbe1ef623a79'))
 observed=[]
 for name in ('recurrent.o','token-components-NOBOOT.o'):
  data=(out/name).read_bytes();item=(name,len(data),hashlib.sha256(data).hexdigest());observed.append(item);print(repr(item),flush=True)
