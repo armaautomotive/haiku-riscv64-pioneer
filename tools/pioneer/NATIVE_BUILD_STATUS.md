@@ -1,8 +1,8 @@
 # Native build status
 
-## Current: DEBUG72 public lifecycle passed; original-weight comparison still running
+## Current: DEBUG72 offline lifecycle and original-weight comparison passed
 
-October 27, 2026. Offline qualification is NOT physical-card qualification.
+October 28, 2026. Offline qualification is NOT physical-card qualification.
 The original-weight DEBUG71 physical trial uploaded all 300 calls/68603 pages,
 then failed execution preparation at worker114 BEFORE the full recurrent ROOT
 RUN. No numeric comparison or clean END occurred. A shared startup deadline
@@ -24,13 +24,18 @@ New72 actual public-handler tests94469/41404 BOTH TERMINAL0: complete24-line
 stdout exact8e34bce3, actual support23/wholeRUN/STOP/120holds/readback/full
 restore/copy-failure/duplicate/fresh-END all passed. Evidence:
 benchmarks/qwen38-recurrent-debug72-control-20261027.txt.
-Current original-weight native readback tests93742/38351 remain LIVE. They
-passed all three readback-failure cases; strict final output comparison and
-fresh-END gates are still pending. No hardware deployment yet.
+Current original-weight native readback tests93742/38351 BOTH TERMINAL0,
+complete52-line stdout exact5e920fdc. All5120 final words match the independent
+reference bit-for-bit;15/18 stages are exact and the same three intermediate
+rounding differences remain. All three readback failures, five positive READs,
+full restoration+second proof and fresh END+84 faults pass. Raw OS/register/
+GDDR endpoints are SIMULATED; no hardware deployment yet. See
+benchmarks/qwen38-recurrent-debug72-original-20261028.txt. Do not poll these
+completed handles.
 Earlier71/deadline controls2894/11492 now BOTH TERMINAL0, complete24-line
 stdout identicalac309859 and identical to the pre-deadline handler baseline.
 This validates the corrected owner algorithm, NOT the failed87d0 image.
-Only the two original-weight jobs remain LIVE. See
+All current72 offline gates have now completed. See
 benchmarks/qwen38-recurrent-startup-whole-control-20261027.txt.
 See benchmarks/qwen38-recurrent-debug72-preparation-20261027.txt.
 The candidate and helper are now also SHA-verified under new immutable names
@@ -50,7 +55,7 @@ benchmarks/qwen38-recurrent-validation-wait-profile-20261027.txt.
 the actual post-RUN/119STOP+ROOT/120hold readback poison guards (315 samples).
 This was not just the earlier71 snapshot. Current72 readback/restoration/
 final-copy/fresh-END now passed in BOTH copies. Original numerical gates
-remain PENDING; no physical/Work/full64/speed qualification is inferred.
+also passed independently; no physical/Work/full64/speed qualification follows.
 
 The shared startup-deadline defect is now independently reproduced offline:
 119 actual virgin boots with simulated0.3s CPU image checks falsely fail at
@@ -59,8 +64,9 @@ status/scope faults in BOTH main and clean; source/owner/counter/hold/restore
 guards and65536poll limit remain. Main/clean native SDK objects also match.
 Whole public-handler/RUN/readback/final-END regressions2894/11492 BOTH passed
 for the corrected owner compiled with the previous diagnostic identity.
-Current72 public-handler qualification also passed; current original-weight
-qualification remains pending. No hardware permission follows partial results.
+Current72 public-handler and current original-weight qualification both passed.
+Fresh known-clean board ownership and exact pinned files are still required
+before the physical trial; offline tests are not physical arithmetic proof.
 See benchmarks/qwen38-recurrent-startup-deadlines-20261027.txt.
 
 The separately gated per-layer convolution-history staging image also passed

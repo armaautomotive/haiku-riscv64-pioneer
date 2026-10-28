@@ -1,6 +1,6 @@
 Distinct recurrent DEBUG72/namespace23 diagnostic preparation
 October 27, 2026
-STATUS: built/tested/staged ONLY; full runtime/original readback STILL LIVE.
+STATUS October28UTC: offline runtime/original readback BOTH PASSED; staged ONLY.
 Previous pushed source: add343caa7c06e941feee2d64aa537155e09bb33.
 CONTINUATION23:32:43UTC: earlier deadline controls2894/11492 BOTH TERMINAL0,
 not LIVE now. Current72 controls94469/41404 and originals93742/38351 remain
@@ -10,6 +10,14 @@ CONTINUATION23:44:38UTC: CURRENT72 controls94469/41404 BOTH TERMINAL0,
 complete24-line stdout exact8e34bce3. Only originals93742/38351 remain LIVE;
 all3 readback-failure cases passed, final strict comparison/END pending.
 See qwen38-recurrent-debug72-control-20261027.txt. No hardware deployment.
+CONTINUATION October28 00:10:11UTC: originals93742/38351 BOTH TERMINAL0,
+complete52-line stdout exact5e920fdc, final5120 words bit-exact/nonfinite0,
+15/18 stages exact with unchanged three intermediate rounding differences.
+All3 readback failures/5READs/full restore+second proof/freshEND+84faults pass.
+Do not poll their completed handles. See
+qwen38-recurrent-debug72-original-20261028.txt. No physical72 trial yet;
+fresh known-clean ownership/exact pins remain required. Dated LIVE entries
+below describe earlier observations, not current process status.
 
 New identity / unchanged boundaries
 -----------------------------------

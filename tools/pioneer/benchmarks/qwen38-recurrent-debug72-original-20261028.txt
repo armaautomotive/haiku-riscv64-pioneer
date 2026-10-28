@@ -1,0 +1,65 @@
+Current recurrent deadline candidate: original-weight offline qualification
+October28UTC2026, complete00:10:11UTC observation
+STATUS: MAIN93742/CLEAN38351 BOTH TERMINAL0; NOT physical qualification.
+
+Exact complete evidence
+-----------------------
+Both independently compiled current-source native-factory original-weight
+tests exited0. Complete52-line stdout is byte-identical between main/clean
+and identical to the previous original readback baseline:
+SHA256 5e920fdcd543bc5bea04b3a923437cef7b0022d204e244f84384316ab0de0ef4
+Archived logs qwen38-recurrent-debug72-original-{main,clean}-20261028.log.
+No live handle remains for93742/38351; do not poll/restart them.
+
+Full c600 source authentication/private3853-read CPU reference and its seal
+precede native context creation. Only raw57extents/280971136B/68603pages
+cross into the execution; synthetic learned fallback is disabled. Private
+reference fingerprintbb911e57059b179f is identical in both independent runs.
+The actual emitted QPE1+672GDN/336history zero producers, held memory prep,
+all eight recurrent block matrices,640Conv groups and96pairedGDN execute.
+Every119-worker stream/counter relationship is checked after whole RUN.
+
+All eight post-RUN inert readback admission refusals and all three genuinely
+reached readback failures pass, retaining all120 holders/FD/clock/host owners
+with ZERO later IO/restoration/retry/caller output. The normal positive route
+then performs real119STOP+ROOT/120holds, five scoped READs/5120 result words,
+full11406904-word original restoration and its second proof. Fresh explicit
+locked END passes actual call-seal release/reacquisition, clock/fresh7-parent
+audit/quiet/idle checks,30VM+11PCI+3host release, unreserve and destruction;
+all84 genuinely reached final-disposal failures pass their retention fences.
+
+Numerical result, without weakening the original reference
+----------------------------------------------------------
+All5120 final layer0 output words are BIT-EXACT: differences0/nonfinite0/
+maxAbsolute0/relativeL20/exactPassed1. Fifteen of18 observed stages are exact.
+The same three intermediate rounding differences remain:
+stage7 NEXT state:143241/786432 differ,maxAbs4.76837158203e-7,relL23.52535741896e-8
+stage8 raw recurrent:901/6144 differ,maxAbs7.45058059692e-9,relL21.36695056776e-8
+stage9 gated:3563/6144 differ,maxAbs2.38418579102e-7,relL27.9343173981e-8
+No stage contains NaN/Inf. These are NOT silently promoted to bit-exact
+persistent state or correctness across later tokens/layers.
+
+Role and physical limits
+-------------------------
+These original numerical tests use the separately private native-factory
+NODRV role from the current per-transition-deadline source. Their raw OS,
+register and GDDR endpoints are SIMULATED. Current actual public DEBUG72/
+namespace23 handler lifecycle passed independently in94469/41404; authenticated
+client/preflight and guarded helper gates are independently qualified. This
+combination is NOT a physical public-driver original-weight result.
+The separately pinned module3e00974c/client2f322603/helperd560bf3e remain the
+only new physical trial candidate. Standard staging was verified without
+invoking/installing it; installed file remains stable041.
+
+Next: archive/push this complete evidence, fresh64CPU/full-RAM/parent inventory
+and known-clean041/tag12/current generation/sole-FD/owner0/cold0/guard1/exact
+pins and symlink check; guarded72 replacement; ONE authenticated original
+physical client whose strict final comparison precedes explicit END. No other
+card open/status/reload while it lives. Any unknown retains/quarantines with
+no retry/reset/hot rollback; controlled OFF-once/wait/ON-once recovery per
+AGENTS if required. Stable restore ONLY after clean known owner0.
+Separate three-layer history-prefix tests87321/60515/legacy75367 remain LIVE,
+unqualified and not part of this candidate's code. All64/persistent GDN+
+history+KV/token commit/finalnorm+vocabulary+sampling/no-CPU-reference Work+
+Assistant and actual inference optimization remain owed. Last whole27B
+0.207893161tok/s unchanged;20tok/s unmet;goal ACTIVE.
