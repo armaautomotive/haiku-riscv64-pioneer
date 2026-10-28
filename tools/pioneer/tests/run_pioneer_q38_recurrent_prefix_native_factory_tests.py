@@ -8,25 +8,26 @@ import re
 import subprocess
 import sys
 import tempfile
-original_model=None;readback=False;original_control=False;original_routed=False;build_only=False
-if len(sys.argv) in (7,8) and sys.argv[5] in ('--original-model','--original-model-readback','--original-model-control','--original-model-routed-control'):
+original_model=None;readback=False;original_control=False;original_routed=False;original_frozen=False;build_only=False
+if len(sys.argv) in (7,8) and sys.argv[5] in ('--original-model','--original-model-readback','--original-model-control','--original-model-routed-control','--original-model-frozen-routed-control'):
  assert len(sys.argv)==7 or sys.argv[7]=='--build-only'
  build_only=len(sys.argv)==8
  original_model=pathlib.Path(sys.argv[6]);assert original_model.is_absolute() and original_model.stat().st_size==18973870528
- original_control=sys.argv[5] in ('--original-model-control','--original-model-routed-control')
- original_routed=sys.argv[5]=='--original-model-routed-control'
+ original_frozen=sys.argv[5]=='--original-model-frozen-routed-control'
+ original_control=original_frozen or sys.argv[5] in ('--original-model-control','--original-model-routed-control')
+ original_routed=original_frozen or sys.argv[5]=='--original-model-routed-control'
  readback=original_control or sys.argv[5]=='--original-model-readback'
  options=['--control-routing-execute' if original_routed else '--control-execute'] if original_control else ['--fresh-readback-end' if readback else '--fresh-execute-end']
 else:
- assert len(sys.argv) in (5,6) and (len(sys.argv)==5 or sys.argv[5] in ('--execute','--faults','--fresh-held-end','--fresh-execute-end','--fresh-readback-end','--control-preflight','--control-execute','--control-routing-preflight','--control-routing-execute','--frozen-control-preflight','--frozen-control-execute','--frozen-control-refusals','--frozen-layout-gates'))
+ assert len(sys.argv) in (5,6) and (len(sys.argv)==5 or sys.argv[5] in ('--execute','--faults','--fresh-held-end','--fresh-execute-end','--fresh-readback-end','--control-preflight','--control-execute','--control-routing-preflight','--control-routing-execute','--frozen-control-preflight','--frozen-control-execute','--frozen-control-routing-preflight','--frozen-control-routing-execute','--frozen-control-refusals','--frozen-layout-gates'))
  options=sys.argv[5:]
  readback=options==['--fresh-readback-end']
 layout=options==['--frozen-layout-gates']
 refusals=options==['--frozen-control-refusals']
-frozen=layout or bool(options) and options[0].startswith('--frozen-control-')
+frozen=original_frozen or layout or bool(options) and options[0].startswith('--frozen-control-')
 if layout:options=['--control-preflight']
 elif refusals:options=['--control-execute']
-elif frozen:options=['--control-'+options[0].split('--frozen-control-',1)[1]]
+elif options and options[0].startswith('--frozen-control-'):options=['--control-'+options[0].split('--frozen-control-',1)[1]]
 control=bool(options) and options[0].startswith('--control-')
 routed_control=control and options[0].startswith('--control-routing-')
 fresh=control or bool(options) and options[0].startswith('--fresh-')
@@ -153,15 +154,24 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qpx-native-factory-',dir='/priv
   # Private CPU reference/source/coordinator MUST NOT see native or
   # operand/image/Work flags. Only neutral raw bytes and post-END outputs
   # cross TUs; inspect native+operand objects before linking the oracle.
-  objects=[transport];native_objects=[]
+  objects=[transport];native_objects=[];cpu_objects=[]
   for path,selection in [*((p,native_flags) for p in sources),
    (here/'pioneer_q38_recurrent_prefix_original_native_test.cpp',[]),(here.parent/'pioneer_q38_recurrent_prefix_original_source.cpp',[])]:
    obj=base/(path.stem+'.o');subprocess.run([*common,*selection,'-c',str(path),'-o',str(obj)],check=True);objects.append(obj)
    if selection:native_objects.append(obj)
+   else:cpu_objects.append(obj)
+  frozen_bodies=[]
   for obj in [transport,*native_objects]:
    table=subprocess.check_output(['nm','-C',str(obj)],text=True)
    for forbidden in ('OpenPioneerQ38','ReferenceFingerprint','PioneerQ38RecurrentPrefixOriginalSource','PioneerRecurrentPrefixReference'):
     assert forbidden not in table,(obj,forbidden,'private oracle must not enter native/operand objects')
+   frozen_bodies.append(table)
+  for name in ('PioneerQ38RecurrentPrefixFrozenPlan::Capture(', 'PioneerQ38RecurrentPrefixFrozenPlan::Matches('):
+   assert any(name in table for table in frozen_bodies)==frozen,(name,'actual frozen bodies required ONLY for the explicit original frozen selection')
+  for obj in cpu_objects:
+   table=subprocess.check_output(['nm','-C',str(obj)],text=True)
+   for forbidden in ('PioneerQ38RecurrentPrefixFrozenPlan::','PioneerQ38RecurrentPrefixOwner::'):
+    assert forbidden not in table,(obj,forbidden,'native execution/frozen ownership must not enter the private unflagged CPU source or coordinator')
   subprocess.run([*common,*map(str,objects),'-o',str(binary)],check=True)
   run_args=[str(original_model),*sys.argv[1:5]]
  else:
@@ -170,6 +180,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qpx-native-factory-',dir='/priv
  if build_only:
   assert original_model
   print('PASS original-weight '+('routed ACTUAL control' if original_routed else 'ACTUAL control' if original_control else 'native factory')
-   +' compiled/linked with separate unflagged CPU source+coordinator;native/operand objects contain NO private oracle symbols;BUILD ONLY,NO model read/native RUN/readback/END/numerical/runtime/physical/Work or TPS qualification')
+   +(' with PRIVATE frozen geometry' if frozen else ' with ORIGINAL full geometry checks')
+   +' compiled/linked with separate unflagged CPU source+coordinator;native/operand objects contain NO private oracle symbols and CPU objects contain NO native/frozen owners;BUILD ONLY,NO model read/native RUN/readback/END/numerical/runtime/physical/Work or TPS qualification')
  else:
   subprocess.run([str(binary),*run_args],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})

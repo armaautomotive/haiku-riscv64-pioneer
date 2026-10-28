@@ -1,0 +1,63 @@
+Qwen 27B: original weights through private frozen public-control tests
+2026-10-28 UTC. Local renamed NODRV simulation, not physical P100A execution.
+
+The native factory runner now has --original-model-frozen-routed-control.
+It selects genuine actual-control/native execution with the private frozen
+geometry binding AND the verbatim public routing fragment. It retains full
+source authentication, all dynamic guards, original learned bytes only,
+strict independent three-final comparisons, actual readback/restoration,
+fresh final END/context destruction and post-END user-copy checks.
+No new native/physical role, tag, namespace, client or hardware mode exists.
+
+The private CPU source and comparison coordinator still compile separately,
+without any native/operand/image/Work flags. Before linking, the runner
+checks native/operand objects for forbidden private oracle symbols. It now
+also requires the actual Capture and Matches bodies ONLY for the explicit
+frozen mode, and rejects native/frozen ownership symbols in CPU objects.
+The old original routed mode explicitly requires those frozen bodies absent.
+
+Main/clean final direct terminal results
+--------------------------------------
+22848 / 24790: new frozen-original routed control BUILD ONLY, both exit 0.
+Identical one-line stdout SHA-256:
+b878ca2e0571faa773ef6f9a70ba746aca636b673f8955c86df7895a7a4b520b
+
+94391 / 16394: sequential old-original feature-off BUILD ONLY plus new
+--frozen-control-routing-preflight, both complete commands exit 0.
+Feature-off one-line stdout SHA-256:
+fce1377395b9c6530c65a7e8b6d2982ece61106885e44a78cf6b4c4b13ef6952
+New frozen routed preflight two-line stdout SHA-256:
+a80a670da4bd5c18c1945e8bd5f92a5a7d116417e8dbd3176592e3b9835a9cba
+The preflight reaches all 65536 wrong-UID/null-FD/bad-magic root admission
+refusals and actual diagnostic-handler 336 missing learned endpoints,
+96 malformed headers and copy/team/context cases. No native model is
+published and no raw IO occurs. Administrative/upload handlers explicitly
+refuse and are never called; this is not a complete physical upload session.
+
+Neither build-only result executes a model, reads its weights, runs a native
+producer, reaches cleanup, proves numerical results or measures inference.
+No private snapshot is captured by the preflight-only execution.
+
+Full original frozen runs NOW started, not passed
+------------------------------------------------
+81578 MAIN / 50119 CLEAN are the exact new live handles. Both use the full
+absolute 18973870528-byte GGUF, pinned zero/QPE1/ROOT/worker images and the
+new mode WITHOUT --build-only, at nice 10. They are independent local tests,
+not duplicates/restarts of the feature-off original or synthetic frozen runs.
+These still owe authentication/reference preparation, all three actual
+instruction-produced layers, strict final comparisons, readback, restoration,
+full final END and post-END copy. No success or speed result is claimed.
+Only completed build/preflight logs are archived with this checkpoint.
+
+The previous eight exact handles remain active:
+92911/21992 routed control; 58646/88658 original native readback;
+40917/17954 frozen synthetic control; 68414/77070 original routed control.
+Follow the same handles; never restart solely because progress is quiet.
+
+All new work is local-only. Stable installed driver/Assistant/boot/64 CPUs/
+full RAM remain unchanged. A future optimized physical variant needs its
+own unused exact role/tag/client/helper after runtime qualification, not a
+retag of DEBUG73 or promotion of QRPNODRV. Connected physical layers, all64,
+persistent KV/GDN/history, token commit, output head/sampling and no-CPU-
+reference Work/Assistant remain required. Last whole-model measured rate is
+0.207893161 tok/s; full offload and 20 tok/s are UNMET. Goal ACTIVE.

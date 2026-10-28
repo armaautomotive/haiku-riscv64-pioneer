@@ -29,6 +29,16 @@ Last whole-model rate is still **0.207893161 tokens/sec**; full offload and
 20 tokens/sec remain unmet. Evidence and exact running handles:
 [native frozen-data checkpoint](benchmarks/qwen38-recurrent-prefix-native-frozen-data-20261028.txt).
 
+The optimized path now also has an explicit original-weight/public-routing
+test mode. Main/clean build and link pass, requiring actual frozen bodies in
+native objects while keeping the independent CPU source/coordinator free of
+native ownership. The old original routed mode still builds without frozen
+bodies. New frozen routed preflight passes admission and real-handler cases.
+Full original-weight frozen runs `81578/50119` have started at low priority,
+WITHOUT `--build-only`; numerical/readback/final-END results remain pending.
+These are additional local simulations, not physical or Work qualification.
+Evidence: [original frozen control preparation](benchmarks/qwen38-recurrent-prefix-original-frozen-control-preparation-20261028.txt).
+
 ## Latest host-only optimization: exact immutable-data mirror qualified offline
 
 October28UTC2026. A separate HOST-ONLY plan-mirror experiment passes main/
