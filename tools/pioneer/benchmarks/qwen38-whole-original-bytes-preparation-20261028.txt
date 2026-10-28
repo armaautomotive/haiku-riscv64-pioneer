@@ -38,3 +38,13 @@ The same-open source and stdio fork barrier must remain valid through any
 actual forked fault test and final result verification. This is a TEST-only
 source,not an initialized GDDR upload ledger or a physical ownership grant.
 No original model file/weights or user data is added to Git. Goal ACTIVE.
+
+20:58UTC follow-up: real integration now IMPLEMENTED,not full qualified
+---------------------------------------------------------------------
+See qwen38-original-whole-token-integration-20261028.txt. The new fabric uses
+independent canonical learned classification and removes ALL synthetic
+learned recipes/words+supplied hidden before ROOT execution. Main+clean real
+original embedding/bootstrap and4 hard no-fallback refusals PASS. Fresh
+full3-token original-weight runs68871/11982 are RUNNING from RESET,not passes.
+New source-revocation tests61296/8370 BOTH0 and default batching14753/65423
+BOTH0. No native/physical/Work/original whole-model numerical/TPS authority.

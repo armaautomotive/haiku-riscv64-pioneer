@@ -90,7 +90,13 @@ PINS_F32=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059ea
  ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
  ('conv.bin',19752,'3457413087afef8d24755f49546e0d968af87fb5fbad60b674924ae6850c6c51'),
  ('program.elf',176532,'9eb2a26fcca87c06345e1b5c63e36f91bf433d90b57d75513fed1e31439f2839'))
-PINS_CANCEL_F32=()
+# Independently identical main+clean BUILD pins only; runtime qualification
+# (including actual cancellation/combined stack) is separate and still owed.
+PINS_CANCEL_F32=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+ ('text.bin',129236,'20ace51c586a9f4ff3b8a2c21a2d26c21a01ee51a2ff4b22ffd9fb779713bd47'),
+ ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+ ('conv.bin',21340,'8d208e783507fbda17b7309d46c7e5a2b07f37874c6b600bacb375b69f0dd721'),
+ ('program.elf',178180,'5d870cb7efcee1067ceaf146d05b916de80ca5b0f1be39f55a9303db3c018f70'))
 observed=[]
 for name in ('boot.bin','text.bin','terminal.bin','conv.bin','program.elf'):
  data=(out/name).read_bytes();item=(name,len(data),hashlib.sha256(data).hexdigest());observed.append(item);print(repr(item),flush=True)

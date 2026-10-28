@@ -59,7 +59,7 @@ struct GlobalChainPeer:NewCohortPeer {
   for(unsigned i=0;i<inputs;i++)vector[i]=uint16_t(root.at(0xa0000+i/2*4)>>((i%2)*16));
   for(unsigned i=0;i<scales.size();i++)scales[i]=root.at(0xab000+i*4);
   for(unsigned t=0;t<tiles.size();t++){
-   for(unsigned i=0;i<tile.size();i+=4){unsigned value=bytes->Get(route,base+t*unsigned(tile.size())+i);for(unsigned b=0;b<4;b++)tiles[t][i+b]=uint8_t(value>>(b*8));}
+   bytes->ReadRaw(route,base+t*unsigned(tile.size()),tiles[t].data(),unsigned(tile.size()));
    packets.push_back({base+t*unsigned(tile.size()),route,0x90000,unsigned(tile.size()),int(t)});
   }
   Poison();PoisonTail();for(unsigned i=0;i<4096;i++)buffers[4096+i]=0x7fc00000;active=true;

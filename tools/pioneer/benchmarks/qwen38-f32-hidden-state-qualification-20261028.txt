@@ -135,3 +135,25 @@ cache/prompt/L1aux/clock/sole-FD/journal/lifetimes/terminal/client/quarantine,
 physical card stability,no-reference Work distinct from validation,Assistant
 integration/boot+64CPU+fullRAM preservation and real sustained27B throughput.
 No speedup without measurements;target20 unmet. Goal stays ACTIVE.
+
+20:58UTC follow-up (historical pending labels above superseded narrowly)
+-----------------------------------------------------------------------
+Old feedback46023/12070 BOTH now terminal1 at the same old layer15/phase12.
+Real original-weight source integration is implemented and BOTH main+clean
+embedding/bootstrap pass;latest full3-token68871/11982 remain RUNNING. See
+qwen38-original-whole-token-integration-20261028.txt for scope,no-fallback
+proofs and remaining real gates. Synthetic full20159/13324 are unchanged
+independent live histories,not replaced or relabeled original-model runs.
+
+FP32+cancellation combined main69690/clean23377 BOTH direct0 independent
+candidate BUILD;strict main8577/clean24079 BOTH direct0. PINS_CANCEL_F32 now
+contains exact separate BUILD pins,not runtime permission:
+ text.bin129236 20ace51c586a9f4ff3b8a2c21a2d26c21a01ee51a2ff4b22ffd9fb779713bd47
+ conv.bin21340 8d208e783507fbda17b7309d46c7e5a2b07f37874c6b600bacb375b69f0dd721
+ program.elf178180 5d870cb7efcee1067ceaf146d05b916de80ca5b0f1be39f55a9303db3c018f70
+Boot32791432.../terminal6eb1d84a... unchanged;parent frame1616. Combined
+bootstrap4354/16045 BOTH now direct0:actual embedding5120/all metadata/16
+early corruptions/inert2048/stack2992+2984/SAME119 still virgin. Actual first
+layer cancellation10985/85878 launched21:01UTC and is RUNNING,not passed.
+Combined runtime stack,head/committed cancellation and full zero-request
+variant remain owed. No physical or measured speedup.

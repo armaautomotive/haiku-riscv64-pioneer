@@ -54,6 +54,7 @@ struct WholeModelOriginalBytes::Original {
 WholeModelOriginalBytes::WholeModelOriginalBytes():original(new Original){}
 WholeModelOriginalBytes::~WholeModelOriginalBytes(){delete original;}
 bool WholeModelOriginalBytes::Ready()const{return original && original->Current();}
+void WholeModelOriginalBytes::Revoke(){if(original){original->failed=true;original->cache.clear();}}
 bool WholeModelOriginalBytes::Open(const char* path){
  if(!original || original->attempted || !path || wholeOriginalPath)return false;
  original->attempted=true;wholeOriginalPath=path;auto& o=*original;

@@ -8,6 +8,8 @@
 #include "../PioneerQ38TokenLayout.h"
 namespace TL=PioneerQ38TokenLayout;namespace TS=PioneerQ38TokenStateLayout;
 struct TokenFlowMachine:GlobalChainInstructionMachine {
+ virtual void BeforeFork(){}
+ virtual const char* RawInputScope()const{return "SYNTHETIC raw inputs,NOT original model/native/physical/Work/TPS";}
  enum {Tokens=3,Prompts=2};
  const std::array<unsigned,Prompts> prompt={{248319,17}};
  std::array<uint32_t,1920> sources={};
@@ -411,6 +413,7 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
    assert(allLayers==3 && matrices==3 && kvWrites==1 && !kvReadbacks && !committed);
    kvFaults=1;fflush(nullptr);
    for(unsigned fault=1;fault<=9;fault++){
+    BeforeFork();
     pid_t pid=fork();assert(pid>=0);
     if(!pid){
      kvFault=fault;kvInjected=fault!=2;
@@ -466,7 +469,7 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
    const auto& p=*child[w];assert(p.pc==p.stopPC && p.sequence==nonceBefore[w]+(w<21?9:8)+1 && p.memory.at(M::Status+16)==2);
   }
   unsigned before=packets;for(unsigned i=0;i<2048;i++)StepToken();assert(packets==before && pc==0x60004);profile.Dump(window.Total(steps));
-  printf("PASS ACTUAL persistent ROOT %u FULL tokens/two prompt inputs then genuine greedy feedback/SAME119 from virgin boot/ALL64+973 EACH/nonzero GDN+append-only KV consumed across positions/all48 Conv commits+actual readbacks/one slot flip and model record EACH/final119STOP/inert2048/stack reserved%u written%u;SYNTHETIC raw inputs,NOT original model/native/physical/Work/TPS\n",Tokens,0x70000-minSp,0x70000-minStack);
+  printf("PASS ACTUAL persistent ROOT %u FULL tokens/two prompt inputs then genuine greedy feedback/SAME119 from virgin boot/ALL64+973 EACH/nonzero GDN+append-only KV consumed across positions/all48 Conv commits+actual readbacks/one slot flip and model record EACH/final119STOP/inert2048/stack reserved%u written%u;%s\n",Tokens,0x70000-minSp,0x70000-minStack,RawInputScope());
  }
 };
 #ifndef PIONEER_Q38_TOKEN_FLOW_MACHINE_ONLY

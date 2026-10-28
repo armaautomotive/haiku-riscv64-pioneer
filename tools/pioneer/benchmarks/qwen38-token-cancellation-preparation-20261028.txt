@@ -143,3 +143,19 @@ This proves ONLY first-layer cancellation on SYNTHETIC raw model inputs in
 the exact cancellation image. --head/--committed/zero-request full variant
 and a separate FP32-hidden+cancellation combined image are STILL UNPROVEN.
 No native/physical/Work readiness or new speedup. Goal remains ACTIVE.
+
+21:00UTC combined FP32+cancellation BUILD/bootstrap,not runtime pass
+-------------------------------------------------------------------
+The distinct combined variant has two independent identical candidate
+builds69690/23377 and strict pinned rebuilds8577/24079,all direct0. Frozen
+PINS_CANCEL_F32 is now nonempty;the old/default images remain separate.
+ROOT129236/131072,aux21340/32768,parent maxFrame1616;ELF178180 SHA
+5d870cb7efcee1067ceaf146d05b916de80ca5b0f1be39f55a9303db3c018f70.
+Bootstrap4354/16045 BOTH direct0:embedding5120/allmetadata/16 actual early
+faults/inert2048/SAME119 still virgin/stack2992+2984. These narrow gates
+do NOT prove actual cancellation,combined runtime stack or all64 execution.
+New --layer --f32-hidden10985/85878 is RUNNING from RESET with SAME virgin
+workers,not a transplanted old positive first-layer history. Keep following
+those handles;head/committed/zero-request tests remain owed. No new native,
+physical,Work/Assistant or throughput claim. See the FP32 qualification
+report and qwen38-original-whole-token-integration-20261028.txt.

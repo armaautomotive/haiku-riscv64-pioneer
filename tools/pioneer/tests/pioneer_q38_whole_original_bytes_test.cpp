@@ -17,4 +17,7 @@ int main(int argc,char** argv){
  unsigned parts=0,pages=0,mutableRefusals=0;uint64_t padding=0;
  assert(source.CheckSamples(parts,pages,padding,mutableRefusals) && padding && mutableRefusals && source.Ready() && source.PrepareFork());
  printf("PASS ORIGINAL RAW learned parts%u/first+last+middle pages%u/independent original-row permutation+exact zero padding%llu/all851 tensor layout matched/bounded512KiB RAW cache/mutable+workspace refusals%u publish NO bytes;NOT all-byte tiling/model instructions/products/native/physical/Work/TPS\n",parts,pages,(unsigned long long)padding,mutableRefusals);
+ source.Revoke();assert(!source.Ready() && !source.PrepareFork() && !source.Contains(786,0x04000000,64)
+  && !source.Read(786,0x04000000,out.data(),64) && out==before && !source.Open(argv[1]));
+ puts("PASS one-way raw-source revocation/no cached byte access/no output change/no reopen;NOT hardware cleanup");
 }

@@ -15,6 +15,9 @@ public:
  WholeModelOriginalBytes(const WholeModelOriginalBytes&)=delete;
  WholeModelOriginalBytes& operator=(const WholeModelOriginalBytes&)=delete;
  bool Open(const char*);bool Ready()const;bool PrepareFork();
+ // One-way TEST byte-source revocation. No descriptor reopen/recovery or
+ // device cleanup is implied; cached learned bytes become unreadable too.
+ void Revoke();
  // Readiness/bounds query ONLY. A future fabric must classify canonical
  // learned coordinates independently and FAIL on any Read refusal; NEVER
  // fall back to synthetic bytes or CPU products when Contains/Ready fails.

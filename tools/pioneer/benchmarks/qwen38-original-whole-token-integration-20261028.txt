@@ -1,0 +1,103 @@
+Original27B whole-token byte fabric: bootstrap PASSED; full flow RUNNING
+2026-10-28 20:58UTC. Goal ACTIVE. No installed driver/kernel/Assistant/boot/
+CPU/RAM/network/power/SD/mains/hardware changes. Last measured whole-model
+0.207893161tok/s;target20 UNMET. Offline instructions are NOT physical TPS.
+
+Actual integration, not another synthetic source alias
+-----------------------------------------------------
+pioneer_q38_token_original_fabric.h binds the SAME authenticated retained
+WholeModelOriginalBytes to the actual TokenFlowMachine. Authentication of
+the entire18973870528B/c600de03... GGUF precedes ROOT construction. Its851
+descriptors/all4678 learned+mutable+workspace coordinates are checked by
+the source. The fabric separately rebuilds canonical geometry to classify
+all3551 learned parts. Reader Contains/Ready NEVER chooses a fallback path.
+
+BEFORE the first ROOT instruction, all2645504 synthetic learned words and
+47108 synthetic matrix recipes are removed, including norms, Conv, GDN,
+embedding and vocabulary. The5120 supplied synthetic initial-hidden words
+are also removed. Initial recurrent/history zeros remain explicit RAW input;
+metadata/session/prompt/RoPE constants remain RAW data. The actual original
+embedding producer MUST create the first hidden vector. No private processor
+history, CPU hidden/state/logits/selected-token products or completion is
+supplied. Original mutable outputs still come from actual emitted code.
+
+Every learned Get/ReadRaw uses the raw source or REFUSES. Writes overlapping
+any learned extent refuse, as do reads crossing a learned-part boundary.
+Unknown nonlearned reads cannot use the removed synthetic recipes. Actual
+ROOT packet boundaries bracket source liveness; every learned source read
+checks same-file identity/epoch. Fault forks use the same-open stdio barrier;
+the latest source also repeats that barrier after child completion. A one-way
+TEST Revoke invalidates even cached raw pages, not a hardware cleanup grant.
+
+Raw matrix batching changes ONLY byte endpoint bookkeeping. It supplies the
+same original packed Q8/Q4/Q6 bytes/padding, not dequantized or requantized
+values. Every scalar/tensor instruction and worker packet still executes.
+The default CohortBytes implementation is exactly the old ordered Get loop.
+New per-layer PC reports are observer diagnostics; they include SIMULATED
+polling, never select execution and do not establish physical bottlenecks.
+
+Completed narrow evidence, independent main + clean export
+---------------------------------------------------------
+Original bootstrap27504/44315 BOTH direct0, logs
+ qwen38-token-original-bootstrap-{main,clean}-20261028.log
+All3551 learned parts/7102 first+last endpoint batches agree with word reads;
+metadata retains default byte behavior; ZERO ROOT instructions at that gate.
+Four disposable real fork lifetimes deliberately place a synthetic learned
+word in their private TEST map. Valid reads ignore it. Learned writes, revoked
+word reads, revoked batch reads and cross-part reads each SIGABRT at the
+expected fabric assertion, with no fallback. These are HOST transport
+refusals, NOT emitted scalar fault/quarantine/cleanup proofs.
+
+Then actual unchanged literal-pinned FP32 ROOT instructions run from RESET:
+position0/token248319 original embedding5120 bitexact before writes,20raw
+reads+2writes+2readbacks,canonical metadata staged and first returning entry
+reached. SAME119 workers are still virgin/no jobs. Actual ROOT stack reserved
+2992/written2984. NOT a complete first layer or whole-model numerical check.
+
+Default batching14753/65423 BOTH direct0/ASan+UBSan:105 batches/477120 exact
+bytes/all7 banks/3 addresses/Q8+Q4+Q6 tile and16KiB sizes/exact ordered Get
+addresses+counts/no other endpoint calls. Not model/hardware qualification.
+
+Updated raw-source tests61296/8370 BOTH direct0/ASan+UBSan:entire same-open
+SHA/all851 layouts,3551 learned parts/10301 sampled pages/2392736 exact zero
+padding bytes/all1127 mutable+workspace refusals. New one-way revocation
+refuses cached access/fork/reopen and changes NO output bytes. Still not an
+every-byte transpose or independent whole-model numerical proof.
+
+Current full original-model runs: NOT passed
+---------------------------------------------
+Latest source adds post-child stdio barriers and per-layer actual-PC reports
+after the earlier bootstrap binaries were built. Fresh FULL3-token runs
+main68871/clean11982 use that latest source,from RESET,not a transplanted
+bootstrap/old layer history. Launched20:55UTC:
+ python3 tools/pioneer/tests/run_pioneer_q38_token_original_flow_tests.py \
+  /private/tmp/pioneer-q38-token-f32-{main,clean}-20261028-a \
+  /private/tmp/pioneer-q38-mixed-worker-20261026-e \
+  /private/tmp/pioneer-q38-global-globalbuild-{main,clean}-20261028-e \
+  /Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf
+Logs /private/tmp/pioneer-q38-token-original-flow-{main,clean}-20261028-b.log.
+Both reached actual original embedding/first-layer matrix1 at the last check.
+Follow SAME handles. No complete first layer,all64,model token,independent
+whole-model numerical result,actual physical card execution or speedup yet.
+
+Earlier independent synthetic FP3220159/13324 and default94923/26724 remain
+live. The two old feedback46023/12070 now BOTH terminate1 at the same old
+layer15/phase12/65504 residual-sum refusal;completed logs are preserved as
+ qwen38-global-feedback-{main,clean}-failure-20261028.log
+Do not restart/retag those failed histories as a new positive qualification.
+
+Actual release gates still owed
+--------------------------------
+1. Complete/inspect the real original-weight all64/multi-token histories;
+   independently check whole-model numerics without feeding CPU products.
+2. Complete late admission/publication/state-commit/STOP faults,head and
+   committed cancellation,zero-request and FP32+cancellation qualification.
+3. Implement DISTINCT full-model native owner/session/initialized-upload
+   ledger/source+clock+host lifetimes/L1+aux mappings/sole-FD/journal/terminal/
+   client and fail-closed quarantine. No old prefix or marker is a grant.
+4. Qualify physical-card correctness/stability/longer sequences/load-unload/
+   recovery. Preserve Assistant/SD-free boot/64CPU/fullRAM;no new health claim
+   is made without a fresh physical check.
+5. Connect no-CPU-reference Work mode to Assistant,separate from validation;
+   optimize real bottlenecks and benchmark sustained27B generation honestly.
+No new model file/weights or unrelated llama.cpp/FlashNext work is in Git.

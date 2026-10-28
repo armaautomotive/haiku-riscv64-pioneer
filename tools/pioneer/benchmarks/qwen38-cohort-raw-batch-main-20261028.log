@@ -1,0 +1,1 @@
+PASS default CohortBytes ReadRaw/105 batches/477120 exact bytes/all7banks+3addresses+Q8Q4Q6tile+16KiB sizes/exact Get addresses+counts/no other endpoint calls;NOT model or hardware qualification

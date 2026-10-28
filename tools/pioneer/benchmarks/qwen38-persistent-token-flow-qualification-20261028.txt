@@ -193,3 +193,18 @@ FP32 flows20159/13324 start from RESET,not transplanted old history. Original
 GGUF raw source tests now pass separately;whole original model integration,
 native/physical/Work/Assistant and real throughput are still unproven.
 Goal ACTIVE;last measured0.207893161tok/s,target20 unmet,no new speedup.
+
+21:05UTC whole ORIGINAL raw-weight integration and combined safety gates
+------------------------------------------------------------------------
+See qwen38-original-whole-token-integration-20261028.txt. Real whole-source
+classification/removal of all synthetic learned seeds is implemented;two
+original embedding/bootstrap processes27504/44315 PASS and latest full
+original3-token68871/11982 remain RUNNING from RESET,now into first-layer
+FFN matrices. NO complete original model token or new throughput proof.
+New raw-source revocation61296/8370 and default byte-batch equivalence
+14753/65423 BOTH PASS. Combined FP32+cancellation independent+strict builds
+and16-fault bootstrap4354/16045 PASS;actual layer cancel10985/85878 remains
+RUNNING. Earlier synthetic full20159/13324 and default94923/26724 remain
+independent live histories. Old feedback46023/12070 are now terminal1 at
+the same diagnosed old layer15 residual bound;their failed logs are kept.
+No driver installed or physical/boot/CPU/RAM/Assistant change. Goal ACTIVE.

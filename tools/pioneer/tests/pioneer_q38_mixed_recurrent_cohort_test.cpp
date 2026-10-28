@@ -13,6 +13,12 @@ namespace RC=PioneerQ38MixedRecurrentCohortLayout;
 struct CohortBytes {
  virtual ~CohortBytes()=default;
  virtual uint32_t Get(unsigned route,unsigned address)const=0;
+ // Byte endpoint batching ONLY. Every worker instruction and packet still
+ // executes. The default is exactly the previous little-endian Get loop.
+ virtual void ReadRaw(unsigned route,unsigned address,uint8_t* out,unsigned bytes)const{
+  assert(out && bytes && !((address|bytes)&3) && uint64_t(address)+bytes<=UINT64_C(0x100000000));
+  for(unsigned i=0;i<bytes;i+=4){uint32_t word=Get(route,address+i);for(unsigned b=0;b<4;b++)out[i+b]=uint8_t(word>>(b*8));}
+ }
  virtual void Put(unsigned route,unsigned address,uint32_t value)=0;
  virtual uint64_t Clock()const=0;
  virtual uint32_t RootWord(unsigned address)const=0;
@@ -57,7 +63,7 @@ struct NewCohortPeer:MixedPeer {
   for(unsigned i=0;i<inputs;i++)vector[i]=uint16_t(root.at(0xa0000+i/2*4)>>((i%2)*16));
   for(unsigned i=0;i<scales.size();i++)scales[i]=root.at(0xab000+i*4);
   for(unsigned t=0;t<tiles.size();t++){
-   for(unsigned i=0;i<tile.size();i+=4){unsigned value=bytes->Get(route,base+t*unsigned(tile.size())+i);for(unsigned b=0;b<4;b++)tiles[t][i+b]=uint8_t(value>>(b*8));}
+   bytes->ReadRaw(route,base+t*unsigned(tile.size()),tiles[t].data(),unsigned(tile.size()));
    packets.push_back({base+t*unsigned(tile.size()),route,0x90000,unsigned(tile.size()),int(t)});
   }
   // These poison only scratch/cache observer sentinels, never PC/registers,
