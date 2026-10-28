@@ -1,0 +1,26 @@
+Connected QCH1 PREFIX4 actual instructions: COMPLETE OFFLINE
+2026-10-28. main37573 / clean71667 BOTH direct terminal exit0, not restarted.
+Identical38-line logs SHA256:
+ 4285a5349e58a0f9910e16627132f7fee3bf635ee3346cfe07c1a97b9ad4f37a
+Source/test preparation and exact image pins are recorded in the prior
+qwen38-layer-chain-instruction-preparation-20261028.txt. The harmless nice
+permission warning is retained in the raw logs; actual tests did execute.
+
+ONE actual scheduler ROOT,ONE GDDR byte fabric,SAME119 genuinely virgin
+booted worker instruction histories. Actual recurrent0->1->2->dense3:
+31 matrices/2883 matrix jobs,357 peer Conv/288 GDN/288 dense jobs,independent
+RMS/quantization/Conv/GDN/attention/FFN/residual checks,all4 final5120 and
+actual preceding on-card hidden loaded by the next layer. ALL119 closed
+chains retained. Final dense performs real arithmetic in its own private
+lifetime,creates its STOP frame,then all119 actual STOP/receipt/terminal
+checks and inert2048 instructions pass. No caller completed/clean hint,
+forged old summary,or private PC/nonce/tensor-product transplant is used.
+
+Observed combined ROOT written stack7240/8192. This prefix4 fixture measures
+writes,not the lowest reserved SP; the distinct full64 fixture separately
+traces actual SP at every fetch. Old per-function limits remain unchanged.
+
+SYNTHETIC primitive learned/initial hidden/prior state;NoC/OS endpoints are
+SIMULATED. NOT original full model,persistent state/token commit,native
+cleanup/ownership,physical P100A,Work,Assistant or throughput qualification.
+No new driver is installed. Full goal ACTIVE,last whole-model0.207893161tok/s.

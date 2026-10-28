@@ -1,0 +1,92 @@
+QGW1 distinct global-output worker: BUILD/DATA/INITIAL GUARDS ONLY
+2026-10-28. No physical card,driver install,power,boot or Assistant action.
+
+New ABI QGW1 0x31574751,own boot witness40..45,global operation12/layer64,
+Q6_K/5120/248320,9waves,973 jobs (last wave21),distinct global STOP grammar.
+Legacy block arithmetic is reused ONLY as internal returning math. Boot,
+jobs,status and private seal belong to this NEW image. Cannot retag or hot-
+replace an old live QMW1 cohort. Own joint native owner/footprint/source/
+initialized ledger/producer/terminal/journal are still mandatory and absent.
+
+Actual frontend private model/down-job+position/wave sequencing starts from
+zero; only actual returned down arithmetic advances its necessary ordering.
+These counters are NOT sufficient proof of every model operator,full64 hidden
+or a token producer. The future ROOT must own the complete actual pipeline.
+Actual completed global matrix scans ALL its finite local rows at84000;
+signed-zero/equal-logit ties choose the smallest global vocabulary row.
+Own256B QGP1 partial at83e00 precedes existing83f00 matrix proof,contains
+actual selected row/value,counts,command,source and identity. This proposed
+NEW data span is NOT an old native snapshot grant. Positive arithmetic and
+local partial execution have NOT yet been tested; only compiled code exists.
+
+Canonical heap DATA plan binds global role1 Q6 stripes,role2 F32 norm,all
+973 canonical jobs/9waves,positions0..8191 and same-source worker boot DATA.
+It authenticates NO file,initialized pages,completed all64/normalized input,
+native lifetime or token. Caller nonce/identity inputs here are DATA ONLY.
+
+PINNED BUILD main70254 / clean46180 BOTH direct exit0. Commands:
+ python3 tools/pioneer/build_qwen38_global_worker_image.py \
+  /Volumes/HaikuBuildLocal/generated.riscv64 OUT
+Final outputs /private/tmp/pioneer-q38-global-globalbuild-{main,clean}-20261028-e.
+All9 main/clean artifacts identical. Front largest frame1536/2048 unchanged;
+all allocated sections exported/no writable globals/GOT/unresolved symbols/
+forbidden scalar instructions;existing GDN CSR gate passes. s11 has exactly
+one genuine private bind and one reader,all linked math capsules reserve it.
+Qualified old worker rebuilt first and ALL old9 literal pins remain exact.
+New literal pins:
+ boot4 a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c
+ global6264 bdbd801a4482188efed0dea19d3a31f8c383208ea33447c842fd8312674872ba
+ dense10332 cfb3b570f61baf7010e14a4072fbe496014ef2ad792d53145ef1b794ff73233a
+ text5984 e9b643d504dc6b1e2e8d744de9c425603fa9b785ef8dab14a9e47b4249f94553
+ affine5360 47c52fee6ccfb0a8847fe17a9d43d4016e7cfc6c68cc1427673f6869cd287b78
+ ffn16456 102283280e44bb8e614ff84447825fe5126f9fcd7da032f1fa8da20fc619a6d4
+ service9888 ee3f68158d9609cc3667ef9812dbe3da11666dc01baa9b4fe1baf5bfd317d2c0
+ gdn35564 a56acbed91ca3728a6e2cef4cf8566be39ae8c710fe0ad62a80b8c2032573762
+ ELF121836 fc8ade5bdbc69a6be95846d40ee26025d43e559ef53c7beedd52071f75e83c4f
+Boot jump alone matches the old entry address,NOT the boot DATA/image ABI.
+
+DATA/math main90891 / clean19767 BOTH direct exit0,identical2-line f35ba956:
+135 new role/build gates,defined0+late/old mixed+chain+kernel mutual refusal,
+environment refusal BEFORE SDK/output. ASan+UBSan covers1946 descriptions/
+all248320 vocabulary rows exactly once x2/164 mutations/21 refusals/alias+
+no-partial-output/one-shot failures/independent canonical parts+norm/20000
+independent finite greedy-order comparisons and signed-zero tie handling.
+
+ACTUAL initial frontend guards main62107 / clean12090 BOTH direct exit0,
+identical1-line d94ecb1e702863fbfe1ccc3ff5d4d878df21e5a2b6a368795ae4859031163776:
+one genuine NEW boot BEFORE any job,15 reached premature global/globalSTOP,
+fake completed word,layer63 shortcut,position jump,oldABI,boot/source/job
+refusals,ZERO NoC/matrix traffic,inert fault2048. All immutable new ROM is
+installed BEFORE the first worker instruction;never transplant old private
+PC/nonce/tensor histories. Primitive old fixture is only a boot-time endpoint
+constructor. No positive global arithmetic/current all64 producer is proved.
+
+Compatibility controls: old-chain DATA main55543 / clean15831 both exit0,
+332 role gates/all64 packages/all7banks3837952words/384 mutations21 refusals.
+SDK actual native feature-OFF control main8524 / clean74714 both exit0;
+complete unchanged4a8a0a01f12e7520fe62f649af14faab6a9fa72caa5cec8b3db0f84282d1426e
+in both trees,old65 literal61faa093 and resident controls pass. Kernel source
+change ONLY appends global IMAGE refusal to an existing preprocessor line;
+no runtime body or source-line shift. No new native role/tag/ABI was added.
+
+Development repairs: first compiler attempts repaired misleading indentation
+and a bool/float-array name collision,then fixed the renamed linker section's
+SIZEOF reference. DATA test explicitly selects the pre-existing canonical
+GDN mutable-state test perimeter (initial omission refused compilation).
+Initial instruction test references an unused included static helper instead
+of disabling -Werror. No guard,reference,tolerance,code/stack extent or device
+poll bound was relaxed. Final builds and tests are freshly terminal0.
+
+Full64 older positive21097/69041 STILL LIVE. At layer0/1 totals843721110/
+1551668822 ROOT instructions,reserved SP7248/written7240. This includes
+simulated worker polling,NOT physical speed. Its total32-bit4B observation
+counter cannot span64 layers. Next fix OFFLINE counter/window bookkeeping
+without changing private PC/registers/nonces/Tensix/clock/device poll bounds
+or event ordering; diagnostic useful-work vs polling attribution is needed.
+Never restart solely for quiet output. Preserve current partial evidence.
+
+Required next: positive new-worker arithmetic/global partial tests,qualified
+new ROOT and fresh G-cohort handshake,all64+global norm/vocab/reduction/
+sampling,persistent multi-token state and genuine native ownership/lifecycle,
+original/physical validation,Work/Assistant and REAL inference benchmarking.
+Last whole-model0.207893161tok/s,target20 unmet;no measured new speedup.

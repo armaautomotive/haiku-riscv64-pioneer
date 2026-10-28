@@ -1,0 +1,38 @@
+nice: setpriority: Operation not permitted
+START ACTUAL connected QCH1 prefix4 instructions/SAME119 genuinely virgin peers/ONE GDDR map/ONLY raw learned+initial hidden+zero prior state;NO CPU products or worker state transplant
+OBSERVED connected layer0 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer0 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer0 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer0 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer0 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer0 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer0 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer0 matrix8 role4/actual quantized input/same workers
+PASS connected layer0/final5120/ALL119 genuine closed chains/actual on-card hidden for next layer
+OBSERVED connected layer1 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer1 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer1 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer1 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer1 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer1 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer1 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer1 matrix8 role4/actual quantized input/same workers
+PASS connected layer1/final5120/ALL119 genuine closed chains/actual on-card hidden for next layer
+OBSERVED connected layer2 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer2 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer2 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer2 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer2 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer2 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer2 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer2 matrix8 role4/actual quantized input/same workers
+PASS connected layer2/final5120/ALL119 genuine closed chains/actual on-card hidden for next layer
+OBSERVED connected layer3 matrix1 role5/actual quantized input/same workers
+OBSERVED connected layer3 matrix2 role6/actual quantized input/same workers
+OBSERVED connected layer3 matrix3 role7/actual quantized input/same workers
+OBSERVED connected layer3 matrix4 role10/actual quantized input/same workers
+OBSERVED connected layer3 matrix5 role2/actual quantized input/same workers
+OBSERVED connected layer3 matrix6 role3/actual quantized input/same workers
+OBSERVED connected layer3 matrix7 role4/actual quantized input/same workers
+PASS connected layer3/final5120/ALL119 genuine closed chains/actual on-card hidden for next layer
+PASS ACTUAL connected recurrent0->1->2->dense3/ONE ROOT+SAME119+ONE byte fabric/31matrices2883jobs+Conv+GDN+attention/final5120/all119 REAL STOP/inert2048/combined ROOT stack7240/8192;SYNTHETIC raw bytes,NOT original/native/physical/persistent-state/all64/token/Work/TPS

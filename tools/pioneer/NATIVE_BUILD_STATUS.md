@@ -1,5 +1,46 @@
 # Native build status
 
+## Latest: connected four-layer arithmetic and genuine STOP pass both trees
+
+October 28, 2026. Prefix4 instruction runs `37573/71667` both finish 0,
+identical38-line `4285a534`. ONE ROOT and the SAME119 virgin-booted worker
+histories produce recurrent0->1->2->dense3,31 matrices/2883 jobs,Conv/GDN,
+attention and every final5120. All119 actual STOPs and an inert2048 terminal
+pass; observed combined written stack7240/8192. No products or private
+worker state were copied between separate recurrent/dense machines.
+Synthetic primitive bytes/OS/NoC endpoints, NOT original/full64/native/card/
+persistent-token/Work/TPS proof. Reserved-SP tracing is in the full64 test,
+not this prefix4 result. Evidence:
+[connected prefix4 completion](benchmarks/qwen38-layer-chain4-instruction-completion-20261028.txt).
+
+## Current: distinct global-output worker builds and initial guards qualify
+
+A separate QGW1 ABI/image now implements real global layer64/Q6 matrix
+dispatch and scans its actual finite local rows for a greedy maximum. Private
+down-job/wave ordering rejects premature output, but is NOT proof of a full
+model/input producer. Main/clean pinned builds both finish 0, byte-identical,
+front frame1536/2048. All old mixed-worker image pins remain exact. Actual
+initial QGW1 instruction tests pass15 refusals with zero compute/NoC traffic.
+Canonical973-job/9-wave DATA covers all248320 rows exactly once at positions
+0 and8191;135 role gates/164 mutations/21 refusals/20000 finite greedy math
+comparisons pass main/clean ASan+UBSan. Existing chain332 gates and old native
+SDK object4a8a0a01 remain unchanged. No new driver/image is installed.
+
+The global worker is NOT connected to a new whole-model ROOT or qualified
+for positive vocabulary arithmetic,final norm,global reduction,sampling,
+native ownership or Work. It must boot as its own fresh cohort, never replace
+workers inside an old live cohort. Evidence:
+[global worker build/data/initial guards](benchmarks/qwen38-global-worker-preparation-20261028.txt).
+
+Full64 `21097/69041` are still LIVE. Their first two completed layers report
+843721110/1551668822 cumulative ROOT instructions (includes simulated polling),
+reserved/written stack7248/7240. A single32-bit test instruction budget cannot
+cover64 such layers: fix OFFLINE counter/window bookkeeping, preserving
+instruction/tick ordering and all device bounds; do NOT interpret this count
+as physical speed. All64/multi-token state/output/native/Work/Assistant and
+real inference performance remain unfinished. Last whole-model remains
+**0.207893161 tokens/sec**;20 target unmet, no measured speedup.
+
 ## Current: full64 instruction runs started; first connected handoff passes
 
 October 28, 2026. The unchanged prefix4 runs `37573/71667` now complete

@@ -23,7 +23,7 @@ for prefix in (False,True):
    if value is not None:changed[key]=value
    check(changed,'',False);check(base,'#undef '+key+'\n'+('' if value is None else '#define '+key+' '+value+'\n')+include,False)
  other=dict(base);other['PIONEER_Q38_LAYER_CHAIN_LAYERS']='64' if prefix else '4';check(other,'',False)
- for key in ('_KERNEL_MODE','__FAST_MATH__','PIONEER_DRIVER_BUILD_TAG','TT_PIONEER_DRIVER_RELOAD',
+ for key in ('_KERNEL_MODE','__FAST_MATH__','PIONEER_DRIVER_BUILD_TAG','TT_PIONEER_DRIVER_RELOAD','PIONEER_Q38_GLOBAL_WORKER_IMAGE',
   'PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE',
   'PIONEER_Q38_LAYER_RETURN_COMPONENT_IMAGE','PIONEER_Q38_LAYER_COMPONENT_DENSE_STOP',
   'PIONEER_Q38_LAYER_COMPONENT_RECURRENT','PIONEER_Q38_LAYER_COMPONENT_DENSE','PIONEER_Q38_LAYER_COMPONENT_CHAIN_LAYERS',
