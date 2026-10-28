@@ -22,6 +22,17 @@ all current dynamic checks;do not enable the prototype in a kernel/Work
 build or use a cached boolean as launch permission. Evidence:
 benchmarks/qwen38-recurrent-prefix-exact-mirror-20261028.txt.
 
+The same DATA comparison is now measured on the Pioneer in a separately
+built user-mode helper with NO open/fopen/ioctl/mmap/native-owner symbols.
+Main/clean Haiku SDK outputs match:objecta960662a,binary71957965,maxUSERframe
+7904B. Hash-verified isolated execution completed0:three full prefix checks
+average41068.333us versus128 mirror checks average1452.234us (~28x cheaper
+CPU metadata predicate). Stable041 installed-file hash is unchanged before/
+after. This is NOT driver integration,full Guard/card/model performance or
+tokens/sec;it does not establish current GPU ownership/reload permission.
+Default old CPU timing outputs remain byte-identicalc4e6755e/c7db4e67.
+Evidence:benchmarks/qwen38-prefix-mirror-haiku-cpu-20261028.txt.
+
 ## Current offline work: distinct three-layer DEBUG73 built; not installed
 
 October 28, 2026. The new prefix diagnostic now has its own exact physical

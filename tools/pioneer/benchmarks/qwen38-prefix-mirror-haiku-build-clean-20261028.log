@@ -1,0 +1,4 @@
+a960662a0069f315adca91b15229e9281d118b2c3f9027f14f51aca4c5ba3312 cpu-timing.o
+719579650bedd769326e86346398ccc077aded920f08a5ce89549029bac4b7ea q38-prefix-exact-mirror-CPU-TIMING-ONLY
+PASS Haiku CPU-only immutable-plan timing compile/link/no device-open-or-ioctl/native-owner symbols/maxUSERframe7904;NOT executed/model/TPS proof
+EXACT PREFIX MIRROR user-mode DATA helper ONLY;NO kernel/native-role/driver integration,model IO or physical-card timing

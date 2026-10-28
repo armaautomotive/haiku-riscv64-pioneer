@@ -1,0 +1,4 @@
+719579650bedd769326e86346398ccc077aded920f08a5ce89549029bac4b7ea  /boot/home/pioneer-q38-prefix-mirror-cpu-20261028-a/q38-prefix-exact-mirror-CPU-TIMING-ONLY-71957965
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+CPU_METADATA_ONLY full_prefix_checks3 total_us123205 us_per_check41068.333 exact_mirror_checks128 total_us185886 us_per_check1452.234 canonical_bytes287336 prefix_bytes4180232;NO_GPU_OPEN_OR_NATIVE_OWNER_OR_MODEL_IO_NOT_INFERENCE_OR_TOKEN_RATE
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe

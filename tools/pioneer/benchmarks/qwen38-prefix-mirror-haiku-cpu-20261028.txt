@@ -1,0 +1,58 @@
+Pioneer Haiku USER-MODE exact prefix data comparison
+October28UTC2026;CPU metadata ONLY,NOT driver/GPU/inference performance
+
+Implementation and build isolation
+----------------------------------
+The existing CPU-only timing builder has an explicit --prefix-mirror mode,
+with a new separately named user executable. No original driver,image,
+client,program bytes or native ownership scope was changed. The new source
+constructs canonical+three-layer prefix DATA and its exact-data mirror on
+the CPU heap. A compiler memory barrier prevents invariant-call hoisting.
+It measures only3 original Matches and128 exact comparisons,not construction,
+full Guard/source/IO checks,model loading,CPU inference or card operations.
+
+Real Haiku RV64 SDK main49890/clean39499 BOTH TERMINAL0;both artifacts match:
+objecta960662a0069f315adca91b15229e9281d118b2c3f9027f14f51aca4c5ba3312
+binary719579650bedd769326e86346398ccc077aded920f08a5ce89549029bac4b7ea.
+maxUSERframe7904B,NOT a kernel frame. nm inspection excludes direct
+open/fopen/ioctl/mmap/map_physical_memory/session/context/native-owner/Work
+symbols. The mirror header still REFUSES kernel/native/NODRV/client/oracle/
+image/Work roles,including defined0. This is NOT a way to enable the mirror
+inside production code without an independently qualified private adapter.
+
+Default old timing builder regression99504 TERMINAL0,unchanged outputs:
+objectc4e6755ea1f7051cec3bec73d24b02efc9b80786bed85813be1eb6821db502dc
+binaryc7db4e67ad687dfe81fd87797f5184a9f75cce3dcbdc5ffcfb9f2527bcc1649a.
+The new CLI mode does not replace/retag the old executable or its source.
+
+Actual CPU execution,not a physical-driver trial
+------------------------------------------------
+Only the inspected new executable was copied to a fresh isolated folder,
+outside watched drivers and application install paths:
+/boot/home/pioneer-q38-prefix-mirror-cpu-20261028-a/q38-prefix-exact-mirror-CPU-TIMING-ONLY-71957965
+Its complete remote SHA matched71957965 before execution. The SSH command
+completed0. Three full prefix data checks123205us total/41068.333us each;
+128 exact mirror comparisons185886us total/1452.234us each. About28.28x less
+CPU time for this DATA predicate on Haiku/RISC-V. Warm short microbenchmark,
+not a sustained measure,all-core throughput,full Guard cost or tokens/sec.
+No GPU device was opened by the helper and no GPU status ioctl was issued.
+
+Installed driver file BEFORE and AFTER is exactly:
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+This verifies only installed-file preservation,NOT current loaded driver
+generation/owner/quarantine/reload readiness. No new driver was installed
+or loaded,physical compute launched,Assistant/boot/network configured,power
+pulsed,SD changed,mains switched or hardware connections changed. The new
+CPU helper is retained only in the isolated folder for reproducibility.
+
+Outstanding full objective unchanged
+------------------------------------
+Eight exact local native/readback/control/original runs remain required;
+the CPU helper did not replace or restart them. Original numerical results,
+positive readback/full END and actual/routed control caller-copy results are
+not inferred from this CPU benchmark. Complete those gates and the original
+public-control/card comparison,then dense3/all64/persistent KV+GDN+history/
+whole-token commit/finalnorm/vocabulary/on-card sampling/persistent no-CPU-
+reference Work+Assistant and real inference optimization. Stable64CPU/fullRAM
+was freshly checked earlier;no narrower success is claimed. Last measured
+WHOLE27B0.207893161tok/s unchanged;20tok/s/full offload UNMET;goal ACTIVE.
