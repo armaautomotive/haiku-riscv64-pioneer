@@ -28,3 +28,6 @@
  || defined(PIONEER_Q38_EMBEDDING_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_NATIVE)
 #error Global chain IMAGE creates no old image/native/source/client/oracle/Work capability
 #endif
+#if defined(PIONEER_Q38_TOKEN_CANCEL_BOUNDARY) && !defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE)
+#error Token cancellation is not an old parent, component, worker or native role
+#endif

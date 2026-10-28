@@ -19,7 +19,7 @@ struct Private {uint32_t boot[64],outer[128],state[64],phase;};
 static_assert(sizeof(Private)==1028,"actual owned parent, never a transplanted component");
 enum {Bank=0,Workspace=1,Layer=2,Completed=3,Profile=6,Counts=8,
  Position=16,Token=17,Committed=18,Slot=19,Limit=20,Initial=21,PromptCount=22,
- StopEos=23,Eos0=24,Eos1=25,SessionReady=26,NextToken=27,FrameReady=28};
+ StopEos=23,Eos0=24,Eos1=25,SessionReady=26,NextToken=27,FrameReady=28,CancelStage=29};
 static volatile uint32_t* Words(unsigned address){return reinterpret_cast<volatile uint32_t*>(address);}
 static void Fence(){asm volatile("fence":::"memory");}
 static __attribute__((noinline)) Private* Owner(){
@@ -36,15 +36,35 @@ static bool Quiet(){
 }
 static __attribute__((noinline,section(".conv.token"))) void Scope(bool counters=true){
  const auto* p=Owner();
- if(!p->phase || p->phase>6 || p->state[Bank]>=7 || p->state[Profile]!=64 || p->state[Layer]>=64
+ if(!p->phase || p->phase>
+#ifdef PIONEER_Q38_TOKEN_CANCEL_BOUNDARY
+ 7
+#else
+ 6
+#endif
+ || p->state[Bank]>=7 || p->state[Profile]!=64 || p->state[Layer]>=64
   || p->state[Completed]>64 || p->state[Position]>=8192 || p->state[Token]>=248320 || !Quiet())scalar_fault_park();
  if(p->phase==5){
   if(p->state[FrameReady] || p->state[Position] || p->state[Completed] || p->state[Layer] || p->state[Committed] || p->state[Slot]
    || !L::LayerFrame(p->outer,0,p->state[Bank],p->state[Workspace],p->boot))scalar_fault_park();
  }else{
   if(p->state[FrameReady]!=1 || !M::Frame(p->outer,p->state[Layer],p->state[Position],p->state[Token],p->state[Bank],p->state[Workspace],p->boot)
-   || p->state[Committed]!=p->state[Position]+unsigned(p->phase==6)
-   || p->state[Slot]!=((p->state[Position]+unsigned(p->phase==6))&1))scalar_fault_park();
+   || p->state[Committed]!=p->state[Position]+unsigned(p->phase==6
+#ifdef PIONEER_Q38_TOKEN_CANCEL_BOUNDARY
+    || (p->phase==7 && p->state[CancelStage]==3)
+#endif
+   ) || p->state[Slot]!=((p->state[Position]+unsigned(p->phase==6
+#ifdef PIONEER_Q38_TOKEN_CANCEL_BOUNDARY
+    || (p->phase==7 && p->state[CancelStage]==3)
+#endif
+   ))&1))scalar_fault_park();
+#ifdef PIONEER_Q38_TOKEN_CANCEL_BOUNDARY
+  if(p->phase==7){
+   if(!p->state[CancelStage] || p->state[CancelStage]>3 || *Words(T::CancelLocal)!=T::CancelMagic
+    || p->state[Completed]!=p->state[Layer]+1
+    || (p->state[CancelStage]>1 && (p->state[Completed]!=64 || p->state[Layer]!=63)))scalar_fault_park();
+  }else
+#endif
   if(p->phase==4 || p->phase==6){if(p->state[Completed]!=64 || p->state[Layer]!=63)scalar_fault_park();}
   else if(p->phase==1?p->state[Completed]!=p->state[Layer]+1:p->state[Completed]!=p->state[Layer])scalar_fault_park();
  }
@@ -79,7 +99,13 @@ static __attribute__((noinline,section(".conv.token"))) void Transfer(unsigned r
  for(unsigned i=0;i<8;i++)p->state[Counts+i]=expected[i];
 }
 #include "blackhole_qwen38_token_metadata_control.inc"
+#ifdef PIONEER_Q38_TOKEN_CANCEL_BOUNDARY
+extern "C" void q38_token_cancellation_point();
+#endif
 #include "blackhole_qwen38_global_head_control.inc"
+#ifdef PIONEER_Q38_TOKEN_CANCEL_BOUNDARY
+#include "blackhole_qwen38_token_cancel_control.inc"
+#endif
 }
 extern "C" void q38_global_chain_main(){
  using namespace GlobalChain;Private owned;uint32_t next[128];
@@ -90,6 +116,11 @@ extern "C" void q38_global_chain_main(){
  asm volatile("mv s11,%0"::"r"(&owned):"s11","memory");Scope(false);
  for(unsigned i=0;i<8;i++)owned.state[Counts+i]=*Words(0xffb20000+Counter(i));
  if(owned.state[Counts+2]!=owned.state[Counts+6])scalar_fault_park();
+#ifdef PIONEER_Q38_TOKEN_CANCEL_BOUNDARY
+ // RAW control must be initialized by this new exclusive native lease
+ // before release. Never clear/overwrite a request after execution starts.
+ if(*Words(T::CancelLocal))scalar_fault_park();
+#endif
  Words(R::Status)[3]=T::Magic;for(unsigned i=0;i<64;i++){Words(L::Progress)[i]=0;Words(T::TerminalLocal)[i]=0;}
  Bootstrap();
  for(;;){
@@ -116,6 +147,9 @@ extern "C" void q38_global_chain_main(){
    if(owned.state[Counts+2]!=owned.state[Counts+6])scalar_fault_park();
    owned.state[Completed]=layer+1;owned.phase=1;
    Words(L::Progress)[0]=T::Magic;Words(L::Progress)[1]=position;Words(L::Progress)[2]=layer+1;Fence();
+#ifdef PIONEER_Q38_TOKEN_CANCEL_BOUNDARY
+   q38_token_cancellation_point();
+#endif
   }
   if(owned.state[Completed]!=64 || owned.phase!=1 || owned.state[Layer]!=63)scalar_fault_park();
   owned.phase=4;Scope();owned.state[NextToken]=RunHead();

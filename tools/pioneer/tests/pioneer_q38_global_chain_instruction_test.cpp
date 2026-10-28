@@ -115,7 +115,7 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
  unsigned minSp=0x70000;
  PioneerQ38InstructionWindows observation; // host-only instruction accounting, not card state
  PioneerQ38InstructionProfile profile{getenv("PIONEER_TEST_ROOT_PROFILE_MAP")};
- bool pending=false,feedback=false;
+ bool pending=false,feedback=false,cancelBoundary=false;
  unsigned feedbackReads=0,feedbackWrites=0,feedbackChecks=0;
  std::array<uint32_t,5120> feedbackExpected={}; // observer output ONLY
  static uint64_t Key(unsigned route,unsigned address){return uint64_t(route)<<32|address;}
@@ -195,12 +195,16 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
   assert(canonical->Build());bootRom=Read((std::string(image)+"/boot.bin").c_str());text=Read((std::string(image)+"/text.bin").c_str());
   conv=Read((std::string(image)+"/conv.bin").c_str());terminal=Read((std::string(image)+"/terminal.bin").c_str());
   std::ifstream rootSymbols(std::string(image)+"/program.symbols");std::string symbolAddress,symbolKind,symbolName;
-  while(rootSymbols>>symbolAddress>>symbolKind>>symbolName)if(symbolName=="q38_global_chain_feedback_decode")feedback=true;
+  while(rootSymbols>>symbolAddress>>symbolKind>>symbolName){
+   if(symbolName=="q38_global_chain_feedback_decode")feedback=true;
+   if(symbolName=="q38_token_cancellation_point")cancelBoundary=true;
+  }
   assert(bootRom.size()==4 && text.size()<=131072 && conv.size()<=32768 && terminal.size()==8);l1[0]=Word(bootRom,0);
   // Bounded TEST endpoint map, not a native mapping grant. The below bytes
   // are poison before the one ROOT release; all products come from code.
   for(unsigned a=0x6e000;a<0x70000;a+=4)memory[a]=0x7fc00001;
   for(unsigned a=0x74000;a<0x180000;a+=4)memory[a]=0x7fc00001;
+  if(cancelBoundary)memory[0x7f900]=0; // RAW control initialized before first ROOT instruction, not a completed state
   std::array<uint32_t,1920> sources={};counts.fill(0xfffffff8);
   for(unsigned i=0;i<16;i++)sources[i]=source[i]=i?0x76540000+i:0x16005;
   for(unsigned w=0;w<119;w++){

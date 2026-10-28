@@ -23,6 +23,7 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
  unsigned sourceCopies=0,stateWrites=0,stateReadbacks=0,tokenPublications=0;
  unsigned kvPhase=0,kvWrites=0,kvReadbacks=0;
  unsigned kvFaults=0,kvFault=0;bool kvInjected=false;
+ bool expectCancelStop=false; // observer ONLY; never supplied to the device
  std::array<uint32_t,5120> expectedEmbedding={};
  static uint16_t ToHalf(float value){_Float16 h=_Float16(value);uint16_t bits;memcpy(&bits,&h,2);return bits;}
  static float FromHalf(uint16_t bits){_Float16 h;memcpy(&h,&bits,2);return float(h);}
@@ -350,7 +351,15 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
      unsigned op=p.memory.at(M::Job+8);
      if(op==1)matrixJobs++;else if(op==7)convJobs++;else if(op==8)gdnJobs++;else if(op>=9 && op<=11)denseJobs++;
      else if(op==G::GlobalMatrix){assert(completed==64 && p.memory.at(M::Job+24)==position);if(!globalJobs)HeadInput();globalJobs++;}
-     else{assert(op==2 && committed==Tokens && globalJobs==973 && globalPartials==973);stopJobs++;}
+     else{
+      assert(op==2);
+      if(expectCancelStop){
+       unsigned stage=ActualPrivate(29);assert(cancelBoundary && stage>=1 && stage<=3 && completed==layer+1
+        && committed==position+unsigned(stage==3) && p.memory.at(M::Job+5*4)==(stage==1?layer:64U)
+        && p.memory.at(M::Job+6*4)==position);
+      }else assert(committed==Tokens && globalJobs==973 && globalPartials==973);
+      stopJobs++;
+     }
      p.Receive();
     }
     peerWrites++;
@@ -460,6 +469,7 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
   printf("PASS ACTUAL persistent ROOT %u FULL tokens/two prompt inputs then genuine greedy feedback/SAME119 from virgin boot/ALL64+973 EACH/nonzero GDN+append-only KV consumed across positions/all48 Conv commits+actual readbacks/one slot flip and model record EACH/final119STOP/inert2048/stack reserved%u written%u;SYNTHETIC raw inputs,NOT original model/native/physical/Work/TPS\n",Tokens,0x70000-minSp,0x70000-minStack);
  }
 };
+#ifndef PIONEER_Q38_TOKEN_FLOW_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==4 || (argc==5 && !strcmp(argv[4],"--prepare-only")));setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;(void)&Refusals;(void)&LateRefusals;
  auto m=std::make_unique<TokenFlowMachine>(argv[1],argv[2],argv[3]);
@@ -472,3 +482,4 @@ int main(int argc,char** argv){
  bool okay=m->RunTokens();if(m->kvFault){assert(!okay);m->VerifyKvFault();_exit(0);}
  assert(okay);m->VerifyTokens();
 }
+#endif

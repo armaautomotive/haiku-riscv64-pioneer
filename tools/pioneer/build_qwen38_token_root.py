@@ -6,7 +6,9 @@ import pathlib
 import re
 import subprocess
 import sys
-assert len(sys.argv) in (3,4) and (len(sys.argv)==3 or sys.argv[3]=='--inspect-candidate')
+options=sys.argv[3:]
+assert 3<=len(sys.argv)<=5 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary'}
+inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -16,11 +18,12 @@ def run(*args):subprocess.run([str(a) for a in args],check=True)
 # Reproduce the strict returning components and unchanged whole feedback
 # image FIRST. Neither an old native owner nor a component alone can launch.
 components=out/'qualified-components'
-run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if len(sys.argv)==4 else []))
+run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []))
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1',
+ *(['-DPIONEER_Q38_TOKEN_CANCEL_BOUNDARY=1'] if cancel else []),
  '-c',here/'blackhole_qwen38_token_root.cpp','-o',out/'program.o')
 run(tool+'as','-march=rv32imf','-mabi=ilp32','-mno-relax',here/'blackhole_qwen38_global_chain_start.S','-o',out/'start.o')
 run(tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',here/'blackhole_qwen38_global_chain.ld',
@@ -36,6 +39,7 @@ for name in ('q38_global_chain_main','q38_return_recurrent_layer','q38_return_de
  assert re.search(r'^[0-9a-f]+ T '+name+'$',symbols,re.M),name
 for name in ('GlobalChain::CommitState(', 'GlobalChain::PublishToken(', 'GlobalChain::Bootstrap(', 'DensePartitionRoot::AdmitGlobalOutput(', 'Joined::AppendTokenKv('):
  assert name in symbols,name
+assert bool(re.search(r'^[0-9a-f]+ T q38_token_cancellation_point$',symbols,re.M))==cancel
 for name in ('q38_layer_chain_main','q38_run_final_dense_and_stop','mixed_recurrent_block_main','mixed_live_block_main',
  'mixed_live_block_stopped','mixed_recurrent_block_stopped','mixed_recurrent_block_wait','mixed_live_block_wait','q38_feedback_unbound_embedding_main'):
  assert not re.search(r'\b'+name+r'\b',symbols),name
@@ -76,9 +80,15 @@ PINS=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca
  ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
  ('conv.bin',19752,'efb5924c156faafe3a66f7afbc70e253667cad25197d81f82f58789841a8d9bf'),
  ('program.elf',176516,'505eac1b08bee2a6841e5946252ef83d0b05def6bdcad9036b761bd08ea298ed'))
+PINS_CANCEL=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+ ('text.bin',129228,'e8d2ddb2b9df573bf63bd5739a8dc15321bbfc2be37ecdd43b89f8a6ce711462'),
+ ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+ ('conv.bin',21340,'1dd258b6602a98ff34e04c34c74a110de99a3b63c0168f580428422ffd128f15'),
+ ('program.elf',178168,'4d78a5147336e32494e55459fd6b421ecd229f0518f95a2bef559ba346296b35'))
 observed=[]
 for name in ('boot.bin','text.bin','terminal.bin','conv.bin','program.elf'):
  data=(out/name).read_bytes();item=(name,len(data),hashlib.sha256(data).hexdigest());observed.append(item);print(repr(item),flush=True)
-if len(sys.argv)==3:assert PINS and tuple(observed)==PINS,'unqualified persistent parent; inspect independent builds first'
+expected=PINS_CANCEL if cancel else PINS
+if not inspect:assert expected and tuple(observed)==expected,'unqualified persistent parent variant; inspect independent builds first'
 print('BUILD ONLY persistent parent/bootstrap/prompt+generation/all64+973/recurrent state copy+readback/token stream/final119STOP;maxFrame'+str(max(frames))+
  ';NO runtime/combined stack/original full-model/native/physical/cancellation/Work/Assistant/TPS qualification. DO NOT INSTALL')

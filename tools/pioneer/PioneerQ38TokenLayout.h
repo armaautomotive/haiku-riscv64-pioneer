@@ -10,6 +10,7 @@ namespace C=PioneerQ38GlobalChainLayout;namespace H=PioneerQ38GlobalHeadLayout;
 enum {Magic=0x31545351,TokenMagic=0x31435451,TerminalMagic=0x31545451,
  SessionOffset=0x3100000,PromptOffset=0x3180000,OutputOffset=0x3200000,
  SessionLocal=C::Head+1536,RecordLocal=C::Head+2048,TerminalLocal=C::Summary,
+ CancelLocal=C::Head+2304,CancelMagic=0x314e4351,
  SessionBytes=512,RecordBytes=256,Context=8192};
 static inline bool Session(const uint32_t* d,const uint32_t* boot,unsigned bank,unsigned workspace){
  if(!d || !C::BootShape(boot) || bank>=7 || workspace<0x04000000 || workspace>0xc0000000 || (workspace&4095)
@@ -32,6 +33,6 @@ static_assert(SessionOffset>=C::HeadOffset+C::HeadBytes && SessionOffset+Session
  && PromptOffset+Context*4<=OutputOffset && OutputOffset+Context*RecordBytes<=C::WorkspaceBytes,
  "persistent session, immutable prompt and token stream cannot alias existing workspace extents");
 static_assert(PioneerQ38TokenStateLayout::Local+256<=SessionLocal && SessionLocal+512<=RecordLocal
- && RecordLocal+256<=C::R::Projected,"separate L1 state/session/record storage");
+ && RecordLocal+256<=CancelLocal && CancelLocal+64<=C::R::Projected,"separate L1 state/session/record/cancel storage");
 }
 #endif

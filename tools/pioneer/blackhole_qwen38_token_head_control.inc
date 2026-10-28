@@ -133,6 +133,9 @@ static __attribute__((noinline,section(".conv.token"))) unsigned RunHead(){
  for(unsigned w=0;w<119;w++)Closed(header,w);
  unsigned reason=p->state[Position]+1>=p->state[Limit]?1:
   p->state[StopEos] && p->state[Position]+1>=p->state[PromptCount] && (bestRow==p->state[Eos0] || bestRow==p->state[Eos1])?2:0;
+#ifdef PIONEER_Q38_TOKEN_CANCEL_BOUNDARY
+ q38_token_cancellation_point(); // fully closed head, BEFORE mutable commit
+#endif
  unsigned next=bestRow;
  if(!reason){
   if(p->state[Position]+1<p->state[PromptCount])next=Prompt(p->state[Position]+1);
@@ -140,6 +143,9 @@ static __attribute__((noinline,section(".conv.token"))) unsigned RunHead(){
   if(feedback[2]!=next || feedback[3]!=p->state[Position]+1 || feedback[14] || feedback[15]!=1)scalar_fault_park();
  }
  CommitState(header,!reason);PublishToken(header,bestRow,bestBits,!reason);
+#ifdef PIONEER_Q38_TOKEN_CANCEL_BOUNDARY
+ q38_token_cancellation_point(); // finish an already-started commit first
+#endif
  if(reason)Finish(header,reason);
  FeedbackSeal(header);return next;
 }

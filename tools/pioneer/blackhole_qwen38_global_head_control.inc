@@ -7,6 +7,10 @@ static const uint32_t* PeerJob(unsigned w){return reinterpret_cast<const uint32_
 static void HeadSeal(const uint32_t* h,bool counters=true){
  Scope(counters);
 #ifdef PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE
+#ifdef PIONEER_Q38_TOKEN_CANCEL_BOUNDARY
+ if(Owner()->phase==7){if(!Owner()->state[Completed])scalar_fault_park();}
+ else
+#endif
  if(Owner()->phase==5){if(Owner()->state[Completed] || Owner()->state[Layer])scalar_fault_park();}
  else if((Owner()->phase!=4 && Owner()->phase!=6) || Owner()->state[Completed]!=64 || Owner()->state[Layer]!=63)scalar_fault_park();
 #else

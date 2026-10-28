@@ -1,0 +1,129 @@
+Experimental closed-boundary cancellation: BUILD/bootstrap passed, STOP PENDING
+2026-10-28 19:45UTC. Goal ACTIVE. Last real whole-model0.207893161tok/s;
+target20 UNMET, no new throughput measurement. No hardware/SSH/driver/UI/
+boot/CPU/RAM/power/SD/mains change. Dirty llama.cpp/FlashNext untouched.
+
+Progress / exact scope
+-----------------------
+Previous goal turn89d8b55480 made concrete progress: diagnosed the actual
+missing canonical current-KV append, added real on-card writes/readbacks,
+passed independent build/bootstrap/isolation tests and pushed the checkpoint.
+Both original full qualification runs continue with the SAME images/history.
+This turn implements the separately required cancellation control path;
+it does NOT declare that full offload, cancellation or20tok/s is achieved.
+
+Why a separate actual path is needed
+------------------------------------
+The old Finish path only admits all64 layers+973 head jobs+committed token.
+Using it after one layer would invent completion. The new optional
+PIONEER_Q38_TOKEN_CANCEL_BOUNDARY=1 parent instead checks a monotonic RAW
+control word at real closed-layer boundaries, after the genuine complete
+head BEFORE mutable commit, and after actual token publication. It NEVER
+interrupts an in-progress mutable commit or turns a partial layer into a
+model token. A request between checkpoints waits for the next one; all
+arithmetic loops,packet polls and STOP polls remain bounded. Wall-clock/UI
+latency is NOT measured or yet guaranteed by a genuine native owner.
+
+L1 control0x7f900 is distinct from session/token/state/metadata. A fresh lease
+must initialize it0 BEFORE ROOT release. Any initial nonzero value faults
+before any NoC. A host may publish CancelMagic0x314e4351 only AFTER actual
+ROOT admission (status magic follows that initial check); never clear/reuse
+the word while running. A future genuine native owner must authenticate the
+same lease/generation/source and serialize the one-word request. No such
+native/client authority is created by this DATA or code.
+
+The cancellation function sets private stage1(closed layer),2(closed head),
+or3(published token),then audits ALL119 existing jobs/source/reset/doorbell/
+counters before the FIRST STOP write. It constructs real per-worker STOPs,
+releases all119 and verifies actual stopped records+double PC/reset samples+
+boot/job/source/counter closure before publishing the cancellation terminal.
+Early STOPs use the genuine current layer; head/committed STOPs retain the
+existing strict all64/global-wave closure. No worker image is changed.
+
+Terminal reason3 preserves ACTUAL committed token count/slot/frontier. It
+records actual layer/head progress and cancellation stage; it never invents
+973 outputs or a token. Partial inactive GDN/current KV remains uncommitted
+and must be discarded/reinitialized, NOT reused merely because workers stop.
+Any failed terminal proof leaves no cleanup receipt and unknown/quarantined
+resources. It does not reset/retry or fake worker/private completion.
+
+Independent builds and isolation
+--------------------------------
+Main22398/clean34967 BOTH direct0 --cancel-boundary --inspect-candidate:
+ /private/tmp/pioneer-q38-token-cancel-{main,clean}-20261028-a
+Identical literal BUILD pins, frozen separately as PINS_CANCEL:
+ boot.bin4 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text.bin129228 e8d2ddb2b9df573bf63bd5739a8dc15321bbfc2be37ecdd43b89f8a6ce711462
+ terminal.bin8 6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5
+ conv.bin21340 1dd258b6602a98ff34e04c34c74a110de99a3b63c0168f580428422ffd128f15
+ program.elf178168 4d78a5147336e32494e55459fd6b421ecd229f0518f95a2bef559ba346296b35
+ROOT129228/131072,aux21340/32768,parent maxFrame1616,cancel function880.
+Compile frame sizes are NOT combined runtime stack proof;8192 bound remains.
+
+Main91134/clean47542 BOTH direct0 strict DEFAULT builds, without inspect:
+ /private/tmp/pioneer-q38-token-default-{main,clean}-20261028-cancel-isolation-a
+ALL previous default pins remain exact,including parent ELF505eac1b... and
+all unchanged nested global/legacy/components/worker pins. These default
+images are those already under full test; they were NOT replaced/restarted.
+Main86741/clean1618 BOTH direct0:942 preprocessor role gates each. Optional
+cancel flag requires exact new parent role/value1; wrong/zero/late/old/native/
+Work contamination rejected. BUILD role isolation is not launch permission.
+
+ASan+UBSan bootstrap main92608/clean94966 BOTH direct0. Actual new parent
+checks raw control0 then performs5120 RAW Q4 embedding values exactly,
+20 raw reads+2 writes+2 readbacks,actual first frame/all8 recipes/720Conv/
+96GDN and first returning entry;119 workers still virgin. All16 early faults
+pass real fault/inert2048. Reserved2992/written2984. This stops BEFORE the
+first layer and does NOT execute a cancellation checkpoint/STOP/whole token.
+
+Actual from-reset cancellation qualification: KEEP SAME PROCESSES
+-----------------------------------------------------------------
+Main14563 / clean5907 freshly live19:44UTC:
+ python3 tools/pioneer/tests/run_pioneer_q38_token_cancel_tests.py \
+  /private/tmp/pioneer-q38-token-cancel-{main,clean}-20261028-a \
+  /private/tmp/pioneer-q38-mixed-worker-20261026-e \
+  /private/tmp/pioneer-q38-global-globalbuild-{main,clean}-20261028-e --layer
+Logs /private/tmp/pioneer-q38-token-cancel-layer-{main,clean}-20261028-a.log
+Each starts ONE real parent/SAME119 virgin workers/ONE byte fabric, with
+ONLY raw learned/state/prompt/control inputs. The first3 nonzero-control
+refusals already reach actual fault with ZERO NoC/peer work/inert2048.
+They are a narrow sub-result in a STILL RUNNING test, NOT its terminal pass.
+Each then genuinely bootstraps,receives its sole cancel request after actual
+embedding readback and executes the real first layer. At19:45 both reach
+at least four actual matrices. No full layer/cancellation STOP is proved yet.
+
+After the first actual STOP release ONLY,the fixture forks4 executed-history
+children,without any PC/register/nonce transplant. It corrupts root counter,
+stopped-status reply,reset-state reply or stopped-worker counter reply. Each
+must reach the actual ROOT fault park without a cancellation receipt and
+stay ROOT NoC/peer-write inert2048. In-flight peers are UNKNOWN,not claimed
+inert/reusable. The unchanged positive parent then must prove all119 genuine
+STOPs,exact no-commit terminal and inert2048/actual combined stack. These
+four late failures and the positive terminal are IMPLEMENTED/PENDING.
+
+The SAME fixture also implements --head and --committed: request after actual
+973 head partials or first real QTC1 publication,not a host completed bit.
+Those two full-model cancellation modes are NOT RUN/NOT qualified. Normal
+zero-request full multi-token execution of this VARIANT also remains owed.
+Do not splice default-parent runs into cancellation-variant qualification.
+
+Other unchanged live work / remaining objective
+------------------------------------------------
+Default full3-token main94923/clean26724 continue the SAME actual histories;
+both now completed layer0 with608831251 ROOT instructions/reserved6496/
+written6488 and progress in layer1. Still no first KV append/model token.
+Legacy diagnostic79400 is still the SAME fresh pinned QCH1/QMW1 HOST-O2
+diagnostic (not ASan qualification/TPS). At19:45 it is in layer12; old layer15
+fault cause remains UNDETERMINED until genuine callsite/register/numeric
+capture. Six separate global one-pass tests also remain independent.
+
+Finish/inspect all real current tests and repair failures from evidence.
+Qualify full3 tokens+nonzero retained state+KV append+all48 Conv commits+
+token records+119STOP,late commit/admission/publication/terminal faults and
+all cancellation modes/zero-request variant. Verify original-GGUF complete
+generations. Implement/audit true authenticated851-tensor new native owner,
+init/reservation ledger,session/cache/prompt/L1/aux/source/clock/sole-FD/
+journal/lifetimes/terminal/client/helper/quarantine. Then qualify physical
+card and no-CPU-reference Work separately from validation,integrate Assistant
+without regressing boot/CPU/RAM,and honestly measure sustained27B throughput.
+No new speedup. Goal ACTIVE; do not mark complete or blocked for slow tests.

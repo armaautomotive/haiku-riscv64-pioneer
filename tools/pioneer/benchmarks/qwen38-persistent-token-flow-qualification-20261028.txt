@@ -167,3 +167,13 @@ See qwen38-token-kv-append-preparation-20261028.txt for exact new pins, scopes
 and remaining gates. Legacy layer15 diagnosis79400 and six earlier global
 one-pass tests remain independent histories. Last physical whole-model rate
 is still0.207893161tok/s; no speedup measured, target20 UNMET. Goal ACTIVE.
+
+19:45UTC separate cancellation variant (not a replacement/pass)
+---------------------------------------------------------------
+See qwen38-token-cancellation-preparation-20261028.txt. A distinct optional
+parent now implements real closed-layer/head/published-token cancellation
+without inventing a full token. Independent builds/default-pin preservation/
+942 role gates/bootstrap16 early faults pass. Actual cancellation boundary+
+119STOP+terminal corruptions are STILL RUNNING main14563/clean5907, not a pass.
+The default full94923/26724 images/histories remain unchanged and continue.
+No complete new model token,physical/native/Work qualification or speedup.
