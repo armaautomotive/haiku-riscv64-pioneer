@@ -1,0 +1,5 @@
+32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca boot.bin bytes4
+6ad600096827d4f60b4cc73b7901a6999bd5c75c5311b32e2763fe700e6b7652 text.bin bytes53084
+16ff564dc406a72a918f7c67c40f6815a7430f6d02161a0be0b26ec56cde7f65 conv.bin bytes7500
+a1ae94663803c6cfc760ef242275658008cda99b5611e193a11a9958a3375339 program.elf bytes75184
+BUILT_PINNED history-staging experimental ROOT/maxFrame2112;NOT runtime qualified/native/current-history or token commit/fullmodel/Work/TPS;NEVER install before separate native qualification

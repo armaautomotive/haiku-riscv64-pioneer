@@ -8,6 +8,10 @@
 #include "PioneerQ38RecurrentHistoryImageRole.h"
 #include "PioneerQ38RecurrentHistoryLayout.h"
 #endif
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_SCHEDULER_IMAGE
+#include "PioneerQ38RecurrentPrefixImageRole.h"
+#include "PioneerQ38RecurrentPrefixLayout.h"
+#endif
 extern "C" unsigned mixed_recurrent_block_wait(unsigned);
 extern "C" void mixed_recurrent_block_stopped() __attribute__((noreturn));
 namespace RecurrentBlock {
@@ -155,6 +159,45 @@ static void EndSeal(R::PrivateSeal* p){
  RecipeSeal(3);Projection::InputsSeal(p->frame);
  for(unsigned w=0;w<119;w++)DensePartitionRoot::FrameSeal(w);
 }
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_SCHEDULER_IMAGE
+static void PrefixMetadata(R::PrivateSeal* p,unsigned bank,uint32_t workspace){
+ namespace P=PioneerQ38RecurrentPrefixLayout;
+ const auto* o=p->outer;uint32_t package=0,copy[128];
+ if(!P::Frame(o,o[3],bank,workspace,p->boot) || !P::Address(workspace,o[3],package))scalar_fault_park();
+ Read(package,o[8],reinterpret_cast<unsigned>(copy),512);
+ for(unsigned i=0;i<128;i++)if(copy[i]!=o[i])scalar_fault_park();
+ const unsigned regions[][3]={{P::RecipesOffset,o[57],P::RecipeBytes},{P::ConvOffset,o[58],P::ConvBytes},{P::GdnOffset,o[59],P::GdnBytes}};
+ uint32_t tracked[8];for(unsigned i=0;i<8;i++)tracked[i]=*Words(0xffb20000+Counter(i));
+ for(const auto& region:regions)for(unsigned at=0;at<region[2];at+=16384){
+  unsigned bytes=region[2]-at;if(bytes>16384)bytes=16384;
+  Transfer(package+region[0]+at,o[8],R::Scratch,bytes,false,tracked);
+  Transfer(region[1]+at,o[8],R::Scratch,bytes,true,tracked);
+ }
+ // The private frame and exact original outer stay sealed throughout all
+ // copies. Ordinary recipe/cohort consumers still validate the loaded DATA.
+ q38_mixed_root_seal();
+}
+static void PrefixNext(R::PrivateSeal* p,unsigned completed,unsigned bank,uint32_t workspace){
+ namespace P=PioneerQ38RecurrentPrefixLayout;
+ if(!completed || completed>P::Layers || !P::Frame(p->outer,completed-1,bank,workspace,p->boot))scalar_fault_park();
+ EndSeal(p);Phase(p,16);uint32_t next[128];
+ if(completed<P::Layers){
+  uint32_t package=0;if(!P::Address(workspace,completed,package))scalar_fault_park();
+  Read(package,p->outer[8],reinterpret_cast<unsigned>(next),512);
+  if(!P::Frame(next,completed,bank,workspace,p->boot))scalar_fault_park();
+ }else{
+  for(unsigned i=0;i<128;i++)next[i]=0;
+  next[0]=R::Magic;next[1]=1;next[2]=128;next[5]=129;next[48]=completed+1;next[49]=119;next[72]=R::Stop;
+  for(unsigned i=0;i<16;i++)next[16+i]=p->boot[16+i];
+  for(unsigned i=0;i<8;i++)next[32+i]=p->boot[8+i];
+  if(!R::StopShape(next))scalar_fault_park();
+ }
+ // ROOT itself stages and releases the next exact frame. There is no host
+ // metadata write, hidden readback, tensor product or doorbell between layers.
+ for(unsigned i=0;i<128;i++)Words(R::Outer)[i]=p->outer[i]=next[i];
+ Fence();*Words(R::Doorbell)=next[48];Fence();q38_mixed_root_seal();
+}
+#endif
 static void StopJob(const uint32_t* d,unsigned w,unsigned n){
  namespace M=PioneerQ38MixedWorkerLayout;
  for(unsigned i=0;i<64;i++)Words(R::Scratch)[i]=0;
@@ -221,13 +264,24 @@ extern "C" void q38_mixed_root_seal(){
  using namespace RecurrentBlock;const auto* p=Private();
  for(unsigned i=0;i<64;i++)if(Words(R::Boot)[i]!=p->boot[i] || Words(R::Header)[i]!=p->frame[i])scalar_fault_park();
  for(unsigned i=0;i<128;i++)if(Words(R::Outer)[i]!=p->outer[i])scalar_fault_park();
- if(!p->phase || p->phase>15 || (p->phase==15 && !R::StopShape(p->outer)) || *Words(R::Doorbell)!=p->outer[48])scalar_fault_park();
+ if(!p->phase || p->phase>
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_SCHEDULER_IMAGE
+  16
+#else
+  15
+#endif
+  || (p->phase==15 && !R::StopShape(p->outer)) || *Words(R::Doorbell)!=p->outer[48])scalar_fault_park();
  for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+Source(i))!=p->boot[16+i])scalar_fault_park();
 }
 extern "C" void mixed_recurrent_block_main(){
  using namespace RecurrentBlock;R::PrivateSeal seal;uint32_t counters[8];
  for(unsigned i=0;i<64;i++)seal.boot[i]=Words(R::Boot)[i];
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_SCHEDULER_IMAGE
+ namespace P=PioneerQ38RecurrentPrefixLayout;unsigned prefixBank=0;uint32_t prefixWorkspace=0;
+ if(!P::BootShape(seal.boot) || *Words(R::Doorbell) || !Quiet())scalar_fault_park();
+#else
  if(!R::BootShape(seal.boot) || *Words(R::Doorbell) || !Quiet())scalar_fault_park();
+#endif
  for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+Source(i))!=seal.boot[16+i])scalar_fault_park();
  for(unsigned i=0;i<8;i++)counters[i]=*Words(0xffb20000+Counter(i));
  if(counters[2]!=counters[6])scalar_fault_park();
@@ -242,8 +296,15 @@ extern "C" void mixed_recurrent_block_main(){
   for(unsigned i=0;i<16;i++)if(o[16+i]!=seal.boot[16+i])scalar_fault_park();
   for(unsigned i=0;i<8;i++)if(o[32+i]!=seal.boot[8+i] || *Words(0xffb20000+Counter(i))!=counters[i])scalar_fault_park();
   if(stop)Stop(&seal,previous);
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_SCHEDULER_IMAGE
+  if(!previous){prefixBank=o[7];prefixWorkspace=o[9];}
+  if(!P::Frame(o,previous,prefixBank,prefixWorkspace,seal.boot))scalar_fault_park();
+#endif
   for(unsigned i=0;i<64;i++){seal.frame[i]=Words(R::Header)[i]=0;Words(R::JointSummary)[i]=0;}
   Words(R::Status)[0]=n;Words(R::Status)[4]=1;Phase(&seal,1);
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_SCHEDULER_IMAGE
+  PrefixMetadata(&seal,prefixBank,prefixWorkspace);
+#endif
   Read(o[69],PioneerQ38ProjectionRoute(o[68]),R::Original,20480);Copy(R::OriginalCopy,R::Original,5120);Norm(&seal,0);CaptureRecipes(&seal,0,4);
   for(unsigned i=0;i<4;i++)Matrix(&seal,i,4,2+i);
   Cohort(&seal);CaptureRecipes(&seal,4,1);Matrix(&seal,0,1,8);
@@ -262,5 +323,9 @@ extern "C" void mixed_recurrent_block_main(){
   for(unsigned i=0;i<8;i++)s[56+i]=staged[i]; // provisional per-layer receipt,NEVER whole-token commit
 #endif
   Fence();s[0]=R::Magic;Fence();previous=n;Words(R::Status)[4]=0;Words(R::Status)[6]=o[3];Words(R::Status)[7]=o[4];Fence();Words(R::Status)[1]=n;Fence();
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_SCHEDULER_IMAGE
+  PrefixNext(&seal,n,prefixBank,prefixWorkspace);
+  for(unsigned i=0;i<8;i++)counters[i]=*Words(0xffb20000+Counter(i));
+#endif
  }
 }

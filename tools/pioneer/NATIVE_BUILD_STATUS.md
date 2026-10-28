@@ -94,6 +94,17 @@ below describe their individual qualification checkpoints, not current liveness.
 Previous pushed interface checkpoint: `9d6e39a97403c15151c49cab5a9ffc0fce0bdab3`.
 The original-reference/source baseline is `7f13e366a928d1b1d0899a6695839cd47bdb2d69`.
 
+An ISOLATED autonomous-prefix prototype now passes both complete positive
+instruction simulations, identical46-line stdoutf27c86c1: ONE host start,
+actual recurrent0->1->2, SAME119 workers, ROOT-only metadata/frame/release
+changes, retained earlier Conv+GDN NEXT, and realSTOP. Its distinct QPX1
+boot/role is NOT selected by any native/Work driver. Main/clean builds and
+196role/8078DATA refusals pass; conditional-off old image pins stay exact.
+Main39reached-fault children have passed, but BOTH full fault-suite parents
+are STILL LIVE; no complete fault/native/current-state/token/full64/TPS gate
+is inferred. This prototype was NEVER copied/installed on the Pioneer.
+See benchmarks/qwen38-recurrent-autonomous-prefix-20261028.txt.
+
 - Complete execution-owner/real STOP/120 holds/full original restoration
   passed in the clean export (60994, terminal 0); main output is identical.
 - Both seven-case, genuinely reached STOP/hold/restore fault suites passed.

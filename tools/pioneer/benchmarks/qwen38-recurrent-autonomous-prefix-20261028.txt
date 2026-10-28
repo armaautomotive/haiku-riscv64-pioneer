@@ -1,0 +1,111 @@
+Experimental autonomous three-layer recurrent scheduler
+October28UTC2026
+STATUS: main/clean BUILDS+DATA/ROLE/POSITIVE RUNTIMES ALL0.
+MAIN/CLEAN FULL REACHED-FAULT RUNTIMES STILL LIVE. NO NATIVE QUALIFICATION.
+This prototype was NEVER copied to or installed on the Pioneer.
+
+Actual implementation, not native/Work promotion
+------------------------------------------------
+Separate exact PREFIX_SCHEDULER_IMAGE role requires the history/block/sigmoid
+roles and forbids59 native/CPU-reference/Work aliases, including defined0 and
+late includes. Its distinct QPX1 boot signature occupies40..45; it rejects
+the old zero-tail boot. Current physical72/stable41 drivers do not select it.
+Three immutable299520B metadata packages occupy disjoint512KiB slots at
+workspace16MiB, after all provisional history slots. Geometry is DATA only:
+it does not authenticate model bytes, reserve banks, initialize state, mint
+an input producer, publish current history or authorize native device IO.
+
+After ONE initial host release, emitted ROOT code reads/validates/copies
+each package's eight recipes+Conv+GDN metadata using bounded checked NoC
+transfers. ROOT itself stages/releases layer1 and2, always same token0/
+position0/slot0, using the preceding actual final hidden, then constructs
+and executes real STOP. A separate phase16 is admitted only by this image;
+source/counter/command/private-frame seals remain. History staging is still
+provisional, not a whole-token commit. No CPU numerical intermediate is
+provided to this program. This is only the first recurrent prefix, NOT dense3
+or a full decoder, and makes no inference-speed claim.
+
+Independent completed evidence
+-------------------------------
+Main pinned build24752/clean58204 both0. All four complete artifacts cmp exact:
+boot.bin4B SHA32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+text.bin56384B SHAf6488118d403c1e236ccf51944161ad1c95b29d6c90f8ad9625091d834982783
+conv.bin7500B SHAfe4788123cd06f9b382bf1cf6305dae29c7a8f2ba51d863e835abca7c07fe892
+program.elf79572B SHAad412886874b1ce67628136e52b0755bccb0e1675ae99d2205a8b203426d8e39
+Max single device-MCU static frame2560B, NOT a Haiku kernel frame. Image has
+no undefined imports/mutable global sections/forbidden ISA/CSR instructions;
+fixed startup/wait/fault/STOP entry addresses and reserved-s11 checks pass.
+First build34201 correctly failed Werror enum/non-enum BootWord conditional;
+explicit unsigned casts fixed it, without disabling warnings. Preliminary
+build95160 was unpinned/build-only; final pinned main/clean are authoritative.
+
+Existing history default40660 and original recurrent default5797 both0;
+every old pinned artifact remains byte-identical (6ad60009/a1ae9466 history,
+6da8623d/dfaee3da original). No old native image is silently replaced.
+Main97783/clean75376 layout/role suites both0, exact stdout:196 compile-time
+role cases,15 geometry cases,21 real canonical frames across7banks/3layers,
+8078 source/owner/shape/bounds/old-boot refusals. ASan/UBSan retained.
+Pure DATA checks are NOT execution, native ownership or numerical proof.
+
+Exact live instruction qualification / next actions
+---------------------------------------------------
+Main99173 / clean89593, do not restart for quiet output:
+/private/tmp/pioneer-q38-autonomous-prefix-main-20261028-a.log
+/private/tmp/pioneer-q38-autonomous-prefix-clean-20261028-a.log
+Clean export /private/tmp/pioneer-q38-prefix-scheduler-clean.EvPsw43a from
+3aba81734e plus13 cmp-verified source/test files. Raw learned+initial hidden
+and zero current states for ALL3 layers are staged before the ONE host start.
+Actual ROOT stores are observed, never substituted: no host StageNext,
+processor-PC/register/nonce/Tensix resets or expected tensor products.
+Completed actual Conv/GDN NEXT arrays are observer snapshots only; all earlier
+ones must survive later scratch/metadata reuse. Exact final assertions require
+3complete blocks,384ROOT outer-word stores,3ROOT releases,897024B metadata
+read+write,2560B header reads, real119STOP+ROOT and no later work.
+Main99173 now TERMINAL0: complete46-line stdout SHA256
+f27c86c16c91e04ddebaea01b313349f021634c3fe04fc1aa3f2829d6c266a2c.
+All3 actual layers/897024B metadata/2560B headers/384outer stores/3ROOT
+releases/earlier Conv+GDN survival/real119STOP+ROOT passed. Do not poll99173.
+Clean89593 now also TERMINAL0, identical complete46-line stdout and SHA.
+Both positive logs were fully reviewed and cmp-verified. Do not poll either
+completed handle. Raw OS/register/GDDR endpoints
+are SIMULATED, not physical P100A. Runtime phase16 reached-fault suites are
+still OWED before native selection; no partial output is an installation gate.
+
+New reached-phase fault coverage is implemented and running, not yet passed:
+main13554 / clean15283, clean export
+/private/tmp/pioneer-q38-prefix-faults-clean.Cqu6k37f from98dbfa5f67 plus
+10cmp-verified prototype source/test files. Logs:
+/private/tmp/pioneer-q38-autonomous-prefix-faults-main-20261028-a.log
+/private/tmp/pioneer-q38-autonomous-prefix-faults-clean-20261028-a.log
+The intended39cases reach genuine first completed layer/phase16 before seal,
+next-header READ, malformed next header, then next layer's phase1 first READ,
+first WRITE and last WRITE. Each child must retain earlier state and the
+already completed layer while refusing any later IO/release/STOP/retry/commit;
+source/counter/command faults remain un-restored, with inert2048 checks.
+Parent then still must complete all3 actual blocks and realSTOP. No PC, register,
+nonce, product or ready facade is substituted to reach a phase. Current fault
+main has now passed all39 children and continued into the second actual block.
+Its whole-parent positive continuation/STOP remains LIVE, as does clean15283.
+All39 main case logs were counted only after their child waitpid success;
+this is NOT terminal whole-suite or clean-copy qualification.
+
+Archived completed evidence: qwen38-recurrent-autonomous-{positive,build,
+geometry}-{main,clean}-20261028.log and the separate original/history-image
+regression logs. Unfinished fault logs are not archived as terminal evidence.
+No record here substitutes simulated endpoints for physical-card proof.
+
+Original-reference integration constraint found in the current source:
+the qualified single-block CPU reference binds literal blk.0 tensors and
+always derives its input from token0 embedding. A new independent private
+prefix reference must select each actual layer and use the preceding CPU
+reference final hidden as its next input. Repeating embedding or relabeling
+an old producer would NOT validate this prefix. Preserve the frozen72 source/
+reference baseline; never admit those CPU products into native/Work code.
+
+Full goal remains: original authenticated prefix/native history ownership,
+recurrent0..2 -> dense3 -> all64 layers, persistent KV/GDN/history + atomic
+whole-token commit, final norm/vocabulary/sampling, persistent no-CPU-reference
+Work/Assistant and honest loading/prefill/decode optimization. Physical72's
+single original layer0 passed and stable041/tag12/gen4 was restored cleanly;
+that result does not qualify THIS prototype. Last whole27B0.207893161tok/s;
+20tok/s unmet;goal ACTIVE. No SD/power/mains/Assistant/network change here.

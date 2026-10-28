@@ -6,8 +6,9 @@ import pathlib
 import re
 import subprocess
 import sys
-if len(sys.argv)!=3 or any(k.startswith('PIONEER_') for k in os.environ):raise SystemExit(2)
-sdk,out=map(pathlib.Path,sys.argv[1:]);here=pathlib.Path(__file__).resolve().parent
+prefix=len(sys.argv)==4 and sys.argv[3]=='--prefix-scheduler'
+if (len(sys.argv)!=3 and not prefix) or any(k.startswith('PIONEER_') for k in os.environ):raise SystemExit(2)
+sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
 cross=str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku');assert pathlib.Path(cross+'-g++').is_file()
 out.mkdir(mode=0o700)
@@ -17,6 +18,7 @@ flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exc
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11',
  '-DPIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
  '-DPIONEER_Q38_RECURRENT_HISTORY_STAGING_IMAGE=1']
+if prefix:flags+=['-DPIONEER_Q38_RECURRENT_PREFIX_SCHEDULER_IMAGE=1']
 run(cross+'-g++',*flags,'-c',here/'blackhole_qwen38_mixed_recurrent_block_root.cpp','-o',out/'program.o')
 run(cross+'-g++',*flags,'-DPIONEER_Q38_MIXED_ROOT_CAPSULE_IMAGE=1','-Dscalar_main=q38_mixed_recurrent_root_conv',
  '-include',here/'PioneerQ38MixedRecurrentBlockRootImageRole.h','-c',here/'blackhole_qwen38_conv_batch_silu_precision.cpp','-o',out/'root_conv.o')
@@ -47,11 +49,20 @@ for i,row in enumerate(rows):
  m=re.match(r'\s*\d+\s+(\S+)\s+([0-9a-fA-F]+)\s+',row)
  if m and 'ALLOC' in rows[i+1]:assert m[1] in ('.boot','.text','.conv'),row
 PINS=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+ ('text.bin',56384,'f6488118d403c1e236ccf51944161ad1c95b29d6c90f8ad9625091d834982783'),
+ ('conv.bin',7500,'fe4788123cd06f9b382bf1cf6305dae29c7a8f2ba51d863e835abca7c07fe892'),
+ ('program.elf',79572,'ad412886874b1ce67628136e52b0755bccb0e1675ae99d2205a8b203426d8e39')) if prefix else (
+ ('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
  ('text.bin',53084,'6ad600096827d4f60b4cc73b7901a6999bd5c75c5311b32e2763fe700e6b7652'),
  ('conv.bin',7500,'16ff564dc406a72a918f7c67c40f6815a7430f6d02161a0be0b26ec56cde7f65'),
  ('program.elf',75184,'a1ae94663803c6cfc760ef242275658008cda99b5611e193a11a9958a3375339'))
 for name,size,digest in PINS:
- data=(out/name).read_bytes();assert len(data)==size and hashlib.sha256(data).hexdigest()==digest,name
- print(digest+' '+name+' bytes'+str(len(data)))
+ data=(out/name).read_bytes();actual=hashlib.sha256(data).hexdigest()
+ assert len(data)==size and actual==digest,name
+ print(actual+' '+name+' bytes'+str(len(data)))
+if prefix:
+ print('BUILT_PINNED_RUNTIME_UNQUALIFIED autonomous three-layer PREFIX prototype/maxFrame'+str(max(frames))+
+ ';NO native/physical/current-history/token/full64/Work/TPS authority;DO NOT INSTALL')
+ raise SystemExit(0)
 print('BUILT_PINNED history-staging experimental ROOT/maxFrame'+str(max(frames))+
  ';NOT runtime qualified/native/current-history or token commit/fullmodel/Work/TPS;NEVER install before separate native qualification')
