@@ -17,7 +17,11 @@ struct FinalPciService{
 };
 static FinalPciService finalPciService;static FinalPciService* sPCI=&finalPciService;
 static void NativeFinalTail(PioneerProbeCookie* cookie,tt_resident_session_result& result,bool recheck){
- auto* context=cookie->context;bool clean=!sColdRecoveryRequired && !context->Unsafe();
+ auto* context=cookie->context;
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_CONTROL_COMPILE_ONLY
+ context->Snapshot(result); // actual CPU metadata method,NOT manufactured closed progress
+#endif
+ bool clean=!sColdRecoveryRequired && !context->Unsafe();
 #include "native_final_prefix.inc"
  assert(false && "the existing native mixed source must refuse any non-bank fallback");return;
 #include "native_final_tail.inc"

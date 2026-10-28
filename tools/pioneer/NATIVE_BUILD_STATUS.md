@@ -207,6 +207,22 @@ Pioneer/Assistant/boot/power changes;whole27B0.207893161tok/s/20UNMET.
 Evidence/current obligations:
 benchmarks/qwen38-recurrent-prefix-validation-client-20261028.txt.
 
+Full native3RUN+fresh final-END main26734/clean98063 BOTH TERMINAL0/exact
+6fd5770d:all120holds/fullrestore+secondproof/6lifetime+84final-END faults/
+actual source+clock+VM+PCI+host/context disposal. ORIGINAL native main36450
+also0/exact89463a9e:all3 finals15360 words BIT-EXACT,45/54stages exact,
+9known GDN intermediates not relaxed;clean62100 still LIVE. Raw OS/MMIO
+SIMULATED,NOT physical/Work/TPS. Distinct actual control body now implemented
+only under QRPNODRV COMPILE-TEST perimeter,no production routing/physical
+selection:compute+readback+restore ->release RAII ->locked same-context+
+identity-rebound fresh END ->require PCI+hosts+context closed BEFORE usercopy.
+SDK98387/92814 BOTH0/objects EXACT4a8a0a01/maxNewFrame784B;feature-OFF8031
+exact2eab5b48/old65 exact61faa093. Role459/preflight336missing ALL3layer
+endpoints+96header mutations/main+clean0. Actual control runtime26684/93171
+LIVE,not passed;native readback43038/80015 LIVE. No new physical driver or
+speedup;whole27B0.207893161tok/s/20UNMET. Latest evidence/handles/obligations:
+benchmarks/qwen38-recurrent-prefix-control-composition-20261028.txt.
+
 - Complete execution-owner/real STOP/120 holds/full original restoration
   passed in the clean export (60994, terminal 0); main output is identical.
 - Both seven-case, genuinely reached STOP/hold/restore fault suites passed.

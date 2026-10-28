@@ -112,3 +112,10 @@ Assistant,boot,power,SD,mains,network or hardware-connection change this turn.
 Last known stable041/64CPU/fullRAM is not a fresh board check. Whole-model
 0.207893161tok/s unchanged;20tok/s/full card offload still UNMET/goal ACTIVE.
 All test/init/upload/readback/cleanup times here are NOT token performance.
+
+Later continuation:actual NODRV-only control body is now implemented and
+SDK/preflight qualified,but runtime26684/93171 still LIVE. No normal routing,
+physical role/module/helper or card grant. Native full computation+fresh
+END26734/98063 BOTH0/exact6fd5770d;ORIGINAL main36450 also0/exact89463a9e/
+all3final5120-word outputs bit-exact. Remaining original clean/readback and
+control runtime obligations:see qwen38-recurrent-prefix-control-composition-20261028.txt.

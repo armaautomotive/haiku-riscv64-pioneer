@@ -706,7 +706,11 @@ struct PioneerStoreContext {
 #if defined(PIONEER_Q38_MIXED_LIVE_END_FIXTURE) || defined(PIONEER_Q38_RECURRENT_BLOCK_END_FIXTURE)
  NativeClockFields control={};
 #endif
- };struct B1{D baseline;tt_compute_noc_result& noc;};struct B2{B1 baseline;};struct B3{B2 baseline;
+ };struct B1{D baseline;tt_compute_noc_result& noc;};struct B2{B1 baseline;
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_CONTROL_COMPILE_ONLY
+ tt_host_path_result path={}; // raw OS metadata for VERBATIM Snapshot only
+#endif
+ };struct B3{B2 baseline;
 #if defined(PIONEER_Q38_MIXED_LIVE_END_FIXTURE) || defined(PIONEER_Q38_RECURRENT_BLOCK_END_FIXTURE)
  tt_host_dma_audit_result audit={};
 #endif
@@ -737,6 +741,9 @@ struct PioneerStoreContext {
  int q38GdnCallThread=42;
 #endif
  uint64 bytes=PioneerResidentBanks::Total;
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_CONTROL_COMPILE_ONLY
+ uint32 uploadedPages=0;void Snapshot(tt_resident_session_result&);
+#endif
  bool bankStorageOnly=true,dispatchOwnerRetained=false,otherUnsafe=false,q38DispatchRoutes=false;
 #if defined(PIONEER_Q38_MIXED_LIVE_END_FIXTURE) || defined(PIONEER_Q38_RECURRENT_BLOCK_END_FIXTURE)
  tt_pioneer_mmio_result pci={};tt_pioneer_mmio_transaction transaction={};unsigned q38EndPhase=0;

@@ -13,10 +13,12 @@ if len(sys.argv)==7 and sys.argv[5] in ('--original-model','--original-model-rea
  original_model=pathlib.Path(sys.argv[6]);assert original_model.is_absolute() and original_model.stat().st_size==18973870528
  readback=sys.argv[5]=='--original-model-readback';options=['--fresh-readback-end' if readback else '--fresh-execute-end']
 else:
- assert len(sys.argv) in (5,6) and (len(sys.argv)==5 or sys.argv[5] in ('--execute','--faults','--fresh-held-end','--fresh-execute-end','--fresh-readback-end'))
+ assert len(sys.argv) in (5,6) and (len(sys.argv)==5 or sys.argv[5] in ('--execute','--faults','--fresh-held-end','--fresh-execute-end','--fresh-readback-end','--control-preflight','--control-execute'))
  options=sys.argv[5:]
  readback=options==['--fresh-readback-end']
-fresh=bool(options) and options[0].startswith('--fresh-')
+control=bool(options) and options[0].startswith('--control-')
+fresh=control or bool(options) and options[0].startswith('--fresh-')
+readback=readback or control
 here=pathlib.Path(__file__).resolve().parent;kernel=here.parents[2]/'src/add-ons/kernel/drivers/misc'
 zero,embedding,root,worker=map(pathlib.Path,sys.argv[1:5])
 for directory,name,digest in ((zero,'text.bin','39817b679f4358e47c0e6602fb5ae184831206c11dab0b63fe9b7173c410df8b'),
@@ -33,6 +35,7 @@ defines={key:'1' for key in parents};defines['PIONEER_DRIVER_BUILD_TAG']='0x5152
 defines.update({key:'pioneer_prefix_factory_test_'+key for key in ('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')})
 if fresh:defines.update({'PIONEER_Q38_RECURRENT_PREFIX_END_FIXTURE':'1','PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE':'1','PIONEER_Q38_RECURRENT_PREFIX_FRESH_FINAL_TEST':'1'})
 if readback:defines['PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK']='1'
+if control:defines['PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_CONTROL_COMPILE_ONLY']='1'
 if original_model:defines['PIONEER_Q38_RECURRENT_PREFIX_ORIGINAL_NATIVE_TEST']='1'
 source=(kernel/'tenstorrent_pci_probe.cpp').read_text()
 with tempfile.TemporaryDirectory(prefix='pioneer-qpx-native-factory-',dir='/private/tmp') as temporary:
@@ -74,6 +77,14 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qpx-native-factory-',dir='/priv
    return part[start:end]+'\n'
   for name,owner,signature in [('host','PioneerHostPageIO','int32 ReleaseHostPage()'),('output','PioneerOutputBufferIO','int32 ReleaseOutputBuffer()'),('wide','PioneerWideOutputIO','int32 ReleaseWideOutput()')]:
    (base/('native_release_'+name+'.inc')).write_text(member(owner,signature))
+  if control:
+   snapshot=member('PioneerStoreContext','void Snapshot(tt_resident_session_result& r)')
+   assert snapshot.startswith('void Snapshot(')
+   (base/'native_prefix_snapshot.inc').write_text(snapshot.replace('void Snapshot(','void PioneerStoreContext::Snapshot(',1))
+   protocol=(kernel/'tenstorrent_pci_probe.h').read_text()
+   constants=protocol.split('#define TT_PIONEER_CAP_NATIVE_Q8_UNPACK ',1)[1].split('\n\nstruct tt_arc_query_support',1)[0]
+   assert '#define TT_PIONEER_RESIDENT_CAPABILITIES ' in constants
+   (base/'native_prefix_snapshot_protocol.inc').write_text('#define TT_PIONEER_CAP_NATIVE_Q8_UNPACK '+constants+'\n')
   (base/'native_session_unmap.inc').write_text(member('PioneerSessionIO','bool Unmap()'))
   for owner in ('Arc','Telemetry','Tensix','DramSamples','ComputeNoc','HostPath','HostDmaAudit'):
    (base/('native_audit_'+owner+'.inc')).write_text(member('Pioneer'+owner+'IO','bool AfterNodeId(uint32 id)'))
@@ -92,7 +103,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qpx-native-factory-',dir='/priv
  transport=base/'transport.o';binary=base/'test'
  subprocess.run([*common,*flags,'-c',str(here/'pioneer_q38_recurrent_prefix_native_transport.cpp'),'-o',str(transport)],check=True)
  native_flags=[*['-D'+k+'='+v for k,v in sorted(defines.items())],'-I'+str(base),'-I'+str(kernel)]
- sources=[here/'pioneer_q38_recurrent_prefix_native_factory_test.cpp',here/'pioneer_q38_embedding_execution_bridge.cpp',
+ sources=[here/('pioneer_q38_recurrent_prefix_validation_control_test.cpp' if control else 'pioneer_q38_recurrent_prefix_native_factory_test.cpp'),here/'pioneer_q38_embedding_execution_bridge.cpp',
   *([here/'pioneer_q38_mixed_live_native_clock.cpp',here/'pioneer_q38_mixed_live_final_audit.cpp'] if fresh else [])]
  if original_model:
   # Private CPU reference/source/coordinator MUST NOT see native or

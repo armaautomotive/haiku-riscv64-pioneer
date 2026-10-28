@@ -1,0 +1,120 @@
+START ORIGINAL full c600 SHA/cache+independent chained CPU reference BEFORE native contexts;NO expected products cross native/operand TUs
+READY ORIGINAL native prefix/rawbytes842821248/pages205785/spans169/private referenceReads11557;SAME authenticated open file
+QRB_NATIVE_ACTUAL_ZERO GDN96/pages10544;NO publication before clean CLOSE
+QRB_NATIVE_ACTUAL_ZERO GDN192/pages21072;NO publication before clean CLOSE
+QRB_NATIVE_ACTUAL_ZERO GDN288/pages31600;NO publication before clean CLOSE
+QRB_NATIVE_ACTUAL_ZERO GDN384/pages42144;NO publication before clean CLOSE
+QRB_NATIVE_ACTUAL_ZERO GDN480/pages52672;NO publication before clean CLOSE
+QRB_NATIVE_ACTUAL_ZERO GDN576/pages63200;NO publication before clean CLOSE
+QRB_NATIVE_ACTUAL_ZERO GDN672/pages73728;NO publication before clean CLOSE
+PASS QPX genuine native SAME completed QPE1 + actual672GDN/336history zero/private clean publication;NO transferred ready facade
+STAGED ORIGINAL QPE1 packed46080B + ALL42 recurrent tensors/168extents;synthetic learned fallback DISABLED,NO native permission or CPU products
+PASS QPX actual native ALL120 probes/peer leases/held roles/4new mappings/complete prefix journal+program install;NO reset or synthetic permission
+START QRB1 actual matrix1 role10 stage2/prior closed matrix jobs0
+PASS QRB1 actual initial RMS5120 BIT-EXACT -> alpha/beta/Z/QKV
+START QRB1 actual matrix2 role11 stage3/prior closed matrix jobs3
+START QRB1 actual matrix3 role5 stage4/prior closed matrix jobs6
+START QRB1 actual matrix4 role6 stage5/prior closed matrix jobs125
+PASS QRB1 actual QKV ->640 Conv groups ->96 paired GDN/private NEXT+6144 gated;independent arithmetic
+START QRB1 actual matrix5 role13 stage8/prior closed matrix jobs244
+PASS QRB1 actual6144 gated F32 -> actual ROOT Q8 quantization/output projection;NO host intermediate
+START QRB1 actual matrix6 role2 stage10/prior closed matrix jobs363
+PASS QRB1 original residual+post-RMS5120 BIT-EXACT -> actual Q4 gate/up
+START QRB1 actual matrix7 role3 stage11/prior closed matrix jobs482
+START QRB1 actual matrix8 role4 stage13/prior closed matrix jobs601
+PASS QRB1 actual SiLU(gate)*up17408/strict independent error bound -> actual Q4 down
+PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/952 channel refusals;NOT native STOP/cleanup authority
+PASS autonomous ROOT completed layer0/actual preceding hidden/Conv+GDN NEXT retained;NO host metadata or doorbell between layers
+START QRB1 actual matrix1 role10 stage2/prior closed matrix jobs0
+PASS QRB1 actual initial RMS5120 BIT-EXACT -> alpha/beta/Z/QKV
+START QRB1 actual matrix2 role11 stage3/prior closed matrix jobs3
+START QRB1 actual matrix3 role5 stage4/prior closed matrix jobs6
+START QRB1 actual matrix4 role6 stage5/prior closed matrix jobs125
+PASS QRB1 actual QKV ->640 Conv groups ->96 paired GDN/private NEXT+6144 gated;independent arithmetic
+START QRB1 actual matrix5 role13 stage8/prior closed matrix jobs244
+PASS QRB1 actual6144 gated F32 -> actual ROOT Q8 quantization/output projection;NO host intermediate
+START QRB1 actual matrix6 role2 stage10/prior closed matrix jobs363
+PASS QRB1 original residual+post-RMS5120 BIT-EXACT -> actual Q4 gate/up
+START QRB1 actual matrix7 role3 stage11/prior closed matrix jobs482
+START QRB1 actual matrix8 role4 stage13/prior closed matrix jobs601
+PASS QRB1 actual SiLU(gate)*up17408/strict independent error bound -> actual Q4 down
+PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/952 channel refusals;NOT native STOP/cleanup authority
+PASS autonomous ROOT completed layer1/actual preceding hidden/Conv+GDN NEXT retained;NO host metadata or doorbell between layers
+START QRB1 actual matrix1 role10 stage2/prior closed matrix jobs0
+PASS QRB1 actual initial RMS5120 BIT-EXACT -> alpha/beta/Z/QKV
+START QRB1 actual matrix2 role11 stage3/prior closed matrix jobs3
+START QRB1 actual matrix3 role5 stage4/prior closed matrix jobs6
+START QRB1 actual matrix4 role6 stage5/prior closed matrix jobs125
+PASS QRB1 actual QKV ->640 Conv groups ->96 paired GDN/private NEXT+6144 gated;independent arithmetic
+START QRB1 actual matrix5 role13 stage8/prior closed matrix jobs244
+PASS QRB1 actual6144 gated F32 -> actual ROOT Q8 quantization/output projection;NO host intermediate
+START QRB1 actual matrix6 role2 stage10/prior closed matrix jobs363
+PASS QRB1 original residual+post-RMS5120 BIT-EXACT -> actual Q4 gate/up
+START QRB1 actual matrix7 role3 stage11/prior closed matrix jobs482
+START QRB1 actual matrix8 role4 stage13/prior closed matrix jobs601
+PASS QRB1 actual SiLU(gate)*up17408/strict independent error bound -> actual Q4 down
+PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/952 channel refusals;NOT native STOP/cleanup authority
+PASS autonomous ROOT completed layer2/actual preceding hidden/Conv+GDN NEXT retained;NO host metadata or doorbell between layers
+PASS QPX actual post3layer native lifetime fault0/FD+model+clock+ALLhosts retained/ZERO later physical IO
+PASS QPX actual post3layer native lifetime fault1/FD+model+clock+ALLhosts retained/ZERO later physical IO
+PASS QPX actual post3layer native lifetime fault2/FD+model+clock+ALLhosts retained/ZERO later physical IO
+PASS QPX actual post3layer native lifetime fault3/FD+model+clock+ALLhosts retained/ZERO later physical IO
+PASS QPX actual post3layer native lifetime fault4/FD+model+clock+ALLhosts retained/ZERO later physical IO
+PASS QPX actual post3layer native lifetime fault5/FD+model+clock+ALLhosts retained/ZERO later physical IO
+PASS DISTINCT QPX actual native autonomous3RUN+119STOP+ALL120holds/SAME QPE1+672+336init/real scopes+leases+maps+3layerplan/full restore+secondproof/dispatch END;SIMULATED OS+raw learned/MMIO,NOT final clock/VM/PCI/host disposal,original-model,full64,physical,Work or TPS
+PASS GENUINE private native closed + ACTUAL compute-call scope release -> ACTUAL locked bank-END seal/owned prefix+footer/real clock/fresh VERBATIM7-parent AfterNodeId+PCI quiet+resident idle/recheckTRUE/final scope/30VM+11PCI+3host release/unreserve+cookie-global clear+recurrent-prefix destruction;84cases=11early+7binding+12audit+3audit-restore+quiet+idle+5clock+33VMhost+11PCI fence later IO/disposal/retry;SIMULATED OS/registers,NO original-model physical/full64/Work/TPS qualification
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage0/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage1/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage2/checked48/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage3/checked48/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage4/checked6144/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage5/checked10240/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage6/checked10240/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage7/checked786432/differences143241/nonfinite0/maxAbsolute4.76837158203e-07/relativeL23.52535741896e-08/exactPassed0;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage8/checked6144/differences901/nonfinite0/maxAbsolute7.45058059692e-09/relativeL21.36695056776e-08/exactPassed0;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage9/checked6144/differences3563/nonfinite0/maxAbsolute2.38418579102e-07/relativeL27.9343173981e-08/exactPassed0;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage10/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage11/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage12/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage13/checked17408/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage14/checked17408/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage15/checked17408/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage16/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer0/stage17/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage0/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage1/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage2/checked48/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage3/checked48/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage4/checked6144/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage5/checked10240/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage6/checked10240/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage7/checked786432/differences240828/nonfinite0/maxAbsolute2.98023223877e-08/relativeL28.46373249052e-08/exactPassed0;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage8/checked6144/differences1567/nonfinite0/maxAbsolute9.31322574615e-10/relativeL21.11180531942e-07/exactPassed0;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage9/checked6144/differences3412/nonfinite0/maxAbsolute2.38418579102e-07/relativeL21.58987950547e-07/exactPassed0;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage10/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage11/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage12/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage13/checked17408/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage14/checked17408/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage15/checked17408/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage16/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer1/stage17/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage0/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage1/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage2/checked48/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage3/checked48/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage4/checked6144/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage5/checked10240/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage6/checked10240/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage7/checked786432/differences150486/nonfinite0/maxAbsolute7.45058059692e-09/relativeL24.15276325169e-08/exactPassed0;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage8/checked6144/differences978/nonfinite0/maxAbsolute3.49245965481e-10/relativeL23.15613982781e-08/exactPassed0;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage9/checked6144/differences3141/nonfinite0/maxAbsolute1.19209289551e-07/relativeL26.28637809196e-08/exactPassed0;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage10/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage11/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage12/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage13/checked17408/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage14/checked17408/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage15/checked17408/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage16/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_STAGE layer2/stage17/checked5120/differences0/nonfinite0/maxAbsolute0/relativeL20/exactPassed1;AFTER complete native3RUN+STOP+120holds+restore+fresh END
+ORIGINAL_PREFIX_NATIVE_FINAL checked5120/differences0/nonfinite0/exactPassed1/all3finalsExact3/stagesExact45/54;actual genuine native QPE1+672/336init+3layers+realSTOP+120holds+restore+fresh END,raw OS/registers SIMULATED,NOT physical readback,full64/token/Work or TPS

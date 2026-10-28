@@ -30,6 +30,7 @@ public:
  bool CaptureOriginalOutput(uint32_t*,unsigned);bool PublishOriginalStages(PrefixOriginalStageSink&);
  void EnableValidationReadback(unsigned=0);unsigned ReadbackFaultFence()const;unsigned ReadbackPackets()const;
  void VerifyReadback(const uint32_t*,unsigned);
+ void PreserveClosedValidationObservation(const uint32_t*,unsigned);
  void Observe(const PioneerQ38RecurrentPrefixResult&); // read-only ordering observer,not a native phase setter
  void VerifyRun();void VerifyClosed();void Diagnostic();
 };

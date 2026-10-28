@@ -21,6 +21,12 @@ extern "C" {
 #define publish_devices pioneer_q38_recurrent_prefix_context_body_publish_devices
 #define find_device pioneer_q38_recurrent_prefix_context_body_find_device
 #include "../../../src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp"
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_CONTROL_COMPILE_ONLY
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38RecurrentPrefixValidationControl.h"
+extern "C" status_t pioneer_recurrent_prefix_context_control(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t length){
+ return Q38RecurrentPrefixValidationControl(cookie,operation,data,length);
+} // actual complete body inspected,NO normal routing/driver ABI
+#endif
 extern "C" status_t pioneer_q38_recurrent_prefix_context_only_init_hardware(){return B_NOT_ALLOWED;}
 extern "C" status_t pioneer_q38_recurrent_prefix_context_only_init_driver(){return B_NOT_ALLOWED;}
 extern "C" void pioneer_q38_recurrent_prefix_context_only_uninit_driver(){}

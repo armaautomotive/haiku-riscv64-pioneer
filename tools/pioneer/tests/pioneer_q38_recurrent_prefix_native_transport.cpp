@@ -82,6 +82,7 @@ struct RecurrentPrefixNativeTransport::Impl:PrefixOwnerActualIOBase<NativeOrigin
  using OwnerIO=PrefixOwnerActualIOBase<NativeOriginalPrefixMachine>;
  unsigned resets=0;bool configured=false;
  bool readback=false,reading=false;unsigned readbackFault=0,readbackFence=0,readPackets=0;
+ PioneerQ38RecurrentPrefixResult closedObservation;bool observedClosed=false;
  std::array<uint32_t,10240> inheritedPrefix={}; // untouched QPE1/legacy64000..6e000 padding outside new snapshot
  Impl(const char* root,const char* worker):OwnerIO(root,worker){
   (void)&PrefixOwnerUnusedInput;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;
@@ -271,6 +272,11 @@ void RecurrentPrefixNativeTransport::VerifyReadback(const uint32_t* words,unsign
  const auto* o=p.operation->Layer(2)->Outer();
  for(unsigned i=0;i<count;i++)assert(words[i]==p.machine.Get(o[8],o[9]+RB::FinalOffset+i*4));
 } // compare actual instruction bytes,NOT a CPU reference or physical-model proof
+void RecurrentPrefixNativeTransport::PreserveClosedValidationObservation(const uint32_t* words,unsigned count){
+ auto& p=*implementation;assert(!p.observedClosed);VerifyClosed();VerifyReadback(words,count);
+ p.closedObservation=*p.execution;p.execution=&p.closedObservation;p.observedClosed=true;
+} // TEST read-only copy of a GENUINE closed result BEFORE handler frees it;
+  // no producer/ready/native capability and no later controller/physical IO
 bool RecurrentPrefixNativeTransport::CaptureOriginalOutput(uint32_t* output,unsigned words){
  auto& p=*implementation;auto& m=p.machine;
  if(!output || words!=5120 || (uintptr_t(output)&3) || uintptr_t(output)>UINTPTR_MAX-20480

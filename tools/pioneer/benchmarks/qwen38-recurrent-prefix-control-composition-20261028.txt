@@ -1,0 +1,109 @@
+Actual prefix diagnostic-control composition, still NODRV only
+October28UTC2026; NO physical installation,selector or routing
+
+Completed full native computation+final-END gate
+-----------------------------------------------
+26734/98063 BOTH TERMINAL0; complete62-line stdout exact SHA256:
+6fd5770d9195d5bc286abe8d124614ce2bdef7edd8b0ff9ac3fa6ce9c623933a.
+Actual SAME private QPE1+672GDN/336history producers/native owner execute
+3layers/119STOP+ROOT/all120holds/full11406904-word restore+second22813808-
+word proof/dispatch END. Actual compute-call scope releases before the
+actual locked bank-END call, fresh VERBATIM7-parent source audit/PCI quiet+
+resident idle/real private clock restoration/30VM+11PCI+3host release/
+unreserve+cookie/global clear+private context destruction. All6 post-RUN
+lifetime faults and84 final-END faults retain/fence following IO or retry.
+Raw OS/MMIO/PCI/learned endpoints SIMULATED; NOT physical execution,original
+arithmetic,full64,Work,Assistant or token speed. CLOSED:do not poll/restart.
+
+Original-weight main native gate completed; clean still separate
+---------------------------------------------------------------
+36450 TERMINAL0; complete120-line stdout SHA256:
+89463a9edb4cfb88d2e5cdc9a8ad7d31556a7f67a5797f9506f6d83230e5fe3d.
+Full c600 file auth+169 original raw spans/842821248 bytes/private reference
+BEFORE native context; actual QPE1+672/336init+3native layers+STOP/holds/
+restore+fresh END. CPU observer sees54 stage snapshots only AFTER context
+destruction. ALL3 final5120-word outputs BIT-EXACT (15360 words,nonfinite0),
+45/54 stages exact;9 known GDN intermediate rounding differences remain,
+without relaxing the strict finals. No synthetic learned fallback or CPU
+expected products feed native/operand TUs. OS/register endpoints SIMULATED,
+NOT physical readback/Work/TPS. Binary predates later boundary-only and
+atomic-output hardening; do not claim those later negative cases from it.
+CLOSED36450;clean62100 is STILL LIVE,not passed by inference from main.
+
+Actual complete control body implemented, NOT a loadable driver
+--------------------------------------------------------------
+New PrefixValidationControlRole requires exact COMPILE_ONLY=1 plus all21
+renamed-ABI QRPNODRV parents and readback/final-release=1 (24 exact fields).
+Reserved physical73/client/CPU-oracle roles remain forbidden. No production
+ProbeControl route or conventional loadable ABI was added.
+
+The actual body validates fixed request/team/FD scope, runs the genuine
+private embedding+initializers+native3layer/readback/restore chain, checks all
+result invariants/source-page counts and holds output in owned kernel heap.
+It releases the compute RAII seal BEFORE END can destroy that context,
+reacquires the actual lock and rebinds exact context+full model identity
+against replacement/ABA, executes the actual sealed END branch and requires
+closed/cookie-global clear/PCI restored/hosts released before first user copy.
+No dereference of the destroyed context occurs after END. CPU copy failure
+after known-clean END cannot grant another END or quarantine a freed context.
+This is diagnostic-only;it is NOT a whole-token/state commit or Work option.
+
+SDK98387/92814 BOTH TERMINAL0, objects EXACT SHA256:
+4a8a0a01f12e7520fe62f649af14faab6a9fa72caa5cec8b3db0f84282d1426e.
+Actual complete control,END helper and all native factories/controllers/
+readback/final-disposal bodies instantiated;max new kernel frame784B.
+NO conventional ABI/CPU oracle/Work symbols;5 independent inert entries
+exact. Normal feature-OFF object8031 remains byte-identical2eab5b48;
+old65 remains byte-identical61faa093. Compile is NOT runtime authority.
+
+Control role gates1762/69349 BOTH0:459 exact/missing/defined0/late/6-ABI/
+physical73+old72+stable12/CPU/Work refusals. Full stdout exact:
+d164efd79f8892ed1f3ab9d6af4b1a2738674dccbc87944854667e38b62f1397.
+Actual control preflight65200/52770 BOTH0/full stdout exact:
+ecd17586f147e01603a87fb2d7f9555d8446aebede0d6b8b13ab03e1fbbe6a0a.
+336 missing first/last learned endpoints across ALL168 stripes/ALL3layers,
+96 malformed header words,copy/team/null/old-op and locked-END rebinding
+refusals prove ZERO model publication,epoch advance or device IO relative
+to the raw fixture baseline. No public routing/admission claim is made.
+Preflight exits its OS simulation without forging a full-END/destructor
+seal;it is NOT runtime cleanup qualification.
+
+TEST endpoint repairs,not waived production guards
+-------------------------------------------------
+21547 failed because the output-copy observer also recognized a deliberately
+malformed INPUT with state=PASSED. Observer now matches actual caller-copy
+direction/owned caller buffer only.20527 then reached the full-END fixture's
+deliberate destructor assertion on a preflight-only process. Preflight exits
+without manufacturing a closed/destruction record.59130 compile failed for
+the real Snapshot legacy-capability macro missing from the TEST protocol.
+The runner now extracts actual capability macros and actual Snapshot method
+verbatim. Extra TEST fields are raw OS metadata only;Snapshot publishes READY,
+never CLOSED. Actual END must overwrite completion/PCI/host fields. Both final
+preflights rerun0. No production guard/source/clock/ownership rule weakened.
+
+Still LIVE; runtime result not implied by preflight/SDK
+------------------------------------------------------
+62100 ORIGINAL native3RUN/fresh END/54comparisons CLEAN
+43038/80015 native3RUN/fiveREADs/3readback faults/fresh END MAIN/CLEAN
+26684/93171 ACTUAL control3RUN/readback/restore/final-END/post-END caller copy
+MAIN/CLEAN. Control test preserves a read-only snapshot of the genuine closed
+result BEFORE its allocation is freed,not a new producer/ready capability.
+The output-copy fault forks ONLY after actual final-END/context destruction;
+it must leave caller data unchanged and permit ZERO subsequent card IO or
+duplicate END. These are running obligations,NOT passed results. All exact
+handles freshly live. Follow them;never restart solely for quiet output or
+observation timeout. All LOCAL SIMULATIONS,not physical card clients.
+
+Full objective unchanged
+------------------------
+Finish clean original and readback/control runtimes,then actual combined
+original-model-readback mode (not launched). Distinct physical73 native role,
+normal routing/admission,module/helper/pins/current parent+owner audit and
+original-model card comparison still owed. Never retag old72 or compile-only
+QRPNODRV artifacts as physical authority. Then dense3/all64,persistent KV+
+GDN+history/atomic token update/finalnorm/vocab/on-card sampling/persistent
+no-CPU-reference Work+Assistant and real inference optimization toward20tok/s.
+No driver,image,boot,Assistant,power,SD,mains,network or hardware changes.
+Last known stable041/64CPU/fullRAM not freshly re-probed. Last measured whole
+27B0.207893161tok/s unchanged;20tok/s/full-offload unmet;goal ACTIVE. All
+simulator/init/readback/restore/cleanup times are NOT token performance.

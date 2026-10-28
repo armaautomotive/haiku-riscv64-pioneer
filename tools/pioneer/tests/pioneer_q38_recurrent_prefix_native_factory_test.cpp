@@ -47,6 +47,7 @@ template<class Check> static void RecurrentNativeFork(Check check){
  fflush(nullptr);pid_t child=fork();assert(child>=0);if(!child){check();_exit(0);}
  int status=0;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
 }
+#ifndef PIONEER_Q38_RECURRENT_PREFIX_CONTROL_FIXTURE_ONLY
 #ifdef PIONEER_Q38_RECURRENT_PREFIX_ORIGINAL_NATIVE_TEST
 int ExecutePrefixOriginalNativeScenario(const char* const* images,RecurrentBlockRawLearnedBytes& original,uint32_t* output,unsigned outputWords,PrefixOriginalStageSink* sink){
  if(!images || !output || outputWords!=5120 || (uintptr_t(output)&3) || uintptr_t(output)>UINTPTR_MAX-20480 || !original.Ready())return 1;
@@ -174,3 +175,4 @@ int main(int argc,char** argv){
  return transport.CaptureOriginalOutput(output,outputWords)?0:1;
 #endif
 }
+#endif // separate control fixture uses the SAME native classes,not this main
