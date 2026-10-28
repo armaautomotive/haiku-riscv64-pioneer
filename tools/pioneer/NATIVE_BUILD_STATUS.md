@@ -1,8 +1,15 @@
 # Native build status
 
-## Current: DEBUG72 offline lifecycle and original-weight comparison passed
+## Current: DEBUG72 physical original-weight trial running; offline gates passed
 
 October 28, 2026. Offline qualification is NOT physical-card qualification.
+The fully pinned DEBUG72 module is NOW selected after a clean guarded swap:
+tag2026102700010072/generation3, apply terminal0. ONE authenticated original
+physical client is LIVE (SSH78087, remote client636); last log observation
+was its CPU source-authentication phase before GPU_OPEN. No other card open/
+status/reload may occur while it or its pre-Open parent lives. Only OS/log
+reads are allowed. No physical numeric comparison/END/speed result yet.
+See benchmarks/qwen38-recurrent-debug72-physical-20261028.txt.
 The original-weight DEBUG71 physical trial uploaded all 300 calls/68603 pages,
 then failed execution preparation at worker114 BEFORE the full recurrent ROOT
 RUN. No numeric comparison or clean END occurred. A shared startup deadline
@@ -19,7 +26,8 @@ client179/NODRV430/readback93 gates,451 client failure cases, actual original
 c600 preflight and guarded swap236+236/legacy302 cases all passed.
 The helper retires failed71 apply while preserving known-clean restore;
 only exact stable041 <-> new3e00/72 is added. Files are SHA-verified in a
-separate non-watched Haiku folder, NOT installed/invoked. Stable041 remains.
+separate non-watched Haiku folder before the later qualified guarded apply.
+Stable041 remains the restore target, NOT the currently selected trial driver.
 New72 actual public-handler tests94469/41404 BOTH TERMINAL0: complete24-line
 stdout exact8e34bce3, actual support23/wholeRUN/STOP/120holds/readback/full
 restore/copy-failure/duplicate/fresh-END all passed. Evidence:
@@ -29,7 +37,7 @@ complete52-line stdout exact5e920fdc. All5120 final words match the independent
 reference bit-for-bit;15/18 stages are exact and the same three intermediate
 rounding differences remain. All three readback failures, five positive READs,
 full restoration+second proof and fresh END+84 faults pass. Raw OS/register/
-GDDR endpoints are SIMULATED; no hardware deployment yet. See
+GDDR endpoints are SIMULATED; the separate physical trial is now LIVE. See
 benchmarks/qwen38-recurrent-debug72-original-20261028.txt. Do not poll these
 completed handles.
 Earlier71/deadline controls2894/11492 now BOTH TERMINAL0, complete24-line
@@ -38,10 +46,10 @@ This validates the corrected owner algorithm, NOT the failed87d0 image.
 All current72 offline gates have now completed. See
 benchmarks/qwen38-recurrent-startup-whole-control-20261027.txt.
 See benchmarks/qwen38-recurrent-debug72-preparation-20261027.txt.
-The candidate and helper are now also SHA-verified under new immutable names
-in the standard guarded-reload staging folder. This is file staging ONLY,
-not installation/helper invocation/card IO or fresh loaded-owner evidence.
-Stable041's installed file hash is unchanged. See
+The earlier standard-stage candidate/helper copies were SHA-verified under
+new immutable names. That staging action alone did not invoke/install/open
+anything or prove current loaded ownership. The later guarded72 apply is
+recorded separately above; stable041's file hash was unchanged at staging. See
 benchmarks/qwen38-recurrent-debug72-standard-stage-20261027.txt.
 
 Historical scoped profiles captured post-RUN/STOP/120hold readback poison

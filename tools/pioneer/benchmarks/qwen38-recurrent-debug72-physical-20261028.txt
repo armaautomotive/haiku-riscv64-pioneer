@@ -1,0 +1,68 @@
+DEBUG72 single original-weight physical trial
+October28UTC2026
+STATUS: CLIENT78087 LIVE; no physical arithmetic/END/result qualification yet.
+
+Completed prerequisites, not inferred from partial tests
+-------------------------------------------------------
+All current-source offline gates completed, including both actual public72
+handler lifecycle tests and both independently compiled original-weight native
+numerical/readback/final-END tests. Complete original52-line logs are exact
+5e920fdc/final5120words bit-exact/15of18stages exact/nonfinite0; same three
+intermediate rounding differences remain. Original evidence was archived,
+reviewed and pushed7bfc6073e2ea7d579c77607b858b80aa24141b12 BEFORE deployment.
+
+Fresh Haiku sysinfo:64CPUs/max137034936320B/free133797203968B. A first remote
+multiline shell diagnostic made its own process inventory contain invalid
+multiline rows and correctly STOPPED before any card open. A subsequent simple
+ps command yielded valid rows and no compute parent. No inventory guard was
+weakened or bypassed. Installed041, guard/source, admin, A/B/stable/candidate
+files and new helper were all rechecked regular/non-symlink with exact hashes;
+device symlink and absent incoming paths were checked. Fresh admin metadata:
+driver55/tag2026102100010012/generation2/quiesced0/cold0/owner0/open_count1/guard1.
+
+Guarded apply: actual terminal0
+-------------------------------
+Only the qualified standard-stage helper was invoked, using
+--apply-recurrent-deadline-validation. Its OWN fresh parent/sole-FD/owner/
+cold/generation/backup/source/guard checks passed, then the normal watched-path
+rename/reload completed. Tag12/gen2 quiesced, then NEW tag2026102700010072/
+gen3/quiesced0/cold0/owner0/open_count1/guard1 was verified. No reboot/reset/
+automatic rollback or card calculation was performed by the swap.
+Full apply log: qwen38-recurrent-debug72-apply-20261028.log.
+Selected module SHA3e00974c4476f2755341fbcea034340652e976e292cb017344f4a70f896c652e
+Helper SHAd560bf3e6284a9eef1f04528be9cc973519ba76455de04a43b6c49c41e1546b8
+Stable041 is NOT the currently selected driver while this trial runs.
+
+Exactly ONE physical client, still live
+---------------------------------------
+Client file2f322603020b97d4a9eb3696c3bd550606d64a1531545a48e111f80298ee1f40
+was rechecked regular/non-symlink/executable/exact SHA before invocation.
+Argument ONLY --validate-token0-recurrent0. Full original authentication and
+private independent CPU reference/seal must precede its Open. Strict final
+5120-word comparison must pass BEFORE explicit END. Any uncertainty closes
+only, retaining/quarantining rather than retry/reset/implicit-END/hot rollback.
+Remote parent634/client636 and SHA subprocess637 were observed in OS ps;
+the last log read had only the start banner, before its GPU_OPEN marker.
+This is progress/wait evidence, NOT a completed hash or a device result.
+
+SSH session78087; do not start another client. Remote durable log:
+/boot/home/pioneer-q38-recurrent-debug72-qualification-20261027-a/debug72-original-20261028-a.log
+Exit file, written by the wrapper ONLY after the client terminates:
+/boot/home/pioneer-q38-recurrent-debug72-qualification-20261027-a/debug72-original-20261028-a.exit
+Serial baseline82357695 bytes in existing passive screen log
+/private/tmp/pioneer-haiku-recovery.kFZP6j/screenlog.0.
+NO other P100A open/status/probe/reload while the client or its pre-Open parent
+lives. OS/process/file-log reads only. A quiet log/observation timeout is not
+terminal. Follow the SAME handle; if it disappears, inspect exact OS/exit/log
+state rather than infer success, restart or retry.
+
+After terminal0, inspect full reply/strict5120 exact result/clean explicit END
+before fresh clean-owner guarded restore041. On failure/unknown retain all,
+no retry/reset/hot restore; controlled OFF-once/wait/ON-once recovery perAGENTS,
+then pinned64CPU/fullRAM Haiku recovery and fresh clean guarded restore.
+No SD/mains/hardware-connection change or work-saved question is required.
+Separate host history-prefix87321/60515/legacy75367 remain LIVE/unqualified;
+no history prototype is installed. Full64/persistent state+history+KV/token
+commit/finalnorm+vocabulary+sampling/no-CPU-reference Work+Assistant and honest
+inference optimization remain owed. Last whole27B0.207893161tok/s unchanged;
+20tok/s unmet;goal ACTIVE. No client elapsed time may be called token rate.
