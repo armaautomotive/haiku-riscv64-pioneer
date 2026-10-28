@@ -7,7 +7,8 @@ import re
 import runpy
 import subprocess
 import sys
-if len(sys.argv)!=3 or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):raise SystemExit(2)
+if len(sys.argv) not in (3,4) or (len(sys.argv)==4 and sys.argv[3]!='--final-release') or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):raise SystemExit(2)
+final=len(sys.argv)==4
 qualified,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert out.is_absolute() and not out.exists() and not out.is_symlink();out.mkdir(mode=0o700)
 saved=sys.argv[:]
@@ -29,6 +30,7 @@ obj=out/'recurrent-prefix-context-NODRV.o'
 tags=[i for i,a in enumerate(args) if a.startswith('-DPIONEER_DRIVER_BUILD_TAG=')];assert len(tags)==1
 args[tags[0]]='-DPIONEER_DRIVER_BUILD_TAG=0x5152504e4f445256ULL'
 args[args.index('-c')+1]=str(here/'pioneer_q38_recurrent_prefix_native_context_compile.cpp');args[args.index('-o')+1]=str(obj)
+if final:args+=['-DPIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE=1']
 subprocess.run(args,check=True,env=base['clean'])
 frames=base['frames'](obj.with_suffix('.su'));assert frames
 for name,size in frames.items():assert size<=2048 or name in base['previous'] and size<=base['previous'][name],(name,size)
@@ -40,6 +42,7 @@ required=('PioneerQ38RecurrentPrefixMemory::PrepareHeld(', 'PioneerQ38RecurrentP
  'InitializeQ38RecurrentPrefixState(', 'InitializeQ38RecurrentPrefixHistory(', 'pioneer_recurrent_prefix_context_scoped_initialized_held(',
  'PioneerQ38RecurrentPrefixOwner::Prepare(', 'PioneerQ38RecurrentPrefixOwner::Run(', 'PioneerQ38RecurrentPrefixOwner::Close(',
  'RecurrentPrefixExecutionScope(', 'pioneer_recurrent_prefix_context_scoped_execution(')
+if final:required+=('RecurrentPrefixFinalReleaseScope(', 'RecurrentPrefixFinalUnmap(', 'pioneer_recurrent_prefix_context_locked_end(')
 for name in required:assert any(name in key for key in frames),(name,'actual complete implementation must be instantiated')
 sizes=[v for k,v in frames.items() if 'RecurrentPrefix' in k or 'pioneer_recurrent_prefix_context_' in k];assert sizes and max(sizes)<=2048
 tool=str(pathlib.Path(args[0]).parent/'riscv64-unknown-haiku-')
@@ -69,4 +72,5 @@ print('PASS NO conventional driver ABI/ALL5 independent inert controls BYTE-IDEN
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+' recurrent-prefix-context-NODRV.o')
 print('PASS SAME actual native completed-embedding context/private recurrent+history zero leases/real controller init+CLOSE SDK bodies;NO old native-role aliases or caller-ready setters')
 print('PASS DISTINCT actual native QPX1 execution owner/metadata stage/private RUN+counter proof/STOP+ALL120holds/full journal restore body compile;NO CPU products or token/state commit')
+if final:print('PASS DISTINCT prefix final-release/native closed+clock+FD/team/thread scope/30VM-only aliases/actual locked END call seal;COMPILE ONLY,NOT runtime or physical qualification')
 print('COMPILE/INSPECT ONLY;private bodies WOULD do IO if invoked. Never linked/installed/invoked;runtime RUN/STOP/HOLD/restoration/full final disposal/physical and model-speed qualification STILL OWED')

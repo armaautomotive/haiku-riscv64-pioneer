@@ -154,6 +154,19 @@ benchmarks/qwen38-recurrent-prefix-original-and-controller-20261028.txt.
 Native evidence/current handles and remaining gates:
 benchmarks/qwen38-recurrent-prefix-native-binding-20261028.txt.
 
+Native execution coupling + own final-release perimeter now implemented.
+Main9637/clean79534 HELD/full native maps+journal/restore+dispatch END and
+8 partial-map faults BOTH0/exact7f2271b3. Fresh HELD actual compute-call seal
+release -> actual locked final-END/real private clock/fresh7-parent audit/
+30VM+11PCI+3host release/context destruction +84 faults main44017/clean96163
+BOTH0/exactc1d32bd0. Final SDK53197/79445 BOTH0/exact2eab5b48/maxNewFrame784B;
+old65 byte-identical. These use simulated OS/register/raw endpoints, NOT
+physical or a whole computation-END result. Corrected controller58809/98574,
+native execution18968 and fresh native execution+END26734/98063 remain LIVE,
+NOT passed. Original51883 now TERMINAL1 from the same destructive TEST probe
+as7427. No guard weakened, no driver installed or speed measured. Details:
+benchmarks/qwen38-recurrent-prefix-native-execution-and-end-20261028.txt.
+
 - Complete execution-owner/real STOP/120 holds/full original restoration
   passed in the clean export (60994, terminal 0); main output is identical.
 - Both seven-case, genuinely reached STOP/hold/restore fault suites passed.

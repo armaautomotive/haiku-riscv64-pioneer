@@ -1,0 +1,111 @@
+Native prefix execution coupling and final-release perimeter
+October28UTC2026
+
+Implemented, not installed
+-------------------------
+Distinct raw PrefixNativeTransport connects the actual production native
+PrefixState/PrefixOwner/PrefixMemory/PrefixPlan/Mapping/Initialize/Execution
+to actual QPX1+119QMW1 instruction machines in a separate TEST translation
+unit. Native parents/role are not operand/image/simulator flags. Real
+production FD/thread/team/generation/source/model/clock/host/phase checks
+and private zero/QPE1/init producer seals remain in the native TU.
+
+Only actual emitted QPE1 output and actual initialized recurrent/history
+BYTES cross the raw endpoint interface. No copied ready/native phase/PC/
+nonce/completed producer or CPU expected products. ALL3 immutable plans/
+boot/source/identity/recipes/Conv/GDN words are checked against independent
+canonical geometry; both slots for96 GDN workers and all640 Conv groups
+are supplied from actual initializer output for each of the three layers.
+All default packages AND active metadata remain poisoned before the real
+owner's57 host packets and ROOT's own copies. No per-layer host submission.
+The new private cohort Unsafe exception applies ONLY to the bound prefix
+owner's controlled embedding scope; ordinary cleanup still refuses running
+or unknown resources. Original old-role branches remain unchanged.
+
+Native HELD/no-launch runtime qualification COMPLETE
+--------------------------------------------------
+Main9637/clean79534 BOTH TERMINAL0; whole18-line stdout EXACT SHA256:
+7f2271b347a62d304ffeb4baceec79c7914d6a39c62f629ffe0596367524be1c.
+Actual same completed QPE1 + ALL672GDN/336history zero instruction producers,
+all120 actual source probes/peer leases/held role preparation, four new
+native MMIO aliases, full11406904 original-word save+first verification,
+2633615-word program install, complete restoration+second original proof,
+and actual complete dispatch END; no reset/launch, BME changes or CPU math.
+Eight reached partial/NULL map failures retain every owner and partial
+alias, with ZERO later physical IO/retry/cleanup. Raw OS/PCI/GDDR endpoints
+are SIMULATED, not a physical device or a numerical-original-model result.
+
+Distinct complete final-release perimeter implemented and HELD qualified
+----------------------------------------------------------------------
+Own PrefixFinalReleaseRole/Scope/PciState/Unmap/EndCall, not a dense/block
+role alias. Exact compile-only QRPNODRV still required; no normal driver ABI.
+Closed same prefix state/plan/source/FD/thread/team/generation + completed
+dispatch/root/bulk restore + actual ended private clock + all host leases
+are required at EndPhase50 before the first VM-only disposal. Exactly30
+owned MMIO aliases, never host buffers, are considered. Partial/duplicate/
+host alias mistakes refuse; first delete failure fences every later action.
+Only the genuine closed/ended-clock boundary admits provisional PCI
+RESTORE_FAILED. Actual locked bank-END call seal avoids a compute RAII seal
+outliving successful destruction of its context. Old generic Unmap remains
+fail-closed unless this distinct exact feature is selected.
+
+SDK main53197/clean79445 BOTH TERMINAL0. Full real probe/native factories,
+all controller templates and actual final scope/30VM Unmap/locked END body
+instantiated, maximum new static kernel frame784B. Objects byte-identical:
+2eab5b4839e6323b09647184b2c32530be00eaa1a893df519514e9e4f9f391a9.
+No conventional driver ABI/CPU-reference/Work symbols; five independent
+inert entries exact; old65 still BYTE-IDENTICAL61faa093. SDK is NOT execution
+permission. Role main41664/clean23254 BOTH0/stdout EXACT4d7ee74f:
+21 exact parents/6 renamed ABI names/57 forbidden aliases/326 missing,
+wrong,late,defined0 refusals; final feature accepts ONLY1, including late use.
+
+Fresh HELD final-END main44017/clean96163 BOTH TERMINAL0. Whole11-line
+stdout EXACT SHA256c1d32bd03944b37069346d8a2de907dd582c9cef021f851036c52be985a48aea.
+Actual compute-call scope release -> actual locked END/owned source prefix
+and footer/real private clock/VERBATIM7-parent fresh AfterNodeId chain/PCI
+quiet+resident idle/final native scope/30VM+11PCI+3host release/unreserve/
+cookie+global clear/clean private context destruction. ALL84 reached faults
+(11 early+7 binding+12 audit+3 audit restore+quiet+idle+5 clock+33 VM/host+
+11 PCI) retain and fence later IO/disposal/retry. OS/register endpoints
+SIMULATED. HELD result is NOT a full computation/native execution-END grant.
+Completed logs: qwen38-prefix-{native-held,native-final-held,final-sdk,final-role}-{main,clean}-20261028.log.
+
+Development failures resolved, not hidden qualification
+-----------------------------------------------------
+First raw transport attempts41833/15252/95740 TERMINAL1: SeedRoot needed
+untouched64000..6e000 legacy/QPE1 padding outside the new snapshot. A separate
+bounded raw byte backing now preserves that original padding; no producer
+or execution state was manufactured. First final fixture51982/5117 failed
+compilation: the generic TEST layout omitted its fresh-audit fields under
+the new prefix test flag. Added that exact TEST-only conditional; no source,
+clock,held,clean or permission setter was added. All above final gates were
+rerun to terminal0; no failure was interpreted as hardware permission.
+
+Long actual computation gates STILL LIVE, not passed
+--------------------------------------------------
+Corrected controller main58809/clean98574 (original51883 now TERMINAL1 with
+the same TEST VerifyStop Doorbell mutation as7427). Destructive STOP/inert
+challenge and11 other post-STOP mutations now fork the actual post3layer
+simulation, never repair the positive parent or manufacture progress.
+Genuine native execution18968; fresh full native execution+END26734 and
+clean98063. Logs respectively:
+/private/tmp/pioneer-q38-prefix-owner-actual-{main,clean}-20261028-b.log
+/private/tmp/pioneer-q38-prefix-native-execution-main-20261028-b.log
+/private/tmp/pioneer-q38-prefix-native-final-execution-{main,clean}-20261028-a.log
+Follow EXACT live handles; quiet output/timeouts do not permit restarting.
+Full3layers/real119STOP+ROOT/12 controller faults/6 native post-RUN faults/
+all120holds/fullrestore+secondproof/full84 final-END faults still owed for
+their respective computation contexts. No runtime result implied by SDK or
+HELD-only qualification. These handles are LOCAL test processes, not card jobs.
+
+Unchanged full goal
+-------------------
+After these gates, original-model native comparisons and distinct physical
+tag/namespace/client/helper + fresh parent/ownership/hash audit/card test.
+Then dense3/all64, persistent KV+GDN+Conv/atomic token commit/finalnorm/
+vocabulary/on-card sampling/persistent no-CPU-reference Work+Assistant and
+actual inference optimization. No new image/driver installed, no Pioneer
+power/SD/mains/hardware/Assistant/network change. Last known working baseline
+stable041/64CPU/fullRAM unchanged by these LOCAL changes. Last measured whole
+27B rate0.207893161tok/s;20tok/s unmet;full goal ACTIVE. Emulator/init/cleanup
+time is NOT token performance.

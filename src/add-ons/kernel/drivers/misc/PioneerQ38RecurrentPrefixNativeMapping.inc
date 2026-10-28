@@ -11,6 +11,9 @@ void RecurrentPrefixRetainHostOwners();
 area_id q38RecurrentPrefixMemoryArea[4]={-1,-1,-1,-1};
 volatile uint32* q38RecurrentPrefixMemoryView[4]={NULL,NULL,NULL,NULL};
 bool q38RecurrentPrefixMemoryMapAttempted=false;uint64 q38RecurrentPrefixMemoryBar=0;
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE
+#include "PioneerQ38RecurrentPrefixFinalUnmap.inc"
+#endif
 bool RecurrentPrefixMemoryMappingStable(unsigned w){
  if(w>=120 || runtimeCore!=w || !fleetEnabled || !runtimeMapped || !runtimeEntry || !scratchData || payloadBytes!=8192
   || !Q38PanelMappingStable() || !q38RecurrentPrefixMemoryMapAttempted || profile.bar0_host_start!=q38RecurrentPrefixMemoryBar

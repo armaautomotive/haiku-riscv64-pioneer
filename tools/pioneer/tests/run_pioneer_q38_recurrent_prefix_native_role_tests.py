@@ -11,7 +11,7 @@ parents=set(re.findall(r'!defined\(([A-Z][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b',r
 assert len(parents)==21
 abi=('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')
 forbidden=set(re.findall(r'defined\(([A-Z_][A-Z0-9_]*)\)',role[role.index('#if defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT)'):]))
-assert not parents&forbidden and len(forbidden)==58
+assert not parents&forbidden and len(forbidden)==57
 base={**dict.fromkeys(parents,'1'),'PIONEER_DRIVER_BUILD_TAG':'0x5152504e4f445256ULL',
       **{name:'pioneer_q38_recurrent_prefix_context_body_'+name for name in abi}}
 include='#include "'+str(path)+'"\n'
@@ -21,6 +21,10 @@ def check(definitions,accept,tail=''):
                        text=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
  assert (result.returncode==0)==accept,(accept,result.stderr)
 check(base,True);refused=0
+feature='PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE'
+check({**base,feature:'1'},True);check(base,True,'#define '+feature+' 1\n'+include)
+for value in ('0','2'):
+ check({**base,feature:value},False);check(base,False,'#define '+feature+' '+value+'\n'+include);refused+=2
 for name in sorted(parents):
  missing=dict(base);del missing[name];check(missing,False);refused+=1
  for value in ('0','2'):

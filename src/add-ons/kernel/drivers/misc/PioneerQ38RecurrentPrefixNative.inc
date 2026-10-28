@@ -137,4 +137,7 @@ void PioneerSessionIO::RecurrentPrefixRetainHostOwners(){
  else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
 }
 #include "PioneerQ38RecurrentPrefixNativeExecution.inc"
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE
+#include "PioneerQ38RecurrentPrefixFinalReleaseScope.inc"
+#endif
 #endif

@@ -1,5 +1,11 @@
 Original-weight autonomous prefix COMPLETE; controller prototype WIP
 October28UTC2026
+CURRENT FOLLOW-UP: original clean51883 also TERMINAL1 from destructive TEST
+VerifyStop; corrected controller58809/98574 LIVE. Genuine native HELD+final
+END gates now main+clean0, full native computations pending. See
+qwen38-recurrent-prefix-native-execution-and-end-20261028.txt for exact current
+handles and remaining gates. Historical LIVE/unimplemented text below is
+not current authority or runtime/hardware permission.
 Original main46358/clean57860 BOTH TERMINAL0; complete103-line stdout EXACT:
 SHA2568b6d430d6046ba15b6ecddbfeee7725480588d1b90625edfcdbdff30cb12476a.
 ALL3 final5120 outputs BIT-EXACT (15360 words), nonfinite0,45/54 stages exact.

@@ -59,6 +59,14 @@ extern "C" bool pioneer_recurrent_prefix_context_scoped_execution(PioneerProbeCo
 extern "C" bool pioneer_recurrent_prefix_context_scoped_dispatch_end(PioneerProbeCookie* cookie,tt_resident_session_result& result,bool& clean){
  PioneerQ38GdnCallScope scope(cookie);auto* c=scope.Context();return c && EndQ38DispatchOwnership(*c,result,clean);
 } // not a complete final bank-END/VM/clock/PCI/host disposal qualification
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE
+extern "C" status_t pioneer_recurrent_prefix_context_locked_end(PioneerProbeCookie* cookie,tt_resident_session_result& result){
+ status_t status=AcquireQ38GdnSessionLock(cookie);if(status!=B_OK)return status;
+ struct{tt_resident_session_result result;}request={};
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38RecurrentPrefixFinalEndCall.inc"
+ result=request.result;release_sem(sLock);return status;
+} // compile actual final call seal,never link/install/invoke this unit
+#endif
 extern "C" void pioneer_recurrent_prefix_context_retain(PioneerStoreContext& c,tt_resident_session_result& result){RetainQ38DispatchOwner(c,result);}
 extern "C" void pioneer_recurrent_prefix_context_destroy_clean(PioneerStoreContext* c){delete c;}
 extern "C" status_t pioneer_recurrent_prefix_context_expected_refusal(){return B_NOT_ALLOWED;}

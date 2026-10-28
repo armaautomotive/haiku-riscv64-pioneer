@@ -1,6 +1,13 @@
 Distinct autonomous-prefix native bindings: compiled and input/init tested
 October28UTC2026
 
+SUPERSEDED CURRENT GATES: native HELD/maps/restore/dispatch END and distinct
+fresh final-END/84faults now BOTHmain+clean0. Own final perimeter implemented;
+five full-computation handles still LIVE. See the authoritative follow-up
+qwen38-recurrent-prefix-native-execution-and-end-20261028.txt. Earlier LIVE/
+unimplemented labels below are this checkpoint's historical state, not new
+runtime or hardware permission.
+
 Scope
 -----
 New PrefixNativeState/Role/Mapping/Initialize/Execution and actual

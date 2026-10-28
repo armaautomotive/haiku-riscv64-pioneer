@@ -62,6 +62,10 @@
 #include "PioneerQ38MixedLiveFinalReleaseRole.h"
 #endif
 #include "tenstorrent_pci_probe.h"
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE
+#include "PioneerQ38RecurrentPrefixFinalReleaseRole.h"
+#include "PioneerQ38RecurrentPrefixFinalPciState.h"
+#endif
 #ifdef PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE
 #include "PioneerQ38RecurrentBlockFinalReleaseRole.h"
 #include "PioneerQ38RecurrentBlockFinalPciState.h"
@@ -2985,9 +2989,12 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	bool Unmap() {
 		bool okay=true;
 #ifdef PIONEER_Q38_RECURRENT_PREFIX_NATIVE_CONTEXT
-  // No prefix final-release perimeter is qualified yet. Never dispose
-  // its aliases via an old native END/Unmap path, even after STOP/restore.
+  // Only the distinct same-owner final scope can dispose these aliases.
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE
+  if(q38RecurrentPrefixMemoryMapAttempted || q38RecurrentPrefixFinalUnmapAttempted)return RecurrentPrefixFinalUnmap();
+#else
   if(q38RecurrentPrefixMemoryMapAttempted)return false;
+#endif
 #endif
 #ifdef PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE
   if(q38RecurrentBlockMemoryMapAttempted || q38RecurrentBlockFinalUnmapAttempted)return RecurrentBlockFinalUnmap();
@@ -3526,6 +3533,8 @@ struct PioneerStoreContext {
 			|| PioneerQ38MixedLiveFinalPciUncertain(*this);
 #elif defined(PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE)
    || PioneerQ38RecurrentBlockFinalPciUncertain(*this);
+#elif defined(PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE)
+   || PioneerQ38RecurrentPrefixFinalPciUncertain(*this);
 #else
 			|| Pci().state==TT_PIONEER_MMIO_RESTORE_FAILED;
 #endif
@@ -6507,6 +6516,8 @@ Q38BankControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_t len
 #include "PioneerQ38ResidentLayerValidationEndCall.inc"
 #elif defined(PIONEER_Q38_RECURRENT_BLOCK_FINAL_RELEASE)
 #include "PioneerQ38RecurrentBlockFinalEndCall.inc"
+#elif defined(PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE)
+#include "PioneerQ38RecurrentPrefixFinalEndCall.inc"
 #elif defined(PIONEER_Q38_MIXED_LIVE_FINAL_RELEASE)
 #include "PioneerQ38MixedLiveFinalEndCall.inc"
 #else
