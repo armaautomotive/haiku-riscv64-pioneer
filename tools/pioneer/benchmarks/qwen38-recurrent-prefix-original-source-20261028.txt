@@ -101,8 +101,12 @@ No native prefix owner/current-history publication/whole-token commit or
 physical3layer qualification follows CPU/source/build or simulated endpoints.
 Separate synthetic fault13554 is now TERMINAL0/complete85-line8c2bb004:
 39 reached children+all3 real blocks+STOP, arithmetic prefix exactly the
-qualified positive. Clean15283 remains LIVE after39 successful children.
-BOTH terminal0/full comparison is still required before paired qualification.
+qualified positive. Clean15283 now also TERMINAL0 with exact full85-line
+stdout8c2bb004. BOTH39children+all3blocks+realSTOP passed; simulated endpoints,
+NOT original/native/physical/current-history/token/Work/TPS qualification.
+Separate native-preparation DATA plan/program tables+held journal now have
+main+clean tests/SDK witnesses; see the native-preparation report. This is
+NOT a genuine native prefix owner. Original46358/57860 remain LIVE.
 Physical72's single original layer0 passed; stable041/tag12/gen4 restored.
 No power/SD/mains/hardware/network/Assistant change here. Last whole27B
 0.207893161tok/s unchanged,20tok/s unmet. Full64/persistent KV+GDN+Conv/token

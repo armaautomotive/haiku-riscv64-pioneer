@@ -1,0 +1,96 @@
+Autonomous prefix native-preparation components
+October28UTC2026
+STATUS: independent main/clean DATA plan, artifact tables, held journal and
+real SDK template compiles ALL TERMINAL0. These are NOT a genuine native
+prefix context or permission to install/launch. Physical driver unchanged.
+
+Complete immutable plan
+-----------------------
+PioneerQ38RecurrentPrefixPlan holds ALL3 actual canonical block plans on the
+HEAP, not a fabricated producer or relabeled single-layer native state.
+Fixed token0/position0/slot0, phases1001/1017/1033, requests1/2/3, SAME bank,
+identity and120 source seals. First input is canonical QPE1 workspace output;
+later inputs are the preceding actual FinalOffset. Independent native code
+must STILL prove that the QPE1 output exists and owns those initialized banks.
+Distinct extended QPX1 ROOT boot; old zero-tail boot is not accepted.
+All raw metadata packages serialize the real Outer/eight recipes/Conv/GDN
+tables little-endian,64B aligned,max16384B. No numeric products are serialized.
+Source/identity/bank/canonical-pointer/recipe/boot/ledger/range/alias mutations
+refuse. Metadata learned-page checks do NOT prove current/history/input
+initialization, source authentication or native permission.
+
+Main2632/clean94852 BOTH0; complete1-line logs exact SHA1558263c.
+21 packages across all7banks,1572480 canonical metadata words compared,
+16141 refusals, ASan/UBSan and strict warnings retained. "Original metadata"
+in unit output means unchanged canonical tables, NOT authenticated GGUF bytes.
+Pre-binding main70356 also passed; final-b main/clean are authoritative.
+Real RISC-V _KERNEL_MODE plan wrappers both0; complete2-line logs and actual
+objects byte-identical SHA7bba4f15a5eddc9e63df15759126c476236f61e8d7db8ea9902f7d1be86261aa.
+Maximum static KERNEL-mode frame784B. No native context/driver ABI/IO symbols.
+
+Separate complete program table / footprint
+-------------------------------------------
+New QPX1/QMW1 program table is separately named/pinned, NEVER an old QRB1
+program/owner alias. ROOT/Conv bytes differ; unchanged peers remain exact.
+The same bounded original-snapshot DATA geometry fits these new bytes, but
+does not authorize reusing an old journal/scope. 11406904 original words,
+2633615 code words across ALL120 physical participant positions.
+Main/clean generators from separately built pinned roots produce exactly
+the same complete header SHA4a3fb7209e49c912754a97fe11cd92878c5a24c09b8f522c76ac800e0f0a4e5a.
+Generator authenticates ALL13 artifact/ELF inputs and emits the SAME cached
+immutable bytes, not a path reopened after hashing. Separate snapshot test
+proves exactly one read/input and13 altered-pin refusals BEFORE output exists;
+input files are never modified. Main/clean snapshot tests both0/exact stdout.
+Final program main82454/clean synchronous0 BOTH0, complete2-line stdout exact
+SHA62c8f963. Every2633615 codeword is compared to the actual authenticated
+artifact bytes;1557 padding/unaligned/invalid-participant refusals. Generated
+header regenerated and byte-compared. No device program was copied/installed.
+
+Separate held-memory journal, not a native execution owner
+----------------------------------------------------------
+PioneerQ38RecurrentPrefixMemory is a DISTINCT typed journal with new prefix
+scope/read/write/mapping/retention hooks. Old native IO lacks those hooks.
+All120 arbitrary original windows, padding, full stacks and Conv capsule are
+captured, then ALL originals rechecked BEFORE the FIRST write. Install and
+verify new image bytes; never-launched close restores ALL originals and
+checks a second complete pass. No reset/start/NoC/clock/host disposal exists
+in this component. Post-launch restoration is not a public clean/STOP flag;
+it remains private to a future distinct execution owner that must genuinely
+prove terminal STOP/holds/restoration. No such native owner exists yet.
+
+Main98837/clean42504 BOTH0, complete3-line stdout exact SHA7095b1cf.
+Positive save11406904/install2633615/restore11406904/secondOriginal22813808;
+46 actually injected read/write/drop/mapping/source/PCI/counter faults and
+29 precondition refusals. First unknown retains/quarantines every snapshot/
+host/owner and permits NO following IO/retry/restore. Endpoints and scope are
+SIMULATED; this is algorithm qualification, not genuine native ownership.
+Real SDK template instantiations both0, maximum static KERNEL frame880B;
+separate deliberately undefined PrefixMemoryKernelCompileIO prevents a
+linkable driver or native IO alias. Conventional driver ABI absent.
+First runs51755/4251 passed host tests but FAILED SDK Werror misleading-
+indentation in CodeAddress; splitting the statements fixed it, no warnings
+disabled. Final-b full suites repeated and passed, not just a build-only retry.
+
+Autonomous runtime and next real gates
+--------------------------------------
+Synthetic reached-fault main13554/clean15283 BOTH TERMINAL0; complete85-line
+logs exact SHA8c2bb004d75f333018ef77c06b2defd3e46671fec448d78d94ae46affbdb0e88.
+39 reached children+all3 actual instruction blocks+realSTOP, earlier Conv+GDN
+retained, single host start/ROOT-only metadata and releases. Separate original
+instruction main46358/clean57860 STILL LIVE, both completed layer0 and entered
+layer1 as of02:35UTC. Follow SAME handles; full54-stage/ALL3 strict final
+numerical comparisons occur only AFTER complete3layers+realSTOP and are NOT
+yet proven. Never infer a pass/restart from quiet output or an observation timeout.
+
+Next: genuine same-FD/thread/clock/hosts/source/native prefix binding to the
+actual QPE1 producer+closed initialized GDN/history leases; immutable package
+staging,119 virgin-worker starts, ONE ROOT start and complete on-card0->1->2
+then realSTOP; aggregate3layer counter/nonce/receipt verification; ALL120 holds,
+full original restoration/fresh END. No old single-layer producer/ready/scope
+relabeling. Numerical original3 qualification must finish before hardware use.
+Then recurrent->dense3->all64, persistent KV/GDN/Conv+atomic whole-token commit,
+final normalization/vocabulary/sampling, persistent no-CPU-reference Work and
+Assistant, actual loading/prefill/decode optimization and benchmarking.
+Stable041/tag12/gen4 was last restored after physical72 single-layer pass;
+no new board/Assistant/network/power/SD/mains/hardware change here. Last actual
+whole27B0.207893161tok/s unchanged,20tok/s unmet; full goal remains ACTIVE.

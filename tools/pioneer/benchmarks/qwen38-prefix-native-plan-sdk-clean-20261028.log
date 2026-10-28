@@ -1,0 +1,2 @@
+7bba4f15a5eddc9e63df15759126c476236f61e8d7db8ea9902f7d1be86261aa prefix-plan.o
+PASS real Haiku RISC-V kernel-mode immutable3layer prefix DATA plan/maxStaticFrame784;NO native context,driver ABI,device IO,installation or launch

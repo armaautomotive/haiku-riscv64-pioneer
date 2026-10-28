@@ -1,7 +1,7 @@
 Experimental autonomous three-layer recurrent scheduler
 October28UTC2026
 STATUS: main/clean BUILDS+DATA/ROLE/POSITIVE RUNTIMES ALL0.
-MAIN FULL REACHED-FAULT RUNTIME0; CLEAN STILL LIVE. NO NATIVE QUALIFICATION.
+MAIN/CLEAN FULL REACHED-FAULT RUNTIMES BOTH0. NO NATIVE QUALIFICATION.
 This prototype was NEVER copied to or installed on the Pioneer.
 
 Actual implementation, not native/Work promotion
@@ -98,10 +98,15 @@ all39 fault waits and same119/3ROOT releases/retained earlier Conv+GDN.
 Full log reviewed with strict length/count/prefix/terminal checks. Clean15283
 still LIVE; do not infer BOTH-copy qualification or poll closed13554 again.
 
+Clean15283 subsequently TERMINAL0 at02:23UTC: complete85-line stdout exact
+same8c2bb004; reviewed full log and cmp. BOTH39children+actual3blocks+realSTOP
+now passed. Neither completed handle may be polled/restarted. This qualifies
+the simulated reached-fault algorithm, NOT original model/native/physical/
+current-history/slot/token/full64/Work/TPS. Both full fault logs are archived.
+
 Archived completed evidence: qwen38-recurrent-autonomous-{positive,build,
 geometry}-{main,clean}-20261028.log and the separate original/history-image
-regression logs, plus autonomous-faults-main-20261028.log. Unfinished clean
-fault log is not archived as terminal evidence.
+regression logs, plus autonomous-faults-{main,clean}-20261028.log.
 No record here substitutes simulated endpoints for physical-card proof.
 
 Original-reference integration constraint found in the current source:
@@ -115,6 +120,9 @@ That separate reference and authenticated RAW3layer source are now implemented
 and main+clean CPU/source/build qualified; original emitted-instruction tests
 46358/57860 are LIVE, not passed. See
 qwen38-recurrent-prefix-original-source-20261028.txt for exact scope/evidence.
+Native preparation components (complete plan/separate program DATA+held journal)
+also now passed independent tests/SDK witnesses, NOT a genuine native owner;
+see qwen38-recurrent-prefix-native-preparation-20261028.txt.
 
 Full goal remains: original authenticated prefix/native history ownership,
 recurrent0..2 -> dense3 -> all64 layers, persistent KV/GDN/history + atomic

@@ -100,11 +100,11 @@ actual recurrent0->1->2, SAME119 workers, ROOT-only metadata/frame/release
 changes, retained earlier Conv+GDN NEXT, and realSTOP. Its distinct QPX1
 boot/role is NOT selected by any native/Work driver. Main/clean builds and
 196role/8078DATA refusals pass; conditional-off old image pins stay exact.
-Main13554 full fault parent now TERMINAL0:39 reached failures+all3 actual
-blocks+realSTOP; complete85-line log8c2bb004, arithmetic prefix exactly matches
-the qualified positive. Clean15283 is STILL LIVE; no BOTH-copy fault/native/
-current-state/token/full64/TPS gate is inferred. This prototype was NEVER
-copied/installed on the Pioneer.
+Main13554/CLEAN15283 full fault parents BOTH TERMINAL0:39 reached failures+
+all3 actual blocks+realSTOP; complete85-line logs exact8c2bb004, arithmetic
+prefix exactly matches qualified positive. This is simulated synthetic raw
+endpoints, NOT native/current-state/token/full64/TPS qualification. Prototype
+was NEVER copied/installed on the Pioneer.
 See benchmarks/qwen38-recurrent-autonomous-prefix-20261028.txt.
 
 The separate original-prefix CPU reference/source now passed main+clean:
@@ -119,6 +119,18 @@ not passed. It executes original QPE1 before one autonomous prefix start,
 disables synthetic learned fallback and compares only AFTER3blocks+realSTOP.
 It remains OFFLINE, not native/physical/Work/full64/persistent token or TPS.
 See benchmarks/qwen38-recurrent-prefix-original-source-20261028.txt.
+
+Native preparation now has a DISTINCT complete3layer immutable plan, new
+QPX1/QMW1 program table/footprint and retained held-memory journal. Independent
+main+clean plan21packages/1572480words/16141refusals, programALL2633615codewords/
+1557refusals and journal46faults+29preconditions/ALL120originals twice BEFORE
+firstwrite/fullrestore all passed, stdout exact. Real SDK plan objects match
+7bba4f15, kernel frames784B; journal templates880B with deliberately undefined
+PREFIX IO hooks. SAME authenticated artifact bytes are emitted,13changed-pin
+refusals before any output. This is NOT a genuine native prefix context,
+execution/cleanup owner or a loadable driver. Original46358/57860 remain LIVE;
+no new hardware/Work/TPS result. See
+benchmarks/qwen38-recurrent-prefix-native-preparation-20261028.txt.
 
 - Complete execution-owner/real STOP/120 holds/full original restoration
   passed in the clean export (60994, terminal 0); main output is identical.
