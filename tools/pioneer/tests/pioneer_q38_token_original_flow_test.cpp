@@ -2,10 +2,20 @@
 #include "pioneer_q38_token_original_fabric.h"
 #include <csignal>
 int main(int argc,char** argv){
- assert(argc==5 || (argc==6 && (!strcmp(argv[5],"--prepare-only") || !strcmp(argv[5],"--bootstrap-only"))));
+ assert(argc>=5 && argc<=8);const char* mode=nullptr;const char* traceDirectory=nullptr;
+ for(int i=5;i<argc;i++){
+  if(!strcmp(argv[i],"--prepare-only") || !strcmp(argv[i],"--bootstrap-only")){assert(!mode);mode=argv[i];}
+  else{assert(!strcmp(argv[i],"--observed-trace") && !traceDirectory && i+1<argc);traceDirectory=argv[++i];}
+ }
+ assert(!mode || !traceDirectory || !strcmp(mode,"--bootstrap-only"));
  setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;(void)&Refusals;(void)&LateRefusals;
  puts("START authenticate entire SAME-open original27B GGUF BEFORE ROOT construction;no CPU product/native owner/physical IO");
  WholeModelOriginalBytes original;assert(original.Open(argv[4]) && original.Ready());
+#ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
+ std::unique_ptr<PioneerQ38ObservedTrace> observed;
+#else
+ assert(!traceDirectory);
+#endif
  auto m=std::make_unique<OriginalTokenFlowMachine>(argv[1],argv[2],argv[3],original);
  m->VerifyRawEndpoints();
  const auto first=*m->learned.begin();unsigned route=unsigned(first.first>>32),address=unsigned(first.first);
@@ -26,8 +36,11 @@ int main(int argc,char** argv){
   int status=0;assert(waitpid(pid,&status,0)==pid && WIFSIGNALED(status) && WTERMSIG(status)==SIGABRT && original.Ready() && original.PrepareFork());
  }
  puts("PASS 4 genuine original-fabric refusals/learned write+revoked word+revoked batch+cross-part batch/no synthetic fallback/unchanged virgin parent;TEST transport safety only");
- if(argc==6 && !strcmp(argv[5],"--prepare-only"))return 0;
- if(argc==6){
+#ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
+ if(traceDirectory){observed=std::make_unique<PioneerQ38ObservedTrace>();m->observed=observed.get();}
+#endif
+ if(mode && !strcmp(mode,"--prepare-only"))return 0;
+ if(mode){
   unsigned entry=0;std::ifstream symbols(std::string(argv[1])+"/program.symbols");std::string addressText,kind,name;
   while(symbols>>addressText>>kind>>name)if(name=="q38_return_recurrent_layer")entry=unsigned(std::stoul(addressText,nullptr,16));
   assert(entry);
@@ -35,9 +48,15 @@ int main(int argc,char** argv){
   assert(m->pc==entry && m->releases==1 && m->embedded==1 && m->embeddingReads==20 && m->embeddingWrites==2 && m->embeddingBack==2
    && !m->allLayers && !m->matrixJobs && !m->peerWrites && !m->committed && original.Ready());
   for(const auto& p:m->child)assert(!p->active && !p->sequence && p->GdnFinished(0));
+#ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
+  if(observed){assert(observed->Embeddings()==1 && !observed->Layers(0) && !observed->Complete());puts("PASS actual observer captured genuine5120 embedding ONLY/no model layer or token invented/no complete trace saved");}
+#endif
   printf("PASS actual original27B embedding5120/all metadata/first returning entry/ROOT from RESET+SAME119 still virgin/stack reserved%u written%u/ROOTinstructions%u;NOT first layer/full-model numerics/native/physical/Work/TPS\n",0x70000-m->minSp,0x70000-m->minStack,m->steps);return 0;
  }
  puts("START actual original27B FULL3-token flow/from RESET/SAME119/ALL learned bytes from SAME authenticated GGUF/NO supplied hidden or CPU model products");
  bool okay=m->RunTokens();if(m->kvFault){assert(!okay);m->VerifyKvFault();assert(original.Ready());_exit(0);}
  assert(okay && original.Ready());m->VerifyTokens();assert(original.Ready());
+#ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
+ if(observed){assert(observed->Complete() && observed->Save(traceDirectory));puts("SAVED actual emitted output DATA only/3positions/all65hidden+all248320vocab+committed records/AFTER genuine full verification+119STOP;NOT CPU numerical match/native/physical/Work/TPS");}
+#endif
 }

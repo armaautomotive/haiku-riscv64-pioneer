@@ -1,0 +1,100 @@
+Read-only emitted-output capture implemented; full runs RUNNING
+2026-10-28 22:32UTC. Goal ACTIVE. No hardware/SSH/power/SD/mains/driver/
+kernel/Assistant/boot/CPU/RAM/network changes. Last physical whole-model
+0.207893161tok/s;20 UNMET. No new numerical match or speedup claimed.
+
+Actual observation hooks,not CPU-product inputs
+------------------------------------------------
+PioneerQ38ObservedTrace is a distinct opt-in HOST TEST data recorder. It
+accepts const observed words only;no CPU reference/model weights/expected
+numeric vectors,processor state,emulated memory object or accelerator IO
+callback is available to it. No device ROM/ABI/native capability changes.
+
+The genuine TokenFlowMachine hooks collect:
+ *embedding5120 from actual GDDR ONLY after both real write/readback pairs;
+ *each layer's actual final5120 AFTER VerifyTokenLayer proves all119 closed;
+ *ALL248320 vocabulary results from executed worker tensor buffers AFTER
+  CorrectRows and actual partial-record checks,not only the selected token;
+ *the actual64-word committed GDDR record AFTER genuine marker readback,
+  not the host observer's constructed `records` expectation array.
+No captured value returns to Put,processor registers/PC,mutable model state,
+work inputs,control words or an execution/cleanup owner. The default build
+contains no capture hook. With capture enabled every emitted instruction,
+packet,schedule and clock remains unchanged.
+
+Recorder checks exact dimensions/order,duplicate rows,complete vocabulary
+coverage,finite observations,greedy+runner-up ordering,token-record fields
+and reserved words. It handles the REAL overlap order:the parent may publish
+the next embedding before committing the current token;the third input's
+greedy linkage is checked at the appropriate actual commit boundary.
+
+Captured data stay in CPU-private vectors. Complete files are saved ONLY
+after RunTokens AND VerifyTokens prove the full three positions/final119STOP/
+terminal/inertness. KV fault children never take that successful full path,
+so they cannot save complete traces. No output FILE is shared across fault
+forks. Partial bootstrap leaves its output directory EMPTY. Save uses a bound
+directory FD and exclusive/no-follow openat;existing files are never replaced.
+Data completeness is NOT itself a native STOP/ownership/cleanup capability.
+
+Format:token-N.bin,LE32 magic0x31444f51/version1/position/input/selected/
+runner-up/bestBits/secondBits/65/5120/248320/64/four reserved zeros;then
+65*5120 hidden words,248320 vocabulary words,actual64-word committed record,
+footer0x454e444f. Exact2324804B. This is distinct from CPU control QFR1.
+
+Independent posthoc comparison
+--------------------------------
+compare_pioneer_q38_observed_trace.py is a SEPARATE offline reader. It binds
+the SAME opened regular-file byte snapshots,requires fixed SHA256s for all
+three independent original CPU controls,then parses that exact snapshot.
+No caller hash/CPU-control bypass or expected-output upload exists.
+
+It verifies dimensions,finite values,greedy/runner-up vs the complete vocab,
+committed records/reserved fields and within-run input feedback. It reports
+bit differences/max absolute error/relative L2 for every hidden vector and
+the entire vocabulary. Input-path divergence is reported,not hidden by
+retargeting expected data. DEFAULT exit0 requires full bit-exact comparison;
+numeric differences return1,invalid artifacts2. --diagnostic-only explicitly
+labels its exit0 as NOT numerical acceptance. No tolerance is invented from
+observed results. Even bit-exact offline data are NOT physical/TPS authority.
+
+Passing narrow evidence
+------------------------
+Recorder ASan+UBSan main55694/clean41436 BOTH0:three synthetic observations,
+all65hidden+vocab+committed records,real overlap order,exclusive full files,
+7 malformed-order/duplicate/nonfinite/incomplete refusals;independent Python
+header/length/footer checks. These are DATA tests,not actual model execution.
+Role tests main50893/clean88768 BOTH0:42 exact-role/kernel/image/native/
+CPU-oracle/actual Work/defined0+1+late gates. TT_WORK tensor policy is allowed
+ONLY for the existing offline arithmetic harness,not native authority.
+Comparison tests main1689/clean55390 BOTH0:9 malformed/truncated/extra/family/
+dimension/greedy/record/reserved/NaN/terminal refusals,exact and one-word
+metrics;actual pinned CPU controls parse and a changed numeric word REFUSES
+authentication. Synthetic format agreement is NOT a model numerical pass.
+
+Actual original bootstrap main5906/clean11048 BOTH0:real embedding5120 is
+captured AFTER actual readbacks,allmetadata/first returning entry/SAME119
+virgin/stack2992+2984/ROOT4749932 unchanged;ZERO model layers or token invented
+and no complete files saved. Bootstrap predates directory-FD Save hardening,
+which is tested by the final recorder units;the full hooks are the same.
+
+Actual full capture histories: NOT passed
+-----------------------------------------
+Fresh main60499/clean55839 started22:28UTC from RESET with the SAME literal
+pinned FP32 ROOT/workers,original authenticated GGUF,and optional exact HOST
+ROOT storage. No previous PC/register/private history was transplanted.
+Logs /private/tmp/pioneer-q38-observed-full-{main,clean}-20261028-a.log
+Output /private/tmp/pioneer-q38-emitted-trace-{main,clean}-20261028-a
+At22:32 both pass original embedding and enter layer0matrix3. They have not
+completed a layer or model token. They were compiled before directory-FD
+Save hardening;all capture/record/order semantics are the same,only final
+host file-opening differs. Follow SAME handles;do not restart for quiet.
+The seven earlier full histories remain independent and untouched.
+
+After genuine complete traces exist,run the comparer against
+ /private/tmp/pioneer-q38-cpu-original-trace-20261028-a
+and inspect differences honestly;diagnostic-only success is not qualification.
+Then complete late state/admission/publication/STOP and remaining cancel
+gates,distinct full851 native owner/init/source/session/lifetime/journal/
+terminal/quarantine/real card qualification,separate Work+Assistant and
+physical stability/boot64CPU/fullRAM preservation,then actual speed tuning.
+Full goal unchanged and ACTIVE;no new installed driver or measured speedup.

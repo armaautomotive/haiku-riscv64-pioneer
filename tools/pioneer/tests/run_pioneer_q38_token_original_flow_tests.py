@@ -9,8 +9,16 @@ import subprocess
 import sys
 import tempfile
 options = sys.argv[5:]
-assert 5 <= len(sys.argv) <= 7 and len(set(options)) == len(options) and set(options) <= {'--prepare-only', '--bootstrap-only', '--fast-root-memory'}
+observed = None
+if '--observed-trace' in options:
+    at = options.index('--observed-trace')
+    assert at+1 < len(options)
+    observed = pathlib.Path(options[at+1])
+    options = options[:at]+options[at+2:]
+    assert observed.is_absolute() and not observed.exists() and not observed.is_symlink()
+assert 5 <= len(sys.argv) <= 9 and len(set(options)) == len(options) and set(options) <= {'--prepare-only', '--bootstrap-only', '--fast-root-memory'}
 assert not {'--prepare-only', '--bootstrap-only'} <= set(options)
+assert observed is None or '--prepare-only' not in options
 image, old, worker, model = map(pathlib.Path, sys.argv[1:5])
 assert all(p.is_absolute() for p in (image, old, worker, model))
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
@@ -28,6 +36,8 @@ tool = '/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv
 for directory in (image, worker):
     assert subprocess.check_output([tool+'nm', '-n', str(directory/'program.elf')], text=True) == (directory/'program.symbols').read_text()
 flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
+if observed is not None:
+    observed.mkdir(mode=0o700)
 with tempfile.TemporaryDirectory(prefix='pioneer-original-token-flow-', dir='/private/tmp') as tmp:
     binary = pathlib.Path(tmp)/'test'
     intervals = {}
@@ -49,5 +59,10 @@ with tempfile.TemporaryDirectory(prefix='pioneer-original-token-flow-', dir='/pr
     profile.write_text(''.join(f'{start:x} {size:x} {name}\n' for (start, size), name in sorted(intervals.items())))
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-ffp-contract=off', '-fsanitize=address,undefined',
                     *flags, *(['-DPIONEER_Q38_TEST_FAST_ROOT_MEMORY=1'] if '--fast-root-memory' in options else []),
+                    *(['-DPIONEER_Q38_TEST_OBSERVED_TRACE=1'] if observed is not None else []),
                     str(here/'pioneer_q38_token_original_flow_test.cpp'), str(here/'pioneer_q38_whole_original_bytes.cpp'), '-o', str(binary)], check=True)
-    subprocess.run([str(binary), *sys.argv[1:5], *[o for o in options if o != '--fast-root-memory']], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1', 'PIONEER_TEST_ROOT_PROFILE_MAP':str(profile)})
+    subprocess.run([str(binary), *sys.argv[1:5], *[o for o in options if o != '--fast-root-memory'],
+                    *(['--observed-trace', str(observed)] if observed is not None else [])], check=True,
+                   env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1', 'PIONEER_TEST_ROOT_PROFILE_MAP':str(profile)})
+    if observed is not None and '--bootstrap-only' in options:
+        assert not list(observed.iterdir()), 'partial observations MUST NOT publish a complete token trace'

@@ -1,0 +1,2 @@
+PASS posthoc trace format/bitexact+one-word metrics/9 truncation+extra+family+dimension+greedy+record+reserved+NaN+terminal refusals;SYNTHETIC DATA only,CPU authentication in main is NOT bypassed
+PASS SAME-open pinned actual CPU controls/all3 full traces/one changed numerical word refuses authentication;NOT emitted/GPU numerical match

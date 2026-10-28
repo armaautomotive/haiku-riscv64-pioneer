@@ -6,7 +6,17 @@
 #define PIONEER_Q38_TOKEN_FLOW_MACHINE_ONLY
 #include "pioneer_q38_token_flow_test.cpp"
 #include "pioneer_q38_whole_original_bytes.h"
+#ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
+#include "PioneerQ38ObservedTrace.h"
+static_assert(PioneerQ38ObservedTrace::TokenMagic==TL::TokenMagic,"exact recorded DATA format,not execution authority");
+#endif
 struct OriginalTokenFlowMachine:TokenFlowMachine {
+#ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
+ PioneerQ38ObservedTrace* observed=nullptr;
+ void ObservedVocabulary(unsigned pos,unsigned first,const uint32_t* actual,unsigned count)override{
+  if(observed)assert(observed->Vocabulary(pos,first,actual,count));
+ }
+#endif
  WholeModelOriginalBytes& original;
  std::map<uint64_t,const PioneerQ38CanonicalPart*> learned;
  unsigned removedLearned=0,removedRecipes=0;
@@ -76,9 +86,25 @@ struct OriginalTokenFlowMachine:TokenFlowMachine {
  void Store(uint32_t address,uint32_t value)override{
   const bool packet=address==0xffb20040;
   unsigned priorLayers=allLayers;
+#ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
+  unsigned priorEmbedding=embedded,priorPublications=tokenPublications;
+#endif
   if(packet)assert(original.Ready());
   TokenFlowMachine::Store(address,value);
   if(packet)assert(original.Ready());
+#ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
+  if(observed && embedded!=priorEmbedding){
+   assert(embedded==priorEmbedding+1);std::array<uint32_t,5120> actual;
+   for(unsigned i=0;i<5120;i++)actual[i]=Get(outer[8],outer[9]+PioneerQ38GlobalFeedbackLayout::Offset+i*4);
+   assert(observed->Embedding(embeddingTarget,embeddingToken,actual.data(),5120));
+  }
+  if(observed && allLayers!=priorLayers)assert(observed->Layer(position,layer,input.data(),5120));
+  if(observed && tokenPublications!=priorPublications){
+   assert(tokenPublications==priorPublications+1);std::array<uint32_t,64> actual;
+   for(unsigned i=0;i<64;i++)actual[i]=Get(outer[8],outer[9]+TL::OutputOffset+position*256+i*4);
+   assert(observed->Commit(position,actual.data(),64));
+  }
+#endif
   // Observation only: expose real executed-PC hot spots at each verified
   // layer instead of waiting for all three tokens. SIMULATED polling is
   // included; these counts are never physical timing/TPS or an input hint.

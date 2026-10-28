@@ -8,6 +8,9 @@
 #include "../PioneerQ38TokenLayout.h"
 namespace TL=PioneerQ38TokenLayout;namespace TS=PioneerQ38TokenStateLayout;
 struct TokenFlowMachine:GlobalChainInstructionMachine {
+#ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
+ virtual void ObservedVocabulary(unsigned,unsigned,const uint32_t*,unsigned){}
+#endif
  virtual void BeforeFork(){}
  virtual const char* RawInputScope()const{return "SYNTHETIC raw inputs,NOT original model/native/physical/Work/TPS";}
  enum {Tokens=3,Prompts=2};
@@ -375,6 +378,13 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
      unsigned best=0;float maximum=Float(p.buffers[4096]);assert(isfinite(maximum));
      for(unsigned i=1;i<rows;i++){float x=Float(p.buffers[4096+i]);assert(isfinite(x));if(x>maximum){best=i;maximum=x;}}
      assert(p.memory.at(G::Partial)==G::PartialMagic && p.memory.at(G::Partial+8*4)==first+best && p.memory.at(G::Partial+9*4)==p.buffers[4096+best]);
+#ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
+     // Copy actual executed tensor results ONLY,not expected rows or model
+     // products supplied by a CPU oracle. This never writes device input.
+     assert(rows<=256);std::array<uint32_t,256> actual;
+     for(unsigned i=0;i<rows;i++)actual[i]=p.buffers[4096+i];
+     ObservedVocabulary(position,first,actual.data(),rows);
+#endif
      if(bestRow==248320 || maximum>Float(bestBits) || (maximum==Float(bestBits) && first+best<bestRow)){bestRow=first+best;bestBits=p.buffers[4096+best];}
      globalPartials++;globalRows+=rows;
     }else{
