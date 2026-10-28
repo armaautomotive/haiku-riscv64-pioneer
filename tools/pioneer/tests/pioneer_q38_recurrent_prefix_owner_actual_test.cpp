@@ -137,6 +137,26 @@ template<class BlockMachine=AutonomousPrefixMachine> struct PrefixOwnerActualIOB
  }
 };
 using PrefixOwnerActualIO=PrefixOwnerActualIOBase<>;
+template<class Change> static void PrefixPostRunFault(PrefixOwnerActualIO& io,PioneerQ38DispatchLease& cohort,PioneerResidentBanks& banks,
+ PioneerQ38RecurrentPrefixMemory& memory,PioneerQ38RecurrentPrefixOwner& owner,PioneerQ38RecurrentPrefixResult& result,
+ PioneerQ38RecurrentPrefixMemoryResult& journal,const char* name,Change change){
+ // Fork ONLY the offline simulation after its actual instructions+owner
+ // have completed all3 blocks and STOP. Never fabricate progress or repair
+ // a mutated request in the positive parent's live controller context.
+ fflush(nullptr);pid_t pid=fork();assert(pid>=0);
+ if(!pid){
+  change(io);
+  assert(!owner.Close(io,result,journal) && owner.Unsafe() && memory.Unsafe() && !owner.Closed() && !memory.Closed()
+   && cohort.unsafe && banks.Quarantined() && io.quarantined && io.retained && !io.holds && !journal.restoredWords);
+  unsigned touches=io.touches,reads=io.reads,writes=io.writes;
+  assert(!owner.Run(io,result) && !owner.Close(io,result,journal) && !memory.CloseHeldNoLaunch(io,journal)
+   && io.touches==touches && io.reads==reads && io.writes==writes);
+  printf("PASS QPX actual post3layer+realSTOP fault %s/ALL retained/ZERO holds,restore,retry or later IO\n",name);_exit(0);
+ }
+ int status=0;assert(waitpid(pid,&status,0)==pid && WIFEXITED(status) && !WEXITSTATUS(status));
+ assert(!owner.Unsafe() && !memory.Unsafe() && !cohort.unsafe && !banks.Quarantined() && !io.holds && !journal.restoredWords
+  && io.machine.memory.at(RB::Doorbell)==4);
+}
 #ifndef PIONEER_Q38_RECURRENT_PREFIX_OWNER_ACTUAL_FIXTURE_ONLY
 int main(int argc,char** argv){
  assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);
@@ -161,7 +181,23 @@ int main(int argc,char** argv){
  puts("PASS QPX actual owner released119 NEW virgin QMW1 boots/ROOT held/ALL installed artifact words/current sources/counters;NO synthetic ready");
  bool ran=owner->Run(*io,result);
  if(!ran)fprintf(stderr,"QPX_ACTUAL_RUN_FAILED phase%u worker%u word%u rootPC%08x peerPC%08x\n",result.phase,result.worker,result.word,io->machine.pc,io->machine.child[result.worker?result.worker-1:0]->pc);
- assert(ran && io->machine.completedBlocks==3 && io->machine.selfReleases==3 && io->machine.selfOuterWrites==384);io->machine.VerifyStop();
+ assert(ran && io->machine.completedBlocks==3 && io->machine.selfReleases==3 && io->machine.selfOuterWrites==384);
+ auto fault=[&](const char* name,auto change){PrefixPostRunFault(*io,*cohort,banks,*memory,*owner,result,journal,name,change);};
+ // VerifyStop deliberately writes Doorbell=request+1 then steps all120
+ // stopped machines2048 times. It is a destructive inertness challenge,
+ // NOT an observer to run before a fresh native cleanup proof.
+ fault("extra request after STOP/inert2048",[](auto& q){q.machine.VerifyStop();});
+ fault("lost execution scope",[](auto& q){q.scopeAllowed=false;});
+ fault("changed ROOT source",[](auto& q){q.core[0]->source[15]^=1;});
+ fault("changed ROOT STOP receipt",[](auto& q){q.machine.memory[RB::StopSummary+4]^=1;});
+ fault("changed retained history receipt",[](auto& q){q.machine.memory[RB::JointSummary+56*4]^=1;});
+ fault("changed ROOT code",[](auto& q){q.data[PrefixMemoryIO::Index(0,0x40000)]^=1;});
+ fault("changed last peer STOP status",[](auto& q){q.machine.child[118]->memory[M::Status+4]^=1;});
+ fault("changed last peer DOWN receipt",[](auto& q){q.machine.child[118]->memory[0x83f00+16*4]^=1;});
+ fault("changed last peer counters",[](auto& q){q.machine.child[118]->countBase[0]^=1;});
+ fault("changed last peer code",[](auto& q){q.data[PrefixMemoryIO::Index(119,0x20000)]^=1;});
+ fault("changed ROOT STOP request",[](auto& q){q.machine.memory[RB::Outer+48*4]^=1;});
+ fault("changed last peer doorbell",[](auto& q){q.machine.child[118]->memory[M::Doorbell]^=1;});
  for(const auto& saved:io->machine.saved)saved.Verify(io->machine);
  puts("PASS QPX actual owner+ROOT3blocks/ONEhoststart/ROOTmetadata+releases+STOP/24matrices2160jobs+1920Conv+288GDN/ALL119 aggregate packet-counter+last-down proofs;NO host products");
  bool closed=owner->Close(*io,result,journal);

@@ -58,19 +58,26 @@ SHA1afecb3fa39169976b3b03b4498b064a4f00bf8716e058b1e6f5433dae38ce92.
 Max static kernel frame880B;16KiB staging is HEAP. Explicit undefined
 PrefixOwnerKernelCompileIO hooks prevent native/driver alias; no normal ABI.
 
-Actual controller runs main7427/clean51883 LIVE, NOT passed:
+Original controller main7427 TERMINAL1/clean51883 still LIVE, NOT passed:
 /private/tmp/pioneer-q38-prefix-owner-actual-{main,clean}-20261028-a.log.
 Default packages AND primary tables POISONED before preparation: controller's
 57 actual host packets and ROOT metadata copies must do the work. Actual new
 journal/installed-image checks/119 NEW virgin boots/actual QPX1 instructions,
 no fake ready/status/PC/nonce/product setter. Raw learned/initial hidden/state,
 MMIO/source/time SIMULATED. Full controller3blocks/aggregate receipts/realSTOP/
-120holds/fullrestore/legacy clean dispatch close still owed. Follow SAME live
+120holds/fullrestore/legacy clean dispatch close still owed. Main's inherited
+TEST VerifyStop deliberately changed the stopped ROOT Doorbell to5; fresh
+Close correctly refused before holds/restore. The destructive challenge is
+now isolated in a forked offline child plus11 post-STOP fault cases; no
+production guard weakened. Revised main58809 LIVE/NOT passed. Follow SAME live
 handles; quiet output/observation timeout never permits restart or promotion.
 
-Genuine native FD/team/thread/source/model/clock/host/initialized-state and
-completed-QPE1 binding still UNIMPLEMENTED. Controller runtime+fault/native
-scope/physical new-tag gates must pass before hardware use. Then dense3/all64,
+Distinct genuine production FD/team/thread/source/model/clock/host and
+completed-QPE1/initialized-state bindings now compile and pass binding+all
+672GDN/336history initializer tests main+clean with simulated endpoints.
+See qwen38-recurrent-prefix-native-binding-20261028.txt. Full controller
+runtime/fault, coupled native execution/final-END and physical new-tag gates
+must pass before hardware use. Then dense3/all64,
 persistent KV+GDN+Conv/atomic-token commit/finalnorm/vocabulary/sampling/
 persistent noCPUreference Work+Assistant and real inference optimization.
 No new driver/image installation, power/SD/mains/hardware/Assistant/network

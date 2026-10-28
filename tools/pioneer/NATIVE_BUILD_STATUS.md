@@ -137,13 +137,22 @@ benchmarks/qwen38-recurrent-prefix-native-preparation-20261028.txt.
 
 A DISTINCT PrefixOwner controller prototype now has main/clean SDK templates
 exact1afecb3f/maxKernelFrame880B,1936preflight refusals/first-scope-loss noIO,
-and714counter DATA cases/6105refusals all0. Native PREFIX IO hooks remain
-undefined; no genuine native FD/thread/source/clock/init scope is inferred.
-Actual controller+instructions7427/51883 are LIVE, NOT passed. Both default
+and714counter DATA cases/6105refusals all0. That TEMPLATE still has undefined
+PREFIX IO hooks. Separate actual native bindings now compile main+clean,
+EXACTbd92d30d/maxNewFrame784B, with1132 real binding refusals and complete
+672GDN+336history initializer tests both0; role326/learned1517 refusals0.
+Physical endpoints are simulated; full native RUN/END remains unqualified.
+Controller7427 TERMINAL1 after3blocks+realSTOP: TEST VerifyStop deliberately
+changed Doorbell to5, so fresh Close correctly refused before any hold or
+restore. No production guard weakened. Revised fork-isolated destructive
+challenge+11 post-STOP fault cases main58809 LIVE/NOT passed; original clean
+51883 remains LIVE in its original compiled test. Both default
 packages and primary tables are poisoned before its57real metadata writes;
 it must prove ONEhoststart/ROOT-only3layers+STOP/all119aggregate counters/
 ALL120holds/fullrestore. Do not install this prototype. See
 benchmarks/qwen38-recurrent-prefix-original-and-controller-20261028.txt.
+Native evidence/current handles and remaining gates:
+benchmarks/qwen38-recurrent-prefix-native-binding-20261028.txt.
 
 - Complete execution-owner/real STOP/120 holds/full original restoration
   passed in the clean export (60994, terminal 0); main output is identical.

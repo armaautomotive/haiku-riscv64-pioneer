@@ -1,0 +1,96 @@
+Distinct autonomous-prefix native bindings: compiled and input/init tested
+October28UTC2026
+
+Scope
+-----
+New PrefixNativeState/Role/Mapping/Initialize/Execution and actual
+PioneerSessionIO/PioneerStoreContext hooks bind the DISTINCT PrefixOwner,
+PrefixMemory and three-layer PrefixPlan. No old block owner/role alias,
+CPU numerical products, caller-ready setter or new public launch opcode.
+This is NOT a loadable driver or a full native RUN/END qualification.
+
+Genuine production bindings, simulated endpoint tests
+---------------------------------------------------
+Same actual FD/cookie/team/thread/global-call ownership, reload generation,
+authenticated model-owner/ledger/hash pointers, completed private QPE1
+embedding, graph, clock and all retained host leases are required. Fixed
+token0/position0 only. All168 learned stripes/42tensors/205773 allocated
+pages/842775168 raw bytes MUST exist BEFORE model epoch/reservation/embedding
+publication, and again before the prefix bind/held preparation. Layer0-only
+coverage is not a three-layer grant. The actual QPE1 output address is the
+first input; later inputs use the actual preceding FinalOffset, not a copied
+CPU product or the older synthetic input offset.
+
+The native state owns separate actual recurrent/history initializer leases.
+All672 GDN regions/73728pages/both slots and336 Conv-history regions/1680pages
+must run, cleanly close and privately publish under this same real producer.
+No copied initialized bit grants execution. Mapping retains all partial
+aliases on first unknown; per-word accesses still check actual native
+cookie/thread/generation/object/phase and each full participant guard checks
+the real source/clock/host ownership. Preparation uses the new three-layer
+plan and all120 saved originals; execution calls the new autonomous owner.
+
+SDK main57701/clean14582 BOTH TERMINAL0, actual full probe/KernelExport ABI
+and all new native/controller templates instantiated. New object SHA256:
+bd92d30d83c4066ec7930df92fda53502e82eb079a39433185cae03a6dd19afc.
+Main/clean objects EXACT; max new static kernel frame784B. No conventional
+driver ABI, Work/CPU-reference/original-source symbols. Five independent
+inert control entries byte-identical to their constant-return controls.
+Old65 control remains BYTE-IDENTICAL61faa093, not merely a successful build.
+These private complete bodies WOULD issue IO if invoked: never linked,
+installed or invoked by this compilation check.
+
+Main/clean native role tests BOTH0:21 exact parents/6 renamed ABI names/
+58 old-native/image/CPU/Work aliases/326 missing,wrong,defined0+late refusals.
+Main/clean learned coverage BOTH0:1517 refusals/all168 extents and first,
+middle,last page samples with0/2/255 values; all3 required, not old layer0.
+Main35052/clean76316 actual binding tests BOTH0/stdout EXACT163a5d7a:
+1132 refusals, all42tensors/168extents BEFORE publication and before prefix
+binding, actual zero+QPE1 emitted instructions/completed private producer,
+FD/team/thread/source/model/clock/host changes, incomplete-END retention,
+all subsequent calls inert/no post-failure IO. Physical endpoints SIMULATED.
+Main77495/clean91254 initialization BOTH TERMINAL0/stdout EXACTe125de3b:
+all672+336 actual frozen-zero instruction runs, complete page coverage,
+clean private leases+CLOSE/publication, original code/scratch restored,
+embedding and learned bytes unchanged, no BME change. No prefix RUN here.
+Main41501/clean78057 init-fault tests BOTH0/stdout EXACT71bb39f7:3 reached
+GDN initialization faults retain all resources, no publication/retry/cleanup
+or subsequent IO. This is not an exhaustive prefix execution fault suite.
+Old binding regression24779 TERMINAL0/460 refusals unchanged.
+All completed stdout logs archived as qwen38-prefix-native-*20261028.log.
+
+Controller runtime test correction: no production guard weakened
+---------------------------------------------------------------
+Main7427 TERMINAL1 after actual three complete blocks/real119STOP+ROOT and
+all119 aggregate-counter/LAST-down proofs. Close failed phase6/worker0,
+held0/restored0. Cause: the inherited TEST VerifyStop method deliberately
+writes Doorbell=request+1 then steps all120 stopped instruction machines
+2048 times to test inertness. The test left that altered request in the live
+positive context, so fresh Close correctly refused. This was a TEST harness
+mutation, not a physical Pioneer fault or evidence to relax a native check.
+
+The revised test forks only the offline post-RUN simulation for destructive
+STOP/inertness and11 other reached post-STOP mutations. Every fault child
+must retain all with ZERO holds/restores/retry/later IO. The parent is never
+repaired or given fabricated progress/status/nonce; its actual STOP request
+stays4. Unchanged production owner still requires all fresh terminal proofs,
+all120 holds before restoration, full11406904word restore+second proof and
+actual clean legacy dispatch CLOSE. Revised main58809 LIVE, NOT passed.
+Old clean51883 remains LIVE in the original immutable compiled test; follow
+it to terminal before starting its corrected counterpart. Do not restart
+because an observation window expired. These handles are LOCAL simulations.
+
+Remaining gates and unchanged full goal
+--------------------------------------
+Corrected controller complete/fault main+clean; couple genuine native
+input/init/held mappings to full autonomous RUN/STOP/restoration; fresh final
+END/clock/VM/PCI/host disposal; original-model native comparisons; a distinct
+physical tag/namespace/client/helper and controlled card qualification.
+Prefix aliases currently make generic Unmap FAIL CLOSED: no old final-release
+perimeter may dispose them. Compilation/binding/init are NOT disposal grants.
+Then dense3/all64, persistent KV+GDN+Conv, atomic token commit, finalnorm,
+vocabulary, on-card sampling, persistent no-CPU-reference Work+Assistant and
+real inference optimization. No new driver/image installed, no power/SD/
+mains/hardware/Assistant/network change. Stable041 remains last restored;
+64CPU/fullRAM baseline preserved. Last measured whole27B0.207893161tok/s,
+20tok/s unmet, full goal ACTIVE. Emulator/init elapsed time is NOT token rate.
