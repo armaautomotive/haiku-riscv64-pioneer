@@ -8,10 +8,15 @@ import re
 import subprocess
 import sys
 import tempfile
-original_model=None;readback=False
-if len(sys.argv)==7 and sys.argv[5] in ('--original-model','--original-model-readback'):
+original_model=None;readback=False;original_control=False;original_routed=False;build_only=False
+if len(sys.argv) in (7,8) and sys.argv[5] in ('--original-model','--original-model-readback','--original-model-control','--original-model-routed-control'):
+ assert len(sys.argv)==7 or sys.argv[7]=='--build-only'
+ build_only=len(sys.argv)==8
  original_model=pathlib.Path(sys.argv[6]);assert original_model.is_absolute() and original_model.stat().st_size==18973870528
- readback=sys.argv[5]=='--original-model-readback';options=['--fresh-readback-end' if readback else '--fresh-execute-end']
+ original_control=sys.argv[5] in ('--original-model-control','--original-model-routed-control')
+ original_routed=sys.argv[5]=='--original-model-routed-control'
+ readback=original_control or sys.argv[5]=='--original-model-readback'
+ options=['--control-routing-execute' if original_routed else '--control-execute'] if original_control else ['--fresh-readback-end' if readback else '--fresh-execute-end']
 else:
  assert len(sys.argv) in (5,6) and (len(sys.argv)==5 or sys.argv[5] in ('--execute','--faults','--fresh-held-end','--fresh-execute-end','--fresh-readback-end','--control-preflight','--control-execute','--control-routing-preflight','--control-routing-execute'))
  options=sys.argv[5:]
@@ -138,4 +143,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qpx-native-factory-',dir='/priv
  else:
   subprocess.run([*common,*native_flags,*map(str,sources),str(transport),'-o',str(binary)],check=True)
   run_args=[*sys.argv[1:5],*options]
- subprocess.run([str(binary),*run_args],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
+ if build_only:
+  assert original_model
+  print('PASS original-weight '+('routed ACTUAL control' if original_routed else 'ACTUAL control' if original_control else 'native factory')
+   +' compiled/linked with separate unflagged CPU source+coordinator;native/operand objects contain NO private oracle symbols;BUILD ONLY,NO model read/native RUN/readback/END/numerical/runtime/physical/Work or TPS qualification')
+ else:
+  subprocess.run([str(binary),*run_args],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})

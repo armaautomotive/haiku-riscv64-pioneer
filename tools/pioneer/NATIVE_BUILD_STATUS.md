@@ -34,6 +34,23 @@ and no-CPU-reference Work/Assistant integration. Last whole-model measured
 rate remains0.207893161tok/s;20tok/s target UNMET. Detailed evidence:
 benchmarks/qwen38-recurrent-prefix-physical-build-20261028.txt.
 
+The actual-control fixture now also accepts ORIGINAL learned bytes through
+the existing neutral raw-byte interface,with synthetic learned fallback
+disabled and the private CPU oracle/coordinator in separate unflagged TUs.
+New --original-model-control and --original-model-routed-control modes build
+in main/clean;the latter traverses the verbatim public dispatcher before
+the actual handler. They publish54 stage observations and returned5120 words
+ONLY after complete actual END/context destruction and compare the public
+reply against separately captured instruction-produced final bytes. These branches are
+BUILD ONLY so far,not numerical/runtime passes;full original readback/control
+execution remains owed. Existing routed preflight reruns main/clean pass.
+Fresh read-only SSH confirms Haiku64CPUs/max137034936320B and installed041;
+no P100A device was opened and no current GPU-owner/reload grant is implied.
+All six exact local native/readback/control handles remain LIVE. A passive
+stack sample finds the actual control in guarded readback plan checks,not a
+stalled card. These are diagnostic CPU checks,NOT measured inference speed.
+See benchmarks/qwen38-recurrent-prefix-original-control-preparation-20261028.txt.
+
 ## Last physical result: DEBUG72 original-weight layer0 passed; stable restored
 
 October 28, 2026. Offline qualification is NOT physical-card qualification.

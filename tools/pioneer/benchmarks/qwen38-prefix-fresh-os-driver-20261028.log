@@ -1,0 +1,15 @@
+Read-only SSH check October28UTC2026. NO P100A device open or driver status ioctl.
+uname -s;sysinfo;installed driver file SHA256. Command completed exit0.
+Haiku
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133783158784 bytes free      (used/max 3251777536 / 137034936320)
+                           (cached   19165806592)
+     64469 semaphores free (used/max       1067 /      65536)
+      3942 ports free      (used/max        154 /       4096)
+      3898 threads free    (used/max        198 /       4096)
+      2025 teams free      (used/max         23 /       2048)
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+This confirms OS/CPU/RAM and installed file ONLY,not current GPU owner,
+quarantine/reload metadata or a physical-driver trial/reload permission.

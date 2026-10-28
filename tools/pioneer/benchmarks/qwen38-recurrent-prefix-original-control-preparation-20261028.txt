@@ -1,0 +1,84 @@
+Original-weight ACTUAL prefix control and public-route preparation
+October28UTC2026;COMPILE/LOCAL PREFLIGHT ONLY,not a numerical or hardware pass
+
+New concrete work
+-----------------
+The previous turn made progress:distinct73 module/routing/helper and checked
+checkpointda1f07b911 are pushed. This continuation revalidated all six exact
+local runtime handles and implemented the missing ORIGINAL raw-weight path
+through the actual control fixture,including the actual public dispatcher.
+No production driver,program image or guard was changed in this continuation.
+
+--original-model-control selects the actual NODRV handler;the separate
+--original-model-routed-control selects verbatim public root/FD admission
+and routing followed by that SAME actual handler,not a diagnostic stub.
+Both use the existing unflagged original-file source/coordinator. Before
+native context construction,the entry checks caller/image geometry,source
+readiness/ALL168 recurrent extents/842775168 bytes and46080 original packed
+QPE1 bytes. Only original raw bytes cross into native/operand objects;CPU
+expected products remain private. Synthetic learned fallback is disabled.
+
+The actual control performs real private QPE1+672/336 initialization/native
+3RUN/readback/restore/compute-seal release/locked fresh END/context destruction
+and user copy. The copy-fault test is still after actual complete END and
+must not allow later IO or duplicate END. Observed54 stages publish ONLY
+after the completed control returns and the context is gone. The public
+5120-word reply must also exactly equal the separately captured instruction-
+produced final vector before caller output is copied. VerifyReadback already
+compares the real READ reply to the instruction machine's GDDR bytes. The CPU coordinator then
+applies the existing strict final comparisons;no rounding bound is relaxed.
+This composition is implemented,NOT yet numerically/runtime qualified.
+
+An explicit --build-only suffix compiles/links and checks native/operand
+objects contain NO private oracle symbols,prints BUILD ONLY and does not
+execute the coordinator or read model contents. It is NOT any RUN/readback/
+END/model-speed/physical permission. Temporary test binaries are discarded.
+Routed builds main67548/clean51824 BOTH TERMINAL0;direct builds45080/23486
+BOTH TERMINAL0. New TEST-only phase messages distinguish readback/restore
+from the later final-END;they do not alter native guards or running jobs.
+
+Existing routed preflight79467/49308 BOTH TERMINAL0 after the original-only
+branch addition:all65536 wrongUID/nullFD/badMagic refusals before actual
+control/copy,336 missing learned endpoints/96 header mutations/team/null/
+old-op/context rebinding and ZERO native publication/epoch advance/raw IO.
+These binaries precede only the two later post-RUN TEST logging statements;
+the current source is compiled by the routed/direct build checks above.
+
+Fresh board preservation evidence,not a reload grant
+---------------------------------------------------
+Read-only SSH uname/sysinfo/installed-driver file SHA completed0:
+Haiku,64CPUs,max137034936320B/free133783158784B,stable installed driver
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+NO P100A device open/status ioctl/driver or Assistant change occurred.
+This does not establish current GPU owner/quarantine/reload state;fresh
+sole-owner and pinned-client checks remain required before a physical trial.
+See qwen38-prefix-fresh-os-driver-20261028.log.
+
+Verified live wait and next actions
+----------------------------------
+Exact LOCAL handles43038/80015(native readback),26684/93171(actual control),
+92911/21992(routed control) are freshly LIVE. All six associated local test
+processes were CPU-active at the scoped process check. A one-second passive
+sample of actual-control PID58570 shows CloseImpl -> ValidationReadback ->
+Guard/ExecutionScope/BaseScope -> full immutable PrefixPlan::Matches/Conv
+recipe validation. This diagnoses slow CPU diagnostic checking,NOT a card
+hang,inference/token timing or a reason to remove those guards. No process
+was interrupted or restarted and no physical recovery was attempted.
+The full sample stays in /private/tmp;no unrelated process inventory is saved.
+
+Both native readback runs have reported reached faults1..3 passed,not their
+positive readback/full END terminal result. Both actual-control runs reported
+all3 ROOT layers completed,not successful readback/END/user copy. Routed
+control runs remain earlier in their genuine initialization/execution chain.
+Wait on these exact handles;quiet output/observation timeout is not terminal.
+
+After43038/80015 BOTH terminal0,run existing --original-model-readback
+main/clean against generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf. After
+the actual/routed control constituent gates pass,run the new original routed
+control mode in both trees. Build-only results cannot substitute for either.
+Then fresh client/helper/source/owner checks and actual ORIGINAL three-layer
+card comparison+complete END are still required before all64/dense3/persistent
+KV+GDN+Conv history/token commit/finalnorm/vocab/on-card sampling/no-CPU-
+reference Work+Assistant and real20tok/s optimization. WHOLE27B last measured
+0.207893161tok/s unchanged;full offload/20tok/s UNMET;goal ACTIVE. No power,
+SD,mains,hardware connections,network,boot,Assistant or installed-driver change.

@@ -45,7 +45,9 @@ static bool ObserveRawThenPrefixExecute(PioneerStoreContext& c,PioneerQ38Recurre
 static bool ObservePrefixReadbackThenClose(PioneerStoreContext& c,PioneerQ38RecurrentPrefixResult& execution,PioneerQ38RecurrentPrefixMemoryResult& memory,
  uint32_t* values,unsigned words,PioneerQ38RecurrentPrefixReadbackResult& readback){
  auto& io=c.io;io.recurrentTransport->VerifyRun();io.recurrentTransport->EnableValidationReadback();
+ puts("START ACTUAL control native STOP/ALL120holds/five READs/full original journal restoration;per-access source/owner guards remain enabled,NOT token throughput");
  if(!CloseQ38RecurrentPrefixNativeValidation(c,execution,memory,values,words,readback))return false;
+ puts("PASS ACTUAL control native readback+restoration returned clean;full locked final-END/context destruction and user copy STILL OWED");
  // Explicit SIMULATED OS/PCI bookkeeping,not a native completed producer,
  // clock/end/permission facade. Actual final source audits still run.
  io.InitFinalVmViews();c.transaction.map_attempted=c.transaction.config_attempted=true;c.pci.version=1;c.pci.state=TT_PIONEER_MMIO_READ_OK;
@@ -86,13 +88,45 @@ static constexpr status_t nullCookieStatus=B_BAD_VALUE,unknownOperationStatus=B_
 static std::unique_ptr<tt_q38_recurrent_prefix_validation> Request(){
  auto r=std::make_unique<tt_q38_recurrent_prefix_validation>();r->metadata.version=1;return r;
 }
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_ORIGINAL_NATIVE_TEST
+int ExecutePrefixOriginalNativeScenario(const char* const* images,RecurrentBlockRawLearnedBytes& original,uint32_t* output,unsigned outputWords,PrefixOriginalStageSink* sink){
+ if(!images || !output || outputWords!=5120 || (uintptr_t(output)&3) || uintptr_t(output)>UINTPTR_MAX-20480 || !original.Ready())return 1;
+ for(unsigned i=0;i<4;i++)if(!images[i] || !*images[i])return 1;
+ auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();if(!canonical->Build())return 1;
+ unsigned parts=0;uint64_t length=0;
+ for(unsigned i=0;i<canonical->Count();i++){
+  const auto* p=canonical->Part(i);if(p->kind!=canonical->WeightKind || p->layer>=3)continue;
+  if(!original.Contains(PioneerQ38ProjectionRoute(p->bank),canonical->Base+p->offset,p->bytes))return 1;
+  parts++;length+=p->bytes;
+ }
+ const auto* tile=canonical->ProjectionStripe(64,0,0);std::vector<uint8_t> packed(46080);
+ if(parts!=168 || length!=842775168 || !tile || tile->firstRow)return 1;
+ for(unsigned at=0;at<packed.size();at+=16384){
+  unsigned count=std::min(16384U,unsigned(packed.size())-at);
+  if(!original.Ready() || !original.Read(PioneerQ38ProjectionRoute(tile->bank),canonical->Base+tile->offset+at,packed.data()+at,count))return 1;
+ }
+ if(!original.Ready())return 1;
+ const int argc=6;const char* argv[]={"prefix-original-control",images[0],images[1],images[2],images[3],
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_ROUTED_CONTROL_TEST
+ "--control-routing-execute"
+#else
+ "--control-execute"
+#endif
+ };
+#else
 int main(int argc,char** argv){
+#endif
  assert(argc==6 && (!strcmp(argv[5],"--control-preflight") || !strcmp(argv[5],"--control-execute")
   || !strcmp(argv[5],"--control-routing-preflight") || !strcmp(argv[5],"--control-routing-execute")));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
  (void)&AcquireQ38DeltaLock;(void)&NativeSealedFinalEnd;
  RecurrentBindingFixture f(argv[1],argv[2]);auto& c=*f.c;auto& io=f.io;
  RecurrentPrefixNativeTransport transport(argv[3],argv[4]);io.recurrentTransport=&transport;copyTransport=&transport;
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_ORIGINAL_NATIVE_TEST
+ io.originalEmbeddingWeights=packed.data();
+ assert(original.Ready() && transport.AttachOriginalLearned(original));
+ puts("STAGED ORIGINAL control QPE1 packed46080B+ALL168 learned extents;synthetic learned fallback DISABLED;NO CPU expected products or native producer permission");
+#endif
  auto touches=io.touches,physical=transport.Touches();auto epoch=sQ38EmbeddingModelEpoch;
 #ifdef PIONEER_Q38_RECURRENT_PREFIX_ROUTED_CONTROL_TEST
  auto routingRequest=Request();auto beforeCopies=copies;
@@ -170,4 +204,14 @@ int main(int argc,char** argv){
  puts("PASS VERBATIM public diagnostic routing -> ACTUAL control -> native3RUN/readback/full END -> post-END caller copy and retry refusal;administrative/upload handlers NEVER called;SIMULATED endpoints/NODRV body,NOT physical execution or TPS");
 #endif
  io.recurrentTransport=nullptr;
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_ORIGINAL_NATIVE_TEST
+ assert(original.Ready() && !f.cookie.context && !sRuntimeOwner && !sColdRecoveryRequired);
+ if(sink && !transport.PublishOriginalStages(*sink))return 1;
+ // The reply is checked against separately captured instruction-produced
+ // final bytes before publishing caller output. NO CPU product enters.
+ std::array<uint32_t,5120> captured;captured.fill(0xdeadbeef);
+ if(!transport.CaptureOriginalOutput(captured.data(),unsigned(captured.size()))
+  || memcmp(captured.data(),request->values,sizeof(captured)) || !original.Ready())return 1;
+ memcpy(output,request->values,sizeof(captured));return 0;
+#endif
 }
