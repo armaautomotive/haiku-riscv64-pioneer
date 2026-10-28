@@ -114,11 +114,14 @@ source169RAWspans/205785pages/842821248B/11557 reference reads,60 source-role
 refusals and identical Haiku RISC-V source/unit builds passed. Layer0 private
 fingerprint stays EXACTbb911e57059b179f; frozen72 reference/source unchanged.
 No expected arrays/model/FILE escape the CPU TU; raw bytes+comparison only.
-New actual-original instruction integration main46358/clean57860 is LIVE,
-not passed. It executes original QPE1 before one autonomous prefix start,
-disables synthetic learned fallback and compares only AFTER3blocks+realSTOP.
-It remains OFFLINE, not native/physical/Work/full64/persistent token or TPS.
+Original instruction main46358/clean57860 BOTH TERMINAL0; full103-line stdout
+exact8b6d430d. Actual original QPE1/ONEhoststart/autonomous0->1->2/realSTOP,
+ALL3 final5120 outputs BIT-EXACT,45/54stages exact/nonfinite0. Nine GDN
+intermediates round differently: NOT persistent-state/later-token proof.
+No CPU expected products enter instructions. Still OFFLINE/SIMULATED IO,
+not native/physical/Work/full64/TPS. Do not poll completed handles.
 See benchmarks/qwen38-recurrent-prefix-original-source-20261028.txt.
+Full result: benchmarks/qwen38-recurrent-prefix-original-and-controller-20261028.txt.
 
 Native preparation now has a DISTINCT complete3layer immutable plan, new
 QPX1/QMW1 program table/footprint and retained held-memory journal. Independent
@@ -128,9 +131,19 @@ firstwrite/fullrestore all passed, stdout exact. Real SDK plan objects match
 7bba4f15, kernel frames784B; journal templates880B with deliberately undefined
 PREFIX IO hooks. SAME authenticated artifact bytes are emitted,13changed-pin
 refusals before any output. This is NOT a genuine native prefix context,
-execution/cleanup owner or a loadable driver. Original46358/57860 remain LIVE;
-no new hardware/Work/TPS result. See
+execution/cleanup owner or a loadable driver. Original46358/57860 now passed
+as above, not native or silicon. No new hardware/Work/TPS result. See
 benchmarks/qwen38-recurrent-prefix-native-preparation-20261028.txt.
+
+A DISTINCT PrefixOwner controller prototype now has main/clean SDK templates
+exact1afecb3f/maxKernelFrame880B,1936preflight refusals/first-scope-loss noIO,
+and714counter DATA cases/6105refusals all0. Native PREFIX IO hooks remain
+undefined; no genuine native FD/thread/source/clock/init scope is inferred.
+Actual controller+instructions7427/51883 are LIVE, NOT passed. Both default
+packages and primary tables are poisoned before its57real metadata writes;
+it must prove ONEhoststart/ROOT-only3layers+STOP/all119aggregate counters/
+ALL120holds/fullrestore. Do not install this prototype. See
+benchmarks/qwen38-recurrent-prefix-original-and-controller-20261028.txt.
 
 - Complete execution-owner/real STOP/120 holds/full original restoration
   passed in the clean export (60994, terminal 0); main output is identical.

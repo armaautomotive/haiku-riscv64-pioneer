@@ -1,0 +1,78 @@
+Original-weight autonomous prefix COMPLETE; controller prototype WIP
+October28UTC2026
+Original main46358/clean57860 BOTH TERMINAL0; complete103-line stdout EXACT:
+SHA2568b6d430d6046ba15b6ecddbfeee7725480588d1b90625edfcdbdff30cb12476a.
+ALL3 final5120 outputs BIT-EXACT (15360 words), nonfinite0,45/54 stages exact.
+Nine GDN state/raw/gated intermediates round differently: NOT persistent-
+state/later-token/native/physical/Work/full64/TPS qualification.
+
+Actual original instruction evidence
+------------------------------------
+Full18973870528B c600 original-file authentication and private independent
+chained CPU reference prepare/seal BEFORE instruction contexts. SAME file:
+169RAWspans/205785pages/842821248B/11557 reference reads/ONE embedding read.
+Actual pinned QPE1 instructions decode46080 original tiled bytes; actual5120
+outputs are copied into the offline prefix input boundary. This TEST copy is
+NOT a genuine native completed-input producer/permission. No CPU expected
+embedding or intermediate tensor enters the instruction TU. All synthetic
+learned endpoints removed, missing raw spans cannot fall back to a generator.
+Zero current states before ONE initial host release. SAME119 real instruction/
+register/nonce/Tensix streams persist; ROOT alone copies metadata, releases
+0->1->2 and emits STOP4. No host per-layer metadata/doorbell/product. Earlier
+Conv+GDN NEXT snapshots survive scratch reuse and never feed the program.
+All54 comparisons occur AFTER3blocks+real119STOP+ROOT return. Strict full-log
+audit:103lines/54ordered reports/nonfinite0/ALL3strictfinals/nine differences
+only at stages7NEXTstate,8raw,9gated. No fitted error bound. Maximum errors:
+layer0 state4.76837158203e-7/raw7.45058059692e-9/gated2.38418579102e-7
+layer1 state2.98023223877e-8/raw9.31322574615e-10/gated2.38418579102e-7
+layer2 state7.45058059692e-9/raw3.49245965481e-10/gated1.19209289551e-7
+All differing-word counts/relativeL2 in full archived103-line logs:
+qwen38-prefix-original-instructions-{main,clean}-20261028.log.
+ASan/UBSan/strict warnings/ffp-contract=off retained; exact main/clean root,
+QMW1/QPE1 pins verified. OS/register/GDDR endpoints SIMULATED, not silicon.
+Completed46358/57860 must not be polled/restarted; elapsed emulator time is
+NOT a token-rate measurement. Frozen72 source/reference unchanged.
+
+Distinct execution-controller prototype: SDK/preflight/DATA gates passed
+------------------------------------------------------------------------
+PioneerQ38RecurrentPrefixOwner binds distinct PrefixMemory/PrefixPlan and
+new PREFIX IO hooks.57 bounded writes stage ALL3 packages/898560B BEFORE119
+virgin-worker boots. ONE host ROOT nonce1 starts the whole prefix; ROOT alone
+emits STOP4. No host per-layer metadata/doorbell or STOP write. Phase16 is
+accepted only by this new prefix grammar. Same30s per actual boot release;
+one fixed90s complete3layer wait (3x single-layer bound),65536polls, no rearm
+or retry. Overflow/backwards/source/status/code guards remain. ROOT nonce4/
+prior3/layer2/position0/extended boot/terminal receipt, peer nonces3*RunDelta+1,
+all8 aggregate counters and retained LAST-down proof are required. ROOT's
+retained peer counters must match actual observations. Fresh terminals BEFORE
+firsthold, ALL120holds BEFORE firstrestore, full original restore+secondproof.
+Unknown retains/quarantines all, no following IO/retry/reset/restore/clean hint.
+Counter main10385/clean75603 BOTH0:714cases/6105refusals/ALL119/full3+
+beforeLASTdown/modulo32wrap/all8mutations/polls3..768/nonGDN0. DATA algebra
+against summed qualified per-layer geometry, NOT actual packet/native proof.
+Preflight main67284/clean86904 BOTH0:1936refusals/ALL16result+ALL1920source
+fields/unchanged output+zeroIO. First valid claim with missing required scope
+retains everything; later prepare/run/close/no-launch-close inert. SIMULATED.
+SDK main26827/clean20203 BOTH0; objects AND complete2-line stdout exact:
+SHA1afecb3fa39169976b3b03b4498b064a4f00bf8716e058b1e6f5433dae38ce92.
+Max static kernel frame880B;16KiB staging is HEAP. Explicit undefined
+PrefixOwnerKernelCompileIO hooks prevent native/driver alias; no normal ABI.
+
+Actual controller runs main7427/clean51883 LIVE, NOT passed:
+/private/tmp/pioneer-q38-prefix-owner-actual-{main,clean}-20261028-a.log.
+Default packages AND primary tables POISONED before preparation: controller's
+57 actual host packets and ROOT metadata copies must do the work. Actual new
+journal/installed-image checks/119 NEW virgin boots/actual QPX1 instructions,
+no fake ready/status/PC/nonce/product setter. Raw learned/initial hidden/state,
+MMIO/source/time SIMULATED. Full controller3blocks/aggregate receipts/realSTOP/
+120holds/fullrestore/legacy clean dispatch close still owed. Follow SAME live
+handles; quiet output/observation timeout never permits restart or promotion.
+
+Genuine native FD/team/thread/source/model/clock/host/initialized-state and
+completed-QPE1 binding still UNIMPLEMENTED. Controller runtime+fault/native
+scope/physical new-tag gates must pass before hardware use. Then dense3/all64,
+persistent KV+GDN+Conv/atomic-token commit/finalnorm/vocabulary/sampling/
+persistent noCPUreference Work+Assistant and real inference optimization.
+No new driver/image installation, power/SD/mains/hardware/Assistant/network
+change. Stable041 last restored/64CPU/fullRAM. Last whole27B0.207893161tok/s
+unchanged,20tok/s unmet;full goal ACTIVE.

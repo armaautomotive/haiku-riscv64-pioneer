@@ -1,8 +1,11 @@
 Independent original-file recurrent-prefix reference and RAW source
 October28UTC2026
-STATUS: main/clean CPU arithmetic, ORIGINAL source, source-boundary gates and
-Haiku RISC-V compile/link ALL TERMINAL0. Original instruction integration is
-RUNNING, NOT qualified. No new program/driver was installed on the Pioneer.
+STATUS: main/clean CPU arithmetic, ORIGINAL source, source-boundary gates,
+Haiku compile/link AND original instruction integration ALL TERMINAL0.
+Original103line8b6d430d/ALL3final5120bit-exact/45of54stages exact/nonfinite0;
+nine GDN intermediates round differently. No native/physical/persistent-state
+qualification or new driver installation. Dated LIVE observations below are
+superseded by qwen38-recurrent-prefix-original-and-controller-20261028.txt.
 
 Separate CPU reference, not a Work fallback
 ------------------------------------------
@@ -106,7 +109,8 @@ stdout8c2bb004. BOTH39children+all3blocks+realSTOP passed; simulated endpoints,
 NOT original/native/physical/current-history/token/Work/TPS qualification.
 Separate native-preparation DATA plan/program tables+held journal now have
 main+clean tests/SDK witnesses; see the native-preparation report. This is
-NOT a genuine native prefix owner. Original46358/57860 remain LIVE.
+NOT a genuine native prefix owner. Original46358/57860 now BOTH0/full103-line
+stdout exact8b6d430d/ALL3finals bit-exact; separate controller7427/51883 LIVE.
 Physical72's single original layer0 passed; stable041/tag12/gen4 restored.
 No power/SD/mains/hardware/network/Assistant change here. Last whole27B
 0.207893161tok/s unchanged,20tok/s unmet. Full64/persistent KV+GDN+Conv/token

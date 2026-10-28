@@ -118,8 +118,10 @@ an old producer would NOT validate this prefix. Preserve the frozen72 source/
 reference baseline; never admit those CPU products into native/Work code.
 That separate reference and authenticated RAW3layer source are now implemented
 and main+clean CPU/source/build qualified; original emitted-instruction tests
-46358/57860 are LIVE, not passed. See
-qwen38-recurrent-prefix-original-source-20261028.txt for exact scope/evidence.
+46358/57860 now BOTH0/full103lines exact8b6d430d/ALL3finals bit-exact/
+45of54stages exact/nonfinite0. Nine GDN intermediates round differently;
+NOT persistent state/native/physical proof. See
+qwen38-recurrent-prefix-original-and-controller-20261028.txt for exact scope.
 Native preparation components (complete plan/separate program DATA+held journal)
 also now passed independent tests/SDK witnesses, NOT a genuine native owner;
 see qwen38-recurrent-prefix-native-preparation-20261028.txt.

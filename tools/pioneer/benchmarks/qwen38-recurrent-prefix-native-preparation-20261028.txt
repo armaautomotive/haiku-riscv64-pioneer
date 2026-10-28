@@ -77,17 +77,19 @@ Synthetic reached-fault main13554/clean15283 BOTH TERMINAL0; complete85-line
 logs exact SHA8c2bb004d75f333018ef77c06b2defd3e46671fec448d78d94ae46affbdb0e88.
 39 reached children+all3 actual instruction blocks+realSTOP, earlier Conv+GDN
 retained, single host start/ROOT-only metadata and releases. Separate original
-instruction main46358/clean57860 STILL LIVE, both completed layer0 and entered
-layer1 as of02:35UTC. Follow SAME handles; full54-stage/ALL3 strict final
-numerical comparisons occur only AFTER complete3layers+realSTOP and are NOT
-yet proven. Never infer a pass/restart from quiet output or an observation timeout.
+instruction main46358/clean57860 now BOTH TERMINAL0: full103-line stdout exact
+8b6d430d,ALL3final5120outputs bit-exact/45of54stages exact/nonfinite0. Nine GDN
+intermediates round differently; no persistent-state/native/physical proof.
+Do not poll completed handles. Controller prototype7427/51883 is LIVE, NOT
+passed; see qwen38-recurrent-prefix-original-and-controller-20261028.txt.
 
 Next: genuine same-FD/thread/clock/hosts/source/native prefix binding to the
 actual QPE1 producer+closed initialized GDN/history leases; immutable package
 staging,119 virgin-worker starts, ONE ROOT start and complete on-card0->1->2
 then realSTOP; aggregate3layer counter/nonce/receipt verification; ALL120 holds,
 full original restoration/fresh END. No old single-layer producer/ready/scope
-relabeling. Numerical original3 qualification must finish before hardware use.
+relabeling. Original3 numerical qualification passed, but controller runtime,
+genuine native scopes/faults and physical gates are STILL owed before use.
 Then recurrent->dense3->all64, persistent KV/GDN/Conv+atomic whole-token commit,
 final normalization/vocabulary/sampling, persistent no-CPU-reference Work and
 Assistant, actual loading/prefill/decode optimization and benchmarking.

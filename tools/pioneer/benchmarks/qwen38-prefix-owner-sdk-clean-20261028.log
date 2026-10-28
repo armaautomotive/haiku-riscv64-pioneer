@@ -1,0 +1,2 @@
+1afecb3fa39169976b3b03b4498b064a4f00bf8716e058b1e6f5433dae38ce92 prefix-owner.o
+PASS real RISC-V SDK prefix execution owner TEMPLATE/prepare+ONEstart+autonomousSTOP+close/maxStaticFrame880;undefined PREFIX IO hooks,NO native context,driver ABI,launch,hardware or TPS proof
