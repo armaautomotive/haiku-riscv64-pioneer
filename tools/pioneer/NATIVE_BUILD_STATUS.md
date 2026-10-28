@@ -1,5 +1,32 @@
 # Native build status
 
+## Current: returning layer instructions are executing in local tests
+
+October 28, 2026. A separate pinned TEST-only link now calls both actual
+returning layer bodies with emitted SP/s11 initialization and distinct return/
+fault loops. Main/clean linked bytes match (`dccbad45` text, `af896d8a` ELF),
+with no boot/native ABI, writable globals or unresolved symbols. Real parent
+canaries are interface tests, not fabricated native ownership/producer seals.
+
+Actual recurrent initial-refusal tests pass in both trees: 12 boot/outer/
+identity/current-source cases each, zero NoC/peer work, parent bytes retained
+and fault loops inert for 2048 instructions. Full recurrent `24102/8799` and
+dense `99515/95367` numerical runs are still LIVE, not passed. Early RMS,
+Conv/GDN and dense preparation/attention observations pass, but final output,
+worker-chain and parent-return checks remain pending. No standalone result
+receipt is forged to reuse an old verifier; no new card code is deployed.
+
+Frozen actual native-control runtime is now BOTH terminal 0 (`40917/17954`,
+identical 57-line `195f403a`), including full restoration, fresh END/context
+destruction and post-END user-copy fault handling. This is simulated-endpoint
+qualification, not original/card/Work performance. Six original-model runtime
+handles continue unchanged. Older LIVE labels below are dated snapshots.
+
+Evidence: [returning instruction preparation](benchmarks/qwen38-returning-layer-instruction-preparation-20261028.txt).
+Next: actual component completion and ONE on-card recurrent-to-dense scheduler,
+then full64/persistent-state/output/sampling/Work/Assistant. Last whole-model
+**0.207893161 tokens/sec**; full offload and 20 tokens/sec remain unmet.
+
 ## Current: returning recurrent and attention layers compile together
 
 October 28, 2026. Two new DEVICE returning functions reuse the real layer

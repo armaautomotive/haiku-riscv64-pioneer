@@ -1,0 +1,102 @@
+Qwen 27B: actual returning-layer instruction tests started
+2026-10-28 UTC. LOCAL SIMULATION, not a driver deployment or speed result.
+
+New instruction-model call path
+------------------------------
+The pinned 78cf19c4 NOBOOT component capsule now has a separately linked
+TEST-only placement and callers. Its own emitted instructions initialize
+SP and s11, call the actual recurrent or dense function, and branch to a
+distinct inert return loop. A different inert loop is the fault destination.
+There is no boot/reset entry, old controller main or native driver ABI.
+ROOT/Conv/fault sections retain the existing bounded address map; no writable
+globals or unresolved symbols remain in this test link.
+
+The parent area contains 257 canary words, NOT a fabricated native/model/
+producer/ownership seal. The tests require real SP/s11 restoration and no
+canary changes before accepting a component return. That interface test does
+not prove ownership of an actual whole-model scheduler or native context.
+
+Main/clean pinned links both complete directly with exit 0, byte-identical:
+text.bin 93012 bytes:
+dccbad4542394c3b87bc846849ea0d276d1d55ad52c6d7dbeb0956788121adf1
+conv.bin 7500 bytes:
+e30559f9964a2f744250f51e197ba30ef2d7a37bccb89e395ffaa30d180967ef
+fault.bin 8 bytes:
+6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5
+program.elf 119168 bytes:
+af896d8a2c3a91515620005d57f4eb126c4b6432e8937ea0630462da3aa8b376
+These pins are checked by both the linker helper and numerical runners.
+Existing component/physical-driver sources and artifacts are unmodified.
+
+Endpoint and observer fidelity
+-----------------------------
+The fixtures reuse the existing byte-fabric/independent arithmetic observers,
+but never forge the old standalone JointSummary to reuse its verifier.
+Only INITIAL test ROM/entry, raw learned/hidden/prior-state endpoints and
+command metadata are initialized. No ROOT instruction has run at that point.
+The SAME119 workers execute their real virgin boots; their later processor
+state, private nonces and tensor outputs are not replaced to reach a phase.
+Old constructor ROMs are hash-checked bootstrap dependencies, not executed
+as a substitute for the new component. Every actual ROOT instruction comes
+from the new pinned test link. Independent CPU observers receive generated
+outputs only; they do not supply expected intermediate tensors to the card
+program. These synthetic raw learned bytes are NOT original model weights.
+
+Recurrent execution requires eight matrices/720 actual matrix jobs, all
+120 Conv and 96 GDN operations, independent numeric comparisons, final5120,
+all119 retained closed worker chains, and 122880 actual Conv NEXT history
+bytes staged on card. It also requires real parent/SP/s11 restoration and
+no old standalone summary, host wait or STOP. None is inferred from a ready
+flag or numerical helper return alone.
+Dense execution requires on-card GDDR input, seven matrices/723 jobs,
+independent RMS/QDP/QDA/attention/activation/residual observations, final5120,
+all119 retained chains and parent/SP/s11 restoration. Persistent KV across
+tokens and a connected recurrent predecessor are NOT established by this
+single dense-layer test.
+
+Completed actual initial-guard refusal runs
+-----------------------------------------
+41805 MAIN / 33972 CLEAN both direct terminal exit 0, identical log SHA-256:
+dd0b5563a17ff7994e7146681cff94d559781892cd0ef6a43396a03779152615
+Each reaches 12 bad boot/outer/identity/current physical-source cases in the
+actual new instructions. Every case faults before the first NoC packet or
+peer operation, preserves parent bytes and genuinely virgin peers, and
+remains inert for 2048 further instructions. Expected fault diagnostics in
+these logs are test cases, NOT faults of the physical P100A.
+This mode deliberately does NOT run the positive arithmetic or prove native
+cleanup, original-model correctness, full64, physical execution or throughput.
+
+Positive runs still live at this checkpoint, not passed
+------------------------------------------------------
+24102 / 8799: returning recurrent MAIN / CLEAN.
+99515 / 95367: returning dense MAIN / CLEAN (nice 10).
+Early recurrent RMS and actual Conv/GDN/output-projection observations pass;
+dense on-card input, independent preparation and attention observations pass.
+Full numerical completion, final output, worker-chain and return/canary
+checks are STILL OWED. The positive binaries predate the test-only optional
+--refusals hook, whose unselected positive path and pinned device code are
+unchanged. Do not restart or duplicate these live runs for quiet progress.
+Only completed link/refusal logs are archived, not live numerical logs.
+
+Older frozen native-control gate now complete in BOTH trees
+---------------------------------------------------------
+40917 MAIN / 17954 CLEAN both direct terminal exit 0; both 57-line logs:
+195f403a1c77ac080c78a85de74b39b2315c8c1d77dad5d974716f3da903dd15
+Actual private frozen binding now survives real simulated producer/init/
+three-layer execution/readback/full restore/fresh final END/context destruction
+before user copy, including post-END copy failure. All dynamic native guards
+remain enabled. This still uses simulated OS/raw learned endpoints, NOT an
+original-model/card/full64/Work or inference-rate qualification.
+
+Next and limits
+---------------
+Complete the same four new numeric handles and existing six original-model
+native/readback/routed-control handles. Then connect real recurrent0..2 ->
+dense3 in ONE on-card scheduler with canonical metadata and the same workers,
+then all64. No host-side call/reset/handoff substitutes for that pipeline.
+Persistent KV/GDN/history, token commit, output head/sampling, native Work
+and Assistant integration remain required, along with physical qualification
+under its own exact role/client/helper and current sole-owner/source audit.
+No P100A operation, driver install, power/SD/mains, boot, network or Assistant
+change. Last whole-model measurement remains 0.207893161 tok/s; full offload
+and 20 tok/s are UNMET. Goal ACTIVE.

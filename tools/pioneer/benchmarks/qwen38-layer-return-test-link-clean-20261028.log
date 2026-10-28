@@ -1,0 +1,5 @@
+dccbad4542394c3b87bc846849ea0d276d1d55ad52c6d7dbeb0956788121adf1 text.bin bytes93012
+e30559f9964a2f744250f51e197ba30ef2d7a37bccb89e395ffaa30d180967ef conv.bin bytes7500
+6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5 fault.bin bytes8
+af896d8a2c3a91515620005d57f4eb126c4b6432e8937ea0630462da3aa8b376 program.elf bytes119168
+PASS TEST-only fixed-address caller/actual pinned two component bodies/NO boot or native ABI/NO unresolved/writable globals. Caller initializes SP/s11 by emitted instructions;return and fault are distinct inert loops. LINK ONLY,not executed/connected pipeline/physical/Work/TPS. DO NOT INSTALL
