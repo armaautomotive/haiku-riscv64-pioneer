@@ -15,9 +15,9 @@ lifetime faults and84 final-END faults retain/fence following IO or retry.
 Raw OS/MMIO/PCI/learned endpoints SIMULATED; NOT physical execution,original
 arithmetic,full64,Work,Assistant or token speed. CLOSED:do not poll/restart.
 
-Original-weight main native gate completed; clean still separate
----------------------------------------------------------------
-36450 TERMINAL0; complete120-line stdout SHA256:
+Original-weight native gate completed in BOTH main and clean
+-----------------------------------------------------------
+36450/62100 BOTH TERMINAL0; complete120-line stdout EXACT SHA256:
 89463a9edb4cfb88d2e5cdc9a8ad7d31556a7f67a5797f9506f6d83230e5fe3d.
 Full c600 file auth+169 original raw spans/842821248 bytes/private reference
 BEFORE native context; actual QPE1+672/336init+3native layers+STOP/holds/
@@ -28,7 +28,7 @@ without relaxing the strict finals. No synthetic learned fallback or CPU
 expected products feed native/operand TUs. OS/register endpoints SIMULATED,
 NOT physical readback/Work/TPS. Binary predates later boundary-only and
 atomic-output hardening; do not claim those later negative cases from it.
-CLOSED36450;clean62100 is STILL LIVE,not passed by inference from main.
+CLOSED36450/62100;do not poll/restart. Both exits were checked directly.
 
 Actual complete control body implemented, NOT a loadable driver
 --------------------------------------------------------------
@@ -83,7 +83,6 @@ preflights rerun0. No production guard/source/clock/ownership rule weakened.
 
 Still LIVE; runtime result not implied by preflight/SDK
 ------------------------------------------------------
-62100 ORIGINAL native3RUN/fresh END/54comparisons CLEAN
 43038/80015 native3RUN/fiveREADs/3readback faults/fresh END MAIN/CLEAN
 26684/93171 ACTUAL control3RUN/readback/restore/final-END/post-END caller copy
 MAIN/CLEAN. Control test preserves a read-only snapshot of the genuine closed
@@ -96,7 +95,7 @@ observation timeout. All LOCAL SIMULATIONS,not physical card clients.
 
 Full objective unchanged
 ------------------------
-Finish clean original and readback/control runtimes,then actual combined
+Finish readback/control runtimes,then actual combined
 original-model-readback mode (not launched). Distinct physical73 native role,
 normal routing/admission,module/helper/pins/current parent+owner audit and
 original-model card comparison still owed. Never retag old72 or compile-only

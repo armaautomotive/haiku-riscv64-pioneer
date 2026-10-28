@@ -116,6 +116,7 @@ qwen38-recurrent-prefix-validation-client-20261028.txt.
 Later actual terminal results:26734/98063 BOTH0/full native3RUN+fresh final
 END+84faults/exact6fd5770d;ORIGINAL main36450 also0/exact89463a9e/all3finals
 15360words bit-exact/45of54stages exact/9known GDN intermediates unchanged.
-Do NOT poll those CLOSED handles. Clean original62100/native readback43038/
-80015 and new actual-control26684/93171 remain LIVE at latest continuation.
+Clean original62100 now also TERMINAL0;complete120-line stdout EXACT main's
+89463a9e/all3finals bit-exact. Do NOT poll those CLOSED handles. Native
+readback43038/80015 and actual-control26684/93171 remain LIVE.
 See qwen38-recurrent-prefix-control-composition-20261028.txt.

@@ -209,9 +209,9 @@ benchmarks/qwen38-recurrent-prefix-validation-client-20261028.txt.
 
 Full native3RUN+fresh final-END main26734/clean98063 BOTH TERMINAL0/exact
 6fd5770d:all120holds/fullrestore+secondproof/6lifetime+84final-END faults/
-actual source+clock+VM+PCI+host/context disposal. ORIGINAL native main36450
-also0/exact89463a9e:all3 finals15360 words BIT-EXACT,45/54stages exact,
-9known GDN intermediates not relaxed;clean62100 still LIVE. Raw OS/MMIO
+actual source+clock+VM+PCI+host/context disposal. ORIGINAL native main36450/
+clean62100 BOTH0/full120-line stdout EXACT89463a9e:all3 finals15360 words
+BIT-EXACT,45/54stages exact,9known GDN intermediates not relaxed. Raw OS/MMIO
 SIMULATED,NOT physical/Work/TPS. Distinct actual control body now implemented
 only under QRPNODRV COMPILE-TEST perimeter,no production routing/physical
 selection:compute+readback+restore ->release RAII ->locked same-context+

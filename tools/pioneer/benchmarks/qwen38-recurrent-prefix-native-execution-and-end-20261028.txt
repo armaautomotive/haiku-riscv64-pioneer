@@ -113,7 +113,8 @@ Later continuation:26734/98063 BOTH TERMINAL0,full62-line stdout exact
 6fd5770d9195d5bc286abe8d124614ce2bdef7edd8b0ff9ac3fa6ce9c623933a.
 Actual3RUN/STOP/holds/restore plus complete fresh native END+84faults passed,
 SIMULATED OS/MMIO only. Original main36450 also0/all3finals bit-exact;
-clean/original/readback and new control obligations remain. Latest detail:
+original clean62100 also0/exact89463a9e;readback and new control obligations
+remain. Latest detail:
 qwen38-recurrent-prefix-control-composition-20261028.txt.
 
 Unchanged full goal
