@@ -2,7 +2,7 @@ PASS independent half conversion/63488 finite binary16 values/native host half+b
 PASS independent original-row matrix/6 Q8Q4Q6 cases/all16rows/scalar decoded powers-of-two dot exact/atomic read refusal
 PASS independent GDN/8 retained nonzero steps/closed-form basis solution/all16384state+128output;attention3positions/all24heads/uniform half-softmax/append-only original V history
 /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_cpu_model_reference.cpp:33:58: runtime error: index 10 out of bounds for type 'const Shape[9]'
-SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_cpu_model_reference.cpp:33:58 
+SUMMARY: UndefinedBehaviorSanitizer: undefined-behavior /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_cpu_model_reference.cpp:33:58
 Traceback (most recent call last):
   File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_cpu_model_reference_tests.py", line 15, in <module>
     subprocess.run([str(binary), *sys.argv[1:]], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})
