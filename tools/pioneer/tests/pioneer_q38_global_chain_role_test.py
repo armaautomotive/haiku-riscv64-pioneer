@@ -36,4 +36,13 @@ for header,flags in old_roles.items():
  check(header,flags,True)
  for name in ('PIONEER_Q38_GLOBAL_CHAIN_ROOT_IMAGE','PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE','PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE'):
   check(header,{**flags,name:0},False)
+unroll='PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL'
+for flags in (r,d):
+ check('PioneerQ38GlobalChainComponentRole.h',{**flags,unroll:1},True)
+ for value in (0,2):check('PioneerQ38GlobalChainComponentRole.h',{**flags,unroll:value},False)
+ check('PioneerQ38GlobalChainComponentRole.h',flags,False,late=unroll)
+for value in (0,1):
+ check('PioneerQ38GlobalChainComponentRole.h',{**conv,unroll:value},False)
+ check('PioneerQ38GlobalChainImageRole.h',{**root,unroll:value},False)
+check('PioneerQ38GlobalChainImageRole.h',root,False,late=unroll)
 print('PASS QGC1 exact4 BUILD-only roles/late+defined0+missing flags/old native+worker+chain exclusion/gates'+str(gates)+';NO code,source,native,physical,Work or launch grant')

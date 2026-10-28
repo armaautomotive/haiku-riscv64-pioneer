@@ -262,8 +262,13 @@ static void Stop(R::PrivateSeal* p,unsigned previous){
 extern "C" const uint32_t* q38_mixed_recurrent_frame(){return RecurrentBlock::Private()->frame;}
 extern "C" void q38_mixed_root_seal(){
  using namespace RecurrentBlock;const auto* p=Private();
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL
+ PioneerQ38WordSealPairs<64>(Words(R::Boot),p->boot,Words(R::Header),p->frame);
+ PioneerQ38WordSeal<128>(Words(R::Outer),p->outer);
+#else
  for(unsigned i=0;i<64;i++)if(Words(R::Boot)[i]!=p->boot[i] || Words(R::Header)[i]!=p->frame[i])scalar_fault_park();
  for(unsigned i=0;i<128;i++)if(Words(R::Outer)[i]!=p->outer[i])scalar_fault_park();
+#endif
  if(!p->phase || p->phase>
 #ifdef PIONEER_Q38_RECURRENT_PREFIX_SCHEDULER_IMAGE
   16
@@ -271,7 +276,11 @@ extern "C" void q38_mixed_root_seal(){
   15
 #endif
   || (p->phase==15 && !R::StopShape(p->outer)) || *Words(R::Doorbell)!=p->outer[48])scalar_fault_park();
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL
+ PioneerQ38WordSealSources(p->boot+16);
+#else
  for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+Source(i))!=p->boot[16+i])scalar_fault_park();
+#endif
 }
 extern "C" void mixed_recurrent_block_main(){
  using namespace RecurrentBlock;R::PrivateSeal seal;uint32_t counters[8];

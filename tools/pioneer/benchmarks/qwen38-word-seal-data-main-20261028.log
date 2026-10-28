@@ -1,0 +1,2 @@
+PASS QGC1 exact4 BUILD-only roles/late+defined0+missing flags/old native+worker+chain exclusion/gates545;NO code,source,native,physical,Work or launch grant
+PASS QGC1 DATA/7 banks/6811 jobs EXACT vs independent existing canonical scheduler/ALL248320 rows once x7/896 header mutations/1505 NEW G Conv+GDN envelopes/oldboot+envelope rejection/noalias+no-partial-output;NO instructions/all64/source/native/physical/token/Work/TPS grant

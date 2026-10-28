@@ -44,6 +44,12 @@
 extern "C" void q38_mixed_root_seal();
 #endif
 extern "C" void scalar_fault_park() __attribute__((noreturn));
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL
+#if PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL != 1 || !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) || PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE != 1
+#error Unrolled seals are only an explicit NEW global-chain component variant
+#endif
+#include "PioneerQ38WordSeal.h"
+#endif
 namespace DensePartitionRoot {
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
@@ -85,8 +91,13 @@ static void Seal(const uint32_t* d){
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
  q38_mixed_root_seal();
 #endif
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL
+ PioneerQ38WordSeal<64>(Words(L::Header),d);
+ PioneerQ38WordSealSources(d+16);
+#else
  for(unsigned i=0;i<64;i++)if(Words(L::Header)[i]!=d[i])scalar_fault_park();
  for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+Source(i))!=d[16+i])scalar_fault_park();
+#endif
  if(!Quiet())scalar_fault_park();
 }
 static void FrameSeal(unsigned w){

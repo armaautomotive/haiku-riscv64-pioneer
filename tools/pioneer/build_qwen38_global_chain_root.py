@@ -6,7 +6,9 @@ import pathlib
 import re
 import subprocess
 import sys
-assert len(sys.argv) in (3,4) and (len(sys.argv)==3 or sys.argv[3]=='--inspect-candidate')
+assert len(sys.argv) in (3,4) and (len(sys.argv)==3 or sys.argv[3] in ('--inspect-candidate','--unrolled-seals','--inspect-unrolled-candidate'))
+mode=sys.argv[3] if len(sys.argv)==4 else ''
+unrolled=mode in ('--unrolled-seals','--inspect-unrolled-candidate')
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -21,7 +23,7 @@ flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exc
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 component=['-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1']
 for kind,parent in (('recurrent','PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE'),('dense','PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE')):
- run(tool+'g++',*flags,*component,'-DPIONEER_Q38_LAYER_RETURN_COMPONENT_IMAGE=1','-DPIONEER_Q38_LAYER_COMPONENT_'+kind.upper()+'=1',
+ run(tool+'g++',*flags,*component,*(['-DPIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL=1'] if unrolled else []),'-DPIONEER_Q38_LAYER_RETURN_COMPONENT_IMAGE=1','-DPIONEER_Q38_LAYER_COMPONENT_'+kind.upper()+'=1',
   '-D'+parent+'=1','-c',here/('blackhole_qwen38_return_'+kind+'_layer.cpp'),'-o',out/(kind+'.o'))
 run(tool+'g++',*flags,*component,'-DPIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE=1',
  '-DPIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE=1','-DPIONEER_Q38_MIXED_ROOT_CAPSULE_IMAGE=1',
@@ -64,9 +66,17 @@ PINS=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca
  ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
  ('conv.bin',7500,'5fce4465b4d1f30a616311e97f9216d06e4aaf6a09d79de34b1e4ea31b0b004a'),
  ('program.elf',145552,'43cf308d15a7db38cde9e80804d78870a2222788612b8ccf11806e05a21ebc44'))
+UNROLLED_PINS=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+ ('text.bin',114404,'6add798d20f27889783f50c54285ac9129624335711943fb690c188097ed40fd'),
+ ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+ ('conv.bin',7500,'5fce4465b4d1f30a616311e97f9216d06e4aaf6a09d79de34b1e4ea31b0b004a'),
+ ('program.elf',145552,'167f7b32faafdfecb393b9e632af88ff0647d62df164e4e772884179debab561'))
 observed=[]
 for name in ('boot.bin','text.bin','terminal.bin','conv.bin','program.elf'):
  data=(out/name).read_bytes();item=(name,len(data),hashlib.sha256(data).hexdigest());observed.append(item);print(repr(item),flush=True)
-if len(sys.argv)==3:assert PINS and tuple(observed)==PINS,'unqualified candidate; inspect/freeze independent builds first'
+if mode not in ('--inspect-candidate','--inspect-unrolled-candidate'):
+ expected=UNROLLED_PINS if unrolled else PINS
+ assert expected and tuple(observed)==expected,'unqualified candidate; inspect/freeze independent builds first'
 print('BUILD/INSPECT ONLY NEW QGC1/all64 returning arithmetic+final norm+973 vocab jobs+greedy candidate+real global STOP/maxFrame'+str(max(frames))+
+ ('/explicit unrolled seals' if unrolled else '/baseline seals')+
  ';NO runtime/combined reserved stack/original model/native/physical/token commit/multi-token/Work/TPS qualification. DO NOT INSTALL')

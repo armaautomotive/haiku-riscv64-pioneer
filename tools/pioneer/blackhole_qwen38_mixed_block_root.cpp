@@ -83,8 +83,13 @@ static void WriteFinal(const uint32_t* o){
 extern "C" void q38_mixed_root_seal(){
  using namespace DensePartitionRoot;const auto* p=Joined::Private();
  if(reinterpret_cast<unsigned>(p)<0x6e000 || reinterpret_cast<unsigned>(p)>0x70000-sizeof(*p))scalar_fault_park();
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL
+ PioneerQ38WordSealPairs<64>(Words(L::Boot),p->boot,Words(L::Header),p->frame);
+ PioneerQ38WordSeal<L::OuterWords>(Words(L::Outer),p->outer);
+#else
  for(unsigned i=0;i<64;i++)if(Words(L::Boot)[i]!=p->boot[i] || Words(L::Header)[i]!=p->frame[i])scalar_fault_park();
  for(unsigned i=0;i<L::OuterWords;i++)if(Words(L::Outer)[i]!=p->outer[i])scalar_fault_park();
+#endif
  if(!p->phase || p->phase>
 #ifdef PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE
  13
@@ -92,7 +97,11 @@ extern "C" void q38_mixed_root_seal(){
  12
 #endif
  || *Words(L::Doorbell)!=p->outer[48])scalar_fault_park();
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL
+ PioneerQ38WordSealSources(p->boot+16);
+#else
  for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+Source(i))!=p->boot[16+i])scalar_fault_park();
+#endif
 }
 #ifndef PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE
 extern "C" void mixed_block_main(){

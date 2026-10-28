@@ -1,0 +1,117 @@
+QGC1 optional controller-check optimization: qualified routines, full run pending
+2026-10-28. No card access, driver installation, boot, power or Assistant action.
+
+Change
+------
+PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL=1 is an explicit BUILD-only variant of
+the NEW returning global-chain components. It unrolls the boot/header/outer
+word comparisons four at a time and uses the exact sixteen fixed live source
+MMIO addresses instead of recomputing the piecewise Source(i) mapping.
+EVERY comparison remains, in its original order, with immediate fault on
+the first mismatch. No hashes, cached authorization, caller-ready bit,
+reference CPU inference, relaxed phase/ownership check or omitted NoC check.
+No numerical operator, model layout, job grammar or completion ABI changed.
+The default baseline image is NOT replaced. ROOT and convolution cannot
+select this component-only flag, including a defined-zero flag.
+
+Emitted check-routine qualification
+----------------------------------
+Command (run separately in main and clean export):
+ python3 tools/pioneer/tests/run_pioneer_q38_word_seal_instruction_tests.py \
+  /private/tmp/pioneer-q38-global-chain-{main,clean}-20261028-k \
+  /private/tmp/pioneer-q38-global-chain-{main,clean}-20261028-j
+Main55530 and clean18763 BOTH direct terminal0. Identical five-line logs:
+ f3b88d06a419add95ab2d0610ebb642afbd4b95884c97dfe9ab0d8c03511157b
+Archived qwen38-word-seal-{main,clean}-20261028.log.
+
+Isolated actual linked RV32 check functions, baseline -> unrolled instructions:
+ recurrent parent seal: 1755 -> 1070
+ recurrent transfer seal, INCLUDING its parent call: 2587 -> 1563
+ dense parent seal: 1743 -> 1057
+ dense transfer seal, INCLUDING its parent call: 2575 -> 1550
+These exclude the 2048 inert terminal steps. This is approximately39-40%
+fewer instructions in THESE ROUTINES, NOT whole-model or physical speed.
+The two parent calls read273 external words; the two transfer seals read389.
+Their complete external metadata/MMIO address+value traces match EXACTLY.
+
+36156 fault cases cover EVERY BIT of all256 boot/header/outer words, every
+bit of all16 live source words, every doorbell bit, every private copy word,
+invalid phases/private pointers and quiet-control/low-eight-bit lane guards.
+High lane bits remain accepted exactly as before. Both images fault at the
+same external read, perform stack stores ONLY, and remain inert2048. Returned
+calls preserve SP/RA/all callee-saved registers, including private s11.
+Synthetic private function arguments are UNIT TEST data ONLY. These calls
+are NOT genuine owner acquisition, a completed layer, initialized weights,
+worker history, full graph, launch permission or native/physical evidence.
+
+Independent builds and baseline preservation
+-------------------------------------------
+ python3 tools/pioneer/build_qwen38_global_chain_root.py \
+  /Volumes/HaikuBuildLocal/generated.riscv64 \
+  /private/tmp/pioneer-q38-global-chain-{main,clean}-20261028-j --unrolled-seals
+Main89342 and clean48482 BOTH direct0. All five literal UNROLLED_PINS match:
+ boot4 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text114404 6add798d20f27889783f50c54285ac9129624335711943fb690c188097ed40fd
+ terminal8 6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5
+ conv7500 5fce4465b4d1f30a616311e97f9216d06e4aaf6a09d79de34b1e4ea31b0b004a
+ ELF145552 167f7b32faafdfecb393b9e632af88ff0647d62df164e4e772884179debab561
+Identical build logs SHA:
+ 27ce18f691b3ef8f1ffbdef022987bb965dce18ab2d8374f8face6f017c7d8ef
+Initial independent candidate builds49730/2831 were also direct0, same pins.
+
+Default build with NO optional flag: main28187 and clean94734 BOTH direct0,
+output directories ...-{main,clean}-20261028-k. All five OLD baseline pins
+remain byte-exact, including ELF43cf308d15a7db38cde9e80804d78870a2222788612b8ccf11806e05a21ebc44.
+Every build FIRST reproduces all three unchanged old returning-component
+object pins. No old/native image is relabeled or rebuilt with the new flag.
+Identical baseline-build logs SHA:
+ 82a59d57948e08fb3f6603c462c8892d8a763a7e14d9fdc6505eaf453d608a8e
+Both variants retain ROOT131072/Conv32768/stack8192 and existing per-function
+limits2048/4096, no undefined functions/writable globals/GOT/unsupported ISA
+or CSR; max ROOT frame1808. Unrolled text adds564 bytes. Per-function limits
+are NOT proof of combined full-run reserved stack.
+
+Data and genuine initial-fault regression
+----------------------------------------
+ python3 tools/pioneer/tests/run_pioneer_q38_global_chain_data_tests.py
+Main89430 and clean45609 BOTH direct0. ASan+UBSan,545 role gates (including
+late/defined-zero/wrong-value optional-flag and root/capsule exclusion),
+unchanged6811 canonical jobs/896 header mutations/1505 G Conv+GDN envelopes
+and all64 package data tests. Identical two-line logs SHA:
+ 6d7c44767d7531702fb36806623f09595aa66152536bd2822d17a562757cfa15
+
+Updated full-instruction runner accepts exactly ONE of the two literal-pinned
+ROOT variants, never a caller-selected unpinned binary. Worker pins and ELF-
+derived wait/STOP symbols remain mandatory. It prints the verified variant.
+Run with existing old worker .../pioneer-q38-mixed-worker-20261026-e and NEW
+G worker .../pioneer-q38-global-globalbuild-{main,clean}-20261028-e:
+ python3 tools/pioneer/tests/run_pioneer_q38_global_chain_instruction_tests.py \
+  ROOT_DIRECTORY OLD_WORKER_DIRECTORY GLOBAL_WORKER_DIRECTORY --refusals
+Unrolled main30690/clean62693 and baseline main40334/clean29149 ALL direct0.
+Each proves12 real initial boot/outer/source/doorbell faults, zero NoC/peer
+work, inert2048 and SAME119 genuinely virgin G workers. These are fault
+tests, not successful connected inference. Identical per-variant log SHAs:
+ unrolled e2bb0c4eccc77d3faf782bacfe76ffc46c2e7abc119cc1b203d9c73e997a48c8
+ baseline 72188ec7e78f9116dd972c331d6c6bf7140b232e84a2105b9e5218781d78157d
+
+Full qualification remains pending
+----------------------------------
+Unrolled full actual-instruction runs launched WITHOUT --refusals or
+--prepare-only: main34193 / clean84893, output images J, logs:
+ /private/tmp/pioneer-q38-global-chain-unrolled-positive-{main,clean}-20261028-j.log
+SAME119 new virgin workers, ONE shared fabric, ALL64 real returning bodies,
+actual final norm, ALL973 vocab jobs, independent greedy, all119 real STOP
+and actual combined stack are required. Follow SAME handles; do not restart
+because output is quiet or an observation times out. Full result UNPROVEN.
+The earlier current-tag baseline runs61179/96440 remain separate live
+histories (both completed layer0); old QCH1 runs17092/81011 are separate too.
+Do NOT combine their partial results or manufacture a completed lifetime.
+
+All these end-to-end fixtures still use synthetic raw learned/initial-state
+bytes and simulated NoC/time/OS endpoints. Original full-model validation,
+real persistent multi-token KV/GDN/Conv commit/embedding feedback, genuine
+new native ownership/preparation, physical stability, no-reference Work and
+Assistant integration are still required. No new whole-model benchmark.
+Last real measured speed0.207893161 tokens/sec; target20 remains UNMET.
+No deployment or inference-speed claim. Goal remains ACTIVE.
+Unrelated llama.cpp and FlashNext work remains unread/untouched/unstaged.

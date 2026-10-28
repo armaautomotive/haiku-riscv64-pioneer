@@ -1,0 +1,5 @@
+PASS isolated emitted seal0 external read trace273 EXACT; instructions baseline1755 unrolled1070 (excludes2048 inert steps);NO model/native/physical/TPS proof
+PASS isolated emitted seal1 external read trace389 EXACT; instructions baseline2587 unrolled1563 (excludes2048 inert steps);NO model/native/physical/TPS proof
+PASS isolated emitted seal2 external read trace273 EXACT; instructions baseline1743 unrolled1057 (excludes2048 inert steps);NO model/native/physical/TPS proof
+PASS isolated emitted seal3 external read trace389 EXACT; instructions baseline2575 unrolled1550 (excludes2048 inert steps);NO model/native/physical/TPS proof
+PASS isolated emitted check functions: 36156 single-bit/phase/pointer/quiet refusals;fail-fast external traces EXACT,stack writes ONLY,inert2048;NOT genuine owner/acquisition/full graph/Work/performance qualification
