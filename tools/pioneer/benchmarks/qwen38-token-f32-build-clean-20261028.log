@@ -1,0 +1,21 @@
+4b1550f36d8bf6e225684db0a97ba62ad885817c1497d78226443b0c7867533f recurrent.o bytes145120
+29204d287e38fe0ead7fd24c2de44aad7b46d2bcb38e23daa4b55d1cebb6c8e9 dense.o bytes115164
+78cf19c422c773a8c9c47c180df78ecd66609e4614dd75ee2d66344cab0ea25c layer-components-NOBOOT.o bytes228380
+PASS both ACTUAL returning layer bodies retained, separate private seal types/s11 bind+restore, same worker-chain/hidden-slot ADDRESSES;ROOTbytes93044/131072 Convbytes7500/32768 maxFrame2112
+RELOCATABLE COMPONENTS ONLY/NO boot or host wait/STOP/old main/native ABI;sole unresolved fault park. NOT a connected pipeline,initialized state,token commit,physical/Work or throughput qualification. DO NOT INSTALL
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 117016, 'e58aff9bf5be041992ba5435bca334bdd43ac51c3d3c6af47c5ac6de7cdbfd8d')
+('terminal.bin', 8, '6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5')
+('conv.bin', 7500, 'aec9aeacaf188b46ae223bd79fafb928ac39a3369b3c9753bf8145966eb44cea')
+('program.elf', 149964, 'ca0f6beb05e1a20d243332e65ce9b0bc4e3e080fc350768067266b9e1d7209a2')
+BUILD/INSPECT ONLY NEW QGC1/all64 returning arithmetic+final norm+973 vocab jobs+greedy candidate+real global STOP/maxFrame1872/on-card provisional next embedding;NO runtime/combined reserved stack/original model/native/physical/token commit/multi-token/Work/TPS qualification. DO NOT INSTALL
+('recurrent.o', 159452, 'a87da94e9af7f2bb75b538a7d650304f9f6c10ce1cfadbc679f6a3b265e572f2')
+('dense.o', 120816, '0d0cee2d978f71ba68c8a740a7ddb52ee8b486c739a2c1fca9aa1a2e58d0de6d')
+('token-components-NOBOOT.o', 248876, '6c3017d088287e45ef8a2cbcdb31b6a0eb57dd7147c179781c7eb9cfc71ccae9')
+BUILD ONLY actual returning recurrent path includes strict previous-global output admission;ROOTbytes100356/131072 Conv9020/32768 maxFrame2112;NO boot/persistent parent/model token-state commit/native/physical/Work/TPS or combined-stack proof. DO NOT INSTALL
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 128876, 'e59efb8ee42775eb3a49f0db9656c0fdb136eb52f81879c2416ba87dacca1900')
+('terminal.bin', 8, '6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5')
+('conv.bin', 19752, '3457413087afef8d24755f49546e0d968af87fb5fbad60b674924ae6850c6c51')
+('program.elf', 176532, '9eb2a26fcca87c06345e1b5c63e36f91bf433d90b57d75513fed1e31439f2839')
+BUILD ONLY persistent parent/bootstrap/prompt+generation/all64+973/recurrent state copy+readback/token stream/final119STOP;maxFrame1616;NO runtime/combined stack/original full-model/native/physical/cancellation/Work/Assistant/TPS qualification. DO NOT INSTALL

@@ -36,7 +36,7 @@ extern "C" void* memset(void* target,int value,__SIZE_TYPE__ bytes){
 // Arithmetic capsule ONLY. Its NEW parent separately proves the real final
 // hidden/learned norm/current exclusive lifetime before and after this call.
 extern "C" bool q38_global_chain_learned_rms(const float* input,const float* weight,float* output){
- return PioneerQ38LearnedRms(input,weight,output);
+ return PioneerQ38StateRms(input,weight,output);
 }
 extern "C" bool q38_global_chain_quantize14(const float* input,void* output){
  return PioneerQ38ProjectionQuantize(14,input,256,static_cast<PioneerQ38ProjectionInput*>(output));

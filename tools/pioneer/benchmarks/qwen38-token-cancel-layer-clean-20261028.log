@@ -1,0 +1,19 @@
+PASS ACTUAL cancellation initial3 nonzero RAW-control refusals/ZERO NoC+peer work/inert2048;not boundary cancellation proof
+PASS actual next embedding position0/token248319/5120 bit-exact/20raw+2writes+2readbacks/no CPU product upload
+REQUEST RAW cancellation stage1/actual model progress layers0 head0 records0/NO private state supplied
+BEGIN actual persistent token0/layer0/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer0 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer0 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer0 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer0 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer0 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer0 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer0 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer0 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer0/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions608832408/reservedStack6496/writtenStack6488
+PASS ACTUAL cancellation stage1 terminal fault1/no terminal capability/NO invented STOP or cleanup/ROOT NoC+peer-write inert2048;in-flight workers UNKNOWN,not reusable
+PASS ACTUAL cancellation stage1 terminal fault2/no terminal capability/NO invented STOP or cleanup/ROOT NoC+peer-write inert2048;in-flight workers UNKNOWN,not reusable
+PASS ACTUAL cancellation stage1 terminal fault3/no terminal capability/NO invented STOP or cleanup/ROOT NoC+peer-write inert2048;in-flight workers UNKNOWN,not reusable
+PASS ACTUAL cancellation stage1 terminal fault4/no terminal capability/NO invented STOP or cleanup/ROOT NoC+peer-write inert2048;in-flight workers UNKNOWN,not reusable
+PASS ACTUAL 4 cancellation-terminal corruptions/from first real STOP release/SAME executed ROOT+119 history/unchanged positive parent;NOT native cleanup
+PASS ACTUAL cancellation stage1/real model layers1+head0/committed tokens0/ALL119 actual STOP+source+job+counter closure/terminal read locally/inert2048/stack reserved6496 written6488;SYNTHETIC raw model,NOT native/physical/Work/TPS or reusable mutable state

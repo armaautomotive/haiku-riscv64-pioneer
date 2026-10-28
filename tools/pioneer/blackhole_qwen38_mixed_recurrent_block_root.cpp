@@ -3,7 +3,7 @@
 // reused. No old image role, native owner, token or state-slot commit.
 #include "blackhole_qwen38_mixed_projection_root.cpp"
 #include "blackhole_qwen38_mixed_recurrent_cohort.cpp"
-#include "PioneerQ38ResidualRms.h"
+#include "PioneerQ38StateMath.h"
 #ifdef PIONEER_Q38_RECURRENT_HISTORY_STAGING_IMAGE
 #include "PioneerQ38RecurrentHistoryImageRole.h"
 #include "PioneerQ38RecurrentHistoryLayout.h"
@@ -54,8 +54,8 @@ static void Read(unsigned remote,unsigned route,unsigned destination,unsigned by
 }
 static void Norm(R::PrivateSeal* p,unsigned which){
  const auto* o=p->outer;Read(o[65+which*2],PioneerQ38ProjectionRoute(o[64+which*2]),R::Weight,20480);
- bool okay=which?PioneerQ38ResidualRms(Floats(R::Projected),Floats(R::OriginalCopy),Floats(R::Weight),Floats(R::PostResidual),Floats(R::PostNormalized)):
-  PioneerQ38LearnedRms(Floats(R::OriginalCopy),Floats(R::Weight),Floats(R::Input));
+ bool okay=which?PioneerQ38StateResidualRms(Floats(R::Projected),Floats(R::OriginalCopy),Floats(R::Weight),Floats(R::PostResidual),Floats(R::PostNormalized)):
+  PioneerQ38StateRms(Floats(R::OriginalCopy),Floats(R::Weight),Floats(R::Input));
  if(!okay)scalar_fault_park();
  OriginalSeal();q38_mixed_root_seal();
 }
@@ -147,7 +147,7 @@ static void Finish(R::PrivateSeal* p){
 #endif
  for(unsigned i=0;i<5120;i++){
   float a=Floats(R::Projected)[i],b=Floats(R::PostResidual)[i],v=a+b;
-  if(!PioneerQ38RmsDomain(a) || !PioneerQ38RmsDomain(b) || !PioneerQ38RmsDomain(v))scalar_fault_park();
+  if(!PioneerQ38StateDomain(a) || !PioneerQ38StateDomain(b) || !PioneerQ38StateDomain(v))scalar_fault_park();
   Words(R::Final)[i]=PioneerAttentionBits(v);
  }
  OriginalSeal();uint32_t tracked[8];for(unsigned i=0;i<8;i++)tracked[i]=*Words(0xffb20000+Counter(i));

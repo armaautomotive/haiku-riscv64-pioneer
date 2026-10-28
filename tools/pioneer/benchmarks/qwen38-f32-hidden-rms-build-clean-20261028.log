@@ -1,0 +1,4 @@
+('code.bin', 5084, '93da3bbe65a993ec702a52db7b8ad09a62c64f73dbf4e35e4d64379b74381d49')
+('boot.bin', 4, 'd0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6')
+('program.elf', 14416, 'e893629f213f0d8b9f5d257339b2e8019494240da4f8a29f00f38c351e45ce41')
+BUILD ONLY separate FP32 hidden RMS numeric TEST/maxFrame400;NO full controller/native/physical/Work/launch/combined-stack or TPS grant

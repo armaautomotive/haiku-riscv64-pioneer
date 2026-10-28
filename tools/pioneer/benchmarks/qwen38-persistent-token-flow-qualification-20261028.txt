@@ -177,3 +177,19 @@ without inventing a full token. Independent builds/default-pin preservation/
 119STOP+terminal corruptions are STILL RUNNING main14563/clean5907, not a pass.
 The default full94923/26724 images/histories remain unchanged and continue.
 No complete new model token,physical/native/Work qualification or speedup.
+
+20:38UTC actual progress / FP32 correction candidate
+----------------------------------------------------
+Default94923/26724 have BOTH passed all8 actual first dense current-KV writes
+and readbacks,all9 actual corrupted-child refusals,and completed layer3.
+They continue in layer4 under the SAME old pinned images,not a full pass.
+Cancellation14563/5907 BOTH now direct0:real first-layer+119STOP+four terminal
+faults/no invented token commit/inert2048. Scope remains synthetic/first-layer.
+Legacy79400 captured the old layer15 residual-sum65504 range refusal;four
+separate baseline/unrolled global runs also terminate1 there. See the exact
+ELF/register/numeric evidence and new bounded FP32 math/controller candidate
+in qwen38-f32-hidden-state-qualification-20261028.txt. New independent full
+FP32 flows20159/13324 start from RESET,not transplanted old history. Original
+GGUF raw source tests now pass separately;whole original model integration,
+native/physical/Work/Assistant and real throughput are still unproven.
+Goal ACTIVE;last measured0.207893161tok/s,target20 unmet,no new speedup.

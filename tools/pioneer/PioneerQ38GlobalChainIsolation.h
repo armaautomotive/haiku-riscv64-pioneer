@@ -31,3 +31,6 @@
 #if defined(PIONEER_Q38_TOKEN_CANCEL_BOUNDARY) && !defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE)
 #error Token cancellation is not an old parent, component, worker or native role
 #endif
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_F32_HIDDEN) && !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE)
+#error FP32 hidden arithmetic belongs only to the distinct returning components
+#endif

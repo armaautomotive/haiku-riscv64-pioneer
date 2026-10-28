@@ -435,7 +435,7 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
   while(pc!=0x60000 && pc!=0x60004){previousPC=pc;cycles+=19;StepToken();if(!(steps&255))for(unsigned w=0;w<119;w++)Advance(w,64);}
   if(pc==0x60000)fprintf(stderr,"TOKEN_FAULT position%u layer%u completed%u phase%u matrices%u global%u/%u committed%u copy%u/%u/%u/%u packets%u SP%x\n",
    position,layer,completed,Phase(),matrices,globalJobs,globalPartials,committed,copyLayer,copySpan,copyAt,copyPhase,packets,regs[2]);
-  if(pc==0x60000 && !kvFault)PioneerQ38InstructionFault::Dump(*this,previousPC,RB::Projected,RB::PostResidual,RB::Final,RB::Original);
+  if(pc==0x60000 && !kvFault)PioneerQ38InstructionFault::Dump(*this,previousPC,RB::Projected,RB::PostResidual,RB::Final,CL::Dense(layer)?unsigned(DL::Original):unsigned(RB::Original));
   return pc==0x60004;
  }
  void VerifyKvFault(){

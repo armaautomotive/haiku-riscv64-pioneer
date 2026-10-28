@@ -1,0 +1,137 @@
+Bounded FP32 hidden-state correction: math passed; FULL controller RUNNING
+2026-10-28 20:38UTC. Goal ACTIVE. No hardware/SSH/driver/kernel/UI/boot/CPU/
+RAM/power/SD/mains change. Last real whole-model0.207893161tok/s,target20
+UNMET. No new measured speedup. No full-model/native/Work readiness claim.
+
+Evidence changing the next action: actual legacy fault reproduced
+-----------------------------------------------------------------
+SAME from-reset legacy diagnostic79400 terminated0: CAPTURE ONLY,not a pass.
+The exact pinned QCH1/QMW1 instruction history reproduces both old failures:
+ layer15/completed15/phase12/matrices7/jobs11532/Conv1428/GDN1152/dense1152
+ packets1767309/SP0x6f340/pc0x60000/previousPC0x57ec0/RA0x57ec4.
+Both operands in the residual loop are within65504, but the first bad sum is
+ index3 projected0x4589f6f1=4414.86767578125
+        residual0x47719ad5=61850.83203125
+        F32-rounded sum0x47816cda=66265.703125 >65504(0x477fe000).
+There are1280 out-of-domain sums in the5120 actual projected/residual pairs.
+No projected/residual operand itself is nonfinite/out of the legacy domain.
+
+The fault call0x57ec0 is a SHARED sink,not by itself a callsite proof. Exact
+pinned ELF disassembly at0x58958 performs FADD.S;0x58960 masks its sum; the
+0xd4b56c63 BLTU at0x58964 compares a0/a1 and targets0x57ebc,whose JALR at
+0x57ec0 reaches0x60000. Captured a0=0x477fe000,a1=a3=0x47816cda and
+a5=0x8000c(projected+index3),together with phase12/all7 matrices,identify
+that residual-sum range refusal. Predicate65504<66265.703125 is true.
+This is a numerical-contract refusal in OFFLINE simulation,not a physical
+P100A crash,PCIe issue,uninitialized function,or CPU/RAM/boot regression.
+The captured `original` vector mistakenly used recurrent0xbc000 in a dense
+layer (metadata there). Ignore that field. Projected/postResidual/final and
+the register evidence above use correct addresses. Future snapshots now
+select dense0xc8000 vs recurrent original correctly;no rerun/transplant.
+
+Do not clip inputs or relax FP16/learned/activation guards to force a pass.
+The old literal images keep their exact legacy behavior. Baseline main61179/
+clean96440 and unrolled main34193/clean84893 have now BOTH independently
+terminated1 at layer15/phase12 after7 matrices too. Their histories are
+archived,not restarted or relabeled positive. Feedback46023/12070 were
+still independent live histories at the last check.
+
+Separate bounded FP32 raw-state arithmetic
+------------------------------------------
+PioneerQ38F32HiddenRms.h adds NEW helpers,leaving the old RMS functions and
+their65504 contract unchanged. Raw FP32 hidden/projection/residual values
+are accepted only when |x|<=2^26 and zero or|x|>=2^-50. Learned weights retain
+the OLD65504/2^-50 domain. No clipping,requantization,denormal substitution,
+CPU fallback,hardware double/div/sqrt or unbounded arithmetic was added.
+
+Why2^26: rounded x*x<=2^52;the5120-term software-binary64 sum<2^65 and mean
+<=2^52. With epsilon1e-6,scale>=2^-26. Both rounded normalizing multiplies
+stay normal/zero:smallest nonzero2^-50*2^-26*2^-50=2^-126. Mean of one
+minimum nonzero square also remains normal. The old exact paired32-bit
+binary64 sum/mean and correctly rounded software sqrt/divide are reused.
+The normalized RESULT is FP32 arithmetic only. Following FP16/native input
+conversion still separately enforces65504,as do FFN activation/gate/up and
+prepared attention domains. This is NOT blanket unrestricted FP32 support.
+
+Passing math evidence
+----------------------
+ASan+UBSan HOST main9968/clean24756 BOTH direct0:512 varied/boundary rows,
+252 legacy-domain bitexact agreements,21 refusals,original captured rounded
+sum,new2^26 max/min-product edge. Independent double-reduced FLOAT squares,
+sqrtf and two rounded weight multiplies match every output bit.
+
+Independent NEW numeric TEST builds,not an old QRN/native image alias:
+ /private/tmp/pioneer-q38-f32-hidden-rms-image-{main,clean}-20261028-b
+ code.bin5084 93da3bbe65a993ec702a52db7b8ad09a62c64f73dbf4e35e4d64379b74381d49
+ boot.bin4 d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+ program.elf14416 e893629f213f0d8b9f5d257339b2e8019494240da4f8a29f00f38c351e45ce41
+maxFrame400;actual runtime stack596. ASan+UBSan instruction tests main75655/
+clean20894 BOTH direct0:8 actual from-reset positives/14 raw/weight domain
+faults,all5120 bitexact independent references,exact raw backup,NO GDDR
+write on refusal,inert32,max555324 instructions. Numerical input/weight
+bytes only;references OBSERVE and never provide products. This is RMS ONLY,
+not actual residual/control-flow/full model/native/physical/Work/TPS proof.
+
+Integrated DISTINCT persistent controller candidate
+---------------------------------------------------
+PioneerQ38StateMath.h selects NEW helpers ONLY for exact opt-in returning
+R/D components with PIONEER_Q38_GLOBAL_CHAIN_F32_HIDDEN=1. Raw hidden input,
+attention/recurrent residual normalization,final residual and real final-head
+norm use those helpers. Weight/activation/prepared/quantizer guards remain
+unchanged. No marker or old live/native context is promoted into a new owner.
+
+Main91952/clean73687 BOTH direct0 independent --f32-hidden --inspect-candidate:
+ /private/tmp/pioneer-q38-token-f32-{main,clean}-20261028-a
+Literal BUILD pins,frozen separately as PINS_F32:
+ recurrent.o159452 a87da94e9af7f2bb75b538a7d650304f9f6c10ce1cfadbc679f6a3b265e572f2
+ dense.o120816 0d0cee2d978f71ba68c8a740a7ddb52ee8b486c739a2c1fca9aa1a2e58d0de6d
+ token-components-NOBOOT.o248876 6c3017d088287e45ef8a2cbcdb31b6a0eb57dd7147c179781c7eb9cfc71ccae9
+ boot.bin4 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text.bin128876 e59efb8ee42775eb3a49f0db9656c0fdb136eb52f81879c2416ba87dacca1900
+ terminal.bin8 6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5
+ conv.bin19752 3457413087afef8d24755f49546e0d968af87fb5fbad60b674924ae6850c6c51
+ program.elf176532 9eb2a26fcca87c06345e1b5c63e36f91bf433d90b57d75513fed1e31439f2839
+ROOT128876/131072,aux19752/32768,parent maxFrame1616/component2112. Actual
+whole-flow combined8192 stack is still owed. No increased resource limits.
+
+Strict DEFAULT builds main48778/clean90016 BOTH direct0 preserve ALL prior
+default/nested legacy/global/component pins byte-for-byte. Main69780/clean
+48841 BOTH direct0:988 BUILD-only role gates,including late/zero/wrong-role
+exclusion of the new flag. ASan+UBSan raw prepare32746/36689 BOTH direct0,
+ZERO ROOT instructions/no products. Actual bootstrap33364/49727 BOTH direct0:
+first embedding5120/all metadata/16 real early corruptions/inert2048/first
+returning entry,119 still virgin;reserved2992/written2984. Not model execution.
+
+FULL3-token from RESET RUNNING,not a pass
+-----------------------------------------
+New main20159/clean13324 launched20:38UTC:
+ python3 tools/pioneer/tests/run_pioneer_q38_token_flow_tests.py \
+  /private/tmp/pioneer-q38-token-f32-{main,clean}-20261028-a \
+  /private/tmp/pioneer-q38-mixed-worker-20261026-e \
+  /private/tmp/pioneer-q38-global-globalbuild-{main,clean}-20261028-e --f32-hidden
+Logs /private/tmp/pioneer-q38-token-f32-flow-{main,clean}-20261028-a.log
+Follow SAME handles. They must genuinely pass all64/973 head jobs/repeated
+nonzero state/KV/history commits/token records/final119STOP/combined stack.
+No old failing/partial history is transplanted to skip the first15 layers.
+No complete new model token or passed layer15 is claimed yet.
+
+Old default full94923/26724 remain independent live histories,now beyond the
+prior layer3 failure:all8 actual current-KV writes/readbacks and9 real late
+corruption refusals pass,and the positive parent completes dense layer3 and
+progresses in layer4. This is NOT a full-token/model/native qualification.
+Old cancellation --layer14563/5907 now BOTH direct0;see its updated report.
+
+Remaining real objective
+-------------------------
+Finish/inspect new full controller tests;repair actual failures. Integrate
+the separately authenticated WholeModelOriginalBytes into a genuine full
+from-reset model fabric,never fall back to synthetic bytes on source failure.
+Complete original-GGUF whole generations. Qualify head/committed/zero-request
+cancellation and a separately frozen FP32+cancellation combined image;its
+PINS_CANCEL_F32 stays empty/refused until independently built/qualified.
+Late commit/admission/publication/STOP faults remain required. Then genuine
+authenticated851-tensor native owner/init/reservation ledger/source/session/
+cache/prompt/L1aux/clock/sole-FD/journal/lifetimes/terminal/client/quarantine,
+physical card stability,no-reference Work distinct from validation,Assistant
+integration/boot+64CPU+fullRAM preservation and real sustained27B throughput.
+No speedup without measurements;target20 unmet. Goal stays ACTIVE.

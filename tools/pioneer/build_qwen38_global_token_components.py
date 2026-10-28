@@ -6,7 +6,9 @@ import pathlib
 import re
 import subprocess
 import sys
-assert len(sys.argv) in (3,4) and (len(sys.argv)==3 or sys.argv[3]=='--inspect-candidate')
+options=sys.argv[3:]
+assert 3<=len(sys.argv)<=5 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden'}
+inspect='--inspect-candidate' in options;f32='--f32-hidden' in options
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -20,10 +22,12 @@ flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exc
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
+ *(['-DPIONEER_Q38_GLOBAL_CHAIN_F32_HIDDEN=1'] if f32 else []),
  '-DPIONEER_Q38_LAYER_RETURN_COMPONENT_IMAGE=1','-DPIONEER_Q38_LAYER_COMPONENT_RECURRENT=1',
  '-DPIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL=1',
  '-DPIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT=1','-c',here/'blackhole_qwen38_return_recurrent_layer.cpp','-o',out/'recurrent.o')
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
+ *(['-DPIONEER_Q38_GLOBAL_CHAIN_F32_HIDDEN=1'] if f32 else []),
  '-DPIONEER_Q38_LAYER_RETURN_COMPONENT_IMAGE=1','-DPIONEER_Q38_LAYER_COMPONENT_DENSE=1',
  '-DPIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_TOKEN_KV_APPEND=1',
  '-c',here/'blackhole_qwen38_return_dense_layer.cpp','-o',out/'dense.o')
@@ -40,6 +44,8 @@ for name in ('q38_return_recurrent_layer','q38_return_dense_layer','q38_global_c
  assert re.search(r' T '+name+r'$',symbols,re.M),name
 assert 'DensePartitionRoot::AdmitGlobalOutput(' in symbols,'the REAL returning admission path must retain the new code'
 assert 'Joined::AppendTokenKv(' in symbols,'the real dense body must retain current-row GDDR append/readback'
+assert ('PioneerQ38F32HiddenRms(' in symbols)==f32
+assert ('PioneerQ38F32HiddenResidualRms(' in symbols)==f32
 for name in (*dead,'mixed_recurrent_block_main','mixed_live_block_main','q38_global_chain_main','q38_run_final_dense_and_stop','_start','scalar_entry'):
  assert not re.search(r'\b'+name+r'\b',symbols),name
 assert not re.search(r'^[0-9a-f]+ [bBdDgGsS] ',symbols,re.M)
@@ -63,9 +69,13 @@ assert text<=131072 and conv<=32768,(text,conv)
 PINS=(('recurrent.o',159428,'45263bb08b5cee6af697e2163cdf570b3ad2a86e1234a8927148674e9e25e60a'),
  ('dense.o',120792,'38e7bc8cc2e8d00c33eb9ee0424891e9a8c2099fbb767701420b57d347270278'),
  ('token-components-NOBOOT.o',248836,'d3838c28e675d0e399267a63d6259498ccd26b9b47382117685f0e3482aa5839'))
+PINS_F32=(('recurrent.o',159452,'a87da94e9af7f2bb75b538a7d650304f9f6c10ce1cfadbc679f6a3b265e572f2'),
+ ('dense.o',120816,'0d0cee2d978f71ba68c8a740a7ddb52ee8b486c739a2c1fca9aa1a2e58d0de6d'),
+ ('token-components-NOBOOT.o',248876,'6c3017d088287e45ef8a2cbcdb31b6a0eb57dd7147c179781c7eb9cfc71ccae9'))
 observed=[]
 for name in ('recurrent.o','dense.o','token-components-NOBOOT.o'):
  data=(out/name).read_bytes();item=(name,len(data),hashlib.sha256(data).hexdigest());observed.append(item);print(repr(item),flush=True)
-if len(sys.argv)==3:assert PINS and tuple(observed)==PINS,'unqualified components; inspect/freeze first'
+expected=PINS_F32 if f32 else PINS
+if not inspect:assert expected and tuple(observed)==expected,'unqualified component variant; inspect/freeze first'
 print('BUILD ONLY actual returning recurrent path includes strict previous-global output admission;ROOTbytes'+str(text)+'/131072 Conv'+str(conv)+'/32768 maxFrame'+str(max(frames))+
  ';NO boot/persistent parent/model token-state commit/native/physical/Work/TPS or combined-stack proof. DO NOT INSTALL')

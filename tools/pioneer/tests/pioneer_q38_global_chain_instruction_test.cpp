@@ -508,7 +508,7 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
    if(!(steps&255))for(unsigned w=0;w<119;w++)Advance(w,64);
   }
   if(pc==0x60000)fprintf(stderr,"CHAIN_FAULT layer%u completed%u phase%u matrices%u jobs%u Conv%u GDN%u dense%u packets%u SP%x\n",layer,completed,Phase(),matrices,matrixJobs,convJobs,gdnJobs,denseJobs,packets,regs[2]);
-  if(pc==0x60000)PioneerQ38InstructionFault::Dump(*this,previousPC,RB::Projected,RB::PostResidual,RB::Final,RB::Original);
+  if(pc==0x60000)PioneerQ38InstructionFault::Dump(*this,previousPC,RB::Projected,RB::PostResidual,RB::Final,CL::Dense(layer)?unsigned(DL::Original):unsigned(RB::Original));
   return pc==0x60004;
  }
  void Verify(){

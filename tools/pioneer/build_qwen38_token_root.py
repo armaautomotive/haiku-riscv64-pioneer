@@ -7,8 +7,8 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=5 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary'}
-inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options
+assert 3<=len(sys.argv)<=6 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden'}
+inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options;f32='--f32-hidden' in options
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -18,7 +18,7 @@ def run(*args):subprocess.run([str(a) for a in args],check=True)
 # Reproduce the strict returning components and unchanged whole feedback
 # image FIRST. Neither an old native owner nor a component alone can launch.
 components=out/'qualified-components'
-run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []))
+run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []))
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
@@ -85,10 +85,16 @@ PINS_CANCEL=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c05
  ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
  ('conv.bin',21340,'1dd258b6602a98ff34e04c34c74a110de99a3b63c0168f580428422ffd128f15'),
  ('program.elf',178168,'4d78a5147336e32494e55459fd6b421ecd229f0518f95a2bef559ba346296b35'))
+PINS_F32=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+ ('text.bin',128876,'e59efb8ee42775eb3a49f0db9656c0fdb136eb52f81879c2416ba87dacca1900'),
+ ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+ ('conv.bin',19752,'3457413087afef8d24755f49546e0d968af87fb5fbad60b674924ae6850c6c51'),
+ ('program.elf',176532,'9eb2a26fcca87c06345e1b5c63e36f91bf433d90b57d75513fed1e31439f2839'))
+PINS_CANCEL_F32=()
 observed=[]
 for name in ('boot.bin','text.bin','terminal.bin','conv.bin','program.elf'):
  data=(out/name).read_bytes();item=(name,len(data),hashlib.sha256(data).hexdigest());observed.append(item);print(repr(item),flush=True)
-expected=PINS_CANCEL if cancel else PINS
+expected=(PINS_CANCEL_F32 if cancel else PINS_F32) if f32 else PINS_CANCEL if cancel else PINS
 if not inspect:assert expected and tuple(observed)==expected,'unqualified persistent parent variant; inspect independent builds first'
 print('BUILD ONLY persistent parent/bootstrap/prompt+generation/all64+973/recurrent state copy+readback/token stream/final119STOP;maxFrame'+str(max(frames))+
  ';NO runtime/combined stack/original full-model/native/physical/cancellation/Work/Assistant/TPS qualification. DO NOT INSTALL')

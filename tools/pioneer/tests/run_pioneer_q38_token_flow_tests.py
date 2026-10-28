@@ -8,13 +8,15 @@ import re
 import subprocess
 import sys
 import tempfile
-assert len(sys.argv)==4 or len(sys.argv)==5 and sys.argv[4]=='--prepare-only'
+options=sys.argv[4:]
+assert 4<=len(sys.argv)<=7 and len(set(options))==len(options) and set(options)<={'--prepare-only','--cancel-boundary','--f32-hidden'}
 image,old,worker=map(pathlib.Path,sys.argv[1:4]);here=pathlib.Path(__file__).resolve().parent
 assert all(p.is_absolute() for p in (image,old,worker))
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 for directory,script in ((image,here.parent/'build_qwen38_token_root.py'),(old,here/'run_pioneer_q38_mixed_worker_tests.py'),(worker,here.parent/'build_qwen38_global_worker_image.py')):
     tree=ast.parse(script.read_text())
-    pins=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='PINS' for t in n.targets))
+    key='PINS'+('_CANCEL' if '--cancel-boundary' in options else '')+('_F32' if '--f32-hidden' in options else '') if directory==image else 'PINS'
+    pins=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id==key for t in n.targets))
     assert pins
     for name,size,digest in pins:
         data=(directory/name).read_bytes()
@@ -41,4 +43,4 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-flow-',dir='/private/tmp'
     profile.write_text(''.join(format(start,'x')+' '+format(size,'x')+' '+name+'\n' for (start,size),name in ordered))
     subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off','-fsanitize=address,undefined',
                     *flags,str(here/'pioneer_q38_token_flow_test.cpp'),'-o',str(binary)],check=True)
-    subprocess.run([str(binary),*sys.argv[1:]],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1','PIONEER_TEST_ROOT_PROFILE_MAP':str(profile)})
+    subprocess.run([str(binary),*sys.argv[1:4],*(['--prepare-only'] if '--prepare-only' in options else [])],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1','PIONEER_TEST_ROOT_PROFILE_MAP':str(profile)})

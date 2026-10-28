@@ -14,7 +14,7 @@ static void Input(L::PrivateSeal* p){
  Joined::Read(o[74],PioneerQ38ProjectionRoute(o[73]),L::Original,16384,tracked);
  Joined::Read(o[74]+16384,PioneerQ38ProjectionRoute(o[73]),L::Original+16384,4096,tracked);
  for(unsigned i=0;i<5120;i++){
-  float value=Floats(L::Original)[i];if(!PioneerQ38RmsDomain(value))scalar_fault_park();Words(L::OriginalCopy)[i]=PioneerAttentionBits(value);
+  float value=Floats(L::Original)[i];if(!PioneerQ38StateDomain(value))scalar_fault_park();Words(L::OriginalCopy)[i]=PioneerAttentionBits(value);
  }
  q38_mixed_root_seal();
 }
@@ -35,7 +35,7 @@ static void Compute(L::PrivateSeal* p){
  p->phase=12;Words(L::Status)[5]=12;
  for(unsigned i=0;i<5120;i++){
   float a=Floats(L::Projected)[i],b=Floats(L::PostResidual)[i],value=a+b;
-  if(!PioneerQ38RmsDomain(a) || !PioneerQ38RmsDomain(b) || !PioneerQ38RmsDomain(value))scalar_fault_park();
+  if(!PioneerQ38StateDomain(a) || !PioneerQ38StateDomain(b) || !PioneerQ38StateDomain(value))scalar_fault_park();
   Words(L::Final)[i]=PioneerAttentionBits(value);
  }
  Block::FfnSeal();Block::WriteFinal(p->outer);Block::FfnSeal();q38_mixed_root_seal();if(!Quiet())scalar_fault_park();

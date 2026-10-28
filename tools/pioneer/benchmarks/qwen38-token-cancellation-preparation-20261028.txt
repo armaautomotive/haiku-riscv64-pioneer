@@ -1,4 +1,4 @@
-Experimental closed-boundary cancellation: BUILD/bootstrap passed, STOP PENDING
+Experimental closed-boundary cancellation: stage1 PASSED; full modes PENDING
 2026-10-28 19:45UTC. Goal ACTIVE. Last real whole-model0.207893161tok/s;
 target20 UNMET, no new throughput measurement. No hardware/SSH/driver/UI/
 boot/CPU/RAM/power/SD/mains change. Dirty llama.cpp/FlashNext untouched.
@@ -127,3 +127,19 @@ journal/lifetimes/terminal/client/helper/quarantine. Then qualify physical
 card and no-CPU-reference Work separately from validation,integrate Assistant
 without regressing boot/CPU/RAM,and honestly measure sustained27B throughput.
 No new speedup. Goal ACTIVE; do not mark complete or blocked for slow tests.
+
+20:07UTC terminal evidence: BOTH --layer processes14563/5907 direct0
+-----------------------------------------------------------------
+Each independently executed actual bootstrap+complete first layer under the
+same genuine119 histories,then all4 actual terminal-corruption children and
+the unchanged positive parent's119 real STOPs/exact cancellation receipt.
+ROOT608832408 instructions;reserved6496/written6488,below unchanged8192.
+Actual committed tokens0,slot0,head jobs0/layers1,terminal reason3/stage1;
+no partial model token was invented. Positive STOP/inert2048 and all4 failed
+terminal guards/inert2048 pass. Fault-side in-flight workers remain UNKNOWN,
+not claimed reusable;no false cleanup receipt/reset/retry was supplied.
+Complete logs qwen38-token-cancel-layer-{main,clean}-20261028.log.
+This proves ONLY first-layer cancellation on SYNTHETIC raw model inputs in
+the exact cancellation image. --head/--committed/zero-request full variant
+and a separate FP32-hidden+cancellation combined image are STILL UNPROVEN.
+No native/physical/Work readiness or new speedup. Goal remains ACTIVE.

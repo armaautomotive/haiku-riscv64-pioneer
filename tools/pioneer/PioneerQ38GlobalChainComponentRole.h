@@ -28,6 +28,11 @@
 #error Exact optional check-loop code generation for returning components only
 #endif
 #endif
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_F32_HIDDEN
+#if PIONEER_Q38_GLOBAL_CHAIN_F32_HIDDEN != 1 || defined(PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE)
+#error Exact separate returning FP32-hidden arithmetic only,not a capsule/old family
+#endif
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE
 #if PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE != 1 || !defined(PIONEER_Q38_MIXED_ROOT_CAPSULE_IMAGE) || PIONEER_Q38_MIXED_ROOT_CAPSULE_IMAGE != 1 \
  || !defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE != 1 \

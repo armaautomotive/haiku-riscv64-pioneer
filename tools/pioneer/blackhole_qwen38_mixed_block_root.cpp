@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // NEW complete dense decoder BLOCK; no native/source/commit/Work grant.
 #include "blackhole_qwen38_mixed_joined_root.cpp"
-#include "PioneerQ38ResidualRms.h"
+#include "PioneerQ38StateMath.h"
 extern "C" unsigned mixed_block_wait(unsigned);
 namespace Block {
 using namespace DensePartitionRoot;
@@ -11,8 +11,8 @@ static void Norm(const uint32_t* o,unsigned role){
  unsigned address=o[65+role*2],route=PioneerQ38ProjectionRoute(o[64+role*2]);
  Joined::Read(address,route,L::Weight,16384,tracked);Joined::Read(address+16384,route,L::Weight+16384,4096,tracked);
  if(!role){
-  if(!PioneerQ38LearnedRms(Floats(L::OriginalCopy),Floats(L::Weight),Floats(L::Raw)))scalar_fault_park();
- }else if(!PioneerQ38ResidualRms(Floats(L::Projected),Floats(L::OriginalCopy),Floats(L::Weight),Floats(L::PostResidual),Floats(L::PostNormalized)))scalar_fault_park();
+  if(!PioneerQ38StateRms(Floats(L::OriginalCopy),Floats(L::Weight),Floats(L::Raw)))scalar_fault_park();
+ }else if(!PioneerQ38StateResidualRms(Floats(L::Projected),Floats(L::OriginalCopy),Floats(L::Weight),Floats(L::PostResidual),Floats(L::PostNormalized)))scalar_fault_park();
  OriginalSeal();q38_mixed_root_seal();
 }
 static void FfnSeal(){
@@ -121,7 +121,7 @@ extern "C" void mixed_block_main(){
   for(unsigned i=0;i<8;i++)if(o[32+i]!=seal.boot[8+i] || *Words(0xffb20000+Counter(i))!=counters[i])scalar_fault_park();
   for(unsigned i=0;i<64;i++){Words(L::JointSummary)[i]=0;seal.frame[i]=Words(L::Header)[i]=0;}
   for(unsigned i=0;i<5120;i++){
-   float value=Floats(L::Original)[i];if(!PioneerQ38RmsDomain(value))scalar_fault_park();Words(L::OriginalCopy)[i]=PioneerAttentionBits(value);
+   float value=Floats(L::Original)[i];if(!PioneerQ38StateDomain(value))scalar_fault_park();Words(L::OriginalCopy)[i]=PioneerAttentionBits(value);
   }
   seal.phase=1;Words(L::Status)[0]=n;Words(L::Status)[4]=1;Words(L::Status)[5]=1;Block::Norm(o,0);
   Joined::Capture(o);Copy(L::Input,L::RawCopy,5120);
@@ -134,7 +134,7 @@ extern "C" void mixed_block_main(){
   seal.phase=12;Words(L::Status)[5]=12;
   for(unsigned i=0;i<5120;i++){
    float a=Floats(L::Projected)[i],b=Floats(L::PostResidual)[i],value=a+b;
-   if(!PioneerQ38RmsDomain(a) || !PioneerQ38RmsDomain(b) || !PioneerQ38RmsDomain(value))scalar_fault_park();
+   if(!PioneerQ38StateDomain(a) || !PioneerQ38StateDomain(b) || !PioneerQ38StateDomain(value))scalar_fault_park();
    Words(L::Final)[i]=PioneerAttentionBits(value);
   }
   Block::FfnSeal();Block::WriteFinal(o);Block::FfnSeal();q38_mixed_root_seal();if(!Quiet())scalar_fault_park();

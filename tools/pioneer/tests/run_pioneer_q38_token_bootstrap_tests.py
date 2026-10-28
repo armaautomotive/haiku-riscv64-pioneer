@@ -8,14 +8,14 @@ import re
 import subprocess
 import sys
 import tempfile
-assert len(sys.argv)==4 or len(sys.argv)==5 and sys.argv[4]=='--cancel-boundary'
-cancel=len(sys.argv)==5
+options=sys.argv[4:]
+assert 4<=len(sys.argv)<=6 and len(set(options))==len(options) and set(options)<={'--cancel-boundary','--f32-hidden'}
 image,old,worker=map(pathlib.Path,sys.argv[1:4]);here=pathlib.Path(__file__).resolve().parent
 assert all(p.is_absolute() for p in (image,old,worker))
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 for directory,script in ((image,here.parent/'build_qwen38_token_root.py'),(old,here/'run_pioneer_q38_mixed_worker_tests.py'),(worker,here.parent/'build_qwen38_global_worker_image.py')):
     tree=ast.parse(script.read_text())
-    key='PINS_CANCEL' if directory==image and cancel else 'PINS'
+    key='PINS'+('_CANCEL' if '--cancel-boundary' in options else '')+('_F32' if '--f32-hidden' in options else '') if directory==image else 'PINS'
     pins=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id==key for t in n.targets))
     assert pins
     for name,size,digest in pins:

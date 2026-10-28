@@ -1,0 +1,40 @@
+Authenticated whole27B RAW learned byte source: SOURCE tests passed only
+2026-10-28. No device/native/model-product/Work/launch or TPS authority.
+This is not a working real-model inference backend or completed owner.
+
+Separate neutral TEST header/TU contains a fixed-public-model byte reader.
+PioneerQ38PublicModelSource authenticates the entire SAME already-open
+18973870528B GGUF with SHA-256
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+No path reopen,caller digest bypass or executable/network content is used.
+The exact851 descriptors' packed tile plan is independently matched against
+every4678 canonical learned/state/workspace part coordinate/type/size. Only
+the3551 learned parts enter the reader. A bounded128x4096B cache contains RAW
+quantized/F32 learned pages only,NEVER hidden/state/products or completion.
+Q8/Q4/Q6 blocks are losslessly byte-major permuted/padded,not dequantized,
+clipped,-128-rewritten,SM7-converted or requantized. FD identity/epoch checks
+bracket reads;staging prevents partial output publication on failure.
+
+ASan+UBSan main41607/clean22960 BOTH direct0:
+ python3 tools/pioneer/tests/run_pioneer_q38_whole_original_bytes_tests.py \
+  /Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf
+All3551 learned parts' first/last/middle pages10301 are independently compared
+with original SAME-FD GGUF rows (not the tiler). Exact2392736 padding bytes
+are zero in those samples. All1127 mutable+workspace parts reject contains/
+read and publish NO bytes;invalid route/bounds/null/oversize reads also refuse
+without altering output. Complete-container hash and all-layout match do
+NOT prove every transposed byte or a full model numerical result.
+
+Integration is STILL OWED. A full instruction fabric must classify learned
+coordinates using exact immutable canonical geometry,then REQUIRE this raw
+source read. Contains/Ready false MUST NEVER trigger synthetic/CPU-product
+fallback. Mutable inputs must remain explicitly raw zero initialization or
+the genuine prior device-produced state. No CPU hidden/native inputs or
+precomputed logits,selected-token hints,PC/register/private-history transplant
+may be introduced. All model arithmetic and repeated-token state must still
+come from real instructions. Raw-weight batching may improve offline reader
+cost but cannot skip any device instructions or substitute numeric products.
+The same-open source and stdio fork barrier must remain valid through any
+actual forked fault test and final result verification. This is a TEST-only
+source,not an initialized GDDR upload ledger or a physical ownership grant.
+No original model file/weights or user data is added to Git. Goal ACTIVE.
