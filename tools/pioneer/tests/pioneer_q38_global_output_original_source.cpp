@@ -41,3 +41,16 @@ bool GlobalOutputOriginalSource::Tile(unsigned firstRow,unsigned block,uint8_t* 
  }
  if(!Ready())return false;memcpy(output,stage,sizeof(stage));return true;
 }
+bool GlobalOutputOriginalSource::EmbeddingTile(unsigned firstRow,unsigned block,uint8_t* output,unsigned bytes){
+ if(!Ready() || !output || bytes!=2304 || firstRow>248320-16 || (firstRow&15) || block>=20)return false;
+ const auto& model=original->source.Model();const auto* t=model.Find("token_embd.weight");
+ if(!t || t->rank!=2 || t->type!=12 || t->inputs!=5120 || t->outputs!=248320
+  || t->bytes!=UINT64_C(248320)*20*144)return false;
+ unsigned tensor=unsigned(t-model.Tensors().data());uint8_t stage[2304]={};
+ for(unsigned row=0;row<16;row++){
+  uint8_t raw[144];uint64_t offset=(uint64_t(firstRow+row)*20+block)*144;
+  if(!original->source.ReadReferencePacked(tensor,offset,144,raw,sizeof(raw)))return false;
+  for(unsigned i=0;i<144;i++)stage[i*16+row]=raw[i];
+ }
+ if(!Ready())return false;memcpy(output,stage,sizeof(stage));return true;
+}

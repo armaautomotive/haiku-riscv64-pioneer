@@ -1,0 +1,142 @@
+QGC1 provisional next-token embedding: implemented, whole-run proof pending
+2026-10-28. No card/SSH/driver install/boot/power/Assistant/SD/mains action.
+
+Implemented control flow
+------------------------
+The optional --feedback build contains the ACTUAL existing all64 returning
+layer calls + final norm +973 vocabulary jobs + genuine global candidate,
+then the NEW returning on-card embedding stage, then all119 real STOPs.
+It is not a host loop, external candidate hint or numeric product upload.
+The feedback call is reached only after all973 outputs and all119 existing
+worker chains close under the SAME private parent. No externally callable
+whole-model or native launch entry was added.
+
+Feedback chooses the original canonical Q4_K embedding stripe/group/lane
+from the actual private bestRow. It reads20 original2304B tiles, reuses the
+UNCHANGED numeric decoder from blackhole_qwen38_embedding.cpp, and produces
+all5120 finite F32 values BEFORE any resident output write. It writes16KiB
+plus4KiB to workspace+0x700000, then reads BOTH actual GDDR spans back and
+compares every word. Input/header/source/counter/quiet seals remain in force;
+unknown transfer failure parks, never retries, resets or grants cleanup.
+The local decoded output and its shadow stay sealed through all119 STOPs.
+
+The separate QEF1 diagnostic record at L1 0x7f200 is initialized to zero
+at valid ROOT startup. It is published only after the real all119 STOPs,
+with source/identity/counter fields, committed0 and diagnostic1. The old
+QVX1 candidate contract stays unchanged. This is deliberately NOT a model
+token/state commit or permission to run a next position. No KV/GDN slot
+flip or Conv-current publication is performed, and workers still STOP.
+Continuous generation remains required; this stage is one necessary part.
+
+New workspace extent precedes staged Conv histories and all immutable layer
+packages, and cannot alias the original input/final hidden/metadata. Its
+L1 buffers do not overlap normalized/native input, scales or global header.
+A future genuine native owner must STILL authenticate/initialize the actual
+embedding stripes and reserve the extent. Geometry is not that authority.
+
+Pinned builds
+-------------
+ python3 tools/pioneer/build_qwen38_global_chain_root.py \
+  /Volumes/HaikuBuildLocal/generated.riscv64 \
+  /private/tmp/pioneer-q38-global-feedback-{main,clean}-20261028-e --feedback
+Main54905 / clean48464 BOTH direct terminal0. Independent inspection D
+54689/77218 BOTH0 first, followed by these normal literal-pinned builds.
+Final FEEDBACK_PINS (D and E are byte-identical):
+ boot4 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text117016 e58aff9bf5be041992ba5435bca334bdd43ac51c3d3c6af47c5ac6de7cdbfd8d
+ terminal8 6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5
+ conv7500 aec9aeacaf188b46ae223bd79fafb928ac39a3369b3c9753bf8145966eb44cea
+ ELF149964 ca0f6beb05e1a20d243332e65ce9b0bc4e3e080fc350768067266b9e1d7209a2
+Build-log SHA023ccc8ac1677f6bde488344512cf822b3825d21bbe78d58aa417e4b5e7b2031.
+Max ROOT function frame1872 (head), parent1632, feedback160. Existing
+2048/4096 per-function limits and ROOT131072/Conv32768/stack8192 unchanged.
+Actual combined whole-run stack remains UNPROVEN. No writable globals,
+undefined functions,GOT,unsupported scalar ISA/CSR or old embedding main.
+The five s11 writes remain the original parent + two bind/restore pairs.
+Conv bytes change only because final link relocations target shifted ROOT
+code; neither Conv source nor its numerical operation was changed.
+
+Returning arithmetic and actual original-weight qualification
+------------------------------------------------------------
+ python3 tools/pioneer/tests/run_pioneer_q38_global_feedback_decode_tests.py \
+  /private/tmp/pioneer-q38-global-feedback-{main,clean}-20261028-e
+Final synthetic main40754/clean83574 BOTH0. Also run with the real GGUF:
+ python3 tools/pioneer/tests/run_pioneer_q38_global_feedback_decode_tests.py \
+  /private/tmp/pioneer-q38-global-feedback-{main,clean}-20261028-d \
+  /Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf
+Final original main94401/clean41553 BOTH0. D has the SAME five literal pins
+as E. ASan+UBSan,1738240 token/destination geometries against canonical
+stripes, independent embedding-plan edge cases, and invalid geometry without
+partial output. EACH numerical run executes the real linked RETURNING RV32
+capsule for224 complete5120-value embeddings covering every lane and first/
+last groups of all7 banks. Every word matches the independent Q4_K decoder
+BIT-EXACT. Six invalid block/lane/nonfinite-header cases refuse. The capsule
+performs no NoC or publication; synthetic UNIT arguments are NOT an acquired
+parent, real candidate, completed graph or launch permission.
+Synthetic log SHA8613aa7503f8848f6b314c580a8823a4b9bae63b28cc7478dc8201ffe11ab8e4.
+Original log SHA01bbda2b49b208b849ff77b8c93097b53b81a9917c7640210ea8f4ebe1d5ea30.
+
+The separate host TEST source TU uses production PioneerQ38PublicModelSource:
+FULL18973870528B hash on the SAME already-open file description, strict
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747,
+stable file identity/epoch and complete851-tensor schema. Only Mac pathname/
+shasum executable adapters are used, not a mock digest or reopened path.
+The new EmbeddingTile method returns raw byte-interleaved Q4_K bytes ONLY;
+the existing output Tile/Open/Ready implementations are unchanged. CPU
+reference values remain observer outputs and never seed the device program.
+
+Roles and initial faults
+------------------------
+Data/roles main34576/clean36703 BOTH0:696 exact/late/defined-zero/missing
+role gates, unchanged6811 canonical output jobs/896 mutations/1505 Conv+GDN
+envelopes/all64 packages. Own returning feedback capsule role refuses ROOT,
+old/native/client/reference/Work/returning-layer and other capsule roles.
+Data-log SHAe44b336a9861baf71fec73622478cb2a9bb1c080352f47ff938adfb02be05043.
+Actual final-image initial guards main15942/clean30017 BOTH0:12 real initial
+boot/outer/source/doorbell faults,ZERO NoC/peer work,inert2048,SAME119 virgin
+G workers. Guard-log SHA06dbdb00a401840235d830dbd44da68bb81f038bc206eda1564e243197db6cb2.
+These are INITIAL faults, not feedback-stage late-fault or positive proof.
+Runner now requires exact nm-derived ROOT feature metadata as well as the
+existing literal-pinned ROOT/old-worker/G-worker images and worker wait/STOP
+symbols. Exactly one of three literal ROOT variants must match.
+
+Preserved images and current whole-run status
+--------------------------------------------
+Default builds main10132/clean39739 BOTH0, all5 original baseline pins exact.
+Unrolled builds main31771/clean88987 BOTH0, all5 unrolled pins exact. Every
+build FIRST reproduces the3 old returning-component pins too. No kernel,
+native ABI or existing installed image was changed.
+Current fixture startup-fault regression also passes BOTH preserved images:
+baseline76322/25555 and unrolled49885/20139 ALL direct0, each with12 real
+initial faults/zero NoC+peer work/inert2048. Feature detection is derived
+from each literal-pinned ELF, never a caller-supplied completed-state flag.
+
+Feedback FULL runs main46023 / clean12070 are launched, NOT --refusals or
+--prepare-only. Logs /private/tmp/pioneer-q38-global-feedback-positive-{main,clean}-20261028-a.log.
+They must prove SAME119 virgin histories/ONE fabric/all64 original returning
+bodies/final norm/ALL973 outputs/actual chosen-token feedback+24 exact NoC
+commands/independent5120-bit-exact values before first write/real readbacks/
+all48 state histories unchanged/all119 STOPs/diagnostic ordering/actual SP.
+The fixture supplies ONLY synthetic raw learned/initial-state bytes. Numeric
+references are observers, never uploaded products. Full outcome PENDING;
+do not splice other runs, seed a completed owner or restart for quiet output.
+
+Separate unrolled positives34193/84893 completed REAL connected layer0 at
+604311881 ROOT instructions, versus baseline61179/96440 at846030684. Both
+unrolled builds have identical first-layer counts and stack reserved6512/
+written6504, matching baseline stack. This is28.57% fewer simulated first-
+layer controller instructions, NOT physical cycles or inference throughput.
+Their FULL64+head outcomes are still pending. Old QCH1 positives17092/81011
+are separate histories too. No physical card or measured speedup is implied.
+Archived unrolled-partial logs are snapshots of those still-running tests,
+NOT terminal whole-graph passes or evidence for the NEW feedback stage.
+
+Remaining
+---------
+Complete exact whole-run and original full-model validation, late feedback
+faults, persistent position-dependent metadata/KV/GDN/Conv state commits,
+next-layer input handoff without STOP/relaunch, genuine native ownership/
+source/init/memory/lifetime preparation, physical stability, fast Work mode
+without CPU reference, Assistant integration and real sustained throughput.
+Last measured whole-model0.207893161 tokens/sec; target20 remains UNMET.
+Goal ACTIVE. Dirty llama.cpp and FlashNext work remains unread/untouched.

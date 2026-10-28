@@ -6,6 +6,9 @@
 #include "pioneer_q38_mixed_recurrent_block_root_test.cpp"
 #include "../PioneerQ38GlobalChainPackage.h"
 #include "../PioneerQ38GlobalHeadPlan.h"
+#include "../PioneerQ38GlobalFeedbackLayout.h"
+#include "../TenstorrentQ4K.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38EmbeddingPlan.h"
 #include "PioneerQ38InstructionWindows.h"
 #include "PioneerQ38InstructionProfile.h"
 namespace CL=PioneerQ38GlobalChainLayout;
@@ -111,7 +114,9 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
  unsigned minSp=0x70000;
  PioneerQ38InstructionWindows observation; // host-only instruction accounting, not card state
  PioneerQ38InstructionProfile profile{getenv("PIONEER_TEST_ROOT_PROFILE_MAP")};
- bool pending=false;
+ bool pending=false,feedback=false;
+ unsigned feedbackReads=0,feedbackWrites=0,feedbackChecks=0;
+ std::array<uint32_t,5120> feedbackExpected={}; // observer output ONLY
  static uint64_t Key(unsigned route,unsigned address){return uint64_t(route)<<32|address;}
  uint32_t Get(unsigned route,unsigned address)const override{
   auto raw=dram.find(Key(route,address));if(raw!=dram.end())return raw->second;
@@ -188,6 +193,8 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
  GlobalChainInstructionMachine(const char* image,const char* worker,const char* global):ScalarMachine(0,0){
   assert(canonical->Build());bootRom=Read((std::string(image)+"/boot.bin").c_str());text=Read((std::string(image)+"/text.bin").c_str());
   conv=Read((std::string(image)+"/conv.bin").c_str());terminal=Read((std::string(image)+"/terminal.bin").c_str());
+  std::ifstream rootSymbols(std::string(image)+"/program.symbols");std::string symbolAddress,symbolKind,symbolName;
+  while(rootSymbols>>symbolAddress>>symbolKind>>symbolName)if(symbolName=="q38_global_chain_feedback_decode")feedback=true;
   assert(bootRom.size()==4 && text.size()<=131072 && conv.size()<=32768 && terminal.size()==8);l1[0]=Word(bootRom,0);
   // Bounded TEST endpoint map, not a native mapping grant. The below bytes
   // are poison before the one ROOT release; all products come from code.
@@ -203,6 +210,10 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
   }
   for(unsigned w=0;w<96;w++)child[w]->peer=child[w^1].get();
   unsigned bank=0,workspace=canonical->Base+canonical->Workspace(bank)->offset,initial=workspace+0x600000;
+  if(feedback)for(unsigned b=0;b<7;b++){
+   const auto* p=canonical->ProjectionStripe(64,0,b);assert(p && p->type==12 && !p->offset && p->rowBytes==2880);
+   assert(spans.emplace(Key(PioneerQ38ProjectionRoute(b),canonical->Base),Span{PioneerQ38ProjectionRoute(b),canonical->Base,unsigned(p->bytes),12,5120,p->firstRow}).second);
+  }
   for(unsigned selected=0;selected<64;selected++){
    packages[selected]=std::make_unique<PioneerQ38GlobalChainPackage>();
    assert(packages[selected]->Build(*canonical,selected,bank,{1,2,3,4},sources.data(),bank,initial));
@@ -345,6 +356,10 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
   if(a==0xffb20040){assert(value==1 && !pending);Submit();return;}
   assert(memory.count(a));if(Range(a,0x6e000,8192))minStack=std::min(minStack,unsigned(a));
   if(a==RB::Status+4 && value==layer+1)VerifyLayer();
+  if(a==PioneerQ38GlobalFeedbackLayout::Receipt && value==PioneerQ38GlobalFeedbackLayout::Magic){
+   assert(feedback && feedbackReads==22 && feedbackWrites==2 && feedbackChecks==1 && stopJobs==119);
+   for(const auto& p:child)assert(!p->active && p->pc==p->stopPC && p->memory.at(M::Status+16)==2);
+  }
   if(a==RB::Doorbell){
    releases++;assert(value==releases && value>=1 && value<=64);
    assert(completed==value-1);layer=value-1;matrices=lastMatrix=finalWords=inputReads=0;
@@ -391,12 +406,46 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
   headQuant++;
   puts("PASS ACTUAL QGC1 genuine final-hidden5120 -> original final norm -> all20 Q8_K input chunks;observer only,NO CPU products uploaded");
  }
+ void FeedbackInput(){
+  namespace F=PioneerQ38GlobalFeedbackLayout;
+  assert(feedback && completed==64 && globalJobs==973 && globalPartials==973 && feedbackReads==20 && !feedbackWrites && !feedbackChecks);
+  PioneerQ38EmbeddingPlan plan;assert(plan.Build(*canonical,bestRow,1,outer[7],{1,2,3,4},source.data(),17));
+  const auto* d=plan.Descriptor();
+  for(unsigned block=0;block<20;block++){
+   uint8_t packed[144];float decoded[256];
+   for(unsigned byte=0;byte<144;byte++){
+    unsigned address=d[11]+block*2304+byte*16+d[13];
+    packed[byte]=uint8_t(Get(d[12],address&~3U)>>((address&3)*8));
+   }
+   assert(PioneerDecodeQ4K(packed,decoded));
+   for(unsigned i=0;i<256;i++){
+    unsigned word=block*256+i;feedbackExpected[word]=Bits(decoded[i]);
+    assert(memory.at(F::Local+word*4)==feedbackExpected[word] && memory.at(F::Shadow+word*4)==feedbackExpected[word]);
+   }
+  }
+  feedbackChecks++;
+  puts("PASS ACTUAL QGC1 chosen global token -> all20 original Q4_K embedding tiles ->5120 independently bit-exact values BEFORE first GDDR write;NO host product upload");
+ }
  void Submit(){
   packets++;bool write=command[7]==0x212;unsigned local=write?command[0]:command[3],remote=write?command[3]:command[0],route=write?command[5]:command[2],bytes=command[8];
   assert(bytes && bytes<=16384 && !(bytes&3) && !command[1] && !command[4] && !command[6] && !command[9] && (write?command[2]:command[5])==129 && (write || !command[7]));
   bool bank=false;for(unsigned b=0;b<7;b++)bank |= route==PioneerQ38ProjectionRoute(b);
   if(bank){
    bool rootConv=Range(pc,0x64000,unsigned(conv.size()));assert(rootConv?Range(local,0x80000,0x1100):local==RB::Scratch);
+   if(feedback && Phase()==0x300){
+    namespace F=PioneerQ38GlobalFeedbackLayout;
+    assert(completed==64 && globalJobs==973 && globalPartials==973 && !stopJobs);
+    PioneerQ38EmbeddingPlan plan;assert(plan.Build(*canonical,bestRow,1,outer[7],{1,2,3,4},source.data(),17));const auto* d=plan.Descriptor();
+    if(feedbackReads<20){
+     assert(!write && bytes==2304 && route==d[12] && remote==d[11]+feedbackReads*2304 && !feedbackWrites);feedbackReads++;
+    }else{
+     unsigned offset=(write?feedbackWrites:feedbackReads-20)*16384;
+     assert(offset<20480 && route==outer[8] && remote==outer[9]+F::Offset+offset && bytes==std::min(16384U,20480-offset));
+     if(write){if(!feedbackWrites)FeedbackInput();assert(feedbackChecks==1 && feedbackWrites<2);feedbackWrites++;}
+     else {assert(feedbackWrites==2 && feedbackReads<22);feedbackReads++;}
+     for(unsigned i=0;i<bytes/4;i++)assert((write?memory.at(local+i*4):Get(route,remote+i*4))==feedbackExpected[offset/4+i]);
+    }
+   }
    if(!write && remote==(!CL::Dense(layer)?outer[69]:outer[74])+inputReads*4 && (Phase()==1 || Phase()==2)){
     assert(inputReads+bytes/4<=5120);for(unsigned i=0;i<bytes/4;i++)assert(Get(route,remote+i*4)==input[inputReads+i]);inputReads+=bytes/4;
    }
@@ -468,6 +517,16 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
   for(unsigned i=0;i<8;i++)assert(memory.at(CL::Summary+(12+i)*4)==boot[8+i] && memory.at(CL::Summary+(20+i)*4)==counts[i]);
   for(unsigned i=0;i<16;i++)assert(memory.at(CL::Summary+(28+i)*4)==source[i]);
   for(unsigned i=44;i<64;i++)assert(!memory.at(CL::Summary+i*4));
+  if(feedback){
+   namespace F=PioneerQ38GlobalFeedbackLayout;PioneerQ38EmbeddingPlan plan;
+   assert(feedbackReads==22 && feedbackWrites==2 && feedbackChecks==1 && plan.Build(*canonical,bestRow,1,outer[7],{1,2,3,4},source.data(),17));const auto* d=plan.Descriptor();
+   const unsigned expectedFeedback[]={F::Magic,1,bestRow,1,outer[7],outer[9]+F::Offset,d[10],d[11],d[13],5120,22,2,1040,320,0,1};
+   for(unsigned i=0;i<16;i++)assert(memory.at(F::Receipt+i*4)==expectedFeedback[i] && memory.at(F::Receipt+(16+i)*4)==source[i]);
+   for(unsigned i=0;i<8;i++)assert(memory.at(F::Receipt+(32+i)*4)==boot[8+i] && memory.at(F::Receipt+(40+i)*4)==counts[i]);
+   for(unsigned i=48;i<64;i++)assert(!memory.at(F::Receipt+i*4));
+   for(unsigned i=0;i<5120;i++)assert(Get(outer[8],outer[9]+F::Offset+i*4)==feedbackExpected[i]);
+   puts("PASS ACTUAL QGC1 chosen-token feedback5120/20source reads+2writes+2actual readbacks/retained state untouched/own uncommitted diagnostic;NOT next token/state commit/Work");
+  }
   for(unsigned w=0;w<119;w++){
    const auto& p=*child[w];assert(p.pc==p.stopPC && p.memory.at(M::Status+4)==nonceBefore[w]+(w<21?9:8)+1 && !p.memory.at(M::Status+8) && p.memory.at(M::Status+16)==2);
   }

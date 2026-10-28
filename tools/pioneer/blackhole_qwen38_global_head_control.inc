@@ -137,6 +137,9 @@ static void Gather(const uint32_t* h,unsigned w,unsigned ordinal,unsigned& bestR
  if(bestRow==248320 || G::Better(p[9],p[8],bestBits,bestRow)){bestRow=p[8];bestBits=p[9];}
  rows+=groups*16;
 }
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_FEEDBACK
+#include "blackhole_qwen38_global_feedback_control.inc"
+#endif
 static __attribute__((noreturn,noinline)) void RunHead(){
  uint32_t header[128];auto* owner=Owner();unsigned workspace=owner->state[Workspace],bank=owner->state[Bank];
  Transfer(workspace+L::HeadOffset,512,false);
@@ -158,6 +161,9 @@ static __attribute__((noreturn,noinline)) void RunHead(){
  }
  if(accepted!=973 || rows!=248320 || bestRow>=248320)scalar_fault_park();
  for(unsigned w=0;w<119;w++)Closed(header,w);
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_FEEDBACK
+ uint32_t feedback[16];Feedback(header,bestRow,feedback);
+#endif
  // A complete output result is not a token-state commit. Stop ALL real
  // workers and publish only this NEW one-pass diagnostic candidate record.
  for(unsigned w=0;w<119;w++){
@@ -172,6 +178,9 @@ static __attribute__((noreturn,noinline)) void RunHead(){
  for(unsigned w=0;w<119;w++)Release(header,w);
  for(unsigned w=0;w<119;w++)Closed(header,w,true);
  InputSeal();HeadSeal(header);
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_FEEDBACK
+ PublishFeedback(header,feedback);
+#endif
  for(unsigned i=0;i<64;i++)Words(L::Summary)[i]=0;
  const unsigned summary[]={0,1,64,973,248320,bestRow,bestBits,0,119,9,0,1};
  for(unsigned i=0;i<12;i++)Words(L::Summary)[i]=summary[i];

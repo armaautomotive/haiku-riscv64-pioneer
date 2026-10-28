@@ -6,7 +6,7 @@
 #define PIONEER_Q38_GLOBAL_OUTPUT_ORIGINAL_SOURCE_H
 #include <cstdint>
 // Separate TEST-only TU authenticates the complete SAME open public GGUF.
-// Only raw Q6_K bytes cross this interface; no computed numeric products,
+// Only raw Q6_K/Q4_K bytes cross this interface; no computed numeric products,
 // native mappings,device access or full-model producer permission.
 class GlobalOutputOriginalSource {
  struct Original;Original* original;
@@ -16,5 +16,6 @@ public:
  GlobalOutputOriginalSource& operator=(const GlobalOutputOriginalSource&)=delete;
  bool Open(const char*);bool Ready()const;bool PrepareFork();
  bool Tile(unsigned firstRow,unsigned block,uint8_t* output,unsigned bytes);
+ bool EmbeddingTile(unsigned firstRow,unsigned block,uint8_t* output,unsigned bytes);
 };
 #endif

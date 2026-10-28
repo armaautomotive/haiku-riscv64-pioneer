@@ -5,6 +5,10 @@
 #include "PioneerAttentionMath.h"
 #include "PioneerQ38GlobalChainLayout.h"
 #include "PioneerQ38GlobalHeadLayout.h"
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_FEEDBACK
+#include "PioneerQ38GlobalFeedbackLayout.h"
+extern "C" bool q38_global_chain_feedback_decode(unsigned,unsigned);
+#endif
 extern "C" unsigned q38_return_recurrent_layer();
 extern "C" unsigned q38_return_dense_layer();
 extern "C" bool q38_global_chain_learned_rms(const float*,const float*,float*);
@@ -93,6 +97,9 @@ extern "C" void q38_global_chain_main(){
  for(unsigned i=0;i<8;i++)owned.state[Counts+i]=*Words(0xffb20000+Counter(i));
  if(owned.state[Counts+2]!=owned.state[Counts+6])scalar_fault_park();
  Words(R::Status)[3]=L::Magic;for(unsigned i=0;i<64;i++)Words(L::Progress)[i]=0;
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_FEEDBACK
+ for(unsigned i=0;i<64;i++)Words(PioneerQ38GlobalFeedbackLayout::Receipt)[i]=0;
+#endif
  Words(L::Progress)[0]=L::Magic;Words(L::Progress)[1]=owned.state[Profile];
  for(unsigned layer=0;layer<64U;layer++){
   if(owned.state[Completed]!=layer || owned.phase!=1)scalar_fault_park();

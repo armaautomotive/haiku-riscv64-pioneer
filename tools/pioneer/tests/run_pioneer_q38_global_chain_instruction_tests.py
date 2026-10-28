@@ -16,7 +16,8 @@ for directory,script in ((image,here.parent/'build_qwen38_global_chain_root.py')
  tree=ast.parse(script.read_text());pins=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='PINS' for t in n.targets))
  if directory==image:
   unrolled=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='UNROLLED_PINS' for t in n.targets))
-  sets=[(name,p) for name,p in (('baseline-seals',pins),('unrolled-seals',unrolled)) if p and all(
+  feedback=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='FEEDBACK_PINS' for t in n.targets))
+  sets=[(name,p) for name,p in (('baseline-seals',pins),('unrolled-seals',unrolled),('provisional-feedback',feedback)) if p and all(
    len(data:=(directory/file).read_bytes())==size and hashlib.sha256(data).hexdigest()==digest for file,size,digest in p)]
   assert len(sets)==1,'ROOT must match exactly ONE literal-pinned build variant'
   variant,pins=sets[0];print('PINNED QGC1 ROOT '+variant+';not native/physical/Work qualification',flush=True)
@@ -25,6 +26,7 @@ for directory,script in ((image,here.parent/'build_qwen38_global_chain_root.py')
   data=(directory/name).read_bytes();assert len(data)==size and hashlib.sha256(data).hexdigest()==digest,(directory,name)
 nm='/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-nm'
 assert subprocess.check_output([nm,'-n',str(worker/'program.elf')],text=True)==(worker/'program.symbols').read_text(),'worker wait/STOP metadata must derive from the literal-pinned ELF'
+assert subprocess.check_output([nm,'-n',str(image/'program.elf')],text=True)==(image/'program.symbols').read_text(),'ROOT feature/symbol metadata must derive from the literal-pinned ELF'
 flags=re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?',(here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
 with tempfile.TemporaryDirectory(prefix='pioneer-global-chain-instructions-',dir='/private/tmp') as tmp:
  binary=pathlib.Path(tmp)/'test';intervals={}
