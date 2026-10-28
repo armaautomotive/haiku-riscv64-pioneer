@@ -5,6 +5,8 @@
 #define PIONEER_Q38_MIXED_RECURRENT_BLOCK_MACHINE_ONLY
 #include "pioneer_q38_mixed_recurrent_block_root_test.cpp"
 #include "../PioneerQ38LayerChainPackage.h"
+#include "PioneerQ38InstructionWindows.h"
+#include "PioneerQ38InstructionProfile.h"
 namespace CL=PioneerQ38LayerChainLayout;
 namespace DL=PioneerQ38MixedLiveBlockRootLayout;
 struct ChainPeer:NewCohortPeer {
@@ -77,6 +79,8 @@ struct ChainInstruction64Machine:ScalarMachine,CohortBytes {
  unsigned matrixJobs=0,convJobs=0,gdnJobs=0,denseJobs=0,stopJobs=0,matrices=0,lastMatrix=0,finalWords=0,inputReads=0;
  unsigned rmsChecks=0,quantChecks=0,activationChecks=0,gdnChecks=0,attentionChecks=0;
  unsigned minSp=0x70000;
+ PioneerQ38InstructionWindows observation; // host-only instruction accounting, not card state
+ PioneerQ38InstructionProfile profile{getenv("PIONEER_TEST_ROOT_PROFILE_MAP")};
  bool pending=false;
  static uint64_t Key(unsigned route,unsigned address){return uint64_t(route)<<32|address;}
  uint32_t Get(unsigned route,unsigned address)const override{
@@ -205,7 +209,7 @@ struct ChainInstruction64Machine:ScalarMachine,CohortBytes {
   if(regs[2]){assert(regs[2]>=0x6e000 && regs[2]<=0x70000);minSp=std::min(minSp,regs[2]);}
   l1[8180]=Range(a,0x40000,unsigned(text.size()))?Word(text,a-0x40000):Range(a,0x64000,unsigned(conv.size()))?Word(conv,a-0x64000):Word(terminal,a-0x60000);return 8180;
  }
- unsigned StepLimit()const override{return 4000000000U;}
+ unsigned StepLimit()const override{return PioneerQ38InstructionWindows::Limit;}
  uint32_t Load(uint32_t a)override{
   assert(!(a&3));if(CodeAddress(a))return l1[Index(a)];
   if(Range(a,0xffb20000,0x2000)){
@@ -289,7 +293,13 @@ struct ChainInstruction64Machine:ScalarMachine,CohortBytes {
    assert(!p.active && p.GdnFinished(p.sequence) && p.sequence==nonceBefore[w]+delta && memory.at(RB::Nonces+w*4)==p.sequence);
    nonceBefore[w]=p.sequence;
   }
-  completed++;printf("PASS ALL64 connected layer%u/final5120/ALL119 genuine closed chains/actual on-card hidden for next layer/ROOTinstructions%u/reservedStack%u/writtenStack%u\n",layer,steps,0x70000-minSp,0x70000-minStack);
+  completed++;printf("PASS ALL64 connected layer%u/final5120/ALL119 genuine closed chains/actual on-card hidden for next layer/ROOTinstructions%llu/reservedStack%u/writtenStack%u\n",layer,(unsigned long long)observation.Total(steps),0x70000-minSp,0x70000-minStack);
+  // This callback follows actual final5120, input, numeric and all119 closed
+  // chain checks above. Rebase ONLY observation bookkeeping. Keep low8 so
+  // worker Tick ordering,64bit clock,NoC counters and every processor/private
+  // datum remain exactly as before. No emulated instruction is skipped.
+  assert(observation.RebaseAfterVerifiedLayer(steps,completed));
+  profile.Dump(observation.Total(steps));
  }
  void Store(uint32_t a,uint32_t value)override{
   assert(!(a&3) && !CodeAddress(a));
@@ -369,14 +379,22 @@ struct ChainInstruction64Machine:ScalarMachine,CohortBytes {
   }
   counts[write?4:0]++;counts[write?5:1]+=(bytes+63)>>6;counts[write?7:3]++;counts[2]++;counts[6]++;
  }
+ void ObservedStep(){
+  const uint64_t before=observation.Total(steps);profile.Record(pc);
+  StepScalar();assert(observation.Total(steps)==before+1 && profile.Total()==before+1);
+ }
  bool Run(){
-  while(pc!=0x60000 && pc!=0x60004){cycles+=19;StepScalar();if(!(steps&255))for(unsigned w=0;w<119;w++)Advance(w,64);}
+  while(pc!=0x60000 && pc!=0x60004){
+   uint64_t before=observation.Total(steps);assert(before<PioneerQ38InstructionWindows::TotalLimit);
+   cycles+=19;ObservedStep();
+   if(!(steps&255))for(unsigned w=0;w<119;w++)Advance(w,64);
+  }
   if(pc==0x60000)fprintf(stderr,"CHAIN_FAULT layer%u completed%u phase%u matrices%u jobs%u Conv%u GDN%u dense%u packets%u SP%x\n",layer,completed,Phase(),matrices,matrixJobs,convJobs,gdnJobs,denseJobs,packets,regs[2]);
   return pc==0x60004;
  }
  void Verify(){
   assert(pc==0x60004 && completed==64 && releases==65 && matrixJobs==46128 && convJobs==5712 && gdnJobs==4608 && denseJobs==4608 && stopJobs==119
-   && rmsChecks==128 && quantChecks==496 && activationChecks==64 && gdnChecks==48 && attentionChecks==16 && minStack>=0x6e000 && minSp>=0x6e000 && retained.size()==48);
+   && rmsChecks==128 && quantChecks==496 && activationChecks==64 && gdnChecks==48 && attentionChecks==16 && minStack>=0x6e000 && minSp>=0x6e000 && retained.size()==48 && observation.Closed()==64);
   for(const auto& saved:retained){
    for(unsigned i=0;i<saved.convolution.size();i++)assert(Get(saved.route,saved.history+i*4)==saved.convolution[i]);
    for(unsigned w=0;w<96;w++)for(unsigned i=0;i<8192;i++)assert(Get(saved.next[w][0],saved.next[w][1]+i*4)==saved.state[w*8192+i]);
@@ -385,7 +403,8 @@ struct ChainInstruction64Machine:ScalarMachine,CohortBytes {
   for(unsigned w=0;w<119;w++){
    const auto& p=*child[w];assert(p.pc==p.stopPC && p.memory.at(M::Status+4)==nonceBefore[w]+1 && !p.memory.at(M::Status+8) && p.memory.at(M::Status+16)==2);
   }
-  unsigned before=packets;for(unsigned i=0;i<2048;i++)StepScalar();assert(packets==before && pc==0x60004);
+  unsigned before=packets;for(unsigned i=0;i<2048;i++)ObservedStep();assert(packets==before && pc==0x60004);
+  profile.Dump(observation.Total(steps));
   printf("PASS ACTUAL ALL64 connected layers/ONE ROOT+SAME119+ONE byte fabric/496matrices46128jobs+Conv+GDN+attention/final5120/all48 provisional Conv+GDN NEXT retained EXACT/all119 REAL STOP/inert2048/combined ROOT reserved stack%u/written%u/8192;SYNTHETIC raw bytes,NOT original/native/physical/multi-token-state/token/Work/TPS\n",0x70000-minSp,0x70000-minStack);
  }
 };
@@ -409,7 +428,7 @@ int main(int argc,char** argv){
     if(bad==6)m->memory[RB::Outer+48*4]^=1;if(bad==7)m->memory[RB::Outer+32*4]^=1;if(bad==8)m->memory[RB::Outer+69*4]^=4;
     if(bad==9)m->source[0]^=1;if(bad==10)m->source[11]^=1;if(bad==11)m->memory[RB::Doorbell]=2;
     assert(!m->Run() && m->pc==0x60000 && !m->packets && !m->peerWrites && !m->completed);
-    for(unsigned i=0;i<2048;i++)m->StepScalar();assert(m->pc==0x60000 && !m->packets);
+    for(unsigned i=0;i<2048;i++)m->ObservedStep();assert(m->pc==0x60000 && !m->packets);
     for(const auto& p:m->child)assert(!p->active && !p->sequence && p->GdnFinished(0));_exit(0);
    }
    int status=0;assert(waitpid(pid,&status,0)==pid && WIFEXITED(status) && !WEXITSTATUS(status));

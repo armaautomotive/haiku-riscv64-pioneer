@@ -1,0 +1,9 @@
+PASS OFFLINE ROOT observation windows/cases16384/refusals261/64verified-stage bookkeeping/64bit exact totals beyond UINT32/preserve ALL low8 tick phases+next768/unchanged4B per-window bound+bounded total/no state changes on refusal;NO PC,register,NoC,Tensix,clock,product or native/token authority
+ROOT_INSTRUCTION_PROFILE total10/functions7/EXCLUSIVE actual PCs incl SIMULATED polling/NOT physical cycles or token speed
+ROOT_INSTRUCTION_FUNCTION 3 first
+ROOT_INSTRUCTION_FUNCTION 2 terminal
+ROOT_INSTRUCTION_FUNCTION 1 second
+ROOT_INSTRUCTION_FUNCTION 1 last-root
+ROOT_INSTRUCTION_FUNCTION 1 first-conv
+ROOT_INSTRUCTION_FUNCTION 1 last-conv
+ROOT_INSTRUCTION_FUNCTION 1 boot

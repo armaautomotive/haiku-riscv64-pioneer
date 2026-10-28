@@ -1,0 +1,67 @@
+FULL64 offline observer: bounded per-verified-layer windows + ELF profiling
+2026-10-28. TEST ONLY; no device image/native/driver/Assistant changes.
+
+The former generic interpreter counter was unsigned32 with a single4B
+instruction cap. The connected fixture needs approximately700M observed
+ROOT instructions per layer,including SIMULATED polling. It therefore
+cannot complete64 layers under that total counter. This is NOT evidence
+about physical P100A cycles or token throughput.
+
+New host observer retains a64bit exact total and the unchanged4B bound
+PER verified layer,plus a260B bounded whole-run total. It rebases the generic
+32bit observer ONLY after actual numerical/final5120/input/all119 closed-
+chain checks. The counter's low8 bits remain identical,so the existing
+every256-step worker Tick schedule is unchanged. Separate64bit cycles,
+PC/registers/nonces/Tensix/NoC counts/source/products and ALL device poll,
+stack,ROM,range and numerical bounds remain unchanged. Nothing skips or
+replaces a device instruction or authenticates a completed/native token.
+
+Pure ASan+UBSan proof main30394 / clean36606 BOTH direct terminal0:
+16384 cases (256 phases x64 stages),261 refusals,totals exceedUINT32,
+exact totals across rebases and ALL low8 scheduling offsets through next768,
+unchanged state on refusal. Diagnostic profiler independently checks mapped
+first/last ROOT+Conv,boot,terminal counts and exact ranked totals. Identical
+9-line logs SHA7421a22158aa9b6450d1a8804729d8b89426846cf21c051fdcf9227088306c0f.
+Command:
+ python3 tools/pioneer/tests/run_pioneer_q38_instruction_windows_tests.py
+
+Profiler derives function intervals ONLY from the already literal-PINNED
+ELF using SDK nm. Validated nonoverlapping intervals are diagnostic metadata
+in an owned temporary directory;they cannot select/change code or inputs.
+It records the actual ROOT PC before each interpreted instruction and
+requires exact equality with the64bit total,printing top20 exclusive counts
+at each genuinely verified layer and final STOP. Counts include simulated
+polling and are explicitly NOT physical cycles or token speed.
+
+Updated actual FULL64 initial guards main43713 / clean81611 BOTH direct0:
+12 initial boot/outer/source/doorbell faults,ZERO NoC/peer arithmetic,inert2048
+and SAME119 virgin histories. Identical14-line logs retain prior exact SHA
+10954ca13410a864022be743308d007b4d40fd7eafa5ea975f469edca74bbea9.
+Command:
+ python3 tools/pioneer/tests/run_pioneer_q38_layer_chain64_instruction_tests.py \
+  /private/tmp/pioneer-q38-layer-chain64-{main,clean}-20261028-e \
+  /private/tmp/pioneer-q38-mixed-worker-20261026-e --refusals
+Main and clean export use the same6 changed test sources and unchanged
+literal-PINNED device ELF/ROM. No old native role is relabeled.
+
+Old positive21097/69041 were freshly confirmed LIVE then deliberately made
+obsolete for the proven whole-run counter defect,NOT quiet output. Exact
+verified childPIDs26844/26842 received TERM once;their parents both direct
+exit1 (expected manual cancellation,NOT a passing or naturally failed test).
+Preserved old-d logs complete layers0..3 and reach layer4 matrix7. Reserved
+SP7248/written7240 within8192. Partial evidence ONLY,not all64 completion.
+
+Replacement FULL positive main17092 / clean81011 launched WITHOUT refusal/
+preparation flags and remain LIVE at this checkpoint:
+ /private/tmp/pioneer-q38-layer-chain64-windows-main-positive-20261028-a.log
+ /private/tmp/pioneer-q38-layer-chain64-windows-clean-positive-20261028-a.log
+Follow these SAME handles;do not restart for quiet/observation timeout.
+All64 arithmetic/STOP/retained state/stack completion remains UNPROVEN.
+
+This checkpoint qualifies offline bookkeeping+initial guards ONLY. Still
+required:complete64 connected/original-model validation,global output ROOT/
+normalization/vocabulary/reduction/sampling,persistent multi-token history
+and commit,new genuine native/journal/client/helper lifecycle,physical
+validation,no-CPU-reference Work/Assistant and REAL inference measurements.
+GoalACTIVE,last measured whole-model0.207893161tok/s,target20 unmet.
+NO measured new inference speedup;no hardware/power/boot/SD/mains actions.
