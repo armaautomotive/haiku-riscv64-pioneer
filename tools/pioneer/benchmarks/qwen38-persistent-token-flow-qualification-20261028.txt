@@ -1,0 +1,108 @@
+Persistent parent FULL3-token qualification: RUNNING, NOT a pass
+2026-10-28. No hardware/SSH/driver/boot/power/Assistant/SD/mains action.
+Parent/worker literal images unchanged from3072b8f306. Last real whole-model
+rate0.207893161tok/s;target20 remains UNMET. No new speedup measurement.
+
+Implemented whole-flow fixture
+------------------------------
+tests/pioneer_q38_token_flow_test.cpp executes the actual pinned persistent
+parent from reset with ONE fabric and the SAME119 freshly booted G workers.
+The three positions are two immutable prompt IDs248319/17 and then the real
+previous greedy candidate, not a CPU-supplied hidden vector or chosen-token
+hint. Only raw learned/state/session/positional-constant bytes are supplied.
+Numerical references observe and NEVER feed an emulated numeric product.
+No private PC/register/nonce/Tensix/counter history is transplanted.
+
+The constructor retains the old raw matrix/learned/zero-initial-state fabric,
+adds only canonical convolution-current destination DATA, prompt/session
+DATA and raw RoPE constants for all3 positions. First embedding and all
+later hidden/native inputs are produced by real device instructions.
+Per-layer expected plans are independently rebuilt for actual position,
+slot,token,phase/request/input coordinates and compared to actual frames.
+
+Observers check the returning matrix/Conv/GDN/RMS/activation arithmetic,
+including exact quantized inputs and actual final5120 values. At later
+positions each GDN read slot and convolution current history must equal
+the previous actual produced state, not a supplied reference state. Prior
+KV prefixes are retained and checked unchanged. The new dense observer
+independently computes learned256-wide Q/K normalization/partial RoPE,
+prepared K/V/query/gate bits, cached QK/softmax probabilities and gated PV
+over all current positions. It checks actual append rows, maxima/inverses,
+and each worker's finalF16 probabilities. No observer output is uploaded.
+
+The actual973 output jobs and local/global maxima are observed EACH token.
+Read-only admission of a previous-position global partial is distinguished
+from new-position global gathering;it cannot inflate new output coverage.
+Each worker's expected post-head nonce is derived from the verified down
+frontier+its8/9 actual global waves, not recaptured from unknown hardware.
+
+Every commit copy is observed in exact canonical layer/span/chunk order:
+actual staged-history read -> actual current-destination write -> actual
+destination readback. All words equal that token's genuine layer output.
+The actual private parent's slot/frontier stores are observed (NEVER seeded)
+and may advance only after all48 histories close. QTC1 publication must
+perform marker0 payload write/readback then4B marker write/readback with the
+actual candidate,position,source,epochs,counters and slot/frontier fields.
+The following token must consume the committed state;workers never STOP
+or reboot between tokens. Final QTT1 requires all119 real STOPs/inert2048.
+Runtime combined SP is measured;the8192-byte bound is unchanged.
+
+Observation-only bookkeeping
+-----------------------------
+PioneerQ38InstructionWindowSet<192> extends the existing64-stage observer
+for all192 genuine verified layer returns. The original name remains an
+alias of the exact64-stage specialization;its4B per-window bound and old
+low8-bit Tick behavior remain unchanged. Only host observation counts are
+rebased after separately verified stages;no device clock/state changes.
+The old matrix observer now compares request to outer[48] instead of the
+pos0-only layer+1;these are identical for every existing pos0 test.
+
+ASan+UBSan window tests main7255/clean72479 BOTH direct0:
+old16384 cases/261 refusals/ALL low8 phases+next768 remain;new192 stages x256
+tick phases and full524288-stage arithmetic bound pass. Pure bookkeeping,
+not model instructions or permission. Identical log SHA:
+90d53bcb35172f83d6495ad478877599ac827c8486dcf3ecc3bc0a0dfd7845c4.
+
+Independent raw preparation
+----------------------------
+ python3 tools/pioneer/tests/run_pioneer_q38_token_flow_tests.py \
+  /private/tmp/pioneer-q38-token-root-{main,clean}-20261028-h \
+  /private/tmp/pioneer-q38-mixed-worker-20261026-e \
+  /private/tmp/pioneer-q38-global-globalbuild-{main,clean}-20261028-e \
+  --prepare-only
+Main56584/clean75859 BOTH direct0, ASan+UBSan. All119 are genuinely booted
+and still virgin;ZERO ROOT instructions/peer work/token completion. Checks
+setup only, NOT model/commit or positive execution. Identical log SHA:
+dcdbb4c1698676d8e28c25376937c4af6b10ad73996863f1b47337804ea3c0d9.
+Runner FIRST checks literal parent5/oldworker9/Gworker9 pins and derives all
+feature/wait/STOP/profile metadata from those exact ELFs. Profile intervals
+use ELF STT_FUNC,not nm section letters or caller completion data.
+
+Actual positive: KEEP THIS SAME PROCESS
+--------------------------------------
+ python3 tools/pioneer/tests/run_pioneer_q38_token_flow_tests.py \
+  /private/tmp/pioneer-q38-token-root-main-20261028-h \
+  /private/tmp/pioneer-q38-mixed-worker-20261026-e \
+  /private/tmp/pioneer-q38-global-globalbuild-main-20261028-e
+Main session35426. Log:
+ /private/tmp/pioneer-q38-token-flow-positive-main-20261028-b.log
+At18:13UTC freshly live; actual bootstrap20source+2write+2readback gives5120
+bit-exact values,then token0/layer0 progresses through at least matrix6.
+This is PARTIAL execution only. It does NOT complete even one model token.
+Archived positive-partial log is a snapshot, NEVER a terminal pass. Continue
+the SAME handle;quiet output/observation timeout is not terminal or grounds
+for restart. Do not splice old one-pass tests into this new lifetime.
+Only one new full process is started to limit32GiB Mac RAM pressure. The
+eight prior full tests remain independent live histories too. A clean full
+run will still be required;clean preparation is not that proof.
+
+Remaining
+----------
+Finish/inspect this actual full run and repair any real failure without
+inventing completion/private state. Complete an independent clean full run,
+late commit/admission/publication/STOP faults,cancellation and original-GGUF
+whole-model generations. New native ownership/source/init ledger/sole-FD/
+journal/clock/cache/terminal/client audits,physical stability,no-reference
+Work/Assistant integration and real sustained throughput remain required.
+No current driver/kernel/UI/CPU/RAM/boot functionality is changed. Dirty
+llama.cpp/FlashNext work remains unread/untouched/unstaged. Goal ACTIVE.

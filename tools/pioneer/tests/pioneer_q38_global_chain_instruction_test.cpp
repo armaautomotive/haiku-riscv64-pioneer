@@ -290,7 +290,7 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
   uint32_t descriptor[64];for(unsigned i=0;i<64;i++)descriptor[i]=r[i];
   descriptor[0]=!CL::Dense(layer)?unsigned(PioneerQ38MixedRecurrentProjectionRootLayout::Magic):unsigned(PioneerQ38MixedProjectionRootLayout::Magic);
   if(CL::Dense(layer) && matrices<4)descriptor[6]=outer[6]+(matrices==3?4:matrices);
-  descriptor[13]=RB::Rows;descriptor[48]=layer+1;descriptor[49]=119;descriptor[50]=RB::Parts;descriptor[51]=RB::MatrixHeader;descriptor[52]=RB::Banks;
+  descriptor[13]=RB::Rows;descriptor[48]=outer[48];descriptor[49]=119;descriptor[50]=RB::Parts;descriptor[51]=RB::MatrixHeader;descriptor[52]=RB::Banks;
   descriptor[53]=!CL::Dense(layer)?(r[43]==13?unsigned(RB::Output):unsigned(RB::Input)):
    matrices<4?(matrices==3?unsigned(DL::Output):unsigned(DL::Input)):matrices==6?unsigned(DL::Input):unsigned(DL::PostNormalized);
   descriptor[54]=RB::Projected;descriptor[55]=RB::PeerJobs;descriptor[56]=RB::Nonces;descriptor[57]=RB::PeerBoots;

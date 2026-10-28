@@ -13,8 +13,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-instruction-windows-',dir='/pri
  subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-fsanitize=address,undefined',
   str(here/'pioneer_q38_instruction_windows_test.cpp'),'-o',str(binary)],check=True)
  result=subprocess.check_output([str(binary),str(profile)],text=True,env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1'})
- assert result.splitlines()[1:]==[
+ assert result.splitlines()[1:-1]==[
   'ROOT_INSTRUCTION_PROFILE total10/functions7/EXCLUSIVE actual PCs incl SIMULATED polling/NOT physical cycles or token speed',
   'ROOT_INSTRUCTION_FUNCTION 3 first','ROOT_INSTRUCTION_FUNCTION 2 terminal',
   *('ROOT_INSTRUCTION_FUNCTION 1 '+name for name in ('second','last-root','first-conv','last-conv','boot'))],result
+ assert result.splitlines()[-1]=='PASS extended OFFLINE observation192 stages x256 tick phases/full524288-stage arithmetic bound/unchanged4B windows;NO device/model-state authority'
  print(result,end='')
