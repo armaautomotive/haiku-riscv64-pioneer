@@ -1,5 +1,31 @@
 # Native build status
 
+## Current: full64 instruction runs started; first connected handoff passes
+
+October 28, 2026. The unchanged prefix4 runs `37573/71667` now complete
+layer0/final5120 and genuinely consume that hidden vector in layer1 using
+the SAME119 worker histories. The recurrent-to-dense transition and final
+STOP remain pending; neither full prefix4 run is passed yet.
+
+A separate full64 fixture now prepares all48 recurrent+16 dense layers,
+tracks actual reserved SP as well as written stack, and will check exact
+retention of every earlier provisional Conv/GDN NEXT state at final STOP.
+Main/clean raw preparation (`30516/38996`) and all64 initial12 fault cases
+(`87146/44588`) both finish 0. Positive full64 runs `21097/69041` are LIVE,
+not passed. No code/PC/private worker state is replaced between layers.
+
+The older original-weight feature-off routed controls `68414/77070` now
+both finish 0, identical117-line `fc5ebae3`: complete native3RUN/readback/
+restoration/fresh END before independent comparison, all3 final vectors
+bit-exact,45/54 stages exact, nine finite non-bit-exact GDN stages. Those
+OS/NoC endpoints are SIMULATED, not physical or persistent-state proof.
+
+Evidence: [full64 execution preparation](benchmarks/qwen38-layer-chain64-instruction-preparation-20261028.txt)
+and [original routed control completion](benchmarks/qwen38-original-routed-control-completion-20261028.txt).
+No new physical driver is installed. Full64 runtime, multi-token state,
+output/sampling, native lifecycle, Work/Assistant and performance remain owed.
+Last whole-model **0.207893161 tokens/sec**; no measured speedup.
+
 ## Current: connected SAME119 scheduler instructions are executing
 
 October 28, 2026. A new pinned prefix4 instruction fixture uses ONE ROOT,

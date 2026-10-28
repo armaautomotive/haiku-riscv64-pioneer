@@ -1,0 +1,82 @@
+QCH1 FULL64 actual-instruction fixture: PREPARATION + INITIAL FAULTS / LIVE
+2026-10-28. No new physical card, driver, power, boot or Assistant action.
+
+Sources (unchanged prefix4 test is NOT replaced or restarted):
+ tools/pioneer/tests/pioneer_q38_layer_chain64_instruction_test.cpp
+ tools/pioneer/tests/run_pioneer_q38_layer_chain64_instruction_tests.py
+Full64 C++ SHA268862e43fcb7f659a9ed32a5f211165c7f50506b80361bc7d261f50fed989ab
+Runner SHA9f8fcf4f3140b63e1476e0a95bf1d432fb0bb44218383c4788bb9b10f8708a6c
+Main/clean source hashes match. Separate literal PINS64 image verification,
+not prefix4 image substitution, before any host compilation/execution.
+
+ONE scheduler/ONE shared GDDR byte fabric/SAME119 genuinely booted workers
+retain private PC/nonce/tensor/counter histories through all64 layers. Every
+raw matrix/learned/state/metadata region is prepared BEFORE ROOT starts.
+No completed product, status, native owner, or private worker state is
+transplanted between separate recurrent/dense fixtures.
+
+Full64-specific expected checks (NOT PASSED positive runtime):
+48 recurrent +16 dense,496 matrices/46128 matrix jobs,5712 peer Conv jobs,
+4608 GDN jobs,4608 dense jobs,all64 final5120/actual-next-input checks,
+128 RMS checks/496 quantizations/64 FFN activations/48 GDN/16 attention,
+all48 provisional Conv+GDN NEXT snapshots retained EXACT through final
+all119 real STOP/receipt/inert2048,actual reserved SP plus written stack
+inside unchanged8192B window. Snapshots are observer outputs only, NEVER
+fed back into ROOT inputs or used as a token/native ownership grant.
+All data remain SYNTHETIC primitive learned/initial hidden/zero current-state
+bytes. NOT original model,physical,full token,multi-token state,Work or TPS.
+
+Raw preparation main30516 / clean38996 direct exit0. Commands:
+ python3 tools/pioneer/tests/run_pioneer_q38_layer_chain64_instruction_tests.py \
+  /private/tmp/pioneer-q38-layer-chain64-{main,clean}-20261028-e \
+  /private/tmp/pioneer-q38-mixed-worker-20261026-e --prepare-only
+Identical2-line logs SHAb70cc5ebcc8bb5b6e92d2d5053131469cea6efb9d2a7001610aa1d949678aed5.
+ASan+UBSan; all64 canonical packages match,all119 genuine virgin boots.
+This mode executes NO ROOT instructions. Its compiled source differs from
+the final revision only in a positive-runtime progress printf, which this
+mode never reaches. New final-revision initial faults below were rebuilt.
+
+Full64 raw-zero byte model:35328 exact disjoint canonical regions represent
+39223296 zero input words (48*(640 Conv groups +96 GDN half-state regions)).
+Explicit address/alignment/size/nonoverlap bounds; every first+last raw word
+and total count checked. Actual writes take precedence over raw zero data;
+a pre-ROOT raw-byte write/read/restore verifies this precedence. The earlier
+eager map stored all39M zeros as separate host nodes and was needlessly
+memory-heavy; lazy RAW endpoints avoid those nodes without synthesizing a
+product, resetting worker state, or changing any device code/guard/bound.
+This improves OFFLINE test resource use ONLY, not P100A inference speed.
+
+Final-revision all64 initial faults main87146 / clean44588 direct exit0:
+same command with --refusals. Identical14-line logs
+SHA10954ca13410a864022be743308d007b4d40fd7eafa5ea975f469edca74bbea9.
+12 reached boot/outer/source/doorbell refusals,ZERO NoC or peer work,
+inert fault2048,all119 genuine virgin histories retained. Initial SP bounds
+are observed; complete arithmetic call-path stack still remains unproved.
+
+FULL positive runs, WITHOUT --prepare-only/--refusals or --build-only:
+ main21097 / clean69041 LIVE at this checkpoint, both reached layer0 QKV.
+ /private/tmp/pioneer-q38-layer-chain64-instructions-main-positive-20261028-d.log
+ /private/tmp/pioneer-q38-layer-chain64-instructions-clean-positive-20261028-d.log
+Follow SAME handles, do NOT restart for quiet or observation timeout.
+Separate unchanged prefix4 main37573 / clean71667 remain LIVE. They passed
+layer0 final5120/119 closed chains and actual input to layer1, and reached
+layer1's FFN. They have NOT yet completed all4 layers or real final STOP.
+
+Output integration source audit (not implementation/permission): canonical
+global layer64 roles0/1/2 are embedding(Q4),vocabulary(Q6),final norm(F32).
+PioneerQ38ProjectionJobs already describes the9-wave248320-row geometry.
+However QMW1 JobShape explicitly rejects worker layer>=64 and existing
+dense projection recipes only admit particular block roles/layers. Do NOT
+fake layer63 or retag that geometry to claim an output-head launch. Need a
+distinct qualified global-output contract and actual same-cohort path.
+Old blackhole_decoder/PioneerDecoderGreedy are0.6B/1024/151936 contracts,
+not a27B/5120/248320 ABI; only suitably verified arithmetic may be reused.
+Existing resident-output DEBUG68 is a layer0 output/FFN diagnostic, not the
+vocabulary head. These findings constrain the real next integration work.
+
+Next: complete exact running prefix4/full64 instruction tests and stack/
+STOP/state checks,original full-chain validation,multi-token KV/GDN/history
+and token commit,global output/norm/sampling,new genuine native/journal/
+client/helper lifecycle,physical validation,no-reference Work/Assistant,
+and REAL inference timing. All goal scope remains active. Last whole-model
+0.207893161tok/s;20tok/s target unmet,no measured new inference speedup.

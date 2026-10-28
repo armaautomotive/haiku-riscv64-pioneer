@@ -1,0 +1,24 @@
+Original GGUF feature-OFF public-routed native control: COMPLETE OFFLINE
+2026-10-28. main68414 / clean77070 BOTH direct terminal exit0, not restarted.
+Logs identical117 lines SHA256:
+ fc5ebae35ef9dfeff7d63c945fe6e58c46b26b74abb8ac7b13a7cd08fad40605
+Same result bytes as the independently selected frozen optimized controls.
+
+Full original file authentication and raw learned bytes, actual public
+admission/routing and native owner,QPE1 producer/672GDN+336history init,
+3 real recurrent instruction layers,119realSTOP+120holds/fiveREADs,
+full saved journal restoration/fresh final END/private context destruction
+and post-END caller copy precede independent CPU comparisons. CPU reference
+source and coordinator remain separate unflagged translation units.
+
+All3 final hidden vectors (15360 words) bit-exact/nonfinite0.45/54 stages
+exact;9 GDN intermediate stages7/8/9 finite but not bit-exact. Unchanged
+references and tolerances. Exact final vectors do NOT establish persistent
+NEXT state/later-token correctness. Raw OS/registers/NoC endpoints are
+SIMULATED. NOT physical,full64,returning-common-chain,Work or TPS proof.
+
+This closes the two formerly live feature-off routed controls. Do NOT poll
+68414/77070 again or rerun merely because old dated status entries say LIVE.
+Missing old58646/88658 terminal handles remain a separate evidence issue;
+their complete numerical logs do not substitute for a recovered exit code.
+No new hardware action or installed driver change. Full goal ACTIVE.
