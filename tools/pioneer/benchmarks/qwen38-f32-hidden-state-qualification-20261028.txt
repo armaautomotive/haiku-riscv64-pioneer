@@ -157,3 +157,17 @@ early corruptions/inert2048/stack2992+2984/SAME119 still virgin. Actual first
 layer cancellation10985/85878 launched21:01UTC and is RUNNING,not passed.
 Combined runtime stack,head/committed cancellation and full zero-request
 variant remain owed. No physical or measured speedup.
+
+21:59UTC follow-up: combined cancellation/real prefix/CPU controls
+----------------------------------------------------------------
+Combined --layer10985/85878 BOTH now direct0:actual complete first layer,
+all4 terminal faults+119STOP/exact no-token-commit receipt/inert2048/stack
+6496+6488. Scope is SYNTHETIC first-layer only;head/committed/zero-request
+and native/physical/Work remain unproven. Real original68871/11982 complete
+layers0..2;main also passes all9 actual KV append faults at dense layer3.
+Independent whole CPU original main40136/clean34882 BOTH0/ALL64+vocab EACH
+for3 positions/all three binary traces byte-identical. This is not a GPU
+numerical match or TPS result. Optional exact HOST storage/bootstrap tests
+pass but no device ROM or installed functionality changes. See
+ qwen38-whole-cpu-reference-and-root-storage-20261028.txt
+for latest exact scopes and remaining real gates. Goal ACTIVE;20 UNMET.

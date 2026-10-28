@@ -8,7 +8,9 @@ import re
 import subprocess
 import sys
 import tempfile
-assert len(sys.argv) == 5 or (len(sys.argv) == 6 and sys.argv[5] in {'--prepare-only', '--bootstrap-only'})
+options = sys.argv[5:]
+assert 5 <= len(sys.argv) <= 7 and len(set(options)) == len(options) and set(options) <= {'--prepare-only', '--bootstrap-only', '--fast-root-memory'}
+assert not {'--prepare-only', '--bootstrap-only'} <= set(options)
 image, old, worker, model = map(pathlib.Path, sys.argv[1:5])
 assert all(p.is_absolute() for p in (image, old, worker, model))
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
@@ -46,5 +48,6 @@ with tempfile.TemporaryDirectory(prefix='pioneer-original-token-flow-', dir='/pr
     profile = pathlib.Path(tmp)/'profile.map'
     profile.write_text(''.join(f'{start:x} {size:x} {name}\n' for (start, size), name in sorted(intervals.items())))
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-ffp-contract=off', '-fsanitize=address,undefined',
-                    *flags, str(here/'pioneer_q38_token_original_flow_test.cpp'), str(here/'pioneer_q38_whole_original_bytes.cpp'), '-o', str(binary)], check=True)
-    subprocess.run([str(binary), *sys.argv[1:]], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1', 'PIONEER_TEST_ROOT_PROFILE_MAP':str(profile)})
+                    *flags, *(['-DPIONEER_Q38_TEST_FAST_ROOT_MEMORY=1'] if '--fast-root-memory' in options else []),
+                    str(here/'pioneer_q38_token_original_flow_test.cpp'), str(here/'pioneer_q38_whole_original_bytes.cpp'), '-o', str(binary)], check=True)
+    subprocess.run([str(binary), *sys.argv[1:5], *[o for o in options if o != '--fast-root-memory']], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1', 'PIONEER_TEST_ROOT_PROFILE_MAP':str(profile)})

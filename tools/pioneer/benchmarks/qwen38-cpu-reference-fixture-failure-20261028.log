@@ -1,0 +1,25 @@
+PASS independent half conversion/63488 finite binary16 values/native host half+boundary RNE checks
+MATRIX_REFERENCE_DIAGNOSTIC type8 inputs256 returned1 rows16
+ row0 actual3f2edf1c 0.683091879 expected3f2f6400 0.685119629
+ row1 actual3f0f4d0c 0.559769392 expected3f0fa400 0.561096191
+ row2 actual3f3ea9e0 0.744779587 expected3f3f4400 0.747131348
+ row3 actual3ec59ab0 0.385945797 expected3ec5fc00 0.386688232
+ row4 actual3f24f054 0.644292116 expected3f247a00 0.642486572
+ row5 actual3d450480 0.0480999947 expected3d3ae000 0.0456237793
+ row6 actual3ebf4540 0.373575211 expected3ebe0c00 0.371185303
+ row7 actual3e267f30 0.162594557 expected3e25c800 0.161895752
+ row8 actualbd8405e0 -0.0644643307 expectedbd88c000 -0.0667724609
+ row9 actualbe513910 -0.204319239 expectedbe534000 -0.206298828
+ row10 actual3f4cbbe8 0.799742222 expected3f4c2a00 0.797515869
+ row11 actual3efc9c98 0.493382215 expected3efd8c00 0.49520874
+ row12 actual3c40c800 0.0117664337 expected3c6f8000 0.0146179199
+ row13 actual3cc2e700 0.02379179 expected3cd70000 0.0262451172
+ row14 actual3f454a1c 0.770662069 expected3f453800 0.770385742
+ row15 actual3e58e330 0.211804152 expected3e596000 0.212280273
+Assertion failed: (okay && actual==expected), function TestMatrix, file pioneer_q38_cpu_model_reference_test.cpp, line 82.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_cpu_model_reference_tests.py", line 15, in <module>
+    subprocess.run([str(binary), *sys.argv[1:]], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-cpu-model-reference-apty7_3y/test']' died with <Signals.SIGABRT: 6>.

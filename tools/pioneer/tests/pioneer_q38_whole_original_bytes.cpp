@@ -54,6 +54,22 @@ struct WholeModelOriginalBytes::Original {
 WholeModelOriginalBytes::WholeModelOriginalBytes():original(new Original){}
 WholeModelOriginalBytes::~WholeModelOriginalBytes(){delete original;}
 bool WholeModelOriginalBytes::Ready()const{return original && original->Current();}
+uint64_t WholeModelOriginalBytes::Epoch()const{return Ready()?original->source.Model().Epoch():0;}
+bool WholeModelOriginalBytes::Describe(unsigned index,Q38OriginalTensor& output)const{
+ if(!Ready() || index>=original->source.Model().Tensors().size())return false;
+ const auto& t=original->source.Model().Tensors()[index];Q38OriginalTensor stage;
+ stage.name=t.name;stage.type=t.type;stage.rank=t.rank;stage.inputs=t.inputs;stage.outputs=t.outputs;stage.bytes=t.bytes;stage.offset=t.offset;
+ if(!Ready())return false;output=std::move(stage);return true;
+}
+bool WholeModelOriginalBytes::ReadOriginal(unsigned tensor,uint64_t at,unsigned bytes,void* output,unsigned capacity){
+ uintptr_t out=reinterpret_cast<uintptr_t>(output);
+ if(!Ready() || !output || !bytes || bytes>1048576 || capacity<bytes || out>UINTPTR_MAX-bytes || tensor>=851)return false;
+ const auto& t=original->source.Model().Tensors()[tensor];if(at>t.bytes || bytes>t.bytes-at)return false;
+ for(const auto& page:original->cache){uintptr_t p=reinterpret_cast<uintptr_t>(page.second.data());if(out<p+4096 && p<out+bytes)return false;}
+ std::vector<uint8_t> stage(bytes);
+ if(!original->source.ReadReferencePacked(tensor,at,bytes,stage.data(),bytes) || !Ready())return false;
+ memcpy(output,stage.data(),bytes);return true;
+}
 void WholeModelOriginalBytes::Revoke(){if(original){original->failed=true;original->cache.clear();}}
 bool WholeModelOriginalBytes::Open(const char* path){
  if(!original || original->attempted || !path || wholeOriginalPath)return false;

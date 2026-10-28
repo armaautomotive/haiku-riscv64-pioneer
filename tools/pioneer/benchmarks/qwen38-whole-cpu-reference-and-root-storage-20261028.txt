@@ -1,0 +1,151 @@
+Independent whole27B CPU trace PASSED; emitted full model STILL RUNNING
+2026-10-28 21:55UTC. Goal ACTIVE. No hardware/SSH/power/SD/mains/driver/
+kernel/Assistant/boot/CPU/RAM/network mutation. Last measured physical whole
+model0.207893161tok/s;20 UNMET. No new physical throughput/quality claim.
+
+Separate whole-model CPU numerical observer
+--------------------------------------------
+New TEST-only Q38CpuModelReference/Math computes the complete fixed851-tensor
+model from ORIGINAL row-major GGUF bytes,not the tiled reader,card quantizer,
+SFPU implementation,emulator outputs or older token0/three-layer reference.
+Its distinct source interface exposes only descriptors/epoch/original packed
+or F32 learned bytes. All851 exact names/shapes/types/ranks/lengths bind before
+computation;source/epoch and all descriptors are checked throughout. On failed
+Step the CPU reference is poisoned: no retry or partial trace publication.
+
+The independent host arithmetic covers Q8/Q4_K/Q6_K row matrices,documented
+tensor-input quantization policy,FP32-hidden RMS/residuals,48 recurrent layers,
+16 attention layers,final norm/all248320 vocabulary rows and greedy selection.
+Conv history,GDN state and append-only half KV persist across positions.
+This is an independent original-row/libm reference for our tensor policy,
+NOT a claim of bit-identical unmodified upstream llama.cpp/full-model quality.
+Neither dirty llama.cpp nor unrelated FlashNext was read,built,edited or staged.
+
+CPU product code is in a SEPARATE TU/role and rejects kernel,device,native and
+Work flags,including defined0/late reinclusion. Raw row TRANSPORT is not a
+CPU product;it intentionally permits TT_PIONEER_Q38_WORK_MODE's tensor-policy
+flag used by the offline instruction harness,like the preexisting byte source.
+The CPU-PRODUCT header still rejects that flag. No reference hidden,state,
+logits or selected-token values are uploaded or supplied to emitted execution.
+
+Completed tests: independent main and clean
+--------------------------------------------
+Final ASan+UBSan unit main43703/clean7709 BOTH direct0:
+ *63488 finite binary16 values vs host half and rounding-boundary checks;
+ *6 Q8/Q4/Q6 cases/all16 rows/256+512 inputs,independent decoded scalar
+  powers-of-two dots BITEXACT,including full learned Q8 -128/+127 endpoints;
+ *64 RMS rows/all5120 words vs long-double FLOAT-square sum and host sqrt/
+  divide,captured66265.703125 legacy-overflow case,new2^26/min-product edges;
+ *8 nonzero retained GDN steps vs a closed-form basis solution/all16384 state
+  words+128 output words;3 attention positions/all24heads/uniform half-softmax
+  and actual append-only previous-value use;
+ *all851 bindings,last-tensor/duplicate/epoch/source/rounding refusals,
+  late epoch loss/no retry/CPU output unchanged.
+Role compile main66890/clean53139 BOTH direct0:95 exact-parent/forbidden
+kernel+image+native+Work/defined0+1/late guards. Compile-only,not runtime proof.
+Full synthetic-zero main73060/clean16703 BOTH direct0:3positions/all64+
+vocabulary EACH/retained state+KV paths/tie-lowest. SYNTHETIC CPU unit only.
+
+Earlier failures are NOT passes: first exact-dot fixture mistakenly had a
+single maximum for a whole row,not every Q8 32-element block. Real activation
+quantization then correctly differed from the fixture's unquantized dot.
+The fixture now has exact per-block power-of-two scales;no engine quantizer
+or comparison was weakened. UBSan then caught intermediate out-of-bounds
+pointer arithmetic `delta+role-5`;it is fixed to `delta+(role-5)` (and dense
+likewise). Final passing tests and complete real traces use that correction.
+
+Raw source bridge main23803/clean35043 BOTH direct0:full SAME-open model SHA,
+all851 descriptors+first/last ORIGINAL rows,invalid tensor/offset/capacity/
+oversize refusal with NO output change,source revoke/epoch/no cached reads,
+all3551 learned parts/10301 tiled samples+padding2392736/all1127 mutable
+refusals. Those are DATA transport tests,not numerical/native permission.
+
+Complete ORIGINAL CPU traces,NOT an accelerator comparison
+----------------------------------------------------------
+Main40136 and clean34882 independently compute ALL64+vocab for3 positions
+using the fully authenticated18973870528B c600de03... model. No accelerator
+FD/context,readback or model-product upload exists. BOTH terminal0. Direct
+cmp verifies all three complete main/clean binary files byte-identical,
+not only equal reported digests.
+Inputs248319,17,then independent CPU greedy17. Greedy outputs70253,17,17.
+Best/runner-up logits:
+ position0 11.7586288 /11.3286753
+ position1 12.3832579 /11.4817953
+ position2 14.542923 /12.924222
+Each CPU-private token trace is2324548B:16 LE header words,embedding+all64
+hidden5120 vectors,all248320 logits,and a terminal word. Private directories:
+ /private/tmp/pioneer-q38-cpu-original-trace-20261028-a
+ /private/tmp/pioneer-q38-cpu-original-trace-clean-20261028-a
+Main/clean SHA256s match for ALL bytes:
+ token0 9323e2451c41e241c9a0391d3905890b662fd73df8542103da229f9b910d6937
+ token1 dcc88c37599ab6659990f5154da04dcc12b4edea5a38c27359402b75ede4973d
+ token2 433b776057b9ada57c21bd8b103e29464e6f8758ea7cd4e9865d6e8ff2bff214
+These are CPU controls,NOT observed P100A text,TPS or a whole-model numerical
+match. Trace binaries/model weights are not added to Git. Actual emitted
+hidden/vocabulary/committed-token comparison remains OWED. Do not invent a
+tolerance from observed values or call a diagnostic-only exit0 a numerical
+qualification. No expected values may enter an emitted input/state/owner.
+
+Real emitted first layers and actual-PC evidence
+------------------------------------------------
+SAME original main68871/clean11982 BOTH complete original layers0..2 so far,
+under actual FP32 ROOT+SAME119 histories. Each layer0 has608368692 ROOT
+instructions/reserved6496/written6488,all119 closed/final5120/real retained
+state,not a supplied CPU product. Full3-token ALL64+973 EACH and final119STOP
+remain unproven. Partial snapshots are labeled PARTIAL,not complete passes.
+Actual layer0 ROOT exclusive PC counts:
+ q38_layer_return_recurrent_seal292204881
+ DensePartitionRoot::Seal74122240
+ DensePartitionRoot::Transfer68496069
+ DensePartitionRoot::Quiet50285472
+ DensePartitionRoot::FrameSeal47252192
+They include SIMULATED polling,not physical cycles,bandwidth or token speed.
+Existing GLOBAL_CHAIN_SEAL_UNROLL=1/four-word helpers are ALREADY enabled.
+Do not re-enable that flag as a new optimization. Preserve safety;changing
+audit granularity needs a genuine immutable/private ownership proof and
+fault qualification,not merely deleting checks in a renamed Work mode.
+
+Exact optional HOST ROOT storage,not a device optimization
+----------------------------------------------------------
+PioneerQ38RootWordMap uses direct indexing+presence only for aligned host
+keys below0x180000. Absent words stay absent (at throws),insert defaults to
+zero exactly like map;unaligned/high keys use std::map. find/end is the
+read-only snapshot surface needed by fault diagnostics,not general writable
+iterator semantics. No product/readiness cache,implicit zero memory,
+instruction skip,ROM/PC/register/state transplant or scheduling/clock change.
+The opt-in shadows ONLY the ROOT fixture's initially empty ScalarMachine
+word map;unchanged virtual Load/Store/RootWord use it. Worker storage and
+GDDR byte map remain unchanged. Default source/ROM bytes are not modified.
+
+ASan+UBSan word-map main99409/clean23334 BOTH direct0:1000000 operations vs
+std::map,400000writes/200000finds/200000erases/103357 missing-at exceptions,
+all final entries,high/unaligned/boundary/default/erase/reinsert/clear cases.
+Normal bootstrap46391/fast-map clean4576 BOTH direct0 with IDENTICAL complete
+logs:original embedding5120/allmetadata/4 no-fallback refusals/SAME119 virgin,
+stack2992+2984 and4749932 actual ROOT instructions. Narrow bootstrap only.
+Fresh full fast-map original40968 started21:44UTC from RESET,log
+ /private/tmp/pioneer-q38-token-original-fast-flow-main-20261028-a.log
+Follow SAME handle. No first-layer equivalence or complete model pass yet.
+Original68871/11982 and synthetic20159/13324/default94923/26724 remain separate
+live histories;none was stopped/restarted for quiet or transplanted.
+
+Combined FP32+cancellation runtime now narrowly PASSED
+-------------------------------------------------------
+SAME10985/85878 BOTH direct0:actual first layer/ROOT608842648/stack6496+6488,
+all4 genuine terminal-corruption children/no cleanup claim;positive119 real
+STOP/exact stage1 reason3 receipt/inert2048/committed0 and no invented model
+token. SYNTHETIC inputs,not original-model/head/committed/zero-request/full
+combined/native/physical/Work qualification. Follow-up scopes remain owed.
+
+Next real gates: complete emitted original generations + independent full
+numerical comparison;late admission/statecommit/publication/STOP and remaining
+cancellation variants;genuine DISTINCT full851 native owner/init+upload ledger/
+source+clock+host lifetimes/session/cache/prompt/L1aux/soleFD/journal/terminal/
+client/quarantine;controlled physical stability;separate no-reference Work+
+Assistant/boot64CPU/fullRAM preservation;honest sustainable speed optimization.
+No completion or blocker claimed. Goal stays ACTIVE;20tok/s still UNMET.
+
+21:59UTC partial follow-up: original68871 has now passed all9 actual KV
+append corruption lifetimes after the first genuine current-row write and
+continues dense layer3 FFN. This is still not a complete original model token.
+Fast-map40968 is now layer0 matrix7;whole first-layer equivalence is pending.

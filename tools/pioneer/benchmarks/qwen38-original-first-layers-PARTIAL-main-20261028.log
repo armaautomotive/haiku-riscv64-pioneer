@@ -1,0 +1,129 @@
+START authenticate entire SAME-open original27B GGUF BEFORE ROOT construction;no CPU product/native owner/physical IO
+PASS original fabric/3551 independently classified learned parts/7102 endpoint batches+word equivalence/synthetic learned words2645504+recipes47108 REMOVED/no supplied initial hidden/default mutable bytes unchanged/ZERO ROOT instructions;NOT model execution
+Assertion failed: (!(address&3) && !OverlapsLearned(route,address,4)), function Put, file pioneer_q38_token_original_fabric.h, line 71.
+Assertion failed: (original.Read(route,address,raw,4)), function Get, file pioneer_q38_token_original_fabric.h, line 58.
+Assertion failed: (original.Read(route,address,out,bytes)), function ReadRaw, file pioneer_q38_token_original_fabric.h, line 66.
+Assertion failed: (!OverlapsLearned(route,address,bytes) && spans.empty()), function ReadRaw, file pioneer_q38_token_original_fabric.h, line 67.
+PASS 4 genuine original-fabric refusals/learned write+revoked word+revoked batch+cross-part batch/no synthetic fallback/unchanged virgin parent;TEST transport safety only
+START actual original27B FULL3-token flow/from RESET/SAME119/ALL learned bytes from SAME authenticated GGUF/NO supplied hidden or CPU model products
+PASS actual next embedding position0/token248319/5120 bit-exact/20raw+2writes+2readbacks/no CPU product upload
+BEGIN actual persistent token0/layer0/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer0 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer0 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer0 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer0 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer0 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer0 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer0 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer0 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer0/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions608368692/reservedStack6496/writtenStack6488
+ROOT_INSTRUCTION_PROFILE total608368692/functions104/EXCLUSIVE actual PCs incl SIMULATED polling/NOT physical cycles or token speed
+ROOT_INSTRUCTION_FUNCTION 292204881 q38_layer_return_recurrent_seal
+ROOT_INSTRUCTION_FUNCTION 74122240 DensePartitionRoot::Seal(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 68496069 DensePartitionRoot::Transfer(unsigned int const*, unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+ROOT_INSTRUCTION_FUNCTION 50285472 DensePartitionRoot::Quiet()
+ROOT_INSTRUCTION_FUNCTION 47252192 DensePartitionRoot::FrameSeal(unsigned int) [clone .part.0]
+ROOT_INSTRUCTION_FUNCTION 11915146 DensePartitionRoot::PioneerQ38SigmoidDetail::ExpReduced(float, int&)
+ROOT_INSTRUCTION_FUNCTION 10678078 MixedRecurrentCohort::Packet(unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+ROOT_INSTRUCTION_FUNCTION 6913490 PioneerGraphDividePositive(float, float)
+ROOT_INSTRUCTION_FUNCTION 5924319 PioneerQ38ProjectionQuantize(unsigned int, float const*, unsigned int, PioneerQ38ProjectionInput*) [clone .constprop.0]
+ROOT_INSTRUCTION_FUNCTION 3897782 Projection::Run(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 3096704 MixedRecurrentCohort::Audit()
+ROOT_INSTRUCTION_FUNCTION 2170054 PioneerQ38ConvBatchShape(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 1976330 DensePartitionRoot::PioneerQ38SigmoidPrecision(float, float&)
+ROOT_INSTRUCTION_FUNCTION 1929571 RecurrentBlock::Private()
+ROOT_INSTRUCTION_FUNCTION 1897472 DensePartitionRoot::PioneerQ38SigmoidDetail::Divide(PioneerAttentionWide, PioneerAttentionWide)
+ROOT_INSTRUCTION_FUNCTION 1715530 PioneerQ38MixedRecurrentRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*) [clone .constprop.0]
+ROOT_INSTRUCTION_FUNCTION 1536746 PioneerQ38GlobalWorkerLayout::BootShape(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 1503605 DensePartitionRoot::ClosedJob(unsigned int const*, unsigned int*, unsigned int, bool)
+ROOT_INSTRUCTION_FUNCTION 1458434 PioneerQ38MixedRecurrentRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 1276582 DensePartitionRoot::Admit(unsigned int const*, unsigned int*, unsigned int)
+BEGIN actual persistent token0/layer1/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer1 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer1 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer1 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer1 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer1 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer1 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer1 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer1 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer1/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions1124901829/reservedStack6496/writtenStack6488
+ROOT_INSTRUCTION_PROFILE total1124901829/functions104/EXCLUSIVE actual PCs incl SIMULATED polling/NOT physical cycles or token speed
+ROOT_INSTRUCTION_FUNCTION 537391146 q38_layer_return_recurrent_seal
+ROOT_INSTRUCTION_FUNCTION 134532560 DensePartitionRoot::Seal(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 124256442 DensePartitionRoot::Transfer(unsigned int const*, unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+ROOT_INSTRUCTION_FUNCTION 92476488 DensePartitionRoot::Quiet()
+ROOT_INSTRUCTION_FUNCTION 85923376 DensePartitionRoot::FrameSeal(unsigned int) [clone .part.0]
+ROOT_INSTRUCTION_FUNCTION 23627242 DensePartitionRoot::PioneerQ38SigmoidDetail::ExpReduced(float, int&)
+ROOT_INSTRUCTION_FUNCTION 21356156 MixedRecurrentCohort::Packet(unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+ROOT_INSTRUCTION_FUNCTION 13831324 PioneerGraphDividePositive(float, float)
+ROOT_INSTRUCTION_FUNCTION 11875934 PioneerQ38ProjectionQuantize(unsigned int, float const*, unsigned int, PioneerQ38ProjectionInput*) [clone .constprop.0]
+ROOT_INSTRUCTION_FUNCTION 7795397 Projection::Run(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 6193408 MixedRecurrentCohort::Audit()
+ROOT_INSTRUCTION_FUNCTION 4338202 PioneerQ38ConvBatchShape(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 3956988 DensePartitionRoot::PioneerQ38SigmoidPrecision(float, float&)
+ROOT_INSTRUCTION_FUNCTION 3794944 DensePartitionRoot::PioneerQ38SigmoidDetail::Divide(PioneerAttentionWide, PioneerAttentionWide)
+ROOT_INSTRUCTION_FUNCTION 3549518 RecurrentBlock::Private()
+ROOT_INSTRUCTION_FUNCTION 3431692 PioneerQ38MixedRecurrentRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*) [clone .constprop.0]
+ROOT_INSTRUCTION_FUNCTION 3342643 PioneerQ38GlobalWorkerLayout::BootShape(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 3108405 DensePartitionRoot::ClosedJob(unsigned int const*, unsigned int*, unsigned int, bool)
+ROOT_INSTRUCTION_FUNCTION 2917500 PioneerQ38MixedRecurrentRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 2544396 Projection::InputsSeal(unsigned int const*)
+BEGIN actual persistent token0/layer2/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer2 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer2 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer2 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer2 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer2 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer2 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer2 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer2 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer2/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions1641472709/reservedStack6496/writtenStack6488
+ROOT_INSTRUCTION_PROFILE total1641472709/functions104/EXCLUSIVE actual PCs incl SIMULATED polling/NOT physical cycles or token speed
+ROOT_INSTRUCTION_FUNCTION 782564655 q38_layer_return_recurrent_seal
+ROOT_INSTRUCTION_FUNCTION 194939160 DensePartitionRoot::Seal(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 180013173 DensePartitionRoot::Transfer(unsigned int const*, unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+ROOT_INSTRUCTION_FUNCTION 134665308 DensePartitionRoot::Quiet()
+ROOT_INSTRUCTION_FUNCTION 124592232 DensePartitionRoot::FrameSeal(unsigned int) [clone .part.0]
+ROOT_INSTRUCTION_FUNCTION 35395638 DensePartitionRoot::PioneerQ38SigmoidDetail::ExpReduced(float, int&)
+ROOT_INSTRUCTION_FUNCTION 32034234 MixedRecurrentCohort::Packet(unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+ROOT_INSTRUCTION_FUNCTION 20753022 PioneerGraphDividePositive(float, float)
+ROOT_INSTRUCTION_FUNCTION 17835845 PioneerQ38ProjectionQuantize(unsigned int, float const*, unsigned int, PioneerQ38ProjectionInput*) [clone .constprop.0]
+ROOT_INSTRUCTION_FUNCTION 11692678 Projection::Run(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 9290112 MixedRecurrentCohort::Audit()
+ROOT_INSTRUCTION_FUNCTION 6507510 PioneerQ38ConvBatchShape(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 5934376 DensePartitionRoot::PioneerQ38SigmoidPrecision(float, float&)
+ROOT_INSTRUCTION_FUNCTION 5692416 DensePartitionRoot::PioneerQ38SigmoidDetail::Divide(PioneerAttentionWide, PioneerAttentionWide)
+ROOT_INSTRUCTION_FUNCTION 5169381 RecurrentBlock::Private()
+ROOT_INSTRUCTION_FUNCTION 5148540 PioneerQ38GlobalWorkerLayout::BootShape(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 5146876 PioneerQ38MixedRecurrentRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*) [clone .constprop.0]
+ROOT_INSTRUCTION_FUNCTION 4713205 DensePartitionRoot::ClosedJob(unsigned int const*, unsigned int*, unsigned int, bool)
+ROOT_INSTRUCTION_FUNCTION 4375588 PioneerQ38MixedRecurrentRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 3825135 PioneerQ38GlobalWorkerLayout::JobShape(unsigned int const*, unsigned int const*, unsigned int, unsigned int)
+BEGIN actual persistent token0/layer3/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer3 matrix1 role5/actual quantized input/same workers
+OBSERVED connected layer3 matrix2 role6/actual quantized input/same workers
+OBSERVED connected layer3 matrix3 role7/actual quantized input/same workers
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420325 SP6ee70
+PASS ACTUAL KV fault1/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420325 SP6ee70
+PASS ACTUAL KV fault2/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420324 SP6ee70
+PASS ACTUAL KV fault3/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420324 SP6ee60
+PASS ACTUAL KV fault4/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420324 SP6ee70
+PASS ACTUAL KV fault5/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420324 SP6ee60
+PASS ACTUAL KV fault6/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420325 SP6ee70
+PASS ACTUAL KV fault7/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420325 SP6ee70
+PASS ACTUAL KV fault8/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420325 SP6ee70
+PASS ACTUAL KV fault9/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+PASS ACTUAL 9 KV append faults AFTER genuine first on-card row write/from SAME executed ROOT+119 histories/no forged processor state/parent unchanged;not whole-token or terminal proof
+OBSERVED connected layer3 matrix4 role10/actual quantized input/same workers
+OBSERVED connected layer3 matrix5 role2/actual quantized input/same workers
+OBSERVED connected layer3 matrix6 role3/actual quantized input/same workers
+OBSERVED connected layer3 matrix7 role4/actual quantized input/same workers

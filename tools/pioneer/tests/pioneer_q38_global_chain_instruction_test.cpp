@@ -88,7 +88,16 @@ struct GlobalChainPeer:NewCohortPeer {
   densePackets++;phasePackets++;countBase[0]++;countBase[1]+=n/64;countBase[2]++;countBase[3]++;countBase[6]++;
  }
 };
+#ifdef PIONEER_Q38_TEST_FAST_ROOT_MEMORY
+#include "PioneerQ38RootWordMap.h"
+#endif
 struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
+#ifdef PIONEER_Q38_TEST_FAST_ROOT_MEMORY
+ // Shadow ONLY this ROOT fixture's initially empty base word map. All
+ // execution goes through the unchanged virtual Load/Store/RootWord hooks.
+ // Worker storage,DRAM,ROM,PC,registers,clocks and scheduling are unchanged.
+ PioneerQ38RootWordMap memory;
+#endif
  using RPlan=PioneerQ38MixedRecurrentBlockPlan;
  struct Span {unsigned route,base,bytes,type,k,first;};
  struct RetainedState {

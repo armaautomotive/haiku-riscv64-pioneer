@@ -6,15 +6,19 @@
 #ifndef PIONEER_Q38_WHOLE_ORIGINAL_BYTES_H
 #define PIONEER_Q38_WHOLE_ORIGINAL_BYTES_H
 #include <cstdint>
+#include "pioneer_q38_original_rows.h"
 // Separate TEST-only source TU. Only losslessly permuted original learned
 // bytes/padding; NO CPU model products, mutable state, native IO or ownership.
-class WholeModelOriginalBytes {
+class WholeModelOriginalBytes:public Q38OriginalRows {
  struct Original;Original* original;
 public:
  WholeModelOriginalBytes();~WholeModelOriginalBytes();
  WholeModelOriginalBytes(const WholeModelOriginalBytes&)=delete;
  WholeModelOriginalBytes& operator=(const WholeModelOriginalBytes&)=delete;
- bool Open(const char*);bool Ready()const;bool PrepareFork();
+ bool Open(const char*);bool Ready()const override;bool PrepareFork();
+ uint64_t Epoch()const override;
+ bool Describe(unsigned,Q38OriginalTensor&)const override;
+ bool ReadOriginal(unsigned,uint64_t,unsigned,void*,unsigned)override;
  // One-way TEST byte-source revocation. No descriptor reopen/recovery or
  // device cleanup is implied; cached learned bytes become unreadable too.
  void Revoke();

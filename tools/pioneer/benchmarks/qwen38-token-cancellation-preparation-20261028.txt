@@ -159,3 +159,15 @@ workers,not a transplanted old positive first-layer history. Keep following
 those handles;head/committed/zero-request tests remain owed. No new native,
 physical,Work/Assistant or throughput claim. See the FP32 qualification
 report and qwen38-original-whole-token-integration-20261028.txt.
+
+21:22UTC terminal: combined FP32 --layer10985/85878 BOTH direct0
+----------------------------------------------------------------
+Both independently execute bootstrap+the whole first layer from RESET,
+ROOT608842648/reserved6496/written6488,all4 actual terminal-corruption
+children and unchanged positive parent's119 real STOPs/exact stage1 receipt.
+Committed tokens0/slot0/head0/layers1/reason3;no invented model token or
+cleanup/reuse claim. All failed cases remain NoC+peer-write inert2048 and
+fault-side in-flight workers UNKNOWN. SYNTHETIC raw inputs only;not original
+model/head/committed/zero-request/full combined/native/physical/Work/TPS.
+Logs qwen38-token-cancel-f32-layer-{main,clean}-20261028.log. The remaining
+full goal is unchanged;see whole CPU reference/root-storage follow-up.

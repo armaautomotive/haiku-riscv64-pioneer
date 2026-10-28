@@ -101,3 +101,21 @@ Actual release gates still owed
 5. Connect no-CPU-reference Work mode to Assistant,separate from validation;
    optimize real bottlenecks and benchmark sustained27B generation honestly.
 No new model file/weights or unrelated llama.cpp/FlashNext work is in Git.
+
+21:59UTC follow-up: first real layers,independent CPU controls,host storage
+------------------------------------------------------------------------
+Original68871/11982 both complete real layers0..2 with identical executed
+ROOT profiles;main68871 also passes all9 actual KV append faults and enters
+dense layer3 FFN. No full original token yet. Distinct complete CPU reference
+main40136/clean34882 BOTH0 computes all64+vocab EACH for3 positions;all three
+2.3MB CPU-private traces are byte-identical between builds. They are NOT
+emitted/P100A results or a numerical comparison. No expected CPU data is
+supplied to emitted execution. See
+ qwen38-whole-cpu-reference-and-root-storage-20261028.txt
+for exact math/role/source tests,trace digests,actual-PC hot spots and scopes.
+Normal46391/optional-host-storage4576 original bootstrap BOTH0 with identical
+4749932 ROOT instructions and full logs. New fast-storage full40968 runs
+fresh from RESET;old histories remain unchanged. No physical speed claim.
+Combined FP32+cancellation10985/85878 BOTH now0 at actual first-layer+
+4terminal faults+119STOP;head/committed/zero-request remain unproven.
+Full goal stays ACTIVE;last physical0.207893161tok/s,20 UNMET.
