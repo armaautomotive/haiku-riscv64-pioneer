@@ -1,5 +1,34 @@
 # Native build status
 
+## Current: private native frozen-data path qualified for offline tests
+
+October 28, 2026. The genuine renamed NODRV execution owner now has an opt-in
+private inline snapshot of canonical/prefix DATA. Capture requires two full
+original checks; every lookup compares all bytes of both same objects and
+the current source binding. All mutable native lifetime/device guards remain
+live. This is not a cached launch permission or the host prototype promoted
+to a kernel. Physical DEBUG73/client/Work selection is explicitly refused.
+
+Main/clean SDK objects match `7dfd9969`, max new kernel frame 784 B. The 219
+role/access gates, six actual-control layout checks, preflight and 12 genuine
+prepared-owner fault cases pass in both trees. Feature-off control `4a8a0a01`
+and linked physical73 `4ae7b6ea` remain byte-identical. Nothing is installed.
+Positive frozen full-control runtime is still running, not passed.
+
+The older feature-off native readback and actual complete control runtimes
+have now both finished with exit 0 in main/clean, including full restoration,
+fresh final END and disposal before caller copy. These use simulated raw/OS
+endpoints, NOT original-weight/physical/full-model proof. Original native
+readback and original public-control numerical runs are still live; the latter
+are now actually executing without `--build-only`. Older BUILD ONLY/LIVE labels
+below are dated snapshots, superseded by this checkpoint.
+
+Next: finish those exact runtime handles, qualify the physical test path,
+then connect dense3/all64/persistent state/output/sampling/Work and Assistant.
+Last whole-model rate is still **0.207893161 tokens/sec**; full offload and
+20 tokens/sec remain unmet. Evidence and exact running handles:
+[native frozen-data checkpoint](benchmarks/qwen38-recurrent-prefix-native-frozen-data-20261028.txt).
+
 ## Latest host-only optimization: exact immutable-data mirror qualified offline
 
 October28UTC2026. A separate HOST-ONLY plan-mirror experiment passes main/

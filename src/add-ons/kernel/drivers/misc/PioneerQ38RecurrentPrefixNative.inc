@@ -42,7 +42,15 @@ bool PioneerSessionIO::RecurrentPrefixBaseScope(){
   if(c->q38Dispatch && c->q38Dispatch->rootRunning && !state->ControlsCohort(c->q38Dispatch))return false;
   if(state->phase>=PioneerQ38RecurrentPrefixNativeState::MemoryPreparing
    && (!state->memory || !state->plan || !c->q38DispatchRoutes || c->q38Dispatch->prepared!=120
-    || !state->plan->MatchesBinding(m->plan,m->bank,m->identity,&c->q38Dispatch->authority.source[0][0])))return false;
+    ||
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FROZEN_PLAN
+    !(state->execution && state->execution->Claimed()
+     ? state->execution->MatchesFrozenPlanBinding(m->plan,*state->plan,m->bank,m->identity,&c->q38Dispatch->authority.source[0][0])
+     : state->plan->MatchesBinding(m->plan,m->bank,m->identity,&c->q38Dispatch->authority.source[0][0]))
+#else
+    !state->plan->MatchesBinding(m->plan,m->bank,m->identity,&c->q38Dispatch->authority.source[0][0])
+#endif
+    ))return false;
  }else if(runtimeCore || c->q38Dispatch || c->q38DispatchRoutes || fleetEnabled || q38RecurrentPrefixMemoryMapAttempted)return false;
  const auto& clock=c->q38Clock.Snapshot();
  return c->q38Clock.RequiresExplicitEnd() && clock.state==TT_ARC_CLOCK_BUSY_VERIFIED && clock.busy_requested && clock.busy_acknowledged

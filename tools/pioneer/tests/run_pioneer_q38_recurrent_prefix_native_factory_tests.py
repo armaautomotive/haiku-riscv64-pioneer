@@ -18,9 +18,15 @@ if len(sys.argv) in (7,8) and sys.argv[5] in ('--original-model','--original-mod
  readback=original_control or sys.argv[5]=='--original-model-readback'
  options=['--control-routing-execute' if original_routed else '--control-execute'] if original_control else ['--fresh-readback-end' if readback else '--fresh-execute-end']
 else:
- assert len(sys.argv) in (5,6) and (len(sys.argv)==5 or sys.argv[5] in ('--execute','--faults','--fresh-held-end','--fresh-execute-end','--fresh-readback-end','--control-preflight','--control-execute','--control-routing-preflight','--control-routing-execute'))
+ assert len(sys.argv) in (5,6) and (len(sys.argv)==5 or sys.argv[5] in ('--execute','--faults','--fresh-held-end','--fresh-execute-end','--fresh-readback-end','--control-preflight','--control-execute','--control-routing-preflight','--control-routing-execute','--frozen-control-preflight','--frozen-control-execute','--frozen-control-refusals','--frozen-layout-gates'))
  options=sys.argv[5:]
  readback=options==['--fresh-readback-end']
+layout=options==['--frozen-layout-gates']
+refusals=options==['--frozen-control-refusals']
+frozen=layout or bool(options) and options[0].startswith('--frozen-control-')
+if layout:options=['--control-preflight']
+elif refusals:options=['--control-execute']
+elif frozen:options=['--control-'+options[0].split('--frozen-control-',1)[1]]
 control=bool(options) and options[0].startswith('--control-')
 routed_control=control and options[0].startswith('--control-routing-')
 fresh=control or bool(options) and options[0].startswith('--fresh-')
@@ -42,6 +48,8 @@ defines.update({key:'pioneer_prefix_factory_test_'+key for key in ('api_version'
 if fresh:defines.update({'PIONEER_Q38_RECURRENT_PREFIX_END_FIXTURE':'1','PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE':'1','PIONEER_Q38_RECURRENT_PREFIX_FRESH_FINAL_TEST':'1'})
 if readback:defines['PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK']='1'
 if control:defines['PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_CONTROL_COMPILE_ONLY']='1'
+if frozen:defines['PIONEER_Q38_RECURRENT_PREFIX_FROZEN_PLAN']='1'
+if refusals:defines['PIONEER_Q38_RECURRENT_PREFIX_FROZEN_REFUSALS_TEST']='1'
 if routed_control:defines['PIONEER_Q38_RECURRENT_PREFIX_ROUTED_CONTROL_TEST']='1'
 if original_model:defines['PIONEER_Q38_RECURRENT_PREFIX_ORIGINAL_NATIVE_TEST']='1'
 source=(kernel/'tenstorrent_pci_probe.cpp').read_text()
@@ -123,6 +131,22 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qpx-native-factory-',dir='/priv
  transport=base/'transport.o';binary=base/'test'
  subprocess.run([*common,*flags,'-c',str(here/'pioneer_q38_recurrent_prefix_native_transport.cpp'),'-o',str(transport)],check=True)
  native_flags=[*['-D'+k+'='+v for k,v in sorted(defines.items())],'-I'+str(base),'-I'+str(kernel)]
+ if layout:
+  include='#include "'+str(here/'pioneer_q38_recurrent_prefix_validation_control_test.cpp')+'"\n'
+  owner='#include "'+str(kernel/'PioneerQ38RecurrentPrefixOwner.h')+'"\n';feature='PIONEER_Q38_RECURRENT_PREFIX_FROZEN_PLAN';checks=0
+  for enabled in (False,True):
+   selected=[a for a in native_flags if not a.startswith('-D'+feature+'=')]
+   if enabled:selected+=['-D'+feature+'=1']
+   def syntax(tail,expected):
+    result=subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-Wall','-Wextra','-Werror','-ffp-contract=off',*selected,'-fsyntax-only','-x','c++','-'],
+     input=include+tail,text=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
+    if expected is None:assert result.returncode==0,result.stderr
+    else:assert result.returncode!=0 and expected in result.stderr,result.stderr
+   syntax('',None);checks+=1
+   syntax(('#undef '+feature+'\n' if enabled else '#define '+feature+' 1\n')+owner,'late frozen-prefix selection');checks+=1
+   syntax('#undef '+feature+'\n#define '+feature+' 0\n'+owner,'Exact private frozen-prefix-data selection required');checks+=1
+  print('PASS actual full control/native owner syntax/2 valid selections+4 reached late frozen-layout/defined0 refusals/checks'+str(checks)+';TYPECHECK ONLY,NO native RUN/data capture/physical permission')
+  sys.exit(0)
  sources=[here/('pioneer_q38_recurrent_prefix_validation_control_test.cpp' if control else 'pioneer_q38_recurrent_prefix_native_factory_test.cpp'),here/'pioneer_q38_embedding_execution_bridge.cpp',
   *([here/'pioneer_q38_mixed_live_native_clock.cpp',here/'pioneer_q38_mixed_live_final_audit.cpp'] if fresh else [])]
  if original_model:

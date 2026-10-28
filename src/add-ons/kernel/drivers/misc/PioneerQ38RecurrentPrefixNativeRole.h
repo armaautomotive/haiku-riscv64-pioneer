@@ -73,4 +73,9 @@
 #error Exact separate prefix validation-readback selection required,including defined0
 #endif
 #endif
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FROZEN_PLAN
+#if PIONEER_Q38_RECURRENT_PREFIX_FROZEN_PLAN != 1
+#error Exact optional private frozen-prefix-data selection required,including defined0
+#endif
+#endif
 #endif // physical selection OR exact renamed NODRV,never both

@@ -1,4 +1,14 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FROZEN_PLAN
+#include "PioneerQ38RecurrentPrefixFrozenPlanRole.h"
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_OWNER_H
+static_assert(TT_Q38_RECURRENT_PREFIX_FROZEN_PLAN_SELECTION==1,"late frozen-prefix selection change");
+#endif
+#else
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_OWNER_H
+static_assert(TT_Q38_RECURRENT_PREFIX_FROZEN_PLAN_SELECTION==0,"late frozen-prefix selection removal");
+#endif
+#endif
 #if defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_REFERENCE) \
  || defined(PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_REFERENCE) || defined(PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_READBACK)
 #error Prefix execution owner cannot import CPU oracle or old readback roles,including defined0
@@ -15,6 +25,13 @@ static_assert(TT_Q38_RECURRENT_PREFIX_READBACK_SELECTION==0,"late prefix readbac
 #endif
 #ifndef PIONEER_Q38_RECURRENT_PREFIX_OWNER_H
 #define PIONEER_Q38_RECURRENT_PREFIX_OWNER_H
+enum {TT_Q38_RECURRENT_PREFIX_FROZEN_PLAN_SELECTION=
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FROZEN_PLAN
+ 1
+#else
+ 0
+#endif
+};
 enum {TT_Q38_RECURRENT_PREFIX_READBACK_SELECTION=
 #ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK
  1
@@ -26,6 +43,9 @@ enum {TT_Q38_RECURRENT_PREFIX_READBACK_SELECTION=
 #include "PioneerQ38RecurrentPrefixReadbackPlan.h"
 #endif
 #include "PioneerQ38RecurrentPrefixMemory.h"
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FROZEN_PLAN
+#include "PioneerQ38RecurrentPrefixFrozenPlan.h"
+#endif
 #include "../../../../../tools/pioneer/PioneerQ38RecurrentPrefixCounters.h"
 // DISTINCT autonomous QPX1 owner algorithm; NOT the old QRB1 owner. NO old dense owner/role alias,CPU numeric
 // products,public post-launch restore hint,model/token/state-slot commit.
@@ -41,6 +61,9 @@ struct PioneerQ38RecurrentPrefixResult {
  uint32_t armed=0,released=0,rootStarts=0,rootHolds=0,packets=0;
 };
 class PioneerQ38RecurrentPrefixOwner {
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FROZEN_PLAN
+ PioneerQ38RecurrentPrefixFrozenPlan frozenPlan;
+#endif
  const tt_dram_samples_result* proof=nullptr;PioneerResidentBanks* banks=nullptr;PioneerQ38DispatchLease* cohort=nullptr;
  PioneerQ38RecurrentPrefixMemory* memory=nullptr;const PioneerQ38CanonicalModelPlan* canonical=nullptr;
  const PioneerQ38RecurrentPrefixPlan* plan=nullptr;PioneerQ38GdnIdentity identity={};const uint8_t* ledger=nullptr;
@@ -52,7 +75,13 @@ class PioneerQ38RecurrentPrefixOwner {
   if(!started || unsafe || closed || !proof || !banks || !cohort || !memory || !canonical || !plan || !ledger || !identity.Valid()
    || !banks->Matches(*proof) || memory->unsafe || memory->closed || !memory->installed || memory->launched!=launched
    || memory->proof!=proof || memory->banks!=banks || memory->cohort!=cohort || memory->plan!=canonical || memory->ledger!=ledger
-   || !(memory->identity==identity) || !plan->MatchesBinding(*canonical,plan->Bank(),identity,&cohort->authority.source[0][0]) || cohort->unsafe || cohort->closed || cohort->prepared!=120
+   || !(memory->identity==identity) ||
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FROZEN_PLAN
+   !MatchesFrozenPlanBinding(*canonical,*plan,plan->Bank(),identity,&cohort->authority.source[0][0])
+#else
+   !plan->MatchesBinding(*canonical,plan->Bank(),identity,&cohort->authority.source[0][0])
+#endif
+   || cohort->unsafe || cohort->closed || cohort->prepared!=120
    || cohort->bootAttempted || cohort->booted || cohort->rootRunning!=running[0])return false;
   for(unsigned w=0;w<120;w++){
    const auto& n=cohort->worker[w];const auto& s=n.master?*n.master:n.store;
@@ -243,6 +272,12 @@ public:
  PioneerQ38RecurrentPrefixOwner(const PioneerQ38RecurrentPrefixOwner&)=delete;
  PioneerQ38RecurrentPrefixOwner& operator=(const PioneerQ38RecurrentPrefixOwner&)=delete;
  bool Unsafe()const{return unsafe;}bool Closed()const{return closed;}bool Claimed()const{return started;}
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FROZEN_PLAN
+ bool MatchesFrozenPlanBinding(const PioneerQ38CanonicalModelPlan& c,const PioneerQ38RecurrentPrefixPlan& p,unsigned bank,
+  const PioneerQ38GdnIdentity& id,const uint32_t* sources)const{
+  return started && !unsafe && canonical==&c && plan==&p && frozenPlan.Matches(c,p) && p.MatchesFrozenBindingValues(c,bank,id,sources);
+ } // necessary unchanged DATA only,even after known-clean CLOSE;NEVER an IO/ready grant
+#endif
  void Fault(){unsafe=true;if(memory)memory->Fault();} // MEMORY ONLY,never promotes cleanup
  bool MatchesNativeOwner(const PioneerQ38RecurrentPrefixMemory& m,const PioneerQ38RecurrentPrefixPlan& p)const{return memory==&m && plan==&p && Bound();}
  bool MatchesCohort(const PioneerQ38DispatchLease* c)const{return cohort==c && Bound();}
@@ -264,6 +299,9 @@ public:
    || !mem.MatchesNativeOwner(dram,owner,participants,c,id,learned,pages) || r.version!=1)return false;
   const auto* words=reinterpret_cast<const uint32_t*>(&r);for(unsigned i=1;i<sizeof(r)/4;i++)if(words[i])return false;
   started=true;proof=&dram;banks=&owner;cohort=&participants;memory=&mem;canonical=&c;plan=&operation;identity=id;ledger=learned;r.started=1;r.phase=1;
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FROZEN_PLAN
+  if(!frozenPlan.Capture(c,operation))return Fail(io,r);
+#endif
   for(unsigned w=0;w<120;w++){
    resets[w]=0x47800;for(unsigned i=0;i<8;i++)counts[w][i]=mem.counters[w][i];for(unsigned i=0;i<10;i++)command[w][i]=mem.command[w][i];
   }
@@ -390,5 +428,10 @@ public:
  }
 #endif
 };
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FROZEN_PLAN
+static_assert(sizeof(PioneerQ38RecurrentPrefixOwner)>sizeof(PioneerQ38RecurrentPrefixFrozenPlan)+24576
+ && sizeof(PioneerQ38RecurrentPrefixOwner)<sizeof(PioneerQ38RecurrentPrefixFrozenPlan)+65536,"execution proof plus exact snapshot HEAP ONLY");
+#else
 static_assert(sizeof(PioneerQ38RecurrentPrefixOwner)>24576 && sizeof(PioneerQ38RecurrentPrefixOwner)<65536,"execution proof state HEAP ONLY");
+#endif
 #endif

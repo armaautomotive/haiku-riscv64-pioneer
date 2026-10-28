@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FROZEN_PLAN
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38RecurrentPrefixFrozenPlanRole.h"
+#endif
 #ifndef PIONEER_Q38_RECURRENT_PREFIX_PLAN_H
 #define PIONEER_Q38_RECURRENT_PREFIX_PLAN_H
 #include "PioneerQ38MixedRecurrentBlockPlan.h"
@@ -64,6 +67,13 @@ public:
   for(unsigned w=0;w<120;w++)for(unsigned i=0;i<16;i++)if(boots[w][16+i]!=sources[w*16+i])return false;
   return Matches(c); // immutable relation ONLY; never a native source owner
  }
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FROZEN_PLAN
+ bool MatchesFrozenBindingValues(const PioneerQ38CanonicalModelPlan& c,unsigned selected,const PioneerQ38GdnIdentity& id,const uint32_t* sources)const{
+  if(!ready || canonical!=&c || bank!=selected || !(identity==id) || !id.Valid() || !sources)return false;
+  for(unsigned w=0;w<120;w++)for(unsigned i=0;i<16;i++)if(boots[w][16+i]!=sources[w*16+i])return false;
+  return true; // DATA ONLY;caller must ALSO own its exact private frozen comparison
+ }
+#endif
  bool LearnedPagesPresent(const uint8_t* ledger,unsigned count)const{
   if(!canonical || !Matches(*canonical))return false;
   for(const auto& layer:layers)if(!layer.LearnedPagesPresent(ledger,count))return false;

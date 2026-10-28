@@ -21,7 +21,7 @@ def check(definitions,accept,tail=''):
                        text=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
  assert (result.returncode==0)==accept,(accept,result.stderr)
 check(base,True);refused=0
-for feature in ('PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE','PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK'):
+for feature in ('PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE','PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK','PIONEER_Q38_RECURRENT_PREFIX_FROZEN_PLAN'):
  check({**base,feature:'1'},True);check(base,True,'#define '+feature+' 1\n'+include)
  for value in ('0','2'):
   check({**base,feature:value},False);check(base,False,'#define '+feature+' '+value+'\n'+include);refused+=2

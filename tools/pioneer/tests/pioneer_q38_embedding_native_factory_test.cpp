@@ -96,6 +96,9 @@ struct PioneerSessionIO:ProjectionZeroIO,PioneerHostPageIO
  ,DecoderHistoryBytes
 #endif
  {
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FROZEN_REFUSALS_TEST
+ void CheckFrozenPlanRefusals(PioneerQ38RecurrentPrefixResult&);
+#endif
 #ifdef PIONEER_Q38_RESIDENT_DECODER_NATIVE
  bool DecoderCallScopeMatches();bool ConvHistoryZeroBeforeCohort();bool ConvHistoryZeroOtherCoresHeld();
  bool ResidentDecoderScope(const PioneerQ38ResidentDecoderOwner&,const PioneerQ38ProjectionGraphOwner&,const PioneerQ38ConvHistoryBanks&);

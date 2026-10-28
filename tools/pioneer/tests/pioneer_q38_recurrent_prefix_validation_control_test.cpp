@@ -25,6 +25,34 @@ static status_t user_memcpy(void* output,const void* input,size_t bytes){
  if(copies==failCopy)return B_BAD_VALUE;memcpy(output,input,bytes);return B_OK;
 }
 static uint64 system_time(){static uint64 time=100;return ++time;}
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FROZEN_REFUSALS_TEST
+void PioneerSessionIO::CheckFrozenPlanRefusals(PioneerQ38RecurrentPrefixResult& result){
+ auto& c=*q38MutableContext;auto& m=*c.q38EmbeddingModel;auto* state=c.q38RecurrentPrefixNative;
+ assert(state && state->execution && state->execution->Claimed() && state->plan && recurrentTransport && !state->Unsafe());
+ auto data=[&]{return state->execution->MatchesFrozenPlanBinding(m.plan,*state->plan,m.bank,m.identity,&c.q38Dispatch->authority.source[0][0]);};
+ assert(data());
+ for(unsigned bad=0;bad<12;bad++)RecurrentNativeFork([&]{
+  auto physical=recurrentTransport->Touches(),before=touches,resets=recurrentTransport->Resets();
+  if(bad==0)const_cast<uint32_t*>(state->plan->Layer(0)->Recipe(0))[80]^=1;
+  if(bad==1)const_cast<uint32_t*>(state->plan->Layer(2)->Conv())[PioneerQ38MixedRecurrentCohortLayout::ConvWords-1]^=1;
+  if(bad==2)const_cast<uint32_t*>(state->plan->Layer(2)->Gdn())[PioneerQ38MixedRecurrentCohortLayout::GdnWords-1]^=1;
+  if(bad==3)const_cast<uint32_t*>(state->plan->Boot(119))[31]^=1;
+  if(bad==4)const_cast<PioneerQ38CanonicalPart*>(m.plan.Part(m.plan.Count()-1))->bytes^=1;
+  if(bad==5)c.q38Dispatch->authority.source[119][15]^=1;
+  if(bad==6)c.hashes=nullptr;if(bad==7)currentTeam++;if(bad==8)c.q38Clock.Quarantine();
+  if(bad==9)c.bulkHost.ready=false;if(bad==10)sReloadGeneration++;if(bad==11)runtimeMapped=false;
+  assert(data()==(bad>=6)); // unchanged geometry ALONE never grants the dynamic source scope
+  assert(!RunQ38RecurrentPrefixNativeExecution(c,result) && state->Unsafe() && c.dispatchOwnerRetained
+   && c.banks.Quarantined() && c.q38Clock.quarantined && sColdRecoveryRequired);
+  assert(touches==before && recurrentTransport->Touches()==physical && recurrentTransport->Resets()==resets);
+  assert(!RunQ38RecurrentPrefixNativeExecution(c,result) && !RecurrentPrefixBaseScope()
+   && touches==before && recurrentTransport->Touches()==physical && recurrentTransport->Resets()==resets);
+ });
+ puts("PASS ACTUAL private frozen owner captured after genuine QPE1+672/336init/held maps+plan+prepare;6 changed geometry/current-source+6 unchanged-data BUT invalid hash/team/clock/host/generation/map faults retain ALL owners and fence RUN/retry before ANY later raw IO/reset;NO caller ready facade");
+ puts("TEST-ONLY refusal scenario exits with parent genuinely prepared,NOT RUN/positive readback/full END/disposal/physical qualification;NO closed state manufactured");
+ fflush(nullptr);_exit(0);
+}
+#endif
 static bool ObserveRawThenPrefixHeld(PioneerStoreContext& c,PioneerQ38RecurrentPrefixMemoryResult& result){
  auto& io=c.io;auto* transport=io.recurrentTransport;
  assert(transport && c.q38EmbeddingModel->Closed() && c.q38RecurrentPrefixNative->InitializationsClosed(c.banks,c.baseline.baseline.baseline.baseline.dram));
@@ -40,7 +68,12 @@ static bool ObserveRawThenPrefixHeld(PioneerStoreContext& c,PioneerQ38RecurrentP
  return PrepareQ38RecurrentPrefixNativeHeld(c,result);
 } // only actual initialized output BYTES/registers,never a ready/phase setter
 static bool ObserveRawThenPrefixExecute(PioneerStoreContext& c,PioneerQ38RecurrentPrefixResult& result){
- c.io.ConfigureRecurrentPrefixTransport();c.io.recurrentTransport->Observe(result);return PrepareQ38RecurrentPrefixNativeExecution(c,result);
+ c.io.ConfigureRecurrentPrefixTransport();c.io.recurrentTransport->Observe(result);
+ bool okay=PrepareQ38RecurrentPrefixNativeExecution(c,result);
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_FROZEN_REFUSALS_TEST
+ if(okay)c.io.CheckFrozenPlanRefusals(result);
+#endif
+ return okay;
 }
 static bool ObservePrefixReadbackThenClose(PioneerStoreContext& c,PioneerQ38RecurrentPrefixResult& execution,PioneerQ38RecurrentPrefixMemoryResult& memory,
  uint32_t* values,unsigned words,PioneerQ38RecurrentPrefixReadbackResult& readback){

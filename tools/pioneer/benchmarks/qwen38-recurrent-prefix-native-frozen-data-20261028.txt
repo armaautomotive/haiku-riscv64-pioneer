@@ -1,0 +1,97 @@
+Qwen 27B: private native frozen-data qualification checkpoint
+2026-10-28 UTC. Offline compilation and simulated execution, NOT a card run.
+
+Implemented
+-----------
+The separate QRPNODRV execution owner can opt into an inline private snapshot
+of the SAME canonical and three-layer prefix objects. Only the genuine owner
+can construct, capture or query it. Capture requires two full original plan
+checks plus exact byte equality. Every later lookup compares all 287336
+canonical bytes and 4180232 prefix bytes; it also checks the current 1920
+source words and binding values. There is no digest or caller-ready shortcut.
+
+Only the expensive immutable geometry reconstruction is replaced after the
+execution owner has claimed the operation. FD/team/thread, source/hash/model,
+generation, mapping, clock, host, bank/cohort and live NoC/PCI/reset checks
+remain mandatory. Invalid captured data cannot fall back to recapture.
+Known-clean close does not make the DATA predicate an IO permission.
+
+This is NOT the host-only prototype enabled in a driver. Its separate private
+header requires the exact renamed NODRV role and explicitly refuses physical
+DEBUG73, client, CPU oracle, image and Work aliases. DEBUG73 now independently
+refuses the frozen flag, including defined0. Late owner-layout selection or
+removal fails compilation. The refusal-test hook cannot enter a kernel build.
+The physical tags, namespace and installed driver are unchanged.
+
+Completed main/clean qualification
+----------------------------------
+- Private frozen-role/access gates: 219 each, direct final rerun exits 0/0.
+- Existing NODRV role gates: 334 each. Existing physical-role gates: 572 each.
+- Actual full-control syntax: two valid layouts and four reached late-layout
+  or defined0 refusals. Six checks each; typecheck only, not runtime capture.
+- Full-control preflight: 336 missing learned endpoints and 96 malformed
+  header/copy/team/context cases, zero model publication or raw IO.
+- Genuine prepared-owner refusals: 12 reached COW failures each. Six changes
+  to geometry/current source fail the DATA predicate. Six unchanged-data but
+  invalid hash/team/clock/host/generation/map cases still fence RUN/retry,
+  retain all resources and perform zero following raw IO or resets.
+  Both exit 0; identical 10-line stdout SHA-256:
+  1f00d4af16ebd9fe1c208f44632e6530bbcd298eb449c27514ab16152bc0fba8
+  The parent exits genuinely prepared; this scenario is NOT positive RUN,
+  readback, END or disposal qualification and manufactures no closed state.
+- Real Haiku SDK instantiates Capture/Matches and the complete native/control
+  bodies. Both exits 0, exact object:
+  7dfd996966d8766cccbe7ad12d6fba64841b1dbea21d587ad1405f52cfe5b938
+  Max new kernel frame 784 bytes, within the unchanged 2048-byte limit.
+  The inline snapshot makes the heap execution owner 4514872 bytes. The
+  conditional heap-size assertion was corrected, NOT the stack bound.
+- Feature-off actual control remains byte-identical:
+  4a8a0a01f12e7520fe62f649af14faab6a9fa72caa5cec8b3db0f84282d1426e
+  Old65 remains 61faa093. Feature-off linked physical DEBUG73 remains:
+  4ae7b6ea4217c0ee45303aab37e6793c9c17fe18a2acbbece8a7556332f92a3c
+  No conventional driver ABI or private CPU oracle in the NODRV object;
+  five renamed entries remain byte-identical to inert controls.
+
+Newly completed older feature-off runtime gates
+-----------------------------------------------
+Native readback, main 43038 / clean 80015, both direct terminal exit 0:
+same QPE1, 672 GDN and 336 history initializations, genuine three-layer RUN,
+119 STOPs/all 120 holds, five fixed last-layer reads, three reached readback
+failures, full 11406904-word restore plus second proof, actual fresh final
+END, clock/30VM/11PCI/3host release and context destruction. Both 66 lines:
+19cafaa4ceaafb8478af2957670b12e30e06e9d4d074684fc89f6d054c8f0fd9
+
+Actual complete control, main 26684 / clean 93171, both direct exit 0:
+genuine producer/init/three-layer RUN/readback/full restore, release compute
+call seal, locked rebound final END and context destruction BEFORE caller
+copy. Post-END user-copy failure leaves caller data unchanged, performs no
+later card IO/duplicate END and does not quarantine a known-clean context.
+Both 55 lines:
+fb4e75c3beef006b506f7e6c275b3d8b755cc81d03a54c04caec646b4feb8d70
+
+These use simulated OS/MMIO/raw learned endpoints. They are not original-
+weight arithmetic, physical card, all-64-layer, Work or throughput proof.
+
+Still running at the checkpoint (same exact handles; no restart)
+---------------------------------------------------------------
+92911 / 21992: feature-off actual control through public routing.
+58646 / 88658: original-model native three-layer RUN + readback + final END.
+40917 / 17954: private frozen actual complete control, synthetic learned data.
+68414 / 77070: original-model actual control through public routing, WITHOUT
+--build-only. These are now numeric/runtime tests, not just compiled branches.
+All eight were freshly polled live on October 28; no terminal success claimed.
+Only completed logs are archived with this checkpoint.
+
+Next required
+-------------
+Finish the running positive/routed/original gates. Qualify any frozen physical
+variant under its own new exact perimeter/client/helper, never retag DEBUG73.
+Before a physical trial, recheck current sources, pinned artifacts, sole FD
+and live ownership; a CPU timing result grants no reload permission.
+Then validate connected layers on the card and finish dense3/all64, persistent
+KV/GDN/convolution history, whole-token commit, final normalization/vocabulary/
+on-card sampling, persistent no-CPU-reference Work and Assistant integration.
+Measure actual full-model loading, prefill and decode; do not infer speed from
+metadata comparison timing. Last whole-model rate remains 0.207893161 tok/s;
+20 tok/s and full offload are UNMET. Goal ACTIVE. No new physical driver,
+card operation, power/SD/mains, boot, network or Assistant change in this work.

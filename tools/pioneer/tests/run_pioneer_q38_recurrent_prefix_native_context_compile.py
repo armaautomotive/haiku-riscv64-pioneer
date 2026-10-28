@@ -7,8 +7,8 @@ import re
 import runpy
 import subprocess
 import sys
-if len(sys.argv) not in (3,4) or (len(sys.argv)==4 and sys.argv[3] not in ('--final-release','--readback','--control')) or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):raise SystemExit(2)
-final=len(sys.argv)==4;readback=final and sys.argv[3] in ('--readback','--control');control=final and sys.argv[3]=='--control'
+if len(sys.argv) not in (3,4) or (len(sys.argv)==4 and sys.argv[3] not in ('--final-release','--readback','--control','--frozen-control')) or any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ):raise SystemExit(2)
+final=len(sys.argv)==4;readback=final and sys.argv[3] in ('--readback','--control','--frozen-control');control=final and sys.argv[3] in ('--control','--frozen-control');frozen=final and sys.argv[3]=='--frozen-control'
 qualified,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert out.is_absolute() and not out.exists() and not out.is_symlink();out.mkdir(mode=0o700)
 saved=sys.argv[:]
@@ -33,6 +33,7 @@ args[args.index('-c')+1]=str(here/'pioneer_q38_recurrent_prefix_native_context_c
 if final:args+=['-DPIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE=1']
 if readback:args+=['-DPIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK=1']
 if control:args+=['-DPIONEER_Q38_RECURRENT_PREFIX_VALIDATION_CONTROL_COMPILE_ONLY=1']
+if frozen:args+=['-DPIONEER_Q38_RECURRENT_PREFIX_FROZEN_PLAN=1']
 subprocess.run(args,check=True,env=base['clean'])
 frames=base['frames'](obj.with_suffix('.su'));assert frames
 for name,size in frames.items():assert size<=2048 or name in base['previous'] and size<=base['previous'][name],(name,size)
@@ -49,6 +50,7 @@ if readback:required+=('PioneerQ38RecurrentPrefixOwner::CloseImpl(', 'PioneerQ38
  'PioneerQ38RecurrentPrefixOwner::ValidationReadback(', 'PioneerQ38RecurrentPrefixOwner::ReadbackTransferGuard(',
  'CloseQ38RecurrentPrefixNativeValidation(', 'pioneer_recurrent_prefix_context_scoped_readback(')
 if control:required+=('Q38RecurrentPrefixValidationControl(', 'Q38RecurrentPrefixValidationEnd(', 'pioneer_recurrent_prefix_context_control(')
+if frozen:required+=('PioneerQ38RecurrentPrefixFrozenPlan::Capture(', 'PioneerQ38RecurrentPrefixFrozenPlan::Matches(')
 for name in required:assert any(name in key for key in frames),(name,'actual complete implementation must be instantiated')
 sizes=[v for k,v in frames.items() if 'RecurrentPrefix' in k or 'pioneer_recurrent_prefix_context_' in k];assert sizes and max(sizes)<=2048
 tool=str(pathlib.Path(args[0]).parent/'riscv64-unknown-haiku-')
@@ -81,4 +83,5 @@ print('PASS DISTINCT actual native QPX1 execution owner/metadata stage/private R
 if final:print('PASS DISTINCT prefix final-release/native closed+clock+FD/team/thread scope/30VM-only aliases/actual locked END call seal;COMPILE ONLY,NOT runtime or physical qualification')
 if readback:print('PASS DISTINCT prefix validation-only LAST-layer2/request3/fivefixed4096B READs AFTER actual STOP+ALL120holds/owned5120words/restore before publication;NO user pointer,CPU oracle or Work route')
 if control:print('PASS ACTUAL complete prefix control/native producer+3RUN+readback+restore/release compute seal before locked final-END/rebind context+identity/require PCI+host closure before user copy;NODRV COMPILE ONLY,NO public routing or physical selection')
+if frozen:print('PASS PRIVATE owner-INLINE frozen geometry/Capture TWOfull Matches+ALLcanonical/prefix byte checks/current1920 source binding;ALL dynamic native guards retained;renamed NODRV ONLY,NO physical or Work grant')
 print('COMPILE/INSPECT ONLY;private bodies WOULD do IO if invoked. Never linked/installed/invoked;runtime RUN/STOP/HOLD/restoration/full final disposal/physical and model-speed qualification STILL OWED')
