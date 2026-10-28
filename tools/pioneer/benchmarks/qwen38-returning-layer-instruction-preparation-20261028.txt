@@ -78,6 +78,41 @@ checks are STILL OWED. The positive binaries predate the test-only optional
 unchanged. Do not restart or duplicate these live runs for quiet progress.
 Only completed link/refusal logs are archived, not live numerical logs.
 
+Later completion: recurrent MAIN/CLEAN BOTH terminal 0
+-----------------------------------------------------
+24102 / 8799 have now both completed with direct exit 0. Both execute the
+actual new recurrent function through all eight matrices/720 jobs, 120 Conv
+and 96 GDN operations. Independent final5120 checks pass, all119 genuine
+closed worker chains remain retained, actual 122880-byte Conv NEXT history
+is staged on card, and SP/s11 plus all257 parent canaries are restored.
+There is no fabricated standalone JointSummary or host wait/STOP.
+The measured instruction-model stack depth is 6888/8192 bytes INCLUDING the
+test caller's 1280-byte reserved parent area; a future scheduler must qualify
+its own full call path, not infer its peak from the per-function frame bound.
+The now-completed numerical logs are archived separately with this addendum.
+Both 15-line logs have SHA-256:
+579a3912d3b8a9df0f33931a18c18739001294b7d463fe68bf71f547ae807cad
+99515 / 95367 dense runs remain live; their final/return gates are still owed.
+These are synthetic primitive endpoint simulations, NOT original-model,
+native cleanup, connected pipeline, physical card or token-speed proof.
+
+Later completion: dense MAIN/CLEAN BOTH terminal 0
+-------------------------------------------------
+99515 / 95367 now also both complete with direct exit 0. The actual new dense
+returning function passes on-card input, RMS, all seven matrices/723 jobs,
+independent preparation/attention/activation/residual checks and final5120.
+All119 real closed chains remain retained, SP/s11 and all257 parent canaries
+are restored, and no old standalone summary, host wait or STOP is forged.
+Both 15-line completed logs have SHA-256:
+92466a3634a828dad1cf10c3907d8157043d1baa1f4031706acaa11cc259a526
+The observed stack depth is 6916/8192 bytes including the same 1280-byte
+test parent reservation; future scheduler call paths still need measurement.
+All FOUR returning-component numerical runs have now passed, superseding
+the LIVE notes above. They are SINGLE-layer synthetic endpoint tests, NOT a
+connected recurrent-to-dense pipeline, original-model/full64/persistent-KV/
+native cleanup/physical execution or speed qualification. The six older
+original-model native/readback/routed-control runs remain live.
+
 Older frozen native-control gate now complete in BOTH trees
 ---------------------------------------------------------
 40917 MAIN / 17954 CLEAN both direct terminal exit 0; both 57-line logs:

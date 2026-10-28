@@ -1,5 +1,40 @@
 # Native build status
 
+## Latest: both returning arithmetic families pass main and clean
+
+October 28, 2026. All four actual returning-component instruction runs now
+finish with exit 0. Recurrent `24102/8799` passes eight matrices/720 jobs,
+Conv/GDN, final5120 and history staging. Dense `99515/95367` passes seven
+matrices/723 jobs, independent preparation/attention/FFN/residual/final5120.
+Both preserve all119 closed worker chains and restore real SP/s11 plus all257
+parent canaries, without a fabricated standalone summary or host wait/STOP.
+Main/clean logs match: recurrent `579a3912`, dense `92466a36`, 15 lines each.
+Measured stack peaks 6888/6916 B include the TEST caller's 1280 B reservation.
+
+These are SINGLE-layer synthetic raw-endpoint tests. They do NOT prove a
+connected recurrent-to-dense pipeline, original/full64/persistent-state,
+native cleanup, physical P100A use or throughput. The next code step is one
+on-card scheduler retaining the same workers and real hidden flow; its full
+call-path stack and STOP/ownership lifecycle must be qualified separately.
+Six original-model native/readback/routed-control runs remain live. Details:
+[returning instruction results](benchmarks/qwen38-returning-layer-instruction-preparation-20261028.txt).
+No new driver is installed. Last whole-model **0.207893161 tokens/sec**;
+full offload and 20 tokens/sec remain unmet. Older LIVE labels are superseded.
+
+## Latest completion: returning recurrent function passes in both trees
+
+October 28, 2026. Actual new returning recurrent instruction runs `24102/8799`
+both complete with exit 0: eight matrices/720 jobs, 120 Conv/96 GDN, independent
+final5120 arithmetic checks, all119 retained closed chains, 122880-byte on-card
+Conv NEXT history, real SP/s11 and 257 parent canaries restored. No standalone
+summary or host wait/STOP is forged. Simulated raw endpoints, NOT original-
+model, native cleanup, physical card, full64/Work or throughput qualification.
+Observed stack peak is 6888/8192 B including the TEST caller's 1280 B parent
+reservation; a future scheduler still owes its own call-path stack proof.
+Dense `99515/95367` numerical runs and six original-model runs remain live.
+See the later-completion addendum in
+[instruction preparation](benchmarks/qwen38-returning-layer-instruction-preparation-20261028.txt).
+
 ## Current: returning layer instructions are executing in local tests
 
 October 28, 2026. A separate pinned TEST-only link now calls both actual
