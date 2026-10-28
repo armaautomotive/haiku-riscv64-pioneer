@@ -149,3 +149,15 @@ No completion or blocker claimed. Goal stays ACTIVE;20tok/s still UNMET.
 append corruption lifetimes after the first genuine current-row write and
 continues dense layer3 FFN. This is still not a complete original model token.
 Fast-map40968 is now layer0 matrix7;whole first-layer equivalence is pending.
+
+22:07UTC first-layer host-storage equivalence now PASSED narrowly
+----------------------------------------------------------------
+SAME40968 completes the genuine original layer0:all119 closed/final5120/
+retained state/ROOT608368692/reserved6496/written6488. Its first actual-PC
+profile header and ALL20 reported function counts are byte-identical to
+original68871. This is not a full ordered-PC trace or whole-model numerical
+comparison. Partial snapshot
+ qwen38-original-fast-storage-layer0-PARTIAL-main-20261028.log
+is NOT a whole-flow completion. SAME40968 continues layer1. Original68871/
+11982 are now beyond the real dense layer3/KV path;main reaches layer4.
+No ROM/instruction/scheduling change or physical throughput claim. Goal ACTIVE.
