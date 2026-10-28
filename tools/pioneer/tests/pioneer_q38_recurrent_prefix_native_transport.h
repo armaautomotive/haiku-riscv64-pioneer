@@ -3,6 +3,7 @@
 #define PIONEER_Q38_RECURRENT_PREFIX_NATIVE_TRANSPORT_H
 #include <stdint.h>
 class PioneerQ38RecurrentPrefixPlan;struct PioneerQ38RecurrentPrefixResult;
+struct RecurrentBlockRawLearnedBytes;struct PrefixOriginalStageSink;
 // TEST raw endpoints ONLY. Native FD/source/clock/producer/init permissions
 // and private phases/ready records NEVER cross this translation boundary.
 struct PrefixInitializedByteSource {
@@ -25,6 +26,10 @@ public:
  uint32_t* PanelSaved();uint32_t* Backup(unsigned);
  void Quarantine();void Pause();uint64_t Now()const;unsigned Touches()const;unsigned Resets()const;uint64_t Fingerprint();
  bool Configure(const PioneerQ38RecurrentPrefixPlan&,const uint32_t*,unsigned,const PrefixInitializedByteSource&);
+ bool AttachOriginalLearned(RecurrentBlockRawLearnedBytes&);
+ bool CaptureOriginalOutput(uint32_t*,unsigned);bool PublishOriginalStages(PrefixOriginalStageSink&);
+ void EnableValidationReadback(unsigned=0);unsigned ReadbackFaultFence()const;unsigned ReadbackPackets()const;
+ void VerifyReadback(const uint32_t*,unsigned);
  void Observe(const PioneerQ38RecurrentPrefixResult&); // read-only ordering observer,not a native phase setter
  void VerifyRun();void VerifyClosed();void Diagnostic();
 };

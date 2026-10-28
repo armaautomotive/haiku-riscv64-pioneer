@@ -19,6 +19,10 @@ struct PioneerStoreContext;struct PioneerSessionIO;
 [[maybe_unused]] static bool PrepareQ38RecurrentPrefixNativeExecution(PioneerStoreContext&,PioneerQ38RecurrentPrefixResult&);
 [[maybe_unused]] static bool RunQ38RecurrentPrefixNativeExecution(PioneerStoreContext&,PioneerQ38RecurrentPrefixResult&);
 [[maybe_unused]] static bool CloseQ38RecurrentPrefixNativeExecution(PioneerStoreContext&,PioneerQ38RecurrentPrefixResult&,PioneerQ38RecurrentPrefixMemoryResult&);
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK
+[[maybe_unused]] static bool CloseQ38RecurrentPrefixNativeValidation(PioneerStoreContext&,PioneerQ38RecurrentPrefixResult&,PioneerQ38RecurrentPrefixMemoryResult&,
+ uint32_t*,unsigned,PioneerQ38RecurrentPrefixReadbackResult&);
+#endif
 // Genuine retained context,NOT a caller-ready bit or old dense scope alias.
 // State/history init use private leases on this SAME real completed
 // embedding context. A DISTINCT execution owner proves QPX1 RUN/counters/
@@ -34,6 +38,10 @@ class PioneerQ38RecurrentPrefixNativeState {
  friend bool PrepareQ38RecurrentPrefixNativeExecution(PioneerStoreContext&,PioneerQ38RecurrentPrefixResult&);
  friend bool RunQ38RecurrentPrefixNativeExecution(PioneerStoreContext&,PioneerQ38RecurrentPrefixResult&);
  friend bool CloseQ38RecurrentPrefixNativeExecution(PioneerStoreContext&,PioneerQ38RecurrentPrefixResult&,PioneerQ38RecurrentPrefixMemoryResult&);
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK
+ friend bool CloseQ38RecurrentPrefixNativeValidation(PioneerStoreContext&,PioneerQ38RecurrentPrefixResult&,PioneerQ38RecurrentPrefixMemoryResult&,
+  uint32_t*,unsigned,PioneerQ38RecurrentPrefixReadbackResult&);
+#endif
  enum Phase {Bound,RecurrentZeroing,RecurrentClosing,HistoryZeroing,HistoryClosing,DispatchPreparing,MemoryPreparing,MemoryInstalled,
   ExecutionPreparing,ExecutionReady,ExecutionComplete,ExecutionClosing,MemoryClosing,MemoryClosed};
  PioneerStoreContext* const context;PioneerQ38EmbeddingNativeState* const prefix;

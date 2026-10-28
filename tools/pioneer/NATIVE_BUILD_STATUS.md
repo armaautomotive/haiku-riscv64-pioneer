@@ -145,8 +145,9 @@ Physical endpoints are simulated; full native RUN/END remains unqualified.
 Controller7427 TERMINAL1 after3blocks+realSTOP: TEST VerifyStop deliberately
 changed Doorbell to5, so fresh Close correctly refused before any hold or
 restore. No production guard weakened. Revised fork-isolated destructive
-challenge+11 post-STOP fault cases main58809 LIVE/NOT passed; original clean
-51883 remains LIVE in its original compiled test. Both default
+challenge+11 post-STOP fault cases main58809/clean98574 BOTH TERMINAL0;
+complete61-line stdout exact6e247ce0. Original clean51883 TERMINAL1 for the
+same destructive TEST mutation as7427. Both default
 packages and primary tables are poisoned before its57real metadata writes;
 it must prove ONEhoststart/ROOT-only3layers+STOP/all119aggregate counters/
 ALL120holds/fullrestore. Do not install this prototype. See
@@ -161,11 +162,31 @@ release -> actual locked final-END/real private clock/fresh7-parent audit/
 30VM+11PCI+3host release/context destruction +84 faults main44017/clean96163
 BOTH0/exactc1d32bd0. Final SDK53197/79445 BOTH0/exact2eab5b48/maxNewFrame784B;
 old65 byte-identical. These use simulated OS/register/raw endpoints, NOT
-physical or a whole computation-END result. Corrected controller58809/98574,
-native execution18968 and fresh native execution+END26734/98063 remain LIVE,
+physical or a whole computation-END result. Corrected controller58809/98574
+now BOTH0;native execution18968 and fresh native execution+END26734/98063 remain LIVE,
 NOT passed. Original51883 now TERMINAL1 from the same destructive TEST probe
 as7427. No guard weakened, no driver installed or speed measured. Details:
 benchmarks/qwen38-recurrent-prefix-native-execution-and-end-20261028.txt.
+
+Original native3layer coupling and validation-only LAST-layer readback now
+implemented, NOT installed. ALL168 original learned extents/42 tensors,
+actual private QPE1+672/336init binding, no synthetic learned fallback; the
+separate unflagged CPU oracle sees54 observations only AFTER fresh final-END.
+Original native36450/62100 STILL LIVE,not a completed numeric comparison.
+Own fixed5page layer2/request3 readback starts only after STOP4+ALL120holds;
+owned heap capture publishes after full restoration+secondproof, NOT final
+END/user-copy authority. Readback SDK6388/94615 BOTH0/objects EXACT30e13077/
+maxNewFrame784B;NO conventional ABI/CPU oracle/Work. No-readback native object
+remains byte-identical2eab5b48;old65 exact61faa093. Geometry29883/41896 BOTH0/
+35pages7banks+4649 atomic refusals;118readback gates/330native-role gates/
+40original-boundary refusals main+clean0/exact stdout. New native runtime
+readback43038/80015 LIVE,not passed;9inert+3readback faults+84final-END cases
+are still obligations. No card/Assistant/boot/power changes or speedup.
+Still owed original native+readback/full execution gates,distinct physical
+role/client/helper/card comparison,then dense3/all64/persistent state+KV+
+token commit/final norm/vocab/sampling/no-CPU-reference Work+Assistant.
+Whole27B0.207893161tok/s unchanged;20UNMET. Exact handles and evidence:
+benchmarks/qwen38-recurrent-prefix-original-native-and-readback-20261028.txt.
 
 - Complete execution-owner/real STOP/120 holds/full original restoration
   passed in the clean export (60994, terminal 0); main output is identical.

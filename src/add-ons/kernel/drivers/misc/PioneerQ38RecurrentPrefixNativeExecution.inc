@@ -30,4 +30,24 @@
  if(okay)state->phase=PioneerQ38RecurrentPrefixNativeState::MemoryClosed;
  else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
 } // private renamed NODRV only;NO public launch/Work/native token commit
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK
+static bool Q38RecurrentPrefixReadbackNativeOverlap(const void* output,size_t bytes,const void* object,size_t size){
+ const uintptr_t a=reinterpret_cast<uintptr_t>(output),b=reinterpret_cast<uintptr_t>(object);
+ return !output || !object || a>UINTPTR_MAX-bytes || b>UINTPTR_MAX-size || (a<b+size && b<a+bytes);
+}
+[[maybe_unused]] __attribute__((noinline)) static bool CloseQ38RecurrentPrefixNativeValidation(PioneerStoreContext& c,PioneerQ38RecurrentPrefixResult& r,PioneerQ38RecurrentPrefixMemoryResult& memory,
+ uint32_t* values,unsigned words,PioneerQ38RecurrentPrefixReadbackResult& out){
+ auto* state=c.q38RecurrentPrefixNative;
+ if(!state || !c.q38EmbeddingModel || words!=TT_Q38_RECURRENT_PREFIX_READBACK_WORDS
+  || state->phase!=PioneerQ38RecurrentPrefixNativeState::ExecutionComplete || !state->execution || state->Unsafe())return false;
+ const void* objects[]={&c,state,c.q38EmbeddingModel};const size_t sizes[]={sizeof(c),sizeof(*state),sizeof(*c.q38EmbeddingModel)};
+ for(unsigned i=0;i<3;i++)if(Q38RecurrentPrefixReadbackNativeOverlap(values,words*4,objects[i],sizes[i])
+  || Q38RecurrentPrefixReadbackNativeOverlap(&out,sizeof(out),objects[i],sizes[i]))return false;
+ if(!state->execution->CanCloseForValidation(values,words,out,r,memory))return false;
+ state->phase=PioneerQ38RecurrentPrefixNativeState::ExecutionClosing;
+ bool okay=c.io.RecurrentPrefixBaseScope() && state->execution->CloseForValidation(c.io,r,memory,values,words,out);
+ if(okay)state->phase=PioneerQ38RecurrentPrefixNativeState::MemoryClosed;
+ else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);}return okay;
+} // trusted kernel allocation only;never user/CPU-reference or Work selection
+#endif
 #endif

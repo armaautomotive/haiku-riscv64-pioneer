@@ -3,8 +3,28 @@
  || defined(PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_REFERENCE) || defined(PIONEER_Q38_RECURRENT_BLOCK_VALIDATION_READBACK)
 #error Prefix execution owner cannot import CPU oracle or old readback roles,including defined0
 #endif
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK
+#include "PioneerQ38RecurrentPrefixReadbackRole.h"
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_OWNER_H
+static_assert(TT_Q38_RECURRENT_PREFIX_READBACK_SELECTION==1,"late prefix readback selection change");
+#endif
+#else
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_OWNER_H
+static_assert(TT_Q38_RECURRENT_PREFIX_READBACK_SELECTION==0,"late prefix readback selection removal");
+#endif
+#endif
 #ifndef PIONEER_Q38_RECURRENT_PREFIX_OWNER_H
 #define PIONEER_Q38_RECURRENT_PREFIX_OWNER_H
+enum {TT_Q38_RECURRENT_PREFIX_READBACK_SELECTION=
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK
+ 1
+#else
+ 0
+#endif
+};
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK
+#include "PioneerQ38RecurrentPrefixReadbackPlan.h"
+#endif
 #include "PioneerQ38RecurrentPrefixMemory.h"
 #include "../../../../../tools/pioneer/PioneerQ38RecurrentPrefixCounters.h"
 // DISTINCT autonomous QPX1 owner algorithm; NOT the old QRB1 owner. NO old dense owner/role alias,CPU numeric
@@ -56,6 +76,9 @@ class PioneerQ38RecurrentPrefixOwner {
   for(unsigned i=0;i<16;i++)if(io.ResidentNocRead(BlackholeDramSourceOffset(i))!=plan->Boot(w)[16+i])return false;
   for(unsigned i=0;i<TT_DRAM_SOURCE_WORDS;i++)if(io.SourceRead(i)!=proof->source[i])return false;
   for(unsigned p=0;p<2;p++)if(!PioneerQ38GraphCsrPciQuiet(io,p))return false;
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK
+  if(!w && readbackTraffic)return ReadbackTransferGuard(io);
+#endif
   if(!w && traffic)return true; // SAME owned ROOT may have genuine in-flight packets
   if(!PioneerQ38GraphCsrIdle(io))return false;
   // Only AFTER the real ROOT completion receipt may one peer's changed
@@ -212,6 +235,9 @@ class PioneerQ38RecurrentPrefixOwner {
   if(!Guard(io,w))return false;
   heldPeers++;return true;
  }
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK
+#include "PioneerQ38RecurrentPrefixValidationReadback.inc"
+#endif
 public:
  PioneerQ38RecurrentPrefixOwner()=default;
  PioneerQ38RecurrentPrefixOwner(const PioneerQ38RecurrentPrefixOwner&)=delete;
@@ -303,7 +329,13 @@ public:
   if(completedPeers!=119 || !RootPeerCounters(io))return Fail(io,r);
   allStopped=ran=true;r.phase=5;return true; // provisional PREFIX, never full-token state commit
  }
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK
+private:
+ template<class IO> bool CloseImpl(IO& io,PioneerQ38RecurrentPrefixResult& r,PioneerQ38RecurrentPrefixMemoryResult& saved,
+  uint32_t* values,PioneerQ38RecurrentPrefixReadbackResult* readback){
+#else
  template<class IO> bool Close(IO& io,PioneerQ38RecurrentPrefixResult& r,PioneerQ38RecurrentPrefixMemoryResult& saved){
+#endif
   if(!ran || !rootCompleted || !allStopped || completedPeers!=119 || observingPeer || unsafe || closed || !r.prepared || r.completed!=119
    || r.stopped!=119 || r.held || r.closed || saved.restoredWords)return false;
   r.worker=r.word=0;r.phase=6;
@@ -319,6 +351,9 @@ public:
   // FIRST hold. ALL120 proven holds precede the FIRST restore write.
   for(unsigned w=0;w<120;w++){r.worker=w;if(!Hold(io,w))return Fail(io,r);r.held++;if(!w)r.rootHolds++;}
   if(heldPeers!=120)return Fail(io,r);
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK
+  if(readback && !ValidationReadback(io,*readback,r))return Fail(io,r);
+#endif
   r.phase=8;
   for(unsigned w=0;w<120;w++){
    r.worker=w;if(!Guard(io,w) || !Image(io,w))return Fail(io,r);
@@ -337,8 +372,23 @@ public:
   if(!allStopped || heldPeers!=120 || r.held!=120 || saved.restoredWords!=TT_Q38_RECURRENT_PREFIX_SAVED_WORDS
    || saved.verifiedOriginalWords!=2*TT_Q38_RECURRENT_PREFIX_SAVED_WORDS || !Guard(io,0))return Fail(io,r);
   memory->closed=closed=true;memory->installed=false;saved.closed=r.closed=1;
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK
+  if(readback){for(unsigned i=0;i<TT_Q38_RECURRENT_PREFIX_READBACK_WORDS;i++)values[i]=readbackValues[i];readback->completed=1;}
+#endif
   return true;
  }
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK
+public:
+ template<class IO> __attribute__((noinline)) bool Close(IO& io,PioneerQ38RecurrentPrefixResult& r,PioneerQ38RecurrentPrefixMemoryResult& saved){return CloseImpl(io,r,saved,nullptr,nullptr);}
+ bool CanCloseForValidation(uint32_t* values,unsigned words,const PioneerQ38RecurrentPrefixReadbackResult& out,
+  const PioneerQ38RecurrentPrefixResult& r,const PioneerQ38RecurrentPrefixMemoryResult& saved)const{return ReadbackRequest(values,words,out,r,saved);}
+ template<class IO> __attribute__((noinline)) bool CloseForValidation(IO& io,PioneerQ38RecurrentPrefixResult& r,PioneerQ38RecurrentPrefixMemoryResult& saved,
+  uint32_t* values,unsigned words,PioneerQ38RecurrentPrefixReadbackResult& out){
+  if(!ReadbackRequest(values,words,out,r,saved))return false;
+  if(!Scope(io) || !readbackPlan.Build(*canonical,*plan))return Fail(io,r);
+  out.started=1;return CloseImpl(io,r,saved,values,&out);
+ }
+#endif
 };
 static_assert(sizeof(PioneerQ38RecurrentPrefixOwner)>24576 && sizeof(PioneerQ38RecurrentPrefixOwner)<65536,"execution proof state HEAP ONLY");
 #endif

@@ -21,10 +21,10 @@ def check(definitions,accept,tail=''):
                        text=True,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
  assert (result.returncode==0)==accept,(accept,result.stderr)
 check(base,True);refused=0
-feature='PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE'
-check({**base,feature:'1'},True);check(base,True,'#define '+feature+' 1\n'+include)
-for value in ('0','2'):
- check({**base,feature:value},False);check(base,False,'#define '+feature+' '+value+'\n'+include);refused+=2
+for feature in ('PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE','PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK'):
+ check({**base,feature:'1'},True);check(base,True,'#define '+feature+' 1\n'+include)
+ for value in ('0','2'):
+  check({**base,feature:value},False);check(base,False,'#define '+feature+' '+value+'\n'+include);refused+=2
 for name in sorted(parents):
  missing=dict(base);del missing[name];check(missing,False);refused+=1
  for value in ('0','2'):

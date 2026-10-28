@@ -9,6 +9,9 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include "pioneer_q38_recurrent_prefix_native_final_fixture.inc"
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_ORIGINAL_NATIVE_TEST
+#include "pioneer_q38_recurrent_prefix_original_native.h"
+#endif
 bool PioneerSessionIO::UseRecurrentPrefixIO()const{
  auto* c=q38MutableContext;auto* state=c?c->q38RecurrentPrefixNative:nullptr;
  return recurrentTransport && state && state->phase>=PioneerQ38RecurrentPrefixNativeState::DispatchPreparing;
@@ -44,11 +47,41 @@ template<class Check> static void RecurrentNativeFork(Check check){
  fflush(nullptr);pid_t child=fork();assert(child>=0);if(!child){check();_exit(0);}
  int status=0;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && !WEXITSTATUS(status));
 }
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_ORIGINAL_NATIVE_TEST
+int ExecutePrefixOriginalNativeScenario(const char* const* images,RecurrentBlockRawLearnedBytes& original,uint32_t* output,unsigned outputWords,PrefixOriginalStageSink* sink){
+ if(!images || !output || outputWords!=5120 || (uintptr_t(output)&3) || uintptr_t(output)>UINTPTR_MAX-20480 || !original.Ready())return 1;
+ for(unsigned i=0;i<4;i++)if(!images[i] || !*images[i])return 1;
+ auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();if(!canonical->Build())return 1;
+ unsigned parts=0;uint64_t length=0;
+ for(unsigned i=0;i<canonical->Count();i++){
+  const auto* p=canonical->Part(i);if(p->kind!=canonical->WeightKind || p->layer>=3)continue;
+  if(!original.Contains(PioneerQ38ProjectionRoute(p->bank),canonical->Base+p->offset,p->bytes))return 1;
+  parts++;length+=p->bytes;
+ }
+ const auto* tile=canonical->ProjectionStripe(64,0,0);std::vector<uint8_t> packed(46080);
+ if(parts!=168 || length!=842775168 || !tile || tile->firstRow)return 1;
+ for(unsigned at=0;at<packed.size();at+=16384){
+  unsigned count=std::min(16384U,unsigned(packed.size())-at);
+  if(!original.Ready() || !original.Read(PioneerQ38ProjectionRoute(tile->bank),canonical->Base+tile->offset+at,packed.data()+at,count))return 1;
+ }
+ if(!original.Ready())return 1;
+ const int argc=6;const char* argv[]={"prefix-original-native",images[0],images[1],images[2],images[3],
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK
+ "--fresh-readback-end"
+#else
+ "--fresh-execute-end"
+#endif
+ };
+#else
 int main(int argc,char** argv){
- assert(argc==5 || (argc==6 && (!strcmp(argv[5],"--execute") || !strcmp(argv[5],"--faults") || !strcmp(argv[5],"--fresh-held-end") || !strcmp(argv[5],"--fresh-execute-end"))));setvbuf(stdout,nullptr,_IOLBF,0);
+#endif
+ assert(argc==5 || (argc==6 && (!strcmp(argv[5],"--execute") || !strcmp(argv[5],"--faults") || !strcmp(argv[5],"--fresh-held-end") || !strcmp(argv[5],"--fresh-execute-end") || !strcmp(argv[5],"--fresh-readback-end"))));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
- const bool execute=argc==6 && (!strcmp(argv[5],"--execute") || !strcmp(argv[5],"--fresh-execute-end")),faults=argc==6 && !strcmp(argv[5],"--faults");
+ const bool execute=argc==6 && (!strcmp(argv[5],"--execute") || !strcmp(argv[5],"--fresh-execute-end") || !strcmp(argv[5],"--fresh-readback-end")),faults=argc==6 && !strcmp(argv[5],"--faults");
  RecurrentBindingFixture f(argv[1],argv[2]);auto& c=*f.c;auto& io=f.io;
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_ORIGINAL_NATIVE_TEST
+ io.originalEmbeddingWeights=packed.data(); // ORIGINAL packed weights, not expected embedding products
+#endif
 #ifdef PIONEER_Q38_RECURRENT_PREFIX_FRESH_FINAL_TEST
  (void)&AcquireQ38DeltaLock;
  auto computeScope=std::make_unique<PioneerQ38GdnCallScope>(&f.cookie);
@@ -61,6 +94,10 @@ int main(int argc,char** argv){
   && state->InitializationsClosed(c.banks,c.baseline.baseline.baseline.baseline.dram));
  puts("PASS QPX genuine native SAME completed QPE1 + actual672GDN/336history zero/private clean publication;NO transferred ready facade");
  RecurrentPrefixNativeTransport transport(argv[3],argv[4]);
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_ORIGINAL_NATIVE_TEST
+ assert(original.Ready() && transport.AttachOriginalLearned(original));
+ puts("STAGED ORIGINAL QPE1 packed46080B + ALL42 recurrent tensors/168extents;synthetic learned fallback DISABLED,NO native permission or CPU products");
+#endif
  std::vector<uint32> addresses,values;auto seed=[&](uint32 a,uint32 v){addresses.push_back(a);values.push_back(v);};
  seed(0x6000,io.entry);for(unsigned i=0;i<io.prefix.size();i++)seed(0x64000+i*4,io.prefix[i]);
  for(unsigned i=0;i<io.view.size();i++)seed(TT_Q38_PANEL_VIEW_BASE+i*4,io.view[i]);
@@ -108,7 +145,11 @@ int main(int argc,char** argv){
     && physical==transport.Touches() && touches==io.touches && resets==transport.Resets());
    printf("PASS QPX actual post3layer native lifetime fault%u/FD+model+clock+ALLhosts retained/ZERO later physical IO\n",bad);
   });
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK
+#include "pioneer_q38_recurrent_prefix_native_readback_checks.inc"
+#else
   bool closed=CloseQ38RecurrentPrefixNativeExecution(c,execution,memory);
+#endif
   if(!closed){fprintf(stderr,"QPX_NATIVE_CLOSE_FAILED phase%u worker%u word%u holds%u stopped%u\n",
    execution.phase,execution.worker,execution.word,execution.held,execution.stopped);transport.Diagnostic();}
   assert(closed && execution.completed==119 && execution.stopped==119 && execution.held==120 && execution.packets==57);
@@ -127,4 +168,9 @@ int main(int argc,char** argv){
 #include "pioneer_q38_recurrent_prefix_native_final_checks.inc"
 #endif
  io.recurrentTransport=nullptr;
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_ORIGINAL_NATIVE_TEST
+ assert(original.Ready() && !f.cookie.context && !sRuntimeOwner && !sColdRecoveryRequired);
+ if(sink && !transport.PublishOriginalStages(*sink))return 1;
+ return transport.CaptureOriginalOutput(output,outputWords)?0:1;
+#endif
 }

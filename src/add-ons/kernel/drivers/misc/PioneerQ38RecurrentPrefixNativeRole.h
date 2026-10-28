@@ -65,3 +65,8 @@
 #error Exact separate prefix final-release selection required,including defined0
 #endif
 #endif
+#ifdef PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK
+#if PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_READBACK != 1
+#error Exact separate prefix validation-readback selection required,including defined0
+#endif
+#endif

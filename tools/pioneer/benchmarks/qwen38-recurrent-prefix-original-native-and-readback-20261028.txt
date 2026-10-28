@@ -1,0 +1,105 @@
+Original-weight native prefix and distinct validation readback
+October28UTC2026; LOCAL development, NOT installed
+
+Completed controller computation gate
+------------------------------------
+Corrected controller main58809/clean98574 BOTH TERMINAL0. Complete61-line
+stdout exact SHA2566e247ce0b89d5ec5e5979e3410111428a77b23616c1aa1defa54dbe5e9c149d0.
+Actual QPX1 ROOT+same119QMW1 instruction machines execute all3layers from
+ONE host start, with ROOT metadata copies/releases/STOP. All119 aggregate
+counter/last-DOWN receipts, all120 actual terminal records before first
+hold, all120holds before first restore, full11406904-word restoration and
+second22813808-word proof pass, followed by actual legacy dispatch CLOSE.
+All12 reached post-STOP faults retain all owners without following IO,
+hold,restore or retry. Raw learned bytes/MMIO/time SIMULATED; NOT a native
+context, physical model comparison, complete native END or token rate.
+
+Original learned bytes connected to actual private native producer
+-----------------------------------------------------------------
+Separate unflagged original coordinator/source authenticates SAME frozen
+18973870528-byte c600 GGUF and prepares/seals the independent chained CPU
+reference BEFORE constructing a native context. Only169 original raw spans
+(842821248 bytes,including packed46080-byte QPE1 tile) cross TUs. No expected
+vector or native-ready/phase/producer/counter/PC/cleanup setter is exported.
+Native/operand objects are inspected BEFORE linking the private CPU oracle.
+
+The raw endpoint requires ALL168 learned extents/42 recurrent tensors over
+layers0..2 and disables synthetic learned fallback after attachment. The
+actual private QPE1+672GDN/336Conv-history zero/controller CLOSE+publication
+path supplies the native producer binding, not an offline copied input seal.
+Actual54 stage observations are retained without changing instructions or
+products. They publish to the independent observer only AFTER native RUN,
+STOP/holds/fullrestore and complete fresh locked-END/context destruction.
+All3 final5120-word outputs must pass the existing strict reference bound;
+no tolerance is fitted to new output. Nine previously known GDN intermediate
+rounding differences remain diagnostics, not permission to relax finals.
+
+Original-native boundary main59339/clean25960 BOTH TERMINAL0:40 defined0/
+late/kernel/CPU/image/Work/optional-exact1 isolation refusals; complete stdout
+exact03e0cbceb4ac17aa7f7020068dff91b7195dc5498e5aaef3680d1c862103bc86.
+Actual original-native execution36450/62100 STILL LIVE at this checkpoint.
+Full-file auth/private reference/actual producer init/168-span attachment/
+native held journal passed; complete3RUN+END+54comparisons NOT yet qualified.
+These binaries preceded later boundary-only and atomic-output-publication
+hardening; do not claim those negative cases from the older running binary.
+
+Distinct LAST-layer validation readback implemented, NOT Work
+-----------------------------------------------------------
+Own PrefixReadbackPlan/Role/ValidationReadback and private native close
+adapter. Exact optional VALIDATION_READBACK=1; no CPU oracle or public/user
+control. Fixed layer2/request3/token0 geometry, ALL3 bound immutable plans,
+bank/workspace/source/identity checks, five4096-byte FINAL pages ONLY.
+Readback begins only after actual autonomous STOP4/119STOP and all120holds.
+No host STOP or per-layer submissions were added. Scratch is poisoned before
+each READ; exact bounded command/channel/counter/deadline/idle/source checks
+and finite ROOT-domain values are required. Capture stays in the owner's
+HEAP buffer; trusted kernel output publishes only after full original L1
+restoration+secondproof. This completion is NOT final native END or a public
+user copy grant. Future physical handler must wait for actual final END.
+
+Geometry main29883/clean41896 BOTH TERMINAL0:35pages/all7banks and4649
+atomic refusals covering ALL3 layers,recipes,boots,canonical,output aliases
+and ranges. Exact stdoutcf9aecf67769e0d7b0b99a34b128bc88a1d01788eab5aa349b6b36bbb34f31f7.
+Readback gates main81142/clean32154 BOTH0:118 exact/late/defined0/old block/
+CPU-reference/Work/image/native-parent refusals, exact981b0c2b627b0d2ebec572ffde6812eec0e4f390db4438259717afc0f8e49639.
+Updated native role main92193/clean53475 BOTH0:21 exact parents/6 renamed
+ABI names/57 forbidden aliases/330 refusals; exactc2d0ea543dcd5f6cf26e1d110f269b347ece931897fb364760dfa5cb6f234a6d.
+
+Actual Haiku RISC-V SDK main6388/clean94615 BOTH TERMINAL0. All genuine
+private native readback/CloseImpl/transfer guard/final-END bodies instantiated,
+max new kernel frame784 bytes. Objects EXACT SHA256:
+30e130773d6fd17549c328b9a34f81fa4e915c47cae120d41487b87004ad0e53.
+No conventional driver ABI or CPU/Work/reference symbols;5 inert controls
+exact. Normal no-readback native object remains BYTE-IDENTICAL2eab5b48;
+old65 remains BYTE-IDENTICAL61faa093. Compilation is NOT execution authority.
+First DATA compile failed for missing explicit stddef.h; fixed, both gates
+rerun0. First SDK audit failed because an inlined native adapter lacked its
+own stack-usage record; explicit noinline allows actual-body inspection.
+No failing test was interpreted as permission to install/run on hardware.
+
+Runtime readback fixture43038/80015 STILL LIVE. It uses actual private native
+producer/init/3RUN+STOP/holds/restore/fresh END, with simulated raw endpoints,
+9 inert output requests and3 reached dropped-data/counter/other-channel
+faults. These are obligations in the running test, NOT passed results.
+
+Exact ongoing handles; no quiet-output restart
+--------------------------------------------
+18968 genuine native3RUN+6postRUN lifetime faults+dispatch END
+26734/98063 fresh native3RUN+6postRUN+84final-END faults main/clean
+36450/62100 ORIGINAL native3RUN+fresh END+54comparisons main/clean
+43038/80015 new native3RUN+readback+3faults+fresh END main/clean
+All are LOCAL SIMULATIONS,not hardware clients. Follow the same tool handles
+to authoritative completion; no timeout or log alone makes a result terminal.
+
+Full objective unchanged
+------------------------
+Still owed: above execution gates, original native comparisons and original
+readback runtime; distinct physical prefix role/tag/namespace/client/helper,
+fresh actual owner/pin/source audit and original-model card test. Do not
+retag old72 artifacts as prefix authority. Then dense3/all64, persistent
+KV+GDN+Conv history/atomic whole-token update/final norm/vocabulary/on-card
+sampling/persistent no-CPU-reference Work+Assistant and measured optimization.
+No candidate installed; no Pioneer power,SD,mains,hardware,boot,Assistant or
+network changes. Last known stable041/64CPU/fullRAM not freshly re-probed.
+Last measured whole27B0.207893161tok/s unchanged;20tok/s/full offload UNMET.
+No simulator/init/readback/restore elapsed time is a token-performance result.
