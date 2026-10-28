@@ -1,0 +1,9 @@
+03f3465442037a2a4386a05a2d18f12dd9b8e4878a3fff2f47795686eb584f89 original.o
+82bde6c86651b5e1cd3aaf198069d583130b67bd93744b40d2090deb55d8e4cc adapter.o
+dbbe5aef3bcbc1afb148f1eca790349569421ea2c5211e94fbd0cc8affad154b client.o
+7eeef995c758df7c1a2f6512e51fdb0eb26855cdbd3e62cbc9925304cf8a49f1 pioneer-q38-prefix-DEBUG73-VALIDATION-ONLY
+f5aea26977f4a84ba297a59d1b04e9b94c0fbd91f9cfb5d0bd9684fa27f1b6df protocol-data-kernel.o
+PASS separate Haiku riscv64 RESERVED DEBUG73 CPU-source+adapter+actual-ioctl client compile/link/max USER frame16784
+PASS client object has NO private CPU products/source implementation/canonical mutable geometry or native owners;adapter has NO inline oracle or device IO
+PASS matching fixed20864B/96word kernel DATA ABI/max kernel frame16;NO kernel driver/control implementation
+BUILD/INSPECT ONLY;physical role/selector/control/helper NOT implemented or granted here;NO installation,execution,device access,physical/full-model/Work/TPS qualification

@@ -163,7 +163,9 @@ release -> actual locked final-END/real private clock/fresh7-parent audit/
 BOTH0/exactc1d32bd0. Final SDK53197/79445 BOTH0/exact2eab5b48/maxNewFrame784B;
 old65 byte-identical. These use simulated OS/register/raw endpoints, NOT
 physical or a whole computation-END result. Corrected controller58809/98574
-now BOTH0;native execution18968 and fresh native execution+END26734/98063 remain LIVE,
+now BOTH0;native execution18968 now TERMINAL0/exact65ffc2e9(all3RUN/STOP/
+120holds/fullrestore+secondproof/6lifetime faults/actual dispatch END).
+Fresh native execution+final-END26734/98063 remain LIVE,
 NOT passed. Original51883 now TERMINAL1 from the same destructive TEST probe
 as7427. No guard weakened, no driver installed or speed measured. Details:
 benchmarks/qwen38-recurrent-prefix-native-execution-and-end-20261028.txt.
@@ -182,11 +184,28 @@ remains byte-identical2eab5b48;old65 exact61faa093. Geometry29883/41896 BOTH0/
 40original-boundary refusals main+clean0/exact stdout. New native runtime
 readback43038/80015 LIVE,not passed;9inert+3readback faults+84final-END cases
 are still obligations. No card/Assistant/boot/power changes or speedup.
-Still owed original native+readback/full execution gates,distinct physical
+Still owed original native+readback/full final-END gates,distinct physical
 role/client/helper/card comparison,then dense3/all64/persistent state+KV+
 token commit/final norm/vocab/sampling/no-CPU-reference Work+Assistant.
 Whole27B0.207893161tok/s unchanged;20UNMET. Exact handles and evidence:
 benchmarks/qwen38-recurrent-prefix-original-native-and-readback-20261028.txt.
+
+Reserved prefix DEBUG73/namespace24 physical-diagnostic client is now
+implemented/BUILD QUALIFIED,NOT installed/run and NOT a driver selector.
+Distinct20864B/96word protocol requires actual complete final-END before
+user output/strict layer2 comparison;Finish closes FD only,no duplicate END.
+Separate UNFLAGGED private CPU source+adapter;client has no private reference
+implementation/native owner. Host main53239/clean49626 BOTH0/exact6940e6e6:
+169raw extents/205785pages/805uploads/812calls,1110 reached COW faults+12early
+refusals/all20864 byte mutations/adapter atomic failure. Role gates200 main+
+clean0/exactc5d4e794. Real Haiku client+original+adapter+kernel DATA builds
+89954/89470 BOTH0/ALL5 outputs identical;client SHA7eeef995/maxUSERframe16784B,
+kernel DATA16B. No native control/physical selection/helper implemented yet;
+18968 native3RUN+dispatch-END now0;remaining6 native/original/readback handles
+still LIVE,NOT full final-END proof. No
+Pioneer/Assistant/boot/power changes;whole27B0.207893161tok/s/20UNMET.
+Evidence/current obligations:
+benchmarks/qwen38-recurrent-prefix-validation-client-20261028.txt.
 
 - Complete execution-owner/real STOP/120 holds/full original restoration
   passed in the clean export (60994, terminal 0); main output is identical.

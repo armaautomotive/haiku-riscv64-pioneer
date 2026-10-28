@@ -84,7 +84,11 @@ faults. These are obligations in the running test, NOT passed results.
 
 Exact ongoing handles; no quiet-output restart
 --------------------------------------------
-18968 genuine native3RUN+6postRUN lifetime faults+dispatch END
+18968 now TERMINAL0:actual native3RUN+6postRUN lifetime faults+dispatch END,
+complete61-line stdout65ffc2e94b011ca8866069cec736fa1dff2ff87d682d456e65984ff1995aabd4;
+all120holds/full11406904restore+second22813808proof passed. SIMULATED raw
+endpoints,NOT final clock/VM/PCI/host disposal,original-model,physical/TPS.
+Do NOT poll CLOSED18968. Remaining six exact LIVE handles:
 26734/98063 fresh native3RUN+6postRUN+84final-END faults main/clean
 36450/62100 ORIGINAL native3RUN+fresh END+54comparisons main/clean
 43038/80015 new native3RUN+readback+3faults+fresh END main/clean
@@ -103,3 +107,9 @@ No candidate installed; no Pioneer power,SD,mains,hardware,boot,Assistant or
 network changes. Last known stable041/64CPU/fullRAM not freshly re-probed.
 Last measured whole27B0.207893161tok/s unchanged;20tok/s/full offload UNMET.
 No simulator/init/readback/restore elapsed time is a token-performance result.
+
+Later continuation: distinct RESERVED73/24 protocol and user diagnostic
+client/source adapter now build identically in main+clean and pass synthetic
+client/role tests. This does NOT implement/select/install a driver control.
+Native/original/readback runtime obligations above remain separate. See:
+qwen38-recurrent-prefix-validation-client-20261028.txt.

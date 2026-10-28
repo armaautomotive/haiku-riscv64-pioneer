@@ -1,0 +1,61 @@
+QRB_NATIVE_ACTUAL_ZERO GDN96/pages10544;NO publication before clean CLOSE
+QRB_NATIVE_ACTUAL_ZERO GDN192/pages21072;NO publication before clean CLOSE
+QRB_NATIVE_ACTUAL_ZERO GDN288/pages31600;NO publication before clean CLOSE
+QRB_NATIVE_ACTUAL_ZERO GDN384/pages42144;NO publication before clean CLOSE
+QRB_NATIVE_ACTUAL_ZERO GDN480/pages52672;NO publication before clean CLOSE
+QRB_NATIVE_ACTUAL_ZERO GDN576/pages63200;NO publication before clean CLOSE
+QRB_NATIVE_ACTUAL_ZERO GDN672/pages73728;NO publication before clean CLOSE
+PASS QPX genuine native SAME completed QPE1 + actual672GDN/336history zero/private clean publication;NO transferred ready facade
+PASS QPX actual native ALL120 probes/peer leases/held roles/4new mappings/complete prefix journal+program install;NO reset or synthetic permission
+START QRB1 actual matrix1 role10 stage2/prior closed matrix jobs0
+PASS QRB1 actual initial RMS5120 BIT-EXACT -> alpha/beta/Z/QKV
+START QRB1 actual matrix2 role11 stage3/prior closed matrix jobs3
+START QRB1 actual matrix3 role5 stage4/prior closed matrix jobs6
+START QRB1 actual matrix4 role6 stage5/prior closed matrix jobs125
+PASS QRB1 actual QKV ->640 Conv groups ->96 paired GDN/private NEXT+6144 gated;independent arithmetic
+START QRB1 actual matrix5 role13 stage8/prior closed matrix jobs244
+PASS QRB1 actual6144 gated F32 -> actual ROOT Q8 quantization/output projection;NO host intermediate
+START QRB1 actual matrix6 role2 stage10/prior closed matrix jobs363
+PASS QRB1 original residual+post-RMS5120 BIT-EXACT -> actual Q4 gate/up
+START QRB1 actual matrix7 role3 stage11/prior closed matrix jobs482
+START QRB1 actual matrix8 role4 stage13/prior closed matrix jobs601
+PASS QRB1 actual SiLU(gate)*up17408/strict independent error bound -> actual Q4 down
+PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/952 channel refusals;NOT native STOP/cleanup authority
+PASS autonomous ROOT completed layer0/actual preceding hidden/Conv+GDN NEXT retained;NO host metadata or doorbell between layers
+START QRB1 actual matrix1 role10 stage2/prior closed matrix jobs0
+PASS QRB1 actual initial RMS5120 BIT-EXACT -> alpha/beta/Z/QKV
+START QRB1 actual matrix2 role11 stage3/prior closed matrix jobs3
+START QRB1 actual matrix3 role5 stage4/prior closed matrix jobs6
+START QRB1 actual matrix4 role6 stage5/prior closed matrix jobs125
+PASS QRB1 actual QKV ->640 Conv groups ->96 paired GDN/private NEXT+6144 gated;independent arithmetic
+START QRB1 actual matrix5 role13 stage8/prior closed matrix jobs244
+PASS QRB1 actual6144 gated F32 -> actual ROOT Q8 quantization/output projection;NO host intermediate
+START QRB1 actual matrix6 role2 stage10/prior closed matrix jobs363
+PASS QRB1 original residual+post-RMS5120 BIT-EXACT -> actual Q4 gate/up
+START QRB1 actual matrix7 role3 stage11/prior closed matrix jobs482
+START QRB1 actual matrix8 role4 stage13/prior closed matrix jobs601
+PASS QRB1 actual SiLU(gate)*up17408/strict independent error bound -> actual Q4 down
+PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/952 channel refusals;NOT native STOP/cleanup authority
+PASS autonomous ROOT completed layer1/actual preceding hidden/Conv+GDN NEXT retained;NO host metadata or doorbell between layers
+START QRB1 actual matrix1 role10 stage2/prior closed matrix jobs0
+PASS QRB1 actual initial RMS5120 BIT-EXACT -> alpha/beta/Z/QKV
+START QRB1 actual matrix2 role11 stage3/prior closed matrix jobs3
+START QRB1 actual matrix3 role5 stage4/prior closed matrix jobs6
+START QRB1 actual matrix4 role6 stage5/prior closed matrix jobs125
+PASS QRB1 actual QKV ->640 Conv groups ->96 paired GDN/private NEXT+6144 gated;independent arithmetic
+START QRB1 actual matrix5 role13 stage8/prior closed matrix jobs244
+PASS QRB1 actual6144 gated F32 -> actual ROOT Q8 quantization/output projection;NO host intermediate
+START QRB1 actual matrix6 role2 stage10/prior closed matrix jobs363
+PASS QRB1 original residual+post-RMS5120 BIT-EXACT -> actual Q4 gate/up
+START QRB1 actual matrix7 role3 stage11/prior closed matrix jobs482
+START QRB1 actual matrix8 role4 stage13/prior closed matrix jobs601
+PASS QRB1 actual SiLU(gate)*up17408/strict independent error bound -> actual Q4 down
+PASS QRB1 close-counter helper correlated ALL119 emitted instruction streams/before+after down/actual bounded GDN polls/952 channel refusals;NOT native STOP/cleanup authority
+PASS autonomous ROOT completed layer2/actual preceding hidden/Conv+GDN NEXT retained;NO host metadata or doorbell between layers
+PASS QPX actual post3layer native lifetime fault0/FD+model+clock+ALLhosts retained/ZERO later physical IO
+PASS QPX actual post3layer native lifetime fault1/FD+model+clock+ALLhosts retained/ZERO later physical IO
+PASS QPX actual post3layer native lifetime fault2/FD+model+clock+ALLhosts retained/ZERO later physical IO
+PASS QPX actual post3layer native lifetime fault3/FD+model+clock+ALLhosts retained/ZERO later physical IO
+PASS QPX actual post3layer native lifetime fault4/FD+model+clock+ALLhosts retained/ZERO later physical IO
+PASS QPX actual post3layer native lifetime fault5/FD+model+clock+ALLhosts retained/ZERO later physical IO
+PASS DISTINCT QPX actual native autonomous3RUN+119STOP+ALL120holds/SAME QPE1+672+336init/real scopes+leases+maps+3layerplan/full restore+secondproof/dispatch END;SIMULATED OS+raw learned/MMIO,NOT final clock/VM/PCI/host disposal,original-model,full64,physical,Work or TPS

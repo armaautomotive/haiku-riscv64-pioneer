@@ -1,0 +1,114 @@
+Separate prefix physical-diagnostic client preparation
+October28UTC2026; COMPILE/CLIENT-SIMULATION QUALIFICATION ONLY
+
+Implemented, NOT installed or run on the Pioneer
+-----------------------------------------------
+New pointer-free PrefixValidationProtocol reserves DEBUG73/tag
+2026102800010073/namespace24/opcodes END+6502/6503, distinct from layer0
+DEBUG72/tag72/namespace23/END+6402/6403. Fixed token0/position0/layers0..2;
+96-word reply header/20864-byte payload, including3layers/24matrices/STOP4
+and complete final-END/PCI-restored/hosts-released fields. All reply bytes
+must be zero input. This header is DATA, NOT an implemented driver selector,
+native launch/ownership grant or a physical module. NativeRole still refuses
+this reserved physical tag/selection. No new hardware control is exposed.
+
+Actual user client/session seals all169 original RAW extents/205785 pages/
+842821248 bytes and all3 independent reference fingerprints BEFORE Open.
+Private original model/source/CPU products compile in a separate UNFLAGGED
+TU. A separate unflagged adapter exposes raw bytes, identities and a final
+layer2 comparison operation, NEVER an expected input/output vector. Client
+object contains neither the private source/oracle implementation nor mutable
+model geometry/native-owner implementations. Wrong old/foreign tag or
+namespace refuses BEFORE BANK_BEGIN/upload/compute; no old layer0 fallback.
+
+All raw page tails are zeroed, bounded uploads are at most1MiB, and source/
+identity is rechecked around each transfer. Every fixed reply word except
+nonzero64-bit session/time must equal its exact expected value. Layer2 final
+5120 words must pass the unchanged strict independent comparison. Success
+requires actual complete final-END fields BEFORE comparison. Finish then
+CLOSES THE FD ONLY: NEVER a second BANK_END after the device already ended.
+Any uncertainty is terminal CLOSE ONLY, with no peek/reset/retry/extra END.
+The matching kernel control must implement that contract before hardware use.
+
+Host protocol/session/adapter tests main53239/clean49626 BOTH TERMINAL0
+-------------------------------------------------------------------
+Complete4-line stdout exact SHA256:
+6940e6e63e4d36b1556eb2627be9886c75da4a922cdb88af90fcd430b0b38fa5.
+All20864 single-byte request mutations rejected. Actual client over explicit
+SYNTHETIC extents/raw bytes/OS replies:205785 pages/805uploads/812calls,
+all selected raw tails zero and strict comparison after complete-END reply.
+1110 genuinely reached COW faults:ALL812 transport calls+ALL169 extent
+refusals before FD+5 partial raw reads+24 source/3layer-identity losses+
+94 fixed-header corruptions+6 strict comparison metrics. Each proves terminal
+CLOSE/no following calls/retry/END. Twelve additional early old/foreign tag,
+namespace,prepare,seal,open/close refusals. No ready/progress setter or repair
+is used to advance a faulted parent; only offline TEST state is forked.
+Separate adapter unit exercises actual compiled forwarding, self/range/result
+alias refusal, atomic failed comparison and CPU-only destruction over an
+explicit SYNTHETIC private source. This is NOT original-model arithmetic,
+actual file authentication, native context, physical execution or speed proof.
+
+Client/source role gates main47129/clean62020 BOTH TERMINAL0
+---------------------------------------------------------
+200 exact/defined0/late/kernel/native/image/old-client/Work refusals; actual
+private CPU source+adapter forbidden in selected client TU. Exact stdout:
+c5d4e79431a3f2d6debfa866a4002b6a770a9f266beabe5f0e4427723f2bbff9.
+Initial gate26667 failed because adapter/source boundary did not reject a
+defined0 old native flag. The boundary was completed and BOTH gates rerun0;
+no native or source ownership check was relaxed. Initial client85630 failed
+only its SYNTHETIC raw-padding total (forgot the embedding tile's3072-byte
+tail); fixture padding corrected, exact production geometry checks unchanged.
+
+Real Haiku RISC-V client/kernel DATA SDK main89954/clean89470 BOTH0
+-----------------------------------------------------------------
+All5 outputs byte-identical, complete9-line stdout also exact:
+69efd690226894b16b530636543eca5dca7d4df505c95f582e745f044e458625.
+03f3465442037a2a4386a05a2d18f12dd9b8e4878a3fff2f47795686eb584f89 original.o
+82bde6c86651b5e1cd3aaf198069d583130b67bd93744b40d2090deb55d8e4cc adapter.o
+dbbe5aef3bcbc1afb148f1eca790349569421ea2c5211e94fbd0cc8affad154b client.o
+7eeef995c758df7c1a2f6512e51fdb0eb26855cdbd3e62cbc9925304cf8a49f1 pioneer-q38-prefix-DEBUG73-VALIDATION-ONLY
+f5aea26977f4a84ba297a59d1b04e9b94c0fbd91f9cfb5d0bd9684fa27f1b6df protocol-data-kernel.o
+Max USER frame16784 bytes; actual fixed protocol request compiles in kernel
+mode with max16-byte frame, NO driver/native/control/device symbols. The
+client is validation-only and includes ioctl; adapter has no device IO or
+inline CPU oracle. No install/run/hardware permission follows from building.
+
+Native3RUN/dispatch-END passed; other execution gates still LIVE
+--------------------------------------------------------------
+18968 TERMINAL0: actual native3RUN/119STOP+ROOT/all120holds/full11406904-word
+restore+second22813808-word proof/actual dispatch END;ALL6 reached post-RUN
+lifetime faults retain all owners and fence following physical IO/retry.
+Complete61-line stdout SHA256:
+65ffc2e94b011ca8866069cec736fa1dff2ff87d682d456e65984ff1995aabd4.
+Archived qwen38-prefix-native-execution-main-20261028.log. Native context/
+factory/producer/owner code is genuine,raw OS/MMIO/learned bytes SIMULATED.
+NOT final clock/VM/PCI/host disposal,original-model arithmetic,physical or TPS.
+Do NOT poll/restart CLOSED18968. Exact six currently live handles:
+26734/98063 fresh native3RUN+6postRUN+84final-END faults main/clean
+36450/62100 ORIGINAL native3RUN+fresh END+54comparisons main/clean
+43038/80015 native3RUN+fivefixed READs+3readback faults+fresh END main/clean
+All six exact handles freshly confirmed live; some reached completed3RUN
+and six actual lifetime faults, but their restoration/final-END is NOT terminal.
+These are LOCAL SIMULATIONS,not hardware clients. Never restart due to quiet
+output/observation timeout. Original-model-readback combined mode is already
+implemented, but not launched/qualified: finish constituent gates first.
+
+Next actual driver work; no narrowing of the full objective
+---------------------------------------------------------
+Implement/qualify the actual same-context validation control: native3RUN+
+STOP/all120holds/fixed readback/fullrestore, release compute RAII scope,
+actual locked bank-END/fresh source-clock-PCI-idle audits/context destruction,
+and ONLY THEN user-copy the captured output. CPU numerical comparison must
+not grant cleanup or repair an unknown run. Give physical selection its OWN
+exact role/tag/namespace/control/helper/pins/parent+owner audit; never retag
+old72 or treat QRPNODRV compile artifacts as physical authority. Gate all of
+this on original native+readback qualification, then an original-model card
+comparison. No new physical role/selector/control/helper implemented here.
+
+Then dense3/all64, persistent KV+GDN+Conv history/atomic whole-token update,
+finalnorm/vocabulary/on-card sampling/persistent no-CPU-reference Work+
+Assistant and honest hardware performance optimization. No driver,image,
+Assistant,boot,power,SD,mains,network or hardware-connection change this turn.
+Last known stable041/64CPU/fullRAM is not a fresh board check. Whole-model
+0.207893161tok/s unchanged;20tok/s/full card offload still UNMET/goal ACTIVE.
+All test/init/upload/readback/cleanup times here are NOT token performance.
