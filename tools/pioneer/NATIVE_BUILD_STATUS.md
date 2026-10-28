@@ -1,5 +1,22 @@
 # Native build status
 
+## Current: connected SAME119 scheduler instructions are executing
+
+October 28, 2026. A new pinned prefix4 instruction fixture uses ONE ROOT,
+ONE shared GDDR byte map and the SAME119 genuinely booted workers throughout
+recurrent0->1->2->dense3. No private PC/nonce/tensor history is transplanted
+between recurrent and dense fixtures; independent observers do not supply
+products. Actual initial guards pass main/clean (12 cases each, zero NoC or
+peer traffic, inert fault2048). ASan+UBSan logs match `0022f128`.
+
+Positive runs `37573/71667` are LIVE, not passed: both have reached layer0's
+QKV matrix with matching observations. Connected handoff, final all119 STOP
+and combined stack results are pending. Follow the SAME handles; do not
+restart for quiet output. No new physical/card/Work test or driver install.
+Evidence: [connected scheduler instruction preparation](benchmarks/qwen38-layer-chain-instruction-preparation-20261028.txt).
+All64/persistent-state/output/sampling/native/Work/Assistant and performance
+qualification remain owed; last whole-model **0.207893161 tokens/sec**.
+
 ## Latest: common all64 scheduler and genuine final-dense STOP build qualified
 
 October 28, 2026. A distinct on-card scheduler now links the actual returning

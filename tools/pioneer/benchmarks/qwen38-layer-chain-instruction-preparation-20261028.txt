@@ -1,0 +1,72 @@
+Connected QCH1 prefix4 actual instruction test: PREPARATION / LIVE
+2026-10-28. No physical card action or inference timing.
+
+Build-qualified device checkpoint f5c3b1901665681fb5e632bd0b77ae190ff139eb
+was pushed and exact remote branch verified. Its all64/prefix4 builds and
+DATA evidence are recorded in qwen38-layer-chain-build-20261028.txt.
+
+New test sources:
+ tools/pioneer/tests/pioneer_q38_layer_chain_instruction_test.cpp
+ tools/pioneer/tests/run_pioneer_q38_layer_chain_instruction_tests.py
+C++ source SHA256:
+ dfe5043db39815c2e0ec44fac796bfeeb711b02e6d530839191d22917c300d88
+Runner SHA256:
+ 14fa8a99dfe0c5374e1a3b3dbda356ac0584f6150468f2ccb249072a839fdc74
+Both source files are identical in main and the existing clean source export.
+
+The instruction fixture constructs ONE set of119 ChainPeer instances before
+their FIRST boot; all subsequent jobs retain their actual PC/register/nonce/
+tensor/counter histories. One GDDR byte map holds the initial hidden vector,
+raw learned bytes, zero prior states and canonical serialized metadata.
+ROOT itself performs every later metadata/hidden transfer and doorbell.
+Q8/Q4/Q6 raw tile geometry follows the actual received jobs. Dense cache
+reads use the SAME raw map, not a separately simulated dense processor.
+
+Independent observers check actual input/residual/RMS/quantization, worker
+matrix rows, Conv/GDN, single-position attention and final5120. They may
+read outputs but never feed a numeric product, completion or native owner
+back into the instruction path. End-to-end positive completion is NOT yet
+proved. Only synthetic primitive bytes are used, NOT original model weights.
+
+Command in each tree (no --build-only):
+ python3 tools/pioneer/tests/run_pioneer_q38_layer_chain_instruction_tests.py \
+   /private/tmp/pioneer-q38-layer-chain4-{main,clean}-20261028-e \
+   /private/tmp/pioneer-q38-mixed-worker-20261026-e
+Flags inherited from existing pinned worker instruction test. ASan+UBSan,
+ffp-contract=off, no changed reference/tolerance. Script verifies literal
+device+worker image sizes/hashes before compilation or execution.
+
+Initial-refusal command adds --refusals. Main73338 / clean14790 both direct
+exit0. Identical15-line logs SHA256:
+ 0022f128b03bbbd52342c0be5915d4a21a74fd0db78f424be024e77b707041ca
+12 reached boot/outer/source/doorbell faults, ZERO NoC or worker traffic,
+inert fault loop2048 and all119 genuine virgin histories retained.
+Not positive connected execution, STOP, ownership, physical or TPS proof.
+
+Positive main37573 / clean71667 are LIVE at this checkpoint:
+ /private/tmp/pioneer-q38-layer-chain-instructions-main-positive-20261028-d.log
+ /private/tmp/pioneer-q38-layer-chain-instructions-clean-positive-20261028-d.log
+Both reached layer0's fourth matrix (QKV) with matching observations. Follow
+the SAME handles; silence or an observation timeout does not mean stopped.
+Expected but NOT PASSED: all4 real layers/31matrices2883jobs/357peerConv/
+288GDN/288dense/119STOP/actual final5120/terminal inert2048/combined stack.
+
+Fixture development findings (not device arithmetic failures): initial-a
+rejected valid dense Q6 raw spans; initial-b compared canonical recipe DATA
+to the device's legitimately bound execution descriptor. Both were corrected
+to model the existing supported byte geometry and exact descriptor binding,
+not by relaxing image/runtime bounds or arithmetic checks. Initial-c was
+deliberately terminated (exact child PID26077/session2284) because its final
+observer incorrectly expected a returning status from a noreturn final
+dense entry. The corrected observer watches that entry's actual next STOP
+doorbell, then still requires all119 real STOPs and the terminal receipt.
+This restart was for a known observer bug, not quiet output. The current
+-d positive runs are unchanged and remain live. A harmless nice/setpriority
+permission warning is retained in the raw logs; the tests did execute.
+
+Remaining full objective: connected prefix4 runtime and final STOP, all64
+runtime, persistent multi-token KV/GDN/history and token commit, output
+normalization/vocabulary/sampling, genuine native owner/journal/cleanup and
+client/helper gates, original/physical validation, no-CPU-reference Work
+and Assistant selection, real inference timing/performance. Last whole-model
+0.207893161tok/s; no speedup measured and20tok/s target remains unmet.
