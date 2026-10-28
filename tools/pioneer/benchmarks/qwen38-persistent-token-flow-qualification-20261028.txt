@@ -106,3 +106,29 @@ journal/clock/cache/terminal/client audits,physical stability,no-reference
 Work/Assistant integration and real sustained throughput remain required.
 No current driver/kernel/UI/CPU/RAM/boot functionality is changed. Dirty
 llama.cpp/FlashNext work remains unread/untouched/unstaged. Goal ACTIVE.
+
+18:22UTC follow-up: new partial pass and OLD terminal failures
+------------------------------------------------------------
+The SAME new35426 process completed actual token0/layer0 and continued into
+layer1:all119 closed/final5120/prior read-state retained,608831251 ROOT
+instructions,actual reserved SP6496/written6488 (limit8192). Counts include
+simulated polling,not physical cycles or token speed. No full token yet.
+
+The OLD QCH1 windows tests17092/81011 now BOTH terminate1. They are NOT live
+and must NOT be restarted for quiet or treated as passes. Both independently
+complete layers0..14,then fault at layer15/phase12 after all7 dense matrices:
+ completed15,matrixJobs11532,Conv1428,GDN1152,dense1152,packets1767309,SP6f340.
+Each fault is a real emulated scalar_fault_park followed by the host Run()
+assertion,not an observation timeout or compiler/ASan failure. It is an OLD
+one-pass image with the old QMW1 workers and synthetic initial hidden input,
+not this new QGW1 persistent-parent test or an installed-driver failure.
+
+Cause is UNDETERMINED from these logs. Phase12 includes dense final residual
+domain checks,metadata/input seals,final transfer and return audits. No last
+fault-callsite register/numeric-vector dump was retained. Numeric range is
+one hypothesis,not evidence of the cause;do NOT weaken guards/change inputs
+just to force a pass. Preserve these failed histories;instrument the actual
+next failing lifetime/obtain a genuine diagnostic reproduction as needed.
+The six existing QGC1 one-pass tests and new35426 remain separate live runs.
+Shared dense arithmetic means the old failure must be investigated before
+claiming full-model qualification. Hardware remains untouched.
