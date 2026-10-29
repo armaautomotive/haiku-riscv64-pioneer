@@ -6,17 +6,19 @@ import pathlib
 import subprocess
 import sys
 import tempfile
-assert len(sys.argv) == 3
-model, output = map(pathlib.Path, sys.argv[1:])
+assert len(sys.argv) == 3 or (len(sys.argv) == 4 and sys.argv[3] == '--state-snapshots')
+model, output = map(pathlib.Path, sys.argv[1:3])
 assert model.is_absolute() and output.is_absolute() and not output.exists() and not output.is_symlink()
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 here = pathlib.Path(__file__).resolve().parent
 output.mkdir(mode=0o700)
+if len(sys.argv)==4:
+    (output/'state-cpu').mkdir(mode=0o700)
 with tempfile.TemporaryDirectory(prefix='pioneer-cpu-original-reference-', dir='/private/tmp') as tmp:
     binary = pathlib.Path(tmp)/'test'
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-ffp-contract=off', '-fsanitize=address,undefined',
                     str(here/'pioneer_q38_cpu_model_original.cpp'), str(here/'pioneer_q38_cpu_model_reference.cpp'), str(here/'pioneer_q38_whole_original_bytes.cpp'), '-o', str(binary)], check=True)
-    subprocess.run([str(binary), str(model), str(output)], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})
+    subprocess.run([str(binary), str(model), str(output), *sys.argv[3:]], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})
     for position in range(3):
         path = output/f'token-{position}.bin'
         data = path.read_bytes()

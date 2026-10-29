@@ -3,6 +3,7 @@
 #define PIONEER_Q38_CPU_VALIDATION 1
 #include "pioneer_q38_cpu_model_reference.h"
 #include "pioneer_q38_whole_original_bytes.h"
+#include "pioneer_q38_state_snapshot_data.h"
 #include <array>
 #include <cassert>
 #include <cstdio>
@@ -12,7 +13,8 @@ static void Word(FILE* f,uint32_t word){
  uint8_t bytes[4];for(unsigned i=0;i<4;i++)bytes[i]=uint8_t(word>>(i*8));assert(fwrite(bytes,1,4,f)==4);
 }
 int main(int argc,char** argv){
- assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);
+ assert(argc==3 || (argc==4 && !strcmp(argv[3],"--state-snapshots")));setvbuf(stdout,nullptr,_IOLBF,0);
+ const bool snapshots=argc==4;unsigned records=0;std::string stateDirectory=std::string(argv[2])+"/state-cpu";
  puts("START CPU-REFERENCE ONLY/full original SHA/all851 tensors/row-major/libm/retained GDN+Conv+KV;NO accelerator or device-product uploads/TPS authority");
  WholeModelOriginalBytes original;assert(original.Open(argv[1]) && original.Ready());
  Q38CpuModelReference reference;assert(reference.Bind(original) && reference.Ready());
@@ -28,6 +30,13 @@ int main(int argc,char** argv){
   assert(!fflush(f) && !ferror(f) && !fclose(f));
   float best,second;memcpy(&best,&trace.best,4);memcpy(&second,&trace.second,4);
   printf("CPU_REFERENCE_TOKEN position%u/input%u/greedy%u/runnerUp%u/best%.9g/second%.9g/65hidden+all248320logits SAVED;NOT accelerator match or inference throughput\n",position,token,trace.selected,trace.runnerUp,best,second);
+  if(snapshots && position>=1)for(unsigned layer=0;layer<64;layer++)for(unsigned kind=0;kind<4;kind++){
+   const unsigned count=Q38StateSnapshotData::Count(position+1,layer,kind);if(!count)continue;
+   std::vector<uint32_t> words;assert(reference.Snapshot(position+1,layer,kind,words) && words.size()==count);
+   assert(Q38StateSnapshotData::Save(stateDirectory.c_str(),false,position+1,layer,kind,words.data(),words.size()));records++;
+  }
  }
+ if(snapshots){assert(records==176 && reference.Ready() && Q38StateSnapshotData::Finish(stateDirectory.c_str(),false,records));
+  puts("PASS CPU-PRIVATE176 state snapshots/GDN after2+3/Conv after3/packed half K+V all3positions;NOT a native match or execution authority");}
  puts("PASS CPU-ONLY original27B3-position reference computed;MUST compare independently with complete emitted/device generations;NOT native/physical/Work/TPS qualification");
 }

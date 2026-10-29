@@ -1,0 +1,1 @@
+PASS CPU-ONLY original27B retained-state corpus/176 exact records/77021184 words/identity+geometry+finite+footer+complete markers/all files bit-identical across two executions;NOT a native/device state comparison,hardware,Work or TPS result

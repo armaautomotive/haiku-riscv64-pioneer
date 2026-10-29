@@ -1,0 +1,43 @@
+Original27B CPU-private retained-state control:VALIDATION CHECKPOINT
+2026-10-29 22:18UTC. Goal ACTIVE;20tok/s UNMET.
+Last physical whole-model result remains0.207893161 tokens/sec.
+
+Separate original-model CPU producers82522/67610 BOTH terminal0. Each
+authenticates the full SAME-open original GGUF,executes3 complete CPU-only
+forward steps/all64 layers+vocabulary and saves176 retained-state copies:
+48 GDN layers after2+3 steps,48 Conv histories after3,and packed binary16
+K+V for16 attention layers across all3 positions. No reference products
+enter an accelerator or native/Work translation unit.
+
+All3 token files retain the EXACT previously pinned full-reference hashes:
+ token0/2324548B/9323e2451c41e241c9a0391d3905890b662fd73df8542103da229f9b910d6937
+ token1/2324548B/dcc88c37599ab6659990f5154da04dcc12b4edea5a38c27359402b75ede4973d
+ token2/2324548B/433b776057b9ada57c21bd8b103e29464e6f8758ea7cd4e9865d6e8ff2bff214.
+Thus the optional state observation preserves the existing forward traces.
+Main/clean complete producer logs match. These are two executions of the
+SAME CPU-reference implementation,not two independent state algorithms.
+
+Read-only structured audit42031 terminal0:both directories contain exactly
+176 records+one completion marker;all identities,lengths,zero-reserved
+fields,finite FP32/half domains and footers match the fixed schema. All
+77021184 payload words and complete file hashes are bit-identical between
+the two CPU controls. CPU magic QCS1 is DISTINCT from native QNS1;no file
+was relabeled as an accelerator result. Native state comparison is UNPROVEN.
+
+Published source is limited to the CPU producer+runner and HOST-only DATA
+serializer. Sources match both earlier immutable C snapshots. The optional
+--state-snapshots flag writes only into the runner's fresh private output
+directory;exclusive no-follow state-file creation refuses overwrites.
+No model/source/math policy,default Work selection,driver or Assistant
+behavior changes. The existing CPU Snapshot API+119 role gates+synthetic
+3-step/176-copy tests are separately publishedcf5a54139f. Serializer's
+synthetic main/clean normalization/corruption tests41363/34330 passed before
+these original control executions;that does not qualify a native owner.
+
+The native collector,strict state-file comparator and complete-generation
+END integration remain LOCAL WIP. Native81906/33926 and performance62292/
+6569 remain separate running histories,not completed device comparisons.
+All64/multitoken/state/KV/EOS device numerics,full lifecycle/stack,public
+fast Work+Assistant,physical long-context stability and measured throughput
+remain required. No Pioneer/SSH/power/install/OS/network/SD/mains or health
+action/claim. Large generated model/state files are NOT committed.
