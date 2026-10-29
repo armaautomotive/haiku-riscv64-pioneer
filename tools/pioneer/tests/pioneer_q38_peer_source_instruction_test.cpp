@@ -105,6 +105,7 @@ struct AuditMachine:Machine {
   return okay;
  }
 };
+#ifndef PIONEER_Q38_PEER_SOURCE_INSTRUCTION_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==5);setvbuf(stdout,nullptr,_IOLBF,0);AuditImage baseline(argv[1],argv[3]),candidate(argv[2],argv[4]);unsigned faults=0;
  for(unsigned kind=0;kind<3;kind++){
@@ -127,3 +128,4 @@ int main(int argc,char** argv){
  }
  printf("PASS isolated emitted original/candidate source audits:9 positive functions/workers,%u source/root metadata/quiet/counter faults,actual immutable2048 inert steps;NO native acquisition/full-model/physical/Work/TPS grant\n",faults);
 }
+#endif

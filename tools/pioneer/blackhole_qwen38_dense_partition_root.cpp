@@ -25,6 +25,10 @@
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQ38DensePositiveSum.h"
 #include "PioneerQ38DensePartitionRootLayout.h"
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
+#include "PioneerQ38GlobalChainComponentRole.h"
+extern "C" void q38_mixed_root_packet_seal(const uint32_t*);
+#endif
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
 #include "PioneerQ38MixedRecurrentBlockRootLayout.h"
@@ -133,12 +137,27 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
  96
 #endif
  || !bytes || bytes>16384-(remote&31) || ((bytes|remote)&3))scalar_fault_park();
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
+ q38_mixed_root_packet_seal(d);if(!Quiet())scalar_fault_park();
+#if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
+ if(d[9]!=129)scalar_fault_park();
+#else
+ if((d[0]==PioneerQ38MixedProjectionRootLayout::Magic?d[9]:d[5])!=129)scalar_fault_park();
+#endif
+ if(remote>=0xff000000U && (write || bytes!=4))scalar_fault_park(); // no bulk-MMIO loophole
+ if(write && remote==M::Doorbell)Seal(d);
+#else
  Seal(d);
+#endif
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
+ if(write && remote==M::Doorbell)FrameSeal(w);
+#else
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
  FrameSeal(w);
 #else
  if(w<96)FrameSeal(w);
+#endif
 #endif
  unsigned route=M::Peer(w+1);
 #else
@@ -164,6 +183,10 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
  for(unsigned poll=0;poll<65536;poll++){
   bool done=!*Words(0xffb20040);for(unsigned i=0;i<8;i++)done &= *Words(0xffb20000+Counter(i))==expected[i];
   if(done){
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
+   q38_mixed_root_packet_seal(d);if(!Quiet())scalar_fault_park();
+   if(write && remote==M::Doorbell){Seal(d);FrameSeal(w);}
+#else
    Seal(d);
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
@@ -173,6 +196,7 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
 #endif
 #else
    FrameSeal(w);
+#endif
 #endif
    for(unsigned i=0;i<10;i++)if(Words(0xffb20000)[i]!=command[i])scalar_fault_park();
    for(unsigned i=0;i<8;i++)tracked[i]=expected[i];

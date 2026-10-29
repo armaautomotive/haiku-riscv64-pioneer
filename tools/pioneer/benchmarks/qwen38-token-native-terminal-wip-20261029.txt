@@ -95,3 +95,16 @@ HOLD/restore/END/load-unload/recovery,physical repeated generation and long
 conversations,qualified no-CPU-reference Work+Assistant and measured speed.
 No public driver selection or installation route was enabled. Keep all
 those requirements and the20tok/s target intact.
+
+2026-10-29 10:41UTC follow-up--current five-case fault suite is complete
+Main76143/clean27364 BOTH terminal0; complete stdout logs are byte-identical.
+All five actual started-ROOT/native-owner cases pass, including the fifth
+case in which the immutable ROOT itself executes its Scope failure and
+reaches fault-park before any NoC request. The observer retains resources
+and performs no later IO/retry. This qualifies the current D fault path,
+NOT positive terminal acceptance, consumed cancellation, STOP/END or card
+performance. The older four-case mainA6529/cleanC30317 also both finish0;
+their complete logs match, but they do not substitute for the fifth case.
+Current original-model cancellation D main9075/clean31509 remains live;
+its actual consumed-cancel/all119STOP/positive-observer result is still owed.
+Current fault logs are saved as qwen38-native-terminal-faults-{main,clean}-20261029.log.

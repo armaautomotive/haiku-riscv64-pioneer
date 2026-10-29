@@ -1,5 +1,24 @@
 # Native build status
 
+## In progress: boundary-scoped controller audits for lower overhead
+
+October29,2026 10:39UTC. A separate explicit `--boundary-seals` candidate
+moves full immutable metadata rescans to worker-release boundaries while
+retaining per-packet source/identity/counter/command/quiet checks. Its fault
+detection timing is deliberately different, not identical validation.
+All remote MMIO remains four bytes; there is no bulk-MMIO exception.
+
+Independent emitted-function tests both finish0 with identical logs:
+9 source-audit comparisons use51-66% fewer instructions in those routines,
+63 immediate refusals,18 release-boundary cases,18 post-release fault-and-
+retain cases and6 MMIO-width/write refusals pass. These are isolated ABI
+tests,not model/card timing. Main/clean strict builds match; default pins
+remain unchanged. No public/native Work selection or installation is enabled.
+Two changed-code original-model3-token/all64 qualification runs have started;
+no completed model or measured speedup result follows. Last physical
+**0.207893161 tokens/sec**,20 unmet. Evidence:
+[boundary-audit candidate](benchmarks/qwen38-token-boundary-seals-wip-20261029.txt).
+
 ## In progress: native ROOT/all119 terminal observation and consumed cancellation
 
 October29,2026 10:06UTC. A new private read-only terminal observer verifies
@@ -20,6 +39,13 @@ Older full-model histories continue unchanged;native A has returned three
 layers,B two. No new Pioneer/OS/Assistant/boot/CPU/RAM changes. Last physical
 **0.207893161 tokens/sec**,20 unmet. Evidence:
 [native terminal work in progress](benchmarks/qwen38-token-native-terminal-wip-20261029.txt).
+
+October29,2026 10:41UTC follow-up: current D main/clean five-case terminal-
+fault suites BOTH finish0 with identical complete logs. The fifth case
+executes the immutable ROOT's real fault-park path, not a supplied PC.
+Resource retention/no-following-IO pass; positive terminal acceptance and
+consumed cancellation/all119 STOP remain unqualified and running. This
+does not grant HOLD/restore/END, Work or physical readiness.
 
 ## Current: lower-instruction dense audit candidate qualified offline
 

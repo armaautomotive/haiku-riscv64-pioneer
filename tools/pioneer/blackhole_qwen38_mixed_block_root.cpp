@@ -80,6 +80,17 @@ static void WriteFinal(const uint32_t* o){
  }
 }
 }
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
+extern "C" void q38_mixed_root_packet_seal(const uint32_t* frame){
+ using namespace DensePartitionRoot;const auto* p=Joined::Private();
+ if(reinterpret_cast<unsigned>(p)<0x6e000 || reinterpret_cast<unsigned>(p)>0x70000-sizeof(*p)
+  || frame!=p->frame || !p->phase || p->phase>13 || !p->outer[48] || p->outer[48]>=0x7fffffff
+  || *Words(L::Doorbell)!=p->outer[48])scalar_fault_park();
+ for(unsigned i=0;i<16;i++)if(frame[16+i]!=p->boot[16+i])scalar_fault_park();
+ for(unsigned i=0;i<8;i++)if(frame[32+i]!=p->boot[8+i])scalar_fault_park();
+ PioneerQ38WordSealSources(p->boot+16);
+} // no metadata-cache ready bit,NoC/counter recapture or new lifecycle grant
+#endif
 extern "C" void q38_mixed_root_seal(){
  using namespace DensePartitionRoot;const auto* p=Joined::Private();
  if(reinterpret_cast<unsigned>(p)<0x6e000 || reinterpret_cast<unsigned>(p)>0x70000-sizeof(*p))scalar_fault_park();

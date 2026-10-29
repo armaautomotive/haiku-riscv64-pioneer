@@ -16,6 +16,7 @@
 #endif
 #include "PioneerQ38LayerReturnComponentLayout.h"
 #define q38_mixed_root_seal q38_layer_return_dense_seal
+#define q38_mixed_root_packet_seal q38_layer_return_dense_packet_seal
 #define memset q38_layer_return_dense_zero
 #ifdef PIONEER_Q38_LAYER_COMPONENT_DENSE_STOP
 #define mixed_live_block_stopped q38_layer_chain_stopped
@@ -26,6 +27,7 @@
 #endif
 #undef memset
 #undef q38_mixed_root_seal
+#undef q38_mixed_root_packet_seal
 extern "C" __attribute__((noinline)) unsigned q38_return_dense_layer(){
  using namespace DensePartitionRoot;
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE

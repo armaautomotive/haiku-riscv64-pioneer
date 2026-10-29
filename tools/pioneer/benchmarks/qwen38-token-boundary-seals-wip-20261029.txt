@@ -1,0 +1,101 @@
+Boundary-scoped metadata audits: offline controller candidate, NOT ready
+2026-10-29 10:39 UTC. Goal ACTIVE; 20 tokens/sec remains UNMET.
+Last completed physical whole-model measurement: 0.207893161 tokens/sec.
+No Pioneer, SSH, power, driver installation, Assistant, boot, CPU/RAM,
+network, SD, hardware-connection or mains changes in this checkpoint.
+No physical-health or whole-model speedup claim.
+
+Changed execution contract
+--------------------------
+The separate --boundary-seals candidate requires explicit cancellation,
+FP32-hidden arithmetic and --unroll-dense-seals. It does NOT replace an old
+default image, native ROM pin, public driver entry or Work mode.
+
+The returning recurrent/dense controllers previously rescanned their whole
+immutable boot/header/outer metadata around every peer packet. The candidate
+keeps full rescans before AND after worker doorbell releases. The recurrent
+cohort also retains full rescans around job-descriptor writes and its whole
+Conv/GDN audits at the original stage boundaries. Ordinary read/data packets
+use a smaller owner/frame-pointer/phase/nonce/source/cookie check instead.
+Public metadata corruption may therefore be detected later than in the old
+profile, but must be rejected before a worker is released. This changed
+fault timing is intentional and is NOT described as identical validation.
+
+Every packet retains live ROOT source checks, quiet queues, all eight live
+counter checks, all ten command writes/readbacks, expected counter deltas,
+bounded polling and checked command completion. Dense transfers additionally
+require ROOT route129 and refuse wider MMIO or MMIO writes. Peer source
+audits still issue sixteen separate FOUR-BYTE MMIO packets. No bulk-MMIO
+exception, counter adoption, processor-history setter or ready cache exists.
+
+Completed independent component qualification
+----------------------------------------------
+Current emitted-routine B main67301/clean56224 both finish0; complete logs
+are byte-identical. The baseline and candidate complete ELF/image families
+are authenticated against separate fixed pins before actual functions run.
+These are isolated synthetic ABI arguments, NOT a native owner or model.
+
+Nine source-audit comparisons (three actual routines, workers0/95/118) keep
+the same sixteen four-byte remote packets and values. Representative
+worker0 instruction counts, excluding the later inert-loop observation:
+  recurrent projection audit 65444 -> 22756
+  dense projection audit     65316 -> 22388
+  recurrent cohort audit     49887 -> 23871
+Other two worker selections show the same direction. This is approximately
+51-66% fewer instructions in THESE ROUTINES, NOT a token-throughput result.
+Written stacks are respectively216/220,212/212,200/204 baseline/candidate.
+
+The same tests pass63 immediate source/counter/quiet/nonce refusals,
+18 positive-or-metadata-refused release-boundary cases,18 corruption cases
+immediately AFTER the actual isolated release packet, and6 wider-MMIO or
+MMIO-write refusals. Post-release faults retain the old tracked counters,
+issue no retry, and fault-park. Each returned/faulted function executes2048
+actual immutable inert-loop instructions with no further packet/write.
+The earlier main A test's PASS output was recovered after its process was
+confirmed absent, but its lost exit status is NOT substituted for B's two
+observed terminal0 results.
+
+Strict pinned main19291/clean82990 builds both finish0 with identical full
+logs and program.elf bytes. All ISA/s11/no-BSS/entry/section/stack checks
+pass without increasing memory limits:
+  text.bin 130652/131072 bytes, SHA256
+    377d091966a7d189dbeff86cf3c19b82afbb489619eaf5712ff4da3a2e2f4d14
+  conv.bin 21340/32768 bytes, SHA256
+    8ab4558559117ad23fae02ab42332e388547774a2a0f4b5a22e81983b8f85fe0
+  program.elf 178316 bytes, SHA256
+    e9acecd4b0ae512e5ae49d5852472d87b6bbeb275009b0b0f27807de7fec349e
+Parent maximum frame1616; component maximum frame2112. These individual
+frames are NOT combined live-stack proof. Only420 bytes remain in ROOT text.
+
+Current default main44801/clean20277 both finish0; logs and old default pins
+remain identical (cancel+FP32 ELF5d870cb7, text20ace51c). The candidate is
+not silently made the default or accepted by native launch authentication.
+Role tests main71927/clean30383 both finish0 with identical complete logs:
+1042 gates cover explicit candidate roles, missing/zero/late flags and
+old/native/worker/chain exclusions. A valid candidate is not a launch grant.
+
+Whole-model qualification, NOT a completed result
+-------------------------------------------------
+Distinct changed-code original-model three-token/all64-layer runs started:
+  main7635, clean74451
+  /private/tmp/pioneer-q38-boundary-flow-{main,clean}-20261029-c.log
+  /private/tmp/pioneer-q38-boundary-flow-{main,clean}-20261029-c-observed
+They authenticate the separate boundary image and the original GGUF, use
+unchanged FOUR-BYTE MMIO endpoints and actual worker instructions, and keep
+the existing const-only observed-output recorder. The option is HOST-side
+image selection only; it grants no model result, native capability or Work
+execution. Earlier valid whole-model/native histories are not restarted.
+
+No full trace, token, combined stack, native lifecycle or physical result
+follows from starting these runs. After genuine completion, compare the
+complete observed QOD1 traces to the separately pinned original CPU traces
+using compare_pioneer_q38_observed_trace.py WITHOUT --diagnostic-only.
+
+Still required for the actual objective
+----------------------------------------
+Complete original-model/all64/multitoken numerical and state/KV proof;
+current native consumed-cancel/ROOT+all119 STOP/terminal fault qualification;
+owned token readout, HOLD/restore/clean END/load-unload/recovery; native
+integration of a qualified performance image; physical repeated generation
+and long chats; no-CPU-reference Work plus Assistant; measured sustained
+performance toward20 tokens/sec. Preserve SD-free boot,64 CPUs and full RAM.

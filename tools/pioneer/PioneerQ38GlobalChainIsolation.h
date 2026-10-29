@@ -34,3 +34,6 @@
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_F32_HIDDEN) && !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE)
 #error FP32 hidden arithmetic belongs only to the distinct returning components
 #endif
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS) && !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE)
+#error Boundary seals belong only to a distinct returning-component candidate
+#endif

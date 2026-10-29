@@ -16,6 +16,9 @@ extern "C" void scalar_fault_park() __attribute__((noreturn));
 extern "C" unsigned mixed_recurrent_cohort_wait(unsigned);
 extern "C" unsigned q38_mixed_recurrent_root_conv();
 extern "C" __attribute__((noinline)) void q38_mixed_root_seal();
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
+extern "C" void q38_mixed_root_packet_seal(const uint32_t*);
+#endif
 extern "C" __attribute__((noinline)) const uint32_t* q38_mixed_recurrent_frame();
 #ifndef PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE
 extern "C" void* memset(void* target,int value,__SIZE_TYPE__ bytes){
@@ -70,7 +73,13 @@ static void Packet(uint32_t* tracked,unsigned w,unsigned at,unsigned bytes,bool 
   || ((at==TT_Q38_FFN_RESIDENT_SUMMARY || at==TT_Q38_GDN_INPUT_SUMMARY || at==TT_Q38_RGDN_SUMMARY || at==TT_Q38_GDN_GATED_SUMMARY) && bytes==128)
   || ((at==TT_Q38_GDN_GATED_READY || at==TT_Q38_GDN_RENDEZVOUS_CLOCK) && bytes==64) || (Csr(at) && bytes==4);
  if(!permit || w>=119 || ((at|bytes)&3) || bytes>1536)scalar_fault_park();
- q38_mixed_root_seal();if(!Quiet())scalar_fault_park();
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
+ q38_mixed_root_packet_seal(Frame());
+ if(write && (at==M::Job || at==M::Doorbell))q38_mixed_root_seal();
+#else
+ q38_mixed_root_seal();
+#endif
+ if(!Quiet())scalar_fault_park();
  unsigned local=L::Scratch+(at&31),peer=M::Peer(w+1);uint32_t expected[8];
  for(unsigned i=0;i<8;i++){
   if(*Words(0xffb20000+Counter(i))!=tracked[i])scalar_fault_park();
@@ -84,7 +93,13 @@ static void Packet(uint32_t* tracked,unsigned w,unsigned at,unsigned bytes,bool 
  for(unsigned poll=0;poll<65536;poll++){
   bool done=!*Words(0xffb20040);for(unsigned i=0;i<8;i++)done &= *Words(0xffb20000+Counter(i))==expected[i];
   if(done){
-   q38_mixed_root_seal();if(!Quiet())scalar_fault_park();
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
+   q38_mixed_root_packet_seal(Frame());
+   if(write && (at==M::Job || at==M::Doorbell))q38_mixed_root_seal();
+#else
+   q38_mixed_root_seal();
+#endif
+   if(!Quiet())scalar_fault_park();
    for(unsigned i=0;i<10;i++)if(Words(0xffb20000)[i]!=command[i])scalar_fault_park();
    for(unsigned i=0;i<8;i++)tracked[i]=expected[i];
    Words(L::Summary)[8]++;Words(L::Summary)[9]+=(bytes+63)>>6;return;
