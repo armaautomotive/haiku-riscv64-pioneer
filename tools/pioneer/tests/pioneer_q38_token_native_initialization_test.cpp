@@ -60,11 +60,20 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  bool executionMode=false;unsigned executionFault=0,executionArms=0,executionStarts=0,executionObserved=0;
  unsigned terminalFault=0;
  unsigned executionPcReads=0,executionFaultPcObserved=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE
+ std::vector<unsigned> terminalHoldOrder;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
  unsigned embeddingFault=0;
 #endif
  bool RootReset(uint32 value){
   if(!executionMode || runtimeCore)return false;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE
+  if(value==0x47800){
+   Touch();assert(C().coreReset==0x46800 && executionCpu->pc==0x60004 && !C().pending && terminalHoldOrder.empty());
+   C().resets.push_back(value);C().coreReset=value;terminalHoldOrder.push_back(0);return true;
+  } // actual requested HOLD endpoint only;no processor PC/history change
+#endif
   Touch();assert((value==0x87ffff && C().coreReset==0x47800 && !executionArms && !executionCpu->steps)
    || (value==0x46800 && C().coreReset==0x87ffff && executionArms==1 && !executionStarts && !executionCpu->steps));
   C().resets.push_back(value);C().coreReset=value;
@@ -118,6 +127,14 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  }
  bool BootstrapReset(uint32 value){
   if(!bootstrapMode)return false;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE
+  if(value==0x47800){
+   Touch();assert(runtimeCore && runtimeCore<120 && Core(0).coreReset==0x47800
+    && C().coreReset==0x46800 && terminalHoldOrder.size()==runtimeCore && !C().pending
+    && bootstrapPeer[runtimeCore-1]->cpu->ObserveStopped());
+   C().resets.push_back(value);C().coreReset=value;terminalHoldOrder.push_back(runtimeCore);return true;
+  } // same actually stopped engine;HOLD never supplies a STOP receipt
+#endif
   Touch();assert(runtimeCore && runtimeCore<120 && (value==0x87ffff || value==0x46800));
   auto& core=C();auto& cpu=*bootstrapPeer[runtimeCore-1];core.resets.push_back(value);
   if(value==0x87ffff){assert(core.coreReset==0x47800 && !cpu.steps && cpu.pc==0x6000);bootstrapArms++;}
@@ -331,7 +348,7 @@ struct Fixture {
 int main(int argc,char** argv){
  const bool peerBootstrap=argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines");
  const bool fullFlow=argc==7 && !strcmp(argv[2],"--execution-full-flow");
- const bool cancelLayer=argc==7 && !strcmp(argv[2],"--execution-cancel-first-layer");
+ const bool cancelLayer=argc==7 && (!strcmp(argv[2],"--execution-cancel-first-layer") || !strcmp(argv[2],"--execution-hold-first-layer"));
  const bool terminalFaults=argc==3 && !strcmp(argv[2],"--terminal-observation-faults");
  const bool fullLayer=fullFlow || cancelLayer || (argc==7 && !strcmp(argv[2],"--execution-first-layer"));
  (void)cancelLayer;

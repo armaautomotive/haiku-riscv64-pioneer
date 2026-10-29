@@ -50,4 +50,15 @@
   || !Q38TokenExecutionOutput(c,&result,sizeof(result)) || !c.io.TokenModelSourceScope(false))return false;
  return s->runtime->ObserveTerminal(c.io,result);
 } // accepted STOP observation only. State::Closed stays false;no old cleanup/END/Work route is enabled.
+[[maybe_unused]] static __attribute__((noinline)) bool HoldQ38TokenNativeStopped(PioneerStoreContext& c,PioneerQ38TokenHoldResult& result){
+ auto* s=c.q38TokenNative;const PioneerQ38TokenHoldResult pristine;
+ const auto* a=reinterpret_cast<const uint8_t*>(&result);const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+ for(unsigned i=0;i<sizeof(result);i++)if(a[i]!=b[i])return false;
+ if(!s || s->phase!=PioneerQ38TokenNativeState::RootRunning || !s->TerminalObserved() || !s->runtime
+  || !Q38TokenExecutionOutput(c,&result,sizeof(result)) || !c.io.TokenModelSourceScope(false))return false;
+ s->phase=PioneerQ38TokenNativeState::RootHolding;bool okay=s->runtime->HoldStopped(c.io,result);
+ if(okay && s->runtime->HeldAfterTerminal())s->phase=PioneerQ38TokenNativeState::RootHeld;
+ else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);result.unsafe=1;result.ready=0;okay=false;}
+ return okay;
+} // fresh owned handoff ONLY;no CSR/L1 restore,unmapping,host release,END/public Work or generated-token delivery
 #endif

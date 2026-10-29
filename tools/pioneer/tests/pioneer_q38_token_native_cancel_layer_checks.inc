@@ -6,6 +6,9 @@
  || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE) || defined(PIONEER_Q38_WORK_INFERENCE)
 #error Explicit native first-layer cancellation TEST required
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE
+#include "pioneer_q38_token_native_hold_layer_checks.inc"
+#endif
 static void CheckNativeCancelLayer(Fixture& f){
  namespace T=PioneerQ38TokenLayout;namespace C=PioneerQ38GlobalChainLayout;namespace W=PioneerQ38GlobalWorkerLayout;
  auto& c=*f.c;auto& io=f.io;auto& cpu=*io.executionCpu;auto* state=c.q38TokenNative;
@@ -55,4 +58,7 @@ static void CheckNativeCancelLayer(Fixture& f){
   && !io.pciWrites && !io.HostReadMock::bmeWrites && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases);
  printf("EXECUTED native SAME full851/actual first-layer arithmetic+single genuine cancel request CONSUMED/ROOT immutable terminal+all119 actual STOP+2048 inert instructions each/fresh native read-only terminal observer/ROOTinstructions%u peerInstructions%llu;NO model token/current-state reuse/HOLD/restore/END/physical/Work/TPS grant\n",
   cpu.steps,(unsigned long long)peerInstructions);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE
+ CheckNativeHoldLayer(f);
+#endif
 }

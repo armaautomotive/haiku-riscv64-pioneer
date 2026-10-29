@@ -108,3 +108,27 @@ their complete logs match, but they do not substitute for the fifth case.
 Current original-model cancellation D main9075/clean31509 remains live;
 its actual consumed-cancel/all119STOP/positive-observer result is still owed.
 Current fault logs are saved as qwen38-native-terminal-faults-{main,clean}-20261029.log.
+
+2026-10-29 10:59UTC follow-up--original-model cancellation D is complete
+Main9075/clean31509 BOTH terminal0; complete stdout logs and observed prefix
+files are byte-identical. On the SAME full851 owner and original processor
+histories, the actual first layer returns, the single native cancel request
+is consumed by the immutable ROOT, all119 workers execute STOP, ROOT publishes
+the real cancellation terminal, and ROOT/peers each execute2048 further actual
+inert-loop instructions without new transactions. The native observer accepts
+that publication in a fresh FD scope. ROOT659545284 instructions, workers
+2227276603 instructions. The scope still has ZERO committed model tokens.
+
+Independent comparisons72274 both exit0:all5120 actual embedding and5120
+layer0 output values are BIT-EXACT to each separately pinned original CPU
+trace, with no tolerance or diagnostic-only acceptance. These are first-layer
+numeric results, NOT whole-model/token/current-state/KV qualification.
+The older mainA56062 also finishes0 but predates current SDK D/pending-PC
+qualification; it is not retagged as D. Current D result qualifies the
+29fe2d559e/bb27a128c5 terminal observer, NOT later HOLD-candidate changes.
+
+This completes that positive consumed-cancel/ROOT+119STOP/terminal-observation
+milestone OFFLINE,not normal/EOS full-model terminal behavior, HOLD, L1/CSR
+restoration, clean END, physical use, Work/Assistant or tokens/sec.
+Complete logs are qwen38-native-terminal-cancel-{main,clean}-20261029.log;
+independent comparisons are qwen38-native-terminal-cancel-compare-{main,clean}-20261029.log.

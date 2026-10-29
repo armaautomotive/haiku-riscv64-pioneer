@@ -9,7 +9,8 @@ bool PioneerSessionIO::TokenRuntimeScope(const PioneerQ38TokenNativeOwner& runti
   && s->identity==id && c->initialized==learned && pages==PioneerResidentBanks::Pages
   && (s->phase==PioneerQ38TokenNativeState::RuntimePreparing || s->phase==PioneerQ38TokenNativeState::RuntimeReady
    || s->phase==PioneerQ38TokenNativeState::WorkersBootstrapping || s->phase==PioneerQ38TokenNativeState::WorkersReady
-   || s->phase==PioneerQ38TokenNativeState::RootStarting || s->phase==PioneerQ38TokenNativeState::RootRunning)
+   || s->phase==PioneerQ38TokenNativeState::RootStarting || s->phase==PioneerQ38TokenNativeState::RootRunning
+   || s->phase==PioneerQ38TokenNativeState::RootHolding || s->phase==PioneerQ38TokenNativeState::RootHeld)
   && TokenModelSourceScope(false)
   && runtime.MatchesRuntimeBinding(dram,c->banks,*c->q38Dispatch,memory,canonical,startup,id,learned,pages);
 }

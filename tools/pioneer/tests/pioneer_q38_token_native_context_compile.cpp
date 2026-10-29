@@ -70,6 +70,9 @@ extern "C" bool pioneer_token_context_scoped_root_observe(PioneerProbeCookie* co
 extern "C" bool pioneer_token_context_scoped_terminal_observe(PioneerProbeCookie* cookie,PioneerQ38TokenTerminalResult& result){
  PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();return c && ObserveQ38TokenNativeTerminal(*c,result);
 } // private read-only STOP observation;no public ABI/HOLD/restore/END/Work route
+extern "C" bool pioneer_token_context_scoped_terminal_hold(PioneerProbeCookie* cookie,PioneerQ38TokenHoldResult& result){
+ PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();return c && HoldQ38TokenNativeStopped(*c,result);
+} // private actual HOLD controller,not restoration/END/public ABI or Work permission
 extern "C" void pioneer_token_context_destroy_clean(PioneerStoreContext* c){delete c;}
 
 // Independent inert controls, separate from the renamed actual driver bodies.

@@ -5,8 +5,8 @@
 #include "../../../../../tools/pioneer/PioneerQ38TokenRuntimePlan.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenTerminalShape.h"
 // DISTINCT full-token owner. Held staging,fresh QGW1 bootstrap and ROOT
-// startup/cancel request and read-only terminal/worker STOP observation.
-// No CPU products,old-prefix ownership,HOLD,restore or END grant.
+// startup/cancel request,terminal/worker STOP observation and owned HOLD.
+// No CPU products,old-prefix ownership,restoration or END grant.
 struct PioneerQ38TokenRuntimeResult {
  uint32_t version=1,started=0,phase=0,worker=0,chunk=0,word=0,unsafe=0,staged=0;
  uint32_t packets=0,writes=0,reads=0,bytesWritten=0,bytesRead=0,boots=0,reserved[2]={};
@@ -23,6 +23,10 @@ struct PioneerQ38TokenTerminalResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,cancelled=0;
  uint32_t committed=0,position=0,completedLayers=0,stage=0,firstPC=0,secondPC=0,reserved[2]={};
 };
+struct PioneerQ38TokenHoldResult {
+ uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,held=0;
+ uint32_t firstPC=0,secondPC=0,reserved[6]={};
+};
 class PioneerQ38TokenNativeOwner {
  const tt_dram_samples_result* proof=nullptr;PioneerResidentBanks* banks=nullptr;PioneerQ38DispatchLease* cohort=nullptr;
  PioneerQ38TokenMemory* memory=nullptr;const PioneerQ38CanonicalModelPlan* canonical=nullptr;
@@ -31,7 +35,8 @@ class PioneerQ38TokenNativeOwner {
  bool started=false,unsafe=false,staged=false,traffic=false,bootAttempted=false,booted=false,launched=false;
  bool running[120]={};uint32_t reset[120]={};
  bool rootAttempted=false,rootStarted=false,rootAcknowledged=false,cancelRequested=false;
- bool terminalObserved=false;uint32_t observedTerminal[64]={};
+ bool terminalObserved=false,holding=false,held=false;
+ uint32_t observedTerminal[64]={},terminalCounters[120][8]={},terminalNonces[120]={};
  bool Bound()const{
   if(!started || unsafe || !proof || !banks || !cohort || !memory || !canonical || !startup || !ledger
    || !plan.MatchesBinding(*canonical,*startup,identity,&cohort->authority.source[0][0]))return false;
@@ -43,12 +48,15 @@ class PioneerQ38TokenNativeOwner {
    || memory->unsafe || memory->closed || memory->proof!=proof || memory->banks!=banks || memory->cohort!=cohort
    || memory->canonical!=canonical || memory->startup!=startup || memory->ledger!=ledger || !(memory->identity==identity)
    || !canonical->Ready() || !banks->Matches(*proof) || cohort->unsafe || cohort->closed || cohort->rootRunning!=running[0]
-   || cohort->prepared!=120 || cohort->bootAttempted || cohort->booted || running[0]!=rootStarted
-   || (rootStarted?(!rootAttempted || !booted || reset[0]!=0x46800):reset[0]!=(rootAttempted?0x87ffffU:0x47800U)))return false;
+   || cohort->prepared!=120 || cohort->bootAttempted || cohort->booted || ((!holding && !held) && running[0]!=rootStarted)
+   || ((holding || held) && (!terminalObserved || !rootAcknowledged))
+   || (rootStarted?(!rootAttempted || !booted || reset[0]!=((holding || held) && !running[0]?0x47800U:0x46800U))
+    :reset[0]!=(rootAttempted?0x87ffffU:0x47800U)))return false;
   for(unsigned w=0;w<120;w++){
    const auto& n=cohort->worker[w];const auto& store=n.master?*n.master:n.store;
    if(!n.image.saved || !n.image.ready || n.image.unsafe || n.image.running!=running[w] || !store.ready
-    || store.pending || store.recovery_required || n.noc.recovery_required)return false;
+    || store.pending || store.recovery_required || n.noc.recovery_required
+    || ((holding || held) && reset[w]!=(running[w]?0x46800U:0x47800U)) || (held && running[w]))return false;
   }
   return true;
  }
@@ -64,6 +72,7 @@ class PioneerQ38TokenNativeOwner {
  template<class IO> bool Fail(IO& io,PioneerQ38TokenBootstrapResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenExecutionResult& r){r.unsafe=1;r.acknowledged=r.cancelRequested=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenTerminalResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
+ template<class IO> bool Fail(IO& io,PioneerQ38TokenHoldResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Sources(IO& io,unsigned w){
   if(w>=120 || !Scope(io) || !io.SelectRuntimeCore(w) || !io.TokenMemoryMappingStable(w)
    || io.ResetRead()!=reset[w] || io.ResetRead()!=reset[w])return false;
@@ -158,7 +167,8 @@ public:
    && running[0] && reset[0]==0x46800 && participants->rootRunning;
  } // cheap private lifecycle binding ONLY;full native scope+sources still required before IO
  bool ExecutionStarted()const{return rootAcknowledged && OwnsRunningRoot(cohort) && Bound();}
- bool TerminalObserved()const{return terminalObserved && ExecutionStarted();} // STOP observation only,NOT HOLD/restore/END
+ bool TerminalObserved()const{return terminalObserved && !unsafe && (ExecutionStarted() || ((holding || held) && Bound()));}
+ bool HeldAfterTerminal()const{return held && !holding && TerminalObserved() && Bound();} // NOT restored/closed/END
  void Fault(){unsafe=true;staged=false;}
  bool MatchesRuntimeBinding(const tt_dram_samples_result& dram,const PioneerResidentBanks& b,const PioneerQ38DispatchLease& participants,
   const PioneerQ38TokenMemory& m,const PioneerQ38CanonicalModelPlan& c,const PioneerQ38TokenStartupPlan& data,
@@ -411,12 +421,13 @@ public:
   if(r.secondPC==0x60000 || !PioneerQ38TokenPrograms::ProgramWord(0,r.secondPC,word) || !Sources(io,0))return Fail(io,r);
   r.acknowledged=1;r.cancelRequested=cancelRequested;return true;
  } // observation ONLY;NO NoC command/counter recapture,layer/token/frontier/STOP/END completion grant
- template<class IO> bool ObserveTerminal(IO& io,PioneerQ38TokenTerminalResult& r){
+private:
+ template<class IO> __attribute__((noinline)) bool InspectTerminal(IO& io,PioneerQ38TokenTerminalResult& r,bool recheck){
   namespace C=PioneerQ38GlobalChainLayout;namespace R=C::R;namespace T=PioneerQ38TokenLayout;namespace W=PioneerQ38GlobalWorkerLayout;
   const PioneerQ38TokenTerminalResult pristine;const auto* a=reinterpret_cast<const uint8_t*>(&r);
   const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
   for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=b[i])return false;
-  if(terminalObserved || !ExecutionStarted() || !Scope(io))return false;
+  if(terminalObserved!=recheck || holding || held || !ExecutionStarted() || !Scope(io))return false;
   r.started=1;r.phase=9;
   if(!Sources(io,0))return Fail(io,r);
   uint32_t terminal[64],boot[64],job[64],status[16],counters[8],progress[3],cancel=0;
@@ -450,7 +461,8 @@ public:
    r.phase=10;r.worker=w;
    if(!Sources(io,0) || !startup->ReadBoot(w,boot))return Fail(io,r);
    uint32_t nonce=0;
-   if(!io.TokenMemoryReadChecked(0,R::Nonces+(w-1)*4,nonce) || !nonce || nonce>=0x7fffffff)return Fail(io,r);
+   if(!io.TokenMemoryReadChecked(0,R::Nonces+(w-1)*4,nonce) || !nonce || nonce>=0x7fffffff
+    || (recheck && nonce!=terminalNonces[w]))return Fail(io,r);
    for(unsigned i=0;i<64;i++){uint32_t cached=0;r.word=i;
     if(!io.TokenMemoryReadChecked(0,R::PeerBoots+(w-1)*256+i*4,cached) || cached!=boot[i]
      || !io.TokenMemoryReadChecked(0,R::PeerJobs+(w-1)*256+i*4,job[i]))return Fail(io,r);}
@@ -470,6 +482,11 @@ public:
    if((r.firstPC!=0x20060 && r.firstPC!=0x20064) || (r.secondPC!=0x20060 && r.secondPC!=0x20064))return Fail(io,r);
    for(unsigned i=0;i<8;i++)if(io.ResidentNocRead(PioneerQ38PanelCounter(i))!=counters[i])return Fail(io,r);
    if(!Sources(io,w) || !PioneerQ38GraphCsrIdle(io))return Fail(io,r);
+   for(unsigned i=0;i<8;i++){
+    if(recheck && terminalCounters[w][i]!=counters[i])return Fail(io,r);
+    terminalCounters[w][i]=counters[i];
+   } // authenticated current closed STOP journal ONLY;rechecks cannot adopt a changed journal
+   terminalNonces[w]=nonce;
   }
   r.phase=11;r.worker=0;
   if(!Sources(io,0) || !PioneerQ38GraphCsrIdle(io))return Fail(io,r);
@@ -478,15 +495,68 @@ public:
   for(unsigned i=0;i<8;i++)if(io.ResidentNocRead(PioneerQ38PanelCounter(i))!=terminal[36+i])return Fail(io,r);
   r.firstPC=io.RuntimePcRead();r.secondPC=io.RuntimePcRead();
   if(r.firstPC!=0x60004 || r.secondPC!=0x60004 || !Sources(io,0))return Fail(io,r);
-  for(unsigned i=0;i<64;i++)observedTerminal[i]=terminal[i];
+  for(unsigned i=0;i<64;i++){
+   if(recheck && observedTerminal[i]!=terminal[i])return Fail(io,r);
+   observedTerminal[i]=terminal[i];
+  }
+  for(unsigned i=0;i<8;i++)terminalCounters[0][i]=terminal[36+i];
   terminalObserved=true;
   r.ready=1;r.cancelled=terminal[2]==3;r.committed=terminal[3];r.position=terminal[4];r.completedLayers=terminal[6];r.stage=terminal[10];
   return true;
  } // READ-ONLY genuine STOP observation. NO HOLD/reset/NIU commands,counter recapture,restore/END/disposal or reusable state grant.
+ template<class IO> bool HoldGuard(IO& io,unsigned w,PioneerQ38TokenHoldResult& r){
+  if(!Sources(io,w) || !PioneerQ38GraphCsrIdle(io))return false;
+  for(unsigned i=0;i<8;i++)if(io.ResidentNocRead(PioneerQ38PanelCounter(i))!=terminalCounters[w][i])return false;
+  if(running[w]){
+   r.firstPC=io.RuntimePcRead();r.secondPC=io.RuntimePcRead();
+   if(w?((r.firstPC!=0x20060 && r.firstPC!=0x20064) || (r.secondPC!=0x20060 && r.secondPC!=0x20064))
+    :(r.firstPC!=0x60004 || r.secondPC!=0x60004))return false;
+  } // PCs of already HELD cores are never treated as execution proof
+  return Sources(io,w) && PioneerQ38GraphCsrIdle(io);
+ }
+public:
+ template<class IO> __attribute__((noinline)) bool ObserveTerminal(IO& io,PioneerQ38TokenTerminalResult& r){return InspectTerminal(io,r,false);}
+ template<class IO> bool HoldStopped(IO& io,PioneerQ38TokenHoldResult& r){
+  const PioneerQ38TokenHoldResult pristine;const auto* a=reinterpret_cast<const uint8_t*>(&r);
+  const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+  for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=b[i])return false;
+  if(holding || held || !TerminalObserved() || !ExecutionStarted() || !Scope(io))return false;
+  r.started=1;r.phase=1;PioneerQ38TokenTerminalResult fresh;
+  // Re-prove the SAME terminal and every worker in THIS call BEFORE the
+  // first HOLD. Cached ready/counters alone can never authorize a reset.
+  if(!InspectTerminal(io,fresh,true) || !fresh.ready)return Fail(io,r);
+  const uint64_t began=io.Q38CohortNow();uint64_t previous=began;
+  if(began>UINT64_MAX-UINT64_C(30000000))return Fail(io,r);
+  holding=true;r.phase=2;
+  for(unsigned w=0;w<120;w++){
+   r.worker=w;
+   if(!BootTime(io,began,previous) || !HoldGuard(io,w,r))return Fail(io,r);
+   // ROOT first;one known HOLD per core. Mark before uncertain writes so
+   // any failure retains the entire cohort without retry/repair/release.
+   running[w]=cohort->worker[w].image.running=false;reset[w]=0x47800;
+   if(!w)cohort->rootRunning=false;
+   io.RuntimeResetWrite(reset[w]);
+   if(!BootTime(io,began,previous) || !HoldGuard(io,w,r))return Fail(io,r);
+   io.Pause();if(!BootTime(io,began,previous) || !HoldGuard(io,w,r))return Fail(io,r);
+   r.held++;
+  }
+  r.phase=3;
+  for(unsigned w=0;w<120;w++){
+   r.worker=w;if(running[w] || !BootTime(io,began,previous) || !HoldGuard(io,w,r))return Fail(io,r);
+  }
+  r.worker=0;
+  if(r.held!=120 || !Sources(io,0))return Fail(io,r);
+  for(unsigned i=0;i<64;i++){uint32_t actual=0;r.word=i;
+   if(!io.TokenMemoryReadChecked(0,PioneerQ38TokenLayout::TerminalLocal+i*4,actual) || actual!=observedTerminal[i])return Fail(io,r);
+  }
+  if(!HoldGuard(io,0,r))return Fail(io,r);
+  held=true;holding=false;r.ready=1;r.phase=4;return true;
+ } // actual120 HOLD only. No L1/CSR restore,NIU command,token delivery,END/disposal or current-state reuse grant.
 };
 static_assert(sizeof(PioneerQ38TokenRuntimeResult)==64,"all runtime result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenBootstrapResult)==64,"all bootstrap result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenExecutionResult)==64,"all execution result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenTerminalResult)==64,"all terminal-observation result bytes explicit");
+static_assert(sizeof(PioneerQ38TokenHoldResult)==64,"all terminal-HOLD result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenNativeOwner)>16384 && sizeof(PioneerQ38TokenNativeOwner)<32768,"native owner staging buffer HEAP ONLY");
 #endif

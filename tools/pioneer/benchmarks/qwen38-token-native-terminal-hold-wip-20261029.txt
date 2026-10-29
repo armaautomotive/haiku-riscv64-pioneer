@@ -1,0 +1,90 @@
+Native terminal-to-HOLD handoff candidate: IN PROGRESS, NOT ready
+2026-10-29 11:06UTC. Goal ACTIVE;20 tokens/sec remains UNMET.
+Last completed physical whole-model measurement:0.207893161 tokens/sec.
+No Pioneer/SSH/power/driver installation/Assistant/OS/boot/CPU/RAM/network/
+SD/hardware-connection/mains changes. No new physical-health or TPS claim.
+
+Implemented native path,not a public driver selection
+-----------------------------------------------------
+HoldQ38TokenNativeStopped requires the SAME running full851 native owner,
+accepted terminal, fresh FD/team/thread/generation/source/clock/host scope,
+non-aliased pristine64B result and all retained mappings. It re-runs the
+complete ROOT+119-worker terminal proof in THAT call before the first HOLD.
+The terminal, all119 nonces and all120 counter journals must match their
+previous authenticated observations; a recheck cannot adopt changed values.
+
+Only then does it hold ROOT first and each of119 workers,exactly once per
+core,using the known0x47800 request. Before every write it checks current
+sources/reset,quiet queues,counters and two actual STOP PCs. After each
+write it checks actual HOLD reset twice,sources/idle/counters,pauses,and
+checks again. PCs of HELD cores are never execution receipts. A monotonic
+bounded deadline and final all120-held audit are required. Any uncertainty
+retains the entire owner and performs no retry,repair,restore or release.
+
+Private RootHolding/RootHeld phases preserve the same scope through this
+handoff. The complete immutable terminal is checked again after all HOLDs.
+TerminalHeld() is a private processor-HOLD result ONLY;Closed() remains
+FALSE and the real END branch still refuses/retains. No NIU command,token
+readout,L1 restoration,CSR restoration,host release,unmapping or Work/Assistant
+route is enabled. The old held-never-launched close cannot reclaim this owner.
+
+Completed build/role qualification
+----------------------------------
+Current SDK C main51436/clean9776 BOTH terminal0. Objects are byte-identical:
+ SHA25668b8c03675ffd1c7e418a63bdeb466435041e70ebc859fc4b1a9be41193513b7.
+Actual private HOLD/recheck/factory bodies are required in emitted symbol/
+stack tables. Max new frame1728<=unchanged2048;old65 remains61faa093 and all
+five conventional driver entries remain independently inert. No test HOLD/
+peer/trace/CPU-model-reference/Work implementation is imported. SDK logs
+differ only by the temporary old-controls output path,not object bytes.
+Initial A failed because the required ObserveTerminal wrapper was inlined.
+The explicit non-inlined observer plus emitted private InspectTerminal body
+fix that verifier failure; B and current C pass without relaxing stack bounds.
+
+Current role main33779/clean69324 BOTH terminal0,complete logs identical:
+11 explicit TEST roles/128 missing+zero+two+kernel+device+Work refusals.
+The new first-layer HOLD fragment requires all five exact TEST parents and
+rejects a full-flow or Work role even when merely defined0.
+
+Runtime qualification is LIVE,not passing
+----------------------------------------
+Current pending/refusal main15434/clean24209 BOTH terminal0; complete logs
+are byte-identical. Each executes the genuine1010 zero jobs/4616 metadata
+packets/119 virgin boots14744576 instructions/ROOT startup5137 instructions.
+A pending ROOT and all16 non-pristine HOLD results refuse without IO.
+Neither a supplied ready flag nor a pending marker is promoted to STOP.
+This is a refusal result,NOT positive terminal/HOLD/cleanup qualification.
+
+New explicit --execution-hold-first-layer main51800/clean36235 are LIVE.
+Each starts with a virgin full native owner and SAME original authenticated
+GGUF,executes original layer0,issues and consumes the real cancellation,
+requires real ROOT+all119 STOP and fresh native terminal acceptance,then
+invokes the new actual HOLD controller in a new native FD scope. It requires
+exact ROOT-first0..119 HOLD order,one request/core,unchanged actual counters
+and commands,unchanged mapped L1 writes,no BME/unmap/release,continued native
+scope,duplicate/restart/legacy-close refusal and continued END retention.
+There is no supplied STOP flag,PC,processor history or numerical product.
+These requirements are NOT passing results merely because the runs started.
+
+Logs /private/tmp/pioneer-q38-hold-{main,clean}-20261029-c.log
+Prefixes /private/tmp/pioneer-q38-hold-{main,clean}-20261029-c-prefix.bin
+Completed pending logs qwen38-native-terminal-hold-pending-{main,clean}-20261029.log
+Clean export /private/tmp/pioneer-q38-hold-clean.2n6QQ4e2
+
+Separate completed terminal milestone,not new-HOLD qualification
+----------------------------------------------------------------
+Older current-terminal D main9075/clean31509 BOTH finish0 and genuinely
+accept consumed-cancel/all119STOP. Independent original CPU comparisons
+are first-layer BITEXACT. Those binaries predate this HOLD implementation;
+never claim they qualify this new owner/state transition. Details:
+ qwen38-token-native-terminal-wip-20261029.txt
+
+Remaining full objective
+-------------------------
+Positive current HOLD and post-HOLD uncertainty/fault tests; owned generated
+token readout; L1+CSR restoration/clean END/load-unload/recovery; actual whole
+all64/multitoken/state/KV/vocabulary/numeric and normal/EOS terminal proof;
+native performance-image integration; physical repeated generation/long
+conversations; qualified no-CPU-reference Work plus Assistant; sustained
+measured optimization toward20 tokens/sec. Preserve SD-free boot,64 CPUs,
+full RAM and all earlier valid running qualification histories.

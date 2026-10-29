@@ -1,5 +1,32 @@
 # Native build status
 
+## Completed offline: consumed cancellation and native STOP observation
+
+October29,2026 10:59UTC. Current terminal D main/clean BOTH finish0 on the
+SAME full851 owner and original first-layer execution:the real native cancel
+request is consumed,ROOT/all119 workers actually STOP,and the fresh native
+terminal observer accepts after2048 further inert instructions/core. The
+observed embedding+layer0 output are again independently BITEXACT against
+the pinned CPU traces. No committed token,full model,HOLD/restore/END or
+physical performance qualification follows. Evidence:
+[completed cancellation milestone](benchmarks/qwen38-token-native-terminal-wip-20261029.txt).
+
+## In progress: native terminal-to-HOLD handoff
+
+October29,2026 11:06UTC. A new private controller rechecks the SAME accepted
+terminal/nonces/counters and all119 STOP receipts before holding ROOT first,
+then every worker,with current source/reset/idle/counter checks and a bounded
+deadline. This grants neither restoration nor END;all resources stay owned.
+Main/clean SDK objects match68b8c036,max new frame1728<=unchanged2048 and
+all conventional driver entries remain inert. Role checks pass11/128.
+Main/clean pending/refusal tests BOTH finish0 with identical logs:the actual
+running ROOT and16 non-pristine HOLD results cannot grant HOLD or cause IO.
+Positive original-layer/HOLD tests remain LIVE,not passing.
+The completed terminal D binaries above predate these new changes and cannot
+qualify them. No driver is installed;last physical **0.207893161 tokens/sec**,
+20 unmet. Evidence:
+[terminal HOLD candidate](benchmarks/qwen38-token-native-terminal-hold-wip-20261029.txt).
+
 ## In progress: boundary-scoped controller audits for lower overhead
 
 October29,2026 10:39UTC. A separate explicit `--boundary-seals` candidate

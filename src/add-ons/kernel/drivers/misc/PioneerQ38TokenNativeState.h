@@ -23,6 +23,7 @@ struct PioneerStoreContext;struct PioneerSessionIO;
 [[maybe_unused]] static bool CancelQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
 [[maybe_unused]] static bool ObserveQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
 [[maybe_unused]] static bool ObserveQ38TokenNativeTerminal(PioneerStoreContext&,PioneerQ38TokenTerminalResult&);
+[[maybe_unused]] static bool HoldQ38TokenNativeStopped(PioneerStoreContext&,PioneerQ38TokenHoldResult&);
 // Genuine retained full851 model/reservation object. It borrows NO old
 // completed embedding/prefix owner and cannot make those old lifetimes safe.
 // Private factory publication occurs under the real global FD call lock.
@@ -41,9 +42,10 @@ class PioneerQ38TokenNativeState {
  friend bool CancelQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
  friend bool ObserveQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
  friend bool ObserveQ38TokenNativeTerminal(PioneerStoreContext&,PioneerQ38TokenTerminalResult&);
+ friend bool HoldQ38TokenNativeStopped(PioneerStoreContext&,PioneerQ38TokenHoldResult&);
  enum Phase {Claiming,Bound,RecurrentZeroing,RecurrentClosing,HistoryZeroing,HistoryClosing,
   ProjectionZeroing,ProjectionClosing,Initialized,DispatchPreparing,MemoryPreparing,MemoryInstalled,RuntimePreparing,RuntimeReady,
-  WorkersBootstrapping,WorkersReady,RootStarting,RootRunning,MemoryClosing,MemoryClosed,Unknown};
+  WorkersBootstrapping,WorkersReady,RootStarting,RootRunning,RootHolding,RootHeld,MemoryClosing,MemoryClosed,Unknown};
  PioneerStoreContext* const context;const void* const cookie;const void* const hashes;
  const uint8_t* const ledger;const int64_t team;const unsigned bank;
  const PioneerQ38GdnIdentity identity;
@@ -67,16 +69,18 @@ public:
  bool Unsafe()const{return unsafe || phase==Unknown || graph.Unsafe() || recurrentZero.unsafe || historyZero.unsafe
   || projectionZero.unsafe || (memory && memory->Unsafe()) || (runtime && runtime->Unsafe())
   || (participants && (participants->unsafe || participants->closed || participants->bootAttempted || participants->booted
-   || (participants->rootRunning && (!runtime || (phase!=RootStarting && phase!=RootRunning) || !runtime->OwnsRunningRoot(participants)))));}
+   || (participants->rootRunning && (!runtime || (phase!=RootStarting && phase!=RootRunning && phase!=RootHolding) || !runtime->OwnsRunningRoot(participants)))));}
  // Held-only cheap binding:whole-context and participant guards still audit
  // EVERY child lease before/after each pass,not120 peers again per L1 word.
  bool Closed()const{return false;} // NO full-token native END capability has been implemented yet
- bool TerminalObserved()const{return phase==RootRunning && !Unsafe() && runtime && runtime->TerminalObserved();}
+ bool TerminalObserved()const{return (phase==RootRunning || phase==RootHolding || phase==RootHeld) && !Unsafe() && runtime && runtime->TerminalObserved();}
+ bool TerminalHeld()const{return phase==RootHeld && !Unsafe() && runtime && runtime->HeldAfterTerminal();}
  // Necessary private STOP observation only;current sources/mappings and HOLD/restore/END remain separate.
  bool ControlsCohort(const PioneerQ38DispatchLease* p)const{
-  return !unsafe && (phase==WorkersBootstrapping || phase==WorkersReady || phase==RootStarting || phase==RootRunning)
+  return !unsafe && (phase==WorkersBootstrapping || phase==WorkersReady || phase==RootStarting || phase==RootRunning || phase==RootHolding || phase==RootHeld)
    && p && p==participants && runtime && runtime->ControlsCohort(p)
-   && (phase!=WorkersReady || runtime->WorkersReady()) && (phase!=RootRunning || runtime->ExecutionStarted());
+   && (phase!=WorkersReady || runtime->WorkersReady()) && (phase!=RootRunning || runtime->ExecutionStarted())
+   && (phase!=RootHolding || runtime->TerminalObserved()) && (phase!=RootHeld || runtime->HeldAfterTerminal());
  } // necessary SAME private bootstrap owner,not legacy boot flags or ROOT/RUN permission
  bool MatchesBinding(const PioneerStoreContext& c,const void* fd,const void* h,const uint8_t* uploaded,int64_t owner,uint64_t generation)const{
   return context==&c && cookie==fd && fd && hashes==h && h && ledger==uploaded && uploaded && team==owner && owner>=0

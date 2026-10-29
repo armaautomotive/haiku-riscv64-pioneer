@@ -38,7 +38,7 @@ bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
   if(!d || d!=state->participants || !state->memory || !state->startup || !fleetEnabled || d->worker[0].master!=&c->lease
    || d->unsafe || d->closed || d->bootAttempted || d->booted || d->prepared>120
    || (d->rootRunning && (!state->runtime || (state->phase!=PioneerQ38TokenNativeState::RootStarting
-    && state->phase!=PioneerQ38TokenNativeState::RootRunning) || !state->runtime->OwnsRunningRoot(d)))
+    && state->phase!=PioneerQ38TokenNativeState::RootRunning && state->phase!=PioneerQ38TokenNativeState::RootHolding) || !state->runtime->OwnsRunningRoot(d)))
    || !state->InitializationsClosed(c->banks,dram))return false;
   if(state->phase>=PioneerQ38TokenNativeState::MemoryPreparing
    && (!c->q38DispatchRoutes || d->prepared!=120 || !state->startup->MatchesPublishedBinding(state->canonical,state->bank,state->identity,&d->authority.source[0][0])))return false;
@@ -46,7 +46,8 @@ bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
    && (!state->runtime || state->runtime->Unsafe() || !state->memory->Installed()
     || (state->phase==PioneerQ38TokenNativeState::RuntimeReady && !state->runtime->Staged())))return false;
   if((state->phase==PioneerQ38TokenNativeState::WorkersBootstrapping || state->phase==PioneerQ38TokenNativeState::WorkersReady
-   || state->phase==PioneerQ38TokenNativeState::RootStarting || state->phase==PioneerQ38TokenNativeState::RootRunning)
+   || state->phase==PioneerQ38TokenNativeState::RootStarting || state->phase==PioneerQ38TokenNativeState::RootRunning
+   || state->phase==PioneerQ38TokenNativeState::RootHolding || state->phase==PioneerQ38TokenNativeState::RootHeld)
    && !state->ControlsCohort(d))return false;
   if(state->runtime && state->phase<PioneerQ38TokenNativeState::RuntimePreparing)return false;
   if(state->runtime && state->phase>=PioneerQ38TokenNativeState::MemoryClosing

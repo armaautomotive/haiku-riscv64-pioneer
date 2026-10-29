@@ -63,6 +63,15 @@ static void CheckNativeExecution(Fixture& f){
   assert(ObserveQ38TokenNativeTerminal(c,terminal) && terminal.started && !terminal.ready && !terminal.unsafe
    && !state->TerminalObserved() && !state->Closed()); // actual ZERO unpublished terminal,not a supplied completion
   puts("PASS native terminal observer pending after genuine ROOT startup marker;16 non-pristine results refused/no STOP or cleanup grant");
+  {
+   const unsigned beforeHold=io.touches;PioneerQ38TokenHoldResult hold;const auto pristineHold=hold;
+   auto* holdWords=reinterpret_cast<uint32*>(&hold);
+   for(unsigned i=0;i<16;i++){
+    holdWords[i]^=1;assert(!HoldQ38TokenNativeStopped(c,hold) && io.touches==beforeHold);hold=pristineHold;
+   }
+   assert(!HoldQ38TokenNativeStopped(c,hold) && io.touches==beforeHold && !state->TerminalHeld() && !state->Unsafe());
+   puts("PASS native terminal HOLD refuses pending ROOT and16 non-pristine results without IO/no supplied STOP or release grant");
+  }
   if(io.terminalFault){
    namespace C=PioneerQ38GlobalChainLayout;namespace T=PioneerQ38TokenLayout;
    if(io.terminalFault==1)io.Raw(0,C::R::Status+8)=1;
