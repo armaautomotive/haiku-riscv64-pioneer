@@ -16,11 +16,13 @@ if '--observed-trace' in options:
     observed = pathlib.Path(options[at+1])
     options = options[:at]+options[at+2:]
     assert observed.is_absolute() and not observed.exists() and not observed.is_symlink()
-assert 5 <= len(sys.argv) <= 12 and len(set(options)) == len(options) and set(options) <= {'--prepare-only', '--bootstrap-only', '--first-layer-only', '--fast-root-memory', '--cancel-boundary', '--unroll-dense-seals', '--boundary-seals'}
+assert 5 <= len(sys.argv) <= 13 and len(set(options)) == len(options) and set(options) <= {'--prepare-only', '--bootstrap-only', '--first-layer-only', '--fast-root-memory', '--cancel-boundary', '--unroll-dense-seals', '--boundary-seals', '--unroll-quiet'}
 unroll = '--unroll-dense-seals' in options
 boundary = '--boundary-seals' in options
 assert not unroll or '--cancel-boundary' in options,'dense-unroll candidate is an explicitly cancellable FP32 image'
 assert not boundary or (unroll and '--cancel-boundary' in options),'boundary candidate requires explicit cancellable unrolled FP32 image'
+quiet = '--unroll-quiet' in options
+assert not quiet or (boundary and unroll and '--cancel-boundary' in options),'queue-check candidate requires explicit boundary+cancellable+unrolled FP32 image'
 assert sum(o in options for o in ('--prepare-only', '--bootstrap-only', '--first-layer-only')) <= 1
 assert observed is None or '--prepare-only' not in options
 assert '--first-layer-only' not in options or observed is not None
@@ -28,7 +30,7 @@ image, old, worker, model = map(pathlib.Path, sys.argv[1:5])
 assert all(p.is_absolute() for p in (image, old, worker, model))
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 here = pathlib.Path(__file__).resolve().parent
-for directory, script, key in ((image, here.parent/'build_qwen38_token_root.py', 'PINS_CANCEL_F32_BOUNDARY' if boundary else 'PINS_CANCEL_F32_UNROLLED_DENSE' if unroll else 'PINS_CANCEL_F32' if '--cancel-boundary' in options else 'PINS_F32'),
+for directory, script, key in ((image, here.parent/'build_qwen38_token_root.py', 'PINS_CANCEL_F32_QUIET' if quiet else 'PINS_CANCEL_F32_BOUNDARY' if boundary else 'PINS_CANCEL_F32_UNROLLED_DENSE' if unroll else 'PINS_CANCEL_F32' if '--cancel-boundary' in options else 'PINS_F32'),
                                (old, here/'run_pioneer_q38_mixed_worker_tests.py', 'PINS'),
                                (worker, here.parent/'build_qwen38_global_worker_image.py', 'PINS')):
     tree = ast.parse(script.read_text())
@@ -67,7 +69,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-original-token-flow-', dir='/pr
                     *(['-DPIONEER_Q38_TEST_CANCELLABLE_ROOT=1'] if '--cancel-boundary' in options else []),
                     *(['-DPIONEER_Q38_TEST_OBSERVED_TRACE=1'] if observed is not None else []),
                     str(here/'pioneer_q38_token_original_flow_test.cpp'), str(here/'pioneer_q38_whole_original_bytes.cpp'), '-o', str(binary)], check=True)
-    subprocess.run([str(binary), *sys.argv[1:5], *[o for o in options if o not in ('--fast-root-memory', '--cancel-boundary', '--unroll-dense-seals', '--boundary-seals')],
+    subprocess.run([str(binary), *sys.argv[1:5], *[o for o in options if o not in ('--fast-root-memory', '--cancel-boundary', '--unroll-dense-seals', '--boundary-seals', '--unroll-quiet')],
                     *(['--observed-trace', str(observed)] if observed is not None else [])], check=True,
                    env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1', 'PIONEER_TEST_ROOT_PROFILE_MAP':str(profile)})
     if observed is not None and '--bootstrap-only' in options:

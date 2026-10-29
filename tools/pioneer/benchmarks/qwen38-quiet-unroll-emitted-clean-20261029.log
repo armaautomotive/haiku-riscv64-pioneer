@@ -1,0 +1,4 @@
+PASS emitted Quiet0/all36 SAME ordered4B status reads+values/NO traffic or non-stack writes/instructions183->150/stack4/4;NOT physical timing or model/TPS proof
+PASS emitted Quiet1/all36 SAME ordered4B status reads+values/NO traffic or non-stack writes/instructions183->150/stack4/4;NOT physical timing or model/TPS proof
+PASS emitted Quiet2/all36 SAME ordered4B status reads+values/NO traffic or non-stack writes/instructions183->150/stack4/4;NOT physical timing or model/TPS proof
+PASS emitted queue-check equivalence/3777 paired synthetic cases/all32bits at all36 registers/early-exit prefixes+ignored high queue bits+multiple faults+live pending/clear transitions/ABI preserved/actual2048 inert instructions each;NO cached/skipped/wider MMIO,model/native/physical/Work/TPS qualification

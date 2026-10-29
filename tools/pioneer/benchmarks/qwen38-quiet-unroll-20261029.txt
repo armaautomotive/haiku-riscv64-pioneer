@@ -1,0 +1,80 @@
+Experimental on-card queue-check loop:COMPONENT CHECKPOINT,NOT ready
+2026-10-29 21:58UTC. Goal ACTIVE;20tok/s UNMET.
+Last physical whole-model result remains0.207893161 tokens/sec.
+
+Actual controller code change
+----------------------------
+The new explicit --unroll-quiet option adds GCC four-iteration loop
+unrolling ONLY to the32 status-word reads in the returning recurrent/dense
+controllers. It requires the separate FP32+cancel+unrolled+boundary image.
+The four command-ready reads and all32 volatile queue reads keep their
+original order,width,masks and immediate failure behavior. No cached queue
+status,batched/wider MMIO,skipped word,NoC whitelist/counter change,model
+arithmetic change,CPU-reference product or new ownership proof is added.
+Default image/native ROM pins,Work and Assistant selections are unchanged.
+
+Measured emitted-instruction result,NOT card timing
+-------------------------------------------------
+Each tested Quiet entry uses183->150 actual instructions for an idle
+36-read check:33 fewer (18.0327869%). Stack remains4 bytes. Three entry
+labels are tested,including a compiler alias:these are TWO distinct ELF
+bodies,not three independent functions. All3 retain the same ordered4B
+status reads/values and ABI. This does NOT mean18% higher token throughput.
+
+Independent main/clean ASan+UBSan emitted B14671/43745 BOTH terminal0,
+paired logs identical:3777 paired synthetic cases. They exercise every
+one of32bits at every one of36 registers,ignored high queue bits,first-error
+prefixes,multiple pending queues,and live pending/clear transitions between
+reads. Actual2048 terminal-loop instructions after each call cause no new
+read/write. No command,CSR,model,host or non-stack write is permitted.
+
+Existing packet guards B41526/50136 BOTH0,paired logs identical:9 actual
+source-audit comparisons preserve16 separate4B packets/values;63 immediate
+source/counter/quiet/nonce refusals,18 release boundaries,18 post-release
+fault-and-retain cases,6 wider-MMIO/write refusals,and the owning attention
+descriptor helper checks still pass. Representative source-audit controller
+counts:recurrent22756->21700,dense22388->21332,cohort23871->22815. These
+are isolated synthetic ABI routines,NOT model/native/physical results.
+
+Strict independent B builds48377/33048 BOTH0;complete logs+ELF match:
+ recurrent.o161264 SHA86f3263a04a696e8fb54e7425ed7ea37e8d2055a7bbca44754c9e07301f1827a
+ dense.o122964 SHA2e52cefca38eb54ac89cd49b4fe1679a35f158044f2e7bfb969d96cfe14e5d10
+ token-components-NOBOOT.o252860 SHA8fdae3782d66e03be750947cb8c77ffa218916e28540708e13b9c9fa53efb778
+ text.bin130760 SHAd61a470bcd0a81a27c69b08a2886902c480bfb8ae20e4ab931fa76d7234423f1
+ conv.bin21340 SHAad28a3e35fa4584a6e4b8b827ed35e931a0f1af7b8d07f983581a82180282ac7
+ program.elf178384 SHAbcb75d79953848f7e4b01237d03913550a0bfe01253848c83babe525c0e8247f.
+Before freezing these pins,independent inspected A91380/39486 BOTH0 and
+their complete ELF/objects/logs matched. B strict ELF also matches A.
+No unchanged131072B ROOT/32768B Conv bound is raised. Text grows80B over
+the boundary baseline;312B remain. Individual parent/component frames stay
+1616/2112 max;this is NOT a combined runtime reserved-stack qualification.
+
+Default preservation B5201/71461 BOTH0;logs+ELFs match all old fixed pins,
+including cancel+FP32 ELF5d870cb7/text20ace51c. Role A78387/31990 BOTH0,
+logs match:1106 exact/missing/zero/late/old/native/worker/chain gates.
+Valid compiler flags or a good build grant no native lifetime or launch.
+
+Immutable B18-source snapshots,cmp-verified before tests:
+ Main:/private/tmp/pioneer-q38-quiet-source-main-b.qLI2F5pI
+ Clean:/private/tmp/pioneer-q38-quiet-source-clean-b.jxV6qIty
+All dirty llama.cpp and unrelated FlashNext changes remain excluded.
+
+Whole original-model qualification remains running
+-------------------------------------------------
+New B62292/6569 execute the separately pinned Quiet image from virgin
+RESET/119 genuine engines through3tokens*all64 layers and actual STOP.
+They are LIVE,NOT passes. No partial trace/history is transplanted and no
+--diagnostic-only or fast-root-memory mode is used. The runner's new flag
+selects this fixed image only,not a model result or native/Work permission.
+Logs:/private/tmp/pioneer-q38-quiet-flow-{main,clean}-20261029-b.log
+Outputs:/private/tmp/pioneer-q38-quiet-flow-main-20261029-b.SDxZpE7Y/observed
+ and/private/tmp/pioneer-q38-quiet-flow-clean-20261029-b.AnHagGXx/observed.
+Only after genuine terminal0 may complete QOD1 generations be compared to
+the separate pinned CPU traces. Current native state/full-END81906/33926,
+original CPU state82522/67610 and earlier valid baselines remain separate.
+
+Still required:all64/multitoken/state/KV/EOS numerical+terminal and combined
+stack proof,current native cleanup/reuse/recovery,qualified native fast Work
+and Assistant integration,physical long-context stability and honest tuning
+toward20tok/s. No Pioneer/SSH/power/install/OS/Assistant/network/SD/mains
+action or current board-health/speed claim. DO NOT INSTALL this candidate.

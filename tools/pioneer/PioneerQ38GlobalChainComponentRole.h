@@ -33,6 +33,14 @@
 #error Exact separate returning FP32-hidden arithmetic only,not a capsule/old family
 #endif
 #endif
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_QUIET_UNROLL
+#if PIONEER_Q38_GLOBAL_CHAIN_QUIET_UNROLL != 1 || !defined(PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS) || PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS != 1 \
+ || !defined(PIONEER_Q38_GLOBAL_CHAIN_F32_HIDDEN) || PIONEER_Q38_GLOBAL_CHAIN_F32_HIDDEN != 1 \
+ || !defined(PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL) || PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL != 1 \
+ || defined(PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE)
+#error Exact separate FP32/boundary/unrolled queue-check candidate required
+#endif
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
 #error Boundary seals do not belong to the convolution arithmetic capsule

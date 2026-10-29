@@ -8,13 +8,14 @@ import re
 import subprocess
 import sys
 import tempfile
-assert len(sys.argv)==3
+assert len(sys.argv)==3 or (len(sys.argv)==4 and sys.argv[3]=='--quiet')
+quiet=len(sys.argv)==4
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
-baseline,candidate=map(pathlib.Path,sys.argv[1:]);here=pathlib.Path(__file__).resolve().parent
+baseline,candidate=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 tree=ast.parse((here.parent/'build_qwen38_token_root.py').read_text())
-pins={t.id:ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign) for t in n.targets if isinstance(t,ast.Name) and t.id in ('PINS_CANCEL_F32_UNROLLED_DENSE','PINS_CANCEL_F32_BOUNDARY')}
+pins={t.id:ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign) for t in n.targets if isinstance(t,ast.Name) and t.id in ('PINS_CANCEL_F32_UNROLLED_DENSE','PINS_CANCEL_F32_BOUNDARY','PINS_CANCEL_F32_QUIET')}
 tool='/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-';maps=[]
-for directory,key in ((baseline,'PINS_CANCEL_F32_UNROLLED_DENSE'),(candidate,'PINS_CANCEL_F32_BOUNDARY')):
+for directory,key in ((baseline,'PINS_CANCEL_F32_BOUNDARY' if quiet else 'PINS_CANCEL_F32_UNROLLED_DENSE'),(candidate,'PINS_CANCEL_F32_QUIET' if quiet else 'PINS_CANCEL_F32_BOUNDARY')):
  assert directory.is_absolute() and pins[key]
  for name,size,digest in pins[key]:
   data=(directory/name).read_bytes();assert len(data)==size and hashlib.sha256(data).hexdigest()==digest,(directory,name)
@@ -25,7 +26,7 @@ for directory,key in ((baseline,'PINS_CANCEL_F32_UNROLLED_DENSE'),(candidate,'PI
   result=[a for a,n in names if n==name];assert len(result)==count,(name,result);return result
  addresses=(*entries('_ZN18DensePartitionRootL14PhysicalSourceEPKjPjj',2),*entries('_ZN20MixedRecurrentCohortL7SourcesEPjj',1),
               *entries('_ZN18DensePartitionRootL8TransferEPKjPjjjjb',2),*entries('_ZN20MixedRecurrentCohortL6PacketEPjjjjb',1))
- if key=='PINS_CANCEL_F32_BOUNDARY':
+ if key in ('PINS_CANCEL_F32_BOUNDARY','PINS_CANCEL_F32_QUIET'):
   addresses+=(*entries('q38_layer_return_dense_packet_frame',1),*entries('q38_layer_return_dense_packet_seal',1),*entries('q38_joined_dense_frame',1))
  maps.append(addresses)
 flags=re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?',(here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())

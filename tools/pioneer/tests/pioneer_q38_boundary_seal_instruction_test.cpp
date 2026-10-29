@@ -76,7 +76,7 @@ int main(int argc,char** argv){
   for(unsigned worker:{0U,95U,118U}){
    auto a=std::make_unique<BoundaryMachine>(baseline,kind,worker),b=std::make_unique<BoundaryMachine>(candidate,kind,worker);
    assert(a->Run() && b->Run() && a->packets==b->packets && a->sourceReads==b->sourceReads && b->steps<a->steps);
-   printf("PASS boundary-profile source audit%u worker%u SAME16x4B packets+values,instructions%u->%u,stack%u/%u;metadata rescan timing intentionally DIFFERENT,NOT model/native/physical/TPS\n",
+   printf("PASS selected boundary-profile source audit%u worker%u SAME16x4B packets+values,instructions%u->%u,stack%u/%u;see pinned-image audit policy,NOT model/native/physical/TPS\n",
     kind,worker,a->steps-2048,b->steps-2048,0x70000-a->minimumStack,0x70000-b->minimumStack);
    auto x=std::make_unique<BoundaryMachine>(baseline,kind,worker),y=std::make_unique<BoundaryMachine>(candidate,kind,worker);
    x->ReleaseEntry(oldRelease[kind]);y->ReleaseEntry(newRelease[kind]);

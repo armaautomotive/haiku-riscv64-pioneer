@@ -96,6 +96,11 @@ static unsigned Counter(unsigned i){return i==0?0x208:i==1?0x20c:(i==2 || i==6)?
 static unsigned Source(unsigned i){return !i?0x100:i<=6?0x118+(i-1)*4:i<=12?0x130+(i-7)*4:i==13?0x150:i==14?0x154:0x16c;}
 static bool Quiet(){
  for(unsigned i=0;i<4;i++)if(*Words(0xffb20040+i*0x800))return false;
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_QUIET_UNROLL
+ // Code generation ONLY:all32 volatile reads retain order and immediate
+ // failure. No queue caching,batching,wider MMIO or skipped observation.
+#pragma GCC unroll 4
+#endif
  for(unsigned i=0;i<32;i++)if(*Words(0xffb20240+i*4)&255)return false;
  return true;
 }

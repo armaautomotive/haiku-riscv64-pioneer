@@ -7,10 +7,12 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=7 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals'}
+assert 3<=len(sys.argv)<=8 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet'}
 inspect='--inspect-candidate' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or f32,'separate dense-unroll candidate requires explicit FP32-hidden components'
 assert not boundary or (f32 and unroll),'boundary candidate requires explicit FP32-hidden and unrolled components'
+quiet='--unroll-quiet' in options
+assert not quiet or (boundary and f32 and unroll),'queue-check candidate requires explicit boundary+FP32-hidden+unrolled components'
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -24,12 +26,14 @@ flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exc
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
+ *(['-DPIONEER_Q38_GLOBAL_CHAIN_QUIET_UNROLL=1'] if quiet else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS=1'] if boundary else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_F32_HIDDEN=1'] if f32 else []),
  '-DPIONEER_Q38_LAYER_RETURN_COMPONENT_IMAGE=1','-DPIONEER_Q38_LAYER_COMPONENT_RECURRENT=1',
  '-DPIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL=1',
  '-DPIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT=1','-c',here/'blackhole_qwen38_return_recurrent_layer.cpp','-o',out/'recurrent.o')
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
+ *(['-DPIONEER_Q38_GLOBAL_CHAIN_QUIET_UNROLL=1'] if quiet else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS=1'] if boundary else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_F32_HIDDEN=1'] if f32 else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL=1'] if unroll else []),
@@ -89,7 +93,11 @@ PINS_UNROLLED_DENSE_F32=(('recurrent.o',159452,'a87da94e9af7f2bb75b538a7d650304f
 PINS_BOUNDARY_F32=(('recurrent.o',161244,'a207749f83d633423c5fdcc03e3043868470a29909f488e012e1fd290f717b82'),
  ('dense.o',122944,'3ad64af1f649f6a9f67996e565d9dc851d91c9f7dfc307eba8609f4624b5532c'),
  ('token-components-NOBOOT.o',252780,'60a21a352d28a7c6e8dd351bd125816b1f76967e993b60940d652673a8bbe2e4'))
-expected=PINS_BOUNDARY_F32 if boundary else PINS_UNROLLED_DENSE_F32 if unroll else PINS_F32 if f32 else PINS
+# Independent main/clean BUILD pins only;not runtime/native/Work permission.
+PINS_QUIET_F32=(('recurrent.o',161264,'86f3263a04a696e8fb54e7425ed7ea37e8d2055a7bbca44754c9e07301f1827a'),
+ ('dense.o',122964,'2e52cefca38eb54ac89cd49b4fe1679a35f158044f2e7bfb969d96cfe14e5d10'),
+ ('token-components-NOBOOT.o',252860,'8fdae3782d66e03be750947cb8c77ffa218916e28540708e13b9c9fa53efb778'))
+expected=PINS_QUIET_F32 if quiet else PINS_BOUNDARY_F32 if boundary else PINS_UNROLLED_DENSE_F32 if unroll else PINS_F32 if f32 else PINS
 if not inspect:assert expected and tuple(observed)==expected,'unqualified component variant; inspect/freeze first'
 print('BUILD ONLY actual returning recurrent path includes strict previous-global output admission;ROOTbytes'+str(text)+'/131072 Conv'+str(conv)+'/32768 maxFrame'+str(max(frames))+
  ';NO boot/persistent parent/model token-state commit/native/physical/Work/TPS or combined-stack proof. DO NOT INSTALL')
