@@ -24,6 +24,11 @@ through to legacy cleanup until its distinct lifecycle is implemented.
 The full-model numerical runs remain live; no complete-model result or new
 throughput measurement is claimed. Last physical whole-model remains
 **0.207893161 tokens/sec**; the 20 tokens/sec target is unmet.
+At 00:36UTC the two old default-range KV runs both terminate1 at layer15;
+their captured residual sums include 1,280 finite values above the old
+65,504 range. Their shared fault callsite does not by itself prove the
+specific incoming branch. The nine separate FP32/original runs remain live;
+the failed legacy histories are retained and not retagged/restarted.
 Evidence and next steps:
 [full-model native binding checkpoint](benchmarks/qwen38-token-native-binding-20261029.txt).
 

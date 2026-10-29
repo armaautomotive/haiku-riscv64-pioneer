@@ -1,0 +1,200 @@
+START actual persistent3token flow/ONE ROOT+SAME119+ONE byte fabric/ONLY RAW learned+initial state+prompt data;no private-state transplant or CPU product upload
+PASS actual next embedding position0/token248319/5120 bit-exact/20raw+2writes+2readbacks/no CPU product upload
+BEGIN actual persistent token0/layer0/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer0 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer0 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer0 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer0 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer0 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer0 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer0 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer0 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer0/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions608831251/reservedStack6496/writtenStack6488
+BEGIN actual persistent token0/layer1/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer1 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer1 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer1 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer1 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer1 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer1 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer1 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer1 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer1/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions1126416540/reservedStack6496/writtenStack6488
+BEGIN actual persistent token0/layer2/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer2 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer2 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer2 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer2 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer2 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer2 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer2 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer2 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer2/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions1643987341/reservedStack6496/writtenStack6488
+BEGIN actual persistent token0/layer3/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer3 matrix1 role5/actual quantized input/same workers
+OBSERVED connected layer3 matrix2 role6/actual quantized input/same workers
+OBSERVED connected layer3 matrix3 role7/actual quantized input/same workers
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420400 SP6ee70
+PASS ACTUAL KV fault1/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420400 SP6ee70
+PASS ACTUAL KV fault2/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420399 SP6ee70
+PASS ACTUAL KV fault3/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420399 SP6ee60
+PASS ACTUAL KV fault4/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420399 SP6ee70
+PASS ACTUAL KV fault5/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420399 SP6ee60
+PASS ACTUAL KV fault6/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420400 SP6ee70
+PASS ACTUAL KV fault7/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420400 SP6ee70
+PASS ACTUAL KV fault8/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+TOKEN_FAULT position0 layer3 completed3 phase5 matrices3 global0/0 committed0 copy0/0/0/0 packets420400 SP6ee70
+PASS ACTUAL KV fault9/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048
+PASS ACTUAL 9 KV append faults AFTER genuine first on-card row write/from SAME executed ROOT+119 histories/no forged processor state/parent unchanged;not whole-token or terminal proof
+OBSERVED connected layer3 matrix4 role10/actual quantized input/same workers
+OBSERVED connected layer3 matrix5 role2/actual quantized input/same workers
+OBSERVED connected layer3 matrix6 role3/actual quantized input/same workers
+OBSERVED connected layer3 matrix7 role4/actual quantized input/same workers
+PASS actual persistent token0/layer3/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions2353203183/reservedStack6752/writtenStack6740
+BEGIN actual persistent token0/layer4/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer4 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer4 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer4 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer4 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer4 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer4 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer4 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer4 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer4/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions2870774741/reservedStack6752/writtenStack6740
+BEGIN actual persistent token0/layer5/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer5 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer5 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer5 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer5 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer5 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer5 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer5 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer5 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer5/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions3388373797/reservedStack6752/writtenStack6740
+BEGIN actual persistent token0/layer6/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer6 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer6 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer6 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer6 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer6 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer6 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer6 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer6 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer6/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions3905982266/reservedStack6752/writtenStack6740
+BEGIN actual persistent token0/layer7/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer7 matrix1 role5/actual quantized input/same workers
+OBSERVED connected layer7 matrix2 role6/actual quantized input/same workers
+OBSERVED connected layer7 matrix3 role7/actual quantized input/same workers
+OBSERVED connected layer7 matrix4 role10/actual quantized input/same workers
+OBSERVED connected layer7 matrix5 role2/actual quantized input/same workers
+OBSERVED connected layer7 matrix6 role3/actual quantized input/same workers
+OBSERVED connected layer7 matrix7 role4/actual quantized input/same workers
+PASS actual persistent token0/layer7/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions4615163028/reservedStack6752/writtenStack6740
+BEGIN actual persistent token0/layer8/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer8 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer8 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer8 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer8 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer8 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer8 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer8 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer8 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer8/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions5132759153/reservedStack6752/writtenStack6740
+BEGIN actual persistent token0/layer9/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer9 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer9 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer9 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer9 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer9 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer9 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer9 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer9 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer9/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions5650398888/reservedStack6752/writtenStack6740
+BEGIN actual persistent token0/layer10/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer10 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer10 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer10 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer10 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer10 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer10 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer10 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer10 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer10/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions6168018057/reservedStack6752/writtenStack6740
+BEGIN actual persistent token0/layer11/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer11 matrix1 role5/actual quantized input/same workers
+OBSERVED connected layer11 matrix2 role6/actual quantized input/same workers
+OBSERVED connected layer11 matrix3 role7/actual quantized input/same workers
+OBSERVED connected layer11 matrix4 role10/actual quantized input/same workers
+OBSERVED connected layer11 matrix5 role2/actual quantized input/same workers
+OBSERVED connected layer11 matrix6 role3/actual quantized input/same workers
+OBSERVED connected layer11 matrix7 role4/actual quantized input/same workers
+PASS actual persistent token0/layer11/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions6877193251/reservedStack6752/writtenStack6740
+BEGIN actual persistent token0/layer12/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer12 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer12 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer12 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer12 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer12 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer12 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer12 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer12 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer12/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions7394864849/reservedStack6752/writtenStack6740
+BEGIN actual persistent token0/layer13/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer13 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer13 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer13 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer13 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer13 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer13 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer13 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer13 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer13/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions7912522228/reservedStack6752/writtenStack6740
+BEGIN actual persistent token0/layer14/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer14 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer14 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer14 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer14 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer14 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer14 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer14 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer14 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer14/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions8430190244/reservedStack6752/writtenStack6740
+BEGIN actual persistent token0/layer15/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer15 matrix1 role5/actual quantized input/same workers
+OBSERVED connected layer15 matrix2 role6/actual quantized input/same workers
+OBSERVED connected layer15 matrix3 role7/actual quantized input/same workers
+OBSERVED connected layer15 matrix4 role10/actual quantized input/same workers
+OBSERVED connected layer15 matrix5 role2/actual quantized input/same workers
+OBSERVED connected layer15 matrix6 role3/actual quantized input/same workers
+OBSERVED connected layer15 matrix7 role4/actual quantized input/same workers
+TOKEN_FAULT position0 layer15 completed15 phase12 matrices7 global0/0 committed0 copy0/0/0/0 packets1822081 SP6f150
+ACTUAL_FAULT_SNAPSHOT pc00060000 previousPC0005de54 ra0005de58 sp0006f150 s110006f58c layer15 completed15 packets1822081;READ_ONLY host map,NOT completion/native/TPS proof
+FAULT_REGS x0 00000000 0005de58 0006f150 00000000 00000000 00000003 000d6000 00000007
+FAULT_REGS x8 0006f380 7fffffff 477fe000 47815e34 267ffffe 47815e34 7fffffff 0008000c
+FAULT_REGS x16 47717d9e 0006f58c 0005f364 00010c00 00092400 0006f58c 0006f88c 477fe000
+FAULT_REGS x24 41400d16 267ffffe 43101368 0006f58c 00000007 0005f348 ffb20000 00000004
+FAULT_COMMAND 00078000 00000000 00000081 b093e000 00000000 00000312 00000000 00000212 00001000 00000000
+FAULT_COUNTERS 001b31e9 002671d6 001bcd79 001b31e9 00009b88 0004d8a0 001bcd79 00009b88
+FAULT_VECTOR projected address80000 missing0 nonfinite0 above655040 below2^-500 zero0 minAbsBits454858b3 maxAbsBits458a547e firstInvalid5120 bits00000000
+FAULT_VECTOR postResidual address156000 missing0 nonfinite0 above655040 below2^-500 zero0 minAbsBits472f581d maxAbsBits477222d6 firstInvalid5120 bits00000000
+FAULT_VECTOR final address160000 missing0 nonfinite0 above655040 below2^-500 zero0 minAbsBits472f581f maxAbsBits477222d7 firstInvalid5120 bits00000000
+FAULT_VECTOR original addressbc000 missing0 nonfinite0 above655040 below2^-503388 zero1332 minAbsBits00000000 maxAbsBits3d800000 firstInvalid1 bits00000001
+FAULT_FINAL_DOMAIN index3 a4589f64c b47717d9e sum47815e34 domain1/1/0
+FAULT_FINAL_DOMAIN index7 a458a326b b4771e6e8 sum4781969b domain1/1/0
+FAULT_FINAL_DOMAIN index11 a4589df8e b477155f5 sum478148f3 domain1/1/0
+FAULT_FINAL_DOMAIN index15 a458a0627 b47719961 sum47816d13 domain1/1/0
+FAULT_FINAL_DOMAIN_TOTAL missing0 invalidProjected0 invalidResidual0 invalidSum1280;classification only,NOT a claim of the fault callsite
+Assertion failed: (okay), function main, file pioneer_q38_token_flow_test.cpp, line 473.
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-prefix-native-clean.Cipnmdpc/tools/pioneer/tests/run_pioneer_q38_token_flow_tests.py", line 44, in <module>
+    subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off','-fsanitize=address,undefined',
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-token-flow-4qtjm39p/test', '/private/tmp/pioneer-q38-token-root-clean-20261028-kv-a', '/private/tmp/pioneer-q38-mixed-worker-20261026-e', '/private/tmp/pioneer-q38-global-globalbuild-clean-20261028-e']' died with <Signals.SIGABRT: 6>.

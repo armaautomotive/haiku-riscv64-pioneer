@@ -122,3 +122,27 @@ readiness or turn page presence/compiled bodies into execution permission.
 Then physical correctness/stability/long sessions/load-unload/recovery,
 separate no-CPU-reference Work+Assistant,boot64CPU/fullRAM preservation and
 measured sustainable27B throughput optimization remain required. Goal ACTIVE.
+
+00:36UTC terminal observations AFTER the binding checkpoint push
+--------------------------------------------------------------
+Old default-range KV main94923/clean26724 now BOTH terminal1/SIGABRT,not
+LIVE and not passed. All other9 handles were re-polled and remain LIVE.
+These old images' complete ELFs still match the original default literal
+pin505eac1b08bee2a6841e5946252ef83d0b05def6bdcad9036b761bd08ea298ed.
+Both histories complete layers0..14,then fault position0/layer15/phase12/
+7matrices/completed15/committed0/copy0. The captured original file maps the
+last fault call at0x5de54 to scalar_fault_park via LiveBlock::Compute's
+SHARED0x5de50 fault label,which has many incoming branches. Do NOT infer
+the precise incoming branch from that last call PC alone.
+
+Both independent logs agree on packets1822081,SP0x6f150,and domain scan:
+missing0/invalidProjected0/invalidResidual0/invalidSum1280. For example,
+projected0x4589f64c plus residual0x47717d9e produces finite0x47815e34,
+above the old0x477fe000 (65504) bound. This is consistent with the earlier
+legacy residual-range refusal;it is NOT an original-model numerical result
+or exact dynamic branch trace. The old guard/image is NOT weakened,retagged
+or restarted. Preserve both complete200-line terminal failure logs:
+ qwen38-token-legacy-kv-main-failure-20261029.log
+ qwen38-token-legacy-kv-clean-failure-20261029.log
+The separate fixed FP32/cancellable full runs continue from their existing
+RESET/SAME119 histories. No new hardware action or performance result.
