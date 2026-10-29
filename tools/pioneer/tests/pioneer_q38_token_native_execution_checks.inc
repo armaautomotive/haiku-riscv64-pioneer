@@ -18,12 +18,15 @@
 #include "pioneer_q38_token_native_full_layer_checks.inc"
 #endif
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE
+#include "pioneer_q38_token_native_cancel_layer_checks.inc"
+#endif
 static void CheckNativeExecution(Fixture& f){
  auto& c=*f.c;auto& io=f.io;auto* state=c.q38TokenNative;
  const unsigned before=io.touches,rootResets=io.resets.size(),packets=io.runtimePackets;
- PioneerQ38TokenExecutionResult start,cancel;uint32 output=0x12345678;
+ PioneerQ38TokenExecutionResult start,cancel;PioneerQ38TokenTerminalResult terminal;uint32 output=0x12345678;
  assert(!lockHeld && c.q38GdnCallThread==-1 && !state->Unsafe() && !state->Closed()
-  && !StartQ38TokenNativeRoot(c,start) && !CancelQ38TokenNativeRoot(c,cancel)
+  && !StartQ38TokenNativeRoot(c,start) && !CancelQ38TokenNativeRoot(c,cancel) && !ObserveQ38TokenNativeTerminal(c,terminal)
   && !io.TokenMemoryReadChecked(0,PioneerQ38TokenLayout::CancelLocal,output) && output==0x12345678 && io.touches==before);
  {
   PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c && io.TokenModelSourceScope(false));
@@ -52,6 +55,36 @@ static void CheckNativeExecution(Fixture& f){
    && io.executionArms==1 && io.executionStarts==1 && io.executionCpu->markerWrites==1 && io.executionCpu->steps
    && io.executionCpu->minStack>=0x6e000 && !io.executionCpu->matrixInstructions && !io.executionCpu->floatOps
    && io.Raw(0,PioneerQ38GlobalChainLayout::R::Status+12)==PioneerQ38TokenLayout::Magic && c.q38Dispatch->rootRunning);
+  const auto pristineTerminal=terminal;auto* terminalWords=reinterpret_cast<uint32*>(&terminal);
+  const unsigned beforeTerminal=io.touches;
+  for(unsigned i=0;i<16;i++){
+   terminalWords[i]^=1;assert(!ObserveQ38TokenNativeTerminal(c,terminal) && io.touches==beforeTerminal && !state->Unsafe());terminal=pristineTerminal;
+  }
+  assert(ObserveQ38TokenNativeTerminal(c,terminal) && terminal.started && !terminal.ready && !terminal.unsafe
+   && !state->TerminalObserved() && !state->Closed()); // actual ZERO unpublished terminal,not a supplied completion
+  puts("PASS native terminal observer pending after genuine ROOT startup marker;16 non-pristine results refused/no STOP or cleanup grant");
+  if(io.terminalFault){
+   namespace C=PioneerQ38GlobalChainLayout;namespace T=PioneerQ38TokenLayout;
+   if(io.terminalFault==1)io.Raw(0,C::R::Status+8)=1;
+   if(io.terminalFault==2)io.Raw(0,T::TerminalLocal)=T::TerminalMagic^1U;
+   if(io.terminalFault==3)io.Core(0).source[11]^=1;
+   if(io.terminalFault==4)io.Core(0).coreReset^=1;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
+   if(io.terminalFault==5){
+    io.Raw(0,C::R::Boot)^=1;io.executionCpu->traffic=true; // release HOST marker pause,not a PC/history setter
+    for(unsigned round=0;round<10000 && io.executionCpu->pc!=0x60000;round++)io.Pause();
+    assert(io.executionCpu->pc==0x60000 && io.executionCpu->markerWrites==1
+     && !io.executionCpu->submitted && !io.Core(0).pending && !io.Raw(0,T::TerminalLocal)); // actual immutable Scope fault,NOT a supplied PC
+   }
+#endif
+   PioneerQ38TokenTerminalResult bad;
+   assert(!ObserveQ38TokenNativeTerminal(c,bad) && bad.started && bad.unsafe && !bad.ready && state->Unsafe());
+   if(io.terminalFault==5)assert(io.executionFaultPcObserved && io.touches==io.executionFaultPcObserved);
+   const unsigned touches=io.touches;PioneerQ38TokenTerminalResult again;PioneerQ38TokenExecutionResult cancel;
+   assert(!ObserveQ38TokenNativeTerminal(c,again) && !CancelQ38TokenNativeRoot(c,cancel) && io.touches==touches);
+   printf("PASS native terminal-observation fault%u/actual started ROOT+119 genuine worker boots/status-error or malformed terminal/source/reset fault/ALL resources retained/no subsequent IO or retry/NO positive STOP/END grant\n",io.terminalFault);
+   return;
+  }
  }
  // Close the launch call completely. Cancellation must acquire a NEW real
  // native scope around this SAME live ROOT/119-worker lifetime.
@@ -96,6 +129,9 @@ static void CheckNativeExecution(Fixture& f){
   const unsigned touches=io.touches;PioneerQ38TokenExecutionResult again;PioneerQ38TokenMemoryResult held;
   assert(!StartQ38TokenNativeRoot(c,again) && !CancelQ38TokenNativeRoot(c,again) && !CloseQ38TokenNativeHeld(c,held) && io.touches==touches);
  }
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE
+ CheckNativeCancelLayer(f);return;
+#endif
  assert(io.resets.size()==rootResets+2 && io.Core(0).coreReset==0x46800 && io.runtimePackets==packets
   && io.rootStarts==1010 && io.rootStops==1010 && io.rootHolds==1010 && !io.pciWrites && !io.HostReadMock::bmeWrites
   && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases);

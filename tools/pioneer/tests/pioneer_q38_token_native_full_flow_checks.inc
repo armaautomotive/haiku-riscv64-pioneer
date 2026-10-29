@@ -80,6 +80,14 @@ static void CheckNativeFullFlow(Fixture& f){
   assert(after.totalSteps==s.totalSteps+2048 && after.requests==s.requests && after.responses==s.responses && p.cpu->ObserveStopped());
   peerInstructions+=after.totalSteps;
  }
+ {
+  PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);PioneerQ38TokenTerminalResult observed;
+  const bool okay=ObserveQ38TokenNativeTerminal(c,observed);
+  if(!okay)fprintf(stderr,"FULL_FLOW_TERMINAL_DIAGNOSTIC phase%u worker%u word%u firstPC%x secondPC%x unsafe%u\n",
+   observed.phase,observed.worker,observed.word,observed.firstPC,observed.secondPC,observed.unsafe);
+  assert(okay && observed.ready && !observed.cancelled && observed.committed==3 && observed.position==2
+   && observed.completedLayers==64 && !observed.stage && state->TerminalObserved() && !state->Closed());
+ }
  commit(2);assert(io.nativeTrace->Complete() && io.nativeTrace->Save(tokenNativeTraceDirectory));
  assert(!io.runtimeDram.at(T::OutputOffset/4+3*64) && !io.pciWrites && !io.HostReadMock::bmeWrites
   && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases);

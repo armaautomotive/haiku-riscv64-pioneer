@@ -11,7 +11,8 @@ import tempfile
 
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 full_flow = len(sys.argv) == 7 and sys.argv[2] == '--execution-full-flow'
-full_layer = full_flow or len(sys.argv) == 7 and sys.argv[2] == '--execution-first-layer'
+cancel_layer = len(sys.argv) == 7 and sys.argv[2] == '--execution-cancel-first-layer'
+full_layer = full_flow or cancel_layer or len(sys.argv) == 7 and sys.argv[2] == '--execution-first-layer'
 first_matrix = full_layer or len(sys.argv) == 6 and sys.argv[2] == '--execution-first-matrix'
 if full_layer:
     prefix = pathlib.Path(sys.argv[6])
@@ -22,7 +23,8 @@ if full_layer:
 embedding = first_matrix or len(sys.argv) == 4 and sys.argv[2] in embedding_modes
 peer_bootstrap = len(sys.argv) == 5 and sys.argv[2] == '--bootstrap-peer-engines'
 peer_engines = peer_bootstrap or first_matrix
-assert peer_bootstrap or embedding or len(sys.argv) in (2,3) and (len(sys.argv) == 2 or sys.argv[2] in ('--faults', '--late-faults', '--held', '--held-faults', '--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'))
+terminal_faults = len(sys.argv)==3 and sys.argv[2]=='--terminal-observation-faults'
+assert peer_bootstrap or embedding or terminal_faults or len(sys.argv) in (2,3) and (len(sys.argv) == 2 or sys.argv[2] in ('--faults', '--late-faults', '--held', '--held-faults', '--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'))
 if embedding:
     assert pathlib.Path(sys.argv[3]).is_absolute() and pathlib.Path(sys.argv[3]).is_file()
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
@@ -47,15 +49,15 @@ defines = dict.fromkeys(parents, '1')
 defines['PIONEER_DRIVER_BUILD_TAG'] = '0x51544b4e4f445256ULL'
 defines.update({name:'pioneer_token_init_test_'+name for name in ('api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device')})
 defines.update(TT_PIONEER_EXPERIMENTAL_Q38_AFFINE='1', TT_PIONEER_EXPERIMENTAL_Q38_BLOCK='1')
-if peer_bootstrap or embedding or len(sys.argv) == 3 and sys.argv[2] in ('--held', '--held-faults', '--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
+if terminal_faults or peer_bootstrap or embedding or len(sys.argv) == 3 and sys.argv[2] in ('--held', '--held-faults', '--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
     defines['PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE'] = '1'
-if peer_bootstrap or embedding or len(sys.argv) == 3 and sys.argv[2] in ('--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
+if terminal_faults or peer_bootstrap or embedding or len(sys.argv) == 3 and sys.argv[2] in ('--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
     defines['PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE'] = '1'
-if peer_bootstrap or embedding or len(sys.argv) == 3 and sys.argv[2] in ('--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
+if terminal_faults or peer_bootstrap or embedding or len(sys.argv) == 3 and sys.argv[2] in ('--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
     defines['PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE'] = '1'
-if embedding or len(sys.argv) == 3 and sys.argv[2] in ('--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
+if terminal_faults or embedding or len(sys.argv) == 3 and sys.argv[2] in ('--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
     defines['PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE'] = '1'
-if embedding or len(sys.argv) == 3 and sys.argv[2] in ('--execution-traffic', '--execution-traffic-faults'):
+if terminal_faults or embedding or len(sys.argv) == 3 and sys.argv[2] in ('--execution-traffic', '--execution-traffic-faults'):
     defines['PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE'] = '1'
 if embedding:
     defines['PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE'] = '1'
@@ -68,6 +70,8 @@ if first_matrix:
     defines['PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE'] = '1'
 if full_layer:
     defines['PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE'] = '1'
+if cancel_layer:
+    defines['PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE'] = '1'
 if full_flow:
     defines.update(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE='1', PIONEER_Q38_NATIVE_TRACE_TEST_BRIDGE='1')
 source = (kernel/'tenstorrent_pci_probe.cpp').read_text()

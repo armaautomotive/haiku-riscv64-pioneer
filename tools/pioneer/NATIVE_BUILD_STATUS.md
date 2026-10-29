@@ -1,5 +1,26 @@
 # Native build status
 
+## In progress: native ROOT/all119 terminal observation and consumed cancellation
+
+October29,2026 10:06UTC. A new private read-only terminal observer verifies
+the SAME running owner,ROOT publication/progress/STOP/current counters and
+all119 actual worker boot/job/nonce/status/STOP/source/counter receipts.
+It does not HOLD/reset cores,adopt NoC counters,restore or release anything;
+`Closed()` remains false and END still retains. No public Work route exists.
+
+Main/clean SDK objects match03f36690,max new frame1696 within the unchanged
+2048B bound;all conventional entries stay inert. DATA tests pass13900
+refusals,roles pass10/111. Current pending tests BOTH finish0 after genuine
+1010 initializers/119 boots/ROOT marker:ZERO terminal is not promoted to
+STOP. The new original-model first-layer cancellation/actual119STOP and
+five-case fault suites remain LIVE,not passing. No positive native STOP
+acceptance,HOLD/restore/END or whole-token qualification is claimed yet.
+
+Older full-model histories continue unchanged;native A has returned three
+layers,B two. No new Pioneer/OS/Assistant/boot/CPU/RAM changes. Last physical
+**0.207893161 tokens/sec**,20 unmet. Evidence:
+[native terminal work in progress](benchmarks/qwen38-token-native-terminal-wip-20261029.txt).
+
 ## Current: lower-instruction dense audit candidate qualified offline
 
 October29,2026 09:21UTC. The explicit `--unroll-dense-seals` candidate

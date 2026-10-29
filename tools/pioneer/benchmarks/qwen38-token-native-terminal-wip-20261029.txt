@@ -1,0 +1,97 @@
+Native ROOT/all119-worker terminal observation--IN PROGRESS
+2026-10-29 10:06UTC. Goal ACTIVE;20tok/s UNMET. Last physical whole-model
+0.207893161tok/s. No Pioneer/SSH/power/driver install/Assistant/OS/boot/
+CPU/RAM/network/SD/mains mutation,physical-health or measured speedup claim.
+
+Implemented private compile-only path,not a ready driver
+--------------------------------------------------------
+ObserveQ38TokenNativeTerminal uses the SAME retained running full851 owner
+and ordinary fresh FD/team/thread/source/generation/clock/mapping scope.
+Its64B result must be pristine and cannot alias owned state. Before treating
+even a ZERO unpublished terminal as pending,it checks actual marker/error
+and both live ROOT PCs;an observed fault-park fails immediately. A nonzero
+publication still needs two actual ROOT STOP samples,coherent complete
+terminal DATA,original startup identity/session,actual progress,correct
+limit/EOS/cancel stage/frontier,matching live ROOT counters and idle queues.
+
+For ALL119 workers it reads the original startup boot and ROOT's current
+closed job/nonce/counter journal,then checks actual worker boot/job/status/
+doorbell/two STOP PCs/sources/reset/idle queues/current counters. It finally
+rechecks the SAME immutable ROOT terminal/current counters/STOP/sources.
+The only accepted state is a private read-only terminal observation. It does
+NOT modify NoC commands/counter journals,reset or HOLD cores,restore L1/CSR,
+release owners,deliver GDDR token records or grant current-state reuse.
+State::Closed remains FALSE and actual END still retains/quarantines.
+Normal success/EOS and all3 consumed-cancellation stages have distinct DATA
+grammar. A late request not consumed by a normal finish is not mislabeled
+as consumed cancellation. The grammar alone creates NO native capability.
+
+Completed component/build scope
+--------------------------------
+Terminal grammar main20826/clean44987 both0,logs identical:7 normal/EOS/
+cancel-stage/context-boundary cases and13900 bit/progress/identity/config/
+null refusals. Byte grammar ONLY,not actual terminal publication or STOP.
+Role main10655/clean21028 both0:10 explicit TEST roles/111 refusals;the new
+cancel fragment rejects absent/zero/two parents and Work,including defined0.
+
+Current SDK D main48040/clean11621 both0. Real new factory/controller bodies
+are REQUIRED in emitted symbol/stack tables,not uninstantiated templates.
+Objects byte-identical SHA256
+ 03f36690c4a4feb53a4304ea4272fdaf6f891551592862d7b565c7664ad62be7.
+Max new frame1696<=2048;old65 remains61faa093,all five conventional function
+entries remain independently inert. No test peer/trace/cancel fixture,
+CPU-model-reference/libm/Work imports. Initial SDK A found misleading
+indentation;B found a2224B frame. Both are FAILURES. C moved the512B session
+temporary into existing private owner staging and passes1696B;D also checks
+live PC before returning pending and is the current required build. No
+stack bound was relaxed. C/B/A are NOT silently retagged as current D.
+
+Current pending D main58663/clean21204 both terminal0,matching complete logs.
+Each executes the real1010 zero jobs,4616 metadata transfers,119 virgin
+worker boots14744576 instructions,and5137 genuine ROOT startup instructions.
+Fresh terminal observation sees the actual unpublished ZERO marker,returns
+pending/not-ready and retains all resources;all16 non-pristine results are
+refused without IO. This is NOT a positive STOP/terminal acceptance result.
+Earlier pending B1289/cleanC75296 also finish0 before the pending-PC fix.
+
+Actual cancellation and fault qualification are LIVE,not passing
+----------------------------------------------------------------
+Current D cancel main9075/clean31509 start from RESET and preserve ONE full
+owner/119 processor histories through actual original27B layer0. The real
+native API issues ONE cancel request only after that layer returns. The
+test releases ONLY its HOST pause,then requires actual immutable ROM to
+consume the request,send ALL119 STOP jobs,publish its terminal and execute
+2048 inert ROOT/peer STOP instructions. Only then may the fresh native
+terminal observer accept. Partial first-layer DATA is saved separately for
+independent original CPU comparison,not uploaded as an input or token.
+Logs /private/tmp/pioneer-q38-terminal-cancel-{main,clean}-20261029-d.log
+Prefixes /private/tmp/pioneer-q38-terminal-cancel-{main,clean}-20261029-d-prefix.bin
+Earlier mainA56062 remains LIVE as a distinct earlier local-buffer observer
+baseline. Its code predates the1696B frame fix and pending-PC check;never
+claim it qualifies the current kernel artifact even if its ROM STOP passes.
+
+Current five-case fault D main76143/clean27364 remain LIVE. The first actual
+status-error case already passes in both trees,with all resources retained
+and no later IO. Remaining malformed marker/source/reset cases and actual
+fault-park execution are NOT yet passing. The last case corrupts actual
+boot DATA then releases the HOST marker pause:the SAME frozen ROOT must
+execute its own Scope failure and reach fault-park before any NoC request.
+NO PC/register/history/completion setter may create that observation. The
+native observer must stop IO at its first actual fault-PC sample.
+Older four-case mainA6529/cleanC30317 remain separate live baselines;neither
+contains the current fifth case. Do not restart any of these for quiet logs.
+
+Full objective still owed
+--------------------------
+Existing native full-flow A/B and original-model numeric/performance
+histories remain separate and uninterrupted. Native A has now returned
+three actual layers,B two;no whole64/token/KV/terminal result follows.
+The full-flow test also now requires this real native terminal observation
+AFTER its own actual all64/3token/119STOP path. Old running binaries do NOT
+contain that new assertion;their eventual results cannot qualify it.
+Positive current cancellation/terminal acceptance and the complete fault
+suites remain owed,then full-token numerics/token readout/current frontier,
+HOLD/restore/END/load-unload/recovery,physical repeated generation and long
+conversations,qualified no-CPU-reference Work+Assistant and measured speed.
+No public driver selection or installation route was enabled. Keep all
+those requirements and the20tok/s target intact.

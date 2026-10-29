@@ -42,4 +42,12 @@
   || !Q38TokenExecutionOutput(c,&result,sizeof(result)) || !c.io.TokenModelSourceScope(false))return false;
  return s->runtime->ObserveRoot(c.io,result);
 } // bounded source/marker/PC observation while firmware owns NoC;NEVER a token/STOP/END receipt
+[[maybe_unused]] static __attribute__((noinline)) bool ObserveQ38TokenNativeTerminal(PioneerStoreContext& c,PioneerQ38TokenTerminalResult& result){
+ auto* s=c.q38TokenNative;const PioneerQ38TokenTerminalResult pristine;
+ const auto* a=reinterpret_cast<const uint8_t*>(&result);const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+ for(unsigned i=0;i<sizeof(result);i++)if(a[i]!=b[i])return false;
+ if(!s || s->phase!=PioneerQ38TokenNativeState::RootRunning || !s->runtime || !s->runtime->ExecutionStarted()
+  || !Q38TokenExecutionOutput(c,&result,sizeof(result)) || !c.io.TokenModelSourceScope(false))return false;
+ return s->runtime->ObserveTerminal(c.io,result);
+} // accepted STOP observation only. State::Closed stays false;no old cleanup/END/Work route is enabled.
 #endif

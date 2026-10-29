@@ -11,6 +11,16 @@ void ResumeFirstMatrix(){assert(layerHeld && dispatchWorker==1 && io.Core(0).pen
 bool fullLayerRunning=false,fullLayerComplete=false;unsigned fullLayerDoorbells=0;
 void ResumeFullLayer(){assert(firstMatrixRunning && layerHeld && dispatchWorker==1 && io.Core(0).pending);
  fullLayerRunning=true;layerHeld=false;dispatchWorker=0;}
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE
+#if PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE != 1 || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE)
+#error Explicit first-layer cancellation TEST only,not whole-flow
+#endif
+void ResumeFirstLayerCancellation(){
+ assert(fullLayerRunning && fullLayerComplete && !io.Core(0).pending && submitted==completed
+  && io.Raw(0,PioneerQ38TokenLayout::CancelLocal)==PioneerQ38TokenLayout::CancelMagic);
+ fullLayerComplete=false; // release HOST pause only;no PC/register/input/receipt change
+}
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
 bool fullFlowRunning=false,flowBoundary=false;unsigned flowPosition=0,flowLayers=0;uint64_t retiredRootInstructions=0;
 uint64_t ObservedRootInstructions()const{return retiredRootInstructions+steps;}

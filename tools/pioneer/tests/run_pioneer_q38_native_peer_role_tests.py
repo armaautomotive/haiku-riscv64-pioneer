@@ -54,8 +54,11 @@ for header, family in (
     ('pioneer_q38_token_native_mutable_bytes.inc', 'PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE'),
     ('pioneer_q38_token_native_full_layer_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE'),
     ('pioneer_q38_token_native_kv_bytes.inc', 'PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE'),
-    ('pioneer_q38_token_native_full_flow_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE')):
+    ('pioneer_q38_token_native_full_flow_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE'),
+    ('pioneer_q38_token_native_cancel_layer_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE')):
     parents = {family:1, fixture:1, context:1}
+    if family=='PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE':
+        parents['PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE']=1
     cases = [(parents, True)]
     for macro in parents:
         absent = dict(parents)
@@ -73,7 +76,7 @@ for header, family in (
         if expected:
             accepted += 1  # preprocess role only;NOT a native owner or usable component
         else:
-            assert 'Explicit native full-' in result.stderr
+            assert 'Explicit native' in result.stderr
             refused += 1
 trace = 'PIONEER_Q38_NATIVE_TRACE_TEST_BRIDGE'
 flow = 'PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE'
