@@ -60,7 +60,7 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  bool executionMode=false;unsigned executionFault=0,executionArms=0,executionStarts=0,executionObserved=0;
  unsigned terminalFault=0;
  unsigned executionPcReads=0,executionFaultPcObserved=0;
-#ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE)
  std::vector<unsigned> terminalHoldOrder;
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
@@ -68,7 +68,7 @@ struct PioneerSessionIO:TokenNativeEndpoints {
 #endif
  bool RootReset(uint32 value){
   if(!executionMode || runtimeCore)return false;
-#ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE)
   if(value==0x47800){
    Touch();assert(C().coreReset==0x46800 && executionCpu->pc==0x60004 && !C().pending && terminalHoldOrder.empty());
    C().resets.push_back(value);C().coreReset=value;terminalHoldOrder.push_back(0);return true;
@@ -127,7 +127,7 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  }
  bool BootstrapReset(uint32 value){
   if(!bootstrapMode)return false;
-#ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE)
   if(value==0x47800){
    Touch();assert(runtimeCore && runtimeCore<120 && Core(0).coreReset==0x47800
     && C().coreReset==0x46800 && terminalHoldOrder.size()==runtimeCore && !C().pending
@@ -347,8 +347,9 @@ struct Fixture {
 #endif
 int main(int argc,char** argv){
  const bool peerBootstrap=argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines");
- const bool fullFlow=argc==7 && !strcmp(argv[2],"--execution-full-flow");
- const bool cancelLayer=argc==7 && (!strcmp(argv[2],"--execution-cancel-first-layer") || !strcmp(argv[2],"--execution-hold-first-layer"));
+ const bool fullFlow=argc==7 && (!strcmp(argv[2],"--execution-full-flow") || !strcmp(argv[2],"--execution-readout-full-flow"));
+ const bool cancelLayer=argc==7 && (!strcmp(argv[2],"--execution-cancel-first-layer") || !strcmp(argv[2],"--execution-hold-first-layer")
+  || !strcmp(argv[2],"--execution-readout-empty"));
  const bool terminalFaults=argc==3 && !strcmp(argv[2],"--terminal-observation-faults");
  const bool fullLayer=fullFlow || cancelLayer || (argc==7 && !strcmp(argv[2],"--execution-first-layer"));
  (void)cancelLayer;

@@ -10,8 +10,10 @@ import sys
 import tempfile
 
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
-full_flow = len(sys.argv) == 7 and sys.argv[2] == '--execution-full-flow'
-hold_layer = len(sys.argv) == 7 and sys.argv[2] == '--execution-hold-first-layer'
+readout_flow = len(sys.argv) == 7 and sys.argv[2] == '--execution-readout-full-flow'
+readout_empty = len(sys.argv) == 7 and sys.argv[2] == '--execution-readout-empty'
+full_flow = readout_flow or len(sys.argv) == 7 and sys.argv[2] == '--execution-full-flow'
+hold_layer = readout_empty or len(sys.argv) == 7 and sys.argv[2] == '--execution-hold-first-layer'
 cancel_layer = hold_layer or len(sys.argv) == 7 and sys.argv[2] == '--execution-cancel-first-layer'
 full_layer = full_flow or cancel_layer or len(sys.argv) == 7 and sys.argv[2] == '--execution-first-layer'
 first_matrix = full_layer or len(sys.argv) == 6 and sys.argv[2] == '--execution-first-matrix'
@@ -75,6 +77,10 @@ if cancel_layer:
     defines['PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE'] = '1'
 if hold_layer:
     defines['PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE'] = '1'
+if readout_empty:
+    defines['PIONEER_Q38_TOKEN_NATIVE_READOUT_EMPTY_FIXTURE'] = '1'
+if readout_flow:
+    defines['PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE'] = '1'
 if full_flow:
     defines.update(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE='1', PIONEER_Q38_NATIVE_TRACE_TEST_BRIDGE='1')
 source = (kernel/'tenstorrent_pci_probe.cpp').read_text()

@@ -99,3 +99,19 @@ owned token readout, HOLD/restore/clean END/load-unload/recovery; native
 integration of a qualified performance image; physical repeated generation
 and long chats; no-CPU-reference Work plus Assistant; measured sustained
 performance toward20 tokens/sec. Preserve SD-free boot,64 CPUs and full RAM.
+
+2026-10-29 11:43UTC follow-up--actual original first-layer profile completes
+Main7635/clean74451 both execute the original layer0 return with all119 jobs
+closed and5120 final values recorded;the same ROOT/worker histories then
+continue into layer1. Their COMPLETE first-layer profile snapshots match.
+The existing unrolled baseline44318/55691 also has matching first-layer
+profiles. Like-for-like ORIGINAL-flow ROOT instructions from RESET:
+  baseline608369849 -> boundary295256264;313113585 fewer (51.4676369%).
+Reserved stack6496/written stack6488 remain within the existing8192 bound.
+The full recurrent seal drops from292204881 to3019983 exclusive instructions;
+the new per-packet seal costs71926312 and Transfer/Quiet now dominate.
+All actual peer MMIO remains four-byte. This is a genuine executed original-
+layer controller-work reduction,NOT physical cycles,tokens/sec,an independent
+full-trace numerical match or native/public-driver qualification. Main/clean
+whole3-token/all64 suites remain LIVE,not passing. Do not infer a20tok/s result.
+Snapshots qwen38-{boundary,dense-unroll}-layer0-profile-{main,clean}-20261029.log

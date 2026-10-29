@@ -7,6 +7,9 @@
  || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE) || defined(PIONEER_Q38_WORK_INFERENCE)
 #error Explicit native first-layer terminal HOLD TEST required
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_READOUT_EMPTY_FIXTURE
+#include "pioneer_q38_token_native_readout_empty_checks.inc"
+#endif
 static void CheckNativeHoldLayer(Fixture& f){
  auto& c=*f.c;auto& io=f.io;auto& cpu=*io.executionCpu;auto* state=c.q38TokenNative;
  assert(!lockHeld && state->TerminalObserved() && !state->TerminalHeld() && !state->Closed()
@@ -46,4 +49,7 @@ static void CheckNativeHoldLayer(Fixture& f){
  }
  assert(!io.pciWrites && !io.HostReadMock::bmeWrites && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases);
  puts("EXECUTED native SAME full851/actual original layer0+consumed cancellation+ROOT/all119 actual STOP+fresh native terminal observation/rechecked SAME terminal+closed journals/ROOT FIRST then119 exact HOLD writes/all counters+commands unchanged/fresh FD scope remains owned;NO L1 or CSR restore/token readout/END/disposal/current-state reuse/physical/Work/TPS grant");
+#ifdef PIONEER_Q38_TOKEN_NATIVE_READOUT_EMPTY_FIXTURE
+ CheckNativeEmptyReadout(f);
+#endif
 }

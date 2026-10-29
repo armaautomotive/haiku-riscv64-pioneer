@@ -1,0 +1,112 @@
+Native committed-record readout candidate: IN PROGRESS, NOT ready
+2026-10-29 11:44UTC. Goal ACTIVE;20 tokens/sec remains UNMET.
+Last completed physical whole-model measurement:0.207893161 tokens/sec.
+No Pioneer/SSH/power/installation/Assistant/OS/boot/CPU/RAM/network/SD/
+hardware-connection/mains changes. No physical-health or TPS claim.
+
+Implemented private controller,not an installed driver
+------------------------------------------------------
+ReadQ38TokenNativeRecords requires the SAME genuinely terminal-observed and
+HELD full851 owner,retained FD/team/thread/generation/source/clock/host scope,
+pristine64B result and a non-aliased,aligned,zeroed trusted KERNEL output.
+The private read cursor is sequential;one call accepts1..64 complete256B
+records,never an arbitrary caller address or seek. A zero-count/null-output
+call is valid ONLY for a genuine zero-committed cancellation frontier.
+It cannot manufacture a token or use a pending ROOT as a HOLD receipt.
+
+All120 current held/source/idle/counter guards and the immutable terminal/
+ROOT boot are checked at batch boundaries. ROOT's NIU is used ONLY after
+that genuine terminal-to-HOLD handoff,not stolen from running firmware.
+The fixed GDDR read is256..16384 bytes within the owned output region;
+both endpoints are ordinary memory,not MMIO. There is no new TLB slot or
+bulk-MMIO exception. Initial closed terminal counters remain the authority.
+Every known read command is written/read back exactly,with current source,
+idle and counter checks before release,delta-bounded completion counters,
+all10 command readbacks,finite polling and a monotonic deadline. Only that
+exact completed read advances the private current counter journal. Counter
+words inside historical token records are NEVER adopted as live counters.
+
+After actual receipt,the reader checks publication/version,position,input,
+selected-token range,finite logit bits,committed frontier/slot,prefill and
+feedback flags,all64 layers/973 head jobs,model/session/source identity,
+history/worker counts and zero padding. Prompt IDs come from the SAME
+immutable startup;the previous selected token supplies the greedy input
+between fresh calls. This is DATA/provenance checking,not a CPU model answer.
+Only a wholly valid batch is copied to output. Any uncertainty retains all
+resources without retry/repair/cleanup. The completed cursor is NOT reusable
+model state or END authority;Closed() remains FALSE. No L1/CSR restoration,
+unmapping,host release,public ABI/Work/Assistant route or active streaming
+channel is enabled.
+
+Completed independent build/DATA/refusal qualification
+-------------------------------------------------------
+Current SDK B main30204/clean76838 BOTH terminal0;objects byte-identical:
+ 4d6b6fb739b8950b644995e7c0eb23f223115181e0ced66d58ea3408a2b58c04.
+The actual reader/factory bodies must be emitted,not uninstantiated templates.
+Max new frame1728<=unchanged2048;old65 remains61faa093;all five conventional
+driver entries stay independently inert. No CPU-reference,Work,peer-engine
+or readout-test implementation is imported. SDK logs differ only in the
+temporary old-controls output path. Earlier SDK A11665 also finishes0 but
+predates the explicit output-alignment check;it is NOT retagged as B.
+
+DATA grammar B main17587/clean22044 BOTH0:11 normal/prefill/final/EOS/
+cancel-stage/context-boundary cases and20152 identity/position/flag/padding/
+nonfinite/config/null refusals. EOS during prompt prefill remains nonfinal.
+PASS lines are identical;only temporary test-artifact paths differ. These
+synthetic record bytes grant NO native ownership or GDDR publication.
+
+Role B main65987/clean55471 BOTH0,complete logs identical:13 explicit TEST
+roles/165 absent+zero+two+kernel+device+Work refusals. Readout fragments need
+their exact distinct parents;they are not included in the SDK/Work artifact.
+
+Native pending B main36485/clean55350 BOTH0,complete logs identical. The
+SAME owner executes1010 actual zero jobs,4616 metadata packets,119 virgin
+boots14744576 instructions and genuine ROOT startup5137 instructions.
+Readout refuses16 non-pristine results and5 requested counts without IO or
+output changes. A running ROOT is not promoted to a held token source.
+The existing HOLD pending refusals also still pass. This proves refusal,
+NOT a positive token/GDDR read,consumed cancellation,HOLD or END.
+
+Genuine model qualifications are LIVE,not passing
+-------------------------------------------------
+Corrected empty C main28865/clean78459 (--execution-readout-empty) runs
+actual original layer0,consumed cancellation,ROOT+119 actual STOP,current
+native terminal acceptance and120 actual HOLDs. It then requires the real
+zero-committed frontier to drain without a GDDR packet or invented token,
+and malformed count/result/buffer/alias/alignment/duplicate calls to refuse.
+These requirements are NOT passing results merely because the runs started.
+
+The first empty B fixtures10599/6790 were invalid:their65-word test buffer
+was too small for a64-record request's4096-word zero check. The exact two
+child binaries34331/34334 were identified from live process/parent/argument
+evidence and deliberately SIGINT'd while authenticating GGUF,before native
+construction. Both end1,not a pass. C supplies4097 words,including room for
+the deliberate misalignment test. No production bound/guard was relaxed.
+All OTHER valid histories were preserved;these were not quiet restarts.
+
+Complete readout C main84969/clean59290 (--execution-readout-full-flow)
+requires the SAME virgin full851 owner/119 engines through3 tokens*64 layers,
+actual state/KV/vocabulary/committed GDDR records,ROOT+119 STOP,current native
+terminal acceptance and120 actual HOLDs. Two fresh native calls must read
+512B then256B through the actual production controller,deliver all192 words
+equal to immutable device GDDR,and preserve the cross-call greedy input.
+The test supplies no product,PC,processor history or caller-ready receipt.
+Its genuine QOD1 traces still require independent CPU comparison AFTER
+successful completion,WITHOUT --diagnostic-only. Older live full-flow
+binaries do not contain this new reader/HOLD assertion;never retag them.
+
+Logs /private/tmp/pioneer-q38-readout-{empty,flow}-{main,clean}-20261029-c.log
+Empty prefixes /private/tmp/pioneer-q38-readout-empty-{main,clean}-20261029-c-prefix.bin
+Flow outputs /private/tmp/pioneer-q38-readout-flow-main-20261029-c.nTEn0Ick
+             /private/tmp/pioneer-q38-readout-flow-clean-20261029-c.LGP65Gi5
+Clean export /private/tmp/pioneer-q38-readout-clean.X3PqdoiD
+
+Remaining full objective
+-------------------------
+Positive current HOLD/readout and uncertainty/fault qualification;complete
+all64/multitoken numerical/state/KV/vocabulary/normal/EOS proof;exact L1+CSR
+restoration/clean END/load-unload/recovery;qualified native performance-image
+integration;physical repeated generation/long conversations;no-CPU-reference
+Work plus Assistant;safe owned active token delivery if streaming is added;
+honest sustained optimization toward20 tokens/sec. Preserve SD-free boot,
+64 CPUs,full RAM and earlier valid qualification histories.

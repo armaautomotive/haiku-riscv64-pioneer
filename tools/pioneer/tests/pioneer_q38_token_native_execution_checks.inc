@@ -71,6 +71,16 @@ static void CheckNativeExecution(Fixture& f){
    }
    assert(!HoldQ38TokenNativeStopped(c,hold) && io.touches==beforeHold && !state->TerminalHeld() && !state->Unsafe());
    puts("PASS native terminal HOLD refuses pending ROOT and16 non-pristine results without IO/no supplied STOP or release grant");
+   PioneerQ38TokenReadResult read;const auto pristineRead=read;auto* readWords=reinterpret_cast<uint32*>(&read);
+   uint32_t output[64]={};
+   for(unsigned i=0;i<16;i++){
+    readWords[i]^=1;assert(!ReadQ38TokenNativeRecords(c,1,output,read) && io.touches==beforeHold);read=pristineRead;
+   }
+   for(unsigned count:{0U,1U,64U,65U,0xffffffffU}){
+    assert(!ReadQ38TokenNativeRecords(c,count,count?output:nullptr,read) && io.touches==beforeHold);
+   }
+   for(auto value:output)assert(!value);
+   puts("PASS native committed READ refuses pending ROOT,16 non-pristine results and5 counts without IO/output changes;NO token or HOLD capability supplied");
   }
   if(io.terminalFault){
    namespace C=PioneerQ38GlobalChainLayout;namespace T=PioneerQ38TokenLayout;

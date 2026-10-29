@@ -61,4 +61,27 @@
  else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);result.unsafe=1;result.ready=0;okay=false;}
  return okay;
 } // fresh owned handoff ONLY;no CSR/L1 restore,unmapping,host release,END/public Work or generated-token delivery
+[[maybe_unused]] static __attribute__((noinline)) bool ReadQ38TokenNativeRecords(PioneerStoreContext& c,unsigned records,uint32_t* output,PioneerQ38TokenReadResult& result){
+ auto* s=c.q38TokenNative;const PioneerQ38TokenReadResult pristine;
+ const auto* a=reinterpret_cast<const uint8_t*>(&result);const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+ for(unsigned i=0;i<sizeof(result);i++)if(a[i]!=b[i])return false;
+ if(!s || s->phase!=PioneerQ38TokenNativeState::RootHeld || !s->runtime || !s->TerminalHeld()
+  || s->runtime->CommittedRecordsRead() || records>64 || (records?!output:output!=nullptr)
+  || !Q38TokenExecutionOutput(c,&result,sizeof(result)))return false;
+ const unsigned bytes=records*unsigned(PioneerQ38TokenLayout::RecordBytes);
+ if(records){
+  const uintptr_t out=reinterpret_cast<uintptr_t>(output),r=reinterpret_cast<uintptr_t>(&result);
+  if((out&3) || out>UINTPTR_MAX-bytes || (out<r+sizeof(result) && r<out+bytes) || !s->startup->PublishedOutput(output,bytes))return false;
+  const void* objects[]={&c,&c.io,s,s->memory,s->participants,s->runtime,c.initialized,c.hashes,PioneerQ38TokenRope::Data};
+  const size_t sizes[]={sizeof(c),sizeof(c.io),sizeof(*s),sizeof(*s->memory),sizeof(*s->participants),sizeof(*s->runtime),
+   PioneerResidentBanks::Pages,size_t(PioneerResidentBanks::Pages)*sizeof(uint32_t),PioneerQ38TokenRope::Bytes};
+  for(unsigned i=0;i<9;i++){
+   const uintptr_t owned=reinterpret_cast<uintptr_t>(objects[i]);
+   if(!owned || owned>UINTPTR_MAX-sizes[i] || (out<owned+sizes[i] && owned<out+bytes))return false;
+  }
+  for(unsigned i=0;i<records*64;i++)if(output[i])return false;
+ } // private trusted kernel buffers ONLY;not an unchecked public/user-pointer ABI
+ if(!c.io.TokenModelSourceScope(false))return false;
+ return s->runtime->ReadCommitted(c.io,records,output,result);
+} // immutable committed DATA after genuine HOLD;NO CPU model reference,restore,END or public Work route
 #endif

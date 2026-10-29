@@ -1,5 +1,28 @@
 # Native build status
 
+## In progress: native committed-record readout after verified HOLD
+
+October29,2026 11:44UTC. A private reader implements sequential1..64-record
+batches ONLY after the SAME genuine terminal/120-HOLD handoff. It uses exact
+current NoC read receipts,never historical record counters,and publishes a
+whole batch only after identity/frontier/prompt/greedy-chain checks. No CPU
+model reference is involved. It does not grant restoration,END or Work.
+Main/clean SDK objects match4d6b6fb7,max frame1728<=2048;DATA11/20152 and
+roles13/165 pass. Genuine native pending/refusal tests BOTH finish0 with
+identical logs. Corrected empty-cancellation and full3-token/readout tests
+are LIVE,not passing. Two invalid early empty TEST buffers were corrected
+and only those two jobs retired;other valid histories remain unchanged.
+No installation or physical speed result follows. Evidence:
+[native record-readout candidate](benchmarks/qwen38-token-native-readout-wip-20261029.txt).
+
+October29,2026 11:43UTC performance evidence:both boundary-profile original
+layer0 runs now return with identical instruction profiles. ROOT work falls
+from608369849 to295256264 instructions (51.5% fewer),with written stack6488
+unchanged. This is OFFLINE controller work,not card cycles or tokens/sec;
+complete numerical and hardware qualification remain owed. Last physical
+**0.207893161 tokens/sec**,20 unmet. Evidence:
+[first-layer boundary profile](benchmarks/qwen38-token-boundary-seals-wip-20261029.txt).
+
 ## Completed offline: consumed cancellation and native STOP observation
 
 October29,2026 10:59UTC. Current terminal D main/clean BOTH finish0 on the

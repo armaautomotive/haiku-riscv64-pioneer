@@ -5,6 +5,9 @@
  || defined(PIONEER_Q38_WORK_INFERENCE)
 #error Explicit native full-flow TEST required
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE
+#include "pioneer_q38_token_native_readout_flow_checks.inc"
+#endif
 static const char* tokenNativeTraceDirectory=nullptr;
 static void CheckNativeFullFlow(Fixture& f){
  namespace C=PioneerQ38GlobalChainLayout;namespace R=C::R;namespace T=PioneerQ38TokenLayout;namespace W=PioneerQ38GlobalWorkerLayout;
@@ -91,6 +94,9 @@ static void CheckNativeFullFlow(Fixture& f){
  commit(2);assert(io.nativeTrace->Complete() && io.nativeTrace->Save(tokenNativeTraceDirectory));
  assert(!io.runtimeDram.at(T::OutputOffset/4+3*64) && !io.pciWrites && !io.HostReadMock::bmeWrites
   && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases);
- printf("EXECUTED native SAME full851 owner+1010 genuinezero+119virgin full engines/3positions*64layers/actual GDN+Conv+KV+vocabulary+device committed records/genuine ROOT terminal+all119 actual STOP/ROOTinstructions%llu peerInstructions%llu/complete RAW QOD1 traces saved;independent CPU numerical comparison STILL REQUIRED;NO native terminal capability/restoration/END/physical/Work/TPS grant\n",
+ printf("EXECUTED native SAME full851 owner+1010 genuinezero+119virgin full engines/3positions*64layers/actual GDN+Conv+KV+vocabulary+device committed records/genuine ROOT terminal+all119 actual STOP+native terminal observation/ROOTinstructions%llu peerInstructions%llu/complete RAW QOD1 traces saved;independent CPU numerical comparison STILL REQUIRED;NO restoration/END/physical/Work/TPS grant\n",
   (unsigned long long)cpu.ObservedRootInstructions(),(unsigned long long)peerInstructions);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE
+ CheckNativeReadoutFlow(f);
+#endif
 }
