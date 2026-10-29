@@ -1,0 +1,40 @@
+Native token VM-handle journal:COMPONENT QUALIFICATION ONLY
+2026-10-29. Full performance goal ACTIVE;20 tokens/sec UNMET.
+Last physical whole-model rate remains0.207893161 tokens/sec.
+
+Exact scope
+-----------
+PioneerQ38TokenViewLease.h is a CPU-only handle journal. It captures29
+device-VM handle values and3 separate retained host handles BEFORE launch,
+rejects duplicates/host aliases/invalid handles,and requires its SAME private
+IO journal identity. It does NOT establish a clean card or a native session.
+The eventual native factory must derive its own original-restoration/clock/
+STOP/FD/team/thread/generation authority before permitting any disposal.
+
+Close is single-attempt and checks current eligibility+the entire original
+manifest before each OS deletion and after the last. Successful deletions
+are recorded even if eligibility disappears immediately afterwards. First
+failure stops following syscalls;no retry or diagnostic rollback is provided.
+Host pages,PCI state,model reservations,and CPU journals are NOT released.
+
+Independent ASAN+UBSAN component tests
+------------------------------------
+Main59218 and clean39549:154 cases,BOTH terminal0.
+Clean checkout:/private/tmp/pioneer-q38-native-views-clean.URckxzfg
+Main/clean component logs are byte-identical:
+ qwen38-token-view-lease-component-main-20261029.log
+ qwen38-token-view-lease-component-clean-20261029.log
+Cases:foreign-journal refusal;all29 and optional/sparse handles;58 lost or
+replaced handle refusals;each29 OS delete failures;each29 post-delete
+eligibility losses;each29 post-delete host mutations;duplicate/host/invalid
+whole-set preflight;no following syscall or retry. Tests simulate OS-handle
+DATA only,never a genuine hardware completion or clean native owner.
+
+Published checkpoint scope
+--------------------------
+ONLY this header,its standalone test+runner,and component evidence are
+eligible for this checkpoint. Later native wiring,prelaunch capture factory,
+29 actual driver aliases,pointer clearing,hardware-lease retirement and final
+VM factory remain separate LOCAL WIP until their runtime histories qualify.
+This component pass is NOT native END/load-unload/Work/Assistant readiness,
+full-model numerical qualification,physical card use or an inference speedup.
