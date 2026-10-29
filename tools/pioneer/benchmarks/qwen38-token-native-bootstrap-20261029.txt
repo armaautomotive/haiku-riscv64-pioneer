@@ -1,0 +1,102 @@
+Distinct native full-token QGW1 worker bootstrap checkpoint
+2026-10-29 04:08UTC. Goal ACTIVE;20tok/s UNMET. Offline cases below COMPLETE.
+Last measured physical whole-model0.207893161tok/s;NO new speedup claim.
+NO hardware/SSH/power/install/kernel/Assistant/boot/CPU/RAM/network/SD/mains
+change. This candidate remains renamed-ABI,unlinked,uninstalled,private.
+
+Implementation
+--------------
+The SAME retained PioneerQ38TokenNativeOwner now supplies a DISTINCT fresh
+QGW1 BootstrapWorkers operation. It never uses legacy DispatchBootstrap,
+borrows an old embedding/prefix producer,or publishes legacy boot flags.
+The private native factory binds actual FD/global lock/team/thread/driver
+generation,canonical851/startup/initialized-page ledger,7bank reservations,
+clock/host owners,120 participant leases and the SAME full L1 journal.
+
+Preflight checks EVERY complete installed program,all120 exact boot DATA,
+zero peer job/doorbell/status,zero ROOT cancel/record/status and the real
+ROOT initial layer template/request1. Exact NIU commands0,0,0,0,0,self,0,0,0,0
+are written/read back for119 workers. QGW1 firmware explicitly requires
+its self-route register at boot. The journal adopts only these known
+verified writes,never arbitrary recaptured commands or counters.
+
+ALL119 workers ARM before ANY release. Journal launch is marked BEFORE
+the first possibly uncertain reset write,irrevocably excluding held-only
+restoration. Private per-worker expected reset/running states retain
+ownership during partial ARM/release;legacy bootAttempted/booted remain
+FALSE. One monotonic30s deadline begins before the first ARM;65536 rounds
+also bound quiet polling. No deadline refresh/re-ARM/retry is permitted.
+Generation loss is checked immediately after ARM before even the next
+pause. Every observed mismatch quarantines all banks/leases/host owners;
+no following IO,reset,restore,cleanup or release is attempted.
+
+Readiness requires QGW1's exact zero status+marker,two actual WAIT PCs
+2004c/20050 and unchanged ALL8 NoC counters/ALL10 command words,with native
+mapping/source/PCI-quiet checks. All already-accepted peers are audited
+again after the last one becomes ready. ROOT remains HELD throughout;
+no model arithmetic,RUN,cancel,STOP,clean END/disposal or Work permission
+is implemented. Ordinary and legacy command routes remain excluded.
+
+Genuine integrated test fabric
+------------------------------
+ALL119 virgin instruction CPUs are constructed before native binding and
+initialization. Their instruction fetch,boot/status/stack DATA and NIU
+CSR reads directly access the SAME per-core L1/CSR backing that the native
+mapping adapter installs into. There is NO status/ready/PC/register or
+private history transplant and no boot-completion callback fabrication.
+The existing RV32 ISA interpreter executes the frozen installed QGW1 ROM;
+only OS,VM,clock,GDDR and NoC endpoints are simulated. Bootstrap emits only
+real stack/status stores,no matrix instructions,NoC packets or CPU model
+products. Bounded instruction interleaving advances all released CPUs.
+
+Each integration first performs ALL1010 genuine zero-ROM jobs/75920pages,
+full120 participant ownership/source capture,full installed token journal
+and4616 actual controller metadata write+readback packets. The initialized
+first2MiB and later64MiB workspace use ONE backing from construction.
+Positive bootstrap tests finish by verifying held cleanup is REFUSED;
+the actual unfinished-END branch retains/quarantines the active owner.
+CPU-only fixture destruction is NOT physical cleanup/END qualification.
+The inherited final init summary describes the initializer's original
+code/scratch restoration,NOT restoration of subsequently launched workers.
+
+Evidence as of04:08UTC
+----------------------
+Diagnostic mainA64900 terminal0,14744576 actual instructions across119
+workers,max written stack1828/8192. It predates two additional native
+generation/deadline guards and is NOT the final main qualification.
+Current mainB96738 AND cleanA74036 BOTH terminal0,byte-identical positive
+logs:14744576 actual instructions/max written stack1828. The whole final
+controller passes in both trees. Two-fault main31316/clean47709 BOTH
+terminal0,byte-identical complete logs:first-ARM generation loss AND
+last-worker-release counter excess both quarantine with no following IO.
+Every fault uses fresh initialization/installation/staging/histories.
+These2 cases are NOT exhaustive timeout/late-fault or physical coverage.
+
+SDK B main86225/clean50565 BOTH terminal0,byte-identical object SHA256:
+43266521fcd460c600eab9bbd667573a8a798e75df1b3c67e2c3a64c345ea47c
+Whole actual bootstrap factory/controller bodies emitted,max new token
+frame560B/initializer704B;whole unit meets <=2048-new-or-exact-old bound.
+Not combined dynamic stack proof. Old native65 stays byte-identical
+61faa093;all6 conventional ABI names absent,all5 independent inert entry
+controls match,NO CPU-reference/Work path or cos/sin/pow imports.
+Binding main88908/clean80061 and role main39377/clean16684 ALL terminal0,
+identical logs:3712 refusals/7banks/3551learned extents/whole lock+ordinary
+and delta exclusion/retention;21parents/31forbidden aliases/241bad roles.
+
+Earlier current strict/published serializer47524/20222 BOTH terminal0,
+identical complete logs:ALL448 full512KiB packages across7banks match
+strict/independent strict/published bytes;15434 refusals. This completes
+that previously-running data regression,NOT native execution/model math.
+
+Still owed/full objective unchanged
+-----------------------------------
+Extend bootstrap timing/late mismatch coverage. Next implement the SAME
+owner's ROOT launch,cancel,terminal and
+all119 real STOP proof,native model-state/KV frontier advancement,complete
+L1/CSR restoration and actual clean END/disposal/client. Qualify fresh-call
+reentry of the live new phase before adding a ROOT/RUN client route.
+Complete original27B all64/multitoken/state/vocabulary/selection independent
+numerical qualification;existing9 instruction histories remain LIVE and
+untouched,not replaced because quiet. Then physical P100A correctness,
+stability,load/unload/recovery,no-CPU-reference Work+Assistant and honest
+sustained27B speed tuning toward20tok/s. Preserve SD-free boot64CPU/fullRAM.

@@ -1,0 +1,26 @@
+OBSERVED actual frozen zero ROM starts96/GDNpages10544/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts192/GDNpages21072/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts288/GDNpages31600/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts384/GDNpages42144/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts480/GDNpages52672/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts576/GDNpages63200/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts672/GDNpages73728/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts768/GDNpages73728/historyPages480/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts864/GDNpages73728/historyPages960/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts960/GDNpages73728/historyPages1440/projectionPages0;NOT native initialization publication
+PASS SAME genuine full851 initialization+120 held histories/actual native runtime scope/factory/ALL2308 bounded metadata+frozen rawRoPE+prompt+zero-record chunks/4616 exact NoC packets+complete readback/37782528B vs independently built startup+ALL untouched slack/120 actual boot DATA/NO reset/start/CPU model products/host BME;SIMULATED endpoints,NOT initialized KV rows/model RUN/STOP/END/physical/TPS
+PASS native QGW1 bootstrap fault1/phase3/actual preceding1010 zero jobs+120 held stages+4616 metadata packets/ALL owners retained/no reARM/restore/retry/cleanup/following IO after observed uncertainty;SIMULATED endpoints,NOT ROOT/model RUN/physical/TPS
+PASS SAME full851 native owner/actual zero RV32 672GDN regions73728pages BOTHslots+336history1680pages+2workspace512pages/1010actualRUN+STOP+HOLD/full coverage+private clean CLOSE publications/code+scratch restored/learned unchanged/no BME;SIMULATED endpoints,NOT KV/metadata/model execution/physical/TPS/END permission
+OBSERVED actual frozen zero ROM starts96/GDNpages10544/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts192/GDNpages21072/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts288/GDNpages31600/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts384/GDNpages42144/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts480/GDNpages52672/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts576/GDNpages63200/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts672/GDNpages73728/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts768/GDNpages73728/historyPages480/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts864/GDNpages73728/historyPages960/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts960/GDNpages73728/historyPages1440/projectionPages0;NOT native initialization publication
+PASS SAME genuine full851 initialization+120 held histories/actual native runtime scope/factory/ALL2308 bounded metadata+frozen rawRoPE+prompt+zero-record chunks/4616 exact NoC packets+complete readback/37782528B vs independently built startup+ALL untouched slack/120 actual boot DATA/NO reset/start/CPU model products/host BME;SIMULATED endpoints,NOT initialized KV rows/model RUN/STOP/END/physical/TPS
+PASS native QGW1 bootstrap fault2/phase4/actual preceding1010 zero jobs+120 held stages+4616 metadata packets/ALL owners retained/no reARM/restore/retry/cleanup/following IO after observed uncertainty;SIMULATED endpoints,NOT ROOT/model RUN/physical/TPS
+PASS SAME full851 native owner/actual zero RV32 672GDN regions73728pages BOTHslots+336history1680pages+2workspace512pages/1010actualRUN+STOP+HOLD/full coverage+private clean CLOSE publications/code+scratch restored/learned unchanged/no BME;SIMULATED endpoints,NOT KV/metadata/model execution/physical/TPS/END permission

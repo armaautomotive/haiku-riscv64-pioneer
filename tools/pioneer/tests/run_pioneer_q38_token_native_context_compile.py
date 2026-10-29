@@ -52,7 +52,8 @@ required = ('BindQ38TokenNative(', 'TokenCallScopeMatches(', 'TokenModelSourceSc
             'MapTokenMemory(', 'TokenMemoryReadChecked(', 'TokenMemoryWrite(',
             'PioneerQ38TokenMemory::PrepareHeld(', 'PioneerQ38TokenMemory::CloseHeldNoLaunch(', 'pioneer_token_context_scoped_held(',
             'TokenRuntimeScope(', 'PrepareQ38TokenNativeRuntime(', 'pioneer_token_context_scoped_runtime(',
-            'PioneerQ38TokenNativeOwner::PrepareHeldRuntime(')
+            'PioneerQ38TokenNativeOwner::PrepareHeldRuntime(', 'BootstrapQ38TokenNativeWorkers(',
+            'PioneerQ38TokenNativeOwner::BootstrapWorkers(', 'pioneer_token_context_scoped_bootstrap(')
 for name in required:
     assert any(name in key for key in frames), (name, 'actual implementation must be emitted')
 for controller in ('State', 'ConvHistory', 'Projection'):
@@ -112,6 +113,7 @@ print('PASS old65 BYTE-IDENTICAL61faa093;NO old embedding/prefix owner/CPU refer
 print('PASS SAME full851 owner/private recurrent+history+projection initialization leases/actual phase-specific source+nonroot callbacks/all9 real controller bodies SDK compiled/maxControllerFrame'+str(max(controller_sizes))+';NOT runtime qualification')
 print('PASS ACTUAL distinct full-token held factories/native120 cohort ownership/4retained aliases/all-word access+source callbacks/whole PrepareHeld+CloseHeldNoLaunch bodies SDK compiled;NOT runtime/launch/END qualification')
 print('PASS ACTUAL distinct full-token native runtime factory/same owner+source callbacks/whole held metadata+rawRoPE+empty-prefix packet write+readback controller SDK emitted;NOT runtime/bootstrap/model/STOP/END qualification')
+print('PASS ACTUAL distinct fresh QGW1 worker bootstrap factory/whole ARM+release+bounded WAIT controller SDK emitted;ROOT/model RUN,cancel,STOP,END and Work STILL OWED;NOT bootstrap runtime qualification')
 print('PASS complete2097152B immutable rawRoPE emitted;NO kernel cos/sin/pow imports or CPU model-reference path')
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+' token-context-NODRV.o')
 print('COMPILE/INSPECT ONLY;real private bodies WOULD do IO if invoked;NO link/install/invoke/physical or performance qualification;this compile is NOT initialization/staging RUNTIME qualification;runtime+metadata/RUN/STOP/END STILL OWED')

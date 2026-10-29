@@ -43,6 +43,8 @@ bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
   if((state->phase==PioneerQ38TokenNativeState::RuntimePreparing || state->phase==PioneerQ38TokenNativeState::RuntimeReady)
    && (!state->runtime || state->runtime->Unsafe() || !state->memory->Installed()
     || (state->phase==PioneerQ38TokenNativeState::RuntimeReady && !state->runtime->Staged())))return false;
+  if((state->phase==PioneerQ38TokenNativeState::WorkersBootstrapping || state->phase==PioneerQ38TokenNativeState::WorkersReady)
+   && !state->ControlsCohort(d))return false;
   if(state->runtime && state->phase<PioneerQ38TokenNativeState::RuntimePreparing)return false;
   if(state->runtime && state->phase>=PioneerQ38TokenNativeState::MemoryClosing
    && (!state->runtime->Staged() || state->runtime->Pending()))return false;

@@ -1,4 +1,9 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
+if(q38TokenNative && q38TokenNative->ControlsCohort(q38Dispatch)){
+ if(!controlledToken)return true;
+}else
+#endif
 #ifdef PIONEER_Q38_RECURRENT_PREFIX_NATIVE_CONTEXT
 if(q38RecurrentPrefixNative && q38RecurrentPrefixNative->ControlsCohort(q38Dispatch)){
  if(!controlledEmbedding)return true;

@@ -61,6 +61,9 @@ static void CheckNativeHeld(Fixture& f,unsigned fault){
   if(fault==3){assert(!CloseQ38TokenNativeHeld(c,result));unknown();return;}
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
   if(!CheckNativeRuntime(f))return;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
+  CheckNativeBootstrap(f,result);return; // launched owner MUST NOT enter held-only restoration
+#endif
 #endif
   assert(CloseQ38TokenNativeHeld(c,result) && result.closed && !result.unsafe
    && result.restoredWords==PioneerQ38TokenL1::SavedWords && result.verifiedOriginalWords==2*PioneerQ38TokenL1::SavedWords

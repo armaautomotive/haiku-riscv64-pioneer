@@ -1,5 +1,25 @@
 # Native build status
 
+## Current: distinct native QGW1 worker startup passes offline
+
+October29,2026. The SAME retained full851 token owner now implements a
+fresh119-worker bootstrap: exact self-route setup,ALL ARM before ANY
+release,one bounded deadline,real idle status/two WAIT PCs and unchanged
+NoC command/counter proof. ROOT stays held;legacy boot flags remain false.
+Main/clean positive tests both finish0,executing14744576 actual installed
+QGW1 instructions directly against the SAME native fixture's L1/CSR backing.
+Both two-fault suites also finish0:first-ARM generation loss and last-worker
+release counter excess retain all resources with no following IO after
+observed uncertainty. These are not exhaustive or physical fault coverage.
+
+Main/clean actual-driver SDK objects match;ownership/role regressions pass.
+The previously-running full strict/published serializer now finishes0 in
+both trees:all448 complete512KiB packages/7banks/15434 refusals. No driver
+was installed and no physical or speed result is claimed. ROOT/model RUN,
+cancel,STOP,END/disposal,Work/Assistant and physical qualification remain
+owed. Last physical whole-model **0.207893161 tokens/sec**;20 target unmet.
+Evidence: [native worker bootstrap checkpoint](benchmarks/qwen38-token-native-bootstrap-20261029.txt).
+
 ## Current: native held runtime metadata staging passes offline
 
 October29,2026. The SAME full851 owner now stages all64 complete packages,
@@ -63,8 +83,11 @@ Evidence: [native held staging checkpoint](benchmarks/qwen38-token-native-held-2
   with simulated hardware endpoints and actual zero-program instructions.
 - [x] Integrated native held program staging/restoration positive offline test.
 - [x] Native held startup metadata/empty-prefix staging positive offline test.
-- [ ] Finish runtime fault/serializer qualification;extend failure coverage
-  and validate genuine KV/state frontier advancement with native execution.
+- [x] Startup-data runtime fault cases and complete strict/published serializer
+  offline regression (not exhaustive fault coverage or execution proof).
+- [x] Fresh native119-worker QGW1 bootstrap positive and two-fault offline tests.
+- [ ] Extend bootstrap timing/late-fault coverage and validate genuine KV/state
+  advancement during native execution.
 - [ ] Complete original-model all64-layer, multitoken, persistent-state,
   vocabulary, selection and genuine STOP numerical qualification.
 - [ ] Implement the distinct native execution owner, cancellation, terminal

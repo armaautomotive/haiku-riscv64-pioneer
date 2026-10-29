@@ -16,6 +16,8 @@ bool PioneerSessionIO::TokenMemoryAccessScope(){
   && s->participants && s->participants==c->q38Dispatch && !s->memory->Unsafe() && !s->memory->Closed()
   && (s->phase==PioneerQ38TokenNativeState::MemoryPreparing || s->phase==PioneerQ38TokenNativeState::MemoryInstalled
    || s->phase==PioneerQ38TokenNativeState::RuntimePreparing || s->phase==PioneerQ38TokenNativeState::RuntimeReady
+   || ((s->phase==PioneerQ38TokenNativeState::WorkersBootstrapping || s->phase==PioneerQ38TokenNativeState::WorkersReady)
+    && s->runtime && !s->runtime->Unsafe())
    || s->phase==PioneerQ38TokenNativeState::MemoryClosing)
   && s->MatchesBinding(*c,fd,c->hashes,c->initialized,fd->team,sReloadGeneration);
 }

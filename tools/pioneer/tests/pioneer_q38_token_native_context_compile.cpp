@@ -54,6 +54,10 @@ extern "C" bool pioneer_token_context_scoped_runtime(PioneerProbeCookie* cookie,
  PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();
  return c && PrepareQ38TokenNativeRuntime(*c,result);
 } // startup metadata/empty-prefix DATA ONLY;NO native bootstrap/RUN/STOP/END grant
+extern "C" bool pioneer_token_context_scoped_bootstrap(PioneerProbeCookie* cookie,PioneerQ38TokenBootstrapResult& result){
+ PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();
+ return c && BootstrapQ38TokenNativeWorkers(*c,result);
+} // private actual fresh-worker controller,not a public driver or ROOT/model RUN route
 extern "C" void pioneer_token_context_destroy_clean(PioneerStoreContext* c){delete c;}
 
 // Independent inert controls, separate from the renamed actual driver bodies.

@@ -17,6 +17,7 @@ struct PioneerStoreContext;struct PioneerSessionIO;
 [[maybe_unused]] static bool PrepareQ38TokenNativeHeld(PioneerStoreContext&,const uint32_t*,unsigned,unsigned,bool,unsigned,unsigned,PioneerQ38TokenMemoryResult&);
 [[maybe_unused]] static bool CloseQ38TokenNativeHeld(PioneerStoreContext&,PioneerQ38TokenMemoryResult&);
 [[maybe_unused]] static bool PrepareQ38TokenNativeRuntime(PioneerStoreContext&,PioneerQ38TokenRuntimeResult&);
+[[maybe_unused]] static bool BootstrapQ38TokenNativeWorkers(PioneerStoreContext&,PioneerQ38TokenBootstrapResult&);
 // Genuine retained full851 model/reservation object. It borrows NO old
 // completed embedding/prefix owner and cannot make those old lifetimes safe.
 // Private factory publication occurs under the real global FD call lock.
@@ -29,8 +30,10 @@ class PioneerQ38TokenNativeState {
  friend bool PrepareQ38TokenNativeHeld(PioneerStoreContext&,const uint32_t*,unsigned,unsigned,bool,unsigned,unsigned,PioneerQ38TokenMemoryResult&);
  friend bool CloseQ38TokenNativeHeld(PioneerStoreContext&,PioneerQ38TokenMemoryResult&);
  friend bool PrepareQ38TokenNativeRuntime(PioneerStoreContext&,PioneerQ38TokenRuntimeResult&);
+ friend bool BootstrapQ38TokenNativeWorkers(PioneerStoreContext&,PioneerQ38TokenBootstrapResult&);
  enum Phase {Claiming,Bound,RecurrentZeroing,RecurrentClosing,HistoryZeroing,HistoryClosing,
-  ProjectionZeroing,ProjectionClosing,Initialized,DispatchPreparing,MemoryPreparing,MemoryInstalled,RuntimePreparing,RuntimeReady,MemoryClosing,MemoryClosed,Unknown};
+  ProjectionZeroing,ProjectionClosing,Initialized,DispatchPreparing,MemoryPreparing,MemoryInstalled,RuntimePreparing,RuntimeReady,
+  WorkersBootstrapping,WorkersReady,MemoryClosing,MemoryClosed,Unknown};
  PioneerStoreContext* const context;const void* const cookie;const void* const hashes;
  const uint8_t* const ledger;const int64_t team;const unsigned bank;
  const PioneerQ38GdnIdentity identity;
@@ -57,6 +60,10 @@ public:
  // Held-only cheap binding:whole-context and participant guards still audit
  // EVERY child lease before/after each pass,not120 peers again per L1 word.
  bool Closed()const{return false;} // NO full-token native END capability has been implemented yet
+ bool ControlsCohort(const PioneerQ38DispatchLease* p)const{
+  return !unsafe && (phase==WorkersBootstrapping || phase==WorkersReady) && p && p==participants && runtime
+   && runtime->ControlsCohort(p) && (phase!=WorkersReady || runtime->WorkersReady());
+ } // necessary SAME private bootstrap owner,not legacy boot flags or ROOT/RUN permission
  bool MatchesBinding(const PioneerStoreContext& c,const void* fd,const void* h,const uint8_t* uploaded,int64_t owner,uint64_t generation)const{
   return context==&c && cookie==fd && fd && hashes==h && h && ledger==uploaded && uploaded && team==owner && owner>=0
    && identity.Valid() && generation && identity.driverGeneration==generation && bank<7 && canonical.Ready() && !Unsafe();

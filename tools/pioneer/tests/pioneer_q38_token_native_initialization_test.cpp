@@ -13,14 +13,44 @@ using TokenNativeEndpoints=TokenHeldEndpoints;
 #else
 using TokenNativeEndpoints=ZeroControlIO;
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
+#include "pioneer_q38_token_native_bootstrap_machine.h"
+#endif
 struct PioneerSessionIO:TokenNativeEndpoints {
  tt_dram_samples_result& dram;
  PioneerSessionIO(const char* image,tt_dram_samples_result& proof):TokenNativeEndpoints(image),dram(proof){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
   tokenHeldEndpoint=this;
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
+  for(unsigned w=1;w<120;w++)bootstrapPeer[w-1]=std::make_unique<TokenBootstrapPeer>(image,*this,w);
+#endif
  }
  PioneerStoreContext* q38MutableContext=nullptr;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
+ std::array<std::unique_ptr<TokenBootstrapPeer>,119> bootstrapPeer;
+ bool bootstrapMode=false;unsigned bootstrapArms=0,bootstrapStarts=0,bootstrapFault=0,bootstrapObserved=0;
+ void Pause(){
+  if(!bootstrapMode){ZeroControlIO::Pause();return;}
+  Touch();clock+=1000;
+  for(unsigned w=1;w<120;w++)if(Core(w).coreReset==0x46800)bootstrapPeer[w-1]->Advance(256);
+ }
+ uint32 RuntimePcRead(){
+  if(!bootstrapMode)return ZeroControlIO::RuntimePcRead();
+  Touch();assert(runtimeCore && runtimeCore<120);return bootstrapPeer[runtimeCore-1]->pc;
+ }
+ bool BootstrapReset(uint32 value){
+  if(!bootstrapMode)return false;
+  Touch();assert(runtimeCore && runtimeCore<120 && (value==0x87ffff || value==0x46800));
+  auto& core=C();auto& cpu=*bootstrapPeer[runtimeCore-1];core.resets.push_back(value);
+  if(value==0x87ffff){assert(core.coreReset==0x47800 && !cpu.steps && cpu.pc==0x6000);bootstrapArms++;}
+  else{assert(bootstrapArms==119 && core.coreReset==0x87ffff && !cpu.steps);bootstrapStarts++;}
+  core.coreReset=value;
+  if(bootstrapFault==1 && bootstrapArms==1 && !bootstrapStarts){sReloadGeneration++;bootstrapObserved=touches;}
+  if(bootstrapFault==2 && runtimeCore==119 && value==0x46800){core.accepted++;bootstrapObserved=touches;}
+  return true;
+ }
+#endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
  unsigned runtimeCore=0;bool fleetEnabled=false;
  bool q38TokenMemoryMapAttempted=false;
@@ -66,6 +96,9 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  }
 #endif
  void RuntimeResetWrite(uint32 value){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
+  if(BootstrapReset(value))return;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
   assert(!runtimeCore); // root initialization ONLY;no held participant may launch
 #endif
@@ -191,22 +224,28 @@ struct Fixture {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
 #include "pioneer_q38_token_native_runtime_checks.inc"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
+#include "pioneer_q38_token_native_bootstrap_checks.inc"
+#endif
 #endif
 #include "pioneer_q38_token_native_held_checks.inc"
 #endif
 int main(int argc,char** argv){
  assert(argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
+  || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
   || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;(void)&AcquireQ38DeltaLock;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
- assert(argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults")));
+ assert(argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults")
+  || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")));
 #else
  assert(argc==2 || strncmp(argv[2],"--held",6));
 #endif
  const bool heldFaults=argc==3 && !strcmp(argv[2],"--held-faults");
+ const bool bootstrap=argc==3 && !strncmp(argv[2],"--bootstrap",11),bootstrapFaults=bootstrap && !strcmp(argv[2],"--bootstrap-faults");
  const bool runtime=argc==3 && !strncmp(argv[2],"--runtime",9),runtimeFaults=runtime && !strcmp(argv[2],"--runtime-faults");
- const bool faults=argc==3 && strncmp(argv[2],"--held",6) && !runtime,late=faults && !strcmp(argv[2],"--late-faults");
- for(unsigned fault=0;fault<(runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
+ const bool faults=argc==3 && strncmp(argv[2],"--held",6) && !runtime && !bootstrap,late=faults && !strcmp(argv[2],"--late-faults");
+ for(unsigned fault=0;fault<(bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
   Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;assert(f.Bind());auto* state=c.q38TokenNative;
   PioneerQ38StateZeroResult g;PioneerQ38ConvHistoryZeroResult h;PioneerQ38ProjectionZeroResult p;
   assert(!state->InitializationsClosed(c.banks,f.proof) && !io.StateZeroBeforeCohort() && !io.ConvHistoryZeroBeforeCohort() && !io.ProjectionZeroBeforeCohort());
@@ -254,6 +293,9 @@ int main(int argc,char** argv){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
   io.runtimeWorkspace=io.workspaceAddress;io.runtimeFault=runtimeFaults?fault+1:0;
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
+  io.bootstrapFault=bootstrapFaults?fault+1:0;
 #endif
   CheckNativeHeld(f,heldFaults?fault+1:0);
   touches=io.touches;
