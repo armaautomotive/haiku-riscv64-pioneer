@@ -1,0 +1,113 @@
+Distinct native full-token ROOT startup and cancellation REQUEST checkpoint
+2026-10-29 04:25UTC. Goal ACTIVE;20tok/s UNMET. Positive tests COMPLETE;
+four-case fault suites RUNNING. Last physical whole-model0.207893161tok/s.
+NO measured speedup,hardware/SSH/power/install/kernel/Assistant/boot/CPU/RAM/
+network/SD/mains change or physical health claim. Private unlinked candidate.
+
+Actual implementation
+----------------------
+The SAME PioneerQ38TokenNativeOwner now owns ROOT reset/running state as
+well as all119 freshly booted QGW1 workers. New RootStarting/RootRunning
+native phases bind the real FD/global lock/team/thread/generation,canonical
+model/startup/learned ledger,banks/clock/hosts,full L1 journal and participant
+leases. No legacy owner,completed-prefix alias or public ready hint is used.
+Legacy bootstrap flags stay FALSE;ROOT running is allowed only when it
+matches this private owner's actual transition. Ordinary commands stay
+excluded and unfinished END still retains/quarantines rather than frees.
+
+StartRoot re-audits all119 CURRENT idle workers:exact boot/job/doorbell/
+status,unchanged command/counters/source/reset/PCI state and two WAIT PCs.
+It verifies the complete installed ROOT image,real boot/template/request1,
+zero cancel/record/status controls,then initializes stale terminal/progress
+bytes while ROOT is still held. One ARM/release and a single monotonic30s
+deadline follow. No retry/re-ARM/repair/reset-on-failure is permitted.
+
+From ROOT release onward,its actual firmware legitimately owns device NoC
+traffic. Native source/reset/VM/PCI-quiet checks remain;arbitrary commands/
+counters are NEVER recaptured and active traffic is NOT treated as an idle
+receipt. Startup acknowledgment is the actual sticky token-ROM marker,
+zero fault field and two valid installed-code PCs,not fault park60000.
+Changing layer-progress fields are NOT required to remain zero after the
+marker. A valid STOP PC is not a STOP/terminal/cleanup receipt on its own.
+Full terminal/layer/token/frontier/counter/STOP qualification is still owed.
+
+RequestCancel writes ONLY the fixed32bit RAW CancelMagic control word,
+once,after checking its initial zero control range. Exact readback and
+native source guards are required. Duplicate requests are inert refusals.
+This is a monotonic REQUEST,not acknowledgment of consumed cancellation,
+completed tokens,worker STOP or clean END. No model product is supplied by
+the host and no worker is reset or released as a result of that request.
+Private factories reject malformed and owned-buffer-aliased results.
+Mapping stability now additionally refuses a missing runtime-PC mapping.
+
+Genuine positive evidence and strict scope limits
+-------------------------------------------------
+Native positive mainB54067/cleanA12093 BOTH terminal0 ASan+UBSan,byte-identical
+logs. Each uses ONE genuine full851 initialization:1010 actual frozen zero
+jobs/75920pages,full120 held L1 installation,4616 metadata transfer receipts,
+then ALL119 virgin installed-QGW1 instruction boots. Workers and ROOT use
+DIRECT shared native-fixture L1/CSR backing from construction,not copied
+ready flags,PCs,registers or processor histories. Only OS/VM/clock/GDDR/NoC
+endpoints are simulated;this is NOT the physical P100A.
+
+The original bootstrap call closes COMPLETELY before a NEW actual native
+call scope re-enters the same live workers,re-audits them and starts ROOT.
+The virgin ROOT executes5137 actual installed instructions,writing its own
+token-ROM marker;max written startup stack1732/8192. Another wholly NEW
+native call scope re-enters that same live ROOT and writes one fixed cancel
+request,checks actual readback and refuses duplicate launch/cancel/held
+cleanup. All32 malformed-result mutations and out-of-call accesses refuse
+without IO. Ordinary shared commands remain excluded in both live phases.
+
+IMPORTANT:the TEST ROOT scheduler deliberately PAUSES immediately after its
+actual marker-producing store. It has NOT executed Bootstrap's session
+transfer,embedding,any model layer,token commit,cancel consumption or STOP.
+No such completion is fabricated or inferred from this result. Its lack
+of model NoC traffic does NOT qualify the active-traffic integration.
+The actual unfinished-END branch then retains/quarantines all resources;
+CPU-only fixture destruction is NOT physical disposal. The inherited final
+initializer summary refers to original INITIALIZER code/scratch restoration,
+not restoration of subsequently launched ROOT/worker programs.
+
+Other completed qualification
+------------------------------
+SDK B main42296/clean4168 BOTH terminal0,byte-identical object SHA256:
+abce6a0482edbe4ca9891cf30c109200f0818a3d4839aad505f1edf4d3809427
+Whole native ROOT start/cancel factories and controller templates emitted;
+max new token frame560B/initializer704B;whole unit meets <=2048-new-or-old
+bound. NOT combined dynamic stack proof. Old native65 remains byte-identical
+61faa093;all6 conventional ABI names absent/all5 independent inert controls
+match;NO CPU-reference/Work route or kernel cos/sin/pow imports.
+Mapping main44362/clean6128 BOTH0,identical logs:all11406906 original words
+across120 independent apertures/write+two reads/1715 inert refusals including
+missing PC mapping/eight partial-map failures retained without retry/unmap.
+Binding main72789/clean27417 and role main8520/clean15256 ALL terminal0:
+3712 refusals/7banks/3551learned extents/whole shared lock+ordinary/delta
+exclusion/retention;21parents/31forbidden aliases/241bad roles. Logs match.
+
+Initial nativeA59505 and SDKA37711 both terminal1 on a freestanding missing
+initializer_list declaration. A fixed two-region scalar loop replaces the
+brace loop;no warning suppression/guard weakening or hardware failure.
+
+Live fault qualification:follow SAME handles,never restart for silence
+-----------------------------------------------------------------------
+main48439/clean83725 are LIVE four-case suites. First-ARM generation loss
+already passes in both;remaining cases are failed ROOT-release reset,
+source change after a genuine ROOT marker,and lost cancel write with exact
+readback refusal. EACH starts fresh genuine initialization/installation/
+staging/119worker histories;there is no private readiness/history transplant.
+Do NOT count either complete four-case suite passed until terminal0.
+Earlier9 full-model numerical instruction histories remain untouched/LIVE.
+
+Remaining actual work/full objective unchanged
+-----------------------------------------------
+Finish current four-fault suites,then connect actual ROOT-driven NoC/model
+execution rather than pausing at startup. Qualify cancellation consumption,
+token/state/KV-frontier publication,terminal proof and all119 genuine STOPs;
+only then restore complete L1/CSR originals and implement actual clean END/
+disposal/load-unload/client. Complete independent original27B all64-layer/
+multitoken/persistent-state/vocabulary/selection numerical comparison.
+Then physical-card correctness/stability/recovery,no-CPU-reference Work+
+Assistant and honest sustained27B speed optimization toward20tok/s. Preserve
+working SD-free boot64CPU/full RAM. Bootstrap timing/late-fault and dynamic
+stack coverage also remain owed. No full-model or performance claim here.

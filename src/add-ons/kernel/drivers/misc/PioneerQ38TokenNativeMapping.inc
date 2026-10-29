@@ -11,7 +11,7 @@ area_id q38TokenMemoryArea[4]={-1,-1,-1,-1};
 volatile uint32* q38TokenMemoryView[4]={NULL,NULL,NULL,NULL};
 bool q38TokenMemoryMapAttempted=false;uint64 q38TokenMemoryBar=0;
 bool TokenMemoryMappingStable(unsigned worker){
- if(worker>=120 || runtimeCore!=worker || !fleetEnabled || !runtimeMapped || !runtimeEntry || !scratchData || payloadBytes!=8192
+ if(worker>=120 || runtimeCore!=worker || !fleetEnabled || !runtimeMapped || !runtimeEntry || !runtimePc || !scratchData || payloadBytes!=8192
   || !Q38PanelMappingStable() || !q38TokenMemoryMapAttempted || profile.bar0_host_start!=q38TokenMemoryBar
   || profile.bar0_host_start>UINT64_MAX-UINT64_C(0x19180000) || TT_Q38_PANEL_VIEW_BASE!=0x6e000 || TT_Q38_PANEL_VIEW_BYTES<0x3e000)return false;
  for(unsigned i=0;i<4;i++)if(q38TokenMemoryArea[i]<B_OK || !q38TokenMemoryView[i])return false;

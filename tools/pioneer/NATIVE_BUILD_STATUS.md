@@ -1,5 +1,25 @@
 # Native build status
 
+## Current: native ROOT startup and cancel-request positive tests pass offline
+
+October29,2026. The SAME full851 token owner now re-enters its live119-worker
+session through a fresh native call,re-audits current idle workers,and
+starts ROOT with one controlled ARM/release. A separate fresh call writes
+one monotonic32bit cancellation REQUEST with exact readback. Main/clean
+positive ASan+UBSan tests both finish0,byte-identical:ROOT executes5137
+actual installed instructions and publishes its own startup marker.
+
+The TEST ROOT then deliberately pauses at that genuine marker store:there
+is NO model arithmetic,session NoC transfer,token completion,cancel
+consumption or STOP proof in this test. Four-case fault suites remain LIVE;
+first-ARM generation loss passes in both trees,but their other cases are
+not yet complete. SDK objects match;mapping/binding/role regressions pass.
+No driver is installed and physical functionality is unchanged. Full
+execution,state/KV-frontier,terminal/all119STOP/END,Work/Assistant and card
+qualification remain owed. Last whole-model **0.207893161 tokens/sec**;
+20 target unmet. Evidence:
+[native ROOT-start checkpoint](benchmarks/qwen38-token-native-root-start-20261029.txt).
+
 ## Current: distinct native QGW1 worker startup passes offline
 
 October29,2026. The SAME retained full851 token owner now implements a
@@ -86,6 +106,8 @@ Evidence: [native held staging checkpoint](benchmarks/qwen38-token-native-held-2
 - [x] Startup-data runtime fault cases and complete strict/published serializer
   offline regression (not exhaustive fault coverage or execution proof).
 - [x] Fresh native119-worker QGW1 bootstrap positive and two-fault offline tests.
+- [x] Fresh-call worker/ROOT reentry,actual ROOT instruction startup and one
+  cancel REQUEST positive offline test (not model math or cancel consumption).
 - [ ] Extend bootstrap timing/late-fault coverage and validate genuine KV/state
   advancement during native execution.
 - [ ] Complete original-model all64-layer, multitoken, persistent-state,

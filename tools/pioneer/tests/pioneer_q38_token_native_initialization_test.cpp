@@ -16,6 +16,9 @@ using TokenNativeEndpoints=ZeroControlIO;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
 #include "pioneer_q38_token_native_bootstrap_machine.h"
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
+#include "pioneer_q38_token_native_root_machine.h"
+#endif
 struct PioneerSessionIO:TokenNativeEndpoints {
  tt_dram_samples_result& dram;
  PioneerSessionIO(const char* image,tt_dram_samples_result& proof):TokenNativeEndpoints(image),dram(proof){
@@ -25,8 +28,25 @@ struct PioneerSessionIO:TokenNativeEndpoints {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
   for(unsigned w=1;w<120;w++)bootstrapPeer[w-1]=std::make_unique<TokenBootstrapPeer>(image,*this,w);
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
+  executionCpu=std::make_unique<TokenStartupRoot>(image,*this);
+#endif
  }
  PioneerStoreContext* q38MutableContext=nullptr;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
+ std::unique_ptr<TokenStartupRoot> executionCpu;
+ bool executionMode=false;unsigned executionFault=0,executionArms=0,executionStarts=0,executionObserved=0;
+ bool RootReset(uint32 value){
+  if(!executionMode || runtimeCore)return false;
+  Touch();assert((value==0x87ffff && C().coreReset==0x47800 && !executionArms && !executionCpu->steps)
+   || (value==0x46800 && C().coreReset==0x87ffff && executionArms==1 && !executionStarts && !executionCpu->steps));
+  C().resets.push_back(value);C().coreReset=value;
+  if(value==0x87ffff)executionArms++;else executionStarts++;
+  if(executionFault==1 && value==0x87ffff){sReloadGeneration++;executionObserved=touches;}
+  if(executionFault==2 && value==0x46800){C().coreReset=0x87ffff;executionObserved=touches;}
+  return true;
+ }
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
  std::array<std::unique_ptr<TokenBootstrapPeer>,119> bootstrapPeer;
  bool bootstrapMode=false;unsigned bootstrapArms=0,bootstrapStarts=0,bootstrapFault=0,bootstrapObserved=0;
@@ -34,10 +54,20 @@ struct PioneerSessionIO:TokenNativeEndpoints {
   if(!bootstrapMode){ZeroControlIO::Pause();return;}
   Touch();clock+=1000;
   for(unsigned w=1;w<120;w++)if(Core(w).coreReset==0x46800)bootstrapPeer[w-1]->Advance(256);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
+  if(executionMode && Core(0).coreReset==0x46800){
+   executionCpu->Advance(256);
+   if(executionFault==3 && executionCpu->markerWrites && !executionObserved){Core(0).source[11]^=1;executionObserved=touches;}
+  }
+#endif
  }
  uint32 RuntimePcRead(){
   if(!bootstrapMode)return ZeroControlIO::RuntimePcRead();
-  Touch();assert(runtimeCore && runtimeCore<120);return bootstrapPeer[runtimeCore-1]->pc;
+  Touch();assert(runtimeCore<120);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
+  if(!runtimeCore){assert(executionMode);return executionCpu->pc;}
+#endif
+  assert(runtimeCore);return bootstrapPeer[runtimeCore-1]->pc;
  }
  bool BootstrapReset(uint32 value){
   if(!bootstrapMode)return false;
@@ -96,6 +126,9 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  }
 #endif
  void RuntimeResetWrite(uint32 value){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
+  if(RootReset(value))return;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
   if(BootstrapReset(value))return;
 #endif
@@ -167,6 +200,9 @@ static void TestKernelLog(const char*,...){}
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeHeld.inc"
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeRuntime.inc"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeExecution.inc"
+#endif
 #endif
 #endif
 #include "token_native_zero_callbacks.inc"
@@ -226,6 +262,9 @@ struct Fixture {
 #include "pioneer_q38_token_native_runtime_checks.inc"
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
 #include "pioneer_q38_token_native_bootstrap_checks.inc"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
+#include "pioneer_q38_token_native_execution_checks.inc"
+#endif
 #endif
 #endif
 #include "pioneer_q38_token_native_held_checks.inc"
@@ -233,19 +272,22 @@ struct Fixture {
 int main(int argc,char** argv){
  assert(argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
   || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
+  || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")
   || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;(void)&AcquireQ38DeltaLock;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
  assert(argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults")
-  || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")));
+  || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
+  || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")));
 #else
  assert(argc==2 || strncmp(argv[2],"--held",6));
 #endif
  const bool heldFaults=argc==3 && !strcmp(argv[2],"--held-faults");
  const bool bootstrap=argc==3 && !strncmp(argv[2],"--bootstrap",11),bootstrapFaults=bootstrap && !strcmp(argv[2],"--bootstrap-faults");
+ const bool execution=argc==3 && !strncmp(argv[2],"--execution",11),executionFaults=execution && !strcmp(argv[2],"--execution-faults");
  const bool runtime=argc==3 && !strncmp(argv[2],"--runtime",9),runtimeFaults=runtime && !strcmp(argv[2],"--runtime-faults");
- const bool faults=argc==3 && strncmp(argv[2],"--held",6) && !runtime && !bootstrap,late=faults && !strcmp(argv[2],"--late-faults");
- for(unsigned fault=0;fault<(bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
+ const bool faults=argc==3 && strncmp(argv[2],"--held",6) && !runtime && !bootstrap && !execution,late=faults && !strcmp(argv[2],"--late-faults");
+ for(unsigned fault=0;fault<(executionFaults?4U:bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
   Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;assert(f.Bind());auto* state=c.q38TokenNative;
   PioneerQ38StateZeroResult g;PioneerQ38ConvHistoryZeroResult h;PioneerQ38ProjectionZeroResult p;
   assert(!state->InitializationsClosed(c.banks,f.proof) && !io.StateZeroBeforeCohort() && !io.ConvHistoryZeroBeforeCohort() && !io.ProjectionZeroBeforeCohort());
@@ -297,7 +339,13 @@ int main(int argc,char** argv){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
   io.bootstrapFault=bootstrapFaults?fault+1:0;
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
+  io.executionFault=executionFaults?fault+1:0;
+#endif
   CheckNativeHeld(f,heldFaults?fault+1:0);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
+  if(!state->Unsafe())CheckNativeExecution(f);
+#endif
   touches=io.touches;
 #endif
   tt_resident_session_result end={};bool clean=true;

@@ -1,0 +1,14 @@
+OBSERVED actual frozen zero ROM starts96/GDNpages10544/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts192/GDNpages21072/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts288/GDNpages31600/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts384/GDNpages42144/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts480/GDNpages52672/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts576/GDNpages63200/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts672/GDNpages73728/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts768/GDNpages73728/historyPages480/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts864/GDNpages73728/historyPages960/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts960/GDNpages73728/historyPages1440/projectionPages0;NOT native initialization publication
+PASS SAME genuine full851 initialization+120 held histories/actual native runtime scope/factory/ALL2308 bounded metadata+frozen rawRoPE+prompt+zero-record chunks/4616 exact NoC packets+complete readback/37782528B vs independently built startup+ALL untouched slack/120 actual boot DATA/NO reset/start/CPU model products/host BME;SIMULATED endpoints,NOT initialized KV rows/model RUN/STOP/END/physical/TPS
+PASS SAME native full851 owner+1010 zero jobs+installed120 L1 histories+4616 metadata packets/ALL119 VIRGIN QGW1 instruction boots DIRECT shared L1+CSR backing/14744576 actual instructions/maxWrittenStack1828/ALL ARM before ANY release/final status+two WAIT PCs+unchanged NoC counters/ROOT HELD/legacy flags FALSE/held cleanup and ordinary commands REFUSED;SIMULATED OS+VM+NoC,NOT ROOT/model RUN/STOP/END/physical/Work/TPS
+PASS native SAME full851 owner+1010 zero jobs+fullheld journal+4616 metadata packets+119 VIRGIN QGW1 instruction histories/fresh-call reentry+current idle audit/actual ROOT ARM+release+5137 startup instructions/genuine tokenROM marker/written stack1732/fresh-call one32bit monotonic cancel request/exact readback+duplicate refusal/ordinary+held cleanup excluded;ROOT test PAUSED at real marker store,NOT model arithmetic/cancel consumption/token/STOP/END/physical/Work/TPS proof
+PASS SAME full851 native owner/actual zero RV32 672GDN regions73728pages BOTHslots+336history1680pages+2workspace512pages/1010actualRUN+STOP+HOLD/full coverage+private clean CLOSE publications/code+scratch restored/learned unchanged/no BME;SIMULATED endpoints,NOT KV/metadata/model execution/physical/TPS/END permission

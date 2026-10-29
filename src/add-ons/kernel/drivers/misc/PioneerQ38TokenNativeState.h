@@ -10,6 +10,7 @@
 #include "PioneerQ38ConvHistoryZeroController.h"
 #include "PioneerQ38ProjectionZeroController.h"
 struct PioneerStoreContext;struct PioneerSessionIO;
+[[maybe_unused]] static bool Q38TokenExecutionOutput(const PioneerStoreContext&,const void*,size_t);
 [[maybe_unused]] static bool BindQ38TokenNative(PioneerStoreContext&,unsigned);
 [[maybe_unused]] static bool InitializeQ38TokenRecurrent(PioneerStoreContext&,PioneerQ38StateZeroResult&);
 [[maybe_unused]] static bool InitializeQ38TokenHistory(PioneerStoreContext&,PioneerQ38ConvHistoryZeroResult&);
@@ -18,11 +19,14 @@ struct PioneerStoreContext;struct PioneerSessionIO;
 [[maybe_unused]] static bool CloseQ38TokenNativeHeld(PioneerStoreContext&,PioneerQ38TokenMemoryResult&);
 [[maybe_unused]] static bool PrepareQ38TokenNativeRuntime(PioneerStoreContext&,PioneerQ38TokenRuntimeResult&);
 [[maybe_unused]] static bool BootstrapQ38TokenNativeWorkers(PioneerStoreContext&,PioneerQ38TokenBootstrapResult&);
+[[maybe_unused]] static bool StartQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
+[[maybe_unused]] static bool CancelQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
 // Genuine retained full851 model/reservation object. It borrows NO old
 // completed embedding/prefix owner and cannot make those old lifetimes safe.
 // Private factory publication occurs under the real global FD call lock.
 class PioneerQ38TokenNativeState {
  friend struct PioneerStoreContext;friend struct PioneerSessionIO;
+ friend bool Q38TokenExecutionOutput(const PioneerStoreContext&,const void*,size_t);
  friend bool BindQ38TokenNative(PioneerStoreContext&,unsigned);
  friend bool InitializeQ38TokenRecurrent(PioneerStoreContext&,PioneerQ38StateZeroResult&);
  friend bool InitializeQ38TokenHistory(PioneerStoreContext&,PioneerQ38ConvHistoryZeroResult&);
@@ -31,9 +35,11 @@ class PioneerQ38TokenNativeState {
  friend bool CloseQ38TokenNativeHeld(PioneerStoreContext&,PioneerQ38TokenMemoryResult&);
  friend bool PrepareQ38TokenNativeRuntime(PioneerStoreContext&,PioneerQ38TokenRuntimeResult&);
  friend bool BootstrapQ38TokenNativeWorkers(PioneerStoreContext&,PioneerQ38TokenBootstrapResult&);
+ friend bool StartQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
+ friend bool CancelQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
  enum Phase {Claiming,Bound,RecurrentZeroing,RecurrentClosing,HistoryZeroing,HistoryClosing,
   ProjectionZeroing,ProjectionClosing,Initialized,DispatchPreparing,MemoryPreparing,MemoryInstalled,RuntimePreparing,RuntimeReady,
-  WorkersBootstrapping,WorkersReady,MemoryClosing,MemoryClosed,Unknown};
+  WorkersBootstrapping,WorkersReady,RootStarting,RootRunning,MemoryClosing,MemoryClosed,Unknown};
  PioneerStoreContext* const context;const void* const cookie;const void* const hashes;
  const uint8_t* const ledger;const int64_t team;const unsigned bank;
  const PioneerQ38GdnIdentity identity;
@@ -56,13 +62,15 @@ public:
  PioneerQ38TokenNativeState& operator=(const PioneerQ38TokenNativeState&)=delete;
  bool Unsafe()const{return unsafe || phase==Unknown || graph.Unsafe() || recurrentZero.unsafe || historyZero.unsafe
   || projectionZero.unsafe || (memory && memory->Unsafe()) || (runtime && runtime->Unsafe())
-  || (participants && (participants->unsafe || participants->closed || participants->rootRunning || participants->bootAttempted || participants->booted));}
+  || (participants && (participants->unsafe || participants->closed || participants->bootAttempted || participants->booted
+   || (participants->rootRunning && (!runtime || (phase!=RootStarting && phase!=RootRunning) || !runtime->OwnsRunningRoot(participants)))));}
  // Held-only cheap binding:whole-context and participant guards still audit
  // EVERY child lease before/after each pass,not120 peers again per L1 word.
  bool Closed()const{return false;} // NO full-token native END capability has been implemented yet
  bool ControlsCohort(const PioneerQ38DispatchLease* p)const{
-  return !unsafe && (phase==WorkersBootstrapping || phase==WorkersReady) && p && p==participants && runtime
-   && runtime->ControlsCohort(p) && (phase!=WorkersReady || runtime->WorkersReady());
+  return !unsafe && (phase==WorkersBootstrapping || phase==WorkersReady || phase==RootStarting || phase==RootRunning)
+   && p && p==participants && runtime && runtime->ControlsCohort(p)
+   && (phase!=WorkersReady || runtime->WorkersReady()) && (phase!=RootRunning || runtime->ExecutionStarted());
  } // necessary SAME private bootstrap owner,not legacy boot flags or ROOT/RUN permission
  bool MatchesBinding(const PioneerStoreContext& c,const void* fd,const void* h,const uint8_t* uploaded,int64_t owner,uint64_t generation)const{
   return context==&c && cookie==fd && fd && hashes==h && h && ledger==uploaded && uploaded && team==owner && owner>=0

@@ -38,6 +38,7 @@ struct MappingIO:Endpoint {
  unsigned runtimeCore=0,payloadBytes=8192;
  bool fleetEnabled=true,runtimeMapped=true,panelStable=true,mappingSource=true,accessSource=true;
  uint32 entry=0;uint32 scratch[2048]={};uint32* runtimeEntry=&entry;uint32* scratchData=scratch;
+ const volatile uint32* runtimePc=&entry;
  bool Q38PanelMappingStable(){return panelStable;}
  void Select(unsigned w){assert(w<120);runtimeCore=selected=w;}
  uint32 RuntimeCodeRead(unsigned word){assert(!word);direct++;return At(0x6000);}
@@ -82,15 +83,17 @@ int main(){
   for(unsigned worker=0;worker<120;worker++){io->Select(worker);
    for(unsigned i=0;i<L::SnapshotWords(worker);i++){out=0;assert(io->TokenMemoryReadChecked(worker,L::SnapshotAddress(worker,i),out) && out==Value(worker,i));}
   }
-  io->Select(0);for(unsigned kind=0;kind<10;kind++){
+  io->Select(0);for(unsigned kind=0;kind<11;kind++){
    auto bar=io->profile.bar0_host_start;auto* entry=io->runtimeEntry;auto* scratch=io->scratchData;
+   auto* pc=io->runtimePc;
    if(!kind)io->runtimeCore=1;if(kind==1)io->fleetEnabled=false;if(kind==2)io->runtimeMapped=false;if(kind==3)io->panelStable=false;
    if(kind==4)io->profile.bar0_host_start++;if(kind==5)io->runtimeEntry=nullptr;if(kind==6)io->scratchData=nullptr;
    if(kind==7)io->payloadBytes--;if(kind==8)io->accessSource=false;if(kind==9)io->q38TokenMemoryArea[3]=-1;
+   if(kind==10)io->runtimePc=nullptr;
    auto n=io->mmio+io->direct;out=0x12345678;
    assert(!io->TokenMemoryReadChecked(0,0x60004,out) && out==0x12345678 && !io->TokenMemoryWrite(0,0x60004,0) && io->mmio+io->direct==n);refused++;
    io->runtimeCore=0;io->fleetEnabled=io->runtimeMapped=io->panelStable=io->accessSource=true;io->profile.bar0_host_start=bar;
-   io->runtimeEntry=entry;io->scratchData=scratch;io->payloadBytes=8192;io->q38TokenMemoryArea[3]=40;
+   io->runtimeEntry=entry;io->runtimePc=pc;io->scratchData=scratch;io->payloadBytes=8192;io->q38TokenMemoryArea[3]=40;
   }
  }
  for(unsigned kind=0;kind<12;kind++){

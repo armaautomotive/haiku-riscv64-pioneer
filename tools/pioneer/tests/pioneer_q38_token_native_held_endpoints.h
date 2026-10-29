@@ -27,6 +27,10 @@ struct TokenHeldEndpoints:ZeroControlIO {
  uint32 Trace(const char* op,unsigned address,uint32 value){lastOp=op;lastAddress=address;lastValue=value;return value;}
  unsigned payloadBytes=8192;bool fleetEnabled=false;
  uint32* runtimeEntry=&entry;uint32* scratchData=destination;
+ const volatile uint32* runtimePc=&entry; // simulated VM handle only;actual PC reads use the instruction CPU
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
+ bool executionDropCancel=false;unsigned executionCancelWrites=0,executionCancelObserved=0;
+#endif
  explicit TokenHeldEndpoints(const char* image):ZeroControlIO(image){
   for(auto& peer:peers){peer=std::make_unique<PanelIO>();peer->transferBytes=8192;}
   for(unsigned w=0;w<120;w++){
@@ -81,8 +85,21 @@ struct TokenHeldEndpoints:ZeroControlIO {
  bool MapRuntime(){Touch();return true;}
  bool MapQ38Panel(){Touch();return C().mapping;}
  bool Q38PanelMappingStable(){Touch();return C().mapping;}
- uint32 Q38PanelRead(uint32 address){Touch();return Trace("panel",address,C().Q38PanelRead(address));}
- void Q38PanelWrite(uint32 address,uint32 value){Touch();C().Q38PanelWrite(address,value);}
+ uint32 Q38PanelRead(uint32 address){Touch();
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
+  if(!runtimeCore && address==PioneerQ38TokenLayout::CancelLocal && executionDropCancel && executionCancelWrites)executionCancelObserved=touches;
+#endif
+  return Trace("panel",address,C().Q38PanelRead(address));
+ }
+ void Q38PanelWrite(uint32 address,uint32 value){Touch();
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
+  if(!runtimeCore && C().coreReset==0x46800){
+   assert(address==PioneerQ38TokenLayout::CancelLocal && value==PioneerQ38TokenLayout::CancelMagic && !executionCancelWrites);
+   executionCancelWrites++;if(!executionDropCancel)Raw(0,address)=value;return;
+  }
+#endif
+  C().Q38PanelWrite(address,value);
+ }
  uint32* Q38PanelSavedWords(){Touch();return C().Q38PanelSavedWords();}
  uint32* HostReadBackup(unsigned words){Touch();return C().HostReadBackup(words);}
  void DramTlbWrite(unsigned s,unsigned w,uint32 value){Touch();C().DramTlbWrite(s,w,value);}

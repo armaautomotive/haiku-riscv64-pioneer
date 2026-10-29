@@ -3929,6 +3929,7 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 #include "PioneerQ38TokenNativeInitialize.inc"
 #include "PioneerQ38TokenNativeHeld.inc"
 #include "PioneerQ38TokenNativeRuntime.inc"
+#include "PioneerQ38TokenNativeExecution.inc"
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 // PIONEER_Q38_STATE_ZERO_NATIVE_ADAPTER_BEGIN
 // Private native adapter,selected ONLY by the separate fixed zero diagnostic
