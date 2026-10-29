@@ -1,0 +1,37 @@
+Conservative compiler stack auditor:TOOL CHECKPOINT,NOT driver qualification
+2026-10-29 20:50UTC. Goal ACTIVE;20tok/s UNMET.
+Last physical whole-model result remains0.207893161 tokens/sec.
+
+The tool reads GCC-fcallgraph-info=su and the ACTUAL ELF function symbol
+table. Direct module frames are summed conservatively,including tail edges
+as nested calls. Missing/external/indirect nodes stay UNKNOWN,not fictitious
+zero-byte callees. Recursion or dynamic frames prevent a finite bound.
+Compiler localaliases resolve ONLY when ELF section/address/nonzero size
+exactly match a frame-bearing node;no name-only or suffix-strip guesses.
+
+Independent RV64 compiler fixture tests pass in main and a fresh3-file
+clean directory;logs match. Tests exercise actual80B static chain,external
+and indirect calls,mutual recursion,dynamic frame,missing frame/root,
+conflicting/malformed nodes and exact-vs-wrong-address/section/size aliases.
+Both tool copies also independently analyze the SAME real native metadata
+and emit identical JSON;this is not falsely called two independent graph
+producer builds. Clean:/private/tmp/pioneer-q38-stack-audit-clean.qrz6zKtm
+
+Actual local candidate diagnostic,NOT a published native driver:
+The frozen65-source D SDK candidate was recompiled with callgraph metadata;
+the object remains BYTE-IDENTICAL before/after annotation and matches both
+ordinary D builds:212953daf96d7e119b5680e1161a5a9cd34000f954558696e385440399a1863f.
+Its24 scoped roots have no observed dynamic-frame or recursion paths.
+Largest known DRIVER-MODULE chain:4352 bytes,terminal HOLD through the
+terminal inspector/source selector/lifetime/bank-proof checks.
+This excludes18 unresolved kernel/helper/indirect targets,including thread
+lookup,semaphores,allocation/VM functions and PCI/function-pointer calls.
+Entry/interrupt overhead also remains unknown. The repository's64-bit
+kernel-stack setting is16KiB. No total bound or spare-stack claim follows.
+This is HOST kernel stack,NOT accelerator firmware stack qualification.
+
+Every report explicitly retains whole_kernel_stack_qualified=false. A
+successful audit exit means metadata was analyzed,NOT that a driver is safe
+to load. Real combined kernel stack,complete numerical/hardware/Work and
+throughput qualification remain separate requirements. No Pioneer/SSH/
+power/install/OS/Assistant/network/SD/mains action in this checkpoint.

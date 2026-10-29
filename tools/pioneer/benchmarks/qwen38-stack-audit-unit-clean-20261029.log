@@ -1,0 +1,1 @@
+PASS compiler stack graph:actual RV64 static80B chain/external+indirect UNKNOWN/mutual recursion+dynamic frame refused/missing frame+root+malformed metadata refused/ELF exact section-address-size alias proof only;NEVER a whole-kernel/native/Work/physical/TPS grant
