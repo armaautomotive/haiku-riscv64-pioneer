@@ -7,6 +7,7 @@
 // Canonical per-layer serialized DATA, heap only. No file authentication,
 // completed embedding/state, native initialization/ownership or token grant.
 class PioneerQ38LayerChainPackage {
+ friend class PioneerQ38GlobalChainPackage;
  const PioneerQ38CanonicalModelPlan* canonical=nullptr;
  PioneerQ38MixedRecurrentBlockPlan recurrent;PioneerQ38MixedLiveBlockPlan dense;
  uint32_t boot[64]={};unsigned layer=64,bank=7;bool attempted=false,ready=false;
@@ -25,6 +26,13 @@ class PioneerQ38LayerChainPackage {
   const uintptr_t p=reinterpret_cast<uintptr_t>(this),c=reinterpret_cast<uintptr_t>(canonical),o=reinterpret_cast<uintptr_t>(output);
   return output && bytes && o<=UINTPTR_MAX-bytes && !(o<p+sizeof(*this) && p<o+bytes)
    && (!canonical || !(o<c+sizeof(*canonical) && c<o+bytes));
+ }
+ template<bool Strict> bool ReadBound(unsigned offset,uint8_t* output,unsigned bytes)const{
+  if(!canonical || !ready || !canonical->Ready() || layer>=64 || bank>=7 || (Strict && !Matches(*canonical))
+   || (offset&63) || !bytes || (bytes&63) || bytes>16384
+   || offset>Bytes() || bytes>Bytes()-offset || !Output(output,bytes))return false;
+  for(unsigned at=0;at<bytes;at+=4){const uint32_t value=Word((offset+at)/4);for(unsigned b=0;b<4;b++)output[at+b]=uint8_t(value>>(b*8));}
+  return true;
  }
 public:
  PioneerQ38LayerChainPackage()=default;
@@ -64,10 +72,7 @@ public:
  const uint32_t* Outer()const{return ready?OuterData():nullptr;}
  const uint32_t* Boot()const{return ready?boot:nullptr;}
  bool Read(unsigned offset,uint8_t* output,unsigned bytes)const{
-  if(!canonical || !Matches(*canonical) || (offset&63) || !bytes || (bytes&63) || bytes>16384
-   || offset>Bytes() || bytes>Bytes()-offset || !Output(output,bytes))return false;
-  for(unsigned at=0;at<bytes;at+=4){const uint32_t value=Word((offset+at)/4);for(unsigned b=0;b<4;b++)output[at+b]=uint8_t(value>>(b*8));}
-  return true; // immutable CPU serialization only,never device IO or readiness
+  return ReadBound<true>(offset,output,bytes); // strict API unchanged
  }
 };
 static_assert(sizeof(PioneerQ38LayerChainPackage)>1048576 && sizeof(PioneerQ38LayerChainPackage)<3*1048576,"per-layer canonical PACKAGE heap only");

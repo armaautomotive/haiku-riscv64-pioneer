@@ -19,6 +19,10 @@ struct TokenHeldEndpoints:ZeroControlIO {
  unsigned runtimeCore=0,maps=0,aliasReads=0,aliasWrites=0;
  const PioneerQ38TokenMemoryResult* journalResult=nullptr;
  unsigned fault=0,faultSeen=0,touchesAtFault=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
+ bool runtimeMode=false;unsigned runtimeWorkspace=0,runtimeFault=0,runtimePackets=0,runtimeWrites=0,runtimeReads=0,runtimeObserved=0;
+ std::vector<uint32> runtimeDram=std::vector<uint32>(67108864/4,0x13579bdf);
+#endif
  const char* lastOp="none";unsigned lastAddress=0,lastValue=0;
  uint32 Trace(const char* op,unsigned address,uint32 value){lastOp=op;lastAddress=address;lastValue=value;return value;}
  unsigned payloadBytes=8192;bool fleetEnabled=false;
@@ -86,7 +90,32 @@ struct TokenHeldEndpoints:ZeroControlIO {
  uint32 SourceRead(unsigned w){Touch();return Trace("source",w,C().SourceRead(w));}
  uint32 ResidentNocRead(uint32 address){Touch();return Trace("noc",address,C().ResidentNocRead(address));}
  uint32 HostPciRead(unsigned p,uint16_t address,uint8_t bytes){Touch();return Trace("pci",p*0x10000U+address,StoreMock::HostPciRead(p,address,bytes));}
- void ResidentNocWrite(uint32 address,uint32 value){Touch();C().ResidentNocWrite(address,value);}
+ void ResidentNocWrite(uint32 address,uint32 value){Touch();
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
+  if(runtimeMode && address==0x40){
+   assert(!runtimeCore && value==1 && !HostReadMock::quarantined && !wideQuarantined && runtimeWorkspace);
+   auto& c=C();auto* command=c.command;const bool write=command[7]==0x212;
+   assert(write || !command[7]);const unsigned remote=command[write?3:0],bytes=command[8],route=PioneerQ38ProjectionRoute(0);
+   assert(!command[1] && !command[4] && !command[6] && !command[9] && !(remote&63) && !(bytes&63) && bytes && bytes<=16384
+    && command[write?0:3]==PioneerQ38GlobalChainLayout::R::Scratch && command[write?2:5]==129 && command[write?5:2]==route
+    && remote>=runtimeWorkspace && remote<=runtimeWorkspace+67108864-bytes && c.coreReset==0x47800);
+   runtimePackets++;c.doorbells++;c.doorbellRead=false;
+   if(write)runtimeWrites++;else runtimeReads++;
+   for(unsigned i=0;i<bytes/4;i++){
+    auto& local=Raw(0,PioneerQ38GlobalChainLayout::R::Scratch+i*4);auto& device=runtimeDram.at((remote-runtimeWorkspace)/4+i);
+    if(write)device=local;else local=device;
+   }
+   if(write){c.writeCounters[0]++;c.writeCounters[1]+=bytes/64;c.writeCounters[3]++;}
+   else{c.counters[0]++;c.counters[1]+=bytes/64;c.counters[3]++;}
+   c.accepted++;
+   if(runtimeFault==1 && runtimePackets==1){sReloadGeneration++;runtimeObserved=touches;}
+   if(runtimeFault==2 && runtimePackets==4616){Raw(0,PioneerQ38GlobalChainLayout::R::Scratch)^=1;runtimeObserved=touches;}
+   if(runtimeFault==3 && runtimePackets==1){c.counters[0]++;runtimeObserved=touches;}
+   return;
+  }
+#endif
+  C().ResidentNocWrite(address,value);
+ }
  uint32 RuntimeCodeRead(unsigned word){Touch();return Trace("entry",word,C().RuntimeCodeRead(word));}
  void RuntimeCodeWrite(unsigned word,uint32 value){Touch();C().RuntimeCodeWrite(word,value);}
  uint32 RuntimeControlRead(unsigned word){Touch();return C().RuntimeControlRead(word);}

@@ -1,0 +1,140 @@
+Native full-token HELD runtime startup metadata checkpoint
+2026-10-29 03:35UTC. Goal ACTIVE. Last whole-model0.207893161tok/s;20 UNMET.
+NO hardware/SSH/power/install/kernel/Assistant/boot/CPU/RAM/network/SD/mains
+change or physical health claim. No public compute/Work route introduced.
+
+New actual implementation
+--------------------------
+PioneerQ38TokenNativeOwner is the DISTINCT heap-owned full-token actor,
+not a completed prefix alias. Its current PrepareHeldRuntime operation
+binds the SAME native FD/context/global lock/team/thread/generation,
+canonical851 model,private immutable startup,all7 bank reservations,
+learned ledger,clock/host leases,120 participants and full L1 journal.
+The native factory rejects malformed/owned-buffer-alias results,allocates
+only an unpublished CPU child before publication and retains everything on
+published failure. New RuntimePreparing/RuntimeReady phases grant no launch.
+
+The exact immutable write recipe is:
+ 2048x16KiB=32MiB:all64 COMPLETE512KiB packages,including zero padding;
+ 128x16KiB=2MiB:frozen RAW positional configuration,not rotated products;
+ 512B head +512B session +32768B fully padded prompt;
+ 128x16KiB=2MiB:zero output records,not a completion marker.
+Total2308 disjoint chunks/37782528B in one canonical64MiB workspace.
+No learned bytes,recurrent/Conv current state or KV row is overwritten.
+The KV frontier is EMPTY;stale rows are NOT supplied as convenient zeros
+or marked initialized/readable. Native frontier advancement is still owed.
+
+All120 distinct boot records and zero job/doorbell/status controls are
+written/read back while held;root cancel/record controls start zero.
+The validated layer0 template and request1 are installed only after startup.
+Each chunk uses a bounded16KiB ROOT L1 scratch,one fixed NoC write and
+one readback. Exact command,source/reset/mapping/PCI/native-lifetime checks,
+monotonic deadline,poll limit and ALL8 bounded counter deltas precede
+adoption. The memory journal's known command/counters advance ONLY after
+complete exact transfer receipts,never arbitrary recapture or caller hints.
+Every readback word equals the original immutable chunk. ALL120 sources,
+holds and complete program images are checked before/after preparation.
+No core bootstrap/reset/start,CPU model products or host BME is permitted.
+
+Immutable serialization and raw positional constants
+-----------------------------------------------------
+Strict package readers remain strict. Their exact byte serializers and
+bounds/alias checks are now shared with a PRIVATE false-Strict instantiation
+reachable only through the completed one-shot Startup publication. No
+caller-ready boolean/public native permission is accepted. Published reads
+do not repeatedly reconstruct immutable full-model geometry and are NOT
+periodic random-kernel-memory-corruption revalidation. Full strict-versus-
+published byte comparisons are running separately;do not count them passed.
+
+The raw8192x32(cos,sin) binary32 table has2097152 exact bytes,SHA256:
+23abf02bc6bfede090d3434921b2fd9e84b2e9c46e5ae8cb033658740a6305a9
+Generated OFFLINE from fixed model theta10000000.f with FE_TONEAREST,
+noncontracted binary32 angle arithmetic and host libm. The generator
+refuses different libm/compiler bits or replacing a differing frozen file.
+The kernel uses const uint32 DATA,not runtime trigonometry. This is raw
+model-configuration input,NOT normalized/rotated activations,K/V,inference
+outputs or a CPU validation/fallback backend. The source header is6.4MB
+text;the emitted immutable raw table is2MiB,not a kernel-stack object.
+
+Complete positive integration and test-fabric correction
+--------------------------------------------------------
+FINAL D main52080/clean44910 BOTH terminal0 ASan+UBSan. SAME root+119 peer
+histories first complete actual1010 frozen zero-ROM jobs,then the full held
+L1 install,then native runtime staging,and actual full held L1 restoration.
+All2308 chunks/4616 packets/37782528B each way,all120 boot DATA and ALL64MiB
+workspace bytes (including untouched slack/real first2MiB zeros) match an
+independently built startup/recipe. No learned mutation,root/peer reset,
+bootstrap,start,BME or host release occurs. The real unfinished-END branch
+still quarantines rather than reporting safe final disposal.
+
+Initial A20350 and intermediate C fixtures used separate TEST stores for
+the first2MiB zero initializer and the later64MiB NoC workspace. Their
+positive output is NOT full shared-byte-fabric qualification. Audit fixed
+this by aliasing workspaceWords DIRECTLY to runtimeDram FROM CONSTRUCTION,
+not copying zeros/state/history/readiness after initialization. Fresh D
+runs above execute genuine initialization into the SAME later NoC backing.
+All endpoints remain SIMULATED;only the frozen zero ROM actually executes
+RV32 instructions here. This is NOT full-model arithmetic or a card result.
+
+Other completed evidence
+-------------------------
+Recipe main40844/clean49160 BOTH0:all7 banks/16156 chunks/disjoint coverage,
+ALL524288 raw RoPE words independently recomputed,high64-bit identity,
+all1920 separate source mutations and29820 aliases/range/size refusals.
+Generator main/clean verification E both0 with exact frozen raw digest.
+SDK E main35937/clean5301 BOTH0. Main/clean object bytes match:
+84b24a8099d575e06a290b06b91101f9173bbe66932ad9774fac723bec8e1973
+Actual runtime factory/scope/whole transfer controller and full2MiB const
+table are emitted;no cos/sin/pow import. New context max frame560B,existing
+initializer max704B;whole unit meets unchanged <=2048B-new-or-old bound.
+This is NOT combined dynamic stack proof. Old native65 stays61faa093;
+all6 normal ABI names absent,all5 independent inert machine-code controls
+unchanged. Unlinked,uninstalled COMPILE/INSPECT ONLY;private bodies WOULD
+perform IO if invoked. Role main69028/clean17928 BOTH0:21 parents/31 old
+aliases/241 undefined+zero+two+late refusals. Binding D main35348/clean15289
+BOTH0:3712 refusals/7 workspaces/full3551 learned extents/shared ordinary
+and delta exclusion/retention/host quarantine/unfinished END.
+Initializer early-fault E main83500/clean70372 BOTH0,all4 cases preserve
+production retention and deny following IO. The older full startup G
+main94467/clean52118 BOTH0:all448 complete512KiB packages match independent
+per-layer serialization. Current bindings-only E main7582/clean52247
+also BOTH0:all7 banks/all120 boots/13642 refusals. Those older G binaries predate the shared
+strict/published serializer refactor and do NOT qualify its new fast reader.
+
+Initial SDK A34811 ends1 on six GCC misleading-indentation warnings in new
+code. Formatting was corrected without suppressing warnings or weakening
+guards;B28229 and final C/E compile successfully. No hardware failure.
+
+Complete native runtime fault qualification
+--------------------------------------------
+FINAL D main52921/clean31180 BOTH terminal0,identical ASan+UBSan logs.
+All3 cases pass:generation loss on packet1,corrupt-last-readback after
+packet4616 and excess read counter during packet1's write. EACH uses a
+FRESH owner/root+119 histories/shared workspace,all1010 actual zero jobs
+and fresh120-role held preparation. All resources retain with no retry,
+cleanup,release or following IO after observed uncertainty. The native
+state remains unsafe and unfinished END refuses disposal. These3 cases
+are not exhaustive hardware fault coverage or native execution proof.
+
+Still running:follow SAME histories,do not restart for silence
+--------------------------------------------------------------
+Pre-repair C fault83665/98289 and positive47269/74578 also finish0,but are
+preserved as split-byte-fabric diagnostics,NOT substitutes for D qualification.
+Full strict/published serializer D main47524/clean20222 are LIVE;all448
+complete512KiB packets across7 banks must finish before claiming that
+regression. Strict-rebuilding held F25831/19019+15876/88407 retain their
+original histories. Older startup G94467/52118 are COMPLETE0,not live.
+Whole-model original/synthetic instruction histories remain untouched:
+36786/63451,60499/55839,68871/11982,40968,20159/13324. No full64/multitoken/
+state/head/selection numerical result is inferred from their activity.
+
+Remaining actual work/full objective unchanged
+----------------------------------------------
+Finish runtime fault/serializer regressions;then extend this SAME native
+owner with a DISTINCT fresh QGW1 boot,real root launch,cancel/terminal/
+all119 STOP proof,model-state/KV frontier validation,restoration and actual
+END/disposal/client. Never use the old bootstrap policy on new firmware.
+Complete independent original-model all64/multitoken/state/head/selection
+comparison,then actual P100A correctness/stability/recovery/load-unload,
+no-CPU-reference Work+Assistant and real sustained27B speed optimization.
+Preserve SD-free boot64CPU/full RAM.20tok/s remains UNMET;goal ACTIVE.

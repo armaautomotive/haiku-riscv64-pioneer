@@ -5,9 +5,29 @@
 // Original immutable pos0 package plus canonical state-copy spans in its
 // reserved slack. CPU serialization ONLY, not a completed producer/launch.
 class PioneerQ38TokenPackage {
+ friend class PioneerQ38TokenStartupPlan;
  PioneerQ38GlobalChainPackage numeric;PioneerQ38TokenStatePlan state;
  const PioneerQ38CanonicalModelPlan* canonical=nullptr;unsigned layer=64;
  bool attempted=false,ready=false;
+ template<bool Strict> bool ReadBound(unsigned offset,uint8_t* output,unsigned bytes)const{
+  namespace S=PioneerQ38TokenStateLayout;
+  uintptr_t o=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this),c=reinterpret_cast<uintptr_t>(canonical);
+  if(!canonical || !ready || !canonical->Ready() || layer>=64 || (Strict && !Matches(*canonical))
+   || !output || !bytes || ((offset|bytes)&63) || bytes>16384
+   || offset>Bytes() || bytes>Bytes()-offset || o>UINTPTR_MAX-bytes
+   || (o<self+sizeof(*this) && self<o+bytes) || (o<c+sizeof(*canonical) && c<o+bytes))return false;
+  unsigned at=0;
+  if(offset<numeric.Bytes()){
+   at=numeric.Bytes()-offset;if(at>bytes)at=bytes;
+   if(!numeric.ReadBound<Strict>(offset,output,at))return false;
+  }
+  for(;at<bytes;at++){
+   unsigned p=offset+at;
+   output[at]=!PioneerQ38GlobalChainLayout::Dense(layer) && p>=S::Offset && p<S::Offset+S::Bytes?
+    uint8_t(state.Data()[(p-S::Offset)/4]>>((p&3)*8)):0;
+  }
+  return true;
+ }
 public:
  bool Build(const PioneerQ38CanonicalModelPlan& c,unsigned selected,unsigned bank,const PioneerQ38GdnIdentity& id,
   const uint32_t* sources,unsigned initialBank,uint32_t initialAddress){
@@ -25,23 +45,7 @@ public:
  const uint32_t* Outer()const{return ready?numeric.Outer():nullptr;}
  unsigned Bytes()const{return ready?unsigned(PioneerQ38GlobalChainLayout::Stride):0;}
  bool Read(unsigned offset,uint8_t* output,unsigned bytes)const{
-  namespace S=PioneerQ38TokenStateLayout;
-  uintptr_t o=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this),c=reinterpret_cast<uintptr_t>(canonical);
-  if(!canonical || !Matches(*canonical) || !output || !bytes || ((offset|bytes)&63) || bytes>16384
-   || offset>Bytes() || bytes>Bytes()-offset || o>UINTPTR_MAX-bytes
-   || (o<self+sizeof(*this) && self<o+bytes) || (o<c+sizeof(*canonical) && c<o+bytes))return false;
-  // Read crossing a section boundary is serialized without partial refusal.
-  unsigned at=0;
-  if(offset<numeric.Bytes()){
-   at=numeric.Bytes()-offset;if(at>bytes)at=bytes;
-   if(!numeric.Read(offset,output,at))return false;
-  }
-  for(;at<bytes;at++){
-   unsigned p=offset+at;
-   output[at]=!PioneerQ38GlobalChainLayout::Dense(layer) && p>=S::Offset && p<S::Offset+S::Bytes?
-    uint8_t(state.Data()[(p-S::Offset)/4]>>((p&3)*8)):0;
-  }
-  return true;
+  return ReadBound<true>(offset,output,bytes);
  }
 };
 #endif

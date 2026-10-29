@@ -1,5 +1,32 @@
 # Native build status
 
+## Current: native held runtime metadata staging passes offline
+
+October29,2026. The SAME full851 owner now stages all64 complete packages,
+fixed raw RoPE configuration,head/session/prompt data and zeroed output
+records through actual native scope and checked NoC transfers. Final
+main/clean positive runs finish0:2308 chunks,4616 write+readback packets,
+37782528 bytes each direction,all120 boot records and every workspace byte
+match an independently built expected image. The first2MiB use the SAME
+backing from actual zero-ROM initialization through later NoC staging;
+no initializer history or readiness is copied between fixtures.
+
+All participants stay held. Full L1 journal restoration still passes after
+the verified NoC receipts update its known counters/commands. This is an
+EMPTY KV prefix,not initialized/readable KV rows or token-state publication.
+The distinct execution owner still has no bootstrap,RUN,cancel,STOP,END or
+Work capability. Incomplete END continues to retain resources.
+
+The exact all7-bank startup recipe and raw RoPE tests pass29820 refusals;
+main/clean real-driver SDK objects match,old native65 stays byte-identical,
+and no kernel cos/sin/pow imports exist. All3 generation-loss,last-readback
+and counter-excess faults finish0 in both trees. The older full448-package
+startup regression also finishes0;the updated strict/published serializer
+comparison remains running. No new driver is installed,no physical health
+or inference speedup is claimed;last measured whole-model remains
+**0.207893161 tokens/sec**,20 target unmet.
+Evidence: [native runtime checkpoint](benchmarks/qwen38-token-native-runtime-20261029.txt).
+
 ## Current: full-token native held staging passes its positive offline test
 
 October 29, 2026. A distinct private factory now connects the genuinely
@@ -35,8 +62,9 @@ Evidence: [native held staging checkpoint](benchmarks/qwen38-token-native-held-2
 - [x] Native full-model binding and recurrent/history/workspace initialization
   with simulated hardware endpoints and actual zero-program instructions.
 - [x] Integrated native held program staging/restoration positive offline test.
-- [ ] Implement runtime/KV frontiers and metadata staging; extend native
-  failure-path coverage as the new lifecycle is connected.
+- [x] Native held startup metadata/empty-prefix staging positive offline test.
+- [ ] Finish runtime fault/serializer qualification;extend failure coverage
+  and validate genuine KV/state frontier advancement with native execution.
 - [ ] Complete original-model all64-layer, multitoken, persistent-state,
   vocabulary, selection and genuine STOP numerical qualification.
 - [ ] Implement the distinct native execution owner, cancellation, terminal

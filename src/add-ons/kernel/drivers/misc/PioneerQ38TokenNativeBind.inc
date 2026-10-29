@@ -40,6 +40,12 @@ bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
    || !state->InitializationsClosed(c->banks,dram))return false;
   if(state->phase>=PioneerQ38TokenNativeState::MemoryPreparing
    && (!c->q38DispatchRoutes || d->prepared!=120 || !state->startup->MatchesPublishedBinding(state->canonical,state->bank,state->identity,&d->authority.source[0][0])))return false;
+  if((state->phase==PioneerQ38TokenNativeState::RuntimePreparing || state->phase==PioneerQ38TokenNativeState::RuntimeReady)
+   && (!state->runtime || state->runtime->Unsafe() || !state->memory->Installed()
+    || (state->phase==PioneerQ38TokenNativeState::RuntimeReady && !state->runtime->Staged())))return false;
+  if(state->runtime && state->phase<PioneerQ38TokenNativeState::RuntimePreparing)return false;
+  if(state->runtime && state->phase>=PioneerQ38TokenNativeState::MemoryClosing
+   && (!state->runtime->Staged() || state->runtime->Pending()))return false;
  }
  const auto& clock=c->q38Clock.Snapshot();
  return c->q38Clock.RequiresExplicitEnd() && clock.state==TT_ARC_CLOCK_BUSY_VERIFIED && clock.busy_requested && clock.busy_acknowledged

@@ -1,0 +1,8 @@
+PASS runtime DATA bank0/ALL2308 disjoint chunks/37782528B/full32MiB packages+2MiB rawRoPE+head+session+prompt+2MiB zero records/NO KV-row initialization
+PASS runtime DATA bank1/ALL2308 disjoint chunks/37782528B/full32MiB packages+2MiB rawRoPE+head+session+prompt+2MiB zero records/NO KV-row initialization
+PASS runtime DATA bank2/ALL2308 disjoint chunks/37782528B/full32MiB packages+2MiB rawRoPE+head+session+prompt+2MiB zero records/NO KV-row initialization
+PASS runtime DATA bank3/ALL2308 disjoint chunks/37782528B/full32MiB packages+2MiB rawRoPE+head+session+prompt+2MiB zero records/NO KV-row initialization
+PASS runtime DATA bank4/ALL2308 disjoint chunks/37782528B/full32MiB packages+2MiB rawRoPE+head+session+prompt+2MiB zero records/NO KV-row initialization
+PASS runtime DATA bank5/ALL2308 disjoint chunks/37782528B/full32MiB packages+2MiB rawRoPE+head+session+prompt+2MiB zero records/NO KV-row initialization
+PASS runtime DATA bank6/ALL2308 disjoint chunks/37782528B/full32MiB packages+2MiB rawRoPE+head+session+prompt+2MiB zero records/NO KV-row initialization
+PASS runtime DATA all7banks/chunks16156/ALL524288 rawRoPE words independently recomputed/high64 identity+all1920 source changes/aliases+range+size refusals29820;NO native/IO/model/Work/TPS grant

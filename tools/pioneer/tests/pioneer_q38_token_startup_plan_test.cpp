@@ -40,10 +40,10 @@ int main(int argc,char** argv){
    auto independent=std::make_unique<PioneerQ38TokenPackage>();
    assert(independent->Build(*canonical,layer,bank,id,sources.data(),bank,plan->Workspace()+0x600000));
    uint32_t address=0;assert(plan->PackageAddress(layer,address) && address==plan->Workspace()+C::Offset+layer*C::Stride);
-   std::array<uint8_t,16384> actual,expected;
+   std::array<uint8_t,16384> actual,expected,published;
    for(unsigned at=0;at<C::Stride;at+=actual.size()){
     assert(plan->ReadPackage(layer,at,actual.data(),actual.size()) && independent->Read(at,expected.data(),expected.size()));
-    assert(actual==expected);
+    assert(actual==expected && plan->ReadPublishedPackage(layer,at,published.data(),published.size()) && actual==published);
    }
    actual.fill(0x5a);const auto before=actual;
    assert(!plan->ReadPackage(layer,1,actual.data(),64) && actual==before);

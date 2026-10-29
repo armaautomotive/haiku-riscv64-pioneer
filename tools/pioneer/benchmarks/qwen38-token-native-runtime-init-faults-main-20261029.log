@@ -1,0 +1,4 @@
+PASS token native init fault0/production retention/ALLowners retained/no publication/retry/cleanup/following IO;SIMULATED endpoints
+PASS token native init fault1/production retention/ALLowners retained/no publication/retry/cleanup/following IO;SIMULATED endpoints
+PASS token native init fault2/production retention/ALLowners retained/no publication/retry/cleanup/following IO;SIMULATED endpoints
+PASS token native init fault3/production retention/ALLowners retained/no publication/retry/cleanup/following IO;SIMULATED endpoints

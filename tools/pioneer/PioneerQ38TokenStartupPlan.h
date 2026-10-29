@@ -130,6 +130,17 @@ public:
   return canonical && Binding(*canonical) && layer<64 && layers[layer] && Output(output,bytes)
    && layers[layer]->Read(offset,output,bytes);
  }
+ bool ReadPublishedPackage(unsigned layer,unsigned offset,uint8_t* output,unsigned bytes)const{
+  // SAME one-shot private publication as MatchesPublishedBinding;never a
+  // caller-supplied ready hint. The byte serializer and all bounds/alias
+  // checks are shared with strict ReadPackage. No periodic corruption
+  // revalidation or native IO/ownership/initialization permission is added.
+  return published && canonical && Binding(*canonical) && layer<64 && layers[layer] && Output(output,bytes)
+   && layers[layer]->ReadBound<false>(offset,output,bytes);
+ }
+ bool PublishedOutput(const void* output,unsigned bytes)const{
+  return published && canonical && Binding(*canonical) && bytes<=16384 && !(bytes&63) && Output(output,bytes);
+ } // DATA output-alias check ONLY,not a native/mutable write permission
  bool ReadSession(unsigned offset,uint8_t* output,unsigned bytes)const{return ReadWords(session,512,offset,output,bytes);}
  bool ReadPrompt(unsigned offset,uint8_t* output,unsigned bytes)const{return ReadWords(prompt,8192*4,offset,output,bytes);}
  bool ReadHead(unsigned offset,uint8_t* output,unsigned bytes)const{

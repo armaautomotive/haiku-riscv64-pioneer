@@ -50,6 +50,10 @@ extern "C" bool pioneer_token_context_scoped_held(PioneerProbeCookie* cookie,con
  PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();
  return c && PrepareQ38TokenNativeHeld(*c,prompt,prompts,limit,stopEos,eos0,eos1,result) && CloseQ38TokenNativeHeld(*c,result);
 } // actual whole held-only factory/controllers;no public route/link/install/invocation
+extern "C" bool pioneer_token_context_scoped_runtime(PioneerProbeCookie* cookie,PioneerQ38TokenRuntimeResult& result){
+ PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();
+ return c && PrepareQ38TokenNativeRuntime(*c,result);
+} // startup metadata/empty-prefix DATA ONLY;NO native bootstrap/RUN/STOP/END grant
 extern "C" void pioneer_token_context_destroy_clean(PioneerStoreContext* c){delete c;}
 
 // Independent inert controls, separate from the renamed actual driver bodies.

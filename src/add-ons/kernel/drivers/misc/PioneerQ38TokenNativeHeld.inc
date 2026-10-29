@@ -15,6 +15,7 @@ bool PioneerSessionIO::TokenMemoryAccessScope(){
   && c->bytes==PioneerResidentBanks::Total && c->runtimeCoreMode==1 && s->memory && s->startup
   && s->participants && s->participants==c->q38Dispatch && !s->memory->Unsafe() && !s->memory->Closed()
   && (s->phase==PioneerQ38TokenNativeState::MemoryPreparing || s->phase==PioneerQ38TokenNativeState::MemoryInstalled
+   || s->phase==PioneerQ38TokenNativeState::RuntimePreparing || s->phase==PioneerQ38TokenNativeState::RuntimeReady
    || s->phase==PioneerQ38TokenNativeState::MemoryClosing)
   && s->MatchesBinding(*c,fd,c->hashes,c->initialized,fd->team,sReloadGeneration);
 }
@@ -79,7 +80,8 @@ void PioneerSessionIO::TokenMemoryRetainHostOwners(){
 } // no bootstrap/reset/start/model compute;ALL120 participants remain held
 [[maybe_unused]] static __attribute__((noinline)) bool CloseQ38TokenNativeHeld(PioneerStoreContext& c,PioneerQ38TokenMemoryResult& result){
  auto* s=c.q38TokenNative;
- if(!s || s->phase!=PioneerQ38TokenNativeState::MemoryInstalled || !s->memory || !s->startup || s->Unsafe())return false;
+ if(!s || (s->phase!=PioneerQ38TokenNativeState::MemoryInstalled && s->phase!=PioneerQ38TokenNativeState::RuntimeReady)
+  || !s->memory || !s->startup || s->Unsafe() || (s->runtime && (!s->runtime->Staged() || s->runtime->Pending())))return false;
  s->phase=PioneerQ38TokenNativeState::MemoryClosing;
  bool okay=c.io.TokenModelSourceScope(false) && s->memory->CloseHeldNoLaunch(c.io,result);
  if(okay)s->phase=PioneerQ38TokenNativeState::MemoryClosed;

@@ -43,7 +43,11 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  std::vector<uint32> historyWords=std::vector<uint32>(1680*1024,0x13579bdf);
  std::vector<unsigned> historyTouched=std::vector<unsigned>(1680);
  uint32 workspaceAddress=0;unsigned workspaceBank=7;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
+ std::vector<uint32>& workspaceWords=runtimeDram; // SAME physical workspace bytes from construction through NoC staging
+#else
  std::vector<uint32> workspaceWords=std::vector<uint32>(512*1024,0x13579bdf);
+#endif
  std::vector<unsigned> workspaceTouched=std::vector<unsigned>(512);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeMapping.inc"
@@ -128,6 +132,9 @@ static void TestKernelLog(const char*,...){}
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeInitialize.inc"
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeHeld.inc"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeRuntime.inc"
+#endif
 #endif
 #include "token_native_zero_callbacks.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenCallScope.inc"
@@ -182,19 +189,24 @@ struct Fixture {
  }
 };
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
+#include "pioneer_q38_token_native_runtime_checks.inc"
+#endif
 #include "pioneer_q38_token_native_held_checks.inc"
 #endif
 int main(int argc,char** argv){
- assert(argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
+ assert(argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
+  || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;(void)&AcquireQ38DeltaLock;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
- assert(argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")));
+ assert(argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults")));
 #else
  assert(argc==2 || strncmp(argv[2],"--held",6));
 #endif
  const bool heldFaults=argc==3 && !strcmp(argv[2],"--held-faults");
- const bool faults=argc==3 && strncmp(argv[2],"--held",6),late=faults && !strcmp(argv[2],"--late-faults");
- for(unsigned fault=0;fault<(heldFaults?3U:late?2U:faults?4U:1U);fault++){
+ const bool runtime=argc==3 && !strncmp(argv[2],"--runtime",9),runtimeFaults=runtime && !strcmp(argv[2],"--runtime-faults");
+ const bool faults=argc==3 && strncmp(argv[2],"--held",6) && !runtime,late=faults && !strcmp(argv[2],"--late-faults");
+ for(unsigned fault=0;fault<(runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
   Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;assert(f.Bind());auto* state=c.q38TokenNative;
   PioneerQ38StateZeroResult g;PioneerQ38ConvHistoryZeroResult h;PioneerQ38ProjectionZeroResult p;
   assert(!state->InitializationsClosed(c.banks,f.proof) && !io.StateZeroBeforeCohort() && !io.ConvHistoryZeroBeforeCohort() && !io.ProjectionZeroBeforeCohort());
@@ -235,11 +247,14 @@ int main(int argc,char** argv){
   for(auto value:io.historyWords)assert(!value);for(auto count:io.historyTouched)assert(count==1);
   assert(f.Projection(p) && state->InitializationsClosed(c.banks,f.proof) && io.observedProjectionPages==512
    && io.rootStarts==1010 && io.rootHolds==1010 && io.rootStops==1010 && io.view==panel && std::equal(scratch.begin(),scratch.end(),io.l1) && io.entry==entry);
-  for(auto value:io.workspaceWords)assert(!value);for(auto count:io.workspaceTouched)assert(count==1);
+  for(unsigned i=0;i<512*1024;i++)assert(!io.workspaceWords[i]);for(auto count:io.workspaceTouched)assert(count==1);
   touches=io.touches;assert(!f.Recurrent(g) && !f.History(h) && !f.Projection(p) && io.touches==touches);
   assert(f.learned==learned && !c.bulk.dirty && !io.pciWrites && !io.HostReadMock::bmeWrites
    && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases && !state->Closed());
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
+  io.runtimeWorkspace=io.workspaceAddress;io.runtimeFault=runtimeFaults?fault+1:0;
+#endif
   CheckNativeHeld(f,heldFaults?fault+1:0);
   touches=io.touches;
 #endif

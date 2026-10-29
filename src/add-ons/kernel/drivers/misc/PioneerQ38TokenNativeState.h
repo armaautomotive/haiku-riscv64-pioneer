@@ -5,6 +5,7 @@
 #define PIONEER_Q38_TOKEN_NATIVE_STATE_H
 #include "PioneerQ38ProjectionMutableBanks.h"
 #include "PioneerQ38TokenMemory.h"
+#include "PioneerQ38TokenNativeOwner.h"
 #include "PioneerQ38StateZeroController.h"
 #include "PioneerQ38ConvHistoryZeroController.h"
 #include "PioneerQ38ProjectionZeroController.h"
@@ -15,6 +16,7 @@ struct PioneerStoreContext;struct PioneerSessionIO;
 [[maybe_unused]] static bool InitializeQ38TokenProjection(PioneerStoreContext&,PioneerQ38ProjectionZeroResult&);
 [[maybe_unused]] static bool PrepareQ38TokenNativeHeld(PioneerStoreContext&,const uint32_t*,unsigned,unsigned,bool,unsigned,unsigned,PioneerQ38TokenMemoryResult&);
 [[maybe_unused]] static bool CloseQ38TokenNativeHeld(PioneerStoreContext&,PioneerQ38TokenMemoryResult&);
+[[maybe_unused]] static bool PrepareQ38TokenNativeRuntime(PioneerStoreContext&,PioneerQ38TokenRuntimeResult&);
 // Genuine retained full851 model/reservation object. It borrows NO old
 // completed embedding/prefix owner and cannot make those old lifetimes safe.
 // Private factory publication occurs under the real global FD call lock.
@@ -26,8 +28,9 @@ class PioneerQ38TokenNativeState {
  friend bool InitializeQ38TokenProjection(PioneerStoreContext&,PioneerQ38ProjectionZeroResult&);
  friend bool PrepareQ38TokenNativeHeld(PioneerStoreContext&,const uint32_t*,unsigned,unsigned,bool,unsigned,unsigned,PioneerQ38TokenMemoryResult&);
  friend bool CloseQ38TokenNativeHeld(PioneerStoreContext&,PioneerQ38TokenMemoryResult&);
+ friend bool PrepareQ38TokenNativeRuntime(PioneerStoreContext&,PioneerQ38TokenRuntimeResult&);
  enum Phase {Claiming,Bound,RecurrentZeroing,RecurrentClosing,HistoryZeroing,HistoryClosing,
-  ProjectionZeroing,ProjectionClosing,Initialized,DispatchPreparing,MemoryPreparing,MemoryInstalled,MemoryClosing,MemoryClosed,Unknown};
+  ProjectionZeroing,ProjectionClosing,Initialized,DispatchPreparing,MemoryPreparing,MemoryInstalled,RuntimePreparing,RuntimeReady,MemoryClosing,MemoryClosed,Unknown};
  PioneerStoreContext* const context;const void* const cookie;const void* const hashes;
  const uint8_t* const ledger;const int64_t team;const unsigned bank;
  const PioneerQ38GdnIdentity identity;
@@ -38,17 +41,18 @@ class PioneerQ38TokenNativeState {
  PioneerQ38ProjectionZeroLease projectionZero;
  PioneerQ38TokenStartupPlan* startup=nullptr;
  PioneerQ38TokenMemory* memory=nullptr;
+ PioneerQ38TokenNativeOwner* runtime=nullptr;
  PioneerQ38DispatchLease* participants=nullptr; // owned by SAME retained context;never a borrowed completed prefix
  uint32_t prompt[8192]={};unsigned prompts=0,limit=0,eos[2]={};bool stopEos=false;
  Phase phase=Claiming;bool unsafe=false;
  PioneerQ38TokenNativeState(PioneerStoreContext& c,const void* fd,const void* h,const uint8_t* uploaded,int64_t owner,
   unsigned selected,const PioneerQ38GdnIdentity& id):context(&c),cookie(fd),hashes(h),ledger(uploaded),team(owner),bank(selected),identity(id){}
- ~PioneerQ38TokenNativeState(){delete memory;delete startup;} // known-clean native destruction ONLY
+ ~PioneerQ38TokenNativeState(){delete runtime;delete memory;delete startup;} // known-clean native destruction ONLY
 public:
  PioneerQ38TokenNativeState(const PioneerQ38TokenNativeState&)=delete;
  PioneerQ38TokenNativeState& operator=(const PioneerQ38TokenNativeState&)=delete;
  bool Unsafe()const{return unsafe || phase==Unknown || graph.Unsafe() || recurrentZero.unsafe || historyZero.unsafe
-  || projectionZero.unsafe || (memory && memory->Unsafe())
+  || projectionZero.unsafe || (memory && memory->Unsafe()) || (runtime && runtime->Unsafe())
   || (participants && (participants->unsafe || participants->closed || participants->rootRunning || participants->bootAttempted || participants->booted));}
  // Held-only cheap binding:whole-context and participant guards still audit
  // EVERY child lease before/after each pass,not120 peers again per L1 word.
@@ -84,7 +88,7 @@ public:
    && p->MatchesInitializationOwner(banks,proof,identity);
  } // actual initialization-controller seals ONLY;not KV/metadata/input/RUN or END authority
  void Fault(){unsafe=true;phase=Unknown;recurrentZero.unsafe=historyZero.unsafe=projectionZero.unsafe=true;
-  graph.Fault();if(memory)memory->Fault();} // MEMORY ONLY;retain every borrowed resource
+  graph.Fault();if(memory)memory->Fault();if(runtime)runtime->Fault();} // MEMORY ONLY;retain every borrowed resource
 };
 static_assert(sizeof(PioneerQ38TokenNativeState)>262144 && sizeof(PioneerQ38TokenNativeState)<1048576,
  "complete canonical+runtime reservation model is HEAP ONLY");

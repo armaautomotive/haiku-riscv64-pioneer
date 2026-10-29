@@ -6,9 +6,16 @@
 // Serialized numeric outer/recipe DATA is intentionally identical. The
 // proposed ROOT boot is DISTINCT QGC1;this creates no old native ownership.
 class PioneerQ38GlobalChainPackage {
+ friend class PioneerQ38TokenPackage;
  PioneerQ38LayerChainPackage numeric;uint32_t boot[64]={};
  const PioneerQ38CanonicalModelPlan* canonical=nullptr;unsigned layer=64,bank=7;
  bool attempted=false,ready=false;
+ template<bool Strict> bool ReadBound(unsigned offset,uint8_t* output,unsigned bytes)const{
+  uintptr_t o=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this);
+  return canonical && ready && canonical->Ready() && layer<64 && bank<7 && (!Strict || Matches(*canonical))
+   && output && o<=UINTPTR_MAX-bytes && !(o<self+sizeof(*this) && self<o+bytes)
+   && numeric.ReadBound<Strict>(offset,output,bytes);
+ }
 public:
  bool Build(const PioneerQ38CanonicalModelPlan& c,unsigned selectedLayer,unsigned selectedBank,const PioneerQ38GdnIdentity& id,
   const uint32_t* sources,unsigned initialBank,uint32_t initialAddress){
@@ -28,9 +35,7 @@ public:
  const uint32_t* Outer()const{return ready?numeric.Outer():nullptr;}
  unsigned Bytes()const{return ready?numeric.Bytes():0;}
  bool Read(unsigned offset,uint8_t* output,unsigned bytes)const{
-  uintptr_t o=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this);
-  return canonical && Matches(*canonical) && output && o<=UINTPTR_MAX-bytes && !(o<self+sizeof(*this) && self<o+bytes)
-   && numeric.Read(offset,output,bytes);
+  return ReadBound<true>(offset,output,bytes);
  }
 };
 #endif

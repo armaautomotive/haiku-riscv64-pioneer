@@ -50,7 +50,9 @@ required = ('BindQ38TokenNative(', 'TokenCallScopeMatches(', 'TokenModelSourceSc
             'pioneer_token_context_scoped_initialize(', 'PrepareQ38TokenNativeHeld(', 'CloseQ38TokenNativeHeld(',
             'TokenMemoryMappingSourceScope(', 'TokenMemoryAccessScope(', 'TokenMemoryScope(',
             'MapTokenMemory(', 'TokenMemoryReadChecked(', 'TokenMemoryWrite(',
-            'PioneerQ38TokenMemory::PrepareHeld(', 'PioneerQ38TokenMemory::CloseHeldNoLaunch(', 'pioneer_token_context_scoped_held(')
+            'PioneerQ38TokenMemory::PrepareHeld(', 'PioneerQ38TokenMemory::CloseHeldNoLaunch(', 'pioneer_token_context_scoped_held(',
+            'TokenRuntimeScope(', 'PrepareQ38TokenNativeRuntime(', 'pioneer_token_context_scoped_runtime(',
+            'PioneerQ38TokenNativeOwner::PrepareHeldRuntime(')
 for name in required:
     assert any(name in key for key in frames), (name, 'actual implementation must be emitted')
 for controller in ('State', 'ConvHistory', 'Projection'):
@@ -69,6 +71,10 @@ symbols = {r[-1]:(int(r[0], 16), int(r[1], 16), r[2])
 normal = {'api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device'}
 assert not normal & symbols.keys()
 assert all('pioneer_q38_token_context_body_'+name in symbols for name in normal)
+rope = [info for name, info in symbols.items() if 'PioneerQ38TokenRope' in name and name.endswith('DataE')]
+assert len(rope) == 1 and rope[0][1] == 2097152, 'complete frozen raw RoPE must be emitted,not runtime CPU trigonometry'
+unresolved = subprocess.check_output([tool+'nm', '-u', str(obj)], text=True)
+assert not re.search(r'\b(?:cosf?|sinf?|powf?)\b', unresolved), 'kernel may not import libm for raw configuration'
 for forbidden in ('Q38WorkControl', 'OriginalSource', 'CompareFinal', 'ReferenceProducts',
                   'Q38MixedLiveValidationControl', 'PioneerQ38MixedLiveNativeState',
                   'PioneerQ38EmbeddingNativeState', 'PioneerQ38RecurrentPrefixNativeState'):
@@ -105,5 +111,7 @@ print('PASS ACTUAL full851 canonical/model+7 atomic runtime reservations/FD+team
 print('PASS old65 BYTE-IDENTICAL61faa093;NO old embedding/prefix owner/CPU reference/Work route;ALL5 independent inert controls byte-identical')
 print('PASS SAME full851 owner/private recurrent+history+projection initialization leases/actual phase-specific source+nonroot callbacks/all9 real controller bodies SDK compiled/maxControllerFrame'+str(max(controller_sizes))+';NOT runtime qualification')
 print('PASS ACTUAL distinct full-token held factories/native120 cohort ownership/4retained aliases/all-word access+source callbacks/whole PrepareHeld+CloseHeldNoLaunch bodies SDK compiled;NOT runtime/launch/END qualification')
+print('PASS ACTUAL distinct full-token native runtime factory/same owner+source callbacks/whole held metadata+rawRoPE+empty-prefix packet write+readback controller SDK emitted;NOT runtime/bootstrap/model/STOP/END qualification')
+print('PASS complete2097152B immutable rawRoPE emitted;NO kernel cos/sin/pow imports or CPU model-reference path')
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+' token-context-NODRV.o')
 print('COMPILE/INSPECT ONLY;real private bodies WOULD do IO if invoked;NO link/install/invoke/physical or performance qualification;this compile is NOT initialization/staging RUNTIME qualification;runtime+metadata/RUN/STOP/END STILL OWED')

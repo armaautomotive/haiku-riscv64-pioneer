@@ -5,6 +5,8 @@ bool TokenMemoryMappingSourceScope();bool TokenMemoryAccessScope();
 bool TokenMemoryScope(const PioneerQ38TokenMemory&,const PioneerQ38CanonicalModelPlan&,const PioneerQ38TokenStartupPlan&,
  const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
 void TokenMemoryRetainHostOwners();
+bool TokenRuntimeScope(const PioneerQ38TokenNativeOwner&,const PioneerQ38TokenMemory&,const PioneerQ38CanonicalModelPlan&,
+ const PioneerQ38TokenStartupPlan&,const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
 area_id q38TokenMemoryArea[4]={-1,-1,-1,-1};
 volatile uint32* q38TokenMemoryView[4]={NULL,NULL,NULL,NULL};
 bool q38TokenMemoryMapAttempted=false;uint64 q38TokenMemoryBar=0;
