@@ -23,6 +23,20 @@ struct TokenHeldEndpoints:ZeroControlIO {
  const PioneerQ38TokenRestoreResult* nativeRestoreResult=nullptr;
  bool restoreFault=false;unsigned restoreFaultSeen=0,restoreFaultTouches=0;
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE
+ std::vector<uint32> beforeDispatchImage;
+ const PioneerQ38TokenDispatchRestoreResult* nativeDispatchResult=nullptr;
+ bool dispatchRestoreFault=false;unsigned dispatchFaultSeen=0,dispatchFaultTouches=0;
+ void SnapshotPreDispatch(){
+  assert(beforeDispatchImage.empty() && rootStarts==1010 && rootStops==1010 && rootHolds==1010);
+  beforeDispatchImage.resize(120U*(TT_Q38_PANEL_VIEW_WORDS+1U));
+  for(unsigned w=0;w<120;w++){
+   assert(Core(w).coreReset==0x47800);
+   const unsigned base=w*(TT_Q38_PANEL_VIEW_WORDS+1U);beforeDispatchImage[base]=Raw(w,0x6000);
+   for(unsigned i=0;i<TT_Q38_PANEL_VIEW_WORDS;i++)beforeDispatchImage[base+1+i]=Raw(w,TT_Q38_PANEL_VIEW_BASE+i*4);
+  }
+ } // actual physical bytes before ANY dispatch preparation,not saved[] or a supplied processor input
+#endif
  unsigned fault=0,faultSeen=0,touchesAtFault=0;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
  bool runtimeMode=false;unsigned runtimeWorkspace=0,runtimeFault=0,runtimePackets=0,runtimeWrites=0,runtimeReads=0,runtimeObserved=0;
@@ -134,6 +148,12 @@ struct TokenHeldEndpoints:ZeroControlIO {
   }
 #endif
   C().Q38PanelWrite(address,value);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE
+  if(dispatchRestoreFault && !dispatchFaultSeen && nativeDispatchResult && nativeDispatchResult->phase==2
+   && runtimeCore==119 && address==TT_Q38_PANEL_VIEW_BASE){
+   dispatchFaultSeen++;dispatchFaultTouches=touches;sReloadGeneration++;
+  } // generation loss AFTER an actual original dispatch write;following checked read must refuse
+#endif
  }
  uint32* Q38PanelSavedWords(){Touch();return C().Q38PanelSavedWords();}
  uint32* HostReadBackup(unsigned words){Touch();return C().HostReadBackup(words);}

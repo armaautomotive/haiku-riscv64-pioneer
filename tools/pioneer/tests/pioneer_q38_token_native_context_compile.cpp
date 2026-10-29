@@ -79,6 +79,9 @@ extern "C" bool pioneer_token_context_scoped_token_records(PioneerProbeCookie* c
 extern "C" bool pioneer_token_context_scoped_l1_restore(PioneerProbeCookie* cookie,PioneerQ38TokenRestoreResult& result){
  PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();return c && RestoreQ38TokenNativeL1(*c,result);
 } // actual full-token journal restoration;not dispatch/CSR cleanup or END
+extern "C" bool pioneer_token_context_scoped_dispatch_restore(PioneerProbeCookie* cookie,PioneerQ38TokenDispatchRestoreResult& result){
+ PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();return c && RestoreQ38TokenNativeDispatchImages(*c,result);
+} // earlier dispatch originals only;not NIU/scratch/TLB/master/clock cleanup or END
 extern "C" void pioneer_token_context_destroy_clean(PioneerStoreContext* c){delete c;}
 
 // Independent inert controls, separate from the renamed actual driver bodies.

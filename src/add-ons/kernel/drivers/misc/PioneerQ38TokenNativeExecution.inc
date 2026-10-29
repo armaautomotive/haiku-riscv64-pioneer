@@ -13,7 +13,7 @@
   const uintptr_t owned=reinterpret_cast<uintptr_t>(objects[i]);
   if(!owned || owned>UINTPTR_MAX-sizes[i] || (out<owned+sizes[i] && owned<out+bytes))return false;
  }
- return true;
+ return s->runtime->DispatchOutput(output,bytes);
 }
 [[maybe_unused]] static __attribute__((noinline)) bool StartQ38TokenNativeRoot(PioneerStoreContext& c,PioneerQ38TokenExecutionResult& result){
  auto* s=c.q38TokenNative;const PioneerQ38TokenExecutionResult pristine;
@@ -80,6 +80,7 @@
    if(!owned || owned>UINTPTR_MAX-sizes[i] || (out<owned+sizes[i] && owned<out+bytes))return false;
   }
   for(unsigned i=0;i<records*64;i++)if(output[i])return false;
+  if(!s->runtime->DispatchOutput(output,bytes))return false;
  } // private trusted kernel buffers ONLY;not an unchecked public/user-pointer ABI
  if(!c.io.TokenModelSourceScope(false))return false;
  return s->runtime->ReadCommitted(c.io,records,output,result);
@@ -95,4 +96,15 @@
  else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);result.unsafe=1;result.ready=0;okay=false;}
  return okay;
 } // exact full-token L1 journal ONLY;dispatch/CSR leases,clock,maps,hosts remain owned. END STILL REFUSES.
+[[maybe_unused]] static __attribute__((noinline)) bool RestoreQ38TokenNativeDispatchImages(PioneerStoreContext& c,PioneerQ38TokenDispatchRestoreResult& result){
+ auto* s=c.q38TokenNative;const PioneerQ38TokenDispatchRestoreResult pristine;
+ const auto* a=reinterpret_cast<const uint8_t*>(&result);const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+ for(unsigned i=0;i<sizeof(result);i++)if(a[i]!=b[i])return false;
+ if(!s || s->phase!=PioneerQ38TokenNativeState::RootRestored || !s->runtime || !s->OriginalL1Restored()
+  || !Q38TokenExecutionOutput(c,&result,sizeof(result)) || !c.io.TokenModelSourceScope(false))return false;
+ s->phase=PioneerQ38TokenNativeState::DispatchRestoring;bool okay=s->runtime->RestoreDispatchImages(c.io,result);
+ if(okay && s->runtime->DispatchImagesRestored())s->phase=PioneerQ38TokenNativeState::DispatchRestored;
+ else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);result.unsafe=1;result.ready=0;okay=false;}
+ return okay;
+} // distinct lower dispatch L1 restoration ONLY;NIU/scratch/TLB/master/clock/maps/hosts and END remain owned
 #endif

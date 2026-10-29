@@ -11,7 +11,8 @@ import tempfile
 
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 readout_flow = len(sys.argv) == 7 and sys.argv[2] == '--execution-readout-full-flow'
-restore_empty = len(sys.argv) == 7 and sys.argv[2] in ('--execution-restore-empty','--execution-restore-empty-fault')
+restore_dispatch = len(sys.argv) == 7 and sys.argv[2] in ('--execution-restore-dispatch','--execution-restore-dispatch-fault')
+restore_empty = restore_dispatch or len(sys.argv) == 7 and sys.argv[2] in ('--execution-restore-empty','--execution-restore-empty-fault')
 readout_empty = restore_empty or len(sys.argv) == 7 and sys.argv[2] == '--execution-readout-empty'
 full_flow = readout_flow or len(sys.argv) == 7 and sys.argv[2] == '--execution-full-flow'
 hold_layer = readout_empty or len(sys.argv) == 7 and sys.argv[2] == '--execution-hold-first-layer'
@@ -82,6 +83,8 @@ if readout_empty:
     defines['PIONEER_Q38_TOKEN_NATIVE_READOUT_EMPTY_FIXTURE'] = '1'
 if restore_empty:
     defines['PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE'] = '1'
+if restore_dispatch:
+    defines['PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE'] = '1'
 if readout_flow:
     defines['PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE'] = '1'
 if full_flow:

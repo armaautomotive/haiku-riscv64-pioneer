@@ -1,5 +1,36 @@
 # Native build status
 
+## In progress: distinct earlier-dispatch image restoration
+
+October29,2026 12:54UTC. The SAME launched owner now captures the120 private
+dispatch-original buffer identities during real runtime preparation. A new
+private stage requires completed token-L1 restoration,proves all120 earlier
+dispatch images BEFORE writing,and restores8110200 original words including
+entries with immediate exact readback and a complete second pass. Dedicated
+phase-specific aliases cover the existing full panel without widening the
+token snapshot. Only complete verification clears image ready/dirty flags.
+NIU/scratch/TLB/master/clock/maps/hosts remain owned;Closed() is still FALSE.
+
+Independent SDK C91492/26420 BOTH finish0;objects match355dd61c,max new frame
+1728<=2048,old65/all5 inert entries unchanged. Role checks pass15/214. Current
+positive main41283/clean71327 are LIVE;post-write generation-loss mode is
+implemented but not yet dispatched. Earlier pending B69803/56865 remain LIVE
+and predate current noinline aliases/extra alias tests;they are not retagged.
+No installation/physical speed claim follows;last physical **0.207893161
+tokens/sec**,20 unmet. Evidence:
+[dispatch-image restoration candidate](benchmarks/qwen38-token-native-dispatch-restore-wip-20261029.txt).
+
+## Completed offline: genuine zero-commit cancellation readout
+
+October29,2026 12:48UTC. Readout-empty C28865/78459 BOTH finish0 with
+identical full logs/prefixes. The SAME original first-layer/cancel/STOP/HOLD
+history drains its actual ZERO committed frontier without a GDDR packet or
+invented token. Independent comparison21266/86597 BOTH0:5120 embedding and
+5120 layer0 values BITEXACT,without tolerance. These binaries predate later
+restoration code;they qualify neither it nor a positive token-record read,
+whole model,END or physical performance. Evidence:
+[completed empty readout](benchmarks/qwen38-token-native-readout-wip-20261029.txt).
+
 ## In progress: full-token original-L1 restoration after drained HOLD
 
 October29,2026 12:31UTC. A private restorer now requires the SAME genuine

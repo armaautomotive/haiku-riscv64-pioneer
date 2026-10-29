@@ -11,7 +11,8 @@ bool PioneerSessionIO::TokenRuntimeScope(const PioneerQ38TokenNativeOwner& runti
    || s->phase==PioneerQ38TokenNativeState::WorkersBootstrapping || s->phase==PioneerQ38TokenNativeState::WorkersReady
    || s->phase==PioneerQ38TokenNativeState::RootStarting || s->phase==PioneerQ38TokenNativeState::RootRunning
    || s->phase==PioneerQ38TokenNativeState::RootHolding || s->phase==PioneerQ38TokenNativeState::RootHeld
-   || s->phase==PioneerQ38TokenNativeState::RootRestoring || s->phase==PioneerQ38TokenNativeState::RootRestored)
+   || s->phase==PioneerQ38TokenNativeState::RootRestoring || s->phase==PioneerQ38TokenNativeState::RootRestored
+   || s->phase==PioneerQ38TokenNativeState::DispatchRestoring || s->phase==PioneerQ38TokenNativeState::DispatchRestored)
   && TokenModelSourceScope(false)
   && runtime.MatchesRuntimeBinding(dram,c->banks,*c->q38Dispatch,memory,canonical,startup,id,learned,pages);
 }

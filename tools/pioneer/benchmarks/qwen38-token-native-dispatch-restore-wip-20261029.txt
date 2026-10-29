@@ -1,0 +1,113 @@
+Native earlier-dispatch L1 restoration candidate:IN PROGRESS,NOT ready
+2026-10-29 12:54UTC. Goal ACTIVE;20 tokens/sec remains UNMET.
+Last completed physical whole-model measurement:0.207893161 tokens/sec.
+No Pioneer/SSH/power/install/OS/Assistant/boot/CPU/RAM/network/SD/hardware-
+connection/mains changes. No physical-health or speed improvement claim.
+
+Distinct necessary lower restoration stage,not full END
+-------------------------------------------------------
+The token overlay's private45,627,624B journal restores an earlier FRESH
+dispatch image,not the pre-dispatch state. The new stage restores that
+separate earlier dispatch layer ONLY after SAME owner terminal/120HOLD,
+complete record drain and complete token-L1 restoration. It cannot accept a
+caller clean/STOP/original/ready/counter receipt or an old prefix owner.
+
+During actual PrepareHeldRuntime,the native owner captures each existing
+private Q38PanelSavedWords pointer after selecting/guarding that participant.
+All120 pointers must be non-null,aligned,in-range and mutually disjoint.
+Output guards now exclude those original buffers as well as the previous
+context/model/journal/ROM owners. No original bytes or processor history are
+supplied by a TEST to the controller. The private captured originals remain
+part of the SAME retained context through restoration and eventual END.
+
+RestoreQ38TokenNativeDispatchImages requires pristine64B/non-aliased output,
+fresh FD/team/thread/generation/source/clock/host scope and the actual
+RootRestored phase. All120 current held/source/idle/known-command/counter
+guards and earlier immutable dispatch-code proofs pass BEFORE the first
+original write. The source-buffer pointer must still match. A monotonic
+5-minute bound and participant guards remain mandatory.
+
+Descending119..0,it restores every full-panel word and original entry with
+immediate exact readback,then separately verifies all120 complete originals.
+The total is8110200 words (120*(67584+1));UINT32_MAX is valid original data.
+Dedicated native phase-specific checked panel/entry aliases do NOT widen
+the separate token snapshot geometry. The full panel includes gaps not in
+that geometry. Existing retained panel mappings are used;no new TLB window
+or MMIO burst is introduced. Known per-participant selection still configures
+its owned mapping windows. No NoC command,counter recapture/reset/start,
+NIU/scratch/TLB lease restoration,master/clock change,unmap or host release.
+
+Only after the whole second pass,one CPU-only publication under the same
+driver lock clears all120 image.ready/image.dirty flags and enters private
+DispatchRestored. Images stay saved;all store leases remain ready and owned.
+The distinct full-token launched journal remains NOT closed. Native Closed()
+stays FALSE;legacy END/held-close still refuse. On any uncertainty all owners
+are quarantined/retained with no later IO,retry,repair or release. The NIU,
+scratch,TLB,master,clock,mappings and hosts STILL require qualified closure.
+
+Completed independent build and role evidence
+----------------------------------------------
+Current SDK C main91492/clean26420 BOTH terminal0. Objects byte-identical:
+ 355dd61ceedcbd2fdc4a7ddee107f3fd2d1d7dbff08fa004ab2182a7f1fc2e62.
+Actual factory/restorer/phase-specific alias bodies must be emitted,not just
+template declarations. Max new frame1728<=unchanged2048;old65 stays61faa093;
+all5 conventional entries remain independently inert. No CPU-reference,
+Work,pre-dispatch observer or restoration fixture enters the SDK object.
+SDK logs differ only by the temporary old-controls path.
+
+Early pending A23150 and SDK A68895 both end1:the new64B result initially
+omitted firstPC/secondPC members referenced by the generic HoldGuard template.
+They replace two reserved words;size/guards are unchanged. SDK B26201/28016
+both end1 because GCC inlined TokenDispatchImageWrite and the required-body
+verifier refused. Explicit noinline on both checked aliases fixes that for
+C. No body check or stack bound was removed or relaxed;failed histories are
+not retagged as passes. Original logs remain under /private/tmp with A/B tags.
+
+Role main74815/clean95188 BOTH0,complete logs identical:15 explicit TEST
+roles/214 absent+zero+two+kernel+device+Work refusals. The new restoration
+fragment requires all8 exact TEST parents and excludes full-flow/Work even
+when merely defined0. Saved SDK/role logs:
+ qwen38-native-dispatch-restore-{sdk,roles}-{main,clean}-20261029.log.
+
+Runtime requirements are LIVE,not passing
+-----------------------------------------
+Earlier pending B69803/56865 are confirmed LIVE. They predate the explicit
+noinline alias bodies and added360 saved-buffer/48 phase+range refusals;
+their eventual result must NOT be retagged as current C qualification.
+
+Current positive C main41283/clean71327 (--execution-restore-dispatch) are
+confirmed LIVE12:50UTC. Each must execute the SAME full851 initializer/native
+owner/119 virgin engines/original first layer/cancel/ROOT+119STOP/current
+terminal/120HOLD/zero-commit drain/full-token L1 restoration and only THEN
+the new dispatch restorer. Pending17 non-pristine/new-stage refusals,all360
+original-buffer output aliases and48 checked-alias phase/range refusals also
+must preserve output with no IO. These are requirements,NOT passing results.
+
+The TEST independently observes all actual pre-dispatch physical entry/panel
+bytes AFTER genuine initializers close and BEFORE the first dispatch prepare.
+It never reads the private saved[] data or feeds original/model products to
+a processor/controller. Successful completion must independently match all
+8110200 actual restored words,including UINT32_MAX,with unchanged reset/NIU/
+PCI/map/host state and genuine scope continuing while Closed remains FALSE.
+
+The same explicit --execution-restore-dispatch-fault mode injects generation
+loss AFTER an actual first original write at worker119/panel0x6e000. It must
+retain with no following IO/retry/reset/release;it cannot qualify clean END.
+This new fault mode is implemented/compiled by the positive fixture but NOT
+yet dispatched;the existing older four L1-restoration histories remain
+running. Additional large runs are sequenced to limit host memory pressure.
+
+Logs /private/tmp/pioneer-q38-dispatch-restore-empty-{main,clean}-20261029-c.log
+Prefixes same names ending -c-prefix.bin.
+Clean export /private/tmp/pioneer-q38-dispatch-restore-clean.VFNksPQR.
+Older successful zero-commit readout28865/78459 predates this new stage and
+new captured-original/alias guards. It is NOT restoration qualification.
+
+Remaining complete objective,unchanged
+---------------------------------------
+Positive current dispatch/L1/readout and fault qualification;all64-layer/
+multitoken/state/KV/vocabulary/normal+EOS numerical and terminal proof;
+distinct NIU/scratch/TLB/master/clock/maps/hosts closure and full clean END;
+qualified performance-image/Work/Assistant integration;actual repeated and
+long-context card generation;measured sustained optimization toward20tok/s.
+Preserve SD-free boot,64 CPUs,full RAM and valid running histories.

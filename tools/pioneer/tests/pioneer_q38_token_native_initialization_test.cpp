@@ -349,7 +349,8 @@ int main(int argc,char** argv){
  const bool peerBootstrap=argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines");
  const bool fullFlow=argc==7 && (!strcmp(argv[2],"--execution-full-flow") || !strcmp(argv[2],"--execution-readout-full-flow"));
  const bool cancelLayer=argc==7 && (!strcmp(argv[2],"--execution-cancel-first-layer") || !strcmp(argv[2],"--execution-hold-first-layer")
-  || !strcmp(argv[2],"--execution-readout-empty") || !strcmp(argv[2],"--execution-restore-empty") || !strcmp(argv[2],"--execution-restore-empty-fault"));
+  || !strcmp(argv[2],"--execution-readout-empty") || !strcmp(argv[2],"--execution-restore-empty") || !strcmp(argv[2],"--execution-restore-empty-fault")
+  || !strcmp(argv[2],"--execution-restore-dispatch") || !strcmp(argv[2],"--execution-restore-dispatch-fault"));
  const bool terminalFaults=argc==3 && !strcmp(argv[2],"--terminal-observation-faults");
  const bool fullLayer=fullFlow || cancelLayer || (argc==7 && !strcmp(argv[2],"--execution-first-layer"));
  (void)cancelLayer;
@@ -452,6 +453,9 @@ int main(int argc,char** argv){
   io.terminalFault=terminalFaults?fault+1:0;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE
   io.restoreFault=!strcmp(argv[2],"--execution-restore-empty-fault");
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE
+  io.dispatchRestoreFault=!strcmp(argv[2],"--execution-restore-dispatch-fault");
 #endif
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE

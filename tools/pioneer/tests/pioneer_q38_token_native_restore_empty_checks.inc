@@ -9,6 +9,9 @@
  || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE) || defined(PIONEER_Q38_WORK_INFERENCE)
 #error Explicit native original-L1 restoration TEST required
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE
+#include "pioneer_q38_token_native_dispatch_restore_checks.inc"
+#endif
 static void CheckNativeRestoreEmpty(Fixture& f){
  namespace L=PioneerQ38TokenL1;auto& c=*f.c;auto& io=f.io;auto* state=c.q38TokenNative;
  assert(!lockHeld && state->TerminalHeld() && !state->Closed() && !state->OriginalL1Restored()
@@ -50,4 +53,7 @@ static void CheckNativeRestoreEmpty(Fixture& f){
  puts(io.restoreFault?
   "EXECUTED native actual original-L1 write then generation loss/ALL owners retained/no later IO/retry/restore/reset/release;NO clean L1/CSR/END or hardware grant":
   "EXECUTED native SAME full851/original firstlayer+cancel/ROOT+119STOP/current terminal+120HOLD/zero-commit drain/ALL120 frozen images BEFORE first restore/exact original-L1 writes+full second pass/ALL observed original words including UINT32_MAX independently match/no reset or NIU command;dispatch/CSR/clock/maps/hosts STILL OWNED,NO END/physical/Work/TPS grant");
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE
+ if(!io.restoreFault)CheckNativeDispatchRestore(f);
+#endif
 }

@@ -87,6 +87,23 @@ static void CheckNativeExecution(Fixture& f){
    }
    assert(!RestoreQ38TokenNativeL1(c,restore) && io.touches==beforeHold && !state->OriginalL1Restored());
    puts("PASS native original-L1 restoration refuses pending ROOT and16 non-pristine results without IO/no caller clean or HOLD grant");
+   PioneerQ38TokenDispatchRestoreResult dispatch;const auto pristineDispatch=dispatch;auto* dispatchWords=reinterpret_cast<uint32*>(&dispatch);
+   for(unsigned i=0;i<16;i++){
+    dispatchWords[i]^=1;assert(!RestoreQ38TokenNativeDispatchImages(c,dispatch) && io.touches==beforeHold);dispatch=pristineDispatch;
+   }
+   assert(!RestoreQ38TokenNativeDispatchImages(c,dispatch) && io.touches==beforeHold && !state->DispatchImagesRestored());
+   puts("PASS native earlier-dispatch L1 restoration refuses pending ROOT and16 non-pristine results without IO/no original or clean-state hint");
+   for(unsigned w=0;w<120;w++){
+    const uint32_t* original=io.Core(w).Q38PanelSavedWords();assert(original);
+    for(unsigned offset:{0U,1U,unsigned(TT_Q38_PANEL_VIEW_WORDS)})
+     assert(!Q38TokenExecutionOutput(c,original+offset,sizeof(dispatch)) && io.touches==beforeHold);
+   }
+   uint32_t aliasValue=0x13579bdf;
+   for(unsigned w:{0U,1U,119U,120U})for(uint32_t address:{0x6000U,0x6e000U,0x6e001U,0xac000U,0xb0000U,0xffffffffU}){
+    assert(!io.TokenDispatchImageReadChecked(w,address,aliasValue) && aliasValue==0x13579bdf
+     && !io.TokenDispatchImageWrite(w,address,0x2468ace0) && io.touches==beforeHold);
+   }
+   puts("PASS native execution outputs exclude ALL120 earlier saved dispatch buffers/360 alias refusals and48 phase-or-range checked alias refusals preserve output with NO IO;NOT cleanup authority");
   }
   if(io.terminalFault){
    namespace C=PioneerQ38GlobalChainLayout;namespace T=PioneerQ38TokenLayout;

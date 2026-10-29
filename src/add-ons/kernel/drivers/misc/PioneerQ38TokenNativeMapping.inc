@@ -2,6 +2,7 @@
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
 #include "PioneerQ38TokenNativeRole.h"
 bool TokenMemoryMappingSourceScope();bool TokenMemoryAccessScope();
+bool TokenDispatchImageAccessScope(unsigned);
 bool TokenMemoryScope(const PioneerQ38TokenMemory&,const PioneerQ38CanonicalModelPlan&,const PioneerQ38TokenStartupPlan&,
  const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
 void TokenMemoryRetainHostOwners();
@@ -56,4 +57,17 @@ bool TokenMemoryWrite(unsigned worker,uint32 address,uint32 value){
  else PioneerWrite32(q38TokenMemoryView[3]+(address-0xac000)/4,value);
  return true;
 }
+__attribute__((noinline)) bool TokenDispatchImageReadChecked(unsigned worker,uint32 address,uint32& output){
+ if((address&3) || (address!=0x6000 && (address<TT_Q38_PANEL_VIEW_BASE
+  || address-TT_Q38_PANEL_VIEW_BASE>=TT_Q38_PANEL_VIEW_BYTES))
+  || !TokenDispatchImageAccessScope(worker) || !TokenMemoryMappingStable(worker))return false;
+ output=address==0x6000?RuntimeCodeRead(0):Q38PanelRead(address);return true;
+} // complete existing panel alias;UINT32_MAX is valid original DATA
+__attribute__((noinline)) bool TokenDispatchImageWrite(unsigned worker,uint32 address,uint32 value){
+ if((address&3) || (address!=0x6000 && (address<TT_Q38_PANEL_VIEW_BASE
+  || address-TT_Q38_PANEL_VIEW_BASE>=TT_Q38_PANEL_VIEW_BYTES))
+  || !TokenDispatchImageAccessScope(worker) || !TokenMemoryMappingStable(worker))return false;
+ if(address==0x6000)RuntimeCodeWrite(0,value);else Q38PanelWrite(address,value);
+ return true;
+} // fixed dispatch originals only;does NOT widen token snapshot geometry
 #endif

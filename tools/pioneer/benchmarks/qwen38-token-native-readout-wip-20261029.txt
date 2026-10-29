@@ -110,3 +110,27 @@ integration;physical repeated generation/long conversations;no-CPU-reference
 Work plus Assistant;safe owned active token delivery if streaming is added;
 honest sustained optimization toward20 tokens/sec. Preserve SD-free boot,
 64 CPUs,full RAM and earlier valid qualification histories.
+
+Completed empty-cancellation follow-up,2026-10-29 12:48:43UTC
+------------------------------------------------------------
+Current empty C main28865/clean78459 BOTH terminal0. Full logs and prefixes
+are byte-identical. The SAME native original first-layer history consumes
+cancellation,ROOT+119 workers actually STOP,current terminal proof and120
+HOLDs pass,and zero-count/null-output drains the genuine ZERO committed
+frontier without a GDDR packet or invented token. All malformed result,
+count,buffer,alias,alignment and duplicate refusals preserve the output.
+
+Independent numerical comparisons21266/86597 BOTH0:all5120 embedding and
+5120 layer0 values BITEXACT against the separate pinned CPU traces,zero
+max error/differences,NO tolerance. Comparison logs are byte-identical.
+Original ROOT659545284/peer2227276603 instructions remain offline execution
+observations,not card cycles or a token-rate measurement.
+
+Saved qwen38-native-readout-empty-{main,clean}-20261029.log and
+      qwen38-native-readout-empty-compare-{main,clean}-20261029.log.
+Observation dirs /private/tmp/pioneer-q38-readout-empty-c-main-observation.BD8JzI9u
+                 /private/tmp/pioneer-q38-readout-empty-c-clean-observation.oSNo4LeZ
+The earlier empty-C LIVE text is historical. Full-flow readout84969/59290
+remains a separate running requirement for actual positive GDDR records.
+Empty C predates original-L1/dispatch-restoration changes and grants neither
+them,whole-model/state-frontier reuse,END,Work,physical readiness nor speed.

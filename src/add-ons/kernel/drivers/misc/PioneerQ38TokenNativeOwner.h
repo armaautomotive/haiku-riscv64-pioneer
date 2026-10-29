@@ -7,8 +7,8 @@
 #include "../../../../../tools/pioneer/PioneerQ38TokenRecordShape.h"
 // DISTINCT full-token owner. Held staging,fresh QGW1 bootstrap and ROOT
 // startup/cancel request,terminal/worker STOP observation,owned HOLD,
-// committed readout and original-L1 restoration. No CPU products,
-// old-prefix ownership,dispatch/CSR close or END grant.
+// committed readout,original-L1 and earlier-dispatch image restoration.
+// No CPU products,old-prefix ownership,NIU/CSR close or END grant.
 struct PioneerQ38TokenRuntimeResult {
  uint32_t version=1,started=0,phase=0,worker=0,chunk=0,word=0,unsafe=0,staged=0;
  uint32_t packets=0,writes=0,reads=0,bytesWritten=0,bytesRead=0,boots=0,reserved[2]={};
@@ -37,6 +37,10 @@ struct PioneerQ38TokenRestoreResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,restoredCores=0;
  uint32_t savedWords=0,restoredWords=0,verifiedWords=0,programWords=0,firstPC=0,secondPC=0,reserved[2]={};
 };
+struct PioneerQ38TokenDispatchRestoreResult {
+ uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,restoredCores=0;
+ uint32_t savedWords=0,restoredWords=0,verifiedWords=0,entryWords=0,firstPC=0,secondPC=0,reserved[2]={};
+};
 class PioneerQ38TokenNativeOwner {
  const tt_dram_samples_result* proof=nullptr;PioneerResidentBanks* banks=nullptr;PioneerQ38DispatchLease* cohort=nullptr;
  PioneerQ38TokenMemory* memory=nullptr;const PioneerQ38CanonicalModelPlan* canonical=nullptr;
@@ -50,6 +54,8 @@ class PioneerQ38TokenNativeOwner {
  bool readoutPending=false,readoutDrained=false,readoutCommandKnown=false;
  uint32_t readoutCursor=0,readoutInput=0,readoutCommand[10]={};
  bool restoring=false,l1Restored=false;
+ const uint32_t* dispatchSaved[120]={}; // SAME earlier dispatch originals,captured BEFORE native launch
+ bool dispatchRestoring=false,dispatchRestored=false;
  bool Bound()const{
   if(!started || unsafe || !proof || !banks || !cohort || !memory || !canonical || !startup || !ledger
    || !plan.MatchesBinding(*canonical,*startup,identity,&cohort->authority.source[0][0]))return false;
@@ -64,11 +70,12 @@ class PioneerQ38TokenNativeOwner {
    || cohort->prepared!=120 || cohort->bootAttempted || cohort->booted || ((!holding && !held) && running[0]!=rootStarted)
    || ((holding || held) && (!terminalObserved || !rootAcknowledged))
    || ((restoring || l1Restored) && (!held || holding || !readoutDrained || readoutPending || readoutCursor!=observedTerminal[3]))
+   || ((dispatchRestoring || dispatchRestored) && (!l1Restored || restoring || !held || holding))
    || (rootStarted?(!rootAttempted || !booted || reset[0]!=((holding || held) && !running[0]?0x47800U:0x46800U))
     :reset[0]!=(rootAttempted?0x87ffffU:0x47800U)))return false;
   for(unsigned w=0;w<120;w++){
    const auto& n=cohort->worker[w];const auto& store=n.master?*n.master:n.store;
-   if(!n.image.saved || !n.image.ready || n.image.unsafe || n.image.running!=running[w] || !store.ready
+   if(!n.image.saved || n.image.ready==dispatchRestored || n.image.unsafe || n.image.running!=running[w] || !store.ready
     || store.pending || store.recovery_required || n.noc.recovery_required
     || ((holding || held) && reset[w]!=(running[w]?0x46800U:0x47800U)) || (held && running[w]))return false;
   }
@@ -89,6 +96,7 @@ class PioneerQ38TokenNativeOwner {
  template<class IO> bool Fail(IO& io,PioneerQ38TokenHoldResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenReadResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenRestoreResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
+ template<class IO> bool Fail(IO& io,PioneerQ38TokenDispatchRestoreResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Sources(IO& io,unsigned w){
   if(w>=120 || !Scope(io) || !io.SelectRuntimeCore(w) || !io.TokenMemoryMappingStable(w)
    || io.ResetRead()!=reset[w] || io.ResetRead()!=reset[w])return false;
@@ -187,6 +195,17 @@ public:
  bool HeldAfterTerminal()const{return held && !holding && TerminalObserved() && Bound();} // NOT restored/closed/END
  bool CommittedRecordsRead()const{return readoutDrained && !readoutPending && HeldAfterTerminal() && readoutCursor==observedTerminal[3];}
  bool OriginalL1Restored()const{return l1Restored && !restoring && CommittedRecordsRead() && Bound();} // dispatch/CSR leases STILL owned
+ bool DispatchImagesRestored()const{return dispatchRestored && !dispatchRestoring && OriginalL1Restored();} // NIU/scratch/TLB/END still owned
+ bool DispatchOutput(const void* output,size_t bytes)const{
+  const uintptr_t out=reinterpret_cast<uintptr_t>(output);
+  const size_t savedBytes=(size_t(TT_Q38_PANEL_VIEW_WORDS)+1)*4;
+  if(!output || !bytes || out>UINTPTR_MAX-bytes)return false;
+  for(unsigned w=0;w<120;w++){
+   const uintptr_t p=reinterpret_cast<uintptr_t>(dispatchSaved[w]);
+   if(!p || p>UINTPTR_MAX-savedBytes || (out<p+savedBytes && p<out+bytes))return false;
+  }
+  return true; // memory-only alias exclusion,NOT lifecycle/restore authority
+ }
  void Fault(){unsafe=true;staged=false;}
  bool MatchesRuntimeBinding(const tt_dram_samples_result& dram,const PioneerResidentBanks& b,const PioneerQ38DispatchLease& participants,
   const PioneerQ38TokenMemory& m,const PioneerQ38CanonicalModelPlan& c,const PioneerQ38TokenStartupPlan& data,
@@ -205,6 +224,14 @@ public:
   for(auto& value:reset)value=0x47800;
   for(unsigned w=0;w<120;w++){r.worker=w;PioneerQ38TokenMemoryResult image;
    if(!Guard(io,w) || !memory->VerifyImage(io,w,image))return Fail(io,r);
+   dispatchSaved[w]=io.Q38PanelSavedWords();
+   const uintptr_t saved=reinterpret_cast<uintptr_t>(dispatchSaved[w]);
+   const size_t savedBytes=(size_t(TT_Q38_PANEL_VIEW_WORDS)+1)*4;
+   if(!saved || (saved&3) || saved>UINTPTR_MAX-savedBytes)return Fail(io,r);
+   for(unsigned p=0;p<w;p++){
+    const uintptr_t other=reinterpret_cast<uintptr_t>(dispatchSaved[p]);
+    if(saved<other+savedBytes && other<saved+savedBytes)return Fail(io,r);
+   }
   }
   namespace C=PioneerQ38GlobalChainLayout;namespace W=PioneerQ38GlobalWorkerLayout;namespace T=PioneerQ38TokenLayout;
   r.phase=2;
@@ -717,6 +744,59 @@ public:
   r.worker=0;if(!HoldGuard(io,0,r))return Fail(io,r);
   l1Restored=true;restoring=false;memory->installed=false;r.ready=1;r.phase=4;return true;
  } // complete SAME original L1 journal restored;NO counter rewind/NIU command/CSR or dispatch close/END/unmap/host release.
+ template<class IO> bool RestoreDispatchImages(IO& io,PioneerQ38TokenDispatchRestoreResult& r){
+  const PioneerQ38TokenDispatchRestoreResult pristine;const auto* a=reinterpret_cast<const uint8_t*>(&r);
+  const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+  for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=b[i])return false;
+  if(dispatchRestoring || dispatchRestored || !OriginalL1Restored() || !DispatchOutput(&r,sizeof(r)) || !Scope(io))return false;
+  r.started=1;r.phase=1;const uint64_t began=io.Q38CohortNow();uint64_t previous=began;
+  if(began>UINT64_MAX-UINT64_C(300000000))return Fail(io,r);
+  auto time=[&](){
+   if(!Scope(io))return false;
+   const uint64_t now=io.Q38CohortNow();
+   if(now<previous || now<began || now-began>=UINT64_C(300000000))return false;
+   previous=now;return true;
+  };
+  // The complete earlier dispatch images must be present on ALL120 before
+  // the first original is written. This is NOT the broad legacy close.
+  for(unsigned w=0;w<120;w++){
+   r.worker=w;
+   if(!time() || !HoldGuard(io,w,r) || io.Q38PanelSavedWords()!=dispatchSaved[w]
+    || !PioneerQ38GraphCsrCode(io,w) || !HoldGuard(io,w,r))return Fail(io,r);
+  }
+  dispatchRestoring=true;r.phase=2;r.savedWords=120U*(TT_Q38_PANEL_VIEW_WORDS+1U);
+  for(unsigned end=120;end;end--){
+   const unsigned w=end-1;r.worker=w;
+   if(!time() || !HoldGuard(io,w,r) || io.Q38PanelSavedWords()!=dispatchSaved[w])return Fail(io,r);
+   for(unsigned i=0;i<TT_Q38_PANEL_VIEW_WORDS;i++){
+    r.word=i;const uint32_t address=TT_Q38_PANEL_VIEW_BASE+i*4,expected=dispatchSaved[w][1+i];uint32_t actual=0;
+    if(!io.TokenDispatchImageWrite(w,address,expected) || !io.TokenDispatchImageReadChecked(w,address,actual) || actual!=expected)return Fail(io,r);
+    r.restoredWords++;
+   }
+   uint32_t actual=0;r.word=TT_Q38_PANEL_VIEW_WORDS;
+   if(!io.TokenDispatchImageWrite(w,0x6000,dispatchSaved[w][0])
+    || !io.TokenDispatchImageReadChecked(w,0x6000,actual) || actual!=dispatchSaved[w][0]
+    || !time() || !HoldGuard(io,w,r))return Fail(io,r);
+   r.restoredWords++;r.entryWords++;r.restoredCores++;
+  }
+  r.phase=3;
+  for(unsigned w=0;w<120;w++){
+   r.worker=w;
+   if(!time() || !HoldGuard(io,w,r) || io.Q38PanelSavedWords()!=dispatchSaved[w])return Fail(io,r);
+   for(unsigned i=0;i<TT_Q38_PANEL_VIEW_WORDS+1U;i++){
+    r.word=i;uint32_t actual=0;const uint32_t address=i?TT_Q38_PANEL_VIEW_BASE+(i-1)*4:0x6000;
+    if(!io.TokenDispatchImageReadChecked(w,address,actual) || actual!=dispatchSaved[w][i])return Fail(io,r);
+    r.verifiedWords++;
+   }
+   if(!HoldGuard(io,w,r))return Fail(io,r);
+  }
+  if(r.restoredCores!=120 || r.entryWords!=120 || r.restoredWords!=r.savedWords || r.verifiedWords!=r.savedWords
+   || !time() || !HoldGuard(io,0,r))return Fail(io,r);
+  // CPU-only atomic publication under the SAME driver lock;no intermediate
+  // node-ready hint can authorize cleanup/reuse of this launched owner.
+  for(auto& node:cohort->worker){node.image.ready=false;node.image.dirty=false;}
+  dispatchRestored=true;dispatchRestoring=false;r.ready=1;r.phase=4;return true;
+ } // earlier dispatch L1 originals ONLY;NIU/scratch/TLB/clock/maps/hosts still owned. NO END.
 };
 static_assert(sizeof(PioneerQ38TokenRuntimeResult)==64,"all runtime result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenBootstrapResult)==64,"all bootstrap result bytes explicit");
@@ -725,5 +805,6 @@ static_assert(sizeof(PioneerQ38TokenTerminalResult)==64,"all terminal-observatio
 static_assert(sizeof(PioneerQ38TokenHoldResult)==64,"all terminal-HOLD result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenReadResult)==64,"all committed-readout result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenRestoreResult)==64,"all L1-restoration result bytes explicit");
+static_assert(sizeof(PioneerQ38TokenDispatchRestoreResult)==64,"all dispatch-restoration result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenNativeOwner)>16384 && sizeof(PioneerQ38TokenNativeOwner)<32768,"native owner staging buffer HEAP ONLY");
 #endif
