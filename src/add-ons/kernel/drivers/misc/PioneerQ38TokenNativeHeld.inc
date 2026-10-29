@@ -22,7 +22,8 @@ bool PioneerSessionIO::TokenMemoryAccessScope(){
     || s->phase==PioneerQ38TokenNativeState::RootHolding || s->phase==PioneerQ38TokenNativeState::RootHeld
     || s->phase==PioneerQ38TokenNativeState::RootRestoring || s->phase==PioneerQ38TokenNativeState::RootRestored
     || s->phase==PioneerQ38TokenNativeState::DispatchRestoring || s->phase==PioneerQ38TokenNativeState::DispatchRestored
-    || s->phase==PioneerQ38TokenNativeState::PeerStoresRestoring || s->phase==PioneerQ38TokenNativeState::PeerStoresRestored)
+    || s->phase==PioneerQ38TokenNativeState::PeerStoresRestoring || s->phase==PioneerQ38TokenNativeState::PeerStoresRestored
+    || s->phase==PioneerQ38TokenNativeState::RootStoreRestoring || s->phase==PioneerQ38TokenNativeState::RootStoreRestored)
     && s->runtime && !s->runtime->Unsafe())
    || s->phase==PioneerQ38TokenNativeState::MemoryClosing)
   && s->MatchesBinding(*c,fd,c->hashes,c->initialized,fd->team,sReloadGeneration);
@@ -34,7 +35,8 @@ bool PioneerSessionIO::TokenDispatchImageAccessScope(unsigned worker){
 } // exact native dispatch-restoration call only,not a broader L1 address grant
 bool PioneerSessionIO::TokenPeerStoreSelectionScope(){
  auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;
- return s && (s->phase==PioneerQ38TokenNativeState::PeerStoresRestoring || s->phase==PioneerQ38TokenNativeState::PeerStoresRestored)
+ return s && (s->phase==PioneerQ38TokenNativeState::PeerStoresRestoring || s->phase==PioneerQ38TokenNativeState::PeerStoresRestored
+   || s->phase==PioneerQ38TokenNativeState::RootStoreRestoring || s->phase==PioneerQ38TokenNativeState::RootStoreRestored)
   && TokenMemoryAccessScope() && TokenModelSourceScope(false);
 } // CPU ownership checks ONLY;selection may be between exact known TLB writes
 bool PioneerSessionIO::TokenPeerStoreAccessScope(unsigned worker){
@@ -42,6 +44,11 @@ bool PioneerSessionIO::TokenPeerStoreAccessScope(unsigned worker){
  return worker && worker<120 && worker==runtimeCore && s && s->phase==PioneerQ38TokenNativeState::PeerStoresRestoring
   && TokenPeerStoreSelectionScope();
 } // never ROOT or a public arbitrary NIU/scratch operation
+bool PioneerSessionIO::TokenRootStoreAccessScope(){
+ auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;
+ return !runtimeCore && s && s->phase==PioneerQ38TokenNativeState::RootStoreRestoring
+  && TokenPeerStoreSelectionScope();
+} // distinct ROOT-only local restoration;not master/shared-resource close
 bool PioneerSessionIO::TokenMemoryScope(const PioneerQ38TokenMemory& memory,const PioneerQ38CanonicalModelPlan& canonical,
  const PioneerQ38TokenStartupPlan& startup,const PioneerQ38GdnIdentity& id,const uint8_t* learned,unsigned pages){
  auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;

@@ -1,0 +1,55 @@
+Native ROOT-local original restoration:COMPLETED OFFLINE CHECKPOINT
+2026-10-29 18:25UTC. Full goal ACTIVE;20 tokens/sec UNMET.
+Last physical whole-model result remains0.207893161 tokens/sec.
+
+Exact source and qualification scope
+-----------------------------------
+Source snapshot:/private/tmp/pioneer-q38-root-store-clean.ZFFCkfwk
+The exact earlier ROOT-only source bytes are staged independently of later
+shared-mapping/clock/hardware-seal/VM changes. No newer ready flag,processor
+history or completed-owner object is substituted into these tests.
+
+Positive native histories25451/26623 and first-command-write generation-loss
+histories76939/81091 ALL terminal0. Each independently executes the genuine
+1010 initializer jobs,new120 participant preparation,full held image journal,
+4616 metadata packets,119 virgin tensor engines,original embedding+complete
+layer0 arithmetic,consumed cancellation,ROOT+119 genuine STOP,120 HOLD,
+zero-committed frontier drain,full token+earlier dispatch L1 restoration and
+119 peer original-store restoration BEFORE the distinct ROOT stage.
+
+Positive:ROOT10 zero command words,actual pre-master-lease original NIU
+configuration and2048 original scratch words are restored with immediate
+readback and a second complete pass. Independent original observations match,
+including UINT32_MAX. Counters are NOT recaptured or cleared. The generation
+fault occurs AFTER the first real original command write;NO following IO,
+retry,reset or resource release is allowed. Both paired runtime logs match.
+Only this write-generation fault is qualified here;other implemented ROOT
+fault modes are NOT silently claimed passing.
+
+Independent posthoc numerical comparisons
+-----------------------------------------
+Main positive72612,clean positive66366,main fault17259,clean fault43646
+ALL terminal0. Each embedding5120 words+first-layer5120 words is BIT-EXACT
+against the pinned independent original-model CPU trace:NO tolerance or
+diagnostic-only acceptance. CPU products are never supplied to the native
+execution path. This is first-layer numerics,not all64 layers/state/KV/tokens.
+
+Earlier matching SDK29217/6462 BOTH0:
+67f6b363787b22ba6b03a9331ed095166b628ef723511a916082ea21280b4ea0
+ROOT controller320B,factory208B,checked endpoints48B;individual frames only,
+not complete combined-stack qualification. Existing65 remains61faa093 and
+the renamed native entries remain inert/non-loadable. Endpoint75730/34993
+BOTH0:960 window checks+58 ROOT-only refusals. Role21018/47629 BOTH0:
+17 explicit TEST roles+277 refusals. Pending B68332/26284 BOTH0 adds17
+factory+22 endpoint refusals after genuine startup;B assertions are TEST ONLY
+and do not replace positive runtime history. Runtime/endpoint/role/pending
+paired logs match;SDK logs differ only in their output-directory pathname,
+and the actual SDK objects are byte-identical.
+
+Not yet ready
+-------------
+Master.ready stays true;shared mappings,clock,VM,PCI,host pages and model
+reservations remain owned;Closed stays FALSE. This checkpoint does not
+qualify later shared/clock/hardware-seal/VM stages,native full END/load-unload,
+full-model or multitoken execution,public no-CPU-reference Work/Assistant,
+the physical P100A or any speedup. No Pioneer software or power changes.

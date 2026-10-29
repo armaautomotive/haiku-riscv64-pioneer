@@ -4,6 +4,7 @@
 bool TokenMemoryMappingSourceScope();bool TokenMemoryAccessScope();
 bool TokenDispatchImageAccessScope(unsigned);
 bool TokenPeerStoreSelectionScope();bool TokenPeerStoreAccessScope(unsigned);
+bool TokenRootStoreAccessScope();
 bool TokenInitializationFifoEmpty(unsigned);bool TokenInitializationFifoReadChecked(unsigned,bool,uint32&);
 bool PrepareTokenNativeParticipant(unsigned);
 bool TokenMemoryScope(const PioneerQ38TokenMemory&,const PioneerQ38CanonicalModelPlan&,const PioneerQ38TokenStartupPlan&,
@@ -100,6 +101,22 @@ __attribute__((noinline)) bool TokenPeerScratchWrite(unsigned worker,unsigned wo
  if(word>=2048 || !TokenPeerStoreAccessScope(worker) || !TokenMemoryMappingStable(worker))return false;
  ResidentL1Write(word,value);return true;
 } // existing fixed8KiB alias;arbitrary original UINT32_MAX remains valid data
+__attribute__((noinline)) bool TokenRootNiuReadChecked(uint32 address,uint32& output){
+ if((address&3) || (address>=40 && address!=0x100) || !TokenRootStoreAccessScope() || !TokenMemoryMappingStable(0))return false;
+ output=ResidentNocRead(address);return true;
+}
+__attribute__((noinline)) bool TokenRootNiuWrite(uint32 address,uint32 value){
+ if((address&3) || (address>=40 && address!=0x100) || !TokenRootStoreAccessScope() || !TokenMemoryMappingStable(0))return false;
+ ResidentNocWrite(address,value);return true;
+} // original commands/config ONLY;never START/counter clear or peer access
+__attribute__((noinline)) bool TokenRootScratchReadChecked(unsigned word,uint32& output){
+ if(word>=2048 || !TokenRootStoreAccessScope() || !TokenMemoryMappingStable(0))return false;
+ output=ResidentL1Read(word);return true;
+}
+__attribute__((noinline)) bool TokenRootScratchWrite(unsigned word,uint32 value){
+ if(word>=2048 || !TokenRootStoreAccessScope() || !TokenMemoryMappingStable(0))return false;
+ ResidentL1Write(word,value);return true;
+} // fixed ROOT8KiB only;UINT32_MAX remains original DATA
 __attribute__((noinline)) bool TokenFifoReadChecked(unsigned worker,bool overflow,uint32& output){
  if(worker>=120 || !TokenMemoryAccessScope() || !TokenMemoryMappingStable(worker))return false;
  output=TokenFifoStatusWord(overflow?0x68U:0x64U);return true;

@@ -68,7 +68,10 @@ required = ('BindQ38TokenNative(', 'TokenCallScopeMatches(', 'TokenModelSourceSc
             'RestoreQ38TokenNativePeerStores(', 'PioneerQ38TokenNativeOwner::RestorePeerStores(', 'pioneer_token_context_scoped_peer_restore(',
             'TokenPeerStoreSelectionScope(', 'TokenPeerStoreAccessScope(', 'TokenPeerStoreSelect(',
             'TokenPeerNiuReadChecked(', 'TokenPeerNiuWrite(', 'TokenPeerScratchReadChecked(', 'TokenPeerScratchWrite(', 'TokenFifoReadChecked(',
-            'TokenInitializationFifoEmpty(', 'TokenInitializationFifoReadChecked(', 'PrepareTokenNativeParticipant(')
+            'TokenInitializationFifoEmpty(', 'TokenInitializationFifoReadChecked(', 'PrepareTokenNativeParticipant(',
+            'RestoreQ38TokenNativeRootStore(', 'PioneerQ38TokenNativeOwner::RestoreRootStore(',
+            'pioneer_token_context_scoped_root_store_restore(', 'TokenRootStoreAccessScope(',
+            'TokenRootNiuReadChecked(', 'TokenRootNiuWrite(', 'TokenRootScratchReadChecked(', 'TokenRootScratchWrite(')
 for name in required:
     assert any(name in key for key in frames), (name, 'actual implementation must be emitted')
 for controller in ('State', 'ConvHistory', 'Projection'):
@@ -98,6 +101,7 @@ for forbidden in ('Q38WorkControl', 'OriginalSource', 'CompareFinal', 'Reference
                   'CheckNativeEmptyReadout', 'CheckNativeReadoutFlow', 'CheckNativeRestoreEmpty', 'beforeNativeImage',
                   'CheckNativeDispatchRestore', 'beforeDispatchImage', 'ResumeFirstLayerCancellation',
                   'CheckNativePeerRestore', 'beforePeerScratch', 'SnapshotPrePeerStores',
+                  'CheckNativeRootStoreRestore', 'beforeRootScratch', 'nativeRootStoreResult',
                   'NativePreparationObservation', 'NativePreparationFifoObserved', 'CheckNativePreparationFault',
                   'Q38NativeTraceTest', 'PioneerQ38ObservedTrace', 'KvByteSpan', 'BindKvBytes', 'CheckNativeFullFlow',
                   'Q38MixedLiveValidationControl', 'PioneerQ38MixedLiveNativeState',
@@ -145,6 +149,7 @@ print('PASS ACTUAL private held-only committed-record READ factory/controller SD
 print('PASS ACTUAL full-token original-L1 journal restoration factory/controller SDK emitted;requires SAME genuine HOLD+drained records/all120 frozen-image proof before writes/exact original words+full second pass;NO NIU/CSR/dispatch close/END/host release/physical/Work grant')
 print('PASS ACTUAL distinct earlier dispatch-original L1 factory/controller+phase-specific checked aliases SDK emitted;SAME private captured originals+all120 code proofs BEFORE writes/exact immediate readback+whole second pass;NO NIU/scratch/TLB/master/clock/END/host release/physical/Work grant')
 print('PASS ACTUAL119 peer NIU+scratch factory/controller+per-write-checked selection and aliases SDK emitted;private original config/scratch identities+all120-held guards+exact words/secondpass;ROOT/sharedTLB/master/clock/maps/hosts/END STILL owned;NOT runtime/physical/Work qualification')
+print('PASS ACTUAL distinct ROOT-only NIU+scratch factory/controller+phase-scoped checked4B aliases SDK emitted;requires SAME119 peer restores/all120 current held proofs/original command+config+scratch immediate checks/full secondpass;master.ready/sharedTLB/clock/maps/hosts/END STILL retained;NOT runtime/physical/Work qualification')
 print('PASS scoped fixed FIFO availability+overflow reads emitted/native zero-initializer+held-memory+runtime-packet+bootstrap+HOLD/restoration guards test FIFO drain BEFORE accepting completion receipts;no old MMIO whitelist widening/counter clear/START;runtime/hardware and earlier peer-lease/dispatch-preparation FIFO audit STILL OWED')
 print('PASS complete2097152B immutable rawRoPE emitted;NO kernel cos/sin/pow imports or CPU model-reference path')
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+' token-context-NODRV.o')

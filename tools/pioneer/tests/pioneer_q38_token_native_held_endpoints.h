@@ -18,6 +18,11 @@ struct TokenHeldEndpoints:ZeroControlIO {
  std::vector<uint32> alias=std::vector<uint32>(Words),original;
  unsigned runtimeCore=0,maps=0,aliasReads=0,aliasWrites=0;
  const PioneerQ38TokenMemoryResult* journalResult=nullptr;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+ std::array<uint32,2048> beforeRootScratch={};uint32 beforeRootConfig=0;
+ const PioneerQ38TokenRootStoreRestoreResult* nativeRootStoreResult=nullptr;
+ unsigned rootStoreFault=0,rootStoreFaultSeen=0,rootStoreFaultTouches=0,rootStoreMapWrites=0;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE
  std::vector<uint32> beforeNativeImage;
  const PioneerQ38TokenRestoreResult* nativeRestoreResult=nullptr;
@@ -90,6 +95,13 @@ struct TokenHeldEndpoints:ZeroControlIO {
   for(unsigned w=0;w<120;w++){runtimeCore=w;assert(Q38PanelRead(address)==0x5a000000+w);}
   for(unsigned w=0;w<120;w++){runtimeCore=w;Q38PanelWrite(address,0xab860000+at);}
   runtimeCore=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+  for(unsigned i=0;i<2048;i++)Core(0).destination[i]=i%17?uint32(0x75a31901U*(i+1)):UINT32_MAX;
+  beforeRootConfig=Core(0).config;
+  for(unsigned i=0;i<2048;i++)beforeRootScratch[i]=Raw(0,0x17e000+i*4);
+#endif
+  // Root-store observations precede PanelOwners/actual master-lease BEGIN;
+  // they are compared ONLY after restoration,never fed to a saved journal.
  }
  PanelIO& C(){assert(runtimeCore<120);return runtimeCore?*peers[runtimeCore-1]:static_cast<PanelIO&>(*this);}
  PanelIO& Core(unsigned worker){assert(worker<120);return worker?*peers[worker-1]:static_cast<PanelIO&>(*this);}
@@ -176,6 +188,9 @@ struct TokenHeldEndpoints:ZeroControlIO {
  uint32* Q38PanelSavedWords(){Touch();return C().Q38PanelSavedWords();}
  uint32* HostReadBackup(unsigned words){Touch();return C().HostReadBackup(words);}
  void DramTlbWrite(unsigned s,unsigned w,uint32 value){Touch();C().DramTlbWrite(s,w,value);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+  if(rootStoreFault==2 && nativeRootStoreResult && nativeRootStoreResult->phase==1 && !runtimeCore && !s && !w)rootStoreMapWrites++;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
   if(nativePeerResult && nativePeerResult->started){
    C().nativePhysicalWindow=true;C().nativeWindowX=PioneerWorkerX(runtimeCore);C().nativeWindowY=PioneerWorkerY(runtimeCore);
@@ -184,6 +199,11 @@ struct TokenHeldEndpoints:ZeroControlIO {
 #endif
  }
  uint32 DramTlbRead(unsigned s,unsigned w){Touch();const uint32 actual=C().DramTlbRead(s,w);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+  if(rootStoreFault==2 && !rootStoreFaultSeen && nativeRootStoreResult && nativeRootStoreResult->phase==1 && !runtimeCore && !s && !w){
+   assert(rootStoreMapWrites==1);rootStoreFaultSeen++;rootStoreFaultTouches=touches;return actual^1U;
+  }
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
   if(peerRestoreFault==2 && !peerFaultSeen && nativePeerResult && nativePeerResult->phase==1 && !runtimeCore && !s && !w){
    assert(peerMapWriteSeen==1);peerFaultSeen++;peerFaultTouches=touches;return actual^1U;
@@ -193,6 +213,11 @@ struct TokenHeldEndpoints:ZeroControlIO {
  }
  uint32 SourceRead(unsigned w){Touch();return Trace("source",w,C().SourceRead(w));}
  uint32 ResidentNocRead(uint32 address){Touch();const uint32 actual=Trace("noc",address,C().ResidentNocRead(address));
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+  if(rootStoreFault==3 && !rootStoreFaultSeen && nativeRootStoreResult && nativeRootStoreResult->phase==3 && !runtimeCore && address==0x100){
+   rootStoreFaultSeen++;rootStoreFaultTouches=touches;return actual^1U;
+  }
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
   if(peerRestoreFault==3 && !peerFaultSeen && nativePeerResult && nativePeerResult->phase==3 && runtimeCore==119 && address==0x100){
    peerFaultSeen++;peerFaultTouches=touches;return actual^1U;
@@ -202,6 +227,12 @@ struct TokenHeldEndpoints:ZeroControlIO {
  }
  uint32 TokenFifoStatusWord(uint32 address){
   Touch();assert(address==0x64 || address==0x68);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+  if(!rootStoreFaultSeen && nativeRootStoreResult && nativeRootStoreResult->phase==1 && !runtimeCore
+   && ((rootStoreFault==5 && address==0x64) || (rootStoreFault==6 && address==0x68))){
+   rootStoreFaultSeen++;rootStoreFaultTouches=touches;return address==0x64?0x1010100fU:1U;
+  }
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
   if(!peerFaultSeen && nativePeerResult && nativePeerResult->phase==1 && !runtimeCore
    && ((peerRestoreFault==5 && address==0x64) || (peerRestoreFault==6 && address==0x68))){
@@ -238,6 +269,11 @@ struct TokenHeldEndpoints:ZeroControlIO {
   }
 #endif
   C().ResidentNocWrite(address,value);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+  if(rootStoreFault==1 && !rootStoreFaultSeen && nativeRootStoreResult && nativeRootStoreResult->phase==2 && !runtimeCore && !address){
+   rootStoreFaultSeen++;rootStoreFaultTouches=touches;sReloadGeneration++;
+  } // actual write precedes scope loss;no following IO is permitted
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
   if(peerRestoreFault==1 && !peerFaultSeen && nativePeerResult && nativePeerResult->phase==2 && runtimeCore==119 && !address){
    peerFaultSeen++;peerFaultTouches=touches;sReloadGeneration++;
@@ -250,6 +286,11 @@ struct TokenHeldEndpoints:ZeroControlIO {
  uint32 RuntimeStatusRead(unsigned word){Touch();return C().RuntimeStatusRead(word);}
  void RuntimeStatusWrite(unsigned word,uint32 value){Touch();C().RuntimeStatusWrite(word,value);}
  uint32 ResidentL1Read(unsigned word){Touch();const uint32 actual=C().ResidentL1Read(word);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+  if(rootStoreFault==4 && !rootStoreFaultSeen && nativeRootStoreResult && nativeRootStoreResult->phase==4 && !runtimeCore && !word){
+   rootStoreFaultSeen++;rootStoreFaultTouches=touches;return actual^1U;
+  }
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
   if(peerRestoreFault==4 && !peerFaultSeen && nativePeerResult && nativePeerResult->phase==4 && runtimeCore==119 && !word){
    peerFaultSeen++;peerFaultTouches=touches;return actual^1U;

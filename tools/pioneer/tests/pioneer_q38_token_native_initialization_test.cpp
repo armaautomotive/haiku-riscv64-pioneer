@@ -376,10 +376,14 @@ struct Fixture {
 int main(int argc,char** argv){
  const bool peerBootstrap=argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines");
  const bool fullFlow=argc==7 && (!strcmp(argv[2],"--execution-full-flow") || !strcmp(argv[2],"--execution-readout-full-flow"));
- const bool restorePeers=argc==7 && (!strcmp(argv[2],"--execution-restore-peers") || !strcmp(argv[2],"--execution-restore-peers-fault")
+ const bool restoreRoot=argc==7 && (!strcmp(argv[2],"--execution-restore-root-store") || !strcmp(argv[2],"--execution-restore-root-store-fault")
+  || !strcmp(argv[2],"--execution-restore-root-store-map-fault") || !strcmp(argv[2],"--execution-restore-root-store-config-fault")
+  || !strcmp(argv[2],"--execution-restore-root-store-scratch-fault") || !strcmp(argv[2],"--execution-restore-root-store-fifo-fault")
+  || !strcmp(argv[2],"--execution-restore-root-store-overflow-fault"));
+ const bool restorePeers=restoreRoot || (argc==7 && (!strcmp(argv[2],"--execution-restore-peers") || !strcmp(argv[2],"--execution-restore-peers-fault")
   || !strcmp(argv[2],"--execution-restore-peers-map-fault") || !strcmp(argv[2],"--execution-restore-peers-config-fault")
   || !strcmp(argv[2],"--execution-restore-peers-scratch-fault") || !strcmp(argv[2],"--execution-restore-peers-fifo-fault")
-  || !strcmp(argv[2],"--execution-restore-peers-overflow-fault"));
+  || !strcmp(argv[2],"--execution-restore-peers-overflow-fault")));
  const bool cancelLayer=restorePeers || (argc==7 && (!strcmp(argv[2],"--execution-cancel-first-layer") || !strcmp(argv[2],"--execution-hold-first-layer")
   || !strcmp(argv[2],"--execution-readout-empty") || !strcmp(argv[2],"--execution-restore-empty") || !strcmp(argv[2],"--execution-restore-empty-fault")
   || !strcmp(argv[2],"--execution-restore-dispatch") || !strcmp(argv[2],"--execution-restore-dispatch-fault")));
@@ -446,6 +450,19 @@ int main(int argc,char** argv){
     assert(io.TokenFifoStatusWord(0x64)==((core.config&0x10000U)?0x10101010U:0U) && !io.TokenFifoStatusWord(0x68));checks+=2;
    }
    assert(io.SelectRuntimeCore(0) && io.rootStarts==starts && !starts && io.rootStops==stops && io.rootHolds==holds);
+   const unsigned rootBefore=io.touches;unsigned rootRefusals=0;
+   auto refuseRoot=[&](){
+    uint32 value=0xa5a55a5a;assert(!io.TokenRootStoreAccessScope());rootRefusals++;
+    for(unsigned address:{0U,4U,36U,40U,0x40U,0x64U,0x100U,0x174U,0x204U,UINT32_MAX}){
+     assert(!io.TokenRootNiuReadChecked(address,value) && value==0xa5a55a5a && !io.TokenRootNiuWrite(address,0));rootRefusals+=2;
+    }
+    for(unsigned word:{0U,2047U,2048U,UINT32_MAX}){
+     assert(!io.TokenRootScratchReadChecked(word,value) && value==0xa5a55a5a && !io.TokenRootScratchWrite(word,0));rootRefusals+=2;
+    }
+    assert(io.touches==rootBefore);
+   };
+   refuseRoot();{PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);refuseRoot();}
+   printf("PASS ROOT-only restoration endpoints/%u wrong-phase+outside-FD refusals/output unchanged/ZERO IO or zero-program/model instructions;NOT positive restoration/END/hardware/Work qualification\n",rootRefusals);
    tt_resident_session_result end={};bool clean=true;const unsigned before=io.touches;
    assert(!IncompleteEnd(c,end,clean) && !clean && io.touches==before);f.Unknown();
    printf("PASS actual HELD TEST constructor/ALL120 physical endpoint expectations BEFORE any preparation/history/actual selected6 TLB words+FIFO observations/%u checks/ZERO zero-program or model instructions;NOT native preparation/model/STOP/END/hardware/Work/TPS qualification\n",checks);
@@ -544,6 +561,12 @@ int main(int argc,char** argv){
    !strcmp(argv[2],"--execution-restore-peers-map-fault")?2:!strcmp(argv[2],"--execution-restore-peers-config-fault")?3:
    !strcmp(argv[2],"--execution-restore-peers-scratch-fault")?4:!strcmp(argv[2],"--execution-restore-peers-fifo-fault")?5:
    !strcmp(argv[2],"--execution-restore-peers-overflow-fault")?6:0;
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+  io.rootStoreFault=!strcmp(argv[2],"--execution-restore-root-store-fault")?1:
+   !strcmp(argv[2],"--execution-restore-root-store-map-fault")?2:!strcmp(argv[2],"--execution-restore-root-store-config-fault")?3:
+   !strcmp(argv[2],"--execution-restore-root-store-scratch-fault")?4:!strcmp(argv[2],"--execution-restore-root-store-fifo-fault")?5:
+   !strcmp(argv[2],"--execution-restore-root-store-overflow-fault")?6:0;
 #endif
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE

@@ -99,6 +99,20 @@ static void CheckNativeExecution(Fixture& f){
    }
    assert(!RestoreQ38TokenNativePeerStores(c,peer) && io.touches==beforeHold && !state->PeerStoreOriginalsRestored());
    puts("PASS native119-peer local NIU+scratch restore refuses pending ROOT and16 non-pristine results without IO/no caller original/clean capability");
+   PioneerQ38TokenRootStoreRestoreResult rootStore;const auto pristineRootStore=rootStore;
+   auto* rootStoreWords=reinterpret_cast<uint32*>(&rootStore);
+   for(unsigned i=0;i<16;i++){
+    rootStoreWords[i]^=1;assert(!RestoreQ38TokenNativeRootStore(c,rootStore) && io.touches==beforeHold);rootStore=pristineRootStore;
+   }
+   assert(!RestoreQ38TokenNativeRootStore(c,rootStore) && io.touches==beforeHold && !state->RootStoreOriginalsRestored());
+   uint32 rootValue=0xa5a55a5a;
+   for(uint32 address:{0U,36U,40U,0x40U,0x100U,0x104U,UINT32_MAX})
+    assert(!io.TokenRootNiuReadChecked(address,rootValue) && rootValue==0xa5a55a5a
+     && !io.TokenRootNiuWrite(address,0) && io.touches==beforeHold);
+   for(unsigned word:{0U,2047U,2048U,UINT32_MAX})
+    assert(!io.TokenRootScratchReadChecked(word,rootValue) && rootValue==0xa5a55a5a
+     && !io.TokenRootScratchWrite(word,0) && io.touches==beforeHold);
+   puts("PASS native ROOT-local restore refuses genuine pending ROOT+16 non-pristine results/22 phase-or-range checked NIU+scratch refusals preserve output/NO IO or caller original/clean capability");
    for(unsigned w=0;w<120;w++){
     const uint32_t* original=io.Core(w).Q38PanelSavedWords();assert(original);
     for(unsigned offset:{0U,1U,unsigned(TT_Q38_PANEL_VIEW_WORDS)})

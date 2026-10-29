@@ -61,7 +61,8 @@ for header, family in (
     ('pioneer_q38_token_native_readout_flow_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE'),
     ('pioneer_q38_token_native_restore_empty_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE'),
     ('pioneer_q38_token_native_dispatch_restore_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE'),
-    ('pioneer_q38_token_native_peer_restore_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE')):
+    ('pioneer_q38_token_native_peer_restore_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE'),
+    ('pioneer_q38_token_native_root_store_restore_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE')):
     parents = {family:1, fixture:1, context:1}
     if family in ('PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE','PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE'):
         parents['PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE']=1
@@ -79,10 +80,12 @@ for header, family in (
         parents.update(PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE=1,PIONEER_Q38_TOKEN_NATIVE_READOUT_EMPTY_FIXTURE=1,
                        PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE=1,PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE=1,
                        PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE=1)
-    if family=='PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE':
+    if family in ('PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE','PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE'):
         parents.update(PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE=1,PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE=1,
                        PIONEER_Q38_TOKEN_NATIVE_READOUT_EMPTY_FIXTURE=1,PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE=1,
                        PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE=1,PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE=1)
+    if family=='PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE':
+        parents['PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE']=1
     cases = [(parents, True)]
     for macro in parents:
         absent = dict(parents)
@@ -92,6 +95,8 @@ for header, family in (
             cases.append(({**parents, macro:value}, False))
     for value in (0, 1):
         cases.append(({**parents, 'PIONEER_Q38_WORK_INFERENCE':value}, False))
+        if family=='PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE':
+            cases.append(({**parents, 'PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE':value}, False))
     for definitions, expected in cases:
         result = subprocess.run([os.environ.get('CXX', 'c++'), '-E', '-x', 'c++',
                                  *['-D'+key+'='+str(value) for key, value in definitions.items()], str(here/header)],

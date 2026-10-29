@@ -118,4 +118,15 @@
  else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);result.unsafe=1;result.ready=0;okay=false;}
  return okay;
 } //119 local NIU/scratch leases ONLY;ROOT/sharedTLBs/master/clock/maps/hosts/END remain owned
+[[maybe_unused]] static __attribute__((noinline)) bool RestoreQ38TokenNativeRootStore(PioneerStoreContext& c,PioneerQ38TokenRootStoreRestoreResult& result){
+ auto* s=c.q38TokenNative;const PioneerQ38TokenRootStoreRestoreResult pristine;
+ const auto* a=reinterpret_cast<const uint8_t*>(&result);const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+ for(unsigned i=0;i<sizeof(result);i++)if(a[i]!=b[i])return false;
+ if(!s || s->phase!=PioneerQ38TokenNativeState::PeerStoresRestored || !s->runtime || !s->PeerStoreOriginalsRestored()
+  || !Q38TokenExecutionOutput(c,&result,sizeof(result)) || !c.io.TokenModelSourceScope(false))return false;
+ s->phase=PioneerQ38TokenNativeState::RootStoreRestoring;bool okay=s->runtime->RestoreRootStore(c.io,result);
+ if(okay && s->runtime->RootStoreOriginalsRestored())s->phase=PioneerQ38TokenNativeState::RootStoreRestored;
+ else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);result.unsafe=1;result.ready=0;okay=false;}
+ return okay;
+} // ROOT-local originals only;master.ready/shared-TLB/clock/maps/hosts/END retained
 #endif

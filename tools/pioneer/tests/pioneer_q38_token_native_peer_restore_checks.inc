@@ -11,6 +11,9 @@
  || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE) || defined(PIONEER_Q38_WORK_INFERENCE)
 #error Explicit native119-peer local NIU+scratch restoration TEST required
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+#include "pioneer_q38_token_native_root_store_restore_checks.inc"
+#endif
 static void CheckNativePeerRestore(Fixture& f){
  auto& c=*f.c;auto& io=f.io;auto* state=c.q38TokenNative;
  assert(!lockHeld && state->DispatchImagesRestored() && !state->PeerStoreOriginalsRestored()
@@ -57,4 +60,7 @@ static void CheckNativePeerRestore(Fixture& f){
   && !io.PageMock::releases && !io.OutputBufferMock::releases);
  if(io.peerRestoreFault)printf("EXECUTED native119-peer restore fault%u/ACTUAL preceding original layer/cancel/STOP/HOLD/drain/token+dispatch originals/first bad real mapping or NIU/scratch readback or generation loss/NO following IO/retry/reset/release;ALL resources retained,NO clean closure/END/physical/Work/TPS grant\n",io.peerRestoreFault);
  else puts("EXECUTED native SAME full851/original firstlayer+cancel/STOP/HOLD/drain/token+dispatch originals/ALL120 current held preflight/119 exact original NIU configs+1190 zero command words+243712 original scratch words immediate reads+full second pass/independent pre-lease byte+config observations match including UINT32_MAX;ROOT/sharedTLBs/master/clock/maps/hosts STILL OWNED,NO END/physical/Work/TPS grant");
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+ if(!io.peerRestoreFault)CheckNativeRootStoreRestore(f);
+#endif
 }
