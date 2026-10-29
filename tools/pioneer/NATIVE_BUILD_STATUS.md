@@ -1,5 +1,26 @@
 # Native build status
 
+## Current: first native original-model matrix passes offline
+
+October29,2026 07:15UTC. Main/clean first-matrix C tests both finish0 with
+byte-identical complete logs. The SAME full851 owner,1010 actual zero jobs,
+119 virgin full tensor-engine histories and actual ROOT execution continue
+through original embedding/normalization/input packing and three real
+worker doorbells. All48 original role10 outputs (K5120) match independent
+FP32/FP64 observers after3840 actual Tensix matrix instructions. ROOT checks
+the first projection and reaches the NEXT phase1002 doorbell,held BEFORE
+delivery. Fresh observation/cancel REQUEST and incomplete-END retention pass.
+
+The earlier A/B assertions required scalar-RISC FP activity,which is not
+required for matrix arithmetic performed by Tensix. C independently checks
+each actual output and real matrix execution;all three workers have zero
+scalar-FP instructions and1280 Tensix matrix instructions each. Failed A/B
+histories remain failures. No CPU product or processor history is supplied.
+This is NOT a completed layer/token,state advancement,consumed cancellation,
+STOP/END,physical P100A or Work/Assistant qualification. No driver is installed
+and last physical whole-model remains **0.207893161 tokens/sec**;20 unmet.
+Evidence: [native first-matrix checkpoint](benchmarks/qwen38-token-native-first-matrix-20261029.txt).
+
 ## Current: full tensor-engine instances bootstrap under the native owner offline
 
 October29,2026 07:03UTC. All119 full matrix/GDN/Conv/attention instruction
@@ -210,6 +231,8 @@ Evidence: [native held staging checkpoint](benchmarks/qwen38-token-native-held-2
 - [x] Full tensor-engine instances from VIRGIN construction on the native
   byte backing;actual119-worker native boot positive offline tests and
   component constructor-isolation/idle-CSR-fault persistence tests.
+- [x] First original-model native matrix:three actual workers/48 outputs,
+  real Tensix arithmetic and independent FP32/FP64 output comparisons offline.
 - [ ] Extend bootstrap timing/late-fault coverage and validate genuine KV/state
   advancement during native execution.
 - [ ] Complete original-model all64-layer, multitoken, persistent-state,

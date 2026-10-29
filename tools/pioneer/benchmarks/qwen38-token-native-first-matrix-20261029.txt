@@ -1,0 +1,51 @@
+Native original-model first-matrix arithmetic qualification
+2026-10-29 07:15UTC. Goal ACTIVE. Last physical whole-model0.207893161tok/s,
+20tok/s UNMET. NO Pioneer/SSH/power/install/OS/Assistant/boot/CPU/RAM/
+network/SD/mains mutation,physical health or measured speedup claim.
+
+Current first-matrix C main17036/clean18220 BOTH terminal0. Complete logs
+are byte-identical. Exact source is in ab91d3dd277d263c8f5033e0ba6dc872661ea45c.
+The same native full851 owner performs actual1010 zero jobs,full120 held
+stages,4616 metadata transfers and119 genuine VIRGIN QGW1 instruction boots.
+All full tensor engines exist before binding and use the SAME native L1/CSR
+backing from their first instruction. No completed CPU or owner is replaced.
+
+ROOT continues through authenticated original27B Q4_K embedding,verified
+GDDR publication,original layer0 normalization and native input packing.
+The first3 actual worker doorbells are delivered. Actual learned requests
+read authenticated original GGUF bytes. Worker input,output and ROOT reads
+use the same native backing;no CPU-computed model product is uploaded.
+
+All3 actual workers finish sequence1 at WAIT pc20050,each with1280 Tensix
+matrix instructions,162 actual requests/responses and independentOutput1.
+The48 role10 outputs (full K5120) match BOTH independent FP32 arithmetic
+and the separate original-row FP64 observer. The references run only after
+actual execution and never supply inputs or completion. ROOT validates
+the first projection and submits NEXT phase1002 worker1 doorbell,which
+remains genuinely pending BEFORE delivery;the old delivered doorbell1
+does not start the staged next job. ROOT118848073 instructions;all workers
+364574464 instructions;max written ROOT stack5764/8192 bytes.
+
+Fresh native observation and one monotonic cancel REQUEST pass at the
+pending next doorbell. Cancellation has NOT been consumed. Incomplete
+END still refuses cleanup and retains/quarantines all owners and mappings.
+
+Earlier A35505/90433 and event-delta B24961/13433 all terminate1 at an
+overconstrained combined assertion requiring scalar-RISC FP instructions.
+Those logs did not split the conjuncts and are NOT retagged as passes.
+C counts actual scalar-FP opcodes,prints/evaluates independent outputs
+before asserting real matrix instructions and correct output. Scalar FP
+is legitimately0 for all3 workers:the actual3840 Tensix matrix instructions
+perform the matrix arithmetic. No numerical tolerance was weakened.
+
+Exact-source storage F93888/49343 BOTH0;native119 bootstrap B4662/48402
+BOTH0;SDK78168/11474 BOTH0 with identical unchanged object SHA256
+57ef41179428d9ab2e04d0e8256cea2d2ccfb68d2c77ce53472e60ce9713780c.
+Role75301/55587 BOTH0. See the full-engine bootstrap report for these scopes.
+
+Remaining complete objective:all native matrix/attention/GDN/Conv bodies,
+all64 layers,multitoken/persistent-state/KV/vocabulary/token delivery;
+consumed cancel,terminal/all119STOP,L1/CSR restoration,clean END/load-unload/
+recovery;physical correctness and longer conversations;qualified separate
+no-CPU-reference Work+Assistant and measured optimization toward20tok/s.
+This first matrix is NOT a whole layer/token or hardware acceptance gate.
