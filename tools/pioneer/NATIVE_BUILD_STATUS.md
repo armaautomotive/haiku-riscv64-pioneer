@@ -1,5 +1,32 @@
 # Native build status
 
+## Latest: full-model native binding and shared-lock interlock qualify offline
+
+October 29, 2026. The distinct full851 native token context now owns its
+canonical model and all seven runtime-bank reservations, without borrowing
+the old embedding/prefix owner. The real FD/team/thread/global-lock,
+generation, clock and host-resource checks compile against the actual Haiku
+driver. Main/clean SDK objects are byte-identical; largest new function frame
+400 bytes. The older native65 control remains byte-identical.
+
+Main/clean ASan+UBSan tests execute the production factory, whole shared
+command lock, call scope, whole `Unsafe`, retention and unfinished-END branch:
+seven workspace choices and 3,711 refusals pass, including missing last pages
+of all 3,551 learned extents. An integration gap was fixed: ordinary and delta
+commands are now excluded while the new token context owns the mutable banks.
+OS/clock/unused foreign-owner endpoints in these tests are simulated.
+
+This is native BINDING qualification, **not initialization, upload, model
+execution or physical-card qualification**. It has no conventional driver ABI
+or compute/Work route and has not been linked, installed or invoked on the
+P100A. Full-token END deliberately retains/quarantines rather than falling
+through to legacy cleanup until its distinct lifecycle is implemented.
+The full-model numerical runs remain live; no complete-model result or new
+throughput measurement is claimed. Last physical whole-model remains
+**0.207893161 tokens/sec**; the 20 tokens/sec target is unmet.
+Evidence and next steps:
+[full-model native binding checkpoint](benchmarks/qwen38-token-native-binding-20261029.txt).
+
 ## Latest: original first-layer numerics match; full-token native journal in development
 
 October 28, 2026. Actual instruction-executed original27B embedding and

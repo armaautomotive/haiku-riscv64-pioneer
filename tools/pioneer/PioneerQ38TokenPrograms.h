@@ -7599,7 +7599,8 @@ static inline unsigned CodeWords(unsigned worker){
 static inline uint32_t CodeAddress(unsigned worker,unsigned ordinal){
  if(worker>=120)return UINT32_MAX;
  for(unsigned i=0;i<CodeSpans(worker);i++){const auto s=CodeSpan(worker,i);
-  if(ordinal<s.words)return s.address+ordinal*4;ordinal-=s.words;
+  if(ordinal<s.words)return s.address+ordinal*4;
+  ordinal-=s.words;
  }return UINT32_MAX;
 }
 static inline bool ProgramWord(unsigned worker,uint32_t address,uint32_t& output){

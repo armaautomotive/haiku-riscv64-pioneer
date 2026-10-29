@@ -1,0 +1,3 @@
+28ee719add7e0df0b6b699d6f4f8f5043dfa0a794813893028fe22fcc2fe50e9 token-programs FP32/cancel1/ALL12 sections+2fullELFs authenticated/DATA ONLY/NO install or native permission
+PASS FP32 token program DATA/cancel1/ALL12 section bytes/ALL120 exact code2710744 words/snapshot11406906 words=45627624bytes/terminal60000+60004 NEW vs old prefix/runtime+padding covered/963 refusals/no implicit padding or immutable-output alias;NOT native/journal-execution/physical/model/Work/TPS authority
+PASS full-token immutable generator/complete14artifact auth/SAME-open snapshots/exact reproduction/17 corruption+overwrite+role refusals;DATA ONLY/no device or native permission

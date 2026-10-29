@@ -1,0 +1,124 @@
+Full851 native token binding, actual shared-lock interlock and SDK compilation
+2026-10-29 00:32UTC checkpoint. Goal ACTIVE, not complete/blocked/paused.
+No hardware/SSH/power/driver install/kernel/Assistant/boot/CPU/RAM/network/
+SD/mains actions. No current physical health claim. Last actual whole-model
+0.207893161 tokens/sec;20 target UNMET. No measured speedup.
+
+Implementation, not a new partial-model or old-prefix execution alias
+------------------------------------------------------------------
+PioneerQ38TokenNativeState privately owns the complete canonical model and
+joint runtime reservation object. Its factory checks all851 learned tensors/
+3551 extents' allocated-page PRESENCE before identity consumption, reservation
+or context publication. This is NOT original-file or byte authentication.
+No dummy source identities are supplied to construct startup DATA early.
+The canonical-only presence check is shared with the existing startup plan.
+
+The genuine native factory uses the current exclusive FD/cookie, calling
+team/thread/global call seal, full64-bit driver generation, monotonic model
+epoch, actual initialized/hash pointers, busy-clock lease and retained high
+host/input/bulk leases. It claims ALL7 complete runtime suffixes atomically
+through the existing real bank owner; no second reservation or initialized
+bitmap is fabricated. State, history, KV and workspace initialization remain
+unpublished. No old completed embedding/prefix object is borrowed.
+
+The new call scope can re-enter ONLY its own active token context. The
+controlledToken Unsafe exception does not hide other zero/graph/compute/
+host/PCI uncertainties. Scope exit clears only its CPU call seal/releases
+the semaphore;it never performs END, STOP, reset, restore, ARC, unmap or free.
+The shared Q38MutableScopeOwned interlock now includes q38TokenNative:
+ordinary and delta commands cannot overlap these reservations. SAME-owner
+private session calls still enter through the actual production lock.
+
+Any post-publication reservation/binding failure invokes the production
+MEMORY-ONLY retention path, faulting this state and keeping banks, bulk,
+clock and all host owners. The full-token END path is NOT implemented:it
+intentionally refuses before any legacy cleanup and retains/quarantines.
+Closed() is deliberately false;this cannot be installed as a usable driver.
+
+Actual whole-driver SDK compilation, not a loadable module
+---------------------------------------------------------
+Main58556 initial binding-only compile finished0;final interlock build
+main88498 and clean72646 BOTH0. Actual PioneerSessionIO/PioneerStoreContext,
+factory, whole shared lock, call scope, retention/END and clean destructor
+compile against the authenticated real Haiku RISC-V SDK trace. Old65 actual
+control remains SHA256:
+61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821
+
+Final main/clean token objects directly cmp identical,SHA256:
+bd0bf05fbbb90a33edf1f21ef5fff12a896c5dfa5934e60a198e2472eba54255
+Largest new static function frame400B;all whole-unit frames satisfy the
+unchanged <=2048B/new or unchanged-old-frame rule. This is NOT a combined
+runtime stack proof. All6 conventional driver ABI names are absent;the actual
+driver bodies are renamed. ALL5 independent inert entry controls are
+machine-code byte-identical to their constant refusal/null/inert controls,
+with all bytes and no relocations checked in each symbol's own section.
+Private bank/span/reload constructor bodies remain compiled to avoid a fake
+constant-false scope;no new/old compute,CPU-reference or Work route exists.
+These are unlinked COMPILE/INSPECT objects,never installed or invoked.
+
+Initial compile/test repairs:runner exact-parent count included _KERNEL_MODE;
+normal-clock/local-delta guards now recognize ONLY the checked new NODRV
+witness;four misleading-indentation sites were split without semantic changes
+(including the firmware DATA generator and its generated header);the private
+dispatcher was closed instead of accepting its accidental3136B legacy frame.
+An invalid test expectation of a separate inlined-destructor frame was removed;
+all emitted callers remain stack checked and actual scope exit is tested.
+SDK warning/error and stack checks were not disabled or widened.
+
+Production binding/control tests, simulated OS endpoints only
+------------------------------------------------------------
+Final main48488 and clean11927 BOTH0 ASan+UBSan,identical3-line logs:
+7 selected workspaces;ALL7 runtime suffix endpoints protected by actual
+reservations;unchanged learned ledger;3711 refusals including last allocated
+pages of EVERY3551 learned extent,non1 uploads,source/cookie/thread/team/
+generation/clock/host/foreign ownership,duplicate bind,epoch exhaustion,
+stale generation,actual atomic reservation collision after publication,
+reentrancy and lost FD at scope exit. Actual whole AcquireProbeLock and
+AcquireQ38GdnSessionLock are extracted verbatim,not a replacement lock grant;
+only OS semaphore/thread,clock and unused foreign-owner endpoints are mocks.
+Ordinary/delta lock calls refuse after binding;SAME-owner session reentry
+works. Whole production Unsafe rejects unrelated compute uncertainty even
+with controlledToken=true. Unfinished END retains all owners without device IO.
+NO state zeroing,program upload,launch,original learned arithmetic or P100A
+operation occurs. Fixture destruction frees CPU-only test objects,never
+quarantined physical resources.
+
+Main/clean final role tests BOTH0,identical:21 exact parents including
+kernel mode,6 renamed ABI names,31 forbidden old-native/image/CPU/Work aliases,
+241 missing/defined0/2/late include refusals,including the actual driver's
+first block rejecting supplied witness0/1 and a reserved tag without its
+full token role. No header guard bypass.
+
+Unchanged firmware bytes and startup-data regression
+---------------------------------------------------
+Full all-word footprint tests pass both variants/main+clean after the SOURCE
+formatting fix. All12 actual section bytes/ALL120 participants,2710744
+cancellable or2710257 plain words,11406906 original-snapshot words,963 alias/
+geometry refusals and17 complete-artifact/generator refusals remain verified.
+Firmware ELF/section pins and device instructions are UNCHANGED. Generated
+header source hashes change ONLY because of the warning-free line split:
+cancel28ee719add7e0df0b6b699d6f4f8f5043dfa0a794813893028fe22fcc2fe50e9
+plain b2cce4731ba1a2dea6da55c2672feddcf24316f45bd37c5b9436cf736bfb3768
+Main32526 and clean97450 bindings-only startup regressions BOTH0:all7banks/
+120 boot records/root/head/session/padded8192 prompt/1920 sources/202 refusals.
+These latest regressions use fullPackageCopies0,NOT a rerun of the earlier
+448 complete512KiB package-copy test. They grant no native launch permission.
+
+Full objective and immediate next code work remain
+-------------------------------------------------
+All11 existing full-model sessions were re-polled and confirmed LIVE during
+this turn:36786/63451 cancellable original captured,60499/55839 plain original
+captured,68871/11982 other original,40968 fast HOST original,20159/13324
+synthetic FP32,and94923/26724 old default-KV. No quiet run was restarted,
+transplanted or called passed. Complete64-layer/multitoken/state/vocabulary/
+token-selection/STOP and late-cancellation numerical evidence remains owed.
+
+NEXT:bind actual native state/history/projection initialization controllers
+and their real phase-specific source/non-root-hold callbacks to this SAME
+owner (including bulk dirty lifetime). Then full runtime/KV/metadata/program
+mapping+staging,held journal,distinct execution owner,RUN/STOP/cancellation/
+terminal/disposal/client integration. Do not borrow completed old prefix
+readiness or turn page presence/compiled bodies into execution permission.
+Then physical correctness/stability/long sessions/load-unload/recovery,
+separate no-CPU-reference Work+Assistant,boot64CPU/fullRAM preservation and
+measured sustainable27B throughput optimization remain required. Goal ACTIVE.

@@ -55,7 +55,8 @@ public:
   for(unsigned i=0;i<16;i++)b[16+i]=sources[worker*16+i];
   for(unsigned i=40;i<46;i++)b[i]=G::BootWord(i);
   if(!G::BootShape(b))return false;
-  for(unsigned i=0;i<64;i++)output[i]=b[i];return true;
+  for(unsigned i=0;i<64;i++)output[i]=b[i];
+  return true;
  }
  bool Job(unsigned wave,unsigned worker,unsigned previous,uint32_t* output)const{
   namespace G=PioneerQ38GlobalWorkerLayout;
@@ -68,7 +69,8 @@ public:
   for(unsigned i=0;i<10;i++)j[16+i]=m[i];
   j[26]=1;j[27]=wave;j[28]=p->firstRow;j[29]=248320;j[30]=1;j[31]=G::JobWitness;
   if(!G::JobShape(j,b,previous,0))return false;
-  for(unsigned i=0;i<64;i++)output[i]=j[i];return true;
+  for(unsigned i=0;i<64;i++)output[i]=j[i];
+  return true;
  }
 };
 static_assert(sizeof(PioneerQ38GlobalOutputPlan)>28672 && sizeof(PioneerQ38GlobalOutputPlan)<40000,"global DATA plan HEAP ONLY");

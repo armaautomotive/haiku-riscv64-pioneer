@@ -89,8 +89,9 @@ public:
   for(unsigned i=0;i<1920;i++)if(sources[i]!=source[i])return false;
   return Matches(c); // immutable relation ONLY; no native lifetime grant
  }
- bool LearnedPagesPresent(const uint8_t* ledger,unsigned count)const{
-  if(!canonical || !Binding(*canonical) || !ledger || count!=PioneerResidentBanks::Pages)return false;
+ static bool CanonicalLearnedPagesPresent(const PioneerQ38CanonicalModelPlan& model,const uint8_t* ledger,unsigned count){
+  if(!model.Ready() || !ledger || count!=PioneerResidentBanks::Pages)return false;
+  const auto* canonical=&model;
   unsigned parts[65]={};
   for(unsigned i=0;i<canonical->Count();i++){
    const auto* p=canonical->Part(i);if(!p)return false;
@@ -105,6 +106,9 @@ public:
   for(unsigned layer=0;layer<64;layer++)if(parts[layer]!=(PioneerQ38GlobalChainLayout::Dense(layer)?53U:56U))return false;
   return parts[64]==15; // ALL3551 learned parts/851 tensors, including embedding/head/norm.
  } // page PRESENCE only,not authenticated uploads/current/history/KV init
+ bool LearnedPagesPresent(const uint8_t* ledger,unsigned count)const{
+  return canonical && Binding(*canonical) && CanonicalLearnedPagesPresent(*canonical,ledger,count);
+ }
  bool PackageAddress(unsigned layer,uint32_t& output)const{
   uint32_t address=0;
   if(!canonical || !Binding(*canonical) || !Output(&output,4)
@@ -135,7 +139,8 @@ public:
    if(!G::Old::BootShape(data))return false;
    data[0]=G::Magic;for(unsigned i=40;i<46;i++)data[i]=G::BootWord(i);
   }
-  for(unsigned i=0;i<64;i++)output[i]=data[i];return true;
+  for(unsigned i=0;i<64;i++)output[i]=data[i];
+  return true;
  } // immutable boot DATA only;no ROM,source or participant ownership grant
  const uint32_t* Boot()const{return ready?boot:nullptr;}
  unsigned Bank()const{return ready?bank:7;}
