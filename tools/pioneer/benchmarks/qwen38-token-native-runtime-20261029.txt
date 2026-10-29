@@ -122,8 +122,11 @@ Pre-repair C fault83665/98289 and positive47269/74578 also finish0,but are
 preserved as split-byte-fabric diagnostics,NOT substitutes for D qualification.
 Full strict/published serializer D main47524/clean20222 are LIVE;all448
 complete512KiB packets across7 banks must finish before claiming that
-regression. Strict-rebuilding held F25831/19019+15876/88407 retain their
-original histories. Older startup G94467/52118 are COMPLETE0,not live.
+regression. At03:40UTC the ORIGINAL strict-rebuilding held F positive
+25831/19019 AND fault15876/88407 all finish0 without replacement/restart.
+Their identical complete positive/fault logs preserve the original slower
+scope histories;this is NOT a card/loading/TPS comparison. Older startup
+G94467/52118 are also COMPLETE0,not live.
 Whole-model original/synthetic instruction histories remain untouched:
 36786/63451,60499/55839,68871/11982,40968,20159/13324. No full64/multitoken/
 state/head/selection numerical result is inferred from their activity.
