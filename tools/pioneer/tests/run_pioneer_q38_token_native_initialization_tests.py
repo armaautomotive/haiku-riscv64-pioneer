@@ -10,11 +10,15 @@ import sys
 import tempfile
 
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
-full_layer = len(sys.argv) == 7 and sys.argv[2] == '--execution-first-layer'
+full_flow = len(sys.argv) == 7 and sys.argv[2] == '--execution-full-flow'
+full_layer = full_flow or len(sys.argv) == 7 and sys.argv[2] == '--execution-first-layer'
 first_matrix = full_layer or len(sys.argv) == 6 and sys.argv[2] == '--execution-first-matrix'
 if full_layer:
     prefix = pathlib.Path(sys.argv[6])
-    assert prefix.is_absolute() and prefix.parent.is_dir() and not prefix.exists() and not prefix.is_symlink()
+    if full_flow:
+        assert prefix.is_absolute() and prefix.is_dir() and not prefix.is_symlink() and not any(prefix.iterdir())
+    else:
+        assert prefix.is_absolute() and prefix.parent.is_dir() and not prefix.exists() and not prefix.is_symlink()
 embedding = first_matrix or len(sys.argv) == 4 and sys.argv[2] in embedding_modes
 peer_bootstrap = len(sys.argv) == 5 and sys.argv[2] == '--bootstrap-peer-engines'
 peer_engines = peer_bootstrap or first_matrix
@@ -64,6 +68,8 @@ if first_matrix:
     defines['PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE'] = '1'
 if full_layer:
     defines['PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE'] = '1'
+if full_flow:
+    defines.update(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE='1', PIONEER_Q38_NATIVE_TRACE_TEST_BRIDGE='1')
 source = (kernel/'tenstorrent_pci_probe.cpp').read_text()
 with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/private/tmp') as tmp:
     base = pathlib.Path(tmp)
@@ -104,6 +110,11 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         ('bool PioneerSessionIO::StateZeroBeforeCohort()', 'bool PioneerSessionIO::StateZeroOtherCoresHeld()', 'bool PioneerSessionIO::NonRootHeldOwner()')))
     binary = base/'test'
     extra = []
+    if full_flow:
+        trace_object = base/'native-observed-trace.o'
+        subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
+                        '-fsanitize=address,undefined', '-c', str(here/'pioneer_q38_native_trace_test_bridge.cpp'), '-o', str(trace_object)], check=True)
+        extra += [str(trace_object)]  # const observation DATA only,HOST TU without native/kernel/Work roles
     if peer_engines:
         peer_object = base/'native-peer-engine.o'
         peer_flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())

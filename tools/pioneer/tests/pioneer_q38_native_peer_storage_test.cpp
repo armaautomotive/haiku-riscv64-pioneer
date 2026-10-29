@@ -71,6 +71,18 @@ int main(int argc,char** argv){
  }
  const unsigned events=memory.events;memory.counters[0][0]++;memory.command[0][1]^=1;
  first.Advance(256);assert(memory.counters[0][0]==0xfffffff9 && memory.command[0][1]==1 && memory.events==events);
+ assert(!first.ObserveStopped() && !second.ObserveStopped() && !second.ObserveLayerBoundary());
+ { // actual early STOP COMPONENT job on the pristine second CPU;NOT a full-model terminal
+  namespace W=PioneerQ38GlobalWorkerLayout;auto& raw=memory.l1[1];uint32_t job[64]={};
+  job[0]=W::Magic;job[1]=1;job[2]=W::Stop;job[3]=2;job[4]=W::Peer(2);job[7]=17;
+  uint32_t boot[64];for(unsigned i=0;i<64;i++)boot[i]=raw.at((W::Boot+i*4)/4);
+  for(unsigned i=8;i<16;i++)job[i]=boot[i];assert(W::JobShape(job,boot,0,0));
+  for(unsigned i=0;i<64;i++)raw.at((W::Job+i*4)/4)=job[i];raw.at(W::Doorbell/4)=1;
+  for(unsigned round=0;round<4096 && !second.ObserveStopped();round++)second.Advance(256);
+  assert(second.ObserveStopped() && !second.ObserveLayerBoundary() && second.Stats().totalSteps==second.Stats().steps);
+  const auto stopped=second.Stats();second.Advance(256);assert(second.Stats().steps==stopped.steps && second.ObserveStopped());
+  second.AdvanceStopped(256);assert(second.Stats().steps==stopped.steps+256 && second.ObserveStopped() && memory.events==events);
+ }
  assert(!memory.reads && !memory.puts && !unchanged.steps && sizeof(unchanged.l1)==32768);
- puts("PASS TWO virgin full matrix/GDN/Conv/attention ISA engines on SAME external L1 from construction/ALL generic constructor mailbox+code+operand writes DISCARDED/no readiness or private history copied/actual QGW1 boots+17status stores+WAIT/physical counter+command faults PERSIST across real idle instructions/other TU old Machine layout intact;COMPONENT TEST ONLY,NOT native binding/119 cohort/matrix/STOP/END/physical/Work/TPS");
+ puts("PASS TWO virgin full tensor ISA engines/shared actual L1 from construction/generic constructor bytes DISCARDED/actual QGW1 boots+WAIT/idle CSR faults PERSIST/pristine second CPU actual early component STOP+256 genuine inert instructions/no new hardware event/host layer-window refuses without actual down-job arithmetic/old other-TU layout intact;COMPONENT ONLY,NOT full-model/native119 STOP/END/physical/Work/TPS");
 }

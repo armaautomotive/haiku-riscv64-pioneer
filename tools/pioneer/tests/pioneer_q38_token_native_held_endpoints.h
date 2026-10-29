@@ -25,6 +25,9 @@ struct TokenHeldEndpoints:ZeroControlIO {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
  bool (*executionDramRead)(TokenHeldEndpoints&,unsigned,uint32,uint8*,unsigned)=nullptr;
  bool (*executionDramPut)(TokenHeldEndpoints&,unsigned,uint32,uint32)=nullptr;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
+ void (*observeVocabulary)(TokenHeldEndpoints&,unsigned)=nullptr;
+#endif
 #endif
 #endif
  const char* lastOp="none";unsigned lastAddress=0,lastValue=0;

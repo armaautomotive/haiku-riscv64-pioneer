@@ -19,6 +19,9 @@ void PreparePeerBytes(){
   if(!out || !count || count>16384 || (address|count)&3)return false;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
   if(self.ReadMutableBytes(route,address,out,count))return true;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
+  if(self.ReadKvBytes(route,address,out,count))return true;
+#endif
 #else
   if(route==PioneerQ38ProjectionRoute(0) && address>=self.runtimeWorkspace && count<=67108864
    && address-self.runtimeWorkspace<=67108864-count){
@@ -35,7 +38,11 @@ void PreparePeerBytes(){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE
   auto& self=*static_cast<PioneerSessionIO*>(p);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
-  return self.PutMutableWord(route,address,word);
+  return self.PutMutableWord(route,address,word)
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
+   || self.PutKvWord(route,address,word)
+#endif
+   ;
 #else
   if(route!=PioneerQ38ProjectionRoute(0) || (address&3) || address<self.runtimeWorkspace || address-self.runtimeWorkspace>67108860)return false;
   self.runtimeDram.at((address-self.runtimeWorkspace)/4)=word;return true;
@@ -52,5 +59,21 @@ void PreparePeerBytes(){
  executionDramPut=[](TokenHeldEndpoints& p,unsigned route,uint32 address,uint32 word){
   auto& native=static_cast<PioneerSessionIO&>(p);return native.peerBytes.put(&native,route,address,word);
  };
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
+ observeVocabulary=[](TokenHeldEndpoints& p,unsigned worker){
+  namespace W=PioneerQ38GlobalWorkerLayout;auto& native=static_cast<PioneerSessionIO&>(p);auto& root=*native.executionCpu;
+  assert(worker && worker<120 && root.fullFlowRunning);
+  if(!root.flowLayers || root.flowLayers%64 || native.Raw(worker,W::Job+8)!=W::GlobalMatrix
+   || native.Raw(worker,W::Job+6*4)!=root.flowPosition)return;
+  auto& peer=*native.bootstrapPeer[worker-1];const auto observed=peer.cpu->Stats();
+  if(native.vocabularySequence[worker-1]==observed.sequence)return; // repeated DATA read,not another produced row
+  assert(peer.Idle() && !observed.active && !observed.pending && peer.cpu->ObserveMatrixOutput());
+  const unsigned rows=native.Raw(worker,W::Job+23*4)*16,first=native.Raw(worker,W::Job+28*4);
+  assert(rows && rows<=256);std::array<uint32,256> actual;
+  for(unsigned i=0;i<rows;i++)actual[i]=native.Raw(worker,0x84000+i*4);
+  assert(native.nativeTrace->Vocabulary(root.flowPosition,first,actual.data(),rows));
+  native.vocabularySequence[worker-1]=observed.sequence;
+ }; // independent output observer AFTER actual worker math;NO product/ready/processor input
+#endif
 #endif
 } // BOOT-only profile refuses ALL learned/mutable transfers;matrix profile uses actual staged/original bytes ONLY

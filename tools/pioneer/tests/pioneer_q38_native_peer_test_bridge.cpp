@@ -39,6 +39,7 @@ namespace NativeQ38PeerInstructionModel {
 struct NativePeer:GlobalChainPeer,CohortBytes {
  PioneerQ38SharedTestBinding& binding;unsigned deviceReads=0,deviceWrites=0,statusWrites=0,scalarFpInstructions=0;
  uint32_t publishedCounts[8]={},publishedCommands[10]={};bool publishedPending=false;
+ bool endpointInputsObserved=false;
  NativePeer(const char* old,const char* global,unsigned worker,PioneerQ38SharedTestBinding& b)
   :GlobalChainPeer(old,global,worker),binding(b){
   (void)&RunPersistentGdnPair;(void)&Refusals;(void)&LateRefusals;
@@ -95,7 +96,8 @@ struct NativePeer:GlobalChainPeer,CohortBytes {
   // physical CSR fault or skip processor history when no event occurred.
  }
  void Advance(unsigned count){
-  if(!steps){
+  if(!endpointInputsObserved){
+   assert(!steps && pc==0x6000);endpointInputsObserved=true;
    for(unsigned i=0;i<16;i++)source[i]=binding.bytes.noc(binding.bytes.context,logicalWorker,BlackholeDramSourceOffset(i));
    for(unsigned i=0;i<8;i++)publishedCounts[i]=countBase[i]=binding.bytes.noc(binding.bytes.context,logicalWorker,CounterOffset(i));
    for(unsigned i=0;i<10;i++)publishedCommands[i]=command[i]=binding.bytes.noc(binding.bytes.context,logicalWorker,i*4);
@@ -107,13 +109,14 @@ struct NativePeer:GlobalChainPeer,CohortBytes {
     if(memory.at(G::Doorbell)==memory.at(G::Job+4) && memory.at(G::Job+4)==sequence+1)Receive();
     // A staged NEXT job plus an OLD nonzero doorbell is NOT a delivery.
    }
-   StepBlock();if(active && GdnFinished(sequence))active=false;
+   StepBlock();if(active && (GdnFinished(sequence) || (pc==stopPC && memory.at(G::Status+4)==sequence)))active=false;
   }
  }
 };
 }
 struct Q38NativePeerTestCpu::Impl {
  PioneerQ38SharedTestBinding binding;std::unique_ptr<NativeQ38PeerInstructionModel::NativePeer> cpu;
+ uint64_t retiredInstructions=0;unsigned observedLayers=0;
  Impl(const char* old,const char* global,unsigned worker,const Q38NativePeerTestBytes& bytes):binding{bytes,worker,false}{
   assert(bytes.context && bytes.word && bytes.noc && bytes.events && bytes.read && bytes.put && bytes.clock && worker && worker<120);
   PioneerQ38SharedTestConstruction construction(binding);
@@ -130,7 +133,7 @@ void Q38NativePeerTestCpu::Link(Q38NativePeerTestCpu& other){
 void Q38NativePeerTestCpu::Advance(unsigned count){assert(count && count<=10000);impl->cpu->Advance(count);}
 Q38NativePeerTestStats Q38NativePeerTestCpu::Stats()const{
  const auto& p=*impl->cpu;return {p.pc,p.steps,p.matrixInstructions,p.moveInstructions,p.scalarFpInstructions,p.requests,p.responses,unsigned(p.pending),
-  p.deviceReads,p.deviceWrites,p.statusWrites,p.minStack,p.sequence,unsigned(p.active)};
+  p.deviceReads,p.deviceWrites,p.statusWrites,p.minStack,p.sequence,unsigned(p.active),impl->retiredInstructions+p.steps};
 }
 bool Q38NativePeerTestCpu::ObserveMatrixOutput()const{
  const auto& p=*impl->cpu;
@@ -138,3 +141,21 @@ bool Q38NativePeerTestCpu::ObserveMatrixOutput()const{
   && p.memory.at(NativeQ38PeerInstructionModel::G::Status+4)==p.sequence && p.sequence
   && p.requests==p.packets.size() && !p.dotProbeReads && p.CorrectRows();
 } // actual native L1 outputs vs separate FP32/FP64 arithmetic,NO products supplied
+bool Q38NativePeerTestCpu::ObserveStopped()const{
+ namespace G=NativeQ38PeerInstructionModel::G;const auto& p=*impl->cpu;
+ return p.pc==p.stopPC && !p.active && !p.pending && p.sequence
+  && p.memory.at(G::Status+4)==p.sequence && !p.memory.at(G::Status+8) && p.memory.at(G::Status+16)==G::Stop
+  && p.memory.at(G::Job+4)==p.sequence && p.memory.at(G::Job+8)==G::Stop;
+} // observed actual STOP only;NO native terminal/restore/END permission
+void Q38NativePeerTestCpu::AdvanceStopped(unsigned count){
+ assert(count && count<=2048 && ObserveStopped());auto& p=*impl->cpu;
+ for(unsigned i=0;i<count;i++){p.StepBlock();assert(ObserveStopped());}
+} // real STOP instructions,not a host no-op or a supplied STOP receipt
+bool Q38NativePeerTestCpu::ObserveLayerBoundary(){
+ namespace G=NativeQ38PeerInstructionModel::G;auto& p=*impl->cpu;
+ if(impl->observedLayers>=192 || p.memory.at(G::Job+8)!=1 || p.memory.at(G::Job+5*4)!=impl->observedLayers%64
+  || p.memory.at(G::Job+6*4)!=impl->observedLayers/64 || p.memory.at(G::Job+17*4)!=12
+  || p.memory.at(G::Job+21*4)!=17408 || !ObserveMatrixOutput() || p.steps>=4000000000U)return false;
+ const unsigned low=p.steps&255U;impl->retiredInstructions+=p.steps-low;p.steps=low;impl->observedLayers++;return true;
+} // HOST instruction-accounting window ONLY;low scheduler bits preserved;
+  // NO PC/register/NoC/tensor/private model state or native owner is changed

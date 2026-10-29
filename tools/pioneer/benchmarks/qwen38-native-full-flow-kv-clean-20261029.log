@@ -1,0 +1,1 @@
+PASS empty native TEST KV endpoints/112 canonical regions536870912 reserved bytes/ZERO readable initial words/224 first+last raw-write/read views/10924 missing+partial+unaligned+overflow+cross-span+null+non-KV+identical-or-different-rewrite refusals/append-only+atomic output/no zero fallback;COMPONENT ONLY,NOT actual KV append/attention/token/native owner/physical/Work/TPS

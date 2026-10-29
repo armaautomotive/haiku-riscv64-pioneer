@@ -19,8 +19,15 @@ using TokenNativeEndpoints=ZeroControlIO;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
 #include "pioneer_q38_token_native_root_machine.h"
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
+#include "pioneer_q38_native_trace_test_bridge.h"
+#endif
 struct PioneerSessionIO:TokenNativeEndpoints {
  tt_dram_samples_result& dram;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
+ std::unique_ptr<Q38NativeTraceTest> nativeTrace=std::make_unique<Q38NativeTraceTest>();
+ unsigned vocabularySequence[119]={};
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE
 #include "pioneer_q38_token_native_peer_bytes.inc"
 #endif
@@ -150,6 +157,9 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  std::vector<unsigned> workspaceTouched=std::vector<unsigned>(512);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
 #include "pioneer_q38_token_native_mutable_bytes.inc"
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
+#include "pioneer_q38_token_native_kv_bytes.inc"
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeMapping.inc"
@@ -282,6 +292,9 @@ struct Fixture {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
   io.BindMutableBytes();
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
+  io.BindKvBytes(*plan);
+#endif
  }
  bool Bind(){PioneerQ38TokenCallScope scope(&cookie);return scope.Context() && BindQ38TokenNative(*scope.Context(),0);}
  bool Recurrent(PioneerQ38StateZeroResult& r){PioneerQ38TokenCallScope scope(&cookie);return scope.Context() && InitializeQ38TokenRecurrent(*scope.Context(),r);}
@@ -316,7 +329,8 @@ struct Fixture {
 #endif
 int main(int argc,char** argv){
  const bool peerBootstrap=argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines");
- const bool fullLayer=argc==7 && !strcmp(argv[2],"--execution-first-layer");
+ const bool fullFlow=argc==7 && !strcmp(argv[2],"--execution-full-flow");
+ const bool fullLayer=fullFlow || (argc==7 && !strcmp(argv[2],"--execution-first-layer"));
  const bool firstMatrix=fullLayer || (argc==6 && !strcmp(argv[2],"--execution-first-matrix"));
  const bool embedding=firstMatrix || (argc==4 && (!strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-embedding-source-loss")
   || !strcmp(argv[2],"--execution-embedding-readback-loss") || !strcmp(argv[2],"--execution-layer-dispatch")));
@@ -349,7 +363,11 @@ int main(int argc,char** argv){
  assert(peerBootstrap || firstMatrix);tokenPeerOriginalImage=argv[peerBootstrap?3:4];tokenPeerGlobalImage=argv[peerBootstrap?4:5];
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
+ assert(fullFlow);tokenNativeTraceDirectory=argv[6];
+#else
  assert(fullLayer);tokenNativePrefixFile=argv[6];
+#endif
 #endif
  for(unsigned fault=0;fault<(trafficFaults?2U:executionFaults?4U:bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
   Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;assert(f.Bind());auto* state=c.q38TokenNative;

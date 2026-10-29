@@ -1,0 +1,116 @@
+Whole native all64/three-token execution fixture--IN PROGRESS
+2026-10-29 08:45UTC. Goal ACTIVE;20tok/s UNMET. Last physical whole-model
+0.207893161tok/s. NO Pioneer/SSH/power/install/OS/Assistant/boot/CPU/RAM/
+network/SD/mains mutation,physical health or measured speedup claim.
+
+New execution scope,NOT a passing result
+---------------------------------------
+--execution-full-flow extends the SAME full851 private owner,1010 actual
+zero jobs,120 held histories,4616 metadata transfers,119 VIRGIN full tensor
+engines,original embedding/input packing/first matrix toward all3 positions
+and all64 layers each. Raw recurrent/history/workspace views remain the SAME
+initializer arrays;learned bytes come from the SAME-open authenticated GGUF.
+KV starts with112 canonical reserved spans/536870912 bytes but ZERO readable
+words. Only actual device writes create words;reads of unwritten/partly
+written ranges refuse atomically,not return convenient zero cache products.
+Current B requires append-only KV,no identical/different rewrite,and exact
+per-layer prefix coverage,ending49152 words for3*16dense*8rows*128words.
+
+All actual layer returns are observed after the real ROOT progress store.
+Every worker must independently pass its actual final down-matrix output
+comparison and DONE/WAIT before its HOST watchdog counter is rebased.
+ROOT accounting rebases only after those119 real receipts,retaining the
+low8 scheduler bits. PC,registers,NoC,clock,tensor/private model state and
+native ownership never change. Full64-bit totals retain all instructions.
+An explicit one-shot endpoint-input flag prevents a zero step residue from
+reinitializing private counter/source bookkeeping after a completed layer.
+This is bounded HOST accounting,not a native layer/token/ready grant.
+
+Const observation trace bridge
+-------------------------------
+An opaque TEST-only trace facade delegates to the unchanged existing QOD1
+recorder in a separate unflagged HOST TU. It accepts only const already-
+observed words,not a processor/native owner/memory endpoint/expected CPU
+source or accelerator callback. No product can flow back into execution.
+It records actual embedding/layer outputs,each actual vocabulary row after
+worker arithmetic,and immutable GDDR token records after actual publication
+and the subsequent genuine parent boundary or final terminal. It cannot
+grant native STOP/restore/END;Save remains after separate genuine terminal
+and all119-worker STOP verification. No partial trace is a complete token.
+
+The final path requires real terminal fields/source/counters,all119 actual
+STOP instructions and—in current B—2048 further genuine ROOT/peer STOP-loop
+instructions without new transactions. Kernel-native terminal capability,
+holding/restoration/disposal,load-unload and recovery remain separate work.
+No cancellation request is injected into this uninterrupted3-token run.
+Existing cancellation/fault histories remain independent obligations.
+
+Completed component/regression results
+--------------------------------------
+Observed facade A73139/84462 BOTH0;unchanged default recorder A83451/3102
+BOTH0,all complete logs identical across main/clean and facade/default.
+Existing synthetic3-token/65hidden/all248320vocab/records/exclusive-file and
+invalid-order/nonfinite/duplicate/partial/refusal cases run through the new
+opaque facade,followed by independent Python format checks. These are DATA
+tests,not executed model outputs or native ownership.
+
+Current append-only KV B74310/62089 BOTH0,byte-identical:112 actual canonical
+regions,224 first/last views,10924 empty/partial/misaligned/overflow/cross-
+span/null/non-KV/identical-or-different-rewrite refusals. Failed reads never
+modify output or insert cache words. Earlier A28339/49429 also both0 before
+append-only tightening. Initial standalone A compilation failed for mixed
+auto-deduced size_t/uint64 declarations;explicit types fixed it with no
+warning or sanitizer suppression. Unit bytes are synthetic raw inputs,
+NOT claims of an actual model KV append or attention result.
+
+Current stop/window B76117/17074 BOTH0,byte-identical. Two virgin full engines
+boot on shared native byte endpoints;the first preserves injected idle CSR
+faults. The pristine second executes an actual early COMPONENT STOP job,
+then256 actual immutable STOP-loop instructions with no new hardware event.
+The layer-window method refuses without real down-job arithmetic. This
+does NOT prove full-model119 STOP or a positive all64 observation window.
+Earlier A40940/83691 predates the actual inert-instruction observation.
+
+Role A14358/17249 BOTH0,identical9 accepted explicit TEST roles/97 refusals;
+opaque trace allowed only in the exact emulated-kernel fixture,backend
+implementation rejects ALL native/kernel/Work roles even defined0. KV/full-
+flow fragments require all exact fixture roles and reject Work even0.
+Actual-driver SDK A23202/41159 BOTH0,objects byte-identical UNCHANGED SHA256
+57ef41179428d9ab2e04d0e8256cea2d2ccfb68d2c77ce53472e60ce9713780c.
+No Q38NativeTraceTest/PioneerQ38ObservedTrace/KvByteSpan/BindKvBytes/full-
+flow observer/CPU reference/Work imports. All conventional driver entries
+remain inert;no real driver is linked,installed or invoked here.
+
+Exact running histories,NEVER quiet restarted
+--------------------------------------------
+Full-flow A main69552/clean50638 LIVE;current source at launch includes the
+one-shot input flag and genuine three-token flow,but predates the later
+append-only KV and actual inert-loop checks. Output directories:
+ /private/tmp/pioneer-q38-native-flow-main-20261029-a.OHxSpaa0
+ /private/tmp/pioneer-q38-native-flow-clean-20261029-a.3UJzuHJ9
+By08:48UTC both A histories pass their actual layer0/119 down-matrix
+arithmetic/DONE/WAIT window and continue into layer1 on the SAME processors.
+This is the first positive integrated accounting-boundary result,not a
+whole64/multitoken/KV/terminal result or independent full-trace comparison.
+Current B main65551/clean86191 LIVE,distinct changed-code qualification:
+ /private/tmp/pioneer-q38-native-flow-main-20261029-b.85zAOmx3
+ /private/tmp/pioneer-q38-native-flow-clean-20261029-b.YMTeyLGr
+Logs /private/tmp/pioneer-q38-token-native-full-flow-{main,clean}-20261029-{a,b}.log
+Only after terminal success compare actual complete QOD1 traces with the
+authenticated independent CPU reference using compare_pioneer_q38_observed_trace.py
+WITHOUT --diagnostic-only. All64 outputs/allvocab/greedy feedback/3 positions
+must pass;never promote first-layer QOP1 output to this scope.
+
+Independent first-layer result is already complete,pushed628b9cd87d:
+all5120 embedding+5120 layer0 outputs BIT-EXACT,no tolerance;genuine786432
+next-state writes/all119 DONE/WAIT. That is NOT all64 or actual whole-token
+state/KV advancement. First-layer A12848/7064 and9 older full-model histories
+remain separate;retain them until their actual terminal results.
+
+Remaining objective intact:actual full-flow numerical/state/KV/STOP proof,
+native token delivery/consumed cancellation/terminal/holds/L1+CSR restore/
+clean END/load-unload/recovery,physical repeated generations and long chats,
+qualified no-CPU-reference Work+Assistant,real sustained optimization toward
+20tok/s,with SD-free boot/64CPU/full RAM preserved. Repeated strict ROOT
+audits are an identified instruction-cost target;offline runtime/counter
+optimizations are not card throughput measurements.

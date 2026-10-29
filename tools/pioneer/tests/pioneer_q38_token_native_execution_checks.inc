@@ -12,7 +12,11 @@
 #include "pioneer_q38_token_native_first_matrix_checks.inc"
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
+#include "pioneer_q38_token_native_full_flow_checks.inc"
+#else
 #include "pioneer_q38_token_native_full_layer_checks.inc"
+#endif
 #endif
 static void CheckNativeExecution(Fixture& f){
  auto& c=*f.c;auto& io=f.io;auto* state=c.q38TokenNative;
@@ -65,7 +69,11 @@ static void CheckNativeExecution(Fixture& f){
  CheckNativeFirstMatrix(f);
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
+ CheckNativeFullFlow(f);return; // no cancel is injected;genuine three-token terminal path retains its native resources
+#else
  CheckNativeFullLayer(f);
+#endif
 #endif
  {
   PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c && io.TokenModelSourceScope(false)

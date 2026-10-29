@@ -1,5 +1,34 @@
 # Native build status
 
+## In progress: whole native three-token/all64-layer qualification
+
+October29,2026 08:45UTC. A new full-flow profile continues the SAME native
+owner/initializer byte arrays/119 virgin tensor engines through all64 layers,
+real empty-prefix KV appends,full vocabulary,device-committed token records
+and the genuine all119-worker STOP path. Complete raw observations are kept
+in a separate HOST-only data-recorder TU;it accepts no accelerator/processor
+callback and never supplies a model product. Actual whole-flow runs A/B are
+LIVE,not passing;no full-model/token/STOP/native-END claim follows yet.
+By08:48UTC A has completed its first actual all119 down-job/window check
+and continued the SAME ROOT/worker histories into layer1 without a reset.
+
+Current component tests pass in main/clean:112 canonical KV regions with
+NO readable initial rows and10924 refusals,including identical/different
+rewrites;actual early component STOP plus256 executed inert instructions;
+unchanged observed-trace format/negative cases;9 explicit roles/97 refusals.
+SDK objects remain byte-identical57ef4117 with no trace/KV/test/CPU-reference
+or Work imports. Host observation counters rebase ONLY after actual complete
+down-job arithmetic/DONE/WAIT;no PC/register/NoC/private model state changes.
+Initial CSR input observation is now one-shot,so a zero watchdog residue
+cannot recapture/re-baseline hardware state. Positive whole-flow window/KV/
+vocabulary/terminal behavior still requires those actual running results.
+
+The first-layer result below is independently complete. Full-model physical
+qualification,lifecycle,Work/Assistant and sustained performance remain owed.
+No new Pioneer software or hardware changes;last physical **0.207893161
+tokens/sec**,20 unmet. Evidence:
+[native whole-flow work in progress](benchmarks/qwen38-token-native-full-flow-wip-20261029.txt).
+
 ## Current: complete native original first recurrent layer passes offline
 
 October29,2026 08:16UTC. Full-layer B main/clean both finish0 with identical

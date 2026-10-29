@@ -83,6 +83,7 @@ for forbidden in ('Q38WorkControl', 'OriginalSource', 'CompareFinal', 'Reference
                   'Q38EmbeddingRawTestBridge',
                   'Q38NativePeerTestCpu', 'Q38NativePeerTestBytes', 'NativeQ38PeerInstructionModel',
                   'MutableByteSpan', 'BindMutableBytes', 'CheckNativeFullLayer',
+                  'Q38NativeTraceTest', 'PioneerQ38ObservedTrace', 'KvByteSpan', 'BindKvBytes', 'CheckNativeFullFlow',
                   'Q38MixedLiveValidationControl', 'PioneerQ38MixedLiveNativeState',
                   'PioneerQ38EmbeddingNativeState', 'PioneerQ38RecurrentPrefixNativeState'):
     assert forbidden not in table and forbidden not in unresolved, forbidden

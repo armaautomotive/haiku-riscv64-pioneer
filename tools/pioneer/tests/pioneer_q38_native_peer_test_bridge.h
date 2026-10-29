@@ -25,6 +25,7 @@ struct Q38NativePeerTestBytes {
 struct Q38NativePeerTestStats {
  uint32_t pc,steps,matrixInstructions,moveInstructions,floatOps,requests,responses,pending;
  uint32_t deviceReads,deviceWrites,statusWrites,minStack,sequence,active;
+ uint64_t totalSteps;
 }; // observations ONLY;never accepted as a processor or native-owner input
 class Q38NativePeerTestCpu {
  struct Impl;Impl* impl;
@@ -35,5 +36,8 @@ public:
  Q38NativePeerTestCpu& operator=(const Q38NativePeerTestCpu&)=delete;
  void Link(Q38NativePeerTestCpu&);void Advance(unsigned);Q38NativePeerTestStats Stats()const;
  bool ObserveMatrixOutput()const; // independent arithmetic observer ONLY,never a ready/completion setter
+ bool ObserveStopped()const;
+ void AdvanceStopped(unsigned); // execute the actual immutable STOP loop for an inertness observation
+ bool ObserveLayerBoundary(); // rebase HOST watchdog only AFTER actual down-job arithmetic/DONE/WAIT
 }; // virgin construction + execution ONLY;NO PC/register/history/ready setters
 #endif

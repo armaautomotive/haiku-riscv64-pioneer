@@ -4,8 +4,11 @@ import os
 import pathlib
 import struct
 import subprocess
+import sys
 import tempfile
 here = pathlib.Path(__file__).resolve().parent
+assert len(sys.argv) == 1 or sys.argv[1:] == ['--native-test-bridge']
+extra = ['-DPIONEER_Q38_NATIVE_TRACE_FACADE_TEST=1', str(here/'pioneer_q38_native_trace_test_bridge.cpp')] if len(sys.argv) == 2 else []
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 with tempfile.TemporaryDirectory(prefix='pioneer-observed-trace-', dir='/private/tmp') as tmp:
     binary = pathlib.Path(tmp)/'test'
@@ -14,7 +17,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-observed-trace-', dir='/private
     prefix = pathlib.Path(tmp)/'prefix'
     prefix.mkdir(mode=0o700)
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined',
-                    str(here/'pioneer_q38_observed_trace_test.cpp'), '-o', str(binary)], check=True)
+                    *extra, str(here/'pioneer_q38_observed_trace_test.cpp'), '-o', str(binary)], check=True)
     subprocess.run([str(binary), str(output), str(prefix)], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})
     for position in range(3):
         data = (output/f'token-{position}.bin').read_bytes()

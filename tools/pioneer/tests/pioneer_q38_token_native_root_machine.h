@@ -157,8 +157,16 @@ struct TokenStartupRoot:TokenNativeRootISA {
    io.Raw(0,address)=value;deviceWrites++;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
    if(fullLayerRunning && address==C::Progress+8){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
+    assert(fullFlowRunning && value>=1 && value<=64 && !fullLayerComplete && !io.Core(0).pending);fullLayerComplete=true;
+#else
     assert(value==1 && !fullLayerComplete && !io.Core(0).pending);fullLayerComplete=true;
+#endif
    } // pause AFTER the actual completed-layer progress store,not a supplied completion
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
+   if(fullFlowRunning && address==C::R::Doorbell && io.Raw(0,C::R::Outer+3*4)==0
+    && io.Raw(0,C::R::Outer+4*4)==flowPosition+1){assert(!flowBoundary);flowBoundary=true;}
+#endif
 #endif
    return;
   }
@@ -208,6 +216,9 @@ struct TokenStartupRoot:TokenNativeRootISA {
    if(layerHeld)break;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
    if(fullLayerComplete)break;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
+   if(flowBoundary)break;
+#endif
 #endif
    const uint32_t instruction=io.Raw(0,pc),op=instruction&127;
    if(op==7 || op==0x27 || op==0x53)floatOps++;

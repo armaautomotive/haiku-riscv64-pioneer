@@ -11,6 +11,20 @@ void ResumeFirstMatrix(){assert(layerHeld && dispatchWorker==1 && io.Core(0).pen
 bool fullLayerRunning=false,fullLayerComplete=false;unsigned fullLayerDoorbells=0;
 void ResumeFullLayer(){assert(firstMatrixRunning && layerHeld && dispatchWorker==1 && io.Core(0).pending);
  fullLayerRunning=true;layerHeld=false;dispatchWorker=0;}
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
+bool fullFlowRunning=false,flowBoundary=false;unsigned flowPosition=0,flowLayers=0;uint64_t retiredRootInstructions=0;
+uint64_t ObservedRootInstructions()const{return retiredRootInstructions+steps;}
+void ObserveRootLayerWindow(){
+ namespace C=PioneerQ38GlobalChainLayout;
+ assert(fullFlowRunning && fullLayerComplete && flowLayers<192 && !io.Core(0).pending && steps<4000000000U
+  && io.Raw(0,C::Progress+4)==flowLayers/64 && io.Raw(0,C::Progress+8)==flowLayers%64+1);
+ const unsigned low=steps&255U;retiredRootInstructions+=steps-low;steps=low;flowLayers++;fullLayerComplete=false;
+} // HOST watchdog/scheduler bookkeeping ONLY;all low bits,PC/registers/NoC/tensor/private model state preserved
+uint32_t ObserveParent(unsigned field){
+ assert(fullFlowRunning && field<64);const unsigned parent=regs[27];
+ assert(parent>=0x6e000 && parent<=0x70000-1028);return io.Raw(0,parent+(192+field)*4);
+} // read the actual current token parent's stack;never supply/replace a private owner
+#endif
 #endif
 #endif
 unsigned layerPackets=0,layerRawReads=0,layerPeerReads=0,layerPeerWrites=0,dispatchWorker=0;
@@ -82,6 +96,9 @@ void RespondLayer(){
 #endif
  }else{
   unsigned worker=1;while(worker<120 && W::Peer(worker)!=route)worker++;assert(worker<120 && io.Core(worker).coreReset==0x46800);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
+  if(fullFlowRunning && !write && remote==W::Partial && bytes==512){assert(io.observeVocabulary);io.observeVocabulary(io,worker);}
+#endif
   if(remote==0xffb121b0 || remote==0xffb13140){
    assert(!write && bytes==4);io.Raw(0,local)=remote==0xffb121b0?io.Core(worker).coreReset:livePeerPC(io,worker);
   }else if(remote>=0xffb20000 && remote<0xffb22000){

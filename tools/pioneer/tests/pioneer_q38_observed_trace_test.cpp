@@ -1,6 +1,16 @@
 /* SPDX-License-Identifier: MIT */
 #define PIONEER_Q38_TEST_OBSERVED_TRACE 1
+#ifdef PIONEER_Q38_NATIVE_TRACE_FACADE_TEST
+#define PIONEER_Q38_NATIVE_TRACE_TEST_BRIDGE 1
+#include "pioneer_q38_native_trace_test_bridge.h"
+#include <array>
+#include <cstdio>
+#include <cstring>
+#include <vector>
+using PioneerQ38ObservedTrace=Q38NativeTraceTest;
+#else
 #include "PioneerQ38ObservedTrace.h"
+#endif
 #include <cassert>
 #include <limits>
 static uint32_t Bits(float value){uint32_t b;std::memcpy(&b,&value,4);return b;}
