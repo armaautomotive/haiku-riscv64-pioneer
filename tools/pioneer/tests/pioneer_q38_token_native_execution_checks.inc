@@ -11,6 +11,9 @@
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE
 #include "pioneer_q38_token_native_first_matrix_checks.inc"
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+#include "pioneer_q38_token_native_full_layer_checks.inc"
+#endif
 static void CheckNativeExecution(Fixture& f){
  auto& c=*f.c;auto& io=f.io;auto* state=c.q38TokenNative;
  const unsigned before=io.touches,rootResets=io.resets.size(),packets=io.runtimePackets;
@@ -61,6 +64,9 @@ static void CheckNativeExecution(Fixture& f){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE
  CheckNativeFirstMatrix(f);
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+ CheckNativeFullLayer(f);
+#endif
  {
   PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c && io.TokenModelSourceScope(false)
    && c.Unsafe() && !c.Unsafe(false,false,true));
@@ -85,7 +91,10 @@ static void CheckNativeExecution(Fixture& f){
  assert(io.resets.size()==rootResets+2 && io.Core(0).coreReset==0x46800 && io.runtimePackets==packets
   && io.rootStarts==1010 && io.rootStops==1010 && io.rootHolds==1010 && !io.pciWrites && !io.HostReadMock::bmeWrites
   && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases);
-#ifdef PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+ assert(io.executionCpu->fullLayerComplete && !io.Core(0).pending);
+ printf("PASS native fresh-call cancellation REQUEST after actual first-layer return/ROOT instructions%u writtenStack%u;prefix comparison still separate,NOT consumed cancellation/token/STOP/END/physical/Work/TPS\n",
+#elif defined(PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE)
  assert(io.Core(0).pending && io.executionCpu->layerHeld && io.executionCpu->firstMatrixDoorbells==3);
  printf("PASS native ORIGINAL first48-output matrix/SAME3 actual worker tensor histories/fresh-call cancel while NEXT matrix doorbell PENDING/ROOT instructions%u writtenStack%u;NOT whole layer/token/cancel consumption/STOP/END/physical/Work/TPS\n",
 #elif defined(PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE)

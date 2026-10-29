@@ -50,4 +50,25 @@ for definitions in ({role:1}, {role:1, storage:0}, {role:1, storage:2},
 for macro in ('_KERNEL_MODE', 'PIONEER_Q38_TOKEN_NATIVE_CONTEXT', 'PIONEER_Q38_WORK_INFERENCE'):
     for value in (0, 1):
         check('pioneer_q38_native_peer_test_bridge.cpp', {macro:value}, False, True)
+for header in ('pioneer_q38_token_native_mutable_bytes.inc', 'pioneer_q38_token_native_full_layer_checks.inc'):
+    parents = {'PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE':1, fixture:1, context:1}
+    cases = [(parents, True)]
+    for macro in parents:
+        absent = dict(parents)
+        del absent[macro]
+        cases.append((absent, False))
+        for value in (0, 2):
+            cases.append(({**parents, macro:value}, False))
+    for value in (0, 1):
+        cases.append(({**parents, 'PIONEER_Q38_WORK_INFERENCE':value}, False))
+    for definitions, expected in cases:
+        result = subprocess.run([os.environ.get('CXX', 'c++'), '-E', '-x', 'c++',
+                                 *['-D'+key+'='+str(value) for key, value in definitions.items()], str(here/header)],
+                                stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
+        assert (result.returncode == 0) == expected, (header, definitions, result.stderr)
+        if expected:
+            accepted += 1  # preprocess role only;NOT a native owner or usable component
+        else:
+            assert 'Explicit native full-layer TEST' in result.stderr
+            refused += 1
 print(f'PASS peer-engine byte interface/storage/{accepted} explicit TEST roles/{refused} absent+zero+two+kernel+device+Work refusals/implementation rejects ALL native roles;NO native permission,processor-history setter or product supplier')

@@ -22,6 +22,10 @@ struct TokenHeldEndpoints:ZeroControlIO {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
  bool runtimeMode=false;unsigned runtimeWorkspace=0,runtimeFault=0,runtimePackets=0,runtimeWrites=0,runtimeReads=0,runtimeObserved=0;
  std::vector<uint32> runtimeDram=std::vector<uint32>(67108864/4,0x13579bdf);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+ bool (*executionDramRead)(TokenHeldEndpoints&,unsigned,uint32,uint8*,unsigned)=nullptr;
+ bool (*executionDramPut)(TokenHeldEndpoints&,unsigned,uint32,uint32)=nullptr;
+#endif
 #endif
  const char* lastOp="none";unsigned lastAddress=0,lastValue=0;
  uint32 Trace(const char* op,unsigned address,uint32 value){lastOp=op;lastAddress=address;lastValue=value;return value;}

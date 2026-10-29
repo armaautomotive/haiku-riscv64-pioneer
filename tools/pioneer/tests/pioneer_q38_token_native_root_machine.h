@@ -154,7 +154,13 @@ struct TokenStartupRoot:TokenNativeRootISA {
   if(layerActive){
    assert(PioneerQ38TokenL1::SnapshotContains(0,address) && !CodeAddress(address));
    if(Range(address,0x6e000,8192))minStack=std::min(minStack,address);
-   io.Raw(0,address)=value;deviceWrites++;return;
+   io.Raw(0,address)=value;deviceWrites++;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+   if(fullLayerRunning && address==C::Progress+8){
+    assert(value==1 && !fullLayerComplete && !io.Core(0).pending);fullLayerComplete=true;
+   } // pause AFTER the actual completed-layer progress store,not a supplied completion
+#endif
+   return;
   }
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
@@ -200,6 +206,9 @@ struct TokenStartupRoot:TokenNativeRootISA {
    if(markerWrites)break;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
    if(layerHeld)break;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+   if(fullLayerComplete)break;
+#endif
    const uint32_t instruction=io.Raw(0,pc),op=instruction&127;
    if(op==7 || op==0x27 || op==0x53)floatOps++;
    StepScalar(); // unchanged FULL scalar ISA engine,from the very first virgin instruction

@@ -1,0 +1,1 @@
+PASS native TEST mutable byte views/1009 canonical spans/2018 direct actual-vector aliases/little-endian reads+raw writes/15410 unaligned+overflow+cross-span+null+zero+learned+KV+unselected-workspace refusals/nonzero inputs never replaced with zero;COMPONENT ONLY,NOT native init/state advancement/layer/token/physical/Work/TPS

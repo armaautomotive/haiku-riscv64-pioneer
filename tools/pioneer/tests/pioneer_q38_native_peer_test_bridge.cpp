@@ -73,20 +73,26 @@ struct NativePeer:GlobalChainPeer,CohortBytes {
   if(CodeAddress(address))return binding.Word(address);
   if(Range(address,0xffb20000,0x2000))for(unsigned i=0;i<16;i++)if(address-0xffb20000==BlackholeDramSourceOffset(i))
    return binding.bytes.noc(binding.bytes.context,logicalWorker,address-0xffb20000);
-  const uint32_t value=GlobalChainPeer::Load(address);Publish();
+  const uint32_t value=GlobalChainPeer::Load(address);
+  if(Range(address,0xffb20000,0x2000))Publish();
   return Range(address,0xffb20000,0x2000)?binding.bytes.noc(binding.bytes.context,logicalWorker,address-0xffb20000):value;
  }
  void Store(uint32_t address,uint32_t value)override{
   assert(!CodeAddress(address));GlobalChainPeer::Store(address,value);deviceWrites++;
   if(Range(address,G::Status,64))statusWrites++;
-  Publish(Range(address,0xffb20000,40)?1U<<((address-0xffb20000)/4):0U);
+  if(Range(address,0xffb20000,0x2000))Publish(Range(address,0xffb20000,40)?1U<<((address-0xffb20000)/4):0U);
  }
  void StepBlock()override{
   uint32_t expected;assert(PioneerQ38TokenPrograms::ProgramWord(logicalWorker,pc,expected) && binding.Word(pc)==expected);
   const unsigned opcode=expected&127;if(opcode==7 || opcode==0x27 || opcode==0x53)scalarFpInstructions++;
   // Parent service FP decoders may use their immutable ROM byte vectors.
   // ALL instruction bytes must first equal this SAME installed L1 word.
-  GlobalChainPeer::StepBlock();Publish();
+  GlobalChainPeer::StepBlock();
+  // Hardware events originate ONLY at actual NoC Load/Store endpoints
+  // above. Re-scanning every completed packet after every ordinary ISA/
+  // L1/tensor instruction is quadratic HOST work,not a hardware event.
+  // Keep all instructions and their real endpoint events;do not repair a
+  // physical CSR fault or skip processor history when no event occurred.
  }
  void Advance(unsigned count){
   if(!steps){

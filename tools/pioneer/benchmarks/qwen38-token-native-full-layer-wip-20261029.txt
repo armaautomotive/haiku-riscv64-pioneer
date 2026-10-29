@@ -1,0 +1,99 @@
+Native full-layer execution fixture and mutable byte endpoints--IN PROGRESS
+2026-10-29 07:43UTC. Goal ACTIVE;20tok/s UNMET. Last physical whole-model
+0.207893161tok/s. NO Pioneer/SSH/power/install/OS/Assistant/boot/CPU/RAM/
+network/SD/mains mutation,physical-health or measured-card-speedup claim.
+
+New full-layer execution profile
+--------------------------------
+--execution-first-layer continues the SAME full851 native owner after its
+actual1010 zero jobs,full120 held stages,4616 metadata transfers,119 VIRGIN
+full tensor-engine boots,original embedding,RMS/quantization and first real
+matrix. It does not replace a processor or copy a completed private history.
+The next doorbell is delivered and the actual returning recurrent-layer
+program executes its remaining matrix,Conv,GDN and FFN instructions.
+
+ROOT/worker byte endpoints share1009 nonoverlapping direct views:all672
+recurrent regions point into the actual initializer's73728-page array;all336
+history regions point into its1680-page array;the64MiB selected workspace
+is the SAME runtime staging vector from construction. Binding happens before
+native BIND/initialization. It does not clear,copy or supply a model product.
+Only actual device packet callbacks write those views. Learned reads still
+come from the SAME-open authenticated original GGUF. Learned writes and
+unmapped/uninitialized KV/unselected workspaces have no mutable fallback.
+
+The test will pause AFTER the actual ROOT completed-layer progress store,
+not set that store or advance a PC. It requires genuine all119 DONE/WAIT,
+actual prior-state/history reads and next-state writes,finite nonzero next
+state,and unchanged initial current-slot/other-layer recurrent bytes. It
+emits only raw embedding+layer0 output observations in distinct QOP1 format
+to an exclusively created file. An independent CPU-trace comparison is
+STILL REQUIRED. This does NOT create a token/current-slot/KV frontier grant.
+Cancellation remains a REQUEST;STOP/END/restoration/cleanup still owed.
+
+Complete component/regression qualification
+--------------------------------------------
+Mutable-byte C main81856/clean1008 BOTH terminal0,logs byte-identical:
+1009 actual-canonical ranges,2018 first/last little-endian direct-vector
+aliases and15410 alignment/overflow/cross-span/null/empty/learned/KV/
+unselected-workspace refusals. Unit inputs are deliberately NONZERO synthetic
+raw data,not claimed actual initialization or model products. Raw writes
+are checked against the actual backing vectors. No zero fallback is used.
+Initial A failed compilation for a missing route-helper include;B both failed
+an unused embedded BankProof helper warning. Explicit include/reference fixes
+retain -Werror and sanitizers. No numerical or device failure was involved.
+
+Expanded role A main58492/clean86360 BOTH0,byte-identical5 accepted explicit
+test/preprocess roles and49 absent/zero/two/kernel/device/Work refusals.
+Mutable endpoints/full-layer observers require all three exact fixture roles
+and reject Work even when defined0. They confer no real kernel permission.
+
+SDK B main76556/clean15528 BOTH terminal0,actual objects byte-identical and
+UNCHANGED SHA25657ef41179428d9ab2e04d0e8256cea2d2ccfb68d2c77ce53472e60ce9713780c.
+Symbol inspection also forbids MutableByteSpan,BindMutableBytes and
+CheckNativeFullLayer,in addition to peer engines/CPU reference/Work imports.
+The first SDK A invocations were given the SDK root instead of the required
+baseline-evidence root and failed BEFORE compilation. Required old controls
+were rebuilt in an isolated temporary directory;exact old52cdacaa3a and
+old65 controls still pass. No baseline/runtime guard was weakened and no
+rebuilt linked control was installed or invoked.
+Rebuilt SDK input root:
+ /private/tmp/pioneer-q38-native-layer-sdk-inputs-20261029-b.L6U32Dj2/qualified
+It is reproducible with build_qwen38_conv_silu_precision_validation_native.py
+and the read-only /Volumes/HaikuBuildLocal/generated.riscv64 SDK.
+
+Host test runtime improvement--NOT physical speed
+------------------------------------------------
+The full-layer-only event scheduler pauses a genuinely idle worker when
+there is no MATCHING newly delivered doorbell;it does not execute irrelevant
+idle polls or alter PC/registers/history. A's first matrix repeats actual
+root118848073 instructions/3840 Tensix ops/all48 FP32+FP64 comparisons.
+Its worker instruction total is172827904 rather than C's364574464 because
+of omitted no-event idle polls,NOT faster firmware/card arithmetic.
+
+A one-second live stack sample of A PID8356 finds most samples in repeated
+NativePeer::Publish -> FfnPersistentPeer::Count packet scans. Count computes
+completed packet bytes by scanning responses;doing that after every ordinary
+instruction is quadratic host bookkeeping. Current bridge publishes actual
+event deltas only following real NoC Load/Store callbacks,where submission,
+completion,commands and pending state actually change. ALL actual processor,
+L1 and tensor instructions still execute;no physical fault is overwritten.
+Fresh storage G main17090/clean8198 BOTH0 with unchanged complete logs:
+virgin engines/actual boot/idle CSR fault persistence/old other-TU layout.
+Full-model event-equivalence/numerical proof remains pending B,not assumed.
+
+Full-layer A main12848/clean7064 are LIVE;larger matrix executing after the
+actual first48 outputs pass. A predates the event-only publication change
+and is retained,not restarted. B main68156/clean69524 are LIVE,distinct
+changed-code qualification from reset. Prefix directories:
+ /private/tmp/pioneer-q38-native-layer-main-20261029-a.V3LD4NYO
+ /private/tmp/pioneer-q38-native-layer-clean-20261029-a.cxUvKZOB
+ /private/tmp/pioneer-q38-native-layer-main-20261029-b.JqRmIJMm
+ /private/tmp/pioneer-q38-native-layer-clean-20261029-b.j38oyvFY
+Compare only after actual terminal success;prefix files are NOT full-token
+traces and may never be promoted to all64/multitoken/native/physical proof.
+
+Remaining goal intact:all64 layers,attention/Conv/GDN retained state and
+KV,vocabulary/token delivery,multiple generations,consumed cancellation,
+terminal/all119STOP,L1/CSR restoration,clean END/load-unload/recovery,
+physical correctness/long conversations,qualified no-CPU-reference Work+
+Assistant,sustained tuning toward20tok/s,and boot/64CPU/full RAM regressions.

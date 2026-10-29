@@ -81,6 +81,13 @@ struct PioneerSessionIO:TokenNativeEndpoints {
    // makes this exact CPU runnable again. No wall-clock timing is modeled.
    if(executionMode && executionCpu->layerActive && bootstrapPeer[w-1]->Idle()
     && !Raw(w,PioneerQ38GlobalWorkerLayout::Doorbell))continue;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+   if(executionMode && executionCpu->layerActive && bootstrapPeer[w-1]->Idle()){
+    const unsigned doorbell=Raw(w,PioneerQ38GlobalWorkerLayout::Doorbell),job=Raw(w,PioneerQ38GlobalWorkerLayout::Job+4);
+    const auto observed=bootstrapPeer[w-1]->cpu->Stats();
+    if(doorbell!=job || job!=observed.sequence+1)continue;
+   } // actual WAIT/no newly delivered event:pause,NEVER advance PC/history or supply a completion
+#endif
 #endif
    bootstrapPeer[w-1]->Advance(256);
   }
@@ -141,6 +148,9 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  std::vector<uint32> workspaceWords=std::vector<uint32>(512*1024,0x13579bdf);
 #endif
  std::vector<unsigned> workspaceTouched=std::vector<unsigned>(512);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+#include "pioneer_q38_token_native_mutable_bytes.inc"
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeMapping.inc"
 #else
@@ -269,6 +279,9 @@ struct Fixture {
    assert(n<336);io.history[n++]={p->bank,plan->Base+p->offset,PioneerQ38ProjectionRoute(p->bank),0,p->allocated/4096,p->allocated};
   }
   assert(n==336);io.workspaceAddress=plan->Base+plan->Workspace(0)->offset;io.workspaceBank=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+  io.BindMutableBytes();
+#endif
  }
  bool Bind(){PioneerQ38TokenCallScope scope(&cookie);return scope.Context() && BindQ38TokenNative(*scope.Context(),0);}
  bool Recurrent(PioneerQ38StateZeroResult& r){PioneerQ38TokenCallScope scope(&cookie);return scope.Context() && InitializeQ38TokenRecurrent(*scope.Context(),r);}
@@ -303,7 +316,8 @@ struct Fixture {
 #endif
 int main(int argc,char** argv){
  const bool peerBootstrap=argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines");
- const bool firstMatrix=argc==6 && !strcmp(argv[2],"--execution-first-matrix");
+ const bool fullLayer=argc==7 && !strcmp(argv[2],"--execution-first-layer");
+ const bool firstMatrix=fullLayer || (argc==6 && !strcmp(argv[2],"--execution-first-matrix"));
  const bool embedding=firstMatrix || (argc==4 && (!strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-embedding-source-loss")
   || !strcmp(argv[2],"--execution-embedding-readback-loss") || !strcmp(argv[2],"--execution-layer-dispatch")));
  assert(peerBootstrap || embedding || argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
@@ -333,6 +347,9 @@ int main(int argc,char** argv){
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE
  assert(peerBootstrap || firstMatrix);tokenPeerOriginalImage=argv[peerBootstrap?3:4];tokenPeerGlobalImage=argv[peerBootstrap?4:5];
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+ assert(fullLayer);tokenNativePrefixFile=argv[6];
 #endif
  for(unsigned fault=0;fault<(trafficFaults?2U:executionFaults?4U:bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
   Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;assert(f.Bind());auto* state=c.q38TokenNative;

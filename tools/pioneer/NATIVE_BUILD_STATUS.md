@@ -1,5 +1,31 @@
 # Native build status
 
+## In progress: native full-layer execution on actual initialized byte views
+
+October29,2026 07:43UTC. A new offline profile continues the SAME full851
+owner/119 virgin tensor-engine histories past the first matrix toward the
+entire first recurrent layer. Workers and ROOT now share direct views of
+the recurrent/history arrays populated by the actual zero ROMs,plus the
+same staged workspace;there is no zero/default fallback for unmapped KV or
+learned bytes. Separate ASan+UBSan component tests finish0 in both trees:
+1009 canonical spans,2018 alias checks and15410 range/refusal checks. Expanded
+role tests pass5 explicit roles/49 refusals. Current SDK objects remain
+byte-identical,unchanged57ef4117,and import none of these test endpoints.
+
+Full-layer A baseline and B event-publication variants remain RUNNING,not
+passing. A already repeats the first48-output numerical check and is
+executing the larger matrix. A host stack sample found repeated packet
+counter scans after ordinary instructions;B publishes the same real hardware
+event deltas only from actual NoC accesses. Both fresh component startup/
+idle-fault tests pass after that change. No instruction/processor history is
+skipped or supplied. A remains alive as an independent baseline.
+
+The next required result is actual complete-layer output and next-state
+production,followed by an independent comparison of all5120 output values.
+Neither a completed layer nor state advancement is claimed yet. No card,
+Assistant or OS changes;last physical **0.207893161 tokens/sec**,20 unmet.
+Evidence: [native full-layer work in progress](benchmarks/qwen38-token-native-full-layer-wip-20261029.txt).
+
 ## Current: first native original-model matrix passes offline
 
 October29,2026 07:15UTC. Main/clean first-matrix C tests both finish0 with

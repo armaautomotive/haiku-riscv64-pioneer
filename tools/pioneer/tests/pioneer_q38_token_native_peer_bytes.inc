@@ -17,11 +17,15 @@ void PreparePeerBytes(){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE
   auto& self=*static_cast<PioneerSessionIO*>(p);
   if(!out || !count || count>16384 || (address|count)&3)return false;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+  if(self.ReadMutableBytes(route,address,out,count))return true;
+#else
   if(route==PioneerQ38ProjectionRoute(0) && address>=self.runtimeWorkspace && count<=67108864
    && address-self.runtimeWorkspace<=67108864-count){
    for(unsigned i=0;i<count/4;i++){const uint32 word=self.runtimeDram.at((address-self.runtimeWorkspace)/4+i);
     for(unsigned b=0;b<4;b++)out[i*4+b]=uint8(word>>(b*8));}return true;
   }
+#endif
   return self.executionCpu && self.executionCpu->original && self.executionCpu->original->Read(route,address,out,count);
 #else
   (void)p;(void)route;(void)address;(void)out;(void)count;return false;
@@ -30,11 +34,23 @@ void PreparePeerBytes(){
  peerBytes.put=[](void* p,unsigned route,uint32_t address,uint32_t word){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE
   auto& self=*static_cast<PioneerSessionIO*>(p);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+  return self.PutMutableWord(route,address,word);
+#else
   if(route!=PioneerQ38ProjectionRoute(0) || (address&3) || address<self.runtimeWorkspace || address-self.runtimeWorkspace>67108860)return false;
   self.runtimeDram.at((address-self.runtimeWorkspace)/4)=word;return true;
+#endif
 #else
   (void)p;(void)route;(void)address;(void)word;return false;
 #endif
  };
  peerBytes.clock=[](void* p){return (UINT64_C(1)<<40)+static_cast<PioneerSessionIO*>(p)->clock*1000;};
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
+ executionDramRead=[](TokenHeldEndpoints& p,unsigned route,uint32 address,uint8* out,unsigned bytes){
+  auto& native=static_cast<PioneerSessionIO&>(p);return native.peerBytes.read(&native,route,address,out,bytes);
+ };
+ executionDramPut=[](TokenHeldEndpoints& p,unsigned route,uint32 address,uint32 word){
+  auto& native=static_cast<PioneerSessionIO&>(p);return native.peerBytes.put(&native,route,address,word);
+ };
+#endif
 } // BOOT-only profile refuses ALL learned/mutable transfers;matrix profile uses actual staged/original bytes ONLY
