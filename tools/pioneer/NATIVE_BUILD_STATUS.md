@@ -1,5 +1,16 @@
 # Native build status
 
+## Completed offline: all six native initializer FIFO fault cases
+
+October29,2026 15:12UTC. MainB3036/cleanC69735 BOTH finish0 with identical
+complete logs. Queued and overflow observations at each recurrent/history/
+workspace initializer stop all later IO/counter/reset/retry/release;later
+phases require their genuinely CLOSED predecessors. Program/scratch/learned
+data remain unchanged. This qualifies the earlier c5c4437b initializer guards,
+NOT the newer in-progress native peer/dispatch preparation replacement,
+full model,END or hardware. Last measured **0.207893161tok/s**,20 unmet.
+[Completed initializer fault milestone](benchmarks/qwen38-native-init-fifo-wip-20261029.txt).
+
 ## Experimental performance image: attention ownership fix passes build/unit
 
 October29,2026 14:46UTC. The failed boundary candidate's attention routine

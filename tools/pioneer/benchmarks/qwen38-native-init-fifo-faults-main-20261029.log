@@ -1,0 +1,40 @@
+PASS native initializer FIFO fault kind0/queued/actual preceding initializers CLOSED/first bad ordered observation stops ALL later IO/counters/reset/retry/release;retained NO initialization/STOP/END/physical/Work/TPS grant
+PASS native initializer FIFO fault kind0/overflow/actual preceding initializers CLOSED/first bad ordered observation stops ALL later IO/counters/reset/retry/release;retained NO initialization/STOP/END/physical/Work/TPS grant
+OBSERVED actual frozen zero ROM starts96/GDNpages10544/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts192/GDNpages21072/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts288/GDNpages31600/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts384/GDNpages42144/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts480/GDNpages52672/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts576/GDNpages63200/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts672/GDNpages73728/historyPages0/projectionPages0;NOT native initialization publication
+PASS native initializer FIFO fault kind1/queued/actual preceding initializers CLOSED/first bad ordered observation stops ALL later IO/counters/reset/retry/release;retained NO initialization/STOP/END/physical/Work/TPS grant
+OBSERVED actual frozen zero ROM starts96/GDNpages10544/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts192/GDNpages21072/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts288/GDNpages31600/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts384/GDNpages42144/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts480/GDNpages52672/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts576/GDNpages63200/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts672/GDNpages73728/historyPages0/projectionPages0;NOT native initialization publication
+PASS native initializer FIFO fault kind1/overflow/actual preceding initializers CLOSED/first bad ordered observation stops ALL later IO/counters/reset/retry/release;retained NO initialization/STOP/END/physical/Work/TPS grant
+OBSERVED actual frozen zero ROM starts96/GDNpages10544/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts192/GDNpages21072/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts288/GDNpages31600/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts384/GDNpages42144/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts480/GDNpages52672/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts576/GDNpages63200/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts672/GDNpages73728/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts768/GDNpages73728/historyPages480/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts864/GDNpages73728/historyPages960/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts960/GDNpages73728/historyPages1440/projectionPages0;NOT native initialization publication
+PASS native initializer FIFO fault kind2/queued/actual preceding initializers CLOSED/first bad ordered observation stops ALL later IO/counters/reset/retry/release;retained NO initialization/STOP/END/physical/Work/TPS grant
+OBSERVED actual frozen zero ROM starts96/GDNpages10544/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts192/GDNpages21072/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts288/GDNpages31600/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts384/GDNpages42144/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts480/GDNpages52672/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts576/GDNpages63200/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts672/GDNpages73728/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts768/GDNpages73728/historyPages480/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts864/GDNpages73728/historyPages960/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts960/GDNpages73728/historyPages1440/projectionPages0;NOT native initialization publication
+PASS native initializer FIFO fault kind2/overflow/actual preceding initializers CLOSED/first bad ordered observation stops ALL later IO/counters/reset/retry/release;retained NO initialization/STOP/END/physical/Work/TPS grant

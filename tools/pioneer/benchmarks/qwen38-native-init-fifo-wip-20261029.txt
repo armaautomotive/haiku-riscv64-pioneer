@@ -1,4 +1,14 @@
 Native initializer/held-memory/startup FIFO checks: IN PROGRESS, NOT ready
+COMPLETED INITIALIZER FAULT FOLLOW-UP15:12UTC:mainB3036/cleanC69735 BOTH
+observed terminal0. Complete logs are byte-identical. All six queued/overflow
+cases pass on the actual recurrent/history/workspace controllers;later cases
+execute and CLOSE their genuine predecessors before injecting the bad FIFO
+observation. No following IO/counters/reset/retry/release or program/scratch/
+learned-data change follows the first bad observation. This supersedes the
+historical LIVE text below and qualifies the c5c4437b initializer guards,
+NOT the later in-progress native peer/dispatch preparation replacement,
+whole-model/END/hardware/Work or speed. Saved
+qwen38-native-init-fifo-faults-{main,clean}-20261029.log.
 2026-10-29 14:37 UTC. Goal ACTIVE; 20 tokens/sec remains UNMET.
 Last measured physical whole-model rate: 0.207893161 tokens/sec.
 No Pioneer/SSH/power/install/Assistant/boot/CPU/RAM/network/SD/hardware-
