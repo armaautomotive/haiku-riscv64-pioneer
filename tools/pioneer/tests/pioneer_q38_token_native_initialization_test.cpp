@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Actual native factory/lock/phase callbacks/initializers and actual frozen
 // zero RV32 instructions. OS/MMIO/GDDR endpoints are simulated. No synthetic
-// completion fabric,no old embedding/prefix producer and no model inference.
+// completion fabric,no old embedding/prefix producer and no completed token.
 #include "pioneer_q38_token_native_fixture_common.h"
 #define PIONEER_Q38_STATE_ZERO_CONTROLLER_MODEL_ONLY
 #include "pioneer_q38_state_zero_controller_test.cpp"
@@ -30,12 +30,22 @@ struct PioneerSessionIO:TokenNativeEndpoints {
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
   executionCpu=std::make_unique<TokenStartupRoot>(image,*this);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
+  executionCpu->livePeerPC=[](TokenHeldEndpoints& endpoints,unsigned worker){
+   auto& native=static_cast<PioneerSessionIO&>(endpoints);
+   assert(worker && worker<120);return native.bootstrapPeer[worker-1]->pc;
+  }; // live byte/PC endpoint attached BEFORE binding or the first instruction
+#endif
 #endif
  }
  PioneerStoreContext* q38MutableContext=nullptr;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
  std::unique_ptr<TokenStartupRoot> executionCpu;
  bool executionMode=false;unsigned executionFault=0,executionArms=0,executionStarts=0,executionObserved=0;
+ unsigned executionPcReads=0,executionFaultPcObserved=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
+ unsigned embeddingFault=0;
+#endif
  bool RootReset(uint32 value){
   if(!executionMode || runtimeCore)return false;
   Touch();assert((value==0x87ffff && C().coreReset==0x47800 && !executionArms && !executionCpu->steps)
@@ -65,7 +75,9 @@ struct PioneerSessionIO:TokenNativeEndpoints {
   if(!bootstrapMode)return ZeroControlIO::RuntimePcRead();
   Touch();assert(runtimeCore<120);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
-  if(!runtimeCore){assert(executionMode);return executionCpu->pc;}
+  if(!runtimeCore){assert(executionMode);executionPcReads++;
+   if(executionCpu->pc==0x60000 && !executionFaultPcObserved)executionFaultPcObserved=touches;
+   return executionCpu->pc;}
 #endif
   assert(runtimeCore);return bootstrapPeer[runtimeCore-1]->pc;
  }
@@ -270,28 +282,39 @@ struct Fixture {
 #include "pioneer_q38_token_native_held_checks.inc"
 #endif
 int main(int argc,char** argv){
- assert(argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
+ const bool embedding=argc==4 && (!strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-embedding-source-loss")
+  || !strcmp(argv[2],"--execution-embedding-readback-loss") || !strcmp(argv[2],"--execution-layer-dispatch"));
+ assert(embedding || argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
   || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
   || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")
   || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-traffic-faults")
   || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;(void)&AcquireQ38DeltaLock;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
- assert(argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults")
+ assert(embedding || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults")
   || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
   || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")
-  || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-traffic-faults")));
+  || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-traffic-faults"))));
 #else
  assert(argc==2 || strncmp(argv[2],"--held",6));
 #endif
  const bool heldFaults=argc==3 && !strcmp(argv[2],"--held-faults");
  const bool bootstrap=argc==3 && !strncmp(argv[2],"--bootstrap",11),bootstrapFaults=bootstrap && !strcmp(argv[2],"--bootstrap-faults");
- const bool execution=argc==3 && !strncmp(argv[2],"--execution",11),executionFaults=execution && !strcmp(argv[2],"--execution-faults");
+ const bool execution=embedding || (argc==3 && !strncmp(argv[2],"--execution",11)),executionFaults=execution && !strcmp(argv[2],"--execution-faults");
  const bool trafficFaults=argc==3 && !strcmp(argv[2],"--execution-traffic-faults");
  const bool runtime=argc==3 && !strncmp(argv[2],"--runtime",9),runtimeFaults=runtime && !strcmp(argv[2],"--runtime-faults");
  const bool faults=argc==3 && strncmp(argv[2],"--held",6) && !runtime && !bootstrap && !execution,late=faults && !strcmp(argv[2],"--late-faults");
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
+ assert(embedding);Q38EmbeddingRawTestBridge original;
+ puts("START authenticate SAME-open original27B GGUF RAW bytes BEFORE native fixture construction;NO CPU embedding/model products");
+ assert(original.Open(argv[3]) && original.Ready());
+#endif
  for(unsigned fault=0;fault<(trafficFaults?2U:executionFaults?4U:bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
   Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;assert(f.Bind());auto* state=c.q38TokenNative;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
+  io.executionCpu->original=&original;io.embeddingFault=!strcmp(argv[2],"--execution-embedding-source-loss")?1U:
+   !strcmp(argv[2],"--execution-embedding-readback-loss")?2U:0U;
+#endif
   PioneerQ38StateZeroResult g;PioneerQ38ConvHistoryZeroResult h;PioneerQ38ProjectionZeroResult p;
   assert(!state->InitializationsClosed(c.banks,f.proof) && !io.StateZeroBeforeCohort() && !io.ConvHistoryZeroBeforeCohort() && !io.ProjectionZeroBeforeCohort());
   unsigned touches=io.touches;assert(!f.History(h) && !f.Projection(p) && io.touches==touches);

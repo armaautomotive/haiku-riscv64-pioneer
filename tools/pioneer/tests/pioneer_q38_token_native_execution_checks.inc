@@ -2,6 +2,12 @@
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
 #include "pioneer_q38_token_native_traffic_checks.inc"
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
+#include "pioneer_q38_token_native_embedding_checks.inc"
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
+#include "pioneer_q38_token_native_layer_checks.inc"
+#endif
 static void CheckNativeExecution(Fixture& f){
  auto& c=*f.c;auto& io=f.io;auto* state=c.q38TokenNative;
  const unsigned before=io.touches,rootResets=io.resets.size(),packets=io.runtimePackets;
@@ -43,6 +49,12 @@ static void CheckNativeExecution(Fixture& f){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
  if(!CheckNativeTraffic(f))return;
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
+ if(!CheckNativeEmbedding(f))return;
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
+ CheckNativeLayerDispatch(f);
+#endif
  {
   PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c && io.TokenModelSourceScope(false)
    && c.Unsafe() && !c.Unsafe(false,false,true));
@@ -67,7 +79,14 @@ static void CheckNativeExecution(Fixture& f){
  assert(io.resets.size()==rootResets+2 && io.Core(0).coreReset==0x46800 && io.runtimePackets==packets
   && io.rootStarts==1010 && io.rootStops==1010 && io.rootHolds==1010 && !io.pciWrites && !io.HostReadMock::bmeWrites
   && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases);
-#ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
+ assert(io.Core(0).pending && io.executionCpu->layerHeld && io.executionCpu->dispatchWorker
+  && io.executionCpu->submitted==io.executionCpu->completed+1);
+ printf("PASS native SAME genuine ROOT normalized+quantized layer0 input/fresh-call cancel WHILE actual first worker doorbell transfer is OUTSTANDING/one32bit request+exact readback/ROOT instructions%u writtenStack%u;NOT worker matrix/layer/token/cancel consumption/STOP/END/physical/Work/TPS\n",
+#elif defined(PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE)
+ assert(io.Core(0).pending && io.executionCpu->submitted==28 && io.executionCpu->completed==27);
+ printf("PASS native original EMBEDDING+verified GDDR publication/SAME ROOT/119worker histories/fresh-call cancel while next layer0 metadata packet OUTSTANDING/one32bit request+exact readback+duplicate refusal/ROOT instructions%u writtenStack%u;NOT layer/token/cancel consumption/STOP/END/physical/Work/TPS\n",
+#elif defined(PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE)
  assert(io.Core(0).pending && io.executionCpu->submitted==4 && io.executionCpu->completed==3);
  printf("PASS native SAME owner+119actual boots+ROOT actual immutable metadata NoC reads/fresh-call CANCEL WHILE learned NoC request is OUTSTANDING/one32bit monotonic request+exact readback+duplicate refusal/no command/reset/host packet or model product/ROOT instructions%u writtenStack%u;NOT actual cancel consumption/embedding/matrix/layer/token/STOP/END/physical/Work/TPS\n",
 #else

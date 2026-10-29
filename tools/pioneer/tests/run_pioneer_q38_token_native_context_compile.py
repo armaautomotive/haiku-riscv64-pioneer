@@ -80,9 +80,10 @@ assert len(rope) == 1 and rope[0][1] == 2097152, 'complete frozen raw RoPE must 
 unresolved = subprocess.check_output([tool+'nm', '-u', str(obj)], text=True)
 assert not re.search(r'\b(?:cosf?|sinf?|powf?)\b', unresolved), 'kernel may not import libm for raw configuration'
 for forbidden in ('Q38WorkControl', 'OriginalSource', 'CompareFinal', 'ReferenceProducts',
+                  'Q38EmbeddingRawTestBridge',
                   'Q38MixedLiveValidationControl', 'PioneerQ38MixedLiveNativeState',
                   'PioneerQ38EmbeddingNativeState', 'PioneerQ38RecurrentPrefixNativeState'):
-    assert forbidden not in table, forbidden
+    assert forbidden not in table and forbidden not in unresolved, forbidden
 sections = subprocess.check_output([tool+'objdump', '-t', str(obj)], text=True)
 section = {r[-1]:r[-3] for r in map(str.split, sections.splitlines()) if len(r) >= 6 and r[-1] in symbols}
 

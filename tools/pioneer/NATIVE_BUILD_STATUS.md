@@ -1,5 +1,26 @@
 # Native build status
 
+## Current: native original embedding and fail-stop observation pass offline
+
+October29,2026. The SAME full851 native owner now runs actual installed
+ROOT instructions through the original27B Q4_K embedding:20 authenticated
+raw tiles,5120 decoded values,two GDDR writes and two verified readbacks.
+All5120 local,shadow and GDDR values match a separate original-row decoder
+used ONLY as an observer after actual execution. No CPU product is uploaded.
+Main/clean positive and both source-loss/readback-corruption suites finish0
+with matching logs. The source loss causes the real firmware poll timeout;
+corruption causes the real comparison failure. Native observation retains
+all resources and stops IO immediately on the FIRST observed fault-park PC.
+SDK objects match,with no raw test bridge or CPU-reference/Work route.
+
+This stops at the first layer0 metadata request,not a completed model layer,
+token,cancel consumption,STOP,END or physical-card qualification. A separate
+new full-scalar-ISA profile continues toward normalization,quantization and
+the first real worker doorbell;its main/clean tests are still RUNNING and
+are not yet a passing result. No Pioneer software was installed. Last
+physical whole-model **0.207893161 tokens/sec**;20 target unmet. Evidence:
+[native embedding checkpoint](benchmarks/qwen38-token-native-embedding-20261029.txt).
+
 ## Current: native observation and cancellation during real ROOT NoC traffic pass offline
 
 October29,2026. A distinct traffic profile now continues the SAME ROOT
@@ -132,6 +153,8 @@ Evidence: [native held staging checkpoint](benchmarks/qwen38-token-native-held-2
   cancel REQUEST positive offline test (not model math or cancel consumption).
 - [x] Native observation and cancel REQUEST during actual instruction-issued
   NoC traffic;positive/two-fault offline tests,plus earlier four ROOT faults.
+- [x] Native ROOT original embedding arithmetic and verified GDDR publication;
+  positive/source-loss/readback-failure offline tests with first-fault IO stop.
 - [ ] Extend bootstrap timing/late-fault coverage and validate genuine KV/state
   advancement during native execution.
 - [ ] Complete original-model all64-layer, multitoken, persistent-state,

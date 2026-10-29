@@ -1,0 +1,86 @@
+Native original27B embedding and actual-firmware fault checkpoint
+2026-10-29 05:38UTC. Goal ACTIVE;20tok/s UNMET. Last measured physical
+whole-model0.207893161tok/s. NO hardware/SSH/power/install/kernel/Assistant/
+boot/CPU/RAM/network/SD/mains change,physical health or speedup claim.
+
+Actual native integration
+-------------------------
+The SAME full851 owner first executes all1010 actual frozen zero-ROM jobs,
+installs the full120-participant journal,stages4616 checked metadata packets
+and boots119 virgin QGW1 CPUs against the SAME native L1/CSR backing.
+Actual ROOT instructions resume from their own first learned NoC request.
+Twenty2304B hardware responses contain only authenticated original packed
+Q4_K tiles. No activation,matrix result,PC,register,history or ready state
+is copied into execution. ROOT decodes5120 values and writes16384+4096B to
+the SAME native-staged GDDR,then checks both actual readbacks before issuing
+the next layer0 metadata request. A fresh native scope observes this running
+owner and another writes one checked monotonic cancel REQUEST while that
+next packet remains outstanding. This does NOT prove cancel consumption.
+
+A separate original-row decoder observes ALL5120 local,shadow and GDDR
+values only AFTER the actual instructions complete the readback checks.
+All are bit-exact. This CPU observer NEVER supplies an execution product.
+ROOT1250367 actual instructions/21320 scalar FP instructions/writtenstack2628.
+This is embedding arithmetic only,NOT a model layer or generated token.
+OS/VM/GDDR/NoC endpoints are SIMULATED,not the physical P100A.
+
+Two genuine instruction-fault paths
+----------------------------------
+Each fault starts another genuine full native initialization and119-worker
+boot;no completed history is reused. One-way original-source revocation
+holds the first learned response without retry/reopen/synthetic fallback.
+The actual firmware's65536-poll bound expires and it parks at60000 after
+5356145 ROOT instructions. Separately,a one-bit corruption in the second
+GDDR readback makes the actual comparison fail,parking after984413 steps.
+
+Both StartRoot and ObserveRoot now validate their FIRST sampled PC before
+sampling another. The fault integration proves ObserveRoot performs exactly
+one actual fault-PC read,then NO following MMIO. All native banks,aliases,
+programs,clock and host owners are retained/quarantined;repeat observation,
+cancel and held cleanup refuse inertly. No reset,repair or rollback occurs.
+StartRoot's analogous early-PC guard compiles;these two faults occur during
+ObserveRoot,not a claim of exhaustive StartRoot/hardware fault coverage.
+
+Current complete qualification
+------------------------------
+Positive main19470/clean22069 BOTH terminal0;byte-identical complete logs.
+Source-loss main21603/clean55936 BOTH terminal0.
+Readback-loss main42096/clean53785 BOTH terminal0;matching complete logs.
+All are ASan+UBSan with the CURRENT first-PC refusal,not the earlier B
+binaries which also passed but predate that production guard improvement.
+
+SDK main91332/clean74373 BOTH terminal0;byte-identical real Haiku objects:
+57ef41179428d9ab2e04d0e8256cea2d2ccfb68d2c77ce53472e60ce9713780c
+The opaque RAW test interface AND implementation remain absent from both
+defined and unresolved SDK symbols;no CPU reference/Work or kernel libm
+path is promoted. The separate implementation refuses every native role,
+even macros defined0;old original-source kernel guards are unchanged.
+Raw-role main74802/clean25616 BOTH0:2 valid explicit TEST roles/26 refusals.
+Native binding31537/9024 and role55205/50524 ALL0:shared lock,ordinary/delta
+exclusion,retention and existing21-parent/31-forbidden-role coverage.
+
+Still owed,not hidden by this checkpoint
+---------------------------------------
+A distinct next profile uses the unchanged full scalar ISA interpreter from
+the first virgin ROOT instruction,then resumes beyond the actual embedding
+into native layer0 metadata/normalization/quantization and a real worker job.
+Main93959/clean69945 are LIVE,not yet passing. It deliberately holds the
+first worker doorbell response before delivery rather than fabricating a
+worker matrix result. This is a step toward the same complete native path,
+not a reduced completion criterion. The full119 tensor engines still need
+to share the native byte backing from construction for actual matrix,
+attention,GDN/Conv and all64-layer native integration.
+
+The9 long full-model instruction histories remain LIVE and untouched;
+none has completed all64 layers/multitoken/state/vocabulary/STOP acceptance.
+Native token delivery,consumed cancel,terminal/all119STOP,full L1/CSR restore,
+clean END/load/unload,physical correctness/stability,recovery,Work/Assistant
+and honest sustained20tok/s performance remain owed.
+
+Output-aperture constraint discovered during this work:the pinned UMD
+blackhole_implementation.hpp declares TLB_COUNT_2M=202,valid indices0..201.
+The current driver owns200/201. Index202 begins the DIFFERENT BAR4 4GiB
+family;BAR0 0x19400000 must NOT be invented as a third2MiB window. Any new
+read-only GDDR token aperture needs a genuinely available existing2MiB
+index,its own source/VM/save/restore lifetime,or another qualified design.
+No new aperture is implemented or exercised by this checkpoint.

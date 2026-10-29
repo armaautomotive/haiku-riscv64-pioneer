@@ -9,7 +9,10 @@ static bool CheckNativeTraffic(Fixture& f){
   PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);
   for(unsigned round=0;round<16384 && cpu.submitted<4;round++)io.Pause();
   assert(cpu.submitted==4 && cpu.completed==3 && io.Core(0).pending && cpu.markerWrites==1
-   && !cpu.matrixInstructions && !cpu.floatOps && !cpu.requests && !cpu.responses && !state->Unsafe());
+   && !cpu.matrixInstructions && !cpu.floatOps && !state->Unsafe());
+#ifndef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
+  assert(!cpu.requests && !cpu.responses); // old RuntimeMachine fabric remains unused;full ScalarMachine has none
+#endif
  }
  // Observe only bytes ACTUALLY delivered by three genuine ROM NoC reads.
  // These expected views never seed local memory or private ROOT state.

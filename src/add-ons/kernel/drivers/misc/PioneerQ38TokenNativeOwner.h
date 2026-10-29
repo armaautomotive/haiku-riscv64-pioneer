@@ -357,10 +357,10 @@ public:
     || !io.TokenMemoryReadChecked(0,C::R::Status+8,error) || error)return Fail(io,r);
    if(marker){
     if(!Sources(io,0) || !BootTime(io,began,previous))return Fail(io,r);
-    r.firstPC=io.RuntimePcRead();if(!Scope(io))return Fail(io,r);
-    r.secondPC=io.RuntimePcRead();uint32_t word;
-    if(r.firstPC==0x60000 || r.secondPC==0x60000 || !PioneerQ38TokenPrograms::ProgramWord(0,r.firstPC,word)
-     || !PioneerQ38TokenPrograms::ProgramWord(0,r.secondPC,word) || !Sources(io,0))return Fail(io,r);
+    uint32_t word;r.firstPC=io.RuntimePcRead();
+    if(r.firstPC==0x60000 || !PioneerQ38TokenPrograms::ProgramWord(0,r.firstPC,word) || !Scope(io))return Fail(io,r);
+    r.secondPC=io.RuntimePcRead();
+    if(r.secondPC==0x60000 || !PioneerQ38TokenPrograms::ProgramWord(0,r.secondPC,word) || !Sources(io,0))return Fail(io,r);
     rootAcknowledged=true;r.acknowledged=1;r.phase=5;return true;
    }
    if(!Scope(io))return Fail(io,r);
@@ -396,10 +396,10 @@ public:
   uint32_t marker,error,word;
   if(!io.TokenMemoryReadChecked(0,PioneerQ38GlobalChainLayout::R::Status+12,marker) || marker!=PioneerQ38TokenLayout::Magic
    || !io.TokenMemoryReadChecked(0,PioneerQ38GlobalChainLayout::R::Status+8,error) || error)return Fail(io,r);
-  r.firstPC=io.RuntimePcRead();if(!Scope(io))return Fail(io,r);
+  r.firstPC=io.RuntimePcRead();
+  if(r.firstPC==0x60000 || !PioneerQ38TokenPrograms::ProgramWord(0,r.firstPC,word) || !Scope(io))return Fail(io,r);
   r.secondPC=io.RuntimePcRead();
-  if(r.firstPC==0x60000 || r.secondPC==0x60000 || !PioneerQ38TokenPrograms::ProgramWord(0,r.firstPC,word)
-   || !PioneerQ38TokenPrograms::ProgramWord(0,r.secondPC,word) || !Sources(io,0))return Fail(io,r);
+  if(r.secondPC==0x60000 || !PioneerQ38TokenPrograms::ProgramWord(0,r.secondPC,word) || !Sources(io,0))return Fail(io,r);
   r.acknowledged=1;r.cancelRequested=cancelRequested;return true;
  } // observation ONLY;NO NoC command/counter recapture,layer/token/frontier/STOP/END completion grant
 };
