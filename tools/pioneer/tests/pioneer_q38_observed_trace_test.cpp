@@ -35,16 +35,17 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<12;i++)record[i]=head[i];record[44]=position+1;record[45]=48;record[46]=119;
   assert(trace.Commit(position,record.data(),64));
  }
- assert(trace.Complete() && trace.Save(argv[1]) && !trace.Complete() && !trace.Save(argv[1]));
+ assert(trace.Complete() && !trace.SavedComplete() && trace.Save(argv[1]) && !trace.Complete() && trace.SavedComplete());
+ assert(!trace.Save(argv[1]) && !trace.SavedComplete()); // duplicate-save failure poisons even a previously saved recorder
  PioneerQ38ObservedTrace prefix;
  assert(prefix.Embedding(0,248319,actual.data(),5120) && prefix.Layer(0,0,actual.data(),5120)
-  && !prefix.Complete() && prefix.SaveFirstLayerDiagnostic(argv[2]) && !prefix.Complete()
+  && !prefix.Complete() && prefix.SaveFirstLayerDiagnostic(argv[2]) && !prefix.Complete() && !prefix.SavedComplete()
   && !prefix.SaveFirstLayerDiagnostic(argv[2]) && !prefix.Save(argv[2]));
  for(unsigned bad=0;bad<3;bad++){
   PioneerQ38ObservedTrace partial;
   if(bad)assert(partial.Embedding(0,248319,actual.data(),5120));
   if(bad==2)for(unsigned layer=0;layer<2;layer++)assert(partial.Layer(0,layer,actual.data(),5120));
-  assert(!partial.SaveFirstLayerDiagnostic(argv[2]) && !partial.Complete());
+  assert(!partial.SaveFirstLayerDiagnostic(argv[2]) && !partial.Complete() && !partial.SavedComplete());
  }
  puts("PASS distinct first-layer diagnostic/exclusive partial file/NO complete token trace or STOP assertion/3 wrong-boundary refusals/no repeated save or full-trace promotion;SYNTHETIC DATA only");
  for(unsigned bad=0;bad<7;bad++){
@@ -63,7 +64,7 @@ int main(int argc,char** argv){
     else{std::array<uint32_t,64> incomplete={};assert(!rejected.Commit(0,incomplete.data(),64));}
    }
   }
-  assert(!rejected.Complete() && !rejected.Save(argv[1]));
+  assert(!rejected.Complete() && !rejected.SavedComplete() && !rejected.Save(argv[1]));
  }
  puts("PASS observed DATA recorder/3positions/65hidden+allvocab+committed records/exclusive complete files/7 invalid-order+duplicate+nonfinite+missing-coverage refusals;SYNTHETIC observations,NOT execution or a numerical/native/Work/TPS grant");
 }

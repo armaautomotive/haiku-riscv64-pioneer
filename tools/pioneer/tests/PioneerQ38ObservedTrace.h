@@ -80,6 +80,7 @@ public:
   std::memcpy(t.record.data(),actual,256);t.selected=best;t.runnerUp=second;t.committed=true;commits++;return true;
  }
  bool Complete()const{return !failed && !saved && embeddings==3 && commits==3;}
+ bool SavedComplete()const{return !failed && saved && embeddings==3 && commits==3;}
  unsigned Embeddings()const{return embeddings;}
  unsigned Layers(unsigned position)const{return position<3?token[position].layers:0;}
  // Distinct, deliberately INCOMPLETE diagnostic. The caller must observe

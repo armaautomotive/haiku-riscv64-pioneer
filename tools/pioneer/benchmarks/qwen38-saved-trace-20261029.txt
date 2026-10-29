@@ -1,0 +1,27 @@
+Complete trace state reporting:HOST TEST COMPONENT CHECKPOINT
+2026-10-29. Goal ACTIVE;20tok/s UNMET;last physical0.207893161tok/s.
+
+ObservedTrace::Save correctly changes Complete() from true to false because
+the unsaved recorder has been consumed. The local full-generation END test
+incorrectly required Complete() after that successful Save. This inspection
+found a deterministic future harness failure,not a physical driver failure
+or a completed whole-model test. Earlier immutable D histories stay separate.
+
+The recorder+opaque HOST TEST facade now expose SavedComplete(),which is
+true ONLY after all3 full records are saved successfully and no later
+failure occurred. Complete() semantics and serialized bytes are unchanged.
+The pending local END harness requires this distinct state;this checkpoint
+does NOT promote that later unqualified full-END/native state collector.
+
+ASan+UBSan component runs97970(main) and61542(frozen clean C) BOTH terminal0;
+corresponding logs are identical. Actual assertions cover pre-save false,
+successful full-save true,duplicate-save refusal poisoning the saved state,
+partial diagnostic never qualifying,invalid-order/duplicate/nonfinite/
+missing-coverage cases never qualifying,and unchanged independently read
+QOD1/prefix header,length,footer. All input observations are SYNTHETIC DATA,
+not actual model execution or state/KV numerical comparison.
+
+Only the4 recorder/facade/component source files and this evidence are
+published. No native production bodies,public ABI,Work,Assistant,boot,
+CPU/RAM,Pioneer installation or power operation changed. No current card
+health,full-model generation,END,recovery,stack or speed qualification.

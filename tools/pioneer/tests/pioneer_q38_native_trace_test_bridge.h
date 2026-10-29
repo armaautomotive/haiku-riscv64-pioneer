@@ -27,7 +27,7 @@ public:
  bool Layer(unsigned,unsigned,const uint32_t*,unsigned);
  bool Vocabulary(unsigned,unsigned,const uint32_t*,unsigned);
  bool Commit(unsigned,const uint32_t*,unsigned);
- bool Complete()const;unsigned Embeddings()const;unsigned Layers(unsigned)const;
+ bool Complete()const;bool SavedComplete()const;unsigned Embeddings()const;unsigned Layers(unsigned)const;
  bool Save(const char*);bool SaveFirstLayerDiagnostic(const char*);
 }; // Save still requires the caller's separate genuine terminal verification
 #endif

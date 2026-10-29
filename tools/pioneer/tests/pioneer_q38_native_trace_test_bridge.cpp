@@ -14,6 +14,7 @@ bool Q38NativeTraceTest::Layer(unsigned p,unsigned l,const uint32_t* v,unsigned 
 bool Q38NativeTraceTest::Vocabulary(unsigned p,unsigned first,const uint32_t* v,unsigned n){return impl->data.Vocabulary(p,first,v,n);}
 bool Q38NativeTraceTest::Commit(unsigned p,const uint32_t* v,unsigned n){return impl->data.Commit(p,v,n);}
 bool Q38NativeTraceTest::Complete()const{return impl->data.Complete();}
+bool Q38NativeTraceTest::SavedComplete()const{return impl->data.SavedComplete();}
 unsigned Q38NativeTraceTest::Embeddings()const{return impl->data.Embeddings();}
 unsigned Q38NativeTraceTest::Layers(unsigned p)const{return impl->data.Layers(p);}
 bool Q38NativeTraceTest::Save(const char* path){return impl->data.Save(path);}
