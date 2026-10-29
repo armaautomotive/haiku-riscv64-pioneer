@@ -88,3 +88,28 @@ native performance-image integration; physical repeated generation/long
 conversations; qualified no-CPU-reference Work plus Assistant; sustained
 measured optimization toward20 tokens/sec. Preserve SD-free boot,64 CPUs,
 full RAM and all earlier valid running qualification histories.
+
+Completed follow-up,2026-10-29 12:07:47UTC
+------------------------------------------
+Current HOLD C main51800/clean36235 BOTH terminal0. Full logs and observed
+prefixes are byte-identical. The SAME original first-layer/native owner
+history reaches real consumed cancellation,ROOT+119 STOP and then the
+ROOT-first120-HOLD handoff. Current counters/commands remain unchanged,
+fresh FD scope stays owned,and duplicate/start/legacy-close refusals pass.
+ROOT659545284/peers2227276603 actual instructions,NOT card cycles or TPS.
+
+Independent comparison66920 also terminal0 in both trees:all5120 embedding
+and5120 layer0 values BITEXACT against the separately authenticated CPU
+traces,zero differences/max error,NO tolerance. The independent comparison
+proves only those numerical observations;the actual native fixture supplies
+the separate STOP/HOLD evidence. No full-token/state-frontier/readout/L1 or
+CSR restoration/END/physical/Work/Assistant/speed qualification follows.
+These current-HOLD binaries predate later readout and restoration changes.
+
+Saved complete evidence:
+ qwen38-native-terminal-hold-{main,clean}-20261029.log
+ qwen38-native-terminal-hold-compare-{main,clean}-20261029.log
+Original prefix files remain /private/tmp/pioneer-q38-hold-{main,clean}-20261029-c-prefix.bin.
+The earlier LIVE paragraphs are the historical launch record,not current
+status for this completed pair. Other full-model/readout/restoration runs
+are separate histories and are not retagged with this result.

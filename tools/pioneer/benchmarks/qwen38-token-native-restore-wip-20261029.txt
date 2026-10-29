@@ -1,0 +1,101 @@
+Native full-token original-L1 restoration candidate:IN PROGRESS,NOT ready
+2026-10-29 12:31UTC. Goal ACTIVE;20 tokens/sec remains UNMET.
+Last completed physical whole-model measurement:0.207893161 tokens/sec.
+No Pioneer/SSH/power/install/Assistant/OS/boot/CPU/RAM/network/SD/hardware-
+connection/mains changes. No physical-health or speed improvement claim.
+
+Implemented private ownership stage,not public driver/END
+----------------------------------------------------------
+RestoreQ38TokenNativeL1 accepts ONLY the SAME full851 native owner after
+genuine ROOT+119 STOP,current terminal acceptance,120 actual HOLDs and
+complete sequential committed-record drain. Pristine64B/non-aliased output,
+fresh FD/team/thread/generation/source/clock/host scope and current closed
+counter journals remain mandatory. No caller supplies an original image,
+clean flag,counter baseline or processor/ready/STOP history.
+
+All120 immutable installed program images are checked BEFORE the first
+original-L1 write. The restorer writes every word from the SAME private
+snapshot journal with immediate exact readback,checks each earlier dispatch
+image,and runs a complete second verification pass. All120
+source/reset/idle/current-counter guards and a monotonic5-minute bound apply
+at participant boundaries;every actual alias access retains native scope.
+The journal contains11406906 words/45627624 bytes. UINT32_MAX is valid saved
+data,not a sentinel or read-failure fallback. No NoC command is issued and no
+counter is rewound/adopted. No reset/start,CSR/NIU/TLB lease restoration,
+ARC/master/clock change,unmap or host release is introduced. Existing guarded
+participant selection still configures its owned mapping windows.
+
+The private RootRestoring/RootRestored phases preserve current ownership.
+Only complete verified restoration sets memory.installed=false;the journal
+remains launched and NOT closed. The original token overlay snapshot was
+taken AFTER fresh dispatch preparation:restoring it returns that earlier
+dispatch image,NOT the pre-dispatch lower-lease state. Dispatch images,
+scratch/NIU/CSR/TLB state,master/clock,mappings and hosts remain owned.
+Native Closed() remains FALSE and legacy END/held-close still refuse.
+An uncertainty marks the whole owner unsafe and retains it without retry,
+following IO,repair,cleanup or release. Full qualified END is STILL OWED.
+
+Completed SDK/role/pending evidence
+------------------------------------
+Independent SDK C main7604/clean24281 BOTH terminal0;objects byte-identical:
+ 2a51b7ff28c06aa453fe480545cbf0bd2801011283afc84c3be1a8035d2d83c3.
+The actual factory/restorer bodies are required in emitted symbol and stack
+tables. Max new frame1728<=unchanged2048;old65 stays61faa093;all5 conventional
+driver entries stay independently inert. No CPU-reference,Work,restoration
+fixture or original-observer implementation is imported. SDK logs differ
+only by the temporary old-controls path. SDK A33110 also passes;redundant
+B50699 was actually built in MAIN despite a clean-looking filename and is
+explicitly NOT independent clean evidence. C corrects that build directory.
+
+Role B main42662/clean26808 BOTH0,complete logs identical:14 explicit TEST
+fragments/188 absent+zero+two+kernel+device+Work refusals. The restoration
+fixture needs all7 exact TEST parents and rejects full-flow/Work even if
+merely defined0;none enters SDK/Work.
+
+Pending B clean2188 terminal0. Main66054's terminal handle is now absent
+after an earlier poll whose tool result was not retained. Its complete
+terminal PASS log is byte-identical to clean's;do not invent a re-observed
+main exit code. The SAME owner executes1010 actual zero jobs,4616 metadata
+packets,119 virgin boots14744576 instructions and ROOT startup5137.
+Pending ROOT and16 non-pristine restore results refuse without IO. Existing
+readout21/HOLD17 pending refusals also pass. These are refusal results,NOT
+positive restoration or a fabricated genuine-HOLD substitute.
+
+Saved logs qwen38-native-restore-{sdk,roles,pending}-{main,clean}-20261029.log.
+
+Genuine original-layer restoration/fault qualifications:LIVE
+-------------------------------------------------------------
+Positive C main38721/clean14981 (--execution-restore-empty) and fault C
+main24735/clean75205 (--execution-restore-empty-fault) are confirmed live
+12:27:52UTC. Each continues a genuine full851 owner/initializer/119 virgin
+engines through original layer0,consumed cancellation,all120 STOP,current
+native terminal observation,ROOT-first120HOLD and a zero-commit drain before
+calling the production restorer in a fresh native FD scope.
+
+The TEST-only endpoint observes ALL11406906 actual original bytes before
+any native image write,while all120 processors are held. It does NOT read
+the private saved[] journal or feed observations to a processor/controller.
+The first ROOT mapped alias is0x40000,not0x20000;the capture/fault address was
+corrected BEFORE any restoration profile was launched. Positive completion
+requires all actual restored words equal that separately observed preimage,
+including UINT32_MAX,plus unchanged reset/NoC/PCI/map/host ownership.
+The fault profile increments generation AFTER an actual first restoration
+write at ROOT0x40000 and requires immediate retained failure with NO later
+IO or retry. A fault pass cannot qualify clean restoration or END.
+These are requirements,NOT passing results merely because runs started.
+
+Logs /private/tmp/pioneer-q38-restore-empty-{main,clean}-20261029-c.log
+     /private/tmp/pioneer-q38-restore-empty-fault-{main,clean}-20261029-c.log
+Prefixes same names ending -c-prefix.bin.
+Independent clean export /private/tmp/pioneer-q38-restore-clean.MWwoZoni.
+No model product,PC/register/history setter or caller original is supplied.
+
+Remaining full objective,unchanged
+----------------------------------
+Complete current readout/restoration and uncertainty tests;qualify all64
+layers/multitoken/state/KV/vocabulary/numerics/normal+EOS terminal behavior;
+restore distinct dispatch/CSR/NIU/TLB leases and clean END/load-unload;
+integrate qualified performance images;physical repeated generation/long
+conversations;no-CPU-reference Work plus Assistant;safe owned active delivery
+if streaming is added;honest sustained optimization toward20 tokens/sec.
+Preserve SD-free boot,64 CPUs,full RAM and valid running qualifications.

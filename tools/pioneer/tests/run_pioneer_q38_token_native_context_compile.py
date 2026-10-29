@@ -60,7 +60,8 @@ required = ('BindQ38TokenNative(', 'TokenCallScopeMatches(', 'TokenModelSourceSc
             'ObserveQ38TokenNativeTerminal(', 'PioneerQ38TokenNativeOwner::ObserveTerminal(', 'PioneerQ38TokenNativeOwner::InspectTerminal(',
             'pioneer_token_context_scoped_terminal_observe(',
             'HoldQ38TokenNativeStopped(', 'PioneerQ38TokenNativeOwner::HoldStopped(', 'pioneer_token_context_scoped_terminal_hold(',
-            'ReadQ38TokenNativeRecords(', 'PioneerQ38TokenNativeOwner::ReadCommitted(', 'pioneer_token_context_scoped_token_records(')
+            'ReadQ38TokenNativeRecords(', 'PioneerQ38TokenNativeOwner::ReadCommitted(', 'pioneer_token_context_scoped_token_records(',
+            'RestoreQ38TokenNativeL1(', 'PioneerQ38TokenNativeOwner::RestoreOriginalL1(', 'pioneer_token_context_scoped_l1_restore(')
 for name in required:
     assert any(name in key for key in frames), (name, 'actual implementation must be emitted')
 for controller in ('State', 'ConvHistory', 'Projection'):
@@ -87,7 +88,7 @@ for forbidden in ('Q38WorkControl', 'OriginalSource', 'CompareFinal', 'Reference
                   'Q38EmbeddingRawTestBridge',
                   'Q38NativePeerTestCpu', 'Q38NativePeerTestBytes', 'NativeQ38PeerInstructionModel',
                   'MutableByteSpan', 'BindMutableBytes', 'CheckNativeFullLayer', 'CheckNativeCancelLayer', 'CheckNativeHoldLayer',
-                  'CheckNativeEmptyReadout', 'CheckNativeReadoutFlow', 'ResumeFirstLayerCancellation',
+                  'CheckNativeEmptyReadout', 'CheckNativeReadoutFlow', 'CheckNativeRestoreEmpty', 'beforeNativeImage', 'ResumeFirstLayerCancellation',
                   'Q38NativeTraceTest', 'PioneerQ38ObservedTrace', 'KvByteSpan', 'BindKvBytes', 'CheckNativeFullFlow',
                   'Q38MixedLiveValidationControl', 'PioneerQ38MixedLiveNativeState',
                   'PioneerQ38EmbeddingNativeState', 'PioneerQ38RecurrentPrefixNativeState'):
@@ -131,6 +132,7 @@ print('PASS ACTUAL SAME running ROOT observation factory/controller SDK emitted;
 print('PASS ACTUAL read-only ROOT+all119 terminal observer factory/controller SDK emitted/explicit64B result;NO reset/HOLD/NIU commands/restore/END/public ABI/Work grant;positive runtime STOP still separate')
 print('PASS ACTUAL owned terminal recheck+ROOT-first/all119-worker HOLD factory/controller SDK emitted;NO NIU commands/L1 or CSR restore/token readout/END/public ABI/Work grant;runtime qualification still separate')
 print('PASS ACTUAL private held-only committed-record READ factory/controller SDK emitted;bounded64-record batches/source+counter+command receipts/atomic non-aliased output/no historical-counter adoption;NOT runtime/token/END/physical/Work qualification')
+print('PASS ACTUAL full-token original-L1 journal restoration factory/controller SDK emitted;requires SAME genuine HOLD+drained records/all120 frozen-image proof before writes/exact original words+full second pass;NO NIU/CSR/dispatch close/END/host release/physical/Work grant')
 print('PASS complete2097152B immutable rawRoPE emitted;NO kernel cos/sin/pow imports or CPU model-reference path')
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+' token-context-NODRV.o')
 print('COMPILE/INSPECT ONLY;real private bodies WOULD do IO if invoked;NO link/install/invoke/physical or performance qualification;this compile is NOT initialization/staging RUNTIME qualification;runtime+metadata/RUN/STOP/END STILL OWED')

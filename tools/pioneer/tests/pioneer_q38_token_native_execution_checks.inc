@@ -81,6 +81,12 @@ static void CheckNativeExecution(Fixture& f){
    }
    for(auto value:output)assert(!value);
    puts("PASS native committed READ refuses pending ROOT,16 non-pristine results and5 counts without IO/output changes;NO token or HOLD capability supplied");
+   PioneerQ38TokenRestoreResult restore;const auto pristineRestore=restore;auto* restoreWords=reinterpret_cast<uint32*>(&restore);
+   for(unsigned i=0;i<16;i++){
+    restoreWords[i]^=1;assert(!RestoreQ38TokenNativeL1(c,restore) && io.touches==beforeHold);restore=pristineRestore;
+   }
+   assert(!RestoreQ38TokenNativeL1(c,restore) && io.touches==beforeHold && !state->OriginalL1Restored());
+   puts("PASS native original-L1 restoration refuses pending ROOT and16 non-pristine results without IO/no caller clean or HOLD grant");
   }
   if(io.terminalFault){
    namespace C=PioneerQ38GlobalChainLayout;namespace T=PioneerQ38TokenLayout;

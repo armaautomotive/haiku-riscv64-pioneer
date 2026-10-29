@@ -76,6 +76,9 @@ extern "C" bool pioneer_token_context_scoped_terminal_hold(PioneerProbeCookie* c
 extern "C" bool pioneer_token_context_scoped_token_records(PioneerProbeCookie* cookie,unsigned records,uint32_t* output,PioneerQ38TokenReadResult& result){
  PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();return c && ReadQ38TokenNativeRecords(*c,records,output,result);
 } // private trusted kernel DATA buffers;no public ABI/Work or cleanup permission
+extern "C" bool pioneer_token_context_scoped_l1_restore(PioneerProbeCookie* cookie,PioneerQ38TokenRestoreResult& result){
+ PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();return c && RestoreQ38TokenNativeL1(*c,result);
+} // actual full-token journal restoration;not dispatch/CSR cleanup or END
 extern "C" void pioneer_token_context_destroy_clean(PioneerStoreContext* c){delete c;}
 
 // Independent inert controls, separate from the renamed actual driver bodies.

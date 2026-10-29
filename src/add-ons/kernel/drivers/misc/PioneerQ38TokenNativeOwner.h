@@ -6,8 +6,9 @@
 #include "../../../../../tools/pioneer/PioneerQ38TokenTerminalShape.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenRecordShape.h"
 // DISTINCT full-token owner. Held staging,fresh QGW1 bootstrap and ROOT
-// startup/cancel request,terminal/worker STOP observation and owned HOLD.
-// No CPU products,old-prefix ownership,restoration or END grant.
+// startup/cancel request,terminal/worker STOP observation,owned HOLD,
+// committed readout and original-L1 restoration. No CPU products,
+// old-prefix ownership,dispatch/CSR close or END grant.
 struct PioneerQ38TokenRuntimeResult {
  uint32_t version=1,started=0,phase=0,worker=0,chunk=0,word=0,unsafe=0,staged=0;
  uint32_t packets=0,writes=0,reads=0,bytesWritten=0,bytesRead=0,boots=0,reserved[2]={};
@@ -32,6 +33,10 @@ struct PioneerQ38TokenReadResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,firstRecord=0;
  uint32_t recordCount=0,packets=0,bytesRead=0,drained=0,firstPC=0,secondPC=0,reserved[2]={};
 };
+struct PioneerQ38TokenRestoreResult {
+ uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,restoredCores=0;
+ uint32_t savedWords=0,restoredWords=0,verifiedWords=0,programWords=0,firstPC=0,secondPC=0,reserved[2]={};
+};
 class PioneerQ38TokenNativeOwner {
  const tt_dram_samples_result* proof=nullptr;PioneerResidentBanks* banks=nullptr;PioneerQ38DispatchLease* cohort=nullptr;
  PioneerQ38TokenMemory* memory=nullptr;const PioneerQ38CanonicalModelPlan* canonical=nullptr;
@@ -44,6 +49,7 @@ class PioneerQ38TokenNativeOwner {
  uint32_t observedTerminal[64]={},terminalCounters[120][8]={},terminalNonces[120]={};
  bool readoutPending=false,readoutDrained=false,readoutCommandKnown=false;
  uint32_t readoutCursor=0,readoutInput=0,readoutCommand[10]={};
+ bool restoring=false,l1Restored=false;
  bool Bound()const{
   if(!started || unsafe || !proof || !banks || !cohort || !memory || !canonical || !startup || !ledger
    || !plan.MatchesBinding(*canonical,*startup,identity,&cohort->authority.source[0][0]))return false;
@@ -51,12 +57,13 @@ class PioneerQ38TokenNativeOwner {
    && memory->MatchesNativeOwner(*proof,*banks,*cohort,*canonical,*startup,identity,ledger,PioneerResidentBanks::Pages);
   // SAME private journal after its first uncertain ARM,never a public ready
   // hint or the legacy bootstrap policy. No arbitrary counter recapture.
-  if(!bootAttempted || !staged || traffic || !memory->started || !memory->installed || !memory->launched
+  if(!bootAttempted || !staged || traffic || !memory->started || (!memory->installed && !l1Restored) || !memory->launched
    || memory->unsafe || memory->closed || memory->proof!=proof || memory->banks!=banks || memory->cohort!=cohort
    || memory->canonical!=canonical || memory->startup!=startup || memory->ledger!=ledger || !(memory->identity==identity)
    || !canonical->Ready() || !banks->Matches(*proof) || cohort->unsafe || cohort->closed || cohort->rootRunning!=running[0]
    || cohort->prepared!=120 || cohort->bootAttempted || cohort->booted || ((!holding && !held) && running[0]!=rootStarted)
    || ((holding || held) && (!terminalObserved || !rootAcknowledged))
+   || ((restoring || l1Restored) && (!held || holding || !readoutDrained || readoutPending || readoutCursor!=observedTerminal[3]))
    || (rootStarted?(!rootAttempted || !booted || reset[0]!=((holding || held) && !running[0]?0x47800U:0x46800U))
     :reset[0]!=(rootAttempted?0x87ffffU:0x47800U)))return false;
   for(unsigned w=0;w<120;w++){
@@ -81,6 +88,7 @@ class PioneerQ38TokenNativeOwner {
  template<class IO> bool Fail(IO& io,PioneerQ38TokenTerminalResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenHoldResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenReadResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
+ template<class IO> bool Fail(IO& io,PioneerQ38TokenRestoreResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Sources(IO& io,unsigned w){
   if(w>=120 || !Scope(io) || !io.SelectRuntimeCore(w) || !io.TokenMemoryMappingStable(w)
    || io.ResetRead()!=reset[w] || io.ResetRead()!=reset[w])return false;
@@ -178,6 +186,7 @@ public:
  bool TerminalObserved()const{return terminalObserved && !unsafe && (ExecutionStarted() || ((holding || held) && Bound()));}
  bool HeldAfterTerminal()const{return held && !holding && TerminalObserved() && Bound();} // NOT restored/closed/END
  bool CommittedRecordsRead()const{return readoutDrained && !readoutPending && HeldAfterTerminal() && readoutCursor==observedTerminal[3];}
+ bool OriginalL1Restored()const{return l1Restored && !restoring && CommittedRecordsRead() && Bound();} // dispatch/CSR leases STILL owned
  void Fault(){unsafe=true;staged=false;}
  bool MatchesRuntimeBinding(const tt_dram_samples_result& dram,const PioneerResidentBanks& b,const PioneerQ38DispatchLease& participants,
   const PioneerQ38TokenMemory& m,const PioneerQ38CanonicalModelPlan& c,const PioneerQ38TokenStartupPlan& data,
@@ -630,7 +639,7 @@ public:
   const PioneerQ38TokenReadResult pristine;const auto* a=reinterpret_cast<const uint8_t*>(&r);
   const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
   for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=b[i])return false;
-  if(readoutPending || readoutDrained || !HeldAfterTerminal() || records>64 || readoutCursor>observedTerminal[3]
+  if(restoring || l1Restored || readoutPending || readoutDrained || !HeldAfterTerminal() || records>64 || readoutCursor>observedTerminal[3]
    || records>observedTerminal[3]-readoutCursor || (records?!output:(output || observedTerminal[3] || readoutCursor))
    || !Scope(io))return false;
   r.started=1;r.phase=1;r.firstRecord=readoutCursor;
@@ -663,6 +672,51 @@ public:
   readoutCursor+=records;readoutInput=input;readoutDrained=readoutCursor==observedTerminal[3];
   r.ready=1;r.recordCount=records;r.drained=readoutDrained;r.phase=4;return true;
  } // immutable generated DATA only;NO current-state reuse,L1/CSR restore,END/disposal or running-ROOT NIU access.
+ template<class IO> bool RestoreOriginalL1(IO& io,PioneerQ38TokenRestoreResult& r){
+  namespace L=PioneerQ38TokenL1;namespace P=PioneerQ38TokenPrograms;
+  const PioneerQ38TokenRestoreResult pristine;const auto* a=reinterpret_cast<const uint8_t*>(&r);
+  const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+  for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=b[i])return false;
+  if(restoring || l1Restored || readoutPending || !CommittedRecordsRead() || !Scope(io))return false;
+  r.started=1;r.phase=1;uint32_t boot[64];PioneerQ38TokenReadResult frontier;
+  if(!startup->ReadBoot(0,boot) || !ReadFrontier(io,boot,frontier))return Fail(io,r);
+  const uint64_t began=io.Q38CohortNow();uint64_t previous=began;
+  if(began>UINT64_MAX-UINT64_C(300000000))return Fail(io,r);
+  auto time=[&](){
+   if(!Scope(io))return false;
+   const uint64_t now=io.Q38CohortNow();
+   if(now<previous || now<began || now-began>=UINT64_C(300000000))return false;
+   previous=now;return true;
+  };
+  // Complete immutable image proof over ALL participants BEFORE any L1
+  // original is written. No cached HOLD or caller clean bit substitutes.
+  for(unsigned w=0;w<120;w++){
+   r.worker=w;PioneerQ38TokenMemoryResult image;
+   if(!time() || !HoldGuard(io,w,r) || !memory->VerifyImage(io,w,image) || !HoldGuard(io,w,r))return Fail(io,r);
+   r.programWords+=P::CodeWords(w);
+  }
+  if(r.programWords!=P::CodeWords(0)+119*P::CodeWords(1))return Fail(io,r);
+  restoring=true;r.phase=2;r.savedWords=L::SavedWords;
+  for(unsigned w=0;w<120;w++){
+   r.worker=w;if(!time() || !HoldGuard(io,w,r))return Fail(io,r);
+   for(unsigned i=0;i<L::SnapshotWords(w);i++){
+    r.word=i;const uint32_t address=L::SnapshotAddress(w,i),expected=memory->saved[L::SnapshotBase(w)+i];uint32_t actual=0;
+    if(!io.TokenMemoryWrite(w,address,expected) || !io.TokenMemoryReadChecked(w,address,actual) || actual!=expected)return Fail(io,r);
+    r.restoredWords++;
+   }
+   if(!time() || !HoldGuard(io,w,r) || !PioneerQ38GraphCsrCode(io,w))return Fail(io,r);
+   r.restoredCores++;
+  }
+  r.phase=3;
+  for(unsigned w=0;w<120;w++){
+   r.worker=w;PioneerQ38TokenMemoryResult original;
+   if(!time() || !HoldGuard(io,w,r) || !memory->VerifyOriginal(io,w,original) || !HoldGuard(io,w,r))return Fail(io,r);
+   r.verifiedWords+=original.verifiedOriginalWords;
+  }
+  if(r.restoredCores!=120 || r.restoredWords!=L::SavedWords || r.verifiedWords!=L::SavedWords || !time())return Fail(io,r);
+  r.worker=0;if(!HoldGuard(io,0,r))return Fail(io,r);
+  l1Restored=true;restoring=false;memory->installed=false;r.ready=1;r.phase=4;return true;
+ } // complete SAME original L1 journal restored;NO counter rewind/NIU command/CSR or dispatch close/END/unmap/host release.
 };
 static_assert(sizeof(PioneerQ38TokenRuntimeResult)==64,"all runtime result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenBootstrapResult)==64,"all bootstrap result bytes explicit");
@@ -670,5 +724,6 @@ static_assert(sizeof(PioneerQ38TokenExecutionResult)==64,"all execution result b
 static_assert(sizeof(PioneerQ38TokenTerminalResult)==64,"all terminal-observation result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenHoldResult)==64,"all terminal-HOLD result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenReadResult)==64,"all committed-readout result bytes explicit");
+static_assert(sizeof(PioneerQ38TokenRestoreResult)==64,"all L1-restoration result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenNativeOwner)>16384 && sizeof(PioneerQ38TokenNativeOwner)<32768,"native owner staging buffer HEAP ONLY");
 #endif

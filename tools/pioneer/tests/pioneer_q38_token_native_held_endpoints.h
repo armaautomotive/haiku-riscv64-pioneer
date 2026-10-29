@@ -18,6 +18,11 @@ struct TokenHeldEndpoints:ZeroControlIO {
  std::vector<uint32> alias=std::vector<uint32>(Words),original;
  unsigned runtimeCore=0,maps=0,aliasReads=0,aliasWrites=0;
  const PioneerQ38TokenMemoryResult* journalResult=nullptr;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE
+ std::vector<uint32> beforeNativeImage;
+ const PioneerQ38TokenRestoreResult* nativeRestoreResult=nullptr;
+ bool restoreFault=false;unsigned restoreFaultSeen=0,restoreFaultTouches=0;
+#endif
  unsigned fault=0,faultSeen=0,touchesAtFault=0;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
  bool runtimeMode=false;unsigned runtimeWorkspace=0,runtimeFault=0,runtimePackets=0,runtimeWrites=0,runtimeReads=0,runtimeObserved=0;
@@ -71,6 +76,19 @@ struct TokenHeldEndpoints:ZeroControlIO {
   assert(a>=base && a-base<Words*4 && !((a-base)&3));return uint32(a-base);
  }
  void ObserveAlias(unsigned address,bool write){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE
+  if(beforeNativeImage.empty() && !write && journalResult && journalResult->phase==1 && !runtimeCore){
+   assert(address==0x40000);beforeNativeImage.resize(PioneerQ38TokenL1::SavedWords);
+   for(unsigned w=0;w<120;w++){
+    assert(Core(w).coreReset==0x47800);
+    for(unsigned i=0;i<PioneerQ38TokenL1::SnapshotWords(w);i++)
+     beforeNativeImage[PioneerQ38TokenL1::SnapshotBase(w)+i]=Raw(w,PioneerQ38TokenL1::SnapshotAddress(w,i));
+   }
+  } // independent byte OBSERVATION before any native image write;never fed to an owner/journal or processor
+  if(restoreFault && !restoreFaultSeen && nativeRestoreResult && nativeRestoreResult->phase==2 && write && !runtimeCore && address==0x40000){
+   restoreFaultSeen++;restoreFaultTouches=touches;sReloadGeneration++;
+  } // after an ACTUAL original-L1 write;following native access must refuse
+#endif
   if(!fault || faultSeen || !journalResult)return;
   const bool hit=fault==1?!write && journalResult->phase==1 && !runtimeCore && address==0x40000
    :fault==2?write && journalResult->phase==3 && runtimeCore==119 && address==0x64000

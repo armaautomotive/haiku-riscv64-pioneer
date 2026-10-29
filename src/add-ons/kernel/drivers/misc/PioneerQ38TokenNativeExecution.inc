@@ -84,4 +84,15 @@
  if(!c.io.TokenModelSourceScope(false))return false;
  return s->runtime->ReadCommitted(c.io,records,output,result);
 } // immutable committed DATA after genuine HOLD;NO CPU model reference,restore,END or public Work route
+[[maybe_unused]] static __attribute__((noinline)) bool RestoreQ38TokenNativeL1(PioneerStoreContext& c,PioneerQ38TokenRestoreResult& result){
+ auto* s=c.q38TokenNative;const PioneerQ38TokenRestoreResult pristine;
+ const auto* a=reinterpret_cast<const uint8_t*>(&result);const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+ for(unsigned i=0;i<sizeof(result);i++)if(a[i]!=b[i])return false;
+ if(!s || s->phase!=PioneerQ38TokenNativeState::RootHeld || !s->runtime || !s->TerminalHeld()
+  || !s->runtime->CommittedRecordsRead() || !Q38TokenExecutionOutput(c,&result,sizeof(result)) || !c.io.TokenModelSourceScope(false))return false;
+ s->phase=PioneerQ38TokenNativeState::RootRestoring;bool okay=s->runtime->RestoreOriginalL1(c.io,result);
+ if(okay && s->runtime->OriginalL1Restored())s->phase=PioneerQ38TokenNativeState::RootRestored;
+ else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);result.unsafe=1;result.ready=0;okay=false;}
+ return okay;
+} // exact full-token L1 journal ONLY;dispatch/CSR leases,clock,maps,hosts remain owned. END STILL REFUSES.
 #endif

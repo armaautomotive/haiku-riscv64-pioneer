@@ -58,7 +58,8 @@ for header, family in (
     ('pioneer_q38_token_native_cancel_layer_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE'),
     ('pioneer_q38_token_native_hold_layer_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE'),
     ('pioneer_q38_token_native_readout_empty_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_READOUT_EMPTY_FIXTURE'),
-    ('pioneer_q38_token_native_readout_flow_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE')):
+    ('pioneer_q38_token_native_readout_flow_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE'),
+    ('pioneer_q38_token_native_restore_empty_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE')):
     parents = {family:1, fixture:1, context:1}
     if family in ('PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE','PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE'):
         parents['PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE']=1
@@ -69,6 +70,9 @@ for header, family in (
                        PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE=1)
     if family=='PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE':
         parents.update(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE=1,PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE=1)
+    if family=='PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE':
+        parents.update(PIONEER_Q38_TOKEN_NATIVE_READOUT_EMPTY_FIXTURE=1,PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE=1,
+                       PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE=1,PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE=1)
     cases = [(parents, True)]
     for macro in parents:
         absent = dict(parents)

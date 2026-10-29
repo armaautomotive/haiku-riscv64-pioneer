@@ -1,5 +1,37 @@
 # Native build status
 
+## In progress: full-token original-L1 restoration after drained HOLD
+
+October29,2026 12:31UTC. A private restorer now requires the SAME genuine
+terminal/HOLD owner and completely drained token records. It audits all120
+immutable images BEFORE the first original write,then restores and checks
+all11406906 privately saved L1 words,followed by a complete second pass.
+This returns the earlier fresh dispatch image,NOT the original lower lease;
+dispatch/NIU/CSR/TLB/clock/maps/hosts remain owned and END still refuses.
+No public Work or driver installation is enabled.
+
+Independent main/clean SDK C objects match2a51b7ff,max new frame1728<=2048;
+old65 and all5 inert entries are unchanged. Role checks pass14/188. The
+pending/refusal logs are complete and identical;clean2188 finishes0,while
+main66054's earlier terminal poll was consumed before its result was saved.
+The genuine original-layer/cancel/HOLD/zero-drain/restoration and actual-
+write-then-generation-loss tests are LIVE,not passing. Full-model/readout
+histories remain independent outstanding requirements. Last physical
+**0.207893161 tokens/sec**,20 unmet. Evidence:
+[original-L1 restoration candidate](benchmarks/qwen38-token-native-restore-wip-20261029.txt).
+
+## Completed offline: terminal-to-HOLD on the original first-layer history
+
+October29,2026 12:07UTC follow-up. HOLD C main51800/clean36235 BOTH finish0
+with identical full logs and observed prefixes. After genuine consumed
+cancellation and ROOT+119 actual STOP,the native controller holds ROOT first
+then all119 workers with unchanged counters/commands and retained scope.
+Independent comparison66920 finishes0:all5120 embedding and5120 layer0
+values are BITEXACT,without tolerance. These binaries predate readout and
+restoration;they grant neither those stages nor full-model/native END or
+physical readiness. Evidence:
+[completed HOLD milestone](benchmarks/qwen38-token-native-terminal-hold-wip-20261029.txt).
+
 ## In progress: native committed-record readout after verified HOLD
 
 October29,2026 11:44UTC. A private reader implements sequential1..64-record
