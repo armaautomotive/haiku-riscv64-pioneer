@@ -12,6 +12,7 @@ using area_id=int;
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38NonRootHeld.h"
 using PioneerHostPageIO=HostReadMock;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+#define PIONEER_Q38_TOKEN_NATIVE_VIEW_ENDPOINT_TEST 1
 #include "pioneer_q38_token_native_held_endpoints.h"
 using TokenNativeEndpoints=TokenHeldEndpoints;
 #else
@@ -28,6 +29,22 @@ using TokenNativeEndpoints=ZeroControlIO;
 #endif
 struct PioneerSessionIO:TokenNativeEndpoints {
  tt_dram_samples_result& dram;
+ TokenPciRaw nativePci;
+ tt_pioneer_mmio_result nativePciBegin={};tt_pioneer_mmio_transaction nativePciTransaction={};
+#ifdef PIONEER_Q38_TOKEN_NATIVE_PCI_FIXTURE
+ const PioneerQ38TokenPciResult* nativePciResult=nullptr;unsigned nativePciFault=0,nativePciFaultSeen=0,nativePciFaultEvents=0;
+#endif
+ uint32 CardRead(unsigned offset,unsigned width){
+  const uint32 actual=nativePci.CardRead(offset,width);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_PCI_FIXTURE
+  if(nativePciFault==2 && !nativePciFaultSeen && nativePciResult && nativePciResult->started
+   && nativePci.writes==12 && offset==4 && width==2){nativePciFaultSeen++;nativePciFaultEvents=nativePci.events;return actual^1U;}
+#endif
+  return actual;
+ }
+ uint32 RootRead(unsigned offset,unsigned width){return nativePci.RootRead(offset,width);}
+ void CardWrite(unsigned offset,unsigned width,uint32 value){nativePci.CardWrite(offset,width,value);}
+ void RootWrite(unsigned offset,unsigned width,uint32 value){nativePci.RootWrite(offset,width,value);}
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
  unsigned preparationFault=0,preparationFaultSeen=0,preparationFaultTouches=0,preparationMapWrites=0,preparationPanelWrites=0;
  std::vector<unsigned> preparationFifoEvents;
@@ -47,8 +64,23 @@ struct PioneerSessionIO:TokenNativeEndpoints {
 #include "pioneer_q38_token_native_peer_bytes.inc"
 #endif
  PioneerSessionIO(const char* image,tt_dram_samples_result& proof):TokenNativeEndpoints(image),dram(proof){
+  assert(BlackholePioneerMmioBegin(nativePci,nativePciBegin,nativePciTransaction) && nativePci.writes==11);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
   tokenHeldEndpoint=this;
+  outputArea=302;wideArea=303;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE
+  tokenModelViewDelete=[](area_id view){
+   auto& io=*static_cast<PioneerSessionIO*>(tokenHeldEndpoint);io.Touch();io.nativeViewDeletes.push_back(view);
+   assert(view<101 || view>106);
+   for(unsigned i=0;i<3;i++)assert(view!=io.TokenHostView(i));
+   if(io.nativeViewFault && io.nativeViewDeletes.size()==1){
+    io.nativeViewFaultTouches=io.touches;
+    if(io.nativeViewFault==2)sReloadGeneration++;
+    if(io.nativeViewFault==1)return B_BAD_VALUE;
+   }
+   return B_OK;
+  };
+#endif
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE
@@ -166,6 +198,7 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  bool TokenInitializationFifoEmpty(unsigned);bool TokenInitializationFifoReadChecked(unsigned,bool,uint32&);
 #endif
  unsigned initializationFifoFault=0,initializationFifoReads=0,initializationFifoObserved=0;
+ bool pciCaptureFault=false;
  uint32 TokenFifoStatusWord(uint32 address){
   const uint32 value=TokenNativeEndpoints::TokenFifoStatusWord(address);
   if(initializationFifoFault){
@@ -182,6 +215,10 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  }
  bool runtimeMapped=true,q38SpanAllowed=true,nonrootFault=false;
  int outputArea=0,wideArea=0; // simulated owned VM handles;real quarantine method below
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+ std::array<area_id,25> nativeViewAreas=[](){std::array<area_id,25> values;for(unsigned i=0;i<25;i++)values[i]=int(200+i);return values;}();
+ std::vector<area_id> nativeViewDeletes;unsigned nativeViewFault=0,nativeViewFaultTouches=0;
+#endif
 #include "token_native_host_quarantine.inc"
  unsigned failRun=0,loseTeamRun=0,loseGenerationRun=0,observedGdnPages=0,observedHistoryPages=0,observedProjectionPages=0;
  bool TokenCallScopeMatches();bool TokenModelSourceScope(bool);
@@ -270,6 +307,20 @@ struct PioneerSessionIO:TokenNativeEndpoints {
   }
  }
 };
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+const void* PioneerSessionIO::TokenPciTransport(){return &nativePci;}
+uint64 PioneerSessionIO::TokenPciEndpoint(){return (uint64(nativePci.profile.root_bus)<<24)|(uint64(nativePci.profile.card_bus)<<16);}
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+area_id* PioneerSessionIO::TokenViewHandle(unsigned index){
+ return index<4?&q38TokenMemoryArea[index]:index<29?&nativeViewAreas[index-4]:nullptr;
+} // simulated29 OS-handle endpoints present before any native owner exists
+area_id PioneerSessionIO::TokenHostView(unsigned index){return index==0?301:index==1?outputArea:index==2?wideArea:-1;}
+void PioneerSessionIO::TokenClearViewPointers(){
+ for(auto& view:q38TokenMemoryView)view=nullptr;
+ runtimeEntry=scratchData=nullptr;runtimePc=nullptr;runtimeMapped=false;fleetEnabled=false;
+}
+#endif
 struct PioneerStoreContext {
  PioneerSessionIO& io;PioneerResidentBanks banks;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE
@@ -280,7 +331,7 @@ struct PioneerStoreContext {
 #endif
  struct B1{D baseline;tt_compute_noc_result& noc;};
  struct B2{B1 baseline;MockLease path;};struct B3{B2 baseline;MockLease audit;};B3 baseline;
- struct{uint32 state=0;}pci;
+ tt_pioneer_profile profile=TokenPciRawModel::GoodProfile();tt_pioneer_mmio_result& pci;tt_pioneer_mmio_transaction& transaction;
  PioneerQ38TokenNativeState* q38TokenNative=nullptr;PioneerQ38CanonicalModelPlan* q38FfnModelPlan=nullptr;
  MockForeignOwner *q38GraphMutable=nullptr,*q38FfnZero=nullptr,*q38FfnGraph=nullptr,*q38FfnCode=nullptr,*q38GdnBanks=nullptr,*q38StateZero=nullptr;
  PioneerQ38DispatchLease* q38Dispatch=nullptr;MockCohort* q38Cohort=nullptr;MockFleet* fleet=nullptr;
@@ -298,7 +349,7 @@ struct PioneerStoreContext {
  uint8* initialized=nullptr;uint32* hashes=nullptr;thread_id q38GdnCallThread=-1;uint64 bytes=PioneerResidentBanks::Total;
  bool bankStorageOnly=true,dispatchOwnerRetained=false,q38DispatchRoutes=false;unsigned q38EndPhase=0;int runtimeCoreMode=-1;
  PioneerStoreContext(PioneerSessionIO& native,PanelOwners& owner,PioneerBulkUploadLease& b,PioneerOutputBufferLease& transfer,
-  PioneerWideOutputLease& wide):io(native),baseline{{{{native.dram},owner.noc},{ }},{ }}
+  PioneerWideOutputLease& wide):io(native),baseline{{{{native.dram},owner.noc},{ }},{ }},pci(native.nativePciBegin),transaction(native.nativePciTransaction)
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE
   ,q38ClockIO(tokenClockProfile,baseline.baseline.baseline.baseline.control.control.control.arc,baseline.baseline.baseline.baseline.control.control.telemetry,tokenClockMapping),q38Clock(q38ClockIO)
 #endif
@@ -318,11 +369,14 @@ static void TestKernelLog(const char*,...){}
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeHeld.inc"
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeRuntime.inc"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativePciCapture.inc"
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeExecution.inc"
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeClock.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeHardware.inc"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeViews.inc"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativePci.inc"
 #endif
 #endif
 #endif
@@ -413,7 +467,11 @@ int main(int argc,char** argv){
  const bool clockContract=argc==3 && !strcmp(argv[2],"--clock-owner-contract");
  const bool peerBootstrap=argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines");
  const bool fullFlow=argc==7 && (!strcmp(argv[2],"--execution-full-flow") || !strcmp(argv[2],"--execution-readout-full-flow"));
- const bool hardwareSeal=argc==7 && (!strcmp(argv[2],"--execution-hardware-seal") || !strcmp(argv[2],"--execution-hardware-seal-tlb-fault"));
+ const bool pciClose=argc==7 && (!strcmp(argv[2],"--execution-pci-close") || !strcmp(argv[2],"--execution-pci-generation-fault")
+  || !strcmp(argv[2],"--execution-pci-readback-fault"));
+ const bool viewsClose=pciClose || (argc==7 && (!strcmp(argv[2],"--execution-views-close") || !strcmp(argv[2],"--execution-views-delete-fault")
+  || !strcmp(argv[2],"--execution-views-generation-fault")));
+ const bool hardwareSeal=viewsClose || (argc==7 && (!strcmp(argv[2],"--execution-hardware-seal") || !strcmp(argv[2],"--execution-hardware-seal-tlb-fault")));
  const bool clockEnd=hardwareSeal || (argc==7 && (!strcmp(argv[2],"--execution-clock-end") || !strcmp(argv[2],"--execution-clock-end-generation-fault")
   || !strcmp(argv[2],"--execution-clock-end-response-fault") || !strcmp(argv[2],"--execution-clock-end-unmap-fault")));
  const bool restoreShared=clockEnd || (argc==7 && (!strcmp(argv[2],"--execution-restore-shared-tlb") || !strcmp(argv[2],"--execution-restore-shared-tlb-fault")
@@ -444,10 +502,10 @@ int main(int argc,char** argv){
   || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
   || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")
   || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-traffic-faults")
-  || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
+  || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-pci-capture-fault") || !strcmp(argv[2],"--runtime-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;(void)&AcquireQ38DeltaLock;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
- assert(clockContract || preparationEndpoints || preparationFaults || terminalFaults || peerBootstrap || embedding || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults")
+ assert(clockContract || preparationEndpoints || preparationFaults || terminalFaults || peerBootstrap || embedding || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-pci-capture-fault") || !strcmp(argv[2],"--runtime-faults")
   || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
   || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")
   || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-traffic-faults"))));
@@ -479,6 +537,9 @@ int main(int argc,char** argv){
   Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;assert(f.Bind());auto* state=c.q38TokenNative;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_PCI_FIXTURE
+  io.nativePciFault=!strcmp(argv[2],"--execution-pci-generation-fault")?1:!strcmp(argv[2],"--execution-pci-readback-fault")?2:0;
+#endif
   if(clockContract){
    PioneerQ38TokenClockResult result;const auto pristine=result;auto* words=reinterpret_cast<uint32*>(&result);
    const unsigned before=io.touches,raw=c.q38ClockIO.rawEvents;
@@ -486,21 +547,32 @@ int main(int argc,char** argv){
     && !EndQ38TokenNativeClock(c,result) && !Q38TokenNativeClockScope(&c));
    PioneerQ38TokenHardwareSealResult hardware;const auto pristineHardware=hardware;auto* hardwareWords=reinterpret_cast<uint32*>(&hardware);
    assert(!SealQ38TokenNativeHardware(c,hardware) && !io.TokenFinalOwnershipScope());
+   PioneerQ38TokenViewsResult views;const auto pristineViews=views;auto* viewWords=reinterpret_cast<uint32*>(&views);
+   assert(!CloseQ38TokenNativeViews(c,views) && !io.TokenViewsScope() && io.nativeViewDeletes.empty());
+   const unsigned pciEvents=io.nativePci.events;
+   PioneerQ38TokenPciResult pci;const auto pristinePci=pci;auto* pciWords=reinterpret_cast<uint32*>(&pci);
+   assert(!CloseQ38TokenNativePci(c,pci) && !io.TokenPciScope());
    {
     PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);
     for(unsigned i=0;i<16;i++){words[i]^=1;assert(!EndQ38TokenNativeClock(c,result));result=pristine;}
     assert(!EndQ38TokenNativeClock(c,result) && !state->ClockRestored());
     for(unsigned i=0;i<16;i++){hardwareWords[i]^=1;assert(!SealQ38TokenNativeHardware(c,hardware));hardware=pristineHardware;}
     assert(!SealQ38TokenNativeHardware(c,hardware) && !io.TokenFinalOwnershipScope() && !io.TokenHardwareSealScope());
+    for(unsigned i=0;i<16;i++){viewWords[i]^=1;assert(!CloseQ38TokenNativeViews(c,views));views=pristineViews;}
+    assert(!CloseQ38TokenNativeViews(c,views) && !io.TokenViewsScope() && io.nativeViewDeletes.empty());
+    for(unsigned i=0;i<16;i++){pciWords[i]^=1;assert(!CloseQ38TokenNativePci(c,pci));pci=pristinePci;}
+    assert(!CloseQ38TokenNativePci(c,pci) && !io.TokenPciScope());
     uint32 value=0x3157a9c2;
     for(unsigned slot:{0U,1U,2U,UINT32_MAX})for(unsigned word:{0U,2U,3U,UINT32_MAX})
      assert(!io.TokenClockTlbReadChecked(slot,word,value) && !io.TokenHardwareSealTlbReadChecked(slot,word,value) && value==0x3157a9c2);
+    for(bool root:{false,true})for(unsigned offset:{0U,4U,0x10U,0x34U,0x70U,0x100U,UINT32_MAX})for(unsigned width:{1U,2U,4U,8U})
+     assert(!io.TokenPciReadChecked(root,offset,width,value) && value==0x3157a9c2 && !io.TokenPciWriteChecked(root,offset,width,0));
    }
-   assert(io.touches==before && c.q38ClockIO.rawEvents==raw && !c.q38ClockIO.deletes && !io.rootStarts
+   assert(io.touches==before && c.q38ClockIO.rawEvents==raw && io.nativePci.events==pciEvents && !c.q38ClockIO.deletes && !io.rootStarts
     && !memcmp(&result,&pristine,sizeof(result)) && c.q38Clock.RequiresExplicitEnd());
    tt_resident_session_result end={};bool clean=true;assert(!IncompleteEnd(c,end,clean) && !clean);f.Unknown();
    assert(io.touches==before && c.q38ClockIO.rawEvents==raw && !c.q38ClockIO.deletes);
-   puts("PASS actual native clock BEGIN/private real lease+3 simulated ARC messages/1350BUSY/not mutable ready snapshot/17 clock-END+17 hardware-seal pending-or-non-pristine factories/32 readback-API and final-ownership refusals/output unchanged/ZERO following clock/model IO or instructions;NOT positive clock-END/hardware-seal/compute/hardware/Work/TPS qualification");
+   puts("PASS actual native PCI BEGIN+actual real clock BEGIN3 messages/17 each clock-END+hardware-seal+VM-close+PCI-close pending-or-non-pristine factories/32 mapping+112 PCI read-and-write refusals/output unchanged/ZERO following PCI-clock-model IO/instructions/VM deletes;NOT positive cleanup/compute/hardware/Work/TPS qualification");
    continue;
   }
 #endif
@@ -627,6 +699,7 @@ int main(int argc,char** argv){
   if(preparationFaults){CheckNativePreparationFault(f,fault+(preparationAccessFaults?5U:1U));continue;}
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
   io.runtimeWorkspace=io.workspaceAddress;io.runtimeFault=runtimeFaults?fault+1:0;
+  io.pciCaptureFault=argc==3 && !strcmp(argv[2],"--runtime-pci-capture-fault");
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
   io.bootstrapFault=bootstrapFaults?fault+1:0;
@@ -657,6 +730,7 @@ int main(int argc,char** argv){
    !strcmp(argv[2],"--execution-restore-shared-tlb-readback-fault")?2:!strcmp(argv[2],"--execution-restore-shared-tlb-verify-fault")?3:0;
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE
+  io.nativeViewFault=!strcmp(argv[2],"--execution-views-delete-fault")?1:!strcmp(argv[2],"--execution-views-generation-fault")?2:0;
   c.tokenClockFault=!strcmp(argv[2],"--execution-clock-end-generation-fault")?1:
    !strcmp(argv[2],"--execution-clock-end-response-fault")?2:!strcmp(argv[2],"--execution-clock-end-unmap-fault")?3:0;
 #endif

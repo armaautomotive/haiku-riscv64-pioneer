@@ -97,6 +97,12 @@ extern "C" bool pioneer_token_context_scoped_clock_end(PioneerProbeCookie* cooki
 extern "C" bool pioneer_token_context_scoped_hardware_seal(PioneerProbeCookie* cookie,PioneerQ38TokenHardwareSealResult& result){
  PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();return c && SealQ38TokenNativeHardware(*c,result);
 } // CPU-only retirement after6 fresh control reads;VM/PCI/hosts/reservation/full END retained
+extern "C" bool pioneer_token_context_scoped_views_close(PioneerProbeCookie* cookie,PioneerQ38TokenViewsResult& result){
+ PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();return c && CloseQ38TokenNativeViews(*c,result);
+} // native VM aliases ONLY;PCI/hosts/reservations/full END retained
+extern "C" bool pioneer_token_context_scoped_pci_close(PioneerProbeCookie* cookie,PioneerQ38TokenPciResult& result){
+ PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();return c && CloseQ38TokenNativePci(*c,result);
+} // original PCI configuration only;hosts/reservations/full END retained
 extern "C" void pioneer_token_context_destroy_clean(PioneerStoreContext* c){delete c;}
 
 // Independent inert controls, separate from the renamed actual driver bodies.

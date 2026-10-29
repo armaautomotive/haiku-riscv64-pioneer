@@ -15,6 +15,9 @@
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE)
 #error Explicit native clock-ended hardware-lease retirement TEST required
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_VIEWS_FIXTURE
+#include "pioneer_q38_token_native_views_checks.inc"
+#endif
 static void CheckNativeHardwareSeal(Fixture& f){
  auto& c=*f.c;auto& io=f.io;auto* state=c.q38TokenNative;auto& clock=c.q38ClockIO;
  assert(!lockHeld && state->ClockRestored() && !state->HardwareLeasesSealed() && !state->Closed()
@@ -61,4 +64,7 @@ static void CheckNativeHardwareSeal(Fixture& f){
   && !io.pciWrites && !io.HostReadMock::bmeWrites && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases);
  if(io.hardwareSealFault)puts("EXECUTED native hardware-seal first control-readback fault/actual SAME full predecessor+real clock END/first bad actual observation/NO following IO or publication/ALL remaining owners retained;NO full END/physical/Work/TPS grant");
  else puts("EXECUTED native SAME full851/original layer+cancel/STOP/HOLD/drain/token+dispatch+119peer+ROOT+shared originals+real clock END/6 fresh original-control reads/CPU-only120 image+120 store+launched-journal retirement/master+bulk ready cleared/cohort closed/14 corrupted-final-metadata refusals ZERO IO/launched history retained;modelVM/PCI/hosts/reservations STILL OWNED,NO full END/physical/Work/TPS grant");
+#ifdef PIONEER_Q38_TOKEN_NATIVE_VIEWS_FIXTURE
+ if(!io.hardwareSealFault)CheckNativeViewsClose(f);
+#endif
 }

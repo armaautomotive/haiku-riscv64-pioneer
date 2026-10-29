@@ -10,7 +10,7 @@ void* operator new(std::size_t bytes,const std::nothrow_t&) noexcept{
 using area_id=int;
 static constexpr int B_ANY_KERNEL_ADDRESS=1,B_KERNEL_READ_AREA=2,B_KERNEL_WRITE_AREA=4,B_UNCACHED_MEMORY=8;
 struct TokenHeldEndpoints:ZeroControlIO {
- static constexpr uint64 Bar=UINT64_C(0x900000000);
+ static constexpr uint64 Bar=UINT64_C(0x4900000000); // actual fixed Pioneer BAR0 host aperture
  static constexpr unsigned Words=0x180000/4;
  struct{uint64 bar0_host_start=Bar;}profile;
  std::array<std::unique_ptr<PanelIO>,119> peers;

@@ -19,7 +19,15 @@ static bool CheckNativeRuntime(Fixture& f){
  tokenChildFail=1;tokenChildAttempts=0;
  assert(!PrepareQ38TokenNativeRuntime(c,result) && tokenChildAttempts==1 && io.touches==before && !state->Unsafe() && !io.runtimePackets);
  tokenChildFail=0;
+ const unsigned pciEvents=io.nativePci.events;assert(!state->PciSnapshotCaptured());
+ if(io.pciCaptureFault)c.Pci().bars_before[5]^=1U;
  const bool okay=PrepareQ38TokenNativeRuntime(c,result);
+ if(io.pciCaptureFault){
+  assert(!okay && result.unsafe && !result.staged && !result.started && state->Unsafe() && !state->PciSnapshotCaptured()
+   && io.runtimePackets==0 && io.touches==before && io.nativePci.events==pciEvents && io.nativePci.writes==11);
+  PioneerQ38TokenRuntimeResult again;assert(!PrepareQ38TokenNativeRuntime(c,again) && io.touches==before && io.nativePci.events==pciEvents);
+  f.Unknown();puts("PASS native SAME genuine1010 initializer+120 new preparations+held-image histories/invalid actual PCI BEGIN original refused BEFORE first runtime packet or worker launch/NO following IO/retry/ALL owners retained;NOT successful model or PCI END/physical/Work/TPS qualification");return false;
+ }
  if(io.runtimeFault){
   assert(!okay && result.started && result.unsafe && !result.staged && io.runtimeObserved && state->Unsafe()
    && io.runtimePackets==(io.runtimeFault==2?4616U:1U));
@@ -34,6 +42,7 @@ static bool CheckNativeRuntime(Fixture& f){
  if(!okay)fprintf(stderr,"RUNTIME_PREPARE_DIAGNOSTIC phase%u worker%u chunk%u word%u packets%u writes%u reads%u unsafe%u last%s:%x=%x;SIMULATED metadata ONLY\n",
   result.phase,result.worker,result.chunk,result.word,result.packets,result.writes,result.reads,result.unsafe,io.lastOp,io.lastAddress,io.lastValue);
  assert(okay && result.started && result.staged && !result.unsafe && result.packets==4616 && result.writes==2308 && result.reads==2308
+  && state->PciSnapshotCaptured() && io.nativePci.events==pciEvents && io.nativePci.writes==11
   && result.bytesWritten==37782528 && result.bytesRead==37782528 && result.boots==120 && !state->Unsafe() && !state->Closed()
   && io.runtimePackets==4616 && io.runtimeWrites==2308 && io.runtimeReads==2308
   && io.rootStarts==starts && io.rootStops==stops && io.rootHolds==holds && io.resets.size()==resets
@@ -57,6 +66,6 @@ static bool CheckNativeRuntime(Fixture& f){
  }
  const unsigned touches=io.touches;PioneerQ38TokenRuntimeResult again;
  assert(!PrepareQ38TokenNativeRuntime(c,again) && io.touches==touches);
- puts("PASS SAME genuine full851 initialization+120 held histories/actual native runtime scope/factory/ALL2308 bounded metadata+frozen rawRoPE+prompt+zero-record chunks/4616 exact NoC packets+complete readback/37782528B vs independently built startup+ALL untouched slack/120 actual boot DATA/NO reset/start/CPU model products/host BME;SIMULATED endpoints,NOT initialized KV rows/model RUN/STOP/END/physical/TPS");
+ puts("PASS SAME genuine full851 initialization+120 held histories/actual PCI BEGIN originals captured by native factory BEFORE launch/no new PCI access/actual native runtime scope+factory/ALL2308 bounded metadata+frozen rawRoPE+prompt+zero-record chunks/4616 exact NoC packets+complete readback/37782528B vs independently built startup+ALL untouched slack/120 actual boot DATA/NO reset/start/CPU model products/host BME;SIMULATED endpoints,NOT initialized KV rows/model RUN/STOP/END/physical/TPS");
  return true;
 }

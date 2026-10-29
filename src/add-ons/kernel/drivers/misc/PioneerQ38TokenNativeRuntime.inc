@@ -7,6 +7,7 @@ bool PioneerSessionIO::TokenRuntimeScope(const PioneerQ38TokenNativeOwner& runti
  auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;
  return s && s->runtime==&runtime && s->memory==&memory && &s->canonical==&canonical && s->startup==&startup
   && s->identity==id && c->initialized==learned && pages==PioneerResidentBanks::Pages
+  && s->pci.Prepared() && s->pci.Matches(*this,c->Pci(),c->transaction)
   && (s->phase==PioneerQ38TokenNativeState::RuntimePreparing || s->phase==PioneerQ38TokenNativeState::RuntimeReady
    || s->phase==PioneerQ38TokenNativeState::WorkersBootstrapping || s->phase==PioneerQ38TokenNativeState::WorkersReady
    || s->phase==PioneerQ38TokenNativeState::RootStarting || s->phase==PioneerQ38TokenNativeState::RootRunning
@@ -39,7 +40,8 @@ bool PioneerSessionIO::TokenRuntimeScope(const PioneerQ38TokenNativeOwner& runti
  auto* runtime=new(std::nothrow) PioneerQ38TokenNativeOwner;if(!runtime)return false;
  if(!c.io.TokenModelSourceScope(false)){delete runtime;return false;} // unpublished CPU child ONLY
  s->runtime=runtime;s->phase=PioneerQ38TokenNativeState::RuntimePreparing;
- bool okay=runtime->PrepareHeldRuntime(c.io,c.baseline.baseline.baseline.baseline.dram,c.banks,*c.q38Dispatch,
+ bool okay=s->pci.Capture(c.io,c.Pci(),c.transaction)
+  && runtime->PrepareHeldRuntime(c.io,c.baseline.baseline.baseline.baseline.dram,c.banks,*c.q38Dispatch,
   *s->memory,s->canonical,*s->startup,s->identity,c.initialized,PioneerResidentBanks::Pages,result);
  if(okay)s->phase=PioneerQ38TokenNativeState::RuntimeReady;
  else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);result.unsafe=1;result.staged=0;}

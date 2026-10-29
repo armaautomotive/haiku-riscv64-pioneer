@@ -66,8 +66,22 @@ for header, family in (
     ('pioneer_q38_token_native_shared_tlb_restore_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE'),
     ('pioneer_q38_token_native_shared_tlb_endpoints.inc', 'PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE'),
     ('pioneer_q38_token_native_clock_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE'),
-    ('pioneer_q38_token_native_hardware_seal_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_HARDWARE_SEAL_FIXTURE')):
+    ('pioneer_q38_token_native_hardware_seal_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_HARDWARE_SEAL_FIXTURE'),
+    ('pioneer_q38_token_native_views_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_VIEWS_FIXTURE'),
+    ('pioneer_q38_token_native_pci_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_PCI_FIXTURE')):
     parents = {family:1, fixture:1, context:1}
+    # New descendants inherit the complete hardware-seal TEST perimeter.
+    pci_family = family=='PIONEER_Q38_TOKEN_NATIVE_PCI_FIXTURE'
+    view_family = pci_family or family=='PIONEER_Q38_TOKEN_NATIVE_VIEWS_FIXTURE'
+    if pci_family:
+        parents['PIONEER_Q38_TOKEN_NATIVE_VIEWS_FIXTURE']=1
+    if view_family:
+        parents.update(PIONEER_Q38_TOKEN_NATIVE_HARDWARE_SEAL_FIXTURE=1,PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE=1,
+                       PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE=1,PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE=1,
+                       PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE=1,PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE=1,
+                       PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE=1,PIONEER_Q38_TOKEN_NATIVE_READOUT_EMPTY_FIXTURE=1,
+                       PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE=1,PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE=1,
+                       PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE=1)
     if family in ('PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE','PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE'):
         parents['PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE']=1
     if family=='PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE':
@@ -105,7 +119,7 @@ for header, family in (
             cases.append(({**parents, macro:value}, False))
     for value in (0, 1):
         cases.append(({**parents, 'PIONEER_Q38_WORK_INFERENCE':value}, False))
-        if family in ('PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE','PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE','PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE','PIONEER_Q38_TOKEN_NATIVE_HARDWARE_SEAL_FIXTURE'):
+        if view_family or family in ('PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE','PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE','PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE','PIONEER_Q38_TOKEN_NATIVE_HARDWARE_SEAL_FIXTURE'):
             cases.append(({**parents, 'PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE':value}, False))
     for definitions, expected in cases:
         result = subprocess.run([os.environ.get('CXX', 'c++'), '-E', '-x', 'c++',

@@ -1,0 +1,70 @@
+Native VM+PCI restoration:COMPLETED OFFLINE CHECKPOINT,NOT full END
+2026-10-29 22:20UTC. Goal ACTIVE;20tok/s UNMET.
+Last physical whole-model result remains0.207893161 tokens/sec.
+
+Genuine executed histories
+-------------------------
+Frozen E positive20856/23648 and first-actual-write generation-loss31636/
+36991 ALL terminal0. Earlier bad-prelaunch-capture53569/12105 BOTH0.
+Corresponding complete log pairs match. Positive/fault executions perform
+actual1010 zero-ROM jobs,new120 preparations+held journal,4616 packets,
+119 virgin complete worker engines,original layer0,consumed cancellation,
+ROOT+119 real STOP instructions,120 HOLD,zero-record drain,all original
+L1/dispatch/peer/ROOT/shared controls,real simulated clock END and hardware
+seal BEFORE29 actual simulated OS-view deletions and native PCI closure.
+All alias pointers fence only after complete VM deletion. Exact private
+view identities and per-step native lifetimes remain checked. No legacy
+Unmap/rollback/retry or host/model-reservation release is permitted.
+
+PCI originals and transport are captured from the SAME real simulated PCI
+BEGIN BEFORE worker launch. Close checks FD/team/thread/generation,private
+journal,retained hosts,monotonic deadline,quiet config and pending/errors.
+Positive path executes72 checked config reads,11 ordered original writes
+with immediate readbacks+full final pass,both decoders OFF. Failure after
+the first actual write stops all following IO/releases;transaction consumed
+and remaining owners retained. Bad capture refuses BEFORE metadata/launch.
+Eight altered-final-metadata cases refuse without extra IO. No BME/MMIO/
+NoC write or clean END permission follows from restoring PCI.
+
+Independent posthoc CPU comparisons38110/64992/84036/95121 ALL0;paired
+logs match. All5120 embedding+5120 first-layer words each BIT-EXACT against
+the separate pinned original CPU traces,no tolerance or CPU products fed
+to native execution. NOT all64 layers,state/KV,tokens or full END numerics.
+
+Exact source/provenance and preservation
+----------------------------------------
+Authoritative original E50-source runtime snapshots,never edited:
+ /private/tmp/pioneer-q38-native-pci-main-frozen.MY0mlOt4
+ /private/tmp/pioneer-q38-native-pci-clean.aFLtzdND
+Later committed host-view helper methods and183-case tests must not be
+rolled back to E's earlier154-case component. Publication therefore uses
+HEAD2e0d6f628c +48 exact E paths,KEEPING the current committed view header
+and its expanded component test. The header difference is ONLY two unused
+inline accessors;no field/layout or existing strict Matches change.
+
+Fresh publication trees,all48 overlaid paths cmp-verified before tests:
+ /private/tmp/pioneer-q38-pci-publication-main.j5ulqvRN
+ /private/tmp/pioneer-q38-pci-publication-clean.axL0cYW3
+Their SDK48309/76802 BOTH terminal0;objects BYTE-IDENTICAL to each other
+AND the original frozen E SDK object,not merely compatible source:
+ ab729c41c1ed55bf2a89d93b19c1839dc4d82ad5e9ade958435a1c36a14f4212.
+Thus the unused additive accessors do not change the tested production
+code. Individual frames retain existing bounds;combined stack stays owed.
+Old65 remains61faa093;all5 renamed native entries stay inert/non-loadable.
+
+Publication contracts12873/16410 BOTH0:17 each clock/hardware/VM/PCI
+pending/nonpristine factories+32 mapping+112 PCI endpoint refusals;ZERO
+following IO/instructions/deletions. Roles13731/91773 BOTH0:23+529.
+Retained expanded view component31410/89957 BOTH0:183 cases. Mapping75166/
+13827 BOTH0:all11406906 saved words+1715 refusals. Each log pair matches.
+The original E native and generic190-case PCI-journal tests remain separate
+evidence as documented in qwen38-token-native-pci-wip-20261029.txt.
+
+Only exact48 E source paths+this evidence are promoted. Newer local host/
+unreserve/full-generation END/state-observer work is preserved UNSTAGED,
+not qualified by these older histories. Dirty llama.cpp/unrelated FlashNext
+are excluded. Public device ABI,Work,Assistant,boot and CPU/RAM are unchanged.
+Hosts/model reservations/CPU journals remain OWNED;Closed stays FALSE.
+Still required:full numerical+state/KV/EOS/stack,host/full END/reuse/recovery,
+qualified fast Work+Assistant,physical stability and honest throughput.
+No Pioneer/SSH/power/install/OS/network/SD/mains action or health claim.

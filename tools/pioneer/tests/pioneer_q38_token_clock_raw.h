@@ -11,7 +11,9 @@
 #define PIONEER_Q38_ARC_QUEUE_MODEL_ONLY
 #include "pioneer_q38_arc_queue_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38ClockLease.h"
+#ifndef PIONEER_PCI_PROFILE_H
 struct tt_pioneer_profile {};
+#endif
 struct PioneerArcQueryIO;
 static PioneerArcQueryIO* tokenClockRaw=nullptr;
 struct PioneerArcQueryIO:StrictQueue {
@@ -40,7 +42,9 @@ struct PioneerArcQueryIO:StrictQueue {
  void Pause(){StrictQueue::Pause();Event(8);}
  bool Unmap(){hardwareCleanup++;return false;} // forbidden inherited diagnostic cleanup
 };
+static int (*tokenModelViewDelete)(area_id)=nullptr; // OS endpoint only,never a native phase/clean receipt
 static int delete_area(area_id view){
+ if((view<101 || view>106) && tokenModelViewDelete)return tokenModelViewDelete(view);
  assert(tokenClockRaw && view>=101 && view<=106);auto& raw=*tokenClockRaw;raw.deletes++;raw.Event(9,unsigned(view));
  return raw.failDelete==raw.deletes?-1:B_OK;
 }

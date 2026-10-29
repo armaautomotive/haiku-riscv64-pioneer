@@ -2,6 +2,10 @@
 // Verbatim full-token native mapping adapter. OS aliases and access scopes
 // are simulated endpoint checks ONLY,not a native owner/launch/END grant.
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenMemory.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenViewLease.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenPciLease.h"
+#define PIONEER_Q38_TOKEN_NATIVE_VIEW_ENDPOINT_TEST 1
+#define PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE 1
 #include <array>
 #include <cassert>
 #include <cstdio>
@@ -47,6 +51,13 @@ struct MappingIO:Endpoint {
  void Q38PanelWrite(uint32 address,uint32 value){assert(address>=0x6e000 && address<0xac000);direct++;At(address)=value;}
  uint32 ResidentL1Read(unsigned word){assert(word>=2032 && word<2040);direct++;return At(0x17e000+word*4);}
  void ResidentL1Write(unsigned word,uint32 value){assert(word>=2032 && word<2040);direct++;At(0x17e000+word*4)=value;}
+ // This old L1-geometry test never exercises the newer restoration/CSR
+ // adapters. Abort if one unexpectedly reaches a raw hardware endpoint.
+ uint32 DramTlbRead(unsigned,unsigned){std::abort();}
+ void DramTlbWrite(unsigned,unsigned,uint32){std::abort();}
+ uint32 ResidentNocRead(uint32){std::abort();}
+ void ResidentNocWrite(uint32,uint32){std::abort();}
+ uint32 TokenFifoStatusWord(uint32){std::abort();}
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeMapping.inc"
 };
 bool MappingIO::TokenMemoryMappingSourceScope(){return mappingSource;}

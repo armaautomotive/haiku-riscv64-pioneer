@@ -57,6 +57,8 @@ bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
    || state->phase==PioneerQ38TokenNativeState::HardwareSealing)
    && !state->ControlsCohort(d))return false;
   if(state->runtime && state->phase<PioneerQ38TokenNativeState::RuntimePreparing)return false;
+  if(state->runtime && state->phase>=PioneerQ38TokenNativeState::RuntimeReady && state->phase<=PioneerQ38TokenNativeState::HardwareSealing
+   && (!state->pci.Prepared() || !state->pci.Matches(*this,c->Pci(),c->transaction)))return false;
   if(state->runtime && state->phase>=PioneerQ38TokenNativeState::MemoryClosing
    && (!state->runtime->Staged() || state->runtime->Pending()))return false;
  }

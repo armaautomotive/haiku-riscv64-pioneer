@@ -1,6 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // Shared TEST OS/clock/unused-foreign-owner metadata,NOT a native grant.
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeState.h"
+#define PIONEER_Q38_TOKEN_PCI_RAW_TEST 1
+#include "pioneer_q38_token_pci_raw.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeArcClockGuard.h"
 #define PIONEER_BANKS_MOCK_ONLY
 #include "pioneer_resident_banks_test.cpp"
@@ -9,7 +11,6 @@
 using uint8=uint8_t;using uint32=uint32_t;using uint64=uint64_t;
 using int64_t=std::int64_t;using status_t=int;using thread_id=int;
 static constexpr int B_OK=0,B_BAD_VALUE=-1,B_NOT_ALLOWED=-2,B_DEV_NOT_READY=-3,B_BUSY=-4;
-static constexpr unsigned TT_PIONEER_MMIO_RESTORE_FAILED=5; // simulated PCI-result endpoint enum
 struct thread_info{int team=-1;};
 static int currentThread=17,currentTeam=23,lockHeld=0,lockAcquires=0,lockReleases=0;
 static bool failThreadInfo=false;static status_t lockStatus=B_OK;

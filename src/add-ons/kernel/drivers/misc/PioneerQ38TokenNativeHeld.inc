@@ -7,6 +7,9 @@ bool PioneerSessionIO::TokenMemoryMappingSourceScope(){
  return s && !runtimeCore && s->phase==PioneerQ38TokenNativeState::MemoryPreparing && s->memory && s->startup
   && !s->memory->Installed() && !s->memory->Closed() && TokenModelSourceScope(false);
 }
+bool PioneerSessionIO::TokenViewCaptureScope(){
+ return TokenMemoryMappingSourceScope() && TokenMemoryMappingStable(0) && q38TokenViews.Pristine();
+} // CPU metadata only;capture real aliases before first native image write/launch
 bool PioneerSessionIO::TokenMemoryAccessScope(){
  auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;auto* fd=sRuntimeOwner;
  if(s && s->runtime && s->runtime->SharedMappingsChanged())return false; // changed route is NEVER an L1/NIU/FIFO grant
@@ -122,7 +125,7 @@ void PioneerSessionIO::TokenMemoryRetainHostOwners(){
  if(okay)okay=startup->Build(s->canonical,s->bank,s->identity,&d.authority.source[0][0],s->prompt,s->prompts,s->limit,s->stopEos,s->eos[0],s->eos[1])
   && startup->LearnedPagesPresent(c.initialized,PioneerResidentBanks::Pages);
  if(okay){s->phase=PioneerQ38TokenNativeState::MemoryPreparing;
-  okay=c.io.SelectRuntimeCore(0) && c.io.MapTokenMemory()
+  okay=c.io.SelectRuntimeCore(0) && c.io.MapTokenMemory() && c.io.q38TokenViews.Bind(c.io)
    && memory->PrepareHeld(c.io,dram,c.banks,d,s->canonical,*startup,s->identity,c.initialized,PioneerResidentBanks::Pages,result);}
  if(okay)s->phase=PioneerQ38TokenNativeState::MemoryInstalled;
  else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);

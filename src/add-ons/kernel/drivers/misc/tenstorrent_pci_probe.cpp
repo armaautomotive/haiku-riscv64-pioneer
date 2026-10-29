@@ -9,6 +9,12 @@
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
 #include "PioneerQ38TokenNativeRole.h"
+#if defined(PIONEER_Q38_TOKEN_NATIVE_VIEW_ENDPOINT_TEST)
+#error TEST VM endpoints cannot substitute the actual native driver translation unit,including defined0
+#endif
+#if defined(PIONEER_Q38_TOKEN_PCI_RAW_TEST)
+#error TEST PCI endpoints cannot substitute the actual native driver translation unit,including defined0
+#endif
 #define PIONEER_Q38_TOKEN_NATIVE_ROLE_TAG_OK 1
 #else
 #define PIONEER_Q38_TOKEN_NATIVE_ROLE_TAG_OK 0
@@ -3040,6 +3046,11 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
 	void RuntimeStatusWrite(unsigned w,uint32 value) { if (w<3) ResidentL1Write((0x1fc0/4)+w,value); }
 	bool Unmap() {
 		bool okay=true;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
+  // Full-token aliases belong to the distinct per-deletion native factory.
+  // Never fall through to inherited diagnostic rollback or a second attempt.
+  if(q38TokenMemoryMapAttempted || q38TokenViews.Started())return false;
+#endif
 #ifdef PIONEER_Q38_RECURRENT_PREFIX_NATIVE_CONTEXT
   // Only the distinct same-owner final scope can dispose these aliases.
 #ifdef PIONEER_Q38_RECURRENT_PREFIX_FINAL_RELEASE
@@ -3949,6 +3960,9 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 #include "PioneerQ38TokenNativeExecution.inc"
 #include "PioneerQ38TokenNativeClock.inc"
 #include "PioneerQ38TokenNativeHardware.inc"
+#include "PioneerQ38TokenNativeViews.inc"
+#include "PioneerQ38TokenNativePciCapture.inc"
+#include "PioneerQ38TokenNativePci.inc"
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 // PIONEER_Q38_STATE_ZERO_NATIVE_ADAPTER_BEGIN
 // Private native adapter,selected ONLY by the separate fixed zero diagnostic

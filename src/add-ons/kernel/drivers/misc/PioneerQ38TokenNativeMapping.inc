@@ -7,7 +7,11 @@ bool TokenPeerStoreSelectionScope();bool TokenPeerStoreAccessScope(unsigned);
 bool TokenRootStoreAccessScope();
 bool TokenSharedTlbScope();
 bool TokenClockReceiptScope();
-bool TokenHardwareSealScope();bool TokenFinalOwnershipScope();
+bool TokenHardwareSealScope();bool TokenFinalOwnershipScope();bool TokenFinalLifetimeScope();bool TokenViewsScope();bool TokenViewCaptureScope();
+bool TokenPciCaptureScope();bool TokenPciScope();
+bool TokenPciLeaseIdentity(const PioneerQ38TokenPciLease&)const;
+const void* TokenPciTransport();uint64 TokenPciEndpoint();
+bool TokenPciReadChecked(bool,unsigned,unsigned,uint32&);bool TokenPciWriteChecked(bool,unsigned,unsigned,uint32);
 bool TokenInitializationFifoEmpty(unsigned);bool TokenInitializationFifoReadChecked(unsigned,bool,uint32&);
 bool PrepareTokenNativeParticipant(unsigned);
 bool TokenMemoryScope(const PioneerQ38TokenMemory&,const PioneerQ38CanonicalModelPlan&,const PioneerQ38TokenStartupPlan&,
@@ -18,6 +22,7 @@ bool TokenRuntimeScope(const PioneerQ38TokenNativeOwner&,const PioneerQ38TokenMe
 area_id q38TokenMemoryArea[4]={-1,-1,-1,-1};
 volatile uint32* q38TokenMemoryView[4]={NULL,NULL,NULL,NULL};
 bool q38TokenMemoryMapAttempted=false;uint64 q38TokenMemoryBar=0;
+#include "PioneerQ38TokenNativeViewsMapping.inc"
 bool TokenMemoryMappingStable(unsigned worker){
  if(worker>=120 || runtimeCore!=worker || !fleetEnabled || !runtimeMapped || !runtimeEntry || !runtimePc || !scratchData || payloadBytes!=8192
   || !Q38PanelMappingStable() || !q38TokenMemoryMapAttempted || profile.bar0_host_start!=q38TokenMemoryBar
