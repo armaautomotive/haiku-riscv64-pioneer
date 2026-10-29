@@ -1,0 +1,11 @@
+PASS4 incomplete dense-unroll option selections refuse before SDK/output writes;BUILD-only role checks
+PASS emitted source audit0 worker0 ALL external reads/values/order EXACT,16x4B packets unchanged,instructions65444->65444,stack216/216;NOT model/native/physical/TPS
+PASS emitted source audit0 worker95 ALL external reads/values/order EXACT,16x4B packets unchanged,instructions66068->66068,stack216/216;NOT model/native/physical/TPS
+PASS emitted source audit0 worker118 ALL external reads/values/order EXACT,16x4B packets unchanged,instructions66196->66196,stack216/216;NOT model/native/physical/TPS
+PASS emitted source audit1 worker0 ALL external reads/values/order EXACT,16x4B packets unchanged,instructions98116->65316,stack212/212;NOT model/native/physical/TPS
+PASS emitted source audit1 worker95 ALL external reads/values/order EXACT,16x4B packets unchanged,instructions98740->65940,stack212/212;NOT model/native/physical/TPS
+PASS emitted source audit1 worker118 ALL external reads/values/order EXACT,16x4B packets unchanged,instructions98868->66068,stack212/212;NOT model/native/physical/TPS
+PASS emitted source audit2 worker0 ALL external reads/values/order EXACT,16x4B packets unchanged,instructions49887->49887,stack200/200;NOT model/native/physical/TPS
+PASS emitted source audit2 worker95 ALL external reads/values/order EXACT,16x4B packets unchanged,instructions50527->50527,stack200/200;NOT model/native/physical/TPS
+PASS emitted source audit2 worker118 ALL external reads/values/order EXACT,16x4B packets unchanged,instructions50655->50655,stack200/200;NOT model/native/physical/TPS
+PASS isolated emitted original/candidate source audits:9 positive functions/workers,72 source/root metadata/quiet/counter faults,actual immutable2048 inert steps;NO native acquisition/full-model/physical/Work/TPS grant

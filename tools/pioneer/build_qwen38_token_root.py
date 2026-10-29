@@ -7,8 +7,9 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=6 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden'}
-inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options;f32='--f32-hidden' in options
+assert 3<=len(sys.argv)<=7 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals'}
+inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options
+assert not unroll or (cancel and f32),'dense-unroll candidate requires explicit cancel+FP32 profile'
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -18,7 +19,7 @@ def run(*args):subprocess.run([str(a) for a in args],check=True)
 # Reproduce the strict returning components and unchanged whole feedback
 # image FIRST. Neither an old native owner nor a component alone can launch.
 components=out/'qualified-components'
-run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []))
+run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []))
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
@@ -100,7 +101,13 @@ PINS_CANCEL_F32=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd
 observed=[]
 for name in ('boot.bin','text.bin','terminal.bin','conv.bin','program.elf'):
  data=(out/name).read_bytes();item=(name,len(data),hashlib.sha256(data).hexdigest());observed.append(item);print(repr(item),flush=True)
-expected=(PINS_CANCEL_F32 if cancel else PINS_F32) if f32 else PINS_CANCEL if cancel else PINS
+# Separate independent main/clean BUILD pins,not a native ROM/launch grant.
+PINS_CANCEL_F32_UNROLLED_DENSE=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+ ('text.bin',129516,'51614e3600da010043cfe18f54b78f0b26fdc59a5a7543923bd65c3f73803338'),
+ ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+ ('conv.bin',21340,'dffbbaf76a5180cd70c72e97358073a5ea51127f290a52b740c82fe07dc38ba3'),
+ ('program.elf',178180,'7e504d426686f33f748b788ac6686c9af9c6b31ebaa953621b30cbc1590d770e'))
+expected=PINS_CANCEL_F32_UNROLLED_DENSE if unroll else (PINS_CANCEL_F32 if cancel else PINS_F32) if f32 else PINS_CANCEL if cancel else PINS
 if not inspect:assert expected and tuple(observed)==expected,'unqualified persistent parent variant; inspect independent builds first'
 print('BUILD ONLY persistent parent/bootstrap/prompt+generation/all64+973/recurrent state copy+readback/token stream/final119STOP;maxFrame'+str(max(frames))+
  ';NO runtime/combined stack/original full-model/native/physical/cancellation/Work/Assistant/TPS qualification. DO NOT INSTALL')

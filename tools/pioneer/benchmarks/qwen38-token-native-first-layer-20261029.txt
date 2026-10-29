@@ -53,3 +53,12 @@ generation/long conversations/load-unload/recovery and measured performance
 toward20tok/s,preserving SD-free boot/64CPU/full RAM. Current all64 native
 test profiles remain running and unqualified;existing full-model histories
 are preserved. Do not install the offline correctness image as a fast driver.
+
+2026-10-29 09:21UTC follow-up--independent slow baseline A is now complete
+Main12848/clean7064 both terminal0,not restarted. Both original A prefix
+files are byte-identical to B,and the independent original CPU comparisons
+again both finish0:5120 embedding+5120 layer0 words BITEXACT,no tolerance.
+Actual ROOT580615974,workers2226503680,written stack6488 are unchanged.
+This independently checks the HOST event-publication optimization against
+the preserved slower counter-scan history;it is NOT a card speedup or a
+whole-model/token/committed-state/STOP/END/Work qualification.

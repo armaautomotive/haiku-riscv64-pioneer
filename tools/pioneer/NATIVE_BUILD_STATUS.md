@@ -1,5 +1,27 @@
 # Native build status
 
+## Current: lower-instruction dense audit candidate qualified offline
+
+October29,2026 09:21UTC. The explicit `--unroll-dense-seals` candidate
+enables the existing exact-check unrolling in the returning dense controller.
+Independent main/clean inspect+strict builds match;all old default/native ROM
+pins stay fixed. Isolated ACTUAL emitted routines preserve every external
+read address/value/order and all16 four-byte source packets. The dense
+routine uses roughly33% fewer instructions with unchanged stack;the other
+two routines are unchanged. Representative faults retain exact fail-stop
+traces. This is NOT whole-model/card performance. Main/clean original-model
+three-token/all64 runs are LIVE,not passing;no driver was installed.
+
+An attempted MMIO batching variant was rejected against the official
+Blackhole four-byte MMIO contract;its code/test grants were removed and
+ONLY those two unsupported experimental jobs were deliberately stopped.
+The original valid histories remain uninterrupted. Native whole-flow A has
+now completed two layer boundaries,B one. Slow first-layer baseline A also
+finishes0 in both trees;its observed prefix is byte-identical to B and again
+bit-exact versus independent CPU traces. None proves a whole token or END.
+Last physical **0.207893161 tokens/sec**;20 unmet. Evidence:
+[dense audit optimization and rejected experiment](benchmarks/qwen38-token-dense-audit-unroll-20261029.txt).
+
 ## In progress: whole native three-token/all64-layer qualification
 
 October29,2026 08:45UTC. A new full-flow profile continues the SAME native

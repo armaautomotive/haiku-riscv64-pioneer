@@ -1,0 +1,86 @@
+Dense-controller audit unrolling--OFFLINE component qualification only
+2026-10-29 09:21UTC. Goal ACTIVE;20tok/s UNMET. Last physical whole-model
+0.207893161tok/s. No Pioneer/SSH/power/install/Assistant/OS/boot/CPU/RAM/
+network/SD/mains mutation or physical-health/speedup claim.
+
+Actual device-code change
+-------------------------
+--unroll-dense-seals explicitly selects the EXISTING independently tested
+PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL=1 implementation for the returning
+dense TU too. The recurrent TU is byte-identical a87da94e. All four old
+persistent-parent families and native ProgramWord images keep their pins;
+the default cancel+FP32 image was rebuilt and still matches20ace51c text.
+No new CPU product,observer/native/Work capability,MMIO endpoint or owner
+transition is introduced. The option requires explicit FP32 components;
+the combined parent also requires explicit cancellation. Separate literal
+main/clean BUILD pins never grant installation or inference readiness.
+
+Independent candidate main/clean inspect AND strict builds both finish0.
+ELFs/capsules match byte-for-byte. Text129516/131072,Conv21340/32768,
+component maxFrame2112,parent maxFrame1616. Existing function-interval ISA,
+entry/terminal,private s11 bind/restore,noBSS/unresolved/import checks pass.
+ELF178180 SHA2567e504d426686f33f748b788ac6686c9af9c6b31ebaa953621b30cbc1590d770e.
+These are static BUILD/stack-frame checks,NOT combined execution-stack proof.
+
+Actual emitted-function tests
+------------------------------
+run_pioneer_q38_peer_source_instruction_tests.py authenticates BOTH complete
+ELFs against fixed literal hashes and derives actual private function
+entries from their literal-pinned symbols. It executes all instructions of
+both DensePartitionRoot::PhysicalSource implementations and the recurrent
+cohort Sources routine. Inputs are explicitly synthetic isolated private
+arguments and a generic packet endpoint,NOT a genuinely acquired native
+owner or model-initialized worker. Every MMIO packet must be exactly4B.
+
+For workers0/95/118,all external metadata/MMIO/scratch reads match in exact
+address/value/order,as do all16 source words and all16 four-byte NoC packets.
+Actual dense routine instruction counts,excluding2048 further actual inert
+terminal-loop instructions:
+ worker0   98116 ->65316
+ worker95  98740 ->65940
+ worker118 98868 ->66068
+This is roughly33% fewer instructions in THIS routine,not whole-model/card
+throughput. Recurrent projection and cohort routine counts are unchanged.
+Written stack remains212B for dense,216B/200B for the other two routines.
+All72 representative source/root boot/header/outer/doorbell/quiet/counter
+faults stop at the same point with identical external read/packet traces;
+no later packet is sent. All terminal paths execute2048 actual inert steps.
+Main/clean logs match. Four incomplete candidate-option combinations refuse
+before SDK probing or output writes. Existing role suites both pass988 gates.
+
+Rejected experiment--NOT a hardware-valid speedup
+-------------------------------------------------
+An earlier same-turn48B/8B MMIO-batching experiment compiled and passed a
+too-permissive isolated endpoint. That result is INVALID hardware evidence.
+Official Blackhole NIU documentation states that NoC read/write length must
+be4B when either endpoint is MMIO:
+ https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md#noc_at_len_be
+All batching helpers,flags,pins and enlarged test-MMIO permissions were
+removed. Its two original-model jobs85475/36731 were deliberately stopped
+with SIGINT after identifying exact test PIDs16576/16574. Both ended1 during
+source authentication,not at a model success. No hardware was touched.
+The valid older histories were NOT stopped/restarted;the new unroll tests
+retain the original four-byte-only model endpoint. Do not resurrect the
+temporary batching images or cite their apparent instruction savings.
+
+Full-model scope remains in progress
+-------------------------------------
+New actual original27B whole3-token/all64/uninterrupted validation jobs:
+ main44318 /private/tmp/pioneer-q38-dense-unroll-flow-main.BUZLBBEm
+ clean55691 /private/tmp/pioneer-q38-dense-unroll-flow-clean.PxJqHfwB
+Both are LIVE at09:19UTC,still authenticating the SAME-open original GGUF.
+They are distinct firmware qualification,not quiet restarts of older jobs.
+Only real successful full traces may be compared with the authenticated CPU
+reference,without --diagnostic-only;no first-layer or isolated-function
+result qualifies full-model numerics/native lifecycle/physical/Work/TPS.
+
+All four native whole-flow A/B histories remain LIVE at09:19UTC. A has
+passed TWO actual layer returns and continues the SAME ROOT/119 workers;
+B has passed the first. No whole64/token/state-frontier/STOP claim follows.
+Nine older full-model histories remain LIVE. The two slow native first-layer
+baseline A jobs12848/7064 now finish0 independently;their prefix bytes equal
+B exactly,and independent original CPU comparisons both finish0 bit-exact,
+ROOT580615974/worker2226503680 instructions and6488B written stack unchanged.
+Full-model numerics,state/KV,consumed cancellation,token delivery,terminal/
+all119STOP/restore/END,load-unload,recovery,physical endurance,Work+Assistant
+and measured sustained inference toward20tok/s remain required.
