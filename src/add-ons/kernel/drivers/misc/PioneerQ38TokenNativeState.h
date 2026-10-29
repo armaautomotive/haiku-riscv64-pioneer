@@ -21,6 +21,7 @@ struct PioneerStoreContext;struct PioneerSessionIO;
 [[maybe_unused]] static bool BootstrapQ38TokenNativeWorkers(PioneerStoreContext&,PioneerQ38TokenBootstrapResult&);
 [[maybe_unused]] static bool StartQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
 [[maybe_unused]] static bool CancelQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
+[[maybe_unused]] static bool ObserveQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
 // Genuine retained full851 model/reservation object. It borrows NO old
 // completed embedding/prefix owner and cannot make those old lifetimes safe.
 // Private factory publication occurs under the real global FD call lock.
@@ -37,6 +38,7 @@ class PioneerQ38TokenNativeState {
  friend bool BootstrapQ38TokenNativeWorkers(PioneerStoreContext&,PioneerQ38TokenBootstrapResult&);
  friend bool StartQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
  friend bool CancelQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
+ friend bool ObserveQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult&);
  enum Phase {Claiming,Bound,RecurrentZeroing,RecurrentClosing,HistoryZeroing,HistoryClosing,
   ProjectionZeroing,ProjectionClosing,Initialized,DispatchPreparing,MemoryPreparing,MemoryInstalled,RuntimePreparing,RuntimeReady,
   WorkersBootstrapping,WorkersReady,RootStarting,RootRunning,MemoryClosing,MemoryClosed,Unknown};

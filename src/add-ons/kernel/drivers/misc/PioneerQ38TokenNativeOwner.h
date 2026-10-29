@@ -386,6 +386,22 @@ public:
    || actual!=T::CancelMagic || !Sources(io,0))return Fail(io,r);
   r.cancelRequested=1;r.phase=7;return true;
  }
+ template<class IO> bool ObserveRoot(IO& io,PioneerQ38TokenExecutionResult& r){
+  const PioneerQ38TokenExecutionResult pristine;const auto* a=reinterpret_cast<const uint8_t*>(&r);
+  const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+  for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=b[i])return false;
+  if(!ExecutionStarted() || !Scope(io))return false;
+  r.started=1;r.phase=8;
+  if(!Sources(io,0))return Fail(io,r);
+  uint32_t marker,error,word;
+  if(!io.TokenMemoryReadChecked(0,PioneerQ38GlobalChainLayout::R::Status+12,marker) || marker!=PioneerQ38TokenLayout::Magic
+   || !io.TokenMemoryReadChecked(0,PioneerQ38GlobalChainLayout::R::Status+8,error) || error)return Fail(io,r);
+  r.firstPC=io.RuntimePcRead();if(!Scope(io))return Fail(io,r);
+  r.secondPC=io.RuntimePcRead();
+  if(r.firstPC==0x60000 || r.secondPC==0x60000 || !PioneerQ38TokenPrograms::ProgramWord(0,r.firstPC,word)
+   || !PioneerQ38TokenPrograms::ProgramWord(0,r.secondPC,word) || !Sources(io,0))return Fail(io,r);
+  r.acknowledged=1;r.cancelRequested=cancelRequested;return true;
+ } // observation ONLY;NO NoC command/counter recapture,layer/token/frontier/STOP/END completion grant
 };
 static_assert(sizeof(PioneerQ38TokenRuntimeResult)==64,"all runtime result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenBootstrapResult)==64,"all bootstrap result bytes explicit");

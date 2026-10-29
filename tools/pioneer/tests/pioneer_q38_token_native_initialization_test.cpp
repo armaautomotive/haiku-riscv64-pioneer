@@ -273,21 +273,24 @@ int main(int argc,char** argv){
  assert(argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
   || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
   || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")
+  || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-traffic-faults")
   || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;(void)&AcquireQ38DeltaLock;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
  assert(argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults")
   || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
-  || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")));
+  || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")
+  || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-traffic-faults")));
 #else
  assert(argc==2 || strncmp(argv[2],"--held",6));
 #endif
  const bool heldFaults=argc==3 && !strcmp(argv[2],"--held-faults");
  const bool bootstrap=argc==3 && !strncmp(argv[2],"--bootstrap",11),bootstrapFaults=bootstrap && !strcmp(argv[2],"--bootstrap-faults");
  const bool execution=argc==3 && !strncmp(argv[2],"--execution",11),executionFaults=execution && !strcmp(argv[2],"--execution-faults");
+ const bool trafficFaults=argc==3 && !strcmp(argv[2],"--execution-traffic-faults");
  const bool runtime=argc==3 && !strncmp(argv[2],"--runtime",9),runtimeFaults=runtime && !strcmp(argv[2],"--runtime-faults");
  const bool faults=argc==3 && strncmp(argv[2],"--held",6) && !runtime && !bootstrap && !execution,late=faults && !strcmp(argv[2],"--late-faults");
- for(unsigned fault=0;fault<(executionFaults?4U:bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
+ for(unsigned fault=0;fault<(trafficFaults?2U:executionFaults?4U:bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
   Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;assert(f.Bind());auto* state=c.q38TokenNative;
   PioneerQ38StateZeroResult g;PioneerQ38ConvHistoryZeroResult h;PioneerQ38ProjectionZeroResult p;
   assert(!state->InitializationsClosed(c.banks,f.proof) && !io.StateZeroBeforeCohort() && !io.ConvHistoryZeroBeforeCohort() && !io.ProjectionZeroBeforeCohort());
@@ -341,6 +344,9 @@ int main(int argc,char** argv){
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
   io.executionFault=executionFaults?fault+1:0;
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
+  io.trafficFault=trafficFaults?fault+1:0;
 #endif
   CheckNativeHeld(f,heldFaults?fault+1:0);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE

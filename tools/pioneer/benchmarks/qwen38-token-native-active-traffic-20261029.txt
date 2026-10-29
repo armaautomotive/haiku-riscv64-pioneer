@@ -1,0 +1,117 @@
+Distinct native ROOT observation and active-NoC integration checkpoint
+2026-10-29 04:51UTC. Goal ACTIVE;20tok/s UNMET. Last measured physical
+whole-model0.207893161tok/s. NO hardware/SSH/power/install/kernel/Assistant/
+boot/CPU/RAM/network/SD/mains change,physical health or speedup claim.
+
+New actual implementation
+--------------------------
+The SAME retained token owner now exposes a PRIVATE native ObserveRoot
+factory/controller under the real FD/team/thread/generation/global lock.
+It accepts only its own RootRunning lifetime and rejects malformed and
+owned-buffer-aliased outputs. It checks actual reset/source/VM/PCI-quiet
+state,sticky startup marker,zero error and two installed-code PCs,refusing
+fault park60000. It never writes/recaptures NoC commands/counters,starts a
+packet,resets a core,or supplies a CPU model product.
+
+This observation is intentionally NOT a layer/token/state/KV-frontier,
+terminal,STOP or clean-END receipt. A valid STOP PC alone cannot authorize
+cleanup. Normal and legacy commands remain excluded;unfinished END still
+retains/quarantines all resources. The candidate remains unlinked,
+uninstalled,renamed-ABI and has NO public Work/Assistant route.
+
+Genuine instruction-driven NoC integration
+------------------------------------------
+The previous test deliberately paused at the genuine startup marker. A
+DISTINCT traffic profile now resumes the SAME ROOT CPU from that actual
+instruction history,without transplanting private PC/register/ready state.
+Actual frozen ROM writes its NIU command registers and submits four real
+emulated device requests. Hardware endpoint responses deliver ONLY raw
+immutable bytes from the SAME native-staged runtimeDram:
+ 1 session512B;2 prompt64B;3 head512B.
+The ROOT's own instructions validate/copy these data and initialize their
+bootstrap input storage. Independent observations compare ALL128 session
+and ALL128 head words against the actual staged shared GDDR image.
+The counters advance at actual emulated request/response events:3completed
+reads,17flits and4accepted requests. No native journal baseline is recaptured.
+
+The fourth request is the real2304B first learned embedding-tile read,
+at the canonical route/address independently described from the actual
+session token. Its HARDWARE RESPONSE IS DELIBERATELY HELD and the test CPU
+pauses AFTER executing the NIU doorbell store. No learned bytes,decoded
+embedding,matrix/attention products,layer/token/cancel completion or STOP
+is fabricated. This is partial real ROOT execution,NOT full model math.
+OS/VM/clock/GDDR/NoC endpoints remain SIMULATED,not the physical P100A.
+
+With this actual request outstanding,a NEW real native call scope enters
+the SAME running owner and successfully observes source/marker/PC state.
+Another fresh call writes exactly one monotonic32bit cancel REQUEST and
+checks its readback WHILE NoC remains BUSY. Host packet count,command and
+reset histories remain unchanged;no host BME is enabled. Duplicate cancel,
+ordinary commands and held-only cleanup remain refused. Consumed cancel
+and worker STOP are still NOT established by a request receipt.
+
+Complete positive/fault evidence
+--------------------------------
+Traffic main78621/clean12824 BOTH terminal0 ASan+UBSan,byte-identical15-line
+logs. ROOT178787 actual instructions/max written stack2628/8192. Each full
+integration first executes1010 actual frozen zero-ROM jobs/75920pages,
+full120-participant held install,4616 metadata transfers and all119 virgin
+QGW1 instruction boots,directly sharing the SAME L1/CSR/workspace bytes
+from construction. No private histories,ready flags or products are copied.
+All16 malformed observer-result words and out-of-call access refuse inertly.
+The actual unfinished-END path retains/quarantines rather than freeing an
+active/pending owner;CPU-only fixture destruction is not physical cleanup.
+The inherited initializer summary describes original initializer code/
+scratch restoration,NOT restoration of subsequently launched programs.
+
+Traffic faults main80876/clean74384 BOTH terminal0,byte-identical complete
+logs. EACH fresh full initialization/119-worker history reaches the actual
+outstanding learned request BEFORE the injected fault:
+ 1 generation loss after the real startup-marker read;next metadata guard
+   refuses without ANY following MMIO (touch count equals injection point).
+ 2 hardware source register change after that real marker read;the next
+   source audit stops at the first mismatch,with no following IO.
+All banks/aliases/programs/clocks/host owners retain;NoC stays pending;
+there is no recapture,retry,reset,restore,cleanup or release. These two cases
+are NOT exhaustive hardware or actual model-execution fault qualification.
+
+SDK main32303/clean20204 BOTH terminal0,byte-identical object SHA256:
+69243d6b86ad6ee3b081cdfc4a8d69a0f839671ccd1764853f892b24c603d623
+Whole observer factory/controller emitted,max new token frame560B and
+initializer704B;whole unit meets <=2048-new-or-old frame bound. NOT combined
+dynamic stack proof. Old native65 stays byte-identical61faa093;all6 normal
+ABI names absent,all5 independent inert controls match,NO CPU-reference/
+Work route or kernel cos/sin/pow imports. Binding55217/31369 and role
+37680/91517 ALL terminal0,matching main/clean logs:3712 refusals/7banks/
+3551learned extents/whole shared lock+ordinary/delta exclusion/retention;
+21parents/31forbidden aliases/241bad roles.
+
+Earlier ROOT-start fault suites now COMPLETE
+--------------------------------------------
+The unchanged earlier main48439/clean83725 suites BOTH terminal0,complete
+byte-identical logs. ALL4 cases pass with fresh genuine histories:
+first-ARM generation loss,failed ROOT-release reset,source change after
+an actual ROOT marker,and a lost cancel write detected by exact readback.
+Their completed logs supersede the prior explicitly INPROGRESS snapshots,
+not their processor histories. They predate the new observer/traffic profile
+and do NOT stand in for its actual positive/fault runs above.
+
+Remaining actual work/full objective unchanged
+-----------------------------------------------
+Continue actual learned-byte responses/embedding/matrices/all64 bodies and
+native token/state/KV-frontier integration. Add a genuine token-delivery
+channel:the existing PublishToken publishes immutable per-position records
+to workspace GDDR,not the currently reserved L1 RecordLocal. Do not pretend
+raw diagnostic progress or startup acknowledgment is a committed token.
+A dedicated read-only GDDR output aperture may avoid host interference with
+ROOT's NIU;it requires its own known hardware TLB/VM/source-lifetime proof,
+not an assumed free slot or an old completed output owner's capability.
+No such aperture or token reader is implemented by this checkpoint.
+
+Qualify consumed cancellation,full terminal/all119 STOP proof,complete
+L1/CSR restoration and actual clean END/load-unload/client. Finish original
+27B all64/multitoken/persistent-state/vocabulary/selection numerical proof;
+the existing9 long instruction histories remain untouched. Then physical
+P100A correctness/stability/recovery,no-CPU-reference Work+Assistant and
+honest sustained27B optimization toward20tok/s,while preserving SD-free
+boot64CPU/full RAM. No full-model/card performance result is claimed here.

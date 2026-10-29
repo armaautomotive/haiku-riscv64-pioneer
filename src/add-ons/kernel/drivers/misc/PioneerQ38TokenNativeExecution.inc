@@ -34,4 +34,12 @@
   || !Q38TokenExecutionOutput(c,&result,sizeof(result)) || !c.io.TokenModelSourceScope(false))return false;
  return s->runtime->RequestCancel(c.io,result); // one monotonic RAW request,NEVER a STOP/END receipt
 }
+[[maybe_unused]] static __attribute__((noinline)) bool ObserveQ38TokenNativeRoot(PioneerStoreContext& c,PioneerQ38TokenExecutionResult& result){
+ auto* s=c.q38TokenNative;const PioneerQ38TokenExecutionResult pristine;
+ const auto* a=reinterpret_cast<const uint8_t*>(&result);const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+ for(unsigned i=0;i<sizeof(result);i++)if(a[i]!=b[i])return false;
+ if(!s || s->phase!=PioneerQ38TokenNativeState::RootRunning || !s->runtime || !s->runtime->ExecutionStarted()
+  || !Q38TokenExecutionOutput(c,&result,sizeof(result)) || !c.io.TokenModelSourceScope(false))return false;
+ return s->runtime->ObserveRoot(c.io,result);
+} // bounded source/marker/PC observation while firmware owns NoC;NEVER a token/STOP/END receipt
 #endif

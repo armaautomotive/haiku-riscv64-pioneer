@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
+#include "pioneer_q38_token_native_traffic_checks.inc"
+#endif
 static void CheckNativeExecution(Fixture& f){
  auto& c=*f.c;auto& io=f.io;auto* state=c.q38TokenNative;
  const unsigned before=io.touches,rootResets=io.resets.size(),packets=io.runtimePackets;
@@ -37,6 +40,9 @@ static void CheckNativeExecution(Fixture& f){
  // Close the launch call completely. Cancellation must acquire a NEW real
  // native scope around this SAME live ROOT/119-worker lifetime.
  assert(!lockHeld && c.q38GdnCallThread==-1 && !state->Unsafe());
+#ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
+ if(!CheckNativeTraffic(f))return;
+#endif
  {
   PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c && io.TokenModelSourceScope(false)
    && c.Unsafe() && !c.Unsafe(false,false,true));
@@ -61,6 +67,11 @@ static void CheckNativeExecution(Fixture& f){
  assert(io.resets.size()==rootResets+2 && io.Core(0).coreReset==0x46800 && io.runtimePackets==packets
   && io.rootStarts==1010 && io.rootStops==1010 && io.rootHolds==1010 && !io.pciWrites && !io.HostReadMock::bmeWrites
   && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
+ assert(io.Core(0).pending && io.executionCpu->submitted==4 && io.executionCpu->completed==3);
+ printf("PASS native SAME owner+119actual boots+ROOT actual immutable metadata NoC reads/fresh-call CANCEL WHILE learned NoC request is OUTSTANDING/one32bit monotonic request+exact readback+duplicate refusal/no command/reset/host packet or model product/ROOT instructions%u writtenStack%u;NOT actual cancel consumption/embedding/matrix/layer/token/STOP/END/physical/Work/TPS\n",
+#else
  printf("PASS native SAME full851 owner+1010 zero jobs+fullheld journal+4616 metadata packets+119 VIRGIN QGW1 instruction histories/fresh-call reentry+current idle audit/actual ROOT ARM+release+%u startup instructions/genuine tokenROM marker/written stack%u/fresh-call one32bit monotonic cancel request/exact readback+duplicate refusal/ordinary+held cleanup excluded;ROOT test PAUSED at real marker store,NOT model arithmetic/cancel consumption/token/STOP/END/physical/Work/TPS proof\n",
+#endif
   io.executionCpu->steps,0x70000-io.executionCpu->minStack);
 }

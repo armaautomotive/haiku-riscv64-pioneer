@@ -64,6 +64,9 @@ extern "C" bool pioneer_token_context_scoped_root_start(PioneerProbeCookie* cook
 extern "C" bool pioneer_token_context_scoped_root_cancel(PioneerProbeCookie* cookie,PioneerQ38TokenExecutionResult& result){
  PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();return c && CancelQ38TokenNativeRoot(*c,result);
 } // private actual native ROOT lifecycle candidates,NO public ABI/Work/clean END
+extern "C" bool pioneer_token_context_scoped_root_observe(PioneerProbeCookie* cookie,PioneerQ38TokenExecutionResult& result){
+ PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();return c && ObserveQ38TokenNativeRoot(*c,result);
+} // private observation candidate,not a model event or completion capability
 extern "C" void pioneer_token_context_destroy_clean(PioneerStoreContext* c){delete c;}
 
 // Independent inert controls, separate from the renamed actual driver bodies.

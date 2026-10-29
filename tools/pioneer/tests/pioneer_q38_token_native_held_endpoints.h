@@ -31,6 +31,9 @@ struct TokenHeldEndpoints:ZeroControlIO {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
  bool executionDropCancel=false;unsigned executionCancelWrites=0,executionCancelObserved=0;
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
+ bool trafficObserve=false;unsigned trafficFault=0,trafficObserved=0;
+#endif
  explicit TokenHeldEndpoints(const char* image):ZeroControlIO(image){
   for(auto& peer:peers){peer=std::make_unique<PanelIO>();peer->transferBytes=8192;}
   for(unsigned w=0;w<120;w++){
@@ -89,7 +92,14 @@ struct TokenHeldEndpoints:ZeroControlIO {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
   if(!runtimeCore && address==PioneerQ38TokenLayout::CancelLocal && executionDropCancel && executionCancelWrites)executionCancelObserved=touches;
 #endif
-  return Trace("panel",address,C().Q38PanelRead(address));
+  const uint32 value=Trace("panel",address,C().Q38PanelRead(address));
+#ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
+  if(trafficObserve && !runtimeCore && address==PioneerQ38GlobalChainLayout::R::Status+12 && !trafficObserved){
+   if(trafficFault==1){sReloadGeneration++;trafficObserved=touches;}
+   if(trafficFault==2){Core(0).source[11]^=1;trafficObserved=touches;}
+  }
+#endif
+  return value;
  }
  void Q38PanelWrite(uint32 address,uint32 value){Touch();
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE

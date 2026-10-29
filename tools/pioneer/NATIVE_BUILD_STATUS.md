@@ -1,5 +1,27 @@
 # Native build status
 
+## Current: native observation and cancellation during real ROOT NoC traffic pass offline
+
+October29,2026. A distinct traffic profile now continues the SAME ROOT
+beyond its startup marker. Actual installed instructions read session512B,
+prompt64B and head512B from the SAME native-staged GDDR,then issue the first
+learned2304B request. Its response is deliberately held;no embedding or
+model arithmetic is supplied. Fresh native calls successfully observe
+ownership and issue one checked cancel REQUEST while that request is
+actually outstanding,without host NoC packets,counter/command recapture,
+BME or reset. Main/clean positive tests both finish0,byte-identical:
+178787 ROOT instructions/max written stack2628. Both generation/source
+fault suites also finish0 with all resources retained and no following IO
+after uncertainty. These are simulated endpoints,not physical qualification.
+
+The earlier four ROOT-start/cancel-request fault cases now all finish0 in
+both trees. SDK objects match and binding/role regressions pass. Token
+delivery,all64-layer execution/state/KV frontier,consumed cancellation,
+terminal/all119STOP/restoration/END,Work/Assistant and card qualification
+remain owed. No software is installed and no measured speedup is claimed.
+Last whole-model **0.207893161 tokens/sec**;20 target unmet. Evidence:
+[native active-traffic checkpoint](benchmarks/qwen38-token-native-active-traffic-20261029.txt).
+
 ## Current: native ROOT startup and cancel-request positive tests pass offline
 
 October29,2026. The SAME full851 token owner now re-enters its live119-worker
@@ -108,6 +130,8 @@ Evidence: [native held staging checkpoint](benchmarks/qwen38-token-native-held-2
 - [x] Fresh native119-worker QGW1 bootstrap positive and two-fault offline tests.
 - [x] Fresh-call worker/ROOT reentry,actual ROOT instruction startup and one
   cancel REQUEST positive offline test (not model math or cancel consumption).
+- [x] Native observation and cancel REQUEST during actual instruction-issued
+  NoC traffic;positive/two-fault offline tests,plus earlier four ROOT faults.
 - [ ] Extend bootstrap timing/late-fault coverage and validate genuine KV/state
   advancement during native execution.
 - [ ] Complete original-model all64-layer, multitoken, persistent-state,
