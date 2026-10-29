@@ -1,5 +1,27 @@
 # Native build status
 
+## Current: complete native original first recurrent layer passes offline
+
+October29,2026 08:16UTC. Full-layer B main/clean both finish0 with identical
+logs and observed prefix files. Independent comparisons against the separately
+authenticated original-model CPU traces also both finish0:all5120 embedding
+values AND all5120 layer0 outputs are BIT-EXACT,zero max error,no tolerance.
+The SAME full851 owner/1010 actual zero jobs/119 virgin full engines execute
+all layer0 matrix,Conv,GDN and FFN bodies. Actual native state/history views
+provide786432 prior-state words and30720 history words;the workers produce
+786432 finite nonzero NEXT-slot words. Initial current-slot and other-layer
+recurrent bytes stay zero. All119 actual DONE/WAIT receipts and a fresh
+native observer/cancel REQUEST pass after the real layer return.
+
+This proves first-layer output numerics and actual next-slot production,
+NOT independent bit-exact comparison of every next-state word,a committed
+state/KV frontier,whole token,consumed cancellation,STOP/END or physical card.
+ROOT580615974 instructions/written stack6488/8192;worker instructions2226503680.
+These are offline instruction observations,NOT tokens/sec or a card speedup.
+No software is installed;last physical **0.207893161 tokens/sec**,20 unmet.
+The separate all64/three-token native fixture is now running;not yet passing.
+Evidence: [native first-layer numerical checkpoint](benchmarks/qwen38-token-native-first-layer-20261029.txt).
+
 ## In progress: native full-layer execution on actual initialized byte views
 
 October29,2026 07:43UTC. A new offline profile continues the SAME full851
@@ -259,6 +281,9 @@ Evidence: [native held staging checkpoint](benchmarks/qwen38-token-native-held-2
   component constructor-isolation/idle-CSR-fault persistence tests.
 - [x] First original-model native matrix:three actual workers/48 outputs,
   real Tensix arithmetic and independent FP32/FP64 output comparisons offline.
+- [x] Complete original first recurrent layer on the SAME native owner and
+  initialized byte views;all5120 outputs bit-exact vs independent CPU trace,
+  genuine next-slot writes and all119 DONE/WAIT receipts offline.
 - [ ] Extend bootstrap timing/late-fault coverage and validate genuine KV/state
   advancement during native execution.
 - [ ] Complete original-model all64-layer, multitoken, persistent-state,

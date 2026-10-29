@@ -1,0 +1,55 @@
+Native original first recurrent layer--positive numerical qualification
+2026-10-29 08:16UTC. Goal ACTIVE;20tok/s UNMET. Last physical whole-model
+0.207893161tok/s. NO Pioneer/SSH/power/install/OS/Assistant/boot/CPU/RAM/
+network/SD/mains mutation,physical-health or measured speedup claim.
+
+Full-layer B main68156/clean69524 BOTH terminal0. Complete stdout logs are
+byte-identical. Exact execution source is2ec5971e60e43c3baa38ae26c300d89d53cba3de;
+later uncommitted all64/trace/KV/host-window changes are NOT part of B.
+The original A baseline12848/7064 remains separate and LIVE,not restarted.
+
+The same full851 native owner first executes all1010 actual zero-ROM jobs,
+full120 held stages,4616 metadata packets and119 VIRGIN full engine boots.
+Real ROOT embedding,RMS/native packing and first3 worker matrices pass;
+ROOT then continues actual installed original-model matrix/Conv/GDN/FFN
+instructions through its own complete layer0 return/progress store.
+Shared native physical byte views are the SAME initializer recurrent/history
+arrays and metadata workspace. No expected CPU product or completed private
+processor/owner history is supplied or transplanted. The event-only bridge
+publishes actual NoC Load/Store deltas,not full repaired register snapshots.
+
+Actual prior-state reads786432 words;actual next-slot writes786432 words;
+actual history reads30720 words. Every next-slot word is finite/nonzero;
+initial current-slot and all other-layer recurrent bytes remain zero.
+This is actual NEXT production,NOT a committed current-slot/token frontier
+or an independent numerical comparison of all786432 next-state values.
+All119 actual workers finish at DONE/WAIT after the final down projection.
+ROOT580615974 actual instructions;workers2226503680 total;ROOT max written
+stack6488/8192. Fresh native source/PC observation succeeds,then one checked
+cancel REQUEST succeeds while ROOT is paused after its genuine layer return.
+Cancellation is NOT consumed. Incomplete END still retains/quarantines all
+owners and mappings;no restore/disposal or physical readiness is claimed.
+
+Independent output comparisons BOTH terminal0,main/clean log-identical:
+compare_pioneer_q38_observed_trace.py CPU_TRACE OUTPUT_DIR --first-layer-only
+No --diagnostic-only and NO fitted tolerance. Both original-model CPU traces
+authenticate their complete three-token/all64/vocabulary files against fixed
+SHA256 pins before comparison. Actual native QOP1 prefix contains embedding
+5120 words and final layer0 hidden5120 words,not a token or STOP record.
+Both blocks have0 bit differences,0 max absolute error and0 relativeL2.
+Actual main/clean prefix files are byte-identical. Model numeric files stay
+in temporary output directories and are NOT committed as products/inputs.
+
+Main output /private/tmp/pioneer-q38-native-layer-main-20261029-b.JqRmIJMm
+Clean output /private/tmp/pioneer-q38-native-layer-clean-20261029-b.j38oyvFY
+Main CPU /private/tmp/pioneer-q38-cpu-original-trace-20261028-a
+Clean CPU /private/tmp/pioneer-q38-cpu-original-trace-clean-20261028-a
+Logs /private/tmp/pioneer-q38-native-layer-prefix-compare-{main,clean}-20261029-b.log
+
+No all64/multitoken/KV/vocabulary/token/consumed-cancel/STOP/restoration/END/
+physical/Work/Assistant/TPS acceptance follows from this first-layer result.
+The complete objective remains all of those gates plus physical repeated
+generation/long conversations/load-unload/recovery and measured performance
+toward20tok/s,preserving SD-free boot/64CPU/full RAM. Current all64 native
+test profiles remain running and unqualified;existing full-model histories
+are preserved. Do not install the offline correctness image as a fast driver.
