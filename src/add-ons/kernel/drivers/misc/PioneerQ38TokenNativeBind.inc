@@ -53,20 +53,23 @@ bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
    || state->phase==PioneerQ38TokenNativeState::PeerStoresRestoring || state->phase==PioneerQ38TokenNativeState::PeerStoresRestored
    || state->phase==PioneerQ38TokenNativeState::RootStoreRestoring || state->phase==PioneerQ38TokenNativeState::RootStoreRestored
    || state->phase==PioneerQ38TokenNativeState::SharedTlbRestoring || state->phase==PioneerQ38TokenNativeState::SharedTlbRestored
-   || state->phase==PioneerQ38TokenNativeState::ClockEnding || state->phase==PioneerQ38TokenNativeState::ClockEnded)
+   || state->phase==PioneerQ38TokenNativeState::ClockEnding || state->phase==PioneerQ38TokenNativeState::ClockEnded
+   || state->phase==PioneerQ38TokenNativeState::HardwareSealing)
    && !state->ControlsCohort(d))return false;
   if(state->runtime && state->phase<PioneerQ38TokenNativeState::RuntimePreparing)return false;
   if(state->runtime && state->phase>=PioneerQ38TokenNativeState::MemoryClosing
    && (!state->runtime->Staged() || state->runtime->Pending()))return false;
  }
  const auto& clock=c->q38Clock.Snapshot();
- if(state && (state->phase==PioneerQ38TokenNativeState::ClockEnding || state->phase==PioneerQ38TokenNativeState::ClockEnded)){
+ if(state && (state->phase==PioneerQ38TokenNativeState::ClockEnding || state->phase==PioneerQ38TokenNativeState::ClockEnded
+  || state->phase==PioneerQ38TokenNativeState::HardwareSealing)){
   if(!state->clockEndAttempted || !state->runtime || !state->runtime->SharedMappingsRestored() || c->q38Clock.Unsafe()
    || clock.version!=1 || !clock.busy_requested || !clock.busy_acknowledged || clock.recovery_required
    || clock.before_mhz!=800 || clock.before_mode!=3 || clock.busy_mhz<=800 || clock.busy_mhz>1400 || clock.busy_mode!=3)return false;
   const bool complete=clock.state==TT_ARC_CLOCK_RESTORED && clock.restored && clock.idle_acknowledged
    && clock.after_mhz==clock.before_mhz && clock.after_mode==clock.before_mode;
-  if(state->phase==PioneerQ38TokenNativeState::ClockEnded)return state->clockEnded && complete && !c->q38Clock.RequiresExplicitEnd();
+  if(state->phase==PioneerQ38TokenNativeState::ClockEnded || state->phase==PioneerQ38TokenNativeState::HardwareSealing)
+   return state->clockEnded && complete && !c->q38Clock.RequiresExplicitEnd();
   return !state->clockEnded && (complete || (c->q38Clock.RequiresExplicitEnd() && !clock.restored
    && (clock.state==TT_ARC_CLOCK_BUSY_VERIFIED || clock.state==TT_ARC_CLOCK_IDLE_FAILED || clock.state==TT_ARC_CLOCK_RESTORE_FAILED)));
  } // explicit SAME private normal-clock transition;NEVER arbitrary clock-state adoption

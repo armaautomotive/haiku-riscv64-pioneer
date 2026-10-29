@@ -79,7 +79,9 @@ required = ('BindQ38TokenNative(', 'TokenCallScopeMatches(', 'TokenModelSourceSc
             'TokenClockReceiptScope(', 'TokenClockTlbReadChecked(', 'PioneerQ38TokenNativeOwner::VerifyClockReturnMappings(',
             'PioneerQ38ClockIO::TlbRead(', 'PioneerQ38ClockIO::TlbWrite(', 'PioneerQ38ClockIO::CsmRead(',
             'PioneerQ38ClockIO::QueueWrite(', 'PioneerQ38ClockIO::SetQueueBounds(', 'PioneerQ38ClockIO::MsiStatusRead(',
-            'PioneerQ38ClockIO::NotifyArc(', 'PioneerQ38ClockIO::Pause(', 'PioneerQ38ClockIO::Map(')
+            'PioneerQ38ClockIO::NotifyArc(', 'PioneerQ38ClockIO::Pause(', 'PioneerQ38ClockIO::Map(',
+            'SealQ38TokenNativeHardware(', 'PioneerQ38TokenNativeOwner::SealHardwareLeases(',
+            'pioneer_token_context_scoped_hardware_seal(', 'TokenHardwareSealScope(', 'TokenHardwareSealTlbReadChecked(', 'TokenFinalOwnershipScope(')
 for name in required:
     assert any(name in key for key in frames), (name, 'actual implementation must be emitted')
 for controller in ('State', 'ConvHistory', 'Projection'):
@@ -112,6 +114,7 @@ for forbidden in ('Q38WorkControl', 'OriginalSource', 'CompareFinal', 'Reference
                   'CheckNativeRootStoreRestore', 'beforeRootScratch', 'nativeRootStoreResult',
                   'CheckNativeSharedTlbRestore', 'NativeSharedAliasRefusals', 'beforeSharedTlb', 'nativeSharedTlbResult',
                   'CheckNativeClockEnd', 'tokenClockRaw', 'Eligibility',
+                  'CheckNativeHardwareSeal', 'nativeHardwareSealResult', 'hardwareSealFaultSeen',
                   'NativePreparationObservation', 'NativePreparationFifoObserved', 'CheckNativePreparationFault',
                   'Q38NativeTraceTest', 'PioneerQ38ObservedTrace', 'KvByteSpan', 'BindKvBytes', 'CheckNativeFullFlow',
                   'Q38MixedLiveValidationControl', 'PioneerQ38MixedLiveNativeState',
@@ -162,6 +165,7 @@ print('PASS ACTUAL119 peer NIU+scratch factory/controller+per-write-checked sele
 print('PASS ACTUAL distinct ROOT-only NIU+scratch factory/controller+phase-scoped checked4B aliases SDK emitted;requires SAME119 peer restores/all120 current held proofs/original command+config+scratch immediate checks/full secondpass;master.ready/sharedTLB/clock/maps/hosts/END STILL retained;NOT runtime/physical/Work qualification')
 print('PASS ACTUAL shared200/201 original-TLB factory/controller+checked control aperture SDK emitted;private master+bulk originals captured BEFORE launch/all120 held+bulk8192-word preflight/alias veto BEFORE first attempted change/6 immediate reads+complete secondpass/NO subsequent mapped-source alias access;clock/master-ready/bulk/VM/hosts/END STILL retained;NOT runtime/physical/Work qualification')
 print('PASS ACTUAL distinct native normal-clock END factory/per-access FD+generation+phase+deadline guard/real ClockLease+ARC service/clock-view-only single-attempt disposal/6 direct shared-original readbacks+sealed transport emitted;NO master/bulk/modelVM/host/reservation release or native END/Work/physical grant;runtime qualification separate')
+print('PASS ACTUAL hardware-lease/journal retirement factory/controller/private sealed binding+6 fresh direct-original readbacks/final ownership scope emitted;master+bulk ready cleared,launched history retained;NO VM/PCI/host/reservation release/full native END/Work/physical grant;runtime separate')
 print('PASS scoped fixed FIFO availability+overflow reads emitted/native zero-initializer+held-memory+runtime-packet+bootstrap+HOLD/restoration guards test FIFO drain BEFORE accepting completion receipts;no old MMIO whitelist widening/counter clear/START;runtime/hardware and earlier peer-lease/dispatch-preparation FIFO audit STILL OWED')
 print('PASS complete2097152B immutable rawRoPE emitted;NO kernel cos/sin/pow imports or CPU model-reference path')
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+' token-context-NODRV.o')

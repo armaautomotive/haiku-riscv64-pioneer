@@ -23,7 +23,7 @@ class PioneerQ38TokenMemory {
  const PioneerQ38TokenStartupPlan* startup=nullptr;const uint8_t* ledger=nullptr;
  PioneerQ38GdnIdentity identity={};uint32_t command[120][10]={},counters[120][8]={};
  uint32_t saved[PioneerQ38TokenL1::SavedWords]; // ALL arbitrary originals;HEAP ONLY
- unsigned sampled=0;bool started=false,installed=false,closed=false,unsafe=false,launched=false;
+ unsigned sampled=0;bool started=false,installed=false,closed=false,unsafe=false,launched=false,launchClosed=false;
  template<class IO> bool Fail(IO& io,PioneerQ38TokenMemoryResult& result){
   unsafe=true;installed=false;result.unsafe=1;
   if(cohort && banks)PioneerQ38DispatchQuarantine(*cohort,*banks);
@@ -71,6 +71,8 @@ public:
  bool Unsafe()const{return unsafe;}
  bool Installed()const{return installed && !unsafe && !closed && !launched;}
  bool Closed()const{return closed && !unsafe && !launched;}
+ bool LaunchedJournalClosed()const{return closed && launchClosed && launched && !installed && !unsafe;}
+ // Distinct launched-journal retirement ONLY;not held END or host-release authority.
  void Fault(){unsafe=true;installed=false;} // MEMORY ONLY;retain every native source/map/host/clock owner
  bool MatchesNativeOwner(const tt_dram_samples_result& dram,const PioneerResidentBanks& owner,const PioneerQ38DispatchLease& participants,
   const PioneerQ38CanonicalModelPlan& plan,const PioneerQ38TokenStartupPlan& data,const PioneerQ38GdnIdentity& id,

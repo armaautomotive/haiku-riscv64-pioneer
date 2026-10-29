@@ -32,6 +32,7 @@ struct PioneerStoreContext;struct PioneerSessionIO;
 [[maybe_unused]] static bool RestoreQ38TokenNativeSharedMappings(PioneerStoreContext&,PioneerQ38TokenSharedTlbRestoreResult&);
 [[maybe_unused]] static bool EndQ38TokenNativeClock(PioneerStoreContext&,PioneerQ38TokenClockResult&);
 [[maybe_unused]] static bool Q38TokenNativeClockScope(const void*);
+[[maybe_unused]] static bool SealQ38TokenNativeHardware(PioneerStoreContext&,PioneerQ38TokenHardwareSealResult&);
 // Genuine retained full851 model/reservation object. It borrows NO old
 // completed embedding/prefix owner and cannot make those old lifetimes safe.
 // Private factory publication occurs under the real global FD call lock.
@@ -59,11 +60,12 @@ class PioneerQ38TokenNativeState {
  friend bool RestoreQ38TokenNativeSharedMappings(PioneerStoreContext&,PioneerQ38TokenSharedTlbRestoreResult&);
  friend bool EndQ38TokenNativeClock(PioneerStoreContext&,PioneerQ38TokenClockResult&);
  friend bool Q38TokenNativeClockScope(const void*);
+ friend bool SealQ38TokenNativeHardware(PioneerStoreContext&,PioneerQ38TokenHardwareSealResult&);
  enum Phase {Claiming,Bound,RecurrentZeroing,RecurrentClosing,HistoryZeroing,HistoryClosing,
   ProjectionZeroing,ProjectionClosing,Initialized,DispatchPreparing,MemoryPreparing,MemoryInstalled,RuntimePreparing,RuntimeReady,
   WorkersBootstrapping,WorkersReady,RootStarting,RootRunning,RootHolding,RootHeld,RootRestoring,RootRestored,
   DispatchRestoring,DispatchRestored,PeerStoresRestoring,PeerStoresRestored,RootStoreRestoring,RootStoreRestored,
-  SharedTlbRestoring,SharedTlbRestored,ClockEnding,ClockEnded,MemoryClosing,MemoryClosed,Unknown};
+  SharedTlbRestoring,SharedTlbRestored,ClockEnding,ClockEnded,HardwareSealing,HardwareSealed,MemoryClosing,MemoryClosed,Unknown};
  PioneerStoreContext* const context;const void* const cookie;const void* const hashes;
  const uint8_t* const ledger;const int64_t team;const unsigned bank;
  const PioneerQ38GdnIdentity identity;
@@ -80,6 +82,10 @@ class PioneerQ38TokenNativeState {
  Phase phase=Claiming;bool unsafe=false;
  bool clockEndAttempted=false,clockEnded=false;
  uint64_t clockBegan=0,clockPrevious=0;
+ bool hardwareSealAttempted=false,hardwareSealed=false;
+ bool SealedCohort()const{
+  return hardwareSealAttempted && (phase==HardwareSealing || phase==HardwareSealed) && runtime && runtime->HardwareLeasesSealed();
+ }
  PioneerQ38TokenNativeState(PioneerStoreContext& c,const void* fd,const void* h,const uint8_t* uploaded,int64_t owner,
   unsigned selected,const PioneerQ38GdnIdentity& id):context(&c),cookie(fd),hashes(h),ledger(uploaded),team(owner),bank(selected),identity(id){}
  ~PioneerQ38TokenNativeState(){delete runtime;delete memory;delete startup;} // known-clean native destruction ONLY
@@ -88,7 +94,8 @@ public:
  PioneerQ38TokenNativeState& operator=(const PioneerQ38TokenNativeState&)=delete;
  bool Unsafe()const{return unsafe || phase==Unknown || graph.Unsafe() || recurrentZero.unsafe || historyZero.unsafe
   || projectionZero.unsafe || (memory && memory->Unsafe()) || (runtime && runtime->Unsafe())
-  || (participants && (participants->unsafe || participants->closed || participants->bootAttempted || participants->booted
+  || (hardwareSealed && !SealedCohort())
+  || (participants && (participants->unsafe || (participants->closed && !SealedCohort()) || participants->bootAttempted || participants->booted
    || (participants->rootRunning && (!runtime || (phase!=RootStarting && phase!=RootRunning && phase!=RootHolding) || !runtime->OwnsRunningRoot(participants)))));}
  // Held-only cheap binding:whole-context and participant guards still audit
  // EVERY child lease before/after each pass,not120 peers again per L1 word.
@@ -101,8 +108,14 @@ public:
  bool RootStoreOriginalsRestored()const{return phase==RootStoreRestored && !Unsafe() && runtime && runtime->RootStoreOriginalsRestored();}
  bool SharedMappingsRestored()const{return phase==SharedTlbRestored && !Unsafe() && runtime && runtime->SharedMappingsRestored();}
  bool ClockRestored()const{return phase==ClockEnded && clockEndAttempted && clockEnded && !Unsafe() && runtime && runtime->SharedMappingsRestored();}
+ bool HardwareLeasesSealed()const{return phase==HardwareSealed && hardwareSealed && !Unsafe() && SealedCohort()
+  && memory && memory->LaunchedJournalClosed();} // NOT full native END
  // Necessary private STOP observation only;current sources/mappings and HOLD/restore/END remain separate.
  bool ControlsCohort(const PioneerQ38DispatchLease* p)const{
+  if(!unsafe && hardwareSealAttempted && p && p==participants && runtime){
+   if(phase==HardwareSealed)return hardwareSealed && runtime->HardwareLeasesSealed();
+   if(phase==HardwareSealing)return runtime->HardwareLeasesSealed() || (runtime->ControlsCohort(p) && runtime->SharedMappingsRestored());
+  }
   return !unsafe && (phase==WorkersBootstrapping || phase==WorkersReady || phase==RootStarting || phase==RootRunning || phase==RootHolding
     || phase==RootHeld || phase==RootRestoring || phase==RootRestored || phase==DispatchRestoring || phase==DispatchRestored
     || phase==PeerStoresRestoring || phase==PeerStoresRestored || phase==RootStoreRestoring || phase==RootStoreRestored

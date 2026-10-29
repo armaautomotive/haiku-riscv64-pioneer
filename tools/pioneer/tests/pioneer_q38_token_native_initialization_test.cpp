@@ -322,6 +322,7 @@ static void TestKernelLog(const char*,...){}
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeExecution.inc"
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeClock.inc"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeHardware.inc"
 #endif
 #endif
 #endif
@@ -412,8 +413,9 @@ int main(int argc,char** argv){
  const bool clockContract=argc==3 && !strcmp(argv[2],"--clock-owner-contract");
  const bool peerBootstrap=argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines");
  const bool fullFlow=argc==7 && (!strcmp(argv[2],"--execution-full-flow") || !strcmp(argv[2],"--execution-readout-full-flow"));
- const bool clockEnd=argc==7 && (!strcmp(argv[2],"--execution-clock-end") || !strcmp(argv[2],"--execution-clock-end-generation-fault")
-  || !strcmp(argv[2],"--execution-clock-end-response-fault") || !strcmp(argv[2],"--execution-clock-end-unmap-fault"));
+ const bool hardwareSeal=argc==7 && (!strcmp(argv[2],"--execution-hardware-seal") || !strcmp(argv[2],"--execution-hardware-seal-tlb-fault"));
+ const bool clockEnd=hardwareSeal || (argc==7 && (!strcmp(argv[2],"--execution-clock-end") || !strcmp(argv[2],"--execution-clock-end-generation-fault")
+  || !strcmp(argv[2],"--execution-clock-end-response-fault") || !strcmp(argv[2],"--execution-clock-end-unmap-fault")));
  const bool restoreShared=clockEnd || (argc==7 && (!strcmp(argv[2],"--execution-restore-shared-tlb") || !strcmp(argv[2],"--execution-restore-shared-tlb-fault")
   || !strcmp(argv[2],"--execution-restore-shared-tlb-readback-fault") || !strcmp(argv[2],"--execution-restore-shared-tlb-verify-fault")));
  const bool restoreRoot=restoreShared || (argc==7 && (!strcmp(argv[2],"--execution-restore-root-store") || !strcmp(argv[2],"--execution-restore-root-store-fault")
@@ -482,19 +484,23 @@ int main(int argc,char** argv){
    const unsigned before=io.touches,raw=c.q38ClockIO.rawEvents;
    assert(c.q38ClockIO.tokenClockGuard.Pristine() && c.q38ClockIO.notifications==3 && c.q38ClockIO.TokenClockViewsRetained()
     && !EndQ38TokenNativeClock(c,result) && !Q38TokenNativeClockScope(&c));
+   PioneerQ38TokenHardwareSealResult hardware;const auto pristineHardware=hardware;auto* hardwareWords=reinterpret_cast<uint32*>(&hardware);
+   assert(!SealQ38TokenNativeHardware(c,hardware) && !io.TokenFinalOwnershipScope());
    {
     PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);
     for(unsigned i=0;i<16;i++){words[i]^=1;assert(!EndQ38TokenNativeClock(c,result));result=pristine;}
     assert(!EndQ38TokenNativeClock(c,result) && !state->ClockRestored());
+    for(unsigned i=0;i<16;i++){hardwareWords[i]^=1;assert(!SealQ38TokenNativeHardware(c,hardware));hardware=pristineHardware;}
+    assert(!SealQ38TokenNativeHardware(c,hardware) && !io.TokenFinalOwnershipScope() && !io.TokenHardwareSealScope());
     uint32 value=0x3157a9c2;
     for(unsigned slot:{0U,1U,2U,UINT32_MAX})for(unsigned word:{0U,2U,3U,UINT32_MAX})
-     assert(!io.TokenClockTlbReadChecked(slot,word,value) && value==0x3157a9c2);
+     assert(!io.TokenClockTlbReadChecked(slot,word,value) && !io.TokenHardwareSealTlbReadChecked(slot,word,value) && value==0x3157a9c2);
    }
    assert(io.touches==before && c.q38ClockIO.rawEvents==raw && !c.q38ClockIO.deletes && !io.rootStarts
     && !memcmp(&result,&pristine,sizeof(result)) && c.q38Clock.RequiresExplicitEnd());
    tt_resident_session_result end={};bool clean=true;assert(!IncompleteEnd(c,end,clean) && !clean);f.Unknown();
    assert(io.touches==before && c.q38ClockIO.rawEvents==raw && !c.q38ClockIO.deletes);
-   puts("PASS actual native clock BEGIN/private real lease+3 real simulated ARC messages/1350BUSY/not mutable ready snapshot/17 clock-END pending-or-non-pristine factory and16 readback-API refusals/output unchanged/ZERO following clock/model IO or zero-program instructions;NOT positive clock-END/compute/hardware/Work/TPS qualification");
+   puts("PASS actual native clock BEGIN/private real lease+3 simulated ARC messages/1350BUSY/not mutable ready snapshot/17 clock-END+17 hardware-seal pending-or-non-pristine factories/32 readback-API and final-ownership refusals/output unchanged/ZERO following clock/model IO or instructions;NOT positive clock-END/hardware-seal/compute/hardware/Work/TPS qualification");
    continue;
   }
 #endif
@@ -653,6 +659,9 @@ int main(int argc,char** argv){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE
   c.tokenClockFault=!strcmp(argv[2],"--execution-clock-end-generation-fault")?1:
    !strcmp(argv[2],"--execution-clock-end-response-fault")?2:!strcmp(argv[2],"--execution-clock-end-unmap-fault")?3:0;
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HARDWARE_SEAL_FIXTURE
+  io.hardwareSealFault=!strcmp(argv[2],"--execution-hardware-seal-tlb-fault");
 #endif
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE

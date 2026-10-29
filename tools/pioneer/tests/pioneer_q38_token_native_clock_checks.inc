@@ -14,6 +14,9 @@
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE)
 #error Explicit native shared-map-preceded clock-END TEST required
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HARDWARE_SEAL_FIXTURE
+#include "pioneer_q38_token_native_hardware_seal_checks.inc"
+#endif
 static void CheckNativeClockEnd(Fixture& f){
  auto& c=*f.c;auto& io=f.io;auto* state=c.q38TokenNative;auto& clock=c.q38ClockIO;
  assert(!lockHeld && state->SharedMappingsRestored() && !state->ClockRestored() && !state->Closed()
@@ -64,4 +67,7 @@ static void CheckNativeClockEnd(Fixture& f){
   && !io.pciWrites && !io.HostReadMock::bmeWrites && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases);
  if(c.tokenClockFault)printf("EXECUTED native clock-END fault%u/actual SAME original firstlayer+consumed cancel/STOP/HOLD/drain/token+dispatch+119peer+ROOT+shared originals/real clock lease/first transport-generation-or-response-or-view-deletion uncertainty/ALL remaining owners retained/no retry/NO full END/physical/Work/TPS grant\n",c.tokenClockFault);
  else puts("EXECUTED native SAME full851/original firstlayer+cancel/STOP/HOLD/drain/token+dispatch+119peer+ROOT+shared originals/real clock BEGIN800->1350 and private native per-access-scoped END1350->800/2 real simulated ARC messages/6 clock-only VM deletions/6 shared-original control readbacks/sealed transport;master/bulk/modelVM/hosts/reservations STILL OWNED,NO full END/physical/Work/TPS grant");
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HARDWARE_SEAL_FIXTURE
+ if(!c.tokenClockFault)CheckNativeHardwareSeal(f);
+#endif
 }

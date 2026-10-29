@@ -7,6 +7,7 @@ bool TokenPeerStoreSelectionScope();bool TokenPeerStoreAccessScope(unsigned);
 bool TokenRootStoreAccessScope();
 bool TokenSharedTlbScope();
 bool TokenClockReceiptScope();
+bool TokenHardwareSealScope();bool TokenFinalOwnershipScope();
 bool TokenInitializationFifoEmpty(unsigned);bool TokenInitializationFifoReadChecked(unsigned,bool,uint32&);
 bool PrepareTokenNativeParticipant(unsigned);
 bool TokenMemoryScope(const PioneerQ38TokenMemory&,const PioneerQ38CanonicalModelPlan&,const PioneerQ38TokenStartupPlan&,
@@ -135,6 +136,10 @@ __attribute__((noinline)) bool TokenClockTlbReadChecked(unsigned slot,unsigned w
  if(slot>=2 || word>=3 || !TokenClockReceiptScope())return false;
  output=DramTlbRead(slot,word);return true;
 } // read-only original-map audit after clock return;NO source alias or map write
+__attribute__((noinline)) bool TokenHardwareSealTlbReadChecked(unsigned slot,unsigned word,uint32& output){
+ if(slot>=2 || word>=3 || !TokenHardwareSealScope())return false;
+ output=DramTlbRead(slot,word);return true;
+} // fresh direct-control read before CPU-only hardware-lease retirement
 __attribute__((noinline)) bool TokenFifoReadChecked(unsigned worker,bool overflow,uint32& output){
  if(worker>=120 || !TokenMemoryAccessScope() || !TokenMemoryMappingStable(worker))return false;
  output=TokenFifoStatusWord(overflow?0x68U:0x64U);return true;

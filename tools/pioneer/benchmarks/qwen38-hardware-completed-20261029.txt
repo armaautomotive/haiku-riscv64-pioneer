@@ -1,0 +1,44 @@
+Native hardware-lease sealing:COMPLETED OFFLINE CHECKPOINT,NOT full END
+2026-10-29 21:05UTC. Goal ACTIVE;20tok/s UNMET.
+Last physical whole-model result remains0.207893161 tokens/sec.
+
+Qualified source is the EARLIER35-file hardware-only snapshot from
+/private/tmp/pioneer-q38-hardware-seal-clean.FKrHxlR0.
+It is NOT the later local VM/PCI/host/unreserve/full-generation END code.
+Only the exact frozen source bytes are promoted;newer working files remain.
+
+Positive3813/16789 and first-control-readback-fault62982/47174 ALL terminal0;
+corresponding full logs match. Each executes actual1010 zero jobs/new120
+preparations/held journal/4616 metadata packets/119 virgin worker engines/
+original first layer/consumed cancellation/ROOT+119 STOP/120 HOLD/drain/
+token+dispatch+119peer+ROOT+shared-original restoration/real clock END
+BEFORE entering the distinct hardware-seal factory.
+
+Six fresh direct original-control readbacks precede CPU-only retirement of
+120 image+120 store leases and the SAME launched memory journal. Only then
+master/bulk ready clear and the cohort closes. Private retained binding
+rechecks14 corrupted final metadata cases without IO. Launched history is
+preserved,not converted into a never-launched CLOSE or invented clean flag.
+First bad actual readback stops every later IO/publication;all remaining
+owners are retained without retry,reset,repair or resource release.
+
+Posthoc CPU comparisons79614/60176/88190/56118 ALL0. Each5120 embedding+
+5120 first-layer word is BIT-EXACT against independent pinned CPU traces,
+with no tolerance or CPU products supplied to native execution. These
+comparisons do NOT qualify all64 layers,state/KV progression or tokens.
+
+SDK B70097/80010 BOTH0,actual objects byte-identical:
+ff8a1bd89a75e6da1060380caea6462f068f41126dbed1c7e6f47bfa29130ef4
+All new individual frames pass the existing2048B bound;combined kernel/
+firmware stack remains separate. Old65 unchanged61faa093;all5 renamed
+entries remain machine-code-inert/non-loadable. Contract13916/85110 BOTH0:
+17 clock+17 hardware pending/nonpristine factory refusals/32 readback and
+final ownership refusals with ZERO following IO/instructions. Roles40841/
+7112 BOTH0:21 explicit TEST roles/434 refusals;paired logs match.
+
+Model VM aliases,PCI,host pages,model reservations and CPU journals remain
+OWNED;Closed stays FALSE. No native full END/unload/reuse/public ABI/Work/
+Assistant/physical card or speed permission follows. No newer candidate
+inherits this older snapshot's qualification. Dirty llama.cpp/unrelated
+FlashNext sources were excluded. No Pioneer/SSH/power/install/OS/network/
+SD/mains action or current board-health claim in this checkpoint.

@@ -18,6 +18,10 @@ struct TokenHeldEndpoints:ZeroControlIO {
  std::vector<uint32> alias=std::vector<uint32>(Words),original;
  unsigned runtimeCore=0,maps=0,aliasReads=0,aliasWrites=0;
  const PioneerQ38TokenMemoryResult* journalResult=nullptr;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HARDWARE_SEAL_FIXTURE
+ const PioneerQ38TokenHardwareSealResult* nativeHardwareSealResult=nullptr;
+ bool hardwareSealFault=false;unsigned hardwareSealFaultSeen=0,hardwareSealFaultTouches=0,hardwareSealReads=0;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE
  uint32 beforeSharedTlb[2][3]={};const PioneerQ38TokenSharedTlbRestoreResult* nativeSharedTlbResult=nullptr;
  unsigned sharedTlbFault=0,sharedTlbFaultSeen=0,sharedTlbFaultTouches=0,sharedTlbWrites=0,sharedAliasRefusals=0;
@@ -219,6 +223,12 @@ struct TokenHeldEndpoints:ZeroControlIO {
 #endif
  }
  uint32 DramTlbRead(unsigned s,unsigned w){Touch();const uint32 actual=C().DramTlbRead(s,w);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HARDWARE_SEAL_FIXTURE
+  if(nativeHardwareSealResult && nativeHardwareSealResult->started && nativeHardwareSealResult->phase==1){
+   assert(!runtimeCore);hardwareSealReads++;
+   if(hardwareSealFault && !hardwareSealFaultSeen){hardwareSealFaultSeen++;hardwareSealFaultTouches=touches;return actual^1U;}
+  }
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE
   if(!sharedTlbFaultSeen && nativeSharedTlbResult && !runtimeCore
    && ((sharedTlbFault==2 && nativeSharedTlbResult->phase==3 && !s && !w)

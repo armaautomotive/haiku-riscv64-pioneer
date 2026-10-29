@@ -65,6 +65,12 @@ bool PioneerSessionIO::TokenClockReceiptScope(){
  return clock.state==TT_ARC_CLOCK_RESTORED && clock.restored && clock.idle_acknowledged
   && clock.after_mhz==clock.before_mhz && clock.after_mode==clock.before_mode && TokenMemoryMappingStable(0);
 } // clock service RETURNED/actual private lease ended;direct original-map readback only
+bool PioneerSessionIO::TokenHardwareSealScope(){
+ auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;
+ return !runtimeCore && s && s->phase==PioneerQ38TokenNativeState::HardwareSealing && s->hardwareSealAttempted && !s->hardwareSealed
+  && s->clockEndAttempted && s->clockEnded && s->runtime && !s->runtime->HardwareLeasesSealed()
+  && s->runtime->SharedMappingsRestored() && TokenModelSourceScope(false) && TokenMemoryMappingStable(0);
+} // real ended-clock owner;NO ordinary model-source or changed-route access grant
 bool PioneerSessionIO::TokenMemoryScope(const PioneerQ38TokenMemory& memory,const PioneerQ38CanonicalModelPlan& canonical,
  const PioneerQ38TokenStartupPlan& startup,const PioneerQ38GdnIdentity& id,const uint8_t* learned,unsigned pages){
  auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;

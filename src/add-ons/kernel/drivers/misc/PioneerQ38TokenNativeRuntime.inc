@@ -16,7 +16,8 @@ bool PioneerSessionIO::TokenRuntimeScope(const PioneerQ38TokenNativeOwner& runti
    || s->phase==PioneerQ38TokenNativeState::PeerStoresRestoring || s->phase==PioneerQ38TokenNativeState::PeerStoresRestored
    || s->phase==PioneerQ38TokenNativeState::RootStoreRestoring || s->phase==PioneerQ38TokenNativeState::RootStoreRestored
    || s->phase==PioneerQ38TokenNativeState::SharedTlbRestoring || s->phase==PioneerQ38TokenNativeState::SharedTlbRestored
-   || s->phase==PioneerQ38TokenNativeState::ClockEnding || s->phase==PioneerQ38TokenNativeState::ClockEnded)
+   || s->phase==PioneerQ38TokenNativeState::ClockEnding || s->phase==PioneerQ38TokenNativeState::ClockEnded
+   || s->phase==PioneerQ38TokenNativeState::HardwareSealing)
   && TokenModelSourceScope(false)
   && runtime.MatchesRuntimeBinding(dram,c->banks,*c->q38Dispatch,memory,canonical,startup,id,learned,pages);
 }

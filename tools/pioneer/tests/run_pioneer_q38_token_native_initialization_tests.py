@@ -12,7 +12,8 @@ import tempfile
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 readout_flow = len(sys.argv) == 7 and sys.argv[2] == '--execution-readout-full-flow'
 clock_contract = len(sys.argv)==3 and sys.argv[2]=='--clock-owner-contract'
-clock_end = len(sys.argv)==7 and sys.argv[2] in ('--execution-clock-end','--execution-clock-end-generation-fault',
+hardware_seal = len(sys.argv)==7 and sys.argv[2] in ('--execution-hardware-seal','--execution-hardware-seal-tlb-fault')
+clock_end = hardware_seal or len(sys.argv)==7 and sys.argv[2] in ('--execution-clock-end','--execution-clock-end-generation-fault',
     '--execution-clock-end-response-fault','--execution-clock-end-unmap-fault')
 restore_shared = clock_end or len(sys.argv) == 7 and sys.argv[2] in ('--execution-restore-shared-tlb','--execution-restore-shared-tlb-fault',
     '--execution-restore-shared-tlb-readback-fault','--execution-restore-shared-tlb-verify-fault')
@@ -106,6 +107,8 @@ if restore_shared:
     defines['PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE'] = '1'
 if clock_contract or clock_end:
     defines['PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE'] = '1'
+if hardware_seal:
+    defines['PIONEER_Q38_TOKEN_NATIVE_HARDWARE_SEAL_FIXTURE'] = '1'
 if readout_flow:
     defines['PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE'] = '1'
 if full_flow:
