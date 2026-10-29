@@ -1,5 +1,5 @@
 Full-model native held staging:positive offline checkpoint
-2026-10-29 02:31UTC. Goal ACTIVE. NO hardware/SSH/power/driver install/
+2026-10-29 02:35UTC. Goal ACTIVE. NO hardware/SSH/power/driver install/
 kernel/Assistant/boot/CPU/RAM/network/SD/mains action or physical health claim.
 Last measured whole-model0.207893161tok/s;20 target UNMET.
 
@@ -128,14 +128,22 @@ Standalone held journal main7818/clean72712 completes its positive and52
 fault/33 inert-refusal cases;these use SIMULATED scope endpoints,not the
 native failure-path qualification below.
 
+Complete native generation-loss fault qualification
+---------------------------------------------------
+Final G main29821/clean37515 BOTH terminal0,identical ASan+UBSan logs.
+All THREE generation-loss cases pass:phase1(initial save),phase3(last
+participant install) and phase6(partial root restoration). EACH uses a
+FRESH owner/root+119 endpoint histories,all1010 actual zero jobs and120
+actual participant preparations. Every owner/alias/lease quarantines;
+there is no following device IO,retry,repair,restore,unmap or host release.
+The existing actual unfinished-END path still retains. No initialization,
+processor,model state or private readiness is transplanted between cases.
+These three native integration cases are NOT exhaustive physical fault
+coverage or native launch/STOP/END qualification. Broader failure coverage
+remains necessary as runtime staging and execution are connected.
+
 Still LIVE;do not count as passed or restart for quiet output
 ------------------------------------------------------------
-Native G main29821/clean37515 both pass generation-loss faults in phase1
-(initial save) AND phase3(last participant install),each after FRESH1010
-real zero jobs+120 real participant preparations. Every owner/alias/lease
-quarantines and no following device IO occurs. The phase6(partial root
-restore) case also requires FRESH genuine initialization and is still LIVE.
-Follow SAME handles;do not copy initialization/processor/private readiness.
 
 Baseline F positive main25831/clean19019 and fault main15876/clean88407
 remain LIVE with their strict-rebuilding scope,not replaced by G histories.

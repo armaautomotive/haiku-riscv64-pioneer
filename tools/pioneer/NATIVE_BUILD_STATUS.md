@@ -12,9 +12,10 @@ journal/role regressions pass. Integrated positive runs now both finish0:
 all11406906 originals are saved and second-pass checked before installing
 2710744 code words, then all originals are restored and checked again.
 The SAME owner first completes all1010 real zero-program jobs. Native
-generation-loss faults during initial save and last-participant install
-pass in both trees; the partial-restoration fault remains active. This is
-not complete failure-path or physical qualification.
+generation-loss faults during initial save,last-participant install and
+partial restoration also all finish0 in both trees,with all resources
+retained and no following IO. This is not exhaustive failure-path or
+physical qualification.
 
 A stack sample identified repeated full64 immutable package reconstruction
 in every native source guard. Startup now publishes a private seal only
@@ -34,8 +35,8 @@ Evidence: [native held staging checkpoint](benchmarks/qwen38-token-native-held-2
 - [x] Native full-model binding and recurrent/history/workspace initialization
   with simulated hardware endpoints and actual zero-program instructions.
 - [x] Integrated native held program staging/restoration positive offline test.
-- [ ] Finish its later-fault qualification; then implement runtime/KV
-  frontiers and metadata staging.
+- [ ] Implement runtime/KV frontiers and metadata staging; extend native
+  failure-path coverage as the new lifecycle is connected.
 - [ ] Complete original-model all64-layer, multitoken, persistent-state,
   vocabulary, selection and genuine STOP numerical qualification.
 - [ ] Implement the distinct native execution owner, cancellation, terminal
