@@ -1,0 +1,3 @@
+PASS distinct EOS DATA recorder/two complete observations+terminal/exclusive EOS files/NO third embedding or normal trace promotion/64 terminal,identity,source,padding,partial,family,feedback,duplicate refusals;SYNTHETIC DATA only,NOT model/EOS execution/STOP/native/Work/TPS proof
+PASS independent EOS header/length/footer/record/terminal family checks;NO normal-trace promotion or model correctness claim
+PASS strict EOS parser synthetic corruption refusals105;numeric differences NEVER accepted as original-model equality

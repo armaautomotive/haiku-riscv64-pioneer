@@ -34,6 +34,7 @@ class PioneerQ38ObservedTrace {
   bool embedded=false,committed=false;
  };
  std::array<Token,3> token;unsigned embeddings=0,commits=0;bool failed=false,saved=false;
+ const bool eosAfterPrompt;
  bool Refuse(){failed=true;return false;}
  static float Float(uint32_t bits){float value;std::memcpy(&value,&bits,4);return value;}
  static bool Finite(const uint32_t* words,unsigned count){if(!words)return false;for(unsigned i=0;i<count;i++)if(!std::isfinite(Float(words[i])))return false;return true;}
@@ -47,8 +48,10 @@ class PioneerQ38ObservedTrace {
  }
 public:
  static constexpr uint32_t TokenMagic=0x31435451; // DATA format,not a capability
+ static constexpr unsigned EosFirst=70253,EosSecond=17; // fixed original-corpus TEST stop configuration
+ explicit PioneerQ38ObservedTrace(bool eos=false):eosAfterPrompt(eos){}
  bool Embedding(unsigned position,unsigned input,const uint32_t* actual,unsigned words){
-  if(failed || saved || position>=3 || position!=embeddings || words!=5120 || input>=248320 || !Finite(actual,words))return Refuse();
+  if(failed || saved || position>=(eosAfterPrompt?2U:3U) || position!=embeddings || words!=5120 || input>=248320 || !Finite(actual,words))return Refuse();
   if((position==0 && input!=248319) || (position==1 && input!=17) || (position==2 && token[1].committed && input!=token[1].selected))return Refuse();
   auto& t=token[position];if(t.embedded)return Refuse();
   t.hidden.resize(65*5120);t.logits.resize(248320);t.seen.resize(248320);
@@ -70,17 +73,19 @@ public:
   auto& t=token[position];
   if(!t.embedded || t.committed || t.layers!=64 || t.rows!=248320 || actual[0]!=TokenMagic || actual[1]!=1
    || actual[2]!=position || actual[3]!=t.input || actual[4]>=248320 || actual[6]!=position+1 || actual[7]!=((position+1)&1)
-   || actual[8]!=unsigned(position+1<2) || actual[9]!=unsigned(position+1<3) || actual[10]!=64 || actual[11]!=973
+   || actual[8]!=unsigned(position+1<2) || actual[9]!=unsigned(position+1<(eosAfterPrompt?2U:3U)) || actual[10]!=64 || actual[11]!=973
    || actual[44]!=position+1 || actual[45]!=48 || actual[46]!=119)return Refuse();
   for(unsigned i=47;i<64;i++)if(actual[i])return Refuse();
   unsigned best=0,second=1;if(Float(t.logits[second])>Float(t.logits[best]))std::swap(best,second);
   for(unsigned i=2;i<248320;i++)if(Float(t.logits[i])>Float(t.logits[best])){second=best;best=i;}else if(Float(t.logits[i])>Float(t.logits[second]))second=i;
   if(actual[4]!=best || actual[5]!=t.logits[best] || (position==1 && token[2].embedded && token[2].input!=best)
-   || (position==2 && t.input!=token[1].selected))return Refuse();
+   || (position==2 && t.input!=token[1].selected) || (eosAfterPrompt && best!=(position?EosSecond:EosFirst)))return Refuse();
   std::memcpy(t.record.data(),actual,256);t.selected=best;t.runnerUp=second;t.committed=true;commits++;return true;
  }
- bool Complete()const{return !failed && !saved && embeddings==3 && commits==3;}
- bool SavedComplete()const{return !failed && saved && embeddings==3 && commits==3;}
+ bool Complete()const{return !eosAfterPrompt && !failed && !saved && embeddings==3 && commits==3;}
+ bool SavedComplete()const{return !eosAfterPrompt && !failed && saved && embeddings==3 && commits==3;}
+ bool EosComplete()const{return eosAfterPrompt && !failed && !saved && embeddings==2 && commits==2 && !token[2].embedded;}
+ bool SavedEosComplete()const{return eosAfterPrompt && !failed && saved && embeddings==2 && commits==2 && !token[2].embedded;}
  unsigned Embeddings()const{return embeddings;}
  unsigned Layers(unsigned position)const{return position<3?token[position].layers:0;}
  // Distinct, deliberately INCOMPLETE diagnostic. The caller must observe
@@ -102,6 +107,37 @@ public:
   if(!okay || closed || directoryClosed)return Refuse();
   saved=true;return true;
  }
+ bool SaveEos(const char* directory,const uint32_t* terminal,unsigned words){
+  if(!EosComplete() || !terminal || words!=64)return Refuse();
+  const unsigned head[]={0x31545451,1,2,2,1,119,64,973,0,1};
+  for(unsigned i=0;i<64;i++){
+   if(i<10){if(terminal[i]!=head[i])return Refuse();}
+   else if(i==10 || i==11 || i>=44){if(terminal[i])return Refuse();}
+  }
+  for(unsigned p=0;p<2;p++){
+   for(unsigned i=0;i<8;i++)if(token[p].record[12+i]!=terminal[12+i])return Refuse();
+   for(unsigned i=0;i<16;i++)if(token[p].record[20+i]!=terminal[20+i])return Refuse();
+  }
+  int directoryFd=Directory(directory);if(directoryFd<0)return Refuse();
+  for(unsigned position=0;position<2;position++){
+   const auto& t=token[position];std::string name="eos-token-"+std::to_string(position)+".bin";
+   int fd=openat(directoryFd,name.c_str(),O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600);if(fd<0){close(directoryFd);return Refuse();}
+   FILE* f=fdopen(fd,"wb");if(!f){close(fd);close(directoryFd);return Refuse();}
+   const uint32_t header[]={0x31454f51,1,position,t.input,t.selected,t.runnerUp,t.logits[t.selected],t.logits[t.runnerUp],65,5120,248320,64,2,2,EosFirst,EosSecond};
+   bool okay=true;for(auto word:header)okay=Word(f,word)&&okay;
+   for(auto word:t.hidden)okay=Word(f,word)&&okay;for(auto word:t.logits)okay=Word(f,word)&&okay;
+   for(auto word:t.record)okay=Word(f,word)&&okay;okay=Word(f,0x454e4445)&&okay;
+   okay=!fflush(f)&&!ferror(f)&&okay;int closed=fclose(f);if(!okay || closed){close(directoryFd);return Refuse();}
+  }
+  int fd=openat(directoryFd,"eos-terminal.bin",O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600);if(fd<0){close(directoryFd);return Refuse();}
+  FILE* f=fdopen(fd,"wb");if(!f){close(fd);close(directoryFd);return Refuse();}
+  const uint32_t header[]={0x31544551,1,2,3,2,EosFirst,EosSecond,119,64,973,0,0,0,0,0,0};
+  bool okay=true;for(auto word:header)okay=Word(f,word)&&okay;
+  for(unsigned i=0;i<64;i++)okay=Word(f,terminal[i])&&okay;
+  okay=Word(f,0x454e4445)&&okay;okay=!fflush(f)&&!ferror(f)&&okay;
+  int closed=fclose(f),directoryClosed=close(directoryFd);
+  if(!okay || closed || directoryClosed)return Refuse();saved=true;return true;
+ } // distinct DATA family;caller still owes actual whole-model+119 STOP verification
  bool Save(const char* directory){
   if(!Complete())return Refuse();
   int directoryFd=Directory(directory);if(directoryFd<0)return Refuse();

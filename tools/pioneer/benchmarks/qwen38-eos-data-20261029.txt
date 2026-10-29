@@ -1,0 +1,71 @@
+Distinct EOS output DATA:qualified serializer/parser component,NOT EOS execution
+2026-10-29 23:44UTC. Full goal ACTIVE;20tokens/sec remains UNMET.
+Last physical whole-model measurement remains0.207893161tokens/sec.
+
+The new HOST-only recorder mode accepts two complete observed positions:
+65x5120 hidden words,all248320 vocabulary rows and the committed model
+record per position. It requires the fixed original-corpus TEST stop IDs
+70253/17 and refuses a third embedding. These are deliberately configured
+test stop IDs,NOT official tokenizer EOS metadata or supplied model products.
+
+Its QOE1 token files eos-token-0.bin/eos-token-1.bin and QET1 terminal file
+eos-terminal.bin are DISTINCT from normal three-position QOD1 traces.
+Headers identify2 positions/EOS reason2/limit3/prompt2/configured stop IDs.
+Each has an exact length and END-E footer;the terminal file is written LAST.
+The terminal must say2 commits,position1,119 workers,all64+973,slot0 and
+match both records' source/epoch identities. Reserved fields remain zero.
+Files are exclusive,no-follow creations in a checked directory. Failures
+poison the recorder. Neither the data marker nor a successful save proves
+actual STOP,execution,ownership,cleanup or permission to use hardware.
+
+Normal Complete/SavedComplete remain restricted to the original three-token
+family. New EosComplete/SavedEosComplete are distinct DATA queries. A normal
+save cannot promote EOS data. The existing native test facade still creates
+ONLY the normal recorder;no EOS constructor or cleanup capability is exported
+through it. Actual driver,firmware,Work and Assistant paths are unchanged.
+
+The new posthoc comparator requires the exact EOS file set,regular no-follow
+stable reads,complete finite payloads,actual full-vocabulary greedy+runner-up,
+records and terminal identity. It authenticates the already independent fixed
+original CPU controls,then compares every embedding/layer/vocabulary payload
+word in positions0/1 BIT-FOR-BIT. No tolerance or diagnostic-only success.
+It does NOT relabel EOS as a normal trace or feed CPU products to execution.
+No genuine EOS outputs have completed,so no original-model EOS numerical
+match is claimed by this component checkpoint.
+
+Frozen B10-source trees,all10 compared before tests:
+Main:/private/tmp/pioneer-q38-eos-main-b.wYEpLvLM
+Clean:/private/tmp/pioneer-q38-eos-clean-b.VADC5Aeg
+Each archived861b235095 plus SAME10 scoped files. This publication includes
+ONLY FOUR serializer/parser/test files;the other six execution-harness files
+remain local WIP and are not promoted by the DATA tests.
+
+All eight publication-scope B jobs finish0,corresponding logs identical:
+EOS data81908/85152:64 synthetic recorder refusals;independent Python exact
+  headers/lengths/records/footer/terminal and105 parser corruption refusals;
+normal92832/58105:unchanged three-position+first-layer data formats/lifecycle;
+native facade86729/96589:unchanged default three-position bridge behavior;
+roles54503/74346:42 explicit HOST-data/kernel/image/native/CPU-oracle/real
+  Work/defined0+1/late isolation checks. Old TT_WORK numeric TEST policy
+  remains allowed ONLY as offline host arithmetic,not native permission.
+All C++ tests use ASan+UBSan/Wall/Wextra/Werror. Observations in these units
+are SYNTHETIC DATA,not model generation,EOS decisions or device results.
+
+Local execution WIP,NOT qualified here
+-------------------------------------
+TokenFlow/OriginalTokenFlow can now configure the stop IDs BEFORE the first
+ROOT instruction. A separate observer requires the first actual greedy EOS
+to be ignored during prefill,the second real greedy EOS to commit all64+
+973+48Conv+KV,then119 real STOPs,reason2 and no third embedding/layer/record.
+Normal verification still requires its exact3-position length-limit result.
+No ROM,PC,register,ready/completion hint or CPU model product is inserted.
+Working bootstrap50189 and frozen B92793/93910 remain LIVE,not passing;
+the full original early-EOS runs have NOT been started pending those checks.
+The unchanged existing31 full-model/lifecycle/performance histories remain
+separate;none is promoted by these DATA component results.
+
+Still required:actual normal+EOS/all64/multitoken output/state/KV numerics,
+combined stack,full native END/unload/reuse/fault recovery,qualified fast
+native no-CPU-reference Work+Assistant,physical stability/long contexts and
+honest real-card tuning toward20tokens/sec. No Pioneer/SSH/power/install/
+OS/Assistant/network/SD/mains action or current board-health claim here.
