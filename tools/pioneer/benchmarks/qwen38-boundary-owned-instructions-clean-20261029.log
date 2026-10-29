@@ -1,0 +1,11 @@
+PASS boundary owned-dense descriptor/emitted phase5 getter+10 wrong-phase/range/alignment refusals/byte-identical caller copy STILL refused/actual attention entry calls getter then synthetic invalid DATA shape refuses BEFORE traffic;UNIT ABI ONLY,NOT positive attention/native/model/physical/TPS qualification
+PASS boundary-profile source audit0 worker0 SAME16x4B packets+values,instructions65444->22756,stack216/220;metadata rescan timing intentionally DIFFERENT,NOT model/native/physical/TPS
+PASS boundary-profile source audit0 worker95 SAME16x4B packets+values,instructions66068->23380,stack216/220;metadata rescan timing intentionally DIFFERENT,NOT model/native/physical/TPS
+PASS boundary-profile source audit0 worker118 SAME16x4B packets+values,instructions66196->23508,stack216/220;metadata rescan timing intentionally DIFFERENT,NOT model/native/physical/TPS
+PASS boundary-profile source audit1 worker0 SAME16x4B packets+values,instructions65316->22388,stack212/212;metadata rescan timing intentionally DIFFERENT,NOT model/native/physical/TPS
+PASS boundary-profile source audit1 worker95 SAME16x4B packets+values,instructions65940->23012,stack212/212;metadata rescan timing intentionally DIFFERENT,NOT model/native/physical/TPS
+PASS boundary-profile source audit1 worker118 SAME16x4B packets+values,instructions66068->23140,stack212/212;metadata rescan timing intentionally DIFFERENT,NOT model/native/physical/TPS
+PASS boundary-profile source audit2 worker0 SAME16x4B packets+values,instructions49887->23871,stack200/204;metadata rescan timing intentionally DIFFERENT,NOT model/native/physical/TPS
+PASS boundary-profile source audit2 worker95 SAME16x4B packets+values,instructions50527->24495,stack200/204;metadata rescan timing intentionally DIFFERENT,NOT model/native/physical/TPS
+PASS boundary-profile source audit2 worker118 SAME16x4B packets+values,instructions50655->24623,stack200/204;metadata rescan timing intentionally DIFFERENT,NOT model/native/physical/TPS
+PASS boundary-profile emitted9 source comparisons/63 immediate source/counter/quiet/nonce refusals/18 positive+metadata-refused release boundaries/18 post-release fault-and-retain cases/6 MMIO-width-or-write refusals;actual2048 inert instructions each;NO native/whole-model/physical/Work grant

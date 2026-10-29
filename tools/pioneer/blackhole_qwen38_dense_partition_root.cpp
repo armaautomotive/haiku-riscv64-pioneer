@@ -28,6 +28,9 @@
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
 #include "PioneerQ38GlobalChainComponentRole.h"
 extern "C" void q38_mixed_root_packet_seal(const uint32_t*);
+#ifdef PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE
+extern "C" const uint32_t* q38_mixed_root_packet_frame();
+#endif
 #endif
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
@@ -374,7 +377,15 @@ static void Merge(const uint32_t* d,uint32_t* tracked){
 }
 extern "C" unsigned scalar_main(){
  using namespace DensePartitionRoot;(void)&PioneerQ38LearnedRms;
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS) && defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE)
+ uint32_t tracked[8],before[8];
+ // The packet guard accepts the SAME private descriptor,not this routine's
+ // former local copy. The returning owner alone supplies its phase5 frame;
+ // the unchanged Shape+full Seal below still precede any attention traffic.
+ const uint32_t* d=q38_mixed_root_packet_frame();
+#else
  uint32_t d[64],tracked[8],before[8];for(unsigned i=0;i<64;i++)d[i]=Words(L::Header)[i];
+#endif
  if(!L::Shape(d))scalar_fault_park();
  Seal(d);Capture(d);
  for(unsigned i=0;i<64;i++)Words(L::Summary)[i]=0;

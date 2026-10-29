@@ -87,8 +87,8 @@ PINS_UNROLLED_DENSE_F32=(('recurrent.o',159452,'a87da94e9af7f2bb75b538a7d650304f
 # Independent main/clean BUILD pins only;runtime and changed audit timing
 # require separate qualification. The original/default pins stay fixed.
 PINS_BOUNDARY_F32=(('recurrent.o',161244,'a207749f83d633423c5fdcc03e3043868470a29909f488e012e1fd290f717b82'),
- ('dense.o',122564,'41ac17dea4d437a898c4d1de9fe9291b4baf1569b980a478a683c6454eb5a46e'),
- ('token-components-NOBOOT.o',252304,'716320828657aeadac1251e819f32b9b3a2c4b4292997106f81cca686f5e9a63'))
+ ('dense.o',122944,'3ad64af1f649f6a9f67996e565d9dc851d91c9f7dfc307eba8609f4624b5532c'),
+ ('token-components-NOBOOT.o',252780,'60a21a352d28a7c6e8dd351bd125816b1f76967e993b60940d652673a8bbe2e4'))
 expected=PINS_BOUNDARY_F32 if boundary else PINS_UNROLLED_DENSE_F32 if unroll else PINS_F32 if f32 else PINS
 if not inspect:assert expected and tuple(observed)==expected,'unqualified component variant; inspect/freeze first'
 print('BUILD ONLY actual returning recurrent path includes strict previous-global output admission;ROOTbytes'+str(text)+'/131072 Conv'+str(conv)+'/32768 maxFrame'+str(max(frames))+

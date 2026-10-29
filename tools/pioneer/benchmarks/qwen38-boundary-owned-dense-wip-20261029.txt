@@ -1,0 +1,110 @@
+Experimental boundary image: owned attention descriptor fix, NOT ready
+2026-10-29 14:46 UTC. Goal ACTIVE;20 tokens/sec remains UNMET.
+Last measured physical whole-model rate:0.207893161 tokens/sec.
+No Pioneer/SSH/power/install/Assistant/boot/CPU/RAM/network/SD/hardware-
+connection/mains changes. No physical-health or speedup claim.
+
+Actual full-flow failure changed the next action
+------------------------------------------------
+The original boundary C main7635/clean74451 BOTH terminate1. Their SAME
+virgin ROOT/119 engines completed three recurrent layers,then faulted at
+token0/layer3/phase5/matrix3 before the first attention admission packet.
+Actual previousPC0x5b9e8/RA0x5b9ec resolves to the dense packet-seal's fault
+call in both independently built original images. The final vectors were
+finite;that classification alone did not identify the failed condition.
+
+Source+disassembly show the concrete mismatch:the attention scalar_main
+copies Header into local d[64],then passes d to Transfer. The boundary
+packet guard correctly requires frame==SAME private owner's frame. The
+isolated old source/release tests passed only the owning frame and therefore
+missed this real integration error. The failed whole-flow logs are saved
+as qwen38-boundary-full-flow-failed-{main,clean}-20261029.log. These are
+FAILURES,not completed model/token/numerical or physical-speed qualification.
+
+Fix the caller,do not weaken the guard
+--------------------------------------
+ONLY the explicit boundary+live-dense component now obtains the SAME
+phase5 descriptor from q38_layer_return_dense_packet_frame. The helper
+checks private pointer range/alignment and phase5. Unchanged Shape+full
+Seal still precede attention traffic. The packet guard's pointer-identity
+check is UNCHANGED:a byte-identical caller copy remains refused.
+No caller-ready flag,counter adoption,PC/history setter,CPU product or
+native capability is introduced. The ordinary/default attention path keeps
+its EXACT old declaration/copy and the helper does not exist there. This
+experimental image is not selected by native ROMs,Work or Assistant.
+
+Independent current evidence
+-----------------------------
+Current noinline-helper inspected C85259/92775 BOTH0;then newly pinned
+STRICT D63002/58720 BOTH0. Strict logs and complete program.elf bytes match.
+Current independent pins:
+ recurrent.o161244 a207749f83d633423c5fdcc03e3043868470a29909f488e012e1fd290f717b82 (unchanged)
+ dense.o122944 3ad64af1f649f6a9f67996e565d9dc851d91c9f7dfc307eba8609f4624b5532c
+ token-components-NOBOOT.o252780 60a21a352d28a7c6e8dd351bd125816b1f76967e993b60940d652673a8bbe2e4
+ text.bin130680 34cc0e3de8f3e58a9d56ced4842cfd30e1b08fd4fea46a9678a5b2a2db4c14af
+ conv.bin21340 3348e139f857945d85fd9af660ce9656b63531cb143ea09282e034e3b0eb28d1
+ program.elf178384 753a46be3c7ff794ad932325c73fd26fd5a77970508974e36bc620cf9b521dc7.
+Unchanged131072B ROOT/32768B Conv bounds,ISA/s11/no-BSS/entry/section rules
+and individual frame limits pass;ROOT has392B remaining. Parent max1616,
+component max2112 are NOT a combined runtime reserved-stack proof.
+
+Current emitted-instruction E main86045/clean92024 BOTH0;complete logs match.
+Tests execute the actual helper:phase5 returns precisely the private frame;
+10 wrong-phase/range/alignment cases fault;an identical caller copy STILL
+faults at the unchanged packet guard. The actual attention entry calls the
+helper,then deliberately synthetic invalid DATA shape faults BEFORE traffic.
+This last case is NOT a positive attention/model/native execution test.
+No NoC request,counter/command change or non-stack memory change occurs in
+these helper tests. Actual immutable inert loops execute2048 more instructions.
+
+All previous isolated checks also still pass:9 baseline/candidate actual
+16x4B source audits;63 immediate source/counter/quiet/nonce refusals;18
+positive-or-metadata-refused release boundaries;18 real post-release faults
+with retained counters/no retry;6 wider-MMIO/write refusals. No bulk MMIO
+or old safety test/stack bound is relaxed. These synthetic ABI tests grant
+no native lifetime or original-model result.
+
+Default E3350/85592 BOTH0,logs+ELFs match,all old default pins unchanged:
+ cancel+FP32 program.elf5d870cb7. Role E59548/54572 BOTH0,logs match,1042
+exact/missing/zero/late/old-native/worker/chain gates. A valid build role is
+not native ownership,launch,Work or physical qualification.
+
+Intermediate failures are preserved,not retagged
+------------------------------------------------
+Inspected A82110/28446 and strict B60453/20384 both finished0 but contained
+an INLINED helper. Initial unit A ended1 because its required independent
+helper symbol was absent. Explicit noinline permits the actual helper to be
+executed and independently tested in current C/D;no required-body check was
+removed. Unit C81664/60648 ended1 because its test incorrectly forbade the
+compiler-generated private-stack stores on a real fault call. It now checks
+unchanged commands/counters and ALL non-stack memory instead. Intermediate
+unit D23266/61563 ended1 for a C++ auto declaration mixing map/array types;
+separate declarations fix that compile error. Only current E's observed
+zeros qualify the final tests. Original A/C/D logs remain in /private/tmp.
+
+Corrected whole-model histories are LIVE,not passes
+--------------------------------------------------
+New STRICT D main45486/clean75028 authenticate the original GGUF and new
+image,then must execute from RESET through3 tokens*64 layers,real state/KV,
+vocabulary/greedy feedback,committed records and actual119 STOP. No old
+processor state/history/model product is transplanted. They use ordinary
+FOUR-BYTE MMIO and the const-only output recorder,not --fast-root-memory.
+Only after genuine terminal0 may complete QOD1 traces be compared against
+the independent pinned CPU traces WITHOUT --diagnostic-only. Starting a
+new corrected run does not qualify it or authorize hardware installation.
+All other valid original/native whole-flow histories remain untouched.
+
+Strict images /private/tmp/pioneer-q38-boundary-owned-{main,clean}-20261029-d
+Logs /private/tmp/pioneer-q38-boundary-owned-flow-{main,clean}-20261029-d.log
+Outputs same names ending -d-observed.
+Clean tree /private/tmp/pioneer-q38-init-fifo-clean.EpXZlRcr with exact owned
+performance-file overlay;all dirty llama.cpp/unrelated FlashNext excluded.
+
+Remaining complete objective
+----------------------------
+Actual corrected all64/multitoken/state/KV/vocabulary/normal+EOS correctness
+and full terminal/combined-stack proof;complete native FIFO/lifecycle/root-
+master/shared-TLB/clock/maps/hosts closure,END/load-unload/recovery;qualified
+native performance-image/no-CPU-reference Work+Assistant integration;physical
+repeated/long-context generation and honest sustained tuning toward20tok/s.
+Preserve Assistant,SD-free boot,64 CPUs,full RAM and all valid test histories.

@@ -111,10 +111,10 @@ PINS_CANCEL_F32_UNROLLED_DENSE=(('boot.bin',4,'32791432e2d260817d9007281f3719631
 # Separate independently identical main/clean BUILD pins,NOT native ROMs
 # or a Work/launch grant. No existing family is silently replaced.
 PINS_CANCEL_F32_BOUNDARY=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
- ('text.bin',130652,'377d091966a7d189dbeff86cf3c19b82afbb489619eaf5712ff4da3a2e2f4d14'),
+ ('text.bin',130680,'34cc0e3de8f3e58a9d56ced4842cfd30e1b08fd4fea46a9678a5b2a2db4c14af'),
  ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
- ('conv.bin',21340,'8ab4558559117ad23fae02ab42332e388547774a2a0f4b5a22e81983b8f85fe0'),
- ('program.elf',178316,'e9acecd4b0ae512e5ae49d5852472d87b6bbeb275009b0b0f27807de7fec349e'))
+ ('conv.bin',21340,'3348e139f857945d85fd9af660ce9656b63531cb143ea09282e034e3b0eb28d1'),
+ ('program.elf',178384,'753a46be3c7ff794ad932325c73fd26fd5a77970508974e36bc620cf9b521dc7'))
 expected=PINS_CANCEL_F32_BOUNDARY if boundary else PINS_CANCEL_F32_UNROLLED_DENSE if unroll else (PINS_CANCEL_F32 if cancel else PINS_F32) if f32 else PINS_CANCEL if cancel else PINS
 if not inspect:assert expected and tuple(observed)==expected,'unqualified persistent parent variant; inspect independent builds first'
 print('BUILD ONLY persistent parent/bootstrap/prompt+generation/all64+973/recurrent state copy+readback/token stream/final119STOP;maxFrame'+str(max(frames))+

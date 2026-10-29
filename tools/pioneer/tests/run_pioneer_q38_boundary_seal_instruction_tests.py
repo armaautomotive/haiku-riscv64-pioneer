@@ -23,8 +23,11 @@ for directory,key in ((baseline,'PINS_CANCEL_F32_UNROLLED_DENSE'),(candidate,'PI
  names=[(int(p[0],16),p[2]) for line in symbols.splitlines() if len(p:=line.split())==3]
  def entries(name,count):
   result=[a for a,n in names if n==name];assert len(result)==count,(name,result);return result
- maps.append((*entries('_ZN18DensePartitionRootL14PhysicalSourceEPKjPjj',2),*entries('_ZN20MixedRecurrentCohortL7SourcesEPjj',1),
-              *entries('_ZN18DensePartitionRootL8TransferEPKjPjjjjb',2),*entries('_ZN20MixedRecurrentCohortL6PacketEPjjjjb',1)))
+ addresses=(*entries('_ZN18DensePartitionRootL14PhysicalSourceEPKjPjj',2),*entries('_ZN20MixedRecurrentCohortL7SourcesEPjj',1),
+              *entries('_ZN18DensePartitionRootL8TransferEPKjPjjjjb',2),*entries('_ZN20MixedRecurrentCohortL6PacketEPjjjjb',1))
+ if key=='PINS_CANCEL_F32_BOUNDARY':
+  addresses+=(*entries('q38_layer_return_dense_packet_frame',1),*entries('q38_layer_return_dense_packet_seal',1),*entries('q38_joined_dense_frame',1))
+ maps.append(addresses)
 flags=re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?',(here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
 with tempfile.TemporaryDirectory(prefix='pioneer-boundary-instructions-',dir='/private/tmp') as tmp:
  binary=pathlib.Path(tmp)/'test';mapping=[]

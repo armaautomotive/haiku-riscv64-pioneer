@@ -1,5 +1,20 @@
 # Native build status
 
+## Experimental performance image: attention ownership fix passes build/unit
+
+October29,2026 14:46UTC. The failed boundary candidate's attention routine
+now uses its SAME private phase5 descriptor;the strict packet guard is NOT
+weakened. Main/clean STRICT D63002/58720 BOTH0 with identical ELF753a46be;
+text130680/131072,Conv21340/32768 and individual stack/ISA rules pass.
+Emitted-instruction E86045/92024 BOTH0:actual getter+10 refusals+foreign-copy
+refusal/actual attention entry calls getter,then synthetic bad shape refuses
+before traffic;old9 source/63 immediate/18 boundary/18 post-release/6 MMIO
+cases still pass. Default E3350/85592 BOTH0 preserves old ELF5d870cb7;
+role E59548/54572 BOTH0/1042 gates. Corrected original whole-model D45486/
+75028 are LIVE,not passing. Native/Work/Assistant images remain unchanged.
+No card changes or speedup;last physical **0.207893161tok/s**,20 unmet.
+[Owned attention descriptor candidate](benchmarks/qwen38-boundary-owned-dense-wip-20261029.txt).
+
 ## Current: earlier native FIFO gates and corrected TEST endpoints
 
 October29,2026 14:37UTC. Scoped FIFO-empty/overflow checks now precede

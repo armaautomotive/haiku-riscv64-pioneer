@@ -81,6 +81,13 @@ static void WriteFinal(const uint32_t* o){
 }
 }
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
+#ifdef PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE
+extern "C" __attribute__((noinline)) const uint32_t* q38_mixed_root_packet_frame(){
+ using namespace DensePartitionRoot;const auto* p=Joined::Private();const unsigned address=reinterpret_cast<unsigned>(p);
+ if((address&3) || address<0x6e000 || address>0x70000-sizeof(*p) || p->phase!=5)scalar_fault_park();
+ return p->frame;
+} // private attention descriptor ONLY;NOT a validation bypass or native/launch capability
+#endif
 extern "C" void q38_mixed_root_packet_seal(const uint32_t* frame){
  using namespace DensePartitionRoot;const auto* p=Joined::Private();
  if(reinterpret_cast<unsigned>(p)<0x6e000 || reinterpret_cast<unsigned>(p)>0x70000-sizeof(*p)

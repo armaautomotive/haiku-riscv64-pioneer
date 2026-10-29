@@ -34,9 +34,44 @@ static std::array<unsigned,3> Releases(const char* file){
  for(auto& address:result){in>>std::hex>>address;assert(in.good() && address>=0x40000 && address<0x60000);}
  return result;
 }
+static void OwnedDenseFrame(const AuditImage& image,const char* file){
+ std::ifstream in(file);unsigned entry=0,seal=0,attention=0,unused=0;
+ for(unsigned i=0;i<6;i++)in>>std::hex>>unused;
+ in>>std::hex>>entry>>seal>>attention;assert(in.good() && entry>=0x40000 && seal>=0x40000 && attention>=0x40000);
+ auto runWithoutTraffic=[](BoundaryMachine& m,bool okay){
+  const auto before=m.memory;const auto command=m.command;const auto counters=m.counters;
+  assert(m.Run()==okay && m.packets.empty() && !m.peerWrites && m.command==command && m.counters==counters);
+  // An actual fault call saves registers on the private stack. Forbid all
+  // NON-stack changes,not those legitimate compiler-generated stack stores.
+  for(const auto& item:before)if(item.first<0x6f000 || item.first>=0x70000)assert(m.memory.at(item.first)==item.second);
+  for(const auto& item:m.memory)if(item.first<0x6f000 || item.first>=0x70000)assert(before.at(item.first)==item.second);
+ };
+ auto good=std::make_unique<BoundaryMachine>(image,1,0);good->memory[AuditMachine::Owner+1024]=5;good->pc=entry;
+ runWithoutTraffic(*good,true);assert(good->regs[10]==AuditMachine::Owner+768);
+ for(unsigned phase:{0U,1U,4U,6U,13U}){
+  auto bad=std::make_unique<BoundaryMachine>(image,1,0);bad->memory[AuditMachine::Owner+1024]=phase;bad->pc=entry;
+  runWithoutTraffic(*bad,false);
+ }
+ for(unsigned owner:{0U,0x6dffcU,0x6e001U,0x6fc00U,UINT32_MAX}){
+  auto bad=std::make_unique<BoundaryMachine>(image,1,0);bad->regs[27]=owner;bad->pc=entry;
+  runWithoutTraffic(*bad,false);
+ }
+ // A byte-identical caller copy is STILL refused. The fix supplies the
+ // owning descriptor;it does not broaden the packet guard's authority.
+ auto copy=std::make_unique<BoundaryMachine>(image,1,0);copy->memory[AuditMachine::Owner+1024]=5;
+ for(unsigned i=0;i<64;i++)copy->memory[0x6fc00+i*4]=copy->memory.at(AuditMachine::Owner+768+i*4);
+ copy->pc=seal;copy->regs[10]=0x6fc00;runWithoutTraffic(*copy,false);
+ // Observe the actual attention entry calling the emitted owner getter.
+ // Its synthetic invalid DATA shape must subsequently fault before traffic.
+ auto call=std::make_unique<BoundaryMachine>(image,1,0);call->memory[AuditMachine::Owner+1024]=5;call->pc=attention;
+ bool observed=false;while(call->pc!=0x60000 && call->pc!=AuditMachine::Return){observed|=call->pc==entry;call->Step();}
+ assert(observed && call->pc==0x60000 && call->packets.empty());
+ puts("PASS boundary owned-dense descriptor/emitted phase5 getter+10 wrong-phase/range/alignment refusals/byte-identical caller copy STILL refused/actual attention entry calls getter then synthetic invalid DATA shape refuses BEFORE traffic;UNIT ABI ONLY,NOT positive attention/native/model/physical/TPS qualification");
+}
 int main(int argc,char** argv){
  assert(argc==5);setvbuf(stdout,nullptr,_IOLBF,0);AuditImage baseline(argv[1],argv[3]),candidate(argv[2],argv[4]);
  const auto oldRelease=Releases(argv[3]),newRelease=Releases(argv[4]);unsigned immediate=0,boundaries=0,postRelease=0,mmio=0;
+ OwnedDenseFrame(candidate,argv[4]);
  for(unsigned kind=0;kind<3;kind++){
   for(unsigned worker:{0U,95U,118U}){
    auto a=std::make_unique<BoundaryMachine>(baseline,kind,worker),b=std::make_unique<BoundaryMachine>(candidate,kind,worker);

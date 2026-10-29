@@ -1,4 +1,11 @@
 Boundary-scoped metadata audits: offline controller candidate, NOT ready
+CURRENT CORRECTION14:46UTC: original whole-flow7635/74451 BOTH terminate1
+at token0/layer3/phase5. Historical LIVE text below is superseded. The dense
+attention caller's local descriptor copy violated the strict private-frame
+pointer check. A separate corrected candidate fixes that caller,keeps the
+guard strict,and has new independent strict build/unit evidence;its new
+whole-model histories45486/75028 are LIVE,not passes. See
+qwen38-boundary-owned-dense-wip-20261029.txt. No physical speedup is claimed.
 2026-10-29 10:39 UTC. Goal ACTIVE; 20 tokens/sec remains UNMET.
 Last completed physical whole-model measurement: 0.207893161 tokens/sec.
 No Pioneer, SSH, power, driver installation, Assistant, boot, CPU/RAM,
