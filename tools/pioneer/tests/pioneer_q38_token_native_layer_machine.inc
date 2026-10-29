@@ -4,6 +4,10 @@
 #endif
 // Members of the SAME virgin ROOT,not another CPU or a completed cohort.
 bool layerActive=false,layerHeld=false;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE
+bool firstMatrixRunning=false;unsigned firstMatrixDoorbells=0;
+void ResumeFirstMatrix(){assert(layerHeld && dispatchWorker==1 && io.Core(0).pending);firstMatrixRunning=true;layerHeld=false;dispatchWorker=0;}
+#endif
 unsigned layerPackets=0,layerRawReads=0,layerPeerReads=0,layerPeerWrites=0,dispatchWorker=0;
 uint32_t (*livePeerPC)(TokenHeldEndpoints&,unsigned)=nullptr;
 void ResumeLayer(){
@@ -19,8 +23,15 @@ void SubmitLayer(){
   && request[write?2:5]==129 && (write || !request[7]) && local==C::R::Scratch+(remote&31) && bytes<=16384-(remote&31));
  unsigned worker=1;while(worker<120 && W::Peer(worker)!=route)worker++;
  if(worker<120 && write && remote==W::Doorbell){
-  assert(bytes==4 && io.Raw(worker,W::Job+8)==1 && !dispatchWorker);
+  assert(bytes==4 && io.Raw(worker,W::Job+8)==1);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE
+  if(firstMatrixRunning && io.Raw(worker,W::Job+7*4)==1001){layerHeld=false;}
+  else
+#endif
+  {
+  assert(!dispatchWorker);
   dispatchWorker=worker;layerHeld=true; // PAUSE AFTER actual submit,BEFORE delivery;NO worker completion supplied
+  }
  }
  core.doorbells++;core.doorbellRead=false;core.requests++;core.pending=true;core.accepted++;submitted++;busyReads=0;layerPackets++;
 }
@@ -49,7 +60,15 @@ void RespondLayer(){
    assert(!write && bytes==4);io.Raw(0,local)=io.Core(worker).ResidentNocRead(remote-0xffb20000);
   }else for(unsigned i=0;i<bytes/4;i++){
    const unsigned at=remote+i*4;assert(PioneerQ38TokenL1::SnapshotContains(worker,at));uint32_t word;
-   if(write){assert(!PioneerQ38TokenPrograms::ProgramWord(worker,at,word) && at!=W::Doorbell);io.Raw(worker,at)=io.Raw(0,local+i*4);}
+   if(write){
+    assert(!PioneerQ38TokenPrograms::ProgramWord(worker,at,word));
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE
+    if(at==W::Doorbell){assert(firstMatrixRunning && io.Raw(worker,W::Job+7*4)==1001 && io.Raw(0,local+i*4)==1);firstMatrixDoorbells++;}
+#else
+    assert(at!=W::Doorbell);
+#endif
+    io.Raw(worker,at)=io.Raw(0,local+i*4);
+   }
    else io.Raw(0,local+i*4)=io.Raw(worker,at);
   }
   if(write)layerPeerWrites++;else layerPeerReads++;

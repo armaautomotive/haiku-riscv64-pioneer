@@ -81,6 +81,7 @@ unresolved = subprocess.check_output([tool+'nm', '-u', str(obj)], text=True)
 assert not re.search(r'\b(?:cosf?|sinf?|powf?)\b', unresolved), 'kernel may not import libm for raw configuration'
 for forbidden in ('Q38WorkControl', 'OriginalSource', 'CompareFinal', 'ReferenceProducts',
                   'Q38EmbeddingRawTestBridge',
+                  'Q38NativePeerTestCpu', 'Q38NativePeerTestBytes', 'NativeQ38PeerInstructionModel',
                   'Q38MixedLiveValidationControl', 'PioneerQ38MixedLiveNativeState',
                   'PioneerQ38EmbeddingNativeState', 'PioneerQ38RecurrentPrefixNativeState'):
     assert forbidden not in table and forbidden not in unresolved, forbidden

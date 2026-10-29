@@ -21,12 +21,21 @@ using TokenNativeEndpoints=ZeroControlIO;
 #endif
 struct PioneerSessionIO:TokenNativeEndpoints {
  tt_dram_samples_result& dram;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE
+#include "pioneer_q38_token_native_peer_bytes.inc"
+#endif
  PioneerSessionIO(const char* image,tt_dram_samples_result& proof):TokenNativeEndpoints(image),dram(proof){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
   tokenHeldEndpoint=this;
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE
+  PreparePeerBytes();
+  for(unsigned w=1;w<120;w++)bootstrapPeer[w-1]=std::make_unique<TokenBootstrapPeer>(image,*this,w,peerBytes);
+  for(unsigned w=0;w<96;w++)bootstrapPeer[w]->Link(*bootstrapPeer[w^1]);
+#else
   for(unsigned w=1;w<120;w++)bootstrapPeer[w-1]=std::make_unique<TokenBootstrapPeer>(image,*this,w);
+#endif
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
   executionCpu=std::make_unique<TokenStartupRoot>(image,*this);
@@ -293,16 +302,18 @@ struct Fixture {
 #include "pioneer_q38_token_native_held_checks.inc"
 #endif
 int main(int argc,char** argv){
- const bool embedding=argc==4 && (!strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-embedding-source-loss")
-  || !strcmp(argv[2],"--execution-embedding-readback-loss") || !strcmp(argv[2],"--execution-layer-dispatch"));
- assert(embedding || argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
+ const bool peerBootstrap=argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines");
+ const bool firstMatrix=argc==6 && !strcmp(argv[2],"--execution-first-matrix");
+ const bool embedding=firstMatrix || (argc==4 && (!strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-embedding-source-loss")
+  || !strcmp(argv[2],"--execution-embedding-readback-loss") || !strcmp(argv[2],"--execution-layer-dispatch")));
+ assert(peerBootstrap || embedding || argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
   || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
   || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")
   || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-traffic-faults")
   || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;(void)&AcquireQ38DeltaLock;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
- assert(embedding || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults")
+ assert(peerBootstrap || embedding || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults")
   || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
   || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")
   || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-traffic-faults"))));
@@ -310,7 +321,7 @@ int main(int argc,char** argv){
  assert(argc==2 || strncmp(argv[2],"--held",6));
 #endif
  const bool heldFaults=argc==3 && !strcmp(argv[2],"--held-faults");
- const bool bootstrap=argc==3 && !strncmp(argv[2],"--bootstrap",11),bootstrapFaults=bootstrap && !strcmp(argv[2],"--bootstrap-faults");
+ const bool bootstrap=peerBootstrap || (argc==3 && !strncmp(argv[2],"--bootstrap",11)),bootstrapFaults=bootstrap && !strcmp(argv[2],"--bootstrap-faults");
  const bool execution=embedding || (argc==3 && !strncmp(argv[2],"--execution",11)),executionFaults=execution && !strcmp(argv[2],"--execution-faults");
  const bool trafficFaults=argc==3 && !strcmp(argv[2],"--execution-traffic-faults");
  const bool runtime=argc==3 && !strncmp(argv[2],"--runtime",9),runtimeFaults=runtime && !strcmp(argv[2],"--runtime-faults");
@@ -319,6 +330,9 @@ int main(int argc,char** argv){
  assert(embedding);Q38EmbeddingRawTestBridge original;
  puts("START authenticate SAME-open original27B GGUF RAW bytes BEFORE native fixture construction;NO CPU embedding/model products");
  assert(original.Open(argv[3]) && original.Ready());
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE
+ assert(peerBootstrap || firstMatrix);tokenPeerOriginalImage=argv[peerBootstrap?3:4];tokenPeerGlobalImage=argv[peerBootstrap?4:5];
 #endif
  for(unsigned fault=0;fault<(trafficFaults?2U:executionFaults?4U:bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
   Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;assert(f.Bind());auto* state=c.q38TokenNative;

@@ -1,0 +1,112 @@
+Native full tensor-engine construction/shared-byte bootstrap checkpoint
+2026-10-29 07:03UTC. Goal ACTIVE. Last physical whole-model0.207893161tok/s,
+20tok/s UNMET. NO Pioneer/SSH/power/install/OS/Assistant/boot/CPU/RAM/
+network/SD/mains mutation,physical health or measured speedup claim.
+
+Actual implementation toward complete native execution
+------------------------------------------------------
+An opaque HOST-TEST-only peer engine now instantiates the existing complete
+matrix/GDN/Conv/attention instruction model as a VIRGIN CPU,with shared L1
+instruction,data and operand/output byte storage bound from construction.
+The generic fixture constructors' synthetic code/mailboxes/operands remain
+in DISCARDED constructor scratch;NO instruction executes there and NONE of
+those bytes reaches native memory. All executed byte accesses use the SAME
+native backing. No completed PC/register/history/nonce/tensor/ready state
+is copied into another processor. Installed code words are checked against
+the frozen full QGW1 program before every executed instruction.
+
+The other translation unit keeps the original generic Machine array layout.
+The full engine's classes are namespaced separately,avoiding conflicting
+definitions/vtables. A read-only metadata snapshot reports actual CPU
+observations;it is NEVER accepted as a native-owner or processor input.
+All119 engines are constructed before native BIND/initialization,with the
+real adjacent GDN peer links attached before the first instruction.
+
+The native FD/team/thread/generation/global-lock owner then executes all
+1010 actual zero jobs,full120 held program stages and4616 metadata transfers,
+before actual119 QGW1 ARM/release/WAIT startup through those SAME engines.
+ROOT stays held. The BOOT-only role deliberately refuses learned/mutable
+GDDR transfers;it cannot supply a model product or stand in for model RUN.
+
+Physical-register fidelity improvement
+--------------------------------------
+The first bridge version mirrored complete private counter/command snapshots
+after each instruction. That is unsuitable for later fault testing because
+it could overwrite an independently injected physical CSR fault. Current
+callbacks emit only actual counter deltas,explicit CPU command-store masks
+and actual pending transitions. Source/counter/command/busy reads return
+the physical byte endpoint,not a forged clean snapshot. No native journal
+baseline or ownership/readiness is recaptured. Component tests inject a
+counter and command change after actual boot,execute256 genuine idle
+instructions and prove both faults remain,with no invented NoC event.
+
+Complete qualification and limits
+---------------------------------
+Current component E main39221/clean55720 BOTH terminal0,matching logs:
+two virgin full engine instances;constructor isolation;real QGW1 boots/
+17status stores/WAIT;idle CSR faults persist;other TU old layout remains.
+Current-source F main93888/clean49343 also BOTH terminal0,matching logs;
+this includes the actual scalar-RISC FP instruction metadata counter used
+by the still-running first-matrix C diagnostic. It adds no arithmetic or
+completion permission. The saved component evidence is this F run.
+Earlier D91482/89162 also both0 but predate the event-delta improvement.
+Initial component A/B/C compile failures were missing standalone includes,
+array/pointer syntax and unused embedded-test helper references;not device
+or arithmetic results. They were repaired without suppressing warnings.
+
+Native full119 bootstrap A87876/54053 BOTH0. Current event-delta B4662/48402
+also BOTH terminal0,matching complete logs. All119 CPUs execute14744576
+actual instructions,total;maximum written peer stack1828/8192. Status,
+two actual WAIT PCs,source/NoC counters and ALL ARM-before-ANY-release pass.
+No legacy bootstrap flags or public Work route are used. Initializer
+restoration summaries do NOT mean restoration of later-launched code.
+Unfinished END still retains/quarantines all native owners and mappings.
+
+SDK78168/11474 BOTH0,objects byte-identical and UNCHANGED SHA256:
+57ef41179428d9ab2e04d0e8256cea2d2ccfb68d2c77ce53472e60ce9713780c
+Neither defined nor unresolved symbols import Q38NativePeerTestCpu,
+Q38NativePeerTestBytes or NativeQ38PeerInstructionModel. The conventional
+driver entry controls remain inert. Role75301/55587 BOTH0,matching logs:
+3 explicit TEST interface/storage roles and27 absent/zero/two/kernel/
+device/Work refusals. Implementation rejects all native roles,even0.
+Opaque declarations in the explicitly emulated kernel fixture are NOT a
+real kernel permission. No driver is linked,installed or invoked here.
+
+First native matrix still UNQUALIFIED
+-------------------------------------
+A first-matrix profile now authenticates the SAME-open original GGUF before
+fixture construction,uses all119 full engines from their first instruction,
+continues genuine ROOT embedding/RMS/native quantization,then delivers
+the first3 real worker doorbells. Actual learned reads use authenticated
+raw bytes;ROOT inputs/output L1 and workspace GDDR are the SAME native
+backing. No CPU-computed model product or ready flag enters execution.
+
+First-matrix A35505/90433 BOTH terminal1 at the final combined assertion:
+sequence==1 && matrixInstructions && scalarFP && independentOutput.
+The ROOT reaches the actual next-phase1002 doorbell boundary,but the log
+does not identify which conjunct failed and does NOT prove numerics.
+Scalar RISC-FP is not required for arithmetic performed in Tensix/SFPU;
+current diagnostics count it accurately and evaluate/print the complete
+independent output comparison before asserting actual matrix+correct output.
+The first bridge's next-job bookkeeping also needed actual equality between
+the delivered doorbell and job sequence;an OLD nonzero doorbell plus a staged
+NEXT job must NEVER start a new model job. Current code enforces that.
+
+B main24961/clean13433 are LIVE with event deltas/matching-doorbell guard.
+C main17036/clean18220 are LIVE with accurate scalar-FP metadata and separate
+per-worker independent-output diagnostics. A histories are retained as
+failures,not retagged as successful. B/C are DISTINCT changed-code purposes;
+no quiet/live process was restarted or terminated. Numerical success must
+come from those actual terminal results,not this plan or a ready hint.
+
+Remaining complete objective
+-----------------------------
+Finish actual original first matrix,then all native matrix/attention/GDN/
+Conv bodies and all64 layers,multitoken/persistent-state/KV/vocabulary and
+token delivery. Extend mutable-bank byte endpoints beyond this first-matrix
+role without substituting synthetic defaults or CPU products. Consumed
+cancel,terminal/all119STOP,complete L1/CSR restoration,clean END/load-unload/
+recovery,physical correctness and long conversations,qualified no-CPU-ref
+Work+Assistant and sustained optimization toward20tok/s remain owed.
+The9 older full-model numerical histories are separate and still live;
+none is treated as full-model acceptance or hardware throughput here.

@@ -1,0 +1,82 @@
+START authenticate SAME-open original27B GGUF RAW bytes BEFORE native fixture construction;NO CPU embedding/model products
+OBSERVED actual frozen zero ROM starts96/GDNpages10544/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts192/GDNpages21072/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts288/GDNpages31600/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts384/GDNpages42144/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts480/GDNpages52672/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts576/GDNpages63200/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts672/GDNpages73728/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts768/GDNpages73728/historyPages480/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts864/GDNpages73728/historyPages960/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts960/GDNpages73728/historyPages1440/projectionPages0;NOT native initialization publication
+PASS SAME genuine full851 initialization+120 held histories/actual native runtime scope/factory/ALL2308 bounded metadata+frozen rawRoPE+prompt+zero-record chunks/4616 exact NoC packets+complete readback/37782528B vs independently built startup+ALL untouched slack/120 actual boot DATA/NO reset/start/CPU model products/host BME;SIMULATED endpoints,NOT initialized KV rows/model RUN/STOP/END/physical/TPS
+PASS SAME native full851 owner+1010 zero jobs+installed120 L1 histories+4616 metadata packets/ALL119 VIRGIN QGW1 instruction boots DIRECT shared L1+CSR backing/14744576 actual instructions/maxWrittenStack1828/ALL ARM before ANY release/final status+two WAIT PCs+unchanged NoC counters/ROOT HELD/legacy flags FALSE/held cleanup and ordinary commands REFUSED;SIMULATED OS+VM+NoC,NOT ROOT/model RUN/STOP/END/physical/Work/TPS
+PASS SAME native running ROOT/ACTUAL installed instructions beyond startup/3 genuine NoC reads:session512B+prompt64B+head512B EXACT from native-staged shared GDDR/first learned2304B request OUTSTANDING/fresh native observer accepts legitimate BUSY with source+PC+PCI checks/no host NoC packet,command,counter recapture,products or reset/ROOTsteps178787;PAUSED at raw learned request,NOT embedding/matrix/layer/token/cancel consumption/STOP/END/physical/Work/TPS
+PASS SAME full851 native owner+119 genuine worker histories/ROOT ACTUAL original27B Q4_K embedding/20 authenticated RAW tiles+2 real GDDR writes+2 verified readbacks/ALL5120 LOCAL+SHADOW+GDDR values bit-exact vs separate original-row decoder OBSERVER ONLY/1250367 ROOT instructions/21320 scalar FP instructions/max writtenStack2628/next layer0 metadata request outstanding/no CPU product upload or private-history transplant;SIMULATED endpoints,NOT model layer/token/cancel consumption/STOP/END/physical/Work/TPS
+OBSERVED native ROOT layer0 pre-dispatch/steps2000191 pc427a0 packets9 raw0 peerR0 peerW0 phase300;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps4000063 pc40554 packets41 raw0 peerR0 peerW0 phase300;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps6000191 pc4970c packets60 raw2 peerR0 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps8000063 pc4d614 packets405 raw2 peerR345 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps10000191 pc4893c packets882 raw2 peerR822 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps12000063 pc4d5d8 packets1358 raw2 peerR1298 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps14000191 pc4d5a4 packets1834 raw2 peerR1774 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps16000063 pc4d630 packets2310 raw2 peerR2250 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps18000191 pc4d87c packets2785 raw2 peerR2725 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps20000063 pc4890c packets3260 raw2 peerR3200 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps22000191 pc4d5cc packets3736 raw2 peerR3676 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps24000063 pc4d614 packets4210 raw2 peerR4150 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps26000191 pc485c8 packets4685 raw2 peerR4625 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps28000063 pc4d5d0 packets5159 raw2 peerR5099 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps30000191 pc4d884 packets5633 raw2 peerR5573 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps32000063 pc4d5d4 packets6107 raw2 peerR6047 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps34000191 pc4d63c packets6581 raw2 peerR6521 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps36000063 pc48914 packets7054 raw2 peerR6994 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps38000191 pc4d5d0 packets7527 raw2 peerR7467 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps40000063 pc4d88c packets8000 raw2 peerR7940 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps42000191 pc4dc8c packets8473 raw2 peerR8413 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps44000063 pc4d61c packets8945 raw2 peerR8885 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps46000191 pc4d5f0 packets9417 raw2 peerR9357 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps48000063 pc4d89c packets9889 raw2 peerR9829 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps50000191 pc4d598 packets10361 raw2 peerR10301 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps52000063 pc4dccc packets10832 raw2 peerR10772 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps54000191 pc4d8a0 packets11303 raw2 peerR11243 peerW0 phase2;NOT matrix/layer/token completion
+PASS SAME native full851+1010 actual zero jobs+119 VIRGIN boot histories/unchanged full scalar ISA from first ROOT instruction/original27B embedding -> genuine layer0 metadata+RAW norm+ALL5120 bit-exact RMS+ALL native operands/scales vs independent OBSERVERS ONLY/actual valid worker1 matrix job delivered/doorbell packet PENDING/ROOTsteps54276644 layerPackets11369 peerR11305 peerW3;NO CPU products,worker completion or private-history transplant;NOT matrix/layer/token/STOP/END/physical/Work/TPS
+OBSERVED native first-matrix ROOTsteps56000036 pc4dbec packets11777 doors3 phase2;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps58000164 pc4d648 packets12253 doors3 phase2;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps60000036 pc4d6f4 packets12727 doors3 phase2;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps62000164 pc4d61c packets13201 doors3 phase2;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps64000036 pc4d714 packets13674 doors3 phase2;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps66000164 pc4d628 packets14147 doors3 phase2;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps68000036 pc488c4 packets14618 doors3 phase2;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps70000164 pc4db88 packets15089 doors3 phase2;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps72000036 pc4d8e0 packets15331 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps74000164 pc485c0 packets15806 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps76000036 pc4dc70 packets16283 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps78000164 pc4d5d0 packets16759 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps80000036 pc4d894 packets17234 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps82000164 pc485c8 packets17710 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps84000036 pc4d614 packets18185 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps86000164 pc4d890 packets18660 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps88000036 pc4d598 packets19135 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps90000164 pc4d858 packets19610 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps92000036 pc4d5b8 packets20084 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps94000164 pc4d980 packets20558 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps96000036 pc4d63c packets21032 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps98000164 pc4d62c packets21506 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps100000036 pc4dbf4 packets21979 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps102000164 pc4d640 packets22453 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps104000036 pc4dc98 packets22926 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps106000164 pc4d618 packets23398 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps108000036 pc4d5e8 packets23871 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps110000164 pc485bc packets24343 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps112000036 pc4b2e4 packets24815 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps114000164 pc4dcec packets25287 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps116000036 pc4dc00 packets25758 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps118000164 pc4d86c packets26230 doors3 phase3;NOT completed layer/token
+Assertion failed: (s.sequence==1 && s.matrixInstructions && s.floatOps && p.cpu->ObserveMatrixOutput()), function CheckNativeFirstMatrix, file pioneer_q38_token_native_first_matrix_checks.inc, line 28.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py", line 122, in <module>
+    subprocess.run([str(binary), *sys.argv[1:]], check=True,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-token-native-init-j_5e310c/test', '/private/tmp/pioneer-q38-resident-input-zero.rx9Gfebd/image', '--execution-first-matrix', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf', '/private/tmp/pioneer-q38-mixed-worker-20261026-e', '/private/tmp/pioneer-q38-global-globalbuild-main-20261028-e']' died with <Signals.SIGABRT: 6>.

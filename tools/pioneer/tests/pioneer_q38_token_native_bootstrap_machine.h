@@ -3,6 +3,27 @@
 // A virgin CPU is constructed before binding/initialization. Installed L1,
 // boot DATA,status,stack and NIU CSR accesses use that SAME backing. No PC,
 // registers,history,status or ready flag is copied from another machine.
+#ifdef PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE
+#include "pioneer_q38_native_peer_test_bridge.h"
+static const char* tokenPeerOriginalImage=nullptr;
+static const char* tokenPeerGlobalImage=nullptr;
+struct TokenBootstrapPeer {
+ TokenHeldEndpoints& io;const unsigned worker;std::unique_ptr<Q38NativePeerTestCpu> cpu;
+ unsigned pc=0x6000,steps=0,matrixInstructions=0,moveInstructions=0,floatOps=0,requests=0,responses=0,pending=0;
+ unsigned deviceReads=0,deviceWrites=0,statusWrites=0,minStack=0x70000;
+ TokenBootstrapPeer(const char* image,TokenHeldEndpoints& native,unsigned w,const Q38NativePeerTestBytes& bytes):io(native),worker(w){
+  assert(image && tokenPeerOriginalImage && tokenPeerGlobalImage);
+  cpu=std::make_unique<Q38NativePeerTestCpu>(tokenPeerOriginalImage,tokenPeerGlobalImage,w,bytes);Observe();assert(!steps && pc==0x6000);
+ }
+ void Observe(){const auto s=cpu->Stats();pc=s.pc;steps=s.steps;matrixInstructions=s.matrixInstructions;moveInstructions=s.moveInstructions;
+  floatOps=s.floatOps;requests=s.requests;responses=s.responses;pending=s.pending;deviceReads=s.deviceReads;deviceWrites=s.deviceWrites;
+  statusWrites=s.statusWrites;minStack=s.minStack;
+ } // READ-ONLY host observations,NEVER copied into any processor or native owner
+ void Link(TokenBootstrapPeer& other){assert(!steps && !other.steps);cpu->Link(*other.cpu);}
+ void Advance(unsigned count){assert(io.Core(worker).coreReset==0x46800);cpu->Advance(count);Observe();}
+ bool Idle()const{return pc==0x2004c || pc==0x20050;}
+};
+#else
 struct TokenBootstrapPeer:BlockMachine {
  TokenHeldEndpoints& io;const unsigned worker;unsigned deviceReads=0,deviceWrites=0,statusWrites=0;
  TokenBootstrapPeer(const char* image,TokenHeldEndpoints& native,unsigned w)
@@ -34,3 +55,4 @@ struct TokenBootstrapPeer:BlockMachine {
  }
  bool Idle()const{return pc==0x2004c || pc==0x20050;}
 };
+#endif

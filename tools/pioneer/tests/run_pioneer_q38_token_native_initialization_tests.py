@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Full-model native initializers with actual frozen zero RV32; NO device IO."""
+import ast
 import hashlib
 import os
 import pathlib
@@ -9,14 +10,27 @@ import sys
 import tempfile
 
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
-embedding = len(sys.argv) == 4 and sys.argv[2] in embedding_modes
-assert embedding or len(sys.argv) in (2,3) and (len(sys.argv) == 2 or sys.argv[2] in ('--faults', '--late-faults', '--held', '--held-faults', '--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'))
+first_matrix = len(sys.argv) == 6 and sys.argv[2] == '--execution-first-matrix'
+embedding = first_matrix or len(sys.argv) == 4 and sys.argv[2] in embedding_modes
+peer_bootstrap = len(sys.argv) == 5 and sys.argv[2] == '--bootstrap-peer-engines'
+peer_engines = peer_bootstrap or first_matrix
+assert peer_bootstrap or embedding or len(sys.argv) in (2,3) and (len(sys.argv) == 2 or sys.argv[2] in ('--faults', '--late-faults', '--held', '--held-faults', '--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'))
 if embedding:
     assert pathlib.Path(sys.argv[3]).is_absolute() and pathlib.Path(sys.argv[3]).is_file()
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 image = pathlib.Path(sys.argv[1])
 assert image.is_absolute() and hashlib.sha256((image/'text.bin').read_bytes()).hexdigest() == '39817b679f4358e47c0e6602fb5ae184831206c11dab0b63fe9b7173c410df8b'
 here = pathlib.Path(__file__).resolve().parent
+if peer_engines:
+    peer_arg = 3 if peer_bootstrap else 4
+    for directory, script in ((pathlib.Path(sys.argv[peer_arg]), here/'run_pioneer_q38_mixed_worker_tests.py'),
+                              (pathlib.Path(sys.argv[peer_arg+1]), here.parent/'build_qwen38_global_worker_image.py')):
+        assert directory.is_absolute()
+        tree = ast.parse(script.read_text())
+        pins = next(ast.literal_eval(n.value) for n in tree.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'PINS' for t in n.targets))
+        for name, size, sha in pins:
+            data = (directory/name).read_bytes()
+            assert len(data) == size and hashlib.sha256(data).hexdigest() == sha
 kernel = here.parents[2]/'src/add-ons/kernel/drivers/misc'
 role = (kernel/'PioneerQ38TokenNativeRole.h').read_text()
 parents = set(re.findall(r'!defined\(([A-Z_][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b', role))
@@ -25,11 +39,11 @@ defines = dict.fromkeys(parents, '1')
 defines['PIONEER_DRIVER_BUILD_TAG'] = '0x51544b4e4f445256ULL'
 defines.update({name:'pioneer_token_init_test_'+name for name in ('api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device')})
 defines.update(TT_PIONEER_EXPERIMENTAL_Q38_AFFINE='1', TT_PIONEER_EXPERIMENTAL_Q38_BLOCK='1')
-if embedding or len(sys.argv) == 3 and sys.argv[2] in ('--held', '--held-faults', '--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
+if peer_bootstrap or embedding or len(sys.argv) == 3 and sys.argv[2] in ('--held', '--held-faults', '--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
     defines['PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE'] = '1'
-if embedding or len(sys.argv) == 3 and sys.argv[2] in ('--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
+if peer_bootstrap or embedding or len(sys.argv) == 3 and sys.argv[2] in ('--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
     defines['PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE'] = '1'
-if embedding or len(sys.argv) == 3 and sys.argv[2] in ('--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
+if peer_bootstrap or embedding or len(sys.argv) == 3 and sys.argv[2] in ('--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
     defines['PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE'] = '1'
 if embedding or len(sys.argv) == 3 and sys.argv[2] in ('--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
     defines['PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE'] = '1'
@@ -38,8 +52,12 @@ if embedding or len(sys.argv) == 3 and sys.argv[2] in ('--execution-traffic', '-
 if embedding:
     defines['PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE'] = '1'
     defines['PIONEER_Q38_EMBEDDING_RAW_TEST_BRIDGE'] = '1'
-    if sys.argv[2] == '--execution-layer-dispatch':
+    if first_matrix or sys.argv[2] == '--execution-layer-dispatch':
         defines['PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE'] = '1'
+if peer_engines:
+    defines.update(PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE='1', PIONEER_Q38_NATIVE_PEER_TEST_BRIDGE='1')
+if first_matrix:
+    defines['PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE'] = '1'
 source = (kernel/'tenstorrent_pci_probe.cpp').read_text()
 with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/private/tmp') as tmp:
     base = pathlib.Path(tmp)
@@ -80,6 +98,12 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         ('bool PioneerSessionIO::StateZeroBeforeCohort()', 'bool PioneerSessionIO::StateZeroOtherCoresHeld()', 'bool PioneerSessionIO::NonRootHeldOwner()')))
     binary = base/'test'
     extra = []
+    if peer_engines:
+        peer_object = base/'native-peer-engine.o'
+        peer_flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
+        subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
+                        '-fsanitize=address,undefined', *peer_flags, '-c', str(here/'pioneer_q38_native_peer_test_bridge.cpp'), '-o', str(peer_object)], check=True)
+        extra += [str(peer_object)]  # HOST-only TU;never native/kernel-role flags
     if embedding:
         # RAW byte transport is a separate TEST-only TU,without native-role
         # defines. Never promote its CPU-validation preprocessor role into
@@ -90,7 +114,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         bridge_object = base/'embedding-raw-bridge.o'
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
                         '-fsanitize=address,undefined', '-c', str(here/'pioneer_q38_embedding_raw_test_bridge.cpp'), '-o', str(bridge_object)], check=True)
-        extra = [str(raw_object), str(bridge_object)]
+        extra += [str(raw_object), str(bridge_object)]
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
                     '-fsanitize=address,undefined', *['-D'+k+'='+v for k, v in sorted(defines.items())],
                     '-I'+str(base), '-I'+str(kernel), str(here/'pioneer_q38_token_native_initialization_test.cpp'),

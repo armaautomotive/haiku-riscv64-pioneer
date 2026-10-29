@@ -14,7 +14,11 @@ struct RuntimeMachine:Machine {
 	bool fp16;
 	bool integer;
 	bool int8;
+#ifdef PIONEER_Q38_TEST_SHARED_WORKER_STORAGE
+	::PioneerQ38SharedTestArray<0x80000,8192> buffers;
+#else
 	uint32_t buffers[8192]={};
+#endif
 	std::vector<uint32_t> weights;
 	std::vector<uint16_t> vector;
 	RuntimeMachine(unsigned k,unsigned n,unsigned trial=0,uint32_t address=0x04000000,bool half=false,bool integerBlock=false,bool integerEngine=false)

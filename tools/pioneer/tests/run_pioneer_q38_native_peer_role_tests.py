@@ -1,0 +1,53 @@
+#!/usr/bin/env python3
+"""Host peer-engine isolation checks; NEVER link/invoke hardware code."""
+import os
+import pathlib
+import subprocess
+
+assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
+here = pathlib.Path(__file__).resolve().parent
+role = 'PIONEER_Q38_NATIVE_PEER_TEST_BRIDGE'
+fixture = 'PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE'
+context = 'PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY'
+storage = 'PIONEER_Q38_TEST_SHARED_WORKER_STORAGE'
+accepted = refused = 0
+
+
+def check(header, definitions, expected, implementation=False):
+    global accepted, refused
+    args = [os.environ.get('CXX', 'c++'), '-std=c++17', '-Werror', '-I'+str(here)]
+    args += ['-D'+key+'='+str(value) for key, value in definitions.items()]
+    if implementation:
+        args += ['-E', str(here/header)]
+        source = None
+    else:
+        args += ['-fsyntax-only', '-x', 'c++', '-']
+        source = '#include "'+header+'"\n'
+    result = subprocess.run(args, input=source, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+    assert (result.returncode == 0) == expected, (header, definitions, result.stderr)
+    if expected:
+        accepted += 1
+    else:
+        assert 'error:' in result.stderr
+        refused += 1
+
+
+header = 'pioneer_q38_native_peer_test_bridge.h'
+check(header, {role:1}, True)
+check(header, {role:1, '_KERNEL_MODE':1, fixture:1, context:1}, True)  # opaque interface in emulated fixture ONLY
+check('PioneerQ38SharedTestStorage.h', {role:1, storage:1}, True)
+for definitions in ({}, {role:0}, {role:2}, {role:1, '_KERNEL_MODE':1},
+                    {role:1, '_KERNEL_MODE':1, fixture:1}, {role:1, '_KERNEL_MODE':1, context:1},
+                    {role:1, '_KERNEL_MODE':1, fixture:0, context:1}, {role:1, '_KERNEL_MODE':1, fixture:1, context:2}):
+    check(header, definitions, False)
+for macro in ('PIONEER_Q38_WORK_INFERENCE', 'PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE',
+              'PIONEER_Q38_GLOBAL_WORKER_IMAGE', 'PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE'):
+    for value in (0, 1):
+        check(header, {role:1, macro:value}, False)
+for definitions in ({role:1}, {role:1, storage:0}, {role:1, storage:2},
+                    {role:1, storage:1, '_KERNEL_MODE':0}, {role:1, storage:1, '_KERNEL_MODE':1}):
+    check('PioneerQ38SharedTestStorage.h', definitions, False)
+for macro in ('_KERNEL_MODE', 'PIONEER_Q38_TOKEN_NATIVE_CONTEXT', 'PIONEER_Q38_WORK_INFERENCE'):
+    for value in (0, 1):
+        check('pioneer_q38_native_peer_test_bridge.cpp', {macro:value}, False, True)
+print(f'PASS peer-engine byte interface/storage/{accepted} explicit TEST roles/{refused} absent+zero+two+kernel+device+Work refusals/implementation rejects ALL native roles;NO native permission,processor-history setter or product supplier')

@@ -11,7 +11,11 @@ struct BlockMachine:RuntimeMachine {
 #ifdef PIONEER_Q38_TEST_INT_ACCUMULATOR
 	std::vector<uint8_t> affineCode;
 #endif
+#ifdef PIONEER_Q38_TEST_SHARED_WORKER_STORAGE
+	::PioneerQ38SharedTestMap memory;
+#else
 	std::map<uint32_t,uint32_t> memory;
+#endif
 	uint32_t fp[32]={}; unsigned type,count,floatOps=0,minStack=0x70000;
 	float scale;
 	BlockMachine(const char* root,unsigned kind,unsigned trial,float activationScale,const uint8_t* source=nullptr,bool stream=false)

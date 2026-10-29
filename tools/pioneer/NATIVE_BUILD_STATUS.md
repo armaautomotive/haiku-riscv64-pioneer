@@ -1,5 +1,28 @@
 # Native build status
 
+## Current: full tensor-engine instances bootstrap under the native owner offline
+
+October29,2026 07:03UTC. All119 full matrix/GDN/Conv/attention instruction
+engine instances now exist as VIRGIN CPUs before native binding. Their L1
+instruction/data/operand/output accesses share the SAME native fixture's
+bytes;generic fixture constructor mailboxes/code/operands are discarded,
+never copied into native memory. Main/clean native full-owner tests finish0
+after actual1010 zero jobs,120 held stages,4616 metadata packets and all119
+real QGW1 boots/WAIT receipts. No completed CPU,nonce,tensor state or ready
+flag is transplanted. Host engine classes live in a separate namespace/TU;
+SDK objects remain unchanged and contain no test-engine imports.
+
+The current component tests also prove physical counter/command faults
+persist across real idle instructions. Hardware-event callbacks now apply
+only event deltas and explicit command writes,not arbitrary recapture or
+repair. This is BOOT/storage qualification,NOT native matrix arithmetic.
+The first-matrix A runs reach the next-matrix boundary but terminate at an
+unresolved combined worker/reference assertion;B/C runs remain live with
+corrected doorbell/event bookkeeping and more precise diagnostics. No
+matrix numerical success,complete layer/token,card result or speedup is
+claimed. Last physical **0.207893161 tokens/sec**;20 remains unmet. Evidence:
+[native full-engine bootstrap checkpoint](benchmarks/qwen38-token-native-peer-engines-20261029.txt).
+
 ## Current: native layer0 normalization,quantization and first dispatch pass offline
 
 October29,2026 06:00UTC. Main/clean tests now both finish0 with matching
@@ -184,6 +207,9 @@ Evidence: [native held staging checkpoint](benchmarks/qwen38-token-native-held-2
 - [x] Native ROOT original layer0 metadata/normalization/native input packing
   and first valid worker job offline;doorbell response intentionally HELD,
   no worker matrix/layer/token completion yet.
+- [x] Full tensor-engine instances from VIRGIN construction on the native
+  byte backing;actual119-worker native boot positive offline tests and
+  component constructor-isolation/idle-CSR-fault persistence tests.
 - [ ] Extend bootstrap timing/late-fault coverage and validate genuine KV/state
   advancement during native execution.
 - [ ] Complete original-model all64-layer, multitoken, persistent-state,
