@@ -13,9 +13,10 @@ NIU/scratch/TLB/master/clock/maps/hosts remain owned;Closed() is still FALSE.
 
 Independent SDK C91492/26420 BOTH finish0;objects match355dd61c,max new frame
 1728<=2048,old65/all5 inert entries unchanged. Role checks pass15/214. Current
-positive main41283/clean71327 are LIVE;post-write generation-loss mode is
-implemented but not yet dispatched. Earlier pending B69803/56865 remain LIVE
-and predate current noinline aliases/extra alias tests;they are not retagged.
+positive main41283/clean71327 are LIVE. At13:00UTC the earlier pending pair
+B69803/56865 BOTH finish0 with identical logs;they predate the current
+noinline aliases/extra alias tests and are not retagged. The current post-
+write generation-loss pair is now dispatched,not passing.
 No installation/physical speed claim follows;last physical **0.207893161
 tokens/sec**,20 unmet. Evidence:
 [dispatch-image restoration candidate](benchmarks/qwen38-token-native-dispatch-restore-wip-20261029.txt).

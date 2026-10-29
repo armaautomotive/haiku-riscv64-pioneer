@@ -111,3 +111,23 @@ distinct NIU/scratch/TLB/master/clock/maps/hosts closure and full clean END;
 qualified performance-image/Work/Assistant integration;actual repeated and
 long-context card generation;measured sustained optimization toward20tok/s.
 Preserve SD-free boot,64 CPUs,full RAM and valid running histories.
+
+2026-10-29 13:00UTC follow-up
+-------------------------------
+Earlier pending B main69803/clean56865 BOTH terminal0;complete logs identical.
+Actual1010 zero jobs/4616 metadata packets/119 virgin boots14744576 and ROOT
+startup5137 precede the17 native earlier-dispatch pending/non-pristine result
+refusals. Prior full-L1 restore17/readout21/HOLD17 refusals still pass.
+These binaries predate the noinline aliases and extra360+48 current-C checks.
+They qualify those executed pending cases,NOT current restoration/alias
+implementation,positive lower-original writes or END. Saved full logs:
+ qwen38-native-dispatch-restore-pending-{main,clean}-20261029.log.
+
+Using the freed test capacity,the currentC --execution-restore-dispatch-fault
+pair is dispatched from the SAME frozen main/clean source. It repeats the
+genuine original first-layer/cancel/STOP/HOLD/drain/full-token-L1 restoration
+before the actual first earlier-dispatch write then generation loss. It is
+LIVE,not a passing fault/cleanup/END result. Logs and prefixes:
+ /private/tmp/pioneer-q38-dispatch-restore-empty-fault-{main,clean}-20261029-c.log
+ same names ending -c-prefix.bin.
+The earlier NOT-dispatched and pending-LIVE paragraphs are historical.
