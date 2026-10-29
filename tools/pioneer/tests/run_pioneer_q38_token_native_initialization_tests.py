@@ -11,7 +11,9 @@ import tempfile
 
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 readout_flow = len(sys.argv) == 7 and sys.argv[2] == '--execution-readout-full-flow'
-restore_root = len(sys.argv) == 7 and sys.argv[2] in ('--execution-restore-root-store','--execution-restore-root-store-fault',
+restore_shared = len(sys.argv) == 7 and sys.argv[2] in ('--execution-restore-shared-tlb','--execution-restore-shared-tlb-fault',
+    '--execution-restore-shared-tlb-readback-fault','--execution-restore-shared-tlb-verify-fault')
+restore_root = restore_shared or len(sys.argv) == 7 and sys.argv[2] in ('--execution-restore-root-store','--execution-restore-root-store-fault',
     '--execution-restore-root-store-map-fault','--execution-restore-root-store-config-fault','--execution-restore-root-store-scratch-fault',
     '--execution-restore-root-store-fifo-fault','--execution-restore-root-store-overflow-fault')
 restore_peers = restore_root or len(sys.argv) == 7 and sys.argv[2] in ('--execution-restore-peers','--execution-restore-peers-fault',
@@ -97,6 +99,8 @@ if restore_peers:
     defines['PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE'] = '1'
 if restore_root:
     defines['PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE'] = '1'
+if restore_shared:
+    defines['PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE'] = '1'
 if readout_flow:
     defines['PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE'] = '1'
 if full_flow:

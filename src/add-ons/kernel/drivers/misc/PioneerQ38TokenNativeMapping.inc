@@ -5,6 +5,7 @@ bool TokenMemoryMappingSourceScope();bool TokenMemoryAccessScope();
 bool TokenDispatchImageAccessScope(unsigned);
 bool TokenPeerStoreSelectionScope();bool TokenPeerStoreAccessScope(unsigned);
 bool TokenRootStoreAccessScope();
+bool TokenSharedTlbScope();
 bool TokenInitializationFifoEmpty(unsigned);bool TokenInitializationFifoReadChecked(unsigned,bool,uint32&);
 bool PrepareTokenNativeParticipant(unsigned);
 bool TokenMemoryScope(const PioneerQ38TokenMemory&,const PioneerQ38CanonicalModelPlan&,const PioneerQ38TokenStartupPlan&,
@@ -117,6 +118,18 @@ __attribute__((noinline)) bool TokenRootScratchWrite(unsigned word,uint32 value)
  if(word>=2048 || !TokenRootStoreAccessScope() || !TokenMemoryMappingStable(0))return false;
  ResidentL1Write(word,value);return true;
 } // fixed ROOT8KiB only;UINT32_MAX remains original DATA
+__attribute__((noinline)) bool TokenSharedRootCommandReadChecked(unsigned word,uint32& output){
+ if(word>=10 || !TokenMemoryAccessScope() || !TokenSharedTlbScope())return false;
+ output=ResidentNocRead(word*4);return true;
+} // pre-change ONLY;alias veto takes effect BEFORE the first shared TLB write
+__attribute__((noinline)) bool TokenSharedTlbReadChecked(unsigned slot,unsigned word,uint32& output){
+ if(slot>=2 || word>=3 || !TokenSharedTlbScope())return false;
+ output=DramTlbRead(slot,word);return true;
+}
+__attribute__((noinline)) bool TokenSharedTlbWrite(unsigned slot,unsigned word,uint32 value){
+ if(slot>=2 || word>=3 || !TokenSharedTlbScope())return false;
+ DramTlbWrite(slot,word,value);return true;
+} // direct existing200/201 control aperture ONLY;not the mapped NoC/L1 aliases
 __attribute__((noinline)) bool TokenFifoReadChecked(unsigned worker,bool overflow,uint32& output){
  if(worker>=120 || !TokenMemoryAccessScope() || !TokenMemoryMappingStable(worker))return false;
  output=TokenFifoStatusWord(overflow?0x68U:0x64U);return true;

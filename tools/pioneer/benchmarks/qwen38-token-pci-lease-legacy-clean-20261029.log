@@ -1,0 +1,1 @@
+PASS: fixed MMIO policy rejects unsafe layouts; bounds reads, forbids DMA, and checks rollback

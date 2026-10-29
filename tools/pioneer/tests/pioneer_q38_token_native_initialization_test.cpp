@@ -31,6 +31,9 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  uint32 NativePreparationFifoObserved(uint32,uint32);
  void DramTlbWrite(unsigned,unsigned,uint32);uint32 DramTlbRead(unsigned,unsigned);
  void ResidentNocWrite(uint32,uint32);void Q38PanelWrite(uint32,uint32);uint32 Q38PanelRead(uint32);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE
+ void NativeSharedAliasRefusals();
+#endif
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
  std::unique_ptr<Q38NativeTraceTest> nativeTrace=std::make_unique<Q38NativeTraceTest>();
@@ -302,6 +305,9 @@ static void TestKernelLog(const char*,...){}
 #include "token_native_zero_callbacks.inc"
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #include "pioneer_q38_token_native_prepare_endpoints.inc"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE
+#include "pioneer_q38_token_native_shared_tlb_endpoints.inc"
+#endif
 #endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenCallScope.inc"
 static bool IncompleteEnd(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean){
@@ -376,10 +382,12 @@ struct Fixture {
 int main(int argc,char** argv){
  const bool peerBootstrap=argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines");
  const bool fullFlow=argc==7 && (!strcmp(argv[2],"--execution-full-flow") || !strcmp(argv[2],"--execution-readout-full-flow"));
- const bool restoreRoot=argc==7 && (!strcmp(argv[2],"--execution-restore-root-store") || !strcmp(argv[2],"--execution-restore-root-store-fault")
+ const bool restoreShared=argc==7 && (!strcmp(argv[2],"--execution-restore-shared-tlb") || !strcmp(argv[2],"--execution-restore-shared-tlb-fault")
+  || !strcmp(argv[2],"--execution-restore-shared-tlb-readback-fault") || !strcmp(argv[2],"--execution-restore-shared-tlb-verify-fault"));
+ const bool restoreRoot=restoreShared || (argc==7 && (!strcmp(argv[2],"--execution-restore-root-store") || !strcmp(argv[2],"--execution-restore-root-store-fault")
   || !strcmp(argv[2],"--execution-restore-root-store-map-fault") || !strcmp(argv[2],"--execution-restore-root-store-config-fault")
   || !strcmp(argv[2],"--execution-restore-root-store-scratch-fault") || !strcmp(argv[2],"--execution-restore-root-store-fifo-fault")
-  || !strcmp(argv[2],"--execution-restore-root-store-overflow-fault"));
+  || !strcmp(argv[2],"--execution-restore-root-store-overflow-fault")));
  const bool restorePeers=restoreRoot || (argc==7 && (!strcmp(argv[2],"--execution-restore-peers") || !strcmp(argv[2],"--execution-restore-peers-fault")
   || !strcmp(argv[2],"--execution-restore-peers-map-fault") || !strcmp(argv[2],"--execution-restore-peers-config-fault")
   || !strcmp(argv[2],"--execution-restore-peers-scratch-fault") || !strcmp(argv[2],"--execution-restore-peers-fifo-fault")
@@ -463,6 +471,19 @@ int main(int argc,char** argv){
    };
    refuseRoot();{PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);refuseRoot();}
    printf("PASS ROOT-only restoration endpoints/%u wrong-phase+outside-FD refusals/output unchanged/ZERO IO or zero-program/model instructions;NOT positive restoration/END/hardware/Work qualification\n",rootRefusals);
+   unsigned sharedRefusals=0;
+   auto refuseShared=[&](){
+    uint32 value=0x59a731c2;assert(!io.TokenSharedTlbScope());sharedRefusals++;
+    for(unsigned slot:{0U,1U,2U,UINT32_MAX})for(unsigned word:{0U,2U,3U,UINT32_MAX}){
+     assert(!io.TokenSharedTlbReadChecked(slot,word,value) && value==0x59a731c2 && !io.TokenSharedTlbWrite(slot,word,0));sharedRefusals+=2;
+    }
+    for(unsigned word:{0U,9U,10U,UINT32_MAX}){
+     assert(!io.TokenSharedRootCommandReadChecked(word,value) && value==0x59a731c2);sharedRefusals++;
+    }
+    assert(io.touches==rootBefore);
+   };
+   refuseShared();{PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);refuseShared();}
+   printf("PASS shared200/201 restoration endpoints/%u wrong-phase+outside-FD refusals/output unchanged/ZERO IO or instructions;NOT positive mapping restoration/END/hardware/Work qualification\n",sharedRefusals);
    tt_resident_session_result end={};bool clean=true;const unsigned before=io.touches;
    assert(!IncompleteEnd(c,end,clean) && !clean && io.touches==before);f.Unknown();
    printf("PASS actual HELD TEST constructor/ALL120 physical endpoint expectations BEFORE any preparation/history/actual selected6 TLB words+FIFO observations/%u checks/ZERO zero-program or model instructions;NOT native preparation/model/STOP/END/hardware/Work/TPS qualification\n",checks);
@@ -567,6 +588,10 @@ int main(int argc,char** argv){
    !strcmp(argv[2],"--execution-restore-root-store-map-fault")?2:!strcmp(argv[2],"--execution-restore-root-store-config-fault")?3:
    !strcmp(argv[2],"--execution-restore-root-store-scratch-fault")?4:!strcmp(argv[2],"--execution-restore-root-store-fifo-fault")?5:
    !strcmp(argv[2],"--execution-restore-root-store-overflow-fault")?6:0;
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE
+  io.sharedTlbFault=!strcmp(argv[2],"--execution-restore-shared-tlb-fault")?1:
+   !strcmp(argv[2],"--execution-restore-shared-tlb-readback-fault")?2:!strcmp(argv[2],"--execution-restore-shared-tlb-verify-fault")?3:0;
 #endif
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE

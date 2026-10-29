@@ -129,4 +129,15 @@
  else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);result.unsafe=1;result.ready=0;okay=false;}
  return okay;
 } // ROOT-local originals only;master.ready/shared-TLB/clock/maps/hosts/END retained
+[[maybe_unused]] static __attribute__((noinline)) bool RestoreQ38TokenNativeSharedMappings(PioneerStoreContext& c,PioneerQ38TokenSharedTlbRestoreResult& result){
+ auto* s=c.q38TokenNative;const PioneerQ38TokenSharedTlbRestoreResult pristine;
+ const auto* a=reinterpret_cast<const uint8_t*>(&result);const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+ for(unsigned i=0;i<sizeof(result);i++)if(a[i]!=b[i])return false;
+ if(!s || s->phase!=PioneerQ38TokenNativeState::RootStoreRestored || !s->runtime || !s->RootStoreOriginalsRestored()
+  || !Q38TokenExecutionOutput(c,&result,sizeof(result)) || !c.io.TokenModelSourceScope(false))return false;
+ s->phase=PioneerQ38TokenNativeState::SharedTlbRestoring;bool okay=s->runtime->RestoreSharedMappings(c.io,result);
+ if(okay && s->runtime->SharedMappingsRestored())s->phase=PioneerQ38TokenNativeState::SharedTlbRestored;
+ else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);result.unsafe=1;result.ready=0;okay=false;}
+ return okay;
+} // shared original mappings only;clock/master-ready/bulk/VM/hosts/END remain owned
 #endif

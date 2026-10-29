@@ -19,6 +19,9 @@ uint32 PioneerSessionIO::NativePreparationFifoObserved(uint32 address,uint32 val
 }
 void PioneerSessionIO::DramTlbWrite(unsigned slot,unsigned word,uint32 value){
  TokenHeldEndpoints::DramTlbWrite(slot,word,value);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE
+ NativeSharedAliasRefusals();
+#endif
  if(NativePreparationObservation())preparationMapWrites++;
 }
 uint32 PioneerSessionIO::DramTlbRead(unsigned slot,unsigned word){

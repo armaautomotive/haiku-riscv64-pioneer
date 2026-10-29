@@ -14,7 +14,8 @@ bool PioneerSessionIO::TokenRuntimeScope(const PioneerQ38TokenNativeOwner& runti
    || s->phase==PioneerQ38TokenNativeState::RootRestoring || s->phase==PioneerQ38TokenNativeState::RootRestored
    || s->phase==PioneerQ38TokenNativeState::DispatchRestoring || s->phase==PioneerQ38TokenNativeState::DispatchRestored
    || s->phase==PioneerQ38TokenNativeState::PeerStoresRestoring || s->phase==PioneerQ38TokenNativeState::PeerStoresRestored
-   || s->phase==PioneerQ38TokenNativeState::RootStoreRestoring || s->phase==PioneerQ38TokenNativeState::RootStoreRestored)
+   || s->phase==PioneerQ38TokenNativeState::RootStoreRestoring || s->phase==PioneerQ38TokenNativeState::RootStoreRestored
+   || s->phase==PioneerQ38TokenNativeState::SharedTlbRestoring || s->phase==PioneerQ38TokenNativeState::SharedTlbRestored)
   && TokenModelSourceScope(false)
   && runtime.MatchesRuntimeBinding(dram,c->banks,*c->q38Dispatch,memory,canonical,startup,id,learned,pages);
 }
@@ -26,10 +27,10 @@ bool PioneerSessionIO::TokenRuntimeScope(const PioneerQ38TokenNativeOwner& runti
   || !s->startup || !s->participants || s->participants!=c.q38Dispatch || !c.io.TokenModelSourceScope(false))return false;
  const uintptr_t out=reinterpret_cast<uintptr_t>(&result);
  if(out>UINTPTR_MAX-sizeof(result) || !s->startup->PublishedOutput(&result,sizeof(result)))return false;
- const void* objects[]={&c,&c.io,s,s->memory,s->participants,c.initialized,c.hashes,PioneerQ38TokenRope::Data};
+ const void* objects[]={&c,&c.io,s,s->memory,s->participants,c.initialized,c.hashes,PioneerQ38TokenRope::Data,c.io.BulkSavedWords()};
  const size_t sizes[]={sizeof(c),sizeof(c.io),sizeof(*s),sizeof(*s->memory),sizeof(*s->participants),
-  PioneerResidentBanks::Pages,size_t(PioneerResidentBanks::Pages)*sizeof(uint32_t),PioneerQ38TokenRope::Bytes};
- for(unsigned i=0;i<8;i++){
+  PioneerResidentBanks::Pages,size_t(PioneerResidentBanks::Pages)*sizeof(uint32_t),PioneerQ38TokenRope::Bytes,size_t(TT_BULK_UPLOAD_SAVED_WORDS)*4};
+ for(unsigned i=0;i<9;i++){
   const uintptr_t owned=reinterpret_cast<uintptr_t>(objects[i]);
   if(!owned || owned>UINTPTR_MAX-sizes[i] || (out<owned+sizes[i] && owned<out+sizeof(result)))return false;
  }
@@ -58,6 +59,7 @@ bool PioneerSessionIO::TokenRuntimeScope(const PioneerQ38TokenNativeOwner& runti
   const uintptr_t owned=reinterpret_cast<uintptr_t>(objects[i]);
   if(!owned || owned>UINTPTR_MAX-sizes[i] || (out<owned+sizes[i] && owned<out+sizeof(result)))return false;
  }
+ if(!s->runtime->DispatchOutput(&result,sizeof(result)))return false;
  s->phase=PioneerQ38TokenNativeState::WorkersBootstrapping;
  bool okay=s->runtime->BootstrapWorkers(c.io,result);
  if(okay && s->runtime->WorkersReady())s->phase=PioneerQ38TokenNativeState::WorkersReady;

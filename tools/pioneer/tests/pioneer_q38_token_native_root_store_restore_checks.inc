@@ -12,6 +12,9 @@
  || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE) || defined(PIONEER_Q38_WORK_INFERENCE)
 #error Explicit native119-peer-preceded ROOT-local restoration TEST required
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE
+#include "pioneer_q38_token_native_shared_tlb_restore_checks.inc"
+#endif
 static void CheckNativeRootStoreRestore(Fixture& f){
  auto& c=*f.c;auto& io=f.io;auto* state=c.q38TokenNative;
  assert(!lockHeld && state->PeerStoreOriginalsRestored() && !state->RootStoreOriginalsRestored()
@@ -68,4 +71,7 @@ static void CheckNativeRootStoreRestore(Fixture& f){
   && !io.PageMock::releases && !io.OutputBufferMock::releases);
  if(io.rootStoreFault)printf("EXECUTED native ROOT-local restore fault%u/actual SAME original firstlayer+cancel/STOP/HOLD/drain/token+dispatch+119peer originals/first uncertainty/NO following IO/retry/reset/release;shared/master owners retained,NO END/physical/Work/TPS grant\n",io.rootStoreFault);
  else puts("EXECUTED native SAME full851/original firstlayer+cancel/STOP/HOLD/drain/token+dispatch+119peer originals/ROOT10 zero commands+exact original NIU config+2048 scratch originals/immediate reads+full secondpass/independent pre-master-lease observations match including UINT32_MAX;master.ready/sharedTLB/clock/maps/hosts STILL OWNED,NO END/physical/Work/TPS grant");
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE
+ if(!io.rootStoreFault)CheckNativeSharedTlbRestore(f);
+#endif
 }

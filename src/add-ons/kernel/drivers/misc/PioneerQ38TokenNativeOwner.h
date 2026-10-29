@@ -2,6 +2,7 @@
 #ifndef PIONEER_Q38_TOKEN_NATIVE_OWNER_H
 #define PIONEER_Q38_TOKEN_NATIVE_OWNER_H
 #include "PioneerQ38TokenMemory.h"
+#include "PioneerBulkUpload.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenRuntimePlan.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenTerminalShape.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenRecordShape.h"
@@ -50,6 +51,10 @@ struct PioneerQ38TokenRootStoreRestoreResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,roots=0;
  uint32_t commandWords=0,configWords=0,scratchWords=0,verifiedWords=0,firstPC=0,secondPC=0,reserved[2]={};
 };
+struct PioneerQ38TokenSharedTlbRestoreResult {
+ uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,restoredWords=0;
+ uint32_t verifiedWords=0,bulkWords=0,firstPC=0,secondPC=0,reserved[4]={};
+};
 class PioneerQ38TokenNativeOwner {
  const tt_dram_samples_result* proof=nullptr;PioneerResidentBanks* banks=nullptr;PioneerQ38DispatchLease* cohort=nullptr;
  PioneerQ38TokenMemory* memory=nullptr;const PioneerQ38CanonicalModelPlan* canonical=nullptr;
@@ -68,6 +73,8 @@ class PioneerQ38TokenNativeOwner {
  const uint32_t* storeSaved[120]={};uint32_t storeConfig[120]={};
  bool peerClosing=false,peersClosed=false,peerConfigWritten[120]={},peerClosed[120]={};
  bool rootStoreClosing=false,rootStoreRestored=false,rootConfigWritten=false;
+ uint32_t masterTlb[2][3]={};const uint32_t* bulkSaved=nullptr;bool masterOriginalsCaptured=false;
+ bool sharedTlbClosing=false,sharedTlbChanged=false,sharedTlbRestored=false;
  bool Bound()const{
   if(!started || unsafe || !proof || !banks || !cohort || !memory || !canonical || !startup || !ledger
    || !plan.MatchesBinding(*canonical,*startup,identity,&cohort->authority.source[0][0]))return false;
@@ -86,6 +93,9 @@ class PioneerQ38TokenNativeOwner {
    || ((peerClosing || peersClosed) && (!dispatchRestored || dispatchRestoring || !held || holding))
    || ((rootStoreClosing || rootStoreRestored) && (!peersClosed || peerClosing || !held || holding))
    || (rootConfigWritten && !rootStoreClosing && !rootStoreRestored)
+   || !masterOriginalsCaptured || !bulkSaved
+   || ((sharedTlbClosing || sharedTlbRestored) && (!rootStoreRestored || rootStoreClosing))
+   || (sharedTlbChanged && !sharedTlbClosing && !sharedTlbRestored)
    || (rootStarted?(!rootAttempted || !booted || reset[0]!=((holding || held) && !running[0]?0x47800U:0x46800U))
     :reset[0]!=(rootAttempted?0x87ffffU:0x47800U)))return false;
   for(unsigned w=0;w<120;w++){
@@ -99,6 +109,8 @@ class PioneerQ38TokenNativeOwner {
     || store.pending || store.recovery_required || n.noc.recovery_required
     || ((holding || held) && reset[w]!=(running[w]?0x46800U:0x47800U)) || (held && running[w]))return false;
   }
+  for(unsigned s=0;s<2;s++)for(unsigned i=0;i<3;i++)if(cohort->worker[0].Store().tlb[s][i]!=masterTlb[s][i])return false;
+  if(sharedTlbRestored && !cohort->worker[0].Store().tlb_restored)return false;
   return true;
  }
  template<class IO> bool Scope(IO& io)const{
@@ -119,6 +131,7 @@ class PioneerQ38TokenNativeOwner {
  template<class IO> bool Fail(IO& io,PioneerQ38TokenDispatchRestoreResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenPeerRestoreResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenRootStoreRestoreResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
+ template<class IO> bool Fail(IO& io,PioneerQ38TokenSharedTlbRestoreResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool SelectedSources(IO& io,unsigned w){
   if(w>=120 || !Scope(io) || !io.TokenMemoryMappingStable(w)
    || io.ResetRead()!=reset[w] || io.ResetRead()!=reset[w])return false;
@@ -237,10 +250,15 @@ public:
  bool DispatchImagesRestored()const{return dispatchRestored && !dispatchRestoring && OriginalL1Restored();} // NIU/scratch/TLB/END still owned
  bool PeerStoresRestored()const{return peersClosed && !peerClosing && DispatchImagesRestored();} // ROOT/shared mappings/END STILL owned
  bool RootStoreOriginalsRestored()const{return rootStoreRestored && !rootStoreClosing && PeerStoresRestored();}
+ bool SharedMappingsChanged()const{return sharedTlbChanged;} // CPU-only alias veto,NOT completion authority
+ bool SharedMappingsRestored()const{return sharedTlbRestored && !sharedTlbClosing && RootStoreOriginalsRestored();}
  bool DispatchOutput(const void* output,size_t bytes)const{
   const uintptr_t out=reinterpret_cast<uintptr_t>(output);
   const size_t savedBytes=(size_t(TT_Q38_PANEL_VIEW_WORDS)+1)*4;
   if(!output || !bytes || out>UINTPTR_MAX-bytes)return false;
+  const uintptr_t bulk=reinterpret_cast<uintptr_t>(bulkSaved);
+  const size_t bulkBytes=size_t(TT_BULK_UPLOAD_SAVED_WORDS)*4;
+  if(!bulk || bulk>UINTPTR_MAX-bulkBytes || (out<bulk+bulkBytes && bulk<out+bytes))return false;
   for(unsigned w=0;w<120;w++){
    const uintptr_t p=reinterpret_cast<uintptr_t>(dispatchSaved[w]);
    if(!p || p>UINTPTR_MAX-savedBytes || (out<p+savedBytes && p<out+bytes))return false;
@@ -280,6 +298,13 @@ public:
    if(!store.controls_saved || !store.configured || !scratch || (scratch&3) || scratch>UINTPTR_MAX-8192
     || store.config!=cohort->worker[w].noc.source[0][0] || (store.config|0x10000U)!=cohort->authority.source[w][0]
     || (scratch<saved+savedBytes && saved<scratch+8192))return Fail(io,r);
+   if(!w){
+    if(masterOriginalsCaptured || (store.tlb[0][2]&0xffffc000U) || (store.tlb[1][2]&0xffffc000U))return Fail(io,r);
+    for(unsigned s=0;s<2;s++)for(unsigned i=0;i<3;i++)masterTlb[s][i]=store.tlb[s][i];
+    bulkSaved=io.BulkSavedWords();const uintptr_t original=reinterpret_cast<uintptr_t>(bulkSaved);
+    if(!io.BulkMappingStable() || !original || (original&3) || original>UINTPTR_MAX-TT_BULK_UPLOAD_SAVED_WORDS*4U)return Fail(io,r);
+    masterOriginalsCaptured=true;
+   } // actual SAME master/global+bulk original identities captured BEFORE launch
    for(unsigned p=0;p<w;p++){
     const uintptr_t other=reinterpret_cast<uintptr_t>(storeSaved[p]);
     if(scratch<other+8192 && other<scratch+8192)return Fail(io,r);
@@ -289,6 +314,12 @@ public:
    const uintptr_t scratch=reinterpret_cast<uintptr_t>(storeSaved[w]),image=reinterpret_cast<uintptr_t>(dispatchSaved[p]);
    if(scratch<image+(size_t(TT_Q38_PANEL_VIEW_WORDS)+1)*4 && image<scratch+8192)return Fail(io,r);
   } // disjoint SAME original journals,not caller buffers;BEFORE any runtime write
+  const uintptr_t bulkOriginal=reinterpret_cast<uintptr_t>(bulkSaved);
+  for(unsigned w=0;w<120;w++){
+   const uintptr_t scratch=reinterpret_cast<uintptr_t>(storeSaved[w]),image=reinterpret_cast<uintptr_t>(dispatchSaved[w]);
+   if((scratch<bulkOriginal+TT_BULK_UPLOAD_SAVED_WORDS*4U && bulkOriginal<scratch+8192)
+    || (image<bulkOriginal+TT_BULK_UPLOAD_SAVED_WORDS*4U && bulkOriginal<image+(size_t(TT_Q38_PANEL_VIEW_WORDS)+1)*4))return Fail(io,r);
+  }
   namespace C=PioneerQ38GlobalChainLayout;namespace W=PioneerQ38GlobalWorkerLayout;namespace T=PioneerQ38TokenLayout;
   r.phase=2;
   for(unsigned w=0;w<120;w++){
@@ -973,6 +1004,56 @@ public:
   // No legacy cleanup,global tlb_restored,END or reusable-session publication.
   rootStoreRestored=true;rootStoreClosing=false;r.roots=1;r.ready=1;r.phase=7;return true;
  }
+ template<class IO> bool RestoreSharedMappings(IO& io,PioneerQ38TokenSharedTlbRestoreResult& r){
+  const PioneerQ38TokenSharedTlbRestoreResult pristine;const auto* a=reinterpret_cast<const uint8_t*>(&r);
+  const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+  for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=b[i])return false;
+  if(sharedTlbClosing || sharedTlbChanged || sharedTlbRestored || !RootStoreOriginalsRestored()
+   || !DispatchOutput(&r,sizeof(r)) || !Scope(io))return false;
+  r.started=1;r.phase=1;const uint64_t began=io.Q38CohortNow();uint64_t previous=began;
+  if(began>UINT64_MAX-UINT64_C(300000000))return Fail(io,r);
+  auto time=[&](){
+   if(!Scope(io))return false;
+   const uint64_t now=io.Q38CohortNow();
+   if(now<previous || now<began || now-began>=UINT64_C(300000000))return false;
+   previous=now;return true;
+  };
+  sharedTlbClosing=true;
+  for(unsigned w=0;w<120;w++){
+   r.worker=w;if(!time() || !PeerStoreGuard(io,w,true))return Fail(io,r);
+  }
+  r.worker=0;if(!time() || !PeerStoreGuard(io,0,true) || io.BulkSavedWords()!=bulkSaved || !io.BulkMappingStable())return Fail(io,r);
+  r.phase=2;
+  for(unsigned i=0;i<TT_BULK_UPLOAD_SAVED_WORDS;i++){
+   r.word=i;uint32_t actual=0;
+   if(!time() || !io.TokenMemoryReadChecked(0,TT_BULK_UPLOAD_L1+i*4,actual) || actual!=bulkSaved[i])return Fail(io,r);
+   r.bulkWords++;
+  } // independently retained bulk originals must still match the restored ROOT image
+  if(!time() || io.BulkSavedWords()!=bulkSaved || !PeerStoreGuard(io,0,false))return Fail(io,r);
+  uint32_t actual=0;
+  for(unsigned i=0;i<10;i++)if(!io.TokenSharedRootCommandReadChecked(i,actual) || actual)return Fail(io,r);
+  // Audit the actual CURRENT fixed ROOT routes before changing ANY word.
+  for(unsigned s=0;s<2;s++)for(unsigned i=0;i<3;i++){
+   const uint32_t expected=BlackholeDramFixedTlbWord(s?0xffa00000U:0U,PioneerWorkerX(0),PioneerWorkerY(0),false,i);
+   if(!time() || !io.TokenSharedTlbReadChecked(s,i,actual) || actual!=expected)return Fail(io,r);
+  }
+  r.phase=3;sharedTlbChanged=true; // veto EVERY L1/NIU/FIFO/selector alias BEFORE first attempted map change
+  for(unsigned s=0;s<2;s++)for(unsigned i=0;i<3;i++){
+   r.word=s*3+i;
+   if(!time() || !io.TokenSharedTlbWrite(s,i,masterTlb[s][i]) || !io.TokenSharedTlbReadChecked(s,i,actual)
+    || actual!=masterTlb[s][i])return Fail(io,r);
+   r.restoredWords++;
+  } // direct TLB-control aperture ONLY;NO access through the changed routes
+  r.phase=4;
+  for(unsigned s=0;s<2;s++)for(unsigned i=0;i<3;i++){
+   r.word=s*3+i;
+   if(!time() || !io.TokenSharedTlbReadChecked(s,i,actual) || actual!=masterTlb[s][i])return Fail(io,r);
+   r.verifiedWords++;
+  }
+  if(r.restoredWords!=6 || r.verifiedWords!=6 || r.bulkWords!=TT_BULK_UPLOAD_SAVED_WORDS || !time())return Fail(io,r);
+  cohort->worker[0].Store().tlb_restored=true;
+  sharedTlbRestored=true;sharedTlbClosing=false;r.ready=1;r.phase=5;return true;
+ } // master.ready/bulk/clock/VM aliases/hosts STILL retained;no native END or reuse grant
 };
 static_assert(sizeof(PioneerQ38TokenRuntimeResult)==64,"all runtime result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenBootstrapResult)==64,"all bootstrap result bytes explicit");
@@ -984,5 +1065,6 @@ static_assert(sizeof(PioneerQ38TokenRestoreResult)==64,"all L1-restoration resul
 static_assert(sizeof(PioneerQ38TokenDispatchRestoreResult)==64,"all dispatch-restoration result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenPeerRestoreResult)==64,"all peer-restoration result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenRootStoreRestoreResult)==64,"all ROOT-store result bytes explicit");
+static_assert(sizeof(PioneerQ38TokenSharedTlbRestoreResult)==64,"all shared-TLB result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenNativeOwner)>16384 && sizeof(PioneerQ38TokenNativeOwner)<32768,"native owner staging buffer HEAP ONLY");
 #endif

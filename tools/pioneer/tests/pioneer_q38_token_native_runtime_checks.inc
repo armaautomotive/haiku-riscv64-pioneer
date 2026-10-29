@@ -7,6 +7,15 @@ static bool CheckNativeRuntime(Fixture& f){
  for(unsigned i=0;i<16;i++){
   words[i]^=1;assert(!PrepareQ38TokenNativeRuntime(c,result) && io.touches==before && !state->Unsafe() && !io.runtimePackets);result=pristine;
  }
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE
+ {
+  auto* original=io.BulkSavedWords();uint32 saved[16];memcpy(saved,original,sizeof(saved));
+  memcpy(original,&pristine,sizeof(pristine));
+  auto& alias=*reinterpret_cast<PioneerQ38TokenRuntimeResult*>(original);
+  assert(!PrepareQ38TokenNativeRuntime(c,alias) && io.touches==before && !state->Unsafe() && !io.runtimePackets);
+  memcpy(original,saved,sizeof(saved));
+ } // separately allocated original buffer is rejected BEFORE runtime allocation/IO
+#endif
  tokenChildFail=1;tokenChildAttempts=0;
  assert(!PrepareQ38TokenNativeRuntime(c,result) && tokenChildAttempts==1 && io.touches==before && !state->Unsafe() && !io.runtimePackets);
  tokenChildFail=0;

@@ -1,0 +1,39 @@
+Native shared200/201 mapping restoration:COMPLETED OFFLINE CHECKPOINT
+2026-10-29 19:14UTC. Full goal ACTIVE;20tok/s UNMET.
+Last physical whole-model result remains0.207893161 tokens/sec.
+
+Exact earlier source:/private/tmp/pioneer-q38-shared-tlb-clean.t5B0wuZA
+Only this23-source snapshot is qualified here,not later clock/hardware-seal/
+VM/PCI code. The original6 master TLB words and bulk-buffer identity are
+captured BEFORE launch;no old processor history/owner or ready flag is used.
+
+Positive69001/87282 and first-write-generation-fault49823/22178 ALL terminal0;
+paired logs are identical. Each independently executes actual1010 initializer
+jobs,new120 preparations,held journals,4616 metadata packets,119 virgin
+tensor engines,original first-layer arithmetic,consumed cancellation,ROOT+
+119 STOP,120 HOLD,zero-record drain and token+dispatch+119peer+ROOT originals.
+The shared stage proves all120 current held sources/FIFOs/counters and8192
+bulk original words;writes6 known original control words with immediate
+reads and full second pass. Alias access is vetoed BEFORE the first mapping
+write.9 post-change checked alias calls refuse;NO mapped-source access follows.
+The fault occurs AFTER the first real control write;NO following IO,retry,
+repair,reset or resource release. Other readback/second-pass fault modes are
+implemented but NOT claimed passing by these particular histories.
+
+Independent posthoc comparisons14913/43836/71097/99728 ALL terminal0:
+each5120 embedding+5120 first-layer words BIT-EXACT vs pinned independent
+CPU traces,NO tolerance/diagnostic-only acceptance. Products are never fed
+back to native execution. This does not qualify all64 layers/state/KV/tokens.
+
+SDK B5249/27176 BOTH0;actual objects byte-identical:
+43c926bd048f3a2bf6454d0a2563e25f11d315febd6708e19730511535cd22cc
+Controller304B,factory192B,aliases48B;individual frames,not combined stack.
+Old65 remains61faa093 and renamed native entries remain inert/non-loadable.
+Endpoints97008/62958 BOTH0:960+58+74 checks;roles30878/14897 BOTH0:
+19 explicit TEST roles+351 refusals. Endpoint/role/runtime paired logs match;
+SDK logs may differ in output-directory path,not object bytes.
+
+Master.ready and bulk.ready remain TRUE;clock,VM,PCI,host pages and model
+reservations remain owned. Closed remains FALSE. No full native END/load-
+unload/public Work/Assistant,physical P100A or speed qualification follows.
+No Pioneer software,power or hardware change in this checkpoint.

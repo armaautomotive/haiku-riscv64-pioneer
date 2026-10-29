@@ -1,0 +1,31 @@
+Native PCI journal:COMPONENT QUALIFICATION ONLY
+2026-10-29. Full goal ACTIVE;20tok/s UNMET;last physical0.207893161tok/s.
+
+PioneerQ38TokenPciLease.h captures the SAME actual BEGIN record+transaction,
+original BARs/bridge windows/trial layout/node IDs and transport endpoint
+BEFORE native launch. Private journal identity and immutable record binding
+are necessary metadata only,not supplied clean/STOP/native PCI authority.
+Native integration must separately prove full originals/clock/VM closure.
+
+Close checks identity,capabilities,PCIe errors/pending,commands and live
+layout;consumes the original transaction before FIRST write;issues exactly
+11 ordered original-value writes with immediate readbacks+full final pass.
+It never enables BME,touches MMIO/NoC,unmaps or releases hosts. First failed
+access or uncertainty latches failure with no subsequent IO or retry.
+
+ASAN+UBSAN main D17106 and clean E47427 BOTH terminal0:190 cases,paired
+logs identical. Actual BlackholePioneerMmioBegin runs on simulated PCI bytes;
+the controller subsequently performs72 checked reads+11 writes in this test
+capability layout. Every83 post-access lifetime loss and every read refusal
+is tested,plus metadata/foreign-journal/copied-record/transport mismatches,
+pending/error/MSI/MSI-X/PM/capability-cycle/layout faults and all11 dropped
+writes.2 dropped idempotent original-value writes are harmless and pass exact
+readback;they are NOT mislabeled failures. Every failed case stops following
+IO/retry. Native integration or full END success is NOT supplied by this test.
+Legacy MMIO tests90852/25401 BOTH0 with identical logs;the only change to
+the reused old mock source is a MODEL_ONLY main-function guard.
+
+Publish ONLY the component header,standalone test+runner,shared raw TEST
+endpoint header,reused mock guard and this component evidence. Later native
+state/scopes/capture/factory and full execution qualification remain LOCAL WIP.
+No physical card/Work/Assistant/full-model/speed or host-release claim.

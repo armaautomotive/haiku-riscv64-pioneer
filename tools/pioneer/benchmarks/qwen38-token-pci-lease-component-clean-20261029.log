@@ -1,0 +1,1 @@
+PASS PCI-journal 190 cases/actual simulated Blackhole BEGIN/72 checked closing reads+11 exact ordered writes/every83 post-access lifetime loss+every read refusal/metadata and pending-error-capability mismatches/harmless idempotent drops2/NO following IO/retry/Unmap/host release;endpoint DATA only,NOT native END/hardware/TPS qualification

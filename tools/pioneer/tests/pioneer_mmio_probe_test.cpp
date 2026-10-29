@@ -109,6 +109,7 @@ struct MockIO {
 	}
 };
 
+#ifndef PIONEER_MMIO_PROBE_MODEL_ONLY
 static void Refused(MockIO io)
 {
 	tt_pioneer_mmio_result r;
@@ -196,3 +197,4 @@ int main()
 	io = {}; io.profile.status = -1; Refused(io);
 	io = {}; io.profile.ready = 0; Refused(io);
 }
+#endif
