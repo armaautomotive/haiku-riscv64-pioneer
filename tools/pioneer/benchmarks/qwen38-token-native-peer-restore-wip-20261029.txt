@@ -1,4 +1,19 @@
 Native119-peer NIU/scratch restoration+FIFO candidate:IN PROGRESS,NOT ready
+COMPLETED OLDER D FOLLOW-UP15:57UTC:positive19331/20997 and queued-FIFO
+fault93420/9670 ALL observed terminal0. Full positive logs/prefixes and full
+fault logs respectively match. The SAME genuine original first-layer/cancel/
+ROOT+119STOP/120HOLD/drain/token+dispatch-original history precedes119 exact
+NIU configs+1190 command words+243712 scratch originals/immediate reads+
+full second pass. Independent pre-lease observations match including
+UINT32_MAX. Queued status stops at the first bad observation with no later
+IO/counters/retry/reset/release. ROOT/shared-TLB/master/clock/maps/hosts
+remain owned and Closed stays FALSE. CPU comparisons80975/3716 BOTH0:
+5120 embedding+5120 layer0 values BITEXACT,zero error/differences,NO tolerance.
+This supersedes the historical D LIVE text in the subsequent initializer
+report. These OLDER binaries predate the new native preparation replacement;
+NOT its qualification,other unexecuted fault modes,whole model,END or card
+performance. Last physical0.207893161tok/s;20 unmet. Saved full logs:
+ qwen38-native-peer-restore-{positive,queued-fault,compare}-{main,clean}-20261029.log.
 CURRENT CORRECTION 14:37UTC: six older B/C positive/fault profiles below
 were invalid TEST endpoints and deliberately retired at14:12,ALL terminal1.
 They are NOT still live or passing. New corrected D histories are separate.

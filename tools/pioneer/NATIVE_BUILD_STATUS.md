@@ -1,5 +1,19 @@
 # Native build status
 
+## Completed offline: older119-peer NIU/scratch restoration and queued fault
+
+October29,2026 15:57UTC. Positive D19331/20997 and queued-FIFO D93420/9670
+ALL finish0;corresponding logs/prefixes match. Actual119 original configs,
+1190 command words and243712 scratch words restore and independently match
+pre-lease observations after the SAME genuine firstlayer/cancel/STOP/HOLD/
+drain/token+dispatch restoration. The queued fault retains without following
+IO/counters/retry/reset/release. CPU comparisons80975/3716 BOTH0:5120+5120
+embedding/layer0 BITEXACT. ROOT/sharedTLBs/master/clock/maps/hosts stay owned;
+Closed stays FALSE. These older binaries do NOT qualify the newer local
+native preparation replacement,other faults,full model,END or physical speed.
+Last measured **0.207893161tok/s**,20 unmet.
+[Completed peer-local milestone](benchmarks/qwen38-token-native-peer-restore-wip-20261029.txt).
+
 ## Completed offline: all six native initializer FIFO fault cases
 
 October29,2026 15:12UTC. MainB3036/cleanC69735 BOTH finish0 with identical
