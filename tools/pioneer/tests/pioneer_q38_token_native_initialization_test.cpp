@@ -63,7 +63,18 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  void Pause(){
   if(!bootstrapMode){ZeroControlIO::Pause();return;}
   Touch();clock+=1000;
-  for(unsigned w=1;w<120;w++)if(Core(w).coreReset==0x46800)bootstrapPeer[w-1]->Advance(256);
+  for(unsigned w=1;w<120;w++)if(Core(w).coreReset==0x46800){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
+   // Event scheduling,as in the full instruction fabric:pause the SAME
+   // genuinely booted CPU at its actual WAIT while no doorbell is present.
+   // Do not execute millions of irrelevant idle polls,fast-forward a PC,
+   // copy processor state or invent a worker result. A delivered doorbell
+   // makes this exact CPU runnable again. No wall-clock timing is modeled.
+   if(executionMode && executionCpu->layerActive && bootstrapPeer[w-1]->Idle()
+    && !Raw(w,PioneerQ38GlobalWorkerLayout::Doorbell))continue;
+#endif
+   bootstrapPeer[w-1]->Advance(256);
+  }
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
   if(executionMode && Core(0).coreReset==0x46800){
    executionCpu->Advance(256);

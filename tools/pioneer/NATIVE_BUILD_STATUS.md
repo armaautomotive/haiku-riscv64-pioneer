@@ -1,5 +1,27 @@
 # Native build status
 
+## Current: native layer0 normalization,quantization and first dispatch pass offline
+
+October29,2026 06:00UTC. Main/clean tests now both finish0 with matching
+logs:the SAME full851 owner,119 genuine virgin worker boots and ROOT
+instruction history continue from original embedding through actual
+layer0 metadata transformation,original learned normalization and native
+input packing. All5120 normalized values and all packed operands/scales
+match independent CPU OBSERVERS after execution;none is supplied to ROOT.
+The first valid worker1 matrix job is delivered as raw bytes,and the test
+deliberately holds its actual doorbell packet BEFORE delivery. Fresh native
+observation and cancel REQUEST still pass while that packet is outstanding.
+ROOT54276644 instructions/11369 layer packets/written stack5764 bytes.
+
+This is NOT a worker matrix,completed layer/token,consumed cancel,STOP/END,
+physical card or speed qualification. Earlier A tests reached a HOST-only
+idle-poll watchdog;B had a diagnostic-name compiler error. C corrects only
+TEST scheduling/observation,not firmware or native safety bounds. No
+software was installed. Full119 native tensor-engine integration,all64/
+multitoken/state/token delivery/lifecycle,physical Work+Assistant and
+performance remain owed. Last measured **0.207893161 tokens/sec**;20 unmet.
+Evidence: [native first-dispatch checkpoint](benchmarks/qwen38-token-native-layer-dispatch-20261029.txt).
+
 ## Current: native original embedding and fail-stop observation pass offline
 
 October29,2026. The SAME full851 native owner now runs actual installed
@@ -16,8 +38,12 @@ SDK objects match,with no raw test bridge or CPU-reference/Work route.
 This stops at the first layer0 metadata request,not a completed model layer,
 token,cancel consumption,STOP,END or physical-card qualification. A separate
 new full-scalar-ISA profile continues toward normalization,quantization and
-the first real worker doorbell;its main/clean tests are still RUNNING and
-are not yet a passing result. No Pioneer software was installed. Last
+the first real worker doorbell. Its first main/clean tests terminate at an
+old20M bootstrap-only HOST instruction watchdog while workers still WAIT,
+not a device fault. Revised tests pause the SAME actual waiting CPUs until
+a doorbell arrives and use the existing full-scalar host window;both are
+RUNNING,not yet passing. Firmware/driver bounds are unchanged. No Pioneer
+software was installed. Last
 physical whole-model **0.207893161 tokens/sec**;20 target unmet. Evidence:
 [native embedding checkpoint](benchmarks/qwen38-token-native-embedding-20261029.txt).
 
@@ -155,6 +181,9 @@ Evidence: [native held staging checkpoint](benchmarks/qwen38-token-native-held-2
   NoC traffic;positive/two-fault offline tests,plus earlier four ROOT faults.
 - [x] Native ROOT original embedding arithmetic and verified GDDR publication;
   positive/source-loss/readback-failure offline tests with first-fault IO stop.
+- [x] Native ROOT original layer0 metadata/normalization/native input packing
+  and first valid worker job offline;doorbell response intentionally HELD,
+  no worker matrix/layer/token completion yet.
 - [ ] Extend bootstrap timing/late-fault coverage and validate genuine KV/state
   advancement during native execution.
 - [ ] Complete original-model all64-layer, multitoken, persistent-state,

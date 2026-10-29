@@ -118,6 +118,9 @@ struct TokenStartupRoot:TokenNativeRootISA {
   assert(CodeAddress(address) && !(address&3));l1[8191]=io.Raw(0,address);return 8191;
  }
  unsigned StepLimit()const override{
+#ifdef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
+  return 4000000000U; // same HOST-only scalar window as full-model instruction tests;NO firmware/driver bound changed
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
   if(embedding)return 30000000; // HOST instruction watchdog only;firmware packet polls unchanged
 #endif

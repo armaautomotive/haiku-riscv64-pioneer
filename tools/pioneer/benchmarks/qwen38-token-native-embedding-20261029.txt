@@ -84,3 +84,47 @@ family;BAR0 0x19400000 must NOT be invented as a third2MiB window. Any new
 read-only GDDR token aperture needs a genuinely available existing2MiB
 index,its own source/VM/save/restore lifetime,or another qualified design.
 No new aperture is implemented or exercised by this checkpoint.
+
+05:53UTC follow-up,after the435bfac996 checkpoint was pushed
+----------------------------------------------------------
+Layer-dispatch A main93959/clean69945 are now BOTH terminal1. They each
+complete genuine initialization/worker startup/original embedding,then
+hit the old20M HOST bootstrap-peer instruction watchdog at actual WAIT
+PC20050. This is NOT firmware fault60000,physical failure or a passing
+layer result. Their complete failure logs are retained separately. The
+embedding C positive/two-fault qualification above is unchanged.
+
+The new layer-only scheduler now PAUSES each SAME genuinely booted worker
+at its actual WAIT while its actual doorbell is0. A delivered doorbell
+makes that CPU runnable;no PC/register/history/status/result is copied or
+fast-forwarded. This matches the event scheduling of the full instruction
+fabric and avoids simulating irrelevant busy-wait loops. Wall-clock/cycle
+timing is NOT modeled. The unchanged full scalar ROOT engine uses the same
+4B HOST-only instruction window as the full-model tests,instead of an
+embedding-only30M bound. No native/firmware poll,deadline,source,ownership,
+counter or failure guard changes. HOST metadata diagnostics show progress
+every2M actual ROOT instructions,not completion or a native capability.
+
+Replacement B main69945/clean17047 both terminate1 at compilation:a new
+diagnostic counter reused the existing observer result variable's name.
+It is renamed observedBucket;this is not an execution or device result.
+The numeric handle
+69945 was REUSED by the tool for main B after clean A had terminated;the
+20261029-b.log paths and this new purpose disambiguate them. No live test
+was restarted because it was quiet. Matrix/worker wakeup after actual
+doorbell delivery remains OUT OF SCOPE of this partial test:it still holds
+that first response before delivery and cannot supply a matrix completion.
+
+05:54UTC:replacement C main22126/clean13913 launched after the B compiler
+processes were confirmed terminal. Current logs are
+/private/tmp/pioneer-q38-token-native-layer-dispatch-{main,clean}-20261029-c.log.
+They remain unqualified pending their own terminal results. The9 complete
+model numerical histories were confirmed still LIVE at05:48UTC and were
+not stopped or replaced. The full objective and20tok/s target are unchanged.
+
+06:00UTC:current C22126/13913 BOTH terminal0,byte-identical complete logs:
+actual layer0 metadata+original RMS+native quantization+valid worker1 job,
+first doorbell packet held BEFORE delivery,ROOT54276644 instructions.
+This supersedes the in-progress C snapshot,not its processor history.
+See qwen38-token-native-layer-dispatch-20261029.txt;it is still NOT an
+actual worker matrix,completed layer/token,physical or speed result.

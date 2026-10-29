@@ -1,0 +1,71 @@
+Native original27B layer0 preparation and first-dispatch checkpoint
+2026-10-29 06:00UTC. Goal ACTIVE,20tok/s UNMET. Last measured physical
+whole-model0.207893161tok/s. NO Pioneer/hardware/SSH/power/install/OS/
+Assistant/boot/CPU/RAM/network/SD/mains change or new speed/health claim.
+
+Complete positive evidence,not a completed model layer
+-----------------------------------------------------
+Main22126/clean13913 BOTH terminal0 ASan+UBSan;complete logs byte-identical.
+The SAME native full851 owner executes all1010 actual zero jobs,installs
+the complete120-participant L1 journal,stages4616 metadata packets and
+boots119 virgin QGW1 CPUs. The full scalar ISA interpreter exists from the
+very first virgin ROOT instruction and uses the actual installed L1/CSR
+bytes;no completed processor history or readiness is copied into it.
+
+After genuine original Q4_K embedding and verified GDDR publication,the
+SAME ROOT consumes the actual next layer0 metadata packet,transforms its
+recipes/Conv/GDN metadata and copies the real original normalization
+weights through two raw reads. Its own instructions normalize all5120
+values,quantize the entire native input and submit the first matrix job.
+Actual emulated packets deliver that job to worker1's SAME L1 bytes.
+The next actual doorbell packet is accepted,but its response is HELD
+BEFORE delivery. No worker matrix,nonce advance,completion or product is
+fabricated. All119 CPUs remain at their actual boot-reached WAIT PCs.
+
+Independent observers run ONLY AFTER actual ROOT arithmetic+submission:
+all5120 normalized values match an independent double-sum/sqrt reference
+bit-for-bit;all packed native operands/scales match the separate quantizer.
+The learned bytes come from the authenticated SAME-open original GGUF.
+No CPU embedding,RMS,activation,matrix or ready-state product enters the
+execution byte endpoints. A fresh native call observes the running owner;
+another writes one checked cancel REQUEST while the doorbell packet stays
+pending. Consumed cancellation/worker STOP are NOT proved by this receipt.
+
+ROOT54276644 actual instructions;11369 layer packets,including11305 peer
+reads and3 completed peer writes;written stack5764/8192. This is NOT a
+combined maximum reserved-stack proof or physical timing. OS/VM/GDDR/NoC
+endpoints are SIMULATED. The SDK/production first-PC guard is unchanged
+from435bfac996;that checkpoint's matching SDK objects and six embedding
+positive/fault tests remain the relevant production qualification.
+
+Failed histories and test-only correction preserved
+--------------------------------------------------
+A93959/69945 BOTH terminal1 at actual worker WAIT PC20050:the20M HOST
+bootstrap-only instruction watchdog was exhausted by irrelevant idle
+polls. It was NOT a firmware fault or physical card event. B69945/17047
+BOTH terminal1 during compilation because a new diagnostic counter reused
+an observer result's variable name. C22126/13913 are fresh histories after
+those terminal outcomes,not restarts of quiet/live work.
+
+The layer-only TEST scheduler pauses the SAME genuinely booted CPU at
+its actual WAIT while its actual doorbell is0. A delivered doorbell makes
+it runnable;no PC/register/status/history/result is set or fast-forwarded.
+This is event scheduling,not cycle/wall-clock simulation. Actual worker
+execution after delivery is still unqualified because this test holds
+that first packet. The full scalar ROOT uses the same4B HOST instruction
+window as the full-model instruction tests,not the30M embedding-only cap.
+Firmware/native poll bounds,deadlines,source,ownership,counters and
+failure guards are UNCHANGED. Diagnostic counters do not grant readiness.
+
+Remaining full objective
+------------------------
+Construct all119 full matrix/attention/GDN/Conv instruction engines as
+virgin CPUs on the SAME native L1/CSR backing,then qualify actual native
+worker arithmetic/all64 layers,multitoken/state/KV/vocabulary and token
+delivery. Do NOT replace the completed bootstrap CPUs or copy their PCs,
+registers,private tensor state,nonce,ready flags or completed outputs into
+new engines. Full consumed cancel,terminal/all119STOP,L1+CSR restoration,
+clean END/load-unload/recovery,physical correctness/long conversations,
+no-CPU-reference Work+Assistant and honest sustained optimization toward
+20tok/s remain owed. The9 older full-model numerical histories remain
+live,not full-model acceptance or measured speed results.

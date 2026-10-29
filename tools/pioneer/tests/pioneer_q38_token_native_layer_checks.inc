@@ -10,7 +10,13 @@ static void CheckNativeLayerDispatch(Fixture& f){
  const unsigned hostPackets=io.runtimePackets,resets=io.resets.size();cpu.ResumeLayer();
  {
   PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);
-  for(unsigned round=0;round<120000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;round++)io.Pause();
+  unsigned observedBucket=cpu.steps/2000000;
+  for(unsigned round=0;round<3000000 && !cpu.layerHeld && cpu.pc!=0x60000 && cpu.pc!=0x60004;round++){
+   io.Pause();if(cpu.steps/2000000!=observedBucket){observedBucket=cpu.steps/2000000;
+    printf("OBSERVED native ROOT layer0 pre-dispatch/steps%u pc%x packets%u raw%u peerR%u peerW%u phase%x;NOT matrix/layer/token completion\n",
+     cpu.steps,cpu.pc,cpu.layerPackets,cpu.layerRawReads,cpu.layerPeerReads,cpu.layerPeerWrites,io.Raw(0,R::Status+20));
+   }
+  }
   if(!cpu.layerHeld)fprintf(stderr,"LAYER_DISPATCH_DIAGNOSTIC pc%x steps%u packets%u raw%u peerR%u peerW%u status%x phase%x;NO completion supplied\n",
    cpu.pc,cpu.steps,cpu.layerPackets,cpu.layerRawReads,cpu.layerPeerReads,cpu.layerPeerWrites,io.Raw(0,R::Status+8),io.Raw(0,R::Status+20));
   assert(cpu.layerHeld && cpu.dispatchWorker && io.Core(0).pending && cpu.submitted==cpu.completed+1
