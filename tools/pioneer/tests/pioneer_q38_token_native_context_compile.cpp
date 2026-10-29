@@ -91,6 +91,9 @@ extern "C" bool pioneer_token_context_scoped_root_store_restore(PioneerProbeCook
 extern "C" bool pioneer_token_context_scoped_shared_tlb_restore(PioneerProbeCookie* cookie,PioneerQ38TokenSharedTlbRestoreResult& result){
  PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();return c && RestoreQ38TokenNativeSharedMappings(*c,result);
 } // original shared control words only;clock/VM/hosts/END retained
+extern "C" bool pioneer_token_context_scoped_clock_end(PioneerProbeCookie* cookie,PioneerQ38TokenClockResult& result){
+ PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();return c && EndQ38TokenNativeClock(*c,result);
+} // actual normal clock service only;master/bulk/modelVM/hosts/END retained
 extern "C" void pioneer_token_context_destroy_clean(PioneerStoreContext* c){delete c;}
 
 // Independent inert controls, separate from the renamed actual driver bodies.

@@ -57,6 +57,14 @@ bool PioneerSessionIO::TokenSharedTlbScope(){
  return !runtimeCore && s && s->phase==PioneerQ38TokenNativeState::SharedTlbRestoring && s->runtime
   && s->runtime->RootStoreOriginalsRestored() && TokenModelSourceScope(false) && TokenMemoryMappingStable(0);
 } // CPU ownership+retained VM checks ONLY;never dereference a changed L1/NIU route
+bool PioneerSessionIO::TokenClockReceiptScope(){
+ auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;
+ if(runtimeCore || !s || s->phase!=PioneerQ38TokenNativeState::ClockEnding || !s->clockEndAttempted || s->clockEnded
+  || !s->runtime || !s->runtime->SharedMappingsRestored() || !TokenModelSourceScope(false) || c->q38Clock.RequiresExplicitEnd())return false;
+ const auto& clock=c->q38Clock.Snapshot();
+ return clock.state==TT_ARC_CLOCK_RESTORED && clock.restored && clock.idle_acknowledged
+  && clock.after_mhz==clock.before_mhz && clock.after_mode==clock.before_mode && TokenMemoryMappingStable(0);
+} // clock service RETURNED/actual private lease ended;direct original-map readback only
 bool PioneerSessionIO::TokenMemoryScope(const PioneerQ38TokenMemory& memory,const PioneerQ38CanonicalModelPlan& canonical,
  const PioneerQ38TokenStartupPlan& startup,const PioneerQ38GdnIdentity& id,const uint8_t* learned,unsigned pages){
  auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;

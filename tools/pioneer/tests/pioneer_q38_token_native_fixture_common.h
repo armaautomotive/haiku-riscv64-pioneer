@@ -42,7 +42,8 @@ struct MockForeignOwner:MockLease {
 struct MockFleet {MockLease compute,store,noc;MockLease& Compute(){return compute;}MockLease& Store(){return store;}};
 struct MockCohort {bool unsafe=false;struct Node{MockLease noc,image,store;MockLease& Store(){return store;}}worker[120];};
 struct MockClock {
- struct Value{uint32 state=TT_ARC_CLOCK_BUSY_VERIFIED,busy_requested=1,busy_acknowledged=1,restored=0,busy_mhz=1400;}value;
+ struct Value{uint32 version=1,state=TT_ARC_CLOCK_BUSY_VERIFIED,busy_requested=1,busy_acknowledged=1,restored=0,busy_mhz=1400;
+  uint32 before_mhz=800,before_mode=3,busy_mode=3,after_mhz=0,after_mode=0,idle_acknowledged=0,recovery_required=0;}value;
  bool required=true,quarantined=false;
  bool Unsafe()const{return quarantined;}
  bool RequiresExplicitEnd()const{return required;}

@@ -1655,7 +1655,13 @@ struct PioneerArcQueryIO : PioneerTelemetryIO {
 // Only private clock transport uses this adapter. Map creates VIRTUAL
 // views; Unmap deletes VIRTUAL views ONLY. Never inherit diagnostic ARC
 // rollback, which is forbidden after a Q38 ownership/completion fault.
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
+#include "PioneerQ38ClockScopeGuard.h"
+#endif
 struct PioneerQ38ClockIO : PioneerArcQueryIO {
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
+#include "PioneerQ38TokenClockIO.inc"
+#endif
 	PioneerQ38ClockIO(const tt_pioneer_profile& p,tt_arc_scratch_result& a,
 		tt_arc_telemetry_result& t,tt_arc_queue_result& unused)
 		:PioneerArcQueryIO(p,a,t,unused) {}
@@ -1663,9 +1669,15 @@ struct PioneerQ38ClockIO : PioneerArcQueryIO {
 	bool Unmap() {
 		area_id* views[]={&queueWriteArea,&msiArea,&csmArea,&scratchArea,&tlbArea,&area};
 		for (auto* view:views) if (*view>=B_OK) {
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
+   if(!tokenClockGuard.Check())return false;
+#endif
 			if (delete_area(*view)!=B_OK) return false; // no second disposal attempt
 			*view=-1;
 		}
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
+  if(!tokenClockGuard.Check())return false;
+#endif
 		queueWrite=msi=NULL; csm=scratch=nodeID=NULL; tlb=NULL;
 		return true;
 	}
@@ -3935,6 +3947,7 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 #include "PioneerQ38TokenNativeHeld.inc"
 #include "PioneerQ38TokenNativeRuntime.inc"
 #include "PioneerQ38TokenNativeExecution.inc"
+#include "PioneerQ38TokenNativeClock.inc"
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 // PIONEER_Q38_STATE_ZERO_NATIVE_ADAPTER_BEGIN
 // Private native adapter,selected ONLY by the separate fixed zero diagnostic

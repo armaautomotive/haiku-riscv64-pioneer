@@ -1,0 +1,3 @@
+PASS ACTUAL native clock begin/finish helpers: same bank identity/full120-held/quiet-DMA/pristine scope BEFORE any IO;open span/dispatch/unknown forbid IDLE/disposal;explicit proven-clean end only;OFFLINE NOT native authority
+PASS ACTUAL native clock Unmap:virtual views ONLY,single attempt,first failed deletion stops,NO inherited hardware cleanup/TLB writes/ARC messages
+Actual native-clock helper evidence retained at /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q38-clock-service.rODrmW98

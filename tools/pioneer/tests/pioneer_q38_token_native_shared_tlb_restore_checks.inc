@@ -13,6 +13,9 @@
  || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE) || defined(PIONEER_Q38_WORK_INFERENCE)
 #error Explicit native ROOT-preceded shared-mapping restoration TEST required
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE
+#include "pioneer_q38_token_native_clock_checks.inc"
+#endif
 static void CheckNativeSharedTlbRestore(Fixture& f){
  auto& c=*f.c;auto& io=f.io;auto* state=c.q38TokenNative;
  assert(!lockHeld && state->RootStoreOriginalsRestored() && !state->SharedMappingsRestored()
@@ -54,4 +57,7 @@ static void CheckNativeSharedTlbRestore(Fixture& f){
   && !io.PageMock::releases && !io.OutputBufferMock::releases);
  if(io.sharedTlbFault)printf("EXECUTED native shared200/201 restore fault%u/actual full predecessor through ROOT originals/first real mapping-write or readback uncertainty/NO following IO/NO mapped alias after first attempted change;ALL owners retained,NO END/physical/Work/TPS grant\n",io.sharedTlbFault);
  else puts("EXECUTED native SAME full851/original firstlayer+cancel/STOP/HOLD/drain/token+dispatch+119peer+ROOT originals/ALL120 current held proofs/8192 bulk originals verified/6 exact pre-master-lease shared control originals+immediate reads+secondpass/9 actual post-first-write alias API refusals/NO subsequent mapped-source alias access;clock/master.ready/bulk/VM/hosts STILL OWNED,NO END/physical/Work/TPS grant");
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE
+ if(!io.sharedTlbFault)CheckNativeClockEnd(f);
+#endif
 }

@@ -1,0 +1,51 @@
+Native normal-clock END:COMPLETED OFFLINE CHECKPOINT,NOT full driver END
+2026-10-29 19:59UTC. Goal ACTIVE;20tok/s UNMET.
+Last physical whole-model result remains0.207893161 tokens/sec.
+
+Qualified source is the EARLIER32-file clock snapshot from
+/private/tmp/pioneer-q38-token-clock-clean.PXPfp6OD.
+It is NOT the later local hardware-seal/VM/PCI/host/unreserve/full-END code.
+The later working tree is retained separately;only the exact earlier
+clock-source bytes are promoted by this checkpoint.
+
+Positive67328/76346 and first-clock-write-generation-fault81730/11413 ALL
+observed terminal0. Corresponding full logs and output prefixes match.
+Each executes actual1010 zero-initializer jobs/new120 preparations/held
+journal/4616 metadata packets/119 virgin worker engines/original first
+layer/consumed cancellation/ROOT+119 STOP/120 HOLD/zero-record drain/token+
+dispatch+119peer+ROOT+shared-original restoration BEFORE clock END.
+
+The native factory derives SAME private FD/team/thread/generation/bank/
+host/held-original authority and a monotonic deadline before binding the
+one-shot per-access ARC guard. Actual ClockLease+normal-clock+strict queue
+perform1350->800 using2 simulated firmware messages and6 clock-view-only
+OS deletions. Six direct shared-original control readbacks follow the
+service return,then transport seals. No mapped model alias is reused.
+Generation loss AFTER the first actual ARC-window write stops all later
+clock/model IO and retains every remaining owner,without retry/reset/repair.
+Response/first-view-delete modes exist but these four histories do NOT
+qualify them. Standalone18-case transport tests are separate bounded proof.
+
+Posthoc CPU comparisons94295/36409/93132/45980 ALL terminal0. Every5120
+embedding+5120 first-layer word is BIT-EXACT against pinned independent CPU
+traces;zero tolerance/relative error. These comparisons run AFTER native
+history completion;CPU products are NEVER supplied to native execution.
+They do NOT qualify all64 layers,state/KV progression,generated tokens or
+the whole vocabulary/normal+EOS terminal paths.
+
+SDK B98424/31689 BOTH0,actual objects identical:
+6e59649c50c79dd1885d355386ef3561246748f32e15ad4a830ae81315d9272c
+Factory160B/scope48B/post-return verifier128B/read alias48B/raw wrappers
+32..64B;individual frames,NOT combined kernel stack qualification. Old65
+unchanged61faa093;renamed5 conventional entries independently inert.
+Actual adapter IO95572/9519 BOTH0:18 cases. Pending-owner contract61383/
+73079 BOTH0. Roles47293/23756 BOTH0:20 explicit TEST roles/391 refusals.
+Corresponding IO/contract/role logs match. Legacy23248/9659 BOTH0;only
+temporary path lines differ,not falsely claimed whole-log byte-identical.
+
+Master.ready/bulk.ready/model VM aliases/host pages/model reservations and
+CPU journals remain OWNED;Closed stays FALSE. No native full END/unload/
+reuse/public ABI/Work/Assistant/hardware/throughput permission follows.
+Do not promote the later local candidate with this older snapshot's proof.
+Dirty llama.cpp/unrelated FlashNext sources were excluded from all source
+promotion. No Pioneer/SSH/power/install/OS/network/SD/mains/health action.

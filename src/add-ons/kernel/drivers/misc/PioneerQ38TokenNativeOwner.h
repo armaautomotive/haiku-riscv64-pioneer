@@ -55,6 +55,10 @@ struct PioneerQ38TokenSharedTlbRestoreResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,restoredWords=0;
  uint32_t verifiedWords=0,bulkWords=0,firstPC=0,secondPC=0,reserved[4]={};
 };
+struct PioneerQ38TokenClockResult {
+ uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,messages=0;
+ uint32_t beforeMHz=0,afterMHz=0,tlbWords=0,firstPC=0,secondPC=0,reserved[3]={};
+};
 class PioneerQ38TokenNativeOwner {
  const tt_dram_samples_result* proof=nullptr;PioneerResidentBanks* banks=nullptr;PioneerQ38DispatchLease* cohort=nullptr;
  PioneerQ38TokenMemory* memory=nullptr;const PioneerQ38CanonicalModelPlan* canonical=nullptr;
@@ -252,6 +256,14 @@ public:
  bool RootStoreOriginalsRestored()const{return rootStoreRestored && !rootStoreClosing && PeerStoresRestored();}
  bool SharedMappingsChanged()const{return sharedTlbChanged;} // CPU-only alias veto,NOT completion authority
  bool SharedMappingsRestored()const{return sharedTlbRestored && !sharedTlbClosing && RootStoreOriginalsRestored();}
+ template<class IO> bool VerifyClockReturnMappings(IO& io){
+  if(!SharedMappingsRestored() || !Scope(io))return false;
+  for(unsigned s=0;s<2;s++)for(unsigned i=0;i<3;i++){
+   uint32_t actual=0;
+   if(!Scope(io) || !io.TokenClockTlbReadChecked(s,i,actual) || actual!=masterTlb[s][i])return false;
+  }
+  return Scope(io);
+ } // direct control readback ONLY after the SAME normal clock service ended
  bool DispatchOutput(const void* output,size_t bytes)const{
   const uintptr_t out=reinterpret_cast<uintptr_t>(output);
   const size_t savedBytes=(size_t(TT_Q38_PANEL_VIEW_WORDS)+1)*4;
@@ -1066,5 +1078,6 @@ static_assert(sizeof(PioneerQ38TokenDispatchRestoreResult)==64,"all dispatch-res
 static_assert(sizeof(PioneerQ38TokenPeerRestoreResult)==64,"all peer-restoration result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenRootStoreRestoreResult)==64,"all ROOT-store result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenSharedTlbRestoreResult)==64,"all shared-TLB result bytes explicit");
+static_assert(sizeof(PioneerQ38TokenClockResult)==64,"all native clock result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenNativeOwner)>16384 && sizeof(PioneerQ38TokenNativeOwner)<32768,"native owner staging buffer HEAP ONLY");
 #endif
