@@ -1,0 +1,39 @@
+Wired-host lifetime journal:OFFLINE COMPONENT CHECKPOINT ONLY
+2026-10-29 19:54UTC. Goal ACTIVE;20tok/s UNMET.
+Last physical whole-model result remains0.207893161 tokens/sec.
+
+The noncopyable journal captures SAME private input/bulk/wide lease objects,
+original VM handles,virtual pointers and physical addresses BEFORE launch.
+It excludes overlapping virtual/physical buffers and changed/pending/failed
+metadata. Closure additionally requires the SAME29-view device journal to
+be completely closed. It permits exactly wide->bulk->input,one OS attempt
+per owner. Successful deletion is recorded BEFORE a subsequent eligibility
+check,so a post-delete failure cannot lose the known released prefix.
+First uncertainty stops all following release calls;no retry or repair.
+
+View-journal additions expose original host IDs and device-only closure.
+The existing strict Matches STILL requires all original host handles;it is
+NOT widened to turn device closure into host-release or full-END authority.
+
+Main4750/clean38770 BOTH terminal0:118 host cases,paired logs identical.
+Main61442/clean92483 BOTH terminal0:183 VM cases,paired logs identical.
+ASan+UBSan/Wall+Wextra+Werror;real journal/controller bodies with SIMULATED
+eligibility and OS endpoints. Tests include all3 release failures and each
+post-success eligibility loss/metadata mutation;all29 device reappearances;
+foreign journals/lease copies;changed pointers/addresses/handles/metadata;
+no release before device closure or after uncertainty/completion.
+
+Independent clean tree:/private/tmp/pioneer-q38-native-host-mapping-clean.1vM1uSU8
+Archived854d247805,overlaid59 explicitly owned files and cmp-verified ALL59
+BEFORE these final F tests. No dirty llama.cpp or unrelated FlashNext source
+was read,built or staged. Native production bytes also match the separate
+immutable C runtime trees;only3 TEST source files differ for expanded data
+checks and missing mapping-fixture type imports.
+
+Published scope is this COMPONENT and its view-journal accessors/tests ONLY.
+The new actual native capture/host-close/checked-unreserve/locked-context
+disposal wiring remains LOCAL WIP,not promoted by these DATA tests. Its
+genuine full-predecessor positive/fault/load-unload histories are separate
+running tests,NOT passing results. No public ABI/Work/Assistant/full model,
+hardware recovery,physical speed or current Pioneer health claim follows.
+No Pioneer/SSH/power/install/OS/network/SD/mains action in this checkpoint.

@@ -31,12 +31,17 @@ int main(){
  {
   IO io;PioneerQ38TokenViewLease foreign;
   assert(!foreign.Bind(io) && foreign.Pristine() && io.lease.Bind(io) && !foreign.Close(io)
-   && io.lease.Prepared() && !foreign.Matches(io) && io.calls.empty());cases++;
+   && io.lease.Prepared() && !foreign.Matches(io) && !foreign.DeviceClosureMatches(io) && io.calls.empty());cases++;
  }
  {
   IO io;assert(io.lease.Pristine() && !io.lease.Matches(io) && !io.lease.Close(io));
+  for(unsigned i=0;i<3;i++)assert(io.lease.OriginalHost(i)==-1);
+  assert(!io.lease.DeviceClosureMatches(io));
   assert(io.lease.Bind(io) && io.lease.Prepared() && !io.lease.Bind(io));
+  for(unsigned i=0;i<3;i++)assert(io.lease.OriginalHost(i)==io.hosts[i]);
+  assert(io.lease.OriginalHost(3)==-1 && io.lease.OriginalHost(UINT32_MAX)==-1 && !io.lease.DeviceClosureMatches(io));
   assert(io.lease.Close(io) && io.lease.Complete() && io.lease.Deleted()==29 && io.calls.size()==29 && io.lease.Matches(io));
+  assert(io.lease.DeviceClosureMatches(io));
   for(auto view:io.views)assert(view==-1);
   for(unsigned i=0;i<29;i++)assert(io.calls[i]==int32_t(200+i));
   assert(!io.lease.Close(io) && io.calls.size()==29);cases++;
@@ -67,5 +72,10 @@ int main(){
   IO io;assert(io.lease.Bind(io));io.views[index]=bad;
   assert(!io.lease.Matches(io) && !io.lease.Close(io) && io.calls.empty());cases++;
  }
- printf("PASS VM-handle journal %u cases:SAME private journal identity/prelaunch captured manifest/all29+sparse aliases/58 replaced-or-lost-handle refusals/each29 delete failures+post-delete eligibility loss+host mutation/whole-set duplicate+host+invalid preflight/NO following syscall or retry;OS endpoint DATA only,not native END or hardware qualification\n",cases);
+ for(unsigned index=0;index<29;index++){
+  IO io;assert(io.lease.Bind(io) && io.lease.Close(io) && io.lease.DeviceClosureMatches(io));
+  io.hosts[2]=-1;assert(!io.lease.Matches(io) && io.lease.DeviceClosureMatches(io)); // host lifecycle is NOT granted
+  io.views[index]=777;assert(!io.lease.DeviceClosureMatches(io) && !io.lease.Close(io) && io.calls.size()==29);cases++;
+ }
+ printf("PASS VM-handle journal %u cases:SAME private journal identity/prelaunch captured manifest/all29+sparse aliases/58 replaced-or-lost-handle refusals/each29 delete failures+post-delete eligibility loss+host mutation/29 post-close device reappearance refusals/original-host IDs persist but strict retained-host Matches is NOT widened/whole-set duplicate+host+invalid preflight/NO following syscall or retry;OS endpoint DATA only,not native END or hardware qualification\n",cases);
 }

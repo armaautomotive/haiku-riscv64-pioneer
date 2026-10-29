@@ -19,6 +19,12 @@ public:
  bool Complete()const{return attempted && complete && !failed && cursor==Count;}
  bool Failed()const{return failed;}
  unsigned Deleted()const{return deleted;}
+ int32_t OriginalHost(unsigned i)const{return bound && !failed && i<3?host[i]:-1;}
+ template<class IO> bool DeviceClosureMatches(IO& io)const{
+  if(!Complete() || !io.TokenViewLeaseIdentity(*this))return false;
+  for(unsigned i=0;i<Count;i++){const auto* view=io.TokenViewHandle(i);if(!view || *view!=-1)return false;}
+  return true; // device aliases ONLY;never host ownership or release authority
+ }
  template<class IO> bool Matches(IO& io)const{
   if(!bound || failed || cursor>Count || !io.TokenViewLeaseIdentity(*this))return false;
   for(unsigned i=0;i<3;i++)if(host[i]<0 || io.TokenHostView(i)!=host[i])return false;
