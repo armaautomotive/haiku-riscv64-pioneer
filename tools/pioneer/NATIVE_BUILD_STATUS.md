@@ -1,5 +1,39 @@
 # Native build status
 
+## In progress: worker-local NIU/scratch restoration and explicit FIFO drain
+
+October29,2026 13:58UTC. A distinct private stage restores119 original NIU
+configs/1190 inert command words/243712 scratch words only AFTER genuine
+token+dispatch restoration. It retains ROOT/shared TLBs/master/clock/maps/
+hosts and never grants END. Selection checks each fixed mapping write.
+Saved scratch pointers/configs are captured before launch and protected
+against output aliases. Source expectations follow only known config writes.
+
+The official Blackhole FIFO contract exposed a missing drain check:command
+status/outstanding counters alone cannot prove an enabled FIFO empty. New
+scoped fixed reads check all4 FIFO availability bytes and overflow BEFORE
+HOLD/restoration counter receipts. Earlier initializer/bootstrap FIFO audit
+is STILL OWED;this is not hardware-ready. Current SDK C86658/39927 BOTH0,
+objects matchd1d68a8d,max new frame1728<=2048,old65/all5 inert entries unchanged.
+Isolated FIFO DATA/read-order tests pass5275 cases in both trees. Roles pass
+16/243. Pending B11717/12211 BOTH0,logs identical,including17 new refusals,
+360 saved-scratch aliases and84 API/phase/range refusals;B predates FIFO C.
+Current C pending/positive/FIFO-fault tests are LIVE,not passing. Last physical
+**0.207893161 tokens/sec**,20 unmet. Evidence:
+[peer-local restoration and FIFO candidate](benchmarks/qwen38-token-native-peer-restore-wip-20261029.txt).
+
+## Completed offline: older full original-L1 restoration and write-then-fault
+
+October29,2026 13:54UTC. Original-L1 C38721/14981 and generation-loss
+C24735/75205 all finish0. Positive/fault log pairs match,as do positive
+prefixes. All11406906 original words restore and independently match the
+separately observed simulated L1 preimage;after an original write then generation loss,no
+later IO/retry/release occurs. Independent original CPU comparisons7815/
+59005 BOTH0:5120 embedding+5120 layer0 values BITEXACT,no tolerance. These
+older binaries predate current captured-store/peer/FIFO changes and grant
+neither them,whole-model correctness,END nor physical readiness. Evidence:
+[completed original-L1 milestone](benchmarks/qwen38-token-native-restore-wip-20261029.txt).
+
 ## In progress: distinct earlier-dispatch image restoration
 
 October29,2026 12:54UTC. The SAME launched owner now captures the120 private

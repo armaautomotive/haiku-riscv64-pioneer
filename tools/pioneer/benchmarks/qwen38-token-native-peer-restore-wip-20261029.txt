@@ -1,0 +1,124 @@
+Native119-peer NIU/scratch restoration+FIFO candidate:IN PROGRESS,NOT ready
+2026-10-29 13:58UTC. Goal ACTIVE;20 tokens/sec remains UNMET.
+Last completed physical whole-model measurement:0.207893161 tokens/sec.
+No Pioneer/SSH/power/install/OS/Assistant/boot/CPU/RAM/network/SD/hardware-
+connection/mains changes. No physical-health or speed improvement claim.
+
+Implemented distinct local closure,NOT full END
+-----------------------------------------------
+RestoreQ38TokenNativePeerStores requires the SAME genuinely token-L1 and
+earlier-dispatch-restored full851 owner. No clean/STOP/original/ready/counter
+capability is accepted from a caller. Original store scratch-buffer identities
+and full NIU configurations are captured during real PrepareHeldRuntime,
+before launch. Both original-buffer families must be disjoint and remain
+protected from execution/readout/result output aliases. Public store config/
+pointer/ready fields must match the private original/progress journal.
+
+All120 held/source/idle/current-counter guards precede the first restore.
+Descending119..1,each worker receives its10 known original ZERO command
+words,exact original config and all2048 original scratch words. Every write
+has immediate exact readback;all scratch words get a second complete pass.
+Current counters never rebase. Source expectations change only for this
+owner's known original-config write,not by reading/adopting arbitrary values.
+Any uncertainty retains/quarantines all owners with no later IO/retry/repair.
+A monotonic5-minute participant-boundary limit applies.
+
+New exact checked selection uses only the existing200/201 mappings. It
+checks EACH known mapping write before another write or alias access and
+retains on the first bad readback. Local closure seals119 NIU/scratch leases
+only after exact proof. Shared global mappings are NOT independently restored
+per worker;their final restoration remains with the ROOT/master owner.
+No peer tlb_restored flag is falsely published. ROOT's NIU/config/commands/
+scratch/lease,shared mappings,clock and hosts remain owned. Closed() stays
+FALSE;legacy END/held-close never becomes authorized. No public Work route.
+
+Hardware-contract correction:explicit FIFO drain
+-------------------------------------------------
+Official Blackhole documentation identifies bit16 of NIU_CFG_0 as request-
+FIFO enable,distinct from bit14 coordinate translation. A zero command busy
+bit and zero outstanding counters can coexist with queued requests. The new
+read-only guard requires all4 FIFO availability bytes empty,then checks
+overflow,before issuing counter reads for HOLD/restoration and peer closure.
+It never clears counters or starts a request. The native-only raw backend
+reads exactly0x64/0x68;old MMIO whitelists remain unchanged. Source:
+ https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md#niu-request-fifos
+
+Earlier generic initializer/bootstrap FIFO auditing remains REQUIRED before
+hardware readiness. This current guard is not a claim that the entire old
+initialization chain is already FIFO-qualified. The synchronous TEST NoC
+endpoint has no queued request storage;its availability observation derives
+from that endpoint and actual config,not a supplied native STOP/clean flag.
+Dedicated queued/overflow fault modes inject bad observed status ONLY after
+the genuine predecessor history,not an invented ready/history/product.
+
+Completed independent compile/DATA/refusal evidence
+-----------------------------------------------------
+Current SDK C main86658/clean39927 BOTH terminal0;objects byte-identical:
+ d1d68a8d5fc385c22e93d661f793e85d8f23857e7bd0fdb27fa649ac2d91a0e5.
+Actual peer factory/controller/checked selection+NIU+scratch+FIFO bodies are
+emitted. Max new frame1728<=unchanged2048;old65 stays61faa093;all5 conventional
+driver entries remain independently inert. No CPU-reference,Work or fixture
+implementation is imported. Earlier main A63512 and main/clean B84377/75195
+also0 with matchingB3e53875c objects,but predate this explicit FIFO guard.
+They are not retagged as current C. Saved current SDK logs:
+ qwen38-native-peer-restore-fifo-sdk-{main,clean}-20261029.log.
+Earlier B SDK logs qwen38-native-peer-restore-sdk-{main,clean}-20261029.log.
+
+Main/clean isolated ASan+UBSan FIFO DATA/read-order tests both run0:5275
+cases across all4 byte positions,disabled values,overflow bits and access
+failures. First bad availability stops before overflow;these tests grant no
+native ownership/HOLD/restoration/hardware permission. Logs are identical:
+ qwen38-token-fifo-{main,clean}-20261029.log.
+Main compile60707 and runC0;clean compile71730 and later runD0. An initial
+clean run was attempted before its compiler finished and ended127;that
+failure logC is preserved in /private/tmp. D runs ONLY after actual compile0.
+No source guard was relaxed. Likewise initial clean-overlay copies raced
+archive66099 and failed;all21 owned source files were re-overlaid AFTER
+archive terminal0 and BEFORE any clean qualification. No partial export is
+claimed independent. Clean /private/tmp/pioneer-q38-peer-restore-clean.KpBK7Ywz.
+
+Role B main80229/clean40050 BOTH0;logs identical:16 exact TEST roles/243
+absent+zero+two+kernel+device+Work refusals. New peer fragment requires all9
+parents and excludes full-flow/Work even if defined0. Saved
+ qwen38-native-peer-restore-roles-{main,clean}-20261029.log.
+
+Pending B main11717/clean12211 BOTH0;logs identical. Actual1010 zero jobs,
+4616 metadata packets,119 virgin boots14744576 and ROOT startup5137 precede
+17 peer-restorer pending/non-pristine refusals,360 original-store aliases
+and84 selection/NIU/scratch phase/range refusals with unchanged outputs/no IO.
+Prior dispatch360+48/readout21/HOLD17/full-L1+dispatch17 refusal cases still
+pass. B predates explicit FIFO C and is not positive restoration or C guard
+qualification. Earlier main A53221 also0 but predates the new17/360/84 cases.
+Saved qwen38-native-peer-restore-pending-{main,clean}-20261029.log.
+
+Current genuine qualifications:LIVE,not passing
+-------------------------------------------------
+C pending main48104/clean13748 remain LIVE. Positive C59750/20094
+(--execution-restore-peers) and queued-FIFO fault C5399/90772
+(--execution-restore-peers-fifo-fault) are LIVE13:55UTC. The SAME original
+model/full851 native owner/1010 zero jobs/119 virgin engines must execute
+original layer0,consume cancellation,actually STOP and HOLD all120,drain the
+zero frontier,restore all token+dispatch originals,then invoke the new peer
+controller in a fresh native FD scope. Successful local completion must
+independently match all243712 pre-lease physical scratch words and119 original
+configs,including UINT32_MAX,without reset/NoC requests/master/host release.
+
+Other implemented modes inject generation loss AFTER an actual NIU write,
+the first bad read after an actual mapping write,config/scratch bad readbacks
+and sticky overflow. They are compiled but not yet dispatched. New FIFO-fault
+mode must stop on the first bad observed FIFO value,retain ownership and do
+no later IO/counter read/retry/release. These requirements are NOT passes.
+
+Older positive B88486/30117 remain valid independent running histories but
+predate FIFO C. Do not restart or retag them. Current logs:
+ /private/tmp/pioneer-q38-peer-restore-{empty,fifo-fault}-{main,clean}-20261029-c.log
+Prefixes same names ending -c-prefix.bin.
+
+Remaining complete objective,unchanged
+---------------------------------------
+Current positive/FIFO+other fault and earlier initializer FIFO qualification;
+full64-layer/multitoken/state/KV/vocabulary/normal+EOS numerical+terminal
+proof;qualified ROOT/child/master/shared-TLB/clock/map/host closure and clean
+END/load-unload/reuse;native performance-image/Work/Assistant integration;
+physical repeated/long-context generation and sustained optimization toward
+20 tokens/sec. Preserve SD-free boot,64 CPUs,full RAM and valid histories.

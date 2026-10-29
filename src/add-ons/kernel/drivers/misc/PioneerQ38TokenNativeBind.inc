@@ -49,7 +49,8 @@ bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
    || state->phase==PioneerQ38TokenNativeState::RootStarting || state->phase==PioneerQ38TokenNativeState::RootRunning
    || state->phase==PioneerQ38TokenNativeState::RootHolding || state->phase==PioneerQ38TokenNativeState::RootHeld
    || state->phase==PioneerQ38TokenNativeState::RootRestoring || state->phase==PioneerQ38TokenNativeState::RootRestored
-   || state->phase==PioneerQ38TokenNativeState::DispatchRestoring || state->phase==PioneerQ38TokenNativeState::DispatchRestored)
+   || state->phase==PioneerQ38TokenNativeState::DispatchRestoring || state->phase==PioneerQ38TokenNativeState::DispatchRestored
+   || state->phase==PioneerQ38TokenNativeState::PeerStoresRestoring || state->phase==PioneerQ38TokenNativeState::PeerStoresRestored)
    && !state->ControlsCohort(d))return false;
   if(state->runtime && state->phase<PioneerQ38TokenNativeState::RuntimePreparing)return false;
   if(state->runtime && state->phase>=PioneerQ38TokenNativeState::MemoryClosing

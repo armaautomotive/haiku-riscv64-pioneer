@@ -11,7 +11,10 @@ import tempfile
 
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 readout_flow = len(sys.argv) == 7 and sys.argv[2] == '--execution-readout-full-flow'
-restore_dispatch = len(sys.argv) == 7 and sys.argv[2] in ('--execution-restore-dispatch','--execution-restore-dispatch-fault')
+restore_peers = len(sys.argv) == 7 and sys.argv[2] in ('--execution-restore-peers','--execution-restore-peers-fault',
+    '--execution-restore-peers-map-fault','--execution-restore-peers-config-fault','--execution-restore-peers-scratch-fault',
+    '--execution-restore-peers-fifo-fault','--execution-restore-peers-overflow-fault')
+restore_dispatch = restore_peers or len(sys.argv) == 7 and sys.argv[2] in ('--execution-restore-dispatch','--execution-restore-dispatch-fault')
 restore_empty = restore_dispatch or len(sys.argv) == 7 and sys.argv[2] in ('--execution-restore-empty','--execution-restore-empty-fault')
 readout_empty = restore_empty or len(sys.argv) == 7 and sys.argv[2] == '--execution-readout-empty'
 full_flow = readout_flow or len(sys.argv) == 7 and sys.argv[2] == '--execution-full-flow'
@@ -85,6 +88,8 @@ if restore_empty:
     defines['PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE'] = '1'
 if restore_dispatch:
     defines['PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE'] = '1'
+if restore_peers:
+    defines['PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE'] = '1'
 if readout_flow:
     defines['PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE'] = '1'
 if full_flow:

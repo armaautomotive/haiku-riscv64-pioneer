@@ -93,6 +93,12 @@ static void CheckNativeExecution(Fixture& f){
    }
    assert(!RestoreQ38TokenNativeDispatchImages(c,dispatch) && io.touches==beforeHold && !state->DispatchImagesRestored());
    puts("PASS native earlier-dispatch L1 restoration refuses pending ROOT and16 non-pristine results without IO/no original or clean-state hint");
+   PioneerQ38TokenPeerRestoreResult peer;const auto pristinePeer=peer;auto* peerWords=reinterpret_cast<uint32*>(&peer);
+   for(unsigned i=0;i<16;i++){
+    peerWords[i]^=1;assert(!RestoreQ38TokenNativePeerStores(c,peer) && io.touches==beforeHold);peer=pristinePeer;
+   }
+   assert(!RestoreQ38TokenNativePeerStores(c,peer) && io.touches==beforeHold && !state->PeerStoreOriginalsRestored());
+   puts("PASS native119-peer local NIU+scratch restore refuses pending ROOT and16 non-pristine results without IO/no caller original/clean capability");
    for(unsigned w=0;w<120;w++){
     const uint32_t* original=io.Core(w).Q38PanelSavedWords();assert(original);
     for(unsigned offset:{0U,1U,unsigned(TT_Q38_PANEL_VIEW_WORDS)})
@@ -104,6 +110,18 @@ static void CheckNativeExecution(Fixture& f){
      && !io.TokenDispatchImageWrite(w,address,0x2468ace0) && io.touches==beforeHold);
    }
    puts("PASS native execution outputs exclude ALL120 earlier saved dispatch buffers/360 alias refusals and48 phase-or-range checked alias refusals preserve output with NO IO;NOT cleanup authority");
+   for(unsigned w=0;w<120;w++)for(unsigned offset:{0U,1U,2047U})
+    assert(!Q38TokenExecutionOutput(c,c.q38Dispatch->worker[w].Store().saved+offset,sizeof(peer)) && io.touches==beforeHold);
+   for(unsigned w:{0U,1U,119U,120U}){
+    assert(!io.TokenPeerStoreSelect(w) && io.touches==beforeHold);
+    for(uint32_t address:{0U,36U,40U,0x100U,0x104U,0xffffffffU})
+     assert(!io.TokenPeerNiuReadChecked(w,address,aliasValue) && aliasValue==0x13579bdf
+      && !io.TokenPeerNiuWrite(w,address,0x2468ace0) && io.touches==beforeHold);
+    for(unsigned index:{0U,2047U,2048U,0xffffffffU})
+     assert(!io.TokenPeerScratchReadChecked(w,index,aliasValue) && aliasValue==0x13579bdf
+      && !io.TokenPeerScratchWrite(w,index,0x2468ace0) && io.touches==beforeHold);
+   }
+   puts("PASS native outputs exclude ALL120 original store buffers/360 aliases+84 peer-store selection/phase/range refusals preserve output with NO IO;NOT a peer closure or shared-TLB grant");
   }
   if(io.terminalFault){
    namespace C=PioneerQ38GlobalChainLayout;namespace T=PioneerQ38TokenLayout;

@@ -10,6 +10,9 @@
  || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE) || defined(PIONEER_Q38_WORK_INFERENCE)
 #error Explicit native earlier-dispatch restoration TEST required
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+#include "pioneer_q38_token_native_peer_restore_checks.inc"
+#endif
 static void CheckNativeDispatchRestore(Fixture& f){
  auto& c=*f.c;auto& io=f.io;auto* state=c.q38TokenNative;
  const unsigned allWords=120U*(TT_Q38_PANEL_VIEW_WORDS+1U),before=io.touches,packets=io.runtimePackets;
@@ -55,4 +58,7 @@ static void CheckNativeDispatchRestore(Fixture& f){
  puts(io.dispatchRestoreFault?
   "EXECUTED native actual earlier-dispatch original write then generation loss/ALL owners retained/no later IO/retry/reset/release;NO clean dispatch/NIU/CSR/END or hardware grant":
   "EXECUTED native SAME original firstlayer/cancel/STOP/HOLD/drain/full-token L1 restored/ALL120 earlier dispatch images proved BEFORE first original/exact120*67585 saved words+entry writes+full second pass/ALL bytes independently match pre-dispatch physical observation;NIU/scratch/TLB/master/clock/maps/hosts STILL OWNED,NO END/physical/Work/TPS grant");
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+ if(!io.dispatchRestoreFault)CheckNativePeerRestore(f);
+#endif
 }

@@ -2333,6 +2333,11 @@ struct PioneerHostWriteIO : PioneerHostReadIO {
 	uint32 ResidentNocRead(uint32 offset) {
 		return BlackholeHostWriteReadRegister(offset)?PioneerRead32(nocRegisters+offset/4):UINT32_MAX;
 	}
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
+ uint32 TokenFifoStatusWord(uint32 offset){
+  return nocArea>=B_OK && nocRegisters && (offset==0x64 || offset==0x68)?PioneerRead32(nocRegisters+offset/4):UINT32_MAX;
+ } // raw fixed read backend ONLY;native checked wrapper supplies retained scope
+#endif
 	bool AfterNodeId(uint32 id) {
 		if (!PioneerHostDmaAuditIO::AfterNodeId(id)) return false;
 		readAttempted=true;

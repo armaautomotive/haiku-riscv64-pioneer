@@ -23,6 +23,19 @@ struct TokenHeldEndpoints:ZeroControlIO {
  const PioneerQ38TokenRestoreResult* nativeRestoreResult=nullptr;
  bool restoreFault=false;unsigned restoreFaultSeen=0,restoreFaultTouches=0;
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+ std::vector<uint32> beforePeerScratch;std::array<uint32,119> beforePeerConfig={};
+ const PioneerQ38TokenPeerRestoreResult* nativePeerResult=nullptr;
+ unsigned peerRestoreFault=0,peerFaultSeen=0,peerFaultTouches=0,peerMapWriteSeen=0;
+ void SnapshotPrePeerStores(){
+  assert(beforePeerScratch.empty() && rootStarts==1010 && rootStops==1010 && rootHolds==1010);
+  beforePeerScratch.resize(119*2048);
+  for(unsigned w=1;w<120;w++){
+   assert(Core(w).coreReset==0x47800);beforePeerConfig[w-1]=Core(w).source[0];
+   for(unsigned i=0;i<2048;i++)beforePeerScratch[(w-1)*2048+i]=Raw(w,0x17e000+i*4);
+  }
+ } // actual pre-lease physical byte/config observation,NEVER fed back to a controller or processor
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE
  std::vector<uint32> beforeDispatchImage;
  const PioneerQ38TokenDispatchRestoreResult* nativeDispatchResult=nullptr;
@@ -65,6 +78,9 @@ struct TokenHeldEndpoints:ZeroControlIO {
   for(unsigned w=0;w<120;w++){
    extra[w].resize(Words);
    for(unsigned i=0;i<Words;i++)extra[w][i]=i%17?uint32(0x9e3779b9U*(i+1)^0x1234567U*(w+1)):UINT32_MAX;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+   if(w)for(unsigned i=0;i<2048;i++)Core(w).destination[i]=i%17?uint32(0xa5973101U*(i+1)^w):UINT32_MAX;
+#endif
   }
   // Qualify the simulated endpoint's multiplexing BEFORE any owner/ROM
   // history exists. Inherited root-only panel methods must never be used.
@@ -157,10 +173,40 @@ struct TokenHeldEndpoints:ZeroControlIO {
  }
  uint32* Q38PanelSavedWords(){Touch();return C().Q38PanelSavedWords();}
  uint32* HostReadBackup(unsigned words){Touch();return C().HostReadBackup(words);}
- void DramTlbWrite(unsigned s,unsigned w,uint32 value){Touch();C().DramTlbWrite(s,w,value);}
- uint32 DramTlbRead(unsigned s,unsigned w){Touch();return C().DramTlbRead(s,w);}
+ void DramTlbWrite(unsigned s,unsigned w,uint32 value){Touch();C().DramTlbWrite(s,w,value);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+  if(peerRestoreFault==2 && nativePeerResult && nativePeerResult->phase==1 && !runtimeCore && !s && !w)peerMapWriteSeen++;
+#endif
+ }
+ uint32 DramTlbRead(unsigned s,unsigned w){Touch();const uint32 actual=C().DramTlbRead(s,w);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+  if(peerRestoreFault==2 && !peerFaultSeen && nativePeerResult && nativePeerResult->phase==1 && !runtimeCore && !s && !w){
+   assert(peerMapWriteSeen==1);peerFaultSeen++;peerFaultTouches=touches;return actual^1U;
+  } // FIRST bad readback follows an ACTUAL known mapping write;no supplied ready/PC receipt
+#endif
+  return actual;
+ }
  uint32 SourceRead(unsigned w){Touch();return Trace("source",w,C().SourceRead(w));}
- uint32 ResidentNocRead(uint32 address){Touch();return Trace("noc",address,C().ResidentNocRead(address));}
+ uint32 ResidentNocRead(uint32 address){Touch();const uint32 actual=Trace("noc",address,C().ResidentNocRead(address));
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+  if(peerRestoreFault==3 && !peerFaultSeen && nativePeerResult && nativePeerResult->phase==3 && runtimeCore==119 && address==0x100){
+   peerFaultSeen++;peerFaultTouches=touches;return actual^1U;
+  }
+#endif
+  return actual;
+ }
+ uint32 TokenFifoStatusWord(uint32 address){
+  Touch();assert(address==0x64 || address==0x68);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+  if(!peerFaultSeen && nativePeerResult && nativePeerResult->phase==1 && !runtimeCore
+   && ((peerRestoreFault==5 && address==0x64) || (peerRestoreFault==6 && address==0x68))){
+   peerFaultSeen++;peerFaultTouches=touches;return address==0x64?0x1010100fU:1U;
+  } // first bad queued/overflow status on SAME genuine predecessor;NO ready/STOP supplied
+#endif
+  // This simulator initiates requests synchronously,no request FIFO exists
+  // in front of that endpoint. Outstanding work is independently modeled.
+  return address==0x64 && (C().source[0]&0x10000U)?0x10101010U:0U;
+ }
  uint32 HostPciRead(unsigned p,uint16_t address,uint8_t bytes){Touch();return Trace("pci",p*0x10000U+address,StoreMock::HostPciRead(p,address,bytes));}
  void ResidentNocWrite(uint32 address,uint32 value){Touch();
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
@@ -187,13 +233,25 @@ struct TokenHeldEndpoints:ZeroControlIO {
   }
 #endif
   C().ResidentNocWrite(address,value);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+  if(peerRestoreFault==1 && !peerFaultSeen && nativePeerResult && nativePeerResult->phase==2 && runtimeCore==119 && !address){
+   peerFaultSeen++;peerFaultTouches=touches;sReloadGeneration++;
+  } // generation loss AFTER an ACTUAL original command write;next native access must refuse
+#endif
  }
  uint32 RuntimeCodeRead(unsigned word){Touch();return Trace("entry",word,C().RuntimeCodeRead(word));}
  void RuntimeCodeWrite(unsigned word,uint32 value){Touch();C().RuntimeCodeWrite(word,value);}
  uint32 RuntimeControlRead(unsigned word){Touch();return C().RuntimeControlRead(word);}
  uint32 RuntimeStatusRead(unsigned word){Touch();return C().RuntimeStatusRead(word);}
  void RuntimeStatusWrite(unsigned word,uint32 value){Touch();C().RuntimeStatusWrite(word,value);}
- uint32 ResidentL1Read(unsigned word){Touch();return C().ResidentL1Read(word);}
+ uint32 ResidentL1Read(unsigned word){Touch();const uint32 actual=C().ResidentL1Read(word);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+  if(peerRestoreFault==4 && !peerFaultSeen && nativePeerResult && nativePeerResult->phase==4 && runtimeCore==119 && !word){
+   peerFaultSeen++;peerFaultTouches=touches;return actual^1U;
+  }
+#endif
+  return actual;
+ }
  void ResidentL1Write(unsigned word,uint32 value){Touch();C().ResidentL1Write(word,value);}
  uint32 ResetRead(){
   Touch();if(runtimeCore)return Trace("reset",runtimeCore,C().coreReset);

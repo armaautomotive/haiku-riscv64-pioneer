@@ -64,7 +64,10 @@ required = ('BindQ38TokenNative(', 'TokenCallScopeMatches(', 'TokenModelSourceSc
             'RestoreQ38TokenNativeL1(', 'PioneerQ38TokenNativeOwner::RestoreOriginalL1(', 'pioneer_token_context_scoped_l1_restore(',
             'RestoreQ38TokenNativeDispatchImages(', 'PioneerQ38TokenNativeOwner::RestoreDispatchImages(',
             'pioneer_token_context_scoped_dispatch_restore(', 'TokenDispatchImageAccessScope(',
-            'TokenDispatchImageReadChecked(', 'TokenDispatchImageWrite(')
+            'TokenDispatchImageReadChecked(', 'TokenDispatchImageWrite(',
+            'RestoreQ38TokenNativePeerStores(', 'PioneerQ38TokenNativeOwner::RestorePeerStores(', 'pioneer_token_context_scoped_peer_restore(',
+            'TokenPeerStoreSelectionScope(', 'TokenPeerStoreAccessScope(', 'TokenPeerStoreSelect(',
+            'TokenPeerNiuReadChecked(', 'TokenPeerNiuWrite(', 'TokenPeerScratchReadChecked(', 'TokenPeerScratchWrite(', 'TokenFifoReadChecked(')
 for name in required:
     assert any(name in key for key in frames), (name, 'actual implementation must be emitted')
 for controller in ('State', 'ConvHistory', 'Projection'):
@@ -93,6 +96,7 @@ for forbidden in ('Q38WorkControl', 'OriginalSource', 'CompareFinal', 'Reference
                   'MutableByteSpan', 'BindMutableBytes', 'CheckNativeFullLayer', 'CheckNativeCancelLayer', 'CheckNativeHoldLayer',
                   'CheckNativeEmptyReadout', 'CheckNativeReadoutFlow', 'CheckNativeRestoreEmpty', 'beforeNativeImage',
                   'CheckNativeDispatchRestore', 'beforeDispatchImage', 'ResumeFirstLayerCancellation',
+                  'CheckNativePeerRestore', 'beforePeerScratch', 'SnapshotPrePeerStores',
                   'Q38NativeTraceTest', 'PioneerQ38ObservedTrace', 'KvByteSpan', 'BindKvBytes', 'CheckNativeFullFlow',
                   'Q38MixedLiveValidationControl', 'PioneerQ38MixedLiveNativeState',
                   'PioneerQ38EmbeddingNativeState', 'PioneerQ38RecurrentPrefixNativeState'):
@@ -138,6 +142,8 @@ print('PASS ACTUAL owned terminal recheck+ROOT-first/all119-worker HOLD factory/
 print('PASS ACTUAL private held-only committed-record READ factory/controller SDK emitted;bounded64-record batches/source+counter+command receipts/atomic non-aliased output/no historical-counter adoption;NOT runtime/token/END/physical/Work qualification')
 print('PASS ACTUAL full-token original-L1 journal restoration factory/controller SDK emitted;requires SAME genuine HOLD+drained records/all120 frozen-image proof before writes/exact original words+full second pass;NO NIU/CSR/dispatch close/END/host release/physical/Work grant')
 print('PASS ACTUAL distinct earlier dispatch-original L1 factory/controller+phase-specific checked aliases SDK emitted;SAME private captured originals+all120 code proofs BEFORE writes/exact immediate readback+whole second pass;NO NIU/scratch/TLB/master/clock/END/host release/physical/Work grant')
+print('PASS ACTUAL119 peer NIU+scratch factory/controller+per-write-checked selection and aliases SDK emitted;private original config/scratch identities+all120-held guards+exact words/secondpass;ROOT/sharedTLB/master/clock/maps/hosts/END STILL owned;NOT runtime/physical/Work qualification')
+print('PASS scoped fixed FIFO availability+overflow reads emitted/native HOLD+restoration and peer guards test FIFO drain BEFORE outstanding counters;no old MMIO whitelist widening/counter clear/START;hardware and earlier initializer FIFO audit STILL OWED')
 print('PASS complete2097152B immutable rawRoPE emitted;NO kernel cos/sin/pow imports or CPU model-reference path')
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+' token-context-NODRV.o')
 print('COMPILE/INSPECT ONLY;real private bodies WOULD do IO if invoked;NO link/install/invoke/physical or performance qualification;this compile is NOT initialization/staging RUNTIME qualification;runtime+metadata/RUN/STOP/END STILL OWED')

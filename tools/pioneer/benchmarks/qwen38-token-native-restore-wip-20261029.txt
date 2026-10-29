@@ -99,3 +99,29 @@ integrate qualified performance images;physical repeated generation/long
 conversations;no-CPU-reference Work plus Assistant;safe owned active delivery
 if streaming is added;honest sustained optimization toward20 tokens/sec.
 Preserve SD-free boot,64 CPUs,full RAM and valid running qualifications.
+
+2026-10-29 13:54UTC completed older-C follow-up
+----------------------------------------------
+Positive C main38721/clean14981 and actual-write/generation-loss fault C
+main24735/clean75205 ALL terminal0. Positive full logs/prefixes and fault full
+logs are pairwise byte-identical. The SAME real original first-layer/cancel/
+all120STOP/HOLD/zero-drain history audits120 frozen images before any restore,
+restores11406906 private original words and completes the whole second pass.
+All actual restored words independently match the pre-native physical byte
+observation,including UINT32_MAX. The fault pair performs an actual original
+write then loses generation;all owners retain with no subsequent IO or retry.
+
+Independent comparisons7815/59005 BOTH0:all5120 embedding and5120 layer0
+values BITEXACT against the separate pinned original CPU traces;zero error
+or differences,NO tolerance. These are FIRST-LAYER numerical observations,
+not committed state/KV/token/whole-model results. ROOT659545284 and peers
+2227276603 actual instructions are offline observations,not card cycles/TPS.
+
+Saved qwen38-native-restore-empty-{main,clean}-20261029.log,
+ qwen38-native-restore-empty-fault-{main,clean}-20261029.log,
+ qwen38-native-restore-empty-compare-{main,clean}-20261029.log.
+Observation dirs /private/tmp/pioneer-q38-l1-restore-c-main-observation.EM6rnJEA
+                 /private/tmp/pioneer-q38-l1-restore-c-clean-observation.3BZWv2JN
+The earlier LIVE paragraph is historical. These binaries predate later
+dispatch/store-pointer/peer/FIFO changes. No current FIFO-guarded code,
+dispatch/NIU/CSR/shared-TLB closure,END,physical readiness or speed is granted.

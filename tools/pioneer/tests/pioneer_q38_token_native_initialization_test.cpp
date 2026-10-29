@@ -348,9 +348,13 @@ struct Fixture {
 int main(int argc,char** argv){
  const bool peerBootstrap=argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines");
  const bool fullFlow=argc==7 && (!strcmp(argv[2],"--execution-full-flow") || !strcmp(argv[2],"--execution-readout-full-flow"));
- const bool cancelLayer=argc==7 && (!strcmp(argv[2],"--execution-cancel-first-layer") || !strcmp(argv[2],"--execution-hold-first-layer")
+ const bool restorePeers=argc==7 && (!strcmp(argv[2],"--execution-restore-peers") || !strcmp(argv[2],"--execution-restore-peers-fault")
+  || !strcmp(argv[2],"--execution-restore-peers-map-fault") || !strcmp(argv[2],"--execution-restore-peers-config-fault")
+  || !strcmp(argv[2],"--execution-restore-peers-scratch-fault") || !strcmp(argv[2],"--execution-restore-peers-fifo-fault")
+  || !strcmp(argv[2],"--execution-restore-peers-overflow-fault"));
+ const bool cancelLayer=restorePeers || (argc==7 && (!strcmp(argv[2],"--execution-cancel-first-layer") || !strcmp(argv[2],"--execution-hold-first-layer")
   || !strcmp(argv[2],"--execution-readout-empty") || !strcmp(argv[2],"--execution-restore-empty") || !strcmp(argv[2],"--execution-restore-empty-fault")
-  || !strcmp(argv[2],"--execution-restore-dispatch") || !strcmp(argv[2],"--execution-restore-dispatch-fault"));
+  || !strcmp(argv[2],"--execution-restore-dispatch") || !strcmp(argv[2],"--execution-restore-dispatch-fault")));
  const bool terminalFaults=argc==3 && !strcmp(argv[2],"--terminal-observation-faults");
  const bool fullLayer=fullFlow || cancelLayer || (argc==7 && !strcmp(argv[2],"--execution-first-layer"));
  (void)cancelLayer;
@@ -456,6 +460,12 @@ int main(int argc,char** argv){
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE
   io.dispatchRestoreFault=!strcmp(argv[2],"--execution-restore-dispatch-fault");
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+  io.peerRestoreFault=!strcmp(argv[2],"--execution-restore-peers-fault")?1:
+   !strcmp(argv[2],"--execution-restore-peers-map-fault")?2:!strcmp(argv[2],"--execution-restore-peers-config-fault")?3:
+   !strcmp(argv[2],"--execution-restore-peers-scratch-fault")?4:!strcmp(argv[2],"--execution-restore-peers-fifo-fault")?5:
+   !strcmp(argv[2],"--execution-restore-peers-overflow-fault")?6:0;
 #endif
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE

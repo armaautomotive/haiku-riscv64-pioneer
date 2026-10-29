@@ -3,6 +3,7 @@
 #include "PioneerQ38TokenNativeRole.h"
 bool TokenMemoryMappingSourceScope();bool TokenMemoryAccessScope();
 bool TokenDispatchImageAccessScope(unsigned);
+bool TokenPeerStoreSelectionScope();bool TokenPeerStoreAccessScope(unsigned);
 bool TokenMemoryScope(const PioneerQ38TokenMemory&,const PioneerQ38CanonicalModelPlan&,const PioneerQ38TokenStartupPlan&,
  const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
 void TokenMemoryRetainHostOwners();
@@ -70,4 +71,35 @@ __attribute__((noinline)) bool TokenDispatchImageWrite(unsigned worker,uint32 ad
  if(address==0x6000)RuntimeCodeWrite(0,value);else Q38PanelWrite(address,value);
  return true;
 } // fixed dispatch originals only;does NOT widen token snapshot geometry
+__attribute__((noinline)) bool TokenPeerStoreSelect(unsigned worker){
+ if(worker>=120 || !TokenPeerStoreSelectionScope())return false;
+ runtimeCore=worker; // intended view ONLY;no alias access until BOTH routes verify
+ for(unsigned s=0;s<2;s++)for(unsigned i=0;i<3;i++){
+  const uint32_t expected=BlackholeDramFixedTlbWord(s?0xffa00000U:0U,PioneerWorkerX(worker),PioneerWorkerY(worker),false,i);
+  if(!TokenPeerStoreSelectionScope())return false;
+  DramTlbWrite(s,i,expected);
+  if(!TokenPeerStoreSelectionScope() || DramTlbRead(s,i)!=expected)return false;
+ }
+ return TokenPeerStoreSelectionScope() && TokenMemoryMappingStable(worker);
+} // fixed existing200/201 routes,each write checked;NO final shared-TLB restoration
+__attribute__((noinline)) bool TokenPeerNiuReadChecked(unsigned worker,uint32 address,uint32& output){
+ if((address&3) || (address>=40 && address!=0x100) || !TokenPeerStoreAccessScope(worker) || !TokenMemoryMappingStable(worker))return false;
+ output=ResidentNocRead(address);return true;
+}
+__attribute__((noinline)) bool TokenPeerNiuWrite(unsigned worker,uint32 address,uint32 value){
+ if((address&3) || (address>=40 && address!=0x100) || !TokenPeerStoreAccessScope(worker) || !TokenMemoryMappingStable(worker))return false;
+ ResidentNocWrite(address,value);return true;
+} //4-byte original command/config words ONLY;0x40 START is NEVER accepted
+__attribute__((noinline)) bool TokenPeerScratchReadChecked(unsigned worker,unsigned word,uint32& output){
+ if(word>=2048 || !TokenPeerStoreAccessScope(worker) || !TokenMemoryMappingStable(worker))return false;
+ output=ResidentL1Read(word);return true;
+}
+__attribute__((noinline)) bool TokenPeerScratchWrite(unsigned worker,unsigned word,uint32 value){
+ if(word>=2048 || !TokenPeerStoreAccessScope(worker) || !TokenMemoryMappingStable(worker))return false;
+ ResidentL1Write(word,value);return true;
+} // existing fixed8KiB alias;arbitrary original UINT32_MAX remains valid data
+__attribute__((noinline)) bool TokenFifoReadChecked(unsigned worker,bool overflow,uint32& output){
+ if(worker>=120 || !TokenMemoryAccessScope() || !TokenMemoryMappingStable(worker))return false;
+ output=TokenFifoStatusWord(overflow?0x68U:0x64U);return true;
+} // scoped fixed read-only FIFO registers;no counter clear,START or broader MMIO range
 #endif

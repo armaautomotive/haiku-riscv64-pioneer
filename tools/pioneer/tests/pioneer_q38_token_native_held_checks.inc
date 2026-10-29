@@ -47,6 +47,9 @@ static void CheckNativeHeld(Fixture& f,unsigned fault){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE
   io.SnapshotPreDispatch(); // separate physical byte observation only,not an ownership/history receipt
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+  io.SnapshotPrePeerStores(); // actual originals before ANY fresh peer-store lease begins
+#endif
   const bool prepared=PrepareQ38TokenNativeHeld(c,prompt,2,3,false,248318,248317,result);
   if(!prepared && !io.faultSeen)fprintf(stderr,"HELD_PREPARE_DIAGNOSTIC resultPhase%u/worker%u/word%u/started%u/saved%u/installedWords%u/unsafe%u/cohort%u/prepared%u/core%u/maps%u/routes%u/retained%u/detail%08x:%08x:%08x:%08x/last%s:%x=%x;SIMULATED fixture metadata ONLY\n",
    result.phase,result.worker,result.word,result.started,result.savedWords,result.installedWords,result.unsafe,unsigned(c.q38Dispatch!=nullptr),

@@ -20,7 +20,8 @@ bool PioneerSessionIO::TokenMemoryAccessScope(){
     || s->phase==PioneerQ38TokenNativeState::RootStarting || s->phase==PioneerQ38TokenNativeState::RootRunning
     || s->phase==PioneerQ38TokenNativeState::RootHolding || s->phase==PioneerQ38TokenNativeState::RootHeld
     || s->phase==PioneerQ38TokenNativeState::RootRestoring || s->phase==PioneerQ38TokenNativeState::RootRestored
-    || s->phase==PioneerQ38TokenNativeState::DispatchRestoring || s->phase==PioneerQ38TokenNativeState::DispatchRestored)
+    || s->phase==PioneerQ38TokenNativeState::DispatchRestoring || s->phase==PioneerQ38TokenNativeState::DispatchRestored
+    || s->phase==PioneerQ38TokenNativeState::PeerStoresRestoring || s->phase==PioneerQ38TokenNativeState::PeerStoresRestored)
     && s->runtime && !s->runtime->Unsafe())
    || s->phase==PioneerQ38TokenNativeState::MemoryClosing)
   && s->MatchesBinding(*c,fd,c->hashes,c->initialized,fd->team,sReloadGeneration);
@@ -30,6 +31,16 @@ bool PioneerSessionIO::TokenDispatchImageAccessScope(unsigned worker){
  return worker<120 && worker==runtimeCore && s && s->phase==PioneerQ38TokenNativeState::DispatchRestoring
   && TokenMemoryAccessScope();
 } // exact native dispatch-restoration call only,not a broader L1 address grant
+bool PioneerSessionIO::TokenPeerStoreSelectionScope(){
+ auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;
+ return s && (s->phase==PioneerQ38TokenNativeState::PeerStoresRestoring || s->phase==PioneerQ38TokenNativeState::PeerStoresRestored)
+  && TokenMemoryAccessScope() && TokenModelSourceScope(false);
+} // CPU ownership checks ONLY;selection may be between exact known TLB writes
+bool PioneerSessionIO::TokenPeerStoreAccessScope(unsigned worker){
+ auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;
+ return worker && worker<120 && worker==runtimeCore && s && s->phase==PioneerQ38TokenNativeState::PeerStoresRestoring
+  && TokenPeerStoreSelectionScope();
+} // never ROOT or a public arbitrary NIU/scratch operation
 bool PioneerSessionIO::TokenMemoryScope(const PioneerQ38TokenMemory& memory,const PioneerQ38CanonicalModelPlan& canonical,
  const PioneerQ38TokenStartupPlan& startup,const PioneerQ38GdnIdentity& id,const uint8_t* learned,unsigned pages){
  auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;

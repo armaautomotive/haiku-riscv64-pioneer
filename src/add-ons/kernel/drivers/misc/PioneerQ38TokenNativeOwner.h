@@ -5,10 +5,11 @@
 #include "../../../../../tools/pioneer/PioneerQ38TokenRuntimePlan.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenTerminalShape.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenRecordShape.h"
+#include "../../../../../tools/pioneer/PioneerQ38TokenFifoQuiescence.h"
 // DISTINCT full-token owner. Held staging,fresh QGW1 bootstrap and ROOT
 // startup/cancel request,terminal/worker STOP observation,owned HOLD,
-// committed readout,original-L1 and earlier-dispatch image restoration.
-// No CPU products,old-prefix ownership,NIU/CSR close or END grant.
+// committed readout,original-L1,dispatch-image and local peer-store restoration.
+// No CPU products,old-prefix ownership,shared-TLB/master close or END grant.
 struct PioneerQ38TokenRuntimeResult {
  uint32_t version=1,started=0,phase=0,worker=0,chunk=0,word=0,unsafe=0,staged=0;
  uint32_t packets=0,writes=0,reads=0,bytesWritten=0,bytesRead=0,boots=0,reserved[2]={};
@@ -41,6 +42,10 @@ struct PioneerQ38TokenDispatchRestoreResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,restoredCores=0;
  uint32_t savedWords=0,restoredWords=0,verifiedWords=0,entryWords=0,firstPC=0,secondPC=0,reserved[2]={};
 };
+struct PioneerQ38TokenPeerRestoreResult {
+ uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,peers=0;
+ uint32_t commandWords=0,configWords=0,scratchWords=0,verifiedWords=0,firstPC=0,secondPC=0,reserved[2]={};
+};
 class PioneerQ38TokenNativeOwner {
  const tt_dram_samples_result* proof=nullptr;PioneerResidentBanks* banks=nullptr;PioneerQ38DispatchLease* cohort=nullptr;
  PioneerQ38TokenMemory* memory=nullptr;const PioneerQ38CanonicalModelPlan* canonical=nullptr;
@@ -56,6 +61,8 @@ class PioneerQ38TokenNativeOwner {
  bool restoring=false,l1Restored=false;
  const uint32_t* dispatchSaved[120]={}; // SAME earlier dispatch originals,captured BEFORE native launch
  bool dispatchRestoring=false,dispatchRestored=false;
+ const uint32_t* storeSaved[120]={};uint32_t storeConfig[120]={};
+ bool peerClosing=false,peersClosed=false,peerConfigWritten[120]={},peerClosed[120]={};
  bool Bound()const{
   if(!started || unsafe || !proof || !banks || !cohort || !memory || !canonical || !startup || !ledger
    || !plan.MatchesBinding(*canonical,*startup,identity,&cohort->authority.source[0][0]))return false;
@@ -71,11 +78,16 @@ class PioneerQ38TokenNativeOwner {
    || ((holding || held) && (!terminalObserved || !rootAcknowledged))
    || ((restoring || l1Restored) && (!held || holding || !readoutDrained || readoutPending || readoutCursor!=observedTerminal[3]))
    || ((dispatchRestoring || dispatchRestored) && (!l1Restored || restoring || !held || holding))
+   || ((peerClosing || peersClosed) && (!dispatchRestored || dispatchRestoring || !held || holding))
    || (rootStarted?(!rootAttempted || !booted || reset[0]!=((holding || held) && !running[0]?0x47800U:0x46800U))
     :reset[0]!=(rootAttempted?0x87ffffU:0x47800U)))return false;
   for(unsigned w=0;w<120;w++){
    const auto& n=cohort->worker[w];const auto& store=n.master?*n.master:n.store;
-   if(!n.image.saved || n.image.ready==dispatchRestored || n.image.unsafe || n.image.running!=running[w] || !store.ready
+   if(!n.image.saved || n.image.ready==dispatchRestored || n.image.unsafe || n.image.running!=running[w]
+    || store.ready==peerClosed[w] || store.saved!=storeSaved[w] || store.config!=storeConfig[w]
+    || !store.controls_saved || !store.configured
+    || (peerConfigWritten[w] && (!w || (!peerClosing && !peersClosed)))
+    || (peerClosed[w] && (!peerConfigWritten[w] || !store.niu_restored || !store.l1_restored || store.l1_dirty))
     || store.pending || store.recovery_required || n.noc.recovery_required
     || ((holding || held) && reset[w]!=(running[w]?0x46800U:0x47800U)) || (held && running[w]))return false;
   }
@@ -97,14 +109,29 @@ class PioneerQ38TokenNativeOwner {
  template<class IO> bool Fail(IO& io,PioneerQ38TokenReadResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenRestoreResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenDispatchRestoreResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
- template<class IO> bool Sources(IO& io,unsigned w){
-  if(w>=120 || !Scope(io) || !io.SelectRuntimeCore(w) || !io.TokenMemoryMappingStable(w)
+ template<class IO> bool Fail(IO& io,PioneerQ38TokenPeerRestoreResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
+ template<class IO> bool SelectedSources(IO& io,unsigned w){
+  if(w>=120 || !Scope(io) || !io.TokenMemoryMappingStable(w)
    || io.ResetRead()!=reset[w] || io.ResetRead()!=reset[w])return false;
-  for(unsigned i=0;i<16;i++)if(io.ResidentNocRead(BlackholeDramSourceOffset(i))!=cohort->authority.source[w][i])return false;
+  for(unsigned i=0;i<16;i++){
+   const uint32_t expected=!i && peerConfigWritten[w]?storeConfig[w]:cohort->authority.source[w][i];
+   if(io.ResidentNocRead(BlackholeDramSourceOffset(i))!=expected)return false;
+  }
   for(unsigned i=0;i<TT_DRAM_SOURCE_WORDS;i++)if(io.SourceRead(i)!=proof->source[i])return false;
   for(unsigned p=0;p<2;p++)if(!PioneerQ38GraphCsrPciQuiet(io,p))return false;
   return true;
  } // active device NoC traffic is NOT a host/bus-master grant or an idle receipt
+ template<class IO> bool Sources(IO& io,unsigned w){
+  if(w>=120 || !Scope(io) || !((peerClosing || peersClosed)?io.TokenPeerStoreSelect(w):io.SelectRuntimeCore(w)))return false;
+  return SelectedSources(io,w);
+ }
+ template<class IO> bool PeerStoreGuard(IO& io,unsigned w,bool select){
+  if(!(select?Sources(io,w):SelectedSources(io,w))
+   || !PioneerQ38TokenFifoEmpty(io,w,peerConfigWritten[w]?storeConfig[w]:cohort->authority.source[w][0])
+   || !PioneerQ38GraphCsrIdle(io))return false;
+  for(unsigned i=0;i<8;i++)if(io.ResidentNocRead(PioneerQ38PanelCounter(i))!=terminalCounters[w][i])return false;
+  return SelectedSources(io,w) && PioneerQ38GraphCsrIdle(io);
+ } // no command/counter recapture;selected guard never remaps after a write
  template<class IO> bool Guard(IO& io,unsigned w){
   if(w>=120 || !Scope(io))return false;
   if(launched){
@@ -196,6 +223,7 @@ public:
  bool CommittedRecordsRead()const{return readoutDrained && !readoutPending && HeldAfterTerminal() && readoutCursor==observedTerminal[3];}
  bool OriginalL1Restored()const{return l1Restored && !restoring && CommittedRecordsRead() && Bound();} // dispatch/CSR leases STILL owned
  bool DispatchImagesRestored()const{return dispatchRestored && !dispatchRestoring && OriginalL1Restored();} // NIU/scratch/TLB/END still owned
+ bool PeerStoresRestored()const{return peersClosed && !peerClosing && DispatchImagesRestored();} // ROOT/shared mappings/END STILL owned
  bool DispatchOutput(const void* output,size_t bytes)const{
   const uintptr_t out=reinterpret_cast<uintptr_t>(output);
   const size_t savedBytes=(size_t(TT_Q38_PANEL_VIEW_WORDS)+1)*4;
@@ -203,6 +231,8 @@ public:
   for(unsigned w=0;w<120;w++){
    const uintptr_t p=reinterpret_cast<uintptr_t>(dispatchSaved[w]);
    if(!p || p>UINTPTR_MAX-savedBytes || (out<p+savedBytes && p<out+bytes))return false;
+   const uintptr_t scratch=reinterpret_cast<uintptr_t>(storeSaved[w]);
+   if(!scratch || scratch>UINTPTR_MAX-8192 || (out<scratch+8192 && scratch<out+bytes))return false;
   }
   return true; // memory-only alias exclusion,NOT lifecycle/restore authority
  }
@@ -232,7 +262,20 @@ public:
     const uintptr_t other=reinterpret_cast<uintptr_t>(dispatchSaved[p]);
     if(saved<other+savedBytes && other<saved+savedBytes)return Fail(io,r);
    }
+   const auto& store=cohort->worker[w].Store();storeSaved[w]=store.saved;storeConfig[w]=store.config;
+   const uintptr_t scratch=reinterpret_cast<uintptr_t>(storeSaved[w]);
+   if(!store.controls_saved || !store.configured || !scratch || (scratch&3) || scratch>UINTPTR_MAX-8192
+    || store.config!=cohort->worker[w].noc.source[0][0] || (store.config|0x10000U)!=cohort->authority.source[w][0]
+    || (scratch<saved+savedBytes && saved<scratch+8192))return Fail(io,r);
+   for(unsigned p=0;p<w;p++){
+    const uintptr_t other=reinterpret_cast<uintptr_t>(storeSaved[p]);
+    if(scratch<other+8192 && other<scratch+8192)return Fail(io,r);
+   }
   }
+  for(unsigned w=0;w<120;w++)for(unsigned p=0;p<120;p++){
+   const uintptr_t scratch=reinterpret_cast<uintptr_t>(storeSaved[w]),image=reinterpret_cast<uintptr_t>(dispatchSaved[p]);
+   if(scratch<image+(size_t(TT_Q38_PANEL_VIEW_WORDS)+1)*4 && image<scratch+8192)return Fail(io,r);
+  } // disjoint SAME original journals,not caller buffers;BEFORE any runtime write
   namespace C=PioneerQ38GlobalChainLayout;namespace W=PioneerQ38GlobalWorkerLayout;namespace T=PioneerQ38TokenLayout;
   r.phase=2;
   for(unsigned w=0;w<120;w++){
@@ -550,7 +593,7 @@ private:
   return true;
  } // READ-ONLY genuine STOP observation. NO HOLD/reset/NIU commands,counter recapture,restore/END/disposal or reusable state grant.
  template<class IO,class Result> bool HoldGuard(IO& io,unsigned w,Result& r){
-  if(!Sources(io,w) || !PioneerQ38GraphCsrIdle(io))return false;
+  if(!Sources(io,w) || !PioneerQ38TokenFifoEmpty(io,w,cohort->authority.source[w][0]) || !PioneerQ38GraphCsrIdle(io))return false;
   for(unsigned i=0;i<8;i++)if(io.ResidentNocRead(PioneerQ38PanelCounter(i))!=terminalCounters[w][i])return false;
   if(running[w]){
    r.firstPC=io.RuntimePcRead();r.secondPC=io.RuntimePcRead();
@@ -797,6 +840,66 @@ public:
   for(auto& node:cohort->worker){node.image.ready=false;node.image.dirty=false;}
   dispatchRestored=true;dispatchRestoring=false;r.ready=1;r.phase=4;return true;
  } // earlier dispatch L1 originals ONLY;NIU/scratch/TLB/clock/maps/hosts still owned. NO END.
+ template<class IO> bool RestorePeerStores(IO& io,PioneerQ38TokenPeerRestoreResult& r){
+  const PioneerQ38TokenPeerRestoreResult pristine;const auto* a=reinterpret_cast<const uint8_t*>(&r);
+  const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+  for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=b[i])return false;
+  if(peerClosing || peersClosed || !DispatchImagesRestored() || !DispatchOutput(&r,sizeof(r)) || !Scope(io))return false;
+  r.started=1;r.phase=1;const uint64_t began=io.Q38CohortNow();uint64_t previous=began;
+  if(began>UINT64_MAX-UINT64_C(300000000))return Fail(io,r);
+  auto time=[&](){
+   if(!Scope(io))return false;
+   const uint64_t now=io.Q38CohortNow();
+   if(now<previous || now<began || now-began>=UINT64_C(300000000))return false;
+   previous=now;return true;
+  };
+  peerClosing=true;
+  for(unsigned w=0;w<120;w++){
+   r.worker=w;if(!time() || !PeerStoreGuard(io,w,true))return Fail(io,r);
+  } // ALL genuinely held/idle/source/counters BEFORE the first local restore
+  for(unsigned end=120;end>1;end--){
+   const unsigned w=end-1;r.worker=w;r.phase=2;
+   if(!time() || !PeerStoreGuard(io,w,true))return Fail(io,r);
+   // Original command words were proved ZERO by this SAME peer-lease BEGIN.
+   // They are inert while all processors/queues are held/idle. Never START.
+   for(unsigned i=0;i<10;i++){
+    r.word=i;uint32_t actual=0;
+    if(!io.TokenPeerNiuWrite(w,i*4,0) || !io.TokenPeerNiuReadChecked(w,i*4,actual) || actual
+     || !PeerStoreGuard(io,w,false))return Fail(io,r);
+    r.commandWords++;
+   }
+   r.phase=3;peerConfigWritten[w]=true;uint32_t actual=0;
+   if(!io.TokenPeerNiuWrite(w,0x100,storeConfig[w]) || !io.TokenPeerNiuReadChecked(w,0x100,actual)
+    || actual!=storeConfig[w] || !PeerStoreGuard(io,w,false))return Fail(io,r);
+   r.configWords++;r.phase=4;
+   // Restore ALL original scratch words,not a dirty-flag guess or a sentinel.
+   for(unsigned i=0;i<2048;i++){
+    r.word=i;
+    if(!io.TokenPeerScratchWrite(w,i,storeSaved[w][i]) || !io.TokenPeerScratchReadChecked(w,i,actual)
+     || actual!=storeSaved[w][i])return Fail(io,r);
+    r.scratchWords++;
+   }
+   r.phase=5;
+   for(unsigned i=0;i<2048;i++){
+    r.word=i;
+    if(!io.TokenPeerScratchReadChecked(w,i,actual) || actual!=storeSaved[w][i])return Fail(io,r);
+    r.verifiedWords++;
+   }
+   for(unsigned i=0;i<10;i++)if(!io.TokenPeerNiuReadChecked(w,i*4,actual) || actual)return Fail(io,r);
+   if(!time() || !PeerStoreGuard(io,w,false))return Fail(io,r);
+   auto& store=cohort->worker[w].Store();
+   store.niu_restored=store.l1_restored=true;store.l1_dirty=false;store.ready=false;peerClosed[w]=true;r.peers++;
+   // Shared global TLBs deliberately remain owned;no per-peer restoration
+   // or falsely final tlb_restored publication. ROOT/master closes them last.
+  }
+  r.phase=6;
+  for(unsigned w=0;w<120;w++){
+   r.worker=w;if(!time() || !PeerStoreGuard(io,w,true))return Fail(io,r);
+  }
+  if(r.peers!=119 || r.commandWords!=1190 || r.configWords!=119 || r.scratchWords!=119*2048U
+   || r.verifiedWords!=r.scratchWords || !time() || !PeerStoreGuard(io,0,true))return Fail(io,r);
+  peersClosed=true;peerClosing=false;r.ready=1;r.phase=7;return true;
+ } //119 local NIU+scratch originals ONLY;ROOT/sharedTLBs/master/clock/maps/hosts and END STILL owned
 };
 static_assert(sizeof(PioneerQ38TokenRuntimeResult)==64,"all runtime result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenBootstrapResult)==64,"all bootstrap result bytes explicit");
@@ -806,5 +909,6 @@ static_assert(sizeof(PioneerQ38TokenHoldResult)==64,"all terminal-HOLD result by
 static_assert(sizeof(PioneerQ38TokenReadResult)==64,"all committed-readout result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenRestoreResult)==64,"all L1-restoration result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenDispatchRestoreResult)==64,"all dispatch-restoration result bytes explicit");
+static_assert(sizeof(PioneerQ38TokenPeerRestoreResult)==64,"all peer-restoration result bytes explicit");
 static_assert(sizeof(PioneerQ38TokenNativeOwner)>16384 && sizeof(PioneerQ38TokenNativeOwner)<32768,"native owner staging buffer HEAP ONLY");
 #endif
