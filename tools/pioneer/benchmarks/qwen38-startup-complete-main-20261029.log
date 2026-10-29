@@ -1,0 +1,17 @@
+START complete startup DATA bank0/all64 packages/all120 boots/no execution
+PASS full851 learned-page PRESENCE/all3551 parts including embedding+vocab+norm/all65 layer/global missing-or-non1 endpoints refuse;NOT upload authentication or state initialization
+PASS complete startup DATA bank0/all64 serialized packets/all120 boots/root+head+session+prompt exact/no execution
+START complete startup DATA bank1/all64 packages/all120 boots/no execution
+PASS complete startup DATA bank1/all64 serialized packets/all120 boots/root+head+session+prompt exact/no execution
+START complete startup DATA bank2/all64 packages/all120 boots/no execution
+PASS complete startup DATA bank2/all64 serialized packets/all120 boots/root+head+session+prompt exact/no execution
+START complete startup DATA bank3/all64 packages/all120 boots/no execution
+PASS complete startup DATA bank3/all64 serialized packets/all120 boots/root+head+session+prompt exact/no execution
+START complete startup DATA bank4/all64 packages/all120 boots/no execution
+PASS complete startup DATA bank4/all64 serialized packets/all120 boots/root+head+session+prompt exact/no execution
+START complete startup DATA bank5/all64 packages/all120 boots/no execution
+PASS complete startup DATA bank5/all64 serialized packets/all120 boots/root+head+session+prompt exact/no execution
+START complete startup DATA bank6/all64 packages/all120 boots/no execution
+PASS complete startup DATA bank6/all64 serialized packets/all120 boots/root+head+session+prompt exact/no execution
+PASS startup session EOS-disabled3-position prompt2 and maximum8192-token raw prompt/full last64B serialization;not a qualified context size or model execution
+PASS whole-token STARTUP DATA/448 full512KiB packages EXACT vs independent per-layer serialization/7banks/all64 layers/all120 boots/root+head+session+8192 padded prompt/high64bit identity+all1920 source binding/1994 refusals+unchanged output;NO native owner/RUN/STOP/physical/Work/TPS grant

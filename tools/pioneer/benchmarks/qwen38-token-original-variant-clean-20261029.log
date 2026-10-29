@@ -1,0 +1,1 @@
+PASS exact plain-vs-cancellable original runner/2 wrong-image refusals BEFORE output directory/model construction;NOT a positive runtime or cancellation qualification

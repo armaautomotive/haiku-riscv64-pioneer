@@ -1,6 +1,36 @@
 # Native build status
 
-## Latest: connected four-layer arithmetic and genuine STOP pass both trees
+## Latest: original first-layer numerics match; full-token native journal in development
+
+October 28, 2026. Actual instruction-executed original27B embedding and
+layer0 output match the separate pinned CPU reference **bit-for-bit**, all
+10,240 values, in both trees. The two incomplete diagnostic files are also
+byte-identical. This is offline first-layer evidence, **not** all64 layers,
+multiple generated tokens, a native P100A run, or a throughput result.
+
+The full startup-data tests now finish0 in both trees: all448 complete
+512KiB packets across7banks match independently constructed per-layer data;
+all120 boot records,session/prompt,64-bit identity and1920 source bindings
+pass. The latest original bootstrap,including those120 boot comparisons,
+also finishes0 in both trees with unchanged4749932 ROOT instructions.
+
+New distinct token/QGW1 firmware data and full L1 geometry pass all-word
+tests for plain and cancellable FP32 variants in both trees. The new layout
+includes terminal instructions at60000/60004,which the old three-layer
+journal omits. A distinct held-only token journal now passes simulated
+save/install/restore over all120 participants and RISC-V template compilation;
+all52 injected faults and33 inert refusals pass in both trees. These are
+**not genuine native ownership or
+launch/STOP/disposal qualification**. No driver has been installed.
+
+The complete model-output runs remain active. Full851 native context,
+initialization,code/metadata staging,RUN/STOP/recovery,Work/Assistant and
+physical performance qualification remain owed. Last measured whole-model
+**0.207893161 tokens/sec**;20 target unmet,no measured speedup.
+Evidence and remaining gates:
+[token firmware and journal checkpoint](benchmarks/qwen38-token-firmware-and-journal-20261029.txt).
+
+## Earlier: connected four-layer arithmetic and genuine STOP pass both trees
 
 October 28, 2026. Prefix4 instruction runs `37573/71667` both finish 0,
 identical38-line `4285a534`. ONE ROOT and the SAME119 virgin-booted worker

@@ -1,0 +1,119 @@
+Original first-layer match and distinct full-token firmware/L1 journal
+2026-10-29 00:02UTC. Goal ACTIVE. No hardware/SSH/power/driver/kernel/
+Assistant/boot/CPU/RAM/network/SD/mains changes. Last physical whole-model
+0.207893161tok/s;20 target UNMET. NO new physical performance claim.
+
+Actual original first-layer numerical evidence,not a complete model
+------------------------------------------------------------------
+Original instruction probes main70530/clean97141 BOTH0. Both execute the
+literal pinned FP32 ROOT and SAME119 workers from RESET,using authenticated
+original GGUF learned bytes,no supplied hidden/model products. At the real
+first verified layer boundary,each saves the DISTINCT incomplete prefix
+diagnostic;no token is committed and no STOP/terminal capability is claimed.
+
+Independent posthoc comparison against the SAME fixed authenticated CPU
+controls returns0 in both trees:embedding5120 AND layer0hidden5120 have
+ZERO bit differences,max absolute error0,relativeL2=0. No tolerance used.
+Direct main-vs-clean diagnostic cmp also agrees;each41028B file SHA256:
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+Numeric products remain private temp files,not committed or uploaded as inputs.
+This proves only the offline first-layer result,NOT all64,multiple tokens,
+nonzero recurrent history,a physical P100A result,Work or TPS qualification.
+
+Full startup tests now COMPLETE
+--------------------------------
+Final main80485/clean94681 BOTH0 ASan+UBSan:ALL448 complete512KiB packets
+across7banks/all64 layers match independently constructed per-layer packages;
+ALL120 boot records,session/head/padded prompt,full64-bit identity and1920
+source bindings,851-tensor/3551-part page presence,1994 refusals+unchanged
+outputs,EOS-disabled3-position and maximum8192 raw prompt cases pass.
+Initial exhaustive main59308/clean60733 also finish0;not live anymore.
+Latest original startup bootstrap main54552/clean41250 BOTH0:all120 actual
+fresh worker boot comparisons and all32MiB metadata pass before execution;
+original5120 embedding/first returning entry/ROOT4749932/2992+2984stack/
+SAME119 virgin. No full layer/token is claimed by this bootstrap.
+
+Distinct firmware and original-snapshot geometry
+------------------------------------------------
+PioneerQ38TokenPrograms.h is mechanically generated immutable DATA from
+ALL12 authenticated sections plus BOTH complete ELFs. Main/clean reproduction
+is exact. Committed candidate is cancellable FP32;plain FP32 is independently
+tested as a separate DATA variant. SHA256 of generated headers:
+ cancellable f383b108c3f9d83747bca8397e2e16602c265697cadfca73668d802645b7bfd0
+ plain       4c3c9666c2a6d2260c4ac8e8b4597d293355f5fe5ab0b832c658df97b6e7bb40
+The generator hashes and emits SAME-open stable regular-file byte snapshots,
+never reopens paths after hashing,and refuses corruption before output creation.
+No caller digest,old prefix image/owner or physical install selector is accepted.
+
+The independent full-token footprint includes root terminal instructions
+60000+60004. The old prefix snapshot omits BOTH;it is not a sufficient journal.
+ALL120 arbitrary originals require11406906words=45627624B,including complete
+code windows,padding,8KiB stacks,runtime+session+record+cancel and trailers.
+Native maps/journals/counter/Tensix/PCI/GDDR/clock/host/FD lifetimes are NOT
+inferred from these geometry constants. Code accessor rejects holes/runtime
+data,invalid participants,unaligned addresses and immutable-output aliases.
+
+All-word program/footprint main40281/clean61144 cancellable and main81564/
+clean89922 plain ALL0 ASan+UBSan. All12 section bytes are compared against
+actual pinned artifacts for all120 participants;2710744 cancellable and
+2710257 plain code words. Each run verifies11406906 snapshot addresses,
+963 range/alias refusals,and17 generator corruption/overwrite/defined0-role
+refusals,including both complete ELF files. These are DATA/geometry tests,
+not physical code execution or a native launch permission.
+
+Actual full-token HELD journal algorithm,not launched execution ownership
+------------------------------------------------------------------------
+PioneerQ38TokenMemory is DISTINCT from the old prefix class. It binds the
+same canonical/startup/source identity,all851 learned-page presence and
+ALL120 held participants. It captures ALL arbitrary originals,then checks
+ALL originals AGAIN BEFORE the FIRST write. Every installed code word is
+read back;all code is rechecked before held-only restoration. It restores
+ALL originals,then performs a second full original-word verification.
+Separate native IO scopes/mappings are required;they are NOT supplied here.
+
+Positive main15116/clean28807 BOTH0 ASan+UBSan +RISC-V SDK template:
+ saved11406906/installed2710744/restored11406906/secondOriginal22813812;
+ arbitrary originals includingUINT32_MAX and NEW terminal words preserved;
+ no reset,start,NoC submission or native execution occurs in this test.
+Kernel template compiles,max static per-function frame1216B;undefined TOKEN
+IO hooks/no conventional driver ABI make this NOT a loadable driver or
+genuine native-context qualification. Combined runtime stack still separate.
+
+Fault main29228/clean16030 BOTH0:52 failures across all7 phases,new terminal/
+auxiliary/tail endpoints/read+write failure/mismatch/silent drop/reset/source/
+PCI/counter/command/mapping/scope;33 inert pristine-result/epoch/embedding+
+finalnorm+late-layer page/source/participant refusals. FIRST unknown state
+retains/quarantines every journal/host owner and causes NO following IO,
+retry,repair,restore or cleanup. Fresh fixtures share ONLY immutable CPU
+geometry,never processor/journal/nonce/device history. Endpoints are simulated.
+Initial fixture include-order/panel-ABI configuration and missing standalone
+stddef/NULL declaration issues were fixed before the passing final tests.
+
+Cancellable original-model qualification is STARTED,not passed
+---------------------------------------------------------------
+The original runner now selects literal PINS_CANCEL_F32 only with the exact
+--cancel-boundary option;normal plain FP32 pins remain the default. The HOST
+test asserts the actual cancellation symbol and raw ZERO cancel word BEFORE
+the first instruction. Both wrong-mode/image combinations refuse before
+output directory/model construction in main+clean. No request/STOP is forged.
+
+Cancellable original bootstrap main71478/clean95676 BOTH0 at00:06UTC:
+actual cancellation symbol/raw ZERO control/full startup metadata/original
+embedding5120/20raw+2writes+2readbacks/first returning entry/SAME119 virgin;
+ROOT4751089/stack2992reserved2984written. This is NOT a full layer or a
+boundary-cancellation/STOP proof. Logs:
+/private/tmp/pioneer-q38-cancel-original-bootstrap-{main,clean}-20261028-a.log.
+Fresh complete observed3-position runs main36786/clean63451 STILL LIVE,
+logs /private/tmp/pioneer-q38-cancel-original-full-{main,clean}-20261028-a.log;
+outputs /private/tmp/pioneer-q38-cancel-emitted-trace-{main,clean}-20261028-a.
+Started from RESET/SAME119,not a transplant or replacement of earlier runs.
+No complete emitted file/full numerical comparison exists yet.
+
+Still owed:finish complete model/state/vocab/token/STOP numerical tests and
+late/cancellation gates;implement the genuine distinct full851 native owner,
+retained model+source/clock/host/cookie/thread/session/init/mapping/program+
+metadata/RUN/STOP/terminal/disposal/client integration. The new held journal
+and DATA objects cannot substitute that native factory/lifetime proof.
+Then actual card correctness/long conversations/load-unload/recovery,
+separate no-CPU-reference Work+Assistant,boot64CPU/fullRAM preservation and
+measured sustained27B performance optimization remain required. Goal ACTIVE.

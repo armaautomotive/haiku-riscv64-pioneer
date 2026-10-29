@@ -1,0 +1,2 @@
+PASS DISTINCT full-token HELD journal/ALL120/saved11406906/installed2710744/restored11406906/secondOriginal22813812/arbitrary+UINT32_MAX/NEW terminal60000+60004/fullstack+runtime+padding/startup+851page binding;SIMULATED endpoints,NO start/reset/NoC/native execution/Work/TPS grant
+PASS real RISC-V SDK full-token journal TEMPLATE/maxStaticFrame1216/separate undefined TOKEN IO hooks/no conventional ABI;NOT genuine native context or loadable driver

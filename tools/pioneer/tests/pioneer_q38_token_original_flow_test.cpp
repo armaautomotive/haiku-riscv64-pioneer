@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #include "pioneer_q38_token_original_fabric.h"
 #include <csignal>
+#if defined(PIONEER_Q38_TEST_CANCELLABLE_ROOT) && PIONEER_Q38_TEST_CANCELLABLE_ROOT != 1
+#error Exact HOST cancellable original-root test selection required
+#endif
 int main(int argc,char** argv){
  assert(argc>=5 && argc<=8);const char* mode=nullptr;const char* traceDirectory=nullptr;
  for(int i=5;i<argc;i++){
@@ -18,6 +21,12 @@ int main(int argc,char** argv){
  assert(!traceDirectory);
 #endif
  auto m=std::make_unique<OriginalTokenFlowMachine>(argv[1],argv[2],argv[3],original);
+#ifdef PIONEER_Q38_TEST_CANCELLABLE_ROOT
+ assert(m->cancelBoundary && !m->memory.at(TL::CancelLocal));
+ puts("PASS distinct pinned cancellable FP32 ROOT/raw cancel control ZERO before first instruction;no request or completion invented");
+#else
+ assert(!m->cancelBoundary);
+#endif
  m->VerifyRawEndpoints();
  const auto first=*m->learned.begin();unsigned route=unsigned(first.first>>32),address=unsigned(first.first);
  // A synthetic raw word is deliberately present only in each disposable
