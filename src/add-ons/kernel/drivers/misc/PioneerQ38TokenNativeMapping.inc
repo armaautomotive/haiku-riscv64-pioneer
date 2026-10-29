@@ -5,6 +5,7 @@ bool TokenMemoryMappingSourceScope();bool TokenMemoryAccessScope();
 bool TokenDispatchImageAccessScope(unsigned);
 bool TokenPeerStoreSelectionScope();bool TokenPeerStoreAccessScope(unsigned);
 bool TokenInitializationFifoEmpty(unsigned);bool TokenInitializationFifoReadChecked(unsigned,bool,uint32&);
+bool PrepareTokenNativeParticipant(unsigned);
 bool TokenMemoryScope(const PioneerQ38TokenMemory&,const PioneerQ38CanonicalModelPlan&,const PioneerQ38TokenStartupPlan&,
  const PioneerQ38GdnIdentity&,const uint8_t*,unsigned);
 void TokenMemoryRetainHostOwners();

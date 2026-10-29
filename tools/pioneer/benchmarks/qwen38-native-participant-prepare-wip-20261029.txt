@@ -1,0 +1,139 @@
+Native participant preparation:COMPLETED OFFLINE STARTUP+8FAULTS,NOT INSTALLED
+COMPLETED FINAL FOLLOW-UP16:41UTC:current E FIFO89203/56832 and access
+32070/88885 ALL observed terminal0. Each full corresponding main/clean log
+matches byte-for-byte. ALL8 cases pass after their own genuine1010 zero jobs
+and CLOSED initialization histories:ROOT queued FIFO,peer-before-enable
+disabled-status fault,peer-after-enable queued FIFO,sticky overflow after
+availability;first actual mapping-write bad readback,actual NIU-enable-write
+generation loss,actual role-word-write generation loss and actual role-word
+bad readback. Each stops on the first uncertainty with no following IO,
+counter reads,retry,reset,cleanup or release;all owners remain retained.
+
+Together with positive startup16051/39593 BOTH0,endpoint89229/16861 BOTH0
+and SDK70552/48432 BOTH0/identical7cccd23e,these qualify the exact native
+participant preparation/startup checkpoint. Source bytes are preserved in
+the independent clean.Ur1lPiEW tree. Later ROOT/shared-mapping changes stay
+separate LOCAL WIP;these results do not qualify them. Historical LIVE text
+below is superseded by this final follow-up. No full model/native END/public
+Work/physical-card/speedup claim. Last physical0.207893161tok/s;20 unmet.
+Saved qwen38-native-prepare-{startup,fifo-faults,access-faults,sdk,endpoint}-{main,clean}-20261029.log.
+COMPLETED STARTUP FOLLOW-UP16:16UTC:current E16051/39593 BOTH terminal0;
+full logs byte-identical. Actual1010 zero jobs/CLOSED initializers/ALL120 new
+native preparations/full L1 journals/4616 metadata packets/119 VIRGIN boots
+(14744576 actual instructions)/ROOT startup5137/fresh-call cancellation
+REQUEST and existing phase/output-alias/pending refusals pass. ROOT is paused
+at its actual startup marker,not a completed layer/token/cancel consumption.
+Saved qwen38-native-prepare-startup-{main,clean}-20261029.log. This qualifies
+that positive startup path ONLY,before the newer ROOT-local restore stage.
+E FIFO89203/56832 and access32070/88885 remain separate LIVE requirements,
+not overall fault-suite passes. Full model/END/hardware/speed remain unproven.
+15:55UTC follow-up:older D fault groups39550/70113/94822/16715 all observed
+terminal1 with the known TEST constructor/window mismatch. Their historical
+LIVE text below is superseded;do not poll/restart/retag those old groups.
+Current E16051/39593/89203/56832/32070/88885 remain separate live requirements.
+2026-10-29 15:52 UTC. Full goal ACTIVE;20 tokens/sec remains UNMET.
+Last measured physical whole-model rate:0.207893161 tokens/sec.
+No Pioneer/SSH/power/install/Assistant/boot/CPU/RAM/network/SD/hardware-
+connection/mains changes. No physical-health or speedup claim.
+
+Implemented,still requires positive runtime qualification
+--------------------------------------------------------
+PioneerQ38TokenNativePrepare.inc supplies a DISTINCT full851-native-only
+PrepareTokenNativeParticipant. The held factory no longer calls the legacy
+best-effort peer-lease/dispatch-prepare helpers. Ordinary driver modes and
+their old65 byte identities remain unchanged. No public Work/END is enabled.
+
+Every actual access checks the SAME native FD/thread/team/generation/model/
+clock/host owner plus selected aliases. A monotonic5-minute participant
+deadline is checked per access. Existing200/201 physical mapping writes are
+each read back BEFORE another write or any alias;no index202 is invented.
+Actual held/reset/source/PCI/FIFO/idle proofs precede the ONCE-only original
+command/counter save. No counter is rebased after an operation. Known peer
+NIU enable writes have immediate readback and fresh FIFO/counter proof.
+
+Actual2048-word scratch and67585-word dispatch-entry/panel originals are
+saved from the same physical backing. Each known role-code/entry write has
+immediate exact readback,followed by a complete second code pass and final
+guard. Only then are source authority/image-ready/prepared fields published.
+No RISC release,NoC request,counter clear,retry,legacy cleanup or END occurs.
+Failure includes the partial participant in retention/quarantine;no later IO.
+CPU-only closeDetail progress diagnostics grant no readiness or authority.
+
+Evidence and exact failure lineage
+----------------------------------
+SDK A7211 ends1 for nine GCC misleading-indentation warnings treated as
+errors. Statements were split;the warning policy was not disabled.
+SDK B60405 ends0,hash1bfc00d5,before the detailed CPU-only phase diagnostics.
+Native pending A2211 and B60357 both end1. B's actual phase411/lastread214
+located the defect:the local read allowlist used BlackholeResidentReadRegister
+and therefore refused required write counters204/220/228. It now uses the
+existing BlackholeHostWriteReadRegister. No global MMIO whitelist is widened.
+SDK C1663/97650 BOTH0,objects49a6215e,but predate that correction.
+
+Current production SDK D70552/48432 BOTH observed terminal0;objects match:
+ 7cccd23e5a452164bd163c4143c4ad6c0e3dc5bc33646e88b592ab72114c650b.
+Actual native preparation body is emitted,frame752<=2048. Old65 stays
+61faa093 and all5 ordinary entries remain independently inert. No TEST,
+CPU-reference or Work implementation is imported. This is COMPILE ONLY.
+
+Pending D61716/43449 BOTH end1 at the TEST Window checker,not a production
+register mismatch. The physical expectations had accidentally been placed
+inside SnapshotPreDispatch (an optional restoration fixture),not the actual
+HELD constructor. They now initialize ALL120 endpoints in the constructor,
+BEFORE any preparation or instruction history. Actual TLB words are never
+rewritten to satisfy the checker;all six remain independently compared.
+The TEST selector now uses the real PioneerWorkerX/Y physical coordinates.
+
+Quick endpoint E main89229/clean16861 BOTH0;logs byte-identical. The actual
+HELD constructor+selector/FIFO endpoint passes960 checks across120 physical
+targets with ZERO zero-program/model instructions. This is endpoint DATA,
+NOT a supplied native-ready/history/initialization/launch capability.
+
+Older B fault groups14030/8304 both observed terminal1. Their first queued-
+ROOT/mapping cases pass,but later cases encounter the old local allowlist
+bug before their intended target. Do not retag them as current qualification.
+Older D fault groups39550/70113/94822/16715 were still LIVE at15:52,contain
+the old constructor defect and are NOT current E. Preserve terminal results
+and logs rather than calling their partial first-case passes overall success.
+
+Historical E runtime requirements:completed by final follow-up above
+----------------------------------------------
+Positive/pending main16051/clean39593 must run the SAME actual1010 zero
+jobs/CLOSED initializers,ALL120 native participant preparations/full token
+L1 journals,4616 metadata packets,119 virgin boot histories and ROOT startup.
+Existing source/output-alias/phase/API refusals must still preserve outputs
+and perform no IO. No old result or caller-ready receipt is substituted.
+
+FIFO fault groups main89203/clean56832 require four separate genuine histories:
+ROOT queued,peer-before-enable disabled-status fault,peer-after-enable queued,
+and sticky overflow after an actual empty-availability read. Access fault
+groups main32070/clean88885 require bad readback after an actual first mapping
+write,generation loss after an actual NIU enable write,generation loss after
+an actual role word write,and a bad readback after that actual role write.
+All must retain on the FIRST uncertainty with no later IO/counter/reset/
+retry/cleanup/release. These are requirements,NOT passing results yet.
+
+Clean /private/tmp/pioneer-q38-native-prepare-clean.Ur1lPiEW:HEAD a5f49771
+archive77972 completed0 BEFORE exact owned overlay/cmp and qualification.
+Dirty llama.cpp and unrelated FlashNext files were excluded. Current logs:
+ /private/tmp/pioneer-q38-native-prepare-{pending,fifo-faults,access-faults}-{main,clean}-20261029-e.log
+ /private/tmp/pioneer-q38-native-prepare-endpoint-{main,clean}-20261029-e.log
+ /private/tmp/pioneer-q38-native-prepare-sdk-{main,clean}-20261029-d.log.
+Current SDK compiles the SAME production body as E;E changes only the TEST
+constructor and quick endpoint regression. The implementation is LOCAL and
+must not be pushed/installed as qualified until its runtime gates complete.
+
+Independent prior milestone,NOT this preparation implementation
+---------------------------------------------------------------
+Earlier initializer FIFO fault suites3036/69735 BOTH0 with identical full
+logs/all6 cases. Their exact evidence is pushed as2b520fd499 and documented
+in qwen38-native-init-fifo-wip-20261029.txt. It does not qualify this new path.
+
+Remaining full objective,unchanged
+---------------------------------
+Preparation positive+all8 fault cases are complete OFFLINE;all64-layer/multitoken/
+state/KV/vocabulary/normal+EOS numerical/terminal proof;ROOT/master/shared-
+TLB/clock/maps/hosts restoration,clean END/load-unload/reuse/recovery;qualified
+native performance image/no-CPU-reference Work+Assistant integration;
+physical repeated/long-context generation and honest tuning toward20tok/s.
+Preserve Assistant,SD-free boot,64 CPUs,full RAM and valid test histories.

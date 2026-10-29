@@ -32,7 +32,9 @@ embedding = first_matrix or len(sys.argv) == 4 and sys.argv[2] in embedding_mode
 peer_bootstrap = len(sys.argv) == 5 and sys.argv[2] == '--bootstrap-peer-engines'
 peer_engines = peer_bootstrap or first_matrix
 terminal_faults = len(sys.argv)==3 and sys.argv[2]=='--terminal-observation-faults'
-assert peer_bootstrap or embedding or terminal_faults or len(sys.argv) in (2,3) and (len(sys.argv) == 2 or sys.argv[2] in ('--initializer-fifo-faults', '--faults', '--late-faults', '--held', '--held-faults', '--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'))
+preparation_faults = len(sys.argv)==3 and sys.argv[2] in ('--preparation-fifo-faults', '--preparation-access-faults')
+preparation_endpoints = len(sys.argv)==3 and sys.argv[2]=='--preparation-endpoint-contract'
+assert preparation_endpoints or preparation_faults or peer_bootstrap or embedding or terminal_faults or len(sys.argv) in (2,3) and (len(sys.argv) == 2 or sys.argv[2] in ('--initializer-fifo-faults', '--faults', '--late-faults', '--held', '--held-faults', '--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'))
 if embedding:
     assert pathlib.Path(sys.argv[3]).is_absolute() and pathlib.Path(sys.argv[3]).is_file()
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
@@ -57,7 +59,7 @@ defines = dict.fromkeys(parents, '1')
 defines['PIONEER_DRIVER_BUILD_TAG'] = '0x51544b4e4f445256ULL'
 defines.update({name:'pioneer_token_init_test_'+name for name in ('api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device')})
 defines.update(TT_PIONEER_EXPERIMENTAL_Q38_AFFINE='1', TT_PIONEER_EXPERIMENTAL_Q38_BLOCK='1')
-if terminal_faults or peer_bootstrap or embedding or len(sys.argv) == 3 and sys.argv[2] in ('--held', '--held-faults', '--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
+if preparation_endpoints or preparation_faults or terminal_faults or peer_bootstrap or embedding or len(sys.argv) == 3 and sys.argv[2] in ('--held', '--held-faults', '--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
     defines['PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE'] = '1'
 if terminal_faults or peer_bootstrap or embedding or len(sys.argv) == 3 and sys.argv[2] in ('--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
     defines['PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE'] = '1'

@@ -10,7 +10,7 @@ struct Mock {
 	unsigned writes=0,drop=0,requests=0,orderedReads=0,postIssueWrites=0,pauses=0;
 	bool timeout=false,acceptedOnly=false,badFlits=false,badData=false,changed=false,active=false,irq=false,restoreFails=false;
 	bool doorbellRead=false,done=false;
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE)
  bool nativePhysicalWindow=false;unsigned nativeWindowX=1,nativeWindowY=2;
 #endif
 	Mock() { for (unsigned w=0;w<16;w++) { l1[w]=100+w; gddr[w]=0x98765432+w; } }
@@ -22,13 +22,13 @@ struct Mock {
 		assert(slot<2 && w<3); if (++writes!=drop) tlb[slot][w]=value;
 	}
 	void Window(unsigned slot,uint32_t base,unsigned x,unsigned y,bool readOnly) {
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE)
   assert(NativeWindowMatches(slot,base,x,y,readOnly));
 #else
   for (unsigned w=0;w<3;w++) assert(tlb[slot][w]==BlackholeDramFixedTlbWord(base,x,y,readOnly,w));
 #endif
  }
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE)
  bool NativeWindowMatches(unsigned slot,uint32_t base,unsigned x,unsigned y,bool readOnly)const {
   if(slot>=2)return false;
   if(nativePhysicalWindow && x==1 && y==2 && !readOnly && (base==0 || base==0xffa00000)){

@@ -24,6 +24,14 @@ using TokenNativeEndpoints=ZeroControlIO;
 #endif
 struct PioneerSessionIO:TokenNativeEndpoints {
  tt_dram_samples_result& dram;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+ unsigned preparationFault=0,preparationFaultSeen=0,preparationFaultTouches=0,preparationMapWrites=0,preparationPanelWrites=0;
+ std::vector<unsigned> preparationFifoEvents;
+ bool NativePreparationObservation();
+ uint32 NativePreparationFifoObserved(uint32,uint32);
+ void DramTlbWrite(unsigned,unsigned,uint32);uint32 DramTlbRead(unsigned,unsigned);
+ void ResidentNocWrite(uint32,uint32);void Q38PanelWrite(uint32,uint32);uint32 Q38PanelRead(uint32);
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
  std::unique_ptr<Q38NativeTraceTest> nativeTrace=std::make_unique<Q38NativeTraceTest>();
  unsigned vocabularySequence[119]={};
@@ -159,7 +167,11 @@ struct PioneerSessionIO:TokenNativeEndpoints {
     initializationFifoObserved=touches;return address==0x64?0x1010100fU:1U;
    }
   } // bad OBSERVATION on actual scoped read,not caller-supplied native readiness or completion
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+  return NativePreparationFifoObserved(address,value);
+#else
   return value;
+#endif
  }
  bool runtimeMapped=true,q38SpanAllowed=true,nonrootFault=false;
  int outputArea=0,wideArea=0; // simulated owned VM handles;real quarantine method below
@@ -288,6 +300,9 @@ static void TestKernelLog(const char*,...){}
 #endif
 #endif
 #include "token_native_zero_callbacks.inc"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+#include "pioneer_q38_token_native_prepare_endpoints.inc"
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenCallScope.inc"
 static bool IncompleteEnd(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean){
 #include "token_native_end.inc"
@@ -356,6 +371,7 @@ struct Fixture {
 #endif
 #endif
 #include "pioneer_q38_token_native_held_checks.inc"
+#include "pioneer_q38_token_native_prepare_checks.inc"
 #endif
 int main(int argc,char** argv){
  const bool peerBootstrap=argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines");
@@ -369,19 +385,23 @@ int main(int argc,char** argv){
   || !strcmp(argv[2],"--execution-restore-dispatch") || !strcmp(argv[2],"--execution-restore-dispatch-fault")));
  const bool terminalFaults=argc==3 && !strcmp(argv[2],"--terminal-observation-faults");
  const bool initializationFifoFaults=argc==3 && !strcmp(argv[2],"--initializer-fifo-faults");
+ const bool preparationFifoFaults=argc==3 && !strcmp(argv[2],"--preparation-fifo-faults");
+ const bool preparationAccessFaults=argc==3 && !strcmp(argv[2],"--preparation-access-faults");
+ const bool preparationFaults=preparationFifoFaults || preparationAccessFaults;
+ const bool preparationEndpoints=argc==3 && !strcmp(argv[2],"--preparation-endpoint-contract");
  const bool fullLayer=fullFlow || cancelLayer || (argc==7 && !strcmp(argv[2],"--execution-first-layer"));
  (void)cancelLayer;
  const bool firstMatrix=fullLayer || (argc==6 && !strcmp(argv[2],"--execution-first-matrix"));
  const bool embedding=firstMatrix || (argc==4 && (!strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-embedding-source-loss")
   || !strcmp(argv[2],"--execution-embedding-readback-loss") || !strcmp(argv[2],"--execution-layer-dispatch")));
- assert(initializationFifoFaults || terminalFaults || peerBootstrap || embedding || argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
+ assert(preparationEndpoints || preparationFaults || initializationFifoFaults || terminalFaults || peerBootstrap || embedding || argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
   || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
   || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")
   || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-traffic-faults")
   || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;(void)&AcquireQ38DeltaLock;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
- assert(terminalFaults || peerBootstrap || embedding || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults")
+ assert(preparationEndpoints || preparationFaults || terminalFaults || peerBootstrap || embedding || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-faults")
   || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
   || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")
   || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-traffic-faults"))));
@@ -393,7 +413,7 @@ int main(int argc,char** argv){
  const bool execution=terminalFaults || embedding || (argc==3 && !strncmp(argv[2],"--execution",11)),executionFaults=execution && !strcmp(argv[2],"--execution-faults");
  const bool trafficFaults=argc==3 && !strcmp(argv[2],"--execution-traffic-faults");
  const bool runtime=argc==3 && !strncmp(argv[2],"--runtime",9),runtimeFaults=runtime && !strcmp(argv[2],"--runtime-faults");
- const bool faults=!initializationFifoFaults && argc==3 && strncmp(argv[2],"--held",6) && !runtime && !bootstrap && !execution,late=faults && !strcmp(argv[2],"--late-faults");
+ const bool faults=!preparationEndpoints && !preparationFaults && !initializationFifoFaults && argc==3 && strncmp(argv[2],"--held",6) && !runtime && !bootstrap && !execution,late=faults && !strcmp(argv[2],"--late-faults");
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
  assert(embedding);Q38EmbeddingRawTestBridge original;
  puts("START authenticate SAME-open original27B GGUF RAW bytes BEFORE native fixture construction;NO CPU embedding/model products");
@@ -409,8 +429,29 @@ int main(int argc,char** argv){
  assert(fullLayer);tokenNativePrefixFile=argv[6];
 #endif
 #endif
- for(unsigned fault=0;fault<(initializationFifoFaults?6U:terminalFaults?5U:trafficFaults?2U:executionFaults?4U:bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
+ for(unsigned fault=0;fault<(preparationFaults?4U:initializationFifoFaults?6U:terminalFaults?5U:trafficFaults?2U:executionFaults?4U:bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
   Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;assert(f.Bind());auto* state=c.q38TokenNative;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+  if(preparationEndpoints){
+   unsigned checks=0;const auto starts=io.rootStarts,stops=io.rootStops,holds=io.rootHolds;
+   for(unsigned worker=0;worker<120;worker++){
+    auto& core=io.Core(worker);
+    assert(core.nativePhysicalWindow && core.nativeWindowX==PioneerWorkerX(worker) && core.nativeWindowY==PioneerWorkerY(worker));
+    assert(io.SelectRuntimeCore(worker));
+    for(unsigned slot=0;slot<2;slot++){
+     const uint32 base=slot?0xffa00000U:0U;
+     for(unsigned word=0;word<3;word++)assert(io.DramTlbRead(slot,word)==BlackholeDramFixedTlbWord(base,PioneerWorkerX(worker),PioneerWorkerY(worker),false,word));
+     core.Window(slot,base,1,2,false);checks+=3;
+    }
+    assert(io.TokenFifoStatusWord(0x64)==((core.config&0x10000U)?0x10101010U:0U) && !io.TokenFifoStatusWord(0x68));checks+=2;
+   }
+   assert(io.SelectRuntimeCore(0) && io.rootStarts==starts && !starts && io.rootStops==stops && io.rootHolds==holds);
+   tt_resident_session_result end={};bool clean=true;const unsigned before=io.touches;
+   assert(!IncompleteEnd(c,end,clean) && !clean && io.touches==before);f.Unknown();
+   printf("PASS actual HELD TEST constructor/ALL120 physical endpoint expectations BEFORE any preparation/history/actual selected6 TLB words+FIFO observations/%u checks/ZERO zero-program or model instructions;NOT native preparation/model/STOP/END/hardware/Work/TPS qualification\n",checks);
+   continue;
+  }
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
   io.executionCpu->original=&original;io.embeddingFault=!strcmp(argv[2],"--execution-embedding-source-loss")?1U:
    !strcmp(argv[2],"--execution-embedding-readback-loss")?2U:0U;
@@ -482,6 +523,7 @@ int main(int argc,char** argv){
   assert(f.learned==learned && !c.bulk.dirty && !io.pciWrites && !io.HostReadMock::bmeWrites
    && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases && !state->Closed());
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+  if(preparationFaults){CheckNativePreparationFault(f,fault+(preparationAccessFaults?5U:1U));continue;}
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
   io.runtimeWorkspace=io.workspaceAddress;io.runtimeFault=runtimeFaults?fault+1:0;
 #endif

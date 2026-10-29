@@ -68,7 +68,7 @@ required = ('BindQ38TokenNative(', 'TokenCallScopeMatches(', 'TokenModelSourceSc
             'RestoreQ38TokenNativePeerStores(', 'PioneerQ38TokenNativeOwner::RestorePeerStores(', 'pioneer_token_context_scoped_peer_restore(',
             'TokenPeerStoreSelectionScope(', 'TokenPeerStoreAccessScope(', 'TokenPeerStoreSelect(',
             'TokenPeerNiuReadChecked(', 'TokenPeerNiuWrite(', 'TokenPeerScratchReadChecked(', 'TokenPeerScratchWrite(', 'TokenFifoReadChecked(',
-            'TokenInitializationFifoEmpty(', 'TokenInitializationFifoReadChecked(')
+            'TokenInitializationFifoEmpty(', 'TokenInitializationFifoReadChecked(', 'PrepareTokenNativeParticipant(')
 for name in required:
     assert any(name in key for key in frames), (name, 'actual implementation must be emitted')
 for controller in ('State', 'ConvHistory', 'Projection'):
@@ -98,6 +98,7 @@ for forbidden in ('Q38WorkControl', 'OriginalSource', 'CompareFinal', 'Reference
                   'CheckNativeEmptyReadout', 'CheckNativeReadoutFlow', 'CheckNativeRestoreEmpty', 'beforeNativeImage',
                   'CheckNativeDispatchRestore', 'beforeDispatchImage', 'ResumeFirstLayerCancellation',
                   'CheckNativePeerRestore', 'beforePeerScratch', 'SnapshotPrePeerStores',
+                  'NativePreparationObservation', 'NativePreparationFifoObserved', 'CheckNativePreparationFault',
                   'Q38NativeTraceTest', 'PioneerQ38ObservedTrace', 'KvByteSpan', 'BindKvBytes', 'CheckNativeFullFlow',
                   'Q38MixedLiveValidationControl', 'PioneerQ38MixedLiveNativeState',
                   'PioneerQ38EmbeddingNativeState', 'PioneerQ38RecurrentPrefixNativeState'):

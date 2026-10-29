@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
 #include "PioneerQ38TokenNativeRole.h"
+#include "PioneerQ38TokenNativePrepare.inc"
 bool PioneerSessionIO::TokenMemoryMappingSourceScope(){
  auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;
  return s && !runtimeCore && s->phase==PioneerQ38TokenNativeState::MemoryPreparing && s->memory && s->startup
@@ -86,9 +87,7 @@ void PioneerSessionIO::TokenMemoryRetainHostOwners(){
  for(unsigned w=1;w<120 && okay;w++)okay=PioneerWorkerNocProbe(c.io,dram,w,d.worker[w].noc);
  c.q38DispatchRoutes=okay;
  for(unsigned w=0;w<120 && okay;w++){
-  auto& node=d.worker[w];okay=c.io.SelectRuntimeCore(w) && c.io.MapQ38Panel();
-  if(okay && w)okay=PioneerQ38CohortPeerLeaseBegin(c.io,dram,w,node);
-  if(okay)okay=PioneerQ38DispatchPrepareRole(c.io,dram,c.banks,d,w);
+  okay=c.io.PrepareTokenNativeParticipant(w);
   if(!okay)d.prepared=w+1;
  }
  if(okay)okay=startup->Build(s->canonical,s->bank,s->identity,&d.authority.source[0][0],s->prompt,s->prompts,s->limit,s->stopEos,s->eos[0],s->eos[1])

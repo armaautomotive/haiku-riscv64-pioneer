@@ -76,6 +76,7 @@ struct TokenHeldEndpoints:ZeroControlIO {
  explicit TokenHeldEndpoints(const char* image):ZeroControlIO(image){
   for(auto& peer:peers){peer=std::make_unique<PanelIO>();peer->transferBytes=8192;}
   for(unsigned w=0;w<120;w++){
+   Core(w).nativePhysicalWindow=true;Core(w).nativeWindowX=PioneerWorkerX(w);Core(w).nativeWindowY=PioneerWorkerY(w);
    extra[w].resize(Words);
    for(unsigned i=0;i<Words;i++)extra[w][i]=i%17?uint32(0x9e3779b9U*(i+1)^0x1234567U*(w+1)):UINT32_MAX;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
@@ -136,9 +137,10 @@ struct TokenHeldEndpoints:ZeroControlIO {
  }
  bool SelectRuntimeCore(unsigned w){
   Touch();assert(w<120);runtimeCore=w;
-  // Simulated fixed-window endpoint,as in the existing cohort fixture;
-  // actual topology/source-ID probes still execute in the production helper.
-  return BlackholeDramConfigure(C(),0,0,1,2,false) && BlackholeDramConfigure(C(),1,0xffa00000,1,2,false);
+  // Same physical coordinates as the real backend,not a logical(1,2)
+  // substitute. Actual TLB words are still independently checked by Window.
+  return BlackholeDramConfigure(C(),0,0,PioneerWorkerX(w),PioneerWorkerY(w),false)
+   && BlackholeDramConfigure(C(),1,0xffa00000,PioneerWorkerX(w),PioneerWorkerY(w),false);
  }
  bool MapRuntime(){Touch();return true;}
  bool MapQ38Panel(){Touch();return C().mapping;}
