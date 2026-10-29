@@ -1,5 +1,44 @@
 # Native build status
 
+## Current: earlier native FIFO gates and corrected TEST endpoints
+
+October29,2026 14:37UTC. Scoped FIFO-empty/overflow checks now precede
+acceptance of native zero-initializer,held-memory,worker-bootstrap and
+startup-packet completion receipts. SDK mainB69160/cleanC78499 BOTH0,
+objects identical3191bc7b;old65/all5 inert entries and stack bounds preserved.
+Endpoint ASan+UBSan tests BOTH0 with24720 checks;native role tests BOTH0
+with241 refusals. Current native positive/refusal C26476/47340 BOTH0 at14:38,
+including actual1010 jobs/119 virgin boots/ROOT startup and40 wrong-scope FIFO
+reader refusals. Six initializer-fault cases remain running,not an overall
+pass. Earlier peer-lease/dispatch FIFO audit is still owed.
+
+Six earlier peer positive/fault profiles were invalid TEST config/window
+models and deliberately retired14:12UTC,ALL terminal1. Their historical LIVE
+claims below are superseded;corrected D profiles are separate running tests.
+No new driver is installed or hardware touched. Last physical whole-model
+**0.207893161 tokens/sec**,20 unmet. Details:
+[native initializer FIFO work](benchmarks/qwen38-native-init-fifo-wip-20261029.txt).
+
+## Completed offline: older original dispatch-image restoration
+
+October29,2026 14:37UTC. Positive C41283/71327 and actual-write/generation-loss
+C34072/31820 ALL finish0. All8110200 restored dispatch-original words match
+independent pre-dispatch observations;fault cases stop without following IO.
+CPU comparisons12379/6609 BOTH0:5120 embedding+5120 layer0 BITEXACT. These
+older binaries do NOT qualify the newer peer/FIFO stages,full model or END.
+[Completed dispatch milestone](benchmarks/qwen38-token-native-dispatch-restore-wip-20261029.txt).
+
+## Experimental boundary optimization: full-flow failure, not accepted
+
+October29,2026 14:29UTC. Both boundary original-flow7635/74451 terminate1
+at token0/layer3/phase5 after three recurrent layers. Actual fault callsite
+is the dense packet-seal:the attention routine passes a local descriptor
+copy,violating its strict same-private-frame pointer check. The lower
+first-layer instruction count below is NOT whole-model correctness or a
+speed claim. A separate candidate fix keeps the check strict and uses the
+owning phase5 descriptor;build/unit/full-flow qualification remains owed.
+The default/native/Work images are unchanged;other valid histories remain.
+
 ## In progress: worker-local NIU/scratch restoration and explicit FIFO drain
 
 October29,2026 13:58UTC. A distinct private stage restores119 original NIU

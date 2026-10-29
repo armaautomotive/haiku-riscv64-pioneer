@@ -1,0 +1,1 @@
+PASS native TEST endpoint contract/24720 checks/120 physical endpoints/all6 TLB words+every bit+wrong coordinates/read-only/current NIU config not source baseline/FIFO enable-disable observations;NO native state/STOP/restore/END/hardware/Work/TPS grant

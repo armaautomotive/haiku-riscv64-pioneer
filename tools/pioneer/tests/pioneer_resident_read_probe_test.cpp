@@ -10,6 +10,9 @@ struct Mock {
 	unsigned writes=0,drop=0,requests=0,orderedReads=0,postIssueWrites=0,pauses=0;
 	bool timeout=false,acceptedOnly=false,badFlits=false,badData=false,changed=false,active=false,irq=false,restoreFails=false;
 	bool doorbellRead=false,done=false;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+ bool nativePhysicalWindow=false;unsigned nativeWindowX=1,nativeWindowY=2;
+#endif
 	Mock() { for (unsigned w=0;w<16;w++) { l1[w]=100+w; gddr[w]=0x98765432+w; } }
 	void Pause() { pauses++; }
 	uint32_t ResetRead() { return active?0:0x47800; }
@@ -19,8 +22,28 @@ struct Mock {
 		assert(slot<2 && w<3); if (++writes!=drop) tlb[slot][w]=value;
 	}
 	void Window(unsigned slot,uint32_t base,unsigned x,unsigned y,bool readOnly) {
-		for (unsigned w=0;w<3;w++) assert(tlb[slot][w]==BlackholeDramFixedTlbWord(base,x,y,readOnly,w));
-	}
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+  assert(NativeWindowMatches(slot,base,x,y,readOnly));
+#else
+  for (unsigned w=0;w<3;w++) assert(tlb[slot][w]==BlackholeDramFixedTlbWord(base,x,y,readOnly,w));
+#endif
+ }
+#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+ bool NativeWindowMatches(unsigned slot,uint32_t base,unsigned x,unsigned y,bool readOnly)const {
+  if(slot>=2)return false;
+  if(nativePhysicalWindow && x==1 && y==2 && !readOnly && (base==0 || base==0xffa00000)){
+   x=nativeWindowX;y=nativeWindowY;
+  }
+  for(unsigned w=0;w<3;w++)if(tlb[slot][w]!=BlackholeDramFixedTlbWord(base,x,y,readOnly,w))return false;
+  return true;
+ }
+#endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE)
+ uint32_t NativeFifoStatusWord(uint32_t address) {
+  assert(address==0x64 || address==0x68);Window(1,0xffa00000,1,2,false);
+  return address==0x64 && (config&0x10000U)?0x10101010U:0U;
+ } // TEST synchronous endpoint only;CURRENT register,not immutable baseline source[0]
+#endif
 	uint32_t ResidentGddrRead(unsigned w) { assert(w<16); Window(0,0x04000000,18,12,true); return gddr[w]; }
 	uint32_t ResidentL1Read(unsigned w) { assert(w<16); Window(0,0,1,2,false); return l1[w]; }
 	void ResidentL1Write(unsigned w,uint32_t value) {

@@ -1,0 +1,111 @@
+Native initializer/held-memory/startup FIFO checks: IN PROGRESS, NOT ready
+2026-10-29 14:37 UTC. Goal ACTIVE; 20 tokens/sec remains UNMET.
+Last measured physical whole-model rate: 0.207893161 tokens/sec.
+No Pioneer/SSH/power/install/Assistant/boot/CPU/RAM/network/SD/hardware-
+connection/mains changes. No current physical-health or speedup claim.
+
+Production changes
+------------------
+The three actual native zero controllers now require ordered FIFO-empty
+and overflow observations before accepting idle/completion receipts. A
+distinct initializer-kind/FD/thread/generation/source/phase scope supplies
+the two fixed read-only registers before token-memory aliases exist. It
+does not borrow the later token-memory lifetime or accept a caller-ready
+flag. Ordinary non-native controller builds keep their original path.
+
+Native held-token memory guards and pre-ROOT worker bootstrap guards also
+require FIFO drain before accepting the closed counter journal. A ROOT
+startup packet may poll bounded in-flight deltas, but must then prove FIFO
+empty, idle and fresh exact expected counters BEFORE advancing its journal.
+Live model traffic is NOT incorrectly required to be idle. No wider MMIO,
+counter clear, START, public Work route, native END or hardware permission
+is added. Earlier peer-lease/dispatch-preparation FIFO auditing is still owed.
+
+TEST endpoint corrections and invalid histories
+----------------------------------------------
+The former FIFO endpoint used immutable source[0] rather than the current
+NIU config register. The peer selector also used physical coordinates while
+the old TEST window checker expected only logical(1,2). Both are corrected:
+current config controls FIFO observations; endpoint expectations use actual
+PioneerWorkerX/Y and still independently compare ALL six actual TLB words.
+No TLB value, processor PC/history, model product or completion is supplied
+or repaired to satisfy a guard. Peer-original observations use actual config.
+
+Exactly six invalid older profiles were identified by PID/parent/mode/log
+arguments and deliberately SIGINT'd at 14:12 UTC, all terminal1:
+ B88486/30117 and C59750/20094/5399/90772.
+Their logs remain preserved. They are NOT live, passes, hardware failures or
+qualification evidence. All OTHER valid histories were left alone. This
+supersedes the historical LIVE claims in the older peer-restoration report.
+
+The first initializer attempt A48789 failed to compile because legacy
+ZeroControlIO fixtures instantiated in the native TEST TU lacked the new
+method. A TEST-only synchronous FIFO observer fixes that interface without
+removing the production callback. The actual native IO still uses its own
+FD/phase-scoped reader. The A failure log is preserved, not retagged a pass.
+
+Completed independent evidence
+------------------------------
+SDK mainB69160/cleanC78499 BOTH terminal0. Objects byte-identical:
+ 3191bc7b2393fa0d6fa508ec9ed3a777a1665a966f941e8d787d5125ea13a868.
+Actual native initializer readers and controller/held/runtime/bootstrap/
+HOLD/restoration bodies are emitted. Existing stack bounds, old65 identity
+61faa093 and ALL5 independently inert driver entries remain enforced. No
+CPU-reference/Work/TEST implementation is imported. Earlier SDK A88652
+also completed its log but predates the held/bootstrap/packet extension;
+its lost process exit status is not substituted for the observed B/C zeros.
+
+MainB/cleanC endpoint ASan+UBSan tests BOTH0; logs identical, 24720 checks:
+all120 physical endpoints, every bit of all6 TLB words, wrong coordinates,
+read-only mismatch and actual config enable/disable changes while original
+source[0] stays unchanged. This is endpoint DATA, not native ownership.
+The first endpoint compile A failed for a missing <initializer_list>; B
+includes it. Both original failure and later complete logs are preserved.
+
+Main/clean native role C38972/57456 BOTH0, logs identical:21 exact parents,
+6 renamed ABI names,31 forbidden old-native/image/CPU/Work aliases and241
+undefined/zero/two/late refusals. Legacy fixed resident-read regressions
+also BOTH0 with unchanged pass logs.
+
+Main pending B98967 completed0:actual1010 zero jobs,120 held images,4616
+metadata packets,119 virgin QGW1 boots and ROOT startup5137 instructions
+precede all existing pending/alias/API refusals. It predates the endpoint
+helper factoring and extra initializer-scope refusals, not those new tests.
+Current C main26476/clean47340 BOTH observed terminal0 at14:38UTC;complete
+logs match. In addition to the full preceding1010-job/bootstrap/ROOT history,
+40 wrong-FD/wrong-phase/invalid-kind FIFO reader calls preserve output and
+issue no IO. C is the actual current positive/refusal result,not inferred B.
+
+Current tests are not yet complete
+---------------------------------
+Initializer FIFO faults mainB3036/cleanC69735 run six cases: queued/overflow
+at each recurrent/history/workspace initializer. Later cases execute and
+CLOSE their actual predecessor initializers first. The first bad observed
+FIFO field must stop ALL later IO, counter reads, reset, retry and release,
+with unchanged program/scratch/model data and retained ownership. They are
+LIVE, not an overall passing six-case suite.
+
+Fresh corrected peer-restoration D positive19331/20997 and queued-fault
+93420/9670 are LIVE. They include the corrected endpoint and new initializer/
+held/bootstrap/packet guards. They require genuine original first-layer
+execution, consumed cancellation, ROOT+119 STOP,120 HOLDs, record drain and
+both original-image restorations before peer closure. They are NOT passes.
+
+Clean export: /private/tmp/pioneer-q38-init-fifo-clean.EpXZlRcr.
+HEAD52ad archive52863 completed0 BEFORE the explicit owned overlay; all
+native source pairs compared equal before starting the independent tests.
+No dirty llama.cpp or unrelated FlashNext source was included.
+
+Older peer pending C48104/13748 also BOTH observed terminal0;complete logs
+match. They predate the earlier initializer/held/bootstrap/packet extension
+and qualify only their original17/360/84 pending/alias/API refusal history.
+
+Remaining full objective
+------------------------
+Finish current fault/positive qualification and earlier peer-lease/dispatch
+FIFO audit; all64-layer/multitoken/state/KV/vocabulary/normal+EOS correctness;
+ROOT/children/master/shared-TLB/clock/maps/hosts restoration and clean END,
+load/unload/reuse/recovery; qualified performance-image/no-reference Work
+and Assistant integration; actual repeated/long-context card generation and
+honest sustained optimization toward20tok/s. Preserve SD-free boot,64 CPUs,
+full RAM, Assistant and every valid running qualification history.

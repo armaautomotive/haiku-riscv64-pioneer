@@ -31,7 +31,7 @@ struct TokenHeldEndpoints:ZeroControlIO {
   assert(beforePeerScratch.empty() && rootStarts==1010 && rootStops==1010 && rootHolds==1010);
   beforePeerScratch.resize(119*2048);
   for(unsigned w=1;w<120;w++){
-   assert(Core(w).coreReset==0x47800);beforePeerConfig[w-1]=Core(w).source[0];
+   assert(Core(w).coreReset==0x47800);beforePeerConfig[w-1]=Core(w).config;
    for(unsigned i=0;i<2048;i++)beforePeerScratch[(w-1)*2048+i]=Raw(w,0x17e000+i*4);
   }
  } // actual pre-lease physical byte/config observation,NEVER fed back to a controller or processor
@@ -175,6 +175,9 @@ struct TokenHeldEndpoints:ZeroControlIO {
  uint32* HostReadBackup(unsigned words){Touch();return C().HostReadBackup(words);}
  void DramTlbWrite(unsigned s,unsigned w,uint32 value){Touch();C().DramTlbWrite(s,w,value);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+  if(nativePeerResult && nativePeerResult->started){
+   C().nativePhysicalWindow=true;C().nativeWindowX=PioneerWorkerX(runtimeCore);C().nativeWindowY=PioneerWorkerY(runtimeCore);
+  } // expected physical target for this endpoint;actual TLB words still independently checked,never rewritten by the TEST
   if(peerRestoreFault==2 && nativePeerResult && nativePeerResult->phase==1 && !runtimeCore && !s && !w)peerMapWriteSeen++;
 #endif
  }
@@ -205,7 +208,7 @@ struct TokenHeldEndpoints:ZeroControlIO {
 #endif
   // This simulator initiates requests synchronously,no request FIFO exists
   // in front of that endpoint. Outstanding work is independently modeled.
-  return address==0x64 && (C().source[0]&0x10000U)?0x10101010U:0U;
+  return C().NativeFifoStatusWord(address);
  }
  uint32 HostPciRead(unsigned p,uint16_t address,uint8_t bytes){Touch();return Trace("pci",p*0x10000U+address,StoreMock::HostPciRead(p,address,bytes));}
  void ResidentNocWrite(uint32 address,uint32 value){Touch();

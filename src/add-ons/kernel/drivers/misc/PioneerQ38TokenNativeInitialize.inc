@@ -54,6 +54,21 @@ bool PioneerSessionIO::ConvHistoryZeroBeforeCohort(){return TokenInitializationS
 bool PioneerSessionIO::ConvHistoryZeroOtherCoresHeld(){return TokenInitializationOtherCoresHeld(1);}
 bool PioneerSessionIO::ProjectionZeroBeforeCohort(){return TokenInitializationScope(2,false);}
 bool PioneerSessionIO::ProjectionZeroOtherCoresHeld(){return TokenInitializationOtherCoresHeld(2);}
+bool PioneerSessionIO::TokenInitializationFifoReadChecked(unsigned kind,bool overflow,uint32& output){
+ if(!TokenInitializationScope(kind,false) || runtimeCore || !runtimeMapped
+  || !Q38PanelMappingStable() || !BulkMappingStable())return false;
+ output=TokenFifoStatusWord(overflow?0x68U:0x64U);return true;
+} // no token-memory aliases exist yet;SAME initializer FD/source/clock/host scope
+bool PioneerSessionIO::TokenInitializationFifoEmpty(unsigned kind){
+ if(!TokenInitializationScope(kind,false))return false;
+ struct Reader {
+  PioneerSessionIO& io;unsigned kind;
+  bool TokenFifoReadChecked(unsigned worker,bool overflow,uint32& output){
+   return !worker && io.TokenInitializationFifoReadChecked(kind,overflow,output);
+  }
+ } reader{*this,kind};
+ return PioneerQ38TokenFifoEmpty(reader,0,q38MutableContext->lease.config|0x10000U);
+} // ordered availability/overflow BEFORE initializer idle/outstanding receipts;no ready/hold grant
 
 [[maybe_unused]] static __attribute__((noinline)) bool InitializeQ38TokenRecurrent(PioneerStoreContext& c,PioneerQ38StateZeroResult& r){
  auto* s=c.q38TokenNative;if(!s || !c.io.TokenInitializationScope(0,true))return false;

@@ -5,6 +5,7 @@
 #include "../../../../../tools/pioneer/PioneerQ38TokenPrograms.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenStartupPlan.h"
 #include "PioneerQ38GraphCsrProbe.h"
+#include "../../../../../tools/pioneer/PioneerQ38TokenFifoQuiescence.h"
 // DISTINCT full-token held L1 journal. Not the three-layer prefix journal,
 // an embedding producer,initialized state,model-source/clock/host permission,
 // a launched owner or a caller-supplied STOP/clean capability. Genuine native
@@ -36,6 +37,9 @@ class PioneerQ38TokenMemory {
  template<class IO> bool Guard(IO& io,unsigned worker){
   if(worker>=120 || !Scope(io) || !PioneerQ38GraphCsrGuard(io,*proof,*banks,*cohort,worker)
    || !io.TokenMemoryMappingStable(worker))return false;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
+  if(!PioneerQ38TokenFifoEmpty(io,worker,cohort->authority.source[worker][0]) || !PioneerQ38GraphCsrIdle(io))return false;
+#endif
   if(worker<sampled){
    for(unsigned i=0;i<10;i++)if(io.ResidentNocRead(i*4)!=command[worker][i])return false;
    for(unsigned i=0;i<8;i++)if(io.ResidentNocRead(PioneerQ38PanelCounter(i))!=counters[worker][i])return false;

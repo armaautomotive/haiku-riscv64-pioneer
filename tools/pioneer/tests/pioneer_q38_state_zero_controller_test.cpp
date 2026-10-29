@@ -7,8 +7,25 @@
 #define PIONEER_Q38_STATE_ZERO_MACHINE_ONLY
 #include "pioneer_q38_state_zero_image_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38StateZeroController.h"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
+#include "../PioneerQ38TokenFifoQuiescence.h"
+#endif
 struct ZeroControlIO:SpanControlIO {
 	using SpanControlIO::SpanControlIO;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
+ // Legacy controller fixtures are also instantiated by the native TEST TU.
+ // Observe the synchronous endpoint's CURRENT configuration,not source[0].
+ // The actual native IO hides these methods with its FD/phase-scoped readers.
+ uint32_t TokenFifoStatusWord(uint32_t address) {
+  Touch();return NativeFifoStatusWord(address);
+ }
+ bool TokenFifoReadChecked(unsigned worker,bool overflow,uint32_t& value) {
+  assert(!worker);value=TokenFifoStatusWord(overflow?0x68U:0x64U);return true;
+ }
+ bool TokenInitializationFifoEmpty(unsigned kind) {
+  assert(kind<3);return PioneerQ38TokenFifoEmpty(*this,0,config);
+ }
+#endif
 	bool competingSpan=false,lateCompetingSpan=false,lateOtherHeld=false,lateCoreMapLoss=false;
 	bool backwardsClock=false,frozenClock=false;
 	bool publicationCounterFabricOnly=false;

@@ -136,7 +136,7 @@ class PioneerQ38TokenNativeOwner {
   if(w>=120 || !Scope(io))return false;
   if(launched){
    if(traffic || rootStarted || !Sources(io,w))return false;
-   if(!PioneerQ38GraphCsrIdle(io))return false;
+   if(!PioneerQ38TokenFifoEmpty(io,w,cohort->authority.source[w][0]) || !PioneerQ38GraphCsrIdle(io))return false;
    for(unsigned i=0;i<10;i++)if(io.ResidentNocRead(i*4)!=memory->command[w][i])return false;
    for(unsigned i=0;i<8;i++)if(io.ResidentNocRead(PioneerQ38PanelCounter(i))!=memory->counters[w][i])return false;
    return true;
@@ -197,7 +197,10 @@ class PioneerQ38TokenNativeOwner {
    if(done)break;
    io.Pause();
   }
-  if(!done)return false;
+  if(!done || !PioneerQ38TokenFifoEmpty(io,0,cohort->authority.source[0][0]) || !PioneerQ38GraphCsrIdle(io))return false;
+  for(unsigned i=0;i<8;i++)if(io.ResidentNocRead(PioneerQ38PanelCounter(i))!=expected[i])return false;
+  // Poll deltas only bound live work. FIFO-empty THEN fresh exact receipts
+  // are required before advancing this owner's private counter journal.
   for(unsigned i=0;i<10;i++)if(io.ResidentNocRead(i*4)!=command[i])return false;
   for(unsigned i=0;i<8;i++)memory->counters[0][i]=expected[i]; // ONLY complete exact receipts,NEVER arbitrary recapture
   traffic=false;if(!Guard(io,0))return false;

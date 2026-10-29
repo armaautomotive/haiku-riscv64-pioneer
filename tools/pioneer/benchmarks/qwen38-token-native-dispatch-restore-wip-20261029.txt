@@ -1,4 +1,15 @@
 Native earlier-dispatch L1 restoration candidate:IN PROGRESS,NOT ready
+COMPLETED OFFLINE follow-up14:37UTC: positive C41283/71327 and actual-write-
+then-generation-loss C34072/31820 ALL observed terminal0. Full positive logs,
+positive prefixes and full fault logs respectively match across both trees.
+Actual8110200 original dispatch words independently match pre-dispatch byte
+observations after SAME firstlayer/cancel/STOP/HOLD/drain/token-L1 restore.
+Fault stops after the actual first original write with no later IO/retry/
+reset/release. Independent CPU comparisons12379/6609 BOTH0:5120 embedding+
+5120 layer0 values BITEXACT,zero differences/error,NO tolerance. This
+supersedes the historical LIVE text below. These OLDER binaries predate new
+peer-store and FIFO changes;NOT their qualification,all64/token/END or card
+performance. Last physical0.207893161tok/s;20 unmet.
 2026-10-29 12:54UTC. Goal ACTIVE;20 tokens/sec remains UNMET.
 Last completed physical whole-model measurement:0.207893161 tokens/sec.
 No Pioneer/SSH/power/install/OS/Assistant/boot/CPU/RAM/network/SD/hardware-

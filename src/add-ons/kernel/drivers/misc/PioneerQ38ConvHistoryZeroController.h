@@ -66,6 +66,9 @@ template<class IO> bool PioneerQ38ConvHistoryZeroSources(IO& io,const tt_dram_sa
 		|| !wide.ready || !wide.memory_type_set || wide.released || wide.quarantined || wide.pending) return false;
 	return io.ConvHistoryZeroOtherCoresHeld() && io.SelectRuntimeCore(0) && io.Q38PanelMappingStable() && io.BulkMappingStable()
 		&& io.ResetRead()==reset && io.ResetRead()==reset && PioneerRuntimeSources(io,dram,noc,store,0x402)
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
+  && io.TokenInitializationFifoEmpty(1)
+#endif
 		&& BlackholeResidentIdle(io) && BlackholeHostReadMapStable(io,input)
 		&& PioneerOutputBufferMapStable(io,transfer,input) && PioneerWideOutputMapStable(io,wide,input,transfer);
 }

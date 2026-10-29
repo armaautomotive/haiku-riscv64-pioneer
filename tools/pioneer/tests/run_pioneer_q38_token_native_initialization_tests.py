@@ -32,7 +32,7 @@ embedding = first_matrix or len(sys.argv) == 4 and sys.argv[2] in embedding_mode
 peer_bootstrap = len(sys.argv) == 5 and sys.argv[2] == '--bootstrap-peer-engines'
 peer_engines = peer_bootstrap or first_matrix
 terminal_faults = len(sys.argv)==3 and sys.argv[2]=='--terminal-observation-faults'
-assert peer_bootstrap or embedding or terminal_faults or len(sys.argv) in (2,3) and (len(sys.argv) == 2 or sys.argv[2] in ('--faults', '--late-faults', '--held', '--held-faults', '--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'))
+assert peer_bootstrap or embedding or terminal_faults or len(sys.argv) in (2,3) and (len(sys.argv) == 2 or sys.argv[2] in ('--initializer-fifo-faults', '--faults', '--late-faults', '--held', '--held-faults', '--runtime', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'))
 if embedding:
     assert pathlib.Path(sys.argv[3]).is_absolute() and pathlib.Path(sys.argv[3]).is_file()
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)

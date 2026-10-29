@@ -148,7 +148,19 @@ struct PioneerSessionIO:TokenNativeEndpoints {
 #ifndef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
  unsigned runtimeCore=0;bool fleetEnabled=false;
  bool q38TokenMemoryMapAttempted=false;
+ bool TokenInitializationFifoEmpty(unsigned);bool TokenInitializationFifoReadChecked(unsigned,bool,uint32&);
 #endif
+ unsigned initializationFifoFault=0,initializationFifoReads=0,initializationFifoObserved=0;
+ uint32 TokenFifoStatusWord(uint32 address){
+  const uint32 value=TokenNativeEndpoints::TokenFifoStatusWord(address);
+  if(initializationFifoFault){
+   assert(!initializationFifoObserved);initializationFifoReads++;
+   if((initializationFifoFault==1 && address==0x64) || (initializationFifoFault==2 && address==0x68)){
+    initializationFifoObserved=touches;return address==0x64?0x1010100fU:1U;
+   }
+  } // bad OBSERVATION on actual scoped read,not caller-supplied native readiness or completion
+  return value;
+ }
  bool runtimeMapped=true,q38SpanAllowed=true,nonrootFault=false;
  int outputArea=0,wideArea=0; // simulated owned VM handles;real quarantine method below
 #include "token_native_host_quarantine.inc"
@@ -356,12 +368,13 @@ int main(int argc,char** argv){
   || !strcmp(argv[2],"--execution-readout-empty") || !strcmp(argv[2],"--execution-restore-empty") || !strcmp(argv[2],"--execution-restore-empty-fault")
   || !strcmp(argv[2],"--execution-restore-dispatch") || !strcmp(argv[2],"--execution-restore-dispatch-fault")));
  const bool terminalFaults=argc==3 && !strcmp(argv[2],"--terminal-observation-faults");
+ const bool initializationFifoFaults=argc==3 && !strcmp(argv[2],"--initializer-fifo-faults");
  const bool fullLayer=fullFlow || cancelLayer || (argc==7 && !strcmp(argv[2],"--execution-first-layer"));
  (void)cancelLayer;
  const bool firstMatrix=fullLayer || (argc==6 && !strcmp(argv[2],"--execution-first-matrix"));
  const bool embedding=firstMatrix || (argc==4 && (!strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-embedding-source-loss")
   || !strcmp(argv[2],"--execution-embedding-readback-loss") || !strcmp(argv[2],"--execution-layer-dispatch")));
- assert(terminalFaults || peerBootstrap || embedding || argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
+ assert(initializationFifoFaults || terminalFaults || peerBootstrap || embedding || argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
   || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
   || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")
   || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-traffic-faults")
@@ -380,7 +393,7 @@ int main(int argc,char** argv){
  const bool execution=terminalFaults || embedding || (argc==3 && !strncmp(argv[2],"--execution",11)),executionFaults=execution && !strcmp(argv[2],"--execution-faults");
  const bool trafficFaults=argc==3 && !strcmp(argv[2],"--execution-traffic-faults");
  const bool runtime=argc==3 && !strncmp(argv[2],"--runtime",9),runtimeFaults=runtime && !strcmp(argv[2],"--runtime-faults");
- const bool faults=argc==3 && strncmp(argv[2],"--held",6) && !runtime && !bootstrap && !execution,late=faults && !strcmp(argv[2],"--late-faults");
+ const bool faults=!initializationFifoFaults && argc==3 && strncmp(argv[2],"--held",6) && !runtime && !bootstrap && !execution,late=faults && !strcmp(argv[2],"--late-faults");
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
  assert(embedding);Q38EmbeddingRawTestBridge original;
  puts("START authenticate SAME-open original27B GGUF RAW bytes BEFORE native fixture construction;NO CPU embedding/model products");
@@ -396,7 +409,7 @@ int main(int argc,char** argv){
  assert(fullLayer);tokenNativePrefixFile=argv[6];
 #endif
 #endif
- for(unsigned fault=0;fault<(terminalFaults?5U:trafficFaults?2U:executionFaults?4U:bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
+ for(unsigned fault=0;fault<(initializationFifoFaults?6U:terminalFaults?5U:trafficFaults?2U:executionFaults?4U:bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
   Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;assert(f.Bind());auto* state=c.q38TokenNative;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
   io.executionCpu->original=&original;io.embeddingFault=!strcmp(argv[2],"--execution-embedding-source-loss")?1U:
@@ -405,6 +418,14 @@ int main(int argc,char** argv){
   PioneerQ38StateZeroResult g;PioneerQ38ConvHistoryZeroResult h;PioneerQ38ProjectionZeroResult p;
   assert(!state->InitializationsClosed(c.banks,f.proof) && !io.StateZeroBeforeCohort() && !io.ConvHistoryZeroBeforeCohort() && !io.ProjectionZeroBeforeCohort());
   unsigned touches=io.touches;assert(!f.History(h) && !f.Projection(p) && io.touches==touches);
+  for(unsigned kind:{0U,1U,2U,3U,UINT32_MAX})for(bool overflow:{false,true}){
+   uint32 value=0x5a7183c9;
+   assert(!io.TokenInitializationFifoEmpty(kind) && !io.TokenInitializationFifoReadChecked(kind,overflow,value)
+    && value==0x5a7183c9 && io.touches==touches);
+   PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);
+   assert(!io.TokenInitializationFifoEmpty(kind) && !io.TokenInitializationFifoReadChecked(kind,overflow,value)
+    && value==0x5a7183c9 && io.touches==touches);
+  } // wrong FD or Bound(not initializer) phase never reads registers or changes output
   auto learned=f.learned;const auto panel=io.view;const std::vector<uint32> scratch(io.l1,io.l1+8192);const auto entry=io.entry;
   {PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);
    auto refuse=[&](auto& field,auto bad){auto saved=field;field=bad;
@@ -414,6 +435,21 @@ int main(int argc,char** argv){
    refuse(c.q38GdnCallThread,-1);refuse(currentThread,99);refuse(currentTeam,99);refuse(c.bulk.dirty,true);
    refuse(sReloadGeneration,sReloadGeneration+1);refuse(io.fleetEnabled,true);refuse(c.q38DispatchRoutes,true);
    refuse(c.hashes,nullptr);refuse(c.bulkHost.pending,true);refuse(c.q38Clock.value.busy_mhz,1401U);
+  }
+  if(initializationFifoFaults){
+   const unsigned kind=fault/2;
+   if(kind)assert(f.Recurrent(g) && state->RecurrentInitialized(c.banks,f.proof));
+   if(kind==2)assert(f.History(h) && state->HistoryInitialized(c.banks,f.proof));
+   const unsigned starts=io.rootStarts,stops=io.rootStops,holds=io.rootHolds;
+   const auto originalPanel=io.view;const std::vector<uint32> originalScratch(io.l1,io.l1+8192);
+   io.initializationFifoFault=1+fault%2;
+   const bool okay=kind==0?f.Recurrent(g):kind==1?f.History(h):f.Projection(p);
+   assert(!okay && io.initializationFifoObserved && io.touches==io.initializationFifoObserved
+    && io.initializationFifoReads==1+fault%2 && io.rootStarts==starts && io.rootStops==stops && io.rootHolds==holds
+    && io.view==originalPanel && std::equal(originalScratch.begin(),originalScratch.end(),io.l1));
+   f.Unknown();assert(f.learned==learned);
+   printf("PASS native initializer FIFO fault kind%u/%s/actual preceding initializers CLOSED/first bad ordered observation stops ALL later IO/counters/reset/retry/release;retained NO initialization/STOP/END/physical/Work/TPS grant\n",kind,fault%2?"overflow":"queued");
+   continue;
   }
   if(late){
    assert(f.Recurrent(g) && state->RecurrentInitialized(c.banks,f.proof));

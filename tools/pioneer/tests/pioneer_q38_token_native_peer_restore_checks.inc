@@ -18,7 +18,7 @@ static void CheckNativePeerRestore(Fixture& f){
  const unsigned before=io.touches,packets=io.runtimePackets;
  std::array<unsigned,120> resets;for(unsigned w=0;w<120;w++)resets[w]=io.Core(w).resets.size();
  std::array<uint32_t,10> rootCommand;for(unsigned i=0;i<10;i++)rootCommand[i]=io.Core(0).command[i];
- const uint32_t rootConfig=io.Core(0).source[0];
+ const uint32_t rootConfig=io.Core(0).config;
  PioneerQ38TokenPeerRestoreResult result;const auto pristine=result;auto* words=reinterpret_cast<uint32*>(&result);
  io.nativePeerResult=&result;
  assert(!RestoreQ38TokenNativePeerStores(c,result) && io.touches==before);
@@ -44,12 +44,12 @@ static void CheckNativePeerRestore(Fixture& f){
  }
  io.nativePeerResult=nullptr;
  for(unsigned w=0;w<120;w++)assert(io.Core(w).coreReset==0x47800 && io.Core(w).resets.size()==resets[w]);
- assert(io.Core(0).source[0]==rootConfig && c.lease.ready && !c.q38Dispatch->closed);
+ assert(io.Core(0).config==rootConfig && c.lease.ready && !c.q38Dispatch->closed);
  for(unsigned i=0;i<10;i++)assert(io.Core(0).command[i]==rootCommand[i]);
  if(!io.peerRestoreFault)for(unsigned w=1;w<120;w++){
   const auto& store=c.q38Dispatch->worker[w].Store();
   assert(!store.ready && store.niu_restored && store.l1_restored && !store.l1_dirty && !store.tlb_restored
-   && store.controls_saved && store.configured && !store.recovery_required && io.Core(w).source[0]==io.beforePeerConfig[w-1]);
+   && store.controls_saved && store.configured && !store.recovery_required && io.Core(w).config==io.beforePeerConfig[w-1]);
   for(unsigned i=0;i<10;i++)assert(!io.Core(w).command[i]);
   for(unsigned i=0;i<2048;i++)assert(io.Raw(w,0x17e000+i*4)==io.beforePeerScratch[(w-1)*2048+i]);
  }

@@ -1,0 +1,1 @@
+PASS: fixed GDDR-to-L1 read, posted-doorbell ordering, data verification/rollback, no retry or payload rewrite after uncertainty

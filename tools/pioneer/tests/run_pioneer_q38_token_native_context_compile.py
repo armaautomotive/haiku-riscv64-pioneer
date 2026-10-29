@@ -67,7 +67,8 @@ required = ('BindQ38TokenNative(', 'TokenCallScopeMatches(', 'TokenModelSourceSc
             'TokenDispatchImageReadChecked(', 'TokenDispatchImageWrite(',
             'RestoreQ38TokenNativePeerStores(', 'PioneerQ38TokenNativeOwner::RestorePeerStores(', 'pioneer_token_context_scoped_peer_restore(',
             'TokenPeerStoreSelectionScope(', 'TokenPeerStoreAccessScope(', 'TokenPeerStoreSelect(',
-            'TokenPeerNiuReadChecked(', 'TokenPeerNiuWrite(', 'TokenPeerScratchReadChecked(', 'TokenPeerScratchWrite(', 'TokenFifoReadChecked(')
+            'TokenPeerNiuReadChecked(', 'TokenPeerNiuWrite(', 'TokenPeerScratchReadChecked(', 'TokenPeerScratchWrite(', 'TokenFifoReadChecked(',
+            'TokenInitializationFifoEmpty(', 'TokenInitializationFifoReadChecked(')
 for name in required:
     assert any(name in key for key in frames), (name, 'actual implementation must be emitted')
 for controller in ('State', 'ConvHistory', 'Projection'):
@@ -143,7 +144,7 @@ print('PASS ACTUAL private held-only committed-record READ factory/controller SD
 print('PASS ACTUAL full-token original-L1 journal restoration factory/controller SDK emitted;requires SAME genuine HOLD+drained records/all120 frozen-image proof before writes/exact original words+full second pass;NO NIU/CSR/dispatch close/END/host release/physical/Work grant')
 print('PASS ACTUAL distinct earlier dispatch-original L1 factory/controller+phase-specific checked aliases SDK emitted;SAME private captured originals+all120 code proofs BEFORE writes/exact immediate readback+whole second pass;NO NIU/scratch/TLB/master/clock/END/host release/physical/Work grant')
 print('PASS ACTUAL119 peer NIU+scratch factory/controller+per-write-checked selection and aliases SDK emitted;private original config/scratch identities+all120-held guards+exact words/secondpass;ROOT/sharedTLB/master/clock/maps/hosts/END STILL owned;NOT runtime/physical/Work qualification')
-print('PASS scoped fixed FIFO availability+overflow reads emitted/native HOLD+restoration and peer guards test FIFO drain BEFORE outstanding counters;no old MMIO whitelist widening/counter clear/START;hardware and earlier initializer FIFO audit STILL OWED')
+print('PASS scoped fixed FIFO availability+overflow reads emitted/native zero-initializer+held-memory+runtime-packet+bootstrap+HOLD/restoration guards test FIFO drain BEFORE accepting completion receipts;no old MMIO whitelist widening/counter clear/START;runtime/hardware and earlier peer-lease/dispatch-preparation FIFO audit STILL OWED')
 print('PASS complete2097152B immutable rawRoPE emitted;NO kernel cos/sin/pow imports or CPU model-reference path')
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+' token-context-NODRV.o')
 print('COMPILE/INSPECT ONLY;real private bodies WOULD do IO if invoked;NO link/install/invoke/physical or performance qualification;this compile is NOT initialization/staging RUNTIME qualification;runtime+metadata/RUN/STOP/END STILL OWED')
