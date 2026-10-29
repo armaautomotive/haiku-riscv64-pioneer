@@ -2351,6 +2351,7 @@ struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOu
  bool TokenInitializationScope(unsigned kind,bool beginning);bool TokenInitializationOtherCoresHeld(unsigned kind);
  bool ConvHistoryZeroBeforeCohort();bool ConvHistoryZeroOtherCoresHeld();
  bool ProjectionZeroBeforeCohort();bool ProjectionZeroOtherCoresHeld();
+#include "PioneerQ38TokenNativeMapping.inc"
 #endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
  bool ResidentLayerCallScopeMatches();bool ResidentLayerBindSourceScope();
@@ -3926,6 +3927,7 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 #include "PioneerQ38RecurrentPrefixNative.inc"
 #include "PioneerQ38TokenNativeBind.inc"
 #include "PioneerQ38TokenNativeInitialize.inc"
+#include "PioneerQ38TokenNativeHeld.inc"
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 // PIONEER_Q38_STATE_ZERO_NATIVE_ADAPTER_BEGIN
 // Private native adapter,selected ONLY by the separate fixed zero diagnostic

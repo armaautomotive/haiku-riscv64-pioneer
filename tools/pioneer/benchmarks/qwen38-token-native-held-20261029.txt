@@ -1,0 +1,157 @@
+Full-model native held staging:positive offline checkpoint
+2026-10-29 02:31UTC. Goal ACTIVE. NO hardware/SSH/power/driver install/
+kernel/Assistant/boot/CPU/RAM/network/SD/mains action or physical health claim.
+Last measured whole-model0.207893161tok/s;20 target UNMET.
+
+Actual native implementation
+----------------------------
+The SAME full851 native state now owns its private prompt/startup/memory
+children and borrows ONLY its own newly allocated context-owned dispatch
+lease. No old completed embedding/prefix owner,program/processor history,
+readiness bit or journal is transplanted. Publication follows real closed
+recurrent/history/projection initialization and full learned-page presence.
+This does NOT authenticate original model-file uploads or initialize KV.
+
+PrepareQ38TokenNativeHeld runs actual all120-held and119 worker route
+probes,119 NEW peer store leases,all120 actual held dispatch-role prepares,
+and captures1920 source words before constructing its immutable startup.
+It then retains four DISTINCT actual L1 VM aliases at20000/40000/60000/
+ac000,including the full-token60000/60004 terminal instructions absent in
+the old prefix journal. Native mapping/source/access callbacks bind the
+SAME FD/context/team/thread/global lock/generation/canonical/reservations/
+clock/hosts/participant/startup/journal lifetime. No bootstrap/reset/start
+occurs. A separate private CloseHeld restores a NEVER-launched journal ONLY.
+This is NOT final END,disposal,a model-input producer or execution permission.
+
+Unpublished CPU child-allocation failures delete only unpublished children,
+NEVER the existing full-model owner or its sticky seven-bank reservation.
+Published uncertainty retains/quarantines all owners and forbids retry,
+repair,restore,unmap or release. All partial VM aliases remain retained.
+The native object's Closed() deliberately stays false;actual incomplete
+END retains rather than falling through to legacy cleanup.
+
+Complete positive native integration
+------------------------------------
+Final G main67708/clean18734 BOTH terminal0,identical ASan+UBSan logs.
+ONE fixture per tree owns root+119 independent peer endpoint histories
+from construction through actual1010 zero-ROM jobs and staging/restoration.
+The real private factory,shared lock,phase callbacks,whole Unsafe,actual
+host-quarantine override,retention and unfinished-END branch execute.
+
+After all73728 recurrent+1680 history+512 workspace pages are genuinely
+zeroed and their controllers CLOSE,the actual native held factory prepares
+all120 roles and saves ALL11406906 L1 words (45627624B). A complete SECOND
+original pass precedes the FIRST program write. It installs/verifies all
+2710744 cancellable FP32 token/QGW1 program words. CloseHeld restores all
+11406906 originals,with22813812 total original verification reads. An
+independent pre-journal observer checks every final original,including
+root60000/60004,full runtime/stack/padding and arbitrary UINT32_MAX DATA.
+
+No additional root reset or any peer reset/boot occurs;all120 remain held.
+Learned pages stay unchanged,no BME/PCI write/host release occurs. Pristine
+result,invalid prompt/count/limit/EOS,owned context/state/result aliases,
+all12 result-field mutations and all3 unpublished child OOM refusals are
+inert. OOM preserves the SAME genuinely initialized native owner/banks.
+Repeated preparation/close refuses without IO. Final incomplete END still
+quarantines all resources instead of claiming clean disposal.
+
+OS/VM/MMIO/GDDR/clock endpoints are SIMULATED. Actual frozen zero RV32
+instructions produce initialization data;model inference is NOT executed
+by this test. This is NOT physical code upload,RUN/STOP/END,Work or TPS proof.
+
+First fixture failure and repair
+--------------------------------
+Initial A/B/C(main+clean)/D/E integrations all finish1 at the first held
+journal guard,savedWords0,after preparing120 participants and mapping4
+aliases. D/E metadata traces preserve that failure. Two inherited TEST
+panel-memory methods were still ROOT-only,so peer-role prepares overwrote
+the simulated root view. Native guards correctly refused the wrong code.
+The endpoint now explicitly multiplexes panel reads/writes to the selected
+participant and qualifies all120 independent panel channels BEFORE any
+owner/ROM history exists. NO production code guard was weakened to repair
+this test. Fresh G positive runs above complete from genuine initialization.
+
+Profiled immutable geometry work and private publication
+-------------------------------------------------------
+Baseline F runs preserve their ORIGINAL binaries/history. A one-second
+stack sample of main PID92389 at02:12:41UTC records84/84 samples in native
+source scope rebuilding full64 startup geometry,including nested canonical
+Conv/GDN descriptions. It is a HOST TEST CPU sample,not a P100A performance
+measurement. Baseline binary SHA256:
+ main c05ee11a7f0464a82c23c5e11117f3a67ca6326f5f25e1c6a22679bc86105ab9
+ clean b07ba07571c9420e7f64e6a5dd108673868f04626953dd2f1cae40f14917499a
+
+StartupPlan now sets a PRIVATE published seal ONLY after its complete
+strict Matches(c) succeeds. The one-shot/noncopyable object owns private
+packages,data and sources;const reads reject outputs aliasing any owned
+package or canonical model. MatchesPublishedBinding binds that immutable
+completed publication to the SAME canonical pointer,bank,64-bit identity
+and ALL1920 source words. Native source guards may borrow it only inside
+their existing real ownership/phase/lock lifetime. Strict Matches and
+MatchesBinding APIs remain intact;initial journal preparation still uses
+strict binding. Physical/source/reset/PCI/command/counter checks and all
+L1 code/original verification passes remain unchanged.
+
+This publication is NOT periodic random-kernel-memory-corruption revalidation,
+native ownership,initialized state or a launch/STOP/cleanup capability.
+No CPU model-reference path is introduced. No device/model speedup is claimed.
+
+Final publication-binding main33120/clean86096 BOTH0,identical logs:
+all7 banks/all120 boot records/high64-bit identities/EOS+8192 prompt
+serialization,all1920 separate source mutations and13642 total refusals
+pass,including unbuilt/failed-build/foreign canonical/bank/generation cases.
+These are bindings-only runs(fullPackageCopies0),NOT the full448-package
+serialization regression;that separate main94467/clean52118 remains LIVE.
+
+Other completed evidence
+-------------------------
+Actual SDK G main14566/clean4646 BOTH0;direct object cmp identical:
+508b358985dd0b0c09b87ba15a61ace8464603b0ecfb41fd4b18b299ba39156f
+All native factories,actual IO mappings/access/scope callbacks,whole held
+journal Prepare/Close and all9 initialization controller bodies are emitted.
+New token max frame560B,initialization controller max704B;whole unit meets
+the unchanged new<=2048B-or-old-exact-frame bound. This is NOT combined
+runtime stack proof. Old native65 stays byte-identical61faa093,all6 normal
+ABI names are absent,and ALL5 independent inert machine-code controls match.
+Unlinked,uninstalled renamed-ABI COMPILE/INSPECT ONLY;real private bodies
+WOULD perform IO if invoked. No ordinary/public compute or Work route exists.
+
+Binding G main58071/clean96330 BOTH0:3712 inert refusals,all7 workspaces,
+all3551 learned extent endpoints,shared ordinary+delta exclusion,actual
+retention/host quarantine and unfinished-END. Mapping main58283/clean59479
+BOTH0:all11406906 words written+read twice across120 independent apertures,
+1714 refusals,all8 failed/null partial-map cases retained without retry/unmap.
+Role main88096/clean46222 BOTH0:21 exact parents,31 forbidden aliases,241
+undefined/zero/two/late refusals. Ordinary initializer early-fault regression
+main24136/clean85039 BOTH0:all4 real production retention failures pass.
+Standalone held journal main7818/clean72712 completes its positive and52
+fault/33 inert-refusal cases;these use SIMULATED scope endpoints,not the
+native failure-path qualification below.
+
+Still LIVE;do not count as passed or restart for quiet output
+------------------------------------------------------------
+Native G main29821/clean37515 both pass generation-loss faults in phase1
+(initial save) AND phase3(last participant install),each after FRESH1010
+real zero jobs+120 real participant preparations. Every owner/alias/lease
+quarantines and no following device IO occurs. The phase6(partial root
+restore) case also requires FRESH genuine initialization and is still LIVE.
+Follow SAME handles;do not copy initialization/processor/private readiness.
+
+Baseline F positive main25831/clean19019 and fault main15876/clean88407
+remain LIVE with their strict-rebuilding scope,not replaced by G histories.
+The nine full-model instruction sessions also remain LIVE:
+cancel original36786/63451;plain captured60499/55839;plain68871/11982;
+fast-host40968;synthetic FP32 20159/13324. Activity is NOT numerical success.
+Old default KV94923/26724 remain terminal1 and are NOT retagged/restarted.
+
+Next actual work/full objective unchanged
+-----------------------------------------
+Finish these SAME qualification histories. Then implement SAME-owner
+runtime/KV frontiers+metadata staging,the distinct full-token native execution
+owner,fresh QGW1 bootstrap,RUN/cancel/terminal/actualSTOP/restore/END/disposal
+and client. Never bootstrap the new program with the old image/owner policy.
+Finish independent original-model all64/multitoken/persistent-state/head/
+selection comparisons,then physical-card correctness/stability/load-unload/
+recovery,separate no-CPU-reference Work+Assistant and real sustained27B TPS
+optimization,while preserving SD-free boot64CPU/full RAM.20tok/s is unmet.
+This checkpoint is real positive native staging progress,NOT project completion.

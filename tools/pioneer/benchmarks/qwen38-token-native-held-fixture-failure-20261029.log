@@ -1,0 +1,18 @@
+OBSERVED actual frozen zero ROM starts96/GDNpages10544/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts192/GDNpages21072/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts288/GDNpages31600/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts384/GDNpages42144/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts480/GDNpages52672/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts576/GDNpages63200/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts672/GDNpages73728/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts768/GDNpages73728/historyPages480/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts864/GDNpages73728/historyPages960/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts960/GDNpages73728/historyPages1440/projectionPages0;NOT native initialization publication
+HELD_PREPARE_DIAGNOSTIC resultPhase1/worker0/word0/started1/saved0/installedWords0/unsafe1/cohort1/prepared120/core0/maps4/routes1/retained1/detail00000000:00000000:00000000:00000000/lastentry:0=6c06f;SIMULATED fixture metadata ONLY
+Assertion failed: (prepared), function CheckNativeHeld, file pioneer_q38_token_native_held_checks.inc, line 54.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py", line 69, in <module>
+    subprocess.run([str(binary), *sys.argv[1:]], check=True,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-token-native-init-zuw946s8/test', '/private/tmp/pioneer-q38-resident-input-zero.rx9Gfebd/image', '--held']' died with <Signals.SIGABRT: 6>.

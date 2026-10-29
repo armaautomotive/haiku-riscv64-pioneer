@@ -1,0 +1,130 @@
+/* SPDX-License-Identifier: MIT */
+// TEST hardware/VM endpoints ONLY. Root zero execution and all120 L1/CSR
+// histories belong to ONE fixture from construction through held restoration.
+// No ready flag,private model state,journal or processor history is copied.
+static unsigned tokenChildFail=0,tokenChildAttempts=0;
+void* operator new(std::size_t bytes,const std::nothrow_t&) noexcept{
+ if(tokenChildFail && ++tokenChildAttempts==tokenChildFail)return nullptr;
+ try{return ::operator new(bytes);}catch(...){return nullptr;}
+} // only unpublished-child OOM injection;ordinary allocation/delete remain real
+using area_id=int;
+static constexpr int B_ANY_KERNEL_ADDRESS=1,B_KERNEL_READ_AREA=2,B_KERNEL_WRITE_AREA=4,B_UNCACHED_MEMORY=8;
+struct TokenHeldEndpoints:ZeroControlIO {
+ static constexpr uint64 Bar=UINT64_C(0x900000000);
+ static constexpr unsigned Words=0x180000/4;
+ struct{uint64 bar0_host_start=Bar;}profile;
+ std::array<std::unique_ptr<PanelIO>,119> peers;
+ std::array<std::vector<uint32>,120> extra;
+ std::vector<uint32> alias=std::vector<uint32>(Words),original;
+ unsigned runtimeCore=0,maps=0,aliasReads=0,aliasWrites=0;
+ const PioneerQ38TokenMemoryResult* journalResult=nullptr;
+ unsigned fault=0,faultSeen=0,touchesAtFault=0;
+ const char* lastOp="none";unsigned lastAddress=0,lastValue=0;
+ uint32 Trace(const char* op,unsigned address,uint32 value){lastOp=op;lastAddress=address;lastValue=value;return value;}
+ unsigned payloadBytes=8192;bool fleetEnabled=false;
+ uint32* runtimeEntry=&entry;uint32* scratchData=destination;
+ explicit TokenHeldEndpoints(const char* image):ZeroControlIO(image){
+  for(auto& peer:peers){peer=std::make_unique<PanelIO>();peer->transferBytes=8192;}
+  for(unsigned w=0;w<120;w++){
+   extra[w].resize(Words);
+   for(unsigned i=0;i<Words;i++)extra[w][i]=i%17?uint32(0x9e3779b9U*(i+1)^0x1234567U*(w+1)):UINT32_MAX;
+  }
+  // Qualify the simulated endpoint's multiplexing BEFORE any owner/ROM
+  // history exists. Inherited root-only panel methods must never be used.
+  const unsigned address=0x74000,at=(address-TT_Q38_PANEL_VIEW_BASE)/4;
+  for(unsigned w=0;w<120;w++){runtimeCore=w;Q38PanelWrite(address,0x5a000000+w);}
+  for(unsigned w=0;w<120;w++){runtimeCore=w;assert(Q38PanelRead(address)==0x5a000000+w);}
+  for(unsigned w=0;w<120;w++){runtimeCore=w;Q38PanelWrite(address,0xab860000+at);}
+  runtimeCore=0;
+ }
+ PanelIO& C(){assert(runtimeCore<120);return runtimeCore?*peers[runtimeCore-1]:static_cast<PanelIO&>(*this);}
+ PanelIO& Core(unsigned worker){assert(worker<120);return worker?*peers[worker-1]:static_cast<PanelIO&>(*this);}
+ uint32& Raw(unsigned worker,uint32 address){
+  assert(worker<120 && !(address&3) && address<0x180000);auto& c=Core(worker);
+  if(address==0x6000)return c.entry;
+  if(address>=TT_Q38_PANEL_VIEW_BASE && address-TT_Q38_PANEL_VIEW_BASE<TT_Q38_PANEL_VIEW_BYTES)
+   return c.view.at((address-TT_Q38_PANEL_VIEW_BASE)/4);
+  if(address>=0x140000 && address<0x148000)return c.l1[(address-0x140000)/4];
+  if(address>=0x17e000)return c.destination[(address-0x17e000)/4];
+  return extra[worker].at(address/4);
+ }
+ uint32 Address(const volatile uint32* p)const{
+  const uintptr_t a=reinterpret_cast<uintptr_t>(p),base=reinterpret_cast<uintptr_t>(alias.data());
+  assert(a>=base && a-base<Words*4 && !((a-base)&3));return uint32(a-base);
+ }
+ void ObserveAlias(unsigned address,bool write){
+  if(!fault || faultSeen || !journalResult)return;
+  const bool hit=fault==1?!write && journalResult->phase==1 && !runtimeCore && address==0x40000
+   :fault==2?write && journalResult->phase==3 && runtimeCore==119 && address==0x64000
+   :write && journalResult->phase==6 && !runtimeCore && address==0x60004;
+  if(hit){faultSeen++;touchesAtFault=touches;sReloadGeneration++;}
+ } // TEST metadata loss AFTER an actual alias access;next native check must refuse
+ void SnapshotOriginal(){
+  assert(original.empty() && runtimeCore==0 && rootStarts==1010 && rootStops==1010 && rootHolds==1010);
+  original.resize(PioneerQ38TokenL1::SavedWords);
+  for(unsigned w=0;w<120;w++){
+   assert(Core(w).coreReset==0x47800);
+   for(unsigned i=0;i<PioneerQ38TokenL1::SnapshotWords(w);i++)
+    original[PioneerQ38TokenL1::SnapshotBase(w)+i]=Raw(w,PioneerQ38TokenL1::SnapshotAddress(w,i));
+  }
+ }
+ bool SelectRuntimeCore(unsigned w){
+  Touch();assert(w<120);runtimeCore=w;
+  // Simulated fixed-window endpoint,as in the existing cohort fixture;
+  // actual topology/source-ID probes still execute in the production helper.
+  return BlackholeDramConfigure(C(),0,0,1,2,false) && BlackholeDramConfigure(C(),1,0xffa00000,1,2,false);
+ }
+ bool MapRuntime(){Touch();return true;}
+ bool MapQ38Panel(){Touch();return C().mapping;}
+ bool Q38PanelMappingStable(){Touch();return C().mapping;}
+ uint32 Q38PanelRead(uint32 address){Touch();return Trace("panel",address,C().Q38PanelRead(address));}
+ void Q38PanelWrite(uint32 address,uint32 value){Touch();C().Q38PanelWrite(address,value);}
+ uint32* Q38PanelSavedWords(){Touch();return C().Q38PanelSavedWords();}
+ uint32* HostReadBackup(unsigned words){Touch();return C().HostReadBackup(words);}
+ void DramTlbWrite(unsigned s,unsigned w,uint32 value){Touch();C().DramTlbWrite(s,w,value);}
+ uint32 DramTlbRead(unsigned s,unsigned w){Touch();return C().DramTlbRead(s,w);}
+ uint32 SourceRead(unsigned w){Touch();return Trace("source",w,C().SourceRead(w));}
+ uint32 ResidentNocRead(uint32 address){Touch();return Trace("noc",address,C().ResidentNocRead(address));}
+ uint32 HostPciRead(unsigned p,uint16_t address,uint8_t bytes){Touch();return Trace("pci",p*0x10000U+address,StoreMock::HostPciRead(p,address,bytes));}
+ void ResidentNocWrite(uint32 address,uint32 value){Touch();C().ResidentNocWrite(address,value);}
+ uint32 RuntimeCodeRead(unsigned word){Touch();return Trace("entry",word,C().RuntimeCodeRead(word));}
+ void RuntimeCodeWrite(unsigned word,uint32 value){Touch();C().RuntimeCodeWrite(word,value);}
+ uint32 RuntimeControlRead(unsigned word){Touch();return C().RuntimeControlRead(word);}
+ uint32 RuntimeStatusRead(unsigned word){Touch();return C().RuntimeStatusRead(word);}
+ void RuntimeStatusWrite(unsigned word,uint32 value){Touch();C().RuntimeStatusWrite(word,value);}
+ uint32 ResidentL1Read(unsigned word){Touch();return C().ResidentL1Read(word);}
+ void ResidentL1Write(unsigned word,uint32 value){Touch();C().ResidentL1Write(word,value);}
+ uint32 ResetRead(){
+  Touch();if(runtimeCore)return Trace("reset",runtimeCore,C().coreReset);
+  for(unsigned target=0;target<120;target++)for(bool readOnly:{false,true}){
+   bool same=true;for(unsigned w=0;w<3;w++)same&=tlb[1][w]==BlackholeDramFixedTlbWord(0xffa00000,PioneerWorkerX(target),PioneerWorkerY(target),readOnly,w);
+   if(same)return Trace("reset",target,Core(target).coreReset);
+  }
+  assert(false && "reset outside an actual selected fixed window");return 0;
+ }
+ uint32 ComputeNocRead(uint32 offset){
+  Touch();unsigned target=120;
+  for(unsigned w=0;w<120;w++){
+   bool same=true;for(unsigned i=0;i<3;i++)same&=C().tlb[1][i]==BlackholeDramFixedTlbWord(0xffa00000,PioneerWorkerX(w),PioneerWorkerY(w),true,i);
+   if(same)target=w;
+  }
+  assert(target<120);
+  if(offset==0x44)return 0x1c611000|BlackholeDramSourceX(C().source,PioneerWorkerX(target))|(PioneerWorkerY(target)<<6);
+  if(offset==0x48)return 0x10000|target;
+  for(unsigned w=0;w<16;w++)if(offset==BlackholeDramSourceOffset(w))return C().source[w];
+  if(offset==0x40 || offset==0x840 || offset==0x1040 || offset==0x1840 || (offset>=0x240 && offset<0x280))return 0;
+  assert(false);return 0;
+ }
+};
+static TokenHeldEndpoints* tokenHeldEndpoint=nullptr;
+static area_id map_physical_memory(const char*,uint64 physical,unsigned bytes,int placement,unsigned flags,void** view){
+ auto& io=*tokenHeldEndpoint;io.Touch();assert(io.maps<4 && placement==B_ANY_KERNEL_ADDRESS
+  && flags==(B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY));
+ const unsigned offsets[]={0x20000,0x40000,0x60000,0xac000},lengths[]={8192,131072,57344,868352};
+ const unsigned i=io.maps++;io.Trace("map",i,bytes);assert(physical==TokenHeldEndpoints::Bar+0x19000000+offsets[i] && bytes==lengths[i]);
+ if(!i)io.SnapshotOriginal();*view=io.alias.data()+offsets[i]/4;return int(i)+37;
+}
+static uint32 PioneerRead32(const volatile uint32* p){auto& io=*tokenHeldEndpoint;io.Touch();io.aliasReads++;
+ const auto address=io.Address(p),value=io.Raw(io.runtimeCore,address);io.ObserveAlias(address,false);return value;}
+static void PioneerWrite32(volatile uint32* p,uint32 value){auto& io=*tokenHeldEndpoint;io.Touch();io.aliasWrites++;
+ const auto address=io.Address(p);io.Raw(io.runtimeCore,address)=value;io.ObserveAlias(address,true);}

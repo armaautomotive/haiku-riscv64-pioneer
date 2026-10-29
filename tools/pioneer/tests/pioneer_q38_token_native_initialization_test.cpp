@@ -7,11 +7,25 @@
 #include "pioneer_q38_state_zero_controller_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38NonRootHeld.h"
 using PioneerHostPageIO=HostReadMock;
-struct PioneerSessionIO:ZeroControlIO {
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+#include "pioneer_q38_token_native_held_endpoints.h"
+using TokenNativeEndpoints=TokenHeldEndpoints;
+#else
+using TokenNativeEndpoints=ZeroControlIO;
+#endif
+struct PioneerSessionIO:TokenNativeEndpoints {
  tt_dram_samples_result& dram;
- PioneerSessionIO(const char* image,tt_dram_samples_result& proof):ZeroControlIO(image),dram(proof){}
- PioneerStoreContext* q38MutableContext=nullptr;unsigned runtimeCore=0;
- bool fleetEnabled=false,runtimeMapped=true,q38SpanAllowed=true,nonrootFault=false;
+ PioneerSessionIO(const char* image,tt_dram_samples_result& proof):TokenNativeEndpoints(image),dram(proof){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+  tokenHeldEndpoint=this;
+#endif
+ }
+ PioneerStoreContext* q38MutableContext=nullptr;
+#ifndef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+ unsigned runtimeCore=0;bool fleetEnabled=false;
+ bool q38TokenMemoryMapAttempted=false;
+#endif
+ bool runtimeMapped=true,q38SpanAllowed=true,nonrootFault=false;
  int outputArea=0,wideArea=0; // simulated owned VM handles;real quarantine method below
 #include "token_native_host_quarantine.inc"
  unsigned failRun=0,loseTeamRun=0,loseGenerationRun=0,observedGdnPages=0,observedHistoryPages=0,observedProjectionPages=0;
@@ -31,6 +45,9 @@ struct PioneerSessionIO:ZeroControlIO {
  uint32 workspaceAddress=0;unsigned workspaceBank=7;
  std::vector<uint32> workspaceWords=std::vector<uint32>(512*1024,0x13579bdf);
  std::vector<unsigned> workspaceTouched=std::vector<unsigned>(512);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeMapping.inc"
+#else
  void DramTlbWrite(unsigned slot,unsigned word,uint32 value){Touch();StoreMock::DramTlbWrite(slot,word,value);}
  uint32 DramTlbRead(unsigned slot,unsigned word){Touch();return StoreMock::DramTlbRead(slot,word);}
  uint32 SourceRead(unsigned word){Touch();return ZeroControlIO::SourceRead(word);}
@@ -43,7 +60,11 @@ struct PioneerSessionIO:ZeroControlIO {
    same&=tlb[1][w]==BlackholeDramFixedTlbWord(0xffa00000,1,2,readOnly,w);root|=same;}
   return root?coreReset:nonrootFault?0x46800:0x47800;
  }
+#endif
  void RuntimeResetWrite(uint32 value){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+  assert(!runtimeCore); // root initialization ONLY;no held participant may launch
+#endif
   assert(!publicationCounterFabricOnly && !authorityChanged);
   const bool executes=value==0x46800 && !noCompletion;const unsigned before=rootStarts;
   unsigned first=0,words=executes?l1[4]/4:0,kind=3,region=0;
@@ -96,7 +117,7 @@ struct PioneerStoreContext {
   PioneerWideOutputLease& wide):io(native),baseline{{{{native.dram},owner.noc},{ }},{ }},lease(owner.store),bulk(b),bulkHost(transfer),wideHost(wide),host(owner.host){}
  auto& Pci(){return pci;}
 #include "token_native_unsafe.inc"
- ~PioneerStoreContext(){delete q38TokenNative;} // CPU-only fixture disposal;no physical resources exist
+ ~PioneerStoreContext(){delete q38TokenNative;delete q38Dispatch;} // CPU-only fixture disposal;no physical resources exist
 };
 #include "token_native_lock.inc"
 static void TestKernelLog(const char*,...){}
@@ -105,6 +126,9 @@ static void TestKernelLog(const char*,...){}
 #undef dprintf
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeBind.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeInitialize.inc"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeHeld.inc"
+#endif
 #include "token_native_zero_callbacks.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenCallScope.inc"
 static bool IncompleteEnd(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean){
@@ -157,11 +181,20 @@ struct Fixture {
   assert(!Recurrent(g) && !History(h) && !Projection(p) && !IncompleteEnd(*c,end,clean) && io.touches==touches);
  }
 };
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+#include "pioneer_q38_token_native_held_checks.inc"
+#endif
 int main(int argc,char** argv){
- assert(argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
+ assert(argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;(void)&AcquireQ38DeltaLock;
- const bool faults=argc==3,late=faults && !strcmp(argv[2],"--late-faults");
- for(unsigned fault=0;fault<(late?2U:faults?4U:1U);fault++){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+ assert(argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")));
+#else
+ assert(argc==2 || strncmp(argv[2],"--held",6));
+#endif
+ const bool heldFaults=argc==3 && !strcmp(argv[2],"--held-faults");
+ const bool faults=argc==3 && strncmp(argv[2],"--held",6),late=faults && !strcmp(argv[2],"--late-faults");
+ for(unsigned fault=0;fault<(heldFaults?3U:late?2U:faults?4U:1U);fault++){
   Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;assert(f.Bind());auto* state=c.q38TokenNative;
   PioneerQ38StateZeroResult g;PioneerQ38ConvHistoryZeroResult h;PioneerQ38ProjectionZeroResult p;
   assert(!state->InitializationsClosed(c.banks,f.proof) && !io.StateZeroBeforeCohort() && !io.ConvHistoryZeroBeforeCohort() && !io.ProjectionZeroBeforeCohort());
@@ -206,6 +239,10 @@ int main(int argc,char** argv){
   touches=io.touches;assert(!f.Recurrent(g) && !f.History(h) && !f.Projection(p) && io.touches==touches);
   assert(f.learned==learned && !c.bulk.dirty && !io.pciWrites && !io.HostReadMock::bmeWrites
    && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases && !state->Closed());
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+  CheckNativeHeld(f,heldFaults?fault+1:0);
+  touches=io.touches;
+#endif
   tt_resident_session_result end={};bool clean=true;
   assert(!IncompleteEnd(c,end,clean) && !clean && io.touches==touches);f.Unknown();
   puts("PASS SAME full851 native owner/actual zero RV32 672GDN regions73728pages BOTHslots+336history1680pages+2workspace512pages/1010actualRUN+STOP+HOLD/full coverage+private clean CLOSE publications/code+scratch restored/learned unchanged/no BME;SIMULATED endpoints,NOT KV/metadata/model execution/physical/TPS/END permission");

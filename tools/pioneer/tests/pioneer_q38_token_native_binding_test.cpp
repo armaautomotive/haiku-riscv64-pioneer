@@ -10,6 +10,7 @@ struct PioneerSessionIO:PioneerHostPageIO {
  explicit PioneerSessionIO(tt_dram_samples_result& actual):dram(actual){}
  PioneerStoreContext* q38MutableContext=nullptr;unsigned runtimeCore=0;
  bool fleetEnabled=false,runtimeMapped=true,q38SpanAllowed=true,wideQuarantined=false;
+ bool q38TokenMemoryMapAttempted=false;
  int outputArea=0,wideArea=0;bool outputQuarantined=false; // simulated owned VM handles
  bool TokenCallScopeMatches();bool TokenModelSourceScope(bool);
  void QuarantineOutputBuffer(){outputQuarantined=true;}
@@ -27,7 +28,8 @@ struct PioneerStoreContext {
  MockForeignOwner *q38GdnBanks=nullptr,*q38StateZero=nullptr;
  PioneerQ38DispatchLease* q38Dispatch=nullptr;MockCohort* q38Cohort=nullptr;MockFleet* fleet=nullptr;
  PioneerQ38GdnIdentity q38FfnModelIdentity={},q38GdnIdentity={};
- MockLease q38Delta,panelProbe,streamProbe,span,lease,bulk,secondLease,secondNoc,idle;
+ MockLease q38Delta,panelProbe,streamProbe,span,bulk,secondLease,secondNoc,idle;
+ PioneerResidentLease lease;uint32 savedLease[2048]={};
  MockLease peerAttention[8],decoder,layer,coordinator,attention,compute,secondCompute;
  MockLease* q38Span=&span;MockHost bulkHost,wideHost;MockClock q38Clock;
  tt_host_page_result host={};uint8* initialized=nullptr;uint32* hashes=nullptr;
@@ -67,7 +69,7 @@ struct Fixture {
    unsigned first=p->bank*unsigned(plan->Capacity/4096)+p->offset/4096;
    for(unsigned j=0;j<p->allocated/4096;j++)learned[first+j]=1;
   }
-  c->initialized=learned.data();c->hashes=&hash;c->span.closed=true;c->lease.saved=true;c->lease.ready=true;
+  c->initialized=learned.data();c->hashes=&hash;c->span.closed=true;c->lease.saved=c->savedLease;c->lease.ready=true;
   c->bulk.saved=true;c->bulk.ready=true;c->host.state=TT_HOST_PAGE_READY;
  }
  const tt_dram_samples_result& Dram()const{return c->baseline.baseline.baseline.baseline.dram;}
@@ -140,9 +142,10 @@ int main(){
   refuse(sBankStorageOnly,false);refuse(c.bankStorageOnly,false);refuse(c.bytes,c.bytes-4096);
   refuse(c.runtimeCoreMode,1);refuse(c.io.runtimeCore,1U);refuse(c.io.fleetEnabled,true);refuse(c.io.runtimeMapped,false);
   refuse(c.io.q38SpanAllowed,false);refuse(c.dispatchOwnerRetained,true);refuse(c.initialized,nullptr);refuse(c.hashes,nullptr);
+  refuse(c.io.q38TokenMemoryMapAttempted,true);
   refuse(c.io.q38MutableContext,nullptr);refuse(c.q38Span,nullptr);refuse(c.span.closed,false);
   refuse(c.span.dirty,true);refuse(c.span.ready,true);refuse(c.span.running,true);refuse(c.span.unsafe,true);
-  refuse(c.lease.saved,false);refuse(c.lease.ready,false);refuse(c.lease.pending,true);refuse(c.lease.recovery_required,true);
+  refuse(c.lease.saved,nullptr);refuse(c.lease.ready,false);refuse(c.lease.pending,true);refuse(c.lease.recovery_required,true);
   refuse(c.bulk.saved,false);refuse(c.bulk.ready,false);refuse(c.bulk.dirty,true);refuse(c.bulk.unsafe,true);
   refuse(c.host.state,0U);refuse(c.host.released,1U);refuse(c.io.quarantined,true);
   for(auto* h:{&c.bulkHost,&c.wideHost}){refuse(h->allocated,false);refuse(h->ready,false);refuse(h->pending,true);refuse(h->quarantined,true);refuse(h->released,true);}

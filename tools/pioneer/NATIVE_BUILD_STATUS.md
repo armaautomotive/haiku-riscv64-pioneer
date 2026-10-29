@@ -1,5 +1,51 @@
 # Native build status
 
+## Current: full-token native held staging passes its positive offline test
+
+October 29, 2026. A distinct private factory now connects the genuinely
+initialized full851 owner to a fresh held120-participant cohort, captured
+1920-word source identity, private prompt/startup plan, four retained L1
+aliases and the complete token-code save/install/restore journal. It does
+not bootstrap or launch any participant. Main/clean actual-driver SDK
+objects match; all-word mapping tests and existing initialization/binding/
+journal/role regressions pass. Integrated positive runs now both finish0:
+all11406906 originals are saved and second-pass checked before installing
+2710744 code words, then all originals are restored and checked again.
+The SAME owner first completes all1010 real zero-program jobs. Native
+generation-loss faults during initial save and last-participant install
+pass in both trees; the partial-restoration fault remains active. This is
+not complete failure-path or physical qualification.
+
+A stack sample identified repeated full64 immutable package reconstruction
+in every native source guard. Startup now publishes a private seal only
+after full strict verification; native scopes borrow that immutable
+publication while checking the same canonical/bank/identity/all1920 source
+words and existing live ownership/hardware guards. Strict validation APIs
+remain unchanged. Main/clean publication-binding tests pass13642 refusals.
+This is not random-memory-corruption revalidation or a launch capability.
+
+No driver was installed and no physical throughput improvement is claimed.
+Last measured whole-model remains **0.207893161 tokens/sec**;20 target unmet.
+Evidence: [native held staging checkpoint](benchmarks/qwen38-token-native-held-20261029.txt).
+
+### Remaining readiness gates
+
+- [x] Component firmware builds and offline component tests.
+- [x] Native full-model binding and recurrent/history/workspace initialization
+  with simulated hardware endpoints and actual zero-program instructions.
+- [x] Integrated native held program staging/restoration positive offline test.
+- [ ] Finish its later-fault qualification; then implement runtime/KV
+  frontiers and metadata staging.
+- [ ] Complete original-model all64-layer, multitoken, persistent-state,
+  vocabulary, selection and genuine STOP numerical qualification.
+- [ ] Implement the distinct native execution owner, cancellation, terminal
+  proof, clean END/disposal, load/unload and controlled failure recovery.
+- [ ] Qualify the complete path on the physical P100A, including repeated
+  generations and longer conversations.
+- [ ] Integrate the qualified no-CPU-reference Work path with Assistant.
+- [ ] Measure/tune sustained27B performance toward20tok/s and verify existing
+  Assistant,SD-free boot,64CPU and full RAM functionality before release.
+
 ## Latest: native recurrent/history/workspace initialization passes offline
 
 October 29, 2026. The full-model token owner now runs its own real

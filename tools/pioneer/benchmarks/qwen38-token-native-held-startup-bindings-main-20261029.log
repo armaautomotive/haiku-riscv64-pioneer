@@ -1,0 +1,18 @@
+START startup DATA bank0/all120 boots/fullPackageCopies0/no execution
+PASS full851 learned-page PRESENCE/all3551 parts including embedding+vocab+norm/all65 layer/global missing-or-non1 endpoints refuse;NOT upload authentication or state initialization
+PASS startup DATA bank0/all120 boots/root+head+session+prompt exact/fullPackageCopies0/no execution
+START startup DATA bank1/all120 boots/fullPackageCopies0/no execution
+PASS startup DATA bank1/all120 boots/root+head+session+prompt exact/fullPackageCopies0/no execution
+START startup DATA bank2/all120 boots/fullPackageCopies0/no execution
+PASS startup DATA bank2/all120 boots/root+head+session+prompt exact/fullPackageCopies0/no execution
+START startup DATA bank3/all120 boots/fullPackageCopies0/no execution
+PASS startup DATA bank3/all120 boots/root+head+session+prompt exact/fullPackageCopies0/no execution
+START startup DATA bank4/all120 boots/fullPackageCopies0/no execution
+PASS startup DATA bank4/all120 boots/root+head+session+prompt exact/fullPackageCopies0/no execution
+START startup DATA bank5/all120 boots/fullPackageCopies0/no execution
+PASS startup DATA bank5/all120 boots/root+head+session+prompt exact/fullPackageCopies0/no execution
+START startup DATA bank6/all120 boots/fullPackageCopies0/no execution
+PASS startup DATA bank6/all120 boots/root+head+session+prompt exact/fullPackageCopies0/no execution
+PASS startup session EOS-disabled3-position prompt2 and maximum8192-token raw prompt/full last64B serialization;not a qualified context size or model execution
+PASS private completed-build publication ONLY after full strict64-layer verification/all1920 source mutations/foreign canonical+bank+generation+unbuilt+failed-build refusals;strict API retained,NO native lifetime/corruption/launch grant
+PASS STARTUP DATA/0 full512KiB packages EXACT vs independent per-layer serialization/7banks/all120 boots/root+head+session+8192 padded prompt/high64bit identity+all1920 source binding/13642 refusals+unchanged output/fullPackageCopies0;NO native owner/RUN/STOP/physical/Work/TPS grant

@@ -1,0 +1,2 @@
+PASS DISTINCT full-token HELD journal/ALL120/saved11406906/installed2710744/restored11406906/secondOriginal22813812/arbitrary+UINT32_MAX/NEW terminal60000+60004/fullstack+runtime+padding/startup+851page binding;SIMULATED endpoints,NO start/reset/NoC/native execution/Work/TPS grant
+PASS full-token held-journal faults52/inert preconditionRefusals33/newterminal+aux+lastpeer/all7phases/read+write+mismatch+silentdrop/source+reset+PCI+counter+command+scope/first UNKNOWN retains all owners/no subsequent IO/retry/cleanup;SIMULATED endpoints,NOT genuine native/full-model/Work/TPS

@@ -10,11 +10,13 @@ bool PioneerSessionIO::TokenCallScopeMatches(){
 }
 bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
  auto* c=q38MutableContext;auto* state=c?c->q38TokenNative:NULL;auto* fd=sRuntimeOwner;
+ const bool cohort=state && state->phase>=PioneerQ38TokenNativeState::DispatchPreparing && state->phase<=PioneerQ38TokenNativeState::MemoryClosed;
  if(!c || &c->io!=this || !TokenCallScopeMatches() || sColdRecoveryRequired || sReloadQuiesced || !sReloadGeneration
-  || !sBankStorageOnly || !c->bankStorageOnly || c->bytes!=PioneerResidentBanks::Total || runtimeCore || fleetEnabled
+  || !sBankStorageOnly || !c->bankStorageOnly || c->bytes!=PioneerResidentBanks::Total || runtimeCore>=120
+  || (!cohort && (runtimeCore || fleetEnabled || c->q38Dispatch || c->q38DispatchRoutes || q38TokenMemoryMapAttempted))
   || !runtimeMapped || c->dispatchOwnerRetained || !c->initialized || !c->hashes
   || c->q38FfnModelPlan || c->q38GraphMutable || c->q38FfnZero || c->q38FfnGraph || c->q38FfnCode
-  || c->q38GdnBanks || c->q38StateZero || c->q38Dispatch || c->q38DispatchRoutes || c->q38Cohort || c->fleet || sQ38LocalDeltaOwner
+  || c->q38GdnBanks || c->q38StateZero || c->q38Cohort || c->fleet || sQ38LocalDeltaOwner
   || c->q38FfnModelIdentity.session || c->q38FfnModelIdentity.sequence || c->q38FfnModelIdentity.modelEpoch || c->q38FfnModelIdentity.driverGeneration
   || c->q38GdnIdentity.session || c->q38GdnIdentity.sequence || c->q38GdnIdentity.modelEpoch || c->q38GdnIdentity.driverGeneration
   || c->q38Delta.saved || c->q38Delta.dirty || c->q38Delta.ready || c->q38Delta.running || c->q38Delta.awaiting
@@ -29,8 +31,16 @@ bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
  if(beginning){if(state || c->runtimeCoreMode!=-1 || !q38SpanAllowed)return false;}
  else if(!state || c->runtimeCoreMode!=1 || q38SpanAllowed
   || !state->MatchesBinding(*c,fd,c->hashes,c->initialized,fd->team,sReloadGeneration)
-  || state->phase<PioneerQ38TokenNativeState::Claiming || state->phase>PioneerQ38TokenNativeState::Initialized
+  || state->phase<PioneerQ38TokenNativeState::Claiming || state->phase>PioneerQ38TokenNativeState::MemoryClosed
   || (state->phase!=PioneerQ38TokenNativeState::Claiming && !state->MatchesReservation(c->banks,dram)))return false;
+ if(cohort){
+  const auto* d=c->q38Dispatch;
+  if(!d || d!=state->participants || !state->memory || !state->startup || !fleetEnabled || d->worker[0].master!=&c->lease
+   || d->unsafe || d->closed || d->bootAttempted || d->booted || d->rootRunning || d->prepared>120
+   || !state->InitializationsClosed(c->banks,dram))return false;
+  if(state->phase>=PioneerQ38TokenNativeState::MemoryPreparing
+   && (!c->q38DispatchRoutes || d->prepared!=120 || !state->startup->MatchesPublishedBinding(state->canonical,state->bank,state->identity,&d->authority.source[0][0])))return false;
+ }
  const auto& clock=c->q38Clock.Snapshot();
  return c->q38Clock.RequiresExplicitEnd() && clock.state==TT_ARC_CLOCK_BUSY_VERIFIED && clock.busy_requested && clock.busy_acknowledged
   && !clock.restored && clock.busy_mhz && clock.busy_mhz<=1400;

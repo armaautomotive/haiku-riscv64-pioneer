@@ -1,0 +1,139 @@
+Analysis of sampling test (pid 92389) every 10 milliseconds
+Process:         test [92389]
+Path:            /private/tmp/*/test
+Load Address:    0x102d74000
+Identifier:      test
+Version:         0
+Code Type:       ARM64
+Platform:        macOS
+Parent Process:  Python [92368]
+Target Type:     live task
+
+Date/Time:       2026-10-28 19:12:41.904 -0700
+Launch Time:     2026-10-28 19:04:37.918 -0700
+OS Version:      macOS 15.7.9 (24G830)
+Report Version:  7
+Analysis Tool:   /usr/bin/sample
+
+Physical footprint:         978.9M
+Physical footprint (peak):  978.9M
+Idle exit:                  untracked
+----
+
+Call graph:
+    84 Thread_114687555   DispatchQueue_1: com.apple.main-thread  (serial)
+      84 start  (in dyld) + 6076  [0x19aa8eb98]
+        84 main  (in test) + 10388  [0x102d8a164]  pioneer_q38_token_native_initialization_test.cpp:243
+          84 PrepareQ38TokenNativeHeld(PioneerStoreContext&, unsigned int const*, unsigned int, unsigned int, bool, unsigned int, unsigned int, PioneerQ38TokenMemoryResult&)  (in test) + 6500  [0x102e7f1b4]  PioneerQ38TokenNativeHeld.inc:75
+            84 PioneerQ38TokenMemory::PrepareHeld<PioneerSessionIO>(PioneerSessionIO&, tt_dram_samples_result const&, PioneerResidentBanks&, PioneerQ38DispatchLease&, PioneerQ38CanonicalModelPlan const&, PioneerQ38TokenStartupPlan const&, PioneerQ38GdnIdentity const&, unsigned char const*, unsigned int, PioneerQ38TokenMemoryResult&)  (in test) + 4596  [0x102e87fc4]  PioneerQ38TokenMemory.h:116
+              84 PioneerQ38TokenMemory::Guard<PioneerSessionIO>(PioneerSessionIO&, unsigned int)  (in test) + 264  [0x102eab2b8]  PioneerQ38TokenMemory.h:37
+                84 PioneerSessionIO::TokenModelSourceScope(bool)  (in test) + 14060  [0x102d7c378]  PioneerQ38TokenNativeBind.inc:42
+                  84 PioneerQ38TokenStartupPlan::Matches(PioneerQ38CanonicalModelPlan const&) const  (in test) + 1040  [0x102d94a68]  PioneerQ38TokenStartupPlan.h:82
+                    84 PioneerQ38TokenPackage::Matches(PioneerQ38CanonicalModelPlan const&) const  (in test) + 164  [0x102d97e30]  PioneerQ38TokenPackage.h:21
+                      84 PioneerQ38GlobalChainPackage::Matches(PioneerQ38CanonicalModelPlan const&) const  (in test) + 144  [0x102d9b3e8]  PioneerQ38GlobalChainPackage.h:25
+                        81 PioneerQ38LayerChainPackage::Matches(PioneerQ38CanonicalModelPlan const&) const  (in test) + 348  [0x102d9c1d4]  PioneerQ38LayerChainPackage.h:60
+                        + 77 PioneerQ38MixedRecurrentBlockPlan::Matches(PioneerQ38CanonicalModelPlan const&) const  (in test) + 768  [0x102d9c820]  PioneerQ38MixedRecurrentBlockPlan.h:77
+                        + ! 77 PioneerQ38MixedRecurrentCohortPlan::Matches(PioneerQ38CanonicalModelPlan const&) const  (in test) + 6544  [0x102dbb4e0]  PioneerQ38MixedRecurrentCohortPlan.h:38
+                        + !   60 PioneerQ38ResidentOutputPlan::Matches(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int const*) const  (in test) + 2216  [0x102dc3644]  PioneerQ38ResidentOutputPlan.h:103
+                        + !   : 57 PioneerQ38ConvBatchPlan::Matches(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int) const  (in test) + 476  [0x102dc9d40]  PioneerQ38ConvBatchPlan.h:29
+                        + !   : | 57 PioneerQ38ConvPlan::Matches(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int) const  (in test) + 516  [0x102dd9ba4]  PioneerQ38ConvPlan.h:54
+                        + !   : |   23 PioneerQ38ConvPlan::Describe(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int, unsigned int*)  (in test) + 556  [0x102dd9f38]  PioneerQ38ConvPlan.h:19
+                        + !   : |   + 23 PioneerQ38CanonicalModelPlan::Part(unsigned int) const  (in test) + 36,72,...  [0x102d9b1f4,0x102d9b218,...]  PioneerQ38CanonicalModelPlan.h:98
+                        + !   : |   15 PioneerQ38ConvPlan::Describe(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int, unsigned int*)  (in test) + 608,556,...  [0x102dd9f6c,0x102dd9f38,...]  PioneerQ38ConvPlan.h:19
+                        + !   : |   14 PioneerQ38ConvPlan::Describe(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int, unsigned int*)  (in test) + 472,448,...  [0x102dd9ee4,0x102dd9ecc,...]  PioneerQ38ConvPlan.h:18
+                        + !   : |   4 PioneerQ38ConvPlan::Describe(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int, unsigned int*)  (in test) + 852  [0x102dda060]  PioneerQ38ConvPlan.h:0
+                        + !   : |   1 PioneerQ38ConvPlan::Describe(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int, unsigned int*)  (in test) + 2688  [0x102dda78c]  PioneerQ38ConvPlan.h:27
+                        + !   : 2 PioneerQ38ConvBatchPlan::Matches(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int) const  (in test) + 616  [0x102dc9dcc]  PioneerQ38ConvBatchPlan.h:30
+                        + !   : 1 PioneerQ38ConvBatchPlan::Matches(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int) const  (in test) + 256  [0x102dc9c64]  PioneerQ38ConvBatchPlan.h:27
+                        + !   :   1 PioneerQ38ConvBatchShape(unsigned int const*)  (in test) + 1104  [0x102dcd340]  PioneerQ38ConvBatchShape.h:31
+                        + !   8 PioneerQ38ResidentOutputPlan::Matches(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int const*) const  (in test) + 3196  [0x102dc3a18]  PioneerQ38ResidentOutputPlan.h:108
+                        + !   : 8 PioneerQ38GdnInputPlan::Matches(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int) const  (in test) + 504  [0x102dca560]  PioneerQ38GdnInputPlan.h:52
+                        + !   :   3 PioneerQ38GdnInputPlan::Describe(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int, unsigned int*)  (in test) + 584,608  [0x102ddc368,0x102ddc380]  PioneerQ38GdnInputPlan.h:16
+                        + !   :   3 PioneerQ38GdnInputPlan::Describe(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int, unsigned int*)  (in test) + 688  [0x102ddc3d0]  PioneerQ38GdnInputPlan.h:17
+                        + !   :   | 3 PioneerQ38CanonicalModelPlan::Part(unsigned int) const  (in test) + 96,84  [0x102d9b230,0x102d9b224]  PioneerQ38CanonicalModelPlan.h:98
+                        + !   :   1 PioneerQ38GdnInputPlan::Describe(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int, unsigned int*)  (in test) + 688  [0x102ddc3d0]  PioneerQ38GdnInputPlan.h:17
+                        + !   :   1 PioneerQ38GdnInputPlan::Describe(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int, unsigned int*)  (in test) + 700  [0x102ddc3dc]  PioneerQ38GdnInputPlan.h:18
+                        + !   8 PioneerQ38ResidentOutputPlan::Matches(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int const*) const  (in test) + 3304  [0x102dc3a84]  PioneerQ38ResidentOutputPlan.h:109
+                        + !   : 8 PioneerQ38GdnRendezvousPlan::Matches(PioneerQ38CanonicalModelPlan const&, unsigned int const*, unsigned int const*) const  (in test) + 304  [0x102dccb20]  PioneerQ38GdnRendezvousPlan.h:25
+                        + !   :   8 PioneerQ38GdnGatedPlan::Matches(PioneerQ38CanonicalModelPlan const&, unsigned int const*, unsigned int const*) const  (in test) + 472  [0x102dde95c]  PioneerQ38GdnGatedPlan.h:51
+                        + !   :     8 PioneerQ38GdnGatedPlan::Describe(PioneerQ38CanonicalModelPlan const&, unsigned int const*, unsigned int const*, unsigned int*)  (in test) + 484  [0x102ddf278]  PioneerQ38GdnGatedPlan.h:26
+                        + !   :       5 PioneerQ38GdnGatedPlan::Norm(PioneerQ38CanonicalModelPlan const&, unsigned int)  (in test) + 256  [0x102de08ac]  PioneerQ38GdnGatedPlan.h:15
+                        + !   :       | 5 PioneerQ38CanonicalModelPlan::Part(unsigned int) const  (in test) + 28,72,...  [0x102d9b1ec,0x102d9b218,...]  PioneerQ38CanonicalModelPlan.h:98
+                        + !   :       1 PioneerQ38GdnGatedPlan::Norm(PioneerQ38CanonicalModelPlan const&, unsigned int)  (in test) + 632  [0x102de0a24]  PioneerQ38GdnGatedPlan.h:0
+                        + !   :       1 PioneerQ38GdnGatedPlan::Norm(PioneerQ38CanonicalModelPlan const&, unsigned int)  (in test) + 180  [0x102de0860]  PioneerQ38GdnGatedPlan.h:14
+                        + !   :       1 PioneerQ38GdnGatedPlan::Norm(PioneerQ38CanonicalModelPlan const&, unsigned int)  (in test) + 284  [0x102de08c8]  PioneerQ38GdnGatedPlan.h:16
+                        + !   1 PioneerQ38ResidentOutputPlan::Matches(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int const*) const  (in test) + 540  [0x102dc2fb8]  PioneerQ38ResidentOutputPlan.h:95
+                        + !     1 PioneerQ38ResidentCohortShape(unsigned int const*)  (in test) + 4964  [0x102dc6330]  PioneerQ38ResidentCohortShape.h:43
+                        + !       1 PioneerQ38ResidentConvServiceJob(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int, unsigned int)  (in test) + 432  [0x102dcef54]  PioneerQ38ResidentConvServiceShape.h:13
+                        + 3 PioneerQ38MixedRecurrentBlockPlan::Matches(PioneerQ38CanonicalModelPlan const&) const  (in test) + 1232  [0x102d9c9f0]  PioneerQ38MixedRecurrentBlockPlan.h:79
+                        + ! 1 PioneerQ38MixedRecurrentProjectionPlan::Matches(PioneerQ38CanonicalModelPlan const&) const  (in test) + 528  [0x102dbdb24]  PioneerQ38MixedRecurrentProjectionPlan.h:51
+                        + ! : 1 PioneerQ38ProjectionJobs::Matches(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned long long) const  (in test) + 1136  [0x102da27d4]  PioneerQ38ProjectionJobs.h:67
+                        + ! :   1 PioneerQ38CanonicalModelPlan::ProjectionStripe(unsigned int, unsigned int, unsigned int) const  (in test) + 584  [0x102db69a0]  PioneerQ38CanonicalModelPlan.h:118
+                        + ! 1 PioneerQ38MixedRecurrentProjectionPlan::Matches(PioneerQ38CanonicalModelPlan const&) const  (in test) + 272  [0x102dbda24]  PioneerQ38MixedRecurrentProjectionPlan.h:51
+                        + ! 1 PioneerQ38MixedRecurrentProjectionPlan::Matches(PioneerQ38CanonicalModelPlan const&) const  (in test) + 10916  [0x102dc03b8]  PioneerQ38MixedRecurrentProjectionPlan.h:54
+                        + 1 PioneerQ38MixedRecurrentBlockPlan::Matches(PioneerQ38CanonicalModelPlan const&) const  (in test) + 2476  [0x102d9cecc]  PioneerQ38MixedRecurrentBlockPlan.h:88
+                        +   1 PioneerQ38MixedRecurrentBlockPlan::Recipes() const  (in test) + 612  [0x102dc1fb4]  PioneerQ38MixedRecurrentBlockPlan.h:28
+                        3 PioneerQ38LayerChainPackage::Matches(PioneerQ38CanonicalModelPlan const&) const  (in test) + 316  [0x102d9c1b4]  PioneerQ38LayerChainPackage.h:60
+                          1 PioneerQ38MixedLiveBlockPlan::Shape() const  (in test) + 880  [0x102d9e7a0]  PioneerQ38MixedLiveBlockPlan.h:104
+                          ! 1 PioneerQ38DenseProjectionPlan::Matches(PioneerQ38CanonicalModelPlan const&) const  (in test) + 724  [0x102da056c]  PioneerQ38DenseProjectionPlan.h:53
+                          !   1 PioneerQ38DenseProjectionRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*, bool)  (in test) + 6960  [0x102da8888]  PioneerQ38DenseProjectionShape.h:42
+                          1 PioneerQ38MixedLiveBlockPlan::Shape() const  (in test) + 4464  [0x102d9f5a0]  PioneerQ38MixedLiveBlockPlan.h:120
+                          ! 1 PioneerQ38BlockFfnRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*)  (in test) + 9896  [0x102dac7dc]  PioneerQ38BlockFfnRecipe.h:35
+                          1 PioneerQ38MixedLiveBlockPlan::Shape() const  (in test) + 5088  [0x102d9f810]  PioneerQ38MixedLiveBlockPlan.h:123
+                            1 PioneerQ38MixedLiveBlockPlan::DenseKv(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int (&) [8], unsigned int (&) [8])  (in test) + 116  [0x102dad2a4]  PioneerQ38MixedLiveBlockPlan.h:43
+                              1 PioneerQ38MixedLiveBlockPlan::Kv(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int&, unsigned int&)  (in test) + 144  [0x102db71c0]  PioneerQ38MixedLiveBlockPlan.h:32
+
+Total number in stack (recursive counted multiple, when >=5):
+
+Sort by top of stack, same collapsed (when >= 5):
+        PioneerQ38ConvPlan::Describe(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int, unsigned int*)  (in test)        34
+        PioneerQ38CanonicalModelPlan::Part(unsigned int) const  (in test)        31
+        PioneerQ38GdnInputPlan::Describe(PioneerQ38CanonicalModelPlan const&, unsigned int, unsigned int, unsigned int, unsigned int, PioneerQ38GdnIdentity const&, unsigned int const*, unsigned int, unsigned int*)  (in test)        5
+
+Binary Images:
+       0x102d74000 -        0x102f3138f +test (0) <11F1544E-FD89-3904-868A-3F75CDECC2E0> /tmp/*/test
+       0x103748000 -        0x1037e8543 +libclang_rt.asan_osx_dynamic.dylib (1700.0.13.5) <B21B5046-5980-3245-8BE2-BE3E327ACBEF> /Library/Developer/CommandLineTools/usr/lib/clang/17/lib/darwin/libclang_rt.asan_osx_dynamic.dylib
+       0x19aa34000 -        0x19aa87893  libobjc.A.dylib (940.4) <E6F30EB4-FACF-3381-AE46-10E556F1FC39> /usr/lib/libobjc.A.dylib
+       0x19aa88000 -        0x19ab2357b  dyld (1.0.0 - 1286.10) <AA296324-126C-32DD-9026-5B744F8EB283> /usr/lib/dyld
+       0x19ab24000 -        0x19ab27168  libsystem_blocks.dylib (96) <EFADF6A6-C85B-37E9-9514-8E7A1EBAC882> /usr/lib/system/libsystem_blocks.dylib
+       0x19ab28000 -        0x19ab7297f  libxpc.dylib (2894.140.12.705.2) <8B32C66C-9490-3212-A213-DB54FBFC6967> /usr/lib/system/libxpc.dylib
+       0x19ab73000 -        0x19ab8e87f  libsystem_trace.dylib (1643.120.5) <1B02E60B-7CA1-3B9F-9C19-ED966D9E3DF3> /usr/lib/system/libsystem_trace.dylib
+       0x19ab8f000 -        0x19ac2d3b7  libcorecrypto.dylib (1736.140.2) <2D80D106-1EAB-3D1F-B1AE-FB45BF588C2E> /usr/lib/system/libcorecrypto.dylib
+       0x19ac2e000 -        0x19ac7506f  libsystem_malloc.dylib (715.140.5) <3CE1E59C-91C8-3259-93D8-7DED66842979> /usr/lib/system/libsystem_malloc.dylib
+       0x19ac76000 -        0x19acbc75f  libdispatch.dylib (1521.140.2) <63A54CE1-2AB6-3673-82E4-D8489D811475> /usr/lib/system/libdispatch.dylib
+       0x19acbd000 -        0x19acbfd1b  libsystem_featureflags.dylib (97) <9AF1C2C7-1C15-3F0E-9C0F-4524BD4EB4CF> /usr/lib/system/libsystem_featureflags.dylib
+       0x19acc0000 -        0x19ad4134b  libsystem_c.dylib (1698.140.3.705.1) <2F87F7E4-6D67-339D-9DB1-756A5618CFC7> /usr/lib/system/libsystem_c.dylib
+       0x19ad42000 -        0x19adceff7  libc++.1.dylib (1900.181) <EB94C9FE-91DA-3E9F-9C45-7B476FEAAEAE> /usr/lib/libc++.1.dylib
+       0x19adcf000 -        0x19adecfff  libc++abi.dylib (1900.181) <BC670272-BF32-38AC-AE3F-F06EDA80BE30> /usr/lib/libc++abi.dylib
+       0x19aded000 -        0x19ae285f3  libsystem_kernel.dylib (11417.140.69.711.44) <4D7A9E23-5B73-3C87-80E2-3B5E13F74F58> /usr/lib/system/libsystem_kernel.dylib
+       0x19ae29000 -        0x19ae35a77  libsystem_pthread.dylib (536.0.0.702.1) <2886F4F3-500B-36C8-A20C-C457EB754E3D> /usr/lib/system/libsystem_pthread.dylib
+       0x19ae36000 -        0x19ae65ba3  libdyld.dylib (1286.10) <2E9C20CA-1C3E-3D46-B2CB-001C30D53225> /usr/lib/system/libdyld.dylib
+       0x19ae66000 -        0x19ae6de0b  libsystem_platform.dylib (349.140.6) <C26E58A4-34A1-3F9C-BDBC-EBC34426633A> /usr/lib/system/libsystem_platform.dylib
+       0x19ae6e000 -        0x19ae9dd83  libsystem_info.dylib (597.0.0.701.2) <3B2CAC89-F7B9-3111-9EB6-84A87EEBBAD7> /usr/lib/system/libsystem_info.dylib
+       0x19e930000 -        0x19e93a397  libsystem_darwin.dylib (1698.140.3.705.1) <F3D8ADB4-AE50-30EC-B59D-AD17CF70B1A2> /usr/lib/system/libsystem_darwin.dylib
+       0x19ed93000 -        0x19eda4ff3  libsystem_notify.dylib (342.0.0.701.1) <CD88E430-ED4B-3A44-8D9C-9EDE34F8A898> /usr/lib/system/libsystem_notify.dylib
+       0x1a0d96000 -        0x1a0db0e8f  libsystem_networkextension.dylib (2063.140.6) <5C0C1505-266B-3544-B970-BE347DAF2AAF> /usr/lib/system/libsystem_networkextension.dylib
+       0x1a0e2d000 -        0x1a0e44fdb  libsystem_asl.dylib (402) <0574F75C-FB20-3114-8C16-E17D821FFCBD> /usr/lib/system/libsystem_asl.dylib
+       0x1a298d000 -        0x1a29953a7  libsystem_symptoms.dylib (2022.140.4.701.1) <4125946C-7B3E-35FC-95A6-BC1163D1F504> /usr/lib/system/libsystem_symptoms.dylib
+       0x1a61df000 -        0x1a620f47b  libsystem_containermanager.dylib (689.100.6.701.1) <FF38A93D-F7FA-398C-89A2-8D539ECD61AA> /usr/lib/system/libsystem_containermanager.dylib
+       0x1a744b000 -        0x1a744f5df  libsystem_configuration.dylib (1351.140.5.701.1) <E6976BA1-4F03-3BA5-9768-C4AA7B20FB2D> /usr/lib/system/libsystem_configuration.dylib
+       0x1a7450000 -        0x1a74566ff  libsystem_sandbox.dylib (2401.140.15.704.1) <7848C796-70A5-34AD-99D3-A4BB47817063> /usr/lib/system/libsystem_sandbox.dylib
+       0x1a845b000 -        0x1a845dfe3  libquarantine.dylib (181.120.2.700.1) <AF9AB323-64C2-3CB8-B666-A5E6A21FCEAF> /usr/lib/system/libquarantine.dylib
+       0x1a8b71000 -        0x1a8b77fa3  libsystem_coreservices.dylib (178.6.9) <8809F3D0-D759-34C1-850C-69A5F7C8AE01> /usr/lib/system/libsystem_coreservices.dylib
+       0x1a8fef000 -        0x1a902c2b7  libsystem_m.dylib (3291.100.4) <12090DF0-9887-310A-B308-8F9B6BCF630D> /usr/lib/system/libsystem_m.dylib
+       0x1a902e000 -        0x1a90314e7  libmacho.dylib (1024.3) <CD255FF9-4E35-347A-B7E9-304517D3A871> /usr/lib/system/libmacho.dylib
+       0x1a904b000 -        0x1a90585ef  libcommonCrypto.dylib (600035) <65A3AFCF-9611-35C1-9697-8CF5409F0C83> /usr/lib/system/libcommonCrypto.dylib
+       0x1a9059000 -        0x1a9062ad7  libunwind.dylib (1900.125) <FA046DDB-1518-353B-A9B6-CD622328B746> /usr/lib/system/libunwind.dylib
+       0x1a906b000 -        0x1a9075a63  libcopyfile.dylib (224.0.0.700.1) <26FB54D7-758D-30F1-9A1C-949DAAE923BB> /usr/lib/system/libcopyfile.dylib
+       0x1a9076000 -        0x1a907998f  libcompiler_rt.dylib (103.3) <7720A496-7B7A-33C1-B7F3-9E8B7DEA0622> /usr/lib/system/libcompiler_rt.dylib
+       0x1a907a000 -        0x1a907ea1b  libsystem_collections.dylib (1698.140.3.705.1) <E5D2CB9A-20CC-3F2B-B8CF-3FC12EB734CC> /usr/lib/system/libsystem_collections.dylib
+       0x1a907f000 -        0x1a90822c7  libsystem_secinit.dylib (153.140.2) <63965812-869C-3C3C-A950-FA563CE8EB1E> /usr/lib/system/libsystem_secinit.dylib
+       0x1a9083000 -        0x1a9085b6f  libremovefile.dylib (81) <E34EF2FA-1C55-3222-B1A2-CEEEC4B02F3D> /usr/lib/system/libremovefile.dylib
+       0x1a9086000 -        0x1a9086f27  libkeymgr.dylib (31) <EE1B8708-02B1-385D-B648-E87B4D25391B> /usr/lib/system/libkeymgr.dylib
+       0x1a9087000 -        0x1a908fd5f  libsystem_dnssd.dylib (2600.140.3.703.3) <1AC2F6F2-3C09-3569-B27E-D65024970B96> /usr/lib/system/libsystem_dnssd.dylib
+       0x1a9090000 -        0x1a90950b3  libcache.dylib (95) <4242CCFB-F060-3493-B555-C26217B4F080> /usr/lib/system/libcache.dylib
+       0x1a9096000 -        0x1a9097ca3  libSystem.B.dylib (1351) <9500400E-A2EC-33F9-B76B-9830E022777A> /usr/lib/libSystem.B.dylib
+       0x2824c4000 -        0x2824cb109  libRosetta.dylib (349) <CD13AF03-27E5-387A-8DF1-7016C957167A> /usr/lib/libRosetta.dylib
+       0x2838ef000 -        0x2838f2deb  libsystem_darwindirectory.dylib (122) <8627B2A8-CE68-3F9A-B3E8-2F4E4E35CF66> /usr/lib/system/libsystem_darwindirectory.dylib
+       0x2838f3000 -        0x2838fa523  libsystem_eligibility.dylib (181.140.5) <B76C1C04-8001-3113-BE6E-FDDEA1118104> /usr/lib/system/libsystem_eligibility.dylib
+       0x2838fb000 -        0x2839006c5  libsystem_sanitizers.dylib (19) <6143DE0A-A328-3649-AF7D-8FC8781B86E7> /usr/lib/system/libsystem_sanitizers.dylib

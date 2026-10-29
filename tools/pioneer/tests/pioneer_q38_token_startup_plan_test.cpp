@@ -20,8 +20,11 @@ int main(int argc,char** argv){
  for(unsigned bank=0;bank<7;bank++){
   printf("START startup DATA bank%u/all120 boots/fullPackageCopies%d/no execution\n",bank,int(!bindingsOnly));
   auto plan=std::make_unique<PioneerQ38TokenStartupPlan>();
+  assert(!plan->MatchesPublishedBinding(*canonical,bank,id,sources.data()));
   assert(plan->Build(*canonical,bank,id,sources.data(),prompt,2,8192,true,248318,248317));
-  assert(plan->Matches(*canonical) && plan->MatchesBinding(*canonical,bank,id,sources.data()) && !plan->Matches(*other));
+  assert(plan->Matches(*canonical) && plan->MatchesBinding(*canonical,bank,id,sources.data()) && !plan->Matches(*other)
+   && plan->MatchesPublishedBinding(*canonical,bank,id,sources.data()) && !plan->MatchesPublishedBinding(*other,bank,id,sources.data())
+   && !plan->MatchesPublishedBinding(*canonical,(bank+1)%7,id,sources.data()) && !plan->MatchesPublishedBinding(*canonical,bank,id,nullptr));
   assert(!plan->Build(*canonical,bank,id,sources.data(),prompt,2,8192,true,248318,248317) && plan->Matches(*canonical));
   assert(plan->Bank()==bank && plan->Workspace()==canonical->Base+canonical->Workspace(bank)->offset);
   auto root=std::make_unique<PioneerQ38GlobalChainPackage>();
@@ -72,6 +75,11 @@ int main(int argc,char** argv){
   sources[1919]^=1;assert(!plan->MatchesBinding(*canonical,bank,id,sources.data()));sources[1919]^=1;
   assert(plan->MatchesBinding(*canonical,bank,id,sources.data()));
   auto changed=id;changed.driverGeneration++;assert(!plan->MatchesBinding(*canonical,bank,changed,sources.data()));refusals+=2;
+  assert(!plan->MatchesPublishedBinding(*canonical,bank,changed,sources.data()));
+  for(unsigned i=0;i<1920;i++){
+   sources[i]^=1;assert(!plan->MatchesPublishedBinding(*canonical,bank,id,sources.data()));sources[i]^=1;refusals++;
+  }
+  assert(plan->MatchesBinding(*canonical,bank,id,sources.data()) && plan->MatchesPublishedBinding(*canonical,bank,id,sources.data()));
   if(!bank){
    std::vector<uint8_t> ledger(PioneerResidentBanks::Pages);unsigned parts=0;
    std::array<unsigned,65> last={};
@@ -111,7 +119,9 @@ int main(int argc,char** argv){
   sources[119*16]=savedSource;
   std::array<uint8_t,64> output;output.fill(0x5a);const auto before=output;uint32_t address=0xdeadbeef;
   assert(!rejected->Boot() && !rejected->Matches(*canonical) && !rejected->PackageAddress(0,address) && address==0xdeadbeef
+   && !rejected->MatchesPublishedBinding(*canonical,0,id,sources.data())
    && !rejected->ReadSession(0,output.data(),64) && output==before);refusals++;
  }
+ puts("PASS private completed-build publication ONLY after full strict64-layer verification/all1920 source mutations/foreign canonical+bank+generation+unbuilt+failed-build refusals;strict API retained,NO native lifetime/corruption/launch grant");
  printf("PASS STARTUP DATA/%u full512KiB packages EXACT vs independent per-layer serialization/7banks/all120 boots/root+head+session+8192 padded prompt/high64bit identity+all1920 source binding/%u refusals+unchanged output/fullPackageCopies%d;NO native owner/RUN/STOP/physical/Work/TPS grant\n",packages,refusals,int(!bindingsOnly));
 }

@@ -47,7 +47,10 @@ required = ('BindQ38TokenNative(', 'TokenCallScopeMatches(', 'TokenModelSourceSc
             'pioneer_token_context_scoped_dispatch_end(', 'pioneer_token_context_retain(',
             'pioneer_token_context_destroy_clean(', 'TokenInitializationScope(', 'TokenInitializationOtherCoresHeld(',
             'InitializeQ38TokenRecurrent(', 'InitializeQ38TokenHistory(', 'InitializeQ38TokenProjection(',
-            'pioneer_token_context_scoped_initialize(')
+            'pioneer_token_context_scoped_initialize(', 'PrepareQ38TokenNativeHeld(', 'CloseQ38TokenNativeHeld(',
+            'TokenMemoryMappingSourceScope(', 'TokenMemoryAccessScope(', 'TokenMemoryScope(',
+            'MapTokenMemory(', 'TokenMemoryReadChecked(', 'TokenMemoryWrite(',
+            'PioneerQ38TokenMemory::PrepareHeld(', 'PioneerQ38TokenMemory::CloseHeldNoLaunch(', 'pioneer_token_context_scoped_held(')
 for name in required:
     assert any(name in key for key in frames), (name, 'actual implementation must be emitted')
 for controller in ('State', 'ConvHistory', 'Projection'):
@@ -101,5 +104,6 @@ assert symbols['pioneer_token_context_scoped_bind'][1] > 32, 'real private bind 
 print('PASS ACTUAL full851 canonical/model+7 atomic runtime reservations/FD+team+thread+generation+clock+hosts SDK context compile;maxNewFrame'+str(max(sizes)))
 print('PASS old65 BYTE-IDENTICAL61faa093;NO old embedding/prefix owner/CPU reference/Work route;ALL5 independent inert controls byte-identical')
 print('PASS SAME full851 owner/private recurrent+history+projection initialization leases/actual phase-specific source+nonroot callbacks/all9 real controller bodies SDK compiled/maxControllerFrame'+str(max(controller_sizes))+';NOT runtime qualification')
+print('PASS ACTUAL distinct full-token held factories/native120 cohort ownership/4retained aliases/all-word access+source callbacks/whole PrepareHeld+CloseHeldNoLaunch bodies SDK compiled;NOT runtime/launch/END qualification')
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+' token-context-NODRV.o')
-print('COMPILE/INSPECT ONLY;real private bodies WOULD do IO if invoked;NO link/install/invoke/physical or performance qualification;native init RUNTIME qualification/runtime+program upload/RUN/STOP/END STILL OWED')
+print('COMPILE/INSPECT ONLY;real private bodies WOULD do IO if invoked;NO link/install/invoke/physical or performance qualification;this compile is NOT initialization/staging RUNTIME qualification;runtime+metadata/RUN/STOP/END STILL OWED')

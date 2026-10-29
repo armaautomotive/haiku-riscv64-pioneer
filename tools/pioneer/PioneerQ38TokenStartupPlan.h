@@ -16,7 +16,7 @@ class PioneerQ38TokenStartupPlan {
  PioneerQ38GlobalHeadPlan head;
  PioneerQ38GdnIdentity identity={};
  uint32_t sources[1920]={},boot[64]={},session[128]={},prompt[8192]={};
- unsigned bank=7,workspace=0;bool attempted=false,ready=false;
+ unsigned bank=7,workspace=0;bool attempted=false,ready=false,published=false;
  bool Binding(const PioneerQ38CanonicalModelPlan& c)const{
   return ready && canonical==&c && c.Ready() && bank<7 && identity.Valid()
    && c.Workspace(bank) && workspace==c.Base+c.Workspace(bank)->offset
@@ -70,7 +70,7 @@ public:
   for(unsigned i=0;i<8;i++){session[i]=initial[i];session[24+i]=boot[8+i];}
   for(unsigned i=0;i<16;i++)session[8+i]=sources[i];
   session[32]=unsigned(stopEos);session[33]=eos0;session[34]=eos1;session[35]=T::Context;
-  ready=true;if(Matches(c))return true;
+  ready=true;if(Matches(c)){published=true;return true;}
   ready=false;return false;
  }
  bool Matches(const PioneerQ38CanonicalModelPlan& c)const{
@@ -88,6 +88,17 @@ public:
   if(!Binding(c) || bank!=selected || !(identity==id) || !source)return false;
   for(unsigned i=0;i<1920;i++)if(sources[i]!=source[i])return false;
   return Matches(c); // immutable relation ONLY; no native lifetime grant
+ }
+ bool MatchesPublishedBinding(const PioneerQ38CanonicalModelPlan& c,unsigned selected,const PioneerQ38GdnIdentity& id,const uint32_t* source)const{
+  // Build publishes ONLY after the complete strict Matches(c) succeeds.
+  // This object is noncopyable/one-shot;all fields+packages are private,
+  // read APIs are const and reject aliases into ANY owned package/model.
+  // A native owner may borrow this immutable publication under its SAME
+  // lock/lifetime. This is NOT random-memory-corruption revalidation or a
+  // source/initialization/launch permission. Strict MatchesBinding remains.
+  if(!published || !Binding(c) || bank!=selected || !(identity==id) || !source)return false;
+  for(unsigned i=0;i<1920;i++)if(sources[i]!=source[i])return false;
+  return true;
  }
  static bool CanonicalLearnedPagesPresent(const PioneerQ38CanonicalModelPlan& model,const uint8_t* ledger,unsigned count){
   if(!model.Ready() || !ledger || count!=PioneerResidentBanks::Pages)return false;
