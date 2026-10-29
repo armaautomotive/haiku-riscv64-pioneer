@@ -40,3 +40,6 @@
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_QUIET_UNROLL) && !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE)
 #error Unrolled queue checks belong only to a distinct returning-component candidate
 #endif
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_LOCAL_SOURCE_GUARDS) && !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE)
+#error Worker-local source guards belong only to a distinct returning-component candidate
+#endif

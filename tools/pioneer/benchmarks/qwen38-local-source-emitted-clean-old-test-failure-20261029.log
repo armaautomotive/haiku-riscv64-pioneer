@@ -1,0 +1,13 @@
+PASS emitted ROOT post-completion boot seal0 worker0/64 boot words still checked/packets17->1 ONLY in this helper/instructions23508->1798/stack220/172;NOT model/native/physical/TPS
+PASS emitted ROOT actual virgin Admit0 worker0/ALL16 physical pre-launch source reads retained/ONLY duplicate post-audit removed/packets95->79;synthetic endpoints,NOT a native/real worker launch grant
+PASS emitted ROOT post-completion boot seal0 worker95/64 boot words still checked/packets17->1 ONLY in this helper/instructions24171->1837/stack220/172;NOT model/native/physical/TPS
+PASS emitted ROOT actual virgin Admit0 worker95/ALL16 physical pre-launch source reads retained/ONLY duplicate post-audit removed/packets95->79;synthetic endpoints,NOT a native/real worker launch grant
+PASS emitted ROOT post-completion boot seal0 worker118/64 boot words still checked/packets17->1 ONLY in this helper/instructions24307->1845/stack220/172;NOT model/native/physical/TPS
+PASS emitted ROOT actual virgin Admit0 worker118/ALL16 physical pre-launch source reads retained/ONLY duplicate post-audit removed/packets95->79;synthetic endpoints,NOT a native/real worker launch grant
+Assertion failed: (!a->Run() && !b->Run() && a->packets.empty() && b->packets.empty()), function main, file pioneer_q38_local_source_instruction_test.cpp, line 78.
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-local-source-clean-b.Jyl2RFXg/tools/pioneer/tests/run_pioneer_q38_local_source_instruction_tests.py", line 35, in <module>
+    subprocess.run([str(binary),str(baseline),str(candidate),*map(str,mapping)],check=True,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-local-source-instructions-ri9v6j4g/test', '/private/tmp/pioneer-q38-local-old-quiet-clean-20261029-a', '/private/tmp/pioneer-q38-local-inspect-clean-20261029-a', '/private/tmp/pioneer-local-source-instructions-ri9v6j4g/0', '/private/tmp/pioneer-local-source-instructions-ri9v6j4g/1']' died with <Signals.SIGABRT: 6>.

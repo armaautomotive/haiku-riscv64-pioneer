@@ -56,7 +56,15 @@ static void PhysicalSource(const uint32_t* d,uint32_t* tracked,unsigned w){
 static void BootSeal(const uint32_t* d,uint32_t* tracked,unsigned w){
  Transfer(d,tracked,w,M::Boot,256,false);
  for(unsigned i=0;i<64;i++)if(Words(L::Scratch)[i]!=Boot(w)[i])scalar_fault_park();
+#ifndef PIONEER_Q38_GLOBAL_CHAIN_LOCAL_SOURCE_GUARDS
  PhysicalSource(d,tracked,w);
+#endif
+ // The explicit QGW1-only candidate keeps ALL16 fresh physical reads in
+ // Admit BEFORE release. Its returning worker checks the SAME private
+ // source words before/after its own transfers and before completion.
+ // An idle post-completion source change may be observed at the next
+ // admission instead. Boot/job/nonce/counter/PC/queue checks are unchanged;
+ // this is not a cached-ready grant or permission to reuse an old worker.
 }
 static void ClosedJob(const uint32_t* d,uint32_t* tracked,unsigned w,bool capture){
  unsigned n=Words(L::Nonces)[w];

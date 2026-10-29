@@ -7,12 +7,14 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=9 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet'}
+assert 3<=len(sys.argv)<=10 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards'}
 inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or (cancel and f32),'dense-unroll candidate requires explicit cancel+FP32 profile'
 assert not boundary or (cancel and f32 and unroll),'boundary candidate requires explicit cancel+FP32+unrolled profile'
 quiet='--unroll-quiet' in options
 assert not quiet or (boundary and cancel and f32 and unroll),'queue-check candidate requires explicit boundary+cancel+FP32+unrolled profile'
+local_sources='--worker-local-source-guards' in options
+assert not local_sources or quiet,'worker-local source candidate requires the explicit queue/boundary/cancel/FP32 profile'
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -22,7 +24,7 @@ def run(*args):subprocess.run([str(a) for a in args],check=True)
 # Reproduce the strict returning components and unchanged whole feedback
 # image FIRST. Neither an old native owner nor a component alone can launch.
 components=out/'qualified-components'
-run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []))
+run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []))
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
@@ -123,7 +125,12 @@ PINS_CANCEL_F32_QUIET=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd
  ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
  ('conv.bin',21340,'ad28a3e35fa4584a6e4b8b827ed35e931a0f1af7b8d07f983581a82180282ac7'),
  ('program.elf',178384,'bcb75d79953848f7e4b01237d03913550a0bfe01253848c83babe525c0e8247f'))
-expected=PINS_CANCEL_F32_QUIET if quiet else PINS_CANCEL_F32_BOUNDARY if boundary else PINS_CANCEL_F32_UNROLLED_DENSE if unroll else (PINS_CANCEL_F32 if cancel else PINS_F32) if f32 else PINS_CANCEL if cancel else PINS
+PINS_CANCEL_F32_LOCAL_SOURCE=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+ ('text.bin',130424,'80daf16229e7759a2621d0f1b23b826df96fb0bc1399b216d53a11679c867078'),
+ ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+ ('conv.bin',21340,'92f1b45422aa97849025084a98c14f6d3139c5f3f0901a2e288307da501ce941'),
+ ('program.elf',178272,'37c2f69539087a53a1399ca39216dc40f8651045ba9537bbd44f8517ade4f568')) # independent BUILD pins only,NOT runtime/native/Work permission
+expected=PINS_CANCEL_F32_LOCAL_SOURCE if local_sources else PINS_CANCEL_F32_QUIET if quiet else PINS_CANCEL_F32_BOUNDARY if boundary else PINS_CANCEL_F32_UNROLLED_DENSE if unroll else (PINS_CANCEL_F32 if cancel else PINS_F32) if f32 else PINS_CANCEL if cancel else PINS
 if not inspect:assert expected and tuple(observed)==expected,'unqualified persistent parent variant; inspect independent builds first'
 print('BUILD ONLY persistent parent/bootstrap/prompt+generation/all64+973/recurrent state copy+readback/token stream/final119STOP;maxFrame'+str(max(frames))+
  ';NO runtime/combined stack/original full-model/native/physical/cancellation/Work/Assistant/TPS qualification. DO NOT INSTALL')

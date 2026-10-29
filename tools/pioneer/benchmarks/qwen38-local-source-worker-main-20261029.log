@@ -1,0 +1,1 @@
+PASS ACTUAL pinned QGW1 valid first-matrix admission controls3/all16 local physical-source faults x3 workers:48 BEFORE any NoC,48 AFTER first genuine NoC request/NO following request,matrix product,completion or retry/actual2048 inert steps each;synthetic endpoints ONLY,NOT ROOT/native/full-model/physical/Work/TPS qualification

@@ -123,4 +123,18 @@ for value in (0,1):
  for header,flags in [('PioneerQ38TokenImageRole.h',token),('PioneerQ38GlobalChainImageRole.h',root),('PioneerQ38GlobalFeedbackComponentRole.h',feedback),*old_roles.items()]:
   check(header,{**flags,quiet:value},False)
 for header,flags in old_roles.items():check(header,flags,False,late=quiet)
-print('PASS QGC1 exact6+optional cancellation/FP32-hidden/boundary-seals/queue-unroll BUILD-only roles/late+defined0+missing flags/old native+worker+chain exclusion/gates'+str(gates)+';NO code,source,native,physical,Work or launch grant')
+local_sources='PIONEER_Q38_GLOBAL_CHAIN_LOCAL_SOURCE_GUARDS'
+for flags,frontier in ((r,cross),(d,append)):
+ exact={**flags,frontier:1,f32:1,unroll:1,boundary:1,quiet:1,local_sources:1}
+ check('PioneerQ38GlobalChainComponentRole.h',exact,True)
+ for name in (local_sources,frontier,quiet,boundary,f32,unroll):
+  for value in (0,2):check('PioneerQ38GlobalChainComponentRole.h',{**exact,name:value},False)
+  if name!=local_sources:
+   bad={**exact};del bad[name];check('PioneerQ38GlobalChainComponentRole.h',bad,False)
+ check('PioneerQ38GlobalChainComponentRole.h',{**flags,frontier:1,f32:1,unroll:1,boundary:1,quiet:1},False,late=local_sources)
+for value in (0,1):
+ check('PioneerQ38GlobalChainComponentRole.h',{**conv,local_sources:value},False)
+ for header,flags in [('PioneerQ38TokenImageRole.h',token),('PioneerQ38GlobalChainImageRole.h',root),('PioneerQ38GlobalFeedbackComponentRole.h',feedback),*old_roles.items()]:
+  check(header,{**flags,local_sources:value},False)
+for header,flags in old_roles.items():check(header,flags,False,late=local_sources)
+print('PASS QGC1 exact6+optional cancellation/FP32-hidden/boundary-seals/queue-unroll/worker-local-source BUILD-only roles/late+defined0+missing flags/old native+worker+chain exclusion/gates'+str(gates)+';NO code,source,native,physical,Work or launch grant')

@@ -1,0 +1,117 @@
+Worker-local source guards:experimental ROOT coordination COMPONENT checkpoint
+2026-10-29 23:12UTC. Goal ACTIVE;20tokens/sec remains UNMET.
+Last physical whole-model result remains0.207893161tokens/sec.
+
+Change and deliberate fault timing
+----------------------------------
+The explicit --worker-local-source-guards candidate removes the16 repeated
+remote physical routing-register reads from returning ROOT BootSeal calls.
+It retains ALL16 fresh physical reads in actual Admit BEFORE any release,
+the full64-word boot comparison,job/nonce/status/PC/counter/queue checks,
+and all source/bounds/metadata checks before and after a release packet.
+The SAME pinned QGW1 worker already checks its private source words locally
+before/after its own transfers and before publishing job completion.
+No worker ROM,arithmetic,weight format,MMIO width or public ABI changes.
+
+This is a changed observation policy,NOT identical fault timing:an idle
+source-register change may survive a post-completion read-only BootSeal.
+The next actual Admit rejects it before release;the worker independently
+rejects source loss before any subsequent own transfer. No cached ready
+flag,caller completion receipt,old processor history or new ownership grant
+substitutes for these checks. Further full-model/failure/END proof is owed.
+These are ON-CARD inter-worker NoC packets,not host PCIe round trips or
+model-loading bytes. No physical model speedup is inferred from their count.
+
+Strict isolation and reproducible build
+---------------------------------------
+The candidate requires explicit cancel+FP32+unrolled+boundary+queue profile.
+Its additional compile flag is allowed ONLY in the returning cross-token
+recurrent or KV-appending dense BUILD components. Old parents/workers,
+convolution capsule,kernel/native/source/client/Work roles and late/defined0
+contamination do not gain permission. The default/native/Assistant route is
+UNCHANGED;no new image is installed,loaded or publicly selectable.
+
+Immutable A23-file main/clean snapshots:
+/private/tmp/pioneer-q38-local-source-main-a.puJxEAvo
+/private/tmp/pioneer-q38-local-source-clean-a.vtv49gdv
+Each archived07960784f3 plus SAME23 scoped files,all compared before tests.
+Inspect37084/46033 BOTH0 with identical complete logs/ELF/components.
+Old queue profile27433/20982 BOTH0;existing bcb75d79 ELF pins unchanged.
+Initial worker guard86022/11465 BOTH0;roles75504/29268 BOTH0/1182 gates.
+
+B23-file strict qualification trees:
+/private/tmp/pioneer-q38-local-source-main-b.PEsoqHOd
+/private/tmp/pioneer-q38-local-source-clean-b.Jyl2RFXg
+All23 scoped files compared BEFORE B jobs. Strict74886/49195,default41793/
+67152,roles58695/30964 and worker55358/61752 ALL terminal0. Each corresponding
+log pair matches. Strict images match each other AND A inspect byte-for-byte.
+The unchanged cancel+FP32 default retains ELF5d870cb7/text20ace51c pins.
+No dirty llama.cpp or unrelated FlashNext content was incorporated.
+
+New whole-image BUILD pins:
+boot4B SHA32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+text130424/131072B SHA80daf16229e7759a2621d0f1b23b826df96fb0bc1399b216d53a11679c867078
+terminal8B SHA6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5
+conv21340/32768B SHA92f1b45422aa97849025084a98c14f6d3139c5f3f0901a2e288307da501ce941
+ELF178272B SHA37c2f69539087a53a1399ca39216dc40f8651045ba9537bbd44f8517ade4f568
+recurrent160776B SHA84873403ab0fb39d7da1c2e7faabb169ae3b5e61b9f7407e5a444f9895fcc984
+dense122528B SHAa9ce4d4ec6ce1d1517c8809b236503293f9e20e1b3c9ddf1d6976f92c4e1c851
+NOBOOT252072B SHAc3502896520eeab667b7c2762a2ac87cb41243a1e4b9347179572e69ea0c5d80
+Parent max individual frame1616B,component2112B remain individual ONLY;
+combined firmware/kernel/entry stack remains UNQUALIFIED.
+
+Actual instruction/guard qualification,NOT hardware timing
+---------------------------------------------------------
+The original pinned QGW1 worker executes fresh boots and valid first-matrix
+commands. Three positive controls reach a genuine first NoC request. All16
+physical source fields across logical workers1/96/119 are faulted BEFORE
+traffic and AFTER the first genuine request:48+48 cases. Actual instructions
+fault without following requests,matrix products or completion;2048 further
+instructions leave commands/counters/memory unchanged. Synthetic byte/NoC
+endpoints ONLY;this is not all operators,all64 layers or native ownership.
+
+Final C23-file TEST trees:
+/private/tmp/pioneer-q38-local-source-main-c.YJvPmHr9
+/private/tmp/pioneer-q38-local-source-clean-c.lMvyXS7j
+All23 compared before C tests. C differs from B ONLY in the two emitted-ABI
+test files;all21 other scoped inputs compare with the strict B trees.
+Final emitted55333/10835 BOTH0,complete logs identical:
+12 positive boot+actual virgin Admit functions,4 positive release packets;
+10 immediate source/queue/counter refusals,12 metadata refusals BEFORE
+release,24 post-release fault-retentions,8 wider-MMIO/write refusals,
+128 boot-word mismatches,32 actual Admit source failures and32 explicit
+next-Admit source refusals. Each executes2048 further inert instructions.
+No function is replaced just to make it observable:the actual inlined
+physical-source logic is exercised through emitted Admit itself.
+
+In these isolated ABI tests ONLY,post-completion BootSeal packets17->1;
+ROOT instructions23508->1798(rec worker0),23117->1775(dense worker0).
+Other tested workers95/118 show the same packet reduction. Actual virgin
+Admit packets95->79 retains ALL16 pre-launch physical source reads. This is
+NOT a whole-model packet count,latency reduction,tokens/sec or card speedup.
+
+Failure lineage:B emitted46874/13731 BOTH1 because a new TEST wrongly
+required complete immutable metadata checks before ordinary read-only
+observations. The existing boundary policy deliberately defers those checks
+until release. C keeps that policy and explicitly tests actual release and
+post-release guards;firmware is unchanged. Failed B logs are retained.
+Preliminary working-only ABI tests also hit a null-cast and missing qualified
+test constant at compile time;those are not firmware/runtime results.
+
+Full objective,still incomplete
+-------------------------------
+Fresh original3-token/all64-layer runs45719/30840 use strict B images from
+the C source trees,authenticate the original GGUF,and start119 virgin
+workers. No --fast-root-memory or CPU products are used. Both remain LIVE,
+NOT passing. Raw observed traces must be compared independently AFTER
+actual completion;no partial layer/token/state/END proof is promoted.
+Main observations:/private/tmp/pioneer-q38-local-flow-main-20261029-c.X3sZucFI/observed
+Clean observations:/private/tmp/pioneer-q38-local-flow-clean-20261029-c.UhONWTZO/observed
+Native state/full-END81906/33926,host fault7607/9829/53969/21927 and all
+earlier valid whole-model/performance histories remain separate LIVE tests.
+
+Still required:all64/multitoken/output/state/KV/normal+EOS numerics,combined
+stack,full native END/unload/reuse/fault recovery,new image/native owner
+integration,qualified no-CPU-reference Work+Assistant,physical long-context
+stability and real measured optimization toward20tokens/sec. No Pioneer/
+SSH/power/install/OS/Assistant/network/SD/mains action or board-health claim.

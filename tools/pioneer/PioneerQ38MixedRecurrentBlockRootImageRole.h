@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_LOCAL_SOURCE_GUARDS
+#error Worker-local source-audit policy belongs only to a distinct global-chain returning candidate
+#endif
 #if defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_ROOT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_CONV_CAPSULE_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_TOKEN_KV_APPEND) || defined(PIONEER_Q38_TOKEN_CANCEL_BOUNDARY) || defined(PIONEER_Q38_GLOBAL_CHAIN_F32_HIDDEN) || defined(PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS) || defined(PIONEER_Q38_GLOBAL_CHAIN_QUIET_UNROLL)
 #error Use the distinct global-chain component role,not an old IMAGE
 #endif
