@@ -12,7 +12,10 @@
  || defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT) || defined(PIONEER_Q38_MIXED_LIVE_NATIVE_CONTEXT) \
  || defined(PIONEER_Q38_EMBEDDING_NATIVE) || defined(PIONEER_Q38_LEARNED_RMS_NATIVE) || defined(PIONEER_Q38_DECODER_RUNTIME) \
  || defined(PIONEER_Q38_MIXED_WORKER_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) \
- || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_ROOT_IMAGE)
+ || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_ROOT_IMAGE) \
+ || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) \
+ || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE) \
+ || defined(PIONEER_Q38_NATIVE_STATE_TEST_BRIDGE) || defined(PIONEER_Q38_TOKEN_NATIVE_STATE_SNAPSHOT_FIXTURE)
 #error CPU whole-model products must NEVER enter kernel,image,native,old debug or Work code
 #endif
 #ifndef PIONEER_Q38_CPU_MODEL_REFERENCE_H
@@ -33,6 +36,10 @@ public:
  Q38CpuModelReference(const Q38CpuModelReference&)=delete;
  Q38CpuModelReference& operator=(const Q38CpuModelReference&)=delete;
  bool Bind(Q38OriginalRows&);bool Step(unsigned,Q38CpuTokenTrace&);
+ // CPU-private COPY only,never a mutable view or device-product supplier.
+ // kind0:GDN FP32 after2/3 steps;kind1:Conv FP32 after3;kind2/3:packed
+ // binary16 K/V after3. Invalid requests leave output and state unchanged.
+ bool Snapshot(unsigned completed,unsigned layer,unsigned kind,std::vector<uint32_t>&);
  bool Ready()const;
 };
 #endif

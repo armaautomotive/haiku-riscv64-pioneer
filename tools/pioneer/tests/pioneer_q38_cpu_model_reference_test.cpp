@@ -7,6 +7,7 @@
 using namespace Q38CpuReferenceMath;
 struct ReferenceRowsProbe:Q38OriginalRows {
  std::vector<Q38OriginalTensor> tensors;uint64_t epoch=1;bool live=true;unsigned reads=0;
+ mutable unsigned describes=0;unsigned refuseDescription=0;
  ReferenceRowsProbe(){
   const char* common[]={"attn_norm.weight","post_attention_norm.weight","ffn_gate.weight","ffn_up.weight","ffn_down.weight"};
   const unsigned ci[]={5120,5120,5120,5120,17408},co[]={1,1,17408,17408,5120},ct[]={0,0,12,12,12};
@@ -29,7 +30,9 @@ struct ReferenceRowsProbe:Q38OriginalRows {
  }
  bool Ready()const override{return live;}
  uint64_t Epoch()const override{return live?epoch:0;}
- bool Describe(unsigned i,Q38OriginalTensor& out)const override{if(!live || i>=tensors.size())return false;out=tensors[i];return true;}
+ bool Describe(unsigned i,Q38OriginalTensor& out)const override{
+  describes++;if(!live || i>=tensors.size() || (refuseDescription && describes==refuseDescription))return false;out=tensors[i];return true;
+ }
  bool ReadOriginal(unsigned i,uint64_t at,unsigned bytes,void* out,unsigned capacity)override{
   assert(live && i<851 && out && bytes && bytes<=1048576 && capacity>=bytes && at<=tensors[i].bytes && bytes<=tensors[i].bytes-at);reads++;
   std::memset(out,0,bytes);const auto& t=tensors[i];
@@ -126,6 +129,10 @@ static void TestRms(){
 }
 static void TestBind(){
  ReferenceRowsProbe good;Q38CpuModelReference reference;assert(reference.Bind(good) && reference.Ready() && !reference.Bind(good) && !good.reads);
+ std::vector<uint32_t> snapshot={0x13579bdf};const auto initial=snapshot;
+ for(unsigned completed:{0U,1U,2U,3U,UINT32_MAX})for(unsigned layer:{0U,3U,63U,64U,UINT32_MAX})for(unsigned kind:{0U,1U,2U,3U,4U,UINT32_MAX}){
+  assert(!reference.Snapshot(completed,layer,kind,snapshot) && snapshot==initial && reference.Ready() && !good.reads);
+ }
  Q38CpuTokenTrace out;out.hidden={0xa5a5a5a5};good.epoch++;
  assert(!reference.Step(0,out) && !reference.Ready() && !good.reads && out.hidden==std::vector<uint32_t>{0xa5a5a5a5});
  good.epoch--;assert(!reference.Step(0,out) && !reference.Ready());
@@ -135,6 +142,7 @@ static void TestBind(){
   Q38CpuModelReference ref;assert(!ref.Bind(source) && !source.reads);std::fesetround(FE_TONEAREST);
  }
  puts("PASS independent whole-model binding/all851 exact shapes/names/last-tensor+duplicate+epoch+source+rounding refusals/late epoch loss poisons reference/no retry/CPU output unchanged");
+ puts("PASS CPU-private state snapshot/pre-Step+invalid position/layer/kind requests refuse atomically without learned reads or reference mutation");
 }
 int main(int argc,char** argv){
  assert(argc==1 || (argc==2 && !std::strcmp(argv[1],"--full-zero")));setvbuf(stdout,nullptr,_IOLBF,0);
@@ -145,7 +153,27 @@ int main(int argc,char** argv){
    Q38CpuTokenTrace trace;assert(reference.Step(position==0?248319:position==1?17:0,trace));
    assert(trace.position==position && trace.selected==0 && trace.runnerUp==1 && trace.hidden.size()==65*5120 && trace.logits.size()==248320);
    for(auto b:trace.hidden)assert(!(b&0x7fffffff));for(auto b:trace.logits)assert(!(b&0x7fffffff));
+   if(position>=1){
+    unsigned records=0;const unsigned reads=source.reads;
+    for(unsigned layer=0;layer<64;layer++)for(unsigned kind=0;kind<4;kind++){
+     const bool wanted=(position==1?kind==0:kind<4) && (layer%4==3?kind>=2:kind<2);
+     std::vector<uint32_t> words={0x13579bdf};
+     assert(reference.Snapshot(position+1,layer,kind,words)==wanted);
+     if(wanted){const unsigned expected=kind==0?786432:kind==1?30720:(position+1)*512;assert(words.size()==expected);
+      const uint32_t magnitude=kind<2?0x7fffffffU:0x7fff7fffU;
+      for(auto word:words)assert(!(word&magnitude));records++;words[0]=0x3f800000;std::vector<uint32_t> fresh;
+      assert(reference.Snapshot(position+1,layer,kind,fresh) && !(fresh[0]&magnitude));}
+     else assert(words==std::vector<uint32_t>{0x13579bdf});
+    }
+    assert(records==(position==1?48U:128U) && source.reads==reads && reference.Ready());
+    printf("PASS CPU-private snapshots/after%u complete steps/%u retained-state records/copied-output mutation cannot affect model/no learned reads;SYNTHETIC ZERO only\n",position+1,records);
+   }
   }
+  // A descriptor failure on the POST-copy audit leaves the caller's output
+  // untouched and permanently poisons this reference. No partial snapshot.
+  std::vector<uint32_t> words={0x13579bdf};source.refuseDescription=source.describes+852;
+  assert(!reference.Snapshot(3,0,0,words) && words==std::vector<uint32_t>{0x13579bdf} && !reference.Ready());
+  source.refuseDescription=0;assert(!reference.Snapshot(3,0,0,words) && !reference.Ready());
   puts("PASS independent full CPU reference/3positions/all64+vocab each/tie-lowest/retained state+KV paths/SYNTHETIC ZERO learned bytes only;NOT original model/device/native/Work/TPS proof");
  }
 }

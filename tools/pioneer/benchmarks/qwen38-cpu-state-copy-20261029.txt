@@ -1,0 +1,43 @@
+CPU-private retained-state copy API:VALIDATION COMPONENT CHECKPOINT
+2026-10-29 21:35UTC. Goal ACTIVE;20tok/s UNMET.
+Last physical whole-model result remains0.207893161 tokens/sec.
+
+Only independent HOST CPU reference/test source changes in this checkpoint.
+No device math,driver/Work/Assistant behavior or original Step arithmetic
+changes. New Snapshot returns COPIES,never mutable model pointers:FP32 GDN
+after2+3 steps,FP32 Conv after3,and already half-rounded retained K/V after3
+as packed binary16. Shape/position/kind requests are exact;invalid requests
+leave output and reference unchanged without learned reads. Valid copies
+audit the same851 immutable descriptors/epoch/rounding before and after.
+Post-copy source failure leaves output unchanged and permanently poisons
+the reference. Half caches must roundtrip exactly;no silent quantization.
+
+Full-zero D69043/6010 BOTH terminal0,paired logs identical. Each executes
+3complete CPU steps/all64 layers+vocabulary,observes48+128=176 state copies,
+checks each semantic-zero payload and no learned reads from Snapshot,
+mutates returned vectors then re-copies to prove model isolation,and
+injects post-copy descriptor failure to verify atomic refusal/no retry.
+Existing63488 finite half conversions,Q8/Q4/Q6 original-row matrix fixtures,
+64 RMS rows,nonzero8-step GDN closed-form solution and3-position attention
+component checks also pass. These are SYNTHETIC learned bytes/math fixtures,
+NOT original27B state,all-layer device numerical or physical proof.
+
+CPU role tests30901(main A)/72897(clean C) BOTH0,paired logs identical:
+119 exact-parent/kernel+image+native+Work/defined0+1/late-reinclude gates.
+New direct token-native and state-observer roles are forbidden in this
+CPU-PRODUCT header even0. Generic original RAW bytes remain separate.
+
+Earlier zero A12884/clean C61673 BOTH1 because a new TEST incorrectly
+required unsigned+0 instead of semantic FP32/packed-half zero. D ignores
+only sign bits in that SYNTHETIC zero assertion. It still preserves actual
+copied bit patterns. Original-model posthoc comparison remains bit-strict;
+no tolerance or expected output has been changed. Frozen D82 sources were
+cmp-verified in two separate trees before tests.
+
+The new original-model snapshot producer,serializer,native const observer,
+state-file comparator and complete-generation END wiring remain LOCAL WIP.
+Original CPU producers82522/67610 and native state/full-END81906/33926 are
+running,NOT passed. No original-model state file or complete native result
+is promoted by this API checkpoint. Full numerical/lifecycle/stack/public
+Work/Assistant/physical stability and speed requirements remain.
+No Pioneer/SSH/power/install/OS/network/SD/mains action or health claim.

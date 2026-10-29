@@ -1,0 +1,393 @@
+PASS independent half conversion/63488 finite binary16 values/native host half+boundary RNE checks
+PASS independent original-row matrix/6 Q8Q4Q6 cases/all16rows/scalar decoded powers-of-two dot exact/atomic read refusal
+PASS independent raw FP32 RMS/64 rows/all5120 bits/long-double FLOAT-square reduction+host sqrt/div/captured legacy-overflow+2^26+minimum-product edge/domain refusals atomic
+PASS independent GDN/8 retained nonzero steps/closed-form basis solution/all16384state+128output;attention3positions/all24heads/uniform half-softmax/append-only original V history
+PASS independent whole-model binding/all851 exact shapes/names/last-tensor+duplicate+epoch+source+rounding refusals/late epoch loss poisons reference/no retry/CPU output unchanged
+PASS CPU-private state snapshot/pre-Step+invalid position/layer/kind requests refuse atomically without learned reads or reference mutation
+CPU_REFERENCE_BEGIN position0/layer0/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer0/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer1/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer1/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer2/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer2/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer3/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer3/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer4/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer4/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer5/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer5/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer6/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer6/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer7/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer7/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer8/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer8/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer9/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer9/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer10/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer10/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer11/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer11/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer12/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer12/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer13/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer13/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer14/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer14/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer15/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer15/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer16/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer16/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer17/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer17/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer18/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer18/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer19/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer19/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer20/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer20/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer21/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer21/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer22/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer22/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer23/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer23/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer24/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer24/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer25/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer25/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer26/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer26/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer27/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer27/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer28/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer28/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer29/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer29/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer30/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer30/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer31/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer31/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer32/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer32/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer33/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer33/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer34/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer34/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer35/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer35/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer36/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer36/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer37/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer37/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer38/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer38/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer39/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer39/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer40/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer40/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer41/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer41/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer42/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer42/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer43/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer43/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer44/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer44/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer45/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer45/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer46/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer46/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer47/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer47/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer48/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer48/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer49/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer49/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer50/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer50/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer51/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer51/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer52/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer52/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer53/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer53/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer54/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer54/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer55/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer55/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer56/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer56/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer57/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer57/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer58/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer58/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer59/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer59/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer60/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer60/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer61/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer61/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer62/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer62/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position0/layer63/independent ORIGINAL row-major forward
+CPU_REFERENCE position0/layer63/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer0/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer0/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer1/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer1/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer2/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer2/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer3/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer3/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer4/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer4/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer5/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer5/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer6/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer6/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer7/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer7/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer8/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer8/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer9/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer9/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer10/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer10/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer11/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer11/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer12/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer12/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer13/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer13/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer14/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer14/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer15/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer15/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer16/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer16/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer17/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer17/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer18/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer18/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer19/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer19/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer20/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer20/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer21/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer21/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer22/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer22/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer23/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer23/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer24/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer24/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer25/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer25/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer26/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer26/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer27/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer27/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer28/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer28/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer29/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer29/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer30/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer30/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer31/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer31/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer32/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer32/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer33/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer33/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer34/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer34/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer35/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer35/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer36/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer36/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer37/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer37/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer38/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer38/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer39/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer39/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer40/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer40/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer41/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer41/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer42/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer42/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer43/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer43/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer44/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer44/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer45/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer45/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer46/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer46/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer47/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer47/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer48/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer48/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer49/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer49/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer50/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer50/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer51/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer51/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer52/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer52/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer53/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer53/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer54/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer54/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer55/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer55/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer56/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer56/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer57/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer57/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer58/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer58/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer59/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer59/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer60/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer60/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer61/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer61/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer62/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer62/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position1/layer63/independent ORIGINAL row-major forward
+CPU_REFERENCE position1/layer63/original row-major weights/independent retained state;CPU-private only
+PASS CPU-private snapshots/after2 complete steps/48 retained-state records/copied-output mutation cannot affect model/no learned reads;SYNTHETIC ZERO only
+CPU_REFERENCE_BEGIN position2/layer0/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer0/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer1/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer1/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer2/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer2/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer3/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer3/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer4/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer4/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer5/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer5/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer6/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer6/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer7/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer7/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer8/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer8/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer9/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer9/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer10/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer10/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer11/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer11/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer12/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer12/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer13/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer13/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer14/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer14/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer15/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer15/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer16/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer16/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer17/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer17/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer18/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer18/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer19/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer19/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer20/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer20/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer21/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer21/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer22/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer22/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer23/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer23/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer24/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer24/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer25/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer25/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer26/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer26/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer27/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer27/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer28/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer28/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer29/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer29/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer30/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer30/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer31/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer31/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer32/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer32/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer33/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer33/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer34/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer34/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer35/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer35/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer36/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer36/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer37/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer37/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer38/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer38/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer39/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer39/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer40/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer40/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer41/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer41/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer42/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer42/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer43/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer43/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer44/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer44/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer45/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer45/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer46/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer46/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer47/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer47/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer48/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer48/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer49/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer49/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer50/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer50/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer51/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer51/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer52/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer52/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer53/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer53/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer54/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer54/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer55/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer55/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer56/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer56/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer57/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer57/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer58/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer58/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer59/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer59/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer60/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer60/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer61/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer61/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer62/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer62/original row-major weights/independent retained state;CPU-private only
+CPU_REFERENCE_BEGIN position2/layer63/independent ORIGINAL row-major forward
+CPU_REFERENCE position2/layer63/original row-major weights/independent retained state;CPU-private only
+PASS CPU-private snapshots/after3 complete steps/128 retained-state records/copied-output mutation cannot affect model/no learned reads;SYNTHETIC ZERO only
+PASS independent full CPU reference/3positions/all64+vocab each/tie-lowest/retained state+KV paths/SYNTHETIC ZERO learned bytes only;NOT original model/device/native/Work/TPS proof

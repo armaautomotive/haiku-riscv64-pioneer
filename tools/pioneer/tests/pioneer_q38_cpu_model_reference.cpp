@@ -148,6 +148,25 @@ struct Q38CpuModelReference::Impl {
   for(float x:logits){if(!Normal(x))return false;stage.logits.push_back(Bits(x));}
   if(!Current(true))return false;output=std::move(stage);position++;return true;
  }
+ bool Snapshot(unsigned completed,unsigned layer,unsigned kind,std::vector<uint32_t>& output){
+  if(completed!=position || (completed!=2 && completed!=3) || layer>=64 || kind>3
+   || (completed==2 && kind!=0) || (layer%4==3?kind<2:kind>=2))return false;
+  if(!Current(true)){failed=true;return false;}
+  const auto& s=state[layer];const auto& values=kind==0?s.state:kind==1?s.history:kind==2?s.key:s.value;
+  const unsigned expected=kind==0?786432:kind==1?30720:completed*1024;
+  if(values.size()!=expected){failed=true;return false;}
+  std::vector<uint32_t> stage;stage.reserve(kind<2?expected:expected/2);
+  if(kind<2){for(float value:values){if(!Normal(value)){failed=true;return false;}stage.push_back(Bits(value));}}
+  else for(unsigned i=0;i<expected;i+=2){
+   if(!Normal(values[i]) || !Normal(values[i+1])){failed=true;return false;}
+   const uint16_t low=HalfRne(values[i]),high=HalfRne(values[i+1]);
+   // Attention already half-rounds its retained cache. Refuse an API that
+   // would silently quantize a different FP32 history for the comparison.
+   if(Bits(Half(low))!=Bits(values[i]) || Bits(Half(high))!=Bits(values[i+1])){failed=true;return false;}
+   stage.push_back(uint32_t(low)|uint32_t(high)<<16);
+  }
+  if(!Current(true)){failed=true;return false;}output=std::move(stage);return true;
+ }
 };
 Q38CpuModelReference::Q38CpuModelReference():impl(new Impl){}
 Q38CpuModelReference::~Q38CpuModelReference()=default;
@@ -156,3 +175,4 @@ bool Q38CpuModelReference::Ready()const{return impl->Current(true);}
 bool Q38CpuModelReference::Step(unsigned token,Q38CpuTokenTrace& out){
  if(!impl->Step(token,out)){impl->failed=true;return false;}return true;
 }
+bool Q38CpuModelReference::Snapshot(unsigned completed,unsigned layer,unsigned kind,std::vector<uint32_t>& out){return impl->Snapshot(completed,layer,kind,out);}
