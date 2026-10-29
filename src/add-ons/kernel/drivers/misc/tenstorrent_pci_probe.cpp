@@ -2348,6 +2348,9 @@ struct PioneerHostWriteIO : PioneerHostReadIO {
 struct PioneerSessionIO : PioneerHostWriteIO,PioneerOutputBufferIO,PioneerWideOutputIO {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
  bool TokenCallScopeMatches();bool TokenModelSourceScope(bool beginning);
+ bool TokenInitializationScope(unsigned kind,bool beginning);bool TokenInitializationOtherCoresHeld(unsigned kind);
+ bool ConvHistoryZeroBeforeCohort();bool ConvHistoryZeroOtherCoresHeld();
+ bool ProjectionZeroBeforeCohort();bool ProjectionZeroOtherCoresHeld();
 #endif
 #ifdef PIONEER_Q38_RESIDENT_LAYER_NATIVE_CONTEXT
  bool ResidentLayerCallScopeMatches();bool ResidentLayerBindSourceScope();
@@ -3922,6 +3925,7 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 #include "PioneerQ38RecurrentBlockNative.inc"
 #include "PioneerQ38RecurrentPrefixNative.inc"
 #include "PioneerQ38TokenNativeBind.inc"
+#include "PioneerQ38TokenNativeInitialize.inc"
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 // PIONEER_Q38_STATE_ZERO_NATIVE_ADAPTER_BEGIN
 // Private native adapter,selected ONLY by the separate fixed zero diagnostic
@@ -4737,7 +4741,9 @@ static uint64 sQ38EmbeddingModelEpoch=0; // global-lock protected,never wrap/reu
 // PIONEER_Q38_STATE_ZERO_NATIVE_SCOPE_BEGIN
 bool PioneerSessionIO::StateZeroBeforeCohort()
 {
-#ifdef PIONEER_Q38_RECURRENT_PREFIX_NATIVE_CONTEXT
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
+ return TokenInitializationScope(0,false);
+#elif defined(PIONEER_Q38_RECURRENT_PREFIX_NATIVE_CONTEXT)
  return RecurrentPrefixInitializationScope(false,false);
 #elif defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT)
  return RecurrentBlockInitializationScope(false,false);
@@ -4857,6 +4863,9 @@ bool PioneerSessionIO::ResidentGdnBeforeRoot()
 // PIONEER_Q38_NONROOT_NATIVE_OWNER_BEGIN
 bool PioneerSessionIO::NonRootHeldOwner() {
 	return StateZeroBeforeCohort()
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
+  || TokenInitializationScope(1,false) || TokenInitializationScope(2,false)
+#endif
 #ifdef PIONEER_Q38_RECURRENT_PREFIX_NATIVE_CONTEXT
   || RecurrentPrefixInitializationScope(true,false)
 #endif
@@ -4888,7 +4897,9 @@ bool PioneerSessionIO::NonRootHeldMappingStable()
 // PIONEER_Q38_NONROOT_NATIVE_OWNER_END
 bool PioneerSessionIO::StateZeroOtherCoresHeld()
 {
-#ifdef PIONEER_Q38_RECURRENT_PREFIX_NATIVE_CONTEXT
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
+ return TokenInitializationOtherCoresHeld(0);
+#elif defined(PIONEER_Q38_RECURRENT_PREFIX_NATIVE_CONTEXT)
  return RecurrentPrefixInitializationOtherCoresHeld(false);
 #elif defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT)
  return RecurrentBlockInitializationOtherCoresHeld(false);

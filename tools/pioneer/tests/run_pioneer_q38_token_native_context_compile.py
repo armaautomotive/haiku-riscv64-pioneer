@@ -45,9 +45,18 @@ required = ('BindQ38TokenNative(', 'TokenCallScopeMatches(', 'TokenModelSourceSc
             'PioneerQ38TokenCallScope::PioneerQ38TokenCallScope(',
             'pioneer_token_context_scoped_bind(', 'pioneer_token_context_scoped_binding(',
             'pioneer_token_context_scoped_dispatch_end(', 'pioneer_token_context_retain(',
-            'pioneer_token_context_destroy_clean(')
+            'pioneer_token_context_destroy_clean(', 'TokenInitializationScope(', 'TokenInitializationOtherCoresHeld(',
+            'InitializeQ38TokenRecurrent(', 'InitializeQ38TokenHistory(', 'InitializeQ38TokenProjection(',
+            'pioneer_token_context_scoped_initialize(')
 for name in required:
     assert any(name in key for key in frames), (name, 'actual implementation must be emitted')
+for controller in ('State', 'ConvHistory', 'Projection'):
+    for method in ('Prepare', 'Run', 'Close'):
+        assert any('PioneerQ38'+controller+'Zero'+method+'(' in name and 'PioneerSessionIO' in name for name in frames), (controller, method)
+controller_sizes = [size for name, size in frames.items() if 'PioneerSessionIO' in name
+                    and any('PioneerQ38'+kind+'Zero'+method+'(' in name
+                            for kind in ('State', 'ConvHistory', 'Projection') for method in ('Prepare', 'Run', 'Close'))]
+assert controller_sizes and max(controller_sizes) <= 2048
 sizes = [size for name, size in frames.items() if 'Token' in name or 'pioneer_token_context_' in name]
 assert sizes and max(sizes) <= 2048
 tool = str(pathlib.Path(args[0]).parent/'riscv64-unknown-haiku-')
@@ -91,5 +100,6 @@ for name, control in (('init_hardware', 'refusal'), ('init_driver', 'refusal'),
 assert symbols['pioneer_token_context_scoped_bind'][1] > 32, 'real private bind must not fold to false'
 print('PASS ACTUAL full851 canonical/model+7 atomic runtime reservations/FD+team+thread+generation+clock+hosts SDK context compile;maxNewFrame'+str(max(sizes)))
 print('PASS old65 BYTE-IDENTICAL61faa093;NO old embedding/prefix owner/CPU reference/Work route;ALL5 independent inert controls byte-identical')
+print('PASS SAME full851 owner/private recurrent+history+projection initialization leases/actual phase-specific source+nonroot callbacks/all9 real controller bodies SDK compiled/maxControllerFrame'+str(max(controller_sizes))+';NOT runtime qualification')
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+' token-context-NODRV.o')
-print('COMPILE/INSPECT ONLY;real private bodies WOULD do IO if invoked;NO link/install/invoke/physical or performance qualification;native init/upload/RUN/STOP/END STILL OWED')
+print('COMPILE/INSPECT ONLY;real private bodies WOULD do IO if invoked;NO link/install/invoke/physical or performance qualification;native init RUNTIME qualification/runtime+program upload/RUN/STOP/END STILL OWED')

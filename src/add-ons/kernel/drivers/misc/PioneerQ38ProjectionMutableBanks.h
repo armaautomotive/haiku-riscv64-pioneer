@@ -74,10 +74,9 @@ public:
   projection.AttachReservation(owner,proof,id,this,bank,workspace->offset);return true;
  }
  PioneerQ38GdnBanks* Recurrent(const PioneerQ38ProjectionIdentity& id){return Matches(id)?&recurrent:nullptr;}
-#ifdef PIONEER_Q38_GDN_STATE_INIT_NATIVE
  const PioneerQ38GdnBanks* Recurrent(const PioneerQ38ProjectionIdentity& id)const{return Matches(id)?&recurrent:nullptr;}
-#endif
  PioneerQ38ProjectionBanks* Projection(const PioneerQ38ProjectionIdentity& id){return Matches(id)?&projection:nullptr;}
+ const PioneerQ38ProjectionBanks* Projection(const PioneerQ38ProjectionIdentity& id)const{return Matches(id)?&projection:nullptr;}
 #ifdef PIONEER_Q38_DECODER_RUNTIME
  PioneerQ38ConvHistoryBanks* ConvHistory(const PioneerQ38ProjectionIdentity& id){return Matches(id)?&history:nullptr;}
  const PioneerQ38ConvHistoryBanks* ConvHistory(const PioneerQ38ProjectionIdentity& id)const{return Matches(id)?&history:nullptr;}

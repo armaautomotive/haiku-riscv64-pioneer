@@ -1,0 +1,137 @@
+Full851 native owner's recurrent/history/workspace initialization
+2026-10-29 01:09UTC checkpoint. Goal ACTIVE. No hardware/SSH/power/driver
+install/kernel/Assistant/boot/CPU/RAM/network/SD/mains actions. No physical
+health claim. Last measured whole-model0.207893161tok/s;target20 UNMET.
+
+Actual native implementation,not an old completed-prefix alias
+--------------------------------------------------------------
+PioneerQ38TokenNativeState now owns THREE distinct real controller leases.
+Its private native functions initialize recurrent BOTH slots,then Conv
+history,then the selected projection workspace through the existing frozen
+zero-only program. All initialized extents belong to its SAME canonical
+model/identity/atomic seven-bank reservation,not an old embedding or prefix.
+Read-only const graph accessors allow checks without enabling old native roles.
+
+The real FD/team/thread/global-lock/generation/clock/source/host binding
+remains mandatory. Native phase checks exclude old initiators and require
+pristine next-role leases/ledgers,real preceding clean-CLOSE publications,
+exact nonce/coverage and owner/proof bindings. The existing bulk dirty
+lifetime is allowed ONLY during this owner's zeroing/closing phases,not
+before initialization or after it. Non-root holds use the actual119-tile
+audit,not an ALL120-held check while the owned root intentionally runs.
+All native initialization callbacks/leases are distinct from old role flags.
+No caller can construct/copy/assign a ready/closed native object.
+
+The three private initialization functions run:
+ 672 recurrent stripes,73728 pages,288MiB,BOTH state slots;
+ 336 history stripes,1680 pages,including allocation padding;
+ TWO256-page jobs,512 pages,2MiB selected projection workspace.
+Totals1010 real zero jobs/75920 pages/310968320 bytes. Every individual
+controller proves its actual instruction output/counters/command/descriptor/
+source/PC/hold conditions before progress;only actual clean code+scratch
+restoration/CLOSE publishes each complete initialization. The model's
+learned-page bitmap is NOT marked by mutable initialization.
+
+Initialized here means ONLY those three controller families. It is NOT
+KV frontier/session/metadata initialization,an embedding/current-state input
+producer,full-model execution,STOP/END permission or Work readiness.
+Closed() remains deliberately false;unfinished END retains/quarantines
+before ANY legacy cleanup. No public compute operation is introduced.
+
+Complete simulated-endpoint instruction/runtime tests
+-----------------------------------------------------
+Final full positive main80100/clean34749 BOTH terminal0 ASan+UBSan.
+Identical logs/direct cmp:actual frozen zero RV32 executes1010 times through
+the PRODUCTION native factory/shared lock/call+phase callbacks/initializers.
+All73728 recurrent+1680 history+512 workspace pages are independently
+observed zero and touched exactly once. After EACH controller,all original
+root code/panel/scratch8192words+entry bytes are restored. There are1010
+actual RUN/STOP/HOLD transactions,unchanged learned bytes,zero BME/PCI
+writes,and no host release. Real private initialization publications remain
+false before CLOSE and before the required preceding controller completes.
+Duplicate/out-of-order calls and ten bad scope/clock/host/source preconditions
+per fixture refuse without IO. Final incomplete END is NOT a success:the
+actual retention/host-quarantine path keeps all owners and permits no later IO.
+
+Final early fault main38277/clean44599 BOTH0,identical4-line logs:
+real first-job summary corruption,actual non-root reset mismatch,lost team,
+and changed64-bit generation. All owners/leases/clock/IO aliases quarantine;
+no publication,cleanup,retry,release or following device access occurs.
+
+Final LATE main79576/clean23392 BOTH0,identical19-line logs. Each case uses
+a fresh full native owner. History failure follows ALL672 genuine recurrent
+jobs and clean CLOSE. Projection failure follows those jobs PLUS ALL336
+actual history jobs and clean CLOSE. Corrupting the next phase's actual
+instruction-produced summary retains everything without proceeding to
+further jobs/cleanup/IO. No private processor history/readiness/publication
+is copied between these independent fixtures.
+
+OS/clock/unused foreign-owner endpoints and VM/MMIO/GDDR are SIMULATED.
+The zero image's actual instructions produce the observed bytes and NoC
+summaries;publicationCounterFabricOnly is forbidden. No CPU memset or
+synthetic successful status/counter fabric replaces zero execution. The
+frozen image text remains SHA256:
+39817b679f4358e47c0e6602fb5ae184831206c11dab0b63fe9b7173c410df8b
+This is NOT original-weight model arithmetic,KV/history consumption across
+tokens,physical card execution or a speed result.
+
+Test repairs before the passing final runs
+------------------------------------------
+The initial fixture tried to copy an array pointer using auto;it was fixed
+to preserve and compare all8192 scratch words,not the pointer. First complete
+positive main16869 and clean23717 reached all initialization checks but
+terminated1 at the final retention assertion:the SIMULATED IO endpoint
+omitted the existing production QuarantineHostPage override,which also
+quarantines output/wide VM owners. No physical hardware failed. The driver
+already implemented that override;it was NOT weakened or patched to fit
+the test. Both fixtures now extract and execute that method VERBATIM on
+simulated owned VM handles. The final complete fresh D runs above pass.
+The shared binding fixture's OS/clock definitions were factored into a
+common TEST header;no production capability constructor was substituted.
+
+Real whole-driver SDK compilation and regression evidence
+---------------------------------------------------------
+Final SDK main20791/clean61000 BOTH0. Actual PioneerSessionIO,whole native
+context/factories,calls,phase callbacks,all9 real Prepare/Run/Close controller
+instantiations,retention/unfinished-END and clean destructor compile against
+the authenticated Haiku RISC-V SDK. Direct main/clean object cmp agrees:
+ed09c499e85ed15c2c31957cf31ef825710a11cc25326ada2a03e8fce5afc215
+Largest concrete initialization-controller frame704B;new context frame400B;
+all complete-unit frames meet the unchanged <=2048B/new-or-old bound.
+This is NOT a combined native runtime stack measurement.
+Old native65 remains BYTE-IDENTICAL:
+61faa093c5f247f8f120a6712a24c7e5ef6989c6dc8aeb7466241dca6d52a821
+All6 normal driver ABI names are absent;renamed actual constructor bodies
+remain compiled and ALL5 separate inert controls match constant-return
+controls byte-for-byte with no relocations. No CPU reference/old prefix
+owner/Work routing is present. Unlinked,uninstalled COMPILE/INSPECT ONLY;
+private bodies WOULD perform IO if invoked,not granted by these objects.
+
+Final binding regressions main57440/clean28632 BOTH0,identical3711 refusals/
+seven selected workspaces/3551 learned extent endpoints/whole shared lock/
+quarantine+unfinished-END. These now also use the real host-quarantine
+override and check both IO and lease quarantine flags. Compile-role checks
+retain21 exact parents,31 forbidden aliases and241 undefined/zero/2/late/
+actual reserved-tag/witness refusals;no old native role is enabled.
+
+Still owed;do not redefine success as initialized memory
+--------------------------------------------------------
+Finish the SAME nine live full-model instruction histories and independent
+all64/multitoken/state/vocabulary/token-selection/STOP comparison. Their
+activity is NOT whole-model success. Old default94923/26724 are terminal1,
+not live and not retagged/restarted. No supplied CPU model products enter
+these instruction runs or the future Work path.
+
+NEXT actual code:full token cohort ownership/real source identities,full
+L1 aliases and journal adapters(including terminal60000/60004),runtime/KV
+frontiers+metadata staging,new execution owner,RUN/STOP/cancel/terminal/END/
+client. Do NOT borrow completed old prefix state or copy its allocation
+failure cleanup:the full token state owns sticky runtime reservations and
+must not be deleted/detached after binding when an unpublished child CPU
+allocation fails. Only unpublished child allocations may be freed;the
+retained full model/leases/banks must survive or be safely quarantined.
+
+Then actual P100A correctness/stability/long conversations/load-unload/
+recovery,separate no-CPU-reference Work+Assistant,SD-free boot64CPU/fullRAM
+preservation,and real sustained27B throughput optimization remain required.
+No new driver is installed;no speedup or20tok/s result is claimed. Goal ACTIVE.

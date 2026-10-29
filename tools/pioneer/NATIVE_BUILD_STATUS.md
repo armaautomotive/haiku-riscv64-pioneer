@@ -1,5 +1,31 @@
 # Native build status
 
+## Latest: native recurrent/history/workspace initialization passes offline
+
+October 29, 2026. The full-model token owner now runs its own real
+initialization controllers: both recurrent-state slots (73,728 pages),
+convolution history (1,680 pages), and the selected projection workspace
+(512 pages). Main/clean ASan+UBSan tests both finish0: all1,010 actual frozen
+zero-instruction jobs, STOPs/holds, full zero coverage, clean-CLOSE publication,
+code/scratch restoration and unchanged learned-page ledger pass.
+
+Four early and two later-phase faults also pass in both trees using genuine
+preceding initialization, not copied readiness. The tests execute the
+production shared lock, owner/call/phase callbacks, non-root hold audit,
+initializers, Unsafe, retention and host-quarantine override. OS/MMIO/GDDR
+and clock endpoints remain **simulated**, not the physical P100A.
+
+The real-driver RISC-V SDK objects match byte-for-byte; all nine controller
+bodies are instantiated, max controller frame704B/new context frame400B,
+and the older native65 object stays byte-identical. This remains an unlinked,
+renamed-ABI compile-only family with no public compute or Work route.
+Full-model KV/metadata/program staging, execution, cancellation and actual
+END/disposal are still required; `Closed()` remains false. No driver or other
+Pioneer software was installed. No new physical or performance result:
+last whole-model **0.207893161 tokens/sec**,20 target unmet.
+Evidence and next code steps:
+[native initialization checkpoint](benchmarks/qwen38-token-native-initialization-20261029.txt).
+
 ## Latest: full-model native binding and shared-lock interlock qualify offline
 
 October 29, 2026. The distinct full851 native token context now owns its

@@ -1,0 +1,17 @@
+OBSERVED actual frozen zero ROM starts96/GDNpages10544/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts192/GDNpages21072/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts288/GDNpages31600/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts384/GDNpages42144/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts480/GDNpages52672/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts576/GDNpages63200/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts672/GDNpages73728/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts768/GDNpages73728/historyPages480/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts864/GDNpages73728/historyPages960/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts960/GDNpages73728/historyPages1440/projectionPages0;NOT native initialization publication
+Assertion failed: (c->q38TokenNative->Unsafe() && !c->q38TokenNative->Closed() && !c->q38TokenNative->InitializationsClosed(c->banks,proof) && c->dispatchOwnerRetained && c->banks.Quarantined() && c->q38Clock.quarantined && sColdRecoveryRequired && c->bulk.unsafe && c->bulkHost.quarantined && c->wideHost.quarantined && io.HostReadMock::quarantined && io.wideQuarantined && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases && !io.pciWrites), function Unknown, file pioneer_q38_token_native_initialization_test.cpp, line 147.
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-prefix-native-clean.Cipnmdpc/tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py", line 57, in <module>
+    subprocess.run([str(binary), *sys.argv[1:]], check=True,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-token-native-init-2op_d9us/test', '/private/tmp/pioneer-q38-resident-input-zero.rx9Gfebd/image']' died with <Signals.SIGABRT: 6>.

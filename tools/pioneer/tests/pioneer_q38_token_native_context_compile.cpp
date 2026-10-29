@@ -31,6 +31,12 @@ extern "C" bool pioneer_token_context_scoped_binding(PioneerProbeCookie* cookie)
  PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();
  return c && c->io.TokenModelSourceScope(false);
 }
+extern "C" bool pioneer_token_context_scoped_initialize(PioneerProbeCookie* cookie,
+ PioneerQ38StateZeroResult& recurrent,PioneerQ38ConvHistoryZeroResult& history,PioneerQ38ProjectionZeroResult& projection){
+ PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();
+ return c && InitializeQ38TokenRecurrent(*c,recurrent) && InitializeQ38TokenHistory(*c,history)
+  && InitializeQ38TokenProjection(*c,projection) && c->q38TokenNative->InitializationsClosed(c->banks,c->baseline.baseline.baseline.baseline.dram);
+} // full actual controller bodies,never linked,installed or invoked by this compile test
 extern "C" bool pioneer_token_context_scoped_dispatch_end(PioneerProbeCookie* cookie,
  tt_resident_session_result& result,bool& clean){
  PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();

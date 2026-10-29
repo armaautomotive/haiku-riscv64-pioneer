@@ -21,15 +21,16 @@ bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
   || c->panelProbe.saved || c->panelProbe.dirty || c->panelProbe.ready || c->streamProbe.saved || c->streamProbe.dirty || c->streamProbe.ready
   || !c->q38Span || !c->q38Span->closed || c->q38Span->dirty || c->q38Span->ready || c->q38Span->running || c->q38Span->unsafe
   || !c->lease.saved || !c->lease.ready || c->lease.pending || c->lease.recovery_required
-  || !c->bulk.saved || !c->bulk.ready || c->bulk.dirty || c->bulk.unsafe || c->host.state!=TT_HOST_PAGE_READY || c->host.released
+  || !c->bulk.saved || !c->bulk.ready || (c->bulk.dirty && (!state || state->phase<PioneerQ38TokenNativeState::RecurrentZeroing
+   || state->phase>PioneerQ38TokenNativeState::ProjectionClosing)) || c->bulk.unsafe || c->host.state!=TT_HOST_PAGE_READY || c->host.released
   || PioneerHostPageIO::quarantined || !c->bulkHost.allocated || !c->bulkHost.ready || c->bulkHost.pending || c->bulkHost.quarantined
   || c->bulkHost.released || !c->wideHost.allocated || !c->wideHost.ready || !c->wideHost.memory_type_set || c->wideHost.pending
   || c->wideHost.quarantined || c->wideHost.released || wideQuarantined || c->Unsafe(false,false,true))return false;
  if(beginning){if(state || c->runtimeCoreMode!=-1 || !q38SpanAllowed)return false;}
  else if(!state || c->runtimeCoreMode!=1 || q38SpanAllowed
   || !state->MatchesBinding(*c,fd,c->hashes,c->initialized,fd->team,sReloadGeneration)
-  || (state->phase!=PioneerQ38TokenNativeState::Claiming && state->phase!=PioneerQ38TokenNativeState::Bound)
-  || (state->phase==PioneerQ38TokenNativeState::Bound && !state->MatchesReservation(c->banks,dram)))return false;
+  || state->phase<PioneerQ38TokenNativeState::Claiming || state->phase>PioneerQ38TokenNativeState::Initialized
+  || (state->phase!=PioneerQ38TokenNativeState::Claiming && !state->MatchesReservation(c->banks,dram)))return false;
  const auto& clock=c->q38Clock.Snapshot();
  return c->q38Clock.RequiresExplicitEnd() && clock.state==TT_ARC_CLOCK_BUSY_VERIFIED && clock.busy_requested && clock.busy_acknowledged
   && !clock.restored && clock.busy_mhz && clock.busy_mhz<=1400;

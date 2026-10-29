@@ -20,6 +20,16 @@ defines.update(TT_PIONEER_EXPERIMENTAL_Q38_AFFINE='1', TT_PIONEER_EXPERIMENTAL_Q
 source = (kernel/'tenstorrent_pci_probe.cpp').read_text()
 with tempfile.TemporaryDirectory(prefix='pioneer-token-native-binding-', dir='/private/tmp') as tmp:
     base = pathlib.Path(tmp)
+    session = source[source.index('struct PioneerSessionIO :'):]
+    signature = '\tvoid QuarantineHostPage() {'
+    assert session.count(signature) == 1
+    begin = session.index(signature)
+    at = session.index('{', begin)
+    depth, end = 1, at+1
+    while depth:
+        depth += (session[end] == '{')-(session[end] == '}')
+        end += 1
+    (base/'token_native_host_quarantine.inc').write_text(session[begin:end]+'\n')
     # Exact WHOLE production Unsafe method,not an implementation of just
     # the new controlledToken exception which hides unrelated unsafe owners.
     start, end = '\tbool Unsafe(\n', '\n\tvoid Snapshot(tt_resident_session_result& r)'
