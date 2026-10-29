@@ -10,14 +10,22 @@ using area_id=int;
 #define PIONEER_Q38_STATE_ZERO_CONTROLLER_MODEL_ONLY
 #include "pioneer_q38_state_zero_controller_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38NonRootHeld.h"
-using PioneerHostPageIO=HostReadMock;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #define PIONEER_Q38_TOKEN_NATIVE_VIEW_ENDPOINT_TEST 1
 #include "pioneer_q38_token_native_held_endpoints.h"
-using TokenNativeEndpoints=TokenHeldEndpoints;
+using TokenNativeRawEndpoints=TokenHeldEndpoints;
 #else
-using TokenNativeEndpoints=ZeroControlIO;
+using TokenNativeRawEndpoints=ZeroControlIO;
 #endif
+struct TokenNativeEndpoints:TokenNativeRawEndpoints {
+ using TokenNativeRawEndpoints::TokenNativeRawEndpoints;
+ using HostReadMock::quarantined; // same input-page flag;output has its own unrelated flag
+ // Execute the actual production metadata-only base quarantine,including
+ // after a successful OS release. Do NOT broaden the legacy HostReadMock
+ // assertion used by older live-DMA tests or invent allocation ownership.
+#include "token_native_base_host_quarantine.inc"
+};
+using PioneerHostPageIO=TokenNativeEndpoints;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
 #include "pioneer_q38_token_native_bootstrap_machine.h"
 #endif
@@ -250,6 +258,9 @@ struct PioneerSessionIO:TokenNativeEndpoints {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeMapping.inc"
 #else
+ const void* TokenPciTransport(){return nullptr;}uint64 TokenPciEndpoint(){return 0;}
+ bool TokenPciLeaseIdentity(const PioneerQ38TokenPciLease&)const{return false;}
+ // Initializer-only fixture exposes NO runtime/PCI-journal capability.
  void DramTlbWrite(unsigned slot,unsigned word,uint32 value){Touch();StoreMock::DramTlbWrite(slot,word,value);}
  uint32 DramTlbRead(unsigned slot,unsigned word){Touch();return StoreMock::DramTlbRead(slot,word);}
  uint32 SourceRead(unsigned word){Touch();return ZeroControlIO::SourceRead(word);}

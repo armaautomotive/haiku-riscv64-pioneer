@@ -1,0 +1,83 @@
+Native host-page quarantine TEST adapter:qualified component,NOT driver release
+2026-10-29 22:47UTC. Full goal ACTIVE;20tokens/sec remains UNMET.
+Last physical whole-model measurement remains0.207893161tokens/sec.
+
+Problem and correction
+----------------------
+Four genuine native lifecycle fault histories finish1 AFTER original
+first-layer arithmetic/cancel/STOP/HOLD/drain/all original L1+dispatch+
+peer+ROOT+shared restoration/normal clock/hardware/29VM/PCI closure:
+generation loss after third host deletion20185/1588 and unreserve failure
+99637/84041. They abort in the legacy HostReadMock::QuarantineHostPage
+assertion that the input page is still allocated and never released.
+Their failed logs are retained alongside this report. This is NOT a
+successful native END or a physical card failure/throughput measurement.
+
+The actual production PioneerHostPageIO method only sets its quarantine
+metadata flag. It performs no allocation,read,write,release or card IO,
+and may run after successful OS release when retaining the remaining
+context after lifetime loss or an unreserve error. The native TEST now
+extracts and executes that exact production base method,as it already
+did for the session-level wrapper. A using declaration explicitly picks
+the original input-page flag among unrelated input/output TEST flags.
+No ready,completed,allocation or ownership state is invented or reset.
+The old HostReadMock and its live-DMA assertions remain UNCHANGED.
+
+A separate sanitizer test covers never-allocated,live,released and
+release-failed synthetic OS states,each quarantined twice. It verifies
+the input flag changes but page contents,map/release/write counters,
+physical identity,caching,output quarantine,NoC and BME state do not.
+It constructs NO native owner,execution history or device capability.
+
+Publication qualification
+-------------------------
+Two fresh copies of323cae7d75 plus EXACT SAME FOUR TEST files:
+Main:/private/tmp/pioneer-q38-base-publish-main-h.dy4pdm1M
+Clean:/private/tmp/pioneer-q38-base-publish-clean-h.iJMBdC8I
+All four files compared BEFORE tests. Actual driver/image/Work/Assistant
+source in these publication trees is unchanged from that Git checkpoint.
+The later local host/full-END/state work is NOT included in this commit.
+
+H main/clean ALL eight processes finish0:
+base44092/59246:actual production base method/four synthetic OS states;
+legacy98536/81706:fixed high-address host read,exact NoC proof,BME rollback,
+  wired quarantine after uncertainty,no retry or host writes;
+faults90281/66280:four native initializer fault cases,all owners retained,
+  no publication/retry/cleanup/following IO;
+contract79083/60872:actual simulated PCI+clock BEGIN,pending/nonpristine
+  clock/hardware/VM/PCI close refusals,zero following IO/instructions/delete.
+All four corresponding stdout log pairs are byte-identical. ASan+UBSan,
+Wall/Wextra/Werror remain enabled;these are host-only tests,not card runs.
+
+The initializer-only regression exposed a previously missing PCI endpoint
+method. Its three stubs now explicitly return null,zero and false:that
+fixture has NO runtime PCI transport/identity or completed-journal proof.
+Publication G faults82683/19906 fail this missing method;H fixes only the
+initializer-only TEST branch. No real PCI guard or ownership check changes.
+Earlier integrated F contracts fail ambiguous inherited flag lookup;
+G names the SAME original input flag rather than adding another flag.
+
+Separate newer candidate,NOT promoted here
+-----------------------------------------
+Immutable84-source native G trees:
+Main:/private/tmp/pioneer-q38-host-main-g.RB4KiGgt
+Clean:/private/tmp/pioneer-q38-host-clean-g.Kw54Dm9r
+Base76818/91513 and clock-owner contracts82839/46946 finish0. Full-state
+pending contracts43477/86133 finish0:386 refusals,no subsequent IO/releases.
+Earlier F native SDK10555/4355 finish0 with identical actual objects
+212953daf96d7e119b5680e1161a5a9cd34000f954558696e385440399a1863f;
+all25 scoped production source/header inputs compare F/G in both trees.
+SDK is compile-only,NOT native END or physical permission.
+
+New generation-after-third-delete7607/53969 and unreserve-failure9829/
+21927 start virgin original-model/119-worker histories and remain LIVE,
+NOT passes. Original positive two-cycle reload72525/60012,whole native
+state/full-END81906/33926 and performance62292/6569 remain separate LIVE
+histories. No processor state or ready/result receipt is transplanted.
+No quiet/timeout-based restart or cancellation was used in this checkpoint.
+
+Still required:complete all64/multitoken/output/state/KV/normal+EOS numerical
+proof,full END/reuse/failure recovery,combined stack,qualified public native
+no-CPU-reference Work+Assistant,physical long-context stability and honest
+performance tuning toward20tokens/sec. No Pioneer/SSH/power/install/OS/
+network/SD/mains action or current board-health claim follows from this work.

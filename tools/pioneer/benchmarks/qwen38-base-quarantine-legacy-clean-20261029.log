@@ -1,0 +1,1 @@
+PASS: fixed owned high-address host read, exact NoC completion proof, BME-off rollback and wired quarantine after uncertainty; no retry or host writes

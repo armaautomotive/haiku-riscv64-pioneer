@@ -135,6 +135,15 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         depth += (session[end] == '{')-(session[end] == '}')
         end += 1
     (base/'token_native_host_quarantine.inc').write_text(session[begin:end]+'\n')
+    # The session wrapper calls this actual production base method. The
+    # old HostReadMock assertion incorrectly assumes a page is still live
+    # after every retention failure,including after successful release.
+    host_class = source[source.index('struct PioneerHostPageIO {'):source.index('struct PioneerOutputBufferIO {')]
+    assert host_class.count(signature)==1
+    begin=host_class.index(signature);at=host_class.index('{',begin);depth,end=1,at+1
+    while depth:
+        depth+=(host_class[end]=='{')-(host_class[end]=='}');end+=1
+    (base/'token_native_base_host_quarantine.inc').write_text(host_class[begin:end]+'\n')
     start, end = '\tbool Unsafe(\n', '\n\tvoid Snapshot(tt_resident_session_result& r)'
     assert source.count(start) == source.count(end) == 1
     (base/'token_native_unsafe.inc').write_text(start+source.split(start, 1)[1].split(end, 1)[0])
