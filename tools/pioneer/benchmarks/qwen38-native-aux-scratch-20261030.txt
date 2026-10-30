@@ -1,0 +1,53 @@
+Qwen3.8-27B native TEST ROOT auxiliary scratch scope correction
+2026-10-30 UTC; baseec48d0856add7d727987e0d68c4847776a1a05b5
+
+Scope: TEST transport+metadata tests ONLY. No driver/firmware/public ABI,
+hardware/Assistant/boot/CPU/RAM/mains/SD/network or installed Work change.
+Last physical rate remains0.207893161 tokens/sec;target20 remains unmet.
+
+New runtime evidence
+  Native QTP2 original-model histories9125/57891 both terminal1,not timeouts.
+  Both executed actual full851 initialization,virgin119 worker engines,
+  ROOT+first3 fullK5120/48-row role10 worker completions/3840 tensor matrices
+  and the real ROOT's first projection checks. After80million ROOT instructions
+  both stopped on SubmitLayer's regularScratch||convScratch TEST assertion.
+  No completed layer/token/STOP/END or physical performance was established.
+  Logs:/private/tmp/pioneer-q38-native2-flow-{main,clean}-20261030-d.log.
+
+Cause and correction
+  That TEST guard hardcoded auxiliary PC<0x68000,only the first16KiB of the
+  0x64000 capsule. The selected fixed RootAux DATA is21340B for P1 and32176B
+  for QTP2. The pinned precise ROOT disassembly places Conv::Packet at0x6a6c4,
+  outside that old cutoff. The old assertion did not print its exact failing
+  PC/local fields;the full native rerun remains necessary evidence.
+  Preserve ordinary ROOT scratch and all packet/alignment/route/source/
+  response/ownership checks. The convolution alternative now additionally
+  requires full-layer mode,a4-byte-aligned PC INSIDE THE EXACT selected
+  installed auxiliary image,local0x80000..0x810ff,and a nonzero4-byte-aligned
+  packet contained in that4352B scratch extent. No padding/stack/arbitrary
+  L1 or broad32KiB executable permission is inferred from the mapped range.
+  Actual SubmitLayer uses that shared helper BEFORE packet submission;add
+  a refusal-only PC/local/remote/bytes/family diagnostic for future failures.
+
+Qualification
+  Separate HEAD archive:/private/tmp/pioneer-q38-native-scratch-clean-j.gGr4mB4H
+  Plus only4 owned TEST files;no unfinished native audit/Host/END/state WIP.
+  python3 tools/pioneer/tests/run_pioneer_q38_token_native_scratch_scope_tests.py
+    [--precise-context]
+  Main71713/31723 and clean74652/26818 ALL completed0 at07:28:39UTC.
+  Actual helper is included by both native ROOT and test;runner checks actual
+  SubmitLayer binding and unchanged regularScratch||convScratch assertion.
+  Both profiles exhaust8192 candidate PC words with first/last/maximal scratch
+  packets;8213 inactive/outside/unaligned/overflow refusals EACH.
+  P1:5335 installed words,1239 past old cutoff. QTP2:8044 and3948 respectively.
+  Padding/normal ROOT/terminal/stack/unowned/misaligned PCs and invalid locals/
+  lengths refuse. DATA helper qualification ONLY,not a complete native model
+  or numerical/hardware/TPS qualification. Earlier H compile lacked a standard
+  initializer_list include;fixed. Earlier I incorrectly assumed P1 had no
+  late auxiliary words;corrected the test to its actual pinned21340B image.
+  Logs:/private/tmp/pioneer-q38-native-scratch-scope-{main,clean}-{legacy,precise}-20261030-j.log.
+
+Next
+  Re-run actual native QTP2 original-model flow from virgin histories using
+  corrected mapping+scratch scopes and byte-verified durable inputs. Never
+  transplant processor/model history or claim success from this helper test.

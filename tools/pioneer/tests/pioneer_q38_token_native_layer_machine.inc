@@ -37,6 +37,7 @@ uint32_t ObserveParent(unsigned field){
 #endif
 #endif
 #endif
+#include "pioneer_q38_token_native_scratch_scope.inc"
 unsigned layerPackets=0,layerRawReads=0,layerPeerReads=0,layerPeerWrites=0,dispatchWorker=0;
 uint32_t (*livePeerPC)(TokenHeldEndpoints&,unsigned)=nullptr;
 void ResumeLayer(){
@@ -52,7 +53,8 @@ void SubmitLayer(){
   && request[write?2:5]==129 && (write || !request[7]) && bytes<=16384-(remote&31));
  const bool regularScratch=local==C::R::Scratch+(remote&31);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
- const bool convScratch=fullLayerRunning && pc>=0x64000 && pc<0x68000 && local>=0x80000 && local<0x81100 && bytes<=0x81100-local;
+ const bool convScratch=ConvScratchPacket(fullLayerRunning,pc,local,bytes);
+ if(!regularScratch && !convScratch)fprintf(stderr,"NATIVE_TEST_SCRATCH_REFUSAL pc%08x/local%08x/remote%08x/bytes%u/family%08x;NO packet submitted\n",pc,local,remote,bytes,unsigned(PioneerQ38TokenPrograms::Family));
  assert(regularScratch || convScratch);
 #else
  assert(regularScratch);
