@@ -1,0 +1,107 @@
+QGW3 original first-layer numerical evidence -- NOT full-model/native
+2026-10-30
+====================================================================
+Goal ACTIVE. Last actual physical whole-model rate0.207893161tokens/sec;
+20UNMET. All evidence below is HOST execution of actual pinned instructions,
+not a physical card timing result. No Pioneer hardware/driver/OS action.
+
+Proven scope
+------------
+BM7035(main)/59848(clean) executed the actual ROOT from reset and the SAME119
+virgin-to-live worker histories using authenticated original GGUF bytes,
+not supplied CPU products. Both passed the genuine8-case physical-counter
+matrix-to-Conv fault gate,continued through all8 layer0 matrices,Conv/GDN,
+the precise68-worker activation producer and the complete layer0 output.
+All119 closed histories and retained state/KV checks passed at that boundary.
+
+Each produced its NON-closing diagnostic prefix while the SAME parent
+continued execution. Independent comparison against the fixed CPU traces
+returned EXIT0 in each copy at12:43UTC:the actual embedding5120 words and
+layer0 output5120 words have ZERO bit differences,maxAbs0,relativeL20.
+NO tolerance was used. Both41028-byte prefixes have SHA-256
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+
+Durable diagnostic DATA directories under generated.pioneer/qualification-inputs:
+observed-first-layer-pushed-main-20261030
+observed-first-layer-pushed-clean-20261030
+They each contain only prefix-0.bin,not completed token traces or authority.
+CPU reference:cpu-original-trace-20261028.
+
+Actual immutable inputs
+-----------------------
+HOST sources are the20c078 endpoint correction frozen at
+/private/tmp/pioneer-q38-push-endpoint-main-bl.5Nt7AhWp and
+/private/tmp/pioneer-q38-push-endpoint-clean-bl.FIe1PITs.
+ROOT artifacts are the3712 cohort-corrected BB images;ELF190520 bytes,
+SHA3b0b0d7684e4e82d3cab2ae22316198e352e97c836ce5833abceb8c6f30590df.
+G3 AF sender artifacts remain those pinned by the f8ac sender builder.
+GGUF18973870528 bytes,SHA
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+
+Measured instruction-model scope, NOT speed
+-------------------------------------------
+Each actual first layer executed227211749 ROOT instructions,with reserved
+and written stack6736 bytes inside the unchanged8192-byte stack window.
+Exclusive actual-PC profile includes99500456 recurrent packet-seal,
+25659528 Transfer and18783600 Quiet instructions. These totals include
+SIMULATED polling/interleaving and cannot establish physical timing/TPS.
+The older worker-admission S first layer had197243744 ROOT instructions;
+the new G3 profile is NOT an instruction-count or physical speedup claim.
+Fewer remote reads alone do not establish a faster complete model.
+
+Authoritative continuing-run failure
+------------------------------------
+BM7035/59848 later BOTH EXIT1,after starting layer1 matrix4/Conv handoff.
+The one-time HOST handoff probe retriggered because its Store hook checked
+forked but not continued/position/layer. It incorrectly demanded sequence5
+again,which is only valid at the first layer0 handoff. This is an assertion
+in pioneer_q38_connected_pushed_cohort_test.cpp,not evidence that layer0
+numerics failed. It does mean these histories are FAILED full-model runs,
+not live or successful full-model qualifications. Prefix proof stays scoped
+to embedding+layer0;no token/STOP/native/Work/physical qualification exists.
+
+The HOST probe now requires !continued and position0/layer0,counts exactly
+one genuine handoff,and requires that count still be1 after a complete
+RunTokens. Normal OriginalTokenFlowMachine per-layer/state/token checks are
+unchanged. No instruction/processor history is skipped or transplanted.
+
+Replacement BX full histories started13:01UTC after both BM handles were
+authoritatively terminal. They archive a1687e87 and overlay ONLY that probe
+fix,not the unqualified warm-admission firmware WIP or unrelated dirty code.
+They use the SAME unchanged BB ROOT and AF sender artifacts/original model.
+Main38033:/private/tmp/pioneer-q38-cohort-once-main-bx.p3IcaG1X
+Clean99299:/private/tmp/pioneer-q38-cohort-once-clean-bx.ngswW0Il
+Logs:/private/tmp/pioneer-q38-cohort-once-flow-{main,clean}-20261030-bx.log
+Trace main:/private/tmp/pioneer-q38-cohort-once-flow-main-bx.cmEm2u9g/observed
+Trace clean:/private/tmp/pioneer-q38-cohort-once-flow-clean-bx.dej8l2If/observed
+Poll these SAME handles;do not restart a live history to obtain a snapshot.
+
+Unqualified next optimization remains separate
+---------------------------------------------
+Warm ordinary-matrix admission is being prototyped using retained G3
+receipts and independently expected post-push counter frontiers instead
+of duplicate remote observations. First/other-phase admission stays cold.
+It is not installed or runtime-qualified. Initial BV96753/48903 builds
+BOTH EXIT1:text overran unchanged ROM by988 bytes. Shared code reduced the
+BW18815/66519 build overrun to20 bytes;those builds also BOTH EXIT1. No ROM,
+stack or native mapping bound was enlarged and no failed image was run.
+
+BY22200/35864 BOTH EXIT0 at13:05UTC. All8 independently built artifacts
+compare byte-identical. Normal per-function COMDAT code sharing keeps the
+component-specific private seal callbacks and asserts identical shared DATA
+geometry. The equivalent bounded counter-delta mask removes branch bulk.
+Text130692/131072,aux32720/32768,parent frame1616,component frame2112. This
+is BUILD evidence only,not combined runtime stack or queue/fault qualification.
+Strict BZ builds plus the genuine69-case connected receiver tests were then
+started from separate final source snapshots with literal new pins and
+explicit presence/ROM checks for all3 shared bodies. They are not physical
+tests and remain separately tracked from the unchanged BX full-model runs.
+By13:10UTC both strict builds had completed successfully with exact literal
+pins,all3 shared bodies and all3 grammar functions present inside owned ROM,
+no absolute-x0 JALR/CSR/undefined or mutable symbols,and unchanged bounds.
+Their enclosing cells25728/73987 remain LIVE in connected runtime tests;
+do not report those combined cells as terminal0 or warm admission qualified.
+
+Still owed:complete3positions/all64/state/KV/vocabulary/119STOP numerical
+proofs,optimized ROOT fault/queue tests,combined native stack/END/reuse,
+Work+Assistant integration and controlled physical whole-model benchmarks.
