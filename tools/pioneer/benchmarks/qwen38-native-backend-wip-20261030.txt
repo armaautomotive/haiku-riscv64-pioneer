@@ -137,3 +137,61 @@ EM publication checkpoint / 2026-10-30 20:36 UTC
   Runtime log: /private/tmp/pioneer-q38-backend-finish-main-20261030-em.log
   Output: /private/tmp/pioneer-q38-backend-finish-main-em.v9jK1WFB
   Every runtime/whole-model/numerical/hardware limitation remains unchanged.
+
+EO first composite-Finish cycle EXECUTED / parent84047 STILL LIVE
+  The SAME selected --execution-end-reload history completed original layer0,
+  one actually consumed cancellation, ROOT+119 genuine STOPs plus2048 inert
+  worker instructions each, native terminal observation,120 HOLDs and the real
+  zero-record drain. Composite Finish refused the undrained frontier first
+  without IO, restoration, release or a phase change.
+  Actual composite Finish then completed ALL11 stages: original L1, earlier
+  dispatch,119 peer-store, ROOT-store and shared mappings; normal clock END;
+  hardware seal;29 VM handles; PCI;3 host buffers; one checked unreserve and
+  locked whole-context deletion. Earliest pre-lease byte observations matched,
+  accounting for ordered overlapping journals. No reset, retry, double release
+  or ASan/UBSan error. The next genuinely fresh native model epoch2 has started.
+  This is cycle1 evidence, NOT parent terminal0, a positive committed token,
+  resident-model reuse, whole-model END, a physical reload or a speed result.
+  Its posthoc independent first-layer comparison exited0: embedding5120 and
+  final layer0 hidden5120 words BIT-EXACT, maxAbs0/relativeL20, no tolerance.
+  Durable generated.pioneer/qualification-inputs/
+    observed-native-backend-finish-20261030-eo/cycle1/prefix-0.bin
+  SHA4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+  Compare log:/private/tmp/pioneer-q38-backend-finish-prefix-cycle1-compare-20261030-eo.log
+
+EO actual HOST compiler call-stack audit / paired completed0
+  New run_pioneer_q38_token_backend_stack_audit.py first executes the complete
+  existing G1/G2/G3 SDK controls, then recompiles the ACTUAL G3 TU with ONLY
+  GCC -fcallgraph-info=su added. Both independent producer builds require
+  object bytes identical before/after metadata and to the b8c415...G3 object.
+  The same13 firmware arrays and inert conventional ABI controls remain exact.
+  No optimization/tail-call/warning/source/firmware setting is changed.
+  Both producer outputs and both existing RV64 stack-auditor fixture tests
+  exited0. Corresponding objects and unit logs are byte-identical. Parsed
+  roots/chains/frames/unknowns agree; graph SHA differs with source paths.
+    Begin: known DRIVER-MODULE chain4736 bytes,15 unresolved targets,278 nodes.
+    Finish: known DRIVER-MODULE chain3152 bytes,14 unresolved targets,174 nodes.
+  No reachable dynamic-frame/recursion path was observed. Unknown kernel and
+  indirect targets plus entry/interrupt overhead are EXCLUDED, NOT zero-byte
+  callees. whole_kernel_stack_qualified remains FALSE. The16KiB repository
+  kernel-stack setting does not turn these partial sums into a total bound
+  or spare-stack claim. Accelerator firmware stack is a separate requirement.
+  Main:/private/tmp/pioneer-q38-backend-stack-main-20261030-eo
+  Independent clean source:/private/tmp/pioneer-q38-backend-stack-clean-eo.c7wkwqKc
+  Clean outputs:/private/tmp/pioneer-q38-backend-stack-clean-20261030-eo
+
+Separate EN evidence rechecks, not new driver or hardware execution
+  Ongoing native full-generation DW prefix was independently re-compared0:
+  the same10240 first-layer values are BIT-EXACT, same4fbe3...prefix SHA above.
+  Durable observed-native-full-end-20261030-en/prefix-0.bin. The SAME DW full
+  histories continue; no model/CPU product/PC/owner/history was changed.
+  Pinned SSH read-only checks found Haiku/riscv64, uptime2days22:18. Exact
+  known administrative helper SHA b0c851b...was checked before --status.
+  Its CPU-metadata-only open/query/close reported driver55/tag2026102100010012/
+  gen4/quiesced0/cold0/owner0/open1/guard1; installed stable041 SHA is exact.
+  This is NOT new GPU-register/compute/desktop/throughput qualification. No
+  reload, reset, power, card, SD, OS, Assistant or watched-file change occurred.
+
+Full3position*64layers/vocabulary/commits/state/END/physical no-CPU-reference
+Work and honest inference tuning remain owed. Last physical0.207893161tok/s;
+20tok/s UNMET. Goal stays ACTIVE.
