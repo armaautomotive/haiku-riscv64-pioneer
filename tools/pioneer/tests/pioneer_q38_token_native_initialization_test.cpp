@@ -59,6 +59,9 @@ struct PioneerSessionIO:TokenNativeEndpoints {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
  unsigned preparationFault=0,preparationFaultSeen=0,preparationFaultTouches=0,preparationMapWrites=0,preparationPanelWrites=0;
  unsigned preparationAuditContracts=0;uint64 preparationAuditLastKey=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE
+ void BackendResetEndpoints(uint32);
+#endif
  bool NativePreparationAuditInactive()const{return !q38TokenPreparationAudit.key;}
  void NativePreparationAuditContract();
  std::vector<unsigned> preparationFifoEvents;
@@ -295,6 +298,9 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  }
 #endif
  void RuntimeResetWrite(uint32 value){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE
+  BackendResetEndpoints(value);
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
   if(RootReset(value))return;
 #endif
@@ -446,6 +452,15 @@ bool PioneerSessionIO::TokenPciLeaseIdentity(const PioneerQ38TokenPciLease&)cons
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeEnd.inc"
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE
+#include "pioneer_q38_token_native_backend_role.h"
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE
+#include "pioneer_q38_token_native_backend_finish_role.h"
+#endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE)
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeBackend.inc"
+#endif
 static bool IncompleteEnd(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean){
 #include "token_native_end.inc"
  return true;
@@ -520,6 +535,9 @@ struct Fixture {
 #include "pioneer_q38_token_native_held_checks.inc"
 #include "pioneer_q38_token_native_prepare_checks.inc"
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE
+#include "pioneer_q38_token_native_backend_checks.inc"
+#endif
 int main(int argc,char** argv){
  const bool clockContract=argc==3 && !strcmp(argv[2],"--clock-owner-contract");
  const bool fullEndContract=argc==5 && (!strcmp(argv[2],"--full-end-owner-contract") || !strcmp(argv[2],"--state-owner-contract"));
@@ -559,7 +577,8 @@ int main(int argc,char** argv){
  const bool preparationEndpoints=argc==3 && !strcmp(argv[2],"--preparation-endpoint-contract");
  const bool fullLayer=fullFlow || cancelLayer || (argc==7 && !strcmp(argv[2],"--execution-first-layer"));
  (void)cancelLayer;
- const bool firstMatrix=fullLayer || (argc==6 && !strcmp(argv[2],"--execution-first-matrix"));
+ const bool backendFirstMatrix=argc==6 && !strcmp(argv[2],"--execution-backend-first-matrix");
+ const bool firstMatrix=fullLayer || backendFirstMatrix || (argc==6 && !strcmp(argv[2],"--execution-first-matrix"));
  const bool embedding=firstMatrix || (argc==4 && (!strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-embedding-source-loss")
   || !strcmp(argv[2],"--execution-embedding-readback-loss") || !strcmp(argv[2],"--execution-layer-dispatch")));
  assert(fullEndContract || clockContract || preparationEndpoints || preparationFaults || initializationFifoFaults || terminalFaults || peerBootstrap || embedding || argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
@@ -606,7 +625,14 @@ int main(int argc,char** argv){
  std::string cyclePrefix;
  for(unsigned fault=0;fault<(hostReload?2U:preparationFaults?4U:initializationFifoFaults?6U:terminalFaults?5U:trafficFaults?2U:executionFaults?4U:bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
   const uint64 epoch=sQ38TokenModelEpoch;
-  Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;assert(f.Bind() && sQ38TokenModelEpoch==epoch+1);auto* state=c.q38TokenNative;
+  Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE
+  assert(backendFirstMatrix && original.Ready());io.executionCpu->original=&original;
+  CheckNativeBackendFirstMatrix(f,epoch);continue;
+#else
+  assert(!backendFirstMatrix);
+#endif
+  assert(f.Bind() && sQ38TokenModelEpoch==epoch+1);auto* state=c.q38TokenNative;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE
   assert(fullEndContract || fullEndFlow);
   if(fullEndContract){CheckNativeFullEndPending(f);tt_resident_session_result retained={};bool clean=true;

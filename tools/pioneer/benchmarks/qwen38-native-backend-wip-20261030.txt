@@ -1,0 +1,139 @@
+PRIVATE NATIVE BACKEND ORCHESTRATION — WIP, NOT A LOADABLE DRIVER
+2026-10-30 / EI checkpoint / base b04715dd3bf23321c0e7ee5ca1f7ba1e2f537332
+
+Purpose
+  Join the already distinct full851 native factories in a trusted-kernel
+  Begin/Finish pair. This is NOT a public ioctl, unchecked user-pointer ABI,
+  Work/Assistant route, hardware installation, or inference-speed result.
+  The existing exact21-parent COMPILE_ONLY/NODRV perimeter remains required.
+
+Begin
+  Validate trusted prompt dimensions/domain/alignment/wrap, enter one genuine
+  FD/team/thread/global-lock scope, bind full851, recurrent/history/projection
+  zero, prepare held memory, stage runtime, bootstrap119, then start ROOT.
+  Every controller receives its own pristine typed result. Stop at the first
+  failure. No automatic cancellation/rollback/retry or legacy END fallthrough.
+  ready=1 denotes actual ROOT startup acknowledgement, not a generated token.
+
+Finish
+  Requires genuine terminal/HOLD and previously drained committed records.
+  Ordered actual L1/dispatch/peer-store/ROOT-store/shared-mapping restoration,
+  clock END, hardware seal,29 VM handles, PCI,3 host buffers, checked device
+  unreserve and locked whole-context deletion. Never inspect the destroyed
+  context afterward. No prelaunch-abort or resident-model-reuse implementation.
+  Positive composite Finish execution remains UNQUALIFIED at this checkpoint.
+
+Completed EI checks (all exit0)
+  Main and independent clean archive+10 cmp-verified scoped overlays:
+    SDK actual G1/G2/G3 bodies; new Begin/Finish plus compile witnesses emitted.
+    G3 object byte-identical between trees:
+      b8c4151344081e3daae8fc8c3a44def7528fe1d0e2f6c3d7527521fa4da29a5f
+    All13 frozen G3 firmware arrays remain SHA-exact. Actual5 renamed driver
+    bodies and5 wrappers remain byte-identical to independent inert controls.
+    Individual new frames: Begin544, Finish384, witnesses48/32 bytes.
+    maxIndividualTokenFrame1232; combined HOST kernel stack still UNQUALIFIED.
+    Private first-matrix TEST perimeter:2 positive/268 absent+0+2/ABI/late-change/
+    full-flow/CPU-reference/Work refusals; main/clean role logs byte-identical.
+  Main compile/link-only new fixture: binary linked, NEVER executed by that run.
+  Main unchanged clock-owner contract and native-binding regression: exit0.
+
+Runtime qualification still running (NOT a pass/END/physical permission)
+  --execution-backend-first-matrix ORIGINAL_GGUF OLD_WORKER G3_WORKER
+  --pushed-context, with actual original model authentication before Fixture.
+  New mode routes actual reset/metadata requests into the existing simulated
+  byte/ISA endpoints at observed native phases. It NEVER assigns an owner
+  phase, CPU PC/history, output, ready, counter or completion.
+  Main has passed33 argument/FD/team/thread/lock/unbound-END refusals with
+  unchanged owners/epoch/IO/output, then begun actual zero-ROM execution.
+  Main/clean full composite startup + original embedding/RMS/first matrix and
+  pending-Finish refusal are still owed until the SAME processes exit0.
+
+Failure lineage
+  EH first actual G1 SDK compile rejected a const context passed to its
+  non-const Unsafe method. Changed only the helper parameter to non-const;
+  no compiler-warning suppression or relaxed assertion. Fresh EI outputs
+  used for the complete successful main/clean SDK qualification above.
+
+Artifacts / reproduction
+  Main SDK log: /private/tmp/pioneer-q38-native-backend-sdk-main-20261030-ei.log
+  Clean SDK log: /private/tmp/pioneer-q38-native-backend-sdk-clean-20261030-ei.log
+  Clean source: /private/tmp/pioneer-q38-backend-clean-ei.ah2zbuH0
+  Startup logs: /private/tmp/pioneer-q38-backend-first-matrix-{main,clean}-20261030-ei.log
+  Role runner: tools/pioneer/tests/run_pioneer_q38_token_native_backend_role_tests.py
+  SDK runner: tools/pioneer/tests/run_pioneer_q38_token_pushed_native_context_compile.py
+
+No Pioneer device opened, driver installed, power/OS/Assistant/card/SD/mains
+changed by this work. Five prior corrected baseline/native/optimized full-model
+histories remain in progress;35 older histories remain suspended, not completed.
+Last physical whole-model speed remains0.207893161 tokens/sec. Target20 UNMET.
+
+EI startup runtime result / 2026-10-30 20:23 UTC
+  Main process98611 exited1 after ACTUAL1010 initializer jobs,120 held-stage
+  preparations, runtime staging,119 virgin boots and ROOT startup ACK.
+  Duplicate Begin/pending Finish refusals passed, as did the actual first
+  three metadata reads and outstanding first learned-byte request.
+  It then stopped at CheckNativeEmbedding's unchanged assertion requiring
+  cpu.original && cpu.original->Ready(). The new early backend branch had
+  bypassed the old main-path assignment of the authenticated RAW bridge.
+  Attached that SAME already authenticated bridge immediately after fixture
+  construction, before Begin. No model/CPU product, PC/history/owner phase or
+  completion is supplied, and no assertion/guard was removed or relaxed.
+  EI clean process14453 is still running at this snapshot, not a pass.
+  Fresh EJ runtime qualification is required; EI is NOT an embedding/matrix
+  result. The completed paired SDK/role results above are unaffected.
+
+EJ paired actual startup runtime COMPLETE / main41169+clean13107 exit0
+  EI clean14453 also exited1 at the same unchanged missing-bridge assertion;
+  it was not restarted or relabelled as a pass. Fresh EJ histories used the
+  corrected RAW attachment and actual model authentication before construction.
+  Main/clean EJ logs are byte-identical, SHA256:
+    2f16fc9a05ae72f2e7ae8303378273beede84be7bc7b09a7851425d276f04f17
+  Each passed33 pre-bind refusals, actual composite Begin through1010 zero-ROM
+  jobs/all119 virgin worker boots/ROOT startup ACK, duplicate-Begin and pending-
+  Finish refusals,3 metadata reads+first learned packet, original5120 embedding
+  values EXACT in LOCAL/SHADOW/GDDR,5120 RMS inputs and all native operands/scales,
+  then actual3 fullK5120 matrix workers/48 outputs with independent observers.
+  ROOT36321913 instructions; workers226096128 instructions and3840 real tensor
+  matrix instructions. Reserved/accessed stack ROOT6112/6112, peer3552/3540 of8192
+  EACH. Combined HOST kernel stack still unqualified. No CPU product or processor
+  history was supplied. Pending Finish was refused again at the next real matrix
+  doorbell; the legacy incomplete END correctly retained all native resources.
+  This is NOT a complete layer/token/STOP/END/full-model/physical/Work/TPS result.
+  Corrected clean source: /private/tmp/pioneer-q38-backend-clean-ej.xAlbi3Rd
+  Corrected logs: /private/tmp/pioneer-q38-backend-first-matrix-{main,clean}-20261030-ej.log
+
+Composite Finish test integration / positive runtime still owed
+  Explicit --backend-finish is accepted only with --pushed-context and the
+  actual --execution-end or --execution-end-reload predecessor. It does not
+  shortcut a layer, cancellation,119 STOP,120 HOLD or actual zero-record drain.
+  The new test replaces only the individual post-drain cleanup-test calls with
+  the actual composite Finish. It checks undrained refusal, all earliest observed
+  original bytes with ordered overlapping journals,29 VM handles,3 host releases,
+  one unreserve and whole-context disposal without a dangling dereference/retry.
+  No private-state friend/getter was added and no native guard was relaxed.
+  Main EM compile/link-only exit0; binary NOT executed by that control.
+  Main expanded Begin+Finish TEST role suite:4 positive/586 refusals, exit0.
+  EK draft compile correctly rejected test access to private phase/runtime;
+  replaced those accesses with existing public const predicates and the real
+  parent readout result. EL then rejected an unused individual cleanup-test
+  function. Kept that entire individual-test tree in its old modes; the distinct
+  composite mode includes its own cleanup test instead. No warning suppression.
+
+All physical and whole-model completion/speed limitations above still apply.
+
+EM publication checkpoint / 2026-10-30 20:36 UTC
+  Independent clean archive plus14 cmp-verified scoped overlays:
+    /private/tmp/pioneer-q38-backend-clean-em.zKD9sndz
+  Its fresh full G1/G2/G3 SDK control exited0. Actual G3 object is again
+  byte-identical to main EI, SHA b8c415...above; all13 firmware arrays and
+  all inert ABI controls remain exact. No native implementation was changed
+  after the paired EI SDK result; later changes are TEST selection/observation.
+  Main/clean expanded Begin+Finish isolation suites now4 positive/590 refusals,
+  both exit0 with identical logs (added symmetric defined0 family exclusion).
+  Main EM and clean EM composite-Finish compile/link-only controls both exit0.
+  Actual composite-Finish --execution-end-reload process84047 is LIVE at this
+  checkpoint, not passed: two NEW full first-layer/cancel/STOP/HOLD/drain/END
+  histories are requested, with no earlier completed CPU/native history reused.
+  Runtime log: /private/tmp/pioneer-q38-backend-finish-main-20261030-em.log
+  Output: /private/tmp/pioneer-q38-backend-finish-main-em.v9jK1WFB
+  Every runtime/whole-model/numerical/hardware limitation remains unchanged.

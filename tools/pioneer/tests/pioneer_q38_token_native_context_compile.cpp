@@ -110,6 +110,13 @@ extern "C" bool pioneer_token_context_scoped_finish(PioneerProbeCookie* cookie,P
  PioneerQ38TokenCallScope scope(cookie);return scope.Finish(result);
 } // actual checked reservation release+known-clean whole-context disposal,COMPILE ONLY
 extern "C" void pioneer_token_context_destroy_clean(PioneerStoreContext* c){delete c;}
+extern "C" PioneerQ38TokenBackendResult pioneer_token_context_backend_begin(PioneerProbeCookie* cookie,unsigned bank,
+ const uint32_t* prompt,unsigned prompts,unsigned limit,bool stopEos,unsigned eos0,unsigned eos1){
+ return BeginQ38TokenNativeBackend(cookie,bank,prompt,prompts,limit,stopEos,eos0,eos1);
+}
+extern "C" PioneerQ38TokenBackendResult pioneer_token_context_backend_finish(PioneerProbeCookie* cookie){
+ return FinishQ38TokenNativeBackend(cookie);
+} // actual private orchestration bodies,NOT a public ABI/Work/driver activation
 
 // Compile the actual clock-map dependency explicitly, not via an accidentally
 // reachable conventional driver entry. This witness is NEVER linked/invoked.

@@ -9,6 +9,10 @@ import subprocess
 import sys
 import tempfile
 
+backend_finish = '--backend-finish' in sys.argv
+if backend_finish:
+    assert sys.argv.count('--backend-finish') == 1
+    sys.argv.remove('--backend-finish')
 compile_link_only = '--compile-link-only' in sys.argv
 if compile_link_only:
     assert sys.argv.count('--compile-link-only') == 1
@@ -21,6 +25,8 @@ pushed_context = '--pushed-context' in sys.argv
 if pushed_context:
     assert sys.argv.count('--pushed-context') == 1 and not precise_context, 'QTP3 cannot mix with QTP2,including explicit selectors'
     sys.argv.remove('--pushed-context')
+if backend_finish:
+    assert pushed_context and len(sys.argv) == 7 and sys.argv[2] in ('--execution-end', '--execution-end-reload'), 'backend Finish TEST requires actual G3 first-layer/cancel/STOP/HOLD/drain predecessor'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -54,7 +60,8 @@ full_flow = readout_flow or len(sys.argv) == 7 and sys.argv[2] == '--execution-f
 hold_layer = readout_empty or len(sys.argv) == 7 and sys.argv[2] == '--execution-hold-first-layer'
 cancel_layer = hold_layer or len(sys.argv) == 7 and sys.argv[2] == '--execution-cancel-first-layer'
 full_layer = full_flow or cancel_layer or len(sys.argv) == 7 and sys.argv[2] == '--execution-first-layer'
-first_matrix = full_layer or len(sys.argv) == 6 and sys.argv[2] == '--execution-first-matrix'
+backend_first_matrix = len(sys.argv) == 6 and sys.argv[2] == '--execution-backend-first-matrix'
+first_matrix = full_layer or backend_first_matrix or len(sys.argv) == 6 and sys.argv[2] == '--execution-first-matrix'
 if full_layer:
     prefix = pathlib.Path(sys.argv[6])
     if full_flow:
@@ -143,8 +150,11 @@ if restore_root:
     defines['PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE'] = '1'
 if restore_shared:
     defines['PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE'] = '1'
-if clock_contract or clock_end:
+if clock_contract or clock_end or backend_first_matrix:
     defines['PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE'] = '1'
+if backend_first_matrix:
+    assert pushed_context, 'private backend first-matrix qualification selects the actual G3 family explicitly'
+    defines['PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE'] = '1'
 if hardware_seal:
     defines['PIONEER_Q38_TOKEN_NATIVE_HARDWARE_SEAL_FIXTURE'] = '1'
 if views_close:
@@ -171,6 +181,8 @@ if full_end_fixture:
 source = (kernel/'tenstorrent_pci_probe.cpp').read_text()
 if state_snapshots:
     defines.update(PIONEER_Q38_TOKEN_NATIVE_STATE_SNAPSHOT_FIXTURE='1', PIONEER_Q38_NATIVE_STATE_TEST_BRIDGE='1')
+if backend_finish:
+    defines['PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE'] = '1'
 with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/private/tmp') as tmp:
     base = pathlib.Path(tmp)
     start, end = '// PIONEER_Q38_CLOCK_IO_BEGIN', '// PIONEER_Q38_CLOCK_IO_END'

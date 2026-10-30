@@ -5033,6 +5033,7 @@ public:
 // PIONEER_Q38_GDN_CALL_SCOPE_END
 #include "PioneerQ38TokenCallScope.inc"
 #include "PioneerQ38TokenNativeEnd.inc"
+#include "PioneerQ38TokenNativeBackend.inc"
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE
 #include "PioneerQ38ResidentOutputValidationControl.h"
 #endif

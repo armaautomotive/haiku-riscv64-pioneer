@@ -8,12 +8,18 @@
  || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE) || defined(PIONEER_Q38_WORK_INFERENCE)
 #error Explicit native empty-commit readout TEST required
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE) && !defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE)
 #include "pioneer_q38_token_native_restore_empty_checks.inc"
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE
+#include "pioneer_q38_token_native_backend_finish_checks.inc"
 #endif
 static void CheckNativeEmptyReadout(Fixture& f){
  auto& c=*f.c;auto& io=f.io;auto* state=c.q38TokenNative;const unsigned before=io.touches,packets=io.runtimePackets;
  assert(!lockHeld && state->TerminalHeld() && !state->Closed() && !state->Unsafe());
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE
+ CheckNativeBackendFinishUndrained(f);
+#endif
  PioneerQ38TokenReadResult result;const auto pristine=result;auto* words=reinterpret_cast<uint32*>(&result);
  std::array<uint32_t,4097> output={}; // valid capacity even for the largest refused64-record request
  assert(!ReadQ38TokenNativeRecords(c,0,nullptr,result) && io.touches==before);
@@ -39,7 +45,9 @@ static void CheckNativeEmptyReadout(Fixture& f){
  for(auto value:output)assert(!value);
  assert(io.runtimePackets==packets && !io.pciWrites && !io.HostReadMock::bmeWrites && !io.wideReleased);
  puts("EXECUTED native SAME original layer0/cancel consumed/ROOT+119 real STOP+native terminal+120 real HOLD/actual ZERO-committed frontier drains WITHOUT GDDR packet or invented token/all malformed count+buffer+result refusals preserve output;NOT positive token-record/GDDR read/END/physical/Work/TPS qualification");
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE
+ CheckNativeBackendFinish(f);
+#elif defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE)
  CheckNativeRestoreEmpty(f);
 #endif
 }

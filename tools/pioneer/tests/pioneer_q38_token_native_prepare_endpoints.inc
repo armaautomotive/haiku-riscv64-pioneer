@@ -1,6 +1,20 @@
 /* SPDX-License-Identifier: MIT */
 // TEST bad observations AFTER real native preparation accesses. No owner,
 // PC/history,model product,ready or completion is supplied to the controller.
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE
+void PioneerSessionIO::BackendResetEndpoints(uint32 value){
+ // Route real reset writes to the existing ISA endpoints at their genuine
+ // native phase. Never supply a phase, PC, counter, output or completion.
+ if(value!=0x87ffff || !q38MutableContext || !q38MutableContext->q38TokenNative)return;
+ const auto phase=q38MutableContext->q38TokenNative->phase;
+ if(phase==PioneerQ38TokenNativeState::WorkersBootstrapping){
+  assert(runtimeCore && runtimePackets==4616 && rootStarts==1010);bootstrapMode=true;
+ }
+ if(phase==PioneerQ38TokenNativeState::RootStarting){
+  assert(!runtimeCore && bootstrapArms==119 && bootstrapStarts==119);executionMode=true;
+ }
+}
+#endif
 void PioneerSessionIO::NativePreparationAuditContract(){
  if(!q38TokenPreparationAudit.key || q38TokenPreparationAudit.key==preparationAuditLastKey)return;
  // Called ONLY after the production preparation method issued its private
@@ -54,6 +68,13 @@ uint32 PioneerSessionIO::DramTlbRead(unsigned slot,unsigned word){
  }return actual;
 }
 void PioneerSessionIO::ResidentNocWrite(uint32 address,uint32 value){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE
+ if(address==0x40 && q38MutableContext && q38MutableContext->q38TokenNative
+  && q38MutableContext->q38TokenNative->phase==PioneerQ38TokenNativeState::RuntimePreparing){
+  assert(value==1 && !runtimeCore && rootStarts==1010 && q38TokenMemoryMapAttempted);
+  runtimeMode=true; // select existing byte transport for an ACTUAL metadata packet
+ }
+#endif
  TokenHeldEndpoints::ResidentNocWrite(address,value);
  if(NativePreparationObservation() && preparationFault==6 && runtimeCore==1 && address==0x100){
   assert(C().config==value && (value&0x10000U));sReloadGeneration++;preparationFaultSeen++;preparationFaultTouches=touches;
