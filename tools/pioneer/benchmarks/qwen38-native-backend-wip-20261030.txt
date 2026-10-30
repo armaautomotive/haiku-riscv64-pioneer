@@ -234,3 +234,27 @@ ER early-initialization failure integration / paired completed0
 The original six long histories remain separate: composite-Finish cycle2 and
 five complete-model traces still require their own authoritative terminal and
 numerical evidence. No hardware action or new inference-speed measurement.
+
+ES composite-Finish two-cycle test COMPLETE / parent84047 terminal0
+  Both genuinely fresh native contexts/model epochs1 and2 completed their own
+  original layer0 arithmetic, consumed cancellation, ROOT+119 STOPs with2048
+  inert worker instructions each, terminal observation,120 HOLDs and actual
+  empty-frontier drain. Each refused undrained composite Finish without IO.
+  Both then executed all11 composite restoration/release stages, independently
+  matched earliest original bytes, released29 VM handles and3 host buffers,
+  restored PCI, unreserved exactly once and deleted the entire context under
+  the real call lock. No reset, history transplant, retry, double release,
+  dangling dereference or ASan/UBSan error. This is NOT resident-model reuse.
+  Full151-line log archived as qwen38-native-backend-finish-20261030.log:
+    SHA25609e932096e8b78caa6f77106d6c95b7a398c73371241b05b8401b1f22486e7a2
+  Exactly2 composite-Finish completion lines and2 monotonic model-epoch lines.
+  Second prefix independently compared0 after actual save: all5120 embedding
+  and5120 final layer0 words BIT-EXACT, no tolerance, maxAbs0/relativeL20.
+  Both durable cycle prefixes under observed-native-backend-finish-20261030-eo
+  have SHA4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+  Second compare:/private/tmp/pioneer-q38-backend-finish-prefix-cycle2-compare-20261030-es.log
+  This test generated ZERO committed model tokens. It proves the actual
+  cancelled-first-layer composite cleanup path, NOT positive token readout,
+  all64 layers/3positions/state snapshots, full-generation END, a physical
+  reload/driver installation, no-CPU-reference Work/Assistant or tokens/sec.
+  Five longer complete-model histories continue unchanged;20tok/s is UNMET.
