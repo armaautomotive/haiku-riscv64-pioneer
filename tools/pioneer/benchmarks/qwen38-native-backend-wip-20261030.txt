@@ -533,3 +533,26 @@ FI named eight-way BUILD selector independently qualified for BUILD only
   Exact current-source report:qwen38-packet-seal-eight-experiment-20261030.txt.
   No connected/model/driver/physical permission follows;existing four-way full
   histories are not replaced. Last physical0.207893161tok/s;20UNMET;goal ACTIVE.
+
+FK expanded copied-operation parent79770 COMPLETE / authoritative terminal0
+  Both genuinely fresh original first-layer/cancel/ROOT+119STOP/120HOLD/
+  empty-frontier histories executed copied Cancel,pending+terminal Observe,
+  Hold and zero-record Read,with exact per-cycle counts and original typed
+  malformed/alias/phase/duplicate refusals preserved. Actual copied Finish
+  completed all11 cleanup stages in both:cycle1 completed reply,cycle2 LOST
+  reply AFTER locked whole-context deletion. User bytes unchanged on loss;
+  no subsequent IO,retention,retry,double release,UAF or ASan/UBSan error.
+  Full163-line log:qwen38-native-control-operations-20261030.log
+    SHA19421b345f0de7452afd49dc59b2201914928dca2e8f4d9e3a9895ee1fd60c89
+  Exactly2 epochs,4 copied Observe calls,2 each Cancel/Hold/emptyRead,and2
+  actual Finish outcomes. A full-log count/error check passed. Both prefixes
+  independently compared0/all10240 words BIT-EXACT/no tolerance/maxAbs0/
+  relativeL20;both durable cycle prefixes below have the same4fbe3...SHA:
+    observed-native-control-operations-20261030-fg/cycle{1,2}/prefix-0.bin
+  Cycle2 compare:/private/tmp/pioneer-q38-control-operations-cycle2-compare-20261030-fk.log
+  Initializers/launch here are the original typed predecessor,NOT copied
+  Start;its separate paired evidence remains above. Zero committed tokens,
+  not positive generated-record Read/full-model/physical/Work/TPS proof.
+  Never re-poll or restart now-terminal79770 or21527. Original five full
+  histories remain separate and LIVE;new eight-way connected qualification
+  runs separately.20tok/s UNMET;last physical0.207893161tok/s;goal ACTIVE.

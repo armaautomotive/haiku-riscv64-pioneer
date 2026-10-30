@@ -2,6 +2,8 @@ QGW3 packet-check unroll search -- isolated experiment and BUILD-only selector
 2026-10-30;goal ACTIVE;20tok/s UNMET;last physical0.207893161tok/s
 =======================================================================
 No hardware,driver installation,Assistant,boot,power,SD or mains action.
+FK/FL update:the distinct selector has the narrow HOST connected TEST entry
+described at the end;no native/physical/Work or full-model permission.
 FI update:the distinct named BUILD-only selector below is now implemented;
 the ordinary four-way/default paths and their live histories stay unchanged.
 The following FF/FG initial experiment used TEMPORARY sources only. Its
@@ -112,3 +114,39 @@ This is NOT connected original-model,combined accelerator-stack,cancellation,
 STOP/END,driver installation,physical stability,Work/Assistant or TPS proof.
 Next:separate genuine connected eight-way qualification without replacing or
 restarting the five original long histories.20tok/s remains UNMET;goal ACTIVE.
+
+FK/FL explicit connected HOST fault/first-layer qualification
+-------------------------------------------------------------
+The original-flow runner now requires BOTH --unroll-packet-seals-eight and
+--qualify-packet-seal-eight-connected,alongside the exact original QGW3 packet
+profile. Only unshortened --pushed-completion-faults OR --first-layer-only
+with a fresh observation path is admitted. No full-flow/EOS/fast-memory/
+bootstrap/prepare/snapshot/other-fault mode. The existing four-way selector,
+pins and full-flow qualifier are unchanged. Eight-way pins now have their
+own top-level literal for exact AST extraction;there is no four-way fallback.
+No C++ engine,peer,arithmetic,guard,assertion or native implementation changes.
+
+Paired main/clean CLI suites completed0:123 pre-output refusals,logs identical.
+Paired isolated ISA suites still0/2106 cases/2091 refusals/83 ordered reads.
+Main9679 and clean63481 connected tests are authoritative terminal0,complete
+logs identical SHA22f261e87f0c52c9c3448716007b24cc83b48cc1836fcfe87f30df4124e760fd.
+The actual RESET ROOT+SAME119 virgin histories reached original first3 fullK5120
+tensor jobs and6 real pushed packets. All64 receipt-word mutations,finite
+missing-commit timeout and4 unexpected incoming counters park before any
+following ROOT packet/peer release,then2048 inert instructions preserve state.
+The unchanged parent then genuinely admits nonce2 and performs its first real
+read. L0 fence model hits864/misses15441/stale-remote-events4. This is NOT a
+whole-layer numerical,cancellation,STOP/END,native,physical or TPS result.
+Archived fault log:qwen38-packet-seal-eight-connected-fault-20261030.log.
+
+After BOTH fault tests0,two new original first-layer tests started:
+  Main17549:/private/tmp/pioneer-q38-packet-eight-first-layer-main-20261030-fl.log
+    /private/tmp/pioneer-q38-packet-eight-layer-main-fl.avDBjm4K/observed
+  Clean34885:/private/tmp/pioneer-q38-packet-eight-first-layer-clean-20261030-fl.log
+    /private/tmp/pioneer-q38-packet-eight-layer-clean-fl.93AiThvu/observed
+These are LIVE,not passes or numerically qualified. Each must finish its
+genuine layer and independently compare its saved prefix to the CPU trace.
+Independent runner export:d7f12c8c1f +ONLY3 cmp-verified TEST overlays:
+  /private/tmp/pioneer-q38-eight-connected-clean-fk.4iImuFMS
+Neither the new selector nor a passing fault test authorizes a hardware run.
+The original five full histories remain intact.20tok/s UNMET;goal ACTIVE.

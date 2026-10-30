@@ -67,8 +67,15 @@ with tempfile.TemporaryDirectory(prefix='pioneer-packet-unroll-cli-',dir='/priva
              '--pushed-admission-faults','--pushed-dense-faults')]
     invalid += [[value for value in full if value!=missing] for missing in (candidate,'--pushed-completion','--snapshot-first-layer')]
     invalid += [required+[qualifier,'--snapshot-first-layer'],full+[qualifier]]
-    # This new BUILD selector grants NO connected/whole-model runtime mode.
+    # The BUILD selector alone grants NO connected/whole-model runtime mode.
     invalid += [required+[eight],first_layer+[eight],full+[eight]]
+    eight_qualifier='--qualify-packet-seal-eight-connected'
+    connected=first_layer+[eight,eight_qualifier]
+    invalid += [connected+[extra] for extra in ('--prepare-only','--bootstrap-only','--fast-root-memory',
+                '--snapshot-first-layer','--eos-after-prompt','--admission-source-faults',
+                '--pushed-completion-faults','--pushed-cohort-faults','--pushed-admission-faults','--pushed-dense-faults',qualifier)]
+    invalid += [[value for value in connected if value!=missing] for missing in (*required,eight,'--first-layer-only')]
+    invalid += [connected+[eight_qualifier],full+[eight,eight_qualifier],required+[eight,eight_qualifier]]
     for options in invalid:
         before=sorted(path.relative_to(root) for path in root.rglob('*'))
         result=subprocess.run([sys.executable,str(runner),*[str(root/'unused')]*4,*options],
