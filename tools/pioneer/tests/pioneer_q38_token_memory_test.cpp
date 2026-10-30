@@ -137,11 +137,22 @@ int main(int argc,char** argv){
   printf("PASS DISTINCT full-token HELD journal/ALL120/saved%u/installed%u/restored%u/secondOriginal%u/arbitrary+UINT32_MAX/NEW terminal60000+60004/fullstack+runtime+padding/startup+851page binding;SIMULATED endpoints,NO start/reset/NoC/native execution/Work/TPS grant\n",f.result.savedWords,f.result.installedWords,f.result.restoredWords,f.result.verifiedOriginalWords);return 0;
  }
  if(!strcmp(argv[1],"--capsule-faults")){
-#ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS
+#if defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
   unsigned cases=0;
+#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+  constexpr unsigned family=3;
+#else
+  constexpr unsigned family=2;
+#endif
   auto fault=[&](unsigned kind,unsigned phase,unsigned worker,unsigned address){
    TokenMemoryFixture f;f.io.badKind=kind;f.io.badPhase=phase;f.io.badWorker=worker;
-   assert(worker && TOKL::SnapshotContains(worker,address) && address>=0x30000 && address<0x40000);
+   const bool precise=address>=0x30000 && address<0x40000;
+#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+   const bool extendedFront=address>=0x22000 && address<0x23000;
+#else
+   const bool extendedFront=false;
+#endif
+   assert(worker && TOKL::SnapshotContains(worker,address) && (precise || extendedFront));
    if(phase==3){
     unsigned index=0;while(index<TOKP::CodeWords(worker) && TOKP::CodeAddress(worker,index)!=address)index++;
     assert(index<TOKP::CodeWords(worker));f.io.badOrdinal=index;
@@ -154,9 +165,18 @@ int main(int argc,char** argv){
   fault(3,3,1,0x30000);fault(5,3,1,0x30000);fault(2,3,1,0x30000);
   fault(3,6,1,0x30000);fault(3,6,119,0x3fffc);fault(1,7,119,0x3fffc);
   assert(cases==9);
-  printf("PASS QTP2 precise ROM+padding HELD-journal faults%u/worker1+119/30000+3fffc/save+verify+write-loss+silent-drop+readback-mismatch+restore+finalpass/real algorithm retained all owners/no following IO,retry or cleanup;NOT native,launch,model,Work or TPS\n",cases);return 0;
+#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+  uint32_t last;assert(TOKL::Family==0x33505451 && TOKL::SavedBytes==53913832 && TOKP::ProgramWord(119,0x223a4,last)
+   && !TOKP::ProgramWord(119,0x223a8,last) && TOKL::SnapshotContains(119,0x22ffc));
+  fault(1,1,1,0x22000);fault(1,1,119,0x22ffc);fault(1,2,1,0x22ffc);
+  fault(3,3,1,0x22000);fault(5,3,1,0x223a4);fault(2,3,119,0x223a4);
+  fault(3,6,1,0x22000);fault(3,6,119,0x22ffc);fault(1,7,119,0x22ffc);
+  fault(5,6,119,0x223a4);fault(2,6,1,0x22000);
+  assert(cases==20);
+#endif
+  printf("PASS QTP%u precise ROM+padding+applicable extended-front HELD-journal faults%u/worker1+119/save+verify+write-loss+silent-drop+readback-mismatch+restore+finalpass/real algorithm retained all owners/no following IO,retry or cleanup;NOT native,launch,model,Work or TPS\n",family,cases);return 0;
 #else
-  assert(false && "capsule faults require the distinct QTP2 program DATA");
+  assert(false && "capsule faults require the distinct QTP2/QTP3 program DATA");
 #endif
  }
  unsigned faults=0,refusals=0;

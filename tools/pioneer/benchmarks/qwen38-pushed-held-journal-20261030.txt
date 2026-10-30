@@ -1,0 +1,60 @@
+G3 held-image journal -- HOST controller/template checks,NOT launched END
+2026-10-30 17:25 UTC
+=======================================================================
+Goal ACTIVE. Last physical whole-model rate0.207893161 tokens/sec;20 UNMET.
+No Pioneer SSH,power,driver installation,OS,Assistant,SD or hardware action.
+No production controller or immutable program DATA was changed here.
+
+The real generic journal TEST runner now supports explicit G3 program DATA
+without selecting native/BUILD/Work roles. Duplicate/mixed G2+G3 selectors,
+unknown/defined-zero options,unsupported shortcuts and environment overrides
+are rejected before compilation/IO;13 CLI refusals pass in both source trees.
+
+DL24630(main) and DM56649(clean) BOTH EXIT0;complete logs byte-identical.
+Actual controller round trips save13478458 words,install3048868 code words,
+restore13478458 originals and independently verify26956916 original words
+over ALL120 participants. Arbitrary originals,UINT32_MAX,padding,ROOT fault/
+STOP words,full stacks,all runtime spans and the larger G3 sender window
+are retained,not zero-filled. Saved size53913832 bytes. No core is launched.
+Both also pass52 general injected faults+33 inert precondition refusals
+across all7 phases,including source/reset/PCI/counter/command/mapping/scope,
+read/write loss,mismatch and silent dropped writes. First uncertainty retains
+all owners without following IO/retry/cleanup. Actual RISC-V SDK TEMPLATE
+compile passes,maxStaticFrame1216,only undefined TOKEN IO hooks and no
+conventional driver ABI. This is not a genuine native context or total-stack
+or running-firmware restoration qualification.
+
+DM capsule main7318/clean14602 BOTH EXIT0;logs byte-identical. Twenty targeted
+fault cases cover the precise capsule+padding and G3's extra sender window,
+at worker1/119:30000,3fffc,22000,223a4 and22ffc. The last actual sender word
+is223a4;223a8 is not code,and22ffc is captured padding. Save/verify/install/
+readback/restore/final-verify checks include silent drops and mismatches
+during restoration. Every actual controller failure retains all owners and
+refuses following IO/retry/cleanup. This exercises the real algorithm,not
+only a proposed footprint/address count. It remains HELD/NEVER-LAUNCHED only.
+
+DN80479 EXIT0:old G1 and G2 positive round trips pass with their unchanged
+word counts;G2's nine capsule/padding faults also pass. G3 changes do not
+redefine those program or journal families. Source guard for printing the
+profile avoids assuming a Family member exists in the old G2 geometry.
+
+Frozen source:/private/tmp/pioneer-q38-pushed-journal-dm.wVKP9iKQ
+Base HEAD7bff9edbd7 plus ONLY the three scoped journal TEST paths. All three
+files match the worktree. Main DL compiled the earlier18-case capsule branch,
+which is UNUSED by its normal positive/general-fault/SDK mode;the final
+20-case branch itself is independently compiled/executed in both capsule
+runs. No newer source is substituted for a live process's executed code.
+Logs:
+ /private/tmp/pioneer-q38-token-memory-pushed-main-20261030-dl.log
+ /private/tmp/pioneer-q38-token-memory-pushed-clean-20261030-dm.log
+ /private/tmp/pioneer-q38-token-memory-capsules-{main,clean}-20261030-dm.log
+ /private/tmp/pioneer-q38-token-memory-g{1,2}-control-20261030-dn.log
+ /private/tmp/pioneer-q38-token-memory-g2-capsules-20261030-dn.log
+
+Actual native DK77228 and original CW67964/74406/CY93250 continue on their
+SAME live handles. CW has reached position0/layer3/first dense projection,
+where the old fixed poll budget failed;its actual new receipt/large fault
+results are still pending. Native DK previously passed its first original
+48-row projection and continues original model execution. No completed
+full-model/state/KV/119STOP/positive END/Work or physical rate is claimed.
+The full20-tokens/sec objective remains intact;DO NOT INSTALL NODRV/TEST.

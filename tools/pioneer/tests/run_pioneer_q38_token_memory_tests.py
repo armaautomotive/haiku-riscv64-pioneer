@@ -9,20 +9,26 @@ import tempfile
 args = sys.argv[1:]
 precise = '--precise-programs' in args
 if precise:
+    assert args.count('--precise-programs') == 1
     args.remove('--precise-programs')
+pushed = '--pushed-programs' in args
+if pushed:
+    assert args.count('--pushed-programs') == 1 and not precise, 'distinct QTP3 cannot mix with QTP2 DATA'
+    args.remove('--pushed-programs')
 sdk = None
 if len(args) >= 2 and args[-2] == '--sdk':
     sdk = pathlib.Path(args[-1])
     args = args[:-2]
 assert args in ([], ['--positive'], ['--faults'], ['--capsule-faults'])
-assert args != ['--capsule-faults'] or precise, 'capsule faults require explicit QTP2 DATA'
+assert args != ['--capsule-faults'] or precise or pushed, 'capsule faults require explicit QTP2/QTP3 DATA'
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 here = pathlib.Path(__file__).resolve().parent
 flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
+profile = ['-DPIONEER_Q38_TOKEN_PUSHED_PROGRAMS=1'] if pushed else ['-DPIONEER_Q38_TOKEN_PRECISE_PROGRAMS=1'] if precise else []
 with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/tmp') as tmp:
     binary = pathlib.Path(tmp)/'test'
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
-                    '-fsanitize=address,undefined', *flags, *(['-DPIONEER_Q38_TOKEN_PRECISE_PROGRAMS=1'] if precise else []),
+                    '-fsanitize=address,undefined', *flags, *profile,
                     str(here/'pioneer_q38_token_memory_test.cpp'), '-o', str(binary)], check=True)
     for extra in ([[]] if args == ['--positive'] else [args] if args in (['--faults'], ['--capsule-faults']) else [[], ['--faults']]):
         subprocess.run([str(binary), *extra], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})
@@ -33,7 +39,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/t
         subprocess.run([tool+'-g++', '-std=gnu++17', '-O2', '-Wall', '-Wextra', '-Werror', '-Wno-misleading-indentation',
                         '-fno-exceptions', '-fno-rtti', '-ffreestanding', '-fstack-usage', '-mcmodel=medany', '-fpic', '-D_KERNEL_MODE',
                         '-I'+str(headers), '-idirafter', str(headers/'posix'),
-                        *(['-DPIONEER_Q38_TOKEN_PRECISE_PROGRAMS=1'] if precise else []), '-c',
+                        *profile, '-c',
                         str(here/'pioneer_q38_token_memory_kernel_compile.cpp'), '-o', str(obj)], check=True)
         rows = [line.split('\t') for line in obj.with_suffix('.su').read_text().splitlines()]
         assert rows and all(len(row) == 3 and row[2] == 'static' and int(row[1]) <= 2048 for row in rows)
