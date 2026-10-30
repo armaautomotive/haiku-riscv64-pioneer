@@ -1,0 +1,105 @@
+Job-boot-fold candidate: connected retained-admission qualification
+=================================================================
+2026-10-30. Goal active;20 tokens/sec UNMET. No new hardware inference rate.
+Last measured physical whole-model rate remains0.207893161 tokens/sec.
+
+Changes in this checkpoint
+--------------------------
+New HOST-only runner binds the exact boot-fold candidate image, unchanged
+old-worker and QGW3-worker image pins, and the existing original GGUF byte
+provider. It compiles the UNCHANGED existing connected C++ fault suites.
+No C++ engine, source/nonce/counter check, model byte or firmware pin was
+relaxed. The normal original-flow runner remains unchanged, including its
+refusal of these new candidate bytes. No main production header is patched.
+
+The new runner permits only --retained-admission or --completion-faults,
+with four absolute non-symlink input paths. No shortened/first-layer/full-
+flow/native/Work/observed-trace mode, role override, install or device IO.
+All exact image pins and ELF symbols are verified before temporary output.
+Original bytes are authenticated by the SAME opened full-model provider
+before ROOT construction; no supplied CPU products or ready-state setters.
+
+Producer uses the main checkout574281ea3a plus ONLY the two new test tools.
+Independent clean archive:
+/private/tmp/pioneer-q38-job-boot-fold-connected-clean-fs.kNQ6khF2
+It is a git archive of574281ea3a2a9f8b5e751af34be3557756b212d9 with
+ONLY cmp-verified copies of those two new files. Unrelated worktree edits
+are excluded. Both compile against the unchanged original host DATA header,
+not the candidate header; only the actual pinned ROOT image is changed.
+
+Completed exact retained-admission runs
+--------------------------------------
+Main session78604 and clean46289 BOTH terminal exit0;DO NOT POLL AGAIN.
+Each starts ROOT from RESET and preserves the SAME119 worker histories.
+The three original full-K5120 Q8 jobs actually execute, with1280 tensor
+instructions and162 read packets each, then payload+commit. Forked faults
+are injected at the real next warm-receipt load, not from forged snapshots.
+
+All92 local faults pass in both runs:
+64 retained receipt words;missing commit;all8 independently expected
+counter views (alias2/6 together);ROOT nonce;11 selected saved-job words;
+7 selected saved-boot words. ROOT faults BEFORE any next packet/release,
+with2048 inert instructions afterward and unchanged counters/commands.
+
+All88 raw simulated worker-side faults pass in both runs:
+16 source-register words;8 counter views (alias2/6 together);all64 actual
+worker boot words. ROOT can legitimately queue nonce2 under the existing
+warm-admission contract. The actual worker then refuses before any next
+read/tensor instruction, retains completed1 and is inert for2048 steps.
+The term physical in the existing C++ log means the raw simulated worker
+endpoint, NOT a physical card test. Two cases (source0 and counter0) also
+continue ROOT through its real finite missing-receipt timeout;the other86
+prove worker refusal, not88 separately executed ROOT timeouts.
+
+Both unchanged parents then genuinely issue nonce2's first real read,
+retaining original processor/tensor histories. No reset/transplant/retry,
+forged receipt, recaptured expected frontier, later output or cleanup grant.
+This qualifies these fault-observation cases, not a completed layer/token.
+
+The two complete275-line logs compare byte-for-byte;all expected case sets
+were independently counted:local0..91,worker-only1..15+17..87,and timeout
+cases92/108. Archived:qwen38-job-boot-fold-admission-20261030.log
+SHA256:485159f923c93f6fd57b2f471c6e1dabecc0efee37eaad9e03d395a976d904da
+Log sources:/private/tmp/pioneer-q38-job-boot-fold-admission-{main,clean}-20261030-fs.log
+
+CLI checks:main7757 and clean46289 prelude terminal exit0,34 early refusals
+each,unchanged complete output inventory and sentinel. Actual compilation
+and both connected executions retain ASan/UBSan,-Werror,and normal math.
+Runner SHA256:5bb30a6391652f2ac390472538bcf63e3d8182949afcd89d04313f178bde3134
+CLI-test SHA256:e3dfe310c007295959819b361b9522677e82c57b7686cd9ad1d0d5bb5238ad1f
+
+Reproduction
+------------
+python3 tools/pioneer/tests/run_pioneer_q38_job_boot_fold_connected_tests.py \
+  CANDIDATE_IMAGE OLD_WORKER_IMAGE QGW3_WORKER_IMAGE ORIGINAL_GGUF \
+  --retained-admission
+All four paths must be absolute. Candidate/image construction and the exact
+five pins are documented in qwen38-job-boot-fold-20261030.txt. Candidate
+ELF430b89b2fb734bfb66bbe96cc1e8581fcd6476d263a2578b8e869936df4bc1c7
+is distinct from the eight-way first-layer-qualified df4261... image.
+Main:/private/tmp/pioneer-q38-job-boot-fold-table-eight-fp-image
+Clean:/private/tmp/pioneer-q38-job-boot-fold-clean-eight-fr-image
+Old:generated.pioneer/qualification-inputs/mixed-worker-20261030
+QGW3:/private/tmp/pioneer-q38-push-worker-main-20261030-af-image
+Model:generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf
+
+Continuing, not completed evidence
+----------------------------------
+Separate --completion-faults pair45663/32864 has started on the same exact
+main/clean images. Logs:
+/private/tmp/pioneer-q38-job-boot-fold-completion-main-20261030-ft.log
+/private/tmp/pioneer-q38-job-boot-fold-completion-clean-20261030-ft.log
+It still owes all69 receipt/missing-commit/incoming-counter cases. Preserve
+these same handles;do not restart for an observation timeout.
+The original5 full-flow histories31695/66331/41236/92178/52159 also continue.
+
+Still owed:other connected paths,original layer/model numerical validation
+for THIS boot-fold candidate,native context/END/combined-stack qualification,
+controlled deployment and honest sustained inference measurement. Earlier
+eight-way first-layer evidence is NOT numerical proof for this later image.
+No new firmware is installed;no native or Work route is enabled here.
+
+Read-only Pioneer check during this turn:SSH responsive,Haiku riscv64,
+uptime3 days1:24,64 CPUs,maxRAM137034936320 bytes,free133747576832.
+No driver/OS/Assistant/power/SD/hardware mutation was made. This is not a
+fresh GPU-compute-health,desktop-interaction or performance qualification.
