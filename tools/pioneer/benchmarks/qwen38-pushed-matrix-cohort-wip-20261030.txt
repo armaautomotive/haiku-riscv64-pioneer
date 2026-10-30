@@ -1,0 +1,96 @@
+QGW3 matrix-to-Conv boundary correction -- offline WIP, NOT installed
+2026-10-30, based on40d969783da3e82ed23e5dda93ce1df56225facf
+===================================================================
+Goal ACTIVE;last actual physical whole-model rate0.207893161tokens/sec;
+target20UNMET. Simulated instruction progress is not physical timing/TPS.
+
+Authoritative failure
+---------------------
+Original full-model AZ73776(main)/53013(clean) both EXIT1. They reached
+layer0 matrix4, phase6, before any full-layer output/commit or prefix.
+Fault PC0x60000,previousPC0x54864,actual physical accepted counter0x788
+vs expected0x786. The call is MixedRecurrentCohort::CounterSeal, not the
+projection receiver or a numerical domain failure. Diagnostic residual
+vectors at that uncompleted phase are not produced model outputs.
+
+The separate Conv/GDN coordinator admits a closed ordinary matrix using
+its pre-push arithmetic proof. It had not accounted for QGW3's two actual
+completion writes. Its expected counters now add exactly
+{0,0,2,0,2,5,2,2}, modulo32 bits, AFTER the original read/flit/matrix/source/
+job/proof validation. CounterSeal still freshly reads all eight physical
+counter views, checks exact equality and the2/6 alias, then retains the
+validated frontier. No current counter is recaptured as a new baseline;
+no mismatch is masked, tolerated or retried. Non-QGW3 paths remain textual
+and byte-pin controls are retained. No mathematical capsule was changed.
+
+Frozen paired source inputs, before runtime
+------------------------------------------
+Main:/private/tmp/pioneer-q38-push-cohort-main-bb.ROX8cD3S
+Clean:/private/tmp/pioneer-q38-push-cohort-clean-bb.D8tzp8gr
+Each archives40d969783d and overlays the same six owned sources:cohort.cpp,
+two BUILD scripts,original-flow runner,new genuine cohort test and CLI test.
+Original unrelated native Host/END/state,dirty llama.cpp and FlashNext WIP
+are not incorporated. All six working/main/clean files compare byte-identical.
+
+BB inspect44079/12751 BOTH0;all eight root/component artifacts compare equal.
+BC strict53099/57540 BOTH0:literal pins,unchanged ancestors,all three QGW3
+grammar symbols present,in-bounds,no x0-JALR/no CSR/no forbidden opcodes,
+no mutable/undefined symbols,s11 discipline and unchanged section/frame
+limits. ROOTtext131008/131072,aux32720/32768;individual parent frame1616,
+component frame2112. Combined runtime stack still requires execution proof.
+BB CLI94634/5073 BOTH0:67 invalid combinations refuse BEFORE input/output
+IO. Continuing snapshot mode is separately explicit,not a bounded shortcut.
+
+New BUILD pins, not a native/launch capability:
+boot.bin 4 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+text.bin 131008 55080ae1e89351106ca6eabd4ae4d70133705c6dbaeacbe8499f53f68ebdd987
+terminal.bin 8 6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5
+conv.bin 32720 01a8ac80e8fc500911ea6f86d23a6fdd8b506b6e0a64c802237071bca906043c
+program.elf 190520 3b0b0d7684e4e82d3cab2ae22316198e352e97c836ce5833abceb8c6f30590df
+recurrent.o 180712 344e7ec5a7163bbbf0fc804c6374b0e70a71e3e52d3bb94a768815ed567b3871
+dense.o 144336 383655ce37c0fe0276d3cb2378570c0cd76aa23add1d7b7b6eee0c480e6ed59d
+token-components-NOBOOT.o 281860 a7c8ce3c130075616e022b4aacd7499e870eea60eb8bdf25bd6a6e3595102269
+
+Genuine reached-boundary regression passed;full histories STILL LIVE
+-----------------------------------------------------------------
+New BC main16064 /clean44432 run authenticated original GGUF bytes with
+actual ROOT+119 virgin-to-live RISC/Tensix histories. They must execute
+all four projections and reach the real first cohort counter read. There
+eight child histories corrupt only physical counter observations (alias
+views2/6 moved together). By11:51UTC all eight children in EACH copy exited0:
+the actual ROOT parks before a following command after the first bad reply,
+without Conv release/retry/cleanup,and remains inert2048 instructions. Both
+unchanged parents admit all119 and execute the real worker1 nonce5 Conv
+first read. Their bounded handoff assertions pass;the outer processes are
+NOT terminal0 and are NOT whole-layer/model or completed Conv/GDN results.
+
+With explicit --pushed-cohort-faults --snapshot-first-layer --observed-trace,
+that SAME parent then continues the entire3position x64layer model through
+normal state/token/output checks and119STOP. No reset,ready setter,processor
+transplant or numeric upload occurs between the bounded gate and full run.
+An incomplete first-layer prefix may be recorded without ending the run;
+compare it bit-exact against the fixed independent CPU trace. Full traces
+must be saved only after genuine terminal verification,then compared too.
+Both BC original handles remain live after the handoff milestone. Do not
+restart them to obtain a separate prefix or bounded-test exit code.
+
+Final BD controls13966/83291 BOTH EXIT0:the old QGW2 worker-admission root
+still matches189408-byte ELF1c5fb71798d0199a1e4a8599087220582fc181bd481df84cda577764bf05f32b,
+all old ancestor controls pass,and final CLI tests again reject67 invalid
+combinations before model/image IO or output creation.
+
+Main log:/private/tmp/pioneer-q38-push-cohort-flow-main-20261030-bc.log
+Clean log:/private/tmp/pioneer-q38-push-cohort-flow-clean-20261030-bc.log
+Main trace:/private/tmp/pioneer-q38-push-cohort-flow-main-bc.GantxARb/observed
+Clean trace:/private/tmp/pioneer-q38-push-cohort-flow-clean-bc.snKGAEuE/observed
+Image:/private/tmp/pioneer-q38-push-cohort-{main,clean}-20261030-bb-image
+Sender:/private/tmp/pioneer-q38-push-worker-{main,clean}-20261030-af-image
+Mixed:generated.pioneer/qualification-inputs/mixed-worker-20261030
+Model:generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf
+
+Bounded correction only:do not publish as full-layer/model/native ready.
+Still owed:first-layer+all64/positions/state/KV/vocab/STOP/numerics,
+fault/cancellation/END/reuse/combined stack,native no-CPU-reference Work,
+Assistant and physical complete-model timing. No Pioneer SSH,power,OS,
+driver,Assistant,SD,hardware or mains action;other8 primary histories and
+27 suspended histories remain separate and preserved.

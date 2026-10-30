@@ -16,7 +16,7 @@ if '--observed-trace' in options:
     observed = pathlib.Path(options[at+1])
     options = options[:at]+options[at+2:]
     assert observed.is_absolute() and not observed.exists() and not observed.is_symlink()
-assert 5 <= len(sys.argv) <= 22 and len(set(options)) == len(options) and set(options) <= {'--prepare-only', '--bootstrap-only', '--first-layer-only', '--fast-root-memory', '--cancel-boundary', '--unroll-dense-seals', '--boundary-seals', '--unroll-quiet', '--worker-local-source-guards', '--precise-activation', '--single-closed-audit', '--worker-sealed-admission', '--snapshot-first-layer', '--eos-after-prompt', '--admission-source-faults', '--pushed-completion', '--pushed-completion-faults'}
+assert 5 <= len(sys.argv) <= 23 and len(set(options)) == len(options) and set(options) <= {'--prepare-only', '--bootstrap-only', '--first-layer-only', '--fast-root-memory', '--cancel-boundary', '--unroll-dense-seals', '--boundary-seals', '--unroll-quiet', '--worker-local-source-guards', '--precise-activation', '--single-closed-audit', '--worker-sealed-admission', '--snapshot-first-layer', '--eos-after-prompt', '--admission-source-faults', '--pushed-completion', '--pushed-completion-faults', '--pushed-cohort-faults'}
 unroll = '--unroll-dense-seals' in options
 boundary = '--boundary-seals' in options
 assert not unroll or '--cancel-boundary' in options,'dense-unroll candidate is an explicitly cancellable FP32 image'
@@ -34,7 +34,9 @@ assert not worker_admission or single_audit,'worker-sealed admission requires th
 pushed='--pushed-completion' in options
 assert not pushed or worker_admission,'QGW3 receiver requires the entire explicit worker-admission profile'
 pushed_faults='--pushed-completion-faults' in options
-assert not pushed_faults or (pushed and observed is None and not any(o in options for o in ('--prepare-only','--bootstrap-only','--first-layer-only','--fast-root-memory','--snapshot-first-layer','--eos-after-prompt','--admission-source-faults'))), 'QGW3 connected faults require an unshortened exact original-byte profile without trace publication'
+pushed_cohort='--pushed-cohort-faults' in options
+assert not pushed_faults or (pushed and observed is None and not any(o in options for o in ('--prepare-only','--bootstrap-only','--first-layer-only','--fast-root-memory','--snapshot-first-layer','--eos-after-prompt','--admission-source-faults','--pushed-cohort-faults'))), 'QGW3 connected faults require an unshortened exact original-byte profile without trace publication'
+assert not pushed_cohort or (pushed and (observed is None or '--snapshot-first-layer' in options) and not any(o in options for o in ('--prepare-only','--bootstrap-only','--first-layer-only','--fast-root-memory','--eos-after-prompt','--admission-source-faults','--pushed-completion-faults'))), 'QGW3 cohort faults require exact original bytes;observations require full continuing snapshot mode,not a shortcut'
 admission_faults = '--admission-source-faults' in options
 assert not admission_faults or (single_audit and observed is None and not any(o in options for o in ('--prepare-only','--bootstrap-only','--first-layer-only','--fast-root-memory','--snapshot-first-layer','--eos-after-prompt'))), 'connected admission fault test requires exact single-audit/worker-admission original-byte profile without shortcuts or trace publication'
 assert sum(o in options for o in ('--prepare-only', '--bootstrap-only', '--first-layer-only')) <= 1
@@ -100,8 +102,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-original-token-flow-', dir='/pr
                     *(['-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1'] if precise else []),
                     *(['-DPIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION=1'] if pushed else []),
                     *(['-DPIONEER_Q38_TEST_OBSERVED_TRACE=1'] if observed is not None else []),
-                    str(here/('pioneer_q38_connected_pushed_completion_test.cpp' if pushed_faults else 'pioneer_q38_connected_admission_fault_test.cpp' if admission_faults else 'pioneer_q38_token_original_flow_test.cpp')), str(here/'pioneer_q38_whole_original_bytes.cpp'), *recorder, '-o', str(binary)], check=True)
-    subprocess.run([str(binary), *sys.argv[1:5], *(['--expect-worker-sealed-admission'] if admission_faults and worker_admission else []), *[o for o in options if o not in ('--fast-root-memory', '--cancel-boundary', '--unroll-dense-seals', '--boundary-seals', '--unroll-quiet', '--worker-local-source-guards', '--precise-activation', '--single-closed-audit','--worker-sealed-admission','--admission-source-faults','--pushed-completion','--pushed-completion-faults')],
+                    str(here/('pioneer_q38_connected_pushed_cohort_test.cpp' if pushed_cohort else 'pioneer_q38_connected_pushed_completion_test.cpp' if pushed_faults else 'pioneer_q38_connected_admission_fault_test.cpp' if admission_faults else 'pioneer_q38_token_original_flow_test.cpp')), str(here/'pioneer_q38_whole_original_bytes.cpp'), *recorder, '-o', str(binary)], check=True)
+    subprocess.run([str(binary), *sys.argv[1:5], *(['--expect-worker-sealed-admission'] if admission_faults and worker_admission else []), *[o for o in options if o not in ('--fast-root-memory', '--cancel-boundary', '--unroll-dense-seals', '--boundary-seals', '--unroll-quiet', '--worker-local-source-guards', '--precise-activation', '--single-closed-audit','--worker-sealed-admission','--admission-source-faults','--pushed-completion','--pushed-completion-faults','--pushed-cohort-faults')],
                     *(['--observed-trace', str(observed)] if observed is not None else [])], check=True,
                    env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1', 'PIONEER_TEST_ROOT_PROFILE_MAP':str(profile)})
     if observed is not None and '--bootstrap-only' in options:

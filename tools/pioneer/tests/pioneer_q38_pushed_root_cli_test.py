@@ -29,13 +29,14 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw3-cli-',dir='/private/tmp') 
         for flag in ('--pushed-completion','--pushed-completion=0','--unknown-qgw3'):
             reject(here.parent/script,['sdk','output'],[*selected,flag])
     runner=here/'run_pioneer_q38_token_original_flow_tests.py'
-    selected=['--cancel-boundary',*profile,mode]
-    for flag in selected:
-        if flag!=mode:reject(runner,['image','mixed','worker','model.gguf'],[f for f in selected if f!=flag])
-    for flag in ('--prepare-only','--bootstrap-only','--first-layer-only','--fast-root-memory',
-                 '--snapshot-first-layer','--eos-after-prompt','--admission-source-faults',mode,'--pushed-completion=0'):
-        reject(runner,['image','mixed','worker','model.gguf'],[*selected,flag])
-    reject(runner,['image','mixed','worker','model.gguf'],[*selected,'--observed-trace',str(root/'observed')])
-    for name in ('PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE'):
-        reject(runner,['image','mixed','worker','model.gguf'],selected,{name:'0'})
+    for selected_mode,other_mode in ((mode,'--pushed-cohort-faults'),('--pushed-cohort-faults',mode)):
+        selected=['--cancel-boundary',*profile,selected_mode]
+        for flag in selected:
+            if flag!=selected_mode:reject(runner,['image','mixed','worker','model.gguf'],[f for f in selected if f!=flag])
+        for flag in ('--prepare-only','--bootstrap-only','--first-layer-only','--fast-root-memory',
+                     '--snapshot-first-layer','--eos-after-prompt','--admission-source-faults',selected_mode,other_mode,'--pushed-completion=0'):
+            reject(runner,['image','mixed','worker','model.gguf'],[*selected,flag])
+        reject(runner,['image','mixed','worker','model.gguf'],[*selected,'--observed-trace',str(root/'observed')])
+        for name in ('PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE'):
+            reject(runner,['image','mixed','worker','model.gguf'],selected,{name:'0'})
 print(f'PASS QGW3 receiver CLI/{checks} missing-parent+shortcut+duplicate+unknown+defined-zero-environment refusals BEFORE model/image IO or output creation;NO runtime/native/physical/Work/TPS grant')

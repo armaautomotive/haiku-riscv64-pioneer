@@ -145,3 +145,19 @@ timing are still required. A narrow connected test is not full offload.
 No Pioneer SSH, power, OS, driver, Assistant, SD, hardware or mains action
 occurred. Eight pre-existing primary histories keep their original handles;
 27 older suspended histories remain preserved, not killed or restarted.
+
+Later full-run result, 2026-10-30 11:33 UTC
+-----------------------------------------
+AZ73776/53013 BOTH terminated1, not live or passing. Each reached the actual
+fourth projection of layer0, then faulted at phase6 in the separate
+MixedRecurrentCohort::CounterSeal matrix-to-Conv admission. Disassembly
+identifies the fault call at0x54864; the current accepted-command counter
+is0x788 versus the unadjusted arithmetic-proof expectation0x786. No first-
+layer prefix was produced. This does not invalidate the narrower69-case
+connected gate or qualify the full receiver. No hardware was touched.
+The follow-up correction derives the exact post-publication counter delta
+in that consumer too, while retaining all eight fresh counter reads and
+alias equality checks. By11:51UTC both corrected genuine handoff histories
+pass all eight injected counter cases and the actual next Conv first read;
+the SAME parents continue full numerical/terminal qualification. That full
+qualification remains pending; see the matrix-to-Conv WIP record.

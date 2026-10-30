@@ -181,6 +181,12 @@ static void Admit(uint32_t* t,unsigned w){
   unsigned delta=i==1?flits:i==0 || i==2 || i==3 || i==6?reads:0;
   if(uint32_t(p[8+i]-p[i])!=delta)scalar_fault_park();
  }
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+ // This proof closes arithmetic BEFORE the QGW3 payload+commit writes.
+ // Derive their exact expected delta;CounterSeal still reads ALL current
+ // physical counters and rejects any other movement or alias mismatch.
+ for(unsigned i=0;i<8;i++)p[8+i]+=i==5?5U:i==2 || i==4 || i==6 || i==7?2U:0U;
+#endif
  CounterSeal(t,w,p+8);BootSeal(t,w);
 }
 static void Capture(){
