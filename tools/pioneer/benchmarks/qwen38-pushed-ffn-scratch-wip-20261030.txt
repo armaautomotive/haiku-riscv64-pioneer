@@ -100,3 +100,8 @@ Still owed: terminal original full-model/three-position/state/KV/vocabulary/
 STOP numerics and combined stack; coupled G3 native cancellation/END/reuse;
 Work/Assistant integration; controlled physical whole-model tokens/sec.
 DO NOT INSTALL this experimental candidate on the Pioneer.
+
+Follow-up: DR34851/74276 BOTH subsequently TERMINAL EXIT0/logs identical.
+Each passes all69 actual small-receipt/counter fault children and unchanged
+parent nonce2 first read. The larger original full-model DR31695/66331 are
+still separate live histories; no completed dense-layer/model is implied.

@@ -100,3 +100,12 @@ New failure is phase8/matrices4, not the old timeout. Their first-layer
 bitexact diagnostic prefixes remain scoped valid, NOT full-model passes.
 See qwen38-pushed-ffn-scratch-wip-20261030.txt for the retained-receipt/FFN
 scratch alias diagnosis, distinct correction and replacement histories.
+
+Further follow-up: CY93250 large dense-receipt suite TERMINAL EXIT0 from
+the SAME original RESET+119 histories/prior3layers. Missing-marker child
+exhausts exactly458752 zero loads; wrong-marker child rejects its first
+nonzero load after69137 genuine zero loads. Both park with no following
+packet and remain inert2048 instructions. The unchanged parent retains
+actual8960 tensor instructions/1122 reads/two pushes and resumes its real
+704-byte arithmetic-proof read. This closes the finite LARGE-job timeout
+gate above, not the completed dense-layer/full-model/native/physical gates.

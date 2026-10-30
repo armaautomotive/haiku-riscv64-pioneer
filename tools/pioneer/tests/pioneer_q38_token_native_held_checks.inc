@@ -44,10 +44,10 @@ static void CheckNativeHeld(Fixture& f,unsigned fault){
     && io.touches==touches);f.Unknown();
    printf("PASS native held fault%u/actual preceding1010 zero jobs+120 participant ownership/native generation loss in phase%u/ALLowners+aliases+leases retained/no retry/restore/release/following IO;SIMULATED endpoints,NOT physical/RUN/END/TPS\n",fault,result.phase);
   };
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   io.SnapshotPreDispatch(); // separate physical byte observation only,not an ownership/history receipt
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   io.SnapshotPrePeerStores(); // actual originals before ANY fresh peer-store lease begins
 #endif
   const bool prepared=PrepareQ38TokenNativeHeld(c,prompt,2,3,false,248318,248317,result);

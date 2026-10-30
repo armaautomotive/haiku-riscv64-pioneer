@@ -6,7 +6,7 @@
 // it does not suppress unrelated zero/graph/native unsafe state.
 class PioneerQ38TokenCallScope {
  PioneerProbeCookie* cookie=NULL;PioneerStoreContext* context=NULL;
- thread_id thread=-1;status_t status=B_BAD_VALUE;bool held=false;
+ thread_id thread=-1;status_t status=B_BAD_VALUE;bool held=false,destroyed=false;
 public:
  explicit PioneerQ38TokenCallScope(PioneerProbeCookie* owner){
   if(!owner || owner->magic!=0x50313030)return;
@@ -30,6 +30,7 @@ public:
  PioneerQ38TokenCallScope& operator=(const PioneerQ38TokenCallScope&)=delete;
  ~PioneerQ38TokenCallScope(){
   if(!held)return;
+  if(destroyed){release_sem(sLock);return;} // successful private Finish detached/deleted context UNDER this lock
   if(!context || !cookie || cookie->context!=context || cookie->magic!=0x50313030 || sRuntimeOwner!=cookie
    || context->q38GdnCallThread!=thread || find_thread(NULL)!=thread){
    if(context){tt_resident_session_result retained={};RetainQ38DispatchOwner(*context,retained);}
@@ -38,5 +39,6 @@ public:
  }
  PioneerStoreContext* Context()const{return status==B_OK && held?context:NULL;}
  status_t Status()const{return status;}
+ bool Finish(PioneerQ38TokenEndResult&);
 };
 #endif

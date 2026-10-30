@@ -4,6 +4,7 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenMemory.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenViewLease.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenPciLease.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenHostLease.h"
 #define PIONEER_Q38_TOKEN_NATIVE_VIEW_ENDPOINT_TEST 1
 #define PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE 1
 #include <array>
@@ -11,9 +12,15 @@
 #include <cstdio>
 #include <memory>
 #include <vector>
-using uint32=uint32_t;using uint64=uint64_t;using area_id=int;
+using uint32=uint32_t;using uint64=uint64_t;using area_id=int;using status_t=int;
 static constexpr int B_OK=0,B_ANY_KERNEL_ADDRESS=1,B_KERNEL_READ_AREA=2,B_KERNEL_WRITE_AREA=4,B_UNCACHED_MEMORY=8;
 namespace L=PioneerQ38TokenL1;
+#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+static constexpr bool pushed=true;
+static_assert(L::Family==0x33505451 && L::Pushed==1,"distinct G3 mapping DATA");
+#else
+static constexpr bool pushed=false;
+#endif
 struct Endpoint {
  static constexpr uint64 Bar=UINT64_C(0x900000000);
  static constexpr unsigned Words=0x180000/4;
@@ -86,7 +93,7 @@ int main(){
     const uint32 address=L::SnapshotAddress(worker,i),value=Value(worker,i);
     assert(io->TokenMemoryWrite(worker,address,value) && io->TokenMemoryReadChecked(worker,address,out) && out==value);words++;
    }
-   for(uint32 address:{0U,0x6001U,0x22000U,0x23ffcU,0x17f800U,0x17ffbcU,0x17ffe0U,0x180000U,UINT32_MAX}){
+   for(uint32 address:{0U,0x6001U,pushed && worker?0x23000U:0x22000U,0x23ffcU,0x17f800U,0x17ffbcU,0x17ffe0U,0x180000U,UINT32_MAX}){
     unsigned n=io->mmio+io->direct;out=0x12345678;
     assert(!io->TokenMemoryReadChecked(worker,address,out) && out==0x12345678 && !io->TokenMemoryWrite(worker,address,0)
      && io->mmio+io->direct==n);refused++;

@@ -103,6 +103,12 @@ extern "C" bool pioneer_token_context_scoped_views_close(PioneerProbeCookie* coo
 extern "C" bool pioneer_token_context_scoped_pci_close(PioneerProbeCookie* cookie,PioneerQ38TokenPciResult& result){
  PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();return c && CloseQ38TokenNativePci(*c,result);
 } // original PCI configuration only;hosts/reservations/full END retained
+extern "C" bool pioneer_token_context_scoped_hosts_close(PioneerProbeCookie* cookie,PioneerQ38TokenHostsResult& result){
+ PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();return c && CloseQ38TokenNativeHosts(*c,result);
+} // genuine private host-close path;no public ABI or physical qualification
+extern "C" bool pioneer_token_context_scoped_finish(PioneerProbeCookie* cookie,PioneerQ38TokenEndResult& result){
+ PioneerQ38TokenCallScope scope(cookie);return scope.Finish(result);
+} // actual checked reservation release+known-clean whole-context disposal,COMPILE ONLY
 extern "C" void pioneer_token_context_destroy_clean(PioneerStoreContext* c){delete c;}
 
 // Compile the actual clock-map dependency explicitly, not via an accidentally

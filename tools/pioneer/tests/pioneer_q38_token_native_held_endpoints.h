@@ -31,28 +31,28 @@ struct TokenHeldEndpoints:ZeroControlIO {
  const PioneerQ38TokenHardwareSealResult* nativeHardwareSealResult=nullptr;
  bool hardwareSealFault=false;unsigned hardwareSealFaultSeen=0,hardwareSealFaultTouches=0,hardwareSealReads=0;
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
  uint32 beforeSharedTlb[2][3]={};const PioneerQ38TokenSharedTlbRestoreResult* nativeSharedTlbResult=nullptr;
  unsigned sharedTlbFault=0,sharedTlbFaultSeen=0,sharedTlbFaultTouches=0,sharedTlbWrites=0,sharedAliasRefusals=0;
  std::vector<uint32> sharedBulkSaved=std::vector<uint32>(TT_BULK_UPLOAD_SAVED_WORDS);
  uint32* BulkSavedWords(){return sharedBulkSaved.data();} // real separate retained HOST buffer,not an owner/history receipt
 #endif
  void SharedMappedAccess(){
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   assert(!sharedTlbWrites && "NO mapped source/L1/NIU/FIFO access after first shared-map write");
 #endif
  }
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
  std::array<uint32,2048> beforeRootScratch={};uint32 beforeRootConfig=0;
  const PioneerQ38TokenRootStoreRestoreResult* nativeRootStoreResult=nullptr;
  unsigned rootStoreFault=0,rootStoreFaultSeen=0,rootStoreFaultTouches=0,rootStoreMapWrites=0;
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
  std::vector<uint32> beforeNativeImage;
  const PioneerQ38TokenRestoreResult* nativeRestoreResult=nullptr;
  bool restoreFault=false;unsigned restoreFaultSeen=0,restoreFaultTouches=0;
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
  std::vector<uint32> beforePeerScratch;std::array<uint32,119> beforePeerConfig={};
  const PioneerQ38TokenPeerRestoreResult* nativePeerResult=nullptr;
  unsigned peerRestoreFault=0,peerFaultSeen=0,peerFaultTouches=0,peerMapWriteSeen=0;
@@ -65,7 +65,7 @@ struct TokenHeldEndpoints:ZeroControlIO {
   }
  } // actual pre-lease physical byte/config observation,NEVER fed back to a controller or processor
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
  std::vector<uint32> beforeDispatchImage;
  const PioneerQ38TokenDispatchRestoreResult* nativeDispatchResult=nullptr;
  bool dispatchRestoreFault=false;unsigned dispatchFaultSeen=0,dispatchFaultTouches=0;
@@ -108,7 +108,7 @@ struct TokenHeldEndpoints:ZeroControlIO {
    Core(w).nativePhysicalWindow=true;Core(w).nativeWindowX=PioneerWorkerX(w);Core(w).nativeWindowY=PioneerWorkerY(w);
    extra[w].resize(Words);
    for(unsigned i=0;i<Words;i++)extra[w][i]=i%17?uint32(0x9e3779b9U*(i+1)^0x1234567U*(w+1)):UINT32_MAX;
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
    if(w)for(unsigned i=0;i<2048;i++)Core(w).destination[i]=i%17?uint32(0xa5973101U*(i+1)^w):UINT32_MAX;
 #endif
   }
@@ -119,10 +119,10 @@ struct TokenHeldEndpoints:ZeroControlIO {
   for(unsigned w=0;w<120;w++){runtimeCore=w;assert(Q38PanelRead(address)==0x5a000000+w);}
   for(unsigned w=0;w<120;w++){runtimeCore=w;Q38PanelWrite(address,0xab860000+at);}
   runtimeCore=0;
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   for(unsigned s=0;s<2;s++)for(unsigned i=0;i<3;i++)beforeSharedTlb[s][i]=Core(0).tlb[s][i];
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   for(unsigned i=0;i<2048;i++)Core(0).destination[i]=i%17?uint32(0x75a31901U*(i+1)):UINT32_MAX;
   beforeRootConfig=Core(0).config;
   for(unsigned i=0;i<2048;i++)beforeRootScratch[i]=Raw(0,0x17e000+i*4);
@@ -146,7 +146,7 @@ struct TokenHeldEndpoints:ZeroControlIO {
   assert(a>=base && a-base<Words*4 && !((a-base)&3));return uint32(a-base);
  }
  void ObserveAlias(unsigned address,bool write){
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(beforeNativeImage.empty() && !write && journalResult && journalResult->phase==1 && !runtimeCore){
    assert(address==0x40000);beforeNativeImage.resize(PioneerQ38TokenL1::SavedWords);
    for(unsigned w=0;w<120;w++){
@@ -205,7 +205,7 @@ struct TokenHeldEndpoints:ZeroControlIO {
   }
 #endif
   C().Q38PanelWrite(address,value);
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_DISPATCH_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(dispatchRestoreFault && !dispatchFaultSeen && nativeDispatchResult && nativeDispatchResult->phase==2
    && runtimeCore==119 && address==TT_Q38_PANEL_VIEW_BASE){
    dispatchFaultSeen++;dispatchFaultTouches=touches;sReloadGeneration++;
@@ -215,16 +215,16 @@ struct TokenHeldEndpoints:ZeroControlIO {
  uint32* Q38PanelSavedWords(){Touch();return C().Q38PanelSavedWords();}
  uint32* HostReadBackup(unsigned words){Touch();return C().HostReadBackup(words);}
  void DramTlbWrite(unsigned s,unsigned w,uint32 value){Touch();C().DramTlbWrite(s,w,value);
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(nativeSharedTlbResult && nativeSharedTlbResult->phase==3){
    assert(!runtimeCore);sharedTlbWrites++;
    if(sharedTlbFault==1 && !sharedTlbFaultSeen){sharedTlbFaultSeen++;sharedTlbFaultTouches=touches;sReloadGeneration++;}
   }
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(rootStoreFault==2 && nativeRootStoreResult && nativeRootStoreResult->phase==1 && !runtimeCore && !s && !w)rootStoreMapWrites++;
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(nativePeerResult && nativePeerResult->started){
    C().nativePhysicalWindow=true;C().nativeWindowX=PioneerWorkerX(runtimeCore);C().nativeWindowY=PioneerWorkerY(runtimeCore);
   } // expected physical target for this endpoint;actual TLB words still independently checked,never rewritten by the TEST
@@ -238,19 +238,19 @@ struct TokenHeldEndpoints:ZeroControlIO {
    if(hardwareSealFault && !hardwareSealFaultSeen){hardwareSealFaultSeen++;hardwareSealFaultTouches=touches;return actual^1U;}
   }
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(!sharedTlbFaultSeen && nativeSharedTlbResult && !runtimeCore
    && ((sharedTlbFault==2 && nativeSharedTlbResult->phase==3 && !s && !w)
     || (sharedTlbFault==3 && nativeSharedTlbResult->phase==4 && s==1 && w==1))){
    sharedTlbFaultSeen++;sharedTlbFaultTouches=touches;return actual^1U;
   }
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(rootStoreFault==2 && !rootStoreFaultSeen && nativeRootStoreResult && nativeRootStoreResult->phase==1 && !runtimeCore && !s && !w){
    assert(rootStoreMapWrites==1);rootStoreFaultSeen++;rootStoreFaultTouches=touches;return actual^1U;
   }
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(peerRestoreFault==2 && !peerFaultSeen && nativePeerResult && nativePeerResult->phase==1 && !runtimeCore && !s && !w){
    assert(peerMapWriteSeen==1);peerFaultSeen++;peerFaultTouches=touches;return actual^1U;
   } // FIRST bad readback follows an ACTUAL known mapping write;no supplied ready/PC receipt
@@ -259,12 +259,12 @@ struct TokenHeldEndpoints:ZeroControlIO {
  }
  uint32 SourceRead(unsigned w){SharedMappedAccess();Touch();return Trace("source",w,C().SourceRead(w));}
  uint32 ResidentNocRead(uint32 address){SharedMappedAccess();Touch();const uint32 actual=Trace("noc",address,C().ResidentNocRead(address));
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(rootStoreFault==3 && !rootStoreFaultSeen && nativeRootStoreResult && nativeRootStoreResult->phase==3 && !runtimeCore && address==0x100){
    rootStoreFaultSeen++;rootStoreFaultTouches=touches;return actual^1U;
   }
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(peerRestoreFault==3 && !peerFaultSeen && nativePeerResult && nativePeerResult->phase==3 && runtimeCore==119 && address==0x100){
    peerFaultSeen++;peerFaultTouches=touches;return actual^1U;
   }
@@ -273,13 +273,13 @@ struct TokenHeldEndpoints:ZeroControlIO {
  }
  uint32 TokenFifoStatusWord(uint32 address){
   SharedMappedAccess();Touch();assert(address==0x64 || address==0x68);
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(!rootStoreFaultSeen && nativeRootStoreResult && nativeRootStoreResult->phase==1 && !runtimeCore
    && ((rootStoreFault==5 && address==0x64) || (rootStoreFault==6 && address==0x68))){
    rootStoreFaultSeen++;rootStoreFaultTouches=touches;return address==0x64?0x1010100fU:1U;
   }
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(!peerFaultSeen && nativePeerResult && nativePeerResult->phase==1 && !runtimeCore
    && ((peerRestoreFault==5 && address==0x64) || (peerRestoreFault==6 && address==0x68))){
    peerFaultSeen++;peerFaultTouches=touches;return address==0x64?0x1010100fU:1U;
@@ -315,12 +315,12 @@ struct TokenHeldEndpoints:ZeroControlIO {
   }
 #endif
   C().ResidentNocWrite(address,value);
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(rootStoreFault==1 && !rootStoreFaultSeen && nativeRootStoreResult && nativeRootStoreResult->phase==2 && !runtimeCore && !address){
    rootStoreFaultSeen++;rootStoreFaultTouches=touches;sReloadGeneration++;
   } // actual write precedes scope loss;no following IO is permitted
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(peerRestoreFault==1 && !peerFaultSeen && nativePeerResult && nativePeerResult->phase==2 && runtimeCore==119 && !address){
    peerFaultSeen++;peerFaultTouches=touches;sReloadGeneration++;
   } // generation loss AFTER an ACTUAL original command write;next native access must refuse
@@ -332,12 +332,12 @@ struct TokenHeldEndpoints:ZeroControlIO {
  uint32 RuntimeStatusRead(unsigned word){SharedMappedAccess();Touch();return C().RuntimeStatusRead(word);}
  void RuntimeStatusWrite(unsigned word,uint32 value){SharedMappedAccess();Touch();C().RuntimeStatusWrite(word,value);}
  uint32 ResidentL1Read(unsigned word){SharedMappedAccess();Touch();const uint32 actual=C().ResidentL1Read(word);
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(rootStoreFault==4 && !rootStoreFaultSeen && nativeRootStoreResult && nativeRootStoreResult->phase==4 && !runtimeCore && !word){
    rootStoreFaultSeen++;rootStoreFaultTouches=touches;return actual^1U;
   }
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_PEERS_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(peerRestoreFault==4 && !peerFaultSeen && nativePeerResult && nativePeerResult->phase==4 && runtimeCore==119 && !word){
    peerFaultSeen++;peerFaultTouches=touches;return actual^1U;
   }

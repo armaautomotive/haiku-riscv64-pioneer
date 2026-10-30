@@ -8,6 +8,7 @@ bool PioneerSessionIO::TokenRuntimeScope(const PioneerQ38TokenNativeOwner& runti
  return s && s->runtime==&runtime && s->memory==&memory && &s->canonical==&canonical && s->startup==&startup
   && s->identity==id && c->initialized==learned && pages==PioneerResidentBanks::Pages
   && s->pci.Prepared() && s->pci.Matches(*this,c->Pci(),c->transaction)
+  && s->hosts.Prepared() && s->hosts.Matches(*this,c->host,c->bulkHost,c->wideHost,q38TokenViews)
   && (s->phase==PioneerQ38TokenNativeState::RuntimePreparing || s->phase==PioneerQ38TokenNativeState::RuntimeReady
    || s->phase==PioneerQ38TokenNativeState::WorkersBootstrapping || s->phase==PioneerQ38TokenNativeState::WorkersReady
    || s->phase==PioneerQ38TokenNativeState::RootStarting || s->phase==PioneerQ38TokenNativeState::RootRunning
@@ -27,6 +28,7 @@ bool PioneerSessionIO::TokenRuntimeScope(const PioneerQ38TokenNativeOwner& runti
  const auto* a=reinterpret_cast<const uint8_t*>(&result);const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
  for(unsigned i=0;i<sizeof(result);i++)if(a[i]!=b[i])return false;
  if(!s || s->phase!=PioneerQ38TokenNativeState::MemoryInstalled || s->runtime || !s->memory || !s->memory->Installed()
+  || !s->hosts.Prepared() || !s->hosts.Matches(c.io,c.host,c.bulkHost,c.wideHost,c.io.q38TokenViews)
   || !s->startup || !s->participants || s->participants!=c.q38Dispatch || !c.io.TokenModelSourceScope(false))return false;
  const uintptr_t out=reinterpret_cast<uintptr_t>(&result);
  if(out>UINTPTR_MAX-sizeof(result) || !s->startup->PublishedOutput(&result,sizeof(result)))return false;

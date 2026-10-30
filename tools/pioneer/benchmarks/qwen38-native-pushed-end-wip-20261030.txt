@@ -1,0 +1,107 @@
+Private G3 native host disposal / END -- non-loadable development WIP
+2026-10-30
+====================================================================
+Goal ACTIVE;20 tokens/sec UNMET. Last physical whole-model measurement
+remains0.207893161 tokens/sec. No Pioneer/SSH/power/driver/OS/Assistant/SD/
+hardware/mains action was taken. No speedup is inferred from these tests.
+
+Implementation scope
+-----------------------
+This checkpoint saves the reviewed private native host/END implementation
+and its associated tests. It DOES NOT enable ordinary driver entrypoints,
+a public ioctl, Work mode or Assistant selection. The actual SDK objects
+retain their renamed, machine-code-inert conventional entrypoints. The
+full-generation/cancellation helpers remain distinct explicit TEST roles.
+
+The same three wired-host leases, VM handles and virtual/physical identities
+are captured before image installation. Runtime staging requires that exact
+journal. Cleanup requires actual original L1/dispatch/peer/ROOT/shared-TLB
+restoration, clock END, hardware closure,29 device-view deletions and PCI
+restoration before wide->bulk->input single-attempt host disposal. The old
+strict retained-host VM/PCI scope is not widened; a separate core scope and
+exact released-prefix journal govern disposal. Only the real FD/team/thread
+lock scope may consume one checked same-device/cookie unreserve attempt,
+record success before its final lifetime audit and destroy the whole clean
+context. Uncertainty retains/quarantines; no retry or following device IO.
+The scope destructor does not dereference a legitimately deleted context.
+
+Prior G1 cancellation/positive reload and selected fault evidence is in
+qwen38-native-host-g-completed-20261030.txt. Those results are NOT G3 or
+normal three-token generation proof. Current native host/END bodies match
+that tested implementation; Mapping/State also contain the separately
+published preparation audit and precise-family aperture changes. Actual
+device-manager BEGIN/reacquisition and physical reload remain unqualified.
+
+New G3 checks and failures caught
+---------------------------------
+DS actual G3 pending-owner contracts78646/51807 BOTH EXIT0/logs identical:
+386 pending/nonpristine/outside-FD/host/unreserve refusals after actual bound
+owner and simulated clock/PCI BEGIN; no subsequent model/clock/PCI IO,
+processor instructions, VM/host release or unreserve. These are negative
+prelaunch checks, not positive END or launch authority. The runner now
+accepts this exact contract with the real two image paths and119 virgin
+engine objects; it does not accept synthetic bootstrap shortcuts.
+
+DS native SDK98378/79499 BOTH EXIT0; actual G3 objects byte-identical SHA
+cb8ac63b96d5b253eab93bbb38eca07c7d62c2ae3632d0159a6197367471fdb7.
+All13 compiled program arrays are SHA-exact; actual five renamed bodies
+and five wrappers are inert; max individual Token frame1232. Logs differ
+only in one printed output path. This is COMPILE ONLY, not lifecycle,
+combined-stack or physical proof. The G2 SDK control also compiles.
+
+DS92333 EXIT0:33 explicit TEST roles/1071 refusals,118 host-lease component
+cases,183 view-lease component cases. DU47823 EXIT0:actual native binding
+3717 refusals and default G1 mapping11406906 saved words/1715 refusals.
+
+A new CLI regression first FAILED as expected (82298 EXIT1): a refused
+state-flow request created output/state-native before rejecting a defined-
+zero role override. The runner now creates that directory only after all
+validation and successful linking, immediately before actual execution.
+Compile-link-only creates no state directory. Main34166, clean74199 and
+final clean51037 CLI checks pass41 refusal cases with input sentinels and
+an unchanged complete directory inventory. No native/device code changes
+were needed for that harness correction. DU39399 contract repeats EXIT0.
+
+DV mapping extends the real adapter test to explicit QTP3, including its
+larger front-ROM journal. Its old22000 invalid-address probe now correctly
+stays invalid for ROOT/G1/G2, while G3 peers must retain22000..22ffc and
+refuse23000. Both complete root terminals, UINT32_MAX data, independent
+120-core apertures, partial-map retention and all1715 inert refusals remain.
+Main8591 and clean51037 G3 BOTH EXIT0/all13478458 words/logs identical;
+G2 control82536 EXIT0/all13356602. Clean51037 also passes41 CLI cases.
+These are OS/scope endpoint tests,
+not a launched native journal, restore or physical-memory test.
+
+Provenance and continuing lifetimes
+-------------------------------------
+DS main:/private/tmp/pioneer-q38-native-pushed-end-main-ds.ofwB08g7
+DS clean:/private/tmp/pioneer-q38-native-pushed-end-clean-ds.T7MbMfe7
+DU main:/private/tmp/pioneer-q38-native-pushed-end-main-du.QyroKmRm
+DU clean:/private/tmp/pioneer-q38-native-pushed-end-clean-du.A3RFqACa
+Final DV:/private/tmp/pioneer-q38-native-pushed-final-clean-dv.h2StIFsO
+Each starts from archived e88c275d3c, then scoped current native/END/test
+overlays. DS85 paths were cmp-verified before tests. The final86-path
+source manifest identifies current overlays; only runner/CLI/mapping TEST
+files changed after DS. Candidate native/SDK source is unchanged. Dirty
+llama.cpp, FlashNext and unrelated status-note WIP are not incorporated.
+
+DT29776 is a LIVE two-cycle native G3 first-layer/cancel/STOP/HOLD/drain/
+all-restorations/clock/hardware/VM/PCI/host/checked-unreserve/reload test.
+DT80182 is a LIVE same-predecessor lifetime-loss-after-successful-unreserve
+test. Both use their SAME virgin119-engine histories and original model
+bytes; no processor-state transplantation, supplied ready bit or CPU
+products. Each has passed the actual first three-worker48-row projection
+and continued. They are NOT terminal successes or all64-layer results.
+Logs:/private/tmp/pioneer-q38-native-pushed-{reload-main,unreserve-clean}-20261030-dt.log
+
+Original corrected full-model DR31695/66331 and older native DK77228/
+DO31762 remain LIVE on the SAME handles. No completed or stopped history
+is restarted merely for observation. CY93250 large-receipt faults and
+DR34851/74276 small receiver faults are now terminal0; their evidence is
+recorded in the companion receipt reports, not full-model passes.
+
+Still required: genuine G3 normal/EOS whole-model multi-token/state/KV/
+vocabulary/STOP numerics, combined stacks, positive full-generation native
+END/reuse and faults, public driver/Work/Assistant integration, repeated
+physical reload and generation, long-context stability and measured tuning
+toward20 tokens/sec. DO NOT INSTALL this private non-loadable candidate.

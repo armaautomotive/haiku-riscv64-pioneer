@@ -17,6 +17,9 @@
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE)
 #error Explicit native VM-closed PCI restoration TEST required
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HOSTS_FIXTURE
+#include "pioneer_q38_token_native_hosts_checks.inc"
+#endif
 static void CheckNativePciClose(Fixture& f){
  auto& c=*f.c;auto& io=f.io;auto* s=c.q38TokenNative;auto& raw=io.nativePci;
  assert(!lockHeld && s->ViewsReleased() && !s->PciRestored() && !s->Closed() && raw.writes==11 && raw.mmioReads==3
@@ -63,4 +66,7 @@ static void CheckNativePciClose(Fixture& f){
   && raw.mmioReads==3 && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases);
  if(io.nativePciFault)printf("EXECUTED native PCI close fault%u/actual full predecessor+real BEGIN+native prelaunch capture+hardware+VM closure/first actual config-write generation loss or readback corruption/NO following IO/retry/host release;transaction consumed/remaining owners retained,NOT full END/physical/Work/TPS\n",io.nativePciFault);
  else puts("EXECUTED native SAME full predecessor+prelaunch SAME actual PCI BEGIN+transport journal+hardware+29VM closure/72 checked config reads+11 exact ordered original writes+full final pass/both decoders OFF/8 metadata refusals/no post-close PCI traffic/no retry;hosts+model reservations STILL OWNED,NOT full END/physical/Work/TPS qualification");
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HOSTS_FIXTURE
+ if(!io.nativePciFault)CheckNativeHostsClose(f);
+#endif
 }

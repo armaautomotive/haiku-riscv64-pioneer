@@ -35,6 +35,9 @@ using PioneerHostPageIO=TokenNativeEndpoints;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
 #include "pioneer_q38_native_trace_test_bridge.h"
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_STATE_SNAPSHOT_FIXTURE
+#include "pioneer_q38_native_state_test_bridge.h"
+#endif
 struct PioneerSessionIO:TokenNativeEndpoints {
  tt_dram_samples_result& dram;
  TokenPciRaw nativePci;
@@ -63,7 +66,7 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  uint32 NativePreparationFifoObserved(uint32,uint32);
  void DramTlbWrite(unsigned,unsigned,uint32);uint32 DramTlbRead(unsigned,unsigned);
  void ResidentNocWrite(uint32,uint32);void Q38PanelWrite(uint32,uint32);uint32 Q38PanelRead(uint32);
-#ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
  void NativeSharedAliasRefusals();
 #endif
 #endif
@@ -227,6 +230,19 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  bool runtimeMapped=true,q38SpanAllowed=true,nonrootFault=false;
  int outputArea=0,wideArea=0; // simulated owned VM handles;real quarantine method below
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+ int inputArea=301;bool nativeHostAttempted[3]={};
+ std::vector<unsigned> nativeHostDeletes;unsigned nativeHostFault=0,nativeHostFaultAt=0;
+ unsigned nativeUnreserveCalls=0;bool nativeUnreserveFail=false,nativeUnreserveLose=false;
+ bool nativeEndObserved=false;
+ int NativeReleaseHost(unsigned kind){
+  assert(kind<3 && !nativeHostAttempted[kind]);nativeHostAttempted[kind]=true;nativeHostDeletes.push_back(kind);
+  if(nativeHostFault==1 && nativeHostDeletes.size()==nativeHostFaultAt){Touch();return B_BAD_VALUE;}
+  const int status=kind==2?TokenNativeEndpoints::ReleaseWideOutput():kind==1?OutputBufferMock::ReleaseOutputBuffer():PageMock::ReleaseHostPage();
+  if(!status){if(kind==2)wideArea=-1;else if(kind==1)outputArea=-1;else inputArea=-1;}
+  if(nativeHostFault==2 && nativeHostDeletes.size()==nativeHostFaultAt)sReloadGeneration++;
+  return status;
+ } // OS endpoint simulation ONLY;production controller chooses exact order/one attempt
+ int ReleaseWideOutput(){return NativeReleaseHost(2);}int ReleaseOutputBuffer(){return NativeReleaseHost(1);}int ReleaseHostPage(){return NativeReleaseHost(0);}
  std::array<area_id,25> nativeViewAreas=[](){std::array<area_id,25> values;for(unsigned i=0;i<25;i++)values[i]=int(200+i);return values;}();
  std::vector<area_id> nativeViewDeletes;unsigned nativeViewFault=0,nativeViewFaultTouches=0;
 #endif
@@ -330,7 +346,20 @@ uint64 PioneerSessionIO::TokenPciEndpoint(){return (uint64(nativePci.profile.roo
 area_id* PioneerSessionIO::TokenViewHandle(unsigned index){
  return index<4?&q38TokenMemoryArea[index]:index<29?&nativeViewAreas[index-4]:nullptr;
 } // simulated29 OS-handle endpoints present before any native owner exists
-area_id PioneerSessionIO::TokenHostView(unsigned index){return index==0?301:index==1?outputArea:index==2?wideArea:-1;}
+area_id PioneerSessionIO::TokenHostView(unsigned index){return index==0?inputArea:index==1?outputArea:index==2?wideArea:-1;}
+uintptr_t PioneerSessionIO::TokenHostPointer(unsigned index){
+ if(index>=3 || TokenHostView(index)<0)return 0;
+ return index==0?reinterpret_cast<uintptr_t>(PageMock::page):index==1?reinterpret_cast<uintptr_t>(OutputBufferMock::data)
+  :reinterpret_cast<uintptr_t>(wideWords.data());
+}
+uint64 PioneerSessionIO::TokenHostPhysical(unsigned index){return index==0?PageMock::physical:index==1?OutputBufferMock::physical:index==2?widePhysical:0;}
+bool PioneerSessionIO::TokenHostAttempted(unsigned index){return index>=3 || nativeHostAttempted[index];}
+bool PioneerSessionIO::TokenHostQuarantined(unsigned index){return index==0?HostReadMock::quarantined:index==1?OutputBufferMock::quarantined:index==2?wideQuarantined:true;}
+status_t PioneerSessionIO::TokenUnreserveDeviceRaw(){
+ assert(!nativeUnreserveCalls && nativeHostDeletes.size()==3 && nativeViewDeletes.size()==29 && nativePci.writes==22);
+ nativeUnreserveCalls++;if(nativeUnreserveLose)sReloadGeneration++;
+ return nativeUnreserveFail?B_DEV_NOT_READY:B_OK;
+} // actual device-manager endpoint is simulated;no caller supplies native closed or reservation proof
 void PioneerSessionIO::TokenClearViewPointers(){
  for(auto& view:q38TokenMemoryView)view=nullptr;
  runtimeEntry=scratchData=nullptr;runtimePc=nullptr;runtimeMapped=false;fleetEnabled=false;
@@ -386,6 +415,7 @@ bool PioneerSessionIO::TokenPciLeaseIdentity(const PioneerQ38TokenPciLease&)cons
 #endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeInitialize.inc"
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeHostCapture.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeHeld.inc"
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeRuntime.inc"
@@ -397,6 +427,7 @@ bool PioneerSessionIO::TokenPciLeaseIdentity(const PioneerQ38TokenPciLease&)cons
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeHardware.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeViews.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativePci.inc"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeHosts.inc"
 #endif
 #endif
 #endif
@@ -407,8 +438,14 @@ bool PioneerSessionIO::TokenPciLeaseIdentity(const PioneerQ38TokenPciLease&)cons
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RESTORE_SHARED_TLB_FIXTURE
 #include "pioneer_q38_token_native_shared_tlb_endpoints.inc"
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE
+#include "pioneer_q38_token_native_full_end_endpoints.inc"
+#endif
 #endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenCallScope.inc"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeEnd.inc"
+#endif
 static bool IncompleteEnd(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean){
 #include "token_native_end.inc"
  return true;
@@ -485,10 +522,17 @@ struct Fixture {
 #endif
 int main(int argc,char** argv){
  const bool clockContract=argc==3 && !strcmp(argv[2],"--clock-owner-contract");
+ const bool fullEndContract=argc==5 && (!strcmp(argv[2],"--full-end-owner-contract") || !strcmp(argv[2],"--state-owner-contract"));
+ const bool fullEndFlow=argc==7 && (!strcmp(argv[2],"--execution-end-full-flow") || !strcmp(argv[2],"--execution-end-state-full-flow"));
+ const char* const endModes[]={"--execution-end","--execution-end-reload","--execution-end-host-delete1","--execution-end-host-delete2",
+  "--execution-end-host-delete3","--execution-end-host-generation1","--execution-end-host-generation2","--execution-end-host-generation3",
+  "--execution-end-unreserve-fault","--execution-end-unreserve-generation"};
+ bool hostEnd=false;for(const char* mode:endModes)hostEnd|=argc==7 && !strcmp(argv[2],mode);
+ const bool hostReload=hostEnd && !strcmp(argv[2],"--execution-end-reload");
  const bool peerBootstrap=argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines");
- const bool fullFlow=argc==7 && (!strcmp(argv[2],"--execution-full-flow") || !strcmp(argv[2],"--execution-readout-full-flow"));
- const bool pciClose=argc==7 && (!strcmp(argv[2],"--execution-pci-close") || !strcmp(argv[2],"--execution-pci-generation-fault")
-  || !strcmp(argv[2],"--execution-pci-readback-fault"));
+ const bool fullFlow=fullEndFlow || (argc==7 && (!strcmp(argv[2],"--execution-full-flow") || !strcmp(argv[2],"--execution-readout-full-flow")));
+ const bool pciClose=hostEnd || (argc==7 && (!strcmp(argv[2],"--execution-pci-close") || !strcmp(argv[2],"--execution-pci-generation-fault")
+  || !strcmp(argv[2],"--execution-pci-readback-fault")));
  const bool viewsClose=pciClose || (argc==7 && (!strcmp(argv[2],"--execution-views-close") || !strcmp(argv[2],"--execution-views-delete-fault")
   || !strcmp(argv[2],"--execution-views-generation-fault")));
  const bool hardwareSeal=viewsClose || (argc==7 && (!strcmp(argv[2],"--execution-hardware-seal") || !strcmp(argv[2],"--execution-hardware-seal-tlb-fault")));
@@ -518,14 +562,14 @@ int main(int argc,char** argv){
  const bool firstMatrix=fullLayer || (argc==6 && !strcmp(argv[2],"--execution-first-matrix"));
  const bool embedding=firstMatrix || (argc==4 && (!strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-embedding-source-loss")
   || !strcmp(argv[2],"--execution-embedding-readback-loss") || !strcmp(argv[2],"--execution-layer-dispatch")));
- assert(clockContract || preparationEndpoints || preparationFaults || initializationFifoFaults || terminalFaults || peerBootstrap || embedding || argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
+ assert(fullEndContract || clockContract || preparationEndpoints || preparationFaults || initializationFifoFaults || terminalFaults || peerBootstrap || embedding || argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
   || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
   || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")
   || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-traffic-faults")
   || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-pci-capture-fault") || !strcmp(argv[2],"--runtime-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;(void)&AcquireQ38DeltaLock;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
- assert(clockContract || preparationEndpoints || preparationFaults || terminalFaults || peerBootstrap || embedding || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-pci-capture-fault") || !strcmp(argv[2],"--runtime-faults")
+ assert(fullEndContract || clockContract || preparationEndpoints || preparationFaults || terminalFaults || peerBootstrap || embedding || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-pci-capture-fault") || !strcmp(argv[2],"--runtime-faults")
   || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
   || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")
   || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-traffic-faults"))));
@@ -537,28 +581,53 @@ int main(int argc,char** argv){
  const bool execution=terminalFaults || embedding || (argc==3 && !strncmp(argv[2],"--execution",11)),executionFaults=execution && !strcmp(argv[2],"--execution-faults");
  const bool trafficFaults=argc==3 && !strcmp(argv[2],"--execution-traffic-faults");
  const bool runtime=argc==3 && !strncmp(argv[2],"--runtime",9),runtimeFaults=runtime && !strcmp(argv[2],"--runtime-faults");
- const bool faults=!clockContract && !preparationEndpoints && !preparationFaults && !initializationFifoFaults && argc==3 && strncmp(argv[2],"--held",6) && !runtime && !bootstrap && !execution,late=faults && !strcmp(argv[2],"--late-faults");
+ const bool faults=!fullEndContract && !clockContract && !preparationEndpoints && !preparationFaults && !initializationFifoFaults && argc==3 && strncmp(argv[2],"--held",6) && !runtime && !bootstrap && !execution,late=faults && !strcmp(argv[2],"--late-faults");
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
- assert(embedding);Q38EmbeddingRawTestBridge original;
- puts("START authenticate SAME-open original27B GGUF RAW bytes BEFORE native fixture construction;NO CPU embedding/model products");
- assert(original.Open(argv[3]) && original.Ready());
+ assert(fullEndContract || embedding);Q38EmbeddingRawTestBridge original;
+ if(!fullEndContract){puts("START authenticate SAME-open original27B GGUF RAW bytes BEFORE native fixture construction;NO CPU embedding/model products");
+  assert(original.Open(argv[3]) && original.Ready());}
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE
- assert(peerBootstrap || firstMatrix);tokenPeerOriginalImage=argv[peerBootstrap?3:4];tokenPeerGlobalImage=argv[peerBootstrap?4:5];
+ assert(fullEndContract || peerBootstrap || firstMatrix);
+ tokenPeerOriginalImage=argv[fullEndContract || peerBootstrap?3:4];tokenPeerGlobalImage=argv[fullEndContract || peerBootstrap?4:5];
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
- assert(fullFlow);tokenNativeTraceDirectory=argv[6];
+ assert(fullEndContract || fullFlow);if(!fullEndContract)tokenNativeTraceDirectory=argv[6];
+#ifdef PIONEER_Q38_TOKEN_NATIVE_STATE_SNAPSHOT_FIXTURE
+ assert((fullEndFlow && !strcmp(argv[2],"--execution-end-state-full-flow")) || fullEndContract);
+ const std::string stateDirectory=fullEndFlow?std::string(argv[6])+"/state-native":"";
+ if(fullEndFlow)tokenNativeStateSnapshotDirectory=stateDirectory.c_str();
+#endif
 #else
  assert(fullLayer);tokenNativePrefixFile=argv[6];
 #endif
 #endif
- for(unsigned fault=0;fault<(preparationFaults?4U:initializationFifoFaults?6U:terminalFaults?5U:trafficFaults?2U:executionFaults?4U:bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
-  Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;assert(f.Bind());auto* state=c.q38TokenNative;
+ std::string cyclePrefix;
+ for(unsigned fault=0;fault<(hostReload?2U:preparationFaults?4U:initializationFifoFaults?6U:terminalFaults?5U:trafficFaults?2U:executionFaults?4U:bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
+  const uint64 epoch=sQ38TokenModelEpoch;
+  Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;assert(f.Bind() && sQ38TokenModelEpoch==epoch+1);auto* state=c.q38TokenNative;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE
+  assert(fullEndContract || fullEndFlow);
+  if(fullEndContract){CheckNativeFullEndPending(f);tt_resident_session_result retained={};bool clean=true;
+   assert(!IncompleteEnd(c,retained,clean) && !clean);f.Unknown();continue;}
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_PCI_FIXTURE
   io.nativePciFault=!strcmp(argv[2],"--execution-pci-generation-fault")?1:!strcmp(argv[2],"--execution-pci-readback-fault")?2:0;
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HOSTS_FIXTURE
+  assert(hostEnd);
+  if(hostReload){cyclePrefix=std::string(argv[6])+".cycle"+std::to_string(fault+1)+".bin";tokenNativePrefixFile=cyclePrefix.c_str();}
+  for(unsigned i=1;i<=3;i++){
+   char name[64];snprintf(name,sizeof(name),"--execution-end-host-delete%u",i);
+   if(!strcmp(argv[2],name)){io.nativeHostFault=1;io.nativeHostFaultAt=i;}
+   snprintf(name,sizeof(name),"--execution-end-host-generation%u",i);
+   if(!strcmp(argv[2],name)){io.nativeHostFault=2;io.nativeHostFaultAt=i;}
+  }
+  io.nativeUnreserveFail=!strcmp(argv[2],"--execution-end-unreserve-fault");
+  io.nativeUnreserveLose=!strcmp(argv[2],"--execution-end-unreserve-generation");
 #endif
   if(clockContract){
    PioneerQ38TokenClockResult result;const auto pristine=result;auto* words=reinterpret_cast<uint32*>(&result);
@@ -572,6 +641,9 @@ int main(int argc,char** argv){
    const unsigned pciEvents=io.nativePci.events;
    PioneerQ38TokenPciResult pci;const auto pristinePci=pci;auto* pciWords=reinterpret_cast<uint32*>(&pci);
    assert(!CloseQ38TokenNativePci(c,pci) && !io.TokenPciScope());
+   PioneerQ38TokenHostsResult hosts;const auto pristineHosts=hosts;auto* hostWords=reinterpret_cast<uint32*>(&hosts);
+   PioneerQ38TokenEndResult finish;const auto pristineFinish=finish;auto* finishWords=reinterpret_cast<uint32*>(&finish);
+   assert(!CloseQ38TokenNativeHosts(c,hosts) && !io.TokenHostReleaseScope() && !io.TokenReservationScope());
    {
     PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);
     for(unsigned i=0;i<16;i++){words[i]^=1;assert(!EndQ38TokenNativeClock(c,result));result=pristine;}
@@ -582,6 +654,11 @@ int main(int argc,char** argv){
     assert(!CloseQ38TokenNativeViews(c,views) && !io.TokenViewsScope() && io.nativeViewDeletes.empty());
     for(unsigned i=0;i<16;i++){pciWords[i]^=1;assert(!CloseQ38TokenNativePci(c,pci));pci=pristinePci;}
     assert(!CloseQ38TokenNativePci(c,pci) && !io.TokenPciScope());
+    for(unsigned i=0;i<16;i++){hostWords[i]^=1;assert(!CloseQ38TokenNativeHosts(c,hosts));hosts=pristineHosts;}
+    assert(!CloseQ38TokenNativeHosts(c,hosts) && !io.TokenHostReleaseScope());
+    for(unsigned i=0;i<16;i++){finishWords[i]^=1;assert(!scope.Finish(finish));finish=pristineFinish;}
+    assert(!scope.Finish(finish) && !io.TokenReservationScope() && io.TokenUnreserveDeviceChecked()==B_NOT_ALLOWED);
+    for(unsigned kind:{0U,1U,2U,3U,UINT32_MAX})assert(io.TokenHostReleaseChecked(kind)==B_NOT_ALLOWED);
     uint32 value=0x3157a9c2;
     for(unsigned slot:{0U,1U,2U,UINT32_MAX})for(unsigned word:{0U,2U,3U,UINT32_MAX})
      assert(!io.TokenClockTlbReadChecked(slot,word,value) && !io.TokenHardwareSealTlbReadChecked(slot,word,value) && value==0x3157a9c2);
@@ -589,10 +666,10 @@ int main(int argc,char** argv){
      assert(!io.TokenPciReadChecked(root,offset,width,value) && value==0x3157a9c2 && !io.TokenPciWriteChecked(root,offset,width,0));
    }
    assert(io.touches==before && c.q38ClockIO.rawEvents==raw && io.nativePci.events==pciEvents && !c.q38ClockIO.deletes && !io.rootStarts
-    && !memcmp(&result,&pristine,sizeof(result)) && c.q38Clock.RequiresExplicitEnd());
+    && !memcmp(&result,&pristine,sizeof(result)) && c.q38Clock.RequiresExplicitEnd() && io.nativeHostDeletes.empty() && !io.nativeUnreserveCalls);
    tt_resident_session_result end={};bool clean=true;assert(!IncompleteEnd(c,end,clean) && !clean);f.Unknown();
    assert(io.touches==before && c.q38ClockIO.rawEvents==raw && !c.q38ClockIO.deletes);
-   puts("PASS actual native PCI BEGIN+actual real clock BEGIN3 messages/17 each clock-END+hardware-seal+VM-close+PCI-close pending-or-non-pristine factories/32 mapping+112 PCI read-and-write refusals/output unchanged/ZERO following PCI-clock-model IO/instructions/VM deletes;NOT positive cleanup/compute/hardware/Work/TPS qualification");
+   puts("PASS actual native PCI BEGIN+actual real clock BEGIN3 messages/17 each clock-END+hardware-seal+VM-close+PCI-close+host-close+locked-full-END pending-or-non-pristine factories/32 mapping+112 PCI+6 host/reservation endpoint refusals/output unchanged/ZERO following PCI-clock-model IO/instructions/VM-host deletes/unreserve;NOT positive cleanup/compute/hardware/Work/TPS qualification");
    continue;
   }
 #endif
@@ -770,6 +847,18 @@ int main(int argc,char** argv){
   CheckNativeHeld(f,heldFaults?fault+1:0);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
   if(!state->Unsafe())CheckNativeExecution(f);
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE
+  assert(io.nativeEndObserved && !f.c && !f.cookie.context && !sRuntimeOwner && !sBankStorageOnly && !sColdRecoveryRequired);
+  continue; // actual complete-flow cleanup destroyed c/state;never fall through to the old incomplete END
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HOSTS_FIXTURE
+  assert(io.nativeEndObserved);
+  if(!f.cookie.context)assert(!f.c && !sRuntimeOwner && !sBankStorageOnly && !sColdRecoveryRequired);
+  else assert(f.c && state->Unsafe() && c.dispatchOwnerRetained && sColdRecoveryRequired);
+  assert(!lockHeld && lockAcquires==lockReleases);
+  if(hostReload)printf("EXECUTED clean independent full predecessor+END cycle%u/monotonic actual model epoch%llu/new bank/context and original-BEGIN lifetimes;NOT all64-layer/multitoken/physical reload/TPS qualification\n",fault+1,(unsigned long long)sQ38TokenModelEpoch);
+  continue; // a successful actual Finish destroyed c+state;NEVER dereference their stale local references
 #endif
   touches=io.touches;
 #endif

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
 #include "PioneerQ38TokenNativeRole.h"
-__attribute__((noinline)) bool PioneerSessionIO::TokenFinalLifetimeScope(){
+__attribute__((noinline)) bool PioneerSessionIO::TokenFinalCoreScope(){
  auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;auto* fd=sRuntimeOwner;
  if(!c || &c->io!=this || !s || !s->hardwareSealed || !s->SealedCohort() || s->Unsafe()
   || !s->memory || !s->memory->LaunchedJournalClosed()
@@ -15,9 +15,6 @@ __attribute__((noinline)) bool PioneerSessionIO::TokenFinalLifetimeScope(){
   || !s->runtime || !s->memory || !s->startup || !s->participants || s->participants!=c->q38Dispatch
   || !s->runtime->MatchesRuntimeBinding(dram,c->banks,*s->participants,*s->memory,s->canonical,*s->startup,s->identity,c->initialized,PioneerResidentBanks::Pages)
   || s->participants->worker[0].master!=&c->lease || c->lease.ready || c->bulk.ready || !c->bulk.saved || c->bulk.dirty || c->bulk.unsafe
-  || c->host.state!=TT_HOST_PAGE_READY || c->host.released || PioneerHostPageIO::quarantined
-  || !c->bulkHost.allocated || !c->bulkHost.ready || !c->bulkHost.memory_type_set || c->bulkHost.pending || c->bulkHost.quarantined || c->bulkHost.released
-  || !c->wideHost.allocated || !c->wideHost.ready || !c->wideHost.memory_type_set || c->wideHost.pending || c->wideHost.quarantined || c->wideHost.released || wideQuarantined
   || !c->q38Span || !c->q38Span->closed || c->q38Span->dirty || c->q38Span->ready || c->q38Span->running || c->q38Span->unsafe
   || c->q38FfnModelPlan || c->q38GraphMutable || c->q38FfnZero || c->q38FfnGraph || c->q38FfnCode
   || c->q38GdnBanks || c->q38StateZero || c->q38Cohort || c->fleet || sQ38LocalDeltaOwner
@@ -32,7 +29,14 @@ __attribute__((noinline)) bool PioneerSessionIO::TokenFinalLifetimeScope(){
   && clock.busy_requested && clock.busy_acknowledged && clock.before_mhz==800 && clock.after_mhz==800 && clock.busy_mhz>800 && clock.busy_mhz<=1400
   && clock.before_mode==3 && clock.busy_mode==3 && clock.after_mode==3 && c->q38ClockIO.TokenClockViewsReleased()
   && c->q38ClockIO.tokenClockGuard.Matches(c,Q38TokenNativeClockScope) && c->q38ClockIO.tokenClockGuard.Sealed() && !c->q38ClockIO.tokenClockGuard.Stopped();
-} // CPU ONLY:retained final owner,not a hardware or OS-disposal capability
+} // CPU ONLY:common genuine sealed owner;host ownership is a SEPARATE exact journal,not ignored by a release caller
+__attribute__((noinline)) bool PioneerSessionIO::TokenFinalLifetimeScope(){
+ auto* c=q38MutableContext;
+ return c && TokenFinalCoreScope() && c->host.state==TT_HOST_PAGE_READY && !c->host.released && !PioneerHostPageIO::quarantined
+  && c->q38TokenNative->hosts.Prepared() && c->q38TokenNative->hosts.Matches(*this,c->host,c->bulkHost,c->wideHost,q38TokenViews)
+  && c->bulkHost.allocated && c->bulkHost.ready && c->bulkHost.memory_type_set && !c->bulkHost.pending && !c->bulkHost.quarantined && !c->bulkHost.released
+  && c->wideHost.allocated && c->wideHost.ready && c->wideHost.memory_type_set && !c->wideHost.pending && !c->wideHost.quarantined && !c->wideHost.released && !wideQuarantined;
+} // strict original retained-host scope is NOT widened for VM/PCI or inherited cleanup
 __attribute__((noinline)) bool PioneerSessionIO::TokenFinalOwnershipScope(){
  auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;
  if(!s || s->phase!=PioneerQ38TokenNativeState::HardwareSealed || !s->HardwareLeasesSealed()

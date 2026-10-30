@@ -22,9 +22,19 @@ if pushed_context:
     assert sys.argv.count('--pushed-context') == 1 and not precise_context, 'QTP3 cannot mix with QTP2,including explicit selectors'
     sys.argv.remove('--pushed-context')
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
-readout_flow = len(sys.argv) == 7 and sys.argv[2] == '--execution-readout-full-flow'
+state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
+state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
+state_snapshots = state_contract or state_flow
+full_end_flow = state_flow or len(sys.argv)==7 and sys.argv[2]=='--execution-end-full-flow'
+full_end_contract = state_contract or len(sys.argv)==5 and sys.argv[2]=='--full-end-owner-contract'
+full_end_fixture = full_end_flow or full_end_contract
+readout_flow = full_end_flow or len(sys.argv) == 7 and sys.argv[2] == '--execution-readout-full-flow'
 clock_contract = len(sys.argv)==3 and sys.argv[2]=='--clock-owner-contract'
-pci_close = len(sys.argv)==7 and sys.argv[2] in ('--execution-pci-close','--execution-pci-generation-fault','--execution-pci-readback-fault')
+end_modes = ('--execution-end', '--execution-end-reload', '--execution-end-host-delete1', '--execution-end-host-delete2',
+    '--execution-end-host-delete3', '--execution-end-host-generation1', '--execution-end-host-generation2',
+    '--execution-end-host-generation3', '--execution-end-unreserve-fault', '--execution-end-unreserve-generation')
+host_end = len(sys.argv)==7 and sys.argv[2] in end_modes
+pci_close = host_end or len(sys.argv)==7 and sys.argv[2] in ('--execution-pci-close','--execution-pci-generation-fault','--execution-pci-readback-fault')
 views_close = pci_close or len(sys.argv)==7 and sys.argv[2] in ('--execution-views-close','--execution-views-delete-fault','--execution-views-generation-fault')
 hardware_seal = views_close or len(sys.argv)==7 and sys.argv[2] in ('--execution-hardware-seal','--execution-hardware-seal-tlb-fault')
 clock_end = hardware_seal or len(sys.argv)==7 and sys.argv[2] in ('--execution-clock-end','--execution-clock-end-generation-fault',
@@ -51,17 +61,21 @@ if full_layer:
         assert prefix.is_absolute() and prefix.is_dir() and not prefix.is_symlink() and not any(prefix.iterdir())
     else:
         assert prefix.is_absolute() and prefix.parent.is_dir() and not prefix.exists() and not prefix.is_symlink()
+        if sys.argv[2]=='--execution-end-reload':
+            for cycle in (1, 2):
+                path = pathlib.Path(str(prefix)+'.cycle'+str(cycle)+'.bin')
+                assert not path.exists() and not path.is_symlink()
 embedding = first_matrix or len(sys.argv) == 4 and sys.argv[2] in embedding_modes
 peer_bootstrap = len(sys.argv) == 5 and sys.argv[2] == '--bootstrap-peer-engines'
-peer_engines = peer_bootstrap or first_matrix
+peer_engines = full_end_contract or peer_bootstrap or first_matrix
 if precise_context:
     assert peer_engines or sys.argv[2:]==['--preparation-endpoint-contract'], 'QTP2 execution requires actual virgin peer instruction engines;endpoint-only contract executes NO worker/model instructions'
 if pushed_context:
-    assert peer_bootstrap or first_matrix or sys.argv[2:]==['--preparation-endpoint-contract'], 'QTP3 requires actual virgin engines/full predecessor;no synthetic bootstrap or shortcut'
+    assert full_end_contract or peer_bootstrap or first_matrix or sys.argv[2:]==['--preparation-endpoint-contract'], 'QTP3 requires actual virgin engines/full predecessor;pending END contract grants no execution or cleanup'
 terminal_faults = len(sys.argv)==3 and sys.argv[2]=='--terminal-observation-faults'
 preparation_faults = len(sys.argv)==3 and sys.argv[2] in ('--preparation-fifo-faults', '--preparation-access-faults')
 preparation_endpoints = len(sys.argv)==3 and sys.argv[2]=='--preparation-endpoint-contract'
-assert clock_contract or preparation_endpoints or preparation_faults or peer_bootstrap or embedding or terminal_faults or len(sys.argv) in (2,3) and (len(sys.argv) == 2 or sys.argv[2] in ('--initializer-fifo-faults', '--faults', '--late-faults', '--held', '--held-faults', '--runtime', '--runtime-pci-capture-fault', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'))
+assert full_end_contract or clock_contract or preparation_endpoints or preparation_faults or peer_bootstrap or embedding or terminal_faults or len(sys.argv) in (2,3) and (len(sys.argv) == 2 or sys.argv[2] in ('--initializer-fifo-faults', '--faults', '--late-faults', '--held', '--held-faults', '--runtime', '--runtime-pci-capture-fault', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'))
 if embedding:
     assert pathlib.Path(sys.argv[3]).is_absolute() and pathlib.Path(sys.argv[3]).is_file()
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
@@ -69,7 +83,7 @@ image = pathlib.Path(sys.argv[1])
 assert image.is_absolute() and hashlib.sha256((image/'text.bin').read_bytes()).hexdigest() == '39817b679f4358e47c0e6602fb5ae184831206c11dab0b63fe9b7173c410df8b'
 here = pathlib.Path(__file__).resolve().parent
 if peer_engines:
-    peer_arg = 3 if peer_bootstrap else 4
+    peer_arg = 3 if full_end_contract or peer_bootstrap else 4
     for directory, script in ((pathlib.Path(sys.argv[peer_arg]), here/'run_pioneer_q38_mixed_worker_tests.py'),
                               (pathlib.Path(sys.argv[peer_arg+1]), here.parent/'build_qwen38_pushed_worker_image.py' if pushed_context else here/'run_pioneer_q38_precise_worker_tests.py' if precise_context else here.parent/'build_qwen38_global_worker_image.py')):
         assert directory.is_absolute()
@@ -137,11 +151,26 @@ if views_close:
     defines['PIONEER_Q38_TOKEN_NATIVE_VIEWS_FIXTURE'] = '1'
 if pci_close:
     defines['PIONEER_Q38_TOKEN_NATIVE_PCI_FIXTURE'] = '1'
+if host_end:
+    defines['PIONEER_Q38_TOKEN_NATIVE_HOSTS_FIXTURE'] = '1'
 if readout_flow:
     defines['PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE'] = '1'
 if full_flow:
     defines.update(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE='1', PIONEER_Q38_NATIVE_TRACE_TEST_BRIDGE='1')
+if full_end_fixture:
+    defines.update(dict.fromkeys(('PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE',
+        'PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE',
+        'PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE',
+        'PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE',
+        'PIONEER_Q38_TOKEN_NATIVE_HARDWARE_SEAL_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_VIEWS_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_PCI_FIXTURE',
+        'PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE',
+        'PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE', 'PIONEER_Q38_EMBEDDING_RAW_TEST_BRIDGE', 'PIONEER_Q38_NATIVE_PEER_TEST_BRIDGE',
+        'PIONEER_Q38_NATIVE_TRACE_TEST_BRIDGE'), '1'))
+    assert not any(name in defines for name in ('PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE',
+        'PIONEER_Q38_TOKEN_NATIVE_READOUT_EMPTY_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_RESTORE_EMPTY_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_HOSTS_FIXTURE'))
 source = (kernel/'tenstorrent_pci_probe.cpp').read_text()
+if state_snapshots:
+    defines.update(PIONEER_Q38_TOKEN_NATIVE_STATE_SNAPSHOT_FIXTURE='1', PIONEER_Q38_NATIVE_STATE_TEST_BRIDGE='1')
 with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/private/tmp') as tmp:
     base = pathlib.Path(tmp)
     start, end = '// PIONEER_Q38_CLOCK_IO_BEGIN', '// PIONEER_Q38_CLOCK_IO_END'
@@ -193,12 +222,17 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         ('bool PioneerSessionIO::StateZeroBeforeCohort()', 'bool PioneerSessionIO::StateZeroOtherCoresHeld()', 'bool PioneerSessionIO::NonRootHeldOwner()')))
     binary = base/'test'
     extra = []
-    if full_flow:
+    if state_snapshots:
+        state_object = base/'native-state-data.o'
+        subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
+                        '-fsanitize=address,undefined', '-c', str(here/'pioneer_q38_native_state_test_bridge.cpp'), '-o', str(state_object)], check=True)
+        extra += [str(state_object)]  # HOST-only output DATA;no native/CPU-oracle roles
+    if full_flow or full_end_contract:
         trace_object = base/'native-observed-trace.o'
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
                         '-fsanitize=address,undefined', '-c', str(here/'pioneer_q38_native_trace_test_bridge.cpp'), '-o', str(trace_object)], check=True)
         extra += [str(trace_object)]  # const observation DATA only,HOST TU without native/kernel/Work roles
-    if peer_engines:
+    if peer_engines or full_end_contract:
         peer_object = base/'native-peer-engine.o'
         peer_flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
         if precise_context:
@@ -208,7 +242,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
                         '-fsanitize=address,undefined', *peer_flags, '-c', str(here/'pioneer_q38_native_peer_test_bridge.cpp'), '-o', str(peer_object)], check=True)
         extra += [str(peer_object)]  # HOST-only TU;never native/kernel-role flags
-    if embedding:
+    if embedding or full_end_contract:
         # RAW byte transport is a separate TEST-only TU,without native-role
         # defines. Never promote its CPU-validation preprocessor role into
         # the native factory/driver candidate or its SDK/Work build.
@@ -226,5 +260,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
     if compile_link_only:
         print('COMPILE/LINK ONLY: actual native TEST fixture+selected bridge objects linked;binary NEVER executed,NO initialization/RUN/STOP/END/model/physical/TPS qualification')
     else:
+        if state_flow:
+            # Refused arguments/roles and failed builds must publish nothing.
+            # This output directory is not a state/completion/native receipt.
+            (prefix/'state-native').mkdir(mode=0o700)
         subprocess.run([str(binary), *sys.argv[1:]], check=True,
                        env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})

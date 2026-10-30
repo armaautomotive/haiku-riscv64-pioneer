@@ -8,6 +8,7 @@
 #include "PioneerQ38TokenNativeOwner.h"
 #include "PioneerQ38TokenViewLease.h"
 #include "PioneerQ38TokenPciLease.h"
+#include "PioneerQ38TokenHostLease.h"
 #include "PioneerQ38StateZeroController.h"
 #include "PioneerQ38ConvHistoryZeroController.h"
 #include "PioneerQ38ProjectionZeroController.h"
@@ -43,10 +44,15 @@ struct PioneerQ38TokenPciResult {
  uint32_t version=1,started=0,unsafe=0,ready=0,writes=0,reads=0,reserved[10]={};
 };
 [[maybe_unused]] static bool CloseQ38TokenNativePci(PioneerStoreContext&,PioneerQ38TokenPciResult&);
+struct PioneerQ38TokenHostsResult {uint32_t version=1,started=0,unsafe=0,ready=0,released=0,reserved[11]={};};
+struct PioneerQ38TokenEndResult {uint32_t version=1,started=0,unsafe=0,ready=0,hosts=0,reservation=0,context=0;int32_t unreserve_status=0;uint32_t reserved[8]={};};
+static_assert(sizeof(PioneerQ38TokenHostsResult)==64 && sizeof(PioneerQ38TokenEndResult)==64,"fixed trusted kernel results,not public ABI");
+[[maybe_unused]] static bool CloseQ38TokenNativeHosts(PioneerStoreContext&,PioneerQ38TokenHostsResult&);
 // Genuine retained full851 model/reservation object. It borrows NO old
 // completed embedding/prefix owner and cannot make those old lifetimes safe.
 // Private factory publication occurs under the real global FD call lock.
 class PioneerQ38TokenNativeState {
+ friend class PioneerQ38TokenCallScope;
  friend class PioneerQ38TokenPreparationAudit;
  friend struct PioneerStoreContext;friend struct PioneerSessionIO;
  friend bool Q38TokenExecutionOutput(const PioneerStoreContext&,const void*,size_t);
@@ -74,11 +80,13 @@ class PioneerQ38TokenNativeState {
  friend bool SealQ38TokenNativeHardware(PioneerStoreContext&,PioneerQ38TokenHardwareSealResult&);
  friend bool CloseQ38TokenNativeViews(PioneerStoreContext&,PioneerQ38TokenViewsResult&);
  friend bool CloseQ38TokenNativePci(PioneerStoreContext&,PioneerQ38TokenPciResult&);
+ friend bool CloseQ38TokenNativeHosts(PioneerStoreContext&,PioneerQ38TokenHostsResult&);
  enum Phase {Claiming,Bound,RecurrentZeroing,RecurrentClosing,HistoryZeroing,HistoryClosing,
   ProjectionZeroing,ProjectionClosing,Initialized,DispatchPreparing,MemoryPreparing,MemoryInstalled,RuntimePreparing,RuntimeReady,
   WorkersBootstrapping,WorkersReady,RootStarting,RootRunning,RootHolding,RootHeld,RootRestoring,RootRestored,
   DispatchRestoring,DispatchRestored,PeerStoresRestoring,PeerStoresRestored,RootStoreRestoring,RootStoreRestored,
-  SharedTlbRestoring,SharedTlbRestored,ClockEnding,ClockEnded,HardwareSealing,HardwareSealed,ViewsClosing,ViewsClosed,PciClosing,PciClosed,MemoryClosing,MemoryClosed,Unknown};
+  SharedTlbRestoring,SharedTlbRestored,ClockEnding,ClockEnded,HardwareSealing,HardwareSealed,ViewsClosing,ViewsClosed,PciClosing,PciClosed,
+  HostsClosing,HostsClosed,ReservationReleasing,ClosedState,MemoryClosing,MemoryClosed,Unknown};
  PioneerStoreContext* const context;const void* const cookie;const void* const hashes;
  const uint8_t* const ledger;const int64_t team;const unsigned bank;
  const PioneerQ38GdnIdentity identity;
@@ -100,8 +108,12 @@ class PioneerQ38TokenNativeState {
  PioneerQ38TokenPciLease pci;
  bool pciCloseAttempted=false,pciClosed=false;
  uint64_t pciBegan=0,pciPrevious=0;
+ PioneerQ38TokenHostLease hosts;
+ bool hostsCloseAttempted=false,hostsClosed=false,reservationReleaseAttempted=false,reservationReleased=false;
+ bool reservationEndpointAttempted=false;
  bool SealedCohort()const{
-  return hardwareSealAttempted && (phase==HardwareSealing || phase==HardwareSealed || phase==ViewsClosing || phase==ViewsClosed || phase==PciClosing || phase==PciClosed)
+  return hardwareSealAttempted && (phase==HardwareSealing || phase==HardwareSealed || phase==ViewsClosing || phase==ViewsClosed || phase==PciClosing || phase==PciClosed
+   || phase==HostsClosing || phase==HostsClosed || phase==ReservationReleasing || phase==ClosedState)
    && runtime && runtime->HardwareLeasesSealed();
  }
  PioneerQ38TokenNativeState(PioneerStoreContext& c,const void* fd,const void* h,const uint8_t* uploaded,int64_t owner,
@@ -110,14 +122,16 @@ class PioneerQ38TokenNativeState {
 public:
  PioneerQ38TokenNativeState(const PioneerQ38TokenNativeState&)=delete;
  PioneerQ38TokenNativeState& operator=(const PioneerQ38TokenNativeState&)=delete;
- bool Unsafe()const{return unsafe || phase==Unknown || graph.Unsafe() || pci.Unsafe() || recurrentZero.unsafe || historyZero.unsafe
+ bool Unsafe()const{return unsafe || phase==Unknown || graph.Unsafe() || pci.Unsafe() || hosts.Unsafe() || recurrentZero.unsafe || historyZero.unsafe
   || projectionZero.unsafe || (memory && memory->Unsafe()) || (runtime && runtime->Unsafe())
   || (hardwareSealed && !SealedCohort())
   || (participants && (participants->unsafe || (participants->closed && !SealedCohort()) || participants->bootAttempted || participants->booted
    || (participants->rootRunning && (!runtime || (phase!=RootStarting && phase!=RootRunning && phase!=RootHolding) || !runtime->OwnsRunningRoot(participants)))));}
  // Held-only cheap binding:whole-context and participant guards still audit
  // EVERY child lease before/after each pass,not120 peers again per L1 word.
- bool Closed()const{return false;} // NO full-token native END capability has been implemented yet
+ bool Closed()const{return phase==ClosedState && reservationReleaseAttempted && reservationEndpointAttempted && reservationReleased && hostsCloseAttempted && hostsClosed
+  && hosts.Complete() && pciCloseAttempted && pciClosed && pci.Complete() && viewsCloseAttempted && viewsClosed && hardwareSealed
+  && !Unsafe() && SealedCohort() && memory && memory->LaunchedJournalClosed();} // sticky model reservations retired by whole-context CPU destruction ONLY
  bool TerminalObserved()const{return (phase==RootRunning || phase==RootHolding || phase==RootHeld) && !Unsafe() && runtime && runtime->TerminalObserved();}
  bool TerminalHeld()const{return phase==RootHeld && !Unsafe() && runtime && runtime->HeldAfterTerminal();}
  bool OriginalL1Restored()const{return phase==RootRestored && !Unsafe() && runtime && runtime->OriginalL1Restored();}
@@ -133,10 +147,12 @@ public:
  bool PciRestored()const{return phase==PciClosed && pciCloseAttempted && pciClosed && pci.Complete() && viewsCloseAttempted && viewsClosed
   && hardwareSealed && !Unsafe() && SealedCohort() && memory && memory->LaunchedJournalClosed();} // hosts/reservations/full END still owned
  bool PciSnapshotCaptured()const{return !Unsafe() && pci.Prepared();} // necessary CPU journal state,not PCI/launch/END permission
+ bool HostBuffersReleased()const{return phase==HostsClosed && hostsCloseAttempted && hostsClosed && hosts.Complete() && !Unsafe() && SealedCohort();}
  // Necessary private STOP observation only;current sources/mappings and HOLD/restore/END remain separate.
  bool ControlsCohort(const PioneerQ38DispatchLease* p)const{
   if(!unsafe && hardwareSealAttempted && p && p==participants && runtime){
-   if(phase==HardwareSealed || phase==ViewsClosing || phase==ViewsClosed || phase==PciClosing || phase==PciClosed)return hardwareSealed && runtime->HardwareLeasesSealed();
+   if(phase==HardwareSealed || phase==ViewsClosing || phase==ViewsClosed || phase==PciClosing || phase==PciClosed
+    || phase==HostsClosing || phase==HostsClosed || phase==ReservationReleasing || phase==ClosedState)return hardwareSealed && runtime->HardwareLeasesSealed();
    if(phase==HardwareSealing)return runtime->HardwareLeasesSealed() || (runtime->ControlsCohort(p) && runtime->SharedMappingsRestored());
   }
   return !unsafe && (phase==WorkersBootstrapping || phase==WorkersReady || phase==RootStarting || phase==RootRunning || phase==RootHolding
@@ -185,7 +201,7 @@ public:
    && p->MatchesInitializationOwner(banks,proof,identity);
  } // actual initialization-controller seals ONLY;not KV/metadata/input/RUN or END authority
  void Fault(){unsafe=true;phase=Unknown;recurrentZero.unsafe=historyZero.unsafe=projectionZero.unsafe=true;
-  pci.Fault();graph.Fault();if(memory)memory->Fault();if(runtime)runtime->Fault();} // MEMORY ONLY;retain every borrowed resource
+  hosts.Fault();pci.Fault();graph.Fault();if(memory)memory->Fault();if(runtime)runtime->Fault();} // MEMORY ONLY;retain every borrowed resource
 };
 static_assert(sizeof(PioneerQ38TokenNativeState)>262144 && sizeof(PioneerQ38TokenNativeState)<1048576,
  "complete canonical+runtime reservation model is HEAP ONLY");

@@ -7,6 +7,9 @@
  || defined(PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE) || defined(PIONEER_Q38_WORK_INFERENCE)
 #error Explicit native complete-flow committed readout TEST required
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE
+#include "pioneer_q38_token_native_full_end_checks.inc"
+#endif
 static void CheckNativeReadoutFlow(Fixture& f){
  namespace T=PioneerQ38TokenLayout;
  auto& c=*f.c;auto& io=f.io;auto& cpu=*io.executionCpu;auto* state=c.q38TokenNative;
@@ -38,4 +41,7 @@ static void CheckNativeReadoutFlow(Fixture& f){
  assert(io.runtimePackets==packets+2 && cpu.layerPackets==rootPackets && cpu.ObservedRootInstructions()==rootInstructions
   && !io.pciWrites && !io.HostReadMock::bmeWrites && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases);
  puts("EXECUTED native SAME full851/3tokens*all64 actual model/GDDR committed records/ROOT+119 actual STOP/fresh terminal+120 actual HOLD/native512B+256B NoC reads in2 fresh calls/ALL192 delivered record words EXACT actual immutable GDDR/prefill+cross-call greedy input/duplicate refused;independent full numeric comparison STILL REQUIRED;NO current-state reuse/restore/END/physical/Work/TPS grant");
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE
+ CheckNativeFullEndFlow(f); // actual cleanup may delete context;never dereference c/state after return
+#endif
 }

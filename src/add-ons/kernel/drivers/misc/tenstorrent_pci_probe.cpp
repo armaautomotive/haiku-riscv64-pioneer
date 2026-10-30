@@ -15,6 +15,15 @@
 #if defined(PIONEER_Q38_TOKEN_PCI_RAW_TEST)
 #error TEST PCI endpoints cannot substitute the actual native driver translation unit,including defined0
 #endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_HOSTS_FIXTURE)
+#error TEST host disposal endpoints cannot substitute the actual native driver translation unit,including defined0
+#endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
+#error TEST complete-flow disposal endpoints cannot substitute the actual native driver translation unit,including defined0
+#endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_STATE_SNAPSHOT_FIXTURE) || defined(PIONEER_Q38_NATIVE_STATE_TEST_BRIDGE)
+#error TEST state snapshots cannot substitute the actual native driver translation unit,including defined0
+#endif
 #define PIONEER_Q38_TOKEN_NATIVE_ROLE_TAG_OK 1
 #else
 #define PIONEER_Q38_TOKEN_NATIVE_ROLE_TAG_OK 0
@@ -3961,6 +3970,7 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 #include "PioneerQ38RecurrentPrefixNative.inc"
 #include "PioneerQ38TokenNativeBind.inc"
 #include "PioneerQ38TokenNativeInitialize.inc"
+#include "PioneerQ38TokenNativeHostCapture.inc"
 #include "PioneerQ38TokenNativeHeld.inc"
 #include "PioneerQ38TokenNativeRuntime.inc"
 #include "PioneerQ38TokenNativeExecution.inc"
@@ -3969,6 +3979,7 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 #include "PioneerQ38TokenNativeViews.inc"
 #include "PioneerQ38TokenNativePciCapture.inc"
 #include "PioneerQ38TokenNativePci.inc"
+#include "PioneerQ38TokenNativeHosts.inc"
 #ifdef PIONEER_Q38_GDN_MUTABLE_STATE
 // PIONEER_Q38_STATE_ZERO_NATIVE_ADAPTER_BEGIN
 // Private native adapter,selected ONLY by the separate fixed zero diagnostic
@@ -5018,6 +5029,7 @@ public:
 };
 // PIONEER_Q38_GDN_CALL_SCOPE_END
 #include "PioneerQ38TokenCallScope.inc"
+#include "PioneerQ38TokenNativeEnd.inc"
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE
 #include "PioneerQ38ResidentOutputValidationControl.h"
 #endif

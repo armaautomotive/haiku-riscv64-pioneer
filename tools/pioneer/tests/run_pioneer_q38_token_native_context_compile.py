@@ -86,7 +86,12 @@ required = ('BindQ38TokenNative(', 'TokenCallScopeMatches(', 'TokenModelSourceSc
             'TokenViewDelete(', 'TokenViewHandle(', 'TokenHostView(', 'TokenClearViewPointers(', 'PioneerQ38TokenViewLease::Close(',
             'TokenViewCaptureScope(', 'PioneerQ38TokenViewLease::Bind(',
             'TokenPciCaptureScope(', 'TokenPciScope(', 'TokenPciReadChecked(', 'TokenPciWriteChecked(',
-            'PioneerQ38TokenPciLease::Capture(', 'PioneerQ38TokenPciLease::Close(', 'CloseQ38TokenNativePci(', 'pioneer_token_context_scoped_pci_close(')
+            'PioneerQ38TokenPciLease::Capture(', 'PioneerQ38TokenPciLease::Close(', 'CloseQ38TokenNativePci(', 'pioneer_token_context_scoped_pci_close(',
+            'TokenFinalCoreScope(', 'TokenHostCaptureScope(', 'TokenHostReleaseScope(', 'TokenReservationScope(',
+            'TokenHostPointer(', 'TokenHostPhysical(', 'TokenHostAttempted(', 'TokenHostQuarantined(',
+            'TokenHostReleaseChecked(', 'TokenUnreserveDeviceChecked(', 'TokenUnreserveDeviceRaw(',
+            'PioneerQ38TokenHostLease::Capture(', 'PioneerQ38TokenHostLease::Close(', 'CloseQ38TokenNativeHosts(',
+            'pioneer_token_context_scoped_hosts_close(', 'PioneerQ38TokenCallScope::Finish(', 'pioneer_token_context_scoped_finish(')
 for name in required:
     assert any(name in key for key in frames), (name, 'actual implementation must be emitted')
 for controller in ('State', 'ConvHistory', 'Projection'):
@@ -123,8 +128,11 @@ for forbidden in ('Q38WorkControl', 'OriginalSource', 'CompareFinal', 'Reference
                   'CheckNativeViewsClose', 'nativeViewDeletes', 'nativeViewFaultTouches', 'tokenModelViewDelete',
                   'TokenPciRaw', 'TokenPciRawModel', 'nativePciBegin', 'nativePciTransaction',
                   'CheckNativePciClose', 'nativePciFaultSeen', 'nativePciFaultEvents',
+                  'CheckNativeHostsClose', 'nativeHostDeletes', 'nativeHostFaultAt', 'nativeUnreserveCalls', 'NativeReleaseHost',
+                  'CheckNativeFullEndFlow', 'CheckNativeFullEndPending',
                   'NativePreparationObservation', 'NativePreparationFifoObserved', 'CheckNativePreparationFault',
                   'Q38NativeTraceTest', 'PioneerQ38ObservedTrace', 'KvByteSpan', 'BindKvBytes', 'CheckNativeFullFlow',
+                  'Q38NativeStateTest', 'Q38StateSnapshotData', 'CaptureNativeStateSnapshots',
                   'Q38MixedLiveValidationControl', 'PioneerQ38MixedLiveNativeState',
                   'PioneerQ38EmbeddingNativeState', 'PioneerQ38RecurrentPrefixNativeState'):
     assert forbidden not in table and forbidden not in unresolved, forbidden
@@ -176,6 +184,7 @@ print('PASS ACTUAL distinct native normal-clock END factory/per-access FD+genera
 print('PASS ACTUAL hardware-lease/journal retirement factory/controller/private sealed binding+6 fresh direct-original readbacks/final ownership scope emitted;master+bulk ready cleared,launched history retained;NO VM/PCI/host/reservation release/full native END/Work/physical grant;runtime separate')
 print('PASS ACTUAL distinct29-view single-attempt VM-close factory/per-delete native lifetime+captured-handle manifest/host and duplicate exclusions/pointer fencing/inherited Unmap refusal emitted;PCI/hosts/reservations/full END STILL OWNED;compile ONLY,positive runtime separate')
 print('PASS ACTUAL prelaunch SAME PCI BEGIN-originals+transport capture/distinct VM-closed PCI factory/per-access FD+generation+phase scopes/quiet bounded capability+PCIe pending-error checks/exact11 ordered original writes+immediate reads+full final pass/transaction consumed before FIRST write/no post-close PCI access emitted;hosts/reservations/full END STILL owned;COMPILE ONLY,not native runtime/physical/Work/TPS qualification')
+print('PASS ACTUAL prelaunch SAME3 wired-host handles+virtual/physical identities/private lease metadata+29-device-closed prerequisite/wide->bulk->input single-attempt OS endpoints/distinct native scopes/checked device unreserve status/locked whole-context sticky-reservation+CPU-journal destruction/no dangling call-scope dereference SDK emitted;COMPILE ONLY,not native full-END runtime/public ABI/Assistant/physical/Work/TPS qualification')
 print('PASS scoped fixed FIFO availability+overflow reads emitted/native zero-initializer+held-memory+runtime-packet+bootstrap+HOLD/restoration guards test FIFO drain BEFORE accepting completion receipts;no old MMIO whitelist widening/counter clear/START;runtime/hardware and earlier peer-lease/dispatch-preparation FIFO audit STILL OWED')
 print('PASS complete2097152B immutable rawRoPE emitted;NO kernel cos/sin/pow imports or CPU model-reference path')
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+' token-context-NODRV.o')

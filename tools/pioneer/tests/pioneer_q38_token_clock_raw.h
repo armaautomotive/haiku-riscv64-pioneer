@@ -1,11 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_TOKEN_CLOCK_RAW_TEST_H
 #define PIONEER_Q38_TOKEN_CLOCK_RAW_TEST_H
-#if !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_NATIVE_CONTEXT != 1 \
- || !defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY != 1 \
- || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE)
-#error Explicit native clock transport TEST role required
-#endif
+#include "pioneer_q38_token_clock_raw_role.h"
 // TEST raw ARC/VM endpoints only. The actual extracted adapter and actual
 // ClockLease/normal-clock/strict-queue bodies execute on this backing.
 #define PIONEER_Q38_ARC_QUEUE_MODEL_ONLY
