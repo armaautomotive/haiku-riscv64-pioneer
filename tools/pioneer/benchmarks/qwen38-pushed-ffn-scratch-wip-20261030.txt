@@ -105,3 +105,13 @@ Follow-up: DR34851/74276 BOTH subsequently TERMINAL EXIT0/logs identical.
 Each passes all69 actual small-receipt/counter fault children and unchanged
 parent nonce2 first read. The larger original full-model DR31695/66331 are
 still separate live histories; no completed dense-layer/model is implied.
+
+DW31411/48650 posthoc comparisons BOTH EXIT0 after the SAME new DR full
+histories genuinely completed layer0 and continued at layer1. In each,
+all5120 embedding+5120 layer0 words are bit-exact to independent pinned CPU
+controls (zero tolerance/maxAbs/relativeL2). Both untouched41028-byte
+prefixes SHA4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+are copied byte-identically to durable qualification directories
+observed-first-layer-pushed-ffn-{main,clean}-20261030/prefix-0.bin.
+This preserves early numerical evidence; the corrected dense FFN boundary
+and whole-model/native/physical/Work/TPS qualification remain outstanding.
