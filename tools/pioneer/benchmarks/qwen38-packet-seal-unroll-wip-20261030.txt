@@ -176,3 +176,64 @@ of8192. Both continue layer4. This is baseline G3 execution,not the new
 unrolled candidate or an independent dense-output CPU comparison. Whole
 normal generation,state/terminal/native/physical/Work qualification remains
 pending. The new candidate EF first-layer jobs remain separate live runs.
+
+EG follow-up: original optimized first layer completed and compared
+------------------------------------------------------------------
+The SAME EF82774/40290 jobs subsequently TERMINAL EXIT0. Each executes
+original embedding and the complete recurrent layer0 from RESET with119
+virgin engines,all eight actual matrix projections,Conv/GDN/worker activation,
+closed119 frontiers and a5120-word final hidden vector. Prior GDN+KV remain
+unchanged,nextstate is retained,and no token,slot flip,STOP or terminal is
+invented by this first-layer-only diagnostic. Both observed traces contain
+ONLY prefix-0.bin,not a complete-token trace.
+
+Both report ROOTinstructions210887199,reserved/written stack6672/6672 of8192,
+and90498485 exclusive instructions in the recurrent packet-seal function.
+These counts include simulated scheduling/polling. They are NOT physical
+cycles or TPS,and are not treated as a hardware speedup or compared as if
+the earlier full-flow/fault-instrumented harness were an identical timing
+experiment. The isolated234->192 instruction check remains its own result.
+
+Independent main/clean posthoc comparisons BOTH EXIT0:all5120 embedding
+plus5120 layer0 words match the fixed CPU trace bit-for-bit,zero tolerance,
+maxAbs0/relativeL20. No CPU embedding,hidden vector or product was supplied
+during execution. The untouched41028-byte prefixes have the same SHA256:
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+Each was copied and cmp-verified into durable qualification inputs:
+generated.pioneer/qualification-inputs/observed-packet-seal-unroll-20261030-eg/
+{main,clean}/prefix-0.bin.
+Comparison logs:/private/tmp/pioneer-q38-packet-unroll-first-layer-compare-{main,clean}-20261030-eg.log.
+
+This qualifies actual original first-layer numerics of the inspect-only
+unrolled candidate,NOT all64 layers/multiple tokens/state/STOP/native END,
+physical generation or Work/Assistant integration. Candidate ROMs remain
+uninstalled;the selected native program arrays and public driver stay
+unchanged. Existing baseline full-flow DR31695/66331 and native full
+generation/state/END DW41236 continue on their SAME original handles.
+
+Following those exact first-layer comparisons,the HOST runner adds a
+separate --qualify-packet-seal-full-flow marker for this pinned candidate.
+It requires the entire QGW3 profile,observed-trace and snapshot-first-layer,
+and forbids prepare/bootstrap/first-layer-only/fast-memory/EOS/other-fault
+shortcuts. The qualifier marker is stripped before invoking the unchanged
+actual original-flow C++ engine:its normal three-position,all64-layer,
+vocabulary,state-copy/commit and ROOT+119STOP path must execute genuinely.
+This remains an explicit HOST qualification role,not native or Work authority.
+Final main62873/clean9022 CLI suites BOTH EXIT0/logs identical:65 refusals
+preserve the complete output inventory,including15 new full-flow role cases.
+
+New EG full-qualification jobs92178(main)/52159(clean) are LIVE,NOT passes.
+Each starts from RESET and a NEW119-engine history using the already pinned
+candidate and original GGUF. The terminal first-layer jobs are NOT resumed,
+transplanted or restarted just to observe them. This is a genuinely new
+whole-flow test scope,not a first-layer result relabeled as normal generation.
+Existing baseline/native full histories continue independently.
+Main source:worktree at4841a917be plus these two HOST runner/CLI changes.
+Clean source:archive4841a917be plus the same two cmp-verified overlays:
+/private/tmp/pioneer-q38-packet-unroll-full-clean-eg.81yiPlvg
+Outputs:/private/tmp/pioneer-q38-packet-unroll-full-out-main-eg.Y2vwVdwz/observed
+and /private/tmp/pioneer-q38-packet-unroll-full-out-clean-eg.kkOiJ2Ej/observed
+Logs:/private/tmp/pioneer-q38-packet-unroll-full-{main,clean}-20261030-eg.log
+Complete traces must be independently compared after real terminal success.
+No selected firmware arrays,native scopes,driver,Assistant,OS or hardware
+were modified by this HOST-only expansion.20 tokens/sec remains UNMET.
