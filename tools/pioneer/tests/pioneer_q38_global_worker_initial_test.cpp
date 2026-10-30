@@ -7,7 +7,7 @@
 #include <unistd.h>
 namespace G=PioneerQ38GlobalWorkerLayout;
 struct GlobalInitialPeer:MixedPeer {
- GlobalInitialPeer(const char* old,const char* image,unsigned worker=1):MixedPeer(old,worker,12,17408,1){
+ GlobalInitialPeer(const char* old,const char* image,unsigned worker=1,unsigned type=12,unsigned k=17408,unsigned groups=1):MixedPeer(old,worker,type,k,groups){
   assert(!steps && pc==0x6000); // replace immutable initial ROM BEFORE first boot ONLY
   code=Read((std::string(image)+"/text.bin").c_str());front=Read((std::string(image)+"/globalworker.bin").c_str());
   dense=Read((std::string(image)+"/dense.bin").c_str());helper=Read((std::string(image)+"/ffn.bin").c_str());

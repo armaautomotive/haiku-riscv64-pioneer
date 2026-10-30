@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // Rechecked DATA selection only. No native or image ownership capability.
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION
+#error Worker-sealed admission BUILD cannot select fixed QTP2 DATA
+#endif
 #if !defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || PIONEER_Q38_TOKEN_PRECISE_PROGRAMS != 1
 #error Exact QTP2/QGW2 complete program DATA selection required
 #endif

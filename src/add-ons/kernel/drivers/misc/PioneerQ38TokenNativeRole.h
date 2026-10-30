@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // No guard: the exact native COMPILE-ONLY perimeter must hold on every include.
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION
+#error Worker-sealed admission BUILD is NOT a native token context capability
+#endif
 #ifdef PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT
 #include "PioneerQ38TokenPreciseNativeRole.h"
 #else

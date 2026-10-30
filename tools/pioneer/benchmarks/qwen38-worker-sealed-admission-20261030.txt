@@ -1,0 +1,108 @@
+Worker-sealed admission: opt-in QGW2 ROOT BUILD experiment -- 2026-10-30
+Goal ACTIVE. Last physical whole-model result remains 0.207893161 tokens/sec;
+20 tokens/sec target UNMET. No Pioneer/SSH/relay/install/SD/OS action here.
+
+Scope and changed observation timing
+----------------------------------
+Explicit --worker-sealed-admission requires the complete cancellable FP32,
+unrolled dense/boundary/quiet/local-source/precise/single-closed-audit build.
+It changes only returning recurrent/dense ROOT components,not their worker
+images,parent role,fixed native DATA,public driver or Assistant Work mode.
+
+The ROOT latches its OWN prior nonce before Wait can import a peer sequence.
+If that private frontier is zero,ALL16 physical source CSR reads remain.
+Later admissions omit those16 remote reads and rely on the UNCHANGED QGW2
+worker's actual local guards:all16 source words before its first NoC request,
+after every transfer and before completion. Boot/job/nonce/physical counter,
+WAIT,command/queue checks remain. No ready bit or supplied completion is
+introduced. The worker ELF is unchanged:
+3d51b34fc7c8b99ffadc287b1668548e810e19252b46163eb83ebdb30f68351d
+
+This CHANGES fault-observation timing. A changed source after an earlier
+admission can allow ROOT job/doorbell writes before the worker parks BEFORE
+its first NoC request. It is NOT equivalent to the old pre-admission source
+observation. Connected ROOT+worker changed-timing fault qualification and
+full-model numerics remain OWED;the isolated tests below do not replace them.
+
+Independent source/build qualification
+--------------------------------------
+Base eb8421ce3683074d881818c4b990b3eb70d220eb plus18 owned source paths.
+Main: /private/tmp/pioneer-q38-worker-admit-main-p.c5BGvUzy
+Clean: /private/tmp/pioneer-q38-worker-admit-clean-p.iNLer4zD
+Earlier native preparation/Host/END/state and llama.cpp/FlashNext WIP excluded.
+All18 source pairs match working/main/clean,including the final test addition.
+
+Independent inspect P builds26104/73863 and strict R builds49996/10071 exit0.
+All8 boot/text/terminal/Conv/ELF/component artifacts match main/clean AND
+strict/inspect. Pins were frozen AFTER independent inspect comparison.
+Strict image directories:
+/private/tmp/pioneer-q38-worker-admit-main-20261030-r-image
+/private/tmp/pioneer-q38-worker-admit-clean-20261030-r-image
+SHA256:
+boot.bin 4 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+text.bin 127904 869c14c22ba5a1b15a0209e9d6bd9c18f13199193335724102e827aa83adbcd2
+terminal.bin 8 6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5
+conv.bin 32216 d44c957acf23d5025d43b7b74625a0a3ab5c1f813975a46ae535d514d41abc9b
+program.elf 189408 1c5fb71798d0199a1e4a8599087220582fc181bd481df84cda577764bf05f32b
+recurrent.o 173332 ec717b89aa276961a5afb7031fc81a4903a1a6f58e205cb156684b765914ae8c
+dense.o 137028 c663c6db28eb3b989409b139909ae6a7ef106442a51947d1908219d4a4c7ac72
+token-components-NOBOOT.o 272180 de5ecfb69aa172e36d63f8929c0279ef58b0486d00a4856bfa6dc500941cbd69
+Parent max individual frame1616/component2112 (existing explicit exception).
+Combined worst-case stack is NOT qualified.
+
+Old single-audit strict controls44117/24291 exit0 and retain their exact
+189408-byte ELF6e38018d4e7a918f26f85a5fba631c567c8108c17c008e9eeb8cde081c463f9a.
+Recursive previous/default feedback pins remain unchanged as well.
+
+Paired focused qualification completed
+--------------------------------------
+Role suites main61723/clean57124:11 positives/282 refusals each,exit0.
+Required parents,defined0/2,late on/off replacement and native/fixed DATA,
+CPU oracle,worker,convolution,parent and Work contamination are rejected.
+The earlier main role runs shared a log accidentally;neither shared log is
+counted as independent proof. The stated main61723 rerun has a unique log.
+
+Actual pinned worker local-guard tests QGW1 and QGW2 BOTH exit0 in BOTH trees:
+main60321/82911,clean66772/51389. Each family has3 virgin-boot positive first
+request controls and96 source-fault cases:all16 source words x workers1/96/119,
+before any NoC and after the first genuine request. All park with NO following
+request,matrix product,completion,retry or cleanup and remain inert2048 actual
+instructions. Synthetic byte/NoC endpoints ONLY,not a connected ROOT/model.
+The initial old-family compile exposed a tautological printf-label comparison;
+it was fixed with an explicit family label,not a disabled warning. R is the
+paired passing result for both families.
+
+Emitted admission tests T main57374/clean56491 BOTH exit0 with ASAN/UBSAN.
+The runner authenticates exact old/new ELF bytes and nm/symbol maps,then
+executes their real emitted Admit ABI in the isolated instruction machine.
+These use SYNTHETIC boot/job/proof metadata,NOT acquired native ownership or
+a genuine worker history. Results:
+-12 cold/warm controls across recurrent+dense and workers0/95/118.
+-Cold source audit retained:79->79 packets in this helper.
+-Warm helper only:32->16 packets,all16 omitted reads are physical sources.
+-6 synthetic unseen-peer controls:peer sequence1/private ROOT frontier0;
+ Wait imports sequence1 but ALL16 source audits still execute.
+-32 cold source failures and32 unseen-peer source failures remain rejected.
+-32 warm source changes are EXPLICITLY deferred,not reported as rejections.
+-NO job/doorbell release packets;2048 actual inert instructions after each.
+These counts are neither a whole-layer speedup nor physical tokens/sec.
+
+Original learned-byte model validation PENDING
+---------------------------------------------
+Sessions49534/81457 were launched once from those strict images with the
+original GGUF,119 virgin actual worker instruction engines,three positions,
+all64 layers each and terminal119-worker STOP. NO fast-root-memory/first-layer-stop
+option or CPU product is used. The HOST --snapshot-first-layer option writes
+an explicitly incomplete non-closing prefix only AFTER actual first-layer
+verification;the SAME history must continue afterwards.
+Observed directories:
+/private/tmp/pioneer-q38-worker-admit-flow-main-s.nLXnsZPl/observed
+/private/tmp/pioneer-q38-worker-admit-flow-clean-s.nzd6rP3T/observed
+Logs: /private/tmp/pioneer-q38-worker-admit-flow-{main,clean}-20261030-s.log
+At this checkpoint they are authenticating the SAME-open original GGUF.
+No first-layer,whole token/three positions,EOS,state/KV,STOP/END,combined-stack,
+native owner,physical,Assistant Work or TPS qualification is claimed.
+
+Next:complete connected changed-timing faults and actual model comparisons;
+qualify native lifecycle/stack before any installation,then measure physical
+stability and real whole-model inference. All earlier valid runs are retained.

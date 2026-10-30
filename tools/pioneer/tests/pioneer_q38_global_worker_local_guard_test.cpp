@@ -1,12 +1,43 @@
 /* SPDX-License-Identifier: MIT */
-// ACTUAL pinned QGW1 instructions. Synthetic NoC/byte endpoints ONLY;
+// ACTUAL pinned QGW1 or explicitly selected QGW2 instructions. Synthetic endpoints ONLY;
 // no ROOT/native owner,completion receipt,model product or card authority.
 #define PIONEER_Q38_GLOBAL_WORKER_INITIAL_MACHINE_ONLY
 #include "pioneer_q38_global_worker_initial_test.cpp"
+#ifdef PIONEER_Q38_LOCAL_GUARD_PRECISE_TEST
+#include "../PioneerQ38PreciseWorkerLayout.h"
+namespace GuardLayout=PioneerQ38PreciseWorkerLayout;
+static constexpr const char* GuardFamily="QGW2";
+#else
+namespace GuardLayout=G;
+static constexpr const char* GuardFamily="QGW1";
+#endif
 struct LocalGuardPeer:GlobalInitialPeer {
+#ifdef PIONEER_Q38_LOCAL_GUARD_PRECISE_TEST
+ std::vector<uint8_t> precise;
+ LocalGuardPeer(const char* old,const char* image,unsigned worker):GlobalInitialPeer(old,image,worker,8,5120,3),
+  precise(Read((std::string(image)+"/precise.bin").c_str())){
+  assert(!steps && pc==0x6000 && !precise.empty() && precise.size()<=0x10000);
+  boot[0]=GuardLayout::Magic;for(unsigned i=40;i<49;i++)boot[i]=GuardLayout::BootWord(i);
+  assert(GuardLayout::BootShape(boot.data()) && !G::BootShape(boot.data()));
+  for(unsigned i=0;i<64;i++)memory[M::Boot+i*4]=boot[i];
+ }
+ const std::vector<uint8_t>* Rom(unsigned address,unsigned& base)const override{
+  if(Range(address,0x30000,unsigned(precise.size()))){base=0x30000;return &precise;}
+  return GlobalInitialPeer::Rom(address,base);
+ }
+ void BootGlobal(){
+  PoisonDst();Poison();while(pc!=waitPC && pc!=faultPC)StepBlock();
+  assert(pc==waitPC && !sequence && !requests && !responses && !pending
+   && memory.at(M::Status+12)==GuardLayout::Magic && !memory.at(M::Status+8));
+ }
+#else
  using GlobalInitialPeer::GlobalInitialPeer;
+#endif
  void Stage(){
-  const auto j=Command(false);assert(G::JobShape(j.data(),boot.data(),0,0));
+  std::array<uint32_t,64> j={};const unsigned head[]={GuardLayout::Magic,1,1,boot[3],selfRoute,0,0,2025};
+  for(unsigned i=0;i<8;i++){j[i]=head[i];j[8+i]=boot[8+i];}
+  for(unsigned i=0;i<10;i++)j[16+i]=matrixJob[i];j[26]=1;
+  assert(GuardLayout::JobShape(j.data(),boot.data(),0,0));
   for(unsigned i=0;i<64;i++)memory[M::Job+i*4]=j[i];memory[M::Doorbell]=j[1];
  }
  void FirstRequest(){
@@ -15,7 +46,7 @@ struct LocalGuardPeer:GlobalInitialPeer {
  } // positive admission control,NOT completion/producer/first-layer proof
  void RetainedFault(unsigned issued){
   while(pc!=faultPC && pc!=stopPC)StepBlock();
-  assert(pc==faultPC && memory.at(M::Status+8)==G::Fault && !memory.at(M::Status+4)
+  assert(pc==faultPC && memory.at(M::Status+8)==GuardLayout::Fault && !memory.at(M::Status+4)
    && requests==issued && !matrixInstructions && !densePackets && !pending);
   const auto beforeResponses=responses;uint32_t beforeCommand[10];
   for(unsigned i=0;i<10;i++)beforeCommand[i]=command[i];
@@ -41,5 +72,5 @@ int main(int argc,char** argv){
    peer->RetainedFault(timing);if(timing)after++;else early++;
   }
  }
- printf("PASS ACTUAL pinned QGW1 valid first-matrix admission controls%u/all16 local physical-source faults x3 workers:%u BEFORE any NoC,%u AFTER first genuine NoC request/NO following request,matrix product,completion or retry/actual2048 inert steps each;synthetic endpoints ONLY,NOT ROOT/native/full-model/physical/Work/TPS qualification\n",controls,early,after);
+ printf("PASS ACTUAL pinned %s valid first-matrix admission controls%u/all16 local physical-source faults x3 workers:%u BEFORE any NoC,%u AFTER first genuine NoC request/NO following request,matrix product,completion or retry/actual2048 inert steps each;synthetic endpoints ONLY,NOT ROOT/native/full-model/physical/Work/TPS qualification\n",GuardFamily,controls,early,after);
 }

@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION
+#error Worker-sealed admission is a returning ROOT policy,not a worker image
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT
 #error Single closed audits belong only to the distinct returning QGW2 ROOT candidate
 #endif

@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // No guard: reject late/defined-zero role contamination too. BUILD ONLY.
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION) && !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE)
+#error Worker-sealed admission belongs only to the distinct returning QGW2 candidate
+#endif
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT) && !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE)
 #error Single closed audits belong only to the distinct QGW2 returning-component candidate
 #endif

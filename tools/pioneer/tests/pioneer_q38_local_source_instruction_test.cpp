@@ -3,8 +3,13 @@
 // owner,worker/completion receipt or model product can be manufactured here.
 #define PIONEER_Q38_PEER_SOURCE_INSTRUCTION_MACHINE_ONLY
 #include "pioneer_q38_peer_source_instruction_test.cpp"
+#ifdef PIONEER_Q38_LOCAL_SOURCE_PRECISE_ABI_TEST
+#include "../PioneerQ38PreciseWorkerLayout.h"
+namespace G=PioneerQ38PreciseWorkerLayout;
+#else
 #include "../PioneerQ38GlobalWorkerLayout.h"
 namespace G=PioneerQ38GlobalWorkerLayout;
+#endif
 struct LocalSourceMachine:AuditMachine {
  unsigned peerWrites=0,afterWriteAddress=0;
  LocalSourceMachine(const AuditImage& image,unsigned kind,unsigned worker):AuditMachine(image,kind,worker){
@@ -67,6 +72,7 @@ static std::array<unsigned,6> Entries(const char* file){
  std::ifstream in(file);std::array<unsigned,6> result={};
  for(auto& a:result){in>>std::hex>>a;assert(in.good() && a>=0x40000 && a<0x60000);}return result;
 }
+#ifndef PIONEER_Q38_LOCAL_SOURCE_INSTRUCTION_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==5);setvbuf(stdout,nullptr,_IOLBF,0);
  AuditImage baseline(argv[1],argv[3]),candidate(argv[2],argv[4]);
@@ -134,3 +140,4 @@ int main(int argc,char** argv){
  }
  printf("PASS isolated emitted post-completion policy/12 positive boot+Admit functions/4 positive release packets/%u immediate source-queue-counter faults/%u metadata refusals BEFORE release/%u post-release fault-retentions/%u MMIO-width-write refusals/%u boot mismatches/%u real Admit physical-audit failures/%u explicit next-Admit refusals/actual2048 inert instructions each;worker-local faults and genuine whole ROOT/model/END qualification are SEPARATE,NO physical/Work/TPS grant\n",earlyFaults,releaseFaults,afterRelease,mmioFaults,bootFaults,sourceFaults,nextFaults);
 }
+#endif

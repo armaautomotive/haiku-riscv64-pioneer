@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION
+#error Worker-sealed admission is a returning ROOT policy,not a worker image
+#endif
 // No include guard: late and defined-zero contamination must fail.
 #if !defined(PIONEER_Q38_PRECISE_WORKER_IMAGE) || PIONEER_Q38_PRECISE_WORKER_IMAGE != 1
 #error Exact separate QGW2 precise worker image required

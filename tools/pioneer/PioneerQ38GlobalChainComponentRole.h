@@ -1,5 +1,21 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38GlobalChainIsolation.h"
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION
+#include "PioneerQ38WorkerSealedAdmissionRole.h"
+#endif
+#ifndef PIONEER_Q38_WORKER_SEALED_ADMISSION_BINDING_H
+#define PIONEER_Q38_WORKER_SEALED_ADMISSION_BINDING_H
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION
+enum {PioneerQ38WorkerSealedAdmissionProfile=1};
+#else
+enum {PioneerQ38WorkerSealedAdmissionProfile=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION
+static_assert(PioneerQ38WorkerSealedAdmissionProfile==1,"late worker-sealed admission policy change");
+#else
+static_assert(PioneerQ38WorkerSealedAdmissionProfile==0,"late physical admission policy change");
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT
 #include "PioneerQ38SingleClosedAuditRole.h"
 #endif

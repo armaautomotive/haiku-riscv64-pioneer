@@ -110,6 +110,11 @@ static __attribute__((noinline)) void AdmitGlobalOutput(const uint32_t* d,uint32
 }
 #endif
 static void Admit(const uint32_t* d,uint32_t* tracked,unsigned w){
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION
+ // Observe the ROOT's OWN prior frontier BEFORE Wait can observe a peer's
+ // current sequence. Never use a caller-ready bit or skip the first audit.
+ const bool firstSourceAudit=!Words(L::Nonces)[w];
+#endif
  Wait(d,tracked,w,0,true);
 #if defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
  if(L::FirstMatrix(d) && Words(L::Nonces)[w]>0x7ffffffd-L::RunDelta(w))scalar_fault_park(); // reserve the entire block AND a real STOP
@@ -128,7 +133,16 @@ static void Admit(const uint32_t* d,uint32_t* tracked,unsigned w){
 #else
  if(w<96)for(unsigned i=0;i<16;i++)if(b[16+i]!=Frame(w)[16+i])scalar_fault_park();
 #endif
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION
+ // Returning QGW2 workers check ALL16 local sources before their first
+ // request,after every transfer and before completion. Keep the first ROOT
+ // audit;later corruption can be observed by the worker after a doorbell,
+ // BEFORE its first NoC request,not at this duplicate remote observation.
+ // Boot/job/nonce/physical counter/WAIT/queue checks below remain unchanged.
+ if(firstSourceAudit)PhysicalSource(d,tracked,w);
+#else
  PhysicalSource(d,tracked,w);
+#endif
 #if defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
  if(!Words(L::Nonces)[w]){
    if(!L::Virgin(d))scalar_fault_park(); // exact FIRST request/roles of THIS image,never recaptured later
