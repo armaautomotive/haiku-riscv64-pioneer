@@ -1,0 +1,109 @@
+QGW3 duplicate boot validation experiment, 2026-10-30
+==================================================
+
+Scope: disposable BUILD and isolated DATA/controller-instruction tests only.
+No default header, selector, driver, worker image, native ABI, installed image,
+Assistant, power state or SD media changed. No inference-rate result.
+The last physical whole-model rate remains 0.207893161 tokens/sec;20 UNMET.
+
+Hypothesis and change
+---------------------
+QGW3 JobShape first calls its complete BootShape, normalizes a second copy,
+then calls QGW2 JobShape, which validates the normalized boot again. The
+experiment retains the complete QGW3 extension check and the normalized
+QGW2 JobShape/BootShape checks, but removes the first redundant base check.
+A shared read-only 15-word extension table avoids duplicating its switch.
+Both BootShape and JobShape use that extension check. All base predicates,
+job witnesses, operation-specific checks and normalization remain present.
+
+The transformation is over immutable private DATA arguments. It does NOT
+claim the same input-read sequence under concurrent mutations. All actual
+source/MMIO, packet, nonce, cohort and current-owner checks remain outside
+this isolated proof. Existing worker calls use seal.boot/seal.job snapshots;
+ROOT calls also reference retained L1 boot/job tables. Their lifetime/sealing
+and connected fault behavior still require qualification before adoption.
+Do not apply this patch to a live tree or silently replace default firmware.
+
+Reproduction
+------------
+Apply experiments/q38-job-boot-fold-20261030.patch ONLY to a fresh git archive
+of 5e1a07f6e77fb9be42a522e30166959da253929c. It includes the changed header
+and the two standalone tests; no production source is changed by archiving it.
+Both test sources are under tools/pioneer/tests/ in the resulting archive.
+
+Build host test:
+  c++ -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined \
+    tools/pioneer/tests/pioneer_q38_job_boot_fold_test.cpp -o HOST_TEST
+  HOST_TEST
+
+Build the candidate with build_qwen38_token_root.py SDK FRESH_OUTPUT and:
+  --inspect-candidate --cancel-boundary --f32-hidden --unroll-dense-seals
+  --boundary-seals --unroll-quiet --worker-local-source-guards
+  --precise-activation --single-closed-audit --worker-sealed-admission
+  --pushed-completion --unroll-packet-seals --unroll-packet-seals-eight
+SDK used: /Volumes/HaikuBuildLocal/generated.riscv64
+Keep the unchanged linker limits and every builder inspection/assertion.
+Build the unmodified eight-way reference from the frozen commit separately.
+
+Compile pioneer_q38_job_boot_fold_instruction_test.cpp with the same host
+flags; run with four arguments: OLD_IMAGE CANDIDATE_IMAGE 45ec0 45e34.
+Those last two are the actual old/candidate JobShape entry addresses from
+cross-tools-riscv64/bin/riscv64-unknown-haiku-nm -C -n program.elf.
+Verify the image pins below before using these addresses. The test permits
+only ROM/private immutable arguments/initialized stack; no device/MMIO IO.
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 were used.
+
+Actual results
+--------------
+Host: 667684 cases,65094 accepts,602590 refusals,81 valid operation seeds.
+Every boot/job bit is tested for each seed, plus paired mutations and null,
+phase and sequence boundaries. Frozen original BootShape/JobShape reference
+and the candidate agree; inputs remain unchanged under ASan/UBSan.
+
+Emitted controller: 6148 cases,5115 refusals,81 valid operation seeds.
+All boot/job bits on an ordinary descriptor; paired mutations; null/phase/
+sequence boundaries across the seeds. Both real images return the frozen
+host result. Writes are stack-only; callee-saved registers and SP restore;
+2048 additional terminal instructions produce no input read or write.
+Representative valid ordinary call:7537->5374 actual RISC instructions and
+193->137 immutable input-word reads. Observed stack writes reach2128 bytes
+below SP in BOTH. This is not cycles, a whole-path stack bound, or TPS.
+
+Two initial alternatives were refused by the unchanged linker: the inline
+extension version required131196 ROOT bytes, the shared-switch131116, both
+exceeding131072/overlapping the fixed terminal section. Neither was used.
+The table version builds and passes every existing BUILD inspection.
+ROOT text131040->130960 bytes;112 bytes remain in131072. Conv32720/32768.
+ELF190592 bytes (not smaller than old190444). Parent max individual frame
+1616/component2112 unchanged; do not interpret these as combined stack proof.
+
+Independent archive/replay
+--------------------------
+Producer:/private/tmp/pioneer-q38-job-boot-fold-source-fm.Hv4G5kd3
+Clean:/private/tmp/pioneer-q38-job-boot-fold-clean-fr.jG5OfSBo
+All three patch-produced files compare exactly. Independent ASan/UBSan host
+and emitted tests exit0; emitted two-line logs compare byte-for-byte.
+Independent complete ROOT ELFs/text/Conv compare byte-for-byte.
+Producer host session74881/emitted19773; clean full sequence46704:terminal0.
+Producer table-image build/host94654:terminal0.
+
+Old eight-way reference ELF SHA256:
+df4261ec5bb3d2f9ada2f11f82b1e52d8d1938c704efd70a4bc150aaab28c933
+Candidate pins (BUILD ONLY; not existing native/runtime pins):
+boot.bin4:32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+text.bin130960:6cb8ae7d5b03525ec233aa22b2230c815cab311771c532e82ba7d7bd7ced9dff
+terminal.bin8:6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5
+conv.bin32720:72c325aaaf632e3fc9a5f7c1a0286387982021eec171705f9027c8b16868a09c
+program.elf190592:430b89b2fb734bfb66bbe96cc1e8581fcd6476d263a2578b8e869936df4bc1c7
+Emitted log SHA256:
+3d14af17f4e585e28100c05ade4f1adbe10ca0b1d3743574fd3a464d494a48c7
+
+Still owed
+----------
+Call-site lifetime/sealing qualification and connected invalid/late-change
+tests; original model arithmetic; native context/END and combined-stack
+qualification; physical deployment and honest inference benchmarks. No
+public Work mode, native route, or existing image pin is enabled by this.
+The seven existing whole-flow/first-layer sessions remain on their original
+histories. In particular the eight-way first-layer pair17549/34885 reached
+matrix8 but has not returned a final numerical comparison at this checkpoint.

@@ -1,0 +1,228 @@
+diff --git a/tools/pioneer/PioneerQ38PushedWorkerLayout.h b/tools/pioneer/PioneerQ38PushedWorkerLayout.h
+index 098b3243b3..91a0016d2b 100644
+--- a/tools/pioneer/PioneerQ38PushedWorkerLayout.h
++++ b/tools/pioneer/PioneerQ38PushedWorkerLayout.h
+@@ -38,13 +38,21 @@ static inline void OldBoot(const uint32_t* b,uint32_t* old){
+ #define PIONEER_Q38_PUSHED_BOOT_FN static inline
+ #define PIONEER_Q38_PUSHED_JOB_FN static inline
+ #endif
+-PIONEER_Q38_PUSHED_BOOT_FN bool BootShape(const uint32_t* b){
++PIONEER_Q38_PUSHED_BOOT_FN bool ExtensionShape(const uint32_t* b){
+  if(!b || b[0]!=Magic)return false;
+- for(unsigned i=40;i<=54;i++)if(b[i]!=BootWord(i))return false;
++ static const uint32_t words[]={JobWitness,1,Hidden,Vocabulary,GlobalMatrix,1,
++  ActivationMagic,Chunks,ChunkValues,ReceiptMagic,Root,Mailbox,Stride,PushBuffer,ReceiptWords};
++ for(unsigned i=0;i<15;i++)if(b[40+i]!=words[i])return false;
++ return true;
++}
++PIONEER_Q38_PUSHED_BOOT_FN bool BootShape(const uint32_t* b){
++ if(!ExtensionShape(b))return false;
+  uint32_t old[64];OldBoot(b,old);return Base::BootShape(old);
+ }
+ PIONEER_Q38_PUSHED_JOB_FN bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
+- if(!j || j[0]!=Magic || !BootShape(b))return false;
++ if(!j || j[0]!=Magic || !ExtensionShape(b))return false;
++ // Validate the distinct QGW3 extension here. The normalized QGW2 boot
++ // is still fully checked by Base::JobShape below; do not check it twice.
+  uint32_t oldBoot[64],oldJob[64];OldBoot(b,oldBoot);
+  for(unsigned i=0;i<64;i++)oldJob[i]=i?j[i]:unsigned(Base::Magic);
+  if(j[2]==GlobalMatrix){if(j[31]!=JobWitness)return false;oldJob[31]=Base::JobWitness;}
+diff --git a/tools/pioneer/tests/pioneer_q38_job_boot_fold_test.cpp b/tools/pioneer/tests/pioneer_q38_job_boot_fold_test.cpp
+new file mode 100644
+index 0000000000..75b95d2a67
+--- /dev/null
++++ b/tools/pioneer/tests/pioneer_q38_job_boot_fold_test.cpp
+@@ -0,0 +1,94 @@
++/* SPDX-License-Identifier: MIT */
++// Disposable DATA-grammar equivalence experiment. No device/model/Work grant.
++#include "../PioneerQ38PushedWorkerLayout.h"
++#include <array>
++#include <cassert>
++#include <cstdio>
++#include <cstdint>
++#include <vector>
++namespace P=PioneerQ38PushedWorkerLayout;
++using Words=std::array<uint32_t,64>;
++// Frozen original implementation from 5e1a07f6e77fb9be42a522e30166959da253929c.
++static bool OriginalBoot(const uint32_t* b){
++ if(!b || b[0]!=P::Magic)return false;
++ for(unsigned i=40;i<=54;i++)if(b[i]!=P::BootWord(i))return false;
++ uint32_t old[64];P::OldBoot(b,old);return P::Base::BootShape(old);
++}
++static __attribute__((noinline)) bool Original(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
++ if(!j || j[0]!=P::Magic || !OriginalBoot(b))return false;
++ uint32_t oldBoot[64],oldJob[64];P::OldBoot(b,oldBoot);
++ for(unsigned i=0;i<64;i++)oldJob[i]=i?j[i]:unsigned(P::Base::Magic);
++ if(j[2]==P::GlobalMatrix){if(j[31]!=P::JobWitness)return false;oldJob[31]=P::Base::JobWitness;}
++ return P::Base::JobShape(oldJob,oldBoot,previous,densePhase);
++}
++static uint64_t cases=0,accepted=0,refused=0;
++static void Check(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned phase){
++ Words savedJob={},savedBoot={};if(j)for(unsigned i=0;i<64;i++)savedJob[i]=j[i];
++ if(b)for(unsigned i=0;i<64;i++)savedBoot[i]=b[i];
++ const bool a=Original(j,b,previous,phase),z=P::JobShape(j,b,previous,phase);
++ if(a!=z){std::fprintf(stderr,"MISMATCH case%llu previous%u phase%u old%u candidate%u\n",
++  static_cast<unsigned long long>(cases),previous,phase,unsigned(a),unsigned(z));assert(false);}
++ if(j)for(unsigned i=0;i<64;i++)assert(j[i]==savedJob[i]);
++ if(b)for(unsigned i=0;i<64;i++)assert(b[i]==savedBoot[i]);
++ cases++;accepted+=a;refused+=!a;
++}
++static uint32_t seed=0x51574733;
++static uint32_t Random(){seed^=seed<<13;seed^=seed>>17;seed^=seed<<5;return seed;}
++static Words Boot(unsigned worker){
++ Words b={};b[0]=P::Magic;b[1]=1;b[2]=64;b[3]=worker;b[4]=P::Peer(worker);
++ b[5]=b[16]=0x12345678;b[6]=8192;b[7]=64;
++ for(unsigned i=8;i<16;i+=2)b[i]=i;
++ for(unsigned i=17;i<32;i++)b[i]=0x5a5a0000+i;
++ for(unsigned i=40;i<=54;i++)b[i]=P::BootWord(i);
++ assert(P::BootShape(b.data()));return b;
++}
++struct Job {Words words;unsigned phase;};
++static std::vector<Job> Jobs(const Words& b){
++ std::vector<Job> jobs;
++ for(unsigned op=1;op<=12;op++){
++  Words j={};j[0]=P::Magic;j[1]=8;j[2]=op;j[3]=b[3];j[4]=b[4];j[5]=op>=9?3:0;
++  j[6]=8191;j[7]=2025;for(unsigned i=8;i<16;i++)j[i]=b[i];
++  unsigned phase=op>=9 && op<=11?op-9:0;
++  if(op==3){j[16]=P::ActivationMagic;j[17]=256;j[18]=576;j[19]=j[7];j[20]=12;j[27]=248319;}
++  if(op==12){
++   j[5]=64;j[16]=0x31483851;j[17]=14;j[18]=3392;j[21]=5120;j[22]=0x04000000;
++   j[23]=1;j[24]=PioneerQ38ProjectionRoute(0);j[25]=j[26]=1;j[27]=0;j[28]=0;
++   j[29]=248320;j[30]=1;j[31]=P::JobWitness;
++  }
++  if(Original(j.data(),b.data(),7,phase))jobs.push_back({j,phase});
++ }
++ Words stop={};stop[0]=P::Magic;stop[1]=8;stop[2]=P::Stop;stop[3]=b[3];stop[4]=b[4];
++ stop[5]=64;stop[6]=8191;stop[7]=2025;for(unsigned i=8;i<16;i++)stop[i]=b[i];
++ assert(Original(stop.data(),b.data(),7,0));jobs.push_back({stop,0});return jobs;
++}
++#ifndef PIONEER_Q38_JOB_BOOT_FOLD_DATA_ONLY
++int main(){
++ unsigned validSeeds=0;
++ for(unsigned worker:{1U,21U,68U,69U,96U,97U,119U}){
++  const auto boot=Boot(worker);auto jobs=Jobs(boot);
++  for(const auto& job:jobs){
++   const auto& j=job.words;assert(Original(j.data(),boot.data(),7,job.phase));validSeeds++;
++   Check(j.data(),boot.data(),7,job.phase);
++   Check(nullptr,boot.data(),7,job.phase);Check(j.data(),nullptr,7,job.phase);
++   for(unsigned previous:{0U,6U,7U,8U,0x7ffffffdU,0x7ffffffeU,0x7fffffffU,0xffffffffU})
++    for(unsigned phase:{0U,1U,2U,3U,11U,0xffffffffU})Check(j.data(),boot.data(),previous,phase);
++   for(unsigned i=0;i<64;i++)for(unsigned bit=0;bit<32;bit++){
++    auto b=boot;auto changed=j;b[i]^=uint32_t(1)<<bit;
++    Check(j.data(),b.data(),7,job.phase);changed[i]^=uint32_t(1)<<bit;
++    Check(changed.data(),boot.data(),7,job.phase);
++   }
++   for(unsigned trial=0;trial<4096;trial++){
++    auto b=boot;auto changed=j;
++    for(unsigned n=0;n<1+(trial&7);n++){
++     const auto index=Random()%64,mask=Random();if(Random()&1)b[index]^=mask;else changed[index]^=mask;
++    }
++    Check(changed.data(),b.data(),7,job.phase);
++   }
++  }
++ }
++ Check(nullptr,nullptr,0,0);
++ assert(validSeeds>=65 && accepted>validSeeds && refused>200000);
++ std::printf("PASS frozen original/candidate DATA JobShape: %u valid seeds, %llu cases, %llu accepts, %llu refusals; every boot/job bit + paired mutations + null/phase/nonce boundaries; inputs unchanged; NOT emitted firmware/model/native/physical/Work/TPS\n",
++  validSeeds,static_cast<unsigned long long>(cases),static_cast<unsigned long long>(accepted),static_cast<unsigned long long>(refused));
++}
++#endif
+diff --git a/tools/pioneer/tests/pioneer_q38_job_boot_fold_instruction_test.cpp b/tools/pioneer/tests/pioneer_q38_job_boot_fold_instruction_test.cpp
+new file mode 100644
+index 0000000000..9af79cc9c5
+--- /dev/null
++++ b/tools/pioneer/tests/pioneer_q38_job_boot_fold_instruction_test.cpp
+@@ -0,0 +1,93 @@
++/* SPDX-License-Identifier: MIT */
++// Isolated actual controller instructions over immutable synthetic DATA.
++// This does not acquire a device, native owner, layer, token or Work result.
++#define PIONEER_TENSIX_MACHINE_ONLY
++#include "pioneer_tensix_image_test.cpp"
++#define PIONEER_Q38_JOB_BOOT_FOLD_DATA_ONLY
++#include "pioneer_q38_job_boot_fold_test.cpp"
++#include <map>
++#include <memory>
++#include <string>
++struct JobImage {
++ std::vector<uint8_t> text,conv,terminal;unsigned entry;
++ JobImage(const char* directory,const char* address):
++  text(Read((std::string(directory)+"/text.bin").c_str())),
++  conv(Read((std::string(directory)+"/conv.bin").c_str())),
++  terminal(Read((std::string(directory)+"/terminal.bin").c_str())){
++  entry=unsigned(std::stoul(address,nullptr,16));assert(entry>=0x40000 && entry<0x40000+text.size());
++ }
++ bool Contains(unsigned a)const{return (a>=0x40000 && a-0x40000<text.size())
++  || (a>=0x64000 && a-0x64000<conv.size()) || (a>=0x60000 && a<0x60008);}
++ unsigned At(unsigned a)const{
++  assert(!(a&3) && Contains(a));return a>=0x64000?Word(conv,a-0x64000):
++   a>=0x60000?Word(terminal,a-0x60000):Word(text,a-0x40000);
++ }
++};
++struct JobMachine:Machine {
++ enum {JobPointer=0x72000,BootPointer=0x72100,Return=0x60004,StackTop=0x70000,StackLow=0x6d000};
++ const JobImage& image;Words job={},boot={};bool hasJob,hasBoot;
++ std::map<unsigned,unsigned> stack;unsigned inputReads=0,writes=0,minStack=StackTop;
++ JobMachine(const JobImage& rom,const uint32_t* j,const uint32_t* b,unsigned previous,unsigned phase):
++  image(rom),hasJob(j),hasBoot(b){
++  if(j)for(unsigned i=0;i<64;i++)job[i]=j[i];if(b)for(unsigned i=0;i<64;i++)boot[i]=b[i];
++  regs[1]=Return;regs[2]=StackTop;regs[10]=j?JobPointer:0;regs[11]=b?BootPointer:0;regs[12]=previous;regs[13]=phase;
++  for(unsigned r:{8U,9U,18U,19U,20U,21U,22U,23U,24U,25U,26U,27U})regs[r]=0x90000000U+r;
++  pc=image.entry;
++ }
++ bool CodeAddress(unsigned a)const override{return image.Contains(a);}
++ unsigned Index(unsigned a)override{l1[8180]=image.At(a);return 8180;}
++ unsigned StepLimit()const override{return 100000;}
++ uint32_t Load(unsigned a)override{
++  assert(!(a&3));if(image.Contains(a))return image.At(a);
++  if(a>=JobPointer && a<JobPointer+256){assert(hasJob);inputReads++;return job[(a-JobPointer)/4];}
++  if(a>=BootPointer && a<BootPointer+256){assert(hasBoot);inputReads++;return boot[(a-BootPointer)/4];}
++  assert(a>=StackLow && a<StackTop && stack.count(a));return stack.at(a);
++ }
++ void Store(unsigned a,unsigned value)override{
++  assert(!(a&3) && a>=StackLow && a<StackTop);stack[a]=value;writes++;if(a<minStack)minStack=a;
++ }
++ bool RunCall(){
++  while(pc!=Return)Step();
++  assert(regs[10]<=1 && regs[1]==Return && regs[2]==StackTop);
++  for(unsigned r:{8U,9U,18U,19U,20U,21U,22U,23U,24U,25U,26U,27U})assert(regs[r]==0x90000000U+r);
++  const bool result=regs[10];const auto oldWrites=writes,oldReads=inputReads;
++  for(unsigned i=0;i<2048;i++)Step();assert(pc==Return && writes==oldWrites && inputReads==oldReads);return result;
++ }
++};
++static unsigned emittedCases=0,emittedRefusals=0;
++static void Compare(const JobImage& old,const JobImage& candidate,const uint32_t* j,const uint32_t* b,
++ unsigned previous,unsigned phase,bool report=false){
++ Check(j,b,previous,phase);const bool expected=Original(j,b,previous,phase);
++ auto a=std::make_unique<JobMachine>(old,j,b,previous,phase),z=std::make_unique<JobMachine>(candidate,j,b,previous,phase);
++ const bool x=a->RunCall(),y=z->RunCall();
++ if(x!=expected || y!=expected){std::fprintf(stderr,"EMITTED MISMATCH case%u expected%u old%u candidate%u\n",emittedCases,unsigned(expected),unsigned(x),unsigned(y));assert(false);}
++ if(report){assert(expected && z->steps<a->steps && z->inputReads<a->inputReads);
++  std::printf("PASS actual ordinary descriptor instructions%u->%u private-input reads%u->%u observed stack bytes%u->%u;not cycles/TPS\n",
++   a->steps-2048,z->steps-2048,a->inputReads,z->inputReads,JobMachine::StackTop-a->minStack,JobMachine::StackTop-z->minStack);}
++ emittedCases++;emittedRefusals+=!expected;
++}
++int main(int argc,char** argv){
++ assert(argc==5);setvbuf(stdout,nullptr,_IOLBF,0);JobImage old(argv[1],argv[3]),candidate(argv[2],argv[4]);
++ unsigned validSeeds=0;
++ for(unsigned worker:{1U,21U,68U,69U,96U,97U,119U}){
++  auto b=Boot(worker);for(const auto& job:Jobs(b)){
++   validSeeds++;const auto& j=job.words;Compare(old,candidate,j.data(),b.data(),7,job.phase,validSeeds==1);
++   Compare(old,candidate,nullptr,b.data(),7,job.phase);Compare(old,candidate,j.data(),nullptr,7,job.phase);
++   for(unsigned previous:{0U,7U,0x7ffffffeU,0xffffffffU})
++    for(unsigned phase:{0U,1U,2U,3U})Compare(old,candidate,j.data(),b.data(),previous,phase);
++  }
++ }
++ auto b=Boot(1);auto j=Jobs(b).front().words;
++ for(unsigned i=0;i<64;i++)for(unsigned bit=0;bit<32;bit++){
++  auto alteredBoot=b,alteredJob=j;alteredBoot[i]^=uint32_t(1)<<bit;alteredJob[i]^=uint32_t(1)<<bit;
++  Compare(old,candidate,j.data(),alteredBoot.data(),7,0);Compare(old,candidate,alteredJob.data(),b.data(),7,0);
++ }
++ for(unsigned trial=0;trial<512;trial++){
++  auto alteredBoot=b,alteredJob=j;
++  for(unsigned n=0;n<1+(trial&7);n++){auto index=Random()%64,mask=Random();if(Random()&1)alteredBoot[index]^=mask;else alteredJob[index]^=mask;}
++  Compare(old,candidate,alteredJob.data(),alteredBoot.data(),7,0);
++ }
++ Compare(old,candidate,nullptr,nullptr,0,0);
++ assert(validSeeds==81 && emittedCases==6148 && emittedRefusals>5000);
++ std::printf("PASS actual old/candidate JobShape %u cases/%u refusals/%u valid seeds;all boot+job bits,paired mutations,null/phase/nonce bounds;host frozen result exact,immutable arguments,stack-only stores,no MMIO,callee-saved registers+SP restored,inert2048;NOT connected/model/native/physical/Work/TPS\n",emittedCases,emittedRefusals,validSeeds);
++}
