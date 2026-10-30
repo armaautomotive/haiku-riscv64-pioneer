@@ -1,0 +1,98 @@
+QGW3 queued-next execution prerequisite -- HOST instruction tests only
+2026-10-30, based on20c0781469e64f38c216ec1d886c6da31f847902
+====================================================================
+Goal ACTIVE. Last measured physical whole-model rate0.207893161tokens/sec;
+20UNMET. No firmware,image pins,native role,Work or Assistant behavior was
+changed. No Pioneer SSH,power,driver,OS,SD,hardware or mains action occurred.
+
+Reason for this work
+--------------------
+The proposed next controller optimization would avoid repeated remote
+observations of workers whose ordinary matrix already produced a genuine
+QGW3 completion receipt. The published sender regression allowed descriptor2
+to be queued during commit1, but stopped at the real sequence1 WAIT. It did
+NOT prove descriptor2 could subsequently execute with the retained processor,
+counter frontier and tensor state. This test closes that bounded gap before
+changing ROOT admission. It does not itself remove any polling or prove that
+a ROOT/native client may treat a receipt as a hardware ownership capability.
+
+Actual two-job histories
+------------------------
+New pioneer_q38_pushed_queued_job_test.cpp includes the existing real QGW3
+instruction fixture, not a second approximate publisher. Nine histories
+cover formats8(Q8),12(Q4),14(Q6) x workers1,96,119,each K5120/groups1.
+
+Job1 genuinely boots from reset,executes all reads/tensors,then stalls2048
+instructions without its payload ACK. After ACK,the actual commit1 delivery
+queues external descriptor2+doorbell2 while job1 is still inside its final
+publisher. The worker returns to sequence1 WAIT through its actual code;
+no PC,register,private previous/nonce,configuration,LRegs or tensor Dst is
+transplanted or reset. The test first validates the complete job1 receipt.
+
+Only transport-observer bookkeeping rolls completed read counters into the
+same cumulative physical endpoint values before the next read list starts;
+all eight values are asserted unchanged. This is NOT a new production ROOT
+counter baseline or an admission grant. Public raw input words are changed,
+derived input-sum/output scratch sentinels are poisoned, and the old receipt
+slot is cleared only after the genuine previous WAIT/ACK closure. The actual
+descriptor2 was already queued; no new release or private-ready bit is added.
+
+Actual worker instructions must observe request2 and issue its real first
+read with accepted2/completed1. They execute ALL matrix instructions/reads:
+Q8:1280/162;Q4:640/22;Q6:1280/22. These counts are also checked independently
+of the shared endpoint's format-aware count helpers. Every output row must
+match the independent exact arithmetic reference,with at least one changed
+row from job1. No CPU product is supplied to the executed image.
+
+The second actual256-byte payload again stalls2048 instructions without
+its ACK or commit. After ACK,the actual4-byte commit must arrive,followed
+by genuine completed2/WAIT. The complete receipt binds job2/epoch2026 and
+all sources/counters;all64 single-word corruptions must be rejected. Root
+master counters remain unchanged and cumulative incoming slave movement
+across both jobs is exactly{4,10,4,4}. All eight outgoing deltas match the
+actual two completion writes. First-job counter-wrap coverage is retained.
+
+At the genuine second payload,each history forks16 raw physical source-word
+faults and one indefinitely missing ACK. All153 branches must park with
+completed1 retained,without a second commit,retry,cleanup or later packet,
+then remain inert2048 instructions with unchanged memory/commands/counters.
+These bounded synthetic-endpoint cases are not full-model or silicon proof.
+
+Paired qualification
+--------------------
+BQ73739/46608 BOTH EXIT0 first proved three Q8 two-job histories plus51
+second-payload fault cases. That intermediate scope is not relabeled as
+all-format coverage. Final BR44460/70352 BOTH EXIT0 by12:32UTC prove all9
+histories/18 actual matrix jobs and153 second-payload fault cases EACH.
+
+Main immutable source:/private/tmp/pioneer-q38-push-queued-main-br.YKMzWj5g
+Clean immutable source:/private/tmp/pioneer-q38-push-queued-clean-br.ocxWTnFV
+Both archive20c078 and overlay only the three owned test/runner files.
+Main log:/private/tmp/pioneer-q38-push-queued-main-20261030-br.log
+Clean log:/private/tmp/pioneer-q38-push-queued-clean-20261030-br.log
+
+The runner authenticates all mixed/G3 sender literal byte pins and verifies
+the sender symbol map against the pinned ELF. Both ASAN/UBSAN/Werror runs
+also retain the original48 source faults+3 missing-ACK timeouts+3 queued
+return-to-WAIT branches and the separate12 GlobalChainPeer format/shape
+cases plus the genuine low-rank missing-activation refusal/inert2048. No
+sanitizer error was reported. The old default sender case remains Q8/K5120;
+its fault helpers now accept an explicit prior completed sequence,default0,
+so second-job failures require completed1 rather than fabricating zero.
+
+Still required for an optimized ROOT admission
+---------------------------------------------
+Implement a separately qualified expected-frontier/retained-receipt policy,
+keep first/other-phase admission and immutable boot/source/job/counter
+ownership semantics explicit,validate connected faults and queued byte
+transport against actual ROOT instructions,and fit the unchanged ROM/stack
+bounds. This checkpoint does NOT implement that policy or waive fresh WAIT
+and physical checks in the existing ROOT. Native owner/END/Work/Assistant
+integration and physical whole-model speed remain unproven.
+
+Original-model BM7035/59848 remain the SAME live histories from20c078 inputs;
+no restart was made to incorporate these new bounded tests. At12:32UTC both
+passed the actual eight-case matrix-to-Conv gate,completed Conv/GDN and the
+previously failing Q4 matrix6,then started matrix7. No first-layer prefix,
+whole-model pass or new physical timing was yet available. The original
+eight valid long histories and27 suspended older histories are preserved.

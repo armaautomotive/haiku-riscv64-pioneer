@@ -31,6 +31,11 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw3-publisher-',dir='/private/
                     '-fsanitize=address,undefined',*flags,str(here/'pioneer_q38_pushed_worker_test.cpp'),'-o',str(binary)],check=True)
     subprocess.run([str(binary),str(old),str(image)],check=True,
                    env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
+    queued=pathlib.Path(temporary)/'queued'
+    subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off',
+                    '-fsanitize=address,undefined',*flags,str(here/'pioneer_q38_pushed_queued_job_test.cpp'),'-o',str(queued)],check=True)
+    subprocess.run([str(queued),str(old),str(image)],check=True,
+                   env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
     endpoint=pathlib.Path(temporary)/'endpoint'
     subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off',
                     '-fsanitize=address,undefined',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1',

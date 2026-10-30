@@ -12,7 +12,7 @@ struct PushedPeer:GlobalInitialPeer {
  std::array<uint32_t,4> rootSlave={}; // starts,data flits,received,ACKs;not ROOT master counters.
  unsigned pushes=0,programmed=0;bool heldPayload=false,pushCommand=false,queueAtCommit=false;
  std::array<bool,10> pushReadback={};
- PushedPeer(const char* old,const char* image,unsigned worker):GlobalInitialPeer(old,image,worker,8,5120,1),
+ PushedPeer(const char* old,const char* image,unsigned worker,unsigned type=8,unsigned k=5120,unsigned groups=1):GlobalInitialPeer(old,image,worker,type,k,groups),
   precise(Read((std::string(image)+"/precise.bin").c_str())){
   assert(!steps && pc==0x6000 && !precise.empty());
   boot[0]=Push::Magic;for(unsigned i=40;i<=54;i++)boot[i]=Push::BootWord(i);
@@ -22,6 +22,8 @@ struct PushedPeer:GlobalInitialPeer {
   for(unsigned i=0;i<8;i++)rootOriginal[i]=rootMaster[i]=0xfffffff0U+i;
   countBase[4]=countBase[7]=0xfffffffeU;countBase[5]=0xfffffffcU; // raw cold-boot counter values;exercise outgoing write wrap.
  }
+ unsigned ExpectedMatrixInstructions()const{return MatrixPhasesPerPanel()*FfnPersistentPeer::groups*(inputs/16);}
+ unsigned ExpectedReadPackets()const{return (inputs*2+16383)/16384+1+FfnPersistentPeer::groups*(inputs/(type==8?32:256));}
  const std::vector<uint8_t>* Rom(unsigned address,unsigned& base)const override{
   if(Range(address,0x30000,unsigned(precise.size()))){base=0x30000;return &precise;}
   return GlobalInitialPeer::Rom(address,base);
@@ -38,7 +40,7 @@ struct PushedPeer:GlobalInitialPeer {
  }
  void Store(uint32_t address,uint32_t value)override{
   if(Range(address,0xffb20000,40) && Range(pc,M::Code,unsigned(front.size()))
-   && matrixInstructions==1280 && requests==162 && responses==162){
+   && matrixInstructions==ExpectedMatrixInstructions() && requests==ExpectedReadPackets() && responses==requests){
    assert(!(address&3) && !pending && !heldPayload && drained && pushes<2 && CorrectRows() && !dotProbeReads);
    const unsigned i=(address-0xffb20000)/4,bytes=pushes?4:256;
    const uint32_t wanted[]={Push::PushBuffer,0,selfRoute,Push::Slot(logicalWorker),0,Push::Root,0,0x212,bytes,0};
@@ -50,8 +52,8 @@ struct PushedPeer:GlobalInitialPeer {
    assert(Range(pc,M::Code,unsigned(front.size())) && !pending);memory[address]=value;return;
   }
   if(address==0xffb20040 && command[7]==0x212){
-   assert(value==1 && pushCommand && programmed==10 && !pending && !heldPayload && pushes<2 && matrixInstructions==1280
-    && requests==162 && responses==162 && CorrectRows() && !dotProbeReads);
+   assert(value==1 && pushCommand && programmed==10 && !pending && !heldPayload && pushes<2 && matrixInstructions==ExpectedMatrixInstructions()
+    && requests==ExpectedReadPackets() && responses==requests && CorrectRows() && !dotProbeReads);
    const unsigned bytes=pushes?4:256;
    const uint32_t wanted[]={Push::PushBuffer,0,selfRoute,Push::Slot(logicalWorker),0,Push::Root,0,0x212,bytes,0};
    for(unsigned i=0;i<10;i++)assert(command[i]==wanted[i] && pushReadback[i]);programmed=0;
@@ -94,10 +96,10 @@ struct PushedPeer:GlobalInitialPeer {
   assert(heldPayload && pushes==1);mailbox=payload;rootSlave[1]+=4;rootSlave[2]++;rootSlave[3]++;
   countBase[4]++;heldPayload=false;
  }
- void FaultAfterPayload(unsigned word){
+ void FaultAfterPayload(unsigned word,unsigned completed=0){
   AckPayload();source[word]^=1U<<((word*7+5)%32);
   while(pc!=faultPC && pc!=stopPC)StepBlock();
-  assert(pc==faultPC && memory.at(M::Status+8)==Push::Fault && !memory.at(M::Status+4)
+  assert(pc==faultPC && memory.at(M::Status+8)==Push::Fault && memory.at(M::Status+4)==completed
    && pushes==1 && !mailbox[0] && !heldPayload && !pending && minStack>=0x6e000);
   const auto data=memory;const auto remote=mailbox;const auto slave=rootSlave;std::array<uint32_t,10> commands;
   std::array<uint32_t,8> counts;for(unsigned i=0;i<10;i++)commands[i]=command[i];for(unsigned i=0;i<8;i++)counts[i]=Count(i);
@@ -105,10 +107,10 @@ struct PushedPeer:GlobalInitialPeer {
   assert(pc==faultPC && memory==data && mailbox==remote && rootSlave==slave && pushes==1 && rootMaster==rootOriginal);
   for(unsigned i=0;i<10;i++)assert(command[i]==commands[i]);for(unsigned i=0;i<8;i++)assert(Count(i)==counts[i]);
  }
- void TimeoutPayload(){
+ void TimeoutPayload(unsigned completed=0){
   assert(heldPayload && pushes==1);
   while(pc!=faultPC && pc!=stopPC)StepBlock();
-  assert(pc==faultPC && memory.at(M::Status+8)==Push::Fault && !memory.at(M::Status+4)
+  assert(pc==faultPC && memory.at(M::Status+8)==Push::Fault && memory.at(M::Status+4)==completed
    && heldPayload && pushes==1 && !mailbox[0] && !pending && rootMaster==rootOriginal && minStack>=0x6e000);
   const auto data=memory;const auto remote=mailbox;const auto slave=rootSlave;
   std::array<uint32_t,10> commands;std::array<uint32_t,8> counts;
@@ -121,7 +123,8 @@ struct PushedPeer:GlobalInitialPeer {
   queueAtCommit=queued;
   AckPayload();while(!GdnFinished(1) && pc!=faultPC)StepBlock();
   const std::array<uint32_t,4> expectedSlave={{2,5,2,2}};
-  assert(pc==waitPC && !memory.at(M::Status+8) && pushes==2 && matrixInstructions==1280 && requests==162 && responses==162
+  assert(pc==waitPC && !memory.at(M::Status+8) && pushes==2 && matrixInstructions==ExpectedMatrixInstructions()
+   && requests==ExpectedReadPackets() && responses==requests
    && !heldPayload && rootMaster==rootOriginal && rootSlave==expectedSlave && minStack>=0x6e000);
   std::array<uint32_t,64> job={};for(unsigned i=0;i<32;i++)job[i]=payload[8+i];
   assert(memory.at(M::Doorbell)==(queued?2U:1U) && memory.at(M::Job+4)==(queued?2U:1U)
@@ -134,9 +137,10 @@ struct PushedPeer:GlobalInitialPeer {
   const unsigned delta[]={0,0,2,0,2,5,2,2};
   for(unsigned i=0;i<8;i++)assert(mailbox[56+i]==beforePush[i] && Count(i)==beforePush[i]+delta[i]);
   assert(!Count(4) && Count(5)==1 && !Count(7));
-  printf("PASS QGW3 worker%u/ACTUAL fullK5120+1280tensor instructions/162 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor%u;SYNTHETIC endpoints,NOT model/native/physical/TPS\n",logicalWorker,unsigned(queued));
+  printf("PASS QGW3 worker%u/type%u/ACTUAL fullK%u+%utensor instructions/%u genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor%u;SYNTHETIC endpoints,NOT model/native/physical/TPS\n",logicalWorker,type,inputs,matrixInstructions,requests,unsigned(queued));
  }
 };
+#ifndef PIONEER_Q38_PUSHED_WORKER_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;unsigned faults=0;
  for(unsigned worker:{1U,96U,119U}){
@@ -155,3 +159,4 @@ int main(int argc,char** argv){
  }
  printf("PASS QGW3 actual publisher/3 full tensor jobs+ACK-gated completion messages/%u source faults after real payload before commit/3 finite missing-ACK timeouts/no ready marker,following packet,retry or cleanup/inert2048 each/3 next-descriptor overwrite-at-commit branches return safely to sequence1 WAIT;NO next-job execution,ROOT consumer,original27B,native,physical,Work or TPS qualification\n",faults);
 }
+#endif
