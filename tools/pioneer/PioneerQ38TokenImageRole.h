@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38GlobalChainIsolation.h"
+#include "PioneerQ38PushedCompletionRootBinding.h"
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+#include "PioneerQ38PushedCompletionRootRole.h"
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
 #include "PioneerQ38PreciseActivationRootRole.h"
 #endif

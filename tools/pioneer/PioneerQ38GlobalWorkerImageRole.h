@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+#error QGW3 receiving ROOT is not an old worker image role
+#endif
 #ifdef PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE
 #error QGW3 publisher cannot enter the old QGW1 image role
 #endif

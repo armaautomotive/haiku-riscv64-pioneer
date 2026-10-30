@@ -3,6 +3,12 @@
 #error QGW3 publisher is not a returning ROOT/component capability
 #endif
 // No guard: reject late/defined-zero role contamination too. BUILD ONLY.
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+#if PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION != 1 \
+ || (!defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) && !defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE))
+#error Pushed completion belongs only to the distinct persistent/returning QGW3 BUILD profile
+#endif
+#endif
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION) && !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE)
 #error Worker-sealed admission belongs only to the distinct returning QGW2 candidate
 #endif

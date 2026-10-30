@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=13 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission'}
+assert 3<=len(sys.argv)<=14 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion'}
 inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or (cancel and f32),'dense-unroll candidate requires explicit cancel+FP32 profile'
 assert not boundary or (cancel and f32 and unroll),'boundary candidate requires explicit cancel+FP32+unrolled profile'
@@ -21,6 +21,8 @@ single_audit='--single-closed-audit' in options
 assert not single_audit or precise,'single closed audit requires the explicit QGW2 precise profile'
 worker_admission='--worker-sealed-admission' in options
 assert not worker_admission or single_audit,'worker-sealed admission requires the explicit QGW2 single-closed-audit profile'
+pushed='--pushed-completion' in options
+assert not pushed or worker_admission,'QGW3 receiver requires the entire explicit worker-admission/cancel/FP32 profile'
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -30,12 +32,13 @@ def run(*args):subprocess.run([str(a) for a in args],check=True)
 # Reproduce the strict returning components and unchanged whole feedback
 # image FIRST. Neither an old native owner nor a component alone can launch.
 components=out/'qualified-components'
-run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []))
+run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []),*(['--pushed-completion'] if pushed else []))
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1',
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1'] if precise else []),
+ *(['-DPIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION=1'] if pushed else []),
  *(['-DPIONEER_Q38_TOKEN_CANCEL_BOUNDARY=1'] if cancel else []),
  '-c',here/'blackhole_qwen38_token_root.cpp','-o',out/'program.o')
 run(tool+'as','-march=rv32imf','-mabi=ilp32','-mno-relax',here/'blackhole_qwen38_global_chain_start.S','-o',out/'start.o')
@@ -44,6 +47,10 @@ run(tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',here/'blackho
  '-Map',out/'program.map','-o',out/'program.elf')
 for section in ('boot','text','terminal','conv'):run(tool+'objcopy','-O','binary','-j','.'+section,out/'program.elf',out/(section+'.bin'))
 symbols=subprocess.check_output([tool+'nm','-nC',str(out/'program.elf')],text=True)
+if pushed:
+ for name in ('BootShape','JobShape','Receipt'):
+  matches=re.findall(r'^([0-9a-f]+) [TW] PioneerQ38PushedWorkerLayout::'+name+r'\(',symbols,re.M)
+  assert len(matches)==1 and (0x40000<=int(matches[0],16)<0x60000 or 0x64000<=int(matches[0],16)<0x6c000), ('missing/discarded QGW3 grammar',name)
 assert not subprocess.check_output([tool+'nm','-u',str(out/'program.elf')],text=True).strip()
 assert not re.search(r'^[0-9a-f]+ [bBdDgGsS] ',symbols,re.M)
 for name,address in (('_start',0x6000),('scalar_entry',0x40000),('scalar_fault_park',0x60000),('q38_global_chain_stopped',0x60004)):
@@ -76,6 +83,7 @@ for line in dis.splitlines():
  if not any(begin<=address and address+4<=end for begin,end in intervals):continue
  assert not address&3 and int(m[1],16)&3==3,'RV32IMF functions contain only 32-bit instructions'
  assert int(m[1],16)&127!=0x73,'no controller CSR'
+ assert not (int(m[1],16)&127==0x67 and not ((int(m[1],16)>>15)&31)), 'absolute JALR through x0 cannot reach owned ROOT ROM'
  instructions.append(line)
 code='\n'.join(instructions)
 assert not re.search(r'\b(?:divu?|remu?|mulh[su]*|fdiv\.[sd]|fsqrt\.[sd]|fmadd|fmsub|fnmadd|fnmsub|fcvt\.wu?\.s|ebreak)\b',code)
@@ -154,7 +162,14 @@ PINS_CANCEL_F32_WORKER_ADMISSION=(('boot.bin',4,'32791432e2d260817d9007281f37196
  ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
  ('conv.bin',32216,'d44c957acf23d5025d43b7b74625a0a3ab5c1f813975a46ae535d514d41abc9b'),
  ('program.elf',189408,'1c5fb71798d0199a1e4a8599087220582fc181bd481df84cda577764bf05f32b')) # independent BUILD pins ONLY;changed fault timing/model/native/Work/physical/TPS remain unqualified
-expected=PINS_CANCEL_F32_WORKER_ADMISSION if worker_admission else PINS_CANCEL_F32_SINGLE_AUDIT if single_audit else PINS_CANCEL_F32_PRECISE if precise else PINS_CANCEL_F32_LOCAL_SOURCE if local_sources else PINS_CANCEL_F32_QUIET if quiet else PINS_CANCEL_F32_BOUNDARY if boundary else PINS_CANCEL_F32_UNROLLED_DENSE if unroll else (PINS_CANCEL_F32 if cancel else PINS_F32) if f32 else PINS_CANCEL if cancel else PINS
+PINS_CANCEL_F32_PUSHED=(
+    ('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+    ('text.bin', 130948, '4b39d940946dbf7eb05bc135cbbe7159b71f8757ca7c4c98bc9e6e23442e9bab'),
+    ('terminal.bin', 8, '6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+    ('conv.bin', 32720, 'c1320457497d9cbcb4d8017f23d9b734a58560828e3e081493a08c54481aa34d'),
+    ('program.elf', 190520, '7a3ddc0cada5d300eb555d28f16e09253e121e8c8f8a652ae9258c024e8395a2'),
+) # independent BUILD pins ONLY;not runtime/native/Work/physical/TPS.
+expected=PINS_CANCEL_F32_PUSHED if pushed else PINS_CANCEL_F32_WORKER_ADMISSION if worker_admission else PINS_CANCEL_F32_SINGLE_AUDIT if single_audit else PINS_CANCEL_F32_PRECISE if precise else PINS_CANCEL_F32_LOCAL_SOURCE if local_sources else PINS_CANCEL_F32_QUIET if quiet else PINS_CANCEL_F32_BOUNDARY if boundary else PINS_CANCEL_F32_UNROLLED_DENSE if unroll else (PINS_CANCEL_F32 if cancel else PINS_F32) if f32 else PINS_CANCEL if cancel else PINS
 if not inspect:assert expected and tuple(observed)==expected,'unqualified persistent parent variant; inspect independent builds first'
 print('BUILD ONLY persistent parent/bootstrap/prompt+generation/all64+973/recurrent state copy+readback/token stream/final119STOP;maxFrame'+str(max(frames))+
  ';NO runtime/combined stack/original full-model/native/physical/cancellation/Work/Assistant/TPS qualification. DO NOT INSTALL')

@@ -17,6 +17,12 @@ namespace G=PioneerQ38SelectedGlobalWorker;
 namespace H=PioneerQ38GlobalHeadLayout;
 namespace DL=PioneerQ38MixedLiveBlockRootLayout;
 struct GlobalChainPeer:NewCohortPeer {
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+ void* pushedContext=nullptr;
+ void (*pushedBytes)(void*,unsigned,const uint32_t*,const uint32_t*)=nullptr;
+ bool pushing=false;unsigned pushWords=0,pushPackets=0;
+ std::array<bool,10> pushReadback={};
+#endif
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
  std::vector<uint8_t> preciseCode;bool preciseActive=false;
  unsigned precisePackets=0;
@@ -43,6 +49,13 @@ struct GlobalChainPeer:NewCohortPeer {
   return NewCohortPeer::Rom(a,base);
  }
  uint32_t Load(uint32_t a)override{
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+  if(Range(a,G::PushBuffer,256))return memory.at(a);
+  if(pushing && Range(a,0xffb20000,40)){
+   assert(!(a&3));const unsigned i=(a-0xffb20000)/4;pushReadback[i]=true;return command[i];
+  }
+  if(pushing && a==0xffb20040){doorbellRead=true;return 0;}
+#endif
   if(preciseActive && Range(a,0x90000,3712))return memory.at(a);
   return NewCohortPeer::Load(a);
  }
@@ -76,6 +89,28 @@ struct GlobalChainPeer:NewCohortPeer {
   return pc==waitPC && !sequence && !requests && !responses && !pending && memory.at(M::Status+12)==G::Magic && !memory.at(M::Status+8);
  }
  void Store(uint32_t a,uint32_t value)override{
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+  if(Range(a,G::PushBuffer,256)){
+   assert(Range(pc,M::Code,unsigned(front.size())) && !pending && drained);memory[a]=value;return;
+  }
+  if(Range(a,0xffb20000,40) && Range(pc,M::Code,unsigned(front.size()))
+   && memory.at(M::Job+8)==1 && requests==packets.size() && matrixInstructions==FfnPersistentPeer::groups*inputs/4){
+   assert(!(a&3) && !pending && drained && pushPackets<2 && responses==requests && !dotProbeReads && CorrectRows());
+   unsigned i=(a-0xffb20000)/4;
+   const uint32_t expected[]={G::PushBuffer,0,selfRoute,G::Slot(logicalWorker),0,G::Root,0,0x212,pushPackets?4U:256U,0};
+   assert(i==pushWords && value==expected[i]);if(!i)pushReadback.fill(false);
+   command[i]=value;pushWords++;pushing=true;return;
+  }
+  if(pushing && a==0xffb20040){
+   assert(value==1 && !pending && drained && pushWords==10 && pushPackets<2 && pushedBytes && pushedContext);
+   const uint32_t expected[]={G::PushBuffer,0,selfRoute,G::Slot(logicalWorker),0,G::Root,0,0x212,pushPackets?4U:256U,0};
+   for(unsigned i=0;i<10;i++)assert(command[i]==expected[i] && pushReadback[i]);
+   std::array<uint32_t,64> data={};for(unsigned i=0;i<command[8]/4;i++)data[i]=memory.at(G::PushBuffer+i*4);
+   pushedBytes(pushedContext,logicalWorker,command,data.data());
+   countBase[2]++;countBase[4]++;countBase[5]+=(command[8]+63)/64;countBase[6]++;countBase[7]++;
+   pushWords=0;pushPackets++;doorbellRead=false;return;
+  }
+#endif
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
   if(preciseActive && Range(a,0x90800,1664)){assert(!pending && !(a&3));memory[a]=value;return;}
 #endif
@@ -109,6 +144,9 @@ struct GlobalChainPeer:NewCohortPeer {
   Poison();PoisonTail();for(unsigned i=0;i<4096;i++)buffers[4096+i]=0x7fc00000;active=true;
  }
  void Receive(){
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+  pushing=false;pushWords=pushPackets=0;pushReadback.fill(false); // reached transport boundary ONLY;no processor/tensor state setter.
+#endif
   unsigned op=memory.at(M::Job+8);
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
   if(op==3){ReceivePrecise();return;}
@@ -140,6 +178,29 @@ struct GlobalChainPeer:NewCohortPeer {
 #include "PioneerQ38RootWordMap.h"
 #endif
 struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+ std::array<uint32_t,4> pushedSlave={{0xfffffff0U,0xfffffff1U,0xfffffff2U,0xfffffff3U}};
+ std::array<unsigned,4> l0Tags={{~0U,~0U,~0U,~0U}};
+ std::array<std::array<uint32_t,4>,4> l0Data={};
+ unsigned pushedMessages=0,l0Hits=0,l0Misses=0,l0RemoteStale=0,l0Fences=0;
+ static unsigned SlaveOffset(unsigned i){const unsigned o[]={0x2f0,0x2e0,0x2e8,0x2c4};return o[i];}
+ void IncomingPushed(unsigned worker,const uint32_t* packet,const uint32_t* data){
+  assert(worker && worker<=119 && packet && data && packet[2]==G::Peer(worker) && packet[3]==G::Slot(worker)
+   && packet[5]==129 && packet[7]==0x212 && (packet[8]==256 || packet[8]==4));
+  const unsigned at=packet[3],bytes=packet[8];
+  assert(!memory.at(at) && data[0]==(bytes==4?unsigned(G::ReceiptMagic):0U));
+  for(unsigned i=0;i<bytes/4;i++){
+   unsigned address=at+i*4,line=address&~15U,index=(address>>4)&3;
+   if(l0Tags[index]==line && l0Data[index][(address>>2)&3]!=data[i])l0RemoteStale++;
+   memory[address]=data[i]; // raw NoC writes deliberately DO NOT invalidate the RISCV L0 model.
+  }
+  pushedSlave[0]++;pushedSlave[1]+=(bytes+63)/64;pushedSlave[2]++;pushedSlave[3]++;pushedMessages++;
+ }
+ void StepScalar(){
+  if((Load(pc)&127)==15){l0Tags.fill(~0U);l0Fences++;}
+  ScalarMachine::StepScalar(); // real instruction,not a PC skip or substituted result.
+ }
+#endif
 #ifdef PIONEER_Q38_TEST_FAST_ROOT_MEMORY
  // Shadow ONLY this ROOT fixture's initially empty base word map. All
  // execution goes through the unchanged virtual Load/Store/RootWord hooks.
@@ -266,6 +327,11 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
   for(unsigned i=0;i<16;i++)sources[i]=source[i]=i?0x76540000+i:0x16005;
   for(unsigned w=0;w<119;w++){
    child[w]=std::make_unique<GlobalChainPeer>(worker,global,w+1);auto& p=*child[w];p.bytes=this;
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+   p.pushedContext=this;p.pushedBytes=[](void* context,unsigned worker,const uint32_t* packet,const uint32_t* data){
+    static_cast<GlobalChainInstructionMachine*>(context)->IncomingPushed(worker,packet,data);
+   };
+#endif
    for(unsigned i=0;i<16;i++)p.boot[16+i]=sources[(w+1)*16+i]=p.source[i]+=w*0x100;
    p.boot[5]=p.source[0];for(unsigned i=0;i<64;i++)p.memory[M::Boot+i*4]=p.boot[i];
    assert(!p.steps && p.BootGlobal() && !p.sequence);
@@ -322,6 +388,15 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
  }
  unsigned StepLimit()const override{return PioneerQ38InstructionWindows::Limit;}
  uint32_t Load(uint32_t a)override{
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+  for(unsigned i=0;i<4;i++)if(a==0xffb20000+SlaveOffset(i))return pushedSlave[i];
+  if(Range(a,G::Mailbox,119*256)){
+   const unsigned line=a&~15U,index=(a>>4)&3;
+   if(l0Tags[index]!=line){l0Tags[index]=line;l0Misses++;for(unsigned i=0;i<4;i++)l0Data[index][i]=memory.at(line+i*4);}
+   else l0Hits++;
+   return l0Data[index][(a>>2)&3];
+  }
+#endif
   assert(!(a&3));if(CodeAddress(a))return l1[Index(a)];
   if(Range(a,0xffb20000,0x2000)){
    unsigned off=a-0xffb20000;if(off<40)return command[off/4];
@@ -425,6 +500,9 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
   profile.Dump(observation.Total(steps));
  }
  void Store(uint32_t a,uint32_t value)override{
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+  if(Range(a,G::Mailbox,119*256) && l0Tags[(a>>4)&3]==(a&~15U))l0Tags[(a>>4)&3]=~0U; // only a resident matching line is invalidated.
+#endif
   assert(!(a&3) && !CodeAddress(a));
   if(Range(a,0xffb20000,40)){assert(!pending);command[(a-0xffb20000)/4]=value;return;}
   if(a==0xffb20040){assert(value==1 && !pending);Submit();return;}

@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+#error QGW3 receiving ROOT is not a precise worker image role
+#endif
 #ifndef PIONEER_Q38_PRECISE_WORKER_BINDING_H
 #define PIONEER_Q38_PRECISE_WORKER_BINDING_H
 #ifdef PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE

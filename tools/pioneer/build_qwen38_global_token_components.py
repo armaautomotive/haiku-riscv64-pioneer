@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=12 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission'}
+assert 3<=len(sys.argv)<=13 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion'}
 inspect='--inspect-candidate' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or f32,'separate dense-unroll candidate requires explicit FP32-hidden components'
 assert not boundary or (f32 and unroll),'boundary candidate requires explicit FP32-hidden and unrolled components'
@@ -21,6 +21,8 @@ single_audit='--single-closed-audit' in options
 assert not single_audit or precise,'single closed audit requires the explicit QGW2 precise profile'
 worker_admission='--worker-sealed-admission' in options
 assert not worker_admission or single_audit,'worker-sealed admission requires the explicit QGW2 single-closed-audit profile'
+pushed='--pushed-completion' in options
+assert not pushed or worker_admission,'QGW3 receiver requires the entire explicit returning worker-admission profile'
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -36,6 +38,7 @@ flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exc
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT=1'] if single_audit else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION=1'] if worker_admission else []),
+ *(['-DPIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION=1'] if pushed else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1'] if precise else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_LOCAL_SOURCE_GUARDS=1'] if local_sources else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_QUIET_UNROLL=1'] if quiet else []),
@@ -47,6 +50,7 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT=1'] if single_audit else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION=1'] if worker_admission else []),
+ *(['-DPIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION=1'] if pushed else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1'] if precise else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_LOCAL_SOURCE_GUARDS=1'] if local_sources else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_QUIET_UNROLL=1'] if quiet else []),
@@ -127,7 +131,12 @@ PINS_SINGLE_AUDIT_F32=(('recurrent.o',173168,'9c8910ee2e6acb94d411c576fd94b9222d
 PINS_WORKER_ADMISSION_F32=(('recurrent.o',173332,'ec717b89aa276961a5afb7031fc81a4903a1a6f58e205cb156684b765914ae8c'),
  ('dense.o',137028,'c663c6db28eb3b989409b139909ae6a7ef106442a51947d1908219d4a4c7ac72'),
  ('token-components-NOBOOT.o',272180,'de5ecfb69aa172e36d63f8929c0279ef58b0486d00a4856bfa6dc500941cbd69')) # independent BUILD pins ONLY;not runtime/fault timing/native/Work qualification
-expected=PINS_WORKER_ADMISSION_F32 if worker_admission else PINS_SINGLE_AUDIT_F32 if single_audit else PINS_PRECISE_F32 if precise else PINS_LOCAL_SOURCE_F32 if local_sources else PINS_QUIET_F32 if quiet else PINS_BOUNDARY_F32 if boundary else PINS_UNROLLED_DENSE_F32 if unroll else PINS_F32 if f32 else PINS
+PINS_PUSHED_F32=(
+    ('recurrent.o', 180652, '86f28ba48421fec93152d4f26eb4ec061a055b4afd314832d0677f0ac69a30d6'),
+    ('dense.o', 144336, '383655ce37c0fe0276d3cb2378570c0cd76aa23add1d7b7b6eee0c480e6ed59d'),
+    ('token-components-NOBOOT.o', 281800, 'b14eb5fbf29341c2127a676a06e273d725e56e3c274ccf730d904db0337f1611'),
+) # independent BUILD pins ONLY;not runtime/native/Work/physical/TPS.
+expected=PINS_PUSHED_F32 if pushed else PINS_WORKER_ADMISSION_F32 if worker_admission else PINS_SINGLE_AUDIT_F32 if single_audit else PINS_PRECISE_F32 if precise else PINS_LOCAL_SOURCE_F32 if local_sources else PINS_QUIET_F32 if quiet else PINS_BOUNDARY_F32 if boundary else PINS_UNROLLED_DENSE_F32 if unroll else PINS_F32 if f32 else PINS
 if not inspect:assert expected and tuple(observed)==expected,'unqualified component variant; inspect/freeze first'
 print('BUILD ONLY actual returning recurrent path includes strict previous-global output admission;ROOTbytes'+str(text)+'/131072 Conv'+str(conv)+'/32768 maxFrame'+str(max(frames))+
  ';NO boot/persistent parent/model token-state commit/native/physical/Work/TPS or combined-stack proof. DO NOT INSTALL')

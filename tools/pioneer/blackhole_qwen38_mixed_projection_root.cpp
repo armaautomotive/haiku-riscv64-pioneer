@@ -87,6 +87,7 @@ static void MatrixJob(const uint32_t* d,unsigned w,unsigned sequence){
  for(unsigned i=0;i<10;i++)Words(L::Scratch)[16+i]=job[i];
  Words(L::Scratch)[26]=1;
 }
+#ifndef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
 static void MatrixWait(const uint32_t* d,uint32_t* tracked,unsigned w){
  unsigned n=Words(L::Nonces)[w];
  for(unsigned attempt=0;attempt<65536;attempt++){
@@ -104,14 +105,26 @@ static void MatrixWait(const uint32_t* d,uint32_t* tracked,unsigned w){
  }
  scalar_fault_park();
 }
+#else
+#include "blackhole_qwen38_pushed_completion_root.inc"
+#endif
 static void Gather(const uint32_t* d,uint32_t* tracked,unsigned w){
+#ifndef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
  MatrixWait(d,tracked,w);BootSeal(d,tracked,w);
  MatrixJob(d,w,Words(L::Nonces)[w]);Copy(L::PeerJobs+w*256,L::Scratch,64);ClosedJob(d,tracked,w,false);
+#else
+ MatrixJob(d,w,Words(L::Nonces)[w]);Copy(L::PeerJobs+w*256,L::Scratch,64);
+#endif
  unsigned groups=Words(L::PartsShadow+w*32)[2],k=d[14],type=d[15],blocks=k>>(type==8?5:8);
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
  unsigned reads=groups*blocks+(k*2+16383)/16384+1,flits=groups*blocks*L::Tile(type)/64+(k*2+((blocks*4+63)&~63U))/64;
 #else
  unsigned reads=groups*blocks+(k*2+16383)/16384+1,flits=groups*blocks*(type==8?576:3392)/64+(k*2+((blocks*4+63)&~63U))/64;
+#endif
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+ uint32_t receiptBefore[8];
+ for(unsigned i=0;i<8;i++)receiptBefore[i]=Words(L::Counters)[w*8+i]+(i==1?flits:i==0 || i==2 || i==3 || i==6?reads:0U);
+ PushedWait(d,w,receiptBefore);
 #endif
  Transfer(d,tracked,w,0x83f00,256+groups*64,false);uint32_t proof[64];
  for(unsigned i=0;i<64;i++)proof[i]=Words(L::Scratch)[i];
@@ -132,9 +145,15 @@ static void Gather(const uint32_t* d,uint32_t* tracked,unsigned w){
  }
  for(unsigned i=0;i<8;i++){
   unsigned delta=i==1?flits:i==0 || i==2 || i==3 || i==6?reads:0U;
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+  if(proof[i]!=Words(L::Counters)[w*8+i] || uint32_t(proof[8+i]-proof[i])!=delta)scalar_fault_park();
+  if(proof[8+i]!=receiptBefore[i])scalar_fault_park();
+  Words(L::Counters)[w*8+i]=proof[8+i]+PushedDelta(i); // expected frontier;fresh WAIT+physical checks still occur at next Admit.
+#else
   if(proof[i]!=Words(L::Counters)[w*8+i] || uint32_t(proof[8+i]-proof[i])!=delta
    || Register(d,tracked,w,0xffb20000+Counter(i))!=proof[8+i])scalar_fault_park();
   Words(L::Counters)[w*8+i]=proof[8+i];
+#endif
  }
 }
 static void Scatter(const uint32_t* d,uint32_t* tracked){
@@ -176,6 +195,9 @@ static unsigned Run(const uint32_t* d){
 #endif
  for(unsigned w=0;w<119;w++)Admit(d,tracked,w);
  for(unsigned w=0;w<d[7];w++)if(Words(L::Nonces)[w]>=0x7ffffffe)scalar_fault_park();
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+ uint32_t incoming[4];PushedBegin(d,tracked,incoming);
+#endif
  for(unsigned w=0;w<d[7];w++){MatrixJob(d,w,Words(L::Nonces)[w]+1);Transfer(d,tracked,w,M::Job,256,true);}
  for(unsigned w=0;w<d[7];w++){*Words(L::Scratch)=Words(L::Nonces)[w]+1;Transfer(d,tracked,w,M::Doorbell,4,true);Words(L::Nonces)[w]++;}
  for(unsigned w=0;w<d[7];w++)Gather(d,tracked,w);
@@ -195,7 +217,13 @@ static unsigned Run(const uint32_t* d){
   Wait(d,tracked,w,0);BootSeal(d,tracked,w);ClosedJob(d,tracked,w,false);
   for(unsigned i=0;i<8;i++)if(Register(d,tracked,w,0xffb20000+Counter(i))!=Words(L::Counters)[w*8+i])scalar_fault_park();
  }
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+ PushedEnd(d,incoming);
+#endif
  Scatter(d,tracked);InputsSeal(d);Seal(d);for(unsigned w=0;w<119;w++)FrameSeal(w);
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+ PushedEnd(d,incoming);
+#endif
  auto* s=Words(L::Summary);for(unsigned i=0;i<8;i++){
   if(*Words(0xffb20000+Counter(i))!=tracked[i])scalar_fault_park();
   s[8+i]=before[i];s[16+i]=tracked[i];

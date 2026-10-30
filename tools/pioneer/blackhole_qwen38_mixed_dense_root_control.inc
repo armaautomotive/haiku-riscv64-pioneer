@@ -181,7 +181,15 @@ static void Admit(const uint32_t* d,uint32_t* tracked,unsigned w){
    || p[48]!=(previous[2]==1?0:previous[2]))scalar_fault_park();
   for(unsigned i=0;i<16;i++)if(p[32+i]!=b[16+i])scalar_fault_park();
  }
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+ for(unsigned i=0;i<8;i++){
+  unsigned value=p[after+i];
+  if(previous[2]==1)value+=i==5?5U:i==2 || i==4 || i==6 || i==7?2U:0U;
+  Words(L::Counters)[w*8+i]=value;
+ }
+#else
  for(unsigned i=0;i<8;i++)Words(L::Counters)[w*8+i]=p[after+i];
+#endif
  for(unsigned i=0;i<8;i++){
   if(Words(L::Counters)[w*8+i]!=Register(d,tracked,w,0xffb20000+Counter(i)))scalar_fault_park();
   if(i==6 && Words(L::Counters)[w*8+6]!=Words(L::Counters)[w*8+2])scalar_fault_park();

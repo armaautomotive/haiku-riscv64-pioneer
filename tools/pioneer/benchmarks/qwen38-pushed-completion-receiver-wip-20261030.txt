@@ -1,0 +1,147 @@
+QGW3 completion receiver WIP -- NOT installed or runtime-qualified
+2026-10-30, based on published f8ac6b225fab734d875ae27b28552a8f0c3a7ad6
+================================================================
+
+Previous goal turn was progress: published the qualified isolated sender.
+This turn adds an opt-in receiver to the actual persistent returning-layer
+path. Goal remains ACTIVE. Last physical whole-model rate is 0.207893161
+tokens/sec, target 20 UNMET. No physical performance result is implied.
+
+Production-source experiment
+----------------------------
+--pushed-completion requires the entire existing worker-sealed-admission /
+single-audit / precise / local-source / boundary / unrolled / FP32 profile
+(and cancellation for the parent). The DATA selector chooses distinct
+QGW3 worker boot/job grammar, including all 55 boot words. Existing native
+contexts, fixed QTP2 DATA, worker image roles, CPU validation and Work roles
+reject the new flag, even defined zero. Late profile changes are rejected.
+
+After genuine prior admission of all119 workers, Projection::Run owns and
+clears the active existing 0x118000 proof slots. It verifies the clear and
+unchanged ROOT master/slave counters before sending jobs/doorbells. Incoming
+256-byte payload + 4-byte commit messages are read locally with fences.
+Each receipt binds the actual boot/source/job/layer/position/nonce and the
+expected pre-push counters derived from the retained frontier and matrix
+geometry. The normal arithmetic proof and output rows are still read from
+the worker and independently checked. Gather no longer performs the old
+remote status/reset/PC/boot/job/counter polling for active matrix workers.
+
+Receipt counters establish an EXPECTED frontier including the two writes,
+not a claim that a current physical counter was observed. The next Admit
+still waits for genuine DONE/WAIT and reads actual physical counters before
+another job. Admission of a previous matrix accounts for the two completion
+writes when comparing its pre-push arithmetic proof to actual counters.
+This changes fault-observation timing and is not an equivalent old audit.
+
+The receiver checks all four incoming slave-counter totals and revalidates
+every active receipt before and after scatter. Unexpected totals/marker,
+stale nonce, changed payload or finite timeout park without a later packet,
+retry, reset or cleanup. No new large L1 allocation is made; proof-slot
+ownership is phase-exclusive. Native mapping/journaling remains owed.
+
+Blackhole L0 is not coherent with incoming writes; fences are deliberately
+used before polling/copying. Primary vendor source:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/README.md#l0-data-cache
+The HOST fabric models four direct-mapped 16-byte cache lines in these slots,
+local-store matching-line invalidation, and actual-fence flushing. Raw NoC
+writes do not invalidate cached lines. This model is not a physical cache
+qualification or permission to alter a live hardware cache configuration.
+
+Build/link history (all failed histories remain failures)
+--------------------------------------------------------
+AI exposed a changed old ancestor artifact after a refactor; old textual
+code paths were restored behind the new flag and old literal pins pass.
+AJ caught misleading-indentation at compile time, corrected without changing
+guards. AK found compiler-generated ebreak paths from possibly-null slot
+addresses; explicit checked non-null address construction replaced them.
+AL exceeded text capacity; AM exceeded auxiliary capacity. Cold grammar
+routines were distributed across the SAME bounded text/auxiliary extents.
+No linker or stack limits were enlarged.
+
+AR inspect + AS strict were independently byte-identical and passed their
+then-current static checks, but AS connected runtime FAILED: after the real
+first projection, corrupt marker0 correctly parked; the next receipt case
+hit an out-of-ROM PC. Disassembly revealed a real unresolved-to-zero call,
+NOT a need to enlarge the profiler map. JobShape and Receipt had shared an
+explicit weak/COMDAT section; a parent TU's surviving group omitted Receipt.
+No profiler/execution boundary was widened. Unique function sections fix the
+linkage. The final builder now requires all three QGW3 grammar symbols in
+owned ROM and rejects actual function JALRs through x0. AU caught auxiliary
+overflow after retaining the previously discarded function; moving JobShape
+to its own text section restored both unchanged bounds.
+
+AV inspect pair: sessions67416/99878 EXIT0, all eight root/component artifacts
+byte-identical. Correct Receipt is present at actual ELF address0x69a9c.
+AW strict pair: sessions80631/53780 EXIT0 with symbol + x0-JALR gates.
+Final text130948/131072 bytes; auxiliary32720/32768 bytes; parent maxFrame1616,
+component maxFrame2112. These tight bounds are BUILD evidence, not a combined
+runtime stack or full-model completion proof.
+
+Root pins (AV/AW; not launch authority):
+boot.bin 4 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+text.bin 130948 4b39d940946dbf7eb05bc135cbbe7159b71f8757ca7c4c98bc9e6e23442e9bab
+terminal.bin 8 6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5
+conv.bin 32720 c1320457497d9cbcb4d8017f23d9b734a58560828e3e081493a08c54481aa34d
+program.elf 190520 7a3ddc0cada5d300eb555d28f16e09253e121e8c8f8a652ae9258c024e8395a2
+recurrent.o 180652 86f28ba48421fec93152d4f26eb4ec061a055b4afd314832d0677f0ac69a30d6
+dense.o 144336 383655ce37c0fe0276d3cb2378570c0cd76aa23add1d7b7b6eee0c480e6ed59d
+token-components-NOBOOT.o 281800 b14eb5fbf29341c2127a676a06e273d725e56e3c274ccf730d904db0337f1611
+
+AR paired role checks EXIT0: each12 positives +280 missing/zero/two/late/
+foreign refusals. AX paired CLI checks EXIT0: each44 early refusals before
+model/image IO or output creation. AT paired controls EXIT0: original QGW2
+worker-admission root pins, G1/G2 ancestors, all10 sender pins, and sender
+roles6positive+91refusals. Later grammar-section changes affect ONLY the
+new ROOT flag; repeat final controls before publication.
+
+Connected runtime completed 11:20 UTC -- bounded qualification ONLY
+-----------------------------------------------------------------
+Corrected AW original handles89502 main /77061 clean BOTH EXIT0. Each starts
+the actual ROOT +119 reset-to-live histories and authenticated original GGUF
+and executes three full-K5120 matrix jobs with six real sender packets.
+All64 independently corrupted receipt words, a finite missing-commit timeout
+and four unexpected incoming-counter cases reach the actual ROOT fault park
+before any following packet/release, then remain inert for2048 instructions.
+The unchanged parent proceeds through next admission and the actual nonce2
+first NoC read. L0 model reports720 hits,11340 misses and four actual stale
+remote-write events. No processor state, completion or model result was
+transplanted. These cases are NOT a whole-layer or full-model qualification.
+
+Final AY controls56046/66943 BOTH EXIT0: old QGW2 profile and all ten sender
+pins remain unchanged even with the new final grammar-section policy.
+No source/ROM/native/Work fallback is enabled by these controls.
+
+Full original-model AZ histories launched after the bounded gate passed:
+main73776 trace /private/tmp/pioneer-q38-push-receiver-flow-main-az.EOucvL6I/observed
+clean53013 trace /private/tmp/pioneer-q38-push-receiver-flow-clean-az.qu6duDQd/observed
+Each requests all3 positions x64 layers, normal state/token/output checks,
+final119 STOP and complete observed traces. --snapshot-first-layer records
+an explicitly INCOMPLETE prefix at the verified first layer without ending
+or replacing the running history. That prefix must be compared bit-exact
+against the independent CPU control. Neither the prefix nor full run is
+passing merely because it was started. Poll original handles, no quiet or
+observation-timeout restart.
+
+Frozen source directories:
+/private/tmp/pioneer-q38-push-receiver-main-aq.NHQv2vjI
+/private/tmp/pioneer-q38-push-receiver-clean-aq.R2oG7yDf
+Final strict images: /private/tmp/pioneer-q38-push-receiver-{main,clean}-20261030-aw-image
+Connected logs: /private/tmp/pioneer-q38-push-receiver-connected-{main,clean}-20261030-aw.log
+Original GGUF: generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf
+Mixed inputs: generated.pioneer/qualification-inputs/mixed-worker-20261030
+Sender inputs: /private/tmp/pioneer-q38-push-worker-{main,clean}-20261030-af-image
+
+Publication and remaining objective
+----------------------------------
+Receiver is not installed or native-qualified. Do not stage unrelated
+native Host/END/state WIP, llama.cpp or FlashNext work. Connected gates are
+complete; repeat source/artifact/control checks before a bounded experimental
+checkpoint. Next actual original first-layer trace must be compared
+bit-exact to the independent CPU trace without a tolerance. All operators,
+64 layers/positions/state/output/STOP/HOLD/cancellation/reuse, combined stack,
+native ownership/driver/Assistant integration and physical complete-model
+timing are still required. A narrow connected test is not full offload.
+
+No Pioneer SSH, power, OS, driver, Assistant, SD, hardware or mains action
+occurred. Eight pre-existing primary histories keep their original handles;
+27 older suspended histories remain preserved, not killed or restarted.

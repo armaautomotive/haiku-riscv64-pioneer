@@ -3,7 +3,8 @@
 #define PIONEER_Q38_PUSHED_WORKER_LAYOUT_H
 #include "PioneerQ38PreciseWorkerLayout.h"
 // Distinct proposed DATA only. A matching receipt is NOT a native/physical
-// completion or permission to release a job. No ROOT consumer is enabled.
+// completion or permission to release a job. Only the distinct returning
+// ROOT experiment consumes it; this DATA header grants no native launch.
 namespace PioneerQ38PushedWorkerLayout {
 namespace Base=PioneerQ38PreciseWorkerLayout;
 using namespace Base;
@@ -17,12 +18,21 @@ static inline unsigned BootWord(unsigned i){
 static inline void OldBoot(const uint32_t* b,uint32_t* old){
  for(unsigned i=0;i<64;i++)old[i]=i==0?unsigned(Base::Magic):i==40?unsigned(Base::JobWitness):i>=49 && i<=54?0U:b[i];
 }
-static inline bool BootShape(const uint32_t* b){
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) && defined(__riscv)
+#define PIONEER_Q38_PUSHED_GRAMMAR_FN(name) inline __attribute__((noinline,section(".conv.q38_pushed_" #name)))
+#define PIONEER_Q38_PUSHED_BOOT_FN inline __attribute__((noinline,section(".text.q38_pushed_shape")))
+#define PIONEER_Q38_PUSHED_JOB_FN inline __attribute__((noinline,section(".text.q38_pushed_job_shape")))
+#else
+#define PIONEER_Q38_PUSHED_GRAMMAR_FN(name) static inline
+#define PIONEER_Q38_PUSHED_BOOT_FN static inline
+#define PIONEER_Q38_PUSHED_JOB_FN static inline
+#endif
+PIONEER_Q38_PUSHED_BOOT_FN bool BootShape(const uint32_t* b){
  if(!b || b[0]!=Magic)return false;
  for(unsigned i=40;i<=54;i++)if(b[i]!=BootWord(i))return false;
  uint32_t old[64];OldBoot(b,old);return Base::BootShape(old);
 }
-static inline bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
+PIONEER_Q38_PUSHED_JOB_FN bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
  if(!j || j[0]!=Magic || !BootShape(b))return false;
  uint32_t oldBoot[64],oldJob[64];OldBoot(b,oldBoot);
  for(unsigned i=0;i<64;i++)oldJob[i]=i?j[i]:unsigned(Base::Magic);
@@ -30,7 +40,7 @@ static inline bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previou
  return Base::JobShape(oldJob,oldBoot,previous,densePhase);
 }
 static inline unsigned Slot(unsigned worker){return worker && worker<=119?Mailbox+(worker-1)*Stride:0;}
-static inline bool Receipt(const uint32_t* r,const uint32_t* b,const uint32_t* j,const uint32_t* before){
+PIONEER_Q38_PUSHED_GRAMMAR_FN(receipt_shape) bool Receipt(const uint32_t* r,const uint32_t* b,const uint32_t* j,const uint32_t* before){
  if(!r || !j || !before || !j[1] || j[2]!=1 || !JobShape(j,b,j[1]-1,0)
   || r[0]!=ReceiptMagic || r[1]!=ReceiptWords || r[2]!=b[3] || r[3]!=j[1]
   || r[4]!=j[5] || r[5]!=j[6] || r[6]!=b[4] || r[7]!=Root)return false;
@@ -39,6 +49,9 @@ static inline bool Receipt(const uint32_t* r,const uint32_t* b,const uint32_t* j
  for(unsigned i=0;i<8;i++)if(r[56+i]!=before[i])return false;
  return before[2]==before[6]; // raw pre-push counter DATA relation,NOT current physical authority.
 }
+#undef PIONEER_Q38_PUSHED_GRAMMAR_FN
+#undef PIONEER_Q38_PUSHED_BOOT_FN
+#undef PIONEER_Q38_PUSHED_JOB_FN
 static_assert(Mailbox+119*Stride<=0x120000 && !(Mailbox&63) && !(PushBuffer&63),
  "phase-exclusive existing ROOT proof slots,not a new L1/native mapping grant");
 }
