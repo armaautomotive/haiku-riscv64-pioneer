@@ -1,0 +1,118 @@
+QGW3 recurrent packet-check code-generation experiment -- BUILD/TEST ONLY
+2026-10-30
+=======================================================================
+Goal ACTIVE;20 tokens/sec UNMET. Last physical whole-model measurement
+remains0.207893161 tokens/sec. No Pioneer SSH, power, driver, OS, Assistant,
+SD, hardware or mains operation occurred. No physical speedup is claimed.
+
+Motivation and implementation
+-----------------------------
+The SAME corrected DR instruction profile, after two real recurrent layers,
+observes180585537 of395577577 exclusive ROOT instructions in the recurrent
+packet-seal function. These are HOST-emulated instruction counts including
+simulated polling, NOT physical cycles or token performance. They identify
+a hot controller path worth reducing while full-model qualification runs.
+
+New opt-in --unroll-packet-seals supplies an exact returning QGW3 BUILD-only
+selector to the recurrent component. GCC unroll4 is applied to its existing
+16-source and8-bank equality loops. All predicates, ordered comparisons,
+source MMIO checks, immediate failures, ownership/phase/doorbell checks,
+counter policies, arithmetic and transport remain. No hashing, cached ready
+bit, skipped check, CPU reference or producer substitution is introduced.
+The dense object is unchanged. The ordinary pinned G3 image is unchanged.
+
+The option requires the entire existing QGW3 profile AND inspect-candidate;
+it cannot silently replace any pinned output. Component profile binding is
+rechecked on every header inclusion. Foreign/late/zero/two selectors refuse.
+The native role rejects the flag even0; actual native DATA/ABI/driver and
+Assistant remain unchanged. No new native launch permission is granted.
+The original-flow HOST runner accepts these literal candidate bytes ONLY
+for its exact connected pushed-completion fault TEST, never its normal
+whole-model, shortcut, trace-publication or other fault modes.
+
+Completed paired qualification
+-------------------------------
+Main88607 and clean58473 candidate builds EXIT0. All eight artifacts match:
+four ROM sections,ELF,recurrent object,dense object and combined component.
+Main81661 strict default G3 build EXIT0 with all previously published pins;
+the unchanged-feedback control also retains its old pins. Fixed windows
+are not enlarged: text130976/131072 (+88B),auxiliary32720/32768 unchanged.
+Individual parent frame1616; maximum component frame2112, unchanged.
+These do NOT prove a combined full-model or kernel stack bound.
+
+Candidate text SHA b5e59a5fec54dc60e318f805e4a616886b342dae5d1411ffab48262fd48ae1c9
+Candidate auxiliary SHA6bb4ac3fd7ac99f21c80776b4ed37c6b344c50720e8c032a77128bf0c214800b
+Candidate ELF SHA bcdd540580c025abadcd97054fd8b34274be4fd8a870a10cbad8ab7f3da3edb1
+These are experimental BUILD/TEST pins,not selected native program arrays.
+
+Main94296 and clean58473 actual emitted-function ASan/UBSan tests EXIT0;
+logs identical. The hot check executes234 ->192 instructions,42 fewer
+(about18%) in the isolated valid call. Its83 private-argument/doorbell/MMIO
+reads are identical in address,value and order. All2106 cases pass, including
+2091 refusals: every bit of24 descriptor words,24 corresponding private
+words,16 live source registers,doorbell bits,invalid nonce/phase/owner/frame
+arguments. Valid phases1..15 return. Each outcome executes2048 actual inert
+terminal-loop instructions; all stores are compiler stack stores only.
+These are synthetic isolated ABI arguments,NOT a genuinely acquired native
+owner,model result,physical timing or whole-model performance improvement.
+
+Main54744/clean71013 EXIT0:16 positive BUILD roles/404 refusals; private
+native binding7 positive/203 refusals. Final CLI main99539/clean39619 EXIT0:
+37 refusals before any output change, including eight exact original-flow
+mode combinations. The first extra-CLI draft used an unsupported --f32-hidden
+runner argument and was corrected before the final37-case run, so those
+eight now exercise the intended runner guards rather than unknown options.
+
+Clean SDK53268 EXIT0; actual private native G3 object remains byte-identical
+to the preceding checkpoint, SHA
+cb8ac63b96d5b253eab93bbb38eca07c7d62c2ae3632d0159a6197367471fdb7.
+All13 compiled old G3 arrays stay SHA-exact, conventional renamed bodies
+and wrappers remain inert, max individual Token frame1232. COMPILE ONLY.
+
+Sources and pending connected tests
+------------------------------------
+Base38f179274565496e8e83ac193122b8fb2df56af8. Main candidate compiled the
+four initial codegen files; later guards/tests do not change its bytes,
+as the independent final clean build confirms. EC clean source is a Git
+archive plus12 cmp-verified scoped overlays:
+/private/tmp/pioneer-q38-packet-unroll-clean-ec.lqBacw4n
+Final connected-test source is a fresh archive plus13 cmp-verified overlays:
+/private/tmp/pioneer-q38-packet-unroll-connected-clean-ed.0r87DfR2
+It adds only final CLI/runner qualification changes to the same codegen.
+Logs:/private/tmp/pioneer-q38-packet-unroll-*-20261030-{ec,ed,ee}.log
+
+New paired connected jobs main81826/clean54326 use those SAME pinned
+candidate bytes,original GGUF and virgin119-engine histories. They are LIVE,
+NOT passes. No source/history is transplanted and no CPU products or ready
+bits are supplied. Existing corrected full-flow DR31695/66331 and native
+full-generation/state/END DW41236 continue unchanged,not restarted for this
+experiment. Full-model numerics,normal/EOS state,combined stacks,public
+driver/Work/Assistant integration,physical stability and timings remain owed.
+DO NOT INSTALL or promote this inspect-only candidate yet.
+
+Other original histories completed without restarting
+-----------------------------------------------------
+The SAME DT29776 two-cycle native cleanup job is now TERMINAL EXIT0.
+Each independent fresh epoch1/2 used the actual851 owner,1010 genuine zero
+jobs,119 virgin engines and original first layer,then consumed cancellation,
+executed ROOT+119STOP,120HOLD,empty drain,all original L1/dispatch/peer/ROOT/
+shared restorations,clock END,hardware closure,29VM deletions,PCI restoration,
+three checked host releases,one checked unreserve and locked whole-context
+destruction. No later IO/retry/dangling scope dereference was observed.
+Endpoints are SIMULATED; this is NOT physical reload or full-generation END.
+
+Both41028-byte first-layer prefixes were copied unchanged into
+generated.pioneer/qualification-inputs/observed-native-pushed-reload-20261030-ec/
+cycle{1,2}/prefix-0.bin. Each SHA is
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+Both independent posthoc CPU comparisons EXIT0: all5120 embedding plus5120
+layer0 words bit-exact,zero tolerance/maxAbs/relativeL2. CPU data was never
+supplied during execution. An initial relative-path comparator invocation
+was refused as designed; absolute-path repeats provide these results.
+
+Eight older G1/G2 control tests were revalidated live and exact executable,
+input and parent identities checked before SIGSTOP for CPU prioritization:
+PIDs70816,70821,70829,70830,74548,74552,80092,80095. All are confirmed T/TN,
+NOT terminal or discarded. Their sessions and histories remain intact,
+alongside27 previously deferred tests. Resume only the same verified process
+identities when capacity is available; never restart merely for observation.

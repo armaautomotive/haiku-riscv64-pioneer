@@ -111,3 +111,16 @@ Still owed: corrected dense-FFN/full-model multi-token/state numerics;
 complete native END/reload; accelerator full-flow and HOST combined stacks;
 public driver/Work/Assistant integration, physical generation/stability,
 and actual measured tuning. DO NOT INSTALL the private non-loadable candidate.
+
+Follow-up at the EC checkpoint
+-----------------------------
+EB79905 subsequently TERMINAL EXIT0 on that SAME virgin history. It
+completed actual original embedding/RMS and the first48-output matrix on
+three workers. ROOT36321913 instructions; peers226096128 instructions.
+Every ROOT retirement and all119 peer retirements passed the new SP bounds
+and count checks. Observed ROOT reserved/accessed6112/6112 bytes; maximum
+peer reserved/accessed3552/3540, against8192 bytes EACH. Separate HOST kernel
+stack, full layer/model and physical speed remain unqualified. No earlier
+binary or unrelated full-flow result is retroactively assigned this observer.
+DT29776 also subsequently completed BOTH independent first-layer/cancel/END
+cycles EXIT0; see qwen38-packet-seal-unroll-wip-20261030.txt for exact scope.

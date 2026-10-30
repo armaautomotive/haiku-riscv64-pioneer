@@ -269,7 +269,14 @@ extern "C" void q38_mixed_root_packet_seal(const uint32_t* frame){
  using namespace RecurrentBlock;const auto* p=Private();
  if(frame!=p->frame || !p->phase || p->phase>15 || !p->outer[48] || p->outer[48]>=0x7fffffff
   || *Words(R::Doorbell)!=p->outer[48])scalar_fault_park();
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL
+ // Code generation only: retain ordered comparisons and immediate refusal.
+#pragma GCC unroll 4
+#endif
  for(unsigned i=0;i<16;i++)if(frame[16+i]!=p->boot[16+i])scalar_fault_park();
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL
+#pragma GCC unroll 4
+#endif
  for(unsigned i=0;i<8;i++)if(frame[32+i]!=p->boot[8+i])scalar_fault_park();
  PioneerQ38WordSealSources(p->boot+16);
 } // exclusive owner per-packet checks,NOT a full immutable metadata audit

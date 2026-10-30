@@ -6,6 +6,9 @@
 #error QGW3 publisher is not a returning ROOT/component capability
 #endif
 // No guard: reject late/defined-zero role contamination too. BUILD ONLY.
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL) && !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE)
+#error Packet-seal code generation belongs only to the explicit returning QGW3 BUILD candidate
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
 #if PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION != 1 \
  || (!defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) && !defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE))

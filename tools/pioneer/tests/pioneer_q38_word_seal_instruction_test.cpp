@@ -75,6 +75,7 @@ struct SealMachine:Machine {
   return pass;
  }
 };
+#ifndef PIONEER_Q38_WORD_SEAL_MACHINE_ONLY
 struct Result {unsigned steps=0,reads=0;};
 static Result Check(const SealImage& baseline,const SealImage& candidate,unsigned kind,
  unsigned address=0,unsigned mask=0,int expected=1,unsigned pointer=SealMachine::Owner){
@@ -120,3 +121,4 @@ int main(int argc,char** argv){
  }
  printf("PASS isolated emitted check functions: %u single-bit/phase/pointer/quiet refusals;fail-fast external traces EXACT,stack writes ONLY,inert2048;NOT genuine owner/acquisition/full graph/Work/performance qualification\n",failures);
 }
+#endif

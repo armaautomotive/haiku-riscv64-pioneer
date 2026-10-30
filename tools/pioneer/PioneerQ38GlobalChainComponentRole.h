@@ -4,6 +4,25 @@
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
 #include "PioneerQ38PushedCompletionRootRole.h"
 #endif
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL
+#if PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL != 1 \
+ || !defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION != 1
+#error Packet-seal code generation requires the exact returning QGW3 BUILD profile
+#endif
+#endif
+#ifndef PIONEER_Q38_PACKET_SEAL_UNROLL_BINDING_H
+#define PIONEER_Q38_PACKET_SEAL_UNROLL_BINDING_H
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL
+enum {PioneerQ38PacketSealUnrollProfile=1};
+#else
+enum {PioneerQ38PacketSealUnrollProfile=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL
+static_assert(PioneerQ38PacketSealUnrollProfile==1,"late packet-seal code generation change");
+#else
+static_assert(PioneerQ38PacketSealUnrollProfile==0,"late packet-seal code generation change");
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION
 #include "PioneerQ38WorkerSealedAdmissionRole.h"
 #endif
