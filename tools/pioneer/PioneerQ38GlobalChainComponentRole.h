@@ -10,15 +10,26 @@
 #error Packet-seal code generation requires the exact returning QGW3 BUILD profile
 #endif
 #endif
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL_EIGHT
+#if PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL_EIGHT != 1 \
+ || !defined(PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL) || PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL != 1 \
+ || !defined(PIONEER_Q38_LAYER_COMPONENT_RECURRENT) || PIONEER_Q38_LAYER_COMPONENT_RECURRENT != 1
+#error Eight-way packet-seal code generation requires the explicit returning recurrent QGW3 unroll BUILD profile
+#endif
+#endif
 #ifndef PIONEER_Q38_PACKET_SEAL_UNROLL_BINDING_H
 #define PIONEER_Q38_PACKET_SEAL_UNROLL_BINDING_H
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL_EIGHT
+enum {PioneerQ38PacketSealUnrollProfile=8};
+#elif defined(PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL)
 enum {PioneerQ38PacketSealUnrollProfile=1};
 #else
 enum {PioneerQ38PacketSealUnrollProfile=0};
 #endif
 #endif
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL_EIGHT
+static_assert(PioneerQ38PacketSealUnrollProfile==8,"late eight-way packet-seal code generation change");
+#elif defined(PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL)
 static_assert(PioneerQ38PacketSealUnrollProfile==1,"late packet-seal code generation change");
 #else
 static_assert(PioneerQ38PacketSealUnrollProfile==0,"late packet-seal code generation change");

@@ -1,13 +1,14 @@
-QGW3 packet-check unroll search -- isolated TEMPORARY BUILD/ISA experiment
+QGW3 packet-check unroll search -- isolated experiment and BUILD-only selector
 2026-10-30;goal ACTIVE;20tok/s UNMET;last physical0.207893161tok/s
 =======================================================================
 No hardware,driver installation,Assistant,boot,power,SD or mains action.
-The live four-way whole-model histories remain untouched. Main source,
-selectors,normal pins,native arrays and runtime qualification policy remain
-unchanged. The patch in experiments/ is REPRODUCTION DATA ONLY:apply ONLY to
+FI update:the distinct named BUILD-only selector below is now implemented;
+the ordinary four-way/default paths and their live histories stay unchanged.
+The following FF/FG initial experiment used TEMPORARY sources only. Its
+patch in experiments/ is historical REPRODUCTION DATA ONLY:apply ONLY to
 a disposable archive of bd471c5d960e2c1997f2c037d04e132dd602d9f3,not the live
-tree/selected four-way candidate. A distinct explicit eight-way selector and
-connected/full-model/native/physical qualification are STILL OWED.
+tree/selected four-way candidate. Connected/full-model/native/physical
+qualification is STILL OWED;the selector adds no runtime permission.
 
 Experiment
 ----------
@@ -66,3 +67,48 @@ validation guards. It is NOT sustained inference time;do not divide into TPS
 or repeat the unchanged diagnostic as a new speed experiment. The next real
 benchmark must separate model staging/validation/cleanup from actual generation
 and count genuine generated tokens. No CPU-reference code enters Work.
+
+FI distinct eight-way inspect-only BUILD selector / paired completed0
+-------------------------------------------------------------------
+Both existing build scripts now accept --unroll-packet-seals-eight ONLY in
+addition to --unroll-packet-seals,the complete returning QGW3 profile and
+--inspect-candidate. The new macro is bound to recurrent component profile8;
+old unroll4 remains profile1 and ordinary builds profile0. Missing,zero,two,
+late-switch,dense,unbound,parent,CPU and Work contamination refuse. The native
+role rejects even defined0. No ordinary/runtime image selector or Work route.
+The isolated instruction runner requires the explicit new option to select
+the new five-artifact pins;its unchanged default still pins unroll4. The
+original connected/full-flow runner REFUSES the eight-way option entirely.
+
+Paired main/clean named builds completed0 and reproduce the FF eight-way ELF
+exactly,including all hashes above. The same2106 cases/2091 refusals and83
+ordered reads pass0;logs identical. Both preserved-four builds completed0,
+ELFs exact to each other AND the original four-way b5e59a...candidate. Default
+G1/G2/G3 SDK controls completed0 in both trees,all13 firmware arrays+2MiB RoPE
+and five renamed/inert ordinary hook pairs still exact. Actual G3 objects are
+identical to each other AND the preceding partial-stack-audit object,SHA
+  b7afc402f909eba8110902969c8b19955b35fcda8268bcf7ca96032c687b4cc5
+Max individual native frame1232;whole-kernel stack remains unqualified.
+
+Paired role/CLI suites completed0,corresponding logs byte-identical:
+  QGW3 BUILD roles18 positive/475 missing+0+2+late+foreign refusals.
+  BUILD/runtime CLI97 refusals before any output change.
+  G1 native21-parent/6-ABI/38-alias perimeter278 refusals.
+  G2 native3 positive/303 refusals including real driver-prefix checks.
+  Private backend/control TEST roles14 positive/2146 refusals.
+FH's first G1/G2 role runs stopped at their stale forbidden-selector count:
+the preceding committed role already had35 entries but those old tests still
+expected34. With the new selector it has36. FI uses that exact observed count
+AND explicitly requires both four/eight selectors in the tested set. It does
+not remove any refusal;all36 forbidden entries are exercised early and late.
+No assertion,source/owner/receipt/STOP/deadline or numerical bound is relaxed.
+
+Independent source:557b27bae1 +ONLY12 cmp-verified owned implementation/test
+overlays:/private/tmp/pioneer-q38-eight-selector-clean-fi.8IorJyGi
+Named main image:/private/tmp/pioneer-q38-packet-eight-selected-main-fh-image
+Named clean image:/private/tmp/pioneer-q38-packet-eight-selected-clean-fi-image
+Logs:/private/tmp/pioneer-q38-packet-eight-*-20261030-{fh,fi}.log
+This is NOT connected original-model,combined accelerator-stack,cancellation,
+STOP/END,driver installation,physical stability,Work/Assistant or TPS proof.
+Next:separate genuine connected eight-way qualification without replacing or
+restarting the five original long histories.20tok/s remains UNMET;goal ACTIVE.

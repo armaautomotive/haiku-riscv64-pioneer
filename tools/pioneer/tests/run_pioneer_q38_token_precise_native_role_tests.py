@@ -12,7 +12,8 @@ role = kernel/'PioneerQ38TokenNativeRole.h'
 text = role.read_text()
 parents = set(re.findall(r'!defined\(([A-Z_][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b', text))
 forbidden = set(re.findall(r'defined\(([A-Z_][A-Z0-9_]*)\)', text[text.index('#if defined(PIONEER_Q38_EMBEDDING_NATIVE)'):]))
-assert len(parents) == 21 and len(forbidden) == 34 and not parents & forbidden
+assert len(parents) == 21 and len(forbidden) == 36 and not parents & forbidden
+assert {'PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL', 'PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL_EIGHT'} <= forbidden
 profile = 'PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT'
 program = 'PIONEER_Q38_TOKEN_PRECISE_PROGRAMS'
 tag = 'PIONEER_DRIVER_BUILD_TAG'

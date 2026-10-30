@@ -502,3 +502,34 @@ FG remaining copied-operation cycle1 COMPLETE / parent79770 STILL LIVE
   These cancelled-layer cases commit ZERO model tokens;positive generated
   record Read/full3*64/state/END/physical Work and honest performance remain
   owed. No driver/hardware/Assistant/power action;20tok/s UNMET;goal ACTIVE.
+
+FJ copied-Finish two-cycle parent21527 COMPLETE / authoritative terminal0
+  The SAME second fresh original-layer/cancel/ROOT+119STOP/120HOLD/empty-drain
+  predecessor completed all11 actual cleanup stages. Its deliberate second
+  user-copy failure occurred AFTER locked whole-context deletion. User bytes
+  remained unchanged;all29VM/PCI/3host/unreserve/deletion/earliest-original-byte
+  checks passed;no following IO,retention,retry,double release,dangling access
+  or ASan/UBSan error. Cycle1's completed reply and cycle2's LOST reply are
+  distinct genuinely executed outcomes,not supplied diagnostics/completions.
+  Full153-line log archived:qwen38-native-control-finish-20261030.log
+    SHAe08f06f5545f0addfe7b6fda3e57af60c3632f634c56e18959fae06d598c21ee
+  Exactly2 monotonic epochs and2 actual copied-Finish completion lines.
+  Cycle2 independently compared0 after actual save:all10240 first-layer words
+  BIT-EXACT/no tolerance/maxAbs0/relativeL20. Both durable cycle prefixes in
+  observed-native-control-finish-20261030-ff have SHA4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+  Compare:/private/tmp/pioneer-q38-control-finish-cycle2-compare-20261030-fj.log
+  Zero committed tokens;NOT full-model/positive generated-record Read,resident
+  model reuse,physical reload,Work/Assistant or throughput qualification.
+  Operations parent79770 remains LIVE in its separate second cycle;do not
+  transfer this Finish-only completion into that pending history. Never
+  re-poll/restart now-terminal21527. Original five full traces continue.
+
+FI named eight-way BUILD selector independently qualified for BUILD only
+  --unroll-packet-seals-eight now requires explicit prior packet-unroll,
+  complete QGW3 and inspect-only parents. Role binds profile8 recurrent-only;
+  all default/four-way/native program bytes remain unchanged. Paired18/475
+  BUILD roles,97CLI refusals,G1/G2 native isolation,14/2146 backend roles,
+  actual G1/G2/G3 SDK controls and2106-case169-instruction isolated test all0.
+  Exact current-source report:qwen38-packet-seal-eight-experiment-20261030.txt.
+  No connected/model/driver/physical permission follows;existing four-way full
+  histories are not replaced. Last physical0.207893161tok/s;20UNMET;goal ACTIVE.

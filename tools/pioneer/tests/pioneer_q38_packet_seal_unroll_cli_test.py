@@ -12,7 +12,7 @@ sdk=pathlib.Path('/Volumes/HaikuBuildLocal/generated.riscv64')
 common=['--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet',
         '--worker-local-source-guards','--precise-activation','--single-closed-audit',
         '--worker-sealed-admission','--pushed-completion']
-candidate='--unroll-packet-seals';refusals=0
+candidate='--unroll-packet-seals';eight='--unroll-packet-seals-eight';refusals=0
 with tempfile.TemporaryDirectory(prefix='pioneer-packet-unroll-cli-',dir='/private/tmp') as temporary:
     root=pathlib.Path(temporary);sentinel=root/'keep';sentinel.write_bytes(b'unchanged\n')
     for script,parent in (('build_qwen38_token_root.py',True),('build_qwen38_global_token_components.py',False)):
@@ -21,6 +21,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-packet-unroll-cli-',dir='/priva
                  required+['--inspect-candidate',candidate,candidate],
                  required+['--inspect-candidate',candidate,'--unknown-packet-option']]
         invalid += [[value for value in required if value!=missing]+['--inspect-candidate',candidate] for missing in required]
+        eight_required=required+[candidate,'--inspect-candidate']
+        invalid += [[eight],eight_required+[eight,eight],required+[candidate,eight]]
+        invalid += [[value for value in eight_required if value!=missing]+[eight] for missing in eight_required]
         for options in invalid:
             output=root/('refused-'+str(refusals))
             before=sorted(path.relative_to(root) for path in root.rglob('*'))
@@ -64,6 +67,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-packet-unroll-cli-',dir='/priva
              '--pushed-admission-faults','--pushed-dense-faults')]
     invalid += [[value for value in full if value!=missing] for missing in (candidate,'--pushed-completion','--snapshot-first-layer')]
     invalid += [required+[qualifier,'--snapshot-first-layer'],full+[qualifier]]
+    # This new BUILD selector grants NO connected/whole-model runtime mode.
+    invalid += [required+[eight],first_layer+[eight],full+[eight]]
     for options in invalid:
         before=sorted(path.relative_to(root) for path in root.rglob('*'))
         result=subprocess.run([sys.executable,str(runner),*[str(root/'unused')]*4,*options],

@@ -93,7 +93,8 @@ for stem, family, count, inherited, extra_forbidden in (
                      'PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_STATE_SNAPSHOT_FIXTURE',
                      'PIONEER_Q38_WORK_INFERENCE', 'TT_PIONEER_Q38_WORK_MODE', 'PIONEER_Q38_CPU_VALIDATION',
                      'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE', 'PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT',
-                     'PIONEER_Q38_TOKEN_PRECISE_PROGRAMS', 'PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL'):
+                     'PIONEER_Q38_TOKEN_PRECISE_PROGRAMS', 'PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL',
+                     'PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL_EIGHT'):
             for value in (0, 1):
                 check(header, {**parents, name:value}, False)
         # No include guard: a late change must fail too.

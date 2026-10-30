@@ -64,7 +64,20 @@ for body in (r,d):
     for name in ('_KERNEL_MODE','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE',
                  'PIONEER_Q38_TOKEN_NATIVE_CONTEXT','PIONEER_Q38_TOKEN_PUSHED_PROGRAMS'):
         for value in (0,1):check(header,{**flags,name:value},False)
+eight='PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL_EIGHT'
+flags={**r,push:1,packet:1,eight:1};header='PioneerQ38GlobalChainComponentRole.h'
+check(header,flags,True)
+check(header,{**r,push:1,packet:1},False,'#define '+eight+' 1\n')
+check(header,flags,False,'#undef '+eight+'\n')
+for name in flags:
+    check(header,{k:v for k,v in flags.items() if k!=name},name==eight)
+    for value in (0,2):check(header,{**flags,name:value},False)
+for name in ('_KERNEL_MODE','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE',
+             'PIONEER_Q38_TOKEN_NATIVE_CONTEXT','PIONEER_Q38_TOKEN_PUSHED_PROGRAMS'):
+    for value in (0,1):check(header,{**flags,name:value},False)
 for value in (0,1,2):
-    check('PioneerQ38TokenImageRole.h',{**parent,push:1,packet:value},False)
-    check('PioneerQ38GlobalChainIsolation.h',{packet:value},False)
+    check(header,{**d,push:1,packet:1,eight:value},False)
+    for candidate in (packet,eight):
+        check('PioneerQ38TokenImageRole.h',{**parent,push:1,candidate:value},False)
+        check('PioneerQ38GlobalChainIsolation.h',{candidate:value},False)
 print(f'PASS QGW3 receiver BUILD roles/{positive} positive/{negative} missing+zero+two+late+foreign refusals;NO runtime/native/physical/Work/TPS grant')

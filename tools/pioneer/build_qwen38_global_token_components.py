@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=14 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals'}
+assert 3<=len(sys.argv)<=15 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight'}
 inspect='--inspect-candidate' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or f32,'separate dense-unroll candidate requires explicit FP32-hidden components'
 assert not boundary or (f32 and unroll),'boundary candidate requires explicit FP32-hidden and unrolled components'
@@ -25,6 +25,8 @@ pushed='--pushed-completion' in options
 assert not pushed or worker_admission,'QGW3 receiver requires the entire explicit returning worker-admission profile'
 packet_unroll='--unroll-packet-seals' in options
 assert not packet_unroll or (pushed and inspect),'unfrozen packet-seal BUILD requires explicit QGW3 and inspect-candidate;not a pinned image'
+packet_eight='--unroll-packet-seals-eight' in options
+assert not packet_eight or (packet_unroll and pushed and inspect),'eight-way packet-seal BUILD requires explicit packet unroll/QGW3/inspect parents;NO runtime permission'
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -39,6 +41,7 @@ flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exc
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL=1'] if packet_unroll else []),
+ *(['-DPIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL_EIGHT=1'] if packet_eight else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT=1'] if single_audit else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION=1'] if worker_admission else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION=1'] if pushed else []),

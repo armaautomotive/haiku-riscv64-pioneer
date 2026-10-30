@@ -271,11 +271,19 @@ extern "C" void q38_mixed_root_packet_seal(const uint32_t* frame){
   || *Words(R::Doorbell)!=p->outer[48])scalar_fault_park();
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL
  // Code generation only: retain ordered comparisons and immediate refusal.
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL_EIGHT
+#pragma GCC unroll 8
+#else
 #pragma GCC unroll 4
+#endif
 #endif
  for(unsigned i=0;i<16;i++)if(frame[16+i]!=p->boot[16+i])scalar_fault_park();
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL_EIGHT
+#pragma GCC unroll 8
+#else
 #pragma GCC unroll 4
+#endif
 #endif
  for(unsigned i=0;i<8;i++)if(frame[32+i]!=p->boot[8+i])scalar_fault_park();
  PioneerQ38WordSealSources(p->boot+16);
