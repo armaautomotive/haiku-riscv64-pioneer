@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #include "pioneer_q38_token_native_backend_role.h"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_BEGIN_FIXTURE
+#include "pioneer_q38_token_native_control_begin_checks.inc"
+#endif
 static void CheckNativeBackendFirstMatrix(Fixture& f,uint64 epoch){
  auto& c=*f.c;auto& io=f.io;const auto learned=f.learned;
  const uint32_t prompt[]={248319,17},badPrompt[]={248320,17};
@@ -46,7 +49,11 @@ static void CheckNativeBackendFirstMatrix(Fixture& f,uint64 epoch){
  assert(!lockHeld && lockAcquires==lockReleases);
  printf("PASS private native backend %u argument/FD/team/thread/lock/unbound-END refusals preserve owners, epoch, all IO and outputs;NO device launch or cleanup grant\n",refusals);
  io.runtimeWorkspace=io.workspaceAddress;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_BEGIN_FIXTURE
+ const auto result=CheckNativeControlBegin(f);
+#else
  const auto result=begin(&f.cookie,0,prompt,2,3,248318,248317);
+#endif
  if(!result.ready)fprintf(stderr,"BACKEND_BEGIN_DIAGNOSTIC stage%u started%u ready%u unsafe%u detail%x:%x:%x:%x;NO completion supplied\n",
   result.stage,result.started,result.ready,result.unsafe,result.detail[0],result.detail[1],result.detail[2],result.detail[3]);
  auto* state=c.q38TokenNative;

@@ -1,0 +1,41 @@
+START authenticate SAME-open original27B GGUF RAW bytes BEFORE native fixture construction;NO CPU embedding/model products
+PASS private native backend 33 argument/FD/team/thread/lock/unbound-END refusals preserve owners, epoch, all IO and outputs;NO device launch or cleanup grant
+OBSERVED actual frozen zero ROM starts96/GDNpages10544/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts192/GDNpages21072/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts288/GDNpages31600/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts384/GDNpages42144/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts480/GDNpages52672/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts576/GDNpages63200/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts672/GDNpages73728/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts768/GDNpages73728/historyPages480/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts864/GDNpages73728/historyPages960/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts960/GDNpages73728/historyPages1440/projectionPages0;NOT native initialization publication
+EXECUTED private control Start/one immutable49344B user snapshot/SAME genuine scoped backend8 stages/ROOT startup ACK/reply under SAME real lock;NO public ABI,token,END,physical,Work or TPS grant
+PASS actual composite Begin: SAME full851 owner -> 1010 real zero jobs -> native120 held -> runtime bytes ->119 virgin ISA boots -> genuine ROOT startup ACK;duplicate Begin and pending Finish refused without IO;NOT token/END/physical/Work/TPS
+PASS SAME native running ROOT/ACTUAL installed instructions beyond startup/3 genuine NoC reads:session512B+prompt64B+head512B EXACT from native-staged shared GDDR/first learned2304B request OUTSTANDING/fresh native observer accepts legitimate BUSY with source+PC+PCI checks/no host NoC packet,command,counter recapture,products or reset/ROOTsteps178787;PAUSED at raw learned request,NOT embedding/matrix/layer/token/cancel consumption/STOP/END/physical/Work/TPS
+PASS SAME full851 native owner+119 genuine worker histories/ROOT ACTUAL original27B Q4_K embedding/20 authenticated RAW tiles+2 real GDDR writes+2 verified readbacks/ALL5120 LOCAL+SHADOW+GDDR values bit-exact vs separate original-row decoder OBSERVER ONLY/1250367 ROOT instructions/21320 scalar FP instructions/max writtenStack2628/next layer0 metadata request outstanding/no CPU product upload or private-history transplant;SIMULATED endpoints,NOT model layer/token/cancel consumption/STOP/END/physical/Work/TPS
+OBSERVED native ROOT layer0 pre-dispatch/steps2000191 pc427a0 packets9 raw0 peerR0 peerW0 phase300;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps4000063 pc40554 packets41 raw0 peerR0 peerW0 phase300;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps6000191 pc4a52c packets60 raw2 peerR0 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps8000063 pc48d30 packets1024 raw2 peerR964 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps10000191 pc48b74 packets2349 raw2 peerR2289 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps12000063 pc4e96c packets3666 raw2 peerR3606 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps14000191 pc4e7bc packets4977 raw2 peerR4917 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps16000063 pc48ba4 packets6279 raw2 peerR6219 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps18000191 pc4dd58 packets7557 raw2 peerR7497 peerW0 phase2;NOT matrix/layer/token completion
+PASS SAME native full851+1010 actual zero jobs+119 VIRGIN boot histories/unchanged full scalar ISA from first ROOT instruction/original27B embedding -> genuine layer0 metadata+RAW norm+ALL5120 bit-exact RMS+ALL native operands/scales vs independent OBSERVERS ONLY/actual valid worker1 matrix job delivered/doorbell packet PENDING/ROOTsteps18010603 layerPackets7561 peerR7497 peerW3;NO CPU products,worker completion or private-history transplant;NOT matrix/layer/token/STOP/END/physical/Work/TPS
+OBSERVED native first-matrix ROOTsteps20000235 pc4e9f8 packets8408 doors3 phase2;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps22000107 pc4a390 packets9307 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps24000235 pc48d18 packets10352 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps26000107 pc48b88 packets11689 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps28000235 pc4e6e8 packets13022 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps30000107 pc48b70 packets14347 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps32000235 pc48d88 packets15665 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps34000107 pc4e920 packets16977 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps36000235 pc4e90c packets18285 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix worker1 pc20050 sequence1 matrixInstructions1280 scalarFP0 requests162 responses162 independentOutput1;NOT complete layer/token
+OBSERVED native first-matrix worker2 pc20050 sequence1 matrixInstructions1280 scalarFP0 requests162 responses162 independentOutput1;NOT complete layer/token
+OBSERVED native first-matrix worker3 pc20050 sequence1 matrixInstructions1280 scalarFP0 requests162 responses162 independentOutput1;NOT complete layer/token
+OBSERVED actual first-matrix accelerator ROOT reserved stack6112/accessed6112;MAX119peer reserved3552/accessed3540;8192 bytes EACH/separate HOST kernel stack unqualified
+PASS SAME native full851 owner/ALL119 full tensor ISA engines VIRGIN from construction/shared actual L1+CSR+ROOT inputs+authenticated original learned bytes/ACTUAL first3 workers complete role10 fullK5120+48 rows/real RISC+Tensix matrices3840+native output bytes+FP32/FP64 OBSERVERS ONLY/no CPU product/history transplant/ROOT validates first projection before NEXT matrix doorbell held/workerSteps226096128 ROOTsteps36321913;NOT whole layer/token/STOP/END/physical/Work/TPS
+PASS composite Begin SAME original27B embedding/RMS/first matrix histories;pending Finish never fabricates STOP/drain/restore/END;resources retained;SIMULATED endpoints,NOT full layer/model/physical/TPS

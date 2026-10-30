@@ -333,3 +333,67 @@ EX private bounded request/copy adapter / NOT a public driver operation
   integration still require their own evidence. No installed driver, GPU
   execution, OS, power, SD or Assistant change and no new tokens/sec result.
   Last physical whole-model0.207893161tok/s;20tok/s UNMET;goal ACTIVE.
+
+FB positive control integration fixtures / runtime still IN PROGRESS
+  The EX scoped-backend regressions main85451 and clean50061 are now both
+  authoritative terminal0. Corresponding complete logs are identical, SHA
+    2f16fc9a05ae72f2e7ae8303378273beede84be7bc7b09a7851425d276f04f17
+  They match the earlier EJ log:33 refusals,actual composite8-stage Begin,
+  original27B embedding/RMS/first3 fullK5120 workers/48 independently observed
+  outputs;ROOT36321913 and peer226096128 instructions. No full layer/token,
+  STOP/END, hardware or inference timing is proved by this regression.
+
+  --control-adapter now selects three SEPARATE explicit TEST profiles only:
+    Existing isolated early-initialization failures.
+    --execution-backend-first-matrix:actual copied Start request, then SAME
+      original-model native histories;NOT a direct-backend substitute.
+    --execution-end-reload --backend-finish:two genuine fresh first-layer/
+      consumed-cancel/STOP/HOLD/empty-drain predecessors. Actual control Finish
+      must refuse before drain;cycle1 requests a completed user reply,cycle2
+      deliberately loses its reply AFTER actual context deletion. The loss
+      must leave user bytes unchanged,perform no later IO or retry,and pass
+      all independent29VM/PCI/3host/unreserve/deletion/original-byte checks.
+      No successful result is supplied when the reply is lost. Both cycles
+      still require their own runtime evidence;compile/link is not completion.
+  No public route,production driver/firmware,Work,Assistant or hardware change.
+
+  Final paired role tests completed0,logs identical:12 positives/1766 missing,
+  0,2,ABI,late-change,foreign-family,CPU-reference and Work refusals. Negative
+  control explicitly rejects defined0/1 positive Start/Finish selectors too.
+  New CLI suite completed0 in both trees:14 wrong-fixture/duplicate refusals,
+  checking the intended guard BEFORE the never-existing input/output is used.
+  Clean negative adapter regression completed0 with the exact existing5-line
+  log SHA5f0ae599913053bb7fe5d8efdf6b555b5c84462c61f61a3d9f532fc03b516ae2.
+  Clean positive-Finish fixture compiled/linked0 but NEVER executed there.
+  Warnings-as-errors,ASan/UBSan,actual native owner/lock/phase/source/receipt/
+  STOP/cleanup guards and independent numerical observers remain enabled.
+
+  Main copied-Start9020 is authoritative terminal0. Clean47755 is still LIVE,
+  not a paired runtime pass yet:
+    /private/tmp/pioneer-q38-control-start-first-matrix-main-20261030-ey.log
+    /private/tmp/pioneer-q38-control-start-first-matrix-clean-20261030-ez.log
+  Main completed actual Start/8stages/ROOT ACK under the reply lock,original
+  5120-value embedding bit-exact,RMS/quantization and the SAME first3 actual
+  fullK5120 tensor workers/48 independently observed outputs. ROOT36321913,
+  peer226096128 instructions;pending Finish refuses without IO. No whole
+  layer/token/STOP/END,hardware or throughput claim. Full41-line log archived:
+    qwen38-native-control-start-20261030.log
+    SHA4e9e67e0552a78654d9d70ad0837c664edba442a99e70b2eefea1bcff5a979fd
+  Main two-cycle control-Finish21527 remains LIVE,not a cleanup pass:
+    /private/tmp/pioneer-q38-control-finish-main-20261030-ez.log
+    /private/tmp/pioneer-q38-control-finish-main-ez.KmReIVvo
+  Frozen clean runtime/compile source:ccde66e111 +9 cmp-verified TEST paths:
+    /private/tmp/pioneer-q38-control-positive-clean-ez.ixxCQvRi
+  Final role source adds the isolated-control selector guard (10 paths):
+    /private/tmp/pioneer-q38-control-positive-clean-fa.uuJ5k7aA
+  Final CLI/negative source also adds the CLI test (11 paths):
+    /private/tmp/pioneer-q38-control-positive-clean-fb.cvveSMEr
+  Later role/CLI changes do not alter the selected positive native bodies.
+
+  Scoped process inspection at22:15UTC confirmed eight active ISA-validation
+  processes around95% CPU each:the SAME original five full histories plus
+  these three integration runs. Matching deferred histories remain T/TN/0CPU,
+  not terminal or discarded. Do not restart or transplant any live history.
+  Full3positions*64layers/vocabulary/commits/state/END,positive control token
+  readout,physical integration/stability and real performance remain owed.
+  Last physical whole-model0.207893161tok/s;20tok/s UNMET;goal stays ACTIVE.

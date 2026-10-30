@@ -35,7 +35,7 @@ backend_init_faults = len(sys.argv) == 3 and sys.argv[2] == '--backend-initializ
 if backend_init_faults:
     assert pushed_context, 'backend initialization-fault TEST requires the explicit G3 profile;NO worker/model launch is qualified'
 if control_adapter:
-    assert backend_init_faults, 'private control TEST currently requires the isolated early-init fault fixture'
+    assert backend_init_faults or len(sys.argv) == 6 and sys.argv[2] == '--execution-backend-first-matrix' or backend_finish and sys.argv[2] == '--execution-end-reload', 'private control TEST requires isolated early-init faults,actual G3 backend first matrix OR exact two-cycle cancelled-first-layer Finish'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -199,6 +199,10 @@ if backend_init_faults:
         'PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE'), '1'))
 if control_adapter:
     defines['PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE'] = '1'
+    if backend_first_matrix:
+        defines['PIONEER_Q38_TOKEN_NATIVE_CONTROL_BEGIN_FIXTURE'] = '1'
+    if backend_finish:
+        defines['PIONEER_Q38_TOKEN_NATIVE_CONTROL_FINISH_FIXTURE'] = '1'
 with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/private/tmp') as tmp:
     base = pathlib.Path(tmp)
     start, end = '// PIONEER_Q38_CLOCK_IO_BEGIN', '// PIONEER_Q38_CLOCK_IO_END'

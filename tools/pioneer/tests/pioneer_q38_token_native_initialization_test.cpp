@@ -4,7 +4,14 @@
 // completion fabric,no old embedding/prefix producer and no completed token.
 #include "pioneer_q38_token_native_fixture_common.h"
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_BEGIN_FIXTURE
+#include "pioneer_q38_token_native_control_begin_role.h"
+#elif defined(PIONEER_Q38_TOKEN_NATIVE_CONTROL_FINISH_FIXTURE)
+#include "pioneer_q38_token_native_control_finish_role.h"
+static bool tokenControlFinishLoseReply=false;
+#else
 #include "pioneer_q38_token_native_control_role.h"
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenControlPacket.h"
 static unsigned tokenControlUid=0,tokenControlCopies=0,tokenControlFailCopy=0,tokenControlFailureTouches=0;
 static bool tokenControlLoseTeam=false,tokenControlMutateInput=false;
@@ -574,7 +581,7 @@ struct Fixture {
 #if defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE) && !defined(PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE)
 #include "pioneer_q38_token_native_backend_init_fault_checks.inc"
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE) && !defined(PIONEER_Q38_TOKEN_NATIVE_CONTROL_BEGIN_FIXTURE) && !defined(PIONEER_Q38_TOKEN_NATIVE_CONTROL_FINISH_FIXTURE)
 #include "pioneer_q38_token_native_control_checks.inc"
 #endif
 int main(int argc,char** argv){
@@ -666,6 +673,9 @@ int main(int argc,char** argv){
  for(unsigned fault=0;fault<(backendInitFaults?4U:hostReload?2U:preparationFaults?4U:initializationFifoFaults?6U:terminalFaults?5U:trafficFaults?2U:executionFaults?4U:bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
   const uint64 epoch=sQ38TokenModelEpoch;
   Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_FINISH_FIXTURE
+  assert(hostReload);tokenControlFinishLoseReply=fault==1;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE
   assert(backendInitFaults);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE
