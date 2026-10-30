@@ -1,0 +1,1 @@
+PASS state DATA/4 exact TEST roles/206 absent+0+2+kernel+CPU-oracle+image+Work refusals/implementation stays HOST-only;NO native owner,execution or cleanup permission

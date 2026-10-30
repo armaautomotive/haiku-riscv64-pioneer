@@ -1,0 +1,81 @@
+Versioned normal-state DATA+explicit read-only legacy layout:TEST checkpoint
+2026-10-30 01:04UTC. Full goal ACTIVE;20tokens/sec remains UNMET.
+Last actual physical whole-model result remains0.207893161tokens/sec.
+
+Corrected capture,explicit format distinction
+---------------------------------------------
+The old normal-state collector linearly copied physical GDN heads in
+[head][half][key][value64] order. Independent CPU state is
+[head][key][value128]. The corrected TEST collector now permutes those
+indices without changing any bit. Synthetic physical-coordinate patterns
+are generated independently;the former linear shortcut is demonstrably
+different and cannot pass the corrected comparison.
+
+Corrected normal native DATA uses QNS1 version2 in EVERY record+marker.
+CPU QCS1 stays version1. Distinct EOS QCE1/QNE1 families stay version1.
+All176 normal records/77021184 words retain their identities/counts.
+The ordinary serializer cannot select old nativev1;the unit reconstructs
+old artifacts separately with the literal old physical-copy algorithm.
+No driver,model math,ROM,state-buffer layout or actual cleanup path changes.
+
+compare_pioneer_q38_state_snapshots.py defaults STRICTLY to nativev2
+logical DATA. --legacy-raw-gdn explicitly reads old nativev1 raw GDN and
+performs the known bijective layout permutation in memory. No tolerance,
+arithmetic repair,file rewrite or format auto-detection. Version2 cannot
+be passed in legacy mode;version1 cannot pass the default marker/record
+checks. Unchanged CPU-family files are refused as native. Finite FP32/packed-half
+domains,lengths,identities,padding,footers and exact file sets remain strict.
+Reads use stable regular-file descriptors with O_NOFOLLOW. Python -O is
+refused rather than disabling verification assertions.
+
+The legacy flag/source-SHA label is NOT actual producer provenance,model
+execution,EOS,STOP,END,ownership or permission for hardware. Use it only
+with separate evidence that the artifacts came from the known old raw
+collector. Unknown version1 data are not automatically classified. Earlier
+local synthetic logical-v1 fixtures are not old raw model artifacts and
+must not be relabeled or used as model evidence.
+
+Fresh D qualification
+--------------------
+Immutable10-source trees,all inputs compared BEFORE tests:
+ main /private/tmp/pioneer-q38-state-version-main-d.VMqw2kUy
+ clean /private/tmp/pioneer-q38-state-version-clean-d.84RAFXwb
+Tracked baseline584b052a42 checked clean before copies. Publication uses
+the9 state-format/collector/parser/test files;the tenth CPU-control auditor
+was separately published with the completed original controls2b675dc11b.
+
+Corpus28651/36255 BOTH terminal0,complete logs identical. ASan+UBSan units
+generate independent physical-coordinate patterns,corrected nativev2 and
+literal old raw nativev1 corpora,plus CPUv1. All176 records/77021184 words
+compare BIT-FOR-BIT in both allowed interpretations. Legacy artifact hashes
+are identical before/after decoding. Fourteen geometry/nonfinite/null DATA
+refusals and20 strict parser/version/changed-bit/marker/symlink refusals,
+plus assertion-disabled Python refusal,pass. No reference result is patched
+into either observed corpus. These are SYNTHETIC DATA,not model execution.
+
+Roles4668/54344 BOTH0:4 exact TEST roles+206 absent/0/2/kernel/CPU/image/
+Work refusals. The output-only const DATA interface accepts no processor,
+memory,ready/history/owner setter or product-supply callback. Implementation
+remains HOST-only;explicit native TEST role macros are not actual native
+ownership or cleanup evidence. EOS regressions23866/34986 BOTH0:unchanged
+128-record families,744 serializer+18 parser corruption refusals. Both D
+CPU audits98862/6624 also0;their evidence belongs to the separate CPU
+control checkpoint. No untracked FlashNext or dirty llama.cpp incorporated.
+
+Existing running histories and remaining objective
+---------------------------------------------------
+NativeE81906/33926 remain useful actual generation/END histories,but use
+the OLD raw-v1 collector source SHA:
+21dd8c450a046959bb773751e22925643c8b8f87d29d75ce53f5ad8e73968d6b.
+They are not restarted or retroactively changed. Only AFTER actual full
+completion/source/terminal proofs should their preserved data be compared
+with the explicit legacy option. No actual native state comparison has
+completed here. New EOS19687/40048 remain separate LIVE tests;their QNE1
+capture is already normalized and never uses the legacy flag.
+
+Still required:actual all64/multitoken/normal+official-EOS output/state/KV
+numerics,combined kernel/firmware stack,full native END/unload/reuse/fault
+recovery,new fast native no-CPU-reference Work+Assistant,physical stability/
+long contexts and honest real-card optimization toward20tokens/sec. No
+Pioneer/SSH/power/install/OS/Assistant/network/SD/mains or current hardware-
+health action/claim. No generated model/state binaries are committed.
