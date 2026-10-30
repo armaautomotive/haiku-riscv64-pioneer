@@ -52,6 +52,17 @@ void PreparePeerBytes(){
 #endif
  };
  peerBytes.clock=[](void* p){return (UINT64_C(1)<<40)+static_cast<PioneerSessionIO*>(p)->clock*1000;};
+#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+ peerBytes.push=[](void* p,unsigned worker,const uint32_t* packet,const uint32_t* raw){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
+  auto& self=*static_cast<PioneerSessionIO*>(p);
+  assert(self.executionMode && self.executionCpu && self.executionCpu->layerActive);
+  self.executionCpu->pushedIncoming.Incoming(worker,packet,raw);
+#else
+  (void)p;(void)worker;(void)packet;(void)raw;assert(false && "BOOT-only fixture cannot receive matrix packets");
+#endif
+ }; // actual producer NoC bytes+ACK into SAME ROOT backing;never sets ready/nonce/processor state
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
  executionDramRead=[](TokenHeldEndpoints& p,unsigned route,uint32 address,uint8* out,unsigned bytes){
   auto& native=static_cast<PioneerSessionIO&>(p);return native.peerBytes.read(&native,route,address,out,bytes);

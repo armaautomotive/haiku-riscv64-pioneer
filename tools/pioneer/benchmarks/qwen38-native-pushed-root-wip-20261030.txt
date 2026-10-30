@@ -1,0 +1,88 @@
+G3 native ROOT/session TEST integration -- HOST WIP, NOT driver release
+2026-10-30 17:06 UTC
+======================================================================
+Goal ACTIVE. Last physical whole-model rate0.207893161 tokens/sec;20 UNMET.
+No Pioneer SSH, power, driver installation, OS, Assistant, SD or hardware
+action. No firmware numerical algorithm or immutable program DATA changed.
+
+Integration
+--------------
+The actual virgin native ROOT test engine now owns the previously tested
+G3 incoming byte/counter/L0 fabric,backed DIRECTLY by the same installed
+ROOT L1 bytes. Its actual mailbox loads use that cache,mailbox stores
+invalidate only their resident matching line,and four slave CSR reads
+return actual incoming-packet event counters. Fetching an actual FENCE
+flushes L0 tags before the instruction is retired normally. No PC/register/
+private-state/nonce/ready setter or supplied CPU result is introduced.
+
+The actual native session's opaque peer byte callbacks deliver the real
+sender's payload+commit into this SAME ROOT fabric. BOOT-only fixtures
+provide a refusing callback and cannot send matrix packets. The G1/G2
+branches are unchanged;G3 selectors alone enable the new path. The native
+bootstrap diagnostic now labels this family QGW3 rather than QGW2.
+
+The HOST runner adds explicit --pushed-context:ALL21 native parents plus
+the distinct G3 DATA/context selectors and QT3NODRV tag. All conventional
+driver ABI names remain renamed. The separately compiled peer engine gets
+ONLY the G3 DATA selector,never kernel/native/BUILD flags. No public driver
+selector or Work grant is added. Synthetic bootstrap and incomplete modes,
+duplicates,mixed G2/G3,unknown options and defined-zero environment roles
+are refused. A partial patch preserves unrelated local native/END WIP.
+
+Completed evidence and its limits
+-----------------------------------
+DI main68991 and clean24320 BOTH EXIT0;logs byte-identical. The actual
+controllers use the durable pinned zero ROM,full851 native model owner,
+1010 actual zero RUN/STOP/HOLD histories covering73728 GDN pages,1680
+history pages and512 workspace pages,then all120 held image histories.
+Runtime staging sends4616 exact metadata packets and reads37782528 bytes
+back against independently rebuilt startup data,including untouched slack.
+All119 virgin G3 instruction engines then ARM before ANY release,execute
+15049216 actual instructions,and reach actual WAIT/status with unchanged
+NoC counters. Maximum written peer stack1972. ROOT remains HELD. Ordinary
+commands/held cleanup remain refused;no host BME or model products used.
+This proves TEST initialization/staging/worker bootstrap,not model or END.
+
+DJ ROOT first-matrix compile/link main75271 and clean29233 BOTH EXIT0.
+Both actual ROOT/session/opaque engine paths compile with ASan/UBSan and
+the exact selected G3 package. The binaries are NOT executed by that mode.
+CLI main56565 and clean47544 BOTH EXIT0:26 early refusals each,before
+image/model IO or output creation. The first DH launch used an obsolete
+EMPTY temporary zero-image directory and stopped at FileNotFoundError;
+no runtime ran. DI uses the verified durable source,not a synthetic repair:
+generated.pioneer/qualification-inputs/qwen38-state-zero-20261030/text.bin
+SHA39817b679f4358e47c0e6602fb5ae184831206c11dab0b63fe9b7173c410df8b.
+
+New full actual native history -- RUNNING,not a pass
+----------------------------------------------------
+DK77228 starts from RESET with the exact same clean source and original
+GGUF raw bytes. It includes the complete native initialization/staging/
+119-bootstrap predecessors,then actual ROOT execution,all3 positions/
+64 layers,positive readout and trace observation. It is not a resumed or
+transplanted processor history. At this checkpoint it has passed those
+predecessors and the actual startup/session/prompt/head reads,with the
+first original learned2304-byte request reached. Further model execution
+and G3 receipt consumption have NOT yet been verified. Poll SAME handle;
+do not restart just because output is quiet. It is NOT a completed run.
+
+Frozen clean source:/private/tmp/pioneer-q38-native-pushed-root-dh.CWhg6jvA
+Base HEADfbe119b807 plus only three complete scoped TEST files and five
+scoped runner hunks. New CLI test is identical in both trees. Unrelated
+native/END/llama/FlashNext work is preserved,not included in this snapshot.
+Full log:/private/tmp/pioneer-q38-native-pushed-full-clean-20261030-dk.log
+Output dir:/private/tmp/pioneer-q38-native-pushed-full-dk.syglfReE
+Bootstrap logs:/private/tmp/pioneer-q38-native-pushed-bootstrap-{main,clean}-20261030-di.log
+Compile logs:/private/tmp/pioneer-q38-native-pushed-root-compile-{main,clean}-20261030-dj.log
+Runner-only patch:/private/tmp/pioneer-q38-native-pushed-runner-only-20261030-dh.patch
+
+The original instruction-model CW67964/74406 and large dense fault CY93250
+remain live on the SAME handles. CW has now actually closed layers0/1;
+only embedding+layer0 has an independently bit-exact saved diagnostic.
+No original full-model or large dense fault completion is claimed here.
+
+Still required:actual native receipt/first-projection consumption,complete
+original model/token/state/KV numerical comparisons,normal/EOS termination,
+cancellation/positive END/reload/recovery,combined stack safety,qualified
+no-reference Work/Assistant integration and physical profiling/measurement
+toward20 tokens/sec. Successful boot/compilation cannot replace these.
+DO NOT INSTALL this experimental NODRV/TEST family.

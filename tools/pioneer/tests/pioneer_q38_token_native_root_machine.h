@@ -8,6 +8,10 @@
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
 #include "pioneer_q38_embedding_raw_test_bridge.h"
 #endif
+#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+#define PIONEER_Q38_NATIVE_PUSHED_FABRIC_TEST 1
+#include "PioneerQ38NativePushedTestFabric.h"
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
 #define PIONEER_GRAPH_MATH_BASE_ALREADY_INCLUDED
 #define PIONEER_GRAPH_MATH_MACHINE_ONLY
@@ -18,6 +22,11 @@ using TokenNativeRootISA=BlockMachine;
 #endif
 struct TokenStartupRoot:TokenNativeRootISA {
  TokenHeldEndpoints& io;unsigned deviceReads=0,deviceWrites=0,markerWrites=0;
+#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+ Q38NativePushedTestFabric pushedIncoming{&io,[](void* p,unsigned worker,uint32_t address)->uint32_t&{
+  assert(!worker);return static_cast<TokenHeldEndpoints*>(p)->Raw(0,address);
+ }}; // SAME installed ROOT bytes from construction;no copied processor/native-owner state
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
  unsigned floatOps=0;
 #include "pioneer_q38_token_native_layer_machine.inc"
@@ -128,6 +137,10 @@ struct TokenStartupRoot:TokenNativeRootISA {
  }
  uint32_t Load(uint32_t address)override{
   assert(!(address&3));deviceReads++;
+#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+  if(pushedIncoming.Contains(address))return pushedIncoming.Read(address);
+  for(unsigned i=0;i<4;i++)if(address==0xffb20000+pushedIncoming.CounterOffset(i))return pushedIncoming.slave[i];
+#endif
   if(address<0x180000)return io.Raw(0,address);
   assert(address>=0xffb20000 && address<0xffb22000);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
@@ -154,6 +167,9 @@ struct TokenStartupRoot:TokenNativeRootISA {
   if(layerActive){
    assert(PioneerQ38TokenL1::SnapshotContains(0,address) && !CodeAddress(address));
    if(Range(address,0x6e000,8192))minStack=std::min(minStack,address);
+#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+   if(pushedIncoming.Contains(address))pushedIncoming.Store(address,value);else
+#endif
    io.Raw(0,address)=value;deviceWrites++;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE
    if(fullLayerRunning && address==C::Progress+8){
@@ -221,6 +237,9 @@ struct TokenStartupRoot:TokenNativeRootISA {
 #endif
 #endif
    const uint32_t instruction=io.Raw(0,pc),op=instruction&127;
+#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+   if(op==15)pushedIncoming.Fence(); // actual fetched FENCE instruction;still retired normally below
+#endif
    if(op==7 || op==0x27 || op==0x53)floatOps++;
    StepScalar(); // unchanged FULL scalar ISA engine,from the very first virgin instruction
 #elif defined(PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE)

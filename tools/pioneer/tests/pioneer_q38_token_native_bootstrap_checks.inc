@@ -21,7 +21,7 @@ static void CheckNativeBootstrap(Fixture& f,PioneerQ38TokenMemoryResult& held){
   else assert(result.phase==4 && io.bootstrapArms==119 && io.bootstrapStarts==119);
   const unsigned touches=io.touches;PioneerQ38TokenBootstrapResult again;
   assert(!BootstrapQ38TokenNativeWorkers(c,again) && !CloseQ38TokenNativeHeld(c,held) && io.touches==touches);
-  f.Unknown();printf("PASS native QGW%u bootstrap fault%u/phase%u/actual preceding1010 zero jobs+120 held stages+4616 metadata packets/ALL owners retained/no reARM/restore/retry/cleanup/following IO after observed uncertainty;SIMULATED endpoints,NOT ROOT/model RUN/physical/TPS\n",PioneerQ38SelectedWorkerPrecise+1,io.bootstrapFault,result.phase);
+  f.Unknown();printf("PASS native QGW%u bootstrap fault%u/phase%u/actual preceding1010 zero jobs+120 held stages+4616 metadata packets/ALL owners retained/no reARM/restore/retry/cleanup/following IO after observed uncertainty;SIMULATED endpoints,NOT ROOT/model RUN/physical/TPS\n",PioneerQ38SelectedWorkerPrecise+PioneerQ38SelectedWorkerPushed+1,io.bootstrapFault,result.phase);
   return;
  }
  assert(okay && result.started && !result.unsafe && result.ready && result.phase==7 && result.armed==119 && result.released==119
@@ -42,5 +42,5 @@ static void CheckNativeBootstrap(Fixture& f,PioneerQ38TokenMemoryResult& held){
  const unsigned touches=io.touches;PioneerQ38TokenBootstrapResult again;
  assert(!BootstrapQ38TokenNativeWorkers(c,again) && !CloseQ38TokenNativeHeld(c,held) && io.touches==touches);
  printf("PASS SAME native full851 owner+1010 zero jobs+installed120 L1 histories+4616 metadata packets/ALL119 VIRGIN QGW%u instruction boots DIRECT shared L1+CSR backing/%llu actual instructions/maxWrittenStack%u/ALL ARM before ANY release/final status+two WAIT PCs+unchanged NoC counters/ROOT HELD/legacy flags FALSE/held cleanup and ordinary commands REFUSED;SIMULATED OS+VM+NoC,NOT ROOT/model RUN/STOP/END/physical/Work/TPS\n",
-  PioneerQ38SelectedWorkerPrecise+1,(unsigned long long)steps,0x70000-stack);
+  PioneerQ38SelectedWorkerPrecise+PioneerQ38SelectedWorkerPushed+1,(unsigned long long)steps,0x70000-stack);
 }
