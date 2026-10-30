@@ -1,0 +1,4 @@
+PASS SYNTHETIC EOS128 state DATA records/all2-position shapes+distinct QCE1/QNE1+normal count unchanged/744 invalid shape,null,length,nonfinite,duplicate,marker refusals;NO model,actual EOS,STOP,native END,Work or TPS claim
+PASS EOS128 state DATA records/39256064 words BIT-EXACT/all48 GDN+Conv and16 packed K+V at EXACTLY2 positions;separate ORIGINAL source/execution/EOS/STOP/END proof REQUIRED;NOT hardware,Work or TPS qualification
+PASS EOS128 state DATA records/39256064 words BIT-EXACT/all48 GDN+Conv and16 packed K+V at EXACTLY2 positions;separate ORIGINAL source/execution/EOS/STOP/END proof REQUIRED;NOT hardware,Work or TPS qualification
+PASS EOS state strict DATA parser/18 family,identity,nonfinite,length,missing,extra,marker,symlink,changed-bit refusals;SYNTHETIC ONLY,NO original-model or hardware result

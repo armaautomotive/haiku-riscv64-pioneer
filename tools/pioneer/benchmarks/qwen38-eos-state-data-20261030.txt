@@ -1,0 +1,62 @@
+Two-position retained-state DATA:qualified component,NOT model execution
+2026-10-30 00:02UTC. Full goal ACTIVE;20tokens/sec remains UNMET.
+Last actual physical whole-model result remains0.207893161tokens/sec.
+
+Coverage gap addressed
+----------------------
+The existing independent CPU corpus contains GDN after2+3,Conv after3 and
+packed K/V covering3 positions. It cannot by itself compare ALL final state
+of an early-EOS run that commits only2 positions. This separate DATA schema
+covers48 GDN state arrays,48 Conv histories and16 K+V cache pairs at EXACTLY2
+positions:128 records,39256064 payload words. This does not replace or
+reinterpret the existing176-record normal corpus.
+
+The host-only serializer adds QCE1(CPU) and QNE1(observed DATA) families,
+eos-c2-l<L>-k<K>.bin and a separate eos-state-complete.bin marker.
+Each record identifies2 completed positions,layer,kind,count,zero-reserved
+fields and exact footer. GDN/Conv are finite FP32;K/V are finite packed
+binary16,1024 words per array. Writes remain exclusive/no-follow in checked
+directories. A caller-supplied family label or record count is NOT origin,
+execution,authentication,EOS,STOP,ownership,END or cleanup evidence.
+
+The independent Python parser requires the EXACT128+marker file set,
+family/identity/length/finite-domain/footer agreement,stable regular-file
+reads and every payload bit equal. No tolerance,repair or diagnostic-only
+success. Distinct normal and EOS markers cannot be substituted.
+
+Paired qualification
+--------------------
+Nine-source immutable B snapshots,each based on f9a7644437:
+main /private/tmp/pioneer-q38-eos-state-main-b.l73VuXhC
+clean /private/tmp/pioneer-q38-eos-state-clean-b.HAhYYm0S
+Baseline tracked tools/pioneer+driver metadata checked vs HEAD before copies;
+all9 scoped files compared before tests. Main archive's orchestration first
+returned before completion;no test was restarted. Process absence plus a
+clean tracked-baseline diff verified the completed tree before use.
+
+DATA jobs29570/90431 BOTH terminal0 and complete logs bit-identical.
+ASan+UBSan/Wall/Wextra/Werror writer checks ALL128 shapes and unchanged
+normal Count(2/3) results across valid+invalid layer/kind combinations.
+744 shape/null/length/nonfinite/duplicate/marker refusals leave no invalid
+output. Python compares all39256064 SYNTHETIC pattern words and exercises18
+family/identity/nonfinite/length/missing/extra/marker/symlink/changed-bit
+refusals. A final full comparison passes after restoring the disposable
+synthetic fixtures. These are DATA tests,NOT original-model state results.
+
+Publication includes ONLY FOUR DATA source/test/parser files plus these
+two logs and this report. The other5 CPU-reference/producer/runner files
+remain WIP. Their new SnapshotEos API is CPU-private and keeps normal
+Snapshot restrictions;it is NOT exposed to native or Work code. Full-zero
+3-step/reference-copy regressions72268/23989,role gates11822/59924 and
+original2-step controls89235/20013 are still LIVE,not qualified here.
+The independent original controls must authenticate the SAME-open GGUF,
+produce the already pinned original token0/1 hashes and save all128 copies.
+No completed original CPU EOS-state corpus or accelerator comparison yet.
+
+The genuine ROOT bootstrap92793/93910 and original early-EOS full execution
+remain separate. Actual all64/multitoken/normal+EOS output/state/KV numerics,
+combined stack,full native END/unload/reuse/fault recovery,new fast native
+Work+Assistant,physical stability/long contexts and real-card performance
+remain required. No Pioneer/SSH/power/install/OS/Assistant/network/SD/mains
+action or current hardware-health claim;no generated model/state binaries
+are committed. No inference speedup follows from this DATA component.

@@ -18,6 +18,7 @@
 #include <unistd.h>
 namespace Q38StateSnapshotData {
 constexpr uint32_t CpuMagic=0x31534351,NativeMagic=0x31534e51,End=0x444e4553;
+constexpr uint32_t EosCpuMagic=0x31454351,EosObservedMagic=0x31454e51;
 inline unsigned Count(unsigned completed,unsigned layer,unsigned kind){
  if((completed!=2 && completed!=3) || layer>=64 || kind>3 || (completed==2 && kind!=0)
   || (layer%4==3?kind<2:kind>=2))return 0;
@@ -60,6 +61,22 @@ inline bool Finish(const char* directory,bool native,unsigned records){
  if(records!=176)return false;
  const uint32_t header[16]={native?NativeMagic:CpuMagic,1,176,3,64};
  return Write(directory,"state-complete.bin",header,nullptr,0);
+}
+// Separate two-position DATA family. No normal corpus promotion or claim
+// that an observed byte array came from an executed/owned accelerator.
+inline unsigned EosCount(unsigned layer,unsigned kind){
+ if(layer>=64 || kind>3 || (layer%4==3?kind<2:kind>=2))return 0;
+ return kind==0?786432:kind==1?30720:1024;
+}
+inline bool SaveEos(const char* directory,bool observed,unsigned layer,unsigned kind,const uint32_t* words,unsigned count){
+ if(!count || count!=EosCount(layer,kind) || !Finite(kind,words,count))return false;
+ const uint32_t header[16]={observed?EosObservedMagic:EosCpuMagic,1,2,layer,kind,count};
+ return Write(directory,"eos-"+Name(2,layer,kind),header,words,count);
+}
+inline bool FinishEos(const char* directory,bool observed,unsigned records){
+ if(records!=128)return false;
+ const uint32_t header[16]={observed?EosObservedMagic:EosCpuMagic,1,128,2,64};
+ return Write(directory,"eos-state-complete.bin",header,nullptr,0);
 }
 }
 #endif
