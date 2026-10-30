@@ -2,8 +2,10 @@ QGW3 recurrent packet-check code-generation experiment -- BUILD/TEST ONLY
 2026-10-30
 =======================================================================
 Goal ACTIVE;20 tokens/sec UNMET. Last physical whole-model measurement
-remains0.207893161 tokens/sec. No Pioneer SSH, power, driver, OS, Assistant,
-SD, hardware or mains operation occurred. No physical speedup is claimed.
+remains0.207893161 tokens/sec. In the initial code-generation checkpoint,
+no Pioneer SSH, power, driver, OS, Assistant, SD, hardware or mains operation
+occurred. A later read-only SSH health check is recorded below. No physical
+speedup is claimed.
 
 Motivation and implementation
 -----------------------------
@@ -116,3 +118,53 @@ PIDs70816,70821,70829,70830,74548,74552,80092,80095. All are confirmed T/TN,
 NOT terminal or discarded. Their sessions and histories remain intact,
 alongside27 previously deferred tests. Resume only the same verified process
 identities when capacity is available; never restart merely for observation.
+
+Follow-up: connected proof and original first-layer diagnostic
+-------------------------------------------------------------
+The SAME ED81826/54326 jobs subsequently TERMINAL EXIT0; complete logs
+are byte-identical, SHA
+2379fd5402d2156c4ecae0663418146bba0fad588c2402a393003a8832f76fdc.
+Each candidate ROOT executes from RESET with the SAME119 virgin histories,
+original27B bytes,first3 fullK5120 jobs and six genuine sender packets.
+All64 receipt-word mutations,one finite missing-commit timeout and four
+incoming-counter faults park before following traffic and stay inert2048.
+The unchanged parent then admits the next job and issues its real nonce2
+first read. L0 observations are864 hits/13708 misses/four stale remote events.
+This closes connected early fault qualification,not full-layer/model numerics.
+
+After that result,the HOST runner permits the pinned candidate in one
+additional explicit mode: complete --first-layer-only with a fresh separate
+observed-trace path. No prepare/bootstrap/fast-memory/EOS/snapshot/other-fault
+shortcut or full-token trace publication is allowed for this mode. No C++,
+firmware,selected DATA,native scope,Work or Assistant behavior changes.
+Final CLI main35794 and clean4340 BOTH EXIT0:50 refused mode combinations
+leave the entire output inventory and sentinel unchanged.
+
+New original first-layer jobs EF82774(main)/40290(clean) are LIVE,NOT passes.
+They authenticate the original GGUF,boot119 fresh workers and execute actual
+embedding/RMS and matrix work; no CPU hidden/product/ready bit is supplied.
+Only a genuine complete first-layer boundary may emit prefix-0.bin. Both
+prefixes must subsequently be compared to the independent fixed CPU trace.
+Main source:worktree atcad8b74ad3 plus the two HOST runner/CLI changes.
+Clean source:archivecad8b74ad3 plus the same two cmp-verified overlays:
+/private/tmp/pioneer-q38-packet-unroll-first-layer-clean-ef.DEOaPHWj
+Outputs:/private/tmp/pioneer-q38-packet-unroll-first-layer-main-ef.Zv9nBXr4/observed
+and /private/tmp/pioneer-q38-packet-unroll-first-layer-out-clean-ef.rPe7KQKR/observed
+Logs:/private/tmp/pioneer-q38-packet-unroll-first-layer-{main,clean}-20261030-ef.log
+Their instruction counts are NOT physical cycles or tokens/sec.
+
+Separate corrected DR31695/66331 histories have now reached the formerly
+failing first dense CaptureFfn boundary after three genuine recurrent layers,
+attention/KV append and the fourth projection. Both observe all three full
+recipe copies AND all119 genuine retained receipt markers intact,then resume
+actual FFN admission. Gate/up projections are in progress. This confirms
+the specific scratch-alias fix at that boundary,NOT a completed dense layer
+or token. Full-generation/state/END DW41236 remains its own live history.
+
+Read-only physical health,2026-10-30 about19:27UTC:strict existing host pin
+and existing Haiku key authenticate as baron at10.0.0.247. uname reports
+Haiku/riscv64;uptime is2days21hours. sysinfo -cpu -mem reports64 CPUs and
+max137034936320 bytes RAM (free133747474432,used3287461888). These are
+enumeration/memory observations,not a new all-core stress or GPU benchmark.
+No GPU device was opened and no driver,power,boot,OS,Assistant or card state
+was changed by these commands. Last physical inference speed is unchanged.

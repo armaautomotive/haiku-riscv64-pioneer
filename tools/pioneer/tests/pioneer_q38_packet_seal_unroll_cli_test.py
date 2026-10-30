@@ -43,4 +43,18 @@ with tempfile.TemporaryDirectory(prefix='pioneer-packet-unroll-cli-',dir='/priva
         assert result.returncode and 'AssertionError' in result.stderr,(options,result.stdout,result.stderr)
         assert before==sorted(path.relative_to(root) for path in root.rglob('*')) and sentinel.read_bytes()==b'unchanged\n'
         refusals+=1
+    first_layer=required+['--first-layer-only','--observed-trace',str(root/'forbidden-prefix')]
+    invalid=[first_layer+[extra] for extra in ('--prepare-only','--bootstrap-only','--fast-root-memory',
+             '--snapshot-first-layer','--eos-after-prompt','--admission-source-faults','--pushed-completion-faults',
+             '--pushed-cohort-faults','--pushed-admission-faults','--pushed-dense-faults')]
+    invalid += [[value for value in first_layer if value!='--pushed-completion'],
+                required+['--observed-trace',str(root/'forbidden-full-model')],
+                required+['--snapshot-first-layer','--observed-trace',str(root/'forbidden-full-model')]]
+    for options in invalid:
+        before=sorted(path.relative_to(root) for path in root.rglob('*'))
+        result=subprocess.run([sys.executable,str(runner),*[str(root/'unused')]*4,*options],
+                              text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        assert result.returncode and 'AssertionError' in result.stderr,(options,result.stdout,result.stderr)
+        assert before==sorted(path.relative_to(root) for path in root.rglob('*')) and sentinel.read_bytes()==b'unchanged\n'
+        refusals+=1
 print(f'PASS packet-seal inspect-only BUILD CLI/{refusals} missing-parent+no-inspect+duplicate+unknown refusals/unchanged complete output inventory;NO compiler/device/native/Work authority')

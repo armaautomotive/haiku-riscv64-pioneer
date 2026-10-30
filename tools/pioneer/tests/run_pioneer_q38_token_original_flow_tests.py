@@ -35,7 +35,11 @@ pushed='--pushed-completion' in options
 assert not pushed or worker_admission,'QGW3 receiver requires the entire explicit worker-admission profile'
 pushed_faults='--pushed-completion-faults' in options
 packet_unroll='--unroll-packet-seals' in options
-assert not packet_unroll or pushed_faults,'experimental packet seals require the exact connected pushed-completion fault TEST;not normal model execution'
+packet_first_layer=('--first-layer-only' in options and observed is not None
+                    and not any(o in options for o in ('--prepare-only','--bootstrap-only','--fast-root-memory',
+                        '--snapshot-first-layer','--eos-after-prompt','--admission-source-faults',
+                        '--pushed-completion-faults','--pushed-cohort-faults','--pushed-admission-faults','--pushed-dense-faults')))
+assert not packet_unroll or (pushed and (pushed_faults or packet_first_layer)), 'experimental packet seals require exact connected fault TEST or full first-layer diagnostic;not normal model execution'
 pushed_cohort='--pushed-cohort-faults' in options
 pushed_admission='--pushed-admission-faults' in options
 pushed_dense='--pushed-dense-faults' in options

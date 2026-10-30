@@ -115,3 +115,11 @@ are copied byte-identically to durable qualification directories
 observed-first-layer-pushed-ffn-{main,clean}-20261030/prefix-0.bin.
 This preserves early numerical evidence; the corrected dense FFN boundary
 and whole-model/native/physical/Work/TPS qualification remain outstanding.
+
+EF follow-up:the SAME corrected DR31695/66331 histories now pass the exact
+previously failing first dense CaptureFfn retention observation. After three
+real recurrent layers,attention/KV append and output projection,both retain
+three complete recipe copies and ALL119 genuine pushed-receipt markers,
+then issue actual first FFN admission. Gate/up arithmetic is continuing;
+this is NOT a completed dense layer,token,normal terminal or native END.
+No code/guard/window change or restart was used to obtain this observation.
