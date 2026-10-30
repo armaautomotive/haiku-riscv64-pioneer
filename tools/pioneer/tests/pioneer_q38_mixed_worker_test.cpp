@@ -35,7 +35,7 @@ struct MixedPeer:ResidentGdnOutputPeer {
   memory[M::Doorbell]=0;for(unsigned i=0;i<16;i++)memory[M::Status+i*4]=0xdeadbeef;
  }
  unsigned StepLimit()const override{return 2000000000U;}
- const std::vector<uint8_t>* Rom(unsigned a,unsigned& base)const{
+ virtual const std::vector<uint8_t>* Rom(unsigned a,unsigned& base)const{
   for(auto p:{std::make_pair(unsigned(M::Code),&front),std::make_pair(unsigned(M::DenseCode),&dense),std::make_pair(0x60000U,&helper),std::make_pair(0x70b00U,&affineCode)})
    if(Range(a,p.first,unsigned(p.second->size()))){base=p.first;return p.second;}
   return nullptr;

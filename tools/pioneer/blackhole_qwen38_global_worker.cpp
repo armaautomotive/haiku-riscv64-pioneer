@@ -1,10 +1,18 @@
 /* SPDX-License-Identifier: MIT */
 // DISTINCT QGW1 whole-model/global-output front end. Fresh cohort required.
 // Reuses returning arithmetic ONLY; this is not an old live-cohort update.
+#ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
+#include "PioneerQ38PreciseWorkerImageRole.h"
+#else
 #include "PioneerQ38GlobalWorkerImageRole.h"
+#endif
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQwen38Panel.h"
 #include "PioneerQ38GlobalWorkerLayout.h"
+#ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
+#include "PioneerQ38PreciseWorkerLayout.h"
+extern "C" void q38_precise_persistent_activation(const uint32_t*,const uint32_t*,unsigned,unsigned);
+#endif
 #include "PioneerQ38DensePartitionLayout.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FfnPersistentShape.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ConvBatchShape.h"
@@ -20,7 +28,11 @@ extern "C" void q38_resident_persistent_gdn(const uint32_t*,const uint32_t*,unsi
 extern "C" void q38_resident_persistent_gdn_output(const uint32_t*,const uint32_t*,unsigned,unsigned);
 extern "C" void q38_mixed_dense_phase(const uint32_t*,unsigned,unsigned,float*,float*);
 namespace GlobalWorker {
+#ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
+namespace M=PioneerQ38PreciseWorkerLayout;
+#else
 namespace M=PioneerQ38GlobalWorkerLayout;
+#endif
 namespace D=PioneerQ38DensePartitionLayout;
 static volatile uint32_t* Words(unsigned a){return reinterpret_cast<volatile uint32_t*>(a);}
 static void Fence(){asm volatile("fence" ::: "memory");}
@@ -96,6 +108,9 @@ extern "C" void q38_global_worker_main(){
  for(unsigned i=0;i<16;i++)Words(M::Status)[i]=0;
  Words(M::Status)[3]=M::Magic;Fence();
  unsigned previous=0,densePhase=0,modelLayer=0,modelPosition=0,globalWave=0;
+#ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
+ bool preciseInputReady=false;
+#endif
  const unsigned finalWaves=worker<=21?9U:8U;
  for(;;){
   unsigned request=block_peer_wait(previous);
@@ -104,6 +119,10 @@ extern "C" void q38_global_worker_main(){
   q38_mixed_seal();if(!Quiet())block_fault_park();
   for(unsigned i=0;i<8;i++)if(*Words(0xffb20000+Counter(i))!=counters[i])block_fault_park();
   unsigned op=seal.job[2];const bool outputJob=op==M::GlobalMatrix;
+#ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
+  const bool downJob=op==1 && seal.job[17]==12 && seal.job[21]==17408;
+  if((preciseInputReady && !downJob && op!=M::Stop) || (downJob && worker<=68 && !preciseInputReady))block_fault_park();
+#endif
   // Necessary private ordering, NOT proof of all model arithmetic or a
   // native token/producer grant. Only actual returned down jobs advance it.
   if(op==M::Stop && seal.job[5]==64){
@@ -144,11 +163,17 @@ extern "C" void q38_global_worker_main(){
     if(d[op==7 || op==8?5:42]!=seal.job[5] || d[40]!=seal.job[6] || d[6]!=seal.job[7]
      || capsule[3]!=seal.job[7])block_fault_park();
     for(unsigned i=0;i<8;i++)if(d[32+i]!=seal.boot[8+i])block_fault_park();
+#ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
+    if(op==3 && d[41]!=seal.job[27])block_fault_park();
+#endif
    }
    for(unsigned i=0;i<16;i++)Words(0x74000)[i]=capsule[i];
    for(unsigned i=0;i<8;i++)Words(0x74040)[i]=i==0?unsigned(TT_Q38_FFN_PERSISTENT_MARKER):i==1?worker:i==2?self:i==3?seal.boot[16]:0;
    *Words(0x74100)=request;Fence();
    if(op==1 || outputJob)Matrix(capsule,seal.boot+16,worker,self);
+#ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
+   else if(op==3)q38_precise_persistent_activation(capsule,seal.boot+16,worker,self);
+#endif
    else if(op==6)q38_resident_persistent_gdn_output(capsule,seal.boot+16,worker,self);
    else if(op==7)q38_resident_persistent_conv(capsule,seal.boot+16,worker,self);
    else if(op==8)q38_resident_persistent_gdn(capsule,seal.boot+16,worker,self);
@@ -158,6 +183,10 @@ extern "C" void q38_global_worker_main(){
   q38_mixed_seal();if(!Quiet())block_fault_park();
   for(unsigned i=0;i<8;i++)counters[i]=*Words(0xffb20000+Counter(i));
   if(counters[2]!=counters[6])block_fault_park();
+#ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
+  if(op==3)preciseInputReady=true;
+  else if(downJob)preciseInputReady=false;
+#endif
   if(outputJob){GlobalPartial(seal.job,seal.boot);globalWave++;}
   else if(op==1 && capsule[1]==12 && capsule[5]==17408)modelLayer++;
   previous=request;Words(M::Status)[5]=densePhase;Words(M::Status)[6]=seal.job[5];Words(M::Status)[7]=seal.job[6];

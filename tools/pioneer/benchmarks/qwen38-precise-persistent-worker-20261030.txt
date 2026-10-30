@@ -1,0 +1,99 @@
+Precise persistent worker QGW2/QPA1: completed bounded qualification
+2026-10-30 02:24:36 UTC. Goal ACTIVE;20tokens/sec UNMET.
+Last physical whole-model rate remains0.207893161tokens/sec.
+No Pioneer/SSH/install/power/OS/Assistant/network/SD/mains action this turn.
+
+Implemented, not just planned
+------------------------------
+A DISTINCT worker image now executes the qualified precise256 activation/
+native-packing operator, reading gate+up directly from card DRAM and writing
+512B native operands plus a128B private scale/freshness line. There is no
+CPU arithmetic/reference call in the worker. The separate posthoc host
+sigmoid control is compiled without the old tensor TEST flags and is used
+only AFTER actual instruction execution returns. Existing precision-role
+guards were not weakened to link that control.
+
+QGW2 has a distinct boot magic/witness and exact68-chunk capability words.
+QPA1 descriptors bind current worker,chunk,nonce,layer,position,input token,
+four owner epochs,all16 physical source words and exact workspace offsets.
+The outer job's input token must match the descriptor. Each worker has a
+PRIVATE actual-execution activation-ready state: down input is refused
+without activation, a repeat/unrelated operation is refused while ready,
+and a real down return consumes readiness. STOP remains available after a
+partial/cancelled layer without pretending the layer or token committed.
+
+Each packet checks the private current boot/job seal,physical sources,
+descriptor,queue emptiness,command readback and exact modulo32 counters.
+A failed/uncertain transfer parks without a later packet,reset,retry or
+completion. Raw proof and scale-line readers are DATA checks, not native
+ownership/completion grants. Source geometry covers the common dense and
+recurrent FFN gate/up offsets; production ROOT integration remains owed.
+
+New proposed capsule ROM is at0x30000, separate from the old QGW1 regions.
+A native owner MUST independently cover the complete new immutable image,
+its code/scratch/stack/source/NoC lifetime and exact save/restore extent
+before hardware use. An old image marker,old owned view or a hash alone is
+not permission to install this image into a running cohort.
+
+Final G evidence
+------------------
+Parentabaabe35101caa829cda58ec015bd93d985e0688, separately archived and
+overlaid with the same10 owned source files,all re-compared:
+  /private/tmp/pioneer-q38-precise-worker-main-g.IjEn0gyW
+  /private/tmp/pioneer-q38-precise-worker-clean-g.RPWAXveg
+Both actual final processes64760/72699 returned0. All10 final image files
+are byte-identical. Tests,role and old-initial log pairs are byte-identical.
+Raw build logs differ only in printed directory paths; a separate READONLY
+path-normalized comparison matches. Original logs were not rewritten.
+
+Per snapshot,ACTUAL emitted instructions with synthetic NoC byte endpoints:
+- 68 independent virgin-worker histories,one for EACH chunk position,run
+  precise activation+packing,return to WAIT and subsequently execute STOP.
+  These are not one concurrently connected119-worker ROOT history.
+- All activated F32 bits match unchanged ROOT order; native operands and
+  scales match independent host division/rounding/packing. Freshness lines
+  are checked. All4352 single-word proof mutations are refused against
+  independently captured before/after counters and actual local job words.
+- 20 actual fault histories:source/descriptor/outer-job changes,bad final
+  arithmetic lane,bad boot,workers69/119,old QGW1 boot/job/descriptor,
+  token disagreement,down without activation,repeated activation,stalled
+  first transfer and wrong final counter. All execute2048 inert steps after
+  fault with no following transfer or false completed frontier.
+- Reserved SP and writes remain inside6e000..70000 for EVERY instruction.
+  Max combined reservation6320bytes;max415702 instructions in a positive
+  tested chunk history. No physical timing or tokens/sec follows.
+- QGW2 roles:2 positive/58 absent+zero+two+late incompatible refusals.
+- Rebuilt QGW1 ancestor retains ALL original pinned sections and full ELF.
+  Its original virgin-boot15-fault instruction regression also passes.
+
+New image pins are explicit in run_pioneer_q38_precise_worker_tests.py.
+QGW2 global frontend7124B;precise capsule8392B;full ELF135052B:
+  ELF SHA2563d51b34fc7c8b99ffadc287b1668548e810e19252b46163eb83ebdb30f68351d
+All allocated sections are exported;no undefined symbols,writable globals,
+unsupported arithmetic or unqualified CSR instructions;the single private
+s11 producer/reader pair is preserved. New individual frames stay within
+2048(frontend)/2128(precise TU);actual combined stack is checked separately.
+
+Failure lineage
+-----------------
+Initial A/B build attempts failed Werror for misleading indentation in the
+NEW capsule,not hardware or arithmetic. Statement separation fixed them.
+C/D development builds pass;final G source and checks are fresh.
+Comparison auditing caught that an early multi-command shell could mask a
+non-final cmp failure. ALL sources/images/three log pairs were rechecked
+with set-e;raw build-log path differences were separately verified read-only.
+No failed or live run has been relabelled as a complete pass.
+
+Next REQUIRED performance integration
+--------------------------------------
+ROOT must boot the new family on a fresh cohort,dispatch the68 operations,
+verify exact current physical WAIT/proofs/owners,compact their scale lines
+on-card and use the produced native inputs for down projection directly.
+It must remove its old serial activation AND serial re-quantization on that
+route,not merely add extra worker work before the old serial path.
+Then prove connected original-model/all64/multitoken/state/KV/normal+EOS,
+native lifecycle/combined stack and physical inference before Work/Assistant
+promotion. Matrix/Conv/GDN/dense arithmetic through the new linked image
+and a real connected down-consumer history are NOT qualified by this test.
+The existing27 long histories remain separate. No installed driver or
+measured inference improvement is claimed by this checkpoint.
