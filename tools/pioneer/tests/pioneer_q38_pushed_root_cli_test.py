@@ -29,12 +29,13 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw3-cli-',dir='/private/tmp') 
         for flag in ('--pushed-completion','--pushed-completion=0','--unknown-qgw3'):
             reject(here.parent/script,['sdk','output'],[*selected,flag])
     runner=here/'run_pioneer_q38_token_original_flow_tests.py'
-    for selected_mode,other_mode in ((mode,'--pushed-cohort-faults'),('--pushed-cohort-faults',mode)):
+    modes=(mode,'--pushed-cohort-faults','--pushed-admission-faults')
+    for selected_mode in modes:
         selected=['--cancel-boundary',*profile,selected_mode]
         for flag in selected:
             if flag!=selected_mode:reject(runner,['image','mixed','worker','model.gguf'],[f for f in selected if f!=flag])
         for flag in ('--prepare-only','--bootstrap-only','--first-layer-only','--fast-root-memory',
-                     '--snapshot-first-layer','--eos-after-prompt','--admission-source-faults',selected_mode,other_mode,'--pushed-completion=0'):
+                     '--snapshot-first-layer','--eos-after-prompt','--admission-source-faults',selected_mode,*[m for m in modes if m!=selected_mode],'--pushed-completion=0'):
             reject(runner,['image','mixed','worker','model.gguf'],[*selected,flag])
         reject(runner,['image','mixed','worker','model.gguf'],[*selected,'--observed-trace',str(root/'observed')])
         for name in ('PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE'):

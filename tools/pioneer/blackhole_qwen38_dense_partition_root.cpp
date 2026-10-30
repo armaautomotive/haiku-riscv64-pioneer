@@ -51,6 +51,9 @@ extern "C" const uint32_t* q38_mixed_root_packet_frame();
 extern "C" void q38_mixed_root_seal();
 #endif
 extern "C" void scalar_fault_park() __attribute__((noreturn));
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+namespace Projection {static void PushedReceipt(const uint32_t*,unsigned,const uint32_t*);}
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT
 #if PIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT != 1 || !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) || !defined(PIONEER_Q38_LAYER_COMPONENT_RECURRENT)
 #error Exact returning global recurrent component required for cross-token admission

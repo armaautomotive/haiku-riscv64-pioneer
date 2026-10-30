@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
-// Included INSIDE the new ROOT namespace. All peer observations are real
-// NoC reads; no caller nonce/ready setter or old fresh-boot grammar.
+// Included INSIDE the new ROOT namespace. Cold/other-phase peer observations
+// are real NoC reads;G3 normal-matrix warm admission validates its retained
+// receipt and expected frontier instead. No caller-ready/native grant.
 static const uint32_t* Boot(unsigned w){return reinterpret_cast<const uint32_t*>(L::PeerBoots+w*256);}
 #if !defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) && !defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
 static bool Executing(unsigned pc){
@@ -115,11 +116,26 @@ static void Admit(const uint32_t* d,uint32_t* tracked,unsigned w){
  // current sequence. Never use a caller-ready bit or skip the first audit.
  const bool firstSourceAudit=!Words(L::Nonces)[w];
 #endif
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+ const bool pushedPrior=Words(L::Nonces)[w] && Words(L::PeerJobs+w*256)[2]==1;
+ if(!pushedPrior){Wait(d,tracked,w,0,true);}
+#else
  Wait(d,tracked,w,0,true);
+#endif
 #if defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
  if(L::FirstMatrix(d) && Words(L::Nonces)[w]>0x7ffffffd-L::RunDelta(w))scalar_fault_park(); // reserve the entire block AND a real STOP
 #endif
  if(w<96 && Words(L::Nonces)[w]>0x7ffffffb)scalar_fault_park();
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+ if(pushedPrior){
+  // The expected post-push frontier was derived from the closed arithmetic
+  // proof,not recaptured from current counters. A queued descriptor is
+  // permitted after commit;the actual worker checks its retained frontier,
+  // boot/source/job before its next request. Other/virgin phases stay cold.
+  Projection::PushedReceipt(d,w,reinterpret_cast<const uint32_t*>(L::Counters+w*32));
+  return;
+ }
+#endif
  Transfer(d,tracked,w,M::Boot,256,false);Copy(L::PeerBoots+w*256,L::Scratch,64);
  const auto* b=Boot(w);
  if(!M::BootShape(b) || b[3]!=w+1 || b[4]!=M::Peer(w+1))scalar_fault_park();

@@ -48,6 +48,9 @@ run(tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',here/'blackho
 for section in ('boot','text','terminal','conv'):run(tool+'objcopy','-O','binary','-j','.'+section,out/'program.elf',out/(section+'.bin'))
 symbols=subprocess.check_output([tool+'nm','-nC',str(out/'program.elf')],text=True)
 if pushed:
+ for name in ('q38_pushed_begin_shared','q38_pushed_receipt_shared','q38_pushed_end_shared'):
+  matches=re.findall(r'^([0-9a-f]+) [TW] '+name+r'$',symbols,re.M)
+  assert len(matches)==1 and (0x40000<=int(matches[0],16)<0x60000 or 0x64000<=int(matches[0],16)<0x6c000), ('missing/discarded QGW3 shared body',name)
  for name in ('BootShape','JobShape','Receipt'):
   matches=re.findall(r'^([0-9a-f]+) [TW] PioneerQ38PushedWorkerLayout::'+name+r'\(',symbols,re.M)
   assert len(matches)==1 and (0x40000<=int(matches[0],16)<0x60000 or 0x64000<=int(matches[0],16)<0x6c000), ('missing/discarded QGW3 grammar',name)
@@ -164,10 +167,10 @@ PINS_CANCEL_F32_WORKER_ADMISSION=(('boot.bin',4,'32791432e2d260817d9007281f37196
  ('program.elf',189408,'1c5fb71798d0199a1e4a8599087220582fc181bd481df84cda577764bf05f32b')) # independent BUILD pins ONLY;changed fault timing/model/native/Work/physical/TPS remain unqualified
 PINS_CANCEL_F32_PUSHED=(
     ('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
-    ('text.bin', 131008, '55080ae1e89351106ca6eabd4ae4d70133705c6dbaeacbe8499f53f68ebdd987'),
+    ('text.bin', 130692, 'f56ef8742a5be8ceb9a54e7c4eb69d406299fd466366d2c141d1a3ffcd7bb007'),
     ('terminal.bin', 8, '6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
-    ('conv.bin', 32720, '01a8ac80e8fc500911ea6f86d23a6fdd8b506b6e0a64c802237071bca906043c'),
-    ('program.elf', 190520, '3b0b0d7684e4e82d3cab2ae22316198e352e97c836ce5833abceb8c6f30590df'),
+    ('conv.bin', 32720, '393e81f6323d20d9b9738a570aeb52bd14e169b59fa59cc6bd2ab03574ce22ad'),
+    ('program.elf', 190444, 'af0a6e2de533ad253b5a73d1cef4cc7b582d8aedf8ce6a118eebd2094736b199'),
 ) # independent BUILD pins ONLY;not runtime/native/Work/physical/TPS.
 expected=PINS_CANCEL_F32_PUSHED if pushed else PINS_CANCEL_F32_WORKER_ADMISSION if worker_admission else PINS_CANCEL_F32_SINGLE_AUDIT if single_audit else PINS_CANCEL_F32_PRECISE if precise else PINS_CANCEL_F32_LOCAL_SOURCE if local_sources else PINS_CANCEL_F32_QUIET if quiet else PINS_CANCEL_F32_BOUNDARY if boundary else PINS_CANCEL_F32_UNROLLED_DENSE if unroll else (PINS_CANCEL_F32 if cancel else PINS_F32) if f32 else PINS_CANCEL if cancel else PINS
 if not inspect:assert expected and tuple(observed)==expected,'unqualified persistent parent variant; inspect independent builds first'

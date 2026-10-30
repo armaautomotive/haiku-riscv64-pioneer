@@ -7,7 +7,7 @@
 struct PushedCohortMachine:OriginalTokenFlowMachine {
  using OriginalTokenFlowMachine::OriginalTokenFlowMachine;
  bool forked=false,injected=false,badObserved=false,continued=false;
- unsigned fault=8,cases=0,packetsAtBad=0,commandsAtBad=0;
+ unsigned fault=8,cases=0,handoffs=0,packetsAtBad=0,commandsAtBad=0;
  static unsigned CounterAddress(unsigned i){return 0xffb20000+FfnPersistentPeer::CounterOffset(i);}
  void Predecessor(){
   assert(!position && !layer && matrices==4 && Phase()==6 && !allLayers && !committed && !convJobs && !stopJobs);
@@ -40,10 +40,11 @@ struct PushedCohortMachine:OriginalTokenFlowMachine {
   if(target && !write && injected && remote==CounterAddress(fault)){
    assert(!badObserved);badObserved=true;packetsAtBad=packets;commandsAtBad=peerWrites;
   }
-  if(target && write && remote==M::Doorbell && forked && child[0]->memory.at(M::Job+8)==7){
+  if(target && write && remote==M::Doorbell && forked && !continued && !position && !layer
+   && child[0]->memory.at(M::Job+8)==7){
    auto& p=*child[0];assert(cases==8 && !p.convPackets && p.sequence==5 && !p.GdnFaulted());
    for(unsigned i=0;i<1000000 && !p.convPackets && !p.GdnFaulted();i++){cycles+=19;p.StepBlock();}
-   assert(p.convPackets==1 && !p.GdnFaulted());continued=true;
+   assert(p.convPackets==1 && !p.GdnFaulted() && !handoffs);handoffs++;continued=true;
   }
  }
  void CheckFault(){
@@ -68,14 +69,14 @@ int main(int argc,char** argv){
 #endif
  while(m->pc!=0x60000 && m->pc!=0x60004 && !m->continued){m->cycles+=19;m->StepToken();if(!(m->steps&255))for(unsigned w=0;w<119;w++)m->Advance(w,64);}
  if(m->injected){m->CheckFault();return 0;}
- assert(m->continued && m->cases==8 && !m->allLayers && !m->committed && source.Ready());
+ assert(m->continued && m->cases==8 && m->handoffs==1 && !m->allLayers && !m->committed && source.Ready());
  puts("PASS connected QGW3 matrix-to-Conv/ROOT from RESET+SAME119/original four projections/actual prior payload+commit/8 physical-counter faults rejected/unchanged parent admits ALL119 then actual nonce5 Conv first read;NOT completed Conv/GDN/layer/model numerics/native/physical/Work/TPS qualification");
 #ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
  if(observed){
   puts("CONTINUE SAME original ROOT+119 histories AFTER actual cohort handoff gate/NO reset,transplanted processor state or fabricated token/first-layer snapshot remains INCOMPLETE DATA only");
   const bool okay=m->RunTokens();
   if(m->kvFault){assert(!okay);m->VerifyKvFault();assert(source.Ready());_exit(0);}
-  assert(okay && source.Ready());m->VerifyTokens();
+  assert(okay && source.Ready() && m->handoffs==1);m->VerifyTokens();
   assert(observed->Complete() && observed->Save(argv[7]) && source.Ready());
   puts("SAVED actual complete3position traces AFTER genuine192layers+119STOP/cohort gate history preserved;NOT independent CPU match,native END,physical,Work or TPS qualification");
  }

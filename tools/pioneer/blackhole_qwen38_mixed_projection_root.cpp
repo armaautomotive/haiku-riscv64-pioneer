@@ -122,9 +122,9 @@ static void Gather(const uint32_t* d,uint32_t* tracked,unsigned w){
  unsigned reads=groups*blocks+(k*2+16383)/16384+1,flits=groups*blocks*(type==8?576:3392)/64+(k*2+((blocks*4+63)&~63U))/64;
 #endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
- uint32_t receiptBefore[8];
- for(unsigned i=0;i<8;i++)receiptBefore[i]=Words(L::Counters)[w*8+i]+(i==1?flits:i==0 || i==2 || i==3 || i==6?reads:0U);
- PushedWait(d,w,receiptBefore);
+ uint32_t receiptAfter[8];
+ for(unsigned i=0;i<8;i++)receiptAfter[i]=Words(L::Counters)[w*8+i]+(i==1?flits:i==0 || i==2 || i==3 || i==6?reads:0U)+PushedDelta(i);
+ PushedWait(d,w,receiptAfter);
 #endif
  Transfer(d,tracked,w,0x83f00,256+groups*64,false);uint32_t proof[64];
  for(unsigned i=0;i<64;i++)proof[i]=Words(L::Scratch)[i];
@@ -147,8 +147,9 @@ static void Gather(const uint32_t* d,uint32_t* tracked,unsigned w){
   unsigned delta=i==1?flits:i==0 || i==2 || i==3 || i==6?reads:0U;
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
   if(proof[i]!=Words(L::Counters)[w*8+i] || uint32_t(proof[8+i]-proof[i])!=delta)scalar_fault_park();
-  if(proof[8+i]!=receiptBefore[i])scalar_fault_park();
-  Words(L::Counters)[w*8+i]=proof[8+i]+PushedDelta(i); // expected frontier;fresh WAIT+physical checks still occur at next Admit.
+  const unsigned finished=proof[8+i]+PushedDelta(i);
+  if(finished!=receiptAfter[i])scalar_fault_park();
+  Words(L::Counters)[w*8+i]=finished; // expected frontier;not a current physical observation or recaptured baseline.
 #else
   if(proof[i]!=Words(L::Counters)[w*8+i] || uint32_t(proof[8+i]-proof[i])!=delta
    || Register(d,tracked,w,0xffb20000+Counter(i))!=proof[8+i])scalar_fault_park();
@@ -201,12 +202,13 @@ static unsigned Run(const uint32_t* d){
  for(unsigned w=0;w<d[7];w++){MatrixJob(d,w,Words(L::Nonces)[w]+1);Transfer(d,tracked,w,M::Job,256,true);}
  for(unsigned w=0;w<d[7];w++){*Words(L::Scratch)=Words(L::Nonces)[w]+1;Transfer(d,tracked,w,M::Doorbell,4,true);Words(L::Nonces)[w]++;}
  for(unsigned w=0;w<d[7];w++)Gather(d,tracked,w);
- // Gather has just proved each active worker's actual DONE+WAIT,immutable
- // boot/job,arithmetic proof and current physical counters. No later command
- // is sent to those workers here. The opt-in policy omits only their SECOND
- // closed audit;unused workers still receive the existing final audit.
- // A later metadata change can therefore be observed at the next Admit,
- // not by this duplicate pass. This is NOT identical fault-observation timing.
+ // Non-pushed Gather observes DONE/WAIT,boot/job and current counters.
+ // G3 instead binds the pushed receipt,arithmetic proof and expected counter
+ // frontier;that is NOT a fresh physical observation. No later command is
+ // sent to those workers here. The single-audit policy omits their duplicate
+ // audit;unused workers retain it. Later idle faults in G3's warm path are
+ // detected by actual worker guards before its next request,not by a new
+ // ROOT remote audit. These policies have different fault-observation timing.
  for(unsigned w=
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT
   d[7]

@@ -132,9 +132,9 @@ PINS_WORKER_ADMISSION_F32=(('recurrent.o',173332,'ec717b89aa276961a5afb7031fc81a
  ('dense.o',137028,'c663c6db28eb3b989409b139909ae6a7ef106442a51947d1908219d4a4c7ac72'),
  ('token-components-NOBOOT.o',272180,'de5ecfb69aa172e36d63f8929c0279ef58b0486d00a4856bfa6dc500941cbd69')) # independent BUILD pins ONLY;not runtime/fault timing/native/Work qualification
 PINS_PUSHED_F32=(
-    ('recurrent.o', 180712, '344e7ec5a7163bbbf0fc804c6374b0e70a71e3e52d3bb94a768815ed567b3871'),
-    ('dense.o', 144336, '383655ce37c0fe0276d3cb2378570c0cd76aa23add1d7b7b6eee0c480e6ed59d'),
-    ('token-components-NOBOOT.o', 281860, 'a7c8ce3c130075616e022b4aacd7499e870eea60eb8bdf25bd6a6e3595102269'),
+    ('recurrent.o', 182164, '1a9bec24cb2324c31cc6a72e8957af2ca46b1611b8e72358e3fdd9c40f63061c'),
+    ('dense.o', 145612, 'cf75ad00c0d90ec4574853c87d36402bfc6f78d9cf2f261aa77346111fea651a'),
+    ('token-components-NOBOOT.o', 281680, '9d56ea6593d250e1ab586e53745a9996558184d921240ae1c839e92da53744be'),
 ) # independent BUILD pins ONLY;not runtime/native/Work/physical/TPS.
 expected=PINS_PUSHED_F32 if pushed else PINS_WORKER_ADMISSION_F32 if worker_admission else PINS_SINGLE_AUDIT_F32 if single_audit else PINS_PRECISE_F32 if precise else PINS_LOCAL_SOURCE_F32 if local_sources else PINS_QUIET_F32 if quiet else PINS_BOUNDARY_F32 if boundary else PINS_UNROLLED_DENSE_F32 if unroll else PINS_F32 if f32 else PINS
 if not inspect:assert expected and tuple(observed)==expected,'unqualified component variant; inspect/freeze first'

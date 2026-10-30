@@ -1,0 +1,103 @@
+QGW3 retained-receipt warm admission -- BUILD/HOST WIP ONLY
+2026-10-30
+=========================================================
+Goal ACTIVE. Last physical whole-model rate remains 0.207893161 tokens/sec;
+20 tokens/sec is UNMET. No physical performance result is established here.
+No Pioneer SSH, power, driver, OS, Assistant, SD or hardware action was taken.
+
+Change and fault-observation contract
+-------------------------------------
+Only the explicit G3 --pushed-completion BUILD profile changes. Ordinary
+matrix admission with a nonzero ROOT nonce and a retained op1 job validates
+the prior receipt against ROOT's independently expected POSTPUSH frontier,
+instead of repeating remote WAIT/boot/job/counter observations. Virgin and
+other-phase admissions retain the cold path and all nonce reservations.
+Receipt counter DATA is not authority: all eight receipt[56+i]+pushDelta(i)
+must match the expected frontier before the existing complete receipt
+grammar is accepted; the saved job nonce must also equal ROOT's nonce.
+
+This deliberately changes idle-fault observation timing. A changed actual
+worker boot/source/counter can be detected by that worker after ROOT queues
+the next descriptor, but BEFORE any next read or tensor instruction. It is
+not claimed that ROOT freshly observes an idle worker before every release.
+The finite 65536-poll watchdog and empty-poll packet seals are unchanged.
+Expected counters are never recaptured from potentially changed hardware.
+
+Three shared bodies use ordinary per-function COMDAT, fixed shared DATA
+geometry and private code-generated component-specific seal callbacks.
+No public callback/address selector or native/Work execution grant is added.
+The strict builder requires exactly one owned in-ROM definition of each
+shared body and of all three G3 grammar functions; no absolute-x0 JALR,
+CSR, undefined/mutable symbol, s11 or ROM/stack-bound relaxation is allowed.
+
+Completed independent checks
+-----------------------------
+CD main66536 and clean75279 BOTH terminal EXIT0. Each starts actual ROOT
+from reset, SAME119 actual worker histories and authenticated original GGUF
+bytes, completes the first three full-K5120 Q8 jobs, and forks at the ACTUAL
+next warm receipt load. ASAN/UBSAN and -Werror remain enabled. Each passes:
+  92 local-data faults: every retained receipt word, missing commit, all
+  eight expected counter views (alias2/6 together), ROOT nonce, and explicit
+  selections of eleven saved-job and seven saved-boot words. ROOT parks
+  BEFORE another packet/release, then remains inert for 2048 instructions.
+  88 idle physical faults: all sixteen actual source registers, eight
+  counter views (alias2/6 together), and all64 actual worker boot words.
+  ROOT legitimately queues nonce2; the ACTUAL worker rejects before its
+  first read/tensor instruction, keeps completed1, and is inert for2048.
+  TWO representative physical faults also continue ROOT through its real
+  finite missing-receipt timeout and inert2048. The other86 prove worker
+  refusal only, NOT a separately executed ROOT timeout.
+The unchanged parent then uses the SAME processor/tensor histories to
+issue the genuine next nonce2 first read. No supplied CPU product, PC,
+private nonce/status/ready setter, reset or processor transplant is used.
+Logs: /private/tmp/pioneer-q38-push-admit-{main,clean}-20261030-cd.log
+
+Earlier BZ25728/73987 BOTH terminal EXIT0 on the SAME firmware bytes: all69
+connected receiver faults (64 receipt words, missing commit, four extra
+incoming counters), non-coherent cache/fence observations and real next
+nonce2 first read. These69 alone do not qualify warm idle-fault semantics.
+
+Final CE75309/49132 BOTH terminal EXIT0: strict build, 12 positive/280
+refused BUILD roles and92 early CLI refusals. All8 main/clean artifacts
+compare byte-identical and also equal the BZ firmware used by CD tests.
+The old G2 worker-admission ROOT was separately rebuilt in both CD control
+copies with unchanged ELF189408/SHA
+1c5fb71798d0199a1e4a8599087220582fc181bd481df84cda577764bf05f32b.
+
+Final G3 BUILD pins (not a runtime launch grant)
+-----------------------------------------------
+text.bin 130692 f56ef8742a5be8ceb9a54e7c4eb69d406299fd466366d2c141d1a3ffcd7bb007
+conv.bin 32720 393e81f6323d20d9b9738a570aeb52bd14e169b59fa59cc6bd2ab03574ce22ad
+program.elf 190444 af0a6e2de533ad253b5a73d1cef4cc7b582d8aedf8ce6a118eebd2094736b199
+recurrent.o 182164 1a9bec24cb2324c31cc6a72e8957af2ca46b1611b8e72358e3fdd9c40f63061c
+dense.o 145612 cf75ad00c0d90ec4574853c87d36402bfc6f78d9cf2f261aa77346111fea651a
+token-components-NOBOOT.o 281680 9d56ea6593d250e1ab586e53745a9996558184d921240ae1c839e92da53744be
+Unchanged ROM headroom: text380 bytes, auxiliary48 bytes. Static maximum
+frames: parent1616, component2112. Combined runtime stack is STILL OWED.
+
+Continuing histories, not completed qualification
+--------------------------------------------------
+The one-time HOST matrix-to-Conv hook now requires !continued, position0,
+layer0 and exactly one handoff. It cannot retrigger at layer1 as the old
+BM test did. Its replacement BX38033/99299 histories are still live and
+have passed layer1 matrix5. Their nonclosing first-layer prefixes compare
+bitexact to the independent CPU trace in BOTH copies (zero tolerance).
+That is old BB firmware evidence, NOT warm-candidate numerical evidence.
+
+After the180-case tests and final strict builds passed, NEW warm CE full
+histories began from reset with original bytes and unchanged AF senders:
+main55607: /private/tmp/pioneer-q38-push-warm-main-ce.LPxhvwyL
+clean43309: /private/tmp/pioneer-q38-push-warm-clean-ce.iXMeLFVm
+Logs: /private/tmp/pioneer-q38-push-warm-flow-{main,clean}-20261030-ce.log
+Trace main: /private/tmp/pioneer-q38-push-warm-flow-main-ce.oUQV0xEg/observed
+Trace clean: /private/tmp/pioneer-q38-push-warm-flow-clean-ce.H2AruP4R/observed
+They include the genuine eight-counter matrix-to-Conv fault gate and a
+nonclosing first-layer snapshot, then continue SAME histories through
+three positions/all64 layers/state/KV/vocabulary/final119STOP. They remain
+LIVE, not terminal0. Poll SAME handles; do not restart for an observation.
+
+Still owed: warm full-model numerical proof, actual combined stack,
+native END/reuse/lifecycle and cancellation qualification, Work/Assistant
+integration, controlled hardware execution and real whole-model timings.
+Fewer remote reads or simulator instruction counts DO NOT prove a speedup.
+No change to the existing native role registry or hardware installation.
