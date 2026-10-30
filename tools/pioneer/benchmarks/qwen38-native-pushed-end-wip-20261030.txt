@@ -105,3 +105,37 @@ vocabulary/STOP numerics, combined stacks, positive full-generation native
 END/reuse and faults, public driver/Work/Assistant integration, repeated
 physical reload and generation, long-context stability and measured tuning
 toward20 tokens/sec. DO NOT INSTALL this private non-loadable candidate.
+
+Follow-up after769df51a99
+-------------------------
+The unchanged DO31762 PCI-close history subsequently TERMINAL EXIT0.
+It actually consumed first-layer cancellation, executed ROOT+119 STOPs,
+held all120, drained zero committed records, independently restored every
+token/dispatch/peer/ROOT/shared original, ended the simulated clock, sealed
+hardware, deleted29 simulated device views and completed PCI restoration.
+ROOT239972139 instructions/peers2277032067 are interpreter counts, NOT time
+or throughput. Hosts and reservations remain owned: DO did NOT run new END.
+
+Its untouched41028-byte prefix was copied to durable qualification input
+observed-native-pushed-pci-20261030/prefix-0.bin. Original and copy SHA
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+Independent fixed CPU trace comparison reports all5120 embedding and5120
+layer0 words BIT-EXACT, zero tolerance/maxAbs/relativeL2. No CPU products
+were supplied to native execution. First layer only, NOT full-model proof.
+
+DW41236 now runs --execution-end-state-full-flow --pushed-context from a
+clean Git archive of769df51a99, NOT the dirty worktree or a transplanted
+processor history. Output:/private/tmp/pioneer-q38-native-pushed-full-end-dw.mhIbR5YI
+Source:/private/tmp/pioneer-q38-native-pushed-full-end-source-dw.rhZ2skK5
+Log:/private/tmp/pioneer-q38-native-pushed-full-end-20261030-dw.log
+This NEW original3-position/all64+positive-readout/state-capture/complete
+END history is LIVE, not passing. Existing DR,DK and DT histories continue;
+the terminal DO/CY/receiver runs are not restarted merely for observation.
+Its complete traces and176 state records must be independently compared
+after genuine completion. Existing completed CPU-only state producers are
+reused, not restarted. No physical-card or public Work qualification follows.
+DW50383 CPU-only pair audit EXIT0: all176 records/77021184 payload words
+bit-identical with strict headers, finite domains, footers and completion
+markers; both three-token traces match their immutable CPU pins. References
+are /private/tmp/pioneer-q38-state-cpu-original-{main,clean}-20261029-c/state-cpu.
+This verifies available CPU controls, NOT the still-running native outputs.
