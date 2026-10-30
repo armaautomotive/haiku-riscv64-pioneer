@@ -73,6 +73,7 @@ struct PushedCohortMachine:OriginalTokenFlowMachine {
   printf("PASS QGW3 genuine matrix-to-Conv counter%u/alias2+6 moved together/ROOT rejects extra movement before Conv release/no following packet/inert2048;NOT native/physical/Work/TPS\n",fault);
  }
 };
+#ifndef PIONEER_Q38_PUSHED_COHORT_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==5 || (argc==8 && !strcmp(argv[5],"--snapshot-first-layer") && !strcmp(argv[6],"--observed-trace")));
  setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;(void)&Refusals;(void)&LateRefusals;
@@ -99,3 +100,4 @@ int main(int argc,char** argv){
  }
 #endif
 }
+#endif

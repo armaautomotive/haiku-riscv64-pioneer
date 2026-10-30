@@ -1,0 +1,71 @@
+Large dense G3 receipt faults -- HOST TEST WIP, NOT a speed result
+2026-10-30 16:15 UTC
+================================================================
+Goal ACTIVE. Last physical whole-model rate 0.207893161 tokens/sec;
+20 tokens/sec remains UNMET. No Pioneer SSH, power, driver installation,
+OS, Assistant, SD, hardware or mains action in this checkpoint.
+
+New test and its exact intended scope
+--------------------------------------
+The separate --pushed-dense-faults test starts ROOT from RESET and retains
+the same119 actual worker histories with authenticated original GGUF bytes.
+It first executes the existing eight matrix-to-Conv counter fault forks,
+then continues the unchanged parent through the first three recurrent
+layers to the genuine first dense Q8/K5120/seven-group worker0 receipt.
+
+Only AFTER the producer's actual8960 tensor instructions,1122 reads and
+both payload+commit writes may the test fork missing-marker and wrong-
+nonzero-marker cases. Only that raw mailbox word is changed, before the
+one actual ROOT load. The preceding actual fence must have invalidated its
+L0 line. No PC/register/tensor/nonce/private-state/ready input is supplied;
+no CPU model product is uploaded. Original-source BeforeFork only prepares
+its raw byte transport. The ordinary unchanged parent's load is not cached
+in a host temporary before the mutations.
+
+The missing case must exhaust exactly458752 actual zero-marker loads for
+the admitted seven-group shape. The wrong marker must reject on its first
+actual load, without another zero poll. Both must reach the actual ROOT
+fault park before any following ROOT packet or peer release and remain
+inert for2048 actual instructions. The unchanged parent must then accept
+its real receipt and issue the genuine next704-byte arithmetic-proof read.
+These are assertions under test, NOT completed runtime evidence yet.
+Even a pass will NOT prove completed dense-layer/model numerics, all64/
+three positions/119STOP, native lifecycle, physical timing, Work or TPS.
+
+The original cohort main is unchanged unless its HOST machine-only include
+macro is used by the new test. The runner requires the entire explicit G3
+profile, rejects shortcuts/trace publication/other fault modes, and strips
+the new mode before invoking the fixed four-input binary. Existing whole-
+model histories are not restarted or given a shortened path.
+
+Completed checks versus running work
+--------------------------------------
+Current-tree CLI119 early refusals and policy1088 valid/132 invalid cases
+pass. In a frozen HEAD9879cc6af9 plus ONLY these four test files, both
+checks pass again and BUILD roles12 positive/280 refused pass. The actual C++ test compiles and
+links with -O1/-Wall/-Wextra/-Werror/ASan/UBSan, using the exact pinned CW
+ROOT and AF sender images. Source endpoint controls and actual embedding
+pass; token0/layer0 matrix3 has been reached. Neither large dense fault
+case has yet been reached or passed. Enclosing session93250 is LIVE.
+
+Frozen source:/private/tmp/pioneer-q38-push-dense-fault-cy.0xzj9peH
+Log:/private/tmp/pioneer-q38-push-dense-fault-20261030-cy.log
+Actual process20778:/private/tmp/pioneer-original-token-flow-md7gugy1/test
+Poll SAME session93250; do not start a duplicate because output is quiet.
+CW full histories67964/74406 and eight older controls remain LIVE on their
+same handles. Twenty-seven older suspended histories remain preserved.
+No completed new full-model or physical throughput result exists.
+
+Native integration inspection (no native edits in this checkpoint)
+-------------------------------------------------------------------
+The actual G3 private driver body and13 arrays already passed compile-only
+inspection in the prior checkpoint. Its HOST execution bridge still
+directly includes PioneerQ38TokenPrograms.h rather than the new selector.
+Its precise-worker conditionals accept the older G2 DATA selector, while
+pushed packet callbacks are under the G3 BUILD selector only. Native ROOT
+test reads also currently bypass the pushed incoming-counter/L0 model.
+Do not mix BUILD and native DATA selectors to work around these gaps:
+the existing role checks intentionally reject that combination. A separate
+G3 coupled byte-endpoint path, actual payload/commit transport and incoming
+counters/fence model are still needed before native execution qualification.
+This observation is not a driver/runtime/Work grant or an installation.
