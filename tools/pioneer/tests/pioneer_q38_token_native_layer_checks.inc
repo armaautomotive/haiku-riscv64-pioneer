@@ -4,7 +4,7 @@
 #endif
 #include "pioneer_q38_projection_input_reference.h"
 static void CheckNativeLayerDispatch(Fixture& f){
- namespace C=PioneerQ38GlobalChainLayout;namespace R=C::R;namespace W=PioneerQ38GlobalWorkerLayout;
+ namespace C=PioneerQ38GlobalChainLayout;namespace R=C::R;namespace W=PioneerQ38SelectedGlobalWorker;
  auto& c=*f.c;auto& io=f.io;auto& cpu=*io.executionCpu;auto* state=c.q38TokenNative;
  assert(!lockHeld && !state->Unsafe() && !io.embeddingFault);
  const unsigned hostPackets=io.runtimePackets,resets=io.resets.size();cpu.ResumeLayer();

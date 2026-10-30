@@ -3,7 +3,7 @@
 #error Explicit native first-matrix TEST required
 #endif
 static void CheckNativeFirstMatrix(Fixture& f){
- namespace R=PioneerQ38GlobalChainLayout::R;namespace W=PioneerQ38GlobalWorkerLayout;
+ namespace R=PioneerQ38GlobalChainLayout::R;namespace W=PioneerQ38SelectedGlobalWorker;
  auto& c=*f.c;auto& io=f.io;auto& cpu=*io.executionCpu;auto* state=c.q38TokenNative;
  assert(!lockHeld && !state->Unsafe());cpu.ResumeFirstMatrix();unsigned observedBucket=cpu.steps/2000000;
  {

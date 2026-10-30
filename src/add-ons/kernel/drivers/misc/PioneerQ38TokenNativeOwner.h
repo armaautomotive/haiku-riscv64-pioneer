@@ -7,7 +7,7 @@
 #include "../../../../../tools/pioneer/PioneerQ38TokenTerminalShape.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenRecordShape.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenFifoQuiescence.h"
-// DISTINCT full-token owner. Held staging,fresh QGW1 bootstrap and ROOT
+// DISTINCT full-token owner. Held staging,fresh selected-worker bootstrap and ROOT
 // startup/cancel request,terminal/worker STOP observation,owned HOLD,
 // committed readout,original-L1,dispatch-image and local peer-store restoration.
 // No CPU products,old-prefix ownership,shared-TLB/master close or END grant.
@@ -367,7 +367,7 @@ public:
    if((scratch<bulkOriginal+TT_BULK_UPLOAD_SAVED_WORDS*4U && bulkOriginal<scratch+8192)
     || (image<bulkOriginal+TT_BULK_UPLOAD_SAVED_WORDS*4U && bulkOriginal<image+(size_t(TT_Q38_PANEL_VIEW_WORDS)+1)*4))return Fail(io,r);
   }
-  namespace C=PioneerQ38GlobalChainLayout;namespace W=PioneerQ38GlobalWorkerLayout;namespace T=PioneerQ38TokenLayout;
+  namespace C=PioneerQ38GlobalChainLayout;namespace W=PioneerQ38SelectedGlobalWorker;namespace T=PioneerQ38TokenLayout;
   r.phase=2;
   for(unsigned w=0;w<120;w++){
    r.worker=w;if(!data.ReadBoot(w,staging) || !Local(io,w,w?unsigned(W::Boot):unsigned(C::R::Boot),staging,64,r))return Fail(io,r);
@@ -407,7 +407,7 @@ public:
   const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
   for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=b[i])return false;
   if(!Staged() || bootAttempted || booted || launched || !Scope(io))return false;
-  namespace W=PioneerQ38GlobalWorkerLayout;namespace C=PioneerQ38GlobalChainLayout;namespace T=PioneerQ38TokenLayout;
+  namespace W=PioneerQ38SelectedGlobalWorker;namespace C=PioneerQ38GlobalChainLayout;namespace T=PioneerQ38TokenLayout;
   bootAttempted=true;r.started=1;r.phase=1;
   // Full immutable programs,boot envelopes and pristine control mailboxes
   // are checked BEFORE the first ARM. ROOT's real template stays held.
@@ -496,7 +496,7 @@ public:
   booted=true;r.phase=7;r.ready=1;return true;
  } // genuine fresh workers ONLY;ROOT held,NO model RUN/cancel/STOP/END/Work permission
  template<class IO> bool StartRoot(IO& io,PioneerQ38TokenExecutionResult& r){
-  namespace W=PioneerQ38GlobalWorkerLayout;namespace C=PioneerQ38GlobalChainLayout;namespace T=PioneerQ38TokenLayout;
+  namespace W=PioneerQ38SelectedGlobalWorker;namespace C=PioneerQ38GlobalChainLayout;namespace T=PioneerQ38TokenLayout;
   const PioneerQ38TokenExecutionResult pristine;const auto* a=reinterpret_cast<const uint8_t*>(&r);
   const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
   for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=b[i])return false;
@@ -601,8 +601,15 @@ public:
   r.acknowledged=1;r.cancelRequested=cancelRequested;return true;
  } // observation ONLY;NO NoC command/counter recapture,layer/token/frontier/STOP/END completion grant
 private:
+#ifdef PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT
+ // Keep the QGW2 grammar's two 64-word translation buffers out of the
+ // terminal observer's own frame. This is not a combined-stack proof.
+ static __attribute__((noinline)) bool PreciseTerminalJobShape(const uint32_t* job,const uint32_t* boot,unsigned previous){
+  return PioneerQ38SelectedGlobalWorker::JobShape(job,boot,previous,0);
+ }
+#endif
  template<class IO> __attribute__((noinline)) bool InspectTerminal(IO& io,PioneerQ38TokenTerminalResult& r,bool recheck){
-  namespace C=PioneerQ38GlobalChainLayout;namespace R=C::R;namespace T=PioneerQ38TokenLayout;namespace W=PioneerQ38GlobalWorkerLayout;
+  namespace C=PioneerQ38GlobalChainLayout;namespace R=C::R;namespace T=PioneerQ38TokenLayout;namespace W=PioneerQ38SelectedGlobalWorker;
   const PioneerQ38TokenTerminalResult pristine;const auto* a=reinterpret_cast<const uint8_t*>(&r);
   const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
   for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=b[i])return false;
@@ -645,7 +652,12 @@ private:
    for(unsigned i=0;i<64;i++){uint32_t cached=0;r.word=i;
     if(!io.TokenMemoryReadChecked(0,R::PeerBoots+(w-1)*256+i*4,cached) || cached!=boot[i]
      || !io.TokenMemoryReadChecked(0,R::PeerJobs+(w-1)*256+i*4,job[i]))return Fail(io,r);}
-   if(!W::JobShape(job,boot,nonce-1,0) || job[1]!=nonce || job[2]!=W::Stop || job[3]!=w || job[4]!=W::Peer(w)
+#ifdef PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT
+   const bool jobShape=PreciseTerminalJobShape(job,boot,nonce-1);
+#else
+   const bool jobShape=W::JobShape(job,boot,nonce-1,0);
+#endif
+   if(!jobShape || job[1]!=nonce || job[2]!=W::Stop || job[3]!=w || job[4]!=W::Peer(w)
     || job[5]!=stopLayer || job[6]!=terminal[4] || job[7]!=(terminal[2]==3?9998U:9999U))return Fail(io,r);
    for(unsigned i=0;i<8;i++)if(!io.TokenMemoryReadChecked(0,R::Counters+(w-1)*32+i*4,counters[i]))return Fail(io,r);
    if(counters[2]!=counters[6] || !Sources(io,w) || !PioneerQ38GraphCsrIdle(io))return Fail(io,r);

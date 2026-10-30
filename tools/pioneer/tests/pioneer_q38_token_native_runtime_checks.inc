@@ -61,7 +61,7 @@ static bool CheckNativeRuntime(Fixture& f){
  assert(io.runtimeDram==expected); // ALL bytes INCLUDING untouched slack,NOT merely receipts
  for(unsigned w=0;w<120;w++){
   std::array<uint32,64> boot;assert(startup->ReadBoot(w,boot.data()));
-  for(unsigned i=0;i<64;i++)assert(io.Raw(w,(w?unsigned(PioneerQ38GlobalWorkerLayout::Boot):unsigned(PioneerQ38GlobalChainLayout::R::Boot))+i*4)==boot[i]);
+  for(unsigned i=0;i<64;i++)assert(io.Raw(w,(w?unsigned(PioneerQ38SelectedGlobalWorker::Boot):unsigned(PioneerQ38GlobalChainLayout::R::Boot))+i*4)==boot[i]);
   assert(io.Core(w).coreReset==0x47800 && (!w || io.Core(w).resets.empty()));
  }
  const unsigned touches=io.touches;PioneerQ38TokenRuntimeResult again;

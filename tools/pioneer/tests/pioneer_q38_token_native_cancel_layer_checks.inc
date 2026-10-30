@@ -10,7 +10,7 @@
 #include "pioneer_q38_token_native_hold_layer_checks.inc"
 #endif
 static void CheckNativeCancelLayer(Fixture& f){
- namespace T=PioneerQ38TokenLayout;namespace C=PioneerQ38GlobalChainLayout;namespace W=PioneerQ38GlobalWorkerLayout;
+ namespace T=PioneerQ38TokenLayout;namespace C=PioneerQ38GlobalChainLayout;namespace W=PioneerQ38SelectedGlobalWorker;
  auto& c=*f.c;auto& io=f.io;auto& cpu=*io.executionCpu;auto* state=c.q38TokenNative;
  assert(!lockHeld && cpu.fullLayerComplete && !state->Unsafe() && !state->Closed()
   && io.executionCancelWrites==1 && io.Raw(0,T::CancelLocal)==T::CancelMagic);

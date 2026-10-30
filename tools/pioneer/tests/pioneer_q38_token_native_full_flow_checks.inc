@@ -10,7 +10,7 @@
 #endif
 static const char* tokenNativeTraceDirectory=nullptr;
 static void CheckNativeFullFlow(Fixture& f){
- namespace C=PioneerQ38GlobalChainLayout;namespace R=C::R;namespace T=PioneerQ38TokenLayout;namespace W=PioneerQ38GlobalWorkerLayout;
+ namespace C=PioneerQ38GlobalChainLayout;namespace R=C::R;namespace T=PioneerQ38TokenLayout;namespace W=PioneerQ38SelectedGlobalWorker;
  auto& c=*f.c;auto& io=f.io;auto& cpu=*io.executionCpu;auto* state=c.q38TokenNative;
  assert(!lockHeld && !state->Unsafe() && tokenNativeTraceDirectory && io.nativeTrace && io.kvWords.empty());
  auto embedding=[&](unsigned position,unsigned token){

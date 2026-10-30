@@ -44,7 +44,7 @@ void ResumeLayer(){
  assert(livePeerPC);layerActive=true;
 }
 void SubmitLayer(){
- namespace C=PioneerQ38GlobalChainLayout;namespace W=PioneerQ38GlobalWorkerLayout;
+ namespace C=PioneerQ38GlobalChainLayout;namespace W=PioneerQ38SelectedGlobalWorker;
  auto& core=io.Core(0);assert(layerActive && !layerHeld && !core.pending);
  for(unsigned i=0;i<10;i++)request[i]=core.command[i];
  const bool write=request[7]==0x212;const unsigned remote=request[write?3:0],local=request[write?0:3],route=request[write?5:2],bytes=request[8];
@@ -79,7 +79,7 @@ void SubmitLayer(){
  core.doorbells++;core.doorbellRead=false;core.requests++;core.pending=true;core.accepted++;submitted++;busyReads=0;layerPackets++;
 }
 void RespondLayer(){
- namespace C=PioneerQ38GlobalChainLayout;namespace W=PioneerQ38GlobalWorkerLayout;
+ namespace C=PioneerQ38GlobalChainLayout;namespace W=PioneerQ38SelectedGlobalWorker;
  auto& core=io.Core(0);assert(layerActive && !layerHeld && core.pending && submitted==completed+1);
  const bool write=request[7]==0x212;const unsigned remote=request[write?3:0],local=request[write?0:3],route=request[write?5:2],bytes=request[8];
  unsigned bank=0;while(bank<7 && PioneerQ38ProjectionRoute(bank)!=route)bank++;

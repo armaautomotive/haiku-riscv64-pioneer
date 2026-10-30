@@ -22,6 +22,9 @@
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x51544b4e4f445256ULL && !PIONEER_Q38_TOKEN_NATIVE_ROLE_TAG_OK
 #error Reserved QTKNODRV tag requires its exact renamed-ABI native token compile perimeter
 #endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x5154324e4f445256ULL && !PIONEER_Q38_TOKEN_NATIVE_ROLE_TAG_OK
+#error Reserved QT2NODRV tag requires its exact renamed-ABI QTP2 native token compile perimeter
+#endif
 #ifdef PIONEER_Q38_RECURRENT_PREFIX_NATIVE_ROLE_TAG_OK
 #error Internal prefix NODRV role witness cannot be supplied by the caller
 #endif

@@ -1,5 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 // No guard: the exact native COMPILE-ONLY perimeter must hold on every include.
+#ifdef PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT
+#include "PioneerQ38TokenPreciseNativeRole.h"
+#else
+#if defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || (defined(PIONEER_DRIVER_BUILD_TAG) && PIONEER_DRIVER_BUILD_TAG == 0x5154324e4f445256ULL)
+#error QTP2 programs/tag cannot select the old QTKNODRV context
+#endif
+#endif
 #if !defined(_KERNEL_MODE) || _KERNEL_MODE != 1 || !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_NATIVE_CONTEXT != 1 \
  || !defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY != 1 \
  || !defined(PIONEER_Q38_TOKEN_EMIT_CONTEXT_BODY) || PIONEER_Q38_TOKEN_EMIT_CONTEXT_BODY != 1 \
@@ -20,11 +27,24 @@
  || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR != 1 \
  || !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) || TT_PIONEER_EXPERIMENTAL_Q38_STREAM != 1 \
  || !defined(TT_PIONEER_DRIVER_RELOAD) || TT_PIONEER_DRIVER_RELOAD != 1 \
- || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x51544b4e4f445256ULL
+ || !defined(PIONEER_DRIVER_BUILD_TAG) || (PIONEER_DRIVER_BUILD_TAG != 0x51544b4e4f445256ULL && PIONEER_DRIVER_BUILD_TAG != 0x5154324e4f445256ULL)
 #error Exact QTKNODRV native token context/all parents required;NO loadable driver or Work grant
 #endif
 #if !defined(api_version) || !defined(init_hardware) || !defined(init_driver) || !defined(uninit_driver) || !defined(publish_devices) || !defined(find_device)
 #error All conventional token driver ABI names must be renamed in the checked compile unit
+#endif
+#ifndef PIONEER_Q38_TOKEN_NATIVE_PROFILE_BINDING_H
+#define PIONEER_Q38_TOKEN_NATIVE_PROFILE_BINDING_H
+#ifdef PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT
+enum {PioneerQ38TokenNativeProfile=2};
+#else
+enum {PioneerQ38TokenNativeProfile=1};
+#endif
+#endif
+#ifdef PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT
+static_assert(PioneerQ38TokenNativeProfile==2,"late QTP2 native profile change");
+#else
+static_assert(PioneerQ38TokenNativeProfile==1,"late QTP1 native profile change");
 #endif
 #if defined(PIONEER_Q38_EMBEDDING_NATIVE) || defined(PIONEER_Q38_RECURRENT_PREFIX_NATIVE_CONTEXT) \
  || defined(PIONEER_Q38_RECURRENT_PREFIX_VALIDATION_NATIVE) || defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT) \
@@ -37,7 +57,6 @@
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE) \
  || defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_PRECISE_WORKER_IMAGE) \
- || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) \
  || defined(PIONEER_Q38_GLOBAL_WORKER_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) \
  || defined(PIONEER_Q38_RECURRENT_PREFIX_SCHEDULER_IMAGE) || defined(PIONEER_Q38_WORK_SKIP_DOT_CHECK) \
  || defined(PIONEER_Q38_WORK_COHORT_CACHE) || defined(PIONEER_Q38_WORK_OUTPUT_DMA) || defined(PIONEER_Q38_WORK_POSTED_STAGE) \

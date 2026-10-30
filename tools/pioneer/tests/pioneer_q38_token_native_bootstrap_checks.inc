@@ -21,7 +21,7 @@ static void CheckNativeBootstrap(Fixture& f,PioneerQ38TokenMemoryResult& held){
   else assert(result.phase==4 && io.bootstrapArms==119 && io.bootstrapStarts==119);
   const unsigned touches=io.touches;PioneerQ38TokenBootstrapResult again;
   assert(!BootstrapQ38TokenNativeWorkers(c,again) && !CloseQ38TokenNativeHeld(c,held) && io.touches==touches);
-  f.Unknown();printf("PASS native QGW1 bootstrap fault%u/phase%u/actual preceding1010 zero jobs+120 held stages+4616 metadata packets/ALL owners retained/no reARM/restore/retry/cleanup/following IO after observed uncertainty;SIMULATED endpoints,NOT ROOT/model RUN/physical/TPS\n",io.bootstrapFault,result.phase);
+  f.Unknown();printf("PASS native QGW%u bootstrap fault%u/phase%u/actual preceding1010 zero jobs+120 held stages+4616 metadata packets/ALL owners retained/no reARM/restore/retry/cleanup/following IO after observed uncertainty;SIMULATED endpoints,NOT ROOT/model RUN/physical/TPS\n",PioneerQ38SelectedWorkerPrecise+1,io.bootstrapFault,result.phase);
   return;
  }
  assert(okay && result.started && !result.unsafe && result.ready && result.phase==7 && result.armed==119 && result.released==119
@@ -33,7 +33,7 @@ static void CheckNativeBootstrap(Fixture& f,PioneerQ38TokenMemoryResult& held){
   assert(cpu.steps && cpu.Idle() && cpu.statusWrites==17 && !cpu.matrixInstructions && !cpu.requests && !cpu.responses
    && !cpu.pending && !cpu.moveInstructions && !cpu.floatOps && cpu.deviceWrites && cpu.minStack>=0x6e000
    && core.coreReset==0x46800 && core.resets==std::vector<uint32>({0x87ffff,0x46800}));
-  for(unsigned i=0;i<16;i++)assert(io.Raw(w,PioneerQ38GlobalWorkerLayout::Status+i*4)==(i==3?unsigned(PioneerQ38GlobalWorkerLayout::Magic):0));
+  for(unsigned i=0;i<16;i++)assert(io.Raw(w,PioneerQ38SelectedGlobalWorker::Status+i*4)==(i==3?unsigned(PioneerQ38SelectedGlobalWorker::Magic):0));
   steps+=cpu.steps;stack=std::min(stack,cpu.minStack);
  }
  assert(io.Core(0).coreReset==0x47800 && !c.q38Dispatch->rootRunning && !c.q38Dispatch->bootAttempted && !c.q38Dispatch->booted
@@ -41,6 +41,6 @@ static void CheckNativeBootstrap(Fixture& f,PioneerQ38TokenMemoryResult& held){
   && !io.pciWrites && !io.HostReadMock::bmeWrites && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases);
  const unsigned touches=io.touches;PioneerQ38TokenBootstrapResult again;
  assert(!BootstrapQ38TokenNativeWorkers(c,again) && !CloseQ38TokenNativeHeld(c,held) && io.touches==touches);
- printf("PASS SAME native full851 owner+1010 zero jobs+installed120 L1 histories+4616 metadata packets/ALL119 VIRGIN QGW1 instruction boots DIRECT shared L1+CSR backing/%llu actual instructions/maxWrittenStack%u/ALL ARM before ANY release/final status+two WAIT PCs+unchanged NoC counters/ROOT HELD/legacy flags FALSE/held cleanup and ordinary commands REFUSED;SIMULATED OS+VM+NoC,NOT ROOT/model RUN/STOP/END/physical/Work/TPS\n",
-  (unsigned long long)steps,0x70000-stack);
+ printf("PASS SAME native full851 owner+1010 zero jobs+installed120 L1 histories+4616 metadata packets/ALL119 VIRGIN QGW%u instruction boots DIRECT shared L1+CSR backing/%llu actual instructions/maxWrittenStack%u/ALL ARM before ANY release/final status+two WAIT PCs+unchanged NoC counters/ROOT HELD/legacy flags FALSE/held cleanup and ordinary commands REFUSED;SIMULATED OS+VM+NoC,NOT ROOT/model RUN/STOP/END/physical/Work/TPS\n",
+  PioneerQ38SelectedWorkerPrecise+1,(unsigned long long)steps,0x70000-stack);
 }

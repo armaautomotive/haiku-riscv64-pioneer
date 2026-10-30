@@ -9,6 +9,10 @@ import subprocess
 import sys
 import tempfile
 
+precise_context = '--precise-context' in sys.argv
+if precise_context:
+    assert sys.argv.count('--precise-context') == 1
+    sys.argv.remove('--precise-context')
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 readout_flow = len(sys.argv) == 7 and sys.argv[2] == '--execution-readout-full-flow'
 clock_contract = len(sys.argv)==3 and sys.argv[2]=='--clock-owner-contract'
@@ -42,6 +46,8 @@ if full_layer:
 embedding = first_matrix or len(sys.argv) == 4 and sys.argv[2] in embedding_modes
 peer_bootstrap = len(sys.argv) == 5 and sys.argv[2] == '--bootstrap-peer-engines'
 peer_engines = peer_bootstrap or first_matrix
+if precise_context:
+    assert peer_engines, 'QTP2 context requires actual virgin peer instruction engines'
 terminal_faults = len(sys.argv)==3 and sys.argv[2]=='--terminal-observation-faults'
 preparation_faults = len(sys.argv)==3 and sys.argv[2] in ('--preparation-fifo-faults', '--preparation-access-faults')
 preparation_endpoints = len(sys.argv)==3 and sys.argv[2]=='--preparation-endpoint-contract'
@@ -55,7 +61,7 @@ here = pathlib.Path(__file__).resolve().parent
 if peer_engines:
     peer_arg = 3 if peer_bootstrap else 4
     for directory, script in ((pathlib.Path(sys.argv[peer_arg]), here/'run_pioneer_q38_mixed_worker_tests.py'),
-                              (pathlib.Path(sys.argv[peer_arg+1]), here.parent/'build_qwen38_global_worker_image.py')):
+                              (pathlib.Path(sys.argv[peer_arg+1]), here/'run_pioneer_q38_precise_worker_tests.py' if precise_context else here.parent/'build_qwen38_global_worker_image.py')):
         assert directory.is_absolute()
         tree = ast.parse(script.read_text())
         pins = next(ast.literal_eval(n.value) for n in tree.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'PINS' for t in n.targets))
@@ -68,6 +74,9 @@ parents = set(re.findall(r'!defined\(([A-Z_][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b
 assert len(parents) == 21
 defines = dict.fromkeys(parents, '1')
 defines['PIONEER_DRIVER_BUILD_TAG'] = '0x51544b4e4f445256ULL'
+if precise_context:
+    defines.update(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT='1', PIONEER_Q38_TOKEN_PRECISE_PROGRAMS='1',
+                   PIONEER_DRIVER_BUILD_TAG='0x5154324e4f445256ULL')
 defines.update({name:'pioneer_token_init_test_'+name for name in ('api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device')})
 defines.update(TT_PIONEER_EXPERIMENTAL_Q38_AFFINE='1', TT_PIONEER_EXPERIMENTAL_Q38_BLOCK='1')
 if clock_contract or preparation_endpoints or preparation_faults or terminal_faults or peer_bootstrap or embedding or len(sys.argv) == 3 and sys.argv[2] in ('--held', '--held-faults', '--runtime', '--runtime-pci-capture-fault', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):
@@ -179,6 +188,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
     if peer_engines:
         peer_object = base/'native-peer-engine.o'
         peer_flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
+        if precise_context:
+            peer_flags += ['-DPIONEER_Q38_TOKEN_PRECISE_PROGRAMS=1']  # DATA only;never native/kernel roles
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
                         '-fsanitize=address,undefined', *peer_flags, '-c', str(here/'pioneer_q38_native_peer_test_bridge.cpp'), '-o', str(peer_object)], check=True)
         extra += [str(peer_object)]  # HOST-only TU;never native/kernel-role flags

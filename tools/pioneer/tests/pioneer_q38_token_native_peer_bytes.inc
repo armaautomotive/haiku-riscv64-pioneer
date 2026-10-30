@@ -61,7 +61,7 @@ void PreparePeerBytes(){
  };
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
  observeVocabulary=[](TokenHeldEndpoints& p,unsigned worker){
-  namespace W=PioneerQ38GlobalWorkerLayout;auto& native=static_cast<PioneerSessionIO&>(p);auto& root=*native.executionCpu;
+  namespace W=PioneerQ38SelectedGlobalWorker;auto& native=static_cast<PioneerSessionIO&>(p);auto& root=*native.executionCpu;
   assert(worker && worker<120 && root.fullFlowRunning);
   if(!root.flowLayers || root.flowLayers%64 || native.Raw(worker,W::Job+8)!=W::GlobalMatrix
    || native.Raw(worker,W::Job+6*4)!=root.flowPosition)return;

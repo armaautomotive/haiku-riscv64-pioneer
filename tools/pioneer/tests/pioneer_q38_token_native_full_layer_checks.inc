@@ -7,7 +7,7 @@
 #endif
 static const char* tokenNativePrefixFile=nullptr;
 static void CheckNativeFullLayer(Fixture& f){
- namespace C=PioneerQ38GlobalChainLayout;namespace R=C::R;namespace W=PioneerQ38GlobalWorkerLayout;
+ namespace C=PioneerQ38GlobalChainLayout;namespace R=C::R;namespace W=PioneerQ38SelectedGlobalWorker;
  auto& c=*f.c;auto& io=f.io;auto& cpu=*io.executionCpu;auto* state=c.q38TokenNative;
  assert(!lockHeld && !state->Unsafe() && tokenNativePrefixFile && io.mutableBytes.size()==1009);
  cpu.ResumeFullLayer();unsigned observedBucket=cpu.steps/10000000;

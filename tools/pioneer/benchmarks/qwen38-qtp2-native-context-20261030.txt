@@ -1,0 +1,70 @@
+QTP2 native context checkpoint — 2026-10-30
+Classification: PROGRESS; compile/inspection and TEST infrastructure only.
+No Pioneer IO, installation, boot, relay, SD, network or Assistant action.
+Last physical whole-model result remains 0.207893161 tokens/sec;20 target UNMET.
+
+Implemented
+- Separate QT2NODRV (0x5154324e4f445256) profile requires the new native-context
+  flag AND QTP2 complete-program DATA flag,ALL21 existing native parents,
+  COMPILE_ONLY/EMIT and six renamed ABI entries. Old QTKNODRV still rejects it.
+- Repeated includes bind permanently to their original native profile;
+  atomic late replacement by another otherwise-valid profile is refused.
+- Real driver's FIRST reserved-tag check rejects the new tag without its
+  exact native perimeter. This is NOT a loadable driver or public Work mode.
+- SAME production native owner now selects QGW2 boot/job/status grammar for
+  QTP2 staging,bootstrap,ROOT launch and terminal observation;default QGW1
+  selection is unchanged. It retains the complete53,426,408-byte journal.
+- Outline the new terminal job-grammar call rather than inlining its two
+  64-word translation buffers into terminal inspection. Initial2240-byte
+  observer frame failed the2048 gate;fixed build's max native individual
+  frame is1232. Combined call-chain stacks remain a separate obligation.
+- Existing virgin native-peer HOST bridge now recognizes QTP2 DATA without
+  enabling ROOT/worker IMAGE roles in that HOST TU. Actual program-word
+  checks still use installed shared L1 bytes;no private-history transplant.
+- Explicit --precise-context native TEST runner authenticates new worker
+  artifact pins and compiles the actual native owner under the new tag.
+  It is only accepted with actual virgin peer instruction engines. Later
+  TEST layer/job observers also use the selected worker grammar.
+
+Completed qualification
+- Base c676954d7f6df52060f1a65a5b016f0e30d5d6d4 plus20 scoped source paths.
+  Independent main/clean source snapshots matched:
+  /private/tmp/pioneer-q38-native2-main-c.dpkxHX4O
+  /private/tmp/pioneer-q38-native2-clean-c.XHJqnUuk
+  Unpublished native host/full-END/state WIP was NOT included in these trees.
+- Both new profile suites:3 positive/291 refusals each. Exact parents,
+  missing/zero/two/late changes,wrong-family tags,CPU/Work aliases,real driver
+  prefix and full QTP2 program/journal/QGW2 boot binding were checked.
+- Both legacy native role suites:266 refusals each,including35 forbidden
+  old-native/image/CPU/Work aliases. Both complete-program DATA role suites:
+  4 positive/54 refusals each. All completed with exit0.
+- Actual Haiku RISC-V SDK compile/inspection passed in both trees. Complete
+  native factories/controllers,all13 exact-size fixed program sections and
+  2MiB immutable rawRoPE emitted. NO conventional ABI symbols or CPU-reference
+  /HOST TEST-engine imports;all five renamed public controls independently
+  machine-code-identical to inert/refusing controls,with no relocations.
+- Main/clean new objects BYTE-IDENTICAL SHA256:
+  03761c289ca80b9a6a5abe19fe1716d53232970002fe7c0e5dc1f4ba252fa9c6
+- Both committed legacy-control objects unchanged SHA256:
+  ab729c41c1ed55bf2a89d93b19c1839dc4d82ad5e9ade958435a1c36a14f4212
+- Additional all-frame assertion was strengthened after the compile. Its
+  actual AST was executed directly against BOTH completed new/control .su
+  pairs:all new frames <=2048 or no greater than their matching old frame.
+  The added assertion does not change compiler flags or produced objects.
+
+Pending,NOT passes
+- Paired actual native ORIGINAL three-position/64-layer/terminal/readout
+  histories launched from RESET with119 virgin full peer engines,original
+  GGUF byte transport and ASan/UBSan;no fast-forward or supplied products.
+  Main session9125,clean57891;retain THESE SAME running histories.
+  Logs:/private/tmp/pioneer-q38-native2-flow-{main,clean}-20261030-d.log
+  Traces:/private/tmp/pioneer-q38-native2-flow-main-d.VYuJyuHf
+         /private/tmp/pioneer-q38-native2-flow-clean-d.vg9Unu4i
+- Separate exploratory working-tree bootstrap session78109 is executing
+  actual1010 initialization jobs;its source also contains older unpublished
+  host/full-END WIP,so it is NOT the published-source qualification above.
+- Native full runtime,independent original-model comparison,positive STOP,
+  full restoration/END,combined stacks,physical safety and real TPS remain
+  owed. Paired earlier ROOT-original E and older native E histories remain
+  live;they are NOT replaced by these new distinct-profile histories.
+No instruction count,SDK compile or simulated endpoint run is physical TPS.

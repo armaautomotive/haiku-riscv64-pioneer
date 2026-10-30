@@ -42,7 +42,7 @@ struct TokenBootstrapPeer:BlockMachine {
   return io.Core(worker).ResidentNocRead(address-0xffb20000);
  }
  void Store(uint32_t address,uint32_t value)override{
-  namespace W=PioneerQ38GlobalWorkerLayout;
+  namespace W=PioneerQ38SelectedGlobalWorker;
   assert(!(address&3) && (Range(address,0x6e000,8192) || Range(address,W::Status,64)));
   if(Range(address,0x6e000,8192))minStack=std::min(minStack,address);
   else statusWrites++;
