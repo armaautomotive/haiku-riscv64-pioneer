@@ -1,0 +1,99 @@
+Worker-sealed admission: connected fault+first-layer evidence -- 2026-10-30
+Goal ACTIVE. Physical whole-model rate remains0.207893161tokens/sec;
+20tokens/sec UNMET. NO Pioneer/SSH/relay/install/OS/SD/hardware action here.
+
+Actual connected fault tests -- NOT synthetic admission receipts
+---------------------------------------------------------------
+The new TEST runs the actual pinned returning ROOT and SAME119 virgin full
+worker instruction engines from RESET with original authenticated GGUF bytes.
+Before fault injection,the genuine first projection has returned:workers1..3
+each executed1280 real tensor instructions/fullK5120 and closed sequence1;
+3840 tensor instructions total. The actual ROOT's own prior nonce for those
+workers is1,not a caller-supplied warm/ready bit. Actual output/proof/counter
+and wait observations happened through the ordinary original-byte fabric.
+
+At the real first warm admission for projection role11,a POSIX fork preserves
+the SAME already executed whole-machine history. Each of16 disposable children
+corrupts ONE of worker1's16 actual TEST source CSR observations. No PC,register,
+tensor product,private nonce,completion,owner or STOP is set or transplanted.
+The original authenticated FILE's active-handle barrier runs before each fork.
+
+Both old single-closed-audit and new worker-sealed-admission images are tested:
+-Baseline ROOT observes the bad physical source and faults BEFORE the next
+ worker1 doorbell;its previous real completion/traffic/counters are unchanged.
+-Candidate ROOT omits the duplicate physical observation and emits the next
+ actual job+doorbell. The unchanged QGW2 worker executes its real guard,parks
+ at its actual fault PC with its actual fault status BEFORE its first next-job
+ NoC request or tensor operation. No new-job completion can be supplied.
+-After ROOT receives the first genuinely bad source/status/PC observation,
+ NO following ROOT packet,retry,reset or cleanup is allowed. Actual ROOT and
+ selected-worker fault loops remain inert for2048 instructions.
+-The parent waits for every child to pass,then continues its unchanged actual
+ history through the next job's FIRST genuine worker request. It does NOT
+ claim completion of that job or a whole layer/token/STOP/native lifecycle.
+
+Setting the HOST scheduler's active=false follows the selected worker's
+ALREADY observed real fault PC,as in the existing scheduler. It never changes
+processor state or manufactures fault/completion. Other already-issued peer
+jobs are NOT proved globally stopped;this is not full-card quiescence or END.
+These are simulated byte/CSR/NoC endpoints,NOT physical fault recovery proof.
+Connected coverage here is worker1/all16 source words at this warm boundary;
+the earlier virgin worker guards cover additional workers/timings separately.
+
+Independent completed qualification
+-----------------------------------
+Base ec480fa126640a0494d97eb5b3e69c86b6a2caab plus3 owned TEST files.
+Main:/private/tmp/pioneer-q38-connected-admission-main-x.zXh1HUxS
+Clean:/private/tmp/pioneer-q38-connected-admission-clean-x.SKxsBSrC
+Owned source pairs match working/main/clean;unrelated native WIP is excluded.
+Actual original-model ASAN/UBSAN runs:
+ baseline main46301/clean2044 BOTH exit0,16 connected faults+parent each;
+ candidate main62157/clean83413 BOTH exit0,16 connected faults+parent each.
+Total64 actual connected fault children and4 positive parent continuations.
+The old parent ELF remains6e38018d4e7a918f26f85a5fba631c567c8108c17c008e9eeb8cde081c463f9a;
+new parent remains1c5fb71798d0199a1e4a8599087220582fc181bd481df84cda577764bf05f32b.
+The QGW2 worker ELF is unchanged3d51b34fc7c8b99ffadc287b1668548e810e19252b46163eb83ebdb30f68351d.
+Runner --admission-source-faults requires the exact single-audit/worker-admission
+profile and forbids fast-root-memory,partial prepare/bootstrap/layer modes,
+EOS or trace publication. The two CLI suites37069/37545 also exit0:28 missing-
+parent/shortcut/duplicate/unknown/defined-zero-role refusals each,BEFORE image
+or model IO/output creation. Default full-model runner behavior is unchanged.
+Logs:/private/tmp/pioneer-q38-connected-admission-{baseline,candidate}-{main,clean}-20261030-x.log
+CLI logs:/private/tmp/pioneer-q38-connected-admission-cli-{main,clean}-20261030-x.log
+
+Candidate original-model first layer -- independently observed
+-------------------------------------------------------------
+S49534/81457 were NOT restarted for these fault tests. They continued their
+own original3-position/64-layer histories and wrote their actual non-closing,
+explicitly INCOMPLETE QOP1 prefix. Both are now beyond that first layer.
+Posthoc compare_pioneer_q38_observed_trace.py --first-layer-only against all3
+pinned independent CPU controls exits0 for BOTH. No --diagnostic-only or
+tolerance was used:embedding5120 and layer0 hidden5120 words each have ZERO
+bit differences,maxAbs0,relativeL2=0. CPU reference DATA never feeds Work or
+the emulated model. Prefix bytes also match all4 earlier baseline/single G
+observations;41028-byte prefix SHA256:
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+Exact validated copies are retained,not committed as model data:
+generated.pioneer/qualification-inputs/observed-first-layer-worker-admission-{main,clean}-20261030/prefix-0.bin
+Comparison logs:/private/tmp/pioneer-q38-worker-admit-first-layer-{main,clean}-20261030-y.log
+
+Observed controller bottleneck,not physical timing
+--------------------------------------------------
+The actual first-layer S PC profile recorded197,243,744 ROOT instructions:
+ Transfer54,213,434;packet_seal50,630,534;Quiet33,717,900.
+These three exclusive function buckets total138,561,868 instructions,about
+70% of this ROOT history. The baseline G observation recorded230,205,317
+instructions. These include SIMULATED polling and are NOT physical cycles,
+tokens/sec or an extrapolated throughput claim. They identify controller
+transport/check traffic as the next structural performance focus;the new
+source-admission policy has not removed that bottleneck.
+
+Still NOT qualified
+--------------------
+No complete token/three positions,all64-layer numerics,state/KV/EOS/119 STOP,
+native HOLD/readout/restore/clock/VM/PCI/hosts/reservation END/reuse,combined
+stack,callable public Work/Assistant,physical card stability or TPS result is
+supplied by this checkpoint. The eight current G/K/S histories continue;
+27 older histories remain reversibly SIGSTOP,not discarded. Native K's older
+binary has no non-closing prefix API and was not restarted to obtain one.
+Do not convert simulated instruction/packet reductions into physical speed.
