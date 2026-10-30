@@ -1,0 +1,4 @@
+d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6 boot.bin bytes4
+68eb14b3871294d290b12dcc9ccab9e9ce0ead86d67f23d4f61612a4d2da4934 code.bin bytes6676
+17e6e84e39a25b6dd95c2a827869d21a2f824f08524bc95f4f658f3cc780211f program.elf bytes16184
+PASS isolated QAC1 emitted/maxFrame2128/NO unsupported arithmetic,CSR,writable globals or undefined symbols;NOT executed/native/Work/TPS

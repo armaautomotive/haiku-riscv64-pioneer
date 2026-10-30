@@ -1,0 +1,4 @@
+d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6 boot.bin bytes4
+4e587f314dcfba4f3df72cc01cb02e416ef2402c29793a633f75b45f9f4101d2 code.bin bytes2856
+0ba8f128dc597429ad6caa1c52aeea4f9bdee6569f4cd6fef0410cfe98fbdf1e program.elf bytes12060
+PASS isolated QSG1 emitted/NO unsupported arithmetic,CSR,writable globals or undefined symbols/maxFrame352;NOT executed/native/Work/default driver/TPS

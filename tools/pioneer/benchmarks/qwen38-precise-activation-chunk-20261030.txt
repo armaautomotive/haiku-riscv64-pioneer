@@ -1,0 +1,106 @@
+Precise 256-value activation + projection-input packing: isolated candidate
+2026-10-30 01:52:06 UTC. Full objective ACTIVE; target20tokens/sec UNMET.
+Last physical whole-model rate remains0.207893161tokens/sec.
+No Pioneer/SSH/install/power/OS/Assistant/network/SD/mains action this turn.
+
+Performance change being prepared
+---------------------------------
+Current recurrent ROOT Activation runs17408 values serially, then projection
+input quantization runs on ROOT too. There are68 independent256-value
+chunks. The new local operator fuses one precise activation chunk with its
+unchanged native matrix-input packing, so a distinct future worker image
+can perform this stage in parallel without returning arithmetic to CPU.
+
+This checkpoint implements the LOCAL arithmetic and its ACTUAL RV32IMF
+image only. It does NOT launch68 workers, change a ROOT job, select an old
+worker as a new producer, install a driver, or improve measured inference.
+The existing instruction profile is interpreter-only and includes polling;
+its counts cannot be converted into physical tokens/sec.
+
+Arithmetic and boundaries
+--------------------------
+PioneerQ38PreciseActivationChunk preserves the current ROOT calculation:
+  (gate * PioneerQ38SigmoidPrecision(gate)) * up
+with two separately rounded multiplies and -ffp-contract=off. It uses the
+same existing RmsDomain for each input and output: signed zero or normal
+magnitudes2^-50 through65504. No reassociation, FMA, wider hidden-state
+domain, old GraphSiluFast/legacy bounded-SiLU replacement, or CPU fallback.
+
+All four caller-owned local buffers must be aligned, range-valid and
+disjoint. Activation and packed output are staged, then BOTH are published
+only after all256 lanes and complete quantization/packing pass. Q8_0 retains
+eight FP16-rounded positive scales and ties-away semantics; Q4_K/Q6_K
+retain one signed F32 scale and Q8_K ties-even/native operand rules.
+The native scale domain is unchanged; a permitted F32 activation can still
+be refused by the existing native packing domain. No malformed late lane
+or late packing refusal leaks a partial activation or operand/scale block.
+
+Exact isolated roles are required, including after the include guard.
+Kernel/native/CPU-reference/Work/global-worker/root/fast-math/old-SiLU roles,
+including defined-zero forms, are refused. These guards identify a local
+arithmetic candidate, not native ownership, source or launch authority.
+No existing target/default image or live driver route is changed.
+
+Final qualification: two immutable clean source snapshots
+----------------------------------------------------------
+Parentfcf66a4489da5c0eba87faaaf39ca651b6cb0412, separately archived then
+overlaid with exactly the same9 new source files, all re-compared:
+  /private/tmp/pioneer-q38-precise-main-d.3Cl74soU
+  /private/tmp/pioneer-q38-precise-clean-d.a0rAiVE8
+Both final D process handles11307/46847 actually returned0. Corresponding
+images and all5 log pairs are byte-identical. Dirty native/full-END,
+llama.cpp and unrelated FlashNext work was not incorporated.
+
+Per snapshot:
+- host sanitizer test:214 accepted chunks,4104 refusals,40 pointer/count/
+  type/all-buffer-overlap checks; ROOT-order output bit parity plus an
+  independent host division/rounding/half/byte-packing control.
+- ACTUAL emitted QAC1 instructions:28 accepted chunks,1062 refusals;
+  immutable inputs/header/guard words, atomic sinks, inert terminal.
+  Combined local stack3840bytes, max376077 interpreted instructions in a
+  tested chunk. These are NOT physical timing, generic worker-stack or
+  kernel-stack qualification.
+- role checks:2 positive/80 missing+zero+two+late incompatible refusals.
+- unchanged isolated sigmoid control:original pinned2856-byte code and
+  ELF identical; ACTUAL6144 values+1040 refusals,maxUlp0 on this corpus,
+  combined stack416bytes. Existing broader sigmoid qualification permits
+  up to1ULP; neither test claims universally correctly rounded libm.
+
+QAC1 code6676bytes:
+  SHA256 68eb14b3871294d290b12dcc9ccab9e9ce0ead86d67f23d4f61612a4d2da4934
+QAC1 ELF16184bytes:
+  SHA256 17e6e84e39a25b6dd95c2a827869d21a2f824f08524bc95f4f658f3cc780211f
+No undefined symbols, writable globals, CSR, unsupported division/sqrt/
+integer-conversion/FMA instructions. The emitted symbol table contains the
+precise sigmoid/chunk, not LearnedRms, GraphSiluFast or legacy activation.
+
+Failure lineage (not hidden passing runs)
+-----------------------------------------
+Initial A builder rejected an arbitrary2048-byte frame ceiling: the
+unchanged generic projection quantizer actually needs2128bytes. The final
+isolated8192-byte stack has a2128 per-frame cap and independently measured
+3840 combined bound, not a loosened kernel allowance. Initial image TEST
+compilation failed unused static candidate; an unused attribute fixes the
+host-only unused reference, without changing target code. Initial role
+suite caught a late defined-zero old-SiLU inclusion; the outer role checks
+now explicitly refuse it. Final D source and complete checks are fresh.
+
+Reproduction, from repository root
+-----------------------------------
+python3 tools/pioneer/build_qwen38_precise_activation_chunk_image.py \
+  /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/NEW-ABSENT-IMAGE
+python3 tools/pioneer/tests/run_pioneer_q38_precise_activation_chunk_tests.py \
+  /private/tmp/NEW-ABSENT-IMAGE
+python3 tools/pioneer/tests/run_pioneer_q38_precise_activation_chunk_role_tests.py
+
+Next required integration
+--------------------------
+A DISTINCT persistent worker protocol/image must bind each of68 chunks to
+the current token/layer/source/owner and produce native operands/scales.
+ROOT must consume those exact on-card producers for the down projection,
+without serial re-activation/re-quantization or CPU-reference validation.
+Then qualify actual connected full-model/state/KV/normal+EOS behavior,
+combined worker/native stacks and lifecycle before hardware/Work promotion,
+and benchmark physical generation. None of those broader gates is proved
+by this isolated arithmetic checkpoint. Existing27 long histories were
+left running; six critical handles were re-polled live earlier this turn.

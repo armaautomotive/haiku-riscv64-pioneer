@@ -1,0 +1,3 @@
+PASS local precise activation chunks/accepted214/refused4104/ranges40/current ROOT-order F32 bit parity+independent packing/atomic outputs+all-buffer alias refusal;NO distributed worker,native,Work,full-model or speed grant
+PASS ACTUAL isolated QAC1 RV32IMF/accepted28/refused1062/maxCombinedStack3840/maxSteps376077/current ROOT-order activation bits+independent packing/immutable input+header+guards/atomic outputs+inert terminal;NO MMIO,distributed worker,native,Work,physical timing,model or TPS grant
+PASS QAC1 bounded host+emitted tests;NO device access or native/Work selection

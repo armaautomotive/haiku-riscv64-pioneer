@@ -1,0 +1,1 @@
+PASS ACTUAL isolated QSG1 RV32IMF batches96/values6144/refusals1040/maxUlp0/maxStack416/maxSteps84802/input+header+guards immutable/atomic output+inert terminal/NO MMIO,native,Work,physical timing or model grant
