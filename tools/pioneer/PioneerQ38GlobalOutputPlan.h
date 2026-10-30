@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_GLOBAL_OUTPUT_PLAN_H
 #define PIONEER_Q38_GLOBAL_OUTPUT_PLAN_H
-#include "PioneerQ38GlobalWorkerLayout.h"
+#include "PioneerQ38SelectedGlobalWorker.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionJobs.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnIdentity.h"
 // Canonical DATA ONLY. No authenticated weights/ledger, completed all64,
@@ -48,18 +48,18 @@ public:
  unsigned NormBank()const{return ready?normBank:7;}
  unsigned NormAddress()const{return ready?normAddress:0;}
  bool WorkerBoot(unsigned worker,uint32_t* output)const{
-  namespace G=PioneerQ38GlobalWorkerLayout;
+  namespace G=PioneerQ38SelectedGlobalWorker;
   if(!canonical || !Matches(*canonical) || !worker || worker>119 || !Output(output,256))return false;
   uint32_t b[64]={};const unsigned h[]={G::Magic,1,64,worker,G::Peer(worker),sources[worker*16],8192,64};
   for(unsigned i=0;i<8;i++){b[i]=h[i];b[8+i]=identity[i];}
   for(unsigned i=0;i<16;i++)b[16+i]=sources[worker*16+i];
-  for(unsigned i=40;i<46;i++)b[i]=G::BootWord(i);
+  for(unsigned i=40;i<PioneerQ38SelectedWorkerBootEnd;i++)b[i]=G::BootWord(i);
   if(!G::BootShape(b))return false;
   for(unsigned i=0;i<64;i++)output[i]=b[i];
   return true;
  }
  bool Job(unsigned wave,unsigned worker,unsigned previous,uint32_t* output)const{
-  namespace G=PioneerQ38GlobalWorkerLayout;
+  namespace G=PioneerQ38SelectedGlobalWorker;
   if(!canonical || !Matches(*canonical) || !worker || worker>jobs.WaveWorkers(wave) || previous>=0x7ffffffe || !Output(output,256))return false;
   const auto* p=jobs.Part(wave*119+worker-1);if(!p)return false;
   uint32_t j[64]={},b[64];if(!WorkerBoot(worker,b))return false;

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Inside the NEW global parent namespace. No host-ready entry point. Only
 // reached after all64 real returning calls under this SAME private owner.
-namespace H=PioneerQ38GlobalHeadLayout;namespace G=PioneerQ38GlobalWorkerLayout;
+namespace H=PioneerQ38GlobalHeadLayout;namespace G=PioneerQ38SelectedGlobalWorker;
 static const uint32_t* PeerBoot(unsigned w){return reinterpret_cast<const uint32_t*>(R::PeerBoots+w*256);}
 static const uint32_t* PeerJob(unsigned w){return reinterpret_cast<const uint32_t*>(R::PeerJobs+w*256);}
 static void HeadSeal(const uint32_t* h,bool counters=true){

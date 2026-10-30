@@ -31,7 +31,7 @@ extern "C" void* memset(void* target,int value,__SIZE_TYPE__ bytes){
 namespace MixedRecurrentCohort {
 namespace L=PioneerQ38MixedRecurrentCohortLayout;
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE
-namespace M=PioneerQ38GlobalWorkerLayout;
+namespace M=PioneerQ38SelectedGlobalWorker;
 namespace Dispatch=PioneerQ38GlobalRecurrentDispatch;
 #else
 namespace M=PioneerQ38MixedWorkerLayout;

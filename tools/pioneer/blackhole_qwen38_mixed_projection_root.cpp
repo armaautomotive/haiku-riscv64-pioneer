@@ -60,8 +60,16 @@ static void Quantize(const uint32_t* d){
  for(unsigned i=0;i<padded;i++)Words(L::ScaleShadow)[i]=Words(L::Scales)[i];
  Fence();
 }
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
+#include "blackhole_qwen38_precise_activation_root.inc"
+#endif
 static void InputsSeal(const uint32_t* d){
  unsigned k=d[14],blocks=k>>(d[15]==8?5:8),padded=(blocks+15)&~15U;
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
+ // This route's source is the genuine packed worker producer, not a
+ // fabricated or stale local activated-F32 vector.
+ if(!PreciseDown(d))
+#endif
  for(unsigned i=0;i<k;i++)if(Words(d[53])[i]!=Words(L::InputShadow)[i])scalar_fault_park();
  for(unsigned i=0;i<k/2;i++)if(Words(L::Native)[i]!=Words(L::NativeShadow)[i])scalar_fault_park();
  for(unsigned i=0;i<padded;i++)if(Words(L::Scales)[i]!=Words(L::ScaleShadow)[i])scalar_fault_park();
@@ -154,10 +162,18 @@ static void Scatter(const uint32_t* d,uint32_t* tracked){
  }
 }
 static unsigned Run(const uint32_t* d){
- CaptureRecipe(d);Quantize(d);Seal(d);uint32_t tracked[8],before[8];
+ CaptureRecipe(d);
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
+ if(PreciseDown(d))PreparePrecise(d);else
+#endif
+ Quantize(d);
+ Seal(d);uint32_t tracked[8],before[8];
  for(unsigned i=0;i<64;i++)Words(L::Summary)[i]=0;
  for(unsigned i=0;i<8;i++)before[i]=tracked[i]=*Words(0xffb20000+Counter(i));
  if(tracked[2]!=tracked[6])scalar_fault_park();
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
+ if(!PreciseDown(d)) // PreparePrecise already admits/proves ALL119 histories.
+#endif
  for(unsigned w=0;w<119;w++)Admit(d,tracked,w);
  for(unsigned w=0;w<d[7];w++)if(Words(L::Nonces)[w]>=0x7ffffffe)scalar_fault_park();
  for(unsigned w=0;w<d[7];w++){MatrixJob(d,w,Words(L::Nonces)[w]+1);Transfer(d,tracked,w,M::Job,256,true);}

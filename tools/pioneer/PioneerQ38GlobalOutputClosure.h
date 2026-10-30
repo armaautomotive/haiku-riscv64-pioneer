@@ -6,7 +6,7 @@
 // NOT prove all973 jobs, the global candidate, state commit, a native owner
 // or permission to launch the next token. The persistent parent owes those.
 namespace PioneerQ38GlobalOutputClosure {
-namespace G=PioneerQ38GlobalWorkerLayout;namespace H=PioneerQ38GlobalHeadLayout;
+namespace G=PioneerQ38SelectedGlobalWorker;namespace H=PioneerQ38GlobalHeadLayout;
 static inline bool Current(const uint32_t* d,unsigned worker){
  if(!d || !worker || worker>119 || !PioneerQ38MixedRecurrentBlockProjectionLayout::Shape(d)
   || d[42] || !d[40] || d[40]>=8192 || d[41]>=248320 || d[48]!=d[40]*64+1)return false;

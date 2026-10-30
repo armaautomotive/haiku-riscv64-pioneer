@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38GlobalChainIsolation.h"
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
+#include "PioneerQ38PreciseActivationRootRole.h"
+#endif
 #if !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) || PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE != 1 \
  || defined(PIONEER_Q38_GLOBAL_CHAIN_ROOT_IMAGE) || !defined(PIONEER_Q38_SIGMOID_PRECISION_IMAGE) || PIONEER_Q38_SIGMOID_PRECISION_IMAGE != 1
 #error Exact DISTINCT returning QGC1 arithmetic component required

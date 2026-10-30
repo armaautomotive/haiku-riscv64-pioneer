@@ -113,6 +113,9 @@ static void Cohort(R::PrivateSeal* p){
 }
 static void Activation(R::PrivateSeal* p){
  Phase(p,12);const auto* o=p->outer;
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
+ (void)o; // exact down recipe dispatches/consumes the actual worker producer
+#else
  for(unsigned at=0;at<17408;at+=256){
   Read(o[9]+PioneerQ38MixedRecurrentOffset(2)+at*4,o[8],0x92000,1024);
   Read(o[9]+PioneerQ38MixedRecurrentOffset(3)+at*4,o[8],0x92400,1024);
@@ -121,6 +124,7 @@ static void Activation(R::PrivateSeal* p){
    float value=(a*DensePartitionRoot::Sigmoid(a))*b;if(!PioneerQ38RmsDomain(value))scalar_fault_park();Words(R::Input)[at+i]=PioneerAttentionBits(value);
   }
  }
+#endif
  OriginalSeal();q38_mixed_root_seal();
 }
 #ifdef PIONEER_Q38_RECURRENT_HISTORY_STAGING_IMAGE

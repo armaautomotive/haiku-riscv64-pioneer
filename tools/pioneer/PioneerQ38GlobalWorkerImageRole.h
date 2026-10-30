@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
+#error The precise activation ROOT profile is not a worker-image role
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_LOCAL_SOURCE_GUARDS
 #error Worker-local source-audit policy belongs only to a distinct global-chain returning candidate
 #endif

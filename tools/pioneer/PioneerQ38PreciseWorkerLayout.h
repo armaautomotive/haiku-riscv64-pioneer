@@ -14,7 +14,14 @@ static inline unsigned BootWord(unsigned i){
  return i==40?unsigned(JobWitness):i==46?unsigned(ActivationMagic):i==47?unsigned(Chunks)
   :i==48?unsigned(ChunkValues):i>=46?0U:Base::BootWord(i);
 }
-static inline bool BootShape(const uint32_t* b){
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) && defined(__riscv)
+// Shared ROOT-only cold grammar avoids repeated large stack temporaries
+// and fits the existing ROOT text/Conv split. Default worker bytes stay fixed.
+#define PIONEER_Q38_PRECISE_GRAMMAR_FN inline __attribute__((noinline,section(".text.q38_precise_shape")))
+#else
+#define PIONEER_Q38_PRECISE_GRAMMAR_FN static inline
+#endif
+PIONEER_Q38_PRECISE_GRAMMAR_FN bool BootShape(const uint32_t* b){
  if(!b || b[0]!=Magic)return false;
  uint32_t old[64];for(unsigned i=0;i<64;i++){
   if(i>=40 && i<49 && b[i]!=BootWord(i))return false;
@@ -22,7 +29,7 @@ static inline bool BootShape(const uint32_t* b){
  }
  old[0]=Base::Magic;return Base::BootShape(old);
 }
-static inline bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
+PIONEER_Q38_PRECISE_GRAMMAR_FN bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
  if(!j || !BootShape(b) || j[0]!=Magic)return false;
  uint32_t oldBoot[64],oldJob[64];
  for(unsigned i=0;i<64;i++){oldBoot[i]=i>=46 && i<49?0U:i==40?unsigned(Base::JobWitness):b[i];oldJob[i]=j[i];}
@@ -36,6 +43,7 @@ static inline bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previou
  }
  return true;
 }
+#undef PIONEER_Q38_PRECISE_GRAMMAR_FN
 static inline bool DescriptorShape(const uint32_t* d){
  if(!d || d[0]!=ActivationMagic || d[1]!=1 || d[2]!=67108864 || d[3]>=7
   || (d[4]&4095) || d[4]<0x04000000 || d[4]>0xc0000000 || d[5]>=Chunks

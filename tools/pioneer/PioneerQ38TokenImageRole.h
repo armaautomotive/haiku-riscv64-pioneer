@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38GlobalChainIsolation.h"
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
+#include "PioneerQ38PreciseActivationRootRole.h"
+#endif
 #if !defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE) || PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE != 1 \
  || !defined(PIONEER_Q38_GLOBAL_CHAIN_FEEDBACK) || PIONEER_Q38_GLOBAL_CHAIN_FEEDBACK != 1
 #error Exact experimental persistent ROOT with on-card embedding required

@@ -147,7 +147,7 @@ public:
   return canonical && head.Matches(*canonical) && ReadWords(head.Data(),512,offset,output,bytes);
  }
  bool ReadBoot(unsigned worker,uint32_t* output)const{
-  namespace G=PioneerQ38GlobalWorkerLayout;
+  namespace G=PioneerQ38SelectedGlobalWorker;
   if(!canonical || !Binding(*canonical) || worker>=120 || (reinterpret_cast<uintptr_t>(output)&3) || !Output(output,256))return false;
   uint32_t data[64]={};
   if(!worker)for(unsigned i=0;i<64;i++)data[i]=boot[i];
@@ -159,7 +159,7 @@ public:
    // magic/witnesses. Avoid a second 256B temporary on the kernel stack;
    // no caller data can supply those six witness words.
    if(!G::Old::BootShape(data))return false;
-   data[0]=G::Magic;for(unsigned i=40;i<46;i++)data[i]=G::BootWord(i);
+   data[0]=G::Magic;for(unsigned i=40;i<PioneerQ38SelectedWorkerBootEnd;i++)data[i]=G::BootWord(i);
   }
   for(unsigned i=0;i<64;i++)output[i]=data[i];
   return true;

@@ -2,7 +2,7 @@
 #ifndef PIONEER_Q38_GLOBAL_CHAIN_LAYOUT_H
 #define PIONEER_Q38_GLOBAL_CHAIN_LAYOUT_H
 #include "PioneerQ38LayerChainLayout.h"
-#include "PioneerQ38GlobalWorkerLayout.h"
+#include "PioneerQ38SelectedGlobalWorker.h"
 // DISTINCT QGC1 DATA and proposed device contract; no native launch/token grant.
 // Old arithmetic outer/recipe DATA is reused,not old boot/image/owner identity.
 namespace PioneerQ38GlobalChainLayout {

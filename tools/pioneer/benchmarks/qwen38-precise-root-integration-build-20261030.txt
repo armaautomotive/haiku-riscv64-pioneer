@@ -1,0 +1,127 @@
+Qwen3.8-27B precise worker activation / ROOT integration BUILD checkpoint
+2026-10-30. DEVELOPMENT CANDIDATE, NOT AN INSTALLABLE DRIVER.
+
+Outcome and limits
+------------------
+The new explicit --precise-activation family connects the ROOT controller
+to the QGW2/QPA1 worker producer introduced in ccd7be6047. Two frozen source
+snapshots reproduce identical strict BUILD images. Original-model runtime
+tests have been launched, but have NOT completed. This report grants no
+connected-layer, all64, combined-runtime-stack, numerical, native-owner,
+physical-hardware, Work-mode, Assistant or throughput qualification.
+
+No Pioneer/SSH/power/driver/OS/Assistant/network/SD/mains action was performed.
+The last physical whole-model result remains 0.207893161 tokens/sec, NOT a
+measurement of this candidate. The requested 20 tokens/sec remains unmet.
+Instruction counts, parallel worker count and NoC traffic are not TPS.
+
+Implemented device path (not merely a proposed math helper)
+---------------------------------------------------------
+The exact returning FP32/local-source profile dispatches operation3 to the
+first68 workers before each 17408-input/type12 down projection. Each worker
+reads its actual256 gate/up values from shared card memory, executes the
+previously qualified precise activation+packing capsule and writes actual
+512B native operands plus a fresh128B scale/identity line.
+
+ROOT admits ALL119 workers before its first descriptor write. It stages
+68 descriptors/jobs, releases real next nonces, then checks actual returning
+WAIT, closed boot/job words, inner capsule words, descriptor, proof, current
+physical source registers and before/after physical NoC counters. The proof
+is bound to the same external job/nonce, layer, position, input token and
+four owner identities. There is no caller-supplied ready/completion flag.
+
+Only after those checks does ROOT compact68 scales into the existing
+zero-padded320B scale buffer and read the actual34816 native bytes in three
+bounded packets. The existing down-matrix consumer reads those packed bytes.
+The new route does not read activated F32 back to ROOT or requantize it there.
+Other projections retain their current quantizer. Existing default QGW1
+families remain separately selected; QGW2 is not a live old-cohort update.
+
+The HOST original-flow adapter transports the four encoded worker packets
+through the same shared byte fabric. Its numerical observer reads actual
+worker activation values before any down job is released and checks the
+actual ROOT native words/scales against an independent packing control.
+It does not supply numeric products, PC/register state or private phase.
+The no-CPU-reference Work implementation is not replaced by this HOST test.
+
+Build lineage and reproducibility
+--------------------------------
+Initial candidate A stopped at the existing32KiB Conv extent:34492B,1724B
+too large. No memory extent was widened. Shared ROOT-only QGW2 grammar code
+was moved into the existing text region. Candidate B and frozen D/E then
+fit: text127880/131072B; Conv32176/32768B. Parent max individual frame1616B;
+returning components max individual frame2112B. These are NOT a proof of
+combined runtime stack depth. Default worker code generation is unchanged.
+
+Final E snapshots: clean HEAD ccd7be6047 plus only the30 owned source files:
+ main /private/tmp/pioneer-q38-precise-root-main-e.al20Inn6
+ clean /private/tmp/pioneer-q38-precise-root-clean-e.VzcyB2Mf
+All30 frozen source files were compared main=clean=current. Unrelated native
+full-END/state/host WIP, llama.cpp and FlashNext changes were not overlaid.
+
+Strict ROOT builds (no --inspect-candidate): sessions4299/29755, both exit0:
+ /private/tmp/pioneer-q38-precise-root-main-20261030-e
+ /private/tmp/pioneer-q38-precise-root-clean-20261030-e
+Final image bytes and symbols match each other and earlier frozen D exactly.
+All three returning component object files also match. D disassembly differs
+only in its literal input-ELF pathname header; read-only path normalization
+matches exactly. The original disassembly/log files were not rewritten.
+
+Each strict build also rebuilds the pinned, unchanged feedback ancestor.
+BUILD hashes below only allow offline test selection, NOT native launch:
+ boot.bin 4 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text.bin 127880 2a5b4931bf316eabe7266002883a7fd1e59e2f0aa3d30813c9ec2edc39809f6e
+ terminal.bin 8 6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5
+ conv.bin 32176 2d50532cb77a35efdcbe72b6673691f4b8bb1b0ef029003f70e55bb930363666
+ program.elf 189368 0b4d58f651bcb08836afa6418491a43ab6751fe769c9e7af52dc71d97a886e80
+ recurrent.o 173044 28918095da4e6434b539d343f578f35ea42c79ef5da6c78b3e8e7331e9ff6582
+ dense.o 136868 dd41c80ea9b6503339794b128a773e36b942d186e105eec3931469f0bb4c0875
+ token-components-NOBOOT.o 271784 532fe03b7ba5049a39eb388ce73e4c8af82276a9505377b0fc1078c0df6c1239
+
+Worker rebuilds from E: sessions83792/52605, both exit0; strict QGW1 ancestor
+and QGW2 pins passed. QGW2 ELF135052B SHA256:
+ 3d51b34fc7c8b99ffadc287b1668548e810e19252b46163eb83ebdb30f68351d
+These reproduce the worker used in ccd7be6047, not a new runtime pass.
+
+Completed bounded tests
+-----------------------
+New ROOT/component/selected-DATA isolation: main55185 and clean87751 exit0,
+positive9/refusals261 each. Covers exact/missing/zero/two flags, late changes,
+old worker/old parent/capsule, CPU reference, kernel and Work contamination.
+Existing global-chain role regression: session20342 exit0,1194 gates.
+
+Startup DATA tests on main: precise48598 and default98359 both exit0.
+Each covers all7 banks/all120 boot records/root+head+session+padded8192 prompt,
+all119 head-job grammars,1920 source mutations and13642 refusals with unchanged
+outputs. Exact per-worker recurrent+dense nonce headroom is checked: only
+first68 workers reserve the extra job in the new mode. The new worker grammar
+refuses the old magic/witness. These runs used --bindings-only: independent
+full512KiB package-copy comparison is NOT claimed (package-copy count0).
+The independent clean precise startup run58244 remains live at this checkpoint.
+
+Runtime tests still owed / not a pass
+------------------------------------
+Development bootstrap session97075 is still live. It started from RESET
+using candidate B and qualified worker G, the authenticated original GGUF,
+and the actual shared byte fabric. Its preparation stage has made CPU-time
+progress, but no returning-entry/first-layer result is claimed.
+
+Final E original-model histories, both from RESET, with explicit new mode:
+ main session83936 /private/tmp/pioneer-q38-precise-root-flow-main-e.oGELpMHx
+ clean session47662 /private/tmp/pioneer-q38-precise-root-flow-clean-e.kyR2246j
+Logs: /private/tmp/pioneer-q38-precise-root-flow-{main,clean}-20261030-e.log
+They use the matching E ROOT, unchanged pinned mixed worker and qualified
+QGW2 worker G, original Qwen3.8-27B-Q4_K_M.gguf, normal3-position flow and
+--observed-trace. No --fast-root-memory or early-EOS mode was selected.
+They must retain their own histories; no cloned CPU/private/old worker state
+may substitute for a real layer, token, STOP, completion or numerical result.
+
+27 pre-existing long histories were all confirmed live03:12:24UTC. None was
+stopped, reset, silently replaced, reprioritized or reclassified as a pass.
+All these HOST tests are separate from physical inference performance.
+
+Next gates: actual first-layer/full64 histories and reserved-stack limits;
+whole-output/state posthoc comparison; positive/fault connected consumer
+coverage; distinct native/restore/fresh-cohort integration; then controlled
+hardware testing and actual measured inference. Do not install this image
+or advertise an Assistant/Work speedup on the strength of BUILD pins.

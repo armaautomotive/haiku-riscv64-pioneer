@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=10 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards'}
+assert 3<=len(sys.argv)<=11 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation'}
 inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or (cancel and f32),'dense-unroll candidate requires explicit cancel+FP32 profile'
 assert not boundary or (cancel and f32 and unroll),'boundary candidate requires explicit cancel+FP32+unrolled profile'
@@ -15,6 +15,8 @@ quiet='--unroll-quiet' in options
 assert not quiet or (boundary and cancel and f32 and unroll),'queue-check candidate requires explicit boundary+cancel+FP32+unrolled profile'
 local_sources='--worker-local-source-guards' in options
 assert not local_sources or quiet,'worker-local source candidate requires the explicit queue/boundary/cancel/FP32 profile'
+precise='--precise-activation' in options
+assert not precise or local_sources,'precise worker activation requires the explicit FP32/local-source profile'
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -24,11 +26,12 @@ def run(*args):subprocess.run([str(a) for a in args],check=True)
 # Reproduce the strict returning components and unchanged whole feedback
 # image FIRST. Neither an old native owner nor a component alone can launch.
 components=out/'qualified-components'
-run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []))
+run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []))
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1',
+ *(['-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1'] if precise else []),
  *(['-DPIONEER_Q38_TOKEN_CANCEL_BOUNDARY=1'] if cancel else []),
  '-c',here/'blackhole_qwen38_token_root.cpp','-o',out/'program.o')
 run(tool+'as','-march=rv32imf','-mabi=ilp32','-mno-relax',here/'blackhole_qwen38_global_chain_start.S','-o',out/'start.o')
@@ -130,7 +133,14 @@ PINS_CANCEL_F32_LOCAL_SOURCE=(('boot.bin',4,'32791432e2d260817d9007281f371963116
  ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
  ('conv.bin',21340,'92f1b45422aa97849025084a98c14f6d3139c5f3f0901a2e288307da501ce941'),
  ('program.elf',178272,'37c2f69539087a53a1399ca39216dc40f8651045ba9537bbd44f8517ade4f568')) # independent BUILD pins only,NOT runtime/native/Work permission
-expected=PINS_CANCEL_F32_LOCAL_SOURCE if local_sources else PINS_CANCEL_F32_QUIET if quiet else PINS_CANCEL_F32_BOUNDARY if boundary else PINS_CANCEL_F32_UNROLLED_DENSE if unroll else (PINS_CANCEL_F32 if cancel else PINS_F32) if f32 else PINS_CANCEL if cancel else PINS
+# Independently identical main/clean BUILD pins for offline qualification.
+# NOT runtime,combined stack,original-model,native,physical or Work permission.
+PINS_CANCEL_F32_PRECISE=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+ ('text.bin',127880,'2a5b4931bf316eabe7266002883a7fd1e59e2f0aa3d30813c9ec2edc39809f6e'),
+ ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+ ('conv.bin',32176,'2d50532cb77a35efdcbe72b6673691f4b8bb1b0ef029003f70e55bb930363666'),
+ ('program.elf',189368,'0b4d58f651bcb08836afa6418491a43ab6751fe769c9e7af52dc71d97a886e80'))
+expected=PINS_CANCEL_F32_PRECISE if precise else PINS_CANCEL_F32_LOCAL_SOURCE if local_sources else PINS_CANCEL_F32_QUIET if quiet else PINS_CANCEL_F32_BOUNDARY if boundary else PINS_CANCEL_F32_UNROLLED_DENSE if unroll else (PINS_CANCEL_F32 if cancel else PINS_F32) if f32 else PINS_CANCEL if cancel else PINS
 if not inspect:assert expected and tuple(observed)==expected,'unqualified persistent parent variant; inspect independent builds first'
 print('BUILD ONLY persistent parent/bootstrap/prompt+generation/all64+973/recurrent state copy+readback/token stream/final119STOP;maxFrame'+str(max(frames))+
  ';NO runtime/combined stack/original full-model/native/physical/cancellation/Work/Assistant/TPS qualification. DO NOT INSTALL')

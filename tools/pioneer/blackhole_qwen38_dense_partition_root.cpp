@@ -4,7 +4,7 @@
 // source/init/clock/host/joint-memory/Tensix/NoC ownership remains OWED.
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE)
 #include "PioneerQ38GlobalChainComponentRole.h"
-#include "PioneerQ38GlobalWorkerLayout.h"
+#include "PioneerQ38SelectedGlobalWorker.h"
 #elif defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
 #include "PioneerQ38MixedRecurrentBlockRootImageRole.h"
 #elif defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
@@ -81,7 +81,7 @@ namespace L=PioneerQ38MixedProjectionRootLayout;
 namespace L=PioneerQ38MixedDenseRootLayout;
 #endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE
-namespace M=PioneerQ38GlobalWorkerLayout;
+namespace M=PioneerQ38SelectedGlobalWorker;
 #else
 namespace M=PioneerQ38MixedWorkerLayout;
 #endif

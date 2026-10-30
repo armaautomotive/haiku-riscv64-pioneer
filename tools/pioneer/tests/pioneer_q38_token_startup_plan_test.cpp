@@ -34,7 +34,18 @@ int main(int argc,char** argv){
   for(unsigned worker=0;worker<120;worker++){
    std::array<uint32_t,64> actual,expected;assert(plan->ReadBoot(worker,actual.data()));
    if(!worker)for(unsigned i=0;i<64;i++)assert(actual[i]==root->Boot()[i]);
-   else{assert(outputPlan->WorkerBoot(worker,expected.data()));assert(actual==expected);}
+   else{
+    namespace G=PioneerQ38SelectedGlobalWorker;
+    assert(outputPlan->WorkerBoot(worker,expected.data()) && actual==expected && G::BootShape(actual.data()));
+    std::array<uint32_t,64> job;assert(outputPlan->Job(0,worker,123,job.data()) && G::JobShape(job.data(),actual.data(),123,0));
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
+    assert(!PioneerQ38GlobalWorkerLayout::BootShape(actual.data())
+     && !PioneerQ38GlobalWorkerLayout::JobShape(job.data(),actual.data(),123,0)
+     && actual[46]==G::ActivationMagic && actual[47]==68 && actual[48]==256 && job[31]==G::JobWitness);
+#else
+    assert(PioneerQ38GlobalWorkerLayout::BootShape(actual.data()));
+#endif
+   }
   }
   if(!bindingsOnly)for(unsigned layer=0;layer<64;layer++){
    auto independent=std::make_unique<PioneerQ38TokenPackage>();
@@ -123,5 +134,11 @@ int main(int argc,char** argv){
    && !rejected->ReadSession(0,output.data(),64) && output==before);refusals++;
  }
  puts("PASS private completed-build publication ONLY after full strict64-layer verification/all1920 source mutations/foreign canonical+bank+generation+unbuilt+failed-build refusals;strict API retained,NO native lifetime/corruption/launch grant");
+ for(unsigned w=0;w<119;w++){
+  unsigned extra=PioneerQ38SelectedWorkerPrecise && w<68?1U:0U;
+  assert(PioneerQ38MixedRecurrentBlockProjectionLayout::RunDelta(w)==(w<3?10U:w<96?8U:7U)+extra);
+  assert(PioneerQ38MixedLiveBlockRootLayout::RunDelta(w)==(w<64?10U:w<96?8U:5U)+extra);
+ }
+ printf("PASS selected worker DATA precise%d/all119 boot+head-job grammars/7banks/recurrent+dense nonce headroom;NOT worker initialization or execution\n",PioneerQ38SelectedWorkerPrecise);
  printf("PASS STARTUP DATA/%u full512KiB packages EXACT vs independent per-layer serialization/7banks/all120 boots/root+head+session+8192 padded prompt/high64bit identity+all1920 source binding/%u refusals+unchanged output/fullPackageCopies%d;NO native owner/RUN/STOP/physical/Work/TPS grant\n",packages,refusals,int(!bindingsOnly));
 }

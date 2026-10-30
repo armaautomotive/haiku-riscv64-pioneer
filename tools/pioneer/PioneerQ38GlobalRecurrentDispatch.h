@@ -1,11 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_GLOBAL_RECURRENT_DISPATCH_H
 #define PIONEER_Q38_GLOBAL_RECURRENT_DISPATCH_H
-#include "PioneerQ38GlobalWorkerLayout.h"
+#include "PioneerQ38SelectedGlobalWorker.h"
 #include "PioneerQ38MixedRecurrentDispatch.h"
 // Reuse numeric capsule DATA,not the old QMW1 envelope/boot/source authority.
 namespace PioneerQ38GlobalRecurrentDispatch {
-namespace M=PioneerQ38GlobalWorkerLayout;namespace Old=PioneerQ38MixedRecurrentDispatch;
+namespace M=PioneerQ38SelectedGlobalWorker;namespace Old=PioneerQ38MixedRecurrentDispatch;
 using Old::Internal;using Old::DisjointOutput;
 static inline bool Binding(const uint32_t* b,const uint32_t* d){
  if(!b || !d || ((reinterpret_cast<__UINTPTR_TYPE__>(b)|reinterpret_cast<__UINTPTR_TYPE__>(d))&3) || !M::BootShape(b))return false;

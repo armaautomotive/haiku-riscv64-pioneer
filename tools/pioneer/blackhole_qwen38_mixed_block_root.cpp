@@ -43,6 +43,9 @@ static void BindFfn(L::PrivateSeal* p,unsigned slot){
  p->phase=slot==2?11:8+slot;Words(L::Status)[5]=p->phase;Fence();q38_mixed_root_seal();
 }
 static void Activation(L::PrivateSeal* p){
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
+ FfnSeal();p->phase=10;Words(L::Status)[5]=10;FfnSeal();q38_mixed_root_seal();
+#else
  FfnSeal();p->phase=10;Words(L::Status)[5]=10;uint32_t tracked[8];for(unsigned i=0;i<8;i++)tracked[i]=*Words(0xffb20000+Counter(i));
  const auto* o=p->outer;
  for(unsigned at=0;at<17408;at+=256){
@@ -56,6 +59,7 @@ static void Activation(L::PrivateSeal* p){
   }
  }
  FfnSeal();q38_mixed_root_seal();
+#endif
 }
 static void WriteFinal(const uint32_t* o){
  uint32_t tracked[8];for(unsigned i=0;i<8;i++)tracked[i]=*Words(0xffb20000+Counter(i));

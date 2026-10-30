@@ -4,7 +4,7 @@
 #include "PioneerQ38GlobalChainLayout.h"
 // Fixed512B immutable DATA; no weight/init/all64/owner/launch authority.
 namespace PioneerQ38GlobalHeadLayout {
-namespace C=PioneerQ38GlobalChainLayout;namespace G=PioneerQ38GlobalWorkerLayout;
+namespace C=PioneerQ38GlobalChainLayout;namespace G=PioneerQ38SelectedGlobalWorker;
 enum {Words=128,Stripe=64,StripeWords=8,Jobs=973,Waves=9,RowBytes=4240};
 static inline bool Shape(const uint32_t* h,const uint32_t* boot,unsigned bank,unsigned workspace){
  if(!h || !C::BootShape(boot) || bank>=7 || workspace<0x04000000 || workspace>0xc0000000 || (workspace&4095))return false;

@@ -43,3 +43,6 @@
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_LOCAL_SOURCE_GUARDS) && !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE)
 #error Worker-local source guards belong only to a distinct returning-component candidate
 #endif
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) && !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) && !defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE)
+#error Precise activation belongs only to the distinct persistent ROOT and returning components
+#endif
