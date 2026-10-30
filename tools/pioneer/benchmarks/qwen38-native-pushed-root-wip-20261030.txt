@@ -86,3 +86,16 @@ cancellation/positive END/reload/recovery,combined stack safety,qualified
 no-reference Work/Assistant integration and physical profiling/measurement
 toward20 tokens/sec. Successful boot/compilation cannot replace these.
 DO NOT INSTALL this experimental NODRV/TEST family.
+
+Follow-up17:08UTC -- first actual native projection PASSED,full run live
+------------------------------------------------------------------------
+SAME DK77228 has now completed the actual first original role10 projection
+and reached the NEXT matrix doorbell held by the existing observer. The
+three participating virgin workers each return to actual sequence1 WAIT,
+1280 tensor instructions,162 genuine reads/responses and independent
+FP32/FP64 output checks passing. ROOT validates48 produced rows before
+that next dispatch;total3840 tensor instructions,173212416 peer steps,
+36321913 ROOT steps. No CPU products or processor history were supplied.
+It then resumes SAME history into full-flow position0/layer0 at40000121
+ROOT instructions. This verifies a first native G3 consumer,NOT completed
+layer/model/state/KV/119STOP/END/Work/physical timing or tokens/sec.
