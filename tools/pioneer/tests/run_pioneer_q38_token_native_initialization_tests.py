@@ -9,6 +9,10 @@ import subprocess
 import sys
 import tempfile
 
+compile_link_only = '--compile-link-only' in sys.argv
+if compile_link_only:
+    assert sys.argv.count('--compile-link-only') == 1
+    sys.argv.remove('--compile-link-only')
 precise_context = '--precise-context' in sys.argv
 if precise_context:
     assert sys.argv.count('--precise-context') == 1
@@ -208,5 +212,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
                     '-fsanitize=address,undefined', *['-D'+k+'='+v for k, v in sorted(defines.items())],
                     '-I'+str(base), '-I'+str(kernel), str(here/'pioneer_q38_token_native_initialization_test.cpp'),
                     *extra, '-o', str(binary)], check=True)
-    subprocess.run([str(binary), *sys.argv[1:]], check=True,
-                   env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})
+    if compile_link_only:
+        print('COMPILE/LINK ONLY: actual native TEST fixture+selected bridge objects linked;binary NEVER executed,NO initialization/RUN/STOP/END/model/physical/TPS qualification')
+    else:
+        subprocess.run([str(binary), *sys.argv[1:]], check=True,
+                       env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})

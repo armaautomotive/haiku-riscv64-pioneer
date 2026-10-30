@@ -1,0 +1,58 @@
+Native Qwen3.8-27B first-layer observation snapshots
+2026-10-30 UTC;base2eaec633e387cc12af2fdc93f24b886d2b45498b
+
+TEST diagnostics only. No driver/firmware/Work/native-owner capability,
+installed Assistant/boot/CPU/RAM,power,network,SD or hardware change.
+Last physical rate0.207893161 tokens/sec;20 target unmet. No speedup claim.
+
+Purpose and implementation
+  Native full-model experiments can take a long time. Allow independent
+  first-layer comparison BEFORE the whole192-layer/3-token run finishes,
+  without terminating or restarting its genuine instruction histories.
+  Expose the existing non-closing SnapshotFirstLayerDiagnostic through the
+  const-observation-only Q38NativeTraceTest interface. It delegates to the
+  SAME recorder;no processor,owner,expected CPU product or endpoint is added.
+  Future full native tests call it ONLY after actual Layer(0,0) bytes have
+  been recorded and ALL119 actual worker boundaries verified. Then the SAME
+  ROOT and workers continue. No PC/register/counter/NoC/model state is edited.
+  prefix-0.bin remains deliberately INCOMPLETE QOP1,not a committed token,
+  complete QOD1 trace,STOP/END or hardware capability. Complete output still
+  needs all192 layers,all vocabulary and3 actual committed token records.
+  Existing SaveFirstLayerDiagnostic terminating semantics remain unchanged.
+
+Qualification (not full native numerical proof)
+  Fresh HEAD archives plus ONLY6 owned TEST-file changes:
+  /private/tmp/pioneer-q38-native-live-snapshot-main-m.IC5ZzRkh
+  /private/tmp/pioneer-q38-native-live-snapshot-clean-m.Xn21RwQB
+  All6 source pairs byte-identical;unfinished private audit/Host/END/state
+  work excluded. Both ordinary and native-facade synthetic lifecycle tests
+  completed0:92718/21552/39147/24954. Native facade now exercises the SAME
+  non-closing snapshot followed by all192 synthetic layers+3 commits and
+  exclusive complete files. Python independently checks format/length/
+  both5120-value frames/headers/footers. Wrong order,nonfinite,missing rows,
+  duplicate save,wrong diagnostic boundary and false completion still refuse.
+  Recorder DATA role suites99412/39398 both0;Work/kernel/image/native/CPU-
+  oracle roles remain rejected by their existing exact gates.
+  Actual QTP2 native full-model fixture+trace+119-engine+RAW byte bridge
+  objects compiled and LINKED in both archives:98332/73492 both0 at07:53:11.
+  New explicit --compile-link-only mode prints COMPILE/LINK ONLY and NEVER
+  executes the linked binary. Both reserved trace directories remain EMPTY.
+  This is link integration only,NOT model/authentication/init/RUN/STOP/END
+  runtime qualification. Defaults still execute the actual selected test.
+  Logs:/private/tmp/pioneer-q38-native-live-snapshot-{ordinary,native,roles,link}-{main,clean}-20261030-m.log.
+
+Existing long histories are not modified or restarted
+  K59759/75018 were compiled BEFORE this snapshot feature;do NOT expect a
+  prefix file from those live histories. Preserve them. Future experiments
+  receive early snapshots naturally after their first real verified layer.
+  Use compare_pioneer_q38_observed_trace.py with --first-layer-only for an
+  actual complete first-layer diagnostic;never treat --diagnostic-only or
+  this synthetic format test as model numerical acceptance.
+
+Separate optimization status
+  Genuine native startup G64247/19144 BOTH terminal0 at07:51:26:full851
+  owner+1010 actual zero jobs+120 native preparations+37,782,528B metadata
+  and readback+119 VIRGIN QGW2 worker boots/14,866,432 actual instructions.
+  ROOT remains held;no model RUN/STOP/END/physical/TPS proof follows.
+  Actual preparation faults1 and5 have passed;groups51670/69182 continue
+  remaining cases. Private preparation-audit optimization is still unpublished.

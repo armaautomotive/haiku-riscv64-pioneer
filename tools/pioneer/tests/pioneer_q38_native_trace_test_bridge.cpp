@@ -19,3 +19,4 @@ unsigned Q38NativeTraceTest::Embeddings()const{return impl->data.Embeddings();}
 unsigned Q38NativeTraceTest::Layers(unsigned p)const{return impl->data.Layers(p);}
 bool Q38NativeTraceTest::Save(const char* path){return impl->data.Save(path);}
 bool Q38NativeTraceTest::SaveFirstLayerDiagnostic(const char* path){return impl->data.SaveFirstLayerDiagnostic(path);}
+bool Q38NativeTraceTest::SnapshotFirstLayerDiagnostic(const char* path){return impl->data.SnapshotFirstLayerDiagnostic(path);}

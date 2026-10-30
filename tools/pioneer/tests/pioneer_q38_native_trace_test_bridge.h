@@ -29,5 +29,6 @@ public:
  bool Commit(unsigned,const uint32_t*,unsigned);
  bool Complete()const;bool SavedComplete()const;unsigned Embeddings()const;unsigned Layers(unsigned)const;
  bool Save(const char*);bool SaveFirstLayerDiagnostic(const char*);
+ bool SnapshotFirstLayerDiagnostic(const char*); // deliberately incomplete,does NOT seal/stop the run
 }; // Save still requires the caller's separate genuine terminal verification
 #endif

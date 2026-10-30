@@ -48,6 +48,11 @@ static void CheckNativeFullFlow(Fixture& f){
    for(unsigned w=1;w<120;w++){
     auto& p=*io.bootstrapPeer[w-1];assert(p.Idle() && p.cpu->ObserveLayerBoundary());p.Observe();
    }
+   if(!position && !layer){
+    assert(io.nativeTrace->SnapshotFirstLayerDiagnostic(tokenNativeTraceDirectory)
+     && !io.nativeTrace->Complete() && !io.nativeTrace->SavedComplete());
+    puts("SNAPSHOT native first ACTUAL layer+all119 verified boundaries/incomplete prefix-0.bin;SAME full flow continues,NOT token/STOP/END/physical/TPS qualification");
+   }
    cpu.ObserveRootLayerWindow();
    printf("OBSERVED native original position%u/layer%u ACTUAL return+all119 down-matrix arithmetic/DONE/WAIT/5120 final bytes recorded/ROOTinstructions%llu;CPU trace comparison and full terminal STILL REQUIRED\n",
     position,layer,(unsigned long long)cpu.ObservedRootInstructions());
