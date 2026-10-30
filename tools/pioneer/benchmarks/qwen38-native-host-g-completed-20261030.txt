@@ -1,0 +1,79 @@
+Native host-cleanup fault evidence: completed bounded G histories
+Checked 2026-10-30 01:35:07 UTC. Goal ACTIVE; 20 tokens/sec UNMET.
+Last physical whole-model measurement: 0.207893161 tokens/sec.
+No physical-card, SSH, driver-install, power, OS, Assistant, network, SD or
+mains action was taken for this evidence checkpoint.
+
+What actually completed
+-----------------------
+All four existing G processes returned exit 0:
+  main 7607 / clean 53969: --execution-end-host-generation3
+  main 9829 / clean 21927: --execution-end-unreserve-fault
+They were the original runs, not restarted or given processor-history,
+completion, expected-product or ready-state injections.
+
+Each history authenticated the original 851-tensor model, executed the
+1010 zero jobs, 120 preparations, 119 virgin workers and actual first
+recurrent layer, consumed a real cancellation, observed ROOT and all 119
+STOPs, held all 120 cores, drained the zero-commit frontier, restored token
+and dispatch L1, peer and ROOT stores and shared TLB controls, ended the
+clock, sealed hardware leases, deleted 29 simulated OS views and restored
+PCI before the tested host-disposal failure. The OS/PCI/NoC endpoints here
+are instruction-model/host simulations, NOT physical-card observations.
+
+Generation-after-third-release records the three successful releases,
+detects the changed owner lifetime, retains/quarantines the context and
+does not unreserve or retry. Unreserve-failure releases three host buffers,
+makes one checked same-cookie unreserve attempt, observes B_DEV_NOT_READY
+and retains/quarantines the context without retry or false successful END.
+The fixture checks no later card/PCI/OS release traffic. These two tested
+modes do not stand for every other implemented host/unreserve failure mode.
+
+Numerical checks, separate from the execution
+---------------------------------------------
+Four NEW posthoc comparison processes also returned exit 0:
+  host-generation3 main 8147 / clean 39572
+  unreserve-fault main 77450 / clean 32585
+Each reads the independent original CPU control and the unchanged actual
+41028-byte prefix observation: all 5120 embedding words and 5120 layer-0
+words are bit-identical, with zero tolerance. A mechanical copy supplied
+the comparator's prefix-0.bin filename; no header, numeric value, footer or
+source capture was rewritten. No CPU reference is linked into the native
+candidate by these posthoc DATA comparisons.
+
+Provenance and historical failure
+----------------------------------
+The two immutable G trees are:
+  /private/tmp/pioneer-q38-host-main-g.RB4KiGgt
+  /private/tmp/pioneer-q38-host-clean-g.Kw54Dm9r
+All 84 recorded source paths were re-compared byte-for-byte before this
+report. The companion source manifest records their exact SHA-256 values.
+All 11 current native host/END production files also match their G bytes;
+later TEST full-generation/state changes are NOT promoted by that match.
+
+The old frozen C fault runs failed in a legacy TEST mock that incorrectly
+required an allocated, never-released input page during quarantine. The
+actual production method is metadata-only. The corrected TEST extraction
+and standalone quarantine regression were published as 07960784f330b5652f967e796f96e399dadd6993.
+The old C failures are not retroactively labelled passes.
+The independent C positive two-cycle reload runs 72525/60012 completed 0
+earlier, with four exact prefix comparisons; that positive-cancellation
+lifecycle evidence is separate from these G failure histories.
+
+Limits and next steps
+----------------------
+This commit records evidence ONLY. Native host/full-END implementation
+and associated later harness changes remain local WIP, not silently
+staged or installed by this checkpoint. Source hashes identify the tested
+snapshot; they are not native execution or Work authorization.
+These histories do NOT qualify all-64-layer generation, nonzero committed
+token readout, multi-token/state/KV/vocabulary or normal/EOS equivalence,
+combined kernel stack, public driver ABI, Assistant, repeated physical
+reload/generation, long-context stability, or a throughput improvement.
+
+The remaining long original-model histories must finish and be compared
+independently. Performance investigation identified a serial 17408-value
+FFN activation on the on-card coordinator. A distinct exact-order 256-value
+activation/packing candidate is planned as a prerequisite for distributing
+its 68 chunks; it is NOT implemented or selected by this evidence commit.
+No prediction of tokens/sec is made from interpreter instruction counts.
