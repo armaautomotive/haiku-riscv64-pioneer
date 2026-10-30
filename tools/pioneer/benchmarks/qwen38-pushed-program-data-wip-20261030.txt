@@ -1,0 +1,75 @@
+Separately named G3 immutable program package -- NOT native launch
+2026-10-30
+================================================================
+Goal ACTIVE. Physical whole-model rate remains0.207893161 tokens/sec;
+20 UNMET. No Pioneer SSH, power, driver, OS, Assistant, SD or hardware action.
+
+Preparation for the distinct native family
+-------------------------------------------
+generate_qwen38_token_programs.py now accepts --pushed-completion and
+authenticates the fixed warm-admission ROOT and AF QGW3 sender, including
+BOTH complete ELFs, before creating a new output. The generated package
+contains all13 sections and exposes only immutable DATA access in the
+separate PioneerQ38TokenPushedPrograms namespace. It uses the proposed
+PioneerQ38TokenPushedL1 geometry, NOT an alias for old programs/journals.
+No native selector, public function-pointer selector, role grant, driver
+entry point or Work route is introduced. No existing native owner selects it.
+
+PioneerQ38TokenPushedPrograms.h SHA256:
+70d962945b45c48b77981689dd46981ec4cb6aeb7debf5db1387102921f526be
+ROOT code40856 words; each peer25277 words; ALL120 total3048819 words.
+The enlarged sender front fits the separate proposed12KiB saved window.
+ROOT ELF190444/SHAaf0a6e2de533ad253b5a73d1cef4cc7b582d8aedf8ce6a118eebd2094736b199.
+Sender ELF139684/SHAca6e8131fc9bde4a1276903bfc0d2595b3f51a8569d320ee732007de96313451.
+
+Completed checks and exact limits
+----------------------------------
+Final main CL30641 and clean CL64032 BOTH terminal EXIT0. Every code word
+for ALL120 participants is byte-exact to the authenticated sections and
+inside the proposed saved geometry. There are2290 access refusals covering
+section ends, gaps/runtime-only addresses, invalid workers/ordinals and
+all13 immutable output-array aliases. ASAN/UBSAN and -Werror stay enabled.
+
+Each copy also passes36 actual generator refusals: all15 artifacts each
+with an independent byte corruption and truncation, existing output,
+dangling output symlink, and four defined-zero/one environment-role cases.
+No bad artifact causes an output header. Four compile controls show both
+include orders coexist with QTP1 and QTP2 without replacing either namespace
+or saved geometry. This is DATA coexistence, NOT native role qualification.
+
+The factory now explicitly requires a complete source-identity-bound
+section map BEFORE output: every authenticated .bin exactly once, no
+unauthenticated source object. Each copy passes27 map refusals: omission
+and duplication of each of13 sections, plus a cloned foreign source object.
+These map tests validate factory metadata, NOT a processor or model trace.
+
+The generator's old modes remain byte-compatible. Final main21479 and
+clean64032 BOTH EXIT0 on QTP1 cancellation, QTP1 non-cancellation and QTP2
+precise packages, including their full existing artifact/geometry tests.
+QTP1 committed cancellation header SHA25e804db55b384e53915fdf3866acf95f45f6e72a24c05f2326caec28c3ba6fc.
+QTP2 committed header SHAa319fe1cc4143400bb9b6792d138ace178d7d8e969af08ade9ef39f8a63e4f90.
+Non-cancellation generated header SHA28c344e0574307e4e12b1d457a792063297de8e012df93f6c587ab4f1321066b.
+Clean64032 also reran the proposed G3 geometry/30 bad-artifact checks:EXIT0.
+All four owned sources compare identical between main and clean snapshot.
+Clean source:/private/tmp/pioneer-q38-push-programs-clean-cl.B6Pv6DZ1
+Logs:/private/tmp/pioneer-q38-push-programs-{main,clean}-20261030-cl.log
+Legacy logs:/private/tmp/pioneer-q38-push-programs-legacy-{qtp1-cancel,qtp2,qtp1-nocancel}-20261030-cl.log
+Clean legacy logs use legacy-clean- instead of legacy-.
+
+An initial unqualified CJ output printed12 sections: the precise capsule
+insertion branch was misplaced. Inspection rejected it before compilation,
+installation or publication. It is preserved at
+/private/tmp/pioneer-q38-pushed-programs-cj-rejected-12-section.h.
+The corrected13-section output passed CK tests; CL adds the explicit
+pre-output completeness guard above, with unchanged final header bytes.
+
+Still owed
+------------
+Warm CE55607/43309 continue SAME original-model ROOT+119 histories after
+their genuine8-case matrix-to-Conv gate. At14:05UTC they have reached layer0
+matrix7 but have NO first-layer snapshot yet; no numerical/runtime-stack
+proof can be inferred from the program DATA checks. No complete model or
+119STOP qualification exists yet. Next native work must bind the distinct
+family to private capture/install/bootstrap/restore/END/reuse ownership,
+without aliasing QTP2. Native lifecycle/cancellation, Work/Assistant and
+controlled physical whole-model speed measurements remain necessary.

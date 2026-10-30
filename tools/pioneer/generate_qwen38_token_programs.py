@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Emit fixed complete token/QGW1 or distinct QTP2/QGW2 DATA. NEVER install/run."""
+"""Emit fixed complete QTP1/QTP2 or separately named QTP3 DATA. NEVER install/run."""
 import ast
 import hashlib
 import os
@@ -32,16 +32,26 @@ def authenticated(directory, records):
         result[name] = data  # emit THIS same immutable authenticated snapshot;never reopen
     return result
 
+def require_complete_sections(units, sources):
+    require(all(any(unit[0] is source for source in sources) for unit in units),
+            'section coverage: unauthenticated source object')
+    for source in sources:
+        mapped = [unit[1]+'.bin' for unit in units if unit[0] is source]
+        expected = {name for name in source if name.endswith('.bin')}
+        require(len(mapped) == len(set(mapped)) and set(mapped) == expected,
+                'section coverage: every authenticated code section exactly once')
+
 def main():
-    require(len(sys.argv) == 5 and sys.argv[4] in ('--cancel-boundary', '--no-cancel', '--precise-activation'), 'explicit exact FP32 token variant required')
+    require(len(sys.argv) == 5 and sys.argv[4] in ('--cancel-boundary', '--no-cancel', '--precise-activation', '--pushed-completion'), 'explicit exact FP32 token variant required')
     require(not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ), 'role overrides refused')
     root, worker, output = map(pathlib.Path, sys.argv[1:4])
     require(all(p.is_absolute() for p in (root, worker, output)) and not output.exists() and not output.is_symlink(), 'new absolute output required')
     here = pathlib.Path(__file__).resolve().parent
-    precise = sys.argv[4] == '--precise-activation'
+    pushed = sys.argv[4] == '--pushed-completion'
+    precise = pushed or sys.argv[4] == '--precise-activation'
     cancel = precise or sys.argv[4] == '--cancel-boundary'
-    r = authenticated(root, pins(here/'build_qwen38_token_root.py', 'PINS_CANCEL_F32_PRECISE' if precise else 'PINS_CANCEL_F32' if cancel else 'PINS_F32'))
-    w = authenticated(worker, pins(here/'tests/run_pioneer_q38_precise_worker_tests.py' if precise else here/'build_qwen38_global_worker_image.py', 'PINS'))
+    r = authenticated(root, pins(here/'build_qwen38_token_root.py', 'PINS_CANCEL_F32_PUSHED' if pushed else 'PINS_CANCEL_F32_PRECISE' if precise else 'PINS_CANCEL_F32' if cancel else 'PINS_F32'))
+    w = authenticated(worker, pins(here/'build_qwen38_pushed_worker_image.py' if pushed else here/'tests/run_pioneer_q38_precise_worker_tests.py' if precise else here/'build_qwen38_global_worker_image.py', 'PINS'))
     units = [(r, 'boot', 'RootBoot', 0x6000), (r, 'text', 'RootText', 0x40000),
              (r, 'terminal', 'RootTerminal', 0x60000), (r, 'conv', 'RootAux', 0x64000)]
     units += [(w, name, label, address) for name, label, address in (
@@ -50,21 +60,31 @@ def main():
         ('text', 'PeerText', 0x72000), ('gdn', 'PeerGdn', 0xb8000))]
     if precise:
         units.insert(6, (w, 'precise', 'PeerPrecise', 0x30000))
+    require_complete_sections(units, (r, w))
     lines = ['/* SPDX-License-Identifier: MIT */',
              '// Mechanically generated from COMPLETE fixed FP32 persistent-token/QGW1 artifacts.',
              '// IMMUTABLE DATA ONLY. No native owner,source/init,journal,RUN/STOP or cleanup grant.',
              '#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_PRECISE_WORKER_IMAGE)',
              '#error Fixed QTP1/QGW1 program DATA cannot select the distinct precise ROOT/worker family',
              '#endif']
-    if precise:
+    if pushed:
+        lines = ['/* SPDX-License-Identifier: MIT */',
+                 '// Mechanically generated from fixed experimental warm-admission ROOT/QGW3 artifacts.',
+                 '// IMMUTABLE DATA ONLY in a DISTINCT namespace, never selected by an old native owner.',
+                 '// Full-model/native journal/restore/Work/physical/TPS qualification remains separate.']
+    elif precise:
         lines[1] = '// Mechanically generated from COMPLETE fixed precise persistent-token/QGW2 artifacts.'
         lines += ['#include "PioneerQ38TokenPreciseProgramsRole.h"']
     else:
         lines += ['#ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS', '#include "PioneerQ38TokenPrecisePrograms.h"', '#else']
+    program_namespace = 'PioneerQ38TokenPushedPrograms' if pushed else 'PioneerQ38TokenPrograms'
+    footprint_namespace = 'PioneerQ38TokenPushedL1' if pushed else 'PioneerQ38TokenL1'
+    guard = 'PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H' if pushed else 'PIONEER_Q38_TOKEN_PROGRAMS_H'
     lines += [
-             '#ifndef PIONEER_Q38_TOKEN_PROGRAMS_H', '#define PIONEER_Q38_TOKEN_PROGRAMS_H',
-             '#include "PioneerQ38TokenFootprint.h"', 'namespace PioneerQ38TokenPrograms {',
-             f'enum {{Family=0x{0x32505451 if precise else 0x31505451:x},Version=1,CancelBoundary={int(cancel)}}};']
+             '#ifndef '+guard, '#define '+guard,
+             '#include "PioneerQ38TokenPushedFootprint.h"' if pushed else '#include "PioneerQ38TokenFootprint.h"',
+             'namespace '+program_namespace+' {',
+             f'enum {{Family=0x{0x33505451 if pushed else 0x32505451 if precise else 0x31505451:x},Version=1,CancelBoundary={int(cancel)}}};']
     for data_set, name, label, address in units:
         data = data_set[name+'.bin']
         require(data and not len(data)%4 and not address%4 and address+len(data) <= 0x180000, f'{label}: extent')
@@ -72,7 +92,7 @@ def main():
         words = [int.from_bytes(data[i:i+4], 'little') for i in range(0, len(data), 4)]
         lines += [' '+','.join(f'0x{word:08x}U' for word in words[i:i+8])+',' for i in range(0, len(words), 8)]
         lines += ['};', f'static_assert(sizeof({label})=={len(data)},"exact complete {label} DATA");']
-    lines += ['using PioneerQ38TokenL1::Span;',
+    lines += ['using '+footprint_namespace+'::Span;',
               f'static inline unsigned CodeSpans(unsigned worker){{return worker>=120?0:worker?{9 if precise else 8}:4;}}',
               'static inline Span CodeSpan(unsigned worker,unsigned span){',
               ' if(worker>=120 || span>=CodeSpans(worker))return {UINT32_MAX,0};', ' if(!worker)switch(span){']
@@ -103,7 +123,9 @@ def main():
         lines += [f'   case {i}:data={label};break;']
     lines += ['  }', '  if(!data)return false;', '  output=data[(address-s.address)/4];return true;',
               ' }return false; // no implicit zero-padded holes or runtime-data permission', '}', '}', '#endif']
-    if precise:
+    if pushed:
+        lines += ['static_assert(PioneerQ38TokenPushedPrograms::Family==0x33505451,"distinct proposed QTP3 program DATA");', '']
+    elif precise:
         lines += ['static_assert(PioneerQ38TokenPrograms::Family==0x32505451,"late QTP2 program DATA selection");', '']
     else:
         lines += ['#endif', '#ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS',
