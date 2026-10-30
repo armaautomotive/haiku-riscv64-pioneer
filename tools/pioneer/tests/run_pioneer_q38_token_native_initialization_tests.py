@@ -47,7 +47,7 @@ embedding = first_matrix or len(sys.argv) == 4 and sys.argv[2] in embedding_mode
 peer_bootstrap = len(sys.argv) == 5 and sys.argv[2] == '--bootstrap-peer-engines'
 peer_engines = peer_bootstrap or first_matrix
 if precise_context:
-    assert peer_engines, 'QTP2 context requires actual virgin peer instruction engines'
+    assert peer_engines or sys.argv[2:]==['--preparation-endpoint-contract'], 'QTP2 execution requires actual virgin peer instruction engines;endpoint-only contract executes NO worker/model instructions'
 terminal_faults = len(sys.argv)==3 and sys.argv[2]=='--terminal-observation-faults'
 preparation_faults = len(sys.argv)==3 and sys.argv[2] in ('--preparation-fifo-faults', '--preparation-access-faults')
 preparation_endpoints = len(sys.argv)==3 and sys.argv[2]=='--preparation-endpoint-contract'

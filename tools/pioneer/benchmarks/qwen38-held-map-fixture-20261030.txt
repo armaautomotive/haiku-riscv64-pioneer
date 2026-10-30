@@ -1,0 +1,52 @@
+Qwen3.8-27B native HELD fixture mapping correction
+2026-10-30 UTC; base0c145c0a8597bf08b6e625fc00e267141786b839
+
+TEST-only checkpoint: no production driver/firmware/native ABI/Assistant,
+physical IO/install/boot/power/network/SD or model-numerics change.
+Physical inference remains last measured0.207893161 tokens/sec;20 unmet.
+
+Cause
+  Exploratory native precise bootstrap A42692 terminated1 after its actual
+ 1010 zero-ROM jobs and participant preparation. The TEST OS mapper still
+  expected8192 bytes for its first alias,but the actual production QTP2
+  adapter requests131072 bytes after b4bee41c78c5ca71dca2acf34a3ab36c95cd062d.
+  This is a fixture extent assertion,not a device or numerical failure.
+  Log:/private/tmp/pioneer-q38-preparation-audit-bootstrap-main-20261030-a.log.
+
+Correction
+  HELD TEST endpoint expects8192 for P1,131072 for QTP2;other3 lengths remain
+ 131072/57344/868352. Register the successful simulated OS mapping's exact
+  offset/length and assert EVERY alias read/write lies inside a registered
+  range,not merely inside the oversized backing vector. Kernel SnapshotContains
+  still independently excludes holes and unowned participant addresses.
+  Preflight asserts the4 expected lengths,invalid-index refusal and8 unmapped
+  address refusals before any OS mapping. It does NOT create positive mappings
+  or forge initialization/participant/launch/completion authority.
+  Permit --precise-context with ONLY --preparation-endpoint-contract without
+  peer engines:that contract executes no worker/model instructions. All actual
+  execution modes still require119 actual virgin worker instruction engines.
+  Supply the held-only fixture's missing runtime PCI-identity endpoint as an
+  unconditional refusal;it cannot manufacture a runtime PCI lease.
+
+Isolated qualification
+  Fresh HEAD archive:/private/tmp/pioneer-q38-held-map-fixture-f.bGCTKJJl
+  Plus ONLY these3 test-file corrections;no private-audit optimization or
+  unpublished Host/full-END/state work is included in this checkpoint.
+  python3 tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py
+    /private/tmp/pioneer-q38-resident-input-zero.rx9Gfebd/image
+    --preparation-endpoint-contract [--precise-context]
+  Legacy33744 and precise69801 BOTH completed0 at07:07:13UTC.
+  Each:960 selected-window/FIFO endpoint checks,58 root-only+74 shared-TLB
+  wrong-phase/outside-FD refusals,4 lengths+invalid index+8 unmapped addresses.
+  Logs:/private/tmp/pioneer-q38-held-map-fixture-{legacy,precise}-20261030-f.log.
+  This is negative endpoint/preflight qualification,NOT positive actual-map,
+  native initialization/RUN/STOP/END,full-model,physical or performance proof.
+
+Continuing separately
+  Two known-incompatible old-fixture C bootstrap children72286/72289 were
+  verified then retired with TERM once;67994/83430 completed1. Their logs and
+  observations are retained. This was a diagnosed fixture correction,not a
+  restart after quiet logging. Other valid long model histories were untouched.
+  Corrected E genuine startup59052/82769 and actual preparation FIFO53316 /
+  access6593 fault groups remain separate unfinished optimization qualification.
+  Do not install the optimization or claim a speedup from these fixture tests.

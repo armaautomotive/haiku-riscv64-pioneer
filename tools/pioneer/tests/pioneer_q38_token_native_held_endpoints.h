@@ -17,6 +17,15 @@ struct TokenHeldEndpoints:ZeroControlIO {
  std::array<std::vector<uint32>,120> extra;
  std::vector<uint32> alias=std::vector<uint32>(Words),original;
  unsigned runtimeCore=0,maps=0,aliasReads=0,aliasWrites=0;
+ std::array<unsigned,4> mappedOffset={},mappedBytes={};
+ static constexpr unsigned ExpectedMappedBytes(unsigned i){
+  return i==0?(PioneerQ38TokenL1::Precise?131072U:8192U):i==1?131072U:i==2?57344U:i==3?868352U:0U;
+ }
+ bool Mapped(uint32 address)const{
+  for(unsigned i=0;i<4;i++)if(mappedBytes[i]>=4 && address>=mappedOffset[i]
+   && address-mappedOffset[i]<=mappedBytes[i]-4)return true;
+  return false;
+ } // actual successful TEST OS mapping extents,NOT the oversized backing vector
  const PioneerQ38TokenMemoryResult* journalResult=nullptr;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HARDWARE_SEAL_FIXTURE
  const PioneerQ38TokenHardwareSealResult* nativeHardwareSealResult=nullptr;
@@ -362,11 +371,12 @@ static TokenHeldEndpoints* tokenHeldEndpoint=nullptr;
 static area_id map_physical_memory(const char*,uint64 physical,unsigned bytes,int placement,unsigned flags,void** view){
  auto& io=*tokenHeldEndpoint;io.Touch();assert(io.maps<4 && placement==B_ANY_KERNEL_ADDRESS
   && flags==(B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY));
- const unsigned offsets[]={0x20000,0x40000,0x60000,0xac000},lengths[]={8192,131072,57344,868352};
- const unsigned i=io.maps++;io.Trace("map",i,bytes);assert(physical==TokenHeldEndpoints::Bar+0x19000000+offsets[i] && bytes==lengths[i]);
+ const unsigned offsets[]={0x20000,0x40000,0x60000,0xac000};
+ const unsigned i=io.maps++;io.Trace("map",i,bytes);assert(physical==TokenHeldEndpoints::Bar+0x19000000+offsets[i] && bytes==io.ExpectedMappedBytes(i));
+ io.mappedOffset[i]=offsets[i];io.mappedBytes[i]=bytes;
  if(!i)io.SnapshotOriginal();*view=io.alias.data()+offsets[i]/4;return int(i)+37;
 }
 static uint32 PioneerRead32(const volatile uint32* p){auto& io=*tokenHeldEndpoint;io.SharedMappedAccess();io.Touch();io.aliasReads++;
- const auto address=io.Address(p),value=io.Raw(io.runtimeCore,address);io.ObserveAlias(address,false);return value;}
+ const auto address=io.Address(p);assert(io.Mapped(address));const auto value=io.Raw(io.runtimeCore,address);io.ObserveAlias(address,false);return value;}
 static void PioneerWrite32(volatile uint32* p,uint32 value){auto& io=*tokenHeldEndpoint;io.SharedMappedAccess();io.Touch();io.aliasWrites++;
- const auto address=io.Address(p);io.Raw(io.runtimeCore,address)=value;io.ObserveAlias(address,true);}
+ const auto address=io.Address(p);assert(io.Mapped(address));io.Raw(io.runtimeCore,address)=value;io.ObserveAlias(address,true);}

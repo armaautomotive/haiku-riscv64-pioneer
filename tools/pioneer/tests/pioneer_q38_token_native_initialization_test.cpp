@@ -375,6 +375,11 @@ static void TestKernelLog(const char*,...){}
 #include "token_native_retain.inc"
 #undef dprintf
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeBind.inc"
+#if defined(PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE) && !defined(PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE)
+bool PioneerSessionIO::TokenPciLeaseIdentity(const PioneerQ38TokenPciLease&)const{return false;}
+// Held-only tests have NO runtime PCI lease. Keep that unreachable source
+// branch explicitly refusing instead of leaving a missing linker endpoint.
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeInitialize.inc"
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeHeld.inc"
@@ -589,6 +594,11 @@ int main(int argc,char** argv){
 #endif
   if(preparationEndpoints){
    unsigned checks=0;const auto starts=io.rootStarts,stops=io.rootStops,holds=io.rootHolds;
+   assert(!io.maps && io.ExpectedMappedBytes(0)==(PioneerQ38TokenL1::Precise?131072U:8192U)
+    && io.ExpectedMappedBytes(1)==131072 && io.ExpectedMappedBytes(2)==57344 && io.ExpectedMappedBytes(3)==868352
+    && !io.ExpectedMappedBytes(4));
+   for(unsigned address:{0x20000U,0x21ffcU,0x22000U,0x30000U,0x3fffcU,0x40000U,0xac000U,0x17fffcU})
+    assert(!io.Mapped(address)); // no alias access is accepted before an actual successful TEST OS map
    for(unsigned worker=0;worker<120;worker++){
     auto& core=io.Core(worker);
     assert(core.nativePhysicalWindow && core.nativeWindowX==PioneerWorkerX(worker) && core.nativeWindowY==PioneerWorkerY(worker));
@@ -630,6 +640,7 @@ int main(int argc,char** argv){
    tt_resident_session_result end={};bool clean=true;const unsigned before=io.touches;
    assert(!IncompleteEnd(c,end,clean) && !clean && io.touches==before);f.Unknown();
    printf("PASS actual HELD TEST constructor/ALL120 physical endpoint expectations BEFORE any preparation/history/actual selected6 TLB words+FIFO observations/%u checks/ZERO zero-program or model instructions;NOT native preparation/model/STOP/END/hardware/Work/TPS qualification\n",checks);
+   printf("PASS HELD TEST OS expected first-aperture%u bytes/4 lengths+invalid-index/8 unmapped address refusals;DATA endpoint preflight ONLY,NOT positive actual-map/native factory or runtime qualification\n",io.ExpectedMappedBytes(0));
    continue;
   }
 #endif
