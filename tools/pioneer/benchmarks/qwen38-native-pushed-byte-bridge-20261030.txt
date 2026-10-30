@@ -1,0 +1,108 @@
+G3 opaque peer byte bridge -- HOST COMPONENT, NOT a native driver release
+2026-10-30 16:47 UTC
+=======================================================================
+Goal ACTIVE. Last physical whole-model rate0.207893161 tokens/sec;20 UNMET.
+No Pioneer SSH, power, driver installation, OS, Assistant, SD or hardware
+action. No numerical firmware/quantizer or immutable program DATA changed.
+
+Implementation and boundary
+----------------------------
+The isolated HOST peer implementation now selects the distinct G3 program
+package through the existing DATA selector. Its generic ISA model enables
+precise/pushed behavior for that DATA family without borrowing BUILD or
+native-context selectors. The implementation rejects kernel/native/Work
+and BUILD-image imports,including defined0. Ordinary G1/G2 paths remain.
+The opaque byte interface adds only an emitted raw NoC packet callback;
+it accepts no processor/private-state/ready/product/native-owner input.
+The actual sender issues both packets and its existing guards remain.
+
+A separate HOST receiver copies those actual payload/commit bytes into
+the SAME ROOT backing and advances only four incoming slave counters.
+It models four noncoherent L0 lines:remote writes deliberately retain stale
+lines,ROOT stores invalidate only a matching line,and a fence drops tags.
+No ROOT master counter or native saved journal is repaired or advanced.
+IMPORTANT:these component tests call the TEST fence explicitly. Wiring
+this receiver to actual native ROOT loads/stores/FENCE instructions and
+the actual native session's byte callbacks is still owed. This checkpoint
+does NOT claim native ROOT execution,held staging,all119 boot or ownership.
+
+Completed actual instruction evidence
+--------------------------------------
+DG main27198 and clean1717 BOTH EXIT0;full component logs byte-identical.
+Clean source is HEADdeae57530b plus ONLY the nine owned test paths. All nine
+paths were compared byte-for-byte with the worktree. Actual -O1/-Werror/
+ASan/UBSan engines remain virgin until component code+boot staging;generic
+constructor bytes are discarded,not copied into the shared byte backing.
+Nine fresh engines cover worker IDs1/96/119 and groups1/3/7 for EACH format.
+Each engine executes TWO changed-input matrix jobs without reset/replacing
+immutable code,then an actual early COMPONENT STOP+2048 inert instructions.
+
+Format/fullK       tensor instructions(groups1/3/7)  reads(groups1/3/7)
+Q8_0 /5120        1280 /3840 /8960                 162 /482 /1122
+Q4_K /17408       2176 /6528 /15232                72  /208 /480
+Q6_K /6144        1536 /4608 /10752                26  /74  /170
+
+All18 matrix jobs produce two actual payload+commit deliveries,valid full
+receipts and all eight independently expected counter frontiers. Their
+rows are bit-exact against separate POSTHOC arithmetic on synthetic RAW
+operands/weights;no CPU result is supplied. Changed second outputs are
+required. Cached zero remains stale after remote commit until the explicit
+TEST fence. ROOT master counters stay unchanged;outgoing counters wrap.
+Sixteen forks AFTER the actual first payload delivery/ACK each corrupt one
+raw source word. The sender refuses commit+DONE,parks,and executes2048
+actual fault-loop instructions with no following IO/counter/data changes.
+
+Q4 worker1 also executes actual activation predecessors at nonces1/3;
+the following down jobs use nonces2/4. Raw gate127/up1 yield actual SILU
+value42fe0000,packed native c07fc07f and signed scale bf800000. The test
+transports these ACTUAL produced bytes into the following matrix's first
+256 inputs. Other chunks are synthetic raw component inputs,not products
+of all68 workers. Both actual down jobs advance the real private frontier;
+the HOST stager follows that observed history. No frontier flag is set.
+Activation workspace08000000 is disjoint from raw weights04000000.
+
+Regressions and early failures (not hidden as successes)
+---------------------------------------------------------
+DA16134 EXIT0:initial Q8 six jobs+16 faults and original G1 storage control.
+DB16287 EXIT0:updated original G1 and G2 two-virgin-engine boot/WAIT/CSR-
+fault persistence/actual early STOP controls plus roles. Main and frozen
+role suites pass5 positive/47 missing+zero+two+foreign+BUILD+native+Work
+refusals. The G2 control explicitly uses its own DATA selector and image.
+The final bridge source equals the source used for those DB controls.
+
+CZ initially failed for a missing TEST selector-header include. DC/DD
+correctly faulted a premature Q4 down job before any read/tensor because
+the TEST omitted its mandatory activation predecessor. DE/DF then rejected
+the TEST's wrong byte expectation,not a new quantizer result. Reading the
+pinned QuantizeK/FfnPackNative establishes [-127,127] and negative scale;
+DG corrects those expectations and executes the actual prerequisite. No
+guard,packing rule or numerical firmware was relaxed to obtain a pass.
+
+New full-model evidence,still limited to its actual scope
+----------------------------------------------------------
+CW67964/74406 SAME original-model histories have BOTH completed embedding
+plus layer0;posthoc comparator78886 EXIT0 for both. All5120 embedding and
+5120 layer0 output words are BIT-EXACT,no tolerance,maxAbs0,relativeL20.
+Both41028-byte prefixes SHA
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+Actual ROOT instructions215371836;reserved/written stack6672/8192 for
+THIS layer only. Polling is included;NOT physical cycles or a speedup.
+Durable prefixes:generated.pioneer/qualification-inputs/
+ observed-first-layer-pushed-poll-{main,clean}-20261030/prefix-0.bin.
+These nonclosing snapshots do not reset or terminate the full histories.
+CW and large missing-receipt CY93250 are STILL LIVE on their SAME handles;
+the large dense failure cases and complete3position traces remain pending.
+
+Logs and next required integration
+------------------------------------
+/private/tmp/pioneer-q38-native-pushed-storage-{main,clean}-20261030-dg.log
+/private/tmp/pioneer-q38-native-pushed-roles-clean-20261030-dg.log
+/private/tmp/pioneer-q38-native-pushed-{legacy,precise}-clean-20261030-db.log
+Clean source:/private/tmp/pioneer-q38-native-pushed-dg.6FSw2CEE
+
+Next:bind this same byte transport/incoming counter/L0 model to the actual
+native ROOT and session fixture under its separate ALL21-parent QT3NODRV
+profile. Qualify actual held staging/ALL119 bootstrap,original multi-layer
+and token/state/KV numerics,lifecycle/cancel/END/reload and total stack,
+then integrate no-reference Work/Assistant and measure physical inference.
+Component passes are NOT substitutes for those requirements. DO NOT INSTALL.

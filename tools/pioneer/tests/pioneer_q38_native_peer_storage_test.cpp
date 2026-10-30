@@ -3,8 +3,8 @@
 #include "pioneer_q38_native_peer_test_bridge.h"
 #define PIONEER_TENSIX_MACHINE_ONLY
 #include "pioneer_tensix_image_test.cpp"
-#include "../PioneerQ38TokenPrograms.h"
-#include "../PioneerQ38GlobalWorkerLayout.h"
+#include "../PioneerQ38TokenSelectedPrograms.h"
+#include "../PioneerQ38SelectedGlobalWorker.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeDramSamplesProbe.h"
 #include <array>
 #include <memory>
@@ -16,7 +16,7 @@ struct NativePeerBytes {
  NativePeerBytes(){for(unsigned w=0;w<2;w++){
   l1[w].resize(0x180000/4);for(unsigned i=0;i<l1[w].size();i++)l1[w][i]=0xa53179U*(i+1)^0x51470000U*(w+1);
   for(unsigned i=0;i<16;i++)source[w][i]=i?0x12340000+i+w*0x100:0x16005;
-  command[w][5]=PioneerQ38GlobalWorkerLayout::Peer(w+1);counters[w].fill(0xfffffff8);
+  command[w][5]=PioneerQ38SelectedGlobalWorker::Peer(w+1);counters[w].fill(0xfffffff8);
  }}
  Q38NativePeerTestBytes Endpoints(){
   Q38NativePeerTestBytes b;b.context=this;
@@ -42,13 +42,13 @@ struct NativePeerBytes {
   b.clock=[](void*){return UINT64_C(1)<<40;};return b;
  }
  void Install(unsigned worker){
-  namespace P=PioneerQ38TokenPrograms;namespace W=PioneerQ38GlobalWorkerLayout;
+  namespace P=PioneerQ38TokenPrograms;namespace W=PioneerQ38SelectedGlobalWorker;
   auto& raw=l1[worker-1];for(unsigned i=0;i<P::CodeWords(worker);i++){
    uint32_t address=P::CodeAddress(worker,i),word;assert(P::ProgramWord(worker,address,word));raw.at(address/4)=word;
   }
   uint32_t boot[64]={};boot[0]=W::Magic;boot[1]=1;boot[2]=64;boot[3]=worker;boot[4]=W::Peer(worker);boot[5]=source[worker-1][0];boot[6]=8192;boot[7]=64;
   for(unsigned i=0;i<4;i++)boot[8+i*2]=i+1;
-  for(unsigned i=0;i<16;i++)boot[16+i]=source[worker-1][i];for(unsigned i=40;i<46;i++)boot[i]=W::BootWord(i);
+  for(unsigned i=0;i<16;i++)boot[16+i]=source[worker-1][i];for(unsigned i=40;i<PioneerQ38SelectedWorkerBootEnd;i++)boot[i]=W::BootWord(i);
   assert(W::BootShape(boot));for(unsigned i=0;i<64;i++)raw.at((W::Boot+i*4)/4)=boot[i];
   raw.at(W::Doorbell/4)=0;for(unsigned i=0;i<16;i++)raw.at((W::Status+i*4)/4)=0;
  } // pure component-test code/boot DATA,NOT native held staging or a native owner
@@ -67,13 +67,13 @@ int main(int argc,char** argv){
  for(unsigned w=1;w<=2;w++){
   const auto s=(w==1?first:second).Stats();assert((s.pc==0x2004c || s.pc==0x20050) && s.steps && s.statusWrites==17
    && !s.matrixInstructions && !s.moveInstructions && !s.floatOps && !s.requests && !s.responses && !s.pending && !s.sequence && !s.active && s.minStack>=0x6e000);
-  for(unsigned i=0;i<16;i++)assert(memory.l1[w-1].at((PioneerQ38GlobalWorkerLayout::Status+i*4)/4)==(i==3?unsigned(PioneerQ38GlobalWorkerLayout::Magic):0U));
+  for(unsigned i=0;i<16;i++)assert(memory.l1[w-1].at((PioneerQ38SelectedGlobalWorker::Status+i*4)/4)==(i==3?unsigned(PioneerQ38SelectedGlobalWorker::Magic):0U));
  }
  const unsigned events=memory.events;memory.counters[0][0]++;memory.command[0][1]^=1;
  first.Advance(256);assert(memory.counters[0][0]==0xfffffff9 && memory.command[0][1]==1 && memory.events==events);
  assert(!first.ObserveStopped() && !second.ObserveStopped() && !second.ObserveLayerBoundary());
  { // actual early STOP COMPONENT job on the pristine second CPU;NOT a full-model terminal
-  namespace W=PioneerQ38GlobalWorkerLayout;auto& raw=memory.l1[1];uint32_t job[64]={};
+  namespace W=PioneerQ38SelectedGlobalWorker;auto& raw=memory.l1[1];uint32_t job[64]={};
   job[0]=W::Magic;job[1]=1;job[2]=W::Stop;job[3]=2;job[4]=W::Peer(2);job[7]=17;
   uint32_t boot[64];for(unsigned i=0;i<64;i++)boot[i]=raw.at((W::Boot+i*4)/4);
   for(unsigned i=8;i<16;i++)job[i]=boot[i];assert(W::JobShape(job,boot,0,0));
@@ -84,5 +84,5 @@ int main(int argc,char** argv){
   second.AdvanceStopped(256);assert(second.Stats().steps==stopped.steps+256 && second.ObserveStopped() && memory.events==events);
  }
  assert(!memory.reads && !memory.puts && !unchanged.steps && sizeof(unchanged.l1)==32768);
- puts("PASS TWO virgin full tensor ISA engines/shared actual L1 from construction/generic constructor bytes DISCARDED/actual QGW1 boots+WAIT/idle CSR faults PERSIST/pristine second CPU actual early component STOP+256 genuine inert instructions/no new hardware event/host layer-window refuses without actual down-job arithmetic/old other-TU layout intact;COMPONENT ONLY,NOT full-model/native119 STOP/END/physical/Work/TPS");
+ printf("PASS TWO virgin full tensor ISA engines/shared actual L1 from construction/generic constructor bytes DISCARDED/actual QGW%u boots+WAIT/idle CSR faults PERSIST/pristine second CPU actual early component STOP+256 genuine inert instructions/no new hardware event/host layer-window refuses without actual down-job arithmetic/old other-TU layout intact;COMPONENT ONLY,NOT full-model/native119 STOP/END/physical/Work/TPS\n",PioneerQ38SelectedWorkerPrecise+PioneerQ38SelectedWorkerPushed+1);
 }

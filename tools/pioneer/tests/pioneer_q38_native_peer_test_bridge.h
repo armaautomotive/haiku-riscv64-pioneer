@@ -21,6 +21,8 @@ struct Q38NativePeerTestBytes {
  bool (*read)(void*,unsigned,uint32_t,uint8_t*,unsigned)=nullptr;
  bool (*put)(void*,unsigned,uint32_t,uint32_t)=nullptr;
  uint64_t (*clock)(void*)=nullptr;
+ void (*push)(void*,unsigned,const uint32_t*,const uint32_t*)=nullptr;
+ // Raw emitted NoC packet+bytes;G3 only. Not a ready/product/owner callback.
 }; // RAW L1/CSR/GDDR byte endpoints ONLY;no processor/owner/ready/product callbacks
 struct Q38NativePeerTestStats {
  uint32_t pc,steps,matrixInstructions,moveInstructions,floatOps,requests,responses,pending;
@@ -38,6 +40,8 @@ public:
  bool ObserveMatrixOutput()const; // independent arithmetic observer ONLY,never a ready/completion setter
  bool ObserveStopped()const;
  void AdvanceStopped(unsigned); // execute the actual immutable STOP loop for an inertness observation
+ bool ObserveFaulted()const;
+ void AdvanceFaulted(unsigned); // actual immutable fault loop,never a supplied fault/ready marker
  bool ObserveLayerBoundary(); // rebase HOST watchdog only AFTER actual down-job arithmetic/DONE/WAIT
 }; // virgin construction + execution ONLY;NO PC/register/history/ready setters
 #endif

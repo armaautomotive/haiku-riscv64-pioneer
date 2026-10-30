@@ -17,13 +17,13 @@ namespace G=PioneerQ38SelectedGlobalWorker;
 namespace H=PioneerQ38GlobalHeadLayout;
 namespace DL=PioneerQ38MixedLiveBlockRootLayout;
 struct GlobalChainPeer:NewCohortPeer {
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
  void* pushedContext=nullptr;
  void (*pushedBytes)(void*,unsigned,const uint32_t*,const uint32_t*)=nullptr;
  bool pushing=false;unsigned pushWords=0,pushPackets=0;
  std::array<bool,10> pushReadback={};
 #endif
-#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
  std::vector<uint8_t> preciseCode;bool preciseActive=false;
  unsigned precisePackets=0;
 #endif
@@ -37,19 +37,19 @@ struct GlobalChainPeer:NewCohortPeer {
   std::ifstream symbols(std::string(image)+"/program.symbols");std::string address,kind,name;waitPC=stopPC=faultPC=0;
   while(symbols>>address>>kind>>name){unsigned a=unsigned(std::stoul(address,nullptr,16));if(name=="block_peer_wait_load")waitPC=a;if(name=="block_peer_stopped")stopPC=a;if(name=="block_fault_stopped")faultPC=a;}
   assert(waitPC && stopPC && faultPC);boot[0]=G::Magic;for(unsigned i=40;i<PioneerQ38SelectedWorkerBootEnd;i++)boot[i]=G::BootWord(i);
-#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
   preciseCode=Read((std::string(image)+"/precise.bin").c_str());assert(!preciseCode.empty() && preciseCode.size()<=0x10000);
 #endif
   assert(G::BootShape(boot.data()) && !M::BootShape(boot.data()));
   for(unsigned i=0;i<64;i++)memory[G::Partial+i*4]=0x7fc00001;
  }
-#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
  const std::vector<uint8_t>* Rom(unsigned a,unsigned& base)const override{
   if(Range(a,0x30000,unsigned(preciseCode.size()))){base=0x30000;return &preciseCode;}
   return NewCohortPeer::Rom(a,base);
  }
  uint32_t Load(uint32_t a)override{
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
   if(Range(a,G::PushBuffer,256))return memory.at(a);
   if(pushing && Range(a,0xffb20000,40)){
    assert(!(a&3));const unsigned i=(a-0xffb20000)/4;pushReadback[i]=true;return command[i];
@@ -89,7 +89,7 @@ struct GlobalChainPeer:NewCohortPeer {
   return pc==waitPC && !sequence && !requests && !responses && !pending && memory.at(M::Status+12)==G::Magic && !memory.at(M::Status+8);
  }
  void Store(uint32_t a,uint32_t value)override{
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
   if(Range(a,G::PushBuffer,256)){
    assert(Range(pc,M::Code,unsigned(front.size())) && !pending && drained);memory[a]=value;return;
   }
@@ -112,7 +112,7 @@ struct GlobalChainPeer:NewCohortPeer {
    pushWords=0;pushPackets++;doorbellRead=false;return;
   }
 #endif
-#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
   if(preciseActive && Range(a,0x90800,1664)){assert(!pending && !(a&3));memory[a]=value;return;}
 #endif
   if(Range(a,G::Partial,256)){
@@ -145,11 +145,11 @@ struct GlobalChainPeer:NewCohortPeer {
   Poison();PoisonTail();for(unsigned i=0;i<4096;i++)buffers[4096+i]=0x7fc00000;active=true;
  }
  void Receive(){
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
   pushing=false;pushWords=pushPackets=0;pushReadback.fill(false); // reached transport boundary ONLY;no processor/tensor state setter.
 #endif
   unsigned op=memory.at(M::Job+8);
-#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
   if(op==3){ReceivePrecise();return;}
   preciseActive=false;
 #endif
@@ -179,7 +179,7 @@ struct GlobalChainPeer:NewCohortPeer {
 #include "PioneerQ38RootWordMap.h"
 #endif
 struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
  std::array<uint32_t,4> pushedSlave={{0xfffffff0U,0xfffffff1U,0xfffffff2U,0xfffffff3U}};
  std::array<unsigned,4> l0Tags={{~0U,~0U,~0U,~0U}};
  std::array<std::array<uint32_t,4>,4> l0Data={};
@@ -328,7 +328,7 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
   for(unsigned i=0;i<16;i++)sources[i]=source[i]=i?0x76540000+i:0x16005;
   for(unsigned w=0;w<119;w++){
    child[w]=std::make_unique<GlobalChainPeer>(worker,global,w+1);auto& p=*child[w];p.bytes=this;
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
    p.pushedContext=this;p.pushedBytes=[](void* context,unsigned worker,const uint32_t* packet,const uint32_t* data){
     static_cast<GlobalChainInstructionMachine*>(context)->IncomingPushed(worker,packet,data);
    };
@@ -389,7 +389,7 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
  }
  unsigned StepLimit()const override{return PioneerQ38InstructionWindows::Limit;}
  uint32_t Load(uint32_t a)override{
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
   for(unsigned i=0;i<4;i++)if(a==0xffb20000+SlaveOffset(i))return pushedSlave[i];
   if(Range(a,G::Mailbox,119*256)){
    const unsigned line=a&~15U,index=(a>>4)&3;
@@ -444,7 +444,7 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
    for(unsigned i=0;i<17408;i++){
     float a=Float(Get(outer[8],outer[9]+gate+i*4)),b=Float(Get(outer[8],outer[9]+up+i*4));double e=exp(-fabs(double(a))),sigmoid=a>=0?1/(1+e):e/(1+e);
     float expected=(a*float(sigmoid))*b,actual=
-#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
      Float(child[i/256]->memory.at(0x90800+(i%256)*4));
 #else
      Float(memory.at(RB::Input+i*4));
@@ -456,7 +456,7 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
   for(unsigned at=0;at<r[14];at+=256){
    float raw[256];PioneerQ38ProjectionInput q;
    for(unsigned i=0;i<256;i++)raw[i]=
-#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
     r[43]==4?Float(child[at/256]->memory.at(0x90800+i*4)):
 #endif
     Float(memory.at(descriptor[53]+(at+i)*4));
@@ -501,7 +501,7 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
   profile.Dump(observation.Total(steps));
  }
  void Store(uint32_t a,uint32_t value)override{
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
   if(Range(a,G::Mailbox,119*256) && l0Tags[(a>>4)&3]==(a&~15U))l0Tags[(a>>4)&3]=~0U; // only a resident matching line is invalidated.
 #endif
   assert(!(a&3) && !CodeAddress(a));
@@ -585,7 +585,7 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
   bool bank=false;for(unsigned b=0;b<7;b++)bank |= route==PioneerQ38ProjectionRoute(b);
   if(bank){
    bool rootConv=Range(pc,0x64000,unsigned(conv.size()));
-#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
    rootConv=rootConv && local!=RB::Scratch; // precise consumer uses normal ROOT scratch
 #endif
    assert(rootConv?Range(local,0x80000,0x1100):local==RB::Scratch);
@@ -622,7 +622,7 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
     if(remote==M::Doorbell){
      unsigned op=p.memory.at(M::Job+8);
      if(op==1)matrixJobs++;else if(op==7)convJobs++;else if(op==8)gdnJobs++;else if(op>=9 && op<=11)denseJobs++;
-#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
      else if(op==3){assert(w<68 && matrices==(!CL::Dense(layer)?7U:6U));}
 #endif
      else if(op==G::GlobalMatrix){assert(completed==64);if(!globalJobs)HeadInput();globalJobs++;}

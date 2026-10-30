@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
-#if defined(_KERNEL_MODE) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_WORK_INFERENCE)
+#if defined(_KERNEL_MODE) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_WORK_INFERENCE) \
+ || defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION)
 #error Offline peer implementation may never compile into native/Work code
 #endif
 #define PIONEER_Q38_NATIVE_PEER_TEST_BRIDGE 1
@@ -35,7 +37,7 @@
 namespace NativeQ38PeerInstructionModel {
 #define PIONEER_Q38_GLOBAL_CHAIN_MACHINE_ONLY
 #include "pioneer_q38_global_chain_instruction_test.cpp"
-#include "../PioneerQ38TokenPrograms.h"
+#include "../PioneerQ38TokenSelectedPrograms.h"
 struct NativePeer:GlobalChainPeer,CohortBytes {
  PioneerQ38SharedTestBinding& binding;unsigned deviceReads=0,deviceWrites=0,statusWrites=0,scalarFpInstructions=0;
  uint32_t publishedCounts[8]={},publishedCommands[10]={};bool publishedPending=false;
@@ -45,6 +47,13 @@ struct NativePeer:GlobalChainPeer,CohortBytes {
   (void)&RunPersistentGdnPair;(void)&Refusals;(void)&LateRefusals;
   assert(!steps && pc==0x6000 && !active && !sequence && !matrixInstructions && !requests && !responses);
   bytes=this;PoisonDst();Poison();
+#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+  assert(binding.bytes.push);
+  pushedContext=&binding;pushedBytes=[](void* context,unsigned worker,const uint32_t* packet,const uint32_t* raw){
+   auto& b=*static_cast<PioneerQ38SharedTestBinding*>(context);
+   assert(b.executing && worker==b.worker && b.bytes.push);b.bytes.push(b.bytes.context,worker,packet,raw);
+  }; // SAME raw byte/CSR fabric,only after the actual sender's NoC instruction.
+#endif
   // Never expose generic constructor mailboxes,operands or code as native
   // data. Actual held staging supplies boot/code/status before first ARM.
   memory.ForgetConstruction();buffers.ForgetConstruction();l1.ForgetConstruction();
@@ -151,6 +160,14 @@ void Q38NativePeerTestCpu::AdvanceStopped(unsigned count){
  assert(count && count<=2048 && ObserveStopped());auto& p=*impl->cpu;
  for(unsigned i=0;i<count;i++){p.StepBlock();assert(ObserveStopped());}
 } // real STOP instructions,not a host no-op or a supplied STOP receipt
+bool Q38NativePeerTestCpu::ObserveFaulted()const{
+ namespace G=NativeQ38PeerInstructionModel::G;const auto& p=*impl->cpu;
+ return p.pc==p.faultPC && p.memory.at(G::Status+8)==G::Fault;
+}
+void Q38NativePeerTestCpu::AdvanceFaulted(unsigned count){
+ assert(count && count<=2048 && ObserveFaulted());auto& p=*impl->cpu;
+ for(unsigned i=0;i<count;i++){p.StepBlock();assert(ObserveFaulted());}
+} // read/execute only;NO method changes a fault marker or processor state
 bool Q38NativePeerTestCpu::ObserveLayerBoundary(){
  namespace G=NativeQ38PeerInstructionModel::G;auto& p=*impl->cpu;
  if(impl->observedLayers>=192 || p.memory.at(G::Job+8)!=1 || p.memory.at(G::Job+5*4)!=impl->observedLayers%64
