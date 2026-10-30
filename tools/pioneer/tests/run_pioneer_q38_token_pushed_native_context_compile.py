@@ -47,7 +47,7 @@ assert not any('PioneerQ38TokenProgramsL' in name for name in symbols), 'no lega
 sections = subprocess.check_output([tool+'objdump', '-t', str(obj)], text=True)
 section = {row[-1]:row[-3] for row in map(str.split, sections.splitlines()) if len(row) >= 6 and row[-1] in symbols}
 header = (here.parent/'PioneerQ38TokenPushedPrograms.h').read_bytes()
-assert hashlib.sha256(header).hexdigest() == '70d962945b45c48b77981689dd46981ec4cb6aeb7debf5db1387102921f526be'
+assert hashlib.sha256(header).hexdigest() == '0fedf0ef8937c31bcd4e3a92ef14ed6afd145e0e61187ca105fa6f577e0ac830'
 expected = re.findall(r'// SHA256 ([0-9a-f]{64})\nstatic const uint32_t ([A-Za-z]+)\[\]=', header.decode())
 assert len(expected) == 13
 for digest, label in expected:

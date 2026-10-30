@@ -60,8 +60,10 @@ static void PushedReceipt(const uint32_t* d,unsigned w,const uint32_t* expectedA
 static void PushedBegin(const uint32_t* d,uint32_t* tracked,uint32_t* slave){
  q38_pushed_begin_shared(d,tracked,slave,Seal,FrameSeal);
 }
-static void PushedWait(const uint32_t* d,unsigned w,const uint32_t* expectedAfter){
- for(unsigned poll=0;poll<65536;poll++){
+static void PushedWait(const uint32_t* d,unsigned w,const uint32_t* expectedAfter,unsigned groups,unsigned inputs){
+ const unsigned limit=M::ReceiptPollBudget(groups,inputs);
+ if(!limit)scalar_fault_park();
+ for(unsigned poll=0;poll<limit;poll++){
   // Volatile alone cannot see another NoC client's updates through L0.
   Fence();unsigned marker=*Words(PushedSlot(w));
   if(marker==M::ReceiptMagic){PushedReceipt(d,w,expectedAfter);return;}

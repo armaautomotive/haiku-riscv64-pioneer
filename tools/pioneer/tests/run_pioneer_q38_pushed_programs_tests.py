@@ -15,7 +15,7 @@ root, worker = map(pathlib.Path, sys.argv[1:])
 assert root.is_absolute() and worker.is_absolute()
 generator = here.parent/'generate_qwen38_token_programs.py'
 committed = here.parent/'PioneerQ38TokenPushedPrograms.h'
-digest = '70d962945b45c48b77981689dd46981ec4cb6aeb7debf5db1387102921f526be'
+digest = '0fedf0ef8937c31bcd4e3a92ef14ed6afd145e0e61187ca105fa6f577e0ac830'
 
 def records(path, key):
     tree = ast.parse(path.read_text())

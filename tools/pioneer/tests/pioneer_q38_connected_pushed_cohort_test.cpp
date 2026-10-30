@@ -8,6 +8,23 @@ struct PushedCohortMachine:OriginalTokenFlowMachine {
  using OriginalTokenFlowMachine::OriginalTokenFlowMachine;
  bool forked=false,injected=false,badObserved=false,continued=false;
  unsigned fault=8,cases=0,handoffs=0,packetsAtBad=0,commandsAtBad=0;
+ unsigned densePollReads=0,denseZeroReads=0;bool denseReceipt=false;
+ uint32_t Load(uint32_t address)override{
+  const unsigned value=OriginalTokenFlowMachine::Load(address); // EXACTLY one actual load;no state setter.
+  if(continued && !injected && !denseReceipt && !position && layer==3 && matrices==1 && address==G::Mailbox){
+   densePollReads++;
+   if(!value)denseZeroReads++;
+   else if(value==G::ReceiptMagic){
+    const auto& p=*child[0];
+    assert(p.type==8 && p.inputs==5120 && p.matrixInstructions==8960 && p.requests==1122
+     && p.responses==1122 && p.pushPackets==2);
+    denseReceipt=true;
+    printf("OBSERVED genuine first dense Q8 receipt/SAME prior3layers+119 histories/worker0 actual8960 tensor instructions+1122 reads+payload+commit/zeroMarkerReads%u/allMarkerReads%u/afterOld65536Limit%u;NO elapsed/native/physical/TPS proof\n",
+     denseZeroReads,densePollReads,unsigned(denseZeroReads>=65536));
+   }
+  }
+  return value;
+ }
  static unsigned CounterAddress(unsigned i){return 0xffb20000+FfnPersistentPeer::CounterOffset(i);}
  void Predecessor(){
   assert(!position && !layer && matrices==4 && Phase()==6 && !allLayers && !committed && !convJobs && !stopJobs);
@@ -76,7 +93,7 @@ int main(int argc,char** argv){
   puts("CONTINUE SAME original ROOT+119 histories AFTER actual cohort handoff gate/NO reset,transplanted processor state or fabricated token/first-layer snapshot remains INCOMPLETE DATA only");
   const bool okay=m->RunTokens();
   if(m->kvFault){assert(!okay);m->VerifyKvFault();assert(source.Ready());_exit(0);}
-  assert(okay && source.Ready() && m->handoffs==1);m->VerifyTokens();
+  assert(okay && source.Ready() && m->handoffs==1 && m->denseReceipt);m->VerifyTokens();
   assert(observed->Complete() && observed->Save(argv[7]) && source.Ready());
   puts("SAVED actual complete3position traces AFTER genuine192layers+119STOP/cohort gate history preserved;NOT independent CPU match,native END,physical,Work or TPS qualification");
  }

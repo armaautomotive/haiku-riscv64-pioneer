@@ -10,6 +10,17 @@ namespace Base=PioneerQ38PreciseWorkerLayout;
 using namespace Base;
 enum {Magic=0x33574751,JobWitness=0x334f4751,ReceiptMagic=0x33504d51,
  Root=129,Mailbox=0x118000,Stride=256,ReceiptWords=64,PushBuffer=0x83c00};
+// Bounded polling policy for an already admitted ordinary matrix, NOT a
+// clock/deadline or execution grant. Reserve the existing 65536 polls per
+// 16-row group and per <=5120 input chunk. Larger legal jobs must not inherit
+// the same local-poll limit as a single small job. No host override/retry.
+enum {ReceiptPollsPerUnit=65536,MaxReceiptGroups=16,MaxReceiptInputs=17408,
+ MaxReceiptPolls=4194304};
+static inline unsigned ReceiptPollBudget(unsigned groups,unsigned inputs){
+ if(!groups || groups>MaxReceiptGroups || !inputs || inputs>MaxReceiptInputs || (inputs&255U))return 0;
+ const unsigned chunks=inputs<=5120?1U:inputs<=10240?2U:inputs<=15360?3U:4U;
+ return (groups*chunks)<<16;
+}
 static inline unsigned BootWord(unsigned i){
  return i==40?unsigned(JobWitness):i==49?unsigned(ReceiptMagic):i==50?unsigned(Root)
   :i==51?unsigned(Mailbox):i==52?unsigned(Stride):i==53?unsigned(PushBuffer)

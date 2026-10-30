@@ -51,7 +51,7 @@ int main(int argc,char** argv){
    uint32_t unchanged=0xdeadbeef;assert(!P::ProgramWord(worker,address,unchanged) && unchanged==0xdeadbeef);refusals++;
   }
  }
- assert(allWords==3048819 && P::CodeWords(0)==40856 && P::CodeWords(1)==25277);
+ assert(allWords==3048868 && P::CodeWords(0)==40905 && P::CodeWords(1)==25277);
  for(unsigned worker:{120U,UINT32_MAX}){
   uint32_t unchanged=0xdeadbeef;const auto span=P::CodeSpan(worker,0);
   assert(!P::CodeSpans(worker) && !P::CodeWords(worker) && P::CodeAddress(worker,0)==UINT32_MAX

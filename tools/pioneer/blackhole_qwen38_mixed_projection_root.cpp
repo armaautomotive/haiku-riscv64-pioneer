@@ -124,7 +124,7 @@ static void Gather(const uint32_t* d,uint32_t* tracked,unsigned w){
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
  uint32_t receiptAfter[8];
  for(unsigned i=0;i<8;i++)receiptAfter[i]=Words(L::Counters)[w*8+i]+(i==1?flits:i==0 || i==2 || i==3 || i==6?reads:0U)+PushedDelta(i);
- PushedWait(d,w,receiptAfter);
+ PushedWait(d,w,receiptAfter,groups,k);
 #endif
  Transfer(d,tracked,w,0x83f00,256+groups*64,false);uint32_t proof[64];
  for(unsigned i=0;i<64;i++)proof[i]=Words(L::Scratch)[i];

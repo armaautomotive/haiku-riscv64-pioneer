@@ -1,0 +1,95 @@
+G3 work-scaled receipt polling -- BUILD/HOST WIP, NOT a speed result
+2026-10-30
+================================================================
+Goal ACTIVE. Last physical whole-model rate0.207893161 tokens/sec;20 UNMET.
+No Pioneer SSH, power, driver, OS, Assistant, SD or hardware action here.
+
+Authoritative old-run failure and read-only diagnosis
+------------------------------------------------------
+Old BB BX38033/99299 BOTH terminal EXIT1 after three recurrent layers, at
+position0/layer3/first dense Q8 projection. Warm CE43309 independently also
+EXIT1 at the same boundary. CE55607 reached actual ROOT fault and SIGABRT;
+a debugger preserved its SAME live processor objects for read-only inspection.
+First-layer bitexact prefixes remain valid; these are FAILED full-model runs.
+
+Before failure: ROOT layer3/matrix1, steps8397824, packets111127, remaining
+local poll counter54886. Worker0 was active, sequence34, Q8/K5120, with
+189 request/responses,1488 tensor instructions and zero pushed packets.
+At actual ROOT park: steps20966761, packets STILL111127, poll counterZERO.
+Worker0 remained active at pc471928 (faultPC131228),1070 request/responses,
+8536 of8960 tensor instructions, no pending read and zero pushed packets.
+All119 worker objects were inspected:54 active, ZERO faulted,54 with no
+push yet,65 with both payload+commit sent. Samples95/118 had finished,
+962 reads and7680 tensor instructions. This matches the canonical12288-row
+Q8 partition:54 seven-group workers versus65 six-group workers.
+
+No simulated PC/register/tensor/nonce/ready state was changed or transplanted.
+ROOT's unchanged packet count, exhausted wait counter and unfinished healthy
+producer identify an insufficient fixed65536 LOCAL-poll allowance in this
+instruction model, not a numerical or worker fault. No physical wall-clock
+deadline, hardware timing or throughput is inferred from these observations.
+An optional large std::map debugger lookup stalled and did NOT establish
+the receipt slot value. It is not part of the proof. After useful diagnostics
+were captured, only our debugger PID16207 was ended; target7013 had already
+faulted/asserted. Both are verified gone and CE55607 is terminal1. No Pioneer
+power action or live-history reset occurred. The eight older G1/G2/S/native
+histories were left running, not killed or restarted.
+
+Candidate policy and exact scope
+----------------------------------
+Only explicit G3 BUILD changes. An already-admitted ordinary matrix gets
+65536 polls per16-row group and per <=5120 input chunk. Existing recipe
+validators bound groups1..16 and normal matrix inputs<=17408. Zero,
+misaligned or out-of-range dimensions are refused. The limit is at most
+4194304 polls; arithmetic cannot overflow. No division/mul-high/CSR or host
+override/retry is introduced. All fences, marker/receipt grammar, source
+seals and expected-counter checks remain. This is a finite WORK policy,
+not a physical-clock guarantee. Early arrival still returns immediately.
+Gather passes its existing admitted groups/K; no new public selector exists.
+
+The updated HOST cohort observer records genuine first-dense receipt loads
+and requires actual8960 tensor instructions,1122 reads and BOTH producer
+writes. It only observes after the normal load, with no guest-state setter.
+It does NOT manufacture a late completion or assert a speedup. The same
+parent then continues through all layers/positions/119STOP; no shortcut.
+
+Completed checks; continuing jobs are NOT terminal successes
+-------------------------------------------------------------
+CU inspect99605/5519 BOTH EXIT0; all8 artifacts byte-identical. Text130888
+leaves184 bytes, auxiliary32720 leaves48 bytes inside UNCHANGED windows.
+Parent static frame1616, component2112; combined runtime stack still owed.
+ROOT ELF190444/SHA696f8f125a0b425b9ae274344981fe31c72560e3210b0f6bcbe9b627632969a5.
+Sender AF is unchanged. Updated13-section program DATA SHA
+0fedf0ef8937c31bcd4e3a92ef14ed6afd145e0e61187ca105fa6f577e0ac830;
+ALL120 code3048868 words, ROOT40905 and each peer25277.
+
+CW strict builds in BOTH snapshots pass exact pins/owned symbols/bounds,
+1088 valid budget cases/132 invalid cases, every program word,36 generator
+refusals/27 section-map refusals/4 old-DATA coexistence controls, plus12
+positive/280 refused BUILD roles and92 early CLI refusals. CT initially
+failed only for a missing HOST <initializer_list> include; CU fixes it.
+Both CW69-case actual connected receiver suites passed:64 receipt-word
+faults, actual finite missing-commit timeout and4 incoming-counter faults,
+followed by the unchanged parent's genuine next nonce2 first read. This
+uses small group1 jobs; LARGE-job missing-commit runtime coverage is still
+owed and is not implied by the policy unit or these69 cases.
+Clean CX16732 terminal EXIT0: actual native G3 body, all13 compiled arrays
+SHA-exact, actual five renamed entries and five wrappers inert, individual
+Token frame1232. No runtime/native lifecycle/Work or physical grant follows.
+
+Enclosing CW67964(main)/74406(clean) remain LIVE after the above gates and
+have now started NEW full histories from RESET/original bytes/SAME119.
+They replace terminal CE failures, not live histories. Poll SAME handles.
+Sources:/private/tmp/pioneer-q38-push-poll-main-cw.JMARFxyw
+        /private/tmp/pioneer-q38-push-poll-clean-cw.IuaMnylv
+Strict logs:/private/tmp/pioneer-q38-push-poll-{main,clean}-20261030-cw-strict.log
+Receiver logs use -cw-receiver.log. Full logs:
+/private/tmp/pioneer-q38-push-poll-flow-{main,clean}-20261030-cw.log
+Trace main:/private/tmp/pioneer-q38-push-poll-flow-main-cw.9tXRBtGX/observed
+Trace clean:/private/tmp/pioneer-q38-push-poll-flow-clean-cw.Nn3YCdmN/observed
+Native log:/private/tmp/pioneer-q38-push-poll-native-clean-20261030-cx.log
+
+Still owed:actual large dense completion/finite large missing-commit tests,
+all64/three positions/state/KV/vocabulary/119STOP numerics and combined
+stack, G3 coupled native lifecycle/cancellation/END/reuse, Work/Assistant
+integration and controlled physical whole-model tokens/sec. DO NOT INSTALL.
