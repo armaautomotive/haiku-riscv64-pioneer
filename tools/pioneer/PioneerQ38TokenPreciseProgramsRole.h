@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE
+#error QGW3 publisher cannot select fixed QTP2 program DATA
+#endif
 // Rechecked DATA selection only. No native or image ownership capability.
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION
 #error Worker-sealed admission BUILD cannot select fixed QTP2 DATA

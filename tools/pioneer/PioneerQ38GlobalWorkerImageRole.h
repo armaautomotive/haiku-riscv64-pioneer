@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE
+#error QGW3 publisher cannot enter the old QGW1 image role
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION
 #error Worker-sealed admission is a returning ROOT policy,not a worker image
 #endif

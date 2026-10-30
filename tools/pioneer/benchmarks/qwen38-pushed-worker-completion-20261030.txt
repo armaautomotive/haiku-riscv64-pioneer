@@ -1,0 +1,140 @@
+QGW3 pushed worker completion sender: offline BUILD prototype, 2026-10-30
+=====================================================================
+
+NOT installed. NO ROOT consumer, native permission, Work-mode enablement,
+original-27B result, physical card test, or measured inference improvement.
+Last measured physical whole-model rate remains 0.207893161 tokens/sec;
+the 20 tokens/sec objective is UNMET. Emulated instruction counts are not TPS.
+
+Purpose and boundary
+--------------------
+The preceding worker-admission first-layer profile attributed 138,561,868
+of 197,243,744 ROOT instructions to Transfer, packet_seal, and Quiet. This
+motivates replacing repeated remote worker-proof reads with bounded messages
+published by the workers themselves. It does NOT predict physical savings.
+
+This checkpoint implements ONLY the sender. A distinct QGW3 boot/job grammar
+prevents the new writes from entering existing QGW1/QGW2 ROOT/native flows.
+The unchanged QGW2 full BUILD artifact pins are checked first. Only the new
+frontend is compiled; the precise and mathematical object inputs are reused.
+Relocated capsule binary hashes therefore differ without changing the math
+source. No numerical validation is inserted in production Work mode.
+
+After an actual ordinary matrix operation and its existing completion seals,
+the actual RISC worker constructs 256 bytes in local L1: job binding, worker,
+layer/position/nonce, all physical source words, and all pre-push counters.
+It sends a non-inline, non-posted payload write to that worker's ROOT slot,
+waits for command acceptance AND the complete expected outgoing-counter
+delta including the write ACK, then sends a separate 4-byte commit write.
+CMD_CTRL readback precedes counter observation. An idle command register
+alone is deliberately insufficient. Both packets retain source/boot seals,
+command readback, finite polling, and exact modulo-32-bit counter deltas.
+Unknown completion parks: no retry, counter rebase, reset, or cleanup.
+
+Before each packet the current job/doorbell is still fully sealed. After
+the commit becomes visible, only immutable boot/source and outgoing-counter
+checks remain, so an arriving next descriptor cannot invalidate the previous
+job's return. This does NOT yet qualify execution of that next job.
+
+Primary register/ordering references used in designing this prototype:
+https://raw.githubusercontent.com/tenstorrent/tt-isa-documentation/main/BlackholeA0/NoC/Counters.md
+https://raw.githubusercontent.com/tenstorrent/tt-isa-documentation/main/BlackholeA0/NoC/README.md
+https://raw.githubusercontent.com/tenstorrent/tt-metal/main/tt_metal/hw/inc/internal/tt-1xx/blackhole/noc/noc_parameters.h
+https://raw.githubusercontent.com/tenstorrent/tt-metal/main/tech_reports/Blackhole/BlackholeBringUpProgrammingGuide.md
+
+Incoming writes affect ROOT slave counters, not its outgoing master counters.
+The modeled ROOT slave delta is starts=2, flits=5, received=2, ACKs=2;
+worker outgoing delta is {0,0,2,0,2,5,2,2}, including the aliased accepted
+command counter. These are checked against synthetic raw NoC endpoints;
+their physical implementation and ROOT cache policy still require validation.
+
+Paired qualification
+--------------------
+Base: 478c451d41e35a49a4574970ea38be25a23ae199.
+Separate source snapshots: pioneer-q38-push-worker-main-aa.AZ1hDua6 and
+pioneer-q38-push-worker-clean-aa.brFqB4T7 under /private/tmp.
+All 13 owned sources are compared byte-for-byte against the working tree.
+
+AF strict firmware BUILD: main session 95729 and clean 90994 EXIT 0.
+Each validates the unchanged G1/G2 ancestors, ten new artifact pins, no
+undefined/mutable ELF symbols, allocated-section whitelist, reserved-s11
+discipline, forbidden-instruction/CSR gates, and max individual frame 1568.
+Combined-stack lifetime remains owed; tested paths additionally enforce
+the original 8 KiB stack boundary in actual execution.
+
+AC role checks: main 22366 and clean 69998 EXIT 0, each 6 positive controls
+and 91 refusals including defined-zero, late mutations, old ROOT/worker,
+fixed program DATA, native context, CPU-validation, and Work contamination.
+
+AG ASan/UBSan runtime: main 34859 and clean 36759 EXIT 0. Each executes the
+actual pinned RISC and Tensix instructions with synthetic raw tensor/NoC
+endpoints, not host-fed matrix products. Workers 1, 96, and 119 each perform
+full K=5120 arithmetic (1280 tensor instructions and 162 real read transfers)
+before publishing. Acknowledgment is withheld despite idle CMD_CTRL; no
+commit or DONE appears during 2048 actual instructions. Parent history then
+continues through the genuine ACK, commit, and sequence-1 WAIT.
+
+At that same reached history, 16 forked physical-source corruptions per
+worker (48 total) fault after the payload ACK and before a commit; no next
+packet or DONE, no reset/retry/cleanup, and 2048 inert instructions each.
+Three further forked missing-ACK histories exhaust the real finite polling
+budget and park without publishing a ready marker or changing the retained
+outstanding packet. Three additional forked histories overwrite the job and
+doorbell with nonce 2 immediately when commit arrives and still return to
+the real nonce-1 WAIT with the original completion metadata. No nonce-2
+arithmetic or native ownership is claimed. Every one of the 64 received
+receipt words is individually mutated and rejected by its binding check.
+
+Final AH runtime: main 39566 and clean 39265 EXIT 0, repeating every AG
+case with cold-boot outgoing write-counter wraparound inputs. Exact modulo
+results are asserted: final write ACK=0, data flits=1, write requests=0.
+These cold values are established before the first worker instruction,
+not by rebasing a live job's observed counters.
+
+Earlier test failures are retained as failures, not reclassified passes:
+AB swallowed the old read-completion handler when modeling idle CMD_CTRL;
+AC fell through to the inherited read-only packet-programming whitelist
+after the last matrix read. Both are test-endpoint bugs. The corrected
+endpoint admits only the exact ten-word completion commands, in order, from
+the actual frontend after all 162 reads and 1280 tensor instructions, with
+every command word read back before submission. No firmware guard was
+weakened to pass them. AD and subsequent runtime histories are new runs.
+
+Pinned new BUILD artifacts (bytes, SHA-256)
+----------------------------------------
+boot.bin 4 a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c
+globalworker.bin 9128 818e2c1cf3b99d0ee438c988bd28c96dc97bcaf63887b17cbf79912dbe7b7598
+precise.bin 8392 32c078029e1c74ec4bd9744ea494433f5003f63a936df05445d3066c722a7ecc
+dense.bin 10332 d1749707ffe803e28dced9c7d065e763f125009678ace33b4d468109984869ad
+text.bin 5984 e1bd0788b82ff4f3ad58e1d527199ba4bc23ecd55936f7940d3f669c617aa419
+affine.bin 5360 47c52fee6ccfb0a8847fe17a9d43d4016e7cfc6c68cc1427673f6869cd287b78
+ffn.bin 16456 23ce6cc2dc07aa445b7babcac12a068dc3542001329cd24831e8e6749ff3a16f
+service.bin 9888 7d5a42a087bc6bf9d24319583f3655ae344828a51b1092154f7b0567b0fdb187
+gdn.bin 35564 741e1a7eda2a8d6a7f01c587b2ead2bbf41402ce0cbf96cb7a9616f36c293001
+program.elf 139684 ca6e8131fc9bde4a1276903bfc0d2595b3f51a8569d320ee732007de96313451
+
+Reproduction (absolute SDK/image paths; fresh output directory)
+-------------------------------------------------------------
+python3 tools/pioneer/build_qwen38_pushed_worker_image.py SDK NEW_IMAGE
+python3 tools/pioneer/tests/pioneer_q38_pushed_worker_role_test.py
+python3 tools/pioneer/tests/run_pioneer_q38_pushed_worker_tests.py MIXED_IMAGE NEW_IMAGE
+SDK used: /Volumes/HaikuBuildLocal/generated.riscv64
+MIXED_IMAGE: generated.pioneer/qualification-inputs/mixed-worker-20261030
+AF images: /private/tmp/pioneer-q38-push-worker-{main,clean}-20261030-af-image
+Runtime logs: /private/tmp/pioneer-q38-push-worker-runtime-{main,clean}-20261030-{ag,ah}.log
+
+Still required before this can improve deployed inference
+--------------------------------------------------------
+An actual ROOT consumer with a distinct grammar; phase-exclusive ownership
+and clearing/journaling of existing 0x118000 proof slots; cache-policy and
+incoming-slave-counter qualification; all operator types and persistent
+next-job/layer/token histories; original-model numerical comparison;
+STOP/HOLD, faults/cancellation/readout/reuse; combined stack proof; native
+mapping/ownership and driver/Assistant integration; then controlled physical
+validation and complete model timing. Existing QGW2 ROOT consumers are NOT
+compatible with these extra writes. Do not install this BUILD prototype.
+
+No Pioneer network, power, driver, OS, Assistant, SD, hardware, or mains
+actions occurred. Eight older primary full-model histories continue on
+their original handles; 27 deliberately suspended histories remain saved,
+not silently killed, restarted, or relabeled terminal.

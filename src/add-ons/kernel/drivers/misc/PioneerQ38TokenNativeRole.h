@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE
+#error QGW3 publisher is not a native token context capability
+#endif
 // No guard: the exact native COMPILE-ONLY perimeter must hold on every include.
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION
 #error Worker-sealed admission BUILD is NOT a native token context capability

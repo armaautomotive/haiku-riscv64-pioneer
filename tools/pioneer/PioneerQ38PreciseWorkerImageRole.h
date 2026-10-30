@@ -1,4 +1,18 @@
 /* SPDX-License-Identifier: MIT */
+#ifndef PIONEER_Q38_PRECISE_WORKER_BINDING_H
+#define PIONEER_Q38_PRECISE_WORKER_BINDING_H
+#ifdef PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE
+enum {PioneerQ38PreciseWorkerPushProfile=1};
+#else
+enum {PioneerQ38PreciseWorkerPushProfile=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE
+#include "PioneerQ38PushedWorkerImageRole.h"
+static_assert(PioneerQ38PreciseWorkerPushProfile==1,"late QGW3 image policy change");
+#else
+static_assert(PioneerQ38PreciseWorkerPushProfile==0,"late QGW2 image policy change");
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION
 #error Worker-sealed admission is a returning ROOT policy,not a worker image
 #endif

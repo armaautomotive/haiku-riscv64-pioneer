@@ -11,6 +11,9 @@
 #include "PioneerQ38GlobalWorkerLayout.h"
 #ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
 #include "PioneerQ38PreciseWorkerLayout.h"
+#ifdef PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE
+#include "PioneerQ38PushedWorkerLayout.h"
+#endif
 extern "C" void q38_precise_persistent_activation(const uint32_t*,const uint32_t*,unsigned,unsigned);
 #endif
 #include "PioneerQ38DensePartitionLayout.h"
@@ -28,7 +31,9 @@ extern "C" void q38_resident_persistent_gdn(const uint32_t*,const uint32_t*,unsi
 extern "C" void q38_resident_persistent_gdn_output(const uint32_t*,const uint32_t*,unsigned,unsigned);
 extern "C" void q38_mixed_dense_phase(const uint32_t*,unsigned,unsigned,float*,float*);
 namespace GlobalWorker {
-#ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
+#ifdef PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE
+namespace M=PioneerQ38PushedWorkerLayout;
+#elif defined(PIONEER_Q38_PRECISE_WORKER_IMAGE)
 namespace M=PioneerQ38PreciseWorkerLayout;
 #else
 namespace M=PioneerQ38GlobalWorkerLayout;
@@ -43,6 +48,9 @@ static bool Quiet(){
  for(unsigned i=0;i<32;i++)if(*Words(0xffb20240+i*4)&255)return false;
  return true;
 }
+#ifdef PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE
+#include "blackhole_qwen38_pushed_completion.inc"
+#endif
 static void Matrix(const uint32_t* j,const uint32_t* source,unsigned worker,unsigned self){
  if(j[0]!=0x31483851 || j[3] || j[4] || j[9]!=1 || !PioneerQ38PanelTileBytes(j[1])
   || j[2]!=PioneerQ38PanelTileBytes(j[1]) || (j[5]!=5120 && j[5]!=6144 && j[5]!=17408)
@@ -189,6 +197,9 @@ extern "C" void q38_global_worker_main(){
 #endif
   if(outputJob){GlobalPartial(seal.job,seal.boot);globalWave++;}
   else if(op==1 && capsule[1]==12 && capsule[5]==17408)modelLayer++;
+#ifdef PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE
+  if(op==1)PushCompletion(seal.boot,seal.job,counters);
+#endif
   previous=request;Words(M::Status)[5]=densePhase;Words(M::Status)[6]=seal.job[5];Words(M::Status)[7]=seal.job[6];
   Words(M::Status)[4]=0;Fence();Words(M::Status)[1]=previous;Fence();
  }
