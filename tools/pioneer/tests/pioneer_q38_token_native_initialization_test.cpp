@@ -3,6 +3,27 @@
 // zero RV32 instructions. OS/MMIO/GDDR endpoints are simulated. No synthetic
 // completion fabric,no old embedding/prefix producer and no completed token.
 #include "pioneer_q38_token_native_fixture_common.h"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE
+#include "pioneer_q38_token_native_control_role.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenControlPacket.h"
+static unsigned tokenControlUid=0,tokenControlCopies=0,tokenControlFailCopy=0,tokenControlFailureTouches=0;
+static bool tokenControlLoseTeam=false,tokenControlMutateInput=false;
+static const unsigned* tokenControlTouches=nullptr;
+static unsigned TokenControlTestUid(){return tokenControlUid;}
+static status_t TokenControlTestCopy(void* to,const void* from,size_t bytes){
+ assert(bytes==sizeof(PioneerQ38TokenControl::Packet));tokenControlCopies++;
+ if(tokenControlCopies==2)assert(lockHeld==1);
+ if(tokenControlCopies==tokenControlFailCopy){tokenControlFailureTouches=tokenControlTouches?*tokenControlTouches:0;return -6;}
+ memcpy(to,from,bytes);
+ if(tokenControlCopies==1 && tokenControlLoseTeam){currentTeam++;tokenControlLoseTeam=false;}
+ if(tokenControlCopies==1 && tokenControlMutateInput){
+  auto* p=static_cast<PioneerQ38TokenControl::Packet*>(const_cast<void*>(from));
+  p->request.operation=PioneerQ38TokenControl::Finish;p->prompt[0]=PioneerQ38TokenControl::Vocabulary;
+  p->reply.complete=1;tokenControlMutateInput=false;
+ } // USER mutation after the kernel snapshot;never seed a kernel result
+ return B_OK;
+}
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE
 using area_id=int;
 #include "pioneer_q38_token_clock_raw.h"
@@ -464,6 +485,15 @@ bool PioneerSessionIO::TokenPciLeaseIdentity(const PioneerQ38TokenPciLease&)cons
 #if defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE)
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeBackend.inc"
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE
+#define geteuid TokenControlTestUid
+#define user_memcpy TokenControlTestCopy
+#define B_NO_MEMORY (-5)
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeControl.inc"
+#undef B_NO_MEMORY
+#undef user_memcpy
+#undef geteuid
+#endif
 static bool IncompleteEnd(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean){
 #include "token_native_end.inc"
  return true;
@@ -541,8 +571,11 @@ struct Fixture {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE
 #include "pioneer_q38_token_native_backend_checks.inc"
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE) && !defined(PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE)
 #include "pioneer_q38_token_native_backend_init_fault_checks.inc"
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE
+#include "pioneer_q38_token_native_control_checks.inc"
 #endif
 int main(int argc,char** argv){
  const bool backendInitFaults=argc==3 && !strcmp(argv[2],"--backend-initialization-faults");
@@ -634,7 +667,13 @@ int main(int argc,char** argv){
   const uint64 epoch=sQ38TokenModelEpoch;
   Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE
-  assert(backendInitFaults);CheckNativeBackendInitFault(f,fault,epoch);continue;
+  assert(backendInitFaults);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE
+  if(!fault)CheckNativeControlContract(f);
+  CheckNativeControlInitFault(f,fault,epoch);continue;
+#else
+  CheckNativeBackendInitFault(f,fault,epoch);continue;
+#endif
 #else
   assert(!backendInitFaults);
 #endif

@@ -30,18 +30,29 @@ def check(header, definitions, expected, extra=''):
         refused += 1
 
 
-for stem, family, count, extra_forbidden in (
+for stem, family, count, inherited, extra_forbidden in (
     ('pioneer_q38_token_native_backend', 'PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE', 12,
+     '',
      ('PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE')),
     ('pioneer_q38_token_native_backend_finish', 'PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE', 21,
+     '',
      ('PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE')),
     ('pioneer_q38_token_native_backend_init_fault', 'PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE', 7,
+     '',
+     ('PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE',
+      'PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE',
+      'PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE',
+      'PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE')),
+    ('pioneer_q38_token_native_control', 'PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE', 8,
+     'pioneer_q38_token_native_backend_init_fault_role.h',
      ('PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE',
       'PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE',
       'PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE',
       'PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE'))):
     role_header = stem+'_role.h'
     fixture = set(re.findall(pattern, (here/role_header).read_text()))
+    if inherited:
+        fixture |= set(re.findall(pattern, (here/inherited).read_text()))
     assert len(fixture) == count
     required = native | fixture | {'PIONEER_Q38_TOKEN_PUSHED_PROGRAMS'}
     parents = dict.fromkeys(required, 1)

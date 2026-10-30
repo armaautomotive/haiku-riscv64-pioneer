@@ -93,7 +93,9 @@ required = ('BindQ38TokenNative(', 'TokenCallScopeMatches(', 'TokenModelSourceSc
             'PioneerQ38TokenHostLease::Capture(', 'PioneerQ38TokenHostLease::Close(', 'CloseQ38TokenNativeHosts(',
             'pioneer_token_context_scoped_hosts_close(', 'PioneerQ38TokenCallScope::Finish(', 'pioneer_token_context_scoped_finish(',
             'BeginQ38TokenNativeBackend(', 'FinishQ38TokenNativeBackend(',
-            'pioneer_token_context_backend_begin(', 'pioneer_token_context_backend_finish(')
+            'pioneer_token_context_backend_begin(', 'pioneer_token_context_backend_finish(',
+            'BeginQ38TokenNativeBackendScoped(', 'FinishQ38TokenNativeBackendScoped(',
+            'Q38TokenNativeControl(', 'Q38TokenControlReplyFailure(', 'pioneer_token_context_backend_control(')
 for name in required:
     assert any(name in key for key in frames), (name, 'actual implementation must be emitted')
 for controller in ('State', 'ConvHistory', 'Projection'):

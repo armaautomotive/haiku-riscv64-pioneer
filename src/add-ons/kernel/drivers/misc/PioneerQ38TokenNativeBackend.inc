@@ -18,7 +18,7 @@ static PioneerQ38TokenBackendResult Q38TokenBackendFailure(PioneerQ38TokenBacken
 } // MEMORY ONLY;no automatic cancellation,rollback,END,retry or owner deletion
 
 [[maybe_unused]] static __attribute__((noinline)) PioneerQ38TokenBackendResult
-BeginQ38TokenNativeBackend(PioneerProbeCookie* cookie,unsigned bank,const uint32_t* prompt,unsigned prompts,
+BeginQ38TokenNativeBackendScoped(PioneerQ38TokenCallScope& scope,unsigned bank,const uint32_t* prompt,unsigned prompts,
  unsigned limit,bool stopEos,unsigned eos0,unsigned eos1){
  PioneerQ38TokenBackendResult out;
  if(bank>=7 || !prompt || !prompts || prompts>limit || !limit || limit>8192 || eos0>=248320 || eos1>=248320)return out;
@@ -27,7 +27,7 @@ BeginQ38TokenNativeBackend(PioneerProbeCookie* cookie,unsigned bank,const uint32
  // Caller supplies a valid trusted kernel buffer,NOT an unchecked user
  // pointer. The held factory independently copies and rejects owner aliases.
  for(unsigned i=0;i<prompts;i++)if(prompt[i]>=248320)return out;
- PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();
+ auto* c=scope.Context();
  if(!c || c->q38TokenNative)return out;
  out.started=1;out.stage=1;
  if(!BindQ38TokenNative(*c,bank))return Q38TokenBackendFailure(out,*c);
@@ -56,8 +56,20 @@ BeginQ38TokenNativeBackend(PioneerProbeCookie* cookie,unsigned bank,const uint32
 } // READY means actual ROOT startup acknowledged,NOT a model output or END.
 
 [[maybe_unused]] static __attribute__((noinline)) PioneerQ38TokenBackendResult
-FinishQ38TokenNativeBackend(PioneerProbeCookie* cookie){
- PioneerQ38TokenBackendResult out;PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();
+BeginQ38TokenNativeBackend(PioneerProbeCookie* cookie,unsigned bank,const uint32_t* prompt,unsigned prompts,
+ unsigned limit,bool stopEos,unsigned eos0,unsigned eos1){
+ PioneerQ38TokenBackendResult out;
+ if(bank>=7 || !prompt || !prompts || prompts>limit || !limit || limit>8192 || eos0>=248320 || eos1>=248320)return out;
+ const uintptr_t input=reinterpret_cast<uintptr_t>(prompt);
+ if((input&3) || input>UINTPTR_MAX-size_t(prompts)*4)return out;
+ for(unsigned i=0;i<prompts;i++)if(prompt[i]>=248320)return out;
+ PioneerQ38TokenCallScope scope(cookie);
+ return BeginQ38TokenNativeBackendScoped(scope,bank,prompt,prompts,limit,stopEos,eos0,eos1);
+} // preserve early argument refusal before acquiring the actual FD call scope
+
+[[maybe_unused]] static __attribute__((noinline)) PioneerQ38TokenBackendResult
+FinishQ38TokenNativeBackendScoped(PioneerQ38TokenCallScope& scope){
+ PioneerQ38TokenBackendResult out;auto* c=scope.Context();
  if(!c || !c->q38TokenNative || !c->q38TokenNative->TerminalHeld())return out;
  // The caller must observe genuine terminal,hold ALL participants and
  // drain every committed record first. Restore refuses a missing drain.
@@ -82,4 +94,9 @@ FinishQ38TokenNativeBackend(PioneerProbeCookie* cookie){
  out.unsafe=result.unsafe;out.complete=okay && result.ready && result.context && result.reservation && result.hosts==3;
  out.ready=out.complete;return out;
 } // exact explicit cleanup only;NOT a prelaunch abort or resident-model reuse path
+
+[[maybe_unused]] static __attribute__((noinline)) PioneerQ38TokenBackendResult
+FinishQ38TokenNativeBackend(PioneerProbeCookie* cookie){
+ PioneerQ38TokenCallScope scope(cookie);return FinishQ38TokenNativeBackendScoped(scope);
+}
 #endif

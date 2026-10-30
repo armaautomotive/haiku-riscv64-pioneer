@@ -34,9 +34,10 @@ graph = obj.with_suffix('.ci').read_bytes()
 nodes, edges = parse_graph(graph.decode('utf-8'))
 functions = function_symbols(subprocess.check_output([control['tool']+'objdump', '-t', str(obj)], text=True))
 roots = sorted(name for name in nodes if symbol(name).startswith('pioneer_token_context_backend_'))
-assert {symbol(name) for name in roots} == {'pioneer_token_context_backend_begin', 'pioneer_token_context_backend_finish'}
+assert {symbol(name) for name in roots} == {'pioneer_token_context_backend_begin', 'pioneer_token_context_backend_finish',
+                                         'pioneer_token_context_backend_control'}
 results = audit(nodes, edges, functions, roots)
-assert len(results) == 2
+assert len(results) == 3
 for result in results:
     assert not result['dynamic'] and not result['cycles'], result
     assert result['known_module_chain_bytes'] is not None and result['known_module_chain_bytes'] > 0
@@ -55,5 +56,5 @@ for result in results:
     print('OBSERVED '+result['root']+'/knownModuleChain'+str(result['known_module_chain_bytes'])
           +'/unresolved'+str(len(result['unresolved']))+'/reached'+str(result['reached_nodes'])
           +';PARTIAL ONLY,wholeKernelStackQualified=FALSE')
-print('PASS actual G3 object BYTE-IDENTICAL with/without GCC callgraph metadata;2 backend roots analyzed;'
+print('PASS actual G3 object BYTE-IDENTICAL with/without GCC callgraph metadata;3 backend roots analyzed;'
       'NO recursion/dynamic frame observed,unknown contributions EXCLUDED not zero;NOT whole-kernel/native/physical/Work/TPS qualification')

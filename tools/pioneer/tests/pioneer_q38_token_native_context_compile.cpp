@@ -117,6 +117,9 @@ extern "C" PioneerQ38TokenBackendResult pioneer_token_context_backend_begin(Pion
 extern "C" PioneerQ38TokenBackendResult pioneer_token_context_backend_finish(PioneerProbeCookie* cookie){
  return FinishQ38TokenNativeBackend(cookie);
 } // actual private orchestration bodies,NOT a public ABI/Work/driver activation
+extern "C" status_t pioneer_token_context_backend_control(PioneerProbeCookie* cookie,void* data,size_t length){
+ return Q38TokenNativeControl(cookie,data,length);
+} // private copy/transaction adapter witness ONLY;never linked or installed
 
 // Compile the actual clock-map dependency explicitly, not via an accidentally
 // reachable conventional driver entry. This witness is NEVER linked/invoked.

@@ -258,3 +258,78 @@ ES composite-Finish two-cycle test COMPLETE / parent84047 terminal0
   all64 layers/3positions/state snapshots, full-generation END, a physical
   reload/driver installation, no-CPU-reference Work/Assistant or tokens/sec.
   Five longer complete-model histories continue unchanged;20tok/s is UNMET.
+
+EX private bounded request/copy adapter / NOT a public driver operation
+  PioneerQ38TokenControlPacket.h adds a pointer-free DATA grammar, NOT an ioctl
+  number or capability. A49344-byte HEAP packet carries an immutable initial
+  prompt, six explicit Start/Observe/Cancel/Hold/Read/Finish operations, a
+  fixed reply and at most64 existing64-word records. No caller-supplied bank,
+  address, firmware, source proof, ready/terminal state or CPU model product.
+  Every unused prompt word, reserved field, reply byte and output record must
+  initially be zero. The Start limit counts total positions INCLUDING prompt.
+
+  PioneerQ38TokenNativeControl.inc is private and unreachable from normal
+  driver hooks. It verifies root/FD/team/size, takes one user-input snapshot,
+  validates the complete grammar, then holds the actual FD/team/thread/global
+  scope throughout the selected native operation AND user reply copy. The
+  scoped Begin/Finish bodies preserve the existing exact8/11 stage order;
+  old cookie wrappers remain available. Start fixes bank0. A failed reply
+  after an accepted/uncertain operation retains owners using CPU metadata
+  only; it never retries, cancels, resets, performs END or frees resources.
+  Successful Finish may delete the whole context: no subsequent dereference
+  of its old pointer, including in the reply-failure path. Actual successful
+  Finish-through-control/lost-reply runtime evidence is STILL OWED.
+
+  EU correctly failed the TEST's unconditional second-copy lock assertion:
+  team loss between input copy and scope admission had attempted an unlocked
+  refusal reply. EV fixes the implementation, not the assertion: reject that
+  pre-operation admission failure without reply copy or device IO. No guard,
+  assertion, warning, uncertainty retention or isolation rule was weakened.
+
+  Paired main/clean results completed0, corresponding runtime logs identical:
+    DATA packet:11 positive shapes /12486 malformed/unused/output refusals.
+    Actual private adapter:19 privilege/FD/team/size/shape/copy/unbound-state/
+      snapshot-race checks, no IO/publication/owner poisoning on refusals.
+    Four actual scoped-Begin early-initialization failures:stage2 uncertainty,
+      all owners retained, no bootstrap/model start/later IO/free/retry.
+      Case0 mutates USER opcode/prompt/reply AFTER snapshot; actual operation
+      still uses the original Start. Case3 loses the reply while the genuine
+      scope lock is held; retention does not issue subsequent device IO.
+    Direct old cookie-Begin early-failure regression:all4 cases still pass.
+    Isolation suite:8 positives /1128 missing+0+2+ABI+late-change+foreign-family+
+      CPU-reference/Work refusals;includes the new control TEST perimeter.
+  ASan/UBSan remain enabled. Early failures use TEST ledger/OS/MMIO metadata,
+  not original GGUF authentication, positive model output or hardware recovery.
+  Actual control runtime log archived:qwen38-native-control-contract-20261030.log
+    SHA2565f0ae599913053bb7fe5d8efdf6b555b5c84462c61f61a3d9f532fc03b516ae2
+  Main logs:/private/tmp/pioneer-q38-control-*-main-20261030-{ev,ex}.log
+  Clean13-file source:/private/tmp/pioneer-q38-native-control-clean-ev.69TDeLQb
+  Clean14-file role source:/private/tmp/pioneer-q38-control-role-clean-ex.koTe8VgB
+  Both exports start at bce3476b9e + ONLY cmp-verified owned paths.
+
+  Paired actual G1/G2/G3 SDK and3-root compiler-callgraph audits completed0.
+  Corresponding actual G3 object bytes are identical with/without metadata
+  and across both producers;SHA256
+    b7afc402f909eba8110902969c8b19955b35fcda8268bcf7ca96032c687b4cc5
+  All13 firmware arrays,2MiB rawRoPE and all five renamed inert conventional
+  hook/control pairs remain exact. Native21-parent/NODRV compile perimeter
+  remains in force. New bodies explain the changed object SHA, NOT firmware.
+    Begin known-module chain4976 bytes /15 unresolved /278 reached nodes.
+    Control known-module chain4960 bytes /20 unresolved /390 reached nodes.
+    Finish known-module chain3264 bytes /14 unresolved /175 reached nodes.
+  Parsed reports agree except graph source-path SHA;no recursion/dynamic
+  frames observed. Unknown kernel/indirect/entry/interrupt contributions are
+  EXCLUDED, NOT zero. whole_kernel_stack_qualified remains FALSE. Neither
+  these partial sums nor the individual1232-byte maximum grant installation.
+  Main:/private/tmp/pioneer-q38-native-control-stack-main-20261030-ev
+  Clean:/private/tmp/pioneer-q38-native-control-stack-clean-20261030-ew
+
+  Two positive original-model backend-first-matrix regressions are RUNNING
+  on the same frozen scoped-refactor sources (main85451/clean50061), not yet
+  terminal and NOT control-Start qualification. The original five longer
+  full-generation histories also continue unchanged. Positive control Start,
+  positive token readout, all-model/state/END numerical proof, successful
+  control Finish/copy-loss-after-context-deletion and physical Work/Assistant
+  integration still require their own evidence. No installed driver, GPU
+  execution, OS, power, SD or Assistant change and no new tokens/sec result.
+  Last physical whole-model0.207893161tok/s;20tok/s UNMET;goal ACTIVE.

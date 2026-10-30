@@ -5034,6 +5034,7 @@ public:
 #include "PioneerQ38TokenCallScope.inc"
 #include "PioneerQ38TokenNativeEnd.inc"
 #include "PioneerQ38TokenNativeBackend.inc"
+#include "PioneerQ38TokenNativeControl.inc"
 #ifdef PIONEER_Q38_RESIDENT_OUTPUT_VALIDATION_NATIVE
 #include "PioneerQ38ResidentOutputValidationControl.h"
 #endif
