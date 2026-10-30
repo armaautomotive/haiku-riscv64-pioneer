@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
+#error QTP3 selectors cannot alias QTP2 immutable DATA,including defined0
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
 #error QGW3 receiving ROOT cannot select fixed QTP2 program DATA
 #endif

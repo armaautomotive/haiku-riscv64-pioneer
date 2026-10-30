@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
+#error QTP3 DATA/native selectors are not a QGW3 publisher BUILD role
+#endif
 // Rechecked BUILD-only QGW3 publisher,never a QGW2/native/Work capability.
 #if !defined(PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE) || PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE != 1 \
  || !defined(PIONEER_Q38_PRECISE_WORKER_IMAGE) || PIONEER_Q38_PRECISE_WORKER_IMAGE != 1

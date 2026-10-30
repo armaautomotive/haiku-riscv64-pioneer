@@ -1,5 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 // DATA selection only, not an image/native/producer capability.
+#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+#if PIONEER_Q38_TOKEN_PUSHED_PROGRAMS != 1 || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) \
+ || defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION)
+#error Exact QTP3 worker DATA cannot alias QTP2 or BUILD-image selectors
+#endif
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
 #if PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION != 1 || !defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) \
  || PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION != 1 || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
@@ -16,7 +22,7 @@
 #endif
 #ifndef PIONEER_Q38_SELECTED_GLOBAL_WORKER_H
 #define PIONEER_Q38_SELECTED_GLOBAL_WORKER_H
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
 #include "PioneerQ38PushedWorkerLayout.h"
 namespace PioneerQ38SelectedGlobalWorker=PioneerQ38PushedWorkerLayout;
 enum {PioneerQ38SelectedWorkerBootEnd=55,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=1};
@@ -30,12 +36,12 @@ namespace PioneerQ38SelectedGlobalWorker=PioneerQ38GlobalWorkerLayout;
 enum {PioneerQ38SelectedWorkerBootEnd=46,PioneerQ38SelectedWorkerPrecise=0,PioneerQ38SelectedWorkerPushed=0};
 #endif
 #endif
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
 static_assert(PioneerQ38SelectedWorkerPushed==1,"late QGW3 DATA selection");
 #else
 static_assert(PioneerQ38SelectedWorkerPushed==0,"late old worker DATA selection");
 #endif
-#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
 static_assert(PioneerQ38SelectedWorkerPrecise==1,"late worker DATA profile change");
 #else
 static_assert(PioneerQ38SelectedWorkerPrecise==0,"late worker DATA profile change");

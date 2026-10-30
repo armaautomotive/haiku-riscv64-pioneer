@@ -8,7 +8,7 @@
 // Save its complete proposed 12KiB window, including arbitrary padding.
 namespace PioneerQ38TokenPushedL1 {
 struct Span {uint32_t address,words;};
-enum {Family=0x33505451,Workers=120,FrontBytes=0x3000,
+enum {Family=0x33505451,Precise=1,Pushed=1,Workers=120,FrontBytes=0x3000,
  RootSavedWords=316939,PeerSavedWords=110601,
  SavedWords=RootSavedWords+119*PeerSavedWords,SavedBytes=SavedWords*4};
 static inline unsigned SnapshotSpans(unsigned worker){return worker>=Workers?0:worker?8:7;}

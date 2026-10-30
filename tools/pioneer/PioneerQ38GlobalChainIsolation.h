@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
+#error QTP3 DATA/native selectors are not returning ROOT/component BUILD roles
+#endif
 #ifdef PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE
 #error QGW3 publisher is not a returning ROOT/component capability
 #endif

@@ -105,6 +105,13 @@ extern "C" bool pioneer_token_context_scoped_pci_close(PioneerProbeCookie* cooki
 } // original PCI configuration only;hosts/reservations/full END retained
 extern "C" void pioneer_token_context_destroy_clean(PioneerStoreContext* c){delete c;}
 
+// Compile the actual clock-map dependency explicitly, not via an accidentally
+// reachable conventional driver entry. This witness is NEVER linked/invoked.
+extern "C" bool pioneer_token_context_clock_map_body(PioneerQ38ClockIO& io){
+ bool (PioneerQ38ClockIO::* volatile method)()=&PioneerQ38ClockIO::Map;
+ return (io.*method)();
+}
+
 // Independent inert controls, separate from the renamed actual driver bodies.
 extern "C" status_t pioneer_q38_token_context_only_init_hardware(){return B_NOT_ALLOWED;}
 extern "C" status_t pioneer_q38_token_context_only_init_driver(){return B_NOT_ALLOWED;}

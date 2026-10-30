@@ -601,8 +601,8 @@ public:
   r.acknowledged=1;r.cancelRequested=cancelRequested;return true;
  } // observation ONLY;NO NoC command/counter recapture,layer/token/frontier/STOP/END completion grant
 private:
-#ifdef PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT
- // Keep the QGW2 grammar's two 64-word translation buffers out of the
+#if defined(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
+ // Keep the selected QGW2/QGW3 grammar's translation buffers out of the
  // terminal observer's own frame. This is not a combined-stack proof.
  static __attribute__((noinline)) bool PreciseTerminalJobShape(const uint32_t* job,const uint32_t* boot,unsigned previous){
   return PioneerQ38SelectedGlobalWorker::JobShape(job,boot,previous,0);
@@ -652,7 +652,7 @@ private:
    for(unsigned i=0;i<64;i++){uint32_t cached=0;r.word=i;
     if(!io.TokenMemoryReadChecked(0,R::PeerBoots+(w-1)*256+i*4,cached) || cached!=boot[i]
      || !io.TokenMemoryReadChecked(0,R::PeerJobs+(w-1)*256+i*4,job[i]))return Fail(io,r);}
-#ifdef PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT
+#if defined(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
    const bool jobShape=PreciseTerminalJobShape(job,boot,nonce-1);
 #else
    const bool jobShape=W::JobShape(job,boot,nonce-1,0);

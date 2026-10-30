@@ -1,0 +1,86 @@
+Distinct G3 private native binding -- COMPILE/INSPECT ONLY
+2026-10-30
+================================================================
+Goal ACTIVE; physical whole-model0.207893161 tokens/sec,20 UNMET. No Pioneer
+SSH/power/driver/OS/Assistant/SD/hardware action. NEVER link/install/invoke
+these objects. Private bodies WOULD do IO if invoked; no runtime grant.
+
+Actual binding, not just an unused DATA package
+------------------------------------------------
+The actual native memory owner now includes a rechecked selected-program
+header. Explicit QTP3 DATA selects the existing separately named G3 arrays
+and proposed53913832-byte journal. The selected worker is QGW3,55-word boot,
+not QGW2. The precise capsule remains covered by the existing full mapping
+geometry. No fixed ROM bounds or ordinary/default program bytes change.
+Native QT3NODRV tag0x5154334e4f445256 requires BOTH exact G3 selectors,
+ALL21 existing native parents, COMPILE_ONLY and six renamed ABI names.
+Old selector/tag contamination, defined0/2 and late changes are rejected.
+The discriminator also checks an already included journal's actual type,
+not merely late flags; a previously selected QTP1/QTP2 package is rejected.
+BUILD-image, native, DATA, CPU-reference and Work roles remain separate.
+
+Native terminal job grammar translation remains out of the observer's
+own frame for G3, as for QGW2. The actual heap memory object is statically
+checked to contain the full G3 journal, not QTP2's smaller saved array.
+No public operation selector, driver registration or Work route is added.
+
+Final independent evidence
+---------------------------
+CS34888(main)/83400(clean) BOTH terminal EXIT0. Each runs the existing
+legacy SDK controls, then compiles the ACTUAL new native body. Required
+private factories/mapping/source/bootstrap/RUN/STOP/readout/restoration
+bodies are emitted. ALL13 compiled program arrays are individually
+SHA-exact to the fixed G3 package, not merely the expected sizes. One
+complete2MiB rawRoPE array remains; no CPU reference or TEST engine imports.
+Maximum individual Token frame1232, with existing legacy exceptions only;
+this is NOT combined-stack or runtime qualification.
+
+The strengthened check compares the ACTUAL five renamed driver entry
+bodies AND five manual wrappers to independent refusal/null/inert controls,
+with no relocations or missing instruction bytes. Normal ABI names remain
+absent. The real init/uninit/publish/find functions now return inertly for
+TOKEN_CONTEXT_COMPILE_ONLY. The normal installed-driver build does not
+select this flag. Main object SHA
+87446450516a37ba944f8a1fc49a2feb569cfb096204b4394e454fe20234f712.
+Clean object SHA
+48e66afd9b06e57edc6019130f11aa3a80e91934fd7af559443818276ae3af69.
+These objects need not match: main includes unrelated local native WIP;
+clean uses published47f51ba454 plus ONLY this checkpoint's changes.
+
+Each final binding suite passes7 positive/199 refused configurations,
+including otherwise-valid image baselines with early AND late selector
+contamination, plus4 actual driver reserved-tag/witness prefix controls.
+Clean CQ97811 terminal EXIT0: strict ROOT/sender builds retain exact fixed
+pins; legacy native-role/program-family controls, full G3 program DATA
+tests and proposed geometry tests all pass. Those firmware/header tests
+do not prove a physical native run or successful END.
+Clean source:/private/tmp/pioneer-q38-push-native-clean-cs.eWYWojh5
+Logs:/private/tmp/pioneer-q38-push-native-{main,clean}-20261030-cs.log
+Role logs:/private/tmp/pioneer-q38-push-binding-{main,clean}-20261030-cs.log
+Regression log:/private/tmp/pioneer-q38-push-native-regression-20261030-cq.log
+
+Corrected validation gap; earlier results are not the final proof
+-----------------------------------------------------------------
+CN/CP compiled all13 arrays and the actual native body, but their inherited
+inert tests compared manual wrapper functions, NOT actual renamed entries.
+Do NOT use them to claim actual entries inert. The actual source guard now
+covers all five compile-only bodies and the final test checks those bodies.
+CR76111/53859 BOTH EXIT1: making the public entries inert removed the old
+incidental emission path for REQUIRED PioneerQ38ClockIO::Map. The check was
+NOT removed. An explicit compile-only volatile member-pointer witness now
+emits that actual method independently of an accidentally reachable entry.
+The witness is never linked/invoked. Final CS passes the original emission
+checks and the stronger actual-entry checks.
+
+Only the QT3 reserved-tag block and five compile-only entry conditions are
+owned changes in the dirty driver source. Only the clock-map witness is
+owned in the dirty base compile fixture. Other local native/END/host work
+is preserved and excluded from this checkpoint.
+
+Still owed
+------------
+The separate warm first-layer prefix is bitexact but complete model/state/
+KV/119STOP proof remains live in CE55607/43309. New G3 native capture/install/
+bootstrap/terminal/HOLD/restore/END/reuse and cancellation need actual
+coupled runtime tests. Combined stacks, controlled hardware execution,
+Work/Assistant integration and physical tokens/sec are unqualified.

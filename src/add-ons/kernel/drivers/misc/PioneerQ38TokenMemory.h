@@ -2,7 +2,7 @@
 #ifndef PIONEER_Q38_TOKEN_MEMORY_H
 #define PIONEER_Q38_TOKEN_MEMORY_H
 #include <stddef.h>
-#include "../../../../../tools/pioneer/PioneerQ38TokenPrograms.h"
+#include "../../../../../tools/pioneer/PioneerQ38TokenSelectedPrograms.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenStartupPlan.h"
 #include "PioneerQ38GraphCsrProbe.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenFifoQuiescence.h"

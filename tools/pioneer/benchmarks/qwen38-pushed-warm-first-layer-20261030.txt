@@ -1,0 +1,46 @@
+Warm-admission G3 first-layer numerical evidence -- NOT full model
+2026-10-30
+================================================================
+Goal ACTIVE. Last physical whole-model rate remains0.207893161 tokens/sec;
+20 UNMET. No Pioneer SSH, power, driver, OS, Assistant, SD or hardware action.
+
+The SAME CE55607(main)/43309(clean) histories, started from actual ROOT
+reset and SAME119 virgin-to-live workers with authenticated original GGUF
+bytes, completed layer0. Each passed the genuine8-counter matrix-to-Conv
+fault gate, all8 matrices, Conv/GDN, precise68-worker activation, complete
+5120-word layer output, closed119 histories and retained-state/KV invariants.
+No CPU products, fabricated processor state or history transplant was used.
+
+Each produced a NONCLOSING first-layer prefix, then continued the SAME
+histories. Independent CPU comparison CM66167/21608 BOTH terminal EXIT0:
+embedding5120 and layer0 output5120 have ZERO bit differences, maxAbs0,
+relativeL20, NO tolerance. Both41028-byte diagnostic prefixes have SHA256
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+Durable DATA under generated.pioneer/qualification-inputs:
+observed-first-layer-pushed-warm-main-20261030/prefix-0.bin
+observed-first-layer-pushed-warm-clean-20261030/prefix-0.bin
+CPU reference:cpu-original-trace-20261028. These are NOT complete token traces.
+
+Each actual first layer used215361048 ROOT instructions. Reserved and
+written ROOT stack6672 bytes fit the unchanged8192-byte window. These are
+instruction-model measurements, NOT physical timing or native kernel stack.
+Profile includes96108622 packet-seal,21137216 Transfer and16470000 Quiet
+instructions, including SIMULATED polling/interleaving. The older G3 image
+used227211749 instructions; the older S image197243744. Neither comparison
+establishes a physical speedup, theoretical throughput or tokens/sec.
+
+Firmware is the final warm BZ/CE image from d80fefb409, not the old BB image:
+ROOT ELF190444/SHAaf0a6e2de533ad253b5a73d1cef4cc7b582d8aedf8ce6a118eebd2094736b199.
+AF sender ELF139684/SHAca6e8131fc9bde4a1276903bfc0d2595b3f51a8569d320ee732007de96313451.
+Original GGUF18973870528 bytes/SHA
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+Logs:/private/tmp/pioneer-q38-push-warm-flow-{main,clean}-20261030-ce.log
+Comparison logs:/private/tmp/pioneer-q38-push-warm-{main,clean}-20261030-cm-first-layer-compare.log
+
+CE55607/43309 remain LIVE through later layers. Poll those SAME handles;
+do not restart a history for an observation. Still owed:three complete
+positions/all64 layers/state/KV/vocabulary/final119STOP numerical proof,
+native capture/install/runtime/restore/END/reuse and cancellation,
+Work/Assistant integration and controlled physical whole-model timing.
+First-layer output equality does NOT prove complete retained-state numerics,
+another layer/token, native completion, or hardware/Work readiness.

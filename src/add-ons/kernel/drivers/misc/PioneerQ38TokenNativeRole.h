@@ -9,10 +9,13 @@
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION
 #error Worker-sealed admission BUILD is NOT a native token context capability
 #endif
-#ifdef PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT
+#ifdef PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT
+#include "PioneerQ38TokenPushedNativeRole.h"
+#elif defined(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT)
 #include "PioneerQ38TokenPreciseNativeRole.h"
 #else
-#if defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || (defined(PIONEER_DRIVER_BUILD_TAG) && PIONEER_DRIVER_BUILD_TAG == 0x5154324e4f445256ULL)
+#if defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS) \
+ || (defined(PIONEER_DRIVER_BUILD_TAG) && (PIONEER_DRIVER_BUILD_TAG == 0x5154324e4f445256ULL || PIONEER_DRIVER_BUILD_TAG == 0x5154334e4f445256ULL))
 #error QTP2 programs/tag cannot select the old QTKNODRV context
 #endif
 #endif
@@ -36,7 +39,7 @@
  || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR != 1 \
  || !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) || TT_PIONEER_EXPERIMENTAL_Q38_STREAM != 1 \
  || !defined(TT_PIONEER_DRIVER_RELOAD) || TT_PIONEER_DRIVER_RELOAD != 1 \
- || !defined(PIONEER_DRIVER_BUILD_TAG) || (PIONEER_DRIVER_BUILD_TAG != 0x51544b4e4f445256ULL && PIONEER_DRIVER_BUILD_TAG != 0x5154324e4f445256ULL)
+ || !defined(PIONEER_DRIVER_BUILD_TAG) || (PIONEER_DRIVER_BUILD_TAG != 0x51544b4e4f445256ULL && PIONEER_DRIVER_BUILD_TAG != 0x5154324e4f445256ULL && PIONEER_DRIVER_BUILD_TAG != 0x5154334e4f445256ULL)
 #error Exact QTKNODRV native token context/all parents required;NO loadable driver or Work grant
 #endif
 #if !defined(api_version) || !defined(init_hardware) || !defined(init_driver) || !defined(uninit_driver) || !defined(publish_devices) || !defined(find_device)
@@ -44,13 +47,17 @@
 #endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_PROFILE_BINDING_H
 #define PIONEER_Q38_TOKEN_NATIVE_PROFILE_BINDING_H
-#ifdef PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT
+#ifdef PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT
+enum {PioneerQ38TokenNativeProfile=3};
+#elif defined(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT)
 enum {PioneerQ38TokenNativeProfile=2};
 #else
 enum {PioneerQ38TokenNativeProfile=1};
 #endif
 #endif
-#ifdef PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT
+#ifdef PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT
+static_assert(PioneerQ38TokenNativeProfile==3,"late QTP3 native profile change");
+#elif defined(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT)
 static_assert(PioneerQ38TokenNativeProfile==2,"late QTP2 native profile change");
 #else
 static_assert(PioneerQ38TokenNativeProfile==1,"late QTP1 native profile change");

@@ -1,10 +1,19 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+#if PIONEER_Q38_TOKEN_PUSHED_PROGRAMS != 1 || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) \
+ || defined(PIONEER_Q38_TOKEN_PROGRAMS_H)
+#error Exact QTP3 footprint cannot alias a QTP1/QTP2 package or selector
+#endif
+#endif
 #if defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) && PIONEER_Q38_TOKEN_PRECISE_PROGRAMS != 1
 #error Exact separate QTP2 footprint DATA required
 #endif
 #ifndef PIONEER_Q38_TOKEN_FOOTPRINT_H
 #define PIONEER_Q38_TOKEN_FOOTPRINT_H
-#ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+#include "PioneerQ38TokenPushedFootprint.h"
+namespace PioneerQ38TokenL1=PioneerQ38TokenPushedL1;
+#elif defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
 #include "PioneerQ38TokenPreciseFootprint.h"
 #else
 #include <stdint.h>
@@ -61,7 +70,9 @@ static_assert(SavedWords==11406906 && SavedBytes==45627624,"ALL120 arbitrary ori
 }
 #endif
 #endif
-#ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+static_assert(PioneerQ38TokenL1::Family==0x33505451 && PioneerQ38TokenL1::Pushed==1,"late QTP3 footprint selection");
+#elif defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
 static_assert(PioneerQ38TokenL1::Precise==1,"late QTP2 footprint profile change");
 #else
 static_assert(PioneerQ38TokenL1::Precise==0,"late QTP1 footprint profile change");
