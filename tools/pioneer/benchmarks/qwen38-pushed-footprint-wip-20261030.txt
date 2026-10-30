@@ -1,0 +1,61 @@
+Proposed QGW3 native-journal geometry -- NOT a native launch grant
+2026-10-30
+================================================================
+Goal ACTIVE; last measured physical whole-model rate0.207893161 tokens/sec,
+20 UNMET. No Pioneer SSH/power/driver/OS/Assistant/SD/hardware action here.
+
+Concrete integration gap
+-------------------------
+The pinned AF G3 sender globalworker.bin is9128 bytes at0x20000, ending
+at0x223a8. The existing QTP2 journal saves only8192 bytes at0x20000. It
+therefore omits936 bytes/234 actual code words per worker, or27846 code
+words across119 workers. Reusing QTP2 geometry for G3 would be incorrect.
+The existing G2 front end is7124 bytes and still fits its unchanged window.
+
+PioneerQ38TokenPushedFootprint.h proposes a separate DATA namespace, not
+an override of PioneerQ38TokenL1. It saves a12KiB front window including
+3160 bytes of arbitrary padding after the pinned G3 front end. All other
+snapshot spans retain their QTP2 geometry. Root receipt slots, sender push
+buffer, full64-word boot, stack, code capsules and separate terminal words
+are covered. Proposed totals:316939 ROOT words,110601 words per peer,
+13478458 total words/53913832 bytes. Increase versus QTP2:487424 bytes.
+Neither the old native owner nor its role registry selects this geometry.
+The QTP3 family value is proposed DATA identification, not a new runtime ABI.
+
+Completed scope
+----------------
+Main CH69912 and clean CI66743 BOTH terminal EXIT0. Every snapshot ordinal
+and contained/aligned address is checked for ALL120 participants, including
+ordering, disjoint spans, invalid workers/ordinals/unaligned addresses and
+padding. All3048819 code words from the fixed sections fit the new layout.
+The test independently demonstrates the old234-word-per-peer coverage gap.
+Receipt slots and push-buffer/boot/stack addresses are explicitly checked.
+It also includes the existing QTP2 footprint and checks its old dimensions;
+no legacy geometry was enlarged or silently selected by the new header.
+
+The wrapper authenticates all15 fixed artifacts INCLUDING both complete
+ELFs, then gives the C++ test private copies of those SAME authenticated
+snapshots. Each artifact's single-byte corruption and truncation is rejected
+by the same authentication routine BEFORE compilation:30 refusals per copy.
+ASAN/UBSAN and -Werror remain enabled. All three new source files compare
+byte-identical between the main worktree and clean source snapshot.
+Clean source:/private/tmp/pioneer-q38-push-footprint-clean-ci.4bXhGpri
+Logs:/private/tmp/pioneer-q38-push-footprint-main-20261030-ch.log
+     /private/tmp/pioneer-q38-push-footprint-clean-20261030-ci.log
+
+Earlier test/setup failures are not successes:CF69854 EXIT1 had an invalid
+TEST assumption that0x6dffc was outside every participant's saved window.
+That gap is ROOT-only; peers save the whole service/stack window. The test
+now checks this actual distinction. Clean CH EXIT1 omitted tracked shared
+src headers from its source archive; CI adds the committed dependency tree.
+Neither failure was a firmware failure or a hardware test.
+
+Still owed
+------------
+This checks geometry, NOT execution/restoration of a native journal or
+ownership of those addresses. G3 native immutable program packaging,
+private mapping/capture/install/restore/END/reuse integration and native
+lifecycle tests remain necessary. The warm CE55607/43309 full-model
+instruction histories continue separately; no numerical or runtime-stack
+result is transferred from geometry checks. No physical/Work/Assistant
+qualification or speedup follows from this checkpoint.
