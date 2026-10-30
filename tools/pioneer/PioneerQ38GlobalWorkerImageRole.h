@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS
+#error QTP2 program DATA is not a worker-image role
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
 #error The precise activation ROOT profile is not a worker-image role
 #endif

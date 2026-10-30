@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Emit immutable full-token+QGW1 DATA from fixed artifacts. NEVER install/run."""
+"""Emit fixed complete token/QGW1 or distinct QTP2/QGW2 DATA. NEVER install/run."""
 import ast
 import hashlib
 import os
@@ -33,29 +33,38 @@ def authenticated(directory, records):
     return result
 
 def main():
-    require(len(sys.argv) == 5 and sys.argv[4] in ('--cancel-boundary', '--no-cancel'), 'explicit exact FP32 token variant required')
+    require(len(sys.argv) == 5 and sys.argv[4] in ('--cancel-boundary', '--no-cancel', '--precise-activation'), 'explicit exact FP32 token variant required')
     require(not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ), 'role overrides refused')
     root, worker, output = map(pathlib.Path, sys.argv[1:4])
     require(all(p.is_absolute() for p in (root, worker, output)) and not output.exists() and not output.is_symlink(), 'new absolute output required')
     here = pathlib.Path(__file__).resolve().parent
-    cancel = sys.argv[4] == '--cancel-boundary'
-    r = authenticated(root, pins(here/'build_qwen38_token_root.py', 'PINS_CANCEL_F32' if cancel else 'PINS_F32'))
-    w = authenticated(worker, pins(here/'build_qwen38_global_worker_image.py', 'PINS'))
+    precise = sys.argv[4] == '--precise-activation'
+    cancel = precise or sys.argv[4] == '--cancel-boundary'
+    r = authenticated(root, pins(here/'build_qwen38_token_root.py', 'PINS_CANCEL_F32_PRECISE' if precise else 'PINS_CANCEL_F32' if cancel else 'PINS_F32'))
+    w = authenticated(worker, pins(here/'tests/run_pioneer_q38_precise_worker_tests.py' if precise else here/'build_qwen38_global_worker_image.py', 'PINS'))
     units = [(r, 'boot', 'RootBoot', 0x6000), (r, 'text', 'RootText', 0x40000),
              (r, 'terminal', 'RootTerminal', 0x60000), (r, 'conv', 'RootAux', 0x64000)]
     units += [(w, name, label, address) for name, label, address in (
         ('boot', 'PeerBoot', 0x6000), ('globalworker', 'PeerFront', 0x20000), ('dense', 'PeerDense', 0x40000),
         ('ffn', 'PeerFfn', 0x60000), ('service', 'PeerService', 0x68000), ('affine', 'PeerAffine', 0x70b00),
         ('text', 'PeerText', 0x72000), ('gdn', 'PeerGdn', 0xb8000))]
+    if precise:
+        units.insert(6, (w, 'precise', 'PeerPrecise', 0x30000))
     lines = ['/* SPDX-License-Identifier: MIT */',
              '// Mechanically generated from COMPLETE fixed FP32 persistent-token/QGW1 artifacts.',
              '// IMMUTABLE DATA ONLY. No native owner,source/init,journal,RUN/STOP or cleanup grant.',
              '#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_PRECISE_WORKER_IMAGE)',
              '#error Fixed QTP1/QGW1 program DATA cannot select the distinct precise ROOT/worker family',
-             '#endif',
+             '#endif']
+    if precise:
+        lines[1] = '// Mechanically generated from COMPLETE fixed precise persistent-token/QGW2 artifacts.'
+        lines += ['#include "PioneerQ38TokenPreciseProgramsRole.h"']
+    else:
+        lines += ['#ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS', '#include "PioneerQ38TokenPrecisePrograms.h"', '#else']
+    lines += [
              '#ifndef PIONEER_Q38_TOKEN_PROGRAMS_H', '#define PIONEER_Q38_TOKEN_PROGRAMS_H',
              '#include "PioneerQ38TokenFootprint.h"', 'namespace PioneerQ38TokenPrograms {',
-             f'enum {{Family=0x31505451,Version=1,CancelBoundary={int(cancel)}}};']
+             f'enum {{Family=0x{0x32505451 if precise else 0x31505451:x},Version=1,CancelBoundary={int(cancel)}}};']
     for data_set, name, label, address in units:
         data = data_set[name+'.bin']
         require(data and not len(data)%4 and not address%4 and address+len(data) <= 0x180000, f'{label}: extent')
@@ -64,7 +73,7 @@ def main():
         lines += [' '+','.join(f'0x{word:08x}U' for word in words[i:i+8])+',' for i in range(0, len(words), 8)]
         lines += ['};', f'static_assert(sizeof({label})=={len(data)},"exact complete {label} DATA");']
     lines += ['using PioneerQ38TokenL1::Span;',
-              'static inline unsigned CodeSpans(unsigned worker){return worker>=120?0:worker?8:4;}',
+              f'static inline unsigned CodeSpans(unsigned worker){{return worker>=120?0:worker?{9 if precise else 8}:4;}}',
               'static inline Span CodeSpan(unsigned worker,unsigned span){',
               ' if(worker>=120 || span>=CodeSpans(worker))return {UINT32_MAX,0};', ' if(!worker)switch(span){']
     for i, (_, _, label, address) in enumerate(units[:4]):
@@ -93,13 +102,19 @@ def main():
     for i, (_, _, label, _) in enumerate(units[4:]):
         lines += [f'   case {i}:data={label};break;']
     lines += ['  }', '  if(!data)return false;', '  output=data[(address-s.address)/4];return true;',
-              ' }return false; // no implicit zero-padded holes or runtime-data permission', '}', '}', '#endif', '']
+              ' }return false; // no implicit zero-padded holes or runtime-data permission', '}', '}', '#endif']
+    if precise:
+        lines += ['static_assert(PioneerQ38TokenPrograms::Family==0x32505451,"late QTP2 program DATA selection");', '']
+    else:
+        lines += ['#endif', '#ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS',
+                  'static_assert(PioneerQ38TokenPrograms::Family==0x32505451,"late QTP2 program DATA selection");',
+                  '#else', 'static_assert(PioneerQ38TokenPrograms::Family==0x31505451,"late QTP1 program DATA selection");', '#endif', '']
     # All artifacts,including BOTH complete ELFs,were authenticated BEFORE
     # creating any output. Never replace or repair an existing header.
     encoded = '\n'.join(lines).encode()
     with output.open('xb') as target:
         require(target.write(encoded) == len(encoded), 'complete generated output write')
-    print(hashlib.sha256(encoded).hexdigest()+f' token-programs FP32/cancel{int(cancel)}/ALL12 sections+2fullELFs authenticated/DATA ONLY/NO install or native permission')
+    print(hashlib.sha256(encoded).hexdigest()+f' token-programs FP32/cancel{int(cancel)}/ALL{len(units)} sections+2fullELFs authenticated/DATA ONLY/NO install or native permission')
 
 if __name__ == '__main__':
     try:

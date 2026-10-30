@@ -1,6 +1,12 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) && PIONEER_Q38_TOKEN_PRECISE_PROGRAMS != 1
+#error Exact separate QTP2 footprint DATA required
+#endif
 #ifndef PIONEER_Q38_TOKEN_FOOTPRINT_H
 #define PIONEER_Q38_TOKEN_FOOTPRINT_H
+#ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS
+#include "PioneerQ38TokenPreciseFootprint.h"
+#else
 #include <stdint.h>
 // Full-token ROOT + QGW1 L1 GEOMETRY ONLY. Not a native map,held-core
 // journal,source/code authentication,initialization,RUN/STOP or cleanup grant.
@@ -8,7 +14,7 @@
 // untouched padding,before any install and retain them through proved END.
 namespace PioneerQ38TokenL1 {
 struct Span {uint32_t address,words;};
-enum {Workers=120,RootSavedWords=316939,PeerSavedWords=93193,
+enum {Precise=0,Workers=120,RootSavedWords=316939,PeerSavedWords=93193,
  SavedWords=RootSavedWords+119*PeerSavedWords,SavedBytes=SavedWords*4};
 static inline unsigned SnapshotSpans(unsigned worker){return worker>=Workers?0:7;}
 static inline Span SnapshotSpan(unsigned worker,unsigned span){
@@ -53,4 +59,10 @@ static_assert(1+32768+2+8192+2048+273920+8==RootSavedWords,"full token ROOT INCL
 static_assert(1+2048+4096+16384+61440+9216+8==PeerSavedWords,"full QGW1 originals,NOT an old participant owner");
 static_assert(SavedWords==11406906 && SavedBytes==45627624,"ALL120 arbitrary originals HEAP ONLY;old prefix journal is eight bytes short");
 }
+#endif
+#endif
+#ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS
+static_assert(PioneerQ38TokenL1::Precise==1,"late QTP2 footprint profile change");
+#else
+static_assert(PioneerQ38TokenL1::Precise==0,"late QTP1 footprint profile change");
 #endif

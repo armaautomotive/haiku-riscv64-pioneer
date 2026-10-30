@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // No guard: reject late/defined-zero role contamination too. BUILD ONLY.
+#ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS
+#error QTP2 program DATA is not a ROOT/component image role
+#endif
 #if defined(_KERNEL_MODE) || defined(__FAST_MATH__) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(TT_PIONEER_DRIVER_RELOAD) \
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_GLOBAL_WORKER_IMAGE) || defined(PIONEER_Q38_MIXED_WORKER_IMAGE) || defined(PIONEER_Q38_MIXED_CAPSULE_IMAGE) \

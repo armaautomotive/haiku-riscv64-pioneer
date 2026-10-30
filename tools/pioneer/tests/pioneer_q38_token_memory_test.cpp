@@ -117,7 +117,7 @@ struct TokenMemoryFixture {
 };
 int main(int argc,char** argv){
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;
- assert(argc==1 || (argc==2 && !strcmp(argv[1],"--faults")));setvbuf(stdout,nullptr,_IOLBF,0);
+ assert(argc==1 || (argc==2 && (!strcmp(argv[1],"--faults") || !strcmp(argv[1],"--capsule-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
  if(argc==1){
   TokenMemoryFixture f;auto before=f.io.data;std::vector<uint32_t> panels;
   f.io.track=false;for(unsigned worker=0;worker<120;worker++){
@@ -135,6 +135,29 @@ int main(int argc,char** argv){
    for(unsigned i=0;i<4096;i++)assert(f.io.BootstrapIO::Q38PanelRead(0x70000+i*4)==panels[at++]);
   }
   printf("PASS DISTINCT full-token HELD journal/ALL120/saved%u/installed%u/restored%u/secondOriginal%u/arbitrary+UINT32_MAX/NEW terminal60000+60004/fullstack+runtime+padding/startup+851page binding;SIMULATED endpoints,NO start/reset/NoC/native execution/Work/TPS grant\n",f.result.savedWords,f.result.installedWords,f.result.restoredWords,f.result.verifiedOriginalWords);return 0;
+ }
+ if(!strcmp(argv[1],"--capsule-faults")){
+#ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS
+  unsigned cases=0;
+  auto fault=[&](unsigned kind,unsigned phase,unsigned worker,unsigned address){
+   TokenMemoryFixture f;f.io.badKind=kind;f.io.badPhase=phase;f.io.badWorker=worker;
+   assert(worker && TOKL::SnapshotContains(worker,address) && address>=0x30000 && address<0x40000);
+   if(phase==3){
+    unsigned index=0;while(index<TOKP::CodeWords(worker) && TOKP::CodeAddress(worker,index)!=address)index++;
+    assert(index<TOKP::CodeWords(worker));f.io.badOrdinal=index;
+   }else f.io.badOrdinal=TokenMemoryIO::Index(worker,address)-TOKL::SnapshotBase(worker);
+   if(phase<=3){assert(!f.PrepareMemory());if(phase<3)assert(!f.io.writes);}
+   else{assert(f.PrepareMemory());assert(!f.CloseMemory());}
+   f.Unknown();cases++;
+  };
+  fault(1,1,1,0x30000);fault(1,1,119,0x3fffc);fault(1,2,1,0x3fffc);
+  fault(3,3,1,0x30000);fault(5,3,1,0x30000);fault(2,3,1,0x30000);
+  fault(3,6,1,0x30000);fault(3,6,119,0x3fffc);fault(1,7,119,0x3fffc);
+  assert(cases==9);
+  printf("PASS QTP2 precise ROM+padding HELD-journal faults%u/worker1+119/30000+3fffc/save+verify+write-loss+silent-drop+readback-mismatch+restore+finalpass/real algorithm retained all owners/no following IO,retry or cleanup;NOT native,launch,model,Work or TPS\n",cases);return 0;
+#else
+  assert(false && "capsule faults require the distinct QTP2 program DATA");
+#endif
  }
  unsigned faults=0,refusals=0;
  const std::pair<unsigned,unsigned> endpoints[]={{0,0x60000},{0,0x60004},{0,0x64000},{0,0x6bffc},{0,0x17f7fc},{119,0xc0ffc}};

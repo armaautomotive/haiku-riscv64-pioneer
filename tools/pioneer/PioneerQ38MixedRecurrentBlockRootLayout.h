@@ -10,7 +10,7 @@ using namespace PioneerQ38MixedRecurrentProjectionRootLayout;
 static inline bool Virgin(const uint32_t* d){return d && d[48]==1 && (d[43]==10 || d[43]==11 || d[43]==5);}
 static inline bool FirstMatrix(const uint32_t* d){return d && d[43]==10;}
 static inline unsigned RunDelta(unsigned w){return (w<3?10:w<96?8:7)
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
  +unsigned(w<68)
 #endif
  ;}

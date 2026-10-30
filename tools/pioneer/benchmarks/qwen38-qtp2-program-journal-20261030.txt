@@ -1,0 +1,104 @@
+Complete QTP2/QGW2 program bundle and held L1 journal
+2026-10-30. Goal ACTIVE;20tokens/sec remains UNMET.
+Last measured physical whole-model rate remains0.207893161tokens/sec.
+This is NOT a new on-card inference result or an installable native mode.
+
+Implemented prerequisite for the actual full-card path
+-----------------------------------------------------
+The explicit PIONEER_Q38_TOKEN_PRECISE_PROGRAMS=1 DATA family packages the
+complete pinned precise ROOT and QGW2 worker,including QPA1 code at0x30000.
+The existing real PioneerQ38TokenMemory algorithm now uses the selected
+complete geometry/program words to save,install,verify and restore that
+family through its held-only IO interface. No separate toy restore algorithm
+or caller-completed journal substitutes for the production implementation.
+
+The new peer journal captures the ENTIRE64KiB capsule window0x30000..40000,
+not just today's8392 code bytes. All arbitrary padding must be restored.
+ROOT geometry is unchanged. Peer saved words109577;full120 saved words
+13356602/53426408bytes. The old QTP1 journal remains11406906/45627624bytes.
+The two program/footprint profiles cannot be switched after first include.
+
+QTP2 Family0x32505451 has13 complete sections:ROOT boot/text/terminal/aux;
+peer boot/front/precise/dense/FFN/service/affine/text/GDN. Source authentication
+checks15 artifacts including BOTH complete ELFs before creating any output.
+Each authenticated SAME-open byte snapshot is emitted without reopening.
+The generator still refuses an existing output and role overrides.
+Program words:ROOT40017,peer24776,all120 combined2988361.
+Generated QTP2 header SHA256:
+ a319fe1cc4143400bb9b6792d138ace178d7d8e969af08ade9ef39f8a63e4f90
+Current QTP1 wrapper/header SHA256:
+ 25e804db55b384e53915fdf3866acf95f45f6e72a24c05f2326caec28c3ba6fc
+Wrapper/selection text changes,not existing QTP1 program words.
+
+Selected startup/head worker ABI becomes QGW2 only in the explicit DATA
+family;the extra per-layer job reserve applies only to its first68 workers.
+Image roles reject this program-DATA flag,including defined0 and late
+contamination. The old genuine native context ALSO explicitly rejects it.
+Kernel DATA/template compilation is NOT genuine native ownership or launch.
+No new native factory/public driver ABI/Work or Assistant option is enabled.
+
+Frozen main/clean qualification
+-------------------------------
+Base:e5868d4bcd plus the SAME19 scoped source files,including generated DATA.
+ Main /private/tmp/pioneer-q38-qtp2-main-b.tXUyXyeN
+ Clean /private/tmp/pioneer-q38-qtp2-clean-b.UwAdgV1F
+All19 compare main=clean=current before qualification. All five corresponding
+final B log pairs compare identical. No unrelated native/full-END/state/host
+WIP,llama.cpp or FlashNext source was included in these source snapshots.
+
+Final B sessions,ALL exit0:
+ family71929/26571:4 positives+54 refusals;exact QTP1/QTP2 program,footprint,
+  worker magic/boot features,late/zero/two/image/native mixing checks.
+ native role58393/49100:21 exact parents,6 renamed ABI names,34 forbidden
+  aliases,261 refusal cases. No relaxation of the old native perimeter.
+ footprint38175/2370:ALL13 section bytes and ALL120 code words,13356602 saved
+  addresses,963 address/alias refusals,15 artifact authentication,18 generator
+  corruption/overwrite/role refusals;committed DATA reproduces exactly.
+ positive37409/47772:actual production held-journal save13356602,
+  install2988361,restore13356602,second-original verification26713204;
+  arbitrary originals including UINT32_MAX,stack/runtime/padding restored.
+  No ARM,release,reset,NoC execution or processor history was supplied.
+  Real RISC-V SDK journal TEMPLATE compiles,max individual frame1216B;
+  actual IO hooks remain undefined,no conventional driver entry points.
+ capsule faults48882/82220:9 genuine algorithm failures at worker1/119,
+  addresses30000/3fffc;save/verify/write loss/silent drop/readback mismatch/
+  restore/final verification. First failure retains all owners and permits
+  no subsequent IO,retry or cleanup. Simulated endpoints,NOT hardware faults.
+
+Preliminary A positive8808,footprint13839,native roles1862 and capsule faults
+70504 also exit0. A family26068 passes4+38 before the final16 actual-image
+role refusals were added. Immutable final B is authoritative for that suite.
+
+Unchanged-image and default/native regressions,ALL exit0
+-------------------------------------------------------
+Legacy footprint9859 reproduces ALL12 sections/14 artifacts and the complete
+old11406906-word journal exactly,with963+17 refusals.
+Native SDK82294 emits the committed old native body BYTE-IDENTICAL to its
+pre-change control,not merely equivalent source. Object SHA256:
+ ab729c41c1ed55bf2a89d93b19c1839dc4d82ad5e9ade958435a1c36a14f4212
+This is NOT the uncommitted host/full-END candidate212953da... or a deployed
+module. Its conventional entry points remain renamed/inert/non-loadable.
+
+Strict ROOT rebuild11803 preserves ALL E image pins;ELF189368B SHA256:
+ 0b4d58f651bcb08836afa6418491a43ab6751fe769c9e7af52dc71d97a886e80
+Strict worker rebuild84997 preserves ALL G image pins;ELF135052B SHA256:
+ 3d51b34fc7c8b99ffadc287b1668548e810e19252b46163eb83ebdb30f68351d
+Actual ELF files were also compared byte-for-byte against E/G. The new
+program/journal selection does NOT change executed ROOT or worker code.
+
+Remaining full objective
+------------------------
+The SAME original E main83936/clean47662 histories are still running. Both
+have reached layer0 matrix5;this is NOT the later precise activation/down
+consumer,whole-layer,all64,multitoken,numerical,STOP or native END result.
+No existing valid history was stopped,restarted or cloned for these tests.
+
+Next implementation needs a DISTINCT genuine native QTP2 context/perimeter,
+selected worker status/boot owner logic and matching lifetime/restore/END
+integration,not reuse of old QTP1 success flags. Actual connected consumer,
+combined stacks,whole-model/state/KV/EOS numerics and safe native lifecycle
+must be qualified before physical Work/Assistant use and real TPS tuning.
+This DATA+held-journal checkpoint is a prerequisite,not a substitute for
+that requested working fast27B outcome. No20tokens/sec claim is made.
+
+No Pioneer/SSH/power/driver/OS/Assistant/network/SD/mains operation occurred.

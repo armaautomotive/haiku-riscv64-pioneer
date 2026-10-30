@@ -4,6 +4,9 @@
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_PRECISE_WORKER_IMAGE)
 #error Fixed QTP1/QGW1 program DATA cannot select the distinct precise ROOT/worker family
 #endif
+#ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS
+#include "PioneerQ38TokenPrecisePrograms.h"
+#else
 #ifndef PIONEER_Q38_TOKEN_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_PROGRAMS_H
 #include "PioneerQ38TokenFootprint.h"
@@ -7644,4 +7647,10 @@ static inline bool ProgramWord(unsigned worker,uint32_t address,uint32_t& output
  }return false; // no implicit zero-padded holes or runtime-data permission
 }
 }
+#endif
+#endif
+#ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS
+static_assert(PioneerQ38TokenPrograms::Family==0x32505451,"late QTP2 program DATA selection");
+#else
+static_assert(PioneerQ38TokenPrograms::Family==0x31505451,"late QTP1 program DATA selection");
 #endif

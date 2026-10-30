@@ -28,7 +28,7 @@ static inline bool FirstMatrix(const uint32_t* d){
 }
 static inline bool Virgin(const uint32_t* d){return FirstMatrix(d) && d[48]==1;}
 static inline unsigned RunDelta(unsigned w){return (w<64?10:w<96?8:5)
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
  +unsigned(w<68)
 #endif
  ;}

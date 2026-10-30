@@ -7,19 +7,24 @@ import subprocess
 import sys
 import tempfile
 args = sys.argv[1:]
+precise = '--precise-programs' in args
+if precise:
+    args.remove('--precise-programs')
 sdk = None
 if len(args) >= 2 and args[-2] == '--sdk':
     sdk = pathlib.Path(args[-1])
     args = args[:-2]
-assert args in ([], ['--positive'], ['--faults'])
+assert args in ([], ['--positive'], ['--faults'], ['--capsule-faults'])
+assert args != ['--capsule-faults'] or precise, 'capsule faults require explicit QTP2 DATA'
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 here = pathlib.Path(__file__).resolve().parent
 flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
 with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/tmp') as tmp:
     binary = pathlib.Path(tmp)/'test'
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
-                    '-fsanitize=address,undefined', *flags, str(here/'pioneer_q38_token_memory_test.cpp'), '-o', str(binary)], check=True)
-    for extra in ([[]] if args == ['--positive'] else [['--faults']] if args == ['--faults'] else [[], ['--faults']]):
+                    '-fsanitize=address,undefined', *flags, *(['-DPIONEER_Q38_TOKEN_PRECISE_PROGRAMS=1'] if precise else []),
+                    str(here/'pioneer_q38_token_memory_test.cpp'), '-o', str(binary)], check=True)
+    for extra in ([[]] if args == ['--positive'] else [args] if args in (['--faults'], ['--capsule-faults']) else [[], ['--faults']]):
         subprocess.run([str(binary), *extra], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})
     if sdk:
         headers = sdk/'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'
@@ -27,7 +32,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/t
         tool = str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku')
         subprocess.run([tool+'-g++', '-std=gnu++17', '-O2', '-Wall', '-Wextra', '-Werror', '-Wno-misleading-indentation',
                         '-fno-exceptions', '-fno-rtti', '-ffreestanding', '-fstack-usage', '-mcmodel=medany', '-fpic', '-D_KERNEL_MODE',
-                        '-I'+str(headers), '-idirafter', str(headers/'posix'), '-c',
+                        '-I'+str(headers), '-idirafter', str(headers/'posix'),
+                        *(['-DPIONEER_Q38_TOKEN_PRECISE_PROGRAMS=1'] if precise else []), '-c',
                         str(here/'pioneer_q38_token_memory_kernel_compile.cpp'), '-o', str(obj)], check=True)
         rows = [line.split('\t') for line in obj.with_suffix('.su').read_text().splitlines()]
         assert rows and all(len(row) == 3 and row[2] == 'static' and int(row[1]) <= 2048 for row in rows)
