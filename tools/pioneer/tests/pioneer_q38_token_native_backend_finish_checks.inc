@@ -35,6 +35,10 @@ static void CheckNativeBackendFinish(Fixture& f){
  f.cookie.magic^=1;const auto denied=FinishQ38TokenNativeBackend(&f.cookie);f.cookie.magic^=1;
  assert(!memcmp(&denied,&pristine,sizeof(denied)) && !io.nativeUnreserveCalls);
  io.nativeEndObserved=true;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_OPERATIONS_FIXTURE
+ assert(!tokenControlOperationCounts[1] && tokenControlOperationCounts[2]==2 && tokenControlOperationCounts[3]==1
+  && tokenControlOperationCounts[4]==1 && tokenControlOperationCounts[5]==1 && !tokenControlOperationCounts[6]);
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_FINISH_FIXTURE
  status_t status;const bool lostReply=tokenControlFinishLoseReply;
  const auto result=CheckNativeControlFinishCall(f,lostReply,status);assert(status==(lostReply?-6:B_OK));

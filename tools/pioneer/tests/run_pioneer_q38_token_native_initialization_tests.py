@@ -9,6 +9,10 @@ import subprocess
 import sys
 import tempfile
 
+control_operations = '--control-operations' in sys.argv
+if control_operations:
+    assert sys.argv.count('--control-operations') == 1
+    sys.argv.remove('--control-operations')
 control_adapter = '--control-adapter' in sys.argv
 if control_adapter:
     assert sys.argv.count('--control-adapter') == 1
@@ -36,6 +40,8 @@ if backend_init_faults:
     assert pushed_context, 'backend initialization-fault TEST requires the explicit G3 profile;NO worker/model launch is qualified'
 if control_adapter:
     assert backend_init_faults or len(sys.argv) == 6 and sys.argv[2] == '--execution-backend-first-matrix' or backend_finish and sys.argv[2] == '--execution-end-reload', 'private control TEST requires isolated early-init faults,actual G3 backend first matrix OR exact two-cycle cancelled-first-layer Finish'
+if control_operations:
+    assert control_adapter and backend_finish and pushed_context and sys.argv[2] == '--execution-end-reload', 'private control operations TEST requires exact two-cycle G3 control-Finish predecessor'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -203,6 +209,8 @@ if control_adapter:
         defines['PIONEER_Q38_TOKEN_NATIVE_CONTROL_BEGIN_FIXTURE'] = '1'
     if backend_finish:
         defines['PIONEER_Q38_TOKEN_NATIVE_CONTROL_FINISH_FIXTURE'] = '1'
+    if control_operations:
+        defines['PIONEER_Q38_TOKEN_NATIVE_CONTROL_OPERATIONS_FIXTURE'] = '1'
 with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/private/tmp') as tmp:
     base = pathlib.Path(tmp)
     start, end = '// PIONEER_Q38_CLOCK_IO_BEGIN', '// PIONEER_Q38_CLOCK_IO_END'

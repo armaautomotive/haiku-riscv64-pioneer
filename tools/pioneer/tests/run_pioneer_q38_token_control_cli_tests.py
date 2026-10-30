@@ -34,5 +34,20 @@ assert result.returncode != 0 and not result.stdout
 assert "assert sys.argv.count('--control-adapter') == 1" in result.stderr
 assert not never.exists() and not never.is_symlink()
 refused += 1
+for args in ([], ['--backend-initialization-faults', '--pushed-context', '--control-adapter'],
+             ['--execution-backend-first-matrix', base, base, base, '--pushed-context', '--control-adapter'],
+             ['--execution-end-reload', base, base, base, base, '--pushed-context', '--backend-finish']):
+    result = subprocess.run([sys.executable, str(runner), base, *args, '--control-operations'],
+                            text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    assert result.returncode != 0 and not result.stdout
+    assert 'private control operations TEST requires exact two-cycle G3 control-Finish predecessor' in result.stderr
+    assert not never.exists() and not never.is_symlink()
+    refused += 1
+result = subprocess.run([sys.executable, str(runner), base, '--control-operations', '--control-operations'],
+                        text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+assert result.returncode != 0 and not result.stdout
+assert "assert sys.argv.count('--control-operations') == 1" in result.stderr
+assert not never.exists() and not never.is_symlink()
+refused += 1
 print(f'PASS private control CLI/{refused} wrong-fixture+duplicate refusals BEFORE input/output access;'
       'NO model,device,lifecycle,Work,physical or TPS qualification')

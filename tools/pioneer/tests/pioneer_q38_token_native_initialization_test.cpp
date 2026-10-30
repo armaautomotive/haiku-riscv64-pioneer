@@ -9,6 +9,10 @@
 #elif defined(PIONEER_Q38_TOKEN_NATIVE_CONTROL_FINISH_FIXTURE)
 #include "pioneer_q38_token_native_control_finish_role.h"
 static bool tokenControlFinishLoseReply=false;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_OPERATIONS_FIXTURE
+#include "pioneer_q38_token_native_control_operations_role.h"
+static unsigned tokenControlOperationCounts[7]={};
+#endif
 #else
 #include "pioneer_q38_token_native_control_role.h"
 #endif
@@ -564,6 +568,9 @@ struct Fixture {
 };
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_OPERATIONS_FIXTURE
+#include "pioneer_q38_token_native_control_operations_checks.inc"
+#endif
 #include "pioneer_q38_token_native_runtime_checks.inc"
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE
 #include "pioneer_q38_token_native_bootstrap_checks.inc"
@@ -675,6 +682,9 @@ int main(int argc,char** argv){
   Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_FINISH_FIXTURE
   assert(hostReload);tokenControlFinishLoseReply=fault==1;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_OPERATIONS_FIXTURE
+  memset(tokenControlOperationCounts,0,sizeof(tokenControlOperationCounts));
+#endif
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE
   assert(backendInitFaults);

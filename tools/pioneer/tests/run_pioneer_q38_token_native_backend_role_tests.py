@@ -46,6 +46,7 @@ for stem, family, count, inherited, extra_forbidden in (
     ('pioneer_q38_token_native_control', 'PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE', 8,
      'pioneer_q38_token_native_backend_init_fault_role.h',
      ('PIONEER_Q38_TOKEN_NATIVE_CONTROL_BEGIN_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_CONTROL_FINISH_FIXTURE',
+      'PIONEER_Q38_TOKEN_NATIVE_CONTROL_OPERATIONS_FIXTURE',
       'PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE',
       'PIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE',
       'PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE',
@@ -53,16 +54,22 @@ for stem, family, count, inherited, extra_forbidden in (
     ('pioneer_q38_token_native_control_begin', 'PIONEER_Q38_TOKEN_NATIVE_CONTROL_BEGIN_FIXTURE', 14,
      'pioneer_q38_token_native_backend_role.h',
      ('PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE',
-      'PIONEER_Q38_TOKEN_NATIVE_CONTROL_FINISH_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE',
+      'PIONEER_Q38_TOKEN_NATIVE_CONTROL_FINISH_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_CONTROL_OPERATIONS_FIXTURE',
+      'PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE',
       'PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE')),
     ('pioneer_q38_token_native_control_finish', 'PIONEER_Q38_TOKEN_NATIVE_CONTROL_FINISH_FIXTURE', 23,
      'pioneer_q38_token_native_backend_finish_role.h',
+     ('PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE',
+      'PIONEER_Q38_TOKEN_NATIVE_CONTROL_BEGIN_FIXTURE')),
+    ('pioneer_q38_token_native_control_operations', 'PIONEER_Q38_TOKEN_NATIVE_CONTROL_OPERATIONS_FIXTURE', 24,
+     ('pioneer_q38_token_native_control_finish_role.h', 'pioneer_q38_token_native_backend_finish_role.h'),
      ('PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE',
       'PIONEER_Q38_TOKEN_NATIVE_CONTROL_BEGIN_FIXTURE'))):
     role_header = stem+'_role.h'
     fixture = set(re.findall(pattern, (here/role_header).read_text()))
     if inherited:
-        fixture |= set(re.findall(pattern, (here/inherited).read_text()))
+        for parent in (inherited,) if isinstance(inherited, str) else inherited:
+            fixture |= set(re.findall(pattern, (here/parent).read_text()))
     assert len(fixture) == count
     required = native | fixture | {'PIONEER_Q38_TOKEN_PUSHED_PROGRAMS'}
     parents = dict.fromkeys(required, 1)

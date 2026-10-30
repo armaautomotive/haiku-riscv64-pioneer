@@ -190,7 +190,14 @@ static void CheckNativeExecution(Fixture& f){
    words[i]^=1;assert(!CancelQ38TokenNativeRoot(c,cancel) && io.touches==beforeCancel && !state->Unsafe());cancel=pristine;
   }
   io.executionDropCancel=io.executionFault==4;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_OPERATIONS_FIXTURE
+ }
+ const bool okay=CheckNativeControlOperation(f,PioneerQ38TokenControl::Cancel,true,cancel);
+ {
+  PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);
+#else
   const bool okay=CancelQ38TokenNativeRoot(c,cancel);
+#endif
   if(io.executionFault==4){
    assert(!okay && cancel.started && cancel.unsafe && !cancel.cancelRequested && io.executionCancelWrites==1
     && io.executionCancelObserved && io.touches==io.executionCancelObserved && state->Unsafe());

@@ -28,7 +28,14 @@ static void CheckNativeHoldLayer(Fixture& f){
   for(unsigned i=0;i<16;i++){
    words[i]^=1;assert(!HoldQ38TokenNativeStopped(c,held) && io.touches==before);held=pristine;
   }
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_OPERATIONS_FIXTURE
+ }
+ const bool okay=CheckNativeControlOperation(f,PioneerQ38TokenControl::Hold,true,held);
+ {
+  PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);
+#else
   const bool okay=HoldQ38TokenNativeStopped(c,held);
+#endif
   if(!okay)fprintf(stderr,"TERMINAL_HOLD_DIAGNOSTIC phase%u worker%u word%u held%u firstPC%x secondPC%x unsafe%u;NO HOLD supplied\n",
    held.phase,held.worker,held.word,held.held,held.firstPC,held.secondPC,held.unsafe);
   assert(okay && held.started && held.ready && held.held==120 && !held.unsafe && state->TerminalHeld()

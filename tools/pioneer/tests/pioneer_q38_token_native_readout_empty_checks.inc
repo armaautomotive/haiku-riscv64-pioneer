@@ -34,7 +34,14 @@ static void CheckNativeEmptyReadout(Fixture& f){
    assert(!ReadQ38TokenNativeRecords(c,1,static_cast<uint32_t*>(alias),result) && io.touches==before);
   auto* misaligned=reinterpret_cast<uint32_t*>(reinterpret_cast<uint8_t*>(output.data())+1);
   assert(!ReadQ38TokenNativeRecords(c,1,misaligned,result) && io.touches==before);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_OPERATIONS_FIXTURE
+ }
+ const bool okay=CheckNativeControlOperation(f,PioneerQ38TokenControl::Read,true,result);
+ {
+  PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);
+#else
   const bool okay=ReadQ38TokenNativeRecords(c,0,nullptr,result);
+#endif
   if(!okay)fprintf(stderr,"EMPTY_READOUT_DIAGNOSTIC phase%u worker%u word%u packets%u unsafe%u;NO record supplied\n",
    result.phase,result.worker,result.word,result.packets,result.unsafe);
   assert(okay && result.started && result.ready && result.drained && !result.firstRecord && !result.recordCount

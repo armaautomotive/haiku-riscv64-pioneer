@@ -407,3 +407,54 @@ FC22:18UTC copied-Start paired runtime COMPLETE
   STOP/END,public or physical Work/Assistant result,combined kernel-stack
   bound or speed measurement. Main control-Finish21527 and the original
   five full histories continue separately.20tok/s remains UNMET;goal ACTIVE.
+
+FE explicit remaining control-operation integration TEST / NOT runtime pass
+  New --control-operations requires --control-adapter --backend-finish,
+  explicit G3 and the exact --execution-end-reload predecessor. Its separate
+  TEST role inherits all native/first-layer/cancel/STOP/HOLD/drain/cleanup
+  prerequisites;it cannot alias Start-only,early-failure,full-generation,
+  state,CPU-reference or Work fixtures. No production driver/firmware or
+  public operation changed;the existing bounded private adapter is unchanged.
+
+  Selected positive Cancel,pending Observe,actual terminal Observe,HOLD and
+  empty-frontier Read now call the actual copied-request adapter. Each must
+  copy its immutable heap packet once,execute under its genuine native FD/
+  team/thread scope,and copy the reply under that SAME lock. The original
+  typed malformed-result/alias/count/phase refusals remain. Their scope is
+  closed BEFORE the adapter call to avoid reentrant B_BUSY;a new genuine
+  scope checks the original duplicate-operation refusals afterward. Existing
+  non-selected test paths keep their typed operations. No state,terminal,
+  ownership,ready bit,committed token or drain is supplied to the kernel.
+  Each completed cycle must independently count two Observe calls and one
+  each Cancel/Hold/Read before actual Finish. Read here is ZERO-committed:
+  it does NOT replace the still-required positive generated-token readout.
+
+  Completed paired main/clean role suite0:14 positives/2118 absent+0+2+ABI+
+  late-change+foreign-family+CPU/Work refusals;logs identical,SHA
+    52d3d37f2860e52ee8848d04ed0323772cca7ce3a68ecbf70784b96a76b53840
+  Paired CLI suite0:19 wrong-fixture/duplicate refusals BEFORE input/output
+  access;logs identical,SHA
+    1192012d8b12179ede8adeaafa7b056763c942eb227298d0e361a056d8029012
+  Clean existing early-failure adapter regression0,exact archived5-line log
+  SHA5f0ae599913053bb7fe5d8efdf6b555b5c84462c61f61a3d9f532fc03b516ae2.
+  Clean selected positive-operation fixture COMPILED/LINKED0 but NEVER ran
+  there. Warnings-as-errors and ASan/UBSan stay enabled. No skipped native
+  guard,disabled assertion,CPU-product injection or positive completion.
+  Clean export:1c310098ed +ONLY13 cmp-verified owned TEST overlays:
+    /private/tmp/pioneer-q38-control-operations-clean-fe.TmDmRkB8
+  Logs:/private/tmp/pioneer-q38-control-operations-*-20261030-{fd,fe}.log
+
+  Main79770 remains LIVE,actual initialization advancing;none of its new
+  post-layer operations/STOP/drain/Finish are passes yet. It must run BOTH
+  genuine independent first-layer lifetimes,including cycle2's final reply
+  failure AFTER actual context deletion,then numerical comparisons:
+    /private/tmp/pioneer-q38-control-operations-main-20261030-fd.log
+    /private/tmp/pioneer-q38-control-operations-main-fd.6xay2jpR
+  The earlier Finish-only21527 also remains LIVE around layer0 ROOT120M
+  instructions,NOT a cleanup pass. Original five full histories re-polled
+  SAME live handles at22:25UTC;baseline/native are position0 layer13 and
+  packet-unroll candidate layer8,still no full token/STOP/END completion.
+  Nothing was restarted,transplanted,reinstalled or physically exercised.
+  Full numerical/state/lifecycle/stack/physical/Work/Assistant integration
+  and honest inference tuning remain owed. Last physical0.207893161tok/s;
+  target20tok/s UNMET;goal ACTIVE.
