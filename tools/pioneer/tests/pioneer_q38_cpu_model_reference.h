@@ -40,6 +40,10 @@ public:
  // kind0:GDN FP32 after2/3 steps;kind1:Conv FP32 after3;kind2/3:packed
  // binary16 K/V after3. Invalid requests leave output and state unchanged.
  bool Snapshot(unsigned completed,unsigned layer,unsigned kind,std::vector<uint32_t>&);
+ // Separate EOS-two-position validation COPY. No EOS decision is supplied
+ // to an accelerator; all four state kinds are observed only at position2.
+ // The normal three-position corpus and Snapshot restrictions stay intact.
+ bool SnapshotEos(unsigned layer,unsigned kind,std::vector<uint32_t>&);
  bool Ready()const;
 };
 #endif

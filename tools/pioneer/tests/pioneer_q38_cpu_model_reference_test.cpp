@@ -4,6 +4,8 @@
 #include "pioneer_q38_cpu_reference_math.h"
 #include <cassert>
 #include <cstdio>
+#include <sys/wait.h>
+#include <unistd.h>
 using namespace Q38CpuReferenceMath;
 struct ReferenceRowsProbe:Q38OriginalRows {
  std::vector<Q38OriginalTensor> tensors;uint64_t epoch=1;bool live=true;unsigned reads=0;
@@ -132,6 +134,7 @@ static void TestBind(){
  std::vector<uint32_t> snapshot={0x13579bdf};const auto initial=snapshot;
  for(unsigned completed:{0U,1U,2U,3U,UINT32_MAX})for(unsigned layer:{0U,3U,63U,64U,UINT32_MAX})for(unsigned kind:{0U,1U,2U,3U,4U,UINT32_MAX}){
   assert(!reference.Snapshot(completed,layer,kind,snapshot) && snapshot==initial && reference.Ready() && !good.reads);
+  assert(!reference.SnapshotEos(layer,kind,snapshot) && snapshot==initial && reference.Ready() && !good.reads);
  }
  Q38CpuTokenTrace out;out.hidden={0xa5a5a5a5};good.epoch++;
  assert(!reference.Step(0,out) && !reference.Ready() && !good.reads && out.hidden==std::vector<uint32_t>{0xa5a5a5a5});
@@ -168,12 +171,40 @@ int main(int argc,char** argv){
     assert(records==(position==1?48U:128U) && source.reads==reads && reference.Ready());
     printf("PASS CPU-private snapshots/after%u complete steps/%u retained-state records/copied-output mutation cannot affect model/no learned reads;SYNTHETIC ZERO only\n",position+1,records);
    }
+   unsigned eosRecords=0;const unsigned eosReads=source.reads;
+   for(unsigned layer=0;layer<65;layer++)for(unsigned kind=0;kind<5;kind++){
+    const bool wanted=position==1 && layer<64 && kind<4 && (layer%4==3?kind>=2:kind<2);
+    std::vector<uint32_t> words={0x13579bdf};
+    assert(reference.SnapshotEos(layer,kind,words)==wanted);
+    if(wanted){
+     const unsigned expected=kind==0?786432:kind==1?30720:1024;
+     const uint32_t magnitude=kind<2?0x7fffffffU:0x7fff7fffU;
+     assert(words.size()==expected);for(auto word:words)assert(!(word&magnitude));
+     words[0]=0x3f800000;std::vector<uint32_t> again;
+     assert(reference.SnapshotEos(layer,kind,again) && !(again[0]&magnitude));eosRecords++;
+    }else assert(words==std::vector<uint32_t>{0x13579bdf});
+   }
+   assert(eosRecords==(position==1?128U:0U) && source.reads==eosReads && reference.Ready());
+   printf("PASS CPU-private EOS snapshot/after%u steps/%u records/all GDN+Conv+packed K+V at2 ONLY/copied output/invalid geometry and before+after position refuse;SYNTHETIC ZERO only\n",position+1,eosRecords);
+   if(position==1){
+    // Fork the actual two-step CPU history,not a supplied completed state.
+    // A failed POST-copy descriptor audit must not publish any partial copy.
+    const pid_t child=fork();assert(child>=0);
+    if(!child){
+     std::vector<uint32_t> words={0x13579bdf};source.refuseDescription=source.describes+852;
+     assert(!reference.SnapshotEos(0,0,words) && words==std::vector<uint32_t>{0x13579bdf} && !reference.Ready());
+     source.refuseDescription=0;assert(!reference.SnapshotEos(0,0,words) && !reference.Ready());_exit(0);
+    }
+    int status=0;assert(waitpid(child,&status,0)==child && WIFEXITED(status) && WEXITSTATUS(status)==0 && reference.Ready());
+    puts("PASS CPU-private EOS state/post-copy descriptor loss leaves output unchanged+sticky failed reference;parent continues its SAME third step");
+   }
   }
   // A descriptor failure on the POST-copy audit leaves the caller's output
   // untouched and permanently poisons this reference. No partial snapshot.
   std::vector<uint32_t> words={0x13579bdf};source.refuseDescription=source.describes+852;
   assert(!reference.Snapshot(3,0,0,words) && words==std::vector<uint32_t>{0x13579bdf} && !reference.Ready());
   source.refuseDescription=0;assert(!reference.Snapshot(3,0,0,words) && !reference.Ready());
+  assert(!reference.SnapshotEos(0,0,words) && words==std::vector<uint32_t>{0x13579bdf} && !reference.Ready());
   puts("PASS independent full CPU reference/3positions/all64+vocab each/tie-lowest/retained state+KV paths/SYNTHETIC ZERO learned bytes only;NOT original model/device/native/Work/TPS proof");
  }
 }

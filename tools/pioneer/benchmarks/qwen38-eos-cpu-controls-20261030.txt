@@ -1,0 +1,60 @@
+Original-model two-position CPU-private state controls:COMPLETED validation
+2026-10-30 01:00UTC. Full goal ACTIVE;20tokens/sec remains UNMET.
+Last physical whole-model result remains0.207893161tokens/sec.
+
+Original CPU producers89235/20013 BOTH terminal0. Each authenticates the
+SAME-open original GGUF and executes EXACTLY2 complete CPU forward steps,
+all64 layers+full vocabulary each. No third step or token file is produced.
+128 retained-state copies cover48 GDN arrays,48 Conv histories and16 packed
+K+V pairs at2 positions. These are CPU-only controls,NOT actual device EOS
+decisions,accelerator state,STOP,native END or performance measurements.
+
+The token files retain their exact previously pinned three-step-prefix hashes:
+ 0/2324548B/9323e2451c41e241c9a0391d3905890b662fd73df8542103da229f9b910d6937
+ 1/2324548B/dcc88c37599ab6659990f5154da04dcc12b4edea5a38c27359402b75ede4973d
+This confirms that the optional observation preserves the original forward
+trace prefix. Both executions use the SAME independent CPU algorithm;
+they are not independent state algorithms or accelerator comparisons.
+
+The new CPU-private SnapshotEos copies ALL four state kinds only after
+exactly2 completed steps. Existing normal Snapshot restrictions remain.
+Invalid geometry/position requests do not modify output/reference state.
+Source/descriptor loss on the post-copy audit leaves output unchanged and
+permanently fails the reference. No mutable state pointer or device-product
+supplier is exposed;the normal no-CPU-reference Work path is unchanged.
+
+Immutable9-input B producer/API trees,all compared before tests:
+ main /private/tmp/pioneer-q38-eos-state-main-b.l73VuXhC
+ clean /private/tmp/pioneer-q38-eos-state-clean-b.HAhYYm0S
+Their five CPU source files match this publication. Full-zero regressions
+72268/23989 BOTH0:three actual synthetic-zero forward steps,all64+vocabulary
+each,128 EOS copies at2 ONLY,normal176 copies,output mutation independence
+and post-copy descriptor loss. Role11822/59924 BOTH0/119 gates. No CPU
+products may enter image,native,old-debug or actual Work roles,including0.
+
+Read-only structured audit64807 first passes;fresh D98862/6624 BOTH0 using
+the SAME two completed controls. All128 records/39256064 payload words are
+bit-identical;all exact headers,lengths,finite FP32/packed-half domains and
+footers/marker match. CPU QCE1 is distinct from observed QNE1. Exact file
+sets reject a third token or missing/extra state records. Main/clean complete
+producer,zero,role and audit logs are identical. Original generated model/
+state binaries remain outside Git.
+
+Controls:
+ main /private/tmp/pioneer-q38-eos-state-original-main-b.yZEiJNo2/cpu
+ clean /private/tmp/pioneer-q38-eos-state-original-clean-b.JBAT8SHu/cpu
+Each contains token0/1 plus eos-state-cpu. Full EOS accelerator-model
+histories19687/40048 remain LIVE,not passing. Their future128 state records
+must be compared with these controls using compare_pioneer_q38_eos_state.py.
+The output comparator currently authenticates a complete3-token CPU corpus;
+use the earlier original3-step controls for its first2 outputs,whose bytes
+are exactly the hashes above. Do NOT create a third file in these2-step
+controls merely to satisfy the older output loader.
+
+Publication contains ONLY the five CPU/API/producer files,new DATA auditor,
+eight complete passing logs and this report. Normal-native format-version
+and legacy-layout work remains separate;no driver/default Work/Assistant,
+boot,CPU/RAM,hardware,SSH,power,OS,network,SD or mains change is made.
+All64/multitoken/official-EOS output/state/KV accelerator numerics,combined
+stack,full native END/unload/reuse/recovery,new fast Work+Assistant and
+physical stability/real measured tuning remain owed. Goal not complete.

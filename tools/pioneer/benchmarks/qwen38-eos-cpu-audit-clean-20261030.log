@@ -1,0 +1,3 @@
+CPU_EOS_PREFIX position0/bytes2324548/SHA2569323e2451c41e241c9a0391d3905890b662fd73df8542103da229f9b910d6937/UNCHANGED from pinned three-step original control
+CPU_EOS_PREFIX position1/bytes2324548/SHA256dcc88c37599ab6659990f5154da04dcc12b4edea5a38c27359402b75ede4973d/UNCHANGED from pinned three-step original control
+PASS two CPU-private original controls/128 records/39256064 words BIT-IDENTICAL/exact2 tokens+marker/finite FP32+packedhalf domains/CPU QCE1 distinct from observed QNE1;SAME CPU algorithm run twice,NOT accelerator comparison,EOS execution,END,Work or TPS qualification

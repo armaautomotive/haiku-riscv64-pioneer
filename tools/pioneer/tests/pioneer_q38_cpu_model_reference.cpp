@@ -148,9 +148,9 @@ struct Q38CpuModelReference::Impl {
   for(float x:logits){if(!Normal(x))return false;stage.logits.push_back(Bits(x));}
   if(!Current(true))return false;output=std::move(stage);position++;return true;
  }
- bool Snapshot(unsigned completed,unsigned layer,unsigned kind,std::vector<uint32_t>& output){
+ bool Snapshot(unsigned completed,unsigned layer,unsigned kind,std::vector<uint32_t>& output,bool eos=false){
   if(completed!=position || (completed!=2 && completed!=3) || layer>=64 || kind>3
-   || (completed==2 && kind!=0) || (layer%4==3?kind<2:kind>=2))return false;
+   || (eos?completed!=2:completed==2 && kind!=0) || (layer%4==3?kind<2:kind>=2))return false;
   if(!Current(true)){failed=true;return false;}
   const auto& s=state[layer];const auto& values=kind==0?s.state:kind==1?s.history:kind==2?s.key:s.value;
   const unsigned expected=kind==0?786432:kind==1?30720:completed*1024;
@@ -176,3 +176,4 @@ bool Q38CpuModelReference::Step(unsigned token,Q38CpuTokenTrace& out){
  if(!impl->Step(token,out)){impl->failed=true;return false;}return true;
 }
 bool Q38CpuModelReference::Snapshot(unsigned completed,unsigned layer,unsigned kind,std::vector<uint32_t>& out){return impl->Snapshot(completed,layer,kind,out);}
+bool Q38CpuModelReference::SnapshotEos(unsigned layer,unsigned kind,std::vector<uint32_t>& out){return impl->Snapshot(2,layer,kind,out,true);}
