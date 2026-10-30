@@ -94,3 +94,21 @@ fault/cancellation/END/reuse/combined stack,native no-CPU-reference Work,
 Assistant and physical complete-model timing. No Pioneer SSH,power,OS,
 driver,Assistant,SD,hardware or mains action;other8 primary histories and
 27 suspended histories remain separate and preserved.
+
+12:00UTC authoritative BC result -- BOTH EXIT1, not live
+------------------------------------------------------
+The BC main16064/clean44432 parent histories later stopped in the HOST
+GlobalChainPeer endpoint at layer0 matrix6(role2,Q4), after passing all
+eight genuine handoff fault cases in each copy and continuing past Conv/
+GDN. No first-layer prefix or full-model result was produced. The bounded
+handoff results above remain valid; the continuing histories are failures.
+
+The endpoint admitted completion writes only at groups*K/4 tensor
+instructions, incorrectly hard-coding four phases per16-input panel.
+The pinned Q4 capsule uses two phases. CorrectRows already requires the
+actual MatrixPhasesPerPanel()*groups*(K/16) count. The new HOST-only
+correction uses that exact contract, retaining the frontend PC, completed
+read packets, drained/pending checks, exact FP32 rows, source/readback and
+two exact payload+commit command checks. No firmware or guard is changed.
+See qwen38-pushed-endpoint-formats-20261030.txt for the replacement tests;
+do not relabel these failed BC histories as successful or restart them.

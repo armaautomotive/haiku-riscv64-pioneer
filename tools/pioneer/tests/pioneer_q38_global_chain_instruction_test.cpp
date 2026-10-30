@@ -27,7 +27,7 @@ struct GlobalChainPeer:NewCohortPeer {
  std::vector<uint8_t> preciseCode;bool preciseActive=false;
  unsigned precisePackets=0;
 #endif
- GlobalChainPeer(const char* old,const char* image,unsigned worker):NewCohortPeer(old,worker,8,5120){
+ GlobalChainPeer(const char* old,const char* image,unsigned worker,unsigned type=8,unsigned k=5120,unsigned groups=1):NewCohortPeer(old,worker,type,k,groups){
   assert(!steps && pc==0x6000); // immutable new ROM BEFORE first instruction ONLY
   code=Read((std::string(image)+"/text.bin").c_str());front=Read((std::string(image)+"/globalworker.bin").c_str());
   dense=Read((std::string(image)+"/dense.bin").c_str());helper=Read((std::string(image)+"/ffn.bin").c_str());
@@ -94,7 +94,8 @@ struct GlobalChainPeer:NewCohortPeer {
    assert(Range(pc,M::Code,unsigned(front.size())) && !pending && drained);memory[a]=value;return;
   }
   if(Range(a,0xffb20000,40) && Range(pc,M::Code,unsigned(front.size()))
-   && memory.at(M::Job+8)==1 && requests==packets.size() && matrixInstructions==FfnPersistentPeer::groups*inputs/4){
+   && memory.at(M::Job+8)==1 && requests==packets.size()
+   && matrixInstructions==MatrixPhasesPerPanel()*FfnPersistentPeer::groups*(inputs/16)){
    assert(!(a&3) && !pending && drained && pushPackets<2 && responses==requests && !dotProbeReads && CorrectRows());
    unsigned i=(a-0xffb20000)/4;
    const uint32_t expected[]={G::PushBuffer,0,selfRoute,G::Slot(logicalWorker),0,G::Root,0,0x212,pushPackets?4U:256U,0};

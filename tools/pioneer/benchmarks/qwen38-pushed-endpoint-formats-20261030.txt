@@ -1,0 +1,115 @@
+QGW3 HOST completion endpoint format correction -- offline only
+2026-10-30, based on3712e200738b88031abfe57aaaca848d41b5caf5
+================================================================
+Goal ACTIVE;last physical whole-model rate0.207893161tokens/sec;20UNMET.
+No Pioneer SSH,power,OS,driver,Assistant,SD,hardware or mains action.
+
+The old full-model BC16064/44432 both EXIT1 after the genuine eight-case
+matrix-to-Conv counter regression, then Conv/GDN and matrix5. The layer0
+matrix6 Q4 completion fell through to the read-only SharedRows endpoint:
+requests<packets.size() failed because all actual matrix reads had ended.
+No first-layer prefix or token/model result was produced by those runs.
+
+The HOST GlobalChainPeer write admission wrongly assumed four phases for
+every16-input panel. The Q4 two-phase capsule genuinely executes half that
+count. Admission now uses the existing virtual MatrixPhasesPerPanel()
+contract also used by CorrectRows. Q8/Q6 remain four phases,Q4 is two.
+It still requires the actual frontend PC, normal matrix operation, ALL
+reads complete, no pending/undrained operation, exact independently checked
+FP32 rows, no dot-probe reads, all exact command words/order/readbacks and
+ONLY a256-byte payload followed by4-byte commit. No current counter is
+accepted as a new baseline. No production/firmware arithmetic or guards
+were changed; all eight ROOT/component and ten sender artifact pins stay
+those of the published3712/f8ac BUILD experiments, not launch authority.
+
+New regression
+--------------
+pioneer_q38_pushed_endpoint_formats_test.cpp executes the actual pinned
+QGW3 RISC/Tensix image through the SAME GlobalChainPeer class as the original
+full-model fabric, not a second approximate completion endpoint. Constructor
+parameters select immutable synthetic raw fixture bytes before first boot;
+default arguments preserve existing K5120/Q8/groups1 callers. No processor,
+tensor accumulator, private nonce, result or completion is transplanted.
+
+Twelve virgin-to-WAIT normal matrix histories cover all three formats8/12/14
+and shapes(K5120,g1),(K6144,g3),(K17408,g1),(K5120,g16),rotating actual worker
+routes1/96/119. Each requires independently computed phase/instruction/read
+counts, exact rows, actual two completion writes, incoming slave delta
+{2,5,2,2}, all eight outgoing counter deltas {0,0,2,0,2,5,2,2}, the complete
+receipt grammar and rejection of each of its64 individually corrupted words.
+Only raw inputs/weights and NoC transport endpoints are supplied. The isolated
+long-Q4 positive uses worker119:private ranks1..68 require an earlier actual
+activation. A thirteenth negative history requires worker1 to reject that
+missing activation before ANY read/tensor/push,and remain inert2048. No
+private readiness bit is set to make an illegal virgin down job pass.
+
+The runner authenticates literal mixed/sender byte pins and now compares
+the sender symbol map against nm of the pinned ELF before execution. It
+retains the original sender suite first:three Q8/K5120 tensor jobs,48 source
+faults after payload before commit,three finite missing-ACK timeouts,inert
+failure2048,three queued-next-descriptor-at-commit branches,counter wrap and
+all64 receipt mutations. It compiles both suites with ASAN/UBSAN,Werror,
+ffp-contract=off and the explicit two-phase ISA model flags.
+
+Honest setup-failure lineage
+---------------------------
+BF46586/73112 both EXIT1:new regression compile typo qualified the existing
+free Word function as a class member. Both original sender suites passed.
+BG99226/5758 both EXIT1:new regression incorrectly remapped the scale-source
+address to0x94000; PersistentRows had already moved those raw bytes to0xab000.
+BH/BI diagnostic reproductions confirmed the missing raw ROOT word. That
+fixture mapping is now direct, not default-zero. These are failed HOST test
+setups, not successful matrix tests or firmware/card failures. The stalled
+local LLDB diagnostic alone was closed; no older validation run was killed.
+BJ42726/6346 both EXIT1 after four Q8 and two Q4 positives:the long Q4 case
+had wrongly used virgin worker1,which correctly rejects missing private
+activation before any packet or tensor instruction. BK15242 diagnostic
+confirmed PC0x2009c,Fault46574752,ZERO reads/tensors/pushes. The guard remains
+unchanged and is now an explicit negative case;legal high-rank long Q4 is
+separately required to complete. No firmware guard was relaxed.
+
+Final candidate source snapshots
+--------------------------------
+Main:/private/tmp/pioneer-q38-push-endpoint-main-bl.5Nt7AhWp
+Clean:/private/tmp/pioneer-q38-push-endpoint-clean-bl.FIe1PITs
+Both archive3712 and overlay only the three owned HOST test/runner files.
+Unrelated native Host/END/state,dirty llama.cpp and FlashNext WIP excluded.
+BL95215/84496 BOTH EXIT0 by12:14UTC. Each original sender suite passes,
+followed by ALL12 actual matrix/push/receipt format cases and the thirteenth
+missing-activation refusal/inert2048 case. ASAN/UBSAN reported no errors.
+In particular Q4/K5120/g1 executes640 tensor instructions and22 reads;
+Q4/K6144/g3 executes2304 and74;Q4/K17408/g1 on rank119 executes2176 and72;
+Q4/K5120/g16 executes10240 and322. Q8/Q6 use the independently checked
+four-phase counts. These are HOST instruction/transport observations only.
+
+Replacement original-model histories -- still incomplete
+-------------------------------------------------------
+BM main7035 /clean59848 started12:14UTC from the final immutable BL sources,
+using the SAME unchanged BB ROOT and AF sender image artifacts. These are
+new histories replacing genuinely terminal failed BC runs, not restarts of
+live validations. Each requests the actual ROOT reset+119 worker histories,
+original authenticated18,973,870,528-byte GGUF,cohort counter-fault subcases,
+continuation through3positions x64layers and119STOP, and a NON-closing
+first-layer diagnostic snapshot. No complete result or speedup is claimed.
+The launch's nice10 request logged a sandbox permission denial but still
+executed the tests. Their exact new executable PIDs98838/98839 were verified,
+then reniced10 with approval and verified SN/NI10 at12:15UTC. The same
+histories continued without a restart,leaving capacity for the older eight.
+
+Main log:/private/tmp/pioneer-q38-push-endpoint-flow-main-20261030-bm.log
+Clean log:/private/tmp/pioneer-q38-push-endpoint-flow-clean-20261030-bm.log
+Main trace:/private/tmp/pioneer-q38-push-endpoint-flow-main-bm.TxqlPk5g/observed
+Clean trace:/private/tmp/pioneer-q38-push-endpoint-flow-clean-bm.Ct522hgB/observed
+Source/report update does not change their immutable execution inputs.
+Poll these SAME handles;compare an actual first-layer prefix bit-exact
+against qualification-inputs/cpu-original-trace-20261028 when produced,
+while the SAME parent histories continue the full requested execution.
+
+The older eight primary sessions59759/75018,78074/54690,84911/99248,
+49534/81457 were all confirmed live12:13UTC. The27 older SIGSTOP histories
+remain preserved separately,not qualified or killed. Unrelated WIP excluded.
+
+Still owed:actual original first-layer and all64/threeposition/state/KV/
+vocabulary/STOP numerical comparison,combined stack,END/reuse/cancellation,
+native no-CPU-reference Work,Assistant and real physical whole-model speed.
+Synthetic endpoint instruction/packet counts are NOT physical timing/TPS.
