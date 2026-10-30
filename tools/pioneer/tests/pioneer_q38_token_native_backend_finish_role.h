@@ -24,7 +24,7 @@
  || !defined(PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE) || PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE != 1
 #error Explicit actual G3 backend Finish/full cancelled-first-layer predecessor TEST required
 #endif
-#if defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE) \
+#if defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE) \
  || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_STATE_SNAPSHOT_FIXTURE)
 #error Backend Finish TEST cannot alias startup-only/positive-generation/state tests, including defined0
 #endif

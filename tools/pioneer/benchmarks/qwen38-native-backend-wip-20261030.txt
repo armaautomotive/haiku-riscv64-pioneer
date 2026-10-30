@@ -195,3 +195,42 @@ Separate EN evidence rechecks, not new driver or hardware execution
 Full3position*64layers/vocabulary/commits/state/END/physical no-CPU-reference
 Work and honest inference tuning remain owed. Last physical0.207893161tok/s;
 20tok/s UNMET. Goal stays ACTIVE.
+
+ER early-initialization failure integration / paired completed0
+  --backend-initialization-faults --pushed-context is a distinct TEST mode.
+  Four independent fixtures cover an actually executed zero-ROM summary
+  corruption, simulated team loss after that first run, generation loss after
+  that run, and a first-request no-completion timeout. Actual composite Begin
+  stops at stage2 in every case, reports unsafe/not-ready/not-complete, and
+  retains/quarantines all owners. It performs no history/projection publication,
+  held-memory map,119 bootstrap, ROOT/model start, following IO, rollback,
+  release, END or retry. Repeated Begin/Finish and old incomplete-END calls
+  remain inert after uncertainty. All119 TEST boot CPUs stay at zero steps.
+  These early cases use TEST learned-ledger/OS/MMIO metadata, not an original
+  GGUF authentication or a positive worker/model/initialization/END result.
+  They are separate mock fixtures, not a claim of automatic hardware recovery.
+
+  Main68958 and independent clean16720 both exited0, complete logs identical.
+  Source export:46301a28ac + ONLY8 cmp-verified owned TEST paths:
+    /private/tmp/pioneer-q38-backend-fault-clean-er.rvYnqNTr
+  Main67956 and clean36138 isolation suites both0, logs identical:
+    6 positive /860 absent+0+2+ABI+late-change+foreign-family+CPU/Work refusals.
+  Existing positive original-model backend-first-matrix fixture compiled and
+  linked in the clean export (24227 exit0);compile-only did NOT execute it.
+  The unchanged old clock/cleanup-owner contract also executed0 (72318).
+  No native implementation, firmware, normal ABI, Work or Assistant code changed.
+
+  EP draft correctly failed the existing pushed-byte-fabric isolation guard:
+  early failure cases have no actual peer instruction endpoint. Do not weaken
+  that guard or attach dummy successful workers. The exact early-init TEST
+  instead excludes that unrelated, never-used fabric import/member/accesses.
+  EQ then caught four residual references;ER uses the same exclusion consistently
+  at all five fabric sites. Existing normal/native arithmetic TEST paths retain
+  the full fabric unchanged. No assertion, warning, source/receipt/STOP or native
+  lifecycle guard was removed or relaxed; no completion/product was supplied.
+  Main log:/private/tmp/pioneer-q38-backend-init-faults-main-20261030-er.log
+  Clean log:/private/tmp/pioneer-q38-backend-init-faults-clean-20261030-er.log
+
+The original six long histories remain separate: composite-Finish cycle2 and
+five complete-model traces still require their own authoritative terminal and
+numerical evidence. No hardware action or new inference-speed measurement.

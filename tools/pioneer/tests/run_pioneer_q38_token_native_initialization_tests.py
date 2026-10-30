@@ -27,6 +27,9 @@ if pushed_context:
     sys.argv.remove('--pushed-context')
 if backend_finish:
     assert pushed_context and len(sys.argv) == 7 and sys.argv[2] in ('--execution-end', '--execution-end-reload'), 'backend Finish TEST requires actual G3 first-layer/cancel/STOP/HOLD/drain predecessor'
+backend_init_faults = len(sys.argv) == 3 and sys.argv[2] == '--backend-initialization-faults'
+if backend_init_faults:
+    assert pushed_context, 'backend initialization-fault TEST requires the explicit G3 profile;NO worker/model launch is qualified'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -78,11 +81,11 @@ peer_engines = full_end_contract or peer_bootstrap or first_matrix
 if precise_context:
     assert peer_engines or sys.argv[2:]==['--preparation-endpoint-contract'], 'QTP2 execution requires actual virgin peer instruction engines;endpoint-only contract executes NO worker/model instructions'
 if pushed_context:
-    assert full_end_contract or peer_bootstrap or first_matrix or sys.argv[2:]==['--preparation-endpoint-contract'], 'QTP3 requires actual virgin engines/full predecessor;pending END contract grants no execution or cleanup'
+    assert backend_init_faults or full_end_contract or peer_bootstrap or first_matrix or sys.argv[2:]==['--preparation-endpoint-contract'], 'QTP3 requires actual virgin engines/full predecessor;early-init fault TEST grants no worker/model execution or cleanup'
 terminal_faults = len(sys.argv)==3 and sys.argv[2]=='--terminal-observation-faults'
 preparation_faults = len(sys.argv)==3 and sys.argv[2] in ('--preparation-fifo-faults', '--preparation-access-faults')
 preparation_endpoints = len(sys.argv)==3 and sys.argv[2]=='--preparation-endpoint-contract'
-assert full_end_contract or clock_contract or preparation_endpoints or preparation_faults or peer_bootstrap or embedding or terminal_faults or len(sys.argv) in (2,3) and (len(sys.argv) == 2 or sys.argv[2] in ('--initializer-fifo-faults', '--faults', '--late-faults', '--held', '--held-faults', '--runtime', '--runtime-pci-capture-fault', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'))
+assert backend_init_faults or full_end_contract or clock_contract or preparation_endpoints or preparation_faults or peer_bootstrap or embedding or terminal_faults or len(sys.argv) in (2,3) and (len(sys.argv) == 2 or sys.argv[2] in ('--initializer-fifo-faults', '--faults', '--late-faults', '--held', '--held-faults', '--runtime', '--runtime-pci-capture-fault', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'))
 if embedding:
     assert pathlib.Path(sys.argv[3]).is_absolute() and pathlib.Path(sys.argv[3]).is_file()
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
@@ -183,6 +186,11 @@ if state_snapshots:
     defines.update(PIONEER_Q38_TOKEN_NATIVE_STATE_SNAPSHOT_FIXTURE='1', PIONEER_Q38_NATIVE_STATE_TEST_BRIDGE='1')
 if backend_finish:
     defines['PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE'] = '1'
+if backend_init_faults:
+    defines.update(dict.fromkeys(('PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE',
+        'PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE',
+        'PIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE', 'PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE',
+        'PIONEER_Q38_TOKEN_NATIVE_CLOCK_FIXTURE'), '1'))
 with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/private/tmp') as tmp:
     base = pathlib.Path(tmp)
     start, end = '// PIONEER_Q38_CLOCK_IO_BEGIN', '// PIONEER_Q38_CLOCK_IO_END'

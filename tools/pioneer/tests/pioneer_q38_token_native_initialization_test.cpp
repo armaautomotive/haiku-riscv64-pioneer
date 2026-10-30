@@ -458,7 +458,10 @@ bool PioneerSessionIO::TokenPciLeaseIdentity(const PioneerQ38TokenPciLease&)cons
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE
 #include "pioneer_q38_token_native_backend_finish_role.h"
 #endif
-#if defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE)
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE
+#include "pioneer_q38_token_native_backend_init_fault_role.h"
+#endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE)
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeBackend.inc"
 #endif
 static bool IncompleteEnd(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean){
@@ -538,7 +541,11 @@ struct Fixture {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE
 #include "pioneer_q38_token_native_backend_checks.inc"
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE
+#include "pioneer_q38_token_native_backend_init_fault_checks.inc"
+#endif
 int main(int argc,char** argv){
+ const bool backendInitFaults=argc==3 && !strcmp(argv[2],"--backend-initialization-faults");
  const bool clockContract=argc==3 && !strcmp(argv[2],"--clock-owner-contract");
  const bool fullEndContract=argc==5 && (!strcmp(argv[2],"--full-end-owner-contract") || !strcmp(argv[2],"--state-owner-contract"));
  const bool fullEndFlow=argc==7 && (!strcmp(argv[2],"--execution-end-full-flow") || !strcmp(argv[2],"--execution-end-state-full-flow"));
@@ -581,14 +588,14 @@ int main(int argc,char** argv){
  const bool firstMatrix=fullLayer || backendFirstMatrix || (argc==6 && !strcmp(argv[2],"--execution-first-matrix"));
  const bool embedding=firstMatrix || (argc==4 && (!strcmp(argv[2],"--execution-embedding") || !strcmp(argv[2],"--execution-embedding-source-loss")
   || !strcmp(argv[2],"--execution-embedding-readback-loss") || !strcmp(argv[2],"--execution-layer-dispatch")));
- assert(fullEndContract || clockContract || preparationEndpoints || preparationFaults || initializationFifoFaults || terminalFaults || peerBootstrap || embedding || argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
+ assert(backendInitFaults || fullEndContract || clockContract || preparationEndpoints || preparationFaults || initializationFifoFaults || terminalFaults || peerBootstrap || embedding || argc==2 || (argc==3 && (!strcmp(argv[2],"--faults") || !strcmp(argv[2],"--late-faults") || !strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults")
   || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
   || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")
   || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-traffic-faults")
   || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-pci-capture-fault") || !strcmp(argv[2],"--runtime-faults"))));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;(void)&PreparePanel;(void)&Run;(void)&Job;(void)&ClosePanel;(void)&Finish;(void)&AcquireQ38DeltaLock;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
- assert(fullEndContract || clockContract || preparationEndpoints || preparationFaults || terminalFaults || peerBootstrap || embedding || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-pci-capture-fault") || !strcmp(argv[2],"--runtime-faults")
+ assert(backendInitFaults || fullEndContract || clockContract || preparationEndpoints || preparationFaults || terminalFaults || peerBootstrap || embedding || (argc==3 && (!strcmp(argv[2],"--held") || !strcmp(argv[2],"--held-faults") || !strcmp(argv[2],"--runtime") || !strcmp(argv[2],"--runtime-pci-capture-fault") || !strcmp(argv[2],"--runtime-faults")
   || !strcmp(argv[2],"--bootstrap") || !strcmp(argv[2],"--bootstrap-faults")
   || !strcmp(argv[2],"--execution") || !strcmp(argv[2],"--execution-faults")
   || !strcmp(argv[2],"--execution-traffic") || !strcmp(argv[2],"--execution-traffic-faults"))));
@@ -600,7 +607,7 @@ int main(int argc,char** argv){
  const bool execution=terminalFaults || embedding || (argc==3 && !strncmp(argv[2],"--execution",11)),executionFaults=execution && !strcmp(argv[2],"--execution-faults");
  const bool trafficFaults=argc==3 && !strcmp(argv[2],"--execution-traffic-faults");
  const bool runtime=argc==3 && !strncmp(argv[2],"--runtime",9),runtimeFaults=runtime && !strcmp(argv[2],"--runtime-faults");
- const bool faults=!fullEndContract && !clockContract && !preparationEndpoints && !preparationFaults && !initializationFifoFaults && argc==3 && strncmp(argv[2],"--held",6) && !runtime && !bootstrap && !execution,late=faults && !strcmp(argv[2],"--late-faults");
+ const bool faults=!backendInitFaults && !fullEndContract && !clockContract && !preparationEndpoints && !preparationFaults && !initializationFifoFaults && argc==3 && strncmp(argv[2],"--held",6) && !runtime && !bootstrap && !execution,late=faults && !strcmp(argv[2],"--late-faults");
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
  assert(fullEndContract || embedding);Q38EmbeddingRawTestBridge original;
  if(!fullEndContract){puts("START authenticate SAME-open original27B GGUF RAW bytes BEFORE native fixture construction;NO CPU embedding/model products");
@@ -623,9 +630,14 @@ int main(int argc,char** argv){
 #endif
 #endif
  std::string cyclePrefix;
- for(unsigned fault=0;fault<(hostReload?2U:preparationFaults?4U:initializationFifoFaults?6U:terminalFaults?5U:trafficFaults?2U:executionFaults?4U:bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
+ for(unsigned fault=0;fault<(backendInitFaults?4U:hostReload?2U:preparationFaults?4U:initializationFifoFaults?6U:terminalFaults?5U:trafficFaults?2U:executionFaults?4U:bootstrapFaults?2U:runtimeFaults?3U:heldFaults?3U:late?2U:faults?4U:1U);fault++){
   const uint64 epoch=sQ38TokenModelEpoch;
   Fixture f(argv[1]);auto& c=*f.c;auto& io=f.io;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE
+  assert(backendInitFaults);CheckNativeBackendInitFault(f,fault,epoch);continue;
+#else
+  assert(!backendInitFaults);
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE
   assert(backendFirstMatrix && original.Ready());io.executionCpu->original=&original;
   CheckNativeBackendFirstMatrix(f,epoch);continue;
