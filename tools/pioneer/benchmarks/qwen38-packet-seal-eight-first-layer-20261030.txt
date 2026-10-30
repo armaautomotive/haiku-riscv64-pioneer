@@ -1,0 +1,77 @@
+Eight-way packet seal: completed original-model first-layer tests
+===============================================================
+2026-10-30. HOST emulation of actual controller/worker instructions only.
+No new physical execution, installed driver, Work/native route or TPS claim.
+This is the original eight-way image, NOT the later job-boot-fold experiment.
+
+Sessions17549 and34885 both terminated with exit0, on the same histories
+originally started for this pair. No restart, snapshot transplantation or
+replacement of worker arithmetic. Each authenticated the full original
+Qwen3.8-27B-Q4_K_M.gguf before constructing ROOT; synthetic learned inputs
+were removed. Original bytes, not CPU matrix products, entered the workers.
+
+The four intentional original-fabric rejection child assertions are followed
+by PASS4 genuine refusals and normal parent execution. They are not failed
+parent sessions, and no assertion was disabled to obtain completion.
+
+Each ran the actual next embedding at input token248319, then all eight
+layer0 matrix roles with the SAME119 engines and real prior-state handling.
+Final5120 outputs were captured only after all119 real worker closures.
+Prior GDN/KV remained unchanged; next state retained. No token committed.
+ROOT executed208433598 instructions in the host model, including simulated
+polling. Recorded reserved/written stack6672 bytes applies to this test path;
+it is not physical cycles, a native combined-stack bound, or tokens/sec.
+
+Separate posthoc comparison for EACH output used the unchanged
+compare_pioneer_q38_observed_trace.py --first-layer-only, without diagnostic
+override/tolerance. Its three full independent CPU traces are hash-pinned.
+Both comparisons exit0:5120 embedding words and5120 layer0 words are all
+bit-identical, max absolute and relative L2 error0. The CPU reference is not
+uploaded into the worker execution. Durable copies were independently
+compared again and also exit0.
+
+Original observed outputs:
+/private/tmp/pioneer-q38-packet-eight-layer-main-fl.avDBjm4K/observed
+/private/tmp/pioneer-q38-packet-eight-layer-clean-fl.93AiThvu/observed
+Durable observed copies, relative to repository:
+generated.pioneer/qualification-inputs/observed-packet-eight-layer-20261030-fr/main
+generated.pioneer/qualification-inputs/observed-packet-eight-layer-20261030-fr/clean
+Each prefix-0.bin is41028 bytes, SHA256:
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+
+The two runtime logs compare byte-for-byte:42 lines,SHA256:
+42ccdce20ed0f20d328f5aa3fef3d00dc34dc51b12a6b099b438b203066a277d
+Archived:qwen38-packet-seal-eight-first-layer-20261030.log
+The identical independent comparison reports are archived separately as
+qwen38-packet-seal-eight-first-layer-compare-20261030.log.
+
+Pinned inputs and explicit TEST profile
+--------------------------------------
+Eight-way main/clean ROOT images:
+/private/tmp/pioneer-q38-packet-eight-selected-main-fh-image
+/private/tmp/pioneer-q38-packet-eight-selected-clean-fi-image
+Both ELF SHA256:
+df4261ec5bb3d2f9ada2f11f82b1e52d8d1938c704efd70a4bc150aaab28c933
+Text131040/131072,Conv32720/32768. Default non-unrolled image unchanged.
+Old worker:generated.pioneer/qualification-inputs/mixed-worker-20261030
+QGW3 worker:/private/tmp/pioneer-q38-push-worker-main-20261030-af-image
+Model SHA256:c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+Runner:run_pioneer_q38_token_original_flow_tests.py IMAGE OLD WORKER MODEL
+with a fresh absolute --observed-trace directory and:
+--cancel-boundary --unroll-dense-seals --boundary-seals --unroll-quiet
+--worker-local-source-guards --precise-activation --single-closed-audit
+--worker-sealed-admission --pushed-completion --unroll-packet-seals
+--unroll-packet-seals-eight --qualify-packet-seal-eight-connected
+--first-layer-only
+The committed runner enforces these exact candidate pins and distinct TEST
+qualification. Its eight-way selector still does NOT authorize full flow,
+EOS, snapshots/shortcuts, native launch or Work. No guard changed here.
+
+Still incomplete
+----------------
+All64 layers, vocabulary/greedy output, multi-token state, STOP/END, native
+owner/combined-stack, physical deployment and genuine speed benchmarks are
+not proved by a first-layer diagnostic. The separate original five full-flow
+sessions31695/66331/41236/92178/52159 remain active on their original histories.
+Do not poll/restart the now-completed17549/34885 pair again.
+Last measured physical whole-model rate0.207893161 tokens/sec;20 UNMET.

@@ -1,0 +1,42 @@
+START authenticate entire SAME-open original27B GGUF BEFORE ROOT construction;no CPU product/native owner/physical IO
+PASS distinct full-token startup builder/ALL64x512KiB published DATA+state spans+ZERO slack/root+head EXACT vs prior independently loaded numeric metadata/192 strict first+middle+last chunk controls/strict full geometry before+after/actual session+prompt initialized from builder/ZERO ROOT instructions;geometry NOT native ownership or model products
+PASS distinct pinned cancellable FP32 ROOT/raw cancel control ZERO before first instruction;no request or completion invented
+PASS original fabric/3551 independently classified learned parts/7102 endpoint batches+word equivalence/synthetic learned words2645504+recipes47108 REMOVED/no supplied initial hidden/default mutable bytes unchanged/ZERO ROOT instructions;NOT model execution
+Assertion failed: (!(address&3) && !OverlapsLearned(route,address,4)), function Put, file pioneer_q38_token_original_fabric.h, line 82.
+Assertion failed: (original.Read(route,address,raw,4)), function Get, file pioneer_q38_token_original_fabric.h, line 69.
+Assertion failed: (original.Read(route,address,out,bytes)), function ReadRaw, file pioneer_q38_token_original_fabric.h, line 77.
+Assertion failed: (!OverlapsLearned(route,address,bytes) && spans.empty()), function ReadRaw, file pioneer_q38_token_original_fabric.h, line 78.
+PASS 4 genuine original-fabric refusals/learned write+revoked word+revoked batch+cross-part batch/no synthetic fallback/unchanged virgin parent;TEST transport safety only
+PASS actual next embedding position0/token248319/5120 bit-exact/20raw+2writes+2readbacks/no CPU product upload
+BEGIN actual persistent token0/layer0/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer0 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer0 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer0 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer0 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer0 matrix5 role13/actual quantized input/same workers
+OBSERVED connected layer0 matrix6 role2/actual quantized input/same workers
+OBSERVED connected layer0 matrix7 role3/actual quantized input/same workers
+OBSERVED connected layer0 matrix8 role4/actual quantized input/same workers
+PASS actual persistent token0/layer0/all119 closed/final5120/priorGDN+KV unchanged/nextstate retained/ROOTinstructions208433598/reservedStack6672/writtenStack6672
+ROOT_INSTRUCTION_PROFILE total208433598/functions115/EXCLUSIVE actual PCs incl SIMULATED polling/NOT physical cycles or token speed
+ROOT_INSTRUCTION_FUNCTION 87213186 q38_layer_return_recurrent_packet_seal
+ROOT_INSTRUCTION_FUNCTION 21162863 DensePartitionRoot::Transfer(unsigned int const*, unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+ROOT_INSTRUCTION_FUNCTION 16507800 DensePartitionRoot::Quiet()
+ROOT_INSTRUCTION_FUNCTION 11082700 MixedRecurrentCohort::Packet(unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+ROOT_INSTRUCTION_FUNCTION 10265996 PioneerQ38PreciseWorkerLayout::BootShape(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 9165015 PioneerQ38PreciseWorkerLayout::JobShape(unsigned int const*, unsigned int const*, unsigned int, unsigned int)
+ROOT_INSTRUCTION_FUNCTION 6478078 Projection::Run(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 4045986 RecurrentBlock::Private()
+ROOT_INSTRUCTION_FUNCTION 3809582 PioneerQ38ProjectionQuantize(unsigned int, float const*, unsigned int, PioneerQ38ProjectionInput*) [clone .constprop.0]
+ROOT_INSTRUCTION_FUNCTION 3395752 PioneerQ38PushedWorkerLayout::BootShape(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 3109229 PioneerQ38PushedWorkerLayout::JobShape(unsigned int const*, unsigned int const*, unsigned int, unsigned int)
+ROOT_INSTRUCTION_FUNCTION 3096704 MixedRecurrentCohort::Audit()
+ROOT_INSTRUCTION_FUNCTION 2911557 q38_layer_return_recurrent_seal
+ROOT_INSTRUCTION_FUNCTION 2170054 PioneerQ38ConvBatchShape(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 1715530 PioneerQ38MixedRecurrentRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*) [clone .constprop.0]
+ROOT_INSTRUCTION_FUNCTION 1458434 PioneerQ38MixedRecurrentRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 1367700 DensePartitionRoot::FrameSeal(unsigned int) [clone .part.0]
+ROOT_INSTRUCTION_FUNCTION 1241740 q38_pushed_receipt_shared
+ROOT_INSTRUCTION_FUNCTION 1104356 PioneerQ38PushedWorkerLayout::Receipt(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 1044689 RecurrentBlock::RecipeSeal(unsigned int)
+SAVED FIRST_LAYER_DIAGNOSTIC actual original embedding+layer0 hidden words ONLY/real verified layer+SAME119 closed/no token committed/NO STOP or terminal capability/NOT full-model/native/physical/Work/TPS qualification

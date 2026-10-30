@@ -107,3 +107,6 @@ public Work mode, native route, or existing image pin is enabled by this.
 The seven existing whole-flow/first-layer sessions remain on their original
 histories. In particular the eight-way first-layer pair17549/34885 reached
 matrix8 but has not returned a final numerical comparison at this checkpoint.
+Subsequent first-layer completion and bit-exact independent comparisons are
+recorded in qwen38-packet-seal-eight-first-layer-20261030.txt; these are for
+the original eight-way image, NOT the job-boot-fold candidate described here.
