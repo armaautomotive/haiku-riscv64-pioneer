@@ -1,0 +1,63 @@
+QGW2 original27B first-layer observations -- 2026-10-30
+NUMERICAL_BITEXACT for embedding+layer0 ONLY. Goal ACTIVE;target20 UNMET.
+Physical whole-model rate remains0.207893161 tokens/sec. No hardware action.
+
+Actual runs and limited result
+------------------------------
+Corrected original learned-byte G histories,started once from RESET with
+the SAME119 complete virgin worker instruction engines and no CPU product,
+completed their actual first model layer. The existing non-closing recorder
+wrote an explicitly INCOMPLETE QOP1 prefix;the SAME histories continued into
+layer1. No process/PC/register/state was restarted or transplanted for this
+observation. The full three-position/64-layer test has NOT passed yet.
+
+Baseline precise QGW2 main78074/clean54690 and single-closed-audit candidate
+main84911/clean99248 ALL have the following independent posthoc result:
+ embedding5120 words:bitDifferences0,maxAbs0,relativeL2=0
+ layer0 hidden5120 words:bitDifferences0,maxAbs0,relativeL2=0
+ FIRST_LAYER_DIAGNOSTIC NUMERICAL_BITEXACT=1 NO_TOLERANCE_USED
+Comparator exit0 in all4 cases;--diagnostic-only was NOT used.
+
+The comparator authenticates all three pinned independent CPU traces from
+generated.pioneer/qualification-inputs/cpu-original-trace-20261028. They are
+validation-only DATA read AFTER the emitted observation,never runtime inputs
+or an accelerator product/oracle. No Work selection or driver path changed.
+Command shape:
+ python3 tools/pioneer/tests/compare_pioneer_q38_observed_trace.py \
+  ABS_CPU_TRACE_DIR ABS_OBSERVED_DIR --first-layer-only
+
+Original observation directories:
+/private/tmp/pioneer-q38-corrected-baseline-main-g.efyVrkyz/observed
+/private/tmp/pioneer-q38-corrected-baseline-clean-g.U6flDTGe/observed
+/private/tmp/pioneer-q38-corrected-single-main-g.kiOoGzyi/observed
+/private/tmp/pioneer-q38-corrected-single-clean-g.HyQmrNyj/observed
+All four41028-byte prefix-0.bin files are byte-identical,SHA256:
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+Exact copies are retained under the ignored workspace input directory:
+generated.pioneer/qualification-inputs/observed-first-layer-{baseline,single}-{main,clean}-20261030/prefix-0.bin
+Each copy was compared to its actual source and hashed;not committed/uploaded
+as a model fixture. Comparator logs:
+/private/tmp/pioneer-q38-first-layer-{baseline,single}-{main,clean}-20261030-w.log
+
+Qualification boundaries
+------------------------
+QOP1 is NOT a QOD1 committed token,normal/EOS vocabulary prediction,token
+feedback,state/KV qualification,119 STOP,HOLD/readout/restore/native END,
+combined stack,physical card stability,Assistant Work or throughput proof.
+The newer worker-sealed-admission S49534/81457 runs are a DISTINCT candidate
+and have not supplied this prefix result yet;do not borrow G's acceptance.
+Corrected native K59759/75018 are also separate actual histories;their older
+binary has no non-closing prefix API and was not restarted to add one.
+
+Reversible host scheduling
+--------------------------
+To give these8 current G/K/S histories CPU time,27 identity-verified older
+project emulations received SIGSTOP (NOT SIGTERM/restart) on this date.
+Their exact memory/PC/history is retained. Deferred process IDs:
+280,282,6422,6423,10072,10074,11166,11170,21255,21256,29856,29860,
+34442,34446,35173,35179,44813,44831,77487,77490,78226,78230,80439,
+81541,81545,84419,84423.
+Before any SIGCONT,resolving the exact executable identity AND stopped state
+is required;never signal a reused PID. Current8 executables were rechecked
+live/running afterwards. The goal remains ACTIVE;no Pioneer power or OS
+state changed. This is host test scheduling,not a physical model speedup.

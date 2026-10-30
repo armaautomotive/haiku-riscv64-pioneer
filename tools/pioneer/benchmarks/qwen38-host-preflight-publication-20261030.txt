@@ -1,0 +1,51 @@
+HOST whole-token preflight serialization -- 2026-10-30
+TEST-only change. Goal ACTIVE;physical rate0.207893161tokens/sec unchanged.
+No ROOT/worker/native/driver/Work/Assistant code or hardware action changed.
+
+Evidence and implementation
+---------------------------
+A one-second sample of actual live S test PID80092 showed88/88 samples in
+TokenFlowMachine's constructor at the per-chunk ReadPackage path,recursively
+reconstructing immutable cohort/Conv/GDN numeric geometry. Despite its last
+START-authentication log,the SAME-open GGUF authentication had ALREADY
+completed. It was preparing package bytes,not stalled hardware or model math.
+Sample:/private/tmp/pioneer-q38-worker-admit-model-open-main-20261030-u.sample
+The S histories were not restarted or modified in response.
+
+Only pioneer_q38_token_flow_test.cpp changes. After the existing strict
+Build+MatchesBinding,it uses the EXISTING one-shot private publication's
+ReadPublishedPackage const DATA serializer. Existing bounds/all-package and
+canonical alias checks remain;no caller-supplied ready flag is introduced.
+All64x512KiB (33,554,432 bytes) still face the same independent prior numeric
+metadata/state-span/zero-slack comparisons. First/middle/last16KiB chunks of
+each package also face the original strict reader:192 exact controls.
+The original strict whole-plan Matches runs again after every byte has been
+compared and BEFORE the first ROOT instruction. Initial state reads and all
+boot/session/prompt/head checks remain strict/unchanged. No emitted ROOT
+instructions,worker execution,packet semantics,model output or CPU reference
+are skipped. This is HOST preflight,not --fast-root-memory.
+
+Changed HOST check cadence is explicit:full immutable geometry is not walked
+again on EACH published chunk. It remains checked at both boundaries and
+in192 strict chunk controls. The production serializer/API and production
+native ownership checks are unchanged by this TEST caller optimization.
+
+Independent actual original-model preparation controls
+------------------------------------------------------
+Base2ece28b079a412f3060b8f4f978a53eedbdc2210 plus ONE owned TEST source.
+V main:/private/tmp/pioneer-q38-preflight-published-main-v.Mk0xj14j
+V clean:/private/tmp/pioneer-q38-preflight-published-clean-v.D3ZyczfR
+Source matched working/main/clean before validation.
+Paired main55896/clean31069 BOTH exit0 (ASAN/UBSAN) with the original19GB
+GGUF,strict authenticated worker-sealed-admission BUILD artifacts and
+--prepare-only. No --fast-root-memory or supplied model products were used.
+Both prove ALL32MiB independent comparisons,192 strict chunk controls,strict
+geometry before/after and ZERO ROOT instructions,plus the existing4 genuine
+learned-write/revoked-word/revoked-batch/cross-part original-byte refusals.
+Those four expected child SIGABRT assertions are negative controls;the
+unchanged parent verifies their termination and exits0. Not a model failure.
+Logs:/private/tmp/pioneer-q38-preflight-published-{main,clean}-20261030-v.log
+
+This is NOT execution of a model layer/token/STOP/native END or a physical
+performance measurement. Existing full G/K/S histories retain their older
+compiled fixtures and continue unchanged. No runtime result is invented.

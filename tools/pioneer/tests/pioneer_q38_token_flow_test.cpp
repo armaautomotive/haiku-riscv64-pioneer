@@ -71,11 +71,21 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
   // Check ALL full packages against the already-loaded canonical numeric
   // bytes and state spans before the FIRST ROOT instruction. Padding is
   // verified zero but never inserted as synthetic model/cache products.
-  unsigned packageWords=0;
+  // Build+MatchesBinding above strictly checked the SAME one-shot private
+  // publication. Serialize through its existing const published DATA API;
+  // do not rebuild the whole numeric geometry for every16KiB HOST chunk.
+  // Strict chunk controls and the final whole-plan Matches below remain.
+  // ALL32MiB bytes still face the independent prior metadata/slack checks.
+  unsigned packageWords=0,strictPublicationControls=0;
   for(unsigned selected=0;selected<64;selected++){
    unsigned package=0;assert(CL::Address(workspace,selected,package));std::array<uint8_t,16384> raw;
    for(unsigned at=0;at<CL::Stride;at+=raw.size()){
-    assert(startup->ReadPackage(selected,at,raw.data(),raw.size()));
+    assert(startup->ReadPublishedPackage(selected,at,raw.data(),raw.size()));
+    if(!at || at==CL::Stride/2 || at+raw.size()==CL::Stride){
+     std::array<uint8_t,16384> strict;
+     assert(startup->ReadPackage(selected,at,strict.data(),strict.size()) && strict==raw);
+     strictPublicationControls++;
+    }
     for(unsigned i=0;i<raw.size();i+=4){
      uint32_t word=uint32_t(raw[i])|uint32_t(raw[i+1])<<8|uint32_t(raw[i+2])<<16|uint32_t(raw[i+3])<<24;
      unsigned offset=at+i;
@@ -101,8 +111,8 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
    uint32_t word=uint32_t(rawPrompt[i*4])|uint32_t(rawPrompt[i*4+1])<<8|uint32_t(rawPrompt[i*4+2])<<16|uint32_t(rawPrompt[i*4+3])<<24;
    assert(word==(i<Prompts?prompt[i]:0));Put(outer[8],workspace+TL::PromptOffset+i*4,word);
   }
-  assert(packageWords==8388608 && startup->Matches(*canonical) && !steps && !packets && !peerWrites);
-  puts("PASS distinct full-token startup builder/ALL64x512KiB packets+state spans+ZERO slack/root+head EXACT vs prior independently loaded numeric metadata/actual session+prompt initialized from builder/ZERO ROOT instructions;geometry NOT native ownership or model products");
+  assert(packageWords==8388608 && strictPublicationControls==192 && startup->Matches(*canonical) && !steps && !packets && !peerWrites);
+  puts("PASS distinct full-token startup builder/ALL64x512KiB published DATA+state spans+ZERO slack/root+head EXACT vs prior independently loaded numeric metadata/192 strict first+middle+last chunk controls/strict full geometry before+after/actual session+prompt initialized from builder/ZERO ROOT instructions;geometry NOT native ownership or model products");
   // Immutable RAW positional constants, not normalized/rotated products.
   for(unsigned p=0;p<Tokens;p++)for(unsigned i=0;i<32;i++){
    float angle=float(p)*powf(10000000.f,-float(i)/32);
