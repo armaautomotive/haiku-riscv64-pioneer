@@ -8,9 +8,17 @@ struct PushedCohortMachine:OriginalTokenFlowMachine {
  using OriginalTokenFlowMachine::OriginalTokenFlowMachine;
  bool forked=false,injected=false,badObserved=false,continued=false;
  unsigned fault=8,cases=0,handoffs=0,packetsAtBad=0,commandsAtBad=0;
- unsigned densePollReads=0,denseZeroReads=0;bool denseReceipt=false;
+ unsigned densePollReads=0,denseZeroReads=0;bool denseReceipt=false,denseFfnRetention=false;
  uint32_t Load(uint32_t address)override{
   const unsigned value=OriginalTokenFlowMachine::Load(address); // EXACTLY one actual load;no state setter.
+  if(continued && !injected && !denseFfnRetention && !position && layer==3 && Phase()==8 && matrices==4 && address==G::Mailbox){
+   namespace D=PioneerQ38MixedLiveBlockRootLayout;
+   assert(denseReceipt && value==G::ReceiptMagic && memory.at(D::FfnCopies)==D::MatrixMagic);
+   for(unsigned i=0;i<3*D::RecipeStride;i+=4)assert(memory.at(D::FfnRecipes+i)==memory.at(D::FfnCopies+i));
+   for(unsigned w=0;w<119;w++)assert(memory.at(G::Mailbox+w*256)==G::ReceiptMagic);
+   denseFfnRetention=true;
+   puts("OBSERVED actual dense CaptureFfn/three complete recipe copies/SAME prior3layers+attention+output projection/all119 genuine retained receipt markers survive/ROOT resumes first FFN admission;NOT completed FFN/layer/native/physical/TPS proof");
+  }
   if(continued && !injected && !denseReceipt && !position && layer==3 && matrices==1 && address==G::Mailbox){
    densePollReads++;
    if(!value)denseZeroReads++;
@@ -94,7 +102,7 @@ int main(int argc,char** argv){
   puts("CONTINUE SAME original ROOT+119 histories AFTER actual cohort handoff gate/NO reset,transplanted processor state or fabricated token/first-layer snapshot remains INCOMPLETE DATA only");
   const bool okay=m->RunTokens();
   if(m->kvFault){assert(!okay);m->VerifyKvFault();assert(source.Ready());_exit(0);}
-  assert(okay && source.Ready() && m->handoffs==1 && m->denseReceipt);m->VerifyTokens();
+  assert(okay && source.Ready() && m->handoffs==1 && m->denseReceipt && m->denseFfnRetention);m->VerifyTokens();
   assert(observed->Complete() && observed->Save(argv[7]) && source.Ready());
   puts("SAVED actual complete3position traces AFTER genuine192layers+119STOP/cohort gate history preserved;NOT independent CPU match,native END,physical,Work or TPS qualification");
  }

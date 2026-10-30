@@ -93,3 +93,10 @@ Still owed:actual large dense completion/finite large missing-commit tests,
 all64/three positions/state/KV/vocabulary/119STOP numerics and combined
 stack, G3 coupled native lifecycle/cancellation/END/reuse, Work/Assistant
 integration and controlled physical whole-model tokens/sec. DO NOT INSTALL.
+
+2026-10-30 follow-up: CW67964/74406 BOTH subsequently TERMINAL EXIT1 after
+the genuine69137-poll first dense completion and nine KV-append children.
+New failure is phase8/matrices4, not the old timeout. Their first-layer
+bitexact diagnostic prefixes remain scoped valid, NOT full-model passes.
+See qwen38-pushed-ffn-scratch-wip-20261030.txt for the retained-receipt/FFN
+scratch alias diagnosis, distinct correction and replacement histories.

@@ -1,0 +1,102 @@
+G3 dense FFN scratch/retained-receipt alias -- BUILD/HOST WIP
+2026-10-30
+==========================================================
+Goal ACTIVE. Last physical whole-model rate0.207893161 tokens/sec;20 UNMET.
+No Pioneer SSH, power, driver, OS, Assistant, SD or hardware action here.
+
+Authoritative preceding failure
+--------------------------------
+CW67964(main)/74406(clean) are BOTH TERMINAL EXIT1, not live or successful
+full-model runs. Both passed the first three original recurrent layers,
+the first dense Q8 completion (69137 genuine zero-marker polls), the first
+three dense projections, nine actual KV-append fault children, and the
+fourth dense/output projection. Then ROOT parked at position0/layer3,
+completed3/phase8/matrices4/packets123823.
+
+Exact preceding guest PC4df70 is the call to scalar_fault_park from
+q38_pushed_receipt_shared. Disassembly and the saved registers identify
+the marker comparison: a4=314d4251 (FFN recipe MatrixMagic), a5=33504d51
+(ReceiptMagic), t4=118000 (worker0 receipt slot), a1=0. This is not the
+earlier insufficient-poll-budget failure or an invalid numerical vector.
+
+Cause and narrowly selected correction
+---------------------------------------
+Block::CaptureFfn copies three FULL5120-byte strides to FfnCopies=118000.
+G3's retained ordinary-matrix receipts ALSO start at118000. Attention's
+old phase-exclusive reuse is not valid across the subsequent ordinary
+output-projection completion and warm first-FFN admission: that admission
+must still validate all119 prior receipts before PushedBegin clears them.
+The old copy overwrites60 entire slots/3840 words, starting with precisely
+the observed314d4251. No receipt/nonce/counter/source guard is relaxed.
+
+Only explicit G3 BUILD or pure QTP3 DATA now puts FfnCopies at108000, the
+attention frame SHADOW, dead after attention returns. Frames at100000 and
+DenseCopies atbc000 remain untouched: Joined::MetadataSeal still needs
+them during FFN. FfnRecipes stays110000. Both G1 and G2 retain118000.
+Existing complete ROOT journal already covers every relocated word;
+no footprint/mapping/boot/worker/ABI/Work authority is added.
+
+Completed checks
+-------------------
+DQ independent main+clean inspect builds EXIT0, byte-identical all8
+artifacts. DR independent strict builds EXIT0 and reproduce the SAME8
+artifacts with fixed pins. Text130888/131072 and auxiliary32720/32768
+are unchanged in size; parent frame1616/components2112 remain individual
+static bounds, not a combined/runtime stack result. Returning recurrent
+object and all worker sections are unchanged. New ROOT ELF190444/SHA
+917972d54277d95b18ed7e2fc346feba3d1a60857b64ca366fec7b7bd131c60c.
+New fixed13-section program DATA SHA
+692a5296c0bc3a19af30ffe920728834328acb05f2122c11c9f95abefd09256f.
+
+New scratch DATA regression passes in BOTH snapshots: five positive
+profiles (G1, G2 DATA, G2 BUILD, G3 BUILD, G3 DATA), five invalid/mixed
+profiles refused, full three-stride copy including padding, all119
+arbitrary retained slots and all other L1 words unchanged, every new
+write inside the existing snapshot. This is DATA coverage, not firmware
+execution or a completed original dense layer.
+
+Both snapshots pass all120/3048868 installed program words byte-exact,
+15 fixed artifact authentication/30 footprint corruption refusals,
+36 program-generation refusals,27 section-map refusals,4 legacy DATA
+coexistence controls,7 positive/199 refused native DATA bindings and119
+early receiver CLI refusals. These are HOST/compile tests only.
+
+Clean DR G2 worker-admission strict control EXIT0 with its OLD exact ELF
+SHA1c5fb71798d0199a1e4a8599087220582fc181bd481df84cda577764bf05f32b.
+The ordinary G1 feedback image also retains its OLD pins in both builds.
+Clean DR actual native SDK compilation EXIT0: all13 compiled G3 arrays
+SHA-exact, five actual renamed entry bodies and five wrappers inert,
+max individual Token frame1232, object SHA
+fd6b361448cb2fb02a8da214e99b1fde63941aec1ad5f6c8415cc0b41f4ec255.
+No native runtime/launch/END or physical throughput follows from this.
+Clean DR88032 targeted held-journal suite TERMINAL EXIT0: all20 precise
+capsule/front-ROM/padding save/install/write-loss/verify/restore/final-pass
+faults retain ownership and fail before following IO. Not a launched native
+generation/END result and not repeated merely to observe it.
+
+Continuing qualification, NOT terminal successes
+-------------------------------------------------
+DR receiver fault suites34851(main)/74276(clean) remain nonterminal; their
+terminal results are separate from the already completed checks above.
+Replacement original full histories31695(main)/66331(clean) launched from
+RESET, original GGUF bytes and SAME119 workers. No stopped/live history is
+reset or transplanted. New passive observer at first dense FFN admission
+requires the actual three recipe copies plus all119 genuine retained
+markers to survive; no marker/product/processor-state setter is added.
+Both histories continue beyond that point through all64 layers at each
+of three positions and real119STOP; no shortcut or completion is implied.
+
+Frozen main:/private/tmp/pioneer-q38-ffn-scratch-main-dr.7CYcHZNx
+Frozen clean:/private/tmp/pioneer-q38-ffn-scratch-clean-dp.ya3T3eGu
+Images:/private/tmp/pioneer-q38-ffn-scratch-{main,clean}-20261030-dr-image
+Logs:/private/tmp/pioneer-q38-ffn-scratch-flow-{main,clean}-20261030-dr.log
+Main trace:/private/tmp/pioneer-q38-ffn-scratch-flow-main-dr.u3CkUo4Y/observed
+Clean trace:/private/tmp/pioneer-q38-ffn-scratch-flow-clean-dr.q6iQd9l7/observed
+Old native DK77228, cancellation/PCI-close DO31762, large dense faults
+CY93250 and eight older controls are left on their SAME existing histories.
+Their older image bytes do not acquire this correction by observation.
+
+Still owed: terminal original full-model/three-position/state/KV/vocabulary/
+STOP numerics and combined stack; coupled G3 native cancellation/END/reuse;
+Work/Assistant integration; controlled physical whole-model tokens/sec.
+DO NOT INSTALL this experimental candidate on the Pioneer.

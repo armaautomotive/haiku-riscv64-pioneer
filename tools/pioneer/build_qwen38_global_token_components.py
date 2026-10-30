@@ -133,8 +133,8 @@ PINS_WORKER_ADMISSION_F32=(('recurrent.o',173332,'ec717b89aa276961a5afb7031fc81a
  ('token-components-NOBOOT.o',272180,'de5ecfb69aa172e36d63f8929c0279ef58b0486d00a4856bfa6dc500941cbd69')) # independent BUILD pins ONLY;not runtime/fault timing/native/Work qualification
 PINS_PUSHED_F32=(
     ('recurrent.o', 182356, '178660fe0182a5e2483bf15de082241727c82385bdf5f79ad8c2dedc6b87bfaa'),
-    ('dense.o', 145804, '9760a9aac8800b6c5abecaabb5cfbbc9ad1df0261b106b55c6d98ddc3a822a5d'),
-    ('token-components-NOBOOT.o', 282060, '0a42528831ba89179ac343dcf926a48ea0ce20d144894c95596f7d2c524b4500'),
+    ('dense.o', 145804, '3b8b7bfd59cefa41d6baeaa7daa67b89f60307136986108094cb4dba503be226'),
+    ('token-components-NOBOOT.o', 282060, '8fe3acdc948a888f736aec384918b4c99e83e8e06c9d855ba09823d6a070b7fc'),
 ) # independent BUILD pins ONLY;not runtime/native/Work/physical/TPS.
 expected=PINS_PUSHED_F32 if pushed else PINS_WORKER_ADMISSION_F32 if worker_admission else PINS_SINGLE_AUDIT_F32 if single_audit else PINS_PRECISE_F32 if precise else PINS_LOCAL_SOURCE_F32 if local_sources else PINS_QUIET_F32 if quiet else PINS_BOUNDARY_F32 if boundary else PINS_UNROLLED_DENSE_F32 if unroll else PINS_F32 if f32 else PINS
 if not inspect:assert expected and tuple(observed)==expected,'unqualified component variant; inspect/freeze first'

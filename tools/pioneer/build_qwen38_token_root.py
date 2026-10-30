@@ -167,10 +167,10 @@ PINS_CANCEL_F32_WORKER_ADMISSION=(('boot.bin',4,'32791432e2d260817d9007281f37196
  ('program.elf',189408,'1c5fb71798d0199a1e4a8599087220582fc181bd481df84cda577764bf05f32b')) # independent BUILD pins ONLY;changed fault timing/model/native/Work/physical/TPS remain unqualified
 PINS_CANCEL_F32_PUSHED=(
     ('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
-    ('text.bin', 130888, '629152dcf3729a2a108463457bcd0a1ba05bc622d641826a56c977660a7b7fd0'),
+    ('text.bin', 130888, '8be33008ec9aa1c3930b48825c43e795e50178292b44df9ab0bd7b4459f6c13a'),
     ('terminal.bin', 8, '6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
     ('conv.bin', 32720, 'd95531ea6dcb09f3428d845b591e36e8aad617b3420e96713a34f1e8681b4744'),
-    ('program.elf', 190444, '696f8f125a0b425b9ae274344981fe31c72560e3210b0f6bcbe9b627632969a5'),
+    ('program.elf', 190444, '917972d54277d95b18ed7e2fc346feba3d1a60857b64ca366fec7b7bd131c60c'),
 ) # independent BUILD pins ONLY;not runtime/native/Work/physical/TPS.
 expected=PINS_CANCEL_F32_PUSHED if pushed else PINS_CANCEL_F32_WORKER_ADMISSION if worker_admission else PINS_CANCEL_F32_SINGLE_AUDIT if single_audit else PINS_CANCEL_F32_PRECISE if precise else PINS_CANCEL_F32_LOCAL_SOURCE if local_sources else PINS_CANCEL_F32_QUIET if quiet else PINS_CANCEL_F32_BOUNDARY if boundary else PINS_CANCEL_F32_UNROLLED_DENSE if unroll else (PINS_CANCEL_F32 if cancel else PINS_F32) if f32 else PINS_CANCEL if cancel else PINS
 if not inspect:assert expected and tuple(observed)==expected,'unqualified persistent parent variant; inspect independent builds first'
