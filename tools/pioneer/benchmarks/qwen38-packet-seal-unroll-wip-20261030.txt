@@ -168,3 +168,11 @@ max137034936320 bytes RAM (free133747474432,used3287461888). These are
 enumeration/memory observations,not a new all-core stress or GPU benchmark.
 No GPU device was opened and no driver,power,boot,OS,Assistant or card state
 was changed by these commands. Last physical inference speed is unchanged.
+
+Later in this follow-up,the SAME DR31695/66331 histories also finish the
+entire first dense layer3:all119 closed,final5120,prior GDN+KV unchanged,
+nextstate retained,ROOTinstructions729951315,reserved/written stack7616/7616
+of8192. Both continue layer4. This is baseline G3 execution,not the new
+unrolled candidate or an independent dense-output CPU comparison. Whole
+normal generation,state/terminal/native/physical/Work qualification remains
+pending. The new candidate EF first-layer jobs remain separate live runs.
