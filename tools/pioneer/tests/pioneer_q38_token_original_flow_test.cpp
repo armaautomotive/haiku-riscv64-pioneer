@@ -1,17 +1,24 @@
 /* SPDX-License-Identifier: MIT */
 #include "pioneer_q38_token_original_fabric.h"
+#ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
+#include "pioneer_q38_eos_state_capture.h"
+#include "PioneerQ38EosStateDataBridge.h"
+#endif
 #include <csignal>
 #if defined(PIONEER_Q38_TEST_CANCELLABLE_ROOT) && PIONEER_Q38_TEST_CANCELLABLE_ROOT != 1
 #error Exact HOST cancellable original-root test selection required
 #endif
 int main(int argc,char** argv){
- assert(argc>=5 && argc<=8);const char* mode=nullptr;const char* traceDirectory=nullptr;
+ assert(argc>=5 && argc<=9);const char* mode=nullptr;const char* traceDirectory=nullptr;bool eos=false;
  for(int i=5;i<argc;i++){
   if(!strcmp(argv[i],"--prepare-only") || !strcmp(argv[i],"--bootstrap-only") || !strcmp(argv[i],"--first-layer-only")){assert(!mode);mode=argv[i];}
+  else if(!strcmp(argv[i],"--eos-after-prompt")){assert(!eos);eos=true;}
   else{assert(!strcmp(argv[i],"--observed-trace") && !traceDirectory && i+1<argc);traceDirectory=argv[++i];}
  }
  assert(!mode || !traceDirectory || strcmp(mode,"--prepare-only"));
  assert(!mode || strcmp(mode,"--first-layer-only") || traceDirectory);
+ assert(!eos || (mode && !strcmp(mode,"--prepare-only")) || traceDirectory);
+ assert(!eos || !mode || strcmp(mode,"--first-layer-only"));
  setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;(void)&Refusals;(void)&LateRefusals;
  puts("START authenticate entire SAME-open original27B GGUF BEFORE ROOT construction;no CPU product/native owner/physical IO");
  WholeModelOriginalBytes original;assert(original.Open(argv[4]) && original.Ready());
@@ -20,7 +27,7 @@ int main(int argc,char** argv){
 #else
  assert(!traceDirectory);
 #endif
- auto m=std::make_unique<OriginalTokenFlowMachine>(argv[1],argv[2],argv[3],original);
+ auto m=std::make_unique<OriginalTokenFlowMachine>(argv[1],argv[2],argv[3],original,eos);
 #ifdef PIONEER_Q38_TEST_CANCELLABLE_ROOT
  assert(m->cancelBoundary && !m->memory.at(TL::CancelLocal));
  puts("PASS distinct pinned cancellable FP32 ROOT/raw cancel control ZERO before first instruction;no request or completion invented");
@@ -47,7 +54,7 @@ int main(int argc,char** argv){
  }
  puts("PASS 4 genuine original-fabric refusals/learned write+revoked word+revoked batch+cross-part batch/no synthetic fallback/unchanged virgin parent;TEST transport safety only");
 #ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
- if(traceDirectory){observed=std::make_unique<PioneerQ38ObservedTrace>();m->observed=observed.get();}
+ if(traceDirectory){observed=std::make_unique<PioneerQ38ObservedTrace>(eos);m->observed=observed.get();}
 #endif
  if(mode && !strcmp(mode,"--prepare-only"))return 0;
  if(mode && !strcmp(mode,"--first-layer-only")){
@@ -82,10 +89,27 @@ int main(int argc,char** argv){
 #endif
   printf("PASS actual original27B embedding5120/all metadata/first returning entry/ROOT from RESET+SAME119 still virgin/stack reserved%u written%u/ROOTinstructions%u;NOT first layer/full-model numerics/native/physical/Work/TPS\n",0x70000-m->minSp,0x70000-m->minStack,m->steps);return 0;
  }
- puts("START actual original27B FULL3-token flow/from RESET/SAME119/ALL learned bytes from SAME authenticated GGUF/NO supplied hidden or CPU model products");
+ puts(eos?"START actual original27B EOS flow/configured TEST stop IDs70253+17/first match MUST NOT stop prefill/real predictions decide final stop/NO supplied hidden or CPU model products":"START actual original27B FULL3-token flow/from RESET/SAME119/ALL learned bytes from SAME authenticated GGUF/NO supplied hidden or CPU model products");
  bool okay=m->RunTokens();if(m->kvFault){assert(!okay);m->VerifyKvFault();assert(original.Ready());_exit(0);}
- assert(okay && original.Ready());m->VerifyTokens();assert(original.Ready());
+ assert(okay && original.Ready());if(eos)m->VerifyEosTokens();else m->VerifyTokens();assert(original.Ready());
 #ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
- if(observed){assert(observed->Complete() && observed->Save(traceDirectory));puts("SAVED actual emitted output DATA only/3positions/all65hidden+all248320vocab+committed records/AFTER genuine full verification+119STOP;NOT CPU numerical match/native/physical/Work/TPS");}
+ if(observed){
+  if(eos){std::array<uint32_t,64> terminal;for(unsigned i=0;i<64;i++)terminal[i]=m->memory.at(TL::TerminalLocal+i*4);
+   // Only ACTUAL stored mutable words. Never Get's initial-zero/learned
+   // fallback,produced expected vectors,CPU references or generated state.
+   const std::string stateDirectory=std::string(traceDirectory)+"-state";
+   const auto commands=m->command;const auto counters=m->counts;const unsigned packets=m->packets,steps=m->steps;unsigned records=0;
+   assert(CaptureQ38EosStateData(*m->canonical,[&](unsigned route,unsigned address,uint32_t& word){
+    const auto found=m->dram.find(m->Key(route,address));if(found==m->dram.end())return false;word=found->second;return true;
+   },[&](unsigned layer,unsigned kind,const uint32_t* words,unsigned count){
+    if(!SaveQ38ObservedEosStateData(stateDirectory.c_str(),layer,kind,words,count))return false;records++;return true;
+   }));
+   assert(records==128 && original.Ready() && m->pc==0x60004 && m->packets==packets && m->steps==steps && m->command==commands && m->counts==counters
+    && FinishQ38ObservedEosStateData(stateDirectory.c_str(),records));
+   assert(observed->EosComplete() && !observed->Complete() && observed->SaveEos(traceDirectory,terminal.data(),64) && observed->SavedEosComplete());
+   puts("SAVED distinct EOS128 state DATA/ACTUAL stored GDN slot0+Conv+2position packed K/V/half-key-value normalization/AFTER real128layers+119STOP/NO device writes,CPU products or fallback zeros;NOT CPU match,native END,Work or TPS proof");
+   puts("SAVED distinct EOS DATA family/2 real positions+actual terminal/AFTER genuine early EOS+119STOP/no third token/NOT native END,CPU match,physical,Work or TPS proof");
+  }else{assert(observed->Complete() && observed->Save(traceDirectory));puts("SAVED actual emitted output DATA only/3positions/all65hidden+all248320vocab+committed records/AFTER genuine full verification+119STOP;NOT CPU numerical match/native/physical/Work/TPS");}
+ }
 #endif
 }

@@ -1,0 +1,5 @@
+PASS EOS capture/60 exact HOST/kernel+image+native+CPU-oracle+Work/defined0+1+late role gates;NO execution permission
+PASS SYNTHETIC EOS state capture/128 records/39256064 physical-coordinate pattern words/key128-value128 vs half-key128-value64 normalization/all48GDN+Conv+16packedKV2positions/12 geometry-before-read,read-failure,sink-failure,nonfinite refusals/NO third position read;NO model,EOS,STOP,native END,Work or TPS proof
+PASS capture HOST arithmetic legacyTT=0;serializer implementation remains a separate forbidden-math TU
+PASS SYNTHETIC EOS state capture/128 records/39256064 physical-coordinate pattern words/key128-value128 vs half-key128-value64 normalization/all48GDN+Conv+16packedKV2positions/12 geometry-before-read,read-failure,sink-failure,nonfinite refusals/NO third position read;NO model,EOS,STOP,native END,Work or TPS proof
+PASS capture HOST arithmetic legacyTT=1;serializer implementation remains a separate forbidden-math TU

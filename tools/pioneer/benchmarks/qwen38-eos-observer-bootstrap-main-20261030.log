@@ -1,0 +1,8 @@
+PASS distinct full-token startup builder/ALL64x512KiB packets+state spans+ZERO slack/root+head EXACT vs prior independently loaded numeric metadata/actual session+prompt initialized from builder/ZERO ROOT instructions;geometry NOT native ownership or model products
+PASS actual next embedding position0/token248319/5120 bit-exact/20raw+2writes+2readbacks/no CPU product upload
+BEGIN actual persistent token0/layer0/inputToken248319/previous committed0/SAME119 histories
+PASS ACTUAL ROOT from RESET/raw EOS0 session+two prompt IDs/actual private EOS+limit snapshot/5120 first embedding/first returning entry/SAME119 virgin/no model layer,token,EOS decision or STOP invented;SYNTHETIC raw endpoints only,NOT original/native/physical/Work/TPS qualification
+PASS distinct full-token startup builder/ALL64x512KiB packets+state spans+ZERO slack/root+head EXACT vs prior independently loaded numeric metadata/actual session+prompt initialized from builder/ZERO ROOT instructions;geometry NOT native ownership or model products
+PASS actual next embedding position0/token248319/5120 bit-exact/20raw+2writes+2readbacks/no CPU product upload
+BEGIN actual persistent token0/layer0/inputToken248319/previous committed0/SAME119 histories
+PASS ACTUAL ROOT from RESET/raw EOS1 session+two prompt IDs/actual private EOS+limit snapshot/5120 first embedding/first returning entry/SAME119 virgin/no model layer,token,EOS decision or STOP invented;SYNTHETIC raw endpoints only,NOT original/native/physical/Work/TPS qualification

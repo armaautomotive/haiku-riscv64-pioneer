@@ -20,8 +20,8 @@ struct OriginalTokenFlowMachine:TokenFlowMachine {
  WholeModelOriginalBytes& original;
  std::map<uint64_t,const PioneerQ38CanonicalPart*> learned;
  unsigned removedLearned=0,removedRecipes=0;
- OriginalTokenFlowMachine(const char* image,const char* old,const char* worker,WholeModelOriginalBytes& source)
-  :TokenFlowMachine(image,old,worker),original(source){
+ OriginalTokenFlowMachine(const char* image,const char* old,const char* worker,WholeModelOriginalBytes& source,bool eos=false)
+  :TokenFlowMachine(image,old,worker,eos),original(source){
   assert(original.Ready() && !steps && !packets && !peerWrites && !parent);
   // Classify learned coordinates from the independently rebuilt canonical
   // geometry, NEVER from the reader's Contains/Ready result. A missing or

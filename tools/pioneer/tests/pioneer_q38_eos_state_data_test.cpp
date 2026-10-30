@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Synthetic HOST DATA only. No model/reference,firmware,native or device IO.
+#define PIONEER_Q38_TEST_OBSERVED_TRACE 1
+#include "PioneerQ38EosStateDataBridge.h"
 #include "pioneer_q38_state_snapshot_data.h"
 #include <cassert>
 #include <vector>
@@ -18,8 +20,8 @@ int main(int argc,char** argv){
   for(unsigned i=0;i<count;i++)values[i]=kind<2?(i+layer)%3==0?0x3f800000:(i+layer)%3==1?0xbf000000:0:
    ((i+layer)%3==0?0x3c000000:(i+layer)%3==1?0x0000b800:0);
   assert(SaveEos(argv[1],false,layer,kind,values.data(),count));
-  assert(SaveEos(argv[2],true,layer,kind,values.data(),count));records++;
-  assert(!SaveEos(argv[2],true,layer,kind,values.data(),count));refused++;
+  assert(SaveQ38ObservedEosStateData(argv[2],layer,kind,values.data(),count));records++;
+  assert(!SaveQ38ObservedEosStateData(argv[2],layer,kind,values.data(),count));refused++;
   assert(!SaveEos(argv[3],false,layer,kind,nullptr,count));refused++;
   assert(!SaveEos(argv[3],false,layer,kind,values.data(),count-1));refused++;
   values[0]=kind<2?0x7f800000:0x7c000000;
@@ -27,7 +29,7 @@ int main(int argc,char** argv){
   if(kind>=2){values[0]=0x00007c00;assert(!SaveEos(argv[3],false,layer,kind,values.data(),count));refused++;}
  }
  assert(records==128 && !FinishEos(argv[3],false,127) && !FinishEos(argv[3],false,129));refused+=2;
- assert(FinishEos(argv[1],false,records) && FinishEos(argv[2],true,records));
- assert(!FinishEos(argv[2],true,records));refused++;
+ assert(FinishEos(argv[1],false,records) && FinishQ38ObservedEosStateData(argv[2],records));
+ assert(!FinishQ38ObservedEosStateData(argv[2],records));refused++;
  printf("PASS SYNTHETIC EOS128 state DATA records/all2-position shapes+distinct QCE1/QNE1+normal count unchanged/%u invalid shape,null,length,nonfinite,duplicate,marker refusals;NO model,actual EOS,STOP,native END,Work or TPS claim\n",refused);
 }

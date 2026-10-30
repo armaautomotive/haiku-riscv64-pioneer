@@ -1,0 +1,103 @@
+Experimental original-model EOS test harness+raw final-state observations
+2026-10-30 00:32UTC. Full goal ACTIVE;20tokens/sec remains UNMET.
+Last physical whole-model result remains0.207893161tokens/sec.
+
+This checkpoint is TEST-only. It does not install a driver,expose a Work
+backend,prove complete EOS generation or establish any inference speedup.
+The two full original EOS histories19687/40048 have STARTED and are LIVE,
+not passes. Their output/state numerical comparisons remain UNPROVEN.
+
+Genuine EOS configuration,not supplied model products
+----------------------------------------------------
+The harness configures TEST stop IDs70253/17 BEFORE the first ROOT
+instruction. These come from independent original-model CPU controls,not
+official tokenizer EOS metadata. Only numeric session configuration is
+provided;no hidden/logit/state/ready/STOP result or processor history is
+inserted. The first actual prediction must be ignored while prefill remains;
+the second actual prediction must commit all64 layers+973 head jobs,all48
+Conv histories+GDN slot+KV frontier and then119 real STOPs. A third embedding,
+layer or model record is refused. Normal verification still requires its
+unchanged3-position length-limit result. Firmware/worker images are unchanged.
+
+Frozen B92793/93910 BOTH terminal0:normal AND EOS session from real ROOT
+RESET instructions,actual private limit/prompt/EOS snapshots,real5120 first
+embedding/20reads+2writes+2readbacks and SAME119 virgin workers. The bootstrap
+source/TokenFlow/runner inputs compare with C. This is NOT a model layer,
+actual EOS decision,token commit,STOP or native END qualification.
+
+Readout correction and host-data separation
+--------------------------------------------
+The physical GDN layout is [head][half][key][value64],as shown by the bank
+extent's head*16+half*8 pages. The independent CPU reference retains
+[head][key][value128]. A linear copy of a physical head is NOT that CPU
+array. The new EOS observer performs the exact index permutation while
+preserving every bit;Conv is normalized by firstRow*3 and packed K/V by
+position*512+group*128. Only the two actual cache positions are read.
+
+The actual-flow observer executes ONLY AFTER VerifyEosTokens verifies the
+real128 layer returns+119STOP. It reads present mutable words directly from
+the instruction fabric's DRAM map,NEVER initial-zero/learned fallbacks,
+expected produced.* vectors or CPU-reference outputs. Readback does not
+execute more instructions,change packets/commands/counters or write model
+state. It saves128 distinct QNE1 state files+marker in observed-state,then
+the three QOE1/QET1 EOS output files in the separate observed directory.
+All source/execution/ownership/cleanup proofs remain separate from DATA.
+
+Initial integration compile31300 terminal1 correctly rejected inclusion of
+the serializer under the emulator's legacy TT_WORK arithmetic flag. That
+guard was NOT removed. A separate host-only output bridge now accepts only
+const arrays/scalars;its implementation is compiled WITHOUT math flags and
+rejects TT_WORK,native,CPU-oracle,image and real Work roles,including0.
+The HOST capture interface permits the legacy offline arithmetic policy
+only under the exact observer role;this is never a hardware/Work permission.
+
+Paired C qualification,not inference timing
+-------------------------------------------
+Immutable25-source trees,based on d5cfae7aa8:
+ main /private/tmp/pioneer-q38-eos-observe-main-c.ZOcSbW0P
+ clean /private/tmp/pioneer-q38-eos-observe-clean-c.VlQXNc8z
+Both tracked baselines checked clean before copies;ALL25 scoped sources
+compared before tests. This publication includes the18 EOS-related inputs
+(14 changed/new),NOT the other7 local native state-collector files.
+
+Capture80947/84827 BOTH0:60 role/implementation isolation checks;all128
+records/39256064 independent physical-coordinate pattern words exactly
+normalize in BOTH ordinary and legacy-arithmetic HOST variants;12 invalid
+geometry-before-read/read-failure/sink-failure/nonfinite refusals. No third
+position is in the synthetic raw map. No complete model is run in this unit.
+Compile29408/95432 BOTH0:default and observed original-flow source,plus
+separate serializer TU. EOS data bridge38008/43705 BOTH0:744 writer and18
+strict parser refusals;all128 synthetic files and exact comparison.
+Normal data73007/43028,native trace facade24419/30171 and42-role data
+perimeter28179/7113 ALL0. All corresponding logs are identical. C++ units
+use ASan+UBSan/Wall/Wextra/Werror. Compile-only checks are not execution.
+
+Actual full original runs
+-------------------------
+19687 main /private/tmp/pioneer-q38-eos-flow-main-c.EdRaiCoF/observed
+40048 clean /private/tmp/pioneer-q38-eos-flow-clean-c.KcBcvOzO/observed
+Each state's sibling directory is named observed-state. Runs authenticate
+the SAME-open original GGUF and use the pinned local-source ROOT image
+37c2f69539087a53a1399ca39216dc40f8651045ba9537bbd44f8517ade4f568.
+No fast-root-memory or CPU model products are used. After actual completion,
+compare output with compare_pioneer_q38_eos_trace.py and ALL128 state records
+with compare_pioneer_q38_eos_state.py against separate CPU-original controls.
+Those controls89235/20013 are still LIVE,not complete numerical evidence.
+
+Separate normal-state WIP and remaining objective
+------------------------------------------------
+The older nativeE81906/33926 collector also used the incorrect linear GDN
+readout. Its frozen source SHA is21dd8c450a046959bb773751e22925643c8b8f87d29d75ce53f5ad8e73968d6b.
+Those valid execution histories remain running,not restarted or retroactively
+fixed. Their eventual GDN files must NOT be compared as normalized CPU rows.
+A corrected local176-record collector and coordinate-pattern unit pass in
+C96993/36943,but explicit format-version/provenance handling is still needed
+to distinguish old raw artifacts from corrected logical data. This separate
+native collector work is NOT promoted or published by the EOS checkpoint.
+
+Still owed:actual all64/multitoken/normal+official-EOS output/state/KV
+numerics,combined kernel/firmware stack,full native END/unload/reuse/fault
+recovery,qualified native fast no-CPU-reference Work+Assistant,physical
+stability/long contexts and honest measured tuning toward20tokens/sec.
+No Pioneer/SSH/power/install/OS/Assistant/network/SD/mains action or present
+hardware-health claim. Large generated model/state files are not committed.

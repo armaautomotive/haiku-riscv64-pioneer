@@ -15,6 +15,8 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
  virtual void BeforeFork(){}
  virtual const char* RawInputScope()const{return "SYNTHETIC raw inputs,NOT original model/native/physical/Work/TPS";}
  enum {Tokens=3,Prompts=2};
+ const bool eosAfterPrompt;
+ static constexpr unsigned EosFirst=70253,EosSecond=17; // explicit TEST stop IDs,not model products or official tokenizer metadata
  const std::array<unsigned,Prompts> prompt={{248319,17}};
  std::array<uint32_t,1920> sources={};
  std::array<std::unique_ptr<PioneerQ38TokenStatePlan>,64> statePlan;
@@ -33,13 +35,13 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
  std::array<uint32_t,5120> expectedEmbedding={};
  static uint16_t ToHalf(float value){_Float16 h=_Float16(value);uint16_t bits;memcpy(&bits,&h,2);return bits;}
  static float FromHalf(uint16_t bits){_Float16 h;memcpy(&h,&bits,2);return float(h);}
- TokenFlowMachine(const char* image,const char* old,const char* worker):GlobalChainInstructionMachine(image,old,worker){
+ TokenFlowMachine(const char* image,const char* old,const char* worker,bool eos=false):GlobalChainInstructionMachine(image,old,worker),eosAfterPrompt(eos){
   assert(!steps && !packets && !peerWrites && feedback);
   for(unsigned i=0;i<16;i++)sources[i]=source[i];
   for(unsigned w=0;w<119;w++)for(unsigned i=0;i<16;i++)sources[(w+1)*16+i]=child[w]->boot[16+i];
   unsigned workspace=outer[9];
   auto startup=std::make_unique<PioneerQ38TokenStartupPlan>();
-  assert(startup->Build(*canonical,0,{1,2,3,4},sources.data(),prompt.data(),Prompts,Tokens,false,248318,248317)
+  assert(startup->Build(*canonical,0,{1,2,3,4},sources.data(),prompt.data(),Prompts,Tokens,eosAfterPrompt,eosAfterPrompt?EosFirst:248318,eosAfterPrompt?EosSecond:248317)
    && startup->MatchesBinding(*canonical,0,{1,2,3,4},sources.data()));
   for(unsigned i=0;i<64;i++)assert(startup->Boot()[i]==boot[i]);
   for(unsigned worker=0;worker<120;worker++){
@@ -116,10 +118,15 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
  }
  unsigned Private(unsigned index)const{assert(parent>=0x6e000 && parent<=0x70000-1028);return parent+(192+index)*4;}
  unsigned ActualPrivate(unsigned index)const{return memory.at(Private(index));}
+ unsigned ExpectedStopReason()const{
+  if(position+1>=Tokens)return 1;
+  return eosAfterPrompt && position+1>=Prompts && (bestRow==EosFirst || bestRow==EosSecond)?2:0;
+ } // observer of actual computed bestRow ONLY;never feeds a decision to the ROM
  void StartLayer(unsigned request){
   const unsigned nextPosition=releases/64,nextLayer=releases%64;
   assert(request==releases+1 && nextPosition<Tokens && committed==nextPosition);
   if(!nextLayer){
+   if(nextPosition)assert(!ExpectedStopReason()); // no new model position after an EOS decision
    assert(embedded==nextPosition+1 && embeddingStage==4 && !copyPhase && copyLayer==(nextPosition?64U:0U));
    if(nextPosition)for(unsigned w=0;w<119;w++){
     const auto& p=*child[w];unsigned expected=nonceBefore[w]+(w<21?9:8);
@@ -268,6 +275,7 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
  }
  void BeginEmbedding(){
   assert(embeddingStage==0 && embedded<Tokens && (embedded?completed==64 && globalJobs==973 && globalPartials==973:!releases));
+  if(embedded)assert(!ExpectedStopReason());
   embeddingTarget=embedded;embeddingToken=embedded<Prompts?prompt[embedded]:bestRow;
   PioneerQ38EmbeddingPlan plan;assert(plan.Build(*canonical,embeddingToken,embeddingTarget,0,{1,2,3,4},source.data(),17));
   const auto* d=plan.Descriptor();
@@ -313,7 +321,7 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
   const bool from=route==outer[8] && remote==sourceAddress;
   const bool to=route==destinationRoute && remote==destination;
   if(!from && !to)return false;
-  assert(local==RB::Scratch && !stopJobs && (embedded==position+2 || position+1==Tokens));
+  assert(local==RB::Scratch && !stopJobs && (embedded==position+2 || ExpectedStopReason()));
   assert(bytes==std::min(16384U,d[5]-copyAt));
   if(!copyPhase){assert(from && !write);copyPhase=1;copyBytes=bytes;sourceCopies++;}
   else if(copyPhase==1){assert(to && write && bytes==copyBytes);copyPhase=2;stateWrites++;}
@@ -333,7 +341,7 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
   auto& expected=records[position];
   if(!recordPhase){
    assert(write && bytes==256);expected.fill(0);
-   const unsigned h[]={0,1,position,currentToken,bestRow,bestBits,position+1,(position+1)&1,unsigned(position+1<Prompts),unsigned(position+1<Tokens),64,973};
+   const unsigned h[]={0,1,position,currentToken,bestRow,bestBits,position+1,(position+1)&1,unsigned(position+1<Prompts),unsigned(!ExpectedStopReason()),64,973};
    for(unsigned i=0;i<12;i++)expected[i]=h[i];
    for(unsigned i=0;i<8;i++){expected[12+i]=boot[8+i];expected[36+i]=counts[i];}
    for(unsigned i=0;i<16;i++)expected[20+i]=source[i];expected[44]=position+1;expected[45]=48;expected[46]=119;
@@ -403,7 +411,7 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
        unsigned stage=ActualPrivate(29);assert(cancelBoundary && stage>=1 && stage<=3 && completed==layer+1
         && committed==position+unsigned(stage==3) && p.memory.at(M::Job+5*4)==(stage==1?layer:64U)
         && p.memory.at(M::Job+6*4)==position);
-      }else assert(committed==Tokens && globalJobs==973 && globalPartials==973);
+      }else assert(ExpectedStopReason() && committed==position+1 && globalJobs==973 && globalPartials==973);
       stopJobs++;
      }
      p.Receive();
@@ -500,19 +508,20 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
   assert(pc==0x60000 && packets==before && peerWrites==writes && command==commands && counts==physical);
   printf("PASS ACTUAL KV fault%u/scalar fault park/no second row or later projection/token commit/NoC+peer inert2048\n",kvFault);fflush(nullptr);
  }
- void VerifyTokens(){
-  assert(pc==0x60004 && position==Tokens-1 && completed==64 && releases==Tokens*64 && allLayers==Tokens*64 && window.Closed()==Tokens*64
-   && committed==Tokens && flips==Tokens && tokenPublications==Tokens && embedded==Tokens && copyLayer==64 && !copyPhase && recordPhase==4
-   && matrixJobs==Tokens*46128 && convJobs==Tokens*5712 && gdnJobs==Tokens*4608 && denseJobs==Tokens*4608 && stopJobs==119
-   && globalJobs==973 && globalPartials==973 && globalRows==248320 && headQuant==1 && rmsChecks==Tokens*128 && quantChecks==Tokens*496
-   && activationChecks==Tokens*64 && gdnChecks==Tokens*48 && attentionChecks==Tokens*16 && prepared==Tokens*16
-   && sourceCopies==Tokens*672 && stateWrites==sourceCopies && stateReadbacks==sourceCopies && kvWrites==Tokens*128 && kvReadbacks==kvWrites
+ void VerifyStoppedTokens(unsigned total,unsigned reason){
+  assert(total && total<=Tokens && reason && reason<=2 && ExpectedStopReason()==reason);
+  assert(pc==0x60004 && position==total-1 && completed==64 && releases==total*64 && allLayers==total*64 && window.Closed()==total*64
+   && committed==total && flips==total && tokenPublications==total && embedded==total && copyLayer==64 && !copyPhase && recordPhase==4
+   && matrixJobs==total*46128 && convJobs==total*5712 && gdnJobs==total*4608 && denseJobs==total*4608 && stopJobs==119
+   && globalJobs==973 && globalPartials==973 && globalRows==248320 && headQuant==1 && rmsChecks==total*128 && quantChecks==total*496
+   && activationChecks==total*64 && gdnChecks==total*48 && attentionChecks==total*16 && prepared==total*16
+   && sourceCopies==total*672 && stateWrites==sourceCopies && stateReadbacks==sourceCopies && kvWrites==total*128 && kvReadbacks==kvWrites
    && kvFaults==1 && !kvFault && minSp>=0x6e000 && minStack>=0x6e000);
-  const unsigned terminal[]={TL::TerminalMagic,1,1,Tokens,Tokens-1,119,64,973,Tokens&1,1};
+  const unsigned terminal[]={TL::TerminalMagic,1,reason,total,total-1,119,64,973,total&1,1};
   for(unsigned i=0;i<10;i++)assert(memory.at(TL::TerminalLocal+i*4)==terminal[i]);
   for(unsigned i=0;i<8;i++)assert(memory.at(TL::TerminalLocal+(12+i)*4)==boot[8+i] && memory.at(TL::TerminalLocal+(36+i)*4)==counts[i]);
   for(unsigned i=0;i<16;i++)assert(memory.at(TL::TerminalLocal+(20+i)*4)==source[i]);
-  for(unsigned p=0;p<Tokens;p++)for(unsigned i=0;i<64;i++)assert(Get(outer[8],outer[9]+TL::OutputOffset+p*256+i*4)==records[p][i]);
+  for(unsigned p=0;p<total;p++)for(unsigned i=0;i<64;i++)assert(Get(outer[8],outer[9]+TL::OutputOffset+p*256+i*4)==records[p][i]);
   for(unsigned selected=0;selected<64;selected++)if(!CL::Dense(selected)){
    const auto& s=produced[selected];for(unsigned w=0;w<96;w++)for(unsigned i=0;i<8192;i++)assert(Get(s.next[w][0],s.next[w][1]+i*4)==s.state[w*8192+i]);
   }
@@ -520,7 +529,17 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
    const auto& p=*child[w];assert(p.pc==p.stopPC && p.sequence==nonceBefore[w]+(w<21?9:8)+1 && p.memory.at(M::Status+16)==2);
   }
   unsigned before=packets;for(unsigned i=0;i<2048;i++)StepToken();assert(packets==before && pc==0x60004);profile.Dump(window.Total(steps));
+ }
+ void VerifyTokens(){
+  assert(!eosAfterPrompt);VerifyStoppedTokens(Tokens,1);
   printf("PASS ACTUAL persistent ROOT %u FULL tokens/two prompt inputs then genuine greedy feedback/SAME119 from virgin boot/ALL64+973 EACH/nonzero GDN+append-only KV consumed across positions/all48 Conv commits+actual readbacks/one slot flip and model record EACH/final119STOP/inert2048/stack reserved%u written%u;%s\n",Tokens,0x70000-minSp,0x70000-minStack,RawInputScope());
+ }
+ void VerifyEosTokens(){
+  assert(eosAfterPrompt && records[0][4]==EosFirst && records[0][8]==1 && records[0][9]==1
+   && records[1][4]==EosSecond && !records[1][8] && !records[1][9]);
+  VerifyStoppedTokens(2,2);
+  for(unsigned i=0;i<64;i++)assert(!dram.count(Key(outer[8],outer[9]+TL::OutputOffset+2*256+i*4)));
+  puts("PASS ACTUAL early EOS/first real greedy EOS ignored during prefill/second real greedy EOS commits ALL64+973+48Conv+KV then119 genuine STOP/NO third embedding,layer or record/2048 inert;TEST stop IDs70253+17,NOT official tokenizer EOS/native/END/physical/Work/TPS qualification");
  }
 };
 #ifndef PIONEER_Q38_TOKEN_FLOW_MACHINE_ONLY

@@ -16,7 +16,7 @@ if '--observed-trace' in options:
     observed = pathlib.Path(options[at+1])
     options = options[:at]+options[at+2:]
     assert observed.is_absolute() and not observed.exists() and not observed.is_symlink()
-assert 5 <= len(sys.argv) <= 14 and len(set(options)) == len(options) and set(options) <= {'--prepare-only', '--bootstrap-only', '--first-layer-only', '--fast-root-memory', '--cancel-boundary', '--unroll-dense-seals', '--boundary-seals', '--unroll-quiet', '--worker-local-source-guards'}
+assert 5 <= len(sys.argv) <= 15 and len(set(options)) == len(options) and set(options) <= {'--prepare-only', '--bootstrap-only', '--first-layer-only', '--fast-root-memory', '--cancel-boundary', '--unroll-dense-seals', '--boundary-seals', '--unroll-quiet', '--worker-local-source-guards', '--eos-after-prompt'}
 unroll = '--unroll-dense-seals' in options
 boundary = '--boundary-seals' in options
 assert not unroll or '--cancel-boundary' in options,'dense-unroll candidate is an explicitly cancellable FP32 image'
@@ -28,6 +28,12 @@ assert not local_sources or quiet,'worker-local source candidate requires the ex
 assert sum(o in options for o in ('--prepare-only', '--bootstrap-only', '--first-layer-only')) <= 1
 assert observed is None or '--prepare-only' not in options
 assert '--first-layer-only' not in options or observed is not None
+eos = '--eos-after-prompt' in options
+assert not eos or '--first-layer-only' not in options
+assert not eos or observed is not None or '--prepare-only' in options
+eos_state = pathlib.Path(str(observed)+'-state') if eos and observed is not None else None
+if eos_state is not None:
+    assert not eos_state.exists() and not eos_state.is_symlink(), 'fresh separate EOS state directory required'
 image, old, worker, model = map(pathlib.Path, sys.argv[1:5])
 assert all(p.is_absolute() for p in (image, old, worker, model))
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
@@ -47,8 +53,16 @@ for directory in (image, worker):
 flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
 if observed is not None:
     observed.mkdir(mode=0o700)
+if eos_state is not None:
+    eos_state.mkdir(mode=0o700)
 with tempfile.TemporaryDirectory(prefix='pioneer-original-token-flow-', dir='/private/tmp') as tmp:
     binary = pathlib.Path(tmp)/'test'
+    recorder = []
+    if observed is not None:
+        bridge = pathlib.Path(tmp)/'eos-state-data.o'
+        subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined',
+                        '-c', str(here/'pioneer_q38_eos_state_data_bridge.cpp'), '-o', str(bridge)], check=True)
+        recorder = [str(bridge)]
     intervals = {}
     for line in subprocess.check_output([tool+'objdump', '-tC', str(image/'program.elf')], text=True).splitlines():
         p = line.split(None, 5)
@@ -70,11 +84,15 @@ with tempfile.TemporaryDirectory(prefix='pioneer-original-token-flow-', dir='/pr
                     *flags, *(['-DPIONEER_Q38_TEST_FAST_ROOT_MEMORY=1'] if '--fast-root-memory' in options else []),
                     *(['-DPIONEER_Q38_TEST_CANCELLABLE_ROOT=1'] if '--cancel-boundary' in options else []),
                     *(['-DPIONEER_Q38_TEST_OBSERVED_TRACE=1'] if observed is not None else []),
-                    str(here/'pioneer_q38_token_original_flow_test.cpp'), str(here/'pioneer_q38_whole_original_bytes.cpp'), '-o', str(binary)], check=True)
+                    str(here/'pioneer_q38_token_original_flow_test.cpp'), str(here/'pioneer_q38_whole_original_bytes.cpp'), *recorder, '-o', str(binary)], check=True)
     subprocess.run([str(binary), *sys.argv[1:5], *[o for o in options if o not in ('--fast-root-memory', '--cancel-boundary', '--unroll-dense-seals', '--boundary-seals', '--unroll-quiet', '--worker-local-source-guards')],
                     *(['--observed-trace', str(observed)] if observed is not None else [])], check=True,
                    env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1', 'PIONEER_TEST_ROOT_PROFILE_MAP':str(profile)})
     if observed is not None and '--bootstrap-only' in options:
         assert not list(observed.iterdir()), 'partial observations MUST NOT publish a complete token trace'
+        assert eos_state is None or not list(eos_state.iterdir()), 'bootstrap MUST NOT publish EOS state data'
     if '--first-layer-only' in options:
         assert sorted(p.name for p in observed.iterdir()) == ['prefix-0.bin'], 'first-layer diagnostic MUST NOT publish complete token traces'
+    if eos_state is not None and '--bootstrap-only' not in options:
+        from compare_pioneer_q38_eos_state import corpus
+        assert {p.name for p in eos_state.iterdir()} == set(corpus()) | {'eos-state-complete.bin'}, 'missing EOS retained-state data'
