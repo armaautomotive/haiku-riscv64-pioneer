@@ -397,3 +397,13 @@ FB positive control integration fixtures / runtime still IN PROGRESS
   Full3positions*64layers/vocabulary/commits/state/END,positive control token
   readout,physical integration/stability and real performance remain owed.
   Last physical whole-model0.207893161tok/s;20tok/s UNMET;goal stays ACTIVE.
+
+FC22:18UTC copied-Start paired runtime COMPLETE
+  The SAME clean47755 is now authoritative terminal0,not restarted. Its
+  complete41-line log is byte-identical to main9020 and the archived Start
+  log above,SHA4e9e67e0552a78654d9d70ad0837c664edba442a99e70b2eefea1bcff5a979fd.
+  This completes paired original-model private-control Start/embedding/RMS/
+  first-matrix qualification ONLY. It is not a positive whole layer/token,
+  STOP/END,public or physical Work/Assistant result,combined kernel-stack
+  bound or speed measurement. Main control-Finish21527 and the original
+  five full histories continue separately.20tok/s remains UNMET;goal ACTIVE.
