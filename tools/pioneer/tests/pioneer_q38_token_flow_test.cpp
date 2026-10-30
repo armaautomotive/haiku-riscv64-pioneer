@@ -31,6 +31,17 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
  unsigned sourceCopies=0,stateWrites=0,stateReadbacks=0,tokenPublications=0;
  unsigned kvPhase=0,kvWrites=0,kvReadbacks=0;
  unsigned kvFaults=0,kvFault=0;bool kvInjected=false;
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
+ unsigned preciseJobs=0;
+ static void ObservePreciseDoorbell(unsigned worker,unsigned matrices,bool dense,unsigned layer,
+  unsigned position,unsigned token,unsigned completed,const uint32_t* job,unsigned& observed){
+  assert(job && worker<68 && layer<64 && position<Tokens && token<248320 && completed==layer
+   && matrices==(dense?6U:7U) && job[0]==G::Magic && job[2]==G::ActivationOperation
+   && job[3]==worker+1 && job[4]==G::Peer(worker+1) && job[5]==layer && job[6]==position
+   && job[27]==token && observed<Tokens*64*68);
+  observed++; // HOST observation ONLY;actual worker still executes its own job/descriptor/source guards
+ }
+#endif
  bool expectCancelStop=false; // observer ONLY; never supplied to the device
  std::array<uint32_t,5120> expectedEmbedding={};
  static uint16_t ToHalf(float value){_Float16 h=_Float16(value);uint16_t bits;memcpy(&bits,&h,2);return bits;}
@@ -404,6 +415,12 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
     if(remote==M::Doorbell){
      unsigned op=p.memory.at(M::Job+8);
      if(op==1)matrixJobs++;else if(op==7)convJobs++;else if(op==8)gdnJobs++;else if(op>=9 && op<=11)denseJobs++;
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
+     else if(op==G::ActivationOperation){
+      std::array<uint32_t,64> job;for(unsigned i=0;i<64;i++)job[i]=p.memory.at(M::Job+i*4);
+      ObservePreciseDoorbell(w,matrices,CL::Dense(layer),layer,position,currentToken,completed,job.data(),preciseJobs);
+     }
+#endif
      else if(op==G::GlobalMatrix){assert(completed==64 && p.memory.at(M::Job+24)==position);if(!globalJobs)HeadInput();globalJobs++;}
      else{
       assert(op==2);
@@ -510,6 +527,9 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
  }
  void VerifyStoppedTokens(unsigned total,unsigned reason){
   assert(total && total<=Tokens && reason && reason<=2 && ExpectedStopReason()==reason);
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
+  assert(preciseJobs==total*64*68); // additional real activation jobs,not STOP or matrix jobs
+#endif
   assert(pc==0x60004 && position==total-1 && completed==64 && releases==total*64 && allLayers==total*64 && window.Closed()==total*64
    && committed==total && flips==total && tokenPublications==total && embedded==total && copyLayer==64 && !copyPhase && recordPhase==4
    && matrixJobs==total*46128 && convJobs==total*5712 && gdnJobs==total*4608 && denseJobs==total*4608 && stopJobs==119

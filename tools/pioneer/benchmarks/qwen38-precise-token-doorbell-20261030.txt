@@ -1,0 +1,71 @@
+Precise activation token-transport observer correction — 2026-10-30
+Goal ACTIVE;PROGRESS. No Pioneer/device/OS/Assistant/relay/SD action.
+Last measured physical whole-model rate remains0.207893161tokens/sec.
+
+Authoritative failure
+---------------------
+Paired earlier original precise ROOT E sessions83936/47662 BOTH terminated1
+after genuine layer0 matrix7/role3. The terminal assertion was op==2 in
+HOST TokenFlowMachine::SubmitToken. Its override had no case for QGW2's
+precise activation operation3,although the actual ROOT and worker front end
+and generic instruction peer transport already support that operation.
+The four earlier original-fabric child assertions in those logs are EXPECTED
+refusal tests;the final op==2 assertion is the distinct real harness failure.
+This is NOT a physical card fault or a proven firmware numerical failure.
+
+The two newer single-audit D runs12695/5707 were still LIVE but compiled
+that SAME confirmed unsupported handler. After verifying exact commands for
+PIDs69331/69330,only those processes were retired with SIGTERM. Both handles
+then reported terminal1. Logs/observations retained. No valid native history
+was stopped or restarted;no observation timeout was treated as terminal.
+
+Correction and bounded checks
+-----------------------------
+The ACTUAL token packet handler now recognizes operation3 only for the
+precise profile,checks worker<68,correct pre-down matrix phase,job family,
+worker route/layer/position/input token,and counts it separately from STOP,
+matrix,dense,Conv and GDN jobs. Existing p.Receive() remains unchanged:the
+same virgin worker still executes its own job/descriptor/source/counter
+checks and real arithmetic. No PC/register/private tensor history,ready
+flag,completion or numerical product is supplied by this observer.
+Normal/EOS terminal verification additionally requires total*64*68 actual
+observed activation doorbells. Legacy compile behavior stays guarded out.
+
+Independent source trees baseb4bee41c78c5ca71dca2acf34a3ab36c95cd062d+3paths:
+/private/tmp/pioneer-q38-precise-doorbell-main-f.mTMESzfD
+/private/tmp/pioneer-q38-precise-doorbell-clean-f.CubY5fD7
+All3 compared before tests/new runtime launches. ASan/UBSan bounded observer
+tests80435/26729 BOTH0:13,056 valid metadata cases+18 invalid worker/phase/
+family/route/layer/token/operation/count cases. The actual observer method
+used by SubmitToken is tested. This is DATA grammar ONLY,NOT a complete
+transport/RISC/worker/model execution or numerical/STOP/native/Work proof.
+
+Fresh genuine full-model histories,not passes
+--------------------------------------------
+Four source-identical corrected original3-position/all64-layer runs start
+from RESET with119 virgin tensor engines,strict unchanged image pins and
+the SAME authenticated original GGUF. No fast-root-memory,CPU products,
+transplanted processor history or supplied completion. Each preserves its
+own history and takes a NON-CLOSING first-layer snapshot when actually ready.
+Baseline main78074:/private/tmp/pioneer-q38-corrected-baseline-main-g.efyVrkyz/observed
+Baseline clean54690:/private/tmp/pioneer-q38-corrected-baseline-clean-g.U6flDTGe/observed
+Single main84911:/private/tmp/pioneer-q38-corrected-single-main-g.kiOoGzyi/observed
+Single clean99248:/private/tmp/pioneer-q38-corrected-single-clean-g.HyQmrNyj/observed
+Logs:/private/tmp/pioneer-q38-corrected-{baseline,single}-{main,clean}-20261030-g.log
+Keep THESE SAME histories. Compare each real prefix-0.bin independently
+with the pinned CPU corpus before drawing numerical conclusions. Full
+multitoken/state/KV/STOP/END/combined-stack/physical/TPS qualification owed.
+
+Additional completed evidence,NOT a hardware grant
+--------------------------------------------------
+Exploratory working-tree native bootstrap78109 completed0:actual1010 zero
+jobs(full851 model),120 held L1 histories,2308 runtime chunks/4616 packets,
+119 virgin QGW2 instruction boots/14,866,432 instructions/written stack2612.
+ROOT stayed HELD;no model RUN or END. Its console QGW1 label predates the
+cosmetic fix;the explicit QT2NODRV/profile/programs/selected boot magic were
+QGW2. It includes earlier unpublished host/full-END WIP and uses vector
+endpoints,so is NOT committed-source or corrected-VM-extent qualification.
+The separate actual mapper fix b4bee41c78 has its own proper extent tests.
+The verified stack sample located repeated immutable geometry audits in
+native participant preparation;optimizing those under the same private
+FD/thread/generation/lifetime scope remains next independent startup work.
