@@ -20,23 +20,30 @@ struct Endpoint {
  std::vector<uint32> alias=std::vector<uint32>(Words);
  std::array<std::vector<uint32>,120> core;
  unsigned selected=0,maps=0,mmio=0,direct=0;int fail=-1,nullView=-1;
+ std::array<unsigned,4> mappedOffset={},mappedBytes={};
  uint32& At(uint32 address){assert(selected<120 && !(address&3) && address<0x180000);
   auto& data=core[selected];if(data.empty())data.resize(Words);return data.at(address/4);}
  uint32 Address(const volatile uint32* p)const{
   const auto a=reinterpret_cast<uintptr_t>(p),base=reinterpret_cast<uintptr_t>(alias.data());
   assert(a>=base && a-base<Words*4 && !((a-base)&3));return uint32(a-base);
  }
+ bool Mapped(uint32 address)const{
+  for(unsigned i=0;i<4;i++)if(mappedBytes[i] && address>=mappedOffset[i]
+   && address-mappedOffset[i]<=mappedBytes[i]-4)return true;
+  return false;
+ }
 };
 static Endpoint* endpoint=nullptr;
 static area_id map_physical_memory(const char*,uint64 physical,unsigned bytes,int placement,unsigned flags,void** view){
  assert(endpoint && endpoint->maps<4 && placement==B_ANY_KERNEL_ADDRESS && flags==(B_KERNEL_READ_AREA|B_KERNEL_WRITE_AREA|B_UNCACHED_MEMORY));
- const unsigned offsets[]={0x20000,0x40000,0x60000,0xac000},lengths[]={8192,131072,57344,868352};
+ const unsigned offsets[]={0x20000,0x40000,0x60000,0xac000},lengths[]={L::Precise?131072U:8192U,131072,57344,868352};
  const unsigned i=endpoint->maps++;assert(physical==Endpoint::Bar+0x19000000+offsets[i] && bytes==lengths[i]);
  if(int(i)==endpoint->fail)return -1;
+ if(int(i)!=endpoint->nullView){endpoint->mappedOffset[i]=offsets[i];endpoint->mappedBytes[i]=bytes;}
  *view=int(i)==endpoint->nullView?nullptr:endpoint->alias.data()+offsets[i]/4;return int(i)+37;
 }
-static uint32 PioneerRead32(const volatile uint32* p){endpoint->mmio++;return endpoint->At(endpoint->Address(p));}
-static void PioneerWrite32(volatile uint32* p,uint32 value){endpoint->mmio++;endpoint->At(endpoint->Address(p))=value;}
+static uint32 PioneerRead32(const volatile uint32* p){const auto address=endpoint->Address(p);assert(endpoint->Mapped(address));endpoint->mmio++;return endpoint->At(address);}
+static void PioneerWrite32(volatile uint32* p,uint32 value){const auto address=endpoint->Address(p);assert(endpoint->Mapped(address));endpoint->mmio++;endpoint->At(address)=value;}
 struct MappingIO:Endpoint {
  struct{uint64 bar0_host_start=Bar;}profile;
  unsigned runtimeCore=0,payloadBytes=8192;
@@ -70,6 +77,8 @@ int main(){
   assert(!io->TokenMemoryReadChecked(0,0x60000,out) && out==0x12345678 && !io->TokenMemoryWrite(0,0x60000,0)
    && !io->maps && !io->mmio && !io->direct);
   assert(io->MapTokenMemory() && io->maps==4 && !io->mmio && !io->direct);
+  assert(io->mappedBytes[0]==(L::Precise?131072U:8192U) && io->Mapped(0x20000) && io->Mapped(0x21ffc)
+   && io->Mapped(0x30000)==bool(L::Precise) && io->Mapped(0x3fffc)==bool(L::Precise));
   assert(!io->MapTokenMemory() && io->maps==4);refused++;
   for(unsigned worker=0;worker<120;worker++){
    io->Select(worker);assert(io->TokenMemoryMappingStable(worker));

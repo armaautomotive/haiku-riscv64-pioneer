@@ -1,0 +1,59 @@
+QTP2 actual native VM mapping correction — 2026-10-30
+Goal ACTIVE;PROGRESS. No Pioneer/SSH/relay/install/SD/OS action.
+Last physical whole-model rate0.207893161tokens/sec;20target UNMET.
+
+Bug and regression
+------------------
+QTP2's complete arbitrary-original journal includes the entire worker
+capsule0x30000..0x3ffff. Actual native TokenMemoryReadChecked/Write select
+the FIRST alias for addresses below0x40000,but MapTokenMemory still requested
+only8192B at0x20000. Thus the real QTP2 path would form pointers beyond its
+VM mapping. A vector-backed held-journal test could not prove this extent.
+
+Hardened the actual-mapper TEST endpoint to retain each successful requested
+mapping's base/length and assert that EVERY PioneerRead32/Write32 lies within
+one. It no longer treats its oversized backing vector as mapping permission.
+The separate exact length check requires131072B for QTP2,8192B for QTP1.
+RED:94812 exit1 before IO,old actual map request failed required length.
+Log:/private/tmp/pioneer-q38-native2-map-red-main-20261030-a.log
+
+Fix
+---
+Keep four VM aliases at the SAME offsets. ONLY QTP2 expands the first view
+to128KiB,covering0x20000..0x3ffff. QTP1 keeps its original8KiB mapping.
+SnapshotContains still rejects the0x22000..0x2ffff hole,root-forbidden peer
+addresses,unaligned accesses and every other unowned range BEFORE MMIO.
+No wider MMIO,source recapture,new raw access ABI or cleanup permission.
+
+Qualification
+-------------
+Independent base46bd337309c3021e41a79315b98e36d6bb5b37d4+ONLY3 owned source
+changes;prior uncommitted native host/full-END/state changes excluded.
+Main:/private/tmp/pioneer-q38-native2-map-main-c.cEtuXH5x
+Clean:/private/tmp/pioneer-q38-native2-map-clean-c.Dl7L808Q
+All3 sources compared before tests. Actual production mapping include,OS
+and source endpoints simulated. ASan/UBSan enabled.
+86470/45820 QTP1 BOTH0:ALL11,406,906 saved words written+two reads across
+120 independent simulated tile apertures,1715 inert refusal cases each.
+46305/51624 QTP2 BOTH0:ALL13,356,602 words written+two reads,including capsule
+padding through0x3fffc;ALL120,1715 refusals each. Four exact aliases and
+UINT32_MAX DATA;every failed/null partial mapping retained with no retry or
+subsequent MMIO. Working-tree exploratory58079/71960 also BOTH0.
+
+Actual native QTP2 SDK compile/inspection49636/62561 BOTH0. Complete private
+factories,full13 program arrays+2MiB rawRoPE,inert renamed public controls,
+NO CPU model-reference/TEST engine imports,max individual frame1232.
+New main/clean objects BYTE-IDENTICAL SHA256:
+154bc22eeb83f17048f3287b913369ddfe0a613c37805a0f0a91e9720ab28274
+Both legacy-control objects UNCHANGED SHA256:
+ab729c41c1ed55bf2a89d93b19c1839dc4d82ad5e9ade958435a1c36a14f4212
+
+Not proved
+----------
+This tests real mapping logic with simulated VM/access endpoints and
+compiles the actual SDK context. It does NOT prove native ownership/source,
+full-model numerics,all64-layer/multitoken/STOP/restoration/END,combined stack,
+physical safety or TPS. Earlier live native histories used vector-backed
+endpoints;do NOT relabel them as testing this corrected VM extent.
+The optimization candidate680c8ddbd9 is separate BUILD-only work;this mapper
+does not enable it in native code or replace its fixed program DATA.

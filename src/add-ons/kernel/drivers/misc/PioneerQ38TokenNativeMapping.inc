@@ -36,7 +36,10 @@ bool MapTokenMemory(){
   || q38TokenMemoryMapAttempted)return false;
  for(unsigned i=0;i<4;i++)if(q38TokenMemoryArea[i]>=B_OK || q38TokenMemoryView[i])return false;
  q38TokenMemoryMapAttempted=true;q38TokenMemoryBar=profile.bar0_host_start;
- const uint32 offsets[]={0x19020000,0x19040000,0x19060000,0x190ac000},bytes[]={8192,131072,57344,868352};
+ // QTP2 adds the complete0x30000..0x3ffff capsule journal. Keep four
+ // aliases,but cover that whole first aperture;SnapshotContains STILL
+ // excludes the0x22000..0x2ffff hole and every other unowned address.
+ const uint32 offsets[]={0x19020000,0x19040000,0x19060000,0x190ac000},bytes[]={PioneerQ38TokenL1::Precise?131072U:8192U,131072,57344,868352};
  for(unsigned i=0;i<4;i++){
   void* view=NULL;
   q38TokenMemoryArea[i]=map_physical_memory("P100A full token retained L1",profile.bar0_host_start+offsets[i],bytes[i],

@@ -4,7 +4,10 @@ import os
 import pathlib
 import re
 import subprocess
+import sys
 import tempfile
+assert len(sys.argv)==1 or sys.argv[1:]==['--precise-context']
+precise = len(sys.argv)==2
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 here = pathlib.Path(__file__).resolve().parent
 kernel = here.parents[2]/'src/add-ons/kernel/drivers/misc'
@@ -13,6 +16,8 @@ parents = set(re.findall(r'!defined\(([A-Z_][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b
 assert len(parents) == 21
 defines = dict.fromkeys(parents, '1')
 defines.update(PIONEER_DRIVER_BUILD_TAG='0x51544b4e4f445256ULL',TT_PIONEER_EXPERIMENTAL_Q38_AFFINE='1',TT_PIONEER_EXPERIMENTAL_Q38_BLOCK='1')
+if precise:
+    defines.update(PIONEER_DRIVER_BUILD_TAG='0x5154324e4f445256ULL',PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT='1',PIONEER_Q38_TOKEN_PRECISE_PROGRAMS='1')
 defines.update({name:'pioneer_token_mapping_test_'+name for name in ('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')})
 with tempfile.TemporaryDirectory(prefix='pioneer-token-native-map-', dir='/private/tmp') as tmp:
     binary = pathlib.Path(tmp)/'test'
