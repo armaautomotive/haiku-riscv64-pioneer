@@ -125,3 +125,25 @@ whole-output/state posthoc comparison; positive/fault connected consumer
 coverage; distinct native/restore/fresh-cohort integration; then controlled
 hardware testing and actual measured inference. Do not install this image
 or advertise an Assistant/Work speedup on the strength of BUILD pins.
+
+Subsequent bootstrap result,03:27UTC
+----------------------------------
+The BUILD checkpoint above was pushed as5ed722640958c61726e289714f0f6a7e7d71833f.
+Development bootstrap97075 subsequently completed exit0. Candidate B's
+program.elf was compared byte-for-byte with strict E and is identical.
+The bootstrap verified ALL64x512KiB startup packets/state spans/zero slack,
+3551 learned spans/7102 endpoint batches, and four actual disposable-child
+fabric refusals with the virgin parent unchanged. The four assertion messages
+in that diagnostic log are expected SIGABRTs in those children, not a failure
+of the positive parent history or a later model step.
+
+The actual ROOT from RESET produced the original token248319 embedding5120
+bit-exact and reached the first returning layer entry, with the SAME119
+workers still virgin. ROOT instructions4751089; actual reserved stack2992B,
+lowest written stack2984B, within the existing8192B extent for THIS prefix.
+This result does NOT exercise the new activation producer/down consumer,
+first-layer arithmetic, combined stack inside that layer, full64/3tokens,
+numerical model output, native teardown/restore, physical Work or TPS.
+Final E main83936/clean47662 original full-model histories and clean startup
+58244 were still live03:27:24UTC. Preserve those histories; do not count the
+bootstrap prefix as a completed connected-model run.
