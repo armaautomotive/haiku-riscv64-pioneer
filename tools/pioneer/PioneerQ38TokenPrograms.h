@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // Mechanically generated from COMPLETE fixed FP32 persistent-token/QGW1 artifacts.
 // IMMUTABLE DATA ONLY. No native owner,source/init,journal,RUN/STOP or cleanup grant.
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_PRECISE_WORKER_IMAGE)
+#error Fixed QTP1/QGW1 program DATA cannot select the distinct precise ROOT/worker family
+#endif
 #ifndef PIONEER_Q38_TOKEN_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_PROGRAMS_H
 #include "PioneerQ38TokenFootprint.h"

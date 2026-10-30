@@ -1,0 +1,98 @@
+Precise QGW2 candidate / existing QTP1 native-loader separation
+2026-10-30. Goal remains ACTIVE;20tokens/sec is UNMET.
+Last physical whole-model rate remains0.207893161tokens/sec.
+
+Reason for this change
+----------------------
+The actual precise ROOT integration is in5ed7226409,with original-model
+bootstrap evidence in938bb85b25. Its full original-model histories83936/
+47662 remain separate running tests,not passing inference or Work modes.
+
+Native release audit found that the existing fixed program DATA is QTP1/
+QGW1,while the new ROOT image flag selects QGW2 startup/head metadata.
+The old native peer footprint also omits the QPA1 ROM at0x30000. Therefore
+defining the new ROOT/worker flag in an old native build must NOT silently
+mix new boot metadata with old program bytes and an insufficient journal.
+
+The exact native role now explicitly rejects both new image flags,including
+defined0 and late contamination. Fixed QTP1 program DATA rejects those flags
+even outside a native TU and on repeated includes. The immutable generator
+emits that same guard,so committed DATA still reproduces exactly. This does
+not add a native QGW2 loader,extend a map/journal,enable a Work option or
+claim that the new producer/down-consumer has passed. That complete native
+family remains required after connected-runtime qualification.
+
+Owned source:only four files
+----------------------------
+ src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeRole.h
+ tools/pioneer/PioneerQ38TokenPrograms.h
+ tools/pioneer/generate_qwen38_token_programs.py
+ tools/pioneer/tests/run_pioneer_q38_token_native_role_tests.py
+All other native/full-END/host/state WIP and dirty llama.cpp/FlashNext are
+untouched and not included in these comparison snapshots or this checkpoint.
+
+Frozen source and completed qualification
+-----------------------------------------
+A main:/private/tmp/pioneer-q38-precise-native-main-a.H1SP9ACL
+A clean:/private/tmp/pioneer-q38-precise-native-clean-a.Ru860BYf
+Each archives938bb85b25 plus the SAME four-file overlay. All four compare
+main=clean=current;the SDK B main copy matches too.
+
+Native role tests37685(main)/87873(clean):both exit0,identical logs.
+21 exact parents,6 renamed ABI names,33 forbidden aliases,257 refusals.
+The new fixed-DATA cases separately cover each flag/zero+one/early+late.
+These are compile-role tests,not native lifetime or hardware execution.
+
+Complete program+footprint tests99250(main)/21757(clean):both exit0,
+identical logs. Authenticate14 artifacts including both complete ELFs,
+reproduce committed header exactly,check ALL12 section bytes across120
+workers (2710744 code words),and11406906 snapshot words/45627624bytes.
+963 address/alias refusals;17 generator corruption/overwrite/role refusals.
+Generated header SHA2568c74ee178551e1ebd317707f977da12faef734d7e2b1daf9d2149a8cbed6303c.
+Only guard text changed;no emitted program word or footprint was extended.
+
+Native SDK before/after comparison
+----------------------------------
+Control B:/private/tmp/pioneer-q38-precise-native-before-b.piOza8VR
+Changed B:/private/tmp/pioneer-q38-precise-native-main-b.ILFesS2Y
+SDK sessions44751/62428:both exit0. Actual token-context-NODRV.o files are
+BYTE-IDENTICAL before/after,each SHA256:
+ ab729c41c1ed55bf2a89d93b19c1839dc4d82ad5e9ade958435a1c36a14f4212
+This is the committed native body,NOT the separate uncommitted host/full-END
+candidate212953da... and not runtime qualification of either body.
+
+Failure lineage:SDK A39392/48973 both exit1 in the unchanged old65 ancestor
+because the source archive omitted tracked build/config_headers,leaving
+kernel_debug_config.h missing. Immutable A trees/logs are retained. New B
+copies add exactly those tracked headers;no production fix,guard relaxation
+or dummy SDK/header replacement was used. The old65 strict controls and
+actual native context then compile successfully in both B trees.
+
+Current new original-flow source also compiles with the actual precise/
+cancellable/observed profile after this guard:syntax29256 exit0. That check
+does not execute a layer or qualify CPU-reference,Work or device behavior.
+
+Other concrete progress this turn
+---------------------------------
+Independent clean precise startup58244 completed exit0,matching the earlier
+main48598:all7 banks/all120 boot records,all119 head-job grammars,1920 source
+mutations,13642 refusals,unchanged outputs and exact nonce headroom. These
+are --bindings-only DATA tests,not independent full-package-copy execution.
+
+Only10 verified older project test processes were lowered from nice0 to10:
+6422,6423,11166,11170,21255,21256,44813,44831,77487,77490. Each exact full
+command/PID/old priority was revalidated immediately before the change and
+the resulting priority read back. No signal,stop,restart,processor-history
+copy or model-state reset occurred. Eight current offload/lifecycle/local-
+source/EOS gates kept their existing priority;11 already-low runs stayed
+unchanged. This is HOST test scheduling,not a P100A speed measurement.
+
+Both actual E model histories have passed original embedding and reached
+layer0 matrix3 in the SAME retained119-engine histories. The later precise
+activation/down-consumer,whole layer,all64,multitoken/output/state/KV,STOP,
+native END/reuse,physical Work and honest TPS qualification remain owed.
+Preserve both runs and all earlier valid histories;do not substitute this
+loader-isolation check or startup result for the full requested outcome.
+
+No Pioneer/SSH/power/driver/OS/Assistant/network/SD/mains operation occurred.
+No current board-health or inference-speed claim is made.

@@ -13,7 +13,7 @@ parents = set(re.findall(r'!defined\(([A-Z_][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b
 assert len(parents) == 21
 abi = ('api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device')
 forbidden = set(re.findall(r'defined\(([A-Z_][A-Z0-9_]*)\)', role[role.index('#if defined(PIONEER_Q38_EMBEDDING_NATIVE)'):]))
-assert not parents & forbidden and len(forbidden) == 31
+assert not parents & forbidden and len(forbidden) == 33
 base = {**dict.fromkeys(parents, '1'), 'PIONEER_DRIVER_BUILD_TAG':'0x51544b4e4f445256ULL',
         **{name:'pioneer_q38_token_context_body_'+name for name in abi}}
 include = '#include "'+str(path)+'"\n'
@@ -75,4 +75,17 @@ missing = dict(base)
 del missing['PIONEER_Q38_TOKEN_NATIVE_CONTEXT']
 driver_prefix(missing, False, 'Reserved QTKNODRV tag requires its exact')
 refused += 1
+# Fixed program DATA is deliberately still QTP1/QGW1. Do not let the
+# new candidate's DATA selection silently pair QGW2 boot words with those
+# old ROMs and their old peer journal, even outside a native compile TU.
+programs = '#include "'+str(here.parent/'PioneerQ38TokenPrograms.h')+'"\n'
+for candidate in ('PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION', 'PIONEER_Q38_PRECISE_WORKER_IMAGE'):
+    for value in ('0', '1'):
+        for late in (False, True):
+            define = '#define '+candidate+' '+value+'\n'
+            source = (programs+define+programs) if late else define+programs
+            result = subprocess.run([os.environ.get('CXX', 'c++'), '-E', '-x', 'c++', '-'],
+                                    input=source, text=True, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+            assert result.returncode and 'Fixed QTP1/QGW1 program DATA cannot select' in result.stderr, result.stderr
+            refused += 1
 print(f'PASS native QTKNODRV compile role/21 exact parents/6 renamed ABI names/{len(forbidden)} old-native+image+CPU+Work aliases/{refused} undefined+zero+two+late refusals;NO link/install/runtime/physical authority')
