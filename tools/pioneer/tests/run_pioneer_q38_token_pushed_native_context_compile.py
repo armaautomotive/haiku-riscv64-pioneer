@@ -61,7 +61,8 @@ for digest, label in expected:
     data = raw.read_bytes()
     assert start+size <= len(data) and hashlib.sha256(data[start:start+size]).hexdigest() == digest, label
 for forbidden in ('ReferenceProducts', 'CompareFinal', 'OriginalSource', 'NativeQ38PeerInstructionModel',
-                  'Q38NativePeerTestCpu', 'PioneerQ38ObservedTrace', 'CheckNativeFullEndFlow', 'Q38NativeStateTest'):
+                  'Q38NativePeerTestCpu', 'PioneerQ38ObservedTrace', 'CheckNativeFullEndFlow', 'Q38NativeStateTest',
+                  'Q38InstructionStackObserver'):
     assert forbidden not in table and forbidden not in undefined, forbidden
 assert not re.search(r'\b(?:cosf?|sinf?|powf?)\b', undefined)
 

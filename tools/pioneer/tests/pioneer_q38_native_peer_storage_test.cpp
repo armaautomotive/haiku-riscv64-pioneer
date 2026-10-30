@@ -60,6 +60,7 @@ int main(int argc,char** argv){
  NativePeerBytes memory;const auto original=memory.l1;auto endpoints=memory.Endpoints();
  Q38NativePeerTestCpu first(argv[1],argv[2],1,endpoints),second(argv[1],argv[2],2,endpoints);
  assert(memory.l1==original && !first.Stats().steps && !second.Stats().steps && first.Stats().pc==0x6000 && second.Stats().pc==0x6000);
+ assert(!first.Stack().instructions && !second.Stack().instructions && first.Stack().minimumSp==0x70000);
  first.Link(second);second.Link(first);memory.Install(1);memory.Install(2);
  for(auto* cpu:{&first,&second})for(unsigned round=0;round<4096;round++){
   const auto before=cpu->Stats();if(before.pc==0x2004c || before.pc==0x20050)break;cpu->Advance(256);
@@ -67,6 +68,8 @@ int main(int argc,char** argv){
  for(unsigned w=1;w<=2;w++){
   const auto s=(w==1?first:second).Stats();assert((s.pc==0x2004c || s.pc==0x20050) && s.steps && s.statusWrites==17
    && !s.matrixInstructions && !s.moveInstructions && !s.floatOps && !s.requests && !s.responses && !s.pending && !s.sequence && !s.active && s.minStack>=0x6e000);
+  const auto stack=(w==1?first:second).Stack();assert(stack.instructions==s.totalSteps && stack.minimumSp>=0x6e000
+   && stack.minimumSp<0x70000 && stack.minimumAccessed==s.minStack);
   for(unsigned i=0;i<16;i++)assert(memory.l1[w-1].at((PioneerQ38SelectedGlobalWorker::Status+i*4)/4)==(i==3?unsigned(PioneerQ38SelectedGlobalWorker::Magic):0U));
  }
  const unsigned events=memory.events;memory.counters[0][0]++;memory.command[0][1]^=1;
@@ -82,6 +85,7 @@ int main(int argc,char** argv){
   assert(second.ObserveStopped() && !second.ObserveLayerBoundary() && second.Stats().totalSteps==second.Stats().steps);
   const auto stopped=second.Stats();second.Advance(256);assert(second.Stats().steps==stopped.steps && second.ObserveStopped());
   second.AdvanceStopped(256);assert(second.Stats().steps==stopped.steps+256 && second.ObserveStopped() && memory.events==events);
+  assert(second.Stack().instructions==second.Stats().totalSteps);
  }
  assert(!memory.reads && !memory.puts && !unchanged.steps && sizeof(unchanged.l1)==32768);
  printf("PASS TWO virgin full tensor ISA engines/shared actual L1 from construction/generic constructor bytes DISCARDED/actual QGW%u boots+WAIT/idle CSR faults PERSIST/pristine second CPU actual early component STOP+256 genuine inert instructions/no new hardware event/host layer-window refuses without actual down-job arithmetic/old other-TU layout intact;COMPONENT ONLY,NOT full-model/native119 STOP/END/physical/Work/TPS\n",PioneerQ38SelectedWorkerPrecise+PioneerQ38SelectedWorkerPushed+1);

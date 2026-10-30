@@ -34,6 +34,8 @@
 #include <vector>
 #include <sys/wait.h>
 #include <unistd.h>
+#define PIONEER_Q38_INSTRUCTION_STACK_OBSERVER_TEST 1
+#include "PioneerQ38InstructionStackObserver.h"
 namespace NativeQ38PeerInstructionModel {
 #define PIONEER_Q38_GLOBAL_CHAIN_MACHINE_ONLY
 #include "pioneer_q38_global_chain_instruction_test.cpp"
@@ -42,6 +44,7 @@ struct NativePeer:GlobalChainPeer,CohortBytes {
  PioneerQ38SharedTestBinding& binding;unsigned deviceReads=0,deviceWrites=0,statusWrites=0,scalarFpInstructions=0;
  uint32_t publishedCounts[8]={},publishedCommands[10]={};bool publishedPending=false;
  bool endpointInputsObserved=false;
+ Q38InstructionStackObserver instructionStack;
  NativePeer(const char* old,const char* global,unsigned worker,PioneerQ38SharedTestBinding& b)
   :GlobalChainPeer(old,global,worker),binding(b){
   (void)&RunPersistentGdnPair;(void)&Refusals;(void)&LateRefusals;
@@ -98,6 +101,7 @@ struct NativePeer:GlobalChainPeer,CohortBytes {
   // Parent service FP decoders may use their immutable ROM byte vectors.
   // ALL instruction bytes must first equal this SAME installed L1 word.
   GlobalChainPeer::StepBlock();
+  assert(instructionStack.Retired(regs[2])); // actual completed instruction;NO guest-state setter
   // Hardware events originate ONLY at actual NoC Load/Store endpoints
   // above. Re-scanning every completed packet after every ordinary ISA/
   // L1/tensor instruction is quadratic HOST work,not a hardware event.
@@ -144,6 +148,12 @@ Q38NativePeerTestStats Q38NativePeerTestCpu::Stats()const{
  const auto& p=*impl->cpu;return {p.pc,p.steps,p.matrixInstructions,p.moveInstructions,p.scalarFpInstructions,p.requests,p.responses,unsigned(p.pending),
   p.deviceReads,p.deviceWrites,p.statusWrites,p.minStack,p.sequence,unsigned(p.active),impl->retiredInstructions+p.steps};
 }
+Q38NativePeerTestStack Q38NativePeerTestCpu::Stack()const{
+ const auto& p=*impl->cpu;const auto& s=p.instructionStack;
+ assert(s.Valid() && s.Instructions()==impl->retiredInstructions+p.steps
+  && p.minStack>=0x6e000 && p.minStack<=0x70000);
+ return {s.MinimumSp(),p.minStack,s.Instructions()};
+} // inspect only at an instruction boundary;NO memory,CSR or native-owner IO
 bool Q38NativePeerTestCpu::ObserveMatrixOutput()const{
  const auto& p=*impl->cpu;
  return !p.active && !p.pending && (p.pc==p.waitPC || p.pc==p.waitPC+4)

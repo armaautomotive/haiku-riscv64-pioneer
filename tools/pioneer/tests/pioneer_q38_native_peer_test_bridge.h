@@ -29,6 +29,10 @@ struct Q38NativePeerTestStats {
  uint32_t deviceReads,deviceWrites,statusWrites,minStack,sequence,active;
  uint64_t totalSteps;
 }; // observations ONLY;never accepted as a processor or native-owner input
+struct Q38NativePeerTestStack {
+ uint32_t minimumSp,minimumAccessed;
+ uint64_t instructions;
+}; // separate read-only result;the existing64-byte Stats ABI is unchanged
 class Q38NativePeerTestCpu {
  struct Impl;Impl* impl;
 public:
@@ -37,6 +41,7 @@ public:
  Q38NativePeerTestCpu(const Q38NativePeerTestCpu&)=delete;
  Q38NativePeerTestCpu& operator=(const Q38NativePeerTestCpu&)=delete;
  void Link(Q38NativePeerTestCpu&);void Advance(unsigned);Q38NativePeerTestStats Stats()const;
+ Q38NativePeerTestStack Stack()const;
  bool ObserveMatrixOutput()const; // independent arithmetic observer ONLY,never a ready/completion setter
  bool ObserveStopped()const;
  void AdvanceStopped(unsigned); // execute the actual immutable STOP loop for an inertness observation

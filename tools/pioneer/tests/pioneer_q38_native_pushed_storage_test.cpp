@@ -186,6 +186,7 @@ int main(int argc,char** argv){
   auto endpoints=bytes.Endpoints();const auto cold=bytes.l1,root=bytes.root;
   Q38NativePeerTestCpu cpu(argv[1],argv[2],worker,endpoints);
   assert(cold==bytes.l1 && root==bytes.root && !cpu.Stats().steps && cpu.Stats().pc==0x6000);bytes.Install();
+  assert(!cpu.Stack().instructions && cpu.Stack().minimumSp==0x70000);
   auto idle=[&]{const auto s=cpu.Stats();return s.pc==0x2004c || s.pc==0x20050;};
   for(unsigned n=0;n<4096 && !idle();n++)cpu.Advance(256);
   assert(idle() && !cpu.Stats().sequence && !cpu.Stats().requests && !bytes.incoming.messages);
@@ -211,6 +212,8 @@ int main(int argc,char** argv){
     stats.matrixInstructions,stats.requests,stats.responses,bytes.incoming.messages);
    assert(!cpu.ObserveFaulted() && stats.matrixInstructions==groups*(type==12?2U:4U)*(bytes.inputs/16) && stats.requests==reads && stats.responses==reads
     && !stats.pending && !stats.active && stats.minStack>=0x6e000 && bytes.incoming.messages==sequence*2 && bytes.rootMaster==master);
+   const auto stack=cpu.Stack();assert(stack.instructions==stats.totalSteps && stack.minimumSp>=0x6e000
+    && stack.minimumSp<0x70000 && stack.minimumAccessed==stats.minStack);
    assert(bytes.root.at(W::Slot(worker)/4)==W::ReceiptMagic && !bytes.incoming.Read(W::Slot(worker)) && bytes.incoming.stale);
    bytes.incoming.Fence();std::array<uint32_t,64> receipt={};
    for(unsigned i=0;i<64;i++)receipt[i]=bytes.incoming.Read(W::Slot(worker)+i*4);
@@ -235,6 +238,9 @@ int main(int argc,char** argv){
   assert(cpu.ObserveStopped() && bytes.incoming.messages==4 && bytes.rootMaster==master);
   const auto before=cpu.Stats();const auto commands=bytes.commands;const auto counts=bytes.counters;const unsigned events=bytes.events;
   cpu.AdvanceStopped(2048);assert(cpu.Stats().steps==before.steps+2048 && commands==bytes.commands && counts==bytes.counters && events==bytes.events);
+  const auto stack=cpu.Stack();assert(stack.instructions==cpu.Stats().totalSteps && stack.minimumSp>=0x6e000);
+  printf("OBSERVED actual component worker%u/type%u/reserved stack%u/accessed%u/8192/instructions%llu incl genuine STOP2048;NOT whole-model or kernel-stack proof\n",
+   worker,type,0x70000-stack.minimumSp,0x70000-stack.minimumAccessed,(unsigned long long)stack.instructions);
  }
  puts("PASS G3 opaque native TEST bridge/nine virgin shared-byte engines/types8+12+14/fullK5120+17408+6144/two changed-input jobs EACH/groups1+3+7/two actual worker1 activation predecessors+produced chunk consumption/16 actual post-payload source fault forks/ACK-ordered raw payload+commit/L0 stale until explicit TEST fence/root master unchanged/counter wrap/actual early component STOP+2048 each;SYNTHETIC raw operands,NOT ROOT instructions/all68 activation/native held lifecycle/original model/119STOP/END/physical/Work/TPS qualification");
 }

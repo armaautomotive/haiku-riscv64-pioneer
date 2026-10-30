@@ -17,6 +17,8 @@
 #define PIONEER_GRAPH_MATH_MACHINE_ONLY
 #include "pioneer_graph_math_image_test.cpp"
 using TokenNativeRootISA=ScalarMachine;
+#define PIONEER_Q38_INSTRUCTION_STACK_OBSERVER_TEST 1
+#include "PioneerQ38InstructionStackObserver.h"
 #else
 using TokenNativeRootISA=BlockMachine;
 #endif
@@ -29,6 +31,11 @@ struct TokenStartupRoot:TokenNativeRootISA {
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
  unsigned floatOps=0;
+ Q38InstructionStackObserver instructionStack;
+ void StepScalar(){
+  const auto before=steps;TokenNativeRootISA::StepScalar();
+  assert(steps==before+1 && instructionStack.Retired(regs[2]));
+ } // unchanged full ISA retirement,then read-only SP observation
 #include "pioneer_q38_token_native_layer_machine.inc"
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE

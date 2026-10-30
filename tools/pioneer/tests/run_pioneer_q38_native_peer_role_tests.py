@@ -51,6 +51,28 @@ for definitions in ({role:1}, {role:1, storage:0}, {role:1, storage:2},
 for macro in ('_KERNEL_MODE', 'PIONEER_Q38_TOKEN_NATIVE_CONTEXT', 'PIONEER_Q38_WORK_INFERENCE'):
     for value in (0, 1):
         check('pioneer_q38_native_peer_test_bridge.cpp', {macro:value}, False, True)
+stack_header='PioneerQ38InstructionStackObserver.h'
+stack_role='PIONEER_Q38_INSTRUCTION_STACK_OBSERVER_TEST'
+check(stack_header,{stack_role:1},True)
+for value in (None,0,2):
+    check(stack_header,{} if value is None else {stack_role:value},False)
+stack_kernel={stack_role:1,'_KERNEL_MODE':1,'PIONEER_Q38_TOKEN_NATIVE_CONTEXT':1,
+              context:1,'PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE':1}
+check(stack_header,stack_kernel,True)
+for parent in stack_kernel:
+    for value in (None,0,2):
+        invalid=dict(stack_kernel)
+        if value is None:del invalid[parent]
+        else:invalid[parent]=value
+        check(stack_header,invalid,False)
+for macro in ('PIONEER_Q38_WORK_INFERENCE','PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE',
+              'PIONEER_Q38_GLOBAL_WORKER_IMAGE','PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE'):
+    for value in (0,1):check(stack_header,{stack_role:1,macro:value},False)
+for value in (0,1):
+    check(stack_header,{stack_role:1,'TT_PIONEER_Q38_WORK_MODE':value},False)
+    check(stack_header,{stack_role:1,'TT_PIONEER_Q38_WORK_MODE':value,role:1,storage:1},True)
+    check(stack_header,{stack_role:1,'TT_PIONEER_Q38_WORK_MODE':value,role:1},False)
+    check(stack_header,{**stack_kernel,'TT_PIONEER_Q38_WORK_MODE':value,role:1,storage:1},False)
 for header, family in (
     ('pioneer_q38_token_native_mutable_bytes.inc', 'PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE'),
     ('pioneer_q38_token_native_full_layer_checks.inc', 'PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE'),

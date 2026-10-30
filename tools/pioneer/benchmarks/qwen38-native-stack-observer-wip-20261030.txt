@@ -1,0 +1,113 @@
+Private native instruction-stack observations -- development WIP
+2026-10-30
+===============================================================
+Goal ACTIVE; 20 tokens/sec UNMET. Last physical whole-model measurement
+remains 0.207893161 tokens/sec. No Pioneer SSH, power, driver, OS, Assistant,
+SD, hardware-connection or mains action was taken for this checkpoint.
+These HOST instruction-emulator results do not establish physical speed.
+
+Change and scope
+----------------
+The old opaque worker Stats.minStack records the lowest stack address
+accessed, not the lowest reserved SP. A separate read-only observer now
+checks the actual SP after each retired ROOT/peer instruction, accumulates
+its minimum and counts all instructions. It permits initial boot-zero SP,
+then requires aligned SP within [0x6e000,0x70000]; failures are sticky.
+It never sets guest registers, memory, PC, products, receipts or readiness.
+There is no history reset or watchdog-rebase setter in this observer.
+
+The existing 64-byte Stats layout remains unchanged. A separate 16-byte
+Stack result reports reserved/accessed minima and the full retirement count.
+Counts must agree with the existing extended instruction-accounting history.
+Actual first-matrix, first-layer and whole-flow TEST checkpoints now report
+ROOT/119-peer accelerator stack observations separately from HOST kernel
+stack qualification. Earlier running binaries do NOT acquire this observer
+retroactively, and their results cannot qualify the new observation path.
+
+The helper requires explicit TEST roles. Device images and Work imports,
+including defined-zero selectors, are refused. The old TT_WORK_MODE tuning
+flag is accepted only inside the exact isolated HOST peer TEST bridge,
+never as native/Work permission. The actual native driver rejects the
+observer selector even when zero. No firmware bytes, program pins, public
+ABI, launch permission, Assistant option or production inference path change.
+
+Completed component observations
+--------------------------------
+Main EA session40034 and independently archived/overlaid clean EB92582
+both EXIT0. ASan+UBSan; nine virgin engines, each two changed-input jobs,
+full K5120/17408/6144, worker groups1/3/7, actual activation predecessors,
+16 post-payload fault children and genuine component STOP+2048 instructions.
+Both complete logs are byte-identical, SHA256
+6ba4e4eac4d8db2abfc978f649a6edc14bd83e307bf03b0cebadac1ec57aac85.
+Reserved/accessed peaks in bytes:
+
+ type     worker1      worker96     worker119
+ Q8_0     3552/3540    3552/3540     3552/3540
+ Q4_K     5360/5348    3552/3540     3552/3540
+ Q6_K     3552/3540    3552/3540     3552/3540
+
+Each accelerator stack is 8192 bytes. These component paths fit; the peak
+5360-byte reservation includes actual worker1 activation. This is NOT a
+whole-model, all-activation-workers, combined HOST kernel-stack or physical
+stack qualification. Operands in these component tests are synthetic.
+
+Unit checks pass 4100 valid retirement samples, every one of 2049 aligned
+SP values in both directions, boot-zero/zero-after-init and ten invalid
+range/alignment cases with sticky failure; old64/new16-byte layout checks.
+Main79761 and clean35943 EXIT0: 37 positive TEST roles/1103 refusals;
+selected native binding7 positives/199 refusals, including actual native
+driver-prefix defined-zero/one observer rejection; standalone unit checks.
+Main G2 boot/storage control90543 and clean EB97019 EXIT0 with SP/count checks, actual two
+virgin engines, persistent raw CSR faults and genuine early STOP+256.
+
+Native SDK check83731 EXIT0 from clean EB: actual G3 object byte-identical
+to unchanged-HEAD baseline15330 and the preceding published checkpoint.
+SHA256 cb8ac63b96d5b253eab93bbb38eca07c7d62c2ae3632d0159a6197367471fdb7.
+All13 compiled program arrays remain SHA-exact, actual renamed conventional
+bodies/wrappers remain inert, max individual Token frame1232. Observer/test
+symbols are absent. This is COMPILE ONLY, not a combined-stack or runtime
+qualification. The precise G2 SDK control also passes.
+
+Failure lineage and source provenance
+------------------------------------
+DX compile failures caught an incompatible mixed auto declaration and the
+old HOST model tuning flag; fixed without widening actual native imports.
+DY49251 and DZ31803 EXIT1: a new component-only watchdog-rebase assertion
+was inserted into two synthetic same-engine down jobs whose metadata does
+not form the native full-layer sequence. The first version also disturbed
+staging. That unrelated rebase test was removed, not the original protocol,
+SP, output or fault assertions. The unchanged original component sequence
+then passes main/clean with the new read-only SP observer. Full-flow TEST
+still uses its original genuine down-job layer-window checks unchanged.
+
+The first EA archive overlay failed before copying (zsh's special path
+variable hid cp). Therefore clean EA56297 is an unchanged-HEAD component
+baseline, NOT observer coverage. EA11449's role script passed baseline
+roles but its following nonexistent new unit script exited2. Neither is
+claimed as new coverage. A fresh archive of26987bd034 with15 cmp-verified
+scoped overlays was used instead: /private/tmp/pioneer-q38-native-stack-clean-eb.pg57DZU9.
+Logs use /private/tmp/pioneer-q38-native-stack-*-20261030-{ea,eb}.log.
+
+Clean EB79905 runs the new ROOT observer from virgin RESET through actual
+native first-matrix execution using the authenticated original GGUF and
+119 virgin full engines. It has linked and started authentication; it is
+STILL RUNNING, NOT a completed matrix/layer/model/STOP/END result.
+
+Other original histories collected without restarting
+---------------------------------------------------
+DT80182 TERMINAL EXIT0: actual original first-layer/cancel/ROOT+119STOP/
+HOLD/drain/all-restorations/clock/hardware/29VM/PCI predecessor, then a
+lifetime loss after known successful simulated unreserve. It retains the
+remaining context with no retry, following IO or false full END. This is
+negative END evidence, not positive full-generation/physical qualification.
+Older native DK77228 TERMINAL EXIT1 at position0/layer3/phase8,
+ROOT471211889 instructions. Its frozen image predates the published FFN
+scratch fix; the failure matches that already-diagnosed alias. It is not a
+new corrected-image failure or a model pass. Corrected DR31695/66331,
+DT29776 two-cycle reload and full-generation/state/END DW41236 continue
+on their SAME original handles; none has been restarted for observation.
+
+Still owed: corrected dense-FFN/full-model multi-token/state numerics;
+complete native END/reload; accelerator full-flow and HOST combined stacks;
+public driver/Work/Assistant integration, physical generation/stability,
+and actual measured tuning. DO NOT INSTALL the private non-loadable candidate.

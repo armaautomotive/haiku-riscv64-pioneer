@@ -80,13 +80,15 @@ static void CheckNativeFullFlow(Fixture& f){
  const uint64 instructionsBefore=cpu.ObservedRootInstructions();
  for(unsigned i=0;i<2048;i++){cpu.StepScalar();assert(cpu.pc==0x60004);}
  assert(cpu.ObservedRootInstructions()==instructionsBefore+2048 && cpu.layerPackets==packets && cpu.submitted==submitted && cpu.completed==completed);
- uint64 peerInstructions=0;
+ uint64 peerInstructions=0;unsigned minPeerSp=0x70000,minPeerAccessed=0x70000;
  for(unsigned w=1;w<120;w++){
   auto& p=*io.bootstrapPeer[w-1];const auto s=p.cpu->Stats();assert(p.cpu->ObserveStopped() && !s.active && !s.pending
    && io.Raw(w,W::Job+5*4)==64 && io.Raw(w,W::Job+6*4)==2 && io.Raw(w,W::Job+7*4)==9999);
   p.cpu->AdvanceStopped(2048);const auto after=p.cpu->Stats();
   assert(after.totalSteps==s.totalSteps+2048 && after.requests==s.requests && after.responses==s.responses && p.cpu->ObserveStopped());
   peerInstructions+=after.totalSteps;
+  const auto stack=p.cpu->Stack();assert(stack.instructions==after.totalSteps && stack.minimumSp>=0x6e000);
+  minPeerSp=std::min(minPeerSp,stack.minimumSp);minPeerAccessed=std::min(minPeerAccessed,stack.minimumAccessed);
  }
  {
   PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);PioneerQ38TokenTerminalResult observed;
@@ -99,6 +101,10 @@ static void CheckNativeFullFlow(Fixture& f){
  commit(2);assert(io.nativeTrace->Complete() && io.nativeTrace->Save(tokenNativeTraceDirectory));
  assert(!io.runtimeDram.at(T::OutputOffset/4+3*64) && !io.pciWrites && !io.HostReadMock::bmeWrites
   && !io.wideReleased && !io.PageMock::releases && !io.OutputBufferMock::releases);
+ assert(cpu.instructionStack.Valid() && cpu.instructionStack.Initialized()
+  && cpu.instructionStack.Instructions()==cpu.ObservedRootInstructions());
+ printf("OBSERVED actual SAME3*64+ROOT119STOP accelerator ROOT reserved stack%u/accessed%u;MAX119peer reserved%u/accessed%u;8192 bytes EACH/across HOST watchdog rebases;separate kernel stack still unqualified\n",
+  0x70000-cpu.instructionStack.MinimumSp(),0x70000-cpu.minStack,0x70000-minPeerSp,0x70000-minPeerAccessed);
  printf("EXECUTED native SAME full851 owner+1010 genuinezero+119virgin full engines/3positions*64layers/actual GDN+Conv+KV+vocabulary+device committed records/genuine ROOT terminal+all119 actual STOP+native terminal observation/ROOTinstructions%llu peerInstructions%llu/complete RAW QOD1 traces saved;independent CPU numerical comparison STILL REQUIRED;NO restoration/END/physical/Work/TPS grant\n",
   (unsigned long long)cpu.ObservedRootInstructions(),(unsigned long long)peerInstructions);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE

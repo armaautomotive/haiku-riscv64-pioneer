@@ -101,4 +101,5 @@ check_driver(base, True)
 check_driver({'TT_PIONEER_DRIVER_RELOAD':'1', 'PIONEER_DRIVER_BUILD_TAG':'0x5154334e4f445256ULL'}, False)
 for value in ('0', '1'):
     check_driver({**base, 'PIONEER_Q38_TOKEN_NATIVE_ROLE_TAG_OK':value}, False)
+    check_driver({**base, 'PIONEER_Q38_INSTRUCTION_STACK_OBSERVER_TEST':value}, False)
 print(f'PASS G3 selected actual DATA/private native binding/positive{accepted}/refusals{refused}/ALL21 parents+2 profile selectors+6 ABI names/4 actual driver-prefix controls;COMPILE ONLY,NO lifecycle or launch grant')

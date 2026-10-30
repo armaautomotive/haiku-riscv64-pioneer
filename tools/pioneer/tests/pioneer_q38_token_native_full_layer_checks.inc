@@ -27,11 +27,13 @@ static void CheckNativeFullLayer(Fixture& f){
    && io.Raw(0,C::Progress)==PioneerQ38TokenLayout::Magic && !io.Raw(0,C::Progress+4) && io.Raw(0,C::Progress+8)==1);
   PioneerQ38TokenExecutionResult observed;assert(ObserveQ38TokenNativeRoot(c,observed) && observed.acknowledged && !observed.unsafe);
  }
- uint64 instructions=0;unsigned activeWorkers=0,nextNonzero=0;
+ uint64 instructions=0;unsigned activeWorkers=0,nextNonzero=0,minPeerSp=0x70000,minPeerAccessed=0x70000;
  for(unsigned w=1;w<120;w++){
   auto& p=*io.bootstrapPeer[w-1];const auto s=p.cpu->Stats();
   assert(p.Idle() && !s.pending && !s.active && !io.Raw(w,W::Status+8) && io.Raw(w,W::Status+4)==s.sequence);
   instructions+=s.steps;activeWorkers+=s.sequence!=0;
+  const auto stack=p.cpu->Stack();assert(stack.instructions==s.totalSteps && stack.minimumSp>=0x6e000);
+  minPeerSp=std::min(minPeerSp,stack.minimumSp);minPeerAccessed=std::min(minPeerAccessed,stack.minimumAccessed);
  }
  assert(activeWorkers==119 && io.mutableReadWords[0] && io.mutableWriteWords[0] && io.mutableReadWords[1]);
  for(unsigned i=0;i<672;i++){const auto& r=io.recurrent[i];const auto* words=io.recurrentWords.data()+io.recurrentFirst[i]*1024;
@@ -49,6 +51,9 @@ static void CheckNativeFullLayer(Fixture& f){
   const uint32 word=io.runtimeDram.at(offset/4+i);assert(isfinite(Float(word)));emit(word);
  }
  emit(0x454e4450);assert(!fclose(out));
+ assert(cpu.instructionStack.Valid() && cpu.instructionStack.Initialized() && cpu.instructionStack.Instructions()==cpu.steps);
+ printf("OBSERVED actual first-layer combined accelerator ROOT reserved stack%u/accessed%u;MAX119peer reserved%u/accessed%u;8192 bytes EACH/separate HOST kernel stack unqualified\n",
+  0x70000-cpu.instructionStack.MinimumSp(),0x70000-cpu.minStack,0x70000-minPeerSp,0x70000-minPeerAccessed);
  printf("EXECUTED native ORIGINAL layer0/SAME full851+1010zero+119virgin full engines/actual matrix+Conv+GDN+FFN/initialized native recurrent/history/workspace byte aliases/next-slot nonzero%u/all119 actual DONE+WAIT/workerInstructions%llu ROOTinstructions%u/raw prefix OBSERVATION emitted;independent numerical comparison STILL REQUIRED;NOT token/committed state/KV/STOP/END/physical/Work/TPS\n",
   nextNonzero,(unsigned long long)instructions,cpu.steps);
 }

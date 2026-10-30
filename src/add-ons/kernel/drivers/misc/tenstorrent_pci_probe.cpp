@@ -24,6 +24,9 @@
 #if defined(PIONEER_Q38_TOKEN_NATIVE_STATE_SNAPSHOT_FIXTURE) || defined(PIONEER_Q38_NATIVE_STATE_TEST_BRIDGE)
 #error TEST state snapshots cannot substitute the actual native driver translation unit,including defined0
 #endif
+#if defined(PIONEER_Q38_INSTRUCTION_STACK_OBSERVER_TEST)
+#error TEST instruction-stack observations cannot substitute the actual native driver translation unit,including defined0
+#endif
 #define PIONEER_Q38_TOKEN_NATIVE_ROLE_TAG_OK 1
 #else
 #define PIONEER_Q38_TOKEN_NATIVE_ROLE_TAG_OK 0

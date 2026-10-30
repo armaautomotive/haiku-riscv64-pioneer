@@ -21,9 +21,11 @@ static void CheckNativeFirstMatrix(Fixture& f){
    && io.Raw(1,W::Job+7*4)==1002 && io.Raw(1,W::Doorbell)==1);
   PioneerQ38TokenExecutionResult observed;assert(ObserveQ38TokenNativeRoot(c,observed) && observed.acknowledged && !observed.unsafe);
  }
- unsigned instructions=0,matrices=0;
+ unsigned instructions=0,matrices=0,minPeerSp=0x70000,minPeerAccessed=0x70000;
  for(unsigned w=1;w<120;w++){
   auto& p=*io.bootstrapPeer[w-1];const auto s=p.cpu->Stats();assert(p.Idle() && !s.pending && !s.active);
+  const auto stack=p.cpu->Stack();assert(stack.instructions==s.totalSteps && stack.minimumSp>=0x6e000);
+  minPeerSp=std::min(minPeerSp,stack.minimumSp);minPeerAccessed=std::min(minPeerAccessed,stack.minimumAccessed);
   assert(io.Raw(w,W::Status+4)==(w<=3?1U:0U) && !io.Raw(w,W::Status+8));
   if(w<=3){
    const bool output=p.cpu->ObserveMatrixOutput();
@@ -37,6 +39,10 @@ static void CheckNativeFirstMatrix(Fixture& f){
   else assert(!s.sequence && !s.matrixInstructions && !s.floatOps && !s.requests && !s.responses);
   instructions+=s.steps;
  }
+ assert(cpu.instructionStack.Valid() && cpu.instructionStack.Initialized()
+  && cpu.instructionStack.Instructions()==cpu.steps);
+ printf("OBSERVED actual first-matrix accelerator ROOT reserved stack%u/accessed%u;MAX119peer reserved%u/accessed%u;8192 bytes EACH/separate HOST kernel stack unqualified\n",
+  0x70000-cpu.instructionStack.MinimumSp(),0x70000-cpu.minStack,0x70000-minPeerSp,0x70000-minPeerAccessed);
  printf("PASS SAME native full851 owner/ALL119 full tensor ISA engines VIRGIN from construction/shared actual L1+CSR+ROOT inputs+authenticated original learned bytes/ACTUAL first3 workers complete role10 fullK5120+48 rows/real RISC+Tensix matrices%u+native output bytes+FP32/FP64 OBSERVERS ONLY/no CPU product/history transplant/ROOT validates first projection before NEXT matrix doorbell held/workerSteps%u ROOTsteps%u;NOT whole layer/token/STOP/END/physical/Work/TPS\n",
   matrices,instructions,cpu.steps);
 }
