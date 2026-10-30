@@ -1,0 +1,8 @@
+PACKET_SEAL_MISMATCH address0 mask0 owner6e800 frame6eb00 expected1 old1 new1 reads83/67
+Assertion failed: (false), function CheckPacket, file pioneer_q38_packet_seal_unroll_instruction_test.cpp, line 27.
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-packet-unroll-sixteen-source-fg.sLTWsu9l/tools/pioneer/tests/run_pioneer_q38_packet_seal_unroll_instruction_tests.py", line 42, in <module>
+    subprocess.run([str(binary),str(baseline),str(candidate),*map(str,maps)],check=True,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-packet-seal-unroll-hnincs3q/test', '/private/tmp/pioneer-q38-packet-unroll-baseline-20261030-ec-image', '/private/tmp/pioneer-q38-packet-unroll-sixteen-fg-image', '/private/tmp/pioneer-packet-seal-unroll-hnincs3q/0', '/private/tmp/pioneer-packet-seal-unroll-hnincs3q/1']' died with <Signals.SIGABRT: 6>.

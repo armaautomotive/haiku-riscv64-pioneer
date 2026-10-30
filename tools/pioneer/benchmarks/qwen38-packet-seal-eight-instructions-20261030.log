@@ -1,0 +1,2 @@
+PASS isolated QGW3 packet seal: SAME83 ordered private+doorbell+MMIO reads, actual instructions234->169;stack stores ONLY,inert2048;NOT model/native/physical/TPS
+PASS actual pinned old/candidate packet seals: 2106 cases/2091 refusals;every observed argument+MMIO read/value/order EXACT,immediate fault and2048 inert instructions;synthetic isolated ABI ONLY,not real owner/native/model/physical/Work/TPS

@@ -1,0 +1,68 @@
+QGW3 packet-check unroll search -- isolated TEMPORARY BUILD/ISA experiment
+2026-10-30;goal ACTIVE;20tok/s UNMET;last physical0.207893161tok/s
+=======================================================================
+No hardware,driver installation,Assistant,boot,power,SD or mains action.
+The live four-way whole-model histories remain untouched. Main source,
+selectors,normal pins,native arrays and runtime qualification policy remain
+unchanged. The patch in experiments/ is REPRODUCTION DATA ONLY:apply ONLY to
+a disposable archive of bd471c5d960e2c1997f2c037d04e132dd602d9f3,not the live
+tree/selected four-way candidate. A distinct explicit eight-way selector and
+connected/full-model/native/physical qualification are STILL OWED.
+
+Experiment
+----------
+Two existing packet-check pragmas changed4->8 in an isolated Git archive.
+All comparisons,source registers,doorbell,phase,nonce and immediate faults
+remain. The temporary isolated instruction runner pins the resulting actual
+five artifacts;it does not edit the normal runner or admit the image to any
+native/model/Work path. Full original QGW3 returning-parent BUILD uses the
+existing inspect-only explicit profile;no fixed window is enlarged.
+
+Main9505 BUILD0 /96576 emitted-function test0. Independent clean40304 BUILD
+and test0. Both actual program ELFs,recurrent/dense/combined objects match
+byte-for-byte;runtime test logs identical SHA
+  589056f4fc481bb7100ddc5221977312e41df000b532b10d5511b96e4d3472b1
+All2106 cases/2091 refusals retain SAME83 ordered private/doorbell/MMIO
+reads and values,immediate failure and2048 actual inert terminal instructions.
+Only compiler stack stores are observed. ASan/UBSan/warnings-as-errors stay.
+Synthetic ABI arguments are NOT a genuine model/owner or native completion.
+
+Original234 instructions;four-way192;eight-way169 in the isolated valid call.
+Eight-way removes23 instructions versus four-way (about12%),65 versus the
+original (about28%). These are instruction counts,NOT cycles,tokens/sec or a
+whole-model speedup. Memory/NoC traffic is not reduced. No new physical timing.
+Text131040/131072 leaves32 bytes;aux32720/32768 leaves48. ELF190444 bytes.
+Parent individual frame1616/component maximum2112 unchanged;NOT a combined
+accelerator/kernel stack bound. Auxiliary bytes relocate with changed text;
+unchanged size does not mean byte identity to the four-way auxiliary image.
+  text SHA71367a70c4fa3dcf0db172edae3b6b915fc69352585cbb71f3bfb7455f72e279
+  aux  SHA04d55aceadc5c743039a62ac969ccb61682e0dbf070c08fb722a19ed4beb4123
+  ELF  SHAdf4261ec5bb3d2f9ada2f11f82b1e52d8d1938c704efd70a4bc150aaab28c933
+Main source:/private/tmp/pioneer-q38-packet-unroll-eight-source-ff.c6ZZdyRQ
+Clean source:/private/tmp/pioneer-q38-packet-unroll-eight-clean-ff.gZGO1GPA
+Images:/private/tmp/pioneer-q38-packet-unroll-eight-{,clean-}ff-image
+Logs:/private/tmp/pioneer-q38-packet-unroll-eight-*-20261030-ff.log
+Reproduction patch:experiments/q38-packet-seal-eight-20261030.patch
+
+Larger candidate REFUSED by the unchanged equivalence test
+---------------------------------------------------------
+Source-loop unroll16/bank-loop8 built0 (59020),exactly131072 text bytes,zero
+headroom. Emitted-function test12601 failed on its FIRST valid case:both
+functions returned valid but observed read traces were83 versus67. No full
+2106-case pass,instruction improvement,arithmetic correctness or runtime/native
+permission follows. The existing ordered-read assertion was NOT relaxed.
+This is an equivalence-contract failure,not evidence of wrong model numerics.
+The larger image remains unqualified;do not promote it because it fits.
+Source:/private/tmp/pioneer-q38-packet-unroll-sixteen-source-fg.sLTWsu9l
+Log:/private/tmp/pioneer-q38-packet-unroll-sixteen-instructions-20261030-fg.log
+The temporary clean-sixteen archive exists but has NOT built or run.
+
+Physical timing audit
+---------------------
+Existing completed DEBUG72 physical report and production control source
+confirm1456395210us spans embedding/init,snapshots,execution,validation readback
+and restoration. Earlier read-only CPU sampling identified expensive per-word
+validation guards. It is NOT sustained inference time;do not divide into TPS
+or repeat the unchanged diagnostic as a new speed experiment. The next real
+benchmark must separate model staging/validation/cleanup from actual generation
+and count genuine generated tokens. No CPU-reference code enters Work.

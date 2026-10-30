@@ -1,0 +1,34 @@
+diff --git a/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp b/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp
+--- a/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp
++++ b/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp
+@@ -271,11 +271,11 @@ extern "C" void q38_mixed_root_packet_seal(const uint32_t* frame){
+   || *Words(R::Doorbell)!=p->outer[48])scalar_fault_park();
+ #ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL
+  // Code generation only: retain ordered comparisons and immediate refusal.
+-#pragma GCC unroll 4
++#pragma GCC unroll 8
+ #endif
+  for(unsigned i=0;i<16;i++)if(frame[16+i]!=p->boot[16+i])scalar_fault_park();
+ #ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL
+-#pragma GCC unroll 4
++#pragma GCC unroll 8
+ #endif
+  for(unsigned i=0;i<8;i++)if(frame[32+i]!=p->boot[8+i])scalar_fault_park();
+  PioneerQ38WordSealSources(p->boot+16);
+diff --git a/tools/pioneer/tests/run_pioneer_q38_packet_seal_unroll_instruction_tests.py b/tools/pioneer/tests/run_pioneer_q38_packet_seal_unroll_instruction_tests.py
+--- a/tools/pioneer/tests/run_pioneer_q38_packet_seal_unroll_instruction_tests.py
++++ b/tools/pioneer/tests/run_pioneer_q38_packet_seal_unroll_instruction_tests.py
+@@ -18,10 +18,10 @@ old_pins=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign)
+ # Experimental BUILD pins only, NOT DATA/native image selection or authority.
+ candidate_pins=(
+  ('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+- ('text.bin',130976,'b5e59a5fec54dc60e318f805e4a616886b342dae5d1411ffab48262fd48ae1c9'),
++ ('text.bin',131040,'71367a70c4fa3dcf0db172edae3b6b915fc69352585cbb71f3bfb7455f72e279'),
+  ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+- ('conv.bin',32720,'6bb4ac3fd7ac99f21c80776b4ed37c6b344c50720e8c032a77128bf0c214800b'),
+- ('program.elf',190444,'bcdd540580c025abadcd97054fd8b34274be4fd8a870a10cbad8ab7f3da3edb1'))
++ ('conv.bin',32720,'04d55aceadc5c743039a62ac969ccb61682e0dbf070c08fb722a19ed4beb4123'),
++ ('program.elf',190444,'df4261ec5bb3d2f9ada2f11f82b1e52d8d1938c704efd70a4bc150aaab28c933'))
+ tool='/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-'
+ entries=[]
+ for directory,pins in ((baseline,old_pins),(candidate,candidate_pins)):

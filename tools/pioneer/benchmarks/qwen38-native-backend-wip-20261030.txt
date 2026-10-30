@@ -458,3 +458,47 @@ FE explicit remaining control-operation integration TEST / NOT runtime pass
   Full numerical/state/lifecycle/stack/physical/Work/Assistant integration
   and honest inference tuning remain owed. Last physical0.207893161tok/s;
   target20tok/s UNMET;goal ACTIVE.
+
+FF first actual copied Finish cycle COMPLETE / parent21527 STILL LIVE
+  Cycle1 genuinely executed original layer0,consumed cancel,ROOT+119 STOP,
+  120 HOLD and empty-record drain. The actual copied Finish refused before
+  drain,then completed all11 restoration/clock/hardware/29VM/PCI/3host/
+  unreserve/deletion stages and copied its completed reply under the SAME
+  real native scope lock. Independent earliest-original-byte checks pass;
+  no post-delete dereference,IO,retention,retry or double release observed.
+  Parent21527 has started its genuinely fresh epoch2 history. The intentional
+  final reply loss AFTER deletion is STILL PENDING;this is not parent0.
+  Posthoc cycle1 numerical comparison0:all5120 embedding and5120 final layer0
+  words BIT-EXACT/no tolerance/maxAbs0/relativeL20. Durable generated prefix:
+    observed-native-control-finish-20261030-ff/cycle1/prefix-0.bin
+    SHA4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+  Compare:/private/tmp/pioneer-q38-control-finish-cycle1-compare-20261030-ff.log
+  No committed model token,full3*64,state,physical Work or speed qualification.
+  Operations parent79770 remains separate and LIVE;none of its post-layer
+  copied operations are qualified merely by this Finish-only cycle.
+  Separate unroll search produced a169-instruction eight-way isolated
+  candidate;larger unroll16 failed the unchanged ordered-read equivalence
+  test. See qwen38-packet-seal-eight-experiment-20261030.txt. No live source,
+  selected candidate,native arrays,driver or hardware was changed. Goal
+  remains ACTIVE;last physical0.207893161tok/s,target20tok/s UNMET.
+
+FG remaining copied-operation cycle1 COMPLETE / parent79770 STILL LIVE
+  The SAME first original-layer history genuinely issued copied Cancel,
+  copied pending Observe,then consumed cancellation and ROOT+119 actual
+  STOPs/2048 inert instructions each. Copied terminal Observe,HOLD and empty
+  Read then succeeded,followed by copied Finish/all11 independently verified
+  cleanup stages and its completed reply under the real native lock. Exactly
+  two Observe and one each Cancel/Hold/Read were required before Finish.
+  Existing typed malformed/alias/count/phase/duplicate refusals still passed.
+  This is NOT a copied Start cycle:its initializers/launch retain the genuine
+  older typed predecessor;copied Start has its own paired evidence above.
+  Cycle1's posthoc numerical comparison0:all10240 first-layer words BIT-EXACT,
+  no tolerance/maxAbs0/relativeL20. Durable generated prefix:
+    observed-native-control-operations-20261030-fg/cycle1/prefix-0.bin
+    SHA4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+  Compare:/private/tmp/pioneer-q38-control-operations-cycle1-compare-20261030-fg.log
+  The SAME parent has entered fresh epoch2. Its lost-final-reply-after-delete
+  case is still PENDING;neither parent79770 nor21527 is terminal0 yet.
+  These cancelled-layer cases commit ZERO model tokens;positive generated
+  record Read/full3*64/state/END/physical Work and honest performance remain
+  owed. No driver/hardware/Assistant/power action;20tok/s UNMET;goal ACTIVE.
