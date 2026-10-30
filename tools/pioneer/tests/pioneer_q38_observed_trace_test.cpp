@@ -21,7 +21,12 @@ int main(int argc,char** argv){
  assert(trace.Embedding(0,248319,actual.data(),5120));
  for(unsigned position=0;position<3;position++){
   for(unsigned i=0;i<actual.size();i++)actual[i]=Bits(float(position)+float(i%13)*.125f);
-  for(unsigned layer=0;layer<64;layer++)assert(trace.Layer(position,layer,actual.data(),5120));
+  for(unsigned layer=0;layer<64;layer++){
+   assert(trace.Layer(position,layer,actual.data(),5120));
+#ifndef PIONEER_Q38_NATIVE_TRACE_FACADE_TEST
+   if(!position && !layer)assert(trace.SnapshotFirstLayerDiagnostic(argv[1]) && !trace.Complete() && !trace.SavedComplete());
+#endif
+  }
   for(unsigned first=0;first<248320;first+=256)assert(trace.Vocabulary(position,first,logits.data()+first,std::min(256U,248320-first)));
   if(position<2){
    // Actual parent computes NEXT embedding before publishing this token.

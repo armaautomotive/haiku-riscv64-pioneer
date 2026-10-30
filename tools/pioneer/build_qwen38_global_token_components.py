@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=10 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation'}
+assert 3<=len(sys.argv)<=11 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit'}
 inspect='--inspect-candidate' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or f32,'separate dense-unroll candidate requires explicit FP32-hidden components'
 assert not boundary or (f32 and unroll),'boundary candidate requires explicit FP32-hidden and unrolled components'
@@ -17,6 +17,8 @@ local_sources='--worker-local-source-guards' in options
 assert not local_sources or quiet,'worker-local source candidate requires the explicit queue/boundary/FP32 profile'
 precise='--precise-activation' in options
 assert not precise or local_sources,'precise worker activation requires the explicit FP32/local-source profile'
+single_audit='--single-closed-audit' in options
+assert not single_audit or precise,'single closed audit requires the explicit QGW2 precise profile'
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -30,6 +32,7 @@ flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exc
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
+ *(['-DPIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT=1'] if single_audit else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1'] if precise else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_LOCAL_SOURCE_GUARDS=1'] if local_sources else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_QUIET_UNROLL=1'] if quiet else []),
@@ -39,6 +42,7 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_
  '-DPIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL=1',
  '-DPIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT=1','-c',here/'blackhole_qwen38_return_recurrent_layer.cpp','-o',out/'recurrent.o')
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
+ *(['-DPIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT=1'] if single_audit else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1'] if precise else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_LOCAL_SOURCE_GUARDS=1'] if local_sources else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_QUIET_UNROLL=1'] if quiet else []),
@@ -113,7 +117,10 @@ PINS_LOCAL_SOURCE_F32=(('recurrent.o',160776,'84873403ab0fb39d7da1c2e7faabb169ae
 PINS_PRECISE_F32=(('recurrent.o',173044,'28918095da4e6434b539d343f578f35ea42c79ef5da6c78b3e8e7331e9ff6582'),
  ('dense.o',136868,'dd41c80ea9b6503339794b128a773e36b942d186e105eec3931469f0bb4c0875'),
  ('token-components-NOBOOT.o',271784,'532fe03b7ba5049a39eb388ce73e4c8af82276a9505377b0fc1078c0df6c1239'))
-expected=PINS_PRECISE_F32 if precise else PINS_LOCAL_SOURCE_F32 if local_sources else PINS_QUIET_F32 if quiet else PINS_BOUNDARY_F32 if boundary else PINS_UNROLLED_DENSE_F32 if unroll else PINS_F32 if f32 else PINS
+PINS_SINGLE_AUDIT_F32=(('recurrent.o',173168,'9c8910ee2e6acb94d411c576fd94b9222dd69b1f3999fb393551b0daeaed39e3'),
+ ('dense.o',136968,'c7b04051ff8ab48e507660eb0302888f9efe31c4def11c592fe31d8d2be291ad'),
+ ('token-components-NOBOOT.o',271992,'66caa1158cff728ea02bf6c3774c39a22649ee32d86fb77591a8f9e348ae47fe')) # independent BUILD pins only;not runtime/fault-timing or native/Work permission
+expected=PINS_SINGLE_AUDIT_F32 if single_audit else PINS_PRECISE_F32 if precise else PINS_LOCAL_SOURCE_F32 if local_sources else PINS_QUIET_F32 if quiet else PINS_BOUNDARY_F32 if boundary else PINS_UNROLLED_DENSE_F32 if unroll else PINS_F32 if f32 else PINS
 if not inspect:assert expected and tuple(observed)==expected,'unqualified component variant; inspect/freeze first'
 print('BUILD ONLY actual returning recurrent path includes strict previous-global output admission;ROOTbytes'+str(text)+'/131072 Conv'+str(conv)+'/32768 maxFrame'+str(max(frames))+
  ';NO boot/persistent parent/model token-state commit/native/physical/Work/TPS or combined-stack proof. DO NOT INSTALL')

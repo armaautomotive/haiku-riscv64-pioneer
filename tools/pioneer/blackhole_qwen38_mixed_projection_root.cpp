@@ -179,7 +179,19 @@ static unsigned Run(const uint32_t* d){
  for(unsigned w=0;w<d[7];w++){MatrixJob(d,w,Words(L::Nonces)[w]+1);Transfer(d,tracked,w,M::Job,256,true);}
  for(unsigned w=0;w<d[7];w++){*Words(L::Scratch)=Words(L::Nonces)[w]+1;Transfer(d,tracked,w,M::Doorbell,4,true);Words(L::Nonces)[w]++;}
  for(unsigned w=0;w<d[7];w++)Gather(d,tracked,w);
- for(unsigned w=0;w<119;w++){
+ // Gather has just proved each active worker's actual DONE+WAIT,immutable
+ // boot/job,arithmetic proof and current physical counters. No later command
+ // is sent to those workers here. The opt-in policy omits only their SECOND
+ // closed audit;unused workers still receive the existing final audit.
+ // A later metadata change can therefore be observed at the next Admit,
+ // not by this duplicate pass. This is NOT identical fault-observation timing.
+ for(unsigned w=
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT
+  d[7]
+#else
+  0
+#endif
+  ;w<119;w++){
   Wait(d,tracked,w,0);BootSeal(d,tracked,w);ClosedJob(d,tracked,w,false);
   for(unsigned i=0;i<8;i++)if(Register(d,tracked,w,0xffb20000+Counter(i))!=Words(L::Counters)[w*8+i])scalar_fault_park();
  }

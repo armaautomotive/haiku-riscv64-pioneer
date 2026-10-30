@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // No guard: reject late/defined-zero role contamination too. BUILD ONLY.
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT) && !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE)
+#error Single closed audits belong only to the distinct QGW2 returning-component candidate
+#endif
 #ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS
 #error QTP2 program DATA is not a ROOT/component image role
 #endif

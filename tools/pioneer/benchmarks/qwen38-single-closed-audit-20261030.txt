@@ -1,0 +1,91 @@
+Single closed audit:opt-in QGW2 ROOT BUILD candidate — 2026-10-30
+Goal ACTIVE;PROGRESS,not completion. No Pioneer/SSH/relay/install/SD/OS action.
+Last physical whole-model result remains0.207893161tokens/sec;20target UNMET.
+
+Actual on-card path changed
+--------------------------
+--single-closed-audit requires the COMPLETE explicit cancellable FP32,
+unrolled,boundary,queue-unrolled,worker-local-source,precise QGW2 profile.
+It changes the genuine returning projection ROOT and precise-activation
+producer/consumer path,not a CPU helper or a caller-supplied ready flag.
+
+Matrix Gather already verifies its active worker's actual DONE+positive WAIT,
+boot/job/nonce,arithmetic proof and current physical counters. PreciseGather
+likewise proves the68 actual activation producers and their inner/external
+job binding/native-wire receipts. The candidate removes ONLY these active
+workers' SECOND closed audit immediately afterward. Every unused worker's
+existing final audit remains. No job,worker arithmetic,output format,nonce,
+source/command bounds,MMIO width or counter baseline changes.
+
+This deliberately CHANGES fault-observation timing. A metadata change AFTER
+a successful Gather may reach the next owned checks rather than the removed
+duplicate audit. Worker-local pre-traffic source/job/counter checks remain,
+as do future actual admissions and terminal audits. This is an optimization
+CANDIDATE,not proof of equivalent fault timing or safe physical execution.
+Dedicated between-Gather-and-next-Admit fault qualification is STILL OWED.
+
+Explicit BUILD isolation is rechecked on every include,including0/late
+contamination. A C++ binding rejects late policy replacement. Old worker,
+parent,native,QTP2 fixed program DATA,CPU oracle and Work roles cannot acquire
+this option. Native/Assistant/default fixed program images are unchanged.
+
+Reproducible qualification completed
+-----------------------------------
+Base46bd337309c3021e41a79315b98e36d6bb5b37d4 plus20 scoped source files.
+Main:/private/tmp/pioneer-q38-single-audit-main-b.ifpoQ4IT
+Clean:/private/tmp/pioneer-q38-single-audit-clean-b.ytqZmBMx
+All20 source paths compared BEFORE the new original-model runs launched.
+Both independent inspect builds10174/25702 and strict91979/62172 exit0.
+All boot/text/terminal/Conv/ELF pairs match;inspect->strict also matches.
+New parent ELF189408B SHA256:
+6e38018d4e7a918f26f85a5fba631c567c8108c17c008e9eeb8cde081c463f9a
+Text127868/131072B,Conv32216/32768B;parent max individual frame1616,
+component2112. Combined stack remains UNQUALIFIED.
+Both old precise control builds35655/78740 exit0 and reproduce ELF189368B:
+0b4d58f651bcb08836afa6418491a43ab6751fe769c9e7af52dc71d97a886e80
+The recursive prior/default feedback image pins also pass unchanged.
+
+Both single-audit role suites:8 positives/268 refusals,exit0.
+Both old native role suites:36 forbidden aliases/270 refusals,exit0.
+Both precise native role suites:3 positives/295 refusals,exit0.
+Both QTP1/QTP2 complete-program DATA suites:4 positives/54 refusals,exit0.
+These are isolation/build results,NOT model numerics or hardware timing.
+
+Continuous first-layer observation
+----------------------------------
+Added --snapshot-first-layer HOST TEST option. AFTER a genuine first verified
+layer,the recorder writes the existing deliberately INCOMPLETE prefix-0.bin
+family,without sealing the recorder or stopping/changing the model machine.
+The SAME history continues all192 layers/three positions. The terminating
+--first-layer-only diagnostic retains its original behavior.
+Ordinary and native-facade synthetic recorder tests pass in BOTH source
+trees18167/76468/67165/63152. Tests prove the non-closing snapshot's bytes
+and continued192-layer/3committed-token full saves. Native facade remains
+unchanged;it does NOT gain the non-closing snapshot API. This is DATA-format
+proof only,not executed model output or a CPU-reference upload.
+
+Paired ORIGINAL-model runs,not passing yet
+-----------------------------------------
+Sessions12695/5707 authenticate the original GGUF and execute the strict
+candidate from RESET with119 virgin complete tensor instruction engines.
+No fast-root-memory option,CPU products,old PC/register/tensor history or
+supplied completion is used. Keep THESE SAME histories.
+Main:/private/tmp/pioneer-q38-single-audit-flow-main-d.nRnPhqtk/observed
+Clean:/private/tmp/pioneer-q38-single-audit-flow-clean-d.OJ6zeTsU/observed
+Logs:/private/tmp/pioneer-q38-single-audit-flow-{main,clean}-20261030-d.log
+When prefix-0.bin appears,compare with the fixed independent CPU control
+using compare_pioneer_q38_observed_trace.py --first-layer-only. This does not
+replace complete-token/normal+EOS/state/KV/STOP/END/native qualification.
+All earlier valid histories remain intact. No instruction/packet count is
+physical tokens/sec. No new native/Assistant Work option is installed.
+
+Separate discoveries needing follow-through
+-------------------------------------------
+The QTP2 native mapper still had an8KiB view although its new capsule journal
+uses0x30000..0x3ffff. That requires a separate actual-mapper fix/regression;
+vector-backed held-journal tests alone did not cover VM mapping extents.
+A one-second sample of verified bootstrap PID59898 shows participant
+preparation spending its time in repeated TokenModelSourceScope -> history
+geometry/initialization audits. No process/history was stopped or restarted.
+Sample:/private/tmp/pioneer-q38-native2-bootstrap-sample-20261030-a.txt
+This is startup HOST overhead evidence,not card inference profiling or TPS.

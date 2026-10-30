@@ -1,5 +1,21 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38GlobalChainIsolation.h"
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT
+#include "PioneerQ38SingleClosedAuditRole.h"
+#endif
+#ifndef PIONEER_Q38_SINGLE_CLOSED_AUDIT_BINDING_H
+#define PIONEER_Q38_SINGLE_CLOSED_AUDIT_BINDING_H
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT
+enum {PioneerQ38SingleClosedAuditProfile=1};
+#else
+enum {PioneerQ38SingleClosedAuditProfile=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT
+static_assert(PioneerQ38SingleClosedAuditProfile==1,"late single-closed-audit policy change");
+#else
+static_assert(PioneerQ38SingleClosedAuditProfile==0,"late repeated-closed-audit policy change");
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
 #include "PioneerQ38PreciseActivationRootRole.h"
 #endif

@@ -30,4 +30,13 @@ with tempfile.TemporaryDirectory(prefix='pioneer-observed-trace-', dir='/private
     assert len(data) == (16+2*5120+1)*4
     assert struct.unpack_from('<16I', data) == (0x31504f51, 1, 0, 248319, 2, 5120, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0)
     assert data[-4:] == bytes.fromhex('50444e45')
+    live_prefix = output/'prefix-0.bin'
+    if extra:
+        assert not live_prefix.exists()  # unchanged native facade does not expose non-closing snapshots
+    else:
+        live = live_prefix.read_bytes()
+        assert len(live) == (16+2*5120+1)*4 and live[:64] == data[:64] and live[-4:] == data[-4:]
+        for frame in range(2):
+            assert struct.unpack_from('<5120f',live,64+frame*5120*4) == tuple((i%13)*.125 for i in range(5120))
+        print('PASS non-closing first-layer snapshot retains ORIGINAL partial format/real recorder continues ALL192 layers+3 committed tokens+exclusive full saves;SYNTHETIC DATA only')
     print('PASS independent Python observed format/header/length/footer checks;not model correctness')

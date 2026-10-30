@@ -98,7 +98,18 @@ static Q38_PRECISE_ROOT_FN void PreparePrecise(const uint32_t* d){
  for(unsigned w=0;w<68;w++){*Words(L::Scratch)=Words(L::Nonces)[w]+1;Transfer(d,tracked,w,M::Doorbell,4,true);Words(L::Nonces)[w]++;}
  for(unsigned i=0;i<80;i++)Words(L::Scales)[i]=0;
  for(unsigned w=0;w<68;w++)PreciseGather(d,tracked,w);
- for(unsigned w=0;w<119;w++){
+ // The first68 have actual activation+wire proof,external/inner job binding,
+ // DONE+WAIT and current physical counters from PreciseGather. They cannot
+ // leave WAIT without another owned doorbell. Keep the existing last audit
+ // for every unused worker;the single-audit policy deliberately defers a
+ // later completed-worker metadata fault to subsequent owned checks.
+ for(unsigned w=
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT
+  68
+#else
+  0
+#endif
+  ;w<119;w++){
   Wait(d,tracked,w,0);BootSeal(d,tracked,w);ClosedJob(d,tracked,w,false);
   for(unsigned i=0;i<8;i++)if(Register(d,tracked,w,0xffb20000+Counter(i))!=Words(L::Counters)[w*8+i])scalar_fault_park();
  }

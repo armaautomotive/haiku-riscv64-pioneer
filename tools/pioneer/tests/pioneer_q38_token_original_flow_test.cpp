@@ -9,16 +9,18 @@
 #error Exact HOST cancellable original-root test selection required
 #endif
 int main(int argc,char** argv){
- assert(argc>=5 && argc<=9);const char* mode=nullptr;const char* traceDirectory=nullptr;bool eos=false;
+ assert(argc>=5 && argc<=10);const char* mode=nullptr;const char* traceDirectory=nullptr;bool eos=false,snapshot=false;
  for(int i=5;i<argc;i++){
   if(!strcmp(argv[i],"--prepare-only") || !strcmp(argv[i],"--bootstrap-only") || !strcmp(argv[i],"--first-layer-only")){assert(!mode);mode=argv[i];}
   else if(!strcmp(argv[i],"--eos-after-prompt")){assert(!eos);eos=true;}
+  else if(!strcmp(argv[i],"--snapshot-first-layer")){assert(!snapshot);snapshot=true;}
   else{assert(!strcmp(argv[i],"--observed-trace") && !traceDirectory && i+1<argc);traceDirectory=argv[++i];}
  }
  assert(!mode || !traceDirectory || strcmp(mode,"--prepare-only"));
  assert(!mode || strcmp(mode,"--first-layer-only") || traceDirectory);
  assert(!eos || (mode && !strcmp(mode,"--prepare-only")) || traceDirectory);
  assert(!eos || !mode || strcmp(mode,"--first-layer-only"));
+ assert(!snapshot || (traceDirectory && !mode && !eos));
  setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;(void)&Refusals;(void)&LateRefusals;
  puts("START authenticate entire SAME-open original27B GGUF BEFORE ROOT construction;no CPU product/native owner/physical IO");
  WholeModelOriginalBytes original;assert(original.Open(argv[4]) && original.Ready());
@@ -54,7 +56,8 @@ int main(int argc,char** argv){
  }
  puts("PASS 4 genuine original-fabric refusals/learned write+revoked word+revoked batch+cross-part batch/no synthetic fallback/unchanged virgin parent;TEST transport safety only");
 #ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
- if(traceDirectory){observed=std::make_unique<PioneerQ38ObservedTrace>(eos);m->observed=observed.get();}
+ if(traceDirectory){observed=std::make_unique<PioneerQ38ObservedTrace>(eos);m->observed=observed.get();
+  m->snapshotFirstLayerDirectory=snapshot?traceDirectory:nullptr;}
 #endif
  if(mode && !strcmp(mode,"--prepare-only"))return 0;
  if(mode && !strcmp(mode,"--first-layer-only")){

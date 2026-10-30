@@ -13,7 +13,7 @@ parents = set(re.findall(r'!defined\(([A-Z_][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b
 assert len(parents) == 21
 abi = ('api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device')
 forbidden = set(re.findall(r'defined\(([A-Z_][A-Z0-9_]*)\)', role[role.index('#if defined(PIONEER_Q38_EMBEDDING_NATIVE)'):]))
-assert not parents & forbidden and len(forbidden) == 33
+assert not parents & forbidden and len(forbidden) == 34
 forbidden |= {'PIONEER_Q38_TOKEN_PRECISE_PROGRAMS', 'PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT'}
 base = {**dict.fromkeys(parents, '1'), 'PIONEER_DRIVER_BUILD_TAG':'0x51544b4e4f445256ULL',
         **{name:'pioneer_q38_token_context_body_'+name for name in abi}}

@@ -4,6 +4,7 @@
 #error Exact separate QGW2 precise worker image required
 #endif
 #if defined(_KERNEL_MODE) || defined(__FAST_MATH__) || defined(PIONEER_DRIVER_BUILD_TAG) \
+ || defined(PIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT) \
  || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) \
  || defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) \
  || defined(PIONEER_Q38_GLOBAL_WORKER_IMAGE) || defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE) \

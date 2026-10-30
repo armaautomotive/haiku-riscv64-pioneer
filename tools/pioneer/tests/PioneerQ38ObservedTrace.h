@@ -33,7 +33,7 @@ class PioneerQ38ObservedTrace {
   unsigned input=0,layers=0,rows=0,selected=0,runnerUp=0;
   bool embedded=false,committed=false;
  };
- std::array<Token,3> token;unsigned embeddings=0,commits=0;bool failed=false,saved=false;
+ std::array<Token,3> token;unsigned embeddings=0,commits=0;bool failed=false,saved=false,prefixSaved=false;
  const bool eosAfterPrompt;
  bool Refuse(){failed=true;return false;}
  static float Float(uint32_t bits){float value;std::memcpy(&value,&bits,4);return value;}
@@ -92,9 +92,9 @@ public:
  // the real first verified layer; this does NOT assert a token, STOP,
  // terminal capability, initialized native owner or reusable resources.
  // No full-token reader accepts this family/name/length as a complete trace.
- bool SaveFirstLayerDiagnostic(const char* directory){
+ bool SnapshotFirstLayerDiagnostic(const char* directory){
   const auto& t=token[0];
-  if(failed || saved || embeddings!=1 || commits || !t.embedded || t.layers!=1 || t.rows || t.committed)return Refuse();
+  if(failed || saved || prefixSaved || embeddings!=1 || commits || !t.embedded || t.layers!=1 || t.rows || t.committed)return Refuse();
   int directoryFd=Directory(directory);if(directoryFd<0)return Refuse();
   int fd=openat(directoryFd,"prefix-0.bin",O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600);
   if(fd<0){close(directoryFd);return Refuse();}
@@ -105,7 +105,11 @@ public:
   okay=Word(f,0x454e4450)&&okay;okay=!fflush(f)&&!ferror(f)&&okay;
   int closed=fclose(f),directoryClosed=close(directoryFd);
   if(!okay || closed || directoryClosed)return Refuse();
-  saved=true;return true;
+  prefixSaved=true;return true;
+ } // observation ONLY;does not seal/complete the full run or change model state
+ bool SaveFirstLayerDiagnostic(const char* directory){
+  if(!SnapshotFirstLayerDiagnostic(directory))return false;
+  saved=true;return true; // original terminating diagnostic semantics retained
  }
  bool SaveEos(const char* directory,const uint32_t* terminal,unsigned words){
   if(!EosComplete() || !terminal || words!=64)return Refuse();

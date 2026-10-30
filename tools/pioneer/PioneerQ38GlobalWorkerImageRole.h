@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT
+#error Single closed audits belong only to the distinct returning QGW2 ROOT candidate
+#endif
 #ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS
 #error QTP2 program DATA is not a worker-image role
 #endif

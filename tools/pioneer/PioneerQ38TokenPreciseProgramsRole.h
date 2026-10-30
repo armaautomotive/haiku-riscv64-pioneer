@@ -4,6 +4,7 @@
 #error Exact QTP2/QGW2 complete program DATA selection required
 #endif
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_PRECISE_WORKER_IMAGE) \
+ || defined(PIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT) \
  || defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) \
  || defined(PIONEER_Q38_GLOBAL_WORKER_IMAGE)
 #error QTP2 DATA cannot alias a ROOT/worker image

@@ -13,6 +13,7 @@ static_assert(PioneerQ38ObservedTrace::TokenMagic==TL::TokenMagic,"exact recorde
 struct OriginalTokenFlowMachine:TokenFlowMachine {
 #ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
  PioneerQ38ObservedTrace* observed=nullptr;
+ const char* snapshotFirstLayerDirectory=nullptr;
  void ObservedVocabulary(unsigned pos,unsigned first,const uint32_t* actual,unsigned count)override{
   if(observed)assert(observed->Vocabulary(pos,first,actual,count));
  }
@@ -98,7 +99,15 @@ struct OriginalTokenFlowMachine:TokenFlowMachine {
    for(unsigned i=0;i<5120;i++)actual[i]=Get(outer[8],outer[9]+PioneerQ38GlobalFeedbackLayout::Offset+i*4);
    assert(observed->Embedding(embeddingTarget,embeddingToken,actual.data(),5120));
   }
-  if(observed && allLayers!=priorLayers)assert(observed->Layer(position,layer,input.data(),5120));
+  if(observed && allLayers!=priorLayers){
+   assert(observed->Layer(position,layer,input.data(),5120));
+   if(snapshotFirstLayerDirectory && !position && !layer){
+    assert(allLayers==1 && !committed && observed->Embeddings()==1 && observed->Layers(0)==1
+     && !observed->Complete() && observed->SnapshotFirstLayerDiagnostic(snapshotFirstLayerDirectory)
+     && !observed->Complete() && !observed->SavedComplete());
+    puts("SNAPSHOT genuine FIRST_LAYER_DIAGNOSTIC/actual original embedding+layer0 only/SAME119 histories CONTINUE/no token or STOP completion;NOT numerical match/native/physical/Work/TPS");
+   }
+  }
   if(observed && tokenPublications!=priorPublications){
    assert(tokenPublications==priorPublications+1);std::array<uint32_t,64> actual;
    for(unsigned i=0;i<64;i++)actual[i]=Get(outer[8],outer[9]+TL::OutputOffset+position*256+i*4);
