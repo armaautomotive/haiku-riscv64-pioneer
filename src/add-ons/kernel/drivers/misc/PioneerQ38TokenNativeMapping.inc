@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
 #include "PioneerQ38TokenNativeRole.h"
+#include "PioneerQ38TokenPreparationAuditMember.inc"
 bool TokenMemoryMappingSourceScope();bool TokenMemoryAccessScope();
 bool TokenDispatchImageAccessScope(unsigned);
 bool TokenPeerStoreSelectionScope();bool TokenPeerStoreAccessScope(unsigned);

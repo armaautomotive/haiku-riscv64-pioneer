@@ -15,6 +15,7 @@ static void CheckNativePreparationFault(Fixture& f,unsigned fault){
   PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);
   assert(!PrepareQ38TokenNativeHeld(c,prompt,2,3,false,248318,248317,result));
  }
+ assert(io.NativePreparationAuditInactive()); // RAII clears EVERY failed participant path
  assert(io.preparationFaultSeen==1 && io.touches==io.preparationFaultTouches && c.q38Dispatch && c.q38Dispatch->unsafe
   && c.q38Dispatch->prepared==((fault>=2 && fault<=4) || fault==6?2U:1U)
   && !c.q38Dispatch->bootAttempted && !c.q38Dispatch->booted && !c.q38Dispatch->rootRunning

@@ -6,6 +6,7 @@
 #include "pioneer_q38_token_native_fixture_common.h"
 struct PioneerHostPageIO{bool quarantined=false;void QuarantineHostPage(){quarantined=true;}};
 struct PioneerSessionIO:PioneerHostPageIO {
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenPreparationAuditMember.inc"
  tt_dram_samples_result& dram;
  explicit PioneerSessionIO(tt_dram_samples_result& actual):dram(actual){}
  PioneerStoreContext* q38MutableContext=nullptr;unsigned runtimeCore=0;
@@ -13,6 +14,11 @@ struct PioneerSessionIO:PioneerHostPageIO {
  bool q38TokenMemoryMapAttempted=false;
  int outputArea=0,wideArea=0;bool outputQuarantined=false; // simulated owned VM handles
  bool TokenCallScopeMatches();bool TokenModelSourceScope(bool);
+ bool PreparationAuditRefused();
+ const void* TokenPciTransport(){return nullptr;}uint64 TokenPciEndpoint(){return 0;}
+ bool TokenPciLeaseIdentity(const PioneerQ38TokenPciLease&)const{return false;}
+ // This binding-only fixture has NO PCI-close endpoint. Its unreachable
+ // cohort/runtime branch must compile,but must never gain fake PCI proof.
  void QuarantineOutputBuffer(){outputQuarantined=true;}
  void QuarantineWideOutput(){wideQuarantined=true;}
 #include "token_native_host_quarantine.inc"
@@ -21,7 +27,7 @@ struct PioneerStoreContext {
  struct D{tt_dram_samples_result dram={};};struct B1{D baseline;MockLease noc;};
  struct B2{B1 baseline;MockLease path;};struct B3{B2 baseline;MockLease audit;};B3 baseline;
  PioneerSessionIO io{baseline.baseline.baseline.baseline.dram};PioneerResidentBanks banks;
- struct{uint32 state=0;}pci;
+ tt_pioneer_mmio_result pci={};tt_pioneer_mmio_transaction transaction={};
  PioneerQ38TokenNativeState* q38TokenNative=nullptr;
  PioneerQ38CanonicalModelPlan* q38FfnModelPlan=nullptr;
  MockForeignOwner *q38GraphMutable=nullptr,*q38FfnZero=nullptr,*q38FfnGraph=nullptr,*q38FfnCode=nullptr;
@@ -45,6 +51,12 @@ static void TestKernelLog(const char*,...){}
 #include "token_native_retain.inc"
 #undef dprintf
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeBind.inc"
+bool PioneerSessionIO::PreparationAuditRefused(){
+ const auto before=sQ38TokenPreparationAuditKey;
+ {PioneerQ38TokenPreparationAudit audit(*this);
+  assert(!audit.Current(*this) && !audit.Checkpoint() && !audit.Close());}
+ return !q38TokenPreparationAudit.key && sQ38TokenPreparationAuditKey==before;
+}
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenCallScope.inc"
 static bool IncompleteEnd(PioneerStoreContext& c,tt_resident_session_result& result,bool& clean){
 #include "token_native_end.inc"
@@ -53,6 +65,11 @@ static bool IncompleteEnd(PioneerStoreContext& c,tt_resident_session_result& res
 static_assert(!std::is_default_constructible<PioneerQ38TokenNativeState>::value
  && !std::is_destructible<PioneerQ38TokenNativeState>::value
  && !std::is_copy_constructible<PioneerQ38TokenNativeState>::value,"native factory/lifetime is private");
+static_assert(!std::is_default_constructible<PioneerQ38TokenPreparationAudit>::value
+ && !std::is_constructible<PioneerQ38TokenPreparationAudit,PioneerSessionIO&>::value
+ && !std::is_destructible<PioneerQ38TokenPreparationAudit>::value
+ && !std::is_copy_constructible<PioneerQ38TokenPreparationAudit>::value,
+ "participant audit issuance/lifetime is private,not caller-ready or a launch capability");
 struct Fixture {
  BanksMock endpoint;
  std::unique_ptr<PioneerStoreContext> c=std::make_unique<PioneerStoreContext>();
@@ -60,6 +77,7 @@ struct Fixture {
  std::vector<uint8> learned=std::vector<uint8>(PioneerResidentBanks::Pages);
  uint32 hash=0x12345678;PioneerProbeCookie cookie;
  Fixture(){
+  (void)&TokenPciRawModel::GoodProfile; // shared raw endpoint helper is NOT invoked by this binding-only fixture
   assert(!lockHeld);sColdRecoveryRequired=false;sReloadQuiesced=false;sBankStorageOnly=true;
   sQ38LocalDeltaOwner=nullptr;currentThread=17;currentTeam=23;failThreadInfo=false;lockStatus=B_OK;
   cookie.context=c.get();sRuntimeOwner=&cookie;c->io.q38MutableContext=c.get();
@@ -86,6 +104,17 @@ struct Fixture {
 int main(){
  (void)&Input;(void)&Prepare;(void)&Upload;(void)&Close;
  setvbuf(stdout,nullptr,_IOLBF,0);unsigned refused=0,positive=0;
+ {
+  Fixture f;auto& c=*f.c;
+  assert(c.io.PreparationAuditRefused()); // no call scope or initialized owner
+  {PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c && c.io.PreparationAuditRefused());}
+  assert(f.Bind() && c.io.PreparationAuditRefused()); // binding alone is NOT initialization
+  {PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c && c.io.PreparationAuditRefused());
+   const auto key=sQ38TokenPreparationAuditKey;sQ38TokenPreparationAuditKey=UINT64_MAX;
+   assert(c.io.PreparationAuditRefused());sQ38TokenPreparationAuditKey=key;}
+  f.Inert();refused+=5;
+  puts("PASS private participant audit/no call scope,unbound,merely BOUND and nonce exhaustion refuse/no key consumed or device IO;positive issuance requires genuine initialized preparation");
+ }
  for(unsigned bank=0;bank<7;bank++){
   Fixture f;auto& c=*f.c;const auto before=f.learned;const auto epoch=sQ38TokenModelEpoch;
   assert(f.Bind(bank) && sQ38TokenModelEpoch==epoch+1 && c.q38TokenNative && !c.q38TokenNative->Unsafe()

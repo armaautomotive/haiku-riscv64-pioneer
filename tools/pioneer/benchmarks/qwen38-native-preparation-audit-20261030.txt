@@ -1,0 +1,100 @@
+Native participant preparation: scoped immutable-geometry audit -- 2026-10-30
+Goal ACTIVE. Physical whole-model rate remains0.207893161 tokens/sec;
+target20 UNMET. HOST startup optimization,NOT card inference throughput.
+No Pioneer/SSH/power/install/OS/Assistant/SD/network/hardware changes here.
+
+Actual production change
+------------------------
+The verified preparation sample of PID59898 found792/792 samples in the
+per-access TokenModelSourceScope reservation/closed-initialization audits.
+Those whole-model geometry walks repeated for each actual L1 word.
+
+PioneerQ38TokenPreparationAudit is private to ONE actual participant call,
+issued only from the genuine initialized full851 native owner under the real
+call lock. Its RAII object keeps a unique non-wrapping generation key,NOT an
+escaping stack pointer. An embedded POD record binds the exact session,
+context,state,dispatch,FD,team,thread,reload generation,model identity,hashes,
+ledger and worker. A nested/foreign/stale scope cannot issue or borrow it.
+Binding alone is NOT initialization;no caller-ready or runtime owner appears.
+
+ONLY immutable MatchesReservation/InitializationsClosed geometry audits are
+amortized between checkpoints. The original full audit runs at entry,each
+hardware guard and before publication. Every actual access still checks the
+real native FD/team/thread/generation/phase,host owners,mapping stability,
+source/control bounds,clock,unsafe state,worker selection and dynamic scope.
+Existing source/FIFO/command/counter checks and exact write readbacks remain.
+
+Changed timing is EXPLICIT:private immutable geometry corruption is detected
+at the next guard checkpoint,not the next L1 word. This is startup staging
+while cores remain held,NOT permission to cache dynamic hardware ownership,
+run a model,launch a worker or release resources after a failure.
+Close/destruction clears the audit record;no temporary scope survives return.
+
+Genuine initialization and fault qualification
+---------------------------------------------
+Frozen E source pair (base0c145c0 plus13 originally selected paths):
+/private/tmp/pioneer-q38-preparation-audit-main-e.8PyRMb7x
+/private/tmp/pioneer-q38-preparation-audit-clean-e.pGI8f28Y
+All source pairs matched before those actual runs. Durable zero/mixed/QGW2
+inputs are under generated.pioneer/qualification-inputs in the workspace.
+
+G bootstrap main64247/clean19144 BOTH exit0. These constructed a real full851
+owner,executed1010 frozen zero-ROM jobs,prepared120 participants and staged
+all2308 metadata chunks/4616 exact packets/37,782,528 bytes with readback.
+All119 virgin QGW2 instruction engines booted from their own actual ROMs,
+executing14,866,432 instructions. ROOT stayed HELD. All120 real-issued audit
+contracts ran;the temporary record was inactive after preparation. These are
+initialization/bootstrap results,NOT layer/token/STOP/END or physical proof.
+
+G fault groups main51670/clean69182 BOTH exit0,collected08:56UTC. Cases1..4
+and5..8 all passed. EACH case first executed1010 actual zero jobs and closed
+initialization,then injected the first bad actual observation in preparation:
+1 ROOT FIFO;2 peer unconfigured FIFO;3 peer configured FIFO;4 FIFO overflow;
+5 first real TLB write readback;6 reload-generation loss after NIU config;
+7 generation loss after first prefix write;8 first prefix readback corruption.
+Each failed with no following IO/counter read/retry/reset/cleanup/release,
+all acquired owners retained and the private audit record inactive.
+The issued-record probes also reject nested issuance,wrong context/state/
+dispatch/FD/hash/ledger/generation/thread/team/worker/model epoch without IO.
+These remain simulated OS/PCI/NoC endpoints,not physical fault recovery.
+
+Final selected source over current HEAD
+--------------------------------------
+Base f8c9e27829b1de366db8889b1981335a73805b8c plus11 audit-owned paths.
+U main: /private/tmp/pioneer-q38-preparation-final-main-u.0tWQn6Y1
+U clean: /private/tmp/pioneer-q38-preparation-final-clean-u.NvWcD3DN
+All11 selected files match E byte-for-byte in BOTH U trees. Already published
+held-mapping,length/alias,scratch-scope and non-closing snapshot corrections
+remain. The newer --compile-link-only runner is retained,not reverted to E.
+Unrelated native Host/full-END/state and llama.cpp/FlashNext WIP is excluded.
+Publication uses these qualified file versions,not whole dirty worktree files.
+
+U binding main22023/clean19698 BOTH exit0 (ASAN/UBSAN):private issuance/lifetime
+refusals and genuine seven-bank binding/reservation/retention paths pass.
+U precise endpoint main2846/clean14073 BOTH exit0 (ASAN/UBSAN):960 raw checks,
+58 ROOT+74 shared wrong-phase refusals,131072-byte first aperture and exact
+VM/alias refusal controls. These negative endpoints are NOT substituted for
+the genuine positive bootstrap above.
+
+U paired actual Haiku SDK context builds main87052/clean4364 BOTH exit0.
+Both emitted objects match main/clean AND the previously qualified E objects:
+QTP2 object
+c000a42755aabfdf9080cd8d5396c4e628fc805366a7427d4acbaf8a8b66717d and
+P1 token objectd85a01aacd4bfbe605882e112915aadc59fec9d29f05a904bd70e136831363d4.
+The old65 control stays61faa093;all5 public entries are independently inert.
+All13 exact-size program arrays+2MiB raw RoPE remain;no CPU-reference or TEST
+engine imports. Max individual QTP2 native frame1232;actual preparation frame
+864. This is compile-only evidence,NOT a combined-stack or runtime grant.
+The sandbox denied nice priority changes in U;the tests still executed and
+their terminal statuses are collected independently. No nice10 claim for U.
+
+Still owed for the requested end state
+-------------------------------------
+The SAME corrected native original-model K59759/75018 histories continue;
+they are not restarted to add a diagnostic or replace existing evidence.
+Full native multilayer/multitoken numerics,state/KV,normal+EOS,terminal HOLD,
+readout/restore/clock/VM/PCI/hosts/reservation END and reuse,fault behavior,
+combined stack,callable no-CPU-reference Work+Assistant and real physical
+stability/performance qualification remain separate. The new controller
+worker-sealed admission experiment is BUILD-only,not selected by this native
+startup fix. No simulated instruction count is a physical token-rate claim.

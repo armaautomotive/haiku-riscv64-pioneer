@@ -51,6 +51,7 @@ static void CheckNativeHeld(Fixture& f,unsigned fault){
   io.SnapshotPrePeerStores(); // actual originals before ANY fresh peer-store lease begins
 #endif
   const bool prepared=PrepareQ38TokenNativeHeld(c,prompt,2,3,false,248318,248317,result);
+  assert(io.NativePreparationAuditInactive() && io.preparationAuditContracts==120);
   if(!prepared && !io.faultSeen)fprintf(stderr,"HELD_PREPARE_DIAGNOSTIC resultPhase%u/worker%u/word%u/started%u/saved%u/installedWords%u/unsafe%u/cohort%u/prepared%u/core%u/maps%u/routes%u/retained%u/detail%08x:%08x:%08x:%08x/last%s:%x=%x;SIMULATED fixture metadata ONLY\n",
    result.phase,result.worker,result.word,result.started,result.savedWords,result.installedWords,result.unsafe,unsigned(c.q38Dispatch!=nullptr),
    c.q38Dispatch?c.q38Dispatch->prepared:0,io.runtimeCore,io.maps,unsigned(c.q38DispatchRoutes),unsigned(c.dispatchOwnerRetained),

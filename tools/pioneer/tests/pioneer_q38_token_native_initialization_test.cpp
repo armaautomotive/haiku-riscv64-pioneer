@@ -55,6 +55,9 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  void RootWrite(unsigned offset,unsigned width,uint32 value){nativePci.RootWrite(offset,width,value);}
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
  unsigned preparationFault=0,preparationFaultSeen=0,preparationFaultTouches=0,preparationMapWrites=0,preparationPanelWrites=0;
+ unsigned preparationAuditContracts=0;uint64 preparationAuditLastKey=0;
+ bool NativePreparationAuditInactive()const{return !q38TokenPreparationAudit.key;}
+ void NativePreparationAuditContract();
  std::vector<unsigned> preparationFifoEvents;
  bool NativePreparationObservation();
  uint32 NativePreparationFifoObserved(uint32,uint32);
@@ -258,6 +261,7 @@ struct PioneerSessionIO:TokenNativeEndpoints {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeMapping.inc"
 #else
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenPreparationAuditMember.inc"
  const void* TokenPciTransport(){return nullptr;}uint64 TokenPciEndpoint(){return 0;}
  bool TokenPciLeaseIdentity(const PioneerQ38TokenPciLease&)const{return false;}
  // Initializer-only fixture exposes NO runtime/PCI-journal capability.

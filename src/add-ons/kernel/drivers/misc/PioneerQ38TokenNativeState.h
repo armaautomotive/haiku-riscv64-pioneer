@@ -47,6 +47,7 @@ struct PioneerQ38TokenPciResult {
 // completed embedding/prefix owner and cannot make those old lifetimes safe.
 // Private factory publication occurs under the real global FD call lock.
 class PioneerQ38TokenNativeState {
+ friend class PioneerQ38TokenPreparationAudit;
  friend struct PioneerStoreContext;friend struct PioneerSessionIO;
  friend bool Q38TokenExecutionOutput(const PioneerStoreContext&,const void*,size_t);
  friend bool BindQ38TokenNative(PioneerStoreContext&,unsigned);

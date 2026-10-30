@@ -20,6 +20,8 @@ __attribute__((noinline)) bool PioneerSessionIO::PrepareTokenNativeParticipant(u
  for(unsigned i=0;i<16;i++)source[i]=node.noc.source[0][i];
  uint32* scratch=worker?NULL:store.saved;uint32* saved=NULL;
  bool configured=!worker,receipts=false,selected=false;
+ PioneerQ38TokenPreparationAudit modelAudit(*this);
+ if(!modelAudit.Current(*this))return false;
  const uint64 began=Q38CohortNow();uint64 previous=began;
  if(began>UINT64_MAX-UINT64_C(300000000))return false;
  d->closeDetail[0]=0x410;d->closeWorker=worker; // CPU diagnostic ONLY,never authority
@@ -49,6 +51,7 @@ __attribute__((noinline)) bool PioneerSessionIO::PrepareTokenNativeParticipant(u
   return true; // UINT32_MAX is legitimate original DATA
  };
  auto guard=[&](){
+  if(!modelAudit.Checkpoint())return false;
   if(!access() || ResetRead()!=0x47800 || !access() || ResetRead()!=0x47800)return false;
   for(unsigned i=0;i<16;i++){uint32 value,expected=i?source[i]:configured?(originalConfig|0x10000U):originalConfig;
    if(!nocRead(BlackholeDramSourceOffset(i),value) || !same(value,expected,BlackholeDramSourceOffset(i)))return false;}
@@ -148,6 +151,7 @@ __attribute__((noinline)) bool PioneerSessionIO::PrepareTokenNativeParticipant(u
  }
  d->closeDetail[0]=0x41b;
  if(!read(2,0,entry) || entry!=TT_Q38_DISPATCH_BOOT || !guard() || !scope())return false;
+ if(!modelAudit.Close())return false; // full geometry audited before CPU-only publication
  for(unsigned i=0;i<16;i++)d->authority.source[worker][i]=i?source[i]:(originalConfig|0x10000U);
  image.ready=true;d->prepared=worker+1;
  for(auto& value:d->closeDetail)value=0;

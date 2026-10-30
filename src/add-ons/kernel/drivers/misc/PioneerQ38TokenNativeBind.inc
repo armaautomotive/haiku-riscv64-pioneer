@@ -8,8 +8,58 @@ bool PioneerSessionIO::TokenCallScopeMatches(){
  thread_info info={};return get_thread_info(c->q38GdnCallThread,&info)==B_OK && info.team==fd->team
   && sRuntimeOwner==fd && fd->context==c && c->q38GdnCallThread==find_thread(NULL);
 }
+// Private stack-only audit for ONE actual participant preparation call.
+// Immutable reservation/closed-initialization geometry is checked at entry,
+// hardware checkpoints and exit,not again for every L1 word. Dynamic native
+// ownership/lifetime/source checks below are NEVER suppressed. A corruption
+// of the private immutable geometry is detected at the next checkpoint,
+// rather than at the next L1 word;this is deliberately changed fault timing.
+static uint64_t sQ38TokenPreparationAuditKey=0; // SAME global call lock;never wrap/reuse
+class PioneerQ38TokenPreparationAudit {
+ friend struct PioneerSessionIO;
+ using Record=PioneerSessionIO::TokenPreparationAuditRecord;
+ PioneerSessionIO* io=nullptr;uint64_t key=0;
+ static bool Bound(PioneerSessionIO& actual,const Record& r){
+  auto* c=actual.q38MutableContext;auto* s=c?c->q38TokenNative:NULL;
+  auto* d=c?c->q38Dispatch:NULL;auto* fd=sRuntimeOwner;
+  return r.key && c && s && d && fd && r.context==c && r.state==s && r.dispatch==d && r.fd==fd
+   && &c->io==&actual && s->participants==d && s->phase==PioneerQ38TokenNativeState::DispatchPreparing
+   && !s->runtime && d->prepared==r.worker && r.worker<120
+   && fd->magic==0x50313030 && fd->context==c && fd->team==r.team
+   && c->q38GdnCallThread==r.thread && find_thread(NULL)==r.thread && r.thread>=0
+   && r.generation && r.generation==sReloadGeneration && s->identity==r.identity
+   && c->hashes==r.hashes && c->initialized==r.ledger && r.hashes && r.ledger;
+ }
+ bool Current(PioneerSessionIO& actual)const{
+  return &actual==io && key && actual.q38TokenPreparationAudit.key==key && Bound(actual,actual.q38TokenPreparationAudit);
+ }
+ explicit PioneerQ38TokenPreparationAudit(PioneerSessionIO& actual){
+  if(actual.q38TokenPreparationAudit.key || sQ38TokenPreparationAuditKey==UINT64_MAX || !actual.TokenModelSourceScope(false))return;
+  auto* c=actual.q38MutableContext;auto* s=c?c->q38TokenNative:NULL;
+  if(!s || s->phase!=PioneerQ38TokenNativeState::DispatchPreparing || !s->participants
+   || s->participants!=c->q38Dispatch || s->participants->prepared>=120 || s->runtime)return;
+  Record record;record.context=c;record.state=s;record.dispatch=s->participants;record.fd=sRuntimeOwner;
+  record.hashes=c->hashes;record.ledger=c->initialized;record.identity=s->identity;record.generation=sReloadGeneration;
+  record.thread=c->q38GdnCallThread;record.team=sRuntimeOwner->team;record.worker=s->participants->prepared;
+  record.key=++sQ38TokenPreparationAuditKey;
+  if(!Bound(actual,record))return;
+  io=&actual;key=record.key;actual.q38TokenPreparationAudit=record; // NO stack address escapes
+ }
+ PioneerQ38TokenPreparationAudit(const PioneerQ38TokenPreparationAudit&)=delete;
+ PioneerQ38TokenPreparationAudit& operator=(const PioneerQ38TokenPreparationAudit&)=delete;
+ ~PioneerQ38TokenPreparationAudit(){if(io && io->q38TokenPreparationAudit.key==key)io->q38TokenPreparationAudit={};key=0;}
+ bool Checkpoint(){
+  if(!io || !Current(*io))return false;
+  const Record saved=io->q38TokenPreparationAudit;io->q38TokenPreparationAudit={}; // force the ORIGINAL full audit
+  if(!io->TokenModelSourceScope(false) || !Bound(*io,saved) || io->q38TokenPreparationAudit.key){key=0;return false;}
+  io->q38TokenPreparationAudit=saved;return true;
+ }
+ bool Close(){if(!Checkpoint())return false;io->q38TokenPreparationAudit={};key=0;return true;}
+}; // no public/default constructor,copy,stack-pointer publication,caller-ready or launch capability
 bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
  auto* c=q38MutableContext;auto* state=c?c->q38TokenNative:NULL;auto* fd=sRuntimeOwner;
+ const bool audit=q38TokenPreparationAudit.key!=0;
+ if(audit && (beginning || !PioneerQ38TokenPreparationAudit::Bound(*this,q38TokenPreparationAudit)))return false;
  const bool cohort=state && state->phase>=PioneerQ38TokenNativeState::DispatchPreparing && state->phase<=PioneerQ38TokenNativeState::MemoryClosed;
  if(!c || &c->io!=this || !TokenCallScopeMatches() || sColdRecoveryRequired || sReloadQuiesced || !sReloadGeneration
   || !sBankStorageOnly || !c->bankStorageOnly || c->bytes!=PioneerResidentBanks::Total || runtimeCore>=120
@@ -32,14 +82,14 @@ bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
  else if(!state || c->runtimeCoreMode!=1 || q38SpanAllowed
   || !state->MatchesBinding(*c,fd,c->hashes,c->initialized,fd->team,sReloadGeneration)
   || state->phase<PioneerQ38TokenNativeState::Claiming || state->phase>PioneerQ38TokenNativeState::MemoryClosed
-  || (state->phase!=PioneerQ38TokenNativeState::Claiming && !state->MatchesReservation(c->banks,dram)))return false;
+  || (!audit && state->phase!=PioneerQ38TokenNativeState::Claiming && !state->MatchesReservation(c->banks,dram)))return false;
  if(cohort){
   const auto* d=c->q38Dispatch;
   if(!d || d!=state->participants || !state->memory || !state->startup || !fleetEnabled || d->worker[0].master!=&c->lease
    || d->unsafe || d->closed || d->bootAttempted || d->booted || d->prepared>120
    || (d->rootRunning && (!state->runtime || (state->phase!=PioneerQ38TokenNativeState::RootStarting
     && state->phase!=PioneerQ38TokenNativeState::RootRunning && state->phase!=PioneerQ38TokenNativeState::RootHolding) || !state->runtime->OwnsRunningRoot(d)))
-   || !state->InitializationsClosed(c->banks,dram))return false;
+   || (!audit && !state->InitializationsClosed(c->banks,dram)))return false;
   if(state->phase>=PioneerQ38TokenNativeState::MemoryPreparing
    && (!c->q38DispatchRoutes || d->prepared!=120 || !state->startup->MatchesPublishedBinding(state->canonical,state->bank,state->identity,&d->authority.source[0][0])))return false;
   if((state->phase==PioneerQ38TokenNativeState::RuntimePreparing || state->phase==PioneerQ38TokenNativeState::RuntimeReady)

@@ -16,6 +16,7 @@ struct PioneerQ38TokenMemoryResult {
  uint32_t savedWords=0,verifiedOriginalWords=0,installedWords=0,restoredWords=0;
 };
 class PioneerQ38TokenNativeOwner;
+class PioneerQ38TokenPreparationAudit; // private native definition only;NO caller construction or capability
 class PioneerQ38TokenMemory {
  friend class PioneerQ38TokenNativeOwner; // only this future DISTINCT owner may bind a real launch
  const tt_dram_samples_result* proof=nullptr;PioneerResidentBanks* banks=nullptr;
