@@ -1,0 +1,9 @@
+PASS distinct full-token startup builder/ALL64x512KiB published DATA+state spans+ZERO slack/root+head EXACT vs prior independently loaded numeric metadata/192 strict first+middle+last chunk controls/strict full geometry before+after/actual session+prompt initialized from builder/ZERO ROOT instructions;geometry NOT native ownership or model products
+PASS actual next embedding position0/token248319/5120 bit-exact/20raw+2writes+2readbacks/no CPU product upload
+BEGIN actual persistent token0/layer0/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer0 matrix1 role10/actual quantized input/same workers
+PASS same pinned ROOT/actual first3 QGW3 jobs+6 receipt writes/ONE modeled NoC0 cancel delivery/strict incoming frontier faults/2048 instructions limited to park or fault-report DATA/no following packet;NOT physical cause or model/native/Work/TPS qualification
+OBSERVED connected layer0 matrix2 role11/actual quantized input/same workers
+PASS modeled separate-NoC cancel control/SAME executed ROOT+119 histories/NoC0 frontier unchanged/next actual matrix doorbell;NOT an implemented NoC1 route or completed cancellation
+OBSERVED connected layer0 matrix2 role11/actual quantized input/same workers
+PASS unchanged no-host-write parent/next actual matrix doorbell;synthetic raw inputs,not a full layer/model/physical speed result

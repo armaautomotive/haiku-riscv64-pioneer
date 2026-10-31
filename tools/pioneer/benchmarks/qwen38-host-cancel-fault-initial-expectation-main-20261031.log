@@ -1,0 +1,12 @@
+PASS distinct full-token startup builder/ALL64x512KiB published DATA+state spans+ZERO slack/root+head EXACT vs prior independently loaded numeric metadata/192 strict first+middle+last chunk controls/strict full geometry before+after/actual session+prompt initialized from builder/ZERO ROOT instructions;geometry NOT native ownership or model products
+PASS actual next embedding position0/token248319/5120 bit-exact/20raw+2writes+2readbacks/no CPU product upload
+BEGIN actual persistent token0/layer0/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer0 matrix1 role10/actual quantized input/same workers
+Assertion failed: (pc==(faultROM?0x60004U:0x60000U) && packets==packetsAtWrite && peerWrites==peerWritesAtWrite && counts==counters && pushedSlave==incoming && command==commands), function Check, file pioneer_q38_host_cancel_counter_test.cpp, line 59.
+Assertion failed: (waitpid(childPid,&status,0)==childPid && WIFEXITED(status) && !WEXITSTATUS(status)), function Load, file pioneer_q38_host_cancel_counter_test.cpp, line 36.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_host_cancel_counter_tests.py", line 49, in <module>
+    subprocess.run([str(binary), *sys.argv[1:4], f'{start:x}', f'{start+size:x}',
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-q38-host-cancel-counter-u1i7uv2z/test', '/private/tmp/pioneer-q38-fault-marker-main-frozen-20261031-hw', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/qualification-inputs/mixed-worker-20261030', '/private/tmp/pioneer-q38-push-worker-main-20261030-af-image', '4df94', '4e118', '--fault-marker']' died with <Signals.SIGABRT: 6>.

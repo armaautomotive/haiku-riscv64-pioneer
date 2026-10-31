@@ -1,0 +1,11 @@
+Haiku
+P100A_RELOAD driver55 tag2026103100010075 generation3 quiesced0 cold1 active_owner1 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133560696832 bytes free      (used/max 3474239488 / 137034936320)
+                           (cached   19174334464)
+     64487 semaphores free (used/max       1049 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3902 threads free    (used/max        194 /       4096)
+      2026 teams free      (used/max         22 /       2048)

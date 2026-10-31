@@ -1,0 +1,113 @@
+Qwen27B host cancellation versus pushed-completion accounting
+===========================================================
+2026-10-31. Goal ACTIVE. Last whole-model rate0.207893161tokens/sec;
+20tokens/sec remains UNMET. No new throughput or resident Work release.
+
+Completed physical fault-ROM trial
+---------------------------------
+The SAME1031 process actually exited1 after uploading19399024640bytes,
+START acknowledgment and ONE500ms-delayed cancel acknowledgment. The
+first Observe failed with operation00008d13 and returned consistency-
+checked DATA:error51465431,saved_LINK0004e050. No snapshot,STOP,clean END
+or implicit cleanup followed. The complete physical raw log SHA is
+b3800ad133c8d0599e10a1ef6e148de1506ae13dc911ad29f7238797140fbff1.
+
+The exact selected ROOT ELF was rehashed:
+efeebcfc25e00b6519026428b1d7af3c12052dad6db2e6e2b52110e3fb7ed7c6.
+Its q38_pushed_end_shared spans4df94..4e118. LINK4e050 follows the fault
+call at4e048/4e04c. IMPORTANT:invalid participant count,counter overshoot
+and finite-wait exhaustion share that call. The LINK is NOT a retired PC
+or proof of the unique failing branch,time of failure,STOP or safe cleanup.
+
+Source-level transport conflict
+------------------------------
+The production BlackholeDramFixedTlbWord policy selects NoC0(bit67=0)
+and Strict AXI(ordering bits70..71=1). RequestCancel uses that ROOT L1
+alias for ONE4-byte nonposted write. The old simulated held endpoint
+instead stores Raw(0,CancelLocal) without accounting for the host packet.
+The ROOT's QGW3 closure compares four NoC0 incoming nonposted counters
+against exact participant*(2,5,2,2) deltas. A host RAW32 write during
+that interval adds(1,1,1,1),which the current closure does not admit.
+A write completed before the baseline snapshot is different:its counts
+are already part of that baseline. This distinction is consistent with
+early-cancel passes versus delayed-cancel failure,but does not by itself
+prove the physical failure's unique cause.
+
+Primary documentation checked on2026-10-31:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/PCIExpressTile/HostToDeviceTLBs.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/Counters.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/NoC/Ordering.md
+These describe the separate NIUs,TLB fields,nonposted host writes and
+destination-counter events. They are not performance guarantees.
+
+Focused regression and controls
+------------------------------
+The new HOST-only test authenticates the existing literal ROOT/worker
+image pins and ELF-derived function range. It runs the unchanged ROOT
+from RESET with SAME119 worker histories and SYNTHETIC raw model inputs.
+After the first3 actual tensor jobs produce6 real receipt packets,it
+forks that actual history. One branch delivers CancelMagic plus the four
+documented incoming-counter events;another models a separate-network
+write without changing NoC0 counters;the original parent has no host write.
+It never sets a PC,register,receipt,model product,completion or owner.
+The NoC0 branch faults before another ROOT packet. Both controls reach
+the next actual matrix doorbell. Separate-network control is NOT an
+implemented or physically qualified NoC1 route or a completed cancellation.
+
+Initial baseline mainJD and cleanJC both actually exited0,with identical
+logs SHA d277f8a0cc54d55f0266f5607383002e513014c189153e411bc1ebade0090e97.
+The final exact fault-ROM main45076 and clean32501 both actually exited0.
+Their logs are identical,SHA
+246c8197807c88f32a1951705aef3109e10aceb063cce469af6312fe02159a42.
+With the literal selected ELF,the modeled NoC0 cancel produces the actual
+same error51465431 AND LINK4e050 as the physical report. Both controls
+still reach the next actual matrix doorbell. This strongly supports the
+transport conflict;it does not uniquely prove the physical fault's branch.
+Final-source old-ROM baseline29402 and clean17637 also actually exited0,
+with identical logs SHA
+56261052c77e7c79454736a28c4ededf1b5ac180d2d53a14a6f7345e962b29ba.
+Both new source files cmp-match the independent cleanHEAD archive.
+The first fault-ROM test correctly exposed a TEST expectation error:
+the reporter parks at4002c,NOT the successful terminal's60004. Assembly
+and exact ELF disassembly were inspected;only that TEST expectation was
+corrected. No ROM,production guard,counter bound or timeout was relaxed.
+
+Recovery and remaining work
+---------------------------
+Only after1031's actual exit,a fresh supported ps proved no model parent.
+Fresh CPU-only metadata showed CF400563/tag75/gen3,cold1/owner1,with64CPUs
+and137034936320B maxRAM. Thus normal hot-restore was NOT attempted through
+quarantine. sync completed0,OFF was sent ONCE,its actual hold exited0,
+SSH timed out after more than3minutes,and ON was sent ONCE. UART shows a
+new Linux boot. SD cards,mains,cables,network and Assistant were unchanged.
+Linux boot5306a51f-b71e-46dd-8447-f4337cae115c was independently verified
+with0-63 CPUs and131976904KiB RAM. The full19404B recovery helper was read
+and matched9cfc6dc3...61f6e. prepare91995 and boot49868 actually exited0
+for sessionq38-host-cancel-recover-20261031-jq,profile
+memory128-spin-idle7-top-page-nosd-control. Default NVMe boot stayed intact.
+An early Haiku SSH check timed out during boot;it caused NO extra pulse.
+The later JW query0 verified exact CF400563/gen1,cold0/owner0 and no model
+parent. Only THEN exact7d668f6a --restore-token-fault-readout50340 exited0.
+A separate JY query0 verified stable041fef18...53403/tag12/gen2,cold0/owner0,
+open1/guard1,64CPUs and137034936320B maxRAM. The failed trial's exact QHB
+path was independently confirmed absent,including symlinks. Recovery is
+COMPLETE;no current model or GPU diagnostic is running. The five original
+long full-flow simulation handles remain separate and were freshly live
+earlier this turn;none was restarted to replace an observation timeout.
+
+Completed raw physical/callsite/parent/owner/recovery logs and all four
+final regression logs were copied and cmp-checked verbatim. The initial
+wrong-park-expectation failure logs are preserved separately and are NOT
+reported as successful qualification. Only HOST regression/report files
+were changed;production kernel/ROM/client/Assistant code was untouched.
+The source/report whitespace check passes. Raw logs intentionally retain
+the original ps alignment spaces and SSH carriage return;the unfiltered
+git whitespace check reports those evidence bytes,which were not edited.
+
+This is actionable evidence for isolating host control traffic from the
+matrix receipt frontier,not authority to ignore unexpected counters or
+reset/rebase them. Any fix still requires exact route/ownership/lifetime,
+readback and failure tests,then a controlled physical differential test.
+Numerical quality,full card-resident multi-request inference,Assistant
+integration and measured sustained optimization remain required.

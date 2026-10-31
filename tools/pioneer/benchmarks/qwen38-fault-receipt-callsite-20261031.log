@@ -1,0 +1,104 @@
+
+/private/tmp/pioneer-q38-fault-marker-main-frozen-20261031-hw/program.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+0004df94 <q38_pushed_end_shared>:
+   4df94:	fd010113          	add	sp,sp,-48
+   4df98:	02812423          	sw	s0,40(sp)
+   4df9c:	02112623          	sw	ra,44(sp)
+   4dfa0:	02912223          	sw	s1,36(sp)
+   4dfa4:	03212023          	sw	s2,32(sp)
+   4dfa8:	01312e23          	sw	s3,28(sp)
+   4dfac:	01412c23          	sw	s4,24(sp)
+   4dfb0:	01512a23          	sw	s5,20(sp)
+   4dfb4:	01612823          	sw	s6,16(sp)
+   4dfb8:	01712623          	sw	s7,12(sp)
+   4dfbc:	01812423          	sw	s8,8(sp)
+   4dfc0:	01912223          	sw	s9,4(sp)
+   4dfc4:	01a12023          	sw	s10,0(sp)
+   4dfc8:	03010413          	add	s0,sp,48
+   4dfcc:	01c52783          	lw	a5,28(a0)
+   4dfd0:	07600713          	li	a4,118
+   4dfd4:	fff78793          	add	a5,a5,-1
+   4dfd8:	06f76863          	bltu	a4,a5,4e048 <q38_pushed_end_shared+0xb4>
+   4dfdc:	ffb20cb7          	lui	s9,0xffb20
+   4dfe0:	00060937          	lui	s2,0x60
+   4dfe4:	00050b93          	mv	s7,a0
+   4dfe8:	00058a93          	mv	s5,a1
+   4dfec:	00060993          	mv	s3,a2
+   4dff0:	00068493          	mv	s1,a3
+   4dff4:	00010c37          	lui	s8,0x10
+   4dff8:	9d090913          	add	s2,s2,-1584 # 5f9d0 <CSWTCH.894>
+   4dffc:	00100a13          	li	s4,1
+   4e000:	00300b13          	li	s6,3
+   4e004:	ffb20d37          	lui	s10,0xffb20
+   4e008:	2c4c8c93          	add	s9,s9,708 # ffb202c4 <PioneerQ38SiluExpReduced(float, int&)::coefficient+0xffab4408>
+   4e00c:	0ff0000f          	fence
+   4e010:	01cba503          	lw	a0,28(s7)
+   4e014:	00090613          	mv	a2,s2
+   4e018:	000a8693          	mv	a3,s5
+   4e01c:	00151313          	sll	t1,a0,0x1
+   4e020:	00000713          	li	a4,0
+   4e024:	00100893          	li	a7,1
+   4e028:	00251813          	sll	a6,a0,0x2
+   4e02c:	00a80833          	add	a6,a6,a0
+   4e030:	03470263          	beq	a4,s4,4e054 <q38_pushed_end_shared+0xc0>
+   4e034:	01671e63          	bne	a4,s6,4e050 <q38_pushed_end_shared+0xbc>
+   4e038:	000ca783          	lw	a5,0(s9)
+   4e03c:	00caa703          	lw	a4,12(s5)
+   4e040:	40e787b3          	sub	a5,a5,a4
+   4e044:	04f37263          	bgeu	t1,a5,4e088 <q38_pushed_end_shared+0xf4>
+   4e048:	00012097          	auipc	ra,0x12
+   4e04c:	fb8080e7          	jalr	-72(ra) # 60000 <scalar_fault_park>
+   4e050:	00030813          	mv	a6,t1
+   4e054:	00062783          	lw	a5,0(a2)
+   4e058:	0006a583          	lw	a1,0(a3)
+   4e05c:	00fd07b3          	add	a5,s10,a5
+   4e060:	0007a783          	lw	a5,0(a5)
+   4e064:	40b787b3          	sub	a5,a5,a1
+   4e068:	fef860e3          	bltu	a6,a5,4e048 <q38_pushed_end_shared+0xb4>
+   4e06c:	410787b3          	sub	a5,a5,a6
+   4e070:	0017b793          	seqz	a5,a5
+   4e074:	00f8f8b3          	and	a7,a7,a5
+   4e078:	00170713          	add	a4,a4,1
+   4e07c:	00460613          	add	a2,a2,4
+   4e080:	00468693          	add	a3,a3,4
+   4e084:	fa5ff06f          	j	4e028 <q38_pushed_end_shared+0x94>
+   4e088:	00f31463          	bne	t1,a5,4e090 <q38_pushed_end_shared+0xfc>
+   4e08c:	00089c63          	bnez	a7,4e0a4 <q38_pushed_end_shared+0x110>
+   4e090:	000b8513          	mv	a0,s7
+   4e094:	fffc0c13          	add	s8,s8,-1 # ffff <_start+0x9fff>
+   4e098:	000480e7          	jalr	s1
+   4e09c:	f60c18e3          	bnez	s8,4e00c <q38_pushed_end_shared+0x78>
+   4e0a0:	fa9ff06f          	j	4e048 <q38_pushed_end_shared+0xb4>
+   4e0a4:	00122a37          	lui	s4,0x122
+   4e0a8:	00000913          	li	s2,0
+   4e0ac:	02050663          	beqz	a0,4e0d8 <q38_pushed_end_shared+0x144>
+   4e0b0:	000a0613          	mv	a2,s4
+   4e0b4:	00090593          	mv	a1,s2
+   4e0b8:	00048693          	mv	a3,s1
+   4e0bc:	000b8513          	mv	a0,s7
+   4e0c0:	00000097          	auipc	ra,0x0
+   4e0c4:	d88080e7          	jalr	-632(ra) # 4de48 <q38_pushed_receipt_shared>
+   4e0c8:	01cba783          	lw	a5,28(s7)
+   4e0cc:	00190913          	add	s2,s2,1
+   4e0d0:	020a0a13          	add	s4,s4,32 # 122020 <PioneerQ38SiluExpReduced(float, int&)::coefficient+0xb6164>
+   4e0d4:	fcf96ee3          	bltu	s2,a5,4e0b0 <q38_pushed_end_shared+0x11c>
+   4e0d8:	02812403          	lw	s0,40(sp)
+   4e0dc:	02c12083          	lw	ra,44(sp)
+   4e0e0:	02412483          	lw	s1,36(sp)
+   4e0e4:	02012903          	lw	s2,32(sp)
+   4e0e8:	01812a03          	lw	s4,24(sp)
+   4e0ec:	01412a83          	lw	s5,20(sp)
+   4e0f0:	01012b03          	lw	s6,16(sp)
+   4e0f4:	00812c03          	lw	s8,8(sp)
+   4e0f8:	00412c83          	lw	s9,4(sp)
+   4e0fc:	00012d03          	lw	s10,0(sp)
+   4e100:	000b8513          	mv	a0,s7
+   4e104:	00098793          	mv	a5,s3
+   4e108:	00c12b83          	lw	s7,12(sp)
+   4e10c:	01c12983          	lw	s3,28(sp)
+   4e110:	03010113          	add	sp,sp,48
+   4e114:	00078067          	jr	a5
