@@ -1,0 +1,110 @@
+Full-token USER uploader and diagnostic client checkpoint
+=========================================================
+2026-10-30. Goal ACTIVE;20 tokens/sec UNMET. Last measured physical
+whole-model rate remains0.207893161 tokens/sec. No GPU inference or new
+physical speed measurement in this checkpoint.
+
+Actual implementation
+---------------------
+PioneerQ38TokenValidationSession and pioneer_q38_token_validation.cpp now
+implement the complete fixed-public USER path for the separate tag74 route.
+Source.Open authenticates the ENTIRE SAME-open18973870528B original GGUF
+against c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+BEFORE accelerator Open. The8192-context/tiled/TWO-slot layout contains
+4678 parts,3551 learned parts. ALL learned parts,including embeddings and
+FP32 normalization/metadata,are uploaded;mutable state is NEVER uploaded.
+The kernel separately owns initialization,staging and computation.
+
+The USER session retains ONE FD/source epoch,checks exact build tag and
+driver generation before BEGIN and again after span-END,then executes the
+fixed2prompt/3position Start. Pending observations do NOT restart work.
+Only genuine terminal readiness permits HOLD,then READ3,then full native
+Finish ONCE. Data consistency checks cover prompt/greedy feedback,finite
+score bits,record ordering/flags/session stamp/counter alias/reserved words.
+Output is withheld until successful Finish AND FD close. Any unknown,
+source loss,reply error,timeout or abandonment CLOSES ONLY;no implicit
+retry,cancel,END,reset or disposal. The destructor never issues an ioctl.
+The frontend's30minute/18000-poll observation bound is NOT a speed metric.
+
+This client has an explicit diagnostic role,not Assistant Work. Native
+tag74 now also refuses the USER client flag,including defined0. Its23 exact
+parents/default G3 program selection and all public packet bounds remain.
+No CPU learned reference or model arithmetic is linked into the client;
+the external posthoc comparator is separate and never feeds device input.
+
+Paired main/clean validation
+---------------------------
+Clean source:git archive1a2832d564613e5651336d60bf235976420757fb plus ONLY
+the cmp-verified owned sources under:
+/private/tmp/pioneer-q38-token-client-clean-fw.0suVH4tv
+Actual session ASan/UBSan runs both exit0. They use a SYNTHETIC sparse GGUF,
+synthetic page bytes and OS/driver replies,NOT original weight execution:
+4736090 pages/20367 batches/3551 learned parts;complete Begin->pending->
+terminal->HOLD->READ3->Finish/close flow;114 COW source/transport/reply/
+record/abandon/close faults,3 early refusals,3 zero-device-call source-only
+sample/reuse/loss checks. Every uncertainty forbids following calls and
+partial output. COW children clone MOCK state,never real worker history.
+Identical archive:qwen38-token-validation-user-session-20261030.log
+SHA256:e5ed392fb69fcb9ae03d355fb759b6e73da8dc1975b911fee9cc1bb73bd5bd3b
+
+USER header syntax gates:1positive/34 missing+zero+two+late+kernel+native+
+CPU+Work+encoding refusals,with the intended diagnostic error required.
+Native-role isolation now3positives/744 refusals. Original packet/NODRV
+role/prefix routing controls pass. The refreshed clean Haiku driver SDK
+regression still emits BYTE-IDENTICAL G3 NODRV b7afc402... and tag74
+0e1dab1b8d78cba77244e3e98aedb3bf14358c7bd5219fc0add98e612fbb6762.
+That kernel object remains COMPILE/INSPECT ONLY,not linked or installed.
+Archives:user-role,client-isolation,client-kernel-sdk logs for20261030.
+
+Actual USER Haiku riscv64 compile+link passes main/clean with identical
+objects,binaries and4-line SDK reports. No CPU oracle,Work,test engines,
+native kernel owner or mock-source imports. Max individual USER frame4432,
+not a combined kernel-stack bound.
+Object SHA256:f344b2aa3bc5e97e336415bbda68067347daf71cfb17eaa13a7068d8c30f15b1
+Binary SHA256:1593cbab8743ee6c7c791bf89996b4ffa53c40bbe3c3b0cfd59da6e3034c0a1f
+Main:/private/tmp/pioneer-q38-token-validation-client-main-fw-v3
+Clean:/private/tmp/pioneer-q38-token-client-clean-fw.0suVH4tv/sdk-client
+Archive:qwen38-token-validation-user-sdk-20261030.log
+
+Real Haiku source-only run: COMPLETE,NO P100A Open
+-------------------------------------------------
+The identical binary was copied into NEW isolated folder:
+/boot/home/pioneer-token-source-fw-1593cbab/source-check
+Its full SHA was verified on the Pioneer BEFORE execution,and again after.
+No existing program was overwritten. It ran ONLY --preflight-source-only.
+The same SSH process34118 ended exit0;remote parent1105/sha child1107 were
+observed live while waiting. Neither was restarted or transplanted.
+Actual source-only output:qwen38-token-validation-source-haiku-20261030.log
+Both lines are the complete stdout observed from that terminal history.
+The entire original GGUF's fixed SHA passed,and first/middle/last raw page
+visits for all3551 learned parts completed:10653 visits,19399024640 planned
+padded bytes. This is sampling,NOT a readback of all uploaded bytes or a
+model inference test. The source-only path NEVER calls IO.Open;the actual
+DEBUG74_OPEN marker is absent. Source-only success grants no GPU authority.
+Afterward Haiku remained SSH-responsive,64CPUs,maxRAM137034936320B,
+free133743067136B,uptime3days2:27. Installed driver/Assistant/boot/power/
+SD/cards unchanged. Only the isolated USER checker was copied and run.
+
+Detached record comparator
+--------------------------
+compare_pioneer_q38_token_validation_log.py requires a complete ordered
+diagnostic log,all24 record rows and clean-END marker,then compares the3
+input/greedy/max-logit bit patterns against the independently hash-pinned
+CPU trace corpus. No tolerance,diagnostic override or CPU product upload.
+It explicitly does NOT prove all hidden/vocabulary values,log provenance,
+native lifetime,physical execution or speed. Its tests construct SYNTHETIC
+logs from the pinned oracle ONLY to test parsing/comparison;those logs are
+never archived as observed model output. Both tests exit0:1 synthetic DATA
+positive/71 malformed/input/greedy/score refusals. Main/clean logs are separate
+from the real source-only run. No actual native token log was accepted.
+
+Remaining work
+--------------
+The three-position GPU mode has NOT run or been deployed. Native full64/
+vocabulary/greedy/state/STOP/END and copied positive readout,appropriate
+native lifecycle/combined-stack qualification,controlled hardware trials,
+resident no-CPU-reference Assistant Work integration,and sustained honest
+inference benchmarks remain unfinished. The original five full-model
+emulator handles remain on their original histories;native41236 reached
+position0/layer21,not a complete token or full64 pass. Do not treat source-
+only authentication or synthetic replies as full-model execution proof.

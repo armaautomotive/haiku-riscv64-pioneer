@@ -17,7 +17,7 @@ assert len(old) == 21 and required == (old-{'PIONEER_Q38_TOKEN_CONTEXT_COMPILE_O
 assert len(required) == 23
 abi = ('api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device')
 role = physical.read_text()
-aliases = role[role.index('#if defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY)'):role.index('#if defined(api_version)')]
+aliases = role[role.index('#if defined(PIONEER_Q38_TOKEN_VALIDATION_CLIENT)'):role.index('#if defined(api_version)')]
 forbidden = set(re.findall(r'defined\(([A-Z_][A-Z0-9_]*)\)', aliases))
 assert not required & forbidden
 # Every actual token host-fixture selector must be refused, including =0.
