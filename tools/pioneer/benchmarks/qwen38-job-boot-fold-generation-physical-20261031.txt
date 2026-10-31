@@ -1,0 +1,60 @@
+Optimized ROOT physical generation:clean END,same numerical discrepancy
+=======================================================================
+2026-10-31. Goal ACTIVE. Last verified sustained whole-model baseline
+0.207893161 tokens/sec;20 tokens/sec remains UNMET. NO speedup claimed.
+
+Actual original physical39123 completed0,observed20:35:32UTC. Installed
+44209b7873cd2e2f32f133b4c4c45a5870fe1669e98cd4165c4ebc51abdc5eaf,
+tag75/gen7,unchanged efb8d649 timed USER client. Entire original SAME-open
+GGUF authenticated before device Open,all19399024640 padded learned bytes/
+3551 parts/4736090 pages/20367 spans uploaded. Normal64-layer/head flow
+produced all3 records;genuine terminal,HOLD,drain,full END and Close
+completed. No runtime CPU model reference,second GPU/admin FD,reload,
+reset,profiler,reboot,SD,OS or network change during that lifetime.
+
+Unchanged strict posthoc comparator ACTUALLY exited1 in main AND clean.
+All input/greedy tokens match the pinned CPU corpus;all three top-score
+words retain the known discrepancy. Observed exact score words:
+ position0 selected70253 score413bc1de
+ position1 selected17    score41452aa2
+ position2 selected17    score4167c42a
+These match old18362 and precise-beta2723 exactly. The new controller
+optimization did NOT fix the separate F32 recurrent arithmetic issue.
+No tolerance changed,no numerical failure relabelled and no broad
+full-hidden/vocabulary/long-generation correctness asserted.
+
+Real USER HOST wall timing in microseconds,NOT device cycles/TPS:
+ upload20367 calls total1043331376 max418729
+ startup1 call total325385513
+ observe283 calls total996346 max356107
+ cleanup3 calls total208951703 max207822465
+ other6 calls total448378
+ source-before-open298891765
+ open-to-START-return1532298254
+ START-return-to-terminal29218329
+ terminal-to-clean-Close208952035
+ whole-client2069361423
+Inference can begin BEFORE START returns. Dividing3 by29.218329 seconds
+would be a FALSE steady-token rate:two positions are prompt positions and
+startup overlaps execution. Startup-call plus later terminal interval is
+354603842us versus354734330us in the preceding2723 single run,0.0368%
+less. That window includes initialization;this is a single uncontrolled
+pair,NOT evidence of faster inference. The earlier8.83% reduction in
+HOST-native ROOT instruction count has NOT established a physical speedup.
+
+Fresh post-Close SSH found Haiku,64 CPUs,maxRAM137034936320B,
+freeRAM133756706816B,no model/Assistant process and exact installed44209
+plus immutable ff293d2d restore helper. Separate CPU-only admin status:
+tag75/gen7/quiesced0/cold0/active_owner0/open_count1/guard1. Guard d1ce2aa4
+and admin b0c851b3 hashes unchanged. No recovery needed. The separate
+Mac-side numerical failure did NOT quarantine an already cleanly ended
+card. Full stdout,separate stderr,both failing comparisons and health
+checks retained verbatim in qwen38-job-fold-physical-20261031/.
+
+Next:separately qualified34-position diagnostic,without calling its host
+wall intervals steady inference timing. Its firmware is exactly the SAME
+13-array package;only bounded public routing/gate and USER lifecycle are
+different. Whole-model arithmetic qualification,long/EOS decoding,
+resident weights/fresh requests,Assistant Work and actual20tok/s remain
+required. The older original LOCAL native41236 continues its own history,
+not restarted or supplied with CPU products.

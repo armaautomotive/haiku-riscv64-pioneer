@@ -3,6 +3,13 @@ Separate longer all-card diagnostic:34 positions,32 feedback positions
 2026-10-31. Goal ACTIVE. Last verified sustained whole-model baseline
 0.207893161 tokens/sec;20 tokens/sec remains UNMET. NO speedup claimed.
 
+Completion addendum20:35:32UTC:the pending original physical39123 below
+ACTUALLY exited0 after normal3 records/full END+Close. Strict comparisons
+both still fail with the SAME old top-score words;the initialization-
+inclusive window is essentially unchanged. See the separate completed
+qwen38-job-boot-fold-generation-physical-20261031.txt report. The earlier
+pending wording below is retained as that checkpoint's original state.
+
 Implemented path and scope
 --------------------------
 Add a distinct bounded0x6606 endpoint and USER selector for the SAME fixed
