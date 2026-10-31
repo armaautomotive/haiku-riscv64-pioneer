@@ -1,0 +1,65 @@
+Optional host timing for the full-token USER diagnostic
+======================================================
+2026-10-30. Goal ACTIVE;last physical whole-model0.207893161tok/s;20 UNMET.
+This checkpoint adds measurement capability,NOT a measured speedup.
+
+The existing three-position,cancellation and source-only frontend accepts
+an optional FINAL --host-timing argument. Without it no additional clock
+reads or timing output occur. With it,stderr reports HOST wall microseconds
+in upload/start/observe/cleanup/other ioctl buckets,with counts,total,max.
+The five available wall intervals are source-to-device-open,device-open-to-
+Start-return,Start-return-to-terminal-observation,terminal-to-clean-close
+and total diagnostic. Failed/incomplete sessions omit absent milestones.
+Hold/Read/Finish are cleanup;Cancel is Other,not a cleanup/completion grant.
+
+These intervals include host scheduling,packing,transport and polling where
+applicable. They are NOT device clocks,kernel cycles,pure packing time or
+sustained decode throughput. Three processed positions include TWO prompt
+positions;dividing three by a wall interval is NOT decode tokens/sec.
+There is deliberately no automatic rate calculation. Timing DATA never
+permits Start,Cancel,END,retry,recovery or Work. The existing source,packet,
+reply,ownership and close-only policies remain unchanged.
+
+Clock regressions,negative times,duplicate milestones or invalid indices
+permanently invalidate timing. The report then emits ONLY valid0,not partial
+plausible durations. This telemetry failure does not introduce a new device
+command or alter the session's error/recovery policy. Preserve stdout and
+stderr separately when collecting a future trial:the strict posthoc record
+comparator remains UNCHANGED and does not accept timing lines as records.
+
+Completed tests
+---------------
+Base4ae1616c274af8c62038bc8c5f38107647c090ac;independent git archive plus
+ONLY5 cmp-verified owned files:
+  /private/tmp/pioneer-q38-host-timing-clean-fy.2tMz6T8v
+Both actual USER SDK builds compile/link/inspect0;objects and binaries are
+BYTE-IDENTICAL. SDK logs are also raw-identical. Individual USER frame4432.
+Object8b0b6ce05a12499245c376fae45888cae9cffacfec30c69b14d1e1992716eda7
+Binary4dd3f0fa1058208866887aa2d531899d62b285d0f0698ac89f4ce528eba9d502
+MainSDKsession88175/cleanpipeline31094 both terminal0.
+
+Both ASan+UBSan host-timing tests exit0:disabled/zero/large clocks,all5
+buckets,all5 intervals,absent clean milestones and9 invalid-input cases.
+An initial test intentionally supplied an out-of-range enum;UBSan caught
+the unfixed underlying enum domain before the index guard. Both enums now
+have fixed unsigned underlying types and retain explicit bounds checks;
+the SAME negative and upper-bound cases pass without suppressing UBSan.
+These are synthetic host-clock inputs,NOT real system clock/device tests.
+
+Both unchanged USER session regressions also exit0:all synthetic851-model
+upload data/128 COW transport cases/14 explicit cancellation cases/3 early
+refusals/3 source-only cases. MOCK source/OS replies do not prove physical
+generation,SHA,numerics or native cleanup. Main56117/clean31094 terminal0.
+All three archived log pairs are byte-identical:
+  qwen38-diagnostic-host-timing-test-20261030.log
+    SHA2567f83bc9a494204f8d3dd15df179d236ac4b54473d2993c0169028541e606ca03
+  qwen38-diagnostic-host-timing-sdk-20261030.log
+    SHA2561830d8d015690b7cd54f7419f26039cda16d92c432251d2398665121c785790a
+  qwen38-diagnostic-host-timing-session-20261030.log
+    SHA2560242004aa2fcb3c8a8510d561924f51be129656cbc181dd0ff1b58093cf26744
+
+No driver/firmware/default arrays,Assistant,boot,CPU/RAM,SD or power change
+belongs to this timing checkpoint. The new binary is NOT installed. The
+separate already-launched physical cancellation pilot remains on its SAME
+original handle51984/client24f4e84a while this code is built offline. At the
+latest check it is still uploading;this is NOT a lifecycle or speed pass.
