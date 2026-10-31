@@ -31,16 +31,35 @@ JOB_FOLD_PINS = (
     ('conv.bin',32720,'928f48fb4193d69b6fd99de17b638aa116cc78e18f7906f22053ca3d2f1d611a'),
     ('program.elf',190648,'d0760386ea3d00616bfbf8bf53b2cff900701eef9491f6dc8efdc16163e422a6'),
 ) # Main/clean BUILD identity only;no native DATA or driver selection.
+FRONTIER_PARENT_PINS = (
+    ('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+    ('text.bin',130996,'39ca2743b8aaa166d7ecc9205b516558fcfac93449f5d4526ad065b39da39205'),
+    ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+    ('conv.bin',32688,'d9576bce48afad75fe54a337a865437b07263362f43d8d16688835b56e8f7861'),
+    ('program.elf',190628,'5585e908bf3326c5410d0998c81ed161c04ab754412cc60891b8eb1f197a58fe'),
+)
+FRONTIER_PINS = (
+    ('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+    ('text.bin',131028,'8674c84aa9142f049a0dbcb3df6ac70bab8c0f4de096083584bb293562e6284e'),
+    ('terminal.bin',8,'468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2'),
+    ('conv.bin',32688,'54cf89743f34f5156790b9299e2fc95307c28ef78d22b88267aed70d587cb1d2'),
+    ('program.elf',190684,'9515589d211cb9d9b2db4be108ccad5752996ec07a5354f0181775f6a6888862'),
+) # Independent BUILD identity ONLY;not a native image/readout qualification.
 args = sys.argv[1:]
 inspect = '--inspect-candidate' in args
 fold_job_boot = '--job-boot-fold-eight' in args
-if args.count('--inspect-candidate')>1 or args.count('--job-boot-fold-eight')>1:
+frontier = '--token-frontier' in args
+if any(args.count(option)>1 for option in ('--inspect-candidate','--job-boot-fold-eight','--token-frontier')):
     raise SystemExit(2)
 if inspect:
     args.remove('--inspect-candidate')
 if fold_job_boot:
     args.remove('--job-boot-fold-eight')
-if len(args) != 2 or any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ) or (not inspect and not (JOB_FOLD_PINS if fold_job_boot else PINS)):
+if frontier:
+    args.remove('--token-frontier')
+selected_pins = FRONTIER_PINS if frontier else JOB_FOLD_PINS if fold_job_boot else PINS
+if len(args) != 2 or any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ) \
+        or (frontier and not fold_job_boot) or (not inspect and not selected_pins):
     raise SystemExit(2)
 sdk, out = map(pathlib.Path, args)
 here = pathlib.Path(__file__).resolve().parent
@@ -58,9 +77,11 @@ try:
                 '--single-closed-audit', '--worker-sealed-admission', '--pushed-completion']
     if fold_job_boot:
         sys.argv += ['--inspect-candidate','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot']
+    if frontier:
+        sys.argv += ['--token-frontier']
     parent = runpy.run_path(sys.argv[0], run_name='__main__')
     if fold_job_boot:
-        assert tuple(parent['observed'])==JOB_FOLD_PARENT_PINS, 'selected fold parent changed;not a new image qualification'
+        assert tuple(parent['observed'])==(FRONTIER_PARENT_PINS if frontier else JOB_FOLD_PARENT_PINS), 'selected parent changed;not a new image qualification'
 finally:
     sys.argv = saved
 cross = str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
@@ -106,9 +127,11 @@ for name in ('boot.bin', 'text.bin', 'terminal.bin', 'conv.bin', 'program.elf'):
     observed.append(row)
     print(row, flush=True)
 if not inspect:
-    assert tuple(observed) == (JOB_FOLD_PINS if fold_job_boot else PINS), 'unqualified fault-marker build'
+    assert tuple(observed) == selected_pins, 'unqualified fault-marker build'
 print('BUILD_ONLY_UNSELECTED_FAULT_MARKER status_error51465431 status_saved_link_NOT_retired_PC/'+
       'same_compiled_arithmetic_objects_and_STOP_loop/NO timeout_extension_retry_cancel_reset/'+
       'NO native_driver_selection_original_model_physical_Work_or_TPS_permission', flush=True)
 if fold_job_boot:
     print('UNSELECTED_JOB_BOOT_FOLD_EIGHT_FAULT_IMAGE separate BUILD pins;default image pins unchanged;NO native/physical/Work/TPS grant',flush=True)
+if frontier:
+    print('UNSELECTED_TOKEN_FRONTIER_FAULT_IMAGE separate BUILD ONLY;NO program DATA/native/readout/physical/timing/Work/TPS grant',flush=True)

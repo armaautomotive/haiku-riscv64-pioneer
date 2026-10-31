@@ -1,0 +1,87 @@
+Token frontier: actual caller tests and complete immutable firmware DATA
+=====================================================================
+2026-10-31. OFFLINE ONLY. Not installed,native-qualified or a speedup.
+Last sustained whole-model baseline0.207893161tok/s;20tok/s UNMET.
+
+Actual emitted PublishToken+Owner+frontier leaf executed in the RV32
+instruction machine,from exact whole pinned ELFs and re-extracted linked
+sections. HeadSeal/InputSeal/FeedbackSeal and Packet are explicitly MOCK
+dependencies. Their actual bodies,NoC transport,learned model,full caller
+chain,native owner and physical timing are NOT executed/proven here.
+
+For EACH of four exact ELFs,8192 synthetic position fixtures complete
+actual record construction,both64word readback comparisons,all caller
+branches/stack/return and callee-saved ABI.296 failed fixtures cover every
+word in BOTH readbacks,each failing mock dependency,wrong phase and
+wrong committed frontier. All fail before a counter write. The new
+counter write+fence happens ONLY after the4 expected mock NoC packets,
+both complete readback comparisons and final successful mock seals.
+Old ROOTs never write the counter. Parent bytes and other progress words
+are unchanged;return remains inert for2048 actual instructions.
+
+Four authenticated complete ELFs:
+ old ROOT430b89b2fb734bfb66bbe96cc1e8581fcd6476d263a2578b8e869936df4bc1c7
+ new ROOT5585e908bf3326c5410d0998c81ed161c04ab754412cc60891b8eb1f197a58fe
+ old fault ROOTd0760386ea3d00616bfbf8bf53b2cff900701eef9491f6dc8efdc16163e422a6
+ new fault ROOT9515589d211cb9d9b2db4be108ccad5752996ec07a5354f0181775f6a6888862
+Main56182 and independent-clean42846 ACTUALLY exit0 with identical logs.
+Earlier two-image tests85733/46703 also exit0;no history replaced.
+
+New --token-frontier fault build requires the complete job-fold/eight-way
+parent and authenticates its exact5585 full build before linking the
+unchanged fixed fault assembly. Main40153/clean19754 initial inspect
+builds exit0;frozen main66854/clean49576 builds exit0,byte-identical.
+ boot4B     SHA32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text131028 SHA8674c84aa9142f049a0dbcb3df6ac70bab8c0f4de096083584bb293562e6284e
+ terminal8  SHA468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2
+ conv32688  SHA54cf89743f34f5156790b9299e2fc95307c28ef78d22b88267aed70d587cb1d2
+ ELF190684  SHA9515589d211cb9d9b2db4be108ccad5752996ec07a5354f0181775f6a6888862
+Text has44B remaining;auxiliary window80B. No full-runtime/combined
+stack qualification is inferred. No new CSR/frequency/FP32 arithmetic,
+worker,token-record ABI or terminal/lifecycle change is introduced.
+
+PioneerQ38TokenFrontierPrograms.h SHA
+2bd70b273e8c6b2196c0d087ca03d87f34a5567cb1cb361b305483ce4b17c7e5
+is generated from ALL13 sections+2 whole authenticated ELFs,not a patched
+old namespace. The9 peer arrays are unchanged precise-beta artifacts.
+All120 cores'3044254 code words match authenticated artifacts and fit
+the original full L1 journal. Counter7570c is journaled runtime DATA,
+explicitly refused as a program word;root has40932 code words,peer25238.
+Both initial main82263/clean13379 and final main58255/clean43778 exit0:
+2290 immutable/gap/range refusals,30 corrupt/truncated artifact refusals,
+6 pre-SDK CLI refusals,3 syntax positives and94 missing/zero/two/late/
+native/physical/CPU/Work refusals. The complete old job-fold header
+regenerates BYTE-IDENTICALLY to1b8e6109. All strict comparisons unchanged.
+
+The new program selector is DATA ONLY and refuses ALL kernel/native/
+physical/USER/image/CPU/Work roles. No existing native owner can select
+it. Selection0 leaves the actual frozen conventional34-position object
+66b01f59 and module4ebc9463 unchanged. Old-native main55036/clean79362
+actually exit0;each also reproduces full old44209 and posted18362 controls,
+all13 old firmware arrays and2MiB RoPE. Partial known-module chain5392B,
+25 unresolved calls is NOT whole-kernel stack qualification.
+
+Fresh-zero provenance INSPECTED,not replaced by a caller flag:actual
+StartRoot already zeros and reads back ALL64 progress words while ROOT
+is still HELD,after the original L1 journal and runtime staging. Only
+then does it release ROOT. The root journal covers7570c. RootMain's
+startup marker precedes its own zeroing loop,so the marker ALONE must
+never grant fresh-counter provenance. Native integration still needs
+tests over the SAME real owner/FD/team/thread/generation/source lifetime,
+bound to this exact firmware,with regression/range/IO-failure retention.
+
+NOT IMPLEMENTED/QUALIFIED yet:new native counter reader+public metric
+endpoint,host monotonic sampling,bounded post-prompt rate derivation,
+full new native lifetime/fault/restore tests,whole-model arithmetic,
+physical deployment or Assistant Work. Keep the64word record ABI and
+reserved zeros unchanged. Counter DATA must never authorize terminal,
+HOLD,END,retry/reset,disposal or reuse. Publish timing only after true
+clean END and validated record/count consistency;include sampling
+uncertainty and distinguish the2 prompt positions.
+
+The independent original long LOCAL native41236 remains its SAME
+history;it was not restarted or supplied CPU products. The physical
+34-position run closed0 separately and the actual card is restored to
+baseline041fef18/gen10. See qwen38-decode34-generation-physical-20261031.txt.
+Raw build/unit/control logs plus exact new fault artifacts are preserved
+in qwen38-frontier-publication-20261031/.

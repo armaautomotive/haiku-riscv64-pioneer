@@ -1,0 +1,4 @@
+COMPARE_DECODE34_FIRST_THREE position0/sameInput1/CPUgreedy70253/observedGreedy70253/selectedMatch1/maxLogitBitsMatch0
+COMPARE_DECODE34_FIRST_THREE position1/sameInput1/CPUgreedy17/observedGreedy17/selectedMatch1/maxLogitBitsMatch0
+COMPARE_DECODE34_FIRST_THREE position2/sameInput1/CPUgreedy17/observedGreedy17/selectedMatch1/maxLogitBitsMatch0
+FIRST_THREE_RECORD_DATA_BITEXACT=0 NO_TOLERANCE_USED;positions3..33 have NO external numerical control here;NOT full-hidden/vocabulary/native-lifetime/log-provenance/physical/Work/TPS qualification

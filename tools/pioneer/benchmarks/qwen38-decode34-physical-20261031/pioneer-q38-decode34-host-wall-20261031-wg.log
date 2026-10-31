@@ -1,0 +1,2 @@
+Q38_DECODE_BENCHMARK_HOST_WALL_US source_to_open299306991 open_to_start_begin1248521191 startup326907408 start_return_to_terminal328330468 terminal_to_close211113892 total2414179950 upload_calls20367 upload_us1088288386
+HOST WALL ONLY;startup includes initialization and may overlap inference;two prompt positions included;NO isolated-device-cycles or steady-decode TPS claim

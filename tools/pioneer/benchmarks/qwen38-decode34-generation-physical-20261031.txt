@@ -1,0 +1,66 @@
+Longer all-card generation: clean34-position END, numerical issue remains
+======================================================================
+2026-10-31. Goal ACTIVE. Last verified sustained baseline0.207893161
+tokens/sec;20 tokens/sec UNMET. This run establishes NO new steady TPS.
+
+Original physical43815 actually exited0,observed21:23:02UTC. The same
+owner authenticated the original full GGUF before device Open,uploaded
+19399024640 padded learned bytes/3551 parts/4736090 pages/20367 spans,
+ran2 fixed prompt positions plus32 feedback positions,observed genuine
+normal terminal,held/drained all34 records,restored and completed full
+END+Close. No runtime CPU model reference,second GPU/admin FD,reload,
+reset,second model,power,SD,OS or network change during that lifetime.
+
+Installed4ebc9463b80cfa73fe957800cadac819e7ff05e17ff7a2db7fd6362da2c43b14,
+tag75/generation9,client05510422cb94afa60689d69c1523add442b38a0679182dee5da1986b2a650b13.
+All34 record identity,feedback,session,finite-score,flags,counters and
+reserved-zero DATA checks pass. Greedy selection is70253 at position0
+and17 at positions1..33;position1 is the fixed second prompt17. This
+repetition is NOT evidence of useful response quality or arbitrary prompts.
+
+Unchanged new posthoc comparator actually exits1 in BOTH main and clean.
+Only positions0..2 have the pinned external CPU reference here. Inputs
+and greedy selections match;all three exact maximum-logit words differ:
+ position0 selected70253 observed413bc1de CPU413c2358
+ position1 selected17    observed41452aa2 CPU414621d3
+ position2 selected17    observed4167c42a CPU4168afd0
+These observed words equal the preceding short44209/18362/beta2723 runs.
+No tolerance changed,no numerical failure relabelled. Positions3..33
+have NO external numerical control here;full hidden/vocabulary/quality,
+EOS,arbitrary prompts and Assistant Work remain unqualified.
+
+Actual HOST wall microseconds from the separate completed-client stderr:
+ source_to_open299306991
+ open_to_start_begin1248521191
+ startup326907408
+ start_return_to_terminal328330468
+ terminal_to_close211113892
+ total2414179950
+ upload_calls20367 upload_us1088288386
+Total is about40min14sec including full source authentication,upload,
+initialization,inference and full cleanup. START may overlap inference;
+the post-START interval includes terminal observation. Neither34 nor32
+divided by that interval is an isolated steady-decode measurement. No
+on-card cycle/frequency assumption or performance improvement is asserted.
+
+Fresh post-Close health:Haiku,UID0,64CPUs,maxRAM137034936320B,
+freeRAM133754441728B,no model/Assistant parent,exact installed module,
+client,restore-helper and unchanged guard hashes. Separate CPU-only
+admin status:tag75/gen9/quiesced0/cold0/active_owner0/open_count1/guard1.
+The posthoc Mac-side mismatch did NOT quarantine an already closed card.
+
+Only AFTER exit/END+Close,health and idle checks,the immutable c6f7268c
+helper restored known baseline041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Original restore83738 actually exits0. Fresh separate SSH verifies
+tag2026102100010012/gen10/quiesced0/cold0/active_owner0/open_count1/guard1,
+exact041fef18 module,unchanged d1ce2aa4 guard,64CPUs,
+maxRAM137034936320B/freeRAM133759946752B and no model/Assistant parent.
+No reboot or GPU execution during the guarded exchange. Full stdout,
+stderr,failed comparisons and health/restore logs retained verbatim in
+qwen38-decode34-physical-20261031/.
+
+Next:finish separately owned read-only token-counter instrumentation,
+then measure actual post-prompt committed-token intervals. New frontier
+firmware/data is OFFLINE ONLY;it is NOT this tested4ebc9463 driver.
+Numerical qualification,resident-weight fresh requests,usable Assistant
+Work and real20tok/s remain outstanding. Goal is not complete.
