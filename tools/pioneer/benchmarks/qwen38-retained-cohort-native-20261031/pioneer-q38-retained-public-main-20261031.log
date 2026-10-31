@@ -1,0 +1,19 @@
+PASS_ACTUAL_JOB_BOOT_FOLD_PHYSICAL_SDK all13CompiledArraysSHAExact1 oldCodeNamespacesAbsent1 rope2MiBUnchanged1 realOwnerAndControllerAndPostedCancel1 individualFramesBounded1 conventionalDriverABI1 noCPUOracleWorkOrTestImports1
+ee3e9ad9cef6e6e5b449071ad953ce7b18e73df7fd69c935a9e759625288d115 token-job-boot-fold-INSPECT-ONLY.o
+COMPILE_INSPECT_ONLY_NOT_INSTALL_NATIVE_RUNTIME_WHOLE_KERNEL_STACK_PHYSICAL_MODEL_WORK_OR_TPS
+44209b7873cd2e2f32f133b4c4c45a5870fe1669e98cd4165c4ebc51abdc5eaf tenstorrent_pci_probe-token-DEBUG75-JOB-BOOT-FOLD
+PASS old18362LinkedImageReproduced1 actualJobBootFoldDiagnosticLinked1 all13ArraysAnd2MiBRopeExact1 conventionalABI1 noCPUOracleWorkOrTestImports1
+OBSERVED knownModuleChain5392/unresolved25/reached511;PARTIAL ONLY,wholeKernelStackQualified=FALSE;graph object BYTE-IDENTICAL
+BUILD_INSPECT_ONLY_NO_INSTALL_PHYSICAL_DELIVERY_FULL_NATIVE_LIFECYCLE_MODEL_NUMERICS_WORK_OR_TPS_GRANT
+66b01f59eb4d88a1360c3d8263507924bad0c2c7997fc78c86e0176acb84c088 decode-benchmark-native.o
+4ebc9463b80cfa73fe957800cadac819e7ff05e17ff7a2db7fd6362da2c43b14 tenstorrent_pci_probe-token-DECODE34-BENCHMARK
+PASS_FROZEN separate34-position physical diagnostic/old44209+18362 literal controls unchanged/all13 firmware arrays+2MiB RoPE exact/conventionalABI/no CPU oracle+Work+MOCK imports/no old short control or hidden-read routing
+PARTIAL knownModuleChain5392/unresolved25;wholeKernelStackQualified=FALSE;graph object BYTE-IDENTICAL;NO native/physical/model numerics/resident Work/steady-TPS grant
+ed855c3fc7eedf64c8ef806f1386f50982f604fd56bb8abdf0afe1c4e09bca8c frontier-benchmark-native.o
+9ad9e86bd5e45c5cb11dfe286f3528452dfe7b0e4630f67546acbb43a03064e8 tenstorrent_pci_probe-token-FRONTIER34-BENCHMARK
+PASS_BUILD_ONLY new conventional6607+6608 diagnostic/old4eb+44209+18362 controls unchanged/all13 actual arrays+RoPE exact/new source+sameowner counter/lifecycle/noCPU oracle+Work+TEST imports
+PARTIAL knownModuleChain5392/unresolved25;wholeKernelStackQualified=FALSE;NO physical,numerical,steadyTPS,residentWork or deployment grant
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_qwen38_retained_cohort_benchmark_native.py", line 38, in <module>
+    frames = old['control']['compiled']['frames'](obj.with_suffix('.su'))
+KeyError: 'control'

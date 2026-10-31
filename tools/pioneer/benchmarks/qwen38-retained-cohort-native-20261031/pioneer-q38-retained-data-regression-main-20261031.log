@@ -1,0 +1,8 @@
+3e5cec29942498a78227effe268f58a7fa567358d8f58dd7d04922a1ec364803 token-programs FP32/cancel1/ALL13 sections+2fullELFs authenticated/DATA ONLY/NO install or native permission
+PROGRAM_DATA_REFUSAL [Errno 2] No such file or directory: '/private/tmp/pioneer-q38-frontier-frozen-main-20261031-wu/boot.bin'
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_retained_cohort_program_tests.py", line 28, in <module>
+    subprocess.run([sys.executable,str(generator),str(old_root),str(worker),str(old),'--token-frontier'],check=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/Library/Developer/CommandLineTools/usr/bin/python3', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/generate_qwen38_token_programs.py', '/private/tmp/pioneer-q38-frontier-frozen-main-20261031-wu', '/private/tmp/pioneer-q38-precise-beta-worker-main-20261031-np', '/private/tmp/pioneer-q38-retained-cohort-data-heq9h70t/unchanged-frontier.h', '--token-frontier']' returned non-zero exit status 2.

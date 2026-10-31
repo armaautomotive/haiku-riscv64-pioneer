@@ -1,0 +1,103 @@
+Retained-Conv optimization:distinct private and physical diagnostic builds
+=======================================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. This is preparation for a
+hardware measurement,NOT a measured speedup or usable Assistant Work.
+Latest completed all-card diagnostic remains0.103673756..0.103674915tok/s;
+strict first-three maximum-logit numerical mismatches remain failures.
+
+The already qualified48b2bf31 ROOT/3e5cec29 complete code package removes
+only repeated96-worker warm admission checks AFTER all119 genuine Conv
+Finish+Audit proofs. Cold admission,actual completion,source,counter and
+owner checks remain. Its original-byte first-layer/fault evidence is in
+qwen38-retained-conv-closure-20261031.txt;those tests do NOT prove a native
+END,full-model quality or throughput. No CPU model reference is introduced.
+
+New private selection
+----------------------
+Explicit retained-cohort flags select the actual new13 firmware arrays;
+default,old frontier and job-fold selectors keep their old packages.
+QT3NODRV retains every native parent and renamed conventional ABI. It has
+no public route or Work authority. Main56527/clean83926 inspect builds
+and frozen61652/6434 builds ACTUALLY exit0;independent full object:
+ 473ba8728ae591223cd7a62c8d65e3ed57bd0a7f2de6d6d16be64981f2fbfe2a
+Final private26485/59413 also ACTUALLY exit0 after the physical role split.
+Whole old05d149c9/f4f8e84b private objects reproduce FIRST. All13 new
+compiled arrays and unchanged2MiB RoPE are checked from actual objects.
+Individual frames are bounded;whole-kernel/IRQ/entry stack is NOT proved.
+
+New public diagnostic selection
+--------------------------------
+Separate explicit retained-cohort benchmark flags retain the existing
+bounded6607+6608 ABI/tag75. A numeric tag is NOT module byte identity.
+This does not enable old6604/6605/6606,arbitrary prompts or Work. Main49246
+and independent-clean56260 ACTUALLY exit0 with identical new objects:
+ 04da32526ffb4b2bc297ae21375a15e3d3df7141c60cca6747abba64189a3f4a
+Actual new linked conventional module:
+ 1f3bcff838ff9f95d5f450c53000f02f80ddcd073aa5a5cc3018ee4208e0847c
+Whole old9ad9e86b,4ebc9463,44209b78 and18362bcb modules reproduce FIRST.
+All13 actual arrays and unchanged RoPE are verified. Known-module stack
+chain5392B/unresolved25 remains PARTIAL,not whole-kernel qualification.
+Fresh frozen builds90582/81103 ACTUALLY exit0 with these same object and
+module hashes. Raw inspection and frozen output is retained alongside.
+
+Containment/regressions
+------------------------
+New private final-role13980/35134 ACTUALLY exit0:4 syntax positives and
+308 missing/zero/two/late/tag/ABI/physical/USER/CPU/Work refusals EACH.
+New physical-role1423/81708 ACTUALLY exit0:4 positives/203 refusals EACH.
+DATA regressions12211/19710 ACTUALLY exit0:2290 immutable/gap/refusal
+cases,30 corrupt/truncated artifacts,2 positives/89 role refusals EACH;
+the entire old2bd70b27 DATA package remains byte-identical.
+Old physical-role72405 ACTUALLY exits0. Old private-role93781 found a
+REAL missing defined-zero FRONTIER_BENCHMARK_CLIENT refusal. The private
+frontier role now explicitly rejects that USER flag. Corrected old-role
+72631/96607 ACTUALLY exit0:3 positives/300 refusals EACH. No forbidden
+test was deleted or tolerated;all old compiled control modules reproduce.
+
+Build/test setup failures are preserved,not relabelled as passes:
+- Initial independent clean public build used a different saved argv
+  manifest and correctly stopped at its unchanged SHA pin. Both corrected
+  builds share the same authenticated read-only old control manifest but
+  compile their actual implementation from independent source trees.
+- First public builder used an incorrect runpy dictionary nesting for the
+  frame reader. Both failed before link/install;the builder was corrected
+  and fresh output directories were used. No object/hash check relaxed.
+- First DATA regression was given a missing old-ROM directory and stopped.
+  Corrected runs use each rebuilt frozen parent at unchanged-frontier/.
+
+Native execution:STILL PENDING,DO NOT DEPLOY
+---------------------------------------------
+Same original histories28114(main)/12197(clean),NOT restarted. Each uses
+the entire authenticated original GGUF,no CPU products,all851 learned
+tensors,frozen actual zero ROM,and119 virgin full instruction engines.
+Latest observation reaches layer0/ROOT110000231 instructions after actual
+first matrix and recurrent state activity. These are HOST emulation counts,
+NOT hardware cycles or throughput. The actual successor must still finish
+layer0,posted cancellation,119 STOPs+120 HOLDs,drain,held readout,original
+L1/shared/ROOT/clock/VM/PCI/host restoration and whole-context destruction.
+No completed token/full-model/physical lifecycle is inferred from progress.
+Private logs:/private/tmp/pioneer-q38-retained-native-history-main-20261031-zl.log
+and clean-20261031-zm.log. Terminal evidence will supersede this checkpoint.
+
+Guarded deployment preparation
+------------------------------
+The local updater adds ONLY exact041fef18<->1f3bcff8 routes with qualified
+hash-specific backups. Old hash-named on-device helpers are not modified.
+Current local helperSHA94dd21753158096d67acf6ce35c1b261f9e11659c6bc8a65ef84f4078e7a63e0.
+Updater filesystem/handshake/hash/symlink/owner tests29413/71932 ACTUALLY
+exit0 with366 cases EACH,including rejection of old9ad/decode/fold/beta/
+posted/fault/hidden/tag74 and unknown same-tag bytes. They are fake-Haiku
+tests,NOT physical reload permission. No new module/helper has been staged
+or installed. Hardware remains untouched by this development checkpoint.
+
+Fresh read-only SSH preparation check23:51UTC:Haiku/UID0,no model or
+Assistant parent,64CPUs/maxRAM137034936320B/free133760618496B,installed
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+unchanged d1ce2aa4 guard,tag12/generation12/quiesced0/cold0/active_owner0/
+open_count1/guard1. Metadata check only,no accelerator execution or reload.
+
+Next:actual native terminal+strict prefix proof;then fresh hardware
+health/idle/hash checks and ONE same-FD
+34-position diagnostic using unchanged4b1dbee6 client. Compare against the
+completed9ad counter benchmark under the same workload. Do NOT promote
+diagnostic timing or known numerical failures to Assistant Work success.

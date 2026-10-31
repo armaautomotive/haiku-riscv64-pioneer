@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 root_profile=None
+retained_cohort='--retained-conv-closure' in sys.argv
+if retained_cohort:
+    assert sys.argv.count('--retained-conv-closure')==1
+    sys.argv.remove('--retained-conv-closure')
 token_frontier='--token-frontier' in sys.argv
 if token_frontier:
     assert sys.argv.count('--token-frontier')==1
@@ -99,6 +103,8 @@ if job_boot_fold:
         'Job boot fold TEST requires its distinct exact precise-beta original first-layer/full-END predecessor;not an old profile or physical/Work alias'
 if token_frontier:
     assert job_boot_fold, 'Frontier reader TEST requires the SAME complete job-fold original first-layer/cancel/full-END predecessor'
+if retained_cohort:
+    assert token_frontier and not compile_link_only, 'Retained-cohort TEST requires the SAME complete frontier original first-layer/cancel/full-END predecessor,not an endpoint-only alias'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -194,6 +200,8 @@ if job_boot_fold:
     defines.update(PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS='1',PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_NATIVE_CONTEXT='1')
 if token_frontier:
     defines.update(PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS='1',PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT='1')
+if retained_cohort:
+    defines.update(PIONEER_Q38_TOKEN_RETAINED_COHORT_PROGRAMS='1',PIONEER_Q38_TOKEN_RETAINED_COHORT_NATIVE_CONTEXT='1')
 if posted_cancel:
     defines.update(PIONEER_Q38_TOKEN_POSTED_CANCEL='1',PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',
                    PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')
