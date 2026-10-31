@@ -1,4 +1,12 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_GDN_PRECISE_BETA_IMAGE
+#include "PioneerQ38GdnPreciseBetaRole.h"
+#if defined(PIONEER_Q38_GDN_PREPARE_H) && !defined(PIONEER_Q38_GDN_PRECISE_BETA_BOUND)
+#error An already-bound legacy preparation cannot become precise beta
+#endif
+#elif defined(PIONEER_Q38_GDN_PRECISE_BETA_BOUND)
+#error Precise beta role cannot be removed after binding
+#endif
 #ifndef PIONEER_Q38_GDN_PREPARE_H
 #define PIONEER_Q38_GDN_PREPARE_H
 #if !defined(PIONEER_Q38_GDN_PREPARE_IMAGE) || PIONEER_Q38_GDN_PREPARE_IMAGE != 1
@@ -9,6 +17,10 @@
 #endif
 #include "PioneerGraphNorm.h"
 #include "PioneerQwen38Hybrid.h"
+#ifdef PIONEER_Q38_GDN_PRECISE_BETA_IMAGE
+#include "PioneerQ38SigmoidPrecision.h"
+#define PIONEER_Q38_GDN_PRECISE_BETA_BOUND 1
+#endif
 // Missing CARD arithmetic between actual Conv4 and recurrent SFPU work.
 // No native selector/ownership/source/producer grant. A future combined
 // resident worker must source these bytes from its actual QCB1/QPS1 and
@@ -56,8 +68,16 @@ static inline bool PioneerQ38PrepareGates(float alpha,float betaLogit,float nega
  // GGUF ssm_a is ALREADY -exp(A_log). Do not exponentiate it again.
  float softplus=PioneerQ38PrepareSoftplus(alpha+dtBias);
  float decay=PioneerQ38PrepareNegativeExp(PioneerQ38PrepareFlush(negativeA*softplus));
+ float beta;
+#ifdef PIONEER_Q38_GDN_PRECISE_BETA_IMAGE
+ // Preserve the two-float exp through denominator formation and the
+ // compensated quotient. Independent scalar rounding here can cross a
+ // later Q8 half-scale midpoint even if every quantized lane is unchanged.
+ if(!PioneerQ38SigmoidPrecision(betaLogit,beta))return false;
+#else
  float e=PioneerQ38PrepareNegativeExp(-PioneerAttentionFloat(PioneerAttentionBits(betaLogit)&0x7fffffff));
- float beta=PioneerGraphDividePositive(betaLogit>=0?1.0f:e,1.0f+e);
+ beta=PioneerGraphDividePositive(betaLogit>=0?1.0f:e,1.0f+e);
+#endif
  if(!PioneerQ38PrepareNormal(decay) || !PioneerQ38PrepareNormal(beta) || decay<0 || decay>1 || beta<0 || beta>1)return false;
  gates[0]=decay;gates[1]=beta;return true;
 }

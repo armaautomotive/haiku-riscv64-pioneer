@@ -1,0 +1,111 @@
+First divergence localized: zero-based layer29 GDN preparation
+==============================================================
+2026-10-31. Goal ACTIVE. No sustained speedup or physical numerical pass.
+
+The SAME native full-flow session41236/PID32972 was confirmed RUNNING.
+Its genuine token0 had completed64 bodies and the head, while token1
+continued. A brief local HOST debugger attachment copied only immutable
+token0 recorder buffers, then detached automatically. It made NO target
+expression/function calls, guest memory writes, PC changes, expected
+product injection, history replay or completion writes. The partial raw
+buffers have their OWN names/scope; no QOD1 full-run trace was fabricated.
+The original run still owes all3 positions,119 STOP,restoration and END.
+An initial inspection stopped on a std::array wrapper mismatch and also
+detached; the corrected export read the actual nested array member.
+
+Exact copied buffer SHA-256 values:
+hidden (332800 words):
+5a1c8478fea72b7a3d1acc63eecdebdb3fbdcf3c1f57166e04a3a19aa99ab784
+logits (248320 words):
+81c3bfed510fdd8a74200250dba3887f3fc6596c9ebe2fbb69b796e0af9e37da
+record (64 words):
+3ddd040aea71afba0434ea81f9e3be6ecf4280dc6b4260281f3f17081dc248d0
+The raw buffers,actual scalar metadata,export script and debugger log
+are archived. They are HOST-native EMULATION observations,NOT physical
+hidden observations or a completed native lifetime. The physical full
+three-position run is documented independently in its own report.
+
+Comparison against the unchanged authenticated original CPU corpus:
+embedding and boundaries1..29: all5120 words EACH bit-exact.
+boundary30 (output of zero-based layer29): all5120 words differ;
+maxAbs0.0013230331242084503,relativeL2 0.0004095972520807156.
+Differences grow through the remaining layers. The observed token0 top
+word is413bc1de,matching the independently observed PHYSICAL top word;
+the CPU top word is413c2358. This equality does not assert equality of
+all unrecorded physical hidden/vocabulary values.
+
+Bounded CPU-local replay,independent main47486 and clean2062: BOTH exit0,
+logs byte-identical. Full ORIGINAL same-open19.4GB GGUF SHA and851-tensor
+bindings are required. The runner authenticates all three old CPU traces
+and the exact partial-native hidden pin BEFORE building. Its61504-byte
+CPU-local input snapshot SHA is:
+bd3faafe2b26c4eea37ede3a34a5db5db0b8f809845856373d96f43d1b687660
+The ACTUAL CPU reference Impl is losslessly extracted,renaming ONLY its
+type; its original Weight/Project/Bind methods provide the model reads.
+No production CPU/native/Work API or accelerator callback was introduced.
+Separate translation units keep card math out of the CPU oracle role.
+All local code runs under ASan/UBSan,-ffp-contract=off,FE_TONEAREST.
+
+The all-reference reconstruction reproduces all5120 expected layer29
+output words exactly. Substituting actual card GDN preparation math
+reproduces all5120 native partial output words exactly. It changes762
+gated words,zero integer Q8 lanes,but ONE Q8 half-scale word. That changes
+5064 residual words and17407 FFN activation words,then all5120 outputs.
+Card convolution alone is unchanged. Card gated-norm alone changes2628
+local gated words,but no quantized lanes/scales and no final output words.
+All card scalar helpers together also reproduce the native output exactly.
+
+This is a sharply localized CPU arithmetic diagnostic,NOT emitted-RV32
+qualification,new physical inference,full-trace pass or TPS. A follow-on
+split isolates q/k normalization versus beta/decay gates and tests the
+already isolated precise sigmoid. No corrected firmware is installed.
+Fresh Pioneer metadata remains tag75/gen3/cold0/owner0,64 CPUs and
+137034936320B maxRAM. No power,SD,driver reload or hardware changes.
+
+Completed split and actual candidate arithmetic
+-----------------------------------------------
+Split main19557 and clean46042 BOTH exited0,logs identical. Card q/k
+normalization alone (mode8) leaves the layer output bit-exact to CPU.
+Card gates alone (mode16) reproduces the native mismatch. Replacing beta
+with the independently isolated precise sigmoid (modes34/39) removes
+the single half-scale change and restores all5120 CPU output words.
+The old beta differs by one ULP for several original head logits; this
+is no evidence of an unsafe driver lifetime or bad original model bytes.
+
+The new explicit PIONEER_Q38_GDN_PRECISE_BETA_IMAGE role selects precise
+beta inside the ACTUAL PioneerQ38PrepareGates function. Normal defaults
+remain the original function; the whole legacy worker build is reproduced
+and checked against its old literal SHA pins. The isolated actual-helper
+replay (modes64/71,not a host replacement after the helper) restores all
+5120 expected words,including with all other old card scalar helpers.
+Main68948 and clean24606 BOTH exited0,logs identical. This remains HOST
+arithmetic on a known input,not full native or physical qualification.
+
+Independent actual freestanding worker inspection builds43957/5175 BOTH
+exited0. New GDN section35408B SHA:
+cbe3faf60ef0b3a0544b27b29f99d62eb36c7d0ac5b835e337c5501661ed589c
+New whole ELF139528B SHA:
+1f49e9740d8d9045de6c8835f0f8f1738210ba0413d87f607f97cf98da74539e
+The input capsule's maximum individual stack frame is464B. There are no
+unsupported arithmetic instructions,undefined symbols,writable globals
+or newly allocated sections; old link extent limits and CSR checks pass.
+
+Initial build attempts correctly refused the overstrong assertion that
+EVERY non-GDN byte would be equal. Exactly THREE globalworker JALR
+immediates change because existing memcpy/memset bodies move in .gdn:
+PC2018c->memcpy;PC20fa4 and21828->memset. The corrected build requires
+EXACTLY these PCs,decodes both AUIPC/JALR targets,requires identical named
+helpers and compares all60 memcpy/52 memset instruction bytes exactly.
+All other non-GDN bytes remain identical. This is a verified relocation
+distinction,not an arithmetic tolerance or permission to change other code.
+
+The new candidate has NOT been installed. Its emitted runtime,full model
+normal+EOS/state,complete native lifetime,physical correctness and sustained
+performance still require qualification. The installed Pioneer is unchanged.
+
+Frozen default BUILD reruns62745/74042 both subsequently exited0; whole
+ELFs compare byte-for-byte and match the pins above. Main and clean role
+tests also both exited0:one positive and33 missing,defined-zero,foreign
+and late-binding refusals. These are syntax containment checks,not runtime.
+The independent partial comparison exits1 in both trees,as required by
+the real numerical mismatch; no full-native comparator was weakened.

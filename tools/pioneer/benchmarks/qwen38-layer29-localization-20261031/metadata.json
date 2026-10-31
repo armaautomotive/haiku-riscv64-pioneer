@@ -1,0 +1,25 @@
+{
+  "committed": 1,
+  "embedded": 1,
+  "guest_state_writes": 0,
+  "hidden": {
+    "sha256": "5a1c8478fea72b7a3d1acc63eecdebdb3fbdcf3c1f57166e04a3a19aa99ab784",
+    "words": 332800
+  },
+  "injected_products": 0,
+  "input": 248319,
+  "layers": 64,
+  "logits": {
+    "sha256": "81c3bfed510fdd8a74200250dba3887f3fc6596c9ebe2fbb69b796e0af9e37da",
+    "words": 248320
+  },
+  "pid": 32972,
+  "record": {
+    "sha256": "3ddd040aea71afba0434ea81f9e3be6ecf4280dc6b4260281f3f17081dc248d0",
+    "words": 64
+  },
+  "rows": 248320,
+  "runnerUp": 61798,
+  "scope": "PARTIAL_NATIVE_HOST_EMULATION_DATA_ONLY_NOT_FULL_RUN_STOP_END_PHYSICAL_OR_TPS",
+  "selected": 70253
+}

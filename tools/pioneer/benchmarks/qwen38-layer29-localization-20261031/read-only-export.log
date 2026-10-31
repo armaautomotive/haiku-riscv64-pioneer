@@ -1,0 +1,18 @@
+(lldb) process attach --pid 32972
+Process 32972 stopped
+* thread #1, queue = 'com.apple.main-thread', stop reason = signal SIGSTOP
+    frame #0: 0x0000000105e46fcc libclang_rt.asan_osx_dynamic.dylib`__asan::PoisonShadow(unsigned long, unsigned long, unsigned char) + 392
+libclang_rt.asan_osx_dynamic.dylib`__asan::PoisonShadow:
+->  0x105e46fcc <+392>: ldr    x11, [x10]
+    0x105e46fd0 <+396>: cmp    x12, x9
+    0x105e46fd4 <+400>: ccmp   x11, x9, #0x0, lo
+    0x105e46fd8 <+404>: b.hs   0x105e470b4               ; <+624>
+Target 0: (test) stopped.
+Executable binary set to "/private/tmp/pioneer-token-native-init-378b7pv5/test".
+Architecture set to: arm64-apple-macosx-.
+(lldb) script exec(compile(open("/private/tmp/pioneer-q38-read-native-trace-20261031-mx.py").read(),"/private/tmp/pioneer-q38-read-native-trace-20261031-mx.py","exec"))
+Process 32972 detached
+READ_ONLY_TRACE_FIELDS PioneerQ38ObservedTrace::Token [('hidden', 'std::__1::vector<unsigned int, std::__1::allocator<unsigned int> >'), ('logits', 'std::__1::vector<unsigned int, std::__1::allocator<unsigned int> >'), ('seen', 'std::__1::vector<unsigned char, std::__1::allocator<unsigned char> >'), ('record', 'std::__1::array<unsigned int, 64>'), ('input', 'unsigned int'), ('layers', 'unsigned int'), ('rows', 'unsigned int'), ('selected', 'unsigned int'), ('runnerUp', 'unsigned int'), ('embedded', 'bool'), ('committed', 'bool')]
+ACTUAL_TOKEN0_METADATA {'input': 248319, 'layers': 64, 'rows': 248320, 'selected': 70253, 'runnerUp': 61798, 'embedded': 1, 'committed': 1}
+EXPORTED_IMMUTABLE_PARTIAL_TOKEN0_DATA /private/tmp/pioneer-q38-native-token0-readonly-20261031-mx {'input': 248319, 'layers': 64, 'rows': 248320, 'selected': 70253, 'runnerUp': 61798, 'embedded': 1, 'committed': 1, 'scope': 'PARTIAL_NATIVE_HOST_EMULATION_DATA_ONLY_NOT_FULL_RUN_STOP_END_PHYSICAL_OR_TPS', 'pid': 32972, 'guest_state_writes': 0, 'injected_products': 0, 'hidden': {'words': 332800, 'sha256': '5a1c8478fea72b7a3d1acc63eecdebdb3fbdcf3c1f57166e04a3a19aa99ab784'}, 'logits': {'words': 248320, 'sha256': '81c3bfed510fdd8a74200250dba3887f3fc6596c9ebe2fbb69b796e0af9e37da'}, 'record': {'words': 64, 'sha256': '3ddd040aea71afba0434ea81f9e3be6ecf4280dc6b4260281f3f17081dc248d0'}}
+DETACHED_ORIGINAL_HISTORY_WITHOUT_GUEST_WRITES
