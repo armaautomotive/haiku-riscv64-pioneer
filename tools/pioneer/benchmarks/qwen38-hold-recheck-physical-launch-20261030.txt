@@ -1,0 +1,63 @@
+Qualified HOLD-recheck candidate: physical trial launch
+======================================================
+2026-10-30 local/2026-10-31 UTC. Goal ACTIVE;20tok/s UNMET.
+Last physical whole-model rate remains0.207893161tok/s. No new model speed,
+physical cancellation/cleanup or full-model numerical pass is claimed here.
+
+Completed source-only check,original handle76608 exit0
+------------------------------------------------------
+Exact USER f30f5654f8e5417fccedc5bd9bc6683edd3a16954dd55637b8f845e1cbb71ce6
+ran --preflight-source-only --host-timing on the Pioneer. Full SAME-open
+SHA authentication and all3551 learned parts/10653 raw page samples passed;
+planned padded learned bytes19399024640. Host timing valid1,total600841860us
+for the ENTIRE source-only diagnostic,not solely hashing,card load or TPS.
+All five ioctl timing buckets have ZERO calls. No accelerator was opened.
+During this check,the SAME SHA team532 accumulated CPU time;waiting/silence
+was observed on the original handle,never treated as a reason to restart.
+Completed unmodified stdout:qwen38-hold-recheck-physical-source-20261030.log
+ SHA0794efd1c6651dc7983578d9cc8269c9c87ded79976e09647fb19134f4ba10a5
+Completed unmodified stderr:qwen38-hold-recheck-physical-source-timing-20261030.log
+ SHA2366187305752933afa41a78a7febe143a486960e14584a6ad7f67a69cfc1bb3
+
+Guarded driver exchange,original handle52859 exit0
+-------------------------------------------------
+After completed native/independent-prefix gates in d3e761564d,staged exact
+e7ee73dcfab263e38012cfa9787e0ae3eba98476ec3aae51a5f3f50e977fbc95 updater
+ran --apply-token-hold-recheck ONCE. All existing hash,symlink,parent,owner,
+cold,FD,generation,quiesce and replacement/wait guards remained active.
+Actual observed transition:
+ stable041/tag2026102100010012/gen2/clean
+ ->quiesced1/owner0/cold0
+ ->candidate tag2026103000010074/gen3/quiesced0/cold0/owner0/open1/guard1.
+Actual installed file SHA after the verified reload:
+ 781ab93300d1a8418cd752ae0728090c9e2c470a53320eafe22e4f3d3b8706d2
+No reboot or GPU computation occurred during the exchange. Prior d784
+mapping/helpers remain untouched;they are not this image's restoration path.
+Completed unmodified log:qwen38-hold-recheck-physical-install-20261030.log
+ SHA17247ecbea20aa94cd2882a65933f35be28190bd19042d4ac3594509d2496885
+
+ONE hardware diagnostic is LIVE,not a pass
+-----------------------------------------
+Original handle54721;exact staged f30f client above;argv ONLY:
+ --validate-cancel-boundary --host-timing
+This deliberately performs its OWN same-open full authentication before
+opening the card,then uploads all original learned parts before native Start.
+The source-only process is not reused as an authentication or ownership grant.
+Live stdout:/private/tmp/pioneer-q38-hold-recheck-cancel-physical-ge.log
+Live stderr:/private/tmp/pioneer-q38-hold-recheck-cancel-physical-ge.stderr.log
+Only the initial cancellation-diagnostic banner was observed at launch.
+No upload,Start,cancel,terminal,HOLD,drain or Finish result is supplied by
+this report. Live logs are NOT archived as completed runtime evidence.
+
+Continue the SAME handle;never restart on silence/observation timeout.
+Do not query reload/admin status while active:an extra card FD can perturb
+the sole-owner/open-count checks. Read-only process/sysinfo diagnostics are
+separate. Any failed/uncertain operation closes only;no implicit Cancel/END,
+device retry,reset,unload or automatic rollback. Only known-clean terminal
+metadata permits e7ee --restore-token-hold-recheck to stable041. Retained/
+cold resources require the standing OFF-once/wait/check/ON-once recovery,
+then a fresh clean restore. No mains,SD/card/cable change or disk repair.
+The diagnostic74 driver does not advertise legacy Assistant Work;restore
+the stable driver after the trial rather than leaving it as a Work backend.
+Full64/multitoken/state/positive readout/reuse,no-CPU-reference native Work,
+Assistant integration and sustained physical throughput remain owed.
