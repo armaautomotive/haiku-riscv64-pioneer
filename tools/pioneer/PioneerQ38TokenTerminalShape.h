@@ -2,6 +2,17 @@
 #ifndef PIONEER_Q38_TOKEN_TERMINAL_SHAPE_H
 #define PIONEER_Q38_TOKEN_TERMINAL_SHAPE_H
 #include "PioneerQ38TokenLayout.h"
+// Equality of two already-read terminal DATA records only. In a native
+// recheck the previous record must belong to the SAME private owner and
+// actual accepted observation;this helper cannot supply that authority.
+// A regressed/unpublished or changed record is never a pending-PC excuse.
+static inline bool PioneerQ38TokenTerminalRecheckData(const uint32_t* current,const uint32_t* previous,uint32_t& word){
+ if(!current || !previous)return false;
+ if(current[0]!=PioneerQ38TokenLayout::TerminalMagic || previous[0]!=PioneerQ38TokenLayout::TerminalMagic){word=0;return false;}
+ if(current[1]!=1 || previous[1]!=1){word=1;return false;}
+ for(unsigned i=0;i<64;i++)if(current[i]!=previous[i]){word=i;return false;}
+ return true;
+}
 // DATA grammar only. The caller must separately authenticate the session,
 // source identity, SAME running native owner, coherent firmware publication,
 // live counters, ROOT STOP and all119 actual worker STOP receipts. This

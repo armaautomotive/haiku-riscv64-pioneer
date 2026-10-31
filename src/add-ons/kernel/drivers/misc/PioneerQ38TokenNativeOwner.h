@@ -626,9 +626,10 @@ private:
   r.secondPC=io.RuntimePcRead();
   if(r.secondPC==0x60000 || !PioneerQ38TokenPrograms::ProgramWord(0,r.secondPC,word) || !Sources(io,0))return Fail(io,r);
   if(!io.TokenMemoryReadChecked(0,T::TerminalLocal,terminal[0]))return Fail(io,r);
-  if(!terminal[0])return Sources(io,0) ? true : Fail(io,r); // actual unpublished marker: pending,NOT ready
+  if(!terminal[0])return recheck ? Fail(io,r) : Sources(io,0) ? true : Fail(io,r); // a published marker cannot regress
   if(terminal[0]!=T::TerminalMagic)return Fail(io,r);
   for(unsigned i=1;i<64;i++){r.word=i;if(!io.TokenMemoryReadChecked(0,T::TerminalLocal+i*4,terminal[i]))return Fail(io,r);}
+  if(recheck && !PioneerQ38TokenTerminalRecheckData(terminal,observedTerminal,r.word))return Fail(io,r);
   if(r.firstPC!=0x60004 || r.secondPC!=0x60004)return true; // publication may precede STOP;no terminal grant
   if(!PioneerQ38GraphCsrIdle(io) || !startup->ReadBoot(0,boot))return Fail(io,r);
   for(unsigned i=0;i<64;i++){uint32_t actual=0;r.word=i;
@@ -776,10 +777,26 @@ public:
   const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
   for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=b[i])return false;
   if(holding || held || !TerminalObserved() || !ExecutionStarted() || !Scope(io))return false;
-  r.started=1;r.phase=1;PioneerQ38TokenTerminalResult fresh;
+  r.started=1;r.phase=1;
   // Re-prove the SAME terminal and every worker in THIS call BEFORE the
   // first HOLD. Cached ready/counters alone can never authorize a reset.
-  if(!InspectTerminal(io,fresh,true) || !fresh.ready)return Fail(io,r);
+  // A successful pending observation is NOT a failed source/STOP check.
+  // Poll it finitely without accepting another PC or issuing any HOLD.
+  // An actual failed inspection still quarantines immediately;no retry.
+  const uint64_t recheckBegan=io.Q38CohortNow();uint64_t recheckPrevious=recheckBegan;
+  if(recheckBegan>UINT64_MAX-UINT64_C(30000000))return Fail(io,r);
+  bool rechecked=false;
+  for(unsigned poll=0;poll<65536;poll++){
+   if(!BootTime(io,recheckBegan,recheckPrevious))return Fail(io,r);
+   PioneerQ38TokenTerminalResult fresh;
+   const bool okay=InspectTerminal(io,fresh,true);
+   r.worker=fresh.worker;r.word=fresh.word;r.firstPC=fresh.firstPC;r.secondPC=fresh.secondPC;
+   if(!okay)return Fail(io,r); // diagnostic copies above are CPU DATA only
+   if(!BootTime(io,recheckBegan,recheckPrevious))return Fail(io,r);
+   if(fresh.ready){rechecked=true;break;}
+   io.Pause();
+  }
+  if(!rechecked)return Fail(io,r);
   const uint64_t began=io.Q38CohortNow();uint64_t previous=began;
   if(began>UINT64_MAX-UINT64_C(30000000))return Fail(io,r);
   holding=true;r.phase=2;

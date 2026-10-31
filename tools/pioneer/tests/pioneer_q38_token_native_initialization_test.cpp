@@ -3,6 +3,9 @@
 // zero RV32 instructions. OS/MMIO/GDDR endpoints are simulated. No synthetic
 // completion fabric,no old embedding/prefix producer and no completed token.
 #include "pioneer_q38_token_native_fixture_common.h"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_RECHECK_FIXTURE
+#include "pioneer_q38_token_native_hold_recheck_role.h"
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_BEGIN_FIXTURE
 #include "pioneer_q38_token_native_control_begin_role.h"
@@ -156,6 +159,9 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  bool executionMode=false;unsigned executionFault=0,executionArms=0,executionStarts=0,executionObserved=0;
  unsigned terminalFault=0;
  unsigned executionPcReads=0,executionFaultPcObserved=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_RECHECK_FIXTURE
+ unsigned holdRecheckPendingPCs=0,holdRecheckInjectedPCs=0;
+#endif
 #if defined(PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_READOUT_FLOW_FIXTURE)
  std::vector<unsigned> terminalHoldOrder;
 #endif
@@ -216,6 +222,13 @@ struct PioneerSessionIO:TokenNativeEndpoints {
   Touch();assert(runtimeCore<120);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
   if(!runtimeCore){assert(executionMode);executionPcReads++;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_RECHECK_FIXTURE
+   if(holdRecheckPendingPCs){
+    assert(executionCpu->pc==0x60004 && Core(0).coreReset==0x46800 && terminalHoldOrder.empty());
+    holdRecheckPendingPCs--;holdRecheckInjectedPCs++;
+    return 0x40010; // bad RAW frontend-PC observation ONLY;actual engine/history unchanged
+   }
+#endif
    if(executionCpu->pc==0x60000 && !executionFaultPcObserved)executionFaultPcObserved=touches;
    return executionCpu->pc;}
 #endif

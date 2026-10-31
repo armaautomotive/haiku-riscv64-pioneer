@@ -12,7 +12,7 @@ int main(){
  for(unsigned i=0;i<8;i++)base[12+i]=boot[8+i];
  for(unsigned i=0;i<16;i++)base[20+i]=boot[16+i];
  for(unsigned i=0;i<8;i++)base[36+i]=0xffffff00U+i;
- base[42]=base[38];unsigned accepted=0,refused=0;
+ base[42]=base[38];unsigned accepted=0,refused=0,rechecks=0,recheckRefusals=0;
  for(unsigned kind=0;kind<7;kind++){
   auto t=base;unsigned limit=kind==6?8192:kind==1?7:3,prompts=2;bool eos=kind==1,cancel=kind>=2 && kind<=5;
   t[2]=cancel?3:eos?2:1;t[3]=cancel?unsigned(kind==5):kind==6?8192:3;t[4]=cancel?0:t[3]-1;
@@ -22,6 +22,17 @@ int main(){
    return PioneerQ38TokenTerminalShape(term,identity,p,count,input,stop,requested);
   };
   assert(shape(t.data(),boot.data(),progress.data(),limit,prompts,eos,cancel));accepted++;
+  uint32_t failedWord=63;
+  assert(PioneerQ38TokenTerminalRecheckData(t.data(),t.data(),failedWord) && failedWord==63);rechecks++;
+  for(unsigned word=0;word<64;word++)for(unsigned bit=0;bit<32;bit++){
+   auto bad=t;bad[word]^=1U<<bit;failedWord=UINT32_MAX;
+   assert(!PioneerQ38TokenTerminalRecheckData(bad.data(),t.data(),failedWord) && failedWord==word);
+   failedWord=UINT32_MAX;
+   assert(!PioneerQ38TokenTerminalRecheckData(t.data(),bad.data(),failedWord) && failedWord==word);recheckRefusals+=2;
+  }
+  failedWord=63;
+  assert(!PioneerQ38TokenTerminalRecheckData(nullptr,t.data(),failedWord) && failedWord==63
+   && !PioneerQ38TokenTerminalRecheckData(t.data(),nullptr,failedWord) && failedWord==63);recheckRefusals+=2;
   for(unsigned word=0;word<64;word++)if(word<36 || word==38 || word==42 || word>=44)for(unsigned bit=0;bit<32;bit++){
    auto bad=t;bad[word]^=1U<<bit;assert(!shape(bad.data(),boot.data(),progress.data(),limit,prompts,eos,cancel));refused++;
   }
@@ -40,4 +51,5 @@ int main(){
   if(eos){assert(!shape(t.data(),boot.data(),progress.data(),limit,prompts,false,cancel));refused++;}
  }
  printf("PASS terminal DATA grammar%u normal/EOS/cancel-stage/context-boundary cases/%u bit/progress/identity/config/null refusals;NO native owner/publication/STOP/restore/END/Work grant\n",accepted,refused);
+ printf("PASS terminal recheck DATA equality%u accepted/%u current-or-previous bit/null refusals/first changed word retained;NO pending allowance for changed or unpublished terminal,NO native ownership/completion grant\n",rechecks,recheckRefusals);
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Compile/inspect tag74 and its unchanged NODRV controls. NEVER link/install.
+"""Compile/inspect tag74 and its qualified NODRV controls. NEVER link/install.
 
 This object has actual conventional driver entries. It is NOT deployment
 authority: full-model runtime, combined stack and safe lifecycle remain gates.
@@ -25,7 +25,9 @@ try:
 finally:
     sys.argv = saved
 nodrv = out/'nodrv-controls/pushed-token-context-NODRV.o'
-assert hashlib.sha256(nodrv.read_bytes()).hexdigest() == 'b7afc402f909eba8110902969c8b19955b35fcda8268bcf7ca96032c687b4cc5'
+# Intentional bounded-HOLD-recheck change;independent main/clean SDK builds
+# agree. Firmware arrays,old65 and inert ABI controls remain separately exact.
+assert hashlib.sha256(nodrv.read_bytes()).hexdigest() == '07f44e1fe85e7b280ba0762ba57a6dc65baa35cd77b05b529046cc4e374c61a6'
 args = [a for a in control['args'] if not a.startswith('-DPIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY=')]
 role = (project/'src/add-ons/kernel/drivers/misc/PioneerQ38TokenValidationRole.h').read_text()
 required = set(re.findall(r'!defined\(([A-Z_][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b', role))
@@ -103,5 +105,5 @@ for name, size in frames.items():
         inherited_large_frames += 1
 token_frames = [size for name, size in frames.items() if 'Token' in name]
 assert token_frames and max(token_frames) <= 2048
-print('PASS actual tag74 conventional driver object/bounded validation control reachable/all13 G3 arrays SHA-exact/2MiB RoPE/no CPU oracle+Work+TEST imports/unchanged byte-exact G3 NODRV controls/maxIndividualTokenFrame'+str(max(token_frames))+'/inheritedLargeFrames'+str(inherited_large_frames)+' bounded by authenticated old physical-body controls')
+print('PASS actual tag74 conventional driver object/bounded validation control reachable/all13 G3 arrays SHA-exact/2MiB RoPE/no CPU oracle+Work+TEST imports/qualified byte-exact G3 NODRV controls/maxIndividualTokenFrame'+str(max(token_frames))+'/inheritedLargeFrames'+str(inherited_large_frames)+' bounded by authenticated old physical-body controls')
 print(hashlib.sha256(obj.read_bytes()).hexdigest()+' token-validation-tag74-INSPECT-ONLY.o;COMPILE+INSPECT ONLY,NEVER link/install/invoke;full-model numerical/lifecycle/combined stack/physical/TPS qualification STILL OWED')

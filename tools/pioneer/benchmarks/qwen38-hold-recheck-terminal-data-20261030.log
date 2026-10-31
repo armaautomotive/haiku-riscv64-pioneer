@@ -1,0 +1,2 @@
+PASS terminal DATA grammar7 normal/EOS/cancel-stage/context-boundary cases/13900 bit/progress/identity/config/null refusals;NO native owner/publication/STOP/restore/END/Work grant
+PASS terminal recheck DATA equality7 accepted/28686 current-or-previous bit/null refusals/first changed word retained;NO pending allowance for changed or unpublished terminal,NO native ownership/completion grant

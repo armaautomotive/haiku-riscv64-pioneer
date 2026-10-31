@@ -38,6 +38,9 @@ struct TokenValidationTransport {
    const auto& r=static_cast<PioneerQ38TokenControl::Packet*>(data)->reply;
    printf("DEBUG74_CANCEL_UNTRUSTED_REPLY status%d version%u operation%u started%u ready%u unsafe%u complete%u stage%u\n",
     status,r.version,r.operation,r.started,r.ready,r.unsafe,r.complete,r.stage);
+   printf("DEBUG74_CANCEL_UNTRUSTED_DETAIL");
+   for(unsigned i=0;i<16;i++)printf(" %08x",r.detail[i]);
+   putchar('\n'); // RAW integer diagnostics ONLY,not a completion/cleanup grant
   } // logging ONLY;the session independently validates every accepted reply
   return status==0;
  }

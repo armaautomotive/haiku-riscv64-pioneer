@@ -28,6 +28,10 @@ static void CheckNativeHoldLayer(Fixture& f){
   for(unsigned i=0;i<16;i++){
    words[i]^=1;assert(!HoldQ38TokenNativeStopped(c,held) && io.touches==before);held=pristine;
   }
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_RECHECK_FIXTURE
+  assert(!io.holdRecheckPendingPCs && !io.holdRecheckInjectedPCs);
+  io.holdRecheckPendingPCs=3; // two pending inspections,then actual positive PCs;NO new terminal/owner/CPU state
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_OPERATIONS_FIXTURE
  }
  const bool okay=CheckNativeControlOperation(f,PioneerQ38TokenControl::Hold,true,held);
@@ -41,6 +45,10 @@ static void CheckNativeHoldLayer(Fixture& f){
   assert(okay && held.started && held.ready && held.held==120 && !held.unsafe && state->TerminalHeld()
    && state->TerminalObserved() && !state->Closed() && !state->Unsafe() && !c.q38Dispatch->rootRunning
    && io.TokenModelSourceScope(false));
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_RECHECK_FIXTURE
+  assert(!io.holdRecheckPendingPCs && io.holdRecheckInjectedPCs==3 && cpu.pc==0x60004);
+  puts("PASS native HOLD after3 RAW pending frontend-PC observations/two pending inspections/SAME genuine ROOT+119STOP history/no HOLD before positive exact terminal proof;NOT physical cause diagnosis or full-model/TPS proof");
+#endif
   const unsigned touches=io.touches;PioneerQ38TokenHoldResult again;PioneerQ38TokenTerminalResult observed;
   PioneerQ38TokenExecutionResult execution;PioneerQ38TokenMemoryResult old;
   assert(!HoldQ38TokenNativeStopped(c,again) && !ObserveQ38TokenNativeTerminal(c,observed)

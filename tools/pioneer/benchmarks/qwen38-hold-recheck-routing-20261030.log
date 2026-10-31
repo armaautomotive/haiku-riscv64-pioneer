@@ -1,0 +1,2 @@
+PASS actual token NODRV routing/8 allowed/65528 denied selectors/all65536 wrongUID+nullFD+badMagic refusals/pointer+length passed unchanged/NO Work fallback;HANDLER STUBS ONLY,not native lifecycle,model,physical or TPS proof
+PASS actual token tag74 routing/9 allowed/65527 denied selectors/all65536 wrongUID+nullFD+badMagic refusals/pointer+length passed unchanged/NO Work fallback;HANDLER STUBS ONLY,not native lifecycle,model,physical or TPS proof

@@ -1,0 +1,102 @@
+Bounded terminal-to-HOLD recheck: offline preparation
+====================================================
+2026-10-30 local. Goal ACTIVE;last physical0.207893161tok/s;20 UNMET.
+NO Pioneer/device/power/SD/Assistant/boot/NIC/kernel deployment this turn.
+Stable041/tag12/gen2 is still the last verified installed driver. This is
+NOT a physical fix,positive native lifecycle,full-model or speed result.
+
+Implemented source change
+-------------------------
+The physical f490 checkpoint failed in HoldStopped phase1's fresh terminal
+recheck. Its inner observer result was not logged,so its exact cause remains
+UNPROVED. Independently,the extracted old method treats a successful pending
+observer result as a fault. The new method polls that known pending result
+under BOTH65536-inspection and30s monotonic bounds BEFORE any HOLD. Actual
+failed inspection,scope loss,clock regression or exhaustion still fails
+immediately and retains resources;it never retries a failed device operation.
+Only the unchanged exact positive terminal/ROOT/all119 STOP proof can reach
+the unchanged ROOT-first120-HOLD sequence. No PC range was widened.
+
+Recheck is stricter than ordinary unpublished observation:after a prior
+accepted terminal,a zero marker is a HARD failure. Every already-read one
+of64 terminal words must equal the SAME private accepted snapshot BEFORE
+pending-PC allowance. A changed/disappeared record cannot be hidden by a
+pending PC. The small equality helper is DATA only,not a caller-ready,
+source,publication,STOP or ownership grant. The final positive observer's
+existing full checks remain. Failed inner worker/word/PC DATA is copied into
+the existing HOLD result fields;the result layout/reserved fields are unchanged.
+The USER cancellation logger now prints all16 UNTRUSTED detail words without
+using them to authorize anything. Normal diagnostic stdout is unchanged.
+
+Completed bounded tests (not model/native/physical proof)
+--------------------------------------------------------
+Paired ASan/UBSan tests execute the extracted actual HOLD and UNCHANGED
+clock method with MOCK observer/guard endpoints:5 positives/33 refusals.
+The frozen f490 old method reproduces pending-as-fault. New pending counts
+0,1,2,17,65535 precede exactly120 ordered HOLD calls;65536 pending,actual
+inspection failure,scope loss,clock regression/overflow/deadline and invalid
+entry results never issue HOLD or a following observation after failure.
+The before-fix excerpt is SHA-pinned,not read from a moving HEAD.
+
+Paired terminal DATA tests retain the original7 normal/EOS/cancel/context
+cases and13900 old refusals. New exact-snapshot DATA checks pass7 positives/
+28686 current-or-previous bit/null refusals with first changed-word DATA.
+They do NOT supply actual terminal records to a native controller.
+Paired TEST-role/CLI checks:1 positive/37 missing+zero+two+foreign refusals,
+10 early CLI refusals,no compiler/runtime/output creation for bad selectors.
+The physical role regression initially caught the new TEST selector missing
+from its forbidden list. It was added explicitly,including defined0;the
+unchanged gate then passes3 positives/750 refusals. No guard/count was relaxed.
+Paired old routing and USER over-MOCK128-case lifecycle regressions also pass.
+
+Final paired SDK/build evidence
+-------------------------------
+Both actual G3 NODRV builds pass all13 firmware array hashes,2MiB RoPE,
+old65 exact61faa093 and inert ABI controls. Intentional kernel control-code
+change updates the exact NODRV pin from b7afc402 to:
+ 07f44e1fe85e7b280ba0762ba57a6dc65baa35cd77b05b529046cc4e374c61a6
+Final actual public objects BYTE-IDENTICAL:
+ 28e15da7306cf286b4aad0a8112612fce1ceb431f8a75943569dfb8caf4efb7f
+Final linked modules BYTE-IDENTICAL:
+ 781ab93300d1a8418cd752ae0728090c9e2c470a53320eafe22e4f3d3b8706d2
+Final USER binaries BYTE-IDENTICAL:
+ f30f5654f8e5417fccedc5bd9bc6683edd3a16954dd55637b8f845e1cbb71ce6
+Object7d0c43212e6f54a9566900098d8ffe837a0d63850a0df83c7eb4d6ac83214ce1
+Token individual frame1232;USER4432. Actual public ProbeControl call graph:
+known module chain5392B/497 nodes/25 unresolved kernel+indirect targets.
+Unknown syscall/IRQ/entry costs are EXCLUDED,NOT zero;NOT whole-kernel
+stack qualification. Metadata-only compile object stays byte-identical.
+All hash guards remain exact;no digest override or unpinned build option.
+
+Independent final source snapshots:git archivef490 plus15 cmp-verified
+owned files (later exact SDK-pin-only updates,not runtime C++ changes):
+ /private/tmp/pioneer-q38-hold-final-main-gb.WXVoQYzT
+ /private/tmp/pioneer-q38-hold-final-clean-gb.wYS5j7lH
+Final module builds58161/3172 BOTH terminal0. Build logs differ ONLY in
+printed output-directory prefixes;a READONLY normalized comparison passes.
+Original logs are preserved unmodified. All other archived log pairs raw-match.
+
+Native runtime still PENDING;do not install
+------------------------------------------
+Two fresh final GB histories38672/35834 are LIVE,NOT passes. Each uses
+authenticated original851 model bytes,actual zero ROM,virgin119 G3 workers,
+original first-layer/cancel/STOP,then3 deliberately BAD RAW frontend-PC
+observations (two pending inspections) before actual positive PC/terminal
+proof,120 HOLD and ALL existing full-END checks. The actual CPU PCs/history,
+terminal words,ready and arithmetic results are NOT supplied/transplanted.
+They still need actual completion plus independent original-prefix comparison.
+Logs:/private/tmp/pioneer-q38-hold-final-native-{main,clean}-gb.log
+Outputs:/private/tmp/pioneer-q38-hold-final-main-gb-out.82ZBUd6Z/prefix-0.bin
+ /private/tmp/pioneer-q38-hold-final-clean-gb-out.Wt6qWg0a/prefix-0.bin
+
+Earlier draft histories85117/75639 lacked the later strict terminal-snapshot
+guards. They were INTENTIONALLY terminated as superseded,not counted as test
+passes or assertion failures. Exact childPIDs65250/65546 were revalidated
+before SIGTERM. Original5 full-model and both final GB histories untouched.
+Their partial logs remain outside this checkpoint. No restart on a slow poll.
+
+Existing updater still pins OLDd784 and will refuse this new module;do NOT
+try to use it for781ab. After final native qualification,prepare/test an exact
+new guarded apply+restore transition,then one measured cancellation trial
+with raw diagnostics. Full64/multitoken/state/readout/END/Work/Assistant and
+real sustained throughput qualification remain owed. No speedup is claimed.
