@@ -3,7 +3,8 @@
 #define PIONEER_Q38_TOKEN_CONTROL_PACKET_H
 #include <stddef.h>
 #include <stdint.h>
-// Fixed DATA grammar for the private compile-only adapter. No ioctl number,
+// Fixed DATA grammar shared by the private adapter and bounded validation.
+// No ioctl number,
 // support/Work advertisement, addresses, code, CPU products or ownership grants.
 namespace PioneerQ38TokenControl {
 enum {Magic=0x33544351,Version=1,Context=8192,Vocabulary=248320,Batch=64,RecordWords=64};

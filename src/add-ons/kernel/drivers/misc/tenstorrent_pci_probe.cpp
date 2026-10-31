@@ -7,6 +7,9 @@
 #ifdef PIONEER_Q38_TOKEN_NATIVE_ROLE_TAG_OK
 #error Internal token NODRV witness cannot be supplied by the caller
 #endif
+#if defined(PIONEER_Q38_TOKEN_VALIDATION_NATIVE) && !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT)
+#error Token physical validation cannot substitute an old driver role
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
 #include "PioneerQ38TokenNativeRole.h"
 #if defined(PIONEER_Q38_TOKEN_NATIVE_VIEW_ENDPOINT_TEST)
@@ -30,6 +33,9 @@
 #define PIONEER_Q38_TOKEN_NATIVE_ROLE_TAG_OK 1
 #else
 #define PIONEER_Q38_TOKEN_NATIVE_ROLE_TAG_OK 0
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026103000010074ULL && !PIONEER_Q38_TOKEN_NATIVE_ROLE_TAG_OK
+#error Reserved token tag74 requires its exact separate validation role
 #endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x51544b4e4f445256ULL && !PIONEER_Q38_TOKEN_NATIVE_ROLE_TAG_OK
 #error Reserved QTKNODRV tag requires its exact renamed-ABI native token compile perimeter
@@ -8355,8 +8361,12 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	if (geteuid() != 0 || instance==NULL || instance->magic!=0x50313030)
 #include "PioneerQ38MixedLiveNativeRouting.inc"
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
- // QTKNODRV retains genuine PRIVATE bank/clock/FD source constructors,
- // but cannot route compute,old Work or the unfinished token lifecycle.
+ // NODRV retains only PRIVATE bank/clock/FD source constructors. The
+ // distinct tag74 role additionally routes its bounded validation only.
+#ifdef PIONEER_Q38_TOKEN_VALIDATION_NATIVE
+ if(operation==TT_PCI_PROBE_Q38_TOKEN_VALIDATE)
+  return Q38TokenNativeControl(instance,data,length);
+#endif
  if(operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
   return DriverReloadControl(instance,operation,data,length);
  if(operation==TT_PCI_PROBE_Q38_BANK_SUPPORT || operation==TT_PCI_PROBE_Q38_BANK_BEGIN || operation==TT_PCI_PROBE_Q38_BANK_END)

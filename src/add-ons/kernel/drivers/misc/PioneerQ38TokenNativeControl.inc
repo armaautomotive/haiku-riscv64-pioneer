@@ -2,7 +2,11 @@
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
 #include "PioneerQ38TokenNativeRole.h"
 #include "PioneerQ38TokenControlPacket.h"
-// Private adapter ONLY. Deliberately has NO public ioctl route or capability.
+#ifdef PIONEER_Q38_TOKEN_VALIDATION_NATIVE
+#include "PioneerQ38TokenValidationProtocol.h"
+#endif
+// Shared native adapter: private NODRV tests, or the separate tag74 bounded
+// validation ioctl. Neither selection grants an Assistant/Work capability.
 // One genuine FD/team/thread lock covers execution AND reply copy. A failed
 // reply cannot race disposal/replacement of its context by another operation.
 template<class Result> static void Q38TokenControlDetail(PioneerQ38TokenControl::Reply& reply,const Result& result){
@@ -23,7 +27,11 @@ Q38TokenNativeControl(PioneerProbeCookie* cookie,void* data,size_t length){
  if(status!=B_OK || thread.team!=cookie->team)return status!=B_OK?status:B_NOT_ALLOWED;
  auto* packet=new(std::nothrow) P::Packet;if(!packet)return B_NO_MEMORY;
  status=user_memcpy(packet,data,sizeof(*packet));
- if(status!=B_OK || !P::RequestShape(*packet)){delete packet;return status!=B_OK?status:B_BAD_VALUE;}
+ if(status!=B_OK || !P::RequestShape(*packet)
+#ifdef PIONEER_Q38_TOKEN_VALIDATION_NATIVE
+  || !PioneerQ38TokenValidation::RequestShape(*packet)
+#endif
+ ){delete packet;return status!=B_OK?status:B_BAD_VALUE;}
  PioneerQ38TokenCallScope scope(cookie);auto& reply=packet->reply;const auto& request=packet->request;
  reply.version=P::Version;reply.operation=request.operation;status=B_NOT_ALLOWED;bool retainOnCopyFailure=false;
  if(auto* c=scope.Context()){

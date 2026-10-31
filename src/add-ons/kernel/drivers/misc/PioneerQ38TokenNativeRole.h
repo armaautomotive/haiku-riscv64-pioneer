@@ -1,4 +1,12 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_TOKEN_VALIDATION_NATIVE
+#include "PioneerQ38TokenValidationRole.h"
+#else
+#ifndef PIONEER_Q38_TOKEN_NATIVE_ROLE_KIND_H
+#define PIONEER_Q38_TOKEN_NATIVE_ROLE_KIND_H
+enum {PioneerQ38TokenNativePhysicalSelection=0};
+#endif
+static_assert(PioneerQ38TokenNativePhysicalSelection==0,"late physical-to-NODRV token role change");
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
 #error QGW3 receiving ROOT BUILD is not native token authority
 #endif
@@ -81,3 +89,4 @@ static_assert(PioneerQ38TokenNativeProfile==1,"late QTP1 native profile change")
  || defined(PIONEER_Q38_FFN_HOST_PROFILE) || defined(PIONEER_Q38_FFN_SEALED_PROOF) || defined(__FAST_MATH__)
 #error Token native compile context cannot alias old native/image/CPU oracle/Work roles,including defined0
 #endif
+#endif // distinct physical validation OR exact NODRV,never a promotion

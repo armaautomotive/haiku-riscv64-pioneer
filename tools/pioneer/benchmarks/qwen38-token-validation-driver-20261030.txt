@@ -1,0 +1,90 @@
+Distinct bounded full-token validation driver: SDK inspection checkpoint
+======================================================================
+2026-10-30. Source implementation plus OFFLINE compiler/grammar/routing
+qualification ONLY. NO module linking, installation, device execution,
+Assistant capability, measured speedup or Work grant at this checkpoint.
+Goal active; last measured physical whole-model rate0.207893161 tokens/sec;
+20 tokens/sec UNMET.
+
+Implementation
+--------------
+PIONEER_Q38_TOKEN_VALIDATION_NATIVE=1 selects the separate exact physical
+diagnostic role/tag0x2026103000010074, conventional driver ABI and23 exact
+native parents. It selects the corrected default G3 family, NOT the
+experimental eight-way or boot-fold image. No default program bytes changed.
+Original G1/G2/G3 NODRV roles still require CompileOnly and renamed entries.
+Compile-time role-kind/profile binding refuses late retagging in either
+direction, even after redefining every selector and all ABI aliases.
+
+ProbeControl adds ONLY B_DEVICE_OP_CODES_END+0x6603 for this distinct role.
+The existing bank/span/reload constructors remain. No old Work or generic
+compute fallback. The real native adapter checks root/FD/team, copies the
+49344B packet ONCE into heap storage, then checks BOTH common grammar and
+the diagnostic restriction against that SAME snapshot before locking.
+Start is fixed2prompts[248319,17], total3positions, no EOS; Read<=3records.
+Observe/Cancel/Hold/Read/Finish use existing actual FD/team/thread/global-
+lock scope, with reply copy under the SAME lock. Lost/uncertain replies keep
+owners, with no automatic retry/reset/cancel/END or following device IO.
+No CPU reference implementation enters the kernel.
+
+Offline paired checks
+---------------------
+run_pioneer_q38_token_validation_tests.py exits0 in main and clean archive:
+- ASan/UBSan packet:9 positives/12340 refusals/every49344B packet word
+  mutated/fixed prompts+positions/EOS/read cap.
+- C++ -fsyntax-only role:3 positives/738 missing+zero+two+late+old-tag+
+  renamed-ABI+CPU+Work+TEST+NODRV transition refusals. Fixture alias coverage
+  is checked against actual token fixture selectors, not an arbitrary count.
+- Verbatim ProbeControl routing:all65536 selectors checked in each role;
+  NODRV8allowed/65528denied,tag74 9allowed/65527denied. ALL selectors refuse
+  wrong UID/null FD/bad magic before any handler; pointer+length unchanged.
+  HANDLERS ARE STUBS: this is NOT lifecycle or numerical execution proof.
+- Original packet grammar, old21-parent NODRV role and prefix routing
+  regressions pass unchanged.
+Main/clean unit logs byte-identical:
+qwen38-token-validation-offline-20261030.log
+SHA256:bfd7371ff2537975fc4d302ccac25b6511ab96bd512c2bfb8cf28455a8cbc3b3
+
+Actual Haiku riscv64 SDK builds
+------------------------------
+run_pioneer_q38_token_validation_native_compile.py QUALIFIED FRESH_ABS_OUT
+exits0 in main and clean archive8f48f0279f plus ONLY cmp-verified owned files.
+It recompiles the authenticated old65/resident/G1/G2/G3 controls first.
+G3 NODRV object stays BYTE-IDENTICAL:
+b7afc402f909eba8110902969c8b19955b35fcda8268bcf7ca96032c687b4cc5
+New object compiles actual tenstorrent_pci_probe.cpp with conventional ABI,
+not a fixture/wrapper. Actual ProbeControl->Q38TokenNativeControl call
+relocation is required inside the emitted route, not mere handler emission.
+All13 G3 arrays are extracted and SHA-exact; complete2MiB RoPE present;
+no CPU oracle/Work/test-engine symbols or libm imports. Actual5 ordinary
+entries are non-inert, while old NODRV entries remain independently inert.
+Max individual Token frame1232. The sole>2048 frame is the existing2560B
+BlackholeDramSamplesProbe, independently equal to the authenticated old65
+physical-body control. An initial checker compared only private NODRV,
+where this normal hardware-init function is absent, and correctly stopped;
+the corrected checker also compares the real old physical-body frames.
+No stack threshold, compiler flag or production function was weakened.
+Combined native/kernel/IRQ stack is STILL NOT qualified by these frames.
+
+Both new objects byte-identical SHA256:
+0e1dab1b8d78cba77244e3e98aedb3bf14358c7bd5219fc0add98e612fbb6762
+Main:/private/tmp/pioneer-q38-token-validation-sdk-fv.uK4bTebZ/qualified-observed
+Clean:/private/tmp/pioneer-q38-token-validation-clean-fv.3ZxJelQ6/sdk-final-observed
+Complete raw SDK logs:qwen38-token-validation-sdk-20261030.log and
+qwen38-token-validation-sdk-clean-20261030.log. All36 lines match after
+normalizing ONLY their owned SDK-output directory in the old-control
+object pathname on line3; all object digests and remaining text unchanged.
+
+Still required before deployment
+--------------------------------
+Full-model numerical/token/state/terminal/END proof, positive committed
+readout through the native copied adapter, appropriate combined-stack and
+lifecycle qualification, the authenticated user-side uploader/diagnostic
+client, then controlled hardware qualification. This object is NOT a
+qualified module to install. Actual no-CPU-reference Assistant Work mode
+and sustained physical speed benchmarks remain separate unfinished work.
+
+Read-only pinned SSH confirms Haiku responsive,64CPUs,maxRAM137034936320B,
+free133746651136B,uptime3days2:00. No OS/driver/Assistant/power/SD/hardware
+changes this turn. The original five full-flow handles remain live;native
+41236 has advanced to position0/layer20,not a complete token or full64 pass.

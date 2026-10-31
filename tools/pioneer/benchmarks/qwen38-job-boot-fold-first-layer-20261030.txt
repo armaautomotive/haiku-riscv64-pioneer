@@ -1,0 +1,57 @@
+Boot-fold ROOT: completed first-layer numerical qualification
+===========================================================
+2026-10-30. HOST instruction emulation, NOT a physical speed benchmark.
+Supersedes the pending numerical section of the earlier first-layer WIP
+report. Goal active; last physical whole-model rate0.207893161 tokens/sec;
+20 tokens/sec remains UNMET.
+
+Original main93073 and clean54102 both terminated exit0 on their original
+histories. Do not poll or restart those completed handles. Each authenticated
+the full SAME-open original27B GGUF, removed synthetic learned words, ran
+the actual original embedding and all8 layer0 matrix roles with SAME119
+workers, then saved5120 final words after all119 genuine closures.
+Four intentional original-fabric negative child assertions precede PASS4
+and successful parent execution. No assertion or arithmetic was bypassed.
+
+Each independent strict comparison against the unchanged hash-pinned CPU
+corpus passed:5120 embedding words plus5120 layer0 words, ZERO bit
+differences, maxAbsolute0, relativeL20. No tolerance or diagnostic override.
+CPU reference products were not supplied to the executing workers. The
+durable copies were each independently compared again, also exit0.
+
+Main and clean runtime logs are byte-identical,42 lines,SHA256:
+4db7b6081f7959bf1939a0c1af092287e67d3207c38738e82c6411bbc77de826
+Archive:qwen38-job-boot-fold-first-layer-20261030.log
+Identical comparison reports:qwen38-job-boot-fold-first-layer-compare-20261030.log
+SHA256:8e2e6a371b044f8db5d982159dc17c0163fcaf5ee90864886d6ab6a01282ab94
+Each41028B prefix-0.bin SHA256:
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+Durable paths relative to repository:
+generated.pioneer/qualification-inputs/observed-job-boot-fold-layer-20261030-fv/main
+generated.pioneer/qualification-inputs/observed-job-boot-fold-layer-20261030-fv/clean
+
+This candidate executed201376250 ROOT instructions in the host emulator,
+including simulated polling, versus208433598 for the earlier eight-way
+image's corresponding first-layer run. This is NOT physical cycles or TPS.
+Reserved/written stack6672 applies only to this emulated path, not the
+native combined kernel stack. Prior GDN/KV unchanged; next state retained;
+zero token commits and no positive terminal/STOP/END capability.
+
+Exact candidate ELF SHA256:
+430b89b2fb734bfb66bbe96cc1e8581fcd6476d263a2578b8e869936df4bc1c7
+Main image:/private/tmp/pioneer-q38-job-boot-fold-table-eight-fp-image
+Clean image:/private/tmp/pioneer-q38-job-boot-fold-clean-eight-fr-image
+Worker:generated.pioneer/qualification-inputs/mixed-worker-20261030
+G3 worker:/private/tmp/pioneer-q38-push-worker-main-20261030-af-image
+GGUF SHA256:c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+Runner:run_pioneer_q38_job_boot_fold_connected_tests.py IMAGE OLD G3 MODEL
+  --first-layer-only --observed-trace FRESH_ABSOLUTE_DIRECTORY
+Comparison:compare_pioneer_q38_observed_trace.py CPU_CORPUS OBSERVED
+  --first-layer-only
+
+The candidate remains an isolated source patch and explicit host TEST
+profile. It has NOT replaced default native programs or been installed.
+All64 layers/vocabulary/greedy tokens/multi-token state/STOP/END/native
+lifecycle/combined-stack/Assistant Work and physical throughput remain
+unproved by this diagnostic. Original full-flow sessions31695/66331/41236/
+92178/52159 were all confirmed still live on the SAME handles this turn.

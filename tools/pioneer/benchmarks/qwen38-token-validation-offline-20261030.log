@@ -1,0 +1,9 @@
+PASS fixed tag74 DATA packet/9 positives/12340 refusals/all packet words mutated/fixed2prompt+3position/noEOS+bounded3record trial;NOT native execution,ownership,physical,Work or TPS proof
+PASS token tag74 exact validation role/3 positives/738 missing+0+2+late+old-tag+renamed-ABI+CPU+Work+TEST+NODRV-transition refusals;compile ONLY,not module/runtime/physical/TPS proof
+PASS actual token NODRV routing/8 allowed/65528 denied selectors/all65536 wrongUID+nullFD+badMagic refusals/pointer+length passed unchanged/NO Work fallback;HANDLER STUBS ONLY,not native lifecycle,model,physical or TPS proof
+PASS actual token tag74 routing/9 allowed/65527 denied selectors/all65536 wrongUID+nullFD+badMagic refusals/pointer+length passed unchanged/NO Work fallback;HANDLER STUBS ONLY,not native lifecycle,model,physical or TPS proof
+PASS private token packet/11 shape positives/12486 atomic malformed+unused-prompt+caller-reply+record refusals/fixed49344B HEAP message;DATA grammar ONLY,no native/source/launch/terminal/cleanup/Work/physical/TPS authority
+PASS native QTKNODRV compile role/21 exact parents/6 renamed ABI names/38 old-native+image+CPU+Work aliases/278 undefined+zero+two+late refusals;NO link/install/runtime/physical authority
+PASS VERBATIM prefix NODRV routing/8 allowed/65528 denied opcodes/ALL65536 wrongUID+nullFD+badMagic refusals before handlers;NO old layer0,dense,Work or arbitrary-address fallback;HANDLER STUBS ONLY,NOT native/runtime/physical qualification
+PASS VERBATIM prefix physical73 routing/10 allowed/65526 denied opcodes/ALL65536 wrongUID+nullFD+badMagic refusals before handlers;NO old layer0,dense,Work or arbitrary-address fallback;HANDLER STUBS ONLY,NOT native/runtime/physical qualification
+PASS tag74 OFFLINE packet+role+routing and old packet+NODRV role+prefix routing controls;NO module load,lifecycle,original-model,physical or TPS proof
