@@ -1,0 +1,7 @@
+DEBUG74_HOST_TIMING valid1;HOST_WALL_ONLY_NOT_ACCELERATOR_CYCLES_OR_TOKEN_RATE
+DEBUG74_HOST_IOCTL upload_ioctl calls0 total_us0 max_us0
+DEBUG74_HOST_IOCTL startup_ioctl calls0 total_us0 max_us0
+DEBUG74_HOST_IOCTL observe_ioctl calls0 total_us0 max_us0
+DEBUG74_HOST_IOCTL cleanup_ioctl calls0 total_us0 max_us0
+DEBUG74_HOST_IOCTL other_ioctl calls0 total_us0 max_us0
+DEBUG74_HOST_PHASE total_diagnostic elapsed_us594734221

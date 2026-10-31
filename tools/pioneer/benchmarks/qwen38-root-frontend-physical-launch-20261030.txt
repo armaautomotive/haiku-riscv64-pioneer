@@ -1,0 +1,94 @@
+ROOT current-seal candidate: source authentication,install and ONE trial
+======================================================================
+2026-10-30 local/2026-10-31 UTC. Goal ACTIVE;20tok/s UNMET.
+Last physical whole-model rate remains0.207893161tok/s. This is a LIVE
+cancellation-lifecycle diagnostic,NOT a new full-model or speed result.
+
+Prerequisites actually completed before installation
+---------------------------------------------------
+Both ORIGINAL50859/5548 completed actual native instruction-engine first-
+layer/cancellation/119 STOP/current code+receipt seal under RAW60008/120HOLD/
+zero-commit drain/ALL11 Finish and destruction checks with exit0. EACH actual
+emitted prefix and durable copy independently matches the fixed CPU corpus
+with ZERO bit differences. Simulated endpoints,not physical speed proof.
+Recorded/pushed5f11947db2;kernel347630e30f;USER/updatera9c2fc8b58.
+
+Original7430 source-only3638 client on Haiku actually completed exit0.
+Full SAME-open original model SHA,3551 parts,10653 raw page samples and
+planned19399024640 padded learned bytes pass. Actual host-timing DATA:
+valid1,total594734221us;ALL upload/startup/observe/cleanup/other ioctl calls0.
+No accelerator Open or inference was performed by that mode. No timeout
+restart or second source-only launch. Unmodified archived stdout/stderr:
+ qwen38-root-frontend-source-only-20261030.log
+ SHA0794efd1c6651dc7983578d9cc8269c9c87ded79976e09647fb19134f4ba10a5
+ qwen38-root-frontend-source-only-timing-20261030.log
+ SHA5e32cc9e9148bf878fce64696c23fef70f1e7a5fc6145bd01e453be91dae71a2
+Do NOT poll completed7430 or native50859/5548/52868 again.
+
+Fresh preinstall checks passed:installed/backup stable041,exact5f2fc module,
+8bed updater,3638 USER,d1ce guard and b0c8 admin helper regular/nonlink/SHA-
+exact;metadata stable12/gen2/quiesced0cold0owner0open1guard1;64CPUs/full
+137034936320B RAM and no compute parent. Source-only parent had exited.
+Raw preinstall log:qwen38-root-frontend-preinstall-20261030.log
+SHAd1f3b41660b45316fb69193b0dcb4c4a9fe27093582d4b2ecf15549265983103
+
+Early administrative refusal diagnosed;NO guard weakened
+--------------------------------------------------------
+The first SSH wrapper put multiple commands/newlines in bash -c argv.
+The updater refused BEFORE its first admin open/backup/incoming/quiesce:
+ STOP_COMPUTE_PARENT_INVENTORY_UNPROVEN
+Actual read-only reproduction showed the live bash team name splitting
+across output lines. The continuation line has no team ID,so the unchanged
+strict inventory parser CORRECTLY refuses it. Installed hash still041 and
+driver.incoming absent. This was NOT a failed/uncertain GPU operation.
+Raw refusal and reproduction logs are preserved:
+ qwen38-root-frontend-install-refused-20261030.log
+ SHA337e1375da96768e6c8124bbca426c384f9c5daa02f8dfe55872161f64f4b2e7
+ qwen38-root-frontend-inventory-diagnostic-20261030.log
+ SHA9b0d902201cc7b92e65b3ac4d44b24e54fa587ed27d9c54a67bf063b9eac1862
+
+A single-line exec SSH wrapper removes that parent argv formatting issue.
+Read-only inventory then contains only valid ID/team rows and no compute
+parent. Its raw log:qwen38-root-frontend-inventory-single-line-20261030.log
+SHA72ef015e4e05f175bc52da962dae23f322a8eb1414b9f599b285ae44f5bf7b70
+No script code,filter,hash,owner,FD,cold,quiesce,wait or backup check changed.
+Original37964 then ran the exact UNCHANGED8bed --apply-token-root-frontend
+through single-line exec and completed exit0:stable12/gen2 ->74/gen3,clean
+quiesced0cold0owner0open1guard1;actual normal hot reload,NO reboot/GPU work.
+Raw log:qwen38-root-frontend-install-20261030.log
+SHA0fa632eda079e3179cd1b5e6e6c26b5e749dab0b1aa5fd2bf35678b3373351c3
+All external raw ps padding/newlines are retained unmodified;those three
+raw inventory logs are explicitly excluded from source-format lint only.
+
+Exact installed candidate and ONE original physical trial
+---------------------------------------------------------
+Fresh installed-file and staged-client/updater hashes independently match:
+ module5f2fc63de2c4413d54b7087e5b923113246bc7a7f09747d0d79915bf950bf039
+ updater8bed6bc0affa4157d021a37197f0442941be5d319979ed68c2ea1e0339e83346
+ USER3638b0bdbae8e5225c888146a880257c3ffecebf6ae046eba5b6d53f30e0e467
+Metadata actual tag2026103000010074/gen3/clean;unmodified check log:
+ qwen38-root-frontend-installed-20261030.log
+SHA728fe237151c973c3dd66d959f133cfd40aea19fef72c1ecd778fddb14f15608
+
+Then ONE original hardware trial58421 was dispatched around05:02:54UTC:
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-token-root-frontend-3638b0bd-DIAGNOSTIC-ONLY
+ argv --validate-cancel-boundary --host-timing
+Stdout:/private/tmp/pioneer-q38-root-frontend-cancel-physical-20261030-gj.log
+Stderr:/private/tmp/pioneer-q38-root-frontend-cancel-physical-timing-20261030-gj.log
+It is LIVE,not a pass. Initially only the diagnostic header is present:its
+SAME-open full authentication precedes device Open and upload. The prior
+source-only pass is NOT substituted for the file this new trial will use.
+No extra admin FD,second model launch,automatic cancellation after error,
+driver replacement,timeout restart,reset or implicit END while it is active.
+
+Poll the SAME58421 and inspect these same live logs. It must really prove
+terminal/HOLD/drain/all Finish/clean exit before any success or guarded
+stable restoration. On uncertainty it CLOSES ONLY and retains resources;
+do not retry,auto-END/hot-restore or reset behind a retained owner. Recover
+only by the standing controlled one-OFF/few-minutes-evidence/one-ON rules if
+needed;no SD/card/cable/mains changes are authorized or occurred here.
+After a clean completed trial,fresh no-parent/clean metadata is required
+before8bed --restore-token-root-frontend. Preserve64CPUs/fullRAM/Assistant/
+SD-free boot and continue full-model/Work/throughput work. Whole64-layer/
+multitoken/positive record/state reuse/native no-CPU-reference Work/Assistant
+and sustained physical20tok/s remain UNMET. Keep the full goal ACTIVE.

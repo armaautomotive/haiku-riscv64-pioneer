@@ -1,0 +1,40 @@
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
+5f2fc63de2c4413d54b7087e5b923113246bc7a7f09747d0d79915bf950bf039  /boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-token-root-frontend-5f2fc63d
+8bed6bc0affa4157d021a37197f0442941be5d319979ed68c2ea1e0339e83346  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-hot-swap-token-root-frontend-8bed6bc0.sh
+3638b0bdbae8e5225c888146a880257c3ffecebf6ae046eba5b6d53f30e0e467  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-token-root-frontend-3638b0bd-DIAGNOSTIC-ONLY
+d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133791170560 bytes free      (used/max 3243765760 / 137034936320)
+                           (cached   19166355456)
+     64486 semaphores free (used/max       1050 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3901 threads free    (used/max        195 /       4096)
+      2025 teams free      (used/max         23 /       2048)
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /boot/system/servers/net_server                    
+  104 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  105 /boot/system/servers/package_daemon                
+  109 /boot/system/servers/power_daemon                  
+  114 /boot/system/servers/launch_daemon baron           
+  116 /boot/system/servers/syslog_daemon                 
+  131 /boot/system/servers/media_server                  
+  178 /boot/system/servers/app_server                    
+  187 /boot/system/Tracker                               
+  189 /boot/system/Deskbar                               
+  208 /boot/system/servers/input_server                  
+  234 /boot/system/servers/media_addon_server            
+  284 /boot/system/servers/notification_server           
+  485 /boot/system/bin/screen_blanker                    
+  531 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  533 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  534 /boot/system/bin/ps -o Id -o Team                  
