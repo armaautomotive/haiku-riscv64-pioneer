@@ -1,0 +1,19 @@
+PASS separate tag75 diagnostic role/5 positive/1158 missing+zero+two+late/old74+NODRV+ABI+TEST+CPU+Work refusals;compile-only,NO runtime/install/Work/TPS grant
+PASS ACTUAL tag75 hidden handler/2 parts/raw NaN preserved/zero tail/4736 early shape refusals/all8192 changed fixed-prompt words refused/UID+FD+team+scope+full+partial copy faults/failed read DATA cleared/same-lock reply+retain/no following cleanup;LIFECYCLE+READER MOCK,not genuine native/model/physical/numerical/Work/TPS proof
+PASS token tag74 exact validation role/3 positives/780 missing+0+2+late+old-tag+renamed-ABI+CPU+Work+TEST+NODRV-transition refusals;compile ONLY,not module/runtime/physical/TPS proof
+PASS private QT3NODRV hidden readout role/2 positive/274 missing+zero+two+late/tag/ABI/CPU/Work/old-physical refusals;NO opcode,native,physical,Work or TPS grant
+PASS actual token NODRV routing/8 allowed/65528 denied selectors/all65536 wrongUID+nullFD+badMagic refusals/pointer+length passed unchanged/NO Work fallback;HANDLER STUBS ONLY,not native lifecycle,model,physical or TPS proof
+PASS actual token tag74 routing/9 allowed/65527 denied selectors/all65536 wrongUID+nullFD+badMagic refusals/pointer+length passed unchanged/NO Work fallback;HANDLER STUBS ONLY,not native lifecycle,model,physical or TPS proof
+PASS actual token tag75 routing/10 allowed/65526 denied selectors/all65536 wrongUID+nullFD+badMagic refusals/pointer+length passed unchanged/NO Work fallback;HANDLER STUBS ONLY,not native lifecycle,model,physical or TPS proof
+PASS actual DEBUG74 USER client header/1 positive/43 missing+zero+two+late+kernel+native+CPU+Work+encoding refusals;syntax ONLY,not source authentication,native,physical or TPS proof
+PASS extracted hidden READ methods/8 MOCK parts including raw NaN+counter rollover/42 early refusals/1057 retained faults/ALL120 source+FIFO+counter guards/128 post-copy metadata+120 counter faults/no partial publication/no following IO;NO native/model/physical/numerical/Work/TPS proof
+ACTUAL_HIDDEN_METHOD_SHA256 template<class IO> bool BootTime(4ea7a49be4d959a448d60eb98d35f3d5101279da9a7ed55060c461b987b8329c
+ACTUAL_HIDDEN_METHOD_SHA256 template<class IO,class Result> bool HoldGuard(75f91c9ba2171df06ccca8e2cca00973dbe64276571458f04374f23c06834739
+ACTUAL_HIDDEN_METHOD_SHA256 template<class IO> bool ReadIdle(1270a56fd812427e1ea1ae4a50781eae0fddbe6bbc3cb8ed2a2026fc93d08aff
+ACTUAL_HIDDEN_METHOD_SHA256 template<class IO> bool ReadFrontier(76a438e2f6394c0b603d93c6ad2393957e45eac324be05b186000666d9a0522b
+ACTUAL_HIDDEN_METHOD_SHA256 bool HiddenReadOutput(16626a00dbee9f434ea05d2a569fe7b465b6c00062b5cfbba45c4117bfe31eb0
+ACTUAL_HIDDEN_METHOD_SHA256 template<class IO> bool ReadHiddenPacket(fb2e4588e4dfc5c97534ea68985e89f8053d12780665c13fa98b3370ad8711e8
+ACTUAL_HIDDEN_METHOD_SHA256 template<class IO> __attribute__((noinline)) bool ReadHiddenChunk(5cbea052a9152092332ed579e2c6535aebb789059a140942395a1bb6e0f386d8
+EXTRACTED METHODS ONLY;ALL source/lifecycle/terminal/NoC endpoints are MOCK. NO genuine model/processor/native owner/physical/numerical/Work/TPS qualification.
+PASS private token packet/11 shape positives/12486 atomic malformed+unused-prompt+caller-reply+record refusals/fixed49344B HEAP message;DATA grammar ONLY,no native/source/launch/terminal/cleanup/Work/physical/TPS authority
+PASS held-hidden TEST gates/1 role positive/61 missing+zero+two+foreign role refusals/16 early CLI refusals/no output/compiler/runtime creation;NO native/model/physical/TPS grant

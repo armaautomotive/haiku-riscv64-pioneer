@@ -3,9 +3,8 @@
 // or caller-ready input. Exact two-part DATA snapshot of the SAME stopped
 // session's canonical final-hidden region. Existing records must be drained.
 #include "PioneerQ38TokenHiddenReadRole.h"
-#if !defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC != 1
-#error Explicit private held-hidden diagnostic required
-#endif
+static_assert(PioneerQ38TokenHiddenReadSelection==1 || PioneerQ38TokenHiddenReadSelection==2,
+ "Explicit private OR separate tag75 held-hidden diagnostic required");
 private:
  unsigned hiddenReadCursor=0;
  bool HiddenReadOutput(const void* output,size_t bytes)const{

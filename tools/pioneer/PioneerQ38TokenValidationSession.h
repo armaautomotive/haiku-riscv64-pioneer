@@ -4,6 +4,8 @@
 #endif
 #if defined(_KERNEL_MODE) || defined(PIONEER_ATTENTION_FREESTANDING) || defined(__FAST_MATH__) \
  || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_VALIDATION_NATIVE) \
+ || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_CLIENT) \
+ || defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) \
  || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_CPU_VALIDATION) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT)
 #error Diagnostic client cannot alias kernel,native,CPU oracle,changed weight encoding or Work roles,including defined0

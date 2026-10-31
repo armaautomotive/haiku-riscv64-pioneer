@@ -1,0 +1,133 @@
+Held-hidden native completion and separate tag75 diagnostic frontend
+===================================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. Last measured whole-model
+rate remains0.207893161 tokens/sec. NO new physical inference rate claimed.
+
+The TWO original GS histories actually completed,not restarted
+-------------------------------------------------------------
+Main6902 and clean28431,launched by9f6947ed34,BOTH actually exited0.
+Each authenticated its SAME-open original full851 model,executed the virgin
+ROOT+119 worker instruction histories through layer0,consumed cancellation,
+observed genuine terminal+119STOP,held ALL120,and drained zero records.
+The NEW two fresh FD/team/thread call scopes performed actual16384B+4096B
+held READs. ALL5120 returned words matched the SAME engine-written GDDR;
+37 early refusals added NO model write,history transplant or CPU product.
+ALL original restoration stages then ran:full-token L1,earlier dispatch,
+119 peer stores,ROOT store,shared controls,clock,hardware seal,29 VM views,
+PCI originals,3 host releases,device unreserve and whole-context destruction.
+These are genuine native controller/processor histories over SIMULATED
+OS/device endpoints,NOT a real-card numerical or public-tag75 runtime pass.
+The raw hidden result's terminalKind is3;do NOT confuse that native enum
+with the separately encoded USER terminal-stage field.
+
+Only AFTER actual exits0,the unchanged strict comparator independently
+compared EACH newly emitted prefix to cpu-original-trace-20261028:
+ /usr/bin/python3 tools/pioneer/tests/compare_pioneer_q38_observed_trace.py
+ CPU_DIRECTORY ACTUAL_OUTPUT_DIRECTORY --first-layer-only
+BOTH actually exited0,all5120 embedding and5120 layer0 words BIT-EXACT,
+zero differences,maxAbs0,relativeL20. NO tolerance/diagnostic-only option.
+Both prefixes SHA4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+Original paths remain in qwen38-hidden-native-launch-20261031.txt. Separate
+cmp-verified persistent copies now live at generated.pioneer/qualification-inputs/
+qwen38-hidden-native-complete-20261031.nbHHT7ic/{main,clean}/prefix-0.bin.
+This is first-layer ONLY,NOT all64 layers/normal+EOS/full-model qualification.
+
+NEW physical role,not promotion of old74 or private NODRV
+-------------------------------------------------------
+PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE=1 requires the exact distinct
+tag2026103100010075,ALL23 required parents,G3 programs and conventional ABI.
+Role-kind2 cannot retag already-selected74(kind1) or NODRV(kind0) types.
+Private held-hidden selection remains kind1;new physical hidden selection
+is kind2. Both recheck late includes and reject each other's selector,
+CPU-reference,Work,TEST endpoints and USER-client aliases,including defined0.
+Old74 additionally rejects the new native/client selectors. Its USER header
+also refuses both new selectors and private held-hidden contamination.
+
+Separate op6604 routes ONLY the existing6 fixed two-prompt/three-position
+diagnostic lifecycle operations. New op6605 routes ONLY two ordered chunks
+of the actual SAME held/drained canonical final-hidden region. No arbitrary
+bank,address,user pointer,CPU product,ready hint or Work selector is added.
+The pointer-free16576B packet is heap-only,with zero request padding,reply
+and4096-word output required. Part0 returns4096 words;part1 returns1024 with
+zero tail. Actual context/helper/owner source,cursor,aliases,NoC,counter,
+terminal and all120 HOLD checks remain;the arithmetic methods are unchanged.
+Reply copying shares the genuine FD/team/thread lock. Failed reads clear
+payload;failed full OR partial user-copy retains ownership when necessary,
+without retry,following IO,implicit cleanup,END,reset or CPU fallback.
+User memcpy is NOT atomic;a copy fault can expose a prefix of already
+validated/cleared DATA. No atomic user-publication claim is made.
+
+Final independent GU SDK builds and focused tests actually passed
+-----------------------------------------------------------------
+Frozen HEAD9f6947ed34 plus ONLY21 cmp-verified owned source/test files:
+ /private/tmp/pioneer-q38-hidden-physical-main-gu.WVC0RYR4
+ /private/tmp/pioneer-q38-hidden-physical-clean-gu.tZ6UA0Qc
+SDK98459/77152 and focused33952/9859 ALL actually exited0. Both actual
+conventional tag75 objects are BYTE-IDENTICAL,SHA
+ b3a6d7863ee7473e42cec4dcf13edb4faf60a6b326bf9a82747f39e26486bf05.
+Actual ProbeControl relocations reach BOTH handlers;actual hidden-handler
+relocation reaches the real context helper. All13 G3 firmware arrays and
+2MiB RoPE are exact;no CPU oracle,Work or TEST-engine imports. Individual
+new frames:handler304/helper336/reader544/packet304/alias176/failure80.
+This does NOT bound the combined kernel+entry+interrupt stack.
+Default G3 NODRV remains c78a84c7ec8f74c0f73f74e67579dfa94bcc71399145508fcb062619844c9b80;
+old physical74 remains772aafe8c1b47ddfd85f5608a96fa329562967359e23723d5277a30842f9432a.
+No module was linked,installed or invoked by the new SDK checker.
+
+Both frozen focused suites agree byte-for-byte:tag75 role5/1158 refusals;
+actual frontend over MOCK reader/lifecycle4736 malformed requests/all8192
+changed fixed-prompt words refused/full+partial copy faults;old74 role3/780;
+private reader role2/274;ALL65536 routing selectors at each NODRV/74/75 role
+with wrongUID/nullFD/badMagic refusals;old USER role1/43;actual extracted
+read methods8 MOCK parts/42 early/1057 retained faults;old packet11/12486;
+existing native hidden fixture1/61 role+16 early CLI refusals.
+The original old USER synthetic uploader/lifecycle suite also passed269 COW
+branches;it is MOCK source+OS evidence,not physical/source authentication.
+
+Initial failures remain failures
+--------------------------------
+The initial private-role sweep exposed missing new-client defined0 rejection;
+that guard was added before final frozen sweeps. The old USER role check
+initially expected10 forbidden selectors;it now asserts ALL13,explicitly
+including the three new aliases. No permission/guard was relaxed.
+Initial paired GT65155/85509 SDK checks actually exited1 AFTER successful
+compilation and unchanged default/74 controls:the real helper symbol was
+emitted,but GCC labelled its .su frame only constprop(...). The checker now
+requires the EXACT source-definition-bound static frame AND real handler
+relocation to that helper,not a missing/zero frame or skipped body check.
+Fresh GU full builds above completed0. Initial raw failure logs are retained.
+
+Complete unmodified evidence,cmp-checked with actual original logs
+-----------------------------------------------------------------
+qwen38-hidden-native-runtime-{main,clean}-20261031.log:both87lines,identical
+ SHA7ed31b38ab9f425843756ea0e1a657fb22987354db4acc0a8f2519319cd8517a
+qwen38-hidden-native-compare-{main,clean}-20261031.log:both identical
+ SHA8e2e6a371b044f8db5d982159dc17c0163fcaf5ee90864886d6ab6a01282ab94
+qwen38-hidden-tag75-sdk-initial-{main,clean}-20261031.log:
+ main695c9f868ce67a05dcb4c886c0c06821b74a683d05ac16a132958daed4a1868d
+ clean7dd9f183b8ea6371d5fb5414ee987d4a02b432a55ae2f291995974514a0e8621
+qwen38-hidden-tag75-sdk-{main,clean}-20261031.log:
+ main50d883ede034c5cc4ca5cbf55efbede5b226bd808663af7992f91f148c777241
+ clean62cf2a00d0044039012526545770850542d78dee84b8c12a7c621cbc8e0763b3
+Only source-root prefixes differ;read-only normalized comparison is exact.
+qwen38-hidden-tag75-tests-{main,clean}-20261031.log:both identical
+ SHA7f347e6c93d9cbd81e0c0b5943a3b095282dc0f7cc5971a4b373008f53228b41
+
+Pioneer unchanged and freshly verified by read-only SSH
+-----------------------------------------------------
+Installed041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403;
+tag2026102100010012/gen6/quiesced0/cold0/owner0/open1/guard1.64CPUs,
+maxRAM137034936320B/free133781614592B. qwen38-hidden-tag75-health-20261031.log
+ SHA0127fe8126cf96a2957045a05c5d104dcd26a8369fc97d24ef6125b99b98ab92.
+No physical trial,OS/driver/Assistant/power/SD/card/cable/mains mutation.
+Five original full-model histories31695/66331/41236/92178/52159 revalidated
+LIVE;not restarted or replaced by the completed first-layer histories.
+
+Next:implement separately selected tag75 USER upload/cancel/HOLD/drain/two
+chunk/readout/full-Finish client and malformed-reply/close-only tests;derive
+actual enum mappings instead of guessing terminalKind;qualify the complete
+public chain/stack and exact module/updater before real card capture. Use
+actual first-layer card DATA to locate the unexplained physical logit drift,
+without relaxing fixed numerical controls. Resident no-CPU-reference Work,
+normal+EOS state qualification,Assistant integration and honest sustained
+warm-generation performance remain owed. Keep the full goal ACTIVE.

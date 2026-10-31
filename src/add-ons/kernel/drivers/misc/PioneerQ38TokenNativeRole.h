@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
-#ifdef PIONEER_Q38_TOKEN_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE
+#include "PioneerQ38TokenHiddenValidationRole.h"
+#elif defined(PIONEER_Q38_TOKEN_VALIDATION_NATIVE)
 #include "PioneerQ38TokenValidationRole.h"
 #else
 #ifndef PIONEER_Q38_TOKEN_NATIVE_ROLE_KIND_H

@@ -28,7 +28,7 @@ assert not depth and 'Q38TokenNativeControl(instance,data,length)' in ''.join(se
 with tempfile.TemporaryDirectory(prefix='pioneer-token-validation-routing-', dir='/private/tmp') as temporary:
     out = pathlib.Path(temporary)
     (out/'token_actual_routing.inc').write_text(head+''.join(selected)+'\n}\n')
-    for physical in (0, 1):
+    for physical in (0, 1, 2):
         binary = out/('test'+str(physical))
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
                         '-fsanitize=address,undefined', '-DTOKEN_ROUTING_PHYSICAL='+str(physical), '-I'+str(out),

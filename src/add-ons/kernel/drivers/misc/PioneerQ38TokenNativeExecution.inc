@@ -85,7 +85,7 @@
  if(!c.io.TokenModelSourceScope(false))return false;
  return s->runtime->ReadCommitted(c.io,records,output,result);
 } // immutable committed DATA after genuine HOLD;NO CPU model reference,restore,END or public Work route
-#ifdef PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC
+#if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)
 #include "PioneerQ38TokenHiddenReadRole.h"
 [[maybe_unused]] static __attribute__((noinline)) bool ReadQ38TokenNativeHiddenChunk(PioneerStoreContext& c,unsigned part,
  uint32_t* output,unsigned words,PioneerQ38TokenHiddenReadResult& result){
