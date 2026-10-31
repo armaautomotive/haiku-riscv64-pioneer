@@ -1,0 +1,115 @@
+Held final-hidden readout: private implementation and completed SDK checks
+========================================================================
+2026-10-30 local / 2026-10-31 UTC. Goal ACTIVE;20 tokens/sec UNMET.
+Last measured whole-model rate remains0.207893161 tokens/sec. No new
+physical inference,installation,driver exchange,power/SD/mains action.
+
+Why this is necessary
+----------------------
+The real three-position card transaction in5203a39dad completed cleanly,
+but strict posthoc maximum-logit comparison FAILED at all three positions.
+The selected tokens match;that does not establish numerical correctness.
+This change makes an earlier physical arithmetic boundary observable in a
+FUTURE separate diagnostic. It does not change a tolerance,CPU control,
+model product,firmware array or Work mode to conceal that difference.
+
+Implemented private kernel path,not just a proposed packet
+---------------------------------------------------------
+PioneerQ38TokenHiddenRead.inc adds one ordered20480B snapshot in exactly
+two parts:16384B then4096B. The address/route derive ONLY from the SAME
+bound plan's bank/workspace plus canonical R::FinalOffset. No caller bank,
+address,arbitrary length,CPU product,ready flag or ownership receipt exists.
+All committed records must already be drained;actual terminal and120 HOLD
+must precede entry. Existing current source/FIFO/NoC idle/counter/command
+and complete terminal+boot frontier checks bracket each part. Known READ
+deltas advance the existing private command/counter journal,never a newly
+sampled baseline. Each part is staged and copied only after ALL120 final
+guards and the same frontier recheck. Raw bits,including NaNs,remain DATA.
+
+Buffer checks exclude runtime/metadata/original journals,all native context
+owners,initialization/hash ledgers,RoPE and output/result aliases. The exact
+part number,word count,zeroed buffer and pristine64B result are required.
+A failed/uncertain transaction retains resources and permits no following
+IO,retry,reset or cleanup. A failed second part cannot alter the first
+already-returned DATA or publish a partial tail. The diagnostic never changes
+the committed-record cursor,drain flag,terminal,restore or Work authority.
+
+The new scoped wrapper uses the real FD/team/thread/global-lock call scope.
+Only a narrowly declared conditional friend may access NativeState internals;
+no private field became public. The new flag is PRIVATE QT3NODRV ONLY.
+Tag74 explicitly refuses it,including defined0;late selection/removal,old
+tags,missing parents/renamed ABI,CPU-reference and Work aliases refuse.
+There is NO new public opcode,loadable driver,USER client or Work activation.
+
+Final GQ qualification actually completed
+-----------------------------------------
+Two independent archives5203a39dad plus SAME11 owned files,each cmp-checked
+main=clean=current;unrelated llama/status/FlashNext/old WIP are excluded:
+ /private/tmp/pioneer-q38-hidden-read-main-gq.LhTW6Lxb
+ /private/tmp/pioneer-q38-hidden-read-clean-gq.9ipd3Wdx
+Original23702/4989 BOTH actually terminate0. No timeout restart.
+
+Each executes ASan/UBSan extracted ACTUAL methods over explicitly MOCK
+lifecycle/source/NoC endpoints:8 positive parts,42 early refusals,1057
+retained faults. Includes raw NaN preservation,modulo32 counter rollover,
+ALL120 source/FIFO/counter faults,current terminal/boot changes,first-AND-
+second-part transfer/clock/counter/readback/read failures,no partial output,
+and immediate refusal with no following IO. These are NOT native histories.
+Role checks2 positives/268 refusals;unchanged ROOT seal75/1022/8 pending;
+tag74 role3/762;routing8+9 allowed/all65536 bad-caller cases;old native
+role278 refusals pass. Routing handlers in those tests are STUBS.
+
+Both actual SDK private objects compare BYTE-IDENTICAL:
+ 7781af5b5d4b841d3130d2588eb8ef138c6dda7efdf7a95463813c0649463963
+Actual scoped wrapper/context helper/owner/packet/output-check bodies emit.
+All13 compiled G3 arrays and full2MiBRoPE remain exact;no oracle,TEST-engine
+or Work imports;all conventional ABI names absent and renamed bodies inert.
+New individual frames:scope160B,context336B,chunk544B,packet304B,alias176B,
+failure lambda80B. This is NOT a combined host-kernel/entry/IRQ stack bound.
+
+The SAME pipelines independently rebuild the UNSELECTED controls:
+ default G3 NODRV c78a84c7ec8f74c0f73f74e67579dfa94bcc71399145508fcb062619844c9b80
+ public tag74 object772aafe8c1b47ddfd85f5608a96fa329562967359e23723d5277a30842f9432a
+ linked module5f2fc63de2c4413d54b7087e5b923113246bc7a7f09747d0d79915bf950bf039
+ALL remain BYTE-IDENTICAL. Existing ProbeControl partial known-module chain
+5392B/498 nodes/25 unresolved remains unchanged;unknown costs are NOT zero.
+These existing controls do not qualify the new private reader's runtime.
+
+Failure lineage and unchanged raw evidence
+------------------------------------------
+GN80960/27328 both exited1 AFTER focused tests and unchanged c78 control
+passed:the new context wrapper lacked its explicit NativeState friend.
+The specific conditional declaration fixed that compiler error;encapsulation
+was not widened. Frozen GN sources/logs remain unchanged. GP70737/60990
+then both completed0 with private objecteb9b4c93 and exact c78 controls.
+Final GQ adds second-part faults and failure packet/byte diagnostic copying.
+A development harness first lacked its mock terminalObserved member;an
+added second-call clock case also used an absolute time no longer late
+enough. The harness now uses current mock time+30000000. Production BootTime,
+its deadline and all source/NoC guards were unchanged. No failure is a pass.
+
+Archived initial-failure,predecessor-success and final-success raw pairs:
+ qwen38-hidden-read-sdk-initial-{main,clean}-20261030.log
+ qwen38-hidden-read-sdk-predecessor-{main,clean}-20261030.log
+ qwen38-hidden-read-sdk-{main,clean}-20261030.log
+All copies cmp-match their originals. Final logs match under READONLY
+replacement of ONLY their source/private-output/tag74-output directory
+prefixes. Original logs are never normalized or rewritten.
+Final raw SHA256 main9c1617ae0c586973333a1f349411a124660ab5e5b56e6f06f0b831c38682856a
+and clean799bca4947929740305da99b1547a359d6c7cda472baa3433f4a1696c5eb9c9a.
+
+Read-only SSH check after local builds confirms stable041/gen6/clean,
+64 CPUs and full137034936320B RAM;raw qwen38-hidden-read-health-20261030.log.
+Health SHA256881111fca511452a8369506e4c69c7f75e53da9fa86f68d429ea45b3ad492b15.
+
+Still required,not claimed complete
+-----------------------------------
+Connect this exact reader to a genuine native original-model first-layer/
+cancel/119 STOP/120HOLD/Read0 history,and execute two actual read packets
+plus ALL existing restoration/END stages without state transplantation.
+Then qualify a separately tagged bounded public diagnostic and USER capture
+for real card data;old tag74 must not silently acquire it. Compare actual
+earlier hidden values with the fixed CPU controls to isolate the divergence.
+Full numerical/state/EOS/residency/Work+Assistant and honest sustained-speed
+qualification remain outstanding. Do NOT replace those requirements with
+MOCK tests,SDK hashes or matching selected tokens. Keep the goal ACTIVE.

@@ -28,6 +28,9 @@ struct PioneerStoreContext;struct PioneerSessionIO;
 [[maybe_unused]] static bool ObserveQ38TokenNativeTerminal(PioneerStoreContext&,PioneerQ38TokenTerminalResult&);
 [[maybe_unused]] static bool HoldQ38TokenNativeStopped(PioneerStoreContext&,PioneerQ38TokenHoldResult&);
 [[maybe_unused]] static bool ReadQ38TokenNativeRecords(PioneerStoreContext&,unsigned,uint32_t*,PioneerQ38TokenReadResult&);
+#ifdef PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC
+[[maybe_unused]] static bool ReadQ38TokenNativeHiddenChunk(PioneerStoreContext&,unsigned,uint32_t*,unsigned,PioneerQ38TokenHiddenReadResult&);
+#endif
 [[maybe_unused]] static bool RestoreQ38TokenNativeL1(PioneerStoreContext&,PioneerQ38TokenRestoreResult&);
 [[maybe_unused]] static bool RestoreQ38TokenNativeDispatchImages(PioneerStoreContext&,PioneerQ38TokenDispatchRestoreResult&);
 [[maybe_unused]] static bool RestoreQ38TokenNativePeerStores(PioneerStoreContext&,PioneerQ38TokenPeerRestoreResult&);
@@ -70,6 +73,9 @@ class PioneerQ38TokenNativeState {
  friend bool ObserveQ38TokenNativeTerminal(PioneerStoreContext&,PioneerQ38TokenTerminalResult&);
  friend bool HoldQ38TokenNativeStopped(PioneerStoreContext&,PioneerQ38TokenHoldResult&);
  friend bool ReadQ38TokenNativeRecords(PioneerStoreContext&,unsigned,uint32_t*,PioneerQ38TokenReadResult&);
+#ifdef PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC
+ friend bool ReadQ38TokenNativeHiddenChunk(PioneerStoreContext&,unsigned,uint32_t*,unsigned,PioneerQ38TokenHiddenReadResult&);
+#endif
  friend bool RestoreQ38TokenNativeL1(PioneerStoreContext&,PioneerQ38TokenRestoreResult&);
  friend bool RestoreQ38TokenNativeDispatchImages(PioneerStoreContext&,PioneerQ38TokenDispatchRestoreResult&);
  friend bool RestoreQ38TokenNativePeerStores(PioneerStoreContext&,PioneerQ38TokenPeerRestoreResult&);

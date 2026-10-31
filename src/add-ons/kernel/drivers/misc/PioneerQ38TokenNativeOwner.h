@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38TokenHiddenReadRole.h"
 #ifndef PIONEER_Q38_TOKEN_NATIVE_OWNER_H
 #define PIONEER_Q38_TOKEN_NATIVE_OWNER_H
 #include "PioneerQ38TokenMemory.h"
@@ -35,6 +36,13 @@ struct PioneerQ38TokenReadResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,firstRecord=0;
  uint32_t recordCount=0,packets=0,bytesRead=0,drained=0,firstPC=0,secondPC=0,reserved[2]={};
 };
+#ifdef PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC
+struct PioneerQ38TokenHiddenReadResult {
+ uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,part=0;
+ uint32_t firstWord=0,wordCount=0,position=0,completedLayers=0,terminalKind=0,committed=0,packets=0,bytesRead=0;
+};
+static_assert(sizeof(PioneerQ38TokenHiddenReadResult)==64,"fixed private hidden DATA observation");
+#endif
 struct PioneerQ38TokenRestoreResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,restoredCores=0;
  uint32_t savedWords=0,restoredWords=0,verifiedWords=0,programWords=0,firstPC=0,secondPC=0,reserved[2]={};
@@ -893,6 +901,10 @@ public:
   readoutCursor+=records;readoutInput=input;readoutDrained=readoutCursor==observedTerminal[3];
   r.ready=1;r.recordCount=records;r.drained=readoutDrained;r.phase=4;return true;
  } // immutable generated DATA only;NO current-state reuse,L1/CSR restore,END/disposal or running-ROOT NIU access.
+#ifdef PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC
+#include "PioneerQ38TokenHiddenRead.inc"
+#endif
+public:
  template<class IO> bool RestoreOriginalL1(IO& io,PioneerQ38TokenRestoreResult& r){
   namespace L=PioneerQ38TokenL1;namespace P=PioneerQ38TokenPrograms;
   const PioneerQ38TokenRestoreResult pristine;const auto* a=reinterpret_cast<const uint8_t*>(&r);
