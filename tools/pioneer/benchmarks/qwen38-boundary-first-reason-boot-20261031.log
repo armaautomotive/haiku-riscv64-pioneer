@@ -1,0 +1,9 @@
+/mnt/ssd/pioneer-haiku-kexec-20261013/memory-2/HaikuPioneerKexecProbe.Image: OK
+/mnt/ssd/pioneer-haiku-kexec-20261013/smp-kernel-bundle-memory-spin-idle-top-page-7/samsung-ram.bfs: OK
+/mnt/ssd/pioneer-kexec-probe-20261013/kexec-tools-0fd0d8e9ea975696fdc05ad267a65f3efd415612/build/sbin/kexec: OK
+/mnt/ssd/pioneer-haiku-kexec-20261013/pioneer_linux_uart_keepalive.sh: OK
+/mnt/ssd/pioneer-haiku-kexec-20261013/boot-q38-boundary-reason-recover-20261031-hx/live-fdt.dtb: OK
+/mnt/ssd/pioneer-haiku-kexec-20261013/boot-q38-boundary-reason-recover-20261031-hx/probe-fdt.dtb: OK
+/mnt/ssd/pioneer-haiku-kexec-20261013/boot-q38-boundary-reason-recover-20261031-hx/cpus: OK
+/mnt/ssd/pioneer-haiku-kexec-20261013/boot-q38-boundary-reason-recover-20261031-hx/profile: OK
+Switching to Haiku via normal Linux shutdown; default NVMe boot unchanged

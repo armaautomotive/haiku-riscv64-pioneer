@@ -1,0 +1,69 @@
+Boundary first-cause test:actual failure and completed controlled recovery
+=======================================================================
+2026-10-31. Goal ACTIVE. Last measured whole27B0.207893161 tokens/sec;
+20 tokens/sec UNMET. This is failure/recovery evidence,not a speedup.
+
+The original physical54071 actually exited1
+------------------------------------------
+Installed b74f4bfa/tag75/gen3 and be719df8 USER authenticated/uploaded all
+19,399,024,640 weight bytes,acknowledged START and exactly one CANCEL,
+then returned pending until the ORIGINAL30-minute observation bound.
+The final actual line preserves reasondeadline_or_clock/op00008d13.
+Do not replace that combined category with an invented clock diagnosis,
+numerical mismatch,IOCTL failure,clean END or old generic aborted reason.
+No terminal or QHB file was produced;no CPU snapshot comparison was run.
+Raw frontend60000/60004 samples are speculative DATA,not retired PCs,
+fault proof,completed-layer count,STOP receipts or restoration authority.
+The word63 value is left by RootBootSeal,not a model progress field.
+
+The complete473-line physical log is preserved byte-for-byte:
+SHA2901a3962de538d3d266803531e08e6c5864bc26077731135c1fa747c123b9b2.
+Post-exit metadata actually showed cold1/active_owner1 on b74/gen3,
+64 CPUs and maxRAM137034936320 bytes. The first query's ps -A failed
+because that option is unsupported on Haiku. A SEPARATE plain ps query
+actually exited0 and showed no model parent;the failed inventory was not
+silently accepted. No hot restore was attempted through retained ownership.
+
+One OFF and one ON,then the normal SD-free Linux-to-Haiku path
+------------------------------------------------------------
+sync exited0. NEW HX OFF27032 completed0 once at11:58:56UTC,holding the
+front-panel relay7seconds. After more than3minutes,SSH69082 timed out255.
+ON68204 completed0 once at12:02:38UTC with a0.75-second pulse. No repeated
+OFF,extra pulse,mains switch,SD change or hardware reconnection occurred.
+Serial showed a genuine new Linux boot. Early SSH returned No route255;
+the later identity query actually exited0 on Linux6.1.31,usermilkv,
+boot_id0f6332ec-106d-4a1a-b7ef-7641cefbf70a,CPUs0-63 and131976904KiB RAM.
+
+The entire root-owned19404-byte SD-free helper was read and SHA-verified:
+9cfc6dc326c938b8d611c8c8622a9a6686ed530270dde768b1f01362f4f61f6e.
+prepare60131 actually exited0/PREPARED for the SAME fresh session
+q38-boundary-reason-recover-20261031-hx,64CPUs,
+memory128-spin-idle7-top-page-nosd-control. No journal override was used.
+The helper verifies the pinned kernel/bundle,NIC/package,root disk identity,
+unchanged default boot entry,no MMC and inactive P100A before kexec.
+
+An initial EXTRA read-only helper-SHA preflight lacked sudo and was denied;
+shell short-circuiting prevented the boot command from running. A separate
+incorrect status action was refused as Unknown action,also without mutation.
+Both errors are preserved. With sudo on the SHA read,the same Linux boot_id
+and helper hash were rechecked. Corrected boot5384 actually exited0 after
+all prepared inputs passed and Switching to Haiku via normal Linux shutdown.
+No duplicate prepare,recovery pulse or actual boot operation was issued.
+
+Fresh Haiku IB SSH actually exited0 after the initial connection timeout.
+It showed b74/tag75/gen1,cold0/owner0,64 CPUs/full137034936320B maxRAM,
+the exact FFA315aa updater and a supported ps inventory with no compute parent.
+ONLY THEN exact FFA --restore-token-hidden-readout47718 actually exited0:
+b74/gen1 quiesced once;stable041/tag12/gen2 verified without reboot.
+A SEPARATE IC query exited0 and independently verified installed SHA
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012/gen2/quiesced0/cold0/owner0/open1/guard1,
+64CPUs/full RAM and no compute parent. Its raw log SHA is
+35f285381f72ebc328a694a002e1e1b41cd5bc79598e382fbd25578a66fd2bf7.
+
+All17 scoped raw logs were copied and cmp-checked against their actual
+original files,including errors,CRs,ps padding and the empty sync log.
+No OS/network/Assistant/model file or default boot configuration changed.
+Recovery is COMPLETE;these OFF/ON/prepare/boot/restore actions are historical.
+Do not repeat them. Next:qualify the fault-image native binding before any
+new card trial,then continue full-model correctness,resident Work and speed.
