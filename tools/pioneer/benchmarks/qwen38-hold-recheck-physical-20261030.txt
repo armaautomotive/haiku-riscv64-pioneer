@@ -1,0 +1,101 @@
+HOLD-recheck candidate: physical stop-observation failure and recovery
+====================================================================
+2026-10-30 local/2026-10-31 UTC. Goal ACTIVE;20tok/s UNMET.
+Last physical whole-model rate remains0.207893161tok/s. This trial FAILED;
+there is no physical numerical,accepted-terminal,HOLD,END,Work or TPS pass.
+
+ONE original hardware trial54721:actual terminal exit1
+-----------------------------------------------------
+Exact module781ab93300d1a8418cd752ae0728090c9e2c470a53320eafe22e4f3d3b8706d2
+tag2026103000010074/gen3;exact USER
+f30f5654f8e5417fccedc5bd9bc6683edd3a16954dd55637b8f845e1cbb71ce6
+argv --validate-cancel-boundary --host-timing. No CPU learned reference,
+second launch,timeout restart,driver replacement or extra admin FD while
+active. The SAME process603 was observed accumulating kernel CPU time
+during startup;that observation was not treated as a completion grant.
+
+All19,399,024,640 padded learned bytes uploaded. Native Start returned
+status0/ready1/unsafe0/stage8. ONE healthy explicit Cancel returned
+status0/ready1/unsafe0/stage7. Three Observe calls returned pending stage9.
+The fourth Observe returned status-1/errno-2147442676/unsafe1/ready0/stage11.
+Its complete raw inner record is:
+ 00000001 00000001 0000000b 00000000 0000003f 00000001 00000000 00000000
+ 00000000 00000000 00000000 00000000 00060008 00060008 00000000 00000000
+This identifies worker0/word63 and both final ROOT PC snapshots0x60008.
+In the exact source,phase11 occurs after terminal-shape and all119 peer
+STOP/journal checks;the final predicate nevertheless requires BOTH ROOT
+samples==0x60004. That predicate fails here before publishing accepted
+terminal readiness. Terminal payload/counts were not printed;do NOT invent
+a consumed-cancellation layer count,committed token or numerical result.
+
+No Hold,Read or Finish was called. The new bounded HoldStopped recheck
+was NOT exercised by this trial,so this is not its physical qualification
+or proof of the earlier d784 phase1 failure's cause. Client closed only.
+After exit,CPU-only admin metadata independently reported tag74/gen3/
+cold1/active_owner1/open_count1/guard1. Before recovery,no GPU read,retry,implicit END,
+forced unload,reset or unsafe hot-restoration followed the failure.
+
+Completed unmodified310-line stdout:qwen38-hold-recheck-physical-20261030.log
+ SHA1a205a555705f03f33021381ef053b34621bb2dd02608d9a045a3735cccbb2e8
+Completed unmodified9-line stderr:qwen38-hold-recheck-physical-timing-20261030.log
+ SHAe9ce37f8d79534a2639e28d1b9eaacf91022f70ad08e09f8fbdcadb964a72f9b
+HOST timing DATA only:source-to-open299.057679s;upload20367calls/
+1042.650176s;startup1call/324.731638s;Observe4calls/0.265705s;cleanup0calls;
+total diagnostic1828.240097s. These are NOT accelerator cycles,complete
+decode durations or a denominator for generated tokens/sec.
+
+Architecture/source diagnosis,not an address-range workaround
+-------------------------------------------------------------
+The exact G3 program DATA has an8-byte RootTerminal array:two0x0000006f
+self-jumps. The producer assembly names0x60000 scalar_fault_park and0x60004
+q38_global_chain_stopped. CodeSpan ends at0x60008 EXCLUSIVE. That observed
+address is not an installed instruction in this image;ProgramWord must not
+be widened or its bytes invented merely to make a PC sample acceptable.
+
+Primary architecture reference,read directly for this diagnosis:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/README.md#riscv-pc-snapshot
+The T0 register0xffb13140 observes the fetch-side pipeline. Its address may
+describe work subsequently discarded,not an instruction that retired.
+Inference:the exact-PC predicate is not a reliable retirement test. This
+particular sample alone proves neither successful execution nor an actual
+execution fault. Earlier resident-layer RUN-only frontend handling is useful
+background,NOT qualification of a new positive token-STOP/HOLD policy.
+No PC-admission,firmware,ownership or closure guard was changed here.
+
+Controlled recovery COMPLETED;stable driver restored
+----------------------------------------------------
+Standing development-box authority used. OFF89725 actual exit0:ONE7s hold,
+requested03:44:04UTC. Two SSH checks then timed out. ON33790 exit0:ONE0.75s
+pulse at03:47:38UTC,after over3minutes and no contradictory power evidence.
+Neither pulse was repeated;relay contact state was not used as board state.
+Fresh Linux6.1.31 boot_idf3afe411-d08f-43bf-89eb-e4f7b01e9d8d,CPU0-63,
+MemTotal131976904kB,sudo-n works,taint0/kexec0. Endpoint and root COMMAND
+both0000. Exact Samsung120034123776B/serialS14CNSAD300075H/UUID020147de08752551
+was unmounted;partition start64;little-endian journal flag0x434c454e CLEAN.
+An initial normal-user read of the root-owned boot helper was denied AFTER
+these Linux identity checks;the subsequent sudo read/hash succeeded. That
+access error is preserved in the Linux log,not hidden or a power/boot retry.
+
+Full302-line helper9cfc6dc326c938b8d611c8c8622a9a6686ed530270dde768b1f01362f4f61f6e
+and full UART helpera9056dbc were read/hash-verified. Unique session
+q38-token-pc-20261030-gg,64 CPUs,memory128-spin-idle7-top-page-nosd-control:
+prepare73105 and boot61758 both exit0. All pinned inputs passed;normal
+Linux shutdown/kexec;default NVMe boot unchanged. No journal repair/replay
+verifier was needed. No SD,card,cable,mains or physical-disk erase action.
+
+Fresh Haiku:64CPUs/max137034936320B,candidate781ab/tag74/gen1/cold0/owner0.
+Exact candidate,stable041 and e7ee updater hashes verified BEFORE guarded
+--restore-token-hold-recheck. Restore60483 actual exit0,tag74/gen1 ->
+stable12/gen2,without another reboot or GPU execution. Final installed SHA:
+ 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+Final CPU-only metadata:tag2026102100010012/gen2/quiesced0/cold0/owner0/open1/
+guard1. Final64CPU sysinfo max137034936320B/free133814931456B.
+Unmodified failure-health and recovery-{off,on,linux,preflight,prepare,boot,
+haiku-before-restore,restore} logs accompany this report. Final restore log
+SHAfd3b9e9a781f5ca6c69bede5fb84e1a6a55905a814c2bb64c3fb9e058a6677dc.
+
+Next:correct and qualify the stop-observation contract before another card
+trial,with current terminal/status/source/nonce/FIFO/counter/code/all119-peer
+closure and retention invariants intact. No arbitrary PC may supply a ready
+or cleanup grant. Continue the original five full-model histories;full64/
+multitoken/positive readout/native Work/Assistant/sustained TPS remain owed.
