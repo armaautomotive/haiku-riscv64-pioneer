@@ -1,0 +1,85 @@
+Distinct token-frontier publication BUILD:measurement prerequisite only
+=======================================================================
+2026-10-31. Goal ACTIVE. Last verified sustained whole-model baseline
+0.207893161 tokens/sec;20 tokens/sec remains UNMET. NO speedup claimed.
+
+Purpose and implementation
+---------------------------
+Host START intervals include initialization and can overlap inference.
+Add a DISTINCT inspect-only ROOT BUILD selector --token-frontier,requiring
+the entire existing job-fold/cancel/FP32/QGW3 profile. After the complete
+original PublishToken GDDR payload,readback,commit write,second readback
+and final head/input/feedback seals,call one small PublishFrontier leaf.
+It writes committed count to the already-existing progress array word3,
+L1 address7570c,then fences. No CSR,NoC packet,worker code,model arithmetic,
+64-word token-record ABI,terminal shape,HOLD/drain/restore/END or public
+driver/Work capability changes. Default unselected source is unchanged.
+The distinct leaf is not an entry/ready capability;its raw argument alone
+does NOT establish a model event,valid count,current owner or timestamp.
+
+Actual independent builds and tests
+------------------------------------
+Original main65132 and clean3517 ACTUALLY exited0. Default controls43065
+and73212 ACTUALLY exited0,reproducing ENTIRE old430b89b2 ELF. New complete
+main/clean artifacts are byte-identical:
+ boot4B32791432 unchanged
+ text130996/131072B39ca2743b8aaa166d7ecc9205b516558fcfac93449f5d4526ad065b39da39205
+ terminal8B6eb1d84a unchanged
+ conv32688/32768Bd9576bce48afad75fe54a337a865437b07263362f43d8d16688835b56e8f7861
+ full ELF190628B5585e908bf3326c5410d0998c81ed161c04ab754412cc60891b8eb1f197a58fe
+Max individual parent frame1616B,unchanged;this is NOT combined-stack
+qualification. Existing no-CSR opcode and code-extent audits stay enabled.
+Later perimeter-only source change rejects defined-zero/two __riscv;
+final artifacts vp/vq remain byte-identical to these exact original pairs.
+An orchestration error consumed final build handles30174/6243 before
+their results were displayed. Their handles are gone and full final
+artifacts/logs are retained,but no final exit code is claimed. Neither
+model/native history nor a physical process was restarted for that error.
+
+Final actual instruction/role/CLI main92829 and clean52100 BOTH exited0,
+logs identical. All8194 synthetic ABI values (0..8192 andUINT32_MAX)
+execute the REAL helper instructions,one aligned telemetry write ONLY
+7570c,the exact16B compiler ABI frame and ONE s0 save+reload ONLY6fffc,
+preserved callee-saved registers/SP,2048 inert returned instructions.
+All other data/MMIO/CSR/NoC/FP32/stack reads and writes refuse. This is an
+ISOLATED leaf test,NOT execution of PublishToken,actual64-layer products,
+native acquisition,physical token publication or performance evidence.
+Two syntax positives/61 missing,zero,two,late,foreign-role refusals;
+17 malformed/incomplete CLI refusals BEFORE output or SDK access.
+
+Retained failures
+-------------------
+Initial unit vm failed because the new role checked only defined(__riscv),
+not defined-zero/two;the BUILD perimeter was tightened. vn/vo then failed
+because the new harness assumed the compiler omitted the leaf frame.
+Actual disassembly has16B frame plus s0 save/reload. The corrected test
+models ONLY that exact slot/value;it does not permit a broad stack or any
+other write. Production helper instructions were NOT changed to hide the
+failure. Raw failures,paired final unit logs,full build logs and exact
+old/new artifact sets are in qwen38-token-frontier-build-20261031/.
+
+Still required BEFORE any timing or installation
+--------------------------------------------------
+This candidate has NO fault-ROM/package/native selector,owned readout,
+public metric packet,actual caller-publication test,original-model native
+lifecycle or physical qualification. Do NOT install or count its raw word
+as a token event. Existing root code sets the startup status marker BEFORE
+its progress-zeroing loop;that marker alone cannot prove fresh counter
+initialization. A future private native owner must prove an actual fresh
+held zero/readback before release (with original-byte restoration),bind
+the exact new program,then expose bounded read-only observational DATA
+under the same genuine call scope. No caller-ready or old owner promotion.
+Metric loss/regression must never supply terminal/HOLD/END authority.
+Only after full real END+Close and record consistency may a host timing
+observer publish measured decode rate with sampling uncertainty. Preserve
+old strict numerical comparators and keep CPU reference separate from Work.
+
+Current board,unchanged by this BUILD work
+------------------------------------------
+Separately qualified decode34 module4ebc9463 is installed,gen9. The SINGLE
+physical43815 with client05510422 began by20:41:49UTC. Its SAME-open full
+source authentication completed before device Open;at20:59:26UTC it was
+LIVE,upload11736707072/19399024640. Counter5585 is NOT installed. No extra
+GPU/admin FD,reload/reset,power/SD/OS/network change while43815 is active.
+Wait for that SAME normal34-position lifetime and true END+Close before
+copying stderr,comparing or changing anything on the card. No20tok/s claim.

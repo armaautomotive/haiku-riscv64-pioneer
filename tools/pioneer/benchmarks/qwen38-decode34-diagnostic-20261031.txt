@@ -10,6 +10,22 @@ inclusive window is essentially unchanged. See the separate completed
 qwen38-job-boot-fold-generation-physical-20261031.txt report. The earlier
 pending wording below is retained as that checkpoint's original state.
 
+Deployment addendum:after that clean Close,independent idle/hash/health
+checks passed. Exact ff helper restore88024 exited0,44209/gen7->041/gen8;
+exact c6 helper apply23715 exited0,041/gen8->4ebc9463/gen9. Independent
+readback verified new module4eb/client055/helperc6,cold0/owner0/quiesced0,
+64 CPUs/maxRAM137034936320B. No reboot,SD,OS or network action. ONE actual
+physical43815 launched by20:41:49UTC with --generate-34-positions. At
+20:59:26UTC it was LIVE,full same-open source authentication passed and
+11736707072/19399024640 bytes uploaded. No completed position,normal
+terminal,HOLD,END/Close,external numeric result or token rate yet. Preserve
+this SAME handle;no extra GPU/admin FD,reload/reset or second model while
+active. Raw local stdout:
+ /private/tmp/pioneer-q38-decode34-generation-physical-20261031-vh.log
+Separate Pioneer stderr:
+ /boot/home/pioneer-q38-decode34-generation-20261031-vg.stderr
+The original not-staged/pending statements below describe earlier state.
+
 Implemented path and scope
 --------------------------
 Add a distinct bounded0x6606 endpoint and USER selector for the SAME fixed

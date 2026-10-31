@@ -67,6 +67,14 @@ static __attribute__((noinline,section(".conv.token"))) void CommitState(const u
  // A fault partway through copying poisons the context; NEVER rollback/retry.
  p->state[Slot]^=1;p->state[Committed]++;p->phase=6;HeadSeal(h);
 }
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_IMAGE
+// One aligned L1 telemetry word in the ALREADY zeroed progress array.
+// Called ONLY after the complete existing publication/readback/seal below.
+// No CSR,NoC packet,token-record ABI,worker state or lifecycle grant changes.
+static __attribute__((noinline,section(".text.q38_token_frontier"))) void PublishFrontier(unsigned committed){
+ *Words(L::Progress+3*4)=committed;Fence();
+}
+#endif
 static __attribute__((noinline,section(".conv.token"))) void PublishToken(const uint32_t* h,unsigned bestRow,unsigned bestBits,bool feedback){
  auto* p=Owner();if(p->phase!=6 || p->state[Committed]!=p->state[Position]+1)scalar_fault_park();
  uint32_t record[64];for(unsigned i=0;i<64;i++)record[i]=0;
@@ -89,6 +97,9 @@ static __attribute__((noinline,section(".conv.token"))) void PublishToken(const 
  HeadSeal(h);InputSeal();if(feedback)FeedbackSeal(h);
  // This is a MODEL token/state event, NOT permission to release workers,
  // memory or clocks. Only the separate real cohort STOP closes the session.
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_IMAGE
+ PublishFrontier(p->state[Committed]); // observation DATA only,never terminal/HOLD/END authority
+#endif
 }
 static __attribute__((noreturn,noinline,section(".conv.token"))) void Finish(const uint32_t* h,unsigned reason){
  auto* p=Owner();if(p->phase!=6 || !reason || reason>2)scalar_fault_park();

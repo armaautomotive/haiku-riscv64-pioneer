@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=17 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot'}
+assert 3<=len(sys.argv)<=18 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--token-frontier'}
 inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or (cancel and f32),'dense-unroll candidate requires explicit cancel+FP32 profile'
 assert not boundary or (cancel and f32 and unroll),'boundary candidate requires explicit cancel+FP32+unrolled profile'
@@ -29,6 +29,8 @@ packet_eight='--unroll-packet-seals-eight' in options
 assert not packet_eight or (packet_unroll and pushed and inspect),'eight-way packet-seal BUILD requires explicit packet unroll/QGW3/inspect parents;NO runtime permission'
 fold_job_boot='--fold-job-boot' in options
 assert not fold_job_boot or (packet_eight and inspect),'job boot fold BUILD requires the explicit eight-way QGW3 inspect profile;NO native/Work permission'
+frontier='--token-frontier' in options
+assert not frontier or (fold_job_boot and inspect),'token frontier BUILD requires the complete job-fold ROOT profile;NO native/readout/Work permission'
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -43,6 +45,7 @@ flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exc
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1',
+ *(['-DPIONEER_Q38_TOKEN_FRONTIER_IMAGE=1'] if frontier else []),
  *(['-DPIONEER_Q38_JOB_BOOT_FOLD_IMAGE=1'] if fold_job_boot else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1'] if precise else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION=1'] if pushed else []),
@@ -69,6 +72,7 @@ for name in ('q38_global_chain_main','q38_return_recurrent_layer','q38_return_de
  assert re.search(r'^[0-9a-f]+ T '+name+'$',symbols,re.M),name
 for name in ('GlobalChain::CommitState(', 'GlobalChain::PublishToken(', 'GlobalChain::Bootstrap(', 'DensePartitionRoot::AdmitGlobalOutput(', 'Joined::AppendTokenKv('):
  assert name in symbols,name
+assert ('GlobalChain::PublishFrontier(' in symbols)==frontier,'separate telemetry helper must not leak into default ROOT'
 assert bool(re.search(r'^[0-9a-f]+ T q38_token_cancellation_point$',symbols,re.M))==cancel
 for name in ('q38_layer_chain_main','q38_run_final_dense_and_stop','mixed_recurrent_block_main','mixed_live_block_main',
  'mixed_live_block_stopped','mixed_recurrent_block_stopped','mixed_recurrent_block_wait','mixed_live_block_wait','q38_feedback_unbound_embedding_main'):

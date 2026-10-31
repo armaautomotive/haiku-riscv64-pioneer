@@ -1,0 +1,7 @@
+Assertion failed: (address==target && !writes && value==count), function Store, file pioneer_q38_token_frontier_instruction_test.cpp, line 26.
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/tests/run_pioneer_q38_token_frontier_tests.py", line 77, in <module>
+    subprocess.run([str(binary),str(new),entries[0]],check=True,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-q38-frontier-qualification-q7nwa3d7/test', '/private/tmp/pioneer-q38-frontier-root-clean-20261031-vk', '00041784']' died with <Signals.SIGABRT: 6>.

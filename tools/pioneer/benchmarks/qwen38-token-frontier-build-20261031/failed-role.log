@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_frontier_tests.py", line 51, in <module>
+    check(bad,False)
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_frontier_tests.py", line 40, in check
+    assert (result.returncode==0)==okay,result.stderr
+AssertionError
