@@ -1,0 +1,14 @@
+PASS actual USER full851 uploader/all3551 learned parts/4736090 SYNTHETIC pages/20367 batches/includes embedding+FP32/no mutable upload/SAME FD+generation/pending->terminal->HOLD->READ->FINISH once/269 COW branches including128 RAW frontend normal+cancel positives,13 terminal-detail refusals,14 explicit cancel0..3/missed-window/loss/invalid-terminal trials/3 early refusals/3 source-only checks/no RAW-PC completion grant,duplicate cancel or partial/normal publication after cancel;MOCK source+OS replies,NOT SHA authentication,native execution,model numerics,physical or TPS proof
+PASS actual DEBUG74 USER client header/1 positive/34 missing+zero+two+late+kernel+native+CPU+Work+encoding refusals;syntax ONLY,not source authentication,native,physical or TPS proof
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-root-frontend-client-main-gi.A0paSIDy/tools/pioneer/tests/pioneer_q38_token_validation_log_test.py", line 17, in <module>
+    cpu = checked.load_cpu(cpu_path)
+  File "/private/tmp/pioneer-q38-root-frontend-client-main-gi.A0paSIDy/tools/pioneer/tests/compare_pioneer_q38_observed_trace.py", line 100, in load_cpu
+    data = stable_bytes(directory/f'token-{position}.bin', (16+HIDDEN_WORDS+VOCAB_WORDS+1)*4)
+  File "/private/tmp/pioneer-q38-root-frontend-client-main-gi.A0paSIDy/tools/pioneer/tests/compare_pioneer_q38_observed_trace.py", line 29, in stable_bytes
+    with path.open('rb') as source:
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/pathlib.py", line 1242, in open
+    return io.open(self, mode, buffering, encoding, errors, newline,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/pathlib.py", line 1110, in _opener
+    return self._accessor.open(self, flags, mode)
+FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/pioneer-q38-root-frontend-client-main-gi.A0paSIDy/generated.pioneer/qualification-inputs/cpu-original-trace-20261028/token-0.bin'

@@ -43,6 +43,7 @@ struct SyntheticIO {
  unsigned opens=0,closes=0,calls=0,begins=0,uploads=0,spanEnds=0,starts=0,polls=0,holds=0,reads=0,ends=0;
  unsigned fragment=0,page=0;uint64_t bytes=0,progress=0;bool openFail=false;
  unsigned cancels=0,cancelFailure=0,stopRecords=0,stopLayers=1,stopStage=1;bool missedWindow=false;
+ uint32_t rootFirstPC=0x60004,rootSecondPC=0x60004;
  unsigned Records()const{return cancels && !missedWindow?stopRecords:3;}
  explicit SyntheticIO(SyntheticSource& s):source(s),sweep(s.sweep){sweep.calls=&calls;}
  int Open(){assert(source.Ready() && !opens++);return openFail?-1:74;}
@@ -86,12 +87,14 @@ struct SyntheticIO {
    auto* d=r.detail;d[0]=d[1]=1;
    if(operation==P::Start){assert(!starts++ && !holds && !ends);r.stage=d[2]=8;d[3]=1;}
    else if(operation==P::Observe){
-    assert(starts==1 && !holds && !ends);polls++;
+    assert(starts==1 && !holds && !ends);polls++;d[12]=rootFirstPC;d[13]=rootSecondPC;
     if(polls==1){r.ready=0;r.stage=d[2]=9;}
     else {
-     r.stage=d[2]=11;d[6]=1;d[12]=d[13]=0x60004;
+     r.stage=d[2]=11;d[6]=1;
      if(cancels && !missedWindow){d[7]=1;d[8]=stopRecords;d[9]=stopRecords-unsigned(stopStage==3);d[10]=stopLayers;d[11]=stopStage;}
      else {d[8]=3;d[9]=2;d[10]=64;}
+     for(unsigned word:{0U,1U,2U,3U,5U,6U,7U,8U,9U,10U,11U,14U,15U})
+      if(sweep.Clone([&]{d[word]^=1;}))return true;
     }
    }else if(operation==P::Cancel){
     assert(starts==1 && !polls && !holds && !ends && !cancels++);r.stage=d[2]=7;d[9]=1;
@@ -137,6 +140,20 @@ int main(){
  }
  // Reuse ONLY the already-uploaded MOCK fixture in COW children. No native
  // processor/owner history is supplied to any real engine or hardware.
+ constexpr uint32_t samples[]={0,1,0xffffffffU,0x60000,0x60004,0x60008,0x40010,0x1585ec};
+ if(okay)for(auto first:samples)for(auto second:samples)for(bool cancelled:{false,true})
+  if(sweep.Clone([&]{sweep.enabled=false;})){
+   io.rootFirstPC=first;io.rootSecondPC=second;
+   if(cancelled)assert(session->RequestCancellation() && io.cancels==1);
+   const auto held=io.holds;
+   assert(session->Poll() && !session->TerminalReady() && !session->Finish() && io.holds==held);
+   assert(session->Poll() && session->TerminalReady() && !session->CancellationConsumed());
+   assert(session->Finish() && session->Completed() && io.closes==1 && io.holds==1 && io.reads==1 && io.ends==1);
+   assert(session->CancellationConsumed()==cancelled && session->CommittedRecords()==(cancelled?0U:3U));
+   const auto calls=io.calls,closes=io.closes;
+   assert(!session->Poll() && !session->RequestCancellation() && !session->Finish());
+   session.reset();assert(io.calls==calls && io.closes==closes);_exit(0);
+  }
  if(okay)for(unsigned trial=0;trial<14;trial++)if(sweep.Clone([&]{sweep.enabled=false;})){
   if(trial<4){io.stopRecords=trial;io.stopStage=trial==3?3:trial==2?2:1;io.stopLayers=trial<2?1:64;}
   if(trial==4)io.missedWindow=true;
@@ -203,5 +220,5 @@ int main(){
   if(fault==1){original.valid=false;assert(!checked->Begin() && !transport.opens);}
   checked.reset();assert(original.opens==1 && !transport.calls && !transport.closes);preflights++;
  }
- printf("PASS actual USER full851 uploader/all3551 learned parts/%llu SYNTHETIC pages/%u batches/includes embedding+FP32/no mutable upload/SAME FD+generation/pending->terminal->HOLD->READ->FINISH once/%u COW faults+14 explicit cancel0..3/missed-window/loss/invalid-terminal trials/%u early refusals/%u source-only checks/no duplicate cancel or partial/normal publication after cancel;MOCK source+OS replies,NOT SHA authentication,native execution,model numerics,physical or TPS proof\n",(unsigned long long)source.pages,io.uploads,sweep.clones,early,preflights);
+ printf("PASS actual USER full851 uploader/all3551 learned parts/%llu SYNTHETIC pages/%u batches/includes embedding+FP32/no mutable upload/SAME FD+generation/pending->terminal->HOLD->READ->FINISH once/%u COW branches including128 RAW frontend normal+cancel positives,13 terminal-detail refusals,14 explicit cancel0..3/missed-window/loss/invalid-terminal trials/%u early refusals/%u source-only checks/no RAW-PC completion grant,duplicate cancel or partial/normal publication after cancel;MOCK source+OS replies,NOT SHA authentication,native execution,model numerics,physical or TPS proof\n",(unsigned long long)source.pages,io.uploads,sweep.clones,early,preflights);
 }

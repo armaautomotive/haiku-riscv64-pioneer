@@ -1,0 +1,147 @@
+ROOT frontend policy: USER consumer and exact guarded exchange
+=============================================================
+2026-10-30 local/2026-10-31 UTC. Goal ACTIVE;20tok/s UNMET.
+Physical whole-model rate remains0.207893161tok/s. This is NOT a new
+inference-speed,full-model generation,Assistant or Work qualification.
+Previous goal turn PROGRESS:347630e30f kernel correction and paired actual
+SDK/module evidence. THIS turn PROGRESS:found/fixed the corresponding USER
+consumer predicate,extended regressions,qualified the exact updater and
+new USER builds,completed native fault suite,and staged distinct artifacts.
+
+Second consumer fixed BEFORE another physical inference trial
+-------------------------------------------------------------
+The old f30f USER client ALSO required both terminal detail PC samples to
+equal60004. Even a successful new kernel receipt with RAW60008 would have
+been refused as terminal_reply and closed without HOLD/END. The previous
+kernel-only347630e30f checkpoint did NOT fix that independent consumer.
+PioneerQ38TokenValidationSession::Poll now treats those two RAW snapshot
+words as diagnostic DATA. It STILL requires successful ioctl,status,version,
+operation,unchanged request,source epoch,valid ready/stage/unsafe/reserved
+fields and exact normal/cancellation record counts/layer/stage relationships.
+Only the actual kernel can publish ready after current boot/receipt/code/
+all119 STOP/source/counter/FIFO checks. RAW PC values alone cannot do so.
+There is no new Work alias,weight encoding,CPU-reference fallback or ABI.
+Do NOT use the old f30f client for the new ROOT-seal physical trial.
+
+Actual USER lifecycle over MOCK source/driver replies:paired results
+------------------------------------------------------------------
+Both independent archives execute unchanged full3551-part/4736090-page/
+20367-batch SYNTHETIC upload and lifecycle.269 COW branches retain all
+earlier refusals plus128 RAW-snapshot normal/cancel positives and13 mutated
+terminal-detail refusals. Terminal-looking RAW samples still cannot turn
+pending into completion/HOLD.14 explicit cancel0..3/missed-window/loss/bad-
+terminal trials,3 early refusals and3 source-only cases remain. Outputs and
+source/FD/generation/close-only/no-duplicate guards remain enforced.
+All data/replies in these tests are MOCK,NOT real source authentication or
+native processor history. USER role remains1 positive/34 refusals including
+defined0 CPU/native/kernel/Work/encoding selections. Synthetic DATA-log
+comparison remains1 positive/71 refusals against fixed CPU controls.
+
+The initial paired command pipelines95571/18746 actually exited1 AFTER
+the USER269 and role tests PASSED:the unchanged DATA-log test's default
+relative CPU-corpus path was absent in git-only source archives. No client
+build had been attempted. Preserve that failure,do not relabel it as a pass:
+ qwen38-root-frontend-user-initial-{main,clean}-20261030.log
+SHA main e82a98c51f36a2937fb9ae97872f35dcaaee19866e17ce239b71ad586208cebb
+SHA clean397ee2778b7e8ef980d0d151900fcb679e4d1318e522ca30b017e8eb07d06358
+Supplying the test's EXISTING explicit absolute corpus argument resumes
+that DATA check and the unattempted build without any code/digest/threshold
+change. New26657/51817 both exit0;complete resumed logs raw-cmp-match:
+ qwen38-root-frontend-user-build-20261030.log
+SHA aa52e08e61b984d9f050ad2d8696b594741b3106488fc101d3d66cfe670412f1
+
+Two git archives347630e30f plus4 cmp-verified owned source/test overlays:
+ /private/tmp/pioneer-q38-root-frontend-client-main-gi.A0paSIDy
+ /private/tmp/pioneer-q38-root-frontend-client-clean-gi.leQkZz4T
+Actual SDK USER objects and binaries both BYTE-IDENTICAL:
+ object1ce3587891dfe4ea7f0eac30a21de2c56a6a28a2bc886164b4d6befbf7228edc
+ USER3638b0bdbae8e5225c888146a880257c3ffecebf6ae046eba5b6d53f30e0e467
+Max individual USER frame4432B;no kernel,native TEST,CPU oracle or Work imports.
+Build dirs:/private/tmp/pioneer-q38-root-frontend-user-{main,clean}-gi
+The module remains exact5f2fc63d from the previous paired builds;no kernel
+code,firmware array or module hash changes occurred in THIS checkpoint.
+
+Exact new updater:all three same-tag revisions remain distinct
+-------------------------------------------------------------
+New --apply-token-root-frontend / --restore-token-root-frontend ONLY:
+ stable041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+ tag2026102100010012
+ <-> module5f2fc63de2c4413d54b7087e5b923113246bc7a7f09747d0d79915bf950bf039
+ tag2026103000010074
+Older d784 and781ab routes/hashes and staged immutable helpers are unchanged.
+All three apply/restore routes reject BOTH other tag74 byte revisions and
+arbitrary wrong same-tag bytes BEFORE opening the admin device. Restoration
+preserves BOTH other hash-qualified backups and legacy tag-only backups,
+including exact bytes and inode identity;correct backups are reused.
+No owner,cold,FD,generation,parent inventory/hash/symlink/backup/quiesce/
+rename/wait guard was removed. No force,reset,unload or automatic rollback.
+
+Actual shell tests in TWO independent private fake filesystems:
+ /private/tmp/pioneer-q38-root-frontend-updater-main-gi.6lOCNgwh
+ /private/tmp/pioneer-q38-root-frontend-updater-clean-gi.gVKMRyDi
+Original83894/71318 both exit0:860 cases EACH across the new pair,old two
+token pairs,prefix pair and stable scale-reuse pair. Selected TEN-mode
+coverage,NOT every historical mode or an actual native reload test.
+Script8bed6bc0affa4157d021a37197f0442941be5d319979ed68c2ea1e0339e83346
+Test1492e49e49ab4a28f6afa6db7adce275f83ed738e07be56b74f786fee0fca5e3
+Helper684443b4cd6e8d88a9b1e52d50f6456b57d42affd95011d0c570a425a7d67cee
+Paired complete logs raw-cmp-match:qwen38-root-frontend-hot-swap-20261030.log
+SHA b2244e5c24952ce042752c6371d6e58108cf002643a240755264021526ad1296
+Shell syntax,Python AST and source whitespace checks pass. Archived raw
+Haiku ps output retains its original padded/trailing spaces;that one log
+is explicitly excluded from source-format lint,NOT rewritten or normalized.
+
+Native negative suite completed;positive model histories remain LIVE
+------------------------------------------------------------------
+Original52868 actually exits0:all FIVE real native terminal-observation
+fault cases pass with actual zero-ROM/staging/119 virgin-worker+ROOT history
+under SIMULATED OS/VM/PCI/MMIO endpoints. Case5 mutates actual root boot
+bytes and lets immutable firmware reach its real fault self-jump. New
+RootBootSeal rejects actual boot DATA word0,not the speculative PC;last
+observed endpoint is precisely the corrupted boot word. All resources are
+retained;following observation/request causes no IO. Cases1..4 retain their
+status-error,malformed terminal,source and reset refusals. No positive STOP,
+full-model arithmetic,physical or cleanup grant follows from these failures.
+Complete115-line unmodified log:qwen38-root-frontend-native-faults-20261030.log
+SHA a8da30a50d65b5ae8aceb41bb4f04ee4558867e0acfe5c4c560823d57ffe5b31
+
+Original50859/5548 are STILL LIVE at actual first layer~150M ROOT instructions.
+They need genuine consumed cancellation+all119 STOP,current code/receipt
+acceptance under RAW60008,all120 HOLD,zero-record drain,all original END
+checks and actual completion. Then independently compare EACH real prefix
+to the fixed CPU corpus. Do not restart for an observation timeout.
+
+Fresh physical baseline and STAGING ONLY
+----------------------------------------
+Read-only pinned SSH:64CPUs/max137034936320B/free133805301760B;stable041
+installed/tag12/gen2/quiesced0cold0owner0open1guard1;no compute parent.
+Stable backup041,reload guardd1ce2aa4 and admin helperb0c851b3 hashes exact.
+Log:qwen38-root-frontend-baseline-20261030.log
+SHA2d3f23c11b1aa6afc2dd50d6a7a96042d28f2a934b08dd632ea56f1cb1addd6f
+
+Verified unique absent regular/nonlink destinations before three SCP copies:
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/
+  tenstorrent_pci_probe-token-root-frontend-5f2fc63d
+  pioneer-p100a-hot-swap-token-root-frontend-8bed6bc0.sh
+  pioneer-q38-token-root-frontend-3638b0bd-DIAGNOSTIC-ONLY
+All copies completed0 and remote hashes match. Script/client executable;
+installed hash remains041 and metadata remains clean stable12/gen2.
+Log:qwen38-root-frontend-staged-20261030.log
+SHAa21d4b61b12cc6bc4652937f3e4f061e38c65caee4915a24864c57a8f14a41a5
+NO updater invocation,driver replacement,accelerator execution or relay pulse.
+
+New USER source-only --preflight-source-only --host-timing on Haiku is LIVE
+under original handle7430. This path performs FULL same-open SHA,layout and
+raw sample checks before ANY accelerator open/ioctl. It is NOT yet a pass.
+Stdout:/private/tmp/pioneer-q38-root-frontend-source-only-20261030-gi.log
+Stderr:/private/tmp/pioneer-q38-root-frontend-source-only-timing-20261030-gi.log
+No physical inference/install may start during that source-check parent.
+Poll the SAME7430;do not restart or confuse its elapsed host time with TPS.
+
+Next:finish original native pair+independent prefixes and new USER source-
+only check. Only then consider exact8bed apply to5f2fc plus ONE new3638
+cancellation-lifecycle hardware trial with raw details/host-only timing.
+On uncertainty CLOSE ONLY/retain;no automatic retry/END/restore. Restore
+stable only after proved clean closure or separately controlled recovery.
+Full64/multitoken/positive records/state reuse/native Work/Assistant and
+sustained physical20tok/s remain owed. Keep the full goal ACTIVE.

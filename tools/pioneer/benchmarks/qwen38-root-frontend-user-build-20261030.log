@@ -1,0 +1,5 @@
+PASS DEBUG74 posthoc DATA comparator/1 synthetic positive/71 malformed+missing+duplicate+order+source-only+input+greedy+score refusals/pinned independent CPU controls;NO genuine generated token,native,physical,Work or TPS proof
+1ce3587891dfe4ea7f0eac30a21de2c56a6a28a2bc886164b4d6befbf7228edc client.o
+3638b0bdbae8e5225c888146a880257c3ffecebf6ae046eba5b6d53f30e0e467 pioneer-q38-token-DEBUG74-DIAGNOSTIC-ONLY
+PASS actual Haiku riscv64 DEBUG74 USER client compile/link/fixed same-open full SHA before device Open/ALL learned parts/no CPU oracle+Work+mock/native imports/maxIndividualUSERFrame4432
+BUILD+INSPECT ONLY;explicit source-only checks grant NO native execution;three-position runtime still requires independent native/lifecycle/stack/numerical qualification;NO physical or TPS proof

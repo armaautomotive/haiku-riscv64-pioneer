@@ -187,8 +187,11 @@ public:
    if(r.stage!=9 || d[3] || d[4]>63 || d[7] || d[8] || d[9] || d[10] || d[11])return Stop("pending_reply");
    return true;
   }
-  if(r.stage!=11 || d[3] || d[8]>3 || d[9]>=3 || !d[10] || d[10]>64
-   || d[12]!=0x60004 || d[13]!=0x60004)return Stop("terminal_reply");
+  if(r.stage!=11 || d[3] || d[8]>3 || d[9]>=3 || !d[10] || d[10]>64)return Stop("terminal_reply");
+  // d[12..13] are the actual RAW frontend snapshots,not retired PCs or
+  // USER-side completion authority. The kernel must prove its current
+  // boot/receipt/code/119 STOP/FIFO seal before publishing ready. All packet,
+  // source/FD/generation,stage,unsafe and terminal-shape checks still apply.
   if(d[7]){
    if(!d[11] || d[11]>3 || d[8]!=d[9]+unsigned(d[11]==3)
     || (d[11]>1 && d[10]!=64))return Stop("cancelled_terminal_reply");
