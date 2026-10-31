@@ -1,0 +1,40 @@
+Haiku
+cf40056394b5e3ecdac44d1679e26bdaf6256cc47ca8f2f6a890dc878a6d2906  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+7d668f6abbb73b8abd187c0b8be82d9bd44b5ce0c05ccfb86abf65268ed17e20  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-hot-swap-token-fault-readout-7d668f6a.sh
+b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
+d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+a1c45ca19e8715c6bc144a93ef208cc709a01129d71012662c954e1b1c40c09c  /boot/home/pioneer-q38-fault-boundary-client-20261031-a1c45ca1/pioneer-q38-token-DEBUG75-BOUNDARY-DIAGNOSTIC-ONLY
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  104 /boot/system/servers/net_server                    
+  107 /boot/system/servers/package_daemon                
+  112 /boot/system/servers/launch_daemon baron           
+  114 /boot/system/servers/power_daemon                  
+  115 /boot/system/servers/syslog_daemon                 
+  133 /boot/system/servers/media_server                  
+  177 /boot/system/servers/app_server                    
+  187 /boot/system/Tracker                               
+  190 /boot/system/Deskbar                               
+  208 /boot/system/servers/input_server                  
+  232 /boot/system/servers/media_addon_server            
+  296 /boot/system/servers/notification_server           
+  486 /boot/system/bin/screen_blanker                    
+  585 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  587 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  588 /bin/bash -c uname -s; test ! -e /boot/home/pioneer-q38-fault-b 
+  591 /boot/system/bin/ps -o Id -o Team                  
+P100A_RELOAD driver55 tag2026103100010075 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133788291072 bytes free      (used/max 3246645248 / 137034936320)
+                           (cached   19174334464)
+     64487 semaphores free (used/max       1049 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3902 threads free    (used/max        194 /       4096)
+      2026 teams free      (used/max         22 /       2048)

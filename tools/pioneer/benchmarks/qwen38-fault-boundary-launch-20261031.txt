@@ -1,0 +1,76 @@
+Physical fault-ROM boundary trial:source pass,guarded install and launch
+=====================================================================
+2026-10-31. Goal ACTIVE;whole27B last0.207893161tokens/sec,20 UNMET.
+No new throughput,numerical result,snapshot,terminal or clean END yet.
+
+Actual source-only check completed before installation
+-----------------------------------------------------
+The SAME36930 source-only process actually exited0,not restarted or
+replaced after observation timeouts. It reported the full same-open GGUF
+SHA pass,10653 learned-page samples and19399024640 planned upload bytes.
+It opened NO accelerator FD and ran NO inference. Its completed raw log
+is copied/cmp-checked,SHA3ceb544562e21d2d9b340b7ce39da6df3c9c689cdeaf61f5e44b874c89fb9ae0.
+Earlier live process evidence showed the client and its sha256sum child;
+elapsed time alone was never treated as termination or permission to reload.
+
+Fresh metadata,exact staged bytes and one guarded install
+--------------------------------------------------------
+Only AFTER that actual source-only exit,IV SSH0 verified Haiku UID0,
+stable041/tag12/gen2/quiesced0/cold0/owner0/open1/guard1,64CPUs and
+full137034936320B maxRAM. Supported ps -o Id -o Team showed no model
+parent. Both fresh destination paths were absent,including symlinks.
+Module SCP6615 and helper SCP both actually completed0. Files were staged
+OUTSIDE the watched drivers directory;remote complete hashes matched:
+ modulecf40056394b5e3ecdac44d1679e26bdaf6256cc47ca8f2f6a890dc878a6d2906
+ helper7d668f6abbb73b8abd187c0b8be82d9bd44b5ce0c05ccfb86abf65268ed17e20
+The older FFA315aa helper still matched its original full hash and was
+not overwritten. It owns b74 restoration,NOT this new fault-ROM revision.
+
+ONE --apply-token-fault-readout24466 actually exited0. It checked the
+fresh parent inventory/clean ownership,quiesced stable041 once,renamed
+the exact new image and verified tag75/gen3 without reboot/GPU execution.
+A SEPARATE IX SSH query0 independently verified the installed CF400563
+hash,the new7d668f6a helper,adminb0c851b3,guardd1ce2aa4 and USERa1c45ca1.
+Metadata was tag2026103100010075/gen3/quiesced0/cold0/owner0/open1/guard1,
+with64CPUs/full RAM and no model parent. Numeric tag75 alone was NOT used
+as code identity. The complete independent log SHA is
+f7637919778e63ddb5c39816ef40e0786b056171d84d72a993bcd3c2d1df6e92.
+
+One new instrumented trial is ACTIVE
+-----------------------------------
+At12:54UTC,ONE physical1031 was launched under the paired-qualified
+815245335e source. It uses the existing exact a1c45ca1 USER binary:
+ /boot/home/pioneer-q38-fault-boundary-client-20261031-a1c45ca1/
+ pioneer-q38-token-DEBUG75-BOUNDARY-DIAGNOSTIC-ONLY
+with --capture-layer-boundary500 and fresh absolute output:
+ /boot/home/pioneer-q38-fault-boundary-client-20261031-a1c45ca1/
+ observed-boundary-500ms-ix.qhb
+The actual argv has a SPACE between --capture-layer-boundary and500.
+Both CLI and main checked the output did not exist;there was no overwrite.
+This is the SAME bounded500ms observation intent as the old failed test,
+now with the newly qualified ROOT fault marker and USER failure-data log.
+It is NOT an exact requested-layer selector or token-speed benchmark.
+
+1031 remains live after a fresh actual handle poll. Its local raw log is
+/private/tmp/pioneer-q38-fault-boundary-physical-20261031-ix.log.
+Authentication precedes device Open. During its ENTIRE authentication,
+upload,native execution and END lifetime,do NOT open an extra GPU/admin FD,
+reload,profile,reset,retry Start/cancel,or perform implicit cleanup. Poll
+the SAME handle;an observation timeout is not terminal. The original
+30-minute/poll bound AFTER cancellation remains unchanged.
+
+No PASS/snapshot/terminal/clean END or new physical rate follows merely
+from this launch. After an actual successful close,compare ONLY the real
+completed output. On actual failure,preserve its first reason and any
+consistency-checked error/saved_LINK DATA;the LINK is NOT a retired PC,
+authenticated user-copy,STOP or cleanup authority. Query fresh ownership
+only after the parent exits. A retained/cold/unknown owner requires a
+separate controlled recovery,not normal restore through quarantine.
+Exact7d668f6a --restore-token-fault-readout maps CF400563 to stable041
+ONLY after fresh clean ownership. Old FFA must never restore CF400563.
+
+No power,SD,mains,hardware,Assistant,OS or network setting changed.
+Five completed source/preinstall/stage/install/independent-verification
+logs were copied/cmp-checked verbatim. The still-running physical log is
+NOT archived as if complete. The full goal remains fast,resident,no-CPU-
+reference27B Work inference with quality and real sustained measurements.
