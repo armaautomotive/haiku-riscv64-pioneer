@@ -1,0 +1,4 @@
+COMPARE_DEBUG74 position0/sameInput1/CPUgreedy70253/observedGreedy70253/selectedMatch1/maxLogitBitsMatch0
+COMPARE_DEBUG74 position1/sameInput1/CPUgreedy17/observedGreedy17/selectedMatch1/maxLogitBitsMatch0
+COMPARE_DEBUG74 position2/sameInput1/CPUgreedy17/observedGreedy17/selectedMatch1/maxLogitBitsMatch0
+RECORD_DATA_GREEDY_AND_MAXLOGIT_BITEXACT=0 NO_TOLERANCE_USED;NOT full-hidden/vocabulary/native-lifetime/log-provenance/physical/Work/TPS qualification

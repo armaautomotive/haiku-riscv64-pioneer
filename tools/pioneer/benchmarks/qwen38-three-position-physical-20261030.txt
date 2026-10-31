@@ -1,0 +1,88 @@
+Original-model physical three-position diagnostic: lifecycle0,numerics1
+=====================================================================
+2026-10-30 local / 2026-10-31 UTC. Goal ACTIVE;20 tokens/sec UNMET.
+Last measured whole-model rate remains0.207893161 tokens/sec. Do not
+replace it with3/diagnostic-time or call this an Assistant/Work release.
+
+ONE original54139 actually completed exit0 at06:21:22UTC
+-----------------------------------------------------
+Exact module5f2fc63de2c4413d54b7087e5b923113246bc7a7f09747d0d79915bf950bf039
+Exact USER3638b0bdbae8e5225c888146a880257c3ffecebf6ae046eba5b6d53f30e0e467
+Driver74/generation5;argv --validate-three-positions --host-timing.
+Installation and initial launch are in f6b29234c4. No observation timeout
+restarted this process. Monitor cells9665/9669 ended their bounded watch
+windows without ending/replacing the model;9674 observed its actual exit0.
+
+The SAME opened original GGUF passed full authentication before device Open.
+ALL3551 learned parts/4736090 pages/20367 spans/19399024640 padded bytes
+uploaded. Actual normal execution returned3 committed records after all64
+layers at each position,then genuine terminal/120HOLD/positive copied
+readout/Finish/clean_end1. The inputs were248319,17,and actual greedy17.
+No CPU learned product was supplied to the device execution. This proves
+the bounded physical transaction/lifecycle,NOT mathematical equivalence.
+
+Strict posthoc numerical DATA comparison actually FAILED(exit1)
+-------------------------------------------------------------
+Unchanged compare_pioneer_q38_token_validation_log.py compared the complete
+actual log to fixed SHA-pinned cpu-original-trace-20261028. ALL3 inputs and
+selected tokens match;ALL3 maximum-logit bit comparisons FAIL:
+ position0:token70253;CPU413c2358=11.758628845214844;
+           observed413bc1de=11.734830856323242;absoluteDelta0.023797988891601562
+ position1:token17;CPU414621d3=12.383257865905762;
+           observed41452aa2=12.322908401489258;absoluteDelta0.060349464416503906
+ position2:token17;CPU4168afd0=14.542922973632812;
+           observed4167c42a=14.485391616821289;absoluteDelta0.05753135681152344
+Positive-float ULP distances24954/63281/60326,not a few ULPs. No tolerance,
+CPU-corpus retargeting,expected-value change or pass reclassification.
+Three matching selected tokens do NOT qualify all hidden/vocabulary/state
+values or text quality. The discrepancy already exists at position0,so
+cross-token state reuse alone cannot explain every difference. Its actual
+cause remains UNKNOWN;next obtain a physically observed earlier arithmetic
+boundary and compare it independently,while preserving the fixed controls.
+The existing five full-model instruction histories remain separate work.
+
+Host timing,NOT steady decode performance
+----------------------------------------
+valid1,total2078338611us. Source-to-open298531899us;open-to-start-return
+1538203994us;start-return-to-terminal-observation31235703us;terminal-to-
+clean-close210366668us. Upload ioctls20367/1048719905us;startup1/329468230us;
+observe302/1112161us;cleanup3/210366385us;other6/449541us.
+The31.235703s interval mixes TWO prompt positions,ONE warm decode position
+and terminal observation. It is NOT3 measured decode tokens,an isolated
+warm-token timing,a sustained rate or evidence that20 tokens/sec is met.
+
+Cleanup and stable restoration independently verified
+-----------------------------------------------------
+Only AFTER54139 actually exited,a fresh process/hash/status check confirmed
+no compute parent,exact5f2fc/8bed,driver74/gen5/quiesced0cold0owner0open1guard1,
+64CPUs/maxRAM137034936320B. The posthoc score difference does NOT imply a
+retained resource or authorize reset;the actual resource closure was clean.
+Original45630 completed exit0 through unchanged exact8bed updater with
+--restore-token-root-frontend and SINGLE-LINE exec SSH:5f2fc/gen5 ->stable
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403/gen6.
+A separate SHA/status/sysinfo query confirms stable tag2026102100010012,
+generation6/clean,64CPUs/fullRAM/free133781749760B. No reboot/reset,SD/card/
+cable/mains,Assistant replacement,role relaxation or source change occurred.
+
+Complete unmodified raw evidence,each cmp-checked against its original
+--------------------------------------------------------------------
+ qwen38-three-position-physical-20261030.log
+ SHA e8f6a29e7265955af7c830c8cf532f7925bd3422b8f10427943130a87bf39e27
+ qwen38-three-position-physical-timing-20261030.log
+ SHA 4b0bf92b9317d94c044033d94e020f4a30133cf47ae28e4f68d089927630a6c7
+ qwen38-three-position-physical-compare-20261030.log (actual comparison exit1)
+ SHA f0d9facd9dfdb33ec4e5b29ba994c61b784c2ac076bdb78f6067d2062c7a50c3
+ qwen38-three-position-after-trial-20261030.log
+ SHA 69e1b2105031bd779c82c4b80db3cdb7a34788c6da1ab38f209a9252ea1ab2b4
+ qwen38-three-position-stable-restore-20261030.log
+ SHA ae95d3bec052f6c3a7bea7c5f1045c9fbe1d884cf094e44f6b33e39bb113a55d
+ qwen38-three-position-stable-verified-20261030.log
+ SHA d32eafbf7ea28d281c9149165ab931948ae6e621668e205356ebd9c75aac1baa
+Raw external ps padding in the after-trial log is retained byte-for-byte;
+only that raw log is excluded from source-whitespace lint.
+
+Still owed:diagnose the numeric divergence;full numerical/state/normal+EOS
+qualification;resident no-CPU-reference Work+Assistant integration;real
+isolated warm-generation/sustained performance measurements and optimization.
+Do not make the successful cleanup or matching token IDs the final objective.
+Keep the full performance goal ACTIVE.
