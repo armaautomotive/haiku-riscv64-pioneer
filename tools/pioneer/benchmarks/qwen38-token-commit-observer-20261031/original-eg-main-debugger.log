@@ -1,0 +1,55 @@
+(lldb) process attach --pid 48566
+warning: test was compiled with optimization - stepping may behave oddly; variables may not be available.
+Process 48566 stopped
+* thread #1, queue = 'com.apple.main-thread', stop reason = signal SIGSTOP
+    frame #0: 0x0000000104d26b88 test`Word(std::__1::vector<unsigned char, std::__1::allocator<unsigned char>> const&, unsigned int) [inlined] std::__1::vector<unsigned char, std::__1::allocator<unsigned char>>::size[abi:ne190102](this=<unavailable>) const at vector:635:41 [opt]
+   632 	  _LIBCPP_CONSTEXPR_SINCE_CXX20 _LIBCPP_HIDE_FROM_ABI const_reverse_iterator crend() const _NOEXCEPT { return rend(); }
+   633 	
+   634 	  _LIBCPP_CONSTEXPR_SINCE_CXX20 _LIBCPP_HIDE_FROM_ABI size_type size() const _NOEXCEPT {
+-> 635 	    return static_cast<size_type>(this->__end_ - this->__begin_);
+    	                                        ^
+   636 	  }
+   637 	  _LIBCPP_CONSTEXPR_SINCE_CXX20 _LIBCPP_HIDE_FROM_ABI size_type capacity() const _NOEXCEPT {
+   638 	    return static_cast<size_type>(__end_cap() - this->__begin_);
+Target 0: (test) stopped.
+Executable binary set to "/private/tmp/pioneer-original-token-flow-qlkmakjt/test".
+Architecture set to: arm64-apple-macosx-.
+(lldb) breakpoint set -n __assert_rtn
+Breakpoint 1: where = libsystem_c.dylib`__assert_rtn, address = 0x000000019ad37c08
+(lldb) continue
+Process 48566 resuming
+Process 48566 stopped
+* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+    frame #0: 0x000000019ad37c08 libsystem_c.dylib`__assert_rtn
+libsystem_c.dylib`__assert_rtn:
+->  0x19ad37c08 <+0>:  pacibsp 
+    0x19ad37c0c <+4>:  sub    sp, sp, #0x60
+    0x19ad37c10 <+8>:  stp    x24, x23, [sp, #0x20]
+    0x19ad37c14 <+12>: stp    x22, x21, [sp, #0x30]
+Target 0: (test) stopped.
+(lldb) script lldb.debugger.HandleCommand("thread backtrace -c 5"); lldb.debugger.HandleCommand("frame select 1"); lldb.debugger.HandleCommand("frame variable a value this->position this->flips this->copyLayer this->copyPhase this->parent this->committed this->completed"); lldb.debugger.HandleCommand("process detach")
+* thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
+  * frame #0: 0x000000019ad37c08 libsystem_c.dylib`__assert_rtn
+    frame #1: 0x0000000104d6832c test`TokenFlowMachine::Store(this=0x0000000105750800, a=<unavailable>, value=<unavailable>) at pioneer_q38_token_flow_test.cpp:485:31 [opt]
+    frame #2: 0x0000000104d52810 test`OriginalTokenFlowMachine::Store(this=0x0000000105750800, address=<unavailable>, value=<unavailable>) at pioneer_q38_token_original_fabric.h:94:21 [opt]
+    frame #3: 0x0000000104d22cbc test`Machine::Step(this=<unavailable>) at pioneer_tensix_image_test.cpp:347:65 [opt]
+    frame #4: 0x0000000104d19d18 test`ScalarMachine::StepScalar(this=<unavailable>) at pioneer_graph_math_image_test.cpp:66:49 [opt] [artificial]
+frame #1: 0x0000000104d6832c test`TokenFlowMachine::Store(this=0x0000000105750800, a=<unavailable>, value=<unavailable>) at pioneer_q38_token_flow_test.cpp:485:31 [opt]
+   482 	   assert(value==((position+1)&1) && flips==position && completed==64 && globalJobs==973 && globalPartials==973
+   483 	    && copyLayer==64 && !copyPhase && !stopJobs);flips++;
+   484 	  }
+-> 485 	  // These are private,nonvolatile words. The emitted CommitState stores
+    	                              ^
+   486 	  // Committed BEFORE Slot even though the C++ statements name Slot first.
+   487 	  // Observe either order;TokenPacket still requires BOTH actual words and
+   488 	  // the one real slot flip before any output publication can be accepted.
+error: no variable named 'a' found in this frame
+error: no variable named 'value' found in this frame
+error: no variable named 'this' found in this frame
+error: no variable named 'this' found in this frame
+error: no variable named 'this' found in this frame
+error: no variable named 'this' found in this frame
+error: no variable named 'this' found in this frame
+error: no variable named 'this' found in this frame
+error: no variable named 'this' found in this frame
+Process 48566 detached

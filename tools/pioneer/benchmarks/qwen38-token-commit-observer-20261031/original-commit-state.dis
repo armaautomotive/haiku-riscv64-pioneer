@@ -1,0 +1,279 @@
+
+/private/tmp/pioneer-q38-ffn-scratch-main-20261030-dr-image/program.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .boot:
+
+Disassembly of section .text:
+
+Disassembly of section .terminal:
+
+Disassembly of section .conv:
+
+00064eec <_ZN11GlobalChainL11CommitStateEPKjb>:
+   64eec:	eb010113          	add	sp,sp,-336
+   64ef0:	14812423          	sw	s0,328(sp)
+   64ef4:	13312e23          	sw	s3,316(sp)
+   64ef8:	15010413          	add	s0,sp,336
+   64efc:	14112623          	sw	ra,332(sp)
+   64f00:	14912223          	sw	s1,324(sp)
+   64f04:	15212023          	sw	s2,320(sp)
+   64f08:	13412c23          	sw	s4,312(sp)
+   64f0c:	13512a23          	sw	s5,308(sp)
+   64f10:	13612823          	sw	s6,304(sp)
+   64f14:	13712623          	sw	s7,300(sp)
+   64f18:	13812423          	sw	s8,296(sp)
+   64f1c:	13912223          	sw	s9,292(sp)
+   64f20:	13a12023          	sw	s10,288(sp)
+   64f24:	00050993          	mv	s3,a0
+   64f28:	ecb42423          	sw	a1,-312(s0)
+   64f2c:	fffdd097          	auipc	ra,0xfffdd
+   64f30:	858080e7          	jalr	-1960(ra) # 41784 <_ZN11GlobalChainL5OwnerEv>
+   64f34:	40052703          	lw	a4,1024(a0)
+   64f38:	eaa42e23          	sw	a0,-324(s0)
+   64f3c:	00400793          	li	a5,4
+   64f40:	3af71e63          	bne	a4,a5,652fc <_ZN11GlobalChainL11CommitStateEPKjb+0x410>
+   64f44:	30c52703          	lw	a4,780(a0)
+   64f48:	04000793          	li	a5,64
+   64f4c:	3af71863          	bne	a4,a5,652fc <_ZN11GlobalChainL11CommitStateEPKjb+0x410>
+   64f50:	34052703          	lw	a4,832(a0)
+   64f54:	34852783          	lw	a5,840(a0)
+   64f58:	3ae79263          	bne	a5,a4,652fc <_ZN11GlobalChainL11CommitStateEPKjb+0x410>
+   64f5c:	34c52703          	lw	a4,844(a0)
+   64f60:	0017f793          	and	a5,a5,1
+   64f64:	38f71c63          	bne	a4,a5,652fc <_ZN11GlobalChainL11CommitStateEPKjb+0x410>
+   64f68:	000377b7          	lui	a5,0x37
+   64f6c:	00047cb7          	lui	s9,0x47
+   64f70:	c0078793          	add	a5,a5,-1024 # 36c00 <_start+0x30c00>
+   64f74:	ec042623          	sw	zero,-308(s0)
+   64f78:	ea042823          	sw	zero,-336(s0)
+   64f7c:	310c8c93          	add	s9,s9,784 # 47310 <_ZZL25PioneerQ38ProjectionRoutejE5route>
+   64f80:	eaf42a23          	sw	a5,-332(s0)
+   64f84:	ecc42603          	lw	a2,-308(s0)
+   64f88:	00300713          	li	a4,3
+   64f8c:	00367793          	and	a5,a2,3
+   64f90:	20e78a63          	beq	a5,a4,651a4 <_ZN11GlobalChainL11CommitStateEPKjb+0x2b8>
+   64f94:	ebc42783          	lw	a5,-324(s0)
+   64f98:	3047a783          	lw	a5,772(a5)
+   64f9c:	01479713          	sll	a4,a5,0x14
+   64fa0:	34071e63          	bnez	a4,652fc <_ZN11GlobalChainL11CommitStateEPKjb+0x410>
+   64fa4:	fc000737          	lui	a4,0xfc000
+   64fa8:	00e78733          	add	a4,a5,a4
+   64fac:	bc0006b7          	lui	a3,0xbc000
+   64fb0:	34e6e663          	bltu	a3,a4,652fc <_ZN11GlobalChainL11CommitStateEPKjb+0x410>
+   64fb4:	01078737          	lui	a4,0x1078
+   64fb8:	00e787b3          	add	a5,a5,a4
+   64fbc:	01361513          	sll	a0,a2,0x13
+   64fc0:	00a78533          	add	a0,a5,a0
+   64fc4:	10000593          	li	a1,256
+   64fc8:	00000613          	li	a2,0
+   64fcc:	00000097          	auipc	ra,0x0
+   64fd0:	c24080e7          	jalr	-988(ra) # 64bf0 <_ZN11GlobalChainL8TransferEjjb>
+   64fd4:	00007537          	lui	a0,0x7
+   64fd8:	000785b7          	lui	a1,0x78
+   64fdc:	000787b7          	lui	a5,0x78
+   64fe0:	40050513          	add	a0,a0,1024 # 7400 <_start+0x1400>
+   64fe4:	fff88837          	lui	a6,0xfff88
+   64fe8:	10058593          	add	a1,a1,256 # 78100 <_ZZL24PioneerQ38SiluExpReducedfRiE11coefficient+0xc244>
+   64fec:	0007a683          	lw	a3,0(a5) # 78000 <_ZZL24PioneerQ38SiluExpReducedfRiE11coefficient+0xc144>
+   64ff0:	01078733          	add	a4,a5,a6
+   64ff4:	ed040893          	add	a7,s0,-304
+   64ff8:	00a78633          	add	a2,a5,a0
+   64ffc:	00e88733          	add	a4,a7,a4
+   65000:	00d62023          	sw	a3,0(a2)
+   65004:	00d72023          	sw	a3,0(a4) # 1078000 <_ZZL24PioneerQ38SiluExpReducedfRiE11coefficient+0x100c144>
+   65008:	00478793          	add	a5,a5,4
+   6500c:	feb790e3          	bne	a5,a1,64fec <_ZN11GlobalChainL11CommitStateEPKjb+0x100>
+   65010:	ec842683          	lw	a3,-312(s0)
+   65014:	ecc42603          	lw	a2,-308(s0)
+   65018:	00088593          	mv	a1,a7
+   6501c:	00098513          	mv	a0,s3
+   65020:	fffff097          	auipc	ra,0xfffff
+   65024:	5ec080e7          	jalr	1516(ra) # 6460c <_ZN11GlobalChainL9StateSealEPKjS1_jb>
+   65028:	ed040a13          	add	s4,s0,-304
+   6502c:	034a2b03          	lw	s6,52(s4)
+   65030:	140b0e63          	beqz	s6,6518c <_ZN11GlobalChainL11CommitStateEPKjb+0x2a0>
+   65034:	ee442783          	lw	a5,-284(s0)
+   65038:	00000913          	li	s2,0
+   6503c:	00004c37          	lui	s8,0x4
+   65040:	eaf42c23          	sw	a5,-328(s0)
+   65044:	00600b93          	li	s7,6
+   65048:	fff9dab7          	lui	s5,0xfff9d
+   6504c:	412b04b3          	sub	s1,s6,s2
+   65050:	009c7463          	bgeu	s8,s1,65058 <_ZN11GlobalChainL11CommitStateEPKjb+0x16c>
+   65054:	000044b7          	lui	s1,0x4
+   65058:	ec842683          	lw	a3,-312(s0)
+   6505c:	ecc42603          	lw	a2,-308(s0)
+   65060:	ed040593          	add	a1,s0,-304
+   65064:	00098513          	mv	a0,s3
+   65068:	fffff097          	auipc	ra,0xfffff
+   6506c:	5a4080e7          	jalr	1444(ra) # 6460c <_ZN11GlobalChainL9StateSealEPKjS1_jb>
+   65070:	ebc42783          	lw	a5,-324(s0)
+   65074:	fff00593          	li	a1,-1
+   65078:	3007a783          	lw	a5,768(a5)
+   6507c:	00fbe863          	bltu	s7,a5,6508c <_ZN11GlobalChainL11CommitStateEPKjb+0x1a0>
+   65080:	00279793          	sll	a5,a5,0x2
+   65084:	00fc87b3          	add	a5,s9,a5
+   65088:	0007a583          	lw	a1,0(a5)
+   6508c:	028a2783          	lw	a5,40(s4)
+   65090:	00000713          	li	a4,0
+   65094:	00048693          	mv	a3,s1
+   65098:	00179613          	sll	a2,a5,0x1
+   6509c:	00f60633          	add	a2,a2,a5
+   650a0:	eb842783          	lw	a5,-328(s0)
+   650a4:	00261613          	sll	a2,a2,0x2
+   650a8:	00098513          	mv	a0,s3
+   650ac:	00f60633          	add	a2,a2,a5
+   650b0:	01260633          	add	a2,a2,s2
+   650b4:	0024dd13          	srl	s10,s1,0x2
+   650b8:	fffdf097          	auipc	ra,0xfffdf
+   650bc:	344080e7          	jalr	836(ra) # 443fc <_ZN11GlobalChainL6PacketEPKjjjjb>
+   650c0:	1c0d0863          	beqz	s10,65290 <_ZN11GlobalChainL11CommitStateEPKjb+0x3a4>
+   650c4:	0001e637          	lui	a2,0x1e
+   650c8:	00cd0633          	add	a2,s10,a2
+   650cc:	00261613          	sll	a2,a2,0x2
+   650d0:	000787b7          	lui	a5,0x78
+   650d4:	000635b7          	lui	a1,0x63
+   650d8:	0007a683          	lw	a3,0(a5) # 78000 <_ZZL24PioneerQ38SiluExpReducedfRiE11coefficient+0xc144>
+   650dc:	00b78733          	add	a4,a5,a1
+   650e0:	00478793          	add	a5,a5,4
+   650e4:	00d72023          	sw	a3,0(a4)
+   650e8:	fef618e3          	bne	a2,a5,650d8 <_ZN11GlobalChainL11CommitStateEPKjb+0x1ec>
+   650ec:	020a2783          	lw	a5,32(s4)
+   650f0:	024a2603          	lw	a2,36(s4)
+   650f4:	14fbee63          	bltu	s7,a5,65250 <_ZN11GlobalChainL11CommitStateEPKjb+0x364>
+   650f8:	00279793          	sll	a5,a5,0x2
+   650fc:	00fc87b3          	add	a5,s9,a5
+   65100:	0007a583          	lw	a1,0(a5)
+   65104:	00c90633          	add	a2,s2,a2
+   65108:	00100713          	li	a4,1
+   6510c:	00048693          	mv	a3,s1
+   65110:	00098513          	mv	a0,s3
+   65114:	ecc42023          	sw	a2,-320(s0)
+   65118:	ecb42223          	sw	a1,-316(s0)
+   6511c:	fffdf097          	auipc	ra,0xfffdf
+   65120:	2e0080e7          	jalr	736(ra) # 443fc <_ZN11GlobalChainL6PacketEPKjjjjb>
+   65124:	ec042603          	lw	a2,-320(s0)
+   65128:	ec442583          	lw	a1,-316(s0)
+   6512c:	00000713          	li	a4,0
+   65130:	00048693          	mv	a3,s1
+   65134:	00098513          	mv	a0,s3
+   65138:	fffdf097          	auipc	ra,0xfffdf
+   6513c:	2c4080e7          	jalr	708(ra) # 443fc <_ZN11GlobalChainL6PacketEPKjjjjb>
+   65140:	020d0663          	beqz	s10,6516c <_ZN11GlobalChainL11CommitStateEPKjb+0x280>
+   65144:	eb442783          	lw	a5,-332(s0)
+   65148:	00fd0633          	add	a2,s10,a5
+   6514c:	00261613          	sll	a2,a2,0x2
+   65150:	000db7b7          	lui	a5,0xdb
+   65154:	01578733          	add	a4,a5,s5
+   65158:	0007a683          	lw	a3,0(a5) # db000 <_ZZL24PioneerQ38SiluExpReducedfRiE11coefficient+0x6f144>
+   6515c:	00072703          	lw	a4,0(a4)
+   65160:	18e69e63          	bne	a3,a4,652fc <_ZN11GlobalChainL11CommitStateEPKjb+0x410>
+   65164:	00478793          	add	a5,a5,4
+   65168:	fef616e3          	bne	a2,a5,65154 <_ZN11GlobalChainL11CommitStateEPKjb+0x268>
+   6516c:	ec842683          	lw	a3,-312(s0)
+   65170:	ecc42603          	lw	a2,-308(s0)
+   65174:	ed040593          	add	a1,s0,-304
+   65178:	00098513          	mv	a0,s3
+   6517c:	01890933          	add	s2,s2,s8
+   65180:	fffff097          	auipc	ra,0xfffff
+   65184:	48c080e7          	jalr	1164(ra) # 6460c <_ZN11GlobalChainL9StateSealEPKjS1_jb>
+   65188:	ed6962e3          	bltu	s2,s6,6504c <_ZN11GlobalChainL11CommitStateEPKjb+0x160>
+   6518c:	020a0a13          	add	s4,s4,32
+   65190:	fb040793          	add	a5,s0,-80
+   65194:	e8fa1ce3          	bne	s4,a5,6502c <_ZN11GlobalChainL11CommitStateEPKjb+0x140>
+   65198:	eb042783          	lw	a5,-336(s0)
+   6519c:	00178793          	add	a5,a5,1
+   651a0:	eaf42823          	sw	a5,-336(s0)
+   651a4:	ecc42783          	lw	a5,-308(s0)
+   651a8:	00178793          	add	a5,a5,1
+   651ac:	00078713          	mv	a4,a5
+   651b0:	ecf42623          	sw	a5,-308(s0)
+   651b4:	04000793          	li	a5,64
+   651b8:	dcf716e3          	bne	a4,a5,64f84 <_ZN11GlobalChainL11CommitStateEPKjb+0x98>
+   651bc:	eb042703          	lw	a4,-336(s0)
+   651c0:	03000793          	li	a5,48
+   651c4:	12f71c63          	bne	a4,a5,652fc <_ZN11GlobalChainL11CommitStateEPKjb+0x410>
+   651c8:	00100593          	li	a1,1
+   651cc:	00098513          	mv	a0,s3
+   651d0:	fffdf097          	auipc	ra,0xfffdf
+   651d4:	114080e7          	jalr	276(ra) # 442e4 <_ZN11GlobalChainL8HeadSealEPKjb>
+   651d8:	fffdc097          	auipc	ra,0xfffdc
+   651dc:	73c080e7          	jalr	1852(ra) # 41914 <_ZN11GlobalChainL9InputSealEv>
+   651e0:	ec842783          	lw	a5,-312(s0)
+   651e4:	12079063          	bnez	a5,65304 <_ZN11GlobalChainL11CommitStateEPKjb+0x418>
+   651e8:	ebc42683          	lw	a3,-324(s0)
+   651ec:	14812403          	lw	s0,328(sp)
+   651f0:	14c12083          	lw	ra,332(sp)
+   651f4:	3486a783          	lw	a5,840(a3) # bc000348 <_ZZL24PioneerQ38SiluExpReducedfRiE11coefficient+0xbbf9448c>
+   651f8:	34c6a703          	lw	a4,844(a3)
+   651fc:	14412483          	lw	s1,324(sp)
+   65200:	00178793          	add	a5,a5,1
+   65204:	14012903          	lw	s2,320(sp)
+   65208:	13812a03          	lw	s4,312(sp)
+   6520c:	13412a83          	lw	s5,308(sp)
+   65210:	13012b03          	lw	s6,304(sp)
+   65214:	12c12b83          	lw	s7,300(sp)
+   65218:	12812c03          	lw	s8,296(sp)
+   6521c:	12412c83          	lw	s9,292(sp)
+   65220:	12012d03          	lw	s10,288(sp)
+   65224:	34f6a423          	sw	a5,840(a3)
+   65228:	00174713          	xor	a4,a4,1
+   6522c:	00600793          	li	a5,6
+   65230:	00098513          	mv	a0,s3
+   65234:	13c12983          	lw	s3,316(sp)
+   65238:	34e6a623          	sw	a4,844(a3)
+   6523c:	40f6a023          	sw	a5,1024(a3)
+   65240:	00100593          	li	a1,1
+   65244:	15010113          	add	sp,sp,336
+   65248:	fffdf317          	auipc	t1,0xfffdf
+   6524c:	09c30067          	jr	156(t1) # 442e4 <_ZN11GlobalChainL8HeadSealEPKjb>
+   65250:	00c90633          	add	a2,s2,a2
+   65254:	00048693          	mv	a3,s1
+   65258:	00098513          	mv	a0,s3
+   6525c:	00100713          	li	a4,1
+   65260:	fff00593          	li	a1,-1
+   65264:	ecc42223          	sw	a2,-316(s0)
+   65268:	fffdf097          	auipc	ra,0xfffdf
+   6526c:	194080e7          	jalr	404(ra) # 443fc <_ZN11GlobalChainL6PacketEPKjjjjb>
+   65270:	ec442603          	lw	a2,-316(s0)
+   65274:	00000713          	li	a4,0
+   65278:	00048693          	mv	a3,s1
+   6527c:	fff00593          	li	a1,-1
+   65280:	00098513          	mv	a0,s3
+   65284:	fffdf097          	auipc	ra,0xfffdf
+   65288:	178080e7          	jalr	376(ra) # 443fc <_ZN11GlobalChainL6PacketEPKjjjjb>
+   6528c:	eb9ff06f          	j	65144 <_ZN11GlobalChainL11CommitStateEPKjb+0x258>
+   65290:	020a2783          	lw	a5,32(s4)
+   65294:	024a2603          	lw	a2,36(s4)
+   65298:	e6fbf0e3          	bgeu	s7,a5,650f8 <_ZN11GlobalChainL11CommitStateEPKjb+0x20c>
+   6529c:	01260d33          	add	s10,a2,s2
+   652a0:	00100713          	li	a4,1
+   652a4:	00048693          	mv	a3,s1
+   652a8:	000d0613          	mv	a2,s10
+   652ac:	fff00593          	li	a1,-1
+   652b0:	00098513          	mv	a0,s3
+   652b4:	fffdf097          	auipc	ra,0xfffdf
+   652b8:	148080e7          	jalr	328(ra) # 443fc <_ZN11GlobalChainL6PacketEPKjjjjb>
+   652bc:	00000713          	li	a4,0
+   652c0:	00048693          	mv	a3,s1
+   652c4:	000d0613          	mv	a2,s10
+   652c8:	fff00593          	li	a1,-1
+   652cc:	00098513          	mv	a0,s3
+   652d0:	fffdf097          	auipc	ra,0xfffdf
+   652d4:	12c080e7          	jalr	300(ra) # 443fc <_ZN11GlobalChainL6PacketEPKjjjjb>
+   652d8:	ec842683          	lw	a3,-312(s0)
+   652dc:	ecc42603          	lw	a2,-308(s0)
+   652e0:	ed040593          	add	a1,s0,-304
+   652e4:	00098513          	mv	a0,s3
+   652e8:	01890933          	add	s2,s2,s8
+   652ec:	fffff097          	auipc	ra,0xfffff
+   652f0:	320080e7          	jalr	800(ra) # 6460c <_ZN11GlobalChainL9StateSealEPKjS1_jb>
+   652f4:	d5696ce3          	bltu	s2,s6,6504c <_ZN11GlobalChainL11CommitStateEPKjb+0x160>
+   652f8:	e95ff06f          	j	6518c <_ZN11GlobalChainL11CommitStateEPKjb+0x2a0>
+   652fc:	ffffb097          	auipc	ra,0xffffb
+   65300:	d04080e7          	jalr	-764(ra) # 60000 <scalar_fault_park>
+   65304:	00098513          	mv	a0,s3
+   65308:	fffdf097          	auipc	ra,0xfffdf
+   6530c:	7dc080e7          	jalr	2012(ra) # 44ae4 <_ZN11GlobalChainL12FeedbackSealEPKj>
+   65310:	ed9ff06f          	j	651e8 <_ZN11GlobalChainL11CommitStateEPKjb+0x2fc>

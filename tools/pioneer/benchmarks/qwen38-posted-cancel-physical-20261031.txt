@@ -66,3 +66,8 @@ include2 prompts;host-wall data are NOT steady decode tokens/sec.
 Still required:correct full-generation output/normal+EOS,state epochs,
 resident weights across fresh arbitrary requests,Assistant Work integration,
 combined lifetime/stack qualification and sustained real decode benchmarks.
+
+Subsequent result: original 51397 has now exited 0 with three records and
+clean END/Close. Strict posthoc score comparison FAILED although greedy
+tokens match. See qwen38-generation-physical-20261031.txt and its raw logs;
+the earlier pending paragraph above is the historical launch observation.

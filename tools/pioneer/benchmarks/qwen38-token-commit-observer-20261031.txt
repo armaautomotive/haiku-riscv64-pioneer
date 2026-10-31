@@ -1,0 +1,35 @@
+HOST observer correction: private store order is not publication order
+=====================================================================
+2026-10-31. HOST-only test correction; no firmware, model, driver or
+hardware behavior changed. No numerical/model/TPS qualification claimed.
+
+Original DR main session 31695 and clean 66331 both exited 1/SIGABRT at
+the old HOST Store assertion requiring Slot before Committed. They had
+completed the first token's 64 layers and head, but did NOT complete
+three positions, STOP or END. These are failures, not pending passes.
+Original EG main 92178 also exited 1 at the same assertion. The read-only
+LLDB witness caught __assert_rtn and detached; optimized scalar variables
+were unavailable. No scalar values were recovered or guest state changed.
+EG clean 52159 and native DW 41236 were independently confirmed live.
+
+The exact original DR program ELF SHA-256 is:
+917972d54277d95b18ed7e2fc346feba3d1a60857b64ca366fec7b7bd131c60c
+Its actual CommitState disassembly stores Committed at 0x65224, then Slot
+at 0x65238. The private nonvolatile C++ statements are allowed to reorder.
+The old observer incorrectly imposed the opposite order. Exact disassembly
+and original failed histories are archived; they were not patched/replayed.
+
+The correction observes either order for Committed while also requiring
+all 64 layers, all 973 head jobs/partials, all state copies and no STOP.
+The Slot guard remains unchanged. TokenPacket publication still requires
+BOTH actual private words and exactly one real slot flip. No guessed PC,
+ready flag, supplied product, restored history or completion is introduced.
+
+The small unit extracts the ACTUAL Store body and ACTUAL first publication
+predicate from the harness, not a manually reimplemented predicate. Under
+ASan/UBSan it checks six positive cases (three positions, both orders) and
+48 child SIGABRT refusals for early/incomplete/duplicate/wrong metadata.
+Main and independent clean-checkout reruns both exited 0; logs agree.
+The fixture uses SYNTHETIC scalar metadata ONLY. It does not execute model
+instructions, native ownership or hardware, and does not replace the
+unfinished original full-flow or numerical comparison requirements.

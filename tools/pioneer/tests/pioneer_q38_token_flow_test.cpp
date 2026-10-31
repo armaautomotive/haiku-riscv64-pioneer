@@ -482,7 +482,12 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
    assert(value==((position+1)&1) && flips==position && completed==64 && globalJobs==973 && globalPartials==973
     && copyLayer==64 && !copyPhase && !stopJobs);flips++;
   }
-  if(parent && a==Private(18))assert(value==position+1 && flips==position+1 && copyLayer==64 && !copyPhase);
+  // These are private,nonvolatile words. The emitted CommitState stores
+  // Committed BEFORE Slot even though the C++ statements name Slot first.
+  // Observe either order;TokenPacket still requires BOTH actual words and
+  // the one real slot flip before any output publication can be accepted.
+  if(parent && a==Private(18))assert(value==position+1 && (flips==position || flips==position+1)
+   && completed==64 && globalJobs==973 && globalPartials==973 && copyLayer==64 && !copyPhase && !stopJobs);
   if(a==RB::Doorbell){StartLayer(value);memory[a]=value;return;}
   if(a==RB::Status+4){if(value==outer[48])VerifyTokenLayer();memory[a]=value;return;}
   if(a==RB::Status+20 && CL::Dense(layer) && value==5 && memory.at(a)!=5)ObservePrepared();

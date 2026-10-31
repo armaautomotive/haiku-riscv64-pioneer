@@ -1,0 +1,57 @@
+Physical Qwen27B normal generation: completed; numerical mismatch remains
+=======================================================================
+2026-10-31. Goal ACTIVE. Last verified sustained whole-model baseline is
+0.207893161 tokens/sec; 20 tokens/sec remains UNMET. No speedup is claimed.
+
+The original physical session 51397 exited 0. It used driver 18362bcb,
+tag 2026103100010075, generation 3, and the separately qualified timed
+USER client efb8d649. It uploaded the original 19399024640-byte model,
+ran all 64 layers and the vocabulary head at three positions, published
+three records, and completed normal END and Close. No CPU model reference
+ran on the Pioneer. Two positions are prompts; only the third is greedy
+feedback. This is NOT a sustained decode benchmark or Assistant release.
+
+Raw stdout SHA-256:
+625d9d2b9741e5b7e53ea3f1c73da8e8db8c23c93b9e95c15f958403a993a54a
+Separate host-wall stderr SHA-256:
+b7211a9fb724971f4e43f9a5c845f7ea28427ddff29c06c786ebb62b8d0bef05
+Both original logs are archived alongside this report.
+
+Separate strict posthoc CPU comparison exited 1, NOT a numerical pass.
+All three input tokens and greedy selections match the pinned CPU corpus.
+All three maximum-logit words differ; no tolerance was changed:
+
+position  selected  CPU bits  device bits  absolute difference
+0         70253     413c2358  413bc1de     0.023797988891601562
+1         17        414621d3  41452aa2     0.060349464416503906
+2         17        4168afd0  4167c42a     0.057531356811523438
+
+The separately captured physical layer-4 boundary was bit-exact. That
+narrows the investigation; it does not establish the later layers or
+head as correct, nor prove this discrepancy harmless. The comparator
+result is retained verbatim, not relabeled using the matching tokens.
+
+Valid HOST-WALL observations, microseconds (NOT device cycles or TPS):
+source to device open                          299982709
+device open to START return                   1566854276
+START return to terminal observation            31166292
+terminal observation to clean close            209624358
+whole diagnostic                             2107628093
+Upload ioctls: 20367 calls, 1075343114 us total.
+START ioctl: 328533218 us. Cleanup: 3 calls, 209624027 us total.
+Inference can begin before START returns. Do not divide three positions
+by the post-START observation interval to manufacture a decode rate.
+Model authentication, loading, startup and teardown dominate this trial;
+resident weights and repeated requests remain necessary work.
+
+After actual exit, the model/Assistant parent inventory was empty. Fresh
+CPU-only metadata showed the same driver hash, owner 0, cold 0, guard 1,
+64 CPUs and 137034936320 bytes max RAM. No reset, recovery, power action,
+driver exchange, extra GPU/admin FD or profiler was used during the model
+lifetime. The posthoc numerical mismatch did not quarantine the cleanly
+closed device. Raw parent and metadata observations are archived.
+
+Next: locate the first later numerical divergence, retain model residency
+across fresh requests, qualify longer normal/EOS decode, reduce execution
+and memory traffic, integrate the no-reference Work path into Assistant,
+and measure sustained generation. None is established by this short run.
