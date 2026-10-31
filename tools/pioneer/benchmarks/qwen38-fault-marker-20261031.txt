@@ -1,0 +1,87 @@
+Separate ROOT fault marker:paired BUILD and exact instruction tests only
+=====================================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. Last measured whole-model rate
+remains0.207893161 tokens/sec. No new physical performance/correctness pass.
+
+Problem and narrowly scoped change
+---------------------------------
+The installed firmware's scalar_fault_park is a silent self-loop. The
+pending capture's speculative frontend samples cannot distinguish a real
+fault from normal execution or STOP. Do NOT classify those samples as
+retired PCs or use them as permission to restore/reset/release resources.
+
+New blackhole_qwen38_token_fault_start.S is a SEPARATE,UNSELECTED entry.
+It preserves the exact boot,entry addresses and genuine STOP self-loop.
+Only the old fault entry now jumps to a32-byte reporting function. That
+function writes the saved ra LINK to existing LOCAL R::Status[8],fences,
+publishes error0x51465431 to existing LOCAL R::Status[2],fences,and parks.
+The saved link can be zero,unaligned,or a caller's return address;it is NOT
+automatically the failed guard,retired PC or an address to execute/read.
+No stack,NoC,CSR,model,terminal,STOP,clock or resource-release write is made.
+Only t0/t1 are clobbered. No timeout,cancellation,retry or cleanup changes.
+
+The current native observer already refuses a nonzero status error;this
+does NOT prove the new variant's native integration. The saved link is
+NOT exported by the current client. A separately qualified native binding
+and failure-detail reporting are still needed before any hardware trial.
+No existing generated program header,default firmware,builder,native owner,
+driver,protocol,client,Assistant or Work route is replaced by this change.
+
+Independent builds and actual machine instructions
+--------------------------------------------------
+The new builder FIRST recreates the unchanged literal-pinned QTP3 parent,
+whole ELF917972d54277d95b18ed7e2fc346feba3d1a60857b64ca366fec7b7bd131c60c.
+It reuses its ACTUAL compiled program/returning-math/feedback objects and
+only links the separate assembly entry. Normal arithmetic/guards are not
+recompiled with changed settings. Link relocation changes are expected.
+The linker still enforces128KiB ROOT/32KiB auxiliary/8-byte terminal limits,
+no writable globals/GOT and unchanged fixed entry/STOP/fault addresses.
+The genuine STOP instruction remains byte-identical. Boot is unchanged.
+ROOT text grows by exactly32 bytes;auxiliary size remains32720 bytes.
+
+Initial inspected main59229 and clean61201 BOTH exited0 and all five
+artifacts match byte-for-byte. Literal BUILD pins were then frozen. Final
+NON-inspect main67663 and clean5216 BOTH actually exited0,including the
+following instruction and refusal tests. Their artifacts match each other
+AND the original inspected outputs;all three source files cmp-match.
+Clean source:/private/tmp/pioneer-q38-fault-marker-clean-hv.W0N0ssRF,
+HEAD9a38e7710f plus ONLY these three new files.
+
+Actual pinned artifacts:
+ boot4B 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text130920B 3a9e727702c225bc20d2f08153b36b98aa8259cc029f33a151d8d1fd1ec7c26e
+ terminal8B 468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2
+ aux32720B f143a965e082cb1f1bd1cf6af48a62d17590935277110799b30a410821ba77b3
+ ELF190500B efeebcfc25e00b6519026428b1d7af3c12052dad6db2e6e2b52110e3fb7ed7c6
+
+Tests authenticate those complete artifacts BEFORE compiler/symbol access,
+bind symbols to the actual ELF,and compile-check the actual C++ Status
+layout against the assembly offsets. A bounded interpreter executes the
+real fault trampoline/writer/park instructions for SIX saved-link values.
+It requires exactly the two allowed LOCAL writes,in order,with both fences;
+preserved ra/sp/all registers except t0/t1;no additional stores after park.
+SIX actual STOP-entry controls execute the untouched STOP instruction and
+must not write anything or change registers. These are narrow entry tests,
+NOT full-model execution or a claim that an actual guard fault was observed.
+All25 early refusals pass:20 ambient role settings (including defined0)
+before SDK/output access,and mutations of each of five pinned artifacts
+before compiler/SDK-symbol access. No invalid image is retargeted or accepted.
+
+Complete raw logs are copied/cmp-checked byte-for-byte. The paired27-line
+build logs match,SHA8d2168e1a19eef1207ae0081b0bb5fee047064aff84444d2b4173ea121281715.
+Paired one-line tests match,SHA79050f2dc9979f71de0e8954fe8925f4590f653c74ab38ef6aa02b015dac6a87.
+
+Physical lifetime remains separate
+---------------------------------
+SAME54071 still runs the unchanged b74/tag75/gen3 module and be719 USER.
+All weights uploaded;START and one CANCEL are acknowledged;Observe is
+pending without a genuine terminal,QHB or clean END. No extra GPU/admin
+FD,reload,profiler,reset,power/SD/hardware or Assistant change occurred.
+The new image was NEVER copied to or installed on the Pioneer. Poll SAME
+54071 to actual exit. Preserve its first actual failure,or strictly compare
+its actual snapshot only after successful clean closure. Never restore a
+retained/unsafe owner as if it had closed. No frontend-based fault claim.
+
+Still owed:real divergence diagnosis,full numerical/state/normal+EOS/quality,
+retained no-CPU-reference Work+Assistant and measured sustained optimization.
+The goal remains the usable fast27B model,not a collection of diagnostics.
