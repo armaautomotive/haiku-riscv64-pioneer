@@ -66,6 +66,7 @@ int main(int argc,char** argv){
  if(!session->Begin()){
   printf("FAIL_DEBUG75_BOUNDARY reason%s op%08x;CLOSE_ONLY_RESOURCES_MAY_BE_RETAINED\n",session->failure?session->failure:"begin",session->operation);return 1;
  }
+ puts("DEBUG75_BOUNDARY_START_ACKNOWLEDGED;NOT_COMPLETED_LAYER_OR_TOKEN");
  // The delay is host intent,not a target-layer proof. Only genuine terminal
  // metadata determines which boundary may be exported and compared.
  BoundaryValidationClock clock;int64_t delayedUntil=0;
@@ -75,16 +76,28 @@ int main(int argc,char** argv){
  if(!session->RequestCancellation()){
   printf("FAIL_DEBUG75_BOUNDARY_CANCEL reason%s;CLOSE_ONLY_NO_RETRY\n",session->failure?session->failure:"cancel");return 1;
  }
+ puts("DEBUG75_BOUNDARY_CANCEL_REQUEST_ACKNOWLEDGED;NOT_STOP_OR_END");
  const bigtime_t began=delayedUntil;bigtime_t previous=began;bool okay=began>=0;
+ bool reportedPending=false;unsigned reportedWord=0;bigtime_t pendingReportedAt=began;
  const char* observationFailure=okay?nullptr:"clock";
  for(unsigned polls=0;okay && !session->TerminalReady();polls++){
   const bigtime_t now=system_time();
   if(now<previous || now-began>=INT64_C(1800000000) || polls>=18000){observationFailure="deadline_or_clock";okay=false;break;}
   previous=now;
   if(!session->Poll()){okay=false;break;}
+  PioneerQ38TokenBoundaryValidationSession<BoundaryValidationTransport>::PendingObservation observation;
+  if(session->CopyPendingObservation(observation)
+   && (!reportedPending || observation.word!=reportedWord || now-pendingReportedAt>=INT64_C(10000000))){
+   printf("DEBUG75_BOUNDARY_PENDING poll%u readout_word%u raw_frontends%08x/%08x poll_started_elapsed_us%lld;NOT_LAYER_PC_OR_COMPLETION_PROOF\n",
+    polls,observation.word,observation.firstFrontend,observation.secondFrontend,(long long)(now-began));
+   reportedPending=true;reportedWord=observation.word;pendingReportedAt=now;
+  }
   if(!session->TerminalReady() && snooze(100000)!=B_OK){observationFailure="snooze";okay=false;break;}
  }
- if(okay)okay=session->Finish();
+ if(okay){
+  puts("DEBUG75_BOUNDARY_TERMINAL_READY_BEGIN_HOLD_DRAIN_READ_AND_RESTORE;NOT_CLEAN_END_YET");
+  okay=session->Finish();
+ }
  if(!okay){
   session->Abort();printf("FAIL_DEBUG75_BOUNDARY reason%s op%08x;CLOSE_ONLY_NO_RETRY_OR_IMPLICIT_END\n",
    session->failure?session->failure:observationFailure?observationFailure:"unknown",session->operation);return 1;

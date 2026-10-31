@@ -1,0 +1,81 @@
+Boundary diagnostic progress: existing replies only, no extra card queries
+========================================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. Last whole-model rate remains
+0.207893161 tokens/sec. This USER-only diagnostic observability change is
+not an inference speedup, physical result, Work route or numerical pass.
+
+Reason and exact semantics
+--------------------------
+Original physical57871 has uploaded all19399024640 learned bytes but remains
+live without a final capture/END result. Its original immutable5ce43d33
+binary is NOT modified or restarted. The new build improves the NEXT run's
+observability without a second GPU/admin FD or additional ioctl.
+
+The new session getter copies DATA only from an already validated pending
+Observe reply while Running and the original source epoch is still current.
+Native PioneerQ38TokenTerminalResult word/detail4 is a READOUT WORD INDEX,
+not a completed-layer count. firstPC/secondPC/detail12..13 are RAW frontend
+snapshots, not retired PCs or evidence that ROOT/peers stopped. The getter
+does not turn these fields into any lifecycle/cleanup/native permission.
+Every subsequent token call invalidates the cached pending observation.
+Failure clears it; early, revoked-source, terminal and complete states
+refuse without changing the caller's output or issuing any card operation.
+
+The CLI now prints actual Start acknowledgement, actual Cancel-request
+acknowledgement, validated pending DATA on first observation/word changes
+or after10seconds, and a terminal-ready marker BEFORE the existing Finish.
+The timestamp is explicitly poll_started_elapsed_us: it is sampled BEFORE
+the potentially blocking Poll, not claimed as a completion timestamp.
+The pending line explicitly says NOT_LAYER_PC_OR_COMPLETION_PROOF.
+Only the actual final snapshot's existing header identifies completedLayers.
+
+No protocol/header/format/opcode/kernel/firmware change. Same whole SHA
+before FD, ALL learned parts, single0..5000ms delay, one cancellation,
+30minute/18000poll bound, HOLD/drain/two ordered chunks/full Finish/Close
+before exclusive export. No guard, deadline, comparison or CPU control is
+relaxed. Logging can affect host scheduling;delay still NEVER selects an
+exact layer. Before Start acknowledgement, span close/identity/native start
+remain one unreported interval;this adds no kernel sub-stage telemetry.
+
+Actual paired qualification, not a synthetic device claim
+---------------------------------------------------------
+Main88416 and clean8570 BOTH actually exit0. Clean is HEADb7b38d736f plus
+ONLY the three cmp-verified owned source/test files under:
+ /private/tmp/pioneer-q38-boundary-progress-clean-hj.WCzeaC5A
+Final complete13-line logs compare BYTE-FOR-BYTE, SHA
+a004beca09ed184d29ee3df628fccec69304523cf5c66683a8c3de7c6df5f67e.
+
+New session462 COW branches (old448 plus14 pending-detail/range faults).
+All64 readout indices and all64 separately reported terminal layer counts
+are exercised without conflating them. The128 existing RAW-frontend normal
+and cancelled combinations still work, including zero and0xffffffff DATA.
+Copies have no transport calls and preserve output on refusal, including
+revoked source, failed reply and terminal/complete states. Existing upload,
+loss, missed-window, raw-NaN, cleanup and no-implicit-END tests remain.
+These tests use a MOCK source/OS/driver, not a native engine or P100A.
+New role1/49 and CLI/delay9/31 pass. Old strict first-layer session384 and
+role1/49 still pass. No new role or source/runtime capability is introduced.
+
+Actual independently built Haiku riscv64 objects and binaries match:
+ NEW object af6e8b767ba4269319703dca9b4b193f53449ed1629b92e0c2d3c7ba5e58327e
+ NEW binary 6f169892ce7730a44621c80e24d0763ef704d2e6cdb70ced51b3fd406fa3c42c
+ OLD strict binary 1a061f7ab0eb5001c04a73c1334ed3b519a29781157ea4e46f533e3908fe0536
+Both individual USER frames remain4432B;no CPU oracle,Work,mock or native
+owner imports. Old strict binary is byte-identical,not re-labelled.
+Initial HI session99252 also exits0. Initial paired78262/49254 exit0 but
+their shell redirect covered only the last SDK command;they are NOT the
+complete archived logs. The final correctly grouped paired executions
+above supply the unmodified full qualification logs. No code was changed
+between the paired qualification executions.
+
+No deployment or new physical claim
+-----------------------------------
+The new6f16 binary has NOT been staged, installed or run on the Pioneer.
+Original57871 still uses5ce43d33 under9d61a9e67d and b74/tag75/gen9. There
+is no completed QHB snapshot or numeric result yet. No extra GPU/admin FD,
+reload, reboot, power, SD, hardware or Assistant change occurred here.
+Poll SAME57871;respect its actual lifetime. Only after actual clean exit0
+and PASS...clean_end1 copy/hash its real20548B QHB and compare the ACTUAL
+layer with strict --held-boundary-only. After fresh clean ownership proof,
+restore ONLY via unchanged ffa315aa --restore-token-hidden-readout. An
+unsafe/lost lifetime is not normal-restore authority. Keep the goal ACTIVE.

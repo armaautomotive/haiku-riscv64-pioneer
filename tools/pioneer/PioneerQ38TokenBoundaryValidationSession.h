@@ -29,6 +29,9 @@
 // numerics, native lifetime/stack safety, physical speed or Work readiness.
 template<class IO,class Source=PioneerQ38PublicModelSource>
 class PioneerQ38TokenBoundaryValidationSession {
+public:
+ struct PendingObservation {uint32_t word=0,firstFrontend=0,secondFrontend=0;};
+private:
  using Packet=PioneerQ38TokenControl::Packet;
  enum State {Virgin,Running,Terminal,Held,Drained,Complete,Failed};
  IO& io;Source& source;PioneerQwen38PackedPlan layout;
@@ -40,6 +43,7 @@ class PioneerQ38TokenBoundaryValidationSession {
  State state=Virgin;int fd=-1;uint64_t epoch=0,generation=0;
  bool attempted=false,prepared=false,preflightAttempted=false,cancelAttempted=false,cancelled=false;
  unsigned committed=0,completedLayers=0,position=0,terminalStage=0;
+ PendingObservation pendingObservation={};bool pendingObservationValid=false;
  bool Current()const{
   return epoch && source.Ready() && source.Model().Epoch()==epoch && layout.MatchesSource(source.Model());
  }
@@ -47,6 +51,7 @@ class PioneerQ38TokenBoundaryValidationSession {
  bool Stop(const char* why){
   if(!failure)failure=why;
   state=Failed;records.fill(0);hidden->fill(0);captured=false;
+  pendingObservation={};pendingObservationValid=false;
   std::memset(hiddenPacket.get(),0,sizeof(*hiddenPacket));Close();return false;
  } // CLOSE ONLY,never automatic retry/cancel/END/reset after uncertainty
  template<class T>bool Call(unsigned op,T& value){
@@ -63,6 +68,7 @@ class PioneerQ38TokenBoundaryValidationSession {
  }
  bool TokenCall(unsigned op,unsigned count=0){
   namespace P=PioneerQ38TokenControl;namespace V=PioneerQ38TokenHiddenValidation;
+  pendingObservationValid=false;
   std::memset(packet.get(),0,sizeof(*packet));auto& q=packet->request;q.magic=P::Magic;q.version=P::Version;q.operation=op;q.records=count;
   if(op==P::Start){q.prompts=V::Prompts;q.limit=V::Positions;packet->prompt[0]=V::FirstToken;packet->prompt[1]=V::SecondToken;}
   if(!V::ControlRequestShape(*packet))return false;
@@ -127,6 +133,11 @@ public:
  bool CancellationConsumed()const{return state==Complete && cancelAttempted && cancelled;}
  unsigned CommittedRecords()const{return state==Complete?committed:0;}
  unsigned CancelledLayers()const{return CancellationConsumed()?completedLayers:0;}
+ bool CopyPendingObservation(PendingObservation& output)const{
+  if(state!=Running || !pendingObservationValid || !Current())return false;
+  output=pendingObservation;return true;
+ } // validated reply DATA ONLY;word is a readout index,NOT a completed layer;
+ // raw frontend words are NOT retired PCs,completion or cleanup authority.
  bool Preflight(){
   if(preflightAttempted || attempted || state!=Virgin)return false;
   preflightAttempted=true;
@@ -216,6 +227,7 @@ public:
   if(d[5] || d[6]!=r.ready || d[7]>1 || (d[7] && !cancelAttempted) || d[14] || d[15])return Stop("observe_reply");
   if(!r.ready){
    if(r.stage!=9 || d[3] || d[4]>63 || d[7] || d[8] || d[9] || d[10] || d[11])return Stop("pending_reply");
+   pendingObservation={d[4],d[12],d[13]};pendingObservationValid=true;
    return true;
   }
   if(r.stage!=11 || d[3] || d[8]>3 || d[9]>=3 || !d[10] || d[10]>64)return Stop("terminal_reply");

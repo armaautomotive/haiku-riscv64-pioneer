@@ -45,6 +45,7 @@ struct SyntheticIO {
  unsigned fragment=0,page=0;uint64_t bytes=0,progress=0;bool openFail=false;
  unsigned cancels=0,cancelFailure=0,stopRecords=0,stopLayers=1,stopStage=1;bool missedWindow=false;
  uint32_t rootFirstPC=0x60004,rootSecondPC=0x60004;
+ unsigned pendingWord=37;
  unsigned Records()const{return cancels && !missedWindow?stopRecords:3;}
  explicit SyntheticIO(SyntheticSource& s):source(s),sweep(s.sweep){sweep.calls=&calls;}
  int Open(){assert(source.Ready() && !opens++);return openFail?-1:75;}
@@ -100,7 +101,12 @@ struct SyntheticIO {
    if(operation==P::Start){assert(!starts++ && !holds && !ends);r.stage=d[2]=8;d[3]=1;}
    else if(operation==P::Observe){
     assert(starts==1 && !holds && !ends);polls++;d[12]=rootFirstPC;d[13]=rootSecondPC;
-    if(polls==1){r.ready=0;r.stage=d[2]=9;}
+    if(polls==1){
+     r.ready=0;r.stage=d[2]=9;d[4]=pendingWord;
+     for(unsigned word:{0U,1U,2U,3U,5U,6U,7U,8U,9U,10U,11U,14U,15U})
+      if(sweep.Clone([&]{d[word]^=1;}))return true;
+     if(sweep.Clone([&]{d[4]=64;}))return true;
+    }
     else {
      r.stage=d[2]=11;d[6]=1;
      if(cancels && !missedWindow){d[7]=1;d[8]=stopRecords;d[9]=stopRecords-unsigned(stopStage==3);d[10]=stopLayers;d[11]=stopStage;}
@@ -143,9 +149,17 @@ int main(){
  setvbuf(stdout,nullptr,_IOLBF,0);Fixture fixture;Sweep sweep;SyntheticSource source(fixture,sweep);SyntheticIO io(source);
  auto session=std::make_unique<PioneerQ38TokenBoundaryValidationSession<SyntheticIO,SyntheticSource>>(io,source);
  auto out=std::make_unique<PioneerQ38TokenBoundarySnapshot>();std::memset(out.get(),0xaa,sizeof(*out));
+ using Observation=PioneerQ38TokenBoundaryValidationSession<SyntheticIO,SyntheticSource>::PendingObservation;
+ auto noObservation=[&](){
+  Observation data={0xdeadbeef,0xdeadbeef,0xdeadbeef};const auto calls=io.calls;
+  assert(!session->CopyPendingObservation(data) && io.calls==calls);
+  assert(data.word==0xdeadbeef && data.firstFrontend==0xdeadbeef && data.secondFrontend==0xdeadbeef);
+ };
+ noObservation();
  auto unchanged=[&](){for(unsigned i=0;i<sizeof(*out)/4;i++)assert(reinterpret_cast<uint32_t*>(out.get())[i]==0xaaaaaaaa);};
  assert(!session->Finish() && !session->Poll() && !session->RequestCancellation() && !session->CopySnapshot(out.get(),sizeof(*out)) && !io.opens);
  bool okay=session->Begin();
+ noObservation();
  if(okay)for(unsigned abandon=0;abandon<2;abandon++)if(sweep.Clone([]{})){
   const auto calls=io.calls;
   if(abandon)session->Abort();session.reset();
@@ -155,8 +169,10 @@ int main(){
  // processor/owner history is supplied to any real engine or hardware.
  constexpr uint32_t samples[]={0,1,0xffffffffU,0x60000,0x60004,0x60008,0x40010,0x1585ec};
  if(okay)for(unsigned layers=1;layers<=64;layers++)if(sweep.Clone([&]{sweep.enabled=false;})){
-  io.stopLayers=layers;
+  io.stopLayers=layers;io.pendingWord=layers-1;
   assert(session->RequestCancellation() && session->Poll() && !session->TerminalReady());
+  Observation data;const auto callsBeforeCopy=io.calls;
+  assert(session->CopyPendingObservation(data) && data.word==layers-1 && io.calls==callsBeforeCopy);
   assert(session->Poll() && session->TerminalReady() && !session->Captured());
   assert(session->Finish() && session->Captured() && io.hiddenReads==2 && io.ends==1 && io.closes==1);
   assert(session->CopySnapshot(out.get(),sizeof(*out)) && out->header[4]==layers && out->header[0]==0x31424851 && out->footer==0x454e4442);
@@ -168,7 +184,12 @@ int main(){
    if(cancelled)assert(session->RequestCancellation() && io.cancels==1);
    const auto held=io.holds;
    assert(session->Poll() && !session->TerminalReady() && !session->Finish() && io.holds==held);
+   Observation data;const auto observedCalls=io.calls;
+   assert(session->CopyPendingObservation(data) && io.calls==observedCalls && data.word==37
+    && data.firstFrontend==first && data.secondFrontend==second);
+   source.valid=false;noObservation();source.valid=true;
    assert(session->Poll() && session->TerminalReady() && !session->CancellationConsumed());
+   noObservation();
    assert(session->Finish() && session->Completed() && io.closes==1 && io.holds==1 && io.reads==1 && io.ends==1);
    assert(session->CancellationConsumed()==cancelled && session->CommittedRecords()==(cancelled?0U:3U));
    const auto calls=io.calls,closes=io.closes;
@@ -205,12 +226,13 @@ int main(){
   session.reset();assert(io.calls==calls && io.closes==closes && io.cancels==1);
   unchanged();_exit(0);
  }
- if(okay){assert(!session->Begin() && !session->Finish() && !session->CopySnapshot(out.get(),sizeof(*out)));okay=session->RequestCancellation();}
+ if(okay){assert(!session->Begin() && !session->Finish() && !session->CopySnapshot(out.get(),sizeof(*out)));okay=session->RequestCancellation();noObservation();}
  if(okay)okay=session->Poll();
  if(okay){assert(!session->TerminalReady() && !session->Finish());okay=session->Poll();}
  if(okay){assert(session->TerminalReady() && !session->CopySnapshot(out.get(),sizeof(*out)));okay=session->Finish();}
  if(sweep.child){
   assert(!okay && io.calls==sweep.fence && io.closes==1 && !session->Completed());
+  noObservation();
   auto calls=io.calls,closes=io.closes;auto reads=source.reads;
   assert(!session->Begin() && !session->Poll() && !session->RequestCancellation() && !session->Finish() && !session->CopySnapshot(out.get(),sizeof(*out)));
   session->Abort();session->Abort();session.reset();
@@ -218,6 +240,7 @@ int main(){
   unchanged();_exit(0);
  }
  assert(okay && session->Completed() && io.closes==1 && io.starts==1 && io.polls==2 && io.holds==1 && io.reads==1 && io.ends==1 && io.cancels==1 && io.hiddenReads==2 && session->Captured());
+ noObservation();
  assert(session->partsUploaded==3551 && session->pagesUploaded==source.pages && source.reads==source.pages && io.bytes==source.bytes && io.progress==source.bytes);
  assert(!session->CopySnapshot(nullptr,sizeof(*out)) && !session->CopySnapshot(out.get(),sizeof(*out)-1));unchanged();
  assert(session->CopySnapshot(out.get(),sizeof(*out)));
