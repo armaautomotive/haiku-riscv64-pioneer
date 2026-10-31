@@ -1,0 +1,106 @@
+Optimized ROOT: distinct immutable package and actual private native owner
+=========================================================================
+2026-10-31. Goal ACTIVE. Last measured physical whole-model baseline
+0.207893161 tokens/sec;20 tokens/sec remains UNMET. No speedup claimed.
+
+Actual new package and scope
+-----------------------------
+The independently reproduced d0760386 job-boot-fold/eight-way/fault ROOT
+is combined with the UNCHANGED precise-beta worker. All13 code sections
+and BOTH complete ELFs authenticate before output. The generator emits
+only the exact same-open authenticated snapshots,not unchecked reopens.
+Main and independent clean generated headers are byte-identical SHA:
+1b8e610966e7a8b69d545db7dd9f58f326b4d3937a354960930c858e8e92472b.
+ALL nine worker-array digests match the earlier precise-beta package;
+RootText and RootAux change. CodeWords ROOT40931/peer25238,total3044253.
+The full original journal extent/addresses remain unchanged.
+
+PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS selects its DISTINCT namespace,
+not a mutation of the old beta/fault/G3 code. An actual native owner also
+requires PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_NATIVE_CONTEXT plus ALL21 old
+exact parents,QT3NODRV,renamed conventional ABI and held-read diagnostic.
+The new role invokes the original complete native perimeter unchanged.
+Old physical,USER,CPU-reference,Work and BUILD selectors cannot promote it,
+including defined0 or late changes. Old program selection remains legal
+but cannot claim the new JobBootFold identity. No public opcode added.
+
+Completed DATA/role qualification
+----------------------------------
+Final main5661 and clean58811 ACTUALLY exited0,logs identical. Every word
+of all120 code views is exact vs authenticated source sections. All2290
+gap/runtime/invalid/immutable-output refusals preserve output. Thirty
+corrupt/truncated source refusals occur before output creation. Both
+complete ELFs are among authenticated artifacts,not just extracted bins.
+Two positive DATA/private-native syntax cases and217 missing/defined0/
+two/late/foreign/old-owner/renamed-ABI refusal cases pass independently.
+
+Initial DATA harness99426/12135 exited1 after word checks because removing
+the new selector correctly left the OLD beta DATA profile legal. The
+harness wrongly expected that old legal default to be a syntax error.
+The correction requires the new JobBootFold identity explicitly;it does
+not forbid old use or weaken code/word comparison. Original failures stay
+archived. There was no hardware run or resource quarantine from this.
+
+Old precise-beta package regression main3178/clean95754 both0:its entire
+generated header remains byte-identical SHA0e7e21ee62832062fd809ac7af8b9d5da00bb479778f559bc808e4dcede156bd,
+all3044235 old words exact,30 corrupt/truncated refusals,36 selector
+refusals and12 separate ROM-bridge role refusals unchanged.
+
+Actual Haiku SDK objects
+-------------------------
+Main94842 and independent clean70180 ACTUALLY exited0,objects identical:
+f4f8e84b1b3253ff6fd17122d3705934dd01c75ffd44ce2504f84a3158f0fd0d.
+The previous4b2098cf object and complete compiler argv authenticate before
+changing ONLY source/output. Both use the SAME read-only SDK standard/
+generated headers;implementation-relative includes come from independent
+checkouts. This is the actual full driver source/private owner,not stubs.
+All13 COMPILED array digests match the new package;old code namespaces
+are absent;2MiB RoPE bytes are unchanged. Real native controller,terminal
+observer and scoped held-read bodies are emitted. Conventional driver ABI,
+CPU model/reference,Work and HOST endpoint imports are ABSENT. Individual
+static frames are bounded vs the old object;whole kernel stack is NOT
+qualified by this compile-only check. This object MUST NOT be installed.
+
+Old private SDK main37209/clean31327 ACTUALLY exited0 and reproduce their
+entire earlier4b2098cf7fe33edf0450d8e50cec4b8b82efb992c74b38175d773b4cdf2a2ae8
+objects byte-for-byte. Both regressions authenticate the SAME old fault
+object/argv inputs,while compiling this checkout's own relative sources.
+Old physical role tests73841/12734 both0,4 positives and819 refusals.
+
+Full fixture compilation main25300/clean71048 both0. Binaries were NEVER
+executed by these controls;they are NOT native runtime proof. New bounded
+CLI tests10677/84394 both0,30 pre-compile/output refusals:missing/duplicate/
+foreign/shortcut/old-map/ambient overrides,entire output inventory unchanged.
+
+Original first-layer/full-END histories:LIVE,not completed
+---------------------------------------------------------
+Main51647 and clean18828 are two SAME original uninterrupted histories.
+They authenticate the full original27B SAME-open GGUF,execute actual
+1010 zero kernels and119 virgin peer instruction engines,then run new
+ROOT embedding/matrix/Conv/GDN/FFN arithmetic with original model bytes.
+They have completed actual first-matrix closure with all119 genuine
+engines;first3 workers execute fullK5120/48 output rows. No CPU arithmetic
+product,guest PC/state reset or substituted completion is supplied.
+The separate expected peer-ROM bridge remains precise-beta DATA because
+all nine peer arrays are EXACTLY unchanged;it observes workers1..119 ONLY.
+ROOT execution/installed code checks use the NEW package directly.
+
+At the19:31:42UTC checkpoint both logs reach ROOT layer0 steps80000103,
+phase6. Their earlier completed
+first-matrix ROOTsteps33861479 vs the prior same native test36321913,
+workerSteps173212416 unchanged. These are HOST instruction observations,
+including simulated polling,NOT device cycles or an inferred TPS result.
+Complete first-layer output,strict posthoc prefix comparison,cancel,
+119 STOP,120 HOLD,drain,restoration and full END remain PENDING. Partial
+log snapshots are explicitly named partial,not final success logs.
+Preserve these exact handles;observation timeout is not terminal/restart.
+
+Pioneer is unchanged from its last healthy read-only gen5/tag75/cold0/
+owner0/64CPU/full128GB observations. No hardware model,driver exchange,
+reset,power/SD,Assistant,boot,OS or network mutation was done this turn.
+Old local full-model DW41236 also keeps its SAME original history.
+
+Next:actual completion and unchanged strict prefix comparison,then the
+separate physical revision/module/guarded deployment and real benchmark.
+Full-model numerics/long normal+EOS decode,resident weights/fresh requests,
+Assistant no-reference Work and sustained20 tokens/sec remain unproven.

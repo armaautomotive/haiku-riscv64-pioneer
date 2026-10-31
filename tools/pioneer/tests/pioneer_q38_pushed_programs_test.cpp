@@ -13,7 +13,9 @@
 #include <iterator>
 #include <string>
 #include <vector>
-#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_PRECISE_BETA
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_JOB_BOOT_FOLD
+namespace P=PioneerQ38TokenJobBootFoldPrograms;
+#elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_PRECISE_BETA)
 namespace P=PioneerQ38TokenPreciseBetaPrograms;
 #elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_FAULT)
 namespace P=PioneerQ38TokenFaultPrograms;
@@ -57,7 +59,10 @@ int main(int argc,char** argv){
    uint32_t unchanged=0xdeadbeef;assert(!P::ProgramWord(worker,address,unchanged) && unchanged==0xdeadbeef);refusals++;
   }
  }
-#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_PRECISE_BETA
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_JOB_BOOT_FOLD
+ assert(P::FaultMarker==0x51465431 && P::FaultSavedLinkOffset==32 && P::PreciseBeta==1 && P::JobBootFold==1);
+ assert(allWords==3044253 && P::CodeWords(0)==40931 && P::CodeWords(1)==25238);
+#elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_PRECISE_BETA)
  assert(P::FaultMarker==0x51465431 && P::FaultSavedLinkOffset==32 && P::PreciseBeta==1);
  assert(allWords==3044235 && P::CodeWords(0)==40913 && P::CodeWords(1)==25238);
 #elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_FAULT)

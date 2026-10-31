@@ -1,0 +1,8 @@
+1b8e610966e7a8b69d545db7dd9f58f326b4d3937a354960930c858e8e92472b token-programs FP32/cancel1/ALL13 sections+2fullELFs authenticated/DATA ONLY/NO install or native permission
+PASS distinct QTP3 immutable programs/all13 sections/ALL120 code3044253 words byte-exact to authenticated artifacts/covered by proposed journal/2290 gap+runtime+invalid+immutable-output refusals;DATA ONLY,not native/restore/model/physical/Work/TPS qualification
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_job_boot_fold_program_tests.py", line 79, in <module>
+    check(source(bad),False);refused+=1
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_job_boot_fold_program_tests.py", line 36, in check
+    assert (result.returncode==0)==okay,result.stderr
+AssertionError

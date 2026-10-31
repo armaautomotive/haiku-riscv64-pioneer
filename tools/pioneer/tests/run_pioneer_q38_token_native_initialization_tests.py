@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 root_profile=None
+job_boot_fold='--job-boot-fold' in sys.argv
+if job_boot_fold:
+    assert sys.argv.count('--job-boot-fold')==1
+    sys.argv.remove('--job-boot-fold')
 if '--root-instruction-profile' in sys.argv:
     assert sys.argv.count('--root-instruction-profile')==1
     index=sys.argv.index('--root-instruction-profile')
@@ -84,6 +88,11 @@ if held_hidden_readout:
         and len(sys.argv) == 7 and sys.argv[2] == '--execution-end', 'Held hidden TEST requires the exact G3 ROOT frontend first-layer/cancel/STOP/HOLD/Read0/full-END predecessor'
 if root_profile:
     assert precise_beta and posted_cancel and held_hidden_readout and not compile_link_only, 'HOST ROOT profile requires original precise-beta first-layer/full-END execution,not a shortened or compile-only path'
+if job_boot_fold:
+    assert precise_beta and posted_cancel and held_hidden_readout and root_frontend_snapshots \
+        and pushed_context and len(sys.argv)==7 and sys.argv[2]=='--execution-end' \
+        and not any((fault_marker,root_profile,backend_finish,control_adapter,control_operations)), \
+        'Job boot fold TEST requires its distinct exact precise-beta original first-layer/full-END predecessor;not an old profile or physical/Work alias'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -175,6 +184,8 @@ if pushed_context:
 if precise_beta:
     defines.update(PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS='1',PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',
                    PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')
+if job_boot_fold:
+    defines.update(PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS='1',PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_NATIVE_CONTEXT='1')
 if posted_cancel:
     defines.update(PIONEER_Q38_TOKEN_POSTED_CANCEL='1',PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',
                    PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')
@@ -356,6 +367,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         if pushed_context:
             peer_flags += ['-DPIONEER_Q38_TOKEN_PUSHED_PROGRAMS=1']  # distinct HOST DATA,NEVER BUILD/native/kernel flags
         if precise_beta:
+            # The optimized ROOT has EXACTLY the same nine peer arrays.
+            # This bridge observes peers1..119 ONLY;ROOT code comes from
+            # the new native package and is independently authenticated.
             peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_PRECISE_BETA_TEST=1']
             rom_object=base/'precise-beta-expected-rom-data.o'
             subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
