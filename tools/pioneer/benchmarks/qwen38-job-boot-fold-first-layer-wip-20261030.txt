@@ -1,0 +1,92 @@
+Boot-fold ROOT: completed completion faults and numerical test entry
+==================================================================
+2026-10-30. HOST tests only;no installed driver or physical workload change.
+Goal ACTIVE. Last physical whole-model rate0.207893161 tokens/sec;20 UNMET.
+
+Completion-fault pair now complete
+----------------------------------
+Original sessions45663/32864 BOTH terminal exit0;DO NOT POLL/RESTART AGAIN.
+Each used the exact430b89b2... boot-fold ROOT image,unchanged old/G3 workers,
+the authenticated SAME-open original GGUF,and unchanged connected C++ test.
+Both preserved ROOT-from-RESET+SAME119 histories,actual first3 original
+full-K5120 tensor jobs,and6 real simulated pushed payload/commit packets.
+No supplied CPU matrix product,ready marker,PC/nonce setter or transplant.
+
+All69 cases passed in both:receipt words0..63,finite missing-commit timeout,
+and4 unexpected incoming-counter cases. All expected case IDs0..68 were
+independently counted. ROOT parks before a following packet/release and
+remains inert2048 instructions. The unchanged parent then admits nonce2 and
+the actual next first read. Non-coherent cache/fence observations remain:
+hits864/misses15442/stale-remote-events4 (not timings).
+
+Complete logs:76 lines,byte-identical,SHA256:
+23e5b37d96d0aab459f464e0616ebfbec82b9cf644eba610daf5d248108a867d
+Archive:qwen38-job-boot-fold-completion-20261030.log
+Sources:/private/tmp/pioneer-q38-job-boot-fold-completion-{main,clean}-20261030-ft.log
+This completes the69 suite started in a449cc4e33. The separate180 retained-
+admission cases were already completed and archived in that checkpoint.
+Neither suite is a full-layer/model numerical,native,physical or TPS proof.
+
+New bounded numerical TEST mode
+-------------------------------
+run_pioneer_q38_job_boot_fold_connected_tests.py now ALSO permits exactly:
+  IMAGE OLD_WORKER QGW3_WORKER MODEL --first-layer-only --observed-trace ABS
+where ABS is fresh,absolute and not an existing file/directory or symlink.
+Exact image pins/ELF/profile checks precede output creation. The unchanged
+original-flow C++ test and observed-prefix bridge run with ASan/UBSan,
+-Werror,normal math and the fixed cancellable/precise/QGW3 host profile.
+Only prefix-0.bin may be published;no complete token trace or native terminal
+capability. No full-flow/EOS/snapshot/fast-memory/native/Work mode is added.
+The normal original-flow runner,default programs and native role gates stay
+unchanged. Do not use earlier df4261... first-layer results for this image.
+
+Main44671 and clean7163 CLI checks exit0,60 early refusals each,unchanged
+whole output inventory/sentinel,including malformed/existing/dangling-link
+prefixes,mode mixing/duplicates,shortcuts,relative paths and role overrides.
+New fault-argv regression also exits0 in both sources. It authenticates the
+frozen old runner5bb30a... from a449cc4e33,then compares both old/current
+fault modes' actual compiler argv,executable argv and complete execution
+environments,normalizing ONLY their owned temporary paths. Input hashes,
+nm and objdump are real;compiler/model execution is INTERCEPTED here. It
+proves subprocess-contract equality,not a rerun of either fault suite.
+An initial instrumentation error intercepted check_output's internal run;
+the test now allows only real read-only nm/objdump through,then passes.
+
+Runner SHA256:a7188f3779e7d8f542303b0815a3ea3c27355734451198c91940b628ef52a786
+CLI SHA256:3cdb989395e1ad28c226e87359b422e60e31b5949bed8faf39e40a908cc20100
+Argv test SHA256:4dc85c7829e26fd368a9b62de7af98436abbca920e0d97319edd798855c66af8
+Archived outputs:qwen38-job-boot-fold-first-layer-tools-20261030.log
+
+Continuing original numerical histories (not passed)
+---------------------------------------------------
+Main93073:
+  /private/tmp/pioneer-q38-job-boot-fold-layer-main-fu.rtKEGiD9/observed
+  /private/tmp/pioneer-q38-job-boot-fold-first-layer-main-20261030-fu.log
+Clean54102:
+  /private/tmp/pioneer-q38-job-boot-fold-layer-observed-clean-fu.6q1Yd3ax/observed
+  /private/tmp/pioneer-q38-job-boot-fold-first-layer-clean-20261030-fu.log
+Clean source:/private/tmp/pioneer-q38-job-boot-fold-layer-clean-fu.pyoTJE4V
+This is git archive a449cc4e337405b6d5b2829502bfe9b8c2d88ddb plus ONLY
+the3 cmp-verified owned Python tools. It excludes unrelated worktree edits.
+Both new numerical runs have compiled/linked and genuinely reached original
+embedding5120 bit-exact and layer0 matrix3. These are LIVE,not terminal or
+whole-layer numerical acceptance. The4 original-fabric child assertions are
+intentional refusal tests;both parents explicitly pass that gate and continue.
+After actual terminal0,independently compare EACH prefix against the fixed
+CPU corpus with compare_pioneer_q38_observed_trace.py --first-layer-only,
+without --diagnostic-only/tolerance. Do not restart for an observation yield.
+The original5 full-flow sessions31695/66331/41236/92178/52159 also continue.
+
+Driver-integration audit (read-only,not new implementation)
+----------------------------------------------------------
+PioneerQ38TokenNativeRole still requires the exact compile-only role,renamed
+conventional ABI and21 parent flags. ProbeControl's token branch exposes only
+the existing bank/span/reload constructors;Q38TokenNativeControl remains
+private and unrouted. Simply copying a new object or toggling Work would not
+activate a safe whole-token driver. A separately qualified physical role,
+program identity/route and actual lifecycle/stack validation remain required.
+No such public route or hardware authority was enabled by this checkpoint.
+
+Still owed:THIS candidate's completed numerical result,full64/vocabulary/
+multi-token/state/STOP/END,native/combined-stack and physical qualification,
+actual no-CPU-reference Work integration and sustained speed measurements.

@@ -1,0 +1,2 @@
+PASS job-boot-fold connected CLI/60 missing+unknown+duplicate+shortcut+relative+existing-or-symlink-output+role-override refusals/unchanged output inventory;HOST faults or incomplete first layer ONLY,not full model/native/Work
+PASS old/current boot-fold fault modes: both compiler argv, executable argv and complete execution environments EXACT after owned-temporary-path normalization;real input pins+ELF metadata verified;compiler/model execution intercepted,NOT runtime/numeric/native/physical/TPS proof
