@@ -1,0 +1,82 @@
+First DEBUG74 physical full-upload/cancellation lifecycle trial
+==============================================================
+2026-10-30 local/2026-10-31 UTC. Goal ACTIVE;20tok/s UNMET.
+Last measured physical whole-model rate remains0.207893161tok/s.
+OVERALL TRIAL FAILED at fresh terminal recheck before the HOLD loop.
+No full-model generation,numerical,clean-END,Work or throughput pass.
+
+Exact installed module d78464058dec32de49e67c5263fca290751acdaf4252a7785ce56b9654e63aed
+Tag2026103000010074/gen5;guarded oldstable12/gen4 -> candidate74/gen5.
+Exact actual USER client24f4e84a7a21f6623129e5a3734b60646479e0bb05b41db464e3601c10b53c2e
+argv ONLY --validate-cancel-boundary. This is the frozen4ae preparation
+client,NOT the later b307 optional host-timing build. ONE launched trial;
+original handle51984,Haiku team1211. Slow upload/startup was observed on
+the SAME handle;no timeout-based restart,second launch or CPU oracle.
+
+Physical observations
+----------------------
+The real fixed Source.Open/complete851 layout preceded device Open. ALL
+19,399,024,640 padded learned bytes uploaded,not merely sampled pages.
+The public native Start returned status0,ready1,unsafe0,stage8. ONE explicit
+Cancel returned status0,ready1,unsafe0,stage7. Three Observe calls returned
+pending stage9,then Observe returned ready1,unsafe0,stage11. The pinned
+driver's terminal path checks ROOT and all119 peer STOP records/PCs/sources.
+This accepted observation is NOT a HOLD,record drain,END or model proof.
+Layer/committed counts and raw inner observer details were not printed by
+this client;do NOT invent a first-layer/numerical/token result from the log.
+
+Hold operation4 returned status-1/errno-2147442676,started1,ready0,unsafe1,
+stage1. The client reported reasonhold and CLOSE_ONLY,actual exit1.
+In the exact source,HoldStopped phase1 rechecks the SAME terminal before
+phase2's first HOLD write. No Read/Finish/retry/implicit Cancel/END followed.
+CPU-METADATA-ONLY reload status after failure independently reported:
+ tag74/gen5/quiesced0/cold1/active_owner1/open_count1/guard1.
+No further GPU command,forced unload or unsafe hot-restore was attempted.
+
+Complete unedited306-line log:qwen38-token-cancellation-physical-20261030.log
+SHA25632672b8047a36896568fbffe50992ac8b3e414700eb94396cd8bea4ce25ba2e0
+
+Controlled recovery COMPLETED
+------------------------------
+Standing development-box authority used:ONE7s OFF hold50810 terminal0 at
+approximately01:58:50UTC. SSH then timed out;after more than3minutes,ONE
+0.75s ON hold32372 terminal0. Never repeated OFF or ON. No mains switch,
+SD/card/cable change,erase or disk repair. Fresh pinned LinuxSSH as milkv:
+Linux6.1.31/boot_id5c40a8c4-a536-43c8-a652-8a7974c03f34/sudo-n works.
+CPU0-63/kexec0/taint0;P100A endpoint+root COMMAND0000/0000. Samsung journal
+flag434c454e CLEAN,so the ordinary pinned top-page7 profile was selected.
+
+Native helper9cfc6dc326c938b8d611c8c8622a9a6686ed530270dde768b1f01362f4f61f6e
+was read+verified. Unique sessionq38-token-hold-20261030-fy,64 CPUs,
+memory128-spin-idle7-top-page-nosd-control. Prepare55687 and boot70772
+both terminal0;every staged input hash passed,normal Linux shutdown/kexec.
+Default NVMe boot unchanged. No fallback to old3GiB/one-CPU/unfixed kernel.
+
+Fresh pinned HaikuSSH:64CPUs/maxRAM137034936320B,candidate74/gen1/cold0/
+owner0/open1/guard1. Candidate,stable041 and updater0408507f exact hashes
+verified BEFORE guarded --restore-token-validation. Restore23716 terminal0:
+quiesce74/gen1 ->stable12/gen2,clean,no reboot or GPU execution.
+Final actual installed SHA:
+ 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+Final metadata:tag2026102100010012/gen2/cold0/owner0/open1/guard1.
+Final sysinfo:64CPUs/max137034936320/free133819850752B;no pioneer-q parent.
+No Assistant/model/NIC/kernel deployment change belongs to this trial.
+
+Recovery logs: qwen38-token-recovery-{prepare,boot,restore,health}-20261030.log
+prepare SHA bde6fe9e4084aac5c667bb77b5371308a85e816f0bd67daa4daed2641e6824be
+boot SHA f102cc6720a4976447677593d48676ae4665bf1d797b2c9f1d0bbb01874b8039
+restore SHA ddfb95a55d6c70f29c6ace5c82d8068e72bc31a03dd306190edabca65edae00b
+health SHA 488388c87324f20b139b976c51176aa663ce83893f5766a6dbf928cdff2c2ac2
+
+Next work,NOT a diagnosis already proved
+-----------------------------------------
+InspectTerminal can return successful-but-not-ready for a nonterminal
+speculative ROOT PC;HoldStopped currently treats !fresh.ready as a fault.
+That asymmetry is a candidate for a controlled offline reproduction,NOT
+evidence that it caused THIS failure. The failed inner fresh result is not
+exposed in the physical log. Preserve exact PC/source/terminal/counter
+checks;never accept a range or invent ready to make the test pass. Diagnose
+and qualify the handoff before another card trial,then complete all64-layer/
+multitoken/state/readout/END qualification and real performance measurement.
+Original5 full-model emulator histories remain intact;native41236 was
+revalidated LIVE and has reached position0/layer26,not a whole-model pass.

@@ -1,0 +1,5 @@
+ENABLED: UART runtime suspension forbidden until restore/reboot
+UART power/control: on
+UART runtime_status: active
+Warning: No cmdline or append string provided
+PREPARED q38-token-hold-20261030-fy with 64 CPUs (memory128-spin-idle7-top-page-nosd-control); Linux is still running. Run: /mnt/ssd/pioneer-haiku-kexec-20261013/pioneer_linux_boot_haiku_network-serialized-top-page7.sh boot q38-token-hold-20261030-fy 64 memory128-spin-idle7-top-page-nosd-control
