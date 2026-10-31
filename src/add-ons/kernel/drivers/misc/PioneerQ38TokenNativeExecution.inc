@@ -42,6 +42,18 @@
   || !Q38TokenExecutionOutput(c,&result,sizeof(result)) || !c.io.TokenModelSourceScope(false))return false;
  return s->runtime->ObserveRoot(c.io,result);
 } // bounded source/marker/PC observation while firmware owns NoC;NEVER a token/STOP/END receipt
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT
+#include "PioneerQ38TokenFrontierNativeRole.h"
+[[maybe_unused]] static __attribute__((noinline)) bool ObserveQ38TokenNativeFrontier(PioneerStoreContext& c,PioneerQ38TokenFrontierResult& result){
+ const PioneerQ38TokenFrontierResult pristine;const auto* a=reinterpret_cast<const uint8_t*>(&result);
+ const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+ for(unsigned i=0;i<sizeof(result);i++)if(a[i]!=b[i])return false;
+ auto* s=c.q38TokenNative;
+ if(!s || s->phase!=PioneerQ38TokenNativeState::RootRunning || !s->runtime || !s->runtime->ExecutionStarted()
+  || !Q38TokenExecutionOutput(c,&result,sizeof(result)) || !c.io.TokenModelSourceScope(false))return false;
+ return s->runtime->ObserveCommittedFrontier(c.io,result);
+} // same FD/team/thread/generation/source;NO phase transition or terminal/cleanup grant
+#endif
 [[maybe_unused]] static __attribute__((noinline)) bool ObserveQ38TokenNativeTerminal(PioneerStoreContext& c,PioneerQ38TokenTerminalResult& result){
  auto* s=c.q38TokenNative;const PioneerQ38TokenTerminalResult pristine;
  const auto* a=reinterpret_cast<const uint8_t*>(&result);const auto* b=reinterpret_cast<const uint8_t*>(&pristine);

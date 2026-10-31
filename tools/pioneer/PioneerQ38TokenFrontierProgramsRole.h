@@ -3,7 +3,9 @@
 // and qualified; no existing physical driver may silently adopt this ROM.
 #ifndef PIONEER_Q38_TOKEN_FRONTIER_PROGRAM_SELECTION_H
 #define PIONEER_Q38_TOKEN_FRONTIER_PROGRAM_SELECTION_H
-#ifdef PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT
+enum {PioneerQ38TokenFrontierProgramSelection=2};
+#elif defined(PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS)
 enum {PioneerQ38TokenFrontierProgramSelection=1};
 #else
 enum {PioneerQ38TokenFrontierProgramSelection=0};
@@ -17,6 +19,10 @@ enum {PioneerQ38TokenFrontierProgramSelection=0};
  || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_PROGRAMS_H)
 #error Token frontier DATA requires its distinct package before every old package
 #endif
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenFrontierNativeRole.h"
+static_assert(PioneerQ38TokenFrontierProgramSelection==2,"late private frontier selection");
+#else
 #if defined(_KERNEL_MODE) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
  || defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) \
  || defined(PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_NATIVE_CONTEXT) \
@@ -26,8 +32,12 @@ enum {PioneerQ38TokenFrontierProgramSelection=0};
  || defined(PIONEER_Q38_TOKEN_FRONTIER_IMAGE)
 #error Frontier program DATA has NO qualified native,physical,USER or image owner
 #endif
-#include "PioneerQ38TokenJobBootFoldProgramsRole.h"
 static_assert(PioneerQ38TokenFrontierProgramSelection==1,"late frontier DATA selection");
+#endif
+#include "PioneerQ38TokenJobBootFoldProgramsRole.h"
 #else
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT
+#error Private frontier reader requires its actual distinct firmware package
+#endif
 static_assert(PioneerQ38TokenFrontierProgramSelection==0,"late frontier DATA removal");
 #endif

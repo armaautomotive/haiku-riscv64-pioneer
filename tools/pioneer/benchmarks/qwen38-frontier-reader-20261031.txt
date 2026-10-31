@@ -1,0 +1,137 @@
+Private token counter reader,typed adapter and host timing-window arithmetic
+=========================================================================
+2026-10-31. Goal ACTIVE. Last verified sustained baseline0.207893161tok/s;
+20tok/s UNMET. OFFLINE ONLY: no new physical driver or measured speedup.
+
+Actual native owner changes
+---------------------------
+Exact new9515589d ROOT/2bd70b27 program DATA now has its separate explicit
+QT3NODRV private reader role. Old physical/USER/CPU/Work roles still refuse
+this selection;conventional driver ABI remains renamed/absent. The role
+is rechecked against missing,zero,two,late,foreign and wrong-tag changes.
+
+StartRoot already cleared/read back ALL64 progress words while ROOT held,
+after the original L1 journal and immutable runtime staging. New private
+freshness is bound only there,with a checked zero at7570c and validated
+SAME startup session/boot/limits,BEFORE release. RootMain's marker alone
+is NOT freshness proof. No caller-ready or caller-supplied epoch is used.
+
+ObserveCommittedFrontier checks the SAME live owner/FD/team/thread/
+generation/model source,marker/zero-error,current immutable ROOT boot,
+monotonic counter and trusted session limit. Unknown IO/source or invalid
+count retains/quarantines through the existing memory-only failure path,
+without following device IO,retry or reset. It does not set terminal,
+HOLD,readout,END or disposal state. Terminal observation additionally
+requires the published count to match its independently verified receipt.
+The64-word token-record ABI,reserved zeros,workers and arithmetic are
+unchanged. This reader is NOT selected by baseline041 or old4ebc9463.
+
+Actual same-owner native histories:complete
+------------------------------------------
+Original main86746 and independent-clean1428 ACTUALLY exit0,observed
+22:07UTC. Each authenticates the same-open full original GGUF before
+construction,executes1010 real zero-ROM jobs,stages120 complete L1
+journals+4616 metadata packets,boots119 virgin worker instruction engines
+and enters the NEW actual ROOT. At that real marker the new reader proves
+fresh0 and rejects16 non-pristine outputs without IO;no processor step,
+NoC packet,reset or lifecycle transition is added by the observation.
+
+The SAME histories then execute original-byte embedding and actual
+layer0 matrix/Conv/GDN/FFN,consume cancellation,prove ROOT+119 STOP,
+120 HOLD,zero-commit drain,held hidden reads,original L1/dispatch/peer/
+ROOT/shared restoration,clock END,hardware sealing,29 VM closures,
+exact original PCI restoration,3 host releases,device unreserve and
+locked whole-context destruction. No history or CPU product is injected.
+OS/VM/NoC endpoints are SIMULATED;this is NOT physical execution or a
+positive committed-token counter test. The later typed copy adapter was
+NOT exercised by these executables;its separate coverage is below.
+
+Only AFTER actual closure,unchanged strict comparator main+clean exit0:
+embedding5120 words and layer05120 words BIT-EXACT,no tolerance. Both
+prefix files SHA4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+This is NOT full-model/long-generation numerical acceptance. The separate
+completed physical34 run still has the documented exact score mismatch
+in its first3 records;that numerical failure is unchanged.
+
+Private SDK and typed adapter
+-----------------------------
+New128-byte integer DATA packet reserves separate6608 observe opcode,
+but NO ProbeControl route or current physical endpoint is added. It
+accepts no count,prompt,generation,ready or cleanup input. One real
+call scope covers observation AND reply copy;failed reply after a read
+uses the existing metadata-only owner-retention path,not further IO.
+
+Actual frozen private SDK object in main+clean:
+05d149c9ccabe3e6b6b0d1d6c7ed66fd76bad35644fdc9085e410edcda53353f
+Initial reader-only SDK32855/32024 exit0(acb7efc2);adapter SDK33232/28234
+exit0;frozen61731/79917 exit0. All13 actual emitted firmware arrays and
+2MiB RoPE authenticated. Complete old private f4f8e84b object reproduces
+BYTE-IDENTICALLY. No conventional ABI,CPU oracle,Work or TEST imports.
+Actual individual frames:StartRoot288B,reader128B,wrapper112B,typed
+adapter432B;NOT a combined or whole-kernel stack qualification.
+
+Method main+clean exit0:8198 SYNTHETIC bounded/repeat/jump/terminal DATA
+positives,26 pre-IO pristine/freshness/phase/scope refusals,13 marker/
+error/range/regression/terminal/source/boot/read failures. Actual observer
+and Fail methods are extracted unchanged;authority/quarantine are MOCK.
+Typed adapter main+clean exit0:9 DATA positives,1176 request/range/scope/
+reply refusals,6 input/reply-copy faults,immutable USER snapshot and
+locked reply-copy/metadata-retention checks. FD/source/observer/OS are
+MOCK;not a genuine runtime typed-endpoint or physical qualification.
+An initial adapter harness compile failed for missing<initializer_list>;
+only that include was fixed. Failed log preserved,no guard relaxed.
+Private role main45594/clean11064 exit0:3 syntax positives/294 refusals.
+
+Host count-window arithmetic
+---------------------------
+Small<=128B host sampler observes typed ready packets with monotonic
+call begin/end brackets,matching prompts+limit and nondecreasing count.
+It excludes prompt positions,keeps the first qualifying observation,
+uses the first observation of each new count and ignores later repeats
+for endpoints. Lost clock/counter/packet validity poisons the tracker.
+For distinct first/last observations,count delta is exact;elapsed lies
+between last.begin-first.end and last.end-first.begin. It returns the
+corresponding lower/upper observed-rate bounds,NOT fictional point times,
+CSR cycles,frequency or isolated per-token latency. A late first sample
+may contain>2 committed positions;never silently assume32 sampled tokens.
+The caller must SEPARATELY prove genuine END+Close and matching validated
+records before publishing any timing. The sampler grants no lifecycle.
+
+Final main+clean exit0:35 SYNTHETIC windows/18 config,packet,counter,
+clock,incomplete refusals,INT64_MAX boundary,no signed overflow/retry,
+and4 early+late/zero+one kernel-inclusion refusals. This is host DATA
+arithmetic only,NOT a measured accelerator rate or model-quality proof.
+
+Default/regression and performance evidence
+------------------------------------------
+Actual old physical builds63723/69644 exit0:complete66b01f59 object and
+4ebc9463 module unchanged,also full44209+18362 controls/all13 arrays/
+2MiB RoPE. Partial old known-module chain5392B/unresolved25 is NOT whole
+kernel stack. Frontier DATA regeneration37785/42407 exit0:all120 cores'
+3044254 words/2290 range+immutable refusals/30 corrupt+truncated artifact
+refusals/6 pre-SDK CLI refusals/94 DATA-role refusals/old1b8 header exact.
+
+Analysis of the closed physical34 records,adjacent modulo32-bit ROOT
+counter differences,positions2..33 mean:
+ [1451640.09375,3540360.28125,1626614.03125,1451640.09375,
+  174973.9375,1406940,1626614.03125,174973.9375]
+All33 adjacent windows satisfy delta0=delta3,delta4=delta7,delta2=delta6
+and delta2=delta0+delta4. Existing Packet accounting increments2/6 once
+per ROOT-issued read OR write,0/3 per read,4/7 per write;1/5 use64B units.
+Thus about1.63M ROOT commands/position,including1.45M reads,are a concrete
+candidate for reducing CARD-INTERNAL control round trips. This is NOT
+extra host PCIe offload,a timing/share measurement or proof of a bottleneck.
+Do not infer device clocks or TPS from these counts or HOST instructions.
+
+Fresh read-only Pioneer health:041fef18 baseline/tag2026102100010012/
+gen10/cold0/quiesced0/owner0/open_count1/guard1,64CPUs,
+maxRAM137034936320B/freeRAM133759705088B. No physical execution,new driver
+install,reboot,power,SD,OS,network,Assistant or hardware change this turn.
+The separate original LOCAL native41236 remains live in its SAME history,
+not restarted or supplied CPU products.
+
+Next:separately gate a physical counter-benchmark module and matching
+same-FD client;qualify exact artifacts and restore helper,then collect
+real post-prompt count/time windows and reduce measured internal control
+traffic. Full arithmetic/quality,arbitrary prompts/EOS,resident weights/
+fresh requests,Assistant Work and20tok/s remain outstanding. Goal ACTIVE.

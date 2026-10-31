@@ -28,6 +28,10 @@ static void CheckNativeExecution(Fixture& f){
  assert(!lockHeld && c.q38GdnCallThread==-1 && !state->Unsafe() && !state->Closed()
   && !StartQ38TokenNativeRoot(c,start) && !CancelQ38TokenNativeRoot(c,cancel) && !ObserveQ38TokenNativeTerminal(c,terminal)
   && !io.TokenMemoryReadChecked(0,PioneerQ38TokenLayout::CancelLocal,output) && output==0x12345678 && io.touches==before);
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT
+ PioneerQ38TokenFrontierResult outside;
+ assert(!ObserveQ38TokenNativeFrontier(c,outside) && !outside.started && io.touches==before);
+#endif
  {
   PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c && io.TokenModelSourceScope(false));
   assert(c.Unsafe() && !c.Unsafe(false,false,true)); // genuine fresh-call reentry into SAME running119 history
@@ -60,6 +64,21 @@ static void CheckNativeExecution(Fixture& f){
    && io.executionArms==1 && io.executionStarts==1 && io.executionCpu->markerWrites==1 && io.executionCpu->steps
    && io.executionCpu->minStack>=0x6e000 && !io.executionCpu->matrixInstructions && !io.executionCpu->floatOps
    && io.Raw(0,PioneerQ38GlobalChainLayout::R::Status+12)==PioneerQ38TokenLayout::Magic && c.q38Dispatch->rootRunning);
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT
+  {
+   const unsigned touches=io.touches,steps=io.executionCpu->steps,packets=io.runtimePackets;
+   const auto resets=io.resets;PioneerQ38TokenFrontierResult metric;const auto pristineMetric=metric;
+   auto* words=reinterpret_cast<uint32*>(&metric);
+   for(unsigned i=0;i<16;i++){
+    words[i]^=1;assert(!ObserveQ38TokenNativeFrontier(c,metric) && io.touches==touches && !state->Unsafe());metric=pristineMetric;
+   }
+   assert(ObserveQ38TokenNativeFrontier(c,metric) && metric.started && metric.ready && !metric.unsafe
+    && !metric.committed && metric.prompts==2 && metric.limit==3
+    && !state->TerminalObserved() && !state->TerminalHeld() && !state->Closed() && !state->Unsafe()
+    && io.resets==resets && io.executionCpu->steps==steps && io.runtimePackets==packets);
+   puts("PASS new frontier reader in SAME genuinely initialized851+staged120+journaled+virgin119booted+ROOT-entered native history/16 non-pristine outputs refused without IO/fresh0 before any model token/source+boot checked/no processor step,NoC packet,reset or lifecycle transition;SIMULATED OS+VM+NoC,NOT committed token/model/physical/TPS proof");
+  }
+#endif
   const auto pristineTerminal=terminal;auto* terminalWords=reinterpret_cast<uint32*>(&terminal);
   const unsigned beforeTerminal=io.touches;
   for(unsigned i=0;i<16;i++){

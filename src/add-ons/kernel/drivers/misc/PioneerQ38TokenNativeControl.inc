@@ -89,4 +89,7 @@ Q38TokenNativeControl(PioneerProbeCookie* cookie,void* data,size_t length){
  if(copied!=B_OK){if(retainOnCopyFailure)Q38TokenControlReplyFailure(scope);return copied;}
  return status;
 } // no CPU arithmetic/reference,implicit cleanup,public Work or loadable-driver activation
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT
+#include "PioneerQ38TokenFrontierControl.inc"
+#endif
 #endif

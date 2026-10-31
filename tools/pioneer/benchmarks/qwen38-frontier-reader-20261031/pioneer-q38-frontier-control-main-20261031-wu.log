@@ -1,0 +1,10 @@
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_token_frontier_control_test.cpp:71:21: error: cannot deduce type of initializer list because std::initializer_list was not found; include <initializer_list>
+   71 |  for(unsigned count:{0U,1U,2U,17U,34U,8192U}){
+      |                     ^
+1 error generated.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_frontier_control_tests.py", line 24, in <module>
+    subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['c++', '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '-I/private/tmp/pioneer-q38-frontier-control-3dqdoria', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_token_frontier_control_test.cpp', '-o', '/private/tmp/pioneer-q38-frontier-control-3dqdoria/test']' returned non-zero exit status 1.
