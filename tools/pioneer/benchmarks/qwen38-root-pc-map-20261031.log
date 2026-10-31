@@ -1,0 +1,16 @@
+ROOT_TEXT_SHA256 8be33008ec9aa1c3930b48825c43e795e50178292b44df9ab0bd7b4459f6c13a;COARSE HOST INSTRUCTION SAMPLES ONLY
+ROOT_ELF_SHA256 917972d54277d95b18ed7e2fc346feba3d1a60857b64ca366fec7b7bd131c60c;symbol table and code read from SAME authenticated byte snapshot
+LOG_SHA256 7ed31b38ab9f425843756ea0e1a657fb22987354db4acc0a8f2519319cd8517a
+ROOT_PC_SAMPLE steps40000121 pc575b4 phase3 aliases1 RecurrentBlock::RecipeSeal(unsigned int)
+ROOT_PC_SAMPLE steps50000249 pc48d18 phase4 aliases1 q38_layer_return_recurrent_packet_seal
+ROOT_PC_SAMPLE steps60000121 pc527b8 phase4 aliases1 Projection::Run(unsigned int const*)
+ROOT_PC_SAMPLE steps70000249 pc458d8 phase5 aliases1 PioneerQ38PreciseWorkerLayout::JobShape(unsigned int const*, unsigned int const*, unsigned int, unsigned int)
+ROOT_PC_SAMPLE steps80000121 pc48b90 phase6 aliases2 DensePartitionRoot::Quiet() | MixedRecurrentCohort::Quiet()
+ROOT_PC_SAMPLE steps90000249 pc48b94 phase6 aliases2 DensePartitionRoot::Quiet() | MixedRecurrentCohort::Quiet()
+ROOT_PC_SAMPLE steps100000121 pc48b60 phase6 aliases2 DensePartitionRoot::Quiet() | MixedRecurrentCohort::Quiet()
+ROOT_PC_SAMPLE steps110000249 pc54da4 phase6 aliases1 MixedRecurrentCohort::Finish(unsigned int*, unsigned int, unsigned int)
+ROOT_PC_SAMPLE steps120000121 pc5249c phase8 aliases1 Projection::Run(unsigned int const*)
+ROOT_PC_SAMPLE steps130000249 pc48d18 phasea aliases1 q38_layer_return_recurrent_packet_seal
+ROOT_PC_SAMPLE steps140000121 pc48d3c phaseb aliases1 q38_layer_return_recurrent_packet_seal
+ROOT_PC_SAMPLE steps150000249 pc4e87c phased aliases1 DensePartitionRoot::Transfer(unsigned int const*, unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+MAPPED_ROOT_SAMPLES 12;NO physical cycles,wall-time percentage,steady inference rate,Work or TPS qualification

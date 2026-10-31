@@ -1,0 +1,62 @@
+Coarse ROOT instruction-location audit while the real card capture runs
+======================================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. Last measured whole-model rate
+remains0.207893161 tokens/sec. This is NOT a new physical speed measurement.
+
+New evidence,not a guessed arithmetic hotspot
+--------------------------------------------
+Mapped the12 genuine native first-layer ROOT PC observations from the two
+completed GS histories to the EXACT current G3 ROOT code. Baseline EC and
+FFN-scratch DR artifacts independently agree on their whole ELF SHA:
+ 917972d54277d95b18ed7e2fc346feba3d1a60857b64ca366fec7b7bd131c60c.
+Extracted ELF.text matches the installed firmware array's130888 bytes/SHA
+ 8be33008ec9aa1c3930b48825c43e795e50178292b44df9ab0bd7b4459f6c13a.
+Symbol names and code now come from the SAME authenticated byte snapshot,
+not a hash of one file followed by a different unchecked symbol-table open.
+The two87-line runtime logs are independently complete/identical,SHA
+ 7ed31b38ab9f425843756ea0e1a657fb22987354db4acc0a8f2519319cd8517a.
+
+Observed locations include RecipeSeal,three recurrent packet-seal samples,
+JobShape,three Quiet samples,two Projection::Run samples,Cohort::Finish and
+DensePartitionRoot::Transfer. Quiet has TWO aliased function symbols at the
+same addresses;both names are preserved rather than attributing arbitrarily
+to one family. See the complete12-row map,not just this grouping.
+
+These observations repeatedly land in guard/idle/transport paths. They make
+that overhead worth measuring more precisely before assuming the problem
+is entirely matrix arithmetic. They DO NOT prove an elapsed-time share,
+physical stall count,bottleneck ranking or an attainable speedup. Samples
+are coarse and deterministic;simulated polling differs from hardware.
+Existing eight-way packet-seal experiments already target part of this
+area and still need their full-model qualifications. No guard or arithmetic
+was changed/removed here,and no diagnostic is promoted to Work.
+
+Reusable bounded auditor and checks
+----------------------------------
+audit_pioneer_q38_native_pc_samples.py accepts absolute SDK/ELF/log paths,
+authenticates the fixed whole ELF AND its.text,uses actual function ranges,
+rejects malformed/non-monotonic/misaligned/out-of-function samples,and keeps
+all aliased symbol names. It neither imports the driver nor opens a device.
+Synthetic parser checks pass14 missing/ordering/range/format/ELF/path refusals;
+wrong ELF refuses BEFORE external-tool or log access. The two-source initial
+checks pass and produce identical actual maps;final added wrong-ELF/path
+checks also pass. No model history was restarted or transplanted.
+Raw map:qwen38-root-pc-map-20261031.log,cmp-verified with actual tool output.
+
+Residency boundary confirmed,NOT implemented by bypassing cleanup
+---------------------------------------------------------------
+The current native Finish's final stage unreserves the actual device and
+deletes the whole context,including sticky weight-bank reservations and CPU
+ledgers. Begin refuses an existing native state. Thus repeating this current
+diagnostic API is NOT resident Assistant Work;skipping Finish or merely
+allowing another Start would lose required lifetime/reset guarantees.
+Separate retained-model ownership and fresh per-request recurrent/KV state
+remain necessary. This read-only review adds no resident capability claim.
+
+Physical process74246 remains the SAME first tag75 capture. All19399024640
+padded weight bytes uploaded;the last actual poll confirms it still LIVE
+during startup/capture/cleanup. No terminal/snapshot/END result claimed yet.
+No second GPU/admin FD,reload,power,SD,hardware or Assistant action occurred.
+Next poll74246;after actual clean exit0 copy and strictly compare the real
+20548B snapshot,then restore via the new ffa315aa helper only if fresh clean
+ownership permits. See qwen38-hidden-capture-launch-20261031.txt.
