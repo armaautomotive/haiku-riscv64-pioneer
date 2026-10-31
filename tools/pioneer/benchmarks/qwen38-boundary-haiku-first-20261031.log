@@ -1,0 +1,11 @@
+Haiku R1~beta6+development riscv64
+ 10:30:37  up   0:06,  0 users
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133833609216 bytes free      (used/max 3201327104 / 137034936320)
+                           (cached    176721920)
+     64505 semaphores free (used/max       1031 /      65536)
+      3956 ports free      (used/max        140 /       4096)
+      3903 threads free    (used/max        193 /       4096)
+      2025 teams free      (used/max         23 /       2048)

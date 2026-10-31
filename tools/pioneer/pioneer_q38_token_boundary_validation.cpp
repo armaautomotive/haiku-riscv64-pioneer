@@ -11,6 +11,7 @@
 #include "PioneerQ38TokenBoundaryValidationSession.h"
 #include "PioneerQ38TokenBoundaryValidationCLI.h"
 #include "PioneerQ38TokenBoundaryDelay.h"
+#include "PioneerQ38TokenBoundaryAbort.h"
 static_assert(__BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__,"fixed raw snapshot byte order");
 struct BoundaryValidationTransport {
  uint64_t reported=0;
@@ -99,8 +100,8 @@ int main(int argc,char** argv){
   okay=session->Finish();
  }
  if(!okay){
-  session->Abort();printf("FAIL_DEBUG75_BOUNDARY reason%s op%08x;CLOSE_ONLY_NO_RETRY_OR_IMPLICIT_END\n",
-   session->failure?session->failure:observationFailure?observationFailure:"unknown",session->operation);return 1;
+  const char* reason=PioneerQ38TokenBoundaryAbortReason(*session,observationFailure);
+  printf("FAIL_DEBUG75_BOUNDARY reason%s op%08x;CLOSE_ONLY_NO_RETRY_OR_IMPLICIT_END\n",reason,session->operation);return 1;
  }
  if(!session->Captured()){
   printf("FAIL_DEBUG75_BOUNDARY_WINDOW_MISSED clean_end1 commits%u cancelled_layers%u;NO_SNAPSHOT_NO_RETRY\n",

@@ -1,0 +1,77 @@
+Preserve the observation failure BEFORE explicit close-only Abort
+================================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. Last measured whole-model rate
+remains0.207893161 tokens/sec. This is a diagnostic reporting fix, NOT a
+performance, model numerical or new physical execution result.
+
+Actual original57871 ended1 without a snapshot
+----------------------------------------------
+The unchanged5ce43d33 program uploaded all19399024640 learned bytes and
+later actually exited1, with:
+ FAIL_DEBUG75_BOUNDARY reasonaborted op00008d13;CLOSE_ONLY_NO_RETRY_OR_IMPLICIT_END
+No PASS/clean_end1 or QHB file was produced. A fresh post-exit inventory
+confirmed no model parent, exactb74/ffa315aa/b0c851b3 and CPU-only metadata
+tag75/gen9/cold1/active_owner1/open1/guard1.64CPUs/full137034936320B RAM
+were still present. Retained resources require recovery, NOT normal reload.
+There is no captured numeric DATA to compare or generation rate to report.
+
+The old main called session.Abort() BEFORE selecting its output reason.
+If a host clock/deadline/poll/snooze observation condition stopped the loop
+without a previous session failure, Abort filled the null reason with
+"aborted", hiding the original observationFailure string. The exact host
+trigger in THIS old run is consequently lost. It must not be relabelled
+as a known specific timeout, GPU arithmetic mismatch or successful cleanup.
+
+Narrow fix, unchanged lifetime
+------------------------------
+The new helper captures the first existing session reason, otherwise the
+observation reason, otherwise "unknown", BEFORE delegating the SAME one
+explicit Abort. These are fixed diagnostic strings with stable lifetime.
+The returned string has no cleanup/source/native authority. No new ioctl,
+retry,cancellation,implicit END,deadline extension or fallback is added.
+All pending-progress distinctions fromd1f1db6ea4 remain:readout word index
+and RAW frontend DATA are never claimed as layer counts or retired PCs.
+
+Actual independent qualification
+--------------------------------
+Main2488 and clean17028 BOTH actually exited0. Clean is HEADd1f1db6ea4 plus
+ONLY the three cmp-verified owned files under:
+ /private/tmp/pioneer-q38-boundary-reason-clean-hm.SPqfbEBF
+Complete12-line logs are BYTE-IDENTICAL,SHA
+41e5ac7a0417cb8b2c08f475b9fc38bb651b32a1ea8e32f69f94bb3530b0c878.
+ASan/UBSan CLI/delay9 positives/31 refusals plus12 first-cause/Abort cases
+pass. The new pending-reply session462 COW branches, role1/49 and old strict
+first-layer session384 all pass. Source/OS replies are MOCK,not a P100A.
+Two initial CLI TEST compilations refused mixed nullptr initializer types,
+then a missing pointer declarator. Explicit separately typed arrays fixed
+the TEST;no production guard or compiler warning was relaxed.
+
+Actual independently compiled/linked Haiku riscv64 artifacts match:
+ NEW object dcf4b602b0f4687b057c851651f20b8021845058996f08d3cf1f61f3cb1ff6f4
+ NEW binary be719df81aa66466353347089f42ff4bd53f0f05dcc75408ab24ed44c0748aeb
+ OLD strict binary 1a061f7ab0eb5001c04a73c1334ed3b519a29781157ea4e46f533e3908fe0536
+Maximum individual USER frame4432B;no CPU oracle,Work,mock/native imports.
+No kernel/firmware/protocol/DATA-format/CPU-control changes. Old1a and
+original5ce/previous6f binaries remain immutable;newbe71 is NOT deployed.
+
+Physical recovery, independently verified after the test failure
+---------------------------------------------------------------
+ONE authorized OFF hold92743 completed0 while Haiku was known running.
+After a few minutes and an unreachable former SSH endpoint,ONE ON85196
+completed0. No repeated OFF,SD,mains or hardware change. Pinned Linux SSH
+with milkv and the existing Pioneer key verified a NEW boot ID
+d05920a4-254a-4137-ba5c-a679e005e187,0-63 CPUs and131976904KiB RAM. The
+root-owned9cfc6dc3 helper prepared54091 and booted1590,both0,with64CPUs and
+memory128-spin-idle7-top-page-nosd-control/kernel bundle233a2d66. Ordinary
+read-only Samsung source verification passed;no journal override or default
+boot edit. Haiku SSH37058 actually exited0 and verifies64CPUs,
+maxRAM137034936320B/free133833609216B. Fresh post-boot driver metadata proves
+b74/tag75/gen1/clean/no owner. Guarded restore95844 then actually exits0
+through unchanged ffa315aa to stable041/tag12/gen2. A separate query verifies
+that exact stable hash,cold0/owner0/open1/guard1,64CPUs/full137034936320B RAM
+and desktop-service presence. This is NOT a human desktop/input check or
+successful inference qualification;archive complete recovery separately.
+
+Archive the complete physical failure/recovery evidence separately.
+Do not retry57871 or manufacture a QHB. Continue toward actual correctness,
+resident no-CPU-reference Work/Assistant and measured sustained performance.

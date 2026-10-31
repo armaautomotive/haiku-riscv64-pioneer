@@ -1,0 +1,37 @@
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /boot/system/servers/net_server                    
+  104 /boot/system/servers/package_daemon                
+  105 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  109 /boot/system/servers/power_daemon                  
+  112 /boot/system/servers/launch_daemon baron           
+  115 /boot/system/servers/syslog_daemon                 
+  139 /boot/system/servers/media_server                  
+  178 /boot/system/servers/app_server                    
+  187 /boot/system/Tracker                               
+  190 /boot/system/Deskbar                               
+  208 /boot/system/servers/input_server                  
+  233 /boot/system/servers/media_addon_server            
+  277 /boot/system/servers/notification_server           
+  436 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  438 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  439 /bin/bash -c ps -o Id -o Team; sha256sum /boot/home/config/non- 
+  440 /boot/system/bin/ps -o Id -o Team                  
+b74f4bfa5583aaf0cf8272d5136c73336c1db0f93e168e7212277f97705a92cc  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+ffa315aaba98d8863a1b7900270e38cffbe5b1334e5559f5b4471e455f62962e  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-hot-swap-token-hidden-readout-ffa315aa.sh
+b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
+d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+P100A_RELOAD driver55 tag2026103100010075 generation1 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133812957184 bytes free      (used/max 3221979136 / 137034936320)
+                           (cached    187568128)
+     64522 semaphores free (used/max       1014 /      65536)
+      3957 ports free      (used/max        139 /       4096)
+      3908 threads free    (used/max        188 /       4096)
+      2027 teams free      (used/max         21 /       2048)

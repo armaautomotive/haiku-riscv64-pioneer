@@ -1,0 +1,79 @@
+Observed-boundary probe failed; controlled script recovery is complete
+====================================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. Last measured whole-model
+rate remains0.207893161 tokens/sec. No new numerical or speed pass.
+
+Original57871 really ended1,not an observation timeout inferred as exit
+---------------------------------------------------------------------
+One first physical history,unchanged5ce43d33 USER,b74/tag75/gen9,under
+code9d61a9e67d. All19399024640 padded learned bytes uploaded. Final actual:
+ FAIL_DEBUG75_BOUNDARY reasonaborted op00008d13;CLOSE_ONLY_NO_RETRY_OR_IMPLICIT_END
+No PASS/clean_end1,committed token,numerical snapshot or QHB file exists.
+The host's original observation reason was masked by Abort;the exact
+clock/deadline/poll/snooze condition is UNKNOWN,not a proven arithmetic bug.
+The separately qualified be719df8 USER fixes that reporting bug but was
+NOT staged or run during this failed history. Existing CPU controls remain
+unchanged. Do not manufacture a comparison or throughput from this run.
+
+Fresh post-exit process inventory shows no model parent. Exact installed
+b74,updaterffa315aa and adminb0c851b3 hashes match. CPU-only metadata reports
+tag75/gen9/cold1/active_owner1/open1/guard1;no normal restore is attempted.
+64CPUs/maxRAM137034936320B/free133553442816B remain available. The unknown
+native lifetime is quarantined/retained,not treated as completed cleanup.
+
+One OFF and one ON only,using standing development-box authorization
+-------------------------------------------------------------------
+Pioneer was known ON from working Haiku SSH. ONE seven-second OFF parent
+92743 actually exited0. After a few minutes and SSH255/unreachable,ONE
+0.75-second ON parent85196 actually exited0. OFF was not repeated,relay
+contact state was not used as board-power evidence,and no mains/SD/card/
+cable change or extra pulse occurred. No saved-work or fans question needed.
+
+The existing screen logger was read,not reopened or disturbed. It shows a
+new Linux NVMe boot. Linux accepted the existing Pioneer-specific key as
+milkv through the separately pinned known_hosts.linux;the default key had
+been rejected,so authentication configuration was NOT changed. Fresh boot:
+ Linux6.1.31/riscv64,boot_id d05920a4-254a-4137-ba5c-a679e005e187
+ online0-63,MemTotal131976904KiB,rootNVMe0n1p3,bootNVMe0n1p2,build/sdb2
+ kexec_loaded0,noninteractive sudo available
+
+Guarded SD-free Haiku boot,not a boot-entry/disk repair
+------------------------------------------------------
+Read the actual complete root-owned700 helper before invocation:
+ /mnt/ssd/pioneer-haiku-kexec-20261013/pioneer_linux_boot_haiku_network-serialized-top-page7.sh
+Exact SHA9cfc6dc326c938b8d611c8c8622a9a6686ed530270dde768b1f01362f4f61f6e.
+Unique sessionq38-boundary-recover-20261031-hl;prepare54091 and boot1590
+BOTH actually0,64CPUs,memory128-spin-idle7-top-page-nosd-control. Kernel
+bundle233a2d662c52e7ac6435da49a9202e53f66be2eb914f79bf140eaed2f04f2a67,
+imageb5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98.
+All helper identity/untampered boot/CPU/RAM/no-MMC/accelerator-idle guards,
+ordinary read-only Samsung source check,and boot manifest checks pass.
+NO journal override,default NVMe/extlinux edit,SD erase or new OS install.
+Linux's normal shutdown/kexec performs the transition;no second power cycle.
+
+Independent Haiku and stable-driver verification
+------------------------------------------------
+Haiku SSH37058 exits0,R1~beta6+development/riscv64,64CPUs/fullRAM. A fresh
+separate inventory confirms app_server/Tracker/Deskbar/input_server and no
+compute parent. Exactb74/ffa315aa/adminb0c851b3/guardd1ce2aa4 match. Fresh
+power-epoch status is75/gen1/quiesced0/cold0/owner0/open1/guard1. This is a
+NEW boot,not an in-place quarantine-clear or reuse of the failed context.
+
+Only THEN actual95844 exits0 through unchanged ffa315aa
+--restore-token-hidden-readout,SINGLE-LINE exec SSH. b74/gen1 quiesces and
+closes;stable041/gen2 loads and is independently verified by a NEW query:
+ installed041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+ tag2026102100010012/gen2/quiesced0/cold0/active_owner0/open_count1/guard1
+64CPUs,maxRAM137034936320B/free133809033216B. Desktop services remain in
+the process inventory. This is NOT a human desktop/USB-input test,full
+physical hardware certification or new inference/Assistant release.
+
+Complete unmodified logs are archived and cmp-checked against originals.
+Raw ps column padding and SSH error line endings are preserved;only the
+explicit raw transcripts with such whitespace are excluded from source
+whitespace lint. Original57871 is CLOSED1:do not poll or retry it. No new
+physical model trial is active at this recovery checkpoint. Source-only
+authentication of the new diagnostic,then an explicitly justified guarded
+probe with useful observations,remain possible next steps. All full-model
+quality/state/EOS,retained-model Work/Assistant and sustained-speed goals
+remain unmet. Keep the full objective ACTIVE.

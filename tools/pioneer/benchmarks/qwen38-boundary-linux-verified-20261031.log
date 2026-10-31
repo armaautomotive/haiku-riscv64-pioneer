@@ -1,0 +1,139 @@
+Linux 6.1.31 riscv64
+milkv
+ 06:27:08 up 2 min,  2 users,  load average: 0.86, 0.54, 0.21
+d05920a4-254a-4137-ba5c-a679e005e187
+0-63
+MemTotal:       131976904 kB
+0
+0:0:700:1:19404
+9cfc6dc326c938b8d611c8c8622a9a6686ed530270dde768b1f01362f4f61f6e  /mnt/ssd/pioneer-haiku-kexec-20261013/pioneer_linux_boot_haiku_network-serialized-top-page7.sh
+#!/bin/sh
+# Private opt-in SMP/P100A profile. The known-good single-core helper is unchanged.
+set -eu
+fail() { printf 'BLOCKED: %s\n' "$1" >&2; exit 1; }
+[ "$#" -eq 3 ] || [ "$#" -eq 4 ] || fail 'Usage: pioneer_linux_boot_haiku_smp.sh prepare|boot|cancel SESSION CPU_COUNT [PINNED_PROFILE] (default: active-map-control; explicit profiles are listed in this script)'
+action=$1
+session=$2
+cpu_count=$3
+profile=${4:-active-map-control}
+case "$profile" in current|validated-control|capped-control|active-map-control|memory8-control|memory128-control|memory8-map-order-control|memory128-map-order-control|memory8-journal-recovery-control|memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control|memory128-kdl5-spin-idle-nosd-control|memory128-kdl5-spin-idle-nosd-journal-control|memory128-spin-idle6-nosd-control|memory128-spin-idle6-nosd-journal-control|memory128-spin-idle7-top-page-nosd-control|memory128-spin-idle7-top-page-nosd-journal-control) ;; *) fail 'Unknown pinned kernel profile';; esac
+# PIONEER_PRIVATE_PROFILE_FLAGS_BEGIN
+private_nosd=0
+journal_view=0
+case "$profile" in
+ memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control|memory128-kdl5-spin-idle-nosd-control|memory128-kdl5-spin-idle-nosd-journal-control|memory128-spin-idle6-nosd-control|memory128-spin-idle6-nosd-journal-control|memory128-spin-idle7-top-page-nosd-control|memory128-spin-idle7-top-page-nosd-journal-control) private_nosd=1;;
+esac
+case "$profile" in
+ memory8-journal-recovery-control|memory128-kdl-journal-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-journal-control|memory128-kdl5-spin-idle-nosd-journal-control|memory128-spin-idle6-nosd-journal-control|memory128-spin-idle7-top-page-nosd-journal-control) journal_view=1;;
+esac
+# PIONEER_PRIVATE_PROFILE_FLAGS_END
+case "$cpu_count" in 2|4|8|16|32|64) ;; *) fail 'CPU count must be 2, 4, 8, 16, 32 or 64';; esac
+if [ "$profile" = memory8-journal-recovery-control ]; then
+ [ "$cpu_count" = 2 ] || fail 'Journal recovery requires the validated two-CPU/8 GiB control'
+fi
+case "$profile" in memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control|memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control|memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control|memory128-kdl5-spin-idle-nosd-control|memory128-kdl5-spin-idle-nosd-journal-control|memory128-spin-idle6-nosd-control|memory128-spin-idle6-nosd-journal-control|memory128-spin-idle7-top-page-nosd-control|memory128-spin-idle7-top-page-nosd-journal-control)
+ [ "$cpu_count" = 64 ] || fail 'Private diagnostic requires 64 CPUs'
+ ;;
+esac
+case "$action" in prepare|boot|cancel) ;; *) fail 'Unknown action';; esac
+case "$session" in ''|*[!A-Za-z0-9_-]*) fail 'Use a simple unique session name';; esac
+[ "${#session}" -le 64 ] || fail 'Session name too long'
+[ "$(id -u)" = 0 ] || fail 'Run as root on the recorded native Linux'
+[ "$(uname -s):$(uname -m):$(uname -r)" = Linux:riscv64:6.1.31 ] || fail 'Wrong Linux platform'
+base=/mnt/ssd/pioneer-haiku-kexec-20261013
+run=$base/boot-$session
+image=$base/smp-4/HaikuPioneerKexecProbe.Image
+image_hash=7f9788287e1851789ff41b098c910d613df51c4044256278f104b9b806082fcb
+memory_gib=3
+bundle=$base/smp-kernel-bundle-1/samsung-ram.bfs
+# Default has recorded all-core and VM workload passes, not full P100A/runtime
+# certification. "current" is the frozen historical uncapped experiment.
+case "$profile" in
+ current) bundle_hash=a3e1015fb56a440d5ea75a538b590c59cebd1ce99183b176eaef2ac703010c28;;
+ validated-control)
+  bundle=$base/smp-kernel-bundle-validated-1/samsung-ram.bfs
+  bundle_hash=5f2f13fd45946aaae8038f20facad6638574468801c49497085443558a13151a
+  ;;
+ capped-control)
+  bundle=$base/smp-kernel-bundle-capped-1/samsung-ram.bfs
+  bundle_hash=1b247841bdf4a5d5ecd7239103dee0c359f24c7fa3224f8bae7eb8f72115a626
+  ;;
+ active-map-control)
+  bundle=$base/smp-kernel-bundle-active-map-1/samsung-ram.bfs
+  bundle_hash=8a0110715013a322ace77f896a4ce00857c3b18ca4d7106edeac46a6fdfe5ced
+  ;;
+ memory8-control|memory128-control|memory8-journal-recovery-control)
+  # Explicit experimental memory profile; requires its matching kernel's
+  # permanent virtual-map reservation. Never pair it with an older bundle.
+  image=$base/memory-2/HaikuPioneerKexecProbe.Image
+  image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98
+  bundle=$base/smp-kernel-bundle-memory-1/samsung-ram.bfs
+  bundle_hash=98eebc001c7c869566a81ec445ee71798ec98be05d7585e18d416f8029c759cd
+  case "$profile" in memory8-control|memory8-journal-recovery-control) memory_gib=8;; memory128-control) memory_gib=128;; esac
+  ;;
+ memory8-map-order-control|memory128-map-order-control)
+  image=$base/memory-2/HaikuPioneerKexecProbe.Image
+  image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98
+  bundle=$base/smp-kernel-bundle-memory-map-order-1/samsung-ram.bfs
+  bundle_hash=98783b7aa58b283c9ce33623deecd828eaf5a8f20394cfa92a2fe1065c098ebf
+  case "$profile" in memory8-map-order-control) memory_gib=8;; memory128-map-order-control) memory_gib=128;; esac
+  ;;
+ memory128-kdl-control|memory128-kdl-journal-control|memory128-kdl-nosd-control)
+  # Deliberately enters the debugger from AP1 after 120 seconds, even if
+  # boot succeeds. This is a separate diagnostic, never the default kernel.
+  image=$base/memory-2/HaikuPioneerKexecProbe.Image
+  image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98
+  bundle=$base/smp-kernel-bundle-memory-kdl-timer-1/samsung-ram.bfs
+  bundle_hash=abbd25643a1787f3a857535f4becee8f8b7fe7578404fb1dae52b425afae1e68
+  memory_gib=128
+  ;;
+ memory128-kdl3-nosd-control|memory128-kdl3-nosd-journal-control)
+  # Earlier AP1 arm is positively verified before scheduler release. Replay
+  # any pending source journal only through the private COW verifier.
+  image=$base/memory-2/HaikuPioneerKexecProbe.Image
+  image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98
+  bundle=$base/smp-kernel-bundle-memory-kdl-timer-3/samsung-ram.bfs
+  bundle_hash=04b00965d0b52bb75b08863c805cc96b604e241ae2bb10906ce68dfd01b078e3
+  memory_gib=128
+  ;;
+ memory128-kdl4-nosd-control|memory128-kdl4-nosd-journal-control)
+  # Same diagnostic timing with corrected blocking/nonblocking UART input
+  # and a bounded debugger remote-command buffer.
+  image=$base/memory-2/HaikuPioneerKexecProbe.Image
+  image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98
+  bundle=$base/smp-kernel-bundle-memory-kdl-timer-4/samsung-ram.bfs
+  bundle_hash=faa302273e1aa04048c9ab1da8749f41b09b4c144c7b3031769f63b5c70db023
+  memory_gib=128
+  ;;
+ memory128-kdl5-spin-idle-nosd-control|memory128-kdl5-spin-idle-nosd-journal-control)
+  # Bounded wakeup comparison only. All 64 CPUs/RAM remain exposed; idle
+  # harts spin instead of WFI until the same 120-second diagnostic halt.
+  image=$base/memory-2/HaikuPioneerKexecProbe.Image
+  image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98
+  bundle=$base/smp-kernel-bundle-memory-kdl-spin-idle-5/samsung-ram.bfs
+  bundle_hash=657e8dea921ce3a0c8a2526c606065051bdcf39088078f3c2fb642009bf401f4
+  memory_gib=128
+  ;;
+ memory128-spin-idle6-nosd-control|memory128-spin-idle6-nosd-journal-control)
+  # Explicit runtime comparison: same spin-idle behavior without a timed KDL
+  # stop, separating userspace stability from debugger exit/resume behavior.
+  image=$base/memory-2/HaikuPioneerKexecProbe.Image
+  image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98
+  bundle=$base/smp-kernel-bundle-memory-spin-idle-runtime-6/samsung-ram.bfs
+  bundle_hash=f0dac3262f73e6e35ccb8eb2bdcda25875f5ab7841afcb0ec0522026a155cefa
+  memory_gib=128
+  ;;
+ memory128-spin-idle7-top-page-nosd-control|memory128-spin-idle7-top-page-nosd-journal-control)
+  # Same untimed all-CPU/full-RAM profile, with the top virtual page clear/copy
+  # range fix. Older bundles and the default profile remain pinned unchanged.
+  image=$base/memory-2/HaikuPioneerKexecProbe.Image
+  image_hash=b5473e6d00a9bcf469fce648b4415f28eda2dbc2510bfc9ed8d61af9034e6e98
+  bundle=$base/smp-kernel-bundle-memory-spin-idle-top-page-7/samsung-ram.bfs
+  bundle_hash=233a2d662c52e7ac6435da49a9202e53f66be2eb914f79bf140eaed2f04f2a67
+  memory_gib=128
+  ;;
+ *) fail 'Unknown pinned kernel profile';;
+esac
+loader=/mnt/ssd/pioneer-kexec-probe-20261013/kexec-tools-0fd0d8e9ea975696fdc05ad267a65f3efd415612/build/sbin/kexec
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+uart_helper=$script_dir/pioneer_linux_uart_keepalive.sh
