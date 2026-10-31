@@ -1,0 +1,88 @@
+Original CPU-state RMS replay: 195 rows bit-exact on the host
+===========================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. The last measured whole-model
+rate remains0.207893161 tokens/sec. This is CPU-only localization, NOT a
+new physical result, emitted-instruction pass, numerical tolerance or Work.
+
+Question and exact scope
+------------------------
+The first real P100A hidden layer matches all5120 reference words, but the
+earlier three-position final logits differ. Before changing normalization,
+replay the current bounded FP32 hidden-RMS implementation on every existing
+CPU trace boundary with the ORIGINAL learned norm for that boundary.
+
+The new runner uses the unchanged production comparator's same-open CPU
+snapshot authentication and ALL THREE literal full-trace SHA pins. It
+losslessly copies their3*65*5120 hidden words into a private0400 CPU-only
+input snapshot, explicitly NOT an accelerator observation. The3993664-byte
+snapshot SHA is32cac904b49d2f8f8817f14e9785744208f155d9b2ebfbec03071f19ef56b148.
+The separate WholeModelOriginalBytes transport authenticates the FULL fixed
+original GGUF from the SAME open description before reading any norm bytes.
+All64 blk.N.attn_norm.weight tensors and output_norm.weight must have the
+exact original FP32/5120/rank1/20480-byte geometry and unique names.
+
+For each of3positions and65boundaries, the existing device-arithmetic C++
+function is compiled for the HOST, not emulated or executed on the card.
+An independent host double sum of rounded FP32 squares, division by5120,
+sqrtf/FP32 reciprocal, and two ordered FP32 multiplies supplies the expected
+result. Both the software-binary64 mean and all5120 outputs compare by bits.
+No model matrices, device state, GGUF bytes or expected controls are changed.
+
+Actual independent main/clean results
+------------------------------------
+Corrected main71081 and clean54846 BOTH actually exited0. Their complete
+logs are byte-identical, SHA
+6d3cb89789188c692a21b5f80ebc0a53401af5472e47565db02ba464cbc3c326.
+Actual final line:
+ PASS_CPU_TRACE_RMS_REPLAY rows195 words998400 different_rows0 different_words0 mean_differences0
+Both use ASan/UBSan, -ffp-contract=off and FE_TONEAREST; no fast math.
+Clean source is HEAD175f7a14b8 plus ONLY the three new replay test files,
+under/private/tmp/pioneer-q38-rms-replay-clean-hg.QjWWmyGG. All three files
+compare byte-for-byte with the main tree. No production file was edited.
+
+Input/containment programs also completed0 in both trees through86721.
+They verify the exact lossless
+CPU snapshot and23 early refusals: bad arguments/relative paths, native or
+Work role overrides including defined0, and mutation/truncation in each
+CPU trace. Invalid controls cannot reach compilation or model access.
+Their repeated logs match, SHA
+8f85a98f17410334ab052a7e8472154d3a4083df8f2eefdca1e04269926b9a50.
+The first combined46429/57617 programs stopped at compilation because the
+two unused static header helpers triggered -Werror. Only explicit unused
+function-address references in the NEW test were added; no header changes
+or warning suppression. Those original executions are NOT numeric passes.
+The corrected numeric executions are71081 and54846 only.
+
+The unchanged bounded-FP32 RMS randomized/domain regression also passes in
+both trees through original69240, including512rows,252legacy-domain exact
+rows and21refusals. Its unmodified full logs are archived separately, SHA
+623d8a82e6adad82bf7bd7db82a9c02efe1eabce470b34a21012be264412dfec.
+
+Meaning, non-results and next action
+------------------------------------
+This excludes a host-level arithmetic disagreement for THESE195 CPU-state
+inputs and their original learned norms. It does NOT prove later device
+hidden values, RV32 instruction behavior, post-attention residual inputs,
+Q/K256 normalization, all possible FP32 values or full-model correctness.
+The earlier physical logit mismatch remains a failure with unknown cause.
+No production arithmetic is changed on the strength of this host replay.
+
+The simpler sigmoid in the standalone dense-attention image was also read,
+but the actual token-component builder already explicitly selects the
+separate precise sigmoid in the returning recurrent AND dense bodies.
+Changing that unselected standalone default would not fix this token run.
+This observation does not prove universal correct rounding of the selected
+sigmoid or identify the real numerical failure.
+
+Physical original57871 remains the separately owned observed-boundary probe
+under9d61a9e67d, with unchangedb74/tag75/gen9 driver. It is uploading real
+learned bytes, not a completed capture or benchmark. No extra GPU/admin FD,
+driver reload, reboot, power, SD, Assistant or hardware change occurred here.
+Poll THAT SAME handle; after actual clean completion, compare its actual
+QHB boundary against the unchanged CPU slice, then restore only through
+the exact ffa315aa helper after fresh clean ownership checks. Do not use
+this CPU-only snapshot as observed DATA or upload any of its products.
+
+Full correctness/normal+EOS/state/quality, resident no-CPU-reference Work,
+Assistant integration and measured sustained optimization remain required.
+Keep the full goal ACTIVE.
