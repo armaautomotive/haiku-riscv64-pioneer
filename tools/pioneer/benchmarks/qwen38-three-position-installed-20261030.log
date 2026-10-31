@@ -1,0 +1,3 @@
+5f2fc63de2c4413d54b7087e5b923113246bc7a7f09747d0d79915bf950bf039  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+3638b0bdbae8e5225c888146a880257c3ffecebf6ae046eba5b6d53f30e0e467  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-token-root-frontend-3638b0bd-DIAGNOSTIC-ONLY
+P100A_RELOAD driver55 tag2026103000010074 generation5 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY

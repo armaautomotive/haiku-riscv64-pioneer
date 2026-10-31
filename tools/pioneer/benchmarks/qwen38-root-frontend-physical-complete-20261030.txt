@@ -1,0 +1,90 @@
+ROOT current-seal diagnostic: completed physical cancellation lifecycle
+=====================================================================
+2026-10-30 local / 2026-10-31 UTC. Goal ACTIVE;20 tokens/sec UNMET.
+Last measured physical whole-model rate remains0.207893161 tokens/sec.
+This is real cancellation/cleanup evidence,NOT a full-model speed result.
+
+Original58421 actually completed exit0;no timeout restart
+-------------------------------------------------------
+Exact module5f2fc63de2c4413d54b7087e5b923113246bc7a7f09747d0d79915bf950bf039
+Exact USER3638b0bdbae8e5225c888146a880257c3ffecebf6ae046eba5b6d53f30e0e467
+argv --validate-cancel-boundary --host-timing;driver74/generation3.
+Its complete318-line stdout and11-line stderr are preserved unmodified:
+ qwen38-root-frontend-physical-20261030.log
+ SHA b1f2af1b7143001b56f4bed22c67e44154c89a90e5fddd7a2abae3780a4f5754
+ qwen38-root-frontend-physical-timing-20261030.log
+ SHA 060ea478fc34401b1e7be120976a69df6308b2c9f823b372875d05cb2ce4c76e
+Both copies were cmp-checked against the original completed raw logs.
+
+Actual same-open full source authentication and all19399024640 padded
+learned bytes uploaded. Start accepted,ONE explicit healthy cancellation
+was requested,and the fourth Observe accepted the current terminal after
+layer1,with cancelled1/committed0/position0/stage1. BOTH actual RAW ROOT
+frontend snapshots were60008. Readiness came from the current native
+boot/receipt/code/source/counter/FIFO/all119 STOP seal,NOT a RAW PC match.
+The immutable terminal image still ends at60008;no code extent was widened.
+
+Actual Hold held120 participants. Read drained zero committed records.
+Finish returned complete1/ready1/unsafe0 and the CLI reported:
+ PASS_DEBUG74_CANCEL requested1 cancelled1 committed0 layers1 clean_end1
+No positive token readout,whole64 arithmetic,normal generation,physical
+numerical agreement,state reuse,Work-mode or tokens/sec follows from this.
+
+Host-only timing:valid1,total_diagnostic2053049223us. Upload20367 calls/
+1056998616us;startup1/326154804us;observe4/376467us;cleanup3/208261706us.
+Source-to-device-open299088497us. These are preparation/diagnostic timings,
+NOT normal generation latency,layer throughput or an inferred token rate.
+
+Independent cleanup check and guarded stable restoration
+-------------------------------------------------------
+Only AFTER58421 exited,a fresh no-parent/hash/metadata check confirmed
+driver74/gen3/quiesced0cold0owner0open1guard1,64CPUs and full137034936320B
+RAM. Raw log:qwen38-root-frontend-physical-clean-20261030.log
+SHA 0aae257f466a86282ce3345e6bdaa6908b2e5cc1a165dba36f64373227859551
+
+Original90440 completed exit0 through unchanged exact8bed updater,
+--restore-token-root-frontend,using SINGLE-LINE exec SSH. It exchanged
+exact5f2fc/gen3 for stable041fef18/gen4. No reboot,reset or extra GPU work.
+Raw log:qwen38-root-frontend-stable-restore-20261030.log
+SHA fbf54c28862f3f89654c33a4219cea1ed721502efd4af5dc24df0ef58dbaf60e
+Independent subsequent hash/status check confirmed installed041fef18,
+tag2026102100010012/gen4/clean,64CPUs/fullRAM/free133789581312B.
+Raw log:qwen38-root-frontend-stable-verified-20261030.log
+SHA 0d420a7c6ad19430abd756e475532ed7f6d4165665aede90727862aacff926dc
+These three copies also cmp-match their completed originals. Raw external
+ps padding is retained byte-for-byte;only that raw inventory log is excluded
+from source-whitespace lint. No source/test/qualification guard changed.
+
+Next bounded full-model diagnostic:ONE new process,not Work deployment
+--------------------------------------------------------------------
+Fresh pinned SSH process/hash/status checks again confirmed no compute
+parent and clean stable041/gen4. Original44520 then completed exit0 with
+the unchanged guarded8bed --apply-token-root-frontend:stable/gen4 ->5f2fc/
+gen5. A separate fresh SHA/status query confirmed exact5f2fc and3638,
+driver74/gen5/quiesced0cold0owner0open1guard1 before the new model launch.
+Completed raw logs,each cmp-matched against its original:
+ qwen38-three-position-install-20261030.log
+ SHA 3834474ee7287ed06b901a011ad5659ca320c66e3449b788151a557552b70b57
+ qwen38-three-position-installed-20261030.log
+ SHA c55b1803f00f0c7af1612a22904d906ff6b0cedf086a09067fca2f5c167c6bb5
+
+ONE new54139 was launched approximately2026-10-31 05:46:50UTC with the
+SAME3638 binary,argv --validate-three-positions --host-timing. It is LIVE,
+NOT a successful model result. It authenticates its own same-open source,
+uploads learned weights,then requests fixed prompts248319/17 and3 model
+positions. Its normal path must prove terminal/120HOLD/positive record
+readout/Finish/actual exit0. No CPU model products are supplied to execution.
+The existing strict DATA comparator may compare returned greedy/max-logit
+bits against the fixed CPU corpus ONLY AFTER actual successful completion;
+that still cannot establish every hidden/vocabulary value or Work readiness.
+
+Live stdout:/private/tmp/pioneer-q38-three-position-physical-20261030-gl.log
+Live stderr:/private/tmp/pioneer-q38-three-position-physical-timing-20261030-gl.log
+Observe SAME54139;no second launch,extra admin FD,timeout restart,automatic
+retry/END/reset or live driver exchange. On uncertainty close ONLY and retain
+resources. Guarded stable restoration requires actual completion and fresh
+clean/no-parent evidence. Preserve64CPUs/fullRAM/Assistant/SD-free boot.
+Original full-model emulator handles31695/66331/41236/92178/52159 were all
+revalidated LIVE this turn and remain on their own advancing histories.
+Full64/multitoken/positive readout/state reuse/no-CPU-reference Work/Assistant
+and sustained physical20 tokens/sec remain unfinished. Goal stays ACTIVE.
