@@ -8,6 +8,10 @@
 #ifdef PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE
 #include "PioneerQ38TokenHiddenValidationProtocol.h"
 #endif
+#ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_NATIVE
+#include "PioneerQ38TokenDecodeBenchmarkRole.h"
+#include "PioneerQ38TokenDecodeBenchmarkProtocol.h"
+#endif
 // Shared native adapter: private NODRV tests, or the separate tag74 bounded
 // validation ioctl. Neither selection grants an Assistant/Work capability.
 // One genuine FD/team/thread lock covers execution AND reply copy. A failed
@@ -34,7 +38,9 @@ Q38TokenNativeControl(PioneerProbeCookie* cookie,void* data,size_t length){
 #ifdef PIONEER_Q38_TOKEN_VALIDATION_NATIVE
   || !PioneerQ38TokenValidation::RequestShape(*packet)
 #endif
-#ifdef PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_NATIVE
+  || !PioneerQ38TokenDecodeBenchmark::ControlRequestShape(*packet)
+#elif defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)
   || !PioneerQ38TokenHiddenValidation::ControlRequestShape(*packet)
 #endif
  ){delete packet;return status!=B_OK?status:B_BAD_VALUE;}

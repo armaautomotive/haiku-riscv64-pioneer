@@ -12,6 +12,23 @@
  || defined(PIONEER_Q38_TOKEN_POSTED_CANCEL) || defined(PIONEER_Q38_POSTED_CANCEL_TEST)
 #error Held-hidden client cannot alias kernel,native,old USER,CPU oracle,Work or changed source roles,including defined0
 #endif
+#ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_NATIVE
+#error A physical decode benchmark cannot alias a USER session,including defined0
+#endif
+#ifndef PIONEER_Q38_DECODE_BENCHMARK_CLIENT_BINDING_H
+#define PIONEER_Q38_DECODE_BENCHMARK_CLIENT_BINDING_H
+#ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT
+enum {PioneerQ38DecodeBenchmarkClientSelection=1};
+#else
+enum {PioneerQ38DecodeBenchmarkClientSelection=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT
+#include "PioneerQ38TokenDecodeBenchmarkClientRole.h"
+static_assert(PioneerQ38DecodeBenchmarkClientSelection==1,"late longer USER diagnostic selection");
+#else
+static_assert(PioneerQ38DecodeBenchmarkClientSelection==0,"late longer USER diagnostic removal");
+#endif
 #ifndef PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_SESSION_H
 #define PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_SESSION_H
 #include "PioneerQ38PublicModelSource.h"
@@ -19,6 +36,10 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenHiddenValidationProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT
+#include "PioneerQ38TokenDecodeBenchmarkClientRole.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenDecodeBenchmarkProtocol.h"
+#endif
 #include <array>
 #include <cstring>
 #include <memory>
@@ -35,7 +56,11 @@ class PioneerQ38TokenHiddenValidationSession {
  enum State {Virgin,Running,Terminal,Held,Drained,Complete,Failed};
  IO& io;Source& source;PioneerQwen38PackedPlan layout;
  std::unique_ptr<Packet> packet=std::make_unique<Packet>();
+#ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT
+ std::array<uint32_t,PioneerQ38TokenDecodeBenchmark::Positions*64> records={};
+#else
  std::array<uint32_t,3*64> records={};
+#endif
  std::unique_ptr<PioneerQ38TokenHiddenValidation::Packet> hiddenPacket=std::make_unique<PioneerQ38TokenHiddenValidation::Packet>();
  std::unique_ptr<std::array<uint32_t,5120>> hidden=std::make_unique<std::array<uint32_t,5120>>();
  bool captured=false;
@@ -64,12 +89,21 @@ class PioneerQ38TokenHiddenValidationSession {
   generation=r.generation;return true;
  }
  bool TokenCall(unsigned op,unsigned count=0){
-  namespace P=PioneerQ38TokenControl;namespace V=PioneerQ38TokenHiddenValidation;
+  namespace P=PioneerQ38TokenControl;
+#ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT
+  namespace V=PioneerQ38TokenDecodeBenchmark;
+#else
+  namespace V=PioneerQ38TokenHiddenValidation;
+#endif
   std::memset(packet.get(),0,sizeof(*packet));auto& q=packet->request;q.magic=P::Magic;q.version=P::Version;q.operation=op;q.records=count;
   if(op==P::Start){q.prompts=V::Prompts;q.limit=V::Positions;packet->prompt[0]=V::FirstToken;packet->prompt[1]=V::SecondToken;}
   if(!V::ControlRequestShape(*packet))return false;
   const auto request=q;
+#ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT
+  if(!Call(TT_PCI_PROBE_Q38_TOKEN_DECODE_BENCHMARK,*packet) || std::memcmp(&q,&request,sizeof(q)))return false;
+#else
   if(!Call(TT_PCI_PROBE_Q38_TOKEN_HIDDEN_CONTROL,*packet) || std::memcmp(&q,&request,sizeof(q)))return false;
+#endif
   for(unsigned i=0;i<P::Context;i++)if(packet->prompt[i]!=(op==P::Start && i<2?unsigned(i?V::SecondToken:V::FirstToken):0U))return false;
   const auto& r=packet->reply;
   if(r.version!=P::Version || r.operation!=op || r.status || r.started!=1 || r.unsafe || r.ready>1
@@ -106,10 +140,21 @@ class PioneerQ38TokenHiddenValidationSession {
   // identifiers/counters are not recreated into native ownership proofs.
   for(unsigned pos=0;pos<committed;pos++){
    const auto* r=packet->records+pos*64;
+#ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT
+   const unsigned input=pos==0?248319:pos==1?17:packet->records[(pos-1)*64+4];
+   constexpr unsigned final=PioneerQ38TokenDecodeBenchmark::Positions-1;
+#else
    const unsigned input=pos==0?248319:pos==1?17:packet->records[64+4];
+#endif
    if(r[0]!=0x31435451 || r[1]!=1 || r[2]!=pos || r[3]!=input || r[4]>=248320
     || (r[5]&0x7f800000U)==0x7f800000U || r[6]!=pos+1 || r[7]!=((pos+1)&1)
-    || r[8]!=unsigned(pos==0) || r[9]!=unsigned(pos<2) || r[10]!=64 || r[11]!=973
+    || r[8]!=unsigned(pos==0)
+#ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT
+    || r[9]!=unsigned(pos<final)
+#else
+    || r[9]!=unsigned(pos<2)
+#endif
+    || r[10]!=64 || r[11]!=973
     || r[38]!=r[42] || r[44]!=pos+1 || r[45]!=48 || r[46]!=119)return false;
    for(unsigned i=12;i<36;i++)if(r[i]!=packet->records[i])return false;
    for(unsigned i=47;i<64;i++)if(r[i])return false;
@@ -220,7 +265,12 @@ public:
    if(r.stage!=9 || d[3] || d[4]>63 || d[7] || d[8] || d[9] || d[10] || d[11])return Stop("pending_reply");
    return true;
   }
+#ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT
+  if(r.stage!=11 || d[3] || d[7] || d[8]!=PioneerQ38TokenDecodeBenchmark::Positions
+   || d[9]!=PioneerQ38TokenDecodeBenchmark::Positions-1 || d[10]!=64 || d[11])return Stop("terminal_reply");
+#else
   if(r.stage!=11 || d[3] || d[8]>3 || d[9]>=3 || !d[10] || d[10]>64)return Stop("terminal_reply");
+#endif
   // d[12..13] are the actual RAW frontend snapshots,not retired PCs or
   // USER-side completion authority. The kernel must prove its current
   // boot/receipt/code/119 STOP/FIFO seal before publishing ready. All packet,
@@ -228,7 +278,13 @@ public:
   if(d[7]){
    if(!d[11] || d[11]>3 || d[8]!=d[9]+unsigned(d[11]==3)
     || (d[11]>1 && d[10]!=64))return Stop("cancelled_terminal_reply");
-  }else if(d[8]!=3 || d[9]!=2 || d[10]!=64 || d[11])return Stop("normal_terminal_reply");
+  }
+#ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT
+  else if(d[8]!=PioneerQ38TokenDecodeBenchmark::Positions || d[9]!=PioneerQ38TokenDecodeBenchmark::Positions-1
+   || d[10]!=64 || d[11])return Stop("normal_terminal_reply");
+#else
+  else if(d[8]!=3 || d[9]!=2 || d[10]!=64 || d[11])return Stop("normal_terminal_reply");
+#endif
   cancelled=d[7]!=0;committed=d[8];position=d[9];completedLayers=d[10];terminalStage=d[11];
   state=Terminal;return true;
  }
@@ -268,7 +324,12 @@ public:
   return true;
  } // only after BOTH parts,actual Finish and successful Close;never a partial snapshot
  bool CopyGenerationRecords(uint32_t* output,unsigned words)const{
+#ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT
+  if(state!=Complete || cancelAttempted || cancelled || committed!=PioneerQ38TokenDecodeBenchmark::Positions
+   || position!=PioneerQ38TokenDecodeBenchmark::Positions-1
+#else
   if(state!=Complete || cancelAttempted || cancelled || committed!=3 || position!=2
+#endif
    || completedLayers!=64 || terminalStage || !Current() || !output || words!=records.size())return false;
   std::copy(records.begin(),records.end(),output);return true;
  } // fixed three-position DATA only,after genuine normal END+Close;NOT CPU comparison or Work

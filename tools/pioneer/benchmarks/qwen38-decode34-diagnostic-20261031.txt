@@ -1,0 +1,128 @@
+Separate longer all-card diagnostic:34 positions,32 feedback positions
+=====================================================================
+2026-10-31. Goal ACTIVE. Last verified sustained whole-model baseline
+0.207893161 tokens/sec;20 tokens/sec remains UNMET. NO speedup claimed.
+
+Implemented path and scope
+--------------------------
+Add a distinct bounded0x6606 endpoint and USER selector for the SAME fixed
+original27B model,two prompt tokens and34 total positions. The existing
+kernel backend already accepts bounded trusted prompt/limit inputs;the
+new endpoint changes only its fixed request gate/routing. It uses the
+SAME native Begin/Observe/HOLD/one34-record drain/explicit full END under
+the SAME FD/team/thread lock and copy-fault retention. No runtime CPU
+model reference,cancellation,hidden capture,arbitrary prompt,EOS,streaming
+or Assistant/Work capability is added. The old0x6604/5 endpoints are NOT
+routed by this separate build. They remain unchanged in the old build.
+
+The USER path preserves complete SAME-open original-file SHA and851-layout
+authentication before device Open,all3551 learned parts/4736090 pages,
+20367 bounded uploads,source epoch and generation checks. It checks every
+record's feedback against its actual preceding selection,all34 flags,
+session/counter aliases and reserved fields;publication requires normal
+34-position terminal,HOLD,drain,full END and successful Close. Wrong-size,
+null,failed,cancelled,incomplete or changed-source calls publish nothing.
+No implicit retry,cancel,END,CPU fallback or recovery follows uncertainty.
+Late selection/removal and defined-zero native/USER mixing refuse.
+
+The distinct CLI accepts ONLY --generate-34-positions and the existing
+source-only preflight spelling. Host wall timing goes to stderr ONLY.
+Startup includes initialization and can overlap inference. There are two
+prompt positions. Neither a post-START interval nor34/that interval is
+advertised as isolated device time or steady decode TPS. The longer path
+is a next measurement capability,not proof that fast inference now works.
+
+Completed independent local qualification
+------------------------------------------
+Main76919 and clean15141 actually exited0,logs identical:full synthetic
+851 source/all learned uploads,34 chained records,696 COW fault branches,
+12928 protocol/CLI refusals. These exercise MOCK source/OS/device replies,
+NOT physical model execution or native full34-position lifetime.
+Main59348/clean76789 roles both0,4 positives/491 missing,zero,two,late,
+old ABI,NODRV,CPU,Work and TEST refusals. Old short USER lifecycle
+63340/13722 both0:original384 COW branches,128 normal/cancel histories,
+14 cancellation/loss cases and unchanged192-word publication contract.
+
+Actual USER SDK66034/18627 both0,full main/clean bytes identical:
+object d1caf8139df295fb8e7a97e3639e1073ca5319fd954293e4d1b33168f212ff24
+binary 05510422cb94afa60689d69c1523add442b38a0679182dee5da1986b2a650b13
+Max individual USER frame4432B. Real source/uploader/ioctl bodies emitted;
+CPU oracle,ggml/llama,native owner,Work and MOCK imports absent. Builders
+FIRST rebuild and assert literal old hidden1a061,short b15 and timed efb8
+objects/binaries unchanged. No old USER binary is silently promoted.
+
+Physical SDK initial corrected48620/87126 both0;frozen80468/6067 both0;
+final per-frame33956/10602 both0. Full main/clean bytes identical:
+object 66b01f59eb4d88a1360c3d8263507924bad0c2c7997fc78c86e0176acb84c088
+module 4ebc9463b80cfa73fe957800cadac819e7ff05e17ff7a2db7fd6362da2c43b14
+Each builder FIRST reproduces ENTIRE44209 and18362 controls using the
+same authenticated old posted26d54996 object/argv/seven-input link recipe
+and freshly compiled common profile. ALL13 firmware arrays exactly match
+the already-qualified1b8e6109 job-fold package;2MiB RoPE symbol bytes are
+unchanged. Real conventional ABI/native/posted-cancel controllers emitted;
+old short/hidden control and CPU-reference/Work/MOCK imports absent.
+Every individual new frame<=2048B or no larger than its old counterpart.
+Actual GCC callgraph object is byte-identical. Known public module chain
+5392B/25 unresolved;wholeKernelStackQualified=FALSE. Unknown kernel entry,
+IRQ and indirect costs are excluded,NOT assumed zero. This is SDK build
+and inspection,NOT a new public34-position native runtime qualification.
+
+Strict posthoc DATA remains separate
+-------------------------------------
+New parser requires the distinct complete34-position family,all ordered
+rows and phase/footer markers,actual feedback chain,flags and reserved
+fields. It compares ONLY first-three input/greedy/max-logit DATA against
+the unchanged pinned original CPU corpus,without tolerance. Positions
+3..33 have NO external numerical control in that comparison. Exit0 must
+NEVER be described as whole-long-generation/full-vocabulary correctness.
+Main/clean synthetic parser tests both0,2 positives/1250 malformed,line
+deletion/duplication,cross-family,feedback,flags,reserved/numeric refusals.
+Synthetic matching logs are NOT archived as observed accelerator output.
+The old three-position comparator is unchanged;its known failures remain.
+
+Exact updater and retained failures
+------------------------------------
+New apply/restore-token-decode-benchmark maps ONLY clean041fef18<->4ebc9463,
+with full-SHA backups and all existing inventory/owner/cold/quiesce/wait/
+hash/symlink guards. Old44209/2723/18362/cf400/b74/tag74 and unknown same-
+tag images refuse. No reset,forced unload,automatic rollback or quarantine
+bypass. Main5139/clean5281 both0,358 actual filesystem/handshake/failure
+cases including the unchanged job-fold route. New helper SHA:
+c6f7268cdf3502b99857ddc2e081d51fbd363c2acb2b1e75a30189805f1a8b6f.
+The existing staged ff293d2d helper retains44209's exact restore route.
+
+Initial USER SDK74655 failed -Werror on two new-source warnings:enum type
+comparison and misleading indentation. Explicit unsigned casts and a
+separate newline fixed them;NO warning was disabled. Initial native
+97379/13573 failed the new inspection harness's comparison of an entire
+saved section against only its RoPE symbol. Compare the actual bounded
+symbol slice from the authenticated control instead;ALL13 independent
+firmware hashes and exact2MiB RoPE equality remain mandatory. Raw failure
+logs are retained,not relabelled as passes. Raw paired final logs and
+partial stack JSON are in qwen38-decode34-qualification-20261031/.
+
+Physical state at this checkpoint
+----------------------------------
+The NEW4ebc9463 module/client/helper have NOT been staged or installed.
+The independently guarded old-helper restore85878 actually exited0:
+2723/gen5->041/gen6. New job-fold apply73332 actually exited0:
+041/gen6->44209/gen7. Separate read-only checks confirmed exact driver,
+efb8 client and ff helper SHA,cold0/owner0/quiesced0/open_count1/guard1,
+64 CPUs and maxRAM137034936320B. No reboot,SD,OS or network changes.
+
+ONE original physical39123 launched by20:00:52UTC with unchanged efb8 USER
+client and --generate-three-positions. It authenticates the full original
+model before Open. At20:24:19UTC it was LIVE,upload17809326080/19399024640;
+START,normal terminal,HOLD,END/Close and numerical comparison still
+PENDING. Do NOT open another GPU/admin FD,reset,reload or restart on an
+observation timeout. Preserve this SAME running handle. Its stdout is:
+ /private/tmp/pioneer-q38-job-fold-generation-physical-20261031-tw.log
+Separate Pioneer timing:
+ /boot/home/pioneer-q38-job-fold-generation-20261031-tv.stderr
+
+Finish that SAME run,strictly compare it and verify post-Close health
+before any further driver change. Only after qualification and a clean
+idle owner may a separately staged,exact-hash longer diagnostic be tested.
+Full-model arithmetic discrepancy,normal EOS/long generation correctness,
+resident model/fresh requests,Assistant no-reference Work and genuine
+sustained performance remain required. No20tok/s promise follows here.

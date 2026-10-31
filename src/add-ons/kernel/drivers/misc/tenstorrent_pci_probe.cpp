@@ -8373,10 +8373,15 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
   return Q38TokenNativeControl(instance,data,length);
 #endif
 #ifdef PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE
+#ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_NATIVE
+ if(operation==TT_PCI_PROBE_Q38_TOKEN_DECODE_BENCHMARK)
+  return Q38TokenNativeControl(instance,data,length);
+#else
  if(operation==TT_PCI_PROBE_Q38_TOKEN_HIDDEN_CONTROL)
   return Q38TokenNativeControl(instance,data,length);
  if(operation==TT_PCI_PROBE_Q38_TOKEN_HIDDEN_READ)
   return Q38TokenHiddenValidationControl(instance,data,length);
+#endif
 #endif
  if(operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
   return DriverReloadControl(instance,operation,data,length);

@@ -1,0 +1,11 @@
+PASS_ACTUAL_JOB_BOOT_FOLD_PHYSICAL_SDK all13CompiledArraysSHAExact1 oldCodeNamespacesAbsent1 rope2MiBUnchanged1 realOwnerAndControllerAndPostedCancel1 individualFramesBounded1 conventionalDriverABI1 noCPUOracleWorkOrTestImports1
+ee3e9ad9cef6e6e5b449071ad953ce7b18e73df7fd69c935a9e759625288d115 token-job-boot-fold-INSPECT-ONLY.o
+COMPILE_INSPECT_ONLY_NOT_INSTALL_NATIVE_RUNTIME_WHOLE_KERNEL_STACK_PHYSICAL_MODEL_WORK_OR_TPS
+44209b7873cd2e2f32f133b4c4c45a5870fe1669e98cd4165c4ebc51abdc5eaf tenstorrent_pci_probe-token-DEBUG75-JOB-BOOT-FOLD
+PASS old18362LinkedImageReproduced1 actualJobBootFoldDiagnosticLinked1 all13ArraysAnd2MiBRopeExact1 conventionalABI1 noCPUOracleWorkOrTestImports1
+OBSERVED knownModuleChain5392/unresolved25/reached511;PARTIAL ONLY,wholeKernelStackQualified=FALSE;graph object BYTE-IDENTICAL
+BUILD_INSPECT_ONLY_NO_INSTALL_PHYSICAL_DELIVERY_FULL_NATIVE_LIFECYCLE_MODEL_NUMERICS_WORK_OR_TPS_GRANT
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_qwen38_decode_benchmark_native.py", line 57, in <module>
+    assert len(rope)==1 and extract(rope[0],'rope')==(out/'unchanged-short-driver/sdk/new-rope.raw').read_bytes()
+AssertionError
