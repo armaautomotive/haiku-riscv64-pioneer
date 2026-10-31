@@ -52,6 +52,9 @@ static void CheckNativeFullLayer(Fixture& f){
  }
  emit(0x454e4450);assert(!fclose(out));
  assert(cpu.instructionStack.Valid() && cpu.instructionStack.Initialized() && cpu.instructionStack.Instructions()==cpu.steps);
+#ifdef PIONEER_Q38_NATIVE_ROOT_PROFILE_FIXTURE
+ Q38NativeRootProfileReport(cpu.steps); // exclusive HOST PCs ONLY;never device cycles or a completion gate
+#endif
  printf("OBSERVED actual first-layer combined accelerator ROOT reserved stack%u/accessed%u;MAX119peer reserved%u/accessed%u;8192 bytes EACH/separate HOST kernel stack unqualified\n",
   0x70000-cpu.instructionStack.MinimumSp(),0x70000-cpu.minStack,0x70000-minPeerSp,0x70000-minPeerAccessed);
  printf("EXECUTED native ORIGINAL layer0/SAME full851+1010zero+119virgin full engines/actual matrix+Conv+GDN+FFN/initialized native recurrent/history/workspace byte aliases/next-slot nonzero%u/all119 actual DONE+WAIT/workerInstructions%llu ROOTinstructions%u/raw prefix OBSERVATION emitted;independent numerical comparison STILL REQUIRED;NOT token/committed state/KV/STOP/END/physical/Work/TPS\n",

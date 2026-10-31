@@ -9,6 +9,13 @@ import subprocess
 import sys
 import tempfile
 
+root_profile=None
+if '--root-instruction-profile' in sys.argv:
+    assert sys.argv.count('--root-instruction-profile')==1
+    index=sys.argv.index('--root-instruction-profile')
+    assert index+1<len(sys.argv)
+    root_profile=pathlib.Path(sys.argv[index+1]);del sys.argv[index:index+2]
+    assert root_profile.is_absolute() and root_profile.is_dir()
 precise_beta = '--precise-beta' in sys.argv
 if precise_beta:
     assert sys.argv.count('--precise-beta')==1
@@ -75,6 +82,8 @@ if root_frontend_snapshots:
 if held_hidden_readout:
     assert root_frontend_snapshots and pushed_context and not backend_finish and not control_adapter \
         and len(sys.argv) == 7 and sys.argv[2] == '--execution-end', 'Held hidden TEST requires the exact G3 ROOT frontend first-layer/cancel/STOP/HOLD/Read0/full-END predecessor'
+if root_profile:
+    assert precise_beta and posted_cancel and held_hidden_readout and not compile_link_only, 'HOST ROOT profile requires original precise-beta first-layer/full-END execution,not a shortened or compile-only path'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -205,6 +214,8 @@ if root_frontend_snapshots:
     defines['PIONEER_Q38_TOKEN_NATIVE_ROOT_FRONTEND_FIXTURE'] = '1'
 if held_hidden_readout:
     defines.update(PIONEER_Q38_TOKEN_NATIVE_HIDDEN_READ_FIXTURE='1', PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')
+if root_profile:
+    defines['PIONEER_Q38_NATIVE_ROOT_PROFILE_FIXTURE']='1'
 if readout_empty:
     defines['PIONEER_Q38_TOKEN_NATIVE_READOUT_EMPTY_FIXTURE'] = '1'
 if restore_empty:
@@ -314,6 +325,19 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         ('bool PioneerSessionIO::StateZeroBeforeCohort()', 'bool PioneerSessionIO::StateZeroOtherCoresHeld()', 'bool PioneerSessionIO::NonRootHeldOwner()')))
     binary = base/'test'
     extra = []
+    profile_environment={}
+    if root_profile:
+        from pioneer_q38_native_root_profile_map import build_profile_map
+        metadata=build_profile_map(root_profile,base)
+        print('AUTHENTICATED_HOST_NATIVE_ROOT_PROFILE ELF'+metadata['elf_sha256']+
+              '/map'+metadata['map_sha256']+'/ranges'+str(metadata['ranges'])+
+              ';READ_ONLY_HOST_PC_OBSERVATIONS_NOT_DEVICE_CYCLES_OR_TPS',flush=True)
+        profile_environment['PIONEER_TEST_ROOT_PROFILE_MAP']=str(metadata['path'])
+        profile_object=base/'root-profile-host.o'
+        subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
+                        '-fsanitize=address,undefined','-DPIONEER_Q38_NATIVE_ROOT_PROFILE_BRIDGE_TEST=1',
+                        '-c',str(here/'pioneer_q38_native_root_profile_bridge.cpp'),'-o',str(profile_object)],check=True)
+        extra += [str(profile_object)] # HOST-only count sink;NO kernel/native/CPU-model/Work flags
     if state_snapshots:
         state_object = base/'native-state-data.o'
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
@@ -364,4 +388,4 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
             # This output directory is not a state/completion/native receipt.
             (prefix/'state-native').mkdir(mode=0o700)
         subprocess.run([str(binary), *sys.argv[1:]], check=True,
-                       env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})
+                       env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1',**profile_environment})

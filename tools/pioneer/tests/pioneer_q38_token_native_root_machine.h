@@ -22,6 +22,10 @@
 using TokenNativeRootISA=ScalarMachine;
 #define PIONEER_Q38_INSTRUCTION_STACK_OBSERVER_TEST 1
 #include "PioneerQ38InstructionStackObserver.h"
+#ifdef PIONEER_Q38_NATIVE_ROOT_PROFILE_FIXTURE
+#include "pioneer_q38_token_native_root_profile_role.h"
+#include "pioneer_q38_native_root_profile_bridge.h"
+#endif
 #else
 using TokenNativeRootISA=BlockMachine;
 #endif
@@ -39,8 +43,14 @@ struct TokenStartupRoot:TokenNativeRootISA {
  unsigned floatOps=0;
  Q38InstructionStackObserver instructionStack;
  void StepScalar(){
+#ifdef PIONEER_Q38_NATIVE_ROOT_PROFILE_FIXTURE
+  const unsigned retiredPC=pc;
+#endif
   const auto before=steps;TokenNativeRootISA::StepScalar();
   assert(steps==before+1 && instructionStack.Retired(regs[2]));
+#ifdef PIONEER_Q38_NATIVE_ROOT_PROFILE_FIXTURE
+  Q38NativeRootProfileRetired(retiredPC);
+#endif
  } // unchanged full ISA retirement,then read-only SP observation
 #include "pioneer_q38_token_native_layer_machine.inc"
 #endif

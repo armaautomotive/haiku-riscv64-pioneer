@@ -1,0 +1,96 @@
+Exact ROOT instruction histogram for the corrected all-card controller
+=====================================================================
+2026-10-31. Goal ACTIVE. Last verified sustained baseline0.207893161
+tokens/sec;20 tokens/sec remains UNMET. No new speedup is claimed.
+
+Purpose and separation
+-----------------------
+Existing coarse PC samples and older connected profiles repeatedly land
+in packet seals,Quiet,transfer and admission code. They are insufficient
+to attribute current runtime cost after all later scheduling/code changes.
+This new opt-in measures the ACTUAL current ROOT instruction distribution
+on the original native first-layer/full-END test,not a replacement small
+arithmetic loop or a CPU-produced model result.
+
+The observation sink is a SEPARATE HOST-only translation unit. The native
+fixture passes ONLY the PC of an instruction that the unchanged complete
+ISA engine has just retired. No reset,counter result,ready flag,processor
+state,clock or product input API is exposed. No profiler enters the Haiku
+driver or device firmware,and Haiku's scheduler profiler is NOT used.
+The existing generic profile class's kernel refusal remains unchanged.
+Unselected native fixtures contain no new profiling code.
+
+--root-instruction-profile requires the entire separate precise-beta,
+posted-cancel,ROOT-frontend,held-hidden and --execution-end predecessor.
+It refuses compile-only,shortened,old-image,Work and physical roles.
+Counts are EXCLUSIVE compiled-code ranges,including SIMULATED polling.
+They are NOT elapsed hardware shares,device cycles,an attainable speedup
+or token throughput. A returned histogram does NOT authorize cleanup.
+
+Metadata and completed contracts
+--------------------------------
+Current ROOT ELFefeebcfc25e00b6519026428b1d7af3c12052dad6db2e6e2b52110e3fb7ed7c6
+Map52b48cab3713398b1c7adbf125618261c36300f70ee695222aaafa04b2c412d8,211 ranges.
+All aliases05207f4aec6ad105f421d799a91346dafa34279a0352ee2412e08b8b251e609f.
+Final mapper consumes a private copy of the SAME authenticated ELF bytes,
+not a second unchecked pathname open. ALL aliases of shared code are
+retained separately;the first displayed nm name is merely representative,
+not proof of which caller/family incurred those instructions.
+
+Map/bridge/role main68376 and independent clean16666 ACTUALLY exited0,
+identical logs:exact six-PC synthetic counting/continuous history,115
+missing/zero/foreign/late/physical/Work refusals,10 corrupt/truncated ROOT
+refusals BEFORE external tool or output creation,and actual211-range
+authentication with shared Quiet aliases preserved. These isolated tests
+are NOT instruction execution or native lifetime evidence.
+Independent actual map builds both exit0 and are byte-identical,including
+their complete alias lists. Their map SHA exactly matches the metadata
+already loaded by the two ongoing profiles below;no live history was reset
+when strengthening snapshot provenance or preserving alias metadata.
+
+Original integration histories:completed without restart
+---------------------------------------------------------
+Main54343 and independent clean23977 ACTUALLY exited0. Both authenticate
+the full SAME-open original27B source,execute1010 genuine zero kernels
+and119 virgin worker boot histories,then run the actual ROOT embedding/
+matrix/Conv/GDN/FFN first layer. Original cancellation,all119 actual STOP,
+120 HOLD,drain,TWO held-hidden reads,and complete restoration/clock/VM/
+PCI/host/device/context END follow in the SAME uninterrupted histories.
+Separate unchanged posthoc CPU-DATA comparisons both exited0:embedding
+and all5120 first-layer words are bit-exact,without tolerance. Both exact
+10240-word prefixes have SHA:
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+Unselected fixture compile/link controls98761/73332 both ACTUALLY exited0;
+those binaries were NOT executed and are not extra runtime evidence.
+The archived runtime and comparison logs retain their exact scope limits.
+
+Both continuous observers record158620373 retired ROOT instructions,
+115 executed compiled ranges. That equals the earlier uninstrumented
+first-layer history count;neither the execution nor its count was reset.
+Worker arithmetic retires2275341056 instructions before cancellation.
+Top representative range labels/counts:
+39961307 q38_layer_return_recurrent_packet_seal
+23757204 DensePartitionRoot::Transfer
+16193700 DensePartitionRoot::Quiet (SHARED code;all aliases in JSON)
+12078532 MixedRecurrentCohort::Packet
+10265996 PioneerQ38PreciseWorkerLayout::BootShape
+ 9165015 PioneerQ38PreciseWorkerLayout::JobShape
+The first six account for111421754 emulated ROOT instructions (70.24%).
+This includes SIMULATED polling and is NOT a physical elapsed-time share,
+an exclusive attribution to a shared function name,a removable fraction,
+a speedup estimate or tokens/sec. Existing checks must not be discarded
+merely because their compiled ranges are frequently executed.
+
+The independent physical66768 also finished0 with three records and clean
+END/Close,but its strict numerical comparisons still FAIL and its three
+maximum-logit words are unchanged from the prior driver. See the separate
+qwen38-precise-beta-generation-physical-20261031.txt report. The HOST
+observer neither communicated with nor altered that physical lifetime.
+Old original full-model DW41236 remains its own ongoing history;it was
+not restarted or supplied with products. No whole-model numerical pass,
+physical speedup,Assistant readiness or sustained decode follows here.
+
+Next:close the full-model arithmetic qualification gap and use the genuine
+compiled-range profile to select controller optimizations. Longer/EOS
+decode,resident model/fresh requests,Assistant Work integration and honest
+sustained real performance remain required;20 tokens/sec remains UNMET.

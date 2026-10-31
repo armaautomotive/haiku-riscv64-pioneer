@@ -1,0 +1,6 @@
+ROOT_INSTRUCTION_PROFILE total6/functions4/EXCLUSIVE actual PCs incl SIMULATED polling/NOT physical cycles or token speed
+ROOT_INSTRUCTION_FUNCTION 3 exactFunction
+ROOT_INSTRUCTION_FUNCTION 1 boot
+ROOT_INSTRUCTION_FUNCTION 1 exactHelper
+ROOT_INSTRUCTION_FUNCTION 1 stopped
+PASS_HOST_ONLY_ROOT_PROFILE exactPCCounts1 continuousHistory1 declarationOnlyNativeBridge1 actualAuthenticatedMap211Ranges1 sharedAliasesPreserved1 10 corruptOrTruncatedBeforeToolOrOutputRefusals 115 missing+zero+foreign+late+physical+Work refusals;NO native/card/model/cycles/TPS grant

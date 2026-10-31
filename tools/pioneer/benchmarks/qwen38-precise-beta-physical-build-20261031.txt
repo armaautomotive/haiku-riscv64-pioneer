@@ -2,8 +2,13 @@ Precise-beta diagnostic: actual SDK/module and guarded staging
 =============================================================
 2026-10-31. Goal ACTIVE. Last verified sustained baseline remains
 0.207893161 tokens/sec;20 tokens/sec UNMET. NO speedup is claimed.
-The corrected module is now INSTALLED;ONE physical generation lifetime
-is LIVE,pending results. It is not a numerical or throughput pass.
+The corrected module is INSTALLED. The physical66768 lifetime has now
+ACTUALLY exited0 with three records and clean END/Close. Its unchanged
+strict numerical comparison FAILS in main and clean:all greedy selections
+match,but all three maximum-logit words remain exactly equal to the old
+driver's discrepant words. No new throughput result or speedup follows.
+The subsequent result report supersedes all historical LIVE/pending
+wording below:qwen38-precise-beta-generation-physical-20261031.txt.
 
 Scope and actual change
 -----------------------

@@ -1,0 +1,1486 @@
+[
+  {
+    "begin": 262160,
+    "bytes": 32,
+    "names": [
+      "q38_token_fault_report"
+    ]
+  },
+  {
+    "begin": 262192,
+    "bytes": 128,
+    "names": [
+      "PioneerQ38DensePartitionLayout::Route(unsigned int)"
+    ]
+  },
+  {
+    "begin": 262320,
+    "bytes": 108,
+    "names": [
+      "PioneerQ38MixedWorkerLayout::Peer(unsigned int)",
+      "PioneerQ38DensePartitionLayout::Peer(unsigned int)"
+    ]
+  },
+  {
+    "begin": 262428,
+    "bytes": 1068,
+    "names": [
+      "PioneerQ38DensePartitionLayout::Shape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 263496,
+    "bytes": 196,
+    "names": [
+      "PioneerQ38SpanRoute(unsigned int)"
+    ]
+  },
+  {
+    "begin": 263692,
+    "bytes": 208,
+    "names": [
+      "PioneerQ38ConvPeer(unsigned int)"
+    ]
+  },
+  {
+    "begin": 263900,
+    "bytes": 832,
+    "names": [
+      "PioneerQ38ConvShape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 264732,
+    "bytes": 904,
+    "names": [
+      "PioneerQ38GdnInputShape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 265636,
+    "bytes": 760,
+    "names": [
+      "PioneerQ38ResidentGdnShape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 266396,
+    "bytes": 844,
+    "names": [
+      "PioneerQ38MixedRecurrentBlockRootLayout::OuterShape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 267240,
+    "bytes": 380,
+    "names": [
+      "PioneerQ38TokenMetadata::Conv(unsigned int*, unsigned int, unsigned int, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 267620,
+    "bytes": 448,
+    "names": [
+      "PioneerQ38TokenMetadata::Dense(unsigned int*, unsigned int, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 268068,
+    "bytes": 128,
+    "names": [
+      "GlobalChain::Quiet()"
+    ]
+  },
+  {
+    "begin": 268196,
+    "bytes": 52,
+    "names": [
+      "GlobalChain::Owner()"
+    ]
+  },
+  {
+    "begin": 268248,
+    "bytes": 348,
+    "names": [
+      "PioneerQ38GdnRecurrentShape(unsigned int const*, unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 268596,
+    "bytes": 176,
+    "names": [
+      "GlobalChain::InputSeal()"
+    ]
+  },
+  {
+    "begin": 268772,
+    "bytes": 1140,
+    "names": [
+      "PioneerQ38BlockFfnRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 269912,
+    "bytes": 1360,
+    "names": [
+      "PioneerQ38MixedLiveBlockRootLayout::RunShape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 271272,
+    "bytes": 1336,
+    "names": [
+      "PioneerQ38MixedRecurrentRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 272608,
+    "bytes": 1264,
+    "names": [
+      "PioneerQ38DenseProjectionRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*, bool) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 273872,
+    "bytes": 1072,
+    "names": [
+      "PioneerQ38GdnGatedShape(unsigned int const*, unsigned int const*, unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 274944,
+    "bytes": 808,
+    "names": [
+      "PioneerQ38TokenMetadata::Gdn(unsigned int*, unsigned int, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 275752,
+    "bytes": 612,
+    "names": [
+      "PioneerQ38TokenLayout::Session(unsigned int const*, unsigned int const*, unsigned int, unsigned int) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 276364,
+    "bytes": 1240,
+    "names": [
+      "PioneerQ38GlobalHeadLayout::Shape(unsigned int const*, unsigned int const*, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 277604,
+    "bytes": 752,
+    "names": [
+      "PioneerQ38GlobalChainLayout::LayerFrame(unsigned int const*, unsigned int, unsigned int, unsigned int, unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 278356,
+    "bytes": 944,
+    "names": [
+      "PioneerQ38TokenMetadata::Outer(unsigned int*, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 279300,
+    "bytes": 280,
+    "names": [
+      "GlobalChain::HeadSeal(unsigned int const*, bool)"
+    ]
+  },
+  {
+    "begin": 279580,
+    "bytes": 756,
+    "names": [
+      "GlobalChain::Packet(unsigned int const*, unsigned int, unsigned int, unsigned int, bool)"
+    ]
+  },
+  {
+    "begin": 280336,
+    "bytes": 472,
+    "names": [
+      "GlobalChain::PeerPacket(unsigned int const*, unsigned int, unsigned int, unsigned int, bool)"
+    ]
+  },
+  {
+    "begin": 280808,
+    "bytes": 328,
+    "names": [
+      "GlobalChain::BankRead(unsigned int const*, unsigned int, unsigned int, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 281136,
+    "bytes": 212,
+    "names": [
+      "GlobalChain::Release(unsigned int const*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 281348,
+    "bytes": 140,
+    "names": [
+      "GlobalChain::FeedbackSeal(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 281488,
+    "bytes": 1248,
+    "names": [
+      "GlobalChain::Feedback(unsigned int const*, unsigned int, unsigned int*)"
+    ]
+  },
+  {
+    "begin": 282736,
+    "bytes": 172,
+    "names": [
+      "GlobalChain::Prompt(unsigned int)"
+    ]
+  },
+  {
+    "begin": 282908,
+    "bytes": 748,
+    "names": [
+      "PioneerQ38TokenMetadata::Recipe(unsigned int*, unsigned int, unsigned int, unsigned int, unsigned int) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 283656,
+    "bytes": 568,
+    "names": [
+      "PioneerQ38PreciseWorkerLayout::BootShape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 284224,
+    "bytes": 1748,
+    "names": [
+      "PioneerQ38PreciseWorkerLayout::JobShape(unsigned int const*, unsigned int const*, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 285972,
+    "bytes": 400,
+    "names": [
+      "PioneerQ38PushedWorkerLayout::BootShape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 286432,
+    "bytes": 400,
+    "names": [
+      "PioneerQ38PushedWorkerLayout::JobShape(unsigned int const*, unsigned int const*, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 286832,
+    "bytes": 1192,
+    "names": [
+      "GlobalChain::Wait(unsigned int const*, unsigned int, bool)"
+    ]
+  },
+  {
+    "begin": 288024,
+    "bytes": 1108,
+    "names": [
+      "GlobalChain::Closed(unsigned int const*, unsigned int, bool)"
+    ]
+  },
+  {
+    "begin": 289132,
+    "bytes": 1024,
+    "names": [
+      "PioneerQ38GlobalHeadLayout::Job(unsigned int const*, unsigned int, unsigned int, unsigned int const*, unsigned int*)"
+    ]
+  },
+  {
+    "begin": 290356,
+    "bytes": 1108,
+    "names": [
+      "q38_global_chain_main"
+    ]
+  },
+  {
+    "begin": 291464,
+    "bytes": 28,
+    "names": [
+      "CSWTCH.489"
+    ]
+  },
+  {
+    "begin": 291492,
+    "bytes": 24,
+    "names": [
+      "CSWTCH.464"
+    ]
+  },
+  {
+    "begin": 291516,
+    "bytes": 24,
+    "names": [
+      "CSWTCH.455"
+    ]
+  },
+  {
+    "begin": 291540,
+    "bytes": 32,
+    "names": [
+      "CSWTCH.445"
+    ]
+  },
+  {
+    "begin": 291572,
+    "bytes": 48,
+    "names": [
+      "CSWTCH.427"
+    ]
+  },
+  {
+    "begin": 291620,
+    "bytes": 12,
+    "names": [
+      "CSWTCH.422"
+    ]
+  },
+  {
+    "begin": 291632,
+    "bytes": 28,
+    "names": [
+      "PioneerQ38ProjectionRoute(unsigned int)::route"
+    ]
+  },
+  {
+    "begin": 291660,
+    "bytes": 108,
+    "names": [
+      "PioneerQ38MixedWorkerLayout::Peer(unsigned int)",
+      "PioneerQ38DensePartitionLayout::Peer(unsigned int)"
+    ]
+  },
+  {
+    "begin": 291768,
+    "bytes": 196,
+    "names": [
+      "PioneerQ38SpanRoute(unsigned int)"
+    ]
+  },
+  {
+    "begin": 291964,
+    "bytes": 208,
+    "names": [
+      "PioneerQ38ConvPeer(unsigned int)"
+    ]
+  },
+  {
+    "begin": 292172,
+    "bytes": 832,
+    "names": [
+      "PioneerQ38ConvShape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 293004,
+    "bytes": 904,
+    "names": [
+      "PioneerQ38GdnInputShape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 293908,
+    "bytes": 220,
+    "names": [
+      "PioneerQ38ResidentGdnPeer(unsigned int)"
+    ]
+  },
+  {
+    "begin": 294128,
+    "bytes": 1476,
+    "names": [
+      "PioneerQ38GdnGatedShape(unsigned int const*, unsigned int const*, unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 295604,
+    "bytes": 528,
+    "names": [
+      "PioneerQ38MixedRecurrentCohortLayout::Shape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 296132,
+    "bytes": 844,
+    "names": [
+      "PioneerQ38MixedRecurrentBlockRootLayout::OuterShape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 296976,
+    "bytes": 408,
+    "names": [
+      "PioneerGraphDividePositive(float, float)"
+    ]
+  },
+  {
+    "begin": 297384,
+    "bytes": 408,
+    "names": [
+      "PioneerGraphDividePositive(float, float)"
+    ]
+  },
+  {
+    "begin": 297792,
+    "bytes": 168,
+    "names": [
+      "DensePartitionRoot::Quiet()",
+      "MixedRecurrentCohort::Quiet()"
+    ]
+  },
+  {
+    "begin": 297960,
+    "bytes": 168,
+    "names": [
+      "DensePartitionRoot::Quiet()"
+    ]
+  },
+  {
+    "begin": 298128,
+    "bytes": 52,
+    "names": [
+      "RecurrentBlock::Private()"
+    ]
+  },
+  {
+    "begin": 298180,
+    "bytes": 388,
+    "names": [
+      "q38_layer_return_recurrent_packet_seal"
+    ]
+  },
+  {
+    "begin": 298568,
+    "bytes": 260,
+    "names": [
+      "Projection::InputsSeal(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 298828,
+    "bytes": 260,
+    "names": [
+      "Projection::InputsSeal(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 299088,
+    "bytes": 76,
+    "names": [
+      "PioneerQ38ResidentGdnServiceJob(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int, unsigned int) [clone .part.0]",
+      "PioneerQ38ResidentConvServiceJob(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int, unsigned int) [clone .part.0]"
+    ]
+  },
+  {
+    "begin": 299164,
+    "bytes": 192,
+    "names": [
+      "DensePartitionRoot::FrameSeal(unsigned int) [clone .part.0]"
+    ]
+  },
+  {
+    "begin": 299356,
+    "bytes": 40,
+    "names": [
+      "DensePartitionRoot::FrameSeal(unsigned int)"
+    ]
+  },
+  {
+    "begin": 299396,
+    "bytes": 276,
+    "names": [
+      "DensePartitionRoot::FrameSeal(unsigned int)"
+    ]
+  },
+  {
+    "begin": 299672,
+    "bytes": 660,
+    "names": [
+      "PioneerQ38ConvBatchShape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 300332,
+    "bytes": 312,
+    "names": [
+      "PioneerQ38MixedRecurrentProjectionRootLayout::Shape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 300644,
+    "bytes": 504,
+    "names": [
+      "PioneerQ38ConvBatchSummary(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 301148,
+    "bytes": 1360,
+    "names": [
+      "PioneerQ38MixedRecurrentRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 302508,
+    "bytes": 3196,
+    "names": [
+      "PioneerQ38ProjectionQuantize(unsigned int, float const*, unsigned int, PioneerQ38ProjectionInput*) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 305704,
+    "bytes": 2980,
+    "names": [
+      "PioneerQ38ProjectionQuantize(unsigned int, float const*, unsigned int, PioneerQ38ProjectionInput*) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 308684,
+    "bytes": 700,
+    "names": [
+      "PioneerQ38ResidentGdnServiceJob(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 309384,
+    "bytes": 416,
+    "names": [
+      "Projection::MatrixJob(unsigned int const*, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 309800,
+    "bytes": 416,
+    "names": [
+      "Projection::MatrixJob(unsigned int const*, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 310216,
+    "bytes": 480,
+    "names": [
+      "PioneerQ38PreciseWorkerLayout::DescriptorShape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 310696,
+    "bytes": 480,
+    "names": [
+      "PioneerQ38PreciseWorkerLayout::DescriptorShape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 311176,
+    "bytes": 2708,
+    "names": [
+      "PioneerQ38GlobalOutputClosure::Job(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int, unsigned int const*) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 313884,
+    "bytes": 660,
+    "names": [
+      "PioneerQ38RmsSum::Add(float)"
+    ]
+  },
+  {
+    "begin": 314544,
+    "bytes": 1364,
+    "names": [
+      "PioneerQ38F32HiddenRms(float const*, float const*, float*)"
+    ]
+  },
+  {
+    "begin": 315908,
+    "bytes": 328,
+    "names": [
+      "PioneerQ38F32HiddenResidualRms(float const*, float const*, float const*, float*, float*) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 316236,
+    "bytes": 324,
+    "names": [
+      "PioneerQ38F32HiddenResidualRms(float const*, float const*, float const*, float*, float*) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 316560,
+    "bytes": 680,
+    "names": [
+      "DensePartitionRoot::PioneerQ38SigmoidDetail::ExpReduced(float, int&)"
+    ]
+  },
+  {
+    "begin": 317240,
+    "bytes": 436,
+    "names": [
+      "DensePartitionRoot::PioneerQ38SigmoidDetail::Divide(PioneerAttentionWide, PioneerAttentionWide)"
+    ]
+  },
+  {
+    "begin": 317676,
+    "bytes": 880,
+    "names": [
+      "DensePartitionRoot::PioneerQ38SigmoidPrecision(float, float&)"
+    ]
+  },
+  {
+    "begin": 318556,
+    "bytes": 492,
+    "names": [
+      "q38_pushed_begin_shared"
+    ]
+  },
+  {
+    "begin": 319048,
+    "bytes": 332,
+    "names": [
+      "q38_pushed_receipt_shared"
+    ]
+  },
+  {
+    "begin": 319380,
+    "bytes": 388,
+    "names": [
+      "q38_pushed_end_shared"
+    ]
+  },
+  {
+    "begin": 319768,
+    "bytes": 44,
+    "names": [
+      "q38_layer_return_recurrent_frame"
+    ]
+  },
+  {
+    "begin": 319812,
+    "bytes": 764,
+    "names": [
+      "q38_layer_return_recurrent_seal"
+    ]
+  },
+  {
+    "begin": 320576,
+    "bytes": 348,
+    "names": [
+      "DensePartitionRoot::Seal(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 320924,
+    "bytes": 348,
+    "names": [
+      "DensePartitionRoot::Seal(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 321272,
+    "bytes": 1220,
+    "names": [
+      "DensePartitionRoot::Transfer(unsigned int const*, unsigned int*, unsigned int, unsigned int, unsigned int, bool)"
+    ]
+  },
+  {
+    "begin": 322492,
+    "bytes": 1244,
+    "names": [
+      "DensePartitionRoot::Transfer(unsigned int const*, unsigned int*, unsigned int, unsigned int, unsigned int, bool)"
+    ]
+  },
+  {
+    "begin": 323736,
+    "bytes": 120,
+    "names": [
+      "DensePartitionRoot::BootSeal(unsigned int const*, unsigned int*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 323856,
+    "bytes": 120,
+    "names": [
+      "DensePartitionRoot::BootSeal(unsigned int const*, unsigned int*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 323976,
+    "bytes": 948,
+    "names": [
+      "DensePartitionRoot::Wait(unsigned int const*, unsigned int*, unsigned int, unsigned int, bool)"
+    ]
+  },
+  {
+    "begin": 324924,
+    "bytes": 708,
+    "names": [
+      "DensePartitionRoot::Wait(unsigned int const*, unsigned int*, unsigned int, unsigned int, bool)"
+    ]
+  },
+  {
+    "begin": 325632,
+    "bytes": 604,
+    "names": [
+      "DensePartitionRoot::ClosedJob(unsigned int const*, unsigned int*, unsigned int, bool)"
+    ]
+  },
+  {
+    "begin": 326236,
+    "bytes": 604,
+    "names": [
+      "DensePartitionRoot::ClosedJob(unsigned int const*, unsigned int*, unsigned int, bool)"
+    ]
+  },
+  {
+    "begin": 326840,
+    "bytes": 1756,
+    "names": [
+      "DensePartitionRoot::AdmitGlobalOutput(unsigned int const*, unsigned int*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 328596,
+    "bytes": 2932,
+    "names": [
+      "DensePartitionRoot::Admit(unsigned int const*, unsigned int*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 331528,
+    "bytes": 2976,
+    "names": [
+      "DensePartitionRoot::Admit(unsigned int const*, unsigned int*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 334504,
+    "bytes": 4476,
+    "names": [
+      "Projection::Run(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 338980,
+    "bytes": 4476,
+    "names": [
+      "Projection::Run(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 343456,
+    "bytes": 1644,
+    "names": [
+      "MixedRecurrentCohort::Packet(unsigned int*, unsigned int, unsigned int, unsigned int, bool)"
+    ]
+  },
+  {
+    "begin": 345100,
+    "bytes": 636,
+    "names": [
+      "MixedRecurrentCohort::Wait(unsigned int*, unsigned int, unsigned int, unsigned int, bool)"
+    ]
+  },
+  {
+    "begin": 345736,
+    "bytes": 344,
+    "names": [
+      "MixedRecurrentCohort::Sources(unsigned int*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 346080,
+    "bytes": 336,
+    "names": [
+      "MixedRecurrentCohort::CounterSeal(unsigned int*, unsigned int, unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 346416,
+    "bytes": 176,
+    "names": [
+      "MixedRecurrentCohort::BootSeal(unsigned int*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 346592,
+    "bytes": 420,
+    "names": [
+      "MixedRecurrentCohort::Closed(unsigned int*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 347012,
+    "bytes": 4304,
+    "names": [
+      "MixedRecurrentCohort::Finish(unsigned int*, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 351316,
+    "bytes": 120,
+    "names": [
+      "MixedRecurrentCohort::Audit()"
+    ]
+  },
+  {
+    "begin": 351436,
+    "bytes": 3416,
+    "names": [
+      "MixedRecurrentCohort::StageConv(unsigned int*)"
+    ]
+  },
+  {
+    "begin": 354852,
+    "bytes": 1624,
+    "names": [
+      "MixedRecurrentCohort::StageGdn(unsigned int*)"
+    ]
+  },
+  {
+    "begin": 356476,
+    "bytes": 1340,
+    "names": [
+      "q38_mixed_recurrent_cohort"
+    ]
+  },
+  {
+    "begin": 357816,
+    "bytes": 116,
+    "names": [
+      "RecurrentBlock::RecipeSeal(unsigned int)"
+    ]
+  },
+  {
+    "begin": 357932,
+    "bytes": 704,
+    "names": [
+      "RecurrentBlock::Matrix(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*, unsigned int, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 358636,
+    "bytes": 896,
+    "names": [
+      "RecurrentBlock::Transfer(unsigned int, unsigned int, unsigned int, unsigned int, bool, unsigned int*) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 359532,
+    "bytes": 500,
+    "names": [
+      "RecurrentBlock::Finish(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*)"
+    ]
+  },
+  {
+    "begin": 360032,
+    "bytes": 292,
+    "names": [
+      "RecurrentBlock::Read(unsigned int, unsigned int, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 360324,
+    "bytes": 600,
+    "names": [
+      "RecurrentBlock::CaptureRecipes(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 360924,
+    "bytes": 712,
+    "names": [
+      "RecurrentBlock::Cohort(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*)"
+    ]
+  },
+  {
+    "begin": 361636,
+    "bytes": 200,
+    "names": [
+      "RecurrentBlock::Norm(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 361836,
+    "bytes": 184,
+    "names": [
+      "RecurrentBlock::EndSeal(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*)"
+    ]
+  },
+  {
+    "begin": 362020,
+    "bytes": 80,
+    "names": [
+      "memset"
+    ]
+  },
+  {
+    "begin": 362100,
+    "bytes": 28,
+    "names": [
+      "q38_global_chain_learned_rms"
+    ]
+  },
+  {
+    "begin": 362128,
+    "bytes": 40,
+    "names": [
+      "q38_global_chain_quantize14"
+    ]
+  },
+  {
+    "begin": 362168,
+    "bytes": 1404,
+    "names": [
+      "q38_return_recurrent_layer"
+    ]
+  },
+  {
+    "begin": 363572,
+    "bytes": 292,
+    "names": [
+      "PioneerAttentionToHalf(float)"
+    ]
+  },
+  {
+    "begin": 363864,
+    "bytes": 128,
+    "names": [
+      "PioneerQ38DensePartitionLayout::Route(unsigned int)"
+    ]
+  },
+  {
+    "begin": 363992,
+    "bytes": 1132,
+    "names": [
+      "PioneerQ38DensePartitionLayout::Shape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 365124,
+    "bytes": 1184,
+    "names": [
+      "PioneerQ38BlockFfnRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 366308,
+    "bytes": 376,
+    "names": [
+      "q38_layer_return_dense_packet_seal"
+    ]
+  },
+  {
+    "begin": 366684,
+    "bytes": 172,
+    "names": [
+      "Joined::MetadataSeal()"
+    ]
+  },
+  {
+    "begin": 366856,
+    "bytes": 1180,
+    "names": [
+      "PioneerQ38MixedBlockRootLayout::OuterShape(unsigned int const*) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 368036,
+    "bytes": 404,
+    "names": [
+      "PioneerQ38DensePartitionRootLayout::Shape(unsigned int const*) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 368440,
+    "bytes": 1308,
+    "names": [
+      "PioneerQ38DenseProjectionRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*, bool) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 369748,
+    "bytes": 124,
+    "names": [
+      "Block::FfnSeal()"
+    ]
+  },
+  {
+    "begin": 369872,
+    "bytes": 272,
+    "names": [
+      "DensePartitionRoot::Job(unsigned int, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 370144,
+    "bytes": 616,
+    "names": [
+      "Joined::DenseHeader(unsigned int const*, unsigned int*)"
+    ]
+  },
+  {
+    "begin": 370760,
+    "bytes": 1264,
+    "names": [
+      "PioneerGraphFma(float, float, float)"
+    ]
+  },
+  {
+    "begin": 372024,
+    "bytes": 1568,
+    "names": [
+      "PioneerQ38DensePrepare::Head(float const*, float const*, float const*, float*) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 373592,
+    "bytes": 1004,
+    "names": [
+      "PioneerQ38DensePrepare::Run(float const*, float const*, float const*, float const*, float const*, float const*, float*, float*, unsigned int*, unsigned int*) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 374596,
+    "bytes": 1324,
+    "names": [
+      "PioneerQ38F32HiddenRms(float const*, float const*, float*) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 375920,
+    "bytes": 76,
+    "names": [
+      "q38_layer_return_dense_packet_frame"
+    ]
+  },
+  {
+    "begin": 375996,
+    "bytes": 532,
+    "names": [
+      "q38_layer_return_dense_seal"
+    ]
+  },
+  {
+    "begin": 376528,
+    "bytes": 2072,
+    "names": [
+      "DensePartitionRoot::Snapshot(unsigned int const*, unsigned int*, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 378600,
+    "bytes": 436,
+    "names": [
+      "DensePartitionRoot::Launch(unsigned int const*, unsigned int*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 379036,
+    "bytes": 4720,
+    "names": [
+      "q38_joined_dense_frame"
+    ]
+  },
+  {
+    "begin": 383756,
+    "bytes": 648,
+    "names": [
+      "Joined::Read(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int*) [clone .part.0]"
+    ]
+  },
+  {
+    "begin": 384404,
+    "bytes": 668,
+    "names": [
+      "Joined::BindProjection(PioneerQ38MixedBlockRootLayout::PrivateSeal*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 385072,
+    "bytes": 516,
+    "names": [
+      "Block::BindFfn(PioneerQ38MixedBlockRootLayout::PrivateSeal*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 385588,
+    "bytes": 400,
+    "names": [
+      "LiveBlock::Input(PioneerQ38MixedBlockRootLayout::PrivateSeal*)"
+    ]
+  },
+  {
+    "begin": 385988,
+    "bytes": 368,
+    "names": [
+      "Block::Norm(unsigned int const*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 386356,
+    "bytes": 3864,
+    "names": [
+      "LiveBlock::Compute(PioneerQ38MixedBlockRootLayout::PrivateSeal*)"
+    ]
+  },
+  {
+    "begin": 390220,
+    "bytes": 908,
+    "names": [
+      "q38_return_dense_layer"
+    ]
+  },
+  {
+    "begin": 391632,
+    "bytes": 12,
+    "names": [
+      "CSWTCH.894"
+    ]
+  },
+  {
+    "begin": 391644,
+    "bytes": 28,
+    "names": [
+      "CSWTCH.810",
+      "CSWTCH.834",
+      "CSWTCH.896"
+    ]
+  },
+  {
+    "begin": 391672,
+    "bytes": 24,
+    "names": [
+      "CSWTCH.796"
+    ]
+  },
+  {
+    "begin": 391696,
+    "bytes": 32,
+    "names": [
+      "CSWTCH.772"
+    ]
+  },
+  {
+    "begin": 391728,
+    "bytes": 48,
+    "names": [
+      "CSWTCH.730"
+    ]
+  },
+  {
+    "begin": 391864,
+    "bytes": 28,
+    "names": [
+      "PioneerQ38ProjectionRoute(unsigned int)::route"
+    ]
+  },
+  {
+    "begin": 391892,
+    "bytes": 28,
+    "names": [
+      "PioneerQ38ProjectionRoute(unsigned int)::route"
+    ]
+  },
+  {
+    "begin": 392036,
+    "bytes": 28,
+    "names": [
+      "CSWTCH.666",
+      "CSWTCH.744"
+    ]
+  },
+  {
+    "begin": 392064,
+    "bytes": 24,
+    "names": [
+      "CSWTCH.654"
+    ]
+  },
+  {
+    "begin": 392088,
+    "bytes": 28,
+    "names": [
+      "CSWTCH.630"
+    ]
+  },
+  {
+    "begin": 392116,
+    "bytes": 12,
+    "names": [
+      "CSWTCH.621"
+    ]
+  },
+  {
+    "begin": 392128,
+    "bytes": 876,
+    "names": [
+      "Embedding::Decode(unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 393004,
+    "bytes": 60,
+    "names": [
+      "q38_global_chain_feedback_decode"
+    ]
+  },
+  {
+    "begin": 409600,
+    "bytes": 1548,
+    "names": [
+      "GlobalChain::Scope(bool)"
+    ]
+  },
+  {
+    "begin": 411148,
+    "bytes": 632,
+    "names": [
+      "GlobalChain::StateSeal(unsigned int const*, unsigned int const*, unsigned int, bool)"
+    ]
+  },
+  {
+    "begin": 411780,
+    "bytes": 876,
+    "names": [
+      "GlobalChain::PublishToken(unsigned int const*, unsigned int, unsigned int, bool)"
+    ]
+  },
+  {
+    "begin": 412656,
+    "bytes": 764,
+    "names": [
+      "GlobalChain::Transfer(unsigned int, unsigned int, bool)"
+    ]
+  },
+  {
+    "begin": 413420,
+    "bytes": 1064,
+    "names": [
+      "GlobalChain::CommitState(unsigned int const*, bool)"
+    ]
+  },
+  {
+    "begin": 414484,
+    "bytes": 608,
+    "names": [
+      "GlobalChain::Bootstrap()"
+    ]
+  },
+  {
+    "begin": 415092,
+    "bytes": 300,
+    "names": [
+      "GlobalChain::TokenRecipes(unsigned int, unsigned int, unsigned int, unsigned int, bool)"
+    ]
+  },
+  {
+    "begin": 415392,
+    "bytes": 784,
+    "names": [
+      "GlobalChain::Metadata(unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 416176,
+    "bytes": 1012,
+    "names": [
+      "GlobalChain::Finish(unsigned int const*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 417188,
+    "bytes": 3376,
+    "names": [
+      "GlobalChain::RunHead()"
+    ]
+  },
+  {
+    "begin": 420564,
+    "bytes": 1376,
+    "names": [
+      "q38_token_cancellation_point"
+    ]
+  },
+  {
+    "begin": 421940,
+    "bytes": 860,
+    "names": [
+      "Projection::PreciseBankRead(unsigned int const*, unsigned int*, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 422800,
+    "bytes": 424,
+    "names": [
+      "Projection::PreciseDescriptor(unsigned int const*, unsigned int, unsigned int*)"
+    ]
+  },
+  {
+    "begin": 423224,
+    "bytes": 316,
+    "names": [
+      "Projection::PreciseJob(unsigned int const*, unsigned int, unsigned int, unsigned int*)"
+    ]
+  },
+  {
+    "begin": 423540,
+    "bytes": 528,
+    "names": [
+      "Projection::PreciseWait(unsigned int const*, unsigned int*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 424068,
+    "bytes": 2036,
+    "names": [
+      "Projection::PreciseGather(unsigned int const*, unsigned int*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 426104,
+    "bytes": 1264,
+    "names": [
+      "Projection::PreparePrecise(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 427368,
+    "bytes": 860,
+    "names": [
+      "Projection::PreciseBankRead(unsigned int const*, unsigned int*, unsigned int, unsigned int)"
+    ]
+  },
+  {
+    "begin": 428228,
+    "bytes": 424,
+    "names": [
+      "Projection::PreciseDescriptor(unsigned int const*, unsigned int, unsigned int*)"
+    ]
+  },
+  {
+    "begin": 428652,
+    "bytes": 316,
+    "names": [
+      "Projection::PreciseJob(unsigned int const*, unsigned int, unsigned int, unsigned int*)"
+    ]
+  },
+  {
+    "begin": 428968,
+    "bytes": 528,
+    "names": [
+      "Projection::PreciseWait(unsigned int const*, unsigned int*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 429496,
+    "bytes": 2036,
+    "names": [
+      "Projection::PreciseGather(unsigned int const*, unsigned int*, unsigned int)"
+    ]
+  },
+  {
+    "begin": 431532,
+    "bytes": 1264,
+    "names": [
+      "Projection::PreparePrecise(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 432796,
+    "bytes": 504,
+    "names": [
+      "PioneerQ38PushedWorkerLayout::Receipt(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 433300,
+    "bytes": 1520,
+    "names": [
+      "Joined::AppendTokenKv(PioneerQ38MixedBlockRootLayout::PrivateSeal*)"
+    ]
+  },
+  {
+    "begin": 434820,
+    "bytes": 408,
+    "names": [
+      "PioneerGraphDividePositive(float, float)"
+    ]
+  },
+  {
+    "begin": 435228,
+    "bytes": 824,
+    "names": [
+      "PioneerQ38ConvShape(unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 436052,
+    "bytes": 128,
+    "names": [
+      "Conv::Quiet()"
+    ]
+  },
+  {
+    "begin": 436180,
+    "bytes": 272,
+    "names": [
+      "Conv::Seal(unsigned int const*, unsigned int const*)"
+    ]
+  },
+  {
+    "begin": 436452,
+    "bytes": 1296,
+    "names": [
+      "Conv::Packet(unsigned int, unsigned int const*, unsigned int const*, unsigned int*)"
+    ]
+  },
+  {
+    "begin": 437748,
+    "bytes": 680,
+    "names": [
+      "PioneerQ38SiluExpReduced(float, int&)"
+    ]
+  },
+  {
+    "begin": 438428,
+    "bytes": 436,
+    "names": [
+      "PioneerQ38SiluDivideWide(PioneerAttentionWide, PioneerAttentionWide)"
+    ]
+  },
+  {
+    "begin": 438864,
+    "bytes": 1632,
+    "names": [
+      "PioneerQ38Conv16(float const*, float const*, float const*, float*, float*) [clone .constprop.0]"
+    ]
+  },
+  {
+    "begin": 440496,
+    "bytes": 1520,
+    "names": [
+      "q38_mixed_recurrent_root_conv"
+    ]
+  },
+  {
+    "begin": 442016,
+    "bytes": 28,
+    "names": [
+      "PioneerQ38ProjectionRoute(unsigned int)::route"
+    ]
+  },
+  {
+    "begin": 442044,
+    "bytes": 88,
+    "names": [
+      "PioneerQ38SiluExpReduced(float, int&)::coefficient"
+    ]
+  }
+]

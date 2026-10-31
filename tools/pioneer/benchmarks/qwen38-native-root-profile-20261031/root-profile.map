@@ -1,0 +1,211 @@
+40010 20 q38_token_fault_report
+40030 80 PioneerQ38DensePartitionLayout::Route(unsigned int)
+400b0 6c PioneerQ38MixedWorkerLayout::Peer(unsigned int)
+4011c 42c PioneerQ38DensePartitionLayout::Shape(unsigned int const*)
+40548 c4 PioneerQ38SpanRoute(unsigned int)
+4060c d0 PioneerQ38ConvPeer(unsigned int)
+406dc 340 PioneerQ38ConvShape(unsigned int const*)
+40a1c 388 PioneerQ38GdnInputShape(unsigned int const*)
+40da4 2f8 PioneerQ38ResidentGdnShape(unsigned int const*)
+4109c 34c PioneerQ38MixedRecurrentBlockRootLayout::OuterShape(unsigned int const*)
+413e8 17c PioneerQ38TokenMetadata::Conv(unsigned int*, unsigned int, unsigned int, unsigned int, unsigned int)
+41564 1c0 PioneerQ38TokenMetadata::Dense(unsigned int*, unsigned int, unsigned int, unsigned int)
+41724 80 GlobalChain::Quiet()
+417a4 34 GlobalChain::Owner()
+417d8 15c PioneerQ38GdnRecurrentShape(unsigned int const*, unsigned int const*)
+41934 b0 GlobalChain::InputSeal()
+419e4 474 PioneerQ38BlockFfnRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*) [clone .constprop.0]
+41e58 550 PioneerQ38MixedLiveBlockRootLayout::RunShape(unsigned int const*)
+423a8 538 PioneerQ38MixedRecurrentRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*) [clone .constprop.0]
+428e0 4f0 PioneerQ38DenseProjectionRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*, bool) [clone .constprop.0]
+42dd0 430 PioneerQ38GdnGatedShape(unsigned int const*, unsigned int const*, unsigned int const*)
+43200 328 PioneerQ38TokenMetadata::Gdn(unsigned int*, unsigned int, unsigned int, unsigned int)
+43528 264 PioneerQ38TokenLayout::Session(unsigned int const*, unsigned int const*, unsigned int, unsigned int) [clone .constprop.0]
+4378c 4d8 PioneerQ38GlobalHeadLayout::Shape(unsigned int const*, unsigned int const*, unsigned int, unsigned int)
+43c64 2f0 PioneerQ38GlobalChainLayout::LayerFrame(unsigned int const*, unsigned int, unsigned int, unsigned int, unsigned int const*)
+43f54 3b0 PioneerQ38TokenMetadata::Outer(unsigned int*, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int const*)
+44304 118 GlobalChain::HeadSeal(unsigned int const*, bool)
+4441c 2f4 GlobalChain::Packet(unsigned int const*, unsigned int, unsigned int, unsigned int, bool)
+44710 1d8 GlobalChain::PeerPacket(unsigned int const*, unsigned int, unsigned int, unsigned int, bool)
+448e8 148 GlobalChain::BankRead(unsigned int const*, unsigned int, unsigned int, unsigned int, unsigned int)
+44a30 d4 GlobalChain::Release(unsigned int const*, unsigned int)
+44b04 8c GlobalChain::FeedbackSeal(unsigned int const*)
+44b90 4e0 GlobalChain::Feedback(unsigned int const*, unsigned int, unsigned int*)
+45070 ac GlobalChain::Prompt(unsigned int)
+4511c 2ec PioneerQ38TokenMetadata::Recipe(unsigned int*, unsigned int, unsigned int, unsigned int, unsigned int) [clone .constprop.0]
+45408 238 PioneerQ38PreciseWorkerLayout::BootShape(unsigned int const*)
+45640 6d4 PioneerQ38PreciseWorkerLayout::JobShape(unsigned int const*, unsigned int const*, unsigned int, unsigned int)
+45d14 190 PioneerQ38PushedWorkerLayout::BootShape(unsigned int const*)
+45ee0 190 PioneerQ38PushedWorkerLayout::JobShape(unsigned int const*, unsigned int const*, unsigned int, unsigned int)
+46070 4a8 GlobalChain::Wait(unsigned int const*, unsigned int, bool)
+46518 454 GlobalChain::Closed(unsigned int const*, unsigned int, bool)
+4696c 400 PioneerQ38GlobalHeadLayout::Job(unsigned int const*, unsigned int, unsigned int, unsigned int const*, unsigned int*)
+46e34 454 q38_global_chain_main
+47288 1c CSWTCH.489
+472a4 18 CSWTCH.464
+472bc 18 CSWTCH.455
+472d4 20 CSWTCH.445
+472f4 30 CSWTCH.427
+47324 c CSWTCH.422
+47330 1c PioneerQ38ProjectionRoute(unsigned int)::route
+4734c 6c PioneerQ38MixedWorkerLayout::Peer(unsigned int)
+473b8 c4 PioneerQ38SpanRoute(unsigned int)
+4747c d0 PioneerQ38ConvPeer(unsigned int)
+4754c 340 PioneerQ38ConvShape(unsigned int const*)
+4788c 388 PioneerQ38GdnInputShape(unsigned int const*)
+47c14 dc PioneerQ38ResidentGdnPeer(unsigned int)
+47cf0 5c4 PioneerQ38GdnGatedShape(unsigned int const*, unsigned int const*, unsigned int const*)
+482b4 210 PioneerQ38MixedRecurrentCohortLayout::Shape(unsigned int const*)
+484c4 34c PioneerQ38MixedRecurrentBlockRootLayout::OuterShape(unsigned int const*)
+48810 198 PioneerGraphDividePositive(float, float)
+489a8 198 PioneerGraphDividePositive(float, float)
+48b40 a8 DensePartitionRoot::Quiet()
+48be8 a8 DensePartitionRoot::Quiet()
+48c90 34 RecurrentBlock::Private()
+48cc4 184 q38_layer_return_recurrent_packet_seal
+48e48 104 Projection::InputsSeal(unsigned int const*)
+48f4c 104 Projection::InputsSeal(unsigned int const*)
+49050 4c PioneerQ38ResidentGdnServiceJob(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int, unsigned int) [clone .part.0]
+4909c c0 DensePartitionRoot::FrameSeal(unsigned int) [clone .part.0]
+4915c 28 DensePartitionRoot::FrameSeal(unsigned int)
+49184 114 DensePartitionRoot::FrameSeal(unsigned int)
+49298 294 PioneerQ38ConvBatchShape(unsigned int const*)
+4952c 138 PioneerQ38MixedRecurrentProjectionRootLayout::Shape(unsigned int const*)
+49664 1f8 PioneerQ38ConvBatchSummary(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*)
+4985c 550 PioneerQ38MixedRecurrentRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*)
+49dac c7c PioneerQ38ProjectionQuantize(unsigned int, float const*, unsigned int, PioneerQ38ProjectionInput*) [clone .constprop.0]
+4aa28 ba4 PioneerQ38ProjectionQuantize(unsigned int, float const*, unsigned int, PioneerQ38ProjectionInput*) [clone .constprop.0]
+4b5cc 2bc PioneerQ38ResidentGdnServiceJob(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int, unsigned int)
+4b888 1a0 Projection::MatrixJob(unsigned int const*, unsigned int, unsigned int)
+4ba28 1a0 Projection::MatrixJob(unsigned int const*, unsigned int, unsigned int)
+4bbc8 1e0 PioneerQ38PreciseWorkerLayout::DescriptorShape(unsigned int const*)
+4bda8 1e0 PioneerQ38PreciseWorkerLayout::DescriptorShape(unsigned int const*)
+4bf88 a94 PioneerQ38GlobalOutputClosure::Job(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int, unsigned int const*) [clone .constprop.0]
+4ca1c 294 PioneerQ38RmsSum::Add(float)
+4ccb0 554 PioneerQ38F32HiddenRms(float const*, float const*, float*)
+4d204 148 PioneerQ38F32HiddenResidualRms(float const*, float const*, float const*, float*, float*) [clone .constprop.0]
+4d34c 144 PioneerQ38F32HiddenResidualRms(float const*, float const*, float const*, float*, float*) [clone .constprop.0]
+4d490 2a8 DensePartitionRoot::PioneerQ38SigmoidDetail::ExpReduced(float, int&)
+4d738 1b4 DensePartitionRoot::PioneerQ38SigmoidDetail::Divide(PioneerAttentionWide, PioneerAttentionWide)
+4d8ec 370 DensePartitionRoot::PioneerQ38SigmoidPrecision(float, float&)
+4dc5c 1ec q38_pushed_begin_shared
+4de48 14c q38_pushed_receipt_shared
+4df94 184 q38_pushed_end_shared
+4e118 2c q38_layer_return_recurrent_frame
+4e144 2fc q38_layer_return_recurrent_seal
+4e440 15c DensePartitionRoot::Seal(unsigned int const*)
+4e59c 15c DensePartitionRoot::Seal(unsigned int const*)
+4e6f8 4c4 DensePartitionRoot::Transfer(unsigned int const*, unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+4ebbc 4dc DensePartitionRoot::Transfer(unsigned int const*, unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+4f098 78 DensePartitionRoot::BootSeal(unsigned int const*, unsigned int*, unsigned int)
+4f110 78 DensePartitionRoot::BootSeal(unsigned int const*, unsigned int*, unsigned int)
+4f188 3b4 DensePartitionRoot::Wait(unsigned int const*, unsigned int*, unsigned int, unsigned int, bool)
+4f53c 2c4 DensePartitionRoot::Wait(unsigned int const*, unsigned int*, unsigned int, unsigned int, bool)
+4f800 25c DensePartitionRoot::ClosedJob(unsigned int const*, unsigned int*, unsigned int, bool)
+4fa5c 25c DensePartitionRoot::ClosedJob(unsigned int const*, unsigned int*, unsigned int, bool)
+4fcb8 6dc DensePartitionRoot::AdmitGlobalOutput(unsigned int const*, unsigned int*, unsigned int)
+50394 b74 DensePartitionRoot::Admit(unsigned int const*, unsigned int*, unsigned int)
+50f08 ba0 DensePartitionRoot::Admit(unsigned int const*, unsigned int*, unsigned int)
+51aa8 117c Projection::Run(unsigned int const*)
+52c24 117c Projection::Run(unsigned int const*)
+53da0 66c MixedRecurrentCohort::Packet(unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+5440c 27c MixedRecurrentCohort::Wait(unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+54688 158 MixedRecurrentCohort::Sources(unsigned int*, unsigned int)
+547e0 150 MixedRecurrentCohort::CounterSeal(unsigned int*, unsigned int, unsigned int const*)
+54930 b0 MixedRecurrentCohort::BootSeal(unsigned int*, unsigned int)
+549e0 1a4 MixedRecurrentCohort::Closed(unsigned int*, unsigned int)
+54b84 10d0 MixedRecurrentCohort::Finish(unsigned int*, unsigned int, unsigned int)
+55c54 78 MixedRecurrentCohort::Audit()
+55ccc d58 MixedRecurrentCohort::StageConv(unsigned int*)
+56a24 658 MixedRecurrentCohort::StageGdn(unsigned int*)
+5707c 53c q38_mixed_recurrent_cohort
+575b8 74 RecurrentBlock::RecipeSeal(unsigned int)
+5762c 2c0 RecurrentBlock::Matrix(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*, unsigned int, unsigned int, unsigned int)
+578ec 380 RecurrentBlock::Transfer(unsigned int, unsigned int, unsigned int, unsigned int, bool, unsigned int*) [clone .constprop.0]
+57c6c 1f4 RecurrentBlock::Finish(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*)
+57e60 124 RecurrentBlock::Read(unsigned int, unsigned int, unsigned int, unsigned int)
+57f84 258 RecurrentBlock::CaptureRecipes(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*, unsigned int, unsigned int)
+581dc 2c8 RecurrentBlock::Cohort(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*)
+584a4 c8 RecurrentBlock::Norm(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*, unsigned int)
+5856c b8 RecurrentBlock::EndSeal(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*)
+58624 50 memset
+58674 1c q38_global_chain_learned_rms
+58690 28 q38_global_chain_quantize14
+586b8 57c q38_return_recurrent_layer
+58c34 124 PioneerAttentionToHalf(float)
+58d58 80 PioneerQ38DensePartitionLayout::Route(unsigned int)
+58dd8 46c PioneerQ38DensePartitionLayout::Shape(unsigned int const*)
+59244 4a0 PioneerQ38BlockFfnRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*)
+596e4 178 q38_layer_return_dense_packet_seal
+5985c ac Joined::MetadataSeal()
+59908 49c PioneerQ38MixedBlockRootLayout::OuterShape(unsigned int const*) [clone .constprop.0]
+59da4 194 PioneerQ38DensePartitionRootLayout::Shape(unsigned int const*) [clone .constprop.0]
+59f38 51c PioneerQ38DenseProjectionRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*, bool) [clone .constprop.0]
+5a454 7c Block::FfnSeal()
+5a4d0 110 DensePartitionRoot::Job(unsigned int, unsigned int, unsigned int)
+5a5e0 268 Joined::DenseHeader(unsigned int const*, unsigned int*)
+5a848 4f0 PioneerGraphFma(float, float, float)
+5ad38 620 PioneerQ38DensePrepare::Head(float const*, float const*, float const*, float*) [clone .constprop.0]
+5b358 3ec PioneerQ38DensePrepare::Run(float const*, float const*, float const*, float const*, float const*, float const*, float*, float*, unsigned int*, unsigned int*) [clone .constprop.0]
+5b744 52c PioneerQ38F32HiddenRms(float const*, float const*, float*) [clone .constprop.0]
+5bc70 4c q38_layer_return_dense_packet_frame
+5bcbc 214 q38_layer_return_dense_seal
+5bed0 818 DensePartitionRoot::Snapshot(unsigned int const*, unsigned int*, unsigned int, unsigned int)
+5c6e8 1b4 DensePartitionRoot::Launch(unsigned int const*, unsigned int*, unsigned int)
+5c89c 1270 q38_joined_dense_frame
+5db0c 288 Joined::Read(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int*) [clone .part.0]
+5dd94 29c Joined::BindProjection(PioneerQ38MixedBlockRootLayout::PrivateSeal*, unsigned int)
+5e030 204 Block::BindFfn(PioneerQ38MixedBlockRootLayout::PrivateSeal*, unsigned int)
+5e234 190 LiveBlock::Input(PioneerQ38MixedBlockRootLayout::PrivateSeal*)
+5e3c4 170 Block::Norm(unsigned int const*, unsigned int)
+5e534 f18 LiveBlock::Compute(PioneerQ38MixedBlockRootLayout::PrivateSeal*)
+5f44c 38c q38_return_dense_layer
+5f9d0 c CSWTCH.894
+5f9dc 1c CSWTCH.810
+5f9f8 18 CSWTCH.796
+5fa10 20 CSWTCH.772
+5fa30 30 CSWTCH.730
+5fab8 1c PioneerQ38ProjectionRoute(unsigned int)::route
+5fad4 1c PioneerQ38ProjectionRoute(unsigned int)::route
+5fb64 1c CSWTCH.666
+5fb80 18 CSWTCH.654
+5fb98 1c CSWTCH.630
+5fbb4 c CSWTCH.621
+5fbc0 36c Embedding::Decode(unsigned int, unsigned int)
+5ff2c 3c q38_global_chain_feedback_decode
+64000 60c GlobalChain::Scope(bool)
+6460c 278 GlobalChain::StateSeal(unsigned int const*, unsigned int const*, unsigned int, bool)
+64884 36c GlobalChain::PublishToken(unsigned int const*, unsigned int, unsigned int, bool)
+64bf0 2fc GlobalChain::Transfer(unsigned int, unsigned int, bool)
+64eec 428 GlobalChain::CommitState(unsigned int const*, bool)
+65314 260 GlobalChain::Bootstrap()
+65574 12c GlobalChain::TokenRecipes(unsigned int, unsigned int, unsigned int, unsigned int, bool)
+656a0 310 GlobalChain::Metadata(unsigned int, unsigned int)
+659b0 3f4 GlobalChain::Finish(unsigned int const*, unsigned int)
+65da4 d30 GlobalChain::RunHead()
+66ad4 560 q38_token_cancellation_point
+67034 35c Projection::PreciseBankRead(unsigned int const*, unsigned int*, unsigned int, unsigned int)
+67390 1a8 Projection::PreciseDescriptor(unsigned int const*, unsigned int, unsigned int*)
+67538 13c Projection::PreciseJob(unsigned int const*, unsigned int, unsigned int, unsigned int*)
+67674 210 Projection::PreciseWait(unsigned int const*, unsigned int*, unsigned int)
+67884 7f4 Projection::PreciseGather(unsigned int const*, unsigned int*, unsigned int)
+68078 4f0 Projection::PreparePrecise(unsigned int const*)
+68568 35c Projection::PreciseBankRead(unsigned int const*, unsigned int*, unsigned int, unsigned int)
+688c4 1a8 Projection::PreciseDescriptor(unsigned int const*, unsigned int, unsigned int*)
+68a6c 13c Projection::PreciseJob(unsigned int const*, unsigned int, unsigned int, unsigned int*)
+68ba8 210 Projection::PreciseWait(unsigned int const*, unsigned int*, unsigned int)
+68db8 7f4 Projection::PreciseGather(unsigned int const*, unsigned int*, unsigned int)
+695ac 4f0 Projection::PreparePrecise(unsigned int const*)
+69a9c 1f8 PioneerQ38PushedWorkerLayout::Receipt(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*)
+69c94 5f0 Joined::AppendTokenKv(PioneerQ38MixedBlockRootLayout::PrivateSeal*)
+6a284 198 PioneerGraphDividePositive(float, float)
+6a41c 338 PioneerQ38ConvShape(unsigned int const*)
+6a754 80 Conv::Quiet()
+6a7d4 110 Conv::Seal(unsigned int const*, unsigned int const*)
+6a8e4 510 Conv::Packet(unsigned int, unsigned int const*, unsigned int const*, unsigned int*)
+6adf4 2a8 PioneerQ38SiluExpReduced(float, int&)
+6b09c 1b4 PioneerQ38SiluDivideWide(PioneerAttentionWide, PioneerAttentionWide)
+6b250 660 PioneerQ38Conv16(float const*, float const*, float const*, float*, float*) [clone .constprop.0]
+6b8b0 5f0 q38_mixed_recurrent_root_conv
+6bea0 1c PioneerQ38ProjectionRoute(unsigned int)::route
+6bebc 58 PioneerQ38SiluExpReduced(float, int&)::coefficient

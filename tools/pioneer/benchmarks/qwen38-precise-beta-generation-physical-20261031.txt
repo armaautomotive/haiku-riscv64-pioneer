@@ -1,0 +1,60 @@
+Precise-beta physical generation: clean lifetime, numerical failure
+=================================================================
+2026-10-31. Goal ACTIVE. Last verified sustained whole-model baseline
+0.207893161 tokens/sec;20 tokens/sec remains UNMET. NO speedup claimed.
+
+Exactly one physical session66768 used installed module
+2723ac08ac75996f19f6e516c51eda615336f8dcfc3a8d6849f6d755da22c525,
+tag2026103100010075/generation5,and unchanged timed diagnostic client
+efb8d649a41b02d78130476508cde63b0d6a174e5aed66d8bc6c77f51a741e38.
+It began17:59:44UTC and ACTUAL exit0 was observed18:35:12UTC. No process
+restart,extra GPU/admin FD,driver reload,reset or hardware profiler was
+used while this model lifetime was active. Original model bytes:
+Qwen3.8-27B-Q4_K_M.gguf
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+
+All19399024640 padded weight bytes,3551 parts,4736090 pages and20367 spans
+uploaded. Actual64-layer/head processing produced three records:two prompt
+positions and one feedback position. Full END and Close completed. This
+is NOT a sustained decode benchmark or an Assistant release. No runtime
+CPU model reference was used;the CPU comparison is separate posthoc DATA.
+
+The unchanged strict comparator ACTUALLY exited1 in BOTH main and clean.
+Inputs and greedy selections match,but NONE of the three top-score bit
+patterns matches the CPU corpus. No tolerance or verifier was weakened:
+position selected CPUbits  old18362  new2723  absolute score difference
+0        70253    413c2358 413bc1de 413bc1de 0.023797988891601562
+1        17       414621d3 41452aa2 41452aa2 0.060349464416503906
+2        17       4168afd0 4167c42a 4167c42a 0.05753135681152344
+The candidate therefore did NOT remove the known full-model discrepancy,
+despite isolated precise-beta preparation and first-layer tests passing.
+The earlier CPU-local replay used reference matrix quantization and did
+not execute the entire real layer29 SFPU path. Those narrower proofs are
+not promoted to a full-model success. Cause remains under investigation.
+
+Separate host wall timing (microseconds,NOT device cycles):
+upload:20367 calls,total1057000293,max416070
+startup:1 call,total323581008
+observe:302 calls,total1030260,max355633
+cleanup:3 calls,total205932625,max204813064
+other:6 calls,total448605
+source-before-open299131918
+open-to-START-return1543457052
+START-return-to-terminal31153322
+terminal-to-clean-Close205932955
+whole-client2079675945
+Device inference can begin BEFORE START returns. Dividing three positions
+by START-return-to-terminal would be a FALSE token-rate calculation.
+
+After actual Close,read-only checks found no model/Assistant parent and
+the same installed full SHA,quiesced0/cold0/active_owner0/open_count1/
+guard1. CPU count64,maxRAM137034936320B,freeRAM133763784704B. No recovery,
+power/reboot,SD,OS or hardware changes were needed. The exact-SHA restore
+helper remains available,not invoked. Archived stdout,host wall timing,
+both failing comparisons,score arithmetic and post-close health logs are
+retained alongside this report,including failures without relabeling.
+
+Remaining:explain/fix the real arithmetic gap,qualify long normal/EOS
+generation and resident/fresh-request ownership,integrate no-reference
+Work/Assistant,and measure/tune sustained physical inference. Nothing in
+this clean three-position lifetime proves20 tokens/sec or completion.
