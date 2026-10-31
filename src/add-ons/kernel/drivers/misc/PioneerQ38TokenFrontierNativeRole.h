@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
-// Exact private COMPILE-ONLY parent; NO conventional driver or Work route.
+// Distinct private OR explicit physical diagnostic;never a Work alias.
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_NATIVE
+#include "PioneerQ38TokenFrontierBenchmarkRole.h"
+#else
 #if !defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT != 1 \
  || !defined(PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS) || PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS != 1 \
  || !defined(PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_NATIVE_CONTEXT != 1 \
@@ -23,3 +26,4 @@
 #error Frontier reader cannot alias a physical,USER,CPU,image or Work revision
 #endif
 #include "PioneerQ38TokenNativeRole.h"
+#endif

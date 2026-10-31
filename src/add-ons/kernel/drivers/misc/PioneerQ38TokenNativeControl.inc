@@ -12,6 +12,10 @@
 #include "PioneerQ38TokenDecodeBenchmarkRole.h"
 #include "PioneerQ38TokenDecodeBenchmarkProtocol.h"
 #endif
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_NATIVE
+#include "PioneerQ38TokenFrontierBenchmarkRole.h"
+#include "PioneerQ38TokenFrontierBenchmarkProtocol.h"
+#endif
 // Shared native adapter: private NODRV tests, or the separate tag74 bounded
 // validation ioctl. Neither selection grants an Assistant/Work capability.
 // One genuine FD/team/thread lock covers execution AND reply copy. A failed

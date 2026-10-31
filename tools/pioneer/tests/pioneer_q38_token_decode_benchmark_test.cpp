@@ -7,11 +7,24 @@
 #include "pioneer_qwen38_gguf_test.cpp"
 #include "../PioneerQ38TokenHiddenValidationSession.h"
 #include "../PioneerQ38DecodeBenchmarkCli.h"
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT
+#include "../PioneerQ38FrontierBenchmarkCli.h"
+#endif
 #include <sys/wait.h>
 namespace P=PioneerQ38TokenControl;
 namespace V=PioneerQ38TokenDecodeBenchmark;
 static unsigned protocolCases=0;
 static void Protocol(){
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT
+ using F=PioneerQ38FrontierBenchmarkMode;
+ const char* fresh[]={"benchmark","--benchmark-34-positions",nullptr};
+ assert(PioneerQ38FrontierBenchmarkArguments(2,fresh)==F::Positions34);
+ for(const char* text:{"--generate-34-positions","--generate-three-positions","--work","--cpu","--benchmark-34-positions=1",""}){
+  const char* bad[]={"benchmark",text,nullptr};assert(PioneerQ38FrontierBenchmarkArguments(2,bad)==F::Invalid);protocolCases++;
+ }
+ assert(TT_PCI_PROBE_Q38_TOKEN_FRONTIER_BENCHMARK!=TT_PCI_PROBE_Q38_TOKEN_DECODE_BENCHMARK
+  && TT_PCI_PROBE_Q38_TOKEN_FRONTIER_OBSERVE!=TT_PCI_PROBE_Q38_TOKEN_FRONTIER_BENCHMARK);
+#endif
  using Mode=PioneerQ38DecodeBenchmarkMode;
  const char* run[]={"benchmark","--generate-34-positions",nullptr};
  const char* source[]={"benchmark","--preflight-source-only",nullptr};
@@ -71,6 +84,9 @@ struct IO {
  uint64_t bytes=0;unsigned fragment=0,page=0;
  // Inject only synthetic reply damage after the expensive MOCK uploader.
  unsigned damagePhase=0,damageWord=0,damageRecord=0;uint32_t damageMask=1;bool failCopyClose=false;
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT
+ unsigned metrics=0,metricDamage=0;
+#endif
  explicit IO(Source& s):source(s){}
  int Open(){assert(source.Ready() && !opens++);return 76;}
  int Close(int fd){assert(fd==76 && !closes++);return failCopyClose?-1:0;}
@@ -102,7 +118,26 @@ struct IO {
    r.result={1,TT_RUNTIME_PASSED,count*4096,count,uploads,1,1,1,0,0,0,0};
   }else if(op==TT_PCI_PROBE_Q38_SPAN_END){
    assert(bytes==UINT64_C(19399024640) && !spanEnds++);*static_cast<tt_q38_span_end*>(data)={1,0,1,0};
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT
+  }else if(op==TT_PCI_PROBE_Q38_TOKEN_FRONTIER_OBSERVE){
+   namespace F=PioneerQ38TokenFrontierControl;
+   assert(length==sizeof(F::Packet) && starts==1 && !holds && !ends);auto& p=*static_cast<F::Packet*>(data);
+   assert(F::RequestShape(p));metrics++;auto& r=p.reply;
+   r.version=1;r.operation=F::Observe;r.started=r.ready=1;
+   r.detail[0]=r.detail[1]=r.detail[6]=1;r.detail[2]=12;r.detail[4]=63;
+   r.detail[7]=polls>=2?V::Positions:polls?2U:0U;r.detail[8]=V::Positions;r.detail[9]=V::Prompts;
+   if(metricDamage==1)r.detail[7]=V::Positions+1;
+   if(metricDamage==2)r.detail[8]++;
+   if(metricDamage==3)r.detail[9]++;
+   if(metricDamage==4)r.detail[10]=1;
+   if(metricDamage==5)r.ready=0;
+   if(metricDamage==6)r.detail[7]=1; // genuine only as SYNTHETIC reply damage
+   if(metricDamage==7)r.version++;
+   if(metricDamage==8)r.status=-1;
+  }else if(op==TT_PCI_PROBE_Q38_TOKEN_FRONTIER_BENCHMARK){
+#else
   }else if(op==TT_PCI_PROBE_Q38_TOKEN_DECODE_BENCHMARK){
+#endif
    assert(length==sizeof(P::Packet) && spanEnds==1);auto& p=*static_cast<P::Packet*>(data);
    assert(V::ControlRequestShape(p));const unsigned operation=p.request.operation;
    auto& r=p.reply;r.version=1;r.operation=operation;r.started=r.ready=1;
@@ -135,6 +170,10 @@ struct IO {
 int main(){
  setvbuf(stdout,nullptr,_IOLBF,0);Protocol();Fixture fixture;Source source(fixture);IO io(source);
  auto session=std::make_unique<PioneerQ38TokenHiddenValidationSession<IO,Source>>(io,source);
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT
+ PioneerQ38TokenFrontierControl::Packet beforeOpen;
+ assert(!session->ObserveFrontier(beforeOpen) && !io.calls && !io.opens);
+#endif
  std::array<uint32_t,V::Positions*64> output;output.fill(0xaaaaaaaaU);
  auto unchanged=[&](){for(auto word:output)assert(word==0xaaaaaaaaU);};
  assert(!session->CopyGenerationRecords(output.data(),output.size()));unchanged();
@@ -144,10 +183,18 @@ int main(){
   fflush(nullptr);pid_t pid=fork();assert(pid>=0);if(!pid){check();_exit(0);}
   int status=0;assert(waitpid(pid,&status,0)==pid && WIFEXITED(status) && !WEXITSTATUS(status));branches++;
  };
+ auto finish=[&](){
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT
+  if(session->TerminalReady()){
+   PioneerQ38TokenFrontierControl::Packet metric;assert(session->ObserveFrontier(metric));
+  }
+#endif
+  return session->Finish();
+ };
  auto fail=[&](bool expectedTerminal){
   assert(session->Poll() && !session->TerminalReady() && !session->Finish());
   const bool ready=session->Poll();assert(ready==expectedTerminal);
-  if(ready)assert(!session->Finish());
+  if(ready)assert(!finish());
   assert(io.closes==1 && !session->Completed() && !io.ends);
   assert(!session->CopyGenerationRecords(output.data(),output.size()));unchanged();
   const auto calls=io.calls;session.reset();assert(io.calls==calls && io.closes==1);
@@ -161,10 +208,22 @@ int main(){
  }
  child([&]{io.damagePhase=3;fail(true);});
  child([&]{const auto calls=io.calls;assert(!session->RequestCancellation() && io.calls==calls && io.closes==1);});
- child([&]{io.failCopyClose=true;assert(session->Poll() && session->Poll() && !session->Finish() && !session->Completed());});
+ child([&]{io.failCopyClose=true;assert(session->Poll() && session->Poll() && !finish() && !session->Completed());});
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT
+ for(unsigned damage=1;damage<=8;damage++)child([&]{
+  assert(session->Poll());PioneerQ38TokenFrontierControl::Packet metric;assert(session->ObserveFrontier(metric));
+  io.metricDamage=damage;assert(!session->ObserveFrontier(metric) && io.closes==1 && !io.ends && !io.holds);
+  const auto calls=io.calls;assert(!session->ObserveFrontier(metric) && !session->Finish() && io.calls==calls);
+ });
+ child([&]{assert(session->Poll() && session->Poll() && !session->Finish() && io.closes==1 && !io.holds && !io.ends);});
+#endif
  assert(session->Poll() && !session->TerminalReady() && !session->CopyGenerationRecords(output.data(),output.size()));unchanged();
  assert(session->Poll() && session->TerminalReady() && !session->CopyGenerationRecords(output.data(),output.size()));unchanged();
- assert(session->Finish() && session->Completed() && session->CommittedRecords()==V::Positions && io.closes==1 && io.ends==1);
+ assert(finish() && session->Completed() && session->CommittedRecords()==V::Positions && io.closes==1 && io.ends==1);
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT
+ {PioneerQ38TokenFrontierControl::Packet metric;const auto calls=io.calls;
+  assert(!session->ObserveFrontier(metric) && io.calls==calls && io.metrics==1);}
+#endif
  assert(!session->CopyGenerationRecords(nullptr,output.size()) && !session->CopyGenerationRecords(output.data(),192));unchanged();
  assert(session->CopyGenerationRecords(output.data(),output.size()));
  for(unsigned pos=0;pos<V::Positions;pos++)assert(output[pos*64+2]==pos && output[pos*64+4]==100+pos);

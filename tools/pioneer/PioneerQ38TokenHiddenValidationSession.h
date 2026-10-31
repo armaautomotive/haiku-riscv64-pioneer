@@ -15,6 +15,20 @@
 #ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_NATIVE
 #error A physical decode benchmark cannot alias a USER session,including defined0
 #endif
+#ifndef PIONEER_Q38_FRONTIER_BENCHMARK_CLIENT_BINDING_H
+#define PIONEER_Q38_FRONTIER_BENCHMARK_CLIENT_BINDING_H
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT
+enum {PioneerQ38FrontierBenchmarkClientSelection=1};
+#else
+enum {PioneerQ38FrontierBenchmarkClientSelection=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT
+#include "PioneerQ38TokenFrontierBenchmarkClientRole.h"
+static_assert(PioneerQ38FrontierBenchmarkClientSelection==1,"late frontier USER selection");
+#else
+static_assert(PioneerQ38FrontierBenchmarkClientSelection==0,"late frontier USER removal");
+#endif
 #ifndef PIONEER_Q38_DECODE_BENCHMARK_CLIENT_BINDING_H
 #define PIONEER_Q38_DECODE_BENCHMARK_CLIENT_BINDING_H
 #ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT
@@ -39,6 +53,9 @@ static_assert(PioneerQ38DecodeBenchmarkClientSelection==0,"late longer USER diag
 #ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT
 #include "PioneerQ38TokenDecodeBenchmarkClientRole.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenDecodeBenchmarkProtocol.h"
+#endif
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenFrontierBenchmarkProtocol.h"
 #endif
 #include <array>
 #include <cstring>
@@ -67,6 +84,9 @@ class PioneerQ38TokenHiddenValidationSession {
  State state=Virgin;int fd=-1;uint64_t epoch=0,generation=0;
  bool attempted=false,prepared=false,preflightAttempted=false,cancelAttempted=false,cancelled=false;
  unsigned committed=0,completedLayers=0,position=0,terminalStage=0;
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT
+ unsigned frontierLast=0;bool frontierObserved=false;
+#endif
  bool Current()const{
   return epoch && source.Ready() && source.Model().Epoch()==epoch && layout.MatchesSource(source.Model());
  }
@@ -99,7 +119,9 @@ class PioneerQ38TokenHiddenValidationSession {
   if(op==P::Start){q.prompts=V::Prompts;q.limit=V::Positions;packet->prompt[0]=V::FirstToken;packet->prompt[1]=V::SecondToken;}
   if(!V::ControlRequestShape(*packet))return false;
   const auto request=q;
-#ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT
+  if(!Call(TT_PCI_PROBE_Q38_TOKEN_FRONTIER_BENCHMARK,*packet) || std::memcmp(&q,&request,sizeof(q)))return false;
+#elif defined(PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT)
   if(!Call(TT_PCI_PROBE_Q38_TOKEN_DECODE_BENCHMARK,*packet) || std::memcmp(&q,&request,sizeof(q)))return false;
 #else
   if(!Call(TT_PCI_PROBE_Q38_TOKEN_HIDDEN_CONTROL,*packet) || std::memcmp(&q,&request,sizeof(q)))return false;
@@ -244,6 +266,18 @@ public:
   if(r.ready!=1 || r.stage!=8 || d[3]!=1 || d[4] || d[5] || d[6] || d[7])return Stop("start_reply");
   state=Running;return true;
  }
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT
+ bool ObserveFrontier(PioneerQ38TokenFrontierControl::Packet& output){
+  namespace F=PioneerQ38TokenFrontierControl;namespace V=PioneerQ38TokenDecodeBenchmark;
+  if(state!=Running && state!=Terminal)return false;
+  F::Packet value;
+  if(!Call(TT_PCI_PROBE_Q38_TOKEN_FRONTIER_OBSERVE,value) || !F::ReplyShape(value) || !value.reply.ready
+   || value.reply.detail[8]!=V::Positions || value.reply.detail[9]!=V::Prompts
+   || (frontierObserved && value.reply.detail[7]<frontierLast)
+   || (state==Terminal && value.reply.detail[7]!=committed))return Stop("frontier_observe");
+  frontierLast=value.reply.detail[7];frontierObserved=true;output=value;return true;
+ } // same authenticated source and SAME opened FD;DATA only,never a terminal or cleanup grant
+#endif
  bool RequestCancellation(){
   if(state!=Running || cancelAttempted)return false;
   cancelAttempted=true; // mark BEFORE the first uncertain operation;no retry
@@ -291,6 +325,9 @@ public:
  bool Finish(){
   namespace P=PioneerQ38TokenControl;
   if(state!=Terminal)return false;
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT
+  if(!frontierObserved || frontierLast!=committed)return Stop("frontier_final_count");
+#endif
   if(!TokenCall(P::Hold))return Stop("hold");
   {const auto& r=packet->reply;const auto* d=r.detail;
    if(r.ready!=1 || r.stage!=4 || d[5] || d[6]!=1 || d[7]!=120)return Stop("hold_reply");

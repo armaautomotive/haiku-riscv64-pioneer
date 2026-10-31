@@ -1,0 +1,82 @@
+Counter-enabled physical benchmark candidate: independent builds complete
+=======================================================================
+2026-10-31. Goal ACTIVE. Last verified sustained baseline0.207893161tok/s;
+20tok/s UNMET. This checkpoint establishes NO new measured speedup or
+full-model numerical acceptance. Existing first-three maximum-logit-bit
+failures remain failures;no tolerance or CPU reference result is changed.
+
+New separately selected native module exposes bounded6607 generation and
+6608 committed-counter observation,NOT old6604/6605/6606,arbitrary prompts,
+hidden capture,cancel,CPU reference or Assistant Work. Explicit physical
+and USER roles retain all inherited source/owner/ABI/tag75 requirements;
+private NODRV and old physical images remain distinct. All13 emitted
+frontier firmware arrays and2MiB RoPE are authenticated from the objects.
+
+Actual main73870 and independent-clean49976 exit0,including whole old
+4ebc9463,44209b78 and18362bcb module controls FIRST. Exact new object:
+ ed855c3fc7eedf64c8ef806f1386f50982f604fd56bb8abdf0afe1c4e09bca8c
+Exact new conventional module:
+ 9ad9e86bd5e45c5cb11dfe286f3528452dfe7b0e4630f67546acbb43a03064e8
+Known-module call chain5392B/unresolved25;NO cycle/dynamic chain found,
+but NOT whole-kernel/IRQ/entry/unknown-callee stack qualification.
+
+Actual main70553 and clean30868 client builds exit0,first reproducing
+old05510422 decode and all hidden/short/timed literal controls. Object:
+ 884f5e43f11de24d6264ab537e99344ff62fe6b9add64ce6daccea816b1d0b5f
+Exact standalone USER executable:
+ 4b1dbee63e537b39e5212a9180670139a2a9ba46ef0b3cbeb66a7d5226b7f048
+Maximum individual USER frame4432B. No CPU oracle/native/Work/MOCK imports.
+Source-only and fixed34-position CLI modes ONLY. Complete SAME-open full
+GGUF authentication precedes accelerator Open. Metric requests use SAME
+FD and authenticated source/epoch as upload and generation;no admin FD.
+Invalid/regressing count closes ONLY,without retry,implicit END or reset.
+After terminal,one final same-FD metric observation precedes HOLD. Finish
+requires that final observed count34 before genuine HOLD/drain/END+Close.
+Rate bounds are printed only AFTER34 validated records and clean closure,
+with>=16 sampled post-prompt tokens. Repeated counts never move endpoints.
+Call brackets bound observed count-window rates,NOT isolated token latency,
+device cycle frequency,model quality or independently proved provenance.
+
+New USER fixture main43712/clean80007 exit0:full851 SYNTHETIC uploader,
+3551 parts/4736090pages/20367batches,34 chained records,705 COW failures,
+12934 protocol refusals,metric damage/regression/missing-final observation,
+no follow-up metric after close,old6606 refused. OS/transport/source are
+MOCK,NOT actual device/native/model/timing authority. Old USER94988 exit0:
+696 COW failures/12928 protocol refusals,unchanged original behavior.
+Role/router main90631/clean63141 exit0:4 syntax positives/214 refusals,
+15 actual dispatch-block routes executed with MOCK bodies. This verifies
+namespace separation,NOT native function semantics or physical behavior.
+Private controls main19030/clean4145 exit0:oldf4f8e84b and frontier05d149c9
+complete NODRV objects BYTE-IDENTICAL;actual arrays and RoPE unchanged.
+
+Guarded exchange adds ONLY exact041fef18<->9ad9e86b modes,hash-qualified
+backups,unchanged owner/cold/quiesce/open-count/generation/symlink guards.
+Actual updater fake-Haiku tests4413/61892 exit0,182 cases EACH,including
+older4eb/44209/2723/18362/cf400/b74/tag74 and unknown same-tag refusals.
+No native reload/reset is performed by these tests. New immutable helper:
+ ff91bbb5ded4ee6be58d17e3b4e465c65b516e85ab98ee7637491a68c686e8cb
+Earlier hash-named helpers are neither overwritten nor repurposed.
+
+Posthoc parser has its own new log grammar,not a relabelled old physical
+log. It checks complete phases/upload/34 records/final34,feedback/session/
+finite-score/reserved consistency and integer count/time/rate arithmetic.
+Its numerical comparison reuses the unchanged STRICT first-three control;
+later positions remain externally unqualified. Main43848/clean fixture
+tests exit0:3 SYNTHETIC positives/1260 refusals. Old comparator unchanged,
+2 SYNTHETIC positives/1250 refusals. Synthetic logs are disposable and
+NEVER archived as observed accelerator DATA.
+
+Prestage actual SSH:Haiku,UID0,64CPUs,maxRAM137034936320B,
+freeRAM133758619648B,installed041fef18,tag12/gen10,cold0/quiesced0/
+active_owner0/open_count1/guard1,no model/Assistant parent. The module,
+client and new immutable helper were staged and readback hashes matched.
+Source-only full-GGUF preflight11960 remains pending at this checkpoint;
+NO accelerator Open/inference/reload by that preflight. Initial diagnostic
+used unsupported ps -A;subsequent plain ps succeeded. Raw logs retained.
+
+No new throughput,numerical acceptance,resident fresh requests or usable
+Assistant Work is claimed. Next:finish source-only preflight,guarded exact
+install,then ONE same-FD34-position hardware run. No second accelerator or
+admin FD/reset/reload/model is permitted during that run's live lifetime.
+Original LOCAL full-native history41236 remains live at position1/layer98
+on the SAME handle;not restarted or supplied with CPU products.

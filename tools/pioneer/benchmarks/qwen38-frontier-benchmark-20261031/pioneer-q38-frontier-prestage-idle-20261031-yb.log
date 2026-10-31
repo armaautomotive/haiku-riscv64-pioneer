@@ -1,0 +1,35 @@
+Team                                                  Id #Threads  Gid  Uid 
+kernel_team                                            1      100    0    0 
+/boot/system/servers/launch_daemon                    94        2    0    0 
+/boot/system/servers/registrar                        99        6    0    0 
+/boot/system/servers/debug_server                    100        2    0    0 
+/boot/system/servers/mount_server                    102        1    0    0 
+/boot/system/servers/net_server                      103        5    0    0 
+/boot/system/servers/package_daemon                  104        2    0    0 
+/bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho   105        1    0    0 
+/boot/system/servers/power_daemon                    111        1    0    0 
+/boot/system/servers/launch_daemon baron             113        2    0    0 
+/boot/system/servers/syslog_daemon                   115        2    0    0 
+/boot/system/servers/media_server                    130        4    0    0 
+/boot/system/servers/app_server                      177       28    0    0 
+/boot/system/Tracker                                 187        8    0    0 
+/boot/system/Deskbar                                 189        6    0    0 
+/boot/system/servers/input_server                    208       14    0    0 
+/boot/system/servers/media_addon_server              235        5    0    0 
+/boot/home/Desktop/Terminal                          619        5    0    0 
+/bin/bash -l                                         625        1    0    0 
+/boot/system/bin/screen_blanker                     1197        3    0    0 
+/packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de  1287        1    0    0 
+/packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de  1289        1    0    0 
+/bin/bash -c ps && sysinfo && /boot/home/pioneer-p100a-hot-relo  1290        1    0    0 
+/boot/system/bin/ps                                 1291        1    0    0 
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133758619648 bytes free      (used/max 3276316672 / 137034936320)
+                           (cached   19197186048)
+     64436 semaphores free (used/max       1100 /      65536)
+      3942 ports free      (used/max        154 /       4096)
+      3894 threads free    (used/max        202 /       4096)
+      2024 teams free      (used/max         24 /       2048)
+P100A_RELOAD driver55 tag2026102100010012 generation10 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
