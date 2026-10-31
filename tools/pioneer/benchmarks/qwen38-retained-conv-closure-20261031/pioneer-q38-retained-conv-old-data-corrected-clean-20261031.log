@@ -1,0 +1,9 @@
+2bd70b273e8c6b2196c0d087ca03d87f34a5567cb1cb361b305483ce4b17c7e5 token-programs FP32/cancel1/ALL13 sections+2fullELFs authenticated/DATA ONLY/NO install or native permission
+1b8e610966e7a8b69d545db7dd9f58f326b4d3937a354960930c858e8e92472b token-programs FP32/cancel1/ALL13 sections+2fullELFs authenticated/DATA ONLY/NO install or native permission
+PASS distinct QTP3 immutable programs/all13 sections/ALL120 code3044254 words byte-exact to authenticated artifacts/covered by proposed journal/2290 gap+runtime+invalid+immutable-output refusals;DATA ONLY,not native/restore/model/physical/Work/TPS qualification
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/tests/run_pioneer_q38_token_frontier_program_tests.py", line 91, in <module>
+    syntax(base,False,include(committed)+'#define '+key+' 0\n'+include(committed))
+  File "/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/tests/run_pioneer_q38_token_frontier_program_tests.py", line 70, in syntax
+    assert (result.returncode==0)==okay,(values,body,result.stderr)
+AssertionError: ({'PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS': '1', 'PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS': '1', 'PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS': '1', 'PIONEER_Q38_TOKEN_FAULT_PROGRAMS': '1', 'PIONEER_Q38_TOKEN_PUSHED_PROGRAMS': '1'}, '#include "/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/PioneerQ38TokenFrontierPrograms.h"\n#define PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_NATIVE 0\n#include "/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/PioneerQ38TokenFrontierPrograms.h"\n', '')

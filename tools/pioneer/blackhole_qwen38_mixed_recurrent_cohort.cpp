@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Returning on-card Conv->GDN coordinator for SAME retained QMW1 workers.
 // Separate offline image;original/init/clock/native/lifecycle ownership owed.
+#include "PioneerQ38RetainedConvClosureRole.h"
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE
 #include "PioneerQ38GlobalChainComponentRole.h"
 #include "PioneerQ38GlobalRecurrentDispatch.h"
@@ -246,10 +247,23 @@ static void StageConv(uint32_t* t){
  for(unsigned w=0;w<119;w++)Finish(t,w,7);
  Audit();Words(L::Summary)[4]=120; // ALL640 actual outputs precede ANY GDN
 }
+#ifdef PIONEER_Q38_RETAINED_CONV_CLOSURE_IMAGE
+static void StageGdnAfterClosedConv(uint32_t* t){
+#else
 static void StageGdn(uint32_t* t){
+#endif
  for(unsigned w=0;w<96;w++){
+#ifndef PIONEER_Q38_RETAINED_CONV_CLOSURE_IMAGE
   Wait(t,w,Words(L::Nonces)[w],0,true);BootSeal(t,w);Closed(t,w);
   CounterSeal(t,w,Data(L::Counters+w*32));
+#endif
+  // Retained variant is reached ONLY at the call site below,immediately
+  // after StageConv returned through ALL119 real Finish(Conv) proofs and
+  // Audit. Those include WAIT,current boot/source/job/nonce/physical
+  // counters and service summaries. No intervening peer release,reset or
+  // source rebind exists. The SAME private owner and captured boot/nonces/
+  // expected counters continue here;no caller-ready flag or recapture.
+  // Original/debug variant deliberately retains the duplicate remote audit.
   const auto* in=Gdn(w+1);uint32_t j[64],zero[16]={};Job(w,8,j);
   Write(t,w,TT_Q38_GDN_INPUT_DESCRIPTOR,in,64);Write(t,w,TT_Q38_RGDN_DESCRIPTOR,in+64,64);
   Write(t,w,TT_Q38_GDN_GATED_DESCRIPTOR,in+128,64);Write(t,w,M::Job,j,64);
@@ -270,7 +284,13 @@ extern "C" unsigned q38_mixed_recurrent_cohort(){
  for(unsigned i=0;i<64;i++)Words(L::Summary)[i]=0;
  for(unsigned i=0;i<8;i++)before[i]=tracked[i]=*Words(0xffb20000+Counter(i));
  if(tracked[2]!=tracked[6] || !Quiet())scalar_fault_park();
- StageConv(tracked);StageGdn(tracked);Audit();if(!Quiet())scalar_fault_park();
+ StageConv(tracked); // actual complete predecessor,never a caller-supplied receipt
+#ifdef PIONEER_Q38_RETAINED_CONV_CLOSURE_IMAGE
+ StageGdnAfterClosedConv(tracked);
+#else
+ StageGdn(tracked);
+#endif
+ Audit();if(!Quiet())scalar_fault_park();
  const auto* d=Frame();auto* s=Words(L::Summary);
  for(unsigned i=0;i<8;i++){if(*Words(0xffb20000+Counter(i))!=tracked[i])scalar_fault_park();s[16+i]=tracked[i];s[24+i]=before[i];s[48+i]=d[32+i];}
  for(unsigned i=0;i<16;i++)s[32+i]=d[16+i];

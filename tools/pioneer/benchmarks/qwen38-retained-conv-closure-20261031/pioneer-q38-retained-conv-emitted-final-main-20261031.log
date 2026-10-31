@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_retained_conv_emitted_tests.py", line 60, in <module>
+    old_edges=edges(old,prefix+'StageGdn(');new_edges=edges(new,prefix+'StageGdnAfterClosedConv(')
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_retained_conv_emitted_tests.py", line 55, in edges
+    assert target in table,(name,hex(pc),hex(target),'not an actual function entry')
+AssertionError: ('MixedRecurrentCohort::StageGdn(unsigned int*)', '0x56c2c', '0x60000', 'not an actual function entry')

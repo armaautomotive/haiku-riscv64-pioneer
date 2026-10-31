@@ -1,0 +1,41 @@
+Haiku
+0
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /boot/system/servers/net_server                    
+  104 /boot/system/servers/package_daemon                
+  105 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  111 /boot/system/servers/power_daemon                  
+  113 /boot/system/servers/launch_daemon baron           
+  115 /boot/system/servers/syslog_daemon                 
+  130 /boot/system/servers/media_server                  
+  177 /boot/system/servers/app_server                    
+  187 /boot/system/Tracker                               
+  189 /boot/system/Deskbar                               
+  208 /boot/system/servers/input_server                  
+  235 /boot/system/servers/media_addon_server            
+  619 /boot/home/Desktop/Terminal                        
+  625 /bin/bash -l                                       
+ 1197 /boot/system/bin/screen_blanker                    
+ 1377 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+ 1379 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+ 1380 /bin/bash -c uname -s && id -u && ps -o Id -o Team && sysinfo & 
+ 1383 /boot/system/bin/ps -o Id -o Team                  
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133755068416 bytes free      (used/max 3279867904 / 137034936320)
+                           (cached   19201781760)
+     64436 semaphores free (used/max       1100 /      65536)
+      3942 ports free      (used/max        154 /       4096)
+      3894 threads free    (used/max        202 /       4096)
+      2024 teams free      (used/max         24 /       2048)
+9ad9e86bd5e45c5cb11dfe286f3528452dfe7b0e4630f67546acbb43a03064e8  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+4b1dbee63e537b39e5212a9180670139a2a9ba46ef0b3cbeb66a7d5226b7f048  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-FRONTIER34-BENCHMARK-4b1dbee6
+ff91bbb5ded4ee6be58d17e3b4e465c65b516e85ab98ee7637491a68c686e8cb  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-hot-swap-token-frontier-benchmark-ff91bbb5.sh
+d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+P100A_RELOAD driver55 tag2026103100010075 generation11 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY

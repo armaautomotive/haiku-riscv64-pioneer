@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_retained_conv_emitted_tests.py", line 71, in <module>
+    conv=edges(directory,prefix+'StageConv(')
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_retained_conv_emitted_tests.py", line 56, in edges
+    assert previous&127==0x17 and ((previous>>7)&31)==rs1,'unresolved indirect target'
+AssertionError: unresolved indirect target

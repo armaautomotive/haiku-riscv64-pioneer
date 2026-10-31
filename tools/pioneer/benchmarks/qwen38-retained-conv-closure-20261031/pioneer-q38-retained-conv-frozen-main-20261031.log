@@ -1,0 +1,35 @@
+4b1550f36d8bf6e225684db0a97ba62ad885817c1497d78226443b0c7867533f recurrent.o bytes145120
+29204d287e38fe0ead7fd24c2de44aad7b46d2bcb38e23daa4b55d1cebb6c8e9 dense.o bytes115164
+78cf19c422c773a8c9c47c180df78ecd66609e4614dd75ee2d66344cab0ea25c layer-components-NOBOOT.o bytes228380
+PASS both ACTUAL returning layer bodies retained, separate private seal types/s11 bind+restore, same worker-chain/hidden-slot ADDRESSES;ROOTbytes93044/131072 Convbytes7500/32768 maxFrame2112
+RELOCATABLE COMPONENTS ONLY/NO boot or host wait/STOP/old main/native ABI;sole unresolved fault park. NOT a connected pipeline,initialized state,token commit,physical/Work or throughput qualification. DO NOT INSTALL
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 117016, 'e58aff9bf5be041992ba5435bca334bdd43ac51c3d3c6af47c5ac6de7cdbfd8d')
+('terminal.bin', 8, '6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5')
+('conv.bin', 7500, 'aec9aeacaf188b46ae223bd79fafb928ac39a3369b3c9753bf8145966eb44cea')
+('program.elf', 149964, 'ca0f6beb05e1a20d243332e65ce9b0bc4e3e080fc350768067266b9e1d7209a2')
+BUILD/INSPECT ONLY NEW QGC1/all64 returning arithmetic+final norm+973 vocab jobs+greedy candidate+real global STOP/maxFrame1872/on-card provisional next embedding;NO runtime/combined reserved stack/original model/native/physical/token commit/multi-token/Work/TPS qualification. DO NOT INSTALL
+('recurrent.o', 182228, '43d4f239eb5c3622e6aa5b4c2fabace858934e8ce4e7797bb1d7eafd0d3e4c38')
+('dense.o', 145388, 'c0c982aaa5f49fc2b8a381481b015ae6d29df8890c13dfca617740b0be2511ce')
+('token-components-NOBOOT.o', 281844, 'c35cce0c63cecb81bc8975610fcc93286c6f19dda84376b18b343f964e2867f2')
+BUILD ONLY actual returning recurrent path includes strict previous-global output admission;ROOTbytes103820/131072 Conv20380/32768 maxFrame2112;NO boot/persistent parent/model token-state commit/native/physical/Work/TPS or combined-stack proof. DO NOT INSTALL
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 130996, '39ca2743b8aaa166d7ecc9205b516558fcfac93449f5d4526ad065b39da39205')
+('terminal.bin', 8, '6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5')
+('conv.bin', 32688, 'd9576bce48afad75fe54a337a865437b07263362f43d8d16688835b56e8f7861')
+('program.elf', 190628, '5585e908bf3326c5410d0998c81ed161c04ab754412cc60891b8eb1f197a58fe')
+BUILD ONLY persistent parent/bootstrap/prompt+generation/all64+973/recurrent state copy+readback/token stream/final119STOP;maxFrame1616;NO runtime/combined stack/original full-model/native/physical/cancellation/Work/Assistant/TPS qualification. DO NOT INSTALL
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 131028, '8674c84aa9142f049a0dbcb3df6ac70bab8c0f4de096083584bb293562e6284e')
+('terminal.bin', 8, '468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2')
+('conv.bin', 32688, '54cf89743f34f5156790b9299e2fc95307c28ef78d22b88267aed70d587cb1d2')
+('program.elf', 190684, '9515589d211cb9d9b2db4be108ccad5752996ec07a5354f0181775f6a6888862')
+BUILD_ONLY_UNSELECTED_FAULT_MARKER status_error51465431 status_saved_link_NOT_retired_PC/same_compiled_arithmetic_objects_and_STOP_loop/NO timeout_extension_retry_cancel_reset/NO native_driver_selection_original_model_physical_Work_or_TPS_permission
+UNSELECTED_JOB_BOOT_FOLD_EIGHT_FAULT_IMAGE separate BUILD pins;default image pins unchanged;NO native/physical/Work/TPS grant
+UNSELECTED_TOKEN_FRONTIER_FAULT_IMAGE separate BUILD ONLY;NO program DATA/native/readout/physical/timing/Work/TPS grant
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 130936, '7c5e233b9cf59351dbaf7ec821917b23746ba3d3077e41922e7180a765343693')
+('terminal.bin', 8, '468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2')
+('conv.bin', 32688, '9df7840dfc64968f63574069ef94ce63ab2e17fe8593eceb5068b0afbcfcc5f0')
+('program.elf', 190700, '48b2bf31d2eefc36e50dcaaa9202d7d92579496a5ab72e9a62c9d4cfb66250ee')
+BUILD_ONLY retained SAME119 actual Conv closure->GDN preparation/old951+complete recurrent object unchanged/current cold audit+ALL Conv/GDN completion source+counter+job+summary checks preserved;duplicate96 warm pre-GDN audits omitted ONLY in separately selected returning TU;NO native program DATA,driver,physical,original-model numerics,combined-stack,Work or TPS grant

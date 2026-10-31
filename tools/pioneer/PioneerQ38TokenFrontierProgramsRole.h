@@ -35,6 +35,7 @@ static_assert(PioneerQ38TokenFrontierProgramSelection==2,"late private frontier 
  || defined(PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_VALIDATION_NATIVE) \
  || defined(PIONEER_Q38_TOKEN_PRECISE_BETA_VALIDATION_NATIVE) || defined(PIONEER_Q38_TOKEN_FAULT_VALIDATION_NATIVE) \
  || defined(PIONEER_Q38_TOKEN_DECODE_BENCHMARK_NATIVE) || defined(PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT) \
+ || defined(PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_NATIVE) || defined(PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT) \
  || defined(PIONEER_Q38_TOKEN_FRONTIER_IMAGE)
 #error Frontier program DATA has NO qualified native,physical,USER or image owner
 #endif

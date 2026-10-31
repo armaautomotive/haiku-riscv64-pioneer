@@ -1,0 +1,4 @@
+3e5cec29942498a78227effe268f58a7fa567358d8f58dd7d04922a1ec364803 token-programs FP32/cancel1/ALL13 sections+2fullELFs authenticated/DATA ONLY/NO install or native permission
+2bd70b273e8c6b2196c0d087ca03d87f34a5567cb1cb361b305483ce4b17c7e5 token-programs FP32/cancel1/ALL13 sections+2fullELFs authenticated/DATA ONLY/NO install or native permission
+PASS distinct QTP3 immutable programs/all13 sections/ALL120 code3044231 words byte-exact to authenticated artifacts/covered by proposed journal/2290 gap+runtime+invalid+immutable-output refusals;DATA ONLY,not native/restore/model/physical/Work/TPS qualification
+PASS retained-cohort DATA/15 authenticated artifacts/30 corrupt+truncated refusals/2 syntax positives/83 missing+zero+two+late+native+USER+CPU+Work refusals/old full2bd70b27 frontier header unchanged;NO native selector,physical,model,timing or Work grant

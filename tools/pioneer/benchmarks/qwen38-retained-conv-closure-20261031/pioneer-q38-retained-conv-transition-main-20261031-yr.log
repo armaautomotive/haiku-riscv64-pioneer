@@ -1,0 +1,18 @@
+START SAME-open original27B authentication BEFORE retained-conv fault history;NO CPU products or hardware IO
+PASS distinct full-token startup builder/ALL64x512KiB published DATA+state spans+ZERO slack/root+head EXACT vs prior independently loaded numeric metadata/192 strict first+middle+last chunk controls/strict full geometry before+after/actual session+prompt initialized from builder/ZERO ROOT instructions;geometry NOT native ownership or model products
+PASS original fabric/3551 independently classified learned parts/7102 endpoint batches+word equivalence/synthetic learned words2645504+recipes47108 REMOVED/no supplied initial hidden/default mutable bytes unchanged/ZERO ROOT instructions;NOT model execution
+PASS actual next embedding position0/token248319/5120 bit-exact/20raw+2writes+2readbacks/no CPU product upload
+BEGIN actual persistent token0/layer0/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer0 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer0 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer0 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer0 matrix4 role6/actual quantized input/same workers
+OBSERVED actual original embedding+4 matrices+ALL119 Conv completions/boot+source+job+counter proofs/BEFORE first GDN descriptor;HOST TEST only
+Assertion failed: (doorbells==1 && !child[0]->requests && !child[0]->responses), function Store, file pioneer_q38_connected_retained_conv_test.cpp, line 64.
+Assertion failed: (waitpid(pid,&status,0)==pid && WIFEXITED(status) && !WEXITSTATUS(status)), function Store, file pioneer_q38_connected_retained_conv_test.cpp, line 59.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_retained_cohort_original_tests.py", line 67, in <module>
+    subprocess.run([str(binary),str(image),str(old),str(worker),str(model),
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-q38-retained-conv-original-mnf1zp3x/test', '/private/tmp/pioneer-q38-retained-conv-main-20261031-yl', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/qualification-inputs/mixed-worker-20261030', '/private/tmp/pioneer-q38-precise-beta-worker-main-20261031-np', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf']' died with <Signals.SIGABRT: 6>.

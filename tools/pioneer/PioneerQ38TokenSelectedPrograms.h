@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 // DATA selection only; no native source/lifetime, journal or launch grant.
 // Rechecked outside the guard so late/defined-zero changes cannot alias data.
+#include "PioneerQ38TokenRetainedCohortProgramsRole.h"
+#ifdef PIONEER_Q38_TOKEN_RETAINED_COHORT_PROGRAMS
+#error Retained-cohort DATA has no qualified shared/native selector;include its distinct DATA header only
+#endif
 #include "PioneerQ38TokenFrontierProgramsRole.h"
 #include "PioneerQ38TokenJobBootFoldProgramsRole.h"
 #include "PioneerQ38TokenPreciseBetaProgramsRole.h"

@@ -1,0 +1,8 @@
+2bd70b273e8c6b2196c0d087ca03d87f34a5567cb1cb361b305483ce4b17c7e5 token-programs FP32/cancel1/ALL13 sections+2fullELFs authenticated/DATA ONLY/NO install or native permission
+PROGRAM_DATA_REFUSAL artifact text.bin: type/length
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/tests/run_pioneer_q38_token_frontier_program_tests.py", line 38, in <module>
+    subprocess.run([sys.executable,str(generator),str(old_root),str(worker),str(old),'--job-boot-fold'],check=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/Library/Developer/CommandLineTools/usr/bin/python3', '/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/generate_qwen38_token_programs.py', '/private/tmp/pioneer-q38-retained-conv-clean-20261031-ym/unchanged-frontier/unchanged-root', '/private/tmp/pioneer-q38-precise-beta-worker-clean-20261031-nr', '/private/tmp/pioneer-q38-frontier-programs-0eb038vl/old-control.h', '--job-boot-fold']' returned non-zero exit status 2.

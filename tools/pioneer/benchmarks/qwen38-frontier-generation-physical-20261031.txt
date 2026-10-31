@@ -1,0 +1,70 @@
+Instrumented all-card generation:0.103674 tokens/sec,clean END
+===========================================================
+2026-10-31. Goal ACTIVE.20tok/s UNMET. NO speedup claimed. This is the
+current fixed-prompt all-card diagnostic,not usable Assistant Work. The
+earlier recorded0.207893161 benchmark remains historical;these are not
+a paired old/new optimization experiment. The retained-Conv candidate
+was NOT selected by this physical run.
+
+Original87895 launched22:40:39UTC and ACTUALLY exited0,observed23:21:33UTC.
+Exact9ad9e86bd5e45c5cb11dfe286f3528452dfe7b0e4630f67546acbb43a03064e8
+module/tag2026103100010075/generation11,exact4b1dbee63e537b39e5212a9180670139a2a9ba46ef0b3cbeb66a7d5226b7f048
+client. SAME owner authenticated original full GGUF before accelerator
+Open,uploaded19399024640 padded bytes/3551parts/4736090pages/20367spans,
+generated34 positions (2 fixed prompts+32 feedback),observed genuine
+terminal,performed HOLD/drain/complete native restoration/END+Close,
+validated all34 records and final counter34. Runtime CPU model reference
+was absent. No second GPU/admin FD,reset,reload,second model,power,SD,
+OS or network change occurred during the live model lifetime. Stderr0B.
+
+Observed post-prompt count-window measurement
+---------------------------------------------
+3146 SAME-FD counter observations. First committed2,last34,sampled32.
+Host elapsed bounds308657113..308660565 microseconds:
+ lower0.103673756 tokens/sec
+ upper0.103674915 tokens/sec
+Equivalent mean9.64553478125..9.64564265625 seconds per sampled token.
+These are commit-count WINDOW bounds,not isolated individual token latency,
+hardware cycles/frequency or end-to-end chat speed. They exclude initial
+source authentication,upload,startup and cleanup. Frozen client prints
+them only after clean END+Close and validated records. The posthoc parser
+checks record/format/arithmetic consistency,not independent raw-sample
+provenance. Full actual stdout/stderr and typed-client build hashes retained.
+
+Numerical acceptance:FAILED,unchanged
+-------------------------------------
+Both strict posthoc comparators ACTUALLY exit1. Record/feedback/session/
+finite-score/flags/reserved/counter and reported-rate arithmetic pass.
+Only first3 positions have pinned external CPU controls here. Their
+inputs and greedy choices agree;ALL3 exact maximum-logit words differ:
+ position0 selected70253 observed413bc1de CPU413c2358
+ position1 selected17    observed41452aa2 CPU414621d3
+ position2 selected17    observed4167c42a CPU4168afd0
+No tolerance changed,no CPU reference result substituted. Position0
+selects70253,positions1..33 select17. Position1 is the fixed prompt17;
+repetition is NOT useful-response or arbitrary-prompt/EOS quality proof.
+Positions3..33 have NO external numerical acceptance in this comparison.
+Posthoc numerical failure did not quarantine an already cleanly closed card.
+
+Restoration and health
+-----------------------
+Only AFTER actual exit/END+Close,fresh SSH verifies Haiku/UID0,64CPUs,
+maxRAM137034936320B/freeRAM133755068416B,no model/Assistant parent,
+exact driver/client/helper/guard hashes,tag75/gen11,quiesced0/cold0/
+active_owner0/open_count1/guard1. Exact immutable ff91bbb5 helper then
+restores through13082,actual exit0,NO reboot or GPU execution in exchange.
+Fresh independent SSH confirms baseline:
+ 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+tag2026102100010012/gen12/quiesced0/cold0/active_owner0/open_count1/guard1,
+unchanged d1ce2aa4 guard,64CPUs and maxRAM137034936320B. No physical
+recovery,SD or mains action was needed. Complete raw evidence is under
+qwen38-frontier-generation-physical-20261031/.
+
+Next:separately qualify native selection of the retained-Conv candidate,
+then paired physical measurement. Its original-byte layer0 and24 actual
+connected CSR fault histories pass in BOTH builds,but those are NOT
+full-model/native restoration/physical throughput proofs. Investigate
+remaining controller/worker/state-copy overhead with actual timings;
+HOST instruction counts include simulated waiting and are not device
+time. Full numerical acceptance,resident fresh requests,arbitrary prompts,
+Assistant Work and20tok/s remain outstanding. Goal remains ACTIVE.

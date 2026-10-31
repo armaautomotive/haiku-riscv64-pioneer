@@ -106,3 +106,16 @@ not automatic rollback or reset. No power,SD,OS or network change made.
 
 Tested implementation checkpoint16146a7117be238ffb78d9d7524313b882849c0f
 was pushed and independently confirmed on origin/pioneer-riscv64.
+
+Completed physical result23:21UTC
+--------------------------------
+Original87895 ACTUALLY exit0,full34 records/final count34/clean END+Close.
+32 post-prompt counts over308657113..308660565us yield observed bounds
+0.103673756..0.103674915tok/s,NO speedup. Both strict posthoc first-three
+comparators exit1 on the unchanged maximum-logit-bit failures. Record
+and rate-format/arithmetic checks pass,not numerical or useful Work.
+Fresh idle health precedes exact ff91bbb5 restore13082,actual exit0.
+Known baseline041fef18 is restored at tag12/gen12,cold0/quiesced0/
+active_owner0/open_count1/guard1,64CPUs/128GB preserved. No restart used.
+Full evidence:qwen38-frontier-generation-physical-20261031.txt and its
+raw-log directory. Never poll the CLOSED87895 or restore13082 again.

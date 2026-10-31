@@ -1,0 +1,177 @@
+Retained Conv closure candidate: build and DATA qualification
+===========================================================
+2026-10-31. Goal ACTIVE. Last verified sustained baseline0.207893161tok/s;
+20tok/s UNMET. NO new measured speedup or full-model numerical acceptance.
+
+Concrete on-card change,not a CPU validation switch
+--------------------------------------------------
+The original Conv->GDN transition runs StageConv through ALL119 actual
+Finish(Conv) checks and Audit,then immediately repeats Wait/BootSeal/
+Closed/CounterSeal for the first96 workers in StageGdn. Those Conv
+closures already include real completion WAIT,current boot/ALL16 source
+words,job+nonce,physical counters and service-summary checks. The SAME
+private owner/boot/nonces/expected counters remain live;there is no peer
+release,reset or source rebind between those proofs and GDN preparation.
+
+New explicit PIONEER_Q38_RETAINED_CONV_CLOSURE_IMAGE changes ONLY the
+returning recurrent translation unit's GDN entry. The single actual
+q38_mixed_recurrent_cohort call site reaches StageGdnAfterClosedConv only
+AFTER StageConv returns. No caller-ready flag,source/counter recapture,
+supplied result or new public entry point exists. The duplicate96 warm
+pre-GDN audits are omitted in that isolated variant. Original cold
+admission and ALL119 Conv/ALL96 GDN Finish checks remain. Model jobs,
+descriptors,arithmetic,state and actual GDN releases are unchanged.
+Original/debug policy is still the default. Changed idle-fault observation
+timing requires the connected fault histories below;BUILD is not authority.
+
+Actual independent builds
+--------------------------
+Main95233/clean75124 inspect builds actually exit0. Frozen57390/42149
+also exit0. Each FIRST rebuilds the WHOLE old9515589d frontier/fault
+image from source and reproduces its complete old recurrent object
+BYTE-IDENTICALLY. The separately recompiled recurrent candidate changes
+code;old ROOT/dense/numeric capsules and workers are reused unchanged.
+All existing ISA/ROM/individual-frame bounds remain checked. No combined
+stack/native owner/full-model qualification is implied by those bounds.
+
+Exact new BUILD artifacts:
+ boot.bin4 SHA32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text.bin130936 SHA7c5e233b9cf59351dbaf7ec821917b23746ba3d3077e41922e7180a765343693
+ terminal.bin8 SHA468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2
+ conv.bin32688 SHA9df7840dfc64968f63574069ef94ce63ab2e17fe8593eceb5068b0afbcfcc5f0
+ program.elf190700 SHA48b2bf31d2eefc36e50dcaaa9202d7d92579496a5ab72e9a62c9d4cfb66250ee
+Boot/terminal bytes remain old. Text is92B smaller,not a speed measurement.
+
+Role tests main80251/clean36396 actually exit0:2 syntax positives,
+59 missing/zero/two/late/foreign/CPU/Work refusals. New policy is a
+returning recurrent BUILD only;no kernel/native/CPU/worker/Work role.
+An initial fixture lacked its required __riscv marker;fixed TEST input,
+not the guard. Initial failures remain archived.
+
+Actual linked direct-call audit main+clean exit0:old StageGdn has one
+direct call site for each of Wait/BootSeal/Closed/CounterSeal;new GDN
+entry has none of those duplicate sites. BOTH Finish bodies still call
+ALL4 checks,and BOTH StageConv bodies still call Finish. Actual wrapper
+call order is Conv before GDN. Two StageConv indexed switch jumps stay
+explicitly UNRESOLVED. This is static direct-edge evidence,NOT path
+feasibility,96/119 loop execution,NoC counts,model or physical timing.
+The initial audit did not account for GNU nm's missing size column on
+zero-sized assembly labels,needed an re import,and assumed Release was
+out-of-line. These fixture issues were corrected;Release is inlined and
+its actual96 releases belong to runtime qualification,not a fake edge.
+
+Complete immutable DATA
+-----------------------
+New generated PioneerQ38TokenRetainedCohortPrograms.h,main/clean identical:
+ SHA3e5cec29942498a78227effe268f58a7fa567358d8f58dd7d04922a1ec364803
+All13 code sections/15 artifacts including BOTH full ELFs authenticated
+before output. Complete120-core code3044231 words compares byte-exact to
+the fixed artifacts and lies in the proposed journal footprint. DATA
+tests60257/27607 exit0:2290 range/runtime/gap/immutable-output refusals,
+30 corrupted/truncated artifact refusals,2 syntax positives/83 role
+refusals. Telemetry7570c remains non-code DATA. Old2bd70b27 frontier
+header reproduces byte-identically. The new DATA cannot select a shared
+or native owner;kernel/native/physical/USER/CPU/Work roles are refused.
+This is NOT genuine initialization,journaling,restoration or execution.
+
+Regression check found a real compile-time separation gap in the earlier
+frontier DATA role:late defined-zero FRONTIER_BENCHMARK_NATIVE was not
+refused. Explicit native+USER discriminator checks now close that gap;
+no active driver binary or runtime state changes. Final old frontier
+DATA main+clean log PASS:15 artifacts,30 corruption refusals,6 pre-SDK
+CLI refusals,3 positives/100 role refusals,full old1b8e header unchanged.
+An initial old-DATA command used the wrong parent5585 instead of d076;
+it correctly refused text size before output. That command was corrected,
+not the pins. Whole9ad9e86b physical builds also reproduce unchanged;
+final post-guard rebuilds remain pending at this snapshot.
+
+Original-model runtime histories:still pending
+---------------------------------------------
+Original main1732 and independent-clean25038 authenticate the SAME-open
+original full27B GGUF,remove all synthetic learned words and execute the
+new48b2 ROOT with unchanged precise-beta workers from RESET. Each has
+reached the actual layer0 eighth matrix on SAME119 histories. No CPU
+products,processor/nonce history or completed states are supplied. They
+have NOT yet returned,so no prefix/numerical acceptance is claimed.
+Poll SAME sessions;missing output or observation timeout is not failure.
+When actually finished,compare embedding+layer0 STRICTLY against the
+unchanged pinned cpu-original-trace-20261028 corpus. Full model/long
+generation and earlier maximum-logit-bit failures remain unqualified.
+
+Initial connected fault run43214 ACTUALLY failed:the harness incorrectly
+expected generic matrix request/response bookkeeping to reset at GDN
+receive. Existing Received() instead resets gdnPackets and GDN counters.
+The corrected harness checks ZERO new GDN packets/writes/clocks while
+requiring prior matrix request/response/instruction counts UNCHANGED.
+No production guard or numeric comparison was removed. New main18208
+and clean41823 continue fresh actual histories with24 raw CSR faults
+(16 source+8 counters) ONLY after ALL119 real Conv closures. They are
+still before that COW fork at this snapshot;NO fault success claimed.
+
+Physical state and remaining work
+---------------------------------
+This optimization has NOT been installed or selected by a native owner.
+The separate original physical87895 still runs exact9ad9e86b/tag75/gen11
+and4b1dbee6,launched22:40:39UTC. It completed19399024640-byte upload and
+acknowledged START by23:12UTC. NO actual terminal/END+Close or rate yet.
+No second accelerator/admin FD,reset,reload,second model,power,SD,OS or
+network change was made during its lifetime. Poll SAME87895. After actual
+clean closure,strict posthoc first3 comparison/rate-format validation and
+fresh idle health precede any guarded restore. Never reset on a timeout.
+Original LOCAL native41236 is also still live on SAME history at
+position1/layers100/ROOT12.84B instructions,not restarted or fed products.
+
+Next:finish both actual prefix and connected-fault histories,retain exact
+comparisons,then separately qualify any native selection of this new ROOT.
+Only a later paired physical measurement can establish its actual benefit.
+No arbitrary prompts,EOS,resident fresh requests,Assistant Work or20tok/s
+success is implied. Goal remains ACTIVE with its full original scope.
+
+Completed offline histories23:15UTC (supersedes pending section above)
+--------------------------------------------------------------------
+Original1732/25038 and corrected fault18208/41823 ALL ACTUALLY exit0.
+Both genuine original-byte layer0 histories finish ALL8 matrix roles,
+Conv/GDN/FFN and actual119 closures,then save ONLY the incomplete prefix.
+Each strict posthoc comparison independently exits0:5120 embedding words
+and5120 layer0 words,ZERO bit differences,maxAbsolute0,relativeL20.
+No tolerance or CPU product injection. Both41028B prefixes share SHA:
+ 4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+Full-model,token/STOP/END,native restore and physical acceptance remain
+OUTSIDE this completed first-layer diagnostic. Actual HOST instruction
+count197292792 includes SIMULATED polling;it is NOT device cycles or TPS,
+and no paired physical speedup is claimed from that count.
+
+Both corrected fault histories genuinely reach the local store AFTER
+ALL119 Conv Finish proofs,then fork24 COW children. Each raw source/counter
+fault is rejected by the real worker BEFORE any GDN NoC packet,write or
+clock read. Old matrix request/response/instruction bookkeeping remains
+UNCHANGED,not falsely reset. ROOT observes the actual error and issues
+NO following NoC request. Its real fault writer executes,then2048 actual
+inert steps preserve commands,counters,writes and memory. The unchanged
+parent independently reaches its genuine first GDN NoC request. No PC,
+register,nonce,product or completed-worker history is transplanted. These
+are simulated endpoint/fork histories,NOT physical or native END proofs.
+
+Final post-guard physical controls64223/91657 ACTUALLY exit0:complete
+ed855c3f object/9ad9e86b module/all13 arrays+RoPE remain BYTE-IDENTICAL,
+as do old4eb/44209/18362 controls. Final new DATA90463/55299 and final old
+frontier DATA73851/3472 ACTUALLY exit0. The late compile-time flag fix does
+not alter the active driver or any device execution. No optimization is
+installed;native selection is still intentionally refused.
+
+Separate physical87895 has reached actual terminal by23:19UTC and is
+performing HOLD/drain/restoration. It is still LIVE,not clean END+Close.
+No rate is accepted until that original run actually completes. Keep its
+FD exclusive;do NOT poll driver/admin/reset/reload while it is live.
+
+Physical run now CLOSED (supersedes preceding live note)
+--------------------------------------------------------
+Original87895 ACTUALLY exits0,observed23:21:33UTC,full34 records/final34/
+clean END+Close. Post-prompt32-token observed count-window bounds are
+0.103673756..0.103674915tok/s,NOT a speedup or numerical acceptance.
+Both strict first-three comparisons still exit1 on known score words.
+Only after fresh idle verification,exact helper restore13082 exits0;
+baseline041fef18/tag12/gen12/cold0/quiesced0/owner0/open_count1/guard1
+is independently verified,64CPUs/128GB intact. No reboot or recovery.
+This new retained-Conv optimization was NOT in that measured driver.
+See qwen38-frontier-generation-physical-20261031.txt for complete scope.

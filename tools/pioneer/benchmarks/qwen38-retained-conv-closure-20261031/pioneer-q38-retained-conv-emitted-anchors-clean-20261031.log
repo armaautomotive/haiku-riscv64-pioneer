@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/tests/run_pioneer_q38_retained_conv_emitted_tests.py", line 63, in <module>
+    old_edges=edges(old,prefix+'StageGdn(');new_edges=edges(new,prefix+'StageGdnAfterClosedConv(')
+  File "/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/tests/run_pioneer_q38_retained_conv_emitted_tests.py", line 37, in edges
+    table=functions(directory);matches=[(start,size,name) for start,(size,name) in table.items() if name.startswith(needle)]
+  File "/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/tests/run_pioneer_q38_retained_conv_emitted_tests.py", line 33, in functions
+    assert re.search('^'+format(start,'08x')+' T '+name+'$',plain,re.M)
+NameError: name 're' is not defined
