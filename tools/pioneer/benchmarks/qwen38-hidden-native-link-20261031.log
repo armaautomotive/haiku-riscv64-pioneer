@@ -1,0 +1,5 @@
+PASS held-hidden TEST gates/1 role positive/61 missing+zero+two+foreign role refusals/16 early CLI refusals/no output/compiler/runtime creation;NO native/model/physical/TPS grant
+PASS ROOT frontend TEST gates/1 role positive/40 missing+zero+two+foreign role refusals/12 early CLI refusals/no output/compiler/runtime creation;NO native/model/physical/TPS grant
+PASS private QT3NODRV hidden readout role/2 positive/268 missing+zero+two+late/tag/ABI/CPU/Work/old-physical refusals;NO opcode,native,physical,Work or TPS grant
+PASS token tag74 exact validation role/3 positives/768 missing+0+2+late+old-tag+renamed-ABI+CPU+Work+TEST+NODRV-transition refusals;compile ONLY,not module/runtime/physical/TPS proof
+COMPILE/LINK ONLY: actual native TEST fixture+selected bridge objects linked;binary NEVER executed,NO initialization/RUN/STOP/END/model/physical/TPS qualification

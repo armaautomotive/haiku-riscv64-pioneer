@@ -1,0 +1,89 @@
+Held-hidden reader: genuine native predecessor integration and TWO live runs
+=========================================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. Last physical whole-model rate
+remains0.207893161 tokens/sec. No Pioneer installation,driver/power/SD/mains/
+Assistant action. The stable041/gen6 installation is unchanged.
+
+Implementation,not just a mock packet
+-------------------------------------
+Parent24e4921411 implements the private canonical hidden reader and paired
+actual SDK checks. This checkpoint connects it to the EXISTING native full851
+first-layer/cancellation/119STOP/120HOLD/Read0/full-END TEST history through
+the explicit --held-hidden-readout selector. The selector requires the exact
+G3 --root-frontend-snapshots --execution-end predecessor. No shortened,
+full-flow,backend/control,old-family,Work or CPU-reference shortcut is added.
+
+New CheckNativeHiddenReadout runs ONLY AFTER every original zero-record drain
+check and BEFORE every original restoration/END stage. It makes TWO fresh
+real call scopes and invokes the actual private context/controller methods.
+Two exact16384B+4096B NoC READs must return ALL5120 words from the SAME actual
+shared GDDR written by the model instruction engines. The comparison is an
+observer,never an input product or a ready/PC/register setter. Root model
+instructions,model packets and GDDR write count must remain unchanged.
+Counts,pointers,result aliases,misalignment,overflow,nonzero buffers and
+duplicate cursor requests must refuse before additional IO. Duplicate tests
+use a freshly zeroed buffer,so they prove ordering rather than the unrelated
+nonzero-buffer guard. Each full part is copied into separate heap DATA.
+
+The existing runtime NoC endpoint ALREADY performs the genuine requested READ
+from that shared workspace with the correct command/counter rules. It was
+NOT modified or replaced with supplied hidden products. All original model,
+source,STOP,HOLD,restoration,clock,VM,PCI,host and unreserve checks remain.
+The old tag74 role additionally refuses the new fixture macro,including0.
+No production reader/controller/firmware arithmetic changed in this step.
+
+Completed gates and actual compile/link results
+------------------------------------------------
+New fixture role:1 positive/61 missing+zero+two+foreign refusals. New CLI:
+16 early refusals with unchanged output inventory and no compiler/runtime.
+Existing ROOT fixture:1/40 plus12 CLI refusals. Private reader role:2/268.
+Old physical tag74 role:3/768,including the new TEST contamination refusal.
+
+Initial GR26624/98235 BOTH actually exited1 at compilation. The NEW fixture
+used ObservedRootInstructions(),which exists only in the full-flow adapter.
+It now uses the SAME first-layer cpu.steps counter already used by the
+original cancellation fixture;both before/after equality checks remain.
+No guard,processor history or model input changed. Preserve the initial
+failure logs;neither failed build ever executed a model or made a prefix:
+ qwen38-hidden-native-link-initial-main-20261031.log
+ SHA c5681da9e57d24161dd7a510a1060a9454650c15278f97f5eae526620bf9b234
+ qwen38-hidden-native-link-initial-clean-20261031.log
+ SHA af37f3aa5e647d19035587193c7fe86ac036bab0334caf84050f304a3e6496cf
+
+Fresh GS archives24e4921411 plus ONLY7 cmp-verified owned source/test files:
+ /private/tmp/pioneer-q38-hidden-native-main-gs.edvEmNF4
+ /private/tmp/pioneer-q38-hidden-native-clean-gs.egicOtxK
+Final47829/87594 BOTH actually exit0:all gates plus actual native fixture,
+unchanged selected virgin-worker instruction bridges and original RAW model
+transport COMPILE AND LINK. Binary NOT executed in that mode. The two complete
+5-line logs compare BYTE-FOR-BYTE;each archived copy matches its original:
+ qwen38-hidden-native-link-20261031.log
+ SHA c5e62ee23d176b79c72f6951ccb4be9ac3e113d4f102ed636392f0ea4b2c13e7
+Both reserved prefix paths remain absent at this compile-only boundary.
+
+FIRST real executions are LIVE,not passing readout/END results
+--------------------------------------------------------------
+After actual successful linking,ONE first actual history per source started:
+ main6902 /private/tmp/pioneer-q38-hidden-native-main-20261031-gs.log
+ clean28431 /private/tmp/pioneer-q38-hidden-native-clean-20261031-gs.log
+Actual outputs,not populated from an old run or CPU control:
+ /private/tmp/pioneer-q38-hidden-native-main-out-gs.mXlzdZM9/prefix-0.bin
+ /private/tmp/pioneer-q38-hidden-native-clean-out-gs.qJPDDpRg/prefix-0.bin
+Each uses unchanged qwen38-state-zero-20261030,mixed-worker-20261030 and its
+pin-verified G3 AF worker image,plus original Qwen3.8-27B-Q4_K_M.gguf.
+Each authenticates its own SAME-open model BEFORE constructing the native
+fixture. Both are now in actual zero-ROM execution,observed starts576/
+GDNpages63200. This is NOT completed initialization,layer arithmetic,hidden
+readout or END. No native runtime/combined-stack/physical/TPS pass is claimed.
+
+Poll SAME6902/28431;never restart a healthy/quiet process on a wait timeout.
+Require actual original arithmetic/STOP/HOLD/Read0/two hidden packets and ALL
+original END/destruction checks and exit0. Only THEN compare EACH actual
+prefix to the unchanged fixed CPU corpus,without a tolerance/diagnostic pass.
+Existing full-model histories31695/66331/41236/92178/52159 remain separate;
+do not substitute these first-layer tests for their full-model requirements.
+
+Still owed:completed new native lifecycle and numerical DATA checks;separate
+qualified public diagnostic+USER capture of REAL card hidden values to locate
+the unexplained score drift;resident no-CPU-reference Work/Assistant integration
+and honest sustained inference optimization. Preserve the full goal ACTIVE.

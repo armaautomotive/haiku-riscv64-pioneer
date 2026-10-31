@@ -9,6 +9,9 @@
 #ifdef PIONEER_Q38_TOKEN_NATIVE_ROOT_FRONTEND_FIXTURE
 #include "pioneer_q38_token_native_root_frontend_role.h"
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_HIDDEN_READ_FIXTURE
+#include "pioneer_q38_token_native_hidden_read_role.h"
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_BEGIN_FIXTURE
 #include "pioneer_q38_token_native_control_begin_role.h"

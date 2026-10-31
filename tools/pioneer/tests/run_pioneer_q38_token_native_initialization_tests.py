@@ -9,6 +9,10 @@ import subprocess
 import sys
 import tempfile
 
+held_hidden_readout = '--held-hidden-readout' in sys.argv
+if held_hidden_readout:
+    assert sys.argv.count('--held-hidden-readout') == 1, 'duplicate held hidden TEST selector'
+    sys.argv.remove('--held-hidden-readout')
 assert '--hold-recheck-pending' not in sys.argv, 'historical pending-PC selector retired; use --root-frontend-snapshots with the original full-END predecessor'
 root_frontend_snapshots = '--root-frontend-snapshots' in sys.argv
 if root_frontend_snapshots:
@@ -49,6 +53,9 @@ if control_operations:
     assert control_adapter and backend_finish and pushed_context and sys.argv[2] == '--execution-end-reload', 'private control operations TEST requires exact two-cycle G3 control-Finish predecessor'
 if root_frontend_snapshots:
     assert pushed_context and len(sys.argv) == 7 and sys.argv[2] == '--execution-end' and not control_adapter, 'ROOT frontend TEST requires the explicit G3 original first-layer/cancel/STOP/HOLD/full-END history'
+if held_hidden_readout:
+    assert root_frontend_snapshots and pushed_context and not backend_finish and not control_adapter \
+        and len(sys.argv) == 7 and sys.argv[2] == '--execution-end', 'Held hidden TEST requires the exact G3 ROOT frontend first-layer/cancel/STOP/HOLD/Read0/full-END predecessor'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -163,6 +170,8 @@ if hold_layer:
 if root_frontend_snapshots:
     assert hold_layer and host_end and not full_flow
     defines['PIONEER_Q38_TOKEN_NATIVE_ROOT_FRONTEND_FIXTURE'] = '1'
+if held_hidden_readout:
+    defines.update(PIONEER_Q38_TOKEN_NATIVE_HIDDEN_READ_FIXTURE='1', PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')
 if readout_empty:
     defines['PIONEER_Q38_TOKEN_NATIVE_READOUT_EMPTY_FIXTURE'] = '1'
 if restore_empty:
