@@ -27,6 +27,9 @@ using TokenNativeRootISA=BlockMachine;
 #endif
 struct TokenStartupRoot:TokenNativeRootISA {
  TokenHeldEndpoints& io;unsigned deviceReads=0,deviceWrites=0,markerWrites=0;
+#ifdef PIONEER_Q38_TOKEN_FAULT_PROGRAMS
+ unsigned faultSavedWrites=0,faultErrorWrites=0;
+#endif
 #if defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS) && !defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE)
  Q38NativePushedTestFabric pushedIncoming{&io,[](void* p,unsigned worker,uint32_t address)->uint32_t&{
   assert(!worker);return static_cast<TokenHeldEndpoints*>(p)->Raw(0,address);
@@ -213,6 +216,10 @@ struct TokenStartupRoot:TokenNativeRootISA {
   assert(!(address&3) && (Range(address,0x6e000,8192) || Range(address,C::R::Status,64)));
   if(Range(address,0x6e000,8192))minStack=std::min(minStack,address);
   else{
+#ifdef PIONEER_Q38_TOKEN_FAULT_PROGRAMS
+   if(address==C::R::Status+32){assert(!faultSavedWrites && !faultErrorWrites && value==regs[1]);faultSavedWrites++;io.Raw(0,address)=value;deviceWrites++;return;}
+   if(address==C::R::Status+8){assert(faultSavedWrites==1 && !faultErrorWrites && value==PioneerQ38TokenPrograms::FaultMarker);faultErrorWrites++;io.Raw(0,address)=value;deviceWrites++;return;}
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
    if(traffic && address==C::R::Status+20){assert(value==0x300);io.Raw(0,address)=value;deviceWrites++;return;}
 #endif

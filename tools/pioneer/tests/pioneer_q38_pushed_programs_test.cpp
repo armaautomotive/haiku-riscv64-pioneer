@@ -13,7 +13,11 @@
 #include <iterator>
 #include <string>
 #include <vector>
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_FAULT
+namespace P=PioneerQ38TokenFaultPrograms;
+#else
 namespace P=PioneerQ38TokenPushedPrograms;
+#endif
 namespace S=PioneerQ38TokenPushedL1;
 struct Code {const char* file;unsigned address;};
 static std::vector<unsigned char> Bytes(const char* directory,const char* name){
@@ -51,7 +55,12 @@ int main(int argc,char** argv){
    uint32_t unchanged=0xdeadbeef;assert(!P::ProgramWord(worker,address,unchanged) && unchanged==0xdeadbeef);refusals++;
   }
  }
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_FAULT
+ assert(P::FaultMarker==0x51465431 && P::FaultSavedLinkOffset==32);
+ assert(allWords==3048876 && P::CodeWords(0)==40913 && P::CodeWords(1)==25277);
+#else
  assert(allWords==3048868 && P::CodeWords(0)==40905 && P::CodeWords(1)==25277);
+#endif
  for(unsigned worker:{120U,UINT32_MAX}){
   uint32_t unchanged=0xdeadbeef;const auto span=P::CodeSpan(worker,0);
   assert(!P::CodeSpans(worker) && !P::CodeWords(worker) && P::CodeAddress(worker,0)==UINT32_MAX

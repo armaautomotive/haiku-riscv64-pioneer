@@ -9,6 +9,10 @@ import subprocess
 import sys
 import tempfile
 
+fault_marker = '--fault-marker' in sys.argv
+if fault_marker:
+    assert sys.argv.count('--fault-marker')==1
+    sys.argv.remove('--fault-marker')
 held_hidden_readout = '--held-hidden-readout' in sys.argv
 if held_hidden_readout:
     assert sys.argv.count('--held-hidden-readout') == 1, 'duplicate held hidden TEST selector'
@@ -42,6 +46,11 @@ pushed_context = '--pushed-context' in sys.argv
 if pushed_context:
     assert sys.argv.count('--pushed-context') == 1 and not precise_context, 'QTP3 cannot mix with QTP2,including explicit selectors'
     sys.argv.remove('--pushed-context')
+if fault_marker:
+    assert pushed_context and len(sys.argv)==5 and sys.argv[2]=='--execution-fault-marker' \
+        and not any((held_hidden_readout,root_frontend_snapshots,control_operations,control_adapter,backend_finish)), 'fault TEST requires separate G3 virgin-engine diagnostic,not model/END/Work qualification'
+else:
+    assert '--execution-fault-marker' not in sys.argv, 'fault TEST requires explicit separate code selection'
 if backend_finish:
     assert pushed_context and len(sys.argv) == 7 and sys.argv[2] in ('--execution-end', '--execution-end-reload'), 'backend Finish TEST requires actual G3 first-layer/cancel/STOP/HOLD/drain predecessor'
 backend_init_faults = len(sys.argv) == 3 and sys.argv[2] == '--backend-initialization-faults'
@@ -102,7 +111,7 @@ if full_layer:
                 path = pathlib.Path(str(prefix)+'.cycle'+str(cycle)+'.bin')
                 assert not path.exists() and not path.is_symlink()
 embedding = first_matrix or len(sys.argv) == 4 and sys.argv[2] in embedding_modes
-peer_bootstrap = len(sys.argv) == 5 and sys.argv[2] == '--bootstrap-peer-engines'
+peer_bootstrap = fault_marker or len(sys.argv) == 5 and sys.argv[2] == '--bootstrap-peer-engines'
 peer_engines = full_end_contract or peer_bootstrap or first_matrix
 if precise_context:
     assert peer_engines or sys.argv[2:]==['--preparation-endpoint-contract'], 'QTP2 execution requires actual virgin peer instruction engines;endpoint-only contract executes NO worker/model instructions'
@@ -140,6 +149,9 @@ if precise_context:
 if pushed_context:
     defines.update(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT='1', PIONEER_Q38_TOKEN_PUSHED_PROGRAMS='1',
                    PIONEER_DRIVER_BUILD_TAG='0x5154334e4f445256ULL')
+if fault_marker:
+    defines.update(PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1',
+                   PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE='1',PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE='1')
 defines.update({name:'pioneer_token_init_test_'+name for name in ('api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device')})
 defines.update(TT_PIONEER_EXPERIMENTAL_Q38_AFFINE='1', TT_PIONEER_EXPERIMENTAL_Q38_BLOCK='1')
 if clock_contract or preparation_endpoints or preparation_faults or terminal_faults or peer_bootstrap or embedding or len(sys.argv) == 3 and sys.argv[2] in ('--held', '--held-faults', '--runtime', '--runtime-pci-capture-fault', '--runtime-faults', '--bootstrap', '--bootstrap-faults', '--execution', '--execution-faults', '--execution-traffic', '--execution-traffic-faults'):

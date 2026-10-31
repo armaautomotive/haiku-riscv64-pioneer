@@ -632,7 +632,11 @@ int main(int argc,char** argv){
   "--execution-end-unreserve-fault","--execution-end-unreserve-generation"};
  bool hostEnd=false;for(const char* mode:endModes)hostEnd|=argc==7 && !strcmp(argv[2],mode);
  const bool hostReload=hostEnd && !strcmp(argv[2],"--execution-end-reload");
- const bool peerBootstrap=argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines");
+ const bool faultMarker=argc==5 && !strcmp(argv[2],"--execution-fault-marker");
+#ifndef PIONEER_Q38_TOKEN_FAULT_PROGRAMS
+ assert(!faultMarker);
+#endif
+ const bool peerBootstrap=faultMarker || (argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines"));
  const bool fullFlow=fullEndFlow || (argc==7 && (!strcmp(argv[2],"--execution-full-flow") || !strcmp(argv[2],"--execution-readout-full-flow")));
  const bool pciClose=hostEnd || (argc==7 && (!strcmp(argv[2],"--execution-pci-close") || !strcmp(argv[2],"--execution-pci-generation-fault")
   || !strcmp(argv[2],"--execution-pci-readback-fault")));
@@ -682,7 +686,7 @@ int main(int argc,char** argv){
 #endif
  const bool heldFaults=argc==3 && !strcmp(argv[2],"--held-faults");
  const bool bootstrap=peerBootstrap || (argc==3 && !strncmp(argv[2],"--bootstrap",11)),bootstrapFaults=bootstrap && !strcmp(argv[2],"--bootstrap-faults");
- const bool execution=terminalFaults || embedding || (argc==3 && !strncmp(argv[2],"--execution",11)),executionFaults=execution && !strcmp(argv[2],"--execution-faults");
+ const bool execution=faultMarker || terminalFaults || embedding || (argc==3 && !strncmp(argv[2],"--execution",11)),executionFaults=execution && !strcmp(argv[2],"--execution-faults");
  const bool trafficFaults=argc==3 && !strcmp(argv[2],"--execution-traffic-faults");
  const bool runtime=argc==3 && !strncmp(argv[2],"--runtime",9),runtimeFaults=runtime && !strcmp(argv[2],"--runtime-faults");
  const bool faults=!backendInitFaults && !fullEndContract && !clockContract && !preparationEndpoints && !preparationFaults && !initializationFifoFaults && argc==3 && strncmp(argv[2],"--held",6) && !runtime && !bootstrap && !execution,late=faults && !strcmp(argv[2],"--late-faults");

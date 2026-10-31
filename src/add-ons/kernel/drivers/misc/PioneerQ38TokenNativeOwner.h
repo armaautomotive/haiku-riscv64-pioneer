@@ -26,7 +26,12 @@ struct PioneerQ38TokenExecutionResult {
 };
 struct PioneerQ38TokenTerminalResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,cancelled=0;
+#ifdef PIONEER_Q38_TOKEN_FAULT_PROGRAMS
+ uint32_t committed=0,position=0,completedLayers=0,stage=0,firstPC=0,secondPC=0;
+ uint32_t faultError=0,faultSavedLink=0; // private diagnostic DATA;never cleanup authority
+#else
  uint32_t committed=0,position=0,completedLayers=0,stage=0,firstPC=0,secondPC=0,reserved[2]={};
+#endif
 };
 struct PioneerQ38TokenHoldResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,held=0;
@@ -660,8 +665,22 @@ private:
   if(!Sources(io,0))return Fail(io,r);
   uint32_t terminal[64],boot[64],job[64],status[16],counters[8],progress[3],cancel=0;
   uint32_t marker=0,error=0;
+#ifdef PIONEER_Q38_TOKEN_FAULT_PROGRAMS
+  if(!io.TokenMemoryReadChecked(0,R::Status+12,marker) || marker!=T::Magic
+   || !io.TokenMemoryReadChecked(0,R::Status+8,error))return Fail(io,r);
+  if(error){
+   r.faultError=error;
+   if(error==PioneerQ38TokenPrograms::FaultMarker){
+    uint32_t link=0;
+    if(!io.TokenMemoryReadChecked(0,R::Status+PioneerQ38TokenPrograms::FaultSavedLinkOffset,link))return Fail(io,r);
+    r.faultSavedLink=link;
+   }
+   return Fail(io,r); // retain owner;no terminal,HOLD,following IO or implicit END
+  }
+#else
   if(!io.TokenMemoryReadChecked(0,R::Status+12,marker) || marker!=T::Magic
    || !io.TokenMemoryReadChecked(0,R::Status+8,error) || error)return Fail(io,r);
+#endif
   r.firstPC=io.RuntimePcRead();
   if(!Sources(io,0))return Fail(io,r);
   r.secondPC=io.RuntimePcRead();

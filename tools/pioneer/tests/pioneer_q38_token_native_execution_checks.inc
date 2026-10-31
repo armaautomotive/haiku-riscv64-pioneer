@@ -152,6 +152,32 @@ static void CheckNativeExecution(Fixture& f){
    }
    puts("PASS native outputs exclude ALL120 original store buffers/360 aliases+84 peer-store selection/phase/range refusals preserve output with NO IO;NOT a peer closure or shared-TLB grant");
   }
+#ifdef PIONEER_Q38_TOKEN_FAULT_PROGRAMS
+  {
+   namespace R=PioneerQ38GlobalChainLayout::R;namespace T=PioneerQ38TokenLayout;
+   auto& cpu=*io.executionCpu;const auto faultResets=io.resets;
+   assert(!cpu.faultSavedWrites && !cpu.faultErrorWrites && !io.Raw(0,R::Status+8));
+   io.Raw(0,R::Boot)^=1;cpu.traffic=true; // deliberate boot-data corruption,NEVER a PC/status/history setter
+   for(unsigned round=0;round<10000 && !cpu.faultErrorWrites;round++)io.Pause();
+   assert(cpu.faultSavedWrites==1 && cpu.faultErrorWrites==1 && cpu.markerWrites==1
+    && io.Raw(0,R::Status+8)==PioneerQ38TokenPrograms::FaultMarker
+    && io.Raw(0,R::Status+32)==cpu.regs[1] && !io.Raw(0,T::TerminalLocal)
+    && !cpu.submitted && !io.Core(0).pending && io.resets==faultResets && io.Core(0).coreReset==0x46800);
+   const auto steps=cpu.steps;const uint32_t link=io.Raw(0,R::Status+32);
+   PioneerQ38TokenTerminalResult bad;
+   assert(!ObserveQ38TokenNativeTerminal(c,bad) && bad.started && bad.unsafe && !bad.ready
+    && bad.faultError==PioneerQ38TokenPrograms::FaultMarker && bad.faultSavedLink==link
+    && state->Unsafe() && !state->TerminalObserved() && !state->Closed() && cpu.steps==steps
+    && io.lastAddress==R::Status+32 && io.lastValue==link && io.resets==faultResets);
+   const unsigned touches=io.touches;PioneerQ38TokenTerminalResult again;PioneerQ38TokenExecutionResult cancel;
+   PioneerQ38TokenHoldResult hold;
+   assert(!ObserveQ38TokenNativeTerminal(c,again) && !CancelQ38TokenNativeRoot(c,cancel)
+    && !HoldQ38TokenNativeStopped(c,hold) && io.touches==touches);
+   f.Unknown();
+   printf("PASS actual native virgin ROOT+119 worker histories/deliberate boot-data guard failure/ACTUAL fault trampoline+ordered savedLINK+error stores/native observer exports error%08x savedLINK%08x/owner retained/no terminal,HOLD,retry,following IO or END;SIMULATED endpoints,NOT model correctness/physical/Work/TPS\n",bad.faultError,bad.faultSavedLink);
+   return;
+  }
+#endif
   if(io.terminalFault){
    namespace C=PioneerQ38GlobalChainLayout;namespace T=PioneerQ38TokenLayout;
    if(io.terminalFault==1)io.Raw(0,C::R::Status+8)=1;

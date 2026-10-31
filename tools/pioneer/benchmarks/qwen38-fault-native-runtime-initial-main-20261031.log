@@ -1,0 +1,21 @@
+In file included from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_token_native_initialization_test.cpp:609:
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_token_native_execution_checks.inc:165:52: error: no member named 'terminalHoldOrder' in 'PioneerSessionIO'
+  165 |     && !cpu.submitted && !io.Core(0).pending && io.terminalHoldOrder.empty());
+      |                                                 ~~ ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h:75:25: note: expanded from macro 'assert'
+   75 |     (__builtin_expect(!(e), 0) ? __assert_rtn(__func__, __ASSERT_FILE_NAME, __LINE__, #e) : (void)0)
+      |                         ^
+In file included from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_token_native_initialization_test.cpp:609:
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_token_native_execution_checks.inc:171:65: error: no member named 'terminalHoldOrder' in 'PioneerSessionIO'
+  171 |     && io.lastAddress==R::Status+32 && io.lastValue==link && io.terminalHoldOrder.empty());
+      |                                                              ~~ ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h:75:25: note: expanded from macro 'assert'
+   75 |     (__builtin_expect(!(e), 0) ? __assert_rtn(__func__, __ASSERT_FILE_NAME, __LINE__, #e) : (void)0)
+      |                         ^
+2 errors generated.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py", line 327, in <module>
+    subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['c++', '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '-DPIONEER_DRIVER_BUILD_TAG=0x5154334e4f445256ULL', '-DPIONEER_Q38_DECODER_RUNTIME=1', '-DPIONEER_Q38_FFN_GRAPH_INPUT_ROOT=1', '-DPIONEER_Q38_FFN_MODEL_INIT=1', '-DPIONEER_Q38_FFN_NATIVE_GRAPH=1', '-DPIONEER_Q38_FFN_PERSISTENT_GRAPH=1', '-DPIONEER_Q38_GDN_MUTABLE_STATE=1', '-DPIONEER_Q38_LOCAL_DELTA_PROBE=1', '-DPIONEER_Q38_NATIVE_PEER_TEST_BRIDGE=1', '-DPIONEER_Q38_NORMAL_CLOCK=1', '-DPIONEER_Q38_SPAN_FAST=1', '-DPIONEER_Q38_SPAN_PRELOAD=1', '-DPIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY=1', '-DPIONEER_Q38_TOKEN_EMIT_CONTEXT_BODY=1', '-DPIONEER_Q38_TOKEN_FAULT_PROGRAMS=1', '-DPIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC=1', '-DPIONEER_Q38_TOKEN_NATIVE_BOOTSTRAP_FIXTURE=1', '-DPIONEER_Q38_TOKEN_NATIVE_CONTEXT=1', '-DPIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE=1', '-DPIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE=1', '-DPIONEER_Q38_TOKEN_NATIVE_PEER_FIXTURE=1', '-DPIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE=1', '-DPIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE=1', '-DPIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT=1', '-DPIONEER_Q38_TOKEN_PUSHED_PROGRAMS=1', '-DTT_PIONEER_DRIVER_RELOAD=1', '-DTT_PIONEER_EXPERIMENTAL_Q38_AFFINE=1', '-DTT_PIONEER_EXPERIMENTAL_Q38_BANKS=1', '-DTT_PIONEER_EXPERIMENTAL_Q38_BLOCK=1', '-DTT_PIONEER_EXPERIMENTAL_Q38_COHORT=1', '-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH=1', '-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR=1', '-DTT_PIONEER_EXPERIMENTAL_Q38_PANEL=1', '-DTT_PIONEER_EXPERIMENTAL_Q38_STREAM=1', '-D_KERNEL_MODE=1', '-Dapi_version=pioneer_token_init_test_api_version', '-Dfind_device=pioneer_token_init_test_find_device', '-Dinit_driver=pioneer_token_init_test_init_driver', '-Dinit_hardware=pioneer_token_init_test_init_hardware', '-Dpublish_devices=pioneer_token_init_test_publish_devices', '-Duninit_driver=pioneer_token_init_test_uninit_driver', '-I/private/tmp/pioneer-token-native-init-utodyn4f', '-I/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_token_native_initialization_test.cpp', '/private/tmp/pioneer-token-native-init-utodyn4f/native-peer-engine.o', '-o', '/private/tmp/pioneer-token-native-init-utodyn4f/test']' returned non-zero exit status 1.

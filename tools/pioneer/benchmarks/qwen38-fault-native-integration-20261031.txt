@@ -1,0 +1,105 @@
+Fault-reporting ROM:native integration and actual guard-failure histories
+======================================================================
+2026-10-31. Goal ACTIVE. Last measured physical whole27B0.207893161
+tokens/sec,20 UNMET. This is a diagnostic integration,not a speedup.
+
+Actual change,with old builds preserved
+--------------------------------------
+The separate fault-entry firmware qualified by1ee90687db is now bound to
+an ACTUAL private native compile-only context. A new immutable program
+namespace includes its four ROOT sections and the unchanged nine QGW3
+worker sections. The existing generator's explicit --fault-marker mode
+authenticates ALL15 complete artifacts,including both whole ELFs,BEFORE
+emitting DATA from those SAME snapshots. Existing --pushed-completion
+still reproduces its exact old header692a5296c0bc3a19af30ffe9207288343
+28acb05f2122c11c9f95abefd09256f. No old program header is overwritten.
+New header SHA4e7a5fa71d546fb859c26376db50159bf6126c9e1185f48a36f7bad51eb11cdd.
+
+The selector rechecks defined0/late additions/removals and disallows old
+program aliasing,CPU reference,Work,USER clients and BOTH physical native
+roles. Native use requires the existing exact private QT3NODRV parents
+and held-hidden diagnostic. This revision CANNOT be installed as tag75
+or selected by an old public client. No public operation or Work grant.
+G3 layout,worker grammar,all53,913,832 journal bytes,arithmetic,deadlines,
+cancellation,STOP/HOLD/restoration/ownership and default code stay intact.
+
+The real native terminal observer reads the existing nonzero status error
+through its checked ROOT-local access. Only error51465431 causes one extra
+checked read of existing Status[8]. The private64B result uses its last two
+words for faultError and faultSavedLink;actual SDK static assertions bind
+offsets56/60. An error STILL fails and retains resources,without terminal,
+HOLD,retry,reset,implicit END or following ordinary IO. The saved ra LINK
+is DATA,not necessarily the failed guard or a retired PC,not an address
+to execute/read and NEVER a cleanup receipt. Unselected builds retain the
+exact original result declaration and combined error predicate.
+
+Independent final DATA and SDK qualification
+-------------------------------------------
+Frozen clean:/private/tmp/pioneer-q38-fault-native-clean-if.0E97PXZD,
+HEAD1ee90687db plus ONLY13 cmp-verified source/test/generated files.
+Main46910 and clean65128 final SDK checks BOTH actually exited0.
+The ACTUAL fault-ROM native objects are byte-identical,SHA
+0983c720820cc6ad8d54c522f16d6bc5c6bac2248981ead5b79a84afcb2ecd4c.
+All13 compiled arrays match the complete artifact pins;old program arrays
+are absent;the full2MiB RoPE is unchanged. Real observer,controller and
+FD/team/thread call-scope bodies are emitted. All10 conventional renamed
+body/wrapper entries match independent inert controls. No CPU-model oracle,
+Work,validation session or TEST-instruction engine is imported. Individual
+frames remain within the existing bounds;combined kernel stack is NOT
+newly certified. Old default native G3 still matches literal c78a84c7ec8f
+74c0f73f74e67579dfa94bcc71399145508fcb062619844c9b80;pin was NOT retargeted.
+
+Final DATA main11915/clean86364 BOTH actually exited0,identical logs:
+ALL120 workers/3,048,876 code words match authenticated sections and fit
+the unchanged journal;2290 immutable-output/gap/runtime/address refusals;
+30 corrupt/truncated-artifact refusals;28 exact/defined0/late-selector
+refusals. The existing old program suite3889 also exited0,including its
+36 input/overwrite/symlink/role refusals,27 section-map refusals and four
+legacy coexistence controls. No hardware execution is inferred from DATA.
+
+Actual fault,not a supplied PC,status or completion
+-------------------------------------------------
+Native runtime main36428 and independent clean1335 BOTH actually exited0.
+Each constructs its own native owner,executes1010 genuine zero jobs across
+73728 recurrent pages,1680 history pages and512 workspace pages,stages
+ALL120 L1 images,then boots119 VIRGIN workers and starts the VIRGIN ROOT.
+The test first exercises genuine pending-terminal/early-HOLD/read/restore
+refusals. It then deliberately corrupts ONE boot DATA word and resumes
+the SAME instruction history;it does not set PC,ra,status,terminal or ready.
+The actual firmware guard fails,returns through the new fault trampoline,
+writes savedLINK before error51465431 and parks. The actual scoped native
+observer returns unsafe1/ready0/error51465431/savedLINK000642c0. Ownership
+and all host/bank/clock resources remain quarantined;no reset,HOLD,terminal,
+retry,following ordinary IO or END is granted. These are actual processor
+and native-controller histories over SIMULATED OS/VM/NoC endpoints,NOT
+real-card behavior,original27B products,multi-token correctness or Work.
+
+Complete paired23-line runtime logs are byte-identical,SHA
+e6566a350082f9f9857023db25dd6545d67b186745154277ba6abbd6065a01ef.
+Paired3-line DATA logs are identical,SHA
+ea0181e9af93e70b383d66f3db9e3761d982ebdea02a3b1603dbf834f0dae940.
+Nine raw logs,including initial failures,were copied/cmp-checked verbatim.
+SDK logs retain their genuine absolute source paths;object bytes,not log
+path spellings,are the independently identical artifact.
+
+Initial failures were fixed,not accepted
+--------------------------------------
+Initial SDK67489 exited1 because splitting the old default error predicate
+changed its object hash. The original predicate/declaration now remain
+literally under the unchanged default branch;final old c78 pin passes.
+Initial runtime22427 exited1 DURING compilation because its test referenced
+a HOLD-profile-only observation member. It now checks the actual unchanged
+reset history and live ROOT state;the final two runtime histories pass.
+No model tolerance,pin,timeout,hardware guard or ownership rule was relaxed.
+
+Physical status and next required integration
+--------------------------------------------
+The Pioneer remains stable041/tag12/gen2/cold0/owner0,64CPUs/full128GB,
+as independently verified after recovery798729478f. None of this new code
+was copied to or installed on the card;no Assistant/OS/network/power/SD/
+mains/hardware change occurred after that recovery. Still required BEFORE
+any physical fault-ROM trial:a distinct qualified physical driver binding,
+actual failure-detail export/logging,exact install/restore route and its
+native stack/lifecycle tests. Then resume divergence diagnosis,full27B
+quality+normal/EOS,state retention,no-CPU-reference Work and real sustained
+speed measurements. The usable fast model remains the actual goal.
