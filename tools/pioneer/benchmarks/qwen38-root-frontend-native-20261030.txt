@@ -1,0 +1,97 @@
+ROOT frontend seal: completed original native cancellation predecessor
+====================================================================
+2026-10-30 local/2026-10-31 UTC. Goal ACTIVE;20tok/s UNMET.
+Last physical whole-model rate remains0.207893161tok/s. These are native
+kernel/controller plus full firmware instruction-engine tests with SIMULATED
+OS/PCI/NoC endpoints,NOT physical speed or a full-model/Work result.
+
+Both ORIGINAL50859/5548 completed with actual exit0
+-------------------------------------------------
+Sources and exact5f2fc63d module builds are recorded in
+ qwen38-root-frontend-preparation-20261030.txt (kernel checkpoint347630e30f)
+USER consumer,exact3638 client,8bed updater and staged files are recorded in
+ qwen38-root-frontend-client-updater-20261030.txt (checkpointa9c2fc8b58)
+No history was restarted for a slow/empty observation. Source archives were
+unchanged in all runtime/firmware code throughout each original execution.
+
+Each run authenticated original SAME-open851-tensor model bytes,executed all
+1010 actual zero-ROM jobs,staged37782528 actual metadata bytes,booted SAME
+virgin119 G3 full tensor/worker instruction engines plus ROOT,and executed
+the complete original first layer:actual matrices,Conv,GDN and FFN on shared
+native recurrent/history/workspace backing. ROOT158620094 instructions;
+workers2275298560 instructions at the actual first-layer boundary. Measured
+accelerator instruction stacks remain ROOT6672/8192,largest peer5360/8192;
+these do NOT qualify the separate Haiku host-kernel interrupt/syscall stack.
+
+RAW-only debug endpoint variation,not a supplied execution history
+-----------------------------------------------------------------
+At real startup/unpublished observation,RAW0/UINTMAX/60000/60008/60004/40010
+samples cannot invent terminal readiness or HOLD. The actual virgin engine
+PC,registers,model products,terminal bytes and ownership state are never
+set/transplanted to obtain a pass. All actual peer bootstrap checks remain.
+
+After actual layer arithmetic,the SAME single real cancellation request
+is consumed. ROOT executes239972139 instructions and all119 real workers
+perform STOP,then remain inert for2048 real instructions each. Only RAW
+debug samples change to60008;actual ROOT stays at60004. The actual current
+boot,terminal/source/nonces/all119 STOP journals/status/counters/FIFO and
+immutable ROOT code seal accepts the receipt without treating RAW PC as
+retirement proof. CodeSpan60008 remains OUTSIDE the unchanged8-byte image.
+
+The actual HoldStopped rechecks the SAME current receipt and immutable
+ROOT code under6 RAW60008 snapshots,then performs120 ROOT-first HOLDs.
+ALL original counters/commands stay unchanged;no CPU ready hint,product or
+substituted image grants closure. Zero committed records drain without a
+GDDR packet or invented token. The SAME histories continue through EVERY
+original token-L1 and120 dispatch-original restoration,119 peer and ROOT
+NIU/scratch restoration,shared original controls,scoped clock END,hardware
+retirement seal,29 OS-view deletions,ordered original PCI restoration,3 OS
+host releases,device unreserve and whole-context destruction. Existing
+malformed/late metadata and alias refusals remain. No following PCI/MMIO/
+OS release,retry or duplicate destruction is permitted after closure.
+This is typed native predecessor qualification,not a complete public USER-
+to-physical-device transaction,full-model numerical result or Work mode.
+
+Both completed86-line runtime logs raw-cmp-match. Unmodified matching archive:
+ qwen38-root-frontend-native-20261030.log
+SHA b36693180446491b3d753240f4f7d39b99ae095fe7e84aa35203835e4e1bf726
+Originals:/private/tmp/pioneer-q38-root-frontend-native-{main,clean}-20261030-gh.log
+Do NOT poll or restart completed50859/5548.
+
+Independent post-execution numerical DATA comparison:ZERO differences
+---------------------------------------------------------------------
+Only AFTER each actual runtime completed,compare_pioneer_q38_observed_trace.py
+--first-layer-only compared EACH original emitted prefix against the fixed
+SHA-pinned cpu-original-trace-20261028 corpus. Both actual comparisons exit0:
+embedding5120 and final layer0 hidden5120 each bitDifferences0/maxAbs0/
+relativeL20. No tolerance,diagnostic-only flag,retargeted input or CPU product
+fed to execution was used. Both41028-byte prefixes raw-cmp-match with SHA:
+ 4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+Paired complete3-line comparison logs raw-cmp-match;unmodified archive:
+ qwen38-root-frontend-native-prefix-20261030.log
+SHA8e2e6a371b044f8db5d982159dc17c0163fcaf5ee90864886d6ab6a01282ab94
+
+Original durable byte-exact copies were made into a fresh nonexisting path:
+ generated.pioneer/qualification-inputs/observed-token-root-frontend-native-20261030-gj/{main,clean}/prefix-0.bin
+EACH durable copy was independently re-compared against the fixed corpus,
+also exit0/zero differences. These remain incomplete first-layer diagnostic
+DATA,NOT model tokens or committed full-model/state/positive READ records.
+
+Next physical gate remains pending;no early install
+---------------------------------------------------
+Completed USER269-branch and role regressions,paired actual3638 USER builds,
+860-case paired8bed updater regression,and five completed native fault cases
+are recorded separately. The source-only3638 physical Haiku check remains
+LIVE as original7430;it performs no accelerator Open/ioctl. Wait for its
+actual completion and current no-parent/clean stable041 metadata before
+invoking the exact8bed apply to5f2fc. Older e7ee maps781ab ONLY,and olderf30f
+USER still has the invalid positive-PC predicate;neither belongs to this
+new physical trial. Do not restart a healthy source check on elapsed time.
+
+Then ONE explicit new3638 cancellation-lifecycle diagnostic may test actual
+terminal/HOLD/drain/Finish/clean status on hardware. Close only on a failed
+or uncertain operation;retain resources,no implicit retry/END/reset/restore.
+Preserve standing one-OFF/one-ON recovery rules if recovery is truly needed.
+The original five full-model histories remain separate LIVE work. Full64/
+multitoken/positive records/state reuse/native no-CPU-reference Work/Assistant
+and sustained physical20tok/s remain UNMET. Keep the full goal ACTIVE.
