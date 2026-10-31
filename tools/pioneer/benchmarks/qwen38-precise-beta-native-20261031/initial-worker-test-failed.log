@@ -1,0 +1,9 @@
+PASS QGW3 worker1/type8/ACTUAL fullK5120+1280tensor instructions/162 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor0;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker2/type8/ACTUAL fullK5120+1280tensor instructions/162 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor0;SYNTHETIC endpoints,NOT model/native/physical/TPS
+Assertion failed: (RunPersistentGdnPair(*a,*b,2)), function main, file pioneer_q38_precise_beta_worker_test.cpp, line 56.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_precise_beta_worker_tests.py", line 25, in <module>
+    subprocess.run([str(binary),str(old),str(image)],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-q38-beta-worker-nn4iavu4/test', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/qualification-inputs/mixed-worker-20261030', '/private/tmp/pioneer-q38-precise-beta-worker-main-20261031-np']' died with <Signals.SIGABRT: 6>.

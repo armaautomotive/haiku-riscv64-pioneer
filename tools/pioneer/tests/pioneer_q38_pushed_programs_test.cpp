@@ -13,7 +13,9 @@
 #include <iterator>
 #include <string>
 #include <vector>
-#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_FAULT
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_PRECISE_BETA
+namespace P=PioneerQ38TokenPreciseBetaPrograms;
+#elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_FAULT)
 namespace P=PioneerQ38TokenFaultPrograms;
 #else
 namespace P=PioneerQ38TokenPushedPrograms;
@@ -55,7 +57,10 @@ int main(int argc,char** argv){
    uint32_t unchanged=0xdeadbeef;assert(!P::ProgramWord(worker,address,unchanged) && unchanged==0xdeadbeef);refusals++;
   }
  }
-#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_FAULT
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_PRECISE_BETA
+ assert(P::FaultMarker==0x51465431 && P::FaultSavedLinkOffset==32 && P::PreciseBeta==1);
+ assert(allWords==3044235 && P::CodeWords(0)==40913 && P::CodeWords(1)==25238);
+#elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_FAULT)
  assert(P::FaultMarker==0x51465431 && P::FaultSavedLinkOffset==32);
  assert(allWords==3048876 && P::CodeWords(0)==40913 && P::CodeWords(1)==25277);
 #else

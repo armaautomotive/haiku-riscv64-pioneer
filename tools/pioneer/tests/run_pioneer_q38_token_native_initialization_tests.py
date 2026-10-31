@@ -9,6 +9,10 @@ import subprocess
 import sys
 import tempfile
 
+precise_beta = '--precise-beta' in sys.argv
+if precise_beta:
+    assert sys.argv.count('--precise-beta')==1
+    sys.argv.remove('--precise-beta')
 fault_marker = '--fault-marker' in sys.argv
 posted_cancel = '--posted-cancel' in sys.argv
 if posted_cancel:
@@ -50,6 +54,8 @@ pushed_context = '--pushed-context' in sys.argv
 if pushed_context:
     assert sys.argv.count('--pushed-context') == 1 and not precise_context, 'QTP3 cannot mix with QTP2,including explicit selectors'
     sys.argv.remove('--pushed-context')
+if precise_beta:
+    assert pushed_context and not precise_context and not fault_marker, 'precise-beta TEST requires its distinct G3 code package,not QTP2/fault-injection aliases'
 if fault_marker:
     assert pushed_context and len(sys.argv)==5 and sys.argv[2]=='--execution-fault-marker' \
         and not any((held_hidden_readout,root_frontend_snapshots,control_operations,control_adapter,backend_finish)), 'fault TEST requires separate G3 virgin-engine diagnostic,not model/END/Work qualification'
@@ -119,6 +125,8 @@ if full_layer:
 embedding = first_matrix or len(sys.argv) == 4 and sys.argv[2] in embedding_modes
 peer_bootstrap = fault_marker or len(sys.argv) == 5 and sys.argv[2] == '--bootstrap-peer-engines'
 peer_engines = full_end_contract or peer_bootstrap or first_matrix
+if precise_beta:
+    assert peer_engines, 'precise-beta TEST requires virgin engines or the original full native predecessor;not an endpoint-only alias'
 if precise_context:
     assert peer_engines or sys.argv[2:]==['--preparation-endpoint-contract'], 'QTP2 execution requires actual virgin peer instruction engines;endpoint-only contract executes NO worker/model instructions'
 if pushed_context:
@@ -136,7 +144,7 @@ here = pathlib.Path(__file__).resolve().parent
 if peer_engines:
     peer_arg = 3 if full_end_contract or peer_bootstrap else 4
     for directory, script in ((pathlib.Path(sys.argv[peer_arg]), here/'run_pioneer_q38_mixed_worker_tests.py'),
-                              (pathlib.Path(sys.argv[peer_arg+1]), here.parent/'build_qwen38_pushed_worker_image.py' if pushed_context else here/'run_pioneer_q38_precise_worker_tests.py' if precise_context else here.parent/'build_qwen38_global_worker_image.py')):
+                              (pathlib.Path(sys.argv[peer_arg+1]), here.parent/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here.parent/'build_qwen38_pushed_worker_image.py' if pushed_context else here/'run_pioneer_q38_precise_worker_tests.py' if precise_context else here.parent/'build_qwen38_global_worker_image.py')):
         assert directory.is_absolute()
         tree = ast.parse(script.read_text())
         pins = next(ast.literal_eval(n.value) for n in tree.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'PINS' for t in n.targets))
@@ -155,6 +163,9 @@ if precise_context:
 if pushed_context:
     defines.update(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT='1', PIONEER_Q38_TOKEN_PUSHED_PROGRAMS='1',
                    PIONEER_DRIVER_BUILD_TAG='0x5154334e4f445256ULL')
+if precise_beta:
+    defines.update(PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS='1',PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',
+                   PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')
 if posted_cancel:
     defines.update(PIONEER_Q38_TOKEN_POSTED_CANCEL='1',PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',
                    PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')
@@ -320,6 +331,13 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
             peer_flags += ['-DPIONEER_Q38_TOKEN_PRECISE_PROGRAMS=1']  # DATA only;never native/kernel roles
         if pushed_context:
             peer_flags += ['-DPIONEER_Q38_TOKEN_PUSHED_PROGRAMS=1']  # distinct HOST DATA,NEVER BUILD/native/kernel flags
+        if precise_beta:
+            peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_PRECISE_BETA_TEST=1']
+            rom_object=base/'precise-beta-expected-rom-data.o'
+            subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
+                            '-fsanitize=address,undefined','-c',str(here/'pioneer_q38_precise_beta_program_data_bridge.cpp'),
+                            '-o',str(rom_object)],check=True)
+            extra += [str(rom_object)] # DATA TU has NO inherited tensor-Work/native/CPU-oracle roles
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
                         '-fsanitize=address,undefined', *peer_flags, '-c', str(here/'pioneer_q38_native_peer_test_bridge.cpp'), '-o', str(peer_object)], check=True)
         extra += [str(peer_object)]  # HOST-only TU;never native/kernel-role flags

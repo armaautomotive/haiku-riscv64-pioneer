@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // DATA selection only; no native source/lifetime, journal or launch grant.
 // Rechecked outside the guard so late/defined-zero changes cannot alias data.
+#include "PioneerQ38TokenPreciseBetaProgramsRole.h"
 #include "PioneerQ38TokenFaultProgramsRole.h"
 #ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
 #if PIONEER_Q38_TOKEN_PUSHED_PROGRAMS != 1 || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) \
@@ -12,7 +13,9 @@
 #elif defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
 #error QTP3 native selector requires its actual native parent
 #endif
-#ifdef PIONEER_Q38_TOKEN_FAULT_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS
+#include "PioneerQ38TokenPreciseBetaPrograms.h"
+#elif defined(PIONEER_Q38_TOKEN_FAULT_PROGRAMS)
 #include "PioneerQ38TokenFaultPrograms.h"
 #else
 #include "PioneerQ38TokenPushedPrograms.h"
@@ -20,7 +23,9 @@
 #include "PioneerQ38TokenFootprint.h"
 #ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
-#ifdef PIONEER_Q38_TOKEN_FAULT_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS
+namespace PioneerQ38TokenPrograms=PioneerQ38TokenPreciseBetaPrograms;
+#elif defined(PIONEER_Q38_TOKEN_FAULT_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenFaultPrograms;
 #else
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenPushedPrograms;

@@ -1,0 +1,124 @@
+Precise GDN beta: emitted execution and private native integration
+================================================================
+2026-10-31. Goal ACTIVE. Last confirmed whole-model baseline remains
+0.207893161 tokens/sec;20 tokens/sec UNMET. Candidate NOT installed.
+No new physical numerical pass or performance improvement is claimed.
+
+Actual preparation instructions
+-------------------------------
+Independent main/clean inspection builds and frozen default reruns all
+exited0 and agree. The probe compiles the ACTUAL existing preparation
+source with the explicit combined-input/precise-beta roles,not a host
+substitute for the selected function. Fixed code6476B SHA:
+2cec5069905e82faf1d42c2263c7206ea8fcef708cf172ee2fd0f18e55e627d4
+Whole ELF15932B SHA:
+9fcb223a34689cbca39decfb875e6d957e3b2d13d37d260e63cc0268c89c77ac
+No undefined symbols,writable globals,CSR or unqualified instructions.
+Maximum individual frame96B. No device access or native image selection.
+
+Actual RV32/FTZ-F32 main33041 and clean61928 both exited0;logs identical:
+480 full-head cases over ALL96 halves and five raw q/k trials,42 critical
+beta cases including original layer29 logits and adjacent representable
+values,and1097 invalid-header/input refusals. All q/k outputs and the
+critical beta values match the independent reference by bits. Other beta
+checks retain the existing isolated sigmoid's <=1ULP qualification scope;
+the full-model comparator has NOT been relaxed. Invalid half provenance
+mutations that remain in0..95 are valid inputs,not false refusals.
+Raw inputs,headers,guards remain unchanged;actual terminal parks inert.
+Maximum combined observed stack244/8192. These are LOCAL scalar tests,
+not a whole model,119-worker context,physical or throughput result.
+
+Actual complete candidate worker
+--------------------------------
+Main58396 and clean77265 both exited0;logs identical. Six VIRGIN workers,
+paired heads0,31,47,execute their candidate ROM from the initial boot:
+one genuine fullK5120 matrix and actual ACK-gated payload+commit,then
+two GDN state-update steps with changed raw beta inputs,then actual STOP
+and2048 inert instructions. All12 GDN half-jobs check the existing exact
+byte/counter/summary/paired-state proofs and an additional BIT-EXACT beta
+check. The second step consumes the actual previous next-state bytes.
+No PC,register,tensor-history or ready/completion setter is used.
+Maximum combined observed stack4804/8192. Synthetic byte/NoC endpoints
+are explicit;this is not ALL64 model arithmetic or native ownership.
+
+The initial new compound test correctly failed at the worker's cumulative
+counter guard. Its endpoint changed from matrix to GDN accounting without
+retiring the completed matrix packet list. The fix preserves EVERY actual
+counter value across the bookkeeping transition and asserts equality
+before/after;no guest counter is reset/rebased. The old failed logs remain
+failures. A read-only PC trail identifies the actual comparison at2136c.
+No firmware guard,completion limit or mathematical check was weakened.
+
+Immutable package and role boundaries
+--------------------------------------
+The generator has an explicit new --precise-beta mode. All old modes
+remain byte-identical,including the old fault package and literal header
+SHA4e7a5fa7. Both new complete ELFs and all13 code sections are authenticated
+before creating the exclusive output. New separate header SHA:
+0e7e21ee62832062fd809ac7af8b9d5da00bb479778f559bc808e4dcede156bd
+It contains the unchanged fault ROOT and exact candidate worker sections.
+ALL120 code mappings,3044235 words,are checked by bits against the original
+authenticated artifacts and remain inside the existing full journal.
+The shorter GDN code has an exact shorter span;NO implicit zero padding,
+runtime data access or expanded snapshot authority is introduced.
+
+New package tests88061/70248 both exited0;logs identical. They also refuse
+30 corrupt/truncated artifacts,34 foreign/defined-zero/old-owner/late
+selectors and12 foreign roles at the expected-ROM DATA bridge. Old fault
+program regression18261/72887 both exited0,old header unchanged,all120
+old code words still exact. Existing native-peer isolation tests37681/
+30270 both exited0:37 positives and1103 invalid-role refusals.
+
+The first new native-test compilation correctly refused importing the
+new DATA package into the old tensor-test TU carrying a historical Work
+format flag. The fix is a SEPARATE HOST DATA translation unit,without
+native,tensor-Work or CPU-oracle roles. The tensor engine asks only for
+const expected ROM words,then still compares EVERY fetched instruction
+against the SAME installed L1 byte backing. NO #undef,guard exception,
+caller product or injected processor state was added.
+
+Actual private SDK and ALL119 native boots
+------------------------------------------
+The actual private kernel-source SDK objects46269/19723 both exited0 and
+are byte-identical SHA:
+4b2098cf7fe33edf0450d8e50cec4b8b82efb992c74b38175d773b4cdf2a2ae8
+All13 compiled arrays hash EXACTLY to the new header;old program namespaces
+are absent. The2MiB RoPE array is unchanged. Real native owner,controller,
+terminal observer and FD-scoped hidden reader are emitted;no CPU-reference,
+Work or synthetic-test imports. Conventional loadable driver ABI is absent.
+Individual module frames are bounded against the old qualified SDK object;
+whole-kernel stack and physical qualification are NOT claimed.
+
+Both use the SAME SHA-bound old SDK compiler command/object;only the new
+source/output change. Shared standard/generated Haiku SDK headers remain
+read-only shared inputs. The independent project implementations/includes
+come from each checkout. An initial clean attempt incorrectly remapped
+shared SDK headers to an incomplete archive and was fixed. Template
+InspectTerminal<...> and extern-C symbols are inspected by their actual
+emitted names,not guessed demangler spellings. Those initial inspections
+were failures and are not relabeled as passing runtime tests.
+
+Main92255 and clean47797 BOTH actually exited0;logs identical. The actual
+native initialization factory performs full851 setup,1010 genuine zero
+jobs/STOP/HOLD,all120 installed L1 histories,4616 metadata packets and
+complete readback,then boots ALL119 virgin candidate worker instruction
+engines directly against SAME shared L1/CSR backing. It observes15049216
+actual instructions,maxWrittenStack1972,ALL ARM before ANY release,
+two actual WAIT PCs and unchanged physical counters. ROOT remains HELD;
+legacy flags and ordinary commands/early cleanup remain refused.
+This proves those native initializers+boot histories,NOT model RUN or END.
+
+Next original full predecessor is RUNNING,not completed
+-------------------------------------------------------
+ONE first-layer/posted-cancel/STOP/HOLD/readback/full-END run in each tree
+was launched as53060 and37677. They use the full SAME-open original GGUF,
+actual new119-worker engines and all existing restoration checks. They
+have not yet produced terminal success. Poll the SAME handles;do not
+restart on an observation timeout or supply a completion/CPU product.
+Logs:/private/tmp/pioneer-q38-beta-native-layer-{main,clean}-20261031-{ou,ov}.log
+
+The installed Pioneer is unchanged. Its fresh CPU-only status/hash/CPU/RAM
+observations are archived. Still required:actual corrected full generation,
+normal+EOS/state,physical-safe module binding/deployment,resident weights
+across fresh requests,Assistant no-reference Work integration,and measured
+sustained performance toward20 tokens/sec. Keep the entire goal ACTIVE.

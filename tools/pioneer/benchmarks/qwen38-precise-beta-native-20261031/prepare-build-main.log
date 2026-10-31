@@ -1,0 +1,4 @@
+('boot.bin', 4, 'd0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6')
+('code.bin', 6476, '2cec5069905e82faf1d42c2263c7206ea8fcef708cf172ee2fd0f18e55e627d4')
+('program.elf', 15932, '9fcb223a34689cbca39decfb875e6d957e3b2d13d37d260e63cc0268c89c77ac')
+BUILD_ONLY actual combined GDN preparation+precise beta/maxIndividualFrame96;LOCAL_DATA_ONLY_NOT_WORKER_NATIVE_PHYSICAL_WORK_OR_TPS;DO_NOT_INSTALL

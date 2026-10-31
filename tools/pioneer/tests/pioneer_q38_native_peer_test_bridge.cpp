@@ -36,10 +36,25 @@
 #include <unistd.h>
 #define PIONEER_Q38_INSTRUCTION_STACK_OBSERVER_TEST 1
 #include "PioneerQ38InstructionStackObserver.h"
+#ifdef PIONEER_Q38_NATIVE_PEER_PRECISE_BETA_TEST
+#if PIONEER_Q38_NATIVE_PEER_PRECISE_BETA_TEST != 1
+#error Exact separate HOST native-peer beta TEST required
+#endif
+#include "pioneer_q38_precise_beta_program_data_bridge.h"
+#endif
 namespace NativeQ38PeerInstructionModel {
 #define PIONEER_Q38_GLOBAL_CHAIN_MACHINE_ONLY
 #include "pioneer_q38_global_chain_instruction_test.cpp"
+#ifndef PIONEER_Q38_NATIVE_PEER_PRECISE_BETA_TEST
 #include "../PioneerQ38TokenSelectedPrograms.h"
+#endif
+static bool ExpectedProgramWord(unsigned worker,uint32_t address,uint32_t& output){
+#ifdef PIONEER_Q38_NATIVE_PEER_PRECISE_BETA_TEST
+ return Q38PreciseBetaTestProgramWord(worker,address,output);
+#else
+ return PioneerQ38TokenPrograms::ProgramWord(worker,address,output);
+#endif
+} // expected CONST ROM DATA,never a guest memory or arithmetic product source
 struct NativePeer:GlobalChainPeer,CohortBytes {
  PioneerQ38SharedTestBinding& binding;unsigned deviceReads=0,deviceWrites=0,statusWrites=0,scalarFpInstructions=0;
  uint32_t publishedCounts[8]={},publishedCommands[10]={};bool publishedPending=false;
@@ -71,7 +86,7 @@ struct NativePeer:GlobalChainPeer,CohortBytes {
  void Put(unsigned route,unsigned address,uint32_t value)override{assert(binding.bytes.put(binding.bytes.context,route,address,value));}
  uint64_t Clock()const override{return binding.bytes.clock(binding.bytes.context);}
  uint32_t RootWord(unsigned address)const override{return binding.bytes.word(binding.bytes.context,0,address);}
- bool CodeAddress(uint32_t address)const override{uint32_t word;return PioneerQ38TokenPrograms::ProgramWord(logicalWorker,address,word);}
+ bool CodeAddress(uint32_t address)const override{uint32_t word;return ExpectedProgramWord(logicalWorker,address,word);}
  unsigned Index(uint32_t address)override{assert(!(address&3) && address<0x180000);return address/4;}
  unsigned StepLimit()const override{return 4000000000U;}
  void Publish(unsigned commandWrites=0){
@@ -96,7 +111,7 @@ struct NativePeer:GlobalChainPeer,CohortBytes {
   if(Range(address,0xffb20000,0x2000))Publish(Range(address,0xffb20000,40)?1U<<((address-0xffb20000)/4):0U);
  }
  void StepBlock()override{
-  uint32_t expected;assert(PioneerQ38TokenPrograms::ProgramWord(logicalWorker,pc,expected) && binding.Word(pc)==expected);
+  uint32_t expected;assert(ExpectedProgramWord(logicalWorker,pc,expected) && binding.Word(pc)==expected);
   const unsigned opcode=expected&127;if(opcode==7 || opcode==0x27 || opcode==0x53)scalarFpInstructions++;
   // Parent service FP decoders may use their immutable ROM byte vectors.
   // ALL instruction bytes must first equal this SAME installed L1 word.

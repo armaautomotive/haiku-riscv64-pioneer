@@ -42,17 +42,18 @@ def require_complete_sections(units, sources):
                 'section coverage: every authenticated code section exactly once')
 
 def main():
-    require(len(sys.argv) == 5 and sys.argv[4] in ('--cancel-boundary', '--no-cancel', '--precise-activation', '--pushed-completion', '--fault-marker'), 'explicit exact FP32 token variant required')
+    require(len(sys.argv) == 5 and sys.argv[4] in ('--cancel-boundary', '--no-cancel', '--precise-activation', '--pushed-completion', '--fault-marker', '--precise-beta'), 'explicit exact FP32 token variant required')
     require(not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ), 'role overrides refused')
     root, worker, output = map(pathlib.Path, sys.argv[1:4])
     require(all(p.is_absolute() for p in (root, worker, output)) and not output.exists() and not output.is_symlink(), 'new absolute output required')
     here = pathlib.Path(__file__).resolve().parent
-    fault = sys.argv[4] == '--fault-marker'
+    precise_beta = sys.argv[4] == '--precise-beta'
+    fault = precise_beta or sys.argv[4] == '--fault-marker'
     pushed = fault or sys.argv[4] == '--pushed-completion'
     precise = pushed or sys.argv[4] == '--precise-activation'
     cancel = precise or sys.argv[4] == '--cancel-boundary'
     r = authenticated(root, pins(here/'build_qwen38_token_fault_marker_image.py', 'PINS') if fault else pins(here/'build_qwen38_token_root.py', 'PINS_CANCEL_F32_PUSHED' if pushed else 'PINS_CANCEL_F32_PRECISE' if precise else 'PINS_CANCEL_F32' if cancel else 'PINS_F32'))
-    w = authenticated(worker, pins(here/'build_qwen38_pushed_worker_image.py' if pushed else here/'tests/run_pioneer_q38_precise_worker_tests.py' if precise else here/'build_qwen38_global_worker_image.py', 'PINS'))
+    w = authenticated(worker, pins(here/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here/'build_qwen38_pushed_worker_image.py' if pushed else here/'tests/run_pioneer_q38_precise_worker_tests.py' if precise else here/'build_qwen38_global_worker_image.py', 'PINS'))
     units = [(r, 'boot', 'RootBoot', 0x6000), (r, 'text', 'RootText', 0x40000),
              (r, 'terminal', 'RootTerminal', 0x60000), (r, 'conv', 'RootAux', 0x64000)]
     units += [(w, name, label, address) for name, label, address in (
@@ -76,14 +77,17 @@ def main():
         if fault:
             lines[1] = '// Mechanically generated from fixed fault-reporting ROOT and unchanged QGW3 artifacts.'
             lines[2] = '// Separate immutable DATA namespace; the native selector is COMPILE-ONLY.'
+        if precise_beta:
+            lines[1] = '// Mechanically generated from fixed fault-reporting ROOT and precise-beta QGW3 artifacts.'
+            lines += ['#include "PioneerQ38TokenPreciseBetaProgramsRole.h"']
     elif precise:
         lines[1] = '// Mechanically generated from COMPLETE fixed precise persistent-token/QGW2 artifacts.'
         lines += ['#include "PioneerQ38TokenPreciseProgramsRole.h"']
     else:
         lines += ['#ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS', '#include "PioneerQ38TokenPrecisePrograms.h"', '#else']
-    program_namespace = 'PioneerQ38TokenFaultPrograms' if fault else 'PioneerQ38TokenPushedPrograms' if pushed else 'PioneerQ38TokenPrograms'
+    program_namespace = 'PioneerQ38TokenPreciseBetaPrograms' if precise_beta else 'PioneerQ38TokenFaultPrograms' if fault else 'PioneerQ38TokenPushedPrograms' if pushed else 'PioneerQ38TokenPrograms'
     footprint_namespace = 'PioneerQ38TokenPushedL1' if pushed else 'PioneerQ38TokenL1'
-    guard = 'PIONEER_Q38_TOKEN_FAULT_PROGRAMS_H' if fault else 'PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H' if pushed else 'PIONEER_Q38_TOKEN_PROGRAMS_H'
+    guard = 'PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS_H' if precise_beta else 'PIONEER_Q38_TOKEN_FAULT_PROGRAMS_H' if fault else 'PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H' if pushed else 'PIONEER_Q38_TOKEN_PROGRAMS_H'
     lines += [
              '#ifndef '+guard, '#define '+guard,
              '#include "PioneerQ38TokenPushedFootprint.h"' if pushed else '#include "PioneerQ38TokenFootprint.h"',
@@ -91,6 +95,8 @@ def main():
              f'enum {{Family=0x{0x33505451 if pushed else 0x32505451 if precise else 0x31505451:x},Version=1,CancelBoundary={int(cancel)}}};']
     if fault:
         lines += ['enum {FaultMarker=0x51465431,FaultSavedLinkOffset=32}; // LINK DATA,not a retired PC or STOP receipt']
+    if precise_beta:
+        lines += ['enum {PreciseBeta=1}; // distinct immutable math revision,not an old owner or Work alias']
     for data_set, name, label, address in units:
         data = data_set[name+'.bin']
         require(data and not len(data)%4 and not address%4 and address+len(data) <= 0x180000, f'{label}: extent')
