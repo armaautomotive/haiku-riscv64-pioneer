@@ -1,0 +1,13 @@
+b74f4bfa5583aaf0cf8272d5136c73336c1db0f93e168e7212277f97705a92cc  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+be719df81aa66466353347089f42ff4bd53f0f05dcc75408ab24ed44c0748aeb  /boot/home/pioneer-q38-boundary75-client-20261031-be719df8/pioneer-q38-token-DEBUG75-BOUNDARY-DIAGNOSTIC-ONLY
+P100A_RELOAD driver55 tag2026103100010075 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133796474880 bytes free      (used/max 3238461440 / 137034936320)
+                           (cached   19174666240)
+     64472 semaphores free (used/max       1064 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3901 threads free    (used/max        195 /       4096)
+      2025 teams free      (used/max         23 /       2048)
+NEW_BOUNDARY_OUTPUT_ABSENT

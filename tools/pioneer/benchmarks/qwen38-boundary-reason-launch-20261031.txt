@@ -1,0 +1,69 @@
+Corrected diagnostic: real source check0; one new physical history LIVE
+=====================================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. Last whole-model rate remains
+0.207893161 tokens/sec. This launch is NOT a capture,numeric or speed pass.
+Codea7b47e3e1f is pushed/remote verified. The actual failed57871 and complete
+one-OFF/one-ON recovery are preserved separately;do NOT relabel that failure.
+
+Actual corrected USER source authentication,not a device test
+------------------------------------------------------------
+New immutable path:
+ /boot/home/pioneer-q38-boundary75-client-20261031-be719df8/
+ pioneer-q38-token-DEBUG75-BOUNDARY-DIAGNOSTIC-ONLY
+Remote regular-file check and exact SHA match:
+ be719df81aa66466353347089f42ff4bd53f0f05dcc75408ab24ed44c0748aeb
+Independent paired SDK/lifecycle qualification is in
+qwen38-boundary-first-reason-qualified-20261031.txt. Old1a/5ce and unselected
+6f builds are not overwritten or re-labelled as this corrected program.
+
+Original source-only7259 actually exits0,with:
+ PASS_DEBUG75_BOUNDARY_SOURCE_ONLY reasonnone sampled_pages10653 planned_bytes19399024640;FULL_SHA_PLUS_RAW_SAMPLES_NO_ACCELERATOR_OPEN_OR_INFERENCE
+The whole fixed ORIGINAL GGUF SHA authenticated from the SAME open source,
+all851 descriptors/layout and10653 RAW learned-page samples passed. This
+mode NEVER opens the accelerator or runs a model;no numerical/Work grant.
+The parent is terminal before any driver exchange;never restart/poll7259.
+
+Fresh ownership checks and exact unchanged module exchange
+----------------------------------------------------------
+Stable041/tag12/gen2/quiesced0/cold0/owner0/open1/guard1 is freshly verified
+with exact updaterffa315aa,adminb0c851b3 and newbe719 USER hashes,64CPUs/
+full137034936320B RAM. No compute parent remains. A separate compound
+output-path check confirms the new hp.qhb target is absent before install.
+Original35409 actually exits0 through SINGLE-LINE exec SSH:
+ --apply-token-hidden-readout
+UNCHANGED pinned ffa315aa exchanges stable041/gen2 ->b74/tag75/gen3.
+The independent postinstall hash/status query confirms exactb74 andbe719,
+75/gen3/clean,64CPUs/fullRAM/free133796474880B and absent output target.
+No new firmware,math,driver source,protocol or snapshot format is introduced.
+
+One instrumented physical process54071,not a successful retry claim
+------------------------------------------------------------------
+The previous run's observation reason and phase were hidden. This one adds
+already-validated reply/stage reporting and first-cause-before-Abort while
+preserving the firmware,inputs,source checks,delay/cancellation bounds and
+full explicit cleanup. It does NOT extend a timeout or bypass a failure.
+One actual new process54071 runs undera7b47e3e1f:
+ NEW_USER --capture-layer-boundary 500
+ /boot/home/pioneer-q38-boundary75-client-20261031-be719df8/observed-boundary-500ms-hp.qhb
+Actual log:/private/tmp/pioneer-q38-boundary-reason-physical-20261031-hp.log.
+It is LIVE with its initial banner. No learned upload,Start acknowledgement,
+captured layer,terminal/clean END or numerical result is claimed yet.
+500ms remains host intent,NOT exact layer selection. The genuine final QHB
+header alone determines which fixed CPU hidden slice may be compared.
+
+NEXT poll SAME54071 and SAME hp.log;never restart on an observation timeout.
+No extra GPU/admin FD,another auth/model process,reload,profiler,reset,power
+or hardware change through this whole auth/upload/native/END lifetime.
+Only actual exit0 AND PASS_DEBUG75_BOUNDARY_SNAPSHOT...clean_end1 permits
+copy/hash of the actual20548B QHB and strict --held-boundary-only comparison.
+If failed/unsafe,record the actual first error and retained-resource state;
+do not assume ordinary restoration authority. After proven clean closure,
+fresh process/hash/ownership checks precede exact ffa315aa
+--restore-token-hidden-readout. Earlier restoration/recovery evidence is
+historical,NOT current stable state:the diagnostic b74/gen3 is now installed.
+
+Completed staged/source/preinstall/install/postinstall logs are archived
+byte-for-byte;only the explicitly padded raw preinstall ps log is excluded
+from source-whitespace lint. The live physical log is not archived as a
+completed result. Preserve the full objective,including full-model/state/
+EOS/quality,resident no-CPU-reference Work+Assistant and sustained speed.
