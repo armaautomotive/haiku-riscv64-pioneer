@@ -1,0 +1,31 @@
+Haiku
+0
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /boot/system/servers/net_server                    
+  104 /boot/system/servers/package_daemon                
+  105 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  111 /boot/system/servers/power_daemon                  
+  113 /boot/system/servers/launch_daemon baron           
+  115 /boot/system/servers/syslog_daemon                 
+  130 /boot/system/servers/media_server                  
+  177 /boot/system/servers/app_server                    
+  187 /boot/system/Tracker                               
+  189 /boot/system/Deskbar                               
+  208 /boot/system/servers/input_server                  
+  235 /boot/system/servers/media_addon_server            
+  484 /boot/system/bin/screen_blanker                    
+  491 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  493 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  494 /bin/bash -c uname -s
+id -u
+ps -o Id -o Team
+sha256sum /boot/ho 
+  497 /boot/system/bin/ps -o Id -o Team                  
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
+d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard

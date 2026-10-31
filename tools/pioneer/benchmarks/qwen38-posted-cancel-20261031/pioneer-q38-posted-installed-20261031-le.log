@@ -1,0 +1,35 @@
+18362bcb97180f8428b7e3b54aee7c81a42b8ed9f998aea11ccbefee5aff29af  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+de3496bb102c2fe8820eb9ba44e65e08a6bb8821d6a5cebf7f8e21dfcab9e668  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-hot-swap-token-posted-cancel-de3496bb.sh
+P100A_RELOAD driver55 tag2026103100010075 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /boot/system/servers/net_server                    
+  104 /boot/system/servers/package_daemon                
+  105 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  111 /boot/system/servers/power_daemon                  
+  113 /boot/system/servers/launch_daemon baron           
+  115 /boot/system/servers/syslog_daemon                 
+  130 /boot/system/servers/media_server                  
+  177 /boot/system/servers/app_server                    
+  187 /boot/system/Tracker                               
+  189 /boot/system/Deskbar                               
+  208 /boot/system/servers/input_server                  
+  235 /boot/system/servers/media_addon_server            
+  484 /boot/system/bin/screen_blanker                    
+  563 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  565 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  566 /bin/bash -c sha256sum /boot/home/config/non-packaged/add-ons/k 
+  569 /boot/system/bin/ps -o Id -o Team                  
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133801496576 bytes free      (used/max 3233439744 / 137034936320)
+                           (cached    197341184)
+     64518 semaphores free (used/max       1018 /      65536)
+      3954 ports free      (used/max        142 /       4096)
+      3906 threads free    (used/max        190 /       4096)
+      2027 teams free      (used/max         21 /       2048)

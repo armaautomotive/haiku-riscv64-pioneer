@@ -1,0 +1,118 @@
+Qwen27B posted host-cancellation transport
+========================================
+2026-10-31. Goal ACTIVE. Last measured whole-model rate remains
+0.207893161 tokens/sec;20 tokens/sec is UNMET. No speedup,full-model
+correctness,resident multi-request Work or Assistant release is claimed.
+
+Actual change,not relaxed completion accounting
+----------------------------------------------
+The preceding physical CF400563 trial faulted after one500ms-delayed
+host cancel. qwen38-host-cancel-accounting-20261031.txt documents the
+real failure and the coupled reproducer. The ROOT's strict incoming
+nonposted counters must not count this unrelated control-plane write.
+
+PIONEER_Q38_TOKEN_POSTED_CANCEL=1 selects a separate experimental native
+adapter. It changes ONLY ordering bits70..71 of existing fixed ROOT
+TLB200,Strict AXI0x40 -> Posted0x80 -> Strict AXI0x40. The NoC0,ROOT
+coordinate,address,TLB201 NIU mapping and all firmware remain unchanged.
+It performs exactly ONE fixed RAW32 CancelMagic write. Posted acceptance
+alone is NOT delivery:bounded fresh actual-destination reads must observe
+the magic BEFORE restoring normal mode. All six mapping words,source
+seals,PCI quiet state and FD/team/thread/generation ownership are checked.
+Any uncertainty retains resources without retry,rollback,reset or END.
+Ordinary token-memory accesses are refused during the private transport.
+This requests cancellation;it does not manufacture STOP or cleanup proof.
+
+The old TEST endpoint silently wrote Raw CancelMagic without the host
+counter event. It now decodes the actual mapping's ordering mode and
+delivers the modeled host packet to the SAME executing G3 NoC fabric.
+No model product,PC,register,receipt or completed history is supplied.
+Posted writes advance their separate counters without nonposted ACKs.
+The old deliberate fault-marker TEST now has an explicit injection
+selector;selecting fault-reporting ROM alone no longer corrupts boot DATA.
+The existing deliberate-corruption regression was then rerun against the
+final source:main55507 and independent clean49746 both exited0 with
+byte-identical logs. The actual guard failure still exports51465431 /
+savedLINK000642c0 and retains ownership without terminal,HOLD,retry or END.
+
+Independent completed qualification
+-----------------------------------
+Main source and frozen HEADfa1a8e9d9e plus ONLY22 cmp-verified owned files:
+ /private/tmp/pioneer-q38-posted-cancel-clean-ki.EzKXMurM
+
+Main41610 and independent clean19317 BOTH actually exited0. Each uses
+the authenticated SAME-open full851 GGUF and genuine instruction histories:
+full state initialization,119 virgin worker boots,original embedding and
+whole layer0,one consumed posted cancellation,ROOT terminal+119 real STOP,
+120 HOLD,zero-record drain,two held-hidden reads,all original restoration
+stages,clock/VM/PCI closure,host release and whole-context destruction.
+These are native controllers over SIMULATED OS/device endpoints,NOT
+physical model execution. Both complete logs are byte-identical.
+
+Only AFTER both actual exits,the unchanged strict comparator separately
+compared each emitted prefix to cpu-original-trace-20261028. Both exited0:
+all5120 embedding and5120 layer0 words BIT-EXACT,zero differences,NO
+tolerance/diagnostic-only acceptance. Both prefix SHA-256 values:
+ 4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+This does not prove later layers,greedy tokens,multi-request or hardware.
+
+The controller's253 ASan/UBSan cases pass main/clean,identical logs:
+delayed delivery,one write,two mode changes,all raw-event scope losses,
+192 route-bit mutations,source/mode/readback/clock/poll faults,retention
+without retry or speculative cleanup. The coupled exact fault-ROM tests
+also pass main/clean:nonposted reproduces error51465431/LINK4e050;the
+actual new posted controller preserves strict counters and reaches the
+next matrix doorbell,as does the no-host-write parent. Synthetic raw
+inputs in this focused regression are NOT a full-model numerical proof.
+The USER boundary role tests pass1 positive/61 negative main/clean.
+
+Actual independent SDK/link builds pass and produce byte-identical:
+ object26d54996ebfde7fa9c7a97ee936fb8535affb409e689b008dba0a6dfbfa191f5
+ module18362bcb97180f8428b7e3b54aee7c81a42b8ed9f998aea11ccbefee5aff29af
+Conventional tag75 ABI,all13 firmware arrays and2MiB RoPE unchanged;
+no CPU oracle,Work or TEST-engine imports. Old literal native controls
+remain unchanged,including the prior CF400 fault object98555df8.
+Partial public-entry known module stack chain5392B,25 unresolved calls,
+511 reached nodes,no dynamic frame/cycle. WHOLE KERNEL STACK QUALIFIED
+IS FALSE;unknown kernel/entry/IRQ/indirect costs are NOT treated as zero.
+
+Hash-qualified guarded exchange
+-------------------------------
+New --apply-token-posted-cancel/--restore-token-posted-cancel routes map
+ONLY exact clean041fef18 <-> exact18362bcb. Same-tag b74/cf400 and tag74
+images are explicitly rejected;old immutable restoration helpers stay
+untouched. Backups include the full original SHA,not only the tag.
+Main63081 and independent clean93875 BOTH exited0:344 actual shell-updater
+filesystem/handshake/hash/symlink/owner/failure cases,identical logs.
+Helper SHAde3496bb102c2fe8820eb9ba44e65e08a6bb8821d6a5cebf7f8e21dfcab9e668.
+
+Fresh physical preflight at14:34UTC independently showed Haiku idle,
+stable041fef18/tag2026102100010012/gen2/cold0/owner0,64 CPUs and
+137034936320B maxRAM. The new module and immutable helper were staged
+OUTSIDE watched drivers/bin and independently hashed. Existing exact
+bounded boundary client A1C45CA1 was independently authenticated.
+The exact new helper's guarded exchange64747 actually exited0,from
+041fef18/gen2 to18362bcb/tag75/gen3,without reboot or GPU execution.
+Independent verification again authenticated the installed module and
+helper,found no model parent,cold0/owner0,and64 CPUs/full maxRAM unchanged.
+The old immutable7d668f6a fault-ROM helper was NOT changed or reused.
+
+At14:42UTC,ONE physical49753 was launched with the unchanged authenticated
+A1C45CA1 boundary client,the SAME original GGUF and requested500ms delay.
+Fresh output:/boot/home/pioneer-q38-posted-boundary-20261031-lc.qhb.
+Log:/private/tmp/pioneer-q38-posted-boundary-physical-20261031-lf.log.
+The client authenticates the full SAME-open source before device Open,
+then uploads all19399024640B and performs the bounded diagnostic. No CPU
+model reference is used during this run. No snapshot,STOP,END,numerical
+pass or speedup is yet established. Do not restart this SAME lifetime
+on observation timeout,open another GPU/admin FD,reload,reset or profile.
+
+Remaining gates
+---------------
+Actual physical differential delivery/cancellation/STOP/END and separate
+comparison of the ACTUAL reported layer,then correct full-generation
+and fresh-request state epochs,resident weights,Assistant integration
+and sustained real inference benchmarks. No offline instruction count
+or frontend/saved-LINK value is a hardware cycle/token-rate/retired-PC
+measurement. The five original long-running full-flow tests remain live;
+they were polled by their SAME handles,not restarted on observation timeout.

@@ -9,8 +9,11 @@ import subprocess
 import sys
 import tempfile
 
-fault_marker = sys.argv[4:] == ['--fault-marker']
-assert (len(sys.argv) == 4 or fault_marker) and not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
+options=sys.argv[4:]
+assert len(set(options))==len(options) and set(options)<={'--fault-marker','--posted-control'}
+fault_marker = '--fault-marker' in options
+posted_control = '--posted-control' in options
+assert 4<=len(sys.argv)<=6 and not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 image, old, worker = map(pathlib.Path, sys.argv[1:4])
 assert all(p.is_absolute() for p in (image, old, worker))
 here = pathlib.Path(__file__).resolve().parent
@@ -45,6 +48,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-q38-host-cancel-counter-', dir=
                     '-DPIONEER_Q38_TEST_CANCELLABLE_ROOT=1',
                     '-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1',
                     '-DPIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION=1',
+                    *(['-DPIONEER_Q38_TEST_POSTED_CANCEL_CONTROL=1'] if posted_control else []),
                     str(here/'pioneer_q38_host_cancel_counter_test.cpp'), '-o', str(binary)], check=True)
     subprocess.run([str(binary), *sys.argv[1:4], f'{start:x}', f'{start+size:x}',
                     *(['--fault-marker'] if fault_marker else [])], check=True,

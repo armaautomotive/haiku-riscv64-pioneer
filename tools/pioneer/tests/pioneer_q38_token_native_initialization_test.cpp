@@ -151,6 +151,12 @@ struct PioneerSessionIO:TokenNativeEndpoints {
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
   executionCpu=std::make_unique<TokenStartupRoot>(image,*this);
+#if defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS) && !defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE)
+  executionHostContext=executionCpu.get();
+  executionHostWord=[](void* p,uint32_t address,uint32_t value,bool posted){
+   static_cast<TokenStartupRoot*>(p)->pushedIncoming.IncomingHostWord(address,value,posted);
+  }; // actual host alias write now accounts for its actual TLB packet class
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
   executionCpu->livePeerPC=[](TokenHeldEndpoints& endpoints,unsigned worker){
    auto& native=static_cast<PioneerSessionIO&>(endpoints);
@@ -488,6 +494,7 @@ bool PioneerSessionIO::TokenPciLeaseIdentity(const PioneerQ38TokenPciLease&)cons
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeHeld.inc"
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeRuntime.inc"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativePostedCancel.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativePciCapture.inc"
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeExecution.inc"
@@ -633,7 +640,9 @@ int main(int argc,char** argv){
  bool hostEnd=false;for(const char* mode:endModes)hostEnd|=argc==7 && !strcmp(argv[2],mode);
  const bool hostReload=hostEnd && !strcmp(argv[2],"--execution-end-reload");
  const bool faultMarker=argc==5 && !strcmp(argv[2],"--execution-fault-marker");
-#ifndef PIONEER_Q38_TOKEN_FAULT_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_NATIVE_INJECT_FAULT_MARKER
+ assert(faultMarker);
+#else
  assert(!faultMarker);
 #endif
  const bool peerBootstrap=faultMarker || (argc==5 && !strcmp(argv[2],"--bootstrap-peer-engines"));

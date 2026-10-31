@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 fault_marker = '--fault-marker' in sys.argv
+posted_cancel = '--posted-cancel' in sys.argv
+if posted_cancel:
+    assert sys.argv.count('--posted-cancel')==1
+    sys.argv.remove('--posted-cancel')
 if fault_marker:
     assert sys.argv.count('--fault-marker')==1
     sys.argv.remove('--fault-marker')
@@ -98,6 +102,8 @@ full_flow = readout_flow or len(sys.argv) == 7 and sys.argv[2] == '--execution-f
 hold_layer = readout_empty or len(sys.argv) == 7 and sys.argv[2] == '--execution-hold-first-layer'
 cancel_layer = hold_layer or len(sys.argv) == 7 and sys.argv[2] == '--execution-cancel-first-layer'
 full_layer = full_flow or cancel_layer or len(sys.argv) == 7 and sys.argv[2] == '--execution-first-layer'
+if posted_cancel:
+    assert pushed_context and cancel_layer and not fault_marker and not full_flow, 'posted transport TEST requires exact G3 original first-layer/cancel lifecycle,not a new Work or full-flow alias'
 backend_first_matrix = len(sys.argv) == 6 and sys.argv[2] == '--execution-backend-first-matrix'
 first_matrix = full_layer or backend_first_matrix or len(sys.argv) == 6 and sys.argv[2] == '--execution-first-matrix'
 if full_layer:
@@ -149,8 +155,12 @@ if precise_context:
 if pushed_context:
     defines.update(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT='1', PIONEER_Q38_TOKEN_PUSHED_PROGRAMS='1',
                    PIONEER_DRIVER_BUILD_TAG='0x5154334e4f445256ULL')
+if posted_cancel:
+    defines.update(PIONEER_Q38_TOKEN_POSTED_CANCEL='1',PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',
+                   PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')
 if fault_marker:
     defines.update(PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1',
+                   PIONEER_Q38_TOKEN_NATIVE_INJECT_FAULT_MARKER='1',
                    PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE='1',PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE='1')
 defines.update({name:'pioneer_token_init_test_'+name for name in ('api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device')})
 defines.update(TT_PIONEER_EXPERIMENTAL_Q38_AFFINE='1', TT_PIONEER_EXPERIMENTAL_Q38_BLOCK='1')

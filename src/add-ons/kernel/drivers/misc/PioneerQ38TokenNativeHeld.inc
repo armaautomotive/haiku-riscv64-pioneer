@@ -11,6 +11,9 @@ bool PioneerSessionIO::TokenViewCaptureScope(){
  return TokenMemoryMappingSourceScope() && TokenMemoryMappingStable(0) && q38TokenViews.Pristine();
 } // CPU metadata only;capture real aliases before first native image write/launch
 bool PioneerSessionIO::TokenMemoryAccessScope(){
+#ifdef PIONEER_Q38_TOKEN_POSTED_CANCEL
+ if(q38PostedCancel.Active())return false; // only the fixed private transport may use the temporary posted alias
+#endif
  auto* c=q38MutableContext;auto* s=c?c->q38TokenNative:NULL;auto* fd=sRuntimeOwner;
  if(s && s->runtime && s->runtime->SharedMappingsChanged())return false; // changed route is NEVER an L1/NIU/FIFO grant
  // Per-WORD metadata under the SAME call lock. Full physical/native guards

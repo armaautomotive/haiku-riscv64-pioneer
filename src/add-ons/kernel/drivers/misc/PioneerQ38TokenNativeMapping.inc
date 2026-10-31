@@ -3,6 +3,17 @@
 #include "PioneerQ38TokenNativeRole.h"
 #include "PioneerQ38TokenPreparationAuditMember.inc"
 bool TokenMemoryMappingSourceScope();bool TokenMemoryAccessScope();
+#ifdef PIONEER_Q38_TOKEN_POSTED_CANCEL
+PioneerQ38PostedCancel q38PostedCancel;
+bool PostedCancelScope(const PioneerQ38PostedCancel&);
+bool PostedCancelSourceGuard();
+bool PostedCancelTlbRead(unsigned,unsigned,uint32_t&);
+bool PostedCancelControlWrite(bool);
+bool PostedCancelWordRead(uint32_t&);bool PostedCancelWordWrite();
+uint64_t PostedCancelNow(){return Q38CohortNow();}
+void PostedCancelPause(){Pause();}
+bool TokenRequestPostedCancellation(){return q38PostedCancel.Request(*this);}
+#endif
 bool TokenDispatchImageAccessScope(unsigned);
 bool TokenPeerStoreSelectionScope();bool TokenPeerStoreAccessScope(unsigned);
 bool TokenRootStoreAccessScope();

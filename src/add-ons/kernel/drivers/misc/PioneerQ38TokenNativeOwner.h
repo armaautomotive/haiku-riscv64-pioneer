@@ -8,6 +8,9 @@
 #include "../../../../../tools/pioneer/PioneerQ38TokenTerminalShape.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenRecordShape.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenFifoQuiescence.h"
+#ifdef PIONEER_Q38_TOKEN_POSTED_CANCEL
+#include "PioneerQ38PostedCancel.h"
+#endif
 // DISTINCT full-token owner. Held staging,fresh selected-worker bootstrap and ROOT
 // startup/cancel request,terminal/worker STOP observation,owned HOLD,
 // committed readout,original-L1,dispatch-image and local peer-store restoration.
@@ -293,6 +296,9 @@ public:
    && running[0] && reset[0]==0x46800 && participants->rootRunning;
  } // cheap private lifecycle binding ONLY;full native scope+sources still required before IO
  bool ExecutionStarted()const{return rootAcknowledged && OwnsRunningRoot(cohort) && Bound();}
+#ifdef PIONEER_Q38_TOKEN_POSTED_CANCEL
+ bool CancellationRequested()const{return cancelRequested && !terminalObserved && ExecutionStarted();}
+#endif
  bool TerminalObserved()const{return terminalObserved && !unsafe && (ExecutionStarted() || ((holding || held) && Bound()));}
  bool HeldAfterTerminal()const{return held && !holding && TerminalObserved() && Bound();} // NOT restored/closed/END
  bool CommittedRecordsRead()const{return readoutDrained && !readoutPending && HeldAfterTerminal() && readoutCursor==observedTerminal[3];}
@@ -594,7 +600,11 @@ public:
   // One fixed monotonic RAW32 request,not a STOP acknowledgment. Never
   // rewrite it,reset a worker,copy a model product or authorize disposal.
   cancelRequested=true;
+#ifdef PIONEER_Q38_TOKEN_POSTED_CANCEL
+  if(!io.TokenRequestPostedCancellation())return Fail(io,r);
+#else
   if(!io.TokenMemoryWrite(0,T::CancelLocal,T::CancelMagic))return Fail(io,r);
+#endif
   uint32_t actual;if(!Scope(io) || !io.TokenMemoryReadChecked(0,T::CancelLocal,actual)
    || actual!=T::CancelMagic || !Sources(io,0))return Fail(io,r);
   r.cancelRequested=1;r.phase=7;return true;

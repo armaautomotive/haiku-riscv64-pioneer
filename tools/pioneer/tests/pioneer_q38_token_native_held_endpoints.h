@@ -98,6 +98,8 @@ struct TokenHeldEndpoints:ZeroControlIO {
  const volatile uint32* runtimePc=&entry; // simulated VM handle only;actual PC reads use the instruction CPU
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
  bool executionDropCancel=false;unsigned executionCancelWrites=0,executionCancelObserved=0;
+ void* executionHostContext=nullptr;
+ void (*executionHostWord)(void*,uint32,uint32,bool)=nullptr;
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
  bool trafficObserve=false;unsigned trafficFault=0,trafficObserved=0;
@@ -201,7 +203,13 @@ struct TokenHeldEndpoints:ZeroControlIO {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
   if(!runtimeCore && C().coreReset==0x46800){
    assert(address==PioneerQ38TokenLayout::CancelLocal && value==PioneerQ38TokenLayout::CancelMagic && !executionCancelWrites);
-   executionCancelWrites++;if(!executionDropCancel)Raw(0,address)=value;return;
+   executionCancelWrites++;
+   if(!executionDropCancel){
+    const unsigned mode=C().tlb[0][2]&0xc0U;assert(mode==0x40 || mode==0x80);
+    if(executionHostWord)executionHostWord(executionHostContext,address,value,mode==0x80);
+    else Raw(0,address)=value;
+   }
+   return;
   }
 #endif
   C().Q38PanelWrite(address,value);

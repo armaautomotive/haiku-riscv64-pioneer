@@ -25,6 +25,7 @@ struct Q38NativePushedTestFabric {
  std::array<std::array<uint32_t,4>,4> cache={};
  std::array<unsigned,119> delivered={};
  unsigned messages=0,hits=0,misses=0,stale=0,fences=0;
+ unsigned hostWrites=0;std::array<uint32_t,3> hostPosted={};
  Q38NativePushedTestFabric(void* c,Word w):context(c),word(w){assert(c && w);}
  static bool Contains(unsigned address){return address>=PioneerQ38PushedWorkerLayout::Mailbox
   && address-PioneerQ38PushedWorkerLayout::Mailbox<119*256;}
@@ -40,6 +41,11 @@ struct Q38NativePushedTestFabric {
   assert(Contains(address) && !(address&3));word(context,0,address)=value;
   if(tags[(address>>4)&3]==(address&~15U))tags[(address>>4)&3]=~0U;
  } // the actual ROOT store invalidates its matching resident line,not all L0
+ void IncomingHostWord(unsigned address,uint32_t value,bool posted){
+  assert(address<0x180000 && !(address&3));word(context,0,address)=value;hostWrites++;
+  if(posted)for(auto& counter:hostPosted)counter++;
+  else for(auto& counter:slave)counter++;
+ } // one actual modeled host RAW32 packet:posted has no nonposted counter/ACK event
  void Incoming(unsigned worker,const uint32_t* packet,const uint32_t* raw){
   namespace W=PioneerQ38PushedWorkerLayout;
   assert(worker && worker<=119 && packet && raw);

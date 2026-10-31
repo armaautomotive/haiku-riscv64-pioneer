@@ -152,8 +152,9 @@ static void CheckNativeExecution(Fixture& f){
    }
    puts("PASS native outputs exclude ALL120 original store buffers/360 aliases+84 peer-store selection/phase/range refusals preserve output with NO IO;NOT a peer closure or shared-TLB grant");
   }
-#ifdef PIONEER_Q38_TOKEN_FAULT_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_NATIVE_INJECT_FAULT_MARKER
   {
+   static_assert(PIONEER_Q38_TOKEN_NATIVE_INJECT_FAULT_MARKER==1,"explicit guard-corruption TEST only");
    namespace R=PioneerQ38GlobalChainLayout::R;namespace T=PioneerQ38TokenLayout;
    auto& cpu=*io.executionCpu;const auto faultResets=io.resets;
    assert(!cpu.faultSavedWrites && !cpu.faultErrorWrites && !io.Raw(0,R::Status+8));

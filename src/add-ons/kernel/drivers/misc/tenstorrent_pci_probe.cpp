@@ -3985,6 +3985,7 @@ EndQ38DispatchOwnership(PioneerStoreContext& c,tt_resident_session_result& resul
 #include "PioneerQ38TokenNativeHostCapture.inc"
 #include "PioneerQ38TokenNativeHeld.inc"
 #include "PioneerQ38TokenNativeRuntime.inc"
+#include "PioneerQ38TokenNativePostedCancel.inc"
 #include "PioneerQ38TokenNativeExecution.inc"
 #include "PioneerQ38TokenNativeClock.inc"
 #include "PioneerQ38TokenNativeHardware.inc"

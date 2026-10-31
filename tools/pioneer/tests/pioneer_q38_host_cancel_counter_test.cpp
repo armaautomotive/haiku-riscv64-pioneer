@@ -9,17 +9,66 @@
 #define PIONEER_Q38_TOKEN_FLOW_MACHINE_ONLY
 #include "pioneer_q38_token_flow_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerComputeFleet.h"
+#ifdef PIONEER_Q38_TEST_POSTED_CANCEL_CONTROL
+#define PIONEER_Q38_POSTED_CANCEL_TEST 1
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38PostedCancel.h"
+#endif
 
 struct HostCancelCounterMachine:TokenFlowMachine {
  using TokenFlowMachine::TokenFlowMachine;
+ enum {HostCases=
+#ifdef PIONEER_Q38_TEST_POSTED_CANCEL_CONTROL
+  3
+#else
+  2
+#endif
+ };
  unsigned endFirst=0,endLast=0,cases=0,mode=0,packetsAtWrite=0,peerWritesAtWrite=0;
  bool forked=false,delivered=false,continued=false,faultROM=false;
  std::array<uint32_t,4> beforeWrite={};
+#ifdef PIONEER_Q38_TEST_POSTED_CANCEL_CONTROL
+ struct PostedEndpoint {
+  HostCancelCounterMachine& m;uint32_t tlb[2][3]={};
+  unsigned writes=0,modes=0,reads=0;bool pending=false;uint64_t clock=100;
+  std::array<unsigned,3> posted={};
+  explicit PostedEndpoint(HostCancelCounterMachine& actual):m(actual){
+   for(unsigned s=0;s<2;s++)for(unsigned w=0;w<3;w++)tlb[s][w]=PioneerQ38PostedCancel::Expected(s,w,false);
+  }
+  bool PostedCancelScope(const PioneerQ38PostedCancel&){return m.mode==3 && m.forked && !m.continued
+   && m.pc>=m.endFirst && m.pc<m.endLast && !m.allLayers && !m.committed && !m.stopJobs;}
+  bool PostedCancelSourceGuard(){
+   for(unsigned i=0;i<16;i++)if(m.source[i]!=m.boot[16+i])return false;
+   return true;
+  }
+  bool PostedCancelTlbRead(unsigned s,unsigned w,uint32_t& out){out=tlb[s][w];return true;}
+  bool PostedCancelControlWrite(bool post){tlb[0][2]=PioneerQ38PostedCancel::Expected(0,2,post);modes++;return true;}
+  bool PostedCancelWordWrite(){assert(!writes && !pending);writes++;pending=true;return true;}
+  bool PostedCancelWordRead(uint32_t& out){
+   if(pending && ++reads==2){
+    // A read may overtake a posted write. Deliver only on the second actual
+    // endpoint read,using the actual selected TLB request class.
+    const unsigned ordering=(tlb[0][2]>>6)&3;assert(ordering==2);
+    m.memory[TL::CancelLocal]=TL::CancelMagic;for(auto& count:posted)count++;pending=false;
+   }
+   out=m.memory.at(TL::CancelLocal);return true;
+  }
+  uint64_t PostedCancelNow(){return clock;}void PostedCancelPause(){clock+=1000;}
+ };
+#endif
  void Deliver(unsigned network){
-  assert(network<=1 && !delivered && forked && !position && !layer && matrices==1
+  assert(network<HostCases && !delivered && forked && !position && !layer && matrices==1
    && pushedMessages==6 && !allLayers && !committed && !stopJobs
    && !memory.at(TL::CancelLocal) && pc>=endFirst && pc<endLast);
   beforeWrite=pushedSlave;packetsAtWrite=packets;peerWritesAtWrite=peerWrites;
+#ifdef PIONEER_Q38_TEST_POSTED_CANCEL_CONTROL
+  if(network==2){
+   PostedEndpoint io(*this);PioneerQ38PostedCancel request;
+   assert(request.Request(io) && request.Delivered() && !request.Active() && io.writes==1 && io.modes==2 && io.reads==2
+    && pushedSlave==beforeWrite && io.posted[0]==1 && io.posted[1]==1 && io.posted[2]==1);
+   for(unsigned s=0;s<2;s++)for(unsigned w=0;w<3;w++)assert(io.tlb[s][w]==PioneerQ38PostedCancel::Expected(s,w,false));
+   delivered=true;return;
+  }
+#endif
   memory[TL::CancelLocal]=TL::CancelMagic;delivered=true;
   // One completed, nonposted, one-flit NoC write at the destination NIU:
   // STARTED, DATA_WORD_RECEIVED, REQ_RECEIVED, ACK_SENT each advance once.
@@ -30,12 +79,13 @@ struct HostCancelCounterMachine:TokenFlowMachine {
   if(!forked && address==0xffb20000+SlaveOffset(0) && pushedMessages==6
    && pc>=endFirst && pc<endLast){
    forked=true;
-   for(unsigned network=0;network<2;network++){
+   const unsigned branches=HostCases;
+   for(unsigned network=0;network<branches;network++){
     BeforeFork();fflush(nullptr);const pid_t childPid=fork();assert(childPid>=0);
     if(!childPid){mode=network+1;Deliver(network);return TokenFlowMachine::Load(address);}
     int status=0;assert(waitpid(childPid,&status,0)==childPid && WIFEXITED(status) && !WEXITSTATUS(status));cases++;
    }
-   assert(cases==2 && !delivered && !mode && !memory.at(TL::CancelLocal));
+   assert(cases==branches && !delivered && !mode && !memory.at(TL::CancelLocal));
   }
   return TokenFlowMachine::Load(address);
  }
@@ -45,7 +95,7 @@ struct HostCancelCounterMachine:TokenFlowMachine {
   const bool next=submit && forked && command[7]==0x212 && command[5]==G::Peer(1)
    && command[3]==M::Doorbell && matrices==2;
   TokenFlowMachine::Store(address,value);
-  if(next){assert(mode!=1 && !continued && (!mode?cases==2:delivered));continued=true;}
+  if(next){assert(mode!=1 && !continued && (!mode?cases>=2:delivered));continued=true;}
  }
  void Check(){
   assert(forked && !allLayers && !committed && !stopJobs && !position && !layer
@@ -66,7 +116,13 @@ struct HostCancelCounterMachine:TokenFlowMachine {
    assert(continued && pc!=0x60000 && pc!=0x60004);
    if(mode==2){assert(delivered && pushedSlave==beforeWrite && memory.at(TL::CancelLocal)==TL::CancelMagic);
     puts("PASS modeled separate-NoC cancel control/SAME executed ROOT+119 histories/NoC0 frontier unchanged/next actual matrix doorbell;NOT an implemented NoC1 route or completed cancellation");
-   }else{assert(!delivered && cases==2 && !memory.at(TL::CancelLocal));
+   }
+#ifdef PIONEER_Q38_TEST_POSTED_CANCEL_CONTROL
+   else if(mode==3){assert(delivered && pushedSlave==beforeWrite && memory.at(TL::CancelLocal)==TL::CancelMagic);
+    puts("PASS actual posted-cancel controller at reached receipt closure/one modeled posted RAW32 write/delayed destination readback/normal TLB restored/unchanged strict NoC0 incoming frontier/SAME executed ROOT+119 histories/next actual matrix doorbell;NOT native/physical/Work/TPS qualification");
+   }
+#endif
+   else{assert(!delivered && cases>=2 && !memory.at(TL::CancelLocal));
     puts("PASS unchanged no-host-write parent/next actual matrix doorbell;synthetic raw inputs,not a full layer/model/physical speed result");}
   }
  }
