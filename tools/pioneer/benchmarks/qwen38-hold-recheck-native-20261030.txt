@@ -1,0 +1,69 @@
+Bounded terminal recheck: completed native cancellation predecessor
+==================================================================
+2026-10-30 local/2026-10-31 UTC. Goal ACTIVE;20tok/s UNMET.
+Physical whole-model rate remains0.207893161tok/s. These are native-code
+instruction-engine tests with simulated OS/PCI/MMIO endpoints,NOT hardware
+speed,full-model generation,positive token readout or Assistant Work proof.
+
+Both existing final GB histories38672/35834 completed with actual exit0.
+No observation-timeout restart or old draft substitution occurred.
+Sources/builds/strict snapshot guards are recorded in
+ qwen38-hold-recheck-preparation-20261030.txt
+Exact781ab module exchange gates are separately covered in
+ qwen38-hold-recheck-updater-20261030.txt
+
+Each run executes original same-open full851 model authentication,actual
+zero ROM and SAME virgin119 G3 workers+ROOT,full original first layer and
+consumed cancellation. After genuine accepted terminal+all119 STOP history,
+three deliberately bad RAW frontend-PC observations produce TWO pending
+inspections in the actual HoldStopped method. There is NO HOLD before the
+new exact positive terminal/same closed-journal proof. No CPU processor
+history,PC,ready,terminal record or arithmetic product was transplanted.
+The injected RAW observations do NOT prove the cause of the earlier physical
+phase1 failure;that older inner observer detail was not exposed.
+
+The SAME histories then execute120 ROOT-first HOLDs,zero-commit record
+drain,token-L1 and all120 earlier dispatch-image restoration with independent
+original-byte checks,119 peer and ROOT NIU/scratch restoration,shared-control
+restoration,scoped native clock END,retirement seal,29 OS-view deletions,
+ordered original PCI restoration,3 OS host releases,device unreserve and
+whole-context destruction under the original scope. Existing malformed and
+late metadata/alias refusal checks remain. No later PCI/MMIO/release/retry
+or double destruction is permitted after closure. This runner uses the typed
+native predecessor,NOT a full public USER-to-device ABI or Work test.
+
+Both complete84-line runtime logs cmp-match;unmodified matching archive:
+ qwen38-hold-recheck-native-20261030.log
+ SHA80812c2163fdf46aac73f151cce1d9f0594a69fbd71b09b1182e517751954cac
+Original logs:/private/tmp/pioneer-q38-hold-final-native-{main,clean}-gb.log
+
+Independent numerical DATA comparison AFTER actual runtime completion
+---------------------------------------------------------------------
+compare_pioneer_q38_observed_trace.py --first-layer-only independently
+compared EACH actual original prefix against the fixed SHA-pinned CPU corpus
+cpu-original-trace-20261028. Both exit0 with ZERO bit differences,maxAbs0,
+relativeL2=0 for embedding5120 and layer0 final5120. No diagnostic-only,
+tolerance,retargeted input or CPU reference fed into execution was used.
+Completed comparison logs cmp-match;unmodified matching archive:
+ qwen38-hold-recheck-native-prefix-20261030.log
+ SHA8e2e6a371b044f8db5d982159dc17c0163fcaf5ee90864886d6ab6a01282ab94
+Both41028-byte prefixes have SHA:
+ 4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+Durable original copies,also independently compared,are retained at:
+ generated.pioneer/qualification-inputs/observed-token-hold-recheck-native-20261030-gd/{main,clean}/prefix-0.bin
+They are incomplete diagnostic DATA,not committed model assets or full-token
+records. No64-layer/vocabulary/greedy-feedback/multitoken/state/EOS/positive
+record-read or sustained physical TPS qualification follows from them.
+
+Next controlled hardware boundary
+----------------------------------
+Fresh read-only checks still find stable041/tag12/gen2/cold0/owner0/open1/
+guard1 on Haiku;no compute/Assistant parent. Exact stable backup041,guard
+d1ce2aa4 and admin helperb0c851b3 also match. Next is one exact781ab module/
+f30f client cancellation-lifecycle trial using the separately tested e7ee73dc
+updater. Keep raw observer detail and host-only phase timings separate from
+normal output;do NOT report a cancellation or3-position diagnostic as TPS.
+Any failed/uncertain operation closes only and retains resources;no retry,
+automatic rollback or reset. Only known-clean metadata permits guarded
+stable restoration. Full native Work/Assistant integration and20tok/s remain
+owed;the goal remains ACTIVE.
