@@ -19,7 +19,8 @@ base = {**dict.fromkeys(selected, '1'), 'PIONEER_DRIVER_BUILD_TAG':'0x5154334e4f
 foreign = set(re.findall(r'defined\(([A-Z_][A-Z0-9_]*)\)',
                         native[native.index('#if defined(PIONEER_Q38_EMBEDDING_NATIVE)'):]))
 foreign |= {'PIONEER_Q38_TOKEN_VALIDATION_NATIVE', 'PIONEER_Q38_TOKEN_VALIDATION_CLIENT',
-            'PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE', 'PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_CLIENT'}
+            'PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE', 'PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_CLIENT',
+            'PIONEER_Q38_TOKEN_BOUNDARY_VALIDATION_CLIENT'}
 assert not selected & foreign
 accepted = refused = 0
 include = '#include "'+str(header)+'"\n'

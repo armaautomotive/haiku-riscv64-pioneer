@@ -1,0 +1,74 @@
+Observed later-boundary diagnostic: separate USER/DATA family,unchanged kernel
+============================================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. Last whole-model rate remains
+0.207893161 tokens/sec. NO new physical or performance claim in this report.
+The completed first-layer hardware result remains inef803ff94e and is NOT
+weakened:ALL5120 real first-layer words were bit-exact,stable041 restored.
+
+New bounded USER path,not an exact-layer selector
+------------------------------------------------
+PIONEER_Q38_TOKEN_BOUNDARY_VALIDATION_CLIENT=1 selects a separate session,
+CLI,binary and output type. Old USER/native/private/CPU-reference/Work
+aliases,including defined0/late includes,refuse. Old clients/kernel roles
+also explicitly reject the new selector. No Kernel/firmware implementation,
+public opcode,model prompt/position limit or Work capability changes.
+
+The same fixed full SHA-before-FD/851-tensor source and all3551 RAW learned
+parts are used. After Begin,one0..5000ms canonical-decimal host delay precedes
+ONE healthy cancellation request. Clock overflow/regression,short/failed
+sleep or uncertain lifecycle closes ONLY;no automatic cancellation,retry,
+END,reset or CPU fallback. Delay is NOT evidence of an exact target layer.
+Only the device's genuine terminal position0/zero commits/cancel-stage1 and
+actual1..64 completed layers can authorize capture. HOLD/drain/two ordered
+chunks/all16 native detail words/zero tail/full Finish/Close still precede
+snapshot export. Missed/other boundaries clean up but do NOT export.
+
+New20548B QHB1/ENDB DATA family carries the ACTUAL layer. The old QHD1/ENDH
+first-layer format/session/CLI remains strict and byte-identical. New
+--held-boundary-only comparison uses only SHA-pinned CPU position0 slice
+actualLayers*5120..(actualLayers+1)*5120;it invents no embedding/full trace,
+does not retarget expected values,and forbids diagnostic-only/tolerance
+acceptance. Differences exit1. Nonfinite/malformed/wrong-family DATA refuse.
+
+Final independent HE sources and actual results
+-----------------------------------------------
+HEADef803ff94e plus ONLY21 cmp-verified owned files:
+ /private/tmp/pioneer-q38-boundary-main-he.m4vUn6CE
+ /private/tmp/pioneer-q38-boundary-clean-he.nLoKZlpG
+Original17845/30837 BOTH actually exited0. Source inventories match current;
+raw completed logs differ only by source-root prefixes.
+New session448 COW branches,including all64 MOCK-reported layer counts,
+128 raw-PC normal/cancel positives,98 hidden header/request/tail faults,
+invalid terminals,loss and close-only behavior. Synthetic source+OS replies,
+NOT native/device execution. Old strict session still384 COW branches.
+New role1/49;old strict role1/49;old74 USER role1/46. Kernel74 role3/786;
+kernel75 role5/1167;private reader2/277. CLI/delay9 positives/31 refusals.
+New boundary format/metrics492 refusals and four explicit MOCK-I/O expected
+slice checks (1/4/32/64),with exit1 on differences. Existing459 strict hidden
+format tests,full/prefix metrics and REAL pinned CPU-authentication pass.
+
+Both actual Haiku riscv64 USER builds are BYTE-IDENTICAL:
+ object24fe8949becce49697076f3e62101b5be88f719ba0501b4bef75d35ac5098863
+ binary5ce43d33156588fc3b9649321fca82ba3bb6490b6984ee686ba54ef00c0378c3
+Max individual USER frame4432B;no old USER session,CPU model oracle,Work,
+native owner or MOCK imports. Independent actual default/private+old74+
+tag75 module pipeline confirms unchanged control pins and exact module:
+ b74f4bfa5583aaf0cf8272d5136c73336c1db0f93e168e7212277f97705a92cc
+The old strict first-layer USER also remains EXACT1a061f7ab0eb5001c04a73c1334ed3b519a29781157ea4e46f533e3908fe0536.
+No new module/updater is required. Partial known module chain remains5392B,
+25 unresolved costs/504 nodes;UNKNOWN kernel/entry/IRQ stack is NOT zero.
+
+One initial pure CLI fixture failed compilation because it omitted the
+standard initializer_list header. That TEST include was added;no production
+guard/timing condition was relaxed. Final paired full runs above exit0.
+Complete unmodified logs,cmp-checked with originals:
+ qwen38-boundary-main-20261031.log
+ qwen38-boundary-clean-20261031.log
+
+No actual boundary probe is launched by these tests/builders. Next stage
+the new binary under its own hash-qualified name;fresh hardware/parent/hash
+check;apply the SAME immutable ffa315aa exact041<->b74 updater;run ONE bounded
+probe with500ms delay. Poll its same actual handle,then accept only actual
+clean completion and compare its actually observed layer. Preserve the old
+first-layer binary/data/CPU controls. Normal+EOS/full-model/state/quality,
+resident no-CPU-reference Work+Assistant and sustained speed remain owed.

@@ -22,7 +22,7 @@ static_assert(PioneerQ38TokenHiddenReadSelection==1,"late hidden diagnostic sele
  || !defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS) || PIONEER_Q38_TOKEN_PUSHED_PROGRAMS != 1 \
  || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x5154334e4f445256ULL \
  || defined(PIONEER_Q38_TOKEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_TOKEN_VALIDATION_CLIENT) \
- || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_CLIENT)
+ || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_CLIENT) || defined(PIONEER_Q38_TOKEN_BOUNDARY_VALIDATION_CLIENT)
 #error Held hidden readout requires distinct private QT3NODRV diagnostic selection;NO physical/Work grant
 #endif
 #include "PioneerQ38TokenNativeRole.h"

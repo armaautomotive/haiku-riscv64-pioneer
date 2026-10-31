@@ -123,6 +123,27 @@ def decode_hidden_snapshot(data):
     require(all(math.isfinite(x) for x in floats), 'nonfinite held hidden DATA')
     return {'header': h, 'bits': words[16:-1], 'floats': floats}
 
+def decode_boundary_snapshot(data):
+    require(len(data) == (16+5120+1)*4, 'observed boundary snapshot length')
+    words = array.array('I')
+    require(words.itemsize == 4, '32-bit word host required')
+    words.frombytes(data)
+    if sys.byteorder != 'little':
+        words.byteswap()
+    h = words[:16]
+    require(list(h[:4]) == [0x31424851, 1, 0, 248319] and 1 <= h[4] <= 64
+            and list(h[5:10]) == [5120, 3, 0, 0x00010075, 0x20261031],
+            'observed boundary family/version/position/input/ACTUAL layers/kind/commits/tag')
+    require(bool(h[10] or h[11]) and list(h[12:]) == [2, 0, 0, 0], 'observed boundary generation/chunks/reserved')
+    require(words[-1] == 0x454e4442, 'observed boundary snapshot footer, NOT token terminal')
+    floats = array.array('f')
+    require(floats.itemsize == 4, 'binary32 host required')
+    floats.frombytes(data[64:-4])
+    if sys.byteorder != 'little':
+        floats.byteswap()
+    require(all(math.isfinite(x) for x in floats), 'nonfinite observed boundary DATA')
+    return {'header': h, 'bits': words[16:-1], 'floats': floats}
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('cpu', type=pathlib.Path)
@@ -130,12 +151,23 @@ def main(argv=None):
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument('--first-layer-only', action='store_true', help='Compare ONLY an incomplete embedding+layer0 diagnostic; no token/STOP/full-model qualification')
     mode.add_argument('--held-hidden-only', action='store_true', help='Observed argument is a tag75 snapshot FILE: compare ONLY its 5120 first-layer words, without inventing an embedding/full trace')
+    mode.add_argument('--held-boundary-only', action='store_true', help='Observed argument is a distinct boundary snapshot FILE: compare its ACTUAL reported layer, never a layer inferred from host delay')
     parser.add_argument('--diagnostic-only', action='store_true', help='Permit exit0 for a valid report with numeric differences; NEVER a numerical pass')
     args = parser.parse_args(argv)
     require(args.cpu.is_absolute() and args.observed.is_absolute(), 'absolute trace directories required')
     require(not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ), 'unexpected role overrides')
     require(not (args.held_hidden_only and args.diagnostic_only), 'held hidden comparison never permits diagnostic-only acceptance')
+    require(not (args.held_boundary_only and args.diagnostic_only), 'observed boundary comparison never permits diagnostic-only acceptance')
     cpu, observed = load_cpu(args.cpu), []
+    if args.held_boundary_only:
+        actual = decode_boundary_snapshot(stable_bytes(args.observed, (16+5120+1)*4))
+        layers = actual['header'][4]
+        expected = {'bits': cpu[0]['bits'][layers*5120:(layers+1)*5120],
+                    'floats': cpu[0]['floats'][layers*5120:(layers+1)*5120]}
+        diff, maximum, relative = difference(expected, actual, 0, 5120)
+        print(f'COMPARE_OBSERVED_BOUNDARY position0/completedLayers{layers}/words5120/bitDifferences{diff}/maxAbs{maximum:.12g}/relativeL2{relative:.12g}')
+        print(f'OBSERVED_BOUNDARY_DIAGNOSTIC NUMERICAL_BITEXACT={int(diff == 0)} NO_TOLERANCE_USED;NO earlier/later-layer/token/full-model/native/physical/Work/TPS qualification')
+        return 0 if diff == 0 else 1
     if args.held_hidden_only:
         actual = decode_hidden_snapshot(stable_bytes(args.observed, (16+5120+1)*4))
         expected = {'bits': cpu[0]['bits'][5120:10240], 'floats': cpu[0]['floats'][5120:10240]}
