@@ -1,0 +1,68 @@
+Physical posted cancellation: clean four-layer boundary,bit-exact DATA
+====================================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. Last measured whole-model
+rate remains0.207893161 tokens/sec. This is NOT a whole-model/Work/TPS pass.
+
+The SAME physical49753 actually exited0
+--------------------------------------
+Launched14:42UTC;actual terminal exit0 observed by15:23UTC. This is a
+polling-bound observation,NOT separate measured inference/startup phases.
+No restart,retry,extra GPU/admin FD,reload,reset,profiler,power or card
+change was used during that lifetime. The client fully authenticated the
+SAME-open original GGUF before device Open,uploaded19399024640bytes,
+received START,issued ONE requested500ms-delayed cancellation,observed
+genuine terminal,performed HOLD/drain/two hidden reads,all original
+restoration stages,full END and Close,and published its exclusive file.
+
+Actual observed completedLayers=4 at position0,not a layer inferred from
+500ms or RAW frontend samples. Actual module18362bcb uses the SAME frozen
+fault-reporting ROOT/worker ROMs and strict completion bounds as CF400563.
+Only the scoped host RAW32 cancellation transport was changed to posted
+ordering with actual-destination readback before returning to normal mode.
+The previously failing500ms control path now reaches clean END. This
+supports the documented transport-accounting diagnosis;the old savedLINK
+was not a unique fault-branch/retired-PC proof and is not reinterpreted.
+
+Raw completed physical log SHA-256:
+ 51671fe47446733d29851e689955cd73001630b1d924b91a2cdeb242508877fc
+Actual20548-byte snapshot SHA-256:
+ ec2b8c4b8c5103adb2cddb967d712b11ebf89e3865309f99472010ceaecf1f47
+Remote and independently copied local snapshot hashes agree. Both raw
+artifacts are archived with this report,not substituted with HOST outputs.
+
+Separate strict posthoc comparison actually exited0
+--------------------------------------------------
+ /usr/bin/python3 tools/pioneer/tests/compare_pioneer_q38_observed_trace.py
+ ABS_CPU_DIRECTORY ABS_ACTUAL_SNAPSHOT --held-boundary-only
+The unchanged pinned cpu-original-trace-20261028 corpus was used ONLY on
+the Mac AFTER the physical run. No CPU model reference/products were used
+by the Pioneer diagnostic. The comparator decoded ACTUAL layer4 and
+compared all5120 boundary words:bitDifferences0,maxAbs0,relativeL20.
+No tolerance,diagnostic-only acceptance,retargeted corpus or invented
+embedding/earlier/later-layer trace was used. This proves that captured
+four-layer boundary output,NOT each unrecorded intermediate layer,all64
+layers,vocabulary,greedy tokens,multi-request state or sustained speed.
+
+Fresh post-exit parent inventory has no model/Assistant parent. Installed
+driver still hashes18362bcb. Fresh CPU-only reload metadata shows tag75,
+gen3,quiesced0,cold0,owner0,open_count1,guard1. sysinfo again shows64 CPUs
+and137034936320B maxRAM. No recovery or driver exchange was necessary.
+
+Next normal-generation trial
+----------------------------
+The independently rebuilt host-wall-timed USER client EFB8D649 was staged
+in a fresh directory,remote-hashed,and made executable. Its ordinary B15
+and old hidden1A061 literal controls remain unchanged. A fresh parent
+inventory and idle driver metadata were checked immediately before launch.
+At15:31UTC,ONE normal3-position physical51397 was started. It authenticates
+the original full source before device Open and uses no CPU model reference.
+Stdout:/private/tmp/pioneer-q38-generation-physical-20261031-mj.log
+Separate remote stderr:/boot/home/pioneer-q38-generation-20261031-mg.stderr
+It is still pending:do not claim a generated token,normal END,numerical
+pass or throughput from launch. Poll the SAME lifetime;NO extra GPU/admin
+FD,reload,reset,profiler or restart on observation timeout. Its3 positions
+include2 prompts;host-wall data are NOT steady decode tokens/sec.
+
+Still required:correct full-generation output/normal+EOS,state epochs,
+resident weights across fresh arbitrary requests,Assistant Work integration,
+combined lifetime/stack qualification and sustained real decode benchmarks.

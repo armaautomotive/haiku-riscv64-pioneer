@@ -1,0 +1,10 @@
+P100A_RELOAD driver55 tag2026103100010075 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133796036608 bytes free      (used/max 3238899712 / 137034936320)
+                           (cached   19170705408)
+     64518 semaphores free (used/max       1018 /      65536)
+      3954 ports free      (used/max        142 /       4096)
+      3906 threads free    (used/max        190 /       4096)
+      2027 teams free      (used/max         21 /       2048)

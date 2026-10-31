@@ -1,0 +1,22 @@
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /boot/system/servers/net_server                    
+  104 /boot/system/servers/package_daemon                
+  105 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  111 /boot/system/servers/power_daemon                  
+  113 /boot/system/servers/launch_daemon baron           
+  115 /boot/system/servers/syslog_daemon                 
+  130 /boot/system/servers/media_server                  
+  177 /boot/system/servers/app_server                    
+  187 /boot/system/Tracker                               
+  189 /boot/system/Deskbar                               
+  208 /boot/system/servers/input_server                  
+  235 /boot/system/servers/media_addon_server            
+  484 /boot/system/bin/screen_blanker                    
+  575 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  577 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  578 /boot/system/bin/ps -o Id -o Team                  

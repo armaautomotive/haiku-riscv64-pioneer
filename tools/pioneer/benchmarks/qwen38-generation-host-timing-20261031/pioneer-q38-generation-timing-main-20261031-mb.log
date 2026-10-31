@@ -1,0 +1,12 @@
+33cffe8edd7235e5b212a44937309dcde6d758e9bd09b5e30c4b35b6132c992c client.o
+1a061f7ab0eb5001c04a73c1334ed3b519a29781157ea4e46f533e3908fe0536 pioneer-q38-token-DEBUG75-DIAGNOSTIC-ONLY
+PASS actual Haiku riscv64 DEBUG75 USER client compile/link/fixed same-open full SHA before device Open/ALL learned parts/no CPU oracle+Work+mock/native imports/maxIndividualUSERFrame4432
+BUILD+INSPECT ONLY;explicit source-only checks grant NO native execution;hidden snapshot runtime still requires independent native/lifecycle/stack/numerical qualification;NO physical or TPS proof
+785b914818a0ac8b9f566600fb85493cc3dcf348018357e8fbe4ac1c3dfdfbe2 generation-client.o
+b15da1871edf8f1c8acb59ab9b3978e3ace43b6d8bb4c3d8fd50ee240114d779 pioneer-q38-token-DEBUG75-GENERATION-DIAGNOSTIC-ONLY
+PASS fixed tag75 three-position USER diagnostic/old hidden object+binary LITERAL pins unchanged/actual same-open source uploader+normal terminal+END/192-word DATA publication/no CPU oracle+native+Work+MOCK imports/maxIndividualUSERFrame4432
+BUILD+INSPECT ONLY;NO install/run,physical correctness,resident multi-request,Assistant or steady-state TPS qualification
+262692ebbc03aa9b6cd1e6e036a2f50e820840c79b025bd90142527ec8ec2712 generation-timing-client.o
+efb8d649a41b02d78130476508cde63b0d6a174e5aed66d8bc6c77f51a741e38 pioneer-q38-token-DEBUG75-GENERATION-TIMED-DIAGNOSTIC-ONLY
+PASS separate tag75 host-wall observation/actual USER clock and same fixed generation lifecycle/old b15+hidden literal controls unchanged/no CPU oracle+native+Work+MOCK imports/maxIndividualUSERFrame4432
+BUILD+INSPECT ONLY;stderr phases MUST stay separate from stdout record log;NOT on-card cycles,steady decode TPS,physical numerics or a resident Work release

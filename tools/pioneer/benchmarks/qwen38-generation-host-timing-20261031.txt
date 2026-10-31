@@ -1,0 +1,50 @@
+Separate tag75 USER host-wall timing for the full-generation diagnostic
+======================================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. No new speedup is claimed.
+
+PIONEER_Q38_TOKEN_GENERATION_HOST_TIMING=1 is a separate USER build only.
+It records existing ioctl wall durations in upload/startup/observe/cleanup/
+other buckets and source-to-open/open-to-start/start-to-terminal/terminal-
+to-close/total-diagnostic wall phases. It adds CPU clock reads ONLY,not CPU
+model inference,another GPU handle,new driver operations,firmware or Work.
+The timing data cannot authorize completion,cleanup,retry or END. Invalid
+or regressing clocks suppress plausible-looking partial phase data.
+
+Startup includes initialization/install. Observe includes transport and
+terminal proof. Three positions include TWO prompt positions. No part is
+claimed to be accelerator cycles,isolated kernel timing or steady decode
+TPS. The separate stderr report must NOT be merged into the strict stdout
+record log. The existing --generation-tag75 posthoc comparator remains
+unchanged and operates only after a genuine completed run.
+
+Final independent qualification actually completed0
+--------------------------------------------------
+Main68554/clean78617 actual Haiku SDK compile/link/inspect BOTH exited0.
+Frozen HEADd177e4a0de plus ONLY5 cmp-verified owned source/test files:
+ /private/tmp/pioneer-q38-generation-timing-clean-20261031-ly.KXEOHsnI
+Both actual timed objects and binaries are BYTE-IDENTICAL,with literal pins:
+ object262692ebbc03aa9b6cd1e6e036a2f50e820840c79b025bd90142527ec8ec2712
+ binaryefb8d649a41b02d78130476508cde63b0d6a174e5aed66d8bc6c77f51a741e38
+Max individual USER frame4432B. Real clock/source/lifecycle/ioctl bodies are
+emitted. No old74 timing-role alias,CPU oracle,ggml/llama,native owner,Work
+or MOCK-engine import. Both rebuild the ordinary generation against its
+UNCHANGED literal B15 binary/785 object and hidden1A061/33C object controls.
+The new ifdef adds no code to the unselected ordinary generation build.
+
+Clock/role main74522 and independent clean46901 BOTH exited0,identical logs:
+disabled/zero/large clocks,incomplete milestones,5 buckets/5 phases,all9
+invalid-clock/index/duplicate-mark cases;1 positive/44 missing+0+2+late+
+oldUSER/native/CPU/Work/HOST-TEST role refusals. HOST arithmetic/syntax
+tests are NOT evidence of model execution or hardware timing.
+
+The exact EFB8D649 client was later independently remote-hashed beside
+the unchanged18362bcb idle driver and staged in its own new userspace
+directory. Physical51397 is the ONE actual normal3-position run,now pending;
+see qwen38-posted-cancel-physical-20261031.txt. No CPU-only source pass was
+repeated:the real Begin path itself authenticates the SAME-open full GGUF
+before device Open. No source-authentication or native guard was skipped.
+
+Wait for that SAME actual exit before copying stderr or comparing stdout.
+Do not open another GPU/admin FD while it is active. A successful3-record
+comparison would qualify only its selected-token/max-logit DATA,not full
+hidden/vocabulary values,resident multi-request Work or20 decode tokens/sec.

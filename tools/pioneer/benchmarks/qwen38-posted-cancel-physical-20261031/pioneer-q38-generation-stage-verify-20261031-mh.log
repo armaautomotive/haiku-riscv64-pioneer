@@ -1,0 +1,3 @@
+efb8d649a41b02d78130476508cde63b0d6a174e5aed66d8bc6c77f51a741e38  /boot/home/pioneer-q38-generation-timing-20261031-efb8d649/pioneer-q38-token-DEBUG75-GENERATION-TIMED-DIAGNOSTIC-ONLY
+18362bcb97180f8428b7e3b54aee7c81a42b8ed9f998aea11ccbefee5aff29af  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+P100A_RELOAD driver55 tag2026103100010075 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
