@@ -1,0 +1,38 @@
+5ce43d33156588fc3b9649321fca82ba3bb6490b6984ee686ba54ef00c0378c3  /boot/home/pioneer-q38-boundary75-client-20261031-5ce43d33/pioneer-q38-token-DEBUG75-BOUNDARY-DIAGNOSTIC-ONLY
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+ffa315aaba98d8863a1b7900270e38cffbe5b1334e5559f5b4471e455f62962e  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-hot-swap-token-hidden-readout-ffa315aa.sh
+b74f4bfa5583aaf0cf8272d5136c73336c1db0f93e168e7212277f97705a92cc  /boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-token-hidden-readout-b74f4bfa
+P100A_RELOAD driver55 tag2026102100010012 generation8 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133777518592 bytes free      (used/max 3257417728 / 137034936320)
+                           (cached   19176570880)
+     64486 semaphores free (used/max       1050 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3901 threads free    (used/max        195 /       4096)
+      2025 teams free      (used/max         23 /       2048)
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /boot/system/servers/net_server                    
+  104 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  105 /boot/system/servers/package_daemon                
+  109 /boot/system/servers/power_daemon                  
+  114 /boot/system/servers/launch_daemon baron           
+  116 /boot/system/servers/syslog_daemon                 
+  131 /boot/system/servers/media_server                  
+  178 /boot/system/servers/app_server                    
+  187 /boot/system/Tracker                               
+  189 /boot/system/Deskbar                               
+  208 /boot/system/servers/input_server                  
+  234 /boot/system/servers/media_addon_server            
+  284 /boot/system/servers/notification_server           
+  485 /boot/system/bin/screen_blanker                    
+  978 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  980 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  981 /bin/bash -c sha256sum /boot/home/pioneer-q38-boundary75-client 
+  985 /boot/system/bin/ps -o Id -o Team                  

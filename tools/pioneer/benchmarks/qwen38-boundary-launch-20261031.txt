@@ -1,0 +1,57 @@
+First observed later-boundary capture: original57871 LIVE,not a result
+====================================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. Last whole-model rate remains
+0.207893161 tokens/sec. No new numerical,END or physical speed pass claimed.
+Qualified code9d61a9e67d903106f63e0871e0e3c3d5560e96d0 is pushed and
+remote-verified. Complete paired gates:qwen38-boundary-qualified-20261031.txt.
+
+The NEW separately staged USER binary is
+ /boot/home/pioneer-q38-boundary75-client-20261031-5ce43d33/
+ pioneer-q38-token-DEBUG75-BOUNDARY-DIAGNOSTIC-ONLY
+SHA5ce43d33156588fc3b9649321fca82ba3bb6490b6984ee686ba54ef00c0378c3.
+Old first-layer USER and its DATA/control remain untouched. Kernel module
+b74f4bfa5583aaf0cf8272d5136c73336c1db0f93e168e7212277f97705a92cc and
+immutable ffa315aa updater are unchanged from the successful first-layer
+physical diagnostic;no new firmware or Work selector is introduced.
+
+Fresh preinstall hashes/status verified stable041/tag12/gen8/clean,
+64CPUs/full137034936320B RAM. That inventory includes the short-lived
+metadata-query shell itself,not a model parent. The actual updater performs
+its OWN fresh no-compute-parent checks after that query finishes.
+Original17214 actually exited0 through SINGLE-LINE exec SSH using
+--apply-token-hidden-readout:stable041/gen8 ->b74/tag75/gen9/clean.
+Separate postinstall SHA/status/sysinfo confirms in-memory75/gen9,
+quiesced0/cold0/owner0/open1/guard1,64CPUs/fullRAM/free133778247680B and
+absent snapshot target. No reboot,power,SD,hardware,boot,OS kernel or
+Assistant binary change occurred.
+
+ONE first physical process57871 runs:
+ NEW_USER --capture-layer-boundary 500
+ /boot/home/pioneer-q38-boundary75-client-20261031-5ce43d33/observed-boundary-500ms-hf.qhb
+Actual log:/private/tmp/pioneer-q38-boundary-physical-20261031-hf.log.
+Initial banner received;the SAME process is LIVE,not restarted. No upload,
+terminal,captured-layer,clean END or numerical result is claimed yet.
+500ms is host intent,NOT proof of selecting an exact layer. Only the actual
+terminal layer accepted by the client can identify the CPU comparison slice.
+Do not relabel an early/later/missed boundary to fit an intended target.
+
+NEXT poll SAME57871 and tail SAME log. No extra GPU/admin FD,reload,
+profiler,reset or power action during its lifetime. Wait for actual exit0
+AND PASS_DEBUG75_BOUNDARY_SNAPSHOT...clean_end1;ONLY then copy/hash actual
+20548B QHB1 file and run strict --held-boundary-only with the unchanged
+SHA-pinned CPU corpus. No diagnostic-only/tolerance,synthetic embedding or
+full-token/throughput promotion. If completed cleanly but no captured
+boundary,record failure without automatic retry. Unsafe/lost lifetime is
+NOT normal-restore authority. After actual closure and fresh clean ownership,
+restore b74->stable041 with the SAME ffa315aa helper
+--restore-token-hidden-readout. OLD8bed restores5f ONLY,not b74.
+
+Completed unmodified install evidence,cmp-checked with originals:
+ qwen38-boundary-preinstall-20261031.log
+ qwen38-boundary-install-20261031.log
+ qwen38-boundary-installed-20261031.log
+Preinstall raw ps padding is preserved;only that raw log is excluded from
+source-whitespace lint. No partial live output is saved as completed evidence.
+Prior first-layer physical74246/restore43283 are COMPLETE;do not repoll them.
+Full-model/state/normal+EOS/quality,resident no-CPU-reference Work+Assistant
+and measured sustained performance remain owed. Keep the full goal ACTIVE.
