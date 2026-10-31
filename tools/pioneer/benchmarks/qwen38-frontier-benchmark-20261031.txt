@@ -80,3 +80,29 @@ install,then ONE same-FD34-position hardware run. No second accelerator or
 admin FD/reset/reload/model is permitted during that run's live lifetime.
 Original LOCAL full-native history41236 remains live at position1/layer98
 on the SAME handle;not restarted or supplied with CPU products.
+
+Hardware launch update22:40UTC
+-----------------------------
+Source-only11960 actually exited0:PASS,full original GGUF authenticated,
+no accelerator Open. Exact new helper applied through33154,actual exit0:
+baseline tag12/gen10 quiesced and exchanged,then new tag75/gen11 verified.
+No reboot,GPU execution or automatic rollback during the exchange. Fresh
+separate prelaunch SSH confirms exact9ad9e86b module/4b1dbee6 client/
+ff91bbb5 helper/unchanged d1ce2aa4 guard,64CPUs,maxRAM137034936320B,
+freeRAM133755146240B,active_owner0/open_count1/cold0/quiesced0/guard1,
+no Assistant or model parent. Complete fixed health/apply logs retained.
+
+ONE physical run87895 launched22:40:39UTC with exact4b1dbee6 client:
+ /private/tmp/pioneer-q38-frontier-generation-physical-20261031-yk.log
+ /private/tmp/pioneer-q38-frontier-generation-physical-20261031-yk.stderr
+It remains LIVE;initial header only while repeating full source auth.
+This launch is NOT END+Close,completed inference,a timing result or any
+numerical acceptance. Poll SAME87895;observation timeout is not failure.
+Until actual terminal exit and clean closure,NO second accelerator/admin
+FD,reset,reload,second model or cleanup. After proven clean END+Close,
+use exact ff91bbb5 helper --restore-token-frontier-benchmark ONLY after
+fresh idle/health checks. Uncertain/failing lifecycle needs diagnosis,
+not automatic rollback or reset. No power,SD,OS or network change made.
+
+Tested implementation checkpoint16146a7117be238ffb78d9d7524313b882849c0f
+was pushed and independently confirmed on origin/pioneer-riscv64.
