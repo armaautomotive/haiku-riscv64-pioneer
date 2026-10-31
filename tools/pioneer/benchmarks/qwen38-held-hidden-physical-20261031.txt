@@ -1,0 +1,83 @@
+REAL P100A first-layer hidden snapshot: lifecycle0,numerical comparison0
+======================================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. Last measured whole-model
+rate remains0.207893161 tokens/sec. This cancelled first-layer diagnostic
+is NOT a generated token,steady-rate benchmark or Assistant Work release.
+
+The SAME original74246 actually completed exit0
+----------------------------------------------
+Exact moduleb74f4bfa5583aaf0cf8272d5136c73336c1db0f93e168e7212277f97705a92cc,
+tag2026103100010075/gen7. Exact USER
+1a061f7ab0eb5001c04a73c1334ed3b519a29781157ea4e46f533e3908fe0536.
+Launched under codef0ccc273954f27c502361e6876a62b6205809775;installation
+and initial LIVE handoff are in41fb1e5c36. No timeout restarted this run.
+
+The actual SAME-open fixed full GGUF authenticated BEFORE accelerator Open;
+all19399024640 padded learned bytes uploaded. The kernel acknowledged
+startup,consumed one cancellation at position0/completedLayers1,proved
+terminal/119STOP/120HOLD,drained zero records,and returned two ordered
+canonical hidden chunks. Session accepted the exact native16-word metadata
+and zero tail. Actual Finish and successful Close preceded snapshot export.
+Actual final stdout:
+ PASS_DEBUG75_HIDDEN_SNAPSHOT words5120 position0 completed_layers1 clean_end1
+ RAW_DIAGNOSTIC_ONLY_NOT_NUMERICAL_WORK_OR_TPS_PROOF
+The full unmodified output is archived separately,not reconstructed here.
+
+Actual DATA copied and independently compared only AFTER actual exit0
+--------------------------------------------------------------------
+Remote file:
+ /boot/home/pioneer-q38-hidden75-client-20261031-1a061f7a/hidden-layer0-gz.qhd
+Actual remote and local length20548B,matching SHA:
+ 4abe372f2dd1d0c4f5962e88d52eb8056f57e23977113d21c039b68003b21795
+Persistent local copy:
+ generated.pioneer/qualification-inputs/qwen38-held-hidden-physical-20261031.S3bGvo5V/held-layer0.qhd
+The strict production comparator with --held-hidden-only actually exited0
+against unchanged cpu-original-trace-20261028:ALL5120 first-layer words
+BIT-EXACT,bitDifferences0/maxAbs0/relativeL20. No diagnostic-only/tolerance,
+CPU-product upload,expected-value change or synthetic observed embedding.
+
+Meaning and limits
+------------------
+This proves that this real tested first-layer hidden output equals the
+independent CPU result,including both its matrix and recurrent/FFN path.
+It does NOT prove all later layers,state trajectories,attention/vocabulary
+math,normal/EOS generation,arbitrary prompts or text quality. Earlier real
+three-position logits still differed at all three positions;those failures
+are NOT relabelled. With the same fixed input/firmware,this result makes
+later-layer/output-head localization the next useful diagnostic;cross-run
+or timing-sensitive faults are not excluded by a single passing snapshot.
+No whole-model throughput improvement follows from this first-layer pass.
+
+Stable driver restored through exact new route,not reset
+-------------------------------------------------------
+AFTER74246 actually ended,a fresh process inventory,installed/updater SHA
+and status verified no compute parent,b74/tag75/gen7/quiesced0/cold0/owner0/
+open1/guard1. Original43283 actually exited0 through the new ffa315aa helper
+with --restore-token-hidden-readout,SINGLE-LINE exec SSH. The transition
+was b74/gen7 ->stable041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403/gen8.
+An independent post-restore query confirms exact041/tag2026102100010012/
+generation8/quiesced0/cold0/owner0/open1/guard1,64CPUs/full137034936320B
+RAM/free133783052288B. No reboot,power,SD,card,cable,mains,boot,OS kernel
+or Assistant binary change. No physical trial remains active.
+
+Complete raw evidence,each cmp-verified against actual original output
+---------------------------------------------------------------------
+ qwen38-held-hidden-physical-20261031.log
+ qwen38-held-hidden-physical-compare-20261031.log
+ qwen38-held-hidden-physical-prerestore-20261031.log
+ qwen38-held-hidden-physical-restore-20261031.log
+ qwen38-held-hidden-physical-restored-20261031.log
+The prerestore log preserves padded raw ps columns byte-for-byte;only that
+raw log is excluded from source-whitespace lint.
+
+Next localize later hidden boundaries/output head without retargeting the
+fixed CPU controls or weakening the successful first-layer diagnostic.
+The current kernel's hidden reader already reports actual terminal position,
+layer count and native kind;any additional USER capture/format/comparator
+must separately preserve and validate those distinctions. A host delay can
+request cancellation at a later healthy layer boundary,but must never be
+claimed to select an exact layer;use only the genuinely observed boundary.
+No new later-boundary selector or Work capability is implemented by this
+result. Resident no-CPU-reference request lifetime/fresh-state reuse,full
+normal+EOS qualification,Assistant integration and sustained performance
+optimization remain owed. Keep the full goal ACTIVE.

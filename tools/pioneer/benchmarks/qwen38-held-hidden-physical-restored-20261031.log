@@ -1,0 +1,11 @@
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+P100A_RELOAD driver55 tag2026102100010012 generation8 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133783052288 bytes free      (used/max 3251884032 / 137034936320)
+                           (cached   19181391872)
+     64489 semaphores free (used/max       1047 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3902 threads free    (used/max        194 /       4096)
+      2026 teams free      (used/max         22 /       2048)
