@@ -1,0 +1,108 @@
+{
+  "kind": "PARTIAL_ACTUAL_DEBUG75_FAULT_PUBLIC_ENTRY_STACK_AUDIT",
+  "roots": [
+    {
+      "root": "_ZL12ProbeControlPvjS_m",
+      "known_module_chain_bytes": 5392,
+      "known_chain": [
+        {
+          "function": "status_t ProbeControl(void*, uint32, void*, size_t)",
+          "frame": 384
+        },
+        {
+          "function": "status_t Q38TokenNativeControl(PioneerProbeCookie*, void*, size_t)",
+          "frame": 272
+        },
+        {
+          "function": "PioneerQ38TokenBackendResult BeginQ38TokenNativeBackendScoped(PioneerQ38TokenCallScope&, unsigned int, const uint32_t*, unsigned int, unsigned int, bool, unsigned int, unsigned int)",
+          "frame": 592
+        },
+        {
+          "function": "constprop(PioneerStoreContext&, const uint32_t*, unsigned int, unsigned int, bool, unsigned int, unsigned int, PioneerQ38TokenMemoryResult&)",
+          "frame": 544
+        },
+        {
+          "function": "bool PioneerQ38TokenStartupPlan::Build(const PioneerQ38CanonicalModelPlan&, unsigned int, const PioneerQ38GdnIdentity&, const uint32_t*, const uint32_t*, unsigned int, unsigned int, bool, unsigned int, unsigned int)",
+          "frame": 224
+        },
+        {
+          "function": "bool PioneerQ38LayerChainPackage::Build(const PioneerQ38CanonicalModelPlan&, unsigned int, unsigned int, const PioneerQ38GdnIdentity&, const uint32_t*, unsigned int, uint32_t)",
+          "frame": 160
+        },
+        {
+          "function": "bool PioneerQ38MixedRecurrentBlockPlan::Build(const PioneerQ38CanonicalModelPlan&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const PioneerQ38GdnIdentity&, const uint32_t*, unsigned int, unsigned int)",
+          "frame": 768
+        },
+        {
+          "function": "bool PioneerQ38MixedRecurrentBlockPlan::Matches(const PioneerQ38CanonicalModelPlan&) const",
+          "frame": 144
+        },
+        {
+          "function": "bool PioneerQ38MixedRecurrentCohortPlan::Matches(const PioneerQ38CanonicalModelPlan&) const",
+          "frame": 784
+        },
+        {
+          "function": "bool PioneerQ38ResidentOutputPlan::Matches(const PioneerQ38CanonicalModelPlan&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const PioneerQ38GdnIdentity&, const uint32_t*, const uint32_t*) const",
+          "frame": 480
+        },
+        {
+          "function": "bool PioneerQ38GdnRendezvousPlan::Matches(const PioneerQ38CanonicalModelPlan&, const uint32_t*, const uint32_t*) const",
+          "frame": 576
+        },
+        {
+          "function": "static bool PioneerQ38GdnGatedPlan::Describe(const PioneerQ38CanonicalModelPlan&, const uint32_t*, const uint32_t*, uint32_t*)",
+          "frame": 112
+        },
+        {
+          "function": "bool PioneerQ38GdnGatedShape(const uint32_t*, const uint32_t*, const uint32_t*)",
+          "frame": 144
+        },
+        {
+          "function": "bool PioneerQ38ResidentGdnShape(const uint32_t*)",
+          "frame": 128
+        },
+        {
+          "function": "uint32_t PioneerQ38SpanRoute(unsigned int)",
+          "frame": 80
+        }
+      ],
+      "unresolved": [
+        "_Z20GetPioneerPciProfileP19device_manager_infoRK8pci_infoR18tt_pioneer_profile",
+        "_ZdaPv",
+        "_ZdlPvm",
+        "_ZnwmRKSt9nothrow_t",
+        "__indirect_call",
+        "_get_thread_info",
+        "acquire_sem",
+        "calloc",
+        "create_area_etc",
+        "delete_area",
+        "dprintf",
+        "find_thread",
+        "free",
+        "get_memory_map",
+        "get_module",
+        "geteuid",
+        "malloc",
+        "map_physical_memory",
+        "memcpy",
+        "memset",
+        "release_sem",
+        "spin",
+        "system_time",
+        "user_memcpy",
+        "vm_set_area_memory_type"
+      ],
+      "dynamic": [],
+      "cycles": [],
+      "reached_nodes": 504,
+      "module_graph_closed": false,
+      "whole_kernel_stack_qualified": false
+    }
+  ],
+  "module_sha256": "cf40056394b5e3ecdac44d1679e26bdaf6256cc47ca8f2f6a890dc878a6d2906",
+  "object_sha256": "98555df8f038598c79bd69cca8e911ceb111a6ee6787faa041299cec10fffac0",
+  "graph_sha256": "afa081458943c9bdeaffce89aeca5e64c193541cd84f92178d1aa6927103ad00",
+  "whole_kernel_stack_qualified": false,
+  "limits": "Known module chains only;unknown indirect/kernel/entry/IRQ costs are excluded,NOT zero. Separate SHA-qualified tag75 fault-ROM revision,not old75 or Work. No deployment or TPS grant."
+}

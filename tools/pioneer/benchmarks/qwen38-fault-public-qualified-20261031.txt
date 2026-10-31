@@ -1,0 +1,106 @@
+Explicit physical fault-ROM revision:independent qualification
+=============================================================
+2026-10-31. Goal ACTIVE. Whole27B last measured0.207893161tokens/sec;
+20tokens/sec UNMET. This is a controlled diagnostic,not a Work release.
+
+Separate binding,not promotion of old code by numeric tag
+-------------------------------------------------------
+New PIONEER_Q38_TOKEN_FAULT_VALIDATION_NATIVE=1 explicitly selects the
+fault-reporting ROOT already qualified by1ee90687db and01b809000b.
+It requires the actual fault program package and ALL23 inherited physical
+tag75 parents,conventional ABI and native owner. Missing/defined0/private
+compile-only/CPU-reference/Work/TEST aliases refuse. The program selector
+seals kind2 for this explicit physical revision,kind1 for the unchanged
+private fault context and kind0 for an old selection. Late mixing refuses.
+The numeric tag remains75 because the bounded public operations and packet
+extents are unchanged. It is NOT byte identity or an old b74 deployment.
+Old b74/FFA restore helpers stay immutable and MUST NOT restore this image.
+
+All mathematical objects,workers,layouts,journals,ownership/deadlines,
+cancel/terminal/STOP/HOLD and restoration rules are unchanged. Actual native
+InspectTerminal exports the existing status error and saved ra LINK as
+failure DATA in detail[14..15],then retains unsafe ownership. A saved LINK
+is NOT necessarily a failed guard/retired PC,nor read/execute/cleanup authority.
+No CPU reference,automatic retry,fallback,reset or implicit END was added.
+
+Independent actual builds
+-------------------------
+Clean:/private/tmp/pioneer-q38-fault-public-clean-io.ERzv559D,
+HEAD01b809000b plus ONLY14 cmp-verified owned source/test files.
+Module builds main92939/clean70540 BOTH actually exited0. Actual objects
+are byte-identical,SHA98555df8f038598c79bd69cca8e911ceb111a6ee6787faa041299cec10fffac0.
+Actual linked modules are byte-identical,SHA
+cf40056394b5e3ecdac44d1679e26bdaf6256cc47ca8f2f6a890dc878a6d2906.
+All13 firmware sections match their complete fixed artifact SHA pins,
+old program arrays are absent,and2MiB RoPE is unchanged. ProbeControl
+relocations reach both bounded real handlers;the actual token handler's
+relocation reaches the real terminal observer. No CPU oracle,Work,synthetic
+IO or TEST engine is imported. Old public75 b3a6d786,old74 772aafe8 and
+private G3 c78a84c7 literal object pins still pass without retargeting.
+
+The actual callgraph metadata recompile is byte-identical to the actual
+module object. The public entry has known module-chain5392B,25 unresolved
+external/indirect costs,reached504,no dynamic frame/cycle. Its entire roots
+audit is identical to old b74,not merely the maximum. Unknown kernel,
+entry and IRQ costs remain excluded,NOT zero. wholeKernelStackQualified
+is FALSE;this is a relative/narrow audit,not whole-system certification.
+
+USER source main23793/clean26679 BOTH actually compiled/linked0. Objects
+573244e5f3ddbc178307f8fc252f36b6af95d8ca851b1291aa77b099fa7ac288
+and binaries a1c45ca19e8715c6bc144a93ef208cc709a01129d71012662c954e1b1c40c09c
+match byte-for-byte. New failure logging makes NO extra ioctl. It copies
+only the request/reply headers of a failed exact Observe packet,checks
+their consistency,and logs error51465431/saved_LINK with an explicit warning:
+NOT_RETIRED_PC_AUTHENTICATED_COPY_STOP_OR_CLEANUP_PROOF. A failed user copy
+can expose a prefix;matching DATA is still NOT authenticated or atomic.
+No output field changes the existing status==0 predicate or session state.
+The maximum observed individual USER frame is4432B,not a kernel frame.
+
+Independent focused and installer tests
+--------------------------------------
+Final focused main96809/clean4758 BOTH actually exited0;their complete
+9-line logs match,SHA2f14c0fed3426b74f32ce3bf10ef3146c697f9fe4070a116d326bf0250b3b135.
+Actual helper10 saved-link/status/unaligned/opaque-payload cases and55
+malformed-header/size/opcode/null refusals preserve inputs and refused output.
+Its14 USER-only role refusals pass. Explicit physical selection has3
+positives/794 missing/zero/two/late/ABI/oldtag/NODRV/CPU/Work/TEST refusals.
+The existing USER session passes462 COW branches over MOCK source/driver
+replies;CLI9 positives/31 refusals plus12 first-cause/Abort cases pass.
+Updated USER role1 positive/55 refusals includes both new native aliases.
+Original immutable-program DATA tests still pass ALL120/3,048,876 words,
+2290 immutable/gap/address refusals,30 input refusals and28 selector refusals.
+These scopes are NOT original-model products,card execution or token rate.
+
+Guarded updater now has ONLY exact clean041<->exactcf400 transitions for
+--apply-token-fault-readout/--restore-token-fault-readout,with hash-qualified
+backups. Helper SHA7d668f6abbb73b8abd187c0b8be82d9bd44b5ce0c05ccfb86abf65268ed17e20.
+Paired actual shell tests main27873/clean95451 BOTH exited0,336 cases each,
+including old75 b74 and old74 same-role substitutions,candidate/installed
+hashes,symlinks,possible model parents,metadata/cold/owner/open/generation,
+one quiesce,rename/wait failures and preserved backups. Their complete logs
+match,SHAffb41aebd387de83b353343f9cc85eccae2db464889e2a56b302d138ae368cd6.
+No retained/cold/unknown owner may restore,retry or reset through this helper.
+
+Initial check failure retained
+-----------------------------
+Initial SDK69875 exited1 AFTER compilation because GCC labels the emitted
+observer frame constprop(...),not its function name. The final checker
+requires the EXACT source-definition-bound static112B frame AND the actual
+control-to-observer relocation,plus its real symbol. It does not accept a
+missing/zero frame or omit the body. Initial raw failure log is preserved.
+
+Hardware boundary at this checkpoint
+-----------------------------------
+PreflightIK SSH0 independently showed stable041/tag12/gen2/cold0/owner0,
+64CPUs/full137034936320B maxRAM and no compute parent. No new driver is
+installed yet. Only the byte-verified USER client was staged in a fresh
+directory. Its explicit source-only36930 is hashing/sampling the original
+GGUF WITHOUT opening the accelerator. Await its actual exit before another
+GPU/admin FD or install;do not infer completion from elapsed time or a log.
+No power,SD,mains,hardware,Assistant,OS or network setting changed.
+
+Next controlled trial requires that source-only pass,fresh clean ownership
+and the exact paired module/helper/client hashes. Failure must retain the
+real reason and LINK DATA without a normal restore through quarantine.
+The broader requirements remain full27B correctness+state,normal/EOS/quality,
+retained no-CPU-reference Work+Assistant and measured sustained optimization.

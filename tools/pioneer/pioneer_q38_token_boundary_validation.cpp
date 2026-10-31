@@ -12,6 +12,7 @@
 #include "PioneerQ38TokenBoundaryValidationCLI.h"
 #include "PioneerQ38TokenBoundaryDelay.h"
 #include "PioneerQ38TokenBoundaryAbort.h"
+#include "PioneerQ38TokenBoundaryFaultData.h"
 static_assert(__BYTE_ORDER__==__ORDER_LITTLE_ENDIAN__,"fixed raw snapshot byte order");
 struct BoundaryValidationTransport {
  uint64_t reported=0;
@@ -19,7 +20,12 @@ struct BoundaryValidationTransport {
   return open("/dev/misc/tenstorrent_pci_probe",O_RDWR|O_CLOEXEC);}
  bool Call(int fd,uint32_t op,void* data,size_t bytes){
   errno=0;const int status=ioctl(fd,op,data,bytes);const int saved=errno;
-  if(status)printf("DEBUG75_BOUNDARY_IOCTL_FAILED op%08x status%d errno%d;NO_RETRY\n",unsigned(op),status,saved);
+  if(status){
+   printf("DEBUG75_BOUNDARY_IOCTL_FAILED op%08x status%d errno%d;NO_RETRY\n",unsigned(op),status,saved);
+   PioneerQ38TokenBoundaryFaultWords words;
+   if(PioneerQ38TokenBoundaryCopyFaultData(op,data,bytes,words))
+    printf("DEBUG75_BOUNDARY_FAULT_REPLY_DATA error%08x saved_LINK%08x;NOT_RETIRED_PC_AUTHENTICATED_COPY_STOP_OR_CLEANUP_PROOF\n",words.error,words.savedLink);
+  }
   return status==0;
  }
  int Close(int fd){return close(fd);}

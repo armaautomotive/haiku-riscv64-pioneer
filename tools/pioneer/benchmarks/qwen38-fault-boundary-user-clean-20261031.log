@@ -1,0 +1,4 @@
+573244e5f3ddbc178307f8fc252f36b6af95d8ca851b1291aa77b099fa7ac288 client.o
+a1c45ca19e8715c6bc144a93ef208cc709a01129d71012662c954e1b1c40c09c pioneer-q38-token-DEBUG75-BOUNDARY-DIAGNOSTIC-ONLY
+PASS actual Haiku riscv64 DEBUG75_BOUNDARY USER client compile/link/observed-boundary/same-open full SHA before device Open/ALL learned parts/no CPU oracle+Work+mock/native imports/maxIndividualUSERFrame4432
+BUILD+INSPECT ONLY;explicit source-only checks grant NO native execution;hidden snapshot runtime still requires independent native/lifecycle/stack/numerical qualification;NO physical or TPS proof

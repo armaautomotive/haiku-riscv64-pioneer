@@ -1,8 +1,10 @@
 /* SPDX-License-Identifier: MIT */
-// Rechecked selection. A distinct code revision,not a physical/Work grant.
+// Rechecked separate code revision. Physical binding still needs qualification.
 #ifndef PIONEER_Q38_TOKEN_FAULT_PROGRAM_SELECTION_H
 #define PIONEER_Q38_TOKEN_FAULT_PROGRAM_SELECTION_H
-#ifdef PIONEER_Q38_TOKEN_FAULT_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_FAULT_VALIDATION_NATIVE
+enum {PioneerQ38TokenFaultProgramSelection=2};
+#elif defined(PIONEER_Q38_TOKEN_FAULT_PROGRAMS)
 enum {PioneerQ38TokenFaultProgramSelection=1};
 #else
 enum {PioneerQ38TokenFaultProgramSelection=0};
@@ -15,7 +17,11 @@ enum {PioneerQ38TokenFaultProgramSelection=0};
  || defined(PIONEER_Q38_TOKEN_PROGRAMS_H)
 #error Fault-reporting code requires its separate exact G3 program selection
 #endif
-static_assert(PioneerQ38TokenFaultProgramSelection==1,"late fault program selection");
+#ifdef PIONEER_Q38_TOKEN_FAULT_VALIDATION_NATIVE
+static_assert(PioneerQ38TokenFaultProgramSelection==2,"late physical fault program selection");
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenFaultValidationRole.h"
+#else
+static_assert(PioneerQ38TokenFaultProgramSelection==1,"late private fault program selection");
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
 #if !defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY != 1 \
  || !defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT != 1 \
@@ -25,7 +31,9 @@ static_assert(PioneerQ38TokenFaultProgramSelection==1,"late fault program select
 #error Fault-reporting native integration is private QT3NODRV COMPILE-ONLY
 #endif
 #endif
-#if defined(PIONEER_Q38_TOKEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE) \
+#endif // separate physical revision OR private compile-only selection
+#if defined(PIONEER_Q38_TOKEN_VALIDATION_NATIVE) \
+ || (!defined(PIONEER_Q38_TOKEN_FAULT_VALIDATION_NATIVE) && defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)) \
  || defined(PIONEER_Q38_TOKEN_VALIDATION_CLIENT) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_CLIENT) \
  || defined(PIONEER_Q38_TOKEN_BOUNDARY_VALIDATION_CLIENT) || defined(PIONEER_Q38_CPU_VALIDATION) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
@@ -33,5 +41,8 @@ static_assert(PioneerQ38TokenFaultProgramSelection==1,"late fault program select
 #error Fault-reporting program selection cannot alias CPU-reference,USER or Work roles
 #endif
 #else
+#ifdef PIONEER_Q38_TOKEN_FAULT_VALIDATION_NATIVE
+#error Physical fault-ROM revision requires its actual separate program selection,including defined0
+#endif
 static_assert(PioneerQ38TokenFaultProgramSelection==0,"late fault program removal");
 #endif
