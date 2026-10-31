@@ -1,0 +1,59 @@
+Future full-card Work: bounded request-position DATA conversion
+==============================================================
+2026-10-30 local/2026-10-31 UTC. Goal ACTIVE;20tok/s UNMET.
+Last physical whole-model rate remains0.207893161tok/s. This checkpoint
+does NOT enable native Work,change Assistant behavior or establish speed.
+The independent physical cancellation trial54721 continues unchanged.
+
+Required frontend conversion,not a driver/protocol promotion
+-----------------------------------------------------------
+The resident parent's limit counts TOTAL PROCESSED positions,including the
+prompt. The last prompt position already predicts output0. For M prompt
+tokens and N requested outputs,the correct total is M+N-1,with N-1 further
+warm decode positions. In particular N=1 has ZERO warm decode samples;
+processed prompt positions must not become generated-token/TPS counts.
+This prepares the future native frontend;the existing CPU-state Assistant
+loop is unchanged and is not claimed to have had this off-by-one bug.
+
+PioneerQ38CardWorkRequestData.h builds only bounded,pristine pointer-free
+request DATA:1..96 immutable copied prompt tokens,1..32 requested outputs,
+at most127 positions,range-checked token/EOS IDs and mandatory stopEos1.
+Every refusal preserves the entire caller packet. Input/output alias,
+unaligned/overflowing input ranges and nonpristine header/prompt/reply/record
+storage refuse before output changes. Caller input is staged once before
+publication. OutputOrdinalData maps positions only;it does NOT prove a
+record exists,that EOS/cancellation has not shortened a run,or that output
+can be delivered before independent terminal/readout/cleanup qualification.
+
+Mandatory stopEos1 makes this DATA grammar disjoint from tag74's fixed
+diagnostic in BOTH directions,including M=2/N=2 (the same total3 positions).
+There is NO new ioctl number,driver tag,role selector,source/owner grant,
+CPU learned product,device operation or live Work/Assistant routing.
+The ONLY current consumer is the new offline test;kernel/firmware/client/
+Assistant runtime sources and the running candidate are untouched.
+A separately qualified Work driver/session/bridge is still required.
+
+Completed paired offline tests;not native/model qualification
+------------------------------------------------------------
+Six-file cmp-verified independent snapshots (three new sources plus the
+unchanged generic/validation packet grammars and actual Assistant bounds):
+ /private/tmp/pioneer-q38-card-work-data-main-gf.sRKpLtot
+ /private/tmp/pioneer-q38-card-work-data-clean-gf.XEuyJyuU
+ASan+UBSan runs18469/65512 BOTH actual exit0;complete logs byte-identical.
+Each passes3072 bounded builds,12358 refusal-preserves-output cases,
+1824 independent literal-grammar mutations and396288 position mappings.
+All96*32 request-size combinations yield exactly N planned output ordinals;
+subsequent caller-input mutation cannot change the copied prompt. Each of
+12336 packet words is made nonzero to check pristine-output refusal.
+Static assertions bind the DATA bounds to actual Assistant27 limits.
+Tests mutate object representations using byte/memcpy access,not fabricated
+uint32 array traversal across separate struct members. No sanitizer guard
+or compiler warning was disabled. Shell syntax/whitespace checks also pass.
+Unmodified matching archive:qwen38-card-work-request-data-20261030.log
+ SHAe8ee82f1f21476b4985835514a6bbd8ba538a04189eadd5dd576a550736f81cb
+
+Full64/multitoken/state/EOS/positive readout/END/reuse,actual arbitrary-
+prompt native Work,Assistant integration and sustained physical throughput
+still require real qualification. No packet grammar/mapping test can
+substitute for those. Continue the SAME live hardware trial and restore
+stable041 only after known-clean completion (controlled recovery if not).
