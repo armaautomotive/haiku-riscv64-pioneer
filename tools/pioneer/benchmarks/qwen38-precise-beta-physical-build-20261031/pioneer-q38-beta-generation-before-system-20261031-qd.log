@@ -1,0 +1,9 @@
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133763772416 bytes free      (used/max 3271163904 / 137034936320)
+                           (cached   19182690304)
+     64456 semaphores free (used/max       1080 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3898 threads free    (used/max        198 /       4096)
+      2025 teams free      (used/max         23 /       2048)

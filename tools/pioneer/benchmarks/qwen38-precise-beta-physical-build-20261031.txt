@@ -2,7 +2,8 @@ Precise-beta diagnostic: actual SDK/module and guarded staging
 =============================================================
 2026-10-31. Goal ACTIVE. Last verified sustained baseline remains
 0.207893161 tokens/sec;20 tokens/sec UNMET. NO speedup is claimed.
-The corrected module is STAGED ONLY,not installed or physically run.
+The corrected module is now INSTALLED;ONE physical generation lifetime
+is LIVE,pending results. It is not a numerical or throughput pass.
 
 Scope and actual change
 -----------------------
@@ -97,8 +98,41 @@ numerics and native HOST-emulation lifetime evidence,not later layers,
 physical execution or model throughput. Whole-model old DW41236 remains
 LIVE with its original instruction history preserved;do not restart it.
 
-Next:fresh idle/hash checks,restore18362 with
-its OWN immutable helper and install2723 with the NEW helper. Run normal
-physical three-position generation and unchanged strict posthoc comparison.
-Even that does not prove sustained decode,normal EOS,request residency,
+Controlled exchange and physical generation now underway
+--------------------------------------------------------
+Initial68445 exited1 before quiesce:the multiline remote launcher appeared
+as a non-PID continuation in Haiku ps. The strict inventory guard refused
+it;independent readback confirmed18362 unchanged and no compute parent.
+Separate SINGLE-LINE old-helper invocation8290 actually exited0,restoring
+18362/gen3 ->041/gen4 with the original de3496bb immutable helper.
+
+The first new-helper invocation also safely refused before quiesce:its
+pioneer-q38 staging-directory name matched the conservative compute-parent
+pattern. Independent hashes confirmed installed041 unchanged. The SAME
+5e1c9ee8 helper was copied,without changing ANY guard,to its final control
+path below. Final SINGLE-LINE22205 actually exited0,041/gen4 ->2723/gen5:
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-hot-swap-token-precise-beta-5e1c9ee8.sh
+Do not invoke an updater FROM a pioneer-q* compute-looking directory or
+inside a multiline ps-visible shell command. Keep the inventory refusal;
+do not weaken it to work around launcher naming/formatting.
+
+Fresh independent verification authenticated installed2723,new helper5e1
+and unchanged timed clientefb8d649. Metadata:tag75/gen5/quiesced0/cold0/
+active_owner0/open_count1/guard1. No model/Assistant parent.64 CPUs and
+137034936320B maxRAM remain available. No reboot,power,SD or mains action.
+
+At17:59:44UTC ONE physical66768 was launched using the SAME authenticated
+EFB8D649 client,--generate-three-positions. It authenticates the full
+SAME-open original GGUF before Open,uploads all19399024640B,then requests
+normal64-layer/head generation for two prompt positions plus one feedback.
+No CPU model reference runs on Pioneer. Current raw stdout:
+ /private/tmp/pioneer-q38-beta-generation-physical-20261031-qf.log
+Separate HOST-wall stderr on Pioneer:
+ /boot/home/pioneer-q38-beta-generation-20261031-qe.stderr
+
+This SAME66768 lifetime is LIVE,not completed or numerically qualified.
+Do not open another GPU/admin FD,reload,reset,profile or restart it on an
+observation timeout. After actual exit0,copy stderr and run the UNCHANGED
+strict posthoc generation comparator against the pinned CPU corpus.
+Even a pass does not prove sustained decode,normal EOS,request residency,
 Assistant Work integration or20 tokens/sec;those remain real requirements.
