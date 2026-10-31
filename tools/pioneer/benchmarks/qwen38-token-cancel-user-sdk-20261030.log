@@ -1,0 +1,4 @@
+32514841576064c59d937d364897557bb06c6f18ae9117bc0a6b8e15525c687a client.o
+24f4e84a7a21f6623129e5a3734b60646479e0bb05b41db464e3601c10b53c2e pioneer-q38-token-DEBUG74-DIAGNOSTIC-ONLY
+PASS actual Haiku riscv64 DEBUG74 USER client compile/link/fixed same-open full SHA before device Open/ALL learned parts/no CPU oracle+Work+mock/native imports/maxIndividualUSERFrame4432
+BUILD+INSPECT ONLY;explicit source-only checks grant NO native execution;three-position runtime still requires independent native/lifecycle/stack/numerical qualification;NO physical or TPS proof

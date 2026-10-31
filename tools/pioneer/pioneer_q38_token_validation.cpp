@@ -10,14 +10,21 @@
 #include "PioneerQ38TokenValidationSession.h"
 
 struct TokenValidationTransport {
- uint64_t reported=0;
+ uint64_t reported=0;bool cancelDiagnostics=false;
  int Open(){
   puts("DEBUG74_OPEN_AFTER_FULL_SAME_OPEN_GGUF_SHA_AND_COMPLETE_851_LAYOUT");
   return open("/dev/misc/tenstorrent_pci_probe",O_RDWR|O_CLOEXEC);
  }
  bool Call(int fd,uint32_t op,void* data,size_t bytes){
+  const bool token=cancelDiagnostics && op==TT_PCI_PROBE_Q38_TOKEN_VALIDATE;
+  if(token)printf("DEBUG74_CANCEL_IOCTL_BEGIN operation%u\n",static_cast<PioneerQ38TokenControl::Packet*>(data)->request.operation);
   errno=0;const int status=ioctl(fd,op,data,bytes);
   if(status)printf("DEBUG74_IOCTL_FAILED op%08x status%d errno%d;NO_RETRY\n",unsigned(op),status,errno);
+  if(token){
+   const auto& r=static_cast<PioneerQ38TokenControl::Packet*>(data)->reply;
+   printf("DEBUG74_CANCEL_UNTRUSTED_REPLY status%d version%u operation%u started%u ready%u unsafe%u complete%u stage%u\n",
+    status,r.version,r.operation,r.started,r.ready,r.unsafe,r.complete,r.stage);
+  } // logging ONLY;the session independently validates every accepted reply
   return status==0;
  }
  int Close(int fd){return close(fd);}
@@ -30,10 +37,12 @@ struct TokenValidationTransport {
 int main(int argc,char** argv){
  if(argc!=2)return 2;
  const bool preflight=!std::strcmp(argv[1],"--preflight-source-only");
- if(!preflight && std::strcmp(argv[1],"--validate-three-positions"))return 2;
+ const bool cancelTrial=!std::strcmp(argv[1],"--validate-cancel-boundary");
+ if(!preflight && !cancelTrial && std::strcmp(argv[1],"--validate-three-positions"))return 2;
  setvbuf(stdout,nullptr,_IOLBF,0);
- puts("DEBUG74_FIXED_2PROMPT_3POSITION_DIAGNOSTIC_NOT_ASSISTANT_WORK_OR_TOKEN_RATE");
- PioneerQ38PublicModelSource source;TokenValidationTransport io;
+ puts(cancelTrial?"DEBUG74_CANCELLATION_LIFECYCLE_DIAGNOSTIC_NOT_FULL_MODEL_WORK_OR_TOKEN_RATE"
+  :"DEBUG74_FIXED_2PROMPT_3POSITION_DIAGNOSTIC_NOT_ASSISTANT_WORK_OR_TOKEN_RATE");
+ PioneerQ38PublicModelSource source;TokenValidationTransport io;io.cancelDiagnostics=cancelTrial;
  auto session=std::make_unique<PioneerQ38TokenValidationSession<TokenValidationTransport>>(io,source);
  if(preflight){
   const bool okay=session->Preflight() && session->InspectLearnedPageSamples();
@@ -48,6 +57,7 @@ int main(int argc,char** argv){
  }
  const bigtime_t began=system_time();bigtime_t previous=began;
  bool okay=began>=before;const char* observationFailure=okay?nullptr:"clock";
+ if(okay && cancelTrial)okay=session->RequestCancellation(); // explicit healthy trial,NOT error recovery
  // A known healthy but slow diagnostic is observed,not restarted. A lost
  // channel/clock/deadline closes ONLY;no automatic cancel/END or GPU retry.
  for(unsigned polls=0;okay && !session->TerminalReady();polls++){
@@ -58,9 +68,15 @@ int main(int argc,char** argv){
   if(!session->TerminalReady() && snooze(100000)!=B_OK){observationFailure="snooze";okay=false;break;}
  }
  if(okay)okay=session->Finish();
- uint32_t records[3*64]={};if(okay)okay=session->CopyRecords(records,3*64);
+ uint32_t records[3*64]={};if(okay && !cancelTrial)okay=session->CopyRecords(records,3*64);
  if(!okay){
   session->Abort();printf("FAIL_DEBUG74 reason%s op%08x;CLOSE_ONLY_NO_IMPLICIT_END_OR_RETRY\n",observationFailure?observationFailure:session->failure?session->failure:"unknown",session->operation);return 1;
+ }
+ if(cancelTrial){
+  const bool consumed=session->CancellationConsumed();
+  printf("%s_DEBUG74_CANCEL requested1 cancelled%u committed%u layers%u clean_end1;CANCELLATION_LIFECYCLE_ONLY_NOT_FULL_MODEL_WORK_OR_TOKEN_RATE\n",
+   consumed?"PASS":"MISSED_WINDOW",unsigned(consumed),session->CommittedRecords(),session->CancelledLayers());
+  return consumed?0:2;
  }
  for(unsigned position=0;position<3;position++)for(unsigned row=0;row<8;row++){
   printf("DEBUG74_RECORD position%u word%02u",position,row*8);

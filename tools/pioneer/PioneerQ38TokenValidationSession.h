@@ -31,7 +31,8 @@ class PioneerQ38TokenValidationSession {
  std::unique_ptr<Packet> packet=std::make_unique<Packet>();
  std::array<uint32_t,3*64> records={};
  State state=Virgin;int fd=-1;uint64_t epoch=0,generation=0;
- bool attempted=false,prepared=false,preflightAttempted=false;
+ bool attempted=false,prepared=false,preflightAttempted=false,cancelAttempted=false,cancelled=false;
+ unsigned committed=0,completedLayers=0;
  bool Current()const{
   return epoch && source.Ready() && source.Model().Epoch()==epoch && layout.MatchesSource(source.Model());
  }
@@ -71,7 +72,7 @@ class PioneerQ38TokenValidationSession {
  bool RecordData()const{
   // Consistency of the ALREADY kernel-validated public DATA only. Session
   // identifiers/counters are not recreated into native ownership proofs.
-  for(unsigned pos=0;pos<3;pos++){
+  for(unsigned pos=0;pos<committed;pos++){
    const auto* r=packet->records+pos*64;
    const unsigned input=pos==0?248319:pos==1?17:packet->records[64+4];
    if(r[0]!=0x31435451 || r[1]!=1 || r[2]!=pos || r[3]!=input || r[4]>=248320
@@ -92,6 +93,9 @@ public:
  PioneerQ38TokenValidationSession& operator=(const PioneerQ38TokenValidationSession&)=delete;
  bool TerminalReady()const{return state==Terminal;}
  bool Completed()const{return state==Complete;}
+ bool CancellationConsumed()const{return state==Complete && cancelAttempted && cancelled;}
+ unsigned CommittedRecords()const{return state==Complete?committed:0;}
+ unsigned CancelledLayers()const{return CancellationConsumed()?completedLayers:0;}
  bool Preflight(){
   if(preflightAttempted || attempted || state!=Virgin)return false;
   preflightAttempted=true;
@@ -162,6 +166,15 @@ public:
   if(r.ready!=1 || r.stage!=8 || d[3]!=1 || d[4] || d[5] || d[6] || d[7])return Stop("start_reply");
   state=Running;return true;
  }
+ bool RequestCancellation(){
+  if(state!=Running || cancelAttempted)return false;
+  cancelAttempted=true; // mark BEFORE the first uncertain operation;no retry
+  if(!TokenCall(PioneerQ38TokenControl::Cancel))return Stop("cancel");
+  const auto& r=packet->reply;const auto* d=r.detail;
+  if(r.ready!=1 || r.stage!=7 || d[5] || d[6] || d[7] || d[8] || d[9]!=1
+   || d[10] || d[11] || d[12] || d[13] || d[14] || d[15])return Stop("cancel_reply");
+  return true;
+ } // one RAW request only;NEVER a STOP/HOLD/drain/END permission
  // Pending is successful observation,NOT a reason to retry Start or HOLD.
  // Poll timing/deadline belongs to the explicit caller. Loss/timeout closes
  // only; a separate recovery must resolve any retained native resources.
@@ -169,13 +182,18 @@ public:
   if(state!=Running)return false;
   if(!TokenCall(PioneerQ38TokenControl::Observe))return Stop("observe");
   const auto& r=packet->reply;const auto* d=r.detail;
-  if(d[5] || d[6]!=r.ready || d[7] || d[14] || d[15])return Stop("observe_reply");
+  if(d[5] || d[6]!=r.ready || d[7]>1 || (d[7] && !cancelAttempted) || d[14] || d[15])return Stop("observe_reply");
   if(!r.ready){
-   if(r.stage!=9 || d[3] || d[4]>63 || d[8] || d[9] || d[10] || d[11])return Stop("pending_reply");
+   if(r.stage!=9 || d[3] || d[4]>63 || d[7] || d[8] || d[9] || d[10] || d[11])return Stop("pending_reply");
    return true;
   }
-  if(r.stage!=11 || d[3] || d[8]!=3 || d[9]!=2 || d[10]!=64 || d[11]
+  if(r.stage!=11 || d[3] || d[8]>3 || d[9]>=3 || !d[10] || d[10]>64
    || d[12]!=0x60004 || d[13]!=0x60004)return Stop("terminal_reply");
+  if(d[7]){
+   if(!d[11] || d[11]>3 || d[8]!=d[9]+unsigned(d[11]==3)
+    || (d[11]>1 && d[10]!=64))return Stop("cancelled_terminal_reply");
+  }else if(d[8]!=3 || d[9]!=2 || d[10]!=64 || d[11])return Stop("normal_terminal_reply");
+  cancelled=d[7]!=0;committed=d[8];completedLayers=d[10];
   state=Terminal;return true;
  }
  bool Finish(){
@@ -186,9 +204,10 @@ public:
    if(r.ready!=1 || r.stage!=4 || d[5] || d[6]!=1 || d[7]!=120)return Stop("hold_reply");
    for(unsigned i=10;i<16;i++)if(d[i])return Stop("hold_reserved");}
   state=Held;
-  if(!TokenCall(P::Read,3))return Stop("read");
+  if(!TokenCall(P::Read,committed))return Stop("read");
   {const auto& r=packet->reply;const auto* d=r.detail;
-   if(r.ready!=1 || r.stage!=4 || d[5] || d[6]!=1 || d[7] || d[8]!=3 || d[9]!=1 || d[10]!=768
+   if(r.ready!=1 || r.stage!=4 || d[5] || d[6]!=1 || d[7] || d[8]!=committed
+    || d[9]!=unsigned(committed!=0) || d[10]!=committed*256
     || d[11]!=1 || d[14] || d[15] || !RecordData())return Stop("read_reply");}
   std::copy(packet->records,packet->records+records.size(),records.begin());state=Drained;
   if(!TokenCall(P::Finish))return Stop("finish");
@@ -199,7 +218,7 @@ public:
   state=Complete;return true;
  }
  bool CopyRecords(uint32_t* output,unsigned words)const{
-  if(state!=Complete || !output || words!=records.size())return false;
+  if(state!=Complete || cancelAttempted || !output || words!=records.size())return false;
   std::copy(records.begin(),records.end(),output);return true;
  }
  void Abort(){if(state!=Complete)Stop("aborted");}

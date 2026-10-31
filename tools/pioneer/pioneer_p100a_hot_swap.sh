@@ -44,6 +44,7 @@ case "$1" in
  --apply-recurrent-block-validation|--restore-recurrent-block-validation) mode=$1;;
  --apply-recurrent-deadline-validation|--restore-recurrent-deadline-validation) mode=$1;;
  --apply-recurrent-prefix-validation|--restore-recurrent-prefix-validation) mode=$1;;
+ --apply-token-validation|--restore-token-validation) mode=$1;;
  --apply-host-phase-diagnostic|--restore-host-phase-diagnostic) mode=$1;;
  --apply-batch4-fetch-qualification|--restore-batch4-fetch-qualification) mode=$1;;
  --apply-batch-raw-qualification|--restore-batch-raw-qualification) mode=$1;;
@@ -143,6 +144,7 @@ candidate_mixed_live_validation=$stage/tenstorrent_pci_probe-mixed-live-validati
 candidate_recurrent_block_validation=$stage/tenstorrent_pci_probe-recurrent-block-validation-87d0c4e0
 candidate_recurrent_deadline_validation=$stage/tenstorrent_pci_probe-recurrent-deadline-validation-3e00974c
 candidate_recurrent_prefix_validation=$stage/tenstorrent_pci_probe-recurrent-prefix-validation-4ae7b6ea
+candidate_token_validation=$stage/tenstorrent_pci_probe-token-validation-d7846405
 candidate_host_phase_diagnostic=$stage/tenstorrent_pci_probe-host-phase-diagnostic-acf33ea4
 candidate_batch4_fetch_qualification=$stage/tenstorrent_pci_probe-batch4-fetch-qualification-2fcf0b27
 candidate_batch_raw_qualification=$stage/tenstorrent_pci_probe-batch-raw-qualification-c38e258c
@@ -230,6 +232,7 @@ hash_mixed_live_validation=11d24d92c9ee05f1e3664ee13796f8621f378bb738eb5c62b6223
 hash_recurrent_block_validation=87d0c4e005d7df937e22c2806051cd0aa99d736c0fb2c0199fde40d8eb1d7cb4
 hash_recurrent_deadline_validation=3e00974c4476f2755341fbcea034340652e976e292cb017344f4a70f896c652e
 hash_recurrent_prefix_validation=4ae7b6ea4217c0ee45303aab37e6793c9c17fe18a2acbbece8a7556332f92a3c
+hash_token_validation=d78464058dec32de49e67c5263fca290751acdaf4252a7785ce56b9654e63aed
 hash_host_phase_diagnostic=acf33ea4279ca6d36cbc4b90ae56e6da1fed219b431ae7c80c2693b3f1591583
 hash_batch4_fetch_qualification=2fcf0b27039ed8e8e8114c632d51ba2f75ed2e6c28ef4a7081dd347d39cba9da
 hash_batch_raw_qualification=c38e258cb76bf8013a721cacb73e98b1d7eb191badbfaed6076655284543d379
@@ -315,6 +318,7 @@ tag_mixed_live_validation=2026102700010070
 tag_recurrent_block_validation=2026102700010071
 tag_recurrent_deadline_validation=2026102700010072
 tag_recurrent_prefix_validation=2026102800010073
+tag_token_validation=2026103000010074
 tag_host_phase_diagnostic=2026102100010018
 tag_batch4_fetch_qualification=2026102100010019
 tag_batch_raw_qualification=2026102100010020
@@ -342,7 +346,7 @@ parents_idle()
   END {if(headers!=1 || !teams || invalid) exit 1}
  ' || { echo STOP_COMPUTE_PARENT_INVENTORY_UNPROVEN; return 1; }
  printf '%s\n' "$reload_teams" | awk '
-  /(^|[\/[:space:]])(Assistant|llama-|tenstorrent_haiku|inference-|pioneer_q38|pioneer-q|graph-csr-debug)/ {owner++}
+  /(^|[\/[:space:]])(Assistant|llama-|tenstorrent_haiku|inference-|pioneer_q38|pioneer-q|graph-csr-debug|source-check)/ {owner++}
   END {if(owner) exit 1}
  ' || { echo STOP_POSSIBLE_COMPUTE_PARENT; return 1; }
 }
@@ -546,6 +550,11 @@ else
  # stable041 <-> pinned4ae7;UNKNOWN cannot restore/retry or cold-recover.
  elif [ "$mode" = --apply-recurrent-prefix-validation ]; then source=$candidate_recurrent_prefix_validation; expected=$hash_scale_reuse_qualification; result=$hash_recurrent_prefix_validation; oldtag=$tag_scale_reuse_qualification; newtag=$tag_recurrent_prefix_validation
  elif [ "$mode" = --restore-recurrent-prefix-validation ]; then source=$candidate_scale_reuse_qualification; expected=$hash_recurrent_prefix_validation; result=$hash_scale_reuse_qualification; oldtag=$tag_recurrent_prefix_validation; newtag=$tag_scale_reuse_qualification
+ # Distinct bounded full-token diagnostic ONLY. This mapping is not
+ # qualification to run a model. Exact clean041 <-> pinned d784 only;
+ # no Work route or restoration through retained/cold/unknown resources.
+ elif [ "$mode" = --apply-token-validation ]; then source=$candidate_token_validation; expected=$hash_scale_reuse_qualification; result=$hash_token_validation; oldtag=$tag_scale_reuse_qualification; newtag=$tag_token_validation
+ elif [ "$mode" = --restore-token-validation ]; then source=$candidate_scale_reuse_qualification; expected=$hash_token_validation; result=$hash_scale_reuse_qualification; oldtag=$tag_token_validation; newtag=$tag_scale_reuse_qualification
  elif [ "$mode" = --apply-host-phase-diagnostic ]; then source=$candidate_host_phase_diagnostic; expected=$hash_sentinel_poll_qualification; result=$hash_host_phase_diagnostic; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_host_phase_diagnostic
  elif [ "$mode" = --restore-host-phase-diagnostic ]; then source=$candidate_sentinel_poll_qualification; expected=$hash_host_phase_diagnostic; result=$hash_sentinel_poll_qualification; oldtag=$tag_host_phase_diagnostic; newtag=$tag_sentinel_poll_qualification
  elif [ "$mode" = --apply-batch4-fetch-qualification ]; then source=$candidate_batch4_fetch_qualification; expected=$hash_sentinel_poll_qualification; result=$hash_batch4_fetch_qualification; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_batch4_fetch_qualification
@@ -584,6 +593,7 @@ else
  generationhex=$(printf '%016x' "$generation")
  reload_backup=$stage/qualified-reload-$oldtag
  case "$mode" in
+  --apply-token-validation|--restore-token-validation) reload_backup=$reload_backup-$expected;;
   --apply-mixed-live-validation|--restore-mixed-live-validation|--apply-recurrent-block-validation|--restore-recurrent-block-validation|--apply-recurrent-deadline-validation|--restore-recurrent-deadline-validation|--apply-recurrent-prefix-validation|--restore-recurrent-prefix-validation) reload_backup=$reload_backup-$expected;;
   # DEBUG44 has two byte-distinct images. Preserve the previous tag-only
   # backup; never overwrite it or confuse it with this exact input image.

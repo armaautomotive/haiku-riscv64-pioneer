@@ -1,0 +1,108 @@
+{
+  "kind": "PARTIAL_ACTUAL_DEBUG74_PUBLIC_ENTRY_STACK_AUDIT",
+  "roots": [
+    {
+      "root": "_ZL12ProbeControlPvjS_m",
+      "known_module_chain_bytes": 5392,
+      "known_chain": [
+        {
+          "function": "status_t ProbeControl(void*, uint32, void*, size_t)",
+          "frame": 384
+        },
+        {
+          "function": "status_t Q38TokenNativeControl(PioneerProbeCookie*, void*, size_t)",
+          "frame": 272
+        },
+        {
+          "function": "PioneerQ38TokenBackendResult BeginQ38TokenNativeBackendScoped(PioneerQ38TokenCallScope&, unsigned int, const uint32_t*, unsigned int, unsigned int, bool, unsigned int, unsigned int)",
+          "frame": 592
+        },
+        {
+          "function": "constprop(PioneerStoreContext&, const uint32_t*, unsigned int, unsigned int, bool, unsigned int, unsigned int, PioneerQ38TokenMemoryResult&)",
+          "frame": 544
+        },
+        {
+          "function": "bool PioneerQ38TokenStartupPlan::Build(const PioneerQ38CanonicalModelPlan&, unsigned int, const PioneerQ38GdnIdentity&, const uint32_t*, const uint32_t*, unsigned int, unsigned int, bool, unsigned int, unsigned int)",
+          "frame": 224
+        },
+        {
+          "function": "bool PioneerQ38LayerChainPackage::Build(const PioneerQ38CanonicalModelPlan&, unsigned int, unsigned int, const PioneerQ38GdnIdentity&, const uint32_t*, unsigned int, uint32_t)",
+          "frame": 160
+        },
+        {
+          "function": "bool PioneerQ38MixedRecurrentBlockPlan::Build(const PioneerQ38CanonicalModelPlan&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const PioneerQ38GdnIdentity&, const uint32_t*, unsigned int, unsigned int)",
+          "frame": 768
+        },
+        {
+          "function": "bool PioneerQ38MixedRecurrentBlockPlan::Matches(const PioneerQ38CanonicalModelPlan&) const",
+          "frame": 144
+        },
+        {
+          "function": "bool PioneerQ38MixedRecurrentCohortPlan::Matches(const PioneerQ38CanonicalModelPlan&) const",
+          "frame": 784
+        },
+        {
+          "function": "bool PioneerQ38ResidentOutputPlan::Matches(const PioneerQ38CanonicalModelPlan&, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, const PioneerQ38GdnIdentity&, const uint32_t*, const uint32_t*) const",
+          "frame": 480
+        },
+        {
+          "function": "bool PioneerQ38GdnRendezvousPlan::Matches(const PioneerQ38CanonicalModelPlan&, const uint32_t*, const uint32_t*) const",
+          "frame": 576
+        },
+        {
+          "function": "static bool PioneerQ38GdnGatedPlan::Describe(const PioneerQ38CanonicalModelPlan&, const uint32_t*, const uint32_t*, uint32_t*)",
+          "frame": 112
+        },
+        {
+          "function": "bool PioneerQ38GdnGatedShape(const uint32_t*, const uint32_t*, const uint32_t*)",
+          "frame": 144
+        },
+        {
+          "function": "bool PioneerQ38ResidentGdnShape(const uint32_t*)",
+          "frame": 128
+        },
+        {
+          "function": "uint32_t PioneerQ38SpanRoute(unsigned int)",
+          "frame": 80
+        }
+      ],
+      "unresolved": [
+        "_Z20GetPioneerPciProfileP19device_manager_infoRK8pci_infoR18tt_pioneer_profile",
+        "_ZdaPv",
+        "_ZdlPvm",
+        "_ZnwmRKSt9nothrow_t",
+        "__indirect_call",
+        "_get_thread_info",
+        "acquire_sem",
+        "calloc",
+        "create_area_etc",
+        "delete_area",
+        "dprintf",
+        "find_thread",
+        "free",
+        "get_memory_map",
+        "get_module",
+        "geteuid",
+        "malloc",
+        "map_physical_memory",
+        "memcpy",
+        "memset",
+        "release_sem",
+        "spin",
+        "system_time",
+        "user_memcpy",
+        "vm_set_area_memory_type"
+      ],
+      "dynamic": [],
+      "cycles": [],
+      "reached_nodes": 497,
+      "module_graph_closed": false,
+      "whole_kernel_stack_qualified": false
+    }
+  ],
+  "module_sha256": "d78464058dec32de49e67c5263fca290751acdaf4252a7785ce56b9654e63aed",
+  "object_sha256": "0e1dab1b8d78cba77244e3e98aedb3bf14358c7bd5219fc0add98e612fbb6762",
+  "graph_sha256": "c7fa72788b4f694ea69808b458e049a62bcf3fcdf410c0d94bb2a196375a63af",
+  "whole_kernel_stack_qualified": false,
+  "limits": "Known module chains only;unknown indirect/kernel/entry/IRQ costs are excluded,NOT zero. No deployment,full-model,Work,physical or performance qualification."
+}

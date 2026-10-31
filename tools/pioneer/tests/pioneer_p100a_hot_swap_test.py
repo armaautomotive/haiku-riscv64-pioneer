@@ -60,6 +60,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
         payloads['hash_recurrent_block_validation'] = ('test-' + values['hash_recurrent_block_validation']).encode()
         payloads['hash_recurrent_deadline_validation'] = ('test-' + values['hash_recurrent_deadline_validation']).encode()
         payloads['hash_recurrent_prefix_validation'] = ('test-' + values['hash_recurrent_prefix_validation']).encode()
+        payloads['hash_token_validation'] = ('test-' + values['hash_token_validation']).encode()
         payloads['hash_host_phase_diagnostic'] = ('test-' + values['hash_host_phase_diagnostic']).encode()
         payloads['hash_batch4_fetch_qualification'] = ('test-' + values['hash_batch4_fetch_qualification']).encode()
         payloads['hash_batch_raw_qualification'] = ('test-' + values['hash_batch_raw_qualification']).encode()
@@ -191,6 +192,8 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
             '--restore-recurrent-deadline-validation': ('hash_recurrent_deadline_validation', 'hash_scale_reuse_qualification', 'tag_recurrent_deadline_validation'),
             '--apply-recurrent-prefix-validation': ('hash_scale_reuse_qualification', 'hash_recurrent_prefix_validation', 'tag_scale_reuse_qualification'),
             '--restore-recurrent-prefix-validation': ('hash_recurrent_prefix_validation', 'hash_scale_reuse_qualification', 'tag_recurrent_prefix_validation'),
+            '--apply-token-validation': ('hash_scale_reuse_qualification', 'hash_token_validation', 'tag_scale_reuse_qualification'),
+            '--restore-token-validation': ('hash_token_validation', 'hash_scale_reuse_qualification', 'tag_token_validation'),
             '--apply-host-phase-diagnostic': ('hash_sentinel_poll_qualification', 'hash_host_phase_diagnostic', 'tag_sentinel_poll_qualification'),
             '--restore-host-phase-diagnostic': ('hash_host_phase_diagnostic', 'hash_sentinel_poll_qualification', 'tag_host_phase_diagnostic'),
             '--apply-batch4-fetch-qualification': ('hash_sentinel_poll_qualification', 'hash_batch4_fetch_qualification', 'tag_sentinel_poll_qualification'),
@@ -288,6 +291,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
         put('candidate_recurrent_block_validation', payloads['hash_recurrent_block_validation'])
         put('candidate_recurrent_deadline_validation', payloads['hash_recurrent_deadline_validation'])
         put('candidate_recurrent_prefix_validation', payloads['hash_recurrent_prefix_validation'])
+        put('candidate_token_validation', payloads['hash_token_validation'])
         put('candidate_host_phase_diagnostic', payloads['hash_host_phase_diagnostic'])
         put('candidate_batch4_fetch_qualification', payloads['hash_batch4_fetch_qualification'])
         put('candidate_batch_raw_qualification', payloads['hash_batch_raw_qualification'])
@@ -313,6 +317,9 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
         if mode in ('--apply-recurrent-prefix-validation', '--restore-recurrent-prefix-validation'):
             assert values['tag_recurrent_prefix_validation'] == '2026102800010073'
             assert values['hash_recurrent_prefix_validation'] == '4ae7b6ea4217c0ee45303aab37e6793c9c17fe18a2acbbece8a7556332f92a3c'
+        if mode in ('--apply-token-validation', '--restore-token-validation'):
+            assert values['tag_token_validation'] == '2026103000010074'
+            assert values['hash_token_validation'] == 'd78464058dec32de49e67c5263fca290751acdaf4252a7785ce56b9654e63aed'
         status = f'P100A_RELOAD driver55 tag{oldtag} generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY'
         if fault == 'cold':
             status = status.replace('cold0', 'cold1')
@@ -366,6 +373,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
         hash_backup |= mode in ('--apply-recurrent-block-validation', '--restore-recurrent-block-validation')
         hash_backup |= mode in ('--apply-recurrent-deadline-validation', '--restore-recurrent-deadline-validation')
         hash_backup |= mode in ('--apply-recurrent-prefix-validation', '--restore-recurrent-prefix-validation')
+        hash_backup |= mode in ('--apply-token-validation', '--restore-token-validation')
         backup_name = 'qualified55-before-hot-reload' if mode == '--bootstrap' else 'qualified-reload-' + oldtag
         if hash_backup:
             backup_name += '-' + hashlib.sha256(payloads[starting]).hexdigest()
@@ -423,6 +431,12 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
                 put('candidate_recurrent_prefix_validation', previous)
             else:
                 installed.write_bytes(previous)
+        if fault == 'token-same-tag-wrong-bytes':
+            assert mode in ('--apply-token-validation', '--restore-token-validation')
+            if mode == '--apply-token-validation':
+                put('candidate_token_validation', b'unqualified distinct bytes claiming tag74')
+            else:
+                installed.write_bytes(b'unqualified distinct bytes claiming tag74')
         before = installed.read_bytes()
         if fault == 'previous-debug52':
             assert mode in ('--apply-conv-silu-precision-validation', '--restore-conv-silu-precision-validation')
@@ -470,6 +484,9 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
             'owner-recurrent-deadline-validation': '/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-recurrent-DEBUG72-VALIDATION-ONLY',
             'owner-recurrent-prefix-validation': '/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-prefix-DEBUG73-VALIDATION-ONLY',
             'owner-recurrent-prefix-validation-underscore': '/boot/home/pioneer_q38_recurrent_prefix_validation',
+            'owner-token-validation': '/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-token-DEBUG74-DIAGNOSTIC-ONLY',
+            'owner-token-validation-underscore': '/boot/home/pioneer_q38_token_validation',
+            'owner-token-source-check': '/boot/home/pioneer-token-source-fw-1593cbab/source-check --validate-cancel-boundary',
         }
         if fault in owner_faults:
             teams.append('999 ' + owner_faults[fault])
@@ -511,7 +528,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False):
             assert backup_target.stat().st_ino == backup_inode, (mode, fault, 'VALID_BACKUP_REPLACED')
         if fault:
             assert result.returncode != 0, (mode, fault, result.stdout, result.stderr)
-            if fault in ('previous-debug44', 'previous-capture-debug44', 'previous-debug52', 'previous-layer69', 'previous-capture-layer69', 'previous-debug71'):
+            if fault in ('previous-debug44', 'previous-capture-debug44', 'previous-debug52', 'previous-layer69', 'previous-capture-layer69', 'previous-debug71', 'token-same-tag-wrong-bytes'):
                 assert not (root / 'calls').exists(), (mode, fault, 'ADMIN_OPEN_WITH_PREVIOUS_IMAGE')
             if fault in ('backup', 'backup-link') and mode != '--bootstrap':
                 assert (root / 'calls').read_text().splitlines() == ['--status'], (mode, fault, 'QUIESCED_WITH_UNPROVEN_BACKUP')
@@ -607,6 +624,8 @@ if __name__ == '__main__':
     modes += ['--restore-recurrent-block-validation']
     modes += ['--apply-recurrent-deadline-validation', '--restore-recurrent-deadline-validation']
     modes += ['--apply-recurrent-prefix-validation', '--restore-recurrent-prefix-validation']
+    modes += ['--apply-token-validation', '--restore-token-validation']
+    parents += ['owner-token-validation', 'owner-token-validation-underscore', 'owner-token-source-check']
     parents += ['owner-recurrent-prefix-validation', 'owner-recurrent-prefix-validation-underscore']
     parents += ['owner-recurrent-deadline-validation']
     parents += ['owner-embedding-validation']
@@ -891,6 +910,10 @@ if __name__ == '__main__':
             candidate = ['candidate_recurrent_prefix_validation']
         elif mode == '--restore-recurrent-prefix-validation':
             candidate = ['candidate_scale_reuse_qualification']
+        elif mode == '--apply-token-validation':
+            candidate = ['candidate_token_validation']
+        elif mode == '--restore-token-validation':
+            candidate = ['candidate_scale_reuse_qualification']
         candidate_links = [key + '-link' for key in candidate]
         previous_image = ['previous-debug44', 'previous-capture-debug44'] if mode in ('--apply-decoder-validation', '--restore-decoder-validation') else []
         if mode in ('--apply-conv-silu-precision-validation', '--restore-conv-silu-precision-validation'):
@@ -902,11 +925,14 @@ if __name__ == '__main__':
         if mode in ('--apply-recurrent-prefix-validation', '--restore-recurrent-prefix-validation'):
             previous_image.extend(('prefix-previous-debug71', 'prefix-previous-debug72', 'prefix-same-tag-wrong-bytes',
                                    'old-tag71-metadata', 'old-tag72-metadata'))
+        if mode in ('--apply-token-validation', '--restore-token-validation'):
+            previous_image.extend(('token-same-tag-wrong-bytes', 'old-tag71-metadata', 'old-tag72-metadata'))
         hash_backup_mode = mode in ('--apply-decoder-validation', '--restore-decoder-validation', '--apply-gdn-input-validation', '--restore-gdn-input-validation', '--apply-gdn-recurrent-validation', '--restore-gdn-recurrent-validation', '--apply-gdn-rendezvous-validation', '--restore-gdn-rendezvous-validation', '--apply-conv-silu-precision-validation', '--restore-conv-silu-precision-validation', '--apply-resident-output-validation', '--restore-resident-output-validation', '--apply-resident-layer-validation', '--restore-resident-layer-validation')
         hash_backup_mode |= mode in ('--apply-mixed-live-validation', '--restore-mixed-live-validation')
         hash_backup_mode |= mode in ('--apply-recurrent-block-validation', '--restore-recurrent-block-validation')
         hash_backup_mode |= mode in ('--apply-recurrent-deadline-validation', '--restore-recurrent-deadline-validation')
         hash_backup_mode |= mode in ('--apply-recurrent-prefix-validation', '--restore-recurrent-prefix-validation')
+        hash_backup_mode |= mode in ('--apply-token-validation', '--restore-token-validation')
         backup_links = ['backup-link'] if hash_backup_mode else []
         for fault in [None] + common + candidate + candidate_links + parents + previous_image + backup_links + (['loaded'] if mode == '--bootstrap' else hot):
             check(mode, fault)

@@ -1,0 +1,77 @@
+DEBUG74 cancellation/lifecycle pilot preparation
+===============================================
+2026-10-30. Goal ACTIVE;last physical full-model0.207893161tok/s;20 UNMET.
+No physical generation or speed qualification is claimed by this report.
+
+The actual ROOT checks cancellation after a CLOSED layer,closed output head
+and completed token commit,never in the middle of mutable commit. The normal
+3-position client remains the default diagnostic,not Assistant Work. New
+--validate-cancel-boundary explicitly requests cancellation ONCE after startup
+ACK. It must still observe genuine terminal,hold all120,drain exactly the
+actual0..3 committed records,then complete all11 native Finish stages.
+Any error closes only. No implicit cancellation,cleanup,retry or reset.
+A too-late request followed by normal completion is explicitly MISSED_WINDOW,
+not a cancellation pass. Cancelled records can never use normal CopyRecords
+or produce a normal3-position PASS/benchmark log. The cancel frontend logs
+public replies as UNTRUSTED;those lines confer no ownership/cleanup authority.
+
+Main/clean ASan+UBSan USER tests exit0:the unchanged synthetic full851 model
+upload plus normal full3 path;128 COW cases including14 explicit cancellation
+trials (0..3 commits,missed window,lost/bad replies,invalid terminal),3 early
+refusals and3 source-only checks. COW clones MOCK transport state only,never
+an actual processor/native execution history. No partial or cancelled data
+is published as normal output and duplicate Cancel performs no device IO.
+Archive:qwen38-token-cancel-user-session-20261030.log
+
+Both actual Haiku USER clients compile/link/inspect0 and are BYTE-IDENTICAL:
+Object32514841576064c59d937d364897557bb06c6f18ae9117bc0a6b8e15525c687a
+Binary24f4e84a7a21f6623129e5a3734b60646479e0bb05b41db464e3601c10b53c2e
+Max individual USER frame4432;no CPU oracle/Work/mock/kernel-owner imports.
+Archive:qwen38-token-cancel-user-sdk-20261030.log
+
+New native build helper recompiles all authenticated old SDK controls and
+the actual conventional tag74 object,then links it with the authenticated
+SDK kernel/glue/profile/libgcc objects under --no-undefined. No installation
+occurs in this helper. Actual G3 firmware arrays and2MiB RoPE stay exact;
+NODRV remains b7afc402...,public object remains0e1dab1b... . Paired actual
+modules are BYTE-IDENTICAL:
+d78464058dec32de49e67c5263fca290751acdaf4252a7785ce56b9654e63aed
+Archive:qwen38-token-native-module-20261030.log
+
+The same actual ProbeControl object is also compiled with GCC callgraph
+metadata ONLY;object bytes must remain identical. Known module chain5392B,
+497 reached nodes,25 unresolved kernel/indirect targets,no observed dynamic
+frame/recursion. Unknowns and syscall/IRQ overhead are EXCLUDED,NOT zero.
+This is NOT a total16KiB kernel-stack proof or production safety grant.
+Paired roots/frames/unknowns/object+module hashes agree;graph hashes differ
+with source paths. Archive:qwen38-token-public-stack-20261030.json
+
+Guarded updater adds ONLY exact stable041/tag12 <-> d784/tag74 transitions.
+It preserves hash-qualified backups,all idle-parent/FD/owner/cold/generation
+checks,quiesce/rename/wait behavior,and NO automatic rollback after unknowns.
+The parent fence additionally catches the known source-check executable,
+which can authenticate before opening the device. Both main/clean actual
+shell regressions pass502 filesystem/mock-handshake cases across new74,
+previous73,and stable12 apply/restore modes. Wrong same-tag bytes refuse
+BEFORE admin open. No guard or unknown-state refusal was weakened.
+Archive:qwen38-token-hot-swap-20261030.log
+
+Independent source:git archive4215aea5c4 plus ONLY7 cmp-verified owned files:
+/private/tmp/pioneer-q38-token-cancel-clean-fx.PxpJpgfn
+Main native:/private/tmp/pioneer-q38-token-validation-native-main-fx
+Main client:/private/tmp/pioneer-q38-token-cancel-client-main-fx
+Client header/old packet/native role/routing isolation regressions also pass.
+
+Read-only pre-pilot checks:installed stable041,guard d1ce2aa4...,admin helper
+b0c851b3... all exact. Fresh metadata:tag12/gen4/cold0/owner0/open1/guard1.
+No scoped compute/Assistant parent was present. The relay's AT test returns
+OK without changing contacts;it is NOT board-power-state evidence. Recovery
+uses OFF once while known on,wait/check,ON once;no SD/card/mains action.
+
+This prepares an explicitly bounded experimental hardware LIFECYCLE test,
+not a full-model/numerical/Work/speed result. A first-layer/cancel/STOP/HOLD/
+drain/Finish predecessor already ran the actual native code with original
+weights and instruction engines under simulated OS/MMIO endpoints. The
+new hardware pilot must establish real transport/lifecycle behavior before
+full-generation/throughput trials. The long original full-model emulator
+histories remain intact and full64/state/token/END evidence is still owed.

@@ -42,6 +42,8 @@ struct SyntheticIO {
  SyntheticSource& source;Sweep& sweep;
  unsigned opens=0,closes=0,calls=0,begins=0,uploads=0,spanEnds=0,starts=0,polls=0,holds=0,reads=0,ends=0;
  unsigned fragment=0,page=0;uint64_t bytes=0,progress=0;bool openFail=false;
+ unsigned cancels=0,cancelFailure=0,stopRecords=0,stopLayers=1,stopStage=1;bool missedWindow=false;
+ unsigned Records()const{return cancels && !missedWindow?stopRecords:3;}
  explicit SyntheticIO(SyntheticSource& s):source(s),sweep(s.sweep){sweep.calls=&calls;}
  int Open(){assert(source.Ready() && !opens++);return openFail?-1:74;}
  int Close(int fd){assert(fd==74 && !closes++);if(!sweep.child && ends==1 && sweep.Clone([]{}))return -1;return 0;}
@@ -86,12 +88,22 @@ struct SyntheticIO {
    else if(operation==P::Observe){
     assert(starts==1 && !holds && !ends);polls++;
     if(polls==1){r.ready=0;r.stage=d[2]=9;}
-    else {r.stage=d[2]=11;d[6]=1;d[8]=3;d[9]=2;d[10]=64;d[12]=d[13]=0x60004;}
+    else {
+     r.stage=d[2]=11;d[6]=1;d[12]=d[13]=0x60004;
+     if(cancels && !missedWindow){d[7]=1;d[8]=stopRecords;d[9]=stopRecords-unsigned(stopStage==3);d[10]=stopLayers;d[11]=stopStage;}
+     else {d[8]=3;d[9]=2;d[10]=64;}
+    }
+   }else if(operation==P::Cancel){
+    assert(starts==1 && !polls && !holds && !ends && !cancels++);r.stage=d[2]=7;d[9]=1;
+    if(cancelFailure==1)return false;
+    if(cancelFailure==2)d[9]=0;
+    if(cancelFailure==3)r.unsafe=1;
+    if(cancelFailure==4)source.valid=false;
    }else if(operation==P::Hold){assert(polls==2 && !holds++ && !reads && !ends);r.stage=d[2]=4;d[6]=1;d[7]=120;}
    else if(operation==P::Read){
-    assert(holds==1 && !reads++ && !ends && p.request.records==3);r.stage=d[2]=4;r.records=3;
-    d[6]=1;d[8]=3;d[9]=1;d[10]=768;d[11]=1;
-    for(unsigned pos=0;pos<3;pos++){
+    const unsigned count=Records();assert(holds==1 && !reads++ && !ends && p.request.records==count);r.stage=d[2]=4;r.records=count;
+    d[6]=1;d[8]=count;d[9]=unsigned(count!=0);d[10]=count*256;d[11]=1;
+    for(unsigned pos=0;pos<count;pos++){
      auto* v=p.records+pos*64;v[0]=0x31435451;v[1]=1;v[2]=pos;v[3]=pos==0?248319:pos==1?17:101;
      v[4]=100+pos;v[5]=0x3f800000;v[6]=pos+1;v[7]=(pos+1)&1;v[8]=unsigned(pos==0);v[9]=unsigned(pos<2);v[10]=64;v[11]=973;
      for(unsigned i=12;i<36;i++)v[i]=i+100;
@@ -116,12 +128,44 @@ int main(){
  setvbuf(stdout,nullptr,_IOLBF,0);Fixture fixture;Sweep sweep;SyntheticSource source(fixture,sweep);SyntheticIO io(source);
  auto session=std::make_unique<PioneerQ38TokenValidationSession<SyntheticIO,SyntheticSource>>(io,source);
  std::array<uint32_t,192> out;out.fill(0xaaaaaaaa);
- assert(!session->Finish() && !session->Poll() && !session->CopyRecords(out.data(),192) && !io.opens);
+ assert(!session->Finish() && !session->Poll() && !session->RequestCancellation() && !session->CopyRecords(out.data(),192) && !io.opens);
  bool okay=session->Begin();
  if(okay)for(unsigned abandon=0;abandon<2;abandon++)if(sweep.Clone([]{})){
   const auto calls=io.calls;
   if(abandon)session->Abort();session.reset();
   assert(io.calls==calls && io.closes==1 && !io.polls && !io.holds && !io.reads && !io.ends);_exit(0);
+ }
+ // Reuse ONLY the already-uploaded MOCK fixture in COW children. No native
+ // processor/owner history is supplied to any real engine or hardware.
+ if(okay)for(unsigned trial=0;trial<14;trial++)if(sweep.Clone([&]{sweep.enabled=false;})){
+  if(trial<4){io.stopRecords=trial;io.stopStage=trial==3?3:trial==2?2:1;io.stopLayers=trial<2?1:64;}
+  if(trial==4)io.missedWindow=true;
+  if(trial>=5 && trial<=8)io.cancelFailure=trial-4;
+  if(trial==9)io.stopStage=0;
+  if(trial==10)io.stopLayers=0;
+  if(trial==11)io.stopRecords=4;
+  if(trial==12){io.stopStage=2;io.stopLayers=1;}
+  if(trial==13)io.stopStage=3; // zero commits cannot follow a completed commit
+  const bool requested=session->RequestCancellation();
+  if(trial>=5 && trial<=8){
+   assert(!requested && io.closes==1 && !io.polls && !io.holds && !io.reads && !io.ends);
+  }else{
+   assert(requested && io.cancels==1);const auto calls=io.calls;
+   assert(!session->RequestCancellation() && io.calls==calls); // no duplicate device request
+   assert(session->Poll() && !session->TerminalReady() && !session->Finish());
+   const bool terminal=session->Poll();
+   if(trial>=9)assert(!terminal && io.closes==1 && !io.holds && !io.reads && !io.ends);
+   else{
+    assert(terminal && session->TerminalReady() && !session->CancellationConsumed() && !session->CommittedRecords());
+    assert(session->Finish() && session->Completed() && io.closes==1 && io.holds==1 && io.reads==1 && io.ends==1);
+    assert(session->CancellationConsumed()==bool(trial!=4) && session->CommittedRecords()==io.Records());
+    assert(session->CancelledLayers()==(trial==4?0:io.stopLayers));
+   }
+  }
+  const auto calls=io.calls,closes=io.closes;
+  assert(!session->RequestCancellation() && !session->CopyRecords(out.data(),192));
+  session.reset();assert(io.calls==calls && io.closes==closes && io.cancels==1);
+  for(auto word:out)assert(word==0xaaaaaaaa);_exit(0);
  }
  if(okay){assert(!session->Begin() && !session->Finish() && !session->CopyRecords(out.data(),192));okay=session->Poll();}
  if(okay){assert(!session->TerminalReady() && !session->Finish());okay=session->Poll();}
@@ -129,12 +173,12 @@ int main(){
  if(sweep.child){
   assert(!okay && io.calls==sweep.fence && io.closes==1 && !session->Completed());
   auto calls=io.calls,closes=io.closes;auto reads=source.reads;
-  assert(!session->Begin() && !session->Poll() && !session->Finish() && !session->CopyRecords(out.data(),192));
+  assert(!session->Begin() && !session->Poll() && !session->RequestCancellation() && !session->Finish() && !session->CopyRecords(out.data(),192));
   session->Abort();session->Abort();session.reset();
   assert(io.calls==calls && io.closes==closes && source.reads==reads);
   for(auto word:out)assert(word==0xaaaaaaaa);_exit(0);
  }
- assert(okay && session->Completed() && io.closes==1 && io.starts==1 && io.polls==2 && io.holds==1 && io.reads==1 && io.ends==1);
+ assert(okay && session->Completed() && io.closes==1 && io.starts==1 && io.polls==2 && io.holds==1 && io.reads==1 && io.ends==1 && !io.cancels);
  assert(session->partsUploaded==3551 && session->pagesUploaded==source.pages && source.reads==source.pages && io.bytes==source.bytes && io.progress==source.bytes);
  assert(!session->CopyRecords(out.data(),191) && session->CopyRecords(out.data(),192));
  assert(out[4]==100 && out[64+4]==101 && out[128+3]==101 && out[128+4]==102);
@@ -159,5 +203,5 @@ int main(){
   if(fault==1){original.valid=false;assert(!checked->Begin() && !transport.opens);}
   checked.reset();assert(original.opens==1 && !transport.calls && !transport.closes);preflights++;
  }
- printf("PASS actual USER full851 uploader/all3551 learned parts/%llu SYNTHETIC pages/%u batches/includes embedding+FP32/no mutable upload/SAME FD+generation/pending->terminal->HOLD->READ3->FINISH once/%u COW transport+source+reply+record+abandon+close faults/%u early source+open refusals/%u source-only sample+reuse+loss checks ZERO device calls/CLOSE_ONLY/no partial output;MOCK source+OS replies,NOT SHA authentication,native execution,model numerics,physical or TPS proof\n",(unsigned long long)source.pages,io.uploads,sweep.clones,early,preflights);
+ printf("PASS actual USER full851 uploader/all3551 learned parts/%llu SYNTHETIC pages/%u batches/includes embedding+FP32/no mutable upload/SAME FD+generation/pending->terminal->HOLD->READ->FINISH once/%u COW faults+14 explicit cancel0..3/missed-window/loss/invalid-terminal trials/%u early refusals/%u source-only checks/no duplicate cancel or partial/normal publication after cancel;MOCK source+OS replies,NOT SHA authentication,native execution,model numerics,physical or TPS proof\n",(unsigned long long)source.pages,io.uploads,sweep.clones,early,preflights);
 }

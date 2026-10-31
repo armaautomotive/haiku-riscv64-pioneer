@@ -47,6 +47,7 @@ rows = [line.split('\t') for line in obj.with_suffix('.su').read_text().splitlin
 assert rows and all(len(row) == 3 and row[2] == 'static' and int(row[1]) <= 32768 for row in rows), rows
 assert b'--validate-three-positions\0' in binary.read_bytes()
 assert b'--preflight-source-only\0' in binary.read_bytes()
+assert b'--validate-cancel-boundary\0' in binary.read_bytes()
 for path in (obj, binary):
     print(hashlib.sha256(path.read_bytes()).hexdigest()+' '+path.name)
 print('PASS actual Haiku riscv64 DEBUG74 USER client compile/link/fixed same-open full SHA before device Open/ALL learned parts/no CPU oracle+Work+mock/native imports/maxIndividualUSERFrame'+str(max(int(row[1]) for row in rows)))
