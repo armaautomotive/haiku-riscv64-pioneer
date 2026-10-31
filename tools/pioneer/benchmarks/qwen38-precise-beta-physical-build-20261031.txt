@@ -1,0 +1,104 @@
+Precise-beta diagnostic: actual SDK/module and guarded staging
+=============================================================
+2026-10-31. Goal ACTIVE. Last verified sustained baseline remains
+0.207893161 tokens/sec;20 tokens/sec UNMET. NO speedup is claimed.
+The corrected module is STAGED ONLY,not installed or physically run.
+
+Scope and actual change
+-----------------------
+The previous report qwen38-precise-beta-native-20261031.txt qualifies
+the emitted beta arithmetic,compound matrix-to-GDN instruction lifetime,
+exact13-array program DATA,all119 virgin bootstrap and private SDK owner.
+The numerical cause was isolated independently at zero-based layer29:
+beta rounding changed one Q8 half-scale and then the layer's output.
+
+This checkpoint adds an EXPLICIT separate physical diagnostic selection,
+PIONEER_Q38_TOKEN_PRECISE_BETA_VALIDATION_NATIVE. It cannot be selected by
+an old tag75 role alone or by promoting QT3NODRV,USER,CPU-reference,TEST
+or Work flags. Its role inherits all25 fault-ROM physical parents and
+requires the precise-beta package plus actual posted-cancel transport.
+No conventional control-packet ABI,journal,ROOT code,Assistant or Work
+mode is changed. Numeric tag75 is NOT module identity;SHA is mandatory.
+
+Actual independently rebuilt artifacts
+--------------------------------------
+Object dca90a0f1e83597a350621ae76c9d02339234861e52ed48a4b29c2e7565d5edf
+Module 2723ac08ac75996f19f6e516c51eda615336f8dcfc3a8d6849f6d755da22c525
+Helper 5e1c9ee819760f56c64578b97e76120a95c6275d9b51ad75df49cec748f76c18
+
+Main5649 and clean91418 both ACTUALLY exited0. The builder authenticates
+the prior posted-cancel object AND complete compiler argv before changing
+only source/output. It rebuilds this checkout's actual PioneerPciProfile
+and reproduces the ENTIRE old linked18362bcb image before using that exact
+seven-input link recipe for the candidate. Object/module pins are frozen.
+All13 compiled arrays authenticate against the new immutable package;
+the2MiB RoPE bytes are unchanged. Conventional driver ABI and actual
+native/hidden/posted-cancel controllers are emitted. Old code namespaces,
+CPU model references,Work implementations and HOST endpoints are absent.
+
+The actual GCC callgraph object is byte-identical to the candidate object.
+Public-entry known module chain5392B,25 unresolved calls,511 reached nodes;
+no dynamic frame/cycle. WHOLE KERNEL STACK QUALIFIED=FALSE. Unknown
+kernel/entry/IRQ/indirect costs are excluded,NOT asserted zero.
+
+Independent checkout is frozen344e62c65b plus the prior cmp-verified
+implementation checkpoints through e157f829fc and ONLY this checkpoint's
+nine source changes. Both builds use the SAME read-only standard/generated
+Haiku SDK headers;actual implementation relative includes are independent.
+Initial clean73077 exited1 because its minimal archive lacked the unchanged
+relative Sg2042RootPolicy.h dependency. That tracked header was extracted
+from HEAD without modification;the fresh pinned clean91418 then exited0.
+The failure log is retained,not relabeled as a pass.
+
+Completed regressions
+---------------------
+Physical role73301/27317:both0,4 positives and819 missing/zero/two/late,
+wrong-tag,ABI,NODRV,CPU,Work and TEST refusals,identical logs.
+Old fault role96263/50248:both0,3 positives and794 refusals unchanged.
+Private SDK53007/66287:both0,original4b2098cf object byte-identical and
+conventional driver ABI still ABSENT;not promoted by the new physical role.
+Exact program DATA9595/54757:both0,ALL3044235 immutable words,30 corrupt
+or truncated input refusals,36 foreign/late role refusals and12 bridge
+foreign-role refusals,identical logs. No comparator tolerance was changed.
+Actual updater64981/33518:both0,350 filesystem/handshake/hash/symlink/
+owner/failure cases across the new and old posted-cancel route pairs.
+It rejects older same-tag18362/cf400/b74,tag74 and unknown code,keeps
+full-SHA backups,and cannot reset/recover quarantined resources.
+
+Guarded route and current Pioneer
+---------------------------------
+New --apply-token-precise-beta/--restore-token-precise-beta map ONLY exact
+clean041fef18 <-> exact2723ac08. The old de3496bb posted-cancel restore
+helper remains unchanged and owns18362bcb ->041fef18. No updater action
+has been executed for this candidate;no automatic rollback was added.
+
+Fresh read-only preflight:Haiku,installed18362bcb/tag75/generation3,
+quiesced0/cold0/active_owner0/open_count1/guard1;no model/Assistant parent.
+MaxRAM137034936320B. Driver/admin/guard/old immutable helper hashes match.
+The candidate and new helper were copied into the NEW separate directory
+/boot/home/pioneer-q38-precise-beta-20261031-2723ac08,OUTSIDE watched
+drivers/bin. Independent remote readback authenticates both;installed
+18362bcb remains unchanged. No GPU execution,reload,reset,power or SD action.
+
+Original first-layer/full-END complete;next hardware gate
+--------------------------------------------------------
+The SAME first-layer main53060/clean37677 processes ACTUALLY exited0.
+Both ran original full851 initialization+1010 zero kernels+119 virgin
+engines,actual layer0,ONE posted cancel,all119 STOP/120 HOLD,zero-record
+drain,TWO scoped held-hidden reads,and full original restoration/clock/
+VM/PCI/host/device/context closure. No processor/history reset or supplied
+CPU products were used. Raw native instruction/lifetime logs are retained.
+
+Separate unchanged posthoc CPU-DATA comparisons both exited0. Embedding
+AND all5120 layer0 words are bit-exact,NO tolerance. Both emitted prefixes
+are identical SHA4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7;
+one exact copy is archived as native-prefix-0.raw. This is ONLY first-layer
+numerics and native HOST-emulation lifetime evidence,not later layers,
+physical execution or model throughput. Whole-model old DW41236 remains
+LIVE with its original instruction history preserved;do not restart it.
+
+Next:fresh idle/hash checks,restore18362 with
+its OWN immutable helper and install2723 with the NEW helper. Run normal
+physical three-position generation and unchanged strict posthoc comparison.
+Even that does not prove sustained decode,normal EOS,request residency,
+Assistant Work integration or20 tokens/sec;those remain real requirements.

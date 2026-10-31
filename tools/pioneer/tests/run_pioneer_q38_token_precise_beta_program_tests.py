@@ -51,7 +51,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-q38-beta-programs-',dir='/priva
     bad += ['#include "PioneerQ38TokenFaultPrograms.h"\n'+good,
             '#include "PioneerQ38TokenPushedPrograms.h"\n'+good,
             include+good,selected+include+'#undef PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS\n'+include]
-    for role in ('_KERNEL_MODE','PIONEER_Q38_TOKEN_NATIVE_CONTEXT','PIONEER_Q38_TOKEN_FAULT_VALIDATION_NATIVE',
+    for role in ('_KERNEL_MODE','PIONEER_Q38_TOKEN_NATIVE_CONTEXT','PIONEER_Q38_TOKEN_PRECISE_BETA_VALIDATION_NATIVE','PIONEER_Q38_TOKEN_FAULT_VALIDATION_NATIVE',
                  'PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE','PIONEER_Q38_TOKEN_VALIDATION_NATIVE',
                  'PIONEER_Q38_TOKEN_VALIDATION_CLIENT','PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_CLIENT',
                  'PIONEER_Q38_TOKEN_BOUNDARY_VALIDATION_CLIENT','PIONEER_Q38_CPU_VALIDATION',
