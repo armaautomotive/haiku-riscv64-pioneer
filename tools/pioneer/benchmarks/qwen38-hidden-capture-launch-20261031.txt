@@ -1,0 +1,66 @@
+First real tag75 held-hidden capture: installed cleanly,original74246 LIVE
+========================================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. Last whole-model rate remains
+0.207893161 tokens/sec. NO physical hidden numerical/END or speed pass yet.
+
+Code checkpoint f0ccc273954f27c502361e6876a62b6205809775 is pushed and
+remote-verified. See qwen38-hidden-user-qualified-20261031.txt for the
+paired actual SDK binaries/modules,384 COW session cases,strict snapshot
+comparison,paired344 updater cases and actual source-only60353 exit0.
+
+Only NEW staging files were copied;older immutable helpers stay untouched:
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/
+  tenstorrent_pci_probe-token-hidden-readout-b74f4bfa
+  pioneer-p100a-hot-swap-token-hidden-readout-ffa315aa.sh
+Module SHA b74f4bfa5583aaf0cf8272d5136c73336c1db0f93e168e7212277f97705a92cc
+Updater SHA ffa315aaba98d8863a1b7900270e38cffbe5b1334e5559f5b4471e455f62962e
+Admin b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f
+Guard d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
+
+Fresh full process inventory found no compute parent. Installed stable041,
+tag12/gen6/quiesced0/cold0/owner0/open1/guard1 and64CPUs/full137034936320B
+RAM were verified BEFORE invoking the new updater. Original15360 actually
+completed0 with --apply-token-hidden-readout through SINGLE-LINE exec SSH.
+It quiesced the exact old image,installed exact b74,and verified in-memory
+tag2026103100010075/gen7/clean. A SEPARATE post-install query verified module,
+USER and updater hashes plus tag75/gen7/quiesced0/cold0/owner0/open1/guard1,
+64CPUs/maxRAM137034936320B/free133780520960B and absent snapshot target.
+No reboot,power,SD,card,cable,mains,boot,OS kernel or Assistant binary change.
+
+ONE actual first capture is LIVE,not a result
+--------------------------------------------
+Original74246 runs the exact USER SHA
+ 1a061f7ab0eb5001c04a73c1334ed3b519a29781157ea4e46f533e3908fe0536
+ /boot/home/pioneer-q38-hidden75-client-20261031-1a061f7a/
+ pioneer-q38-token-DEBUG75-DIAGNOSTIC-ONLY --capture-first-layer
+ /boot/home/pioneer-q38-hidden75-client-20261031-1a061f7a/hidden-layer0-gz.qhd
+Its actual current log is
+ /private/tmp/pioneer-q38-hidden-capture-physical-20261031-gz.log.
+The SAME74246 was re-polled and confirmed LIVE. Initial banner received;
+no upload/terminal/capture/Finish result is claimed yet. No healthy process
+has been restarted. Do NOT archive a partial log/synthetic file as observed
+numeric evidence. Do NOT open an extra GPU admin FD,reload,profile,reset or
+power-cycle during this lifetime. No Haiku scheduler profiler.
+
+After actual exit0 and clean snapshot output ONLY,copy the actual20548B
+file and invoke unchanged pinned-CPU comparison with --held-hidden-only;
+no diagnostic-only/tolerance option,embedding fabrication or full-token
+promotion. THEN fresh no-parent/status evidence may authorize exact guarded
+b74->stable041 restore via THIS new ffa315aa helper's
+--restore-token-hidden-readout. The old8bed helper restores5f ONLY and MUST
+NOT be used for b74. A numerical mismatch with clean resources is NOT a
+reason to quarantine/reset;an unsafe/lost lifetime is NOT normal-restore
+authority. Preserve failures and recover under standing one-OFF/one-ON rules
+only when needed. First poll SAME74246,never restart on a watch timeout.
+
+Three completed raw install evidence logs are stored alongside this report:
+ qwen38-hidden-capture-preinstall-20261031.log
+ qwen38-hidden-capture-install-20261031.log
+ qwen38-hidden-capture-installed-20261031.log
+The preinstall log preserves Haiku's padded raw ps columns byte-for-byte;
+only that raw log is excluded from source-whitespace lint.
+Five earlier LOCAL full-model histories31695/66331/41236/92178/52159 were
+revalidated LIVE;nativeposition0/layer48,other pairs44/39. Do not confuse
+their instruction engines with the one physical Pioneer process74246.
+Full mathematical/state/normal+EOS qualification,resident no-CPU-reference
+Work+Assistant integration and measured sustained performance remain owed.
