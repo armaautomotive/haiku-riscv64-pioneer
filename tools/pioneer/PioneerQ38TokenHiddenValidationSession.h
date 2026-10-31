@@ -8,7 +8,8 @@
  || defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) \
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) || defined(PIONEER_Q38_BENCHMARK_HOST) \
- || defined(PIONEER_Q38_TOKEN_BOUNDARY_VALIDATION_CLIENT)
+ || defined(PIONEER_Q38_TOKEN_BOUNDARY_VALIDATION_CLIENT) \
+ || defined(PIONEER_Q38_TOKEN_POSTED_CANCEL) || defined(PIONEER_Q38_POSTED_CANCEL_TEST)
 #error Held-hidden client cannot alias kernel,native,old USER,CPU oracle,Work or changed source roles,including defined0
 #endif
 #ifndef PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_SESSION_H
@@ -19,6 +20,7 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
 #include <array>
+#include <cstring>
 #include <memory>
 
 // Actual fixed-public uploader and diagnostic lifecycle. ALL learned parts,
@@ -265,6 +267,11 @@ public:
   std::copy(h,h+16,output->header);std::copy(hidden->begin(),hidden->end(),output->words);output->footer=S::Footer;
   return true;
  } // only after BOTH parts,actual Finish and successful Close;never a partial snapshot
+ bool CopyGenerationRecords(uint32_t* output,unsigned words)const{
+  if(state!=Complete || cancelAttempted || cancelled || committed!=3 || position!=2
+   || completedLayers!=64 || terminalStage || !Current() || !output || words!=records.size())return false;
+  std::copy(records.begin(),records.end(),output);return true;
+ } // fixed three-position DATA only,after genuine normal END+Close;NOT CPU comparison or Work
  void Abort(){if(state!=Complete)Stop("aborted");}
 };
 #endif

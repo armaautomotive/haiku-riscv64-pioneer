@@ -9,10 +9,11 @@ assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 header = pathlib.Path(__file__).resolve().parents[1]/'PioneerQ38TokenHiddenValidationSession.h'
 gate = header.read_text().split('#ifndef PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_SESSION_H')[0]
 forbidden = set(re.findall(r'defined\(([A-Z_][A-Z0-9_]*)\)', gate))-{'PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_CLIENT'}
-assert len(forbidden) == 15
+assert len(forbidden) == 17
 assert 'PIONEER_Q38_TOKEN_BOUNDARY_VALIDATION_CLIENT' in forbidden
 assert {'PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE','PIONEER_Q38_TOKEN_VALIDATION_CLIENT',
         'PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC','PIONEER_Q38_BENCHMARK_HOST'} <= forbidden
+assert {'PIONEER_Q38_TOKEN_POSTED_CANCEL','PIONEER_Q38_POSTED_CANCEL_TEST'} <= forbidden
 positive = negative = 0
 def check(values, expected, tail=''):
     global positive, negative

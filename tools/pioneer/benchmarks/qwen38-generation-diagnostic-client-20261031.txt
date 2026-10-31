@@ -1,0 +1,79 @@
+Fixed tag75 three-position generation diagnostic
+===============================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. Last verified whole-model
+rate remains0.207893161 tokens/sec. No new generated token,physical
+numerical pass,Assistant integration,resident Work or speedup is claimed.
+
+Next full-generation gate,not another kernel/firmware revision
+------------------------------------------------------------
+The new USER program uses the existing exact tag75 fixed2-prompt/3-position
+protocol and original source uploader. It never requests cancellation,
+changes firmware or uploads CPU model products. The existing kernel must
+prove genuine normal terminal/119 STOP/HOLD/drain and complete END.
+It publishes192 raw record words ONLY after normal3-position END+Close,
+with the original source still current. Cancellation,changed source,
+incomplete/failed lifetime,null output and wrong sizes publish nothing.
+These are consistency-checked DATA,not external numerical acceptance.
+
+The CLI accepts ONLY --generate-three-positions or --preflight-source-only.
+Invalid/old/capture/cancel/Work/CPU arguments refuse BEFORE source/device
+access. Source-only does not open the accelerator. Failed inference closes
+only:there is no automatic cancel,END,retry,reset or CPU fallback. A healthy
+pending run is observed using its SAME lifetime,not restarted on timeout.
+No steady decode rate is calculated from mixed prompt/greedy positions or
+an observation interval that excludes startup work.
+
+Completed paired qualification
+------------------------------
+Frozen HEADc780121bb3 plus ONLY10 cmp-verified owned files:
+ /private/tmp/pioneer-q38-generation-clean-20261031-ll.MFieMewz
+Main54300 and clean88791 actual USER-lifecycle tests BOTH exited0:
+full851 synthetic source/all3551 learned parts/4736090 pages/20367 batches,
+384 COW fault branches,128 RAW-frontend normal/cancel histories. The new
+publication checks cover64 normal and64 cancelled MOCK histories and
+virgin/running/terminal/wrong-size/null/changed-source refusals,without IO.
+This is MOCK source/OS/device testing,NOT actual model execution.
+Role tests main60326/clean55295 pass1 positive/55 negative,including
+posted-native and HOST-TEST contamination,defined0 and late includes.
+CLI tests main77933/clean55295 pass2 positive/23 malformed-mode refusals.
+All paired final logs match byte-for-byte.
+
+Final actual Haiku SDK builds main8720/clean63787 BOTH exited0 and match:
+ object785b914818a0ac8b9f566600fb85493cc3dcf348018357e8fbe4ac1c3dfdfbe2
+ binaryb15da1871edf8f1c8acb59ab9b3978e3ace43b6d8bb4c3d8fd50ee240114d779
+Both enforce literal pins for the new artifacts and rebuild the old
+hidden client against its UNCHANGED literal object33cffe8e/binary1a061f7a.
+Max individual USER frame4432B. Actual symbol/import inspection finds
+the real source/lifecycle/ioctl paths and no CPU oracle,ggml/llama,native
+owner,MOCK engine or Work import. The missing direct <cstring> dependency
+exposed by the actual SDK compile was fixed in the shared USER header;
+the old binary's bytes remain unchanged. This is build/inspect ONLY.
+
+Separate posthoc comparison,never CPU validation during generation
+-----------------------------------------------------------------
+The existing record comparator now has explicit --generation-tag75.
+It requires the distinct complete generation family,all upload/phase/row
+ordering and clean-end markers. Default old74 parsing stays separate;
+neither family can be silently reinterpreted as the other or as a layer
+snapshot. Comparison uses the unchanged pinned original CPU corpus and
+checks all3 input IDs,greedy IDs and max-logit bits WITHOUT tolerance or
+retargeting. It does not compare all hidden/vocabulary values or establish
+log provenance,native lifetime,physical execution,Work or throughput.
+Main6030 and clean47922 BOTH exited0,identical logs:2 SYNTHETIC positive /
+200 malformed/missing/duplicate/ordering/cross-family/numeric refusals,
+including every30-line deletion and duplication. The SYNTHETIC DATA used
+to test this parser are NOT archived as observed accelerator inference.
+
+Physical status and next action
+-------------------------------
+This new generation binary has NOT been installed or run on the Pioneer.
+The existing posted-cancel physical49753 remains the ONLY active card
+test. At14:55UTC it had completed full same-open original GGUF SHA and
+was genuinely uploading weights,2.426GB/19.399GB. No START/cancel/STOP/END
+or captured boundary was yet established. Do not open another GPU/admin
+FD,reload,reset,profile or restart that model lifetime. Finish and inspect
+that SAME trial first. A clean snapshot must be compared against its
+ACTUAL reported layer. Only then qualify/deploy the exact new generation
+client for a separate physical normal3-position trial. Full arbitrary
+prompts,fresh per-request epochs/resident weights and sustained real
+inference benchmarks remain required before a fast Assistant Work release.

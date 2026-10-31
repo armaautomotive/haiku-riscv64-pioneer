@@ -143,8 +143,11 @@ int main(){
  setvbuf(stdout,nullptr,_IOLBF,0);Fixture fixture;Sweep sweep;SyntheticSource source(fixture,sweep);SyntheticIO io(source);
  auto session=std::make_unique<PioneerQ38TokenHiddenValidationSession<SyntheticIO,SyntheticSource>>(io,source);
  auto out=std::make_unique<PioneerQ38TokenHiddenSnapshot>();std::memset(out.get(),0xaa,sizeof(*out));
+ std::array<uint32_t,192> generation;generation.fill(0xaaaaaaaaU);
+ auto generationUnchanged=[&](){for(auto word:generation)assert(word==0xaaaaaaaaU);};
  auto unchanged=[&](){for(unsigned i=0;i<sizeof(*out)/4;i++)assert(reinterpret_cast<uint32_t*>(out.get())[i]==0xaaaaaaaa);};
  assert(!session->Finish() && !session->Poll() && !session->RequestCancellation() && !session->CopySnapshot(out.get(),sizeof(*out)) && !io.opens);
+ assert(!session->CopyGenerationRecords(generation.data(),generation.size()));generationUnchanged();
  bool okay=session->Begin();
  if(okay)for(unsigned abandon=0;abandon<2;abandon++)if(sweep.Clone([]{})){
   const auto calls=io.calls;
@@ -157,13 +160,23 @@ int main(){
  if(okay)for(auto first:samples)for(auto second:samples)for(bool cancelled:{false,true})
   if(sweep.Clone([&]{sweep.enabled=false;})){
    io.rootFirstPC=first;io.rootSecondPC=second;
+   assert(!session->CopyGenerationRecords(generation.data(),generation.size()));generationUnchanged();
    if(cancelled)assert(session->RequestCancellation() && io.cancels==1);
    const auto held=io.holds;
    assert(session->Poll() && !session->TerminalReady() && !session->Finish() && io.holds==held);
    assert(session->Poll() && session->TerminalReady() && !session->CancellationConsumed());
+   assert(!session->CopyGenerationRecords(generation.data(),generation.size()));generationUnchanged();
    assert(session->Finish() && session->Completed() && io.closes==1 && io.holds==1 && io.reads==1 && io.ends==1);
    assert(session->CancellationConsumed()==cancelled && session->CommittedRecords()==(cancelled?0U:3U));
    const auto calls=io.calls,closes=io.closes;
+   assert(!session->CopyGenerationRecords(nullptr,generation.size())
+    && !session->CopyGenerationRecords(generation.data(),generation.size()-1)
+    && !session->CopyGenerationRecords(generation.data(),generation.size()+1));generationUnchanged();
+   assert(session->CopyGenerationRecords(generation.data(),generation.size())==!cancelled);
+   if(cancelled)generationUnchanged();
+   else for(unsigned pos=0;pos<3;pos++)assert(generation[pos*64+2]==pos && generation[pos*64+4]==100+pos);
+   generation.fill(0xaaaaaaaaU);source.valid=false;
+   assert(!session->CopyGenerationRecords(generation.data(),generation.size()));generationUnchanged();
    assert(!session->Poll() && !session->RequestCancellation() && !session->Finish());
    session.reset();assert(io.calls==calls && io.closes==closes);_exit(0);
   }
@@ -238,4 +251,5 @@ int main(){
   checked.reset();assert(original.opens==1 && !transport.calls && !transport.closes);preflights++;
  }
  printf("PASS actual DEBUG75 USER full851 uploader/all3551 learned parts/%llu SYNTHETIC pages/%u batches/includes embedding+FP32/no mutable upload/SAME FD+generation/pending->terminal->HOLD->READ0->two hidden chunks->FINISH once/%u COW branches including128 RAW frontend normal+cancel positives,13 terminal-detail refusals,98 hidden reply+request+tail faults,14 explicit cancel0..3/missed-window/loss/invalid-terminal trials/%u early refusals/%u source-only checks/exact20548B snapshot/raw NaN preserved/NO snapshot before clean END+Close,after missed-window or later-layer cancellation/no RAW-PC completion grant or duplicate cancel;MOCK source+OS replies,NOT SHA authentication,native execution,model numerics,physical or TPS proof\n",(unsigned long long)source.pages,io.uploads,sweep.clones,early,preflights);
+ puts("PASS fixed192-word generation publication/64 normal and64 cancelled MOCK histories/virgin+running+terminal+cancel+wrong-size+null+changed-source refusals preserve output and add NO IO;only normal3-position END+Close publishes DATA,NOT numerical/native/physical/Work/TPS proof");
 }
