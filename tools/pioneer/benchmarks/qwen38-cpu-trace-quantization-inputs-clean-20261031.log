@@ -1,0 +1,1 @@
+PASS CPU_TRACE_QUANTIZATION_REPLAY_INPUTS refusals23/invalid_role_or_control_refuses_before_compiler_and_model;NO device,native,Work or TPS

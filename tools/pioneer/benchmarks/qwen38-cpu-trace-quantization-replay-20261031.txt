@@ -1,0 +1,77 @@
+Original CPU-state input quantization replay:585 rows bit-exact on HOST
+====================================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. Last measured whole-model rate
+remains0.207893161 tokens/sec. This is numerical localization,not a speedup.
+
+Question and independent controls
+--------------------------------
+The earlier real three-position diagnostic completed cleanly but its final
+logits differed from the fixed independent reference. The first captured
+physical hidden layer later matched all5120 words. The existing195-row RMS
+replay excluded a host-level RMS disagreement on those CPU inputs. This
+new check continues across the input quantizer and native operand packing,
+without changing ANY production math,model bytes,trace pins or thresholds.
+
+The runner reuses the unchanged CPU snapshot authentication:all three full
+trace SHA pins,same-open reads,dimensions,finite values and token path.
+Its private0400 CPU-only input snapshot is3993664 bytes,SHA
+32cac904b49d2f8f8817f14e9785744208f155d9b2ebfbec03071f19ef56b148.
+It is explicitly NOT an accelerator observation. The separate original-
+bytes transport authenticates the entire original GGUF from the SAME open
+description before the learned norms are read. All65 norm descriptors are
+checked for unique exact FP32/5120/rank1/20480-byte geometry.
+
+For3positions*65boundaries,the independent CPU libm/double-reduction RMS
+supplies the normalized input. The current bounded device RMS compiled
+for HOST independently matches that input by bits. BOTH quantizers then
+consume the SAME independent normalized row. CPU-reference Input supplies
+the expected Q8_0/Q8_K rounding/scales;the existing projection quantizer
+supplies actual native operands and padded scale lines. Expected native
+sign-magnitude16 words are constructed independently,not by asking the
+packing function under test for its own expected values. All256 lanes and
+all16 scale/padding words are compared for each chunk,including zero pads.
+Types8,12,14 are replayed for EVERY row;this does not claim every combination
+was used by a real layer or that matrix arithmetic itself was executed.
+
+Actual paired results
+---------------------
+Main28941 and independently staged clean84610 BOTH actually exited0.
+Clean source:/private/tmp/pioneer-q38-quantization-clean-hu.7PP5NXrM,
+HEAD347eadda21 plus ONLY the three new replay files,cmp-checked with main.
+Both use ASan/UBSan,FE_TONEAREST,-ffp-contract=off,no fast math. Logs match
+byte-for-byte,SHA
+bab727ce0eb69f16f5c8d52e1c05d76cb551629627e42a058be9e76e98fbe61a.
+Actual totals:
+ rows585 chunks11700 lanes2995200 scale_words187200
+ lane_differences0 scale_differences0 normalization_differences0
+No tolerance,retargeted control,changed expected value or CPU/device upload.
+
+Input-containment28120/main and81555/clean ALSO actually exited0,with23
+early refusals each:bad argument count/relative paths,Work/native role
+overrides including defined0,mutation in header/numeric/footer bytes and
+truncation of EACH CPU trace. Invalid inputs cannot reach compiler/model
+access. Their complete logs match,SHA
+b1e0407ab4de6da86a8538b46430ecda77f48666400b13bcc4d72cb8f5930580.
+All four completed raw logs are copied/cmp-checked byte-for-byte here.
+
+Scope and next
+--------------
+This excludes a HOST-level quantizer/packing disagreement for THESE fixed
+CPU-derived normalized rows. It does NOT prove emitted RV32 behavior,
+actual later device inputs,post-attention residual/FFN activation inputs,
+all FP32 values,learned matrix output,state,full-model quality,Work or TPS.
+The actual physical mismatch remains unresolved. No native owner,firmware,
+driver,Assistant,boot,power,SD or hardware configuration changed here.
+
+Physical54071 is still the SAME corrected observed-boundary process under
+a7b47e3e1f. All19399024640 learned bytes are uploaded;actual START and CANCEL
+acknowledgements are present. Pending readout_word63 is an index left by
+the current boot seal,NOT a layer count. Frontend snapshots are speculative
+RAW DATA,NOT retired PCs or a proven fault/completion. No terminal/QHB or
+clean END is claimed. No extra GPU/admin FD,reload,profiler or reset occurs
+while that entire physical lifetime is active. Poll SAME54071;only actual
+clean exit0+snapshot PASS allows strict comparison of the actual QHB layer.
+
+Still owed:physical divergence diagnosis,full numerical/state/normal+EOS/
+quality,resident no-CPU-reference Work and Assistant,actual sustained token
+measurements and performance improvements. Preserve the full ACTIVE goal.
