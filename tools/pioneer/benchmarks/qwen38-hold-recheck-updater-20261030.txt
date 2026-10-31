@@ -1,0 +1,81 @@
+Exact HOLD-recheck candidate: guarded exchange preparation
+=========================================================
+2026-10-30 local/2026-10-31 UTC. Goal ACTIVE;20tok/s UNMET.
+Last physical whole-model rate remains0.207893161tok/s. NO new inference
+speed,physical lifecycle,full-model or Work qualification is established.
+
+New exchange paths,not a runtime qualification grant
+---------------------------------------------------
+Added --apply-token-hold-recheck / --restore-token-hold-recheck for ONLY:
+ stable041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+ tag2026102100010012
+ <-> candidate781ab93300d1a8418cd752ae0728090c9e2c470a53320eafe22e4f3d3b8706d2
+ tag2026103000010074
+Staged candidate name:tenstorrent_pci_probe-token-hold-recheck-781ab933.
+This still requires completed original-model/native qualification BEFORE use.
+No files were staged or installed on the Pioneer by this checkpoint.
+
+The previous d784 token mapping/bytes and its immutable staged helpers are
+untouched. That image shares tag74 but is NEVER valid for this new transition;
+the previous transition likewise rejects781ab. Backups include the entire
+expected source digest,not just the numeric tag. The same idle-parent,
+source/installed/guard/admin-helper hash,symlink,FD,owner,cold,generation,
+quiesce,atomic-rename and wait checks remain. There is no force,reset,unload,
+automatic rollback,cold/retained-owner recovery or Work alias.
+
+Actual shell tests in disposable filesystems;OS/device endpoints MOCK
+--------------------------------------------------------------------
+Frozen independent copies of the actual script and test/helper sources:
+ /private/tmp/pioneer-q38-hot-recheck-main-gc.Yf18qivD
+ /private/tmp/pioneer-q38-hot-recheck-clean-gc.pOH1cvHA
+All three source files cmp-match the working tree and each other.
+Script SHA e7ee73dcfab263e38012cfa9787e0ae3eba98476ec3aae51a5f3f50e977fbc95
+Test SHA f40ce6bd6fc27aab8cb10c6bf5dbb5709be49d7dc3efcc334cf761eb75894cd5
+Helper SHA684443b4cd6e8d88a9b1e52d50f6456b57d42affd95011d0c570a425a7d67cee
+Both actual /bin/sh regression runs92579/4264 exit0:680 cases EACH across
+new HOLD-recheck,previous token,previous recurrent-prefix and stable scale-
+reuse apply/restore pairs. This is selected eight-mode coverage,not a claim
+that every historical updater mode or a native reload was tested.
+
+Coverage includes both directions of old/new tag74 byte confusion and
+arbitrary wrong same-tag bytes BEFORE admin open;candidate/installed/hash/
+symlink faults;retained/cold/open/generation/quiesced/guard metadata;live
+Assistant,model-authentication and token-source-check parents;malformed or
+failed process inventories;late parents;status/quiesce/wait failures;and
+existing wrong/symlink backups. Failed wait never triggers automatic restore.
+Successful restoration also preserves the OTHER same-tag hash-qualified
+backup and legacy tag-only backup,with exact bytes and inode identity.
+Existing correct exact backups are reused rather than replaced.
+
+Complete main/clean logs cmp-match;SHA256:
+ af7f56f26cd25db3e2a0c2a5216bf40a4d219aae787dd3127d645841475eea22
+One unmodified matching log archived:qwen38-hold-recheck-hot-swap-20261030.log
+Shell syntax,Python AST and git diff whitespace checks pass.
+The two actual built modules were rehashed and cmp-verified byte-identical
+to781ab above. Their SDK/build evidence is in the prior preparation report.
+
+Fresh physical baseline:READ ONLY,not candidate execution
+--------------------------------------------------------
+Pinned Haiku SSH reports64CPUs/max137034936320B/free133812842496B.
+Actual installed SHA remains041 above. CPU-only admin metadata reports:
+ tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1
+No device execution,driver replacement,Assistant/boot/kernel/NIC change,
+power command,SD/card/cable/mains action or disk repair occurred here.
+
+Qualification still owed
+-------------------------
+Final native histories38672/35834 remain LIVE,not passes. Both have advanced
+to actual ROOT130000249 instructions/layer0 phasea;no actual terminal/HOLD/
+full-END pass or independent prefix comparison yet. Original five full-
+model histories also remain live;native41236 has reached position0/layer28,
+not an entire token. No history was restarted for an observation timeout.
+
+After BOTH final native runs actually complete,compare EACH emitted prefix
+independently against the pinned original CPU corpus without tolerance.
+Only then consider one exact781ab/f30f diagnostic cancellation hardware
+trial with raw inner details and optional host phase timing. A successful
+trial must prove actual terminal,HOLD,drain,all Finish stages and clean
+metadata before guarded stable restoration. Full64-layer/multitoken/state/
+readout/END/reuse,public no-CPU-reference Work and Assistant integration,
+physical sustained throughput and20tok/s remain owed. No compile or mock
+test result substitutes for those requirements.
