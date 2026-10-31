@@ -2,7 +2,9 @@
 // Separate immutable revision; recheck every include,including defined0.
 #ifndef PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_SELECTION_H
 #define PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_SELECTION_H
-#ifdef PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_NATIVE_CONTEXT
+#ifdef PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_VALIDATION_NATIVE
+enum {PioneerQ38TokenJobBootFoldSelection=3};
+#elif defined(PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_NATIVE_CONTEXT)
 enum {PioneerQ38TokenJobBootFoldSelection=2};
 #elif defined(PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS)
 enum {PioneerQ38TokenJobBootFoldSelection=1};
@@ -21,7 +23,12 @@ enum {PioneerQ38TokenJobBootFoldSelection=0};
 #error Job boot fold DATA requires its exact separate beta/fault/G3 revision before any old package
 #endif
 #if defined(PIONEER_Q38_TOKEN_PRECISE_BETA_VALIDATION_NATIVE) || defined(PIONEER_Q38_TOKEN_FAULT_VALIDATION_NATIVE) \
- || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_TOKEN_VALIDATION_NATIVE) \
+ || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)
+#ifndef PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_VALIDATION_NATIVE
+#error Job boot fold code requires its explicit physical revision,not an old physical owner
+#endif
+#endif
+#if defined(PIONEER_Q38_TOKEN_VALIDATION_NATIVE) \
  || defined(PIONEER_Q38_TOKEN_VALIDATION_CLIENT) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_CLIENT) \
  || defined(PIONEER_Q38_TOKEN_BOUNDARY_VALIDATION_CLIENT) || defined(PIONEER_Q38_CPU_VALIDATION) \
  || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_WORK_INFERENCE) \
@@ -31,7 +38,10 @@ enum {PioneerQ38TokenJobBootFoldSelection=0};
  || defined(__FAST_MATH__)
 #error Job boot fold DATA cannot alias an old physical,USER,CPU,image or Work role
 #endif
-#ifdef PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_NATIVE_CONTEXT
+#ifdef PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_VALIDATION_NATIVE
+static_assert(PioneerQ38TokenJobBootFoldSelection==3,"late physical job boot fold selection");
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenJobBootFoldValidationRole.h"
+#elif defined(PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_NATIVE_CONTEXT)
 #if PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_NATIVE_CONTEXT != 1 \
  || !defined(_KERNEL_MODE) || _KERNEL_MODE != 1 \
  || !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_NATIVE_CONTEXT != 1 \
@@ -50,7 +60,7 @@ static_assert(PioneerQ38TokenJobBootFoldSelection==1,"late job boot fold DATA se
 #endif
 #endif
 #else
-#ifdef PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_NATIVE_CONTEXT
+#if defined(PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_VALIDATION_NATIVE)
 #error Job boot fold native revision requires its own actual code package
 #endif
 static_assert(PioneerQ38TokenJobBootFoldSelection==0,"late job boot fold program removal");

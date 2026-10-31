@@ -70,6 +70,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
         payloads['hash_token_fault_readout'] = ('test-' + values['hash_token_fault_readout']).encode()
         payloads['hash_token_posted_cancel'] = ('test-' + values['hash_token_posted_cancel']).encode()
         payloads['hash_token_precise_beta'] = ('test-' + values['hash_token_precise_beta']).encode()
+        payloads['hash_token_job_boot_fold'] = ('test-' + values['hash_token_job_boot_fold']).encode()
         payloads['hash_host_phase_diagnostic'] = ('test-' + values['hash_host_phase_diagnostic']).encode()
         payloads['hash_batch4_fetch_qualification'] = ('test-' + values['hash_batch4_fetch_qualification']).encode()
         payloads['hash_batch_raw_qualification'] = ('test-' + values['hash_batch_raw_qualification']).encode()
@@ -215,6 +216,8 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
             '--restore-token-posted-cancel': ('hash_token_posted_cancel', 'hash_scale_reuse_qualification', 'tag_token_posted_cancel'),
             '--apply-token-precise-beta': ('hash_scale_reuse_qualification', 'hash_token_precise_beta', 'tag_scale_reuse_qualification'),
             '--restore-token-precise-beta': ('hash_token_precise_beta', 'hash_scale_reuse_qualification', 'tag_token_precise_beta'),
+            '--apply-token-job-boot-fold': ('hash_scale_reuse_qualification', 'hash_token_job_boot_fold', 'tag_scale_reuse_qualification'),
+            '--restore-token-job-boot-fold': ('hash_token_job_boot_fold', 'hash_scale_reuse_qualification', 'tag_token_job_boot_fold'),
             '--apply-host-phase-diagnostic': ('hash_sentinel_poll_qualification', 'hash_host_phase_diagnostic', 'tag_sentinel_poll_qualification'),
             '--restore-host-phase-diagnostic': ('hash_host_phase_diagnostic', 'hash_sentinel_poll_qualification', 'tag_host_phase_diagnostic'),
             '--apply-batch4-fetch-qualification': ('hash_sentinel_poll_qualification', 'hash_batch4_fetch_qualification', 'tag_sentinel_poll_qualification'),
@@ -319,6 +322,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
         put('candidate_token_fault_readout', payloads['hash_token_fault_readout'])
         put('candidate_token_posted_cancel', payloads['hash_token_posted_cancel'])
         put('candidate_token_precise_beta', payloads['hash_token_precise_beta'])
+        put('candidate_token_job_boot_fold', payloads['hash_token_job_boot_fold'])
         put('candidate_host_phase_diagnostic', payloads['hash_host_phase_diagnostic'])
         put('candidate_batch4_fetch_qualification', payloads['hash_batch4_fetch_qualification'])
         put('candidate_batch_raw_qualification', payloads['hash_batch_raw_qualification'])
@@ -373,6 +377,10 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
             assert values['tag_token_precise_beta'] == '2026103100010075'
             assert values['hash_token_precise_beta'] == '2723ac08ac75996f19f6e516c51eda615336f8dcfc3a8d6849f6d755da22c525'
             assert values['candidate_token_precise_beta'] == values['stage'] + '/tenstorrent_pci_probe-token-precise-beta-2723ac08'
+        if mode in ('--apply-token-job-boot-fold', '--restore-token-job-boot-fold'):
+            assert values['tag_token_job_boot_fold'] == '2026103100010075'
+            assert values['hash_token_job_boot_fold'] == '44209b7873cd2e2f32f133b4c4c45a5870fe1669e98cd4165c4ebc51abdc5eaf'
+            assert values['candidate_token_job_boot_fold'] == values['stage'] + '/tenstorrent_pci_probe-token-job-boot-fold-44209b78'
         status = f'P100A_RELOAD driver55 tag{oldtag} generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY'
         if fault == 'cold':
             status = status.replace('cold0', 'cold1')
@@ -433,6 +441,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
         hash_backup |= mode in ('--apply-token-fault-readout', '--restore-token-fault-readout')
         hash_backup |= mode in ('--apply-token-posted-cancel', '--restore-token-posted-cancel')
         hash_backup |= mode in ('--apply-token-precise-beta', '--restore-token-precise-beta')
+        hash_backup |= mode in ('--apply-token-job-boot-fold', '--restore-token-job-boot-fold')
         backup_name = 'qualified55-before-hot-reload' if mode == '--bootstrap' else 'qualified-reload-' + oldtag
         if hash_backup:
             backup_name += '-' + hashlib.sha256(payloads[starting]).hexdigest()
@@ -538,6 +547,18 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
                                        'beta-old-tag74': 'hash_token_root_frontend'}[fault]])
             if mode.startswith('--apply-'):
                 put('candidate_token_precise_beta', previous)
+            else:
+                installed.write_bytes(previous)
+        if fault in ('fold-old-beta', 'fold-old-posted', 'fold-old-fault', 'fold-old-hidden', 'fold-old-tag74', 'fold-same-tag-wrong'):
+            assert mode in ('--apply-token-job-boot-fold', '--restore-token-job-boot-fold')
+            previous = (b'unqualified distinct bytes claiming tag75' if fault == 'fold-same-tag-wrong'
+                        else payloads[{'fold-old-beta': 'hash_token_precise_beta',
+                                       'fold-old-posted': 'hash_token_posted_cancel',
+                                       'fold-old-fault': 'hash_token_fault_readout',
+                                       'fold-old-hidden': 'hash_token_hidden_readout',
+                                       'fold-old-tag74': 'hash_token_root_frontend'}[fault]])
+            if mode.startswith('--apply-'):
+                put('candidate_token_job_boot_fold', previous)
             else:
                 installed.write_bytes(previous)
         before = installed.read_bytes()
@@ -737,6 +758,7 @@ if __name__ == '__main__':
     modes += ['--apply-token-fault-readout', '--restore-token-fault-readout']
     modes += ['--apply-token-posted-cancel', '--restore-token-posted-cancel']
     modes += ['--apply-token-precise-beta', '--restore-token-precise-beta']
+    modes += ['--apply-token-job-boot-fold', '--restore-token-job-boot-fold']
     parents += ['owner-token-hidden-validation']
     parents += ['owner-token-validation', 'owner-token-validation-underscore', 'owner-token-source-check']
     parents += ['owner-recurrent-prefix-validation', 'owner-recurrent-prefix-validation-underscore']
@@ -1049,6 +1071,10 @@ if __name__ == '__main__':
             candidate = ['candidate_token_precise_beta']
         elif mode == '--restore-token-precise-beta':
             candidate = ['candidate_scale_reuse_qualification']
+        elif mode == '--apply-token-job-boot-fold':
+            candidate = ['candidate_token_job_boot_fold']
+        elif mode == '--restore-token-job-boot-fold':
+            candidate = ['candidate_scale_reuse_qualification']
         elif mode == '--restore-token-root-frontend':
             candidate = ['candidate_scale_reuse_qualification']
         candidate_links = [key + '-link' for key in candidate]
@@ -1070,6 +1096,8 @@ if __name__ == '__main__':
             previous_image.extend(('posted-old-fault', 'posted-old-hidden', 'posted-old-tag74', 'posted-same-tag-wrong'))
         if mode in ('--apply-token-precise-beta', '--restore-token-precise-beta'):
             previous_image.extend(('beta-old-posted', 'beta-old-fault', 'beta-old-hidden', 'beta-old-tag74', 'beta-same-tag-wrong'))
+        if mode in ('--apply-token-job-boot-fold', '--restore-token-job-boot-fold'):
+            previous_image.extend(('fold-old-beta', 'fold-old-posted', 'fold-old-fault', 'fold-old-hidden', 'fold-old-tag74', 'fold-same-tag-wrong'))
         hash_backup_mode = mode in ('--apply-decoder-validation', '--restore-decoder-validation', '--apply-gdn-input-validation', '--restore-gdn-input-validation', '--apply-gdn-recurrent-validation', '--restore-gdn-recurrent-validation', '--apply-gdn-rendezvous-validation', '--restore-gdn-rendezvous-validation', '--apply-conv-silu-precision-validation', '--restore-conv-silu-precision-validation', '--apply-resident-output-validation', '--restore-resident-output-validation', '--apply-resident-layer-validation', '--restore-resident-layer-validation')
         hash_backup_mode |= mode in ('--apply-mixed-live-validation', '--restore-mixed-live-validation')
         hash_backup_mode |= mode in ('--apply-recurrent-block-validation', '--restore-recurrent-block-validation')
@@ -1082,6 +1110,7 @@ if __name__ == '__main__':
         hash_backup_mode |= mode in ('--apply-token-fault-readout', '--restore-token-fault-readout')
         hash_backup_mode |= mode in ('--apply-token-posted-cancel', '--restore-token-posted-cancel')
         hash_backup_mode |= mode in ('--apply-token-precise-beta', '--restore-token-precise-beta')
+        hash_backup_mode |= mode in ('--apply-token-job-boot-fold', '--restore-token-job-boot-fold')
         backup_links = ['backup-link'] if hash_backup_mode else []
         for fault in [None] + common + candidate + candidate_links + parents + previous_image + backup_links + (['loaded'] if mode == '--bootstrap' else hot):
             check(mode, fault)

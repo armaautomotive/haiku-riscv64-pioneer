@@ -51,6 +51,7 @@ case "$1" in
  --apply-token-fault-readout|--restore-token-fault-readout) mode=$1;;
  --apply-token-posted-cancel|--restore-token-posted-cancel) mode=$1;;
  --apply-token-precise-beta|--restore-token-precise-beta) mode=$1;;
+ --apply-token-job-boot-fold|--restore-token-job-boot-fold) mode=$1;;
  --apply-host-phase-diagnostic|--restore-host-phase-diagnostic) mode=$1;;
  --apply-batch4-fetch-qualification|--restore-batch4-fetch-qualification) mode=$1;;
  --apply-batch-raw-qualification|--restore-batch-raw-qualification) mode=$1;;
@@ -162,6 +163,8 @@ candidate_token_fault_readout=$stage/tenstorrent_pci_probe-token-fault-readout-c
 candidate_token_posted_cancel=$stage/tenstorrent_pci_probe-token-posted-cancel-18362bcb
 # Separate math revision;old immutable helpers retain their exact own routes.
 candidate_token_precise_beta=$stage/tenstorrent_pci_probe-token-precise-beta-2723ac08
+# Separate controller revision;runtime qualification REQUIRED before use.
+candidate_token_job_boot_fold=$stage/tenstorrent_pci_probe-token-job-boot-fold-44209b78
 candidate_host_phase_diagnostic=$stage/tenstorrent_pci_probe-host-phase-diagnostic-acf33ea4
 candidate_batch4_fetch_qualification=$stage/tenstorrent_pci_probe-batch4-fetch-qualification-2fcf0b27
 candidate_batch_raw_qualification=$stage/tenstorrent_pci_probe-batch-raw-qualification-c38e258c
@@ -256,6 +259,7 @@ hash_token_hidden_readout=b74f4bfa5583aaf0cf8272d5136c73336c1db0f93e168e7212277f
 hash_token_fault_readout=cf40056394b5e3ecdac44d1679e26bdaf6256cc47ca8f2f6a890dc878a6d2906
 hash_token_posted_cancel=18362bcb97180f8428b7e3b54aee7c81a42b8ed9f998aea11ccbefee5aff29af
 hash_token_precise_beta=2723ac08ac75996f19f6e516c51eda615336f8dcfc3a8d6849f6d755da22c525
+hash_token_job_boot_fold=44209b7873cd2e2f32f133b4c4c45a5870fe1669e98cd4165c4ebc51abdc5eaf
 hash_host_phase_diagnostic=acf33ea4279ca6d36cbc4b90ae56e6da1fed219b431ae7c80c2693b3f1591583
 hash_batch4_fetch_qualification=2fcf0b27039ed8e8e8114c632d51ba2f75ed2e6c28ef4a7081dd347d39cba9da
 hash_batch_raw_qualification=c38e258cb76bf8013a721cacb73e98b1d7eb191badbfaed6076655284543d379
@@ -348,6 +352,7 @@ tag_token_hidden_readout=2026103100010075
 tag_token_fault_readout=2026103100010075
 tag_token_posted_cancel=2026103100010075
 tag_token_precise_beta=2026103100010075
+tag_token_job_boot_fold=2026103100010075
 tag_host_phase_diagnostic=2026102100010018
 tag_batch4_fetch_qualification=2026102100010019
 tag_batch_raw_qualification=2026102100010020
@@ -613,6 +618,10 @@ else
  elif [ "$mode" = --restore-token-posted-cancel ]; then source=$candidate_scale_reuse_qualification; expected=$hash_token_posted_cancel; result=$hash_scale_reuse_qualification; oldtag=$tag_token_posted_cancel; newtag=$tag_scale_reuse_qualification
  elif [ "$mode" = --apply-token-precise-beta ]; then source=$candidate_token_precise_beta; expected=$hash_scale_reuse_qualification; result=$hash_token_precise_beta; oldtag=$tag_scale_reuse_qualification; newtag=$tag_token_precise_beta
  elif [ "$mode" = --restore-token-precise-beta ]; then source=$candidate_scale_reuse_qualification; expected=$hash_token_precise_beta; result=$hash_scale_reuse_qualification; oldtag=$tag_token_precise_beta; newtag=$tag_scale_reuse_qualification
+ # Exact clean041 <-> optimized44209 ONLY,never an older same-tag image.
+ # No Work promotion,cold recovery,forced unload or automatic rollback.
+ elif [ "$mode" = --apply-token-job-boot-fold ]; then source=$candidate_token_job_boot_fold; expected=$hash_scale_reuse_qualification; result=$hash_token_job_boot_fold; oldtag=$tag_scale_reuse_qualification; newtag=$tag_token_job_boot_fold
+ elif [ "$mode" = --restore-token-job-boot-fold ]; then source=$candidate_scale_reuse_qualification; expected=$hash_token_job_boot_fold; result=$hash_scale_reuse_qualification; oldtag=$tag_token_job_boot_fold; newtag=$tag_scale_reuse_qualification
  elif [ "$mode" = --apply-host-phase-diagnostic ]; then source=$candidate_host_phase_diagnostic; expected=$hash_sentinel_poll_qualification; result=$hash_host_phase_diagnostic; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_host_phase_diagnostic
  elif [ "$mode" = --restore-host-phase-diagnostic ]; then source=$candidate_sentinel_poll_qualification; expected=$hash_host_phase_diagnostic; result=$hash_sentinel_poll_qualification; oldtag=$tag_host_phase_diagnostic; newtag=$tag_sentinel_poll_qualification
  elif [ "$mode" = --apply-batch4-fetch-qualification ]; then source=$candidate_batch4_fetch_qualification; expected=$hash_sentinel_poll_qualification; result=$hash_batch4_fetch_qualification; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_batch4_fetch_qualification
@@ -655,6 +664,7 @@ else
   --apply-token-fault-readout|--restore-token-fault-readout) reload_backup=$reload_backup-$expected;;
   --apply-token-posted-cancel|--restore-token-posted-cancel) reload_backup=$reload_backup-$expected;;
   --apply-token-precise-beta|--restore-token-precise-beta) reload_backup=$reload_backup-$expected;;
+  --apply-token-job-boot-fold|--restore-token-job-boot-fold) reload_backup=$reload_backup-$expected;;
   --apply-token-validation|--restore-token-validation|--apply-token-hold-recheck|--restore-token-hold-recheck|--apply-token-root-frontend|--restore-token-root-frontend) reload_backup=$reload_backup-$expected;;
   --apply-mixed-live-validation|--restore-mixed-live-validation|--apply-recurrent-block-validation|--restore-recurrent-block-validation|--apply-recurrent-deadline-validation|--restore-recurrent-deadline-validation|--apply-recurrent-prefix-validation|--restore-recurrent-prefix-validation) reload_backup=$reload_backup-$expected;;
   # DEBUG44 has two byte-distinct images. Preserve the previous tag-only

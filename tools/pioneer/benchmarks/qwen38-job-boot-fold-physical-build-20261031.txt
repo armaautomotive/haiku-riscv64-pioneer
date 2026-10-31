@@ -1,0 +1,91 @@
+Optimized ROOT: full native END passed; physical module/updater qualified
+========================================================================
+2026-10-31. Goal ACTIVE. Last verified sustained whole-model baseline
+0.207893161 tokens/sec;20 tokens/sec remains UNMET. NO speedup claimed.
+
+Raw qualification archive: qwen38-job-boot-fold-qualification-20261031/
+contains both full native histories, both strict prefix comparisons,
+their identical first-layer prefix, independent frozen physical builds,
+partial stack audits, DATA/role/private/old-public/updater regressions and
+the pre-deployment read-only health check. Logs are retained verbatim.
+
+Original uninterrupted native histories completed
+---------------------------------------------------
+Main51647 and independent clean18828 ACTUALLY exited0,confirmed19:46:35UTC.
+Both executed original SAME-open full851-model binding,1010 actual zero
+kernels,119 virgin full instruction engines,real embedding/matrix/Conv/
+GDN/FFN first layer,ONE posted cancel,all119 actual STOP,120 HOLD,drain,
+TWO held reads and original full restoration/clock/VM/PCI/host/device/
+context END. No PC/history reset,supplied CPU product or invented token.
+Full raw logs are archived,not just the earlier partial snapshots.
+
+After the prefix writer had genuinely closed its output,independent strict
+posthoc CPU-DATA comparisons both exited0. Embedding AND all5120 layer0
+words match exactly;NO tolerance. Both full prefixes41028B have SHA:
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+Comparisons occurred while subsequent cleanup continued;they grant ONLY
+prefix numerics. Actual exit0 independently establishes completed END.
+ROOT instructions144615276 vs158620373 in the prior SAME native first-
+layer test;worker2275341056 unchanged. These include SIMULATED polling,
+not elapsed hardware cycles,an attainable speedup or token throughput.
+Observed ROOT stack6672/8192,peer5360 reserved/5348 accessed unchanged;
+these do not qualify the separate whole Haiku kernel stack.
+
+Distinct physical code revision
+--------------------------------
+PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_VALIDATION_NATIVE explicitly selects new
+physical revision3,private QT3NODRV remains2,DATA-only1,absent0. It requires
+the actual new code package and inherits all old physical parents,tag75,
+conventional ABI,posted cancel and NODRV/CPU/Work/TEST refusals. An old
+same-tag owner or private context cannot promote this revision. A numeric
+tag is ABI identity,NOT module bytes. No public packet/Work API changed.
+
+Initial actual module builds10026/19451 both0;frozen82235/91119 both0.
+Both use authenticated old posted26d54996 object plus entire argv,a04e60b4,
+replacing only source/output. All13 compiled arrays authenticate against
+the unchanged1b8e6109 package,old code namespaces absent,2MiB RoPE unchanged,
+actual native/hidden/posted controllers and conventional ABI emitted;
+CPU-reference/Work/HOST test imports absent. Main/clean full bytes match:
+Object ee3e9ad9cef6e6e5b449071ad953ce7b18e73df7fd69c935a9e759625288d115
+Module 44209b7873cd2e2f32f133b4c4c45a5870fe1669e98cd4165c4ebc51abdc5eaf
+The actual common PioneerPciProfile is rebuilt from this checkout. The
+ENTIRE old18362 module reproduces first,then the SAME seven-input recipe
+links the new module. Actual GCC callgraph object matches compiled bytes;
+known public module chain5392B/25 unresolved/511 reached,no dynamic frame
+or cycle. Unknown entry/kernel/IRQ/indirect costs are NOT assumed zero;
+WHOLE KERNEL STACK QUALIFIED=FALSE.
+
+Regressions and exact updater
+------------------------------
+Physical role94566/33964 both0,4 positives/841 missing,zero,two,late,ABI,
+oldtag,NODRV,CPU,Work and TEST refusals. Updated DATA81056/27777 both0:
+all3044253 words exact,2290 gap/runtime/alias refusals,30 corrupt/truncated
+sources before output,221 role/old-owner/ABI refusals. New physical marker
+cannot turn a DATA/private context into physical code accidentally.
+Private SDK93896/46366 both0,entire f4f8e84b object byte-identical to the
+previous private checkpoint despite the separately added physical branch.
+Old public module16486/63235 both0,full dca90a0f object and2723ac08 module
+unchanged. Old code and its saved immutable restore helper are preserved.
+
+New apply/restore-token-job-boot-fold modes map ONLY exact clean041fef18
+<-> exact44209b78. They preserve SHA-qualified backups and every original
+filesystem/parent/owner/quarantine/quiesce/wait fence. Old2723/18362/cf400/
+b74/tag74/wrong same-tag bytes refuse. No forced reset,unknown recovery,
+automatic rollback or permission to erase state. Actual updater tests
+55064/64730 both0,354 cases across new and old precise-beta route pairs.
+Helper SHA ff293d2d56c069013c1a8743a59e4c8e8b064a1d61d0b3cff8d74c7811627448.
+
+Pre-deployment state
+---------------------
+The installed module is STILL2723ac08/tag75/gen5,cold0/owner0/quiesced0,
+open_count1/guard1. No model/Assistant parent. Fresh read-only SSH preflight
+is archived:Haiku64 CPUs/full RAM;installed/guard/admin/old restore/baseline
+hashes checked. Candidate/helper staging and actual controlled exchange
+remain separate actions;no card execution or speed result follows from
+these local compile/native/updater tests. No power/SD/OS/network change.
+
+Next:guarded staging/exchange and one real normal-generation measurement.
+Full-model numerical precision mismatch remains separately documented;
+first-layer equality does not fix it. Longer/EOS decode,resident model
+reuse,fresh requests,Assistant no-reference Work and sustained20tok/s are
+still incomplete. No completion or speedup is asserted.

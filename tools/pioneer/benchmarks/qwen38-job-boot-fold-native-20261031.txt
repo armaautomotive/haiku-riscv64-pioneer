@@ -3,6 +3,16 @@ Optimized ROOT: distinct immutable package and actual private native owner
 2026-10-31. Goal ACTIVE. Last measured physical whole-model baseline
 0.207893161 tokens/sec;20 tokens/sec remains UNMET. No speedup claimed.
 
+COMPLETED FOLLOW-ON:the SAME main51647/clean18828 histories ACTUALLY
+exited0,confirmed19:46:35UTC. Original first layer,posted cancellation,
+all119 STOP/120 HOLD,drain,TWO held reads and complete original END/Close
+passed. Independent unchanged posthoc comparisons both0:embedding and
+all5120 layer0 words bit-exact,prefix SHA4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+ROOT retires144615276 instructions vs158620373 in the prior same native
+test;worker2275341056 unchanged. These are HOST observations,NOT hardware
+cycles or TPS. Historical LIVE/pending sections below are superseded by
+qwen38-job-boot-fold-physical-build-20261031.txt and its full raw logs.
+
 Actual new package and scope
 -----------------------------
 The independently reproduced d0760386 job-boot-fold/eight-way/fault ROOT
