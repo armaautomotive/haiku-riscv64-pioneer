@@ -6,6 +6,9 @@
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_RECHECK_FIXTURE
 #include "pioneer_q38_token_native_hold_recheck_role.h"
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_ROOT_FRONTEND_FIXTURE
+#include "pioneer_q38_token_native_root_frontend_role.h"
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_BEGIN_FIXTURE
 #include "pioneer_q38_token_native_control_begin_role.h"
@@ -159,6 +162,10 @@ struct PioneerSessionIO:TokenNativeEndpoints {
  bool executionMode=false;unsigned executionFault=0,executionArms=0,executionStarts=0,executionObserved=0;
  unsigned terminalFault=0;
  unsigned executionPcReads=0,executionFaultPcObserved=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_ROOT_FRONTEND_FIXTURE
+ bool rootFrontendSnapshots=false,rootFrontendStoppedOnly=false;
+ unsigned rootFrontendInjectedPCs=0;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_RECHECK_FIXTURE
  unsigned holdRecheckPendingPCs=0,holdRecheckInjectedPCs=0;
 #endif
@@ -222,6 +229,14 @@ struct PioneerSessionIO:TokenNativeEndpoints {
   Touch();assert(runtimeCore<120);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
   if(!runtimeCore){assert(executionMode);executionPcReads++;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_ROOT_FRONTEND_FIXTURE
+   if(rootFrontendSnapshots){
+    const uint32_t raw[]={0,0xffffffffU,0x60000,0x60008,0x60004,0x40010};
+    if(rootFrontendStoppedOnly)assert(executionCpu->pc==0x60004 && Core(0).coreReset==0x46800 && terminalHoldOrder.empty());
+    const unsigned index=rootFrontendInjectedPCs++;
+    return rootFrontendStoppedOnly?0x60008U:raw[index%6];
+   } // RAW debug DATA ONLY;actual processor PC,products and ownership untouched
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_RECHECK_FIXTURE
    if(holdRecheckPendingPCs){
     assert(executionCpu->pc==0x60004 && Core(0).coreReset==0x46800 && terminalHoldOrder.empty());

@@ -1,0 +1,144 @@
+ROOT frontend snapshots: current boot/receipt/code seal preparation
+==================================================================
+2026-10-30 local/2026-10-31 UTC. Goal ACTIVE;20tok/s UNMET.
+Last physical whole-model rate remains0.207893161tok/s. NO new speed result,
+hardware execution,driver installation,power/SD/mains/OS/Assistant change.
+Stable041/tag12/gen2 remains the last independently verified installation.
+
+Previous goal turn:PROGRESS through the precise failed physical observation
+and completed controlled recovery,recorded in818e24b0b5. The intervening
+user-requested ETA answer changed no project state. THIS turn:PROGRESS via
+source correction,regressions,paired actual SDK/module builds and two LIVE
+new genuine native histories;not a claim of completed hardware repair.
+
+Source correction,not an address-range workaround
+-------------------------------------------------
+The preceding physical trial failed after all119 peer STOP checks at the
+last exact ROOT PC predicate:two RAW0x60008 samples versus required0x60004.
+The T0 debug snapshot is a speculative frontend observation,not proof of
+retirement. Primary architecture reference:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/README.md#riscv-pc-snapshot
+The actual G3 terminal code remains8bytes at60000 and60004;60008 is STILL
+outside its exclusive code extent. No ProgramWord or firmware range widened.
+
+StartRoot ACK,ObserveRoot and terminal observation now retain the actual
+RAW samples as diagnostic DATA,not execution/fault/STOP authority. A new
+private RootBootSeal checks ALL64 current boot words against the SAME
+startup object with source/lifetime guards. This applies even BEFORE a
+terminal marker,so actual immutable-boot corruption cannot hide behind a
+misleading debug PC. It does not supply a terminal or a code product.
+
+Positive terminal acceptance still requires real marker,full boot/session/
+terminal grammar,cancel record,original source/lifetime binding,and each
+of119 exact STOP jobs/nonces/status/current counters and existing peer STOP
+PC checks. Its final ROOT seal independently checks current immutable ROOT
+code bytes through actual memory.VerifyImage:RootBoot,RootText,RootTerminal,
+RootAux. It brackets that read-only code proof with TWO passes over the SAME
+current boot,status/zero-error,64 terminal words,8 counters,and FIFO/NoC idle
+conditions. A change after image validation must fail the second pass.
+The authenticated publication tails close traffic/peers before fenced marker
+publication and then enter the stopped self-jump;there is no later NoC work.
+HoldGuard requires this SAME current seal for a still-running ROOT,not its
+cached terminal or RAW sample. Already-held cores never need old live terminal
+memory after restoration overwrites it. All actual HOLD/reset,retention,
+closed-journal,clock and subsequent restoration/END guards remain separate.
+
+Completed focused and role tests:MOCK/DATA only
+----------------------------------------------
+Both independent source archives pass ASan/UBSan extracted-method tests:
+75 MOCK positives,1022 refusals,8 unpublished pending cases. Frozen old
+InspectTerminal reproduces the physical sample sequence's old phase11
+failure;new readiness requires the new seal. Arbitrary zero,UINTMAX,fault,
+terminal and out-of-range RAW samples alone never grant terminal readiness.
+Real current boot-word mismatch remains a refusal for all64 words in BOTH
+root observation and unpublished terminal inspection. Every119 peer is
+independently mutated in7 ways;guards still refuse. Post-image changes,
+read failures,regressed accepted terminal and bad entry records also refuse.
+ALL endpoints,grammar,authority and image-verifier behavior in THIS focused
+test are MOCK:it is NOT a native/model/processor/physical completion proof.
+
+The extracted actual HOLD+UNCHANGED BootTime test still passes5 positives/
+33 refusals. Production HOLD method remains byte-identical to the earlier
+bounded-recheck source. Actual terminal DATA grammar retains7 positives/
+13900 refusals and exact snapshot7/28686;record grammar retains11/20152.
+Existing packet,control,old NODRV/prefix routing and physical role tests pass.
+Physical role explicitly refuses the new TEST macro,including defined0:
+3 positives/756 refusals;no selection/guard/count was relaxed.
+
+New --root-frontend-snapshots is restricted to the explicit G3 ORIGINAL
+first-layer/cancel/STOP/HOLD/full-END predecessor. Compile gates:1 positive/
+40 missing+zero+two+foreign refusals;12 early CLI refusals create no output
+or compiler/runtime. Historical --hold-recheck-pending is now explicitly
+retired:it cannot still claim that RAW PC samples should cause pending after
+publication under this new policy. Historical evidence and frozen methods
+remain unchanged;historical role1/37 and10 retired CLI refusals pass.
+
+Raw paired completed logs are archived as
+ qwen38-root-frontend-offline-{main,clean}-20261030.log
+SHA main b4c30a7b7219ca42fc9829c68973130847cbbc1c235b5d644471f9b506d82d82
+SHA clean e7b9495a31587ec7df5e375563e11d88370c78efa059e0b6e99dec5c9f0f2d42
+READONLY comparison matches after excluding ONLY the printed temporary
+artifact-directory line. Both originals are preserved unmodified.
+
+Actual paired SDK/module evidence:BUILD ONLY
+--------------------------------------------
+Two independent git archives818e24b0b5 plus15 cmp-verified OWNED source/test/
+pin files;dirty llama,FlashNext and unrelated old WIP are excluded:
+ /private/tmp/pioneer-q38-root-frontend-main-gh.R2uoIcva
+ /private/tmp/pioneer-q38-root-frontend-clean-gh.7IsJBRPp
+Actual G3 NODRV objects BYTE-IDENTICAL:
+ c78a84c7ec8f74c0f73f74e67579dfa94bcc71399145508fcb062619844c9b80
+Actual conventional public objects BYTE-IDENTICAL:
+ 772aafe8c1b47ddfd85f5608a96fa329562967359e23723d5277a30842f9432a
+Actual linked DEBUG74 modules BYTE-IDENTICAL:
+ 5f2fc63de2c4413d54b7087e5b923113246bc7a7f09747d0d79915bf950bf039
+Only AFTER independent actual object comparisons were their exact source
+hash pins intentionally updated. No override,unpinned build or guard removal.
+All13 firmware array hashes,2MiB RoPE,old65 exact61faa093,and actual inert ABI
+controls remain exact. New helper frames:BootSeal368B,StopSeal224B;largest
+individual Token frame1232B. Actual ProbeControl partial known-module chain
+5392B/reached498/unresolved25;graph metadata object BYTE-IDENTICAL. Unknown
+kernel/indirect/entry/IRQ costs are excluded,NOT zero;NOT whole16KiB proof.
+Builds:/private/tmp/pioneer-q38-root-frontend-module-{main,clean}-gh
+Completed raw logs:qwen38-root-frontend-module-{main,clean}-20261030.log
+SHA main 60630e85caf9c69200d3bd5c8077d106b30274f0e745330abc3dce405ce3b479
+SHA clean 3489e62f17ffc369dff99bf630da68664ddb5760e98bc6193daf260fbbe3454d
+READONLY comparison differs ONLY in printed output-directory prefix.
+
+Genuine runtime qualification is LIVE/PENDING:DO NOT INSTALL
+-----------------------------------------------------------
+Original new handles50859/5548 are LIVE,not completed passes. Each compiled
+from its source archive,authenticates SAME-open original851 model bytes,
+executes all1010 real zero-ROM jobs,stages real37782528 metadata bytes,then
+boots SAME virgin119 G3 instruction engines and ROOT. Both have passed actual
+startup and unpublished observations under RAW0/UINTMAX/60000/60008/60004/
+40010 samples with NO supplied processor PC,product,terminal or ready state.
+They continue the original full first layer and genuine cancellation/119 STOP.
+At real terminal publication ONLY RAW snapshot reads switch to60008 while
+the actual engine remains at60004. Actual image/current receipt checks,120
+HOLDs,zero-commit drain and ALL existing original restoration/END/destruction
+checks must still complete. Then compare EACH actual prefix to the fixed
+CPU corpus AFTER execution;do not feed CPU reference products to the run.
+Logs:/private/tmp/pioneer-q38-root-frontend-native-{main,clean}-20261030-gh.log
+Outputs:/private/tmp/pioneer-q38-root-frontend-main-out-gh.2kAxOjeZ/prefix-0.bin
+ /private/tmp/pioneer-q38-root-frontend-clean-out-gh.akdQeznk/prefix-0.bin
+
+Original handle52868 is separately LIVE in the FIVE real native terminal
+fault cases. Case5 corrupts actual boot bytes and lets immutable firmware
+reach the fault self-jump. It must fail on current boot DATA,not a RAW PC,
+retain resources and refuse following IO/retry. It is not yet a five-case pass.
+Log:/private/tmp/pioneer-q38-root-frontend-native-boot-faults-20261030-gh.log
+Poll these SAME handles;do not restart because observation times out.
+
+The original five full-model histories31695/66331/41236/92178/52159 remain
+LIVE and unchanged. Latest native41236 observation is position0/layer35,
+not a full token;the other pairs are at layers32/27. Slow emulated progress
+is not physical tokens/sec. The35 older SIGSTOP histories remain preserved.
+
+Next:finish actual native qualification and independent prefix comparisons;
+if sound,prepare/test an EXACT new guarded stable041<->5f2fc63d module
+transition before one physical trial. Existing e7ee updater is for781ab ONLY
+and MUST NOT be used for this new module. Preserve failure retention and
+recover only under actual physical-state evidence and standing relay rules.
+Full64-layer/multitoken/positive records/state reuse/native Work/Assistant
+and sustained physical20tok/s remain UNMET;keep the full goal ACTIVE.

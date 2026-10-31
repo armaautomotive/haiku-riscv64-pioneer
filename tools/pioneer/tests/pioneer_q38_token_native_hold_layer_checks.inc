@@ -32,6 +32,10 @@ static void CheckNativeHoldLayer(Fixture& f){
   assert(!io.holdRecheckPendingPCs && !io.holdRecheckInjectedPCs);
   io.holdRecheckPendingPCs=3; // two pending inspections,then actual positive PCs;NO new terminal/owner/CPU state
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_ROOT_FRONTEND_FIXTURE
+  assert(io.rootFrontendSnapshots && io.rootFrontendStoppedOnly && cpu.pc==0x60004 && io.terminalHoldOrder.empty());
+  const unsigned rawBeforeHold=io.rootFrontendInjectedPCs;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_OPERATIONS_FIXTURE
  }
  const bool okay=CheckNativeControlOperation(f,PioneerQ38TokenControl::Hold,true,held);
@@ -48,6 +52,10 @@ static void CheckNativeHoldLayer(Fixture& f){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_RECHECK_FIXTURE
   assert(!io.holdRecheckPendingPCs && io.holdRecheckInjectedPCs==3 && cpu.pc==0x60004);
   puts("PASS native HOLD after3 RAW pending frontend-PC observations/two pending inspections/SAME genuine ROOT+119STOP history/no HOLD before positive exact terminal proof;NOT physical cause diagnosis or full-model/TPS proof");
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_ROOT_FRONTEND_FIXTURE
+  assert(io.rootFrontendInjectedPCs==rawBeforeHold+6 && cpu.pc==0x60004);
+  puts("PASS native SAME current receipt+immutable ROOT image recheck and ROOT-first120 HOLD with6 RAW60008 samples;actual ROOT/119 STOP history and all original END guards unchanged;NOT full-model/physical/TPS proof");
 #endif
   const unsigned touches=io.touches;PioneerQ38TokenHoldResult again;PioneerQ38TokenTerminalResult observed;
   PioneerQ38TokenExecutionResult execution;PioneerQ38TokenMemoryResult old;

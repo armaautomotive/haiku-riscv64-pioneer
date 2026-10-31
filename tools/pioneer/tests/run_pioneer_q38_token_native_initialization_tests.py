@@ -9,10 +9,11 @@ import subprocess
 import sys
 import tempfile
 
-hold_recheck_pending = '--hold-recheck-pending' in sys.argv
-if hold_recheck_pending:
-    assert sys.argv.count('--hold-recheck-pending') == 1, 'duplicate pending-recheck TEST selector'
-    sys.argv.remove('--hold-recheck-pending')
+assert '--hold-recheck-pending' not in sys.argv, 'historical pending-PC selector retired; use --root-frontend-snapshots with the original full-END predecessor'
+root_frontend_snapshots = '--root-frontend-snapshots' in sys.argv
+if root_frontend_snapshots:
+    assert sys.argv.count('--root-frontend-snapshots') == 1, 'duplicate ROOT frontend TEST selector'
+    sys.argv.remove('--root-frontend-snapshots')
 control_operations = '--control-operations' in sys.argv
 if control_operations:
     assert sys.argv.count('--control-operations') == 1
@@ -46,8 +47,8 @@ if control_adapter:
     assert backend_init_faults or len(sys.argv) == 6 and sys.argv[2] == '--execution-backend-first-matrix' or backend_finish and sys.argv[2] == '--execution-end-reload', 'private control TEST requires isolated early-init faults,actual G3 backend first matrix OR exact two-cycle cancelled-first-layer Finish'
 if control_operations:
     assert control_adapter and backend_finish and pushed_context and sys.argv[2] == '--execution-end-reload', 'private control operations TEST requires exact two-cycle G3 control-Finish predecessor'
-if hold_recheck_pending:
-    assert pushed_context and len(sys.argv) == 7 and sys.argv[2] == '--execution-end' and not control_adapter, 'pending-recheck TEST requires the explicit G3 original first-layer/cancel/STOP/HOLD/full-END history'
+if root_frontend_snapshots:
+    assert pushed_context and len(sys.argv) == 7 and sys.argv[2] == '--execution-end' and not control_adapter, 'ROOT frontend TEST requires the explicit G3 original first-layer/cancel/STOP/HOLD/full-END history'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -159,9 +160,9 @@ if cancel_layer:
     defines['PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE'] = '1'
 if hold_layer:
     defines['PIONEER_Q38_TOKEN_NATIVE_HOLD_LAYER_FIXTURE'] = '1'
-if hold_recheck_pending:
+if root_frontend_snapshots:
     assert hold_layer and host_end and not full_flow
-    defines['PIONEER_Q38_TOKEN_NATIVE_HOLD_RECHECK_FIXTURE'] = '1'
+    defines['PIONEER_Q38_TOKEN_NATIVE_ROOT_FRONTEND_FIXTURE'] = '1'
 if readout_empty:
     defines['PIONEER_Q38_TOKEN_NATIVE_READOUT_EMPTY_FIXTURE'] = '1'
 if restore_empty:

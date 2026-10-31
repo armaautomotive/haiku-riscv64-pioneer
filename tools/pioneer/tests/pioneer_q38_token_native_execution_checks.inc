@@ -36,7 +36,12 @@ static void CheckNativeExecution(Fixture& f){
    words[i]^=1;assert(!StartQ38TokenNativeRoot(c,start) && io.touches==before && !state->Unsafe());start=pristine;
   }
   assert(!io.executionCpu->steps && !io.executionCpu->markerWrites && !io.executionArms && !io.executionStarts);
-  io.executionMode=true;const bool okay=StartQ38TokenNativeRoot(c,start);
+  io.executionMode=true;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_ROOT_FRONTEND_FIXTURE
+  assert(!io.rootFrontendSnapshots && !io.rootFrontendInjectedPCs);
+  io.rootFrontendSnapshots=true;
+#endif
+  const bool okay=StartQ38TokenNativeRoot(c,start);
   if(!okay && !io.executionObserved)fprintf(stderr,"ROOT_START_DIAGNOSTIC phase%u worker%u word%u armed%u released%u ack%u CPUsteps%u/pc%x/markerWrites%u last%s:%x=%x;SIMULATED metadata ONLY\n",
    start.phase,start.worker,start.word,start.armed,start.released,start.acknowledged,io.executionCpu->steps,io.executionCpu->pc,
    io.executionCpu->markerWrites,io.lastOp,io.lastAddress,io.lastValue);
@@ -63,6 +68,16 @@ static void CheckNativeExecution(Fixture& f){
   assert(ObserveQ38TokenNativeTerminal(c,terminal) && terminal.started && !terminal.ready && !terminal.unsafe
    && !state->TerminalObserved() && !state->Closed()); // actual ZERO unpublished terminal,not a supplied completion
   puts("PASS native terminal observer pending after genuine ROOT startup marker;16 non-pristine results refused/no STOP or cleanup grant");
+#ifdef PIONEER_Q38_TOKEN_NATIVE_ROOT_FRONTEND_FIXTURE
+  for(unsigned sample=0;sample<6;sample++){
+   PioneerQ38TokenTerminalResult pending;PioneerQ38TokenExecutionResult observation;
+   assert(ObserveQ38TokenNativeTerminal(c,pending) && pending.started && !pending.ready && !pending.unsafe
+    && ObserveQ38TokenNativeRoot(c,observation) && observation.acknowledged && !observation.unsafe
+    && !io.Raw(0,PioneerQ38TokenLayout::TerminalLocal) && !state->TerminalObserved() && io.terminalHoldOrder.empty());
+  }
+  assert(io.rootFrontendInjectedPCs>=28);
+  puts("PASS genuine virgin ROOT startup and unpublished terminal remain non-completion under RAW zero/UINTMAX/fault/terminal/outside frontend samples;actual engine/history unchanged;NO supplied ready or HOLD");
+#endif
   {
    const unsigned beforeHold=io.touches;PioneerQ38TokenHoldResult hold;const auto pristineHold=hold;
    auto* holdWords=reinterpret_cast<uint32*>(&hold);
@@ -153,7 +168,8 @@ static void CheckNativeExecution(Fixture& f){
 #endif
    PioneerQ38TokenTerminalResult bad;
    assert(!ObserveQ38TokenNativeTerminal(c,bad) && bad.started && bad.unsafe && !bad.ready && state->Unsafe());
-   if(io.terminalFault==5)assert(io.executionFaultPcObserved && io.touches==io.executionFaultPcObserved);
+   if(io.terminalFault==5)assert(io.executionFaultPcObserved && io.touches>io.executionFaultPcObserved
+    && bad.word==0 && io.lastAddress==C::R::Boot && io.lastValue==io.Raw(0,C::R::Boot));
    const unsigned touches=io.touches;PioneerQ38TokenTerminalResult again;PioneerQ38TokenExecutionResult cancel;
    assert(!ObserveQ38TokenNativeTerminal(c,again) && !CancelQ38TokenNativeRoot(c,cancel) && io.touches==touches);
    printf("PASS native terminal-observation fault%u/actual started ROOT+119 genuine worker boots/status-error or malformed terminal/source/reset fault/ALL resources retained/no subsequent IO or retry/NO positive STOP/END grant\n",io.terminalFault);

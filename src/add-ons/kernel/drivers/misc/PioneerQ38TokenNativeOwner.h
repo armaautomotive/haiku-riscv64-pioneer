@@ -555,10 +555,12 @@ public:
     || !io.TokenMemoryReadChecked(0,C::R::Status+8,error) || error)return Fail(io,r);
    if(marker){
     if(!Sources(io,0) || !BootTime(io,began,previous))return Fail(io,r);
-    uint32_t word;r.firstPC=io.RuntimePcRead();
-    if(r.firstPC==0x60000 || !PioneerQ38TokenPrograms::ProgramWord(0,r.firstPC,word) || !Scope(io))return Fail(io,r);
+    r.firstPC=io.RuntimePcRead();
+    if(!Scope(io))return Fail(io,r);
     r.secondPC=io.RuntimePcRead();
-    if(r.secondPC==0x60000 || !PioneerQ38TokenPrograms::ProgramWord(0,r.secondPC,word) || !Sources(io,0))return Fail(io,r);
+    if(!Sources(io,0) || !RootBootSeal(io,r.word))return Fail(io,r);
+    // T0 PC snapshots are speculative frontend DATA,not executed addresses.
+    // Only actual status/zero-error/boot/source/clock checks acknowledge entry.
     rootAcknowledged=true;r.acknowledged=1;r.phase=5;return true;
    }
    if(!Scope(io))return Fail(io,r);
@@ -591,13 +593,13 @@ public:
   if(!ExecutionStarted() || !Scope(io))return false;
   r.started=1;r.phase=8;
   if(!Sources(io,0))return Fail(io,r);
-  uint32_t marker,error,word;
+  uint32_t marker,error;
   if(!io.TokenMemoryReadChecked(0,PioneerQ38GlobalChainLayout::R::Status+12,marker) || marker!=PioneerQ38TokenLayout::Magic
    || !io.TokenMemoryReadChecked(0,PioneerQ38GlobalChainLayout::R::Status+8,error) || error)return Fail(io,r);
   r.firstPC=io.RuntimePcRead();
-  if(r.firstPC==0x60000 || !PioneerQ38TokenPrograms::ProgramWord(0,r.firstPC,word) || !Scope(io))return Fail(io,r);
+  if(!Scope(io))return Fail(io,r);
   r.secondPC=io.RuntimePcRead();
-  if(r.secondPC==0x60000 || !PioneerQ38TokenPrograms::ProgramWord(0,r.secondPC,word) || !Sources(io,0))return Fail(io,r);
+  if(!Sources(io,0) || !RootBootSeal(io,r.word))return Fail(io,r);
   r.acknowledged=1;r.cancelRequested=cancelRequested;return true;
  } // observation ONLY;NO NoC command/counter recapture,layer/token/frontier/STOP/END completion grant
 private:
@@ -608,6 +610,38 @@ private:
   return PioneerQ38SelectedGlobalWorker::JobShape(job,boot,previous,0);
  }
 #endif
+ template<class IO> __attribute__((noinline)) bool RootBootSeal(IO& io,uint32_t& word){
+  uint32_t boot[64];
+  if(!Sources(io,0) || !startup->ReadBoot(0,boot))return false;
+  for(unsigned i=0;i<64;i++){uint32_t actual=0;word=i;
+   if(!io.TokenMemoryReadChecked(0,PioneerQ38GlobalChainLayout::R::Boot+i*4,actual) || actual!=boot[i])return false;}
+  return Sources(io,0);
+ } // real immutable boot DATA,not a debug-PC fault/ready predicate
+ // The immutable publication tail closes all119 peers/traffic,then writes
+ // the terminal marker under a fence and enters the stopped self-jump.
+ // Authenticate THAT current program and the same closed receipt,not a
+ // speculative debug-PC address. No ProgramWord/code extent is widened.
+ // https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/README.md#riscv-pc-snapshot
+ template<class IO> __attribute__((noinline)) bool RootStopSeal(IO& io,const uint32_t* terminal,uint32_t& word){
+  namespace R=PioneerQ38GlobalChainLayout::R;namespace T=PioneerQ38TokenLayout;
+  if(!terminal || terminal[0]!=T::TerminalMagic)return false;
+  for(unsigned pass=0;pass<2;pass++){
+   if(!RootBootSeal(io,word) || !PioneerQ38TokenFifoEmpty(io,0,cohort->authority.source[0][0])
+    || !PioneerQ38GraphCsrIdle(io))return false;
+   uint32_t marker=0,error=0;
+   if(!io.TokenMemoryReadChecked(0,R::Status+12,marker) || marker!=T::Magic
+    || !io.TokenMemoryReadChecked(0,R::Status+8,error) || error)return false;
+   for(unsigned i=0;i<64;i++){uint32_t actual=0;word=i;
+    if(!io.TokenMemoryReadChecked(0,T::TerminalLocal+i*4,actual) || actual!=terminal[i])return false;}
+   for(unsigned i=0;i<8;i++)if(io.ResidentNocRead(PioneerQ38PanelCounter(i))!=terminal[36+i])return false;
+   if(!pass){
+    PioneerQ38TokenMemoryResult image;
+    if(!memory->VerifyImage(io,0,image)){word=image.word;return false;}
+   } // ROOT boot/text/terminal/aux bytes must STILL match the installed image
+  }
+  return Sources(io,0) && PioneerQ38TokenFifoEmpty(io,0,cohort->authority.source[0][0])
+   && PioneerQ38GraphCsrIdle(io);
+ } // READ ONLY,private current-receipt/code/NoC seal;no HOLD,restore or END grant
  template<class IO> __attribute__((noinline)) bool InspectTerminal(IO& io,PioneerQ38TokenTerminalResult& r,bool recheck){
   namespace C=PioneerQ38GlobalChainLayout;namespace R=C::R;namespace T=PioneerQ38TokenLayout;namespace W=PioneerQ38SelectedGlobalWorker;
   const PioneerQ38TokenTerminalResult pristine;const auto* a=reinterpret_cast<const uint8_t*>(&r);
@@ -620,17 +654,15 @@ private:
   uint32_t marker=0,error=0;
   if(!io.TokenMemoryReadChecked(0,R::Status+12,marker) || marker!=T::Magic
    || !io.TokenMemoryReadChecked(0,R::Status+8,error) || error)return Fail(io,r);
-  uint32_t word=0;
   r.firstPC=io.RuntimePcRead();
-  if(r.firstPC==0x60000 || !PioneerQ38TokenPrograms::ProgramWord(0,r.firstPC,word) || !Sources(io,0))return Fail(io,r);
+  if(!Sources(io,0))return Fail(io,r);
   r.secondPC=io.RuntimePcRead();
-  if(r.secondPC==0x60000 || !PioneerQ38TokenPrograms::ProgramWord(0,r.secondPC,word) || !Sources(io,0))return Fail(io,r);
+  if(!Sources(io,0) || !RootBootSeal(io,r.word))return Fail(io,r);
   if(!io.TokenMemoryReadChecked(0,T::TerminalLocal,terminal[0]))return Fail(io,r);
   if(!terminal[0])return recheck ? Fail(io,r) : Sources(io,0) ? true : Fail(io,r); // a published marker cannot regress
   if(terminal[0]!=T::TerminalMagic)return Fail(io,r);
   for(unsigned i=1;i<64;i++){r.word=i;if(!io.TokenMemoryReadChecked(0,T::TerminalLocal+i*4,terminal[i]))return Fail(io,r);}
   if(recheck && !PioneerQ38TokenTerminalRecheckData(terminal,observedTerminal,r.word))return Fail(io,r);
-  if(r.firstPC!=0x60004 || r.secondPC!=0x60004)return true; // publication may precede STOP;no terminal grant
   if(!PioneerQ38GraphCsrIdle(io) || !startup->ReadBoot(0,boot))return Fail(io,r);
   for(unsigned i=0;i<64;i++){uint32_t actual=0;r.word=i;
    if(!io.TokenMemoryReadChecked(0,R::Boot+i*4,actual) || actual!=boot[i])return Fail(io,r);}
@@ -682,11 +714,10 @@ private:
   }
   r.phase=11;r.worker=0;
   if(!Sources(io,0) || !PioneerQ38GraphCsrIdle(io))return Fail(io,r);
-  for(unsigned i=0;i<64;i++){uint32_t actual=0;r.word=i;
-   if(!io.TokenMemoryReadChecked(0,T::TerminalLocal+i*4,actual) || actual!=terminal[i])return Fail(io,r);}
-  for(unsigned i=0;i<8;i++)if(io.ResidentNocRead(PioneerQ38PanelCounter(i))!=terminal[36+i])return Fail(io,r);
   r.firstPC=io.RuntimePcRead();r.secondPC=io.RuntimePcRead();
-  if(r.firstPC!=0x60004 || r.secondPC!=0x60004 || !Sources(io,0))return Fail(io,r);
+  // Keep the actual snapshots verbatim. They neither authorize completion
+  // nor turn a closed receipt into a fault;the current seal below is mandatory.
+  if(!RootStopSeal(io,terminal,r.word))return Fail(io,r);
   for(unsigned i=0;i<64;i++){
    if(recheck && observedTerminal[i]!=terminal[i])return Fail(io,r);
    observedTerminal[i]=terminal[i];
@@ -701,8 +732,8 @@ private:
   for(unsigned i=0;i<8;i++)if(io.ResidentNocRead(PioneerQ38PanelCounter(i))!=terminalCounters[w][i])return false;
   if(running[w]){
    r.firstPC=io.RuntimePcRead();r.secondPC=io.RuntimePcRead();
-   if(w?((r.firstPC!=0x20060 && r.firstPC!=0x20064) || (r.secondPC!=0x20060 && r.secondPC!=0x20064))
-    :(r.firstPC!=0x60004 || r.secondPC!=0x60004))return false;
+   if(w){if((r.firstPC!=0x20060 && r.firstPC!=0x20064) || (r.secondPC!=0x20060 && r.secondPC!=0x20064))return false;}
+   else if(!terminalObserved || !RootStopSeal(io,observedTerminal,r.word))return false;
   } // PCs of already HELD cores are never treated as execution proof
   return Sources(io,w) && PioneerQ38GraphCsrIdle(io);
  }

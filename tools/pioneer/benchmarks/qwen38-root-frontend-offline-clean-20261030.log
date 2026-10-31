@@ -1,0 +1,25 @@
+PASS extracted ROOT methods/75 MOCK positives/1022 refusals/8 unpublished pending;old physical PC sequence reproduced;RAW PC never grants readiness;current BOOT/status/terminal/119 peer/counter/code/FIFO guards and post-image second pass;read failure NO following IO. NO native/model/physical/Work/TPS proof
+ACTUAL_ROOT_METHOD_SHA256 RootBootSeal(308d243aabe41aefcc92828a0cb08c00061a3b34d9b7a27119d6321645dcb99a
+ACTUAL_ROOT_METHOD_SHA256 RootStopSeal(3f111d22e342aef05f3d354403f5f8e2d4b4ceb06e474cdc25510a7730f0ee24
+ACTUAL_ROOT_METHOD_SHA256 InspectTerminal(e2b60abccdca2442703d7e5f048cbd5252fa87e68937501365dd546d0dac2867
+ACTUAL_ROOT_METHOD_SHA256 HoldGuard(75f91c9ba2171df06ccca8e2cca00973dbe64276571458f04374f23c06834739
+ACTUAL_ROOT_METHOD_SHA256 ObserveRoot(1b6cd34d7b27433a42748c1ec98f306ddc78eda070a85eea77a3626285fe76e8
+EXTRACTED METHODS ONLY;endpoint,grammar,source authority and image verifier are MOCK. NO genuine model/processor history,native owner,physical completion,Work or TPS proof.
+PASS actual extracted HOLD+UNCHANGED clock guard/5 MOCK positives/33 refusals/old pending-as-fault reproduced/new bounded pending1..65535 then exact120 HOLD order;false inspection,timeout,clock regression/exhaustion cause NO HOLD or later observation;failed inner worker/word/PC DATA retained;NO native,model,physical,Work or TPS proof
+ACTUAL_HOLD_METHOD_SHA256 old98585667bf19cbbd8c5a21908efb1f8be658a0d34210e77c1f4bc923cd1b31ca/new72609091ba979c17460b9ba8043b144a753127e4a1537c62c2fac4ee8d2c9b54
+EXTRACTED METHOD CONTROL FLOW ONLY;observer+guards+clocks are MOCK,NO genuine terminal,model history,native owner,physical or TPS proof
+PASS terminal DATA grammar7 normal/EOS/cancel-stage/context-boundary cases/13900 bit/progress/identity/config/null refusals;NO native owner/publication/STOP/restore/END/Work grant
+PASS terminal recheck DATA equality7 accepted/28686 current-or-previous bit/null refusals/first changed word retained;NO pending allowance for changed or unpublished terminal,NO native ownership/completion grant
+PASS committed-record DATA grammar11 prefill/final/EOS/cancel-stage/context-boundary cases/20152 identity/position/flags/padding/nonfinite/config/null refusals;NO native owner/GDDR publication/NoC baseline/HOLD/END/Work grant
+Test artifacts: /private/tmp/pioneer-token-record-shape.96RAwWMa
+PASS ROOT frontend TEST gates/1 role positive/40 missing+zero+two+foreign role refusals/12 early CLI refusals/no output/compiler/runtime creation;NO native/model/physical/TPS grant
+PASS HISTORICAL HOLD pending-recheck role/1 compile positive/37 role refusals/10 RETIRED CLI refusals/no output or compiler/runtime creation;old evidence preserved,NO current native/model/physical/TPS grant
+PASS fixed tag74 DATA packet/9 positives/12340 refusals/all packet words mutated/fixed2prompt+3position/noEOS+bounded3record trial;NOT native execution,ownership,physical,Work or TPS proof
+PASS token tag74 exact validation role/3 positives/756 missing+0+2+late+old-tag+renamed-ABI+CPU+Work+TEST+NODRV-transition refusals;compile ONLY,not module/runtime/physical/TPS proof
+PASS actual token NODRV routing/8 allowed/65528 denied selectors/all65536 wrongUID+nullFD+badMagic refusals/pointer+length passed unchanged/NO Work fallback;HANDLER STUBS ONLY,not native lifecycle,model,physical or TPS proof
+PASS actual token tag74 routing/9 allowed/65527 denied selectors/all65536 wrongUID+nullFD+badMagic refusals/pointer+length passed unchanged/NO Work fallback;HANDLER STUBS ONLY,not native lifecycle,model,physical or TPS proof
+PASS private token packet/11 shape positives/12486 atomic malformed+unused-prompt+caller-reply+record refusals/fixed49344B HEAP message;DATA grammar ONLY,no native/source/launch/terminal/cleanup/Work/physical/TPS authority
+PASS native QTKNODRV compile role/21 exact parents/6 renamed ABI names/38 old-native+image+CPU+Work aliases/278 undefined+zero+two+late refusals;NO link/install/runtime/physical authority
+PASS VERBATIM prefix NODRV routing/8 allowed/65528 denied opcodes/ALL65536 wrongUID+nullFD+badMagic refusals before handlers;NO old layer0,dense,Work or arbitrary-address fallback;HANDLER STUBS ONLY,NOT native/runtime/physical qualification
+PASS VERBATIM prefix physical73 routing/10 allowed/65526 denied opcodes/ALL65536 wrongUID+nullFD+badMagic refusals before handlers;NO old layer0,dense,Work or arbitrary-address fallback;HANDLER STUBS ONLY,NOT native/runtime/physical qualification
+PASS tag74 OFFLINE packet+role+routing and old packet+NODRV role+prefix routing controls;NO module load,lifecycle,original-model,physical or TPS proof

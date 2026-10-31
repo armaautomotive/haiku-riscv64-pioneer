@@ -28,9 +28,9 @@ finally:
     sys.argv = saved
 legacy = compiled['control']['control']['control']['base']
 obj, args, tool = compiled['obj'], list(compiled['args']), compiled['tool']
-# Qualified main/clean object after the intentional bounded HOLD recheck.
+# Qualified main/clean object after the current ROOT boot/receipt/code seal.
 # This changes native control code,NOT the separately pinned G3 firmware.
-assert hashlib.sha256(obj.read_bytes()).hexdigest() == '28e15da7306cf286b4aad0a8112612fce1ceb431f8a75943569dfb8caf4efb7f'
+assert hashlib.sha256(obj.read_bytes()).hexdigest() == '772aafe8c1b47ddfd85f5608a96fa329562967359e23723d5277a30842f9432a'
 old_object = legacy['original'][legacy['original'].index('-o')+1]
 links = [line for line in legacy['commands'] if '-shared' in line and old_object in line]
 assert len(links) == 1

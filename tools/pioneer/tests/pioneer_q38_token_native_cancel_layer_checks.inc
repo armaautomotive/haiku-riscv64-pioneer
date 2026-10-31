@@ -49,6 +49,10 @@ static void CheckNativeCancelLayer(Fixture& f){
   peerInstructions+=after.totalSteps;
  }
  PioneerQ38TokenTerminalResult observed;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_ROOT_FRONTEND_FIXTURE
+ assert(io.rootFrontendSnapshots && !io.rootFrontendStoppedOnly && cpu.pc==0x60004);
+ io.rootFrontendStoppedOnly=true; // only the RAW endpoint changes;all actual stopped engines stay untouched
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_OPERATIONS_FIXTURE
  const bool okay=CheckNativeControlOperation(f,PioneerQ38TokenControl::Observe,true,observed);
 #endif
@@ -61,6 +65,10 @@ static void CheckNativeCancelLayer(Fixture& f){
    observed.phase,observed.worker,observed.word,observed.firstPC,observed.secondPC,observed.unsafe);
   assert(okay && observed.ready && observed.cancelled && !observed.unsafe && !observed.committed && !observed.position
    && observed.completedLayers==1 && observed.stage==1 && state->TerminalObserved() && !state->Closed());
+#ifdef PIONEER_Q38_TOKEN_NATIVE_ROOT_FRONTEND_FIXTURE
+  assert(observed.firstPC==0x60008 && observed.secondPC==0x60008 && cpu.pc==0x60004 && io.terminalHoldOrder.empty());
+  puts("PASS SAME actual first-layer/cancel/119 STOP/immutable ROOT code and current terminal accepted with RAW final60008 samples;actual CPU remains60004;NO PC range widening or substituted execution history");
+#endif
   const unsigned touches=io.touches;PioneerQ38TokenTerminalResult again;PioneerQ38TokenExecutionResult cancel;
   PioneerQ38TokenMemoryResult held;
   assert(!ObserveQ38TokenNativeTerminal(c,again) && !CancelQ38TokenNativeRoot(c,cancel)

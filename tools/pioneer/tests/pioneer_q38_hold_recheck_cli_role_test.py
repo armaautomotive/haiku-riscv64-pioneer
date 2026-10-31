@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Early CLI and TEST-role refusals; no model/device/native execution."""
+"""Frozen historical role checks and retired CLI refusal; NO execution."""
 import os
 import pathlib
 import re
@@ -51,8 +51,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-hold-recheck-gates-', dir='/pri
         args = list(common);args[1] = mode
         cases.append((args+['--pushed-context', '--hold-recheck-pending'], 'pending-recheck TEST requires'))
     before = sorted(p.relative_to(tmp).as_posix() for p in tmp.rglob('*'))
-    for args, expected in cases:
+    for args, _historical_expected in cases:
         result = subprocess.run([sys.executable, str(runner), *args], text=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        assert result.returncode and expected in result.stderr and not result.stdout
+        assert result.returncode and 'historical pending-PC selector retired' in result.stderr and not result.stdout
         assert not prefix.exists() and sorted(p.relative_to(tmp).as_posix() for p in tmp.rglob('*')) == before
-    print(f'PASS HOLD pending-recheck TEST gates/{accepted} role positive/{refused} missing+zero+two+foreign role refusals/{len(cases)} early CLI refusals/no output or compiler/runtime creation;NO native/model/physical/TPS grant')
+    print(f'PASS HISTORICAL HOLD pending-recheck role/{accepted} compile positive/{refused} role refusals/{len(cases)} RETIRED CLI refusals/no output or compiler/runtime creation;old evidence preserved,NO current native/model/physical/TPS grant')

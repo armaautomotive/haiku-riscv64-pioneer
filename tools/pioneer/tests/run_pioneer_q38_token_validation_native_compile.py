@@ -25,9 +25,9 @@ try:
 finally:
     sys.argv = saved
 nodrv = out/'nodrv-controls/pushed-token-context-NODRV.o'
-# Intentional bounded-HOLD-recheck change;independent main/clean SDK builds
+# Intentional current ROOT boot/receipt/code seal;independent main/clean SDK builds
 # agree. Firmware arrays,old65 and inert ABI controls remain separately exact.
-assert hashlib.sha256(nodrv.read_bytes()).hexdigest() == '07f44e1fe85e7b280ba0762ba57a6dc65baa35cd77b05b529046cc4e374c61a6'
+assert hashlib.sha256(nodrv.read_bytes()).hexdigest() == 'c78a84c7ec8f74c0f73f74e67579dfa94bcc71399145508fcb062619844c9b80'
 args = [a for a in control['args'] if not a.startswith('-DPIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY=')]
 role = (project/'src/add-ons/kernel/drivers/misc/PioneerQ38TokenValidationRole.h').read_text()
 required = set(re.findall(r'!defined\(([A-Z_][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b', role))
