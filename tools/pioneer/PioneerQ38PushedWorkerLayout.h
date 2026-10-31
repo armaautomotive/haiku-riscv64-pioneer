@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38JobBootFoldRole.h"
 #ifndef PIONEER_Q38_PUSHED_WORKER_LAYOUT_H
 #define PIONEER_Q38_PUSHED_WORKER_LAYOUT_H
 #include "PioneerQ38PreciseWorkerLayout.h"
@@ -38,13 +39,32 @@ static inline void OldBoot(const uint32_t* b,uint32_t* old){
 #define PIONEER_Q38_PUSHED_BOOT_FN static inline
 #define PIONEER_Q38_PUSHED_JOB_FN static inline
 #endif
+#ifdef PIONEER_Q38_JOB_BOOT_FOLD_IMAGE
+PIONEER_Q38_PUSHED_BOOT_FN bool ExtensionShape(const uint32_t* b){
+ if(!b || b[0]!=Magic)return false;
+ static const uint32_t words[]={JobWitness,1,Hidden,Vocabulary,GlobalMatrix,1,
+  ActivationMagic,Chunks,ChunkValues,ReceiptMagic,Root,Mailbox,Stride,PushBuffer,ReceiptWords};
+ for(unsigned i=0;i<15;i++)if(b[40+i]!=words[i])return false;
+ return true;
+}
+#endif
 PIONEER_Q38_PUSHED_BOOT_FN bool BootShape(const uint32_t* b){
+#ifdef PIONEER_Q38_JOB_BOOT_FOLD_IMAGE
+ if(!ExtensionShape(b))return false;
+#else
  if(!b || b[0]!=Magic)return false;
  for(unsigned i=40;i<=54;i++)if(b[i]!=BootWord(i))return false;
+#endif
  uint32_t old[64];OldBoot(b,old);return Base::BootShape(old);
 }
 PIONEER_Q38_PUSHED_JOB_FN bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
+#ifdef PIONEER_Q38_JOB_BOOT_FOLD_IMAGE
+ // The normalized QGW2 boot is STILL fully checked by Base::JobShape.
+ // Check the distinct QGW3 extension here,not that same base boot twice.
+ if(!j || j[0]!=Magic || !ExtensionShape(b))return false;
+#else
  if(!j || j[0]!=Magic || !BootShape(b))return false;
+#endif
  uint32_t oldBoot[64],oldJob[64];OldBoot(b,oldBoot);
  for(unsigned i=0;i<64;i++)oldJob[i]=i?j[i]:unsigned(Base::Magic);
  if(j[2]==GlobalMatrix){if(j[31]!=JobWitness)return false;oldJob[31]=Base::JobWitness;}

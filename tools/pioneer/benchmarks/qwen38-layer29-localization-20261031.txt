@@ -2,6 +2,17 @@ First divergence localized: zero-based layer29 GDN preparation
 ==============================================================
 2026-10-31. Goal ACTIVE. No sustained speedup or physical numerical pass.
 
+FOLLOW-ON CORRECTION:the later real physical test did NOT improve after
+the beta-only change. The earlier replay below used CPU-reference wider
+GDN sums and did not model the actual SFPU F32 reduction order. A new
+independent main/clean replay reproduces all5120 original native output
+words with EITHER old or precise beta when using the card's F32 order.
+Actual card quantization agrees exactly with reference on every tested
+gated and FFN input. Thus the earlier beta-only localization was incomplete,
+not a proven whole-layer hardware fix. See the separate report
+qwen38-layer29-reduction-order-20261031.txt for the completed evidence.
+Historical results below retain their original narrower scopes.
+
 The SAME native full-flow session41236/PID32972 was confirmed RUNNING.
 Its genuine token0 had completed64 bodies and the head, while token1
 continued. A brief local HOST debugger attachment copied only immutable

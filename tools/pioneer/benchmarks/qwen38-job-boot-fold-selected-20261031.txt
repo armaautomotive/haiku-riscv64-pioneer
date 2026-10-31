@@ -1,0 +1,97 @@
+Selected boot-fold ROOT: reproducible source option and fault image
+==================================================================
+2026-10-31. Goal ACTIVE. Last physical whole-model0.207893161 tokens/sec;
+20 tokens/sec remains UNMET. No physical speedup or installation claimed.
+
+Actual implementation
+----------------------
+Promote the existing isolated boot-fold source experiment into a DISTINCT
+opt-in ROOT BUILD selector,not the default grammar. QGW3 JobShape checks
+its exact extension once,normalizes the boot,and still delegates to the
+unchanged QGW2 JobShape,which fully checks the normalized base boot. The
+duplicate outer base-boot check is removed;the underlying admission is
+NOT discarded. Receipt/sequence/doorbell/transport/counter/metadata checks
+and physical worker arithmetic remain unchanged. No CPU validation enters
+Work or card execution. Default unselected implementation stays literal.
+
+PIONEER_Q38_JOB_BOOT_FOLD_IMAGE requires precise QGW3 plus either a real
+returning-component/token ROOT BUILD or a distinct HOST DATA test role.
+Defined-zero,foreign CPU/kernel/native/worker/Work and late rebinding
+refuse. The source BUILD options --fold-job-boot require all inspect-only
+eight-way packet-seal/predecessor options. This selector grants NO native
+ROM selection,driver deployment or Work route.
+
+Independent actual builds
+--------------------------
+Main4499 and clean74572 ACTUALLY exited0. Both source-selected ROOTs
+reproduce the ENTIRE previously qualified experimental parent ELF:
+430b89b2fb734bfb66bbe96cc1e8581fcd6476d263a2578b8e869936df4bc1c7.
+Text130960/131072B,Conv32720/32768B. This exact byte identity preserves
+the SCOPE of the older original-model first-layer comparison;it does not
+invent native cleanup,full-model correctness or hardware performance.
+
+Default fault-ROOT regression main64066/clean28842 ACTUALLY exited0:
+ALL five original artifact pins remain unchanged,including full ELF
+efeebcfc25e00b6519026428b1d7af3c12052dad6db2e6e2b52110e3fb7ed7c6.
+No default worker/ROOT code was silently switched to the optimized role.
+
+New separate --job-boot-fold-eight fault image reuses the exact source-
+selected parent objects and the existing assembly fault/STOP entry.
+Initial inspect builds12664/47458 both0;frozen builds53844/70856 both0.
+All complete source-selected parent bytes must authenticate before link.
+New complete ELF190648B SHA:
+d0760386ea3d00616bfbf8bf53b2cff900701eef9491f6dc8efdc16163e422a6.
+Text130992/131072B SHA98044d9c4201a5329dedd10ed0cc1656a93cb8d304faff50a5542c063c053920
+Conv32720/32768B SHA928f48fb4193d69b6fd99de17b638aa116cc78e18f7906f22053ca3d2f1d611a
+Boot and STOP-loop words remain unchanged;the fixed fault body adds32B.
+No new memory extent,unsupported arithmetic,CSR or reset code is added.
+
+Completed exact contracts
+--------------------------
+Initial corrected main55985/clean53933 and final86523/24691 all ACTUALLY
+exited0. Each independent pair's logs are identical:
+81 valid DATA seeds,667684 cases,65094 accepts,602590 refusals vs frozen
+original;EVERY boot/job bit,paired changes,null/phase/nonce bounds;inputs
+unchanged. Actual emitted old/candidate JobShape:6148 cases/5115 refusals,
+same exact decisions,stack-only stores,no MMIO,callee-saved registers/SP
+restored,2048 inert instructions after each call.
+Ordinary helper instruction count7537 ->5374;private input reads193 ->137;
+observed helper stack2128 ->2128B. These are emitted HOST instruction
+counts for one helper,NOT physical cycles,whole-model speedup or TPS.
+
+Four positive syntax roles,40 missing/zero/foreign/late refusals and37
+BUILD CLI refusals before any output creation also pass in both trees.
+The final six additionally cover malformed/duplicate fault-image selectors
+before even opening the SDK. The earlier corrected pair covered31 cases.
+Tests losslessly extract existing test bodies from the authenticated
+03b97e8267af4b831a4f7b7c758278514904c4ab562c3ccbf06b5e13c8f8110f
+experiment patch;only include paths change. No runtime completion is
+fabricated. First selection tests96604/4294 failed because fake __riscv
+on Mach-O rejected ELF section names. Second29029/75220 failed because
+the bare cross compiler lacked HOST stdint.h. Both failures are archived.
+Final positive device syntax checks use the REAL cross compiler on the
+role itself;complete device DATA/body compilation is independently covered
+by the exact full ROOT builds. No warning or arithmetic check was disabled.
+
+Old packet selector CLI main74774/clean73581:both0,123 pre-output refusals.
+Final old default fault-stub tests:both0,25 ambient/corruption refusals.
+New candidate fault-stub tests within53844/70856:both0,25 refusals,six
+saved links/two exact local writes/order+fences/unchanged RA+SP+others,
+six real STOP controls with no writes. This is fault-stub code ONLY,not a
+whole model,native lifetime or permission to restore unknown resources.
+
+Pioneer and remaining gates
+----------------------------
+Fresh read-only health:Haiku,64 CPUs,maxRAM137034936320B,free133760245760B,
+tag75/generation5,quiesced0/cold0/active_owner0/open_count1/guard1. No
+model or Assistant parent. Installed precise-beta2723ac08 is NOT replaced.
+No GPU execution,reset,reload,boot/network/OS/SD/power/hardware action was
+performed for this candidate. The older independent local native DW41236
+continues its SAME history and was not restarted or supplied with products.
+
+Next:separate exact program DATA/native integration for the new d0760386
+ROOT plus the unchanged precise-beta worker;original first-layer/full-END
+and fault coverage,then guarded physical measurement. Numerical F32-order
+findings remain separately recorded;strict comparisons are not weakened.
+Long normal/EOS decode,resident weights across fresh requests,Assistant
+Work integration and honest sustained throughput still remain required.

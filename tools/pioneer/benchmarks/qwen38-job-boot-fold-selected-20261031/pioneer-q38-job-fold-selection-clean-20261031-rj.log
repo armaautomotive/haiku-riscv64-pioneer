@@ -1,0 +1,49 @@
+PASS frozen original/candidate DATA JobShape: 81 valid seeds, 667684 cases, 65094 accepts, 602590 refusals; every boot/job bit + paired mutations + null/phase/nonce boundaries; inputs unchanged; NOT emitted firmware/model/native/physical/Work/TPS
+PASS actual ordinary descriptor instructions7537->5374 private-input reads193->137 observed stack bytes2128->2128;not cycles/TPS
+PASS actual old/candidate JobShape 6148 cases/5115 refusals/81 valid seeds;all boot+job bits,paired mutations,null/phase/nonce bounds;host frozen result exact,immutable arguments,stack-only stores,no MMIO,callee-saved registers+SP restored,inert2048;NOT connected/model/native/physical/Work/TPS
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/tests/run_pioneer_q38_job_boot_fold_selection_tests.py", line 64, in <module>
+    check({**device,'__riscv':'1',role:'1'},True)
+  File "/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/tests/run_pioneer_q38_job_boot_fold_selection_tests.py", line 59, in check
+    assert (result.returncode==0)==okay,result.stderr
+AssertionError: In file included from <stdin>:6:
+In file included from /private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/PioneerQ38PushedWorkerLayout.h:5:
+/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/PioneerQ38PreciseWorkerLayout.h:24:1: error: argument to 'section' attribute is not valid for this target: mach-o section specifier requires a segment and section separated by a comma
+   24 | PIONEER_Q38_PRECISE_GRAMMAR_FN bool BootShape(const uint32_t* b){
+      | ^
+/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/PioneerQ38PreciseWorkerLayout.h:20:79: note: expanded from macro 'PIONEER_Q38_PRECISE_GRAMMAR_FN'
+   20 | #define PIONEER_Q38_PRECISE_GRAMMAR_FN inline __attribute__((noinline,section(".text.q38_precise_shape")))
+      |                                                                               ^
+/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/PioneerQ38PreciseWorkerLayout.h:32:1: error: argument to 'section' attribute is not valid for this target: mach-o section specifier requires a segment and section separated by a comma
+   32 | PIONEER_Q38_PRECISE_GRAMMAR_FN bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
+      | ^
+/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/PioneerQ38PreciseWorkerLayout.h:20:79: note: expanded from macro 'PIONEER_Q38_PRECISE_GRAMMAR_FN'
+   20 | #define PIONEER_Q38_PRECISE_GRAMMAR_FN inline __attribute__((noinline,section(".text.q38_precise_shape")))
+      |                                                                               ^
+In file included from <stdin>:6:
+/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/PioneerQ38PushedWorkerLayout.h:43:1: error: argument to 'section' attribute is not valid for this target: mach-o section specifier requires a segment and section separated by a comma
+   43 | PIONEER_Q38_PUSHED_BOOT_FN bool ExtensionShape(const uint32_t* b){
+      | ^
+/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/PioneerQ38PushedWorkerLayout.h:35:75: note: expanded from macro 'PIONEER_Q38_PUSHED_BOOT_FN'
+   35 | #define PIONEER_Q38_PUSHED_BOOT_FN inline __attribute__((noinline,section(".text.q38_pushed_shape")))
+      |                                                                           ^
+/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/PioneerQ38PushedWorkerLayout.h:51:1: error: argument to 'section' attribute is not valid for this target: mach-o section specifier requires a segment and section separated by a comma
+   51 | PIONEER_Q38_PUSHED_BOOT_FN bool BootShape(const uint32_t* b){
+      | ^
+/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/PioneerQ38PushedWorkerLayout.h:35:75: note: expanded from macro 'PIONEER_Q38_PUSHED_BOOT_FN'
+   35 | #define PIONEER_Q38_PUSHED_BOOT_FN inline __attribute__((noinline,section(".text.q38_pushed_shape")))
+      |                                                                           ^
+/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/PioneerQ38PushedWorkerLayout.h:60:1: error: argument to 'section' attribute is not valid for this target: mach-o section specifier requires a segment and section separated by a comma
+   60 | PIONEER_Q38_PUSHED_JOB_FN bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
+      | ^
+/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/PioneerQ38PushedWorkerLayout.h:36:74: note: expanded from macro 'PIONEER_Q38_PUSHED_JOB_FN'
+   36 | #define PIONEER_Q38_PUSHED_JOB_FN inline __attribute__((noinline,section(".text.q38_pushed_job_shape")))
+      |                                                                          ^
+/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/PioneerQ38PushedWorkerLayout.h:74:1: error: argument to 'section' attribute is not valid for this target: mach-o section specifier requires a segment and section separated by a comma
+   74 | PIONEER_Q38_PUSHED_GRAMMAR_FN(receipt_shape) bool Receipt(const uint32_t* r,const uint32_t* b,const uint32_t* j,const uint32_t* before){
+      | ^
+/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/PioneerQ38PushedWorkerLayout.h:34:84: note: expanded from macro 'PIONEER_Q38_PUSHED_GRAMMAR_FN'
+   34 | #define PIONEER_Q38_PUSHED_GRAMMAR_FN(name) inline __attribute__((noinline,section(".conv.q38_pushed_" #name)))
+      |                                                                                    ^
+6 errors generated.
+

@@ -15,11 +15,32 @@ PINS = (
     ('conv.bin', 32720, 'f143a965e082cb1f1bd1cf6af48a62d17590935277110799b30a410821ba77b3'),
     ('program.elf', 190500, 'efeebcfc25e00b6519026428b1d7af3c12052dad6db2e6e2b52110e3fb7ed7c6'),
 )  # Independently identical BUILD pins ONLY;never native/physical/Work authority.
+# Selected fold/eight-way parent is independently reproduced from source;
+# this literal parent identity does NOT authorize any native image selection.
+JOB_FOLD_PARENT_PINS = (
+    ('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+    ('text.bin',130960,'6cb8ae7d5b03525ec233aa22b2230c815cab311771c532e82ba7d7bd7ced9dff'),
+    ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+    ('conv.bin',32720,'72c325aaaf632e3fc9a5f7c1a0286387982021eec171705f9027c8b16868a09c'),
+    ('program.elf',190592,'430b89b2fb734bfb66bbe96cc1e8581fcd6476d263a2578b8e869936df4bc1c7'),
+)
+JOB_FOLD_PINS = (
+    ('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+    ('text.bin',130992,'98044d9c4201a5329dedd10ed0cc1656a93cb8d304faff50a5542c063c053920'),
+    ('terminal.bin',8,'468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2'),
+    ('conv.bin',32720,'928f48fb4193d69b6fd99de17b638aa116cc78e18f7906f22053ca3d2f1d611a'),
+    ('program.elf',190648,'d0760386ea3d00616bfbf8bf53b2cff900701eef9491f6dc8efdc16163e422a6'),
+) # Main/clean BUILD identity only;no native DATA or driver selection.
 args = sys.argv[1:]
-inspect = len(args) == 3 and args[-1] == '--inspect-candidate'
+inspect = '--inspect-candidate' in args
+fold_job_boot = '--job-boot-fold-eight' in args
+if args.count('--inspect-candidate')>1 or args.count('--job-boot-fold-eight')>1:
+    raise SystemExit(2)
 if inspect:
-    args.pop()
-if len(args) != 2 or any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ) or (not inspect and not PINS):
+    args.remove('--inspect-candidate')
+if fold_job_boot:
+    args.remove('--job-boot-fold-eight')
+if len(args) != 2 or any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ) or (not inspect and not (JOB_FOLD_PINS if fold_job_boot else PINS)):
     raise SystemExit(2)
 sdk, out = map(pathlib.Path, args)
 here = pathlib.Path(__file__).resolve().parent
@@ -28,13 +49,18 @@ assert (sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-g++').is_file()
 out.mkdir(mode=0o700)
 saved = sys.argv[:]
 try:
-    # Rebuild the unchanged,strictly pinned QTP3 parent FIRST. Its actual
-    # compiled arithmetic/guard/metadata objects are reused without edits.
+    # Rebuild the default pinned parent,or the explicitly selected fold
+    # parent,FIRST. Authenticate the latter's complete literal identity
+    # below before reusing its actual compiled objects without edits.
     sys.argv = [str(here/'build_qwen38_token_root.py'), str(sdk), str(out/'unchanged-root'),
                 '--cancel-boundary', '--f32-hidden', '--unroll-dense-seals', '--boundary-seals',
                 '--unroll-quiet', '--worker-local-source-guards', '--precise-activation',
                 '--single-closed-audit', '--worker-sealed-admission', '--pushed-completion']
+    if fold_job_boot:
+        sys.argv += ['--inspect-candidate','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot']
     parent = runpy.run_path(sys.argv[0], run_name='__main__')
+    if fold_job_boot:
+        assert tuple(parent['observed'])==JOB_FOLD_PARENT_PINS, 'selected fold parent changed;not a new image qualification'
 finally:
     sys.argv = saved
 cross = str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
@@ -80,7 +106,9 @@ for name in ('boot.bin', 'text.bin', 'terminal.bin', 'conv.bin', 'program.elf'):
     observed.append(row)
     print(row, flush=True)
 if not inspect:
-    assert tuple(observed) == PINS, 'unqualified fault-marker build'
+    assert tuple(observed) == (JOB_FOLD_PINS if fold_job_boot else PINS), 'unqualified fault-marker build'
 print('BUILD_ONLY_UNSELECTED_FAULT_MARKER status_error51465431 status_saved_link_NOT_retired_PC/'+
       'same_compiled_arithmetic_objects_and_STOP_loop/NO timeout_extension_retry_cancel_reset/'+
       'NO native_driver_selection_original_model_physical_Work_or_TPS_permission', flush=True)
+if fold_job_boot:
+    print('UNSELECTED_JOB_BOOT_FOLD_EIGHT_FAULT_IMAGE separate BUILD pins;default image pins unchanged;NO native/physical/Work/TPS grant',flush=True)

@@ -1,0 +1,4 @@
+PASS frozen original/candidate DATA JobShape: 81 valid seeds, 667684 cases, 65094 accepts, 602590 refusals; every boot/job bit + paired mutations + null/phase/nonce boundaries; inputs unchanged; NOT emitted firmware/model/native/physical/Work/TPS
+PASS actual ordinary descriptor instructions7537->5374 private-input reads193->137 observed stack bytes2128->2128;not cycles/TPS
+PASS actual old/candidate JobShape 6148 cases/5115 refusals/81 valid seeds;all boot+job bits,paired mutations,null/phase/nonce bounds;host frozen result exact,immutable arguments,stack-only stores,no MMIO,callee-saved registers+SP restored,inert2048;NOT connected/model/native/physical/Work/TPS
+PASS_SELECTED_JOB_BOOT_FOLD 4 positive roles/40 missing+zero+foreign+late refusals/31 pre-output BUILD CLI refusals;frozen DATA and actual emitted equivalence above;NO native/physical/Work/TPS grant

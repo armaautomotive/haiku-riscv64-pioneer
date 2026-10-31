@@ -1,0 +1,70 @@
+Layer29: quantizer ruled out; missing F32 recurrent order isolated
+================================================================
+2026-10-31. Goal ACTIVE. Last physical baseline0.207893161 tokens/sec,
+20 tokens/sec UNMET. This is HOST CPU-local arithmetic evidence,NOT a
+new physical inference,native history,firmware fix or speed measurement.
+
+Why this test was necessary
+---------------------------
+Installed precise-beta2723ac08 completed three positions but all top-score
+words were unchanged from old18362bcb. The previous local replay replaced
+card preparation but STILL used reference GDN double-precision reductions
+and reference matrix-input quantization. Passing that replay could not
+establish the behavior of the real SFPU recurrence plus quantizer.
+
+Actual quantizer comparison
+----------------------------
+Independent main73855 and clean28529 ACTUALLY exited0,logs identical.
+For all11 existing replay variants,execute the ACTUAL unmodified
+PioneerQ38ProjectionQuantize in a separate no-CPU-oracle-role translation
+unit. Decode its native packed operands and compare EVERY integer lane
+and F32 scale word against the independent reference Input function.
+Each variant checks6144 gated values/type8 and17408 FFN values/type12:
+ZERO lane or scale differences throughout. FP16 conversion is already
+ties-to-even;it was not changed. No approximate division/half fix added.
+
+All full-source authentication,original851 bindings and exact snapshot
+pins remain unchanged. The model full SHA is:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+Original partial-native hidden pin:
+5a1c8478fea72b7a3d1acc63eecdebdb3fbdcf3c1f57166e04a3a19aa99ab784.
+CPU-local layer29 input snapshot (61504 bytes):
+bd3faafe2b26c4eea37ede3a34a5db5db0b8f809845856373d96f43d1b687660.
+ASan/UBSan,FE_TONEAREST and -ffp-contract=off remain enabled. The actual
+CPU Impl is extracted losslessly with only its type name changed. No CPU
+reference result is supplied to any executing native or physical history.
+
+F32-order contrast
+-------------------
+New main21859 and independent clean10498 ACTUALLY exited0,logs identical.
+All15 modes again compare actual quantizer lanes/scales exactly. New
+modes128/135/192/199 add a clearly named CPU-LOCAL scalar mirror of the
+existing PioneerQ38DeltaVectorHalf prediction/update/query-dot FP32 order,
+including explicit FTZ between each operation. It is NOT an RV32/Tensix
+instruction engine and must not be advertised as emitted-code proof.
+
+mode preparation    recurrent sums gated diff Q8 lanes/scales CPU diff native diff
+0    reference      reference-wide       0      0/0              0       5120
+64   actual precise reference-wide       0      0/0              0       5120
+71   all card math  reference-wide    2628      0/0              0       5120
+128  reference      scalar F32 order  4555      0/1           5120          0
+135  legacy card    scalar F32 order  5037      0/1           5120          0
+192  actual precise scalar F32 order  4555      0/1           5120          0
+199  all card math  scalar F32 order  5000      0/1           5120          0
+All F32-order cases reproduce EVERY original native layer29 output word
+exactly,despite different raw gated intermediates. The same ONE Q8 half
+scale changes,with no integer lane changes,then5064 residual and17407 FFN
+activation words change. Seven total replay variants match native DATA.
+
+This explains the missing distinction in the earlier beta-only replay and
+is consistent with the unchanged physical top scores. It does NOT by
+itself prove all unobserved physical hidden values,all later layers or
+future-token state. The original strict comparator remains unchanged and
+its failing results stay failures. No tolerance was chosen to turn them
+green. No production arithmetic,installed driver,Work/Assistant,hardware,
+OS,boot,network,SD or power state was changed by these diagnostics.
+
+Next:qualify the real emitted SFPU path on original model-derived inputs
+if changing its reduction;keep numerical validation separate from Work.
+In parallel qualify controller cost reductions and resident/long decode,
+then measure actual physical sustained inference. No20tok/s claim follows.

@@ -1,0 +1,27 @@
+4b1550f36d8bf6e225684db0a97ba62ad885817c1497d78226443b0c7867533f recurrent.o bytes145120
+29204d287e38fe0ead7fd24c2de44aad7b46d2bcb38e23daa4b55d1cebb6c8e9 dense.o bytes115164
+78cf19c422c773a8c9c47c180df78ecd66609e4614dd75ee2d66344cab0ea25c layer-components-NOBOOT.o bytes228380
+PASS both ACTUAL returning layer bodies retained, separate private seal types/s11 bind+restore, same worker-chain/hidden-slot ADDRESSES;ROOTbytes93044/131072 Convbytes7500/32768 maxFrame2112
+RELOCATABLE COMPONENTS ONLY/NO boot or host wait/STOP/old main/native ABI;sole unresolved fault park. NOT a connected pipeline,initialized state,token commit,physical/Work or throughput qualification. DO NOT INSTALL
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 117016, 'e58aff9bf5be041992ba5435bca334bdd43ac51c3d3c6af47c5ac6de7cdbfd8d')
+('terminal.bin', 8, '6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5')
+('conv.bin', 7500, 'aec9aeacaf188b46ae223bd79fafb928ac39a3369b3c9753bf8145966eb44cea')
+('program.elf', 149964, 'ca0f6beb05e1a20d243332e65ce9b0bc4e3e080fc350768067266b9e1d7209a2')
+BUILD/INSPECT ONLY NEW QGC1/all64 returning arithmetic+final norm+973 vocab jobs+greedy candidate+real global STOP/maxFrame1872/on-card provisional next embedding;NO runtime/combined reserved stack/original model/native/physical/token commit/multi-token/Work/TPS qualification. DO NOT INSTALL
+('recurrent.o', 182356, '178660fe0182a5e2483bf15de082241727c82385bdf5f79ad8c2dedc6b87bfaa')
+('dense.o', 145804, '3b8b7bfd59cefa41d6baeaa7daa67b89f60307136986108094cb4dba503be226')
+('token-components-NOBOOT.o', 282060, '8fe3acdc948a888f736aec384918b4c99e83e8e06c9d855ba09823d6a070b7fc')
+BUILD ONLY actual returning recurrent path includes strict previous-global output admission;ROOTbytes103748/131072 Conv20380/32768 maxFrame2112;NO boot/persistent parent/model token-state commit/native/physical/Work/TPS or combined-stack proof. DO NOT INSTALL
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 130888, '8be33008ec9aa1c3930b48825c43e795e50178292b44df9ab0bd7b4459f6c13a')
+('terminal.bin', 8, '6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5')
+('conv.bin', 32720, 'd95531ea6dcb09f3428d845b591e36e8aad617b3420e96713a34f1e8681b4744')
+('program.elf', 190444, '917972d54277d95b18ed7e2fc346feba3d1a60857b64ca366fec7b7bd131c60c')
+BUILD ONLY persistent parent/bootstrap/prompt+generation/all64+973/recurrent state copy+readback/token stream/final119STOP;maxFrame1616;NO runtime/combined stack/original full-model/native/physical/cancellation/Work/Assistant/TPS qualification. DO NOT INSTALL
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 130920, '3a9e727702c225bc20d2f08153b36b98aa8259cc029f33a151d8d1fd1ec7c26e')
+('terminal.bin', 8, '468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2')
+('conv.bin', 32720, 'f143a965e082cb1f1bd1cf6af48a62d17590935277110799b30a410821ba77b3')
+('program.elf', 190500, 'efeebcfc25e00b6519026428b1d7af3c12052dad6db2e6e2b52110e3fb7ed7c6')
+BUILD_ONLY_UNSELECTED_FAULT_MARKER status_error51465431 status_saved_link_NOT_retired_PC/same_compiled_arithmetic_objects_and_STOP_loop/NO timeout_extension_retry_cancel_reset/NO native_driver_selection_original_model_physical_Work_or_TPS_permission

@@ -10,14 +10,19 @@ import subprocess
 import sys
 import tempfile
 
+fold_job_boot='--job-boot-fold-eight' in sys.argv
+if fold_job_boot:
+    assert sys.argv.count('--job-boot-fold-eight')==1 and len(sys.argv)==4
+    sys.argv.remove('--job-boot-fold-eight')
 assert len(sys.argv) == 3
 sdk, image = map(pathlib.Path, sys.argv[1:])
 assert sdk.is_absolute() and image.is_absolute()
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 here = pathlib.Path(__file__).resolve().parent
 tree = ast.parse((here.parent/'build_qwen38_token_fault_marker_image.py').read_text())
+pin_key='JOB_FOLD_PINS' if fold_job_boot else 'PINS'
 pins = next(ast.literal_eval(n.value) for n in tree.body if isinstance(n, ast.Assign)
-            and any(isinstance(t, ast.Name) and t.id == 'PINS' for t in n.targets))
+            and any(isinstance(t, ast.Name) and t.id == pin_key for t in n.targets))
 assert pins, 'pin independent builds before instruction testing'
 for name, size, digest in pins:
     data = (image/name).read_bytes()
@@ -108,7 +113,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-q38-fault-marker-refusals-', di
                  'TT_PIONEER_Q38_WORK_MODE', 'PIONEER_Q38_CPU_VALIDATION', 'PIONEER_UNKNOWN_ROLE'):
         for value in ('0', '1', '2', ''):
             target = root/'MUST_NOT_CREATE'
-            result = subprocess.run([sys.executable, str(builder), str(root/'MUST_NOT_READ_SDK'), str(target)],
+            result = subprocess.run([sys.executable, str(builder), str(root/'MUST_NOT_READ_SDK'), str(target),
+                                     *(['--job-boot-fold-eight'] if fold_job_boot else [])],
                                     env={**os.environ, name: value}, capture_output=True, text=True)
             assert result.returncode == 2 and not result.stdout and not result.stderr and not target.exists()
             refusals += 1
@@ -121,7 +127,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-q38-fault-marker-refusals-', di
         damaged[len(damaged)//2] ^= 1
         (changed/name).write_bytes(damaged)
         result = subprocess.run([sys.executable, str(pathlib.Path(__file__).resolve()),
-                                 str(root/'MUST_NOT_READ_SDK'), str(changed)],
+                                 str(root/'MUST_NOT_READ_SDK'), str(changed),
+                                 *(['--job-boot-fold-eight'] if fold_job_boot else [])],
                                 env={**os.environ, 'CXX':str(root/'MUST_NOT_RUN_COMPILER')},
                                 capture_output=True, text=True)
         assert result.returncode != 0 and result.stderr.rstrip().endswith('AssertionError: '+name)
@@ -129,3 +136,5 @@ with tempfile.TemporaryDirectory(prefix='pioneer-q38-fault-marker-refusals-', di
 print('PASS_ACTUAL_FAULT_MARKER_INSTRUCTIONS six_saved_links/two_exact_LOCAL_writes/order_and_fences/unchanged_ra_sp_others/'+
       'no_writes_after_park/six_genuine_STOP_entry_controls_no_fault_writes/refusals'+str(refusals)+
       '_ambient_roles_before_SDK_and_changed_images_before_compiler;NO model_native_physical_Work_or_TPS_qualification')
+if fold_job_boot:
+    print('JOB_BOOT_FOLD_EIGHT_FAULT_STUB_ONLY actual pinned candidate bytes;NO optimizer arithmetic/native/physical/Work/TPS grant')

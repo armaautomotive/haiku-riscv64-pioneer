@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=16 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight'}
+assert 3<=len(sys.argv)<=17 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot'}
 inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or (cancel and f32),'dense-unroll candidate requires explicit cancel+FP32 profile'
 assert not boundary or (cancel and f32 and unroll),'boundary candidate requires explicit cancel+FP32+unrolled profile'
@@ -27,6 +27,8 @@ packet_unroll='--unroll-packet-seals' in options
 assert not packet_unroll or (pushed and inspect),'unfrozen packet-seal BUILD requires explicit QGW3 and inspect-candidate;not a pinned image'
 packet_eight='--unroll-packet-seals-eight' in options
 assert not packet_eight or (packet_unroll and pushed and inspect),'eight-way packet-seal BUILD requires explicit packet unroll/QGW3/inspect parents;NO runtime permission'
+fold_job_boot='--fold-job-boot' in options
+assert not fold_job_boot or (packet_eight and inspect),'job boot fold BUILD requires the explicit eight-way QGW3 inspect profile;NO native/Work permission'
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -36,11 +38,12 @@ def run(*args):subprocess.run([str(a) for a in args],check=True)
 # Reproduce the strict returning components and unchanged whole feedback
 # image FIRST. Neither an old native owner nor a component alone can launch.
 components=out/'qualified-components'
-run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []),*(['--pushed-completion'] if pushed else []),*(['--unroll-packet-seals'] if packet_unroll else []),*(['--unroll-packet-seals-eight'] if packet_eight else []))
+run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []),*(['--pushed-completion'] if pushed else []),*(['--unroll-packet-seals'] if packet_unroll else []),*(['--unroll-packet-seals-eight'] if packet_eight else []),*(['--fold-job-boot'] if fold_job_boot else []))
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1',
+ *(['-DPIONEER_Q38_JOB_BOOT_FOLD_IMAGE=1'] if fold_job_boot else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1'] if precise else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION=1'] if pushed else []),
  *(['-DPIONEER_Q38_TOKEN_CANCEL_BOUNDARY=1'] if cancel else []),
