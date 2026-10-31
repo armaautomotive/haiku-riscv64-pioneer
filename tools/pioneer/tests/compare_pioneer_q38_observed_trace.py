@@ -103,16 +103,46 @@ def load_cpu(directory):
     require(traces[2]['header'][3] == traces[1]['header'][4], 'CPU greedy feedback path')
     return traces
 
+def decode_hidden_snapshot(data):
+    require(len(data) == (16+5120+1)*4, 'held hidden snapshot length')
+    words = array.array('I')
+    require(words.itemsize == 4, '32-bit word host required')
+    words.frombytes(data)
+    if sys.byteorder != 'little':
+        words.byteswap()
+    h = words[:16]
+    require(list(h[:10]) == [0x31444851, 1, 0, 248319, 1, 5120, 3, 0, 0x00010075, 0x20261031],
+            'held hidden snapshot family/version/position/input/layers/kind/commits/tag')
+    require(bool(h[10] or h[11]) and list(h[12:]) == [2, 0, 0, 0], 'held hidden generation/chunks/reserved')
+    require(words[-1] == 0x454e4448, 'held hidden snapshot footer, NOT token terminal')
+    floats = array.array('f')
+    require(floats.itemsize == 4, 'binary32 host required')
+    floats.frombytes(data[64:-4])
+    if sys.byteorder != 'little':
+        floats.byteswap()
+    require(all(math.isfinite(x) for x in floats), 'nonfinite held hidden DATA')
+    return {'header': h, 'bits': words[16:-1], 'floats': floats}
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('cpu', type=pathlib.Path)
     parser.add_argument('observed', type=pathlib.Path)
-    parser.add_argument('--first-layer-only', action='store_true', help='Compare ONLY an incomplete embedding+layer0 diagnostic; no token/STOP/full-model qualification')
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument('--first-layer-only', action='store_true', help='Compare ONLY an incomplete embedding+layer0 diagnostic; no token/STOP/full-model qualification')
+    mode.add_argument('--held-hidden-only', action='store_true', help='Observed argument is a tag75 snapshot FILE: compare ONLY its 5120 first-layer words, without inventing an embedding/full trace')
     parser.add_argument('--diagnostic-only', action='store_true', help='Permit exit0 for a valid report with numeric differences; NEVER a numerical pass')
     args = parser.parse_args(argv)
     require(args.cpu.is_absolute() and args.observed.is_absolute(), 'absolute trace directories required')
     require(not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ), 'unexpected role overrides')
+    require(not (args.held_hidden_only and args.diagnostic_only), 'held hidden comparison never permits diagnostic-only acceptance')
     cpu, observed = load_cpu(args.cpu), []
+    if args.held_hidden_only:
+        actual = decode_hidden_snapshot(stable_bytes(args.observed, (16+5120+1)*4))
+        expected = {'bits': cpu[0]['bits'][5120:10240], 'floats': cpu[0]['floats'][5120:10240]}
+        diff, maximum, relative = difference(expected, actual, 0, 5120)
+        print(f'COMPARE_HELD_HIDDEN position0/completedLayers1/words5120/bitDifferences{diff}/maxAbs{maximum:.12g}/relativeL2{relative:.12g}')
+        print(f'HELD_HIDDEN_DIAGNOSTIC NUMERICAL_BITEXACT={int(diff == 0)} NO_TOLERANCE_USED;NO embedding/later-layer/token/full-model/native/physical/Work/TPS qualification')
+        return 0 if diff == 0 else 1
     if args.first_layer_only:
         actual = decode_prefix(stable_bytes(args.observed/'prefix-0.bin', (16+2*5120+1)*4))
         exact = True

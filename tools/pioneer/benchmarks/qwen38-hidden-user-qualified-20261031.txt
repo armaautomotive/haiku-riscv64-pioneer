@@ -1,0 +1,122 @@
+Separate tag75 USER capture client,module and guarded updater qualification
+==========================================================================
+2026-10-31. Goal ACTIVE;20 tokens/sec UNMET. Last measured whole-model
+rate remains0.207893161 tokens/sec. No physical inference speedup claimed.
+This checkpoint PRECEDES any real tag75 module installation/capture.
+
+Real USER implementation,not an old-tag transport alias
+------------------------------------------------------
+PioneerQ38TokenHiddenValidationSession requires its OWN CLIENT=1 role and
+rejects old74 USER,kernel/native,private hidden,CPU-reference,Work,changed
+Q8 source and benchmark aliases,including defined0 and late includes.
+It independently checks actual tag2026103100010075 and op6604/6605. Source
+authentication still occurs on the SAME fully hashed fixed GGUF BEFORE the
+first accelerator FD. All3551 learned parts/4736090 padded pages/20367 spans/
+19399024640 padded bytes are uploaded RAW;no mutable state or CPU products.
+
+The fixed two-prompt/three-position diagnostic requests cancellation once.
+After genuine terminal/HOLD/record drain,it captures two chunks ONLY for
+position0,zero commits,completedLayers1,cancel stage1. Native terminal kind3
+is separately checked;it is NOT the public stage enum. Every request,reply,
+reserved word,16-word native detail and second-part zero tail is checked.
+Both raw chunks are private heap DATA;no snapshot export before full actual
+Finish AND successful Close. Failure clears captured DATA and closes ONLY,
+without retry,following IO,implicit END,reset or fallback. A missed target
+window follows the valid normal cleanup but exports NO wrong-layer snapshot.
+
+Snapshot format is20548B:16-word fixed header+5120 raw words+footer. It
+includes actual driver tag/generation and observed boundary metadata,NOT
+an invented embedding or full-token trace. Raw NaN bits remain diagnostic
+DATA;they are not accepted as valid numerics. CLI accepts ONLY source-only
+or capture-first-layer with an absolute new output path. Existing outputs
+refuse before source/device access. O_EXCL/O_NOFOLLOW/0600,full writes,
+fsync/close are required;write errors leave any new partial artifact marked
+unusable and never overwrite/unlink user data. No Assistant/Work UI change.
+
+Strict posthoc comparison,not inference-time CPU validation
+----------------------------------------------------------
+compare_pioneer_q38_observed_trace.py --held-hidden-only takes a snapshot
+FILE and compares exactly5120 words against the SHA-pinned CPU position0
+first-layer slice. All three original CPU pins remain unchanged. No fake
+observed embedding/full trace is synthesized. Exact bit differences,maximum
+error and relativeL2 are reported;any difference exits1. Wrong mode pairs,
+diagnostic-only acceptance,bad metadata/footer and nonfinite DATA refuse.
+Old full/prefix comparison and actual CPU-authentication regressions pass.
+
+Independent frozen GW builds:actual successes,not runtime substitution
+----------------------------------------------------------------------
+HEAD98cd841930 plus ONLY13 cmp-verified client/builder/test/comparator files:
+ /private/tmp/pioneer-q38-hidden-user-main-gw.esV1H81Z
+ /private/tmp/pioneer-q38-hidden-user-clean-gw.nWcWXucm
+Original11119/13279 BOTH actually exited0. Both source archives match current
+owned source. New USER session384 COW branches,including98 hidden reply/
+request/tail faults,128 raw frontend normal/cancel positives,missed-window,
+later-layer,source-loss,close-only and early-exposure refusals. Old74 session
+still passes269 COW branches. These use SYNTHETIC source+OS replies,NOT
+actual source authentication,native arithmetic or physical execution.
+New USER role1positive/46 refusals;CLI2positive/15 refusals plus real temp
+exclusive-file/raw-NaN readback;new snapshot comparator459 format/metric/
+nonfinite/mode refusals. Signed-zero bit mismatch does NOT pass despite
+zero arithmetic error. Old USER role1/43 remains unchanged.
+
+Actual Haiku SDK USER objects and binaries compare BYTE-FOR-BYTE:
+ object33cffe8edd7235e5b212a44937309dcde6d758e9bd09b5e30c4b35b6132c992c
+ binary1a061f7ab0eb5001c04a73c1334ed3b519a29781157ea4e46f533e3908fe0536
+Max individual USER frame4432B;no llama/ggml,CPU oracle,native owner or MOCK
+imports. The new actual conventional-ABI kernel objects/modules also match:
+ objectb3a6d7863ee7473e42cec4dcf13edb4faf60a6b326bf9a82747f39e26486bf05
+ moduleb74f4bfa5583aaf0cf8272d5136c73336c1db0f93e168e7212277f97705a92cc
+All13 G3 arrays and2MiB RoPE remain exact;old defaultc78/physical74772a pins
+pass. Callgraph metadata object is byte-identical to its original object.
+ProbeControl known module chain5392B/reached504/unresolved25. Unknown kernel,
+indirect,entry and IRQ costs remain UNKNOWN,not zero or a whole-stack proof.
+No module is installed or invoked by the builders.
+
+Separate updater route,old immutable helpers untouched
+------------------------------------------------------
+Current pioneer_p100a_hot_swap.sh SHA
+ ffa315aaba98d8863a1b7900270e38cffbe5b1334e5559f5b4471e455f62962e.
+New --apply-token-hidden-readout / --restore-token-hidden-readout accept
+ONLY exact clean stable041 <-> newb74 bytes AND exact12/75 tags/generation.
+Hash-qualified backups,cold/owner/open/guard checks,compute-parent inventory,
+quiesce/wait and no-automatic-rollback rules remain. The new USER/source-only
+parent is explicitly covered by the tests. Previous74 candidate bytes and
+staged immutable restoration scripts are NOT replaced by this code change.
+Separate frozen GX archives HEAD98 plus those13 unchanged files and ONLY
+the updater+its test:
+ /private/tmp/pioneer-q38-hidden-updater-main-gx.3Pwssq3q
+ /private/tmp/pioneer-q38-hidden-updater-clean-gx.0m4IHovv
+Both13063/75835 actually exit0:344 actual /bin/sh fake-filesystem cases EACH,
+new75 apply+restore AND previous-root74 apply+restore. Logs match exactly.
+No physical reload/reset is performed by those fixtures.
+
+Actual Haiku source-only execution completed0
+---------------------------------------------
+Copied ONLY the hash-verified new USER binary into the NEW directory
+ /boot/home/pioneer-q38-hidden75-client-20261031-1a061f7a
+and independently verified its full remote SHA above. Original60353 actually
+completed0 with --preflight-source-only:full SAME-open original GGUF SHA and
+all10653 first/middle/last raw page samples pass;planned19399024640 bytes.
+This branch returns before accelerator Open/Begin/any driver computation.
+No old Assistant binary,boot,kernel,SD,power or hardware connection changed.
+
+Raw evidence,each cmp-verified with original completed output
+------------------------------------------------------------
+qwen38-hidden-user-{main,clean}-20261031.log:
+ main08aad120ee32965e650945ed84d591712e55bf667ca81e0e0f6b1d598aac76c6
+ clean67e61a8fe93a63b9031949e24acea07f6b8a4fe2b9c5b14a0571f5241b199206
+Only source-root prefixes differ;read-only normalized comparison matches.
+qwen38-hidden-updater-{main,clean}-20261031.log,both
+ SHA2878b61b2ec21e9cab39c7e32c2c29ecafafee623e64461e1d61621230e740cb.
+qwen38-hidden-user-source-only-20261031.log
+ SHAfb9c8c164a1aaee10aeea0a6e7bf56f68363406cc41780876d0c6d8fd5fc9f90.
+
+NEXT:stage independently verified module+new immutable updater without
+overwriting old helpers;fresh no-compute/status/hash check;one guarded
+experimental install and ONE bounded first-layer capture. Poll that SAME
+handle,never restart on a watch timeout. Only after actual clean exit0 copy
+the real snapshot and run the strict fixed-control posthoc comparison.
+If failed/unsafe,retain resources and recover under standing power rules;
+do not attempt normal restore across an unknown/cold/active owner. Full
+normal+EOS numerical/state qualification,resident no-CPU-reference Work,
+Assistant integration and sustained performance optimization are still owed.

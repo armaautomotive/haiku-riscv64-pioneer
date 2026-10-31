@@ -66,6 +66,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
         payloads['hash_token_validation'] = ('test-' + values['hash_token_validation']).encode()
         payloads['hash_token_hold_recheck'] = ('test-' + values['hash_token_hold_recheck']).encode()
         payloads['hash_token_root_frontend'] = ('test-' + values['hash_token_root_frontend']).encode()
+        payloads['hash_token_hidden_readout'] = ('test-' + values['hash_token_hidden_readout']).encode()
         payloads['hash_host_phase_diagnostic'] = ('test-' + values['hash_host_phase_diagnostic']).encode()
         payloads['hash_batch4_fetch_qualification'] = ('test-' + values['hash_batch4_fetch_qualification']).encode()
         payloads['hash_batch_raw_qualification'] = ('test-' + values['hash_batch_raw_qualification']).encode()
@@ -203,6 +204,8 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
             '--restore-token-hold-recheck': ('hash_token_hold_recheck', 'hash_scale_reuse_qualification', 'tag_token_hold_recheck'),
             '--apply-token-root-frontend': ('hash_scale_reuse_qualification', 'hash_token_root_frontend', 'tag_scale_reuse_qualification'),
             '--restore-token-root-frontend': ('hash_token_root_frontend', 'hash_scale_reuse_qualification', 'tag_token_root_frontend'),
+            '--apply-token-hidden-readout': ('hash_scale_reuse_qualification', 'hash_token_hidden_readout', 'tag_scale_reuse_qualification'),
+            '--restore-token-hidden-readout': ('hash_token_hidden_readout', 'hash_scale_reuse_qualification', 'tag_token_hidden_readout'),
             '--apply-host-phase-diagnostic': ('hash_sentinel_poll_qualification', 'hash_host_phase_diagnostic', 'tag_sentinel_poll_qualification'),
             '--restore-host-phase-diagnostic': ('hash_host_phase_diagnostic', 'hash_sentinel_poll_qualification', 'tag_host_phase_diagnostic'),
             '--apply-batch4-fetch-qualification': ('hash_sentinel_poll_qualification', 'hash_batch4_fetch_qualification', 'tag_sentinel_poll_qualification'),
@@ -303,6 +306,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
         put('candidate_token_validation', payloads['hash_token_validation'])
         put('candidate_token_hold_recheck', payloads['hash_token_hold_recheck'])
         put('candidate_token_root_frontend', payloads['hash_token_root_frontend'])
+        put('candidate_token_hidden_readout', payloads['hash_token_hidden_readout'])
         put('candidate_host_phase_diagnostic', payloads['hash_host_phase_diagnostic'])
         put('candidate_batch4_fetch_qualification', payloads['hash_batch4_fetch_qualification'])
         put('candidate_batch_raw_qualification', payloads['hash_batch_raw_qualification'])
@@ -341,6 +345,10 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
             assert values['hash_token_root_frontend'] == '5f2fc63de2c4413d54b7087e5b923113246bc7a7f09747d0d79915bf950bf039'
             assert values['hash_scale_reuse_qualification'] == '041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403'
             assert values['candidate_token_root_frontend'] == values['stage'] + '/tenstorrent_pci_probe-token-root-frontend-5f2fc63d'
+        if mode in ('--apply-token-hidden-readout', '--restore-token-hidden-readout'):
+            assert values['tag_token_hidden_readout'] == '2026103100010075'
+            assert values['hash_token_hidden_readout'] == 'b74f4bfa5583aaf0cf8272d5136c73336c1db0f93e168e7212277f97705a92cc'
+            assert values['candidate_token_hidden_readout'] == values['stage'] + '/tenstorrent_pci_probe-token-hidden-readout-b74f4bfa'
         status = f'P100A_RELOAD driver55 tag{oldtag} generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY'
         if fault == 'cold':
             status = status.replace('cold0', 'cold1')
@@ -397,6 +405,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
         hash_backup |= mode in ('--apply-token-validation', '--restore-token-validation')
         hash_backup |= mode in ('--apply-token-hold-recheck', '--restore-token-hold-recheck')
         hash_backup |= mode in ('--apply-token-root-frontend', '--restore-token-root-frontend')
+        hash_backup |= mode in ('--apply-token-hidden-readout', '--restore-token-hidden-readout')
         backup_name = 'qualified55-before-hot-reload' if mode == '--bootstrap' else 'qualified-reload-' + oldtag
         if hash_backup:
             backup_name += '-' + hashlib.sha256(payloads[starting]).hexdigest()
@@ -526,6 +535,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
             'owner-recurrent-prefix-validation': '/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-prefix-DEBUG73-VALIDATION-ONLY',
             'owner-recurrent-prefix-validation-underscore': '/boot/home/pioneer_q38_recurrent_prefix_validation',
             'owner-token-validation': '/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-token-DEBUG74-DIAGNOSTIC-ONLY',
+            'owner-token-hidden-validation': '/boot/home/pioneer-q38-hidden75-client-20261031-1a061f7a/pioneer-q38-token-DEBUG75-DIAGNOSTIC-ONLY',
             'owner-token-validation-underscore': '/boot/home/pioneer_q38_token_validation',
             'owner-token-source-check': '/boot/home/pioneer-token-source-fw-1593cbab/source-check --validate-cancel-boundary',
         }
@@ -670,6 +680,8 @@ if __name__ == '__main__':
     modes += ['--apply-token-validation', '--restore-token-validation']
     modes += ['--apply-token-hold-recheck', '--restore-token-hold-recheck']
     modes += ['--apply-token-root-frontend', '--restore-token-root-frontend']
+    modes += ['--apply-token-hidden-readout', '--restore-token-hidden-readout']
+    parents += ['owner-token-hidden-validation']
     parents += ['owner-token-validation', 'owner-token-validation-underscore', 'owner-token-source-check']
     parents += ['owner-recurrent-prefix-validation', 'owner-recurrent-prefix-validation-underscore']
     parents += ['owner-recurrent-deadline-validation']
@@ -965,6 +977,10 @@ if __name__ == '__main__':
             candidate = ['candidate_scale_reuse_qualification']
         elif mode == '--apply-token-root-frontend':
             candidate = ['candidate_token_root_frontend']
+        elif mode == '--apply-token-hidden-readout':
+            candidate = ['candidate_token_hidden_readout']
+        elif mode == '--restore-token-hidden-readout':
+            candidate = ['candidate_scale_reuse_qualification']
         elif mode == '--restore-token-root-frontend':
             candidate = ['candidate_scale_reuse_qualification']
         candidate_links = [key + '-link' for key in candidate]
@@ -988,6 +1004,7 @@ if __name__ == '__main__':
         hash_backup_mode |= mode in ('--apply-token-validation', '--restore-token-validation')
         hash_backup_mode |= mode in ('--apply-token-hold-recheck', '--restore-token-hold-recheck')
         hash_backup_mode |= mode in ('--apply-token-root-frontend', '--restore-token-root-frontend')
+        hash_backup_mode |= mode in ('--apply-token-hidden-readout', '--restore-token-hidden-readout')
         backup_links = ['backup-link'] if hash_backup_mode else []
         for fault in [None] + common + candidate + candidate_links + parents + previous_image + backup_links + (['loaded'] if mode == '--bootstrap' else hot):
             check(mode, fault)

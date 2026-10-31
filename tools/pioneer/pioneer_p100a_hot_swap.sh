@@ -47,6 +47,7 @@ case "$1" in
  --apply-token-validation|--restore-token-validation) mode=$1;;
  --apply-token-hold-recheck|--restore-token-hold-recheck) mode=$1;;
  --apply-token-root-frontend|--restore-token-root-frontend) mode=$1;;
+ --apply-token-hidden-readout|--restore-token-hidden-readout) mode=$1;;
  --apply-host-phase-diagnostic|--restore-host-phase-diagnostic) mode=$1;;
  --apply-batch4-fetch-qualification|--restore-batch4-fetch-qualification) mode=$1;;
  --apply-batch-raw-qualification|--restore-batch-raw-qualification) mode=$1;;
@@ -153,6 +154,7 @@ candidate_token_hold_recheck=$stage/tenstorrent_pci_probe-token-hold-recheck-781
 # Current boot/receipt/code seal;the previous two tag74 images and their
 # immutable restore helpers retain their OWN exact hash-qualified routes.
 candidate_token_root_frontend=$stage/tenstorrent_pci_probe-token-root-frontend-5f2fc63d
+candidate_token_hidden_readout=$stage/tenstorrent_pci_probe-token-hidden-readout-b74f4bfa
 candidate_host_phase_diagnostic=$stage/tenstorrent_pci_probe-host-phase-diagnostic-acf33ea4
 candidate_batch4_fetch_qualification=$stage/tenstorrent_pci_probe-batch4-fetch-qualification-2fcf0b27
 candidate_batch_raw_qualification=$stage/tenstorrent_pci_probe-batch-raw-qualification-c38e258c
@@ -243,6 +245,7 @@ hash_recurrent_prefix_validation=4ae7b6ea4217c0ee45303aab37e6793c9c17fe18a2acbbe
 hash_token_validation=d78464058dec32de49e67c5263fca290751acdaf4252a7785ce56b9654e63aed
 hash_token_hold_recheck=781ab93300d1a8418cd752ae0728090c9e2c470a53320eafe22e4f3d3b8706d2
 hash_token_root_frontend=5f2fc63de2c4413d54b7087e5b923113246bc7a7f09747d0d79915bf950bf039
+hash_token_hidden_readout=b74f4bfa5583aaf0cf8272d5136c73336c1db0f93e168e7212277f97705a92cc
 hash_host_phase_diagnostic=acf33ea4279ca6d36cbc4b90ae56e6da1fed219b431ae7c80c2693b3f1591583
 hash_batch4_fetch_qualification=2fcf0b27039ed8e8e8114c632d51ba2f75ed2e6c28ef4a7081dd347d39cba9da
 hash_batch_raw_qualification=c38e258cb76bf8013a721cacb73e98b1d7eb191badbfaed6076655284543d379
@@ -331,6 +334,7 @@ tag_recurrent_prefix_validation=2026102800010073
 tag_token_validation=2026103000010074
 tag_token_hold_recheck=2026103000010074
 tag_token_root_frontend=2026103000010074
+tag_token_hidden_readout=2026103100010075
 tag_host_phase_diagnostic=2026102100010018
 tag_batch4_fetch_qualification=2026102100010019
 tag_batch_raw_qualification=2026102100010020
@@ -581,6 +585,10 @@ else
  # No Work alias,retained-owner recovery,reset or automatic rollback.
  elif [ "$mode" = --apply-token-root-frontend ]; then source=$candidate_token_root_frontend; expected=$hash_scale_reuse_qualification; result=$hash_token_root_frontend; oldtag=$tag_scale_reuse_qualification; newtag=$tag_token_root_frontend
  elif [ "$mode" = --restore-token-root-frontend ]; then source=$candidate_scale_reuse_qualification; expected=$hash_token_root_frontend; result=$hash_scale_reuse_qualification; oldtag=$tag_token_root_frontend; newtag=$tag_scale_reuse_qualification
+ # Distinct tag75 held-hidden diagnostic,NOT old74 or Work. This mapping
+ # is NOT a runtime/numerical grant and cannot recover retained resources.
+ elif [ "$mode" = --apply-token-hidden-readout ]; then source=$candidate_token_hidden_readout; expected=$hash_scale_reuse_qualification; result=$hash_token_hidden_readout; oldtag=$tag_scale_reuse_qualification; newtag=$tag_token_hidden_readout
+ elif [ "$mode" = --restore-token-hidden-readout ]; then source=$candidate_scale_reuse_qualification; expected=$hash_token_hidden_readout; result=$hash_scale_reuse_qualification; oldtag=$tag_token_hidden_readout; newtag=$tag_scale_reuse_qualification
  elif [ "$mode" = --apply-host-phase-diagnostic ]; then source=$candidate_host_phase_diagnostic; expected=$hash_sentinel_poll_qualification; result=$hash_host_phase_diagnostic; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_host_phase_diagnostic
  elif [ "$mode" = --restore-host-phase-diagnostic ]; then source=$candidate_sentinel_poll_qualification; expected=$hash_host_phase_diagnostic; result=$hash_sentinel_poll_qualification; oldtag=$tag_host_phase_diagnostic; newtag=$tag_sentinel_poll_qualification
  elif [ "$mode" = --apply-batch4-fetch-qualification ]; then source=$candidate_batch4_fetch_qualification; expected=$hash_sentinel_poll_qualification; result=$hash_batch4_fetch_qualification; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_batch4_fetch_qualification
@@ -619,6 +627,7 @@ else
  generationhex=$(printf '%016x' "$generation")
  reload_backup=$stage/qualified-reload-$oldtag
  case "$mode" in
+  --apply-token-hidden-readout|--restore-token-hidden-readout) reload_backup=$reload_backup-$expected;;
   --apply-token-validation|--restore-token-validation|--apply-token-hold-recheck|--restore-token-hold-recheck|--apply-token-root-frontend|--restore-token-root-frontend) reload_backup=$reload_backup-$expected;;
   --apply-mixed-live-validation|--restore-mixed-live-validation|--apply-recurrent-block-validation|--restore-recurrent-block-validation|--apply-recurrent-deadline-validation|--restore-recurrent-deadline-validation|--apply-recurrent-prefix-validation|--restore-recurrent-prefix-validation) reload_backup=$reload_backup-$expected;;
   # DEBUG44 has two byte-distinct images. Preserve the previous tag-only
