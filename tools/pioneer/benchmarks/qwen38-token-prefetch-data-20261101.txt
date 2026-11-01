@@ -1,5 +1,10 @@
 Current prefetch: complete14-section immutable program package CLOSED
 =====================================================================
+13:39UTC UPDATE:separate new native subjects,original-byte first-layer/
+cancel/full-END main+clean and strict prefix comparisons are now CLOSED.
+See qwen38-token-prefetch-native-20261101.txt for exact scope. This does
+NOT establish full-model correctness,physical speed or Assistant Work.
+
 2026-11-01,12:52UTC. Goal ACTIVE;20tok/s UNMET. No new native owner,
 prefetch driver,module,installation,physical inference or speed result.
 No Pioneer operation was issued. The last measured diagnostic remains

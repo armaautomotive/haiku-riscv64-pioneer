@@ -1,0 +1,10 @@
+AUTHENTICATED_NATIVE_COUNTER_GATHER_SCOPE 4dd88..4e0c4/ELF88e419152d297dbe2ebb0b3913d3e2cae58aa69741b4b03e2667749702c4a674;HOST byte-endpoint classification ONLY,not supplied PC,owner,model result or hardware authority
+START authenticate SAME-open original27B GGUF RAW bytes BEFORE native fixture construction;NO CPU embedding/model products
+OBSERVED actual frozen zero ROM starts96/GDNpages10544/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts192/GDNpages21072/historyPages0/projectionPages0;NOT native initialization publication
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py", line 539, in <module>
+    subprocess.run([str(binary), *sys.argv[1:]], check=True,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-token-native-init-ogb5gh3x/test', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/qualification-inputs/qwen38-state-zero-20261030', '--execution-end', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/qualification-inputs/mixed-worker-20261030', '/private/tmp/pioneer-q38-token-prefetch-frozen-main-20261101-jp', '/private/tmp/pioneer-q38-prefetch-native-prefix-main-20261101-le.bin']' died with <Signals.SIGTERM: 15>.

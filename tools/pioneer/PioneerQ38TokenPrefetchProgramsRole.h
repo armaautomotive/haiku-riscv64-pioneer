@@ -1,14 +1,7 @@
 /* SPDX-License-Identifier: MIT */
-// Separate complete prefetch DATA. Rechecked on EVERY include. A native
-// owner must be separately implemented/qualified;none exists in this role.
-#ifndef PIONEER_Q38_TOKEN_PREFETCH_DATA_SELECTION_H
-#define PIONEER_Q38_TOKEN_PREFETCH_DATA_SELECTION_H
-#ifdef PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS
-enum {PioneerQ38TokenPrefetchDataSelection=1};
-#else
-enum {PioneerQ38TokenPrefetchDataSelection=0};
-#endif
-#endif
+// Separate DATA/private/diagnostic bindings,rechecked on EVERY include.
+// Syntax and compiled identity do NOT grant native lifecycle or Work.
+#include "PioneerQ38TokenPrefetchDataBoundary.h"
 #ifdef PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS
 #if PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS != 1 \
  || !defined(PIONEER_Q38_TOKEN_FLAT_MATRIX_PROGRAMS) || PIONEER_Q38_TOKEN_FLAT_MATRIX_PROGRAMS != 1 \
@@ -26,6 +19,13 @@ enum {PioneerQ38TokenPrefetchDataSelection=0};
  || !defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS) || PIONEER_Q38_TOKEN_PUSHED_PROGRAMS != 1
 #error Exact complete prefetch DATA selector and all parent revisions required
 #endif
+#ifdef PIONEER_Q38_TOKEN_PREFETCH_BENCHMARK_NATIVE
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenPrefetchBenchmarkRole.h"
+static_assert(PioneerQ38TokenPrefetchDataSelection==3,"late prefetch diagnostic selection");
+#elif defined(PIONEER_Q38_TOKEN_PREFETCH_NATIVE_CONTEXT)
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenPrefetchNativeRole.h"
+static_assert(PioneerQ38TokenPrefetchDataSelection==2,"late prefetch private selection");
+#else
 #if defined(_KERNEL_MODE) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
  || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT) \
  || defined(PIONEER_Q38_TOKEN_PREFETCH_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_PREFETCH_BENCHMARK_NATIVE) \
@@ -62,6 +62,21 @@ enum {PioneerQ38TokenPrefetchDataSelection=0};
 #error Prefetch DATA cannot own a native,USER,BUILD,CPU,Work or old code binding
 #endif
 static_assert(PioneerQ38TokenPrefetchDataSelection==1,"late prefetch DATA selection");
+#endif
+// A new owner may retain old revision selectors,but NEVER old code arrays.
+// Repeated correctly selected includes are allowed only with this DATA's
+// own guard;an already selected legacy namespace cannot acquire this role.
+#if defined(PIONEER_Q38_TOKEN_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS_H) \
+ || defined(PIONEER_Q38_TOKEN_FLAT_MATRIX_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_PROGRAMS_H) \
+ || defined(PIONEER_Q38_TOKEN_COUNTER_GATHER_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_TID_BOUNDARY_PROGRAMS_H) \
+ || defined(PIONEER_Q38_TOKEN_PACKET_IDENTITY_BOUNDARY_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_COHORT_LOCAL_SOURCES_PROGRAMS_H) \
+ || defined(PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_RETAINED_COHORT_PROGRAMS_H) \
+ || defined(PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS_H) \
+ || defined(PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_FAULT_PROGRAMS_H) \
+ || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H) \
+ || (defined(PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H) && !defined(PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS_H))
+#error Prefetch owner cannot bind already selected old code DATA
+#endif
 #else
 #if defined(PIONEER_Q38_TOKEN_PREFETCH_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_PREFETCH_BENCHMARK_NATIVE)
 #error Prefetch owner requires separately qualified complete prefetch DATA

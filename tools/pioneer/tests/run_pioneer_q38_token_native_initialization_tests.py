@@ -17,6 +17,12 @@ if '--flat-matrix-root' in sys.argv:
     assert index+1<len(sys.argv)
     flat_matrix=pathlib.Path(sys.argv[index+1]);del sys.argv[index:index+2]
     assert flat_matrix.is_absolute() and flat_matrix.is_dir() and not flat_matrix.is_symlink()
+prefetch_worker=None
+if '--prefetch-worker' in sys.argv:
+    assert sys.argv.count('--prefetch-worker')==1 and flat_matrix is not None
+    index=sys.argv.index('--prefetch-worker');assert index+1<len(sys.argv)
+    prefetch_worker=pathlib.Path(sys.argv[index+1]);del sys.argv[index:index+2]
+    assert prefetch_worker.is_absolute() and prefetch_worker.is_dir() and not prefetch_worker.is_symlink()
 empty_receipt=None
 if '--empty-receipt-root' in sys.argv:
     assert flat_matrix is None,'Distinct ROOT variants cannot alias'
@@ -159,6 +165,11 @@ if tid_boundary:
 if counter_gather:
     assert tid_boundary and not compile_link_only and not root_profile and len(sys.argv)==7 and sys.argv[2]=='--execution-end', \
         'Counter-gather TEST requires its exact original first-layer/cancel/STOP/HOLD/drain/full-END predecessor and frozen ROOT;not a shortened/old/Work alias'
+if prefetch_worker:
+    assert flat_matrix and precise_beta and pushed_context and posted_cancel and held_hidden_readout \
+        and root_frontend_snapshots and len(sys.argv)==7 and sys.argv[2]=='--execution-end' \
+        and pathlib.Path(sys.argv[5])==prefetch_worker and not compile_link_only, \
+        'Prefetch native TEST requires its exact ten-section worker and whole original first-layer/cancel/STOP/HOLD/drain/END predecessor'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -228,7 +239,7 @@ here = pathlib.Path(__file__).resolve().parent
 if peer_engines:
     peer_arg = 3 if full_end_contract or peer_bootstrap else 4
     for directory, script in ((pathlib.Path(sys.argv[peer_arg]), here/'run_pioneer_q38_mixed_worker_tests.py'),
-                              (pathlib.Path(sys.argv[peer_arg+1]), here.parent/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here.parent/'build_qwen38_pushed_worker_image.py' if pushed_context else here/'run_pioneer_q38_precise_worker_tests.py' if precise_context else here.parent/'build_qwen38_global_worker_image.py')):
+                              (pathlib.Path(sys.argv[peer_arg+1]), here.parent/'build_qwen38_token_prefetch_worker.py' if prefetch_worker else here.parent/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here.parent/'build_qwen38_pushed_worker_image.py' if pushed_context else here/'run_pioneer_q38_precise_worker_tests.py' if precise_context else here.parent/'build_qwen38_global_worker_image.py')):
         assert directory.is_absolute()
         tree = ast.parse(script.read_text())
         pins = next(ast.literal_eval(n.value) for n in tree.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'PINS' for t in n.targets))
@@ -280,6 +291,10 @@ if flat_matrix:
     assert hashlib.sha256((here.parent/'PioneerQ38TokenFlatMatrixPrograms.h').read_bytes()).hexdigest()=='8963e12e1acddf582f0c035db2cb45025d1303fbe9e096e11901b36a0352c780'
     defines.update(PIONEER_Q38_TOKEN_FLAT_MATRIX_PROGRAMS='1',PIONEER_Q38_TOKEN_FLAT_MATRIX_NATIVE_CONTEXT='1',
                    PIONEER_Q38_TOKEN_NATIVE_FLAT_MATRIX_FIXTURE='1')
+if prefetch_worker:
+    assert hashlib.sha256((here.parent/'PioneerQ38TokenPrefetchPrograms.h').read_bytes()).hexdigest()=='021fdff4100dd6f8a6ff8548f9fa961473503cf6c2cd2e0b6adc44053b007567'
+    defines.update(PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS='1',PIONEER_Q38_TOKEN_PREFETCH_NATIVE_CONTEXT='1',
+                   PIONEER_Q38_TOKEN_NATIVE_PREFETCH_FIXTURE='1')
 if posted_cancel:
     defines.update(PIONEER_Q38_TOKEN_POSTED_CANCEL='1',PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',
                    PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')
@@ -490,9 +505,10 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
             # This bridge observes peers1..119 ONLY;ROOT code comes from
             # the new native package and is independently authenticated.
             peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_PRECISE_BETA_TEST=1']
+            if prefetch_worker:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_PREFETCH_TEST=1']
             rom_object=base/'precise-beta-expected-rom-data.o'
             subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
-                            '-fsanitize=address,undefined','-c',str(here/'pioneer_q38_precise_beta_program_data_bridge.cpp'),
+                            '-fsanitize=address,undefined','-c',str(here/('pioneer_q38_prefetch_program_data_bridge.cpp' if prefetch_worker else 'pioneer_q38_precise_beta_program_data_bridge.cpp')),
                             '-o',str(rom_object)],check=True)
             extra += [str(rom_object)] # DATA TU has NO inherited tensor-Work/native/CPU-oracle roles
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',

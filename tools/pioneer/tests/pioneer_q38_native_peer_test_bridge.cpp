@@ -55,13 +55,19 @@ static bool ExpectedProgramWord(unsigned worker,uint32_t address,uint32_t& outpu
  return PioneerQ38TokenPrograms::ProgramWord(worker,address,output);
 #endif
 } // expected CONST ROM DATA,never a guest memory or arithmetic product source
-struct NativePeer:GlobalChainPeer,CohortBytes {
+#ifdef PIONEER_Q38_NATIVE_PEER_PREFETCH_TEST
+#include "PioneerQ38NativePrefetchObserver.h"
+using NativePeerBase=NativePrefetchPeer<GlobalChainPeer>;
+#else
+using NativePeerBase=GlobalChainPeer;
+#endif
+struct NativePeer:NativePeerBase,CohortBytes {
  PioneerQ38SharedTestBinding& binding;unsigned deviceReads=0,deviceWrites=0,statusWrites=0,scalarFpInstructions=0;
  uint32_t publishedCounts[8]={},publishedCommands[10]={};bool publishedPending=false;
  bool endpointInputsObserved=false;
  Q38InstructionStackObserver instructionStack;
  NativePeer(const char* old,const char* global,unsigned worker,PioneerQ38SharedTestBinding& b)
-  :GlobalChainPeer(old,global,worker),binding(b){
+  :NativePeerBase(old,global,worker),binding(b){
   (void)&RunPersistentGdnPair;(void)&Refusals;(void)&LateRefusals;
   assert(!steps && pc==0x6000 && !active && !sequence && !matrixInstructions && !requests && !responses);
   bytes=this;PoisonDst();Poison();
@@ -101,12 +107,12 @@ struct NativePeer:GlobalChainPeer,CohortBytes {
   if(CodeAddress(address))return binding.Word(address);
   if(Range(address,0xffb20000,0x2000))for(unsigned i=0;i<16;i++)if(address-0xffb20000==BlackholeDramSourceOffset(i))
    return binding.bytes.noc(binding.bytes.context,logicalWorker,address-0xffb20000);
-  const uint32_t value=GlobalChainPeer::Load(address);
+  const uint32_t value=NativePeerBase::Load(address);
   if(Range(address,0xffb20000,0x2000))Publish();
   return Range(address,0xffb20000,0x2000)?binding.bytes.noc(binding.bytes.context,logicalWorker,address-0xffb20000):value;
  }
  void Store(uint32_t address,uint32_t value)override{
-  assert(!CodeAddress(address));GlobalChainPeer::Store(address,value);deviceWrites++;
+  assert(!CodeAddress(address));NativePeerBase::Store(address,value);deviceWrites++;
   if(Range(address,G::Status,64))statusWrites++;
   if(Range(address,0xffb20000,0x2000))Publish(Range(address,0xffb20000,40)?1U<<((address-0xffb20000)/4):0U);
  }
@@ -115,7 +121,7 @@ struct NativePeer:GlobalChainPeer,CohortBytes {
   const unsigned opcode=expected&127;if(opcode==7 || opcode==0x27 || opcode==0x53)scalarFpInstructions++;
   // Parent service FP decoders may use their immutable ROM byte vectors.
   // ALL instruction bytes must first equal this SAME installed L1 word.
-  GlobalChainPeer::StepBlock();
+  NativePeerBase::StepBlock();
   assert(instructionStack.Retired(regs[2])); // actual completed instruction;NO guest-state setter
   // Hardware events originate ONLY at actual NoC Load/Store endpoints
   // above. Re-scanning every completed packet after every ordinary ISA/
@@ -177,6 +183,9 @@ bool Q38NativePeerTestCpu::ObserveMatrixOutput()const{
 } // actual native L1 outputs vs separate FP32/FP64 arithmetic,NO products supplied
 bool Q38NativePeerTestCpu::ObserveStopped()const{
  namespace G=NativeQ38PeerInstructionModel::G;const auto& p=*impl->cpu;
+#ifdef PIONEER_Q38_NATIVE_PEER_PREFETCH_TEST
+ if(!p.prefetchJobsVerified || !p.prefetchPendingOps)return false;
+#endif
  return p.pc==p.stopPC && !p.active && !p.pending && p.sequence
   && p.memory.at(G::Status+4)==p.sequence && !p.memory.at(G::Status+8) && p.memory.at(G::Status+16)==G::Stop
   && p.memory.at(G::Job+4)==p.sequence && p.memory.at(G::Job+8)==G::Stop;

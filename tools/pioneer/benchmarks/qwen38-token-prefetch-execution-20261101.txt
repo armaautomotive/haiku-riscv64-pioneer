@@ -1,5 +1,12 @@
 Current QGW3 prefetch: actual emitted execution qualification
 ============================================================
+13:39UTC UPDATE:new complete native main/clean subjects and original-byte
+first-layer/cancel/STOP/HOLD/drain/full-END BOTH exit0;strict ALL10240-word
+prefix comparisons BOTH exit0,bitexact. See
+qwen38-token-prefetch-native-20261101.txt. No physical prefetch rate exists
+yet;the narrower historical UNQUALIFIED statements below are superseded
+only within that report's explicit simulated/native/first-layer scope.
+
 12:52UTC UPDATE:the complete14-section DATA package and default old whole-
 native-binary controls are CLOSED;see qwen38-token-prefetch-data-20261101.txt.
 New native owner/lifecycle/hardware/speed remain UNQUALIFIED. Historical

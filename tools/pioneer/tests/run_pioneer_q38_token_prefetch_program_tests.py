@@ -97,10 +97,17 @@ with tempfile.TemporaryDirectory(prefix='pioneer-q38-token-prefetch-data-',dir='
             else:bad[key]=value
             syntax(bad,False,include(committed))
         syntax(base,False,include(committed)+'#undef '+key+'\n#define '+key+' 0\n'+include(committed))
-    foreign=set(re.findall(r'defined\(([A-Z_][A-Z0-9_]*)\)',role.read_text()))-set(selectors)
+    # The role now distinguishes an already included OWN header from a
+    # legacy selected namespace. Its conventional include guard is not a
+    # capability flag;test forged guards against the ACTUAL DATA below.
+    own_guard='PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS_H'
+    foreign=set(re.findall(r'defined\(([A-Z_][A-Z0-9_]*)\)',role.read_text()))-set(selectors)-{own_guard}
     for key in sorted(foreign):
         for value in ('0','1'):syntax({**base,key:value},False)
         syntax(base,False,include(role)+'#define '+key+' 0\n'+include(role))
+    for value in ('0','1'):
+        syntax({**base,own_guard:value},False,include(committed)
+               +'static_assert(PioneerQ38TokenPrefetchPrograms::TilePrefetch==1);\n')
     selected=here.parent/'PioneerQ38TokenSelectedPrograms.h'
     syntax(base,False,include(selected))
     syntax({},False,include(selected)+''.join('#define '+key+' 1\n' for key in selectors)+include(role))

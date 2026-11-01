@@ -1,5 +1,10 @@
 Current full-model prefetch worker: BUILD/roles CLOSED,execution unqualified
 =========================================================================
+13:39UTC UPDATE:new native main/clean subjects and original-byte first-layer/
+cancel/full-END+strict bitexact prefix are CLOSED. See
+qwen38-token-prefetch-native-20261101.txt. No physical speed or whole-model
+correctness claim follows;historical narrower open items below predate it.
+
 12:52UTC UPDATE:complete new14-section DATA is now CLOSED in both trees;
 old SDK objects/whole8612 module still reproduce EXACTLY. See
 qwen38-token-prefetch-data-20261101.txt. No new native owner/module or

@@ -1,0 +1,172 @@
+Current full-model prefetch: native BUILD,full-END and strict prefix CLOSED
+=========================================================================
+13:43UTC DEPLOYMENT UPDATE:all native/strict gates below are CLOSED.
+Fresh independent health,staging/full copy-back,exact apply44612 and fresh
+independent prelaunch checks ALL ACTUALLY exit0. New919d/tag75/gen33 is
+installed without reboot. SAME14837 physical run is LIVE with unchanged4b
+--benchmark-34-positions. PROTECTED whole original-source-SHA/Open/upload/
+generation/restoration/END+Close lifetime: NO extra Pioneer SSH/status/admin/
+GPU/model/stage/reload/reset/power/SD/OS/network until actual process exit.
+No prefetch speed or full-model quality claim before actual clean closure.
+
+2026-11-01,13:39UTC. Goal ACTIVE;20tok/s UNMET. At that earlier checkpoint
+no Pioneer operation,installation,physical inference or speedup had occurred.
+Last physical result remains0.154472171..0.154474645tok/s with unresolved
+strict full-model score differences. New original-byte native first-layer/
+STOP/HOLD/drain/full-END main99921 andclean39549 BOTH ACTUALLY exit0;
+main/clean complete logs compare exactly. Independent strict prefix
+comparators BOTH ACTUALLY exit0. This is NOT full-model or physical proof.
+
+Exact separate native subjects
+--------------------------------
+021fdff4100dd6f8a6ff8548f9fa961473503cf6c2cd2e0b6adc44053b007567 DATA binds
+the88e4 ROOT andcf02 returning worker,including its856B fetch ROM. New
+private/bounded diagnostic CPPs select their OWN program namespace before
+inherited native code. All14 actual compiled arrays authenticate against
+their immutable source SHA256;the2MiB raw RoPE matches the old control.
+No old program namespace,CPU model oracle,TEST instruction engine,llama,
+ggml,Work control or validation-product import is present in either binary.
+
+Private object:
+ e4e8cc3f616d8cc5c34789326ed3fdd8e3e920cf96c50ce19658d1d9b934f845
+Public object:
+ 30691de52d1f34dcc01725b8d068c54fa283419ec97da7b15c58ac02729ba9a0
+Whole diagnostic module:
+ 919d4a631ff664549a67bb2372ce2db344ba29473c452c0b273c4b27a2bdf978
+Filename tenstorrent_pci_probe-token-PREFETCH34-BENCHMARK.
+
+Inspect7381/85623/38795/30112 and frozen44198/6640/78433/81600 ALL ACTUALLY
+exit0. Main/clean entire objects+module compare byte-for-byte. Literal
+new pins are enforced in frozen reruns,not inferred from a source change.
+ENTIRE old98db private/ab06 public/8612 module reproduce FIRST from pinned
+original compile/link argv on EVERY build. The private5 actual renamed ABI
+bodies AND5 wrappers equal independent inert/refusal/null functions. The
+public path keeps only the bounded6607+6608 diagnostic,not Assistant Work.
+Frames remain bounded against the old subject. Actual public callgraph
+still reports5392 known module bytes/25 unresolved targets;kernel/IRQ/
+entry/indirect costs are excluded. Whole kernel stack is NOT qualified.
+
+Binding isolation and include-order repair
+--------------------------------------------
+Private1958/56839 and public65549/67584 ALL ACTUALLY exit0;main/clean log
+pairs cmp-exact. Each tree:4 private positives/434 refusals,4 diagnostic
+positives/331 refusals. Every old syntax control executes FIRST. Wrong,
+missing,zero,two,late,tag,ABI,old-image,shader BUILD,CPU and Work selections
+cannot acquire the new binding or silently fall back to old programs.
+
+Initial48929/82390 actually exit1:calling the new full native role from
+inside geometry declaration recursed before PioneerQ38TokenL1 existed.
+Separate the pure DATA boundary from full native-owner checks. The common
+footprint rechecks the former OUTSIDE its guard;complete program roles
+still validate ALL native parents and actual journal type. There is no
+skip flag,caller bypass or removal of a parent/type guard. Old/new DATA
+mixing remains refused,including direct headers and repeated includes.
+
+DATA14111/38191 initially exit1 because the syntax fixture mistook the
+newly referenced OWN conventional include guard for a foreign capability.
+Scope the foreign-flag loop correctly and separately forge that guard0/1
+against the ACTUAL header:both must fail to provide the required namespace.
+No production condition is relaxed by this fixture correction. Final
+90745/91247 ACTUALLY exit0;logs cmp-exact:ALL3068314 words,32 corrupt/
+truncated+2 wrong-worker refusals,3 syntax positives/264 refusals. ENTIRE
+old DATA controls and all original literal identities remain unchanged.
+
+Native instruction/endpoint extension: HOST ONLY,not driver code
+----------------------------------------------------------------
+The new opaque expected-ROM bridge provides the exact ten peer sections,
+never ROOT words or products. The same119 virgin ISA engines see actual
+installed L1 bytes from genuine native staging. A HOST-only prefetch
+observer adds the fetch ROM BEFORE first boot and checks completed current
+raw bytes against original source tiles,alternating90000/98000 destinations,
+exact issued/completed counts,real call/return order and final unissued
+command restoration. Pending NIU state/counters are NEVER hidden from the
+guest. Per-job bookkeeping preserves processor/LReg/Dst/nonce and physical
+counter history;no ready marker,output or completion is supplied.
+Every actual matrix completion must have all original reads/responses,
+all stages/restores and drained tensors. Actual STOP additionally requires
+prior matrix jobs and observed pending compute. Other matrix/GDN/dense/
+global-output/native restoration state stays in the SAME engine/fabric.
+
+The initial25882 run was explicitly terminated for a KNOWN setup defect,
+not a timeout:inherited delay0 completed each synthetic reply during issue
+readback,so the mandatory pending-compute witness could never occur. Exact
+owned child36172 was identified before SIGTERM;the Pioneer and old41236
+test were untouched. The corrected fixture sets synthetic reply delay3
+BEFORE first instruction;this is NOT physical timing or a speed result.
+24 shortened/missing/duplicate/wrong-worker/profile/compile-only CLI cases
+54741/54045 ACTUALLY exit0 with no output/compiler/runtime/source creation;
+old ROOT-frontend1 positive/40 role+12 CLI refusals run FIRST. Logs cmp-exact.
+
+Original-byte execution,full native END and strict prefix: CLOSED
+------------------------------------------------------------------
+CLOSED99921 main raw:/private/tmp/pioneer-q38-prefetch-native-full-end-main-20261101-lf.log
+CLOSED39549 clean raw:/private/tmp/pioneer-q38-prefetch-native-full-end-clean-20261101-lg.log
+Both authenticate the SAME-open original27B GGUF BEFORE native construction,
+pass genuine full851 initialization,create ALL119 virgin engines and
+execute original first-projection bytes. First3 workers complete actual
+fullK5120/1280 tensor instructions EACH with independent FP32/FP64 output
+checks. BOTH execute actual matrix+Conv+GDN+FFN first-layer arithmetic,
+consume cancellation,reach ROOT/all119 actual STOP,120 HOLD,zero-record
+drain,TWO held-hidden reads16384+4096B,full original code+L1+dispatch,
+119peer+ROOT NIU+scratch,shared originals,clock END1350->800,hardware
+retirement,29 simulated OS-view deletions,72 checked PCI config reads+
+11 exact original writes,3 host releases,unreserve and locked destruction.
+No later PCI/MMIO/OS release or retry occurs. Actual layer0 ROOT92530231/
+peer2081966592 and terminal ROOT170872660/peer2083700092 are HOST instruction
+counts,NOT physical timing or speed. Actual ROOT reserved6528/accessed6516
+and largest peer reserved5360/accessed5348 fit8192B EACH;HOST kernel/IRQ
+stack remains separately unqualified.
+
+Only AFTER actual exit0,prefixes copied into separate observed directories.
+Initial comparator invocations refuse relative CPU path with exit2 before
+comparison;production parser unchanged. Correct absolute-path invocations
+main/clean BOTH exit0,logs cmp-exact:ALL10240 embedding+layer0 words bitexact,
+maxAbs0/relativeL20,NO tolerance. Both41028B prefixes SHA:
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+This matches the preceding flat-worker prefix but does NOT establish later
+layers,tokens,state reuse,arbitrary prompts,public ABI or Assistant Work.
+
+Exact-version updater: CLOSED offline,NOT staged
+-------------------------------------------------
+Source SHA3ceff7375c872bbcb2394c751ad8200c845cc6a6b62d436b7e99812608df0698
+adds ONLY exact041<->919d prefetch apply/restore routes. Immutable remote
+ccbc and older helpers retain their OWN routes and CANNOT restore919d.
+Main67512/clean4009 BOTH ACTUALLY exit0,1996 cases EACH;logs cmp-exact.
+All20 selected old/new diagnostic routes retain exact hash-qualified
+backups,source/destination/owner/handshake/symlink checks and failure
+behavior. New modes reject all9 older same-tag subjects;all18 prior routes
+reject919d. No force,reset,retry,automatic rollback or actual reload occurs.
+The source comment restricts staging/use until separate native full-END
+qualification;it is NOT a runtime proof-verification gate. Neither this
+helper nor919d has been copied to the Pioneer at this checkpoint.
+
+Earlier13:30UTC LIVE statements are superseded ONLY by these actual exits.
+No inference rate is derived from HOST instruction counts.
+
+Qualified staging/apply/isolated physical launch: CLOSED prelaunch,LIVE run
+---------------------------------------------------------------------------
+Fresh prestage SSH actually exits0:exact041/gen32/cold0/quiesced0/owner0/
+open1/guard1,64 CPUs/full137034936320B/no compute parent. Both new paths
+absent including symlinks. Module+helper copies actually exit0;fresh staged
+remote SHA and BOTH independent full copy-backs match qualified local bytes.
+Module2873352B/919d and helper86054B/3ceff are exact. (Actual file length
+is independently recorded by the archived copy-back command evidence.)
+The baseline remains041 throughout staging;older helpers are untouched.
+
+ONLY new3ceff helper /bin/sh --apply-token-prefetch-benchmark:44612
+ACTUALLY exits0,041/gen32 quiesce+close/reload919d/tag75/gen33. No reboot,
+reset or GPU execution. Fresh independent prelaunch SSH actually exits0:
+exact919d/helper3ceff/baseline041/client4b/adminb0c/guardd1ce,healthy idle,
+64 CPUs/fullRAM/no compute parent. All stage/apply/prelaunch stderr0B.
+
+SAME14837 launched13:42:33UTC,raw:
+/private/tmp/pioneer-q38-prefetch-physical-20261101-lw.log
+stderr same basename. Original model authentication occurs BEFORE Open.
+All earlier NOT STAGED/INSTALLED statements are superseded ONLY by this
+actual verified ledger. This is still a diagnostic,NOT Assistant Work.
+
+Next:poll SAME14837 locally until actual exit,then unchanged strict score
+comparison and paired rate arithmetic. After actual closure,independent
+health and ONLY exact3ceff --restore-token-prefetch-benchmark if healthy.
+Full64-layer numerical quality,arbitrary prompts,resident fresh requests,
+useful no-CPU-reference Assistant Work and sustained20tok/s remain unmet.
