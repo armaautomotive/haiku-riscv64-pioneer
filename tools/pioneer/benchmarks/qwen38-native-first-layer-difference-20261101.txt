@@ -1,0 +1,56 @@
+Original-model native hidden rows:first visible difference at completed30
+=======================================================================
+2026-11-01 22:45UTC. Goal ACTIVE;usable27B Work and20tok/s UNMET. This is
+an offboard numerical localization,NOT P100A throughput,physical fault
+cause,whole-model numerical acceptance or card authenticity evidence.
+
+SAME original histories,not supplied model products
+---------------------------------------------------
+Main17008/clean75574 are the older original-model precise-beta1f49/fault-
+ROOT full3-token native flows described in qwen38-native-layer-boundaries-
+20261101.txt. They are NOT new twin56b/ROOT6066/privatefeaa/public010c.
+No flow was restarted,shortened,completed by timeout or supplied a private
+owner/processor/counter/product/history transplant. The incomplete files
+record actual completed-hidden rows only after genuine progress and ALL
+119 peer arithmetic/DONE/WAIT boundaries,without CPU expected products.
+These rows contain no token/terminal/STOP/END or physical identity claim.
+
+New unchanged strict comparisons
+--------------------------------
+All three original full CPU trace pins authenticate on EVERY comparison.
+Main zi/clean zj for completed27 BOTH ACTUALLY0;main zk/clean zl for28
+BOTH ACTUALLY0. Main zm/clean zn run29 THEN30 without changing the command,
+input or verifier;BOTH ACTUALLY exit1. Complete paired logs are byte-exact.
+ALL four paired snapshot files27..30 are byte-exact between source trees.
+
+completedLayers  bitDifferences/5120       maxAbs         relativeL2
+27                         0                   0                  0
+28                         0                   0                  0
+29                         0                   0                  0
+30                      5120      0.00132303312421  0.000409597252081
+
+Earlier completed1..26 passed their unchanged comparisons in the prior
+checkpoints. Therefore30 is the FIRST VISIBLE completed-hidden-row
+difference in position0,not proof that every intermediate/KV/GDN state in
+earlier layers matched. Completed30 corresponds to the output after
+zero-based layer29. A row's small relative difference remains a FAIL;
+no tolerance,expected trace/pin,diagnostic-only exit or numerical decision
+was changed. Numerical equality at29 does not prove full-model correctness.
+
+What this changes
+-----------------
+The difference reproduces deterministically in the two HOST instruction-
+execution histories without using the physical P100A. That establishes
+an offboard mismatch to investigate,not that its cause is identical to the
+physical final-score differences or that hardware is fully healthy.
+Next localize the operations producing this first divergent row,retaining
+the real preceding observed row only as DATA for numerical diagnostics.
+Never use it to replace the global history or manufacture native ownership,
+full-model success,STOP/END or hardware-deployment qualification.
+
+SAME17008/75574 and the separate older3-token41236 continue toward their
+original full arithmetic/commit/terminal/STOP/END obligations. Partial
+snapshots/comparisons cannot close those jobs. New physical010c diagnostic
+21858 is a SEPARATE protected lifetime;no extra Pioneer operation is allowed
+while it authenticates/loads/executes/restores. Its bounded first-layer and
+native-END qualifications do not waive full-model numerical/Work requirements.

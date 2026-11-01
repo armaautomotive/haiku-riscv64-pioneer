@@ -1,5 +1,42 @@
-Twin010c guarded rollout:STAGED,NOT INSTALLED;full regression still LIVE
-=======================================================================
+Twin010c guarded rollout:INSTALLED;bounded physical diagnostic LIVE
+==================================================================
+2026-11-01 22:47UTC update supersedes historical STAGED/LIVE-test status below.
+SAME main97588/clean32790 unfiltered updater runs BOTH ACTUALLY exit0,
+observed22:45:29UTC:EACH17037 actual filesystem/handshake/hash/symlink/
+owner/failure cases;complete logs byte-identical. Both helper/test sources
+remained byte-exact6c3215d8/8d59c690 throughout.205 declared modes include
+the explicit retired failures;no selection/expectation was relaxed.
+
+ONLY exact new6c32 helper apply:51494-zg ACTUALLY0 after fresh stable041/
+gen2/fullRAM64CPU/whole staged identity/clean owner checks. Actual old
+quiesce+close,new010c/tag75/gen3 reload verified;stderr0B. Separate fresh
+prelaunch zh ACTUALLY0:installed010c AND all preserved module/helper/f8/
+admin/guard hashes exact,gen3/cold0/owner0/quiesced0/open1/guard1,no compute
+parent,64CPUs/full137034936320B;stderr0B. No reboot/reset/GPU work in apply.
+
+NEW actual bounded diagnostic21858-zp starts22:47:03UTC and is LIVE:
+ /private/tmp/pioneer-q38-twin-physical-20261101-zp.log
+ /private/tmp/pioneer-q38-twin-physical-20261101-zp.stderr
+Exact f8 client --diagnose-frontier-34-positions,no runtime CPU reference.
+Initial log has only its exact F8 banner+fixed diagnostic header;full
+original GGUF authentication precedes accelerator Open. No Open/upload/
+START/records/clean END/rate is claimed yet. PROTECT this ENTIRE SAME
+hash/Open/upload/generation/restoration/Close lifetime:NO other Pioneer
+SSH/status/admin/GPU/model/stage/reload/reset/power/SD/OS/network action.
+Only SAME21858 observations and local raw files. Timeout is NOT terminal,
+retry,restore or recovery permission. New local UART cursor zo records the
+existing logger's inode/offset only;it neither opens nor alters the serial
+device and is NOT fault provenance. No speedup or usable Work result.
+
+Separate older native numerical observation:completed layer29 is bitexact,
+first visible completed-hidden-row difference is at30 in BOTH old flows:
+5120 differing words,maxAbs0.00132303312421,relativeL20.000409597252081.
+This is a STRICT FAILURE,not a tolerance/expected-value change or a claim
+of the physical error's cause. See qwen38-native-first-layer-difference-
+20261101.txt. Those SAME full native histories remain separate and LIVE.
+
+Historical staging ledger follows,not the current hardware state
+-----------------------------------------------------------------
 2026-11-01 22:10UTC. Goal ACTIVE;20tok/s UNMET. No new accelerator job or
 speed result. Stable041/tag12/generation2 remains installed,healthy idle,
 64CPUs/full137034936320B. Native first-layer/full-END and public BUILD
