@@ -100,11 +100,13 @@ No2d45 result may be silently relabelled as cd54 qualification.
 Physical work remains separate
 -------------------------------
 SAME41855 is the previously qualified78322 driver,NOT either new BUILD.
-It remains LIVE,full19399024640 learned-byte upload complete and START
-acknowledged,then actual terminal ready observed;HOLD/drain/restore is
-still running,not a clean END. No other GPU/admin FD,model,reload/reset/power/SD/OS/network
-intervention is permitted until actual END+Close/process exit. Strict
-comparison,fresh idle health and exactccded66d restore041/gen18 remain
-required after closure. Latest completed rate remains about0.10723tok/s;
+It ACTUALLY closes0,observed02:27:12UTC,with all34 records/clean END and
+rate0.110798402..0.110799678tok/s,about3.3percent above the same4b/old1f3
+control. Known numerical mismatches still fail both strict comparators.
+Fresh idle health,exactccded66d baseline restore75608 ACTUAL exit0 and
+independent041/tag12/gen18/cold0/owner0/64CPU/max137034936320B health all
+pass. No live-model GPU/admin/reload/reset/power intervention occurred.
+Full evidence is qwen38-commit-boundary-physical-20261101.txt. This small
+hardware gain does NOT qualify the distinct new source-audit experiment;
 known full-model numerical differences,arbitrary fresh requests,resident
 Assistant Work and20tok/s all remain unmet.

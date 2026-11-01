@@ -1,0 +1,6 @@
+PASS exact first12 header words ALL34 records;per-session nonce and counters NOT asserted equal;NO numerical acceptance
+old_rate {'sampled_tokens': 32, 'first_committed': 2, 'last_committed': 34, 'elapsed_min_us': 298353879, 'elapsed_max_us': 298357206, 'lower': 0.107253987, 'upper': 0.107255183, 'observations': 3046}
+new_rate {'sampled_tokens': 32, 'first_committed': 2, 'last_committed': 34, 'elapsed_min_us': 288809504, 'elapsed_max_us': 288812830, 'lower': 0.110798402, 'upper': 0.110799678, 'observations': 2949}
+observed_percent_gain_bounds 3.3035410512515684 3.305882698794216
+new_mean_seconds_per_sampled_token_bounds 9.025297 9.0254009375
+SAME4b client:old1f3 vs new78322;one run each,not statistical confidence or isolated latency;NO full-model quality or Work grant

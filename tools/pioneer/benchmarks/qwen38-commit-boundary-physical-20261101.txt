@@ -1,0 +1,72 @@
+Actual commit-boundary driver:small measured gain,not usable27B Work
+===================================================================
+2026-11-01,02:29UTC. Goal ACTIVE;20tok/s and full numerical acceptance
+remain UNMET. This is one bounded34-position diagnostic,not Assistant
+conversation,arbitrary fresh requests,resident serving or a delivery ETA.
+
+Actual subject and complete lifetime
+-------------------------------------
+SAME41855 launched01:47:12UTC and ACTUALLY exits0,observed02:27:12UTC.
+Prelaunch independent SSH verified the complete78322 driver hash:
+ 78322cfa94db2519284efa12ad69cfa77981446f03081fc95aee2ee6234de8d1
+tag2026103100010075/generation17,with the UNCHANGED4b client:
+ 4b1dbee63e537b39e5212a9180670139a2a9ba46ef0b3cbeb66a7d5226b7f048
+The full same-open original GGUF authenticates BEFORE accelerator Open.
+All19399024640 padded learned bytes/3551parts/4736090pages/20367spans
+upload. Actual terminal,HOLD,drain,full restore,END+Close and all34 records
+complete;stderr0B. No runtime CPU model reference,second GPU/admin FD,
+other model,reload/reset,power/SD/OS/network intervention occurs while live.
+Declared ROOT payload is83677,NOT either new2d45/cd54 offline experiment.
+
+Observed post-prompt count window
+----------------------------------
+32 sampled tokens,first committed2,last34,2949 observations:
+ elapsed288809504..288812830us
+ rate0.110798402..0.110799678tok/s
+ mean9.025297..9.0254009375seconds per sampled token
+Authentication,upload,startup and cleanup are EXCLUDED. These are count-
+window bounds,not statistical confidence or isolated-token latency.
+
+Exact same-client old1f3 control(zaq):32 sampled tokens,committed2..34,
+3046 observations,elapsed298353879..298357206us,rate0.107253987..
+0.107255183tok/s. The observed paired-run improvement is3.303541..
+3.305883percent. One run of each is NOT repeatability/statistical proof.
+ALL34 first12-word record headers are EXACT;per-session nonces and physical
+counters are deliberately NOT asserted equal. The separate718d frontend
+profile is not substituted as this unchanged-client control.
+
+Numerical acceptance:STILL FAILED
+---------------------------------
+Main and independent-clean strict posthoc comparators ACTUALLY exit1;
+outputs byte-identical. Record/session/feedback/flags/reserved/count/rate
+grammar and arithmetic pass. Known first-three maximum-logit differences
+remain,with the same input/greedy selections:
+ pos0 selected70253 observed413bc1de CPU413c2358
+ pos1 selected17    observed41452aa2 CPU414621d3
+ pos2 selected17    observed4167c42a CPU4168afd0
+No tolerance,reference,expected value or parser gate is relaxed. Positions
+3..33 have no external numerical acceptance here. Repeated17 and equal
+headers versus another experimental driver do NOT prove useful language
+generation. No full-hidden/vocabulary or Assistant Work pass is claimed.
+
+Fresh idle health and actual baseline restoration
+--------------------------------------------------
+Only AFTER actual process exit,fresh independent SSH verifies Haiku/UID0,
+64CPUs/max137034936320B/free133753221120B,no model/Assistant parent,
+exact78322/4b/ccded66d/d1ce hashes and tag75/gen17/cold0/quiesced0/owner0/
+open1/guard1. Exactccded66d restore75608 ACTUALLY exits0:quiescence,close,
+041 baseline reload and verified generation18,no reboot or GPU execution.
+Fresh independent SSH then verifies complete baseline:
+ 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+tag2026102100010012/gen18/cold0/quiesced0/owner0/open1/guard1,unchanged
+helper/guard,64CPUs/max137034936320B/free133755232256B. No reset,recovery,
+SD/mains or hardware change. The diagnostic is no longer the live driver.
+
+Next
+-----
+Continue exactcd54 original-byte transition+first-layer numerical tests,
+then separately qualify any new immutable DATA/native/physical route.
+The new source-audit experiment has NOT run on hardware. This3.3percent
+gain is small;substantially faster on-card orchestration/compute and full
+model correctness remain necessary. Keep Work without runtime CPU model
+reference distinct from validation. Goal stays ACTIVE.

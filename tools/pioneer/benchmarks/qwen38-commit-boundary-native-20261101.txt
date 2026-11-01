@@ -143,3 +143,13 @@ permitted until its actual END+Close and process exit. After closure,strict
 comparison/record+rate arithmetic/fresh idle health and exactccded66d
 baseline restoration (expected generation18) remain required. No new
 throughput or numerical acceptance is available from this pending run.
+
+Terminal physical update02:29UTC
+--------------------------------
+SAME41855 ACTUALLY exits0,observed02:27:12UTC,all34 records/clean END.
+Rate0.110798402..0.110799678tok/s,about3.3percent above the same4b/old1f3
+control;known first3 score differences still fail both strict comparators.
+Fresh idle health,exactccded66d baseline restore75608 ACTUAL exit0 and
+independent041/tag12/gen18/cold0/owner0/64CPU/max137034936320B health pass.
+See qwen38-commit-boundary-physical-20261101.txt for exact raw evidence,
+rate/quality limitations and remaining requirements.20tok/s remains UNMET.
