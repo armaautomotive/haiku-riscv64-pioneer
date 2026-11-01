@@ -1,0 +1,11 @@
+PASS_UNCHANGED_OLD_NATIVE_OBJECT 98db93fac0a8a59d8fead7e71d974ab8e6b70e02c0f5dc281100ced7656ebacf flat-matrix-context-NODRV.o
+PASS_OLD_NATIVE_CONTROL_ONLY current shared guards preserve qualified code;NO prefetch native owner,new driver,install,lifecycle,model or speed grant
+ACTUAL_PRIVATE5_BODIES_AND5_WRAPPERS_BYTEEXACT_INDEPENDENT_INERT_CONTROLS
+e4e8cc3f616d8cc5c34789326ed3fdd8e3e920cf96c50ce19658d1d9b934f845 token-prefetch-context-NODRV.o
+BUILD_ONLY prefetch14-array binding and preserved old controls;NO native execution,lifecycle,installation,model quality,Work or TPS grant
+ACTUAL_PRIVATE5_BODIES_AND5_WRAPPERS_BYTEEXACT_INERT_CONTROLS/all14 NEW arrays+unchanged rope/old completeprefetch FIRST
+3a24eb79013746eff0b7aa4be2cdeafbac8169a605c606327a2427c249a00126 token-batched-prefetch-context-NODRV.o
+BUILD_ONLY separate batched private context;NO conventional ABI,native lifecycle,install,model,physical,Work or TPS grant
+ACTUAL_PRIVATE5_BODIES_AND5_WRAPPERS_BYTEEXACT_INERT_CONTROLS/all14 NEW twin arrays+unchanged rope/ENTIRE old batched+prefetch+flat+ancestors FIRST/staticFrames<=2048 or unchanged older bound
+feaa9a9f7323ce1759177c62ae84b39c5993cffab4263b00806d4b9e7638a0ec token-twin-batch-prefetch-context-NODRV.o
+BUILD_ONLY distinct copy-free twin-batch PRIVATE context;NO conventional ABI,native lifecycle,install,model,physical,Work or TPS grant

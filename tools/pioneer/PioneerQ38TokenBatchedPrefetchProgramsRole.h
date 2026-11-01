@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 // Re-evaluate on EVERY include;separate DATA/private/diagnostic binding.
 #include "PioneerQ38TokenBatchedPrefetchDataBoundary.h"
+#include "PioneerQ38TokenTwinBatchPrefetchDataBoundary.h"
+#ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS
+static_assert(PioneerQ38TokenTwinBatchPrefetchParentBinding==1,"twin DATA requires its distinct outer role");
+#endif
 #ifndef PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PARENT_BINDING_H
 #define PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PARENT_BINDING_H
 #ifdef PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS

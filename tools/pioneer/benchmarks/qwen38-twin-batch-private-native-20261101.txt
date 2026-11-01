@@ -1,0 +1,89 @@
+Copy-free twin-batch PRIVATE native BUILD:CLOSED,not execution/installation
+======================================================================
+2026-11-01. Goal ACTIVE;20tok/s UNMET. The copy-free worker now has a
+distinct compiled private native binding to the actual full-model owner.
+No new public driver,hardware run,whole-model numerical pass,Assistant
+Work mode or speed result is claimed. Pioneer remains041/tag12/gen2,
+healthy idle/64CPUs/full RAM after the completed source-only diagnostic.
+
+Actual complete program/owner binding
+--------------------------------------
+Own DATA selector and private context are required together with EVERY
+exact batched/prefetch/flat/older private parent,renamed ABI and NODRV tag.
+The old parent role alone cannot acquire the new package. Pure twin DATA
+still has no SelectedPrograms/native grant. A separate outer role binds
+the new namespace before delegating to legacy parent revision checks.
+Late/missing/zero/two selectors,old arrays,public diagnostics,USER,shader,
+CPU oracle and Work aliases are refused. No conventional ABI is exported.
+
+The immutable049613d6 DATA header and ALL14 section bytes are unchanged:
+ROOT6066e693,worker56b470ae,ALL120 cores/3086042 code words in the original
+QTP3 journal geometry. FullBatchBuffers2/RawCopyBytes0/SecondBatch9a000
+are asserted on the actual selected namespace,not merely on an unrelated
+DATA header. The worker is the separately qualified copy-free two-buffer
+variant,NOT old b73,1f49 or a fresh synthetic replacement for the native
+owner. This build does NOT execute the worker or qualify the actual model.
+
+Whole private object:
+ feaa9a9f7323ce1759177c62ae84b39c5993cffab4263b00806d4b9e7638a0ec
+Inspect main54819-vo/clean47050-vp BOTH ACTUALLY0 and whole bytes EXACT.
+Only then was the identity frozen. First frozen92658-vv/83569-vw BOTH0.
+After the later boundary repair,FINAL main6300-wa/clean67378-wb BOTH
+ACTUALLY0 and whole objects EXACT against the frozen pin. EVERY build
+first reproduces whole old private98db flat,e4e8 prefetch and3a24 batched
+objects,then checks every14 new embedded-array digest and unchanged2MiB
+rope. All5 actual renamed driver bodies+5 wrappers match independent
+inert/refusal/null controls. Individual frames<=2048 or no larger than
+the qualified predecessor. This is NOT whole kernel/IRQ stack proof.
+Forbidden CPU reference,llama/ggml,HOST ISA model,synthetic source and
+Work-control symbols remain absent from defined AND undefined symbols.
+
+The failed boundary test and production repair
+----------------------------------------------
+Initial pure-DATA main63844-vr/clean58031-vs ACTUALLY fail1. The unchanged
+old prefetch-role negative test finds that a newly recognized foreign
+PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT defined0 is accepted
+by that standalone legacy role. There was NO device operation or new
+native code execution. The failure/expectation is preserved,not relabelled
+or removed. Production PrefetchDataBoundary now unconditionally rechecks
+TwinBatchDataBoundary even without a generated header/geometry include.
+Thus a foreign twin native selector cannot evade its own DATA binding.
+
+Repaired complete DATA main89330-vy/clean86300-vz BOTH ACTUALLY0,logs EXACT.
+ALL original ancestor packages/corruption/role tests still run FIRST.
+Final twin scope:16 same-open authenticated artifacts,32 corrupt/truncated
+refusals,5 wrong-family refusals,3 positive and214 missing/zero/two/late/
+old-array/native/BUILD/USER/CPU/Work refusals. No original expectation,
+code word,pin,journal extent,numerical tolerance or failed run was relaxed.
+
+Final private role main17367-we/clean76529-wf BOTH ACTUALLY0,logs EXACT:
+ALL old private-role controls FIRST,then3 positives/480 missing/zero/two/
+late/tag/ABI/old-parent/old-array/public/USER/shader/CPU/Work refusals.
+Earlier vn/vq also ACTUALLY0;final we/wf supersede them after the repair.
+
+Existing public driver preservation
+------------------------------------
+Before boundary repair vt/vu BOTH ACTUALLY0. After repair FINAL55498-wc/
+16531-wd BOTH ACTUALLY0. Complete old flat8612,prefetch919d and batched34322
+objects/modules reproduce FIRST. Every14 old arrays,unchanged rope and
+conventional ABI remain;actual graph recompilation is byte-identical,
+partial known module5392 bytes/25 unresolved/no dynamic frames or cycles.
+Whole kernel/IRQ stack remains unqualified by this partial audit.
+ old object368307386dbf6ecfa29a146ddf8e9c11559d8227c8d9137816ee6f4113c59d19
+ old module34322035d8aadcc8667d8a7ec3f2a144646f0060604e9e00ebfdd59fa7e4ca1c
+That old module's physical failure remains a FAILURE,and its source
+updater apply route remains disabled. Byte preservation grants no retry.
+
+Next required scope
+---------------------
+Add a distinct immutable expected-ROM HOST bridge and two-buffer raw-NoC
+endpoint observer without CPU products,guest PC/register/result/ready
+injection or native-state transplant. Authenticate the original model
+and matching complete ELFs;execute actual ROOT+ALL119 virgin RV32/Tensix
+workers through the original first layer and consumed cancellation,
+STOP/HOLD/drain/all stores+readbacks/clock/PCI/VM/hosts/reservation/
+destructor/END. Strict original-model prefix comparison is still required.
+Only after those gates may a separate public diagnostic be considered.
+The saved physical34322 failure must be diagnosed,not assumed fixed by
+copy removal. Full-model quality,resident fresh requests,arbitrary prompts
+and usable20tok/s on the P100A remain unproven and unfinished.

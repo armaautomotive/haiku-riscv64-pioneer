@@ -1,5 +1,14 @@
 Copy-free twin-batch immutable DATA:CLOSED,NOT a native or hardware grant
 ======================================================================
+Private BUILD update:feaa9a9f now separately binds the unchanged0496 DATA
+to the real renamed-ABI native owner. Independent inspect/frozen builds,
+all14-array/rope/inert-body checks,480 private role refusals,original pure
+DATA controls and whole old public-driver preservation are CLOSED. See
+qwen38-twin-batch-private-native-20261101.txt for the initial failed legacy
+boundary test and production repair. NO native execution,public new
+driver,hardware,Work or TPS grant. Historical no-private-binding scope
+below describes this earlier DATA checkpoint,not the new private build.
+
 Recovery update20:10UTC:separate34322 physical failure remains a failure.
 Controlled OFF once/ON once and pinned SD-free Linux-to-Haiku handoff are
 complete. Independent new-epoch cold0/owner0 checks preceded exact33d

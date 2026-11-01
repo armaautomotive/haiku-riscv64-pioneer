@@ -1,9 +1,11 @@
 /* SPDX-License-Identifier: MIT */
-// Rechecked on every geometry/header include. Pure DATA ONLY at present;
-// no native,public diagnostic,kernel,USER,shader or runtime Work binding.
+// Rechecked on every geometry/header include. Pure DATA OR a distinct
+// private renamed-ABI build;NEVER public diagnostic,USER,shader or Work.
 #ifndef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_DATA_SELECTION_H
 #define PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_DATA_SELECTION_H
-#ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT
+enum {PioneerQ38TokenTwinBatchPrefetchDataSelection=2};
+#elif defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS)
 enum {PioneerQ38TokenTwinBatchPrefetchDataSelection=1};
 #else
 enum {PioneerQ38TokenTwinBatchPrefetchDataSelection=0};
@@ -21,15 +23,13 @@ enum {PioneerQ38TokenTwinBatchPrefetchDataSelection=0};
  || defined(PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_RETAINED_COHORT_PROGRAMS_H) \
  || defined(PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS_H) \
  || defined(PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_FAULT_PROGRAMS_H) \
- || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H)
+ || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H) \
+ || (defined(PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H) && !defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS_H))
 #error Twin-batch DATA cannot coexist with old arrays or a selected native namespace
 #endif
-#if defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(__FAST_MATH__) \
- || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
- || defined(PIONEER_Q38_TOKEN_NATIVE_TEST_CONTEXT) || defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT) \
+#if defined(__FAST_MATH__) || defined(PIONEER_Q38_TOKEN_NATIVE_TEST_CONTEXT) \
  || defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_BENCHMARK_NATIVE) \
- || defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_BENCHMARK_NATIVE) \
- || defined(PIONEER_Q38_TOKEN_PREFETCH_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_PREFETCH_BENCHMARK_NATIVE) \
+ || defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_BENCHMARK_NATIVE) || defined(PIONEER_Q38_TOKEN_PREFETCH_BENCHMARK_NATIVE) \
  || defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_WORKER_IMAGE) || defined(PIONEER_Q38_WORK_TWIN_BATCH_PREFETCH) \
  || defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_WORKER_IMAGE) || defined(PIONEER_Q38_WORK_BATCHED_PREFETCH) \
  || defined(PIONEER_Q38_TOKEN_PREFETCH_WORKER_IMAGE) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) \
@@ -40,6 +40,20 @@ enum {PioneerQ38TokenTwinBatchPrefetchDataSelection=0};
  || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_WORK_INFERENCE) \
  || defined(TT_PIONEER_Q38_WORK_MODE)
 #error Twin-batch DATA alone has no driver,native,USER,shader,CPU oracle or Work grant
+#endif
+#ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT
+#if PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT != 1 \
+ || !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT != 1 \
+ || !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS) || PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS != 1
+#error Exact distinct twin-batch private build and complete batched parent required
+#endif
+// Full native role validation belongs in ProgramsRole AFTER geometry.
+static_assert(PioneerQ38TokenTwinBatchPrefetchDataSelection==2,"late twin-batch private DATA boundary");
+#else
+#if defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) \
+ || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_PREFETCH_NATIVE_CONTEXT)
+#error Pure twin-batch DATA alone has NO private native or kernel binding
 #endif
 #if defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS) \
  || defined(PIONEER_Q38_TOKEN_FLAT_MATRIX_PROGRAMS) || defined(PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_PROGRAMS) \
@@ -52,13 +66,14 @@ enum {PioneerQ38TokenTwinBatchPrefetchDataSelection=0};
 #error Pure twin-batch DATA must not inherit old package selectors
 #endif
 static_assert(PioneerQ38TokenTwinBatchPrefetchDataSelection==1,"late twin-batch DATA selection");
+#endif
 #else
 #ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS_H
 #error Twin-batch guard cannot forge an unselected old DATA package
 #endif
 #if defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT) \
  || defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_BENCHMARK_NATIVE)
-#error Twin-batch DATA currently has NO native/public diagnostic binding
+#error Twin-batch native selection requires its distinct immutable DATA
 #endif
 static_assert(PioneerQ38TokenTwinBatchPrefetchDataSelection==0,"late twin-batch DATA removal");
 #endif

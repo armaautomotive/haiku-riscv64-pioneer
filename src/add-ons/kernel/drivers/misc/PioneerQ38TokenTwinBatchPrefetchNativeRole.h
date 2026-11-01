@@ -1,0 +1,14 @@
+/* SPDX-License-Identifier: MIT */
+// Separate PRIVATE renamed-ABI build only;no loadable driver or Work.
+#if !defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT != 1 \
+ || !defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS) || PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS != 1 \
+ || !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT != 1 \
+ || !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS) || PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS != 1
+#error Exact distinct twin-batch private context and batched parent revisions required
+#endif
+#if defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_BENCHMARK_NATIVE) \
+ || defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_WORKER_IMAGE) || defined(PIONEER_Q38_WORK_TWIN_BATCH_PREFETCH) \
+ || defined(PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT) || defined(PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT)
+#error Twin-batch private build cannot alias a public diagnostic,USER,shader or Work
+#endif
+#include "PioneerQ38TokenBatchedPrefetchNativeRole.h"

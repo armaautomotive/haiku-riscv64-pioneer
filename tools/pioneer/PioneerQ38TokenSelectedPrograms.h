@@ -2,8 +2,8 @@
 // DATA selection only; no native source/lifetime, journal or launch grant.
 // Rechecked outside the guard so late/defined-zero changes cannot alias data.
 #include "PioneerQ38TokenTwinBatchPrefetchProgramsRole.h"
-#ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS
-#error Twin-batch DATA currently has no qualified native selection;never silently fall back
+#if defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS) && !defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT)
+#error Twin-batch DATA requires its distinct private build;never silently fall back
 #endif
 #include "PioneerQ38TokenBatchedPrefetchProgramsRole.h"
 #if defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS) \
@@ -69,7 +69,9 @@
 #elif defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
 #error QTP3 native selector requires its actual native parent
 #endif
-#ifdef PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS
+#include "PioneerQ38TokenTwinBatchPrefetchPrograms.h"
+#elif defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS)
 #include "PioneerQ38TokenBatchedPrefetchPrograms.h"
 #elif defined(PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS)
 #include "PioneerQ38TokenPrefetchPrograms.h"
@@ -103,7 +105,9 @@
 #include "PioneerQ38TokenFootprint.h"
 #ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
-#ifdef PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS
+namespace PioneerQ38TokenPrograms=PioneerQ38TokenTwinBatchPrefetchPrograms;
+#elif defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenBatchedPrefetchPrograms;
 #elif defined(PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenPrefetchPrograms;

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // DATA boundary ONLY,including while geometry is still being declared.
 // Native owner checks belong in ProgramsRole AFTER geometry is available.
+#include "PioneerQ38TokenTwinBatchPrefetchDataBoundary.h"
 #ifndef PIONEER_Q38_TOKEN_PREFETCH_DATA_SELECTION_H
 #define PIONEER_Q38_TOKEN_PREFETCH_DATA_SELECTION_H
 #ifdef PIONEER_Q38_TOKEN_PREFETCH_BENCHMARK_NATIVE
@@ -40,7 +41,9 @@ enum {PioneerQ38TokenPrefetchDataSelection=0};
  || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H) \
  || (defined(PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H) && !defined(PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS_H) \
   && !(defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS) && PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS == 1 \
-   && defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS_H)))
+   && defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS_H)) \
+  && !(defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT) && PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT == 1 \
+   && defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS_H)))
 #error Prefetch DATA cannot coexist with old program arrays or selected namespace
 #endif
 #ifdef PIONEER_Q38_TOKEN_PREFETCH_BENCHMARK_NATIVE
