@@ -1,0 +1,3 @@
+OBSERVED MOCK CommitState feedback0 identical2064commands+5898240copiedbytes+slotflip1;actualInputSealCalls old1393 new2 actualFeedbackSealCalls old0 new0;NOT cycles_or_TPS
+OBSERVED MOCK CommitState feedback1 identical2064commands+5898240copiedbytes+slotflip1;actualInputSealCalls old2786 new4 actualFeedbackSealCalls old1393 new2;NOT cycles_or_TPS
+PASS actual StateSeal+CommitState+InputSeal+FeedbackSeal fragments/4 valid/160 fault cases/unchanged copy bytes+commands/readback+metadata failures before flip/initial numeric failure before IO/mid-copy numeric corruption detected at transaction EXIT before slot/frontier publication;SYNTHETIC private frame+MOCK HeadSeal/Transfer/Packet,NOT original model/native lifecycle/physical/Work/TPS

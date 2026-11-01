@@ -101,3 +101,47 @@ health/idle/hash checks and ONE same-FD
 34-position diagnostic using unchanged4b1dbee6 client. Compare against the
 completed9ad counter benchmark under the same workload. Do NOT promote
 diagnostic timing or known numerical failures to Assistant Work success.
+
+Terminal and hardware-launch update2026-11-01,00:05UTC
+-----------------------------------------------------
+This update SUPERSEDES the earlier pending lifecycle/deployment state.
+Original main28114 and clean12197 ACTUALLY exit0. SAME original851-tensor
+owner and119 virgin engines execute layer0,consume one posted cancel,
+finish119 real STOP histories and120 HOLDs,drain ZERO committed records,
+read the5120 actual held hidden words,restore ALL token/earlier-dispatch
+L1 images/119peer+ROOT NIU+scratch/shared originals,restore clock1350->800,
+close29 model VM views,restore PCI,release3 actual simulated OS hosts and
+reservations,and perform locked WHOLE-context destruction. No history or
+CPU products substituted. ROOT220823039/peer2277074562 are HOST emulation
+instruction counts,NOT hardware cycles,TPS or a full-model numerical pass.
+Both complete raw histories are preserved alongside.
+
+Both actual41028B prefix files SHA:
+ 4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+Separate unchanged strict comparators ACTUALLY exit0:5120 embedding plus
+5120 layer0 words each have0 bit differences/maxAbs0/relativeL20. No
+tolerance or runtime CPU reference is introduced. This is first-layer
+numerical proof,NOT token/full-model/physical/Assistant Work acceptance.
+
+New1f3bcff8 module and94dd2175 helper were staged under NEW hash-specific
+names;readback hashes matched. Old ff91bbb5 helper and all older candidates
+remain unchanged. Source-only8528 ACTUALLY exits0,authenticating full same-
+open original GGUF with NO accelerator Open/inference. Fresh preapply SSH
+confirms Haiku/UID0,64CPUs/maxRAM137034936320B,baseline041/tag12/gen12,
+no model/Assistant parent,owner0/cold0/quiesced0/open1/guard1 and all exact
+module/client/helper/guard hashes. Guarded45102 ACTUALLY exits0:041/tag12/
+gen12 quiesced once,then1f3/tag75/gen13 verified. No reboot/reset/GPU
+execution in the exchange. Independent installed-health SSH verifies all
+hashes,64CPUs/free133758218240B/max137034936320B and idle gen13 metadata.
+
+ONE same-FD original-model benchmark52739 launched00:05:07UTC:
+ /private/tmp/pioneer-q38-retained-generation-physical-20261101-zaq.log
+ /private/tmp/pioneer-q38-retained-generation-physical-20261101-zaq.stderr
+At00:10UTC source authentication has finished and upload is progressing;
+stderr is0B. This run is STILL LIVE,not an END or speed result. No second
+accelerator/admin FD,model,reload/reset,power/SD/OS/network change is
+permitted during that live lifetime. Poll the SAME52739 handle,do not
+restart on observation timeout. Full terminal/HOLD/drain/restoration/END+
+Close and strict posthoc numerical checks remain required. No new speedup
+or usable Work is claimed. The newer83677 commit-boundary BUILD is NOT
+selected in this physical experiment.

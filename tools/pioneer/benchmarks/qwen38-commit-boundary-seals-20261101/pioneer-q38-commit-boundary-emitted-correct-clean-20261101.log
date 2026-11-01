@@ -1,0 +1,5 @@
+PASS actual linked old951/new48b2 RV32 call targets/old warm pre-GDN Wait+BootSeal+Closed+CounterSeal each1 call site/new each0/both Conv still call Finish,both Finish still call ALL4 completion checks/actual wrapper Conv-before-GDN order;2 StageConv indexed switch jumps explicitly UNRESOLVED;static direct edges ONLY,NOT path feasibility,actual96/119 loop execution,numerical,NoC counts,physical speed or Work proof
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/tests/run_pioneer_q38_commit_boundary_emitted_tests.py", line 60, in <module>
+    assert body(old, prefix + name) == body(new, prefix + name), ('unchanged checked body', name)
+AssertionError: ('unchanged checked body', 'Transfer(')

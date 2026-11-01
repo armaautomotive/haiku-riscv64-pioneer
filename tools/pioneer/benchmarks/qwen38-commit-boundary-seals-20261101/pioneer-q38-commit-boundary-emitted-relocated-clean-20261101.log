@@ -1,0 +1,4 @@
+  File "/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/tests/run_pioneer_q38_commit_boundary_emitted_tests.py", line 77
+    assert body(old, prefix + 'Packet(') == body(new, prefix + 'Packet('), 'entire Packet raw bytes')
+                                                                                                    ^
+SyntaxError: unmatched ')'

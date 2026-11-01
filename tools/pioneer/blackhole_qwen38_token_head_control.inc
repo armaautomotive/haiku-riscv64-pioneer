@@ -30,13 +30,24 @@ static __attribute__((noinline,section(".conv.token"))) void Bootstrap(){
  FeedbackSeal(header);
 }
 static __attribute__((noinline,section(".conv.token"))) void StateSeal(const uint32_t* h,const uint32_t* data,unsigned layer,bool feedback){
- HeadSeal(h);InputSeal();if(feedback)FeedbackSeal(h);
+ HeadSeal(h);
+#ifdef PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_SEALS_IMAGE
+ (void)feedback; // immutable numeric scans bracket the ENTIRE transaction
+#else
+ InputSeal();if(feedback)FeedbackSeal(h);
+#endif
  if(!S::Shape(data,layer,Owner()->state[Bank],Owner()->state[Workspace]))scalar_fault_park();
  for(unsigned i=0;i<64;i++)if(Words(S::Local)[i]!=data[i])scalar_fault_park();
 }
 static __attribute__((noinline,section(".conv.token"))) void CommitState(const uint32_t* h,bool feedback){
  auto* p=Owner();if(p->phase!=4 || p->state[Completed]!=64 || p->state[Committed]!=p->state[Position]
   || p->state[Slot]!=(p->state[Position]&1))scalar_fault_park();
+#ifdef PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_SEALS_IMAGE
+ // Copy packets use only disjoint Scratch/Weight/descriptor buffers. Keep
+ // EVERY metadata/source/counter/command/readback check inside the loop.
+ // Detect numeric damage before any copy and again BEFORE frontier flip.
+ HeadSeal(h);InputSeal();if(feedback)FeedbackSeal(h);
+#endif
  unsigned completed=0;
  for(unsigned layer=0;layer<64;layer++){
   if(L::Dense(layer))continue;

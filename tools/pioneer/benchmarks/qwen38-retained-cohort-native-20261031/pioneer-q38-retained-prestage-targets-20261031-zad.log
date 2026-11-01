@@ -1,0 +1,6 @@
+Haiku
+0
+   Id Team                                               
+ 1460 /boot/system/bin/awk NR==1 || /[Pp]ioneer|[Qq]38|P100A|Assistan 
+NEW_RETAINED_MODULE_TARGET_ABSENT
+NEW_RETAINED_HELPER_TARGET_ABSENT

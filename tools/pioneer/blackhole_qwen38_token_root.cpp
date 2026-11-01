@@ -1,10 +1,14 @@
 /* SPDX-License-Identifier: MIT */
 // Experimental persistent on-card parent. Not installed/native-qualified.
 #include "PioneerQ38TokenImageRole.h"
+#include "PioneerQ38TokenCommitBoundaryRole.h"
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerAttentionMath.h"
 #include "PioneerQ38TokenLayout.h"
 #include "PioneerQ38TokenMetadata.h"
+#ifdef PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_SEALS_IMAGE
+#include "PioneerQ38TokenCommitBoundaryLayout.h"
+#endif
 extern "C" unsigned q38_return_recurrent_layer();
 extern "C" unsigned q38_return_dense_layer();
 extern "C" bool q38_global_chain_learned_rms(const float*,const float*,float*);

@@ -1,0 +1,98 @@
+Commit-copy numeric seal hoisting:isolated offline BUILD,NOT deployed
+=====================================================================
+2026-11-01. Goal ACTIVE;20tok/s UNMET. Current hardware experiment uses
+retained-cohort48b2 ROOT/1f3 module,NOT this new83677 ROOT. No measured
+speedup,original-model/native lifecycle,physical or Work proof is claimed
+for83677. Runtime CPU model-reference validation remains absent.
+
+Change and failure boundary
+----------------------------
+CommitState's48 recurrent layers each copy seven Conv-history spans,using
+only ROOT Scratch/Weight/state-descriptor/private-stack ranges. Existing
+code rescans immutable input/feedback arrays in each StateSeal call before
+and after each16KiB chunk. The explicit ROOT-only profile moves ONLY these
+numeric scans to transaction ENTRY and EXIT BEFORE slot/committed/phase
+flip. StateSeal STILL checks HeadSeal,canonical state-table shape and all64
+descriptor mirror words. ALL Packet/Transfer bounds,source/counter/command/
+quiet/readback checks remain. Compile-time geometry proves all copy-local
+writes disjoint from all ten sealed numeric regions,including feedback.
+
+Initial numeric corruption now fails before ANY copy IO. Numeric corruption
+during copying may be detected at EXIT rather than at the next chunk;all
+copies may have occurred,but slot/commit/publication stays untouched and
+the context faults. This is intentional transactional failure timing,NOT
+an immediate-corruption-detection claim. Existing partial-copy poisoning/
+no rollback-or-retry policy stays. No caller-ready cache,source recapture,
+host hint,new NoC command/CSR,math/tensor/worker or record ABI is added.
+Default/debug ROOT and all existing selected program packages stay old.
+
+Build identity
+---------------
+Main62659/independent-clean87031 inspect ACTUALLY exit0;frozen45484/31884
+also ACTUALLY exit0 with identical artifacts. Entire old48b2/9515589d ROOTs
+and whole old ROOT object reproduce FIRST. Unchanged retained recurrent,
+dense,numeric and feedback capsules are reused;only ROOT is recompiled.
+ boot.bin4     32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text.bin130936 ab6c14eb6935613c70b08d879cf3f435d945175ab4279a5e065a989eb6b95739
+ terminal.bin8 468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2
+ conv.bin32684 0cbd70719967cbc43b1353186cad5f422a9da045bdc1d51efb88a0e775d52e99
+ program.elf190704 83677f78f548b8fc11d874a858b670310d1dad859982e737c674b2ff7329db00
+No unresolved symbols/mutable globals/new CSR or unsupported arithmetic;
+existing section boundaries,entry/fault/STOP addresses and individual-frame
+bounds pass. Text136B/aux84B spare is footprint,NOT a speed measurement.
+There is NO generated program DATA/private/public/native selector for83677.
+
+Actual fragment execution with MOCK context/transport
+-----------------------------------------------------
+Main79159/clean49032 ACTUALLY exit0 under ASan+UBSan. The test compiles the
+ACTUAL StateSeal,CommitState,InputSeal and FeedbackSeal source fragments in
+before/after namespaces. Its Private frame,HeadSeal/Packet/Transfer and
+state bytes are SYNTHETIC/MOCK,NOT a genuine model predecessor or native
+endpoint. Both profiles issue the identical2064 transfer commands and copy
+5898240 bytes with exact readbacks/destination contents and one slot flip.
+Observed actual InputSeal function CALL counts,not instruction/cycle/TPS:
+ terminal path:false-feedback old1393,new2
+ feedback path:true-feedback old2786,new4;FeedbackSeal old1393,new2
+These counts do NOT establish hardware speedup or whole-inference savings.
+4 valid cases and160 faults pass EACH:all10 applicable numeric regions'
+first/last words before copy and at first/final packet;initial failures
+before IO,new mid-copy failures before flip,descriptor mirror,readback,
+metadata scope and unknown-IO refusal. The MOCKs do not prove production
+HeadSeal/NoC semantics;those actual machine bodies are audited below.
+
+Emitted-code and role evidence
+------------------------------
+Both final emitted audits ACTUALLY exit0,after authenticating ALL old and
+new pinned artifacts and repeating old Conv->GDN audit. Linked RV32 shows
+StateSeal InputSeal/FeedbackSeal sites1->0 while its HeadSeal stays. Actual
+CommitState numeric call sites1->2 (entry+exit),not repeated at chunks.
+GCC duplicates full/tail paths:both images have4 StateSeal+7 Packet+1
+Transfer emitted sites. Packet's ENTIRE raw machine code stays identical.
+Transfer,HeadSeal,InputSeal,FeedbackSeal and Scope have identical opcodes,
+registers,loads/stores,data/branch immediates and exact function-call targets;
+ONLY authenticated direct-call LINK displacements are normalized. Actual
+Transfer's four differing JALR immediates and unchanged callees are retained
+in the inspection log. Two inherited StageConv switch jumps remain explicitly
+UNRESOLVED. Static direct edges are NOT path feasibility or actual execution.
+Role34792/85610 ACTUALLY exit0:2 positives/73 missing/zero/two/late/native/
+worker/component/CPU/Work refusals EACH. Geometry remains DATA,not readiness.
+
+Failed setup/audit attempts are archived,not silently turned green:
+- First role fixture omitted lowercase __riscv from its uppercase regex;
+  fixture corrected,production exact-role checks unchanged.
+- First candidate included geometry before freestanding integer typedefs;
+  correct include ordering fixed the actual build. Old controls reproduced.
+- First emitted audit assumed source-expression counts3/3;decoded actual
+  GCC full/tail paths show4/7 in BOTH old/new. Expectations corrected to the
+  real instructions. A raw whole-body assertion then exposed ordinary LINK
+  displacement changes in Transfer. Inspection proves only its four JALR
+  offsets differ;the final audit additionally checks EVERY retained guard
+  instruction and exact callee. A transient audit-script syntax typo was
+  fixed before final tests. No fault/numeric tolerance was relaxed.
+
+Next:exercise83677's actual RV32 transaction/fault boundaries and original
+model integration,then independently qualify complete program DATA/native
+selection before any physical use. Keep it distinct from the live1f3 test.
+No driver/client/Assistant/default selection or deployed code was changed
+by this isolated optimization. Full numerical acceptance,resident fresh
+requests,arbitrary prompts,Assistant Work and20tok/s remain outstanding.
