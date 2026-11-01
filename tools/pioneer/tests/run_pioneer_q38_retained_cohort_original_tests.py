@@ -12,6 +12,10 @@ import subprocess
 import sys
 import tempfile
 
+empty_receipt_poll='--empty-receipt-poll' in sys.argv[1:]
+if empty_receipt_poll:
+    assert sys.argv.count('--empty-receipt-poll')==1
+    sys.argv.remove('--empty-receipt-poll')
 read_source_boundary='--read-source-boundary' in sys.argv[1:]
 if read_source_boundary:
     assert sys.argv.count('--read-source-boundary')==1
@@ -39,10 +43,12 @@ cold_faults=local_sources and len(sys.argv)==6 and sys.argv[5]=='--cold-source-f
 identity_faults=identity_boundary and len(sys.argv)==6 and sys.argv[5]=='--packet-identity-faults'
 tid_faults=tid_boundary and len(sys.argv)==6 and sys.argv[5]=='--tid-boundary-faults'
 read_source_faults=read_source_boundary and len(sys.argv)==6 and sys.argv[5]=='--read-source-boundary-faults'
-assert not read_source_boundary or counter_gather and (first_layer or read_source_faults)
-assert (not tid_boundary or identity_boundary and (first_layer or tid_faults or read_source_faults))
-assert not counter_gather or tid_boundary and (first_layer or read_source_faults)
-assert (not identity_boundary or local_sources) and (first_layer or faults or source_faults or cold_faults or identity_faults or tid_faults or read_source_faults)
+empty_receipt_faults=empty_receipt_poll and len(sys.argv)==6 and sys.argv[5]=='--empty-receipt-poll-faults'
+assert not empty_receipt_poll or read_source_boundary and (first_layer or empty_receipt_faults)
+assert not read_source_boundary or counter_gather and (first_layer or read_source_faults or empty_receipt_faults)
+assert (not tid_boundary or identity_boundary and (first_layer or tid_faults or read_source_faults or empty_receipt_faults))
+assert not counter_gather or tid_boundary and (first_layer or read_source_faults or empty_receipt_faults)
+assert (not identity_boundary or local_sources) and (first_layer or faults or source_faults or cold_faults or identity_faults or tid_faults or read_source_faults or empty_receipt_faults)
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 image,old,worker,model=map(pathlib.Path,sys.argv[1:5]);observed=pathlib.Path(sys.argv[7]) if first_layer else None
 assert all(p.is_absolute() and not p.is_symlink() for p in (image,old,worker,model))
@@ -51,7 +57,7 @@ here=pathlib.Path(__file__).resolve().parent
 def pins(script):
     return next(ast.literal_eval(n.value) for n in ast.parse(script.read_text()).body
                 if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='PINS' for t in n.targets))
-for directory,script in ((image,here.parent/('build_qwen38_read_source_boundary_root.py' if read_source_boundary else 'build_qwen38_counter_gather_root.py' if counter_gather else 'build_qwen38_tid_boundary_root.py' if tid_boundary else 'build_qwen38_packet_identity_boundary_root.py' if identity_boundary else 'build_qwen38_cohort_local_sources_root.py' if local_sources else 'build_qwen38_retained_cohort_root.py')),
+for directory,script in ((image,here.parent/('build_qwen38_empty_receipt_poll_root.py' if empty_receipt_poll else 'build_qwen38_read_source_boundary_root.py' if read_source_boundary else 'build_qwen38_counter_gather_root.py' if counter_gather else 'build_qwen38_tid_boundary_root.py' if tid_boundary else 'build_qwen38_packet_identity_boundary_root.py' if identity_boundary else 'build_qwen38_cohort_local_sources_root.py' if local_sources else 'build_qwen38_retained_cohort_root.py')),
                          (old,here/'run_pioneer_q38_mixed_worker_tests.py'),
                          (worker,here.parent/'build_qwen38_precise_beta_worker_image.py')):
     expected=pins(script);assert expected
@@ -85,6 +91,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-q38-retained-conv-original-',di
         subprocess.run([*common,'-c',str(here/'pioneer_q38_eos_state_data_bridge.cpp'),'-o',str(bridge)],check=True)
         recorder=[str(bridge)]
     test_source=('pioneer_q38_token_original_flow_test.cpp' if first_layer else
+                 'pioneer_q38_connected_empty_receipt_poll_test.cpp' if empty_receipt_faults else
                  'pioneer_q38_connected_read_source_boundary_test.cpp' if read_source_faults else
                  'pioneer_q38_connected_tid_boundary_test.cpp' if tid_faults else
                  'pioneer_q38_connected_packet_identity_test.cpp' if identity_faults else
@@ -92,6 +99,13 @@ with tempfile.TemporaryDirectory(prefix='pioneer-q38-retained-conv-original-',di
                  'pioneer_q38_connected_cold_sources_test.cpp' if cold_faults else
                  'pioneer_q38_connected_retained_conv_test.cpp')
     entries=[]
+    if empty_receipt_faults:
+        symbols=subprocess.check_output([tool+'nm','-n',str(image/'program.elf')],text=True)
+        for name in ('q38_layer_return_recurrent_empty_receipt_seal','q38_pushed_receipt_shared',
+                     'q38_layer_return_recurrent_packet_seal'):
+            found=re.findall(r'^([0-9a-f]+) [TW] '+name+r'$',symbols,re.M)
+            assert len(found)==1
+            entries+=found
     if read_source_faults:
         symbols=subprocess.check_output([tool+'nm','-n',str(image/'program.elf')],text=True)
         for name in ('q38_layer_return_recurrent_direction_packet_seal','q38_layer_return_recurrent_seal',
@@ -130,6 +144,10 @@ with tempfile.TemporaryDirectory(prefix='pioneer-q38-retained-conv-original-',di
                    env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1',
                         'PIONEER_TEST_ROOT_PROFILE_MAP':str(profile)})
     if observed is not None:assert sorted(p.name for p in observed.iterdir())==['prefix-0.bin']
-print(('PASS actual cohort SAME original27B embedding+layer0 instructions/real119 closed histories;strict posthoc numerical comparison still REQUIRED;'
-       if first_layer else ('PASS actual original-byte read-source faults/read-only deferral then write/full or earlier FIFO refusal and unchanged parent control;' if read_source_faults else 'PASS actual original-byte TID/FIFO faults/immediate active+FIFO or deferred inactive-ID full refusal and unchanged parent control;' if tid_faults else 'PASS actual original-byte packet identity faults/deferred packet then full boundary refusal and unchanged parent control;' if identity_faults else 'PASS actual original-byte four-matrix->Conv physical-source faults and unchanged parent control;' if source_faults else 'PASS actual original-byte cold remote source refusals and unchanged parent control;' if cold_faults else 'PASS actual retained-cohort original-byte Conv->GDN transition raw-CSR fault children and unchanged parent control;'))+
-      'NOT native/whole-model/STOP/END/physical/Work/TPS permission')
+if empty_receipt_faults:
+    print('PASS genuine original empty-receipt faults/actual worker completion+receipt then live-source refusal before later ROOT traffic;'
+          'NOT complete matrix/layer/native/whole-model/STOP/END/physical/Work/TPS permission')
+else:
+    print(('PASS actual cohort SAME original27B embedding+layer0 instructions/real119 closed histories;strict posthoc numerical comparison still REQUIRED;'
+           if first_layer else ('PASS actual original-byte read-source faults/read-only deferral then write/full or earlier FIFO refusal and unchanged parent control;' if read_source_faults else 'PASS actual original-byte TID/FIFO faults/immediate active+FIFO or deferred inactive-ID full refusal and unchanged parent control;' if tid_faults else 'PASS actual original-byte packet identity faults/deferred packet then full boundary refusal and unchanged parent control;' if identity_faults else 'PASS actual original-byte four-matrix->Conv physical-source faults and unchanged parent control;' if source_faults else 'PASS actual original-byte cold remote source refusals and unchanged parent control;' if cold_faults else 'PASS actual retained-cohort original-byte Conv->GDN transition raw-CSR fault children and unchanged parent control;'))+
+          'NOT native/whole-model/STOP/END/physical/Work/TPS permission')

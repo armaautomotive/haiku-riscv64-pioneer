@@ -324,6 +324,12 @@ extern "C" void q38_mixed_root_packet_seal(const uint32_t* frame){
  // eight-counter gather) NEVER acquire read-source deferral implicitly.
  q38_mixed_root_direction_packet_seal(frame,true);
 }
+#ifdef PIONEER_Q38_EMPTY_RECEIPT_POLL_IMAGE
+extern "C" __attribute__((noinline,noclone,optimize("Os","omit-frame-pointer")))
+void q38_mixed_root_empty_receipt_seal(const uint32_t* frame){
+ q38_mixed_root_direction_packet_seal(frame,false);
+}
+#endif
 #endif
 #endif
 extern "C" void q38_mixed_root_seal(){

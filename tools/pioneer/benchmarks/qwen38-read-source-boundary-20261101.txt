@@ -1,5 +1,18 @@
 Read-only source-boundary BUILD: independent guards PASS; model tests LIVE
 =======================================================================
+Closure08:04 UTC:original56635/94460 BOTH ACTUALLY exit0;unchanged strict
+main+clean comparators BOTH ACTUALLY exit0 across ALL10240 embedding+
+layer0 words,maxAbs0/relativeL20. Both41028B prefixes SHA:
+ 4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+Each genuinely executes4538-read groups/3624 peer CSR replies on the SAME
+119 instruction histories;ROOT reserved/written6672B. HOST169244573
+retired instructions are NOT device cycles/TPS. No token/STOP/native/
+full-model/device/Work acceptance follows from first-layer completion.
+Follow-on combined3718 empty-receipt BUILD preserves these read-source
+boundaries;see qwen38-empty-receipt-poll-20261101.txt. Standalone0f67 is
+NOT installed or relabelled as a native/Work owner. Historical LIVE text
+below is superseded by this closure.
+
 Update07:58 UTC:connected3985/47468 BOTH ACTUALLY exit0. EACH512 genuine
 original-byte COW source-fault children pass,then the unchanged parent
 issues its first actual worker matrix request. Logs cmp-exact and archived

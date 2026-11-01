@@ -3,6 +3,12 @@
 // zero RV32 instructions. OS/MMIO/GDDR endpoints are simulated. No synthetic
 // completion fabric,no old embedding/prefix producer and no completed token.
 #include "pioneer_q38_token_native_fixture_common.h"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EMPTY_RECEIPT_POLL_FIXTURE
+#if !defined(PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_PROGRAMS) || PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_PROGRAMS != 1 \
+ || !defined(PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_NATIVE_CONTEXT != 1
+#error Exact distinct empty-receipt private DATA/owner required,not an old fixture alias
+#endif
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HOLD_RECHECK_FIXTURE
 #include "pioneer_q38_token_native_hold_recheck_role.h"
 #endif
@@ -1009,3 +1015,8 @@ int main(int argc,char** argv){
  }
  assert(!lockHeld && lockAcquires==lockReleases);
 }
+#ifdef PIONEER_Q38_TOKEN_NATIVE_EMPTY_RECEIPT_POLL_FIXTURE
+static_assert(PioneerQ38TokenPrograms::EmptyReceiptPoll==1
+ && PioneerQ38TokenPrograms::ReadSourceBoundary==1 && PioneerQ38TokenPrograms::CounterGather==1,
+ "actual distinct empty-receipt DATA compiled into native history,not a parent image alias");
+#endif

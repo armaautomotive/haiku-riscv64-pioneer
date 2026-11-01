@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/tests/pioneer_p100a_hot_swap_test.py", line 1428, in <module>
+    for fault in [None] + common + candidate + candidate_links + parents + previous_image + backup_links + (['loaded'] if mode == '--bootstrap' else hot):
+  File "/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/tests/pioneer_p100a_hot_swap_test.py", line 901, in check
+    else:
+AssertionError: ('--apply-token-empty-receipt-poll-benchmark', '', '')

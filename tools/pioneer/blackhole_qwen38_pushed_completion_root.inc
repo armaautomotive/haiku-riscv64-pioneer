@@ -68,7 +68,16 @@ static void PushedWait(const uint32_t* d,unsigned w,const uint32_t* expectedAfte
   Fence();unsigned marker=*Words(PushedSlot(w));
   if(marker==M::ReceiptMagic){PushedReceipt(d,w,expectedAfter);return;}
   if(marker)scalar_fault_park();
+#ifdef PIONEER_Q38_EMPTY_RECEIPT_POLL_IMAGE
+  // Zero-marker polling only: no packet,write,release or receipt consumes
+  // this source-check deferral. PushedReceipt still uses the unchanged
+  // write=true guard after binding ALL actual receipt fields/counters.
+  // Keep the SAME finite ReceiptPollBudget. This is NOT an equal elapsed-
+  // time claim: making each empty poll cheaper can shorten its wall time.
+  q38_mixed_root_empty_receipt_seal(d);
+#else
   q38_mixed_root_packet_seal(d);
+#endif
  }
  scalar_fault_park(); // no synthetic ready, later packet,retry,reset or release.
 }

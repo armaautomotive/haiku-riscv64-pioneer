@@ -32,6 +32,9 @@
 extern "C" void q38_mixed_root_packet_seal(const uint32_t*);
 #ifdef PIONEER_Q38_READ_SOURCE_BOUNDARY_IMAGE
 extern "C" void q38_mixed_root_direction_packet_seal(const uint32_t*,bool);
+#ifdef PIONEER_Q38_EMPTY_RECEIPT_POLL_IMAGE
+extern "C" void q38_mixed_root_empty_receipt_seal(const uint32_t*);
+#endif
 #endif
 #ifdef PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE
 extern "C" const uint32_t* q38_mixed_root_packet_frame();

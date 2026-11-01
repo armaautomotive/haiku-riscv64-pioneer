@@ -63,9 +63,11 @@ for name in dead:
 run(tool + 'objcopy', *['--strip-symbol=' + name for name in dead], raw, capsule)
 assert subprocess.check_output([tool + 'nm', '-u', str(capsule)], text=True).split() == ['U', 'scalar_fault_park']
 elf = out / 'program.elf'
+entry_object = base['base']['old']['out'] / 'unchanged-frontier/start.o'
+commit_object = base['base']['commit']['obj']
 run(tool + 'ld', '-m', 'elf32lriscv', '--no-relax', '--gc-sections',
     '-T', here / 'blackhole_qwen38_global_chain.ld',
-    base['base']['old']['out'] / 'unchanged-frontier/start.o', base['base']['commit']['obj'], capsule,
+    entry_object, commit_object, capsule,
     components / 'unchanged-feedback/feedback.o', '-Map', out / 'program.map', '-o', elf)
 assert not subprocess.check_output([tool + 'nm', '-u', str(elf)], text=True).strip()
 symbols = subprocess.check_output([tool + 'nm', '-n', str(elf)], text=True)

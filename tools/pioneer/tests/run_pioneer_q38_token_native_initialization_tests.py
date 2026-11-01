@@ -10,13 +10,23 @@ import sys
 import tempfile
 
 root_profile=None
+empty_receipt=None
+if '--empty-receipt-root' in sys.argv:
+    assert sys.argv.count('--empty-receipt-root')==1
+    index=sys.argv.index('--empty-receipt-root')
+    assert index+1<len(sys.argv)
+    empty_receipt=pathlib.Path(sys.argv[index+1]);del sys.argv[index:index+2]
+    assert empty_receipt.is_absolute() and empty_receipt.is_dir() and not empty_receipt.is_symlink()
 counter_gather=None
 if '--counter-gather-root' in sys.argv:
+    assert empty_receipt is None, 'Distinct ROOT variants cannot alias'
     assert sys.argv.count('--counter-gather-root')==1
     index=sys.argv.index('--counter-gather-root')
     assert index+1<len(sys.argv)
     counter_gather=pathlib.Path(sys.argv[index+1]);del sys.argv[index:index+2]
     assert counter_gather.is_absolute() and counter_gather.is_dir() and not counter_gather.is_symlink()
+if empty_receipt:
+    counter_gather=empty_receipt  # SAME captured-byte FIFO endpoint;distinct authenticated program/owner below
 tid_boundary='--tid-boundary' in sys.argv
 if tid_boundary:
     assert sys.argv.count('--tid-boundary')==1
@@ -252,6 +262,10 @@ if counter_gather:
     assert hashlib.sha256((here.parent/'PioneerQ38TokenCounterGatherPrograms.h').read_bytes()).hexdigest()=='c2f4764197a8a402bf6a60972744adc7dfd641914449ab2abc96ea19e6d9bc63'
     defines.update(PIONEER_Q38_TOKEN_COUNTER_GATHER_PROGRAMS='1',PIONEER_Q38_TOKEN_COUNTER_GATHER_NATIVE_CONTEXT='1',
                    PIONEER_Q38_TOKEN_NATIVE_COUNTER_GATHER_FIXTURE='1')
+if empty_receipt:
+    assert hashlib.sha256((here.parent/'PioneerQ38TokenEmptyReceiptPollPrograms.h').read_bytes()).hexdigest()=='a96f194bf1ac5172e29e752c3e1f894a692105b2d74bb8b8100fc5a41ca6becf'
+    defines.update(PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_PROGRAMS='1',PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_NATIVE_CONTEXT='1',
+                   PIONEER_Q38_TOKEN_NATIVE_EMPTY_RECEIPT_POLL_FIXTURE='1')
 if posted_cancel:
     defines.update(PIONEER_Q38_TOKEN_POSTED_CANCEL='1',PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',
                    PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')
@@ -407,7 +421,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         # Authenticate ALL frozen artifacts before classifying any TEST
         # request. nm consumes the SAME already authenticated ELF snapshot,
         # not a second unchecked open of the original image pathname.
-        tree=ast.parse((here.parent/'build_qwen38_counter_gather_root.py').read_text())
+        tree=ast.parse((here.parent/('build_qwen38_empty_receipt_poll_root.py' if empty_receipt else 'build_qwen38_counter_gather_root.py')).read_text())
         pins=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign)
                   and any(isinstance(t,ast.Name) and t.id=='PINS' for t in n.targets))
         elf=None

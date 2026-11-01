@@ -1,0 +1,253 @@
+Empty-receipt polling: native END PASS;qualified new hardware benchmark LIVE
+=======================================================================
+09:26UTC:staged whitespace check caught extra EOF blank lines in NEW role/
+builder/test files;removed ONLY those blanks,never raw evidence whitespace.
+Independent full SDK rebuilds29338/25790 BOTH ACTUALLY exit0:ENTIRE old
+0b8d control first,then newc094 publicobject/5a3c wholemodule exact again.
+Installed candidate bytes unchanged. Hardware2812 remains LIVE/authenticating
+original GGUF BEFORE Open;NO extra Pioneer action or speed claim.
+
+2026-11-01,09:24 UTC:NEW5a3c PHYSICAL2812 LIVE from09:23UTC. NO speed,
+full-model numeric or Work result yet. Same unchanged4b non-profiling
+client/--benchmark-34-positions as completed0b8d control;fixed2prompt/
+34position diagnostic,NO runtime CPU oracle. Driver tag75/generation29.
+NO extra Pioneer SSH/admin/status/GPU/model/staging/reload/reset/power/
+SD/OS/network until SAME actual process exit+terminal/HOLD/drain/full
+restoration/END+Close. Includes original GGUF authentication BEFORE Open.
+Local development/tests/git do not touch this live hardware lifetime.
+
+Exact041<->5a3c updater4161e1acfe3492111827367b86aca480d536fe3f5e4da1ed76b4e35f7b97d112:
+MAIN22386/CLEAN98036 BOTH ACTUALLY exit0,EACH1564 filesystem/hash/handshake/
+symlink/owner/failure cases;logs cmp-exact. New pair plus unchanged frontier/
+retained/commit/cohort/packet/TID/counter routes exercised;new refuses ALL
+7 previous tag75 subjects and old routes refuse new5a3c. No force/reset/
+automatic rollback added. Initial fixture omitted its new candidate file
+and BOTH tests correctly failed;fixture corrected,no updater guard relaxed.
+Syntax and actual test reruns pass;original failing logs are archived.
+
+Fresh prestage SSH exits0:baseline041/gen28 idle,64CPU/full137034936320B/
+no compute parent,exact041/4b/b0c/d1ce;both new hash-named paths ABSENT.
+Both staging copies ACTUALLY exit0,full remote hashes exact,complete module
+and helper independently copied BACK and byte-compared with qualified
+local artifacts;new module2873400B,whole5a3c matches BOTH frozen builds.
+Installed041 unchanged before apply. ONLY new4161 helper through /bin/sh,
+SAME66658 ACTUALLY exits0:quiesce/close/reload5a3c/tag75/gen29;NO reboot or
+GPU execution. Fresh independent prelaunch SSH ACTUALLY exits0:whole5a3c/
+4161/041/4b/b0c/d1ce exact,cold0/quiesced0/owner0/open1/guard1,64CPU/
+fullRAM/free133748019200B,no compute parent. No subsequent extra card IO.
+
+Physical raw /private/tmp/pioneer-q38-empty-physical-20261101-ft.log;
+stderr same basename.stderr. Only AFTER ACTUAL clean exit:unchanged main+
+clean frontier comparator/CPU corpus;known score differences remain
+failures;compare all34 headers and measured count-window with0b8d. Fresh
+independent idle health,then ONLY4161 restore5a3c->041(expectedgen30),fresh
+041 health. NEVER4f61 or other old tag75 helper for5a3c. Never force a
+quarantined/unknown subject. Older NOT STAGED/INSTALLED paragraphs below
+are historical and superseded by this qualified stage/apply/run ledger.
+
+2026-11-01,09:17 UTC:MAIN92403/CLEAN77377 BOTH ACTUALLY exit0. Genuine
+same native production-method851 initialization/actual original firstlayer/
+consumed cancellation/119 real STOP/120 HOLD/zero-record drain/TWO held
+hidden reads16384+4096B/full token code+L1/dispatch/119peer+ROOT NIU/shared
+TLB/clock END1350->800/hardware retirement/29VM deletions/PCI originals/
+3 host releases/unreserve/locked context destruction ALL execute,with NO
+later PCI/MMIO/OS-release/retry. All existing error/refusal guards remain.
+ROOT191970932/peer2277073538 HOST instructions are NOT physical cycles/TPS.
+Original-prefix files BOTH41028B SHA4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+Unchanged main+clean strict comparators BOTH ACTUALLY exit0,logs cmp-exact:
+ALL10240 original embedding+layer0 words BITEXACT,maxAbs0,relativeL20,
+NO tolerance. These are simulated native production-method lifetimes and
+first-layer arithmetic,NOT full-model/public-ABI/hardware/Work/TPS proof.
+New exact041<->5a3c updater offline tests are LIVE;new module NOT staged.
+The historical native LIVE paragraphs below are superseded by THIS closure.
+
+2026-11-01,09:15 UTC:PROFILE4854 ACTUALLY exits0,34 records/final_count34/
+clean_end1/END+Close;stderr0B. Independent main+clean unchanged strict
+profile parsers ACTUALLY exit1,logs cmp-exact:grammar,full record/rate
+arithmetic,generation27 and2485 raw rows pass;first3 greedy tokens match
+but their max-logit bits still FAIL. Same known numerical outcome is NOT
+relaxed. Profile client718d measured0.131219379..0.131221235tok/s across
+32 sampled tokens/2486 observations,elapsed243862970..243866419us. This
+DIFFERENT client/run is NOT an accepted repeatable speedup versus4b.
+
+Largest raw address bins:recurrent packet seal664,Transfer439,precise
+JobShape365,dense packet seal266,pushed BootShape248. These are address
+sample counts ONLY,not retired PCs,cycles,function time or causal shares.
+No subtraction/range widening or checked_word-as-layer reinterpretation.
+They motivate source inspection,not a measured bottleneck attribution.
+
+ONLY after actual exit:independent fresh SSH exits0;whole0b8d/718d/4f61/
+041/b0c/d1ce exact,tag75/gen27/cold0/quiesced0/owner0/open1/guard1,no
+compute parent,64CPU/fullRAM. Exact immutable4f61 helper through /bin/sh,
+SAME69951 ACTUALLY exits0:quiesce/close/reload041,generation28. Independent
+fresh health exits0:whole041 installed,tag12/gen28/cold0/quiesced0/owner0/
+open1/guard1,unchanged4f61/718d/d1ce,64CPU/fullRAM,no compute parent.
+No reboot/reset/power/SD/hardware change. Card is now IDLE on baseline041.
+Raw physical/parser/health/restore evidence is archived below. The later
+historical LIVE paragraphs are superseded by this observed closure ONLY.
+New3718/5a3c native92403/77377 later closed ABOVE;no install or Work acceptance.
+
+2026-11-01,09:06 UTC. Goal ACTIVE;20tok/s UNMET. New3718/5a3c has NO
+physical speed or whole-model/Work acceptance. Last CLOSED physical
+result remains0b8d/a2d5,0.131167537..0.131169397tok/s with known strict
+max-logit differences. No gain is inferred from HOST instruction counts.
+
+Specific change and retained boundaries
+---------------------------------------
+PIONEER_Q38_EMPTY_RECEIPT_POLL_IMAGE requires the complete separate0f67
+read-source/FIFO/TID/counter-gather returning recurrent BUILD. ONLY the
+ZERO-marker branch of inlined Projection::PushedWait calls a new empty-
+only scope wrapper. It retains private-pointer/frame/phase/nonce/doorbell/
+sealed-FIFO-enable checks but defers16 live source reads until receipt
+consumption. Real nonempty receipt fields/counters still bind independently
+retained expected frontiers,then use the original write=true source guard.
+ALL writes/releases/full compute+closure and every gather request retain
+all16 sources. PushedBegin/PushedEnd and normal receipt bodies keep their
+semantics. No ready/product/history/PC setter,counter rebase,mode toggle,
+new NoC command,CPU oracle,reset,retry or timeout extension exists.
+
+EXACT finite ReceiptPollBudget is unchanged. Cheaper empty polls can
+SHORTEN its elapsed wall time;no equivalent time budget is claimed. Full
+original/native/hardware tests remain necessary to detect healthy-work
+timeouts. Timeout/fault still quarantines;it never grants later work.
+
+Independent returning BUILD and instruction/role gates: CLOSED
+---------------------------------------------------------------
+Main91428/clean40987 inspections and71841/61656 frozen runs ALL ACTUALLY
+exit0. ENTIRE0f67/a2d5/bc01/0c3f/cd54/83677/48b2/951 controls reproduce
+FIRST from current source. Fixed complete pins:
+ boot4       32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text131036  bc240d0bec6f4c9b36adcc0344147f29b9195623ca9718e3c8fa0d98d4419adf
+ terminal8   468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2
+ aux32692    a945ab2edc82ce53f07e5525ec853499544a597d785e4398ba998f74d48fafd0
+ ELF191576   3718528c9bb953b8daca77d54208dc9c18e0376f1afb79292f5892e372f94f52
+Existing131072/32768 limits unchanged:36/76B remain. No forbidden writable
+globals,GOT,unsupported arithmetic,CSR or unresolved imports are accepted.
+Only the tiny new INTEGER wrapper uses Os/omit-frame-pointer;all floating
+flags/math remain old. Initial bad exported-entry metadata path and a
+too-large ordinary-frame wrapper correctly fail;logs remain. The metadata
+export now has a stable entry_object name,not a function-range loop variable.
+
+55131/41757 BOTH ACTUALLY exit0:EACH9898 emitted actual guards/9345
+immediate-or-full refusals/512 live-source single-bit empty deferrals,
+actual fault writer+2048 inert,ABI intact,normal stack-only writes. These
+are SYNTHETIC ABI arguments,not real native ownership. Empty47/write101
+HOST instructions are NOT device timing. Role66689/83909 BOTH ACTUALLY
+exit0:EACH2 syntax positives/138 missing,zero,two,late,foreign,CPU/Work
+refusals. Old controls are not updated to new expected values.
+
+Final static8178/39061 both exit0,cmp-exact logs:36 selected real arithmetic,
+release,commit,feedback,source/FIFO/TID/gather bodies byte-exact except
+authenticated LINK/readonly-literal relocations. Three complete receipt/
+begin/end callback bodies separately compare exact bytes except direct
+named LINK and authenticated readonly OBJECT-address relocations. Their
+indirect instruction offsets/words remain EXACT but runtime callback
+targets are explicitly NOT resolved statically. Transfer/Packet complete
+direct-call multisets remain unchanged;empty wrapper always loads a1=0.
+Inlined PushedWait/Projection::Run argument/indexed-switch paths are NOT
+claimed statically equivalent;actual execution is a separate gate.
+
+Initial static refusals remain archived. The existing strict CFG decoder
+was NOT relaxed. A separate byte comparator uses ELF FUNCTION types from
+objdump,not nm's t letter (which also labels.text OBJECTS);keeps zero-sized
+fixed scalar_fault_park;deduplicates identical literal aliases;recognizes
+only real readonly object identities/all bytes with LUI definitions within
+ONE straight-line block,invalidated at branches/joins/calls/integer clobbers.
+It never normalizes MMIO,executable code or unknown callbacks into targets.
+
+Actual original-byte faults and first layer: CLOSED
+----------------------------------------------------
+Connected5512/1466 BOTH ACTUALLY exit0,cmp-exact logs. Genuine original
+embedding/first matrix is dispatched BEFORE reaching the first real empty
+branch.16 COW children cover one explicit bit in EACH live source register.
+Each empty guard RETURNS;the real worker executes actual RISC+Tensix math,
+pushes its real receipt,then actual receipt consumption refuses the changed
+source BEFORE ANY subsequent ROOT command/release/model commit. The real
+fault writer executes then2048 inert steps. Already-issued worker math
+continues;"no math occurred after corruption" is NOT claimed. Unchanged
+parent genuinely consumes its receipt then issues its first proof READ.
+
+Initial fixture assertions incorrectly expected matrix count0 and at least
+one worker memory request. Actual trace is matrix1/marker0/sequence1/active1/
+requests0:the job is accepted and still in its prologue. Fixture now requires
+that genuine predecessor and later real matrix instructions/responses.
+No production behavior,budget,guard or numeric expected word was relaxed.
+
+Original73404/79234 BOTH ACTUALLY exit0. Strict main+clean comparators both
+ACTUALLY exit0:ALL5120 embedding+5120 layer0 words bit-exact,maxAbs0,
+relativeL20,no tolerance. Both41028B prefixes SHA:
+ 4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+SAME119 genuine histories,453 actual8-read groups/3624 captured4B peer CSR
+replies,8 queued-before-counted/8 outstanding/reverse replies. ROOT reserved/
+written6672B. HOST169244501 instructions versus0f67's169244573 is NOT a
+physical speed measurement or forecast;simulated cooperative polling is
+included. First layer does NOT qualify full64 layers/token/CommitState/
+STOP/END/native lifetime/hardware/Work/arbitrary prompts.
+
+Immutable package,actual SDK subjects and syntax: CLOSED
+--------------------------------------------------------
+Distinct PioneerQ38TokenEmptyReceiptPollPrograms.h SHA:
+ a96f194bf1ac5172e29e752c3e1f894a692105b2d74bb8b8100fc5a41ca6becf
+Independent generator snapshots authenticate ALL13 full sections+BOTH
+wholeELFs BEFORE exclusive output creation. Old headers regenerate EXACT
+first. Markers explicitly include ReadSourceBoundary+EmptyReceiptPoll and
+all counter/TID/FIFO parents. No old owner silently selects this package.
+DATA12494/50504 BOTH ACTUALLY exit0:EACH3044257 codewords/ALL120cores,
+2290 gap/runtime/invalid/immutable-output refusals,15 artifacts/30 corrupt+
+truncated refusals,2 syntax positives/139 refusals. No native owner from DATA.
+
+Four initial SDK inspections,renamed physical inspections12343/24034,and
+frozen95317/69859/72907/69648 ALL ACTUALLY exit0. ENTIRE oldb90c private/
+575f public-object/0b8d module+exact compile/link argv reproduce FIRST.
+New full private342f01b799ac11300bb0c85792e94a70a6d2922f8df1fa4ec428edc6aedc2c5f
+publicobjectc09481c314a59395f95431716ebfc4fa764d48c2ece5f776191bc8fea36dbe2a
+module5a3ca6b662e3e7cb332a366c04b3650357a52e3bfe601cf0829e9e84e5e67008.
+All13 ACTUAL compiled arrays and2MiBRoPE check against immutable originals.
+Private5 renamed bodies+5 wrappers equal independently compiled inert/null/
+refusal controls. Public keeps bounded6607+6608 ABI. No old program namespace,
+CPU model oracle,TEST interpreter or Work imports. Individual frames bounded.
+Partial public stack5392B known+25 unresolved;whole kernel/IRQ stack NOT proved.
+Native role tests each4 positives/398 private or295 public refusals in BOTH
+trees,all old syntax controls FIRST. No deploy/helper/Work grant is implied.
+
+Native production-method full END: LIVE,not completion
+-------------------------------------------------------
+Main92403/clean77377 launched08:52 UTC,confirmed LIVE at08:58. Explicit
+--empty-receipt-root authenticates3718 and new package/owner,refuses mixed
+ROOT variants,uses the genuine captured-command FIFO endpoint on the SAME
+authenticated ELF range4e2d0..4e60c,not an old image alias. Compile-time
+assertion checks actual EmptyReceiptPoll/ReadSourceBoundary/CounterGather
+markers. Source SHA authentication precedes native construction. Actual851
+zero initializations/120held/119virgin engines and first3 full-K5120 real
+workers execute. Scope stack at first matrix:ROOTreserved/access6112B,
+maxpeer3552/3540B,8192B EACH;not whole-kernel proof. At09:06 main reaches
+layer0 phase8,786432 actual GDN state reads+writes,30720 history reads.
+No full first-layer/119STOP/120HOLD/drain/restoration/END/context destruction
+or strict native-prefix pass is asserted until these SAME processes exit.
+Logs /private/tmp/pioneer-q38-empty-native-full-end-main-20261101-ey.log
+     /private/tmp/pioneer-q38-empty-native-full-end-clean-20261101-ez.log
+Outputs /private/tmp/pioneer-q38-empty-native-prefix-main-20261101-ey.bin
+        /private/tmp/pioneer-q38-empty-native-prefix-clean-20261101-ez.bin
+
+Bounded real profiling on the OLD qualified driver: LIVE
+---------------------------------------------------------
+Actual existing regular executable718d0cea client was authenticated and
+REUSED without overwrite (initial absent-path check correctly exited1).
+Exact4f61 apply21035 ACTUALLY exits0:041/gen26->0b8d/gen27,no reboot/GPU
+execution. Fresh independent prelaunch SSH ACTUAL0:whole0b8d/718d/4f61/
+d1ce,tag75/gen27/cold0/quiesced0/owner0/open1/guard1,64CPU/fullRAM and no
+compute parent. ONE --profile-frontends-34-positions process4854 starts
+08:29UTC and is LIVE at09:06,terminal ready but draining/restoring. NOT clean
+END yet. No extra accelerator call;copies only existing6607 replies.
+No extra Pioneer SSH/admin/status/model/staging/reload/reset/power/SD/OS/
+network intervention during this entire live lifetime,including source
+authentication BEFORE accelerator Open. Raw cursors are NOT retired PCs,
+cycles,function time or bottleneck causality. No new speed result is claimed.
+Raw /private/tmp/pioneer-q38-counter-frontend-physical-20261101-dy.log
+stderr same basename.stderr. After ACTUAL clean exit:strict main+clean
+profile parser with0b8d declared binding and a2d5 ELF,known score mismatches
+remain failures;fresh idle health then ONLY4f61 restore041(expectedgen28),
+fresh baseline health. Never use4f61 for the new5a3c subject.
+
+Goal remains full-model correctness,resident fresh requests,usable Assistant
+Work and actual sustained20tok/s. New3718/5a3c is local and NOT installed.

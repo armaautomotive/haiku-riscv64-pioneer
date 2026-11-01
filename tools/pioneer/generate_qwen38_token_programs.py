@@ -42,12 +42,13 @@ def require_complete_sections(units, sources):
                 'section coverage: every authenticated code section exactly once')
 
 def main():
-    require(len(sys.argv) == 5 and sys.argv[4] in ('--cancel-boundary', '--no-cancel', '--precise-activation', '--pushed-completion', '--fault-marker', '--precise-beta', '--job-boot-fold', '--token-frontier', '--retained-conv-closure', '--commit-boundary-seals', '--cohort-local-sources', '--packet-identity-boundary', '--tid-boundary', '--counter-gather'), 'explicit exact FP32 token variant required')
+    require(len(sys.argv) == 5 and sys.argv[4] in ('--cancel-boundary', '--no-cancel', '--precise-activation', '--pushed-completion', '--fault-marker', '--precise-beta', '--job-boot-fold', '--token-frontier', '--retained-conv-closure', '--commit-boundary-seals', '--cohort-local-sources', '--packet-identity-boundary', '--tid-boundary', '--counter-gather', '--empty-receipt-poll'), 'explicit exact FP32 token variant required')
     require(not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ), 'role overrides refused')
     root, worker, output = map(pathlib.Path, sys.argv[1:4])
     require(all(p.is_absolute() for p in (root, worker, output)) and not output.exists() and not output.is_symlink(), 'new absolute output required')
     here = pathlib.Path(__file__).resolve().parent
-    counter_gather = sys.argv[4] == '--counter-gather'
+    empty_receipt = sys.argv[4] == '--empty-receipt-poll'
+    counter_gather = empty_receipt or sys.argv[4] == '--counter-gather'
     tid_boundary = counter_gather or sys.argv[4] == '--tid-boundary'
     packet_identity = tid_boundary or sys.argv[4] == '--packet-identity-boundary'
     local_sources = packet_identity or sys.argv[4] == '--cohort-local-sources'
@@ -60,7 +61,7 @@ def main():
     pushed = fault or sys.argv[4] == '--pushed-completion'
     precise = pushed or sys.argv[4] == '--precise-activation'
     cancel = precise or sys.argv[4] == '--cancel-boundary'
-    r = authenticated(root, pins(here/'build_qwen38_counter_gather_root.py', 'PINS') if counter_gather else pins(here/'build_qwen38_tid_boundary_root.py', 'PINS') if tid_boundary else pins(here/'build_qwen38_packet_identity_boundary_root.py', 'PINS') if packet_identity else pins(here/'build_qwen38_cohort_local_sources_root.py', 'PINS') if local_sources else pins(here/'build_qwen38_commit_boundary_root.py', 'PINS') if commit_boundary else pins(here/'build_qwen38_retained_cohort_root.py', 'PINS') if retained_cohort else pins(here/'build_qwen38_token_fault_marker_image.py', 'FRONTIER_PINS' if frontier else 'JOB_FOLD_PINS' if job_boot_fold else 'PINS') if fault else pins(here/'build_qwen38_token_root.py', 'PINS_CANCEL_F32_PUSHED' if pushed else 'PINS_CANCEL_F32_PRECISE' if precise else 'PINS_CANCEL_F32' if cancel else 'PINS_F32'))
+    r = authenticated(root, pins(here/'build_qwen38_empty_receipt_poll_root.py', 'PINS') if empty_receipt else pins(here/'build_qwen38_counter_gather_root.py', 'PINS') if counter_gather else pins(here/'build_qwen38_tid_boundary_root.py', 'PINS') if tid_boundary else pins(here/'build_qwen38_packet_identity_boundary_root.py', 'PINS') if packet_identity else pins(here/'build_qwen38_cohort_local_sources_root.py', 'PINS') if local_sources else pins(here/'build_qwen38_commit_boundary_root.py', 'PINS') if commit_boundary else pins(here/'build_qwen38_retained_cohort_root.py', 'PINS') if retained_cohort else pins(here/'build_qwen38_token_fault_marker_image.py', 'FRONTIER_PINS' if frontier else 'JOB_FOLD_PINS' if job_boot_fold else 'PINS') if fault else pins(here/'build_qwen38_token_root.py', 'PINS_CANCEL_F32_PUSHED' if pushed else 'PINS_CANCEL_F32_PRECISE' if precise else 'PINS_CANCEL_F32' if cancel else 'PINS_F32'))
     w = authenticated(worker, pins(here/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here/'build_qwen38_pushed_worker_image.py' if pushed else here/'tests/run_pioneer_q38_precise_worker_tests.py' if precise else here/'build_qwen38_global_worker_image.py', 'PINS'))
     units = [(r, 'boot', 'RootBoot', 0x6000), (r, 'text', 'RootText', 0x40000),
              (r, 'terminal', 'RootTerminal', 0x60000), (r, 'conv', 'RootAux', 0x64000)]
@@ -89,8 +90,8 @@ def main():
             lines[1] = '// Mechanically generated from fixed fault-reporting ROOT and precise-beta QGW3 artifacts.'
             if job_boot_fold:
                 lines[1] = '// Mechanically generated from fixed job-boot-fold/eight-way/fault ROOT and precise-beta QGW3 artifacts.'
-                selector = 'PIONEER_Q38_TOKEN_COUNTER_GATHER_PROGRAMS' if counter_gather else 'PIONEER_Q38_TOKEN_TID_BOUNDARY_PROGRAMS' if tid_boundary else 'PIONEER_Q38_TOKEN_PACKET_IDENTITY_BOUNDARY_PROGRAMS' if packet_identity else 'PIONEER_Q38_TOKEN_COHORT_LOCAL_SOURCES_PROGRAMS' if local_sources else 'PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_PROGRAMS' if commit_boundary else 'PIONEER_Q38_TOKEN_RETAINED_COHORT_PROGRAMS' if retained_cohort else 'PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS' if frontier else 'PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS'
-                lines += ['#include "PioneerQ38TokenCounterGatherProgramsRole.h"' if counter_gather else '#include "PioneerQ38TokenTidBoundaryProgramsRole.h"' if tid_boundary else '#include "PioneerQ38TokenPacketIdentityBoundaryProgramsRole.h"' if packet_identity else '#include "PioneerQ38TokenCohortLocalSourcesProgramsRole.h"' if local_sources else '#include "PioneerQ38TokenCommitBoundaryProgramsRole.h"' if commit_boundary else '#include "PioneerQ38TokenRetainedCohortProgramsRole.h"' if retained_cohort else '#include "PioneerQ38TokenFrontierProgramsRole.h"' if frontier else '#include "PioneerQ38TokenJobBootFoldProgramsRole.h"',
+                selector = 'PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_PROGRAMS' if empty_receipt else 'PIONEER_Q38_TOKEN_COUNTER_GATHER_PROGRAMS' if counter_gather else 'PIONEER_Q38_TOKEN_TID_BOUNDARY_PROGRAMS' if tid_boundary else 'PIONEER_Q38_TOKEN_PACKET_IDENTITY_BOUNDARY_PROGRAMS' if packet_identity else 'PIONEER_Q38_TOKEN_COHORT_LOCAL_SOURCES_PROGRAMS' if local_sources else 'PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_PROGRAMS' if commit_boundary else 'PIONEER_Q38_TOKEN_RETAINED_COHORT_PROGRAMS' if retained_cohort else 'PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS' if frontier else 'PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS'
+                lines += ['#include "PioneerQ38TokenEmptyReceiptPollProgramsRole.h"' if empty_receipt else '#include "PioneerQ38TokenCounterGatherProgramsRole.h"' if counter_gather else '#include "PioneerQ38TokenTidBoundaryProgramsRole.h"' if tid_boundary else '#include "PioneerQ38TokenPacketIdentityBoundaryProgramsRole.h"' if packet_identity else '#include "PioneerQ38TokenCohortLocalSourcesProgramsRole.h"' if local_sources else '#include "PioneerQ38TokenCommitBoundaryProgramsRole.h"' if commit_boundary else '#include "PioneerQ38TokenRetainedCohortProgramsRole.h"' if retained_cohort else '#include "PioneerQ38TokenFrontierProgramsRole.h"' if frontier else '#include "PioneerQ38TokenJobBootFoldProgramsRole.h"',
                           '#if !defined('+selector+') || '+selector+' != 1',
                           '#error Exact separate job boot fold program DATA selection required', '#endif']
             else:
@@ -112,6 +113,8 @@ def main():
         program_namespace = 'PioneerQ38TokenTidBoundaryPrograms'
     if counter_gather:
         program_namespace = 'PioneerQ38TokenCounterGatherPrograms'
+    if empty_receipt:
+        program_namespace = 'PioneerQ38TokenEmptyReceiptPollPrograms'
     guard = 'PIONEER_Q38_TOKEN_RETAINED_COHORT_PROGRAMS_H' if retained_cohort else 'PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS_H' if frontier else 'PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS_H' if job_boot_fold else 'PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS_H' if precise_beta else 'PIONEER_Q38_TOKEN_FAULT_PROGRAMS_H' if fault else 'PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H' if pushed else 'PIONEER_Q38_TOKEN_PROGRAMS_H'
     if commit_boundary:
         guard = 'PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_PROGRAMS_H'
@@ -123,6 +126,8 @@ def main():
         guard = 'PIONEER_Q38_TOKEN_TID_BOUNDARY_PROGRAMS_H'
     if counter_gather:
         guard = 'PIONEER_Q38_TOKEN_COUNTER_GATHER_PROGRAMS_H'
+    if empty_receipt:
+        guard = 'PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_PROGRAMS_H'
     lines += [
              '#ifndef '+guard, '#define '+guard,
              '#include "PioneerQ38TokenPushedFootprint.h"' if pushed else '#include "PioneerQ38TokenFootprint.h"',
@@ -156,6 +161,9 @@ def main():
     if counter_gather:
         lines[1] = '// Mechanically generated from fixed eight-counter FIFO-gather ROOT and unchanged precise-beta QGW3 artifacts.'
         lines += ['enum {CounterGather=1,CounterGatherReads=8}; // immutable DATA only;not a native or Work grant']
+    if empty_receipt:
+        lines[1] = '// Mechanically generated from fixed read-source-boundary/empty-receipt-poll ROOT and unchanged precise-beta QGW3 artifacts.'
+        lines += ['enum {ReadSourceBoundary=1,EmptyReceiptPoll=1}; // DATA only;not native,device or Work authority']
     for data_set, name, label, address in units:
         data = data_set[name+'.bin']
         require(data and not len(data)%4 and not address%4 and address+len(data) <= 0x180000, f'{label}: extent')

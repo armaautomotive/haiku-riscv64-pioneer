@@ -17,12 +17,13 @@
 #endif
 #include "PioneerQ38LayerReturnComponentLayout.h"
 #include "PioneerQ38RecurrentHistoryLayout.h"
-#include "PioneerQ38ReadSourceBoundaryRole.h"
+#include "PioneerQ38EmptyReceiptPollRole.h"
 // Separate TUs retain their own genuine private seal TYPES. Do not cast a
 // recurrent private owner into a dense one or transplant an old native owner.
 #define q38_mixed_root_seal q38_layer_return_recurrent_seal
 #define q38_mixed_root_packet_seal q38_layer_return_recurrent_packet_seal
 #define q38_mixed_root_direction_packet_seal q38_layer_return_recurrent_direction_packet_seal
+#define q38_mixed_root_empty_receipt_seal q38_layer_return_recurrent_empty_receipt_seal
 #define q38_mixed_recurrent_frame q38_layer_return_recurrent_frame
 #define memset q38_layer_return_recurrent_zero
 #include "blackhole_qwen38_mixed_recurrent_block_root.cpp"
@@ -31,6 +32,7 @@
 #undef q38_mixed_root_seal
 #undef q38_mixed_root_packet_seal
 #undef q38_mixed_root_direction_packet_seal
+#undef q38_mixed_root_empty_receipt_seal
 // GCC also lowers aggregate zero-initialization to the ordinary C symbol.
 // One implementation serves both components; it retains the zero/alignment
 // checks of the existing device helper, not a host runtime or allocator.

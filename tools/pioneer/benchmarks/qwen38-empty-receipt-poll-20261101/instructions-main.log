@@ -1,0 +1,2 @@
+PASS emitted read guard HOST instructions47 versus write101;1 doorbell versus17 ordered external reads;NOT device cycles/TPS
+PASS emitted read-source boundary/9898 cases/9345 immediate-or-full refusals/512 explicit read-only deferrals;actual fault writer+2048 inert/ABI preserved/normal stack writes ONLY;synthetic ABI,NOT connected release,original model,native,device,Work or TPS proof

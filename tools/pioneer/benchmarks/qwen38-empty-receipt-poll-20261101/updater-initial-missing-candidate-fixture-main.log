@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_p100a_hot_swap_test.py", line 1428, in <module>
+    check(mode, fault)
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_p100a_hot_swap_test.py", line 901, in check
+    assert result.returncode == 0, (mode, result.stdout, result.stderr)
+AssertionError: ('--apply-token-empty-receipt-poll-benchmark', '', '')

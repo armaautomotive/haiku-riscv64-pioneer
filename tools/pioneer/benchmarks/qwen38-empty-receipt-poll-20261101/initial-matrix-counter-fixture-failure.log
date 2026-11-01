@@ -1,0 +1,13 @@
+START SAME-open original27B authentication BEFORE empty-receipt faults;NO supplied products,ready or processor history
+PASS distinct full-token startup builder/ALL64x512KiB published DATA+state spans+ZERO slack/root+head EXACT vs prior independently loaded numeric metadata/192 strict first+middle+last chunk controls/strict full geometry before+after/actual session+prompt initialized from builder/ZERO ROOT instructions;geometry NOT native ownership or model products
+PASS original fabric/3551 independently classified learned parts/7102 endpoint batches+word equivalence/synthetic learned words2645504+recipes47108 REMOVED/no supplied initial hidden/default mutable bytes unchanged/ZERO ROOT instructions;NOT model execution
+PASS actual next embedding position0/token248319/5120 bit-exact/20raw+2writes+2readbacks/no CPU product upload
+BEGIN actual persistent token0/layer0/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer0 matrix1 role10/actual quantized input/same workers
+Assertion failed: (pc==entry && !position && !layer && !completed && !allLayers && !committed && !stopJobs && embedded==1 && !matrices && !convJobs && !gdnJobs && Phase()==2), function Predecessor, file pioneer_q38_connected_empty_receipt_poll_test.cpp, line 14.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_retained_cohort_original_tests.py", line 142, in <module>
+    subprocess.run([str(binary),str(image),str(old),str(worker),str(model),
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-q38-retained-conv-original-m6vqyyyv/test', '/private/tmp/pioneer-q38-empty-poll-inspect-main-20261101-cx', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/qualification-inputs/mixed-worker-20261030', '/private/tmp/pioneer-q38-precise-beta-worker-main-20261031-np', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf', '0004e748', '0004de54', '0004e2b0']' died with <Signals.SIGABRT: 6>.
