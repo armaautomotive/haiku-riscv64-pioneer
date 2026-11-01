@@ -1,0 +1,114 @@
+Twin-batch native execution path:ENTRY gates CLOSED,full END still LIVE
+====================================================================
+2026-11-01. Goal ACTIVE;20tok/s UNMET. No new public driver is built,
+staged or installed by this checkpoint. There is NO physical TPS result,
+whole-model quality pass or new Assistant Work option. Pioneer remains
+on the previously verified stable041/tag12/gen2;no GPU test since recovery.
+
+Distinct actual native fixture path
+------------------------------------
+New --twin-batch-prefetch requires the exact original first-layer/cancel/
+STOP/HOLD/drain/restore/clock/PCI/VM/host-release/unreserve/destructor/END
+predecessor with every existing explicit parent. It refuses old-batched,
+shortened,full-flow,profile,duplicate and compile-only aliases BEFORE
+source/compiler/output access. Old batched and prefetch argument semantics
+remain unchanged and their original negative controls still run FIRST.
+
+The actual native fixture selects the qualified feaa private owner with
+unchanged complete0496 DATA:ROOT6066e693+copy-free worker56b470ae. It asserts
+both full buffers and zero raw-copy stores on the selected namespace.
+The new immutable expected-ROM TU is pure DATA:all119 peer addresses are
+looked up through the distinct package;ROOT code is separately checked
+in the native fixture. No native/kernel/tensor-Work/CPU-oracle flags are
+inherited by that DATA TU. The opaque byte-interface ABI is unchanged.
+
+New NativeTwinBatchPrefetchPeer is a HOST raw-NoC endpoint/observer only.
+It derives from the unchanged full GlobalChainPeer,keeps the existing
+virgin instruction history and shared actual L1/CSR/GDDR backing,and
+observes emitted commands rather than supplying model arithmetic. It
+tracks alternating98000/9a000 batches,real issued-read completion before
+unpack,disjoint other-buffer math,drained tensor references before reuse,
+legacy final command restoration and the absence of ANY raw-copy store.
+Only raw original bytes complete an actually issued read. It adds no
+PC/register,result/ready/receipt or native-owner setter. Other service
+jobs delegate to their unchanged endpoint observers. Genuine STOP must
+follow at least one verified matrix job and actual overlapped operations.
+This adapter is NOT a physical implementation or standalone model proof.
+
+Closed entry and isolation gates
+---------------------------------
+Initial main76377-wh ACTUALLY fails1:the new expected-ROM C++ test omitted
+the standard <initializer_list> include. The compile failure is preserved.
+Only that explicit include was added;no expectation or tolerance changed.
+Final main18995-wi/clean27333-wj BOTH ACTUALLY0,complete logs byte-identical:
+all old ROOT-frontend/prefetch/batched CLI and observer controls FIRST;
+31 new incomplete/duplicate/old/wrong-worker/shortened/profile/compile-only
+CLI refusals;2 observer syntax positives/26 role refusals;ALL3045448 actual
+peer code words over119 workers;723 wrong-worker/alignment/gap/runtime-
+buffer refusals with unchanged output;18 expected-ROM kernel/native/CPU/
+Work/old-DATA refusals. ASan/UBSan are enabled for the ROM execution test.
+Syntax positives do NOT instantiate or execute the native adapter.
+
+Unchanged broader byte-interface/storage/engine isolation main46804-wq
+and clean13853-wr BOTH ACTUALLY0,logs EXACT:37 explicit positive TEST roles
+and1103 absent/zero/two/kernel/device/Work refusals. The implementation
+still refuses native imports and has no processor-history/product setter.
+
+Four genuine original-model histories:LIVE,NOT completed qualification
+-----------------------------------------------------------------------
+SAME handles,all started21:07UTC:
+ main twin90832-wk   clean twin22896-wl
+ main old15267-wm    clean old30712-wn
+The old runs are unchanged batched regression controls,NOT the new twin
+subject and NOT retries on the physical card. ALL four authenticate the
+entire SAME-open original27B GGUF BEFORE native fixture construction,
+then execute the actual851-source initialization/1010 zero jobs,120 held
+L1 histories and ALL119 virgin RV32/Tensix engines. At the last observed
+prefix,both new histories have passed the original embedding,native RMS,
+and first3-worker fullK5120/48-row projection:3840 actual tensor matrix
+instructions with independent FP32/FP64 OBSERVERS ONLY. No CPU products
+or processor-history transplant. New ROOT26618739/peers172524288 HOST
+instructions;old ROOT26639963/peers172588800. These are NOT hardware
+cycles,latency,throughput or a speedup. New and old first-matrix max
+reserved ROOT5760/peer3552 bytes each;kernel/IRQ stack remains separate.
+
+All four continue the SAME original first layer and complete lifecycle;
+the next required evidence is actual process exit0,then strict original
+prefix comparison and full END assertions. An observation timeout,partial
+matrix pass or output file is NOT layer/token/STOP/END/Work qualification.
+DO NOT restart because a wait expires. Observe the SAME handles/logs:
+ /private/tmp/pioneer-q38-twin-native-full-end-main-20261101-wk.log
+ /private/tmp/pioneer-q38-twin-native-full-end-clean-20261101-wl.log
+ /private/tmp/pioneer-q38-old-batched-native-full-end-main-20261101-wm.log
+ /private/tmp/pioneer-q38-old-batched-native-full-end-clean-20261101-wn.log
+Their mutable logs are not archived as completed evidence in this commit.
+
+Reproduction is the existing run_pioneer_q38_token_native_initialization_tests.py
+with zero image generated.pioneer/qualification-inputs/qwen38-state-zero-20261030,
+--execution-end,original generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf,
+mixed-worker-20261030,matching complete WORKER and unique PREFIX,followed by:
+ --pushed-context --precise-beta --posted-cancel --root-frontend-snapshots
+ --held-hidden-readout --job-boot-fold --token-frontier --retained-conv-closure
+ --commit-boundary-seals --cohort-local-sources --packet-identity-boundary
+ --tid-boundary --flat-matrix-root ROOT --prefetch-worker WORKER
+ --twin-batch-prefetch (or --batched-prefetch for the unchanged old control)
+Main ROOT is /private/tmp/pioneer-q38-batched-prefetch-cohort-root-frozen-main-20261101-qq;
+clean is the corresponding clean-qr. Twin WORKER main is
+/private/tmp/pioneer-q38-twin-batch-frozen-main-20261101-sv,clean-sw;
+old is /private/tmp/pioneer-q38-token-batched-prefetch-frozen-main-20261101-nv,
+clean-nw. All PINS include complete ELFs,not just section fragments.
+
+Separate older numerical prefix:CLOSED,full model still LIVE
+-------------------------------------------------------------
+The existing precise-beta snapshot flows17008/75574 and original full3-
+token41236 remain separate live histories,NOT new twin qualification.
+Position0/layer23 snapshot strict main-wo/clean-wp comparators ACTUALLY0:
+all5120 words bit-exact,maxAbs/L2zero,all3 CPU trace pins unchanged;both
+logs and immutable snapshots match byte-for-byte. This is NOT full-model,
+token/STOP/END,physical,Work or TPS evidence. No running flow was restarted.
+
+After whole native END and strict comparisons close,consider a separately
+bound public diagnostic with captured failure replies. Failed physical
+34322 remains disabled;do not presume copy-free code fixes that unknown
+failure or blindly reapply the failed module. Preserve no-CPU-reference
+Work vs validation separation,boot,Assistant,64CPUs and full RAM.
