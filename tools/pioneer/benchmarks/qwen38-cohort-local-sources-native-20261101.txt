@@ -1,0 +1,112 @@
+Cohort-local-source firmware:exact DATA and distinct native subjects
+===================================================================
+2026-11-01. Goal ACTIVE;20tok/s UNMET. No new physical throughput or
+whole-model numerical acceptance. Latest closed78322 measurement remains
+0.110798402..0.110799678tok/s;known first3 score differences still fail.
+The distinct844ec module below has NOT been staged or run on hardware.
+
+Current-source ROOT rechecks72666/80527 ACTUALLY exit0 after the new role
+and DATA selectors are added:exact cd54 reproduces,with ENTIRE old83677/
+48b2/951 controls FIRST. No device arithmetic changed during packaging.
+
+Exact original-byte transition and numerical gates
+---------------------------------------------------
+Corrected cd54 ROOT is pinned by build_qwen38_cohort_local_sources_root.py.
+SAME36583/15395 matrix->Conv and14196/13373 Conv->GDN ACTUALLY exit0.
+EACH independently authenticates the full original GGUF and executes the
+genuine ROOT+119 worker histories before COW raw-CSR fault injection.
+Matrix->Conv:16 physical-source faults,affected worker rejects before its
+first Conv NoC/math;ROOT observes actual fault,no following packet,real
+fault writer+2048 inert terminal steps;unchanged parent first Conv packet.
+Conv->GDN:16 source+8 counter faults AFTER ALL119 actual Conv closures;
+affected worker rejects before first GDN NoC,ROOT observes actual fault,
+no following packet,real fault writer+2048 inert;unchanged parent first GDN.
+Earlier cold16-source tests pass in BOTH trees before any matrix doorbell.
+No processor history,learned product,completion or native lifetime is
+supplied by these fixtures. Tests are simulated byte/CSR/NoC endpoints.
+
+SAME84489/72442 original embedding+full first-layer histories ACTUALLY
+exit0. Both strict posthoc CPU-prefix comparisons ACTUALLY exit0:ALL5120
+embedding+5120 layer0 words bit-exact,maxAbs0,relativeL20,no tolerance.
+This remains FIRST-LAYER coverage,NOT a committed token,STOP,native END,
+all64-layer numerical or physical timing proof. Host retired-instruction
+profile190191577 includes simulated polling;it is NOT device cycles/TPS.
+
+Immutable DATA,not an ownership grant
+--------------------------------------
+Main/clean generated headers are byte-identical:
+ 51e7bd06cb11ab01f2b2e55b3492ac4dbfa1aa26639f2a02e9635d9615dbd6bb
+New namespace PioneerQ38TokenCohortLocalSourcesPrograms never aliases
+old commit/retained/frontier DATA. New explicit selection distinguishes
+DATA-only,private renamed-ABI NODRV and bounded physical diagnostic.
+Old/default selectors keep old packages. Both complete ELFs+ALL13 code
+sections authenticate BEFORE output creation. Same authenticated snapshots
+are emitted;no late artifact reopen or implicit padded code holes.
+
+Main81581/clean78164 ACTUALLY exit0:ALL3044109 code words across120
+cores,2290 gap/runtime/invalid/immutable-output refusals,15 authenticated
+artifacts,30 corrupt/truncated refusals and2 positives/102 DATA role
+refusals EACH. ENTIRE old commit/retained/frontier headers regenerate
+unchanged and their DATA/refusal tests pass FIRST. DATA alone cannot select
+native/physical/USER/ROOT BUILD/CPU/Work or the shared execution binding.
+
+Independent exact private and public builds
+--------------------------------------------
+Private repaired4489/38518 and final44085/83545 ACTUALLY exit0:
+ ce078f0f428ca594bce7fef38ea899c9b0f5f69ca8b9111d85981981179c0f43
+This object has renamed conventional ABI and is NOT an installable driver.
+ENTIRE olde008a065 object reproduces FIRST from current source.
+Public inspect27313/2877 and final26578/51222 ACTUALLY exit0:
+ object36abb94efaa51fa9db8547eb63ea954ed93f9a81abbcda18710db43aadcbe3a1
+ module844ecfe2fc3b8396f0c9787c3a5458544abb91a91011d8f9844f3e137c3d03f5
+ENTIRE oldf04166c6 object+78322 module reproduce FIRST. Exact qualified
+compile/link argv hashes are authenticated,then only the translation unit
+and output destinations change. All13 actual compiled arrays and unchanged
+2MiB RoPE are verified from the objects. No CPU oracle,Work,TEST model or
+old program namespace is imported. Individual frames remain bounded.
+Public callgraph stays5392 known-module bytes/25 unresolved edges,PARTIAL
+only:unknown kernel/IRQ/entry/indirect costs are not zero or qualified.
+Same6607+6608/tag75 is retained;full module hash identifies the revision.
+
+Initial private23775/67389 ACTUALLY exit1 on an include recursion:adding
+the new derived role to the base NativeRole re-entered the parent chain.
+That unnecessary base-header change was removed entirely. The derived
+program selector still checks the complete new and old role perimeter.
+No include-depth increase,guard weakening or replacement of failed logs.
+
+Containment and guarded exchange
+---------------------------------
+Private3387/39388 ACTUALLY exit0:4 positives/339 refusals EACH;old4/325
+and retained4/308 controls pass FIRST. Physical41883/72200 ACTUALLY exit0:
+4 positives/236 refusals EACH;old4/220 and retained4/203 pass FIRST.
+Missing/zero/two/late/tag/ABI/private-vs-physical/CPU/Work cases refuse.
+
+Local guarded updater adds ONLY041<->844ec full-hash routes under new
+--apply-token-cohort-sources-benchmark / --restore-token-cohort-sources-benchmark.
+New helper SHA:
+ af680d2db96e4734d5ff054bc81bd2592b937fda9e084257db9746f30acc898b
+Fake-Haiku actual/bin/sh tests10313/6918 ACTUALLY exit0:748 cases EACH
+covering new+old commit/retained/frontier modes,hash backups,symlinks,
+parent inventories,quarantine/ownership/handshake failures and same-tag
+cross-revision refusals. Old routes refuse844ec;new route refuses78322,
+1f3,9ad and unknown tag75 bytes. No force/reset/automatic rollback exists.
+No real hardware IO occurs in these tests. Old immutableccded66d remains
+untouched on the Pioneer;041/tag12/generation18 is still the live baseline.
+
+Actual native original-model lifecycle qualification:LIVE
+---------------------------------------------------------
+SAME44922/53188 select the exact new DATA with all old complete original
+first-layer/cancel/STOP/HOLD/full-END parents,not a shortened endpoint mode.
+Full same-open original GGUF authenticates BEFORE native factory creation.
+Actual full851 initialization,1010 frozen-RV32 zero jobs,120 staged/journaled
+L1 histories and119 virgin full RISC/Tensix engines have completed the real
+first matrix projection and Conv/GDN work. Latest02:55UTC reaches ROOT
+100000208 actual host-interpreter instructions/phase8,with786432 genuine
+state reads+writes and30720 history reads. These are NOT device cycles or
+model throughput. No CPU-produced model products or private history
+are supplied. Full first layer,posted cancellation,119 STOPs+120 HOLDs,
+drain,held hidden readout,L1/dispatch/ROOT/shared/clock/PCI/VM/host restore,
+device unreserve and locked context destruction remain REQUIRED.
+Even a clean first-layer native END will NOT prove CommitState/all64-layer
+quality,arbitrary prompts,resident Assistant Work or20tok/s. Do not apply
+the new driver before this gate and strict native-prefix checks finish.

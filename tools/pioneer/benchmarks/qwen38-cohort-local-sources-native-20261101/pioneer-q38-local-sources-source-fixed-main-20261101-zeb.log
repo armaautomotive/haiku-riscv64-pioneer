@@ -1,0 +1,27 @@
+PASS distinct full-token startup builder/ALL64x512KiB published DATA+state spans+ZERO slack/root+head EXACT vs prior independently loaded numeric metadata/192 strict first+middle+last chunk controls/strict full geometry before+after/actual session+prompt initialized from builder/ZERO ROOT instructions;geometry NOT native ownership or model products
+PASS original fabric/3551 independently classified learned parts/7102 endpoint batches+word equivalence/synthetic learned words2645504+recipes47108 REMOVED/no supplied initial hidden/default mutable bytes unchanged/ZERO ROOT instructions;NOT model execution
+PASS actual next embedding position0/token248319/5120 bit-exact/20raw+2writes+2readbacks/no CPU product upload
+BEGIN actual persistent token0/layer0/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer0 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer0 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer0 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer0 matrix4 role6/actual quantized input/same workers
+OBSERVED actual original embedding+four closed matrices/BEFORE first StageConv instruction;HOST COW only
+PASS original matrix->Conv source0/actual worker rejects BEFORE first Conv NoC or math/ROOT observes real fault+no following packet/actual fault writer+2048 inert steps;NOT native/physical/Work/TPS
+PASS original matrix->Conv source1/actual worker rejects BEFORE first Conv NoC or math/ROOT observes real fault+no following packet/actual fault writer+2048 inert steps;NOT native/physical/Work/TPS
+PASS original matrix->Conv source2/actual worker rejects BEFORE first Conv NoC or math/ROOT observes real fault+no following packet/actual fault writer+2048 inert steps;NOT native/physical/Work/TPS
+PASS original matrix->Conv source3/actual worker rejects BEFORE first Conv NoC or math/ROOT observes real fault+no following packet/actual fault writer+2048 inert steps;NOT native/physical/Work/TPS
+PASS original matrix->Conv source4/actual worker rejects BEFORE first Conv NoC or math/ROOT observes real fault+no following packet/actual fault writer+2048 inert steps;NOT native/physical/Work/TPS
+PASS original matrix->Conv source5/actual worker rejects BEFORE first Conv NoC or math/ROOT observes real fault+no following packet/actual fault writer+2048 inert steps;NOT native/physical/Work/TPS
+PASS original matrix->Conv source6/actual worker rejects BEFORE first Conv NoC or math/ROOT observes real fault+no following packet/actual fault writer+2048 inert steps;NOT native/physical/Work/TPS
+PASS original matrix->Conv source7/actual worker rejects BEFORE first Conv NoC or math/ROOT observes real fault+no following packet/actual fault writer+2048 inert steps;NOT native/physical/Work/TPS
+PASS original matrix->Conv source8/actual worker rejects BEFORE first Conv NoC or math/ROOT observes real fault+no following packet/actual fault writer+2048 inert steps;NOT native/physical/Work/TPS
+PASS original matrix->Conv source9/actual worker rejects BEFORE first Conv NoC or math/ROOT observes real fault+no following packet/actual fault writer+2048 inert steps;NOT native/physical/Work/TPS
+PASS original matrix->Conv source10/actual worker rejects BEFORE first Conv NoC or math/ROOT observes real fault+no following packet/actual fault writer+2048 inert steps;NOT native/physical/Work/TPS
+PASS original matrix->Conv source11/actual worker rejects BEFORE first Conv NoC or math/ROOT observes real fault+no following packet/actual fault writer+2048 inert steps;NOT native/physical/Work/TPS
+PASS original matrix->Conv source12/actual worker rejects BEFORE first Conv NoC or math/ROOT observes real fault+no following packet/actual fault writer+2048 inert steps;NOT native/physical/Work/TPS
+PASS original matrix->Conv source13/actual worker rejects BEFORE first Conv NoC or math/ROOT observes real fault+no following packet/actual fault writer+2048 inert steps;NOT native/physical/Work/TPS
+PASS original matrix->Conv source14/actual worker rejects BEFORE first Conv NoC or math/ROOT observes real fault+no following packet/actual fault writer+2048 inert steps;NOT native/physical/Work/TPS
+PASS original matrix->Conv source15/actual worker rejects BEFORE first Conv NoC or math/ROOT observes real fault+no following packet/actual fault writer+2048 inert steps;NOT native/physical/Work/TPS
+PASS original four-matrix->Conv/ALL16 physical-source faults before coordinator admission/unchanged parent actual first Conv packet;no transplanted history or supplied products;NOT native/physical/Work/TPS
+PASS actual original-byte four-matrix->Conv physical-source faults and unchanged parent control;NOT native/whole-model/STOP/END/physical/Work/TPS permission

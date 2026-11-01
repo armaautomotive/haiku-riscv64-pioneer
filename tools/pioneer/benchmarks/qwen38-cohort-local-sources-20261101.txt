@@ -97,6 +97,18 @@ Full strict posthoc CPU-prefix comparison and BOTH transition suites
 against this exact cd54 remain REQUIRED.
 No2d45 result may be silently relabelled as cd54 qualification.
 
+Terminal corrected gates update02:43UTC
+---------------------------------------
+All four exact cd54 transition histories ACTUALLY exit0:36583/15395 pass
+16 matrix->Conv source faults EACH;14196/13373 pass16 source+8 counter
+Conv->GDN faults EACH. Both unchanged parents reach their actual next
+packet. SAME84489/72442 first-layer histories ACTUALLY exit0 and strict
+posthoc comparisons exit0:ALL5120 embedding+5120 layer0 words bit-exact,
+maxAbs0/relativeL20/no tolerance. These remain genuine instruction TEST
+histories,not native/physical/full-model/STOP/END or timing proof. Distinct
+DATA/private/public packaging and pending native lifetime qualification are
+recorded in qwen38-cohort-local-sources-native-20261101.txt.
+
 Physical work remains separate
 -------------------------------
 SAME41855 is the previously qualified78322 driver,NOT either new BUILD.

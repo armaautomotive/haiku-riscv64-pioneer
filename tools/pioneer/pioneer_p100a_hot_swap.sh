@@ -56,6 +56,7 @@ case "$1" in
  --apply-token-frontier-benchmark|--restore-token-frontier-benchmark) mode=$1;;
  --apply-token-retained-cohort-benchmark|--restore-token-retained-cohort-benchmark) mode=$1;;
  --apply-token-commit-boundary-benchmark|--restore-token-commit-boundary-benchmark) mode=$1;;
+ --apply-token-cohort-sources-benchmark|--restore-token-cohort-sources-benchmark) mode=$1;;
  --apply-host-phase-diagnostic|--restore-host-phase-diagnostic) mode=$1;;
  --apply-batch4-fetch-qualification|--restore-batch4-fetch-qualification) mode=$1;;
  --apply-batch-raw-qualification|--restore-batch-raw-qualification) mode=$1;;
@@ -173,6 +174,7 @@ candidate_token_decode_benchmark=$stage/tenstorrent_pci_probe-token-decode-bench
 candidate_token_frontier_benchmark=$stage/tenstorrent_pci_probe-token-frontier-benchmark-9ad9e86b
 candidate_token_retained_cohort_benchmark=$stage/tenstorrent_pci_probe-token-retained-cohort-benchmark-1f3bcff8
 candidate_token_commit_boundary_benchmark=$stage/tenstorrent_pci_probe-token-commit-boundary-benchmark-78322cfa
+candidate_token_cohort_sources_benchmark=$stage/tenstorrent_pci_probe-token-cohort-sources-benchmark-844ecfe2
 candidate_host_phase_diagnostic=$stage/tenstorrent_pci_probe-host-phase-diagnostic-acf33ea4
 candidate_batch4_fetch_qualification=$stage/tenstorrent_pci_probe-batch4-fetch-qualification-2fcf0b27
 candidate_batch_raw_qualification=$stage/tenstorrent_pci_probe-batch-raw-qualification-c38e258c
@@ -272,6 +274,7 @@ hash_token_decode_benchmark=4ebc9463b80cfa73fe957800cadac819e7ff05e17ff7a2db7fd6
 hash_token_frontier_benchmark=9ad9e86bd5e45c5cb11dfe286f3528452dfe7b0e4630f67546acbb43a03064e8
 hash_token_retained_cohort_benchmark=1f3bcff838ff9f95d5f450c53000f02f80ddcd073aa5a5cc3018ee4208e0847c
 hash_token_commit_boundary_benchmark=78322cfa94db2519284efa12ad69cfa77981446f03081fc95aee2ee6234de8d1
+hash_token_cohort_sources_benchmark=844ecfe2fc3b8396f0c9787c3a5458544abb91a91011d8f9844f3e137c3d03f5
 hash_host_phase_diagnostic=acf33ea4279ca6d36cbc4b90ae56e6da1fed219b431ae7c80c2693b3f1591583
 hash_batch4_fetch_qualification=2fcf0b27039ed8e8e8114c632d51ba2f75ed2e6c28ef4a7081dd347d39cba9da
 hash_batch_raw_qualification=c38e258cb76bf8013a721cacb73e98b1d7eb191badbfaed6076655284543d379
@@ -369,6 +372,7 @@ tag_token_decode_benchmark=2026103100010075
 tag_token_frontier_benchmark=2026103100010075
 tag_token_retained_cohort_benchmark=2026103100010075
 tag_token_commit_boundary_benchmark=2026103100010075
+tag_token_cohort_sources_benchmark=2026103100010075
 tag_host_phase_diagnostic=2026102100010018
 tag_batch4_fetch_qualification=2026102100010019
 tag_batch_raw_qualification=2026102100010020
@@ -649,6 +653,9 @@ else
  # Exact041 <-> separately qualified78322 ONLY;tag75 alone is NOT code identity.
  elif [ "$mode" = --apply-token-commit-boundary-benchmark ]; then source=$candidate_token_commit_boundary_benchmark; expected=$hash_scale_reuse_qualification; result=$hash_token_commit_boundary_benchmark; oldtag=$tag_scale_reuse_qualification; newtag=$tag_token_commit_boundary_benchmark
  elif [ "$mode" = --restore-token-commit-boundary-benchmark ]; then source=$candidate_scale_reuse_qualification; expected=$hash_token_commit_boundary_benchmark; result=$hash_scale_reuse_qualification; oldtag=$tag_token_commit_boundary_benchmark; newtag=$tag_scale_reuse_qualification
+ # Exact041 <-> separately qualified844ec ONLY;old78322/1f3/tag75 are NOT substitutes.
+ elif [ "$mode" = --apply-token-cohort-sources-benchmark ]; then source=$candidate_token_cohort_sources_benchmark; expected=$hash_scale_reuse_qualification; result=$hash_token_cohort_sources_benchmark; oldtag=$tag_scale_reuse_qualification; newtag=$tag_token_cohort_sources_benchmark
+ elif [ "$mode" = --restore-token-cohort-sources-benchmark ]; then source=$candidate_scale_reuse_qualification; expected=$hash_token_cohort_sources_benchmark; result=$hash_scale_reuse_qualification; oldtag=$tag_token_cohort_sources_benchmark; newtag=$tag_scale_reuse_qualification
  elif [ "$mode" = --apply-host-phase-diagnostic ]; then source=$candidate_host_phase_diagnostic; expected=$hash_sentinel_poll_qualification; result=$hash_host_phase_diagnostic; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_host_phase_diagnostic
  elif [ "$mode" = --restore-host-phase-diagnostic ]; then source=$candidate_sentinel_poll_qualification; expected=$hash_host_phase_diagnostic; result=$hash_sentinel_poll_qualification; oldtag=$tag_host_phase_diagnostic; newtag=$tag_sentinel_poll_qualification
  elif [ "$mode" = --apply-batch4-fetch-qualification ]; then source=$candidate_batch4_fetch_qualification; expected=$hash_sentinel_poll_qualification; result=$hash_batch4_fetch_qualification; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_batch4_fetch_qualification
@@ -696,6 +703,7 @@ else
   --apply-token-frontier-benchmark|--restore-token-frontier-benchmark) reload_backup=$reload_backup-$expected;;
   --apply-token-retained-cohort-benchmark|--restore-token-retained-cohort-benchmark) reload_backup=$reload_backup-$expected;;
   --apply-token-commit-boundary-benchmark|--restore-token-commit-boundary-benchmark) reload_backup=$reload_backup-$expected;;
+  --apply-token-cohort-sources-benchmark|--restore-token-cohort-sources-benchmark) reload_backup=$reload_backup-$expected;;
   --apply-token-validation|--restore-token-validation|--apply-token-hold-recheck|--restore-token-hold-recheck|--apply-token-root-frontend|--restore-token-root-frontend) reload_backup=$reload_backup-$expected;;
   --apply-mixed-live-validation|--restore-mixed-live-validation|--apply-recurrent-block-validation|--restore-recurrent-block-validation|--apply-recurrent-deadline-validation|--restore-recurrent-deadline-validation|--apply-recurrent-prefix-validation|--restore-recurrent-prefix-validation) reload_backup=$reload_backup-$expected;;
   # DEBUG44 has two byte-distinct images. Preserve the previous tag-only

@@ -1,0 +1,15 @@
+/* SPDX-License-Identifier: MIT */
+// Bounded6607+6608 diagnostic;full module hash,NOT tag75,is revision identity.
+#if !defined(PIONEER_Q38_TOKEN_COHORT_LOCAL_SOURCES_BENCHMARK_NATIVE) || PIONEER_Q38_TOKEN_COHORT_LOCAL_SOURCES_BENCHMARK_NATIVE != 1 \
+ || !defined(PIONEER_Q38_TOKEN_COHORT_LOCAL_SOURCES_PROGRAMS) || PIONEER_Q38_TOKEN_COHORT_LOCAL_SOURCES_PROGRAMS != 1 \
+ || !defined(PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_BENCHMARK_NATIVE) || PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_BENCHMARK_NATIVE != 1 \
+ || !defined(PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_PROGRAMS) || PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_PROGRAMS != 1 \
+ || defined(PIONEER_Q38_TOKEN_COHORT_LOCAL_SOURCES_NATIVE_CONTEXT) || defined(PIONEER_Q38_COHORT_LOCAL_SOURCES_IMAGE)
+#error Exact cohort-source diagnostic required,not DATA,private NODRV or ROOT BUILD
+#endif
+#include "PioneerQ38TokenCommitBoundaryBenchmarkRole.h"
+#ifndef PIONEER_Q38_TOKEN_COHORT_LOCAL_SOURCES_PHYSICAL_BINDING_H
+#define PIONEER_Q38_TOKEN_COHORT_LOCAL_SOURCES_PHYSICAL_BINDING_H
+enum {PioneerQ38TokenCohortLocalSourcesPhysicalSelection=1};
+#endif
+static_assert(PioneerQ38TokenCohortLocalSourcesPhysicalSelection==1,"late cohort-source diagnostic binding");
