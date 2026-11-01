@@ -1,0 +1,89 @@
+Flat QGW3 grammar: clean34,16.16% one-pair gain,quality still unaccepted
+====================================================================
+2026-11-01,11:43UTC. Goal ACTIVE;20tok/s UNMET. Physical69899 ACTUALLY
+exits0,observed11:40:02UTC. Baseline041 independently restored/gen32;
+card NOW healthy and idle. No protected physical run remains.
+
+Actual subject and full isolated lifetime
+------------------------------------------
+New whole module8612962e38cab47999b8aecf67268c8e7fd651917b8a570fd79f79b78e1b165f,
+ROOT88e419152d297dbe2ebb0b3913d3e2cae58aa69741b4b03e2667749702c4a674,
+tag2026103100010075/generation31. SAME unchanged non-profiling client:
+4b1dbee63e537b39e5212a9180670139a2a9ba46ef0b3cbeb66a7d5226b7f048,
+--benchmark-34-positions. Exact build/DATA/native/updater/stage/readback/
+apply/prelaunch evidence:qwen38-flat-matrix-native-20261101.txt.
+
+SAME69899 starts11:01UTC;whole original SAME-open GGUF authentication
+precedes accelerator Open. All3551 parts/4736090 pages/20367 spans/
+19399024640 padded learned bytes upload. START acknowledges,all34 records/
+final_count34/terminal/HOLD/drain/full restoration/END+Close complete;
+ACTUAL process exit0 observed,stderr0B. No runtime CPU model oracle.
+NO extra Pioneer SSH/admin/status/GPU/model/staging/reload/reset/power/
+SD/OS/network action during the ENTIRE source-authentication/upload/
+execution/restoration lifetime. Only after actual exit did new SSH occur.
+Repeated observation timeouts were NOT treated as completion or restart.
+
+Measured count-window result,not isolated latency or quality
+-------------------------------------------------------------
+32 post-prompt sampled tokens,committed2..34,2116 observations:
+ elapsed207153737..207157055us
+ rate0.154472171..0.154474645 tokens/sec
+ mean6.47355428125..6.47365796875 seconds per sampled token.
+Authentication,loading,initialization and restoration EXCLUDED. Bounds
+are count-observation-window bounds,NOT statistical confidence intervals.
+
+Previous5a3c/3718/SAME4b run:32 sampled tokens,committed2..34,2454
+observations,elapsed240635991..240639453us,rate0.132979026..0.132980939.
+ALL34 first12-word headers EXACTLY equal. Nonces and physical counters
+are NOT claimed equal. Independently main+clean exact-rational pair tools
+BOTH ACTUALLY exit0,logs cmp-exact. ONE run each yields gain interval:
+ [669578720/41431411,3348571600/207153737] percent
+ approximately16.161137258878..16.164669044807 percent.
+No repeatability,statistical confidence or causal attribution is established.
+This fixed short diagnostic is NOT sustained usable Assistant inference.
+20tok/s is still approximately129.47 times this measured rate;no prediction
+or promise of attaining that target is inferred.
+
+Strict numerical comparison: known failure remains a failure
+-------------------------------------------------------------
+Unchanged main+clean strict comparators BOTH ACTUALLY exit1;logs cmp-exact.
+Complete34-record grammar and rate arithmetic pass. First3 greedy tokens
+match independent CPU corpus,while max-logit words still differ:
+ position selected observed CPU-reference
+ 0        70253    413bc1de 413c2358
+ 1        17       41452aa2 414621d3
+ 2        17       4167c42a 4168afd0
+No expected word,tolerance,verifier or exit mode relaxed. Positions3..33
+have NO external numerical acceptance here. Matching prior diagnostic
+headers is NOT full-hidden/vocabulary/state/arbitrary-prompt quality proof.
+Earlier exact original-byte first-layer tests remain their narrower scope,
+not evidence that later-layer score differences have been resolved.
+
+Independent restoration and final health
+------------------------------------------
+Only AFTER actual clean exit,fresh independent SSH ACTUALLY exits0:
+whole8612/ccbc-helper/041/4b/b0c-admin/d1ce-guard exact;tag75/gen31/cold0/
+quiesced0/owner0/open1/guard1;64CPUs/full137034936320B/no compute parent.
+
+ONLY exact new helperccbcf57fe57b18d5f1e3abb8b0c82661e5a2cbca14e32961e4aebf2c03dcbc99,
+through /bin/sh --restore-token-flat-matrix-benchmark. SAME60944 ACTUALLY
+exits0:quiesce/close/reload041/tag2026102100010012/generation32. NO older
+4161/4f61 helper,force,reset,retry,quarantine bypass or automatic rollback.
+No reboot,GPU execution,power,SD,mains,network or hardware change.
+
+Fresh independent post-restore SSH ACTUALLY exits0:whole installed
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag12/gen32/cold0/quiesced0/owner0/open1/guard1;64CPUs/full137034936320B/
+free133753016320B/no compute parent. Staged8612/ccbc/041/4b/b0c/d1ce
+remain exact. Physical/post-END health/restore/post-restore stderr ALL0B.
+Assistant,boot,kernel,CPU/RAM code and all unrelated local work untouched.
+
+Next and scope
+----------------
+Continue controller/kernel/dataflow performance work with measured physical
+feedback;qualify before hardware. Full-model numerical/state testing,
+resident fresh requests,arbitrary prompts,useful no-CPU-reference Assistant
+Work and sustained generation remain owed. No20tok/s or driver-ready claim.
+Archived raw logs are in the sibling qwen38-flat-matrix-physical-20261101
+directory;preserve original whitespace. Historical LIVE claims elsewhere
+are superseded by this ACTUAL closure and independent restored health.

@@ -1,0 +1,6 @@
+PASS FRONTIER34 record DATA and rate-format consistency;NOT hardware provenance or numerical acceptance
+OBSERVED_COUNT_WINDOW {'sampled_tokens': 32, 'first_committed': 2, 'last_committed': 34, 'elapsed_min_us': 207153737, 'elapsed_max_us': 207157055, 'lower': 0.154472171, 'upper': 0.154474645, 'observations': 2116}
+COMPARE_DECODE34_FIRST_THREE position0/sameInput1/CPUgreedy70253/observedGreedy70253/selectedMatch1/maxLogitBitsMatch0
+COMPARE_DECODE34_FIRST_THREE position1/sameInput1/CPUgreedy17/observedGreedy17/selectedMatch1/maxLogitBitsMatch0
+COMPARE_DECODE34_FIRST_THREE position2/sameInput1/CPUgreedy17/observedGreedy17/selectedMatch1/maxLogitBitsMatch0
+FIRST_THREE_RECORD_DATA_BITEXACT=0 NO_TOLERANCE_USED;positions3..33 have NO external numerical control here;NOT full-hidden/vocabulary/native-lifetime/log-provenance/physical/Work/TPS qualification

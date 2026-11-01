@@ -1,5 +1,12 @@
 Flat QGW3 grammar: immutable program package and native subjects
 ===============================================================
+11:43UTC CLOSURE:physical69899 ACTUALLY exits0,all34/cleanEND+Close,
+0.154472171..0.154474645tok/s,16.16% ONE-pair gain vs5a3c/SAME4b;
+known strict score mismatch remains FAIL. Exactccbc restore60944 ACTUALLY
+exits0;independent fresh041/gen32/64CPU/fullRAM/healthy-idle check0.
+No protected run remains. See qwen38-flat-matrix-physical-20261101.txt.
+All historical LIVE statements below are superseded by that closure.
+
 2026-11-01,11:02 UTC. Goal ACTIVE;20tok/s UNMET. Physical69899 is LIVE
 from11:01UTC with new8612/tag75/generation31 and SAME unchanged4b client.
 PROTECTED whole source-SHA BEFORE Open/upload/execution/restoration/END+

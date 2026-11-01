@@ -1,0 +1,6 @@
+PAIRED_LOG_DATA_ONLY all34 first12 record words EXACT;session nonces/physical counters NOT compared across runs
+MATCHED_COUNT_WINDOW sampled_tokens=32 first_committed=2 last_committed=34
+PREVIOUS exact_tokens_per_second=[32000000/240639453,32000000/240635991] approximate=[0.132979025680,0.132980938832] observations=2454
+CANDIDATE exact_tokens_per_second=[6400000/41431411,32000000/207153737] approximate=[0.154472170885,0.154474645080] observations=2116
+ONE_PAIR_GAIN_PERCENT exact=[669578720/41431411,3348571600/207153737] approximate=[16.161137258878,16.164669044807]
+NOT hardware/client/clock/isolation provenance,causal attribution,repeatability,full-model numerical acceptance,sustained inference or Assistant Work;strict CPU comparator remains separate
