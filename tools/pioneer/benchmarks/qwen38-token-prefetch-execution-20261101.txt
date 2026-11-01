@@ -1,0 +1,118 @@
+Current QGW3 prefetch: actual emitted execution qualification
+============================================================
+2026-11-01,12:38UTC. Final full52372/98656 BOTH ACTUALLY exit0;logs compare
+exactly. Final queued98353/36680 BOTH ACTUALLY exit0;logs compare exactly.
+Goal ACTIVE;20tok/s UNMET. This is OFFLINE validation of the
+frozen cf02 worker,not a native owner,module,installation,original-model
+quality result,Assistant Work qualification or physical throughput claim.
+No Pioneer operation,power,SD,network,driver or Assistant change occurred.
+Last closed physical result remains0.154472171..0.154474645tok/s with known
+strict score mismatches;see qwen38-flat-matrix-physical-20261101.txt.
+
+Subject and independent endpoints
+----------------------------------
+ENTIRE program.elf cf02c9777314443510894903a74637277be1ccc9b0db8ae80e7fd900baea7120
+and ALL10 extracted sections authenticate to fixed BUILD pins before tests.
+The old mixed constructor fixture and ENTIRE1f49 baseline also authenticate.
+The856B fetch ROM at70000 is installed in the instruction observer BEFORE
+the actual virgin boot. New wait70000/stage7018c PCs are decoded by nm from
+the authenticated ELF and checked against the exact symbol list. They are
+observation points,not guest completion or positive-path PC substitutions.
+Actual RV32/FPU/Tensix instructions write outputs and completion records.
+Only NoC/raw tensor endpoints are synthetic;NO device IO occurs.
+
+Explicit disjoint-pending arithmetic premise
+---------------------------------------------
+The shared Rows observer retains defaultfalse DisjointPrefetchCompute.
+Old fixtures therefore retain their NIU-idle arithmetic requirements. Only
+this new leaf can authorize computation while a read is pending:current
+raw bytes must have completed and match their original tile;pending must
+be exactly the NEXT original-size packet into the opposite90000/98000
+buffer,with exact issued/completed counts and current matrix progress.
+Cross-group prefetch cannot acquire that premise. Every original source,
+operand,unpack,FIFO,accumulator,configuration,drain,tail and receipt check
+remains. No guest NIU pending/counter/ready state is hidden or fabricated.
+NIU command acceptance/publication/fault/STOP guards are NOT relaxed.
+
+Both raw buffers are poisoned before jobs. Scalar metadata and actual raw
+unpack access only completed current data. Async endpoint responses arrive
+between actual RISC instructions,not only when software polls busy. Separate
+1024/4099/65537 instruction-delay schedules and an adversarial between-
+matrix schedule exercise early,during-compute and late visibility. These
+delays and instruction counts are NOT silicon latency or TPS measurements.
+
+Observed failure and evidence-driven observer repair
+------------------------------------------------------
+Initial full main51538/clean54430 BOTH actually exit1 AFTER all54 paired
+matrix/input cases pass. The Q4 async1024 case fails CheckMatrixEnd solely
+because pendingTensorOps=0;exact outputs,all reads/responses,all20 stages,
+final-command restoration,no pending tensors/probes and genuine completion
+already pass. Diagnostic3494 actually exits1 and identifies those fields.
+The fast response legitimately completes before its first Tensix operation.
+
+Separate the nonarithmetic overlap witness from matrix correctness. Poll-
+held and adversarial between-matrix schedules STILL REQUIRE actual pending
+Tensix operations;the latter ALSO requires actual reply retirement between
+matrices. Fast schedules may complete early while retaining ALL arithmetic,
+packet,count,command,publication and endpoint checks. Pending scalar raw
+metadata reads are independently counted. NO firmware,expected word,
+tolerance,timeout,response ordering or guest pending state was changed.
+Repaired async15975 actually exits0:12 missing-response cases,12 deliberate
+skip-wait/wrong-buffer mutants,12 async schedules. This is a PARTIAL pilot,
+not the complete suite. Initial failures remain archived unchanged.
+
+Queued actual second-job execution
+------------------------------------
+Initial76534/94111 and final98353/36680 all actually exit0;each main/clean
+log pair compares exactly. Unchanged old queued worker runs FIRST. New
+candidate:all3 formats x workers1,96,119 =9 retained two-job histories;
+153 second-payload source/missing-ACK fault branches,2048 inert steps each.
+Descriptor2 is genuinely queued during commit1. Actual second-job first
+read requires status2/completed1;changed raw input produces changed exact
+output. Real256B payload ACK precedes4B commit2;all64 receipt words and
+their64 one-bit mutations,cumulative slave4/10/4/4 and real STOP pass.
+Endpoint list bookkeeping preserves exact physical counters;no guest PC,
+register,LReg,Dst or private execution history is reset. Combined observed
+stack3540/8192B;this is NOT a native kernel/IRQ stack qualification.
+
+Full final main/clean reruns: CLOSED
+-------------------------------------
+52372/98656 BOTH ACTUALLY exit0,observed12:38UTC;complete logs cmp-exact.
+No observation timeout was treated as completion or used to restart them.
+Each reruns unchanged old6-worker/12GDN-half-job controls FIRST,then:
+ 54 paired cases:types8/12/14 x K5120/6144/17408 x groups1/3/16 x2inputs;
+ exact original FP32 matrix output plus independent FP64 reference;
+ exact ALL64 payload words vs the1f49 baseline,all64 receipt mutations;
+ same read packets/response counts/matrix/raw/SFPU/sum/drain counts;
+ same final command,real ACK-gated payload/commit/WAIT and actual STOP;
+ 12 lost input/first/middle/last tile reply faults,inert2048 each;
+ 12 actual-call skip-wait/wrong-buffer mutants refused BEFORE publication;
+ 12 asynchronous schedules,real pending compute+between-matrix witnesses;
+ 48 source faults after payload,3 finite missing-ACK and3 queued branches;
+ 3 paired recurrent heads0/31/47,6 virgin workers,12 GDN-half jobs after
+ actual prefetch matrix publication;changed beta/state and real STOP.
+Combined observed stack4804/8192B. First54 use fresh virgin histories for
+each changed input,not retained second-job proof;the separate9 retained
+queued histories supply that narrower proof. ASan+UBSan andffp-contract=off
+apply to all executable tests. None grants all119/native/model quality.
+Q4/1024 specifically observes0 pending Tensix ops but1216 real pending
+metadata reads;the adversarial schedules STILL require pending Tensix ops
+AND replies retiring between matrices. This is not fabricated overlap.
+
+Final source files compare byte-for-byte across the working and clean trees.
+Raw logs,including initial failures and partial pilots,are preserved in the
+sibling qwen38-token-prefetch-execution-20261101 directory. Python syntax
+checks pass using a task-specific temporary cache;the first syntax-only
+attempt could not write macOS's default cache,not a source syntax failure.
+
+Remaining before hardware
+---------------------------
+Dense/global-output/original-model/all119-worker/native lifecycle coverage
+is still owed. The new fetch ROM is absent from the old nine-section peer
+descriptor. A separately selected complete14-section DATA package and new
+native ownership/original-store snapshots/journals/END/module+updater
+identities must be qualified;old image selectors cannot silently own cf02.
+Only then run a controlled physical comparison. Earlier standalone tile
+prefetch was slower in its narrower experiment;no speedup is presumed.
+Full-model numerical correctness,resident fresh requests,arbitrary prompts,
+useful no-CPU-reference Assistant Work and20tok/s remain unmet.

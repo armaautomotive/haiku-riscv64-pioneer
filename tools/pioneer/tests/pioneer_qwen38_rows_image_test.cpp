@@ -21,6 +21,11 @@ struct RowsMachine:StreamMachine {
 	}
 	unsigned StepLimit() const override { return 1000000000; }
 	virtual unsigned MatrixPhasesPerPanel() const { return 4; }
+	// Test-only arithmetic premise. Ordinary images still require NIU idle.
+	// A prefetch fixture must independently prove completed current operands
+	// and a pending read into ONLY the disjoint next raw buffer. This never
+	// changes guest-visible pending state, responses or command acceptance.
+	virtual bool DisjointPrefetchCompute() const { return false; }
 	uint32_t Load(uint32_t a) override { if (a==0x7401c) return memory.at(a); return StreamMachine::Load(a); }
 	void Store(uint32_t a,uint32_t v) override {
 		if (Range(a,0x84000,16384)) { assert(drained && !(a&3) && Range(a,0x84000,groups*64)); buffers[4096+(a-0x84000)/4]=v; return; }

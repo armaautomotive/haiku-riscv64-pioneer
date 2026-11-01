@@ -32,7 +32,7 @@ struct DirectSrcBImage:ReplayImage {
    paddingWrites++;if(!omitPadding)memory[address]=value;return;
   }
   if(Active() && address==0xffef0000+124*4 && setupConfiguration==25) {
-   assert(drained && pendingAccumulator.empty() && !pending && !rawPending && phaseQueue.empty()
+   assert(drained && pendingAccumulator.empty() && (!pending || DisjointPrefetchCompute()) && !rawPending && phaseQueue.empty()
     && !recordRemaining && value==(SourceBPayloadBase()-16)/16);baseWrites++;
   }
   if(Range(address,0x70920,32))copyWrites++;

@@ -63,6 +63,7 @@ struct PreciseBetaPeer:PushedPeer {
   assert(pc==stopPC && gdnPackets==packets && matrixInstructions==math && gdnNextWrites==writes);
  }
 };
+#ifndef PIONEER_Q38_PRECISE_BETA_WORKER_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);unsigned pairs=0,stack=0;
  for(unsigned head:{0U,31U,47U}){
@@ -78,3 +79,4 @@ int main(int argc,char** argv){
  }
  printf("PASS_ACTUAL_PRECISE_BETA_WORKER_SUMMARY pairs%u virginWorkers%u GdnHalfJobs%u maxCombinedStack%u/8192;NO_NATIVE_MODEL_OR_TPS_GRANT\n",pairs,pairs*2,pairs*4,stack);
 }
+#endif

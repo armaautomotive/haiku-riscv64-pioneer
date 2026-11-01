@@ -25,7 +25,7 @@ struct InputSumCache:VectorPersistent {
 	}
 	void Store(uint32_t at,uint32_t value) override {
 		if (Range(at,0x95000,4352)) {
-			assert(memory.at(0x74038)==1 && groups>1 && !pending && drained && !(at&3));
+			assert(memory.at(0x74038)==1 && groups>1 && (!pending || DisjointPrefetchCompute()) && drained && !(at&3));
 			unsigned slot=(at-0x95000)/4;
 			assert(slot==sumWrites && slot<inputs/16 && int(value)==Expected(slot));
 			memory[at]=value; sumWrites++; return;
@@ -34,7 +34,7 @@ struct InputSumCache:VectorPersistent {
 	}
 	uint32_t Load(uint32_t at) override {
 		if (Range(at,0x95000,4352)) {
-			assert(memory.at(0x74038)==1 && groups>1 && !pending && sumWrites==inputs/16 && !(at&3));
+			assert(memory.at(0x74038)==1 && groups>1 && (!pending || DisjointPrefetchCompute()) && sumWrites==inputs/16 && !(at&3));
 			unsigned slot=(at-0x95000)/4;
 			assert(slot==sumReads%(inputs/16) && int(memory.at(at))==Expected(slot));
 			sumReads++; return corruptSum?0x7fffffff:memory.at(at);

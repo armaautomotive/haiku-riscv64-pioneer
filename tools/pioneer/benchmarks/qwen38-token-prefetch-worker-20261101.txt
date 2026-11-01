@@ -1,5 +1,11 @@
 Current full-model prefetch worker: BUILD/roles CLOSED,execution unqualified
 =========================================================================
+12:38UTC UPDATE:selected actual emitted execution is now CLOSED offline,
+full main52372/clean98656 and queued98353/36680 all ACTUALLY exit0.
+See qwen38-token-prefetch-execution-20261101.txt for exact scope/failures/
+repair. Dense/global-output/all119/native/module/hardware/Work/speed remain
+UNQUALIFIED. The historical BUILD-only statements below predate this update.
+
 2026-11-01,12:06UTC. Goal ACTIVE;20tok/s UNMET. New cf02 worker is LOCAL
 shader BUILD ONLY. No DATA package,native owner,module,installation,
 physical inference,speedup or Assistant Work is qualified for it. No

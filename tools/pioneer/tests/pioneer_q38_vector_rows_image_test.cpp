@@ -119,7 +119,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 	// it ONLY after their real acknowledged drain;the new wait-gate fixture
 	// may call it after its separately observed full-class hardware wait.
 	void CompleteRawUnpack() {
-		assert(rawPending && !pending);
+		assert(rawPending && (!pending || this->DisjointPrefetchCompute()));
 		if (rawFloat) {
 			for (unsigned i=0;i<(rawInitial?256U:16U);i++) {
 				uint32_t data=
@@ -203,7 +203,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 		if (allRowsClear && (op==0x10280002 || op==0x10080004)) op=0x10180000;
 		unsigned code=op>>24;
 		if (op==0x10080004 || op==0x10080005) {
-			assert(Base::sfpuSmoke>=16 && !rawPending && !pending);
+			assert(Base::sfpuSmoke>=16 && !rawPending && (!pending || this->DisjointPrefetchCompute()));
 			// Independent ZEROACC encoding:UseDst32b=0,mode16_ROWS=1,
 			// physical row range Imm10*16..+15. Logical FP32 validity
 			// consults ONLY physical Adj32(row);decoded rows stay defined.
@@ -217,7 +217,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 		if (op==0x10180000) for (auto& value:defined) value=false; // ALL1024 physical row-valid bits
 		if (op==0x10280002) for (unsigned row=32;row<48;row++) defined[Adj(row)]=false;
 		if (code==0x42 && !(op&0x800000)) {
-			assert(!rawPending && !pending && !sources[unpackBank] && !ownerA
+			assert(!rawPending && (!pending || this->DisjointPrefetchCompute()) && !sources[unpackBank] && !ownerA
 				&& !config[49] && config[73]==0x13 && thread[5]==0 && !adc0);
 			rawFloat=config[72]==0;
 			rawInitial=op==0x42000091;
@@ -259,7 +259,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 		if (op==0x5e203c00) { adc0=adcX0[0]=0; adc1=adcX1[0]=15; return; }
 		if (op==0x5120000a || op==0x5420000f) { assert(!rawPending); return; }
 		if (op==0x4500017e && rawPending) {
-			assert(backendWait && !pending);
+			assert(backendWait && (!pending || this->DisjointPrefetchCompute()));
 			CompleteRawUnpack();
 		}
 #ifdef TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_PEER_PROGRESS
@@ -294,7 +294,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 			registerOnly=registerOnly || (BlockAffineActive() && blockScratchWords==256 && blockImportMask==65535
 				&& (op==0x8a000002 || (code==0x71 && ((op>>20)&7)==3)));
 #endif
-			assert(!rawPending && !pending && ((ownerA && sources[mathBank]) || affineEligible || registerOnly) && thread[2]==1
+			assert(!rawPending && (!pending || this->DisjointPrefetchCompute()) && ((ownerA && sources[mathBank]) || affineEligible || registerOnly) && thread[2]==1
 				&& (BFloat?PioneerQ38BFloatMatrixEquivalent(config[0],config[1],thread[2],thread[3]):
 					(config[1]==0xa0220000 || PioneerQ38VectorFixedMatrixEquivalent(config[0],config[1],thread[2],thread[3])
 #ifdef PIONEER_Q38_TEST_NATIVE_Q8
@@ -469,7 +469,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 		assert(!Range(address,0x70710,512)); // NO decoded operand staging/copy
 #ifdef PIONEER_Q38_BLOCK_AFFINE_DST
 		if (Range(address,0x97000,1024)) {
-			assert(BlockAffineActive() && !(address&3) && !pending && !rawPending && drained && (value&0x7f800000)!=0x7f800000);
+			assert(BlockAffineActive() && !(address&3) && (!pending || this->DisjointPrefetchCompute()) && !rawPending && drained && (value&0x7f800000)!=0x7f800000);
 			if (address==0x97000) { assert(!blockScratchWords || blockScratchWords==256); blockScratchWords=0; blockImportMask=0; blockImportAttempts=0; }
 			unsigned group=blockScratchWords/32,lane=(blockScratchWords%32)/2,kind=blockScratchWords%2;
 			assert(blockScratchWords<256 && address==0x97000+(group*32+kind*16+lane)*4);
@@ -479,7 +479,7 @@ template<class Base,bool Persistent=false,bool BFloat=false,bool Accumulate=fals
 #ifdef PIONEER_Q38_WORK_INPUT_SUM_CACHE
 		if (Range(address,0x95000,4352)) {
 			assert(Persistent && !BFloat && Accumulate && groups>1 && memory.at(0x74038)==1
-				&& Range(address,0x95000,(inputs/16)*4) && !(address&3) && !pending && drained
+				&& Range(address,0x95000,(inputs/16)*4) && !(address&3) && (!pending || this->DisjointPrefetchCompute()) && drained
 				&& int(value)>=-2048 && int(value)<=2048);
 			memory[address]=value; return;
 		}
