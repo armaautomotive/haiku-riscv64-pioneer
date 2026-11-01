@@ -300,6 +300,9 @@ extern "C" void q38_mixed_root_packet_seal(const uint32_t* frame){
  for(unsigned i=0;i<8;i++)if(frame[32+i]!=p->boot[8+i])scalar_fault_park();
 #endif
  PioneerQ38WordSealSources(p->boot+16);
+#ifdef PIONEER_Q38_TID_BOUNDARY_IMAGE
+ if(!(p->boot[16]&0x10000U))scalar_fault_park(); // refuse FIFO-disabled mode,never change it
+#endif
 } // exclusive owner per-packet checks,NOT a full immutable metadata audit
 #endif
 extern "C" void q38_mixed_root_seal(){
@@ -331,6 +334,12 @@ extern "C" void q38_mixed_root_seal(){
  // precede refusal at the next full boundary;no successful layer/token
  // closure follows a failed identity. No ready bit or source recapture.
  if(p->phase>=2)PacketIdentity(p);
+#endif
+#ifdef PIONEER_Q38_TID_BOUNDARY_IMAGE
+ // Inactive-ID faults may defer through owned metadata traffic,NOT
+ // through a worker release,compute boundary or successful layer/token.
+ // FIFO drain+overflow and ALL32 transaction counters are required here.
+ if(!(p->boot[16]&0x10000U) || !PioneerQ38TidFullQuiet())scalar_fault_park();
 #endif
 }
 extern "C" void mixed_recurrent_block_main(){

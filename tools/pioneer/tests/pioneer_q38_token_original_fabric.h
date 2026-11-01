@@ -11,6 +11,25 @@
 static_assert(PioneerQ38ObservedTrace::TokenMagic==TL::TokenMagic,"exact recorded DATA format,not execution authority");
 #endif
 struct OriginalTokenFlowMachine:TokenFlowMachine {
+#ifdef PIONEER_Q38_TEST_TID_FIFO_ENDPOINT
+ static_assert(PIONEER_Q38_TEST_TID_FIFO_ENDPOINT==1,"exact HOST-only serial FIFO endpoint");
+ // TEST transport is serialized:SubmitToken completes the actual byte
+ // copy and counter updates before returning. There is no FIFO backlog
+ // to fabricate. Fault children may supply nonempty/overflow/TID inputs;
+ // none of these fields supplies a worker result or completion counter.
+ std::array<uint32_t,32> tidStatus={};
+ std::array<uint32_t,4> initiatorStatus={};
+ uint32_t fifoAvailable=0x10101010U,fifoOverflow=0;
+ uint32_t Load(uint32_t address)override{
+  if(address==0xffb20064U || address==0xffb20068U){
+   assert(!pending);if(!(source[0]&0x10000U))return 0;
+   return address==0xffb20064U?fifoAvailable:fifoOverflow;
+  }
+  for(unsigned i=0;i<4;i++)if(address==0xffb20040U+i*0x800 && initiatorStatus[i])return initiatorStatus[i];
+  if(address>=0xffb20240U && address<0xffb202c0U){assert(!(address&3));return tidStatus[(address-0xffb20240U)/4];}
+  return TokenFlowMachine::Load(address);
+ }
+#endif
 #ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
  PioneerQ38ObservedTrace* observed=nullptr;
  const char* snapshotFirstLayerDirectory=nullptr;

@@ -86,7 +86,11 @@ static void Packet(uint32_t* tracked,unsigned w,unsigned at,unsigned bytes,bool 
 #else
  q38_mixed_root_seal();
 #endif
+#ifdef PIONEER_Q38_TID_BOUNDARY_IMAGE
+ if(!PioneerQ38TidPacketQuiet())scalar_fault_park();
+#else
  if(!Quiet())scalar_fault_park();
+#endif
  unsigned local=L::Scratch+(at&31),peer=M::Peer(w+1);uint32_t expected[8];
  for(unsigned i=0;i<8;i++){
   if(*Words(0xffb20000+Counter(i))!=tracked[i])scalar_fault_park();
@@ -106,7 +110,11 @@ static void Packet(uint32_t* tracked,unsigned w,unsigned at,unsigned bytes,bool 
 #else
    q38_mixed_root_seal();
 #endif
+#ifdef PIONEER_Q38_TID_BOUNDARY_IMAGE
+   if(!PioneerQ38TidPacketQuiet())scalar_fault_park();
+#else
    if(!Quiet())scalar_fault_park();
+#endif
    for(unsigned i=0;i<10;i++)if(Words(0xffb20000)[i]!=command[i])scalar_fault_park();
    for(unsigned i=0;i<8;i++)tracked[i]=expected[i];
    Words(L::Summary)[8]++;Words(L::Summary)[9]+=(bytes+63)>>6;return;

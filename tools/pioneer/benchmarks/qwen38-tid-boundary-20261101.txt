@@ -1,0 +1,120 @@
+FIFO-aware transaction boundaries: isolated returning ROOT experiment
+===================================================================
+2026-11-01. Goal ACTIVE. This is not a native/physical/Assistant release.
+Last CLOSED physical result remains 0.121167265..0.121168784 tokens/sec
+on the DIFFERENT 844ec driver. Full-model numerical acceptance and the
+20 tokens/sec target remain unmet. No speedup is claimed for this BUILD.
+
+Why the next optimization needs real FIFO checks
+------------------------------------------------
+The 32 registers previously scanned by Quiet are transaction-ID counters,
+not FIFO status. With FIFO mode enabled, queued requests are not represented
+in those counters yet; zero CMD_CTRL alone does not establish FIFO drain.
+The official sequence requires testing FIFO availability before issuing
+counter reads. The unchanged completed 844ec record captured NIU_CFG_0
+0x16005, so this experiment supports FIFO-enabled mode, not a presumed
+disabled-mode shortcut. It never changes configuration or clears counters.
+Primary hardware references:
+ https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md
+ https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/Counters.md
+
+Selected policy, not a cached readiness bit
+-------------------------------------------
+PIONEER_Q38_TID_BOUNDARY_IMAGE=1 is an isolated returning recurrent BUILD
+requiring the exact packet-identity/cohort/component/boundary parents.
+Its emitted packet guard and EVERY full recurrent seal require the genuine
+sealed FIFO-enable bit. Disabled mode is refused, never enabled or rebased.
+
+At each selected packet pre/post boundary: read all four initiator controls,
+then read and TEST availability 0x10101010, then reject overflow, then check
+both active TID0 low-eight-bit counters. All command packet tags are still
+zero. This is eight ordered 32-bit status reads instead of the previous
+36, including NEW FIFO evidence. Every full recurrent seal checks all
+32 TID counters after the same initiator/FIFO checks: 38 reads total.
+
+Explicit latency difference: an unexpected inactive TID1..15 may permit
+owned metadata traffic before the next full/release/compute boundary
+refuses it. Persistent faults cannot authorize worker release or successful
+model commit. Active TID0, all initiators, FIFO backlog/overflow stay checked
+before new commands. All 16 live source checks, eight expected counters,
+command readbacks, bounds, finite polling and worker/job/math checks remain.
+No MMIO widening, counter reset, source recapture, runtime CPU model oracle
+or model product is introduced. Existing non-selected images remain exact.
+
+Independent builds and containment
+-----------------------------------
+Inspect 23900/65584 and frozen 13613/13021 ACTUALLY exit0 in independent
+trees. ENTIRE old 0c3f/cd54/83677/48b2/951 images and current-source control
+objects reproduce FIRST. New identical pins:
+ boot.bin     4      32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text.bin     130672 6e2789103ac011fda300054807e310561eff00612f259b0688aad52f6b558413
+ terminal.bin 8      468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2
+ conv.bin     32684  d2efdcec3e082422ccb412c1730500da465b3f41d82fc1664a72b9b265276d07
+ program.elf  190952 bc01b290d588c3809acc22288fedbc5445ce1d152aa2a39fb86b496437a8bbd2
+Individual compiler frames, original section bounds, no unresolved symbols,
+RV32IMF instruction constraints and immutable boot/terminal controls pass.
+Role 76172/42163 ACTUAL0 EACH: 2 positives, 86 missing/zero/two/late and
+foreign ROOT/worker/dense/DATA/native/CPU/Work refusals. No native route exists.
+
+Actual emitted helper execution
+--------------------------------
+58305/20999 ACTUAL0 EACH under ASan/UBSan: 3989 synthetic cases, all 32 bits
+at all 38 status registers, immediate ordered early exits, high-counter-bit
+handling, FIFO test-before-counter ordering and live pending/clear changes.
+240 explicitly deferred inactive-ID cases then execute full rejection.
+Only compiler-stack writes; ABI preserved; 2048 real inert instructions per
+case. Helpers execute 46/202/26 HOST instructions for packet/full/initiator
+positive paths. These are NOT card cycles, device timing or token rates.
+
+Emitted static 47241/25402 ACTUAL0 EACH: 20 selected compute/release/commit/
+feedback/transfer bodies are exact after authenticated LINK/literal-address
+relocation. The two transfer functions change ONLY their two Quiet callee
+targets to the selected packet helper. The full seal adds one complete-TID
+helper call; the packet seal adds none. Earlier static controls pass first.
+Projection::Run's indexed switch remains outside this direct-body audit.
+This does not establish branch feasibility or a model/native lifetime.
+
+Genuine original-model corruption history
+------------------------------------------
+33091/50392 BOTH ACTUALLY exit0. Authenticate the complete SAME-open original
+GGUF and all 851 bindings, execute original embedding and 119 virgin emitted
+worker histories. COW only at the actual first installed Phase2 packet.
+Each tree runs 46 children: 30 inactive TIDs, 2 active TID0 counters, 4
+initiators, 4 FIFO occupancy bytes, 4 overflow bits, coherent FIFO-disabled
+source mirrors, and simultaneous FIFO/active-TID faults. Inactive faults
+return from the packet guard then fail the next full boundary; active/FIFO
+faults fail before any new command. Disabled config fails the actual packet
+guard even with all compared local source mirrors coherent.
+
+All children prohibit worker release/math/commit, execute the real fault
+writer and 2048 inert instructions. The unchanged parent genuinely releases
+its first matrix worker, which issues its actual first operand request.
+The optional HOST-only FIFO endpoint models the existing serialized,
+immediately completed byte-transport operations. It supplies no worker
+result, completion counter, processor history or numerical product. This is
+not an asynchronous-hardware timing/FIFO implementation or native owner.
+The default original fabric is unchanged when this TEST flag is absent.
+
+First-layer positive and external comparison
+---------------------------------------------
+15231/66956 are LIVE at 04:52 UTC. Do not infer completion from partial
+matrix output. Both must genuinely exit0 before strict unchanged CPU DATA
+comparison, any immutable DATA/native package or device use is considered.
+
+Separate physical run and remaining work
+-----------------------------------------
+16680 is the DIFFERENT packet-identity ba971/gen21 driver, unchanged 4b
+benchmark client, launched 04:24 UTC. At 04:49:52 its entire padded upload
+is logged; the SAME handle is confirmed live at 04:52 UTC. No new rate or
+clean END exists.
+Do not open another GPU/admin/model handle or change driver/power/OS/network
+while it is alive, including source authentication before accelerator Open.
+After actual END+Close+exit: strict comparison, same-client 844ec control,
+fresh healthy idle, exact efd848 helper restoration to041, expected gen22.
+
+This TID BUILD has no DATA/native/public/physical/Work grant. Next qualify
+the original first-layer positive and strict external words, then immutable
+packaging and complete native lifecycle before any separate hardware test.
+Larger on-card orchestration/batching changes and full-model arithmetic
+correctness, resident fresh prompts, Assistant and real sustained speed
+remain required; this intermediate checkpoint does not redefine the goal.

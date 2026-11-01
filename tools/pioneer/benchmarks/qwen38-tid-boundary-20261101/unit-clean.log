@@ -1,0 +1,4 @@
+PASS emitted TID helper0/8 actual ordered4B reads/46 HOST instructions/stack20;NOT device timing
+PASS emitted TID helper1/38 actual ordered4B reads/202 HOST instructions/stack20;NOT device timing
+PASS emitted TID helper2/6 actual ordered4B reads/26 HOST instructions/stack4;NOT device timing
+PASS emitted TID boundary/3989 synthetic cases/240 explicit inactive-ID deferrals then full refusal/all38 registers all32bits/FIFO availability TEST before ANY counter read/overflow+all4initiators/TID0 immediate/high-counter bits ignored/live transitions/ABI+stack-only writes/2048 inert steps EACH;NO acquisition,model,worker-release,native,physical,Work or TPS proof

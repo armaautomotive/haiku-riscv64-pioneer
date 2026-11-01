@@ -2,6 +2,7 @@
 // NEW QDR1: actual96-worker card controller. Local prepared inputs are
 // supplied by FOUR real QDP producers in the joined qualification. Native
 // source/init/clock/host/joint-memory/Tensix/NoC ownership remains OWED.
+#include "PioneerQ38TidQuiet.h"
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE)
 #include "PioneerQ38GlobalChainComponentRole.h"
 #include "PioneerQ38SelectedGlobalWorker.h"
@@ -149,7 +150,12 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
 #endif
  || !bytes || bytes>16384-(remote&31) || ((bytes|remote)&3))scalar_fault_park();
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
- q38_mixed_root_packet_seal(d);if(!Quiet())scalar_fault_park();
+ q38_mixed_root_packet_seal(d);
+#ifdef PIONEER_Q38_TID_BOUNDARY_IMAGE
+ if(!PioneerQ38TidPacketQuiet())scalar_fault_park();
+#else
+ if(!Quiet())scalar_fault_park();
+#endif
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
  if(d[9]!=129)scalar_fault_park();
 #else
@@ -195,7 +201,12 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
   bool done=!*Words(0xffb20040);for(unsigned i=0;i<8;i++)done &= *Words(0xffb20000+Counter(i))==expected[i];
   if(done){
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
-   q38_mixed_root_packet_seal(d);if(!Quiet())scalar_fault_park();
+   q38_mixed_root_packet_seal(d);
+#ifdef PIONEER_Q38_TID_BOUNDARY_IMAGE
+   if(!PioneerQ38TidPacketQuiet())scalar_fault_park();
+#else
+   if(!Quiet())scalar_fault_park();
+#endif
    if(write && remote==M::Doorbell){Seal(d);FrameSeal(w);}
 #else
    Seal(d);
