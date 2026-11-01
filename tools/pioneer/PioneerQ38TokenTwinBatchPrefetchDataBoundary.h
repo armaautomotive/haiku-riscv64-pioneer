@@ -1,9 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 // Rechecked on every geometry/header include. Pure DATA OR a distinct
-// private renamed-ABI build;NEVER public diagnostic,USER,shader or Work.
+// private renamed-ABI OR explicit bounded diagnostic build;NEVER USER,
+// shader or runtime Work authority. Compiled identity grants no launch.
 #ifndef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_DATA_SELECTION_H
 #define PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_DATA_SELECTION_H
-#ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT
+#ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_BENCHMARK_NATIVE
+enum {PioneerQ38TokenTwinBatchPrefetchDataSelection=3};
+#elif defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT)
 enum {PioneerQ38TokenTwinBatchPrefetchDataSelection=2};
 #elif defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS)
 enum {PioneerQ38TokenTwinBatchPrefetchDataSelection=1};
@@ -28,8 +31,6 @@ enum {PioneerQ38TokenTwinBatchPrefetchDataSelection=0};
 #error Twin-batch DATA cannot coexist with old arrays or a selected native namespace
 #endif
 #if defined(__FAST_MATH__) || defined(PIONEER_Q38_TOKEN_NATIVE_TEST_CONTEXT) \
- || defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_BENCHMARK_NATIVE) \
- || defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_BENCHMARK_NATIVE) || defined(PIONEER_Q38_TOKEN_PREFETCH_BENCHMARK_NATIVE) \
  || defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_WORKER_IMAGE) || defined(PIONEER_Q38_WORK_TWIN_BATCH_PREFETCH) \
  || defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_WORKER_IMAGE) || defined(PIONEER_Q38_WORK_BATCHED_PREFETCH) \
  || defined(PIONEER_Q38_TOKEN_PREFETCH_WORKER_IMAGE) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) \
@@ -41,10 +42,20 @@ enum {PioneerQ38TokenTwinBatchPrefetchDataSelection=0};
  || defined(TT_PIONEER_Q38_WORK_MODE)
 #error Twin-batch DATA alone has no driver,native,USER,shader,CPU oracle or Work grant
 #endif
-#ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT
+#ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_BENCHMARK_NATIVE
+#if PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_BENCHMARK_NATIVE != 1 \
+ || !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_BENCHMARK_NATIVE) || PIONEER_Q38_TOKEN_BATCHED_PREFETCH_BENCHMARK_NATIVE != 1 \
+ || !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS) || PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS != 1 \
+ || defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_TOKEN_PREFETCH_NATIVE_CONTEXT)
+#error Exact distinct twin-batch diagnostic and batched parent required,never private NODRV
+#endif
+static_assert(PioneerQ38TokenTwinBatchPrefetchDataSelection==3,"late twin-batch diagnostic DATA boundary");
+#elif defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT)
 #if PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT != 1 \
  || !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT != 1 \
- || !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS) || PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS != 1
+ || !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS) || PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS != 1 \
+ || defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_BENCHMARK_NATIVE) || defined(PIONEER_Q38_TOKEN_PREFETCH_BENCHMARK_NATIVE)
 #error Exact distinct twin-batch private build and complete batched parent required
 #endif
 // Full native role validation belongs in ProgramsRole AFTER geometry.
@@ -52,7 +63,8 @@ static_assert(PioneerQ38TokenTwinBatchPrefetchDataSelection==2,"late twin-batch 
 #else
 #if defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) \
  || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \
- || defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_PREFETCH_NATIVE_CONTEXT)
+ || defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_PREFETCH_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_BENCHMARK_NATIVE) || defined(PIONEER_Q38_TOKEN_PREFETCH_BENCHMARK_NATIVE)
 #error Pure twin-batch DATA alone has NO private native or kernel binding
 #endif
 #if defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS) \

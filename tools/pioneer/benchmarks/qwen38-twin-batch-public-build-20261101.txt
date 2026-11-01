@@ -1,0 +1,88 @@
+Copy-free twin-batch bounded diagnostic BUILD:CLOSED,NOT installed
+================================================================
+2026-11-01. Goal ACTIVE;20tok/s UNMET. No new physical rate or usable27B
+Assistant Work result exists. New public BUILD follows,not substitutes
+for,the actual original-model first-layer/native full-END qualification
+and strict10240-word comparisons closed in980fd48aa6. All four histories
+ACTUALLY exit0 and all strict comparators ACTUALLY0;see the complete raw
+evidence in qwen38-twin-batch-native-execution-20261101.txt.
+
+Distinct bounded source role and actual code
+---------------------------------------------
+New PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_BENCHMARK_NATIVE binds the same
+immutable0496 ROOT6066e693+worker56b470ae DATA through a separate outer
+role,exact public parents and unchanged conventional driver ABI. DATA
+alone,private NODRV,old-parent-only,USER,shader,CPU-oracle and Work roles
+do not grant this binding,including defined0/late changes. Selection3
+is distinct from pure DATA1/private2. Shared selectors still preserve
+all earlier subjects. Tag75 remains shared and is NEVER code identity.
+All14 arrays use the new namespace;unchanged2MiB RoPE is retained. No
+runtime CPU numerical oracle,HOST instruction model or full-model Work
+control is linked. The existing4/2/2 read sizes and8KiB precaution remain
+unchanged;NO wider-transfer proposal is implemented by this checkpoint.
+
+Independent complete objects/modules and frozen builds
+-------------------------------------------------------
+ Inspect main69633-xa/clean61480-xb BOTH ACTUALLY0.
+ Frozen main88695-xi/clean39203-xj BOTH ACTUALLY0.
+Whole object and module bytes compare exactly across source trees and
+are frozen ONLY after independent inspect completion:
+ objecta0f0b93bf04325fc39074884a56ae0720e4370fef2c05457d726e1ba3504fe26
+ module010c184ef474f962205918fd9a9a34b23b2ab47c3cf6a62d285fcb36d2e9e899
+EVERY build FIRST reproduces entire old flat8612,prefetch919d and FAILED
+batched34322 public objects/modules from their authenticated commands.
+That byte preservation does NOT authorize retrying34322. Its apply path
+remains hard-disabled in source and no new updater has been staged here.
+
+Every14 embedded-array digest matches unchanged0496;whole RoPE bytes
+match the old module;all6 conventional ABI names are present. Forbidden
+old namespaces,CPU-reference/llama/ggml,HOST ISA engines,synthetic sources
+and Work-control symbols are absent from defined AND undefined tables.
+Static frames<=2048 or no larger than the qualified predecessor. Actual
+GCC graph recompilation is byte-identical and audits ProbeControl:known
+module chain5392 bytes/25 unresolved,no cycles/dynamic frames. This is
+explicitly PARTIAL:kernel/IRQ/entry/indirect costs are excluded;it is NOT
+a whole kernel-stack qualification or permission to skip device guards.
+
+Closed shared-boundary regression and refusal gates
+----------------------------------------------------
+Public role main20584-wy/clean38895-wz BOTH ACTUALLY0,complete logs exact:
+ALL older public-role ancestors FIRST,then3 positives/375 missing/zero/
+two/late/tag/ABI/old-parent/old-array/shader/private/USER/CPU/Work refusals.
+Private whole-build main45462-xc/clean97808-xd BOTH ACTUALLY0:complete old
+flat98db,prefetche4e8,batched3a24 AND twinfeaa objects reproduce FIRST;
+all14 arrays,unchanged RoPE,5 actual renamed bodies+5 inert/null/refusal
+wrappers,forbidden symbols and static-frame checks remain. Whole twin:
+ feaa9a9f7323ce1759177c62ae84b39c5993cffab4263b00806d4b9e7638a0ec
+This preserves the exact private subject used by the closed genuine
+model/END history after the public selector was added;no model output
+or original expectation was changed to admit this diagnostic build.
+
+Private roles main39347-xg/clean32109-xh BOTH ACTUALLY0,logs exact:
+ALL ancestors FIRST,then3 positives/480 refusals;public/private/Work
+cannot alias. Complete pure-DATA main48159-xe/clean50707-xf BOTH ACTUALLY0,
+logs exact:ALL old packages FIRST,all16 same-open authenticated artifacts,
+ALL3086042 code words/120 cores in unchanged journal geometry,32 corrupt/
+truncated and5 wrong-family refusals,3 positives/214 DATA role refusals.
+Old prefetch and batched DATA tests now also catch3 additional foreign
+public-selector cases EACH;their original expectations are not relaxed.
+
+Next required rollout scope
+-----------------------------
+Prepare a separately pinned apply/restore updater for exact010c<->041,
+preserving retired34322 apply refusal and all owner/cold/unknown-byte/
+backup/guard safeguards;test it before staging. Fresh CPU-only healthy
+idle64CPU/fullRAM/041-gen evidence and non-overwriting stage/readback
+checks must precede any install. Then an explicitly bounded diagnostic
+using the already staged f8efe67a failure-report client may be considered.
+Its source-only native check is CLOSED and it preserves original failed
+reply bytes without any extra accelerator call/retry/implicit cleanup.
+
+If the new diagnostic fails,retain/quarantine and recover in a new power
+epoch;do NOT hot restore/unload/reset through retained GPU ownership.
+OFF once then ON once per the standing power policy,no mains/SD change.
+No blind retry of the failed34322 subject. Build pins and offline model
+proofs are NOT physical safety,quality,hardware integrity or throughput
+proof. Preserve working boot,Assistant,64CPUs/full RAM and separate Work
+versus validation. Model quality beyond the prefix,actual P100A speed,
+resident fresh requests,arbitrary prompts and20tok/s remain unfinished.

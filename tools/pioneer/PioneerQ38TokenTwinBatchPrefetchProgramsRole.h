@@ -10,7 +10,11 @@ enum {PioneerQ38TokenTwinBatchPrefetchParentBinding=1};
 enum {PioneerQ38TokenTwinBatchPrefetchParentBinding=0};
 #endif
 #endif
-#ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT
+#ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_BENCHMARK_NATIVE
+#include "PioneerQ38TokenBatchedPrefetchProgramsRole.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenTwinBatchPrefetchBenchmarkRole.h"
+static_assert(PioneerQ38TokenTwinBatchPrefetchDataSelection==3,"exact bounded twin-batch diagnostic binding");
+#elif defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT)
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenTwinBatchPrefetchNativeRole.h"
 #include "PioneerQ38TokenBatchedPrefetchProgramsRole.h"
 static_assert(PioneerQ38TokenTwinBatchPrefetchDataSelection==2,"exact private twin-batch binding");

@@ -2,6 +2,11 @@ Twin-batch native execution path:ENTRY gates CLOSED,full END still LIVE
 ====================================================================
 Native full-END+strict-prefix closure2026-11-01 21:36UTC
 -------------------------------------------------------
+Separately bound public diagnostic BUILD010c is now qualified OFFBOARD;
+see qwen38-twin-batch-public-build-20261101.txt. Its whole private feaa
+subject is independently reproduced after shared selector changes. No
+new module/helper is installed or hardware run granted by that build.
+
 This closure supersedes ALL historical LIVE statements below. SAME new
 main90832-wk/clean22896-wl BOTH ACTUALLY exit0;whole logs byte-identical.
 SAME unchanged old batched15267-wm/30712-wn ALSO ACTUALLY0,whole logs exact.
