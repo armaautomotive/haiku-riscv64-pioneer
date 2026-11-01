@@ -1,0 +1,120 @@
+Copy-free twin-batch returning worker:standalone OFFBOARD gates CLOSED
+======================================================================
+2026-11-01. Goal ACTIVE;20tok/s UNMET. No new physical rate or full-model
+quality result. Last CLOSED nonprofiling diagnostic0.159697435..0.159700083
+tok/s still has strict final-score failures. Assistant Work is unchanged.
+
+Performance change being tested
+-------------------------------
+The previous batch shaderb73 copies one last tile per batch from98000 to
+90000,then overlaps the next read with only that final tile. The actual
+current-layout conditional one-matrix-sweep budget counts7441879040 L1
+copy bytes per token. This is extra LOCAL work,not GDDR/PCIe payload.
+
+New distinct shader56b470ae alternates TWO COMPLETE batch buffers98000 and
+9a000. Q8x4/Q4x2/Q6x2,2304/4608/6784-byte messages,source order and all
+original learned bytes stay unchanged. At batch entry,wait for the actual
+current reply,drain actual previous-batch tensor references,then issue
+next batch into the OTHER buffer. All current tiles use their completed
+buffer directly;no raw-copy store exists in this new source. On the last
+batch,restore the old final-tile command without a doorbell or extra read.
+No current read is consumed before response/idle/error proof. UNKNOWN
+still parks inertly;no retry,reset,CPU product or replacement input.
+
+Both buffers are inside the EXISTING saved peer70000..ac000 span. End9ba80
+is below shared vectora0000 and disjoint from metadata91000,scales94000,
+input-sum cache95000..96100. Other services reuse these addresses:there is
+NO persistent cross-job cache. Whole-native save/restore and mixed-service
+lifetime still need their own execution qualification before hardware use.
+Identical packet counts alone do NOT authorize using an old DATA package.
+
+Distinct BUILD and regressions:CLOSED
+-------------------------------------
+New full math TU+role requires exact own outer selector/work flag/parent
+binding and current returning batched/prefetch parents. It refuses old
+leaf,sender,ROOT,kernel,DATA/native,CPU oracle and runtime Work aliases.
+Old b73 leaf explicitly cannot become this candidate. Default-false old
+source/emitted identities remain byte-exact. No driver/public/native owner
+or new Assistant target is added by these shader sources.
+
+Inspect26594/main-sq and88268/clean-ss ACTUALLY exit0. Frozen83970/main-sv
+and57086/clean-sw ACTUALLY exit0;whole math objects,ELFs and ALL10 sections
+compare byte-for-byte across independent trees. ENTIRE oldb73,oldcf02,
+oldprecise-beta and ancestors reproduce FIRST on EVERY build. All7
+non-matrix sections,including the9232B sender/counter/receipt front end,
+are unchanged. No unresolved symbols,writable globals/GOT,unqualified
+arithmetic/control opcodes or reserved-s11 usage is introduced.
+
+Fixed subject:
+ program.elf143880B SHA56b470ae508655a070f17294c0a0fe242335214faed7101abaa05fb385ce6e38
+ fetch1292/1792B SHA8422f5a12befcf4bba1500919006a79c00accbe29ffa99c1750dff66dc871f77
+ text6004/8192B SHAd5fc264b4cb0a76ae84a68bd5762ff620b1b3eea38fd9bb3a34cbef4e76b4d8d
+ affine5360/5376B SHA0074182efb372d30e38807d26f701901c3995a5d3a549110b4ac35e5800ae51f
+Static frames remain<=4096;this is NOT combined native/kernel/IRQ proof.
+
+ASan/UBSan pure plan main-sp/clean-sr ACTUALLY0,logs exact:old334313 checks
+FIRST,then353801 new proposals/raw-input checks+591 unchanged-output
+refusals;ALL types,K,groups,source endpoints,packet counts,byte totals,
+buffer alternation/disjointness and existing saved-span membership checked.
+Role main44899-st/clean30579-su ACTUALLY0,logs exact:old3/136+3/214 syntax
+controls FIRST,then3 positives/118 missing/zero/two/late/alias refusals.
+These are geometry/syntax checks,not hardware or native execution.
+
+Actual emitted math/sender execution
+-------------------------------------
+Pilot main6128-sx/clean45540-sy BOTH ACTUALLY0,logs exact. Three Q8/Q4/Q6
+full-K5120 shapes execute the frozen RV32/Tensix instructions from virgin
+boot through actual sender/payload ACK/commit/WAIT/STOP. Original FP32 and
+FP64 expected rows,arithmetic ordering/counters/command restoration match;
+no raw-copy stores occur. Max combined observed worker stack3540/8192.
+Synthetic NoC/raw endpoints,NOT physical cycles or model throughput.
+
+Full suites SAME81320-sz/main and75584-ta/clean BOTH ACTUALLY exit0 at the
+19:39UTC observation;complete logs compare byte-identical. EACH executes
+ALL54 shapes:Q8/Q4/Q6,K5120/6144/17408,groups1/3/16,two changed-input trials;
+12 input/first/middle/final response faults,12 skipped-wait/wrong-buffer
+negative controls,12 asynchronous schedules,48 source-payload faults and
+3 genuine two-half GDN pairs with two retained-state steps. ALL original
+FP32/FP64 rows,tensor/raw reads,vector/sum arithmetic,byte+packet counters,
+legacy final command,real drain-before-buffer-reuse,ACK+commit and STOP
+checks pass. Direct raw-copy stores are forbidden and ZERO observed in
+every positive case;the old90000 tile stays poisoned. Both batch-buffer
+tail/gap sentinels remain unchanged. Max observed combined stack4804/8192.
+Actual emitted instructions with SYNTHETIC endpoints,NOT dense global
+output/all119 peers/whole-native END/model quality/physical/Work/TPS proof.
+
+Retained queued suites SAME46199-tb/main and70339-tc/clean BOTH ACTUALLY0,
+logs exact. ALL9 type/worker pairs use the SAME actual processor history
+for changed second inputs,ROOT-queued descriptor2,missing ACK hold,real
+payload+commit+receipt,153 second-payload source/timeout faults and actual
+STOP+2048 inert steps. Old retained queued control executes FIRST. No guest
+PC/register/LRegs/Dst/counter/private history reset or supplied completion.
+Max observed combined worker stack3540/8192. These synthetic endpoints do
+NOT prove all119 peers/full native lifecycle/model quality/Work/TPS.
+
+Independent existing numerical flow,NOT this shader
+---------------------------------------------------
+Unchanged SAME17008/main and75574/clean full-model flows continue. Fresh
+strict comparisons of INCOMPLETE position0 snapshots17,18,19 ACTUALLY0
+in BOTH trees:each5120 words bitexact,maxAbs0,relativeL20,original3 trace
+pins/expectations unchanged. Paired snapshots compare exact. Layers1..16
+were already checked in prior checkpoints. Subject is OLD precise-beta
+worker1f49,NOT new56b470 or current physical34322. No later layer/token/
+terminal/END/physical/Work/TPS acceptance is inferred from these snapshots.
+
+Pioneer protection and next gates
+----------------------------------
+Physical SAME29181 is STILL LIVE and PROTECTED for the separate34322
+batch diagnostic installed before this offboard work. It is authenticating/
+uploading the original model;no rate result exists. Observe ONLY same tool
+handle and local raw log;NO other Pioneer SSH/status/admin/scp/GPU/reload/
+reset/power/network/SD/OS action until actual closure. No timeout is END.
+
+After new shader standalone execution closes:separate immutable DATA and
+HOST endpoint integration,whole native initialization/first original layer/
+cancel/119STOP/120HOLD/drain/all stores+readbacks/clock+PCI+VM+host releases/
+unreserve/destruction/END and strict unchanged comparisons must pass before
+any separately built public bounded diagnostic or staging. No old module,
+helper,selector or shared tag grants that authority. Whole-model quality,
+resident fresh requests,arbitrary prompts,usable no-CPU-reference Assistant
+Work and20tok/s remain unproven. No measured speedup is claimed.

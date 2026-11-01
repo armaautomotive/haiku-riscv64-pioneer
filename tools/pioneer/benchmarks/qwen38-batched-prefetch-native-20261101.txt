@@ -1,3 +1,30 @@
+Physical rollout update2026-11-01 19:38UTC:LIVE,NO new rate yet
+=======================================================================
+This supersedes historical not-yet-staged/next-stage statements below.
+Fresh independent prestage-sf ACTUALLY0,all new destination paths absent,
+041/tag12/gen36 healthy idle/64CPU/fullRAM. SCP sg/sh ACTUALLY0. Stage
+verify-si ACTUALLY0;module and helper independently copied BACK to sj/sk,
+whole bytes exact34322035 and33d69062. No older staged file overwritten.
+ONLY33d helper --apply-token-batched-prefetch-benchmark SAME89346 ACTUALLY0:
+041/gen36 quiesced+closed,new34322/tag75/gen37 verified,no reboot/noGPU.
+Fresh independent prelaunch-sn ACTUALLY0:all exact installed/staged/client/
+admin/guard hashes,gen37/cold0/quiesced0/owner0/open1/guard1,no compute
+parent,64CPUs/full137034936320B. All rollout stderr0B.
+
+SAME29181 launched19:18:50UTC,unchanged4b frontier34 benchmark client.
+ENTIRE original-source-SHA/Open/upload/execute/Finish/END+Close lifetime
+remains PROTECTED:only same tool handle+local raw log observed;NO other
+Pioneer operation. Actual original-model upload progresses;no returned
+token-rate/quality/END result exists. Timeout is NOT completion. After
+actual closure,unchanged strict comparator and independent34322/gen37
+health BEFORE only33d --restore-token-batched-prefetch-benchmark,expected
+041/gen38,then fresh health. Never use old3ceff to restore34322.
+
+Separate twin-batch56b470 is OFFBOARD ONLY,not installed/selected here.
+See qwen38-twin-batch-prefetch-20261101.txt. Goal ACTIVE;20tok/s UNMET.
+
+Historical closed offline qualification ledger
+=======================================================================
 Batched transfer variant:full native END,strict prefix and bounded BUILD
 =======================================================================
 2026-11-01. Goal ACTIVE;20tok/s UNMET. All offline gates described here are

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Distinct shader BUILD only. Changed read-count grammar is NOT compatible
 // with the existing ROOT/native packages. No owner,launch or Work grant.
+#include "PioneerQ38TokenTwinBatchPrefetchRole.h"
 #ifndef PIONEER_Q38_TOKEN_BATCHED_PREFETCH_BINDING_H
 #define PIONEER_Q38_TOKEN_BATCHED_PREFETCH_BINDING_H
 #ifdef PIONEER_Q38_TOKEN_BATCHED_PREFETCH_WORKER_IMAGE

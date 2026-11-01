@@ -42,6 +42,9 @@
 #include "PioneerQ38TilePrefetchPlan.h"
 #ifdef PIONEER_Q38_WORK_BATCHED_PREFETCH
 #include "PioneerQ38BatchedPrefetchPlan.h"
+#ifdef PIONEER_Q38_WORK_TWIN_BATCH_PREFETCH
+#include "PioneerQ38TwinBatchPrefetchPlan.h"
+#endif
 #endif
 #endif
 #if defined(PIONEER_Q38_WORK_FRONTEND_BARRIER) && (!defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_WORK_AFFINE_REPLAY) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT))
@@ -436,6 +439,25 @@ void TilePrefetchWait(uint32_t expected){
  block_fault_park(); // UNKNOWN:inert,NO next command/read/reset/retry
 }
 #ifdef PIONEER_Q38_WORK_BATCHED_PREFETCH
+#ifdef PIONEER_Q38_WORK_TWIN_BATCH_PREFETCH
+static __attribute__((noinline,optimize("Os"),section(".text.pioneer_q38_batch4_stage")))
+uint32_t TwinBatchTilePrefetchStage(unsigned type,unsigned inputs,unsigned groups,unsigned group,unsigned block,uint32_t first,uint32_t route,uint32_t& pending){
+ PioneerQ38TwinBatchPrefetchPlan p;
+ if(!PioneerQ38TwinBatchPrefetchPlan::Describe(type,inputs,groups,group,block,first,p))block_fault_park();
+ if(p.batchFirst){
+  if(p.first)TilePrefetchWait(TilePrefetchStart(p.bulkSource,route,p.bulkRaw,p.bulkBytes));
+  else TilePrefetchWait(pending);
+  // The other complete buffer may still be referenced by PREVIOUS-batch
+  // tensor operands. Retire them before reusing it,including group entry.
+  VectorPanelEmitter emitter;emitter.Drain();
+  if(p.next)pending=TilePrefetchStart(p.nextSource,route,p.nextRaw,p.bulkBytes);
+  else if(p.restore)ReadCommand(p.bulkSource+p.bulkBytes-p.tileBytes,route,0x90000,p.tileBytes);
+ }
+ // No raw-copy stores. NEXT read is disjoint from ALL current-batch tiles.
+ // Restore the legacy last-tile command WITHOUT an extra read/doorbell.
+ return p.currentRaw;
+}
+#else
 static __attribute__((noinline,optimize("Os"),section(".text.pioneer_q38_batch4_stage")))
 uint32_t BatchedTilePrefetchStage(unsigned type,unsigned inputs,unsigned groups,unsigned group,unsigned block,uint32_t first,uint32_t route,uint32_t& pending){
  PioneerQ38BatchedPrefetchPlan p;
@@ -453,6 +475,7 @@ uint32_t BatchedTilePrefetchStage(unsigned type,unsigned inputs,unsigned groups,
  }
  return p.currentRaw; // known-complete current bytes;pending is disjoint90000 vs98000
 }
+#endif
 #else
 static __attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
 uint32_t TilePrefetchStage(unsigned type,unsigned inputs,unsigned groups,unsigned group,unsigned block,uint32_t first,uint32_t route,uint32_t& pending){
@@ -709,7 +732,11 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_STREAM
 #ifdef PIONEER_Q38_WORK_TILE_PREFETCH
 #ifdef PIONEER_Q38_WORK_BATCHED_PREFETCH
+#ifdef PIONEER_Q38_WORK_TWIN_BATCH_PREFETCH
+	if(skipDotCheck)rawBase=TwinBatchTilePrefetchStage(type,inputs,groups,group,block,first,job[8],nextTileExpected);else
+#else
 	if(skipDotCheck)rawBase=BatchedTilePrefetchStage(type,inputs,groups,group,block,first,job[8],nextTileExpected);else
+#endif
 #else
 	if(skipDotCheck)rawBase=TilePrefetchStage(type,inputs,groups,group,block,first,job[8],nextTileExpected);else
 #endif

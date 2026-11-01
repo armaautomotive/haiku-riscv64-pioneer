@@ -7,6 +7,9 @@
 #include "PioneerQ38TilePrefetchPlan.h"
 #ifdef PIONEER_Q38_WORK_BATCHED_PREFETCH
 #include "PioneerQ38BatchedPrefetchPlan.h"
+#ifdef PIONEER_Q38_WORK_TWIN_BATCH_PREFETCH
+#include "PioneerQ38TwinBatchPrefetchPlan.h"
+#endif
 #endif
 #endif
 #ifdef PIONEER_Q38_WORK_FRONTEND_BARRIER
@@ -65,6 +68,8 @@ template<class E> static bool PioneerQ38VectorFixedUnpack(E& e,unsigned type,uns
 	PioneerQ38VectorPanelSpan span; if (!PioneerQ38VectorPanel(type,panel,span)) return false;
 #ifdef PIONEER_Q38_WORK_BATCH_RAW_INPUT
 	if(!PioneerQ38Batch4RawInput(type,rawBase))return false;
+#elif defined(PIONEER_Q38_WORK_TWIN_BATCH_PREFETCH)
+	if(!PioneerQ38TwinBatchPrefetchPlan::RawInput(type,rawBase))return false;
 #elif defined(PIONEER_Q38_WORK_BATCHED_PREFETCH)
 	if(!PioneerQ38BatchedPrefetchPlan::RawInput(type,rawBase))return false;
 #elif defined(PIONEER_Q38_WORK_TILE_PREFETCH)
