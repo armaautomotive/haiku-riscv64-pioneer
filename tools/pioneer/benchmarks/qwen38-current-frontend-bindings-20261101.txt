@@ -1,0 +1,54 @@
+Current flat/prefetch ROOT profile bindings: CLOSED offline DATA only
+====================================================================
+2026-11-01,13:51UTC. Goal ACTIVE;20tok/s UNMET. This change affects ONLY
+the offline raw-address decoder and its tests,not a driver,firmware,
+benchmark client,CPU oracle or Assistant Work. No Pioneer operation is
+issued for these tests. Physical prefetch14837 remains its separately
+protected live SHA/upload/generation/END+Close lifetime;do not disturb it.
+
+Why
+-----
+The earlier hardware frontend profile belongs to1f3/48b2,not the current
+8612 or919d modules. Mapping newer samples with that older ELF would be
+incorrect. Add explicit whole-module declarations for the two separately
+native-qualified builds. Both legitimately contain the SAME ROOT:
+191436B/88e419152d297dbe2ebb0b3913d3e2cae58aa69741b4b03e2667749702c4a674.
+Prefetch changes peer code;it does not create a new ROOT address map.
+
+New declared bindings
+----------------------
+8612962e38cab47999b8aecf67268c8e7fd651917b8a570fd79f79b78e1b165f
+919d4a631ff664549a67bb2372ce2db344ba29473c452c0b273c4b27a2bdf978
+Both require that exact immutable ROOT length+SHA BEFORE nm. As before,nm
+decodes a private copy of the SAME authenticated byte snapshot,not a later
+unchecked reopen. Exact nonzero function intervals and coincident symbols
+are unchanged. No PC subtraction,range widening or inferred processor ID.
+
+Actual tests
+--------------
+Main63878 and clean34336 BOTH ACTUALLY exit0;logs compare byte-for-byte.
+Each authenticates both ACTUAL complete module artifacts and their ROOT,
+then verifies2 identical exact symbol maps,expected current flat-grammar
+symbols and absence of old Precise JobShape fallback. RAW60008/FFFFFFFF
+remain unmapped.30 old-root,wrong-module,corrupt,truncated,oversized,
+symlink,relative and directory inputs refuse BEFORE any external symbol
+tool is reached. No code is executed from these ELF snapshots.
+
+The existing two-module binding controls execute FIRST unchanged:2
+positives/3 wrong-binding refusals. The complete unchanged base comparator
+then runs3 SYNTHETIC positives/1260 omissions,duplicates,record,counter,
+time,rate,numeric refusals;the old profile parser runs1 SYNTHETIC positive/
+581 grammar/order/time/count/stage/base-record refusals. Actual main/clean
+source files also compare exactly. No tolerance or numerical check changes.
+
+Limits and next use
+---------------------
+A declared module/ELF pair is NOT independent hardware provenance. Future
+actual profile capture still needs prelaunch whole-module/client/generation
+evidence and its OWN isolated original-source/upload/execution/full-END+
+Close lifetime. The currently live unchanged4b benchmark has NO profile
+rows and must never be relabelled as a profile. Do not stage or start a
+profile client until SAME14837 ACTUALLY closes and independent health is
+verified. Raw-address frequency is not retired-PC,cycles,function time,
+bottleneck causality,quality or speed. The known full-model strict score
+differences remain failures;no sustained usable Assistant or20tok/s claim.

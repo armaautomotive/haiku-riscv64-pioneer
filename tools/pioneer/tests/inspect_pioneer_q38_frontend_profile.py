@@ -30,6 +30,12 @@ BINDINGS = {
   (190952, 'bc01b290d588c3809acc22288fedbc5445ce1d152aa2a39fb86b496437a8bbd2'),
  '0b8d1530b3f6de3462be23e923be169c82a8b15c76e83657c35c2d268b70405c':
   (191408, 'a2d52546a4606b37c6cb421ac412a8d3eae59135492edecbc1a96079d24af536'),
+ # Distinct qualified native modules share the SAME immutable ROOT ELF.
+ # The prefetch change is in peer firmware,not a new ROOT address map.
+ '8612962e38cab47999b8aecf67268c8e7fd651917b8a570fd79f79b78e1b165f':
+  (191436, '88e419152d297dbe2ebb0b3913d3e2cae58aa69741b4b03e2667749702c4a674'),
+ '919d4a631ff664549a67bb2372ce2db344ba29473c452c0b273c4b27a2bdf978':
+  (191436, '88e419152d297dbe2ebb0b3913d3e2cae58aa69741b4b03e2667749702c4a674'),
 }
 
 

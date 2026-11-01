@@ -1,0 +1,4 @@
+PASS frontend symbolizer actual ROOT ELF snapshots authenticated/2 positive+3 wrong declared-module refusals/exact code intervals/RAW60008+FFFFFFFF unmapped;NO retiredPC/range-widening,native execution or hardware provenance claim
+PASS FRONTIER34 comparator/3 SYNTHETIC positives/1260 omissions+duplicates+record+counter+time+rate+numeric refusals;strict first3 numerical comparison unchanged;NO physical/timing/quality proof
+PASS frontend parser/1 SYNTHETIC positives/581 grammar,order,time,count,stage,base-record refusals/RAW60008+FFFFFFFF stay unmapped without range widening;NO hardware/time/quality proof
+PASS current frontend binding/2 actual module hashes+SAME88e4 ROOT/2 identical exact symbol maps/30 old,wrong,corrupt,truncated,oversized,symlink,relative,directory refusals BEFORE external tool;RAW60008+FFFFFFFF remain unmapped;NO device IO,retired-PC,cycle,time,quality,Work or hardware-provenance grant
