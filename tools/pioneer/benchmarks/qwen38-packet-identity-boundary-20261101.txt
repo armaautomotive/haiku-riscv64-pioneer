@@ -109,17 +109,32 @@ retained;none is a runtime or numerical failure relabeled as a pass.
 
 Original embedding+full first-layer positive history
 ----------------------------------------------------
-SAME32132/62298 currently LIVE (03:35UTC),at actual layer0 FFN matrices.
-They still owe actual completion and separate unchanged strict CPU DATA
-comparison of all5120 embedding+5120 layer0 words. Do not restart them
-because a poll yields no output. No full model/token/native/STOP/END or
-numerical pass is claimed while these tests remain live.
+SAME32132/62298 BOTH ACTUALLY exit0,observed03:43:43UTC. Genuine original
+embedding+whole first recurrent layer+all119 closed histories complete,
+with zero committed tokens and no STOP/terminal authority. Independent
+unchanged strict main+clean CPU DATA comparators ACTUALLY exit0:ALL5120
+embedding and5120 layer0 output words BIT-EXACT,maxAbs0,relativeL20.
+Both41028-byte prefix DATA files SHA:
+ 4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+No tolerance or diagnostic-only mode is used. This is FIRST-LAYER ONLY,
+not a full64-layer/token/STOP/END/native/device/Work quality proof.
+
+Executed HOST instruction profile total182734157/116 functions versus
+oldcd54 total190191577/115;both include SIMULATED scheduling/polling.
+Packet guard70471050 vs84539214,Transfer22322481,Quiet14082900,
+Projection::Run9909670,worker JobShape9165015,RecurrentBlock::Private6460342.
+Changing the guard changes simulated poll counts too;the169->85 isolated
+routine reduction is NOT a halving of whole model/controller/device time.
+These actual-PC HOST counts are NOT physical cycles,causal device timing,
+statistical confidence or measured token speed. Strict output remains exact.
 
 Separate hardware state
 ------------------------
 SAME74354 is the PREVIOUS cd54 source-audit variant,driver844ec/gen19,
-unchanged4b client,launched03:08UTC. It is ACTUALLY live03:34 and its full
-19399024640-byte upload has finished. NO new0c3f firmware is on the card.
+unchanged4b client,launched03:08UTC. It is ACTUALLY live03:43:43 and its full
+19399024640-byte upload has finished;startup is acknowledged and the actual
+terminal-ready marker has begun HOLD/drain/restoration. NOT clean END yet.
+NO new0c3f firmware is on the card.
 No second GPU/admin/model FD,reload/reset,power,SD,OS or network change
 while that model is live. After actual terminal/END+Close+process exit:
 strict main+clean analysis;compare same4b/old78322 control;fresh idle health;
