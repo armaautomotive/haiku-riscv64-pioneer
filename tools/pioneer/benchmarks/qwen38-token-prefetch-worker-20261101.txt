@@ -1,0 +1,102 @@
+Current full-model prefetch worker: BUILD/roles CLOSED,execution unqualified
+=========================================================================
+2026-11-01,12:06UTC. Goal ACTIVE;20tok/s UNMET. New cf02 worker is LOCAL
+shader BUILD ONLY. No DATA package,native owner,module,installation,
+physical inference,speedup or Assistant Work is qualified for it. No
+Pioneer operation was issued in this work. Last independently observed
+hardware remains restored041/gen32,64CPU/fullRAM/healthyidle. Last CLOSED
+physical result is8612/88e4,0.154472171..0.154474645tok/s,16.16% ONE-pair
+gain versus5a3c;strict full-model score differences remain failures. See
+qwen38-flat-matrix-physical-20261101.txt. No protected physical run remains.
+
+Evidence motivating a qualified experiment,not an assumed gain
+--------------------------------------------------------------
+Read the existing qwen38-tile-prefetch-offline-20261021.txt in full. Its
+original-layout prototype preserved byte/count/math/proof behavior and
+passed old standalone asynchronous/fault/native FFN checks,HOWEVER its
+paired small FFN measurements were0.738808% MORE time,not faster. Those
+results cannot establish a full-model gain or qualify a current QGW3 owner.
+
+The current whole-model returning matrix capsule had no prefetch selection.
+Its resident IdleAll/SourceMatches helpers also carry their own service-code
+placement,unlike the old standalone peer. The new explicit
+PIONEER_Q38_TOKEN_PREFETCH_WORKER_IMAGE BUILD selects prefetch ONLY within
+the current matrix/service compilation. Under that flag retain resident
+guard placement instead of combining it with the old fetch-section
+attribute. Default preprocessing/code remains the old path.
+
+This reuses the existing bounded one-tile proposal:original type8/12/14
+tile sizes,completed current raw buffer90000 or98000,next read into the
+opposite buffer,real response wait,unissued final destination restoration.
+No arithmetic,format,packet widening,host model product,extra tile request,
+new source authority,retry,reset or timeout extension is intentionally
+introduced. Intent is NOT emitted execution or equivalence evidence.
+
+Independent BUILD identity and delta audit: CLOSED
+---------------------------------------------------
+Inspection main84482/clean11452 BOTH ACTUALLY exit0. Their ten sections
+and wholeELF compare byte-for-byte across trees. Before any new shader,
+ENTIRE old precise-beta worker+all ancestors reproduce from current source,
+whole oldELF1f49e9740d8d9045de6c8835f0f8f1738210ba0413d87f607f97cf98da74539e.
+The actual old matrix/service object is additionally rebuilt with the
+derived original argv and compared byte-for-byte FIRST.
+
+After literal BUILD pins were frozen,main59018/clean48329 BOTH ACTUALLY
+exit0. New artifacts reproduce exactly again. All original link limits
+remain:fetch856/1792B,text5948/8192B,affine5360/5376B. No widened code
+extent,undefined import,writable global/GOT,unsupported arithmetic or
+new CSR is accepted. Individual object frames <=4096B;this is NOT a
+combined peer or kernel stack/lifetime qualification.
+
+Boot,precise,dense,FFN,service andGDN section bytes remain EXACT versus
+the preceding worker. The old global.o is unchanged. EVERY difference
+in its linked9128B frontend is accounted for by ONE audited AUIPC/JALR
+call site0x21e28:old q38_compute_once0x72508 ->new q38_compute_once0x7242c.
+Both actual decoded targets must have that exact nonempty symbol name;
+all changed words must belong to that call pair. This does NOT claim
+the replacement matrix routine's arithmetic is already qualified.
+
+Frozen BUILD pins (bytes/SHA256)
+---------------------------------
+boot4 a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c
+globalworker9128 ede241b1a22fe541acd6a89470b8a93ad9d5e576127965745a3a932371befac1
+precise8392 32c078029e1c74ec4bd9744ea494433f5003f63a936df05445d3066c722a7ecc
+dense10332 d1749707ffe803e28dced9c7d065e763f125009678ace33b4d468109984869ad
+fetch856 9529379ea2277127520adf49fe6b17b7c37b701ed3108b1fed1ac08a7ddef561
+text5948 530e72df699db2c6d16b8360115d8f94cdbb6f542ed2f23653c59f75a266dce8
+affine5360 ec3428e6f946b113e7e39575df8c768dc2f6e9a56b79c47dad16c283c12ee159
+ffn16456 23ce6cc2dc07aa445b7babcac12a068dc3542001329cd24831e8e6749ff3a16f
+service9888 7d5a42a087bc6bf9d24319583f3655ae344828a51b1092154f7b0567b0fdb187
+gdn35408 cbe3faf60ef0b3a0544b27b29f99d62eb36c7d0ac5b835e337c5501661ed589c
+ELF143756 cf02c9777314443510894903a74637277be1ccc9b0db8ae80e7fd900baea7120
+
+Role isolation: CLOSED syntax only
+-----------------------------------
+Main81290/clean28240 BOTH ACTUALLY exit0,logs cmp-exact. EACH3 positives/
+136 missing,zero,two,late,native,ROOT,oldimage,CPU/Work refusals. Ordinary
+flag-off and old NON-projection prefetch remain separate. Current returning
+projection+prefetch cannot omit the distinct new selection. Defined-zero
+foreign flags cannot acquire a native owner or production Work alias.
+Old preSDK prefetch build gates main92678/clean14326 ALSO ACTUALLY exit0,
+236 refusals EACH,logs cmp-exact;no SDK/libraries/output/device opened.
+
+Required next work before any hardware
+---------------------------------------
+Execute the frozen actual QGW3 worker through virgin boot/matrix arithmetic/
+payload ACK/commit/queued next jobs/GDN/dense/global-output/STOP with its
+new fetch ROM and raw-buffer paths. Test all formats/geometries and changed
+inputs,independent outputs,counters/proofs/final command,source faults,
+lost first/middle/last replies,skipped waits,wrong buffer and adversarial
+asynchronous replies while compute uses ONLY completed opposite data.
+Do NOT supply ready/product/history/PC values or hide NIU pending from
+guest reads to manufacture a pass. Synthetic endpoints are not silicon
+latency or speed evidence.
+
+The added .fetch code is NOT in the preceding nine-section immutable
+worker descriptor. New source coverage,typed DATA packaging,all119 peer
+code+original-store snapshots,journals/native lifetime/END and exact whole-
+module/updater identities require qualification. A BUILD checksum alone
+cannot grant those. Existing old-image/native selectors must remain old.
+Only then consider a controlled physical comparison;no gain is presumed.
+Full-model numerical/state,resident fresh requests,arbitrary prompts,
+Assistant no-CPU-reference Work and sustained usable speed remain owed.

@@ -73,7 +73,7 @@ static unsigned Counter(unsigned c)
 #endif
 	return *Words(0xffb20000+offset[c]);
 }
-#if defined(PIONEER_Q38_WORK_LOCAL_Q4) || defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q38_WORK_PEER_PHASE_PROFILE)
+#if !defined(PIONEER_Q38_TOKEN_PREFETCH_WORKER_IMAGE) && (defined(PIONEER_Q38_WORK_LOCAL_Q4) || defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q38_WORK_PEER_PHASE_PROFILE))
 __attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
 #endif
 #ifdef PIONEER_Q38_PROJECTION_PERSISTENT
@@ -100,7 +100,7 @@ static unsigned SourceOffset(unsigned word)
 	if (word<=12) return 0x130+(word-7)*4;
 	return word==13?0x150:word==14?0x154:0x16c;
 }
-#if defined(PIONEER_Q38_WORK_LOCAL_Q4) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_FRONTEND_BARRIER) || defined(PIONEER_Q38_WORK_RAW_UNPACK_CACHE) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q38_WORK_PEER_PHASE_PROFILE)
+#if !defined(PIONEER_Q38_TOKEN_PREFETCH_WORKER_IMAGE) && (defined(PIONEER_Q38_WORK_LOCAL_Q4) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_FRONTEND_BARRIER) || defined(PIONEER_Q38_WORK_RAW_UNPACK_CACHE) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q38_WORK_PEER_PHASE_PROFILE))
 __attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
 #endif
 #ifdef PIONEER_Q38_PROJECTION_PERSISTENT

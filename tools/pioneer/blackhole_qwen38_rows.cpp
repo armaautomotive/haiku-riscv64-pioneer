@@ -6,6 +6,7 @@
 // K32(Q8_0) or K256(Q4_K/Q6_K). All2/16 matrix panels and affine accumulation
 // stay on this ONE card core. No host intermediate/NoC/DRAM/DMA/PCI access.
 // Not a full-K matrix, resident model, decoder, or performance result.
+#include "PioneerQ38TokenPrefetchWorkerRole.h"
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQwen38Panel.h"
 #ifdef PIONEER_Q38_WORK_LOCAL_Q4
