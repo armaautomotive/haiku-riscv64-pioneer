@@ -1,10 +1,15 @@
 Flat QGW3 grammar: immutable program package and native subjects
 ===============================================================
-2026-11-01,10:45 UTC. Goal ACTIVE;20tok/s UNMET. New8612 module is NOT
-staged,installed,hardware-benchmarked or accepted for Assistant Work.
-Native full-END main30731/clean20541 are LIVE. Exact-version updater
-main75744/clean55848 BOTH ACTUALLY exit0;1778 cases EACH,logs cmp-exact.
-These are local tests,not protected physical runs.
+2026-11-01,11:02 UTC. Goal ACTIVE;20tok/s UNMET. Physical69899 is LIVE
+from11:01UTC with new8612/tag75/generation31 and SAME unchanged4b client.
+PROTECTED whole source-SHA BEFORE Open/upload/execution/restoration/END+
+Close lifetime: NO extra Pioneer SSH/admin/status/GPU/model/staging/reload/
+reset/power/SD/OS/network until SAME actual process exit. No new speed,
+whole-model numerical or Assistant Work acceptance is claimed.
+Native full-END main30731/clean20541 BOTH ACTUALLY exit0,observed10:58:58.
+Unchanged main+clean strict prefix comparators BOTH ACTUALLY exit0 with
+ALL10240 original embedding+layer0 words bitexact,maxAbs0/relativeL20.
+Exact updater main75744/clean55848 BOTH ACTUALLY exit0;1778 cases EACH.
 Last closed physical result remains5a3c/SAME4b,0.132979026..0.132980939
 tok/s across32 post-prompt tokens;known strict full-model score differences
 remain. No new speed,whole-model numerical or usable Work claim exists.
@@ -64,8 +69,8 @@ stack-report kind from copied EmptyReceiptPoll to FlatMatrix. Entire old
 controls and newab06/8612 subjects reproduce exactly again. No production
 code,program bytes or acceptance guard changed by that reporting fix.
 
-Native lifecycle: PENDING
---------------------------
+Native lifecycle and strict first layer: CLOSED
+-----------------------------------------------
 New --flat-matrix-root authenticates8963 DATA and exact88e4 artifacts.
 Captured FIFO byte endpoint is reused,NOT old firmware or old owner.
 Actual emitted Read classification4dd88..4e0c4 is HOST endpoint routing,
@@ -74,8 +79,24 @@ private owner assertions bind actual new DATA. Full old native refusal/
 source/initialization/cancellation/restoration/END requirements remain.
 Initial ie/if invocations ACTUALLY exit1 before construction because I
 placed zeroROM after --execution-end. Correct command puts positional
-zeroROM FIRST;parser guard unchanged. SAME corrected30731/20541 are live.
-No prefix or clean-END acceptance is inferred before actual process exit.
+zeroROM FIRST;parser guard unchanged. SAME corrected30731/20541 BOTH
+ACTUALLY exit0;complete main/clean logs cmp-exact. Genuine native851
+initialization and ALL119 virgin ISA engines execute actual original
+firstlayer,consume cancellation,ALL119 STOP/120 HOLD/zero-record drain/
+TWO held hidden reads16384+4096B/full token code+L1+dispatch/119peer+ROOT
+NIU+scratch/shared-originals/clock END1350->800/hardware retirement/29VM
+deletions/72 checked PCI config reads+11 exact original writes/3 host
+releases/unreserve/locked context destruction. No later PCI/MMIO/OS release
+or retry. ROOT172946956/peer2277074562 HOST instructions are NOT physical
+cycles or speed. Endpoint execution is simulated,NOT public-ABI proof.
+
+Only AFTER actual clean exit,copy each actual prefix file into its own
+fresh strict-comparison directory. Both41028B snapshots SHA:
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+Unchanged main+clean compare_pioneer_q38_observed_trace.py --first-layer-only
+BOTH ACTUALLY exit0;logs cmp-exact. ALL10240 original embedding+layer0
+words bitexact,maxAbs0,relativeL20,NO tolerance. This is NOT full64-layer,
+multi-token,arbitrary-prompt,resident fresh-request,physical or Work proof.
 
 Exact-version updater: CLOSED
 ------------------------------
@@ -94,14 +115,39 @@ owner0/open1/guard1;64 CPUs/full137034936320B/no compute parent. New hash-
 qualified candidate/helper paths absent including symlinks;stderr0B. This
 does NOT install or start8612;repeat independent checks before real apply.
 
+Qualified staging/apply/isolated launch: CLOSED prelaunch,LIVE hardware
+----------------------------------------------------------------------
+Fresh final prestage SSH ACTUALLY exits0:whole041/4b/b0c/d1ce exact,
+tag12/gen30/cold0/quiesced0/owner0/open1/guard1;64 CPUs/fullRAM/no compute
+parent. Both new target paths absent including symlinks. Both copies
+ACTUALLY exit0;complete remote SHA verified,then BOTH files independently
+copied BACK and byte-compared with qualified local artifacts. Whole module
+2869320B/8612 and helper84865B/ccbc exact. Baseline041 unchanged at staging.
+
+ONLY exactccbc helper through /bin/sh --apply-token-flat-matrix-benchmark,
+SAME98684 ACTUALLY exits0:quiesce/close/reload8612/tag75/generation31;
+NO reboot/GPU execution. Fresh independent prelaunch SSH ACTUALLY exits0:
+whole8612/ccbc/041/4b/b0c/d1ce exact,cold0/quiesced0/owner0/open1/guard1,
+64 CPUs/full137034936320B/free133747941376B/no compute parent. Final
+prestage/stage-verify/apply/prelaunch stderr files ALL0B. No power/reset/
+SD/hardware change.
+
+Physical69899 starts11:01UTC:exec SAME4b --benchmark-34-positions.
+Fixed2prompt/34position diagnostic,NO runtime CPU oracle. Raw local file
+/private/tmp/pioneer-q38-flat-physical-20261101-ix.log;stderr same basename.
+NO speed or full-model quality claim before actual cleanEND+Close+exit.
+All earlier NOT STAGED/INSTALLED/LIVE-native statements are superseded
+only by this observed staged/apply/launch ledger,NOT by intent or timeout.
+
 Remaining gates
 ---------------
-Actual native fullEND+Close,strict original-byte prefix comparisons and
-actual updater closure are required BEFORE unique-name staging/readback,
-fresh independent idle health/exact apply/prelaunch health and one SAME4b
-34-position physical benchmark. Protect its whole source-authentication/
-execution/restoration lifetime from extra Pioneer IO. Only after actual
-clean exit compare strict numerical results and full paired record/rate
-data,then restore with the exact new helper and independently check health.
+Protect SAME69899 whole source-authentication/upload/execution/restoration
+lifetime from extra Pioneer IO. Only after ACTUAL cleanEND+Close+exit,
+run unchanged strict comparator main+clean,compare ALL34 first12 headers
+and post-prompt count window against5a3c/SAME4b. Known score differences
+must remain failures. Fresh independent idle health then restore ONLY
+ccbc helper --restore-token-flat-matrix-benchmark,expected041/gen32;
+fresh independent post-restore health. NEVER4161/4f61 for8612. Fault or
+unknown/quarantined state grants no force/retry/reload/automatic cleanup.
 Even success would NOT establish arbitrary-prompt,resident fresh-request,
 full-model numerical correctness,sustained Assistant Work or20tok/s.
