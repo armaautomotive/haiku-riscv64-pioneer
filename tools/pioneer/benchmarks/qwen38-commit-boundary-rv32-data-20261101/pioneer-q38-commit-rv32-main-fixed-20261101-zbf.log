@@ -1,0 +1,20 @@
+In file included from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_commit_boundary_instruction_test.cpp:11:
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/../PioneerQ38TokenMetadata.h:37:39: error: unused function 'Recipe' [-Werror,-Wunused-function]
+   37 | static __attribute__((noinline)) bool Recipe(uint32_t* r,unsigned layer,unsigned slot,unsigned position,unsigned token){
+      |                                       ^~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/../PioneerQ38TokenMetadata.h:50:39: error: unused function 'Conv' [-Werror,-Wunused-function]
+   50 | static __attribute__((noinline)) bool Conv(uint32_t* d,unsigned layer,unsigned worker,unsigned slot,unsigned position){
+      |                                       ^~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/../PioneerQ38TokenMetadata.h:59:39: error: unused function 'Gdn' [-Werror,-Wunused-function]
+   59 | static __attribute__((noinline)) bool Gdn(uint32_t* d,unsigned layer,unsigned worker,unsigned position){
+      |                                       ^~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/../PioneerQ38TokenMetadata.h:73:39: error: unused function 'Dense' [-Werror,-Wunused-function]
+   73 | static __attribute__((noinline)) bool Dense(uint32_t* d,unsigned layer,unsigned worker,unsigned position){
+      |                                       ^~~~~
+4 errors generated.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_commit_boundary_instruction_tests.py", line 27, in <module>
+    subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['c++', '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '-DPIONEER_Q38_TEST_WORK_DOT_ZERO_ELISION', '-DPIONEER_Q38_TEST_AFFINE_REPLAY', '-DPIONEER_Q38_BLOCK_AFFINE_DST', '-DPIONEER_Q38_TEST_BLOCK_SCALE_REUSE', '-DPIONEER_Q38_WORK_DEFER_AFFINE', '-DPIONEER_Q38_WORK_INPUT_SUM_CACHE', '-DPIONEER_Q38_WORK_ZERO_MINIMUM', '-DPIONEER_Q38_NATIVE_OPERAND_STORE', '-DPIONEER_Q38_WORK_SKIP_DOT_CHECK', '-DPIONEER_Q38_REPLAY_OPERAND', '-DPIONEER_Q38_CACHED_AFFINE', '-DPIONEER_Q38_STATIC_VECTOR', '-DPIONEER_Q38_PIPELINED_MATRIX', '-DPIONEER_Q38_INT_SFPU', '-DTT_PIONEER_Q38_WORK_MODE', '-DPIONEER_Q38_WORK_COHORT_CACHE', '-DPIONEER_Q38_QUEUED_MATRIX_ENTRY', '-DPIONEER_Q38_WORK_OUTPUT_DMA', '-DPIONEER_Q38_SPAN_FAST', '-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR', '-DPIONEER_Q38_TEST_INT_ACCUMULATOR', '-DPIONEER_Q38_TEST_PIPELINED_MATRIX', '-DPIONEER_Q38_Q4_TWO_PHASE', '-DPIONEER_Q38_GDN_MUTABLE_STATE=1', '-I/private/tmp/pioneer-q38-commit-rv32-cw1oa6ft', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_commit_boundary_instruction_test.cpp', '-o', '/private/tmp/pioneer-q38-commit-rv32-cw1oa6ft/test']' returned non-zero exit status 1.

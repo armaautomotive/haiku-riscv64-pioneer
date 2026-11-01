@@ -1,0 +1,23 @@
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_commit_boundary_instruction_test.cpp:16:13: error: no namespace named 'PioneerQ38TokenLayout'; did you mean 'PioneerQ38TokenStateLayout'?
+   16 | namespace T=PioneerQ38TokenLayout;namespace S=PioneerQ38TokenStateLayout;
+      |             ^~~~~~~~~~~~~~~~~~~~~
+      |             PioneerQ38TokenStateLayout
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/../PioneerQ38TokenStateLayout.h:8:11: note: namespace 'PioneerQ38TokenStateLayout' defined here
+    8 | namespace PioneerQ38TokenStateLayout {
+      |           ^
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_commit_boundary_instruction_test.cpp:67:13: error: no member named 'Session' in namespace 'PioneerQ38TokenStateLayout'
+   67 |   assert(T::Session(session,owner.boot,bank,workspace));
+      |          ~~~^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h:75:25: note: expanded from macro 'assert'
+   75 |     (__builtin_expect(!(e), 0) ? __assert_rtn(__func__, __ASSERT_FILE_NAME, __LINE__, #e) : (void)0)
+      |                         ^
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_commit_boundary_instruction_test.cpp:68:38: error: no member named 'SessionLocal' in namespace 'PioneerQ38TokenStateLayout'
+   68 |   for(unsigned i=0;i<128;i++)Data(T::SessionLocal+i*4)=session[i];
+      |                                   ~~~^
+3 errors generated.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_commit_boundary_instruction_tests.py", line 27, in <module>
+    subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['c++', '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '-DPIONEER_Q38_TEST_WORK_DOT_ZERO_ELISION', '-DPIONEER_Q38_TEST_AFFINE_REPLAY', '-DPIONEER_Q38_BLOCK_AFFINE_DST', '-DPIONEER_Q38_TEST_BLOCK_SCALE_REUSE', '-DPIONEER_Q38_WORK_DEFER_AFFINE', '-DPIONEER_Q38_WORK_INPUT_SUM_CACHE', '-DPIONEER_Q38_WORK_ZERO_MINIMUM', '-DPIONEER_Q38_NATIVE_OPERAND_STORE', '-DPIONEER_Q38_WORK_SKIP_DOT_CHECK', '-DPIONEER_Q38_REPLAY_OPERAND', '-DPIONEER_Q38_CACHED_AFFINE', '-DPIONEER_Q38_STATIC_VECTOR', '-DPIONEER_Q38_PIPELINED_MATRIX', '-DPIONEER_Q38_INT_SFPU', '-DTT_PIONEER_Q38_WORK_MODE', '-DPIONEER_Q38_WORK_COHORT_CACHE', '-DPIONEER_Q38_QUEUED_MATRIX_ENTRY', '-DPIONEER_Q38_WORK_OUTPUT_DMA', '-DPIONEER_Q38_SPAN_FAST', '-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR', '-DPIONEER_Q38_TEST_INT_ACCUMULATOR', '-DPIONEER_Q38_TEST_PIPELINED_MATRIX', '-DPIONEER_Q38_Q4_TWO_PHASE', '-DPIONEER_Q38_GDN_MUTABLE_STATE=1', '-I/private/tmp/pioneer-q38-commit-rv32-pf7qwxne', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_commit_boundary_instruction_test.cpp', '-o', '/private/tmp/pioneer-q38-commit-rv32-pf7qwxne/test']' returned non-zero exit status 1.

@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 // DATA selection only; no native source/lifetime, journal or launch grant.
 // Rechecked outside the guard so late/defined-zero changes cannot alias data.
+#include "PioneerQ38TokenCommitBoundaryProgramsRole.h"
+#ifdef PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_PROGRAMS
+#error Commit-boundary DATA has no qualified native program selector or Work grant
+#endif
 #include "PioneerQ38TokenRetainedCohortProgramsRole.h"
 #if defined(PIONEER_Q38_TOKEN_RETAINED_COHORT_PROGRAMS) \
  && !defined(PIONEER_Q38_TOKEN_RETAINED_COHORT_NATIVE_CONTEXT) && !defined(PIONEER_Q38_TOKEN_RETAINED_COHORT_BENCHMARK_NATIVE)

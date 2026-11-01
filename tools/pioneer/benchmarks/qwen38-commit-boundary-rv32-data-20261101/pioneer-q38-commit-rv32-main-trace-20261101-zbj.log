@@ -1,0 +1,8 @@
+Unexpected positive-unit fault from pc000642bc steps1724 packets0 transfers0 phase4
+Assertion failed: (run->Run(&first,&last)), function main, file pioneer_q38_commit_boundary_instruction_test.cpp, line 184.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_commit_boundary_instruction_tests.py", line 47, in <module>
+    subprocess.run([str(binary), str(temporary), *entries, str(int(directory == new)),
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-q38-commit-rv32-0ieoi11p/test', '/private/tmp/pioneer-q38-commit-rv32-0ieoi11p', '00064ecc', '00041958', '00044b28', '0', '--synthetic-predecessor-and-noc']' died with <Signals.SIGABRT: 6>.

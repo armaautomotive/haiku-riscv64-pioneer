@@ -1,0 +1,106 @@
+Commit-boundary optimization:actual RV32 transaction and immutable DATA
+======================================================================
+2026-11-01,01:08UTC. Goal ACTIVE;20tok/s UNMET. This checkpoint adds no
+hardware throughput or original full-model numerical acceptance. The latest
+closed hardware rate remains0.107253987..0.107255183tok/s with known score
+mismatches. The separate frontend profile91692 is LIVE,not a completed run.
+
+Actual compiled transaction,not just C++ helper fragments
+---------------------------------------------------------
+New instruction fixture executes the authenticated old48b2/new83677 linked
+RV32 CommitState,StateSeal,InputSeal,FeedbackSeal,HeadSeal,Scope,Packet and
+Transfer bodies. It does NOT intercept/replace any of those functions.
+The unit starts at CommitState with an EXPLICITLY SYNTHETIC canonical
+private phase4/final-layer frame,session,finite numeric pairs and nonzero
+history buffers. It does NOT execute the preceding64 layers or claim those
+histories/private words were produced by a model/native owner. NoC is an
+immediate-completion byte-copy/counter/MMIO TEST model,not hardware timing.
+The ROOT ELF is SHA-authenticated once,then objcopy/nm decode a private copy
+of those exact bytes;raw sections must match their frozen counterpart.
+
+Final main13270/independent-clean81420 ACTUALLY exit0,observed01:08:08UTC,
+ASan+UBSan enabled. EACH performs4 complete transactions (old+new,with and
+without feedback),94 old+96 new fault cases,exactly2064 modeled commands,
+5898240 copied bytes,336 independently checked destinations,actual readback
+loops/counter/source/command guards,ABI return and private slot/count flip.
+Snapshots are copied ONLY after actual positive execution reaches the first
+or final copy packet;faults resume captured registers/stack/CSR/memory,never
+invent function returns. No token/frontier publication is performed.
+Initial or final numeric mirror damage,matching NaN/Inf feedback pairs,
+head/descriptor/source/counter/command/readback/outer damage all refuse
+without committing state. One first-copy numeric perturbation in each new
+feedback case is detected at transaction EXIT,not immediately;all copies
+may occur but NO slot/count/phase flip is allowed. No rollback is claimed.
+
+Exact old/new comparison EACH feedback case:12077444 bytes equal,covering
+the complete command stream,all modeled DRAM,private frame,numeric pairs,
+head/session,scratch/readback shadow and descriptor. Both fixtures use bank3,
+position33. Feedback cases have limit35;terminal/no-feedback cases limit34.
+They are synthetic unit coverage,not arbitrary-prompt or whole-model proof.
+Actual minimum SP/store6f2d0 from synthetic entry SP/parent6f800;this does
+NOT qualify the whole model's combined/native/kernel stack.
+
+HOST interpreter step observations ONLY (include2048 inert return steps):
+ old feedback0 153537724,new53540924;InputSeal1393->2
+ old feedback1 335626505,new53802358;InputSeal2786->4,FeedbackSeal1393->2
+These are NOT device cycles,function time,wall time,TPS or a model speedup.
+The old/new copy bytes,commands and numeric arithmetic remain unchanged.
+
+Fixture failures retained,not relabelled as passes
+--------------------------------------------------
+Initial compilation exposed a missing TokenLayout include,then unused
+metadata generators under -Werror. The include was added;unused-generator
+addresses are referenced without claiming their execution. A positive
+synthetic frame then failed the ACTUAL dense RunShape guard:it used old
+FfnCopies geometry,while both linked ROOTs use pushed-completion geometry.
+The test's canonical DATA flags now match the actual builders. No firmware
+guard,branch,code byte,numerical tolerance or pin was relaxed. The failing
+and final logs are archived separately. An earlier174-fault run also passed;
+the final190-fault run additionally covers matching NaN/Inf mirrors.
+
+Distinct immutable package,NO native selector yet
+-------------------------------------------------
+Generator adds explicit --commit-boundary-seals,authenticating ALL13 code
+sections plus BOTH complete ROOT/worker ELFs before any output creation.
+Independent main/clean generated headers match byte-for-byte:
+ f17464e86b23df5210830446fa894980deba0f1f9a469fd9676db788190df182
+New namespace/role/guard never aliases old retained-cohort program DATA.
+Main13831/clean38418 ACTUALLY exit0:3044230 code words across120 workers,
+2290 gap/runtime/invalid/immutable-output refusals,15 authenticated artifacts,
+30 corrupt/truncated refusals,2 role positives/91 missing/zero/two/late/
+private/physical/USER/CPU/Work refusals EACH. Whole old retained and frontier
+headers regenerate unchanged and their existing DATA regressions pass first.
+Current shared selector EXPLICITLY refuses this DATA:there is NO new native
+or physical driver route and NO Assistant Work exposure in this checkpoint.
+
+Main32212/clean25216 ACTUALLY exit0 after independent current-source SDK
+compile/link. Their ENTIRE old04da3252 object+1f3bcff8 module reproduce byte-
+for-byte despite the dormant new role check. Compile/link argv and previous
+object/module pins are authenticated,not assumed from an old result.
+
+Physical frontend profile:still LIVE and separate
+-------------------------------------------------
+New718d client staged under a previously absent target;readback SHA exact.
+Source-only56190 ACTUALLY exits0 without accelerator Open. Fresh idle health
+then verifies041/tag12/gen14,64CPUs/maxRAM137034936320B,exact candidate1f3,
+718d client,94dd helper and d1ce guard. Immutable94dd apply80105 ACTUALLY
+exits0. Independent prelaunch health verifies1f3/tag75/gen15,owner0/cold0/
+quiesced0/guard1 and no model/Assistant parent. Profile91692 launched at
+00:59UTC;at01:07UTC it is ACTUALLY LIVE,upload progressing,stderr0B. No
+second GPU/admin FD,model,driver/reset,power/SD/OS/network change occurs
+during its lifetime. The new83677 DATA is NOT used in that run. Raw frontend
+rows appear only after genuine terminal/HOLD/drain/END+Close;none is
+available yet. Do not relabel this pending run as completed or baseline-
+restored. Poll SAME91692 until actual exit,then strict posthoc analysis and
+fresh idle restoration041 via exact94dd helper,expected generation16.
+
+Next
+-----
+Finish the SAME live profile and use its raw address distribution cautiously
+(frontend cursor samples are NOT retired-PC/cycle/function-time proof).
+Qualify the new83677 private/native program selection and full source/init/
+cleanup path separately;first-layer/cancel tests cannot prove CommitState
+or whole-model numerical acceptance. Preserve strict numeric comparisons.
+Then consider a separately identified controlled physical diagnostic,never
+silently replace Work. Original model numerical acceptance,resident fresh
+requests,arbitrary prompts,usable Assistant and20tok/s remain outstanding.
