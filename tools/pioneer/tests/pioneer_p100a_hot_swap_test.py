@@ -1021,12 +1021,16 @@ if __name__ == '__main__':
     count = 0
     selected = set(sys.argv[1:])
     seen = set()
-    retired = '--apply-recurrent-block-validation'
-    if not selected or retired in selected:
-        stopped = subprocess.run(['/bin/sh', str(SCRIPT), retired], capture_output=True, text=True, timeout=5)
-        assert stopped.returncode == 2 and not stopped.stdout and 'STOP_RECURRENT71_FAILED_NATIVE' in stopped.stderr
-        count += 1
-        seen.add(retired)
+    retired_modes = {
+        '--apply-recurrent-block-validation': 'STOP_RECURRENT71_FAILED_NATIVE',
+        '--apply-token-batched-prefetch-benchmark': 'STOP_BATCHED_PREFETCH34322_FAILED_PHYSICAL',
+    }
+    for retired, reason in retired_modes.items():
+        if not selected or retired in selected:
+            stopped = subprocess.run(['/bin/sh', str(SCRIPT), retired], capture_output=True, text=True, timeout=5)
+            assert stopped.returncode == 2 and not stopped.stdout and reason in stopped.stderr
+            count += 1
+            seen.add(retired)
     common = ['candidatea', 'candidateb', 'guardsource', 'client', 'installed', 'candidatea-link', 'client-link',
               'installed-link', 'device-link', 'stage-link', 'incoming', 'guardincoming', 'backup', 'platform']
     hot = ['guard', 'guard-link', 'cold', 'active', 'open', 'tag', 'generation', 'quiesced', 'guard-version',
@@ -1127,6 +1131,8 @@ if __name__ == '__main__':
     parents += ['owner-resident-layer-validation', 'owner-resident-layer-validation-underscore']
     parents += ['owner-recurrent-block-validation', 'owner-recurrent-block-validation-underscore']
     for mode in modes:
+        if mode in retired_modes:
+            continue # Explicit hard refusal above,never an apply-positive fixture.
         if selected and mode not in selected:
             continue
         seen.add(mode)

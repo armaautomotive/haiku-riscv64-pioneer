@@ -77,3 +77,6 @@ static_assert(PioneerQ38TokenL1::Precise==1,"late QTP2 footprint profile change"
 #else
 static_assert(PioneerQ38TokenL1::Precise==0,"late QTP1 footprint profile change");
 #endif
+// Direct QTP1/QTP2 headers also need to reject a previously selected new
+// twin-batch package;they do not necessarily include the QTP3 footprint.
+#include "PioneerQ38TokenTwinBatchPrefetchDataBoundary.h"

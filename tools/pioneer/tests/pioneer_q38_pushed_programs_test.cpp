@@ -13,7 +13,9 @@
 #include <iterator>
 #include <string>
 #include <vector>
-#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_BATCHED_PREFETCH
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_TWIN_BATCH_PREFETCH
+namespace P=PioneerQ38TokenTwinBatchPrefetchPrograms;
+#elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_BATCHED_PREFETCH)
 namespace P=PioneerQ38TokenBatchedPrefetchPrograms;
 #elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_PREFETCH)
 namespace P=PioneerQ38TokenPrefetchPrograms;
@@ -56,7 +58,7 @@ int main(int argc,char** argv){
  const Code root[]={{"boot",0x6000},{"text",0x40000},{"terminal",0x60000},{"conv",0x64000}};
  const Code peer[]={{"boot",0x6000},{"globalworker",0x20000},{"precise",0x30000},
   {"dense",0x40000},{"ffn",0x60000},{"service",0x68000},
-#if defined(PIONEER_Q38_PROGRAM_DATA_TEST_PREFETCH) || defined(PIONEER_Q38_PROGRAM_DATA_TEST_BATCHED_PREFETCH)
+#if defined(PIONEER_Q38_PROGRAM_DATA_TEST_PREFETCH) || defined(PIONEER_Q38_PROGRAM_DATA_TEST_BATCHED_PREFETCH) || defined(PIONEER_Q38_PROGRAM_DATA_TEST_TWIN_BATCH_PREFETCH)
   {"fetch",0x70000},
 #endif
   {"affine",0x70b00},{"text",0x72000},{"gdn",0xb8000}};
@@ -85,7 +87,7 @@ int main(int argc,char** argv){
    uint32_t unchanged=0xdeadbeef;assert(!P::ProgramWord(worker,address,unchanged) && unchanged==0xdeadbeef);refusals++;
   }
  }
-#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_BATCHED_PREFETCH
+#if defined(PIONEER_Q38_PROGRAM_DATA_TEST_BATCHED_PREFETCH) || defined(PIONEER_Q38_PROGRAM_DATA_TEST_TWIN_BATCH_PREFETCH)
  assert(P::BatchedPrefetch==1 && P::Q8Batch==4 && P::Q4Batch==2 && P::Q6Batch==2);
  assert(P::TilePrefetch==1 && P::RawBuffers==2 && P::FetchAddress==0x70000 && P::FlatMatrixGrammar==1);
  assert(P::EmptyReceiptPoll==1 && P::ReadSourceBoundary==1 && P::CounterGather==1 && P::CounterGatherReads==8);
@@ -93,8 +95,15 @@ int main(int argc,char** argv){
  assert(P::CohortLocalSources==1 && P::ColdSourceFromStatus==1 && P::CommitBoundarySeals==1 && P::RetainedConvClosure==1);
  assert(P::FaultMarker==0x51465431 && P::FaultSavedLinkOffset==32 && P::PreciseBeta==1 && P::JobBootFold==1);
  assert(P::TokenFrontier==1 && P::FrontierAddress==0x7570c);
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_TWIN_BATCH_PREFETCH
+ assert(P::TwinBatchPrefetch==1 && P::FullBatchBuffers==2 && P::RawCopyBytes==0 && P::SecondBatchAddress==0x9a000);
+ assert(allWords==3086042 && P::CodeWords(0)==40594 && P::CodeWords(1)==25592);
+ const unsigned fetchEnd=0x7050c;
+#else
  assert(allWords==3085090 && P::CodeWords(0)==40594 && P::CodeWords(1)==25584);
- for(unsigned w=0;w<120;w++)for(unsigned at:{0x70001U,0x704ecU,0x90000U,0x98000U,0x7570cU}){
+ const unsigned fetchEnd=0x704ec;
+#endif
+ for(unsigned w=0;w<120;w++)for(unsigned at:{0x70001U,fetchEnd,0x90000U,0x98000U,0x7570cU}){
   uint32_t unchanged=0xdeadbeef;assert(!P::ProgramWord(w,at,unchanged) && unchanged==0xdeadbeef);refusals++;
  }
 #elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_FLAT_MATRIX)
@@ -185,7 +194,7 @@ int main(int argc,char** argv){
  }
  const uint32_t* arrays[]={P::RootBoot,P::RootText,P::RootTerminal,P::RootAux,P::PeerBoot,P::PeerFront,
   P::PeerPrecise,P::PeerDense,P::PeerFfn,P::PeerService,
-#if defined(PIONEER_Q38_PROGRAM_DATA_TEST_PREFETCH) || defined(PIONEER_Q38_PROGRAM_DATA_TEST_BATCHED_PREFETCH)
+#if defined(PIONEER_Q38_PROGRAM_DATA_TEST_PREFETCH) || defined(PIONEER_Q38_PROGRAM_DATA_TEST_BATCHED_PREFETCH) || defined(PIONEER_Q38_PROGRAM_DATA_TEST_TWIN_BATCH_PREFETCH)
   P::PeerFetch,
 #endif
   P::PeerAffine,P::PeerText,P::PeerGdn};

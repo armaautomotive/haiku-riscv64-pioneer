@@ -59,3 +59,4 @@ static_assert(SavedWords==13478458 && SavedBytes==53913832,"distinct full120 pro
 // headers cannot coexist with the new prefetch DATA,even on a later include.
 #include "PioneerQ38TokenPrefetchDataBoundary.h"
 #include "PioneerQ38TokenBatchedPrefetchDataBoundary.h"
+#include "PioneerQ38TokenTwinBatchPrefetchDataBoundary.h"

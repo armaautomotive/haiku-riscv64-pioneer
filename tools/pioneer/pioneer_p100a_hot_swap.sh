@@ -3,6 +3,9 @@
 # Candidates pin their complete qualified/offline-tested code. No force/reset/unload
 # command and NO automatic rollback after an unproven replacement.
 set -eu
+if [ "$#" = 1 ] && [ "$1" = --apply-token-batched-prefetch-benchmark ]; then
+ echo 'STOP_BATCHED_PREFETCH34322_FAILED_PHYSICAL:20261101 first frontier observation unsafe;NO install/retry/reset/automatic rollback' >&2;exit 2
+fi
 if [ "$#" = 1 ] && [ "$1" = --apply-raw-unpack-cache-qualification ]; then
  echo 'STOP_RAW_CACHE_FAILED_NATIVE:tag22 Q4 completion failed;NO install/retry/reset/automatic rollback' >&2;exit 2
 fi

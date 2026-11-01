@@ -1,3 +1,69 @@
+Physical34322 FAILED2026-11-01;controlled recovery COMPLETE
+=======================================================================
+Recovery closure20:10UTC supersedes historical in-progress recovery below.
+OFF once66880-ty ACTUAL0;after>3minutes,SSH83051-ub ACTUAL255/timeout,
+no contradictory powered-on evidence. ON once75127-uc ACTUAL0. Existing
+SCREEN72956/UART untouched;fresh SOPHGO/DDR/Linux serial proves new boot.
+No duplicate OFF/ON pulse,mains,SD or hardware connection change.
+
+Linux default id_ed25519 UD key attempt is ACTUAL255/publickey rejection;
+the established Pioneer key UE succeeds ACTUAL0 with pinned Linux host key.
+New boot_idee919854-cb92-42a4-b4ec-4d3d7d9fc4a6,Linux6.1.31/milkv,
+CPUs0-63/MemTotal131976904KiB. Root-owned helper0:0:700:1:19404 exactly
+SHA9cfc6dc326c938b8d611c8c8622a9a6686ed530270dde768b1f01362f4f61f6e.
+Its complete locally authenticated source was read before execution.
+Fresh session q38-batched-recover-20261101-uf prepare88851 ACTUALLY0,
+normal memory128-spin-idle7-top-page-nosd-control/64CPU profile,NO journal
+override. Boot52437-ug ACTUALLY0 after same-boot-ID/helper/input checks;
+normal Linux shutdown to Haiku,default NVMe boot entry unchanged.
+
+Fresh Haiku UH69942 ACTUALLY0:whole installed34322 and staged33d/041/
+unchanged4b/adminb0c/guardd1ce identities exact,newgen1/cold0/owner0/
+quiesced0/open1/guard1,no compute parent,64CPUs/full137034936320B. ONLY THEN
+preserved33d --restore-token-batched-prefetch-benchmark84250-ui ACTUALLY0:
+34322/gen1 quiesced+closed,stable041/tag12/gen2 verified. New independent
+UJ check ACTUALLY0:whole041 exact,cold0/owner0/quiesced0/open1/guard1,
+64CPUs/full RAM and all preserved stage/client/guard identities exact.
+No GPU work was started in this new epoch. UI/UH/UJ stderr0B.
+
+Failed34322 APPLY is now hard-disabled BEFORE platform/admin operations
+in SOURCE helperd62f1f92fa52b7bdcca623274f90485c7aa54dbb84a456ab3f239a1de3d9583f.
+Restore remains exact and guarded. Main23013-tz/clean35499-ua BOTH ACTUALLY0,
+logs exact,2111 cases EACH:retired apply refusal,all original restore/hash/
+owner/backup/unknown-byte safeguards and20 older routes remain. This new
+source helper was NOT staged over33d;the separately preserved33d was used
+ONLY for the verified healthy-new-epoch restoration. No automatic rollback
+through quarantine. Raw errors,empty stderr files and padded ps lines are
+preserved unchanged;raw-log trailing whitespace is intentional evidence.
+
+This supersedes ALL historical LIVE/no-result statements below. SAME29181
+ACTUALLY exits1 at19:51:38UTC after original authentication,all19399024640
+weight bytes and START acknowledgment. The FIRST frontier observation
+returns ioctl-1/errno-2147442676 (B_DEV_NOT_READY,0x8000a00c),then:
+ FAIL_Q38_FRONTIER reasonfrontier_observe op00008d17;CLOSE_ONLY_NO_RETRY_OR_IMPLICIT_END
+No34 records,no terminal/HOLD/drain/restore/END proof and NO valid TPS.
+This is not a numerical-score comparison or evidence of counterfeit card.
+The old4b client does not retain/print the copied failure detail fields;
+no exact underlying source/marker/counter/boot-seal cause is invented.
+
+Fresh CPU-only metadata tv ACTUALLY exits1 because its healthy-idle
+expectation is correctly violated:exact34322/tag75/gen37,cold1/owner1,
+quiesced0/open1/guard1. Haiku SSH responds,64CPUs/fullRAM,no compute parent,
+stderr0. Filtered project kernel-log read tw ACTUALLY0,NO matching lines;
+absence is NOT a cause diagnosis. No GPU inspection,hot restore,retry,
+forced unreserve,unload or reset was attempted through retained ownership.
+
+Filesystem sync tx ACTUALLY0. Single OFF66880-ty ACTUALLY0,7-second hold
+completed and observed19:56:13UTC. NO duplicate OFF. Wait a few minutes,
+check available power-state evidence,then ON once and the normal pinned
+SD-free Linux-to-Haiku path. No SD,mains or hardware connection change.
+Restoration must wait for a NEW power/driver epoch with cold0/owner0,then
+ONLY the preserved exact33d helper restore route34322->041 and fresh health.
+Source updater now disables --apply-token-batched-prefetch-benchmark;
+that source change does not overwrite the staged33d recovery helper.
+
+Historical physical rollout ledger
+=======================================================================
 Physical rollout update2026-11-01 19:38UTC:LIVE,NO new rate yet
 =======================================================================
 This supersedes historical not-yet-staged/next-stage statements below.

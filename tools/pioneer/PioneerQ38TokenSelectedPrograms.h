@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 // DATA selection only; no native source/lifetime, journal or launch grant.
 // Rechecked outside the guard so late/defined-zero changes cannot alias data.
+#include "PioneerQ38TokenTwinBatchPrefetchProgramsRole.h"
+#ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS
+#error Twin-batch DATA currently has no qualified native selection;never silently fall back
+#endif
 #include "PioneerQ38TokenBatchedPrefetchProgramsRole.h"
 #if defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS) \
  && !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT) && !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_BENCHMARK_NATIVE)

@@ -1,5 +1,19 @@
 Copy-free twin-batch returning worker:standalone OFFBOARD gates CLOSED
 ======================================================================
+Recovery closure20:10UTC:stable041/tag12/gen2 is independently verified
+installed,idle/cold0/owner0,64CPUs/fullRAM after one OFF/ON and pinned
+SD-free handoff. No GPU work in this new epoch. Physical34322 remains
+FAILED/no rate;source apply disabled. New twin56b and DATA0496 remain
+OFFBOARD ONLY,without a native/public/Work or speedup grant.
+
+Update19:58UTC:separate physical34322 batch FAILED29181exit1 at first
+frontier observation,after complete upload/START. Cardcold1/owner1;one
+controlled OFF completed,recovery in progress. No clean END or new rate.
+The twin56b shader was NOT installed or run. Its complete immutable DATA
+checks are now CLOSED;see qwen38-twin-batch-data-20261101.txt. No native,
+hardware,model-quality or Work grant. Historical LIVE statements below
+are superseded by this failure update,not silently treated as success.
+
 2026-11-01. Goal ACTIVE;20tok/s UNMET. No new physical rate or full-model
 quality result. Last CLOSED nonprofiling diagnostic0.159697435..0.159700083
 tok/s still has strict final-score failures. Assistant Work is unchanged.

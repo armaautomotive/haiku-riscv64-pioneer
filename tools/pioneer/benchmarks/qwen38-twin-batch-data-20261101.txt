@@ -1,0 +1,92 @@
+Copy-free twin-batch immutable DATA:CLOSED,NOT a native or hardware grant
+======================================================================
+Recovery update20:10UTC:separate34322 physical failure remains a failure.
+Controlled OFF once/ON once and pinned SD-free Linux-to-Haiku handoff are
+complete. Independent new-epoch cold0/owner0 checks preceded exact33d
+restore to stable041/tag12/gen2;fresh64CPU/fullRAM/idle health ACTUALLY0.
+No GPU work started in the recovered epoch. Failed34322 apply is disabled
+in sourced62f1f92;paired updater tests ACTUALLY0,2111 cases EACH/logs exact.
+See qwen38-batched-prefetch-native-20261101.txt for complete raw provenance.
+
+2026-11-01. Goal ACTIVE;20tok/s UNMET. Standalone shader gates are CLOSED
+and pushedc5cc9d8b8a. This checkpoint adds complete immutable code DATA,
+not a driver/native owner or an Assistant Work mode. Separate physical
+batch34322 FAILED its first frontier observation;that failure is NOT
+fixed or excused by these DATA checks. No new token-rate result exists.
+
+Exact same-open input authentication and complete geometry
+-----------------------------------------------------------
+Generator --twin-batch-prefetch authenticates ALL16 artifacts,including
+BOTH complete ELFs,before creating output. ROOT6066e693 and worker56b470ae
+are fixed independent-build pins. All14 sections are emitted exactly once
+into distinct PioneerQ38TokenTwinBatchPrefetchPrograms. No old package is
+relabelled and no section silently omitted. New header SHA:
+049613d63e3524be9a5aa1d3ef5f234adf4c61e4142a4d79eaf7e3bd50ae9db1.
+Independent main/clean generation produces byte-identical headers.
+
+Existing CodeSpans/CodeAddress/ProgramWord accessors and unchanged QTP3
+snapshot geometry cover ALL120 cores:ROOT40594 words,each peer25592,
+total3086042 actual code words. ASan/UBSan access checks compare EVERY
+word to independently authenticated section files;invalid workers,
+ordinals,unaligned addresses,holes,runtime DATA and writes into immutable
+output arrays are refused. No implicit zero-padding or enlarged extent.
+FullBatchBuffers=2/RawCopyBytes=0/SecondBatchAddress=9a000 describe this
+previously tested shader;these enum fields are not an execution proof.
+
+Pure DATA selection,not silent native fallback
+----------------------------------------------
+Own selection0/1 is immutable across includes. Pure new DATA rejects all
+old array guards/selectors,kernel/driver tags,native/public diagnostic,
+USER,shader,CPU reference and runtime Work selections,including defined
+zero/late changes. Common QTP3 AND QTP1/QTP2 geometry rechecks this boundary
+outside their guards. Direct old-header includes cannot bypass it merely
+because the old package does not use the QTP3 footprint.
+
+Initial full DATA main24766-td/clean14226-te ACTUALLY exit1:the independent
+negative check expected SelectedPrograms to reject pure twin DATA,but the
+old selector silently ignored that flag and compiled old QTP1 DATA. No
+new program was selected,no device opened,no hardware failure occurred in
+that test. The original false expectation was retained. Production
+SelectedPrograms now explicitly rejects this not-yet-qualified native
+selection. An additional audit added direct QTP1/QTP2 include checks and
+the generic footprint boundary. Original failed logs remain preserved.
+
+Intermediate repaired main71470-tj/clean6913-tk ACTUALLY0,3 positives/
+210 refusals. FINAL expanded main38623-tp/clean74161-tq BOTH ACTUALLY0,
+complete logs byte-identical:ALL old batched/prefetch/ancestor controls
+FIRST,then complete new code-word checks,32 corrupt/truncated artifact
+refusals BEFORE output,5 wrong-family refusals,3 syntax positives and214
+missing/zero/two/late/old-array/native/BUILD/USER/CPU/Work refusals. No pin,
+word,extent,tolerance,old expectation or numerical result was relaxed.
+
+Whole existing native-object and public-driver regressions:CLOSED
+-----------------------------------------------------------------
+After the FINAL shared geometry and selector changes,private main44750-tr
+and clean98194-ts BOTH ACTUALLY0. ENTIRE old flat98db,prefetche4e8 and
+batched3a24 objects reproduce FIRST;all14 old arrays,unchanged2MiB rope,
+renamed5 bodies+5 wrappers inert/refusal controls and static-frame limits
+remain intact. Final private SHA:
+3a24eb79013746eff0b7aa4be2cdeafbac8169a605c606327a2427c249a00126.
+
+Public main11916-tt and clean8709-tu BOTH ACTUALLY0. ENTIRE oldflat8612,
+prefetch919d,and batched34322 objects/modules reproduce FIRST. Complete
+all14-array/rope/conventional-ABI/forbidden-CPU-model-symbol controls stay
+unchanged. Actual callgraph recompilation is byte-identical,partial known
+module5392B/25 unresolved,no cycle/dynamic frame;NOT whole kernel/IRQ stack.
+ old object368307386dbf6ecfa29a146ddf8e9c11559d8227c8d9137816ee6f4113c59d19
+ old module34322035d8aadcc8667d8a7ec3f2a144646f0060604e9e00ebfdd59fa7e4ca1c
+These are byte-preservation checks,NOT permission to retry that FAILED
+physical subject. Earlier tf..to regression runs also ACTUALLY0;final
+tr..tu supersede them after the generic-footprint hardening.
+
+Next required scope
+---------------------
+The new pure DATA has NO private/native/public owner binding. Separate
+private context/expected-ROM HOST bridge,actual119-worker mixed-original-
+model execution and whole initialization/cancel/STOP/HOLD/drain/all stores+
+readbacks/clock/PCI/VM/host-release/unreserve/destructor/END qualification
+remain required. Current physical failure must be diagnosed,not presumed
+fixed by removing copies. No failed-context hot unload/reset/cleanup is
+authorized by these tests. Preserve boot,Assistant,64CPUs/fullRAM and
+validation-vs-no-CPU-reference Work separation. Full-model numerical
+quality,resident fresh requests,arbitrary prompts and20tok/s remain unmet.
