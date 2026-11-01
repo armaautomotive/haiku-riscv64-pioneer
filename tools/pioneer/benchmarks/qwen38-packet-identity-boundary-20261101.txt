@@ -1,0 +1,134 @@
+Packet identity:isolated on-card controller cost reduction
+========================================================
+2026-11-01. Goal ACTIVE;correct fast resident27B Work/Assistant and20tok/s
+remain UNMET. BUILD and offline instruction evidence ONLY;this new image
+has NO DATA/native/physical/Work selector. NO card speedup is claimed.
+
+Exact change and fault timing
+-----------------------------
+Explicit PIONEER_Q38_PACKET_IDENTITY_BOUNDARY_IMAGE returning recurrent
+BUILD only. Move24 duplicate private frame-vs-boot comparisons from every
+packet into EVERY full recurrent audit,for installed phases2..15. The cold
+phase1 full audit still permits the genuinely not-yet-installed zero frame;
+packet use in that phase is refused. Pointer/frame/phase/request/doorbell
+checks and ALL16 live physical source reads remain per packet. Unchanged
+NoC command/readback/counter/queue/job/worker proofs and math are retained.
+No MMIO burst,cached-ready bit,source recapture or counter rebase is added.
+
+This deliberately changes fault observation timing. Idle private identity
+damage may permit owned metadata packets or descriptor staging before the
+next full/release/compute boundary refuses it. It does NOT permit a worker
+release,successful layer/token commit or continued use after refusal.
+Cold worker boot nonce binding can legitimately reject a nonce discrepancy
+EARLIER than the next full audit. All faults remain faults;no numerical
+tolerance,reference,expected value or acceptance gate was made less strict.
+
+Independent whole builds
+-------------------------
+Main41577 and independent-clean46474 ACTUALLY exit0. ENTIRE frozen old
+cd54/83677/48b2/951 images and the old recurrent object reproduce FIRST.
+New BUILD pins (main and clean byte-identical):
+ boot.bin 4 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text.bin 130344 f9275e1c9cf31a9508522c5bab9a7645e8886e842cc664ad51a40edb4cc357e0
+ terminal.bin 8 468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2
+ conv.bin 32684 0756a64a8cfffd923ab5af14957a23e32aa8ca80304693f2350d23b340f660e6
+ program.elf 190760 0c3f72d469164830670f5d880fe5c2f5df9a95609b09325dcddc1bea58c62e10
+No writable globals,unresolved symbols,unsupported arithmetic/CSR or new
+absolute JALR. Existing section bounds and individual4096B frame bound hold;
+this is not a whole native/kernel stack proof. Default/old selectors stay old.
+
+Actual emitted guard tests
+---------------------------
+Original unit76456/54397 ACTUAL0:11632 cases. Extended current-source
+2938/9662 ACTUAL0 EACH:13424 cases/12371 immediate-or-boundary refusals/
+1024 explicitly deferred packet identities. Execute actual packet and full
+guard bodies,actual authenticated fault writer and2048 inert instructions.
+Only compiler stack stores normally;only the real two status stores while
+faulting. No guard call,return,completion or processor state is substituted.
+
+ALL512 single-bit physical source mutations remain immediate failures.
+Every frame identity bit and private boot bit is tested. Full audit rejects
+mirrored frame+external Header corruption,and mirrored private+external
+boot nonce corruption. Pointer/frame/phase/request/doorbell faults and every
+bit of all256 external immutable boot/header/outer words are covered. These
+are SYNTHETIC ABI unit arguments,not an acquired owner or model history.
+
+Positive packet routine HOST retired instruction count169->85. Every live
+source+doorbell read is identical in order/value. This includes no physical
+device timing and is NOT a card-cycle,token-rate or whole-model speedup.
+For private boot source damage,the old early private comparison and new
+actual source read fail at different points;that trace distinction is
+explicitly checked,not represented as identical.
+
+BUILD containment main50973/clean22112 ACTUAL0 EACH:2 syntax positives,
+89 missing/zero/two/late/ROOT/worker/dense/native/DATA/CPU/Work refusals.
+
+Original-model fault history
+-----------------------------
+Current42743/86951 ACTUAL0 EACH. Same-open complete original GGUF required:
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+All851 bindings,original embedding and119 virgin emitted-worker histories
+execute from RESET. Host COW forks ONLY at the actual first Phase2 packet
+entry after the actual frame has been installed. No supplied CPU product,
+private owner,PC/processor history or ready/completion value is inserted.
+
+Each build has48 fault children:24 private-frame words,then the same24 with
+matching external Header corruption. The actual packet RETURNS. All16
+source-identity cases (both mirror classes) reach and fail the next full
+audit. All8 nonce cases (both classes) fail the existing EARLIER cold boot
+nonce binding inside the emitted DensePartitionRoot::Admit extent;the actual
+captured worker nonce matches the unchanged original private boot and does
+not match the damaged frame. No worker doorbell,worker math,layer/token
+commit or later packet after refusal. Actual fault writer+2048 inert steps
+are required. The unchanged parent then executes its genuine first matrix
+worker request. This is NOT a full layer/native/lifecycle/hardware proof.
+
+Initial30466/3641 ACTUAL1:the fixture incorrectly required every nonce
+fault to reach the full audit,although existing cold admission rejects it
+earlier. Failed logs are retained. Corrected expectations require the
+specific earlier emitted Admit range AND actual nonce mismatch;they do
+not accept an arbitrary fault or drop the no-release/no-commit assertions.
+
+Static emitted-body audit
+--------------------------
+Independent main+clean ACTUAL0.20 actual transfer,release-related,selected
+compute,commit and feedback bodies retain every instruction+named direct
+call target,apart from authenticated link and read-only literal-address
+displacements. Each literal relocation retains register/opcode bits and
+requires exact whole OBJECT bytes,size,name (compiler CSWTCH ordinal
+normalized only) and intra-object offset. Arithmetic/data immediates are
+not generally masked. New full seal has exactly1 PacketIdentity call site;
+packet has0. This is static call/body comparison,not path feasibility.
+
+Initial overstrong direct-only comparison failed on linker-moved read-only
+CSWTCH tables;actual literal identities explain the changed LUI/ADDI words.
+Projection::Run has an indexed switch,this direct-body audit DOES NOT cover
+it. RecurrentBlock::Activation has no out-of-line symbol in this build and
+is not advertised as an inspected body. Both initial failed outputs are
+retained;none is a runtime or numerical failure relabeled as a pass.
+
+Original embedding+full first-layer positive history
+----------------------------------------------------
+SAME32132/62298 currently LIVE (03:35UTC),at actual layer0 FFN matrices.
+They still owe actual completion and separate unchanged strict CPU DATA
+comparison of all5120 embedding+5120 layer0 words. Do not restart them
+because a poll yields no output. No full model/token/native/STOP/END or
+numerical pass is claimed while these tests remain live.
+
+Separate hardware state
+------------------------
+SAME74354 is the PREVIOUS cd54 source-audit variant,driver844ec/gen19,
+unchanged4b client,launched03:08UTC. It is ACTUALLY live03:34 and its full
+19399024640-byte upload has finished. NO new0c3f firmware is on the card.
+No second GPU/admin/model FD,reload/reset,power,SD,OS or network change
+while that model is live. After actual terminal/END+Close+process exit:
+strict main+clean analysis;compare same4b/old78322 control;fresh idle health;
+ONLY exactaf680 helper may restore041 baseline (expected generation20).
+Never use oldccded66d for844ec,or auto-restore unknown/quarantined hardware.
+
+Last CLOSED measured rate remains0.110798402..0.110799678tok/s,with known
+full-model score mismatches. This BUILD does not fix those mismatches or
+establish full-card serving,arbitrary fresh prompts,usable Work/Assistant
+or20tok/s. Separate immutable DATA,complete native lifetime and hardware
+benchmarking are still required. Continue substantive on-card orchestration
+cost reductions and arithmetic investigation;keep the original goal active.

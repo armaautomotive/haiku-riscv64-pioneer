@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // NEW complete recurrent hidden producer; only returning arithmetic is
 // reused. No old image role, native owner, token or state-slot commit.
+#include "PioneerQ38PacketIdentityBoundaryRole.h"
 #include "blackhole_qwen38_mixed_projection_root.cpp"
 #include "blackhole_qwen38_mixed_recurrent_cohort.cpp"
 #include "PioneerQ38StateMath.h"
@@ -24,6 +25,12 @@ static __attribute__((noinline)) R::PrivateSeal* Private(){
  if(reinterpret_cast<unsigned>(p)<0x6e000 || reinterpret_cast<unsigned>(p)>0x70000-sizeof(*p))scalar_fault_park();
  return p;
 }
+#ifdef PIONEER_Q38_PACKET_IDENTITY_BOUNDARY_IMAGE
+static __attribute__((noinline)) void PacketIdentity(const R::PrivateSeal* p){
+ for(unsigned i=0;i<16;i++)if(p->frame[16+i]!=p->boot[16+i])scalar_fault_park();
+ for(unsigned i=0;i<8;i++)if(p->frame[32+i]!=p->boot[8+i])scalar_fault_park();
+}
+#endif
 static void Phase(R::PrivateSeal* p,unsigned phase){p->phase=phase;Words(R::Status)[5]=phase;Fence();q38_mixed_root_seal();}
 static void OriginalSeal(){for(unsigned i=0;i<5120;i++)if(Words(R::Original)[i]!=Words(R::OriginalCopy)[i])scalar_fault_park();}
 static void Transfer(unsigned remote,unsigned route,unsigned local,unsigned bytes,bool write,uint32_t* tracked){
@@ -269,6 +276,11 @@ extern "C" void q38_mixed_root_packet_seal(const uint32_t* frame){
  using namespace RecurrentBlock;const auto* p=Private();
  if(frame!=p->frame || !p->phase || p->phase>15 || !p->outer[48] || p->outer[48]>=0x7fffffff
   || *Words(R::Doorbell)!=p->outer[48])scalar_fault_park();
+#ifdef PIONEER_Q38_PACKET_IDENTITY_BOUNDARY_IMAGE
+ // Actual packet paths start only after Phase2 installed the current
+ // private frame. Cold Phase1 has no packet identity to borrow.
+ if(p->phase<2)scalar_fault_park();
+#else
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL
  // Code generation only: retain ordered comparisons and immediate refusal.
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL_EIGHT
@@ -286,6 +298,7 @@ extern "C" void q38_mixed_root_packet_seal(const uint32_t* frame){
 #endif
 #endif
  for(unsigned i=0;i<8;i++)if(frame[32+i]!=p->boot[8+i])scalar_fault_park();
+#endif
  PioneerQ38WordSealSources(p->boot+16);
 } // exclusive owner per-packet checks,NOT a full immutable metadata audit
 #endif
@@ -309,6 +322,15 @@ extern "C" void q38_mixed_root_seal(){
  PioneerQ38WordSealSources(p->boot+16);
 #else
  for(unsigned i=0;i<16;i++)if(*Words(0xffb20000+Source(i))!=p->boot[16+i])scalar_fault_park();
+#endif
+#ifdef PIONEER_Q38_PACKET_IDENTITY_BOUNDARY_IMAGE
+ // Duplicate24 private identity comparisons move to EVERY full audit:
+ // phase install,recipe/compute boundaries and pre/post worker release.
+ // All16 LIVE source MMIO reads remain per packet. This changes detection
+ // latency for idle private-frame corruption:owned metadata transfers may
+ // precede refusal at the next full boundary;no successful layer/token
+ // closure follows a failed identity. No ready bit or source recapture.
+ if(p->phase>=2)PacketIdentity(p);
 #endif
 }
 extern "C" void mixed_recurrent_block_main(){

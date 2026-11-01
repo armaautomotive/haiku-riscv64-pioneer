@@ -1,0 +1,29 @@
+PASS distinct full-token startup builder/ALL64x512KiB published DATA+state spans+ZERO slack/root+head EXACT vs prior independently loaded numeric metadata/192 strict first+middle+last chunk controls/strict full geometry before+after/actual session+prompt initialized from builder/ZERO ROOT instructions;geometry NOT native ownership or model products
+PASS original fabric/3551 independently classified learned parts/7102 endpoint batches+word equivalence/synthetic learned words2645504+recipes47108 REMOVED/no supplied initial hidden/default mutable bytes unchanged/ZERO ROOT instructions;NOT model execution
+PASS actual next embedding position0/token248319/5120 bit-exact/20raw+2writes+2readbacks/no CPU product upload
+BEGIN actual persistent token0/layer0/inputToken248319/previous committed0/SAME119 histories
+OBSERVED actual original embedding+119 virgin workers/Phase2 installed identity/BEFORE first packet guard;HOST COW only
+PASS original packet identity0/private:actual packet RETURNS then next full audit faults/NO worker release,math,model commit/fault writer+2048 inert;NOT native/physical/Work/TPS
+PASS original packet identity1/private:actual packet RETURNS then next full audit faults/NO worker release,math,model commit/fault writer+2048 inert;NOT native/physical/Work/TPS
+PASS original packet identity2/private:actual packet RETURNS then next full audit faults/NO worker release,math,model commit/fault writer+2048 inert;NOT native/physical/Work/TPS
+PASS original packet identity3/private:actual packet RETURNS then next full audit faults/NO worker release,math,model commit/fault writer+2048 inert;NOT native/physical/Work/TPS
+PASS original packet identity4/private:actual packet RETURNS then next full audit faults/NO worker release,math,model commit/fault writer+2048 inert;NOT native/physical/Work/TPS
+PASS original packet identity5/private:actual packet RETURNS then next full audit faults/NO worker release,math,model commit/fault writer+2048 inert;NOT native/physical/Work/TPS
+PASS original packet identity6/private:actual packet RETURNS then next full audit faults/NO worker release,math,model commit/fault writer+2048 inert;NOT native/physical/Work/TPS
+PASS original packet identity7/private:actual packet RETURNS then next full audit faults/NO worker release,math,model commit/fault writer+2048 inert;NOT native/physical/Work/TPS
+PASS original packet identity8/private:actual packet RETURNS then next full audit faults/NO worker release,math,model commit/fault writer+2048 inert;NOT native/physical/Work/TPS
+PASS original packet identity9/private:actual packet RETURNS then next full audit faults/NO worker release,math,model commit/fault writer+2048 inert;NOT native/physical/Work/TPS
+PASS original packet identity10/private:actual packet RETURNS then next full audit faults/NO worker release,math,model commit/fault writer+2048 inert;NOT native/physical/Work/TPS
+PASS original packet identity11/private:actual packet RETURNS then next full audit faults/NO worker release,math,model commit/fault writer+2048 inert;NOT native/physical/Work/TPS
+PASS original packet identity12/private:actual packet RETURNS then next full audit faults/NO worker release,math,model commit/fault writer+2048 inert;NOT native/physical/Work/TPS
+PASS original packet identity13/private:actual packet RETURNS then next full audit faults/NO worker release,math,model commit/fault writer+2048 inert;NOT native/physical/Work/TPS
+PASS original packet identity14/private:actual packet RETURNS then next full audit faults/NO worker release,math,model commit/fault writer+2048 inert;NOT native/physical/Work/TPS
+PASS original packet identity15/private:actual packet RETURNS then next full audit faults/NO worker release,math,model commit/fault writer+2048 inert;NOT native/physical/Work/TPS
+Assertion failed: (injected && fault<48 && forked && packetReturned && fullEntered && !doorbells && pc==0x60000 && !allLayers && !committed && !stopJobs && original.Ready()), function CheckFault, file pioneer_q38_connected_packet_identity_test.cpp, line 60.
+Assertion failed: (waitpid(pid,&status,0)==pid && WIFEXITED(status) && !WEXITSTATUS(status)), function StepToken, file pioneer_q38_connected_packet_identity_test.cpp, line 36.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_retained_cohort_original_tests.py", line 95, in <module>
+    subprocess.run([str(binary),str(image),str(old),str(worker),str(model),
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-q38-retained-conv-original-xzg9fogt/test', '/private/tmp/pioneer-q38-packet-identity-frozen-main-20261101-zft', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/qualification-inputs/mixed-worker-20261030', '/private/tmp/pioneer-q38-precise-beta-worker-main-20261031-np', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf', '00048c98', '0004e128']' died with <Signals.SIGABRT: 6>.

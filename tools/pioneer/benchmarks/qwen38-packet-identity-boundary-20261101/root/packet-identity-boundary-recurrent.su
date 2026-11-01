@@ -1,0 +1,88 @@
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38DensePartitionLayout.h:15:24:unsigned int PioneerQ38DensePartitionLayout::Route(unsigned int)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38DensePartitionLayout.h:16:24:unsigned int PioneerQ38DensePartitionLayout::Peer(unsigned int)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanShape.h:17:24:uint32_t PioneerQ38SpanRoute(unsigned int)	80	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/../../src/add-ons/kernel/drivers/misc/PioneerQ38ConvShape.h:13:24:uint32_t PioneerQ38ConvPeer(unsigned int)	64	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/../../src/add-ons/kernel/drivers/misc/PioneerQ38ConvShape.h:19:20:bool PioneerQ38ConvShape(const uint32_t*)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnInputShape.h:9:20:bool PioneerQ38GdnInputShape(const uint32_t*)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnShape.h:10:24:uint32_t PioneerQ38ResidentGdnPeer(unsigned int)	64	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnGatedShape.h:11:20:bool PioneerQ38GdnGatedShape(const uint32_t*, const uint32_t*, const uint32_t*)	80	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38MixedRecurrentCohortLayout.h:22:20:bool PioneerQ38MixedRecurrentCohortLayout::Shape(const uint32_t*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38MixedRecurrentBlockRootLayout.h:34:20:bool PioneerQ38MixedRecurrentBlockRootLayout::OuterShape(const uint32_t*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerGraphMath.h:12:21:float PioneerGraphDividePositive(float, float)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_dense_partition_root.cpp:100:13:bool DensePartitionRoot::Quiet()	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:23:50:PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal* RecurrentBlock::Private()	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:275:17:void q38_layer_return_recurrent_packet_seal(const uint32_t*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:29:39:void RecurrentBlock::PacketIdentity(const PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_projection_root.cpp:66:13:void Projection::InputsSeal(const uint32_t*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_precise_activation_root.inc:41:33:void Projection::PreciseBankRead(const uint32_t*, uint32_t*, unsigned int, unsigned int)	112	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentConvServiceShape.h:10:20:bool PioneerQ38ResidentConvServiceJob(const uint32_t*, const uint32_t*, const uint32_t*, unsigned int, unsigned int)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_dense_partition_root.cpp:124:13:0(unsigned int)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_dense_partition_root.cpp:124:13:void DensePartitionRoot::FrameSeal(unsigned int)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/../../src/add-ons/kernel/drivers/misc/PioneerQ38ConvBatchShape.h:18:20:bool PioneerQ38ConvBatchShape(const uint32_t*)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38MixedRecurrentProjectionRootLayout.h:11:20:bool PioneerQ38MixedRecurrentProjectionRootLayout::Shape(const uint32_t*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/../../src/add-ons/kernel/drivers/misc/PioneerQ38ConvBatchShape.h:39:20:bool PioneerQ38ConvBatchSummary(const uint32_t*, const uint32_t*, const uint32_t*, const uint32_t*)	128	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/../../src/add-ons/kernel/drivers/misc/PioneerQ38MixedRecurrentRecipe.h:16:20:bool PioneerQ38MixedRecurrentRecipe(const uint32_t*, const uint32_t*, const uint32_t*, const uint32_t (*)[8], const uint32_t*)	64	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38ProjectionInput.h:12:39:bool PioneerQ38ProjectionQuantize(unsigned int, const float*, unsigned int, PioneerQ38ProjectionInput*)	2112	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnServiceShape.h:9:20:bool PioneerQ38ResidentGdnServiceJob(const uint32_t*, const uint32_t*, const uint32_t*, const uint32_t*, const uint32_t*, unsigned int, unsigned int)	304	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_dense_root_control.inc:224:13:void DensePartitionRoot::Job(unsigned int, unsigned int, unsigned int)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_projection_root.cpp:77:13:void Projection::MatrixJob(const uint32_t*, unsigned int, unsigned int)	96	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38PreciseWorkerLayout.h:47:20:bool PioneerQ38PreciseWorkerLayout::DescriptorShape(const uint32_t*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_precise_activation_root.inc:8:33:void Projection::PreciseDescriptor(const uint32_t*, unsigned int, uint32_t*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38PreciseWorkerLayout.h:24:37:bool PioneerQ38PreciseWorkerLayout::BootShape(const uint32_t*)	528	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38PreciseWorkerLayout.h:32:37:bool PioneerQ38PreciseWorkerLayout::JobShape(const uint32_t*, const uint32_t*, unsigned int, unsigned int)	1056	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38PushedWorkerLayout.h:43:33:bool PioneerQ38PushedWorkerLayout::ExtensionShape(const uint32_t*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38PushedWorkerLayout.h:51:33:bool PioneerQ38PushedWorkerLayout::BootShape(const uint32_t*)	272	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38PushedWorkerLayout.h:60:32:bool PioneerQ38PushedWorkerLayout::JobShape(const uint32_t*, const uint32_t*, unsigned int, unsigned int)	544	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_precise_activation_root.inc:20:33:void Projection::PreciseJob(const uint32_t*, unsigned int, unsigned int, uint32_t*)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38GlobalOutputClosure.h:20:20:bool PioneerQ38GlobalOutputClosure::Job(const uint32_t*, const uint32_t*, const uint32_t*, const uint32_t*, unsigned int, const uint32_t*)	672	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38PushedWorkerLayout.h:74:51:bool PioneerQ38PushedWorkerLayout::Receipt(const uint32_t*, const uint32_t*, const uint32_t*, const uint32_t*)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38LearnedRms.h:18:7:bool PioneerQ38RmsSum::Add(float)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38F32HiddenRms.h:17:39:bool PioneerQ38F32HiddenRms(const float*, const float*, float*)	80	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38F32HiddenRms.h:36:39:bool PioneerQ38F32HiddenResidualRms(const float*, const float*, const float*, float*, float*)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38SigmoidPrecision.h:23:29:PioneerAttentionWide DensePartitionRoot::PioneerQ38SigmoidDetail::ExpReduced(float, int&)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38SigmoidPrecision.h:44:14:float DensePartitionRoot::PioneerQ38SigmoidDetail::Divide(PioneerAttentionWide, PioneerAttentionWide)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38SigmoidPrecision.h:58:13:bool DensePartitionRoot::PioneerQ38SigmoidPrecision(float, float&)	64	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_projection_root.cpp:16:18:void* q38_layer_return_recurrent_zero(void*, int, unsigned int)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_pushed_completion_root.inc:25:58:void Projection::q38_pushed_begin_shared(const uint32_t*, uint32_t*, uint32_t*, PushedSeal, PushedFrameSeal)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_pushed_completion_root.inc:42:58:void Projection::q38_pushed_receipt_shared(const uint32_t*, unsigned int, const uint32_t*, PushedSeal)	272	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_pushed_completion_root.inc:75:58:void Projection::q38_pushed_end_shared(const uint32_t*, const uint32_t*, PushedSeal, PushedSeal)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:273:28:const uint32_t* q38_layer_return_recurrent_frame()	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:305:17:void q38_layer_return_recurrent_seal()	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_dense_partition_root.cpp:111:13:void DensePartitionRoot::Seal(const uint32_t*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_dense_partition_root.cpp:142:13:void DensePartitionRoot::Transfer(const uint32_t*, uint32_t*, unsigned int, unsigned int, unsigned int, bool)	144	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_dense_root_control.inc:57:13:void DensePartitionRoot::BootSeal(const uint32_t*, uint32_t*, unsigned int)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_dense_root_control.inc:16:13:void DensePartitionRoot::Wait(const uint32_t*, uint32_t*, unsigned int, unsigned int, bool)	160	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_dense_root_control.inc:70:13:void DensePartitionRoot::ClosedJob(const uint32_t*, uint32_t*, unsigned int, bool)	288	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_precise_activation_root.inc:27:33:void Projection::PreciseWait(const uint32_t*, uint32_t*, unsigned int)	144	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_precise_activation_root.inc:65:33:void Projection::PreciseGather(const uint32_t*, uint32_t*, unsigned int)	896	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_dense_root_control.inc:230:13:void DensePartitionRoot::Snapshot(const uint32_t*, uint32_t*, unsigned int, unsigned int)	416	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_dense_partition_root.cpp:319:13:void DensePartitionRoot::Launch(const uint32_t*, uint32_t*, unsigned int)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_dense_root_control.inc:95:39:void DensePartitionRoot::AdmitGlobalOutput(const uint32_t*, uint32_t*, unsigned int)	1360	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_dense_root_control.inc:113:13:void DensePartitionRoot::Admit(const uint32_t*, uint32_t*, unsigned int)	64	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_dense_partition_root.cpp:386:21:unsigned int q38_unused_dense_frame()	464	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_precise_activation_root.inc:87:33:void Projection::PreparePrecise(const uint32_t*)	608	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_projection_root.cpp:184:17:unsigned int Projection::Run(const uint32_t*)	848	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_cohort.cpp:73:13:void MixedRecurrentCohort::Packet(uint32_t*, unsigned int, unsigned int, unsigned int, bool)	128	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_cohort.cpp:125:17:unsigned int MixedRecurrentCohort::Wait(uint32_t*, unsigned int, unsigned int, unsigned int, bool)	160	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_cohort.cpp:162:13:void MixedRecurrentCohort::CounterSeal(uint32_t*, unsigned int, const uint32_t*)	64	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_cohort.cpp:148:13:void MixedRecurrentCohort::BootSeal(uint32_t*, unsigned int)	272	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_cohort.cpp:154:13:void MixedRecurrentCohort::Closed(uint32_t*, unsigned int)	352	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_cohort.cpp:222:13:void MixedRecurrentCohort::Finish(uint32_t*, unsigned int, unsigned int)	1216	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_cohort.cpp:62:13:void MixedRecurrentCohort::Audit()	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_cohort.cpp:244:13:void MixedRecurrentCohort::StageConv(uint32_t*)	1376	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_cohort.cpp:266:13:void MixedRecurrentCohort::StageGdnAfterClosedConv(uint32_t*)	768	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_cohort.cpp:297:21:unsigned int q38_mixed_recurrent_cohort()	176	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:69:13:void RecurrentBlock::RecipeSeal(unsigned int)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:88:13:void RecurrentBlock::Matrix(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*, unsigned int, unsigned int, unsigned int)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:36:13:void RecurrentBlock::Transfer(unsigned int, unsigned int, unsigned int, unsigned int, bool, uint32_t*)	128	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:154:13:void RecurrentBlock::Finish(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:56:13:void RecurrentBlock::Read(unsigned int, unsigned int, unsigned int, unsigned int)	80	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:73:13:void RecurrentBlock::CaptureRecipes(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*, unsigned int, unsigned int)	80	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:105:13:void RecurrentBlock::Cohort(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*)	144	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:62:13:void RecurrentBlock::Norm(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*, unsigned int)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:169:13:void RecurrentBlock::EndSeal(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:336:17:void mixed_recurrent_block_main()	1664	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_return_recurrent_layer.cpp:34:18:void* memset(void*, int, unsigned int)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_return_recurrent_layer.cpp:40:17:bool q38_global_chain_learned_rms(const float*, const float*, float*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_return_recurrent_layer.cpp:43:17:bool q38_global_chain_quantize14(const float*, void*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_return_recurrent_layer.cpp:47:47:unsigned int q38_return_recurrent_layer()	1120	static

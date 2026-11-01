@@ -1,0 +1,2 @@
+PASS actual packet guard host instructions169->85;ALL live source/doorbell reads EXACT;NOT device cycles/TPS
+PASS emitted packet/full identity boundary:13424 cases/12371 immediate-or-boundary refusals/1024 explicit deferred packet identities;actual fault writer+2048 inert,stack-only normal writes;synthetic ABI ONLY,NOT acquired owner/original model/native/physical/Work/TPS
