@@ -1,5 +1,13 @@
 Current full-model prefetch: native BUILD,full-END and strict prefix CLOSED
 =========================================================================
+14:23UTC CLOSURE:physical14837 ACTUALLY exits0,clean34/END+Close,
+0.159697435..0.159700083tok/s,3.38% ONE-pair rate gain vs8612/SAME4b.
+Known strict full-model score mismatch remains FAIL. Exact3ceff restore
+88418 ACTUALLY exits0;fresh independent041/gen34/healthy-idle/64CPU/fullRAM
+check ACTUALLY0. No protected physical run remains. See
+qwen38-token-prefetch-physical-20261101.txt. Earlier LIVE claims below are
+superseded ONLY by this actual closure,not by timeout or intent.
+
 13:43UTC DEPLOYMENT UPDATE:all native/strict gates below are CLOSED.
 Fresh independent health,staging/full copy-back,exact apply44612 and fresh
 independent prelaunch checks ALL ACTUALLY exit0. New919d/tag75/gen33 is

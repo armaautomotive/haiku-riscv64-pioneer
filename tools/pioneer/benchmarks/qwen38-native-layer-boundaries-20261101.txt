@@ -1,5 +1,11 @@
 Incremental native layer observations: DATA controls CLOSED,model runs LIVE
 ==========================================================================
+14:23UTC PHYSICAL CLOSURE:separate prefetched14837 ACTUALLY exits0,clean34,
+0.159697435..0.159700083tok/s,known strict scores still FAIL. Baseline041/
+gen34 independently restored healthy. See
+qwen38-token-prefetch-physical-20261101.txt. The protected-physical LIVE
+paragraph below is superseded;native17008/75574 remain their OWN live runs.
+
 2026-11-01,14:08UTC. Goal ACTIVE;20tok/s UNMET. This changes ONLY the HOST
 emulator observation recorder/facade and full-flow TEST harness,plus a
 separate strict posthoc DATA comparator. No production arithmetic,firmware,
