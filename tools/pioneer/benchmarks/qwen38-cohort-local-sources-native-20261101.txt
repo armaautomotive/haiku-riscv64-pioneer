@@ -3,7 +3,7 @@ Cohort-local-source firmware:exact DATA and distinct native subjects
 2026-11-01. Goal ACTIVE;20tok/s UNMET. No new physical throughput or
 whole-model numerical acceptance. Latest closed78322 measurement remains
 0.110798402..0.110799678tok/s;known first3 score differences still fail.
-The distinct844ec module below has NOT been staged or run on hardware.
+The distinct844ec module below is staged ONLY;NOT installed or run on hardware.
 
 Current-source ROOT rechecks72666/80527 ACTUALLY exit0 after the new role
 and DATA selectors are added:exact cd54 reproduces,with ENTIRE old83677/
@@ -110,3 +110,20 @@ device unreserve and locked context destruction remain REQUIRED.
 Even a clean first-layer native END will NOT prove CommitState/all64-layer
 quality,arbitrary prompts,resident Assistant Work or20tok/s. Do not apply
 the new driver before this gate and strict native-prefix checks finish.
+
+Staging-only update03:02UTC
+----------------------------
+Package checkpoint93ee8b51ff is pushed and independently verified on
+GitHub. Fresh SSH confirms Haiku/UID0,64CPUs/max137034936320B,baseline
+041/tag12/gen18/cold0/quiesced0/owner0/open1/guard1,unchanged4b/ccded66d/
+d1ce and both new staging targets absent. Copy45820 ACTUALLY exits0 to:
+ tenstorrent_pci_probe-token-cohort-sources-benchmark-844ecfe2
+ pioneer-p100a-hot-swap-token-cohort-sources-benchmark-af680d2d.sh
+Independent readback verifies complete844ec and af680 hashes;installed
+041,oldccded66d,4b and d1ce stay exact and generation18 remains idle.
+No apply,model,RUN,reload,power,SD or OS change occurs. SAME44922/53188
+remain ACTUALLY LIVE,latestROOT120000208 instructions/phase12. These
+HOST counts are not physical timing. Finish BOTH actual native ENDs and
+strict native-prefix comparisons before fresh health/exactaf680 apply
+to expectedgen19. Oldccded66d cannot restore844ec;use the new exact helper
+only after actual model closure,fresh idle health and no cold/quarantine.
