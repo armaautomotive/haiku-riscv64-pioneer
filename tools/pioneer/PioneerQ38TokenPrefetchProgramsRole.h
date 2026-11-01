@@ -2,6 +2,12 @@
 // Separate DATA/private/diagnostic bindings,rechecked on EVERY include.
 // Syntax and compiled identity do NOT grant native lifecycle or Work.
 #include "PioneerQ38TokenPrefetchDataBoundary.h"
+#include "PioneerQ38TokenBatchedPrefetchDataBoundary.h"
+#ifdef PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS
+// This OLD parent alone cannot acquire a new code family. Its distinct
+// outer ProgramsRole must have bound the new package BEFORE delegating.
+static_assert(PioneerQ38TokenBatchedPrefetchParentBinding==1,"batched DATA requires its own outer role");
+#endif
 #ifdef PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS
 #if PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS != 1 \
  || !defined(PIONEER_Q38_TOKEN_FLAT_MATRIX_PROGRAMS) || PIONEER_Q38_TOKEN_FLAT_MATRIX_PROGRAMS != 1 \
@@ -74,7 +80,9 @@ static_assert(PioneerQ38TokenPrefetchDataSelection==1,"late prefetch DATA select
  || defined(PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS_H) \
  || defined(PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_FAULT_PROGRAMS_H) \
  || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H) \
- || (defined(PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H) && !defined(PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS_H))
+ || (defined(PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H) && !defined(PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS_H) \
+  && !(defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS) && PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS == 1 \
+   && defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS_H)))
 #error Prefetch owner cannot bind already selected old code DATA
 #endif
 #else

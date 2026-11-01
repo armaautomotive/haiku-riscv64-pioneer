@@ -1,9 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // DATA selection only; no native source/lifetime, journal or launch grant.
 // Rechecked outside the guard so late/defined-zero changes cannot alias data.
-#include "PioneerQ38TokenBatchedPrefetchDataBoundary.h"
-#ifdef PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS
-#error Batched-prefetch DATA has no selected native owner yet
+#include "PioneerQ38TokenBatchedPrefetchProgramsRole.h"
+#if defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS) && !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT)
+#error Batched-prefetch DATA requires its distinct private native selector;no Work grant
 #endif
 #include "PioneerQ38TokenPrefetchProgramsRole.h"
 #if defined(PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS) \
@@ -64,7 +64,9 @@
 #elif defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
 #error QTP3 native selector requires its actual native parent
 #endif
-#ifdef PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS
+#include "PioneerQ38TokenBatchedPrefetchPrograms.h"
+#elif defined(PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS)
 #include "PioneerQ38TokenPrefetchPrograms.h"
 #elif defined(PIONEER_Q38_TOKEN_FLAT_MATRIX_PROGRAMS)
 #include "PioneerQ38TokenFlatMatrixPrograms.h"
@@ -96,7 +98,9 @@
 #include "PioneerQ38TokenFootprint.h"
 #ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
-#ifdef PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS
+namespace PioneerQ38TokenPrograms=PioneerQ38TokenBatchedPrefetchPrograms;
+#elif defined(PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenPrefetchPrograms;
 #elif defined(PIONEER_Q38_TOKEN_FLAT_MATRIX_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenFlatMatrixPrograms;

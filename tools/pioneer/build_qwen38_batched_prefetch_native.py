@@ -1,0 +1,73 @@
+#!/usr/bin/env python3
+"""Distinct batched private native BUILD only;NEVER install or execute."""
+import hashlib
+import os
+import pathlib
+import re
+import runpy
+import subprocess
+import sys
+
+PRIVATE_SHA='b0d4e782ea8a5c97d08fb88aecfeab20a14e09e19436a8e88277cf617daaab1c'  # Independent whole private-object identity ONLY.
+args=sys.argv[1:];inspect='--inspect-candidate' in args
+if inspect:assert args.count('--inspect-candidate')==1;args.remove('--inspect-candidate')
+assert len(args)==2 and (inspect or PRIVATE_SHA)
+assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
+previous,out=map(pathlib.Path,args);here=pathlib.Path(__file__).resolve().parent
+assert previous.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
+out.mkdir(mode=0o700);saved=sys.argv[:]
+try:
+    sys.argv=[str(here/'build_qwen38_token_prefetch_native.py'),'--private',str(previous),str(out/'unchanged-prefetch')]
+    parent=runpy.run_path(sys.argv[0],run_name='__main__')
+finally:sys.argv=saved
+control=parent['obj'];assert hashlib.sha256(control.read_bytes()).hexdigest()=='e4e8cc3f616d8cc5c34789326ed3fdd8e3e920cf96c50ce19658d1d9b934f845'
+command=parent['compile_args'][:];tool=command[0][:-3]
+obj=out/'token-batched-prefetch-context-NODRV.o'
+command[command.index('-c')+1]=str(here/'tests/pioneer_q38_token_batched_prefetch_native_context_compile.cpp')
+command[command.index('-o')+1]=str(obj)
+subprocess.run(command,check=True);(out/'compile-argv.txt').write_text('\n'.join(command)+'\n')
+
+def records(path):
+    raw=subprocess.check_output([tool+'nm','-S','--defined-only',str(path)],text=True)
+    values={row[-1]:(int(row[0],16),int(row[1],16)) for row in map(str.split,raw.splitlines()) if len(row)==4}
+    raw=subprocess.check_output([tool+'objdump','-t',str(path)],text=True)
+    sections={row[-1]:row[-3] for row in map(str.split,raw.splitlines()) if len(row)>=6 and row[-1] in values}
+    return values,sections
+def payload(path,name,values,sections,label):
+    start,size=values[name];target=out/(label+'.raw')
+    subprocess.run([tool+'objcopy','-O','binary','-j',sections[name],str(path),str(target)],check=True)
+    data=target.read_bytes();assert start+size<=len(data)
+    return data[start:start+size]
+symbols,sections=records(obj);old_symbols,old_sections=records(control)
+header=(here/'PioneerQ38TokenBatchedPrefetchPrograms.h').read_bytes()
+assert hashlib.sha256(header).hexdigest()=='1ae2a7c9028ad7623390bf7512d38fca0528d731af361d444d72671e8db273f2'
+arrays=re.findall(r'// SHA256 ([0-9a-f]{64})\nstatic const uint32_t ([A-Za-z]+)\[\]=',header.decode())
+assert len(arrays)==14 and sum(label=='PeerFetch' for _,label in arrays)==1
+for digest,label in arrays:
+    found=[name for name in symbols if 'PioneerQ38TokenBatchedPrefetchPrograms' in name and name.endswith(str(len(label))+label+'E')]
+    assert len(found)==1 and hashlib.sha256(payload(obj,found[0],symbols,sections,label)).hexdigest()==digest
+rope=[name for name,(_,size) in symbols.items() if 'PioneerQ38TokenRope' in name and name.endswith('DataE') and size==2097152]
+assert len(rope)==1 and rope[0] in old_symbols
+assert payload(obj,rope[0],symbols,sections,'new-rope')==payload(control,rope[0],old_symbols,old_sections,'old-rope')
+before,after=parent['frames'](control.with_suffix('.su')),parent['frames'](obj.with_suffix('.su'))
+for name,size in after.items():assert size<=2048 or name in before and size<=before[name],(name,size)
+abi=('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device')
+assert not set(abi)&symbols.keys()
+for name,kind in (('init_hardware','refusal'),('init_driver','refusal'),('uninit_driver','inert'),('publish_devices','null'),('find_device','null')):
+    expected=payload(obj,'pioneer_token_context_expected_'+kind,symbols,sections,'inert-'+kind)
+    for prefix in ('pioneer_q38_token_context_body_','pioneer_q38_token_context_only_'):
+        assert payload(obj,prefix+name,symbols,sections,prefix+name)==expected
+table=subprocess.check_output([tool+'nm','-C','--defined-only',str(obj)],text=True)
+undefined=subprocess.check_output([tool+'nm','-u',str(obj)],text=True)
+for required in ('PioneerQ38TokenBatchedPrefetchPrograms','Q38TokenNativeControl(',
+                 'PioneerQ38TokenNativeOwner::ObserveCommittedFrontier<','BeginQ38TokenNativeBackendScoped(',
+                 'FinishQ38TokenNativeBackendScoped('):assert required in table,required
+for forbidden in ('PioneerQ38TokenPrefetchPrograms','PioneerQ38TokenFlatMatrixPrograms','PioneerQ38TokenPreciseBetaPrograms',
+                  'ReferenceProducts','OriginalSource','ValidationSession','Q38WorkControl','NativeQ38PeerInstructionModel',
+                  'Q38NativePeerTestCpu','PioneerQ38ObservedTrace','SyntheticIO','llama_','ggml_'):
+    assert forbidden not in table and forbidden not in undefined,forbidden
+digest=hashlib.sha256(obj.read_bytes()).hexdigest()
+if not inspect:assert digest==PRIVATE_SHA
+print('ACTUAL_PRIVATE5_BODIES_AND5_WRAPPERS_BYTEEXACT_INERT_CONTROLS/all14 NEW arrays+unchanged rope/old completeprefetch FIRST',flush=True)
+print(digest+' '+obj.name,flush=True)
+print('BUILD_ONLY separate batched private context;NO conventional ABI,native lifecycle,install,model,physical,Work or TPS grant',flush=True)

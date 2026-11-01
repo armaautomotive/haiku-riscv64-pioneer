@@ -1,0 +1,88 @@
+Distinct batched private native BUILD closed;execution remains unqualified
+=========================================================================
+2026-11-01. Goal ACTIVE;20tok/s UNMET. No new physical inference rate or
+numerical acceptance. Last nonprofiling diagnostic0.159697435..0.159700083
+tok/s and known strict final-score failure remain unchanged. No Pioneer
+SSH/reload/model/power/SD/hardware operation in this offline checkpoint;
+last installed baseline041/tag12/gen36 was independently healthy/idle,
+all64CPUs/full137034936320B. Assistant/boot/CPU/RAM code untouched.
+
+Actual separate private code binding,not an installable driver
+--------------------------------------------------------------
+New private leaf requires BOTH batched program and private context flags
+plus the exact prefetch+all older native parents. SelectedPrograms now
+binds PioneerQ38TokenBatchedPrefetchPrograms ONLY for this distinct private
+selection. DATA alone,old native selectors,already included old arrays,
+ROOT/worker BUILD,public diagnostic,CPU oracle and Work cannot select it.
+Repeated includes recheck selection;missing,zero,two and late changes refuse.
+
+Matching immutable header remains byte-identical1ae2a7c9028ad7623390bf7512d38fca0528d731af361d444d72671e8db273f2.
+The pure proposed journal geometry is unchanged. New private object embeds
+ALL14 exact new arrays from b622 ROOT+b73 worker. All2MiB rope bytes equal
+the previous qualified context. Old array namespaces and CPU reference,
+llama/ggml,host instruction engine,synthesized completion and Work symbols
+are absent. This compile-time identity is NOT proof of native execution,
+initialization,STOP/HOLD/drain/restoration,model quality or reusable memory.
+
+Independent main86156/clean57690 inspect and parent-bound main17639
+ACTUALLY0. Frozen main70264/clean9461 BOTH ACTUALLY exit0,ENTIRE objects
+compare byte-for-byte,including the literal frozen SHA:
+b0d4e782ea8a5c97d08fb88aecfeab20a14e09e19436a8e88277cf617daaab1c
+ token-batched-prefetch-context-NODRV.o.
+Each builder reproduces the ENTIRE previous flat native object AND complete
+prefetch private object FIRST,e4e8cc3f616d8cc5c34789326ed3fdd8e3e920cf96c50ce19658d1d9b934f845.
+All6 conventional driver ABI names remain absent;5 renamed bodies+5
+wrappers are byte-exact to independent inert/refusal/null controls. Static
+frames remain <=2048B or no greater than the corresponding old frame;
+this is NOT a full combined native/kernel/IRQ stack proof.
+
+Role and DATA controls after private integration
+------------------------------------------------
+Final main36309/clean55114 BOTH ACTUALLY exit0,logs identical. ENTIRE old
+prefetch+all native role ancestors execute FIRST. Then new3 syntax positives
+and453 missing,zero,two,late,tag,ABI,old-array,shader,CPU+Work refusals pass.
+Private3-positive scope is role syntax/selected code identity ONLY.
+
+Full DATA main32278/clean39267 BOTH ACTUALLY exit0,logs identical,including
+ALL unchanged old packages/pins/refusals FIRST. ALL3085090 code words and
+3010 gap/runtime/invalid/immutable-output refusals still pass,ALL14 arrays
+including fetch.32 damaged/truncated files and5 wrong families refuse
+before output. New DATA3 positives/300 refusals remain intact. Old-prefetch
+DATA has270 refusals now:the prior264 are retained and the newly referenced
+batched selector/header guards add6 checks,not fewer old controls.
+
+Old public main82595/clean19950 BOTH ACTUALLY exit0;ENTIRE old flat8612
+driver reproduces FIRST,then whole old prefetch object30691de5 and module
+919d4a631ff664549a67bb2372ce2db344ba29473c452c0b273c4b27a2bdf978 reproduce
+exactly under current shared guards. Main/clean objects/modules compare.
+No old driver is modified,loaded or recast as the batched subject.
+
+Failures retained;guards repaired without relabelling results
+---------------------------------------------------------------
+Initial role17431 ACTUALLY1:the test put non-constexpr CodeWords in a
+static_assert. Its valid compile-time check now uses immutable Q6Batch;
+the separate unchanged runtime DATA test STILL checks all exact word counts
+and every code byte. No expected numerical value or tolerance changed.
+
+Initial DATA80150 ACTUALLY1:the OLD parent ProgramsRole accepted the new
+batched selector by itself. It now requires the distinct outer role's
+already established parent binding before delegating. A new forged guard
+without the new selector also refuses. Both include orders and all late
+cases pass in final main/clean DATA tests. Failed raw logs are preserved.
+No actual model failure is converted into a pass by either repair.
+
+Next toward safely measured inference
+--------------------------------------
+Implement the separate HOST expected-ROM bridge and actual batched NoC
+endpoint observer. The existing prefetch observer has DIFFERENT fetch
+PCs,raw-buffer grammar and one-read-per-tile counters and MUST NOT be reused
+unchanged. Bind the exact new14-section private subject into full native
+initialization/original model/first-layer/cancel/119STOP/120HOLD/drain/full
+restoration/clock/VM/PCI/host-buffer/unreserve/destruction+END qualification.
+Do not shorten that lifetime or substitute CPU results. A separate physical
+diagnostic driver/update helper remains unimplemented and unqualified;
+no batched build may be installed through an old owner/helper. Full-model
+correctness,resident fresh requests,arbitrary prompts,usable no-CPU-reference
+Assistant Work and20tok/s remain unmet. Keep existing long native flows
+17008/75574 and older41236 running;poll SAME handles,never restart for an
+observation timeout. Their old firmware histories do not qualify this build.

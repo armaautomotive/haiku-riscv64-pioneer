@@ -1,0 +1,15 @@
+/* SPDX-License-Identifier: MIT */
+// Separate private renamed-ABI BUILD only;not a loadable/physical/Work role.
+#if !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT != 1 \
+ || !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS) || PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS != 1 \
+ || !defined(PIONEER_Q38_TOKEN_PREFETCH_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_PREFETCH_NATIVE_CONTEXT != 1 \
+ || !defined(PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS) || PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS != 1
+#error Exact separate batched private context and prefetch parent revisions required
+#endif
+#if defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_BENCHMARK_NATIVE) || defined(PIONEER_Q38_TOKEN_PREFETCH_BENCHMARK_NATIVE) \
+ || defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_WORKER_IMAGE) || defined(PIONEER_Q38_WORK_BATCHED_PREFETCH) \
+ || defined(PIONEER_Q38_BATCHED_PREFETCH_ROOT_IMAGE) || defined(PIONEER_Q38_TOKEN_PREFETCH_WORKER_IMAGE) \
+ || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q38_FLAT_MATRIX_GRAMMAR_IMAGE)
+#error Batched private context cannot alias public diagnostic,ROOT or worker BUILD
+#endif
+#include "PioneerQ38TokenPrefetchNativeRole.h"
