@@ -10,8 +10,16 @@ import sys
 import tempfile
 
 root_profile=None
+flat_matrix=None
+if '--flat-matrix-root' in sys.argv:
+    assert sys.argv.count('--flat-matrix-root')==1
+    index=sys.argv.index('--flat-matrix-root')
+    assert index+1<len(sys.argv)
+    flat_matrix=pathlib.Path(sys.argv[index+1]);del sys.argv[index:index+2]
+    assert flat_matrix.is_absolute() and flat_matrix.is_dir() and not flat_matrix.is_symlink()
 empty_receipt=None
 if '--empty-receipt-root' in sys.argv:
+    assert flat_matrix is None,'Distinct ROOT variants cannot alias'
     assert sys.argv.count('--empty-receipt-root')==1
     index=sys.argv.index('--empty-receipt-root')
     assert index+1<len(sys.argv)
@@ -19,12 +27,14 @@ if '--empty-receipt-root' in sys.argv:
     assert empty_receipt.is_absolute() and empty_receipt.is_dir() and not empty_receipt.is_symlink()
 counter_gather=None
 if '--counter-gather-root' in sys.argv:
-    assert empty_receipt is None, 'Distinct ROOT variants cannot alias'
+    assert empty_receipt is None and flat_matrix is None, 'Distinct ROOT variants cannot alias'
     assert sys.argv.count('--counter-gather-root')==1
     index=sys.argv.index('--counter-gather-root')
     assert index+1<len(sys.argv)
     counter_gather=pathlib.Path(sys.argv[index+1]);del sys.argv[index:index+2]
     assert counter_gather.is_absolute() and counter_gather.is_dir() and not counter_gather.is_symlink()
+if flat_matrix:
+    empty_receipt=flat_matrix  # SAME byte endpoint ONLY;distinct code/owner/hash below
 if empty_receipt:
     counter_gather=empty_receipt  # SAME captured-byte FIFO endpoint;distinct authenticated program/owner below
 tid_boundary='--tid-boundary' in sys.argv
@@ -266,6 +276,10 @@ if empty_receipt:
     assert hashlib.sha256((here.parent/'PioneerQ38TokenEmptyReceiptPollPrograms.h').read_bytes()).hexdigest()=='a96f194bf1ac5172e29e752c3e1f894a692105b2d74bb8b8100fc5a41ca6becf'
     defines.update(PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_PROGRAMS='1',PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_NATIVE_CONTEXT='1',
                    PIONEER_Q38_TOKEN_NATIVE_EMPTY_RECEIPT_POLL_FIXTURE='1')
+if flat_matrix:
+    assert hashlib.sha256((here.parent/'PioneerQ38TokenFlatMatrixPrograms.h').read_bytes()).hexdigest()=='8963e12e1acddf582f0c035db2cb45025d1303fbe9e096e11901b36a0352c780'
+    defines.update(PIONEER_Q38_TOKEN_FLAT_MATRIX_PROGRAMS='1',PIONEER_Q38_TOKEN_FLAT_MATRIX_NATIVE_CONTEXT='1',
+                   PIONEER_Q38_TOKEN_NATIVE_FLAT_MATRIX_FIXTURE='1')
 if posted_cancel:
     defines.update(PIONEER_Q38_TOKEN_POSTED_CANCEL='1',PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',
                    PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')
@@ -421,7 +435,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         # Authenticate ALL frozen artifacts before classifying any TEST
         # request. nm consumes the SAME already authenticated ELF snapshot,
         # not a second unchecked open of the original image pathname.
-        tree=ast.parse((here.parent/('build_qwen38_empty_receipt_poll_root.py' if empty_receipt else 'build_qwen38_counter_gather_root.py')).read_text())
+        tree=ast.parse((here.parent/('build_qwen38_flat_matrix_grammar_root.py' if flat_matrix else 'build_qwen38_empty_receipt_poll_root.py' if empty_receipt else 'build_qwen38_counter_gather_root.py')).read_text())
         pins=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign)
                   and any(isinstance(t,ast.Name) and t.id=='PINS' for t in n.targets))
         elf=None

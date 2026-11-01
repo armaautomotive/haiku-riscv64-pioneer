@@ -61,6 +61,7 @@ case "$1" in
  --apply-token-tid-boundary-benchmark|--restore-token-tid-boundary-benchmark) mode=$1;;
  --apply-token-counter-gather-benchmark|--restore-token-counter-gather-benchmark) mode=$1;;
  --apply-token-empty-receipt-poll-benchmark|--restore-token-empty-receipt-poll-benchmark) mode=$1;;
+ --apply-token-flat-matrix-benchmark|--restore-token-flat-matrix-benchmark) mode=$1;;
  --apply-host-phase-diagnostic|--restore-host-phase-diagnostic) mode=$1;;
  --apply-batch4-fetch-qualification|--restore-batch4-fetch-qualification) mode=$1;;
  --apply-batch-raw-qualification|--restore-batch-raw-qualification) mode=$1;;
@@ -183,6 +184,7 @@ candidate_token_packet_identity_benchmark=$stage/tenstorrent_pci_probe-token-pac
 candidate_token_tid_boundary_benchmark=$stage/tenstorrent_pci_probe-token-tid-boundary-benchmark-e09cc074
 candidate_token_counter_gather_benchmark=$stage/tenstorrent_pci_probe-token-counter-gather-benchmark-0b8d1530
 candidate_token_empty_receipt_poll_benchmark=$stage/tenstorrent_pci_probe-token-empty-receipt-poll-benchmark-5a3ca6b6
+candidate_token_flat_matrix_benchmark=$stage/tenstorrent_pci_probe-token-flat-matrix-benchmark-8612962e
 candidate_host_phase_diagnostic=$stage/tenstorrent_pci_probe-host-phase-diagnostic-acf33ea4
 candidate_batch4_fetch_qualification=$stage/tenstorrent_pci_probe-batch4-fetch-qualification-2fcf0b27
 candidate_batch_raw_qualification=$stage/tenstorrent_pci_probe-batch-raw-qualification-c38e258c
@@ -287,6 +289,7 @@ hash_token_packet_identity_benchmark=ba9719dbc45ffb408d386c7c84da7322ae94136b6cb
 hash_token_tid_boundary_benchmark=e09cc07492d201b6a23f454ae0be514597051f8c55cf143b518eeb0b2f6c5e35
 hash_token_counter_gather_benchmark=0b8d1530b3f6de3462be23e923be169c82a8b15c76e83657c35c2d268b70405c
 hash_token_empty_receipt_poll_benchmark=5a3ca6b662e3e7cb332a366c04b3650357a52e3bfe601cf0829e9e84e5e67008
+hash_token_flat_matrix_benchmark=8612962e38cab47999b8aecf67268c8e7fd651917b8a570fd79f79b78e1b165f
 hash_host_phase_diagnostic=acf33ea4279ca6d36cbc4b90ae56e6da1fed219b431ae7c80c2693b3f1591583
 hash_batch4_fetch_qualification=2fcf0b27039ed8e8e8114c632d51ba2f75ed2e6c28ef4a7081dd347d39cba9da
 hash_batch_raw_qualification=c38e258cb76bf8013a721cacb73e98b1d7eb191badbfaed6076655284543d379
@@ -389,6 +392,7 @@ tag_token_packet_identity_benchmark=2026103100010075
 tag_token_tid_boundary_benchmark=2026103100010075
 tag_token_counter_gather_benchmark=2026103100010075
 tag_token_empty_receipt_poll_benchmark=2026103100010075
+tag_token_flat_matrix_benchmark=2026103100010075
 tag_host_phase_diagnostic=2026102100010018
 tag_batch4_fetch_qualification=2026102100010019
 tag_batch_raw_qualification=2026102100010020
@@ -683,6 +687,9 @@ else
  # Exact041 <->5a3c ONLY;4f61 and all old tag75 helpers retain their own routes.
  elif [ "$mode" = --apply-token-empty-receipt-poll-benchmark ]; then source=$candidate_token_empty_receipt_poll_benchmark; expected=$hash_scale_reuse_qualification; result=$hash_token_empty_receipt_poll_benchmark; oldtag=$tag_scale_reuse_qualification; newtag=$tag_token_empty_receipt_poll_benchmark
  elif [ "$mode" = --restore-token-empty-receipt-poll-benchmark ]; then source=$candidate_scale_reuse_qualification; expected=$hash_token_empty_receipt_poll_benchmark; result=$hash_scale_reuse_qualification; oldtag=$tag_token_empty_receipt_poll_benchmark; newtag=$tag_scale_reuse_qualification
+ # Exact041 <->8612 ONLY;4161 and all older tag75 helpers keep their OWN routes.
+ elif [ "$mode" = --apply-token-flat-matrix-benchmark ]; then source=$candidate_token_flat_matrix_benchmark; expected=$hash_scale_reuse_qualification; result=$hash_token_flat_matrix_benchmark; oldtag=$tag_scale_reuse_qualification; newtag=$tag_token_flat_matrix_benchmark
+ elif [ "$mode" = --restore-token-flat-matrix-benchmark ]; then source=$candidate_scale_reuse_qualification; expected=$hash_token_flat_matrix_benchmark; result=$hash_scale_reuse_qualification; oldtag=$tag_token_flat_matrix_benchmark; newtag=$tag_scale_reuse_qualification
  elif [ "$mode" = --apply-host-phase-diagnostic ]; then source=$candidate_host_phase_diagnostic; expected=$hash_sentinel_poll_qualification; result=$hash_host_phase_diagnostic; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_host_phase_diagnostic
  elif [ "$mode" = --restore-host-phase-diagnostic ]; then source=$candidate_sentinel_poll_qualification; expected=$hash_host_phase_diagnostic; result=$hash_sentinel_poll_qualification; oldtag=$tag_host_phase_diagnostic; newtag=$tag_sentinel_poll_qualification
  elif [ "$mode" = --apply-batch4-fetch-qualification ]; then source=$candidate_batch4_fetch_qualification; expected=$hash_sentinel_poll_qualification; result=$hash_batch4_fetch_qualification; oldtag=$tag_sentinel_poll_qualification; newtag=$tag_batch4_fetch_qualification
@@ -735,6 +742,7 @@ else
   --apply-token-tid-boundary-benchmark|--restore-token-tid-boundary-benchmark) reload_backup=$reload_backup-$expected;;
   --apply-token-counter-gather-benchmark|--restore-token-counter-gather-benchmark) reload_backup=$reload_backup-$expected;;
   --apply-token-empty-receipt-poll-benchmark|--restore-token-empty-receipt-poll-benchmark) reload_backup=$reload_backup-$expected;;
+  --apply-token-flat-matrix-benchmark|--restore-token-flat-matrix-benchmark) reload_backup=$reload_backup-$expected;;
   --apply-token-validation|--restore-token-validation|--apply-token-hold-recheck|--restore-token-hold-recheck|--apply-token-root-frontend|--restore-token-root-frontend) reload_backup=$reload_backup-$expected;;
   --apply-mixed-live-validation|--restore-mixed-live-validation|--apply-recurrent-block-validation|--restore-recurrent-block-validation|--apply-recurrent-deadline-validation|--restore-recurrent-deadline-validation|--apply-recurrent-prefix-validation|--restore-recurrent-prefix-validation) reload_backup=$reload_backup-$expected;;
   # DEBUG44 has two byte-distinct images. Preserve the previous tag-only

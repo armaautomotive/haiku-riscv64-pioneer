@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py", line 136, in <module>
+    assert pushed_context and len(sys.argv) == 7 and sys.argv[2] == '--execution-end' and not control_adapter, 'ROOT frontend TEST requires the explicit G3 original first-layer/cancel/STOP/HOLD/full-END history'
+AssertionError: ROOT frontend TEST requires the explicit G3 original first-layer/cancel/STOP/HOLD/full-END history

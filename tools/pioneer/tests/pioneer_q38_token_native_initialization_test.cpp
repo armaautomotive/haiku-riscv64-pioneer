@@ -3,6 +3,14 @@
 // zero RV32 instructions. OS/MMIO/GDDR endpoints are simulated. No synthetic
 // completion fabric,no old embedding/prefix producer and no completed token.
 #include "pioneer_q38_token_native_fixture_common.h"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FLAT_MATRIX_FIXTURE
+#if !defined(PIONEER_Q38_TOKEN_FLAT_MATRIX_PROGRAMS) || PIONEER_Q38_TOKEN_FLAT_MATRIX_PROGRAMS != 1 \
+ || !defined(PIONEER_Q38_TOKEN_FLAT_MATRIX_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_FLAT_MATRIX_NATIVE_CONTEXT != 1
+#error Exact flat QGW3 private DATA/owner required,not an old fixture alias
+#endif
+static_assert(PioneerQ38TokenPrograms::FlatMatrixGrammar==1 && PioneerQ38TokenPrograms::EmptyReceiptPoll==1,
+ "actual flat QGW3 code compiled into genuine native history,not an old image alias");
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EMPTY_RECEIPT_POLL_FIXTURE
 #if !defined(PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_PROGRAMS) || PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_PROGRAMS != 1 \
  || !defined(PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_NATIVE_CONTEXT != 1

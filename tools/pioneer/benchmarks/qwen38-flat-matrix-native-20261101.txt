@@ -1,0 +1,107 @@
+Flat QGW3 grammar: immutable program package and native subjects
+===============================================================
+2026-11-01,10:45 UTC. Goal ACTIVE;20tok/s UNMET. New8612 module is NOT
+staged,installed,hardware-benchmarked or accepted for Assistant Work.
+Native full-END main30731/clean20541 are LIVE. Exact-version updater
+main75744/clean55848 BOTH ACTUALLY exit0;1778 cases EACH,logs cmp-exact.
+These are local tests,not protected physical runs.
+Last closed physical result remains5a3c/SAME4b,0.132979026..0.132980939
+tok/s across32 post-prompt tokens;known strict full-model score differences
+remain. No new speed,whole-model numerical or usable Work claim exists.
+
+Scope
+-----
+This packages the already-qualified88e4 ALL-TU flat QGW3 descriptor grammar
+without changing arithmetic,worker images,poll budget,NoC commands,source
+checks,receipts,ownership or CPU-oracle policy. See the separate flat-matrix
+grammar report for predicate/emitted/static/original-byte qualification.
+New DATA,private renamed-ABI owner and bounded public diagnostic selectors
+remain separate from each other,ROOT BUILD,old image bindings and Work.
+
+Immutable DATA: CLOSED
+-----------------------
+Main78317/clean55387 BOTH ACTUALLY exit0. ALL3043919 words across120 cores
+compare with exact frozen code;2290 gap/runtime/invalid/unchanged-output
+refusals. Each tree authenticates15 artifacts including2 wholeELFs before
+output;30 corrupt/truncated artifacts refuse. Each new role set has2 syntax
+positives/110 missing,zero,two,late,native,USER,ROOT BUILD,CPU/Work refusals.
+ENTIRE oldEmpty+Counter+TID+packet+cohort+commit+retained+frontier DATA tests
+run FIRST unchanged. Original87199/47635 refusals came from a copied test
+fixture checking FlatMatrix instead of the actual FlatMatrixGrammar marker;
+ONLY fixture corrected,no production acceptance guard changed.
+
+Header SHA2568963e12e1acddf582f0c035db2cb45025d1303fbe9e096e11901b36a0352c780.
+Namespace PioneerQ38TokenFlatMatrixPrograms;FlatMatrixGrammar=1.
+ROOT40597words/eachpeer25238words. Generated independently in main/clean,
+then byte-compared. DATA alone does not grant a native/device owner.
+
+Role syntax: CLOSED
+---------------------
+Private84733/70734 and public71011/7914 ALL ACTUALLY exit0. EACH tree:
+ private4 positives/412 missing+zero+two+late+tag+ABI+foreign+CPU+Work refusals;
+ public4 positives/309 corresponding refusals.
+All old role controls execute FIRST. Wrong/removed/late private or public
+selector cannot silently alias old code. Syntax is NOT lifecycle evidence.
+
+Independent SDK subjects: CLOSED
+---------------------------------
+Inspection46151/53716/63240/74502 and frozen57248/92427/95670/76832 ALL
+ACTUALLY exit0. Pinned original compile/link argv first reproduce ENTIRE
+old342f private object/c094 publicobject/5a3c module from current source.
+New subject identities reproduce independently in main and clean:
+ private98db93fac0a8a59d8fead7e71d974ab8e6b70e02c0f5dc281100ced7656ebacf
+ publicobjectab0686f8d354ee5c032211003f86dd2ddbea369b168fb61134e17c99c14021f4
+ module8612962e38cab47999b8aecf67268c8e7fd651917b8a570fd79f79b78e1b165f.
+Filename tenstorrent_pci_probe-token-FLAT-MATRIX34-BENCHMARK.
+All13 actual compiled program arrays and2MiB RoPE authenticate against the
+expected snapshots. Private5 actual renamedABI bodies+5 wrappers compare
+with independent expected inert/null/refusal bodies. Public retains bounded
+6607+6608 only;no Work,CPU oracle,TEST engine or old-program imports.
+Individual frames bounded;known module stack chain5392B/25 unresolved
+targets is explicitly PARTIAL,NOT wholekernel/IRQ/indirect-stack proof.
+Later53480/69944 BOTH ACTUALLY exit0 after correcting ONLY the generated
+stack-report kind from copied EmptyReceiptPoll to FlatMatrix. Entire old
+controls and newab06/8612 subjects reproduce exactly again. No production
+code,program bytes or acceptance guard changed by that reporting fix.
+
+Native lifecycle: PENDING
+--------------------------
+New --flat-matrix-root authenticates8963 DATA and exact88e4 artifacts.
+Captured FIFO byte endpoint is reused,NOT old firmware or old owner.
+Actual emitted Read classification4dd88..4e0c4 is HOST endpoint routing,
+not supplied PC,completion or hardware authority. Compile-time marker and
+private owner assertions bind actual new DATA. Full old native refusal/
+source/initialization/cancellation/restoration/END requirements remain.
+Initial ie/if invocations ACTUALLY exit1 before construction because I
+placed zeroROM after --execution-end. Correct command puts positional
+zeroROM FIRST;parser guard unchanged. SAME corrected30731/20541 are live.
+No prefix or clean-END acceptance is inferred before actual process exit.
+
+Exact-version updater: CLOSED
+------------------------------
+Updater sourceccbcf57fe57b18d5f1e3abb8b0c82661e5a2cbca14e32961e4aebf2c03dcbc99
+adds exact041<->8612 apply/restore only;tag75 alone is not identity. It keeps
+all old routes and hash-qualified backup safeguards;no force,reset,retry
+or automatic rollback. Old4161/4f61 helpers CANNOT restore8612. Both actual
+18-mode fake-filesystem suites ACTUALLY exit0,1778 cases EACH;logs cmp-exact.
+New pair refuses all8 previous tag75 subjects;all16 old routes refuse8612.
+Filesystem/hash/handshake/symlink/owner/backup/failure paths covered;no real
+native reload,reset or automatic rollback executed by these tests.
+
+Fresh read-only Pioneer health ACTUAL0 at10:44UTC:whole041 baseline/
+4b client/b0c admin/d1ce guard exact,tag12/generation30/cold0/quiesced0/
+owner0/open1/guard1;64 CPUs/full137034936320B/no compute parent. New hash-
+qualified candidate/helper paths absent including symlinks;stderr0B. This
+does NOT install or start8612;repeat independent checks before real apply.
+
+Remaining gates
+---------------
+Actual native fullEND+Close,strict original-byte prefix comparisons and
+actual updater closure are required BEFORE unique-name staging/readback,
+fresh independent idle health/exact apply/prelaunch health and one SAME4b
+34-position physical benchmark. Protect its whole source-authentication/
+execution/restoration lifetime from extra Pioneer IO. Only after actual
+clean exit compare strict numerical results and full paired record/rate
+data,then restore with the exact new helper and independently check health.
+Even success would NOT establish arbitrary-prompt,resident fresh-request,
+full-model numerical correctness,sustained Assistant Work or20tok/s.
