@@ -1,0 +1,89 @@
+Isolated on-card DRAM read baseline: actual instructions qualified offline
+========================================================================
+2026-11-01. Goal active. This is a required diagnostic component, NOT a
+physical bandwidth measurement, working native driver or inference gain.
+The Pioneer remains on stable041/gen2, clean idle, 64 CPUs/full RAM after
+the failed twin-batch experiment's controlled recovery.
+
+Scope and exact subject
+-----------------------
+New PioneerDramReadSweep.h and blackhole_dram_read_sweep.cpp implement a
+separate finite READ-only device loop, not selected by any driver/Work
+mode. It sweeps a fixed8MiB GDDR window beginning at0x04000000 into the
+same private16KiB L1 buffer. Supported transaction sizes64/1024/4096/16384
+bytes,1..256 sweeps. No GDDR writes, dequantization, matrix arithmetic,
+CPU expected products, host-memory target, PCIe transfer or host polling
+inside the loop. The loop has ONE outstanding read on ONE worker/NoC.
+It is deliberately NOT a whole-card saturation test or an integrity test.
+
+The exact emitted image has:
+ boot4B SHA d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+ text1252B SHA cde3b6a902dda99343ef0c68a089ad971773ea1d7810fc317fd1e56f5a45a1c2
+ ELF10192B SHA7002ccac8cdaf7b4c0cef7890ebc538d666eedbf4b1f407b59ea5e7136cdda5f
+The linker rejects writable globals/GOT, bad boot size and any text that
+could overlap the complete8KiB stack. Emitted stack frames are240B main
+and16B sampler, not a combined native-kernel-stack qualification.
+
+Timing and uncertainty behavior
+-------------------------------
+The loop samples64-bit mcycle with bounded high/low/high reads before
+actual READ issue and after every response is fully complete. The build
+audits ALL3 emitted CSR encodings: CSRRS/read-only, rs1=x0, addresses only
+0xb80/0xb00. No timer reset, inhibition or CSR writes. Low-counter rollover
+and a high/low sampling retry are covered. Timer sampling uncertainty,
+zero/backward elapsed time, bad idle state, command readback, busy value,
+excess/missing response, stuck outstanding or changed input frame prevents
+a successful report. No next request is sent after transfer uncertainty.
+Only the local fault marker is written before an inert fault park. It is
+DATA, never STOP/HOLD/restore authority. No permissive cleanup is added.
+
+Setup/configuration,upload,final integrity checking and cleanup are outside
+the device cycle window. The reported cycles INCLUDE issue/readback,
+doorbell,wait and fences, not pure GDDR bus utilization. First/last payload
+samples are recorded, NOT a full-span integrity checksum. Frequency must
+be independently established before converting cycles to seconds. Per-core
+rates must NOT be added and described as measured whole-card bandwidth.
+
+Actual independent instruction tests
+-------------------------------------
+Main59389 and independent clean20657 BOTH actually exited0, complete logs
+byte-identical; whole emitted ELFs also byte-identical. Each ASan/UBSan
+execution starts a fresh actual RV32 processor at the real boot instruction
+and executes the emitted program through its own success or fault park.
+No supplied PC/register/result or host timing is used to manufacture a
+device receipt. Synthetic clocks/NoC timing are test stimuli, NOT physical
+cycles, memory bandwidth or native ownership evidence.
+
+Each executes6 valid histories, all4 transaction sizes with complete8MiB
+address sequences, a repeated sweep and high/low timer retry. Read-response
+counter rollover is tested.38 rejected histories cover all16 frame words,
+invalid count/shift/route bounds, dirty output, idle/config/source/response/
+busy/outstanding failures, changed frame and unstable/frozen/backward
+clocks. Invalid-frame/dirty-output cases have ZERO NIU/CSR accesses; no
+GDDR WRITE, engine instruction or unbounded wait is permitted by the test.
+The plan's256-sweep/2GiB byte-count boundary is checked without pretending
+to execute that largest case. Exact actual code is unchanged between runs.
+
+Reproduce, with a fresh absolute output directory:
+ python3 tools/pioneer/tests/run_pioneer_dram_read_sweep_tests.py \
+   /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/NEW-UNUSED-DIRECTORY
+
+Remaining gates before a hardware baseline
+-------------------------------------------
+Implement a separate native driver owner that binds the SAME complete
+window to real firmware-derived bank routes, proves all other engines
+held/no active owner, saves/restores EVERY changed L1/NIU word, controls
+normal firmware clocks, validates exact installed image/frame/report and
+proves actual STOP/HOLD/restoration/END. Uncertainty must retain resources,
+not reset/retry/unreserve. Whole-module identity, public ABI/role/stack
+audits and lifecycle/fault tests are still required before staging.
+Only a real clean hardware run can supply a one-stream bandwidth result.
+Then independently qualify synchronized all-bank/all-worker measurement
+before relating results to the20token/sec whole-model target. The current
+leaf provides NO native apply route and is NOT installed on the Pioneer.
+
+Primary ISA references consulted2026-11-01:
+ https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/README.md
+ https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/CSRs.md
+Official nominal p100a448GB/s is not this program's measured bandwidth.
+Raw final main/clean test logs are preserved in the sibling directory.
