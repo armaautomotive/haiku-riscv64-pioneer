@@ -1,5 +1,21 @@
 Incremental native layer observations: DATA controls CLOSED,model runs LIVE
 ==========================================================================
+2026-11-01,17:39UTC update:actual position0 snapshots for completedLayers
+1..12 exist in BOTH original-model runs. Unchanged strict main comparator
+passes ALL5120 words bitexact/maxAbs0/relativeL20 for EACH of those12 rows;
+independent clean snapshot files are byte-identical. Separate full1..12
+main/clean comparison logs below authenticate ALL3 original CPU controls.
+This supersedes the historical no-later-layer statement below. These are
+still INCOMPLETE original precise-beta/fault-ROOT native observations,NOT
+current optimized physical919d timing,64-layer/full3-token/terminal/END,
+model-quality,Assistant Work or TPS acceptance. SAME17008/75574 continue;
+older41236 remains separate. Do not restart any on an observation timeout.
+
+Physical profile60755 is now CLOSED actual0 and baseline041/gen36 restored
+with independent healthy-idle/64CPU/fullRAM check0. See updated
+qwen38-current-frontend-profile-20261101.txt. Historical protected-LIVE
+paragraphs here no longer describe current hardware state.
+
 14:31UTC ACTUAL FIRST SNAPSHOTS:both SAME17008/75574 return actual layer0,
 verify ALL119 boundaries and emit20548B incomplete QNL1 files. Both strict
 posthoc comparators ACTUALLY exit0:ALL5120 layer0 words bitexact,maxAbs0/

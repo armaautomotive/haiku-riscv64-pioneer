@@ -1,5 +1,52 @@
-Current919d/88e4 frontend profile: verified prelaunch CLOSED,physical LIVE
-========================================================================
+Current919d/88e4 frontend profile CLOSED;baseline restored and healthy
+=====================================================================
+2026-11-01 closure update. SAME60755 ACTUALLY exits0,observed17:35:39UTC.
+This supersedes ALL historical LIVE/no-result/no-restoration statements
+below. No protected physical process remains. Goal ACTIVE,20tok/s UNMET.
+
+Full SAME-open original GGUF SHA before Open,all19399024640 padded learned
+bytes upload,34 actual records,terminal/HOLD/drain/full restore/END+Close,
+then2045 RAW frontend sample rows. Stderr0B. NO extra Pioneer operation
+during the ENTIRE protected lifetime. No timeout was treated as terminal.
+
+Unchanged strict profile analysis main+independent clean BOTH ACTUALLY
+exit1,logs byte-identical:record grammar,count/rate arithmetic,generation35
+and declared919d/current88e4 ELF binding pass. Known numerical failure is
+STILL failure:first3 greedy selections match,but maximum-logit bits differ.
+Positions3..33 have no external numerical acceptance. No tolerance,expected
+word,pin or verifier change. Derived base-only parser data is NOT a new
+observed nonprofiling run and is not archived as one.
+
+Count window32 sampled tokens,committed2..34,2046 observations:
+ elapsed200417950..200421279us
+ rate0.159663685..0.159666337 tokens/sec.
+This is a distinct profiling run,NOT a speedup or usable Assistant result.
+Authentication/loading/initialization/restoration excluded;these bounds
+are observation-window bounds,not statistical confidence intervals.
+
+Most frequent exact raw-address bins:Transfer454,recurrent-direction-
+packet-seal427,dense-packet-seal279,Projection::Run241,GlobalChain::Scope159.
+These are fetch-ahead/wait/alias-ambiguous cursor frequencies,NOT retired
+PCs,cycles,function times,bottleneck causality or removable fractions.
+No PC subtraction or widened ranges. Further experiments,not presumed
+speedup,are needed to identify improvements.
+
+AFTER actual60755exit,fresh independent CPU-only health ACTUALLY0:
+919d/tag75/gen35/cold0/quiesced0/owner0/open1/guard1,all staged identities
+exact,no compute parent,64CPUs/full137034936320B. ONLY exact3ceff helper
+--restore-token-prefetch-benchmark:62024 ACTUALLY exits0,quiesce+close,
+baseline041/tag12/gen36. Fresh independent POST-restore health ACTUALLY0:
+installed041/helper3ceff/candidate919d/client4b/profile718d/adminb0c/guardd1ce
+whole hashes exact,gen36/cold0/quiesced0/owner0/open1/guard1,no compute
+parent,64CPUs/full137034936320B. All four stderr files0B. NO reboot,reset,
+power,SD,OS/network or hardware change. Oldccbc helper was NOT used.
+
+Raw physical,strict main/clean,post-END,restore and independent post-restore
+logs are preserved unchanged in the sibling directory. No full numerical,
+resident fresh-request,arbitrary-prompt,Assistant Work or20tok/s acceptance.
+
+Historical launch ledger (superseded LIVE status;retain provenance)
+-----------------------------------------------------------------
 2026-11-01,14:32UTC. Goal ACTIVE;20tok/s UNMET. SAME60755 is ACTUALLY
 LIVE,launched14:29:48UTC. PROTECTED entire original-source-SHA/Open/upload/
 generation/restoration/END+Close lifetime: NO extra Pioneer SSH/status/

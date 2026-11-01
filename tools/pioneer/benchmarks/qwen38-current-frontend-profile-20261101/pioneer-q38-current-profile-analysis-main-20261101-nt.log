@@ -1,0 +1,133 @@
+PASS profile grammar/base records+rate arithmetic/generation35/rows2045;ELF authenticated to DECLARED module,not independent hardware provenance
+OBSERVED_COUNT_WINDOW {'sampled_tokens': 32, 'first_committed': 2, 'last_committed': 34, 'elapsed_min_us': 200417950, 'elapsed_max_us': 200421279, 'lower': 0.159663685, 'upper': 0.159666337, 'observations': 2046}
+RAW_FRONTEND_ADDRESS_BIN samples454 DensePartitionRoot::Transfer(unsigned int const*, unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+RAW_FRONTEND_ADDRESS_BIN samples427 q38_layer_return_recurrent_direction_packet_seal
+RAW_FRONTEND_ADDRESS_BIN samples279 q38_layer_return_dense_packet_seal
+RAW_FRONTEND_ADDRESS_BIN samples241 Projection::Run(unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples159 GlobalChain::Scope(bool)
+RAW_FRONTEND_ADDRESS_BIN samples151 q38_layer_return_recurrent_seal
+RAW_FRONTEND_ADDRESS_BIN samples143 PioneerQ38ProjectionQuantize(unsigned int, float const*, unsigned int, PioneerQ38ProjectionInput*) [clone .constprop.0]
+RAW_FRONTEND_ADDRESS_BIN samples129 MixedRecurrentCohort::Packet(unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+RAW_FRONTEND_ADDRESS_BIN samples125 PioneerQ38MixedLiveBlockRootLayout::RunShape(unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples98 PioneerQ38PushedWorkerLayout::JobShape(unsigned int const*, unsigned int const*, unsigned int, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples98 DensePartitionRoot::Quiet()
+RAW_FRONTEND_ADDRESS_BIN samples93 MixedRecurrentCohort::Audit()
+RAW_FRONTEND_ADDRESS_BIN samples78 PioneerQ38MixedRecurrentRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*) [clone .constprop.0]
+RAW_FRONTEND_ADDRESS_BIN samples72 PioneerQ38ConvBatchShape(unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples68 GlobalChain::HeadSeal(unsigned int const*, bool)
+RAW_FRONTEND_ADDRESS_BIN samples67 q38_pushed_receipt_shared
+RAW_FRONTEND_ADDRESS_BIN samples62 PioneerQ38MixedRecurrentRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples58 PioneerQ38TokenLayout::Session(unsigned int const*, unsigned int const*, unsigned int, unsigned int) [clone .constprop.0]
+RAW_FRONTEND_ADDRESS_BIN samples57 DensePartitionRoot::FrameSeal(unsigned int) [clone .part.0]
+RAW_FRONTEND_ADDRESS_BIN samples57 PioneerQ38PushedWorkerLayout::Receipt(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples56 q38_joined_dense_frame
+RAW_FRONTEND_ADDRESS_BIN samples49 DensePartitionRoot::PioneerQ38SigmoidDetail::ExpReduced(float, int&)
+RAW_FRONTEND_ADDRESS_BIN samples45 RecurrentBlock::Private()
+RAW_FRONTEND_ADDRESS_BIN samples44 PioneerGraphDividePositive(float, float)
+RAW_FRONTEND_ADDRESS_BIN samples42 RecurrentBlock::RecipeSeal(unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples38 q38_layer_return_dense_seal
+RAW_FRONTEND_ADDRESS_BIN samples38 PioneerQ38ConvShape(unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples38 GlobalChain::Packet(unsigned int const*, unsigned int, unsigned int, unsigned int, bool)
+RAW_FRONTEND_ADDRESS_BIN samples38 PioneerQ38TidInitiatorsQuiet()
+RAW_FRONTEND_ADDRESS_BIN samples34 DensePartitionRoot::Seal(unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples32 Projection::InputsSeal(unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples32 Projection::MatrixJob(unsigned int const*, unsigned int, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples32 PioneerQ38TidFullQuiet()
+RAW_FRONTEND_ADDRESS_BIN samples31 PioneerQ38CounterGather::Read(unsigned int const*, unsigned int*, unsigned int, unsigned int*)
+RAW_FRONTEND_ADDRESS_BIN samples25 GlobalChain::Quiet()
+RAW_FRONTEND_ADDRESS_BIN samples25 MixedRecurrentCohort::StageConv(unsigned int*)
+RAW_FRONTEND_ADDRESS_BIN samples24 PioneerQ38TidPacketQuiet()
+RAW_FRONTEND_ADDRESS_BIN samples24 PioneerQ38RmsSum::Add(float)
+RAW_FRONTEND_ADDRESS_BIN samples23 Joined::MetadataSeal()
+RAW_FRONTEND_ADDRESS_BIN samples22 PioneerQ38DenseProjectionRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*, bool) [clone .constprop.0]
+RAW_FRONTEND_ADDRESS_BIN samples21 PioneerQ38F32HiddenRms(float const*, float const*, float*)
+RAW_FRONTEND_ADDRESS_BIN samples20 PioneerQ38GdnGatedShape(unsigned int const*, unsigned int const*, unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples18 DensePartitionRoot::FrameSeal(unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples17 DensePartitionRoot::Quiet() | MixedRecurrentCohort::Quiet()
+RAW_FRONTEND_ADDRESS_BIN samples16 GlobalChain::CommitState(unsigned int const*, bool)
+RAW_FRONTEND_ADDRESS_BIN samples16 q38_layer_return_recurrent_empty_receipt_seal
+RAW_FRONTEND_ADDRESS_BIN samples16 q38_pushed_begin_shared
+RAW_FRONTEND_ADDRESS_BIN samples16 MixedRecurrentCohort::Finish(unsigned int*, unsigned int, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples15 DensePartitionRoot::PioneerQ38SigmoidDetail::Divide(PioneerAttentionWide, PioneerAttentionWide)
+RAW_FRONTEND_ADDRESS_BIN samples15 RecurrentBlock::PacketIdentity(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal const*)
+RAW_FRONTEND_ADDRESS_BIN samples15 RecurrentBlock::Read(unsigned int, unsigned int, unsigned int, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples14 PioneerQ38ConvPeer(unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples12 MixedRecurrentCohort::Closed(unsigned int*, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples12 DensePartitionRoot::ClosedJob(unsigned int const*, unsigned int*, unsigned int, bool)
+RAW_FRONTEND_ADDRESS_BIN samples11 PioneerGraphFma(float, float, float)
+RAW_FRONTEND_ADDRESS_BIN samples11 PioneerQ38TokenMetadata::Conv(unsigned int*, unsigned int, unsigned int, unsigned int, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples10 PioneerQ38GdnInputShape(unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples10 q38_mixed_recurrent_cohort
+RAW_FRONTEND_ADDRESS_BIN samples9 DensePartitionRoot::Snapshot(unsigned int const*, unsigned int*, unsigned int, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples9 MixedRecurrentCohort::BootSeal(unsigned int*, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples9 DensePartitionRoot::PioneerQ38SigmoidPrecision(float, float&)
+RAW_FRONTEND_ADDRESS_BIN samples8 PioneerQ38BlockFfnRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*) [clone .constprop.0]
+RAW_FRONTEND_ADDRESS_BIN samples8 PioneerQ38BlockFfnRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples7 Block::FfnSeal()
+RAW_FRONTEND_ADDRESS_BIN samples7 DensePartitionRoot::Wait(unsigned int const*, unsigned int*, unsigned int, unsigned int, bool)
+RAW_FRONTEND_ADDRESS_BIN samples7 PioneerQ38TokenMetadata::Gdn(unsigned int*, unsigned int, unsigned int, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples6 Projection::PreciseGather(unsigned int const*, unsigned int*, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples6 MixedRecurrentCohort::StageGdnAfterClosedConv(unsigned int*)
+RAW_FRONTEND_ADDRESS_BIN samples6 PioneerQ38SiluExpReduced(float, int&)
+RAW_FRONTEND_ADDRESS_BIN samples6 q38_layer_return_recurrent_frame
+RAW_FRONTEND_ADDRESS_BIN samples6 PioneerQ38F32HiddenResidualRms(float const*, float const*, float const*, float*, float*) [clone .constprop.0]
+RAW_FRONTEND_ADDRESS_BIN samples6 PioneerQ38SpanRoute(unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples6 PioneerQ38PushedWorkerLayout::BootShape(unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples5 Projection::PreparePrecise(unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples4 PioneerQ38DensePrepare::Head(float const*, float const*, float const*, float*) [clone .constprop.0]
+RAW_FRONTEND_ADDRESS_BIN samples4 Projection::PreciseDescriptor(unsigned int const*, unsigned int, unsigned int*)
+RAW_FRONTEND_ADDRESS_BIN samples4 Conv::Seal(unsigned int const*, unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples4 RecurrentBlock::EndSeal(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*)
+RAW_FRONTEND_ADDRESS_BIN samples4 q38_layer_return_recurrent_packet_seal
+RAW_FRONTEND_ADDRESS_BIN samples4 MixedRecurrentCohort::Wait(unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+RAW_FRONTEND_ADDRESS_BIN samples3 Projection::PreciseBankRead(unsigned int const*, unsigned int*, unsigned int, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples3 PioneerQ38ConvBatchSummary(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples3 Joined::Read(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int*) [clone .part.0]
+RAW_FRONTEND_ADDRESS_BIN samples3 RecurrentBlock::Matrix(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*, unsigned int, unsigned int, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples3 RecurrentBlock::Finish(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*)
+RAW_FRONTEND_ADDRESS_BIN samples3 DensePartitionRoot::BootSeal(unsigned int const*, unsigned int*, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples3 RecurrentBlock::Cohort(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*)
+RAW_FRONTEND_ADDRESS_BIN samples3 PioneerQ38ResidentConvServiceJob(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int, unsigned int) [clone .part.0] | PioneerQ38ResidentGdnServiceJob(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int, unsigned int) [clone .part.0]
+RAW_FRONTEND_ADDRESS_BIN samples3 GlobalChain::Closed(unsigned int const*, unsigned int, bool)
+RAW_FRONTEND_ADDRESS_BIN samples2 GlobalChain::Transfer(unsigned int, unsigned int, bool)
+RAW_FRONTEND_ADDRESS_BIN samples2 GlobalChain::PeerPacket(unsigned int const*, unsigned int, unsigned int, unsigned int, bool)
+RAW_FRONTEND_ADDRESS_BIN samples2 Conv::Packet(unsigned int, unsigned int const*, unsigned int const*, unsigned int*)
+RAW_FRONTEND_ADDRESS_BIN samples2 Projection::PreciseWait(unsigned int const*, unsigned int*, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples2 MixedRecurrentCohort::CounterSeal(unsigned int*, unsigned int, unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples2 PioneerQ38ResidentGdnServiceJob(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples2 DensePartitionRoot::Admit(unsigned int const*, unsigned int*, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples2 PioneerQ38MixedRecurrentBlockRootLayout::OuterShape(unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples2 PioneerQ38F32HiddenRms(float const*, float const*, float*) [clone .constprop.0]
+RAW_FRONTEND_ADDRESS_BIN samples2 PioneerQ38TokenMetadata::Dense(unsigned int*, unsigned int, unsigned int, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples2 q38_mixed_recurrent_root_conv
+RAW_FRONTEND_ADDRESS_BIN samples2 PioneerQ38GdnRecurrentShape(unsigned int const*, unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples2 PioneerQ38Conv16(float const*, float const*, float const*, float*, float*) [clone .constprop.0]
+RAW_FRONTEND_ADDRESS_BIN samples2 q38_return_recurrent_layer
+RAW_FRONTEND_ADDRESS_BIN samples2 GlobalChain::RunHead()
+RAW_FRONTEND_ADDRESS_BIN samples2 DensePartitionRoot::AdmitGlobalOutput(unsigned int const*, unsigned int*, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples2 DensePartitionRoot::GatherCounters(unsigned int const*, unsigned int*, unsigned int, unsigned int*)
+RAW_FRONTEND_ADDRESS_BIN samples2 UNMAPPED_RAW_ADDRESS
+RAW_FRONTEND_ADDRESS_BIN samples1 RecurrentBlock::Transfer(unsigned int, unsigned int, unsigned int, unsigned int, bool, unsigned int*) [clone .constprop.0]
+RAW_FRONTEND_ADDRESS_BIN samples1 Block::Norm(unsigned int const*, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples1 Conv::Quiet()
+RAW_FRONTEND_ADDRESS_BIN samples1 PioneerQ38DensePrepare::Run(float const*, float const*, float const*, float const*, float const*, float const*, float*, float*, unsigned int*, unsigned int*) [clone .constprop.0]
+RAW_FRONTEND_ADDRESS_BIN samples1 PioneerQ38GlobalOutputClosure::Job(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const*, unsigned int, unsigned int const*) [clone .constprop.0]
+RAW_FRONTEND_ADDRESS_BIN samples1 PioneerQ38PreciseWorkerLayout::DescriptorShape(unsigned int const*)
+RAW_FRONTEND_ADDRESS_BIN samples1 memset
+RAW_FRONTEND_ADDRESS_BIN samples1 LiveBlock::Compute(PioneerQ38MixedBlockRootLayout::PrivateSeal*)
+RAW_FRONTEND_ADDRESS_BIN samples1 RecurrentBlock::Norm(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples1 RecurrentBlock::CaptureRecipes(PioneerQ38MixedRecurrentBlockRootLayout::PrivateSeal*, unsigned int, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples1 PioneerQ38DensePartitionLayout::Peer(unsigned int) | PioneerQ38MixedWorkerLayout::Peer(unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples1 PioneerQ38TokenMetadata::Recipe(unsigned int*, unsigned int, unsigned int, unsigned int, unsigned int) [clone .constprop.0]
+RAW_FRONTEND_ADDRESS_BIN samples1 GlobalChain::InputSeal()
+RAW_FRONTEND_ADDRESS_BIN samples1 DensePartitionRoot::Job(unsigned int, unsigned int, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples1 GlobalChain::Wait(unsigned int const*, unsigned int, bool)
+RAW_FRONTEND_ADDRESS_BIN samples1 PioneerAttentionToHalf(float)
+RAW_FRONTEND_ADDRESS_BIN samples1 GlobalChain::Metadata(unsigned int, unsigned int)
+RAW_FRONTEND_ADDRESS_BIN samples1 PioneerQ38GlobalHeadLayout::Job(unsigned int const*, unsigned int, unsigned int, unsigned int const*, unsigned int*)
+RAW_FRONTEND_ADDRESS_BIN samples1 GlobalChain::Owner()
+Address sample counts include fetch-ahead/waits and boundary ambiguity;NO PC subtraction/range widening;NOT retired instructions,cycles,function time,bottleneck causality,quality or Work proof
+COMPARE_DECODE34_FIRST_THREE position0/sameInput1/CPUgreedy70253/observedGreedy70253/selectedMatch1/maxLogitBitsMatch0
+COMPARE_DECODE34_FIRST_THREE position1/sameInput1/CPUgreedy17/observedGreedy17/selectedMatch1/maxLogitBitsMatch0
+COMPARE_DECODE34_FIRST_THREE position2/sameInput1/CPUgreedy17/observedGreedy17/selectedMatch1/maxLogitBitsMatch0
+FIRST_THREE_RECORD_DATA_BITEXACT=0 NO_TOLERANCE_USED;positions3..33 have NO external numerical control here;NOT full-hidden/vocabulary/native-lifetime/log-provenance/physical/Work/TPS qualification
