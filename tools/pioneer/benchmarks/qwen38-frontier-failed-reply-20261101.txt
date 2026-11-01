@@ -1,5 +1,15 @@
 Separate frontier failure-report client: offline qualification CLOSED
 ===================================================================
+Native closure update supersedes the historical LIVE source check below.
+SAME96143-vl ACTUALLY exits0:full same-open original GGUF authentication,
+all851 tensor-layout checks and learned-page samples PASS_SOURCE_ONLY,
+NO accelerator Open or inference. Invalid Work CLI actually exits2 with
+zero output. Pre/post status is identical041/tag12/gen2/cold0/owner0.
+New independent vx health ACTUALLY0:whole installed+preserved identities
+exact,64CPUs/full137034936320B,idle/no compute parent. Both stderr files
+are empty. The distinct staged client is available for future controlled
+diagnostics,NOT permission to retry failed34322 or a usable Work target.
+
 2026-11-01. Goal ACTIVE;20tok/s UNMET. This is observability,NOT a fix for
 the34322 hardware failure,model quality,full-card performance or Work.
 The failed module remains disabled in the source updater. No accelerator
@@ -66,7 +76,7 @@ This is synthetic USER protocol evidence,NOT native GPU arithmetic or
 proof of the physical failure's cause. Role uo/up BOTH ACTUALLY0,logs
 exact:3 positives/91 missing,zero,two,late,foreign-role refusals.
 
-Native staging and source-only check: IN PROGRESS
+Historical native staging and source-only check: now CLOSED ABOVE
 ------------------------------------------------
 Fresh vc CPU-only health ACTUALLY0:whole041/gen2,cold0/owner0/quiesced0/
 open1/guard1,64CPUs/full137034936320B,no compute parent,all preserved
