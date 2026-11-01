@@ -1,0 +1,3 @@
+PASS_UNCHANGED_OLD_NATIVE_OBJECT ab0686f8d354ee5c032211003f86dd2ddbea369b168fb61134e17c99c14021f4 flat-matrix-benchmark-native.o
+PASS_UNCHANGED_OLD_NATIVE_MODULE 8612962e38cab47999b8aecf67268c8e7fd651917b8a570fd79f79b78e1b165f tenstorrent_pci_probe-token-FLAT-MATRIX34-BENCHMARK
+PASS_OLD_NATIVE_CONTROL_ONLY current shared guards preserve qualified code;NO prefetch native owner,new driver,install,lifecycle,model or speed grant

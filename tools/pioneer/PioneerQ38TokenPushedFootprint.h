@@ -54,3 +54,7 @@ static_assert(1+3072+16384+4096+16384+61440+9216+8==PeerSavedWords,"QGW3 front w
 static_assert(SavedWords==13478458 && SavedBytes==53913832,"distinct full120 proposed QTP3 journal;HEAP ONLY");
 }
 #endif
+// Every generated QTP3 package includes this common geometry AFTER setting
+// its own DATA guard. Recheck outside the geometry guard so direct old
+// headers cannot coexist with the new prefetch DATA,even on a later include.
+#include "PioneerQ38TokenPrefetchProgramsRole.h"

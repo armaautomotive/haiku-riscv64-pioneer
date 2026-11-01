@@ -13,7 +13,9 @@
 #include <iterator>
 #include <string>
 #include <vector>
-#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_FLAT_MATRIX
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_PREFETCH
+namespace P=PioneerQ38TokenPrefetchPrograms;
+#elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_FLAT_MATRIX)
 namespace P=PioneerQ38TokenFlatMatrixPrograms;
 #elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_EMPTY_RECEIPT_POLL)
 namespace P=PioneerQ38TokenEmptyReceiptPollPrograms;
@@ -51,10 +53,14 @@ int main(int argc,char** argv){
  assert(P::Family==S::Family && P::Family==0x33505451 && P::Version==1 && P::CancelBoundary==1);
  const Code root[]={{"boot",0x6000},{"text",0x40000},{"terminal",0x60000},{"conv",0x64000}};
  const Code peer[]={{"boot",0x6000},{"globalworker",0x20000},{"precise",0x30000},
-  {"dense",0x40000},{"ffn",0x60000},{"service",0x68000},{"affine",0x70b00},{"text",0x72000},{"gdn",0xb8000}};
+  {"dense",0x40000},{"ffn",0x60000},{"service",0x68000},
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_PREFETCH
+  {"fetch",0x70000},
+#endif
+  {"affine",0x70b00},{"text",0x72000},{"gdn",0xb8000}};
  unsigned allWords=0,refusals=0;
  for(unsigned worker=0;worker<120;worker++){
-  const unsigned count=worker?9:4;const Code* sections=worker?peer:root;
+  const unsigned count=worker?unsigned(sizeof(peer)/sizeof(peer[0])):4;const Code* sections=worker?peer:root;
   assert(P::CodeSpans(worker)==count);unsigned words=0,last=0;
   for(unsigned section=0;section<count;section++){
    const auto span=P::CodeSpan(worker,section);const auto bytes=Bytes(worker?argv[2]:argv[1],sections[section].file);
@@ -85,6 +91,17 @@ int main(int argc,char** argv){
  assert(P::TokenFrontier==1 && P::FrontierAddress==0x7570c);
  uint32_t unchanged=0xdeadbeef;assert(!P::ProgramWord(0,P::FrontierAddress,unchanged) && unchanged==0xdeadbeef);
  assert(allWords==3043919 && P::CodeWords(0)==40597 && P::CodeWords(1)==25238);
+#elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_PREFETCH)
+ assert(P::TilePrefetch==1 && P::RawBuffers==2 && P::FetchAddress==0x70000 && P::FlatMatrixGrammar==1);
+ assert(P::EmptyReceiptPoll==1 && P::ReadSourceBoundary==1 && P::CounterGather==1 && P::CounterGatherReads==8);
+ assert(P::TidBoundary==1 && P::FifoEnabledRequired==1 && P::ActiveTid==0 && P::PacketIdentityBoundary==1);
+ assert(P::CohortLocalSources==1 && P::ColdSourceFromStatus==1 && P::CommitBoundarySeals==1 && P::RetainedConvClosure==1);
+ assert(P::FaultMarker==0x51465431 && P::FaultSavedLinkOffset==32 && P::PreciseBeta==1 && P::JobBootFold==1);
+ assert(P::TokenFrontier==1 && P::FrontierAddress==0x7570c);
+ assert(allWords==3068314 && P::CodeWords(0)==40597 && P::CodeWords(1)==25443);
+ for(unsigned w=0;w<120;w++)for(unsigned at:{0x70001U,0x70358U,0x90000U,0x98000U,0x7570cU}){
+  uint32_t unchanged=0xdeadbeef;assert(!P::ProgramWord(w,at,unchanged) && unchanged==0xdeadbeef);refusals++;
+ }
 #elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_EMPTY_RECEIPT_POLL)
  assert(P::EmptyReceiptPoll==1 && P::ReadSourceBoundary==1 && P::CounterGather==1 && P::CounterGatherReads==8);
  assert(P::TidBoundary==1 && P::FifoEnabledRequired==1 && P::ActiveTid==0 && P::PacketIdentityBoundary==1);
@@ -153,9 +170,13 @@ int main(int argc,char** argv){
    && span.address==UINT32_MAX && !span.words && !P::ProgramWord(worker,0x6000,unchanged) && unchanged==0xdeadbeef);refusals++;
  }
  const uint32_t* arrays[]={P::RootBoot,P::RootText,P::RootTerminal,P::RootAux,P::PeerBoot,P::PeerFront,
-  P::PeerPrecise,P::PeerDense,P::PeerFfn,P::PeerService,P::PeerAffine,P::PeerText,P::PeerGdn};
+  P::PeerPrecise,P::PeerDense,P::PeerFfn,P::PeerService,
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_PREFETCH
+  P::PeerFetch,
+#endif
+  P::PeerAffine,P::PeerText,P::PeerGdn};
  for(const auto* array:arrays){
   const uint32_t before=*array;assert(!P::ProgramWord(0,0x6000,*const_cast<uint32_t*>(array)) && *array==before);refusals++;
  }
- printf("PASS distinct QTP3 immutable programs/all13 sections/ALL120 code%u words byte-exact to authenticated artifacts/covered by proposed journal/%u gap+runtime+invalid+immutable-output refusals;DATA ONLY,not native/restore/model/physical/Work/TPS qualification\n",allWords,refusals);
+ printf("PASS distinct QTP3 immutable programs/all%zu sections/ALL120 code%u words byte-exact to authenticated artifacts/covered by proposed journal/%u gap+runtime+invalid+immutable-output refusals;DATA ONLY,not native/restore/model/physical/Work/TPS qualification\n",sizeof(arrays)/sizeof(arrays[0]),allWords,refusals);
 }

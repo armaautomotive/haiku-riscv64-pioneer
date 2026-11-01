@@ -1,5 +1,10 @@
 Current full-model prefetch worker: BUILD/roles CLOSED,execution unqualified
 =========================================================================
+12:52UTC UPDATE:complete new14-section DATA is now CLOSED in both trees;
+old SDK objects/whole8612 module still reproduce EXACTLY. See
+qwen38-token-prefetch-data-20261101.txt. No new native owner/module or
+hardware inference is qualified by that DATA/old-binary result.
+
 12:38UTC UPDATE:selected actual emitted execution is now CLOSED offline,
 full main52372/clean98656 and queued98353/36680 all ACTUALLY exit0.
 See qwen38-token-prefetch-execution-20261101.txt for exact scope/failures/

@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // Exact immutable DATA/private/diagnostic binding,rechecked every include.
+#include "PioneerQ38TokenPrefetchProgramsRole.h"
+#ifdef PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS
+#error Old flat grammar DATA cannot own the separate prefetch worker
+#endif
 #ifndef PIONEER_Q38_TOKEN_FLAT_MATRIX_SELECTION_H
 #define PIONEER_Q38_TOKEN_FLAT_MATRIX_SELECTION_H
 #ifdef PIONEER_Q38_TOKEN_FLAT_MATRIX_BENCHMARK_NATIVE

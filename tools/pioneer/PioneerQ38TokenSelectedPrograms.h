@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 // DATA selection only; no native source/lifetime, journal or launch grant.
 // Rechecked outside the guard so late/defined-zero changes cannot alias data.
+#include "PioneerQ38TokenPrefetchProgramsRole.h"
+#ifdef PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS
+#error Prefetch DATA has no qualified native owner;cannot use the old selected package
+#endif
 #include "PioneerQ38TokenFlatMatrixProgramsRole.h"
 #if defined(PIONEER_Q38_TOKEN_FLAT_MATRIX_PROGRAMS) \
  && !defined(PIONEER_Q38_TOKEN_FLAT_MATRIX_NATIVE_CONTEXT) && !defined(PIONEER_Q38_TOKEN_FLAT_MATRIX_BENCHMARK_NATIVE)

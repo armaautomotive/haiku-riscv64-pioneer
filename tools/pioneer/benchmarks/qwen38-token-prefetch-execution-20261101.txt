@@ -1,5 +1,10 @@
 Current QGW3 prefetch: actual emitted execution qualification
 ============================================================
+12:52UTC UPDATE:the complete14-section DATA package and default old whole-
+native-binary controls are CLOSED;see qwen38-token-prefetch-data-20261101.txt.
+New native owner/lifecycle/hardware/speed remain UNQUALIFIED. Historical
+remaining-DATA statements below predate this update.
+
 2026-11-01,12:38UTC. Final full52372/98656 BOTH ACTUALLY exit0;logs compare
 exactly. Final queued98353/36680 BOTH ACTUALLY exit0;logs compare exactly.
 Goal ACTIVE;20tok/s UNMET. This is OFFLINE validation of the

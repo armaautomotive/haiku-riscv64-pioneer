@@ -42,12 +42,13 @@ def require_complete_sections(units, sources):
                 'section coverage: every authenticated code section exactly once')
 
 def main():
-    require(len(sys.argv) == 5 and sys.argv[4] in ('--cancel-boundary', '--no-cancel', '--precise-activation', '--pushed-completion', '--fault-marker', '--precise-beta', '--job-boot-fold', '--token-frontier', '--retained-conv-closure', '--commit-boundary-seals', '--cohort-local-sources', '--packet-identity-boundary', '--tid-boundary', '--counter-gather', '--empty-receipt-poll', '--flat-matrix-grammar'), 'explicit exact FP32 token variant required')
+    require(len(sys.argv) == 5 and sys.argv[4] in ('--cancel-boundary', '--no-cancel', '--precise-activation', '--pushed-completion', '--fault-marker', '--precise-beta', '--job-boot-fold', '--token-frontier', '--retained-conv-closure', '--commit-boundary-seals', '--cohort-local-sources', '--packet-identity-boundary', '--tid-boundary', '--counter-gather', '--empty-receipt-poll', '--flat-matrix-grammar', '--tile-prefetch'), 'explicit exact FP32 token variant required')
     require(not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ), 'role overrides refused')
     root, worker, output = map(pathlib.Path, sys.argv[1:4])
     require(all(p.is_absolute() for p in (root, worker, output)) and not output.exists() and not output.is_symlink(), 'new absolute output required')
     here = pathlib.Path(__file__).resolve().parent
-    flat_grammar = sys.argv[4] == '--flat-matrix-grammar'
+    prefetch = sys.argv[4] == '--tile-prefetch'
+    flat_grammar = prefetch or sys.argv[4] == '--flat-matrix-grammar'
     empty_receipt = flat_grammar or sys.argv[4] == '--empty-receipt-poll'
     counter_gather = empty_receipt or sys.argv[4] == '--counter-gather'
     tid_boundary = counter_gather or sys.argv[4] == '--tid-boundary'
@@ -63,7 +64,7 @@ def main():
     precise = pushed or sys.argv[4] == '--precise-activation'
     cancel = precise or sys.argv[4] == '--cancel-boundary'
     r = authenticated(root, pins(here/'build_qwen38_flat_matrix_grammar_root.py', 'PINS') if flat_grammar else pins(here/'build_qwen38_empty_receipt_poll_root.py', 'PINS') if empty_receipt else pins(here/'build_qwen38_counter_gather_root.py', 'PINS') if counter_gather else pins(here/'build_qwen38_tid_boundary_root.py', 'PINS') if tid_boundary else pins(here/'build_qwen38_packet_identity_boundary_root.py', 'PINS') if packet_identity else pins(here/'build_qwen38_cohort_local_sources_root.py', 'PINS') if local_sources else pins(here/'build_qwen38_commit_boundary_root.py', 'PINS') if commit_boundary else pins(here/'build_qwen38_retained_cohort_root.py', 'PINS') if retained_cohort else pins(here/'build_qwen38_token_fault_marker_image.py', 'FRONTIER_PINS' if frontier else 'JOB_FOLD_PINS' if job_boot_fold else 'PINS') if fault else pins(here/'build_qwen38_token_root.py', 'PINS_CANCEL_F32_PUSHED' if pushed else 'PINS_CANCEL_F32_PRECISE' if precise else 'PINS_CANCEL_F32' if cancel else 'PINS_F32'))
-    w = authenticated(worker, pins(here/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here/'build_qwen38_pushed_worker_image.py' if pushed else here/'tests/run_pioneer_q38_precise_worker_tests.py' if precise else here/'build_qwen38_global_worker_image.py', 'PINS'))
+    w = authenticated(worker, pins(here/'build_qwen38_token_prefetch_worker.py' if prefetch else here/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here/'build_qwen38_pushed_worker_image.py' if pushed else here/'tests/run_pioneer_q38_precise_worker_tests.py' if precise else here/'build_qwen38_global_worker_image.py', 'PINS'))
     units = [(r, 'boot', 'RootBoot', 0x6000), (r, 'text', 'RootText', 0x40000),
              (r, 'terminal', 'RootTerminal', 0x60000), (r, 'conv', 'RootAux', 0x64000)]
     units += [(w, name, label, address) for name, label, address in (
@@ -72,6 +73,9 @@ def main():
         ('text', 'PeerText', 0x72000), ('gdn', 'PeerGdn', 0xb8000))]
     if precise:
         units.insert(6, (w, 'precise', 'PeerPrecise', 0x30000))
+    if prefetch:
+        units.insert(next(i for i, unit in enumerate(units) if unit[2] == 'PeerAffine'),
+                     (w, 'fetch', 'PeerFetch', 0x70000))
     require_complete_sections(units, (r, w))
     lines = ['/* SPDX-License-Identifier: MIT */',
              '// Mechanically generated from COMPLETE fixed FP32 persistent-token/QGW1 artifacts.',
@@ -94,7 +98,9 @@ def main():
                 selector = 'PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_PROGRAMS' if empty_receipt else 'PIONEER_Q38_TOKEN_COUNTER_GATHER_PROGRAMS' if counter_gather else 'PIONEER_Q38_TOKEN_TID_BOUNDARY_PROGRAMS' if tid_boundary else 'PIONEER_Q38_TOKEN_PACKET_IDENTITY_BOUNDARY_PROGRAMS' if packet_identity else 'PIONEER_Q38_TOKEN_COHORT_LOCAL_SOURCES_PROGRAMS' if local_sources else 'PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_PROGRAMS' if commit_boundary else 'PIONEER_Q38_TOKEN_RETAINED_COHORT_PROGRAMS' if retained_cohort else 'PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS' if frontier else 'PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS'
                 if flat_grammar:
                     selector = 'PIONEER_Q38_TOKEN_FLAT_MATRIX_PROGRAMS'
-                lines += ['#include "PioneerQ38TokenFlatMatrixProgramsRole.h"' if flat_grammar else '#include "PioneerQ38TokenEmptyReceiptPollProgramsRole.h"' if empty_receipt else '#include "PioneerQ38TokenCounterGatherProgramsRole.h"' if counter_gather else '#include "PioneerQ38TokenTidBoundaryProgramsRole.h"' if tid_boundary else '#include "PioneerQ38TokenPacketIdentityBoundaryProgramsRole.h"' if packet_identity else '#include "PioneerQ38TokenCohortLocalSourcesProgramsRole.h"' if local_sources else '#include "PioneerQ38TokenCommitBoundaryProgramsRole.h"' if commit_boundary else '#include "PioneerQ38TokenRetainedCohortProgramsRole.h"' if retained_cohort else '#include "PioneerQ38TokenFrontierProgramsRole.h"' if frontier else '#include "PioneerQ38TokenJobBootFoldProgramsRole.h"',
+                if prefetch:
+                    selector = 'PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS'
+                lines += ['#include "PioneerQ38TokenPrefetchProgramsRole.h"' if prefetch else '#include "PioneerQ38TokenFlatMatrixProgramsRole.h"' if flat_grammar else '#include "PioneerQ38TokenEmptyReceiptPollProgramsRole.h"' if empty_receipt else '#include "PioneerQ38TokenCounterGatherProgramsRole.h"' if counter_gather else '#include "PioneerQ38TokenTidBoundaryProgramsRole.h"' if tid_boundary else '#include "PioneerQ38TokenPacketIdentityBoundaryProgramsRole.h"' if packet_identity else '#include "PioneerQ38TokenCohortLocalSourcesProgramsRole.h"' if local_sources else '#include "PioneerQ38TokenCommitBoundaryProgramsRole.h"' if commit_boundary else '#include "PioneerQ38TokenRetainedCohortProgramsRole.h"' if retained_cohort else '#include "PioneerQ38TokenFrontierProgramsRole.h"' if frontier else '#include "PioneerQ38TokenJobBootFoldProgramsRole.h"',
                           '#if !defined('+selector+') || '+selector+' != 1',
                           '#error Exact separate job boot fold program DATA selection required', '#endif']
             else:
@@ -120,6 +126,8 @@ def main():
         program_namespace = 'PioneerQ38TokenEmptyReceiptPollPrograms'
     if flat_grammar:
         program_namespace = 'PioneerQ38TokenFlatMatrixPrograms'
+    if prefetch:
+        program_namespace = 'PioneerQ38TokenPrefetchPrograms'
     guard = 'PIONEER_Q38_TOKEN_RETAINED_COHORT_PROGRAMS_H' if retained_cohort else 'PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS_H' if frontier else 'PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS_H' if job_boot_fold else 'PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS_H' if precise_beta else 'PIONEER_Q38_TOKEN_FAULT_PROGRAMS_H' if fault else 'PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H' if pushed else 'PIONEER_Q38_TOKEN_PROGRAMS_H'
     if commit_boundary:
         guard = 'PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_PROGRAMS_H'
@@ -135,6 +143,8 @@ def main():
         guard = 'PIONEER_Q38_TOKEN_EMPTY_RECEIPT_POLL_PROGRAMS_H'
     if flat_grammar:
         guard = 'PIONEER_Q38_TOKEN_FLAT_MATRIX_PROGRAMS_H'
+    if prefetch:
+        guard = 'PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS_H'
     lines += [
              '#ifndef '+guard, '#define '+guard,
              '#include "PioneerQ38TokenPushedFootprint.h"' if pushed else '#include "PioneerQ38TokenFootprint.h"',
@@ -174,6 +184,9 @@ def main():
     if flat_grammar:
         lines[1] = '// Mechanically generated from fixed ALL-TU flat QGW3 grammar ROOT and unchanged precise-beta worker artifacts.'
         lines += ['enum {FlatMatrixGrammar=1}; // DATA only;no native,device,model quality or Work authority']
+    if prefetch:
+        lines[1] = '// Mechanically generated from fixed flat QGW3 ROOT and current full-model prefetch worker artifacts.'
+        lines += ['enum {TilePrefetch=1,RawBuffers=2,FetchAddress=0x70000}; // DATA ONLY;no native or Work grant']
     for data_set, name, label, address in units:
         data = data_set[name+'.bin']
         require(data and not len(data)%4 and not address%4 and address+len(data) <= 0x180000, f'{label}: extent')
@@ -182,7 +195,7 @@ def main():
         lines += [' '+','.join(f'0x{word:08x}U' for word in words[i:i+8])+',' for i in range(0, len(words), 8)]
         lines += ['};', f'static_assert(sizeof({label})=={len(data)},"exact complete {label} DATA");']
     lines += ['using '+footprint_namespace+'::Span;',
-              f'static inline unsigned CodeSpans(unsigned worker){{return worker>=120?0:worker?{9 if precise else 8}:4;}}',
+              f'static inline unsigned CodeSpans(unsigned worker){{return worker>=120?0:worker?{10 if prefetch else 9 if precise else 8}:4;}}',
               'static inline Span CodeSpan(unsigned worker,unsigned span){',
               ' if(worker>=120 || span>=CodeSpans(worker))return {UINT32_MAX,0};', ' if(!worker)switch(span){']
     for i, (_, _, label, address) in enumerate(units[:4]):

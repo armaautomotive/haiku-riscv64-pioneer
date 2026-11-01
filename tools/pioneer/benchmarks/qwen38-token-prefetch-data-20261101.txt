@@ -1,0 +1,80 @@
+Current prefetch: complete14-section immutable program package CLOSED
+=====================================================================
+2026-11-01,12:52UTC. Goal ACTIVE;20tok/s UNMET. No new native owner,
+prefetch driver,module,installation,physical inference or speed result.
+No Pioneer operation was issued. The last measured diagnostic remains
+0.154472171..0.154474645tok/s with unresolved strict full-model scores.
+
+Exact new program DATA
+-----------------------
+Header SHA256021fdff4100dd6f8a6ff8548f9fa961473503cf6c2cd2e0b6adc44053b007567.
+PioneerQ38TokenPrefetchPrograms,TilePrefetch=1,RawBuffers=2,FetchAddress70000.
+The explicit --tile-prefetch generator authenticates ALL16 artifacts,
+including ENTIRE88e4 ROOT and cf02 worker ELFs,BEFORE creating output.
+It emits the SAME immutable authenticated snapshots,never reopened data.
+Every authenticated code section occurs exactly once. The new856B fetch
+code is explicitly its tenth peer span,not an omitted hole or padded old
+worker. ROOT remains4 spans/40597words;each peer10 spans/25443words.
+
+Main98682/clean14802 BOTH ACTUALLY exit0;complete logs cmp-exact. ALL3068314
+words across120 code maps compare with their exact frozen source artifacts;
+3010 gap/runtime/invalid/unchanged/immutable-output refusals. New fetch-end,
+unaligned fetch,raw90000/98000 and frontier-data accesses cannot become
+code. Each tree independently generates the exact021f header. ALL old
+flat/empty/counter/TID/packet/cohort/commit/retained/frontier complete DATA,
+literal identities and refusal tests execute FIRST unchanged.
+
+Each new suite also refuses32 corrupt/truncated artifacts and2 wrong-
+generation worker combinations BEFORE output exists. New roles pass3
+syntax positives/262 missing,zero,two,late,oldbinding,native,BUILD,USER,
+CPU and Work refusals. The new package cannot use the old selected/native
+route. Shader BUILD flags,even defined0,do not acquire program/native roles.
+DATA alone grants no device access,initialization,journal,RUN or cleanup.
+
+Real isolation defect found and fixed
+--------------------------------------
+Initial38692/40807 BOTH ACTUALLY exit1:direct older DATA headers could
+bypass the new selector's checks. The test failure is retained,not waived.
+Checking only the newest flat role was insufficient for direct includes
+of earlier packages. Their common pushed footprint is included AFTER each
+package sets its DATA guard. Add a new-role recheck OUTSIDE that geometry
+guard,so old/new combinations are refused in both directions,including
+repeated/late includes. No old generated header,literal pin,math predicate
+or memory extent was modified. Full repaired suites prove the fix.
+
+Geometry versus native ownership
+----------------------------------
+The existing proposed snapshot already saves the complete peer70000..ac000
+window. It covers BOTH the new70000..70358 fetch code and the98000 raw
+buffer. Snapshot sizes and spans remain EXACTLY unchanged:all120 proposed
+saved words13478458/53913832B. All new code-word coverage is checked above.
+This geometry result does NOT prove an actual new native owner saved,
+initialized,ran,held,drained or restored those words. That lifecycle proof
+is still required before installing any new driver.
+
+Default old SDK binary regression: CLOSED
+------------------------------------------
+Private84092/94650 and public98572/6501 ALL ACTUALLY exit0;each main/clean
+log pair cmp-exact. Pinned original compile/link argv reproduce from the
+current sources AFTER shared-role/footprint changes:
+ old private98db93fac0a8a59d8fead7e71d974ab8e6b70e02c0f5dc281100ced7656ebacf
+ old publicobjectab0686f8d354ee5c032211003f86dd2ddbea369b168fb61134e17c99c14021f4
+ ENTIRE oldmodule8612962e38cab47999b8aecf67268c8e7fd651917b8a570fd79f79b78e1b165f.
+No install or execution occurs. This is evidence that default old binaries
+are preserved,NOT a build or qualification of a new prefetch driver.
+Python syntax checks pass with a task-specific temporary cache. Original
+failed and successful raw logs are preserved in the sibling directory.
+
+Next required work
+--------------------
+Implement separately selected private/bounded diagnostic owners for021f,
+with actual14-array+RoPE binding,inert private ABI and old whole-binary
+controls. Extend the actual all119-core/original-byte native instruction
+test to the prefetch fetch ROM and completed-opposite-buffer protocol.
+Prove full initialization/cancellation/STOP/HOLD/drain/all-original-saved-
+state restoration/END before a new module and exact-version updater may
+reach hardware. Dense/global-output/all119 execution remains owed,not
+inferred from selected worker tests or code-word DATA coverage.
+Then measure actual performance;no prefetch gain is assumed. Full-model
+correctness,resident fresh requests,arbitrary prompts,useful no-CPU-
+reference Assistant Work and sustained20tok/s remain unmet.
