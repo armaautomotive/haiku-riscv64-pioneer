@@ -1,0 +1,95 @@
+Queued8-counter driver: clean34,2.09% one-pair gain,quality STILL unaccepted
+========================================================================
+2026-11-01,07:58 UTC. Goal ACTIVE;20tok/s UNMET. This is a fixed bounded
+diagnostic,not usable Assistant Work or arbitrary-prompt acceptance.
+
+Actual physical subject and complete lifetime
+---------------------------------------------
+SAME51361 starts07:17:06 UTC and ACTUALLY exits0,observed07:56 UTC.
+Whole installed module:
+ 0b8d1530b3f6de3462be23e923be169c82a8b15c76e83657c35c2d268b70405c
+tag2026103100010075/generation25,returning ROOT whole ELF:
+ a2d52546a4606b37c6cb421ac412a8d3eae59135492edecbc1a96079d24af536
+UNCHANGED4b benchmark client:
+ 4b1dbee63e537b39e5212a9180670139a2a9ba46ef0b3cbeb66a7d5226b7f048
+Native/build/stage/apply/prelaunch gates:qwen38-counter-native-20261101.txt.
+This is NOT the later0f67 read-source-boundary BUILD;that has NO module.
+
+Original SAME-open GGUF full SHA authentication precedes accelerator Open;
+all3551 parts/4736090 pages/20367 spans/19399024640 padded bytes upload.
+START acknowledges,all34 positions execute,actual terminal/HOLD/drain/full
+restoration/END+Close finishes,records34/final_count34/clean_end1. stderr0B.
+No runtime CPU model oracle and no second GPU/admin/model/reload/reset/
+power/SD/OS/network action occurred during this ENTIRE live lifetime.
+The terminal marker alone was not accepted as clean completion;actual
+process exit0 and final clean-END record were observed before any new SSH
+health/admin access. No scheduler profiler or timeout-based restart ran.
+
+Measured post-prompt count window,not isolated latency
+------------------------------------------------------
+32 sampled tokens,committed2..34,2486 observations:
+ elapsed243959344..243962804us
+ rate0.131167537..0.131169397 tokens/sec
+ mean7.6237295..7.623837625 seconds per sampled token.
+Authentication,loading,initialization and restoration are EXCLUDED. These
+are observation-window bounds,not statistical confidence or isolated-token
+latency.20tok/s is152.4745898..152.4767519x above this measured rate.
+
+Previous e09/bc01 SAME4b client measured0.128485469..0.128487180tok/s,
+elapsed249052084..249055401us,2542 observations. ONE paired-run gain:
+ 2.0860890557..2.0888961381 percent.
+ALL34 first12-word record headers are EXACTLY equal. Session nonces and
+physical counters are NOT claimed equal. One run each cannot establish
+repeatability,statistical confidence or causal attribution to queued reads.
+The short window does not demonstrate sustained useful conversation.
+
+Strict numerical outcome: FAIL remains FAIL
+-------------------------------------------
+Unchanged main+independent-clean strict comparators BOTH ACTUALLY exit1;
+logs cmp-exact. Complete log grammar,34 records and rate arithmetic pass.
+First3 selected tokens match the CPU corpus,but max-logit bits retain the
+same known differences:
+ position selected observed CPU-reference
+ 0        70253    413bc1de 413c2358
+ 1        17       41452aa2 414621d3
+ 2        17       4167c42a 4168afd0
+No expected word,tolerance,exit mode or verifier was relaxed. Positions
+3..33 have NO external numerical acceptance here. Matching previous
+diagnostic headers cannot substitute for hidden/vocabulary/model quality,
+fresh-request state,Assistant integration or Work acceptance.
+
+Independent idle health and baseline restoration
+------------------------------------------------
+ONLY after actual exit,fresh independent SSH ACTUALLY exits0:
+Haiku/UID0,64CPUs,max137034936320B/free133749293056B,no model/Assistant
+parent,whole0b8d/4f61/041/4b/b0c-admin/d1ce-guard hashes exact,tag75/gen25/
+cold0/quiesced0/owner0/open1/guard1. No quarantine/unknown baseline forced.
+
+ONLY exact4f61 helper,invoked through /bin/sh with
+--restore-token-counter-gather-benchmark,95839 ACTUALLY exits0:
+quiesce/close/reload041,tag2026102100010012/generation26,guard1/healthyidle.
+No reboot,GPU execution,reset,power,SD,mains or hardware change.
+Helper SHA:
+ 4f61b0e7891e23426ccdba68c55b2b726eba30c208c625e0c3ab59289c2276d5
+No old51c/efd848/other updater was used for0b8d.
+
+Fresh independent post-restore SSH ACTUALLY exits0:
+whole installed baseline041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+64CPUs/fullRAM,tag12/gen26/cold0/quiesced0/owner0/open1/guard1,no model
+parent,unchanged4f61/4b/d1ce identities. Restoration and health stderr0B.
+0b8d is no longer installed. No new hardware inference was started.
+
+Next work and honest limits
+----------------------------
+Separate0f67 read-only source-boundary ROOT has independent frozen BUILD,
+9898 emitted cases per tree,34 selected static bodies,121 role refusals,
+and newly CLOSED512 actual original-byte COW faults+unchanged parent per
+tree. Its first-layer original histories56635/94460 remain LIVE;unchanged
+strict numerical posthoc checks are still REQUIRED after actual exit.
+It has no DATA/native module/updater/device/Work result. See
+qwen38-read-source-boundary-20261101.txt. Larger persistent on-card
+scheduling,parallel preparation,full-model correctness,resident fresh
+requests,Assistant integration and actual sustained20tok/s remain owed.
+
+Raw physical/strict/pair/health/restore evidence is archived in the same-
+basename directory,without rewriting whitespace or hiding failing checks.

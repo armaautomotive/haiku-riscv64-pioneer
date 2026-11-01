@@ -1,5 +1,13 @@
-Queued-counter native package: full native lifetime PASS, hardware benchmark LIVE
+Queued-counter native package: native PASS; hardware CLOSED, quality UNMET
 ============================================================================
+Closure07:57 UTC:51361 ACTUALLY exits0 with34 records/cleanEND+Close.
+Measured0.131167537..0.131169397tok/s,one-pair+2.086..2.089% versus e09.
+ALL34 first12 headers match;strict first3 score differences STILL fail.
+Fresh idle health passes,exact4f61 restore95839 ACTUAL0->041/gen26,and
+independent post-restore health passes64CPU/fullRAM/cold0/owner0/open1.
+See qwen38-counter-physical-20261101.txt for full evidence and limitations.
+The launch record below is HISTORICAL,not a currently live GPU process.
+
 2026-11-01,07:17 UTC. Goal ACTIVE. NO queued-gather hardware/Work speed claim.
 Last actual physical measurement belongs to OLDER e09/bc01:0.128485469..
 0.128487180tok/s,known first3 score mismatches,not usable20tok/s or Work.

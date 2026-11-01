@@ -1,6 +1,18 @@
 Read-only source-boundary BUILD: independent guards PASS; model tests LIVE
 =======================================================================
-2026-11-01,07:45 UTC. Goal ACTIVE;20tok/s UNMET. This is an UNSELECTED
+Update07:58 UTC:connected3985/47468 BOTH ACTUALLY exit0. EACH512 genuine
+original-byte COW source-fault children pass,then the unchanged parent
+issues its first actual worker matrix request. Logs cmp-exact and archived
+as connected-main.log/connected-clean.log. This closes the connected
+boundary gate below,NOT whole-layer/native/hardware/Work acceptance.
+Original first-layer56635/94460 are STILL LIVE at their eighth matrix.
+Separate0b8d/a2d5 physical51361 now ACTUALLY exits0 at0.131167537..
+0.131169397tok/s with same known strict score differences. Exact4f61
+restores baseline041/gen26;64CPU/fullRAM/healthyidle independently verified.
+See qwen38-counter-physical-20261101.txt. Earlier LIVE statements below
+are the historical07:45 checkpoint,not current completed-handle status.
+
+Historical2026-11-01,07:45 UTC. Goal ACTIVE;20tok/s UNMET. This is an UNSELECTED
 returning ROOT BUILD,not a new native driver,Work mode or hardware result.
 The protected physical process51361 still runs DIFFERENT0b8d/a2d5;its
 complete19399024640 padded-byte upload is observed,but no completed rate,
