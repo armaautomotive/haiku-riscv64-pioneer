@@ -1,5 +1,10 @@
 Current full-model prefetch: clean34,3.38% ONE-pair gain,quality still FAIL
 ========================================================================
+14:32UTC NEXT-RUN UPDATE:the closure/restoration below is complete. A NEW
+distinct60755 frontend profile now runs919d/88e4+718d/gen35 after fresh
+independent prelaunch. See qwen38-current-frontend-profile-20261101.txt;
+do not confuse that protected LIVE run with this CLOSED14837 benchmark.
+
 2026-11-01,14:23UTC. Goal ACTIVE;20tok/s UNMET. Physical14837 ACTUALLY
 exits0,observed14:21:32UTC. Exact3ceff restore88418 ACTUALLY exits0;fresh
 independent baseline041/gen34/healthy-idle/64CPU/fullRAM check ACTUALLY0.

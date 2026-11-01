@@ -1,5 +1,10 @@
 Current flat/prefetch ROOT profile bindings: CLOSED offline DATA only
 ====================================================================
+14:32UTC UPDATE:physical14837 is CLOSED/restored;new distinct60755 profile
+with919d/88e4+718d/gen35 is LIVE after exact independent prelaunch. See
+qwen38-current-frontend-profile-20261101.txt. No current sample bins or
+rate exists yet;historical protected14837 statements below are superseded.
+
 2026-11-01,13:51UTC. Goal ACTIVE;20tok/s UNMET. This change affects ONLY
 the offline raw-address decoder and its tests,not a driver,firmware,
 benchmark client,CPU oracle or Assistant Work. No Pioneer operation is

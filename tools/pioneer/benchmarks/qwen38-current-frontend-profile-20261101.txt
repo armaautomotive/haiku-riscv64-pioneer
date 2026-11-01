@@ -1,0 +1,76 @@
+Current919d/88e4 frontend profile: verified prelaunch CLOSED,physical LIVE
+========================================================================
+2026-11-01,14:32UTC. Goal ACTIVE;20tok/s UNMET. SAME60755 is ACTUALLY
+LIVE,launched14:29:48UTC. PROTECTED entire original-source-SHA/Open/upload/
+generation/restoration/END+Close lifetime: NO extra Pioneer SSH/status/
+admin/GPU/model/stage/reload/reset/power/SD/OS/network action until actual
+process exit. Observe ONLY the SAME handle and local raw file. A timeout
+is not completion or permission to start/reload/recover anything.
+
+Previous run is CLOSED,not this profile
+---------------------------------------
+Unchanged4b+919d diagnostic14837 ACTUALLY exits0,all34+END+Close,
+0.159697435..0.159700083tok/s,3.38% ONE-pair rate gain vs8612. Known strict
+scores remain FAIL. Exact restore88418 and independent041/gen34/healthy-
+idle/64CPU/fullRAM checks ACTUALLY0. See
+qwen38-token-prefetch-physical-20261101.txt. That log contains NO frontend
+rows and must never be relabelled as a profile. The current capture is a
+new isolated lifetime and makes no speedup or model-quality claim yet.
+
+Exact immutable subjects and qualified decoder
+-----------------------------------------------
+Module919d4a631ff664549a67bb2372ce2db344ba29473c452c0b273c4b27a2bdf978,
+ROOT88e419152d297dbe2ebb0b3913d3e2cae58aa69741b4b03e2667749702c4a674,
+tag2026103100010075/gen35. Already-qualified USER client:
+718d0ceac7eb5caad771413aefa32903fabf1e81b3dc6ad34793fd8ad0b7b77c
+/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-q38-FRONTEND34-PROFILE-718d0cea
+--profile-frontends-34-positions.
+This client copies two RAW frontend words from ALREADY existing successful
+Observe responses;there is NO extra accelerator call,PC read,opcode,
+driver,firmware or CPU model oracle. Heap samples print ONLY after full
+Finish+Close and34 validated records. Old build/USER/role/parser controls
+are in qwen38-frontend-profile-20261101.txt. The current exact module/ROOT
+decoder bindings and refusal tests are separately CLOSED in
+qwen38-current-frontend-bindings-20261101.txt.
+
+Actual independent prelaunch ledger
+------------------------------------
+After the previous run actually closes,fresh read-only staging discovery
+finds the existing profile client. Fresh preapply SSH ACTUALLY exits0:
+whole baseline041/newmodule919d/helper3ceff/client4b/profile718d/adminb0c/
+guardd1ce exact,tag12/gen34/cold0/quiesced0/owner0/open1/guard1,no compute
+parent,64CPUs/max137034936320B/free133752672256B. The profile client is
+independently copied BACK;whole local SHA is EXACT718d. No file is staged
+over an older helper or client. All preapply/copy-back stderr0B.
+
+ONLY exact3ceff helper /bin/sh --apply-token-prefetch-benchmark. SAME73581
+ACTUALLY exits0:041/gen34 quiesce+close/reload919d/tag75/gen35. No reboot,
+reset or GPU execution. Fresh independent prelaunch SSH ACTUALLY exits0:
+all whole module/helper/client/admin/guard hashes exact,tag75/gen35/cold0/
+quiesced0/owner0/open1/guard1,no compute parent,64CPUs/full137034936320B/
+free133749653504B. Apply/prelaunch stderr0B.
+
+Live original-model capture,not returned samples or timing
+---------------------------------------------------------
+SAME60755 starts14:29:48UTC. Raw local:
+/private/tmp/pioneer-q38-current-profile-physical-20261101-mr.log
+stderr same basename. Current raw includes the distinct profile marker
+and fixed2prompt/34position/noCPU-reference header. No returned frontend
+rows,clean END or valid rate result exists yet. Do not infer layer count
+from checked_word or equate RAW cursors with retired PCs/cycles. Do not
+subtract4,expand function ranges or force60008 into actual60004.
+
+After actual clean exit ONLY:run unchanged strict profile parser with
+declared919d and the authenticated current88e4 ROOT,then interpret exact
+address bins within their fetch-ahead/wait/alias/ambiguity limits. This
+declaration is not independent hardware provenance;the prelaunch ledger
+above and complete isolated lifetime remain separately required. Raw
+frequency is NOT function time,bottleneck causality or a removable fraction.
+
+After actual closure,fresh independent health BEFORE ONLY new3ceff
+--restore-token-prefetch-benchmark. Oldccbc CANNOT restore919d. Expected
+restored baseline041/tag12/gen36. Do not reuse the older gen33/gen34 health
+scripts without updating their explicit generation expectations. No force,
+retry,reset,automatic rollback or power cycle is authorized by a timeout.
+Full-model numerical acceptance,resident requests,arbitrary prompts,
+usable no-CPU-reference Assistant Work and20tok/s remain unmet.
