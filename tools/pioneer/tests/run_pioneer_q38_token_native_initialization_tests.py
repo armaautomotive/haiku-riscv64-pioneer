@@ -10,6 +10,13 @@ import sys
 import tempfile
 
 root_profile=None
+counter_gather=None
+if '--counter-gather-root' in sys.argv:
+    assert sys.argv.count('--counter-gather-root')==1
+    index=sys.argv.index('--counter-gather-root')
+    assert index+1<len(sys.argv)
+    counter_gather=pathlib.Path(sys.argv[index+1]);del sys.argv[index:index+2]
+    assert counter_gather.is_absolute() and counter_gather.is_dir() and not counter_gather.is_symlink()
 tid_boundary='--tid-boundary' in sys.argv
 if tid_boundary:
     assert sys.argv.count('--tid-boundary')==1
@@ -129,6 +136,9 @@ if packet_identity_boundary:
     assert cohort_local_sources, 'Packet-identity TEST requires its distinct code and SAME complete original first-layer/cancel/STOP/HOLD/full-END predecessor;not old native,whole-model or Work qualification'
 if tid_boundary:
     assert packet_identity_boundary, 'TID boundary TEST requires its distinct code and SAME packet-identity original first-layer/cancel/STOP/HOLD/full-END predecessor;not old native,whole-model or Work qualification'
+if counter_gather:
+    assert tid_boundary and not compile_link_only and not root_profile and len(sys.argv)==7 and sys.argv[2]=='--execution-end', \
+        'Counter-gather TEST requires its exact original first-layer/cancel/STOP/HOLD/drain/full-END predecessor and frozen ROOT;not a shortened/old/Work alias'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -238,6 +248,10 @@ if packet_identity_boundary:
 if tid_boundary:
     assert hashlib.sha256((here.parent/'PioneerQ38TokenTidBoundaryPrograms.h').read_bytes()).hexdigest()=='229da82175d8a83765d4a0494b345749a92de0a93ec373ffb4ffdd45a9584b1d'
     defines.update(PIONEER_Q38_TOKEN_TID_BOUNDARY_PROGRAMS='1',PIONEER_Q38_TOKEN_TID_BOUNDARY_NATIVE_CONTEXT='1')
+if counter_gather:
+    assert hashlib.sha256((here.parent/'PioneerQ38TokenCounterGatherPrograms.h').read_bytes()).hexdigest()=='c2f4764197a8a402bf6a60972744adc7dfd641914449ab2abc96ea19e6d9bc63'
+    defines.update(PIONEER_Q38_TOKEN_COUNTER_GATHER_PROGRAMS='1',PIONEER_Q38_TOKEN_COUNTER_GATHER_NATIVE_CONTEXT='1',
+                   PIONEER_Q38_TOKEN_NATIVE_COUNTER_GATHER_FIXTURE='1')
 if posted_cancel:
     defines.update(PIONEER_Q38_TOKEN_POSTED_CANCEL='1',PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',
                    PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')
@@ -389,6 +403,31 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
     binary = base/'test'
     extra = []
     profile_environment={}
+    if counter_gather:
+        # Authenticate ALL frozen artifacts before classifying any TEST
+        # request. nm consumes the SAME already authenticated ELF snapshot,
+        # not a second unchecked open of the original image pathname.
+        tree=ast.parse((here.parent/'build_qwen38_counter_gather_root.py').read_text())
+        pins=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign)
+                  and any(isinstance(t,ast.Name) and t.id=='PINS' for t in n.targets))
+        elf=None
+        for name,size,digest in pins:
+            data=(counter_gather/name).read_bytes()
+            assert len(data)==size and hashlib.sha256(data).hexdigest()==digest
+            if name=='program.elf':elf=data
+        assert elf is not None
+        snapshot=base/'counter-gather-PINNED.elf';snapshot.write_bytes(elf)
+        tool='/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-nm'
+        table=subprocess.check_output([tool,'-S','-nC',str(snapshot)],text=True)
+        assert snapshot.read_bytes()==elf
+        ranges=[(int(row[0],16),int(row[1],16)) for line in table.splitlines()
+                if len(row:=line.split(None,3))==4 and row[2] in ('t','T')
+                and row[3].startswith('PioneerQ38CounterGather::Read(')]
+        assert len(ranges)==1
+        begin,size=ranges[0];assert begin>=0x40000 and size and begin+size<=0x60000 and not (begin|size)&3
+        profile_environment['PIONEER_TEST_COUNTER_GATHER_RANGE']=f'{begin:x}:{begin+size:x}'
+        print(f'AUTHENTICATED_NATIVE_COUNTER_GATHER_SCOPE {begin:x}..{begin+size:x}/ELF'+hashlib.sha256(elf).hexdigest()+
+              ';HOST byte-endpoint classification ONLY,not supplied PC,owner,model result or hardware authority',flush=True)
     if root_profile:
         from pioneer_q38_native_root_profile_map import build_profile_map
         metadata=build_profile_map(root_profile,base)

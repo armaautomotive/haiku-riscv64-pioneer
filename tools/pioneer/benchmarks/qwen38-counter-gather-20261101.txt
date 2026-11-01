@@ -1,4 +1,4 @@
-Queued eight-counter gather: returning BUILD qualified, original runs LIVE
+Queued eight-counter gather: returning BUILD and strict original first layer PASS
 ========================================================================
 2026-11-01,06:30 UTC. Goal ACTIVE. NO queued-BUILD hardware/Work speed claim.
 The separate e09 TID physical96523 ACTUALLY exits0 after clean34/END+Close,
@@ -128,9 +128,9 @@ Snapshot's actual indexed jr a3 and Projection::Run's indexed switch
 remain explicitly outside direct-call proof. Call-site existence does not
 prove that a path executes.
 
-Actual original-byte first-layer runs: LIVE
+Actual original-byte first-layer runs: COMPLETE
 --------------------------------------------
-Main22262 and independent-clean81821 remain LIVE. Complete SAME-open
+Main22262 and independent-clean81821 BOTH ACTUALLY exit0. Complete SAME-open
 original GGUF authentication precedes constructing each fixture;all
 learned bytes are from that authenticated original,not CPU products.
 The new HOST-only FIFO endpoint is scoped to actual emitted gather code:
@@ -140,20 +140,33 @@ quiescent peer CSRs and transports their bytes in reverse reply order.
 It never supplies a worker numeric result,completion,PC/register history
 or readiness setter. Ordinary traffic retains its old transport.
 
-At this checkpoint main has reached matrix7 and clean matrix6 of layer0.
-No finished first layer or strict external numerical pass is claimed.
-If genuinely complete,compare ALL10240 actual prefix words against the
-unchanged CPU corpus;no diagnostic-only exit or tolerance. A first-layer
-pass still would NOT prove all64 layers,token/STOP/END,native ownership,
-physical performance,arbitrary prompts or Assistant Work.
+Both genuinely finish original embedding+layer0/all119 closed histories,
+453 full8-read batches/3624 actual transported peer CSR replies EACH,8
+queued-before-counted and8 outstanding with reverse replies. Both observed
+41028B prefix files SHA:
+ 4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+Unchanged main+independent-clean strict comparators BOTH ACTUALLY exit0:
+ALL5120 embedding+5120 layer0 words bit-exact,maxAbs0,relativeL20,NO
+diagnostic-only exit or tolerance. This STILL does NOT prove all64 layers,
+token/STOP/END,native ownership,physical speed,arbitrary prompts or Work.
+
+Observed first-layer ROOT stack reserved/written6672B fits8192B at this
+scope. HOST retired172359149 instructions/124functions includes SIMULATED
+polling and is NOT device cycles/TPS. Packet seal remains the largest
+HOST bin70631600. Its16 source MMIO reads are ALREADY fully unrolled;
+merely proposing to unroll them again is not a new optimization.
 
 Next
 ------
-Close these SAME original handles,strictly compare actual prefix DATA,
-then qualify immutable programs/private+public native objects,the full
-native acquisition/initialization/first-layer/cancel/STOP/HOLD/drain/
-restoration lifetime and exact guarded updater before any hardware trial.
-The separate e09 physical96523 has closed and041 is independently restored;
-do not retest/reload hardware before the NEW BUILD's missing gates close.
+Immutable programs/private+public SDK objects/role tests and exact updater
+are now independently qualified;see qwen38-counter-native-20261101.txt
+and qwen38-counter-updater-20261101.txt. Native35069/1044 now BOTH ACTUAL0
+through full first-layer/cancel/STOP/HOLD/drain/restoration/END;strict native
+prefix comparisons BOTH ACTUAL0. After fresh idle verification/stage/full
+readback/exact4f61 apply,one new physical51361 is LIVE on0b8d/gen25.
+No queued-gather hardware speed or Work result exists yet.
+The separate e09 physical96523 closed and041 was independently restored
+before the NEW fully qualified diagnostic was applied. Do not touch the
+new51361 GPU/admin/model lifetime until actual END+Close/process exit.
 No throughput gain is claimed from queue occupancy,HOST instruction counts,
 source changes,first-layer observations or a build/unit-test pass.

@@ -1,0 +1,40 @@
+Queued-counter exact updater: offline fake-Haiku qualification COMPLETE
+=======================================================================
+2026-11-01,07:17 UTC. This section records offline updater qualification.
+Later:Native full-END35069/1044 BOTH ACTUAL0 and strict native first-layer
+checks BOTH ACTUAL0. Fresh idle/stage/readback/apply3382 ACTUAL0,new0b8d/
+gen25 independently verified;one benchmark51361 is LIVE. See
+qwen38-counter-native-20261101.txt. Updater tests alone did NOT grant this.
+
+New modes:
+ --apply-token-counter-gather-benchmark
+ --restore-token-counter-gather-benchmark
+Full module0b8d1530b3f6de3462be23e923be169c82a8b15c76e83657c35c2d268b70405c
+Candidate under the existing stage directory:
+ tenstorrent_pci_probe-token-counter-gather-benchmark-0b8d1530
+Only041 baseline <-> exact0b8d is mapped. Numeric tag75 is NOT code identity.
+Backup names include the entire expected SHA,not only shared tag75.
+No retained/quarantined/cold recovery,forced unload,Work alias,reset or
+automatic rollback is added. Old remote helpers are not edited/replaced.
+
+Source helper whole SHA:
+ 4f61b0e7891e23426ccdba68c55b2b726eba30c208c625e0c3ab59289c2276d5
+Both /bin/sh syntax checks pass;independent copies are byte-identical.
+97838(main)/29527(clean) BOTH ACTUALLY exit0,EACH1354 cases across14modes:
+new counter-gather plus old TID,packet,cohort,commit,retained and frontier
+apply/restore routes. This executes the actual source /bin/sh updater in
+disposable fake Haiku filesystems,NOT a mock reimplementation of routing.
+
+Coverage includes whole payload/tag/path/backup pins,symlinks,loaded image,
+active/unknown/cold owner,open/guard/current generation,quiesce/reload/
+verification failures,legacy and same-tag other-revision backup conflicts,
+source changes and no automatic fallback. New route explicitly refuses
+old e09/ba971/844ec/78322/1f3/9ad candidates AND installed restore inputs.
+All old routes explicitly refuse new0b8d in both directions. Shared
+unknown-tag75/old74/earlier fault/beta/fold/decode cases also run.
+
+This does not prove real OS reload correctness,native lifetime,numerical
+quality,hardware execution,performance or Assistant Work. Actual deployment
+still requires new full-native gates,fresh independent idle verification,
+separate staging/full readback and the exact new helper. For this non-
+executable staged .sh convention,invoke through /bin/sh,not direct exec.

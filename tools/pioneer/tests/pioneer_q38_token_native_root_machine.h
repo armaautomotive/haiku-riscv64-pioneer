@@ -53,6 +53,9 @@ struct TokenStartupRoot:TokenNativeRootISA {
 #endif
  } // unchanged full ISA retirement,then read-only SP observation
 #include "pioneer_q38_token_native_layer_machine.inc"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_COUNTER_GATHER_FIXTURE
+#include "pioneer_q38_native_counter_gather_fifo.inc"
+#endif
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
  bool traffic=false;unsigned submitted=0,completed=0,busyReads=0;
@@ -141,7 +144,11 @@ struct TokenStartupRoot:TokenNativeRootISA {
  } // raw immutable bytes from actual native staging ONLY;NO model products/completion fabricated
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
- TokenStartupRoot(const char* image,TokenHeldEndpoints& native):ScalarMachine(0,0),io(native){assert(image && !steps && pc==0x6000);}
+ TokenStartupRoot(const char* image,TokenHeldEndpoints& native):ScalarMachine(0,0),io(native){assert(image && !steps && pc==0x6000);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_COUNTER_GATHER_FIXTURE
+  InitializeCounterGatherEndpoint();
+#endif
+ }
 #else
  TokenStartupRoot(const char* image,TokenHeldEndpoints& native):BlockMachine(image,8,0,.01f,nullptr,true),io(native){assert(!steps && pc==0x6000);}
 #endif
@@ -166,6 +173,17 @@ struct TokenStartupRoot:TokenNativeRootISA {
 #endif
   if(address<0x180000)return io.Raw(0,address);
   assert(address>=0xffb20000 && address<0xffb22000);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_COUNTER_GATHER_FIXTURE
+  if(InCounterGather() && address<0xffb20028U)gatherReadback[(address-0xffb20000U)/4]=true;
+  if(address==0xffb20040U || address==0xffb20840U || address==0xffb21040U || address==0xffb21840U
+   || address==0xffb20064U || address==0xffb20068U)AdvanceCounterGather();
+  if(address==0xffb20040U){
+   io.Core(0).doorbellRead=true; // actual emitted read,not a response/completion setter
+   if(gatherActive)return 1;
+  }
+  if(address==0xffb20064U && gatherIssued)return 0x10101000U|(16-unsigned(gatherQueue.size()));
+  if(address==0xffb20240U && gatherOutstanding)return gatherOutstanding;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
   bool mayRespond=submitted<=3;
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EMBEDDING_FIXTURE
@@ -189,8 +207,15 @@ struct TokenStartupRoot:TokenNativeRootISA {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TRAFFIC_FIXTURE
   namespace T=PioneerQ38TokenLayout;
   if(traffic && address>=0xffb20000 && address<0xffb20028){
+#ifdef PIONEER_Q38_TOKEN_NATIVE_COUNTER_GATHER_FIXTURE
+   if(InCounterGather()){if(address==0xffb20000U)gatherReadback.fill(false);}
+   else assert(!gatherIssued && !gatherOutstanding && !gatherActive);
+#endif
    assert(!io.Core(0).pending);io.Core(0).ResidentNocWrite(address-0xffb20000,value);return;
   }
+#ifdef PIONEER_Q38_TOKEN_NATIVE_COUNTER_GATHER_FIXTURE
+  if(traffic && address==0xffb20040U && InCounterGather()){assert(value==1);CaptureCounterGather();return;}
+#endif
   if(traffic && address==0xffb20040){assert(value==1);Submit();return;}
 #ifdef PIONEER_Q38_TOKEN_NATIVE_LAYER_FIXTURE
   if(layerActive){
@@ -205,7 +230,11 @@ struct TokenStartupRoot:TokenNativeRootISA {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE
     assert(fullFlowRunning && value>=1 && value<=64 && !fullLayerComplete && !io.Core(0).pending);fullLayerComplete=true;
 #else
-    assert(value==1 && !fullLayerComplete && !io.Core(0).pending);fullLayerComplete=true;
+    assert(value==1 && !fullLayerComplete && !io.Core(0).pending);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_COUNTER_GATHER_FIXTURE
+    VerifyCounterGatherEndpoint();
+#endif
+    fullLayerComplete=true;
 #endif
    } // pause AFTER the actual completed-layer progress store,not a supplied completion
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_FLOW_FIXTURE

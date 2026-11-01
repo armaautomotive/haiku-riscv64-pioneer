@@ -1,0 +1,146 @@
+Queued-counter native package: full native lifetime PASS, hardware benchmark LIVE
+============================================================================
+2026-11-01,07:17 UTC. Goal ACTIVE. NO queued-gather hardware/Work speed claim.
+Last actual physical measurement belongs to OLDER e09/bc01:0.128485469..
+0.128487180tok/s,known first3 score mismatches,not usable20tok/s or Work.
+After all offline gates below,Pioneer is independently verified on the
+new0b8d/tag75/gen25,64CPUs/fullRAM and healthy idle,then ONE unchanged
+bounded benchmark51361 starts. This is NOT a completed speed result.
+
+Prerequisite returning ROOT and original first layer: COMPLETE
+---------------------------------------------------------------
+Fixed a2d52546a4606b37c6cb421ac412a8d3eae59135492edecbc1a96079d24af536
+has independent full-old-controls-first builds,2023 emitted asynchronous
+queue/closure cases per tree and34 selected body comparisons per tree.
+Original22262/81821 BOTH ACTUAL0 and unchanged strict comparators BOTH
+ACTUAL0 across ALL10240 embedding+layer0 words,maxAbs0,relativeL20.
+Each genuinely executes453 full8-read groups/3624 actual peer CSR replies,
+8 queued-before-counted/8 outstanding/reversed replies/SAME119 histories.
+Both41028B prefix SHA4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+This is FIRST LAYER ONLY,not full-model,token,STOP/END,native or device proof.
+
+Immutable DATA: independently identical
+-----------------------------------------
+PioneerQ38TokenCounterGatherPrograms.h SHA:
+ c2f4764197a8a402bf6a60972744adc7dfd641914449ab2abc96ea19e6d9bc63
+Generator --counter-gather authenticates ALL13 complete sections and BOTH
+complete ELFs before exclusively creating output. Separate namespace,
+CounterGather=1/CounterGatherReads=8 plus TID/FIFO-required parent markers.
+No existing output is replaced and no old native owner selects this DATA.
+Both independently generated headers are byte-identical.
+
+DATA52424/22495 BOTH ACTUAL0,EACH3044233 codewords across120cores match
+every authenticated source section,2290 gap/runtime/invalid/immutable-
+output refusals,15 artifacts/30 corrupt+truncated refusals,2 positive
+syntax cases/132 missing/zero/two/late/native/USER/ROOT/CPU/Work refusals.
+ENTIRE old TID/packet/cohort/commit/retained/frontier DATA and their refusal
+controls regenerate unchanged FIRST. No span or native mapping expands.
+
+Actual private/public SDK objects and bounded module: COMPLETE
+----------------------------------------------------------------
+Inspection3089/45572/12019/52695 and frozen46979/94372/2965/19862 ALL
+ACTUALLY exit0. ENTIRE old08f58 private/f70f3 public/e09 complete module
+reproduce FIRST from CURRENT source in BOTH independent trees.
+New full pins:
+ private objectb90c8a84d30bf33f33619ee7e9fffc37a032f580ebd9d8b175bd2dbeb3e26b0b
+ public object575f669babf2de0f9141a1e865ec2352655119d5856ca2bb88a2eb0ce74cd9cf
+ complete module0b8d1530b3f6de3462be23e923be169c82a8b15c76e83657c35c2d268b70405c
+All13 ACTUAL compiled arrays match source digests and2MiB RoPE is byte-
+exact to the old object. Individual frames remain bounded. Private5
+actual renamed entry bodies+5 wrappers match independently compiled
+refusal/inert/null controls;absence of conventional ABI names alone is
+NOT treated as proof. Public keeps bounded6607+6608 diagnostic ABI,not Work.
+
+Actual imports/code have no CPU model oracle,products,TEST interpreter,
+Work route or old TID/packet/cohort/commit/retained/frontier program
+namespaces. New selector is separate;no hook is added to base NativeRole.
+Partial public stack:known module chain5392B,25 unresolved kernel/IRQ/
+entry/indirect costs;whole-kernel stack is NOT qualified.
+
+Final private roles56276/17322 BOTH ACTUAL0,EACH4 positives/381 refusals.
+Public roles69857/66710 BOTH ACTUAL0,EACH4 positives/278 refusals.
+All old syntax controls run FIRST. ROOT roles50034/23505 BOTH ACTUAL0,
+EACH2 positives/108 refusals. DATA,ROOT BUILD,renamed private NODRV and
+bounded public diagnostic are never aliases for each other or Work.
+
+Full native lifecycle: COMPLETE
+------------------------------------------------------------
+Main35069 and independent-clean1044 launch06:47 UTC and BOTH ACTUALLY
+exit0,observed07:12 UTC.
+Full SAME-open original GGUF authentication precedes native construction.
+New HOST-only FIFO endpoint consumes the actual installed ROOT's8 captured
+4B counter-read commands,models queued/initiating/outstanding/response
+stages and transports ACTUAL peer CSR words in reverse order. It does not
+supply worker math,completion,PC/register histories or native ownership.
+Ordinary packets keep the unchanged transport.
+
+The endpoint range48f0c..49248 comes from nm on the SAME fully authenticated
+frozen a2d5 ELF snapshot in a private temporary directory. Runtime external
+role overrides are refused. This range ONLY classifies TEST byte transport;
+it never supplies PC,changes code or grants physical/native authority.
+Each newly captured command still verifies all10 fields/4B length/fixed
+CSR offset/worker route/root129/bounded owned scratch/readbacks.
+
+Both genuinely finish full851 zero initializations/120 held/119 virgin
+RISC+Tensix engines,original5120 embedding and first3 workers' fullK5120/
+48-row projection,ROOT validates its actual result before next doorbell.
+Observed first-matrix accelerator ROOT reserved/accessed6112B and maximum
+peer reserved3552B/accessed3540B fit8192B EACH at that point;not a whole-run
+or HOST-kernel stack proof. Later07:10 observation:both reach layer0 phased,
+ROOT110M HOST instructions,786432 actual GDN state reads+writes and30720
+history reads. Those partial observations alone were NOT an END pass.
+
+Both SAME processes genuinely finish original first layer,consume cancel,
+119STOP/120HOLD,zero-record drain,two actual held-hidden READ packets,
+full L1/dispatch/119peer/ROOT/shared/clock/VM/PCI/host restoration,checked
+device unreserve and locked whole-context destruction. Both actual native
+endpoints observe453 groups/3624 captured4B actual peer CSR replies,
+8 queued-before-counted/8 outstanding/reverse replies;no product/history/
+PC/register/completion setter. No later PCI/MMIO/release/retry occurs.
+
+Both actual41028B native prefix files SHA:
+ 4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+Unchanged main+independent-clean strict comparisons BOTH ACTUALLY exit0:
+ALL5120 embedding+5120 layer0 words bit-exact,maxAbs0,relativeL20. NO
+diagnostic-only exit or tolerance. This proves the stated SIMULATED native
+production-method lifecycle and FIRST LAYER only,NOT all64 layers/token,
+CommitState,public ABI,device performance,arbitrary prompts or Work.
+
+Exact updater and deployment status
+------------------------------------
+Helper4f61b0e7891e23426ccdba68c55b2b726eba30c208c625e0c3ab59289c2276d5
+qualifies ONLY041<->0b8d;1354 fake-Haiku cases per independent tree pass.
+See qwen38-counter-updater-20261101.txt. Old remote51c remains unchanged.
+
+Fresh independent pre-stage SSH ACTUAL0 verifies041/tag12/gen24/healthy
+idle,whole baseline+4b+b0c admin+d1ce guard hashes,64 CPUs,maxRAM
+137034936320B/free133754372096B,no model/Assistant parent. BOTH new paths
+are absent including symlinks BEFORE copying. Helper SCP ACTUAL0/module
+74521 ACTUAL0. Independent full readback SSH ACTUAL0:0b8d+4f61 match,
+installed041/client4b/guardd1ce unchanged,gen24/owner0/cold0/quiesced0/
+open1/guard1. Staging OUTSIDE drivers/bin did NOT install or execute code.
+
+Exact4f61 /bin/sh apply3382 ACTUAL0:quiesce,close,0b8d reload,tag75/gen25,
+no reboot,GPU execution,reset,power,SD/mains or hardware change. Fresh
+independent prelaunch SSH ACTUAL0 verifies exact0b8d/4f61/4b/d1ce hashes,
+gen25/cold0/quiesced0/owner0/open1/guard1,64 CPUs/fullRAM/free133749272576B
+and no model/Assistant parent.
+
+ONE new unchanged4b physical benchmark51361 launches07:17:06 UTC and is
+LIVE,initial SAME-open original GGUF authentication BEFORE accelerator
+Open. NO extra real GPU/admin/status/reload/reset/model/power/SD/OS/network
+intervention until its actual terminal/HOLD/drain/full restoration/END+
+Close and actual process exit. An observation timeout is NOT completion.
+After genuine closure:unchanged strict main+clean DATA checks,all34 first12
+headers+rate vs same4b e09 control,fresh independent idle identities and
+ONLY exact4f61 restore041(expectedgen26). NEVER use old51c for0b8d.
+No hardware speed or quality result is claimed while this process is LIVE.
+
+Primary alignment cross-check
+-------------------------------
+Blackhole's alignment page delegates to the shared Wormhole page. Its
+MMIO->L1 length rule is <=4B within an aligned4B word and congruence mod4;
+the fixed4B reads and stronger mod32-preserving separate scratch lines
+satisfy that rule. This does not authorize bulk MMIO or inline-write use.
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/Alignment.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/NoC/Alignment.md

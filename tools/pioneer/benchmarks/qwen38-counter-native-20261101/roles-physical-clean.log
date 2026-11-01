@@ -1,0 +1,6 @@
+PASS retained-cohort physical roles/4 syntax positives/203 missing+zero+two+late+NODRV+ABI+CPU+Work refusals/old physical selector still old firmware;syntax ONLY,NO lifecycle,physical execution,model quality,timing or deployment grant
+PASS commit-boundary physical roles/4 syntax positives/220 missing+zero+two+late+NODRV+ABI+CPU+Work refusals/old physical selector still old firmware;syntax ONLY,NO lifecycle,physical execution,model quality,timing or deployment grant
+PASS cohort-source physical roles/4 syntax positives/236 missing+zero+two+late+tag+ABI+foreign+CPU+Work refusals;ENTIREoldsyntaxcontrols first;NO native lifecycle,physical execution,model quality,timing or deployment grant
+PASS packet-identity-boundary physical roles/4 syntax positives/250 missing+zero+two+late+tag+ABI+foreign+CPU+Work refusals;ENTIREoldsyntaxcontrols first;NO native lifecycle,physical execution,model quality,timing or deployment grant
+PASS tid-boundary physical roles/4 syntax positives/264 missing+zero+two+late+tag+ABI+foreign+CPU+Work refusals;ENTIREoldsyntaxcontrols first;NO native lifecycle,physical execution,model quality,timing or deployment grant
+PASS counter-gather physical roles/4 syntax positives/278 missing+zero+two+late+tag+ABI+foreign+CPU+Work refusals;ENTIREoldsyntaxcontrols first;NO native lifecycle,physical execution,model quality,timing or deployment grant
