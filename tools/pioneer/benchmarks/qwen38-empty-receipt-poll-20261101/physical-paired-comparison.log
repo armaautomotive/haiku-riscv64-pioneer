@@ -1,0 +1,9 @@
+SAME4b_CLIENT_OLD_0b8d_NEW_5a3c_ONE_RUN_EACH
+ALL34_FIRST12_HEADERS_EXACT True
+CHANGED_HEADER_POSITIONS []
+OLD_RATE {'sampled_tokens': 32, 'first_committed': 2, 'last_committed': 34, 'elapsed_min_us': 243959344, 'elapsed_max_us': 243962804, 'lower': 0.131167537, 'upper': 0.131169397, 'observations': 2486}
+NEW_RATE {'sampled_tokens': 32, 'first_committed': 2, 'last_committed': 34, 'elapsed_min_us': 240635991, 'elapsed_max_us': 240639453, 'lower': 0.132979026, 'upper': 0.132980939, 'observations': 2454}
+ONE_PAIR_GAIN_PERCENT 1.3796121971956676 1.3825082344879114
+MEAN_SAMPLED_SECONDS_BOUNDS 7.51987471875 7.51998290625
+TARGET20_REMAINING_FACTOR 150.3974941852381 150.39965776257077
+No repeatability/statistical confidence/causal attribution/full numerical/Assistant Work proof. Session nonce/physical counters are NOT claimed equal.

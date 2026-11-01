@@ -1,5 +1,39 @@
-Empty-receipt polling: native END PASS;qualified new hardware benchmark LIVE
+Empty-receipt polling: hardware CLOSED,1.38% one-pair gain;quality unaccepted
 =======================================================================
+2026-11-01,10:13UTC CLOSURE:physical2812 ACTUALLY exits0,observed10:03:42.
+All34 records/final_count34/clean_end1/real terminal/HOLD/drain/full
+restoration/END+Close,stderr0B. No extra Pioneer SSH/admin/status/GPU/
+model/staging/reload/reset/power/SD/OS/network during its full lifetime.
+Original SAME-open GGUF auth precedes Open;all3551parts/4736090pages/
+20367spans/19399024640 padded bytes upload. SAME unchanged4b client.
+
+Measured32 post-prompt sampled tokens,committed2..34,2454 observations:
+ elapsed240635991..240639453us
+ rate0.132979026..0.132980939tok/s
+ mean7.51987471875..7.51998290625s per sampled token.
+Auth/loading/initialization/restoration EXCLUDED. Versus previous0b8d/
+a2d5/SAME4b0.131167537..0.131169397,ONE run each gives
+1.3796121972..1.3825082345% gain. ALL34 first12-word headers EXACTLY equal.
+Session nonce/physical counters are NOT claimed equal. No repeatability,
+statistical confidence or causal attribution;NOT sustained usable Work.
+20tok/s remains150.3974942..150.3996578x above this measured rate.
+
+Unchanged main+clean strict comparators BOTH ACTUALLY exit1,logs cmp-exact:
+grammar/34records/rate arithmetic pass;first3 greedy selections match CPU
+but known max-logit bits STILL FAIL. Positions3..33 have no external
+numerical acceptance here. No tolerance,expected word or verifier relaxed.
+
+ONLY after actual clean exit:independent idle health ACTUAL0,whole5a3c/
+4161/041/4b/b0c/d1ce exact,tag75/gen29/cold0/quiesced0/owner0/open1/guard1,
+64CPU/fullRAM/no compute parent. ONLY exact4161 through /bin/sh restore,
+SAME3592 ACTUALLY exits0:quiesce/close/reload041/tag12/generation30.
+Fresh independent health ACTUAL0:whole041 installed,64CPU/fullRAM,no
+compute parent,cold0/quiesced0/owner0/open1/guard1,unchanged4161/4b/d1ce.
+All physical/health/restore stderr0B. No reboot/reset/power/SD/hardware
+change. Card NOW idle on041/gen30;all historical LIVE statements below
+are superseded by this actual closure. Separate new88e4 flat grammar is
+LOCAL BUILD only,not a new installed driver;see its own report.
+
 09:26UTC:staged whitespace check caught extra EOF blank lines in NEW role/
 builder/test files;removed ONLY those blanks,never raw evidence whitespace.
 Independent full SDK rebuilds29338/25790 BOTH ACTUALLY exit0:ENTIRE old

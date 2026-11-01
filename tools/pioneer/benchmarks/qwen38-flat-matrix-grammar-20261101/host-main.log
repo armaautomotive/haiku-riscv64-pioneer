@@ -1,0 +1,6 @@
+PASS flat ordinary-matrix ALL119 workers/both flags/ALL128x32 one-bit variations;old DATA predicate unchanged
+PASS flat DATA grammar/1413717 differential cases/245867 accepted/1167850 refused/null+alias+unsigned-boundaries/read-only inputs;NO ROOT selection,native ownership,device execution,model result or timing grant
+PASS unchanged legacy reference and direct DATA predicate
+PASS flat ordinary-matrix ALL119 workers/both flags/ALL128x32 one-bit variations;old DATA predicate unchanged
+PASS flat DATA grammar/1413717 differential cases/245867 accepted/1167850 refused/null+alias+unsigned-boundaries/read-only inputs;NO ROOT selection,native ownership,device execution,model result or timing grant
+PASS unchanged job-boot-fold reference and direct DATA predicate

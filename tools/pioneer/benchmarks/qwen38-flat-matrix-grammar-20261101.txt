@@ -1,0 +1,124 @@
+Flat QGW3 grammar: frozen BUILD,emitted predicates and original layer0 PASS
+========================================================================
+2026-11-01,10:13UTC. Goal ACTIVE/20tok/s UNMET. LOCAL88e4 ROOT only:NOT
+DATA-packaged,native-owned,installed,hardware-benchmarked or Assistant Work.
+Last CLOSED hardware5a3c/3718/SAME4b is0.132979026..0.132980939tok/s,
+known full-model numerical differences remain. See empty-receipt report.
+Do not forecast a device speedup from the instruction counts below.
+
+What changed
+-------------
+New pure PioneerQ38FlatMatrixGrammar.h composes the old QGW3->QGW2->QGW1->
+QMW1 boot/job DATA predicates without repeatedly materializing64-word
+translation arrays. Covers ordinary matrices,activation,convolution/GDN,
+attention,global-output and both STOP forms. All fields,geometry,reserved
+zeros,nonce/previous comparisons,source DATA,route/bank/wave/tail bounds
+remain;unsigned densePhase wrap behavior is deliberately preserved. Actual
+source/counter/receipt/frame/owner/NoC checks remain SEPARATE and unchanged.
+No floating arithmetic,weights,worker image,poll budget,timeout,NoC command,
+counter reset,CPU model oracle,Work path,ready/product/history/PC setter.
+
+Distinct PIONEER_Q38_FLAT_MATRIX_GRAMMAR_IMAGE=1 requires exact RV32 and
+job-boot-fold/precise/QGW3 returning-component OR token ROOT BUILD. New
+role is evaluated outside its binding guard;missing/zero/two/late/foreign/
+worker/native/CPU/Work selections refuse. Default flag OFF preserves all
+old objects/images;no old runtime namespace silently selects this BUILD.
+ALL THREE potential grammar-emitting TUs (recurrent,dense,token) compile
+with the SAME flag. No mixed old/new COMDAT selection by link order. Whole
+old3718 and all ancestors reproduce FIRST,then entire unchanged recurrent,
+dense and token objects independently reproduce BEFORE new compilation.
+Conv/feedback objects prove no unconverted QGW3 grammar symbols/imports.
+
+Independent host,syntax and whole BUILD gates: CLOSED
+-----------------------------------------------------
+Original host29404/42992 narrow ordinary cases ACTUAL0;expanded18046/
+85326 ALL-job tests ACTUAL0 in main/clean,cmp-exact logs. EACH tree tests
+BOTH legacy and job-boot-fold references with ASan/UBSan:EACH configuration
+1413717 comparisons,245867 accepts/1167850 refusals. ALL119 worker IDs/
+both ordinary flags/ALL128 boot+job words x32 single-bit mutations;other
+operation seeds/mutations,random correlated/multiword mutations,previous/
+phase/value boundaries,null/alias/read-only inputs. Four successes total;
+these are pure DATA predicates,not owners or model acceptance.
+
+Role62239/63309 BOTH ACTUALLY exit0:EACH2 syntax positives/109 refusals.
+Faked HOST architecture macros are ONLY syntax arguments. Initial fixture
+incorrectly expected missing new selector to reject a valid OLD default;
+fixed fixture now asserts selected binding1,default/late case binding0.
+No production default or role requirement weakened. Initial log retained.
+
+Inspection85112/44100 and frozen28243/84426 ALL ACTUALLY exit0. Whole:
+ boot4       32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text129684  c1a8a1c020d895f5e9e3a2530e2ff686c16f4c01f0c01057cccc91d818b85504
+ terminal8   468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2
+ aux32692    ef9a1b0de3baf346b893f3dc0db2363e11d19a465f2d39ecc313cc06730e3066
+ ELF191436   88e419152d297dbe2ebb0b3913d3e2cae58aa69741b4b03e2667749702c4a674
+Text1352B shorter than3718:1388B margin,unchanged76B aux margin. No bounds
+widened. Same boot/terminal,no globals/GOT/unresolved imports/CSR/new ISA
+or unsupported arithmetic;individual frames<=4096. Old copied-array
+Precise BootShape/JobShape functions are ABSENT from the actual new ELF.
+
+New flag OFF:full real SDK73941/57615 BOTH ACTUALLY exit0. Entire old0b8d
+control FIRST,then currentc094 public object and5a3c module reproduce
+EXACTLY. Existing native/Assistant/default image is unchanged. Partial
+native stack5392B known/25 unresolved is NOT whole-kernel qualification.
+
+Actual emitted predicates: CLOSED
+----------------------------------
+36248/82294 BOTH ACTUALLY exit0,cmp-exact logs. ALL five whole old/new
+artifacts authenticated before output/tool invocation;nm/processor use
+SAME private snapshots,not unchecked second opens of caller files. Actual
+old3718 and new88e4 Boot/Job RV32 bodies execute on synthetic ABI inputs:
+41169 comparisons/7283 accepts/33886 refusals;ALL119 workers/ALL128x32
+mutations across8 job operations/unsigned limits/null/alias. Returned bool
+matches unchanged HOST predicate;ABI/callee-saved regs/input arrays intact,
+compiler stack writes ONLY,no model/NoC/MMIO/Tensix/CSR or native owner.
+Representative HOST retired counts:Boot2100->233,ordinaryJob5374->521.
+These counts are NOT device cycles,physical latency,TPS or Work evidence.
+
+Non-grammar static audit: CLOSED,explicit proof limits
+-----------------------------------------------------
+Final29289/38247 BOTH ACTUALLY exit0.37 actual arithmetic/release/commit/
+feedback/live-source/FIFO/TID/gather/empty-wrapper bodies byte-exact except
+authenticated LINK/readonly literal and exact bounded-induction relocations.
+3 whole begin/receipt/end callback bodies preserve exact indirect words;
+callback TARGETS remain explicitly unresolved. Transfer/Packet complete
+direct-call multisets unchanged. Changed Boot/Job predicates and inlined
+indexed-switch/Projection::Run paths are NOT proved by this static test.
+
+Initial strict audit correctly refused literal aliases/Scope;logs retained.
+Existing parent decoders/source remain UNCHANGED. New consumer object view
+removes ONLY3 extra flat-route symbols after proving EACH same start,
+size28,all bytes and7 canonical route words as its existing named route
+OBJECT. No generic alias collapse,executable/MMIO/unknown normalization.
+
+Scope is the same1548B function at0x64000. Its compiler loop uses an
+induction pointer initially just before readonly tables,not an always-read
+object base. An exact pinned instruction/branch pattern proves32 iterations,
+counter unsigned(-8..23),table READS ONLY iterations8..13,exact6words in a
+24B CSWTCH object,ALL24 bytes identical. The end-marker minus start remains
+128B;the accidentally enclosing object/offset is NOT read authority. This
+specific proof retains all other instructions/calls/metadata and replaces
+ONLY the two address materializations plus that false end-marker identity.
+No generic code-pointer or out-of-object normalization grant. Bad initial
+alias-count fixtures and Scope mismatch diagnostics remain in raw evidence.
+
+Actual original-byte first layer: CLOSED,strict bitexact
+------------------------------------------------------
+SAME97103/20007 BOTH ACTUALLY exit0. New explicit --flat-matrix-grammar
+accepts ONLY the full empty/read-source/counter/TID/identity/cohort original
+first-layer test;new88e4 five artifacts+original worker/model authenticated.
+Genuine embedding+layer0/SAME119 histories execute real worker arithmetic;
+453 real8-read groups/3624 captured CSR replies/8 queued/outstanding/reverse
+responses retained. ALL10240 captured embedding+layer0 words compare
+BITEXACT in unchanged main+clean comparators,actualexit0,maxAbs0,
+relativeL20,NO tolerance. BOTH41028B captured prefixes SHA:
+ 4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+HOST152420178 instructions include cooperative simulated waiting;previous
+3718 HOST169244501 is NOT a device timing comparison or speedup forecast.
+No model token/current-state reuse/STOP/END/native lifetime/full64-layer/
+arbitrary-prompt/public-ABI/hardware/Work result is inferred from layer0.
+
+Next remains immutable DATA + exact native subject/lifetime/updater gates,
+then real A/B hardware timing. Larger on-card scheduling/kernel changes,
+full-model numerical investigation,resident fresh requests and usable
+Assistant Work remain owed.20tok/s target is nowhere near demonstrated.

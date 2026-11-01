@@ -12,6 +12,10 @@ import subprocess
 import sys
 import tempfile
 
+flat_grammar='--flat-matrix-grammar' in sys.argv[1:]
+if flat_grammar:
+    assert sys.argv.count('--flat-matrix-grammar')==1
+    sys.argv.remove('--flat-matrix-grammar')
 empty_receipt_poll='--empty-receipt-poll' in sys.argv[1:]
 if empty_receipt_poll:
     assert sys.argv.count('--empty-receipt-poll')==1
@@ -44,6 +48,7 @@ identity_faults=identity_boundary and len(sys.argv)==6 and sys.argv[5]=='--packe
 tid_faults=tid_boundary and len(sys.argv)==6 and sys.argv[5]=='--tid-boundary-faults'
 read_source_faults=read_source_boundary and len(sys.argv)==6 and sys.argv[5]=='--read-source-boundary-faults'
 empty_receipt_faults=empty_receipt_poll and len(sys.argv)==6 and sys.argv[5]=='--empty-receipt-poll-faults'
+assert not flat_grammar or empty_receipt_poll and first_layer
 assert not empty_receipt_poll or read_source_boundary and (first_layer or empty_receipt_faults)
 assert not read_source_boundary or counter_gather and (first_layer or read_source_faults or empty_receipt_faults)
 assert (not tid_boundary or identity_boundary and (first_layer or tid_faults or read_source_faults or empty_receipt_faults))
@@ -57,7 +62,7 @@ here=pathlib.Path(__file__).resolve().parent
 def pins(script):
     return next(ast.literal_eval(n.value) for n in ast.parse(script.read_text()).body
                 if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='PINS' for t in n.targets))
-for directory,script in ((image,here.parent/('build_qwen38_empty_receipt_poll_root.py' if empty_receipt_poll else 'build_qwen38_read_source_boundary_root.py' if read_source_boundary else 'build_qwen38_counter_gather_root.py' if counter_gather else 'build_qwen38_tid_boundary_root.py' if tid_boundary else 'build_qwen38_packet_identity_boundary_root.py' if identity_boundary else 'build_qwen38_cohort_local_sources_root.py' if local_sources else 'build_qwen38_retained_cohort_root.py')),
+for directory,script in ((image,here.parent/('build_qwen38_flat_matrix_grammar_root.py' if flat_grammar else 'build_qwen38_empty_receipt_poll_root.py' if empty_receipt_poll else 'build_qwen38_read_source_boundary_root.py' if read_source_boundary else 'build_qwen38_counter_gather_root.py' if counter_gather else 'build_qwen38_tid_boundary_root.py' if tid_boundary else 'build_qwen38_packet_identity_boundary_root.py' if identity_boundary else 'build_qwen38_cohort_local_sources_root.py' if local_sources else 'build_qwen38_retained_cohort_root.py')),
                          (old,here/'run_pioneer_q38_mixed_worker_tests.py'),
                          (worker,here.parent/'build_qwen38_precise_beta_worker_image.py')):
     expected=pins(script);assert expected

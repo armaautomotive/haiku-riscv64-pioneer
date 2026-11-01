@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_flat_matrix_grammar_roles.py", line 32, in <module>
+    check(bad,False)
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_flat_matrix_grammar_roles.py", line 21, in check
+    assert (result.returncode==0)==okay,result.stderr
+AssertionError

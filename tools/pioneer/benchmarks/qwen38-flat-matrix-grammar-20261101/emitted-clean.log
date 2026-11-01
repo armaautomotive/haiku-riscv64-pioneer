@@ -1,0 +1,2 @@
+EMITTED_SYNTHETIC_ARGUMENT_HOST_INSTRUCTIONS boot2100->233 ordinaryJob5374->521;NOT device cycles,TPS or sustained model time
+PASS actual frozen old+new emitted Boot/Job grammar/41169 cases/7283 accepted/33886 refused/ALL119 worker arguments/ALL128x32 mutations across8 operations+unsigned/null/alias/ABI/stack-only writes;synthetic DATA arguments ONLY,NO acquired owner,connected model,native,hardware,timing or Work grant

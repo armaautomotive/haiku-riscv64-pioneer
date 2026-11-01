@@ -1,8 +1,11 @@
 /* SPDX-License-Identifier: MIT */
-#include "PioneerQ38JobBootFoldRole.h"
+#include "PioneerQ38FlatMatrixGrammarRole.h"
 #ifndef PIONEER_Q38_PUSHED_WORKER_LAYOUT_H
 #define PIONEER_Q38_PUSHED_WORKER_LAYOUT_H
 #include "PioneerQ38PreciseWorkerLayout.h"
+#ifdef PIONEER_Q38_FLAT_MATRIX_GRAMMAR_IMAGE
+#include "PioneerQ38FlatMatrixGrammar.h"
+#endif
 // Distinct proposed DATA only. A matching receipt is NOT a native/physical
 // completion or permission to release a job. Only the distinct returning
 // ROOT experiment consumes it; this DATA header grants no native launch.
@@ -49,6 +52,9 @@ PIONEER_Q38_PUSHED_BOOT_FN bool ExtensionShape(const uint32_t* b){
 }
 #endif
 PIONEER_Q38_PUSHED_BOOT_FN bool BootShape(const uint32_t* b){
+#ifdef PIONEER_Q38_FLAT_MATRIX_GRAMMAR_IMAGE
+ return PioneerQ38FlatMatrixGrammar::BootShape(b);
+#else
 #ifdef PIONEER_Q38_JOB_BOOT_FOLD_IMAGE
  if(!ExtensionShape(b))return false;
 #else
@@ -56,8 +62,12 @@ PIONEER_Q38_PUSHED_BOOT_FN bool BootShape(const uint32_t* b){
  for(unsigned i=40;i<=54;i++)if(b[i]!=BootWord(i))return false;
 #endif
  uint32_t old[64];OldBoot(b,old);return Base::BootShape(old);
+#endif
 }
 PIONEER_Q38_PUSHED_JOB_FN bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
+#ifdef PIONEER_Q38_FLAT_MATRIX_GRAMMAR_IMAGE
+ return PioneerQ38FlatMatrixGrammar::JobShape(j,b,previous,densePhase);
+#else
 #ifdef PIONEER_Q38_JOB_BOOT_FOLD_IMAGE
  // The normalized QGW2 boot is STILL fully checked by Base::JobShape.
  // Check the distinct QGW3 extension here,not that same base boot twice.
@@ -69,6 +79,7 @@ PIONEER_Q38_PUSHED_JOB_FN bool JobShape(const uint32_t* j,const uint32_t* b,unsi
  for(unsigned i=0;i<64;i++)oldJob[i]=i?j[i]:unsigned(Base::Magic);
  if(j[2]==GlobalMatrix){if(j[31]!=JobWitness)return false;oldJob[31]=Base::JobWitness;}
  return Base::JobShape(oldJob,oldBoot,previous,densePhase);
+#endif
 }
 static inline unsigned Slot(unsigned worker){return worker && worker<=119?Mailbox+(worker-1)*Stride:0;}
 PIONEER_Q38_PUSHED_GRAMMAR_FN(receipt_shape) bool Receipt(const uint32_t* r,const uint32_t* b,const uint32_t* j,const uint32_t* before){
