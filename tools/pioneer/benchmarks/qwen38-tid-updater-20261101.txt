@@ -1,0 +1,53 @@
+Exact TID diagnostic update/restore route: offline qualification complete
+=======================================================================
+2026-11-01,05:41 UTC. Goal ACTIVE. No new hardware or Work speed result.
+The Pioneer remains on independently verified041 baseline/tag12/gen22;
+the new e09 TID diagnostic is NOT staged or installed by these tests.
+
+Identity and reversible route
+-------------------------------
+New --apply-token-tid-boundary-benchmark accepts ONLY exact baseline:
+ 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+to the exact independently qualified native module:
+ e09cc07492d201b6a23f454ae0be514597051f8c55cf143b518eeb0b2f6c5e35
+New --restore-token-tid-boundary-benchmark accepts ONLY the reverse.
+Both directions bind whole input hashes in their backup names; tag75
+alone is NOT revision identity. New candidate path, outside drivers/bin:
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-token-tid-boundary-benchmark-e09cc074
+Current complete helper SHA:
+ 51c138e4965e1df0cb67d6d79d93f907ad11e9443c0a7efaf9699fbbb4816dc9
+The old efd848/af680/other staged immutable helpers are not modified and
+cannot be used for e09 restoration. No force/reset/automatic rollback.
+
+Actual disposable filesystem and handshake tests
+-------------------------------------------------
+Main77179 and independent-clean21660 BOTH ACTUALLY exit0. Each executes
+1148 cases using the real /bin/sh helper in disposable fake Haiku trees:
+new TID and unchanged packet/cohort/commit/retained/frontier apply/restore
+routes, full hashes, candidate paths, symlinks, possible compute parents,
+status/generation/ownership/guard handshakes, uncertainty and backup guards.
+All old/default code bytes and handshakes remain unchanged outside the
+new explicit routes. Same-tag unknown and known old ba971/844ec/78322/1f3/
+9ad inputs cannot masquerade as e09. Old routes reject new e09 bytes too.
+Legacy backups remain untouched; exact existing backups retain identity.
+Bad identities fail before admin access. No real device, driver reload,
+GPU execution, reset, power, network, SD or hardware operation is performed.
+Both trees' complete helper hashes agree; shell syntax validation passes.
+
+Runtime qualification is still separate
+-----------------------------------------
+Corrected native original-history2757/74646 remain ACTUALLY LIVE05:41 UTC,
+phase13/ROOT110000066 after real first-matrix and subsequent model work.
+This is not complete first-layer/119STOP/120HOLD/drain/full-END proof.
+Poll those SAME handles through actual closure and compare native prefix
+DATA strictly before any new hardware application. Initial failed native
+fixture runs stay failed; see qwen38-tid-native-20261101.txt.
+
+After all native gates: fresh idle/full hashes/64CPU/fullRAM, stage outside
+drivers/bin, independently verify exact module+helper+4b+guard bytes, apply
+only this exact helper, verify installed identity, then one bounded SAME4b
+benchmark. No second GPU/admin/model or reload/reset/power/SD/OS/network
+intervention during that real model lifetime, including source auth before
+accelerator Open. After actual clean closure, strict comparison/fresh idle
+and this exact helper restore041. Unknown/quarantined resources are never
+auto-restored. No usable Assistant/Work, full-model quality or20tok/s claim.
