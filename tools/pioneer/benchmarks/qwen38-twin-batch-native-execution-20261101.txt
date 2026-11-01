@@ -1,5 +1,44 @@
 Twin-batch native execution path:ENTRY gates CLOSED,full END still LIVE
 ====================================================================
+Native full-END+strict-prefix closure2026-11-01 21:36UTC
+-------------------------------------------------------
+This closure supersedes ALL historical LIVE statements below. SAME new
+main90832-wk/clean22896-wl BOTH ACTUALLY exit0;whole logs byte-identical.
+SAME unchanged old batched15267-wm/30712-wn ALSO ACTUALLY0,whole logs exact.
+No timeout was treated as completion,no abbreviated/cancel-only substitute
+was run and none of these four histories was restarted.
+
+The new actual851-source/1010 zero-job/120-held-image/119 VIRGIN complete
+RV32+Tensix histories execute original embedding,Matrix,Conv,GDN and FFN,
+produce786432 nonzero next-slot state words and reach ALL119 DONE/WAIT
+boundaries. New ROOT90841289/peers1931109888 instruction observations are
+HOST counts,NOT hardware cycles or speed. Actual combined reserved stack
+ROOT6528/accessed6516 and MAX peer5360/accessed5348 fit8192 bytes EACH;
+kernel/IRQ stack is separate and NOT qualified by those numbers.
+
+The SAME history consumes cancellation,executes ROOT+119 genuine STOP
+loops and2048 inert instructions each,observes the actual native terminal,
+performs ROOT-first120 HOLD,zero-commit drain and BOTH original held-hidden
+reads16384+4096B,then restores original full token/dispatch/119peer/ROOT/
+shared stores with their complete second passes. Actual native clock
+END1350->800,hardware retirement,29 simulated OS-view deletions,72 checked
+PCI reads/11 ordered original writes,3 checked host releases,same-cookie
+unreserve,locked whole-context destruction and END all complete. Raw logs
+preserve every original lifetime/refusal assertion;NO supplied terminal,
+owner,processor state,CPU products or private-history transplant.
+
+ONLY AFTER actual exit0,original immutable prefixes were copied to
+separate observed directories. Unchanged strict comparator new wu/wv and
+old ww/wx ALL ACTUALLY0;paired logs exact. ALL10240 embedding+layer0 words
+are bit-exact,maxAbs/L2zero,all3 CPU trace pins unchanged,NO tolerance or
+diagnostic-only exit policy. All four41028B prefixes are byte-identical:
+ SHA4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+This is first-layer/native lifecycle qualification,NOT later layers,
+committed model tokens,full-model quality,physical speed or usable Work.
+No new accelerator work has occurred on the Pioneer. Next is a separately
+bound public diagnostic BUILD,not automatic deployment. The failed34322
+module's apply route remains disabled and its failure is not relabelled.
+
 2026-11-01. Goal ACTIVE;20tok/s UNMET. No new public driver is built,
 staged or installed by this checkpoint. There is NO physical TPS result,
 whole-model quality pass or new Assistant Work option. Pioneer remains
@@ -54,7 +93,7 @@ and clean13853-wr BOTH ACTUALLY0,logs EXACT:37 explicit positive TEST roles
 and1103 absent/zero/two/kernel/device/Work refusals. The implementation
 still refuses native imports and has no processor-history/product setter.
 
-Four genuine original-model histories:LIVE,NOT completed qualification
+Historical four original-model histories:now CLOSED ABOVE
 -----------------------------------------------------------------------
 SAME handles,all started21:07UTC:
  main twin90832-wk   clean twin22896-wl

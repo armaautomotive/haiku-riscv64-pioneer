@@ -1,5 +1,12 @@
 Copy-free twin-batch PRIVATE native BUILD:CLOSED,not execution/installation
 ======================================================================
+Native execution update:paired actual original-model first-layer/full
+cancel/STOP/HOLD/drain/restore/clock/PCI/VM/hosts/unreserve/destructor/END
+histories and strict10240-word CPU prefix comparisons are now CLOSED.
+See qwen38-twin-batch-native-execution-20261101.txt for complete evidence.
+This does NOT qualify a new public driver,physical performance or Work;
+historical next-execution requirements below describe this earlier build.
+
 2026-11-01. Goal ACTIVE;20tok/s UNMET. The copy-free worker now has a
 distinct compiled private native binding to the actual full-model owner.
 No new public driver,hardware run,whole-model numerical pass,Assistant
