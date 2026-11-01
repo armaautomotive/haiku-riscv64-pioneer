@@ -1,0 +1,112 @@
+Commit-boundary firmware:new private SDK and bounded diagnostic builds
+======================================================================
+2026-11-01,01:32UTC. Goal ACTIVE;20tok/s UNMET. This checkpoint does NOT
+claim a new hardware speedup,native END,whole-model numerical acceptance
+or usable Work. Latest closed hardware rate remains0.107253987..
+0.107255183tok/s,with known first-three maximum-logit mismatches. Live
+profile91692 still uses OLD1f3 firmware,NOT the new78322 module below.
+
+Firmware subject and exact selection
+-------------------------------------
+The already independently built83677 ROOT brackets CommitState's repeated
+numeric scans at entry/exit while preserving metadata,source,counter,
+command,copy and readback guards. Actual linked-RV32 transaction/fault
+coverage is qwen38-commit-boundary-rv32-data-20261101.txt:synthetic unit
+predecessors are NOT genuine all64-layer/native histories. All13 complete
+ROOT/worker sections and2MiB RoPE bind to the exact new DATA header:
+ f17464e86b23df5210830446fa894980deba0f1f9a469fd9676db788190df182
+New explicit flags now select that namespace under a distinct private OR
+bounded physical diagnostic role. Default/old retained/frontier selectors
+keep their old packages. DATA alone cannot select a native owner;private,
+physical,USER,ROOT BUILD,CPU-reference and Work combinations are refused.
+
+Actual independent private builds
+----------------------------------
+Main64075/clean3303 inspection and frozen80215/19459 ACTUALLY exit0.
+Final92728/83028 ACTUALLY exit0 after the physical role split,producing:
+ e008a0656dc3cb65899e8b893c4b4d1d45339ccd8cfce8f1bbc3e1a0f29c97d5
+This is a renamed-ABI NODRV object,not an installable conventional driver.
+The entire old473ba872 private object reproduces FIRST from current source.
+Actual new arrays,unchanged RoPE,individual static frames and absence of
+CPU-oracle/Work/MOCK/public-ABI imports are checked. Combined kernel/IRQ/
+entry stack is NOT qualified by these object checks.
+
+Actual independent public diagnostic builds
+--------------------------------------------
+Main93160/clean60421 inspect and frozen59117/97625 ACTUALLY exit0:
+ object f04166c669355593a80a98d39b7fafdd19914c5ec86730b373b7619d99365962
+ module 78322cfa94db2519284efa12ad69cfa77981446f03081fc95aee2ee6234de8d1
+The entire old04da3252 object and1f3bcff8 module reproduce FIRST. All13
+actual compiled arrays and unchanged RoPE are verified from those objects.
+Existing bounded6607+6608 ABI/tag75 is retained;that tag is NOT full byte
+identity. Complete module hashes distinguish78322 from1f3,9ad and other
+tag75 images. No arbitrary prompts,old hidden operations or Work route is
+enabled. The actual known-module public callgraph remains5392B/25 unknown
+edges,PARTIAL only:unknown kernel/IRQ/entry/indirect costs are not zero.
+
+Containment and regressions:ACTUAL exits
+----------------------------------------
+Final private20149/98775 ACTUALLY exit0:4 positives/325 missing,zero,two,
+late,tag,ABI,physical,USER,CPU and Work refusals EACH. The unchanged old
+retained private4/308 controls pass FIRST. Physical14427/15674 ACTUALLY
+exit0:4 positives/220 refusals EACH;old retained4/203 controls pass FIRST.
+DATA5228/93973 ACTUALLY exit0:all3044230 code words across120 cores,2290
+gap/invalid/immutable-output refusals,15 authenticated artifacts,30 corrupt/
+truncated refusals,2 positives/91 role refusals EACH. Entire old retained
+and frontier DATA regenerate unchanged and their old tests pass first.
+
+Declared parser binding,NOT hardware provenance
+------------------------------------------------
+78322 is bound to the exact190704-byte83677 ROOT ELF for offline profile
+symbolization.26008/71298 ACTUALLY exit0:3 real ELF positives/7 wrong
+cross-module or unknown-binding refusals EACH. nm reads a private snapshot
+of authenticated ELF bytes. Exact function extents remain mandatory;
+RAW60008/FFFFFFFF stay UNMAPPED. Strict parser1 positive/581 refusals and
+unchanged base3 positives/1260 refusals pass EACH. Numeric mismatches still
+fail;no tolerance,CPU control,PC subtraction or interval widening changes.
+Declared binding does NOT prove what module ran on real hardware.
+
+Guarded update preparation:NOT deployment permission
+-----------------------------------------------------
+Local helper adds ONLY exact041fef18<->78322cfa routes,with full-hash
+backups and existing idle/quiescence/source/symlink/owner guards. Current
+helper SHA:
+ ccded66d81b5589a8f6d2c6787fca0568b47543f2136b1f5f0376e894262563c
+Fake-Haiku filesystem tests56209/68108 ACTUALLY exit0:554 cases EACH for
+new and old retained/frontier apply/restore modes. They reject1f3/9ad,
+older tag75/tag74 and unknown same-tag bytes in the new route,and reject
+78322 as a substitute in the old retained route. No automatic rollback,
+force/reset or real accelerator access exists in these tests. No new helper
+or module is staged on the Pioneer;existing immutable94dd helper is intact.
+
+Native original-model lifecycle tests:STILL LIVE
+------------------------------------------------
+Main69606/clean88283 are the SAME live histories,not restarted. They use
+the full authenticated original GGUF,all851 learned tensors,actual frozen
+zero ROM and119 virgin full RISC/Tensix engines sharing native L1/CSR/
+GDDR bytes. First3 actual matrix workers complete their full role10 output;
+no CPU-produced embedding,model products or processor history is inserted.
+Latest01:32 observation reaches layer0/ROOT120000103 instructions,actual
+recurrent state reads/writes786432 words each and30720 history words.
+These are HOST interpreter counts,NOT hardware time,cycles or throughput.
+The history must still complete layer0,posted cancellation,119 STOPs+120
+HOLDs,drain,held readout,L1/ROOT/shared/clock/PCI/VM/host restoration and
+whole-context destruction. First-layer/cancel can NEVER qualify CommitState
+or all64-layer numerical acceptance. DO NOT DEPLOY while this gate is open.
+Raw live logs:
+ /private/tmp/pioneer-q38-commit-native-history-main-20261101-zcd.log
+ /private/tmp/pioneer-q38-commit-native-history-clean-20261101-zce.log
+
+Physical profile and next action
+---------------------------------
+SAME91692 old1f3/718d profile has completed full19399024640-byte upload
+and acknowledged START;it is still LIVE at01:32UTC,stderr0B. No other
+GPU/admin FD,model,reload/reset,power/SD/OS/network change occurs during
+that lifetime. Raw frontend rows print ONLY after genuine END+Close. After
+actual process exit,strict main/clean parser analysis and fresh idle041
+restoration via existing94dd helper are required;expected generation16.
+The pending profile cannot be relabelled as completed or baseline restored.
+Finish both native original histories and strict first-layer CPU comparison
+before considering a separately identified new78322 hardware diagnostic.
+Preserve original-model numerical,arbitrary-prompt,resident fresh-request,
+Assistant Work and20tok/s requirements. Goal remains ACTIVE.

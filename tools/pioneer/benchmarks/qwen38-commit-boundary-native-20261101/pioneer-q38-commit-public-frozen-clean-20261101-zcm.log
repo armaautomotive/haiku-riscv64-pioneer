@@ -1,0 +1,5 @@
+PASS dormant commit-boundary DATA role: ENTIRE old04da3252 SDK object+1f3bcff8 diagnostic module byte-identical after independent current-source compile/link;no candidate native selector,install,execution or TPS grant
+f04166c669355593a80a98d39b7fafdd19914c5ec86730b373b7619d99365962 commit-boundary-benchmark-native.o
+78322cfa94db2519284efa12ad69cfa77981446f03081fc95aee2ee6234de8d1 tenstorrent_pci_probe-token-COMMIT-BOUNDARY34-BENCHMARK
+PASS_BUILD_ONLY separate commit-boundary6607+6608 diagnostic/entireold04da+1f3 unchanged/all13 actual arrays+RoPE exact/same-owner counter+native lifecycle adapters/noCPU oracle+Work+TEST imports
+PARTIAL knownModuleChain5392/unresolved25;wholeKernelStackQualified=FALSE;NO native execution,physical,numerical,timing,resident Work or deployment grant

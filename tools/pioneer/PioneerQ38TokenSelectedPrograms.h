@@ -2,8 +2,9 @@
 // DATA selection only; no native source/lifetime, journal or launch grant.
 // Rechecked outside the guard so late/defined-zero changes cannot alias data.
 #include "PioneerQ38TokenCommitBoundaryProgramsRole.h"
-#ifdef PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_PROGRAMS
-#error Commit-boundary DATA has no qualified native program selector or Work grant
+#if defined(PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_PROGRAMS) \
+ && !defined(PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_NATIVE_CONTEXT) && !defined(PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_BENCHMARK_NATIVE)
+#error Commit-boundary DATA requires its distinct private or diagnostic selector;no Work grant
 #endif
 #include "PioneerQ38TokenRetainedCohortProgramsRole.h"
 #if defined(PIONEER_Q38_TOKEN_RETAINED_COHORT_PROGRAMS) \
@@ -24,7 +25,9 @@
 #elif defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
 #error QTP3 native selector requires its actual native parent
 #endif
-#ifdef PIONEER_Q38_TOKEN_RETAINED_COHORT_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_PROGRAMS
+#include "PioneerQ38TokenCommitBoundaryPrograms.h"
+#elif defined(PIONEER_Q38_TOKEN_RETAINED_COHORT_PROGRAMS)
 #include "PioneerQ38TokenRetainedCohortPrograms.h"
 #elif defined(PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS)
 #include "PioneerQ38TokenFrontierPrograms.h"
@@ -40,7 +43,9 @@
 #include "PioneerQ38TokenFootprint.h"
 #ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
-#ifdef PIONEER_Q38_TOKEN_RETAINED_COHORT_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_PROGRAMS
+namespace PioneerQ38TokenPrograms=PioneerQ38TokenCommitBoundaryPrograms;
+#elif defined(PIONEER_Q38_TOKEN_RETAINED_COHORT_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenRetainedCohortPrograms;
 #elif defined(PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenFrontierPrograms;

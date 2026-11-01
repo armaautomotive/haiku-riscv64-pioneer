@@ -17,13 +17,15 @@ HEADER = 'Q38_FRONTEND_PROFILE_ZERO_EXTRA_ACCELERATOR_CALLS_RAW_NOT_RETIRED_PC_O
 BEGIN = re.compile(r'Q38_FRONTEND_ROWS_BEGIN generation([0-9]+) rows([0-9]+);AFTER_CLEAN_END_NOT_ATOMIC_WITH_PRECEDING_COUNT')
 ROW = re.compile(r'Q38_FRONTEND_ROW index([0-9]+) begin_us([0-9]+) end_us([0-9]+) preceding_count([0-9]+) ready([0-9]+) stage([0-9]+) checked_word([0-9]+) first_raw([0-9a-f]{8}) second_raw([0-9a-f]{8})')
 END = re.compile(r'Q38_FRONTEND_ROWS_END rows([0-9]+);FRONTEND_SAMPLE_COUNTS_NOT_RETIRED_INSTRUCTION_CYCLES_OR_FUNCTION_TIME')
-# These are caller-declared bindings to independently qualified modules,
+# These are caller-declared bindings to independently build-qualified modules,
 # NOT an in-band cryptographic proof of the hardware's installed module.
 BINDINGS = {
  '9ad9e86bd5e45c5cb11dfe286f3528452dfe7b0e4630f67546acbb43a03064e8':
   (190684, '9515589d211cb9d9b2db4be108ccad5752996ec07a5354f0181775f6a6888862'),
  '1f3bcff838ff9f95d5f450c53000f02f80ddcd073aa5a5cc3018ee4208e0847c':
   (190700, '48b2bf31d2eefc36e50dcaaa9202d7d92579496a5ab72e9a62c9d4cfb66250ee'),
+ '78322cfa94db2519284efa12ad69cfa77981446f03081fc95aee2ee6234de8d1':
+  (190704, '83677f78f548b8fc11d874a858b670310d1dad859982e737c674b2ff7329db00'),
 }
 
 
