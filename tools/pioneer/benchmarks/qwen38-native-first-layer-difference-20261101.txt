@@ -1,5 +1,30 @@
 Original-model native hidden rows:first visible difference at completed30
 =======================================================================
+2026-11-01 23:12UTC follow-on:the current first30 completed hidden rows
+are ALL153600 words bit-exact to the original pinned partial token0 DATA
+already studied on2026-10-31. The old full partial hidden SHA remains
+5a1c8478fea72b7a3d1acc63eecdebdb3fbdcf3c1f57166e04a3a19aa99ab784.
+Thus this is confirmation of the EXISTING reduction-order issue,not a new
+normalizer or beta-only diagnosis. See qwen38-layer29-reduction-order-
+20261031.txt and its correction to the earlier beta-only localization.
+
+The UNCHANGED existing layer29 replay was rerun from both source trees:
+main45111-zx/clean77196-zy BOTH ACTUALLY exit0,complete logs byte-identical.
+Every run authenticates ALL3 original CPU traces,the exact old partial
+hidden pin and SAME-open whole original GGUF before the actual CPU Impl
+replay and separately isolated card scalar/quantizer helpers. ALL15 modes
+retain their original decisions:the exact CPU baseline matches all5120
+reference words;seven F32-reduction variants reproduce all5120 native
+words. Actual card quantizer lanes/scales match their reference for every
+tested gated/FFN vector. Changing reduction order changes ONE Q8 half-scale
+relative to the wider-reference path,then propagates through the layer.
+No tolerance,trace pin,expected value,production arithmetic or Work mode
+changed. This is HOST arithmetic evidence,not an emitted-SFPU fix or a new
+physical score/speed result. The next numerical experiment must qualify
+the actual emitted recurrence on these real-model-derived inputs.
+
+Historical first observation and scope follow
+----------------------------------------------
 2026-11-01 22:45UTC. Goal ACTIVE;usable27B Work and20tok/s UNMET. This is
 an offboard numerical localization,NOT P100A throughput,physical fault
 cause,whole-model numerical acceptance or card authenticity evidence.
