@@ -1,0 +1,83 @@
+Actual cohort-source driver:9.36percent paired gain,still not usable27B
+====================================================================
+2026-11-01,03:49UTC. Goal ACTIVE.20tok/s,full numerical acceptance and
+usable resident Work/Assistant remain UNMET. This is one34-position
+diagnostic,not arbitrary-prompt serving or a delivery ETA.
+
+Actual subject and clean complete lifetime
+-------------------------------------------
+SAME74354 launched03:08UTC and ACTUALLY exits0,observed03:47:14UTC.
+Installed complete module SHA:
+ 844ecfe2fc3b8396f0c9787c3a5458544abb91a91011d8f9844f3e137c3d03f5
+tag2026103100010075/generation19;ROOT iscd54a316,not new0c3f BUILD.
+UNCHANGED4b client SHA:
+ 4b1dbee63e537b39e5212a9180670139a2a9ba46ef0b3cbeb66a7d5226b7f048
+The same-open ORIGINAL GGUF authenticates before accelerator Open. All
+19399024640 padded learned bytes/3551parts/4736090pages/20367spans upload.
+Actual terminal,HOLD,drain,full restore,END+Close and all34 records complete;
+stderr0B. No runtime CPU model reference,second GPU/admin FD,other model,
+reload/reset,power,SD,OS or network change during the active model lifetime.
+
+Measured post-prompt count window
+----------------------------------
+32 sampled tokens,first committed2,last34,2696 observations:
+ elapsed264094422..264097733us
+ rate0.121167265..0.121168784tok/s
+ mean8.2529506875..8.25305415625seconds per sampled token
+Authentication,upload,startup and cleanup are EXCLUDED. These are count-
+window bounds,not statistical confidence or isolated-token latency.
+
+Exact same-client old78322 control:zdh log,32 sampled tokens,committed2..34,
+2949 observations,elapsed288809504..288812830us,rate0.110798402..
+0.110799678tok/s. Observed paired-run throughput gain9.357055..
+9.359686percent. One run each is NOT repeatability or statistical proof.
+ALL34 first12-word record headers EXACT. Per-session nonces and physical
+counters are deliberately not asserted equal. No profiler client is
+substituted as a control. This is a modest gain,not close to20tok/s.
+
+Strict numerical acceptance:STILL FAILED
+-----------------------------------------
+Main+independent-clean strict comparators ACTUALLY exit1;outputs byte-
+identical. Record/session/feedback/flags/reserved/count/rate grammar and
+arithmetic pass. Known first-three maximum-logit differences remain:
+ position selected observed CPU-reference
+ 0        70253    413bc1de 413c2358
+ 1        17       41452aa2 414621d3
+ 2        17       4167c42a 4168afd0
+No tolerance,reference,expected value or verifier was relaxed. Later
+positions3..33 have no external numerical acceptance here. Repeated17
+and equal experimental-driver headers do NOT prove conversation quality.
+No full-hidden/vocabulary,arbitrary-prompt or Work/Assistant pass is claimed.
+
+Actual baseline restoration and independent health
+---------------------------------------------------
+ONLY after actual process closure,fresh independent SSH ACTUALLY exits0:
+Haiku/UID0,64CPUs,maxRAM137034936320B/free133749952512B,no model/Assistant
+parent,exact844ec/4b/af680/d1ce hashes,tag75/gen19/cold0/quiesced0/owner0/
+open1/guard1. Exact af680d2d helper restore1249 ACTUALLY exits0:quiesce,
+close,041 baseline reload,tag2026102100010012/generation20. No reboot,
+GPU execution,reset,recovery,SD,mains or hardware change was needed.
+
+Fresh independent post-restore SSH ACTUALLY exits0 and verifies full SHA:
+ 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+tag12/gen20/cold0/quiesced0/owner0/open1/guard1,64CPUs,
+maxRAM137034936320B/free133755088896B,unchanged4b client,af680 helper and
+d1ce guard hashes.
+Restore helper SHA:
+ af680d2db96e4734d5ff054bc81bd2592b937fda9e084257db9746f30acc898b
+The diagnostic is no longer installed. No additional hardware model ran.
+
+Next
+------
+Separate0c3f packet-identity BUILD now has independent frozen control
+reproduction,13424 emitted-unit cases,48 original corruption children and
+original embedding+whole layer0 bit-exact in BOTH trees. See separate
+qwen38-packet-identity-boundary-20261101.txt. It is NOT this measured driver
+and has NO immutable DATA/native/physical/Work route yet. Its HOST169->85
+packet guard instruction count is not a measured card gain.
+
+Qualify the complete native path before any0c3f deployment,continue larger
+on-card orchestration/transfer cost reductions and arithmetic investigation,
+then establish resident fresh requests and usable Assistant Work. The
+original20tok/s goal stays active;neither this9.36percent pair nor the
+separate first-layer pass establishes completion.

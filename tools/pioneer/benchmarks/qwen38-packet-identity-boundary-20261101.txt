@@ -133,7 +133,12 @@ Separate hardware state
 SAME74354 is the PREVIOUS cd54 source-audit variant,driver844ec/gen19,
 unchanged4b client,launched03:08UTC. It is ACTUALLY live03:43:43 and its full
 19399024640-byte upload has finished;startup is acknowledged and the actual
-terminal-ready marker has begun HOLD/drain/restoration. NOT clean END yet.
+terminal-ready marker has begun HOLD/drain/restoration. That was NOT clean
+END yet. FOLLOW-ON:SAME74354 ACTUALLY exits0,observed03:47:14UTC. Strict
+main+clean comparisons both exit1 on unchanged full-model score failures;
+actual rate0.121167265..0.121168784tok/s. Exactaf680 restoration1249 exits0;
+fresh independent041 baseline/gen20/64CPU/max137034936320B health passes.
+See qwen38-cohort-local-sources-physical-20261101.txt for complete evidence.
 NO new0c3f firmware is on the card.
 No second GPU/admin/model FD,reload/reset,power,SD,OS or network change
 while that model is live. After actual terminal/END+Close+process exit:
@@ -141,7 +146,7 @@ strict main+clean analysis;compare same4b/old78322 control;fresh idle health;
 ONLY exactaf680 helper may restore041 baseline (expected generation20).
 Never use oldccded66d for844ec,or auto-restore unknown/quarantined hardware.
 
-Last CLOSED measured rate remains0.110798402..0.110799678tok/s,with known
+Last CLOSED measured rate is now0.121167265..0.121168784tok/s,with known
 full-model score mismatches. This BUILD does not fix those mismatches or
 establish full-card serving,arbitrary fresh prompts,usable Work/Assistant
 or20tok/s. Separate immutable DATA,complete native lifetime and hardware

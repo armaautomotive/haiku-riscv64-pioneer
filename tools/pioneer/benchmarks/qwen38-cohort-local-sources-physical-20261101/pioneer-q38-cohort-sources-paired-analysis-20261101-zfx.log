@@ -1,0 +1,37 @@
+{
+  "all34_first12_headers_exact": true,
+  "first3_actual_score_bits": [
+    "413bc1de",
+    "41452aa2",
+    "4167c42a"
+  ],
+  "new": {
+    "elapsed_max_us": 264097733,
+    "elapsed_min_us": 264094422,
+    "first_committed": 2,
+    "last_committed": 34,
+    "lower": 0.121167265,
+    "observations": 2696,
+    "sampled_tokens": 32,
+    "upper": 0.121168784
+  },
+  "old_same4b_78322": {
+    "elapsed_max_us": 288812830,
+    "elapsed_min_us": 288809504,
+    "first_committed": 2,
+    "last_committed": 34,
+    "lower": 0.110798402,
+    "observations": 2949,
+    "sampled_tokens": 32,
+    "upper": 0.110799678
+  },
+  "scope": "one paired count-window,NOT repeated statistical proof,isolated latency or model quality",
+  "seconds_per_sampled_token_bounds": [
+    8.2529506875,
+    8.25305415625
+  ],
+  "throughput_gain_percent_bounds": [
+    9.357055171225316,
+    9.359685530482654
+  ]
+}
