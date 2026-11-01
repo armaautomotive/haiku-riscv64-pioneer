@@ -1,8 +1,8 @@
 FIFO-aware transaction boundaries: isolated returning ROOT experiment
 ===================================================================
 2026-11-01. Goal ACTIVE. This is not a native/physical/Assistant release.
-Last CLOSED physical result remains 0.121167265..0.121168784 tokens/sec
-on the DIFFERENT 844ec driver. Full-model numerical acceptance and the
+Last CLOSED physical result is 0.124069222..0.124070829 tokens/sec
+on the DIFFERENT ba971 driver. Full-model numerical acceptance and the
 20 tokens/sec target remain unmet. No speedup is claimed for this BUILD.
 
 Why the next optimization needs real FIFO checks
@@ -97,9 +97,21 @@ The default original fabric is unchanged when this TEST flag is absent.
 
 First-layer positive and external comparison
 ---------------------------------------------
-15231/66956 are LIVE at 04:52 UTC. Do not infer completion from partial
-matrix output. Both must genuinely exit0 before strict unchanged CPU DATA
-comparison, any immutable DATA/native package or device use is considered.
+15231/66956 BOTH ACTUALLY exit0, observed05:06:52 UTC. Genuine original
+embedding+whole first layer+all119 closed histories complete, with no token
+or STOP/terminal grant. Unchanged strict main+clean comparators ACTUALLY
+exit0: all5120 embedding+5120 layer0 words bit-exact, maxAbs0,relativeL20.
+Both41028-byte prefix DATA files SHA:
+ 4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+This is FIRST-LAYER ONLY, not full-model/native/device/Work quality proof.
+Actual-PC HOST profile174023678 instructions/119 functions vs old0c3f
+182734157/116, including simulated polling/scheduling. Those counts are
+NOT card cycles, causal device timing or a physical throughput gain.
+
+The subsequent immutable DATA/native qualification is recorded separately
+in qwen38-tid-native-20261101.txt. Current-source86978/17569 also ACTUAL0:
+entirebc01 and all old controls remain exact after adding selector guards.
+Current BUILD role76361/66768 ACTUAL0 EACH:2 positives/95 refusals.
 
 Separate physical run and remaining work
 -----------------------------------------

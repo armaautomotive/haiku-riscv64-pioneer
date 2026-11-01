@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 // DATA selection only; no native source/lifetime, journal or launch grant.
 // Rechecked outside the guard so late/defined-zero changes cannot alias data.
+#include "PioneerQ38TokenTidBoundaryProgramsRole.h"
+#if defined(PIONEER_Q38_TOKEN_TID_BOUNDARY_PROGRAMS) \
+ && !defined(PIONEER_Q38_TOKEN_TID_BOUNDARY_NATIVE_CONTEXT) && !defined(PIONEER_Q38_TOKEN_TID_BOUNDARY_BENCHMARK_NATIVE)
+#error TID boundary DATA requires its distinct private or diagnostic selector;no Work grant
+#endif
 #include "PioneerQ38TokenPacketIdentityBoundaryProgramsRole.h"
 #if defined(PIONEER_Q38_TOKEN_PACKET_IDENTITY_BOUNDARY_PROGRAMS) \
  && !defined(PIONEER_Q38_TOKEN_PACKET_IDENTITY_BOUNDARY_NATIVE_CONTEXT) && !defined(PIONEER_Q38_TOKEN_PACKET_IDENTITY_BOUNDARY_BENCHMARK_NATIVE)
@@ -35,7 +40,9 @@
 #elif defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
 #error QTP3 native selector requires its actual native parent
 #endif
-#ifdef PIONEER_Q38_TOKEN_PACKET_IDENTITY_BOUNDARY_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_TID_BOUNDARY_PROGRAMS
+#include "PioneerQ38TokenTidBoundaryPrograms.h"
+#elif defined(PIONEER_Q38_TOKEN_PACKET_IDENTITY_BOUNDARY_PROGRAMS)
 #include "PioneerQ38TokenPacketIdentityBoundaryPrograms.h"
 #elif defined(PIONEER_Q38_TOKEN_COHORT_LOCAL_SOURCES_PROGRAMS)
 #include "PioneerQ38TokenCohortLocalSourcesPrograms.h"
@@ -57,7 +64,9 @@
 #include "PioneerQ38TokenFootprint.h"
 #ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
-#ifdef PIONEER_Q38_TOKEN_PACKET_IDENTITY_BOUNDARY_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_TID_BOUNDARY_PROGRAMS
+namespace PioneerQ38TokenPrograms=PioneerQ38TokenTidBoundaryPrograms;
+#elif defined(PIONEER_Q38_TOKEN_PACKET_IDENTITY_BOUNDARY_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenPacketIdentityBoundaryPrograms;
 #elif defined(PIONEER_Q38_TOKEN_COHORT_LOCAL_SOURCES_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenCohortLocalSourcesPrograms;

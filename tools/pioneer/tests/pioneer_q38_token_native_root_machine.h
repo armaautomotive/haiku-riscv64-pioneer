@@ -176,7 +176,13 @@ struct TokenStartupRoot:TokenNativeRootISA {
 #endif
   if(traffic && address==0xffb20040 && io.Core(0).pending && mayRespond && ++busyReads>=3)Respond();
 #endif
-  return io.Core(0).ResidentNocRead(address-0xffb20000);
+  // The hardware FIFO words already have a separate CURRENT-config
+  // endpoint in this fixture. They are not ordinary command/counter
+  // registers accepted by ResidentNocRead. Route actual emitted RISC
+  // loads here too;do not synthesize readiness or change configuration.
+  const uint32_t offset=address-0xffb20000;
+  if(offset==0x64 || offset==0x68)return io.Core(0).NativeFifoStatusWord(offset);
+  return io.Core(0).ResidentNocRead(offset);
  }
  void Store(uint32_t address,uint32_t value)override{
   namespace C=PioneerQ38GlobalChainLayout;

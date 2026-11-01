@@ -1,0 +1,4 @@
+PARTIAL knownModuleChain5392/unresolved25;wholeKernelStackQualified=FALSE
+f70f338b60454fe422026dad75d4d91448c9934bc9ad19dcdd7c2a8685619920 tid-boundary-benchmark-native.o
+e09cc07492d201b6a23f454ae0be514597051f8c55cf143b518eeb0b2f6c5e35 tenstorrent_pci_probe-token-TID-BOUNDARY34-BENCHMARK
+BUILD_ONLY new tid-boundary bounded6607+6608 diagnostic/ENTIRE old subject reproduced FIRST/all13 arrays+2MiBRoPE exact/individual frames bounded/noCPU oracle+Work+TEST imports;NOT lifecycle,full-model,physical,timing or Work qualification

@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 root_profile=None
+tid_boundary='--tid-boundary' in sys.argv
+if tid_boundary:
+    assert sys.argv.count('--tid-boundary')==1
+    sys.argv.remove('--tid-boundary')
 packet_identity_boundary='--packet-identity-boundary' in sys.argv
 if packet_identity_boundary:
     assert sys.argv.count('--packet-identity-boundary')==1
@@ -123,6 +127,8 @@ if cohort_local_sources:
     assert commit_boundary, 'Cohort-local-source TEST requires its distinct code and SAME complete original first-layer/cancel/STOP/HOLD/full-END predecessor;not old native,whole-model or Work qualification'
 if packet_identity_boundary:
     assert cohort_local_sources, 'Packet-identity TEST requires its distinct code and SAME complete original first-layer/cancel/STOP/HOLD/full-END predecessor;not old native,whole-model or Work qualification'
+if tid_boundary:
+    assert packet_identity_boundary, 'TID boundary TEST requires its distinct code and SAME packet-identity original first-layer/cancel/STOP/HOLD/full-END predecessor;not old native,whole-model or Work qualification'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -229,6 +235,9 @@ if cohort_local_sources:
 if packet_identity_boundary:
     assert hashlib.sha256((here.parent/'PioneerQ38TokenPacketIdentityBoundaryPrograms.h').read_bytes()).hexdigest()=='de0ae6307f235640a067360de2b3acf5a0e30c7de00b06c27322d4d90c1e3243'
     defines.update(PIONEER_Q38_TOKEN_PACKET_IDENTITY_BOUNDARY_PROGRAMS='1',PIONEER_Q38_TOKEN_PACKET_IDENTITY_BOUNDARY_NATIVE_CONTEXT='1')
+if tid_boundary:
+    assert hashlib.sha256((here.parent/'PioneerQ38TokenTidBoundaryPrograms.h').read_bytes()).hexdigest()=='229da82175d8a83765d4a0494b345749a92de0a93ec373ffb4ffdd45a9584b1d'
+    defines.update(PIONEER_Q38_TOKEN_TID_BOUNDARY_PROGRAMS='1',PIONEER_Q38_TOKEN_TID_BOUNDARY_NATIVE_CONTEXT='1')
 if posted_cancel:
     defines.update(PIONEER_Q38_TOKEN_POSTED_CANCEL='1',PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',
                    PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')

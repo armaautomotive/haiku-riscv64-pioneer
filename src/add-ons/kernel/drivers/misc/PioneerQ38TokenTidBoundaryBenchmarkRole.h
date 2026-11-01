@@ -1,0 +1,15 @@
+/* SPDX-License-Identifier: MIT */
+// Bounded6607+6608 diagnostic;complete module SHA,not tag75,is identity.
+#if !defined(PIONEER_Q38_TOKEN_TID_BOUNDARY_BENCHMARK_NATIVE) || PIONEER_Q38_TOKEN_TID_BOUNDARY_BENCHMARK_NATIVE != 1 \
+ || !defined(PIONEER_Q38_TOKEN_TID_BOUNDARY_PROGRAMS) || PIONEER_Q38_TOKEN_TID_BOUNDARY_PROGRAMS != 1 \
+ || !defined(PIONEER_Q38_TOKEN_PACKET_IDENTITY_BOUNDARY_BENCHMARK_NATIVE) || PIONEER_Q38_TOKEN_PACKET_IDENTITY_BOUNDARY_BENCHMARK_NATIVE != 1 \
+ || !defined(PIONEER_Q38_TOKEN_PACKET_IDENTITY_BOUNDARY_PROGRAMS) || PIONEER_Q38_TOKEN_PACKET_IDENTITY_BOUNDARY_PROGRAMS != 1 \
+ || defined(PIONEER_Q38_TOKEN_TID_BOUNDARY_NATIVE_CONTEXT) || defined(PIONEER_Q38_TID_BOUNDARY_IMAGE)
+#error Exact TID-boundary diagnostic required,not DATA,private NODRV or ROOT BUILD
+#endif
+#include "PioneerQ38TokenPacketIdentityBoundaryBenchmarkRole.h"
+#ifndef PIONEER_Q38_TOKEN_TID_BOUNDARY_PHYSICAL_BINDING_H
+#define PIONEER_Q38_TOKEN_TID_BOUNDARY_PHYSICAL_BINDING_H
+enum {PioneerQ38TokenTidBoundaryPhysicalSelection=1};
+#endif
+static_assert(PioneerQ38TokenTidBoundaryPhysicalSelection==1,"late TID-boundary diagnostic binding");

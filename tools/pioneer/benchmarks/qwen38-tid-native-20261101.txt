@@ -1,0 +1,114 @@
+FIFO-aware TID native package: qualified builds, full lifecycle still pending
+===========================================================================
+2026-11-01,05:26 UTC. Goal ACTIVE. No TID hardware/Work speed claim.
+The separate ba971/0c3f hardware benchmark closed at0.124069222..
+0.124070829 tokens/sec, known strict score failures persist, and the
+Pioneer is independently verified back on041/tag12/generation22 with
+64 CPUs/fullRAM and healthy idle. This new package has NOT been staged,
+installed, run on hardware, or connected to Assistant Work.
+
+Returning ROOT prerequisite: complete, FIRST LAYER ONLY
+--------------------------------------------------------
+bc01b290d588c3809acc22288fedbc5445ce1d152aa2a39fb86b496437a8bbd2 has
+independent frozen controls,3989 emitted cases each,46 genuine original
+corruption children each and20 selected body/call proofs each. Original
+first-layer15231/66956 BOTH ACTUAL0, then strict main+clean ACTUAL0 across
+all10240 words. See qwen38-tid-boundary-20261101.txt for exact scope and
+the explicitly changed inactive-TID fault detection latency. These gates
+do not establish native ownership, whole-model quality or physical speed.
+
+Immutable DATA: independently identical and authenticated
+-----------------------------------------------------------
+New PioneerQ38TokenTidBoundaryPrograms.h SHA:
+ 229da82175d8a83765d4a0494b345749a92de0a93ec373ffb4ffdd45a9584b1d
+Separate --tid-boundary generator route authenticates ALL13 sections and
+BOTH complete ELFs before exclusively creating output. Separate namespace,
+TidBoundary=1,FifoEnabledRequired=1,ActiveTid=0; never falls back to the
+old packet-identity package. Main and independent-clean generation match.
+
+DATA89376/19566 ACTUAL0 EACH: ALL120 cores'3044164 codewords byte-exact to
+the authenticated images,2290 gap/runtime/invalid/immutable-output refusals;
+15 artifacts/30 corrupt+truncated refusals;2 syntax positives/119 missing,
+zero,two,late,native,USER,ROOT BUILD,CPU,Work refusals. ENTIRE old packet/
+cohort/commit/retained/frontier headers and refusal controls pass FIRST.
+
+Actual independent SDK objects and bounded public module
+----------------------------------------------------------
+Inspection39022/21509/71927/78662 ALL ACTUAL0. Frozen96220/84769/39581/
+38471 ALL ACTUAL0. ENTIRE old6040e private object,59ed67 public object and
+ba971 complete module reproduce FIRST from current source in BOTH trees.
+New independently identical pins:
+ private NODRV object08f58fcee2b4593ec88ae7fcf1c30e7d1bc4389968d1becf20307a51ea05a7cf
+ public objectf70f338b60454fe422026dad75d4d91448c9934bc9ad19dcdd7c2a8685619920
+ complete modulee09cc07492d201b6a23f454ae0be514597051f8c55cf143b518eeb0b2f6c5e35
+ALL13 actual compiled arrays match their authenticated SHA; unchanged2MiB
+RoPE matches the old control exactly. Individual frames stay bounded.
+Private conventional ABI is renamed/inert; public has bounded6607+6608
+diagnostic ABI, not Work. CPU oracle, model products, interpreter/TEST and
+all old program namespaces are absent from actual compiled imports/code.
+No new hook was inserted in the base NativeRole.
+
+Additional private8499/43486 ACTUAL0 EACH: all5 ACTUAL renamed entry bodies
+and all5 wrappers are byte-identical to independently compiled inert/refusal/
+null controls. The complete object pin remains08f58f unchanged. Absence of
+conventional names alone is not being treated as proof of inertness.
+
+Partial public callgraph: known module chain5392B,25 unresolved kernel/
+IRQ/entry/indirect edges. Whole-kernel stack is NOT qualified.
+Final role95403/16948 ACTUAL0 EACH:4 private positives/367 refusals;
+98127/71321 ACTUAL0 EACH:4 diagnostic positives/264 refusals. ENTIRE old
+syntax controls pass FIRST. Earlier successful role logs had a harmless
+duplicated word in their final message; the final source/rechecks fix it.
+Packet BUILD96799/21862 ACTUAL0 EACH:2 positives/107 refusals, including
+new DATA/private/diagnostic aliases. No baremetal numeric code changed.
+No private,DATA-only,old same-tag,CPU or Work alias is granted deployment.
+
+Native original-history test model: initial failure retained
+--------------------------------------------------------------
+Initial68043/71176 BOTH ACTUALLY exit1, after genuine full851 initialization,
+119 worker histories and original5120 embedding. Before first matrix the
+ROOT tried to read FIFO status through the test's ordinary command/counter
+register whitelist. Actual assertion is BlackholeHostWriteReadRegister in
+pioneer_resident_store_test.cpp:24, not a hardware failure or arithmetic pass.
+Full failed logs are retained unchanged; no lifecycle success is claimed.
+
+The existing fixture already models current-config FIFO status in a
+separate NativeFifoStatusWord method, but TokenStartupRoot::Load did not
+route actual RISC reads0xffb20064/68 to it. The correction adds only that
+4-byte TEST endpoint dispatch; it never changes firmware, configuration,
+counters, worker results or native ownership. Old firmware makes no such
+new reads. This is a serialized endpoint model, not a queued/asynchronous
+hardware implementation or performance proof.
+
+Corrected native lifetimes: LIVE
+----------------------------------
+New2757(main)/74646(clean) launch05:19 UTC on the corrected fixture and
+are ACTUALLY LIVE05:26:18 UTC. Both pass the formerly failing point and
+genuinely complete the first3 workers' role10 fullK5120/48-row projection;
+ROOT validates the actual result before the next matrix doorbell is held.
+Observed accelerator ROOT reserved/accessed6112B and maximum peer reserved
+3552B/accessed3540B fit their separate8192B reservations at that point;
+not a whole-kernel or whole-run stack proof. Later phase4/ROOT40000194
+instruction observations remain partial, not a completed layer or END.
+The complete SAME-open original GGUF authentication precedes
+native fixture construction; no CPU embedding/model products are inputs.
+They must actually complete first-layer/cancel/119STOP/120HOLD/drain/full
+L1/dispatch/peer/ROOT/shared/clock/VM/PCI/host restoration, unreserve and
+locked destruction. Then compare actual native prefix DATA strictly and
+independently. Partial embeddings, matrices or output files are NOT END.
+
+Remaining gates before a separate physical test
+------------------------------------------------
+Poll SAME2757/74646 through actual exit; never restart for observation
+timeouts. Keep failed initial logs separate. After genuine successful
+closure+strict prefix comparison, qualify an exact041<->e09 guarded helper
+and fake-Haiku updater failures, fresh idle, stage outside drivers/bin,
+verify all complete hashes, then guarded apply and SAME4b benchmark.
+No existing efd848/af680/other helper owns e09; tags are NOT revision IDs.
+No unsafe automatic restore of unknown/quarantined resources is allowed.
+
+Full-model numerical acceptance, resident fresh requests/arbitrary prompts,
+Assistant Work and20 tokens/sec remain unmet. Larger on-card orchestration/
+packet batching is still needed; HOST instruction counts are not evidence
+of real device acceleration. The intermediate package does not redefine
+the requested final state or authorize a premature Work release.
