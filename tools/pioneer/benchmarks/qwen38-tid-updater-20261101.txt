@@ -1,8 +1,10 @@
 Exact TID diagnostic update/restore route: offline qualification complete
 =======================================================================
 2026-11-01,05:41 UTC. Goal ACTIVE. No new hardware or Work speed result.
-The Pioneer remains on independently verified041 baseline/tag12/gen22;
-the new e09 TID diagnostic is NOT staged or installed by these tests.
+Later update05:47 UTC: native lifetimes2757/74646 and strict comparisons
+ACTUAL0; e09 staged, exact51c applied/gen23 and NEW96523 benchmark LIVE.
+See qwen38-tid-native-20261101.txt. The offline tests described below do
+not themselves install/run hardware;the board was041/tag12/gen22 then.
 
 Identity and reversible route
 -------------------------------

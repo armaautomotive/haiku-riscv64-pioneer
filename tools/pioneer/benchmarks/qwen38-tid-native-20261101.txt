@@ -1,11 +1,12 @@
-FIFO-aware TID native package: qualified builds, full lifecycle still pending
+FIFO-aware TID native package: full lifecycle passed, hardware benchmark LIVE
 ===========================================================================
-2026-11-01,05:26 UTC. Goal ACTIVE. No TID hardware/Work speed claim.
+2026-11-01,05:48 UTC. Goal ACTIVE. No TID hardware/Work speed claim.
 The separate ba971/0c3f hardware benchmark closed at0.124069222..
 0.124070829 tokens/sec, known strict score failures persist, and the
-Pioneer is independently verified back on041/tag12/generation22 with
-64 CPUs/fullRAM and healthy idle. This new package has NOT been staged,
-installed, run on hardware, or connected to Assistant Work.
+Pioneer was independently verified back on041/tag12/generation22 with
+64 CPUs/fullRAM and healthy idle. AFTER all native gates below, e09 is
+staged, guardedly applied/gen23 and a NEW bounded hardware benchmark is
+LIVE. This is not connected to Assistant Work or a new speed result.
 
 Returning ROOT prerequisite: complete, FIRST LAYER ONLY
 --------------------------------------------------------
@@ -80,32 +81,61 @@ counters, worker results or native ownership. Old firmware makes no such
 new reads. This is a serialized endpoint model, not a queued/asynchronous
 hardware implementation or performance proof.
 
-Corrected native lifetimes: LIVE
-----------------------------------
+Corrected native lifetimes: COMPLETE
+--------------------------------------
 New2757(main)/74646(clean) launch05:19 UTC on the corrected fixture and
-are ACTUALLY LIVE05:26:18 UTC. Both pass the formerly failing point and
+BOTH ACTUALLY exit0, observed05:43:58 UTC. Both pass the formerly failing point and
 genuinely complete the first3 workers' role10 fullK5120/48-row projection;
 ROOT validates the actual result before the next matrix doorbell is held.
 Observed accelerator ROOT reserved/accessed6112B and maximum peer reserved
 3552B/accessed3540B fit their separate8192B reservations at that point;
-not a whole-kernel or whole-run stack proof. Later phase4/ROOT40000194
-instruction observations remain partial, not a completed layer or END.
+not a whole-kernel or whole-run stack proof.
 The complete SAME-open original GGUF authentication precedes
 native fixture construction; no CPU embedding/model products are inputs.
-They must actually complete first-layer/cancel/119STOP/120HOLD/drain/full
-L1/dispatch/peer/ROOT/shared/clock/VM/PCI/host restoration, unreserve and
-locked destruction. Then compare actual native prefix DATA strictly and
-independently. Partial embeddings, matrices or output files are NOT END.
+They genuinely complete original first-layer/cancel/119STOP/120HOLD/zero-
+record drain, two actual held-hidden packets, full L1/dispatch/peer/ROOT/
+shared/clock/VM/PCI/host restoration, unreserve and locked destruction.
+Initial missing-endpoint failures remain separate and failed. Native
+production methods execute with actual emitted RISC/Tensix and simulated
+endpoints, NOT public ABI/hardware/whole64-layer/CommitState/Work proof.
 
-Remaining gates before a separate physical test
-------------------------------------------------
-Poll SAME2757/74646 through actual exit; never restart for observation
-timeouts. Keep failed initial logs separate. After genuine successful
-closure+strict prefix comparison, qualify an exact041<->e09 guarded helper
-and fake-Haiku updater failures, fresh idle, stage outside drivers/bin,
-verify all complete hashes, then guarded apply and SAME4b benchmark.
-No existing efd848/af680/other helper owns e09; tags are NOT revision IDs.
-No unsafe automatic restore of unknown/quarantined resources is allowed.
+Both actual41028-byte native prefixes SHA:
+ 4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+Unchanged strict main+independent-clean CPU DATA comparisons ACTUALLY exit0:
+ALL5120 embedding+5120 layer0 output words bit-exact,maxAbs0,relativeL20.
+No diagnostic-only mode or tolerance is used. FIRST LAYER ONLY.
+
+Actual updater, staging, guarded apply and benchmark launch
+-----------------------------------------------------------
+Separate helper51c138e4965e1df0cb67d6d79d93f907ad11e9443c0a7efaf9699fbbb4816dc9
+qualifies ONLY041<->e09. Fake-Haiku77179/21660 ACTUAL0 EACH:1148 cases
+across new+old packet/cohort/commit/retained/frontier routes. See
+qwen38-tid-updater-20261101.txt. Old efd848/af680 helpers do NOT own e09.
+
+Fresh independent pre-stage SSH ACTUAL0:Haiku/UID0,64CPU/max137034936320B/
+free133754761216B,no compute parent,exact041 installed+baseline candidate,
+4b client,b0c reload tool,d1ce guard,tag12/gen22/cold0/quiesced0/owner0/
+open1/guard1. BOTH exact new paths are absent including no symlink BEFORE
+copy. SCP helper ACTUAL0/module12738 ACTUAL0; independent full readback
+confirms e09+51c hashes, unchanged041+4b+d1ce and healthy generation22.
+Both stage files are OUTSIDE watched drivers/bin;staging did not install.
+
+Only AFTER all gates, exact51c apply43553 ACTUALLY exits0: quiesce, close,
+e09 reload,tag75/generation23. No reboot,GPU execution,reset,SD,mains or
+hardware change by the exchange. Fresh independent prelaunch SSH ACTUAL0
+verifies exact installed e09,51c helper,unchanged4b,d1ce;64CPU/fullRAM,
+free133752446976B,tag75/gen23/cold0/quiesced0/owner0/open1/guard1 and no
+compute parent. This is prelaunch health, not a subsequent idle claim.
+
+NEW96523 launches05:47:07 UTC with exacte09 and UNCHANGED4b client,
+--benchmark-34-positions. It is LIVE, beginning complete SAME-open original
+GGUF authentication BEFORE accelerator Open. No new speed,numerical or
+clean-END result exists. Do not open another GPU/admin/model or reload/
+reset/power/SD/OS/network during that entire lifetime. Poll SAME96523 to
+ACTUAL END+Close+process exit, then unchanged strict comparisons and SAME4b
+ba971 control /private/tmp/pioneer-q38-packet-identity-physical-20261101-zgs.log,
+fresh healthy idle,ONLY exact51c restore041 expectedgeneration24. Never use
+efd848/af680 for e09 or automatically restore unknown/quarantined hardware.
 
 Full-model numerical acceptance, resident fresh requests/arbitrary prompts,
 Assistant Work and20 tokens/sec remain unmet. Larger on-card orchestration/
