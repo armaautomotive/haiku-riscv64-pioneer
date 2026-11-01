@@ -1,0 +1,4 @@
+PARTIAL knownModuleChain5392/unresolved25;wholeKernelStackQualified=FALSE
+59ed6722eb9715c8d1326e066c785b1f008b686a9b490f6217f5f67f0555cc02 packet-identity-boundary-benchmark-native.o
+ba9719dbc45ffb408d386c7c84da7322ae94136b6cbab26e39f6077870366830 tenstorrent_pci_probe-token-PACKET-IDENTITY-BOUNDARY34-BENCHMARK
+BUILD_ONLY new packet-identity-boundary bounded6607+6608 diagnostic/ENTIRE old subject reproduced FIRST/all13 arrays+2MiBRoPE exact/individual frames bounded/noCPU oracle+Work+TEST imports;NOT lifecycle,full-model,physical,timing or Work qualification

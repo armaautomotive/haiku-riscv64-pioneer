@@ -13,7 +13,9 @@
 #include <iterator>
 #include <string>
 #include <vector>
-#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_COHORT_LOCAL_SOURCES
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_PACKET_IDENTITY_BOUNDARY
+namespace P=PioneerQ38TokenPacketIdentityBoundaryPrograms;
+#elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_COHORT_LOCAL_SOURCES)
 namespace P=PioneerQ38TokenCohortLocalSourcesPrograms;
 #elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_COMMIT_BOUNDARY)
 namespace P=PioneerQ38TokenCommitBoundaryPrograms;
@@ -67,7 +69,13 @@ int main(int argc,char** argv){
    uint32_t unchanged=0xdeadbeef;assert(!P::ProgramWord(worker,address,unchanged) && unchanged==0xdeadbeef);refusals++;
   }
  }
-#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_COHORT_LOCAL_SOURCES
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_PACKET_IDENTITY_BOUNDARY
+ assert(P::PacketIdentityBoundary==1 && P::CohortLocalSources==1 && P::ColdSourceFromStatus==1);
+ assert(P::CommitBoundarySeals==1 && P::RetainedConvClosure==1 && P::FaultMarker==0x51465431 && P::FaultSavedLinkOffset==32);
+ assert(P::PreciseBeta==1 && P::JobBootFold==1 && P::TokenFrontier==1 && P::FrontierAddress==0x7570c);
+ uint32_t unchanged=0xdeadbeef;assert(!P::ProgramWord(0,P::FrontierAddress,unchanged) && unchanged==0xdeadbeef);
+ assert(allWords==3044082 && P::CodeWords(0)==40760 && P::CodeWords(1)==25238);
+#elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_COHORT_LOCAL_SOURCES)
  assert(P::CohortLocalSources==1 && P::ColdSourceFromStatus==1 && P::CommitBoundarySeals==1 && P::RetainedConvClosure==1);
  assert(P::FaultMarker==0x51465431 && P::FaultSavedLinkOffset==32 && P::PreciseBeta==1 && P::JobBootFold==1);
  assert(P::TokenFrontier==1 && P::FrontierAddress==0x7570c);

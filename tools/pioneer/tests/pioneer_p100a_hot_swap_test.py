@@ -16,6 +16,7 @@ TOKEN_MODES = tuple('--'+direction+'-'+revision.replace('_', '-')
 RETAINED_MODES = ('--apply-token-retained-cohort-benchmark', '--restore-token-retained-cohort-benchmark')
 COMMIT_MODES = ('--apply-token-commit-boundary-benchmark', '--restore-token-commit-boundary-benchmark')
 COHORT_SOURCE_MODES = ('--apply-token-cohort-sources-benchmark', '--restore-token-cohort-sources-benchmark')
+PACKET_IDENTITY_MODES = ('--apply-token-packet-identity-benchmark', '--restore-token-packet-identity-benchmark')
 
 
 def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_token_backup=False):
@@ -79,6 +80,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
         payloads['hash_token_retained_cohort_benchmark'] = ('test-' + values['hash_token_retained_cohort_benchmark']).encode()
         payloads['hash_token_commit_boundary_benchmark'] = ('test-' + values['hash_token_commit_boundary_benchmark']).encode()
         payloads['hash_token_cohort_sources_benchmark'] = ('test-' + values['hash_token_cohort_sources_benchmark']).encode()
+        payloads['hash_token_packet_identity_benchmark'] = ('test-' + values['hash_token_packet_identity_benchmark']).encode()
         payloads['hash_host_phase_diagnostic'] = ('test-' + values['hash_host_phase_diagnostic']).encode()
         payloads['hash_batch4_fetch_qualification'] = ('test-' + values['hash_batch4_fetch_qualification']).encode()
         payloads['hash_batch_raw_qualification'] = ('test-' + values['hash_batch_raw_qualification']).encode()
@@ -236,6 +238,8 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
             '--restore-token-commit-boundary-benchmark': ('hash_token_commit_boundary_benchmark', 'hash_scale_reuse_qualification', 'tag_token_commit_boundary_benchmark'),
             '--apply-token-cohort-sources-benchmark': ('hash_scale_reuse_qualification', 'hash_token_cohort_sources_benchmark', 'tag_scale_reuse_qualification'),
             '--restore-token-cohort-sources-benchmark': ('hash_token_cohort_sources_benchmark', 'hash_scale_reuse_qualification', 'tag_token_cohort_sources_benchmark'),
+            '--apply-token-packet-identity-benchmark': ('hash_scale_reuse_qualification', 'hash_token_packet_identity_benchmark', 'tag_scale_reuse_qualification'),
+            '--restore-token-packet-identity-benchmark': ('hash_token_packet_identity_benchmark', 'hash_scale_reuse_qualification', 'tag_token_packet_identity_benchmark'),
             '--apply-host-phase-diagnostic': ('hash_sentinel_poll_qualification', 'hash_host_phase_diagnostic', 'tag_sentinel_poll_qualification'),
             '--restore-host-phase-diagnostic': ('hash_host_phase_diagnostic', 'hash_sentinel_poll_qualification', 'tag_host_phase_diagnostic'),
             '--apply-batch4-fetch-qualification': ('hash_sentinel_poll_qualification', 'hash_batch4_fetch_qualification', 'tag_sentinel_poll_qualification'),
@@ -346,6 +350,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
         put('candidate_token_retained_cohort_benchmark', payloads['hash_token_retained_cohort_benchmark'])
         put('candidate_token_commit_boundary_benchmark', payloads['hash_token_commit_boundary_benchmark'])
         put('candidate_token_cohort_sources_benchmark', payloads['hash_token_cohort_sources_benchmark'])
+        put('candidate_token_packet_identity_benchmark', payloads['hash_token_packet_identity_benchmark'])
         put('candidate_host_phase_diagnostic', payloads['hash_host_phase_diagnostic'])
         put('candidate_batch4_fetch_qualification', payloads['hash_batch4_fetch_qualification'])
         put('candidate_batch_raw_qualification', payloads['hash_batch_raw_qualification'])
@@ -424,6 +429,10 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
             assert values['tag_token_cohort_sources_benchmark'] == '2026103100010075'
             assert values['hash_token_cohort_sources_benchmark'] == '844ecfe2fc3b8396f0c9787c3a5458544abb91a91011d8f9844f3e137c3d03f5'
             assert values['candidate_token_cohort_sources_benchmark'] == values['stage'] + '/tenstorrent_pci_probe-token-cohort-sources-benchmark-844ecfe2'
+        if mode in PACKET_IDENTITY_MODES:
+            assert values['tag_token_packet_identity_benchmark'] == '2026103100010075'
+            assert values['hash_token_packet_identity_benchmark'] == 'ba9719dbc45ffb408d386c7c84da7322ae94136b6cbab26e39f6077870366830'
+            assert values['candidate_token_packet_identity_benchmark'] == values['stage'] + '/tenstorrent_pci_probe-token-packet-identity-benchmark-ba9719db'
         status = f'P100A_RELOAD driver55 tag{oldtag} generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY'
         if fault == 'cold':
             status = status.replace('cold0', 'cold1')
@@ -490,6 +499,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
         hash_backup |= mode in RETAINED_MODES
         hash_backup |= mode in COMMIT_MODES
         hash_backup |= mode in COHORT_SOURCE_MODES
+        hash_backup |= mode in PACKET_IDENTITY_MODES
         backup_name = 'qualified55-before-hot-reload' if mode == '--bootstrap' else 'qualified-reload-' + oldtag
         if hash_backup:
             backup_name += '-' + hashlib.sha256(payloads[starting]).hexdigest()
@@ -623,7 +633,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
             else:
                 installed.write_bytes(previous)
         if fault in ('frontier-old-decode', 'frontier-old-fold', 'frontier-old-beta', 'frontier-old-posted', 'frontier-old-fault', 'frontier-old-hidden', 'frontier-old-tag74', 'frontier-same-tag-wrong'):
-            assert mode in ('--apply-token-frontier-benchmark', '--restore-token-frontier-benchmark') + RETAINED_MODES + COMMIT_MODES + COHORT_SOURCE_MODES
+            assert mode in ('--apply-token-frontier-benchmark', '--restore-token-frontier-benchmark') + RETAINED_MODES + COMMIT_MODES + COHORT_SOURCE_MODES + PACKET_IDENTITY_MODES
             previous = (b'unknown frontier bytes claiming the same tag75' if fault == 'frontier-same-tag-wrong'
                         else payloads[{'frontier-old-decode': 'hash_token_decode_benchmark',
                                        'frontier-old-fold': 'hash_token_job_boot_fold',
@@ -633,7 +643,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
                                        'frontier-old-hidden': 'hash_token_hidden_readout',
                                        'frontier-old-tag74': 'hash_token_root_frontend'}[fault]])
             if mode.startswith('--apply-'):
-                put('candidate_token_cohort_sources_benchmark' if mode in COHORT_SOURCE_MODES else 'candidate_token_commit_boundary_benchmark' if mode in COMMIT_MODES else 'candidate_token_retained_cohort_benchmark' if mode in RETAINED_MODES else 'candidate_token_frontier_benchmark', previous)
+                put('candidate_token_packet_identity_benchmark' if mode in PACKET_IDENTITY_MODES else 'candidate_token_cohort_sources_benchmark' if mode in COHORT_SOURCE_MODES else 'candidate_token_commit_boundary_benchmark' if mode in COMMIT_MODES else 'candidate_token_retained_cohort_benchmark' if mode in RETAINED_MODES else 'candidate_token_frontier_benchmark', previous)
             else:
                 installed.write_bytes(previous)
         if fault == 'retained-old-frontier':
@@ -666,6 +676,23 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
             previous = payloads['hash_token_cohort_sources_benchmark']
             if mode.startswith('--apply-'):
                 put('candidate_token_commit_boundary_benchmark' if mode in COMMIT_MODES else 'candidate_token_retained_cohort_benchmark' if mode in RETAINED_MODES else 'candidate_token_frontier_benchmark', previous)
+            else:
+                installed.write_bytes(previous)
+        if fault in ('packet-old-cohort', 'packet-old-commit', 'packet-old-retained', 'packet-old-frontier'):
+            assert mode in PACKET_IDENTITY_MODES
+            previous = payloads[{'packet-old-cohort': 'hash_token_cohort_sources_benchmark',
+                                 'packet-old-commit': 'hash_token_commit_boundary_benchmark',
+                                 'packet-old-retained': 'hash_token_retained_cohort_benchmark',
+                                 'packet-old-frontier': 'hash_token_frontier_benchmark'}[fault]]
+            if mode.startswith('--apply-'):
+                put('candidate_token_packet_identity_benchmark', previous)
+            else:
+                installed.write_bytes(previous)
+        if fault == 'old-route-new-packet':
+            assert mode in COHORT_SOURCE_MODES + COMMIT_MODES + RETAINED_MODES + ('--apply-token-frontier-benchmark', '--restore-token-frontier-benchmark')
+            previous = payloads['hash_token_packet_identity_benchmark']
+            if mode.startswith('--apply-'):
+                put('candidate_token_cohort_sources_benchmark' if mode in COHORT_SOURCE_MODES else 'candidate_token_commit_boundary_benchmark' if mode in COMMIT_MODES else 'candidate_token_retained_cohort_benchmark' if mode in RETAINED_MODES else 'candidate_token_frontier_benchmark', previous)
             else:
                 installed.write_bytes(previous)
         before = installed.read_bytes()
@@ -762,6 +789,8 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
             assert other_target.read_bytes() == other_bytes and other_target.stat().st_ino == other_inode, (mode, fault, 'OTHER_REVISION_BACKUP_CHANGED')
         if fault:
             assert result.returncode != 0, (mode, fault, result.stdout, result.stderr)
+            if fault in ('packet-old-cohort', 'packet-old-commit', 'packet-old-retained', 'packet-old-frontier', 'old-route-new-packet'):
+                assert not (root / 'calls').exists(), (mode, fault, 'ADMIN_OPEN_WITH_DIFFERENT_BYTE_REVISION')
             if fault in ('previous-debug44', 'previous-capture-debug44', 'previous-debug52', 'previous-layer69', 'previous-capture-layer69', 'previous-debug71', 'token-same-tag-wrong-bytes', 'token-other-revision', 'token-third-revision'):
                 assert not (root / 'calls').exists(), (mode, fault, 'ADMIN_OPEN_WITH_PREVIOUS_IMAGE')
             if fault in ('backup', 'backup-link') and mode != '--bootstrap':
@@ -871,6 +900,7 @@ if __name__ == '__main__':
     modes += list(RETAINED_MODES)
     modes += list(COMMIT_MODES)
     modes += list(COHORT_SOURCE_MODES)
+    modes += list(PACKET_IDENTITY_MODES)
     parents += ['owner-token-hidden-validation']
     parents += ['owner-token-validation', 'owner-token-validation-underscore', 'owner-token-source-check']
     parents += ['owner-recurrent-prefix-validation', 'owner-recurrent-prefix-validation-underscore']
@@ -1207,6 +1237,10 @@ if __name__ == '__main__':
             candidate = ['candidate_token_cohort_sources_benchmark']
         elif mode == '--restore-token-cohort-sources-benchmark':
             candidate = ['candidate_scale_reuse_qualification']
+        elif mode == '--apply-token-packet-identity-benchmark':
+            candidate = ['candidate_token_packet_identity_benchmark']
+        elif mode == '--restore-token-packet-identity-benchmark':
+            candidate = ['candidate_scale_reuse_qualification']
         elif mode == '--restore-token-root-frontend':
             candidate = ['candidate_scale_reuse_qualification']
         candidate_links = [key + '-link' for key in candidate]
@@ -1232,7 +1266,7 @@ if __name__ == '__main__':
             previous_image.extend(('fold-old-beta', 'fold-old-posted', 'fold-old-fault', 'fold-old-hidden', 'fold-old-tag74', 'fold-same-tag-wrong'))
         if mode in ('--apply-token-decode-benchmark', '--restore-token-decode-benchmark'):
             previous_image.extend(('decode-old-fold', 'decode-old-beta', 'decode-old-posted', 'decode-old-fault', 'decode-old-hidden', 'decode-old-tag74', 'decode-same-tag-wrong'))
-        if mode in ('--apply-token-frontier-benchmark', '--restore-token-frontier-benchmark') + RETAINED_MODES + COMMIT_MODES + COHORT_SOURCE_MODES:
+        if mode in ('--apply-token-frontier-benchmark', '--restore-token-frontier-benchmark') + RETAINED_MODES + COMMIT_MODES + COHORT_SOURCE_MODES + PACKET_IDENTITY_MODES:
             previous_image.extend(('frontier-old-decode', 'frontier-old-fold', 'frontier-old-beta', 'frontier-old-posted', 'frontier-old-fault', 'frontier-old-hidden', 'frontier-old-tag74', 'frontier-same-tag-wrong'))
         if mode in RETAINED_MODES:
             previous_image.append('retained-old-frontier')
@@ -1241,6 +1275,10 @@ if __name__ == '__main__':
             previous_image.extend(('commit-old-frontier', 'commit-old-retained'))
         if mode in COHORT_SOURCE_MODES:
             previous_image.extend(('cohort-old-commit', 'cohort-old-retained', 'cohort-old-frontier'))
+        if mode in PACKET_IDENTITY_MODES:
+            previous_image.extend(('packet-old-cohort', 'packet-old-commit', 'packet-old-retained', 'packet-old-frontier'))
+        if mode in COHORT_SOURCE_MODES + COMMIT_MODES + RETAINED_MODES + ('--apply-token-frontier-benchmark', '--restore-token-frontier-benchmark'):
+            previous_image.append('old-route-new-packet')
         if mode in COMMIT_MODES + RETAINED_MODES + ('--apply-token-frontier-benchmark', '--restore-token-frontier-benchmark'):
             previous_image.append('old-route-new-cohort')
         hash_backup_mode = mode in ('--apply-decoder-validation', '--restore-decoder-validation', '--apply-gdn-input-validation', '--restore-gdn-input-validation', '--apply-gdn-recurrent-validation', '--restore-gdn-recurrent-validation', '--apply-gdn-rendezvous-validation', '--restore-gdn-rendezvous-validation', '--apply-conv-silu-precision-validation', '--restore-conv-silu-precision-validation', '--apply-resident-output-validation', '--restore-resident-output-validation', '--apply-resident-layer-validation', '--restore-resident-layer-validation')
@@ -1261,6 +1299,7 @@ if __name__ == '__main__':
         hash_backup_mode |= mode in RETAINED_MODES
         hash_backup_mode |= mode in COMMIT_MODES
         hash_backup_mode |= mode in COHORT_SOURCE_MODES
+        hash_backup_mode |= mode in PACKET_IDENTITY_MODES
         backup_links = ['backup-link'] if hash_backup_mode else []
         for fault in [None] + common + candidate + candidate_links + parents + previous_image + backup_links + (['loaded'] if mode == '--bootstrap' else hot):
             check(mode, fault)

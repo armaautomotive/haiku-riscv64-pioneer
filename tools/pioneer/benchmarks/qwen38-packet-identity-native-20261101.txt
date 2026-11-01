@@ -1,0 +1,119 @@
+Packet-identity native package:qualification IN PROGRESS,not deployed
+===================================================================
+2026-11-01,04:10UTC. Goal ACTIVE.20tok/s,full model quality and usable
+resident Work/Assistant remain UNMET. Latest CLOSED physical measurement
+is the DIFFERENT844ec source-audit driver:0.121167265..0.121168784tok/s,
+with known strict score failures. No speedup from this new package claimed.
+
+Source predecessor
+--------------------
+New returning ROOT0c3f72d469164830670f5d880fe5c2f5df9a95609b09325dcddc1bea58c62e10
+has actual independent13424 emitted-unit cases,48 original corruption
+children and original embedding+whole layer0 bit-exact in both trees.
+See qwen38-packet-identity-boundary-20261101.txt for scope and fault timing.
+This does not by itself qualify native ownership,full END,Work or hardware.
+
+Separate immutable DATA
+------------------------
+PioneerQ38TokenPacketIdentityBoundaryPrograms.h SHA:
+ de0ae6307f235640a067360de2b3acf5a0e30c7de00b06c27322d4d90c1e3243
+New --packet-identity-boundary generator route authenticates ALL13 code
+sections and BOTH complete ELFs before exclusively creating output. New
+namespace and PacketIdentityBoundary=1 marker;no fallback to an old image.
+Old cohort/commit/retained/frontier headers regenerate ENTIRELY unchanged.
+
+Main18947+clean84504 ACTUAL0 EACH:ALL120 cores'3044082 codewords byte-exact
+to the authenticated images,2290 gaps/runtime/invalid/immutable-output
+refusals;15 artifacts/30 corrupt+truncated refusals;2 syntax positives,
+115 missing/zero/two/late/native/USER/ROOT BUILD/CPU/Work refusals. ALL old
+DATA controls pass FIRST. No native lifetime or device permission follows.
+
+Independent actual SDK builds
+------------------------------
+Inspection70675/74524/34163/90030 ACTUAL0;frozen46763/33443/99232/15110
+ACTUAL0. Complete oldce078 private object and old36abb public object+
+844ec full module reproduce FIRST from current source in BOTH trees.
+New independently identical pins:
+ private NODRV object6040e42e027bc0e637b074cb229de02bcd456daff875276f35eb2c4722eb309f
+ public object59ed6722eb9715c8d1326e066c785b1f008b686a9b490f6217f5f67f0555cc02
+ public moduleba9719dbc45ffb408d386c7c84da7322ae94136b6cbab26e39f6077870366830
+ALL13 arrays extracted from the actual compiled object match their SHA
+pins;unchanged2MiB RoPE is byte-exact to the complete old control. Individual
+frames are bounded. Private object keeps conventional driver ABI renamed;
+public object has the actual bounded6607+6608 ABI. No CPU oracle,Work,
+simulated endpoint,peer engine,reference product,llama/ggml or old-program
+namespace imports are present. This is build containment,not model quality.
+
+Actual public callgraph PARTIAL:known module chain5392B,25 unresolved
+kernel/IRQ/entry/indirect edges. Whole kernel stack is NOT qualified.
+
+Private role53502/81712 ACTUAL0 EACH:4 positives/353 refusals. Public
+role84752/92284 ACTUAL0 EACH:4 positives/250 refusals. Entire old syntax
+controls pass FIRST;old selectors still select old firmware. New DATA-only
+cannot select a native/USER/CPU/Work owner. Missing,defined-zero,two,late,
+cross-profile,wrong tag and conventional/private ABI mixtures are refused.
+No unnecessary derived-role include was added to the base NativeRole.
+
+Current-source returning ROOT rechecks31125/27591 ACTUAL0 still produce
+ENTIRE0c3f pins and all old controls. BUILD role29030/92171 ACTUAL0 EACH:
+2 positives/98 refusals,including the3 new DATA/private/diagnostic aliases.
+No baremetal code or arithmetic was changed while packaging this revision.
+
+Guarded updater
+----------------
+New apply/restore-token-packet-identity-benchmark routes accept ONLY exact
+041 baseline <->ba971 module,not any other tag75 bytes. Guarded helper SHA:
+ efd848f7c1bf6f1da77c514e5026af843218c2a043e0273dc5f690d1ce7b58bf
+Fake-Haiku88723/91576 ACTUAL0 EACH:946 cases across new+old source/commit/
+retained/frontier routes. Filesystem,handshake,hash,symlink,parent,owner,
+unknown/same-tag/cross-revision and backup guards retain old behavior.
+Known old844ec/78322/1f3/9ad bytes are not newba971;newba971 bytes cannot
+masquerade under old routes. These failures occur BEFORE admin open.
+Backups bind complete input SHA;legacy/unrelated backups remain unchanged.
+No force/reset,automatic rollback or failure-to-success relabeling is added.
+These are simulated filesystem/handshake checks,not a real driver reload.
+
+Real Pioneer staging ONLY
+--------------------------
+Fresh independent pre-stage SSH ACTUAL0:Haiku/UID0,64CPU/fullRAM,baseline
+041/tag12/generation20,cold0/quiesced0/owner0/open1/guard1,no model parent;
+both exact new destination paths absent (including no symlink) BEFORE copy.
+SCP56253 ACTUAL0 followed by independent whole-file readback:
+ tenstorrent_pci_probe-token-packet-identity-benchmark-ba9719db ->ba971 SHA above
+ pioneer-p100a-hot-swap-token-packet-identity-benchmark-efd848f7.sh ->efd848 SHA above
+They are OUTSIDE the watched drivers/bin. Installed041,unchanged4b client,
+oldaf680 helper andd1ce guard remain exact;fresh status stays generation20.
+No new driver was loaded,no GPU execution/reload/reset/power/SD/mains/OS/
+network or hardware change was performed. Staging is NOT deployment.
+
+Actual native original-model lifetime:STILL LIVE
+------------------------------------------------
+SAME75049(main)/56382(clean) ACTUALLY LIVE04:10:21UTC. Do not restart or
+replace these jobs because observation yields no output. They authenticate
+the complete same-open original GGUF before fixture construction,not CPU
+model products. ALL851 native initializations/120 held histories complete.
+Actual first3 workers finish role10 fullK5120/48 rows from119 virgin ISA
+engines;the native ROOT verifies the first projection before continuing.
+Accelerator ROOT stack6112B and maximum peer3552B fit their separate8192B
+reservations at that observed point;not a whole kernel stack proof.
+
+Latest both:ROOT90000010 instructions/phase8,actual Conv/GDN state traffic
+and same119 histories continue. These are HOST simulated-endpoint/model
+instruction observations,NOT card timing. They have NOT completed full
+layer/cancel/119 STOP/120 HOLD/empty drain/held hidden read/full L1,dispatch,
+shared,clock,PCI,VM and host restoration/unreserve/locked context destruction.
+No native full-END or new physical/model-quality/Work acceptance is claimed.
+
+Next gates
+------------
+Poll SAME75049/56382 through ACTUAL terminal exits;require complete native
+lifetime assertions AND separate unchanged strict CPU comparison of their
+actual first-layer DATA. Preserve failures if either test fails;never infer
+success from an existing prefix or a timeout. Only then fresh Pioneer idle/
+full hashes/health,exactefd848 apply (expected gen20->21 if unchanged),and
+one UNCHANGED4b fixed34 diagnostic. NO other GPU/admin/model FD or reload/
+power/SD/OS/network intervention during that model lifetime,including its
+source authentication BEFORE Open. After genuine END+Close+process exit:
+strict main+clean analysis,same4b+844ec control comparison,fresh idle,ONLY
+exactefd848 restore to041 (expected gen22). Never use oldaf680 forba971,
+or auto-restore unknown/quarantined hardware. Goal remains active.

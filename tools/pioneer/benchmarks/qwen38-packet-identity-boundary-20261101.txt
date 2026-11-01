@@ -4,6 +4,12 @@ Packet identity:isolated on-card controller cost reduction
 remain UNMET. BUILD and offline instruction evidence ONLY;this new image
 has NO DATA/native/physical/Work selector. NO card speedup is claimed.
 
+FOLLOW-ON04:10UTC:new separate immutable DATA/private/public build selectors
+are now byte-qualified and staged OUTSIDE drivers/bin;the original-model
+native lifetime is STILL running,so no deployment or native-END grant.
+See qwen38-packet-identity-native-20261101.txt for that later checkpoint.
+The original BUILD-only evidence and its limits below remain unchanged.
+
 Exact change and fault timing
 -----------------------------
 Explicit PIONEER_Q38_PACKET_IDENTITY_BOUNDARY_IMAGE returning recurrent
