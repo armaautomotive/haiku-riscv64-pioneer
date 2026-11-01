@@ -13,7 +13,8 @@ mode. It sweeps a fixed8MiB GDDR window beginning at0x04000000 into the
 same private16KiB L1 buffer. Supported transaction sizes64/1024/4096/16384
 bytes,1..256 sweeps. No GDDR writes, dequantization, matrix arithmetic,
 CPU expected products, host-memory target, PCIe transfer or host polling
-inside the loop. The loop has ONE outstanding read on ONE worker/NoC.
+inside the loop. The loop has ONE outstanding read on fixed logical
+worker(1,2)/NoC0; its command return-coordinate is fixed to1|(2<<6).
 It is deliberately NOT a whole-card saturation test or an integrity test.
 
 The exact emitted image has:
@@ -70,7 +71,8 @@ Reproduce, with a fresh absolute output directory:
 
 Remaining gates before a hardware baseline
 -------------------------------------------
-Implement a separate native driver owner that binds the SAME complete
+Implement a separate native driver owner for fixed logical worker(1,2)
+that binds the SAME complete
 window to real firmware-derived bank routes, proves all other engines
 held/no active owner, saves/restores EVERY changed L1/NIU word, controls
 normal firmware clocks, validates exact installed image/frame/report and

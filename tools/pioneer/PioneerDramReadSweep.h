@@ -11,7 +11,8 @@ typedef __UINT64_TYPE__ uint64_t;
 // must reserve the SAME complete 8MiB bank window, bind the firmware-derived
 // route, save ALL modified L1/NIU words, exclude other owners, and prove the
 // actual STOP/HOLD/restore lifecycle. A valid frame is DATA, not that authority.
-// Single worker/single outstanding READ: NOT the card's peak bandwidth test.
+// Fixed logical worker(1,2)/single outstanding READ: NOT the card's peak
+// bandwidth test. The command's return-coordinate word is fixed to1|(2<<6).
 struct PioneerDramReadSweep {
  enum : uint32_t { Magic=0x31425244, ReportMagic=0x31524244,
   Base=0x04000000, Span=0x00800000, Raw=0x90000, Job=0x74000,
