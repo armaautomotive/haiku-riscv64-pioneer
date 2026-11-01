@@ -1,0 +1,7 @@
+SAME_FIXED_WORKLOAD_RECORD_HEADERS 34 /34
+FIRST3_OBSERVED_MAX_LOGIT_BITS ['0x413bc1de', '0x41452aa2', '0x4167c42a']
+CONTROL_RATE {'sampled_tokens': 32, 'first_committed': 2, 'last_committed': 34, 'elapsed_min_us': 308657113, 'elapsed_max_us': 308660565, 'lower': 0.103673756, 'upper': 0.103674915, 'observations': 3146}
+CANDIDATE_RATE {'sampled_tokens': 32, 'first_committed': 2, 'last_committed': 34, 'elapsed_min_us': 298353879, 'elapsed_max_us': 298357206, 'lower': 0.107253987, 'upper': 0.107255183, 'observations': 3046}
+SINGLE_PAIR_RATE_CHANGE_PERCENT_BOUNDS 3.45220654734244 3.454517177569527
+CANDIDATE_SECONDS_PER_TOKEN_BOUNDS 9.32355871875 9.3236626875
+NOT_STATISTICAL_CONFIDENCE_OR_FULL_MODEL_NUMERICAL_PROOF

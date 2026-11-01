@@ -145,3 +145,17 @@ restart on observation timeout. Full terminal/HOLD/drain/restoration/END+
 Close and strict posthoc numerical checks remain required. No new speedup
 or usable Work is claimed. The newer83677 commit-boundary BUILD is NOT
 selected in this physical experiment.
+
+Completed hardware update00:48UTC2026-11-01
+--------------------------------------------
+52739 ACTUALLY exits0 with clean END+Close and all34 records/final34.
+Measured32 post-prompt tokens in298353879..298357206us:
+0.107253987..0.107255183tok/s,3046 observations. Single old9ad/new1f3
+controlled-pair change is3.4522..3.4545percent,NOT statistical confidence or
+usable speed. Strict first-three numerical score mismatches remain failures
+(both posthoc comparators ACTUAL exit1). No CPU reference/tolerance changed.
+Fresh idle health proves cold0/owner0,then exact94dd helper restores baseline
+041 through90082 ACTUAL exit0. Independent health verifies tag12/gen14,
+64CPUs/maxRAM137034936320B/free133757423616B and unchanged guard. No reboot,
+recovery,SD or mains change. See qwen38-retained-generation-physical-20261101.txt
+and its raw evidence for the completed physical result. Goal still ACTIVE.

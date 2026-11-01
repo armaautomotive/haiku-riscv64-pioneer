@@ -92,3 +92,13 @@ qualified1f3 module to gather actual frontend samples for the next major
 optimization. No profile sample distribution,TPS or speedup is available
 yet. Original-model numerical correctness,resident fresh requests,usable
 Assistant Work and20tok/s remain outstanding.
+
+Hardware-control completion update00:48UTC
+------------------------------------------
+The unmodified4b/1f3 control experiment52739 ACTUALLY exits0 with clean
+END+Close,measuring0.107253987..0.107255183tok/s. Known numerical failures
+remain failures. After fresh idle health,the exact94dd helper restores
+baseline041/tag12/gen14;64CPUs and128GB-class maxRAM remain available.
+The718d profile client is still NOT staged/run. The next controlled profile
+must establish its own actual module/generation/log provenance;this current
+4b log contains NO frontend sample rows and cannot be relabelled as a profile.

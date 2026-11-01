@@ -1,0 +1,82 @@
+Retained-Conv hardware measurement:0.107254tok/s,clean END,baseline restored
+==========================================================================
+2026-11-01. Goal ACTIVE;20tok/s UNMET. This bounded fixed-prompt all-card
+diagnostic is NOT usable Assistant Work or full-model numerical acceptance.
+
+Actual hardware lifetime
+-------------------------
+Original52739 launched00:05:07UTC and ACTUALLY exited0,observed00:44:58UTC.
+Exact driver1f3bcff838ff9f95d5f450c53000f02f80ddcd073aa5a5cc3018ee4208e0847c,
+tag2026103100010075/generation13,with unchanged client
+4b1dbee63e537b39e5212a9180670139a2a9ba46ef0b3cbeb66a7d5226b7f048.
+SAME-open original full GGUF authenticated BEFORE accelerator Open;all
+19399024640 padded learned bytes/3551parts/4736090pages/20367spans uploaded.
+34 positions (2 prompts+32 feedback),genuine terminal/HOLD/drain/full native
+restoration/END+Close,all34 records and final counter34 validated. Stderr0B.
+No runtime CPU model reference,no other accelerator/admin FD,second model,
+reload/reset,power/SD/OS/network change during the live model lifetime.
+The later718d frontend profiler and83677 state-copy experiment are NOT used.
+
+Observed post-prompt count-window bounds
+----------------------------------------
+3046 SAME-FD counter observations;first committed2,last34,sampled32.
+Host elapsed bounds298353879..298357206 microseconds:
+ lower0.107253987 tokens/sec
+ upper0.107255183 tokens/sec
+Mean9.32355871875..9.3236626875 seconds per sampled token. Bounds describe
+the observed count window,NOT isolated token latency,device cycles or chat
+speed. Authentication,upload,startup and cleanup are EXCLUDED. The client
+prints timing only after actual whole Finish+Close and validated records.
+
+Comparison with preceding qualified control
+--------------------------------------------
+Old9ad driver+SAME4b client,identical full-model/fixed34-position workload:
+32 sampled tokens/308657113..308660565us/0.103673756..0.103674915tok/s,
+3146 observations. Only firmware/controller revision differs;both runs
+use the same normal-clock contract and clean native lifetime. The prior
+0.207893161 historical metric is NOT the comparison control.
+This SINGLE controlled old/new pair yields3.452206547..3.454517178 percent
+higher observed rate. These arithmetic bounds are NOT statistical confidence
+intervals or repeated-run evidence. Do not generalize the gain to arbitrary
+prompts/models or claim a large performance improvement. All34 first12-word
+record headers (inputs,selected tokens,max-score words,flags/counts) match
+the control exactly. Per-session nonces/counters are not asserted equal.
+
+Numerical acceptance:STILL FAILED
+---------------------------------
+Both unchanged strict posthoc comparators ACTUALLY exit1. Complete record,
+feedback,session,finite score,flags,reserved,final count and rate arithmetic
+PASS;the known first-three maximum-logit words still differ from the fixed
+CPU control,with identical mismatches to the preceding hardware run:
+ pos0 selected70253 observed413bc1de CPU413c2358
+ pos1 selected17    observed41452aa2 CPU414621d3
+ pos2 selected17    observed4167c42a CPU4168afd0
+No tolerance or CPU reference result was changed/substituted. Inputs and
+greedy selections agree in the first3 positions;positions3..33 have NO
+external numerical acceptance. Repeated17 is NOT useful-response proof.
+Posthoc failure does NOT quarantine an already cleanly closed native owner.
+
+Fresh health and guarded baseline restoration
+----------------------------------------------
+Only AFTER actual process exit/END+Close,fresh independent SSH confirms
+Haiku/UID0,64CPUs,maxRAM137034936320B/free133755383808B,no model/Assistant
+parent,exact1f3 module/94dd helper/4b client/unchanged d1ce2aa4 guard,
+tag75/gen13/cold0/quiesced0/active_owner0/open_count1/guard1. The immutable
+94dd2175 helper restores via90082,ACTUAL exit0,without reboot/reset/GPU
+execution or automatic rollback. Independent restored-health SSH verifies:
+ 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+tag2026102100010012/generation14/cold0/quiesced0/owner0/open1/guard1,
+unchanged guard+helper hashes,64CPUs/maxRAM137034936320B/free133757423616B.
+No SD/mains/hardware/network change or recovery was needed. Complete raw
+stdout,empty stderr,comparisons,arithmetic and restore/health logs retained.
+
+Next
+-----
+The small gain is insufficient. Gather actual raw frontend observations
+with the separately qualified718d client to guide the next major controller/
+worker optimization;its getter adds NO accelerator calls to each existing
+Poll. Keep raw sample counts distinct from retired PCs/cycles/function time.
+83677 commit-boundary scan hoisting remains OFFLINE ONLY pending actual RV32
+transaction/fault/integration and native program-selection qualification.
+Full numerical acceptance,resident fresh requests,arbitrary prompts,usable
+Assistant Work and20tok/s remain outstanding. Goal remains ACTIVE.
