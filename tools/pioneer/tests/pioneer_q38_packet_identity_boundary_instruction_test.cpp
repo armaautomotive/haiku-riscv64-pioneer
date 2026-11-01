@@ -73,6 +73,7 @@ struct IdentityImages {
   return {a->steps-2048,b->steps-2048};
  }
 };
+#ifndef PIONEER_Q38_PACKET_IDENTITY_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==5);setvbuf(stdout,nullptr,_IOLBF,0);IdentityImages tests(argv);
  using S=SealMachine;const unsigned owner=S::Owner;
@@ -126,3 +127,4 @@ int main(int argc,char** argv){
  }
  printf("PASS emitted packet/full identity boundary:%u cases/%u immediate-or-boundary refusals/%u explicit deferred packet identities;actual fault writer+2048 inert,stack-only normal writes;synthetic ABI ONLY,NOT acquired owner/original model/native/physical/Work/TPS\n",tests.cases,tests.refusals,tests.deferred);
 }
+#endif

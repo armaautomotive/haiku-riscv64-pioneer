@@ -1,0 +1,131 @@
+Read-only source-boundary BUILD: independent guards PASS; model tests LIVE
+=======================================================================
+2026-11-01,07:45 UTC. Goal ACTIVE;20tok/s UNMET. This is an UNSELECTED
+returning ROOT BUILD,not a new native driver,Work mode or hardware result.
+The protected physical process51361 still runs DIFFERENT0b8d/a2d5;its
+complete19399024640 padded-byte upload is observed,but no completed rate,
+terminal,HOLD/drain,END+Close or actual exit has yet been observed here.
+Last CLOSED physical result remains e09/bc01,0.128485469..0.128487180tok/s,
+with known full-model score differences. No speedup from this BUILD exists.
+
+Specific change,not a disabled global validation switch
+-------------------------------------------------------
+PIONEER_Q38_READ_SOURCE_BOUNDARY_IMAGE=1 is a distinct returning recurrent
+BUILD requiring the complete existing FIFO/TID/identity/counter-gather
+parent. ONLY DensePartitionRoot::Transfer and MixedRecurrentCohort::Packet
+pass their ACTUAL command write direction to the new direction guard.
+READ-ONLY owned metadata can now precede a ROOT live-source fault until the
+next write/full boundary. Every write,including metadata,still checks all
+16 live source registers;worker release,full compute/layer/token closure
+and every8-counter gather submission retain their previous full checks.
+
+The original one-argument packet guard remains a real wrapper selecting
+write=true. Existing receipt/activation callbacks and the counter gather
+do NOT implicitly acquire read deferral. Frame/private-pointer/phase/
+nonce/doorbell and sealed FIFO-enable checks remain per packet. Exact
+command readbacks,8 master counter deltas,live FIFO/overflow/TID checks,
+finite waits,all-worker checks and fault quarantine remain. No source
+recapture,counter clear,mode toggle,wider MMIO,product,completion or CPU
+oracle is introduced. Detection latency changes are explicit;immediate
+source refusal for read-only metadata is NOT claimed.
+
+Actual independent BUILD closure
+--------------------------------
+Inspection8552/26341 and frozen46300/20634 ALL ACTUALLY exit0. Every old
+a2d5/bc01/0c3f/cd54/83677/48b2/951 complete control reproduces FIRST from
+CURRENT sources. New full section/ELF pins independently match:
+ boot4       32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text131028  356090cc6f614a71bcc70c2a75c5d8f2ebde2b0cd4f403404fb4e972568b15e7
+ terminal8   468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2
+ conv32692   e7d14515f80b77879f0d25caa82d94a9c02f15d47ae3b50d7b23821b67c6f47f
+ ELF191496   0f67bf57a57ee7e23836255a86590da3886e9f712f5e618c7f6630829eed08f5
+Existing131072/32768 code limits are unchanged;44/76 bytes remain. No
+writable globals,GOT,unsupported arithmetic,CSR or unresolved import is
+accepted. Individual compiler frames stay within the inherited bound;
+this does NOT qualify whole ROOT/native/kernel/IRQ stack depth.
+
+An initial separate read-guard body correctly fails the existing link
+extent check,92B beyond.text. The next shared-signature attempt correctly
+fails because existing callback/gather declarations are one-argument.
+The final shared direction routine+write=true compatibility wrapper fits;
+no linker/import/old-control requirement was relaxed. Failure logs remain.
+
+Guards,arithmetic and role tests: CLOSED
+---------------------------------------
+Main68790/clean33128 BOTH ACTUALLY exit0 under ASan+UBSan. Logs cmp-exact.
+Each executes9898 actual emitted-guard cases,9345 immediate-or-full
+refusals and512 explicit read-only deferrals (ALL16 live registers and
+ALL32 bits). Actual full/write guards reject each live source fault. All
+external immutable mirrors,phase,pointer,doorbell,nonce and coherent FIFO-
+disabled configuration checks remain. Successful read guard observes ONLY
+the doorbell;successful write guard observes doorbell+ALL16 ordered live
+sources. Real fault writer executes then2048 inert steps,ABI preserved,
+normal writes restricted to compiler stack. These are SYNTHETIC ABI unit
+inputs,not a genuinely acquired owner or connected worker-release proof.
+HOST instruction counts44(read)/101(write) are NOT device cycles or TPS.
+An initial unsigned initializer-list fixture compile error was fixed;
+its failure logs remain. No production arithmetic was changed to pass it.
+
+Static90298/10080 BOTH ACTUALLY exit0,cmp-exact logs. EACH checks34 selected
+actual arithmetic,release,commit,feedback,source/FIFO/TID and gather bodies
+byte-exact except authenticated LINK/readonly-literal relocation. Complete
+transfer/Packet direct-call multisets agree after exact direction-guard
+replacement. Actual old guard wrapper unconditionally loads a1=1. Changed
+direction guard and transfer argument flow are NOT claimed byte-equivalent;
+indexed switches are NOT newly proved by direct-call checks.
+
+Role17920/87203 BOTH ACTUALLY exit0:EACH2 syntax positives/121 missing,
+zero,two,late,ROOT,worker,dense,DATA,native,CPU and Work refusals. None of
+these BUILD tests supplies DATA,native or physical ownership.
+
+Genuine original-model tests: LIVE,not acceptance
+------------------------------------------------
+Connected3985(main)/47468(clean) use the exact original GGUF,SAME-open
+full SHA authentication BEFORE constructing the real fixture,and genuine
+embedding/119 virgin histories.512 COW fault children target the first
+actually reached Phase2 READ guard:ALL16 live registers ALL32bits. They
+must reject before ANY write,worker release,math or model commit;actual
+FIFO-disabled faults may refuse earlier at the unchanged FIFO guard.
+The unchanged parent must then issue its first actual matrix request.
+At07:45 only PARTIAL children have passed;NO completed512/control result
+or overall connected pass is asserted. Source files do not inject products,
+worker completion,PC/register histories or ready flags.
+
+Original first-layer56635(main)/94460(clean) are separately LIVE on frozen
+0f67 images,genuine captured8-command FIFO transport,original weights and
+SAME119 histories. Main has reached the fourth real layer0 matrix. No
+prefix file,strict numerical comparison,layer completion,STOP/END or
+native/hardware result is yet accepted. After actual exits the unchanged
+strict main+clean first-layer comparator must compare ALL10240 words.
+
+Current local handles/logs,not completion evidence by themselves:
+ connected main3985 /private/tmp/pioneer-q38-read-source-connected-main-20261101-bx.log
+ connected clean47468 /private/tmp/pioneer-q38-read-source-connected-clean-20261101-by.log
+ original main56635 /private/tmp/pioneer-q38-read-source-original-main-20261101-cf.log
+ original clean94460 /private/tmp/pioneer-q38-read-source-original-clean-20261101-cg.log
+ original outputs /private/tmp/pioneer-q38-read-source-original-prefix-main-20261101-cf
+                  /private/tmp/pioneer-q38-read-source-original-prefix-clean-20261101-cg
+Poll SAME handles;timeout is not completion and never authorizes restart.
+No new native DATA/module/updater,public ABI,Assistant or Work selection
+exists. Full native lifecycle,whole-model quality,device stability and real
+performance remain required;BUILD/unit results cannot substitute for them.
+
+Preparing actual bottleneck measurement,without touching live hardware
+----------------------------------------------------------------------
+The existing zero-extra-accelerator-call frontend parser now authenticates
+e09/bc01 and0b8d/a2d5 declared module/whole-ELF bindings in addition to the
+three old profiles. These two exact modules have independent complete
+native build evidence;0f67 has NO module binding. No ELF is accepted merely
+because its functions look familiar. Same authenticated snapshot is passed
+to nm. Binding tests independently exit0:EACH5 actual positives/21 wrong
+cross-bindings or unknown-module refusals. Parser81540/31769 BOTH ACTUALLY
+exit0:EACH1 SYNTHETIC profile/581 refusals plus unchanged base comparator
+3 SYNTHETIC positives/1260 refusals. RAW60008/FFFFFFFF remain unmapped,
+with no subtract4 or widened ranges. Declared binding is NOT independent
+hardware provenance;raw fetch cursors are NOT retired PCs,cycles,function
+time or bottleneck causality. No profiling client was staged/run here.
+
+No extra real GPU/admin/status/model/reset/reload/power/SD/OS/network action
+occurred while51361 remained live. New code is local and unselected. All
+closed raw logs including initial failures are archived without rewriting
+their whitespace in the same-basename evidence directory.

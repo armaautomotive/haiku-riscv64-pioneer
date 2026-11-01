@@ -5,13 +5,26 @@ import pathlib
 import sys
 import inspect_pioneer_q38_frontend_profile as profile
 
-assert len(sys.argv) in (3, 4) and not any(key.startswith(('PIONEER_', 'TT_PIONEER_')) for key in os.environ)
-old, retained = map(pathlib.Path, sys.argv[1:3])
+args = sys.argv[1:]
+extra = []
+for option, driver in (
+    ('--tid-root', 'e09cc07492d201b6a23f454ae0be514597051f8c55cf143b518eeb0b2f6c5e35'),
+    ('--counter-root', '0b8d1530b3f6de3462be23e923be169c82a8b15c76e83657c35c2d268b70405c'),
+):
+    if option in args:
+        assert args.count(option) == 1
+        at = args.index(option)
+        assert at+1 < len(args)
+        extra.append((pathlib.Path(args[at+1]), driver))
+        args[at:at+2] = []
+assert len(args) in (2, 3) and not any(key.startswith(('PIONEER_', 'TT_PIONEER_')) for key in os.environ)
+old, retained = map(pathlib.Path, args[:2])
 old_driver = '9ad9e86bd5e45c5cb11dfe286f3528452dfe7b0e4630f67546acbb43a03064e8'
 retained_driver = '1f3bcff838ff9f95d5f450c53000f02f80ddcd073aa5a5cc3018ee4208e0847c'
 cases = ((old, old_driver), (retained, retained_driver))
-if len(sys.argv) == 4:
-    cases += ((pathlib.Path(sys.argv[3]), '78322cfa94db2519284efa12ad69cfa77981446f03081fc95aee2ee6234de8d1'),)
+if len(args) == 3:
+    cases += ((pathlib.Path(args[2]), '78322cfa94db2519284efa12ad69cfa77981446f03081fc95aee2ee6234de8d1'),)
+cases += tuple(extra)
 for elf, driver in cases:
     ranges = profile.authenticated_ranges(elf, driver)
     assert any(name.startswith('GlobalChain::Scope(') for _, _, name in ranges)

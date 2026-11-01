@@ -20,6 +20,9 @@ extern "C" unsigned q38_mixed_recurrent_root_conv();
 extern "C" __attribute__((noinline)) void q38_mixed_root_seal();
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
 extern "C" void q38_mixed_root_packet_seal(const uint32_t*);
+#ifdef PIONEER_Q38_READ_SOURCE_BOUNDARY_IMAGE
+extern "C" void q38_mixed_root_direction_packet_seal(const uint32_t*,bool);
+#endif
 #endif
 extern "C" __attribute__((noinline)) const uint32_t* q38_mixed_recurrent_frame();
 #ifndef PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE
@@ -81,7 +84,11 @@ static void Packet(uint32_t* tracked,unsigned w,unsigned at,unsigned bytes,bool 
   || ((at==TT_Q38_GDN_GATED_READY || at==TT_Q38_GDN_RENDEZVOUS_CLOCK) && bytes==64) || (Csr(at) && bytes==4);
  if(!permit || w>=119 || ((at|bytes)&3) || bytes>1536)scalar_fault_park();
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
+#ifdef PIONEER_Q38_READ_SOURCE_BOUNDARY_IMAGE
+ q38_mixed_root_direction_packet_seal(Frame(),write);
+#else
  q38_mixed_root_packet_seal(Frame());
+#endif
  if(write && (at==M::Job || at==M::Doorbell))q38_mixed_root_seal();
 #else
  q38_mixed_root_seal();
@@ -105,7 +112,11 @@ static void Packet(uint32_t* tracked,unsigned w,unsigned at,unsigned bytes,bool 
   bool done=!*Words(0xffb20040);for(unsigned i=0;i<8;i++)done &= *Words(0xffb20000+Counter(i))==expected[i];
   if(done){
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
+#ifdef PIONEER_Q38_READ_SOURCE_BOUNDARY_IMAGE
+   q38_mixed_root_direction_packet_seal(Frame(),write);
+#else
    q38_mixed_root_packet_seal(Frame());
+#endif
    if(write && (at==M::Job || at==M::Doorbell))q38_mixed_root_seal();
 #else
    q38_mixed_root_seal();

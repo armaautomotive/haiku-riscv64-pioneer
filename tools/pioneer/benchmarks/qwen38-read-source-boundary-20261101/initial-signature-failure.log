@@ -1,0 +1,149 @@
+4b1550f36d8bf6e225684db0a97ba62ad885817c1497d78226443b0c7867533f recurrent.o bytes145120
+29204d287e38fe0ead7fd24c2de44aad7b46d2bcb38e23daa4b55d1cebb6c8e9 dense.o bytes115164
+78cf19c422c773a8c9c47c180df78ecd66609e4614dd75ee2d66344cab0ea25c layer-components-NOBOOT.o bytes228380
+PASS both ACTUAL returning layer bodies retained, separate private seal types/s11 bind+restore, same worker-chain/hidden-slot ADDRESSES;ROOTbytes93044/131072 Convbytes7500/32768 maxFrame2112
+RELOCATABLE COMPONENTS ONLY/NO boot or host wait/STOP/old main/native ABI;sole unresolved fault park. NOT a connected pipeline,initialized state,token commit,physical/Work or throughput qualification. DO NOT INSTALL
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 117016, 'e58aff9bf5be041992ba5435bca334bdd43ac51c3d3c6af47c5ac6de7cdbfd8d')
+('terminal.bin', 8, '6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5')
+('conv.bin', 7500, 'aec9aeacaf188b46ae223bd79fafb928ac39a3369b3c9753bf8145966eb44cea')
+('program.elf', 149964, 'ca0f6beb05e1a20d243332e65ce9b0bc4e3e080fc350768067266b9e1d7209a2')
+BUILD/INSPECT ONLY NEW QGC1/all64 returning arithmetic+final norm+973 vocab jobs+greedy candidate+real global STOP/maxFrame1872/on-card provisional next embedding;NO runtime/combined reserved stack/original model/native/physical/token commit/multi-token/Work/TPS qualification. DO NOT INSTALL
+('recurrent.o', 182228, '43d4f239eb5c3622e6aa5b4c2fabace858934e8ce4e7797bb1d7eafd0d3e4c38')
+('dense.o', 145388, 'c0c982aaa5f49fc2b8a381481b015ae6d29df8890c13dfca617740b0be2511ce')
+('token-components-NOBOOT.o', 281844, 'c35cce0c63cecb81bc8975610fcc93286c6f19dda84376b18b343f964e2867f2')
+BUILD ONLY actual returning recurrent path includes strict previous-global output admission;ROOTbytes103820/131072 Conv20380/32768 maxFrame2112;NO boot/persistent parent/model token-state commit/native/physical/Work/TPS or combined-stack proof. DO NOT INSTALL
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 130996, '39ca2743b8aaa166d7ecc9205b516558fcfac93449f5d4526ad065b39da39205')
+('terminal.bin', 8, '6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5')
+('conv.bin', 32688, 'd9576bce48afad75fe54a337a865437b07263362f43d8d16688835b56e8f7861')
+('program.elf', 190628, '5585e908bf3326c5410d0998c81ed161c04ab754412cc60891b8eb1f197a58fe')
+BUILD ONLY persistent parent/bootstrap/prompt+generation/all64+973/recurrent state copy+readback/token stream/final119STOP;maxFrame1616;NO runtime/combined stack/original full-model/native/physical/cancellation/Work/Assistant/TPS qualification. DO NOT INSTALL
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 131028, '8674c84aa9142f049a0dbcb3df6ac70bab8c0f4de096083584bb293562e6284e')
+('terminal.bin', 8, '468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2')
+('conv.bin', 32688, '54cf89743f34f5156790b9299e2fc95307c28ef78d22b88267aed70d587cb1d2')
+('program.elf', 190684, '9515589d211cb9d9b2db4be108ccad5752996ec07a5354f0181775f6a6888862')
+BUILD_ONLY_UNSELECTED_FAULT_MARKER status_error51465431 status_saved_link_NOT_retired_PC/same_compiled_arithmetic_objects_and_STOP_loop/NO timeout_extension_retry_cancel_reset/NO native_driver_selection_original_model_physical_Work_or_TPS_permission
+UNSELECTED_JOB_BOOT_FOLD_EIGHT_FAULT_IMAGE separate BUILD pins;default image pins unchanged;NO native/physical/Work/TPS grant
+UNSELECTED_TOKEN_FRONTIER_FAULT_IMAGE separate BUILD ONLY;NO program DATA/native/readout/physical/timing/Work/TPS grant
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 130936, '7c5e233b9cf59351dbaf7ec821917b23746ba3d3077e41922e7180a765343693')
+('terminal.bin', 8, '468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2')
+('conv.bin', 32688, '9df7840dfc64968f63574069ef94ce63ab2e17fe8593eceb5068b0afbcfcc5f0')
+('program.elf', 190700, '48b2bf31d2eefc36e50dcaaa9202d7d92579496a5ab72e9a62c9d4cfb66250ee')
+BUILD_ONLY retained SAME119 actual Conv closure->GDN preparation/old951+complete recurrent object unchanged/current cold audit+ALL Conv/GDN completion source+counter+job+summary checks preserved;duplicate96 warm pre-GDN audits omitted ONLY in separately selected returning TU;NO native program DATA,driver,physical,original-model numerics,combined-stack,Work or TPS grant
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 130936, 'ab6c14eb6935613c70b08d879cf3f435d945175ab4279a5e065a989eb6b95739')
+('terminal.bin', 8, '468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2')
+('conv.bin', 32684, '0cbd70719967cbc43b1353186cad5f422a9da045bdc1d51efb88a0e775d52e99')
+('program.elf', 190704, '83677f78f548b8fc11d874a858b670310d1dad859982e737c674b2ff7329db00')
+BUILD_ONLY numeric input+feedback scans bracket actual CommitState;ALL per-packet HeadSeal,descriptor,source,counter,command,bounds+readback checks retained;geometry proves copy/descriptor/private-stack buffers disjoint from numeric seals;entire48b2+oldROOT object controls unchanged;NO runtime,native,physical,Work or TPS qualification
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 130452, '33ae483e1e37c53aa1f04d5fe4c8dc2f1a5d99ba055b0eb883d9773372918edc')
+('terminal.bin', 8, '468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2')
+('conv.bin', 32684, '57aff888b9fba9864b9e83ad4d8c13d5fe06d4839c02299c223eb3da7a95c0b5')
+('program.elf', 190632, 'cd54a316614ed8f653c930ad2fa43e2b526b237350432f53ac8d89072e10f64f')
+BUILD_ONLY recurrent duplicate remote source scans omitted AFTER genuine matrix admission;cold audit derives from actual captured status,not pre-Wait scratch;worker-local ALL16 checks,ROOT local source guards,boot/job/status/counter/packet proofs retained;post-completion idle source faults may be detected at next WORKER request;unchanged CommitState,dense,workers;NO MMIO burst,native,physical,Work,numerical or TPS grant
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 130344, 'f9275e1c9cf31a9508522c5bab9a7645e8886e842cc664ad51a40edb4cc357e0')
+('terminal.bin', 8, '468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2')
+('conv.bin', 32684, '0756a64a8cfffd923ab5af14957a23e32aa8ca80304693f2350d23b340f660e6')
+('program.elf', 190760, '0c3f72d469164830670f5d880fe5c2f5df9a95609b09325dcddc1bea58c62e10')
+BUILD_ONLY duplicate24 private frame/boot identity comparisons move to EVERY full audit;packet pointer/phase/request/doorbell+ALL16 live source checks retained;NoC command/counter/queue/job/worker guards and math unchanged;metadata fault detection may defer to release/compute boundary;NO cached ready,native,physical,Work or TPS grant
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 130672, '6e2789103ac011fda300054807e310561eff00612f259b0688aad52f6b558413')
+('terminal.bin', 8, '468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2')
+('conv.bin', 32684, 'd2efdcec3e082422ccb412c1730500da465b3f41d82fc1664a72b9b265276d07')
+('program.elf', 190952, 'bc01b290d588c3809acc22288fedbc5445ce1d152aa2a39fb86b496437a8bbd2')
+BUILD_ONLY FIFO-enabled original configuration REQUIRED,never changed;all4 initiators+actualFIFOdrain/overflow then TID0 live at EACH packet;ALL32 IDs at EVERY full/release/compute boundary;inactive-ID faults may defer through owned metadata,NOT release/commit;sameALL16source/command/readback/8counter/job/worker guards/math;NO counter clear,recapture,MMIOburst,native,physical,Work or TPS grant
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 130948, '3aee61817ef8779f7406234451dffa76db9a82cb5c66603c38bda8dca51dc1da')
+('terminal.bin', 8, '468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2')
+('conv.bin', 32684, '3c5fc882ee106f600d00531f8bc3c9ee9c512b238a173a6fadc77837833d1f1b')
+('program.elf', 191408, 'a2d52546a4606b37c6cb421ac412a8d3eae59135492edecbc1a96079d24af536')
+BUILD_ONLY eight fixed4B counter reads, FIFO-enable REQUIRED never changed, no external counter rebase;full quiet pre/post and all8 expected master deltas, ALL16 live sources per request;read-only fault latency may reach end-of-gather, NEVER worker release/commit;no native,device,Work,numerical or TPS grant
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_return_recurrent_layer.cpp:24:36: error: conflicting declaration of C function 'void q38_layer_return_recurrent_packet_seal(const uint32_t*, bool)'
+   24 | #define q38_mixed_root_packet_seal q38_layer_return_recurrent_packet_seal
+      |                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_dense_partition_root.cpp:33:17: note: in expansion of macro 'q38_mixed_root_packet_seal'
+   33 | extern "C" void q38_mixed_root_packet_seal(const uint32_t*,bool);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_return_recurrent_layer.cpp:24:36: note: previous declaration 'void q38_layer_return_recurrent_packet_seal(const uint32_t*)'
+   24 | #define q38_mixed_root_packet_seal q38_layer_return_recurrent_packet_seal
+      |                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38CounterGather.h:9:17: note: in expansion of macro 'q38_mixed_root_packet_seal'
+    9 | extern "C" void q38_mixed_root_packet_seal(const uint32_t*);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_projection_root.cpp:9,
+                 from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:5,
+                 from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_return_recurrent_layer.cpp:27:
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_dense_partition_root.cpp: In function 'void DensePartitionRoot::Transfer(const uint32_t*, uint32_t*, unsigned int, unsigned int, unsigned int, bool)':
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_dense_partition_root.cpp:159:28: error: too many arguments to function 'void q38_layer_return_recurrent_packet_seal(const uint32_t*)'
+  159 |  q38_mixed_root_packet_seal(d,write);
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_return_recurrent_layer.cpp:24:36: note: declared here
+   24 | #define q38_mixed_root_packet_seal q38_layer_return_recurrent_packet_seal
+      |                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38CounterGather.h:9:17: note: in expansion of macro 'q38_mixed_root_packet_seal'
+    9 | extern "C" void q38_mixed_root_packet_seal(const uint32_t*);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_dense_partition_root.cpp:214:30: error: too many arguments to function 'void q38_layer_return_recurrent_packet_seal(const uint32_t*)'
+  214 |    q38_mixed_root_packet_seal(d,write);
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_return_recurrent_layer.cpp:24:36: note: declared here
+   24 | #define q38_mixed_root_packet_seal q38_layer_return_recurrent_packet_seal
+      |                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38CounterGather.h:9:17: note: in expansion of macro 'q38_mixed_root_packet_seal'
+    9 | extern "C" void q38_mixed_root_packet_seal(const uint32_t*);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_cohort.cpp: At global scope:
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_return_recurrent_layer.cpp:24:36: error: conflicting declaration of C function 'void q38_layer_return_recurrent_packet_seal(const uint32_t*, bool)'
+   24 | #define q38_mixed_root_packet_seal q38_layer_return_recurrent_packet_seal
+      |                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_cohort.cpp:23:17: note: in expansion of macro 'q38_mixed_root_packet_seal'
+   23 | extern "C" void q38_mixed_root_packet_seal(const uint32_t*,bool);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_return_recurrent_layer.cpp:24:36: note: previous declaration 'void q38_layer_return_recurrent_packet_seal(const uint32_t*)'
+   24 | #define q38_mixed_root_packet_seal q38_layer_return_recurrent_packet_seal
+      |                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38CounterGather.h:9:17: note: in expansion of macro 'q38_mixed_root_packet_seal'
+    9 | extern "C" void q38_mixed_root_packet_seal(const uint32_t*);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+In file included from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:6:
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_cohort.cpp: In function 'void MixedRecurrentCohort::Packet(uint32_t*, unsigned int, unsigned int, unsigned int, bool)':
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_cohort.cpp:89:28: error: too many arguments to function 'void q38_layer_return_recurrent_packet_seal(const uint32_t*)'
+   89 |  q38_mixed_root_packet_seal(Frame(),write);
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_return_recurrent_layer.cpp:24:36: note: declared here
+   24 | #define q38_mixed_root_packet_seal q38_layer_return_recurrent_packet_seal
+      |                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38CounterGather.h:9:17: note: in expansion of macro 'q38_mixed_root_packet_seal'
+    9 | extern "C" void q38_mixed_root_packet_seal(const uint32_t*);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_cohort.cpp:117:30: error: too many arguments to function 'void q38_layer_return_recurrent_packet_seal(const uint32_t*)'
+  117 |    q38_mixed_root_packet_seal(Frame(),write);
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_return_recurrent_layer.cpp:24:36: note: declared here
+   24 | #define q38_mixed_root_packet_seal q38_layer_return_recurrent_packet_seal
+      |                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38CounterGather.h:9:17: note: in expansion of macro 'q38_mixed_root_packet_seal'
+    9 | extern "C" void q38_mixed_root_packet_seal(const uint32_t*);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp: At global scope:
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_return_recurrent_layer.cpp:24:36: error: conflicting declaration of C function 'void q38_layer_return_recurrent_packet_seal(const uint32_t*, bool)'
+   24 | #define q38_mixed_root_packet_seal q38_layer_return_recurrent_packet_seal
+      |                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_mixed_recurrent_block_root.cpp:276:17: note: in expansion of macro 'q38_mixed_root_packet_seal'
+  276 | extern "C" void q38_mixed_root_packet_seal(const uint32_t* frame,bool write){
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_return_recurrent_layer.cpp:24:36: note: previous declaration 'void q38_layer_return_recurrent_packet_seal(const uint32_t*)'
+   24 | #define q38_mixed_root_packet_seal q38_layer_return_recurrent_packet_seal
+      |                                    ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38CounterGather.h:9:17: note: in expansion of macro 'q38_mixed_root_packet_seal'
+    9 | extern "C" void q38_mixed_root_packet_seal(const uint32_t*);
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~~~~
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_qwen38_read_source_boundary_root.py", line 42, in <module>
+    run(*command)
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_qwen38_read_source_boundary_root.py", line 32, in run
+    subprocess.run(list(map(str, values)), check=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-g++', '-DPIONEER_Q38_READ_SOURCE_BOUNDARY_IMAGE=1', '-DPIONEER_Q38_COUNTER_GATHER_IMAGE=1', '-std=c++11', '-O2', '-Wall', '-Wextra', '-Werror', '-ffreestanding', '-fno-exceptions', '-fno-rtti', '-fno-stack-protector', '-fno-pic', '-fno-pie', '-ffp-contract=off', '-ffunction-sections', '-fdata-sections', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-msmall-data-limit=0', '-mno-relax', '-march=rv32imf', '-mabi=ilp32', '-fstack-usage', '-ffixed-s11', '-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1', '-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1', '-DPIONEER_Q38_JOB_BOOT_FOLD_IMAGE=1', '-DPIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL=1', '-DPIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL_EIGHT=1', '-DPIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT=1', '-DPIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION=1', '-DPIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION=1', '-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1', '-DPIONEER_Q38_GLOBAL_CHAIN_LOCAL_SOURCE_GUARDS=1', '-DPIONEER_Q38_GLOBAL_CHAIN_QUIET_UNROLL=1', '-DPIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS=1', '-DPIONEER_Q38_GLOBAL_CHAIN_F32_HIDDEN=1', '-DPIONEER_Q38_LAYER_RETURN_COMPONENT_IMAGE=1', '-DPIONEER_Q38_LAYER_COMPONENT_RECURRENT=1', '-DPIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE=1', '-DPIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL=1', '-DPIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT=1', '-DPIONEER_Q38_RETAINED_CONV_CLOSURE_IMAGE=1', '-DPIONEER_Q38_COHORT_LOCAL_SOURCES_IMAGE=1', '-DPIONEER_Q38_PACKET_IDENTITY_BOUNDARY_IMAGE=1', '-DPIONEER_Q38_TID_BOUNDARY_IMAGE=1', '-c', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_return_recurrent_layer.cpp', '-o', '/private/tmp/pioneer-q38-read-source-inspect-main-20261101-bq/read-source-boundary-recurrent.o']' returned non-zero exit status 1.

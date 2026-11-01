@@ -30,6 +30,9 @@
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
 #include "PioneerQ38GlobalChainComponentRole.h"
 extern "C" void q38_mixed_root_packet_seal(const uint32_t*);
+#ifdef PIONEER_Q38_READ_SOURCE_BOUNDARY_IMAGE
+extern "C" void q38_mixed_root_direction_packet_seal(const uint32_t*,bool);
+#endif
 #ifdef PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE
 extern "C" const uint32_t* q38_mixed_root_packet_frame();
 #endif
@@ -151,7 +154,11 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
 #endif
  || !bytes || bytes>16384-(remote&31) || ((bytes|remote)&3))scalar_fault_park();
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
+#ifdef PIONEER_Q38_READ_SOURCE_BOUNDARY_IMAGE
+ q38_mixed_root_direction_packet_seal(d,write);
+#else
  q38_mixed_root_packet_seal(d);
+#endif
 #ifdef PIONEER_Q38_TID_BOUNDARY_IMAGE
  if(!PioneerQ38TidPacketQuiet())scalar_fault_park();
 #else
@@ -202,7 +209,11 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
   bool done=!*Words(0xffb20040);for(unsigned i=0;i<8;i++)done &= *Words(0xffb20000+Counter(i))==expected[i];
   if(done){
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
+#ifdef PIONEER_Q38_READ_SOURCE_BOUNDARY_IMAGE
+   q38_mixed_root_direction_packet_seal(d,write);
+#else
    q38_mixed_root_packet_seal(d);
+#endif
 #ifdef PIONEER_Q38_TID_BOUNDARY_IMAGE
    if(!PioneerQ38TidPacketQuiet())scalar_fault_park();
 #else

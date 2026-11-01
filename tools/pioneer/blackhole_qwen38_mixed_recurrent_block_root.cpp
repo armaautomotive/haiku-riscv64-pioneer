@@ -272,7 +272,11 @@ static void Stop(R::PrivateSeal* p,unsigned previous){
 }
 extern "C" const uint32_t* q38_mixed_recurrent_frame(){return RecurrentBlock::Private()->frame;}
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
+#ifdef PIONEER_Q38_READ_SOURCE_BOUNDARY_IMAGE
+extern "C" void q38_mixed_root_direction_packet_seal(const uint32_t* frame,bool write){
+#else
 extern "C" void q38_mixed_root_packet_seal(const uint32_t* frame){
+#endif
  using namespace RecurrentBlock;const auto* p=Private();
  if(frame!=p->frame || !p->phase || p->phase>15 || !p->outer[48] || p->outer[48]>=0x7fffffff
   || *Words(R::Doorbell)!=p->outer[48])scalar_fault_park();
@@ -299,11 +303,28 @@ extern "C" void q38_mixed_root_packet_seal(const uint32_t* frame){
 #endif
  for(unsigned i=0;i<8;i++)if(frame[32+i]!=p->boot[8+i])scalar_fault_park();
 #endif
+#ifdef PIONEER_Q38_READ_SOURCE_BOUNDARY_IMAGE
+ // READ-ONLY metadata traffic may precede a source fault at the next
+ // write/full boundary. Both transfer callers pass their ACTUAL command
+ // direction,not a caller-ready flag. Every write (including metadata),
+ // worker release,full compute/closure and each gather submission still
+ // checks ALL16 live sources. Callers retain exact command readbacks,
+ // counter deltas,FIFO checks,finite waits and quarantine.
+ if(write)PioneerQ38WordSealSources(p->boot+16);
+#else
  PioneerQ38WordSealSources(p->boot+16);
+#endif
 #ifdef PIONEER_Q38_TID_BOUNDARY_IMAGE
  if(!(p->boot[16]&0x10000U))scalar_fault_park(); // refuse FIFO-disabled mode,never change it
 #endif
 } // exclusive owner per-packet checks,NOT a full immutable metadata audit
+#ifdef PIONEER_Q38_READ_SOURCE_BOUNDARY_IMAGE
+extern "C" void q38_mixed_root_packet_seal(const uint32_t* frame){
+ // Existing one-argument users (including receipt callbacks and the
+ // eight-counter gather) NEVER acquire read-source deferral implicitly.
+ q38_mixed_root_direction_packet_seal(frame,true);
+}
+#endif
 #endif
 extern "C" void q38_mixed_root_seal(){
  using namespace RecurrentBlock;const auto* p=Private();
