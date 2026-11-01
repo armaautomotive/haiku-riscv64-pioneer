@@ -1,0 +1,65 @@
+F8 diagnostic posthoc reader:CLOSED,not a new physical performance result
+=======================================================================
+2026-11-01. Goal ACTIVE;20tok/s remains UNMET. No new accelerator job or
+010c installation occurs in this checkpoint. Last completed physical
+diagnostic remains about0.1597tok/s with known strict score differences.
+
+Why a separate reader is required
+---------------------------------
+The distinct f8efe67a failure-report client adds exactly ONE informational
+stdout banner before the original complete frontier34 grammar. The old
+strict reader correctly refuses this different envelope. A separate
+posthoc reader accepts ONLY that exact banner followed by every original
+byte through the UNCHANGED legacy parser,with a separate EMPTY stderr.
+It neither changes the original parser nor filters failed packet/error
+lines,omissions,duplicates,records,times or rate arithmetic. Raw input
+files are never rewritten. Its private normalized byte snapshot is NOT
+a raw hardware artifact or independent hardware-provenance proof.
+
+The CLI first loads ALL three original pinned CPU traces and uses the
+UNCHANGED first-three token/score comparison with the same exit behavior.
+There is no tolerance,diagnostic-only success override,runtime CPU model,
+accelerator action or Work acceptance. A syntactically valid count rate
+does not prove full-model quality;positions3..33 remain outside that
+reference's numerical scope. Failure stderr cannot become a clean result.
+
+Paired independent closed tests
+-------------------------------
+Main64692-yt/clean67981-yu BOTH ACTUALLY exit0;complete logs byte-identical.
+EVERY run FIRST executes ALL unchanged old strict-parser and exact-rational
+pair controls:3 positives/1260 refusals then7 positives/51 refusals.
+New own envelope tests:3 SYNTHETIC positives/686 refusals. They cover every
+banner-byte mutation,omission/duplicate of every complete log line,extra
+output,failed-packet/error stderr,record/count/rate corruption,missing/
+relative/linked/same file paths,unchanged raw inputs and original strict
+numerical decisions. These are parser fixtures,NOT observed card results.
+Both new source files also compare byte-for-byte between source trees.
+
+Independent actual current Pioneer health
+-----------------------------------------
+Default-sandbox yo SSH actually255 with Operation not permitted;it did not
+reach the board. The separately authorized same scoped CPU-only health yp
+ACTUALLY exits0,stderr0B:exact installed041/tag12/generation2,cold0,
+quiesced0/owner0/open1/guard1,64CPUs/full137034936320B,no compute parent,
+and preserved stable/4b/admin/guard/failed34322/33d-helper whole hashes exact.
+This is host/driver metadata,NOT memory integrity,bandwidth,authenticity or
+whole-card health qualification. No model/Assistant/boot/network/SD/power
+change or inference occurs. The new010c remains qualified OFFBOARD only;
+its separate guarded updater qualification is still in progress.
+
+Separate original-model native numerical progress
+-------------------------------------------------
+Older precise-beta snapshot flows17008/75574 are still LIVE;they are NOT
+the new twin worker. Original completed position0/layers26 snapshots were
+read with the unchanged strict comparator and ALL three original CPU pins.
+Main yq/clean yr ACTUALLY0;logs AND binary snapshots compare byte-identical.
+ALL5120 layer words bit-exact,maxAbs/L2zero,no tolerance. This extends
+previous completed-layer checks,NOT token/terminal/STOP/END/full-model/
+physical/Work/TPS proof. Original full3-token41236 remains LIVE as well.
+No flow was restarted or replaced by an abbreviated closure.
+
+Next:finish the separately pinned010c<->041 updater tests,non-overwriting
+stage/readback and fresh clean-idle checks;only then a bounded physical
+diagnostic using f8 with raw failure reporting. Never reapply failed34322
+or hot-recover retained/quarantined ownership. Preserve the working
+Assistant,boot,64 CPUs/fullRAM and separation of Work versus validation.

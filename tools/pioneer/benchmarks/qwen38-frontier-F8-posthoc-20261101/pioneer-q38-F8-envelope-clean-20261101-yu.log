@@ -1,0 +1,3 @@
+PASS FRONTIER34 comparator/3 SYNTHETIC positives/1260 omissions+duplicates+record+counter+time+rate+numeric refusals;strict first3 numerical comparison unchanged;NO physical/timing/quality proof
+PASS paired frontier34/7 SYNTHETIC positives/51 header/window/partial/rate/path/role refusals;exact rational raw-count bounds/legacy strict suite unchanged;NO device IO,hardware timing,quality or Work proof
+PASS F8_DIAGNOSTIC comparator/3 SYNTHETIC positives/686 envelope+stderr+file+complete-grammar+numeric refusals;old parser/expectations UNCHANGED;NO physical/TPS/Work proof
