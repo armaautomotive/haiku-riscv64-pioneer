@@ -3,7 +3,8 @@ Cohort-local-source firmware:exact DATA and distinct native subjects
 2026-11-01. Goal ACTIVE;20tok/s UNMET. No new physical throughput or
 whole-model numerical acceptance. Latest closed78322 measurement remains
 0.110798402..0.110799678tok/s;known first3 score differences still fail.
-The distinct844ec module below is staged ONLY;NOT installed or run on hardware.
+The distinct844ec module below is now loaded/gen19 and its first physical
+benchmark is LIVE. No new speed or full-model correctness result exists.
 
 Current-source ROOT rechecks72666/80527 ACTUALLY exit0 after the new role
 and DATA selectors are added:exact cd54 reproduces,with ENTIRE old83677/
@@ -127,3 +128,35 @@ HOST counts are not physical timing. Finish BOTH actual native ENDs and
 strict native-prefix comparisons before fresh health/exactaf680 apply
 to expectedgen19. Oldccded66d cannot restore844ec;use the new exact helper
 only after actual model closure,fresh idle health and no cold/quarantine.
+
+Terminal native qualification update03:06UTC
+--------------------------------------------
+SAME44922/53188 ACTUALLY exit0,observed03:06:28UTC. Both complete actual
+original first-layer arithmetic,consumed posted cancellation,119 real
+STOPs+120 HOLDs,zero-record drain,held hidden reads,all L1/dispatch/peer/
+ROOT/shared/clock/PCI/VM/host restoration,device unreserve and locked whole-
+context destruction. No reset,CPU model product or invented predecessor.
+Both41028-byte native prefixes have SHA
+ 4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+Strict independent posthoc CPU comparisons ACTUALLY exit0:both5120-word
+embedding and5120-word layer0 outputs bit-exact,maxAbs0/relativeL20.
+This is first-layer/native-lifetime coverage,NOT CommitState/all64-layer
+quality,public ABI execution,resident Work or timing proof.
+
+Actual guarded load and first physical run03:08UTC
+--------------------------------------------------
+After all gates close,fresh independent SSH verifies idle041/tag12/gen18,
+Haiku/UID0,64CPUs/max137034936320B/free133751152640B,exact844ec/af680/
+4b/d1ce and no model/Assistant parent. Exactaf680 apply13565 ACTUALLY
+exits0:041/gen18->844ec/tag75/gen19,no reboot or GPU execution. Fresh
+independent prelaunch SSH verifies those full hashes,cold0/quiesced0/
+owner0/open1/guard1,64CPUs/max137034936320B/free133749944320B.
+ONE unchanged4b client benchmark74354 starts03:08UTC. It is LIVE,initial
+same-open full original-GGUF authentication before accelerator Open,NOT a
+completed model or speedup. Raw log:
+ /private/tmp/pioneer-q38-cohort-sources-physical-20261101-zfq.log
+NO second GPU/admin FD,other model,reload/reset,power,SD,OS or network
+intervention until actual END+Close and process exit. After actual closure,
+strict main/clean comparison,same4b/old78322 control comparison,fresh idle
+health and exactaf680 restore041 expectedgen20 remain REQUIRED. Do not
+use oldccded66d for844ec or restore a cold/quarantined/unknown owner.
