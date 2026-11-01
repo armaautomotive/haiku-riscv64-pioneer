@@ -1,0 +1,22 @@
+PASS all34 first12 record words EXACT vs prior unchanged4b+1f3 control;session nonces+counter words NOT asserted equal
+OBSERVED generation 15 rows 3045 raw words 6090 rate {'sampled_tokens': 32, 'first_committed': 2, 'last_committed': 34, 'elapsed_min_us': 298411994, 'elapsed_max_us': 298415320, 'lower': 0.1072331, 'upper': 0.107234296, 'observations': 3046}
+OBSERVED mean seconds per sampled token bounds 9.3253748125 9.32547875
+OBSERVED RAW CHANNEL first_raw samples 3045
+RAW samples 502 fraction 0.16486042692939246 q38_layer_return_recurrent_packet_seal
+RAW samples 229 fraction 0.07520525451559934 MixedRecurrentCohort::Packet(unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+RAW samples 227 fraction 0.07454844006568144 DensePartitionRoot::Transfer(unsigned int const*, unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+RAW samples 213 fraction 0.06995073891625615 DensePartitionRoot::Quiet() | MixedRecurrentCohort::Quiet()
+RAW samples 202 fraction 0.06633825944170772 PioneerQ38PreciseWorkerLayout::JobShape(unsigned int const*, unsigned int const*, unsigned int, unsigned int)
+RAW samples 151 fraction 0.04958949096880132 q38_layer_return_dense_packet_seal
+RAW samples 116 fraction 0.0380952380952381 PioneerQ38PreciseWorkerLayout::BootShape(unsigned int const*)
+RAW samples 94 fraction 0.030870279146141214 Projection::Run(unsigned int const*)
+OBSERVED RAW CHANNEL second_raw samples 3045
+RAW samples 518 fraction 0.17011494252873563 q38_layer_return_recurrent_packet_seal
+RAW samples 238 fraction 0.07816091954022988 MixedRecurrentCohort::Packet(unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+RAW samples 233 fraction 0.07651888341543514 DensePartitionRoot::Transfer(unsigned int const*, unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+RAW samples 217 fraction 0.07126436781609195 DensePartitionRoot::Quiet() | MixedRecurrentCohort::Quiet()
+RAW samples 201 fraction 0.06600985221674877 PioneerQ38PreciseWorkerLayout::JobShape(unsigned int const*, unsigned int const*, unsigned int, unsigned int)
+RAW samples 137 fraction 0.04499178981937603 q38_layer_return_dense_packet_seal
+RAW samples 133 fraction 0.04367816091954023 PioneerQ38PreciseWorkerLayout::BootShape(unsigned int const*)
+RAW samples 98 fraction 0.03218390804597701 GlobalChain::Scope(bool)
+NO retiredPC,device cycles,function time,causality,statistical confidence or numerical/Work acceptance inferred

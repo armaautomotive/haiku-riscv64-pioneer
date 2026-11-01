@@ -1,0 +1,91 @@
+Actual raw frontend profile:controller checks dominate observed address bins
+==========================================================================
+2026-11-01. Goal ACTIVE;20tok/s UNMET. RAW sample frequency is NOT retired
+PC,device cycles,function time or bottleneck causality. No new optimization
+speedup or full-model numerical acceptance is claimed by this experiment.
+
+Actual hardware lifetime
+-------------------------
+SAME91692 launches00:59UTC and ACTUALLY exits0,observed01:38:51UTC. Exact
+1f3bcff838ff9f95d5f450c53000f02f80ddcd073aa5a5cc3018ee4208e0847c module,
+tag75/generation15,with distinct718d0cea frontend client. Original full
+GGUF authenticates before accelerator Open;19399024640 padded learned
+bytes/3551 parts/4736090 pages/20367 spans upload.34 positions(2 prompts+
+32 feedback),genuine terminal/HOLD/drain/full restore/END+Close,all34
+records/final count34 validate;stderr0B. No runtime CPU model reference,
+second GPU/admin FD,other model,reload/reset,power/SD/OS/network change
+occurs during the live model lifetime. This is NOT the new78322 firmware.
+
+The collector copies the raw words ALREADY in each existing Observe
+response:3045 raw rows,6090 words,one final ready row,generation15. No
+extra accelerator call is added. Raw rows print only AFTER clean closure.
+Main+independent-clean strict parsers ACTUALLY exit1 on known numerical
+failures,while profile grammar,whole base records/feedback/session/flags/
+reserved/count/rate arithmetic and exact declared1f3->48b2 ELF binding PASS.
+Both analysis outputs are byte-identical. Raw/derived-data distinctions and
+exact nonzero-size function extents are preserved;no PC subtraction or
+range widening occurs. Separate first_raw/second_raw statistics agree in
+their leading bins;no processor identity or independent sample population
+is inferred for these two sequential frontend observations.
+
+Observed count window
+-----------------------
+3046 counter observations,first committed2,last34,32 sampled tokens:
+ elapsed298411994..298415320us
+ lower0.107233100tok/s,upper0.107234296tok/s
+ mean9.3253748125..9.32547875seconds per sampled token
+These are post-prompt count-window bounds,not statistical confidence or
+isolated-token latency. Authentication,upload,startup and cleanup excluded.
+All34 first12-word record headers are EXACT vs the preceding unchanged4b/
+same1f3 control. Per-session nonce/counter fields are not asserted equal.
+No measured optimization or profiler-overhead causal effect is inferred.
+
+Leading COMBINED raw address bins(out of6090)
+--------------------------------------------
+1020 q38_layer_return_recurrent_packet_seal
+ 467 MixedRecurrentCohort::Packet
+ 460 DensePartitionRoot::Transfer
+ 430 coincident DensePartitionRoot::Quiet|MixedRecurrentCohort::Quiet
+ 403 PioneerQ38PreciseWorkerLayout::JobShape
+ 288 q38_layer_return_dense_packet_seal
+ 249 PioneerQ38PreciseWorkerLayout::BootShape
+ 180 GlobalChain::Scope
+143 GlobalChain::InputSeal and41 GlobalChain::FeedbackSeal are also sampled.
+Coincident symbol intervals remain explicitly ambiguous. These samples
+motivate inspecting controller packet/seal/metadata/transfer overhead next;
+they DO NOT prove how many cycles any function consumed or that removing a
+check would be safe. The already prepared commit-boundary optimization is
+being measured separately,not assumed to solve these larger hot paths.
+
+Numerical acceptance:STILL FAILED
+---------------------------------
+Same first-three input/greedy matches,but maximum-logit words differ:
+ pos0 selected70253 observed413bc1de CPU413c2358
+ pos1 selected17    observed41452aa2 CPU414621d3
+ pos2 selected17    observed4167c42a CPU4168afd0
+No tolerance/control is changed. Positions3..33 still have no external
+numerical acceptance here. Repeated17 is NOT useful conversation proof.
+
+Fresh health and baseline restoration
+---------------------------------------
+Only AFTER actual process exit,fresh independent SSH verifies Haiku/UID0,
+64CPUs/max137034936320B/free133753249792B,no model/Assistant parent,exact
+1f3 module/94dd helper/d1ce guard,tag75/gen15,cold0/quiesced0/owner0/open1.
+Immutable94dd restore20217 ACTUALLY exits0 without reboot/reset. Fresh
+independent SSH verifies041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag12/gen16/cold0/quiesced0/owner0/open1/guard1,unchanged helper/guard,
+64CPUs/max137034936320B/free133753155584B. No recovery/SD/mains change.
+This is historical restoration evidence,NOT a claim the board stays on
+baseline:the separately qualified78322 diagnostic is later applied/gen17
+and NEW41855 benchmark starts01:47UTC;that run is still LIVE and must be
+closed before any further GPU/admin or reload/power intervention.
+
+Next
+-----
+Finish SAME41855 new-firmware benchmark;strict comparison/fresh idle then
+exactccded66d restore041 expectedgen18. In parallel investigate measured
+controller address concentrations without equating samples with time or
+silently weakening metadata/source/counter/command/safe-lifetime guards.
+Preserve distinct validation and no-CPU-reference Work requirements.
+Full numerical acceptance,resident fresh requests,arbitrary prompts,usable
+Assistant and20tok/s remain outstanding. Goal remains ACTIVE.
