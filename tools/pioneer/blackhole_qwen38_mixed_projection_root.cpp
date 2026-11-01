@@ -116,10 +116,16 @@ static void Gather(const uint32_t* d,uint32_t* tracked,unsigned w){
  MatrixJob(d,w,Words(L::Nonces)[w]);Copy(L::PeerJobs+w*256,L::Scratch,64);
 #endif
  unsigned groups=Words(L::PartsShadow+w*32)[2],k=d[14],type=d[15],blocks=k>>(type==8?5:8);
+ unsigned weightReadBlocks=blocks;
+#ifdef PIONEER_Q38_BATCHED_PREFETCH_ROOT_IMAGE
+ // SAME original bytes and output arithmetic;only weight request count
+ // changes. Sender AND all ROOT TUs need this distinct counter grammar.
+ weightReadBlocks=blocks>>(type==8?2:1);
+#endif
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
- unsigned reads=groups*blocks+(k*2+16383)/16384+1,flits=groups*blocks*L::Tile(type)/64+(k*2+((blocks*4+63)&~63U))/64;
+ unsigned reads=groups*weightReadBlocks+(k*2+16383)/16384+1,flits=groups*blocks*L::Tile(type)/64+(k*2+((blocks*4+63)&~63U))/64;
 #else
- unsigned reads=groups*blocks+(k*2+16383)/16384+1,flits=groups*blocks*(type==8?576:3392)/64+(k*2+((blocks*4+63)&~63U))/64;
+ unsigned reads=groups*weightReadBlocks+(k*2+16383)/16384+1,flits=groups*blocks*(type==8?576:3392)/64+(k*2+((blocks*4+63)&~63U))/64;
 #endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
  uint32_t receiptAfter[8];

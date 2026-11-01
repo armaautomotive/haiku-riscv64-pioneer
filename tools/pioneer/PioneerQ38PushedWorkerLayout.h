@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38FlatMatrixGrammarRole.h"
+#include "PioneerQ38BatchedPrefetchRootRole.h"
 #ifndef PIONEER_Q38_PUSHED_WORKER_LAYOUT_H
 #define PIONEER_Q38_PUSHED_WORKER_LAYOUT_H
 #include "PioneerQ38PreciseWorkerLayout.h"

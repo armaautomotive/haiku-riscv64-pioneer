@@ -1,0 +1,7 @@
+PASS distinct full-model prefetch shader roles/3 syntax positives/136 missing+zero+two+late+native+ROOT+oldimage+CPU+Work refusals;legacy nonprojection prefetch remains distinct;NO firmware execution,numeric,lifetime,device or speed qualification
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/tests/run_pioneer_q38_batched_prefetch_roles.py", line 44, in <module>
+    check(wrong,kind,False)
+  File "/private/tmp/pioneer-q38-commit-observer-clean-20261031-ms.NEKUcFTV/tools/pioneer/tests/run_pioneer_q38_batched_prefetch_roles.py", line 32, in check
+    assert (result.returncode==0)==okay,(values,body,result.stderr)
+AssertionError: ({'PIONEER_Q38_PRECISE_WORKER_IMAGE': '1', 'PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE': '1'}, None, '')

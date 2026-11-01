@@ -1,0 +1,2 @@
+PASS distinct full-model prefetch shader roles/3 syntax positives/136 missing+zero+two+late+native+ROOT+oldimage+CPU+Work refusals;legacy nonprojection prefetch remains distinct;NO firmware execution,numeric,lifetime,device or speed qualification
+PASS distinct batched shader/3 positives/208 missing,zero,two,late,math-vs-sender,native,ROOT,oldDATA,CPU+Work refusals;old prefetch role controls FIRST;NO emitted execution,native ownership,physical or TPS proof

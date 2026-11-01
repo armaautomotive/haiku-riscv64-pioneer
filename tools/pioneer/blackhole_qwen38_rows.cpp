@@ -7,6 +7,7 @@
 // stay on this ONE card core. No host intermediate/NoC/DRAM/DMA/PCI access.
 // Not a full-K matrix, resident model, decoder, or performance result.
 #include "PioneerQ38TokenPrefetchWorkerRole.h"
+#include "PioneerQ38TokenBatchedPrefetchRole.h"
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQwen38Panel.h"
 #ifdef PIONEER_Q38_WORK_LOCAL_Q4
@@ -39,6 +40,9 @@
 #error Tile prefetch is a separate OFFLINE original-layout Work scheduling experiment
 #endif
 #include "PioneerQ38TilePrefetchPlan.h"
+#ifdef PIONEER_Q38_WORK_BATCHED_PREFETCH
+#include "PioneerQ38BatchedPrefetchPlan.h"
+#endif
 #endif
 #if defined(PIONEER_Q38_WORK_FRONTEND_BARRIER) && (!defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_WORK_AFFINE_REPLAY) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT))
 #error Frontend barrier is a separate OFFLINE original-layout direct-SrcB peer,not a batch/format mix
@@ -431,6 +435,25 @@ void TilePrefetchWait(uint32_t expected){
   if(!*Words(0xffb20040)&&*Words(0xffb20208)==expected&&!(*Words(0xffb20240)&255)){Fence();return;}
  block_fault_park(); // UNKNOWN:inert,NO next command/read/reset/retry
 }
+#ifdef PIONEER_Q38_WORK_BATCHED_PREFETCH
+static __attribute__((noinline,optimize("Os"),section(".text.pioneer_q38_batch4_stage")))
+uint32_t BatchedTilePrefetchStage(unsigned type,unsigned inputs,unsigned groups,unsigned group,unsigned block,uint32_t first,uint32_t route,uint32_t& pending){
+ PioneerQ38BatchedPrefetchPlan p;
+ if(!PioneerQ38BatchedPrefetchPlan::Describe(type,inputs,groups,group,block,first,p))block_fault_park();
+ if(p.first)TilePrefetchWait(TilePrefetchStart(p.bulkSource,route,0x98000,p.bulkBytes));
+ else if(p.batchFirst)TilePrefetchWait(pending);
+ if(p.copyLast){
+  // Do not overwrite ANY prior batch tile while an older tensor operand
+  // might still reference it. Drain is real,not a host-ready assertion.
+  VectorPanelEmitter emitter;emitter.Drain();
+  for(unsigned word=0;word<p.tileBytes/4;word++)Words(0x90000)[word]=Words(p.copySource)[word];
+  (void)Words(0x90000)[p.tileBytes/4-1];Fence();
+  if(p.next)pending=TilePrefetchStart(p.nextSource,route,0x98000,p.bulkBytes);
+  else ReadCommand(p.currentSource,route,0x90000,p.tileBytes);
+ }
+ return p.currentRaw; // known-complete current bytes;pending is disjoint90000 vs98000
+}
+#else
 static __attribute__((noinline,section(".text.pioneer_q38_batch4_stage")))
 uint32_t TilePrefetchStage(unsigned type,unsigned inputs,unsigned groups,unsigned group,unsigned block,uint32_t first,uint32_t route,uint32_t& pending){
  PioneerQ38TilePrefetchPlan p;
@@ -446,6 +469,7 @@ uint32_t TilePrefetchStage(unsigned type,unsigned inputs,unsigned groups,unsigne
  // preserving ALL original final coordinator/source/counter proofs.
  return p.currentRaw;
 }
+#endif
 #endif
 #ifdef PIONEER_Q38_WORK_BATCH4_FETCH
 // Cold prefix,original saved window. No asynchronous fetch/counter reset.
@@ -684,7 +708,11 @@ extern "C" unsigned block_main()
 #endif
 #ifdef PIONEER_Q38_STREAM
 #ifdef PIONEER_Q38_WORK_TILE_PREFETCH
+#ifdef PIONEER_Q38_WORK_BATCHED_PREFETCH
+	if(skipDotCheck)rawBase=BatchedTilePrefetchStage(type,inputs,groups,group,block,first,job[8],nextTileExpected);else
+#else
 	if(skipDotCheck)rawBase=TilePrefetchStage(type,inputs,groups,group,block,first,job[8],nextTileExpected);else
+#endif
 #endif
 #ifdef PIONEER_Q38_WORK_BATCH4_FETCH
 	if(skipDotCheck)

@@ -136,7 +136,13 @@ static void Gather(const uint32_t* h,unsigned w,unsigned ordinal,unsigned& bestR
  for(unsigned i=0;i<64;i++)if(PeerJob(w)[i]!=expectedJob[i])scalar_fault_park();
  Wait(h,w,false);const auto* j=PeerJob(w);const auto* b=PeerBoot(w);
  PeerPacket(h,w,G::Partial,512,false);uint32_t p[64];for(unsigned i=0;i<64;i++)p[i]=Words(R::Scratch)[i];
- const auto* proof=Words(R::Scratch+256);const unsigned groups=j[23],reads=groups*20+2,flits=groups*1060+162;
+ const auto* proof=Words(R::Scratch+256);const unsigned groups=j[23],reads=groups*
+#ifdef PIONEER_Q38_BATCHED_PREFETCH_ROOT_IMAGE
+  10
+#else
+  20
+#endif
+  +2,flits=groups*1060+162;
  const unsigned expected[]={G::PartialMagic,j[1],64,
 #ifdef PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE
   j[6],

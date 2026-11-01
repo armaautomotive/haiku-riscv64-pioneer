@@ -23,7 +23,7 @@ struct PushedPeer:GlobalInitialPeer {
   countBase[4]=countBase[7]=0xfffffffeU;countBase[5]=0xfffffffcU; // raw cold-boot counter values;exercise outgoing write wrap.
  }
  unsigned ExpectedMatrixInstructions()const{return MatrixPhasesPerPanel()*FfnPersistentPeer::groups*(inputs/16);}
- unsigned ExpectedReadPackets()const{return (inputs*2+16383)/16384+1+FfnPersistentPeer::groups*(inputs/(type==8?32:256));}
+ virtual unsigned ExpectedReadPackets()const{return (inputs*2+16383)/16384+1+FfnPersistentPeer::groups*(inputs/(type==8?32:256));}
  const std::vector<uint8_t>* Rom(unsigned address,unsigned& base)const override{
   if(Range(address,0x30000,unsigned(precise.size()))){base=0x30000;return &precise;}
   return GlobalInitialPeer::Rom(address,base);

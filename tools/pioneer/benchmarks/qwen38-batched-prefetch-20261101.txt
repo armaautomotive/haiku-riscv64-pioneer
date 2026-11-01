@@ -1,0 +1,129 @@
+Distinct current-QGW3 batched prefetch: offline qualification checkpoint
+=======================================================================
+2026-11-01. Goal ACTIVE;20tok/s UNMET. This is NOT a physical speedup,
+model-quality,full-model native-lifetime or usable Assistant Work result.
+Last measured nonprofiling diagnostic remains0.159697435..0.159700083tok/s;
+known strict final-score mismatch remains FAIL. Profile60755 CLOSED actual0,
+baseline041/tag12/gen36 restored and independently healthy/idle,all64CPUs
+and137034936320B RAM. See qwen38-current-frontend-profile-20261101.txt.
+
+Actual implementation,not altered weights or CPU result substitution
+-------------------------------------------------------------------
+Q8 reads4 adjacent original tiles/2304B,Q4 reads2/4608B,Q6 reads2/6784B.
+ALL original quantized bytes,source bounds,arithmetic order and saved L1
+extents remain unchanged. Consume completed scratch tiles directly;copy
+ONLY the last tile to90000 after an actual Tensix drain. Then fetch the
+next batch into disjoint98000 scratch while computing the copied last tile.
+This reduces weight commands,not weight bytes. No CPU/reference products
+enter the instruction engine or proposed device implementation.
+
+The existing <=8KiB precaution is retained,not asserted as a universal
+silicon safety threshold. Actual response/counter/error/bounded-wait,
+ownership,command restoration,private tensor completion and packet ACK
+requirements are not removed. Unknown completion parks without another
+read,retry,reset,cleanup or success marker.
+
+New math AND sender counter grammar must be selected together. Old ROOT
+and native packages are INCOMPATIBLE. Matching new ROOT changes ordinary
+projection counter expectations AND the complete-vocabulary output-head
+expectations;all3 ROOT grammar-emitting TUs have one consistent selection.
+No current installed owner selects this new family. New roles explicitly
+refuse old DATA/native,CPU oracle and Work aliases;BUILD is not execution.
+
+Independent complete BUILD identities
+---------------------------------------
+Worker inspect24141/9979 and frozen48865/1121 ACTUALLY exit0. ALL10 code
+sections+whole ELF compare byte-for-byte across main+independent clean:
+b73a8278ed2bf6f7c9e8713072b01ecf2a6e28206003026f4d1fbd5ff3c41c8e.
+The ENTIRE previouscf02+all ancestors and old sender object reproduce
+FIRST. Boot/precise/dense/ffn/service/gdn sections remain byte-identical.
+Fetch1260/1792,text6004/8192,affine5360/5376;no writable globals,GOT,
+undefined symbols,unqualified arithmetic/CSR or reserved-s11 misuse.
+
+ROOT inspect55143/36289 ACTUALLY exit0. All4 sections+whole ELF compare:
+b622da7fdfa314c9ee4d7695f066d374de86c47d98c5ed79e4e88d0fc972cca8.
+The ENTIRE previous88e4+ancestors and all3 whole ROOT TUs reproduce FIRST.
+Text129672/131072,conv32692/32768;boot/terminal unchanged. Function-bounded
+RV32IMF/noCSR/noabsoluteJALR gate matches the unchanged parent. Literal
+pins were frozen only AFTER these independent whole-artifact matches.
+Frozen ROOT rebuild83990/8869 BOTH ACTUALLY exit0;all4 sections+whole ELF
+compare exactly,also identical to the independently matched inspect ELF.
+
+Closed pure geometry,role and retained actual instruction checks
+----------------------------------------------------------------
+ASan/UBSan pure DATA main+clean ACTUALLY0,logs byte-identical:334313 checks,
+591 unchanged-output refusals,all types/K/groups/source-end cases. Same
+total bytes,fewer commands,last-tile-only copy,original saved scratch.
+This geometry does NOT prove response/drain/actual execution or speed.
+
+Current shader roles main26676/clean31857 ACTUALLY0,logs identical:old
+3positive/136refusals FIRST,then new3positive/214refusals. ROOT roles
+main35181/clean53500 ACTUALLY0,logs identical:old2positive/109refusals FIRST,
+then new3positive/183refusals. Host-faked architecture macros are syntax
+arguments ONLY,not emitted architecture or ownership evidence.
+
+Retained actual-instruction main76394/clean8006 ACTUALLY0,logs identical.
+The whole unchanged old queued-worker control executes FIRST. Then EACH
+new run executes9 retained workers(type8/12/14,workers1/96/119),two changed
+input matrix jobs per worker,genuine ROOT-queued descriptor at first
+commit,second payload ACK then final commit,153 second-payload/source/
+ACK-timeout fault branches and real STOP. No positive PC/register/Dst/
+LReg/raw-unpack/hardware-counter/private-state reset. Max combined stack
+3540/8192. Synthetic NoC/input endpoints only;NOT all119/native/model/TPS.
+
+Full new worker arithmetic/fault suite43541/53782 BOTH ACTUALLY exit0,
+logs byte-identical. Each executes unchanged old precise-beta controls
+FIRST,then54 paired matrix cases(type8/12/14,K5120/6144/17408,groups1/3/16,
+two changed input patterns),12 missing read responses,12 skipped-wait/wrong-
+buffer mutants,12 async completion schedules(including actual reply while
+the copied last tile computes),48 source faults after payload before
+commit,finite ACK timeout/queued-descriptor branches,and3 retained GDN
+pairs/12 half-jobs/real STOP. ALL exported FP32 rows equal unchanged old
+instructions and independent FP64 check. Same Tensix arithmetic/vector/raw/
+sum operations,actual extra drain once per batch,unchanged outgoing payload
+ACK+commit deltas and flit bytes;fewer genuine weight-read requests.
+Max combined matrix/GDN stack4804/8192. Synthetic endpoints only,NOT dense
+global-output connected execution,all119 workers,native/model/Work/TPS.
+Pilot64020 ACTUALLY0 was only3 shapes and did not replace this full suite.
+The default old read-count accessor changed to virtual ONLY inside the
+test fixture so the new actual sender can be checked against the distinct
+batch packet count;its old default arithmetic is unchanged and controls
+execute FIRST. No production owner or verifier was relaxed.
+
+Failures kept as failures;no expectation/pin/tolerance laundering
+----------------------------------------------------------------
+Initial ns59265/nx6388 ACTUALLY1:observer misclassified the first read of
+the next row-group as the previous group's final command restoration.
+The repair requires the actual final-tile stage boundary;no firmware or
+expected arithmetic change. ny26682/oa80184 ACTUALLY1 after all54 arithmetic
+cases:wrong-buffer mutant at tile0 correctly refuses after its first batch
+has already completed,but an inherited test expected a pending next read.
+New test requires refusal,NO math/copy/publish,completed first read,and no
+next issue;missing-wait mutants STILL require the read remain pending.
+
+Initial ROOT od8803/oe26494 ACTUALLY1:unbounded objdump scan interpreted
+embedded unaligned DATA words as FMA opcodes. The repair applies EXACTLY
+the parent's actual function-symbol intervals;no ranges widened,no real
+forbidden instruction dropped. All failed raw logs are retained.
+
+Remaining gates toward actual useful inference
+------------------------------------------------
+Qualify complete14-section new immutable DATA and old-owner refusals,
+connected new ROOT+sender arithmetic INCLUDING full-vocabulary output,
+full native initialization/journal/119worker lifetime/STOP/HOLD/drain/END
+and exact restoration. Only then build/qualify a separate native driver,
+stage/readback/prelaunch and run an isolated physical comparison. No
+batched subject has been staged or run on the Pioneer. Resident fresh
+requests,arbitrary prompts,full numerical correctness and usable no-CPU-
+reference Assistant Work remain separate unmet requirements. Do not infer
+TPS or promise20tok/s from fewer commands or synthetic instruction tests.
+
+Separate numerical-localization evidence (NOT the batched subject)
+------------------------------------------------------------------
+The existing precise-beta/fault-ROOT original-model flows17008/75574 remain
+LIVE separately. Actual position0/completedLayers13 snapshot compares
+ALL5120 words bitexact/maxAbs0/relativeL20 to unchanged CPU controls;
+main+clean snapshots and strict comparator logs are identical. Together
+with earlier1..12 this is13 exact incomplete rows,not64-layer/full3-token/
+terminal/END or physical acceptance. No snapshot was supplied as a result
+to the instruction engine. The historical older41236 remains separate.

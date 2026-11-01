@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // DISTINCT QGW1 whole-model/global-output front end. Fresh cohort required.
 // Reuses returning arithmetic ONLY; this is not an old live-cohort update.
+#include "PioneerQ38TokenBatchedPrefetchRole.h"
 #ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
 #include "PioneerQ38PreciseWorkerImageRole.h"
 #else
@@ -8,6 +9,9 @@
 #endif
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQwen38Panel.h"
+#ifdef PIONEER_Q38_TOKEN_BATCHED_PREFETCH_WORKER_IMAGE
+#include "PioneerQ38BatchedPrefetchPlan.h"
+#endif
 #include "PioneerQ38GlobalWorkerLayout.h"
 #ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
 #include "PioneerQ38PreciseWorkerLayout.h"
@@ -58,7 +62,13 @@ static void Matrix(const uint32_t* j,const uint32_t* source,unsigned worker,unsi
  q38_ffn_persistent_matrix_begin(source,self);
  uint32_t before[8];for(unsigned i=0;i<8;i++)before[i]=*Words(0xffb20000+Counter(i));
  unsigned count=q38_compute_once(),blocks=j[5]>>(j[1]==8?5:8);
- unsigned reads=j[7]*blocks+(j[5]*2+16383)/16384+1;
+ unsigned reads=j[7]*
+#ifdef PIONEER_Q38_TOKEN_BATCHED_PREFETCH_WORKER_IMAGE
+  PioneerQ38BatchedPrefetchPlan::ReadBlocks(j[1],j[5],j[14]==1)
+#else
+  blocks
+#endif
+  +(j[5]*2+16383)/16384+1;
  unsigned flits=j[7]*blocks*j[2]/64+(j[5]*2+((blocks*4+63)&~63U))/64;
  if(count!=j[7]*j[5]/16 || !Quiet() || *Words(0xffb20014)!=self)block_fault_park();
  auto* p=Words(0x83f00);

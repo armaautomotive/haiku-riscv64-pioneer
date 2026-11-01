@@ -1,0 +1,1 @@
+PASS batched-prefetch pure DATA/334313 proposals+raw-input checks/591 unchanged-output refusals/ALLtypes,K,groups,source-end boundaries/old bounded batches exact/unchanged total bytes/fewer read commands/last-tile-only copy/disjoint saved scratch;NO response,drain,owner,execution,hardware or speed proof

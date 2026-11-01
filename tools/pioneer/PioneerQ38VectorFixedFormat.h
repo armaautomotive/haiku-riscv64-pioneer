@@ -1,9 +1,13 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38TokenBatchedPrefetchRole.h"
 #ifndef PIONEER_Q38_VECTOR_FIXED_FORMAT_H
 #define PIONEER_Q38_VECTOR_FIXED_FORMAT_H
 #include "PioneerQ38VectorPanel.h"
 #ifdef PIONEER_Q38_WORK_TILE_PREFETCH
 #include "PioneerQ38TilePrefetchPlan.h"
+#ifdef PIONEER_Q38_WORK_BATCHED_PREFETCH
+#include "PioneerQ38BatchedPrefetchPlan.h"
+#endif
 #endif
 #ifdef PIONEER_Q38_WORK_FRONTEND_BARRIER
 #include "PioneerQ38FrontendBarrier.h"
@@ -61,6 +65,8 @@ template<class E> static bool PioneerQ38VectorFixedUnpack(E& e,unsigned type,uns
 	PioneerQ38VectorPanelSpan span; if (!PioneerQ38VectorPanel(type,panel,span)) return false;
 #ifdef PIONEER_Q38_WORK_BATCH_RAW_INPUT
 	if(!PioneerQ38Batch4RawInput(type,rawBase))return false;
+#elif defined(PIONEER_Q38_WORK_BATCHED_PREFETCH)
+	if(!PioneerQ38BatchedPrefetchPlan::RawInput(type,rawBase))return false;
 #elif defined(PIONEER_Q38_WORK_TILE_PREFETCH)
 	if(!PioneerQ38PrefetchRawInput(type,rawBase))return false;
 #else
