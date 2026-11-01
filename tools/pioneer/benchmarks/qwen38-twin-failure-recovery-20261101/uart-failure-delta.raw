@@ -1,0 +1,48 @@
+ron 10.0.0.211 port 55471
+P211:TU runtime_loader entry 0x2af72295f2 args 0x00000037e779f200 commpage 0x0000003fffdca000
+P211:UE thread 885 entry 0x2af72295f2 stack 0x37e779f000 tls 0x37e779f000 return 0x3fffdca248
+Accepted publickey for baron from 10.0.0.211 port 55479 ssh2: ED25519 SHA256:4Yhn12jvuqyzpFCm7R/nwER/r41CUJchirapXGYkRPE
+P211:TU runtime_loader entry 0x1d36a635f2 args 0x0000003f895e5200 commpage 0x0000003ffff87000
+P211:UE thread 888 entry 0x1d36a635f2 stack 0x3f895e5000 tls 0x3f895e5000 return 0x3ffff87248
+P211:TU runtime_loader entry 0x32edfdd5f2 args 0x0000003eace0d200 commpage 0x0000003ffffd9000
+P211:UE thread 888 entry 0x32edfdd5f2 stack 0x3eace0d000 tls 0x3eace0d000 return 0x3ffffd9248
+P211:TU runtime_loader entry 0x32638895f2 args 0x0000003e761e4200 commpage 0x0000003ffffe3000
+P211:UE thread 889 entry 0x32638895f2 stack 0x3e761e4000 tls 0x3e761e4000 return 0x3ffffe3248
+PIONEER-P100A: probe open ready
+PIONEER-P100A: profile root node begin
+PIONEER-P100A: profile card node search begin
+PIONEER-P100A: profile stage 1 card node found
+PIONEER-P100A: profile stage 2 cached card identity checked
+PIONEER-P100A: profile root peers checked
+PIONEER-P100A: profile root PCI reads begin
+PIONEER-P100A: profile stage 3 root PCI reads complete
+PIONEER-P100A: profile stage 4 FDT identity checked
+P236:SG2042 resource range 0 type 0x2 host 0x4810800000 size 0x400000
+P236:SG2042 resource range 1 type 0x1 host 0x4890000000 size 0x30000000
+P236:SG2042 resource range 2 type 0x1 host 0x48c0000000 size 0x10000000
+P236:SG2042 resource range 3 type 0x1 host 0x4900000000 size 0x200000000
+P236:SG2042 resource range 4 type 0x1 host 0x4b00000000 size 0x100000000
+P236:SG2042 resource ranges complete
+PIONEER-P100A: profile stage 5 host windows checked
+PIONEER-P100A: profile stage 6 validated; no PCI/MMIO writes
+PIONEER-P100A: ARC scratch attempt NoC0 (8,0), TLB 201, read-only target
+PIONEER-P100A: bounded CSM telemetry attempt, whitelisted tags only
+PIONEER-P100A: enabled physical Tensix (1,2), read-only reset-state attempt
+PIONEER-P100A: seven-bank DRAM read-only route transaction, no core start/DMA/flash
+PIONEER-P100A: read-only host-transfer route/inbound/SII audit; no DMA or bus mastering
+PIONEER-P100A: read-only PCIe pending/firmware HDMA ch0 audit; no DMA or bus mastering
+P100A_Q38_CLOCK begin1 state1 mhz800/1350 mode3/3 messages3 uncertain0;NORMAL_FIRMWARE_ONLY
+slab memory manager: created area 0xffffffc059801000 (63561)
+slab memory manager: created area 0xffffffc00c801000 (63562)
+slab memory manager: created area 0xffffffc05a001000 (63563)
+slab memory manager: created area 0xffffffc00d001000 (63564)
+slab memory manager: created area 0xffffffc05a801000 (63565)
+slab memory manager: created area 0xffffffc00d801000 (63566)
+slab memory manager: created area 0xffffffc05b001000 (63567)
+slab memory manager: created area 0xffffffc00e001000 (63568)
+PIONEER-P100A:54 RETAIN end=0 close=0 worker=0 status=00000000/00000000/00000000 prepared=120 booted=0 closed=0;NO_LATER_CARD_IO
+PIONEER-P100A:54 DETAIL 00000000/00000000/00000000/00000000;ALREADY_READ_VALUES_ONLY
+PIONEER-P100A:54 RETAIN end=0 close=0 worker=0 status=00000000/00000000/00000000 prepared=120 booted=0 closed=0;NO_LATER_CARD_IO
+PIONEER-P100A:54 DETAIL 00000000/00000000/00000000/00000000;ALREADY_READ_VALUES_ONLY
+Received disconnect from 10.0.0.211 port 55479:11: disconnected by user
+Disconnected from user baron 10.0.0.211 port 55479

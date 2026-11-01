@@ -1,0 +1,80 @@
+Twin-batch physical failure: retired; controlled recovery complete
+================================================================
+2026-11-01 23:47 UTC. Goal active; usable 27B Work and 20 tokens/sec remain
+unmet. This supersedes the historical LIVE status in the rollout report.
+
+Physical result, not a performance or authenticity result
+--------------------------------------------------------
+SAME 21858 actually exited 1, observed at 23:20:02 UTC. Exact public driver
+010c184ef474f962205918fd9a9a34b23b2ab47c3cf6a62d285fcb36d2e9e899 and f8
+failure-report client completed original-GGUF authentication, uploaded
+19,399,024,640 bytes and received START_ACK. The first frontier observation
+failed: B_DEV_NOT_READY / 0x8000a00c. No token records, clean END or TPS.
+The already-returned failure reply has raw started1 / phase12 / worker0 /
+word0 / unsafe1 / ready0. This narrows the observed failure to Sources or
+the initial root marker/error checks, before reading the token count. It
+does NOT identify which check failed, the fault instruction, the cause,
+completed layers, or authority to restore anything. No extra card read was
+made to obtain those failure fields. No concurrent Pioneer operation ran
+during the entire authentication/upload/start/observe/close lifetime.
+
+The existing serial logger was not reopened or reconfigured. The exact
+3,529-byte local delta from prelaunch offset 88,011,363 is preserved raw.
+Its RETAIN/DETAIL lines are not proof of root cause or a safe cleanup.
+Independent CPU-only health AAA actually exited 1: the expected healthy
+idle state was correctly refused because cold1 and active_owner1. Haiku
+remained SSH-responsive with 64 CPUs and 137,034,936,320 bytes RAM. No hot
+restore, reset, forced unload, unreserve, or further GPU work was attempted.
+
+Recovery, with no SD/mains/hardware change
+-----------------------------------------
+OFF once (34069) actually exited 0. After more than four minutes the SSH
+state check timed out (42944, exit255), without contradictory powered-on
+evidence. ON once (54951) completed; its raw log records the 0.75-second
+pulse and action completion, stderr empty. A subsequent successful SSH
+check established new Linux boot ID 31757105-712d-49c3-9cb4-664d2db91d7c,
+6.1.31/riscv64, all CPUs0-63, MemTotal131976904KiB, card enable0/no driver/
+COMMAND0000. No duplicate OFF or ON pulse was sent.
+
+The pinned root-owned SD-free helper is unchanged, SHA9cfc6dc326c938b8d611
+c8c8622a9a6686ed530270dde768b1f01362f4f61f6e, metadata0:0:700:1:19404.
+Its entire source was inspected. Fresh session twin-recovery-20261101-aag
+prepare98471 and boot76091 both actually exited0, normal64-CPU/full-RAM
+top-page7/no-SD profile, NO journal override. Default Linux boot unchanged.
+The first Haiku SSH observation timed out; a later observation succeeded
+without another power pulse: exact010c/tag75/newgen1/cold0/owner0.
+
+Only after independent new-epoch/full-RAM/all-CPU/whole-identity checks,
+restore16595 actually exited0. The preserved exact6c3215d8 helper was used
+ONLY with --restore-token-twin-batch-prefetch-benchmark. It quiesced and
+closed010c/gen1, loaded stable041/tag12/gen2, and checked its whole hash.
+Independent fresh AAK health actually exited0: stable041 exact, gen2,
+cold0/quiesced0/active_owner0/open_count1/guard1, no compute parent, 64 CPUs
+and full137034936320B. Restore and independent-health stderr are empty.
+No inference or new accelerator test was started in this clean epoch.
+
+Prevent accidental retry, preserve explicit guarded restoration
+--------------------------------------------------------------
+The source updater now rejects the failed twin APPLY route before any
+platform/admin operation. Its exact SHA is
+108ea20abacb0582944860fead1b8e3f68eaf46aad10bd0d80873d1dee745a7f.
+The test source SHA is
+e71f30d1455a4fd5e98af5d119e2d492ef8a9dc277ab99d1fdf41f24f9ea702b.
+Main21122 and independent clean99320 both actually exited0, complete logs
+byte-identical: 201 focused filesystem/handshake/hash/symlink/owner/failure
+cases each. Failed34322 apply remains disabled. Both restore routes retain
+their exact source/installed/owner/cold/generation/backup safeguards. This
+is NOT a rerun of all17037 cases; those closed on the earlier frozen6c
+source. The staged6c helper was not overwritten with the retired source.
+
+The unchanged strict F8 posthoc reader was run against these ACTUAL raw
+logs and the pinned original CPU traces: exit2, expected refusal because
+stderr is nonempty. No rate was accepted or failed-packet lines filtered.
+
+All raw physical/failure/health/power/restore/test evidence is preserved in
+the sibling qwen38-twin-failure-recovery-20261101 directory, including raw
+CR/trailing whitespace. A successful recovery does not turn the failed
+optimization into a pass. Last completed diagnostic rate remains about
+0.1597 tokens/sec with known numerical failures; no usable Work claim.
+Next independent baseline work is a separately compiled card-only DRAM
+read-sweep leaf. It has no native driver or hardware qualification yet.

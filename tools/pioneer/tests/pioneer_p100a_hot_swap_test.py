@@ -1062,6 +1062,7 @@ if __name__ == '__main__':
     selected = set(sys.argv[1:])
     seen = set()
     retired_modes = {
+        '--apply-token-twin-batch-prefetch-benchmark': 'STOP_TWIN_PREFETCH010C_FAILED_PHYSICAL',
         '--apply-recurrent-block-validation': 'STOP_RECURRENT71_FAILED_NATIVE',
         '--apply-token-batched-prefetch-benchmark': 'STOP_BATCHED_PREFETCH34322_FAILED_PHYSICAL',
     }

@@ -1,5 +1,17 @@
-Twin010c guarded rollout:INSTALLED;bounded physical diagnostic LIVE
+Twin010c guarded rollout:FAILED;baseline041 restored after recovery
 ==================================================================
+2026-11-01 23:47 UTC supersedes all historical LIVE/installed status below.
+SAME21858 actually exited1 on the FIRST frontier observation after upload
+and START_ACK. No token/END/TPS result. Raw reply phase12/word0/unsafe1
+does NOT distinguish the early source/marker/error check or prove cause.
+Quarantine was respected;OFF once/ON once,new Linux/Haiku epoch,then ONLY
+preserved6c guarded RESTORE to041/gen2 after clean-new-epoch checks. Fresh
+independent health0:64CPUs/fullRAM/cold0/owner0. Failed010c APPLY is now
+hard-disabled in source;focused main+clean201 cases each exit0/logs exact.
+Full evidence and qualifications:qwen38-twin-failure-recovery-20261101.txt.
+
+Historical rollout ledger, not the current hardware state
+--------------------------------------------------------
 2026-11-01 22:47UTC update supersedes historical STAGED/LIVE-test status below.
 SAME main97588/clean32790 unfiltered updater runs BOTH ACTUALLY exit0,
 observed22:45:29UTC:EACH17037 actual filesystem/handshake/hash/symlink/
