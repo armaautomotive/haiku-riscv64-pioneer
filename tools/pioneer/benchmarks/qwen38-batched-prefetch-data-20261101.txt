@@ -1,0 +1,76 @@
+Matching batched14-section DATA closed;no native or hardware selection
+=====================================================================
+2026-11-01. Goal ACTIVE;20tok/s UNMET,known final-score mismatch remains
+FAIL. This checkpoint packages the already independently frozen b622 ROOT
+and b73 worker;it does not install a driver or claim inference throughput.
+Pioneer remains on baseline041/tag12/gen36,last independently healthy/idle,
+all64CPUs/full137034936320B. No Pioneer SSH,reload,model,power,SD or hardware
+operation occurs during this offline DATA qualification.
+
+Complete fixed artifacts,not an old nine-section alias
+------------------------------------------------------
+generate_qwen38_token_programs.py --batched-prefetch authenticates ALL16
+artifacts(4 ROOT+10 peer sections+BOTH whole ELFs) BEFORE creating output.
+It emits only those SAME immutable authenticated snapshots,no second open.
+ROOT wholeELF b622da7fdfa314c9ee4d7695f066d374de86c47d98c5ed79e4e88d0fc972cca8
+Worker wholeELF b73a8278ed2bf6f7c9e8713072b01ecf2a6e28206003026f4d1fbd5ff3c41c8e
+Distinct namespace PioneerQ38TokenBatchedPrefetchPrograms;own selector and
+guard,metadata BatchedPrefetch1/Q8Batch4/Q4Batch2/Q6Batch2. No old ROOT/peer
+code arrays or native owner are substituted. Full .fetch is included.
+
+Independent main+clean generation BOTH ACTUALLY exit0;headers byte-exact:
+1ae2a7c9028ad7623390bf7512d38fca0528d731af361d444d72671e8db273f2.
+ROOT4 spans/40594 words,peer10 spans/25584 words,total3085090 words across
+ALL120 workers. Every immutable code word fits the UNCHANGED proposed
+PioneerQ38TokenPushedL1 journal:13478458 words/53913832B. In particular
+peer70000..ac000 contains the full new fetch,90000 last-tile copy and
+98000 batched scratch. Geometry alone is NOT actual native restoration.
+
+Closed independent DATA tests and refusals
+-------------------------------------------
+Main90939 and clean70858 BOTH ACTUALLY exit0,logs byte-for-byte identical.
+Each first executes the ENTIRE unchanged prefetch+flat+empty-receipt+
+counter+TID+packet+cohort+commit+retained+frontier DATA controls,original
+header pins,generator identities,corruptions and syntax refusals.
+
+New ASan/UBSan test independently reads the extracted artifact files and
+checks ALL3085090 code words,span order,addresses,exact lengths,ordinal
+lookups,and full snapshot containment across ROOT+119 workers.3010 gap,
+runtime-data,invalid-worker,unaligned and immutable-output alias refusals
+include ALL14 arrays. The peer-fetch immutable-output test explicitly
+covers this new variant too;no missing-array shortcut.
+
+32 damaged/truncated artifact cases and5 mixed/wrong-family cases ALL
+refuse before creating output:old ROOT/new peer,new ROOT/old peer,both old
+under new selector,and new images under both old selectors.3 positive
+syntax cases/300 missing,zero,two,late,forged-guard,old-array/native,BUILD,
+USER,CPU-oracle+Work refusals pass. Direct old generated headers are
+rechecked through the common geometry AFTER their own guard is set;both
+include orders refuse. Existing selected-programs owner refuses this
+DATA entirely. No native context or driver ABI selection is granted.
+
+Existing complete compiled native subjects preserved
+-----------------------------------------------------
+Main private85739/public22304 and clean private96114/public72907 ALL
+ACTUALLY exit0. Each authenticates old argv and reproduces the ENTIRE
+old flat native object(and whole8612 module for public) FIRST. Then the
+ENTIRE unchanged previous prefetch private object/public object/module
+reproduce exactly under the new shared guard headers:
+ private e4e8cc3f616d8cc5c34789326ed3fdd8e3e920cf96c50ce19658d1d9b934f845
+ public object30691de52d1f34dcc01725b8d068c54fa283419ec97da7b15c58ac02729ba9a0
+ module919d4a631ff664549a67bb2372ce2db344ba29473c452c0b273c4b27a2bdf978.
+Private5 ABI bodies+5 wrappers remain byte-exact to inert controls;public
+partial known-module stack5392B/25 unresolved is NOT a whole-kernel-stack
+proof. These checks BUILD the OLD subjects only;none is a new batched
+owner,lifecycle,hardware execution or deployable driver qualification.
+
+Next required integration
+--------------------------
+Implement a distinct new native selector and immutable-package binding,
+separate expected-ROM/actual peer endpoint observer for batched reads,
+and connected first-layer/cancel/119STOP/120HOLD/drain/full restore/END.
+Keep the exact old native/data controls and unchanged numerical comparator.
+Full-model final scores,resident fresh requests,arbitrary prompts,usable
+no-CPU-reference Assistant Work and20tok/s remain unaccepted. Only after
+native qualification may a separately built driver be staged/verified and
+physically benchmarked. Fewer NoC read commands are not a measured speedup.

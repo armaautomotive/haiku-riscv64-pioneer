@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 // DATA selection only; no native source/lifetime, journal or launch grant.
 // Rechecked outside the guard so late/defined-zero changes cannot alias data.
+#include "PioneerQ38TokenBatchedPrefetchDataBoundary.h"
+#ifdef PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS
+#error Batched-prefetch DATA has no selected native owner yet
+#endif
 #include "PioneerQ38TokenPrefetchProgramsRole.h"
 #if defined(PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS) \
  && !defined(PIONEER_Q38_TOKEN_PREFETCH_NATIVE_CONTEXT) && !defined(PIONEER_Q38_TOKEN_PREFETCH_BENCHMARK_NATIVE)
