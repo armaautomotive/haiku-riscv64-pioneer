@@ -103,14 +103,13 @@ comparison, any immutable DATA/native package or device use is considered.
 
 Separate physical run and remaining work
 -----------------------------------------
-16680 is the DIFFERENT packet-identity ba971/gen21 driver, unchanged 4b
-benchmark client, launched 04:24 UTC. At 04:49:52 its entire padded upload
-is logged; the SAME handle is confirmed live at 04:52 UTC. No new rate or
-clean END exists.
-Do not open another GPU/admin/model handle or change driver/power/OS/network
-while it is alive, including source authentication before accelerator Open.
-After actual END+Close+exit: strict comparison, same-client 844ec control,
-fresh healthy idle, exact efd848 helper restoration to041, expected gen22.
+16680 was the DIFFERENT packet-identity ba971/gen21 driver, unchanged 4b
+benchmark client, launched04:24 UTC. It ACTUALLY exits0 observed05:03:56 UTC,
+rate0.124069222..0.124070829 tokens/sec; known strict score failures remain.
+All34 first12 headers match old844ec. Fresh healthy idle, exact efd848
+restoration and independent041/tag12/gen22 health are verified. See
+qwen38-packet-identity-physical-20261101.txt for the complete closed result.
+The board is back on041; no TID package has been deployed or measured.
 
 This TID BUILD has no DATA/native/public/physical/Work grant. Next qualify
 the original first-layer positive and strict external words, then immutable

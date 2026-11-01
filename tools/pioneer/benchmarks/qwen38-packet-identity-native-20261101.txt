@@ -1,5 +1,10 @@
 Packet-identity native gates passed;bounded hardware benchmark LIVE
 ==================================================================
+Later update05:05 UTC:16680 ACTUALLY exits0,rate0.124069222..0.124070829
+tokens/sec,strict first3 scores still FAIL;exact041 baseline restored/gen22.
+See qwen38-packet-identity-physical-20261101.txt for the closed measurement
+and independently verified restoration. The launch account below is historical.
+
 2026-11-01,04:24UTC. Goal ACTIVE.20tok/s,full model quality and usable
 resident Work/Assistant remain UNMET. Latest CLOSED physical measurement
 is the DIFFERENT844ec source-audit driver:0.121167265..0.121168784tok/s,

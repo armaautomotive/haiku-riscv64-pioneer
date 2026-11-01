@@ -1,0 +1,79 @@
+Packet-identity driver: clean34, modest measured gain, quality still unaccepted
+===========================================================================
+2026-11-01,05:05 UTC. Goal ACTIVE. This is a fixed diagnostic, not arbitrary
+prompt serving or Assistant Work. Target20 tokens/sec remains unmet.
+
+Actual hardware subject and complete lifetime
+----------------------------------------------
+SAME16680 launched04:24 UTC and ACTUALLY exits0, observed05:03:56 UTC.
+Full installed module SHA:
+ ba9719dbc45ffb408d386c7c84da7322ae94136b6cbab26e39f6077870366830
+tag2026103100010075/generation21, packet-identity ROOT0c3f72d4.
+This is NOT the new FIFO/TID ROOTbc01 or a TID native package.
+UNCHANGED4b benchmark client SHA:
+ 4b1dbee63e537b39e5212a9180670139a2a9ba46ef0b3cbeb66a7d5226b7f048
+
+Complete SAME-open original GGUF authentication precedes accelerator Open;
+all3551 parts/4736090 pages/20367 spans/19399024640 padded learned bytes
+upload. Start acknowledges, all34 positions execute, actual terminal/HOLD/
+drain/full restore/END+Close finishes, all34 records/final_count34 validate.
+stderr0B. No runtime CPU model reference, second GPU/admin/model handle,
+driver reload/reset, power, SD, OS or network change during that lifetime.
+
+Observed post-prompt count window
+----------------------------------
+32 sampled tokens, committed2..34,2633 counter observations:
+ elapsed257917194..257920535us
+ rate0.124069222..0.124070829 tokens/sec
+ mean8.0599123125..8.06001671875 seconds per sampled token.
+Authentication, upload, initialization and cleanup are EXCLUDED. These are
+count-window bounds, not statistical confidence or isolated-token latency.
+
+Same4b client/old844ec control:32 tokens,committed2..34,2696 observations,
+elapsed264094422..264097733us,rate0.121167265..0.121168784 tokens/sec.
+One paired-run throughput gain2.393717..2.396328 percent. ALL34 first12-word
+headers are EXACT. Session nonces and physical counters are not asserted
+equal. One run each does NOT establish repeatability or causal confidence.
+This is a modest gain, still about161 times short of20 tokens/sec.
+
+Strict numerical comparison: STILL FAILED
+-------------------------------------------
+Unchanged main+independent-clean comparators ACTUALLY exit1 and their logs
+are byte-identical. Record/session/feedback/flag/reserved/count/rate grammar
+and arithmetic pass. First3 selected tokens match the same CPU input path,
+but maximum-logit words retain the known differences:
+ position selected observed CPU-reference
+ 0        70253    413bc1de 413c2358
+ 1        17       41452aa2 414621d3
+ 2        17       4167c42a 4168afd0
+No expected values, tolerance or verifier were relaxed. Positions3..33 have
+no external numerical acceptance here; repeated17 is not conversation proof.
+No full-hidden/vocabulary/arbitrary-prompt or Work quality pass is claimed.
+
+Actual exact baseline restoration
+----------------------------------
+Only AFTER actual closure, fresh independent SSH ACTUALLY exits0 and
+verifies Haiku/UID0,64 CPUs,maxRAM137034936320B/free133752664064B,
+no model/Assistant parent, whole ba971/efd848/4b/d1ce hashes and tag75/gen21/
+cold0/quiesced0/owner0/open1/guard1. Exact efd848 helper restore35629
+ACTUALLY exits0: quiesce, close,041 reload, tag2026102100010012/generation22.
+No reboot, GPU execution, reset, recovery, SD/mains or hardware change.
+
+Fresh independent post-restore SSH ACTUALLY exits0 and verifies full SHA:
+ 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+tag12/gen22/cold0/quiesced0/owner0/open1/guard1,64 CPUs/fullRAM, and unchanged
+efd848 helper,4b client,d1ce guard hashes. The diagnostic is no longer
+installed; no additional hardware model ran.
+Exact helper SHA:
+ efd848f7c1bf6f1da77c514e5026af843218c2a043e0273dc5f690d1ce7b58bf
+
+Next
+------
+The separate FIFO-aware TID ROOTbc01 has independently frozen images,
+3989 emitted synthetic cases per tree and46 genuine original corruption
+children per tree. Its original first-layer positive is still LIVE; do not
+infer a numerical pass or physical speed from partial matrices or HOST
+instruction counts. Qualify full positive, strict external words, immutable
+program DATA and complete native lifecycle before a separate hardware test.
+Larger on-card orchestration/batching, full model quality, resident fresh
+requests, arbitrary prompts and usable Assistant Work remain outstanding.
