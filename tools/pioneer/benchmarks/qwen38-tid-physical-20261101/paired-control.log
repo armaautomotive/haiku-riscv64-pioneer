@@ -1,0 +1,7 @@
+PREVIOUS {'sampled_tokens': 32, 'first_committed': 2, 'last_committed': 34, 'elapsed_min_us': 257917194, 'elapsed_max_us': 257920535, 'lower': 0.124069222, 'upper': 0.124070829, 'observations': 2633}
+TID {'sampled_tokens': 32, 'first_committed': 2, 'last_committed': 34, 'elapsed_min_us': 249052084, 'elapsed_max_us': 249055401, 'lower': 0.128485469, 'upper': 0.12848718, 'observations': 2542}
+ALL34_FIRST12_HEADERS_EQUAL True
+ONE_PAIR_GAIN_PERCENT_BOUNDS 3.5581611210157904 3.5608815214461575
+MEAN_SECONDS_PER_SAMPLED_TOKEN_BOUNDS 7.782877625 7.78298128125
+TARGET20_GAP_FACTOR 155.65755276129494 155.6596256032657
+ONE PAIR ONLY,NOT STATISTICAL OR FULL NUMERICAL ACCEPTANCE

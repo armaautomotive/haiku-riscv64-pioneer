@@ -1,5 +1,13 @@
-FIFO-aware TID native package: full lifecycle passed, hardware benchmark LIVE
+FIFO-aware TID native package: full lifecycle passed, hardware benchmark CLOSED
 ===========================================================================
+Later closure,2026-11-01 06:30 UTC:96523 ACTUALLY exits0 after clean34 and
+END+Close,0.128485469..0.128487180tok/s,one-pair3.558..3.561% gain.
+Known strict first3 score failures persist. Exact51c restoration62304
+ACTUALLY exits0;fresh independent health verifies041/tag12/gen24,64 CPUs/
+fullRAM,healthy idle. See qwen38-tid-physical-20261101.txt. The following
+05:48 record is historical qualification/launch evidence,not current LIVE
+state. A separate newer a2d5 queued BUILD is still offline,not this driver.
+
 2026-11-01,05:48 UTC. Goal ACTIVE. No TID hardware/Work speed claim.
 The separate ba971/0c3f hardware benchmark closed at0.124069222..
 0.124070829 tokens/sec, known strict score failures persist, and the

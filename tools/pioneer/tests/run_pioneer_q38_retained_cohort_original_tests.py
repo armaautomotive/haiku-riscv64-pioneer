@@ -12,6 +12,10 @@ import subprocess
 import sys
 import tempfile
 
+counter_gather='--counter-gather' in sys.argv[1:]
+if counter_gather:
+    assert sys.argv.count('--counter-gather')==1
+    sys.argv.remove('--counter-gather')
 tid_boundary='--tid-boundary' in sys.argv[1:]
 if tid_boundary:
     assert sys.argv.count('--tid-boundary')==1
@@ -31,6 +35,7 @@ cold_faults=local_sources and len(sys.argv)==6 and sys.argv[5]=='--cold-source-f
 identity_faults=identity_boundary and len(sys.argv)==6 and sys.argv[5]=='--packet-identity-faults'
 tid_faults=tid_boundary and len(sys.argv)==6 and sys.argv[5]=='--tid-boundary-faults'
 assert (not tid_boundary or identity_boundary and (first_layer or tid_faults))
+assert not counter_gather or tid_boundary and first_layer
 assert (not identity_boundary or local_sources) and (first_layer or faults or source_faults or cold_faults or identity_faults or tid_faults)
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 image,old,worker,model=map(pathlib.Path,sys.argv[1:5]);observed=pathlib.Path(sys.argv[7]) if first_layer else None
@@ -40,7 +45,7 @@ here=pathlib.Path(__file__).resolve().parent
 def pins(script):
     return next(ast.literal_eval(n.value) for n in ast.parse(script.read_text()).body
                 if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='PINS' for t in n.targets))
-for directory,script in ((image,here.parent/('build_qwen38_tid_boundary_root.py' if tid_boundary else 'build_qwen38_packet_identity_boundary_root.py' if identity_boundary else 'build_qwen38_cohort_local_sources_root.py' if local_sources else 'build_qwen38_retained_cohort_root.py')),
+for directory,script in ((image,here.parent/('build_qwen38_counter_gather_root.py' if counter_gather else 'build_qwen38_tid_boundary_root.py' if tid_boundary else 'build_qwen38_packet_identity_boundary_root.py' if identity_boundary else 'build_qwen38_cohort_local_sources_root.py' if local_sources else 'build_qwen38_retained_cohort_root.py')),
                          (old,here/'run_pioneer_q38_mixed_worker_tests.py'),
                          (worker,here.parent/'build_qwen38_precise_beta_worker_image.py')):
     expected=pins(script);assert expected
@@ -100,6 +105,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-q38-retained-conv-original-',di
                     '-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1','-DPIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION=1',
                     *(['-DPIONEER_Q38_TEST_OBSERVED_TRACE=1'] if first_layer else []),
                     *(['-DPIONEER_Q38_TEST_TID_FIFO_ENDPOINT=1'] if tid_boundary else []),
+                    *(['-DPIONEER_Q38_TEST_COUNTER_GATHER_FIFO=1'] if counter_gather else []),
                     str(here/test_source),
                     str(here/'pioneer_q38_whole_original_bytes.cpp'),*recorder,'-o',str(binary)],check=True)
     # Only now create the observation destination. No synthetic learned

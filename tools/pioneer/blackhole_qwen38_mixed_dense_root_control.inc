@@ -110,7 +110,15 @@ static __attribute__((noinline)) void AdmitGlobalOutput(const uint32_t* d,uint32
  ClosedJob(d,tracked,w,false);GlobalHeaderSeal(d,header);
 }
 #endif
-static void Admit(const uint32_t* d,uint32_t* tracked,unsigned w){
+#ifdef PIONEER_Q38_COUNTER_GATHER_IMAGE
+// Keep the new queued BUILD inside the EXISTING code reservation. This
+// integer-only admission routine contains no model arithmetic; worker
+// kernels, numerical reductions and floating-point flags are unchanged.
+static __attribute__((noinline,optimize("Os")))
+#else
+static
+#endif
+void Admit(const uint32_t* d,uint32_t* tracked,unsigned w){
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION
 #ifndef PIONEER_Q38_COHORT_LOCAL_SOURCES_IMAGE
  // Observe the ROOT's OWN prior frontier BEFORE Wait can observe a peer's
@@ -216,8 +224,15 @@ static void Admit(const uint32_t* d,uint32_t* tracked,unsigned w){
 #else
  for(unsigned i=0;i<8;i++)Words(L::Counters)[w*8+i]=p[after+i];
 #endif
+#ifdef PIONEER_Q38_COUNTER_GATHER_IMAGE
+ uint32_t observed[8];GatherCounters(d,tracked,w,observed);
+#endif
  for(unsigned i=0;i<8;i++){
+#ifdef PIONEER_Q38_COUNTER_GATHER_IMAGE
+  if(Words(L::Counters)[w*8+i]!=observed[i])scalar_fault_park();
+#else
   if(Words(L::Counters)[w*8+i]!=Register(d,tracked,w,0xffb20000+Counter(i)))scalar_fault_park();
+#endif
   if(i==6 && Words(L::Counters)[w*8+6]!=Words(L::Counters)[w*8+2])scalar_fault_park();
  }
 }

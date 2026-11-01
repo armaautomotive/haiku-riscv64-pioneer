@@ -1,0 +1,159 @@
+Queued eight-counter gather: returning BUILD qualified, original runs LIVE
+========================================================================
+2026-11-01,06:30 UTC. Goal ACTIVE. NO queued-BUILD hardware/Work speed claim.
+The separate e09 TID physical96523 ACTUALLY exits0 after clean34/END+Close,
+0.128485469..0.128487180tok/s,one-pair3.558..3.561% gain. Known strict
+first3 score failures persist. Exact51c restore62304 ACTUALLY exits0;
+fresh independent SSH verifies041/tag12/gen24,64 CPUs/fullRAM and healthy
+idle. See qwen38-tid-physical-20261101.txt. This report is a DIFFERENT,
+newer offline BUILD,not e09 and not a measured queued-gather speed result.
+
+Actual hot-path selection
+--------------------------
+Inspection of the actual recurrent compile flags and admission code shows
+the16 remote-source reads mostly belong to first/cold admission:normal
+matrix warm admission already takes its retained pushed receipt. Optimizing
+only those cold audits would not establish a decode improvement.
+Instead, the NEW PIONEER_Q38_COUNTER_GATHER_IMAGE=1 selects a bounded,
+read-only eight-counter gather at the actual recurrent Cohort::CounterSeal
+and DensePartitionRoot::Admit physical-counter closure call sites.
+The linked DENSE component remains the exact old object;its Snapshot has
+ZERO new gather calls. An unlinked recurrent Snapshot source hook was
+removed;final main reproduces the SAME entire a2d5 ELF. No dense-attention
+speedup is being inferred from an inactive source change.
+
+Protocol and explicit changed observation latency
+--------------------------------------------------
+PioneerQ38CounterGather.h submits EIGHT separate4-byte MMIO reads,never
+a bulk read,write,arbitrary target,worker release or native caller route.
+Offsets208,20c,210,214,204,220,210,228 preserve alias2/6 as TWO actual reads.
+Each response has a distinct32-byte scratch line with remote/local low
+five bits equal,within the SAME existing256B of the owned16KiB scratch.
+Only fixed worker coordinates0..118/root129 are used by the real callers.
+
+The current sealed NIU_CFG0 FIFO-enable bit is REQUIRED,never enabled,
+changed or recaptured. Full quiet proves all4 initiators/all4 FIFOs free,
+no overflow and ALL32 transaction-ID statuses before the bounded8 submits.
+ALL16 LIVE source checks precede EACH request. All10 command fields are
+written and read back before each submit;CMD_CTRL is read back after each
+store,with the existing fences. At most8 of16 FIFO slots are needed.
+
+The completion loop RETURNS+TESTS availability BEFORE the first master-
+counter load. All8 exact master deltas must close,including wrapping32-bit
+counts and alias2/6;post-source/full quiet/all32 TIDs and the LAST command
+readback must pass before output/frontier publication. No counters or mode
+are cleared. Finite65536 polling failure parks;no retry/reset/cleanup grant.
+
+Earlier read-only metadata requests may precede detection of a late source
+or peer-receipt mismatch. Intermediate command registers are intentionally
+reprogrammed after each captured FIFO submit,so their old post-response
+readback becomes pre-submit readback plus final-command post-drain readback.
+Peer-counter comparisons occur after the entire group instead of after
+each scalar response. NO worker release,model commit or accepted baseline
+follows a failed group. These are explicit protocol changes,not byte/path
+equivalence or permission to bypass validation in a Work implementation.
+
+Primary hardware specifications consulted:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/Counters.md
+
+Independent immutable BUILD
+----------------------------
+The ENTIRE old bc01 TID and its complete frozen ancestors reproduce FIRST
+from current source in both trees. Independent inspection8971/16546 and
+frozen14594/3513 ALL ACTUALLY exit0. After removing the unlinked Snapshot
+hook,final main66623 also ACTUALLY exits0 with the SAME complete pins:
+ boot4     32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text130948 3aee61817ef8779f7406234451dffa76db9a82cb5c66603c38bda8dca51dc1da
+ terminal8 468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2
+ conv32684 3c5fc882ee106f600d00531f8bc3c9ee9c512b238a173a6fadc77837833d1f1b
+ ELF191408 a2d52546a4606b37c6cb421ac412a8d3eae59135492edecbc1a96079d24af536
+Final independent-clean90838 also ACTUALLY exits0 with the SAME pins.
+The existing text131072/Conv32768 reservations,entry/terminal,ISA,relocation
+and writable-global restrictions are unchanged. Text has ONLY124B left.
+Size-only compilation applies to NEW gather/admission/CounterSeal integer
+control functions;worker kernels and floating-point flags are unchanged.
+An initial compiler memcpy import was removed,not granted a host runtime.
+Earlier over-budget candidates FAILED and were not deployed;the linker
+limits were never expanded or bypassed.
+
+Actual emitted synthetic queue and closure tests: COMPLETE
+-----------------------------------------------------------
+65797(main)/75092(clean) BOTH ACTUALLY exit0,ASan+UBSan,EACH2023 cases.
+The actual a2d5 Read and actual ROOT packet/source guard execute on emitted
+RISC instructions. A queue CAPTURES all10 real command words and holds8
+requests before initiation,counters are not incremented for queued entries,
+and8 requests genuinely become outstanding. Their actual target words
+travel to captured return addresses with forward,reverse and mixed reply
+orders and1/3/17 status-event delays,workers0/95/118 and count wraparound.
+
+The actual linked Cohort::CounterSeal then independently compares those
+transported physical words against its supplied synthetic receipt:ALL
+8x32 physical-counter and8x32 receipt-bit corruptions refuse WITHOUT
+recapturing/publishing the worker baseline. Synthetic receipts here are
+test inputs ONLY,not original-model numerical proof.
+
+All38 initiator/FIFO/TID inputs x32bits,each command pre-readback at each
+of8 submits,each final readback,ALL16 current sources before each submit,
+overflow bits,post-drain ALL32 TID faults,coherently FIFO-disabled sealed
+mode,lost initiation/lost response and ALL8 master-counter mismatches are
+tested. The fault writer ACTUALLY writes its saved return PC and marker,
+then each case executes2048 additional inert instructions. No worker,
+mode,counter,model/host or cleanup command is supplied by these tests.
+Printed stack164 is the lowest WRITTEN stack word,not a total reserved/
+whole-kernel stack proof. HOST retired counts are NOT device cycles/TPS.
+
+BUILD role73433/49009 BOTH ACTUALLY exit0:EACH2 syntax positives and108
+missing/zero/two/late/ROOT/worker/dense/DATA/native/CPU/Work refusals.
+No DATA/private-native/public-native program selector exists for this BUILD.
+
+Selected emitted comparison: COMPLETE
+------------------------------------------------------
+75678(main)/34921(clean) BOTH ACTUALLY exit0. All34 selected arithmetic,transfer,release,
+commit,feedback,source/FIFO/TID guard bodies retain exact instructions and
+named direct callees except decoded LINK and authenticated immutable
+literal addresses. Scalar LUI+LW/FLW loads use conservative must-value
+analysis across actual direct branches,kill caller-saved state at calls,
+distinguish integer/FP register files,and retain EXACT4-byte NONEXECUTABLE
+literal data. Numeric instructions/immediates are never normalized.
+Earlier scalar-address decoder failures were TEST coverage gaps,not
+relaxed numerical comparison;the numerical comparator remains unchanged.
+
+Admit,CounterSeal/gather and the compiler-specialized Cohort::Packet are
+NOT asserted byte-identical. Removing its counter callers lets GCC
+specialize that remaining Packet. Its complete direct-call multiset stays
+equal,including2 packet-quiet,3 packet/source and2 full-guard calls. This
+is NOT a branch-feasibility or protocol-equivalence proof.
+Snapshot's actual indexed jr a3 and Projection::Run's indexed switch
+remain explicitly outside direct-call proof. Call-site existence does not
+prove that a path executes.
+
+Actual original-byte first-layer runs: LIVE
+--------------------------------------------
+Main22262 and independent-clean81821 remain LIVE. Complete SAME-open
+original GGUF authentication precedes constructing each fixture;all
+learned bytes are from that authenticated original,not CPU products.
+The new HOST-only FIFO endpoint is scoped to actual emitted gather code:
+it captures the actual eight4B requests,holds queued-before-counted state,
+performs real initiation/accepted/outstanding transitions,then reads actual
+quiescent peer CSRs and transports their bytes in reverse reply order.
+It never supplies a worker numeric result,completion,PC/register history
+or readiness setter. Ordinary traffic retains its old transport.
+
+At this checkpoint main has reached matrix7 and clean matrix6 of layer0.
+No finished first layer or strict external numerical pass is claimed.
+If genuinely complete,compare ALL10240 actual prefix words against the
+unchanged CPU corpus;no diagnostic-only exit or tolerance. A first-layer
+pass still would NOT prove all64 layers,token/STOP/END,native ownership,
+physical performance,arbitrary prompts or Assistant Work.
+
+Next
+------
+Close these SAME original handles,strictly compare actual prefix DATA,
+then qualify immutable programs/private+public native objects,the full
+native acquisition/initialization/first-layer/cancel/STOP/HOLD/drain/
+restoration lifetime and exact guarded updater before any hardware trial.
+The separate e09 physical96523 has closed and041 is independently restored;
+do not retest/reload hardware before the NEW BUILD's missing gates close.
+No throughput gain is claimed from queue occupancy,HOST instruction counts,
+source changes,first-layer observations or a build/unit-test pass.

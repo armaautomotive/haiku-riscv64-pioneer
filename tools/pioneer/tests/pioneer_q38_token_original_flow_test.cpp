@@ -73,6 +73,9 @@ int main(int argc,char** argv){
    && !m->position && !m->layer && !m->committed && !m->flips && !m->tokenPublications && !m->stopJobs
    && observed->Embeddings()==1 && observed->Layers(0)==1 && !observed->Complete() && original.Ready());
   assert(observed->SaveFirstLayerDiagnostic(traceDirectory));
+#ifdef PIONEER_Q38_TEST_COUNTER_GATHER_FIFO
+  m->VerifyCounterGatherEndpoint();
+#endif
   puts("SAVED FIRST_LAYER_DIAGNOSTIC actual original embedding+layer0 hidden words ONLY/real verified layer+SAME119 closed/no token committed/NO STOP or terminal capability/NOT full-model/native/physical/Work/TPS qualification");
   return 0;
 #else

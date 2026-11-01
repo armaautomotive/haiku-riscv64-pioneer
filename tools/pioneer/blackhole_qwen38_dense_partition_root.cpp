@@ -26,6 +26,7 @@
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQ38DensePositiveSum.h"
 #include "PioneerQ38DensePartitionRootLayout.h"
+#include "PioneerQ38CounterGather.h"
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
 #include "PioneerQ38GlobalChainComponentRole.h"
 extern "C" void q38_mixed_root_packet_seal(const uint32_t*);
@@ -228,6 +229,13 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
  scalar_fault_park(); // UNKNOWN: no later packet/retry/reset/cleanup grant
 }
 static uint32_t Register(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned at){Transfer(d,tracked,w,at,4,false);return *Words(L::Scratch+(at&31));}
+#ifdef PIONEER_Q38_COUNTER_GATHER_IMAGE
+static __attribute__((noinline,optimize("Os"))) void GatherCounters(const uint32_t* d,uint32_t* tracked,unsigned w,uint32_t* out){
+ static_assert(unsigned(L::Scratch)==unsigned(PioneerQ38CounterGather::Scratch),"same owned scratch only");
+ PioneerQ38CounterGather::Read(d,tracked,w,out);
+ Words(L::Summary)[6]+=8;Words(L::Summary)[7]+=8;
+}
+#endif
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
 #include "blackhole_qwen38_mixed_dense_root_control.inc"
 #else

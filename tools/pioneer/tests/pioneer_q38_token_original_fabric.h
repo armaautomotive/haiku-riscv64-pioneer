@@ -6,11 +6,17 @@
 #define PIONEER_Q38_TOKEN_FLOW_MACHINE_ONLY
 #include "pioneer_q38_token_flow_test.cpp"
 #include "pioneer_q38_whole_original_bytes.h"
+#ifdef PIONEER_Q38_TEST_COUNTER_GATHER_FIFO
+#include <sstream>
+#endif
 #ifdef PIONEER_Q38_TEST_OBSERVED_TRACE
 #include "PioneerQ38ObservedTrace.h"
 static_assert(PioneerQ38ObservedTrace::TokenMagic==TL::TokenMagic,"exact recorded DATA format,not execution authority");
 #endif
 struct OriginalTokenFlowMachine:TokenFlowMachine {
+#ifdef PIONEER_Q38_TEST_COUNTER_GATHER_FIFO
+#include "pioneer_q38_original_counter_gather_fifo.inc"
+#endif
 #ifdef PIONEER_Q38_TEST_TID_FIFO_ENDPOINT
  static_assert(PIONEER_Q38_TEST_TID_FIFO_ENDPOINT==1,"exact HOST-only serial FIFO endpoint");
  // TEST transport is serialized:SubmitToken completes the actual byte
@@ -21,12 +27,25 @@ struct OriginalTokenFlowMachine:TokenFlowMachine {
  std::array<uint32_t,4> initiatorStatus={};
  uint32_t fifoAvailable=0x10101010U,fifoOverflow=0;
  uint32_t Load(uint32_t address)override{
+#ifdef PIONEER_Q38_TEST_COUNTER_GATHER_FIFO
+  if(address>=0xffb20000U && address<0xffb20028U && InCounterGather())gatherReadback[(address-0xffb20000U)/4]=true;
+  if(address==0xffb20064U || address==0xffb20068U || address==0xffb20040U
+   || address==0xffb20840U || address==0xffb21040U || address==0xffb21840U)AdvanceCounterGather();
+  if(address==0xffb20040U && gatherActive)return 1;
+#endif
   if(address==0xffb20064U || address==0xffb20068U){
    assert(!pending);if(!(source[0]&0x10000U))return 0;
+#ifdef PIONEER_Q38_TEST_COUNTER_GATHER_FIFO
+   if(address==0xffb20064U)return (fifoAvailable&0xffffff00U)|(16-unsigned(gatherQueue.size()));
+#endif
    return address==0xffb20064U?fifoAvailable:fifoOverflow;
   }
   for(unsigned i=0;i<4;i++)if(address==0xffb20040U+i*0x800 && initiatorStatus[i])return initiatorStatus[i];
-  if(address>=0xffb20240U && address<0xffb202c0U){assert(!(address&3));return tidStatus[(address-0xffb20240U)/4];}
+  if(address>=0xffb20240U && address<0xffb202c0U){assert(!(address&3));
+#ifdef PIONEER_Q38_TEST_COUNTER_GATHER_FIFO
+   if(address==0xffb20240U)return tidStatus[0]+gatherOutstanding;
+#endif
+   return tidStatus[(address-0xffb20240U)/4];}
   return TokenFlowMachine::Load(address);
  }
 #endif
@@ -43,6 +62,9 @@ struct OriginalTokenFlowMachine:TokenFlowMachine {
  OriginalTokenFlowMachine(const char* image,const char* old,const char* worker,WholeModelOriginalBytes& source,bool eos=false)
   :TokenFlowMachine(image,old,worker,eos),original(source){
   assert(original.Ready() && !steps && !packets && !peerWrites && !parent);
+#ifdef PIONEER_Q38_TEST_COUNTER_GATHER_FIFO
+  InitializeCounterGatherEndpoint();
+#endif
   // Classify learned coordinates from the independently rebuilt canonical
   // geometry, NEVER from the reader's Contains/Ready result. A missing or
   // revoked source must not reclassify a learned byte as mutable/synthetic.
@@ -104,6 +126,15 @@ struct OriginalTokenFlowMachine:TokenFlowMachine {
  void BeforeFork()override{assert(original.PrepareFork());}
  const char* RawInputScope()const override{return "AUTHENTICATED original GGUF learned bytes;NOT independent whole-model numerical/native/physical/Work/TPS qualification";}
  void Store(uint32_t address,uint32_t value)override{
+#ifdef PIONEER_Q38_TEST_COUNTER_GATHER_FIFO
+  if(address>=0xffb20000U && address<0xffb20028U){
+   if(InCounterGather()){if(address==0xffb20000U)gatherReadback.fill(false);}
+   else assert(!gatherIssued && !gatherOutstanding && !gatherActive);
+  }
+  if(address==0xffb20040U && InCounterGather()){
+   assert(value==1);CaptureCounterGather();assert(original.Ready());return;
+  }
+#endif
   const bool packet=address==0xffb20040;
   unsigned priorLayers=allLayers;
 #ifdef PIONEER_Q38_TEST_OBSERVED_TRACE

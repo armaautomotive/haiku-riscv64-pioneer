@@ -167,9 +167,24 @@ static void Closed(uint32_t* t,unsigned w){
  if(s[0]!=n || s[1]!=n || s[2] || s[3]!=M::Magic || s[4] || s[5] || s[6]!=j[5] || s[7]!=j[6])scalar_fault_park();
  for(unsigned i=8;i<16;i++)if(s[i])scalar_fault_park();
 }
-static void CounterSeal(uint32_t* t,unsigned w,const uint32_t* after){
+#ifdef PIONEER_Q38_COUNTER_GATHER_IMAGE
+static __attribute__((noinline,optimize("Os")))
+#else
+static
+#endif
+void CounterSeal(uint32_t* t,unsigned w,const uint32_t* after){
+#ifdef PIONEER_Q38_COUNTER_GATHER_IMAGE
+ static_assert(unsigned(L::Scratch)==unsigned(PioneerQ38CounterGather::Scratch),"same owned scratch only");
+ uint32_t observed[8];PioneerQ38CounterGather::Read(Frame(),t,w,observed);
+ Words(L::Summary)[8]+=8;Words(L::Summary)[9]+=8;
+#endif
  for(unsigned i=0;i<8;i++){
-  unsigned v=Register(t,w,0xffb20000+Counter(i));if(v!=after[i] || (i==6 && v!=after[2]))scalar_fault_park();
+#ifdef PIONEER_Q38_COUNTER_GATHER_IMAGE
+  unsigned v=observed[i];
+#else
+  unsigned v=Register(t,w,0xffb20000+Counter(i));
+#endif
+  if(v!=after[i] || (i==6 && v!=after[2]))scalar_fault_park();
  }
  for(unsigned i=0;i<8;i++)Words(L::Counters+w*32)[i]=after[i];
 }

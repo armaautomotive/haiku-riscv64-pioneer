@@ -1,0 +1,80 @@
+FIFO-aware TID driver: clean34, modest measured gain, quality STILL unaccepted
+============================================================================
+2026-11-01,06:30 UTC. Goal ACTIVE. Diagnostic only,not Assistant Work or
+arbitrary prompts.20tok/s remains about156x above the measured throughput.
+
+Actual hardware lifetime and exact subject
+-------------------------------------------
+SAME96523 launches05:47:07 UTC and ACTUALLY exits0,observed06:27:41 UTC.
+Installed modulee09cc07492d201b6a23f454ae0be514597051f8c55cf143b518eeb0b2f6c5e35
+tag2026103100010075/generation23,returning TID ROOTbc01b290d588c3809acc22288fedbc5445ce1d152aa2a39fb86b496437a8bbd2.
+UNCHANGED benchmark client4b1dbee63e537b39e5212a9180670139a2a9ba46ef0b3cbeb66a7d5226b7f048.
+This is NOT the newer queued8-counter a2d5 BUILD;that has no driver yet.
+
+Full SAME-open original GGUF authentication precedes accelerator Open;
+all3551 parts/4736090 pages/20367 spans/19399024640 padded bytes upload.
+START acknowledges,all34 positions execute,actual terminal/HOLD/drain/
+full restoration/END+Close completes,records34/final_count34/clean_end1.
+stderr0B. No runtime CPU model oracle or second GPU/admin/model handle,
+driver/reset/power/SD/OS/network intervention during the entire lifetime.
+
+Measured post-prompt count window
+----------------------------------
+32 tokens,committed2..34,2542 observations:
+ elapsed249052084..249055401us
+ rate0.128485469..0.128487180 tokens/sec
+ mean7.782877625..7.78298128125 seconds per sampled token.
+Authentication,loading,initialization and restoration are EXCLUDED.
+These are observation-window bounds,not statistical confidence or isolated
+token latency. This fixed diagnostic does not demonstrate useful chat.
+
+Same4b client/previous ba971/0c3f control measured0.124069222..
+0.124070829tok/s,elapsed257917194..257920535us,2633 observations.
+ONE paired-run gain3.558161121..3.560881522 percent. ALL34 first12-word
+headers are EXACTLY equal. Session nonces/physical counters are not claimed
+equal. One run each does NOT establish repeatability or causal confidence.
+20tok/s is155.65755..155.65963x above this new measurement,not nearly met.
+
+Strict numerical comparison: STILL FAILED
+-------------------------------------------
+Unchanged main+independent-clean comparators BOTH ACTUALLY exit1,and their
+logs are byte-identical. Record grammar/rate arithmetic pass;first3 greedy
+tokens match but max-logit bits retain the existing discrepancies:
+ position selected observed CPU-reference
+ 0        70253    413bc1de 413c2358
+ 1        17       41452aa2 414621d3
+ 2        17       4167c42a 4168afd0
+No verifier,expected value,tolerance or exit mode was relaxed. Positions
+3..33 have no external numerical acceptance here. Repeated17 does NOT
+prove conversation quality. No full-hidden/vocabulary/Work pass is claimed.
+
+Independent idle verification and exact baseline restoration
+-------------------------------------------------------------
+ONLY AFTER actual process exit,fresh independent SSH ACTUALLY exits0:
+Haiku/UID0,64 CPUs,max137034936320B/free133752520704B,no model/Assistant
+parent,whole e09/51c/4b/d1ce hashes,tag75/gen23/cold0/quiesced0/owner0/
+open1/guard1. The exact current driver identity matches the new helper.
+
+Direct execution of the non-executable staged helper ACTUALLY exits126:
+Permission denied BEFORE script execution. It did not run a partial
+restore. Invoking the SAME fully hashed helper through /bin/sh,62304,
+ACTUALLY exits0:quiesce,close,041 reload,tag2026102100010012/generation24.
+No reboot,GPU execution,reset,power,SD/mains or hardware change.
+Only51c helper owns041<->e09;no old helper or unknown image was forced.
+Helper SHA51c138e4965e1df0cb67d6d79d93f907ad11e9443c0a7efaf9699fbbb4816dc9.
+
+Fresh independent post-restore SSH ACTUALLY exits0,whole installed SHA:
+ 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+tag12/gen24/cold0/quiesced0/owner0/open1/guard1,64 CPUs/fullRAM/free
+133754523648B,no model/Assistant parent,unchanged51c/4b/d1ce hashes.
+The e09 diagnostic is no longer installed. No new hardware model ran.
+
+Next
+------
+The separate a2d5 queued counter gather reduces serialization of actual
+recurrent completion/admission reads. It has independently frozen images,
+2023 emitted queue/closure cases per tree and34 selected static-body
+checks per tree. Its original first-layer runs are LIVE;see
+qwen38-counter-gather-20261101.txt. No native/physical/Work speed from that
+BUILD is asserted. Larger on-card scheduling/kernel work,full-model
+numerical correctness,resident fresh requests and Assistant remain owed.

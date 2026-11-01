@@ -1,0 +1,34 @@
+PASS emitted gather worker0 delay1 order0:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions2970 stack164;NOT device cycles
+PASS emitted gather worker0 delay1 order1:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions2970 stack164;NOT device cycles
+PASS emitted gather worker0 delay1 order2:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions2970 stack164;NOT device cycles
+PASS emitted gather worker0 delay3 order0:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions3318 stack164;NOT device cycles
+PASS emitted gather worker0 delay3 order1:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions3318 stack164;NOT device cycles
+PASS emitted gather worker0 delay3 order2:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions3318 stack164;NOT device cycles
+PASS emitted gather worker0 delay17 order0:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions5584 stack164;NOT device cycles
+PASS emitted gather worker0 delay17 order1:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions5584 stack164;NOT device cycles
+PASS emitted gather worker0 delay17 order2:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions5584 stack164;NOT device cycles
+PASS emitted gather worker95 delay1 order0:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions3010 stack164;NOT device cycles
+PASS emitted gather worker95 delay1 order1:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions3010 stack164;NOT device cycles
+PASS emitted gather worker95 delay1 order2:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions3010 stack164;NOT device cycles
+PASS emitted gather worker95 delay3 order0:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions3358 stack164;NOT device cycles
+PASS emitted gather worker95 delay3 order1:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions3358 stack164;NOT device cycles
+PASS emitted gather worker95 delay3 order2:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions3358 stack164;NOT device cycles
+PASS emitted gather worker95 delay17 order0:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions5624 stack164;NOT device cycles
+PASS emitted gather worker95 delay17 order1:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions5624 stack164;NOT device cycles
+PASS emitted gather worker95 delay17 order2:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions5624 stack164;NOT device cycles
+PASS emitted gather worker118 delay1 order0:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions3018 stack164;NOT device cycles
+PASS emitted gather worker118 delay1 order1:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions3018 stack164;NOT device cycles
+PASS emitted gather worker118 delay1 order2:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions3018 stack164;NOT device cycles
+PASS emitted gather worker118 delay3 order0:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions3366 stack164;NOT device cycles
+PASS emitted gather worker118 delay3 order1:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions3366 stack164;NOT device cycles
+PASS emitted gather worker118 delay3 order2:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions3366 stack164;NOT device cycles
+PASS emitted gather worker118 delay17 order0:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions5632 stack164;NOT device cycles
+PASS emitted gather worker118 delay17 order1:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions5632 stack164;NOT device cycles
+PASS emitted gather worker118 delay17 order2:8 captured4B requests,8 simultaneously outstanding,actual byte replies,all8 deltas incl wrap+alias,HOST instructions5632 stack164;NOT device cycles
+Assertion failed: (output || tracked || stack), function Store, file pioneer_q38_counter_gather_instruction_test.cpp, line 121.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_counter_gather_instruction_tests.py", line 49, in <module>
+    subprocess.run([str(binary), str(candidate), str(mapping)], check=True,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-counter-gather-instructions-ne1qjwpk/test', '/private/tmp/pioneer-q38-counter-gather-inspect-main-20261101-g', '/private/tmp/pioneer-counter-gather-instructions-ne1qjwpk/entries']' died with <Signals.SIGABRT: 6>.
