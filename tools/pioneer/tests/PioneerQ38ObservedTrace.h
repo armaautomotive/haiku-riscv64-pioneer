@@ -34,6 +34,7 @@ class PioneerQ38ObservedTrace {
   bool embedded=false,committed=false;
  };
  std::array<Token,3> token;unsigned embeddings=0,commits=0;bool failed=false,saved=false,prefixSaved=false;
+ std::array<unsigned,3> nativeLayerSnapshots={};
  const bool eosAfterPrompt;
  bool Refuse(){failed=true;return false;}
  static float Float(uint32_t bits){float value;std::memcpy(&value,&bits,4);return value;}
@@ -111,6 +112,29 @@ public:
   if(!SnapshotFirstLayerDiagnostic(directory))return false;
   saved=true;return true; // original terminating diagnostic semantics retained
  }
+ // Deliberately incomplete HOST-observation family,NOT a physical tag75
+ // snapshot or token trace. Called only AFTER the harness verifies the real
+ // layer return and ALL119 peer boundaries. No CPU reference enters here.
+ bool SnapshotNativeLayerDiagnostic(const char* directory,unsigned position,unsigned completedLayers){
+  if(eosAfterPrompt || failed || saved || position>=3 || !completedLayers || completedLayers>64
+   || embeddings!=position+1 || commits!=position)return Refuse();
+  const auto& t=token[position];
+  if(!t.embedded || t.committed || t.rows || t.layers!=completedLayers
+   || nativeLayerSnapshots[position]+1!=completedLayers)return Refuse();
+  int directoryFd=Directory(directory);if(directoryFd<0)return Refuse();
+  const std::string name="INCOMPLETE-native-position-"+std::to_string(position)
+   +"-layers-"+std::to_string(completedLayers)+".bin";
+  int fd=openat(directoryFd,name.c_str(),O_WRONLY|O_CREAT|O_EXCL|O_NOFOLLOW,0600);
+  if(fd<0){close(directoryFd);return Refuse();}
+  FILE* f=fdopen(fd,"wb");if(!f){close(fd);close(directoryFd);return Refuse();}
+  const uint32_t header[]={0x314c4e51,1,position,t.input,completedLayers,5120,0,0,0,0,0,0,0,0,0,0};
+  bool okay=true;for(auto word:header)okay=Word(f,word)&&okay;
+  for(unsigned i=0;i<5120;i++)okay=Word(f,t.hidden[completedLayers*5120+i])&&okay;
+  okay=Word(f,0x454e444c)&&okay;okay=!fflush(f)&&!ferror(f)&&okay;
+  int closed=fclose(f),directoryClosed=close(directoryFd);
+  if(!okay || closed || directoryClosed)return Refuse();
+  nativeLayerSnapshots[position]=completedLayers;return true;
+ } // full-flow execution/terminal/Save requirements remain unchanged
  bool SaveEos(const char* directory,const uint32_t* terminal,unsigned words){
   if(!EosComplete() || !terminal || words!=64)return Refuse();
   const unsigned head[]={0x31545451,1,2,2,1,119,64,973,0,1};

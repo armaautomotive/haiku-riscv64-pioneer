@@ -1,0 +1,83 @@
+Incremental native layer observations: DATA controls CLOSED,model runs LIVE
+==========================================================================
+2026-11-01,14:08UTC. Goal ACTIVE;20tok/s UNMET. This changes ONLY the HOST
+emulator observation recorder/facade and full-flow TEST harness,plus a
+separate strict posthoc DATA comparator. No production arithmetic,firmware,
+driver,model bytes,CPU reference pins,full-model comparator,Assistant,
+boot,CPU/RAM code or native/public Work selector changes.
+
+Why and exact observation boundary
+-----------------------------------
+Existing full-model capture withheld later hidden rows until all3*64
+layers,vocabulary and terminal checks finished. The older full-flow41236
+remains LIVE and unchanged;do not restart it for this extension. Its first
+layer alone cannot localize later-layer score differences.
+
+Future full-flow TEST runs now save each row ONLY after the actual ROOT
+completed-layer store,the exact genuine native progress identity,actual
+GDDR hidden bytes,exact current KV append count and ALL119 actual peer
+arithmetic/DONE/WAIT boundaries have been checked. The recorder accepts
+const already-observed words,never a processor,mutable memory endpoint,
+CPU expected values or accelerator callback. No guest PC/register/product,
+counter,nonce,ready marker,completion or model state is supplied or reset.
+
+The existing first-layer prefix remains in its ORIGINAL format. New files
+are named INCOMPLETE-native-position-P-layers-N.bin,20548 bytes,QNL1 family,
+version1,actual position/input/completed layer count,5120 finite FP32 words,
+zero reserved fields and a distinct footer. They contain NO physical
+driver tag,generation,token record,terminal or END claim. Sequential once-
+only snapshots cannot close or promote the recorder. Full3*64 arithmetic,
+vocabulary,actual commits,ROOT+119 STOP,native terminal and full END still
+remain required;an output failure refuses instead of manufacturing success.
+
+Closed DATA tests,not actual arithmetic
+---------------------------------------
+Main95444/clean12697 BOTH ACTUALLY exit0;logs compare byte-for-byte. Each
+executes the entire unchanged old ordinary+native-facade recorder tests
+FIRST,including their full synthetic192-layer/3-token/exclusive complete
+saves,original prefix format and invalid-order cases. Original42 DATA
+role controls execute unchanged. Then BOTH direct and opaque native-facade
+paths capture192 SYNTHETIC rows with independently checked headers,lengths,
+footers,ALL5120 words and exact equality to the corresponding final full
+token rows. Both paths also reject20 missing,wrong,skipped,duplicate,
+nonfinite,closed,premature,sticky,filesystem,symlink/no-overwrite cases.
+These fixtures are NOT claimed as executed model observations.
+
+Separate strict comparator main99732/clean47402 BOTH ACTUALLY exit0;logs
+compare exactly. ALL3 original full CPU traces authenticate through the
+unchanged existing loader.9 CPU-derived SYNTHETIC positives and9 finite
+one-bit NUMERICAL_FAILURES cover3positions and layers1/4/64.35 family,
+header,length,finite,input-path,filename,symlink,relative,role,pin and CLI
+refusals pass. There is NO diagnostic-only acceptance switch,no tolerance,
+and no change to the complete-model or physical snapshot comparators.
+The incomplete family cannot be read as a complete token or physical QHB.
+
+Actual original-model native integration: LIVE,not qualified yet
+----------------------------------------------------------------
+New main17008/clean75574 compile+link and begin SAME-open original27B GGUF
+authentication BEFORE native fixture construction. They use the exact
+existing precise-beta1f49 worker,not a CPU-substituted arithmetic result:
+1f49e9740d8d9045de6c8835f0f8f1738210ba0413d87f607f97cf98da74539e.
+Selected native DATA is the existing precise-beta/fault-ROOT package,NOT
+the new919d physical prefetch module. Arithmetic localization here does
+not establish current optimized ROOT timing or whole-module qualification.
+Both run --execution-end-full-flow --pushed-context --precise-beta through
+the original full3-token native lifetime. No shortened stop/cleanup alias.
+
+Main raw:/private/tmp/pioneer-q38-native-layer-flow-main-20261101-md.log
+Output:/private/tmp/pioneer-q38-native-layer-flow-main-20261101.AxPaML
+Clean raw:/private/tmp/pioneer-q38-native-layer-flow-clean-20261101-me.log
+Output:/private/tmp/pioneer-q38-native-layer-flow-clean-20261101.RkdkrS
+Poll these SAME live handles;observation timeout is NOT terminal/restart.
+No actual later-layer comparison or arithmetic pass exists yet. Incomplete
+rows may localize a difference while the SAME full model continues,but
+cannot qualify STOP,END,cleanup,physical deployment or reusable resources.
+
+Physical prefetch14837 is separately LIVE and protected
+-------------------------------------------------------
+Only local raw-file reads and SAME-handle polling occur during its source-
+authentication/Open/upload/generation/restoration/END+Close lifetime. No
+extra Pioneer SSH/status/admin/model/reload/reset/power/SD/network action
+is issued. New919d/tag75/gen33+unchanged4b client must actually close before
+any independent health/restore or profile run. No prefetch speedup,full-
+model numerical acceptance,usable Assistant Work or20tok/s claim is made.

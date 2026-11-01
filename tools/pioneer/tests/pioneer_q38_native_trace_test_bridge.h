@@ -30,5 +30,6 @@ public:
  bool Complete()const;bool SavedComplete()const;unsigned Embeddings()const;unsigned Layers(unsigned)const;
  bool Save(const char*);bool SaveFirstLayerDiagnostic(const char*);
  bool SnapshotFirstLayerDiagnostic(const char*); // deliberately incomplete,does NOT seal/stop the run
+ bool SnapshotNativeLayerDiagnostic(const char*,unsigned,unsigned); // incomplete const DATA only,NO physical identity
 }; // Save still requires the caller's separate genuine terminal verification
 #endif

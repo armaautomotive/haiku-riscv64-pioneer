@@ -1,0 +1,17 @@
+PASS distinct first-layer diagnostic/exclusive partial file/NO complete token trace or STOP assertion/3 wrong-boundary refusals/no repeated save or full-trace promotion;SYNTHETIC DATA only
+PASS observed DATA recorder/3positions/65hidden+allvocab+committed records/exclusive complete files/7 invalid-order+duplicate+nonfinite+missing-coverage refusals;SYNTHETIC observations,NOT execution or a numerical/native/Work/TPS grant
+PASS distinct first-layer diagnostic/exclusive partial file/NO complete token trace or STOP assertion/3 wrong-boundary refusals/no repeated save or full-trace promotion;SYNTHETIC DATA only
+PASS observed DATA recorder/3positions/65hidden+allvocab+committed records/exclusive complete files/7 invalid-order+duplicate+nonfinite+missing-coverage refusals;SYNTHETIC observations,NOT execution or a numerical/native/Work/TPS grant
+PASS distinct first-layer diagnostic/exclusive partial file/NO complete token trace or STOP assertion/3 wrong-boundary refusals/no repeated save or full-trace promotion;SYNTHETIC DATA only
+PASS observed DATA recorder/3positions/65hidden+allvocab+committed records/exclusive complete files/7 invalid-order+duplicate+nonfinite+missing-coverage refusals;SYNTHETIC observations,NOT execution or a numerical/native/Work/TPS grant
+PASS incomplete native-layer recorder/20 missing,wrong,skipped,duplicate,nonfinite,closed,premature,sticky,filesystem+symlink+no-overwrite refusals/no full-token promotion;SYNTHETIC DATA only
+PASS ordinary recorder non-closing first-layer snapshot retains ORIGINAL partial format/real recorder continues ALL192 layers+3 committed tokens+exclusive full saves;SYNTHETIC DATA only
+PASS independent Python observed format/header/length/footer checks;not model correctness
+PASS native TEST facade non-closing first-layer snapshot retains ORIGINAL partial format/real recorder continues ALL192 layers+3 committed tokens+exclusive full saves;SYNTHETIC DATA only
+PASS independent Python observed format/header/length/footer checks;not model correctness
+PASS 42 exact recorder DATA role/kernel+image+native+CPU-oracle+real Work/defined0+1+late refusals;TT_WORK arithmetic policy permitted ONLY as offline host data,not native authority
+PASS direct192 SYNTHETIC layer snapshots retain exact complete token DATA/independent headers,lengths,footers,ALL words;20 refusals;NO observed model arithmetic,terminal,END,physical,Work or timing proof
+PASS distinct first-layer diagnostic/exclusive partial file/NO complete token trace or STOP assertion/3 wrong-boundary refusals/no repeated save or full-trace promotion;SYNTHETIC DATA only
+PASS observed DATA recorder/3positions/65hidden+allvocab+committed records/exclusive complete files/7 invalid-order+duplicate+nonfinite+missing-coverage refusals;SYNTHETIC observations,NOT execution or a numerical/native/Work/TPS grant
+PASS incomplete native-layer recorder/20 missing,wrong,skipped,duplicate,nonfinite,closed,premature,sticky,filesystem+symlink+no-overwrite refusals/no full-token promotion;SYNTHETIC DATA only
+PASS facade192 SYNTHETIC layer snapshots retain exact complete token DATA/independent headers,lengths,footers,ALL words;20 refusals;NO observed model arithmetic,terminal,END,physical,Work or timing proof

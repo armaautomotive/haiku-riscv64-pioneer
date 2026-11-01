@@ -24,6 +24,11 @@ int main(int argc,char** argv){
   for(unsigned layer=0;layer<64;layer++){
    assert(trace.Layer(position,layer,actual.data(),5120));
    if(!position && !layer)assert(trace.SnapshotFirstLayerDiagnostic(argv[1]) && !trace.Complete() && !trace.SavedComplete());
+#ifdef PIONEER_Q38_NATIVE_LAYER_SNAPSHOT_DATA_TEST
+   static_assert(PIONEER_Q38_NATIVE_LAYER_SNAPSHOT_DATA_TEST==1,"exact incomplete-layer DATA TEST selector");
+   assert(trace.SnapshotNativeLayerDiagnostic(argv[1],position,layer+1)
+    && !trace.Complete() && !trace.SavedComplete());
+#endif
   }
   for(unsigned first=0;first<248320;first+=256)assert(trace.Vocabulary(position,first,logits.data()+first,std::min(256U,248320-first)));
   if(position<2){

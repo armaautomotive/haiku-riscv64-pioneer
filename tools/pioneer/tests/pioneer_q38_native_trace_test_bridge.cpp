@@ -20,3 +20,4 @@ unsigned Q38NativeTraceTest::Layers(unsigned p)const{return impl->data.Layers(p)
 bool Q38NativeTraceTest::Save(const char* path){return impl->data.Save(path);}
 bool Q38NativeTraceTest::SaveFirstLayerDiagnostic(const char* path){return impl->data.SaveFirstLayerDiagnostic(path);}
 bool Q38NativeTraceTest::SnapshotFirstLayerDiagnostic(const char* path){return impl->data.SnapshotFirstLayerDiagnostic(path);}
+bool Q38NativeTraceTest::SnapshotNativeLayerDiagnostic(const char* path,unsigned position,unsigned layers){return impl->data.SnapshotNativeLayerDiagnostic(path,position,layers);}
