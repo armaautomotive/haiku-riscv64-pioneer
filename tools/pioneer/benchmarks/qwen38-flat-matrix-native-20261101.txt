@@ -151,3 +151,33 @@ fresh independent post-restore health. NEVER4161/4f61 for8612. Fault or
 unknown/quarantined state grants no force/retry/reload/automatic cleanup.
 Even success would NOT establish arbitrary-prompt,resident fresh-request,
 full-model numerical correctness,sustained Assistant Work or20tok/s.
+
+Reproducible paired-log arithmetic: CLOSED locally,NOT new hardware result
+-------------------------------------------------------------------------
+11:12UTC:separate compare_pioneer_q38_frontier_benchmark_pair.py reuses the
+UNCHANGED complete frontier34 parser. Requires distinct absolute files,
+ALL34 first12-word headers equal and identical sampled-token/count windows.
+Missing rate,incomplete/invalid log or mismatched header/window refuses.
+Rates and one-pair percentage bounds use exact rational raw integer counts
+and elapsed bounds,NOT rounded printed rates. Session nonces/physical
+counters are deliberately NOT compared across runs. This is not hardware/
+client/clock/isolation provenance,causality,repeatability,quality or Work.
+The unchanged strict CPU comparator remains REQUIRED and separate.
+
+Main87582/clean73749 BOTH ACTUALLY exit0,logs cmp-exact. Each first executes
+ENTIRE unchanged strict parser suite:3 synthetic positives/1260 refusals.
+New pair checks:7 synthetic positives/51 header/window/partial/rate/path/
+defined-zero-or-one role refusals,including faster/slower/reversed/equal-
+time/rounded-rate contrast and cross-run nonce/counter distinction. These
+synthetic timings are NOT accelerator observations.
+
+Both trees then ACTUALLY exit0 on already-CLOSED0b8d versus5a3c physical
+logs;outputs cmp-exact,all34 first12 headers equal/count window32/2..34.
+Exact raw-count percentage interval:
+ [331989100/240639453,332681300/240635991]
+approximately1.379612095445..1.382508487685 percent. Last decimals differ
+from the earlier ad-hoc comparison because that used9-decimal printed
+rates. This is only a RECOMPUTATION of the historical one-pair result,
+NOT new hardware inference or statistical confidence. Known strict score
+differences remain failures. SAME current69899 is still PROTECTED/LIVE;
+do not run a comparison on its incomplete log or infer its rate yet.
