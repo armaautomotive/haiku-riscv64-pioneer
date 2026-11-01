@@ -1,5 +1,12 @@
 Distinct current-QGW3 batched prefetch: offline qualification checkpoint
 =======================================================================
+2026-11-01 UPDATE:connected b622-ROOT native runs failed at cohort admission;
+the projection/vocabulary counters below were NOT sufficient. A conditional
+one-instruction repair now produces6066 ROOT;workerb73 remains unchanged.
+New9b DATA/private3a24 BUILD gates pass;connected full-END remains LIVE.
+See qwen38-batched-cohort-admission-20261101.txt. Historical closed worker
+arithmetic tests below remain their stated narrow scope,NOT native proof.
+
 2026-11-01. Goal ACTIVE;20tok/s UNMET. This is NOT a physical speedup,
 model-quality,full-model native-lifetime or usable Assistant Work result.
 Last measured nonprofiling diagnostic remains0.159697435..0.159700083tok/s;

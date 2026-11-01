@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_batched_cohort_root_revision_test.py", line 38, in <module>
+    assert words[0][at - 2:at + 3] == (0x002a1793, 0x014787b3, 0x00379313, 0x00679793, 0x00230313)
+AssertionError

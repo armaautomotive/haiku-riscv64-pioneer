@@ -221,7 +221,17 @@ static void Admit(uint32_t* t,unsigned w){
   || !j[23] || j[23]>16 || j[25]!=1 || j[26]!=1)scalar_fault_park();
  for(unsigned i=0;i<64;i++)Words(L::PeerJobs+w*256)[i]=j[i];
  Closed(t,w);
- Read(t,w,0x83f00,p,64);unsigned groups=j[23],reads=groups*160+2,flits=groups*1440+170;
+ Read(t,w,0x83f00,p,64);unsigned groups=j[23],reads=groups*
+#ifdef PIONEER_Q38_BATCHED_PREFETCH_ROOT_IMAGE
+ // This second closure of the preceding Q8 matrix must use the SAME
+ // four-tiles-per-read grammar as Projection::Gather and the actual sender.
+ // Keep every proof/source/command/physical-counter check below:only the
+ // expected number of weight READ REQUESTS changes,not bytes or flits.
+ 40
+#else
+ 160
+#endif
+ +2,flits=groups*1440+170;
  if(p[16]!=groups*320 || p[17]!=n || p[18]!=w+1 || p[19]!=TT_Q38_FFN_PERSISTENT_MARKER || p[30]!=b[16] || p[31]!=b[4])scalar_fault_park();
  for(unsigned i=0;i<16;i++)if(p[32+i]!=b[16+i])scalar_fault_park();
  for(unsigned i=48;i<64;i++)if(p[i])scalar_fault_park();

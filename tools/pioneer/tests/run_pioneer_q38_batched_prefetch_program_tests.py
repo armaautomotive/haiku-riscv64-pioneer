@@ -27,7 +27,7 @@ inputs=((root,helpers['pins'](here.parent/'build_qwen38_batched_prefetch_root.py
         (worker,helpers['pins'](here.parent/'build_qwen38_token_batched_prefetch_worker.py','PINS')))
 for directory,records in inputs:helpers['authenticated'](directory,records)
 committed=here.parent/'PioneerQ38TokenBatchedPrefetchPrograms.h'
-assert hashlib.sha256(committed.read_bytes()).hexdigest()=='1ae2a7c9028ad7623390bf7512d38fca0528d731af361d444d72671e8db273f2'
+assert hashlib.sha256(committed.read_bytes()).hexdigest()=='9b1d913648714127badbb8888b8e000367cea40f01259b6024a3f0096e996fd9'
 primary='PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS'
 selectors=(primary,*old['selectors']);base=dict.fromkeys(selectors,'1')
 with tempfile.TemporaryDirectory(prefix='pioneer-q38-batched-prefetch-data-',dir='/private/tmp') as temporary:

@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 root_profile=None
+batched_prefetch='--batched-prefetch' in sys.argv
+if batched_prefetch:
+    assert sys.argv.count('--batched-prefetch')==1
+    sys.argv.remove('--batched-prefetch')
 flat_matrix=None
 if '--flat-matrix-root' in sys.argv:
     assert sys.argv.count('--flat-matrix-root')==1
@@ -170,6 +174,9 @@ if prefetch_worker:
         and root_frontend_snapshots and len(sys.argv)==7 and sys.argv[2]=='--execution-end' \
         and pathlib.Path(sys.argv[5])==prefetch_worker and not compile_link_only, \
         'Prefetch native TEST requires its exact ten-section worker and whole original first-layer/cancel/STOP/HOLD/drain/END predecessor'
+if batched_prefetch:
+    assert prefetch_worker and flat_matrix and counter_gather and not root_profile, \
+        'Batched native TEST requires explicit matching ROOT+worker/full original first-layer/cancel/STOP/HOLD/drain/END,not an old or shortened alias'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -239,7 +246,7 @@ here = pathlib.Path(__file__).resolve().parent
 if peer_engines:
     peer_arg = 3 if full_end_contract or peer_bootstrap else 4
     for directory, script in ((pathlib.Path(sys.argv[peer_arg]), here/'run_pioneer_q38_mixed_worker_tests.py'),
-                              (pathlib.Path(sys.argv[peer_arg+1]), here.parent/'build_qwen38_token_prefetch_worker.py' if prefetch_worker else here.parent/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here.parent/'build_qwen38_pushed_worker_image.py' if pushed_context else here/'run_pioneer_q38_precise_worker_tests.py' if precise_context else here.parent/'build_qwen38_global_worker_image.py')):
+                              (pathlib.Path(sys.argv[peer_arg+1]), here.parent/'build_qwen38_token_batched_prefetch_worker.py' if batched_prefetch else here.parent/'build_qwen38_token_prefetch_worker.py' if prefetch_worker else here.parent/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here.parent/'build_qwen38_pushed_worker_image.py' if pushed_context else here/'run_pioneer_q38_precise_worker_tests.py' if precise_context else here.parent/'build_qwen38_global_worker_image.py')):
         assert directory.is_absolute()
         tree = ast.parse(script.read_text())
         pins = next(ast.literal_eval(n.value) for n in tree.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'PINS' for t in n.targets))
@@ -295,6 +302,10 @@ if prefetch_worker:
     assert hashlib.sha256((here.parent/'PioneerQ38TokenPrefetchPrograms.h').read_bytes()).hexdigest()=='021fdff4100dd6f8a6ff8548f9fa961473503cf6c2cd2e0b6adc44053b007567'
     defines.update(PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS='1',PIONEER_Q38_TOKEN_PREFETCH_NATIVE_CONTEXT='1',
                    PIONEER_Q38_TOKEN_NATIVE_PREFETCH_FIXTURE='1')
+if batched_prefetch:
+    assert hashlib.sha256((here.parent/'PioneerQ38TokenBatchedPrefetchPrograms.h').read_bytes()).hexdigest()=='9b1d913648714127badbb8888b8e000367cea40f01259b6024a3f0096e996fd9'
+    defines.update(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS='1',PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT='1',
+                   PIONEER_Q38_TOKEN_NATIVE_BATCHED_PREFETCH_FIXTURE='1')
 if posted_cancel:
     defines.update(PIONEER_Q38_TOKEN_POSTED_CANCEL='1',PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',
                    PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')
@@ -450,7 +461,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         # Authenticate ALL frozen artifacts before classifying any TEST
         # request. nm consumes the SAME already authenticated ELF snapshot,
         # not a second unchecked open of the original image pathname.
-        tree=ast.parse((here.parent/('build_qwen38_flat_matrix_grammar_root.py' if flat_matrix else 'build_qwen38_empty_receipt_poll_root.py' if empty_receipt else 'build_qwen38_counter_gather_root.py')).read_text())
+        tree=ast.parse((here.parent/('build_qwen38_batched_prefetch_root.py' if batched_prefetch else 'build_qwen38_flat_matrix_grammar_root.py' if flat_matrix else 'build_qwen38_empty_receipt_poll_root.py' if empty_receipt else 'build_qwen38_counter_gather_root.py')).read_text())
         pins=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign)
                   and any(isinstance(t,ast.Name) and t.id=='PINS' for t in n.targets))
         elf=None
@@ -505,10 +516,11 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
             # This bridge observes peers1..119 ONLY;ROOT code comes from
             # the new native package and is independently authenticated.
             peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_PRECISE_BETA_TEST=1']
-            if prefetch_worker:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_PREFETCH_TEST=1']
+            if batched_prefetch:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_BATCHED_PREFETCH_TEST=1']
+            elif prefetch_worker:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_PREFETCH_TEST=1']
             rom_object=base/'precise-beta-expected-rom-data.o'
             subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
-                            '-fsanitize=address,undefined','-c',str(here/('pioneer_q38_prefetch_program_data_bridge.cpp' if prefetch_worker else 'pioneer_q38_precise_beta_program_data_bridge.cpp')),
+                            '-fsanitize=address,undefined','-c',str(here/('pioneer_q38_batched_prefetch_program_data_bridge.cpp' if batched_prefetch else 'pioneer_q38_prefetch_program_data_bridge.cpp' if prefetch_worker else 'pioneer_q38_precise_beta_program_data_bridge.cpp')),
                             '-o',str(rom_object)],check=True)
             extra += [str(rom_object)] # DATA TU has NO inherited tensor-Work/native/CPU-oracle roles
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',

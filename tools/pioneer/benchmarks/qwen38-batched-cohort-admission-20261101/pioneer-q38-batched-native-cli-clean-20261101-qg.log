@@ -1,0 +1,4 @@
+PASS ROOT frontend TEST gates/1 role positive/40 missing+zero+two+foreign role refusals/12 early CLI refusals/no output/compiler/runtime creation;NO native/model/physical/TPS grant
+PASS prefetch native CLI/24 missing+duplicate+wrongworker+shortened+profile+compile-only refusals/NO source,compiler,runtime or output creation;NOT native execution or device qualification
+PASS batched native CLI/30 missing+duplicate+wrongworker+shortened+profile+compile-only+incompatible-ROOT refusals/ENTIRE old controls FIRST;NO source,compiler,runtime or output creation;NOT native execution or device qualification
+PASS batched HOST observer/2 syntax positives/24 missing+nonexact+old+kernel+native+CPU+runtime-Work refusals;NOT instantiated execution or device qualification

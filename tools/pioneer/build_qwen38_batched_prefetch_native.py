@@ -8,7 +8,7 @@ import runpy
 import subprocess
 import sys
 
-PRIVATE_SHA='b0d4e782ea8a5c97d08fb88aecfeab20a14e09e19436a8e88277cf617daaab1c'  # Independent whole private-object identity ONLY.
+PRIVATE_SHA='3a24eb79013746eff0b7aa4be2cdeafbac8169a605c606327a2427c249a00126'  # Independent whole private-object identity ONLY.
 args=sys.argv[1:];inspect='--inspect-candidate' in args
 if inspect:assert args.count('--inspect-candidate')==1;args.remove('--inspect-candidate')
 assert len(args)==2 and (inspect or PRIVATE_SHA)
@@ -40,7 +40,7 @@ def payload(path,name,values,sections,label):
     return data[start:start+size]
 symbols,sections=records(obj);old_symbols,old_sections=records(control)
 header=(here/'PioneerQ38TokenBatchedPrefetchPrograms.h').read_bytes()
-assert hashlib.sha256(header).hexdigest()=='1ae2a7c9028ad7623390bf7512d38fca0528d731af361d444d72671e8db273f2'
+assert hashlib.sha256(header).hexdigest()=='9b1d913648714127badbb8888b8e000367cea40f01259b6024a3f0096e996fd9'
 arrays=re.findall(r'// SHA256 ([0-9a-f]{64})\nstatic const uint32_t ([A-Za-z]+)\[\]=',header.decode())
 assert len(arrays)==14 and sum(label=='PeerFetch' for _,label in arrays)==1
 for digest,label in arrays:

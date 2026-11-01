@@ -55,7 +55,10 @@ static bool ExpectedProgramWord(unsigned worker,uint32_t address,uint32_t& outpu
  return PioneerQ38TokenPrograms::ProgramWord(worker,address,output);
 #endif
 } // expected CONST ROM DATA,never a guest memory or arithmetic product source
-#ifdef PIONEER_Q38_NATIVE_PEER_PREFETCH_TEST
+#ifdef PIONEER_Q38_NATIVE_PEER_BATCHED_PREFETCH_TEST
+#include "PioneerQ38NativeBatchedPrefetchObserver.h"
+using NativePeerBase=NativeBatchedPrefetchPeer<GlobalChainPeer>;
+#elif defined(PIONEER_Q38_NATIVE_PEER_PREFETCH_TEST)
 #include "PioneerQ38NativePrefetchObserver.h"
 using NativePeerBase=NativePrefetchPeer<GlobalChainPeer>;
 #else
@@ -183,7 +186,7 @@ bool Q38NativePeerTestCpu::ObserveMatrixOutput()const{
 } // actual native L1 outputs vs separate FP32/FP64 arithmetic,NO products supplied
 bool Q38NativePeerTestCpu::ObserveStopped()const{
  namespace G=NativeQ38PeerInstructionModel::G;const auto& p=*impl->cpu;
-#ifdef PIONEER_Q38_NATIVE_PEER_PREFETCH_TEST
+#if defined(PIONEER_Q38_NATIVE_PEER_PREFETCH_TEST) || defined(PIONEER_Q38_NATIVE_PEER_BATCHED_PREFETCH_TEST)
  if(!p.prefetchJobsVerified || !p.prefetchPendingOps)return false;
 #endif
  return p.pc==p.stopPC && !p.active && !p.pending && p.sequence

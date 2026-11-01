@@ -10,10 +10,10 @@ import sys
 
 PINS=(
     ('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
-    ('text.bin',129672,'c87570de8dc8ba0001db08bd6890cb7017dfbf01bd98ae08af98a873f21cdc0d'),
+    ('text.bin',129672,'fc2674af71846a63bca556f3ef3a4128154d246ea7a1fdaa2665fe00c713e0dd'),
     ('terminal.bin',8,'468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2'),
     ('conv.bin',32692,'19f59e9c75feb02f247e0c3ce1feb8cd3691d79ba5654484cc5ebed2451b0315'),
-    ('program.elf',191436,'b622da7fdfa314c9ee4d7695f066d374de86c47d98c5ed79e4e88d0fc972cca8'),
+    ('program.elf',191436,'6066e6935f7230175aab0ac98379cdc2d58dc35e49a15ca89af5064797e2d48b'),
 )  # Independent whole-artifact BUILD identity ONLY,not execution authority.
 args=sys.argv[1:];inspect='--inspect-candidate' in args
 if inspect:
@@ -96,5 +96,5 @@ for name in ('boot.bin','text.bin','terminal.bin','conv.bin','program.elf'):
 for name in ('boot.bin','terminal.bin'):assert (out/name).read_bytes()==(out/'unchanged-flat'/name).read_bytes()
 assert len((out/'text.bin').read_bytes())<=131072 and len((out/'conv.bin').read_bytes())<=32768
 if not inspect:assert tuple(observed)==PINS
-print('BUILD_ONLY matching batched counts in ordinary projections AND all-vocabulary global head/'
+print('BUILD_ONLY matching batched counts in projections AND cohort Q8 re-admission AND all-vocabulary global head/'
       'ALL3 ROOT TUs same selection/full88e4+ancestors+3wholeTUs FIRST;NO emitted execution,old DATA/native,hardware,Work or TPS grant',flush=True)

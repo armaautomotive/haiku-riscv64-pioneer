@@ -3,6 +3,15 @@
 // zero RV32 instructions. OS/MMIO/GDDR endpoints are simulated. No synthetic
 // completion fabric,no old embedding/prefix producer and no completed token.
 #include "pioneer_q38_token_native_fixture_common.h"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BATCHED_PREFETCH_FIXTURE
+#if !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS) || PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS != 1 \
+ || !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT != 1
+#error Exact separate batched-prefetch native TEST binding required
+#endif
+static_assert(PioneerQ38TokenBatchedPrefetchDataSelection==2 && PioneerQ38TokenPrograms::BatchedPrefetch==1
+ && PioneerQ38TokenPrograms::Q8Batch==4 && PioneerQ38TokenPrograms::Q4Batch==2 && PioneerQ38TokenPrograms::Q6Batch==2,
+ "actual matched batched ROOT+worker DATA in genuine native history");
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_PREFETCH_FIXTURE
 #if !defined(PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS) || PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS != 1 \
  || !defined(PIONEER_Q38_TOKEN_PREFETCH_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_PREFETCH_NATIVE_CONTEXT != 1

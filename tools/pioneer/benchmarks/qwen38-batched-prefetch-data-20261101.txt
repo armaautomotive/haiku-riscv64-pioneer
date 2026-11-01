@@ -1,5 +1,10 @@
 Matching batched14-section DATA closed;no native or hardware selection
 =====================================================================
+2026-11-01 UPDATE:b622/1ae below are historical BUILD/DATA identities,NOT
+runtime-qualified:connected cohort admission failed. Repaired ROOT6066+
+header9b are independently qualified for DATA only;native full-END LIVE.
+See qwen38-batched-cohort-admission-20261101.txt for exact evidence/limits.
+
 2026-11-01. Goal ACTIVE;20tok/s UNMET,known final-score mismatch remains
 FAIL. This checkpoint packages the already independently frozen b622 ROOT
 and b73 worker;it does not install a driver or claim inference throughput.

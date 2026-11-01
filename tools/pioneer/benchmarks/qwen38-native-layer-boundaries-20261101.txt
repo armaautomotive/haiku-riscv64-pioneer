@@ -1,5 +1,16 @@
 Incremental native layer observations: DATA controls CLOSED,model runs LIVE
 ==========================================================================
+2026-11-01,18:51UTC update:completedLayers1..16 now exist in BOTH original
+position0 flows. Layers1..13 had already passed their unchanged strict
+comparison. Fresh main+clean comparators for EACH layer14,15,16 ACTUALLY
+exit0:ALL5120 words bitexact/maxAbs0/relativeL20,ALL3 original CPU control
+pins unchanged. These6 logs and paired snapshots are archived separately.
+SAME17008/75574 continue into layer16;older41236 independently progresses
+through position2/completedLayers171. This remains the OLD precise-beta/
+fault-ROOT subject,NOT current optimized physical919d or the NEW batched
+6066 ROOT+b73 worker. Partial layer correctness cannot clear those subjects
+or prove64 layers,all3 tokens,vocabulary,terminal,STOP,END,Work or speed.
+
 2026-11-01,17:39UTC update:actual position0 snapshots for completedLayers
 1..12 exist in BOTH original-model runs. Unchanged strict main comparator
 passes ALL5120 words bitexact/maxAbs0/relativeL20 for EACH of those12 rows;

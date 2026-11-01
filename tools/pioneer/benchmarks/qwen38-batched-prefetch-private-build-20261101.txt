@@ -1,4 +1,8 @@
 Distinct batched private native BUILD closed;execution remains unqualified
+2026-11-01 UPDATE:the b0d4/1ae/b622 identities below are historical BUILD
+only. Connected execution failed at cohort Q8 admission. Repaired6066/new9b
+embed into independently matched3a24 private object;full-END remains LIVE.
+See qwen38-batched-cohort-admission-20261101.txt. NO hardware deployment.
 =========================================================================
 2026-11-01. Goal ACTIVE;20tok/s UNMET. No new physical inference rate or
 numerical acceptance. Last nonprofiling diagnostic0.159697435..0.159700083

@@ -1,0 +1,118 @@
+Batched Q8 cohort admission repair:BUILD/DATA closed,connected test LIVE
+======================================================================
+2026-11-01,18:54UTC checkpoint. Goal ACTIVE;20tok/s UNMET. This is NOT a
+physical speedup,whole-model numerical or usable Assistant Work result.
+Latest physical rate remains0.159697435..0.159700083tok/s;known final-score
+bit differences remain FAIL. No new batched module has been installed.
+
+Actual connected failure,not a hardware fault or suppressed verifier
+---------------------------------------------------------------------
+First complete new HOST native runs29793/main-pv and65517/clean-pw BOTH
+ACTUALLY exit1 after genuine original-source SHA,851-weight+1010-zero
+initialization,119 virgin peer histories and first3 full-K Q8 jobs. Both
+fault at ROOT60000/48231852 instructions/32034 packets/241 doors/phase6.
+Their immutable subject is b622 ROOT+b73 peer/header1ae/privateb0d4.
+These failures are preserved as failures;neither was run on the Pioneer.
+
+The second admission of the preceding Q8 matrix into the Conv/GDN cohort
+still checked groups*160+2 reads. The actual batched sender and projection
+closure use groups*40+2:four adjacent original tiles per read. Native first
+matrix jobs genuinely observed42 requests+42 responses per one row group.
+The admission check was missed by the earlier projection/vocabulary-only
+counter update. Standalone worker math/DATA tests did not cover this join.
+
+Production fix is conditional ONLY on the distinct batched ROOT build.
+Keep every receipt,source,command,flit,physical-counter and boundary check;
+require EXACT new40*groups+2,not old OR new and not a widened tolerance.
+Default/old ROOT still requires160*groups+2. Original bytes,arithmetic,
+source bounds,read flits,last-command restoration and completion unchanged.
+
+Independent exact repaired BUILD identities
+--------------------------------------------
+ROOT inspect61000/93989 and frozen97655/16166 ALL ACTUALLY exit0. Main and
+independent clean4 sections+whole ELF are byte-exact:
+6066e6935f7230175aab0ac98379cdc2d58dc35e49a15ca89af5064797e2d48b
+The ENTIRE old88e419+ancestors+3 whole ROOT TUs reproduce FIRST on each
+build. Compared to the failed b622 subject,boot/terminal/conv are unchanged;
+text changes ONLY one instruction at55bc4,in the genuine inlined StageConv
+admission body:SLLI5->3. Text129672/131072;conv32692/32768;no extent growth.
+All119 worker artifacts remain the previously frozen b73a8278 family.
+
+Independent revision test main-rb/clean-rc ACTUALLY0,logs byte-identical:
+authenticate ALL5 old/new artifacts,confirm sole changed word lies inside
+actual ELF function bounds,calculate selected integer count instructions
+for EACH groups1..16,and reject the COMPLETE old b622 subject before DATA
+output creation. These small arithmetic calculations are NOT a substitute
+for executing the complete native controller,which remains required below.
+Initial qy helper fails because an unrelated LW interleaves the arithmetic;
+repair observes it as a disjoint-register load,does NOT fake memory input
+or alter the expected count. The original failed log is retained.
+
+Complete matched DATA and private context BUILD
+------------------------------------------------
+Generated main+clean14-section headers byte-identical:
+9b1d913648714127badbb8888b8e000367cea40f01259b6024a3f0096e996fd9
+ONLY the RootText SHA comment+single code word change. All16 artifacts,
+including both whole ELFs,authenticate before generation. Whole new DATA
+main6597/clean97010 BOTH ACTUALLY exit0,logs byte-identical:ALL120 code words,
+all14 sections,unchanged snapshot geometry,3010 gap/runtime/output aliases,
+32 corrupt/truncated+5 wrong-family refusals,3 syntax positives/300
+refusals. ALL unchanged old DATA/ancestor controls execute FIRST.
+
+Private inspect94696/60609 and frozen98094/80382 ALL ACTUALLY exit0,whole
+objects compare byte-for-byte:
+3a24eb79013746eff0b7aa4be2cdeafbac8169a605c606327a2427c249a00126
+All14 new arrays and unchanged2MiB rope checked. Six conventional driver
+ABI names absent;5 renamed bodies+5 wrappers remain byte-exact inert,
+refusal/null controls. Every frame<=2048 or unchanged old;NOT full kernel
+stack. Entire old98db/e4e8 private subjects reproduce FIRST. These are
+private NODRV objects,NOT deployable modules or native lifecycle proof.
+
+Main29686/clean52495 private roles BOTH ACTUALLY0,logs byte-identical:
+old controls FIRST,new3 syntax positives/453 missing/zero/two/late/ABI/
+tag/old-array/shader/CPU/runtime-Work refusals. Separate HOST observer
+CLI main92930/clean16124 BOTH ACTUALLY0,logs exact:old24 CLI+all root-
+frontend controls FIRST,new30 incomplete-history refusals BEFORE source/
+compiler/output,then2 syntax positives/24 HOST-binding refusals. The HOST
+ISA model inherits its existing TT arithmetic-definition flag;this is NOT
+a native/runtime Work grant. Immutable expected-ROM DATA TU still rejects
+that flag. No CPU products or ready/completion values enter peer execution.
+Initial pu compile failure was this HOST flag separation,NOT a device run.
+
+Old public main30028/clean8424 BOTH ACTUALLY0:ENTIRE oldflat8612,objectab06,
+then unchanged prefetch object30691 and whole public module919d reproduce
+exactly,main/clean whole objects+modules byte-exact. Earlier rg/rh attempts
+ACTUALLY1 before compilation because wrong original argv directories ic/id
+were supplied. Correct original after-label im/in match EXISTING whitelist;
+the whitelist and old expected artifacts were NOT relaxed. Partial known
+module chain5392/unresolved25 is NOT a whole-kernel-stack claim.
+
+Current connected execution remains pending,not qualified by build gates
+------------------------------------------------------------------------
+New SAME main36635/clean42349 use repaired6066 ROOT+unchangedb73 peer+new9b
+header under the explicit distinct private context. Both remain LIVE at
+this checkpoint,after genuine initializer/virgin boot/first3 Q8 arithmetic
+and real output bytes. BOTH now advance PAST the old48231852-instruction
+fault:ROOT60000091/37222 packets/429 doors/phase6,actual recurrent state
+read356352/write32768 words and history read30720 words. This demonstrates
+progress through the repaired admission,NOT completed GDN/layer/END/model
+acceptance. They must complete the ORIGINAL full first-layer,
+cancel,119STOP,120HOLD,drain,all-store/clock/PCI/29VM/3host restore,unreserve,
+destruction and END. No shortened mode,guest PC/register/result injection,
+CPU expected-product input,private-history transplant or synthetic terminal
+is introduced. Old final-score tolerance/pins remain unchanged.
+
+Main log:/private/tmp/pioneer-q38-batched-cohort-native-full-end-main-20261101-qu.log
+Clean log:/private/tmp/pioneer-q38-batched-cohort-native-full-end-clean-20261101-qv.log
+After ACTUAL complete exits only,run the unchanged strict original10240-word
+prefix comparator and preserve all old/native negative controls. A timeout
+is not a terminal result or permission to restart these processes.
+
+Pioneer remains baseline041/tag12/gen36,independently healthy/idle,64CPUs/
+full137034936320B. This turn's only Pioneer operation was the read-only CPU
+metadata health check in qwen38-weight-traffic-budget-20261101.txt. No GPU
+job,staging,reload,reboot,relay,power,SD,network,Assistant or hardware action.
+Full-model numerical acceptance,resident fresh requests,arbitrary prompts,
+usable no-CPU-reference Assistant Work and sustained20tok/s remain UNMET.
+Raw CLOSED build/data/failure logs are in the sibling directory. LIVE logs
+above are deliberately NOT archived or represented as complete histories.
