@@ -1,0 +1,1 @@
+PASS formatter reachable graph/preserve verbatim blocks+all edges/unreachable declaration conflicts excluded ONLY outside explicit scope/15 reachable-conflict,unknown,control,alias,cycle,dynamic,missing-frame refusals;NO compiler,wholeUSER,native,hardware or TPS proof

@@ -1,0 +1,6 @@
+COMPARE_INCOMPLETE_NATIVE_LAYER position0/completedLayers20/words5120/bitDifferences0/maxAbs0/relativeL20
+INCOMPLETE_NATIVE_LAYER_NUMERICAL_BITEXACT=1 NO_TOLERANCE_USED;NOT token/terminal/STOP/END/full-model/physical/Work/TPS qualification
+COMPARE_INCOMPLETE_NATIVE_LAYER position0/completedLayers21/words5120/bitDifferences0/maxAbs0/relativeL20
+INCOMPLETE_NATIVE_LAYER_NUMERICAL_BITEXACT=1 NO_TOLERANCE_USED;NOT token/terminal/STOP/END/full-model/physical/Work/TPS qualification
+COMPARE_INCOMPLETE_NATIVE_LAYER position0/completedLayers22/words5120/bitDifferences0/maxAbs0/relativeL20
+INCOMPLETE_NATIVE_LAYER_NUMERICAL_BITEXACT=1 NO_TOLERANCE_USED;NOT token/terminal/STOP/END/full-model/physical/Work/TPS qualification

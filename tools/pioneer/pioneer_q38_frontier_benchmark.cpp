@@ -7,9 +7,16 @@
 #include <cerrno>
 #include <cstdio>
 #include <memory>
+#include "PioneerQ38FrontierFailureReportRole.h"
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT
+#include "PioneerQ38FrontierFailureReport.h"
+#include "PioneerQ38FrontierFailureReportCli.h"
+#endif
 #include "PioneerQ38TokenHiddenValidationSession.h"
 #include "PioneerQ38TokenRateSamples.h"
-#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT
+// Own explicit CLI was bound above;never expose the old benchmark spelling.
+#elif defined(PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT)
 #include "PioneerQ38FrontendProfileCli.h"
 #else
 #include "PioneerQ38FrontierBenchmarkCli.h"
@@ -19,7 +26,12 @@ struct FrontierBenchmarkTransport {
  int Open(){puts("Q38_FRONTIER_OPEN_AFTER_FULL_SAME_OPEN_GGUF_SHA_AND_COMPLETE_851_LAYOUT");return open("/dev/misc/tenstorrent_pci_probe",O_RDWR|O_CLOEXEC);}
  bool Call(int fd,uint32_t op,void* data,size_t bytes){
   errno=0;const int status=ioctl(fd,op,data,bytes),error=errno;
-  if(status)fprintf(stderr,"Q38_FRONTIER_IOCTL_FAILED op%08x status%d errno%d;NO_RETRY\n",unsigned(op),status,error);
+  if(status){
+   fprintf(stderr,"Q38_FRONTIER_IOCTL_FAILED op%08x status%d errno%d;NO_RETRY\n",unsigned(op),status,error);
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT
+   (void)PioneerQ38WriteFrontierFailedReply(stderr,op,data,bytes,status,error);
+#endif
+  }
   return status==0;
  }
  int Close(int fd){return close(fd);}
@@ -30,7 +42,9 @@ struct FrontierBenchmarkTransport {
  }
 };
 int main(int argc,char** argv){
-#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT
+ using M=PioneerQ38FrontierFailureReportMode;const auto mode=PioneerQ38FrontierFailureReportArguments(argc,argv);
+#elif defined(PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT)
  using M=PioneerQ38FrontendProfileMode;const auto mode=PioneerQ38FrontendProfileArguments(argc,argv);
 #else
  using M=PioneerQ38FrontierBenchmarkMode;const auto mode=PioneerQ38FrontierBenchmarkArguments(argc,argv);
@@ -38,6 +52,9 @@ int main(int argc,char** argv){
  if(mode==M::Invalid)return 2;
  namespace V=PioneerQ38TokenDecodeBenchmark;
  setvbuf(stdout,nullptr,_IOLBF,0);
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT
+ puts("Q38_FRONTIER_FAILURE_REPORT_ZERO_EXTRA_ACCELERATOR_CALLS_RAW_REPLY_NOT_ROOT_CAUSE_OR_CLEAN_END");
+#endif
 #ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
  puts("Q38_FRONTEND_PROFILE_ZERO_EXTRA_ACCELERATOR_CALLS_RAW_NOT_RETIRED_PC_OR_CYCLES");
 #endif

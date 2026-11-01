@@ -1,0 +1,28 @@
+33cffe8edd7235e5b212a44937309dcde6d758e9bd09b5e30c4b35b6132c992c client.o
+1a061f7ab0eb5001c04a73c1334ed3b519a29781157ea4e46f533e3908fe0536 pioneer-q38-token-DEBUG75-DIAGNOSTIC-ONLY
+PASS actual Haiku riscv64 DEBUG75 USER client compile/link/fixed same-open full SHA before device Open/ALL learned parts/no CPU oracle+Work+mock/native imports/maxIndividualUSERFrame4432
+BUILD+INSPECT ONLY;explicit source-only checks grant NO native execution;hidden snapshot runtime still requires independent native/lifecycle/stack/numerical qualification;NO physical or TPS proof
+785b914818a0ac8b9f566600fb85493cc3dcf348018357e8fbe4ac1c3dfdfbe2 generation-client.o
+b15da1871edf8f1c8acb59ab9b3978e3ace43b6d8bb4c3d8fd50ee240114d779 pioneer-q38-token-DEBUG75-GENERATION-DIAGNOSTIC-ONLY
+PASS fixed tag75 three-position USER diagnostic/old hidden object+binary LITERAL pins unchanged/actual same-open source uploader+normal terminal+END/192-word DATA publication/no CPU oracle+native+Work+MOCK imports/maxIndividualUSERFrame4432
+BUILD+INSPECT ONLY;NO install/run,physical correctness,resident multi-request,Assistant or steady-state TPS qualification
+262692ebbc03aa9b6cd1e6e036a2f50e820840c79b025bd90142527ec8ec2712 generation-timing-client.o
+efb8d649a41b02d78130476508cde63b0d6a174e5aed66d8bc6c77f51a741e38 pioneer-q38-token-DEBUG75-GENERATION-TIMED-DIAGNOSTIC-ONLY
+PASS separate tag75 host-wall observation/actual USER clock and same fixed generation lifecycle/old b15+hidden literal controls unchanged/no CPU oracle+native+Work+MOCK imports/maxIndividualUSERFrame4432
+BUILD+INSPECT ONLY;stderr phases MUST stay separate from stdout record log;NOT on-card cycles,steady decode TPS,physical numerics or a resident Work release
+d1caf8139df295fb8e7a97e3639e1073ca5319fd954293e4d1b33168f212ff24 decode-benchmark-client.o
+05510422cb94afa60689d69c1523add442b38a0679182dee5da1986b2a650b13 pioneer-q38-DECODE34-BENCHMARK-DIAGNOSTIC-ONLY
+PASS_FROZEN separate34-position USER diagnostic/old short+timed+hidden literal controls unchanged/same-open full SHA/source/real ioctl lifecycle/no CPU oracle+native+Work+MOCK imports/maxIndividualUSERFrame4432
+NO install/run authority;34 positions include two prompt positions;host startup may overlap inference;NOT numerical/native/physical/resident-Work/steady-TPS qualification
+884f5e43f11de24d6264ab537e99344ff62fe6b9add64ce6daccea816b1d0b5f frontier-benchmark-client.o
+4b1dbee63e537b39e5212a9180670139a2a9ba46ef0b3cbeb66a7d5226b7f048 pioneer-q38-FRONTIER34-BENCHMARK-DIAGNOSTIC-ONLY
+PASS_BUILD_ONLY new6607+6608 SAME-source+FD counter client/old05510422+allshort controls unchanged/fullGGUF SHA BEFORE Open/noCPU oracle+native+Work+MOCK imports/maxIndividualUSERFrame4432
+No install/run grant;timing published only after wholeFinish+Close+34 validated records/finalcounter34;NOT model quality or measured TPS proof
+76e5a770f3cdf56bfd47d763e5ea56833403c347f5f6558ecb2cc6e7dcd13020 frontend-profile-client.o
+718d0ceac7eb5caad771413aefa32903fabf1e81b3dc6ad34793fd8ad0b7b77c pioneer-q38-FRONTEND34-PROFILE-DIAGNOSTIC-ONLY
+PASS_BUILD_ONLY separate raw frontend USER profile/wholeold4b+055+short+timed+hidden unchanged/same6607+6608 source+FD+generation+Finish+Close/noCPU oracle,native,Work or MOCK imports/maxIndividualUSERFrame4432
+Profile copies existing Observe response PCs ONLY;heap samples printed AFTER cleanFinish+Close+records;NO retiredPC,cycle,function-time,model-quality,physical or deployment qualification
+60775f89c05e0aedce37c73247999b70c5b1bbdb6805f32d6640a84228f50bbd frontier-failure-report-client.o
+f8efe67a51d9685a9e7e3ce57267ed2ae4967600c2802dd21f5f6ee0c24a22c9 pioneer-q38-FRONTIER34-FAILED-REPLY-DIAGNOSTIC-ONLY
+BUILD_ONLY distinct fixed34 failed-reply USER client/ENTIREold718d+4b+055+short+timed+hidden FIRST/same original ioctl+failure return+close-only lifecycle/noCPU oracle,native,Work or MOCK imports/maxIndividualUSERFrame4432
+RAW caller-owned packet ONLY after ioctl failure;NO additional accelerator call,retry,Cancel,HOLD,END,root-cause/provenance/cleanup/model-quality/speed or deployment grant

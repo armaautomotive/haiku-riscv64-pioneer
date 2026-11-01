@@ -173,6 +173,7 @@ struct IO {
   return true;
  }
 };
+#ifndef PIONEER_Q38_DECODE_BENCHMARK_FIXTURE_MACHINE_ONLY
 int main(){
  setvbuf(stdout,nullptr,_IOLBF,0);Protocol();Fixture fixture;Source source(fixture);IO io(source);
  auto session=std::make_unique<PioneerQ38TokenHiddenValidationSession<IO,Source>>(io,source);
@@ -284,3 +285,4 @@ int main(){
  printf("PASS frontend snapshot getter/%u direct cases+8 COW source/raw-address cases/IO call count UNCHANGED/pending+terminal snapshots/bad output unchanged/closed andwrong-phase refused/raw addresses NOT retiredPC,layer count,cycles or completion authority;MOCK transport ONLY\n",frontendCases);
 #endif
 }
+#endif

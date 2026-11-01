@@ -1,0 +1,109 @@
+Separate frontier failure-report client: offline qualification CLOSED
+===================================================================
+2026-11-01. Goal ACTIVE;20tok/s UNMET. This is observability,NOT a fix for
+the34322 hardware failure,model quality,full-card performance or Work.
+The failed module remains disabled in the source updater. No accelerator
+job has started since the controlled recovery to041/tag12/generation2.
+
+Why this client exists
+---------------------
+The prior4b client reports the first failed FRONTIER_OBSERVE errno and
+stops,but discards the caller's returned128-byte reply. The kernel can
+copy failure detail before returning B_DEV_NOT_READY. The distinct new
+client logs ONLY that already-returned caller-owned packet before the
+original false return. It adds NO ioctl,Open,retry,Cancel,HOLD,END,reset,
+unreserve,cleanup or source mutation. An early rejection can leave the
+pristine initialized request unchanged;all bytes remain RAW,even when
+ReplyShape is consistent. These are not authenticated provenance,an
+underlying hardware cause,retired PCs or restoration authority. The raw
+guard cursor is NOT a completed-layer count or fault code.
+
+The own immutable selector+leaf binding require the existing exact USER
+diagnostic parents and reject profile,native,kernel,shader,CPU oracle and
+Work aliases. CLI accepts ONLY --diagnose-frontier-34-positions or
+--preflight-source-only. The old benchmark spelling is not exposed.
+All successful source/FD/generation/counter/records/HOLD/drain/END behavior
+is inherited unchanged;the formatter is used only on a failed Observe.
+
+Whole compiled identities and independent checks
+------------------------------------------------
+ Object60775f89c05e0aedce37c73247999b70c5b1bbdb6805f32d6640a84228f50bbd
+ Binaryf8efe67a51d9685a9e7e3ce57267ed2ae4967600c2802dd21f5f6ee0c24a22c9
+Inspect main-uw/clean-ux BOTH ACTUALLY exit0,as recovered from completed
+command-execution records after an orchestration-output truncation. No
+job was restarted because its observation output had been lost. Only
+then were the whole-object/binary pins frozen. New frozen main57021-va
+and clean73690-vb BOTH ACTUALLY exit0;complete object+binary bytes compare
+exactly. EVERY build first reproduces the entire old718d profile,4b
+frontier,055 decode34 and all older short,timed,hidden clients. None is
+overwritten or relabelled. Maximum individual USER frame4432 bytes is
+NOT a whole USER-thread/kernel/IRQ stack qualification.
+
+Actual GCC -fcallgraph-info=su recompilation is whole-object byte-identical.
+The initial full-graph parser runs uq/ur ACTUALLY fail1 on conflicting
+duplicate strcmp declarations. Those failed logs remain failures. The
+existing strict parser was NOT weakened. The new explicitly scoped
+formatter audit preserves verbatim GCC records for the sole formatter
+root and ALL transitive outgoing edges,then uses that unchanged strict
+parser. Reachable duplicate/missing/indirect/control/alias/cycle/dynamic/
+unknown-frame cases still fail. Only conflicts entirely outside this
+explicit formatter scope are excluded;this is NOT a whole-client audit.
+Final actual known formatter chain400 bytes,unresolved fprintf/fputc/
+memcpy costs excluded,NO accelerator/control call reachable in this
+formatter. Raw and selected graphs and scope-labelled JSON are archived.
+
+Final units uy/uz BOTH ACTUALLY0,complete logs exact:strict graph15 refusal
+cases;ALL old705 COW failures+12934 USER protocol refusals FIRST;104 whole
+packets+272 no-read/no-log refusals;every32-word mutation,pristine and
+misaligned input,unchanged caller bytes and explicit CLI. New actual
+session-template synthetic transport fixture uses one genuine synthetic
+851-source Begin,54 COW failure branches comparing reporting on/off at
+first,running and terminal observations with no-copy,unsafe and malformed
+replies/cursors0,3,63. Every branch performs one failed Observe and one
+Close,NO retry/Cancel/HOLD/END/destructor IO. The original parent completes
+all34 records+HOLD+END+Close with reporting enabled and ZERO reports.
+This is synthetic USER protocol evidence,NOT native GPU arithmetic or
+proof of the physical failure's cause. Role uo/up BOTH ACTUALLY0,logs
+exact:3 positives/91 missing,zero,two,late,foreign-role refusals.
+
+Native staging and source-only check: IN PROGRESS
+------------------------------------------------
+Fresh vc CPU-only health ACTUALLY0:whole041/gen2,cold0/owner0/quiesced0/
+open1/guard1,64CPUs/full137034936320B,no compute parent,all preserved
+stage identities exact. vf creates ONLY a fresh non-overwriting directory.
+Initial modern-SCP vg ACTUALLY255:Haiku rejects the SFTP subsystem BEFORE
+copying. vi ACTUALLY0 independently verifies no partial target. Legacy
+SCP -O vj/vk BOTH ACTUALLY0;readback whole bytes EXACT f8efe67a. No older
+client,module,helper,Assistant,boot or model file is overwritten.
+
+New client path:
+ /boot/home/pioneer-p100a-hot-reload-20261019-a/frontier-failed-reply-f8efe67a-20261101/pioneer-q38-FRONTIER34-FAILED-REPLY-DIAGNOSTIC-ONLY
+SAME native source-only handle96143-vl remains LIVE at this checkpoint.
+Its invalid --work invocation actually returned2 with zero output. It is
+now authenticating the SAME-open original full GGUF before layout/page
+checks. Independent CPU-only vm process-name read ACTUALLY0 observes the
+sha256sum child579 still present at20:45UTC. NO accelerator Open or GPU
+inference occurs on this path. A live SSH handle or partial log is NOT a
+completed source check;observe THIS handle to actual closure before any
+next inference decision. Local log/stderr:
+ /private/tmp/pioneer-q38-failed-reply-native-source-20261101-vl.log
+ /private/tmp/pioneer-q38-failed-reply-native-source-20261101-vl.stderr
+Source-only completion and fresh independent health remain pending.
+
+Separate existing original-model numerical evidence
+---------------------------------------------------
+Unchanged precise-beta native full-flow main17008/clean75574 remain LIVE;
+old full3-token41236 also remains LIVE. No restart or abbreviated END was
+substituted. Completed immutable position0 snapshots20,21,22 were checked
+with the unchanged strict comparator against all3 pinned original CPU
+traces. Main44116-vd/clean25361-ve BOTH ACTUALLY0,complete logs AND all3
+snapshot files byte-identical;each5120-word layer difference/maxAbs/L2=0.
+These extend earlier completed-prefix checks,but are NOT full-model,
+token/STOP/END,physical,Work or speed evidence,and are NOT the new twin
+worker. Snapshot flows and original full END must continue to closure.
+
+Next:finish the SAME source-only job;preserve the stable recovery state;
+bind and qualify the copy-free twin package through the actual native
+owner/lifecycle before a separately controlled diagnostic hardware test.
+Do not blindly reapply34322 or assume the copy-free shader fixes its
+unknown physical fault. No new TPS or usable27B Work result exists.
