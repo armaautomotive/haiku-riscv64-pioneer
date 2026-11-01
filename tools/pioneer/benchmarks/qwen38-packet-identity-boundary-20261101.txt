@@ -9,6 +9,9 @@ are now byte-qualified and staged OUTSIDE drivers/bin;the original-model
 native lifetime is STILL running,so no deployment or native-END grant.
 See qwen38-packet-identity-native-20261101.txt for that later checkpoint.
 The original BUILD-only evidence and its limits below remain unchanged.
+FOLLOW-ON04:24UTC:BOTH native original first-layer/cancel/full-END tests
+and strict comparisons ACTUALLY pass;exactba971 driver applied/gen21 and
+new16680 hardware benchmark LIVE. No new speed or Work quality result yet.
 
 Exact change and fault timing
 -----------------------------

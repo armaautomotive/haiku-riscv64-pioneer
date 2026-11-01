@@ -1,6 +1,6 @@
-Packet-identity native package:qualification IN PROGRESS,not deployed
-===================================================================
-2026-11-01,04:10UTC. Goal ACTIVE.20tok/s,full model quality and usable
+Packet-identity native gates passed;bounded hardware benchmark LIVE
+==================================================================
+2026-11-01,04:24UTC. Goal ACTIVE.20tok/s,full model quality and usable
 resident Work/Assistant remain UNMET. Latest CLOSED physical measurement
 is the DIFFERENT844ec source-audit driver:0.121167265..0.121168784tok/s,
 with known strict score failures. No speedup from this new package claimed.
@@ -86,32 +86,53 @@ oldaf680 helper andd1ce guard remain exact;fresh status stays generation20.
 No new driver was loaded,no GPU execution/reload/reset/power/SD/mains/OS/
 network or hardware change was performed. Staging is NOT deployment.
 
-Actual native original-model lifetime:STILL LIVE
-------------------------------------------------
-SAME75049(main)/56382(clean) ACTUALLY LIVE04:10:21UTC. Do not restart or
-replace these jobs because observation yields no output. They authenticate
-the complete same-open original GGUF before fixture construction,not CPU
-model products. ALL851 native initializations/120 held histories complete.
+Actual native original-model lifetime:COMPLETE
+-----------------------------------------------
+SAME75049(main)/56382(clean) BOTH ACTUALLY exit0,observed04:21:40UTC.
+They authenticate the complete same-open original GGUF before fixture
+construction,not CPU model products. ALL851 native initializations/120 held histories complete.
 Actual first3 workers finish role10 fullK5120/48 rows from119 virgin ISA
 engines;the native ROOT verifies the first projection before continuing.
 Accelerator ROOT stack6112B and maximum peer3552B fit their separate8192B
 reservations at that observed point;not a whole kernel stack proof.
 
-Latest both:ROOT90000010 instructions/phase8,actual Conv/GDN state traffic
-and same119 histories continue. These are HOST simulated-endpoint/model
-instruction observations,NOT card timing. They have NOT completed full
-layer/cancel/119 STOP/120 HOLD/empty drain/held hidden read/full L1,dispatch,
-shared,clock,PCI,VM and host restoration/unreserve/locked context destruction.
-No native full-END or new physical/model-quality/Work acceptance is claimed.
+Both genuinely complete the original full first layer,cancel,119 STOP,
+120 HOLD,zero-record drain,two actual held hidden read packets and full
+L1/dispatch/peer/ROOT/shared/clock/VM/PCI/host restoration,unreserve and
+locked whole-context destruction. No processor history,products,completion
+or successful return are supplied. All fixture refusal/assertion gates hold.
+These are native production methods with actual emitted RISC/Tensix and
+HOST simulated endpoints,NOT a public ABI,whole64-layer/CommitState or
+physical/Work timing proof.
+
+Both actual41028B native prefixes SHA:
+ 4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+Separate unchanged strict main+clean CPU DATA comparators ACTUALLY exit0:
+ALL5120 embedding+5120 layer0 output words bit-exact,maxAbs0,relativeL20.
+No tolerance or diagnostic-only mode. Not a full-model numerical pass.
+
+Actual guarded apply and model launch
+--------------------------------------
+Only AFTER both complete native lifetimes+strict comparisons,fresh SSH
+ACTUAL0 verifies Haiku/UID0,64CPUs/max137034936320B/free133750947840B,
+no model/Assistant parent,exact041/ba971/efd848/4b/af680/d1ce hashes and
+baseline tag12/gen20/cold0/quiesced0/owner0/open1/guard1. Exactefd848
+apply28319 ACTUALLY exits0:quiescence,close,ba971 load/tag75/generation21.
+No reboot,GPU execution,reset,SD/mains or hardware change by the switch.
+
+Fresh independent prelaunch SSH ACTUAL0 verifies complete installedba971,
+unchanged4b client/efd848 helper/d1ce guard,tag75/gen21/cold0/quiesced0/
+owner0/open1/guard1,64CPUs/max137034936320B/free133752791040B. This is
+prelaunch health,not a claim the subsequent model lifetime is idle.
+
+NEW16680 launches04:24UTC with exactba971 and UNCHANGED4b client,
+--benchmark-34-positions. It is LIVE;no new speed,numerical or clean-END
+result exists yet. This fixed diagnostic is NOT an Assistant Work release.
 
 Next gates
 ------------
-Poll SAME75049/56382 through ACTUAL terminal exits;require complete native
-lifetime assertions AND separate unchanged strict CPU comparison of their
-actual first-layer DATA. Preserve failures if either test fails;never infer
-success from an existing prefix or a timeout. Only then fresh Pioneer idle/
-full hashes/health,exactefd848 apply (expected gen20->21 if unchanged),and
-one UNCHANGED4b fixed34 diagnostic. NO other GPU/admin/model FD or reload/
+Poll SAME16680 through ACTUAL terminal/END+Close+process exit;never restart
+because observation yields no output. NO other GPU/admin/model FD or reload/
 power/SD/OS/network intervention during that model lifetime,including its
 source authentication BEFORE Open. After genuine END+Close+process exit:
 strict main+clean analysis,same4b+844ec control comparison,fresh idle,ONLY
