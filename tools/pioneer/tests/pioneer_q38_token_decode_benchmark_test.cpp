@@ -87,6 +87,9 @@ struct IO {
 #ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT
  unsigned metrics=0,metricDamage=0;
 #endif
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+ uint32_t firstRaw=0x60008,secondRaw=0x40004;
+#endif
  explicit IO(Source& s):source(s){}
  int Open(){assert(source.Ready() && !opens++);return 76;}
  int Close(int fd){assert(fd==76 && !closes++);return failCopyClose?-1:0;}
@@ -145,6 +148,9 @@ struct IO {
    if(operation==P::Start){assert(!starts++);r.stage=d[2]=8;d[3]=1;}
    else if(operation==P::Observe){
     assert(starts==1 && !holds && !ends);polls++;
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+    d[12]=firstRaw;d[13]=secondRaw;
+#endif
     if(polls==1){r.ready=0;r.stage=d[2]=9;d[4]=63;}
     else{r.stage=d[2]=11;d[6]=1;d[8]=V::Positions;d[9]=V::Positions-1;d[10]=64;
      if(damagePhase==1)d[damageWord]^=damageMask;}
@@ -174,10 +180,17 @@ int main(){
  PioneerQ38TokenFrontierControl::Packet beforeOpen;
  assert(!session->ObserveFrontier(beforeOpen) && !io.calls && !io.opens);
 #endif
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+ {PioneerQ38TokenFrontendSnapshot raw;assert(!session->LastPollFrontends(raw) && !io.calls && !io.opens);}
+ unsigned frontendCases=0;auto frontends=std::make_unique<PioneerQ38TokenFrontendSamples>();
+#endif
  std::array<uint32_t,V::Positions*64> output;output.fill(0xaaaaaaaaU);
  auto unchanged=[&](){for(auto word:output)assert(word==0xaaaaaaaaU);};
  assert(!session->CopyGenerationRecords(output.data(),output.size()));unchanged();
  assert(session->Begin() && io.uploads==20367 && source.pages==4736090 && io.bytes==UINT64_C(19399024640));
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+ {PioneerQ38TokenFrontendSnapshot raw;const auto calls=io.calls;assert(!session->LastPollFrontends(raw) && io.calls==calls);}
+#endif
  unsigned branches=0;
  auto child=[&](auto check){
   fflush(nullptr);pid_t pid=fork();assert(pid>=0);if(!pid){check();_exit(0);}
@@ -218,8 +231,39 @@ int main(){
  child([&]{assert(session->Poll() && session->Poll() && !session->Finish() && io.closes==1 && !io.holds && !io.ends);});
 #endif
  assert(session->Poll() && !session->TerminalReady() && !session->CopyGenerationRecords(output.data(),output.size()));unchanged();
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+ {
+  const auto calls=io.calls;PioneerQ38TokenFrontendSnapshot raw;
+  assert(session->LastPollFrontends(raw) && io.calls==calls && raw.generation==7 && !raw.ready && raw.stage==9
+   && raw.checkedWord==63 && raw.firstPC==io.firstRaw && raw.secondPC==io.secondRaw);
+  assert(frontends->Observe(100,110,0,raw));frontendCases++;
+  for(unsigned field=0;field<7;field++){
+   PioneerQ38TokenFrontendSnapshot dirty;
+   if(field==0)dirty.generation=1;if(field==1)dirty.ready=1;if(field==2)dirty.stage=1;
+   if(field==3)dirty.checkedWord=1;if(field==4)dirty.firstPC=1;if(field==5)dirty.secondPC=1;if(field==6)dirty.reserved=1;
+   const auto before=dirty;assert(!session->LastPollFrontends(dirty) && !std::memcmp(&before,&dirty,sizeof(dirty)) && io.calls==calls);frontendCases++;
+  }
+  child([&]{source.current=false;PioneerQ38TokenFrontendSnapshot value;const auto count=io.calls;
+   assert(!session->LastPollFrontends(value) && io.calls==count);});
+  for(uint32_t pc:{0U,0x40000U,0x60004U,0x60008U,0x64000U,0xfffffffcU,0xffffffffU})child([&]{
+   io.firstRaw=pc;io.secondRaw=pc^4U;assert(session->Poll() && session->TerminalReady());
+   const auto count=io.calls;PioneerQ38TokenFrontendSnapshot value;
+   assert(session->LastPollFrontends(value) && io.calls==count && value.ready && value.stage==11
+    && value.firstPC==pc && value.secondPC==(pc^4U));assert(finish() && session->Completed());
+  });
+ }
+#endif
  assert(session->Poll() && session->TerminalReady() && !session->CopyGenerationRecords(output.data(),output.size()));unchanged();
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+ {const auto calls=io.calls;PioneerQ38TokenFrontendSnapshot raw;
+  assert(session->LastPollFrontends(raw) && io.calls==calls && raw.ready && raw.stage==11);
+  assert(frontends->Observe(200,210,2,raw) && frontends->Complete());frontendCases++;}
+#endif
  assert(finish() && session->Completed() && session->CommittedRecords()==V::Positions && io.closes==1 && io.ends==1);
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+ {const auto calls=io.calls;PioneerQ38TokenFrontendSnapshot raw;
+  assert(!session->LastPollFrontends(raw) && io.calls==calls);frontendCases++;}
+#endif
 #ifdef PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT
  {PioneerQ38TokenFrontierControl::Packet metric;const auto calls=io.calls;
   assert(!session->ObserveFrontier(metric) && io.calls==calls && io.metrics==1);}
@@ -230,5 +274,13 @@ int main(){
  output.fill(0xaaaaaaaaU);source.current=false;
  assert(!session->CopyGenerationRecords(output.data(),output.size()));unchanged();
  const auto calls=io.calls;session.reset();assert(io.calls==calls && io.closes==1);
- printf("PASS separate34-position/32-feedback MOCK USER lifecycle/full851 synthetic uploader/4736090pages/20367batches/all34 chained records/HOLD+one drain+full END+Close/%u COW failures and%u protocol refusals;no old endpoint,cancel,hidden capture,CPU model or Work;NO native/model numerics/physical/steady-TPS qualification\n",branches,protocolCases);
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+ const char* cowLabel="COW branches including frontend positives";
+#else
+ const char* cowLabel="COW failures";
+#endif
+ printf("PASS separate34-position/32-feedback MOCK USER lifecycle/full851 synthetic uploader/4736090pages/20367batches/all34 chained records/HOLD+one drain+full END+Close/%u %s and%u protocol refusals;no old endpoint,cancel,hidden capture,CPU model or Work;NO native/model numerics/physical/steady-TPS qualification\n",branches,cowLabel,protocolCases);
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+ printf("PASS frontend snapshot getter/%u direct cases+8 COW source/raw-address cases/IO call count UNCHANGED/pending+terminal snapshots/bad output unchanged/closed andwrong-phase refused/raw addresses NOT retiredPC,layer count,cycles or completion authority;MOCK transport ONLY\n",frontendCases);
+#endif
 }

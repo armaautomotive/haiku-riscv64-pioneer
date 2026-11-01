@@ -1,0 +1,94 @@
+Zero-extra-accelerator-call frontend sampling:qualified USER build ONLY
+=======================================================================
+2026-11-01. Goal ACTIVE;20tok/s UNMET. No new throughput or full-model
+numerical acceptance is claimed. Physical52739 remains the unchanged4b
+client+1f3 retained-cohort driver,NOT this new718d profiling client. At
+00:38UTC52739 is ACTUALLY LIVE:weight upload completed,START acknowledged,
+stderr0B. No additional accelerator/admin/model/reload/reset/power/SD/OS/
+network change is made during that live lifetime.
+
+Purpose and strict limits
+--------------------------
+The next diagnostic records the two RAW frontend address words ALREADY
+returned by each existing successful6607 Observe call. A separate USER
+role and explicit --profile-frontends-34-positions CLI reuse the complete
+existing source/upload/start/6607+6608/terminal/HOLD/drain/END+Close path.
+No new opcode,driver,firmware,NoC command,PC read or accelerator FD exists.
+The getter copies ONLY a current validated Observe response,with the same
+source epoch/generation,while the session is Running/Terminal. It refuses
+wrong phase,nonpristine output,lost source and closed sessions without IO.
+The class layout is unchanged;getter/collector/CLI code compiles ONLY in
+the separately selected profile. Whole old binaries reproduce unchanged.
+
+The field named checked_word is the native observer's checked-word index,
+NOT a layer count. first_raw/second_raw are frontend cursors,NOT retired
+PCs. Existing60008-vs-actual60004 observations preclude subtracting4 or
+widening code intervals to manufacture a match. Samples may reflect fetch-
+ahead,waiting and boundary ambiguity;address bins do NOT prove cycles,
+function time,bottleneck causality,completed layers or model correctness.
+
+Host samples are stored in a bounded18000-row heap object (<2MiB),not
+printed during generation. Each row has a separate host Observe-call time
+bracket,the PRECEDING metric count and the raw response. Count and PC
+observations are NOT atomic. Generation must remain constant;count and
+clock cannot regress;only the final row may be terminal. Rows print ONLY
+after genuine whole Finish+Close and34 validated records. The existing
+count-rate bounds remain distinct from frontend-address sampling. No CPU
+model reference or validation output is introduced.
+
+Actual independent builds and regressions
+------------------------------------------
+Main70120/clean10273 inspect ACTUALLY exit0;frozen81355/43864 ACTUALLY
+exit0 with identical new object/executable:
+ 76e5a770f3cdf56bfd47d763e5ea56833403c347f5f6558ecb2cc6e7dcd13020
+ 718d0ceac7eb5caad771413aefa32903fabf1e81b3dc6ad34793fd8ad0b7b77c
+Before each candidate,the ENTIRE old4b1dbee6 frontier,05510422 decode,
+short,timed and held-hidden literal controls reproduce unchanged. Maximum
+individual USER frame4432B;no native/CPU-oracle/Work/MOCK imports. The
+profile cannot select old generation/benchmark/capture/CPU/Work CLIs.
+No binary has been staged or run on the Pioneer in this checkpoint.
+
+USER fixtures5638/12520 ACTUALLY exit0 under ASan+UBSan. Existing full851
+SYNTHETIC uploader/4736090pages/20367batches/34 chained records and clean
+Finish+Close still pass,with713 COW branches/12934 protocol refusals EACH.
+New getter10 direct+8 COW source/raw-address cases prove the transport call
+count UNCHANGED,RAW0/40000/60004/60008/64000/FFFFFFFC/FFFFFFFF preserved,
+nonpristine output unchanged,and closed/wrong-phase/source-loss refusals.
+Bounded DATA/CLI fixture adds33 time/count/generation/stage/reserved/
+capacity/late/CLI refusals. MOCK transport/source are NOT actual native
+execution,GGUF SHA authentication,hardware provenance or numerical proof.
+Old unchanged USER19780/80628 ACTUALLY exit0:705 COW branches/12934
+refusals EACH. Profile role18681/22050 ACTUALLY exit0:1 positive/79
+missing/zero/two/late/native/CPU/Work refusals EACH. An initial test fixture
+referenced a nonexistent separate hidden-role file (its guards are inline
+in the existing session header);the fixture path list was corrected. The
+production role/session guards were not relaxed. Failure logs retained.
+
+Strict parser and qualified-ELF address bins
+--------------------------------------------
+Parser25672/84102 ACTUALLY exit0:1 SYNTHETIC positive/581 omissions,
+duplicates,clock,count,generation,stage/base-record refusals EACH. The
+unchanged base comparator additionally passes3 SYNTHETIC positives/1260
+refusals. The new parser requires its unique profile marker,exact row
+grammar/order/limits,one terminal final row and complete row terminator.
+Every base upload/phase/34-record/count-rate line passes the unchanged base
+parser. Metric observations must equal snapshot rows+1. The temporary
+derived base file is parser input ONLY,never archived as an observed old-
+mode log. Strict first-three CPU comparisons remain unchanged and return
+failure on the known score mismatches. Profile grammar is not quality.
+
+Actual symbolizer tests authenticate old9515589d and retained48b2 ROOT
+ELFs to DECLARED9ad/1f3 module bindings:2 positives/3 wrong-binding
+refusals EACH. nm decodes a private copy of the exact authenticated ELF
+byte snapshot,not a second unchecked open of the caller's path. Bins use
+exact nonzero-size function intervals;unmapped RAW60008/FFFFFFFF stay
+unmapped. These declared bindings are NOT independent hardware provenance;
+actual prelaunch module hashes/generation/lifetime evidence remains needed.
+No83677 binding exists:that next ROOT has no qualified native module yet.
+
+Next:finish the SAME52739 benchmark,strict posthoc checks and safe baseline
+restoration. Then consider ONE controlled718d profile run against the
+qualified1f3 module to gather actual frontend samples for the next major
+optimization. No profile sample distribution,TPS or speedup is available
+yet. Original-model numerical correctness,resident fresh requests,usable
+Assistant Work and20tok/s remain outstanding.

@@ -1,0 +1,2 @@
+PASS FRONTIER34 comparator/3 SYNTHETIC positives/1260 omissions+duplicates+record+counter+time+rate+numeric refusals;strict first3 numerical comparison unchanged;NO physical/timing/quality proof
+PASS frontend parser/1 SYNTHETIC positives/581 grammar,order,time,count,stage,base-record refusals/RAW60008+FFFFFFFF stay unmapped without range widening;NO hardware/time/quality proof

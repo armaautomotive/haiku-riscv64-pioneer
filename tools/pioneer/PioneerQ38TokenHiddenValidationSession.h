@@ -67,6 +67,10 @@ static_assert(PioneerQ38DecodeBenchmarkClientSelection==0,"late longer USER diag
 // IO/Source substitution exists for explicit OFFLINE transport fixtures only.
 // Neither a successful fixture nor these returned DATA records prove model
 // numerics, native lifetime/stack safety, physical speed or Work readiness.
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+#include "PioneerQ38TokenFrontendProfileClientRole.h"
+#include "PioneerQ38TokenFrontendSamples.h"
+#endif
 template<class IO,class Source=PioneerQ38PublicModelSource>
 class PioneerQ38TokenHiddenValidationSession {
  using Packet=PioneerQ38TokenControl::Packet;
@@ -196,6 +200,23 @@ public:
  bool CancellationConsumed()const{return state==Complete && cancelAttempted && cancelled;}
  unsigned CommittedRecords()const{return state==Complete?committed:0;}
  unsigned CancelledLayers()const{return CancellationConsumed()?completedLayers:0;}
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+ bool LastPollFrontends(PioneerQ38TokenFrontendSnapshot& output)const{
+  if(output.generation || output.ready || output.stage || output.checkedWord || output.firstPC || output.secondPC || output.reserved
+   || failure || fd<0 || !generation || (state!=Running && state!=Terminal)
+   || operation!=TT_PCI_PROBE_Q38_TOKEN_FRONTIER_BENCHMARK || !Current())return false;
+  const auto& q=packet->request;const auto& r=packet->reply;const auto* d=r.detail;
+  if(q.operation!=PioneerQ38TokenControl::Observe || r.operation!=q.operation || r.status || r.unsafe
+   || r.version!=PioneerQ38TokenControl::Version || r.started!=1 || r.complete || r.records
+   || r.ready!=unsigned(state==Terminal) || r.stage!=(r.ready?11U:9U)
+   || d[0]!=1 || d[1]!=1 || d[2]!=r.stage || d[3] || d[5] || d[6]!=r.ready || d[7] || d[14] || d[15])return false;
+  for(auto word:r.reserved)if(word)return false;
+  if(!r.ready && (d[4]>63 || d[8] || d[9] || d[10] || d[11]))return false;
+  if(r.ready && (d[8]!=34 || d[9]!=33 || d[10]!=64 || d[11]))return false;
+  PioneerQ38TokenFrontendSnapshot value;value.generation=generation;value.ready=r.ready;
+  value.stage=r.stage;value.checkedWord=d[4];value.firstPC=d[12];value.secondPC=d[13];output=value;return true;
+ } // existing validated response ONLY;NO transport call,Open,counter recapture or lifecycle change
+#endif
  bool Preflight(){
   if(preflightAttempted || attempted || state!=Virgin)return false;
   preflightAttempted=true;

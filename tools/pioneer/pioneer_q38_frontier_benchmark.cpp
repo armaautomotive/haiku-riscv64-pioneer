@@ -9,7 +9,11 @@
 #include <memory>
 #include "PioneerQ38TokenHiddenValidationSession.h"
 #include "PioneerQ38TokenRateSamples.h"
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+#include "PioneerQ38FrontendProfileCli.h"
+#else
 #include "PioneerQ38FrontierBenchmarkCli.h"
+#endif
 struct FrontierBenchmarkTransport {
  uint64_t reported=0;
  int Open(){puts("Q38_FRONTIER_OPEN_AFTER_FULL_SAME_OPEN_GGUF_SHA_AND_COMPLETE_851_LAYOUT");return open("/dev/misc/tenstorrent_pci_probe",O_RDWR|O_CLOEXEC);}
@@ -26,10 +30,17 @@ struct FrontierBenchmarkTransport {
  }
 };
 int main(int argc,char** argv){
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+ using M=PioneerQ38FrontendProfileMode;const auto mode=PioneerQ38FrontendProfileArguments(argc,argv);
+#else
  using M=PioneerQ38FrontierBenchmarkMode;const auto mode=PioneerQ38FrontierBenchmarkArguments(argc,argv);
+#endif
  if(mode==M::Invalid)return 2;
  namespace V=PioneerQ38TokenDecodeBenchmark;
  setvbuf(stdout,nullptr,_IOLBF,0);
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+ puts("Q38_FRONTEND_PROFILE_ZERO_EXTRA_ACCELERATOR_CALLS_RAW_NOT_RETIRED_PC_OR_CYCLES");
+#endif
  puts("Q38_FRONTIER_FIXED_2PROMPT_34POSITION_NO_CPU_REFERENCE_NOT_ASSISTANT_WORK_NUMERICAL_VALIDATION_REQUIRED");
  PioneerQ38PublicModelSource source;FrontierBenchmarkTransport io;
  auto session=std::make_unique<PioneerQ38TokenHiddenValidationSession<FrontierBenchmarkTransport>>(io,source);
@@ -38,6 +49,9 @@ int main(int argc,char** argv){
   printf("%s_Q38_FRONTIER_SOURCE_ONLY reason%s;NO_ACCELERATOR_OPEN_OR_INFERENCE\n",okay?"PASS":"FAIL",session->failure?session->failure:"none");
   return okay?0:1;
  }
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+ auto frontends=std::make_unique<PioneerQ38TokenFrontendSamples>();
+#endif
  if(!session->Begin()){
   printf("FAIL_Q38_FRONTIER reason%s op%08x;CLOSE_ONLY_NO_RETRY_OR_IMPLICIT_END\n",session->failure?session->failure:"begin",session->operation);return 1;
  }
@@ -54,13 +68,25 @@ int main(int argc,char** argv){
   if(!samples.Observe(metric,before,after)){why="counter_or_clock";okay=false;break;}
   observations++;finalCount=metric.reply.detail[7];previous=after;
   if(session->TerminalReady())break;
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+  const bigtime_t pollBegin=system_time();
+#endif
   if(!session->Poll()){okay=false;break;}
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+  const bigtime_t pollEnd=system_time();PioneerQ38TokenFrontendSnapshot raw;
+  if(pollBegin<after || !session->LastPollFrontends(raw) || !frontends->Observe(pollBegin,pollEnd,finalCount,raw)){
+   why="frontend_snapshot_or_clock";okay=false;break;
+  }
+#endif
   if(!session->TerminalReady() && snooze(100000)!=B_OK){why="snooze";okay=false;break;}
  } // after terminal publication,one final SAME-FD metric read BEFORE HOLD
  if(okay && (!session->TerminalReady() || finalCount!=V::Positions)){why="final_count";okay=false;}
  if(okay){puts("Q38_FRONTIER_TERMINAL_READY_BEGIN_HOLD_DRAIN_AND_RESTORE;NOT_CLEAN_END_YET");okay=session->Finish();}
  auto records=std::make_unique<uint32_t[]>(V::Positions*64);
  if(okay)okay=session->CopyGenerationRecords(records.get(),V::Positions*64);
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+ if(okay && !frontends->Complete()){why="frontend_terminal_missing";okay=false;}
+#endif
  if(!okay){
   printf("FAIL_Q38_FRONTIER reason%s op%08x;CLOSE_ONLY_NO_RETRY_OR_IMPLICIT_END\n",why?why:session->failure?session->failure:"records",session->operation);return 1;
  }
@@ -77,5 +103,17 @@ int main(int argc,char** argv){
    bounds.sampledTokens,bounds.firstCommitted,bounds.lastCommitted,(long long)bounds.minElapsedUs,(long long)bounds.maxElapsedUs,
    bounds.lowerTokensPerSecond,bounds.upperTokensPerSecond,observations);
  }else puts("Q38_FRONTIER_RATE_UNAVAILABLE_INSUFFICIENT_POST_PROMPT_WINDOW;CLEAN_END_DOES_NOT_PROVE_RATE");
+#ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
+ // Print raw observations ONLY after genuine whole Finish+Close+records.
+ // The preceding count and Observe are separate calls,not an atomic snapshot.
+ printf("Q38_FRONTEND_ROWS_BEGIN generation%llu rows%u;AFTER_CLEAN_END_NOT_ATOMIC_WITH_PRECEDING_COUNT\n",
+  (unsigned long long)frontends->Generation(),frontends->Size());
+ for(unsigned i=0;i<frontends->Size();i++){
+  const auto& row=frontends->Data()[i];const auto& raw=row.observed;
+  printf("Q38_FRONTEND_ROW index%u begin_us%lld end_us%lld preceding_count%u ready%u stage%u checked_word%u first_raw%08x second_raw%08x\n",
+   i,(long long)row.begin,(long long)row.end,row.precedingCount,raw.ready,raw.stage,raw.checkedWord,raw.firstPC,raw.secondPC);
+ }
+ printf("Q38_FRONTEND_ROWS_END rows%u;FRONTEND_SAMPLE_COUNTS_NOT_RETIRED_INSTRUCTION_CYCLES_OR_FUNCTION_TIME\n",frontends->Size());
+#endif
  return 0;
 }
