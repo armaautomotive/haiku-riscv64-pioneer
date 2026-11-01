@@ -1,0 +1,1 @@
+{"quantized_matrices":497,"raw_weight_bytes":18237132800,"tiled_weight_bytes":18671902720,"single_tile_commands":17764480,"batched_commands":5593920,"batch_last_tile_l1_copy_bytes":7441879040,"all_quantized_storage_tiled_bytes":19387064320,"all_learned_page_allocation_bytes":19399024640}

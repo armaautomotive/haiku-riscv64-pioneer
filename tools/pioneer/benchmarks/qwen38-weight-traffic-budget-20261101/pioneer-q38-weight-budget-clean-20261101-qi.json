@@ -1,0 +1,88 @@
+{
+  "all_quantized_storage_raw_bytes": 18952294400,
+  "all_quantized_storage_tiled_bytes": 19387064320,
+  "bandwidth_scenario": {
+    "assumed_nominal_decimal_gb_per_second": 448.0,
+    "conditional_weight_payload_decimal_gb_per_second": 373.4380544,
+    "fraction_of_assumed_nominal_bandwidth_for_weight_payload_only": 0.8335670857142857,
+    "interpretation": "CONDITIONAL_ONE_SWEEP_BUDGET_NOT_A_MEASURED_BANDWIDTH_OR_TOKEN_RATE_OR_IMPOSSIBILITY_PROOF",
+    "target_tokens_per_second": 20.0
+  },
+  "families": {
+    "ffn": {
+      "batch_last_tile_l1_copy_bytes": 4812963840,
+      "batched_commands": 2088960,
+      "quantized_matrices": 192,
+      "raw_weight_bytes": 9625927680,
+      "single_tile_commands": 4177920,
+      "tiled_weight_bytes": 9625927680
+    },
+    "projections": {
+      "batch_last_tile_l1_copy_bytes": 2102476800,
+      "batched_commands": 3349760,
+      "quantized_matrices": 304,
+      "raw_weight_bytes": 7568261120,
+      "single_tile_commands": 13276160,
+      "tiled_weight_bytes": 7993098240
+    },
+    "vocabulary_head": {
+      "batch_last_tile_l1_copy_bytes": 526438400,
+      "batched_commands": 155200,
+      "quantized_matrices": 1,
+      "raw_weight_bytes": 1042944000,
+      "single_tile_commands": 310400,
+      "tiled_weight_bytes": 1052876800
+    }
+  },
+  "limits": [
+    "No full-file SHA authentication or weight-payload reads.",
+    "Excludes F32 weights,embedding lookup,K/V,recurrent state,activations,controller traffic and repetition.",
+    "No claim of hardware integrity,attainable bandwidth,model correctness or inference speed.",
+    "L1 last-tile copy bytes are NOT extra GDDR weight payload bytes.",
+    "No SRAM caching or cross-sequence weight reuse assumed;other implementations can differ."
+  ],
+  "metadata_only": {
+    "declared_full_bytes": 18973870528,
+    "metadata": {
+      "general.architecture": "qwen35",
+      "general.file_type": 15,
+      "general.name": "Qwen3.8-27B",
+      "qwen35.attention.head_count": 24,
+      "qwen35.attention.head_count_kv": 4,
+      "qwen35.attention.key_length": 256,
+      "qwen35.attention.layer_norm_rms_epsilon": 9.999999974752427e-07,
+      "qwen35.attention.recurrent_layers": {
+        "array_type": 7,
+        "count": 64
+      },
+      "qwen35.attention.value_length": 256,
+      "qwen35.block_count": 64,
+      "qwen35.context_length": 262144,
+      "qwen35.embedding_length": 5120,
+      "qwen35.feed_forward_length": 17408,
+      "qwen35.full_attention_interval": 4,
+      "qwen35.rope.dimension_count": 64,
+      "qwen35.rope.dimension_sections": {
+        "array_type": 5,
+        "count": 4
+      },
+      "qwen35.rope.freq_base": 10000000.0,
+      "qwen35.ssm.conv_kernel": 4,
+      "qwen35.ssm.group_count": 16,
+      "qwen35.ssm.inner_size": 6144,
+      "qwen35.ssm.state_size": 128,
+      "qwen35.ssm.time_step_rank": 48
+    },
+    "tensor_bytes": 18962876416,
+    "tensor_count": 851
+  },
+  "scenario": "ONE_SWEEP_QUANTIZED_MATRICES_EXCLUDING_EMBEDDING_NOT_MEASURED_TRAFFIC",
+  "totals": {
+    "batch_last_tile_l1_copy_bytes": 7441879040,
+    "batched_commands": 5593920,
+    "quantized_matrices": 497,
+    "raw_weight_bytes": 18237132800,
+    "single_tile_commands": 17764480,
+    "tiled_weight_bytes": 18671902720
+  }
+}

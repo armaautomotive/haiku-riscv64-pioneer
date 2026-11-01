@@ -1,0 +1,89 @@
+Qwen27B actual-layout weight budget:conditional accounting,NOT throughput
+=======================================================================
+2026-11-01. Goal ACTIVE;20tok/s UNMET. Last physical nonprofiling diagnostic
+remains0.159697435..0.159700083tok/s,with known strict final-score failures.
+This report is NOT a hardware bandwidth,integrity,authenticity,model-quality
+or inference benchmark. No accelerator is opened by the accounting tools.
+
+Why this changes the next performance decision
+----------------------------------------------
+The actual fixed GGUF contains851 tensors,including288 Q8_0,193 Q4_K and17
+Q6_K tensors. A simple27B*4bit estimate does NOT describe its weight traffic.
+Metadata-only Python accounting and the EXISTING strict C++ GGUF reader+
+actual tile-major8192-context/two-delta-slot packed plan independently agree
+on EVERY count below. No weight dequantization or CPU model products occur.
+No new full-file SHA authentication is claimed by these layout tools.
+
+Scenario:ONE complete sweep of all497 non-embedding quantized matrices per
+decoded token,in the CURRENT tile-major layout. Excludes F32 learned
+weights,embedding lookup,K/V,recurrent state,activations,controller traffic,
+repeated reads and caching. This is NOT a universal lower bound:another
+layout,SRAM reuse or multiple concurrent sequences can change the traffic.
+
+                             raw bytes       tile-major payload bytes
+ FFN192 matrices            9625927680              9625927680
+ Projections304             7568261120              7993098240
+ Full vocabulary head1      1042944000              1052876800
+ TOTAL                     18237132800             18671902720
+
+At20tok/s,this scenario requires373.4380544 decimal GB/s for these weights
+ALONE.448GB/s is an EXPLICIT nominal scenario input,not a detected/measured
+bandwidth. The required payload is83.35670857% of that input BEFORE other
+traffic,quantization decode,arithmetic,synchronization and scheduling.
+Official nominal specification consulted2026-11-01:
+https://docs.tenstorrent.com/aibs/blackhole/index.html
+This arithmetic neither promises20tok/s nor proves it impossible. A proper
+on-card sustained bandwidth/compute baseline is still needed. Even booting
+Linux on the RISC-V Pioneer is not itself the documented x86_64 Ubuntu host
+baseline;no OS,firmware,hardware or mains change was made for this report.
+
+The single-tile scenario issues17764480 weight reads per sweep. The pending
+Q8x4/Q4x2/Q6x2 batch geometry uses5593920 weight reads for the SAME payload.
+It also copies7441879040 bytes between L1 buffers per sweep(one last tile
+per batch). That L1 staging count is NOT extra GDDR payload,but it is real
+additional work;fewer commands alone cannot be advertised as a speedup.
+The all-quantized tiled STORAGE figure19387064320 includes the FULL
+embedding table,which is deliberately excluded from the per-token sweep.
+The actual packed plan's19399024640 all-learned page allocation bytes match
+the physical loader's uploaded count;storage/upload is NOT token traffic.
+
+Closed independent checks
+---------------------------
+Python unit main+clean ACTUALLY exit0,logs byte-identical. Independent small
+Q8/Q4/Q6 shapes check padding,embedding exclusion,families,copy/command
+arithmetic,invalid geometry/format/length,duplicates,empty workload and
+nonfinite/nonpositive/overflowed rate refusal. No expected value was
+relaxed. An initial mutable-family accumulator bug was caught by the
+independent family totals and fixed;the original expectation stayed.
+
+ASan/UBSan C++ main97676 and clean72506 builds ACTUALLY exit0. EACH executes
+both the existing sparse GGUF fixture AND the REAL851-tensor GGUF layout;
+all four executions ACTUALLY exit0. The REAL C++ plan uses existing tensor
+shape/type validation and actual bank stripes,not Python-produced inputs.
+Python main/clean reports are byte-identical;C++ actual main/clean reports
+are byte-identical;every C++ total equals the independently computed Python
+total. This proves only the declared layout/accounting scope.
+
+Reproduce:
+ python3 tools/pioneer/tests/pioneer_q38_weight_budget_test.py
+ python3 tools/pioneer/pioneer_q38_weight_budget.py MODEL.gguf \
+   --target-tokens-per-second 20 --nominal-gb-per-second 448
+C++ source:tests/pioneer_q38_weight_budget_layout_test.cpp;compile with
+-std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined;
+run with no argument for the sparse fixture,or ONE real GGUF path.
+
+Pioneer preservation and remaining work
+----------------------------------------
+Fresh read-only SSH health ACTUALLY exits0:installed baseline041,tag12,
+generation36,cold0/quiesced0/active_owner0/open_count1/guard1,no compute
+parent,64CPUs/full137034936320B/free133749350400B. All staged identities
+and guard remain exact;stderr0B. No driver reload,GPU job,reboot,power,
+network,SD,Assistant or hardware action. This is host/driver metadata
+health,NOT a hardware bandwidth or whole-memory integrity test.
+
+The connected batch experiment found a separate controller admission-count
+bug BEFORE hardware use. Its full native lifecycle is being repaired and
+must pass before any separately qualified driver is staged. This report
+does not clear that experiment. Full-model numerical acceptance,resident
+fresh requests,arbitrary prompts,usable no-CPU-reference Assistant Work and
+sustained20tok/s remain unproven. Raw artifacts are in the sibling folder.
