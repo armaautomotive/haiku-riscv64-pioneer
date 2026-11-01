@@ -1,5 +1,12 @@
 Batched Q8 cohort admission repair:BUILD/DATA closed,connected test LIVE
 ======================================================================
+19:09UTC CLOSURE UPDATE:both SAME36635/42349 ACTUALLY exit0 through complete
+original firstlayer/cancel/119STOP/120HOLD/drain/all restores/clock/PCI/
+29VM/3hosts/unreserve/destruction+END. Logs exact. Unchanged strict main/
+clean prefix comparators BOTH ACTUALLY0:ALL10240 words bitexact. Historical
+LIVE paragraphs below are superseded;see qwen38-batched-prefetch-native-
+20261101.txt for exact public BUILD/updater/limits. No physical speed claim.
+
 2026-11-01,18:54UTC checkpoint. Goal ACTIVE;20tok/s UNMET. This is NOT a
 physical speedup,whole-model numerical or usable Assistant Work result.
 Latest physical rate remains0.159697435..0.159700083tok/s;known final-score

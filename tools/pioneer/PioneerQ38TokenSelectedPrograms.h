@@ -2,8 +2,9 @@
 // DATA selection only; no native source/lifetime, journal or launch grant.
 // Rechecked outside the guard so late/defined-zero changes cannot alias data.
 #include "PioneerQ38TokenBatchedPrefetchProgramsRole.h"
-#if defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS) && !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT)
-#error Batched-prefetch DATA requires its distinct private native selector;no Work grant
+#if defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS) \
+ && !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_NATIVE_CONTEXT) && !defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_BENCHMARK_NATIVE)
+#error Batched-prefetch DATA requires its distinct private or diagnostic selector;no Work grant
 #endif
 #include "PioneerQ38TokenPrefetchProgramsRole.h"
 #if defined(PIONEER_Q38_TOKEN_PREFETCH_PROGRAMS) \

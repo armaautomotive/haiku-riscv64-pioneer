@@ -1,0 +1,112 @@
+Batched transfer variant:full native END,strict prefix and bounded BUILD
+=======================================================================
+2026-11-01. Goal ACTIVE;20tok/s UNMET. All offline gates described here are
+CLOSED. No physical speedup or whole-model numerical pass is claimed.
+Last physical nonprofiling rate remains0.159697435..0.159700083tok/s;known
+strict final-score differences remain FAIL. No new Assistant Work target.
+
+Actual original-model execution and complete native cleanup:CLOSED
+------------------------------------------------------------------
+Repaired ROOT6066e693+unchanged workerb73a8278+complete DATA9b1d9136.
+SAME main36635 and independent clean42349 BOTH ACTUALLY exit0;complete logs
+byte-identical. This supersedes their historical LIVE status in
+qwen38-batched-cohort-admission-20261101.txt. The old b622 cohort-admission
+failures remain preserved failures;the production fix and sole changed
+instruction are documented there. No expectation,tolerance or failed
+subject was silently relabelled as successful.
+
+Both genuine histories authenticate the entire SAME-open original27B GGUF
+BEFORE constructing the native fixture. Actual851 learned tensors+1010 zero
+jobs,staging/snapshot of all120 cores,119 VIRGIN full RV32/Tensix engines,
+original embedding+first-layer Matrix/Conv/GDN/FFN arithmetic,actual next-
+state786432 nonzero words and all119 DONE/WAIT boundaries execute. No CPU
+products,guest PC/register/result/ready injection or private-state transplant.
+Actual firstlayer ROOT91933639/peer2043383040 instructions;after consumed
+cancellation ROOT170276068/peer2045116546. These are HOST instruction counts,
+NOT hardware cycles or speed. Actual ROOT reserved6528/accessed6516 and
+max peer reserved5360/accessed5348 fit8192B EACH;kernel/IRQ stack is separate.
+
+The ORIGINAL predecessor continues through genuine cancel consumption,
+ROOT+119 STOP,2048 actual inert instructions each,real native terminal,
+ROOT-first120 HOLD,zero-record drain,TWO held-hidden reads16384+4096B,
+all original token+dispatch+peer+ROOT+shared stores and second readbacks,
+native clock END1350->800,hardware retirement,29 actual simulated OS view
+deletions,72 checked PCI reads+11 ordered original writes,3 OS host releases,
+same-cookie unreserve,locked whole-context destruction and END. No timeout
+was treated as closure;no shorter mode or synthetic terminal substituted.
+
+Only AFTER actual exit0,prefixes were copied to separate observed folders.
+Unchanged strict comparator main+clean BOTH ACTUALLY exit0,logs exact:
+ALL10240 embedding+layer0 words bitexact,maxAbs0/relativeL20,NO tolerance.
+All3 independent original CPU trace pins remain unchanged. Both41028B
+prefixes SHA4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+This is NOT later layers,model commits,arbitrary prompts,full numerical
+acceptance,physical speed or usable Assistant Work.
+
+Distinct bounded diagnostic BUILD:CLOSED,not yet staged
+-------------------------------------------------------
+New explicit PIONEER_Q38_TOKEN_BATCHED_PREFETCH_BENCHMARK_NATIVE selects
+the same14-section DATA through its own role/outer binding. No DATA-alone,
+old-parent-only,private NODRV,shader,CPU-oracle or Work promotion. Exact
+existing public parents and conventional ABI remain required. Tag75 is
+shared and NEVER code identity;whole module SHA identifies this variant.
+New leaf is pioneer_q38_token_batched_prefetch_benchmark_native_compile.cpp.
+
+Inspect main92977/clean49566 and frozen41254/43818 ALL ACTUALLY exit0.
+Entire oldflat8612+prefetch919d objects/modules reproduce FIRST on EVERY
+build. New whole objects and modules compare byte-for-byte across trees:
+ object368307386dbf6ecfa29a146ddf8e9c11559d8227c8d9137816ee6f4113c59d19
+ module34322035d8aadcc8667d8a7ec3f2a144646f0060604e9e00ebfdd59fa7e4ca1c
+ALL14 embedded arrays match their authenticated code digests;unchanged
+2MiB rope matches parent;all6 actual conventional driver ABI names present.
+No old immutable program namespace,CPU reference/llama/ggml,HOST instruction
+model,synthetic endpoint or full-model Work-control symbols are linked.
+Static frames<=2048 or no larger than old. Actual -fcallgraph-info=su rebuild
+is byte-identical and audits ProbeControl:5392 known module bytes/25 unresolved,
+no cycles/dynamic frames. This is explicitly PARTIAL,NOT whole-kernel-stack
+qualification or permission to skip any native/physical ownership check.
+
+Public roles main62506/clean30549 BOTH ACTUALLY0,logs exact:ALL old controls
+FIRST,then3 syntax positives/353 missing/zero/two/late/tag/ABI/old-array/
+private/shader/CPU/runtime-Work refusals. Private-role regressions31342/48784
+BOTH ACTUALLY0,logs exact;all3/453 original cases remain. Complete DATA
+regressions56616/82993 BOTH ACTUALLY0,logs exact;all old controls and new
+all120-word/32 corruptions/5 wrong-families/300 syntax refusals remain.
+Post-shared-header old private main81436/clean22479 ACTUALLY0,whole3a24
+unchanged;old public919d remains exact in independent public builds. Existing
+program bytes,numerical controls,Assistant,boot,kernel,CPU/RAM code unchanged.
+
+Exact updater and hardware preparation:CLOSED offline
+----------------------------------------------------
+New source SHA33d6906295813080dfa1db2950ec3170b79cb2f5e2cf2d9dedab9810fb0fbd08
+adds ONLY exact041<->34322035 batched apply/restore routes and hash-qualified
+backups. Old3ceff and every previous helper retain their OWN routes;none
+can install/restore34322035. No force/reset,unproven replacement retry,
+automatic rollback or broader Work capability. New helper must be staged
+under its distinct hash-qualified name,never overwrite the old helper.
+
+Actual /bin/sh updater main25423/clean35821 BOTH ACTUALLY exit0,2204 cases
+EACH across22 selected old/new bounded diagnostic routes;logs byte-identical.
+All original hash/symlink/owner/handshake/failure/backup cases remain. New
+routes reject10 old byte revisions+unknown same-tag bytes BEFORE opening
+admin;all20 old routes reject the new image. Tests use disposable simulated
+Haiku filesystems,NOT native device reload or hardware permission.
+
+Fresh pre-staging read-only SSH ACTUALLY0:EXACT baseline041/tag12/gen36,
+cold0/quiesced0/owner0/open1/guard1,no compute parent,64CPUs/full RAM,all
+immutable guard/admin/baseline/unchanged4b client hashes exact. New module/
+helper destination paths ABSENT. Stderr0B. Hardware has NOT been modified
+by these offline gates. No power,reboot,SD,network or Assistant changes.
+
+Next:stage these EXACT new bytes,copy back+independently verify,fresh idle
+check,apply ONLY new helper,verify generation+whole installed identity,
+then run SAME unchanged nonprofiling4b34-position benchmark. Protect its
+ENTIRE source-authentication/Open/upload/execution/restore/END+Close lifetime:
+NO extra Pioneer SSH/status/admin/GPU/reload/reset/power/SD/OS operation.
+Observe only SAME handle+local raw log until actual process exit. Strict
+numerical comparison and independent health precede exact guarded restore.
+No rate or quality result exists for this new physical subject yet.
+
+Full-model numerics,resident fresh requests,arbitrary prompts,usable
+no-CPU-reference Assistant Work and sustained20tok/s remain UNMET. Raw
+closed logs,stack reports and paired prefixes are in the sibling directory.

@@ -22,6 +22,8 @@ COUNTER_GATHER_MODES = ('--apply-token-counter-gather-benchmark', '--restore-tok
 EMPTY_RECEIPT_POLL_MODES = ('--apply-token-empty-receipt-poll-benchmark', '--restore-token-empty-receipt-poll-benchmark')
 FLAT_MATRIX_MODES = ('--apply-token-flat-matrix-benchmark', '--restore-token-flat-matrix-benchmark')
 PREFETCH_MODES = ('--apply-token-prefetch-benchmark', '--restore-token-prefetch-benchmark')
+BATCHED_PREFETCH_MODES = ('--apply-token-batched-prefetch-benchmark', '--restore-token-batched-prefetch-benchmark')
+BATCHED_PREFETCH_OLD_MODES = PREFETCH_MODES + FLAT_MATRIX_MODES + EMPTY_RECEIPT_POLL_MODES + COUNTER_GATHER_MODES + TID_BOUNDARY_MODES + PACKET_IDENTITY_MODES + COHORT_SOURCE_MODES + COMMIT_MODES + RETAINED_MODES + ('--apply-token-frontier-benchmark', '--restore-token-frontier-benchmark')
 
 
 def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_token_backup=False):
@@ -91,6 +93,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
         payloads['hash_token_empty_receipt_poll_benchmark'] = ('test-' + values['hash_token_empty_receipt_poll_benchmark']).encode()
         payloads['hash_token_flat_matrix_benchmark'] = ('test-' + values['hash_token_flat_matrix_benchmark']).encode()
         payloads['hash_token_prefetch_benchmark'] = ('test-' + values['hash_token_prefetch_benchmark']).encode()
+        payloads['hash_token_batched_prefetch_benchmark'] = ('test-' + values['hash_token_batched_prefetch_benchmark']).encode()
         payloads['hash_host_phase_diagnostic'] = ('test-' + values['hash_host_phase_diagnostic']).encode()
         payloads['hash_batch4_fetch_qualification'] = ('test-' + values['hash_batch4_fetch_qualification']).encode()
         payloads['hash_batch_raw_qualification'] = ('test-' + values['hash_batch_raw_qualification']).encode()
@@ -260,6 +263,8 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
             '--restore-token-flat-matrix-benchmark': ('hash_token_flat_matrix_benchmark', 'hash_scale_reuse_qualification', 'tag_token_flat_matrix_benchmark'),
             '--apply-token-prefetch-benchmark': ('hash_scale_reuse_qualification', 'hash_token_prefetch_benchmark', 'tag_scale_reuse_qualification'),
             '--restore-token-prefetch-benchmark': ('hash_token_prefetch_benchmark', 'hash_scale_reuse_qualification', 'tag_token_prefetch_benchmark'),
+            '--apply-token-batched-prefetch-benchmark': ('hash_scale_reuse_qualification', 'hash_token_batched_prefetch_benchmark', 'tag_scale_reuse_qualification'),
+            '--restore-token-batched-prefetch-benchmark': ('hash_token_batched_prefetch_benchmark', 'hash_scale_reuse_qualification', 'tag_token_batched_prefetch_benchmark'),
             '--apply-host-phase-diagnostic': ('hash_sentinel_poll_qualification', 'hash_host_phase_diagnostic', 'tag_sentinel_poll_qualification'),
             '--restore-host-phase-diagnostic': ('hash_host_phase_diagnostic', 'hash_sentinel_poll_qualification', 'tag_host_phase_diagnostic'),
             '--apply-batch4-fetch-qualification': ('hash_sentinel_poll_qualification', 'hash_batch4_fetch_qualification', 'tag_sentinel_poll_qualification'),
@@ -376,6 +381,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
         put('candidate_token_empty_receipt_poll_benchmark', payloads['hash_token_empty_receipt_poll_benchmark'])
         put('candidate_token_flat_matrix_benchmark', payloads['hash_token_flat_matrix_benchmark'])
         put('candidate_token_prefetch_benchmark', payloads['hash_token_prefetch_benchmark'])
+        put('candidate_token_batched_prefetch_benchmark', payloads['hash_token_batched_prefetch_benchmark'])
         put('candidate_host_phase_diagnostic', payloads['hash_host_phase_diagnostic'])
         put('candidate_batch4_fetch_qualification', payloads['hash_batch4_fetch_qualification'])
         put('candidate_batch_raw_qualification', payloads['hash_batch_raw_qualification'])
@@ -478,6 +484,10 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
             assert values['tag_token_prefetch_benchmark'] == '2026103100010075'
             assert values['hash_token_prefetch_benchmark'] == '919d4a631ff664549a67bb2372ce2db344ba29473c452c0b273c4b27a2bdf978'
             assert values['candidate_token_prefetch_benchmark'] == values['stage'] + '/tenstorrent_pci_probe-token-prefetch-benchmark-919d4a63'
+        if mode in BATCHED_PREFETCH_MODES:
+            assert values['tag_token_batched_prefetch_benchmark'] == '2026103100010075'
+            assert values['hash_token_batched_prefetch_benchmark'] == '34322035d8aadcc8667d8a7ec3f2a144646f0060604e9e00ebfdd59fa7e4ca1c'
+            assert values['candidate_token_batched_prefetch_benchmark'] == values['stage'] + '/tenstorrent_pci_probe-token-batched-prefetch-benchmark-34322035'
         status = f'P100A_RELOAD driver55 tag{oldtag} generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY'
         if fault == 'cold':
             status = status.replace('cold0', 'cold1')
@@ -550,6 +560,7 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
         hash_backup |= mode in EMPTY_RECEIPT_POLL_MODES
         hash_backup |= mode in FLAT_MATRIX_MODES
         hash_backup |= mode in PREFETCH_MODES
+        hash_backup |= mode in BATCHED_PREFETCH_MODES
         backup_name = 'qualified55-before-hot-reload' if mode == '--bootstrap' else 'qualified-reload-' + oldtag
         if hash_backup:
             backup_name += '-' + hashlib.sha256(payloads[starting]).hexdigest()
@@ -863,6 +874,29 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
                      else 'candidate_token_frontier_benchmark')
                 put(key,previous)
             else:installed.write_bytes(previous)
+        if fault and fault.startswith('batched-old-'):
+            assert mode in BATCHED_PREFETCH_MODES
+            revision = fault.removeprefix('batched-old-')
+            if revision == 'same-tag-wrong':
+                previous = b'unknown batched bytes claiming the same tag75'
+            else:
+                key = {'prefetch': 'hash_token_prefetch_benchmark', 'flat': 'hash_token_flat_matrix_benchmark',
+                       'empty': 'hash_token_empty_receipt_poll_benchmark', 'gather': 'hash_token_counter_gather_benchmark',
+                       'tid': 'hash_token_tid_boundary_benchmark', 'packet': 'hash_token_packet_identity_benchmark',
+                       'cohort': 'hash_token_cohort_sources_benchmark', 'commit': 'hash_token_commit_boundary_benchmark',
+                       'retained': 'hash_token_retained_cohort_benchmark', 'frontier': 'hash_token_frontier_benchmark'}[revision]
+                previous = payloads[key]
+            if mode.startswith('--apply-'):
+                put('candidate_token_batched_prefetch_benchmark', previous)
+            else:
+                installed.write_bytes(previous)
+        if fault == 'old-route-new-batched':
+            assert mode in BATCHED_PREFETCH_OLD_MODES
+            previous = payloads['hash_token_batched_prefetch_benchmark']
+            if mode.startswith('--apply-'):
+                put('candidate_' + mode.removeprefix('--apply-').replace('-', '_'), previous)
+            else:
+                installed.write_bytes(previous)
         before = installed.read_bytes()
         if fault == 'previous-debug52':
             assert mode in ('--apply-conv-silu-precision-validation', '--restore-conv-silu-precision-validation')
@@ -957,6 +991,8 @@ def check(mode, fault=None, legacy_backup=False, qualified_backup=False, other_t
             assert other_target.read_bytes() == other_bytes and other_target.stat().st_ino == other_inode, (mode, fault, 'OTHER_REVISION_BACKUP_CHANGED')
         if fault:
             assert result.returncode != 0, (mode, fault, result.stdout, result.stderr)
+            if fault.startswith('batched-old-') or fault == 'old-route-new-batched':
+                assert not (root / 'calls').exists(), (mode, fault, 'ADMIN_OPEN_WITH_WRONG_BATCHED_REVISION')
             if fault in ('packet-old-cohort', 'packet-old-commit', 'packet-old-retained', 'packet-old-frontier', 'old-route-new-packet'):
                 assert not (root / 'calls').exists(), (mode, fault, 'ADMIN_OPEN_WITH_DIFFERENT_BYTE_REVISION')
             if fault in ('previous-debug44', 'previous-capture-debug44', 'previous-debug52', 'previous-layer69', 'previous-capture-layer69', 'previous-debug71', 'token-same-tag-wrong-bytes', 'token-other-revision', 'token-third-revision'):
@@ -1074,6 +1110,7 @@ if __name__ == '__main__':
     modes += list(EMPTY_RECEIPT_POLL_MODES)
     modes += list(FLAT_MATRIX_MODES)
     modes += list(PREFETCH_MODES)
+    modes += list(BATCHED_PREFETCH_MODES)
     parents += ['owner-token-hidden-validation']
     parents += ['owner-token-validation', 'owner-token-validation-underscore', 'owner-token-source-check']
     parents += ['owner-recurrent-prefix-validation', 'owner-recurrent-prefix-validation-underscore']
@@ -1434,6 +1471,10 @@ if __name__ == '__main__':
             candidate = ['candidate_token_prefetch_benchmark']
         elif mode == '--restore-token-prefetch-benchmark':
             candidate = ['candidate_scale_reuse_qualification']
+        elif mode == '--apply-token-batched-prefetch-benchmark':
+            candidate = ['candidate_token_batched_prefetch_benchmark']
+        elif mode == '--restore-token-batched-prefetch-benchmark':
+            candidate = ['candidate_scale_reuse_qualification']
         elif mode == '--restore-token-root-frontend':
             candidate = ['candidate_scale_reuse_qualification']
         candidate_links = [key + '-link' for key in candidate]
@@ -1480,6 +1521,10 @@ if __name__ == '__main__':
             previous_image.extend(('flat-old-empty','flat-old-gather','flat-old-tid','flat-old-packet','flat-old-cohort','flat-old-commit','flat-old-retained','flat-old-frontier'))
         if mode in PREFETCH_MODES:
             previous_image.extend('prefetch-old-'+name for name in ('flat','empty','gather','tid','packet','cohort','commit','retained','frontier'))
+        if mode in BATCHED_PREFETCH_MODES:
+            previous_image.extend('batched-old-' + name for name in ('prefetch', 'flat', 'empty', 'gather', 'tid', 'packet', 'cohort', 'commit', 'retained', 'frontier', 'same-tag-wrong'))
+        if mode in BATCHED_PREFETCH_OLD_MODES:
+            previous_image.append('old-route-new-batched')
         if mode in FLAT_MATRIX_MODES + EMPTY_RECEIPT_POLL_MODES + COUNTER_GATHER_MODES + TID_BOUNDARY_MODES + PACKET_IDENTITY_MODES + COHORT_SOURCE_MODES + COMMIT_MODES + RETAINED_MODES + ('--apply-token-frontier-benchmark','--restore-token-frontier-benchmark'):
             previous_image.append('old-route-new-prefetch')
         if mode in EMPTY_RECEIPT_POLL_MODES + COUNTER_GATHER_MODES + TID_BOUNDARY_MODES + PACKET_IDENTITY_MODES + COHORT_SOURCE_MODES + COMMIT_MODES + RETAINED_MODES + ('--apply-token-frontier-benchmark', '--restore-token-frontier-benchmark'):
@@ -1518,6 +1563,7 @@ if __name__ == '__main__':
         hash_backup_mode |= mode in EMPTY_RECEIPT_POLL_MODES
         hash_backup_mode |= mode in FLAT_MATRIX_MODES
         hash_backup_mode |= mode in PREFETCH_MODES
+        hash_backup_mode |= mode in BATCHED_PREFETCH_MODES
         backup_links = ['backup-link'] if hash_backup_mode else []
         for fault in [None] + common + candidate + candidate_links + parents + previous_image + backup_links + (['loaded'] if mode == '--bootstrap' else hot):
             check(mode, fault)
