@@ -112,15 +112,25 @@ static __attribute__((noinline)) void AdmitGlobalOutput(const uint32_t* d,uint32
 #endif
 static void Admit(const uint32_t* d,uint32_t* tracked,unsigned w){
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION
+#ifndef PIONEER_Q38_COHORT_LOCAL_SOURCES_IMAGE
  // Observe the ROOT's OWN prior frontier BEFORE Wait can observe a peer's
  // current sequence. Never use a caller-ready bit or skip the first audit.
  const bool firstSourceAudit=!Words(L::Nonces)[w];
+#endif
 #endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
  const bool pushedPrior=Words(L::Nonces)[w] && Words(L::PeerJobs+w*256)[2]==1;
  if(!pushedPrior){Wait(d,tracked,w,0,true);}
 #else
  Wait(d,tracked,w,0,true);
+#endif
+#ifdef PIONEER_Q38_COHORT_LOCAL_SOURCES_IMAGE
+ // On the first request ROOT scratch need not contain a zero nonce yet.
+ // Derive coldness from the actual coherent status captured by Wait,not
+ // an uninitialized/stale pre-Wait scratch word. Pushed warm admissions
+ // still use the unchanged private receipt path below; no counter/source
+ // state is rebased and no caller-ready bit is accepted.
+ const bool firstSourceAudit=!Words(L::Nonces)[w];
 #endif
 #if defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE)
  if(L::FirstMatrix(d) && Words(L::Nonces)[w]>0x7ffffffd-L::RunDelta(w))scalar_fault_park(); // reserve the entire block AND a real STOP

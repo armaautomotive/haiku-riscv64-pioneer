@@ -2,6 +2,7 @@
 // Returning on-card Conv->GDN coordinator for SAME retained QMW1 workers.
 // Separate offline image;original/init/clock/native/lifecycle ownership owed.
 #include "PioneerQ38RetainedConvClosureRole.h"
+#include "PioneerQ38CohortLocalSourcesRole.h"
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE
 #include "PioneerQ38GlobalChainComponentRole.h"
 #include "PioneerQ38GlobalRecurrentDispatch.h"
@@ -139,11 +140,16 @@ static unsigned Wait(uint32_t* t,unsigned w,unsigned target,unsigned operation,b
  }
  scalar_fault_park();
 }
+#ifndef PIONEER_Q38_COHORT_LOCAL_SOURCES_IMAGE
 static void Sources(uint32_t* t,unsigned w){
  for(unsigned i=0;i<16;i++)if(Register(t,w,0xffb20000+Source(i))!=Boot(w)[16+i])scalar_fault_park();
 }
+#endif
 static void BootSeal(uint32_t* t,unsigned w){
- uint32_t b[64];Read(t,w,M::Boot,b,64);for(unsigned i=0;i<64;i++)if(b[i]!=Boot(w)[i])scalar_fault_park();Sources(t,w);
+ uint32_t b[64];Read(t,w,M::Boot,b,64);for(unsigned i=0;i<64;i++)if(b[i]!=Boot(w)[i])scalar_fault_park();
+#ifndef PIONEER_Q38_COHORT_LOCAL_SOURCES_IMAGE
+ Sources(t,w);
+#endif
 }
 static void Closed(uint32_t* t,unsigned w){
  uint32_t j[64],s[16];Read(t,w,M::Job,j,64);
@@ -165,7 +171,16 @@ static void Admit(uint32_t* t,unsigned w){
  uint32_t b[64],j[64],p[64];Read(t,w,M::Boot,b,64);
  if(!M::BootShape(b) || b[3]!=w+1 || b[4]!=M::Peer(w+1) || !Dispatch::Binding(b,Conv(w+1)))scalar_fault_park();
  for(unsigned i=0;i<64;i++)Words(L::PeerBoots+w*256)[i]=b[i];
+#ifndef PIONEER_Q38_COHORT_LOCAL_SOURCES_IMAGE
  Sources(t,w);
+#endif
+ // The explicit local-source BUILD reaches this coordinator ONLY after
+ // the genuine preceding matrix closure below. Cold matrix admission still
+ // reads ALL16 physical sources remotely;the unchanged QGW3 worker checks
+ // them locally before/after its jobs and transfers,including Conv/GDN.
+ // An idle post-completion source change may now be detected by the next
+ // worker request,not this duplicate remote audit. No ready flag,source
+ // recapture,counter rebase,MMIO burst or completion shortcut is introduced.
  Read(t,w,M::Job,j,64);
  if(!M::JobShape(j,b,n-1,0) || j[1]!=n || j[2]!=1 || j[5]!=d[3] || j[6]!=d[4]
   || j[16]!=0x31483851 || j[17]!=8 || j[18]!=576 || j[19] || j[20] || j[21]!=5120

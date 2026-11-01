@@ -1,0 +1,110 @@
+Isolated recurrent coordinator: reuse real worker-local source guards
+===================================================================
+2026-11-01. Goal ACTIVE;20tok/s UNMET. BUILD and host instruction tests
+only. No new native DATA,installable driver,physical speedup or Work grant.
+
+Change and safety boundary
+--------------------------
+PIONEER_Q38_COHORT_LOCAL_SOURCES_IMAGE selects ONLY a returning recurrent
+BUILD. It omits the duplicate16 remote source-register reads in coordinator
+Admit and BootSeal. The SAME unchanged QGW3 workers still compare ALL16
+live local registers before/after requests,transfers and completion. ROOT's
+own per-packet live source checks and all boot/job/nonce/status/physical
+counter/command/queue/service-proof/closure checks remain. No MMIO burst,
+cached-ready bit,source recapture,counter rebase or completion setter exists.
+
+Fault latency is explicitly different: an idle peer source mutation after
+completed work may be detected by the next actual WORKER request instead
+of a duplicate ROOT remote scan. Reserved peer L1 descriptor/job writes
+can precede that worker rejection. The affected worker must reject before
+its next NoC/math/state writes;ROOT must observe the actual fault and emit
+no later packet after observing it. This is not unchanged audit timing.
+
+Independent builds and exact controls
+--------------------------------------
+Main13956/clean14066 inspect and45612/88064 frozen builds ACTUALLY exit0
+for first isolated ELF2d45eeba707156147f2d625525c114d54ae7cd65193db92a37e40754387652b0.
+ENTIRE83677 commit-boundary,48b2 retained-cohort and951 frontier controls
+reproduce first,including the full old recurrent object. Root CommitState,
+dense arithmetic and actual worker images do not change. New role38138/
+92141 ACTUALLY exits0 EACH:2 syntax positives/80 missing+zero+two+late+
+foreign/native/worker/dense/DATA/CPU/Work refusals. BUILD role checks are
+not runtime ownership or native lifecycle qualification.
+
+Original-byte tests on the FIRST2d45 revision
+--------------------------------------------
+Conv->GDN main1888/clean20845 ACTUALLY exit0. Each authenticates the full
+original27B GGUF before constructing actual ROOT+119 virgin RISC/Tensix
+histories,then executes embedding,four real matrix projections and ALL119
+actual Conv closures.24 COW children corrupt16 physical source registers
+or8 physical counters ONLY. Each affected worker faults before its first
+GDN NoC;ROOT observes the real error,issues no following packet,and its
+actual fault-report writer+2048 terminal steps remain inert. The unchanged
+parent reaches its actual first GDN packet. No supplied learned products,
+transplanted PC/register/private history or synthetic completion exists.
+This is not a whole layer,native END,full-model numerical or timing proof.
+
+SAME first-revision matrix->Conv source tests36037/49164 ACTUALLY exit0.
+They fork only at actual emitted StageConv entry AFTER the four real
+projections. Sixteen raw-CSR children and an unchanged parent are required.
+Each passes ALL16 source faults before the first actual worker Conv packet
+and reaches that packet in the unchanged parent. Their result cannot
+qualify the later cd54 revision below.
+
+Cold-audit finding and corrected revision
+-----------------------------------------
+The attempted first-revision cold tests30567/57047 missed their expected
+remote audit while the model progressed through three projections. They
+were deliberately stopped by SIGTERM to their exact identified local
+test binaries,then both handles ACTUALLY exit1. NOT a pass or timeout.
+No hardware process or other test was interrupted.
+
+The existing firstSourceAudit decision reads ROOT Nonces BEFORE Wait
+captures the coherent actual worker status. Poisoned first-use scratch in
+the original-byte fabric can therefore suppress the intended first remote
+source audit. The new experiment ALONE moves that decision AFTER actual
+Wait capture;the unselected controls stay byte-exact. Warm pushed receipts
+and physical counter/source histories are not rebased. The corrected test
+requires the real virgin worker and original embedding BEFORE any matrix
+job;it fails at the first actual job write if the audit observation is
+missed,so it cannot run on and produce a vacuous pass.
+
+Corrected main59956/clean20141 inspect and63516/61238 frozen builds ALL
+ACTUALLY exit0 and independently agree:
+ boot4       32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text130452  33ae483e1e37c53aa1f04d5fe4c8dc2f1a5d99ba055b0eb883d9773372918edc
+ terminal8   468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2
+ aux32684    57aff888b9fba9864b9e83ad4d8c13d5fe06d4839c02299c223eb3da7a95c0b5
+ ELF190632   cd54a316614ed8f653c930ad2fa43e2b526b237350432f53ac8d89072e10f64f
+All old controls reproduce FIRST. No mutable globals,unresolved symbols,
+unsupported instructions/CSR or absolute JALR is admitted;existing code
+section limits and individual4096-byte frame bound hold. These are not a
+combined model/kernel/IRQ stack proof or actual device timing.
+
+Corrected cold-source tests16070/51091 ACTUALLY exit0. Each passes ALL16
+physical-source faults BEFORE the first matrix doorbell;the real worker
+stays virgin,ROOT observes the bad remote value and emits no later packet,
+and actual fault-report+2048 terminal steps are inert. The unchanged parent
+reaches its first actual matrix packet. This proves the corrected audit
+is reached;it does not qualify a completed projection or full model.
+Old+new BUILD role regressions43402/59224 ACTUALLY exit0 EACH:old2/59 and
+new2/80 syntax positive/refusal counts. Independent old controls remain
+byte-exact in the final frozen builds.
+
+Original embedding+first-layer tests84489/72442 are LIVE. Fresh cd54
+matrix->Conv tests36583/15395 and Conv->GDN tests14196/13373 are also LIVE.
+Full strict posthoc CPU-prefix comparison and BOTH transition suites
+against this exact cd54 remain REQUIRED.
+No2d45 result may be silently relabelled as cd54 qualification.
+
+Physical work remains separate
+-------------------------------
+SAME41855 is the previously qualified78322 driver,NOT either new BUILD.
+It remains LIVE,full19399024640 learned-byte upload complete and START
+acknowledged,then actual terminal ready observed;HOLD/drain/restore is
+still running,not a clean END. No other GPU/admin FD,model,reload/reset/power/SD/OS/network
+intervention is permitted until actual END+Close/process exit. Strict
+comparison,fresh idle health and exactccded66d restore041/gen18 remain
+required after closure. Latest completed rate remains about0.10723tok/s;
+known full-model numerical differences,arbitrary fresh requests,resident
+Assistant Work and20tok/s all remain unmet.
