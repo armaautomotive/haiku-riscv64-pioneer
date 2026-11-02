@@ -1,0 +1,1 @@
+Assertion failed: (sizeof(P::PeerGdn)==35944 && P::CodeWords(0)==40594 && P::CodeWords(1)==25739 && allWords==3103535), function main, file pioneer_q38_pushed_programs_test.cpp, line 116.

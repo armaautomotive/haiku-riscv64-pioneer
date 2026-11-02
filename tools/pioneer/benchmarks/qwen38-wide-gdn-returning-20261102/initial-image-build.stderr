@@ -1,0 +1,25 @@
+In file included from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_wide_returning_gdn.cpp:7:
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_resident_gdn.cpp:15:28: error: comparison between 'enum PioneerQ38WideDeltaLocalLayout::<unnamed>' and 'enum PioneerQ38DeltaVectorLayout::<unnamed>' [-Werror=enum-compare]
+   15 | static_assert(W::Descriptor==L::Descriptor && W::Magic==L::Magic
+      |               ~~~~~~~~~~~~~^~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_resident_gdn.cpp:15:55: error: comparison between 'enum PioneerQ38WideDeltaLocalLayout::<unnamed>' and 'enum PioneerQ38DeltaVectorLayout::<unnamed>' [-Werror=enum-compare]
+   15 | static_assert(W::Descriptor==L::Descriptor && W::Magic==L::Magic
+      |                                               ~~~~~~~~^~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_resident_gdn.cpp:16:13: error: comparison between 'enum PioneerQ38WideDeltaLocalLayout::<unnamed>' and 'enum PioneerQ38DeltaVectorLayout::<unnamed>' [-Werror=enum-compare]
+   16 |  && W::Prior==L::Prior && W::Next==L::Next && W::Output==L::Output,
+      |     ~~~~~~~~^~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_resident_gdn.cpp:16:34: error: comparison between 'enum PioneerQ38WideDeltaLocalLayout::<unnamed>' and 'enum PioneerQ38DeltaVectorLayout::<unnamed>' [-Werror=enum-compare]
+   16 |  && W::Prior==L::Prior && W::Next==L::Next && W::Output==L::Output,
+      |                           ~~~~~~~^~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_resident_gdn.cpp:16:56: error: comparison between 'enum PioneerQ38WideDeltaLocalLayout::<unnamed>' and 'enum PioneerQ38DeltaVectorLayout::<unnamed>' [-Werror=enum-compare]
+   16 |  && W::Prior==L::Prior && W::Next==L::Next && W::Output==L::Output,
+      |                                               ~~~~~~~~~^~~~~~~~~~~
+cc1plus: all warnings being treated as errors
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_qwen38_wide_gdn_worker_image.py", line 39, in <module>
+    run(*command);(out/'compile-gdn-argv.txt').write_text('\n'.join(command)+'\n')
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_qwen38_wide_gdn_worker_image.py", line 32, in run
+    def run(*values):subprocess.run(list(map(str,values)),check=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-g++', '-DPIONEER_Q38_WIDE_GDN_RETURNING_IMAGE=1', '-std=c++11', '-Wall', '-Wextra', '-Werror', '-ffreestanding', '-fno-exceptions', '-fno-rtti', '-fno-stack-protector', '-fno-pic', '-fno-pie', '-ffp-contract=off', '-ffunction-sections', '-fdata-sections', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-msmall-data-limit=0', '-mno-relax', '-march=rv32imf', '-mabi=ilp32', '-fstack-usage', '-O2', '-ffixed-s11', '-DPIONEER_Q38_MIXED_CAPSULE_IMAGE=1', '-include', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38MixedCapsuleHook.h', '-DPIONEER_Q38_RESIDENT_OPERATOR_IMAGE=1', '-DPIONEER_Q38_FFN_PERSISTENT=1', '-DPIONEER_Q38_PROJECTION_PERSISTENT=1', '-DPIONEER_Q38_RESIDENT_GDN_OPERATOR_IMAGE=1', '-include', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38ResidentGdnOperatorImageRole.h', '-DPIONEER_Q38_RGDN_COMBINED_STAGE=1', '-Dscalar_fault_park=block_fault_park', '-c', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_wide_returning_gdn.cpp', '-o', '/private/tmp/pioneer-q38-wide-gdn-worker-main-20261102.kgauOx/image/wide_gdn_state.o']' returned non-zero exit status 1.

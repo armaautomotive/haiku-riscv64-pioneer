@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 // ACTUAL emitted matrix/Conv/GDN instructions on ONE shared hardware model.
 // SYNTHETIC byte endpoints only,not native/model-token/silicon throughput.
+#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
+#if PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST != 1 || defined(_KERNEL_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_WIDE_GDN_RETURNING_IMAGE) || defined(__FAST_MATH__)
+#error Separate shared-array returning-wide worker TEST only,not IMAGE/native/CPU oracle/Work
+#endif
+#endif
 #define PIONEER_Q38_RESIDENT_OPERATOR_SERVICE_MACHINE_ONLY
 #include "pioneer_q38_resident_operator_service_image_test.cpp"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnInputPlan.h"
@@ -17,6 +22,12 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
  unsigned gdnPackets=0,gdnPhase=0,gdnPolls=0,gdnImports=0,gdnOps=0,gdnLatency=0;
  unsigned gdnPendingWords=0,gdnPendingSource=0,gdnPendingRow=0,gdnX0=0,gdnX1=0;
  unsigned gdnNextWrites=0,gdnOutputWrites=0,gdnGatedWrites=0,gdnCsrReads=0;
+#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
+ unsigned gdnDeltaWrites=0,gdnDeltaReads=0,gdnSfpuStores=0;
+ static constexpr unsigned ExpectedGdnImports=13,ExpectedGdnCsrReads=8320;
+#else
+ static constexpr unsigned ExpectedGdnImports=9,ExpectedGdnCsrReads=8256;
+#endif
  unsigned gdnFailPacket=0,gdnSourcePacket=0,gdnCounterPacket=0,gdnDescriptorPacket=0;
  unsigned gdnDescriptorBase=TT_Q38_GDN_INPUT_DESCRIPTOR,gdnDescriptorWord=40,gdnFailGatedPhase=0;
  bool dropMatrixConfig1=false;unsigned droppedMatrixConfig1=0;
@@ -55,8 +66,15 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
     && !config[3] && !config[49] && config[64]==0x100010 && config[65]==16 && !config[72] && config[73]==0x13 && !gdnX0);
    unsigned sourceAt=(config[76]+1)*16,row=(config[84]&65535)/16-4,words=gdnX1+1;
    assert((config[84]&0xffff0000)==0x400000 && row<512 && !(words%16) && words<=8192-row*16);
+#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
+   if(gdnImports<8)assert(sourceAt==0x90000+gdnImports*4096 && row==gdnImports*64 && words==1024);
+   else if(gdnImports==8 || gdnImports==10)assert(sourceAt==0x8e400 && !row && words==64);
+   else if(gdnImports==9 || gdnImports==12)assert(sourceAt==0x90000 && !row && words==64);
+   else assert(gdnImports==11 && sourceAt==0x8e600 && !row && words==64 && gdnDeltaWrites==64);
+#else
    assert((!gdnImports && sourceAt==0x8e400 && !row && words==64)
     || (gdnImports && gdnImports<9 && sourceAt==0x90000+(gdnImports-1)*4096 && row==(gdnImports-1)*64 && words==1024));
+#endif
    gdnImports++;gdnPendingSource=sourceAt;gdnPendingRow=row;gdnPendingWords=words;drained=false;
    for(unsigned r=row;r<row+words/16;r++)defined[Adj(r)]=false; // real new UNPACR ownership,not a test reset
    return;
@@ -70,8 +88,18 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
   if(code==0x70 || code==0x72){
    unsigned reg=(op>>20)&15,mode=(op>>16)&15,at=op&1023;
    assert(mode==3 && reg<8 && !(at&1) && at<512 && !(op&0xfc00));
+#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
+   if(code==0x70 && reg)assert(gdnImports==12 && gdnSfpuStores==64 && (reg==6 || reg==7) && !(op&0x3fc));
+   if(code==0x72){
+    if(gdnSfpuStores<64)assert((gdnImports==9 || gdnImports==11) && reg==0 && at==(gdnSfpuStores/32)*2);
+    else if(gdnSfpuStores<8256)assert(gdnImports==13 && reg==0 && at==((gdnSfpuStores-64)/64)*4+(((gdnSfpuStores-64)%64)?2:0));
+    else assert(gdnImports==13 && gdnNextWrites==8192 && reg==6 && at==((gdnSfpuStores-8256)/32)*2 && gdnSfpuStores<8320);
+    gdnSfpuStores+=32;
+   }
+#else
    if(code==0x70 && reg)assert(gdnImports==1 && (reg==6 || reg==7) && !(op&0x3fc));
    if(code==0x72 && reg)assert(gdnNextWrites==8192 && (reg==4 || reg==5) && !(op&0x3fc));
+#endif
    for(unsigned lane=0;lane<32;lane++){
     unsigned row=(at&~3U)+lane/8,col=(lane&7)*2+((at&2)!=0);assert(row<512 && col<16 && defined[Adj(row)]);
     if(code==0x70)lr[reg][lane]=FloatDst(row,col);
@@ -82,14 +110,37 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
    if(code==0x71){unsigned r=(op>>20)&15,mode=(op>>16)&15;assert(r<8);
     if(!mode)lr[r][lane]=(op&65535)<<16;else if(mode==10)lr[r][lane]=(lr[r][lane]&0xffff0000)|(op&65535);
     else {assert(mode==2);lr[r][lane]=op&65535;}
-   }else if(code==0x8d){unsigned s=(op>>8)&15,d=(op>>4)&15;assert(s<8 && d<8 && !(op&15));lr[d][lane]^=lr[s][lane];
+   }
+#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
+   else if(code==0x7e){unsigned b=(op>>12)&15,c=(op>>8)&15,d=(op>>4)&15;
+    assert(b<8 && c<8 && d<8 && (op&15)==1 && !(op&0x00ff0000));lr[d][lane]=lr[b][lane]&lr[c][lane];
+   }else if(code==0x7c){unsigned c=(op>>8)&15,d=(op>>4)&15;
+    assert(c<8 && d<8 && !(op&0x00fff000) && !(op&15));lr[d][lane]=lr[c][lane];
+   }
+#endif
+   else if(code==0x8d){unsigned s=(op>>8)&15,d=(op>>4)&15;assert(s<8 && d<8 && !(op&15));lr[d][lane]^=lr[s][lane];
    }else {
+#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
+    assert(code==0x84 || code==0x85 || code==0x86);
+    unsigned a=(op>>16)&15,b=(op>>12)&15,c=(op>>8)&15,d=(op>>4)&15,mod=op&15;
+    assert(b<8 && d<8 && !(mod&~2U));
+    if(code==0x86)assert(a<8 && c==9 && mod==2);
+    else if(code==0x85)assert(a==10 && c<8);
+    else assert(a<8 && c<8);
+    const uint32_t av=a==10?0x3f800000U:lr[a][lane],cv=(c==9?0U:lr[c][lane])^((mod&2)?0x80000000U:0);
+    lr[d][lane]=PioneerBlackholeFmaBits(av,lr[b][lane],cv);
+#else
     assert(code==0x85 || code==0x86);unsigned a=code==0x86?(op>>16)&15:10,b=(op>>12)&15,c=code==0x86?9:(op>>8)&15,d=(op>>4)&15;
     assert(d<8 && b<8 && ((code==0x86 && a<8 && (op&15)==2) || (code==0x85 && c<8 && !(op&15))));
     lr[d][lane]=PioneerBlackholeFmaBits(a==10?0x3f800000:lr[a][lane],lr[b][lane],c==9?0x80000000:lr[c][lane]);
+#endif
    }
   }
-  if(code==0x85 || code==0x86)gdnLatency=1;
+  if(code==0x85 || code==0x86
+#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
+   || code==0x84
+#endif
+  )gdnLatency=1;
  }
  uint32_t ReadCycleCsr(unsigned csr)override{
   assert(gdnActive && (csr==0xb00 || csr==0xb80));unsigned at=clockReads++;
@@ -113,8 +164,16 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
    if(at==0xffe000fc)return gpr63;
    if(Range(at,0xffef0000,224*4))return config[(at-0xffef0000)/4];
    if(Range(at,0xffbd8000,32768)){
-    assert(drained && !gdnPendingWords && !gdnLatency && !config[3] && gdnImports==9);gdnCsrReads++;
-    unsigned word=(at-0xffbd8000)/4;return FloatDst(word/16,word%16);
+    assert(drained && !gdnPendingWords && !gdnLatency && !config[3]);
+    unsigned word=(at-0xffbd8000)/4;
+#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
+    if(gdnImports==9 || gdnImports==11){assert(word==(gdnDeltaReads%32)*2+(gdnImports==11?1:0) && gdnSfpuStores==(gdnImports==9?32U:64U));gdnDeltaReads++;}
+    else if(gdnNextWrites<8192)assert(gdnImports==13 && gdnSfpuStores==8256 && word==gdnNextWrites && gdnDeltaWrites==64);
+    else assert(gdnImports==13 && gdnSfpuStores==8320 && word==gdnOutputWrites);
+#else
+    assert(gdnImports==9);
+#endif
+    gdnCsrReads++;return FloatDst(word/16,word%16);
    }
    if(Range(at,0x74000,0x1000) || Range(at,0x80000,0x1100) || Range(at,0x83f00,256)
     || Range(at,0x8e000,0xb00) || Range(at,0x90000,32768) || Range(at,0xa0000,32768))return memory.at(at);
@@ -131,7 +190,7 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
    write=p>=9;unsigned piece=(p-7)%2;local=(write?0xa0000:0x90000)+piece*16384;
    remote=state[write?7:5]+piece*16384;route=state[write?13:12];bytes=16384;
   }else {
-   assert(peer && gdnPhase<5 && gdnImports==9 && gdnNextWrites==8192 && gdnOutputWrites==64 && drained);
+   assert(peer && gdnPhase<5 && gdnImports==ExpectedGdnImports && gdnNextWrites==8192 && gdnOutputWrites==64 && drained);
    unsigned phase=gdnPhase;write=phase==4;const unsigned l[]={TT_Q38_GDN_GATED_PEER_READY,0x80000+((gated[7]^1)&1)*256,0x80200,0x80400,0x8ea00};
    const unsigned r[]={gated[44],gated[45],gated[12],gated[4]+gated[42],gated[4]+gated[43]},xy[]={gated[15],gated[15],gated[13],gated[8],gated[8]},n[]={64,256,512,512,256};
    local=l[phase];remote=r[phase];route=xy[phase];bytes=n[phase];
@@ -175,7 +234,15 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
     const unsigned allowed[]={0,1,2,3,6,7,220,20,24,28,49,50,56,59,64,65,72,73,76,84,86,112,113,120,121,124};
     bool found=false;for(unsigned i:allowed)found|=index==i;assert(found);config[index]=value;configWrites++;return;
    }
+#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
+   if(Range(at,0x8e600,256)){
+    assert(drained && !pending && gdnDeltaReads==gdnDeltaWrites+1 && at==0x8e600+((gdnDeltaWrites%32)*2+(gdnDeltaWrites>=32))*4);
+    gdnDeltaWrites++;memory[at]=value;return;
+   }
+   if(Range(at,0xa0000,32768)){assert(drained && gdnImports==13 && gdnCsrReads==64+gdnNextWrites+1);gdnNextWrites++;memory[at]=value;return;}
+#else
    if(Range(at,0xa0000,32768)){assert(drained && gdnImports==9 && gdnCsrReads==gdnNextWrites+1);gdnNextWrites++;memory[at]=value;return;}
+#endif
    if(Range(at,0x8e800,256)){assert(drained && gdnNextWrites==8192);gdnOutputWrites++;memory[at]=value;return;}
    if(Range(at,0x8ea00,256)){assert(gdnPhase==4 && !pending);gdnGatedWrites++;memory[at]=value;return;}
    if(Range(at,0x74140,64) || Range(at,0x83f00,256)){
@@ -216,6 +283,10 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
   assert(logicalWorker<=96 && !pending && !gdnLatency && !gdnPendingWords && !gdnWaiting);ClearTensorState();
   gdnActive=activation=true;convActive=false;gdnPackets=gdnPhase=gdnPolls=gdnImports=gdnOps=clockReads=0;
   gdnNextWrites=gdnOutputWrites=gdnGatedWrites=gdnCsrReads=0;
+#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
+  gdnDeltaWrites=gdnDeltaReads=gdnSfpuStores=0;
+  for(unsigned i=0;i<64;i++)memory[0x8e600+i*4]=0x7fc00000;
+#endif
   auto plan=std::make_unique<PioneerQ38GdnInputPlan>();PioneerQ38GdnIdentity id={1,2,3,4};unsigned half=logicalWorker-1;
   assert(plan->Build(*canonical,layer,half,position,bank,id,source,epoch));
   for(unsigned i=0;i<64;i++)input[i]=plan->Descriptor()[i];state={};
@@ -255,8 +326,11 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
  virtual bool GdnFinished(unsigned sequence)const{return pc==TT_Q38_PEER_WAIT_LOAD && memory.at(0x74144)==sequence;}
  virtual bool GdnFaulted()const{return pc==TT_Q38_PEER_FAULT_PARK;}
  void VerifyGdn(unsigned sequence){
-  assert(GdnFinished(sequence) && !pending && gdnPhase==5 && gdnPolls && gdnImports==9 && gdnNextWrites==8192
-   && gdnOutputWrites==64 && gdnGatedWrites==64 && gdnCsrReads==8256 && drained && !gdnLatency && !gdnPendingWords && peer);
+  assert(GdnFinished(sequence) && !pending && gdnPhase==5 && gdnPolls && gdnImports==ExpectedGdnImports && gdnNextWrites==8192
+   && gdnOutputWrites==64 && gdnGatedWrites==64 && gdnCsrReads==ExpectedGdnCsrReads && drained && !gdnLatency && !gdnPendingWords && peer);
+#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
+  assert(gdnDeltaWrites==64 && gdnDeltaReads==64 && gdnSfpuStores==8320);
+#endif
   assert(memory.at(0x74700)==0x56383351 && memory.at(0x74000)==TT_Q38_RESIDENT_GDN_SERVICE_JOB);
   float qs=0,ks=0;for(unsigned i=0;i<128;i++){float q=Float(raw[i]),k=Float(raw[128+i]);qs+=q*q;ks+=k*k;}
   float qi=1.f/sqrtf(qs+1e-6f),ki=1.f/sqrtf(ks+1e-6f);
@@ -268,13 +342,27 @@ struct ResidentGdnOperatorPeer:ResidentOperatorPeer {
   const float expectedPositive[]={expf(Float(raw[322])*softplus),float(b>=0?1/(1+e):e/(1+e))},actualPositive[]={decay,beta};
   for(unsigned i=0;i<2;i++)if(expectedPositive[i]>=Float(0x00800000))assert(actualPositive[i]>0 && fabs(double(actualPositive[i])-expectedPositive[i])<=3e-6*expectedPositive[i]);else assert(actualPositive[i]==0);
   for(unsigned c=0;c<64;c++){
+#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
+   double predicted=0;for(unsigned k=0;k<128;k++)predicted+=double(Float(prior[k*64+c])*decay)*double(Float(memory.at(0x8e200+k*4)));
+   float delta=(Float(raw[256+c])-float(predicted))*beta;double out=0;
+#else
    float predicted=0;for(unsigned k=0;k<128;k++)predicted+=(Float(prior[k*64+c])*decay)*Float(memory.at(0x8e200+k*4));
    float delta=(Float(raw[256+c])-predicted)*beta,out=0;
+#endif
    for(unsigned k=0;k<128;k++){
     float expected=Float(prior[k*64+c])*decay+Float(memory.at(0x8e200+k*4))*delta;
     assert(next[k*64+c]==Bits(expected) && memory.at(0x90000+(k*64+c)*4)==prior[k*64+c]);
+#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
+    out+=double(expected)*double(Float(memory.at(0x8e000+k*4)));
+#else
     out+=expected*Float(memory.at(0x8e000+k*4));
-   }out*=1.f/sqrtf(128.f);assert(memory.at(0x8e800+c*4)==Bits(out));
+#endif
+   }
+#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
+   assert(memory.at(0x8e800+c*4)==Bits(float(out)*(1.f/sqrtf(128.f))));
+#else
+   out*=1.f/sqrtf(128.f);assert(memory.at(0x8e800+c*4)==Bits(out));
+#endif
   }
   float sum=0,all[128];for(unsigned i=0;i<128;i++){auto* one=i/64==(state[9]&1)?this:peer;all[i]=Float(one->memory.at(0x8e800+i%64*4));sum+=all[i]*all[i];}
   float inverse=1.f/sqrtf(sum/128+1e-6f);

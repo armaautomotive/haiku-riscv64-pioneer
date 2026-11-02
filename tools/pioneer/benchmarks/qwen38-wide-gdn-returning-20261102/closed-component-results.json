@@ -1,0 +1,106 @@
+{
+  "kind": "CLOSED_COMPONENT_AND_FIRST_LAYER_NATIVE_END_RESULTS_NOT_FULL_MODEL_OR_PHYSICAL_SUCCESS",
+  "goal": "ACTIVE;usable correct Work and20TPS unmet",
+  "worker_test": {
+    "main": {
+      "handle": 57551,
+      "exit": 0
+    },
+    "clean": {
+      "handle": 79976,
+      "exit": 0
+    }
+  },
+  "worker_frozen_build": {
+    "main": {
+      "handle": 87102,
+      "exit": 0
+    },
+    "clean": {
+      "handle": 25772,
+      "exit": 0
+    }
+  },
+  "private_inspect": {
+    "main": {
+      "handle": 28136,
+      "exit": 0
+    },
+    "clean": {
+      "handle": 65113,
+      "exit": 0
+    }
+  },
+  "public_frozen_build": {
+    "main": {
+      "handle": 70612,
+      "exit": 0
+    },
+    "clean": {
+      "handle": 77285,
+      "exit": 0
+    }
+  },
+  "program_data": {
+    "main": {
+      "handle": 56799,
+      "exit": 0
+    },
+    "clean": {
+      "handle": 48314,
+      "exit": 0
+    }
+  },
+  "native_cli": {
+    "main": {
+      "handle": 96927,
+      "exit": 0
+    },
+    "clean": {
+      "handle": 81484,
+      "exit": 0
+    }
+  },
+  "standalone_regression": {
+    "main": {
+      "handle": 81130,
+      "exit": 0
+    },
+    "clean": {
+      "handle": 57226,
+      "exit": 0
+    }
+  },
+  "exchange_endpoints": {
+    "main": {
+      "handle": 64956,
+      "exit": 0
+    },
+    "clean": {
+      "handle": 41422,
+      "exit": 0
+    }
+  },
+  "native_firstlayer_full_end": {
+    "main": {
+      "handle": 48028,
+      "exit": 0,
+      "strict_first_layer_compare_exit": 0
+    },
+    "clean": {
+      "handle": 57341,
+      "exit": 0,
+      "strict_first_layer_compare_exit": 0
+    }
+  },
+  "final_selector_audit": {
+    "program_data_main": {"handle": 66806, "exit": 0},
+    "program_data_clean": {"handle": 85412, "exit": 0},
+    "native_cli_main": {"handle": 62455, "exit": 0},
+    "native_cli_clean": {"handle": 24435, "exit": 0},
+    "native_roles_main": {"handle": 70900, "exit": 0},
+    "native_roles_clean": {"handle": 81370, "exit": 0}
+  },
+  "no_new_physical_model_run": true,
+  "hardware_installed_baseline": "041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403"
+}

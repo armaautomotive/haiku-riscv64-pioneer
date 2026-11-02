@@ -1,0 +1,5 @@
+PASS actual emitted wide-delta trial0/13imports/8320CSR/ALL8192state+64outputs FP64-order exact/RV32steps198416 SFPUops27823 stack136;NOT physical or TPS
+PASS actual emitted wide-delta trial1/13imports/8320CSR/ALL8192state+64outputs FP64-order exact/RV32steps250640 SFPUops28463 stack136;NOT physical or TPS
+PASS actual emitted wide-delta trial2/13imports/8320CSR/ALL8192state+64outputs FP64-order exact/RV32steps249862 SFPUops28206 stack136;NOT physical or TPS
+PASS actual emitted wide-delta trial3/13imports/8320CSR/ALL8192state+64outputs FP64-order exact/RV32steps250623 SFPUops28461 stack136;NOT physical or TPS
+PASS actual emitted wide-delta/64 nonresetting transitions/all descriptor bits+35 bounded-input refusals/8 missing-imports numerically detected or undefined-row fault/2 missing-drain publication refusals;NEW local layout ONLY,NOT native END,full-model,physical,Work or TPS

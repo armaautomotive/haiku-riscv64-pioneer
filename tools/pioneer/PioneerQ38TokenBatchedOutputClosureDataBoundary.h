@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38TokenWideGdnDataBoundary.h"
 // Rechecked through geometry and every program-role include. DATA identity
 // is not proof of a completed native lifetime, numerical quality or Work.
 #ifndef PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_DATA_SELECTION_H
@@ -26,7 +27,9 @@ enum {PioneerQ38TokenBatchedOutputClosureDataSelection=0};
  || defined(PIONEER_Q38_TOKEN_RETAINED_COHORT_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS_H) \
  || defined(PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS_H) \
  || defined(PIONEER_Q38_TOKEN_FAULT_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H) \
- || (defined(PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H) && !defined(PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_PROGRAMS_H))
+ || (defined(PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H) && !defined(PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_PROGRAMS_H) \
+  && !(defined(PIONEER_Q38_TOKEN_WIDE_GDN_PROGRAMS) && PIONEER_Q38_TOKEN_WIDE_GDN_PROGRAMS == 1 \
+   && defined(PIONEER_Q38_TOKEN_WIDE_GDN_PROGRAMS_H)))
 #error Batched output closure cannot coexist with old arrays or a selected old namespace
 #endif
 #if defined(__FAST_MATH__) || defined(PIONEER_Q38_TOKEN_NATIVE_TEST_CONTEXT) \

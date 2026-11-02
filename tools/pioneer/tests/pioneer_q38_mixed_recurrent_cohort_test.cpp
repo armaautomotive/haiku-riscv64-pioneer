@@ -39,6 +39,9 @@ struct NewCohortPeer:MixedPeer {
   }else{
    gdnPackets=gdnPhase=gdnPolls=gdnImports=gdnOps=clockReads=0;
    gdnNextWrites=gdnOutputWrites=gdnGatedWrites=gdnCsrReads=0;
+#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST
+   gdnDeltaWrites=gdnDeltaReads=gdnSfpuStores=0;
+#endif
    for(unsigned i=0;i<64;i++){
     input[i]=memory.at(TT_Q38_GDN_INPUT_DESCRIPTOR+i*4);state[i]=memory.at(TT_Q38_RGDN_DESCRIPTOR+i*4);
     gated[i]=memory.at(TT_Q38_GDN_GATED_DESCRIPTOR+i*4);

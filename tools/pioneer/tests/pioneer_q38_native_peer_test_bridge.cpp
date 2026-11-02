@@ -6,6 +6,16 @@
 #endif
 #define PIONEER_Q38_NATIVE_PEER_TEST_BRIDGE 1
 #define PIONEER_Q38_TEST_SHARED_WORKER_STORAGE 1
+#ifdef PIONEER_Q38_NATIVE_PEER_WIDE_GDN_TEST
+#if PIONEER_Q38_NATIVE_PEER_WIDE_GDN_TEST != 1 \
+ || !defined(PIONEER_Q38_NATIVE_PEER_PRECISE_BETA_TEST) || PIONEER_Q38_NATIVE_PEER_PRECISE_BETA_TEST != 1 \
+ || !defined(PIONEER_Q38_NATIVE_PEER_TWIN_BATCH_PREFETCH_TEST) || PIONEER_Q38_NATIVE_PEER_TWIN_BATCH_PREFETCH_TEST != 1 \
+ || !defined(PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST) || PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST != 1
+#error Own wide GDN HOST peer requires shared-array math and complete twin-batch bridge
+#endif
+#elif defined(PIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST)
+#error Wide GDN shared-array math cannot silently retag an old native peer bridge
+#endif
 #include "PioneerQ38SharedTestStorage.h"
 // Include standard/system declarations OUTSIDE the isolated model namespace.
 // The same generic ISA classes also exist in the native test's other TU;

@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 root_profile=None
+wide_gdn='--wide-gdn' in sys.argv
+if wide_gdn:
+    assert sys.argv.count('--wide-gdn')==1
+    sys.argv.remove('--wide-gdn')
 output_closure='--batched-output-closure' in sys.argv
 if output_closure:
     assert sys.argv.count('--batched-output-closure')==1
@@ -209,6 +213,9 @@ if output_closure:
         and not any((batched_prefetch,compile_link_only,root_profile,backend_finish,control_adapter,control_operations)) \
         and len(sys.argv)==7 and sys.argv[2]=='--execution-end', \
         'Corrected-output native TEST requires its distinct complete original QFL1/twin first-layer/cancel/STOP/HOLD/drain/END history'
+if wide_gdn:
+    assert output_closure and not compile_link_only and len(sys.argv)==7 and sys.argv[2]=='--execution-end', \
+        'Wide GDN native TEST requires own frozen full worker and complete corrected-output original-model first-layer/cancel/STOP/HOLD/drain/END history'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -278,7 +285,7 @@ here = pathlib.Path(__file__).resolve().parent
 if peer_engines:
     peer_arg = 3 if full_end_contract or peer_bootstrap else 4
     for directory, script in ((pathlib.Path(sys.argv[peer_arg]), here/'run_pioneer_q38_mixed_worker_tests.py'),
-                              (pathlib.Path(sys.argv[peer_arg+1]), here.parent/'build_qwen38_token_twin_batch_prefetch_worker.py' if twin_batch_prefetch else here.parent/'build_qwen38_token_batched_prefetch_worker.py' if batched_prefetch else here.parent/'build_qwen38_token_prefetch_worker.py' if prefetch_worker else here.parent/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here.parent/'build_qwen38_pushed_worker_image.py' if pushed_context else here/'run_pioneer_q38_precise_worker_tests.py' if precise_context else here.parent/'build_qwen38_global_worker_image.py')):
+                              (pathlib.Path(sys.argv[peer_arg+1]), here.parent/'build_qwen38_wide_gdn_worker_image.py' if wide_gdn else here.parent/'build_qwen38_token_twin_batch_prefetch_worker.py' if twin_batch_prefetch else here.parent/'build_qwen38_token_batched_prefetch_worker.py' if batched_prefetch else here.parent/'build_qwen38_token_prefetch_worker.py' if prefetch_worker else here.parent/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here.parent/'build_qwen38_pushed_worker_image.py' if pushed_context else here/'run_pioneer_q38_precise_worker_tests.py' if precise_context else here.parent/'build_qwen38_global_worker_image.py')):
         assert directory.is_absolute()
         tree = ast.parse(script.read_text())
         pins = next(ast.literal_eval(n.value) for n in tree.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'PINS' for t in n.targets))
@@ -353,6 +360,10 @@ if output_closure:
     defines.update(PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_PROGRAMS='1',
                    PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_NATIVE_CONTEXT='1',
                    PIONEER_Q38_TOKEN_NATIVE_BATCHED_OUTPUT_CLOSURE_FIXTURE='1')
+if wide_gdn:
+    assert hashlib.sha256((here.parent/'PioneerQ38TokenWideGdnPrograms.h').read_bytes()).hexdigest()=='d285c9adb421fc0010d8ad48371eb58ca1480fc0d787f7c147afd4a93457a787'
+    defines.update(PIONEER_Q38_TOKEN_WIDE_GDN_PROGRAMS='1',PIONEER_Q38_TOKEN_WIDE_GDN_NATIVE_CONTEXT='1',
+                   PIONEER_Q38_TOKEN_NATIVE_WIDE_GDN_FIXTURE='1')
 if posted_cancel:
     defines.update(PIONEER_Q38_TOKEN_POSTED_CANCEL='1',PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',
                    PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')
@@ -559,16 +570,19 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         if pushed_context:
             peer_flags += ['-DPIONEER_Q38_TOKEN_PUSHED_PROGRAMS=1']  # distinct HOST DATA,NEVER BUILD/native/kernel flags
         if precise_beta:
-            # The optimized ROOT has EXACTLY the same nine peer arrays.
-            # This bridge observes peers1..119 ONLY;ROOT code comes from
-            # the new native package and is independently authenticated.
+            # Observe peers1..119 ONLY through the selected const-ROM TU.
+            # In particular the wide family has its own complete new peer
+            # image;never compare it against the old narrow-beta arrays.
+            # ROOT code comes from the independently authenticated package.
             peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_PRECISE_BETA_TEST=1']
+            if wide_gdn:
+                peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_WIDE_GDN_TEST=1','-DPIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST=1']
             if twin_batch_prefetch:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_TWIN_BATCH_PREFETCH_TEST=1']
             elif batched_prefetch:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_BATCHED_PREFETCH_TEST=1']
             elif prefetch_worker:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_PREFETCH_TEST=1']
             rom_object=base/'precise-beta-expected-rom-data.o'
             subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
-                            '-fsanitize=address,undefined','-c',str(here/('pioneer_q38_batched_output_closure_program_data_bridge.cpp' if output_closure else 'pioneer_q38_twin_batch_prefetch_program_data_bridge.cpp' if twin_batch_prefetch else 'pioneer_q38_batched_prefetch_program_data_bridge.cpp' if batched_prefetch else 'pioneer_q38_prefetch_program_data_bridge.cpp' if prefetch_worker else 'pioneer_q38_precise_beta_program_data_bridge.cpp')),
+                            '-fsanitize=address,undefined','-c',str(here/('pioneer_q38_wide_gdn_program_data_bridge.cpp' if wide_gdn else 'pioneer_q38_batched_output_closure_program_data_bridge.cpp' if output_closure else 'pioneer_q38_twin_batch_prefetch_program_data_bridge.cpp' if twin_batch_prefetch else 'pioneer_q38_batched_prefetch_program_data_bridge.cpp' if batched_prefetch else 'pioneer_q38_prefetch_program_data_bridge.cpp' if prefetch_worker else 'pioneer_q38_precise_beta_program_data_bridge.cpp')),
                             '-o',str(rom_object)],check=True)
             extra += [str(rom_object)] # DATA TU has NO inherited tensor-Work/native/CPU-oracle roles
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',

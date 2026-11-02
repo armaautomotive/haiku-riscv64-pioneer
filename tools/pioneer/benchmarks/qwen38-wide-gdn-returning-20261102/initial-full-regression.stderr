@@ -1,0 +1,19 @@
+Assertion failed: (file.good()), function Read, file pioneer_tensix_image_test.cpp, line 22.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_precise_beta_worker_tests.py", line 25, in <module>
+    subprocess.run([str(binary),str(old),str(image)],check=True,env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-q38-beta-worker-qggq8zlu/test', '/private/tmp/pioneer-wide-gdn-worker-execution-a22e3s1k/AUTHENTICATED_ROM_0', '/private/tmp/pioneer-wide-gdn-worker-execution-a22e3s1k/AUTHENTICATED_ROM_1']' died with <Signals.SIGABRT: 6>.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_twin_batch_prefetch_worker_tests.py", line 35, in <module>
+    subprocess.run([sys.executable,str(here/'run_pioneer_q38_precise_beta_worker_tests.py'),str(old),str(baseline)],check=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/Library/Developer/CommandLineTools/usr/bin/python3', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_precise_beta_worker_tests.py', '/private/tmp/pioneer-wide-gdn-worker-execution-a22e3s1k/AUTHENTICATED_ROM_0', '/private/tmp/pioneer-wide-gdn-worker-execution-a22e3s1k/AUTHENTICATED_ROM_1']' returned non-zero exit status 1.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_wide_gdn_worker_tests.py", line 42, in <module>
+    subprocess.run([sys.executable,str(here/'run_pioneer_q38_twin_batch_prefetch_worker_tests.py'),*map(str,images[:3])],check=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/Library/Developer/CommandLineTools/usr/bin/python3', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_twin_batch_prefetch_worker_tests.py', '/private/tmp/pioneer-wide-gdn-worker-execution-a22e3s1k/AUTHENTICATED_ROM_0', '/private/tmp/pioneer-wide-gdn-worker-execution-a22e3s1k/AUTHENTICATED_ROM_1', '/private/tmp/pioneer-wide-gdn-worker-execution-a22e3s1k/AUTHENTICATED_ROM_2']' returned non-zero exit status 1.

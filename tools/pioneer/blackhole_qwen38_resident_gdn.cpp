@@ -6,7 +6,19 @@
 #include "PioneerQ38MixedCapsuleHook.h"
 #define PIONEER_Q38_DELTA_VECTOR_POST_SCALE
 #define scalar_main q38_local_recurrent_step
+#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_IMAGE
+#include "PioneerQ38WideGdnReturningImageRole.h"
+#include "blackhole_qwen38_wide_delta.cpp"
+#include "PioneerQ38DeltaVector.h"
+#include "PioneerQ38DeltaVectorLayout.h"
+namespace L=PioneerQ38DeltaVectorLayout;
+static_assert(unsigned(W::Descriptor)==unsigned(L::Descriptor) && unsigned(W::Magic)==unsigned(L::Magic)
+ && unsigned(W::Prior)==unsigned(L::Prior) && unsigned(W::Next)==unsigned(L::Next) && unsigned(W::Output)==unsigned(L::Output),
+ "new wide core preserves returning mailbox DATA,not old code/owner identity");
+static bool InputNormalOrZero(uint32_t bits){return Finite(bits) && (!(bits&0x7fffffffU) || (bits&0x7f800000U));}
+#else
 #include "blackhole_qwen38_delta_vector.cpp"
+#endif
 #undef scalar_main
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38ResidentGdnShape.h"
 namespace RGdn {

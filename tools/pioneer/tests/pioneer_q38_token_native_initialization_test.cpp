@@ -2,10 +2,16 @@
 // Actual native factory/lock/phase callbacks/initializers and actual frozen
 // zero RV32 instructions. OS/MMIO/GDDR endpoints are simulated. No synthetic
 // completion fabric,no old embedding/prefix producer and no completed token.
+#if defined(PIONEER_Q38_TOKEN_WIDE_GDN_PROGRAMS) && !defined(PIONEER_Q38_TOKEN_NATIVE_WIDE_GDN_FIXTURE)
+#error Wide GDN package requires its own complete native TEST binding
+#endif
 #if defined(PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_PROGRAMS) && !defined(PIONEER_Q38_TOKEN_NATIVE_BATCHED_OUTPUT_CLOSURE_FIXTURE)
 #error Corrected output package requires its own complete native TEST binding
 #endif
 #include "pioneer_q38_token_native_fixture_common.h"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_WIDE_GDN_FIXTURE
+#include "pioneer_q38_token_native_wide_gdn_role.h"
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BATCHED_OUTPUT_CLOSURE_FIXTURE
 #include "pioneer_q38_token_native_batched_output_closure_role.h"
 static_assert(PioneerQ38TokenBatchedOutputClosureDataSelection==2

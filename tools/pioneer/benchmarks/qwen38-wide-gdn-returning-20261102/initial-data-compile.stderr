@@ -1,0 +1,13 @@
+tools/pioneer/tests/pioneer_q38_pushed_programs_test.cpp:121:22: error: called object type 'PioneerQ38TokenPushedL1::(unnamed enum at /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38TokenPushedFootprint.h:11:1)' is not a function or function pointer
+  121 |  assert(S::SavedWords()==13478458 && S::SavedBytes()==53913832);
+      |         ~~~~~~~~~~~~~^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h:75:25: note: expanded from macro 'assert'
+   75 |     (__builtin_expect(!(e), 0) ? __assert_rtn(__func__, __ASSERT_FILE_NAME, __LINE__, #e) : (void)0)
+      |                         ^
+tools/pioneer/tests/pioneer_q38_pushed_programs_test.cpp:121:51: error: called object type 'PioneerQ38TokenPushedL1::(unnamed enum at /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38TokenPushedFootprint.h:11:1)' is not a function or function pointer
+  121 |  assert(S::SavedWords()==13478458 && S::SavedBytes()==53913832);
+      |                                      ~~~~~~~~~~~~~^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h:75:25: note: expanded from macro 'assert'
+   75 |     (__builtin_expect(!(e), 0) ? __assert_rtn(__func__, __ASSERT_FILE_NAME, __LINE__, #e) : (void)0)
+      |                         ^
+2 errors generated.

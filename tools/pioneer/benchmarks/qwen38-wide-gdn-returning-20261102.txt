@@ -1,0 +1,196 @@
+Returning wide GDN connected to the complete native diagnostic driver
+===================================================================
+2026-11-02. Goal ACTIVE. Correct usable Qwen27B Work and 20 tokens/sec
+remain UNMET. This is a real shader/package/native BUILD connection, not
+another detached arithmetic prototype. No new physical model result is
+claimed. Last completed physical diagnostic remains about 0.16286 tok/s
+and still fails strict numerical comparison.
+
+Implemented connection
+----------------------
+The independently qualified standalone wide reduction from checkpoint
+7e65297c72d122a12df7e03b73763a2f484837e9 now replaces the narrow recurrence
+inside a separately selected complete returning GDN service. The existing
+74700 descriptor and 56383351 mailbox DATA are preserved. They are not
+permission to reuse old code identity or a running owner. The standalone
+74000/57383351 layout and its default emitted bytes remain unchanged.
+
+The new image uses the same eight LRegs and physical 512x16 FP32 Dst as
+matrix execution. It performs 13 actual imports and 8320 CSR reads, using
+64 new Delta words at 8e600, then the full state update and output. The
+compensated reduction is emitted on the accelerator; no runtime host CPU
+model reference is added. This numerical repair is NOT a measured speedup.
+
+The full twin-batch sender and all other capsules remain unchanged except
+three audited call relocations to the EXACT same complete memcpy/memset
+bodies. The linker emits no old narrow recurrence. Whole old56b worker,
+all its ancestors and the entire old GDN object reproduce before building
+the new image. No counter/control writes, writable globals, undefined
+symbols or forbidden scalar instructions are accepted by the build audit.
+
+The existing QTP3 saved geometry ALREADY covers every new Delta word and
+the complete 35944-byte GDN ROM for all119 peers. It leaves 920 ROM-padding
+bytes. SavedWords=13478458 / SavedBytes=53913832 are unchanged; no mapping
+range/count is widened. Geometry alone is not a new execution capability.
+
+New --wide-gdn generator mode authenticates all14 complete code sections
+and both whole ELFs through same-open snapshots, then emits the distinct
+PioneerQ38TokenWideGdnPrograms namespace. Its exact private/public native
+selectors require complete corrected-output/QFL1/twin parents. Old arrays,
+late/zero/two/removed selections, opposite native modes, shader/HOST/USER/
+CPU-reference/Work aliases are refused. The old corrected-output header
+still regenerates byte-for-byte to its original 1e844aca SHA.
+
+Whole frozen identities
+-----------------------
+ROOT ELF unchanged:
+ c17658fd62d837c13068759e65b164a1eeffe4abc44c536187882215e917f349
+Returning worker ELF:
+ 70fdf96d8edbc38d30391a5f180d5839e97581c9fb8e03f724c74be014e3e028
+GDN35944-byte section:
+ c2824d4822c69867879b09fac67f9f9849cf5f7202c1beca668584976eaf4e9c
+New complete program header:
+ d285c9adb421fc0010d8ad48371eb58ca1480fc0d787f7c147afd4a93457a787
+Private NODRV object:
+ de2f80f0419a7cbbaf4082db763de7737959e13aab6dee58f75b63a90bcce3ae
+Public diagnostic object:
+ 49529e8aa1756609fa4fb57118cb077f65cd27854a98ebd4404618aa182ffdf6
+Bounded diagnostic module:
+ b8c0d49855490e756dfe1c49bed7933a20f2a3afea19436b37e3b4717417b8ed
+Module filename: tenstorrent_pci_probe-WIDE-GDN34-DIAGNOSTIC-ONLY.
+
+Both independent main/clean inspect builds actually finish0; whole private
+objects, public objects and modules compare byte-exact before pins freeze.
+Both final frozen worker and public SDK builders actually finish0, and
+their whole images/private objects/public objects/modules compare exact.
+Every new embedded array is checked against its own SHA; only PeerFront
+and PeerGdn differ from the previous package. All ROOT bytes, the other
+12 arrays, full2MiB RoPE and private inert ABI bodies remain exact.
+No old namespace, CPU model reference, llama/ggml, HOST instruction engine
+or Q38WorkControl is linked into either native subject. Shared tag75 is
+NOT code identity or permission to deploy. The actual public entry graph
+is PARTIAL: known module chain5392B/unresolved25, not whole-kernel/IRQ or
+combined-stack certification.
+
+Closed execution and DATA tests
+-------------------------------
+Actual main57551 and clean79976 complete0 after the ENTIRE unchanged twin
+worker suite and its beta ancestor. New six virgin worker boots execute
+genuine fullK5120 twin matrix transfers, missing-ACK waits, payload ACK and
+commit, then96 recurrent half-jobs with state carried through16 positions
+at head pairs0/31/47, followed by real STOP loops. The SAME config/thread/
+LReg/physical swizzled Dst arrays are shared across matrix and recurrence;
+there is no detached tensor simulation or transition-time tensor reset.
+Twelve injected transport/counter/source faults reach the actual inert
+fault loops and remain idle for2048 more instructions. Their12 expected
+ACTUAL_BETA_WORKER_FAULT stderr lines are preserved, not filtered away.
+Observed combined worker stack4804/8192B in this HOST test, not silicon.
+
+Final main66806 and clean85412 complete0: ALL120 code maps/3101988 words
+match the authenticated artifacts, with3010 gap/runtime/invalid/immutable-
+destination refusals. New DATA tests reject32 corrupt/truncated artifacts,
+four wrong families, and320 missing/zero/two/late/foreign roles, with three
+positive syntax cases; all unchanged corrected-output DATA ancestors run
+first. Separate geometry tests check7616 Delta words and1069334 ROM words.
+
+Actual returning IMAGE gate test26474 completes0: three positives,310
+role refusals and22 CLI refusals before output creation. Final native CLI
+main62455/clean24435 complete0:26 missing/duplicate/incompatible-lifetime
+refusals before source/compiler/output IO, plus the unchanged full older
+CLI controls. The new immutable ROM bridge checks all119 peers/3061394
+code words and723 unchanged-output refusals;28 native/CPU/Work/shader/
+arithmetic-TEST aliases are rejected. It exports only const-ROM reads.
+Final main70900/clean81370 role bundles actually finish0; EACH runs all
+unchanged corrected-output/private/public parents first, then new private
+three positives/764 refusals and public three positives/674 refusals.
+
+The standalone default ELF remains abd969919d1952e79ed127b37e35e318c78a2cbc8c473a3b808617f807219c83.
+Its main81130/clean57226 actual instruction tests both finish0: four basic
+trials,64 nonresetting transitions, all descriptor-bit/35 bounded-input
+refusals, eight missing-import and two missing-drain failures, unchanged.
+
+Honest failed attempts retained
+--------------------------------
+Initial shader compile rejects unlike enum types under -Werror; only the
+explicit unsigned comparison is corrected. A manual test compile used an
+incomplete inherited flag list; the final compile derives the exact old
+flags. One negative-test setup lacked its simulated delay and triggered
+the unchanged overlap assertion; adding delay=3 fixes the setup, not the
+assertion. Both initial full bundles reject a missing authenticated old
+fixture dependency; the runner now snapshots that whole fixed ancestor
+and its sections too. Initial new DATA test declarations incorrectly used
+SavedWords as a function and miscounted the ROM delta; exact existing enum
+and independently counted full-image sizes are used. The final counts
+remain hard-coded and every word is compared, not inferred from a label.
+
+Initial native compiles reject the new selected namespace at old parent
+boundaries. Each recognizes ONLY the exact new primary plus its new guard;
+the new boundary independently rejects old arrays and missing/late native
+parents. A pure-DATA orphan-parent flag is caught by a negative test and
+explicitly refused, including defined-zero values. No numerical expected
+value, CPU pin, tolerance, old image pin or runtime success is relaxed.
+
+Native original-model first-layer/full-END execution CLOSED
+----------------------------------------------------------
+SAME main48028 and clean57341 ACTUALLY terminate0, independently polled
+after their full original-model histories. Both use the new distinct
+--wide-gdn native TEST, original851-tensor same-open authentication,
+1010 actual frozen zero jobs,119 virgin ISA engines and actual ROOT/native
+callback code. The new private package, expected-ROM TU and shared-array
+arithmetic have their own binding; no old narrow peer or shortened fixture
+is substituted. Both complete genuine embedding+layer0 Matrix/Conv/GDN/
+FFN, all786432 GDN state reads/writes, a consumed posted cancellation,
+ROOT+119 actual STOP loops and2048 extra inert peer instructions each,
+120 HOLDs, zero-record drain and full restoration. Native clock,29 OS
+views, actual ordered PCI journal closure,three host releases,device
+unreserve,whole-context destruction and scope unlock all complete in
+those SAME histories. End-of-lifetime negative metadata/alias checks
+remain, with no retry or unsafe IO. Endpoints are simulated, NOT silicon.
+
+ONLY after actual parent exit0 are the two41028-byte prefixes copied into
+new task-local observation directories. They compare byte-identical SHA
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7,
+also the unchanged earlier first-layer prefix. Independent main+clean
+unchanged compare_pioneer_q38_observed_trace.py ACTUALLY exit0 with all
+three original CPU trace pins and --first-layer-only. All5120 embedding
+and5120 layer0 hidden words match bit-for-bit, maxAbs0/relativeL2zero.
+No --diagnostic-only, tolerance or reference change is used. Raw learned
+prefixes remain task-local and are NOT committed as model data.
+
+This does NOT exercise the known layer29 divergence or prove full64-layer,
+multi-token retained state, EOS, fresh requests, physical numerics, useful
+Work or speed. HOST ROOT/worker instruction counts are not device timing.
+
+Guarded exchange: endpoint tests ONLY, no installation
+-----------------------------------------------------
+New pioneer_q38_wide_gdn_exchange.sh SHA:
+ 8a55b8653d31974bcae9052f1c945ac7c7c1cc057b96c14c5976d8896944a693
+It permits ONLY stable041 <-> full b8c0 diagnostic through a NEW root700
+stage /boot/home/pioneer-p100a-wide-gdn-20261102-a. It retains whole-file,
+ownership/link/mode, device symlink, idle-parent, exact metadata/generation,
+quiesce, atomic-outside-watched-directory replacement and independent wait
+checks. No automatic rollback/reset/retry follows uncertainty. Old7c85,
+retired96a0/5920/010c/34322 and private objects are NOT accepted as new code.
+Main64956/clean41422 endpoint suites actually complete0 after all original
+and retired controls: two valid and78 refused new histories each. Only
+paths and SHA endpoints are rebound into private synthetic filesystems.
+
+The ONLY Pioneer operation in this checkpoint is a fresh read-only metadata
+check, actually0: installed041/gen4/cold0/quiesced0/owner0/open1/guard1,
+64 CPUs/full137034936320B RAM and no compute parent; admin/guard/old stage
+hashes remain exact. No new stage/install/GPU job, power/reboot, SD/mains/
+hardware, network, Assistant or boot/kernel change has occurred.
+
+Main: /private/tmp/pioneer-q38-wide-gdn-worker-main-20261102.kgauOx
+Clean: /private/tmp/pioneer-q38-wide-gdn-worker-clean-20261102.TQTgCH
+The clean tree is a4e293bdb8885fec65547e3baff8b3ad21cbb025a export plus ONLY
+the39 owned sources. Unrelated NATIVE_BUILD_STATUS, FlashNext and dirty
+llama.cpp work are untouched. Closed raw build/test/initial-refusal logs
+are in the sibling archive; closed native logs and exact argv are archived
+only after actual exit. No prefix/model binary is published.
+
+Next: separately admit a controlled physical whole-model/multitoken
+diagnostic with this exact new code. Full outputs and state, fresh requests,
+normal/EOS, sustained numerically accepted inference, useful Assistant
+Work and performance tuning toward20tok/s remain required. This checkpoint
+does not certify whole-card capacity/integrity/authenticity or usable speed.

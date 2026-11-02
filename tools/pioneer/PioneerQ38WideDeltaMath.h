@@ -1,4 +1,7 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_WIDE_GDN_RETURNING_IMAGE
+#include "PioneerQ38WideGdnReturningImageRole.h"
+#endif
 #if (defined(PIONEER_Q38_WIDE_DELTA_LOCAL_IMAGE) + defined(PIONEER_Q38_WIDE_DELTA_INSTRUCTION_TEST)) != 1 || defined(_KERNEL_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(__FAST_MATH__)
 #error Separate offline wide-delta instruction image or TEST only; no native/CPU oracle/Work
 #endif

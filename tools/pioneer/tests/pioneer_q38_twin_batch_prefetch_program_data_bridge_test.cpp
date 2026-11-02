@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // Immutable expected-ROM DATA only. No ISA engine,device or model products.
-#ifdef PIONEER_Q38_PROGRAM_DATA_BRIDGE_TEST_OUTPUT_CLOSURE
+#ifdef PIONEER_Q38_PROGRAM_DATA_BRIDGE_TEST_WIDE_GDN
+#define PIONEER_Q38_TOKEN_WIDE_GDN_PROGRAMS 1
+#include "../PioneerQ38TokenWideGdnPrograms.h"
+#elif defined(PIONEER_Q38_PROGRAM_DATA_BRIDGE_TEST_OUTPUT_CLOSURE)
 #define PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_PROGRAMS 1
 #include "../PioneerQ38TokenBatchedOutputClosurePrograms.h"
 #else
@@ -12,7 +15,10 @@
 #include <cstdio>
 #include <initializer_list>
 int main(){
-#ifdef PIONEER_Q38_PROGRAM_DATA_BRIDGE_TEST_OUTPUT_CLOSURE
+#ifdef PIONEER_Q38_PROGRAM_DATA_BRIDGE_TEST_WIDE_GDN
+ namespace P=PioneerQ38TokenWideGdnPrograms;
+ static_assert(P::WideGdn==1 && sizeof(P::PeerGdn)==35944,"actual new returning-GDN ROM DATA");
+#elif defined(PIONEER_Q38_PROGRAM_DATA_BRIDGE_TEST_OUTPUT_CLOSURE)
  namespace P=PioneerQ38TokenBatchedOutputClosurePrograms;
  static_assert(P::BatchedOutputClosure==1 && P::GlobalOutputReadsPerGroup==10,"corrected package ROM DATA");
 #else

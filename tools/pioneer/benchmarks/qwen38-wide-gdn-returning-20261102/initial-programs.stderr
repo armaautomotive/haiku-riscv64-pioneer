@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_wide_gdn_program_tests.py", line 73, in <module>
+    syntax({**base,key:value},False)
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_wide_gdn_program_tests.py", line 61, in syntax
+    assert (result.returncode==0)==okay,(values,body,result.stderr)
+AssertionError: ({'PIONEER_Q38_TOKEN_WIDE_GDN_PROGRAMS': '1', 'PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_BENCHMARK_NATIVE': '0'}, None, '')
