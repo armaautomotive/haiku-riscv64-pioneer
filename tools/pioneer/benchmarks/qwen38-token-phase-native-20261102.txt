@@ -99,20 +99,42 @@ refusals,including98 comparisons with ACTUAL shared C++ ReplyShape;all old
 F8/frontier/exact-rational rate tests run FIRST. No tolerance,expected value,
 CPU pin,parser rule or normal Work mode is changed.
 
-Original-model first-layer histories still LIVE,not passes
+Original-model first-layer/cancel/full-END histories CLOSED
 ----------------------------------------------------------
-At15:11UTC SAME main76272/clean81228 are ACTUALLY live after original851
-same-open SHA authentication,frozen zero initialization,119 virgin engines,
-actual ROOT and first3 fullK5120 matrix workers. The full original layer0,
-consumed cancellation,119 STOP,120 HOLD,real drain,new held observation and
-full restoration/END must finish in these SAME histories. No result is
-inferred from a prefix file,log progress,lock or observation timeout.
+SAME main76272/clean81228 BOTH ACTUALLY terminate0,independently polled
+at15:21:04UTC. Both authenticate original851 same-open SHA,execute1010
+actual frozen zero jobs,119 virgin engines and actual ROOT. The SAME full
+original layer0 Matrix/Conv/GDN/FFN histories finish with1939739392 worker
+instructions and90933282 ROOT instructions,all786432 GDN state words
+read/written,consumed posted cancellation,119 actual STOP loops,2048 extra
+inert instructions each,120 HOLDs and real zero-record drain. Native clock,
+29 OS views,ordered original PCI journal,three host releases,device
+unreserve,whole-context destruction and lock release ALL close in those
+SAME histories. OS/MMIO/clock endpoints are simulated,not silicon.
 New explicit --token-phase-profile TEST binds ROOT91f389/worker70fdf and
 its own immutable const-ROM bridge. Only its HOST clock endpoint is
 fabricated;the actual ROOT executes its emitted read-only CSR sampler.
-Cancellation before a token leaves the actual metric ACTIVE/incomplete,
-not a fabricated closed or sticky-error profile. No measured phase time
-or positive full34 generation follows from this partial native history.
+The actual ROOT executes9 sampler CSR reads on its real call path. AFTER
+the actual drain,ONE real native wrapper/member read rechecks all120 HOLDs
+and original frontier,reads all60 words twice,and returns byte-identical
+actual ROOT DATA with4 pristine padding words. Cancellation before a token
+leaves metric ACTIVE/incomplete,error0,transitions2,committed0,end0. Native
+valid stays0 without quarantine or bypassing subsequent normal full-END.
+This is not a fabricated closed or sticky-error profile.
+
+ONLY after actual parent exit0 are the two41028-byte observed prefixes
+copied to new task-local directories. Whole prefixes compare byte-identical
+SHA4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7,
+also unchanged from the prior wide-GDN first-layer result. Independent
+main+clean UNCHANGED compare_pioneer_q38_observed_trace.py both ACTUALLY0
+with ALL3 original CPU trace pins and --first-layer-only. All5120 embedding
+and5120 layer0 hidden words are BIT-EXACT,maxAbs0/relativeL20;no diagnostic
+exit,tolerance,reference or numerical expected-value change. All native
+and comparison stderr files are0B. Learned prefix files stay task-local,
+not committed as model data. Closed whole raw histories are archived.
+This does NOT prove full64-layer/state/EOS/fresh-request/physical numerics
+or positive34-position timing. HOST instruction counts/fabricated clocks
+are not device time,model speed or Work qualification.
 
 Guarded exchange and Pioneer preservation
 ------------------------------------------
@@ -134,6 +156,8 @@ tag12/generation6/cold0/quiesced0/owner0/open1/guard1,exact admin/guard/
 stablebackup/old wide stage identities,no compute parent,64 CPUs and
 137034936320B RAM;free133786701824B. No new image or helper is staged,
 installed or executed. No restart,power,SD,mains,hardware,network,Assistant,
-kernel or boot change. Existing UART is not reopened/reconfigured. Native
-original-model execution,posthoc unchanged first-layer numeric comparison,
-complete exchange endpoints and fresh guarded physical timing remain owed.
+kernel or boot change. Existing UART is not reopened/reconfigured. The
+native first-layer/cancel/full-END and unchanged first-layer numeric
+comparison are now closed above. Fresh admission,new stage full copy-back,
+exact helper exchange and controlled complete physical phase timing remain
+owed. Usable correct27B Work and20tok/s remain UNMET.

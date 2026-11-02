@@ -6,7 +6,8 @@
 96851 ACTUAL_EXIT_0 clean native CLI,bridge and exchange endpoint suite
 84558 ACTUAL_EXIT_0 main strict parser and C++ packet cross-checks
 64100 ACTUAL_EXIT_0 main USER role boundary tests
-76272 LIVE_VERIFIED_2026_11_02_15_11_UTC_NOT_NATIVE_PASS
-81228 LIVE_VERIFIED_2026_11_02_15_11_UTC_NOT_NATIVE_PASS
+76272 ACTUAL_EXIT_0 observed2026_11_02_15_21_04_UTC original first-layer,cancel,HOLD,phase read and full-END
+81228 ACTUAL_EXIT_0 observed2026_11_02_15_21_04_UTC independent clean original first-layer,cancel,HOLD,phase read and full-END
+Paired unchanged compare_pioneer_q38_observed_trace.py --first-layer-only ACTUAL_EXIT_0 2026_11_02_15_21_31_UTC
 Fresh stable read-only SSH ACTUAL_EXIT_0 2026_11_02_15_03_UTC
 No new image/helper staged,installed or run. Physical model rate unchanged.
