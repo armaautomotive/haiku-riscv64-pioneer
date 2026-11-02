@@ -1,0 +1,104 @@
+Constant-Q4 full-token diagnostic:ONE protected physical parent LIVE
+==================================================================
+2026-11-02 18:05:37UTC. SAME36999 is dispatched and ACTUALLY running.
+Only the three expected diagnostic banners have returned at this first
+observation. Same-open GGUF authentication,full upload,START,generation,
+clean END+Close and measured throughput are NOT yet acknowledged. No
+speedup is claimed. Goal ACTIVE;correct usable27B Work and20tok/s UNMET.
+Last completed physical model diagnostic remains about0.16282tok/s with
+the unchanged strict numerical failure. This is not Assistant Work.
+
+PROTECT ENTIRE36999 authentication/Open/upload/RUN/HOLD/drain/END+Close
+parent lifetime. NO other Pioneer SSH,status,admin,GPU,model,stage,reload,
+reset,power,OS,network,SD or hardware operation while it lives. Observe
+ONLY SAME36999 and local raw files. An observation timeout/yield is NOT
+terminal or permission to restart,recover or restore. SSH255 requires
+resolving the actual remote parent before driver/power action. No UART
+reopen/reconfiguration. No second inference or health query during RUN.
+
+Qualified exact subject BEFORE hardware
+----------------------------------------
+Source+full native/USER original-model evidence checkpoint
+dd636ab537c6b7f025adc970c58193ca4b59331b is pushed and independently
+ls-remote verified BEFORE staging. Both actual original-model first-layer/
+cancel/119STOP/120HOLD/drain/full-END instruction histories exit0. Both
+unchanged independent first-layer CPU comparisons exit0:5120embedding+
+5120hidden words bit-exact. Full34/64-layer/physical numerical acceptance
+and model speed are not inferred. See qwen38-token-constant-q4-native-
+20261102.txt and its complete raw evidence. Actual SDK main/clean objects,
+modules and USER clients are byte-identical;every predecessor reproduces
+first. Both exact updater fixture suites close0:2positive/102refused.
+Partial kernel/USER stack audits remain PARTIAL,not whole-stack proof.
+
+Exact module db032591d905a30debf1e9a36f5990301e3db9ba40bfa8cf945677e3f54e8106
+Exact client 3edc924a9e76fdcd42815fa49b6d2756d80c6a18e3a3eb8bc9d4b765345ce1de
+Exact helper 7fae5efe1add752818c04459369e6c456364941ff8240afc9ae7a09b55f9ddbb
+The inherited tag75 and new host banner are NOT code identity/provenance.
+Old phase0f20/client e80/helper3a2 are NOT interchangeable with this tuple.
+
+Closed fresh admission,staging,copy-back and guarded exchange
+------------------------------------------------------------
+Read-only admission and new-stage creation ACTUALLY exit0:installed stable
+041/tag12/gen8/cold0/owner0/open1/guard1,exact stable backup/admin/guard,
+correct device symlink,no project compute parent,64CPUs/full137034936320B
+RAM. Original model is root-owned/one-link regular18973870528B;this stat
+does not authenticate contents. The running client's SAME-open SHA must.
+
+New root700 stage only:
+ /boot/home/pioneer-p100a-token-constant-q4-20261102-a
+Limited1024Kbit/s SCP5365 ACTUALLY0. Separate whole-identity verification
+ACTUALLY0,sets ONLY these exact staged files755;stable041 still installed.
+Independent full copy-back47392 ACTUALLY0;whole local cmp matches module,
+client and helper against all three original frozen files. No staged
+driver/client is executed during this copy/verification phase.
+
+Fresh exact preapply wrapper and SAME7fa --apply ONCE:45126 ACTUALLY0.
+Stable041/gen8 is quiesced/closed,atomically replaced from outside watched
+driver directory,and db03/tag75/gen9/cold0/idle is verified. No GPU job,
+reset,forced unload,retry,automatic rollback or reboot occurs here.
+Both original700 stable backup and separate stage700 backup are preserved.
+Old stages and their exact helpers stay untouched.
+
+Independent new prelaunch SSH44223 ACTUALLY0:whole installed/staged/helper/
+client/admin/guard/stable-backup identities,exact permissions/device link,
+absent incoming+lock,tag75/gen9/cold0/quiesced0/owner0/open1/guard1,no compute
+parent,64CPUs/fullRAM/free131469381632B. ALL completed staging/copy-back/
+apply/prelaunch stderr files are0B. No power,SD,mains,hardware,boot/kernel,
+network or Assistant change. UART is not reopened/reconfigured.
+
+ONE explicit bounded diagnostic
+--------------------------------
+Exactly one exec of the verified client with
+ --benchmark-constant-q4-34-positions
+starts as protected parent36999 at18:05UTC. Its changing raw streams stay
+task-local,not archived/accepted as completed hardware evidence:
+ /private/tmp/pioneer-q38-constant-q4-physical-20261102-a/physical.log
+ /private/tmp/pioneer-q38-constant-q4-physical-20261102-a/physical.stderr
+The test uses original27B Q4_K_M weights and does NOT run CPU-reference
+inference during the measured generation path. Full34/quality/speed remain
+unproven until actual terminal and independent unchanged strict parsing.
+
+AFTER actual terminal ONLY
+---------------------------
+Read WHOLE closed stdout/stderr through
+ tools/pioneer/tests/compare_pioneer_q38_token_constant_q4_log.py
+and ALL3 original CPU pins at
+ generated.pioneer/qualification-inputs/cpu-original-trace-20261028
+using independent main and clean source. It strips ONLY one exact host
+label in a private snapshot;unchanged phase/frontier/numerical validators
+remain authoritative. Whole96word packet,all10 bucket/count/cycle sums,
+full34 grammar/feedback/count/rate and unchanged first3 comparisons are
+mandatory. Do not filter failures,change tolerance/reference/expected words,
+use diagnostic-only acceptance or label a timing pass as Work acceptance.
+Raw logs are never rewritten. Cycle fractions include all34/bootstrap/STOP/
+observer costs;they are not pure tensor utilization or a known frequency.
+
+Only actual clean END+Close permits fresh independent exact db03/gen9/idle
+identity checks and SAME7fa --restore ONCE to stable041,then independent
+exact041/gen10/cold0/idle verification. Unsafe/quarantined outcomes forbid
+extra GPU IO,hot restore,reset or unreserve;use only authorized controlled
+recovery if required. No SD/mains/hardware change is authorized.
+
+Closed admission/staging/exchange scripts and logs are archived in the
+sibling directory. LIVE physical.log/physical.stderr are NOT archived as
+completed evidence. Do not poll the historical old phase38423;it closed.
