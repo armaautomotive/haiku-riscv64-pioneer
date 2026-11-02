@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_qwen38_manual_ttsync_worker.py", line 84, in <module>
+    audit(control, out, tool)
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_q4_constant_relocations.py", line 74, in audit
+    name=targets(addresses,entry)
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_q4_constant_relocations.py", line 50, in targets
+    assert records[0] == records[1], ('entire referenced object changed',records[0][:3],records[1][:3])
+AssertionError: ('entire referenced object changed', ('_ZL6Configjj', 52, 'FUNC'), ('_ZL6Configjj', 52, 'FUNC'))

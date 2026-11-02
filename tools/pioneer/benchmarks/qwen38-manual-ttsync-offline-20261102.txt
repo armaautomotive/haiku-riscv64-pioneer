@@ -1,0 +1,159 @@
+Manual-TTSync full returning worker: OFFBOARD optimization candidate
+==================================================================
+2026-11-02. This is a NEW completion implementation, not a token-rate
+result, native-owner qualification, quality acceptance or Work promotion.
+No Pioneer operation, driver deployment, reset, power, boot, Assistant,
+network, SD or hardware change is performed in this investigation.
+20tok/s and usable numerically accepted Qwen27B Work remain UNMET.
+
+Why this candidate
+------------------
+The closed physical profile in qwen38-token-matrix-phase-physical-20261102.txt
+measured0.158413730..0.158416372tok/s,NOT a speedup. In119 latest K17408 Q4
+jobs, decode/unpack/pack plus inclusive waits accounts for about75..76%.
+This motivates reducing synchronization overhead while preserving the
+original quantized data and arithmetic. It does NOT establish how much of
+the bucket this candidate can remove or forecast model throughput.
+Do not retry unchanged scalar local-Q4 tag28 (8.509% slower paired FFN)
+or quarantined raw-Dst cache22. This candidate does not requantize weights.
+
+Exact implementation and limitations
+------------------------------------
+The separately selected full returning shader replaces the math Drain()
+GPR63 ACK/poll routine with the documented ordered Manual TTSync primitive:
+ discarded STORE to0xffe80004;blocking LOAD;dependent ANDI;conservative fence.
+The returned load bits are UNDEFINED and are never interpreted as an ACK.
+The whole real leaf is28 bytes,seven RV32 words:
+ ffe807b7 00478793 0007a023 0007a703 00077713 0ff0000f 00008067
+The original88-byte Drain slot is retained with60 unreachable ZERO bytes,
+not60 executed NOPs. Every following function/data ABI stays within its
+original mapping bounds. No writable globals,undefineds,new CSR writes,
+fast-math or larger native allocation are introduced.
+
+IMPORTANT: a missing hardware completion can block this LOAD indefinitely.
+There is NO claimed local polling timeout. PCBuf OverrideEn+OverrideBusy
+can bypass the completion wait. The shader DOES NOT establish a native
+override-clear invariant, exclusive owner, external watchdog, source/
+generation scope, STOP/HOLD proof or uncertain-resource retention. Those
+must be proven in an independently guarded native integration BEFORE any
+hardware use. The default/legacy selection remains OFF. New shader roles
+refuse kernel/native/USER client/Work/oracle and other experimental roles.
+
+Primary contract actually inspected:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/ManualTTSync.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/PCBufs.md
+
+Independent builds CLOSED
+-------------------------
+Base/private scratch:/private/tmp/pioneer-q38-manual-ttsync-20261102.FPQL8G
+Clean source was made from git archive0be8dbc867 plus ONLY the new candidate
+and test files,not the dirty llama.cpp,NATIVE_BUILD_STATUS or FlashNext WIP.
+Both R6 inspect builds ACTUALLY exit0 (main73040/clean16983),then frozen
+non-inspect builds ACTUALLY exit0 (main40323/clean69886);all stderr0B.
+Both final wholeELFs match,144488B/SHA:
+ 4526cb710c62e87ad513fc4aefdb11e7404fc84c5c6d6ea39caf137bfc0a3713
+R6 main/clean math objects match SHA:
+ e157460436fa57347031ac4fea972d1bc8c931f969d3870e7b7d7d2595ace19e
+The builder FIRST reproduces original complete e9ef control and all pinned
+ancestors. Whole boot/globalworker/precise/dense/FFN/service/GDN capsules
+are byte-identical. Fetch changes are limited to TWO exact LUI/ADDI pointer
+pairs referring to an entire byte-identical28B immutable CSWTCH object.
+There is NO general relocation waiver or change to the original auditor.
+Math text/affine ARE deliberately new implementation bytes,not inherited
+old arithmetic qualification. Original extent caps and3 read-only GDN
+cycle-CSR sites remain. Individual generated math frames are<=4096B.
+All final payload sizes/hashes are frozen in the new builder's PINS.
+
+Component tests CLOSED;scope deliberately limited
+------------------------------------------------
+Main83808/clean25897 ACTUALLY exit0;whole stdout matches/stderr0B.
+Exact actual seven-word leaf+padding,20 synthetic delayed completions,
+missing completion held pending,expected override-bypass counterexample,
+2 positive production roles/79 production role refusals pass.
+These seven-word tests are NOT full-worker arithmetic/native/silicon proof.
+
+Actual full-worker qualification
+--------------------------------
+The new runner authenticates whole old/new/legacy ROMs BEFORE copying them
+to read-only snapshots,derives symbols from actual ELF,and executes the
+actual compiled RV32/Tensix programs under ASan/UBSan/FP contraction OFF.
+Raw tensor,NoC and completion-latency endpoints are synthetic,not hardware.
+The new completion endpoint retires the SAME independently modeled raw
+UNPACK,queued matrix arithmetic and deferred SFPU stores. It does not
+inject fake ACK instructions or replace numerical outputs. A blocked load
+does not advance actual guest PC/registers or publish completion. NIU reads
+progress independently under the original disjoint-buffer conditions.
+The stream comparison removes ONLY adjacent original STALLWAIT/STOREREG
+ACK pairs and requires every actual arithmetic submission to remain exact.
+All existing original test expectations/reference/source words stay intact.
+
+Initial pilot48355 ACTUALLY1: the NEW test observer counted recursive
+semantic matrix retirement as extra physical issue between the ACK pair.
+Correcting ONLY that new observer to count submissions once yields pilot
+21655 ACTUALLY0:3 formats/6 retained changed-input jobs,stderr0B.
+This is a test-observer correction,not a production arithmetic change or
+relaxation of an original validator. Initial failure streams are retained.
+
+Full main92904/clean21027 BOTH ACTUALLY exit0,observed23:33:48UTC.
+Whole stdout and stderr streams match independently. Actual coverage:
+ 27 shapes:Q8_0/Q4_K/Q6_K;K5120/6144/17408;groups1/3/16
+ 54 retained changed-input jobs,actual queued descriptors,real ACK+STOP
+ 12 independent delayed NoC/completion schedules,undefined bits0/1/ffffffff/deadbeef
+ 12 NoC-loss cases park inertly without a fabricated result or cleanup
+ 9 actual outstanding raw/matrix/deferred-store completion losses:
+   ordered load remains atPC7200c for4096 steps;guest registers,memory,
+   arithmetic,pending state,request/response counts and published status
+   stay unchanged;NO ACK,output payload,next operation or local timeout
+ 9 expected unsafe-override counterexamples expose early completion
+ maximum actual combined returning-worker stack3540/8192 bytes
+The12 stderr lines are EXPECTED actual worker fault-PC trails from the
+deliberately lost NoC-read cases,not hidden failures. The original packet,
+source,integer/FP32/FP64 arithmetic,deferred STORE,replay and STOP tests
+stay in force. NO all-worker original-model/native/hardware/TPS acceptance
+follows from these synthetic endpoints. The override counterexample is
+NOT an independently owned production/native override-clear rejection.
+Whole worker stdout21540B/107lines SHA:
+ 8c2a544b6e3ae5a220a22004e9cbe03909714e766d05d7bed4c1713428883e66
+Whole worker stderr3264B/12lines SHA:
+ f63a4d979d363a2f20f5780a53e6aee72ccb3e959f62c12bedc22092d969f044
+Both stdout+stderr match main versus clean EXACTLY,not just final banners.
+Build/component/pilot/failure/full streams and generated compile/link
+arguments are archived in the sibling qwen38-manual-ttsync-offline-20261102
+directory. No driver/shader/model binary or learned tensors are committed.
+
+Reproduction (use a fresh absolute output directory)
+----------------------------------------------------
+python3 tools/pioneer/build_qwen38_manual_ttsync_worker.py /Volumes/HaikuBuildLocal/generated.riscv64 NEW_OUTPUT
+python3 tools/pioneer/tests/pioneer_q38_manual_ttsync_component_test.py NEW_OUTPUT/unchanged-constant-q4 NEW_OUTPUT
+python3 tools/pioneer/tests/run_pioneer_q38_manual_ttsync_worker_tests.py NEW_OUTPUT/unchanged-constant-q4 NEW_OUTPUT
+The explicit --pilot option is PARTIAL only,not the closed full command.
+
+Retained build failures,not silently discarded
+-----------------------------------------------
+Initial main25519 ACTUALLY1: shorter routine moved cold constants and
+violated whole-FFN identity. Clean67387 setup ACTUALLY0,but the first clean
+build launched before its source copy completed and ACTUALLY2 (no script).
+R2(main25294/clean34372) andR3(3266/35965) ACTUALLY1: FFN identity still fails.
+R4(39116/91318) ACTUALLY1: fixed projection table restores FFN/GDN identity,
+but original narrow Config relocation auditor refuses a moved fault call.
+R5(85131/63361) ACTUALLY1: fixed Drain slot preserves the following entry,
+but whole-fetch identity fails because two immutable lookup pointers move.
+R6 treats math text/affine as a genuinely new candidate and audits ONLY the
+two exact whole-identical lookup relocations;all old auditors are unchanged.
+Do not describe any failed revision as independently qualified.
+
+Next gates and unchanged actual hardware result
+------------------------------------------------
+Finish actual-worker/delayed completion qualification,then establish the
+real native override-clear/owner/watchdog/quarantine/STOP/HOLD/restoration
+contracts for this NEW image. A synthetic missing-completion test cannot
+grant native launch. Then benchmark the original model against its fixed
+control,including correctness,clean END and exact stable restoration.
+No emulator step count or smaller leaf is a measured physical speedup.
+The last independently verified Pioneer state is stable041/gen12/idle,
+64CPUs/full137034936320B RAM at2026-11-02 22:39:19UTC;not a fresh health
+measurement in this offboard turn. The latest physical27B diagnostic still
+fails the original strict numeric check (one FP32 LSB at position0;first3
+greedy IDs match). Later positions lack external numerical acceptance.
+Native block-float conversion remains a SEPARATE potential path requiring
+explicit format/quality qualification,not a silent relaxation of this one.

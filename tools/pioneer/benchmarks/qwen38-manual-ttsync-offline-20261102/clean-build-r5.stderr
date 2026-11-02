@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-manual-ttsync-20261102.FPQL8G/clean-source/tools/pioneer/build_qwen38_manual_ttsync_worker.py", line 88, in <module>
+    assert (out / (section + '.bin')).read_bytes() == (control / (section + '.bin')).read_bytes(), section
+AssertionError: fetch

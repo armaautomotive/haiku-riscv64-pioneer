@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38ManualTTSyncRole.h"
 // Rechecked on every inclusion. Emitted-worker BUILD only, never a native
 // selector or permission to install/execute a changed image.
 #ifndef PIONEER_Q38_Q4_CONSTANT_ISSUE_BINDING_H

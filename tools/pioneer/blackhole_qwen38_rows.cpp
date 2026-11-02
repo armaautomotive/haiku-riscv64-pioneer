@@ -10,6 +10,9 @@
 #include "PioneerQ38TokenBatchedPrefetchRole.h"
 #include "PioneerQ38TokenMatrixPhaseRole.h"
 #define PIONEER_ATTENTION_FREESTANDING
+#ifdef PIONEER_Q38_MANUAL_TTSYNC_IMAGE
+#include "PioneerQ38ManualTTSync.h"
+#endif
 #ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_IMAGE
 #include "PioneerQ38TokenMatrixPhase.h"
 #endif
@@ -252,12 +255,21 @@ void PublishMatrixPhase(const PioneerQ38TokenMatrixPhase& profile){
  Fence();
 }
 #endif
+#ifdef PIONEER_Q38_MANUAL_TTSYNC_IMAGE
+// Preserve the original real call boundary and avoid a hot leaf frame.
+// Changed math callers still owe their own actual-instruction tests.
+__attribute__((noinline,optimize("omit-frame-pointer")))
+#endif
 static void Drain()
 {
+#ifdef PIONEER_Q38_MANUAL_TTSYNC_IMAGE
+	PioneerQ38ManualTTSync();
+#else
 	volatile uint32_t* ack=Words(0xffe000fc); *ack=0; (void)*ack; Fence();
 	Emit(0xa2101816); Emit(0x4500017e);
 	for (unsigned attempt=0;attempt<1000000;attempt++) if (*ack) { Fence(); return; }
 	block_fault_park();
+#endif
 }
 #if defined(PIONEER_Q38_VECTOR_AFFINE) || defined(PIONEER_Q38_AFFINE_REUSE)
 __attribute__((noinline))

@@ -1,0 +1,11 @@
+MANUAL_TTSYNC_CASE type8 K5120 groups1
+PASS QGW3 worker69/type8/ACTUAL fullK5120+1280tensor instructions/42 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK5120+1280tensor instructions/42 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+MANUAL_TTSYNC_CASE type12 K5120 groups1
+PASS QGW3 worker69/type12/ACTUAL fullK5120+640tensor instructions/12 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type12/ACTUAL fullK5120+640tensor instructions/12 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+MANUAL_TTSYNC_CASE type14 K5120 groups1
+PASS QGW3 worker69/type14/ACTUAL fullK5120+1280tensor instructions/12 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type14/ACTUAL fullK5120+1280tensor instructions/12 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_MANUAL_TTSYNC_PARTIAL actualWorkerShapes3 changedInputJobs6;NOT_COMPLETE_OR_NATIVE_OR_TPS
+CLOSED_MANUAL_TTSYNC_PARTIAL_PILOT_SYNTHETIC_ENDPOINTS_NOT_NATIVE_OR_PHYSICAL_TIMING_OR_MODEL_OR_WORK

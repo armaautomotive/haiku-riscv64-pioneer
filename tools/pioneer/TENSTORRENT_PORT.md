@@ -2,6 +2,22 @@
 
 ## Status
 
+### November2:physical preparation bottleneck and offboard manual completion
+
+The latest original27B diagnostic measured0.158413730..0.158416372tok/s,
+NOT a speedup or numerically accepted Work. Sampled K17408 Q4 jobs spend
+about75..76% in decode/unpack/pack including waits. A separately selected
+Manual-TTSync returning-worker prototype now passes independent main/clean
+builds and actual-instruction tests:27 shapes,54 retained changed-input
+jobs,12 delayed schedules,12 lost reads and9 pending-completion failures.
+Arithmetic/output/source/ACK/STOP checks are retained. Synthetic endpoints
+are NOT hardware timing or a native-owner qualification. Missing completion
+can block the new load indefinitely;real override-clear,external watchdog
+and quarantine/restoration contracts must be qualified before deployment.
+No Pioneer/Assistant/boot/CPU/RAM change was made in this offboard phase.
+20tok/s remains UNMET. See [candidate evidence](benchmarks/qwen38-manual-ttsync-offline-20261102.txt)
+and [closed physical profile](benchmarks/qwen38-token-matrix-phase-physical-20261102.txt).
+
 ### October24:card-resident full FFN and residual instruction path
 
 The new offline QFG3 root preserves the post-attention residual before the
