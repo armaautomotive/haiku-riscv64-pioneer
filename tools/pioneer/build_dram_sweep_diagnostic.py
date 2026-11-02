@@ -19,17 +19,20 @@ finally:sys.argv=saved
 args,features,misc,project,reference,sdk,binpath,cxx=(settings[k] for k in
     ('args','features','misc','project','reference','sdk','binpath','cxx'))
 flags=features+['-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1','-DPIONEER_DRAM_SWEEP_DIAGNOSTIC=1',
-               '-DPIONEER_DRIVER_BUILD_TAG=0x2026110200030076ULL']
+               '-DPIONEER_DRAM_SWEEP_QUEUED=1','-DPIONEER_DRIVER_BUILD_TAG=0x2026110200040076ULL']
 subjects=[misc/name for name in ('tenstorrent_pci_probe.cpp','PioneerDramReadSweepNative.inc',
- 'PioneerDramReadSweepNativeRole.h','PioneerDramReadSweepOwner.h','BlackholeDramReadSweepImage.h',
+ 'PioneerDramReadSweepNativeRole.h','PioneerDramReadSweepOwner.h','BlackholeDramReadSweepImage.h','BlackholeDramQueuedReadSweepImage.h',
  'BlackholeDramSweepArcClock.h','BlackholeDramSweepRoutes.h','PioneerDramSweepControl.inc','PioneerDramSweepProtocol.h')]
-subjects += [here/'pioneer_dram_sweep.cpp']
+subjects += [here/'pioneer_dram_sweep.cpp',here/'PioneerDramQueuedReadSweep.h']
 subjects += [pathlib.Path(__file__).resolve()]
 source_identity={str(path):hashlib.sha256(path.read_bytes()).hexdigest() for path in subjects}
 role_input=('#include "'+str(misc/'PioneerDramReadSweepNativeRole.h')+'"\n').encode()
 cases=[(flags,True)]
+for value in (0,2):
+    cases.append(([f for f in flags if not f.startswith('-DPIONEER_DRAM_SWEEP_QUEUED=')]
+                  +['-DPIONEER_DRAM_SWEEP_QUEUED='+str(value)],False))
 for required in ('-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1','-DPIONEER_DRAM_SWEEP_DIAGNOSTIC=1',
-                 '-DPIONEER_DRIVER_BUILD_TAG=0x2026110200030076ULL','-DTT_PIONEER_DRIVER_RELOAD',
+                 '-DPIONEER_DRAM_SWEEP_QUEUED=1','-DPIONEER_DRIVER_BUILD_TAG=0x2026110200040076ULL','-DTT_PIONEER_DRIVER_RELOAD',
                  '-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH'):
     cases.append(([value for value in flags if value!=required],False))
 for name in ('PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY','PIONEER_Q38_TOKEN_NATIVE_CONTEXT',
@@ -55,7 +58,8 @@ subprocess.run([str(cxx),'-shared','-nostdlib','-Wl,--no-undefined,-soname=tenst
 symbols=subprocess.check_output([str(binpath/'riscv64-unknown-haiku-nm'),'-C','-S',str(binary)],text=True)
 for name in ('init_hardware','init_driver','uninit_driver','publish_devices','find_device','api_version'):
     assert any(row.split()[-1:]==[name] for row in symbols.splitlines()),name
-for required in ('PioneerDramReadSweepOwner::Execute<PioneerDramSweepNativeIO>',
+for required in ('PioneerDramReadSweepOwnerType<BlackholeDramQueuedReadSweepImage',
+                 '::Execute<PioneerDramSweepNativeIO>',
                  'BlackholeDramSweepArc::Queue<PioneerDramSweepClockIO>',
                  'PioneerDramSweepNativeContext::ClosePci','map_physical_memory','delete_area','user_memcpy'):
     assert required in symbols,required

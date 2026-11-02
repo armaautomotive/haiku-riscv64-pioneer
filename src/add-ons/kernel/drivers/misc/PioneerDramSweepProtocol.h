@@ -14,18 +14,19 @@ struct tt_pioneer_dram_sweep_reply {
  uint32_t preflight;
 };
 struct tt_pioneer_dram_sweep {
- uint32_t version,bank,chunk_shift,sweeps,nonce,reserved[3];
+ uint32_t version,bank,chunk_shift,sweeps,nonce,queue_depth,reserved[2];
  uint64_t expected_tag,expected_generation;
  tt_pioneer_dram_sweep_reply reply;
 };
 static_assert(sizeof(tt_pioneer_dram_sweep_reply)==152,"fixed38-word diagnostic DATA");
 static_assert(sizeof(tt_pioneer_dram_sweep)==200,"fixed pointer-free diagnostic request");
 static inline bool PioneerDramSweepParameters(const tt_pioneer_dram_sweep& r){
- if(r.version!=1 || r.bank>=7 || !r.nonce || !r.sweeps || r.sweeps>256
+ if(r.version!=2 || r.bank>=7 || !r.nonce || !r.sweeps || r.sweeps>256
   || (r.chunk_shift!=6 && r.chunk_shift!=10 && r.chunk_shift!=12 && r.chunk_shift!=14)
-  || r.reserved[0] || r.reserved[1] || r.reserved[2]
-  || r.expected_tag!=UINT64_C(0x2026110200030076) || !r.expected_generation)return false;
- return true;
+  || r.reserved[0] || r.reserved[1] || !r.queue_depth || r.queue_depth>16
+  || (r.queue_depth&(r.queue_depth-1))
+  || r.expected_tag!=UINT64_C(0x2026110200040076) || !r.expected_generation)return false;
+ return (1U<<r.chunk_shift)*r.queue_depth<=16384;
 }
 static inline bool PioneerDramSweepRequest(const tt_pioneer_dram_sweep& r){
  if(!PioneerDramSweepParameters(r))return false;
@@ -53,10 +54,10 @@ static inline bool PioneerDramSweepReply(const tt_pioneer_dram_sweep& r,uint32_t
  if(op!=TT_PCI_PROBE_DRAM_SWEEP_RUN || p.complete!=1 || p.preflight
   || p.busy_mhz<=800 || p.busy_mhz>1400 || p.idle_mhz!=800
   || s[1]!=1 || s[2]!=10 || s[3] || s[4]!=1 || s[5]!=1 || s[6]!=1 || s[7]!=1
-  || s[8]!=6490 || s[9]!=6490 || s[10]!=(1U<<r.chunk_shift)/4 || s[11]!=r.bank)return false;
+  || s[8]!=6641 || s[9]!=6641 || s[10]!=((1U<<r.chunk_shift)*r.queue_depth)/4 || s[11]!=r.bank)return false;
  const auto* v=s+12;const uint64_t began=(uint64_t(v[9])<<32)|v[8],ended=(uint64_t(v[11])<<32)|v[10];
  const unsigned x=v[3]&63,y=v[3]>>6;
- return v[0]==0x31524244 && v[1]==1 && v[2]==r.nonce && (x==17 || x==18)
+ return v[0]==0x32524244 && v[1]==2 && v[2]==r.nonce && (x==17 || x==18)
   && (y==12 || y==15 || y==18 || y==21) && v[4]==(1U<<r.chunk_shift) && v[5]==r.sweeps
   && v[6]==0x800000U*r.sweeps && v[7]==(0x800000U>>r.chunk_shift)*r.sweeps
   && ended>began && ((uint64_t(v[13])<<32)|v[12])==ended-began;

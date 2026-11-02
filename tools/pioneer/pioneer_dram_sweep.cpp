@@ -22,11 +22,11 @@ static bool Number(const char* text,unsigned& value){
 int main(int argc,char** argv){
  const bool support=argc==2 && !strcmp(argv[1],"--support");
  const bool preflight=argc==2 && !strcmp(argv[1],"--preflight");
- const bool run=argc==5 && !strcmp(argv[1],"--run");
- tt_pioneer_dram_sweep r={};r.version=1;r.chunk_shift=14;r.sweeps=1;
+ const bool run=argc==6 && !strcmp(argv[1],"--run");
+ tt_pioneer_dram_sweep r={};r.version=2;r.chunk_shift=14;r.sweeps=1;r.queue_depth=1;
  if((!support && !preflight && !run) || (run && (!Number(argv[2],r.bank)
-  || !Number(argv[3],r.chunk_shift) || !Number(argv[4],r.sweeps))))return 2;
- r.expected_tag=UINT64_C(0x2026110200030076);
+  || !Number(argv[3],r.chunk_shift) || !Number(argv[4],r.sweeps) || !Number(argv[5],r.queue_depth))))return 2;
+ r.expected_tag=UINT64_C(0x2026110200040076);
  r.nonce=uint32_t(system_time())^(uint32_t(getpid())<<13);if(!r.nonce)r.nonce=1;
  // Shape-check before opening even a metadata FD; generation is queried below.
  r.expected_generation=1;if(!PioneerDramSweepRequest(r))return 2;
@@ -46,10 +46,10 @@ int main(int argc,char** argv){
  const int result=ioctl(fd,operation,&r,sizeof(r));const int error=errno;
  const bigtime_t ended=system_time();const int closed=close(fd);
  const auto& p=r.reply;
- printf("DRAM_DIAGNOSTIC tag%016llx generation%llu operation%s ioctl%d errno%d close%d host_us%lld "
+ printf("DRAM_DIAGNOSTIC tag%016llx generation%llu operation%s depth%u ioctl%d errno%d close%d host_us%lld "
   "version%u phase%u retained%u complete%u preflight%u busy_mhz%u idle_mhz%u views%u pci%u reservation%u\n",
   (unsigned long long)r.expected_tag,(unsigned long long)r.expected_generation,
-  support?"support":preflight?"preflight":"run",result,error,closed,(long long)(ended-began),
+  support?"support":preflight?"preflight":"run",r.queue_depth,result,error,closed,(long long)(ended-began),
   p.version,p.phase,p.retained,p.complete,p.preflight,p.busy_mhz,p.idle_mhz,
   p.views_closed,p.pci_closed,p.reservation_closed);
  for(unsigned i=0;i<28;i++)printf("SWEEP_WORD %u %08x\n",i,p.sweep[i]);

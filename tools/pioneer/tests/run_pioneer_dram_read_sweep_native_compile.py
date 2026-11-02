@@ -68,14 +68,15 @@ for name in ('private_kernel_initialize','private_open','private_run','private_c
     assert 'pioneer_dram_context_'+name in defined
 for name in ('PioneerDramSweepNativeContext::Scope','PioneerDramSweepNativeContext::ClosePci',
              'PioneerDramSweepNativeIO::SweepNativeScope','PioneerDramSweepClockIO::Check',
-             'PioneerDramReadSweepOwner::Execute<PioneerDramSweepNativeIO>'):
+             'PioneerDramReadSweepOwnerType<BlackholeDramReadSweepImage',
+             '::Execute<PioneerDramSweepNativeIO>'):
     assert name in demangled,(name,'actual native body must be instantiated')
 for name,minimum in [('PioneerDramSweepNativeContext::Scope',300),
                      ('PioneerDramSweepNativeContext::ViewsPresent',500),
                      ('PioneerDramSweepNativeContext::ClosePci',384),
                      ('PioneerDramSweepNativeIO::SweepNativeScope',200),
                      ('PioneerDramSweepClockIO::Check',64),
-                     ('PioneerDramReadSweepOwner::Execute<PioneerDramSweepNativeIO>',2048)]:
+                     ('PioneerDramReadSweepOwnerType<BlackholeDramReadSweepImage',2048)]:
     rows=[line.split() for line in demangled.splitlines() if name in line]
     assert rows and max(int(row[1],16) for row in rows)>=minimum,(name,'not a constant stub')
 assembly=subprocess.check_output([str(binpath/'riscv64-unknown-haiku-objdump'),'-dr',str(obj)],text=True)

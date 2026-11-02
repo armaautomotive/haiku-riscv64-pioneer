@@ -16,7 +16,7 @@ root=pathlib.Path(tempfile.mkdtemp(prefix='pioneer-dram-exchange-endpoints-'))
 print('fixture root',root,flush=True)
 pins={
  'stable':'041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403',
- 'candidate':'d829860b22bd26d5d47bbd5188cd68534e47a763fd4f085ee021ee470da9ec5b',
+ 'candidate':'5e00908a294e381b572761eacb1c9f2e9defd43b5293c9d7f9bc9a0ddeadbf3d',
  'guard':'d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229',
  'admin':'b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f'}
 admin_source='''#!/usr/bin/env python3
@@ -24,18 +24,18 @@ import os,pathlib,sys
 p=pathlib.Path(os.environ['FIXTURE_ROOT']);fault=os.environ['FIXTURE_FAULT'];args=sys.argv[1:]
 with (p/'calls').open('a') as f:f.write(' '.join(args)+'\\n')
 if args==['--status']:
- tag='2026102100010012' if os.environ['FIXTURE_MODE']=='--apply' else '2026110200030076'
+ tag='2026102100010012' if os.environ['FIXTURE_MODE']=='--apply' else '2026110200040076'
  fields=['P100A_RELOAD','driver55','tag'+tag,'generation7','quiesced0','cold0','active_owner0','open_count1','guard1;CPU_METADATA_ONLY']
  if fault.startswith('field'):
   i=int(fault[5:]);fields[i]=['BAD','driver54','tag0','generation0','quiesced1','cold1','active_owner1','open_count2','guard0;'][i]
  print(' '.join(fields));sys.exit(0)
 if args[0]=='--quiesce':
- assert args[1]==('2026102100010012' if os.environ['FIXTURE_MODE']=='--apply' else '2026110200030076')
+ assert args[1]==('2026102100010012' if os.environ['FIXTURE_MODE']=='--apply' else '2026110200040076')
  if fault=='quiesce':sys.exit(1)
  if fault=='changed_during_quiesce':(p/'bin/tenstorrent_pci_probe').write_bytes(b'changed')
  sys.exit(0)
 if args[0]=='--wait':
- assert args[1]==('2026110200030076' if os.environ['FIXTURE_MODE']=='--apply' else '2026102100010012')
+ assert args[1]==('2026110200040076' if os.environ['FIXTURE_MODE']=='--apply' else '2026102100010012')
  assert args[2]=='0000000000000007'
  sys.exit(1 if fault=='wait' else 0)
 raise AssertionError(args)

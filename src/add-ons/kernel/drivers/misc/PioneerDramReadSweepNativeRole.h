@@ -7,7 +7,8 @@
 #endif
 #ifdef PIONEER_DRAM_SWEEP_DIAGNOSTIC
 #if PIONEER_DRAM_SWEEP_DIAGNOSTIC != 1 || defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) \
- || PIONEER_DRIVER_BUILD_TAG != 0x2026110200030076ULL
+ || !defined(PIONEER_DRAM_SWEEP_QUEUED) || PIONEER_DRAM_SWEEP_QUEUED != 1 \
+ || PIONEER_DRIVER_BUILD_TAG != 0x2026110200040076ULL
 #error DRAM diagnostic76 requires its separate physical role;never expose DRSNODRV
 #endif
 #else
@@ -15,6 +16,9 @@
  || PIONEER_DRIVER_BUILD_TAG != 0x4452534e4f445256ULL
 #error DRSNODRV requires its renamed inert compile-only perimeter
 #endif
+#endif
+#if defined(PIONEER_DRAM_SWEEP_QUEUED) && PIONEER_DRAM_SWEEP_QUEUED != 1
+#error Queued diagnostic must be selected explicitly,not inherited as zero
 #endif
 #if defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_RECURRENT_PREFIX_NATIVE_CONTEXT) \
  || defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT) || defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) \

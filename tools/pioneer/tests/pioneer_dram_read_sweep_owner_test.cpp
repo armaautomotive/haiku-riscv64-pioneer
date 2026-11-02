@@ -4,7 +4,8 @@
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDramReadSweepOwner.h"
 #include <map>
 #include <memory>
-using Image=BlackholeDramReadSweepImage;
+using Image=PioneerDramReadSweepOwner::SnapshotImage;
+using Program=PioneerDramReadSweepOwner::DeviceProgram;
 struct Rig;
 struct SweepCpu:Machine {
  Rig& bus;
@@ -153,14 +154,14 @@ struct Rig {
   assert(Matches(0,0,1,2,false));if(!Touch(ReadL1))return false;
   assert(memory.count(a));value=memory.at(a);
   if(corruptInitialSnapshot && result.phase==2 && a==Image::Address(3) && !faultUsed){value^=1;faultUsed=true;}
-  if(badReport && result.phase==5 && a==PioneerDramReadSweep::Report && value==PioneerDramReadSweep::ReportMagic)value^=1;
-  if(badNonce && result.phase==5 && a==PioneerDramReadSweep::Report+8 && cpu->pc==Image::Park)value^=1;
+  if(badReport && result.phase==5 && a==Program::Report && value==Program::ReportMagic)value^=1;
+  if(badNonce && result.phase==5 && a==Program::Report+8 && cpu->pc==Image::Park)value^=1;
   return true;
  }
  bool SweepWrite(uint32_t a,uint32_t v){
   assert(!running && !pending && Matches(0,0,1,2,false) && memory.count(a));
   if(!Touch(WriteL1))return false;memory[a]=v;
-  if(dropReportClear && result.phase==3 && a==PioneerDramReadSweep::Report && !v)memory[a]=original.at(a);
+  if(dropReportClear && result.phase==3 && a==Program::Report && !v)memory[a]=original.at(a);
   if(corruptRestoredNeighbor && result.phase==8 && a==0x90000)memory[Image::Address(3)]^=1;
   return true;
  }
@@ -180,7 +181,7 @@ struct Rig {
   if(badImmutableCode && cpu->pc==Image::Park)memory[Image::Address(3)]^=1;
   if(loseScope)scope=false;
  }
- uint32_t DeviceRead(uint32_t a){
+ virtual uint32_t DeviceRead(uint32_t a){
   assert(running && !quarantined && !(a&3));
   if(memory.count(a))return memory.at(a);
   assert(a>=0xffb20000 && a<0xffb22000);const unsigned offset=a-0xffb20000;
@@ -198,16 +199,16 @@ struct Rig {
   for(unsigned i=0;i<32;i++)if(offset==0x240+i*4)return !i && pending?1:0;
   assert(false);return 0;
  }
- void DeviceWrite(uint32_t a,uint32_t v){
+ virtual void DeviceWrite(uint32_t a,uint32_t v){
   assert(running && !quarantined && !(a&3));
   if(Range(a,0x6e000,8192)){minStack=std::min(minStack,a);memory[a]=v;return;}
-  if(Range(a,PioneerDramReadSweep::Report,64)){memory[a]=v;return;}
+  if(Range(a,Program::Report,64)){memory[a]=v;return;}
   assert(a>=0xffb20000 && a<=0xffb20040);const unsigned offset=a-0xffb20000;
   if(offset<40){assert(!pending);command[offset/4]=v;return;}
   assert(offset==0x40 && v==1 && !pending);
-  const unsigned shift=memory.at(PioneerDramReadSweep::Job+12),bytes=1U<<shift;
-  assert(command[0]==PioneerDramReadSweep::Base+((requests<<shift)&(PioneerDramReadSweep::Span-1)));
-  assert(command[1]==0 && command[2]==memory.at(PioneerDramReadSweep::Job+16)
+  const unsigned shift=memory.at(Program::Job+12),bytes=1U<<shift;
+  assert(command[0]==Program::Base+((requests<<shift)&(Program::Span-1)));
+  assert(command[1]==0 && command[2]==memory.at(Program::Job+16)
    && command[3]==0x90000 && command[4]==0 && command[5]==129 && command[6]==0
    && command[7]==0 && command[8]==bytes && command[9]==0 && requests==responses);
   SelectedBank(command[2]);requests++;pending=true;waits=0;
@@ -222,6 +223,7 @@ uint32_t SweepCpu::ReadCycleCsr(unsigned csr){
  const uint64_t ticks=UINT64_C(0x1ffffe000)+steps;
  return csr==0xb00?uint32_t(ticks):uint32_t(ticks>>32);
 }
+#ifndef PIONEER_DRAM_SWEEP_OWNER_TEST_COMPONENT
 int main(int argc,char** argv){
  assert(argc==3);const auto boot=Read(argv[1]),text=Read(argv[2]);
  assert(boot.size()==4 && Word(boot,0)==Image::Code(0) && text.size()==Image::TextWords*4);
@@ -334,3 +336,4 @@ int main(int argc,char** argv){
  }
  printf("PASS actual isolated RV32 owner histories%u/refusals%u;ALL6490 old L1 words+NIU/TLB restored on clean closure;NO hardware bandwidth/native driver/ARC transport claim\n",passed,refused);
 }
+#endif

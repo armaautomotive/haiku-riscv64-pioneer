@@ -61,7 +61,7 @@ struct PioneerDramSweepClockIO : PioneerArcQueryIO {
 };
 
 struct PioneerDramSweepNativeContext {
- using Image=BlackholeDramReadSweepImage;
+ using Image=PioneerDramReadSweepOwner::SnapshotImage;
  static constexpr unsigned Allocation=Image::SavedWords+Image::RawWords;
  PioneerProbeCookie* fd;
  const thread_id thread;
@@ -71,6 +71,7 @@ struct PioneerDramSweepNativeContext {
  pioneer_driver_reload_guard_info* const guard;
  const uint64 generation;
  const pci_info card;
+ const unsigned queueDepth;
  tt_pioneer_profile profile={};
  tt_pioneer_mmio_result mapping={};tt_pioneer_mmio_transaction transaction={};
  tt_arc_scratch_result arc={};tt_arc_telemetry_result telemetry={};
@@ -85,9 +86,9 @@ struct PioneerDramSweepNativeContext {
  unsigned resetStage=0;
  PioneerDramSweepNativeIO io;
  PioneerDramSweepClockIO clock;
- PioneerDramSweepNativeContext(PioneerProbeCookie* f,const thread_info& t)
+ PioneerDramSweepNativeContext(PioneerProbeCookie* f,const thread_info& t,unsigned depth=1)
   :fd(f),thread(t.thread),team(t.team),lock(sLock),pci(sPCI),guard(sReloadGuard),
-   generation(sReloadGeneration),card(sCard),
+   generation(sReloadGeneration),card(sCard),queueDepth(depth),
    io(*this,profile,arc,telemetry,tensix,dram,noc),clock(*this,profile,arc,telemetry,query) {}
  ~PioneerDramSweepNativeContext(){free(backing);}
  bool View(area_id id,const volatile void* pointer,unsigned offset,size_t bytes,bool write) const {
@@ -245,7 +246,7 @@ void PioneerDramSweepNativeIO::ResidentNocWrite(uint32 a,uint32 v){
  else owner.Retain(); // especially forbidden:host doorbell0x40
 }
 static bool PioneerDramSweepL1Address(uint32 a){
- using I=BlackholeDramReadSweepImage;
+ using I=PioneerDramSweepNativeContext::Image;
  return !(a&3) && (a==0x6000 || (a>=I::Entry && a<I::Entry+I::TextWords*4)
   || (a>=0x6e000 && a<0x70000) || (a>=0x74000 && a<0x74040)
   || (a>=0x74100 && a<0x74140) || (a>=0x90000 && a<0x94000));
@@ -261,9 +262,11 @@ bool PioneerDramSweepNativeIO::SweepWrite(uint32 a,uint32 v){
  PioneerWrite32(sweepMemory+a/4,v);return true;
 }
 bool PioneerDramSweepNativeIO::SweepWindowReadChecked(uint32 a,uint32& v){
- const unsigned bytes=owner.reply.sweep.report[4];
+ const unsigned chunk=owner.reply.sweep.report[4],depth=owner.queueDepth;
+ if((chunk!=64 && chunk!=1024 && chunk!=4096 && chunk!=16384)
+  || !depth || depth>16 || (depth&(depth-1)) || chunk*depth>16384)return false;
+ const unsigned bytes=chunk*depth;
  if(!Access() || !owner.ready || owner.reply.sweep.phase!=7 || !owner.reply.sweep.held
-  || (bytes!=64 && bytes!=1024 && bytes!=4096 && bytes!=16384)
   || (a&3) || a<0x200000-bytes || a>=0x200000)return false;
  const unsigned bank=owner.reply.sweep.bank;
  if(bank>=7)return false;
@@ -285,13 +288,13 @@ uint32 PioneerDramSweepNativeIO::SweepPcRead(){return Access() && owner.ready?Pi
 void PioneerDramSweepNativeIO::Pause(){if(Access())spin(100);}
 unsigned PioneerDramSweepNativeIO::SweepAllocationWords(){return owner.Scope()?owner.Allocation:0;}
 uint32* PioneerDramSweepNativeIO::SweepSavedWords(){return owner.Scope()?owner.backing:NULL;}
-uint32* PioneerDramSweepNativeIO::SweepScratchWords(){return owner.Scope()?owner.backing+BlackholeDramReadSweepImage::SavedWords:NULL;}
+uint32* PioneerDramSweepNativeIO::SweepScratchWords(){return owner.Scope()?owner.backing+PioneerDramSweepNativeContext::Image::SavedWords:NULL;}
 bool PioneerDramSweepNativeIO::SweepNativeScope(const PioneerDramReadSweepOwner* a,
  const tt_dram_samples_result* d,const tt_compute_noc_result* n,uint32* saved,uint32* scratch,unsigned count,unsigned raw){
  return owner.Scope() && owner.ready && !owner.closing && !owner.clockCall
   && a==&owner.algorithm && d==&owner.dram && n==&owner.noc
-  && saved==owner.backing && scratch==owner.backing+BlackholeDramReadSweepImage::SavedWords
-  && count==BlackholeDramReadSweepImage::SavedWords && raw==BlackholeDramReadSweepImage::RawWords
+  && saved==owner.backing && scratch==owner.backing+PioneerDramSweepNativeContext::Image::SavedWords
+  && count==PioneerDramSweepNativeContext::Image::SavedWords && raw==PioneerDramSweepNativeContext::Image::RawWords
   && owner.ViewsPresent() && sweepArea>=0 && controlArea>=0 && pcArea>=0 && nocWriteArea>=0
   && sweepMemory && resetWrite && sweepPc && nocWrite && nocRegisters && reset && tlb && nodeID;
 }
@@ -330,18 +333,20 @@ void PioneerDramSweepClockIO::Pause(){if(Check())PioneerArcQueryIO::Pause();}
 
 [[maybe_unused]] static status_t RunPioneerDramReadSweepNative(PioneerProbeCookie* fd,
  unsigned bank,unsigned shift,unsigned sweeps,uint32 nonce,PioneerDramSweepNativeReply& output,
- bool preflightOnly=false,uint64 expectedGeneration=0){
+ bool preflightOnly=false,uint64 expectedGeneration=0,unsigned depth=1){
  // Kernel-private buffers only. A future public adapter must copy/validate
  // user DATA independently;this function is not exposed by ProbeControl.
  if(geteuid()!=0 || !sPCI || !sReloadGuard || sLock<0 || !fd || fd->magic!=0x50313030 || fd->context
-  || bank>=7 || !nonce || !sweeps || sweeps>256
+  || bank>=7 || !nonce || !sweeps || sweeps>256 || !depth || depth>16 || (depth&(depth-1))
+  || (!PioneerDramReadSweepOwner::Queued && depth!=1)
   || (shift!=6 && shift!=10 && shift!=12 && shift!=14))return B_BAD_VALUE;
+ if((1U<<shift)*depth>16384)return B_BAD_VALUE;
  thread_info thread={};status_t status=get_thread_info(find_thread(NULL),&thread);
  if(status!=B_OK || thread.team!=fd->team)return B_NOT_ALLOWED;
  status=AcquireProbeLock();if(status!=B_OK)return status;
  if(expectedGeneration && expectedGeneration!=sReloadGeneration){release_sem(sLock);return B_BAD_VALUE;}
  if(sDramSweepNativeContext){release_sem(sLock);return B_BUSY;}
- auto* c=new(std::nothrow) PioneerDramSweepNativeContext(fd,thread);
+ auto* c=new(std::nothrow) PioneerDramSweepNativeContext(fd,thread,depth);
  if(!c){release_sem(sLock);return B_NO_MEMORY;}
  c->backing=(uint32*)malloc(c->Allocation*sizeof(uint32));
  if(!c->backing){delete c;release_sem(sLock);return B_NO_MEMORY;}
@@ -364,7 +369,7 @@ void PioneerDramSweepClockIO::Pause(){if(Check())PioneerArcQueryIO::Pause();}
  c->ready=proved && c->Scope() && c->ViewsPresent();
  bool okay=false;
  if(c->ready && preflightOnly){c->reply.preflight=1;okay=true;}
- else if(c->ready)okay=c->algorithm.Execute(c->io,c->dram,c->noc,bank,shift,sweeps,nonce,c->reply.sweep);
+ else if(c->ready)okay=c->algorithm.Execute(c->io,c->dram,c->noc,bank,shift,sweeps,nonce,c->reply.sweep,depth);
  if(okay && (c->reply.sweep.closed || c->reply.preflight) && !c->quarantined && !c->clockEntered){
   c->reply.phase=3;c->closing=true;c->ready=false;
   okay=c->CloseViews();c->reply.viewsClosed=okay;

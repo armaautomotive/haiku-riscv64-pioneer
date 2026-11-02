@@ -1,0 +1,161 @@
+Queued DRAM reader:actual native integration and measured geometry limits
+========================================================================
+2026-11-02. Goal ACTIVE. Previous goal turn was progress;this turn adds the
+real native queued owner and hardware comparisons. Correct usable27B Work
+and20tok/s remain UNMET. No model inference is run;last model diagnostic is
+still about0.1597tok/s with unresolved numerical differences. These are
+single-worker/single-bank memory results,NOT a Qwen speedup,whole-card
+bandwidth/capacity/integrity certificate or authenticity test.
+
+Performance result FIRST:queueing helps small reads,but not our best baseline
+---------------------------------------------------------------------------
+Every row reads8,388,608 bytes from the SAME8MiB bank0 window,one pass,fixed
+worker(1,2),NoC0,normal firmware BUSY1350MHz. Same queued ELF/module/gen9:
+
+ chunk bytes  depth   device cycles    bytes/device cycle
+        1024      1         4901472        1.711446684
+        1024      2         2785761        3.011244683
+        1024      4         1652192        5.077259786
+        1024      8         1158734        7.239459617
+        1024     16          905405        9.265033880
+        4096      1         1461968        5.737887560
+        4096      2          896993        9.351921364
+        4096      4          639284       13.121880103
+       16384      1          638650       13.134906443
+
+Depth16 takes5.4135685x fewer sampled device cycles than depth1 for1KiB
+packets;depth4 takes2.2868835x fewer than depth1 for4KiB packets. However,
+4x4KiB merely matches1x16KiB in this program. The previous SERIAL16KiB
+leaf measured about14.08..14.09 bytes/devicecycle,so this candidate does
+NOT improve on that earlier best memory baseline. Keep the old control.
+No conversion toGB/s:counter frequency is still independently unverified.
+FirmwareMHz alone is not frequency proof. Host total time includes snapshot,
+upload,last-batch verification and closure;it is NOT device transfer time.
+No arbitrary timing cutoff/retry or measured inference speedup is asserted.
+
+The current16KiB return footprint forces smaller packets as depth grows.
+Next experiment should allow several LARGE16KiB packets in flight and test
+whether that improves the measured limit. This is a hypothesis,not proof
+that buffer capacity is the only bottleneck. It needs a new authenticated
+image/snapshot/ABI revision;do not simply widen a read/write allowlist. Full
+card saturation also requires synchronized multi-bank/multi-worker testing,
+not summing isolated rates. Then apply actual findings to Qwen scheduling.
+
+Actual physical subject and closed runs
+----------------------------------------
+Revision4/tag2026110200040076/gen9,distinct from revision3's serial program:
+ module5e00908a294e381b572761eacb1c9f2e9defd43b5293c9d7f9bc9a0ddeadbf3d
+ clientbe46baeec370930537cdb9dbbb6414fb448274b53d28d65a4d97b4425d838372
+ helper40bea726f2b57f3fbee5f6c6018466aa39830b522df33764bd0bfec9a4cbc9b8
+ stage/boot/home/pioneer-p100a-dram-sweep-20261102-d
+Queued ELF remainsfa245dbebd77f90c93d3898e5a0ac1ab27178efd2760769380af1ae14b62a656,
+text1856B/464words,boot4B,main frame288B/sampler16B. Frozen header is checked
+word-for-word against emitted bytes,not generated expected reference results.
+
+Apply76337 ACTUALLY exits0 from independently checked stable041/gen8 ->gen9.
+No-launch preflight exits0,complete0/preflight1,all native closures1;exact
+installed SHA/idle generation independently match before the first launch.
+32822 depth1/1KiB ACTUALLY exits0. Exec cell13199 then sequentially runs
+depth2/4/8/16,ALL ACTUAL exit0. Exec cell13200 then sequentially runs4KiB
+depth1/2/4 and16KiB depth1,ALL ACTUAL exit0. Each next command is gated on
+the preceding actual terminal result,not observation timeout. No concurrent
+Pioneer query/admin/model call occurs during any physical command lifetime.
+
+ALL nine runs:complete1/retained0,inner phase10/closed1/unsafe0,launched/
+observed/held1,saved/restored6641 words,all native views/PCI/reservation
+closures1,ioctl0/errno0/close0. Entire last batch is independently PIO-checked:
+depth*chunk_bytes/4 words,including ALL4096 for full16KiB batches. Immutable
+code/frame,exact nonce/report/count/cycle arithmetic,master counters,FIFO
+drain/outstanding,safe park/all-held and full L1/NIU/TLB/clock restorations
+pass. This does not validate every byte of the8MiB or all28GB of GDDR.
+
+Native changes,without model/Work fallback
+-------------------------------------------
+Owner is now a fixed Program/Image/version template,with explicit unchanged
+serial control and queued aliases. The native diagnostic REQUIRES explicit
+PIONEER_DRAM_SWEEP_QUEUED=1 AND revision4. Missing/zero/other selections and
+all model/CPU-reference/Work roles are refused. Old revisions remain reserved,
+not accidentally selectable as ordinary driver roles. NODRV stays separately
+renamed/inert,with its actual scope bodies still compiled against KernelExport.
+
+Distinct frozen queued image saves6641 unique original words:465codewords,
+2048stack,16frame,16report,4096raw. The old313-word text/6490-word snapshot
+cannot be reused. Exact native backing is10737words;all count/address/scope
+checks derive from the selected image. Frame version2 includes bounded
+depth1/2/4/8/16 and retains the16KiB footprint limit. All16 last-batch return
+slots are compared after HOLD,not just the last slot. Samples bind the LAST
+slot;NIU counter totals bind every request. Guard/FIFO/entry-override checks,
+single-attempt ordered reset and no-IO-after-retention policies are preserved.
+
+Public request remains200bytes but is STRICTLY version2:queue_depth replaces
+one reserved word,remaining reserved words and incoming reply must be zero.
+Old version1/tag0003 is rejected BEFORE mutation. Independent client requires
+explicit --run BANK SHIFT SWEEPS DEPTH and validates shape before opening a
+device. Reply grammar requires6641saved/restored,version2 marker and complete
+last-batch comparison count. No model/CPU expected products,arbitrary code,
+address,reset selector or cleanup authority enters this DATA protocol.
+Native factory binds immutable context depth to the copied validated request;
+last-batch window reads require held/phase7/exact TLB/owned VM/scope and bounds.
+No host-memory DMA or GDDR write is introduced. This diagnostic's PIO data
+integrity check is NOT runtime CPU model-reference validation or a Work mode.
+
+Closed tests and independent reproduction BEFORE hardware use
+-------------------------------------------------------------
+Main71310/B and independent clean17304/E ACTUALLY exit0:actual queued RV32
+leaf12valid/50refused,then queued owner15valid/41refused. Independent FIFO
+endpoint captures commands,delays/reorders replies,checks disjoint buffers,
+full address sequence/counter wrap and no reuse until the batch drains.
+Each of16 individual slots is separately corrupted away from its samples;
+the ACTUAL owner refuses at the exact independent-comparison word,without
+restoration/clock-close afterward. Snapshot/drop/clock/source/override/reset/
+lost/stalled packet failures retain without extra IO or retry. Scope/ARC in
+these owner tests remain fixture hooks,not fabricated native hardware proof.
+
+Serial regression main9725/clean8070 ACTUALLY exit0:unchanged actual leaf
+6valid/38refused,owner13valid/94refused. Original ELF7002ccac is preserved.
+Actual Native.inc/controller/KernelExport endpoint main88546/clean17304 each
+45valid/174refused,including every last-batch slot's real window offset,
+out-of-window/nonheld access,invalid depth and old tag/version refusal.
+Endpoint models are NOT native engine/ARC execution;the nine real runs above
+provide that separate evidence. No failing expectation was weakened.
+
+Main88546/D and clean17304/E actual SDK/full-module builds ACTUALLY exit0;
+module+client compare byte-exact. NODRV control object54b3a7cedcac9f4f11ad12d625540883048da257d02c09f0f55fd83e2e620df6.
+Default/base55 prior/current complete objects remain byte-exact,aabe86f5.../
+20bd6ea1...;base55 control is NOT installed feature-rich041. Actual renamed
+inert entry checks and14NODRV/35physical role cases pass. Physical driver-TU
+max frame912B/direct compiler call-chain2352B;separate unchanged profile
+frame1040B and external/indirect kernel frames are outside that graph. This
+is not whole-kernel stack certification. Initial C build also closed0;D adds
+the stricter selector/value tests without changing module/client bytes.
+Exchange script fixtures main78902/clean31434 each2valid/46refused,actual0.
+Full staged file copy-back comparisons and current source hashes pass before
+apply. Stagea/b/c remain immutable historical identities,not this tuple.
+
+Preservation and next work
+----------------------------
+Exact stage-d restore78603 ACTUALLY exits0 ->stable041/gen10. Fresh independent
+SSH ACTUALLY exits0:installed041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012/gen10/quiesced0/cold0/active_owner0/open1/guard1,
+64CPUs/max137034936320B/free133781950464B. Adminb0c851.../guardd1ce2...
+unchanged. No board power/reboot,SD,mains,firmware,boot/kernel,network or
+Assistant change. Unrelated source/WIP files are preserved. No physical job
+remains live. Raw receipts and source identities are in the sibling folder;
+only the prestage ps table's trailing padding is trimmed for Git whitespace
+checks,with all actual fields retained. Driver receipts are unmodified.
+
+Next:larger disjoint return working set permitting concurrent16KiB reads,
+then real multi-bank/multi-worker saturation and Qwen integration/correctness
+acceptance. Preserve serial control and measure actual model throughput before
+advertising a speedup. Usable no-reference Assistant Work/fresh arbitrary
+requests/full-model numerical acceptance and20tok/s remain outstanding.
+
+Reproduce offline:
+ python3 tools/pioneer/tests/run_pioneer_dram_queued_read_sweep_owner_tests.py SDK NEW_OUT
+ python3 tools/pioneer/tests/run_pioneer_dram_read_sweep_owner_tests.py SDK NEW_OUT
+ python3 tools/pioneer/build_dram_sweep_diagnostic.py SDK NEW_OUT
+SDK:/Volumes/HaikuBuildLocal/generated.riscv64. Independent source tree:
+/private/tmp/pioneer-dram-native-clean-20261102-e.Ps157C,using original
+kernel headers/pinned623bdaad git reference. Main module output:
+/private/tmp/pioneer-dram-queued-native-sdk-main-20261102-d;clean output:
+/private/tmp/pioneer-dram-queued-native-sdk-clean-20261102-e.

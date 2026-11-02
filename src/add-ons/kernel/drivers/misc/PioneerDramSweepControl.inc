@@ -20,7 +20,7 @@ static status_t PioneerDramSweepControl(PioneerProbeCookie* fd,uint32 operation,
    && !sDramSweepNativeContext && !fd->context && sReloadGuard && sReloadGuard->version==1?B_OK:B_DEV_NOT_READY;
   release_sem(sLock);
  }else status=RunPioneerDramReadSweepNative(fd,request.bank,request.chunk_shift,request.sweeps,
-  request.nonce,reply,operation==TT_PCI_PROBE_DRAM_SWEEP_PREFLIGHT,request.expected_generation);
+  request.nonce,reply,operation==TT_PCI_PROBE_DRAM_SWEEP_PREFLIGHT,request.expected_generation,request.queue_depth);
  // Always deliver the already captured result,including retention. No extra
  // card observation or cleanup after a failure;failed copy cannot restart it.
  memcpy(&request.reply,&reply,sizeof(reply));
