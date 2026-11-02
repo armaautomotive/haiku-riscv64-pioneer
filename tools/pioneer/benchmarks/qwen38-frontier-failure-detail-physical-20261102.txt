@@ -1,0 +1,102 @@
+5920 failure-detail probe:LIVE55172;NO result or throughput yet
+================================================================
+2026-11-02 06:04:28UTC. Goal ACTIVE;usable27B Work and20tok/s UNMET.
+THIS is a protected actual Pioneer client lifetime,NOT the closed offboard
+native histories. Do NOT perform any extra Pioneer SSH/status/admin/GPU/
+model/stage/reload/reset/power/SD/OS/network action while it is alive.
+Observe ONLY SAME55172 and local raw files. Timeout is NOT completion,
+retry,restore or recovery permission. If the SSH observer is lost,resolve
+the actual remote process state before any driver/power action.
+
+Exact new diagnostic,not a speed fix or retired010c retry
+--------------------------------------------------------
+Installed module592084df7cc967b688f0f8ef84421165aaeb4e5bb2b7d2e9ca739bf0188c6716
+object0e984211811f01a792542fdd1bf5eeb06c99a669ef9f5277a9ee3f23d568d008
+tag2026103100010075/generation15. Shared tag75 is NOT code identity.
+Firmware remains ROOT6066e693/worker56b470ae;only the native failure
+observer changes. Retired010c/34322 apply paths remain disabled. This is
+a deliberate bounded diagnostic to distinguish the prior early failure,
+NOT a claim that the shader now works or runs faster.
+
+New exact99e651a9353bf35808991659c6a3269fb14b9625b2e5d52bfe24406e6bdf8c07
+exchange helper accepts ONLY5920<->stable041. Existing client is exact
+f8efe67a51d9685a9e7e3ce57267ed2ae4967600c2802dd21f5f6ee0c24a22c9:
+ /boot/home/pioneer-p100a-frontier-failure-detail-20261102-a/pioneer-q38-FRONTIER34-FAILED-REPLY-DIAGNOSTIC-ONLY
+ --diagnose-frontier-34-positions
+No runtime CPU model reference;fixed2prompt/34position diagnostic only.
+All native first-layer/full-END,strict prefix,role,unit,transport,complete
+build/partial-stack and exchange gates CLOSED BEFORE rollout. Evidence:
+qwen38-frontier-failure-detail-native-20261102.txt. Tested checkpoint
+4e5603bcf0e18d1d49c504966772362c80a86995 was pushed and independently
+verified at GitHub BEFORE installation. Those gates do NOT prove a
+physical success,full-model correctness or safe cleanup after a fault.
+
+Staging and network reset,not a GPU fault
+------------------------------------------
+Fresh prestage SSH ACTUALLY0:whole stable041/adminb0c/guardd1ce/stable
+backup/f8 identities exact,gen14/cold0/owner0/quiesced0/open1/guard1,
+64CPUs/max137034936320B,no compute parent;new stage absent. A NEW private
+root-owned700 directory was created and f8 copied without replacing old
+artifacts. Initial SCP-O ACTUALLY exits1:connection reset after589824
+bytes of the module. No helper/install or GPU test occurred in that copy.
+
+Independent inspection ACTUALLY0 confirms stable041/gen14/healthy idle
+and partial candidate SHA50aee4d63bbb857ba60c90e9069224b6243075606c121b7ef9dc3e2c6eca1128.
+After exact size/hash checks,that partial was recoverably renamed ONLY to
+ PARTIAL-upload-reset-50aee4d6.bin
+inside the own stage. No old artifact or disk was erased. Limited-rate
+SCP-O-l1024 handle93981 ACTUALLY0;separate full readback87881 ACTUALLY0.
+Whole copied-back module/helper bytes compare exactly to qualified local
+files;client entire SHA is exactf8. This is a transfer workaround,NOT a
+diagnosis or proof that networking is fixed. Original reset log is retained.
+
+Guarded apply and independent prelaunch
+---------------------------------------
+Preapply SSH ACTUALLY0 verifies all exact module/helper/client/admin/guard/
+installed identities,root one-link non-writable files,device symlink,
+stage700,healthy idle041/gen14,64CPUs/fullRAM/no compute parent.
+ONLY new99e6 helper --apply32872 ACTUALLY0:old041 quiesce+close then
+new5920/tag75/gen15 verified. No reboot,reset or GPU job in that exchange.
+
+Separate fresh prelaunch SSH ACTUALLY0:whole installed+staged5920/helper
+99e6/clientf8/backup041/adminb0c/guardd1ce exact,gen15/cold0/owner0/
+quiesced0/open1/guard1,no compute parent,64CPUs/full137034936320B/free
+133775249408B. Apply/prelaunch stderr are empty. Existing UART logger was
+NOT reopened or reconfigured;local file metadata cursor only:
+inode15618376/offset88873982 in
+ /private/tmp/pioneer-haiku-recovery.kFZP6j/screenlog.0
+That is a log boundary,not fault provenance or a card-state observation.
+
+SAME55172 live lifetime
+------------------------
+Starts05:55:31UTC. Entire original GGUF authentication occurs BEFORE
+accelerator Open. The latest SAME-handle observation at06:04:28UTC confirms
+LIVE. The local log now confirms full same-open GGUF SHA and complete851
+layout,then accelerator Open and134803456/19399024640 uploaded bytes;
+stderr0B. No complete upload,START,record,clean END,TPS or numerical
+acceptance is claimed. Do NOT restart this process because authentication
+or upload is quiet or an observation wait expires.
+
+Mutable raw logs,NOT archived as closed evidence:
+ /private/tmp/pioneer-q38-detail-native-20261102.Y1VNpv/physical.log
+ /private/tmp/pioneer-q38-detail-native-20261102.Y1VNpv/physical.stderr
+Closed staging/apply/prelaunch logs are in the sibling report directory.
+
+After actual termination ONLY
+------------------------------
+If clean34+Finish/Close,run the unchanged strict f8 posthoc reader against
+the pinned original CPU corpus;do NOT change tolerances or accept old
+numerical differences as success. Fresh independent health precedes ONLY
+new99e6 guarded --restore5920->041 (expected nextgen16 in this epoch).
+If unsafe failure,retain the raw QFD1 packet/check/known-mask fields;
+they identify an existing failed check,NOT necessarily underlying cause.
+Do NOT filter stderr into a successful rate or perform more card reads.
+Quarantined resources require a NEW power epoch before guarded restore:
+OFF once/wait/check available evidence/ON once per AGENTS. No mains/SD
+change is authorized. Never hot-unload/reset/unreserve a retained owner.
+
+Original-model native36049/21151 and controls52621/63665 are ALL CLOSED0;
+their four strict comparisons are CLOSED0. They are NOT this live physical
+run. Preserve Assistant/SD-free boot/64CPUs/fullRAM and unrelated work.
+Last completed physical diagnostic remains about0.1597tok/s with unresolved
+numerical differences;usable Work,fast fresh requests and20tok/s UNMET.

@@ -1,5 +1,11 @@
 Failure-detail native first-layer/full-END + public BUILD:CLOSED
 =================================================================
+ROLLOUT UPDATE:separate physical5920 probe55172 is now LIVE. See
+qwen38-frontier-failure-detail-physical-20261102.txt BEFORE ANY Pioneer
+operation. Its ENTIRE hash/Open/upload/execution/cleanup lifetime is
+protected;the historical no-new-GPU-action checkpoint below is superseded
+only by that separately recorded rollout,NOT by an inferred success.
+
 2026-11-02. Goal ACTIVE;usable27B Work and20tok/s UNMET. No new physical
 model test or inference rate in this checkpoint. Last completed diagnostic
 remains about0.1597tok/s with unresolved numerical differences. Pioneer

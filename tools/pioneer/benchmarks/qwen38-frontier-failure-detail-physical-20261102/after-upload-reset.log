@@ -1,0 +1,32 @@
+total 662
+drwx------ 1 baron root   2048 Jan  1 06:06 .
+drwxr-xr-x 1 baron root   9216 Jan  1 06:06 ..
+-rwxr-xr-x 1 baron root  64648 Jan  1 00:35 pioneer-q38-FRONTIER34-FAILED-REPLY-DIAGNOSTIC-ONLY
+-rwxr-xr-x 1 baron root 589824 Jan  1 06:06 tenstorrent_pci_probe-FRONTIER-EARLY-FAILURE-DIAGNOSTIC-ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation14 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+0:1:755:589824 /boot/home/pioneer-p100a-frontier-failure-detail-20261102-a/tenstorrent_pci_probe-FRONTIER-EARLY-FAILURE-DIAGNOSTIC-ONLY
+50aee4d63bbb857ba60c90e9069224b6243075606c121b7ef9dc3e2c6eca1128  /boot/home/pioneer-p100a-frontier-failure-detail-20261102-a/tenstorrent_pci_probe-FRONTIER-EARLY-FAILURE-DIAGNOSTIC-ONLY
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  106 /boot/system/servers/net_server                    
+  107 /boot/system/servers/package_daemon                
+  112 /boot/system/servers/launch_daemon baron           
+  114 /boot/system/servers/power_daemon                  
+  115 /boot/system/servers/syslog_daemon                 
+  133 /boot/system/servers/media_server                  
+  176 /boot/system/servers/app_server                    
+  187 /boot/system/Tracker                               
+  189 /boot/system/Deskbar                               
+  208 /boot/system/servers/input_server                  
+  232 /boot/system/servers/media_addon_server            
+  259 /boot/system/servers/notification_server           
+  517 /boot/system/bin/screen_blanker                    
+ 1668 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+ 1670 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+ 1671 /boot/system/bin/ps -o Id -o Team                  
