@@ -43,7 +43,13 @@ struct PhaseIO:IO {
 int main(){
  (void)&Protocol;setvbuf(stdout,nullptr,_IOLBF,0);
  using Mode=PioneerQ38TokenPhaseProfileMode;
+#ifdef PIONEER_Q38_TOKEN_CONSTANT_Q4_CLIENT
+ const char* run[]={"constant-q4","--benchmark-constant-q4-34-positions",nullptr};
+ const char* oldRun[]={"phase","--profile-card-phases-34-positions",nullptr};
+ assert(PioneerQ38TokenPhaseProfileArguments(2,oldRun)==Mode::Invalid);
+#else
  const char* run[]={"profile","--profile-card-phases-34-positions",nullptr};
+#endif
  const char* sourceOnly[]={"profile","--preflight-source-only",nullptr};
  assert(PioneerQ38TokenPhaseProfileArguments(2,run)==Mode::Positions34 && PioneerQ38TokenPhaseProfileArguments(2,sourceOnly)==Mode::SourceOnly);
  unsigned cli=0,branches=0;

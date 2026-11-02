@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 root_profile=None
+constant_q4='--constant-q4-issue' in sys.argv
+if constant_q4:
+    assert sys.argv.count('--constant-q4-issue')==1
+    sys.argv.remove('--constant-q4-issue')
 token_phase_profile='--token-phase-profile' in sys.argv
 if token_phase_profile:
     assert sys.argv.count('--token-phase-profile')==1
@@ -223,6 +227,10 @@ if wide_gdn:
 if token_phase_profile:
     assert wide_gdn and output_closure and not compile_link_only and len(sys.argv)==7 and sys.argv[2]=='--execution-end', \
         'Full-token timing TEST requires own complete ROOT and wide-GDN original first-layer/cancel/STOP/HOLD/drain/END history;not old,shortened,Work or physical timing'
+if constant_q4:
+    assert token_phase_profile and wide_gdn and output_closure and not compile_link_only \
+        and len(sys.argv)==7 and sys.argv[2]=='--execution-end', \
+        'Constant Q4 TEST requires its exact new worker and complete timing original first-layer/cancel/STOP/HOLD/drain/END predecessor;not old,shortened,Work or hardware timing'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -292,7 +300,7 @@ here = pathlib.Path(__file__).resolve().parent
 if peer_engines:
     peer_arg = 3 if full_end_contract or peer_bootstrap else 4
     for directory, script in ((pathlib.Path(sys.argv[peer_arg]), here/'run_pioneer_q38_mixed_worker_tests.py'),
-                              (pathlib.Path(sys.argv[peer_arg+1]), here.parent/'build_qwen38_wide_gdn_worker_image.py' if wide_gdn else here.parent/'build_qwen38_token_twin_batch_prefetch_worker.py' if twin_batch_prefetch else here.parent/'build_qwen38_token_batched_prefetch_worker.py' if batched_prefetch else here.parent/'build_qwen38_token_prefetch_worker.py' if prefetch_worker else here.parent/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here.parent/'build_qwen38_pushed_worker_image.py' if pushed_context else here/'run_pioneer_q38_precise_worker_tests.py' if precise_context else here.parent/'build_qwen38_global_worker_image.py')):
+                              (pathlib.Path(sys.argv[peer_arg+1]), here.parent/'build_qwen38_q4_constant_issue_worker_image.py' if constant_q4 else here.parent/'build_qwen38_wide_gdn_worker_image.py' if wide_gdn else here.parent/'build_qwen38_token_twin_batch_prefetch_worker.py' if twin_batch_prefetch else here.parent/'build_qwen38_token_batched_prefetch_worker.py' if batched_prefetch else here.parent/'build_qwen38_token_prefetch_worker.py' if prefetch_worker else here.parent/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here.parent/'build_qwen38_pushed_worker_image.py' if pushed_context else here/'run_pioneer_q38_precise_worker_tests.py' if precise_context else here.parent/'build_qwen38_global_worker_image.py')):
         assert directory.is_absolute()
         tree = ast.parse(script.read_text())
         pins = next(ast.literal_eval(n.value) for n in tree.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'PINS' for t in n.targets))
@@ -375,6 +383,10 @@ if token_phase_profile:
     assert hashlib.sha256((here.parent/'PioneerQ38TokenPhaseProfilePrograms.h').read_bytes()).hexdigest()=='2fa11c765f2bf6e87dae30973432d83a9b257cefad870fdc65f15ccb294551fe'
     defines.update(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS='1',PIONEER_Q38_TOKEN_PHASE_PROFILE_NATIVE_CONTEXT='1',
                    PIONEER_Q38_TOKEN_NATIVE_PHASE_PROFILE_FIXTURE='1')
+if constant_q4:
+    assert hashlib.sha256((here.parent/'PioneerQ38TokenConstantQ4Programs.h').read_bytes()).hexdigest()=='79c3056dfbe9b7dd564dc93c3577d72c0bcb004d5018dd0d6b7da212dfad8061'
+    defines.update(PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS='1',PIONEER_Q38_TOKEN_CONSTANT_Q4_NATIVE_CONTEXT='1',
+                   PIONEER_Q38_TOKEN_NATIVE_CONSTANT_Q4_FIXTURE='1')
 if posted_cancel:
     defines.update(PIONEER_Q38_TOKEN_POSTED_CANCEL='1',PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',
                    PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')
@@ -593,7 +605,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
             elif prefetch_worker:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_PREFETCH_TEST=1']
             rom_object=base/'precise-beta-expected-rom-data.o'
             subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
-                            '-fsanitize=address,undefined','-c',str(here/('pioneer_q38_token_phase_profile_program_data_bridge.cpp' if token_phase_profile else 'pioneer_q38_wide_gdn_program_data_bridge.cpp' if wide_gdn else 'pioneer_q38_batched_output_closure_program_data_bridge.cpp' if output_closure else 'pioneer_q38_twin_batch_prefetch_program_data_bridge.cpp' if twin_batch_prefetch else 'pioneer_q38_batched_prefetch_program_data_bridge.cpp' if batched_prefetch else 'pioneer_q38_prefetch_program_data_bridge.cpp' if prefetch_worker else 'pioneer_q38_precise_beta_program_data_bridge.cpp')),
+                            '-fsanitize=address,undefined','-c',str(here/('pioneer_q38_token_constant_q4_program_data_bridge.cpp' if constant_q4 else 'pioneer_q38_token_phase_profile_program_data_bridge.cpp' if token_phase_profile else 'pioneer_q38_wide_gdn_program_data_bridge.cpp' if wide_gdn else 'pioneer_q38_batched_output_closure_program_data_bridge.cpp' if output_closure else 'pioneer_q38_twin_batch_prefetch_program_data_bridge.cpp' if twin_batch_prefetch else 'pioneer_q38_batched_prefetch_program_data_bridge.cpp' if batched_prefetch else 'pioneer_q38_prefetch_program_data_bridge.cpp' if prefetch_worker else 'pioneer_q38_precise_beta_program_data_bridge.cpp')),
                             '-o',str(rom_object)],check=True)
             extra += [str(rom_object)] # DATA TU has NO inherited tensor-Work/native/CPU-oracle roles
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',

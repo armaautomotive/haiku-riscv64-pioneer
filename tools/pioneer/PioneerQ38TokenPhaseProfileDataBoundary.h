@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38TokenConstantQ4DataBoundary.h"
 // Rechecked outside include guards. A new math image is not an old native
 // owner, a CPU oracle, a passing model result, or an Assistant Work target.
 #ifndef PIONEER_Q38_TOKEN_PHASE_PROFILE_DATA_SELECTION_H
@@ -27,7 +28,9 @@ enum {PioneerQ38TokenPhaseProfileDataSelection=0};
  || defined(PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS_H) \
  || defined(PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_FAULT_PROGRAMS_H) \
  || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H) \
- || (defined(PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H) && !defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS_H))
+ || (defined(PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H) && !defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS_H) \
+  && !(defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS) && PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS == 1 \
+   && defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS_H)))
 #error Phase timing DATA cannot coexist with old program arrays or a selected old namespace
 #endif
 #if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE) || defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT) \

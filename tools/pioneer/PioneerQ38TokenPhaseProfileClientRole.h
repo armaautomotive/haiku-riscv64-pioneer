@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38TokenConstantQ4ClientRole.h"
 #include "PioneerQ38FrontierFailureReportRole.h"
 #ifndef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT_SELECTION_H
 #define PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT_SELECTION_H

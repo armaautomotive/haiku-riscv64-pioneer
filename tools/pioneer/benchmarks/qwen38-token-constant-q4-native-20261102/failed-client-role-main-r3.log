@@ -1,0 +1,8 @@
+PASS failed-reply distinct USER/3 positives/91 missing,zero,two,late,native,shader,profile,CPU+Work refusals;NO packet provenance,driver,lifecycle,hardware or TPS grant
+PASS token-phase USER/4 positives/148 missing,zero,two,late,DATA,native,shader,CPU+Work refusals;unchanged failed-reply controls FIRST;NO native lifetime,physical,quality,Work or speed grant
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_constant_q4_client_roles.py", line 55, in <module>
+    syntax(old['base'], False, '#include "' + str(cli) + '"\n')
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_constant_q4_client_roles.py", line 28, in syntax
+    assert (result.returncode == 0) == okay, (values, body, result.stderr)
+AssertionError: ({'PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT': '1', 'PIONEER_Q38_FRONTIER_FAILURE_REPORT_PARENT_BINDING': '1', 'PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_CLIENT': '1', 'PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT': '1', 'PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT': '1', 'PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT': '1'}, '#include "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38TokenPhaseProfileCli.h"\n', '')

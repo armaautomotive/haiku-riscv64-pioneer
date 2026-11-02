@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 // DATA selection only; no native source/lifetime, journal or launch grant.
 // Rechecked outside the guard so late/defined-zero changes cannot alias data.
+#include "PioneerQ38TokenConstantQ4ProgramsRole.h"
+#if defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS) \
+ && !defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_NATIVE_CONTEXT) && !defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_BENCHMARK_NATIVE)
+#error Constant Q4 DATA requires its distinct native subject;no silent old-package fallback
+#endif
 #include "PioneerQ38TokenPhaseProfileProgramsRole.h"
 #if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) \
  && !defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_NATIVE_CONTEXT) && !defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_BENCHMARK_NATIVE)
@@ -85,7 +90,9 @@
 #elif defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
 #error QTP3 native selector requires its actual native parent
 #endif
-#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS
+#include "PioneerQ38TokenConstantQ4Programs.h"
+#elif defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS)
 #include "PioneerQ38TokenPhaseProfilePrograms.h"
 #elif defined(PIONEER_Q38_TOKEN_WIDE_GDN_PROGRAMS)
 #include "PioneerQ38TokenWideGdnPrograms.h"
@@ -127,7 +134,9 @@
 #include "PioneerQ38TokenFootprint.h"
 #ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
-#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS
+namespace PioneerQ38TokenPrograms=PioneerQ38TokenConstantQ4Programs;
+#elif defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenPhaseProfilePrograms;
 #elif defined(PIONEER_Q38_TOKEN_WIDE_GDN_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenWideGdnPrograms;

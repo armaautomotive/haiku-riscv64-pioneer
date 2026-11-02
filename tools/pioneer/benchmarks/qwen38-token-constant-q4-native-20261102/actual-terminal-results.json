@@ -1,0 +1,91 @@
+{
+  "public-final-main": {
+    "id": 20318,
+    "actualExit": 0
+  },
+  "data-final-main": {
+    "id": 44645,
+    "actualExit": 0
+  },
+  "roles-final-main": {
+    "id": 73985,
+    "actualExit": 0
+  },
+  "exchange-main": {
+    "id": 31511,
+    "actualExit": 0
+  },
+  "public-final-clean": {
+    "id": 49767,
+    "actualExit": 0
+  },
+  "data-final-clean": {
+    "id": 23537,
+    "actualExit": 0
+  },
+  "roles-final-clean": {
+    "id": 93461,
+    "actualExit": 0
+  },
+  "exchange-clean": {
+    "id": 24297,
+    "actualExit": 0
+  },
+  "native-main": {
+    "id": 9820,
+    "actualExit": 0
+  },
+  "native-clean": {
+    "id": 99949,
+    "actualExit": 0
+  },
+  "client-final-main": {
+    "id": 15366,
+    "actualExit": 0
+  },
+  "client-final-clean": {
+    "id": 16280,
+    "actualExit": 0
+  },
+  "client-role-r4-main": {
+    "id": 49785,
+    "actualExit": 0
+  },
+  "client-role-r4-clean": {
+    "id": 8616,
+    "actualExit": 0
+  },
+  "native-cli-main": {
+    "id": 67310,
+    "actualExit": 0
+  },
+  "compare-main": {
+    "actualExit": 0
+  },
+  "compare-clean": {
+    "actualExit": 0
+  },
+  "session-final-main": {
+    "id": 92365,
+    "actualExit": 0
+  },
+  "admission-readonly": {
+    "actualExit": 0
+  },
+  "native-cli-clean": {
+    "id": 51240,
+    "actualExit": 0
+  },
+  "session-final-clean": {
+    "id": 43715,
+    "actualExit": 0
+  },
+  "reader-final-main": {
+    "id": 30035,
+    "actualExit": 0
+  },
+  "reader-final-clean": {
+    "id": 9080,
+    "actualExit": 0
+  }
+}

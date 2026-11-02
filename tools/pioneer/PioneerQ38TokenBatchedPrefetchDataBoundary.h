@@ -35,7 +35,9 @@ enum {PioneerQ38TokenBatchedPrefetchDataSelection=0};
   && !(defined(PIONEER_Q38_TOKEN_WIDE_GDN_PROGRAMS) && PIONEER_Q38_TOKEN_WIDE_GDN_PROGRAMS == 1 \
    && defined(PIONEER_Q38_TOKEN_WIDE_GDN_PROGRAMS_H)) \
   && !(defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) && PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS == 1 \
-   && defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS_H)))
+   && (defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS_H) \
+    || (defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS) && PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS == 1 \
+     && defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS_H)))))
 #error Batched-prefetch DATA cannot coexist with old arrays or selected native namespace
 #endif
 #if defined(PIONEER_Q38_TOKEN_NATIVE_TEST_CONTEXT) \

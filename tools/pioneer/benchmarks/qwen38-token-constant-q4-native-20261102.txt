@@ -1,0 +1,147 @@
+Constant-Q4 issue:complete native diagnostic integration,NOT a speedup
+===================================================================
+2026-11-02. Goal ACTIVE. Correct usable Qwen3.8-27B Q4_K_M Work and20tok/s
+remain UNMET. Last completed physical model diagnostic is about0.16282tok/s,
+with strict numerical comparison still failing at the first maximum-score
+FP32 bit. This checkpoint does not claim new physical performance or full
+model numerical acceptance. No Assistant/Work selector is enabled here.
+
+Implemented subject
+---------------------
+The preceding e9ef full returning worker constant-Q4 issue experiment is
+now connected to the unchanged full-token timing ROOT91f389 through its
+own complete immutable DATA/native/USER family. Q4 issue constants replace
+runtime instruction-buffer writes;arithmetic,formats,source-bank handoff,
+original replay decoder,raw UNPACK,stores,drains and twin-buffer scheduling
+are unchanged. This is not the quarantined raw-cache22 experiment.
+
+All14 sections and both complete ELFs authenticate before DATA output.
+ONLY PeerFront,PeerFetch,PeerAffine,PeerText differ from the complete phase
+predecessor. The10 other arrays,2MiB RoPE and53,913,832-byte original journal
+remain exact. All120 code maps cover3,114,315 words. Pure DATA is not native
+ownership,shader execution,CPU validation or Work authority;zero-valued,
+late,missing,mixed-role and old-array aliases are refused.
+
+Independent frozen BUILD results
+--------------------------------
+Main20318/clean49767 final non-inspect public builders ACTUALLY exit0.
+Each rebuilds the entire old phase public/private family+ancestors FIRST,
+then the frozen new private subject,then the public diagnostic. Independent
+whole private objects,public objects and modules compare byte-for-byte.
+Main15366/clean16280 final non-inspect USER builders ACTUALLY exit0;whole
+objects/clients compare byte-for-byte,with every old phase/USER ancestor
+reproduced first. Exact complete identities:
+
+ DATA79c3056dfbe9b7dd564dc93c3577d72c0bcb004d5018dd0d6b7da212dfad8061
+ PRIVATE5e2c95a3887920990a3ef0b80cfd0057a68bc95b645f03476c7869d9dd622e63
+ PUBLIC657a897c27cf3b57567db19eb95519075f554ec4fdd1cca24d09b451c0e143c9
+ MODULEdb032591d905a30debf1e9a36f5990301e3db9ba40bfa8cf945677e3f54e8106
+ USERobjacf6255ff11a94fbf484fb6c277f5adae562e7d83958d825e31b0e337bf325c8
+ USERbin3edc924a9e76fdcd42815fa49b6d2756d80c6a18e3a3eb8bc9d4b765345ce1de
+
+Module:tenstorrent_pci_probe-TOKEN-CONSTANT-Q4-34-DIAGNOSTIC-ONLY.
+Client:pioneer-q38-TOKEN-CONSTANT-Q4-34-DIAGNOSTIC-ONLY.
+The inherited tag2026103100010075 is NOT new code provenance. Loaded full
+module SHA,generation,staged client/helper and exact updater identities
+must independently qualify any deployment;an old tag75 module is not this
+subject. This client has a distinct mandatory
+ --benchmark-constant-q4-34-positions
+entry plus source-only preflight;old phase CLI stays available ONLY to its
+old client. The first new banner is explicitly a HOST LABEL,NOT provenance.
+
+Partial actual public call graph remains5392B known module chain/25
+unresolved edges,wholeKernelStackQualified=FALSE. Native individual frames
+are<=2048B or unchanged larger predecessors. USER individual maximum4432B;
+formatter graph400B with fprintf/fputc/memcpy unresolved. These are not
+whole-kernel/IRQ/indirect or whole-USER stack certification.
+
+Closed original-model native instruction histories
+---------------------------------------------------
+SAME main9820 and independent clean99949 ACTUALLY exit0. Their complete
+17,380-byte stdout streams are byte-identical:
+ SHA2794e796d2ae3046f3de1624b3fa885764cc9649dc0f4597f92a2d5218f6eda3
+Both stderr streams are0B. Actual full851 same-open original-GGUF/source
+authentication,1010 real zero jobs,119 virgin native worker instruction
+engines plus actual ROOT,first-layer arithmetic,cancellation,119STOP+2048
+inert instructions each,120HOLD,zero-record drain,one doublechecked held
+timing read and complete original restoration/full END all finish.
+ROOTinstructions169184049/peerInstructions1931146380 are interpreter counts,
+NOT physical cycles or timing. Timing-clock,OS,NoC and GDDR endpoints here
+are HOST simulations,not physical Pioneer execution. No history transplant,
+CPU expected product,completion receipt injection or shortened END is used.
+
+Unchanged independent CPU comparisons ACTUALLY exit0 in both trees:
+5,120 embedding and5,120 first-layer hidden words bit-exact. All3 original
+CPU trace pins load;no tolerance,expected word,reference,validator or exit
+override changes. Matching layer0 does NOT qualify later layers/full34
+tokens,physical numerics,arbitrary prompts,Assistant Work or model speed.
+First-matrix accelerator stack:ROOT reserved5760/accessed5748,maximum
+119peers reserved3552/accessed3540. The COMPLETE first-layer combined
+path reaches ROOT reserved6528/accessed6516,maximum119peers reserved5360/
+accessed5348,within each unchanged8192-byte reserve. These observations
+are separate from the incomplete HOST kernel-stack graph above.
+
+Closed local boundaries/session/readers
+----------------------------------------
+Both final DATA suites ACTUALLY0:all120 code words+119 ranges,32 corrupt/
+truncated artifacts,4 wrong families,3 positive/292 DATA-role refusals.
+Both final native role suites ACTUALLY0:private3positive/840refused,
+public3positive/750refused,all phase/older controls first. Both native CLI
+suites ACTUALLY0:30 early incomplete/duplicate/old/compile-only refusals,
+actual const-ROM bridge3,073,413 peer words/723 address/worker refusals,
+32 CPU/Work/native/USER/shader isolation refusals. No source/compiler/output
+is opened by refused command lines. No physical device is used.
+
+Both final actual USER-session suites ACTUALLY0:synthetic851 uploader+
+34records,100 COW packet/transport/END/Close/invalid-clock cases. One extra
+timing read is held+drained before END;no raw packet is available until
+whole normal Finish+Close. New client-role suites:4positive/177refused.
+The strict reader removes ONLY one exact new host-label line in a private
+snapshot,then delegates to UNCHANGED phase/frontier/numerical validators.
+386 synthetic equivalent parent decisions(2accepted/384refused),7 malformed
+label refusals preserve strict numerical failure. Raw logs are not rewritten.
+Synthetic packet/session passes are not original-model or hardware results.
+
+Initial USER-role tests failed on missing parent binding and missing wide
+native exclusions;production checks were repaired. A third refusal exposed
+the missing separate CLI entry header;the new wrapper now rejects old-only
+roles while preserving the old phase CLI. No model expectation was weakened.
+Original failure logs are retained separately from the final passing logs.
+
+Exact guarded exchange boundary
+--------------------------------
+Helper7fae5efe1add752818c04459369e6c456364941ff8240afc9ae7a09b55f9ddbb
+owns ONLY db03<->stable041. Old phase3a2 helper cannot apply/restore db03.
+No GPU job,reset,forced unload,retry,automatic rollback or cold-latch clear
+is included. Full file hashes+nonwritable root/single-link identities,
+known idle status/generation,project-parent absence,quiesce and verified
+reload remain mandatory. Main31511/clean24297 exchange suites BOTH ACTUALLY
+exit0:2positive/102refused,all old phase+wide+output+retired controls FIRST.
+Every metadata column,foreign old/private/object/USER identity,corruption,
+symlink,hardlink,writable file,live parent,quiesce/copy race and unverified
+reload is exercised in BOTH directions. These private FS/API endpoint
+fixtures do not install a driver,execute a card or prove native safety.
+
+Next physical gate and preserved objective
+--------------------------------------------
+Read-only SSH admission ACTUALLY0:stable041/tag12/gen8,cold0/owner0/open1/
+guard1,64CPUs/RAM137034936320B,no project compute parent. This is current
+read-only evidence,not a new benchmark or perpetual permission to use a
+stale generation. No remote stage/install/reload/accelerator run,power,
+boot/kernel,network,Assistant,SD,mains or hardware operation occurs in this
+checkpoint. UART is not reopened/reconfigured. Unrelated dirt is excluded.
+
+All exact exchange fixtures are closed;freeze/push this tested checkpoint,
+freshly admit/stage/read back exact full objects,then one controlled
+original27B fixed34 hardware diagnostic. Parse its whole closed raw log
+against unchanged strict CPU pins,including failures,and restore041 ONLY
+after actual clean END+Close and independent verified idle admission.
+No inference speedup follows from the preceding0.8..1.2percent Q4 RV-count
+reduction or35percent fewer instruction-buffer writes. Real model timing
+decides whether this issue-path change is useful;20tok/s remains unproven.
+Whole-card multi-bank bandwidth and representative unpack/tensor timing
+are still needed for a credible feasibility bound,not peak-spec arithmetic.
+
+Raw completed logs and source hashes are archived in the sibling folder.
+Learned GGUF/prefix/CPU trace files are NOT committed. Final code remains
+diagnostic-only;this checkpoint is not a usable no-reference Work target.

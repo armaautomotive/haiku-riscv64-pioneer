@@ -17,7 +17,9 @@
 #endif
 #include "PioneerQ38TokenHiddenValidationSession.h"
 #include "PioneerQ38TokenRateSamples.h"
-#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT
+#if defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_CLIENT)
+#include "PioneerQ38TokenConstantQ4Cli.h"
+#elif defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT)
 #include "PioneerQ38TokenPhaseProfileCli.h"
 #elif defined(PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT)
 // Own explicit CLI was bound above;never expose the old benchmark spelling.
@@ -59,6 +61,9 @@ int main(int argc,char** argv){
  if(mode==M::Invalid)return 2;
  namespace V=PioneerQ38TokenDecodeBenchmark;
  setvbuf(stdout,nullptr,_IOLBF,0);
+#ifdef PIONEER_Q38_TOKEN_CONSTANT_Q4_CLIENT
+ puts("Q38_CONSTANT_Q4_FIXED34_DIAGNOSTIC_HOST_LABEL_NOT_DEVICE_PROVENANCE_OR_WORK");
+#endif
 #ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT
  puts("Q38_TOKEN_PHASE_FIXED34_HELD_READ_NO_CPU_REFERENCE_NOT_WORK_RAW_CYCLES_NOT_FREQUENCY");
 #endif

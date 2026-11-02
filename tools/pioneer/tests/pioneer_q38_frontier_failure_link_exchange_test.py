@@ -12,11 +12,14 @@ import tempfile
 import sys
 
 here=pathlib.Path(__file__).resolve().parent
-assert sys.argv[1:] in ([],['--qualified-original-endpoints'],['--batched-output-closure-endpoints'],['--wide-gdn-endpoints'],['--token-phase-endpoints']) and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
+assert sys.argv[1:] in ([],['--qualified-original-endpoints'],['--batched-output-closure-endpoints'],['--wide-gdn-endpoints'],['--token-phase-endpoints'],['--constant-q4-endpoints']) and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
+constant_q4=sys.argv[1:]==['--constant-q4-endpoints']
 token_phase=sys.argv[1:]==['--token-phase-endpoints']
 output_closure=sys.argv[1:]==['--batched-output-closure-endpoints']
 wide_gdn=sys.argv[1:]==['--wide-gdn-endpoints']
-if token_phase:
+if constant_q4:
+    subprocess.run([sys.executable,str(pathlib.Path(__file__).resolve()),'--token-phase-endpoints'],check=True)
+elif token_phase:
     subprocess.run([sys.executable,str(pathlib.Path(__file__).resolve()),'--wide-gdn-endpoints'],check=True)
 elif wide_gdn:
     subprocess.run([sys.executable,str(pathlib.Path(__file__).resolve()),'--batched-output-closure-endpoints'],check=True)
@@ -30,6 +33,8 @@ assert hashlib.sha256(original).hexdigest()=='e37c189e55c63b9a358aad4732d5e9122b
 retired=not sys.argv[1:]
 if retired:
     subprocess.run([sys.executable,str(pathlib.Path(__file__).resolve()),'--qualified-original-endpoints'],check=True)
+elif constant_q4:
+    production=(here.parent/'pioneer_q38_token_constant_q4_exchange.sh').read_text()
 elif token_phase:
     production=(here.parent/'pioneer_q38_token_phase_profile_exchange.sh').read_text()
 elif wide_gdn:
@@ -48,7 +53,9 @@ pins={
 if output_closure:pins['candidate']='7c85898c5591115521e5f38c9ee546da7909a1da82b9a025046c5f8c81d1b623'
 if wide_gdn:pins['candidate']='b8c0d49855490e756dfe1c49bed7933a20f2a3afea19436b37e3b4717417b8ed'
 if token_phase:pins['candidate']='0f2066ca48b24ae36550e57dd5334aa29645deb7f65dc8fd7bbbb9629f674e86'
+if constant_q4:pins['candidate']='db032591d905a30debf1e9a36f5990301e3db9ba40bfa8cf945677e3f54e8106'
 candidate_name='tenstorrent_pci_probe-TOKEN-PHASE34-DIAGNOSTIC-ONLY' if token_phase else 'tenstorrent_pci_probe-WIDE-GDN34-DIAGNOSTIC-ONLY' if wide_gdn else 'tenstorrent_pci_probe-BATCHED-OUTPUT-CLOSURE34-DIAGNOSTIC-ONLY' if output_closure else 'tenstorrent_pci_probe-FRONTIER-PREERROR-LINK-DIAGNOSTIC-ONLY'
+if constant_q4:candidate_name='tenstorrent_pci_probe-TOKEN-CONSTANT-Q4-34-DIAGNOSTIC-ONLY'
 admin_source='''#!/usr/bin/env python3
 import os,pathlib,sys
 p=pathlib.Path(os.environ['FIXTURE_ROOT']);fault=os.environ['FIXTURE_FAULT'];args=sys.argv[1:]
@@ -95,12 +102,16 @@ cases += [(name,'--apply') for name in ('stable','candidate','guard','admin','in
  'private22a_candidate','private22a_installed',
  'retired5920_candidate','retired5920_installed','private3593_candidate','private3593_installed')]
 cases += [('field'+str(i),'--apply') for i in range(9)]
-if output_closure or wide_gdn or token_phase:
+if output_closure or wide_gdn or token_phase or constant_q4:
     cases += [(fault,'--apply') for fault in ('retired96a0_candidate','retired96a0_installed')]
-if wide_gdn or token_phase:
+if wide_gdn or token_phase or constant_q4:
     cases += [(fault,'--apply') for fault in ('old7c85_candidate','old7c85_installed','privatede2f_candidate','privatede2f_installed')]
-if token_phase:
+if token_phase or constant_q4:
     cases += [(fault,'--apply') for fault in ('oldb8c0_candidate','oldb8c0_installed','private2076_candidate','private2076_installed')]
+if constant_q4:
+    cases += [(fault,'--apply') for fault in ('old0f20_candidate','old0f20_installed',
+        'private5e2c_candidate','private5e2c_installed','object657a_candidate','object657a_installed',
+        'user3edc_candidate','user3edc_installed')]
 cases += [(fault,'--restore') for fault,mode in cases if fault!='none']
 passed=0
 for index,(fault,mode) in enumerate(cases):
@@ -111,6 +122,7 @@ for index,(fault,mode) in enumerate(cases):
            'admin':old/'admin','stable':old/'stable'}
     data={'stable':b'synthetic-stable041','candidate':b'synthetic-phase0f20' if token_phase else b'synthetic-wideb8c0' if wide_gdn else b'synthetic-corrected7c85' if output_closure else b'synthetic-link96a0','guard':b'synthetic-guard',
           'admin':admin_source.encode()}
+    if constant_q4:data['candidate']=b'synthetic-constant-q4-db03'
     for key in ('stable','guard','admin'):
         paths[key].write_bytes(data[key]);paths[key].chmod(0o755)
     candidate=stage/candidate_name;candidate.write_bytes(data['candidate']);candidate.chmod(0o755)
@@ -129,7 +141,7 @@ for index,(fault,mode) in enumerate(cases):
         file=stub/name;file.write_text(stub_source);file.chmod(0o755)
     if fault in ('stable','guard','admin','installed'):paths[fault].write_bytes(b'corrupted')
     if fault=='candidate':candidate.write_bytes(b'corrupted')
-    if fault.startswith(('retired010c_','retired34322_','private22a_','retired5920_','private3593_','retired96a0_','old7c85_','privatede2f_','oldb8c0_','private2076_')):
+    if fault.startswith(('retired010c_','retired34322_','private22a_','retired5920_','private3593_','retired96a0_','old7c85_','privatede2f_','oldb8c0_','private2076_','old0f20_','private5e2c_','object657a_','user3edc_')):
         target=candidate if fault.endswith('_candidate') else paths['installed']
         target.write_bytes(('synthetic-'+fault.split('_')[0]).encode())
     if fault=='stage_mode':stage.chmod(0o777)
@@ -169,6 +181,6 @@ for index,(fault,mode) in enumerate(cases):
         if fault not in ('wait','quiesce','changed_during_quiesce'):assert len(calls)<=1,(fault,calls)
         if fault.startswith('retired96a0_'):
             assert not calls and not (stage/'stable041.backup').exists() and not (stage/'driver.incoming').exists()
-print('exact '+('NEW0f20 token-phase diagnostic' if token_phase else 'NEWb8c0 returning-wide-GDN' if wide_gdn else 'NEW7c85 corrected-output' if output_closure else 'NEW96a0')+' exchange script endpoint fixtures:',passed,'valid /',len(cases)-passed,'refused; NO actual install/reset/GPU')
+print('exact '+('NEWdb03 constant-Q4 diagnostic' if constant_q4 else 'NEW0f20 token-phase diagnostic' if token_phase else 'NEWb8c0 returning-wide-GDN' if wide_gdn else 'NEW7c85 corrected-output' if output_closure else 'NEW96a0')+' exchange script endpoint fixtures:',passed,'valid /',len(cases)-passed,'refused; NO actual install/reset/GPU')
 if retired:print('RETIRED96a0 APPLY stops before platform/admin/copy/lock;entire original2way endpoints FIRST;guarded RESTORE unchanged')
 print('raw fixture histories retained at',root)
