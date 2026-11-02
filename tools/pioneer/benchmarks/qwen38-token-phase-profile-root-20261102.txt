@@ -1,0 +1,141 @@
+Full current token ROOT phase timing: BUILD and direct emitted helpers CLOSED
+===========================================================================
+2026-11-02. Goal ACTIVE; usable numerically accepted27B Work and20tok/s
+remain UNMET. This is local performance-instrumentation progress, NOT a
+speedup, full ROOT execution, original-model qualification or deployment.
+The separate physical wide-GDN parent7442 was protected through its entire
+actual authentication/Open/upload/RUN/HOLD/drain/restore/Close life. It
+ACTUALLY closes0 at13:57UTC;unchanged strict main+clean readers still1
+(one first-score FP32 least-significant bit differs;the other2 are exact).
+Rate approximately0.16274tok/s,not a speedup. Exact stable041/gen6 is
+independently verified after guarded restore. See the separate physical
+report for whole raw logs,reference scope and preservation checks. No
+Pioneer operation was added while7442 lived;only same-handle/local reads.
+
+Why this is needed
+-------------------
+The existing RootCycleProfile measures the older individual-matrix ROOT,
+not the full persistent token controller currently under test. Frontend
+PC samples or HOST emulator instruction counts cannot supply elapsed-time
+fractions for current model phases. This new distinct BUILD adds read-only
+device mcycle observations at real current token-controller boundaries.
+The next native/readout qualification and physical timing remain required.
+
+Ten buckets cover Bootstrap, layer Metadata, Recurrent body, Dense body,
+HeadNormalize, HeadMatrix, Feedback, StateCommit, token Publication and
+FinalStop. Body buckets INCLUDE their child waits/NoC/controller work;
+they are not pure tensor-engine utilization. Timing includes observer
+overhead and ALL positions, including prompt positions and bootstrap/STOP,
+not the uninstrumented32-post-prompt-token benchmark window. No MHz, GB/s,
+hardware utilization, latency or tok/s is inferred from fabricated clocks.
+
+Clock source and telemetry-only failure
+----------------------------------------
+The actual sampler contains exactly three read-only CSRRS opcodes:
+mcycleh0xb80/mcycle0xb00/mcycleh0xb80, source register x0, nonzero results.
+Four bounded attempts tolerate HIGH rollover; no counter inhibit/reset,
+control CSR, MMIO, NoC/DMA packet or mutable global is introduced.
+Official register semantics:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/CSRs.md
+
+Clock instability/backward samples,64-bit cycle or32-bit count overflow,
+malformed timing header/phase or invalid closing count make telemetry
+sticky INVALID. Subsequent marks perform no clock reads or metric writes.
+No numerical/control/STOP/safety predicate is bypassed or made successful
+by timing failure. The original terminal publication and cleanup remain
+separate from the telemetry COMPLETE field. Cancellation/fault histories
+without a full normal closing path do not gain a fabricated closed profile.
+
+Geometry and exact control preservation
+----------------------------------------
+The60-word record occupies ONLY existing Progress words4..63:
+0x75710..0x757ff. The original layer progress words0..2 and frontier word3
+remain disjoint; the record ends EXACTLY at following Parts0x75800. A
+compile-time check uses the actual current ROOT/projection layout enums.
+No geometry fit is treated as native ownership or permission to read live
+metrics. The future native reader must use its actual held-owner lifecycle.
+
+Text is130892/131072 bytes,leaving180;Conv is32704/32768,leaving64. The
+unchanged small StateSeal function is relocated from Conv to text ONLY in
+this distinct timing BUILD. The timing accumulator uses that vacated Conv
+space; neither ROM range nor journal/snapshot footprint expands. Bootstrap
+and terminal bytes remain exact. Per-helper compiler frames are16..32B;
+the direct fixture checks actual stores stay inside the existing8192B stack
+and preserves callee-saved registers,including s11. This is NOT full ROOT
+combined-stack or whole-kernel/IRQ stack certification.
+
+Both complete builds FIRST rebuild the entire c176 output-closure ROOT and
+all its existing ancestors. The whole c176 ELF and all THREE current old
+recurrent/dense/token TUs reproduce byte-exact before the new selection.
+The separate new token TU and sampler link with the unchanged actual
+returning arithmetic capsule and feedback object. No learned value,model
+reference,expected numeric word,tolerance or validator is changed.
+
+All actual function intervals are audited as32-bit instructions. Exact
+same-range symbol aliases are grouped,while different overlapping function
+intervals refuse. CSR is allowed ONLY in the actual sampler and exactly in
+the three-opcode sequence above; forbidden control/arithmetic opcodes stay
+refused. Actual emitted begin/mark/complete/clock call sites are bound to
+main/RunHead/Finish and the sampler,not guessed from literal DATA. This
+static call-site audit does NOT prove the full caller path has executed.
+
+Independent closed evidence
+----------------------------
+Main final BUILD24009 ACTUALLY0;clean13371 ACTUALLY0. Whole new ELF is exact
+between both. Both full immutable section sets and ELF identities are:
+ boot4       32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text130892  0f70850875df17399e233103aa9dd1bee5d5fa249a040bfdb6eb37c46962ad71
+ terminal8   468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2
+ conv32704   32570f96157e3bb28ea072a04b4ca04b09131c22eaed29af45b3ca95d49d9209
+ ELF191928   91f389bb72e04019816a3f66c34a4ba87624f0a58f693e362e190d84ccd17bdf
+The new builder freezes this complete independently reproduced BUILD;
+those pins are not model/numerical/native/physical/Work authority.
+
+Main DATA/role93611 and clean48428 ACTUALLY0. Each ASan/UBSan DATA suite
+has94 cases:1/2/34/8192 positions,64-bit accumulation/rollover,ALL60 single-
+word corruptions and10 sticky-invalid fault classes. Strict closed grammar
+requires the real expected64 metadata/48 recurrent/16 dense/five head-
+commit-publication counts per position plus one bootstrap/STOP;bucket sums
+and segment sums must match the complete observed cycle interval/count.
+Role compilation has3 positives/86 missing,zero,two,late,kernel,native,
+CPU and Work refusals. These are syntax/DATA tests,not a whole-model run.
+
+Main emitted60847 and clean92557 ACTUALLY0. Whole ELF identity and every
+objcopy section are authenticated before execution. The ACTUAL linked
+timing-helper RV32 instructions run21 histories:12 success histories of
+1/2/34 positions with rollover and large64-bit deltas,plus9 fault histories.
+Every bucket's accumulated value matches an independently captured actual
+CSR stream. NoC/MMIO/coprocessor access is forbidden;original first4 progress
+words and ABI registers remain exact. Closed/invalid subsequent calls have
+NO CSR or metric writes. This is DIRECT HELPER execution with fabricated
+clocks,not execution of the full ROOT/caller/model/native lifetime.
+ALL21 existing program-native family generators refuse this new whole ROOT
+before worker IO or output creation. It cannot silently enter current Work.
+Paired emitted stdout is byte-exact;all six final stderr files are0B.
+
+Initial refused builds are retained,not passed off as success:freestanding
+stdint absence,fixed text-overlap limit,unused static routine declaration,
+and same-range emitted symbol aliases. Fixed by freestanding builtin types,
+bounded existing-section placement,unused declaration annotation and exact-
+range alias grouping respectively;no range or opcode refusal was weakened.
+An initial runner expected a Python exception label instead of the existing
+PROGRAM_DATA_REFUSAL diagnostic;ONLY the harness label was corrected.
+
+Sources and next required integration
+--------------------------------------
+Main:/private/tmp/pioneer-q38-token-phase-main-20261102.8VGxN5
+Clean:/private/tmp/pioneer-q38-token-phase-clean-20261102.OF5I8A
+Clean starts from a b8d1e699 export of tools,headers,build/config_headers and
+misc drivers,overlaid only with the12 owned timing sources/tests. Final
+build/test sources compare exact;unrelated FlashNext,dirty llama and user's
+NATIVE_BUILD_STATUS edits are excluded and preserved. Raw closed logs and
+initial refusals are retained in the sibling benchmark directory.
+
+Next:distinct immutable program DATA/native ownership/readout,then actual
+full ROOT/model/cancel/STOP/HOLD/full-END and unchanged strict numeric tests
+before separately guarded physical timing. Read a stable held snapshot,
+not extra live card calls or token-record reserved fields. Use raw cycle
+fractions first;counter frequency still needs independent calibration for
+absolute time. Optimize the measured dominant path without conflating this
+instrumentation with an inference speedup. No timing driver/client has been
+staged,installed or executed on the Pioneer by this checkpoint.

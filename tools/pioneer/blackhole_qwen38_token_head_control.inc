@@ -29,7 +29,14 @@ static __attribute__((noinline,section(".conv.token"))) void Bootstrap(){
  if(feedback[2]!=p->state[NextToken] || feedback[3] || feedback[14] || feedback[15]!=1)scalar_fault_park();
  FeedbackSeal(header);
 }
-static __attribute__((noinline,section(".conv.token"))) void StateSeal(const uint32_t* h,const uint32_t* data,unsigned layer,bool feedback){
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
+// Only this distinct timing BUILD relocates the unchanged small helper to
+// text, retaining the exact existing conv ROM extent despite timing calls.
+static __attribute__((noinline,section(".text.q38_phase_state_seal")))
+#else
+static __attribute__((noinline,section(".conv.token")))
+#endif
+void StateSeal(const uint32_t* h,const uint32_t* data,unsigned layer,bool feedback){
  HeadSeal(h);
 #ifdef PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_SEALS_IMAGE
  (void)feedback; // immutable numeric scans bracket the ENTIRE transaction
@@ -113,6 +120,9 @@ static __attribute__((noinline,section(".conv.token"))) void PublishToken(const 
 #endif
 }
 static __attribute__((noreturn,noinline,section(".conv.token"))) void Finish(const uint32_t* h,unsigned reason){
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
+ q38_token_phase_mark(QPhase::FinalStop);
+#endif
  auto* p=Owner();if(p->phase!=6 || !reason || reason>2)scalar_fault_park();
  for(unsigned w=0;w<119;w++){
   unsigned n=Words(R::Nonces)[w];if(n>=0x7ffffffe)scalar_fault_park();
@@ -126,6 +136,11 @@ static __attribute__((noreturn,noinline,section(".conv.token"))) void Finish(con
  for(unsigned w=0;w<119;w++)Release(h,w);
  for(unsigned w=0;w<119;w++)Closed(h,w,true);
  HeadSeal(h);InputSeal();
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
+ // Telemetry closes AFTER119 real STOPs, BEFORE the unchanged terminal
+ // publication. This is not permission to HOLD,restore,release or succeed.
+ q38_token_phase_complete(p->state[Committed]);
+#endif
  for(unsigned i=0;i<64;i++)Words(T::TerminalLocal)[i]=0;
  const unsigned terminal[]={0,1,reason,p->state[Committed],p->state[Position],119,64,973,p->state[Slot],1};
  for(unsigned i=0;i<10;i++)Words(T::TerminalLocal)[i]=terminal[i];
@@ -134,11 +149,17 @@ static __attribute__((noreturn,noinline,section(".conv.token"))) void Finish(con
  Fence();Words(T::TerminalLocal)[0]=T::TerminalMagic;Fence();q38_global_chain_stopped();
 }
 static __attribute__((noinline,section(".conv.token"))) unsigned RunHead(){
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
+ q38_token_phase_mark(QPhase::HeadNormalize);
+#endif
  uint32_t header[128];auto* p=Owner();
  Transfer(p->state[Workspace]+L::HeadOffset,512,false);
  for(unsigned i=0;i<128;i++)header[i]=Words(L::Head)[i]=Words(R::Scratch)[i];
  if(!H::Shape(header,p->boot,p->state[Bank],p->state[Workspace]))scalar_fault_park();
  HeadSeal(header);Normalize(header);unsigned accepted=0,rows=0,bestRow=248320,bestBits=0;
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
+ q38_token_phase_mark(QPhase::HeadMatrix);
+#endif
  for(unsigned w=0;w<119;w++)Closed(header,w);
  for(unsigned wave=0;wave<9;wave++){
   InputSeal();unsigned workers=wave==8?21:119;
@@ -159,12 +180,22 @@ static __attribute__((noinline,section(".conv.token"))) unsigned RunHead(){
  q38_token_cancellation_point(); // fully closed head, BEFORE mutable commit
 #endif
  unsigned next=bestRow;
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
+ q38_token_phase_mark(QPhase::Feedback);
+#endif
  if(!reason){
   if(p->state[Position]+1<p->state[PromptCount])next=Prompt(p->state[Position]+1);
   uint32_t feedback[16];Feedback(header,next,feedback);
   if(feedback[2]!=next || feedback[3]!=p->state[Position]+1 || feedback[14] || feedback[15]!=1)scalar_fault_park();
  }
- CommitState(header,!reason);PublishToken(header,bestRow,bestBits,!reason);
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
+ q38_token_phase_mark(QPhase::StateCommit);
+#endif
+ CommitState(header,!reason);
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
+ q38_token_phase_mark(QPhase::Publication);
+#endif
+ PublishToken(header,bestRow,bestBits,!reason);
 #ifdef PIONEER_Q38_TOKEN_CANCEL_BOUNDARY
  q38_token_cancellation_point(); // finish an already-started commit first
 #endif

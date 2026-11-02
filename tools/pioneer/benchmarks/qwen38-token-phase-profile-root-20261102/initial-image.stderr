@@ -1,0 +1,5 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_phase_profile_image_tests.py", line 51, in <module>
+    assert result.returncode and 'ValueError: artifact ' in result.stderr and not output.exists(), result.stderr
+AssertionError: PROGRAM_DATA_REFUSAL artifact text.bin: type/length
+

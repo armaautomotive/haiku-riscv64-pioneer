@@ -1,3 +1,73 @@
+Returning wide GDN:34-position physical diagnostic CLOSED,strict still1
+=====================================================================
+2026-11-02 13:59:36UTC. SAME7442 ACTUALLY exits0,observed13:57:00UTC.
+This supersedes all historical LIVE/protected/no-result statements below.
+No physical compute parent remains. Actual clean END+Close,all34 records
+and independent exact idle identities precede guarded restoration52764
+ACTUALLY0. Independent final SSH ACTUALLY0:stable041/tag12/generation6,
+cold0/quiesced0/owner0/open1/guard1,64CPUs/full137034936320B RAM.
+Goal ACTIVE;usable numerically accepted27B Work and20tok/s remain UNMET.
+
+Actual physical result and strict original comparison
+------------------------------------------------------
+Same-open original GGUF SHA/all851 learned bindings authenticate before
+Open;all19399024640 allocation bytes upload. START acknowledges,all34
+positions finish,then actual HOLD/drain/restoration/END+Close succeeds.
+Whole567-line43759B stdout is retained unchanged;stderr0B,actual process0.
+This is not a whole-card authenticity/capacity or sustained-model certificate.
+
+32 post-prompt sampled tokens,committed2..34,2008 observations:
+ elapsed196630023..196633367us
+ rate0.162739420..0.162742187 tokens/sec
+about6.145seconds per sampled token. Authentication,upload,initialization
+and restoration are excluded. Observation-window bounds are NOT confidence
+intervals or isolated latency. No speedup over the preceding approximately
+0.16286tok/s diagnostic is claimed. This remains one fixed2-prompt run,
+not arbitrary-prompt/Assistant Work or usable20tok/s.
+
+Both unchanged strict F8 readers,main and independent clean,ACTUALLY exit1.
+ALL3 original CPU trace pins load. Whole34 grammar,flags,feedback,count/
+rate arithmetic and first3 greedy selections pass. The wide recurrent
+reduction removes the earlier large final-score differences in this scope:
+ position selected observed-max-bits CPU-max-bits
+ 0        70253    413c2359          413c2358
+ 1        17       414621d3          414621d3
+ 2        17       4168afd0          4168afd0
+Position0 still differs by ONE FP32 least-significant bit. Positions1/2
+are bit-exact. That improvement is not strict success. No expected value,
+tolerance,trace pin,verifier or exit mode is changed;strict failure stays
+failure. Positions3..33 have NO external numeric acceptance here. Paired
+whole strict stdout is byte-exact;both stderr0B. This is not all-hidden/
+all-vocabulary quality or whole-model acceptance.
+
+Safe post-terminal restoration and preservation
+------------------------------------------------
+After actual7442 exit0 ONLY,fresh independent cached metadata SSH35722
+ACTUALLY0:whole installedb8c0/stagedmodule/helper8a55/clientf8/stablebackup/
+adminb0c/guardd1ce identities and permissions exact;tag75/gen5/cold0/idle,
+no compute parent,64CPUs/full RAM. No additional card IO interprets the
+already returned results. Exact8a55 --restore b8c0->041 runs ONCE:52764
+ACTUALLY0,quiesce/close/atomic replacement and verified reload togen6.
+Independent new SSH ACTUALLY0 verifies all whole identities,stable041/gen6/
+idle and CPU/RAM above;free133786755072B. All physical,strict,post-terminal,
+restore and final independent stderr streams are0B.
+No extra GPU job,reset,force-unload,retry,quarantine,reboot,power,SD,mains,
+hardware/network/Assistant/kernel or boot change. The existing UART was
+never reopened or reconfigured. The full protected parent lifetime received
+ONLY same-handle polls/local raw reads until its actual terminal status.
+Raw whole physical/strict/metadata/restore logs and final readonly script
+are archived in the sibling directory alongside the prior launch evidence.
+
+Next:investigate the one-bit first-score difference without weakening the
+unchanged reference,while integrating measured phase timing for performance.
+Separate qwen38-token-phase-profile-root-20261102.txt records a new local
+full-ROOT BUILD/direct emitted-helper checkpoint,not an installed driver,
+full ROOT/native/physical execution or speedup. It still needs immutable
+program DATA/native held readout/full-lifetime/numeric qualification before
+separately guarded physical timing. Correct usable Work and20tok/s UNMET.
+
+Historical launch ledger (superseded LIVE status;retain provenance)
+------------------------------------------------------------------
 Returning wide GDN: controlled original27B physical diagnostic LIVE
 =================================================================
 2026-11-02 13:19:40 UTC. Goal ACTIVE. SAME7442 is ACTUALLY LIVE after a

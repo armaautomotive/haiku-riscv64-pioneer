@@ -1,0 +1,6 @@
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38TokenPhaseProfileData.h:32:20:bool PioneerQ38TokenPhaseProfileData::Running(volatile uint32_t*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38TokenPhaseProfileData.h:46:6:void PioneerQ38TokenPhaseProfileData::Advance(volatile uint32_t*, bool, uint64_t, unsigned int, unsigned int)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_token_phase_profile.cpp:11:43:bool q38_token_phase_clock(uint32_t*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_token_phase_profile.cpp:21:43:void q38_token_phase_begin()	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_token_phase_profile.cpp:25:43:void q38_token_phase_mark(unsigned int)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_token_phase_profile.cpp:30:43:void q38_token_phase_complete(unsigned int)	32	static

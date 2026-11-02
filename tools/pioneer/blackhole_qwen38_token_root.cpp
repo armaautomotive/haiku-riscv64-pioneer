@@ -6,6 +6,16 @@
 #include "PioneerAttentionMath.h"
 #include "PioneerQ38TokenLayout.h"
 #include "PioneerQ38TokenMetadata.h"
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
+#include "PioneerQ38TokenPhaseProfileData.h"
+namespace QPhase=PioneerQ38TokenPhaseProfileData;
+static_assert(QPhase::Address==PioneerQ38GlobalChainLayout::Progress+16
+ && QPhase::Address+QPhase::Words*4==PioneerQ38MixedProjectionRootLayout::Parts,
+ "phase telemetry preserves first4 progress words and following projection metadata");
+extern "C" void q38_token_phase_begin();
+extern "C" void q38_token_phase_mark(unsigned);
+extern "C" void q38_token_phase_complete(unsigned);
+#endif
 #ifdef PIONEER_Q38_TOKEN_COMMIT_BOUNDARY_SEALS_IMAGE
 #include "PioneerQ38TokenCommitBoundaryLayout.h"
 #endif
@@ -126,9 +136,15 @@ extern "C" void q38_global_chain_main(){
  if(*Words(T::CancelLocal))scalar_fault_park();
 #endif
  Words(R::Status)[3]=T::Magic;for(unsigned i=0;i<64;i++){Words(L::Progress)[i]=0;Words(T::TerminalLocal)[i]=0;}
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
+ q38_token_phase_begin();
+#endif
  Bootstrap();
  for(;;){
   for(unsigned layer=0;layer<64;layer++){
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
+   q38_token_phase_mark(QPhase::Metadata);
+#endif
    unsigned position=owned.state[Position],token=owned.state[Token];
    if(!layer){
     if(owned.phase!=5 && owned.phase!=6)scalar_fault_park();
@@ -144,6 +160,9 @@ extern "C" void q38_global_chain_main(){
    owned.state[Position]=position;owned.state[Token]=token;owned.state[Layer]=layer;owned.state[Completed]=layer;
    owned.state[FrameReady]=1;owned.phase=2;Fence();*Words(R::Doorbell)=next[48];Fence();
    Metadata(layer,package);Scope();owned.phase=3;
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
+   q38_token_phase_mark(L::Dense(layer)?QPhase::Dense:QPhase::Recurrent);
+#endif
    unsigned returned=L::Dense(layer)?q38_return_dense_layer():q38_return_recurrent_layer();
    if(returned!=5120 || Owner()!=&owned || owned.phase!=3)scalar_fault_park();
    Scope(false);

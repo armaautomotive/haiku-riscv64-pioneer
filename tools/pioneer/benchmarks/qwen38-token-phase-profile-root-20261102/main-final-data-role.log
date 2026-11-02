@@ -1,0 +1,3 @@
+PASS phase timing DATA:94cases/all60 single-word corruptions/four token counts/64-bit rollover and accumulation/sticky invalid on uncertain,backward,overflow or malformed metric;NO model,native,physical frequency or speed proof
+PASS phase timing BUILD role/3 positive/86 missing+zero+two+late+kernel+native+CPU+Work refusals;syntax ONLY,not runtime/model/physical/TPS qualification
+Offline timing DATA and BUILD role evidence retained at /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q38-token-phase-data.j7sHq5H0;NO native access

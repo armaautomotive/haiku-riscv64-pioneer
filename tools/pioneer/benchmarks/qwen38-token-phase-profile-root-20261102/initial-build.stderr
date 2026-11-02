@@ -1,0 +1,13 @@
+In file included from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_token_root.cpp:10:
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38TokenPhaseProfileData.h:4:10: fatal error: stdint.h: No such file or directory
+    4 | #include <stdint.h>
+      |          ^~~~~~~~~~
+compilation terminated.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_qwen38_token_phase_profile_root.py", line 53, in <module>
+    run(*command)
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_qwen38_token_phase_profile_root.py", line 35, in run
+    subprocess.run(list(map(str, values)), check=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-g++', '-DPIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE=1', '-DPIONEER_Q38_BATCHED_OUTPUT_CLOSURE_ROOT_IMAGE=1', '-include', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38BatchedOutputClosureRootRole.h', '-DPIONEER_Q38_BATCHED_PREFETCH_ROOT_IMAGE=1', '-include', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38BatchedPrefetchRootRole.h', '-DPIONEER_Q38_FLAT_MATRIX_GRAMMAR_IMAGE=1', '-std=c++11', '-O2', '-Wall', '-Wextra', '-Werror', '-ffreestanding', '-fno-exceptions', '-fno-rtti', '-fno-stack-protector', '-fno-pic', '-fno-pie', '-ffp-contract=off', '-ffunction-sections', '-fdata-sections', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-msmall-data-limit=0', '-mno-relax', '-march=rv32imf', '-mabi=ilp32', '-fstack-usage', '-ffixed-s11', '-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1', '-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1', '-DPIONEER_Q38_TOKEN_FRONTIER_IMAGE=1', '-DPIONEER_Q38_JOB_BOOT_FOLD_IMAGE=1', '-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1', '-DPIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION=1', '-DPIONEER_Q38_TOKEN_CANCEL_BOUNDARY=1', '-DPIONEER_Q38_TOKEN_COMMIT_BOUNDARY_SEALS_IMAGE=1', '-c', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_token_root.cpp', '-o', '/private/tmp/pioneer-q38-token-phase-main-20261102.8VGxN5/root/phase-token.o']' returned non-zero exit status 1.
