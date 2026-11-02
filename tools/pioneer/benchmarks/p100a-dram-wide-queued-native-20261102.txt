@@ -1,0 +1,177 @@
+Wide queued reads:measured single-worker memory-path improvement
+=================================================================
+2026-11-02. Goal ACTIVE. Previous turn was progress;this turn qualifies the
+larger native working set and measures its physical benefit. Usable correct
+Qwen27B Work and20tok/s UNMET. No model inference is run. Last completed
+model diagnostic remains about0.1597tok/s with unresolved numerical
+differences. Memory improvements below are NOT a model speedup or whole-card
+bandwidth/capacity/integrity/authenticity certificate.
+
+Actual performance result
+--------------------------
+Same revision5/module/gen11/worker(1,2)/bank0/NoC0,16KiB packets:
+
+ depth   one-pass device cycles    bytes/device cycle   last-batch words checked
+     1                  639398           13.119540568                       4096
+     2                  492741           17.024375889                       8192
+     4                  362941           23.112869585                      16384
+     8                  301373           27.834636812                      32768
+    16                  270318           31.032369284                      65536
+
+Each pass reads8,388,608 bytes in512 requests. Depth16 needs2.3653549x fewer
+sampled device cycles than depth1 with the SAME packet size/program. This
+also beats the earlier serial16KiB leaf's595729 cycles/14.081248353bytes
+per cycle by2.2038081x,unlike revision4's smaller-buffer result. Cross-program
+comparison is contextual;the within-revision comparison is the direct test.
+
+Sustained --run 0 14 256 16 ACTUALLY exits0:2,147,483,648 bytes/131072
+requests,69,078,978 device cycles,31.087368548bytes/devicecycle. The earlier
+serial256-pass result was152,398,593 cycles:2.2061501x more than this one.
+The SAME8MiB source window is repeated256times;NOT2GiB of distinct memory,
+all7banks,all28GB,or the actual Qwen access pattern. Only the entire final
+256KiB batch is independently PIO-checked,not integrity of every byte read.
+
+Cycles cover the autonomous on-card issue/wait/fence loop,not upload or PIO
+checking. Firmware BUSY1350MHz/IDLE800MHz lease closes on all runs. Actual
+mcycle frequency is still independently unverified:NO measuredGB/s or model
+TPS conversion. Kernel observation reads may overlap execution. Host total
+operation44.748720s fordepth1 and59.502702s for the sustained case includes
+large snapshot/restore/PIO work and is NOT device transfer time. No sum of
+isolated rates or20tok/s forecast is substituted for a full-card/model run.
+
+What changed,without sacrificing the control
+----------------------------------------------
+New PioneerDramWideQueuedReadSweep inherits the same qualified FIFO/Slot/
+Drain routines,but has a distinct version3 magic/report and256KiB return
+area0x90000..0xcffff. Source READ-only8MiB bank window,NoC0,worker and up-to16
+requests remain fixed. Packet length remains<=16384B;no DMA to host memory,
+GDDR write,CPU model products or tensor-engine instruction is introduced.
+All packet return ranges are disjoint,and all responses of a batch must
+finish before reuse. Shape,source/report/clock/counter and finite-failure
+checks remain. The original scalar and16KiB queued programs are unchanged.
+
+Expanded region was checked against the official Blackhole memory map:
+L1/NoC accessible RAM is0x00000000..0x0017ffff,so this whole footprint fits.
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/README.md#memory-map
+This address-range fact is not permission to overwrite an active model's
+state;the isolated native owner still proves all peers held and saves every
+word before mutation. No production model layout is widened by this patch.
+
+New ELF26191937131cdf549d21420606ac51b36a6b9f4323df7ffc8da7639518cfb78d,
+text1844B/461words SHAc6213325935a08fa45c73b09020ac9ca30cc00fc9c6b0e9f9b6b0a5170ea2c8b;
+boot remains4B/d0565e4e... . Stack main288B/sampler16B,unchanged8KiB reserve.
+Actual source/ELF audit checks three READ-only CSRs,no mutable globals,
+undefined symbols,forbidden instructions or oversized frames. No counter
+reset or forced frequency command is added. Frozen header matches every
+actual emitted boot/text word.
+
+Native snapshot is68078 unique words:462code,2048stack,16job,16report,
+65536raw. Private saved+scratch allocation133614words/534456B is heap-backed,
+not a kernel-stack array. Root L1 allowlist,exact native scope counts,
+independent last-batch window bounds and comparison lengths all derive from
+the selected image,not the old4096-word buffer. All original L1 words are
+restored/read back before full native closure,including unused return slots.
+Exact source/NoC/FIFO/entry-override/reset/ARC/VM/PCI/reservation guards and
+no-IO-after-retention behavior are preserved. Bigger buffers are not simply
+granted by a user address,ready bit,public frame or inner closed flag.
+
+Separate physical subject and DATA boundary
+--------------------------------------------
+ module83029ee4d91ffd7df4aebfb4839d041903d1bc2dc0ba98acfb0f0a85c5b7e5c8
+ clienteefaa370b728f50dbc38bebf9befbd96116093e43c3984410ae1c816c422c1ae
+ helper7d835ebd8d47bfe68394336be74b16b559bfadbfbc7ea0aeb693297f2c30349e
+ tag2026110200050076;stage/boot/home/pioneer-p100a-dram-sweep-20261102-e
+Physical role requires both QUEUED=1 and WIDE=1 plus its exact new tag.
+Missing/zero/other values and all model/CPU-reference/Work/native-legacy
+aliases are refused. NODRV remains separately renamed/inert. Request stays
+200bytes but REQUIRES version3;old version2/tag0004 cannot select these
+bytes. Receipt grammar requires68078saved/restored,version3 marker and the
+whole requested last-batch comparison count. Native immutable depth binds
+the copied request;kernel-side factory independently validates all bounds.
+Old stagesa/b/c/d and their exact helpers remain immutable historical pairs.
+
+Closed tests BEFORE hardware use
+----------------------------------
+Main93940/B and independent clean65663/E ACTUALLY exit0. EACH first executes
+actual wide RV32 bytes18valid/50refused,then actual generic wide owner
+18valid/40refused. The invalid2*16KiB case is now a separately tested valid
+geometry;invalid FIFO depths/versions remain refused,not silently relaxed.
+Every one of16 full-size slots is separately corrupted away from samples;
+the independent comparison fails at that exact word,with no restoration or
+extra IO after uncertainty. ALL68078 old words are byte-exact on clean END.
+Delayed/out-of-order replies,captured FIFO command vs mutable registers,
+counter wrap,disjoint ranges,unused-tail canaries,complete address sequence,
+timeouts/drop/stall/reset/clock/source and restore failures are exercised.
+Scope/ARC in owner tests remain fixture hooks,NOT native hardware proof.
+
+Initial native endpoint C failed134 BEFORE SDK build/hardware:the fixture
+still passed the OLD4096-word scope count. Production correctly refused it.
+Correct caller now passes exact selected-image count AND separately asserts
+old4096 refusal. Expectation was not weakened. Main78197/D and clean65663/E
+actual Native.inc/controller/KernelExport endpoints each62valid/178refused,
+including full256KiB first/last L1 boundaries and each independent PIO slot.
+Both SDK/full-module builds ACTUALLY exit0;whole modules/clients compare
+byte-exact. Main9557 preserves old queued ELFfa245dbe+12valid/50refused and
+owner15valid/41refused. Main47400 preserves scalar ELF7002ccac+6valid/
+38refused and owner13valid/94refused. Default/base55 complete prior/current
+objects remain byte-exact aabe86f5.../20bd6ea1...;base55 is NOT installed041.
+NODRV object54b3a7ce... stays exact.14NODRV/38physical role cases pass.
+Driver-TU max frame912B/direct call-chain2352B;unchanged profile1040B and
+external/indirect kernel frames are outside that graph:NOT whole-kernel
+stack certification. Exchange endpoints main53858/clean51091 each2valid/
+46refused,ACTUAL0. Full staged copy-back and current source hashes pass.
+
+Physical lifetime and preservation
+------------------------------------
+Fresh health verifiesstable041/gen10,cold0/idle,64CPUs/fullRAM. Exact apply
+26637 ACTUALLY exits0 ->revision5/gen11;no-launch preflight ACTUALLY0,
+complete0/preflight1/all closures1. Independent exact installed SHA+idle
+metadata match before the first launch.55805 depth1 ACTUALLY exits0;its
+receipt is copied from completed tool output and count/cycle arithmetic
+rechecked. Cell13230 sequential depth2/4/8/16 ALL ACTUALLY exit0.46273
+sustained256 ACTUALLY exits0. Only same running handles are polled;no
+concurrent Pioneer observation/admin/model call occurs during any lifetime.
+
+ALL SIX:complete1/retained0,inner phase10/closed1/unsafe0,started/launched/
+observed/held1,saved/restored68078,expected full last-batch words checked,
+all views/PCI/reservation closures1,ioctl0/errno0/close0. Immutable code/frame,
+nonce/report,master counter deltas,FIFO/outstanding,safe PC/all-held and
+normal clock/L1/NIU/TLB restoration predicates pass. Post-terminal fresh
+health confirms idle revision5/gen11. Exact stage-e restore40224 ACTUALLY
+exits0 ->stable041/gen12. Independent final SSH ACTUALLY0:installed
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012/gen12/quiesced0/cold0/active_owner0/open1/guard1,
+64CPUs/max137034936320B/free133781012480B,adminb0c851.../guardd1ce2...
+unchanged. No board power/reboot,SD,mains,firmware,boot/kernel,network,
+Assistant or unrelated user source is changed. No physical job remains live.
+Receipts/source identities are in the sibling folder;only prestage ps table
+trailing padding is trimmed for Git whitespace checks.
+
+Next integration requirements,NOT model completion
+----------------------------------------------------
+Now use this measured path to guide real Qwen data scheduling and full-card
+tests. Do NOT transplant0x90000..0xcffff into an existing model:its declared
+L1 layout/second buffers/state and snapshot journal need their own analysis.
+Existing PioneerQ38BatchedPrefetchPlan has a deliberate<=8KiB precaution
+and saved extents;this isolated16KiB read result does not clear that model
+path or the retired failed34322 apply route. Preserve it as a failure.
+
+Source audit:GlobalWorker::Quiet and resident service IdleAll do not contain
+the FIFO-availability/overflow check used here. Determine their ACTUAL linked
+FIFO configuration and every boundary before adding a new separately gated
+model variant;this alone is NOT a demonstrated cause of34322's failure.
+Its old frontier client also omitted copied failure detail fields;capture
+those in a qualified diagnostic before another opaque model failure. No
+post-quarantine GPU observation/retry should be added. Full original-model
+quality/fresh requests,no-reference Assistant Work and measured20tok/s are
+still outstanding. No simulated result or microbenchmark replaces them.
+
+Reproduce:
+ python3 tools/pioneer/tests/run_pioneer_dram_queued_read_sweep_owner_tests.py SDK NEW_OUT --wide
+ python3 tools/pioneer/build_dram_sweep_diagnostic.py SDK NEW_OUT
+Old queued control:omit --wide;scalar control:run_pioneer_dram_read_sweep_owner_tests.py.
+SDK:/Volumes/HaikuBuildLocal/generated.riscv64. Main module output:
+/private/tmp/pioneer-dram-wide-native-sdk-main-20261102-d;clean output:
+/private/tmp/pioneer-dram-wide-native-sdk-clean-20261102-e. Independent source
+tree /private/tmp/pioneer-dram-native-clean-20261102-e.Ps157C uses original
+kernel headers/pinned623bdaad Git reference. Goal remains ACTIVE.

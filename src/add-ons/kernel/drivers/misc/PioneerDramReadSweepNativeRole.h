@@ -8,7 +8,8 @@
 #ifdef PIONEER_DRAM_SWEEP_DIAGNOSTIC
 #if PIONEER_DRAM_SWEEP_DIAGNOSTIC != 1 || defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) \
  || !defined(PIONEER_DRAM_SWEEP_QUEUED) || PIONEER_DRAM_SWEEP_QUEUED != 1 \
- || PIONEER_DRIVER_BUILD_TAG != 0x2026110200040076ULL
+ || !defined(PIONEER_DRAM_SWEEP_WIDE) || PIONEER_DRAM_SWEEP_WIDE != 1 \
+ || PIONEER_DRIVER_BUILD_TAG != 0x2026110200050076ULL
 #error DRAM diagnostic76 requires its separate physical role;never expose DRSNODRV
 #endif
 #else
@@ -19,6 +20,10 @@
 #endif
 #if defined(PIONEER_DRAM_SWEEP_QUEUED) && PIONEER_DRAM_SWEEP_QUEUED != 1
 #error Queued diagnostic must be selected explicitly,not inherited as zero
+#endif
+#if defined(PIONEER_DRAM_SWEEP_WIDE) && (PIONEER_DRAM_SWEEP_WIDE != 1 \
+ || !defined(PIONEER_DRAM_SWEEP_QUEUED) || PIONEER_DRAM_SWEEP_QUEUED != 1)
+#error Wide diagnostic requires its explicit queued perimeter
 #endif
 #if defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_RECURRENT_PREFIX_NATIVE_CONTEXT) \
  || defined(PIONEER_Q38_RECURRENT_BLOCK_NATIVE_CONTEXT) || defined(PIONEER_Q38_RESIDENT_OUTPUT_OWNER) \

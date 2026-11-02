@@ -1,0 +1,11 @@
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133782380544 bytes free      (used/max 3252555776 / 137034936320)
+                           (cached    199241728)
+     64486 semaphores free (used/max       1050 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3901 threads free    (used/max        195 /       4096)
+      2025 teams free      (used/max         23 /       2048)
+83029ee4d91ffd7df4aebfb4839d041903d1bc2dc0ba98acfb0f0a85c5b7e5c8  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+P100A_RELOAD driver55 tag2026110200050076 generation11 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY

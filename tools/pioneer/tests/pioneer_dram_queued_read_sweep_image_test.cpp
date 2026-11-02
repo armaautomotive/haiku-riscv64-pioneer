@@ -3,10 +3,17 @@
 #define PIONEER_TENSIX_MACHINE_ONLY
 #include "pioneer_tensix_image_test.cpp"
 #include "../PioneerDramQueuedReadSweep.h"
+#include "../PioneerDramWideQueuedReadSweep.h"
 #include <deque>
 #include <map>
 #include <string>
+#ifdef PIONEER_DRAM_WIDE_QUEUE_TEST
+using Q=PioneerDramWideQueuedReadSweep;
+static constexpr unsigned RawCapacity=0x40000,FrameVersion=3;
+#else
 using Q=PioneerDramQueuedReadSweep;
+static constexpr unsigned RawCapacity=16384,FrameVersion=2;
+#endif
 struct QueuedMachine:Machine {
  enum Fault { None,Disabled,DirtyFifo,Overflow,InvalidFree,OtherBusy,OtherOutstanding,
   BadSource,BadDestination,StalledFifo,LostDoorbell,LateOverflow,FullFifo,
@@ -23,11 +30,11 @@ struct QueuedMachine:Machine {
  bool queueHidden=false;Fault fault=None;
  QueuedMachine(const std::vector<uint8_t>& boot,const std::vector<uint8_t>& text,
   unsigned good,unsigned bad,unsigned s,unsigned d,unsigned n=1)
-  :Machine(),raw(4096,0xcafebabe),park(good),faultPark(bad),textBytes(unsigned(text.size())),shift(s),depth(d),sweeps(n){
+  :Machine(),raw(RawCapacity/4,0xcafebabe),park(good),faultPark(bad),textBytes(unsigned(text.size())),shift(s),depth(d),sweeps(n){
   assert(boot.size()==4 && !text.empty() && !(text.size()&3));memory[0x6000]=Word(boot,0);
   for(unsigned i=0;i<text.size();i+=4)memory[0x64000+i]=Word(text,i);
   for(unsigned i=0;i<16;i++)memory[Q::Job+i*4]=memory[Q::Report+i*4]=0;
-  const uint32_t frame[]={Q::Magic,2,n,s,18|(12<<6),0x12345678,d};
+  const uint32_t frame[]={Q::Magic,FrameVersion,n,s,18|(12<<6),0x12345678,d};
   for(unsigned i=0;i<7;i++)memory[Q::Job+i*4]=frame[i];
  }
  bool CodeAddress(uint32_t a)const override{return a==0x6000 || (a>=0x64000 && a<0x64000+textBytes);}
@@ -66,7 +73,7 @@ struct QueuedMachine:Machine {
  uint32_t Load(uint32_t a)override{
   assert(!(a&3));
   if(Range(a,0x6e000,8192) || Range(a,Q::Job,64) || Range(a,Q::Report,64))return memory[a];
-  if(Range(a,Q::Raw,16384)){assert(fifo.empty() && flying.empty() && successful);return raw[(a-Q::Raw)/4];}
+  if(Range(a,Q::Raw,RawCapacity)){assert(fifo.empty() && flying.empty() && successful);return raw[(a-Q::Raw)/4];}
   mmioReads++;Tick();
   if(Range(a,0xffb20000,40)){
    const unsigned i=(a-0xffb20000)/4;
@@ -104,7 +111,7 @@ struct QueuedMachine:Machine {
    && command[2]==(18|(12<<6)) && command[3]==Q::Raw+slot*bytes
    && command[4]==0 && command[5]==129 && command[6]==0 && command[7]==0
    && command[8]==bytes && command[9]==0);
-  assert(command[0]+bytes<=Q::Base+Q::Span && command[3]+bytes<=Q::Raw+16384);
+  assert(command[0]+bytes<=Q::Base+Q::Span && command[3]+bytes<=Q::Raw+RawCapacity);
   // A new batch must wait for every response of the previous batch. Within
   // a batch all live destination intervals must be pairwise disjoint.
   if(!slot)assert(fifo.empty() && flying.empty() && requests==successful);
@@ -121,7 +128,7 @@ struct QueuedMachine:Machine {
   if(pc==faultPark){assert(memory.at(Q::Report)==0x46524244);return false;}
   const auto r=[&](unsigned i){return memory.at(Q::Report+i*4);};
   assert(fifo.empty() && flying.empty() && requests==successful && requests==(Q::Span>>shift)*sweeps);
-  assert(uint32_t(responses-initial)==requests && r(0)==Q::ReportMagic && r(1)==2);
+  assert(uint32_t(responses-initial)==requests && r(0)==Q::ReportMagic && r(1)==FrameVersion);
   assert(r(2)==0x12345678 && r(3)==(18|(12<<6)) && r(4)==1U<<shift && r(5)==sweeps);
   assert(r(6)==Q::Span*sweeps && r(7)==requests);
   const uint64_t start=(uint64_t(r(9))<<32)|r(8),end=(uint64_t(r(11))<<32)|r(10);
@@ -129,6 +136,7 @@ struct QueuedMachine:Machine {
   const unsigned bytes=1U<<shift;
   for(unsigned slot=0;slot<depth;slot++)for(unsigned w=0;w<bytes/4;w++)
    assert(raw[slot*bytes/4+w]==Pattern(Q::Base+Q::Span-depth*bytes+slot*bytes+w*4));
+  for(unsigned w=depth*bytes/4;w<RawCapacity/4;w++)assert(raw[w]==0xcafebabe);
   assert(r(14)==Pattern(Q::Base+Q::Span-bytes) && r(15)==Pattern(Q::Base+Q::Span-4));
   if(depth>1)assert(maxPending>1 && reordered);
   assert(!matrixInstructions && !moveInstructions && !configWrites && !inputWrites && !vectorWrites);
@@ -140,7 +148,7 @@ int main(int argc,char** argv){
  const unsigned good=unsigned(std::stoul(argv[3],nullptr,16)),bad=unsigned(std::stoul(argv[4],nullptr,16));
  unsigned passed=0,refused=0;
  for(unsigned shift:{6U,10U,12U,14U})for(unsigned depth:{1U,2U,4U,8U,16U}){
-  if((1U<<shift)*depth>16384 || (shift==6 && depth!=1 && depth!=16))continue;
+  if((1U<<shift)*depth>RawCapacity || (shift==6 && depth!=1 && depth!=16))continue;
   QueuedMachine m(boot,text,good,bad,shift,depth);assert(m.Execute());passed++;
  }
  {QueuedMachine m(boot,text,good,bad,14,1,2);assert(m.Execute());passed++;}
@@ -151,7 +159,7 @@ int main(int argc,char** argv){
   assert(!m.Execute() && !m.requests && !m.csrReads && !m.mmioReads && !m.mmioWrites);refused++;
  }
  for(const auto& change:std::vector<std::pair<unsigned,uint32_t>>{{2,0},{2,257},{2,UINT32_MAX},
-  {3,0},{3,31},{3,32},{3,14},{4,0},{4,19|(12<<6)},{4,17|(13<<6)},
+  {3,0},{3,31},{3,32},{3,RawCapacity==16384?14U:15U},{4,0},{4,19|(12<<6)},{4,17|(13<<6)},
   {6,0},{6,3},{6,17},{6,32},{6,UINT32_MAX}}){
   QueuedMachine m(boot,text,good,bad,10,16);m.memory[Q::Job+change.first*4]=change.second;
   assert(!m.Execute() && !m.requests && !m.csrReads && !m.mmioReads && !m.mmioWrites);refused++;
@@ -174,7 +182,7 @@ int main(int argc,char** argv){
   if(fault==QueuedMachine::LateOverflow || fault==QueuedMachine::FullFifo)assert(m.requests==1);
   refused++;
  }
- uint32_t job[16]={Q::Magic,2,256,6,17|(12<<6),1,16};
+ uint32_t job[16]={Q::Magic,FrameVersion,256,6,17|(12<<6),1,16};
  assert(Q::Shape(job) && Q::Span*job[2]==0x80000000U);
  printf("PASS actual queued RV32 valid%u/refused%u;FIFO capture/async returns/counter wrap/disjoint buffers/full address sequence/finite faults;NO hardware bandwidth/native ownership/Work claim\n",passed,refused);
 }

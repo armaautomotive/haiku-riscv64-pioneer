@@ -9,7 +9,8 @@ import sys
 
 assert len(sys.argv) in (3,4)
 queued = len(sys.argv)==4
-assert not queued or sys.argv[3]=='--queued'
+assert not queued or sys.argv[3] in ('--queued','--wide-queued')
+wide=queued and sys.argv[3]=='--wide-queued'
 assert not any(key.startswith(('PIONEER_', 'TT_PIONEER_')) for key in os.environ)
 sdk, out = map(pathlib.Path, sys.argv[1:3])
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -26,6 +27,7 @@ def run(*args):
     subprocess.run(list(map(str, args)), check=True)
 
 source='blackhole_dram_queued_read_sweep.cpp' if queued else 'blackhole_dram_read_sweep.cpp'
+if wide:source='blackhole_dram_wide_queued_read_sweep.cpp'
 run(tool+'g++', *flags, '-c', here/source, '-o', out/'sweep.o')
 run(tool+'as', '-march=rv32im_zicsr', '-mabi=ilp32', '-mno-relax',
     here/'blackhole_dram_read_sweep_start.S', '-o', out/'start.o')

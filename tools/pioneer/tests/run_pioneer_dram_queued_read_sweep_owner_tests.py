@@ -4,13 +4,17 @@ import os
 import pathlib
 import subprocess
 import sys
-assert len(sys.argv)==3
-sdk,out=map(pathlib.Path,sys.argv[1:])
+assert len(sys.argv) in (3,4)
+wide=len(sys.argv)==4
+assert not wide or sys.argv[3]=='--wide'
+sdk,out=map(pathlib.Path,sys.argv[1:3])
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
 out.mkdir(mode=0o700);here=pathlib.Path(__file__).resolve().parent
 leaf=out/'leaf'
-subprocess.run([sys.executable,str(here/'run_pioneer_dram_queued_read_sweep_tests.py'),str(sdk),str(leaf)],check=True)
+subprocess.run([sys.executable,str(here/'run_pioneer_dram_queued_read_sweep_tests.py'),str(sdk),str(leaf)]
+ +(['--wide'] if wide else []),check=True)
 binary=out/'owner-test'
 subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
- '-fsanitize=address,undefined',str(here/'pioneer_dram_queued_read_sweep_owner_test.cpp'),'-o',str(binary)],check=True)
+ '-fsanitize=address,undefined',*(['-DPIONEER_DRAM_SWEEP_WIDE=1'] if wide else []),
+ str(here/'pioneer_dram_queued_read_sweep_owner_test.cpp'),'-o',str(binary)],check=True)
 subprocess.run([str(binary),str(leaf/'image/boot.bin'),str(leaf/'image/text.bin')],check=True)

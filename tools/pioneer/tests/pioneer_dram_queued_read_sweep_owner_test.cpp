@@ -6,6 +6,7 @@
 // Same ACTUAL generic owner and emitted queued instructions,with a separate
 // asynchronous FIFO/response endpoint. Clock/scope remain fixture hooks.
 struct QueuedRig:Rig {
+ static constexpr unsigned DefaultShift=PioneerDramReadSweepOwner::Wide?14:10;
  struct Packet {uint32_t source,dest,bytes,route;unsigned due;};
  std::deque<Packet> fifo;std::vector<Packet> flying;
  unsigned ticks=0,depth=1,maxPending=0,reordered=0,corruptSlot=UINT32_MAX;
@@ -67,7 +68,7 @@ struct QueuedRig:Rig {
   pending=!fifo.empty() || !flying.empty();
   maxPending=std::max(maxPending,unsigned(fifo.size()+flying.size()));assert(maxPending<=depth);
  }
- bool Execute(unsigned bank=0,unsigned shift=10,unsigned sweeps=1,unsigned count=16){
+ bool Execute(unsigned bank=0,unsigned shift=DefaultShift,unsigned sweeps=1,unsigned count=16){
   depth=count;return owner.Execute(*this,proof,noc,bank,shift,sweeps,0x32435a67,result,count);
  }
 };
@@ -77,14 +78,17 @@ int main(int argc,char** argv){
  for(unsigned i=0;i<Image::TextWords;i++)assert(Word(text,i*4)==Image::Code(i+1));
  std::map<uint32_t,bool> addresses;
  for(unsigned i=0;i<Image::SavedWords;i++){const auto a=Image::Address(i);assert(a!=UINT32_MAX && !addresses[a]);addresses[a]=true;}
- assert(Image::Address(Image::SavedWords)==UINT32_MAX && Image::SavedWords==6641);
+ assert(Image::Address(Image::SavedWords)==UINT32_MAX
+  && Image::SavedWords==Image::CodeWords+2048+16+16+Image::RawWords
+  && Image::RawWords==(PioneerDramReadSweepOwner::Wide?65536:4096));
  unsigned good=0,bad=0;
  for(unsigned bank=0;bank<7;bank++){
   QueuedRig r;assert(r.Execute(bank) && r.result.closed && !r.quarantined && !r.result.unsafe);
   assert(r.memory==r.original && !memcmp(r.tlb,r.originalTlb,sizeof(r.tlb)) && !r.clock
    && r.resetWrites==3 && r.clockStarts==1 && r.clockEnds==1 && r.coreMaskReads==480);
-  assert(r.result.savedWords==6641 && r.result.restoredWords==6641 && r.result.comparedWords==4096
-   && r.maxPending>1 && r.reordered && r.requests==8192 && r.responses==8192);
+  assert(r.result.savedWords==Image::SavedWords && r.result.restoredWords==Image::SavedWords
+   && r.result.comparedWords==Image::RawWords && r.maxPending>1 && r.reordered
+   && r.requests==(Program::Span>>QueuedRig::DefaultShift) && r.responses==r.requests);
   const unsigned calls=r.calls;PioneerDramReadSweepResult again;
   assert(!r.owner.Execute(r,r.proof,r.noc,bank,10,1,1,again,16) && r.calls==calls);good++;
  }
@@ -96,12 +100,15 @@ int main(int argc,char** argv){
  for(unsigned slot=0;slot<16;slot++){
   QueuedRig r;r.corruptSlot=slot;
   assert(!r.Execute() && r.quarantined && r.result.held && r.result.phase==7
-   && r.result.comparedWords==slot*256+17 && !r.result.restoredWords && !r.clockEnds);bad++;
+   && r.result.comparedWords==slot*(1U<<QueuedRig::DefaultShift)/4+17
+   && !r.result.restoredWords && !r.clockEnds);bad++;
  }
  for(unsigned count:{0U,3U,17U,UINT32_MAX}){
   QueuedRig r;assert(!r.Execute(0,10,1,count) && !r.calls && !r.quarantined);bad++;
  }
- {QueuedRig r;assert(!r.Execute(0,14,1,2) && !r.calls && !r.quarantined);bad++;}
+ if(!PioneerDramReadSweepOwner::Wide){QueuedRig r;assert(!r.Execute(0,14,1,2) && !r.calls && !r.quarantined);bad++;}
+ else for(unsigned depth:{2U,4U,8U}){QueuedRig r;assert(r.Execute(0,14,1,depth) && r.memory==r.original
+  && r.result.comparedWords==4096*depth);good++;}
  for(unsigned fault=0;fault<9;fault++){
   QueuedRig r;
   if(fault==0)r.staleFifo=true;
@@ -124,5 +131,5 @@ int main(int argc,char** argv){
   QueuedRig r;r.failPhase=f.first;r.failKind=f.second;
   assert(!r.Execute() && r.faultUsed && r.quarantined && !r.result.closed);bad++;
  }
- printf("PASS actual queued owner %u valid/%u refused;ALL6641 snapshot words restored;entire last batch independently compared;NO native hardware/ARC/bandwidth/Work claim\n",good,bad);
+ printf("PASS actual queued owner %u valid/%u refused;ALL%u snapshot words restored;entire last batch independently compared;NO native hardware/ARC/bandwidth/Work claim\n",good,bad,Image::SavedWords);
 }

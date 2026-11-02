@@ -249,7 +249,7 @@ static bool PioneerDramSweepL1Address(uint32 a){
  using I=PioneerDramSweepNativeContext::Image;
  return !(a&3) && (a==0x6000 || (a>=I::Entry && a<I::Entry+I::TextWords*4)
   || (a>=0x6e000 && a<0x70000) || (a>=0x74000 && a<0x74040)
-  || (a>=0x74100 && a<0x74140) || (a>=0x90000 && a<0x94000));
+  || (a>=0x74100 && a<0x74140) || (a>=0x90000 && a<0x90000+I::RawWords*4));
 }
 bool PioneerDramSweepNativeIO::SweepReadChecked(uint32 a,uint32& v){
  if(!Access() || !owner.ready || !PioneerDramSweepL1Address(a))return false;
@@ -264,7 +264,8 @@ bool PioneerDramSweepNativeIO::SweepWrite(uint32 a,uint32 v){
 bool PioneerDramSweepNativeIO::SweepWindowReadChecked(uint32 a,uint32& v){
  const unsigned chunk=owner.reply.sweep.report[4],depth=owner.queueDepth;
  if((chunk!=64 && chunk!=1024 && chunk!=4096 && chunk!=16384)
-  || !depth || depth>16 || (depth&(depth-1)) || chunk*depth>16384)return false;
+  || !depth || depth>16 || (depth&(depth-1))
+  || chunk*depth>PioneerDramSweepNativeContext::Image::RawWords*4)return false;
  const unsigned bytes=chunk*depth;
  if(!Access() || !owner.ready || owner.reply.sweep.phase!=7 || !owner.reply.sweep.held
   || (a&3) || a<0x200000-bytes || a>=0x200000)return false;
@@ -340,7 +341,7 @@ void PioneerDramSweepClockIO::Pause(){if(Check())PioneerArcQueryIO::Pause();}
   || bank>=7 || !nonce || !sweeps || sweeps>256 || !depth || depth>16 || (depth&(depth-1))
   || (!PioneerDramReadSweepOwner::Queued && depth!=1)
   || (shift!=6 && shift!=10 && shift!=12 && shift!=14))return B_BAD_VALUE;
- if((1U<<shift)*depth>16384)return B_BAD_VALUE;
+ if((1U<<shift)*depth>PioneerDramSweepNativeContext::Image::RawWords*4)return B_BAD_VALUE;
  thread_info thread={};status_t status=get_thread_info(find_thread(NULL),&thread);
  if(status!=B_OK || thread.team!=fd->team)return B_NOT_ALLOWED;
  status=AcquireProbeLock();if(status!=B_OK)return status;

@@ -23,10 +23,10 @@ int main(int argc,char** argv){
  const bool support=argc==2 && !strcmp(argv[1],"--support");
  const bool preflight=argc==2 && !strcmp(argv[1],"--preflight");
  const bool run=argc==6 && !strcmp(argv[1],"--run");
- tt_pioneer_dram_sweep r={};r.version=2;r.chunk_shift=14;r.sweeps=1;r.queue_depth=1;
+ tt_pioneer_dram_sweep r={};r.version=3;r.chunk_shift=14;r.sweeps=1;r.queue_depth=1;
  if((!support && !preflight && !run) || (run && (!Number(argv[2],r.bank)
   || !Number(argv[3],r.chunk_shift) || !Number(argv[4],r.sweeps) || !Number(argv[5],r.queue_depth))))return 2;
- r.expected_tag=UINT64_C(0x2026110200040076);
+ r.expected_tag=UINT64_C(0x2026110200050076);
  r.nonce=uint32_t(system_time())^(uint32_t(getpid())<<13);if(!r.nonce)r.nonce=1;
  // Shape-check before opening even a metadata FD; generation is queried below.
  r.expected_generation=1;if(!PioneerDramSweepRequest(r))return 2;

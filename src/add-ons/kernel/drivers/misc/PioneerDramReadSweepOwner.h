@@ -4,8 +4,10 @@
 #include "BlackholeComputeNocProbe.h"
 #include "BlackholeDramReadSweepImage.h"
 #include "BlackholeDramQueuedReadSweepImage.h"
+#include "BlackholeDramWideQueuedReadSweepImage.h"
 #include "../../../../../tools/pioneer/PioneerDramReadSweep.h"
 #include "../../../../../tools/pioneer/PioneerDramQueuedReadSweep.h"
+#include "../../../../../tools/pioneer/PioneerDramWideQueuedReadSweep.h"
 // Separate single-attempt owner component, only exposed by diagnostic76.
 // IO must bind this EXACT object/proofs/private backing under the native global
 // lock and cold/active-owner gates. Scope/clock/test callbacks are NOT a public
@@ -110,7 +112,8 @@ class PioneerDramReadSweepOwnerType {
 public:
  using SnapshotImage=Image;
  using DeviceProgram=Program;
- static constexpr bool Queued=FrameVersion==2;
+ static constexpr bool Queued=FrameVersion>=2;
+ static constexpr bool Wide=FrameVersion==3;
  template<class IO> bool Execute(IO& io,const tt_dram_samples_result& d,const tt_compute_noc_result& n,
   unsigned selectedBank,unsigned shift,unsigned sweeps,uint32_t nonce,PioneerDramReadSweepResult& r,unsigned depth=1){
   const PioneerDramReadSweepResult pristine;
@@ -257,7 +260,10 @@ public:
 };
 using PioneerDramReadSweepControlOwner=PioneerDramReadSweepOwnerType<BlackholeDramReadSweepImage,PioneerDramReadSweep,1>;
 using PioneerDramQueuedReadSweepOwner=PioneerDramReadSweepOwnerType<BlackholeDramQueuedReadSweepImage,PioneerDramQueuedReadSweep,2>;
-#ifdef PIONEER_DRAM_SWEEP_QUEUED
+using PioneerDramWideQueuedReadSweepOwner=PioneerDramReadSweepOwnerType<BlackholeDramWideQueuedReadSweepImage,PioneerDramWideQueuedReadSweep,3>;
+#ifdef PIONEER_DRAM_SWEEP_WIDE
+using PioneerDramReadSweepOwner=PioneerDramWideQueuedReadSweepOwner;
+#elif defined(PIONEER_DRAM_SWEEP_QUEUED)
 using PioneerDramReadSweepOwner=PioneerDramQueuedReadSweepOwner;
 #else
 using PioneerDramReadSweepOwner=PioneerDramReadSweepControlOwner;

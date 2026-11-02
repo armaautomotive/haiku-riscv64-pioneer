@@ -168,7 +168,7 @@ struct PioneerDramSweepNativeContext;
 static PioneerDramSweepNativeContext* sDramSweepNativeContext=NULL;
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc"
 #define B_DEVICE_OP_CODES_END 1000
-#define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026110200040076)
+#define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026110200050076)
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDramSweepControl.inc"
 
 struct Fixture {
@@ -197,7 +197,13 @@ int main(){
  {Fixture f;f.Map();assert(f.c->Scope());
   assert(f.c->io.SweepNativeScope(&f.c->algorithm,&f.c->dram,&f.c->noc,f.c->backing,
    f.c->backing+PioneerDramSweepNativeContext::Image::SavedWords,
-   PioneerDramSweepNativeContext::Image::SavedWords,4096));f.Closing();assert(f.c->CloseViews() && views.empty() && deletes==17);valid++;}
+   PioneerDramSweepNativeContext::Image::SavedWords,PioneerDramSweepNativeContext::Image::RawWords));
+  if(PioneerDramReadSweepOwner::Wide){
+   assert(!f.c->io.SweepNativeScope(&f.c->algorithm,&f.c->dram,&f.c->noc,f.c->backing,
+    f.c->backing+PioneerDramSweepNativeContext::Image::SavedWords,
+    PioneerDramSweepNativeContext::Image::SavedWords,4096));refused++;
+  }
+  f.Closing();assert(f.c->CloseViews() && views.empty() && deletes==17);valid++;}
  for(unsigned fail=1;fail<=17;fail++){
   Fixture f;f.Map();f.Closing();dropDelete=fail;
   assert(!f.c->CloseViews() && f.c->quarantined && deletes==fail && !unreserves && !pciWrites);
@@ -269,6 +275,21 @@ int main(){
   assert(!f.c->io.SweepWindowReadChecked(0x1fbffc,value) && !f.c->io.SweepWindowReadChecked(0x200000,value));refused+=2;
   f.c->reply.sweep.held=0;assert(!f.c->io.SweepWindowReadChecked(0x1fc000,value));refused++;
  }
+ if(PioneerDramReadSweepOwner::Wide){
+  Fixture f(16);f.Map();f.c->reply.sweep.phase=7;f.c->reply.sweep.held=1;
+  f.c->reply.sweep.report[4]=16384;f.c->dram.translated[0][0]=18;f.c->dram.translated[0][1]=12;
+  for(unsigned i=0;i<3;i++)f.c->io.DramTlbWrite(0,i,BlackholeDramFixedTlbWord(0,1,2,false,i));
+  uint32 value=0;assert(f.c->io.SweepWrite(0xcfffc,0xfeedbeef)
+   && f.c->io.SweepReadChecked(0xcfffc,value) && value==0xfeedbeef);
+  assert(!f.c->io.SweepWrite(0xd0000,0xdeadbeef) && !f.c->io.SweepReadChecked(0xd0000,value));valid++;refused++;
+  for(unsigned i=0;i<3;i++)f.c->io.DramTlbWrite(0,i,BlackholeDramFixedTlbWord(0x04600000,18,12,true,i));
+  for(unsigned slot=0;slot<16;slot++){
+   const unsigned a=0x1c0000+slot*16384;f.c->io.sweepMemory[a/4]=0xbeef0000+slot;
+   assert(f.c->io.SweepWindowReadChecked(a,value) && value==0xbeef0000+slot);valid++;
+  }
+  assert(!f.c->io.SweepWindowReadChecked(0x1bfffc,value)
+   && !f.c->io.SweepWindowReadChecked(0x200000,value));refused+=2;
+ }
  {Fixture f;f.Map();f.c->reply.sweep.phase=4;f.c->io.SweepResetWrite(0x87ffff);
   assert(f.c->resetStage==1 && *f.c->io.resetWrite==0x87ffff);
   f.c->io.SweepResetWrite(0x87ffff);assert(f.c->quarantined && f.c->resetStage==1);refused++;}
@@ -311,7 +332,7 @@ int main(){
   else{assert(result==B_NOT_ALLOWED && reply.reservationClosed && !reply.retained);valid++;}
   failProfile=failUnreserve=false;
  }
- auto request=[](){tt_pioneer_dram_sweep r={};r.version=2;r.chunk_shift=14;r.sweeps=1;r.nonce=1;r.queue_depth=1;
+ auto request=[](){tt_pioneer_dram_sweep r={};r.version=3;r.chunk_shift=14;r.sweeps=1;r.nonce=1;r.queue_depth=1;
   r.expected_tag=PIONEER_DRIVER_BUILD_TAG;r.expected_generation=7;return r;};
  {Fixture f;sDramSweepNativeContext=NULL;auto r=request();
   assert(PioneerDramSweepControl(&f.fd,TT_PCI_PROBE_DRAM_SWEEP_SUPPORT,&r,sizeof(r))==B_OK);
@@ -331,7 +352,7 @@ int main(){
   if(fault==4)r.sweeps=257;
   if(fault==5)r.nonce=0;
   if(fault>=6 && fault<=7)r.reserved[fault-6]=1;
-  if(fault==8)r.queue_depth=2; // 2*16KiB exceeds the entire return footprint
+  if(fault==8)r.version=2; // old narrow queued ABI is not this revision
   if(fault==9)r.expected_tag=0;
   if(fault==10)r.expected_generation=0;
   if(fault==11)effectiveUid=1;
@@ -343,7 +364,7 @@ int main(){
   if(fault==17)r.queue_depth=3;
   if(fault==18)r.queue_depth=17;
   if(fault==19)r.queue_depth=UINT32_MAX;
-  if(fault==20)r.expected_tag=UINT64_C(0x2026110200030076);
+  if(fault==20)r.expected_tag=UINT64_C(0x2026110200040076);
   assert(PioneerDramSweepControl(&f.fd,TT_PCI_PROBE_DRAM_SWEEP_PREFLIGHT,&r,sizeof(r))!=B_OK);
   assert(!ioCalls && !unreserves && !sColdRecoveryRequired);refused++;
  }
@@ -364,8 +385,8 @@ int main(){
   assert(PioneerDramSweepReply(r,TT_PCI_PROBE_DRAM_SWEEP_PREFLIGHT));
   p.preflight=0;p.complete=1;p.busy_mhz=1350;p.idle_mhz=800;
   auto* s=p.sweep;s[1]=s[4]=s[5]=s[6]=s[7]=1;s[2]=10;
-  s[8]=s[9]=6641;s[10]=4096;s[11]=r.bank;
-  auto* v=s+12;v[0]=0x32524244;v[1]=2;v[2]=r.nonce;v[3]=18|(12<<6);
+  s[8]=s[9]=68078;s[10]=4096;s[11]=r.bank;
+  auto* v=s+12;v[0]=0x33524244;v[1]=3;v[2]=r.nonce;v[3]=18|(12<<6);
   v[4]=16384;v[5]=1;v[6]=0x800000;v[7]=512;v[8]=100;v[10]=500;v[12]=400;
   assert(PioneerDramSweepReply(r,TT_PCI_PROBE_DRAM_SWEEP_RUN));valid+=3;
   for(unsigned i=0;i<38;i++){
