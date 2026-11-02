@@ -1,0 +1,15 @@
+5ae9d64ae4757c4635e4bbc6f59cf8350e8f549427e99e1e99e5897092616e39  /boot/home/pioneer-p100a-token-matrix-phase-20261102-a/tenstorrent_pci_probe-TOKEN-MATRIX-PHASE-34-DIAGNOSTIC-ONLY
+5ae9d64ae4757c4635e4bbc6f59cf8350e8f549427e99e1e99e5897092616e39  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+559f986ddc88bbc2ff8cbe034dcda1546d385b366177f027a245452e605c7a22  /boot/home/pioneer-p100a-token-matrix-phase-20261102-a/pioneer-q38-TOKEN-MATRIX-PHASE-34-DIAGNOSTIC-ONLY
+761dfd1494ed3e7963d643572ece1183b07b702471fc2d528d41712c049315bf  /boot/home/pioneer-p100a-token-matrix-phase-20261102-a/pioneer_q38_token_matrix_phase_exchange.sh
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-p100a-token-matrix-phase-20261102-a/stable041.backup
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
+b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
+d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+P100A_RELOAD driver55 tag2026103100010075 generation11 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+PROJECT_COMPUTE_PARENT_COUNT 0
+64 (Unknown), revision 0000 running at 1000MHz
+
+130767405056 bytes free      (used/max 6267531264 / 137034936320)
+                           (cached   19833806848)
+EXACT_MATRIX_PHASE_MODULE_GEN11_IDLE_BEFORE_SOLE_DIAGNOSTIC

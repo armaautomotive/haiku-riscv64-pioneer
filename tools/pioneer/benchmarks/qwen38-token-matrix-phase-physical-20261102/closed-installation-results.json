@@ -1,0 +1,43 @@
+{
+  "scope": "Closed admission/staging/readback/apply/prelaunch ONLY. Not completed inference, numerical acceptance or performance.",
+  "checkedAt": "2026-11-02 22:02:33 UTC",
+  "operations": [
+    {
+      "name": "q38MatrixPhysicalAdmission",
+      "actualExit": 0
+    },
+    {
+      "name": "q38MatrixPhysicalStageCreate",
+      "actualExit": 0
+    },
+    {
+      "name": "q38MatrixPhysicalStageCopy",
+      "actualExit": 0,
+      "historicalSession": 38043
+    },
+    {
+      "name": "q38MatrixPhysicalPoststage",
+      "actualExit": 0
+    },
+    {
+      "name": "q38MatrixPhysicalReadback",
+      "actualExit": 0,
+      "historicalSession": 44917
+    },
+    {
+      "name": "q38MatrixPhysicalReadbackVerified",
+      "actualExit": 0
+    },
+    {
+      "name": "q38MatrixPhysicalApply",
+      "actualExit": 0,
+      "historicalSession": 45632
+    },
+    {
+      "name": "q38MatrixPhysicalPrelaunch",
+      "actualExit": 0,
+      "historicalSession": 36013,
+      "closedObserved": "2026-11-02 21:54:03 UTC"
+    }
+  ]
+}

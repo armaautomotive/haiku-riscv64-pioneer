@@ -1,0 +1,92 @@
+Progress22:02:21UTC: SAME41158 still ACTUALLY live;model authenticated
+===================================================================
+The full same-open original GGUF SHA and complete851 learned layout pass
+BEFORE the accelerator Open banner. Actual upload reaches2021036032/
+19399024640B. These fresh observations supersede the banners-only launch
+state below,not the outstanding full-upload/START/generation/clean-END/
+strict-numerical gates. stderr remains0B. No new rate or speedup is claimed.
+No second Pioneer operation is launched. The entire parent stays protected.
+
+Closed admission/staging/apply/prelaunch wrappers and raw logs are archived
+in the sibling directory. They are COMPLETE for those operations only;
+LIVE physical.log/stderr are deliberately NOT archived as completed output.
+Independent task-local full readback cmp is repeated22:02:33UTC with
+set-e and ACTUALLY exits0 for all three original files. No model or binary
+is committed. Original-model correctness and20tok/s remain UNMET.
+
+Latest-Q4-job physical diagnostic: protected parent LIVE
+======================================================
+2026-11-02 21:55 UTC. ONE diagnostic parent41158 is dispatched and
+confirmed live by its actual session handle. Only its three expected host
+banners have returned. Model authentication, full upload, START, all34
+positions, held timing reads, drain and clean END+Close are NOT yet proved.
+No new throughput, numerical acceptance or speedup is claimed. Goal ACTIVE;
+usable accepted27B Work and20tok/s remain UNMET.
+
+This test measures three inclusive intervals within the latest completed
+Q4 job on each of119 workers: FetchWait, DecodeUnpackPack, MatrixAffine.
+It does not measure pure engine utilization, aggregate memory bandwidth,
+clock frequency or a complete model latency breakdown. Do not sum parallel
+worker cycles and label the sum wall time. No runtime CPU-reference model
+is selected, and this diagnostic is not Assistant Work.
+
+Protect the complete SAME41158 parent, including same-open original GGUF
+authentication, Open, upload, initialization, START, RUN, HOLD,119 sampler
+reads, drain, END and Close. Only the SAME session and local raw files may
+be observed while it lives. No concurrent Pioneer SSH/status/admin/GPU/
+model/stage/reload/reset/power/OS/network/SD/hardware operation. A yield or
+observation timeout is NOT terminal. SSH255 does not prove remote compute
+has stopped. Do not reopen or reconfigure the UART.
+
+Task-local raw streams (LIVE, not completed hardware evidence):
+ /private/tmp/pioneer-q38-matrix-phase-physical-20261102.MHO9uW/physical.log
+ /private/tmp/pioneer-q38-matrix-phase-physical-20261102.MHO9uW/physical.stderr
+Exact diagnostic CLI:
+ /boot/home/pioneer-p100a-token-matrix-phase-20261102-a/pioneer-q38-TOKEN-MATRIX-PHASE-34-DIAGNOSTIC-ONLY --profile-q4-jobs-34-positions
+
+Closed admission, staging and reversible exchange
+------------------------------------------------
+Tested source/build checkpoint19efc958d18f4f1d7d3673308355a8a93edafb44
+was pushed and independently ls-remote verified before hardware staging.
+Full original-model native first-layer/cancel/119STOP/120HOLD/drain/END
+histories and unchanged bit-exact CPU first-layer comparisons are closed
+separately. They are not whole-model or physical performance certificates.
+See qwen38-token-matrix-phase-read-faults-20261102.txt and
+qwen38-token-matrix-phase-public-20261102.txt for their exact scopes.
+
+Fresh admission ACTUALLY0:stable041/tag12/gen10/cold0/owner0/open1/guard1,
+no project compute parent,64CPUs/full137034936320B RAM. Model regular,
+root-owned,one link,18973870528B;stat is not model-content authentication.
+New root700 stage only:
+ /boot/home/pioneer-p100a-token-matrix-phase-20261102-a
+Limited1024Kbit/s SCP38043 ACTUALLY0. Poststage independent full hashes
+ACTUALLY0;only three exact staged files made755. Separate complete SCP
+readback44917 ACTUALLY0;all three whole cmp and SHA values match originals.
+
+Exact module 5ae9d64ae4757c4635e4bbc6f59cf8350e8f549427e99e1e99e5897092616e39
+Exact client 559f986ddc88bbc2ff8cbe034dcda1546d385b366177f027a245452e605c7a22
+Exact helper 761dfd1494ed3e7963d643572ece1183b07b702471fc2d528d41712c049315bf
+The inherited numeric tag75 is NOT code provenance. Older clients/modules/
+updaters cannot be substituted for this exact whole-file tuple.
+
+Fresh exact preapply and SAME761d helper --apply ONCE45632 ACTUALLY0:
+quiesce stable041/gen10,atomic replace,verify new5ae/tag75/gen11/cold0/
+idle. Original and new-stage stable041 backups remain intact. No GPU job
+is executed during staging/apply. Independent prelaunch36013 ACTUALLY0
+observed21:54:03UTC:exact installed/staged/client/helper/admin/guard/backup
+hashes,correct device symlink,absent incoming+lock,gen11/cold0/owner0/
+open1/guard1,no compute parent,64CPUs/fullRAM/free130767405056B. All closed
+staging/apply/prelaunch stderr streams are0B. No reboot,forced unload,
+reset,retry,SD,mains,hardware,network,kernel,boot or Assistant change.
+
+After actual terminal ONLY
+-------------------------
+Inspect complete stdout/stderr and actual clean END+Close. Run unchanged
+strict compare_pioneer_q38_token_matrix_phase_log.py from main+independent
+clean sources with all original CPU pins. Preserve numerical failures;
+valid timing must not override quality failure or be promoted to Work.
+Only actual safe clean terminal permits fresh postterminal exact identity/
+idle checks,then SAME761d --restore ONCE,and independent stable041/gen12/
+cold0/idle/64CPU/fullRAM verification. Unsafe or uncertain lifecycle forbids
+hot restore,force unload,reset or implicit retry. Closed evidence and real
+timing conclusions will supersede this LIVE ledger after those steps.

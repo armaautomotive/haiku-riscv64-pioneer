@@ -1,0 +1,6 @@
+5ae9d64ae4757c4635e4bbc6f59cf8350e8f549427e99e1e99e5897092616e39  /boot/home/pioneer-p100a-token-matrix-phase-20261102-a/tenstorrent_pci_probe-TOKEN-MATRIX-PHASE-34-DIAGNOSTIC-ONLY
+559f986ddc88bbc2ff8cbe034dcda1546d385b366177f027a245452e605c7a22  /boot/home/pioneer-p100a-token-matrix-phase-20261102-a/pioneer-q38-TOKEN-MATRIX-PHASE-34-DIAGNOSTIC-ONLY
+761dfd1494ed3e7963d643572ece1183b07b702471fc2d528d41712c049315bf  /boot/home/pioneer-p100a-token-matrix-phase-20261102-a/pioneer_q38_token_matrix_phase_exchange.sh
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+P100A_RELOAD driver55 tag2026102100010012 generation10 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+WHOLE_STAGE_IDENTITIES_EXACT_STABLE041_STILL_INSTALLED_NO_DRIVER_OR_CLIENT_EXECUTION
