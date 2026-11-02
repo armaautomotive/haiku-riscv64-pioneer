@@ -1,0 +1,99 @@
+Layer29 real-input emitted recurrence: closed HOST diagnostic
+===========================================================
+2026-11-02. Goal ACTIVE; correct usable 27B Work and 20 tokens/sec UNMET.
+Last completed physical diagnostic remains about 0.1597 tokens/sec with
+unresolved numerical differences. This checkpoint changes HOST tests only.
+No production arithmetic, native driver, firmware, Assistant or hardware
+state is changed by these tests. The separate physical failure-detail
+client 55172 remains LIVE and protected; see its own rollout ledger.
+
+Evidence that changes the next numerical experiment
+-------------------------------------------------
+The unchanged scalar-order replay previously reproduced the first visible
+native hidden-row difference at completed layer30, after zero-based layer29.
+That was not execution of emitted instructions. The new explicit diagnostic
+runs the ACTUAL unchanged post-dot-scale local RV32/SFPU image on the real
+model-derived query/key/value/gates for ALL48 heads, as96 local half-images.
+It reproduces every scalar F32-order next-state/output word. The same ONE
+Q8 half-scale changes against the wider CPU reduction, and the resulting
+ALL5120 hidden words match the pinned old native DATA, not the CPU baseline.
+This confirms the known difference through an emitted instruction path;
+it does NOT fix that difference or turn the strict model comparison green.
+
+Three explicit modes:256 reference preparation,320 actual precise card
+preparation,327 all tested card preparation/gated helpers. EACH checks
+786432 next-state words and6144 outputs exactly against the independent
+scalar F32-order calculation. EACH executes13252320 RV32 steps and568320
+SFPU operations. These are HOST engine counts, NOT silicon cycles/time.
+Every mode retains CPU_hidden_differences5120/native_DATA_differences0,
+zero quantized-lane differences and one Q8 scale-word difference.
+
+Mode327 includes the same actual convolution, precise preparation and
+gated helper used by the earlier scalar diagnostic. Original GGUF SHA,
+ALL851 bindings, all three original CPU trace pins and partial native DATA
+pin remain mandatory. The CPU-local input snapshot is unchanged61504B,
+SHA bd3faafe2b26c4eea37ede3a34a5db5db0b8f809845856373d96f43d1b687660.
+Model SHA c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+Original partial hidden SHA
+5a1c8478fea72b7a3d1acc63eecdebdb3fbdcf3c1f57166e04a3a19aa99ab784.
+
+Scope and isolation
+-------------------
+The standalone local image is NOT the current linked whole-model peer.
+Its boot e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+and2864B code0c61dc435a3c2e00c8ae8a11319a307c86707b410100f7fbc85d15f8587bfcbe
+are unchanged. Main/independent clean builds reproduce whole ELF
+79f595554461cf478bbd89cb8d03fa6855e965c1a82b86e7c846e7fedd89454b.
+The new bridge uses the existing unmodified instruction engine, defines
+no CPU oracle role and is compiled in a separate translation unit. Only
+the replay translation unit contains the actual extracted CPU Impl.
+No CPU reference products seed a native history or the physical Pioneer.
+
+The runner authenticates the SAME open original boot/code snapshots,
+then the engine reads only their private400-mode copies, not a later
+reopen of the caller's image path. Both half-images are fresh independent
+local executions; full key-major state packing and output collection
+preserve each original input word. Results copy back only after both
+halves finish with all nine imports, defined rows and final drains. This
+DATA copy conveys no native allocation, owner, held state, launch, NoC,
+terminal, clean-END, card integrity/authenticity or Work capability.
+Only position0/layer29's initially zero recurrent state is studied here;
+these real inputs do not establish long-context numerical correctness.
+
+Closed checks, not inferred completion
+------------------------------------
+New main58947 and independent clean42535 ACTUALLY exit0. Their complete
+logs are byte-identical SHA
+358bb0077ad10e351a24481b9c5595a9621071497fbadb6bdc79c7626cf0fa5b.
+Both run ALL15 original modes FIRST, then the three new emitted modes.
+Old default main88748 and clean16671 ACTUALLY exit0; complete logs match
+each other AND the original20261031 reduction-order raw log byte-for-byte,
+SHA577752362a3c2e6542d86adf783858dfc5f012af73aef7c9aa4b704ad370f045.
+No old decision, reference trace/pin, tolerance or expected value changed.
+All four stderr files are empty. ASan/UBSan, FE_TONEAREST and disabled FP
+contraction are preserved. The newer test's successful exit means the
+known mismatch was reproduced, NOT model numerical acceptance.
+
+Actual new CLI gate tests main70200/clean8902 ACTUALLY exit0, logs exact:
+one valid route stops at an unavailable compiler sentinel, and81 invalid
+cases stop BEFORE snapshot creation/compiler invocation. Tests cover all
+boot bits, first/middle/last code-byte bits, missing/short/long files,
+missing/relative/linked directory, arity and zero/one/other role overrides.
+These gates execute no model arithmetic or device operation. Existing
+unchanged local-image arithmetic/fault suites main21629/clean6642 BOTH
+ACTUALLY exit0, including four basic cases, four16-step nonresetting
+state chains, all descriptor-bit/nonfinite-input and missing-import/drain
+fault cases. Both stderr files are empty. Their final printed temporary
+directories differ; these raw logs are not claimed byte-identical.
+
+Raw closed replay/control/gate evidence is in the sibling directory.
+Reproduce (all paths absolute):
+ python3 tools/pioneer/tests/run_pioneer_q38_layer29_emitted_replay.py MODEL CPU_TRACES ORIGINAL_PARTIAL_DIRECTORY POST_SCALE_IMAGE_DIRECTORY
+Old default control:run_pioneer_q38_layer29_replay.py MODEL CPU_TRACES ORIGINAL_PARTIAL_DIRECTORY.
+Image build:sh tools/pioneer/build_qwen38_local_image.sh delta_vector_ggml SDK NEW_OUT.
+
+Next numerical work must test any reduction change through real emitted
+instructions on these inputs, retaining the original full-model checks.
+This local mismatch does not identify the physical early-frontier failure
+or demonstrate that the card is faulty. Performance needs independent
+physical full-model measurements; no20tok/s forecast follows.

@@ -6,6 +6,9 @@
 #include "pioneer_q38_whole_original_bytes.h"
 #include "pioneer_q38_layer29_math_bridge.h"
 #include "pioneer_q38_sigmoid_precision_host_bridge.h"
+#ifdef PIONEER_Q38_LAYER29_EMITTED_DELTA_DIAGNOSTIC
+#include "pioneer_q38_layer29_emitted_delta_bridge.h"
+#endif
 #include <cassert>
 #include <cstdio>
 #include <map>
@@ -48,7 +51,13 @@ static bool ScalarOrderGdn(const float* q,const float* k,const float* value,floa
  return true;
 }
 int main(int argc,char** argv){
- assert(argc==3 && std::fegetround()==FE_TONEAREST);setvbuf(stdout,nullptr,_IOLBF,0);
+ assert(argc==
+#ifdef PIONEER_Q38_LAYER29_EMITTED_DELTA_DIAGNOSTIC
+ 4
+#else
+ 3
+#endif
+ && std::fegetround()==FE_TONEAREST);setvbuf(stdout,nullptr,_IOLBF,0);
  FILE* file=fopen(argv[2],"rb");assert(file);struct stat st={};constexpr unsigned Count=16+3*5120;
  std::vector<uint32_t> words(Count);assert(!fstat(fileno(file),&st) && S_ISREG(st.st_mode) && st.st_size==Count*4
   && fread(words.data(),4,Count,file)==Count && fgetc(file)==EOF && !ferror(file) && !fclose(file));
@@ -62,8 +71,15 @@ int main(int argc,char** argv){
   && replay.Project(layer,10,normalized,alpha) && replay.Project(layer,11,normalized,beta)
   && replay.Weight(layer,12,convWeight) && replay.Weight(layer,7,a) && replay.Weight(layer,8,dt) && replay.Weight(layer,9,gatedNorm));
  std::vector<float> baselineGated,baselineResidual,baselineActivation;unsigned nativeMatches=0;
- for(unsigned mode:{0U,1U,2U,4U,7U,8U,16U,34U,39U,64U,71U,128U,135U,192U,199U}){
+ for(unsigned mode:{0U,1U,2U,4U,7U,8U,16U,34U,39U,64U,71U,128U,135U,192U,199U
+#ifdef PIONEER_Q38_LAYER29_EMITTED_DELTA_DIAGNOSTIC
+ ,256U,320U,327U
+#endif
+ }){
   std::vector<float> conv(10240),raw(6144),gated(6144),state(786432,0),projected;
+#ifdef PIONEER_Q38_LAYER29_EMITTED_DELTA_DIAGNOSTIC
+  uint64_t emittedSteps=0,emittedOps=0;
+#endif
   if(mode&1){for(unsigned c=0;c<10240;c+=16)assert(Q38Layer29CardConv(qkv.data()+c,convWeight.data()+c*4,conv.data()+c));}
   else for(unsigned c=0;c<10240;c++){
    float sum=0;for(unsigned tap=0;tap<4;tap++)sum+=(tap==3?qkv[c]:0.f)*convWeight[c*4+tap];
@@ -88,8 +104,22 @@ int main(int argc,char** argv){
    }
    if(mode&32){uint32_t precise=0;assert(ProbeQ38SigmoidPrecision(Bits(beta[h]),&precise));gates[1]=Float(precise);}
    if(mode&64)assert(Q38Layer29CardPreparePrecise(inQ,inK,alpha[h],beta[h],a[h],dt[h],query,key,gates));
-   auto recurrence=(mode&128)?ScalarOrderGdn:Gdn;
-   assert(recurrence(query,key,conv.data()+4096+h*128,gates[0],gates[1],state.data()+h*16384,raw.data()+h*128));
+#ifdef PIONEER_Q38_LAYER29_EMITTED_DELTA_DIAGNOSTIC
+   if(mode&256){
+    std::vector<float> scalarState(state.begin()+h*16384,state.begin()+(h+1)*16384),scalarOutput(128);
+    assert(ScalarOrderGdn(query,key,conv.data()+4096+h*128,gates[0],gates[1],scalarState.data(),scalarOutput.data()));
+    uint64_t steps=0,ops=0;
+    assert(Q38Layer29EmittedDelta(argv[3],query,key,conv.data()+4096+h*128,gates[0],gates[1],state.data()+h*16384,raw.data()+h*128,&steps,&ops));
+    for(unsigned i=0;i<16384;i++)assert(Bits(state[h*16384+i])==Bits(scalarState[i]));
+    for(unsigned i=0;i<128;i++)assert(Bits(raw[h*128+i])==Bits(scalarOutput[i]));
+    emittedSteps+=steps;emittedOps+=ops;
+    if((h+1)%8==0)printf("LAYER29_EMITTED_LOCAL_RECURRENCE mode%u heads%u/48 all_state_and_output_words_exact_to_F32_order;HOST instruction engine NOT physical timing\n",mode,h+1);
+   }else
+#endif
+   {
+    auto recurrence=(mode&128)?ScalarOrderGdn:Gdn;
+    assert(recurrence(query,key,conv.data()+4096+h*128,gates[0],gates[1],state.data()+h*16384,raw.data()+h*128));
+   }
    if(mode&4)assert(Q38Layer29CardGated(raw.data()+h*128,gatedNorm.data(),z.data()+h*128,gated.data()+h*128));
    else{
     float sum=0;for(unsigned i=0;i<128;i++){float x=raw[h*128+i];sum+=Flush(x*x);}
@@ -109,7 +139,14 @@ int main(int argc,char** argv){
   std::vector<int> q0,q1;std::vector<float> s0,s1;assert(Input(8,baselineGated,q0,s0) && Input(8,gated,q1,s1));
   unsigned lanes=0;for(unsigned i=0;i<q0.size();i++)lanes+=q0[i]!=q1[i];
   unsigned cpuDiff=Different(result,expected),nativeDiff=Different(result,native);nativeMatches+=nativeDiff==0;
-  if((mode&64) && !(mode&128))assert(!cpuDiff); // Original CPU-order replay,not the actual SFPU reduction.
+  if((mode&64) && !(mode&128) && !(mode&256))assert(!cpuDiff); // Original CPU-order replay,not the actual SFPU reduction.
+#ifdef PIONEER_Q38_LAYER29_EMITTED_DELTA_DIAGNOSTIC
+  if(mode&256){
+   assert(cpuDiff==5120 && !nativeDiff && lanes==0 && Different(s0,s1)==1);
+   printf("LAYER29_EMITTED_LOCAL_REPLAY mode%u half_images96 state_words786432 output_words6144 RV32steps%llu SFPUops%llu known_CPU_difference_REMAINS_FAILURE native_DATA_exact1;NOT current linked peer/native history/physical/Work/TPS\n",
+    mode,static_cast<unsigned long long>(emittedSteps),static_cast<unsigned long long>(emittedOps));
+  }
+#endif
   printf("LAYER29_CPU_LOCAL_REPLAY mode%u gated_words%u gated_q8_lanes%u gated_q8_scales%u residual_words%u activation_words%u CPU_hidden_differences%u native_partial_hidden_differences%u;NOT emitted/physical/Work/TPS\n",
    mode,Different(baselineGated,gated),lanes,Different(s0,s1),Different(baselineResidual,residual),Different(baselineActivation,activation),cpuDiff,nativeDiff);
  }

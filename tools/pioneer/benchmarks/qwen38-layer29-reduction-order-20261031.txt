@@ -1,5 +1,10 @@
 Layer29: quantizer ruled out; missing F32 recurrent order isolated
 ================================================================
+FOLLOW-ON20261102:qwen38-layer29-emitted-recurrence-20261102.txt executes
+the unchanged LOCAL emitted image on real layer29 inputs in both trees.
+It confirms the known difference,NOT a fix,current-linked-peer/full-model
+numerical acceptance,physical fault cause or speed result.
+
 2026-10-31. Goal ACTIVE. Last physical baseline0.207893161 tokens/sec,
 20 tokens/sec UNMET. This is HOST CPU-local arithmetic evidence,NOT a
 new physical inference,native history,firmware fix or speed measurement.

@@ -1,0 +1,7 @@
+PASS ACTUAL local vector GDN trial0 steps135421 SFPUops5408 ALL state/output bits exact;NO native speed claim
+PASS ACTUAL local vector GDN trial1 steps146237 SFPUops5920 ALL state/output bits exact;NO native speed claim
+PASS ACTUAL local vector GDN trial2 steps146226 SFPUops5919 ALL state/output bits exact;NO native speed claim
+PASS ACTUAL local vector GDN trial3 steps146226 SFPUops5919 ALL state/output bits exact;NO native speed claim
+PASS ACTUAL post-dot-scale vector:4 independent half-heads x16 successive state transitions,ALL8256 words/step exact;NOT native/full-model quality
+PASS OFFLINE ACTUAL emitted vector GDN:fixed L1/CSR whitelist,eight10-bit-counter state imports,ALL512 rows defined,ALL descriptor bits+nonfinite inputs inert,first/middle/last missing imports and false final drains reject without publication;NO NoC/DRAM/DMA/PCI/native image selection/GGML residency
+Offline emitted vector GDN evidence retained at /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q38-delta-vector-image.495mT8k5
