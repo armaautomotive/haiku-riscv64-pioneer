@@ -1,0 +1,6 @@
+strict ARC clock endpoint model: 81 valid / 296 refused; zero endpoint IO after retention; NOT hardware
+actual Native.inc endpoint lifecycle: 5 valid / 70 refused; NOT native hardware, ARC or engine execution
+default prior/current complete objects equal aabe86f52abc2d44b15536f6cd9ab1f7ad71d92e9755bafdeb6072575976d425
+base55 prior/current complete objects equal 20bd6ea1e38e94a6510ef64d550efd705ed8413cf9c61de7ce8a0942263c829b
+native actual adapter object 0083f567e103eeae5e04323cbfdbe6aba50c001760b184b0af7b143aac56dfa0 native frame max 896 bytes; NO LINK/INSTALL/HARDWARE
+role perimeter 14 actual preprocessor cases; five renamed entry bodies inert

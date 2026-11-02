@@ -4,6 +4,14 @@
  * Optional, root-only Pioneer experiments. Only fixed owned host-buffer DMA;
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
+#ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
+#include "PioneerDramReadSweepNativeRole.h"
+#elif defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x4452534e4f445256ULL
+#error DRSNODRV is reserved for the separate DRAM owner compile perimeter
+#endif
+#if defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT)
+#error DRAM compile-only flag requires its distinct native context
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_ROLE_TAG_OK
 #error Internal token NODRV witness cannot be supplied by the caller
 #endif
@@ -864,6 +872,10 @@ struct PioneerProbeCookie {
 	PioneerStoreContext* context=NULL;
 };
 static PioneerProbeCookie* sRuntimeOwner=NULL;
+#ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
+struct PioneerDramSweepNativeContext;
+static PioneerDramSweepNativeContext* sDramSweepNativeContext=NULL;
+#endif
 static sem_id sLock = -1;
 #ifdef TT_PIONEER_DRIVER_RELOAD
 #if !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH) || !defined(PIONEER_DRIVER_BUILD_TAG)
@@ -1230,7 +1242,7 @@ FindCard(pci_module_info* pci, pci_info& card)
 status_t
 init_hardware()
 {
-#if defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
+#if defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
 	return B_NOT_ALLOWED; // COMPILE witness:even renamed entry must do ZERO PCI/module IO
 #endif
 #ifdef TT_PIONEER_DRIVER_RELOAD
@@ -1259,7 +1271,7 @@ init_hardware()
 status_t
 init_driver()
 {
-#if defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
+#if defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
 	return B_NOT_ALLOWED; // no reload-guard attachment,PCI module or semaphore creation
 #endif
 #ifdef TT_PIONEER_DRIVER_RELOAD
@@ -1305,14 +1317,18 @@ init_driver()
 void
 uninit_driver()
 {
-#if defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
+#if defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
 	return; // no guard/module/sem/host teardown from a compile-only object
 #endif
 #ifdef TT_PIONEER_DRIVER_RELOAD
 	// uninit_driver cannot veto an OS unload. Persist any unsafe state in
 	// the separate KEEP_LOADED guard BEFORE dropping this driver's image.
 	if (sReloadGuard) {
-		bool clean=!sColdRecoveryRequired && sRuntimeOwner==NULL && sOpenCookies==0;
+		bool clean=!sColdRecoveryRequired && sRuntimeOwner==NULL && sOpenCookies==0
+#ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
+   && sDramSweepNativeContext==NULL
+#endif
+   ;
 		sReloadGuard->detach(sReloadGeneration,clean);
 		put_module(PIONEER_DRIVER_RELOAD_GUARD_MODULE); sReloadGuard=NULL;
 	}
@@ -1330,7 +1346,7 @@ uninit_driver()
 const char**
 publish_devices()
 {
-#if defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
+#if defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
 	return NULL;
 #endif
 	return sNames;
@@ -8325,6 +8341,10 @@ AttentionTileTestControl(PioneerProbeCookie* cookie,void* data,size_t length,boo
 	release_sem(sLock); free(request); return status;
 }
 
+#ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
+#include "PioneerDramReadSweepNative.inc"
+#endif
+
 #ifdef TT_PIONEER_DRIVER_RELOAD
 // PIONEER_DRIVER_RELOAD_CONTROL_BEGIN
 static status_t
@@ -8343,12 +8363,20 @@ DriverReloadControl(PioneerProbeCookie* cookie,uint32 operation,void* data,size_
 		|| (r.expected_generation && r.expected_generation!=sReloadGeneration)) status=B_BAD_VALUE;
 	else if (operation==TT_PCI_PROBE_RELOAD_QUIESCE &&
 		(!r.expected_tag || !r.expected_generation || sColdRecoveryRequired || sRuntimeOwner
-			|| cookie->context || sOpenCookies!=1)) status=B_BUSY;
+			|| cookie->context || sOpenCookies!=1
+#ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
+   || sDramSweepNativeContext!=NULL
+#endif
+   )) status=B_BUSY;
 	else {
 		if (operation==TT_PCI_PROBE_RELOAD_QUIESCE) sReloadQuiesced=true;
 		r={}; r.version=1; r.driver=TT_Q38_DISPATCH_DRIVER; r.build_tag=PIONEER_DRIVER_BUILD_TAG;
 		r.generation=sReloadGeneration; r.guard_version=sReloadGuard->version;
-		r.quiesced=sReloadQuiesced; r.cold=sColdRecoveryRequired; r.active_owner=sRuntimeOwner!=NULL;
+		r.quiesced=sReloadQuiesced; r.cold=sColdRecoveryRequired; r.active_owner=sRuntimeOwner!=NULL
+#ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
+   || sDramSweepNativeContext!=NULL
+#endif
+   ;
 		r.open_count=sOpenCookies;
 		// Failed reply delivery leaves the hardware gate CLOSED. It never
 		// resumes computation or clears the resident cold latch.
@@ -8365,6 +8393,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	PioneerProbeCookie* instance=(PioneerProbeCookie*)cookie;
 	if (geteuid() != 0 || instance==NULL || instance->magic!=0x50313030)
 #include "PioneerQ38MixedLiveNativeRouting.inc"
+#ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
+ // DRSNODRV: no public execution, legacy inference, or model-upload route.
+ return B_NOT_ALLOWED;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
  // NODRV retains only PRIVATE bank/clock/FD source constructors. The
  // distinct tag74 role additionally routes its bounded validation only.
@@ -9749,7 +9781,7 @@ ProbeWrite(void*, off_t, const void*, size_t* length)
 device_hooks*
 find_device(const char* name)
 {
-#if defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
+#if defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_OUTPUT_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_RESIDENT_LAYER_CONTEXT_COMPILE_ONLY) || (defined(PIONEER_Q38_MIXED_LIVE_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_Q38_MIXED_LIVE_EMIT_CONTEXT_BODY))
 	return NULL; // no hooks,including no old Work/CPU/DEBUG controls
 #endif
 	static device_hooks hooks = {

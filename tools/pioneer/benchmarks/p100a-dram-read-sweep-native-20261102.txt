@@ -1,0 +1,122 @@
+DRAM read sweep: actual native adapter compiled; NOT hardware-qualified
+======================================================================
+2026-11-02. Goal ACTIVE; usable 27B Work and 20 tokens/sec remain UNMET.
+This implements the missing native IO/lifetime body, not a measured card
+bandwidth result or an inference speedup. No new module was linked, staged,
+installed or executed on the Pioneer. Last completed model diagnostic stays
+about 0.1597 tokens/sec with unresolved strict numerical differences.
+
+Native implementation, not another caller-supplied scope hook
+-------------------------------------------------------------
+PioneerDramReadSweepNative.inc is included in the actual driver TU under
+separate DRSNODRV identity 4452534e4f445256 and compile-only admission.
+The real owner template is instantiated with PioneerDramSweepNativeIO.
+The body binds the actual FD magic/team/thread, driver semaphore, unique
+active context, PCI module/reservation/BDF, reload guard/generation, complete
+private 10586-word allocation, frozen proofs, and real KernelExport VM views.
+Area ID/address/length/protection checks reject changed aliases. The private
+scope is not replaced by a host fixture in the native SDK object.
+
+The adapter maps the fixed root L1/GDDR window, reset and TRISC0 PC pages,
+and the bounded NIU page. Host writes are confined to command words 0..0x24
+and NIU config0x100; a host doorbell write is forbidden. L1 reads/writes
+require actual root-window mapping words, even while phase7 remaps ROOT
+before phase8. Last-chunk verification requires the read-only selected-bank
+mapping. Reset writes are single-use, ordered initialize/launch/HOLD, with
+the matching owner phase and completion fields checked before each write.
+
+The original read-only ARC/telemetry/reset/seven-bank/NoC prerequisites are
+still real existing native helpers, with their existing bounded TLB policies.
+They are not relabelled as newly strict, whole-native failure qualification.
+The GDDR-writing legacy resident-math probe is not reused.
+
+Separate strict firmware clock transport
+-----------------------------------------
+BlackholeDramSweepArcClock.h preserves the normal firmware application queue
+protocol and only GET_AICLK/BUSY/IDLE. It requires observed unforced mode3,
+idle800MHz and conservative telemetry before entering busy. Unlike the old
+diagnostic transport, it has NO automatic queue/TLB restoration retries:
+first uncertainty performs memory-only retention, with no subsequent IO.
+Original mapping/request bytes are independently reread before modification
+and after restoration. No firmware-owned response bytes or serial counters
+are rewritten. Native transport methods guard the actual scope and views.
+Both ARC aliases and the sweep share TLB201; the unchanged owner snapshots
+after clock entry and checks the original six mapping words after leaving.
+The reported firmware MHz is not yet an independent physical proof of the
+device cycle-counter frequency, nor permission to publish a GB/s result.
+
+Explicit native closure and uncertainty lifetime
+-------------------------------------------------
+Inner owner.closed is NOT whole-driver END. Only after the complete inner
+restore and clock closure does the native controller delete all17 actual
+virtual aliases, restore PCI commands/BAR/bridge fields once with readback
+and a final reread, then consume the real unreserve_device return status.
+Top-level complete requires all three closures. Pre-mutation refusals may
+release only the reservation and are NOT successful sweeps.
+
+Any execution/clock/VM/PCI/reservation uncertainty retains the heap context,
+remaining views, backing allocation and reservation, and latches the shared
+cold-recovery guard. No destructor, legacy Unmap/MmioEnd, reset, retry or
+release follows retention. The FD pointer is cleared to avoid later access
+to a freed cookie. Retained context is included in reload ownership/clean
+detach metadata. No public execution/model/legacy selector is added.
+
+Closed actual tests and their exact limits
+-------------------------------------------
+Final main35080/f and independent-clean49134/g BOTH actually exit0. Their
+complete captured outputs are byte-identical; actual native objects compare
+byte-identical. The independent tree starts from committed623bdaad, with
+381 direct tool headers and the committed driver directory, then overlays
+the exact eight changed/new files through apply_patch. Both use the same
+packaged RISC-V SDK and explicit original kernel-header reference tree.
+
+Each independently executes under ASan/UBSan:
+ - Strict ARC endpoint model:81 valid/296 refused. All queue positions,
+   every actual request/TLB write position, read corruption, timeout, bad
+   replies/descriptors, clock entry/exit and no IO after retention.
+ - Actual Native.inc lifecycle methods with explicit KernelExport/PCI
+   endpoint facades:5 valid/70 refused.17-view deletion failures, FD/team/
+   thread/semaphore/generation/module loss, changed view geometry/protection,
+   no host doorbell, correct phase7 ROOT remap, ordered single-use resets,
+   every PCI write and22 read positions, and failed reservation release.
+   These tests do NOT simulate a successful whole native engine run. The
+   factory is dynamically exercised only on its pre-mutation refusal/release
+   edge; successful physical admission/prerequisites/ARC/engine execution
+   still require their actual native integrated hardware qualification.
+
+Each then recompiles actual kernel SDK source. BOTH preserved ordinary
+branches are byte-exact against authenticated prior623bdaad driver source:
+ default object aabe86f52abc2d44b15536f6cd9ab1f7ad71d92e9755bafdeb6072575976d425
+ base55 object20bd6ea1e38e94a6510ef64d550efd705ed8413cf9c61de7ce8a0942263c829b
+The base55 control is NOT the installed feature-rich stable041 driver.
+Native DRSNODRV object:
+ 0083f567e103eeae5e04323cbfdbe6aba50c001760b184b0af7b143aac56dfa0
+Maximum newly scoped native stack frame896B; no whole-call-chain/kernel
+stack proof is substituted for this per-frame observation. Actual emitted
+scope/VM/clock/owner/PCI bodies must exist and cannot be constant stubs.
+All five renamed entry bodies match independent inert machine-code controls,
+contain no relocations and export no conventional driver ABI. Fourteen
+actual role-preprocessor cases pass. No object is linked or invoked.
+
+Reproduce in a fresh absolute output directory:
+ python3 tools/pioneer/tests/run_pioneer_dram_read_sweep_native_compile.py \
+   /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/NEW-UNUSED-DIRECTORY
+Host tests are the two pioneer_dram_sweep_*_test.cpp files, compiled with
+ -std=c++17 -O1 -g -Wall -Wextra -Werror -fsanitize=address,undefined
+
+Preservation and next physical gates
+-------------------------------------
+Fresh independent read-only SSH exits0:Haiku64CPUs/max137034936320B,
+free133803536384B, installed stable041 SHA exact, tag12/gen2, cold0,
+quiesced0/active_owner0/open1/guard1. Admin b0c851... and guard d1ce2...
+remain exact. No GPU execution, reload, reboot, power, SD, hardware,
+network or Assistant change was made. Raw health and both test outputs
+are preserved in the sibling directory.
+
+Next: qualify a separately identified installable diagnostic/public DATA
+copy path, actual whole-module exports/ABI/call-stack and integrated native
+failure/end lifecycle, strict deployment/restore identities, then one small
+physical READ-only sweep. Do NOT expose DRSNODRV or bypass these gates.
+One stream is not all-card bandwidth; synchronized multi-bank/worker tests
+and correct full-model inference remain later requirements. No authenticity,
+capacity, saturation, usable Assistant,20tok/s or completion claim follows.
