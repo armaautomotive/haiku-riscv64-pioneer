@@ -1,3 +1,97 @@
+Full-token timing: physical diagnostic CLOSED,valid profile,strict still1
+========================================================================
+2026-11-02 16:14:57UTC. SAME38423 ACTUALLY terminates0,observed16:08:56UTC.
+This supersedes ALL historical LIVE/no-result statements below. Actual
+full34 generation,HOLD/drain,held timing read,restoration,END+Close return
+the whole580-line45097B stdout;stderr0B. No compute parent remains.
+Exact3a2 restore30291 ACTUALLY0;independent4236 ACTUALLY0 verifies stable041/
+tag12/generation8/cold0/quiesced0/owner0/open1/guard1,64CPUs and full
+137034936320B RAM/free133785993216B. Goal ACTIVE;correct usable27B Work
+and20tok/s remain UNMET. No whole-card authenticity/capacity certificate.
+
+Actual generation result,not a performance breakthrough
+--------------------------------------------------------
+Same-open original GGUF SHA/all851 learned bindings authenticate BEFORE
+Open;all19399024640 allocation bytes upload,START acknowledges,all34
+positions finish and actual clean END+Close succeeds.32 post-prompt
+sampled tokens,committed2..34,2006 observations:
+ elapsed196534398..196537767us
+ rate0.162818579..0.162821370 tokens/sec
+Approximately6.14seconds per sampled token. Authentication,loading,
+initialization and restoration are excluded. These are observation-window
+bounds,NOT confidence intervals or isolated latency. No meaningful speedup
+over the preceding approximately0.16274tok/s is claimed. This remains ONE
+fixed2-prompt diagnostic,not sustained/arbitrary-prompt/Assistant Work.
+
+First actual complete token-controller device-cycle profile
+------------------------------------------------------------
+Both strict readers validate the exact new envelope,WHOLE384B/96word
+packet,actual success/ready/safe reply,all60 metric words+4 zero padding,
+committed34/stateCOMPLETE/error0 and all10 bucket/count/cycle sums. Actual
+source result is valid1. Total281888258762 sampled device cycles with
+4524 segments. Relative fractions,rounded below:
+
+ phase          segments    device cycles       percent
+ Bootstrap             1          1889347       0.000670
+ Metadata           2176      12050420954       4.274893
+ Recurrent          1632     165492387679      58.708507
+ Dense               544      69952711573      24.815759
+ HeadNormalize        34         64914684       0.023029
+ HeadMatrix           34      31466426731      11.162731
+ Feedback             34         56253446       0.019956
+ StateCommit          34       2691959009       0.954974
+ Publication          34         29831156       0.010583
+ FinalStop             1         81464183       0.028899
+
+These cover ALL34 positions INCLUDING prompt positions,bootstrap/STOP
+and observer cost. They are NOT the separate32-token count-rate window,
+pure tensor-engine utilization,individual kernel latency or known clock
+frequency. Body/head buckets INCLUDE child arithmetic,packing,controller/
+NoC work and waits. No GHz,GB/s,utilization or tok/s conversion is made.
+All exact rational fractions are retained in the whole strict-reader logs.
+
+The layer bodies together account for83.524266percent;with HeadMatrix,
+94.686997percent of this inclusive cycle interval is in these regions.
+This directs the next investigation toward the card-side layer/common
+matrix path and its data preparation/scheduling,then metadata and state
+commit. It does NOT identify which inner arithmetic/pack/NoC/wait operation
+is dominant or prove any removable fraction. Runtime CPU-reference
+validation is already absent from this diagnostic;removing it cannot be
+credited as the missing speedup. Further focused measurements are needed
+before attributing the observed cost or predicting a new model rate.
+
+Unchanged strict numerical decision remains FAILURE
+-----------------------------------------------------
+Independent main+clean phase readers BOTH ACTUALLY exit1,whole stdout
+byte-identical,all stderr0B. ALL3 original CPU trace pins load;the unchanged
+full34 grammar/feedback/flags/count/rate checks and first3 greedy choices
+pass. Known maximum-score values remain:
+ position selected observed-max-bits CPU-max-bits
+ 0        70253    413c2359          413c2358
+ 1        17       414621d3          414621d3
+ 2        17       4168afd0          4168afd0
+Position0 still differs by ONE FP32 least-significant bit. No tolerance,
+expected word,reference pin,verifier or exit mode is changed. Positions3..33
+have NO external numerical acceptance here. A valid timing profile/clean
+END does not make numerical acceptance or usable Work pass.
+
+Safe restoration and preservation,after actual parent terminal ONLY
+-------------------------------------------------------------------
+Only after actual38423 exit0 and whole closed raw parsing,independent
+postterminal56692 ACTUALLY0 verifies exact0f20/gen7/cold0/idle,all whole
+staged/installed/helper/client/backup/admin/guard identities,64CPUs/fullRAM
+and no project compute parent. No extra GPU query is used to interpret
+already returned timing DATA. SAME3a2 --restore0f20->041 ONCE:30291
+ACTUALLY0,quiesce/close/atomic replacement/verified reload. Independent
+new4236 ACTUALLY0 confirms stable041/gen8 and preservation above. All
+postterminal/restore/final independent stderr streams are0B.
+No reset,forced unload,retry,quarantine,reboot,power,SD,mains,hardware,
+network,Assistant,kernel or boot change. UART never reopened/reconfigured.
+Whole closed physical/strict/metadata/restoration logs are archived in the
+sibling directory. Learned model/prefix files are NOT committed.
+
+Historical protected launch ledger (superseded LIVE status)
+-----------------------------------------------------------
 Full-token timing: ONE controlled physical diagnostic LIVE
 ==========================================================
 2026-11-02 15:35:55UTC. SAME38423 is ACTUALLY live after same-handle poll.
