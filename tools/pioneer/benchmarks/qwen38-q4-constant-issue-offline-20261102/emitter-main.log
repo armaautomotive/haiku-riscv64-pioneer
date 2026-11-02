@@ -1,0 +1,2 @@
+PASS_CONSTANT_Q4_ISSUE issued+expanded streams/replay state bit-exact cases832 refusals23;Q8/Q6/return-to-Q8 unchanged;NO hardware or speed claim
+PASS_CONSTANT_Q4_ROLES positives2 refusals52;BUILD only, no native selector

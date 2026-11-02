@@ -51,6 +51,7 @@ struct TwinBatchQueuedPeer:TwinBatchPrefetchPeer {
   CheckEnd();StopLocal();
  }
 };
+#ifndef PIONEER_Q38_TWIN_BATCH_QUEUED_WORKER_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==3);setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;unsigned cases=0,faults=0,stack=0;
  for(unsigned type:{8U,12U,14U})for(unsigned worker:{1U,96U,119U}){
@@ -68,3 +69,4 @@ int main(int argc,char** argv){
  }
  printf("PASS_ACTUAL_TWIN_BATCH_PREFETCH_QUEUED_SUMMARY retainedWorkers%u secondPayloadFaults%u maxCombinedStack%u/8192;NO_DENSE_GLOBAL_OUTPUT_ALL119_NATIVE_MODEL_WORK_OR_TPS\n",cases,faults,stack);
 }
+#endif

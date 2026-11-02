@@ -1,0 +1,139 @@
+Constant Q4 issue: full returning-worker implementation, NOT a speed result
+=========================================================================
+2026-11-02. Goal ACTIVE; usable numerically accepted27B Work and20tok/s
+remain UNMET. No hardware operations this turn. The latest completed
+full-model physical diagnostic remains approximately0.16282tok/s with its
+unchanged strict numerical failure. This file describes a separate shader
+BUILD and local emitted-instruction tests, NOT a newly installed driver,
+an Assistant target, native throughput or a card-authenticity certificate.
+
+Final paired execution12492/main and11162/independent clean ACTUALLY exit0,
+observed17:08:48UTC:27 shapes/54 retained changed-input jobs/12 inert
+NoC-loss cases/2 out-of-order next-layer refusals. Old/new correct next-layer
+receipts pass. Maximum actually observed combined worker stack3540/8192B.
+Whole24169B logs are byte-identical,SHA256
+04e0db8907ef5564af97d11892483ce502a9e58a41e95c2acf05910294c4fa7c.
+Earlier paired full executions85891/33363 also actually0,without the final
+added out-of-order controls;those earlier results are not substituted for
+the closed final rerun. All tests/builds this turn are now terminal.
+
+Why this experiment, and what it changes
+-----------------------------------------
+The actual full-token profile puts94.686997percent of its inclusive device
+cycle interval in body/head regions. Older physically qualified per-peer
+profiling placed most selected Q4 block time in operand preparation; that
+is not a fresh current-worker inner profile or a removable fraction.
+Earlier direct-Q4 and nibble variants were numerically qualified but their
+paired FFN results did NOT demonstrate a clear speedup. They are not blindly
+enabled here. Failed raw-unpack-cache22 stays blocked and is not retried.
+
+The current full returning worker builds some original REPLAY instructions
+at runtime and writes them through0xffe40000, despite Q4 having only two
+decoder forms. New constant type/panel specializations let the EXISTING
+emitter issue those SAME words through its inline rotated encoding.
+No nibble shortcut/new opcode/quantization/reassociation/FP32 arithmetic,
+decoder operation count/replay allocation/cache/raw format,UNPACK/source-
+bank handoff/config-readback/real drain/NoC/buffer lifetime is changed.
+CPU reference products are not introduced into Work.
+
+Primary instruction issue reference:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/PushTensixInstruction.md
+It defines identical instruction-push semantics for stores and inline
+instructions and permits adjacent inline-instruction fusion. Actual cache/
+fusion state and physical timing are NOT established by our interpreter.
+Original replay remains record+execute,never Load-without-Exec;no reliance
+on the documented undefined fusion/record-only combination or index wrap.
+
+Separate immutable BUILD subject, not a native selector
+--------------------------------------------------------
+New TU/role require the distinct constant-issue/twin/returning math family;
+kernel/tag/CPU/Work/old decoder/cache/barrier roles refuse it. A dedicated
+builder reproduces ENTIRE current70f wide-GDN worker+ancestors and its
+entire current matrix object FIRST, then changes that one matrix object.
+Both independent final non-inspect builds complete and reproduce:
+ ELF e9ef5c53dbb3f8a924920c5dac261a884bbe33c3168d90cfd168e02fa96d8397
+ text6408/8192 d99ce0af068f3dfbd42df71747a2beca2c32701e959f0c5de7f467572d9ef93a
+ affine5360/5376 472b4a921fa0df587eebce11b2706c6e5d128d67e1a3e2b6bd5a37509e7155d1
+ fetch1292/1792 63102a2e454bc149c11e44af086ce3ca0fc8853b06ab3fe092169753c076c6d5
+ globalworker9232 6d565f73e3f9856a252632ef278165fb78b477102c03a72f44f07320474e23bd
+All10sections+wholeELF compare byte-for-byte. Boot/precise/dense/FFN/service/
+wide-GDN sections remain EXACT70f. Every changed non-text word is covered
+by18 exact references:ONE named q38_compute_once entry call,12 calls to
+entire byte-identical affine/load helpers,and5 references to entire byte-
+identical readonly switch/setup objects. ELF OBJECT/FUNC types are checked;
+nm's text-section label is not mistaken for actual data type. No broad
+address/changed-body waiver or enlarged code/stack extent is introduced.
+New helpers148/152B each have the exact30/31 old commands ALL emitted
+inline,plus only the exact RV32 prologue/epilogue. No helper MMIO store or
+call. New individual frames<=528B;helpers16B. This is not whole native-
+kernel/IRQ/call-chain stack certification.
+
+Local tests and limits
+------------------------
+Pure emitter:832 cases compare WHOLE issued AND expanded streams/replay
+state,including changed formats/return-to-Q8;23 invalid inputs emit nothing.
+Role2positive/52refusals and builder35 preSDK/output refusals pass. Actual
+reference audit18positive references/22 independent corruptions refuses
+changed calls/data/complete helpers and unexplained non-text words.
+Main/clean emitter/role/CLI/reference outputs match byte-for-byte.
+Unchanged old direct-Q4 emitter298 cases and native-operand1053184 exhaustive
+raw-byte/plane/lane cases pass. These are not physical hardware tests.
+
+Actual whole old/new RV32+Tensix worker ROMs are SHA-authenticated and copied
+to private readonly fixtures before virgin boot. Symbol addresses derive
+from the SAME whole authenticated ELF,never caller symbol text. Unchanged
+historical constructor ROM is authenticated too. The original interpreter
+opcode/replay/hazard whitelists are not extended. Synthetic NoC/raw/control
+endpoints,worker69;Q8/Q4/Q6 xK5120/6144/17408 x1/3/16groups. Each uses real
+payload ACK,queued descriptor,two changed-input jobs on the SAME retained
+processor state,full output/source/NoC/replay/drain/UNPACK comparisons and
+real STOP. No supplied PC/register/guest-state reset makes a case succeed.
+This is NOT original-GGUF/full64-layer/all119worker/native/physical quality.
+
+Initial expanded queued test FAILED on the UNCHANGED old worker at
+Q4/K17408 second job. That FFN-down really advances modelLayer,but the old
+narrow queued fixture's producer left next.layer=0. Corrected ONLY the
+test producer to publish next.layer=1 at the existing final-commit boundary
+for BOTH ROMs. The production ordering guard is unchanged. Final added
+negative controls deliberately repeat layer0 and require actual inert
+refusal before any next read,then correct layer1 on the unchanged parent.
+Earlier build/test failures are preserved:an initially unexplained linked
+reference,incorrect nm data classification,and renamed test-main missing
+implicit-return semantics. No failed run is relabelled as a pass.
+
+Counts, NOT silicon time or a model speedup
+-------------------------------------------
+Across the nine Q4 first jobs, instruction-buffer writes decrease
+35.412920..35.747857percent. Total emulated RV instruction counts decrease
+ONLY0.803560..1.200347percent. Q8/Q6 command streams/writes stay exact,but
+their RV counts INCREASE0.108425..0.168244percent. Therefore no whole-model
+or native benefit is assumed from fewer MMIO writes or fusion opportunity.
+Example K17408/16groups:RV17491437->17281479;
+instruction-buffer writes389573->250309. Tensor instructions,including all
+expanded decoder operations,are identical. These counts include the tested
+job's control/source/ACK work and do not represent physical clock cycles.
+
+Next REQUIRED before hardware or promotion
+--------------------------------------------
+Freeze a separate complete DATA family binding this exact e9ef worker to
+the current qualified token-controller ROOT. Verify every installed code
+word/zero gap/extent and unchanged full journal,not just changed snippets.
+Qualify the real native owner/USER namespace/immutable identities and all
+failure/END/held-source boundaries with this pair. Run original-model
+instruction/numerical controls before a separately admitted physical trial.
+Measure complete real inference with unchanged numerical acceptance and
+separate no-CPU-reference Work;do not extrapolate these instruction counts
+to20tok/s or make this a normal Assistant selection yet.
+
+No Pioneer access,driver install/reload/recovery/power/SD/mains/hardware,
+boot/kernel/CPU/RAM/network/Assistant/preferences/chat write occurred. Dirty
+llama,NativeBuildStatus and unrelated FlashNext/WIP files remain untouched.
+Local build roots:/private/tmp/pioneer-q4-constant-worker-{main,clean}-20261102-final
+Independent source:/private/tmp/pioneer-q4-constant-clean-20261102-a
+All closed final build/execution/emitter/role/CLI/reference and old-unit
+logs,plus original failed build/harness/order attempts,are in the sibling
+qwen38-q4-constant-issue-offline-20261102 directory. A separate py_compile
+check was refused by the sandbox's default external bytecode-cache path;
+all six Python sources subsequently compile with NO cache/file writes.
+Reproduce build with build_qwen38_q4_constant_issue_worker_image.py SDK NEW_OUT;
+execute run_pioneer_q38_q4_constant_issue_worker_tests.py OLD_WIDE NEW_IMAGE.

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_Q38_VECTOR_PANEL_H
 #define PIONEER_Q38_VECTOR_PANEL_H
+#include "PioneerQ38Q4ConstantIssueRole.h"
 #include "PioneerQ38VectorOperand.h"
 #ifdef PIONEER_Q38_WORK_Q4_DIRECT_DECODE
 #if !defined(PIONEER_Q38_WORK_Q4_NIBBLE) || !defined(PIONEER_Q38_NATIVE_OPERAND_STORE) || !defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_REPLAY_OPERAND) || !defined(PIONEER_Q38_STATIC_VECTOR)
@@ -107,6 +108,9 @@ bool PioneerQ38VectorChunk(E& e,unsigned type,unsigned panel,bool second
 #endif
 }
 #endif
+#ifdef PIONEER_Q38_Q4_CONSTANT_ISSUE
+#include "PioneerQ38Q4ConstantIssue.h"
+#endif
 template<class E> static bool PioneerQ38VectorTransform(E& e,unsigned type,unsigned panel
 #ifdef PIONEER_Q38_WORK_SIGNED_MAG2
 	,bool signedMagnitude2Work=false
@@ -120,6 +124,11 @@ template<class E> static bool PioneerQ38VectorTransform(E& e,unsigned type,unsig
 )
 {
 	PioneerQ38VectorPanelSpan span; if (!PioneerQ38VectorPanel(type,panel,span)) return false;
+#ifdef PIONEER_Q38_Q4_CONSTANT_ISSUE
+	if (type == 12) return panel & 2
+		? PioneerQ38Q4ConstantTransform<E,2>(e)
+		: PioneerQ38Q4ConstantTransform<E,0>(e);
+#endif
 #ifdef PIONEER_Q38_STATIC_VECTOR
 #ifdef PIONEER_Q38_WORK_SIGNED_MAG2
 	const bool signedMagnitude2=signedMagnitude2Work && type!=12;

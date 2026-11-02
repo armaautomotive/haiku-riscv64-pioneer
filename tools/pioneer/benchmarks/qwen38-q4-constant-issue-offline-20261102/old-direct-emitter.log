@@ -1,0 +1,3 @@
+PASS OFFLINE direct Q4 expanded stream EXACT:all original SFPLOAD/decode/SFPSTORE/MOV words,only8 replay commands removed per Work panel;affine slots untouched,checked/Q8/Q6 original,return-to-Q8 after changed modes,no stale slots
+cases298;NO hardware/driver/throughput qualification
+Offline direct Q4 stream evidence retained at /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q38-q4-direct-decode.ghGgWEUH

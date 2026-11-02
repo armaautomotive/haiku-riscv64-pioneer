@@ -1,0 +1,2 @@
+PASS OFFLINE native operand:1053184 exhaustive raw-byte/plane/all32-lane cases,exact Q8 -128/Q4/Q6 SM and original MOVD2A overlays,only existing owned initialized physical HIGH halves,invalid selectors zero emission;NO image/scheduling/driver/native/performance qualification
+Offline native operand evidence retained at /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q38-native-operand.EquCfngw
