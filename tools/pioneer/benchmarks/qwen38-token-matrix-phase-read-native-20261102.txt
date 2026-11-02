@@ -12,8 +12,9 @@ then closes. CLOCK/OS/NoC/GDDR endpoints are simulated,NOT physical timing.
 
 UNCHANGED independent original CPU comparators BOTH ACTUALLY0:5120 embedding
 +5120 first-layer words bit-exact. Whole prefix files and comparator stdout
-match. No tolerance,expected word,reference,diagnostic-only exit or validator
-is changed. First-layer accelerator ROOT reserve/access6528/6516B and maximum
+match. No tolerance,expected model word,reference,diagnostic-only exit or
+computed-row comparison is changed. The metadata-only unused-suffix guard
+adaptation is explicitly described below. First-layer accelerator ROOT reserve/access6528/6516B and maximum
 119peer5360/5348B stay within the old8192B reserves. These are accelerator
 instruction observations,NOT HOST kernel/IRQ/indirect-stack certification.
 This closes positive PRIVATE reader qualification ONLY. Scoped IO fault,

@@ -222,7 +222,7 @@
       "bitExactWords": 10240
     }
   },
-  "required20TokensPerSecond": false,
+  "target20TokensPerSecondMet": false,
   "physicalReaderQualified": false,
   "positivePrivateReaderHistory": true
 }
