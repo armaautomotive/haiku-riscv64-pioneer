@@ -2,6 +2,10 @@
 #include "PioneerQ38TokenHiddenReadRole.h"
 #include "PioneerQ38TokenFrontierFailureDetailRole.h"
 #include "PioneerQ38TokenFrontierFailureLinkRole.h"
+#include "../../../../../tools/pioneer/PioneerQ38TokenPhaseProfileProgramsRole.h"
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
+#include "../../../../../tools/pioneer/PioneerQ38TokenPhaseProfileData.h"
+#endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_OWNER_H
 #define PIONEER_Q38_TOKEN_NATIVE_OWNER_H
 #include "PioneerQ38TokenMemory.h"
@@ -54,6 +58,13 @@ struct PioneerQ38TokenReadResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,firstRecord=0;
  uint32_t recordCount=0,packets=0,bytesRead=0,drained=0,firstPC=0,secondPC=0,reserved[2]={};
 };
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
+struct PioneerQ38TokenPhaseProfileResult {
+ uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,valid=0;
+ uint32_t committed=0,words=0,metricState=0,metricError=0,firstPC=0,secondPC=0,reserved[2]={};
+};
+static_assert(sizeof(PioneerQ38TokenPhaseProfileResult)==64,"fixed observation,not a lifecycle receipt");
+#endif
 #if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)
 struct PioneerQ38TokenHiddenReadResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,part=0;
@@ -103,6 +114,9 @@ class PioneerQ38TokenNativeOwner {
  bool terminalObserved=false,holding=false,held=false;
  uint32_t observedTerminal[64]={},terminalCounters[120][8]={},terminalNonces[120]={};
  bool readoutPending=false,readoutDrained=false,readoutCommandKnown=false;
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
+ bool phaseProfileRead=false;
+#endif
  uint32_t readoutCursor=0,readoutInput=0,readoutCommand[10]={};
  bool restoring=false,l1Restored=false;
  const uint32_t* dispatchSaved[120]={}; // SAME earlier dispatch originals,captured BEFORE native launch
@@ -195,6 +209,11 @@ class PioneerQ38TokenNativeOwner {
  template<class IO> bool Fail(IO& io,PioneerQ38TokenTerminalResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenHoldResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenReadResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
+ template<class IO> bool Fail(IO& io,PioneerQ38TokenPhaseProfileResult& r){
+  r.unsafe=1;r.ready=r.valid=r.committed=r.words=r.metricState=r.metricError=0;return FailOwner(io);
+ }
+#endif
  template<class IO> bool Fail(IO& io,PioneerQ38TokenRestoreResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenDispatchRestoreResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenPeerRestoreResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
@@ -1056,6 +1075,9 @@ public:
   readoutCursor+=records;readoutInput=input;readoutDrained=readoutCursor==observedTerminal[3];
   r.ready=1;r.recordCount=records;r.drained=readoutDrained;r.phase=4;return true;
  } // immutable generated DATA only;NO current-state reuse,L1/CSR restore,END/disposal or running-ROOT NIU access.
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
+#include "PioneerQ38TokenPhaseProfileRead.inc"
+#endif
 #if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)
 #include "PioneerQ38TokenHiddenRead.inc"
 #endif

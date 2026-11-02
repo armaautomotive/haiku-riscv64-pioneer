@@ -1,0 +1,12 @@
+55356 ACTUAL_EXIT_0 main frozen public native and USER builders
+4555 ACTUAL_EXIT_0 clean frozen public native builder
+38722 ACTUAL_EXIT_0 clean frozen USER build,session,USER roles,strict parser
+29888 ACTUAL_EXIT_0 main native CLI and const-ROM bridge
+82001 ACTUAL_EXIT_0 main exchange endpoint suite
+96851 ACTUAL_EXIT_0 clean native CLI,bridge and exchange endpoint suite
+84558 ACTUAL_EXIT_0 main strict parser and C++ packet cross-checks
+64100 ACTUAL_EXIT_0 main USER role boundary tests
+76272 LIVE_VERIFIED_2026_11_02_15_11_UTC_NOT_NATIVE_PASS
+81228 LIVE_VERIFIED_2026_11_02_15_11_UTC_NOT_NATIVE_PASS
+Fresh stable read-only SSH ACTUAL_EXIT_0 2026_11_02_15_03_UTC
+No new image/helper staged,installed or run. Physical model rate unchanged.

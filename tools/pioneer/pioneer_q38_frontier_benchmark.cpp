@@ -8,13 +8,18 @@
 #include <cstdio>
 #include <memory>
 #include "PioneerQ38FrontierFailureReportRole.h"
+#include "PioneerQ38TokenPhaseProfileClientRole.h"
 #ifdef PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT
 #include "PioneerQ38FrontierFailureReport.h"
+#ifndef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT
 #include "PioneerQ38FrontierFailureReportCli.h"
+#endif
 #endif
 #include "PioneerQ38TokenHiddenValidationSession.h"
 #include "PioneerQ38TokenRateSamples.h"
-#ifdef PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT
+#include "PioneerQ38TokenPhaseProfileCli.h"
+#elif defined(PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT)
 // Own explicit CLI was bound above;never expose the old benchmark spelling.
 #elif defined(PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT)
 #include "PioneerQ38FrontendProfileCli.h"
@@ -42,7 +47,9 @@ struct FrontierBenchmarkTransport {
  }
 };
 int main(int argc,char** argv){
-#ifdef PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT
+ using M=PioneerQ38TokenPhaseProfileMode;const auto mode=PioneerQ38TokenPhaseProfileArguments(argc,argv);
+#elif defined(PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT)
  using M=PioneerQ38FrontierFailureReportMode;const auto mode=PioneerQ38FrontierFailureReportArguments(argc,argv);
 #elif defined(PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT)
  using M=PioneerQ38FrontendProfileMode;const auto mode=PioneerQ38FrontendProfileArguments(argc,argv);
@@ -52,7 +59,10 @@ int main(int argc,char** argv){
  if(mode==M::Invalid)return 2;
  namespace V=PioneerQ38TokenDecodeBenchmark;
  setvbuf(stdout,nullptr,_IOLBF,0);
-#ifdef PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT
+ puts("Q38_TOKEN_PHASE_FIXED34_HELD_READ_NO_CPU_REFERENCE_NOT_WORK_RAW_CYCLES_NOT_FREQUENCY");
+#endif
+#if defined(PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT) && !defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT)
  puts("Q38_FRONTIER_FAILURE_REPORT_ZERO_EXTRA_ACCELERATOR_CALLS_RAW_REPLY_NOT_ROOT_CAUSE_OR_CLEAN_END");
 #endif
 #ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
@@ -101,6 +111,10 @@ int main(int argc,char** argv){
  if(okay){puts("Q38_FRONTIER_TERMINAL_READY_BEGIN_HOLD_DRAIN_AND_RESTORE;NOT_CLEAN_END_YET");okay=session->Finish();}
  auto records=std::make_unique<uint32_t[]>(V::Positions*64);
  if(okay)okay=session->CopyGenerationRecords(records.get(),V::Positions*64);
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT
+ auto phases=std::make_unique<PioneerQ38TokenPhaseProfileControl::Packet>();
+ if(okay)okay=session->CopyPhaseProfile(*phases);
+#endif
 #ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
  if(okay && !frontends->Complete()){why="frontend_terminal_missing";okay=false;}
 #endif
@@ -132,5 +146,18 @@ int main(int argc,char** argv){
  }
  printf("Q38_FRONTEND_ROWS_END rows%u;FRONTEND_SAMPLE_COUNTS_NOT_RETIRED_INSTRUCTION_CYCLES_OR_FUNCTION_TIME\n",frontends->Size());
 #endif
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT
+ static_assert(sizeof(*phases)==96*4,"fixed complete returned timing packet");
+ const auto* raw=reinterpret_cast<const uint32_t*>(phases.get());
+ for(unsigned row=0;row<12;row++){
+  printf("Q38_TOKEN_PHASE_PACKET word%02u",row*8);
+  for(unsigned col=0;col<8;col++)printf(" %08x",raw[row*8+col]);
+  putchar('\n');
+ }
+ printf("Q38_TOKEN_PHASE_AFTER_CLEAN_END words96 valid%u;ALL34_WITH_BOOTSTRAP_STOP_AND_OBSERVER_COST_RAW_CYCLES_NOT_FREQUENCY_OR_WORK\n",
+  phases->reply.detail[7]);
+ return phases->reply.detail[7]?0:1;
+#else
  return 0;
+#endif
 }

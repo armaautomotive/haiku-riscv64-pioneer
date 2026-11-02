@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38TokenPhaseProfileDataBoundary.h"
 // Rechecked outside include guards. A new math image is not an old native
 // owner, a CPU oracle, a passing model result, or an Assistant Work target.
 #ifndef PIONEER_Q38_TOKEN_WIDE_GDN_DATA_SELECTION_H
@@ -27,7 +28,9 @@ enum {PioneerQ38TokenWideGdnDataSelection=0};
  || defined(PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS_H) \
  || defined(PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_FAULT_PROGRAMS_H) \
  || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H) \
- || (defined(PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H) && !defined(PIONEER_Q38_TOKEN_WIDE_GDN_PROGRAMS_H))
+ || (defined(PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H) && !defined(PIONEER_Q38_TOKEN_WIDE_GDN_PROGRAMS_H) \
+  && !(defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) && PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS == 1 \
+   && defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS_H)))
 #error Wide GDN DATA cannot coexist with old program arrays or a selected old namespace
 #endif
 #if defined(__FAST_MATH__) || defined(PIONEER_Q38_WIDE_GDN_RETURNING_IMAGE) \

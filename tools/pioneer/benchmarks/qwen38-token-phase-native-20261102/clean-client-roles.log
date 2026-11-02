@@ -1,0 +1,2 @@
+PASS failed-reply distinct USER/3 positives/91 missing,zero,two,late,native,shader,profile,CPU+Work refusals;NO packet provenance,driver,lifecycle,hardware or TPS grant
+PASS token-phase USER/4 positives/148 missing,zero,two,late,DATA,native,shader,CPU+Work refusals;unchanged failed-reply controls FIRST;NO native lifetime,physical,quality,Work or speed grant

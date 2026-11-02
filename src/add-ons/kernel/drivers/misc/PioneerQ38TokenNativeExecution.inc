@@ -97,6 +97,30 @@
  if(!c.io.TokenModelSourceScope(false))return false;
  return s->runtime->ReadCommitted(c.io,records,output,result);
 } // immutable committed DATA after genuine HOLD;NO CPU model reference,restore,END or public Work route
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
+[[maybe_unused]] static __attribute__((noinline)) bool ReadQ38TokenNativePhaseProfile(PioneerStoreContext& c,
+ uint32_t* output,PioneerQ38TokenPhaseProfileResult& result){
+ const PioneerQ38TokenPhaseProfileResult pristine;
+ const auto* a=reinterpret_cast<const uint8_t*>(&result);const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+ for(unsigned i=0;i<sizeof(result);i++)if(a[i]!=b[i])return false;
+ auto* s=c.q38TokenNative;
+ if(!s || s->phase!=PioneerQ38TokenNativeState::RootHeld || !s->runtime || !s->TerminalHeld()
+  || !s->runtime->CommittedRecordsRead() || !output || !Q38TokenExecutionOutput(c,&result,sizeof(result)))return false;
+ const unsigned bytes=64*4;const uintptr_t out=reinterpret_cast<uintptr_t>(output),r=reinterpret_cast<uintptr_t>(&result);
+ if((out&3) || out>UINTPTR_MAX-bytes || r>UINTPTR_MAX-sizeof(result) || (out<r+sizeof(result) && r<out+bytes)
+  || !s->startup->PublishedOutput(output,bytes) || !s->runtime->DispatchOutput(output,bytes))return false;
+ const void* objects[]={&c,&c.io,s,s->memory,s->participants,s->runtime,c.initialized,c.hashes,PioneerQ38TokenRope::Data};
+ const size_t sizes[]={sizeof(c),sizeof(c.io),sizeof(*s),sizeof(*s->memory),sizeof(*s->participants),sizeof(*s->runtime),
+  PioneerResidentBanks::Pages,size_t(PioneerResidentBanks::Pages)*sizeof(uint32_t),PioneerQ38TokenRope::Bytes};
+ for(unsigned i=0;i<9;i++){
+  const uintptr_t owned=reinterpret_cast<uintptr_t>(objects[i]);
+  if(!owned || owned>UINTPTR_MAX-sizes[i] || (out<owned+sizes[i] && owned<out+bytes))return false;
+ }
+ for(unsigned i=0;i<64;i++)if(output[i])return false;
+ if(!c.io.TokenModelSourceScope(false))return false;
+ return s->runtime->ReadPhaseProfile(c.io,output,result);
+} // actual SAME held owner;no caller address,count,source or completion hint.
+#endif
 #if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)
 #include "PioneerQ38TokenHiddenReadRole.h"
 [[maybe_unused]] static __attribute__((noinline)) bool ReadQ38TokenNativeHiddenChunk(PioneerStoreContext& c,unsigned part,

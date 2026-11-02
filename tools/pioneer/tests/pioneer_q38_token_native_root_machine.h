@@ -31,6 +31,17 @@ using TokenNativeRootISA=BlockMachine;
 #endif
 struct TokenStartupRoot:TokenNativeRootISA {
  TokenHeldEndpoints& io;unsigned deviceReads=0,deviceWrites=0,markerWrites=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_PHASE_PROFILE_FIXTURE
+ // Fabricated HOST clock endpoint ONLY. Execute the SAME emitted sampler
+ // through the actual ROOT ISA;never transplant registers,PC or model DATA.
+ uint64_t phaseClockReads=0;
+ uint32_t ReadCycleCsr(unsigned csr)override{
+  assert(csr==(phaseClockReads%3==1?0xb00U:0xb80U));
+  phaseClockReads++;
+  const uint64_t now=(UINT64_C(1)<<40)+uint64_t(steps)*19;
+  return csr==0xb00?uint32_t(now):uint32_t(now>>32);
+ } // NOT a hardware frequency,phase timing or model-throughput measurement.
+#endif
 #ifdef PIONEER_Q38_TOKEN_FAULT_PROGRAMS
  unsigned faultSavedWrites=0,faultErrorWrites=0;
 #endif

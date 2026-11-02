@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // Immutable DATA access only, not native initialization or model execution.
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_PHASE_PROFILE
+#define PIONEER_Q38_PROGRAM_DATA_TEST_WIDE_GDN 1
+#endif
 #ifdef PIONEER_Q38_PROGRAM_DATA_TEST_WIDE_GDN
 #define PIONEER_Q38_PROGRAM_DATA_TEST_BATCHED_OUTPUT_CLOSURE 1
 #endif
@@ -19,7 +22,9 @@
 #include <iterator>
 #include <string>
 #include <vector>
-#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_WIDE_GDN
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_PHASE_PROFILE
+namespace P=PioneerQ38TokenPhaseProfilePrograms;
+#elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_WIDE_GDN)
 namespace P=PioneerQ38TokenWideGdnPrograms;
 #elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_BATCHED_OUTPUT_CLOSURE)
 namespace P=PioneerQ38TokenBatchedOutputClosurePrograms;
@@ -109,11 +114,20 @@ int main(int argc,char** argv){
  assert(P::TwinBatchPrefetch==1 && P::FullBatchBuffers==2 && P::RawCopyBytes==0 && P::SecondBatchAddress==0x9a000);
 #ifdef PIONEER_Q38_PROGRAM_DATA_TEST_BATCHED_OUTPUT_CLOSURE
  assert(P::BatchedOutputClosure==1 && P::GlobalOutputReadsPerGroup==10);
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_PHASE_PROFILE
+ assert(P::TokenPhaseProfile==1 && P::PhaseProfileAddress==0x75710 && P::PhaseProfileWords==60);
+ assert(P::RootText[(0x509ac-0x40000)/4]==0x00a00613); // actual relocated unchanged10-read output admission
+#else
  assert(P::RootText[(0x504e8-0x40000)/4]==0x00a00613);
+#endif
 #endif
 #ifdef PIONEER_Q38_PROGRAM_DATA_TEST_WIDE_GDN
  assert(P::WideGdn==1 && P::WideGdnDeltaAddress==0x8e600 && P::WideGdnDeltaWords==64 && P::WideGdnImports==13);
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_PHASE_PROFILE
+ assert(sizeof(P::PeerGdn)==35944 && P::CodeWords(0)==40902 && P::CodeWords(1)==25726 && allWords==3102296);
+#else
  assert(sizeof(P::PeerGdn)==35944 && P::CodeWords(0)==40594 && P::CodeWords(1)==25726 && allWords==3101988);
+#endif
  for(unsigned w=1;w<120;w++)for(unsigned i=0;i<64;i++){
   uint32_t unchanged=0xdeadbeef;const unsigned address=P::WideGdnDeltaAddress+i*4;
   assert(S::SnapshotContains(w,address) && !P::ProgramWord(w,address,unchanged) && unchanged==0xdeadbeef);

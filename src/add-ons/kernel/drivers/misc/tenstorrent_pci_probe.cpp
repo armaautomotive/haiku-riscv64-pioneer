@@ -8419,6 +8419,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
  // NODRV retains only PRIVATE bank/clock/FD source constructors. The
  // distinct tag74 role additionally routes its bounded validation only.
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_BENCHMARK_NATIVE
+ if(operation==TT_PCI_PROBE_Q38_TOKEN_PHASE_PROFILE_READ)
+  return Q38TokenPhaseProfileControl(instance,data,length);
+#endif
 #ifdef PIONEER_Q38_TOKEN_VALIDATION_NATIVE
  if(operation==TT_PCI_PROBE_Q38_TOKEN_VALIDATE)
   return Q38TokenNativeControl(instance,data,length);

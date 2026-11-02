@@ -1,0 +1,139 @@
+Full-token phase timing: connected native/USER diagnostic, not a speedup
+=======================================================================
+2026-11-02. Goal ACTIVE. Correct usable Qwen27B Work and20tokens/sec remain
+UNMET. Last physical model diagnostic is approximately0.16274tok/s, with
+strict first-three comparison still failing on one first-score FP32 bit.
+No new model performance,whole-card health or authenticity claim follows.
+
+Closed local BUILD checkpoint
+------------------------------
+The complete timing ROOT91f389 from the preceding root checkpoint is now
+connected through distinct immutable program DATA, actual native held
+readout, real diagnostic ioctl and the fixed34 USER session/client. It
+retains the actual returning wide-GDN70fdf worker. ALL14 sections and both
+whole ELFs authenticate before DATA generation. Whole old wide-GDN DATA,
+private/public native modules, old F8 client and their ancestors reproduce
+FIRST. Only RootText+RootAux change;12 other arrays,2MiB RoPE and unchanged
+53913832-byte journal geometry remain exact. All120 code maps cover
+3102296 words;the added timing record uses only Progress words4..63.
+
+Independent main/clean whole private objects, public objects, modules,
+USER objects and clients compare byte-for-byte BEFORE freezing literals.
+Final non-inspect builders also ACTUALLY terminate0 in both source trees:
+ main55356: public native + USER builders
+ clean4555: public native builder
+ clean38722: USER builder,session,USER roles and strict parser tests.
+Whole frozen identities:
+ DATA header 2fa11c765f2bf6e87dae30973432d83a9b257cefad870fdc65f15ccb294551fe
+ PRIVATE2076cee83e0fc5e06914d55c25528752488166399e36a4eedef08fd406278d41
+ PUBLIC96be424ab13c3f05a853d4824d0684b5e657272135d886c5fd7c9010b743fe67
+ MODULE0f2066ca48b24ae36550e57dd5334aa29645deb7f65dc8fd7bbbb9629f674e86
+ USERobj4bfed40b34a8f289a2bf22627e1358ad26d9998d27db58eb584508a064e78d3f
+ USERbin e80d575933ffbb8211cd30fc84d97f818886d27c92d78faf3938d86ca0a8ec7c
+Module:tenstorrent_pci_probe-TOKEN-PHASE34-DIAGNOSTIC-ONLY.
+Client:pioneer-q38-TOKEN-PHASE34-DIAGNOSTIC-ONLY.
+These are not Work targets,installed drivers or deployment permission.
+
+The actual native public call graph remains PARTIAL:known module chain
+5392B,25 unresolved edges,wholeKernelStackQualified=FALSE. Native individual
+frames are<=2048B or unchanged larger predecessors. USER maximum individual
+frame4432B;actual unchanged formatter graph400B,external fprintf/fputc/memcpy
+unresolved. None of these is whole kernel/IRQ or whole USER stack proof.
+
+Actual held owner and fixed DATA read
+-------------------------------------
+New6609 opcode is available ONLY in the separately selected public timing
+diagnostic. Request32B has version/op/reserved only: no address,count,
+generation,source,completion or action input. Whole packet384B contains the
+96B reply,actual60 timing words and4 required zero alignment words. No old
+token reserved field or prior opcode is repurposed.
+
+The actual native wrapper/member requires SAME real RootHeld owner and
+fully drained actual committed records. It rechecks all120 HOLDs, original
+boot/terminal/frontier seals,source and scope, then reads all60 words twice
+and rechecks all120 HOLDs/seals before atomic trusted-output publication.
+One observation only;30second host-monotonic bound. Failed/changed IO
+retains the actual owner through existing memory-only quarantine,with no
+following IO or retry. Invalid timing DATA alone does NOT quarantine or
+skip normal cleanup. It stays invalid and produces no valid cycle profile.
+No model arithmetic,NoC command,DMA,counter reset,terminal/cursor/END change
+or runtime CPU-reference product is introduced by this held read.
+
+Actual FD/team/thread lock covers the observation AND immutable user reply
+copy. Failed reply copy retains without retry/cleanup. The actual USER
+session makes exactly one extra same-FD call AFTER HOLD+complete drain,
+BEFORE normal Finish. Stored raw DATA cannot be copied until genuine Finish
+AND Close succeed,with unchanged source epoch and pristine output. Invalid
+metric still completes normal cleanup;transport/END/Close failure cannot
+publish a profile or silently retry.
+
+New CLI ONLY:--profile-card-phases-34-positions, plus source-only preflight.
+The new banner does not repeat old F8's ZERO_EXTRA_ACCELERATOR_CALLS claim.
+All96 returned packet words print ONLY after clean END+Close. The separate
+strict reader recognizes ONLY this exact envelope,validates the whole
+packet and all10 bucket/count/cycle arithmetic,then passes the remaining
+complete bytes to the UNCHANGED frontier34 parser and original strict
+first-three CPU comparator. All3 original CPU trace pins still load.
+Numerical failure retains exit1,even if cycle telemetry is valid or invalid.
+Invalid telemetry yields no cycle fractions. Raw files are never rewritten.
+
+Valid bucket fractions cover ALL34 positions,bootstrap/STOP and observer
+cost;they are not the separate32-post-prompt count-rate window,pure tensor
+utilization or a measured clock frequency. No GHz,GB/s or model TPS is
+inferred from HOST fabricated clocks,component cycle counts or peak specs.
+
+Closed local test scopes
+-------------------------
+Both trees pass actual new DATA/all120 words plus all old wide ancestors,
+32 corrupt/truncated artifacts,4 wrong families,3 positive/346 DATA role
+refusals;private3/804 and public3/714 native BUILD role checks.
+Extracted ACTUAL owner read+Fail with explicitly MOCK authority:
+63 valid/invalid-metric successes,101 pristine/phase/alias refusals and
+905 every-IO-event/changing-second-pass faults. Extracted ACTUAL adapter+
+384B packet,with MOCK FD/OS/reader:5 positives,3561 requestbit/length/scope/
+reply refusals and8 locked-copy faults. These are not real native histories.
+Actual USER session with SYNTHETIC full851 uploader+34 records:100 COW
+branches and9 CLI refusals,after unchanged F8/default controls. USER roles
+4 positives/148 refusals. New strict parser106 SYNTHETIC positives/805
+refusals,including98 comparisons with ACTUAL shared C++ ReplyShape;all old
+F8/frontier/exact-rational rate tests run FIRST. No tolerance,expected value,
+CPU pin,parser rule or normal Work mode is changed.
+
+Original-model first-layer histories still LIVE,not passes
+----------------------------------------------------------
+At15:11UTC SAME main76272/clean81228 are ACTUALLY live after original851
+same-open SHA authentication,frozen zero initialization,119 virgin engines,
+actual ROOT and first3 fullK5120 matrix workers. The full original layer0,
+consumed cancellation,119 STOP,120 HOLD,real drain,new held observation and
+full restoration/END must finish in these SAME histories. No result is
+inferred from a prefix file,log progress,lock or observation timeout.
+New explicit --token-phase-profile TEST binds ROOT91f389/worker70fdf and
+its own immutable const-ROM bridge. Only its HOST clock endpoint is
+fabricated;the actual ROOT executes its emitted read-only CSR sampler.
+Cancellation before a token leaves the actual metric ACTIVE/incomplete,
+not a fabricated closed or sticky-error profile. No measured phase time
+or positive full34 generation follows from this partial native history.
+
+Guarded exchange and Pioneer preservation
+------------------------------------------
+New exact helper3a2a9c8ce534627f9ea0e026ed76931bac9beed93d38cae8e5ebb38ef6b75c7d
+binds ONLY stable041 <-> diagnostic0f20 through NEW stage
+/boot/home/pioneer-p100a-token-phase-20261102-a. Existing8a55 owns b8c0 only
+and MUST NOT stage or restore0f20. No helper is run on the Pioneer here.
+Main82001 and clean96851 exchange endpoint suites ACTUALLY terminate0:
+2 valid/86 refused new histories EACH,after ALL unchanged wide-GDN and
+older/retired endpoint controls FIRST. Oldb8c0/public and new2076/private
+objects are independently refused in both directions. These remain
+synthetic FS/API endpoints,NOT real installation/reload/hardware proof.
+Both native CLI suites also pass27 missing/duplicate/shortened/compile-only
+refusals BEFORE source/compiler/output IO and the actual const-ROM bridge
+checks ALL119 peers/3061394 words,723 refused addresses and24 foreign roles.
+
+One fresh read-only SSH ACTUALLY0 at15:03UTC verifies installed stable041,
+tag12/generation6/cold0/quiesced0/owner0/open1/guard1,exact admin/guard/
+stablebackup/old wide stage identities,no compute parent,64 CPUs and
+137034936320B RAM;free133786701824B. No new image or helper is staged,
+installed or executed. No restart,power,SD,mains,hardware,network,Assistant,
+kernel or boot change. Existing UART is not reopened/reconfigured. Native
+original-model execution,posthoc unchanged first-layer numeric comparison,
+complete exchange endpoints and fresh guarded physical timing remain owed.

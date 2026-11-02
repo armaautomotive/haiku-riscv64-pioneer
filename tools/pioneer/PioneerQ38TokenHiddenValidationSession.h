@@ -60,6 +60,10 @@ static_assert(PioneerQ38DecodeBenchmarkClientSelection==0,"late longer USER diag
 #include <array>
 #include <cstring>
 #include <memory>
+#include "PioneerQ38TokenPhaseProfileClientRole.h"
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenPhaseProfilePacket.h"
+#endif
 
 // Actual fixed-public uploader and diagnostic lifecycle. ALL learned parts,
 // including embeddings/FP32 metadata, are uploaded, never mutable state or
@@ -85,6 +89,11 @@ class PioneerQ38TokenHiddenValidationSession {
  std::unique_ptr<PioneerQ38TokenHiddenValidation::Packet> hiddenPacket=std::make_unique<PioneerQ38TokenHiddenValidation::Packet>();
  std::unique_ptr<std::array<uint32_t,5120>> hidden=std::make_unique<std::array<uint32_t,5120>>();
  bool captured=false;
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT
+ std::unique_ptr<PioneerQ38TokenPhaseProfileControl::Packet> phaseProfile=
+  std::make_unique<PioneerQ38TokenPhaseProfileControl::Packet>();
+ bool phaseCaptured=false;
+#endif
  State state=Virgin;int fd=-1;uint64_t epoch=0,generation=0;
  bool attempted=false,prepared=false,preflightAttempted=false,cancelAttempted=false,cancelled=false;
  unsigned committed=0,completedLayers=0,position=0,terminalStage=0;
@@ -98,6 +107,9 @@ class PioneerQ38TokenHiddenValidationSession {
  bool Stop(const char* why){
   if(!failure)failure=why;
   state=Failed;records.fill(0);hidden->fill(0);captured=false;
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT
+  phaseCaptured=false;*phaseProfile=PioneerQ38TokenPhaseProfileControl::Packet{};
+#endif
   std::memset(hiddenPacket.get(),0,sizeof(*hiddenPacket));Close();return false;
  } // CLOSE ONLY,never automatic retry/cancel/END/reset after uncertainty
  template<class T>bool Call(unsigned op,T& value){
@@ -360,6 +372,19 @@ public:
     || d[9]!=unsigned(committed!=0) || d[10]!=committed*256
     || d[11]!=1 || d[14] || d[15] || !RecordData())return Stop("read_reply");}
   std::copy(packet->records,packet->records+records.size(),records.begin());state=Drained;
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT
+  {
+   namespace P=PioneerQ38TokenPhaseProfileControl;
+   if(phaseCaptured || !P::RequestShape(*phaseProfile))return Stop("phase_request");
+   const auto request=phaseProfile->request;
+   if(!Call(TT_PCI_PROBE_Q38_TOKEN_PHASE_PROFILE_READ,*phaseProfile)
+    || std::memcmp(&phaseProfile->request,&request,sizeof(request)) || !P::ReplyShape(*phaseProfile)
+    || !phaseProfile->reply.ready || phaseProfile->reply.detail[8]!=committed)return Stop("phase_reply");
+   phaseCaptured=true;
+   // Invalid timing DATA alone does NOT skip normal Finish+Close. It is
+   // returned only after cleanup,not converted into good measurements.
+  }
+#endif
   if(CaptureBoundary()){
    if(!HiddenCall(0) || !HiddenCall(1))return Stop("hidden_read");
    captured=true;
@@ -381,6 +406,14 @@ public:
   std::copy(h,h+16,output->header);std::copy(hidden->begin(),hidden->end(),output->words);output->footer=S::Footer;
   return true;
  } // only after BOTH parts,actual Finish and successful Close;never a partial snapshot
+#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT
+ __attribute__((noinline)) bool CopyPhaseProfile(PioneerQ38TokenPhaseProfileControl::Packet& output)const{
+  namespace P=PioneerQ38TokenPhaseProfileControl;
+  if(state!=Complete || !phaseCaptured || failure || !Current() || !P::RequestShape(output)
+   || !P::ReplyShape(*phaseProfile) || !phaseProfile->reply.ready)return false;
+  output=*phaseProfile;return true;
+ } // stored held snapshot ONLY after genuine whole Finish+Close;NO transport call.
+#endif
  bool CopyGenerationRecords(uint32_t* output,unsigned words)const{
 #ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT
   if(state!=Complete || cancelAttempted || cancelled || committed!=PioneerQ38TokenDecodeBenchmark::Positions
