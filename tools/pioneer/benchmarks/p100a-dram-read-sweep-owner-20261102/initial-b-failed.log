@@ -1,0 +1,2 @@
+CLOCK_END preconditions clock1 running0 reset47800 pending0 memory1 tlb0 config6005/6005 size6490/6490
+Assertion failed: (clock && !running && reset==0x47800 && !pending && memory==original && !memcmp(tlb,originalTlb,sizeof(tlb)) && config==source[0]), function SweepClockEnd, file pioneer_dram_read_sweep_owner_test.cpp, line 84.

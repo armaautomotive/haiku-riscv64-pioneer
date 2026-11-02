@@ -1,0 +1,14 @@
+boot 4 d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+text 1252 cde3b6a902dda99343ef0c68a089ad971773ea1d7810fc317fd1e56f5a45a1c2
+BUILD_ONLY single-worker READ sweep;NO native ownership/driver/STOP/restore/whole-memory-integrity/physical bandwidth/inference/Work grant
+OFFLINE actual RV32 READ-sweep boot/issue/wait/clock/result/fault-park execution;NOT hardware timing or native lifecycle
+PASS valid6 rejected38;8MiB complete address sequence/response wrap/finite uncertainty/no next packet/no GDDR writes
+CLOSED_OFFLINE_ONLY actual image+ASan/UBSan execution;NO installation/hardware/bandwidth/Work result
+LATE_FAULT phase1 kind2 ordinal120 completed1 used1 quarantined0 unsafe0 closed1
+Assertion failed: (!completed && r.faultUsed && r.quarantined && r.result.unsafe && !r.result.closed), function main, file pioneer_dram_read_sweep_owner_test.cpp, line 253.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_dram_read_sweep_owner_tests.py", line 21, in <module>
+    subprocess.run([str(test), str(image/'boot.bin'), str(image/'text.bin')], check=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-dram-read-sweep-owner-qualified-main-20261102-f/owner-test', '/private/tmp/pioneer-dram-read-sweep-owner-qualified-main-20261102-f/unchanged-leaf/image/boot.bin', '/private/tmp/pioneer-dram-read-sweep-owner-qualified-main-20261102-f/unchanged-leaf/image/text.bin']' died with <Signals.SIGABRT: 6>.

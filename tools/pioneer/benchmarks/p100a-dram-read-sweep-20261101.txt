@@ -1,5 +1,11 @@
 Isolated on-card DRAM read baseline: actual instructions qualified offline
 ========================================================================
+2026-11-02 follow-on: a separate owner ALGORITHM component now closes its
+offline emitted-instruction lifecycle tests, main+clean12 valid/79 refusals,
+on the unchanged7002ccac leaf. This is NOT an actual native adapter/driver,
+hardware run or bandwidth result. See p100a-dram-read-sweep-owner-20261102.txt
+for exact scope, retained failures, missing native bindings and next gates.
+
 2026-11-01. Goal active. This is a required diagnostic component, NOT a
 physical bandwidth measurement, working native driver or inference gain.
 The Pioneer remains on stable041/gen2, clean idle, 64 CPUs/full RAM after

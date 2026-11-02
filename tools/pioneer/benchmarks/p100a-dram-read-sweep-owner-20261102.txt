@@ -1,0 +1,117 @@
+DRAM read-sweep owner component: offline lifecycle qualification
+==============================================================
+2026-11-02. Goal active; 20 tokens/sec remains unmet. This is an OFFLINE
+component, NOT a registered native driver, hardware run or bandwidth result.
+The actual Pioneer remains on stable041/tag12/gen2, clean idle,64CPUs/full
+137034936320B. No new code was installed or card job launched this turn.
+Fresh independent L health exits0, stderr empty; its raw padded process
+listing is preserved byte-for-byte, including intentional trailing spaces.
+
+Frozen program DATA and complete changed-memory coverage
+--------------------------------------------------------
+BlackholeDramReadSweepImage.h contains EVERY word of the independently
+qualified unchanged ELF7002ccac8cdaf7b4c0cef7890ebc538d666eedbf4b1f407b59ea5e7136cdda5f.
+Tests compare ALL313 text words and the actual boot word against the newly
+rebuilt ELF sections, not a host-produced return value. The snapshot map
+contains exactly6490 unique words: boot1,text313,stack2048,frame16,report16,
+raw4096. Arbitrary old data, including UINT32_MAX, remains valid snapshot
+data. Checked mapping/read failure is separate from the data value.
+
+PioneerDramReadSweepOwner.h implements a separate single-attempt algorithm:
+ 1. Validate coherent7-bank/root-NoC proof DATA, bounded parameters, pristine
+    result and the exact private allocation/scope contract before any IO.
+ 2. Enter the clock lease; capture and independently re-read all6 original
+    mapping words. Check every120 worker reset mask physically in the IO
+    model, then select fixed logical worker(1,2) and a pristine initiator.
+ 3. Save and independently re-read ALL6490 original L1 words while held.
+    Install only the frozen code, new frame and cleared report, boot last.
+    Independently verify EVERY cleared report word before processor release.
+ 4. Initialize/reset while known held, launch once, wait finitely. Accept
+    ONLY current immutable code/frame, bound report/counter/idle checks
+    and the authenticated pair of self-jumps. PC/report alone is not proof.
+ 5. HOLD once only after those checks. Recheck all120 workers held. Copy the
+    last full raw chunk, then independently read the SAME GDDR payload via
+    the selected read-only mapping. This checks only that last chunk, not
+    every byte of the8MiB, full capacity, authenticity or all-card bandwidth.
+ 6. Restore every saved L1 word with boot last; re-read the ENTIRE final
+    snapshot again. Restore original NIU/config and mapping words, leave
+    the clock lease, then check the original mappings again.
+Any uncertainty latches the private owner and calls memory-only retention.
+There is NO further IO, second reset/start, cleanup, retry or unreserve.
+The inner closed flag is NOT a whole native-driver END/disposal authority.
+
+Actual instruction execution and test scope
+-------------------------------------------
+Final main4448-j and independent clean67775-k BOTH actually exit0. Complete
+logs are byte-identical; both newly built full device ELFs are byte-exact.
+Each FIRST rebuilds and runs the UNCHANGED isolated leaf controls:6 valid
+and38 rejected cases, ASan/UBSan. Each then builds/runs the new owner under
+ASan/UBSan against the same byte backing used by a virgin RV32 instruction
+model constructed before owner binding. The owner installs the actual code;
+launch advances that SAME processor from its real boot instruction. No PC,
+register, output, ready/history or completion state is copied into it.
+
+Each final owner run completes12 valid histories and79 refusals. Positive
+coverage includes all7 bank routes, all4 transaction sizes, a repeated
+sweep, low-counter rollover, full original-state equality and one harmless
+redundant same-value write drop. Negative coverage includes invalid inputs,
+incoherent/stale proof fields, short/aliased allocation, dirty result, early
+and late mapping/L1/NIU/PCI/source/reset/clock failures, lost scope, altered
+code/nonce/counters, device timeout, payload corruption, corrupted original
+snapshot, later restoration damage to an earlier word and a silently lost
+report-clear write. That last case fails BEFORE reset or launch. IO after the
+quarantine latch is asserted forbidden by the shared fixture. Refused
+same-owner reentry is also inert. No GDDR WRITE or engine instruction is
+permitted. Host-private old state is compared in full after clean closure.
+
+Native scope admission and the firmware clock transport are EXPLICIT
+FIXTURE HOOKS in these tests. Their real KernelExport/thread/FD/global-lock/
+reload-generation/PCI/VM/reservation/ARC implementations are still missing.
+Synthetic timing/NoC clocks are stimuli, NOT measured physical cycles or
+bandwidth. The tests prove only this component and its actual emitted loop.
+
+Failures found and preserved, not relabelled
+--------------------------------------------
+Initial A/B executions aborted at the independent original-state assertion:
+memory matched but original mappings did not. The injected first read of
+an original mapping word could be captured incorrectly and later restored
+as if valid. Production owner code was fixed to independently re-read the
+saved mapping set before any change. The same principle now also checks
+all saved L1 words before installation and the full set after restoration.
+The original independent equality assertion was NOT weakened.
+
+Expanded E/F executions exposed an incorrect test expectation, not a new
+driver failure: dropping mapping write120 left its already-identical value
+unchanged. F records completed1/used1/quarantined0/unsafe0/closed1. The
+negative case now drops changed coordinate word119; write120 remains an
+explicit positive case requiring droppedOld==droppedRequested AND complete
+original-state equality. No production guard or numerical tolerance changed
+for this correction. G and expanded independent H/I close their own cases;
+final J/K additionally close the report-clear readback/corruption case.
+Earlier failures and the superseded H/I logs remain raw in the sibling folder.
+
+Exact final source identities
+-----------------------------
+ Image header914d9bc4566849cfdd3ca40f8afedfcd34401b7f84cb350b99fbf8ea12428a0c
+ Owner header4dec4d71e5a61047c3a0f52d23fd407561009b42d6b77d66a49ffe4cb23d396b
+ Owner testd1cf3eedaf406bf72783c1e3b404cf70cc113a10d937e8532db2e0d93e687bf3
+ Runner0bf202e3729bcc083a2e00ad7c4e1b1428e22c06aa9fe754c356ee1f6d7ca5d9
+
+Reproduce with a fresh absolute output directory:
+ python3 tools/pioneer/tests/run_pioneer_dram_read_sweep_owner_tests.py \
+   /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/NEW-UNUSED-DIRECTORY
+
+Next required native integration, not yet qualified
+---------------------------------------------------
+Bind the component to the actual guarded driver: real pinned mappings,
+same FD/team/thread/global lock/generation/private allocation, real firmware
+clock transport, retained native lifetime after faults, and explicit clean
+VM/PCI/reservation closure. The ARC transport uses mapping slot201 too;
+its mapping restoration must be checked, never assumed. Do not reuse the
+legacy GDDR-writing matrix probe or automatic cleanup after uncertainty.
+Audit actual native object/whole module/ABI/role/stack and fault paths
+before staging any new separately identified diagnostic. No public selector,
+Work fallback or install route was added here. Only a real clean run can
+provide a one-stream bandwidth result; synchronized all-bank/all-worker
+measurement is a later separate requirement. Do not sum isolated rates or
+substitute this component for whole-model correctness/usability/20tok/s.

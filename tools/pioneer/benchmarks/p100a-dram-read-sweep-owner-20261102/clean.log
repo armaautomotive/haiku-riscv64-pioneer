@@ -1,0 +1,8 @@
+boot 4 d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+text 1252 cde3b6a902dda99343ef0c68a089ad971773ea1d7810fc317fd1e56f5a45a1c2
+BUILD_ONLY single-worker READ sweep;NO native ownership/driver/STOP/restore/whole-memory-integrity/physical bandwidth/inference/Work grant
+OFFLINE actual RV32 READ-sweep boot/issue/wait/clock/result/fault-park execution;NOT hardware timing or native lifecycle
+PASS valid6 rejected38;8MiB complete address sequence/response wrap/finite uncertainty/no next packet/no GDDR writes
+CLOSED_OFFLINE_ONLY actual image+ASan/UBSan execution;NO installation/hardware/bandwidth/Work result
+PASS actual isolated RV32 owner histories12/refusals79;ALL6490 old L1 words+NIU/TLB restored on clean closure;NO hardware bandwidth/native driver/ARC transport claim
+CLOSED_OFFLINE_OWNER_ONLY actual shared-byte virgin RV32/7bank routes/snapshot/start/STOP/HOLD/last-chunk independent check/full restore/uncertainty retention;native scope+ARC are fixture hooks;NO native adapter/public ABI/hardware/peak bandwidth/inference/Work qualification
