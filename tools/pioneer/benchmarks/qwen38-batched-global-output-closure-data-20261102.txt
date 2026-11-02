@@ -1,0 +1,77 @@
+Batched final-output receipt:distinct DATA correction CLOSED
+===========================================================
+2026-11-02. Goal ACTIVE;usable27B Work and20tok/s remain UNMET.
+This checkpoint adds a DATA predicate and HOST tests ONLY. No current ROOT
+firmware,native driver,model,Assistant or hardware is changed by this code.
+The failed96a0 test is separately recovered to stable041,64CPUs/fullRAM.
+
+Concrete producer/consumer mismatch
+-----------------------------------
+The QFL1 physical saved LINK50540 matches the current6066 ROOT's shared
+fault call in DensePartitionRoot::AdmitGlobalOutput. Several guards share
+that call,so it is NOT by itself a unique cause/worker/position diagnosis.
+Independent source inspection identifies a deterministic counter mismatch:
+the batched Q6/5120 producer has20 blocks in batches2 =>10 read requests
+per group plus2 input packets. Its GlobalWorker::Matrix checks that exact
+count;global-head Gather also uses10 with the batched ROOT flag. The old
+cross-token PioneerQ38GlobalOutputClosure::Validate still uses20 per group.
+It must reject otherwise valid batched receipts. The physical mismatch is
+software evidence,not a counterfeit/defective-card diagnosis or speed result.
+
+New PioneerQ38BatchedGlobalOutputClosure::Validate is DISTINCT;it never
+silently accepts both grammars. It changes ONLY expected read-request
+deltas togroups*10+2. Original Current/Job geometry,all boot/owner epochs,
+frame/position/nonce,partial/status/proof/source/counter fields and
+reserved-zero rules remain. Flits remain groups*1060+162. The final command
+metadata stays the restored LAST single tile3392B at90000;actual twin-batch
+math deliberately restores that command WITHOUT issuing it. Do not replace
+this metadata by the last6784B bulk read. The old predicate/header and
+all installed firmware are unchanged;there is NO ROOT call-site binding yet.
+
+Closed synthetic checks,not executed workers
+--------------------------------------------
+Main18923 and independent clean80609 ACTUALLY exit0. Clean export atdf3391
+includes tools+pioneer kernel headers,overlaid with ONLY the3 owned DATA/
+test files;all3 independently cmp exact. Paired complete logs identical,
+both stderr0B. ASan/UBSan. EACH separately builds QGW1,QGW2 and QGW3 DATA
+selection families. Per family1053 valid canonical synthetic receipts,
+48946 wrong-role/bit/count refusals. Positions1,2,8191/all119 workers and
+alpha/beta/Z next-layer geometries;both final-wave worker cohorts included.
+New10 rejects old20 and old20 rejects new10 in EVERY valid case. Counters
+exercise modulo32 wrap. Fixed-bit mutation checks retain all old source/
+status/job/proof/physical/canonical-stripe checks. Counts0/5/9/11/15/19/20/21
+are NOT accepted as a union or recaptured baseline.
+
+These are SYNTHETIC DATA records,including arbitrary legal nonce1001 and
+finite local maximum0. They are NOT outputs from a real/twin-batch worker,
+a transplanted processor history,all64 model arithmetic,actual canonical
+weight reads,973-job coverage,ROOT admission,token commit,native owner,
+native END or a physical inference result. No device/SDK/model weight or
+runtime CPU reference is used. Accepting finite in-range logits is NOT
+numerical quality validation. The whole physical and native goals remain.
+
+Initial compile attempt exits1 before arithmetic because this new test
+omitted the existing GDN mutable-state DATA interlock selector required by
+canonical plan headers. Adding the SAME explicit HOST test flag used by
+the old canonical-output test fixes the harness;no production guard is
+relaxed. Initial stderr is archived alongside final main/clean evidence.
+
+New header SHA
+fde561e2e2ab8d7126921d8f9e2b31d1a248758cb9dc8a3e795b329378835886.
+Unchanged OLD header SHA
+02445d47c2a4e6bf84b15d2bd34b7efd3469d5eefcdc77bbcc223744faa67dc0.
+Raw logs are in the sibling directory. Reproduce:
+ python3 tools/pioneer/tests/run_pioneer_q38_batched_global_output_closure_data_tests.py
+
+Next REQUIRED connection
+-------------------------
+Create a separate explicit ROOT-build selector so old6066/default subjects
+still reproduce,bind ONLY its cross-token AdmitGlobalOutput to this new
+predicate,build/inspect and freeze independent whole ROOT artifacts. Prove
+that actual emitted ROOT admission consumes genuine retained FINAL-output
+receipts from the SAME actual batched workers,then exercise the full native
+all64/multi-token/state/normal+EOS/END/reload paths and physical tests.
+No new module installation follows from these DATA-only tests. The separate
+wide-reduction arithmetic prototype remains independent;never import its
+HOST oracle/products as a Work or native fallback. Benchmark actual
+generation only after completion and numerical qualification;20tok/s UNMET.

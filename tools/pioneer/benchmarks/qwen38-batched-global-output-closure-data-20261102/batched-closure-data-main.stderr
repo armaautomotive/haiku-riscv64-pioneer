@@ -1,0 +1,33 @@
+In file included from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_batched_global_output_closure_data_test.cpp:4:
+In file included from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/../PioneerQ38GlobalOutputPlan.h:5:
+In file included from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/../../../src/add-ons/kernel/drivers/misc/PioneerQ38ProjectionJobs.h:4:
+In file included from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/../../../src/add-ons/kernel/drivers/misc/PioneerQ38CanonicalModelPlan.h:4:
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnBanks.h:5:2: error: GDN mutable banks require the separately gated reservation interlock
+    5 | #error GDN mutable banks require the separately gated reservation interlock
+      |  ^
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnBanks.h:53:2: error: unknown type name 'PioneerResidentMutableRange'; did you mean 'PioneerResidentLease'?
+   53 |  PioneerResidentMutableRange claims[672]={};
+      |  ^~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |  PioneerResidentLease
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnBanks.h:13:8: note: 'PioneerResidentLease' declared here
+   13 | struct PioneerResidentLease;
+      |        ^
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnBanks.h:53:30: error: field has incomplete type 'PioneerResidentLease'
+   53 |  PioneerResidentMutableRange claims[672]={};
+      |                              ^
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnBanks.h:13:8: note: forward declaration of 'PioneerResidentLease'
+   13 | struct PioneerResidentLease;
+      |        ^
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnBanks.h:103:16: error: no member named 'MutablePage' in 'PioneerResidentBanks'
+  103 |    if (!banks->MutablePage(*baseline,reservationOwner,r.bank,offset+p*4096,address,route,index)) return false;
+      |         ~~~~~  ^
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/../../../src/add-ons/kernel/drivers/misc/PioneerQ38GdnBanks.h:157:14: error: no member named 'ReserveMutable' in 'PioneerResidentBanks'
+  157 |    || !owner.ReserveMutable(proof,this,claims,n,initialized,initializedPages)) return false;
+      |        ~~~~~ ^
+5 errors generated.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_batched_global_output_closure_data_tests.py", line 14, in <module>
+    subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['c++', '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_batched_global_output_closure_data_test.cpp', '-o', '/private/tmp/pioneer-q38-batched-output-data-l5io2s93/test-0']' returned non-zero exit status 1.

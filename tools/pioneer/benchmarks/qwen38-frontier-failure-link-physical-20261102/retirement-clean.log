@@ -1,0 +1,21 @@
+fixture root /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-frontier-detail-exchange-endpoints-we5hcsae
+exact exchange script endpoint fixtures: 2 valid / 58 refused; NO actual install/reset/GPU
+raw fixture histories retained at /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-frontier-detail-exchange-endpoints-we5hcsae
+fixture root /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-frontier-detail-exchange-endpoints-s7_6b435
+exact exchange script endpoint fixtures: 1 valid / 59 refused; NO actual install/reset/GPU
+RETIRED5920 APPLY always stops before platform/admin/copy/lock;original2way endpoints FIRST;guarded RESTORE remains exact
+raw fixture histories retained at /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-frontier-detail-exchange-endpoints-s7_6b435
+fixture root /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-frontier-detail-exchange-endpoints-cuc2skky
+exact exchange script endpoint fixtures: 2 valid / 58 refused; NO actual install/reset/GPU
+raw fixture histories retained at /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-frontier-detail-exchange-endpoints-cuc2skky
+fixture root /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-frontier-detail-exchange-endpoints-f6o2t8ox
+exact exchange script endpoint fixtures: 1 valid / 59 refused; NO actual install/reset/GPU
+RETIRED5920 APPLY always stops before platform/admin/copy/lock;original2way endpoints FIRST;guarded RESTORE remains exact
+raw fixture histories retained at /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-frontier-detail-exchange-endpoints-f6o2t8ox
+fixture root /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-frontier-detail-exchange-endpoints-ec6rkdaa
+exact NEW96a0 exchange script endpoint fixtures: 2 valid / 66 refused; NO actual install/reset/GPU
+raw fixture histories retained at /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-frontier-detail-exchange-endpoints-ec6rkdaa
+fixture root /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-frontier-detail-exchange-endpoints-xo410i6r
+exact NEW96a0 exchange script endpoint fixtures: 1 valid / 67 refused; NO actual install/reset/GPU
+RETIRED96a0 APPLY stops before platform/admin/copy/lock;entire original2way endpoints FIRST;guarded RESTORE unchanged
+raw fixture histories retained at /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-frontier-detail-exchange-endpoints-xo410i6r

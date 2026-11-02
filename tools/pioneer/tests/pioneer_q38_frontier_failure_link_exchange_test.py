@@ -12,9 +12,16 @@ import tempfile
 import sys
 
 here=pathlib.Path(__file__).resolve().parent
-assert len(sys.argv)==1 and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
+assert sys.argv[1:] in ([],['--qualified-original-endpoints']) and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 subprocess.run([sys.executable,str(here/'pioneer_q38_frontier_failure_detail_exchange_test.py')],check=True)
 production=(here.parent/'pioneer_q38_frontier_failure_link_exchange.sh').read_text()
+original=(here/'fixtures/pioneer_q38_frontier_failure_link_exchange_qualified_INERT.txt').read_bytes()
+assert hashlib.sha256(original).hexdigest()=='e37c189e55c63b9a358aad4732d5e9122bf6daa29375ea894315daaf754056a8'
+retired=not sys.argv[1:]
+if retired:
+    subprocess.run([sys.executable,str(pathlib.Path(__file__).resolve()),'--qualified-original-endpoints'],check=True)
+else:
+    production=original.decode()
 root=pathlib.Path(tempfile.mkdtemp(prefix='pioneer-frontier-detail-exchange-endpoints-'))
 print('fixture root',root,flush=True)
 pins={
@@ -46,6 +53,7 @@ raise AssertionError(args)
 stub_source='''#!/usr/bin/env python3
 import hashlib,os,pathlib,stat,sys
 name=pathlib.Path(sys.argv[0]).name;args=sys.argv[1:];root=pathlib.Path(os.environ['FIXTURE_ROOT'])
+with (root/'platform-calls').open('a') as f:f.write(name+'\\n')
 if name=='uname':print('Haiku');sys.exit(0)
 if name=='id':print('0');sys.exit(0)
 if name=='stat':
@@ -111,6 +119,15 @@ for index,(fault,mode) in enumerate(cases):
     (directory/'stderr.log').write_text(result.stderr)
     (directory/'exit-status.txt').write_text(str(result.returncode)+'\n')
     calls=(directory/'calls').read_text().splitlines() if (directory/'calls').exists() else []
+    if retired and mode=='--apply':
+        assert result.returncode==1 and result.stderr.strip()=='STOP_96a0_DIAGNOSTIC_ALREADY_OBSERVED_NO_REAPPLY'
+        assert not calls and not (directory/'platform-calls').exists(), 'retired APPLY must stop BEFORE platform/admin access'
+        assert paths['installed'].read_bytes()==installed_before
+        assert not (stage/'stable041.backup').exists() and not (stage/'.exchange-lock').exists()
+        incoming=stage/'driver.incoming'
+        if fault=='stale':assert incoming.read_bytes()==b'stale'
+        else:assert not incoming.exists()
+        continue
     if fault=='none':
         assert result.returncode==0,(fault,result.stdout,result.stderr)
         assert paths['installed'].read_bytes()==data['candidate' if mode=='--apply' else 'stable']
@@ -125,4 +142,5 @@ for index,(fault,mode) in enumerate(cases):
         else:assert paths['installed'].read_bytes()==installed_before
         if fault not in ('wait','quiesce','changed_during_quiesce'):assert len(calls)<=1,(fault,calls)
 print('exact NEW96a0 exchange script endpoint fixtures:',passed,'valid /',len(cases)-passed,'refused; NO actual install/reset/GPU')
+if retired:print('RETIRED96a0 APPLY stops before platform/admin/copy/lock;entire original2way endpoints FIRST;guarded RESTORE unchanged')
 print('raw fixture histories retained at',root)

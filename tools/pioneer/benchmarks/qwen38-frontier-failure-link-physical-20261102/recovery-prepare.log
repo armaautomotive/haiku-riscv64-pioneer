@@ -1,0 +1,4 @@
+ENABLED: UART runtime suspension forbidden until restore/reboot
+UART power/control: on
+UART runtime_status: active
+PREPARED q38-qfl-recover-20261102-a with 64 CPUs (memory128-spin-idle7-top-page-nosd-control); Linux is still running. Run: /mnt/ssd/pioneer-haiku-kexec-20261013/pioneer_linux_boot_haiku_network-serialized-top-page7.sh boot q38-qfl-recover-20261102-a 64 memory128-spin-idle7-top-page-nosd-control

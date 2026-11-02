@@ -1,11 +1,14 @@
 #!/bin/sh
-# Exact stable041 <-> NEW pre-error-LINK96a0 ONLY;tag75 is NOT code identity.
+# RESTORE ONLY for retired96a0;tag75 is NOT code identity.
 # NEVER installs retired010c/34322/5920 or private22a/3593. Diagnostic,NOT Work.
 # No GPU job, force unload, reset,
 # retry, cold-latch clearing or automatic rollback after uncertain replacement.
 set -eu
 [ "$#" = 1 ] || exit 2
 case "$1" in --apply|--restore) mode=$1;; *) exit 2;; esac
+if [ "$mode" = --apply ]; then
+ echo STOP_96a0_DIAGNOSTIC_ALREADY_OBSERVED_NO_REAPPLY >&2;exit 1
+fi
 [ "$(uname -s)" = Haiku ] && [ "$(id -u)" = 0 ] || exit 2
 stage=/boot/home/pioneer-p100a-frontier-failure-link-20261102-a
 installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe

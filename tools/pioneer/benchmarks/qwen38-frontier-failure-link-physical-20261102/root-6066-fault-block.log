@@ -1,0 +1,63 @@
+
+/private/tmp/pioneer-q38-failure-link-20261102.YfGDdc/root-6066-readonly/program.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+000504b0 <DensePartitionRoot::AdmitGlobalOutput(unsigned int const*, unsigned int*, unsigned int)+0x54c>:
+   504b0:	00df86b3          	add	a3,t6,a3
+   504b4:	e5840793          	add	a5,s0,-424
+   504b8:	0c848513          	add	a0,s1,200
+   504bc:	409685b3          	sub	a1,a3,s1
+   504c0:	00170637          	lui	a2,0x170
+   504c4:	00b78733          	add	a4,a5,a1
+   504c8:	00e60733          	add	a4,a2,a4
+   504cc:	fb872803          	lw	a6,-72(a4)
+   504d0:	0007a703          	lw	a4,0(a5)
+   504d4:	07071263          	bne	a4,a6,50538 <DensePartitionRoot::AdmitGlobalOutput(unsigned int const*, unsigned int*, unsigned int)+0x5d4>
+   504d8:	0f87a803          	lw	a6,248(a5)
+   504dc:	05071e63          	bne	a4,a6,50538 <DensePartitionRoot::AdmitGlobalOutput(unsigned int const*, unsigned int*, unsigned int)+0x5d4>
+   504e0:	00478793          	add	a5,a5,4
+   504e4:	fef510e3          	bne	a0,a5,504c4 <DensePartitionRoot::AdmitGlobalOutput(unsigned int const*, unsigned int*, unsigned int)+0x560>
+   504e8:	01400613          	li	a2,20
+   504ec:	42400793          	li	a5,1060
+   504f0:	02ca0633          	mul	a2,s4,a2
+   504f4:	0005f337          	lui	t1,0x5f
+   504f8:	00048713          	mv	a4,s1
+   504fc:	00000513          	li	a0,0
+   50500:	00800f13          	li	t5,8
+   50504:	44030313          	add	t1,t1,1088 # 5f440 <q38_return_dense_layer+0x4f4>
+   50508:	00170eb7          	lui	t4,0x170
+   5050c:	02fa07b3          	mul	a5,s4,a5
+   50510:	00260613          	add	a2,a2,2 # 170002 <PioneerQ38SiluExpReduced(float, int&)::coefficient+0x104162>
+   50514:	0a278793          	add	a5,a5,162
+   50518:	02af6463          	bltu	t5,a0,50540 <DensePartitionRoot::AdmitGlobalOutput(unsigned int const*, unsigned int*, unsigned int)+0x5dc>
+   5051c:	00251593          	sll	a1,a0,0x2
+   50520:	006585b3          	add	a1,a1,t1
+   50524:	0005a583          	lw	a1,0(a1)
+   50528:	00058067          	jr	a1
+   5052c:	ad442b03          	lw	s6,-1324(s0)
+   50530:	ad042683          	lw	a3,-1328(s0)
+   50534:	c9dff06f          	j	501d0 <DensePartitionRoot::AdmitGlobalOutput(unsigned int const*, unsigned int*, unsigned int)+0x26c>
+   50538:	00010097          	auipc	ra,0x10
+   5053c:	ac8080e7          	jalr	-1336(ra) # 60000 <scalar_fault_park>
+   50540:	00000813          	li	a6,0
+   50544:	0002ae03          	lw	t3,0(t0)
+   50548:	04072583          	lw	a1,64(a4)
+   5054c:	ffc596e3          	bne	a1,t3,50538 <DensePartitionRoot::AdmitGlobalOutput(unsigned int const*, unsigned int*, unsigned int)+0x5d4>
+   50550:	12072e03          	lw	t3,288(a4)
+   50554:	ffc592e3          	bne	a1,t3,50538 <DensePartitionRoot::AdmitGlobalOutput(unsigned int const*, unsigned int*, unsigned int)+0x5d4>
+   50558:	10072e03          	lw	t3,256(a4)
+   5055c:	41c585b3          	sub	a1,a1,t3
+   50560:	fd059ce3          	bne	a1,a6,50538 <DensePartitionRoot::AdmitGlobalOutput(unsigned int const*, unsigned int*, unsigned int)+0x5d4>
+   50564:	00de85b3          	add	a1,t4,a3
+   50568:	0c872803          	lw	a6,200(a4)
+   5056c:	0205a583          	lw	a1,32(a1)
+   50570:	00470713          	add	a4,a4,4
+   50574:	00468693          	add	a3,a3,4
+   50578:	00428293          	add	t0,t0,4
+   5057c:	fab81ee3          	bne	a6,a1,50538 <DensePartitionRoot::AdmitGlobalOutput(unsigned int const*, unsigned int*, unsigned int)+0x5d4>
+   50580:	00150513          	add	a0,a0,1
+   50584:	f95ff06f          	j	50518 <DensePartitionRoot::AdmitGlobalOutput(unsigned int const*, unsigned int*, unsigned int)+0x5b4>
+   50588:	af042703          	lw	a4,-1296(s0)
+   5058c:	b0042783          	lw	a5,-1280(s0)

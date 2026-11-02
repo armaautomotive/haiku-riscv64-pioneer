@@ -1,3 +1,106 @@
+96a0 QFL1 CLOSED failure;fault call narrowed,stable041 restored
+=============================================================
+2026-11-02 09:01:40UTC. SAME68757 ACTUALLY exits1,observed08:30:17UTC.
+This supersedes ALL historical LIVE/protected/no-result statements below.
+NO physical compute parent remains. No repeated failed-card IO or hot
+restore occurred. ONLY after a controlled NEW power epoch was stable041
+restored. Current gen2/cold0/owner0/guard1,64CPUs/full137034936320B RAM.
+Goal ACTIVE;usable27B Work and20tok/s remain UNMET.
+
+Returned fault DATA and exact instruction evidence
+--------------------------------------------------
+The same-open original GGUF SHA/full851 layout authenticate,ALL19399024640
+learned bytes upload and START_ACK returns. FIRST frontier Observe fails
+8000a00c,raw unsafe1. There are NO returned token records,clean END or TPS.
+Packet words26..31:
+ 314c4651 00000005 31545351 51465431 00050540 00000007
+QFL1/check5/current startup marker/our ROOT software fault/savedLINK50540/
+known-mask7. Frontier count was NOT read;raw_committed0 is NOT proof of
+zero actual completed positions. No extra accelerator operation follows.
+The unchanged strict f8 decoder ACTUALLY exits2 on its zero-length stderr
+requirement:raw diagnostic stderr is nonempty. Nothing is filtered into a
+successful rate. Saved LINK is NOT a fault/retired-instruction PC.
+
+All five current ROOT artifacts are copied privately,chmod400 and checked
+against their frozen size+SHA pins. program.elf is exact6066e6935f7230175aab0ac98379cdc2d58dc35e49a15ca89af5064797e2d48b
+before AND after nm/objdump;tools consume that same private snapshot.
+The unique function interval4ff64..50640 is DensePartitionRoot::
+AdmitGlobalOutput. Actual instructions50538 AUIPC/5053c JALR call60000
+scalar_fault_park and set return LINK50540. This is decoded instruction
+evidence,not blindly subtracting4 or treating a frontend sample as retired.
+Several guards converge on50538;the LINK does NOT identify which guard,
+worker,position,earlier-layer quality or the ultimate hardware cause.
+The fault stub stores LINK75460 before fault51465431 at75448 and parks.
+Native START separately verifies all16 status words ZERO before ROOT
+release,covering savedLINK offset32. QFL1 reads are still non-atomic;do
+not generalize this nonzero snapshot to a guarantee for every failure.
+
+Independent source mismatch,not an assumption of a healthy card
+---------------------------------------------------------------
+In that routine,PioneerQ38GlobalOutputClosure::Validate expects
+reads=groups*20+2. The selected batched Q6 worker uses5120/256/2=10 weight
+reads/group plus2 input reads. Current global-head Gather already expects
+groups*10+2 under its batched flag;cross-token admission was omitted.
+These incompatible predicates MUST reject an otherwise valid batched
+receipt. This is a concrete software bug and strong fault candidate,NOT
+proof it is the ONLY failed guard in the physical run. Payload flits and
+the deliberately restored FINAL single-tile command remain unchanged;
+do not incorrectly replace that metadata with the last bulk-read command.
+Separate new DATA-only predicate/tests are recorded in
+qwen38-batched-global-output-closure-data-20261102.txt. They are NOT yet
+connected to a new ROOT firmware/native driver,or a physical performance fix.
+
+Quarantine and completed controlled recovery
+---------------------------------------------
+POST-terminal CPU-only SSH9232 ACTUALLY0:whole96a0/e37c/f8/adminb0c/guardd1ce
+exact,tag75/gen3/cold1/owner1/open1/guard1,no compute parent,64CPUs/fullRAM.
+NO card read,hot restore,reset,unload or unreserve after the unsafe result.
+OFF55470 ACTUALLY0 once at08:32:42UTC,7-second hold. After more than3minutes,
+SSH19699 ACTUALLY255/connect timeout,stdout0B,no contradictory on evidence.
+ON87937 ACTUALLY0 once at08:36:33UTC,0.75-second pulse. Relay state was NOT
+substituted for board power. No mains,SD,hardware or connection changes.
+First Linux SSH returns255/no-route during boot,not another power pulse.
+Later Linux SSH ACTUALLY0:6.1.31/riscv64/new boot ID
+295c2d21-942d-4db6-9c79-50ae33bffe3a,CPUs0-63,MemTotal131976904KiB.
+
+Full19404B SD-free helper re-read;root0:0:700:1 and whole9cfc6dc3 hash exact.
+Fresh sessionq38-qfl-recover-20261102-a/64CPU/memory128-spin-idle7-top-page-
+nosd-control,NO journal override. Prepare74538 ACTUALLY0 with recorded
+"No cmdline or append string provided" warning. Boot90967 ACTUALLY0 after
+all pinned inputs recheck;normal Linux shutdown/default NVMe boot preserved.
+Fresh Haiku60798 ACTUALLY0:whole96a0/newgen1/cold0/owner0/open1/guard1,
+64CPUs/fullRAM,no compute parent. ONLY exact e37c --restore99015 ACTUALLY0,
+96a0/gen1->stable041/tag12/gen2. Independent final59562 ACTUALLY0:
+whole041/idle/cold0/owner0/guard1,64CPUs/full137034936320B/free133814448128B.
+
+Failed diagnostic reapply retired,restore guard retained
+---------------------------------------------------------
+Local source and remote active helper are now RESTORE ONLY SHA
+7db41f36fb50d1eba4270b2be90b0e8242111f64dc124d072e5f3161095328e3.
+--apply hard-refuses BEFORE uname/id/hash/status/lock/copy/platform access.
+The qualified old e37c source is recoverably archived as INERT .txt,not an
+active installer. Final endpoint tests35771/18399 BOTH ACTUALLY0:EACH all
+old99e/85c controls and entire original e37c2valid/66refused FIRST,then
+retired1valid/67refused. All34 APPLY cases have ZERO platform/admin calls,
+untouched installed bytes and no new lock/backup/incoming;stale sentinel
+preserved. These endpoints are SYNTHETIC,not another real driver exchange.
+
+The first SCP was rejected before process creation because review assumed
+the source remained apply-capable. Read-only source/diff/hash,actual local
+early refusal and zero-platform fixture evidence establish the hard stop;
+the SAME copy is then approved and ACTUALLY0. Full readback ACTUALLY0,
+whole bytes cmp exact. No bypass or alternate apply route is used.
+After fresh stable-idle/e37c/7db4/file ownership/absent-archive checks,the
+old e37c is renamed to RETIRED-original-two-way-exchange-e37c189e.txt and
+verified7db4 takes its active path. That SSH ACTUALLY0,stderr0B,whole041
+unchanged. Independent final28327 ACTUALLY0:exact7db4/041/admin/guard,
+stable gen2/cold0/owner0/open1/guard1,no compute parent,64CPUs/fullRAM.
+No new inference follows recovery. All final health/retirement stderr0B.
+Raw process-table padding is deliberately preserved in the closed archive;
+authored prose/source receive strict whitespace checks,not raw-log rewriting.
+
+Historical launch ledger (superseded LIVE status;retain provenance)
+------------------------------------------------------------------
 96a0 pre-error LINK diagnostic:PHYSICAL68757 LIVE,NOT a result
 ============================================================
 2026-11-02 07:55:18UTC. Goal ACTIVE;usable27B Work and20tok/s UNMET.
