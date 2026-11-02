@@ -1,0 +1,4 @@
+PASS actual emitted wide-delta trial0/14imports/8320CSR/ALL8192state+64outputs FP64-order exact/RV32steps198512 SFPUops27823 stack136;NOT physical or TPS
+PASS actual emitted wide-delta trial1/14imports/8320CSR/ALL8192state+64outputs FP64-order exact/RV32steps250736 SFPUops28463 stack136;NOT physical or TPS
+PASS actual emitted wide-delta trial2/14imports/8320CSR/ALL8192state+64outputs FP64-order exact/RV32steps249958 SFPUops28206 stack136;NOT physical or TPS
+PASS actual emitted wide-delta trial3/14imports/8320CSR/ALL8192state+64outputs FP64-order exact/RV32steps250719 SFPUops28461 stack136;NOT physical or TPS

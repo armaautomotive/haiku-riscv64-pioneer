@@ -1,0 +1,4 @@
+e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b 4 boot.bin
+57db30a8b60e8447a042d9bbfbf747496778f2714fc24bc1cb861ad73a6656ab 3400 code.bin
+7adafb60fdb6366607709af472c6d1d8a3c7c4473ef434a9983905f4f046818b 12580 program.elf
+OFFLINE_BUILD_ONLY NEW local wide-delta/14 bounded imports/new256B delta scratch/512x16 FP32 Dst/ONLY8LRegs;NOT native-selected,ownership,arithmetic acceptance,physical,Work or TPS

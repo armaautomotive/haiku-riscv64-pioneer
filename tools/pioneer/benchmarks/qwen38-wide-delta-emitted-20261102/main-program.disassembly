@@ -1,0 +1,846 @@
+
+/private/tmp/pioneer-q38-wide-delta-emitted-20261102.tXbA5I/frozen-image/program.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .boot:
+
+00006000 <_start>:
+    6000:	0006c06f          	j	72000 <scalar_entry>
+
+Disassembly of section .text:
+
+00072000 <scalar_entry>:
+   72000:	00070137          	lui	sp,0x70
+   72004:	00000097          	auipc	ra,0x0
+   72008:	59c080e7          	jalr	1436(ra) # 725a0 <scalar_main>
+
+0007200c <scalar_done>:
+   7200c:	001802b7          	lui	t0,0x180
+   72010:	fc028293          	add	t0,t0,-64 # 17ffc0 <scalar_image_end+0x10d270>
+   72014:	00a2a223          	sw	a0,4(t0)
+   72018:	00000317          	auipc	t1,0x0
+   7201c:	ff430313          	add	t1,t1,-12 # 7200c <scalar_done>
+   72020:	0062a023          	sw	t1,0(t0)
+   72024:	31574337          	lui	t1,0x31574
+   72028:	45130313          	add	t1,t1,1105 # 31574451 <scalar_image_end+0x31501701>
+   7202c:	0062a423          	sw	t1,8(t0)
+   72030:	0082a303          	lw	t1,8(t0)
+   72034:	0ff0000f          	fence
+
+00072038 <scalar_park>:
+   72038:	0000006f          	j	72038 <scalar_park>
+   7203c:	ffdff06f          	j	72038 <scalar_park>
+   72040:	ff9ff06f          	j	72038 <scalar_park>
+   72044:	ff5ff06f          	j	72038 <scalar_park>
+   72048:	ff1ff06f          	j	72038 <scalar_park>
+   7204c:	fedff06f          	j	72038 <scalar_park>
+   72050:	fe9ff06f          	j	72038 <scalar_park>
+   72054:	fe5ff06f          	j	72038 <scalar_park>
+   72058:	fe1ff06f          	j	72038 <scalar_park>
+   7205c:	fddff06f          	j	72038 <scalar_park>
+
+00072060 <scalar_fault_park>:
+   72060:	001802b7          	lui	t0,0x180
+   72064:	fc828293          	add	t0,t0,-56 # 17ffc8 <scalar_image_end+0x10d278>
+   72068:	46574337          	lui	t1,0x46574
+   7206c:	45130313          	add	t1,t1,1105 # 46574451 <scalar_image_end+0x46501701>
+   72070:	0062a023          	sw	t1,0(t0)
+   72074:	0002a303          	lw	t1,0(t0)
+   72078:	0ff0000f          	fence
+   7207c:	0000006f          	j	7207c <scalar_fault_park+0x1c>
+
+00072080 <_ZL5Drainv>:
+   72080:	ffe006b7          	lui	a3,0xffe00
+   72084:	0e06ae23          	sw	zero,252(a3) # ffe000fc <scalar_image_end+0xffd8d3ac>
+   72088:	0fc6a783          	lw	a5,252(a3)
+   7208c:	0fc68693          	add	a3,a3,252
+   72090:	0ff0000f          	fence
+   72094:	a21027b7          	lui	a5,0xa2102
+   72098:	ffe40637          	lui	a2,0xffe40
+   7209c:	81678793          	add	a5,a5,-2026 # a2101816 <scalar_image_end+0xa208eac6>
+   720a0:	45000737          	lui	a4,0x45000
+   720a4:	00f62023          	sw	a5,0(a2) # ffe40000 <scalar_image_end+0xffdcd2b0>
+   720a8:	17e70713          	add	a4,a4,382 # 4500017e <scalar_image_end+0x44f8d42e>
+   720ac:	000f47b7          	lui	a5,0xf4
+   720b0:	00e62023          	sw	a4,0(a2)
+   720b4:	24078793          	add	a5,a5,576 # f4240 <scalar_image_end+0x814f0>
+   720b8:	00c0006f          	j	720c4 <_ZL5Drainv+0x44>
+   720bc:	fff78793          	add	a5,a5,-1
+   720c0:	00078a63          	beqz	a5,720d4 <_ZL5Drainv+0x54>
+   720c4:	0006a703          	lw	a4,0(a3)
+   720c8:	fe070ae3          	beqz	a4,720bc <_ZL5Drainv+0x3c>
+   720cc:	0ff0000f          	fence
+   720d0:	00008067          	ret
+   720d4:	ff010113          	add	sp,sp,-16 # 6fff0 <_start+0x69ff0>
+   720d8:	00812423          	sw	s0,8(sp)
+   720dc:	00112623          	sw	ra,12(sp)
+   720e0:	01010413          	add	s0,sp,16
+   720e4:	00000097          	auipc	ra,0x0
+   720e8:	f7c080e7          	jalr	-132(ra) # 72060 <scalar_fault_park>
+
+000720ec <_Z17PioneerSfpuLoad32I7EmitterEvRT_jj.isra.0>:
+   720ec:	ff010113          	add	sp,sp,-16
+   720f0:	00812623          	sw	s0,12(sp)
+   720f4:	01010413          	add	s0,sp,16
+   720f8:	000107b7          	lui	a5,0x10
+   720fc:	01451513          	sll	a0,a0,0x14
+   72100:	02f5f263          	bgeu	a1,a5,72124 <_Z17PioneerSfpuLoad32I7EmitterEvRT_jj.isra.0+0x38>
+   72104:	00c12403          	lw	s0,12(sp)
+   72108:	710207b7          	lui	a5,0x71020
+   7210c:	00a5e5b3          	or	a1,a1,a0
+   72110:	00f5e5b3          	or	a1,a1,a5
+   72114:	ffe407b7          	lui	a5,0xffe40
+   72118:	00b7a023          	sw	a1,0(a5) # ffe40000 <scalar_image_end+0xffdcd2b0>
+   7211c:	01010113          	add	sp,sp,16
+   72120:	00008067          	ret
+   72124:	0105d793          	srl	a5,a1,0x10
+   72128:	00a7e7b3          	or	a5,a5,a0
+   7212c:	01059593          	sll	a1,a1,0x10
+   72130:	710006b7          	lui	a3,0x71000
+   72134:	ffe40737          	lui	a4,0xffe40
+   72138:	00d7e7b3          	or	a5,a5,a3
+   7213c:	0105d593          	srl	a1,a1,0x10
+   72140:	00f72023          	sw	a5,0(a4) # ffe40000 <scalar_image_end+0xffdcd2b0>
+   72144:	00c12403          	lw	s0,12(sp)
+   72148:	00a5e5b3          	or	a1,a1,a0
+   7214c:	710a07b7          	lui	a5,0x710a0
+   72150:	00f5e5b3          	or	a1,a1,a5
+   72154:	00b72023          	sw	a1,0(a4)
+   72158:	01010113          	add	sp,sp,16
+   7215c:	00008067          	ret
+
+00072160 <_ZL3DotR7Emitterjbj.isra.0>:
+   72160:	fb010113          	add	sp,sp,-80
+   72164:	04812623          	sw	s0,76(sp)
+   72168:	03812623          	sw	s8,44(sp)
+   7216c:	05010413          	add	s0,sp,80
+   72170:	04912423          	sw	s1,72(sp)
+   72174:	05212223          	sw	s2,68(sp)
+   72178:	05312023          	sw	s3,64(sp)
+   7217c:	03412e23          	sw	s4,60(sp)
+   72180:	03512c23          	sw	s5,56(sp)
+   72184:	03612a23          	sw	s6,52(sp)
+   72188:	03712823          	sw	s7,48(sp)
+   7218c:	03912423          	sw	s9,40(sp)
+   72190:	03a12223          	sw	s10,36(sp)
+   72194:	03b12023          	sw	s11,32(sp)
+   72198:	ffe407b7          	lui	a5,0xffe40
+   7219c:	fcc42423          	sw	a2,-56(s0)
+   721a0:	71620737          	lui	a4,0x71620
+   721a4:	00e7a023          	sw	a4,0(a5) # ffe40000 <scalar_image_end+0xffdcd2b0>
+   721a8:	717206b7          	lui	a3,0x71720
+   721ac:	00d7a023          	sw	a3,0(a5)
+   721b0:	01065713          	srl	a4,a2,0x10
+   721b4:	711007b7          	lui	a5,0x71100
+   721b8:	00f767b3          	or	a5,a4,a5
+   721bc:	fca42623          	sw	a0,-52(s0)
+   721c0:	fcf42023          	sw	a5,-64(s0)
+   721c4:	0008ec37          	lui	s8,0x8e
+   721c8:	00058463          	beqz	a1,721d0 <_ZL3DotR7Emitterjbj.isra.0+0x70>
+   721cc:	200c0c13          	add	s8,s8,512 # 8e200 <scalar_image_end+0x1b4b0>
+   721d0:	fc842803          	lw	a6,-56(s0)
+   721d4:	00010e37          	lui	t3,0x10
+   721d8:	fffe0d93          	add	s11,t3,-1 # ffff <_start+0x9fff>
+   721dc:	01b87633          	and	a2,a6,s11
+   721e0:	711a0d37          	lui	s10,0x711a0
+   721e4:	01a66633          	or	a2,a2,s10
+   721e8:	86002737          	lui	a4,0x86002
+   721ec:	71120cb7          	lui	s9,0x71120
+   721f0:	90270713          	add	a4,a4,-1790 # 86001902 <scalar_image_end+0x85f8ebb2>
+   721f4:	71310b37          	lui	s6,0x71310
+   721f8:	7e000ab7          	lui	s5,0x7e000
+   721fc:	7e001bb7          	lui	s7,0x7e001
+   72200:	86002a37          	lui	s4,0x86002
+   72204:	850a09b7          	lui	s3,0x850a0
+   72208:	850a1937          	lui	s2,0x850a1
+   7220c:	840454b7          	lui	s1,0x84045
+   72210:	84005537          	lui	a0,0x84005
+   72214:	840413b7          	lui	t2,0x84041
+   72218:	840012b7          	lui	t0,0x84001
+   7221c:	850a6fb7          	lui	t6,0x850a6
+   72220:	850a0f37          	lui	t5,0x850a0
+   72224:	850a0eb7          	lui	t4,0x850a0
+   72228:	fac42e23          	sw	a2,-68(s0)
+   7222c:	01986633          	or	a2,a6,s9
+   72230:	fce42223          	sw	a4,-60(s0)
+   72234:	00000693          	li	a3,0
+   72238:	ffe407b7          	lui	a5,0xffe40
+   7223c:	8f000737          	lui	a4,0x8f000
+   72240:	fac42c23          	sw	a2,-72(s0)
+   72244:	fffb0b13          	add	s6,s6,-1 # 7130ffff <scalar_image_end+0x7129d2af>
+   72248:	341a8a93          	add	s5,s5,833 # 7e000341 <scalar_image_end+0x7df8d5f1>
+   7224c:	351b8b93          	add	s7,s7,849 # 7e001351 <scalar_image_end+0x7df8e601>
+   72250:	922a0a13          	add	s4,s4,-1758 # 86001922 <scalar_image_end+0x85f8ebd2>
+   72254:	40298993          	add	s3,s3,1026 # 850a0402 <scalar_image_end+0x8502d6b2>
+   72258:	51290913          	add	s2,s2,1298 # 850a1512 <scalar_image_end+0x8502e7c2>
+   7225c:	23248493          	add	s1,s1,562 # 84045232 <scalar_image_end+0x83fd24e2>
+   72260:	33050513          	add	a0,a0,816 # 84005330 <scalar_image_end+0x83f925e0>
+   72264:	33038393          	add	t2,t2,816 # 84041330 <scalar_image_end+0x83fce5e0>
+   72268:	33028293          	add	t0,t0,816 # 84001330 <scalar_image_end+0x83f8e5e0>
+   7226c:	200f8f93          	add	t6,t6,512 # 850a6200 <scalar_image_end+0x850334b0>
+   72270:	612f0f13          	add	t5,t5,1554 # 850a0612 <scalar_image_end+0x8502d8c2>
+   72274:	142e8e93          	add	t4,t4,322 # 850a0142 <scalar_image_end+0x8502d3f2>
+   72278:	1280006f          	j	723a0 <_ZL3DotR7Emitterjbj.isra.0+0x240>
+   7227c:	0067a023          	sw	t1,0(a5) # ffe40000 <scalar_image_end+0xffdcd2b0>
+   72280:	0167a023          	sw	s6,0(a5)
+   72284:	713af637          	lui	a2,0x713af
+   72288:	00c7a023          	sw	a2,0(a5)
+   7228c:	0157a023          	sw	s5,0(a5)
+   72290:	0177a023          	sw	s7,0(a5)
+   72294:	0147a023          	sw	s4,0(a5)
+   72298:	00e7a023          	sw	a4,0(a5)
+   7229c:	0137a023          	sw	s3,0(a5)
+   722a0:	00e7a023          	sw	a4,0(a5)
+   722a4:	0127a023          	sw	s2,0(a5)
+   722a8:	00e7a023          	sw	a4,0(a5)
+   722ac:	0097a023          	sw	s1,0(a5)
+   722b0:	00e7a023          	sw	a4,0(a5)
+   722b4:	00a7a023          	sw	a0,0(a5)
+   722b8:	00e7a023          	sw	a4,0(a5)
+   722bc:	0077a023          	sw	t2,0(a5)
+   722c0:	00e7a023          	sw	a4,0(a5)
+   722c4:	0057a023          	sw	t0,0(a5)
+   722c8:	00e7a023          	sw	a4,0(a5)
+   722cc:	01f7a023          	sw	t6,0(a5)
+   722d0:	00e7a023          	sw	a4,0(a5)
+   722d4:	01e7a023          	sw	t5,0(a5)
+   722d8:	00e7a023          	sw	a4,0(a5)
+   722dc:	01d7a023          	sw	t4,0(a5)
+   722e0:	850a6837          	lui	a6,0x850a6
+   722e4:	00e7a023          	sw	a4,0(a5)
+   722e8:	44280813          	add	a6,a6,1090 # 850a6442 <scalar_image_end+0x850336f2>
+   722ec:	0107a023          	sw	a6,0(a5)
+   722f0:	850a2637          	lui	a2,0x850a2
+   722f4:	00e7a023          	sw	a4,0(a5)
+   722f8:	15260613          	add	a2,a2,338 # 850a2152 <scalar_image_end+0x8502f402>
+   722fc:	00c7a023          	sw	a2,0(a5)
+   72300:	850a4637          	lui	a2,0x850a4
+   72304:	00e7a023          	sw	a4,0(a5)
+   72308:	54060613          	add	a2,a2,1344 # 850a4540 <scalar_image_end+0x850317f0>
+   7230c:	00c7a023          	sw	a2,0(a5)
+   72310:	850a7637          	lui	a2,0x850a7
+   72314:	00e7a023          	sw	a4,0(a5)
+   72318:	35060613          	add	a2,a2,848 # 850a7350 <scalar_image_end+0x85034600>
+   7231c:	00c7a023          	sw	a2,0(a5)
+   72320:	850a4637          	lui	a2,0x850a4
+   72324:	53060613          	add	a2,a2,1328 # 850a4530 <scalar_image_end+0x850317e0>
+   72328:	00e7a023          	sw	a4,0(a5)
+   7232c:	00c7a023          	sw	a2,0(a5)
+   72330:	850a0637          	lui	a2,0x850a0
+   72334:	00e7a023          	sw	a4,0(a5)
+   72338:	36060613          	add	a2,a2,864 # 850a0360 <scalar_image_end+0x8502d610>
+   7233c:	00c7a023          	sw	a2,0(a5)
+   72340:	850a6637          	lui	a2,0x850a6
+   72344:	00e7a023          	sw	a4,0(a5)
+   72348:	01260613          	add	a2,a2,18 # 850a6012 <scalar_image_end+0x850332c2>
+   7234c:	00c7a023          	sw	a2,0(a5)
+   72350:	850a6637          	lui	a2,0x850a6
+   72354:	00e7a023          	sw	a4,0(a5)
+   72358:	14260613          	add	a2,a2,322 # 850a6142 <scalar_image_end+0x850333f2>
+   7235c:	00c7a023          	sw	a2,0(a5)
+   72360:	850a0637          	lui	a2,0x850a0
+   72364:	00e7a023          	sw	a4,0(a5)
+   72368:	44260613          	add	a2,a2,1090 # 850a0442 <scalar_image_end+0x8502d6f2>
+   7236c:	00c7a023          	sw	a2,0(a5)
+   72370:	850a3637          	lui	a2,0x850a3
+   72374:	00e7a023          	sw	a4,0(a5)
+   72378:	15260613          	add	a2,a2,338 # 850a3152 <scalar_image_end+0x85030402>
+   7237c:	00c7a023          	sw	a2,0(a5)
+   72380:	850a4637          	lui	a2,0x850a4
+   72384:	00e7a023          	sw	a4,0(a5)
+   72388:	57060613          	add	a2,a2,1392 # 850a4570 <scalar_image_end+0x85031820>
+   7238c:	00c7a023          	sw	a2,0(a5)
+   72390:	00e7a023          	sw	a4,0(a5)
+   72394:	00468693          	add	a3,a3,4 # 71720004 <scalar_image_end+0x716ad2b4>
+   72398:	20000613          	li	a2,512
+   7239c:	08c68063          	beq	a3,a2,7241c <_ZL3DotR7Emitterjbj.isra.0+0x2bc>
+   723a0:	fcc42603          	lw	a2,-52(s0)
+   723a4:	70030837          	lui	a6,0x70030
+   723a8:	00d66633          	or	a2,a2,a3
+   723ac:	01066633          	or	a2,a2,a6
+   723b0:	00c7a023          	sw	a2,0(a5)
+   723b4:	02059a63          	bnez	a1,723e8 <_ZL3DotR7Emitterjbj.isra.0+0x288>
+   723b8:	00dc0633          	add	a2,s8,a3
+   723bc:	00062603          	lw	a2,0(a2)
+   723c0:	71100837          	lui	a6,0x71100
+   723c4:	01065893          	srl	a7,a2,0x10
+   723c8:	0108e8b3          	or	a7,a7,a6
+   723cc:	01b67833          	and	a6,a2,s11
+   723d0:	01966333          	or	t1,a2,s9
+   723d4:	01a86833          	or	a6,a6,s10
+   723d8:	ebc662e3          	bltu	a2,t3,7227c <_ZL3DotR7Emitterjbj.isra.0+0x11c>
+   723dc:	0117a023          	sw	a7,0(a5)
+   723e0:	0107a023          	sw	a6,0(a5)
+   723e4:	e9dff06f          	j	72280 <_ZL3DotR7Emitterjbj.isra.0+0x120>
+   723e8:	fc842603          	lw	a2,-56(s0)
+   723ec:	01c67e63          	bgeu	a2,t3,72408 <_ZL3DotR7Emitterjbj.isra.0+0x2a8>
+   723f0:	fb842603          	lw	a2,-72(s0)
+   723f4:	00c7a023          	sw	a2,0(a5)
+   723f8:	fc442603          	lw	a2,-60(s0)
+   723fc:	00c7a023          	sw	a2,0(a5)
+   72400:	00e7a023          	sw	a4,0(a5)
+   72404:	fb5ff06f          	j	723b8 <_ZL3DotR7Emitterjbj.isra.0+0x258>
+   72408:	fc042603          	lw	a2,-64(s0)
+   7240c:	00c7a023          	sw	a2,0(a5)
+   72410:	fbc42603          	lw	a2,-68(s0)
+   72414:	00c7a023          	sw	a2,0(a5)
+   72418:	fe1ff06f          	j	723f8 <_ZL3DotR7Emitterjbj.isra.0+0x298>
+   7241c:	850a66b7          	lui	a3,0x850a6
+   72420:	04c12403          	lw	s0,76(sp)
+   72424:	76068693          	add	a3,a3,1888 # 850a6760 <scalar_image_end+0x85033a10>
+   72428:	00d7a023          	sw	a3,0(a5)
+   7242c:	00e7a023          	sw	a4,0(a5)
+   72430:	04812483          	lw	s1,72(sp)
+   72434:	04412903          	lw	s2,68(sp)
+   72438:	04012983          	lw	s3,64(sp)
+   7243c:	03c12a03          	lw	s4,60(sp)
+   72440:	03812a83          	lw	s5,56(sp)
+   72444:	03412b03          	lw	s6,52(sp)
+   72448:	03012b83          	lw	s7,48(sp)
+   7244c:	02c12c03          	lw	s8,44(sp)
+   72450:	02812c83          	lw	s9,40(sp)
+   72454:	02412d03          	lw	s10,36(sp)
+   72458:	02012d83          	lw	s11,32(sp)
+   7245c:	05010113          	add	sp,sp,80
+   72460:	00008067          	ret
+
+00072464 <_ZL6Importjjj>:
+   72464:	ffe40737          	lui	a4,0xffe40
+   72468:	b20507b7          	lui	a5,0xb2050
+   7246c:	ffe006b7          	lui	a3,0xffe00
+   72470:	00f72023          	sw	a5,0(a4) # ffe40000 <scalar_image_end+0xffdcd2b0>
+   72474:	0e06ae23          	sw	zero,252(a3) # ffe000fc <scalar_image_end+0xffd8d3ac>
+   72478:	0fc6a783          	lw	a5,252(a3)
+   7247c:	0fc68693          	add	a3,a3,252
+   72480:	0ff0000f          	fence
+   72484:	a21027b7          	lui	a5,0xa2102
+   72488:	81678793          	add	a5,a5,-2026 # a2101816 <scalar_image_end+0xa208eac6>
+   7248c:	45000837          	lui	a6,0x45000
+   72490:	00f72023          	sw	a5,0(a4)
+   72494:	17e80813          	add	a6,a6,382 # 4500017e <scalar_image_end+0x44f8d42e>
+   72498:	000f47b7          	lui	a5,0xf4
+   7249c:	01072023          	sw	a6,0(a4)
+   724a0:	24078793          	add	a5,a5,576 # f4240 <scalar_image_end+0x814f0>
+   724a4:	00c0006f          	j	724b0 <_ZL6Importjjj+0x4c>
+   724a8:	fff78793          	add	a5,a5,-1
+   724ac:	0c078e63          	beqz	a5,72588 <_ZL6Importjjj+0x124>
+   724b0:	0006a703          	lw	a4,0(a3)
+   724b4:	fe070ae3          	beqz	a4,724a8 <_ZL6Importjjj+0x44>
+   724b8:	0ff0000f          	fence
+   724bc:	ff050513          	add	a0,a0,-16
+   724c0:	ffef0737          	lui	a4,0xffef0
+   724c4:	00455793          	srl	a5,a0,0x4
+   724c8:	12f72823          	sw	a5,304(a4) # ffef0130 <scalar_image_end+0xffe7d3e0>
+   724cc:	13070713          	add	a4,a4,304
+   724d0:	00072703          	lw	a4,0(a4)
+   724d4:	0ae79a63          	bne	a5,a4,72588 <_ZL6Importjjj+0x124>
+   724d8:	000407b7          	lui	a5,0x40
+   724dc:	00478793          	add	a5,a5,4 # 40004 <_start+0x3a004>
+   724e0:	00f585b3          	add	a1,a1,a5
+   724e4:	ffef0737          	lui	a4,0xffef0
+   724e8:	00459793          	sll	a5,a1,0x4
+   724ec:	14f72823          	sw	a5,336(a4) # ffef0150 <scalar_image_end+0xffe7d400>
+   724f0:	15070713          	add	a4,a4,336
+   724f4:	00072703          	lw	a4,0(a4)
+   724f8:	08e79863          	bne	a5,a4,72588 <_ZL6Importjjj+0x124>
+   724fc:	fff60613          	add	a2,a2,-1
+   72500:	00a61793          	sll	a5,a2,0xa
+   72504:	5e200637          	lui	a2,0x5e200
+   72508:	ffe40737          	lui	a4,0xffe40
+   7250c:	00c7e7b3          	or	a5,a5,a2
+   72510:	512005b7          	lui	a1,0x51200
+   72514:	00f72023          	sw	a5,0(a4) # ffe40000 <scalar_image_end+0xffdcd2b0>
+   72518:	00a58593          	add	a1,a1,10 # 5120000a <scalar_image_end+0x5118d2ba>
+   7251c:	54200637          	lui	a2,0x54200
+   72520:	00b72023          	sw	a1,0(a4)
+   72524:	00f60613          	add	a2,a2,15 # 5420000f <scalar_image_end+0x5418d2bf>
+   72528:	420007b7          	lui	a5,0x42000
+   7252c:	00c72023          	sw	a2,0(a4)
+   72530:	08178793          	add	a5,a5,129 # 42000081 <scalar_image_end+0x41f8d331>
+   72534:	00f72023          	sw	a5,0(a4)
+   72538:	0006a023          	sw	zero,0(a3)
+   7253c:	0006a783          	lw	a5,0(a3)
+   72540:	0ff0000f          	fence
+   72544:	a21027b7          	lui	a5,0xa2102
+   72548:	81678793          	add	a5,a5,-2026 # a2101816 <scalar_image_end+0xa208eac6>
+   7254c:	45000637          	lui	a2,0x45000
+   72550:	00f72023          	sw	a5,0(a4)
+   72554:	17e60613          	add	a2,a2,382 # 4500017e <scalar_image_end+0x44f8d42e>
+   72558:	000f47b7          	lui	a5,0xf4
+   7255c:	ffe006b7          	lui	a3,0xffe00
+   72560:	00c72023          	sw	a2,0(a4)
+   72564:	24078793          	add	a5,a5,576 # f4240 <scalar_image_end+0x814f0>
+   72568:	0fc68693          	add	a3,a3,252 # ffe000fc <scalar_image_end+0xffd8d3ac>
+   7256c:	00c0006f          	j	72578 <_ZL6Importjjj+0x114>
+   72570:	fff78793          	add	a5,a5,-1
+   72574:	00078a63          	beqz	a5,72588 <_ZL6Importjjj+0x124>
+   72578:	0006a703          	lw	a4,0(a3)
+   7257c:	fe070ae3          	beqz	a4,72570 <_ZL6Importjjj+0x10c>
+   72580:	0ff0000f          	fence
+   72584:	00008067          	ret
+   72588:	ff010113          	add	sp,sp,-16
+   7258c:	00812423          	sw	s0,8(sp)
+   72590:	00112623          	sw	ra,12(sp)
+   72594:	01010413          	add	s0,sp,16
+   72598:	00000097          	auipc	ra,0x0
+   7259c:	ac8080e7          	jalr	-1336(ra) # 72060 <scalar_fault_park>
+
+000725a0 <scalar_main>:
+   725a0:	fc010113          	add	sp,sp,-64
+   725a4:	02812c23          	sw	s0,56(sp)
+   725a8:	02112e23          	sw	ra,60(sp)
+   725ac:	02912a23          	sw	s1,52(sp)
+   725b0:	04010413          	add	s0,sp,64
+   725b4:	000747b7          	lui	a5,0x74
+   725b8:	0007a703          	lw	a4,0(a5) # 74000 <scalar_image_end+0x12b0>
+   725bc:	573837b7          	lui	a5,0x57383
+   725c0:	35178793          	add	a5,a5,849 # 57383351 <scalar_image_end+0x57310601>
+   725c4:	00f71a63          	bne	a4,a5,725d8 <scalar_main+0x38>
+   725c8:	000747b7          	lui	a5,0x74
+   725cc:	0047a683          	lw	a3,4(a5) # 74004 <scalar_image_end+0x12b4>
+   725d0:	08000713          	li	a4,128
+   725d4:	02e68063          	beq	a3,a4,725f4 <scalar_main+0x54>
+   725d8:	00000493          	li	s1,0
+   725dc:	03c12083          	lw	ra,60(sp)
+   725e0:	03812403          	lw	s0,56(sp)
+   725e4:	00048513          	mv	a0,s1
+   725e8:	03412483          	lw	s1,52(sp)
+   725ec:	04010113          	add	sp,sp,64
+   725f0:	00008067          	ret
+   725f4:	03212823          	sw	s2,48(sp)
+   725f8:	0087a903          	lw	s2,8(a5)
+   725fc:	04000713          	li	a4,64
+   72600:	06e91263          	bne	s2,a4,72664 <scalar_main+0xc4>
+   72604:	00c7a483          	lw	s1,12(a5)
+   72608:	04049e63          	bnez	s1,72664 <scalar_main+0xc4>
+   7260c:	0008e7b7          	lui	a5,0x8e
+   72610:	0008e737          	lui	a4,0x8e
+   72614:	03312623          	sw	s3,44(sp)
+   72618:	5007a983          	lw	s3,1280(a5) # 8e500 <scalar_image_end+0x1b7b0>
+   7261c:	03412423          	sw	s4,40(sp)
+   72620:	50472a03          	lw	s4,1284(a4) # 8e504 <scalar_image_end+0x1b7b4>
+   72624:	3f800737          	lui	a4,0x3f800
+   72628:	05376e63          	bltu	a4,s3,72684 <scalar_main+0xe4>
+   7262c:	05476c63          	bltu	a4,s4,72684 <scalar_main+0xe4>
+   72630:	00098863          	beqz	s3,72640 <scalar_main+0xa0>
+   72634:	0179d793          	srl	a5,s3,0x17
+   72638:	0ff7f793          	zext.b	a5,a5
+   7263c:	04078463          	beqz	a5,72684 <scalar_main+0xe4>
+   72640:	040a0a63          	beqz	s4,72694 <scalar_main+0xf4>
+   72644:	017a5793          	srl	a5,s4,0x17
+   72648:	0ff7f793          	zext.b	a5,a5
+   7264c:	04079463          	bnez	a5,72694 <scalar_main+0xf4>
+   72650:	03012903          	lw	s2,48(sp)
+   72654:	02c12983          	lw	s3,44(sp)
+   72658:	02812a03          	lw	s4,40(sp)
+   7265c:	00000493          	li	s1,0
+   72660:	f7dff06f          	j	725dc <scalar_main+0x3c>
+   72664:	03c12083          	lw	ra,60(sp)
+   72668:	03812403          	lw	s0,56(sp)
+   7266c:	00000493          	li	s1,0
+   72670:	03012903          	lw	s2,48(sp)
+   72674:	00048513          	mv	a0,s1
+   72678:	03412483          	lw	s1,52(sp)
+   7267c:	04010113          	add	sp,sp,64
+   72680:	00008067          	ret
+   72684:	03012903          	lw	s2,48(sp)
+   72688:	02c12983          	lw	s3,44(sp)
+   7268c:	02812a03          	lw	s4,40(sp)
+   72690:	f4dff06f          	j	725dc <scalar_main+0x3c>
+   72694:	800007b7          	lui	a5,0x80000
+   72698:	00090737          	lui	a4,0x90
+   7269c:	fff78793          	add	a5,a5,-1 # 7fffffff <scalar_image_end+0x7ff8d2af>
+   726a0:	498005b7          	lui	a1,0x49800
+   726a4:	00072603          	lw	a2,0(a4) # 90000 <scalar_image_end+0x1d2b0>
+   726a8:	00f676b3          	and	a3,a2,a5
+   726ac:	fcd5ece3          	bltu	a1,a3,72684 <scalar_main+0xe4>
+   726b0:	00068863          	beqz	a3,726c0 <scalar_main+0x120>
+   726b4:	01765693          	srl	a3,a2,0x17
+   726b8:	0ff6f693          	zext.b	a3,a3
+   726bc:	f8068ae3          	beqz	a3,72650 <scalar_main+0xb0>
+   726c0:	00470713          	add	a4,a4,4
+   726c4:	000986b7          	lui	a3,0x98
+   726c8:	fcd71ee3          	bne	a4,a3,726a4 <scalar_main+0x104>
+   726cc:	0008e737          	lui	a4,0x8e
+   726d0:	800006b7          	lui	a3,0x80000
+   726d4:	0008e7b7          	lui	a5,0x8e
+   726d8:	fff68693          	add	a3,a3,-1 # 7fffffff <scalar_image_end+0x7ff8d2af>
+   726dc:	40800537          	lui	a0,0x40800
+   726e0:	40070713          	add	a4,a4,1024 # 8e400 <scalar_image_end+0x1b6b0>
+   726e4:	0007a603          	lw	a2,0(a5) # 8e000 <scalar_image_end+0x1b2b0>
+   726e8:	00d675b3          	and	a1,a2,a3
+   726ec:	f8b56ce3          	bltu	a0,a1,72684 <scalar_main+0xe4>
+   726f0:	00058863          	beqz	a1,72700 <scalar_main+0x160>
+   726f4:	01765593          	srl	a1,a2,0x17
+   726f8:	0ff5f593          	zext.b	a1,a1
+   726fc:	f4058ae3          	beqz	a1,72650 <scalar_main+0xb0>
+   72700:	00478793          	add	a5,a5,4
+   72704:	fee790e3          	bne	a5,a4,726e4 <scalar_main+0x144>
+   72708:	0008e737          	lui	a4,0x8e
+   7270c:	800006b7          	lui	a3,0x80000
+   72710:	fff68693          	add	a3,a3,-1 # 7fffffff <scalar_image_end+0x7ff8d2af>
+   72714:	49800537          	lui	a0,0x49800
+   72718:	50070713          	add	a4,a4,1280 # 8e500 <scalar_image_end+0x1b7b0>
+   7271c:	0007a603          	lw	a2,0(a5)
+   72720:	00d675b3          	and	a1,a2,a3
+   72724:	f6b560e3          	bltu	a0,a1,72684 <scalar_main+0xe4>
+   72728:	00058863          	beqz	a1,72738 <scalar_main+0x198>
+   7272c:	01765593          	srl	a1,a2,0x17
+   72730:	0ff5f593          	zext.b	a1,a1
+   72734:	f0058ee3          	beqz	a1,72650 <scalar_main+0xb0>
+   72738:	00478793          	add	a5,a5,4
+   7273c:	fee790e3          	bne	a5,a4,7271c <scalar_main+0x17c>
+   72740:	03512223          	sw	s5,36(sp)
+   72744:	03612023          	sw	s6,32(sp)
+   72748:	01712e23          	sw	s7,28(sp)
+   7274c:	01812c23          	sw	s8,24(sp)
+   72750:	01912a23          	sw	s9,20(sp)
+   72754:	01a12823          	sw	s10,16(sp)
+   72758:	01b12623          	sw	s11,12(sp)
+   7275c:	ffe406b7          	lui	a3,0xffe40
+   72760:	b20007b7          	lui	a5,0xb2000
+   72764:	ffe00737          	lui	a4,0xffe00
+   72768:	00f6a023          	sw	a5,0(a3) # ffe40000 <scalar_image_end+0xffdcd2b0>
+   7276c:	0e072e23          	sw	zero,252(a4) # ffe000fc <scalar_image_end+0xffd8d3ac>
+   72770:	0fc72783          	lw	a5,252(a4)
+   72774:	0fc70713          	add	a4,a4,252
+   72778:	0ff0000f          	fence
+   7277c:	a21027b7          	lui	a5,0xa2102
+   72780:	81678793          	add	a5,a5,-2026 # a2101816 <scalar_image_end+0xa208eac6>
+   72784:	45000637          	lui	a2,0x45000
+   72788:	00f6a023          	sw	a5,0(a3)
+   7278c:	17e60613          	add	a2,a2,382 # 4500017e <scalar_image_end+0x44f8d42e>
+   72790:	000f47b7          	lui	a5,0xf4
+   72794:	00c6a023          	sw	a2,0(a3)
+   72798:	24078793          	add	a5,a5,576 # f4240 <scalar_image_end+0x814f0>
+   7279c:	00c0006f          	j	727a8 <scalar_main+0x208>
+   727a0:	fff78793          	add	a5,a5,-1
+   727a4:	4a078463          	beqz	a5,72c4c <scalar_main+0x6ac>
+   727a8:	00072683          	lw	a3,0(a4)
+   727ac:	fe068ae3          	beqz	a3,727a0 <scalar_main+0x200>
+   727b0:	0ff0000f          	fence
+   727b4:	00010737          	lui	a4,0x10
+   727b8:	b20005b7          	lui	a1,0xb2000
+   727bc:	ffe407b7          	lui	a5,0xffe40
+   727c0:	00010637          	lui	a2,0x10
+   727c4:	004406b7          	lui	a3,0x440
+   727c8:	00b76533          	or	a0,a4,a1
+   727cc:	00a7a023          	sw	a0,0(a5) # ffe40000 <scalar_image_end+0xffdcd2b0>
+   727d0:	00c70733          	add	a4,a4,a2
+   727d4:	fed71ae3          	bne	a4,a3,727c8 <scalar_main+0x228>
+   727d8:	b20206b7          	lui	a3,0xb2020
+   727dc:	00168693          	add	a3,a3,1 # b2020001 <scalar_image_end+0xb1fad2b1>
+   727e0:	b2030737          	lui	a4,0xb2030
+   727e4:	00d7a023          	sw	a3,0(a5)
+   727e8:	00170713          	add	a4,a4,1 # b2030001 <scalar_image_end+0xb1fbd2b1>
+   727ec:	00e7a023          	sw	a4,0(a5)
+   727f0:	b2050737          	lui	a4,0xb2050
+   727f4:	ffe006b7          	lui	a3,0xffe00
+   727f8:	00e7a023          	sw	a4,0(a5)
+   727fc:	0e06ae23          	sw	zero,252(a3) # ffe000fc <scalar_image_end+0xffd8d3ac>
+   72800:	0fc6a703          	lw	a4,252(a3)
+   72804:	0fc68693          	add	a3,a3,252
+   72808:	0ff0000f          	fence
+   7280c:	a2102737          	lui	a4,0xa2102
+   72810:	81670713          	add	a4,a4,-2026 # a2101816 <scalar_image_end+0xa208eac6>
+   72814:	45000637          	lui	a2,0x45000
+   72818:	00e7a023          	sw	a4,0(a5)
+   7281c:	17e60613          	add	a2,a2,382 # 4500017e <scalar_image_end+0x44f8d42e>
+   72820:	000f4737          	lui	a4,0xf4
+   72824:	00c7a023          	sw	a2,0(a5)
+   72828:	24070713          	add	a4,a4,576 # f4240 <scalar_image_end+0x814f0>
+   7282c:	00c0006f          	j	72838 <scalar_main+0x298>
+   72830:	fff70713          	add	a4,a4,-1
+   72834:	40070c63          	beqz	a4,72c4c <scalar_main+0x6ac>
+   72838:	0006a783          	lw	a5,0(a3)
+   7283c:	fe078ae3          	beqz	a5,72830 <scalar_main+0x290>
+   72840:	0ff0000f          	fence
+   72844:	00073637          	lui	a2,0x73
+   72848:	000736b7          	lui	a3,0x73
+   7284c:	00000713          	li	a4,0
+   72850:	c8060613          	add	a2,a2,-896 # 72c80 <_ZZL5SetupvE5value>
+   72854:	ce868693          	add	a3,a3,-792 # 72ce8 <_ZZL5SetupvE5index>
+   72858:	3ffbc837          	lui	a6,0x3ffbc
+   7285c:	06800513          	li	a0,104
+   72860:	00e687b3          	add	a5,a3,a4
+   72864:	0007a783          	lw	a5,0(a5)
+   72868:	00e605b3          	add	a1,a2,a4
+   7286c:	0005a583          	lw	a1,0(a1) # b2000000 <scalar_image_end+0xb1f8d2b0>
+   72870:	00f807b3          	add	a5,a6,a5
+   72874:	00279793          	sll	a5,a5,0x2
+   72878:	00b7a023          	sw	a1,0(a5)
+   7287c:	0007a783          	lw	a5,0(a5)
+   72880:	3cf59663          	bne	a1,a5,72c4c <scalar_main+0x6ac>
+   72884:	00470713          	add	a4,a4,4
+   72888:	fca71ce3          	bne	a4,a0,72860 <scalar_main+0x2c0>
+   7288c:	00000a93          	li	s5,0
+   72890:	00090bb7          	lui	s7,0x90
+   72894:	20000b13          	li	s6,512
+   72898:	006a9513          	sll	a0,s5,0x6
+   7289c:	000a8593          	mv	a1,s5
+   728a0:	40000613          	li	a2,1024
+   728a4:	01750533          	add	a0,a0,s7
+   728a8:	040a8a93          	add	s5,s5,64
+   728ac:	00000097          	auipc	ra,0x0
+   728b0:	bb8080e7          	jalr	-1096(ra) # 72464 <_ZL6Importjjj>
+   728b4:	ff6a92e3          	bne	s5,s6,72898 <scalar_main+0x2f8>
+   728b8:	b2050b37          	lui	s6,0xb2050
+   728bc:	ffe40ab7          	lui	s5,0xffe40
+   728c0:	004b0b13          	add	s6,s6,4 # b2050004 <scalar_image_end+0xb1fdd2b4>
+   728c4:	016aa023          	sw	s6,0(s5) # ffe40000 <scalar_image_end+0xffdcd2b0>
+   728c8:	fffff097          	auipc	ra,0xfffff
+   728cc:	7b8080e7          	jalr	1976(ra) # 72080 <_ZL5Drainv>
+   728d0:	8a0007b7          	lui	a5,0x8a000
+   728d4:	00278793          	add	a5,a5,2 # 8a000002 <scalar_image_end+0x89f8d2b2>
+   728d8:	0008ecb7          	lui	s9,0x8e
+   728dc:	850a0c37          	lui	s8,0x850a0
+   728e0:	86002bb7          	lui	s7,0x86002
+   728e4:	0008edb7          	lui	s11,0x8e
+   728e8:	00faa023          	sw	a5,0(s5)
+   728ec:	400c8c93          	add	s9,s9,1024 # 8e400 <scalar_image_end+0x1b6b0>
+   728f0:	602c0c13          	add	s8,s8,1538 # 850a0602 <scalar_image_end+0x8502d8b2>
+   728f4:	902b8b93          	add	s7,s7,-1790 # 86001902 <scalar_image_end+0x85f8ebb2>
+   728f8:	600d8d93          	add	s11,s11,1536 # 8e600 <scalar_image_end+0x1b8b0>
+   728fc:	03f00d13          	li	s10,63
+   72900:	00098613          	mv	a2,s3
+   72904:	00100593          	li	a1,1
+   72908:	00048513          	mv	a0,s1
+   7290c:	00000097          	auipc	ra,0x0
+   72910:	854080e7          	jalr	-1964(ra) # 72160 <_ZL3DotR7Emitterjbj.isra.0>
+   72914:	ffe40ab7          	lui	s5,0xffe40
+   72918:	04000613          	li	a2,64
+   7291c:	00000593          	li	a1,0
+   72920:	000c8513          	mv	a0,s9
+   72924:	00000097          	auipc	ra,0x0
+   72928:	b40080e7          	jalr	-1216(ra) # 72464 <_ZL6Importjjj>
+   7292c:	016aa023          	sw	s6,0(s5) # ffe40000 <scalar_image_end+0xffdcd2b0>
+   72930:	fffff097          	auipc	ra,0xfffff
+   72934:	750080e7          	jalr	1872(ra) # 72080 <_ZL5Drainv>
+   72938:	700307b7          	lui	a5,0x70030
+   7293c:	00f4e7b3          	or	a5,s1,a5
+   72940:	00faa023          	sw	a5,0(s5)
+   72944:	018aa023          	sw	s8,0(s5)
+   72948:	8f0007b7          	lui	a5,0x8f000
+   7294c:	000a0593          	mv	a1,s4
+   72950:	00faa023          	sw	a5,0(s5)
+   72954:	00100513          	li	a0,1
+   72958:	fffff097          	auipc	ra,0xfffff
+   7295c:	794080e7          	jalr	1940(ra) # 720ec <_Z17PioneerSfpuLoad32I7EmitterEvRT_jj.isra.0>
+   72960:	8f0007b7          	lui	a5,0x8f000
+   72964:	017aa023          	sw	s7,0(s5)
+   72968:	00faa023          	sw	a5,0(s5)
+   7296c:	720307b7          	lui	a5,0x72030
+   72970:	00f4e7b3          	or	a5,s1,a5
+   72974:	00faa023          	sw	a5,0(s5)
+   72978:	fffff097          	auipc	ra,0xfffff
+   7297c:	708080e7          	jalr	1800(ra) # 72080 <_ZL5Drainv>
+   72980:	0014d793          	srl	a5,s1,0x1
+   72984:	ffbd85b7          	lui	a1,0xffbd8
+   72988:	7f8006b7          	lui	a3,0x7f800
+   7298c:	00279713          	sll	a4,a5,0x2
+   72990:	00b70633          	add	a2,a4,a1
+   72994:	00062603          	lw	a2,0(a2)
+   72998:	00d67533          	and	a0,a2,a3
+   7299c:	2ad50863          	beq	a0,a3,72c4c <scalar_main+0x6ac>
+   729a0:	01b70733          	add	a4,a4,s11
+   729a4:	00c72023          	sw	a2,0(a4)
+   729a8:	00278793          	add	a5,a5,2 # 72030002 <scalar_image_end+0x71fbd2b2>
+   729ac:	fefd70e3          	bgeu	s10,a5,7298c <scalar_main+0x3ec>
+   729b0:	2a048263          	beqz	s1,72c54 <scalar_main+0x6b4>
+   729b4:	0008e537          	lui	a0,0x8e
+   729b8:	b2050a37          	lui	s4,0xb2050
+   729bc:	ffe404b7          	lui	s1,0xffe40
+   729c0:	04000613          	li	a2,64
+   729c4:	00000593          	li	a1,0
+   729c8:	60050513          	add	a0,a0,1536 # 8e600 <scalar_image_end+0x1b8b0>
+   729cc:	004a0a13          	add	s4,s4,4 # b2050004 <scalar_image_end+0xb1fdd2b4>
+   729d0:	00000097          	auipc	ra,0x0
+   729d4:	a94080e7          	jalr	-1388(ra) # 72464 <_ZL6Importjjj>
+   729d8:	0144a023          	sw	s4,0(s1) # ffe40000 <scalar_image_end+0xffdcd2b0>
+   729dc:	fffff097          	auipc	ra,0xfffff
+   729e0:	6a4080e7          	jalr	1700(ra) # 72080 <_ZL5Drainv>
+   729e4:	70630737          	lui	a4,0x70630
+   729e8:	707307b7          	lui	a5,0x70730
+   729ec:	00e4a023          	sw	a4,0(s1)
+   729f0:	00278793          	add	a5,a5,2 # 70730002 <scalar_image_end+0x706bd2b2>
+   729f4:	00f4a023          	sw	a5,0(s1)
+   729f8:	fffff097          	auipc	ra,0xfffff
+   729fc:	688080e7          	jalr	1672(ra) # 72080 <_ZL5Drainv>
+   72a00:	04000613          	li	a2,64
+   72a04:	00000593          	li	a1,0
+   72a08:	00090537          	lui	a0,0x90
+   72a0c:	00000097          	auipc	ra,0x0
+   72a10:	a58080e7          	jalr	-1448(ra) # 72464 <_ZL6Importjjj>
+   72a14:	0144a023          	sw	s4,0(s1)
+   72a18:	fffff097          	auipc	ra,0xfffff
+   72a1c:	668080e7          	jalr	1640(ra) # 72080 <_ZL5Drainv>
+   72a20:	00098593          	mv	a1,s3
+   72a24:	00200513          	li	a0,2
+   72a28:	0008e4b7          	lui	s1,0x8e
+   72a2c:	fff72db7          	lui	s11,0xfff72
+   72a30:	86003ab7          	lui	s5,0x86003
+   72a34:	86037d37          	lui	s10,0x86037
+   72a38:	850a0a37          	lui	s4,0x850a0
+   72a3c:	70030cb7          	lui	s9,0x70030
+   72a40:	86038c37          	lui	s8,0x86038
+   72a44:	72030bb7          	lui	s7,0x72030
+   72a48:	0008eb37          	lui	s6,0x8e
+   72a4c:	fffff097          	auipc	ra,0xfffff
+   72a50:	6a0080e7          	jalr	1696(ra) # 720ec <_Z17PioneerSfpuLoad32I7EmitterEvRT_jj.isra.0>
+   72a54:	20048493          	add	s1,s1,512 # 8e200 <scalar_image_end+0x1b4b0>
+   72a58:	e00d8d93          	add	s11,s11,-512 # fff71e00 <scalar_image_end+0xffeff0b0>
+   72a5c:	902a8a93          	add	s5,s5,-1790 # 86002902 <scalar_image_end+0x85f8fbb2>
+   72a60:	912d0d13          	add	s10,s10,-1774 # 86036912 <scalar_image_end+0x85fc3bc2>
+   72a64:	100a0a13          	add	s4,s4,256 # 850a0100 <scalar_image_end+0x8502d3b0>
+   72a68:	002c8c93          	add	s9,s9,2 # 70030002 <scalar_image_end+0x6ffbd2b2>
+   72a6c:	912c0c13          	add	s8,s8,-1774 # 86037912 <scalar_image_end+0x85fc4bc2>
+   72a70:	002b8b93          	add	s7,s7,2 # 72030002 <scalar_image_end+0x71fbd2b2>
+   72a74:	400b0b13          	add	s6,s6,1024 # 8e400 <scalar_image_end+0x1b6b0>
+   72a78:	0004a583          	lw	a1,0(s1)
+   72a7c:	00300513          	li	a0,3
+   72a80:	01b489b3          	add	s3,s1,s11
+   72a84:	fffff097          	auipc	ra,0xfffff
+   72a88:	668080e7          	jalr	1640(ra) # 720ec <_Z17PioneerSfpuLoad32I7EmitterEvRT_jj.isra.0>
+   72a8c:	70030737          	lui	a4,0x70030
+   72a90:	ffe407b7          	lui	a5,0xffe40
+   72a94:	00e9e733          	or	a4,s3,a4
+   72a98:	00e7a023          	sw	a4,0(a5) # ffe40000 <scalar_image_end+0xffdcd2b0>
+   72a9c:	0157a023          	sw	s5,0(a5)
+   72aa0:	8f000737          	lui	a4,0x8f000
+   72aa4:	00e7a023          	sw	a4,0(a5)
+   72aa8:	01a7a023          	sw	s10,0(a5)
+   72aac:	00e7a023          	sw	a4,0(a5)
+   72ab0:	0147a023          	sw	s4,0(a5)
+   72ab4:	720306b7          	lui	a3,0x72030
+   72ab8:	00e7a023          	sw	a4,0(a5)
+   72abc:	00d9e6b3          	or	a3,s3,a3
+   72ac0:	00d7a023          	sw	a3,0(a5)
+   72ac4:	0199e6b3          	or	a3,s3,s9
+   72ac8:	00d7a023          	sw	a3,0(a5)
+   72acc:	0157a023          	sw	s5,0(a5)
+   72ad0:	00e7a023          	sw	a4,0(a5)
+   72ad4:	0187a023          	sw	s8,0(a5)
+   72ad8:	00e7a023          	sw	a4,0(a5)
+   72adc:	0147a023          	sw	s4,0(a5)
+   72ae0:	00e7a023          	sw	a4,0(a5)
+   72ae4:	0179e9b3          	or	s3,s3,s7
+   72ae8:	0137a023          	sw	s3,0(a5)
+   72aec:	00448493          	add	s1,s1,4
+   72af0:	f96494e3          	bne	s1,s6,72a78 <scalar_main+0x4d8>
+   72af4:	fffff097          	auipc	ra,0xfffff
+   72af8:	58c080e7          	jalr	1420(ra) # 72080 <_ZL5Drainv>
+   72afc:	80000737          	lui	a4,0x80000
+   72b00:	ffbd87b7          	lui	a5,0xffbd8
+   72b04:	fff70713          	add	a4,a4,-1 # 7fffffff <scalar_image_end+0x7ff8d2af>
+   72b08:	4d8005b7          	lui	a1,0x4d800
+   72b0c:	0007a603          	lw	a2,0(a5) # ffbd8000 <scalar_image_end+0xffb652b0>
+   72b10:	00e676b3          	and	a3,a2,a4
+   72b14:	12d5ec63          	bltu	a1,a3,72c4c <scalar_main+0x6ac>
+   72b18:	00068863          	beqz	a3,72b28 <scalar_main+0x588>
+   72b1c:	01765693          	srl	a3,a2,0x17
+   72b20:	0ff6f693          	zext.b	a3,a3
+   72b24:	12068463          	beqz	a3,72c4c <scalar_main+0x6ac>
+   72b28:	004c86b7          	lui	a3,0x4c8
+   72b2c:	00d786b3          	add	a3,a5,a3
+   72b30:	00c6a023          	sw	a2,0(a3) # 4c8000 <scalar_image_end+0x4552b0>
+   72b34:	00478793          	add	a5,a5,4
+   72b38:	ffbe06b7          	lui	a3,0xffbe0
+   72b3c:	fcd798e3          	bne	a5,a3,72b0c <scalar_main+0x56c>
+   72b40:	71104ab7          	lui	s5,0x71104
+   72b44:	ffe404b7          	lui	s1,0xffe40
+   72b48:	00000613          	li	a2,0
+   72b4c:	00000593          	li	a1,0
+   72b50:	00000513          	li	a0,0
+   72b54:	db5a8a93          	add	s5,s5,-587 # 71103db5 <scalar_image_end+0x71091065>
+   72b58:	711a0a37          	lui	s4,0x711a0
+   72b5c:	fffff097          	auipc	ra,0xfffff
+   72b60:	604080e7          	jalr	1540(ra) # 72160 <_ZL3DotR7Emitterjbj.isra.0>
+   72b64:	4f3a0a13          	add	s4,s4,1267 # 711a04f3 <scalar_image_end+0x7112d7a3>
+   72b68:	0154a023          	sw	s5,0(s1) # ffe40000 <scalar_image_end+0xffdcd2b0>
+   72b6c:	860629b7          	lui	s3,0x86062
+   72b70:	0144a023          	sw	s4,0(s1)
+   72b74:	96298993          	add	s3,s3,-1694 # 86061962 <scalar_image_end+0x85feec12>
+   72b78:	0134a023          	sw	s3,0(s1)
+   72b7c:	8f000b37          	lui	s6,0x8f000
+   72b80:	726307b7          	lui	a5,0x72630
+   72b84:	0164a023          	sw	s6,0(s1)
+   72b88:	00f4a023          	sw	a5,0(s1)
+   72b8c:	fffff097          	auipc	ra,0xfffff
+   72b90:	4f4080e7          	jalr	1268(ra) # 72080 <_ZL5Drainv>
+   72b94:	00000613          	li	a2,0
+   72b98:	00000593          	li	a1,0
+   72b9c:	00200513          	li	a0,2
+   72ba0:	fffff097          	auipc	ra,0xfffff
+   72ba4:	5c0080e7          	jalr	1472(ra) # 72160 <_ZL3DotR7Emitterjbj.isra.0>
+   72ba8:	0154a023          	sw	s5,0(s1)
+   72bac:	0144a023          	sw	s4,0(s1)
+   72bb0:	0134a023          	sw	s3,0(s1)
+   72bb4:	726307b7          	lui	a5,0x72630
+   72bb8:	00278793          	add	a5,a5,2 # 72630002 <scalar_image_end+0x725bd2b2>
+   72bbc:	0164a023          	sw	s6,0(s1)
+   72bc0:	00f4a023          	sw	a5,0(s1)
+   72bc4:	fffff097          	auipc	ra,0xfffff
+   72bc8:	4bc080e7          	jalr	1212(ra) # 72080 <_ZL5Drainv>
+   72bcc:	004b76b7          	lui	a3,0x4b7
+   72bd0:	ffbd8737          	lui	a4,0xffbd8
+   72bd4:	80000637          	lui	a2,0x80000
+   72bd8:	ffbd87b7          	lui	a5,0xffbd8
+   72bdc:	fff60613          	add	a2,a2,-1 # 7fffffff <scalar_image_end+0x7ff8d2af>
+   72be0:	51800837          	lui	a6,0x51800
+   72be4:	80068693          	add	a3,a3,-2048 # 4b6800 <scalar_image_end+0x443ab0>
+   72be8:	10070713          	add	a4,a4,256 # ffbd8100 <scalar_image_end+0xffb653b0>
+   72bec:	0007a583          	lw	a1,0(a5) # ffbd8000 <scalar_image_end+0xffb652b0>
+   72bf0:	00c5f533          	and	a0,a1,a2
+   72bf4:	04a86c63          	bltu	a6,a0,72c4c <scalar_main+0x6ac>
+   72bf8:	00050863          	beqz	a0,72c08 <scalar_main+0x668>
+   72bfc:	0175d513          	srl	a0,a1,0x17
+   72c00:	0ff57513          	zext.b	a0,a0
+   72c04:	04050463          	beqz	a0,72c4c <scalar_main+0x6ac>
+   72c08:	00d78533          	add	a0,a5,a3
+   72c0c:	00b52023          	sw	a1,0(a0) # 90000 <scalar_image_end+0x1d2b0>
+   72c10:	00478793          	add	a5,a5,4
+   72c14:	fce79ce3          	bne	a5,a4,72bec <scalar_main+0x64c>
+   72c18:	0ff0000f          	fence
+   72c1c:	00090493          	mv	s1,s2
+   72c20:	02c12983          	lw	s3,44(sp)
+   72c24:	03012903          	lw	s2,48(sp)
+   72c28:	02812a03          	lw	s4,40(sp)
+   72c2c:	02412a83          	lw	s5,36(sp)
+   72c30:	02012b03          	lw	s6,32(sp)
+   72c34:	01c12b83          	lw	s7,28(sp)
+   72c38:	01812c03          	lw	s8,24(sp)
+   72c3c:	01412c83          	lw	s9,20(sp)
+   72c40:	01012d03          	lw	s10,16(sp)
+   72c44:	00c12d83          	lw	s11,12(sp)
+   72c48:	995ff06f          	j	725dc <scalar_main+0x3c>
+   72c4c:	fffff097          	auipc	ra,0xfffff
+   72c50:	414080e7          	jalr	1044(ra) # 72060 <scalar_fault_park>
+   72c54:	04000613          	li	a2,64
+   72c58:	00000593          	li	a1,0
+   72c5c:	00090537          	lui	a0,0x90
+   72c60:	00000097          	auipc	ra,0x0
+   72c64:	804080e7          	jalr	-2044(ra) # 72464 <_ZL6Importjjj>
+   72c68:	ffe407b7          	lui	a5,0xffe40
+   72c6c:	0167a023          	sw	s6,0(a5) # ffe40000 <scalar_image_end+0xffdcd2b0>
+   72c70:	fffff097          	auipc	ra,0xfffff
+   72c74:	410080e7          	jalr	1040(ra) # 72080 <_ZL5Drainv>
+   72c78:	00200493          	li	s1,2
+   72c7c:	c85ff06f          	j	72900 <scalar_main+0x360>
+
+00072c80 <_ZZL5SetupvE5value>:
+   72c80:	00004231 a0200000 00000000 00000000     1B.... .........
+	...
+   72ca0:	0000ffff 00000100 00000000 00000100     ................
+   72cb0:	00100000 00000100 00100010 00000010     ................
+   72cc0:	00000000 00000013 00008fff 00400040     ............@.@.
+   72cd0:	00100010 00100011 00000008 00000001     ................
+   72ce0:	00000003 00007091                       .....p..
+
+00072ce8 <_ZZL5SetupvE5index>:
+   72ce8:	00000000 00000001 00000002 00000003     ................
+   72cf8:	00000006 00000007 000000dc 00000014     ................
+   72d08:	00000018 0000001c 00000031 00000032     ........1...2...
+   72d18:	00000038 0000003b 00000040 00000041     8...;...@...A...
+   72d28:	00000048 00000049 0000004c 00000054     H...I...L...T...
+   72d38:	00000056 00000070 00000071 00000078     V...p...q...x...
+   72d48:	00000079 0000007c                       y...|...

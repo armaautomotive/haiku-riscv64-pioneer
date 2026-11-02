@@ -1,0 +1,5 @@
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_wide_delta.cpp:14:13:void Drain()	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerSfpuDivide.h:20:38:void PioneerSfpuLoad32(E&, unsigned int, uint32_t) [with E = Emitter]	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_wide_delta.cpp:50:13:void Dot(Emitter&, unsigned int, bool, uint32_t)	80	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_wide_delta.cpp:41:13:void Import(uint32_t, unsigned int, unsigned int)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_qwen38_wide_delta.cpp:61:21:unsigned int scalar_main()	64	static

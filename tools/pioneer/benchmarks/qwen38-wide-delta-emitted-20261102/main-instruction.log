@@ -1,0 +1,1 @@
+PASS offline actual wide instruction words:16x128x32 products/512 FP64-order rounded sums exact/ONLY8LRegs/explicit latency/missing gap refused;NOT emitted RV32/native/physical/Work/TPS

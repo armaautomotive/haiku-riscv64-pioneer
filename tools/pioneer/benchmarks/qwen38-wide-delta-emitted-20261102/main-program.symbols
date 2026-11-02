@@ -1,0 +1,13 @@
+00006000 T _start
+00072000 T scalar_entry
+0007200c T scalar_done
+00072038 T scalar_park
+00072060 T scalar_fault_park
+00072080 t _ZL5Drainv
+000720ec t _Z17PioneerSfpuLoad32I7EmitterEvRT_jj.isra.0
+00072160 t _ZL3DotR7Emitterjbj.isra.0
+00072464 t _ZL6Importjjj
+000725a0 T scalar_main
+00072c80 t _ZZL5SetupvE5value
+00072ce8 t _ZZL5SetupvE5index
+00072d50 T scalar_image_end

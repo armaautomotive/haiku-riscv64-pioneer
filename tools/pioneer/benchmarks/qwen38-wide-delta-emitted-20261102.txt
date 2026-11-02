@@ -1,0 +1,126 @@
+Actual emitted wide recurrent reduction:original layer29 matches CPU
+===================================================================
+2026-11-02. Goal ACTIVE;correct usable27B Work and20tok/s UNMET.
+This is OFFBOARD HOST instruction execution,NOT physical inference or a
+speedup. The different7c85 corrected-output physical diagnostic28833 is
+LIVE and protected separately. No Pioneer operation is made for this work.
+
+What changed
+--------------
+The known layer29 mismatch is now corrected through ACTUAL emitted RV32+
+SFPU words,not only the earlier HOST arithmetic prototype. The new local
+image uses split12-bit partial-MAD residuals and normalized two-float sums
+for prediction and query-output reductions. The state update retains its
+original separate FP32 multiply/add order,and query scaling remains AFTER
+the completed dot. No CPU model product is supplied to the instruction
+processor. Numerical observers run separately,not in Work or a driver.
+
+ALL8 mutable LRegs are used within bounds. Dst stays512x16 FP32;there is
+NO fictitious row512 scratch. A NEW fixed256B local Delta extent8e600 is
+separate from the prior native layout and conveys NO old native authority.
+Eight1024-word state imports plus five64-word temporary/reload imports
+give13 imports.32 even and32 odd delta words are saved independently.
+Every next-state word is exported BEFORE output overwrites key0 Dst.
+The even-output store does not corrupt the still-needed odd next state.
+Actual CSR read count is8320=64delta+8192state+64output. Final drains and
+all original Q/K/V/prior bytes are independently checked by the TEST.
+
+Sources for hardware semantics,not model performance:
+https://raw.githubusercontent.com/tenstorrent/tt-isa-documentation/main/BlackholeA0/TensixTile/TensixCoprocessor/Dst.md
+https://raw.githubusercontent.com/tenstorrent/tt-isa-documentation/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPMAD.md
+https://raw.githubusercontent.com/tenstorrent/tt-isa-documentation/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPAND.md
+Each MAD/ADD/MUL has an explicit latency gap,including before the documented
+SFPAND USE_VB dependency hazard. The TEST decodes actual operand fields and
+uses the existing independent partial-FMA model and pinned Dst lane mapping.
+
+Frozen standalone artifacts
+----------------------------
+boot.bin4B:e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b
+code.bin3408B:1ab17ccc83b072f6064fb13885ce4e3c4bdfc48ea9814440bf385a5694937979
+program.elf12588B:abd969919d1952e79ed127b37e35e318c78a2cbc8c473a3b808617f807219c83
+The builder refuses mixed inherited roles before output creation and pins
+whole sizes+SHA by default. --inspect-candidate remains BUILD ONLY. The
+linker rejects writable globals/GOT and code reaching the descriptor.
+Undefined symbols are absent;static compiler frames<=512B. Actual tested
+local instruction stack use136B is NOT whole kernel/IRQ stack certification.
+
+Closed new arithmetic and real-input evidence
+---------------------------------------------
+Main instruction test ACTUALLY0:16x128x32 products,512 independent FP64-order
+rounded lane sums exact;missing MAD latency gap faults. Main emitted image
+test ACTUALLY0:four basic cases plus4x16 NONRESETTING transitions,ALL8192
+next-state+64 output words match independent FP64-order reductions+FP32
+updates. All128 descriptor-bit changes and35 invalid input cases refuse
+before config/SFPU/scratch/publication. Eight lost required imports are
+numerically detected or encounter undefined rows;this is NOT a claim that
+the image itself detects every silent transfer error. Two missing final
+drains refuse state/output CSR publication. NO model-state/history transplant.
+
+Main60990 ACTUALLY0:ALL15 unchanged localization controls FIRST,then new
+modes1024/1088/1095. EACH executes96 fresh half-images for ALL48 original
+layer29 heads. EACH matches786432 next-state and6144 output words exactly
+against the independent FP64-order GDN observer. Actual Q8 lanes/scales
+match the CPU baseline;ALL5120 final hidden words match CPU exactly,while
+the old native DATA remains5120 words different. Mode1095 still differs
+in2628 unquantized gated float words;NOT all intermediates CPU-exact.
+Each new mode observes21702144 RV32 steps/2732448 SFPU instructions on
+these inputs. These are HOST instruction counts,NOT silicon cycles or TPS.
+
+Original whole GGUF SHA c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747,
+ALL851 tensor bindings,ALL3 CPU trace pins and original partial hidden pin
+remain mandatory. The61504B CPU-local input pin remains
+bd3faafe2b26c4eea37ede3a34a5db5db0b8f809845856373d96f43d1b687660.
+The runner authenticates the SAME opened image byte snapshots,then engines
+read ONLY private400-mode copies. The bridge copies diagnostic output ONLY
+after both half-images complete;its new numerical expected-observer method
+is preprocessed OUT of that separate TU. No native source/owner/Work role.
+
+Independent clean build and controls
+-------------------------------------
+Clean source is commit3ab44c5d7c0db81f111f2bd716748975a45cd8b2 exported
+without user dirt,then overlaid with ONLY17 owned sources. All17 compare
+exact. Main/clean whole new ELF and complete new instruction,image,role,
+CLI and real-input replay logs compare byte-identical. Replay stdout SHA
+524abfdf8ecfe161153c957a038da85aeecfec00f919a120a9a6db29928fbb45.
+New image CLI18 refusals and23 instruction/bridge syntax cases include3
+positive boundaries. Old replay CLI81 refusals is unchanged;new wide CLI
+adds87 own refusals including all boot bits,first/middle/last code bits,
+length,path,arity and old/new/CPU/Work role overrides before snapshot/compiler.
+Main old-default78407 and old-wide32513 controls ACTUALLY0;old emitted also
+closes0 inside78407. Clean bundle11690 ACTUALLY exits0,observed11:33:07UTC.
+EVERY main/clean old control log compares byte-exact to each other AND its
+unchanged historical control. Old default SHA577752362a3c2e6542d86adf783858dfc5f012af73aef7c9aa4b704ad370f045;
+old emitted358bb0077ad10e351a24481b9c5595a9621071497fbadb6bdc79c7626cf0fa5b;
+old HOST candidateedc5ddbb0d8c6cad3ae528b652545c0a3858ad4e4247311ce0e54478e803b8ba.
+ALL final arithmetic/replay/role/CLI/build stderr files are0B.
+
+Initial failures remain failures
+---------------------------------
+Initial compile refused an unused Float observer helper under-Werror;the
+observer now decodes initial operand bits for its independent FP64 sum.
+The initial14-import image test exits134 on its missing-import assertion:
+inspection found that the second prior reload was dead work immediately
+overwritten by the Delta import. That redundant reload is REMOVED in the
+new13-import image,not accepted by widening a test or numeric tolerance.
+All8 remaining selected lost-import cases fail strict checks. Initial raw
+stdout/stderr is archived;the initial14-import image remains task-local.
+
+Limits and next required integration
+-------------------------------------
+The real-model replay is token0/layer29 with initially zero recurrent state;
+generic nonresetting tests are NOT real multi-token whole-model acceptance.
+This standalone image is NOT the current linked peer or a registered native
+GDN owner. Its new scratch/descriptor/code identities require a separately
+qualified returning-service/peer+native layout and full lifecycle before
+hardware selection. Preserve all old default/validation/Work isolation.
+Then test actual whole-model/multi-token state,normal+EOS,fresh resident
+requests,arbitrary prompts and physical numerics before Assistant Work.
+The wider reduction costs extra arithmetic;no speedup or20tok/s forecast.
+The different running7c85 physical diagnostic does NOT contain this image.
+
+Main:/private/tmp/pioneer-q38-wide-delta-emitted-20261102.tXbA5I
+Clean:/private/tmp/pioneer-q38-wide-delta-emitted-clean-20261102.Xyg9wG
+Reproduce:build_qwen38_wide_delta_local_image.py SDK NEW_OUT;run
+tests/run_pioneer_q38_layer29_wide_emitted_replay.py MODEL CPU_TRACES
+ORIGINAL_PARTIAL_DIRECTORY IMAGE_DIRECTORY. All paths absolute. Raw closed
+evidence is archived in the sibling directory after actual closure. Goal ACTIVE.

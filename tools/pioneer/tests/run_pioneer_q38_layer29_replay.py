@@ -9,18 +9,20 @@ import sys
 import tempfile
 from compare_pioneer_q38_observed_trace import load_cpu, require, stable_bytes
 
-def main(emitted=None,wide=False):
+def main(emitted=None,wide=False,wide_emitted=None):
     require(len(sys.argv)==4, 'MODEL CPU_TRACE_DIRECTORY PARTIAL_NATIVE_DIRECTORY')
     require(not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ), 'role overrides')
-    require(not (wide and emitted is not None), 'separate arithmetic-candidate and old emitted subjects')
+    require(int(wide)+int(emitted is not None)+int(wide_emitted is not None)<=1, 'separate arithmetic-candidate,old emitted and new wide emitted subjects')
+    new_wide_image=wide_emitted is not None
+    if new_wide_image:emitted=wide_emitted
     image_snapshots=[]
     if emitted is not None:
         require(emitted.is_absolute() and emitted.is_dir() and not emitted.is_symlink(), 'absolute emitted image directory')
         for name, size, digest in (
             ('boot.bin',4,'e678476d9aa0bf79d0a982b2561908eb649740efa31b5131392d2e686a03d22b'),
-            ('code.bin',2864,'0c61dc435a3c2e00c8ae8a11319a307c86707b410100f7fbc85d15f8587bfcbe')):
+            ('code.bin',3408 if new_wide_image else 2864,'1ab17ccc83b072f6064fb13885ce4e3c4bdfc48ea9814440bf385a5694937979' if new_wide_image else '0c61dc435a3c2e00c8ae8a11319a307c86707b410100f7fbc85d15f8587bfcbe')):
             raw_image=stable_bytes(emitted/name,size)
-            require(hashlib.sha256(raw_image).hexdigest()==digest, 'unchanged post-dot-scale emitted '+name)
+            require(hashlib.sha256(raw_image).hexdigest()==digest, ('new wide-delta13 emitted ' if new_wide_image else 'unchanged post-dot-scale emitted ')+name)
             image_snapshots.append((name,raw_image))
     model,cpu_path,partial=map(pathlib.Path,sys.argv[1:])
     require(all(p.is_absolute() for p in (model,cpu_path,partial)), 'absolute inputs')
@@ -56,14 +58,14 @@ def main(emitted=None,wide=False):
         print('LAYER29_CPU_ONLY_INPUT',len(words)*4,hashlib.sha256(words.tobytes()).hexdigest(),flush=True)
         flags=['-std=c++17','-O1','-g','-ffp-contract=off','-Wall','-Wextra','-Werror','-fsanitize=address,undefined']
         if emitted is not None:
-            flags.append('-DPIONEER_Q38_LAYER29_EMITTED_DELTA_DIAGNOSTIC=1')
+            flags.append('-DPIONEER_Q38_LAYER29_WIDE_EMITTED_DIAGNOSTIC=1' if new_wide_image else '-DPIONEER_Q38_LAYER29_EMITTED_DELTA_DIAGNOSTIC=1')
         if wide:
             flags.append('-DPIONEER_Q38_LAYER29_WIDE_REDUCTION_DIAGNOSTIC=1')
         binary=root/'replay'
         subprocess.run([os.environ.get('CXX','c++'),*flags,'-I'+str(root),str(here/'pioneer_q38_layer29_replay.cpp'),
                         str(here/'pioneer_q38_layer29_math_bridge.cpp'),str(here/'pioneer_q38_layer29_precise_beta_bridge.cpp'),
                         str(here/'pioneer_q38_sigmoid_precision_host_bridge.cpp'),
-                        *([str(here/'pioneer_q38_layer29_emitted_delta_bridge.cpp')] if emitted is not None else []),
+                        *([str(here/('pioneer_q38_layer29_wide_emitted_delta_bridge.cpp' if new_wide_image else 'pioneer_q38_layer29_emitted_delta_bridge.cpp'))] if emitted is not None else []),
                         *([str(here/'pioneer_q38_layer29_wide_reduction_bridge.cpp')] if wide else []),
                         str(here/'pioneer_q38_whole_original_bytes.cpp'),'-o',str(binary)],check=True)
         return subprocess.run([str(binary),str(model),str(snapshot),*([str(emitted)] if emitted is not None else [])],env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1','ASAN_OPTIONS':'quarantine_size_mb=32'}).returncode
