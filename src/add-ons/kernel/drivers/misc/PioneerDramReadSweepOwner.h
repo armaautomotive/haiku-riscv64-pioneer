@@ -58,8 +58,12 @@ class PioneerDramReadSweepOwner {
   }
   return true;
  }
- template<class IO> bool Idle(IO& io){
+ template<class IO> bool Idle(IO& io,bool fifo){
   for(unsigned i=0;i<4;i++)if(io.ResidentNocRead(0x40+i*0x800))return false;
+  // Disabled FIFOs can hide stale requests. After enabling, prove ALL four
+  // are empty BEFORE the first doorbell. Drain FIFO availability separately
+  // before outstanding counters: a queued request is not yet counted there.
+  if(io.ResidentNocRead(0x64)!=(fifo?0x10101010U:0U) || (io.ResidentNocRead(0x68)&15))return false;
   for(unsigned i=0;i<32;i++)if(io.ResidentNocRead(0x240+i*4)&255)return false;
   return true;
  }
@@ -80,7 +84,7 @@ class PioneerDramReadSweepOwner {
   }
   if(io.ResetRead()!=reset || io.ResetRead()!=reset)return false;
   for(unsigned i=0;i<16;i++)if(io.ResidentNocRead(BlackholeDramSourceOffset(i))!=(i?noc->source[0][i]:expectedConfig))return false;
-  return !idle || Idle(io);
+  return !idle || Idle(io,(expectedConfig&0x10000)!=0);
  }
  template<class IO> bool CodeAndFrame(IO& io){
   uint32_t v=0;

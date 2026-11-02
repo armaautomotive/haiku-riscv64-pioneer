@@ -1,0 +1,139 @@
+First actual card-side DRAM read sweep: clean completion and stable restoration
+=============================================================================
+2026-11-02. Goal ACTIVE. Usable27B Work and20tokens/sec remain UNMET.
+This is a physical single-worker/single-bank memory-path result, NOT a new
+model benchmark, full-card bandwidth measurement or authenticity/capacity
+certificate. Last completed model diagnostic remains about0.1597tok/s with
+unresolved numerical differences. No model inference was run this turn.
+
+Actual physical subject and result
+-----------------------------------
+Module32362d82bfa2179acdf0680c4f99671a6e4a54f580fd35cee16e25b0fc25a8fe,
+tag2026110200020076/generation5. Client
+0f1b0dbbffa9d6d11e3c28e46de29d2ea3fa069b8d8ffd73b9df889538878de5.
+SAME50162 actually exits0. One explicit --run 0 14 1, logical worker(1,2),
+bank0,512 READ requests of16384 bytes,8,388,608 bytes total. No GDDR write,
+host-memory DMA, model/CPU-reference products or tensor-engine instruction.
+
+The actual on-card mcycle samples are:
+ start2110/end597559/delta595449 device cycles
+ 8388608/595449 =14.087869825963265 bytes per sampled device cycle.
+Report magic31524244/version1, noncef75573dc and route0312 are bound to
+the actual frame. Last-chunk first/last samples47452806/7a3796ca; all4096
+last-chunk words match the independent post-HOLD PIO reads. This does not
+check integrity of every byte of the8MiB, let alone all28GB of GDDR.
+
+Started/observed/HOLD/innerclosed all1, unsafe0; saved/restored6490 words,
+compared4096 words. Full immutable code/frame, four master counter deltas,
+FIFO availability/overflow/outstanding, safe park PCs and held-core checks
+pass. Full original L1/NIU/TLB, normal firmware clock, VM views, PCI fields
+and reservation close successfully; ioctl0/close0/topcomplete1/retained0.
+Firmware busy1350MHz/idle800MHz. Host whole operation5786439us includes
+setup/snapshot/upload/verification/closure and is NOT device transfer time.
+
+Do NOT convert these cycles to GB/s just from the firmware MHz:the actual
+counter frequency still needs independent confirmation. The measured cycle
+window includes the leaf's issue/readback/wait/fence work, not pure bus
+utilization. Kernel observation reads may overlap execution. It is NOT a
+whole-card saturation result and isolated worker rates must not be summed
+and described as measured aggregate bandwidth. No20tok/s forecast follows.
+
+New separately gated diagnostic and public DATA path
+-----------------------------------------------------
+Role76 revision2 is separate from DRSNODRV and every model/Work/CPU-reference
+role. The fixed200-byte pointer-free protocol binds expected tag/generation,
+bounded bank/chunk/count/nonce and pristine reserved/output fields. Only
+metadata support, no-launch preflight and the bounded read sweep are routed;
+legacy/model-upload/code-upload/Work controls are refused. FD close never
+enters automatic legacy model cleanup. Wrong-root/team/epoch/copy/shape and
+dirty replies are refused. The independent client also checks reply grammar,
+count/cycle arithmetic and distinct preflight/full-completion semantics.
+
+The read-only seven-bank prerequisite no longer instantiates the old GDDR
+sample-write helper or its2240-byte saved-data array. Its separate route
+checker has no payload API and retains on uncertainty without a retry.
+The native NIU reader now explicitly covers command words, interrupt-config,
+master counters, all32 outstanding words and all four initiator controls;
+the old prerequisite-only offset filter was insufficient for an owner.
+
+FIFO hazard found BEFORE the first core launch
+----------------------------------------------
+Revision1 module8cf52373.../client8594f7c7.../tag2026110200010076 passes
+metadata support and real no-launch preflight only, then is restored cleanly
+to041/gen4. NO --run is issued on revision1. The official NoC documentation
+warns that disabled FIFOs can hide stale entries which replay after enabling
+and a later doorbell. Owner Idle now checks CMD_BUF_AVAIL0x64 (disabled0,
+enabled10101010), overflow0x68, THEN outstanding counters. It rejects stale
+or overflowed FIFOs before reset/launch and rejects a late queued request
+before HOLD/restoration. Frozen device ELF7002ccac remains unchanged.
+Source reference:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md#niu-request-fifos
+Counter semantics independently checked against:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/Counters.md#read-requests
+
+Closed tests, actual source and limits
+---------------------------------------
+Main5808/M and independent clean26690/N BOTH actually exit0. Whole physical
+module, client and unchanged device ELF compare byte-exact. Main/clean
+owner tests each run the actual unchanged RV32 leaf6valid/38refused first,
+then actual owner12valid/82refused. New stale/overflow cases assert ZERO
+reset writes/instructions before refusal; late-FIFO case refuses before
+HOLD with no further IO after retention. The scope/clock in that owner-only
+suite remain fixture hooks, not a substitute for the real native run above.
+
+Actual Native.inc endpoint/controller/public-copy tests:28valid/166refused.
+Strict read-only routes:14valid/181refused. Strict ARC endpoint model:
+81valid/296refused. Exact exchange-script endpoint fixtures:2valid/46refused
+in both directions, including every metadata column, corrupt/symlink/hardlink/
+writable files, live parent, quiesce/copy race and unverified replacement.
+No automatic rollback/reset follows uncertainty. Endpoint tests are NOT
+native hardware evidence by themselves. Initial awk portability errors were
+fixed; their original failures remain failures, not relabelled passes.
+
+SDK native object408816be158f27beb3252546325cb11fbc0d3d2ff3083508dd61794640441ea7.
+All normal driver controls still reproduce byte-exact against authenticated
+prior623bdaad source:defaultaabe86f5.../base5520bd6ea1.... The latter is NOT
+the installed feature-rich041 image. Five renamed NODRV entry bodies remain
+inert;14 NODRV and32 physical role preprocessing cases pass. Physical module
+exports/linked dependencies reject legacy model/sample-write/end helpers.
+Driver-TU kernel frames<=896B; its compiler direct call-chain maximum2304B.
+The separately compiled unchanged GetPioneerPciProfile frame is1040B and
+is outside that graph. External/indirect kernel call frames are unmeasured:
+this is NOT whole-kernel-stack certification. Builder wording is corrected
+after the run to make this scope explicit; no module/client code changes.
+An earlier actual build failed on the old2544B
+sample-write frame; a later stack-parser escaping bug failed its audit. Both
+were repaired without relaxing the size check; raw build trees are retained.
+CLI misleading-indentation and a test's missing initializer_list include
+were also compiler refusals, corrected before final successful builds.
+
+Preservation and exact restoration
+------------------------------------
+New staging directory/whole copy-back comparisons qualify revision2 before
+apply. Immutable helper21436aa4e47ea5bb430c2d63a2b7c2e3bd21abf9c614b534f79bee157db638a2
+owns ONLY32362<->041, tag0002/gen5. Earlier stagea/helper6e08... remains the
+separate8cf<->041 historical pair; NEVER apply8cf or use it for a sweep.
+Revision2 real preflight exits0 with no core start, then independent metadata
+verifies exact32362/gen5/idle before the sole actual read run. No concurrent
+Pioneer observation/admin/model operation occurs during50162's lifetime.
+
+After actual exit0, independent SSH verifies64CPUs/max137034936320B and
+cold0/quiesced0/active_owner0/open1. Exact stageb restore66049 actually exits0,
+without reboot/reset/power/SD/mains/hardware change. Fresh independent final
+SSH exits0:installed041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag12/gen6/cold0/quiesced0/active_owner0/open1/guard1,64CPUs/fullRAM,
+free133783965696B. Adminb0c851... and guardd1ce2... unchanged. Assistant,
+boot/kernel, network and unrelated source/user dirt are untouched.
+
+Next requirements, NOT completion claims
+-----------------------------------------
+Before additional launch variants, audit/add the reset-entry-override guard
+used by earlier TRISC probes; this one successful state is not every startup
+state. Confirm mcycle's actual frequency and quantify observer interference.
+Then qualify queued reads and synchronized multi-bank/multi-worker throughput,
+not sums of isolated rates. Use those data to guide the actual Qwen memory/
+kernel scheduler; full-model numerical acceptance, resident fresh requests,
+usable no-CPU-reference Assistant Work and20tok/s still remain outstanding.
+This checkpoint demonstrates a functioning physical card-memory path only.
+Raw physical/preflight/restore/health and source identities are in the sibling
+directory. Rebuild with build_dram_sweep_diagnostic.py and a fresh output dir.

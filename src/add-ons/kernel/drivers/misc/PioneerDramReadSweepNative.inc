@@ -3,11 +3,13 @@
 // PRIVATE DRSNODRV body only. No public opcode, install role, or Work fallback.
 #include "PioneerDramReadSweepOwner.h"
 #include "BlackholeDramSweepArcClock.h"
+#include "BlackholeDramSweepRoutes.h"
 
 struct PioneerDramSweepNativeReply {
  uint32 version=1,phase=0,retained=0,complete=0;
  uint32 busyMHz=0,idleMHz=0,viewsClosed=0,pciClosed=0,reservationClosed=0;
  PioneerDramReadSweepResult sweep;
+ uint32 preflight=0;
 };
 
 struct PioneerDramSweepNativeIO : PioneerComputeNocIO {
@@ -31,6 +33,8 @@ struct PioneerDramSweepNativeIO : PioneerComputeNocIO {
  uint32 RootRead(uint16,uint8);void RootWrite(uint16,uint8,uint32);
  bool Quiet();uint32 ReadNodeId();
  uint32 SourceRead(unsigned);uint32 HostPciRead(unsigned,uint16,uint8);
+ uint32 DramIdRead(unsigned);
+ uint32 ComputeNocRead(uint32);
  uint32 DramTlbRead(unsigned,unsigned);void DramTlbWrite(unsigned,unsigned,uint32);
  uint32 ResetRead();uint32 ResidentNocRead(uint32);void ResidentNocWrite(uint32,uint32);
  bool SweepReadChecked(uint32,uint32&);bool SweepWrite(uint32,uint32);
@@ -216,13 +220,20 @@ void PioneerDramSweepNativeIO::RootWrite(uint16 a,uint8 n,uint32 v){if(Access())
 bool PioneerDramSweepNativeIO::Quiet(){return Access() && PioneerMmioIO::Quiet();}
 uint32 PioneerDramSweepNativeIO::ReadNodeId(){return Access()?PioneerMmioIO::ReadNodeId():UINT32_MAX;}
 uint32 PioneerDramSweepNativeIO::SourceRead(unsigned i){return Access()?PioneerDramSamplesIO::SourceRead(i):UINT32_MAX;}
+uint32 PioneerDramSweepNativeIO::DramIdRead(unsigned i){return Access()?PioneerDramSamplesIO::DramIdRead(i):UINT32_MAX;}
+uint32 PioneerDramSweepNativeIO::ComputeNocRead(uint32 a){return Access()?PioneerComputeNocIO::ComputeNocRead(a):UINT32_MAX;}
 uint32 PioneerDramSweepNativeIO::HostPciRead(unsigned p,uint16 a,uint8 n){
  return p<2?(p?RootRead(a,n):CardRead(a,n)):UINT32_MAX;
 }
 uint32 PioneerDramSweepNativeIO::DramTlbRead(unsigned s,unsigned i){return Access()?PioneerDramSamplesIO::DramTlbRead(s,i):UINT32_MAX;}
 void PioneerDramSweepNativeIO::DramTlbWrite(unsigned s,unsigned i,uint32 v){if(Access())PioneerDramSamplesIO::DramTlbWrite(s,i,v);}
 uint32 PioneerDramSweepNativeIO::ResetRead(){return Access()?PioneerTensixIO::ResetRead():UINT32_MAX;}
-uint32 PioneerDramSweepNativeIO::ResidentNocRead(uint32 a){return Access()?PioneerComputeNocIO::ComputeNocRead(a):UINT32_MAX;}
+uint32 PioneerDramSweepNativeIO::ResidentNocRead(uint32 a){
+ if(!Access())return UINT32_MAX;
+ const bool extra=(a<=0x24 && !(a&3)) || a==0x64 || a==0x68 || a==0x178
+  || (a>=0x208 && a<=0x214 && !(a&3)) || (a>=0x240 && a<0x2c0 && !(a&3));
+ return extra || BlackholeComputeNocReadOffset(a)?PioneerRead32(nocRegisters+a/4):UINT32_MAX;
+}
 void PioneerDramSweepNativeIO::ResidentNocWrite(uint32 a,uint32 v){
  if(!Access())return;
  if((a<=0x24 && !(a&3)) || a==0x100)PioneerWrite32(nocWrite+a/4,v);
@@ -313,7 +324,8 @@ void PioneerDramSweepClockIO::NotifyArc(){if(Check())PioneerArcQueryIO::NotifyAr
 void PioneerDramSweepClockIO::Pause(){if(Check())PioneerArcQueryIO::Pause();}
 
 [[maybe_unused]] static status_t RunPioneerDramReadSweepNative(PioneerProbeCookie* fd,
- unsigned bank,unsigned shift,unsigned sweeps,uint32 nonce,PioneerDramSweepNativeReply& output){
+ unsigned bank,unsigned shift,unsigned sweeps,uint32 nonce,PioneerDramSweepNativeReply& output,
+ bool preflightOnly=false,uint64 expectedGeneration=0){
  // Kernel-private buffers only. A future public adapter must copy/validate
  // user DATA independently;this function is not exposed by ProbeControl.
  if(geteuid()!=0 || !sPCI || !sReloadGuard || sLock<0 || !fd || fd->magic!=0x50313030 || fd->context
@@ -322,6 +334,7 @@ void PioneerDramSweepClockIO::Pause(){if(Check())PioneerArcQueryIO::Pause();}
  thread_info thread={};status_t status=get_thread_info(find_thread(NULL),&thread);
  if(status!=B_OK || thread.team!=fd->team)return B_NOT_ALLOWED;
  status=AcquireProbeLock();if(status!=B_OK)return status;
+ if(expectedGeneration && expectedGeneration!=sReloadGeneration){release_sem(sLock);return B_BAD_VALUE;}
  if(sDramSweepNativeContext){release_sem(sLock);return B_BUSY;}
  auto* c=new(std::nothrow) PioneerDramSweepNativeContext(fd,thread);
  if(!c){release_sem(sLock);return B_NO_MEMORY;}
@@ -336,12 +349,18 @@ void PioneerDramSweepClockIO::Pause(){if(Check())PioneerArcQueryIO::Pause();}
   && PioneerMinimumBarLayoutMatches(c->profile);
  const bool began=profile && BlackholePioneerMmioBegin(c->io,c->mapping,c->transaction);
  c->reply.phase=2;
- // These are the existing physical READ-only payload prerequisites. They
- // have their own bounded TLB restoration policies,not execution cleanup.
- const bool proved=began && c->io.PioneerComputeNocIO::AfterNodeId(c->mapping.node_id[0]);
- c->ready=proved && c->Scope();
- bool okay=c->ready && c->algorithm.Execute(c->io,c->dram,c->noc,bank,shift,sweeps,nonce,c->reply.sweep);
- if(okay && c->reply.sweep.closed && !c->quarantined && !c->clockEntered){
+ // Do not instantiate the old bool-selected GDDR SAMPLE-WRITE path or its
+ // 2240-byte stack buffer for a route-only diagnostic. ARC/telemetry/Tensix
+ // retain their existing bounded read-only prerequisite policies.
+ const bool proved=began && c->ViewsPresent()
+  && c->io.PioneerTensixIO::AfterNodeId(c->mapping.node_id[0])
+  && BlackholeDramSweepRoutes(c->io,c->telemetry,c->tensix,c->dram)
+  && BlackholeComputeNocProbe(c->io,c->dram,c->noc,2);
+ c->ready=proved && c->Scope() && c->ViewsPresent();
+ bool okay=false;
+ if(c->ready && preflightOnly){c->reply.preflight=1;okay=true;}
+ else if(c->ready)okay=c->algorithm.Execute(c->io,c->dram,c->noc,bank,shift,sweeps,nonce,c->reply.sweep);
+ if(okay && (c->reply.sweep.closed || c->reply.preflight) && !c->quarantined && !c->clockEntered){
   c->reply.phase=3;c->closing=true;c->ready=false;
   okay=c->CloseViews();c->reply.viewsClosed=okay;
   if(okay){okay=c->ClosePci();c->reply.pciClosed=okay;}
@@ -357,7 +376,8 @@ void PioneerDramSweepClockIO::Pause(){if(Check())PioneerArcQueryIO::Pause();}
  if(!okay || !c->reply.reservationClosed){
   c->Retain();output=c->reply;c->lockHeld=false;release_sem(sLock);return B_DEV_NOT_READY;
  }
- c->reply.complete=c->reply.sweep.closed && c->reply.viewsClosed && c->reply.pciClosed;
+ c->reply.complete=!preflightOnly && c->reply.sweep.closed && c->reply.viewsClosed && c->reply.pciClosed;
  output=c->reply;c->lockHeld=false;sDramSweepNativeContext=NULL;delete c;release_sem(sLock);
- return output.complete?B_OK:B_NOT_ALLOWED;
+ return output.complete || (preflightOnly && output.preflight && output.viewsClosed
+  && output.pciClosed && output.reservationClosed)?B_OK:B_NOT_ALLOWED;
 }

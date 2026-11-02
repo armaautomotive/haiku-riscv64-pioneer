@@ -6,11 +6,14 @@
  */
 #ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
 #include "PioneerDramReadSweepNativeRole.h"
-#elif defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x4452534e4f445256ULL
-#error DRSNODRV is reserved for the separate DRAM owner compile perimeter
+#elif defined(TT_PIONEER_DRIVER_RELOAD) && (PIONEER_DRIVER_BUILD_TAG == 0x4452534e4f445256ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026110200010076ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026110200020076ULL)
+#error DRAM tags are reserved for their separate native roles
 #endif
 #if defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT)
 #error DRAM compile-only flag requires its distinct native context
+#endif
+#if defined(PIONEER_DRAM_SWEEP_DIAGNOSTIC) && !defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT)
+#error DRAM physical diagnostic cannot substitute an old native role
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_ROLE_TAG_OK
 #error Internal token NODRV witness cannot be supplied by the caller
@@ -6391,6 +6394,12 @@ static status_t
 ReleaseResidentCookie(PioneerProbeCookie* cookie)
 {
 	if (cookie==NULL || cookie->magic!=0x50313030) return B_BAD_VALUE;
+#ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
+ // This role never creates a legacy model context. A corrupt/foreign one
+ // cannot authorize its automatic legacy END/clock/host/DMA cleanup.
+ if(cookie->context!=NULL){sColdRecoveryRequired=true;return B_DEV_NOT_READY;}
+ cookie->magic=0;delete cookie;return B_OK;
+#else
 	if (cookie->context!=NULL) {
 		// Closing must also work after the cold latch: do not use the
 		// ordinary gate, which deliberately refuses all further card work.
@@ -6443,6 +6452,7 @@ ReleaseResidentCookie(PioneerProbeCookie* cookie)
 	if (cookie->context && cookie->context->dispatchOwnerRetained) return B_OK; // retain cookie/owner too until cold recovery
 #endif
 	cookie->magic=0; delete cookie; return B_OK;
+#endif
 }
 // PIONEER_Q38_DISPATCH_COOKIE_RELEASE_END
 
@@ -8343,6 +8353,9 @@ AttentionTileTestControl(PioneerProbeCookie* cookie,void* data,size_t length,boo
 
 #ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
 #include "PioneerDramReadSweepNative.inc"
+#ifdef PIONEER_DRAM_SWEEP_DIAGNOSTIC
+#include "PioneerDramSweepControl.inc"
+#endif
 #endif
 
 #ifdef TT_PIONEER_DRIVER_RELOAD
@@ -8394,7 +8407,13 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	if (geteuid() != 0 || instance==NULL || instance->magic!=0x50313030)
 #include "PioneerQ38MixedLiveNativeRouting.inc"
 #ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
- // DRSNODRV: no public execution, legacy inference, or model-upload route.
+#ifdef PIONEER_DRAM_SWEEP_DIAGNOSTIC
+ if(operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
+  return DriverReloadControl(instance,operation,data,length);
+ if(operation==TT_PCI_PROBE_DRAM_SWEEP_SUPPORT || operation==TT_PCI_PROBE_DRAM_SWEEP_PREFLIGHT || operation==TT_PCI_PROBE_DRAM_SWEEP_RUN)
+  return PioneerDramSweepControl(instance,operation,data,length);
+#endif
+ // No legacy inference/model upload/CPU-reference/Work or arbitrary code.
  return B_NOT_ALLOWED;
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT

@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <cstring>
+#include <cstddef>
 #include <map>
 #include <new>
 #include <vector>
@@ -48,6 +49,7 @@ static int32 semCount=0;
 static unsigned ioCalls=0,deletes=0,dropDelete=0,unreserves=0;
 static unsigned pciWrites=0,dropPciWrite=0,pciReads=0,badPciRead=0;
 static bool failUnreserve=false,failProfile=false;
+static unsigned effectiveUid=0,copyCalls=0,failCopy=0;
 static std::map<area_id,area_info> views;
 static std::map<uint64,uint32> config;
 static void Touch(){assert(!sColdRecoveryRequired && "endpoint activity after retention");ioCalls++;}
@@ -73,7 +75,10 @@ static status_t get_thread_info(thread_id id,thread_info* t){assert(id==currentT
 static status_t get_sem_count(sem_id id,int32* count){assert(id==sLock);*count=semCount;return B_OK;}
 static status_t AcquireProbeLock(){if(sColdRecoveryRequired)return B_DEV_NOT_READY;semCount=0;return B_OK;}
 static status_t release_sem(sem_id id){assert(id==sLock);semCount=1;return B_OK;}
-static int geteuid(){return 0;}
+static int geteuid(){return int(effectiveUid);}
+static status_t user_memcpy(void* to,const void* from,size_t length){
+ if(++copyCalls==failCopy)return B_NOT_ALLOWED;memcpy(to,from,length);return B_OK;
+}
 static status_t get_module(const char*,module_info**){assert(false);return B_NOT_ALLOWED;}
 static status_t GetPioneerPciProfile(device_manager_info*,const pci_info&,tt_pioneer_profile&){
  assert(failProfile);return B_NOT_ALLOWED;
@@ -120,11 +125,13 @@ struct PioneerTensixIO:PioneerMmioIO {
   reset=(const volatile uint32*)((uint8*)NewView(resetArea)+0x1b0);return true;
  }
  uint32 ResetRead(){return PioneerRead32(reset);}
+ bool AfterNodeId(uint32){assert(false && "NO fabricated ARC/telemetry/Tensix proof");return false;}
 };
 struct PioneerDramSamplesIO:PioneerTensixIO {
  area_id dramArea=-1,dataArea=-1;const volatile uint32* dramNiu=NULL;volatile uint32* data=NULL;
  explicit PioneerDramSamplesIO(const tt_pioneer_profile& p):PioneerTensixIO(p){}
  uint32 SourceRead(unsigned){Touch();return 0;}
+ uint32 DramIdRead(unsigned i){return PioneerRead32(dramNiu+BlackholeDramIdOffset(i)/4);}
  uint32 DramTlbRead(unsigned s,unsigned i){return PioneerRead32(tlb-3+s*3+i);}
  void DramTlbWrite(unsigned s,unsigned i,uint32 v){PioneerWrite32(tlb-3+s*3+i,v);}
 };
@@ -160,6 +167,9 @@ struct PioneerArcQueryIO:PioneerMmioIO {
 struct PioneerDramSweepNativeContext;
 static PioneerDramSweepNativeContext* sDramSweepNativeContext=NULL;
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc"
+#define B_DEVICE_OP_CODES_END 1000
+#define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026110200020076)
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerDramSweepControl.inc"
 
 struct Fixture {
  PioneerProbeCookie fd;
@@ -167,6 +177,7 @@ struct Fixture {
  Fixture(){
   assert(views.empty() && !sDramSweepNativeContext);
   ioCalls=deletes=dropDelete=unreserves=pciWrites=dropPciWrite=pciReads=badPciRead=0;
+  effectiveUid=copyCalls=failCopy=0;
   currentThread=10;currentTeam=20;semCount=0;sColdRecoveryRequired=sReloadQuiesced=sBankStorageOnly=false;
   sOpenCookies=1;sReloadGeneration=7;sReloadGuard=&guard;sPCI=&pci;sRuntimeOwner=NULL;
   c=new PioneerDramSweepNativeContext(&fd,thread_info{});sDramSweepNativeContext=c;
@@ -208,7 +219,7 @@ int main(){
   if(fault==12)f.fd.context=(PioneerStoreContext*)uintptr_t(1);
   const unsigned before=ioCalls;
   assert(!f.c->Scope() && f.c->io.SourceRead(0)==UINT32_MAX && f.c->quarantined && ioCalls==before);
-  assert(f.c->io.SweepPcRead()==UINT32_MAX && ioCalls==before);refused++;
+  assert(f.c->io.SweepPcRead()==UINT32_MAX && f.c->io.ComputeNocRead(0x44)==UINT32_MAX && ioCalls==before);refused++;
  }
  for(unsigned fault=0;fault<4;fault++){
   Fixture f;f.Map();auto& v=views.at(f.c->io.sweepArea);
@@ -223,6 +234,14 @@ int main(){
  }
  {Fixture f;f.Map();const unsigned before=ioCalls;f.c->io.ResidentNocWrite(0x40,1);
   assert(f.c->quarantined && ioCalls>=before && !pciWrites);refused++;}
+ {Fixture f;f.Map();
+  const uint32 offsets[]={0,0x24,0x64,0x68,0x178,0x208,0x20c,0x210,0x214,0x240,0x2bc,0x40,0x840,0x1040,0x1840};
+  for(uint32 a:offsets){
+   const uint32 value=0xabc00000U^a;const_cast<volatile uint32*>(f.c->io.nocRegisters)[a/4]=value;
+   assert(f.c->io.ResidentNocRead(a)==value);valid++;
+  }
+  assert(f.c->io.ResidentNocRead(0x2c0)==UINT32_MAX && !f.c->quarantined);refused++;
+ }
  {Fixture f;f.Map();uint32 value=0;
   assert(!f.c->io.SweepWrite(0x74000,0x1234));
   for(unsigned i=0;i<3;i++)f.c->io.DramTlbWrite(0,i,BlackholeDramFixedTlbWord(0,1,2,false,i));
@@ -272,6 +291,67 @@ int main(){
    auto* retained=sDramSweepNativeContext;sDramSweepNativeContext=NULL;delete retained;refused++;}
   else{assert(result==B_NOT_ALLOWED && reply.reservationClosed && !reply.retained);valid++;}
   failProfile=failUnreserve=false;
+ }
+ auto request=[](){tt_pioneer_dram_sweep r={};r.version=1;r.chunk_shift=14;r.sweeps=1;r.nonce=1;
+  r.expected_tag=PIONEER_DRIVER_BUILD_TAG;r.expected_generation=7;return r;};
+ {Fixture f;sDramSweepNativeContext=NULL;auto r=request();
+  assert(PioneerDramSweepControl(&f.fd,TT_PCI_PROBE_DRAM_SWEEP_SUPPORT,&r,sizeof(r))==B_OK);
+  assert(copyCalls==2 && r.reply.version==1 && !r.reply.complete && !r.reply.preflight && !ioCalls);valid++;}
+ for(unsigned word=0;word<38;word++){
+  Fixture f;sDramSweepNativeContext=NULL;auto r=request();
+  reinterpret_cast<uint32*>(&r.reply)[word]=1;
+  assert(PioneerDramSweepControl(&f.fd,TT_PCI_PROBE_DRAM_SWEEP_RUN,&r,sizeof(r))==B_BAD_VALUE);
+  assert(copyCalls==1 && !ioCalls && !unreserves);refused++;
+ }
+ for(unsigned fault=0;fault<16;fault++){
+  Fixture f;sDramSweepNativeContext=NULL;auto r=request();
+  if(fault==0)r.version=2;
+  if(fault==1)r.bank=7;
+  if(fault==2)r.chunk_shift=7;
+  if(fault==3)r.sweeps=0;
+  if(fault==4)r.sweeps=257;
+  if(fault==5)r.nonce=0;
+  if(fault>=6 && fault<=8)r.reserved[fault-6]=1;
+  if(fault==9)r.expected_tag=0;
+  if(fault==10)r.expected_generation=0;
+  if(fault==11)effectiveUid=1;
+  if(fault==12)f.fd.magic=0;
+  if(fault==13)currentTeam++;
+  if(fault==14)failCopy=1;
+  if(fault==15)r.expected_generation++;
+  assert(PioneerDramSweepControl(&f.fd,TT_PCI_PROBE_DRAM_SWEEP_PREFLIGHT,&r,sizeof(r))!=B_OK);
+  assert(!ioCalls && !unreserves && !sColdRecoveryRequired);refused++;
+ }
+ for(unsigned fault=0;fault<5;fault++){
+  Fixture f;sDramSweepNativeContext=NULL;auto r=request();
+  const uint32 op=fault==0?UINT32_MAX:TT_PCI_PROBE_DRAM_SWEEP_SUPPORT;
+  void* data=fault==1?NULL:&r;size_t size=fault==2?sizeof(r)-1:fault==3?sizeof(r)+1:sizeof(r);
+  if(fault==4)failCopy=2;
+  assert(PioneerDramSweepControl(&f.fd,op,data,size)!=B_OK && !ioCalls && !unreserves && !sColdRecoveryRequired);refused++;
+ }
+ {Fixture f;sDramSweepNativeContext=NULL;failProfile=true;auto r=request();
+  assert(PioneerDramSweepControl(&f.fd,TT_PCI_PROBE_DRAM_SWEEP_RUN,&r,sizeof(r))==B_NOT_ALLOWED);
+  assert(copyCalls==2 && unreserves==1 && r.reply.reservation_closed && !r.reply.complete && !r.reply.preflight);
+  assert(!pciWrites && views.empty() && !sColdRecoveryRequired);failProfile=false;valid++;}
+ {auto r=request();auto& p=r.reply;p.version=1;p.sweep[0]=1;
+  assert(PioneerDramSweepReply(r,TT_PCI_PROBE_DRAM_SWEEP_SUPPORT));
+  p.phase=3;p.preflight=p.views_closed=p.pci_closed=p.reservation_closed=1;
+  assert(PioneerDramSweepReply(r,TT_PCI_PROBE_DRAM_SWEEP_PREFLIGHT));
+  p.preflight=0;p.complete=1;p.busy_mhz=1350;p.idle_mhz=800;
+  auto* s=p.sweep;s[1]=s[4]=s[5]=s[6]=s[7]=1;s[2]=10;
+  s[8]=s[9]=6490;s[10]=4096;s[11]=r.bank;
+  auto* v=s+12;v[0]=0x31524244;v[1]=1;v[2]=r.nonce;v[3]=18|(12<<6);
+  v[4]=16384;v[5]=1;v[6]=0x800000;v[7]=512;v[8]=100;v[10]=500;v[12]=400;
+  assert(PioneerDramSweepReply(r,TT_PCI_PROBE_DRAM_SWEEP_RUN));valid+=3;
+  for(unsigned i=0;i<38;i++){
+   auto bad=r;reinterpret_cast<uint32*>(&bad.reply)[i]^=1;
+   const bool okay=PioneerDramSweepReply(bad,TT_PCI_PROBE_DRAM_SWEEP_RUN);
+   // Firmware busy MHz and two arbitrary payload samples are DATA,not
+   // fixed expected reference results or whole-memory integrity proofs.
+   if(i==4 || i==35 || i==36){assert(okay);valid++;}
+   else{assert(!okay);refused++;}
+  }
+  auto bad=r;bad.chunk_shift=UINT32_MAX;assert(!PioneerDramSweepReply(bad,TT_PCI_PROBE_DRAM_SWEEP_RUN));refused++;
  }
  printf("actual Native.inc endpoint lifecycle: %u valid / %u refused; NOT native hardware, ARC or engine execution\n",valid,refused);
 }

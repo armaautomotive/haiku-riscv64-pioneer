@@ -36,6 +36,7 @@ struct Rig {
  bool deviceTimeout=false,corruptPayload=false,badReport=false;
  bool corruptInitialSnapshot=false,corruptRestoredNeighbor=false;
  bool dropReportClear=false;
+ bool staleFifo=false,overflowFifo=false,lateFifo=false;
  bool badCounter=false,badNonce=false,badImmutableCode=false,loseScope=false,scratchAlias=false;
  enum Kind { TlbRead=1,TlbWrite,ReadL1,WriteL1,ReadNoc,WriteNoc,ReadReset,WriteReset,ReadPci,ReadSource,ReadWindow,BeginClock,EndClock };
  Rig():backing(Image::SavedWords+Image::RawWords,0xfeedabba){
@@ -123,6 +124,9 @@ struct Rig {
  uint32_t ResidentNocRead(uint32_t a){
   assert(Matches(1,0xffa00000,1,2,false));
   if(!Touch(ReadNoc))return UINT32_MAX;
+  if(a==0x64)return !(config&0x10000)?0:
+   (staleFifo || (lateFifo && result.phase==5 && cpu->pc==Image::Park))?0x1010100f:0x10101010;
+  if(a==0x68)return overflowFifo && (config&0x10000)?1:0;
   for(unsigned i=0;i<16;i++)if(a==BlackholeDramSourceOffset(i))return i?source[i]:config;
   if(a==0x178)return 0;
   for(unsigned i=0;i<4;i++)if(a==0x40+i*0x800)return !i && pending?1:0;
@@ -233,6 +237,13 @@ int main(int argc,char** argv){
   assert(r.Execute() && r.faultUsed && r.droppedOld==r.droppedRequested && r.result.closed
    && r.memory==r.original && !memcmp(r.tlb,r.originalTlb,sizeof(r.tlb)));
   passed++;} // dropping a redundant same-value write causes NO hardware change
+ for(unsigned fault=0;fault<3;fault++){
+  Rig r;r.staleFifo=fault==0;r.overflowFifo=fault==1;r.lateFifo=fault==2;
+  assert(!r.Execute() && r.quarantined && r.result.unsafe && !r.result.closed);
+  if(fault<2)assert(!r.resetWrites && !r.cpu->steps && r.result.phase==3);
+  else assert(r.resetWrites==2 && r.cpu->pc==Image::Park && r.result.phase==5 && !r.result.held);
+  refused++;
+ }
  for(unsigned fault=0;fault<10;fault++){
   Rig r;
   if(fault==0)r.proof.routes_verified=6;

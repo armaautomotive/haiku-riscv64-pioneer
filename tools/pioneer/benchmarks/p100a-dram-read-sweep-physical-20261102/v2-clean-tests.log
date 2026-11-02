@@ -1,0 +1,21 @@
+boot 4 d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+text 1252 cde3b6a902dda99343ef0c68a089ad971773ea1d7810fc317fd1e56f5a45a1c2
+BUILD_ONLY single-worker READ sweep;NO native ownership/driver/STOP/restore/whole-memory-integrity/physical bandwidth/inference/Work grant
+OFFLINE actual RV32 READ-sweep boot/issue/wait/clock/result/fault-park execution;NOT hardware timing or native lifecycle
+PASS valid6 rejected38;8MiB complete address sequence/response wrap/finite uncertainty/no next packet/no GDDR writes
+CLOSED_OFFLINE_ONLY actual image+ASan/UBSan execution;NO installation/hardware/bandwidth/Work result
+PASS actual isolated RV32 owner histories12/refusals82;ALL6490 old L1 words+NIU/TLB restored on clean closure;NO hardware bandwidth/native driver/ARC transport claim
+CLOSED_OFFLINE_OWNER_ONLY actual shared-byte virgin RV32/7bank routes/snapshot/start/STOP/HOLD/last-chunk independent check/full restore/uncertainty retention;native scope+ARC are fixture hooks;NO native adapter/public ABI/hardware/peak bandwidth/inference/Work qualification
+actual Native.inc endpoint lifecycle: 28 valid / 166 refused; NOT native hardware, ARC or engine execution
+fixture root /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-dram-exchange-endpoints-6clezrb6
+exact exchange script endpoint fixtures: 2 valid / 46 refused; NO actual install/reset/GPU
+raw fixture histories retained at /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-dram-exchange-endpoints-6clezrb6
+default prior/current complete objects equal aabe86f52abc2d44b15536f6cd9ab1f7ad71d92e9755bafdeb6072575976d425
+base55 prior/current complete objects equal 20bd6ea1e38e94a6510ef64d550efd705ed8413cf9c61de7ce8a0942263c829b
+native actual adapter object 408816be158f27beb3252546325cb11fbc0d3d2ff3083508dd61794640441ea7 native frame max 896 bytes; NO LINK/INSTALL/HARDWARE
+role perimeter 14 actual preprocessor cases; five renamed entry bodies inert
+physical role perimeter 32 actual preprocessor cases
+compiler native-owned call-chain maximum 2304 bytes;external/indirect kernel calls unmeasured,not whole-kernel stack certification
+32362d82bfa2179acdf0680c4f99671a6e4a54f580fd35cee16e25b0fc25a8fe tenstorrent_pci_probe-dram-sweep-diagnostic76
+0f1b0dbbffa9d6d11e3c28e46de29d2ea3fa069b8d8ffd73b9df889538878de5 pioneer-dram-sweep-diagnostic76
+BUILD_ONLY physical role76/closed selectors/preflight-no-launch/bounded READ-only sweep/ max kernel individual frame 896 NO INSTALL/RUN/bandwidth/TPS
