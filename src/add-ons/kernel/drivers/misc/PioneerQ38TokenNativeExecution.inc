@@ -97,6 +97,31 @@
  if(!c.io.TokenModelSourceScope(false))return false;
  return s->runtime->ReadCommitted(c.io,records,output,result);
 } // immutable committed DATA after genuine HOLD;NO CPU model reference,restore,END or public Work route
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE
+[[maybe_unused]] static __attribute__((noinline)) bool ReadQ38TokenNativeMatrixPhase(PioneerStoreContext& c,
+ unsigned worker,uint32_t* output,PioneerQ38TokenMatrixPhaseResult& result){
+ const PioneerQ38TokenMatrixPhaseResult pristine;
+ const auto* a=reinterpret_cast<const uint8_t*>(&result);const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+ for(unsigned i=0;i<sizeof(result);i++)if(a[i]!=b[i])return false;
+ auto* s=c.q38TokenNative;
+ if(!worker || worker>=120 || !s || s->phase!=PioneerQ38TokenNativeState::RootHeld || !s->runtime || !s->TerminalHeld()
+  || !s->runtime->CommittedRecordsRead() || !output || !Q38TokenExecutionOutput(c,&result,sizeof(result)))return false;
+ const unsigned bytes=PioneerQ38TokenMatrixPhaseData::Words*4;
+ const uintptr_t out=reinterpret_cast<uintptr_t>(output),r=reinterpret_cast<uintptr_t>(&result);
+ if((out&3) || out>UINTPTR_MAX-bytes || r>UINTPTR_MAX-sizeof(result) || (out<r+sizeof(result) && r<out+bytes)
+  || !s->startup->PublishedOutput(output,bytes) || !s->runtime->DispatchOutput(output,bytes))return false;
+ const void* objects[]={&c,&c.io,s,s->memory,s->participants,s->runtime,c.initialized,c.hashes,PioneerQ38TokenRope::Data};
+ const size_t sizes[]={sizeof(c),sizeof(c.io),sizeof(*s),sizeof(*s->memory),sizeof(*s->participants),sizeof(*s->runtime),
+  PioneerResidentBanks::Pages,size_t(PioneerResidentBanks::Pages)*sizeof(uint32_t),PioneerQ38TokenRope::Bytes};
+ for(unsigned i=0;i<9;i++){
+  const uintptr_t first=reinterpret_cast<uintptr_t>(objects[i]);
+  if(!first || first>UINTPTR_MAX-sizes[i] || (out<first+sizes[i] && first<out+bytes))return false;
+ }
+ for(unsigned i=0;i<PioneerQ38TokenMatrixPhaseData::Words;i++)if(output[i])return false;
+ if(!c.io.TokenModelSourceScope(false))return false;
+ return s->runtime->ReadMatrixPhase(c.io,worker,output,result);
+} // one fixed held peer slot ONLY;not a caller-provided address,count,nonce or receipt.
+#endif
 #ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
 [[maybe_unused]] static __attribute__((noinline)) bool ReadQ38TokenNativePhaseProfile(PioneerStoreContext& c,
  uint32_t* output,PioneerQ38TokenPhaseProfileResult& result){

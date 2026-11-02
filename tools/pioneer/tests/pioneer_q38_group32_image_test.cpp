@@ -63,7 +63,7 @@ struct Group32Image:DeferredAffineImage {
 			double nu=double(inputs/32+8)*0x1p-24,bound=1e-6+nu/(1-nu)*expanded;
 			if(buffers[4096+group*16+row]!=Bits(expected) || fabs(double(expected)-reference)>bound)return false;
 		}
-		for(unsigned row=groups*16;row<4096;row++)if(buffers[4096+row]!=0x7fc00000)return false;
+		for(unsigned row=groups*16;row<4096;row++)if(!UnusedRowValue(row,buffers[4096+row]))return false;
 		// Cross-check the ACTUAL native debug client's separate DATA oracle.
 		struct Request {unsigned type=12,peers=1,inputs;struct Part{unsigned groups;}part[1];std::vector<uint32_t> activation,scales;} request;
 		request.inputs=inputs;request.part[0].groups=groups;request.scales=scales;request.activation.resize(inputs/2);

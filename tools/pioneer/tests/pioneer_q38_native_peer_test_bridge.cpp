@@ -78,6 +78,36 @@ using NativePeerBase=NativePrefetchPeer<GlobalChainPeer>;
 using NativePeerBase=GlobalChainPeer;
 #endif
 struct NativePeer:NativePeerBase,CohortBytes {
+#ifdef PIONEER_Q38_NATIVE_PEER_MATRIX_PHASE_TEST
+#if PIONEER_Q38_NATIVE_PEER_MATRIX_PHASE_TEST != 1 || !defined(PIONEER_Q38_NATIVE_PEER_WIDE_GDN_TEST)
+#error Separate current sampler HOST clock requires complete returning wide-GDN peer
+#endif
+ uint64_t matrixClockReads=0;unsigned matrixMetricNext=0;
+ uint32_t matrixMetricObserved[16]={};bool matrixMetricAtEntry=false;
+ bool PrivateObservationRow(unsigned row)const override{return row>=320 && row<336;}
+ bool UnusedRowValue(unsigned row,uint32_t value)const override{
+  if(!PrivateObservationRow(row))return NativePeerBase::UnusedRowValue(row,value);
+  // These are observed RAW private words,not numerical expected products.
+  // They may change ONLY at the authenticated actual publisher below.
+  return matrixMetricAtEntry && !matrixMetricNext && value==matrixMetricObserved[row-320];
+ }
+ bool CorrectRows()const override{
+  const bool okay=NativePeerBase::CorrectRows();
+  if(!okay)fprintf(stderr,"NATIVE_MATRIX_ROW_OBSERVER_FAILURE worker%u type%u K%u groups%u matrix%u pending%u drained%u req%u resp%u dotReads%u metricNext%u;original numerical+FP64 comparisons UNCHANGED\n",
+   logicalWorker,type,inputs,FfnPersistentPeer::groups,matrixInstructions,unsigned(pending),unsigned(drained),requests,responses,dotProbeReads,matrixMetricNext);
+  return okay;
+ }
+ uint32_t ReadCycleCsr(unsigned csr)override{
+  if(gdnActive)return NativePeerBase::ReadCycleCsr(csr);
+  // Three exact read-only CSR sites from authenticated d5ba complete ELF.
+  // HOST clock endpoint only;not measured card cycles or a frequency.
+  assert(pc==0x68010+unsigned(matrixClockReads%3)*4
+   && csr==(matrixClockReads%3==1?0xb00U:0xb80U));
+  matrixClockReads++;
+  const uint64_t now=(UINT64_C(1)<<40)+uint64_t(steps)*19;
+  return csr==0xb00?uint32_t(now):uint32_t(now>>32);
+ }
+#endif
  PioneerQ38SharedTestBinding& binding;unsigned deviceReads=0,deviceWrites=0,statusWrites=0,scalarFpInstructions=0;
  uint32_t publishedCounts[8]={},publishedCommands[10]={};bool publishedPending=false;
  bool endpointInputsObserved=false;
@@ -128,6 +158,26 @@ struct NativePeer:NativePeerBase,CohortBytes {
   return Range(address,0xffb20000,0x2000)?binding.bytes.noc(binding.bytes.context,logicalWorker,address-0xffb20000):value;
  }
  void Store(uint32_t address,uint32_t value)override{
+#ifdef PIONEER_Q38_NATIVE_PEER_MATRIX_PHASE_TEST
+  if(Range(address,0x84500,64)){
+   // Raw writes ONLY from the exact frozen sampler publisher. Preserve
+   // all old RowsMachine bounds;do not widen its output/operand window.
+   const unsigned word=(address-0x84500)/4;
+   assert(pc==0x68178 && !(address&3) && word==matrixMetricNext && active && type==12 && prefetchMatrix
+    && !gdnActive && !convActive && !denseActive && !preciseActive && drained && !pending && !rawPending
+    && phaseQueue.empty() && pendingAccumulator.empty() && !prefetchReturn
+    && requests==packets.size() && responses==requests
+    && matrixInstructions==MatrixPhasesPerPanel()*FfnPersistentPeer::groups*(inputs/16)
+    && matrixClockReads && matrixClockReads%3==0 && memory.at(0x74038)==1);
+   const uint32_t expected[]={0x324d5051,2,memory.at(0x74030),logicalWorker,12,inputs,FfnPersistentPeer::groups};
+   if(word<7)assert(value==expected[word]);
+   if(word==7)assert(value<=1);
+   if(word>=14)assert(!value);
+   assert(matrixMetricAtEntry);binding.Word(address)=value;matrixMetricObserved[word]=value;deviceWrites++;
+   if(++matrixMetricNext==16)matrixMetricNext=0;
+   return;
+  }
+#endif
   assert(!CodeAddress(address));NativePeerBase::Store(address,value);deviceWrites++;
   if(Range(address,G::Status,64))statusWrites++;
   if(Range(address,0xffb20000,0x2000))Publish(Range(address,0xffb20000,40)?1U<<((address-0xffb20000)/4):0U);
@@ -148,6 +198,12 @@ struct NativePeer:NativePeerBase,CohortBytes {
  void Advance(unsigned count){
   if(!endpointInputsObserved){
    assert(!steps && pc==0x6000);endpointInputsObserved=true;
+#ifdef PIONEER_Q38_NATIVE_PEER_MATRIX_PHASE_TEST
+   // Read-only initial private-byte observation BEFORE the virgin boot.
+   // Never supply these bytes back to a processor or native owner.
+   assert(!matrixMetricAtEntry);matrixMetricAtEntry=true;
+   for(unsigned i=0;i<16;i++)matrixMetricObserved[i]=binding.Word(0x84500+i*4);
+#endif
    for(unsigned i=0;i<16;i++)source[i]=binding.bytes.noc(binding.bytes.context,logicalWorker,BlackholeDramSourceOffset(i));
    for(unsigned i=0;i<8;i++)publishedCounts[i]=countBase[i]=binding.bytes.noc(binding.bytes.context,logicalWorker,CounterOffset(i));
    for(unsigned i=0;i<10;i++)publishedCommands[i]=command[i]=binding.bytes.noc(binding.bytes.context,logicalWorker,i*4);

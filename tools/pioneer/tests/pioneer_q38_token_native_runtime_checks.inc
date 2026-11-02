@@ -2,6 +2,15 @@
 static bool CheckNativeRuntime(Fixture& f){
  auto& c=*f.c;auto& io=f.io;PioneerQ38TokenRuntimeResult result;auto* state=c.q38TokenNative;
  const unsigned before=io.touches,starts=io.rootStarts,stops=io.rootStops,holds=io.rootHolds,resets=io.resets.size();
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_READ_FIXTURE
+ namespace MatrixData=PioneerQ38TokenMatrixPhaseData;
+ std::vector<uint32_t> slotBefore(119*18);unsigned originalNonzero=0;
+ for(unsigned w=1;w<120;w++)for(unsigned i=0;i<18;i++){
+  const uint32_t value=io.Raw(w,MatrixData::Address-4+i*4);slotBefore[(w-1)*18+i]=value;
+  if(i && i<17)originalNonzero+=value!=0;
+ }
+ assert(originalNonzero); // arbitrary native backing,not a supplied ready state
+#endif
  io.runtimeMode=true;
  const auto pristine=result;auto* words=reinterpret_cast<uint32*>(&result);
  for(unsigned i=0;i<16;i++){
@@ -59,6 +68,13 @@ static bool CheckNativeRuntime(Fixture& f){
    uint32(bytes[i*4])|uint32(bytes[i*4+1])<<8|uint32(bytes[i*4+2])<<16|uint32(bytes[i*4+3])<<24;
  }
  assert(io.runtimeDram==expected); // ALL bytes INCLUDING untouched slack,NOT merely receipts
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_READ_FIXTURE
+ for(unsigned w=1;w<120;w++)for(unsigned i=0;i<18;i++){
+  const uint32_t expectedWord=i && i<17?0:slotBefore[(w-1)*18+i];
+  assert(io.Raw(w,MatrixData::Address-4+i*4)==expectedWord);
+ }
+ puts("OBSERVED actual native prepare clears ALL119 exact16word timing slots from nonzero arbitrary backing and preserves BOTH neighbors;no core start,NoC packet or invented metric;original full-END restoration still required");
+#endif
  for(unsigned w=0;w<120;w++){
   std::array<uint32,64> boot;assert(startup->ReadBoot(w,boot.data()));
   for(unsigned i=0;i<64;i++)assert(io.Raw(w,(w?unsigned(PioneerQ38SelectedGlobalWorker::Boot):unsigned(PioneerQ38GlobalChainLayout::R::Boot))+i*4)==boot[i]);

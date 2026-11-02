@@ -33,7 +33,7 @@ enum {PioneerQ38TokenBatchedOutputClosureDataSelection=0};
   && !(defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) && PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS == 1 \
    && (defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS_H) \
     || (defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS) && PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS == 1 \
-     && defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS_H)))))
+     && (defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS_H) || (defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS) && PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS == 1 && defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS_H)))))))
 #error Batched output closure cannot coexist with old arrays or a selected old namespace
 #endif
 #if defined(__FAST_MATH__) || defined(PIONEER_Q38_TOKEN_NATIVE_TEST_CONTEXT) \

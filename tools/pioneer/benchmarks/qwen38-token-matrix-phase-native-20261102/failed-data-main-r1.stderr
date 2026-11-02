@@ -1,0 +1,7 @@
+Assertion failed: (sizeof(P::PeerGdn)==35944 && P::CodeWords(0)==40902 && P::CodeWords(1)==25827 && allWords==3114315), function main, file pioneer_q38_pushed_programs_test.cpp, line 138.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_matrix_phase_program_tests.py", line 33, in <module>
+    subprocess.run([str(binary),str(root),str(worker)],check=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-q38-matrix-phase-data-_w2gv7va/data-test', '/private/tmp/pioneer-q38-token-phase-main-20261102.8VGxN5/final-root', '/private/tmp/pioneer-q38-token-matrix-phase-main-20261102-a/image-final-r2']' died with <Signals.SIGABRT: 6>.

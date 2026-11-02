@@ -31,6 +31,9 @@ struct PioneerStoreContext;struct PioneerSessionIO;
 #endif
 [[maybe_unused]] static bool HoldQ38TokenNativeStopped(PioneerStoreContext&,PioneerQ38TokenHoldResult&);
 [[maybe_unused]] static bool ReadQ38TokenNativeRecords(PioneerStoreContext&,unsigned,uint32_t*,PioneerQ38TokenReadResult&);
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE
+[[maybe_unused]] static bool ReadQ38TokenNativeMatrixPhase(PioneerStoreContext&,unsigned,uint32_t*,PioneerQ38TokenMatrixPhaseResult&);
+#endif
 #ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
 [[maybe_unused]] static bool ReadQ38TokenNativePhaseProfile(PioneerStoreContext&,uint32_t*,PioneerQ38TokenPhaseProfileResult&);
 #endif
@@ -82,6 +85,9 @@ class PioneerQ38TokenNativeState {
 #endif
  friend bool HoldQ38TokenNativeStopped(PioneerStoreContext&,PioneerQ38TokenHoldResult&);
  friend bool ReadQ38TokenNativeRecords(PioneerStoreContext&,unsigned,uint32_t*,PioneerQ38TokenReadResult&);
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE
+ friend bool ReadQ38TokenNativeMatrixPhase(PioneerStoreContext&,unsigned,uint32_t*,PioneerQ38TokenMatrixPhaseResult&);
+#endif
 #ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
  friend bool ReadQ38TokenNativePhaseProfile(PioneerStoreContext&,uint32_t*,PioneerQ38TokenPhaseProfileResult&);
 #endif

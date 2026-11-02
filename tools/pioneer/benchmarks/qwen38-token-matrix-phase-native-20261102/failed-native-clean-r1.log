@@ -1,0 +1,52 @@
+AUTHENTICATED_NATIVE_COUNTER_GATHER_SCOPE 4e24c..4e588/ELF91f389bb72e04019816a3f66c34a4ba87624f0a58f693e362e190d84ccd17bdf;HOST byte-endpoint classification ONLY,not supplied PC,owner,model result or hardware authority
+START authenticate SAME-open original27B GGUF RAW bytes BEFORE native fixture construction;NO CPU embedding/model products
+OBSERVED actual frozen zero ROM starts96/GDNpages10544/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts192/GDNpages21072/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts288/GDNpages31600/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts384/GDNpages42144/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts480/GDNpages52672/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts576/GDNpages63200/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts672/GDNpages73728/historyPages0/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts768/GDNpages73728/historyPages480/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts864/GDNpages73728/historyPages960/projectionPages0;NOT native initialization publication
+OBSERVED actual frozen zero ROM starts960/GDNpages73728/historyPages1440/projectionPages0;NOT native initialization publication
+PASS SAME genuine full851 initialization+120 held histories/actual PCI BEGIN originals captured by native factory BEFORE launch/no new PCI access/actual native runtime scope+factory/ALL2308 bounded metadata+frozen rawRoPE+prompt+zero-record chunks/4616 exact NoC packets+complete readback/37782528B vs independently built startup+ALL untouched slack/120 actual boot DATA/NO reset/start/CPU model products/host BME;SIMULATED endpoints,NOT initialized KV rows/model RUN/STOP/END/physical/TPS
+PASS SAME native full851 owner+1010 zero jobs+installed120 L1 histories+4616 metadata packets/ALL119 VIRGIN QGW3 instruction boots DIRECT shared L1+CSR backing/15049216 actual instructions/maxWrittenStack1972/ALL ARM before ANY release/final status+two WAIT PCs+unchanged NoC counters/ROOT HELD/legacy flags FALSE/held cleanup and ordinary commands REFUSED;SIMULATED OS+VM+NoC,NOT ROOT/model RUN/STOP/END/physical/Work/TPS
+PASS QFL1 observer in SAME genuine851-source/120-journal/119-virgin-engine native history/fresh0+reserved ZERO/EXACTLY ONE extra checked local savedLINK read/no extra processor step,NoC packet,reset or lifecycle transition;positive ONLY,NOT native unsafe-failure,full-END,physical or TPS proof
+PASS new frontier reader in SAME genuinely initialized851+staged120+journaled+virgin119booted+ROOT-entered native history/16 non-pristine outputs refused without IO/fresh0 before any model token/source+boot checked/no processor step,NoC packet,reset or lifecycle transition;SIMULATED OS+VM+NoC,NOT committed token/model/physical/TPS proof
+PASS native terminal observer pending after genuine ROOT startup marker;16 non-pristine results refused/no STOP or cleanup grant
+PASS genuine virgin ROOT startup and unpublished terminal remain non-completion under RAW zero/UINTMAX/fault/terminal/outside frontend samples;actual engine/history unchanged;NO supplied ready or HOLD
+PASS native terminal HOLD refuses pending ROOT and16 non-pristine results without IO/no supplied STOP or release grant
+PASS native committed READ refuses pending ROOT,16 non-pristine results and5 counts without IO/output changes;NO token or HOLD capability supplied
+PASS native original-L1 restoration refuses pending ROOT and16 non-pristine results without IO/no caller clean or HOLD grant
+PASS native earlier-dispatch L1 restoration refuses pending ROOT and16 non-pristine results without IO/no original or clean-state hint
+PASS native119-peer local NIU+scratch restore refuses pending ROOT and16 non-pristine results without IO/no caller original/clean capability
+PASS native ROOT-local restore refuses genuine pending ROOT+16 non-pristine results/22 phase-or-range checked NIU+scratch refusals preserve output/NO IO or caller original/clean capability
+PASS native execution outputs exclude ALL120 earlier saved dispatch buffers/360 alias refusals and48 phase-or-range checked alias refusals preserve output with NO IO;NOT cleanup authority
+PASS native outputs exclude ALL120 original store buffers/360 aliases+84 peer-store selection/phase/range refusals preserve output with NO IO;NOT a peer closure or shared-TLB grant
+PASS SAME native running ROOT/ACTUAL installed instructions beyond startup/3 genuine NoC reads:session512B+prompt64B+head512B EXACT from native-staged shared GDDR/first learned2304B request OUTSTANDING/fresh native observer accepts legitimate BUSY with source+PC+PCI checks/no host NoC packet,command,counter recapture,products or reset/ROOTsteps179019;PAUSED at raw learned request,NOT embedding/matrix/layer/token/cancel consumption/STOP/END/physical/Work/TPS
+PASS SAME full851 native owner+119 genuine worker histories/ROOT ACTUAL original27B Q4_K embedding/20 authenticated RAW tiles+2 real GDDR writes+2 verified readbacks/ALL5120 LOCAL+SHADOW+GDDR values bit-exact vs separate original-row decoder OBSERVER ONLY/1250775 ROOT instructions/21320 scalar FP instructions/max writtenStack2628/next layer0 metadata request outstanding/no CPU product upload or private-history transplant;SIMULATED endpoints,NOT model layer/token/cancel consumption/STOP/END/physical/Work/TPS
+OBSERVED native ROOT layer0 pre-dispatch/steps2000087 pc42844 packets9 raw0 peerR0 peerW0 phase300;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps4000215 pc406c0 packets41 raw0 peerR0 peerW0 phase300;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps6000087 pc4892c packets60 raw2 peerR0 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps8000215 pc4ef50 packets1685 raw2 peerR1625 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps10000087 pc4ef44 packets3910 raw2 peerR3850 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps12000215 pc4ef24 packets6105 raw2 peerR6045 peerW0 phase2;NOT matrix/layer/token completion
+OBSERVED native ROOT layer0 pre-dispatch/steps14000087 pc48798 packets8272 raw2 peerR8212 peerW0 phase2;NOT matrix/layer/token completion
+PASS SAME native full851+1010 actual zero jobs+119 VIRGIN boot histories/unchanged full scalar ISA from first ROOT instruction/original27B embedding -> genuine layer0 metadata+RAW norm+ALL5120 bit-exact RMS+ALL native operands/scales vs independent OBSERVERS ONLY/actual valid worker1 matrix job delivered/doorbell packet PENDING/ROOTsteps15143381 layerPackets9465 peerR9401 peerW3;NO CPU products,worker completion or private-history transplant;NOT matrix/layer/token/STOP/END/physical/Work/TPS
+OBSERVED native first-matrix ROOTsteps16000213 pc4efdc packets9889 doors3 phase2;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps18000085 pc49e34 packets11211 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps20000213 pc4eef8 packets13175 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps22000085 pc4f060 packets15391 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps24000213 pc4f060 packets17580 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix ROOTsteps26000085 pc4ed58 packets19741 doors3 phase3;NOT completed layer/token
+OBSERVED native first-matrix worker1 pc20050 sequence1 matrixInstructions1280 scalarFP0 requests42 responses42 independentOutput1;NOT complete layer/token
+OBSERVED native first-matrix worker2 pc20050 sequence1 matrixInstructions1280 scalarFP0 requests42 responses42 independentOutput1;NOT complete layer/token
+OBSERVED native first-matrix worker3 pc20050 sequence1 matrixInstructions1280 scalarFP0 requests42 responses42 independentOutput1;NOT complete layer/token
+OBSERVED actual first-matrix accelerator ROOT reserved stack5760/accessed5748;MAX119peer reserved3552/accessed3540;8192 bytes EACH/separate HOST kernel stack unqualified
+PASS SAME native full851 owner/ALL119 full tensor ISA engines VIRGIN from construction/shared actual L1+CSR+ROOT inputs+authenticated original learned bytes/ACTUAL first3 workers complete role10 fullK5120+48 rows/real RISC+Tensix matrices3840+native output bytes+FP32/FP64 OBSERVERS ONLY/no CPU product/history transplant/ROOT validates first projection before NEXT matrix doorbell held/workerSteps172608256 ROOTsteps26626996;NOT whole layer/token/STOP/END/physical/Work/TPS
+OBSERVED native layer0 ROOTsteps30000052 pc4f0f0 packets22295 newDoors3 phase4 stateR0 stateW0 historyR0;NOT layer/token qualification
+OBSERVED native layer0 ROOTsteps40000180 pc4f138 packets31538 newDoors122 phase4 stateR0 stateW0 historyR0;NOT layer/token qualification
+OBSERVED native layer0 ROOTsteps50000052 pc5435c packets34062 newDoors241 phase6 stateR0 stateW0 historyR0;NOT layer/token qualification
+OBSERVED native layer0 ROOTsteps60000180 pc545e8 packets37318 newDoors456 phase6 stateR708608 stateW200704 historyR30720;NOT layer/token qualification
+OBSERVED native layer0 ROOTsteps70000052 pc49b68 packets41629 newDoors575 phasea stateR786432 stateW786432 historyR30720;NOT layer/token qualification

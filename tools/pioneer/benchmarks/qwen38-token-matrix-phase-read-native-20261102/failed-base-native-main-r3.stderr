@@ -1,0 +1,7 @@
+Assertion failed: (!(a&3) && !pending && drained && pushPackets<2 && responses==requests && !dotProbeReads && CorrectRows()), function Store, file pioneer_q38_global_chain_instruction_test.cpp, line 99.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py", line 649, in <module>
+    '-fsanitize=address,undefined', *['-D'+k+'='+v for k, v in sorted(defines.items())],
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-token-native-init-_b6gnnzu/test', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/qualification-inputs/qwen38-state-zero-20261030', '--execution-end', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/qualification-inputs/mixed-worker-20261030', '/private/tmp/pioneer-q38-token-matrix-phase-main-20261102-a/image-final-r2', '/private/tmp/pioneer-q38-token-matrix-phase-native-20261102-a/native-r3-prefix.bin']' died with <Signals.SIGABRT: 6>.

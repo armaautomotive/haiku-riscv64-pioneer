@@ -1,0 +1,228 @@
+{
+  "observedUTC": "2026-11-02 20:24:22 UTC",
+  "noPioneerOperationThisTurn": true,
+  "baseSessions": {
+    "nativeMain": {
+      "id": 13485,
+      "revision": 4,
+      "actualExit": 0
+    },
+    "privateInspectMain": {
+      "id": 30139,
+      "actualExit": 0
+    },
+    "privateInspectClean": {
+      "id": 38948,
+      "actualExit": 0
+    },
+    "privateFinalMain": {
+      "id": 81850,
+      "actualExit": 0
+    },
+    "privateFinalClean": {
+      "id": 16858,
+      "actualExit": 0
+    },
+    "dataMainR1": {
+      "id": 66884,
+      "actualExit": 1,
+      "reason": "new DATA test inherited old code-count expectation; repaired distinct new-only expectation"
+    },
+    "dataMain": {
+      "id": 59053,
+      "actualExit": 0
+    },
+    "dataClean": {
+      "id": 87409,
+      "actualExit": 0
+    },
+    "rolesMain": {
+      "id": 58611,
+      "actualExit": 0
+    },
+    "rolesClean": {
+      "id": 75352,
+      "actualExit": 0
+    },
+    "workerGatesMain": {
+      "id": 91697,
+      "actualExit": 0
+    },
+    "workerGatesClean": {
+      "id": 17328,
+      "actualExit": 0
+    },
+    "cliMain": {
+      "id": 24563,
+      "actualExit": 0
+    },
+    "cliClean": {
+      "id": 41229,
+      "actualExit": 0
+    },
+    "workerSourceMain": {
+      "id": 52657,
+      "actualExit": 0
+    },
+    "workerSourceClean": {
+      "id": 32133,
+      "actualExit": 0
+    },
+    "nativeMainR1": {
+      "id": 66848,
+      "actualExit": 1,
+      "failure": "SIGABRT; inspect exact first assertion before repair"
+    },
+    "nativeCleanR1": {
+      "id": 67765,
+      "actualExit": 1,
+      "failure": "same strict RowsMachine output-window refusal at first84500 metric write"
+    },
+    "nativeMainR2": {
+      "actualExit": 1,
+      "failure": "HOST-only endpoint compile: inherited Group[6] shadows FfnPersistentPeer::groups; fixed explicit qualification"
+    },
+    "nativeClean": {
+      "id": 1448,
+      "revision": 4,
+      "actualExit": 0
+    },
+    "nativeMainR3": {
+      "id": 1589,
+      "actualExit": 1,
+      "failure": "Original CorrectRows includes unused suffix sentinel at newmetric slot. Investigated actual HOST poison loop overwrites84500; repaired precise16word reserved observation no numerical product/tolerance change."
+    },
+    "nativeCleanR3": {
+      "id": 84772,
+      "actualExit": 1,
+      "failure": "same unused suffix sentinel incompatibility"
+    },
+    "compareMain": {
+      "actualExit": 0,
+      "bitExactWords": 10240
+    },
+    "compareClean": {
+      "actualExit": 0,
+      "bitExactWords": 10240
+    }
+  },
+  "readerSessions": {
+    "privateInspectSupersededMain": {
+      "id": 53884,
+      "actualExit": 0,
+      "sha": "59533c0d2a93173ac8b697be79ee8949e00bcbeac4797e0cb9b1f36b0ccc69c1",
+      "scope": "before final second boot recheck"
+    },
+    "privateInspectMain": {
+      "id": 87638,
+      "actualExit": 0
+    },
+    "privateInspectClean": {
+      "id": 98106,
+      "actualExit": 0
+    },
+    "privateFinalMain": {
+      "id": 59492,
+      "actualExit": 0
+    },
+    "privateFinalClean": {
+      "id": 92510,
+      "actualExit": 0
+    },
+    "dataMain": {
+      "actualExit": 0,
+      "positives": 17136,
+      "refused": 108528
+    },
+    "dataClean": {
+      "actualExit": 0
+    },
+    "observerMain": {
+      "id": 79905,
+      "actualExit": 0,
+      "refused": 4352
+    },
+    "observerAndRolesClean": {
+      "id": 98614,
+      "roleRevision": "before optional-feature omission positive fix",
+      "actualExit": 1,
+      "components": {
+        "observerActualExit": 0,
+        "rolesActualExit": 1
+      }
+    },
+    "rolesMain": {
+      "id": 28843,
+      "roleRevision": "before optional-feature omission positive fix",
+      "actualExit": 1,
+      "failure": "test incorrectly expected omission of OPTIONAL reader flag to be a production refusal; omission validly keeps no-reader baseline. Fixed test positive0; no production role relaxed."
+    },
+    "nativeReadMainR1": {
+      "id": 32429,
+      "scope": "compiled before HOST unused-tail preservation; observe to actual terminal",
+      "actualExit": 1,
+      "failure": "same old unused-output sentinel/poison incompatibility as base R3; repaired observer+poison preserve exact64B metadata"
+    },
+    "rolesMainFinal": {
+      "id": 98752,
+      "actualExit": 1,
+      "failure": "late inherited parent shader tag accepted by bare read-role; production role strengthened with complete ConstantQ4 parent recheck"
+    },
+    "rolesCleanFinal": {
+      "id": 41544,
+      "actualExit": 1,
+      "failure": "late inherited parent shader tag accepted by bare read-role; production role strengthened with complete ConstantQ4 parent recheck"
+    },
+    "cliMain": {
+      "id": 56280,
+      "actualExit": 0
+    },
+    "cliClean": {
+      "id": 46871,
+      "actualExit": 0
+    },
+    "privateFinalMainR2": {
+      "id": 77237,
+      "actualExit": 0
+    },
+    "privateFinalCleanR2": {
+      "id": 56710,
+      "actualExit": 0
+    },
+    "nativeReadMainR2": {
+      "id": 33240,
+      "actualExit": 0
+    },
+    "nativeReadClean": {
+      "id": 88733,
+      "actualExit": 0
+    },
+    "rolesMainFinalR3": {
+      "id": 72238,
+      "actualExit": 0
+    },
+    "rolesCleanFinalR3": {
+      "id": 10980,
+      "actualExit": 0
+    },
+    "privateFinalMainR3": {
+      "id": 58949,
+      "actualExit": 0
+    },
+    "privateFinalCleanR3": {
+      "id": 14975,
+      "actualExit": 0
+    },
+    "compareMain": {
+      "actualExit": 0,
+      "bitExactWords": 10240
+    },
+    "compareClean": {
+      "actualExit": 0,
+      "bitExactWords": 10240
+    }
+  },
+  "required20TokensPerSecond": false,
+  "physicalReaderQualified": false,
+  "positivePrivateReaderHistory": true
+}

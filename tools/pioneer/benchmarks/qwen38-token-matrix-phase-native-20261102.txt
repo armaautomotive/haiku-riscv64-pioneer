@@ -1,0 +1,146 @@
+UPDATE20:16:10UTC: corrected R4main13485/clean1448 BOTH ACTUALLY0.
+Whole stdout and first-layer prefix files match byte-for-byte. Separate
+UNCHANGED original CPU comparators BOTH ACTUALLY0:5120 embedding+5120 layer0
+words bit-exact,NO tolerance/expected/reference/exit override. The complete
+original851/virgin119+ROOT/first-layer/cancel/119STOP/120HOLD/zero-record
+drain/all original restoration/clock/VM/PCI/hosts/reservation/full-END history
+closes. This is LOCAL simulated OS/NoC/GDDR,not physical performance or
+whole-model/Assistant Work acceptance. Reader qualification remains separate.
+Raw corrected R4+strict comparison logs are archived below. This supersedes
+all R4-LIVE statements retained as historical evidence in the older ledger.
+
+UPDATE2026-11-02 19:59:47UTC: R3main1589/clean84772 BOTH ACTUALLY1.
+The actual HOST model's unused4096-row poison/sentinel domain includes
+the new84500..8453f DATA slot. This is separate from every computed row
+(at most256 words). Corrected HOST-only hooks preserve exactly those16
+words and compare them against actual raw initial/publisher observations;
+all real-output FP32/FP64 comparisons stay unchanged. Actual method+actual
+poison-loop unit checks pass4352 changed/unobserved/partial-record refusals
+in main+clean. R4main13485/clean1448 are authoritatively LIVE at19:59:47UTC;
+NO first-layer/full-END or independent CPU comparison pass is yet claimed.
+The independent fresh-slot+held-reader implementation is now separate
+PRIVATE1a0429,also NOT deployable. See
+qwen38-token-matrix-phase-read-native-20261102.txt for its tests/status.
+This update supersedes every R3-LIVE and not-yet-implemented reader statement
+below;the older ledger is retained as historical evidence,not current status.
+
+Returning Q4-job sampler:PRIVATE binding;HOST repair/retests STILL LIVE
+=====================================================================
+2026-11-02 19:26:06UTC. Goal ACTIVE. Usable numerically accepted27B Work
+and20tok/s remain UNMET. No new physical benchmark or card operation occurs
+in this turn. The last physical model result is0.16253tok/s,NO speedup;
+stable041 was independently restored at18:48:44UTC with64CPUs/fullRAM.
+This is a PRIVATE build/instruction-test prerequisite,NOT a deployable
+driver,held sampler reader,Assistant target or performance improvement.
+
+Complete distinct program DATA and private subject
+---------------------------------------------------
+The generator authenticates all14 sections and BOTH complete ELFs before
+creating the new immutable matrix-phase namespace. It combines unchanged
+timing ROOT91f389bb with full returning sampler workerd5ba1c3a. Only five
+peer arrays change from e9ef:Front,Service,Fetch,Affine,Text. Nine other
+arrays,2MiB RoPE,the complete53,913,832B journal and10 renamed inert driver
+entry bodies remain byte-exact. All120 code maps cover3,162,153 words;
+no old program array,public/USER selector,CPU model reference or Work alias
+is enabled. The seven ancestor guard checks recognize only the explicitly
+selected new complete DATA,not a defined-zero or old-array substitution.
+
+Whole new DATA SHA:
+ e42b21bd0a5c0f061f3bbbd2cb620e988d03f561b62fdf444624959ddb03ca09
+Whole new PRIVATE object SHA:
+ be835676df7838a238ef11cdd1941ca6489b6c54b26117ae462307ebdbe9f36f
+Whole unchanged sampler ELF SHA:
+ d5ba1c3af9ac040cc1f6f4a8e8d08228a0351f3fadd604ab25f8e5bcb7da93ff
+
+Main30139/independent clean38948 inspect builders ACTUALLY0,whole objects
+match. Only then is the new private pin frozen. Final NON-inspect builders
+81850/16858 ACTUALLY0,whole objects match. Each rebuilds the complete frozen
+old5e2 private subject+ancestors FIRST. Current-source worker builds52657/
+32133 ACTUALLY0 and reproduce whole d5ba independently. Frames are<=2048B
+or unchanged larger predecessors,NOT whole-kernel or IRQ stack proof.
+
+Closed local gates,not physical evidence
+----------------------------------------
+Main DATA59053 and clean87409 ACTUALLY0:all120 code maps byte-exact,all119
+Delta ranges unchanged,32 corrupt/truncated artifacts and3 wrong-family
+refusals before output,3 syntax positives/320 production-only refusals.
+Main roles58611/clean75352 ACTUALLY0:3 positives/870 production-only native
+refusals,all unchanged constant-Q4+older private suites FIRST. Main/clean
+worker gates91697/17328 ACTUALLY0:6 positives/235 refusals+35 pre-SDK
+producer refusals and old35 controls first. Negative syntax snippets do
+NOT contain their own expected-selection assertion.
+Main CLI24563/clean41229 ACTUALLY0:31 missing/duplicate/shortened/old/compile
+refusals before source/compiler/output IO,all constant-Q4+older controls
+first. ASan/UBSan const-ROM bridge checks ALL119 peers/3,121,251 code words,
+723 address/worker refusals with unchanged outputs,30 defined-zero/one
+native/USER/CPU/Work/shader exclusions and29 early private-builder refusals.
+Paired whole DATA/role/CLI stdout matches;final stderr is empty.
+
+The first DATA attempt66884 ACTUALLY1:the shared TEST inherited e9ef's
+25,827-word expectation. A separate sampler-only branch now requires the
+independently byte-counted26,229 words per peer/3,162,153 total. The OLD
+expectation is unchanged. No arithmetic,reference,tolerance or numerical
+validator is changed. A clean-source preimage check also initially failed
+because zsh's special path variable shadowed PATH;the child exited before
+any edit. The corrected task-specific variable verifies all preimages.
+An initial patch-conversion attempt failed verification without edits;
+the corrected format applies to independently verified old bytes.
+
+Original-model R1 failures and LIVE R3 retests:NOT native passes
+---------------------------------------------------------------
+Main66848 ACTUALLY1 at19:22:33UTC;independent clean67765 ACTUALLY1 at
+19:25:44UTC. BOTH reached original layer0 beyond70million ROOT instructions
+before the OLD RowsMachine output-window assertion rejected the first
+84500 timing write. These are LOCAL simulated endpoint failures,not a
+Pioneer fault,model numerical rejection or whole-history pass. Both had
+passed full851 initialization,1010 actual zero jobs,119 virgin boots,
+original embedding and first projection. Neither completes full-END.
+Their original failure stdout/stderr are retained beside this report.
+
+Repair is confined to the new HOST peer test profile. It now accepts ONLY
+the actual frozen publisher's PC68178 writing16 sequential words inside
+84500..8453f,with genuine matrix-active/type12/all-tensor-count/drain/
+empty-queue/exact-request+response checks and same job/worker/shape metadata.
+It forwards the actual guest word to the SAME shared backing unchanged.
+Old RowsMachine output bounds are NOT widened. No PC,register,product,
+ready,completion receipt or owner state is injected. The initial R2 compile
+ACTUALLY1 because another inherited Group[6] shadows the matrix groups;
+explicit FfnPersistentPeer::groups fixes that name,not an arithmetic bound.
+Only this HOST profile permits the exact three sampler CSR PCs68010/68014/
+68018 with high/low/high order and a FABRICATED clock. GDN's old endpoint
+is unchanged. These endpoint repairs are NOT yet full native acceptance.
+
+Fresh R3 main1589 launched19:25:44UTC;independent clean84772 launched
+19:26:06UTC from/private/tmp/pioneer-q38-constant-q4-clean-20261102-a.
+Both same handles return LIVE on dispatch;no complete R3 result exists.
+Each starts original same-open GGUF/virgin119+ROOT and the ENTIRE original
+first-layer/cancel/STOP/HOLD/drain/restoration/full-END history again;NO
+saved processor history or transplanted earlier R1 prefix is used.
+Observe SAME1589/84772 until ACTUAL terminal;timeouts are not exit.
+Live local logs:
+ /private/tmp/pioneer-q38-token-matrix-phase-native-20261102-a/native-main-r3.log
+ /private/tmp/pioneer-q38-token-matrix-phase-native-clean-20261102-a/native-clean-r3.log
+Neither complete first-layer/cancel/full-END nor separate unchanged5120+
+5120-word CPU comparison is qualified. No whole-native stack,numerical,
+held sampler readout,physical or performance claim follows. Closed local
+logs are archived;learned bytes,CPU traces and incomplete R3 stdout are NOT
+committed as proof. A compilation or unit-gate pass does not hide R1/R2.
+
+Remaining before ANY installation or real timing use
+-----------------------------------------------------
+Current startup does NOT clear peer84500..8453f;it only saves/restores
+that extent. A reader cannot infer a fresh sample merely from the magic,
+worker or nonce. Add exact guarded prelaunch zeroing/readback of that slot,
+then qualify unchanged surrounding bytes and original restoration. Bind
+the latest Q4 job independently to the same real source/image/run/history.
+After genuine terminal/HOLD/drain,collect fixed-size doublechecked metric
+DATA with fresh all-core/source/ownership guards and normal cleanup even
+when a metric is invalid. No live reads or arbitrary caller address/count.
+Kernel/public packet,USER grammar,strict reader,exchange/fault tests and
+independent builds remain required. The old db03 client/helper cannot
+select these bytes. Close both pending original-model tests and strict
+CPU comparisons first. Then use actual inner timings to choose a large
+card-side optimization;do NOT extrapolate TPS from issue-count reductions.
+No reboot,relay,SD,mains,firmware,Assistant,network,boot/kernel or hardware
+connection is changed. This turn launches no Pioneer compute or SSH job;
+the last independent hardware-state verification remains18:48:44UTC.

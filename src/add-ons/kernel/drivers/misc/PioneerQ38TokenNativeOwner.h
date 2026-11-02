@@ -3,6 +3,10 @@
 #include "PioneerQ38TokenFrontierFailureDetailRole.h"
 #include "PioneerQ38TokenFrontierFailureLinkRole.h"
 #include "../../../../../tools/pioneer/PioneerQ38TokenPhaseProfileProgramsRole.h"
+#include "../../../../../tools/pioneer/PioneerQ38TokenMatrixPhaseReadRole.h"
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE
+#include "../../../../../tools/pioneer/PioneerQ38TokenMatrixPhaseData.h"
+#endif
 #ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
 #include "../../../../../tools/pioneer/PioneerQ38TokenPhaseProfileData.h"
 #endif
@@ -65,6 +69,13 @@ struct PioneerQ38TokenPhaseProfileResult {
 };
 static_assert(sizeof(PioneerQ38TokenPhaseProfileResult)==64,"fixed observation,not a lifecycle receipt");
 #endif
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE
+struct PioneerQ38TokenMatrixPhaseResult {
+ uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,valid=0;
+ uint32_t metricState=0,nonce=0,inputs=0,groups=0,firstPC=0,secondPC=0,reserved[2]={};
+};
+static_assert(sizeof(PioneerQ38TokenMatrixPhaseResult)==64,"private fixed DATA observation,not lifecycle authority");
+#endif
 #if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)
 struct PioneerQ38TokenHiddenReadResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,part=0;
@@ -116,6 +127,9 @@ class PioneerQ38TokenNativeOwner {
  bool readoutPending=false,readoutDrained=false,readoutCommandKnown=false;
 #ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
  bool phaseProfileRead=false;
+#endif
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE
+ bool matrixSlotsInitialized=false,matrixPhaseRead[120]={};
 #endif
  uint32_t readoutCursor=0,readoutInput=0,readoutCommand[10]={};
  bool restoring=false,l1Restored=false;
@@ -215,6 +229,11 @@ class PioneerQ38TokenNativeOwner {
  }
 #endif
  template<class IO> bool Fail(IO& io,PioneerQ38TokenRestoreResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE
+ template<class IO> bool Fail(IO& io,PioneerQ38TokenMatrixPhaseResult& r){
+  r.unsafe=1;r.ready=r.valid=0;return FailOwner(io);
+ }
+#endif
  template<class IO> bool Fail(IO& io,PioneerQ38TokenDispatchRestoreResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenPeerRestoreResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
  template<class IO> bool Fail(IO& io,PioneerQ38TokenRootStoreRestoreResult& r){r.unsafe=1;r.ready=0;return FailOwner(io);}
@@ -429,6 +448,13 @@ public:
    if(!Local(io,w,w?unsigned(W::Job):unsigned(C::R::Outer),staging,w?64U:128U,r)
     || !Local(io,w,w?unsigned(W::Doorbell):unsigned(C::R::Doorbell),staging,1,r)
     || !Local(io,w,w?unsigned(W::Status):unsigned(C::R::Status),staging,16,r))return Fail(io,r);
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE
+   // Exact existing saved slot ONLY. All cores remain held;Local verifies
+   // EVERY zero word and source/reset/mapping/ownership before and after.
+   // Freshness becomes true ONLY after this entire runtime prepare closes.
+   if(w && !Local(io,w,PioneerQ38TokenMatrixPhaseData::Address,staging,
+    PioneerQ38TokenMatrixPhaseData::Words,r))return Fail(io,r);
+#endif
    r.boots++;
   }
   r.worker=0;
@@ -454,6 +480,9 @@ public:
   for(unsigned w=0;w<120;w++){r.worker=w;PioneerQ38TokenMemoryResult image;
    if(!Guard(io,w) || !memory->VerifyImage(io,w,image))return Fail(io,r);
   }
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE
+  matrixSlotsInitialized=true;
+#endif
   staged=true;r.staged=1;return true;
  } // empty KV prefix/initial session DATA ONLY;NO boot,model arithmetic,token commit or clean-END capability
  template<class IO> bool BootstrapWorkers(IO& io,PioneerQ38TokenBootstrapResult& r){
@@ -1077,6 +1106,9 @@ public:
  } // immutable generated DATA only;NO current-state reuse,L1/CSR restore,END/disposal or running-ROOT NIU access.
 #ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
 #include "PioneerQ38TokenPhaseProfileRead.inc"
+#endif
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE
+#include "PioneerQ38TokenMatrixPhaseRead.inc"
 #endif
 #if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)
 #include "PioneerQ38TokenHiddenRead.inc"

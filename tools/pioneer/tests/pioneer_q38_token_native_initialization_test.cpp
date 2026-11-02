@@ -2,6 +2,12 @@
 // Actual native factory/lock/phase callbacks/initializers and actual frozen
 // zero RV32 instructions. OS/MMIO/GDDR endpoints are simulated. No synthetic
 // completion fabric,no old embedding/prefix producer and no completed token.
+#if defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE) && !defined(PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_READ_FIXTURE)
+#error Fresh-slot sampler reader requires its own complete original native TEST binding
+#endif
+#if defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS) && !defined(PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_FIXTURE)
+#error Sampler package requires its own complete original native TEST binding
+#endif
 #if defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS) && !defined(PIONEER_Q38_TOKEN_NATIVE_CONSTANT_Q4_FIXTURE)
 #error Constant Q4 package requires its own complete native TEST binding
 #endif
@@ -15,6 +21,9 @@
 #error Corrected output package requires its own complete native TEST binding
 #endif
 #include "pioneer_q38_token_native_fixture_common.h"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_FIXTURE
+#include "pioneer_q38_token_native_matrix_phase_role.h"
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONSTANT_Q4_FIXTURE
 #include "pioneer_q38_token_native_constant_q4_role.h"
 #endif

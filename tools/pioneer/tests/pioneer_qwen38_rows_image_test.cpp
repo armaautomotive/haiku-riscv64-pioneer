@@ -21,6 +21,11 @@ struct RowsMachine:StreamMachine {
 	}
 	unsigned StepLimit() const override { return 1000000000; }
 	virtual unsigned MatrixPhasesPerPanel() const { return 4; }
+	// HOST observation only. Defaults preserve the exact old poison domain.
+	// A distinct native timing profile reserves only its declared metadata
+	// words beyond every supported output group,never a computed row.
+	virtual bool PrivateObservationRow(unsigned row) const { (void)row; return false; }
+	virtual bool UnusedRowValue(unsigned row,uint32_t value) const { (void)row; return value==0x7fc00000; }
 	// Test-only arithmetic premise. Ordinary images still require NIU idle.
 	// A prefetch fixture must independently prove completed current operands
 	// and a pending read into ONLY the disjoint next raw buffer. This never
@@ -102,7 +107,7 @@ struct RowsMachine:StreamMachine {
 				}
 			}
 		}
-		for (unsigned row=groups*16;row<4096;row++) if (buffers[4096+row]!=0x7fc00000) {
+		for (unsigned row=groups*16;row<4096;row++) if (!UnusedRowValue(row,buffers[4096+row])) {
 #ifdef PIONEER_Q38_REF_DIAGNOSTIC
 			fprintf(stderr,"ROW_UNUSED_TAIL_DIAGNOSTIC type%u K%u groups%u row%u value%08x\n",type,inputs,groups,row,buffers[4096+row]);
 #endif

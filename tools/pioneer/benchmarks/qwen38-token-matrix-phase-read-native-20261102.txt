@@ -1,0 +1,176 @@
+PRIVATE POSITIVE HISTORY CLOSED20:24:22UTC: SAME reader33240 and88733
+BOTH ACTUALLY0. Whole18,135B stdout streams match:
+ affe6df6850e0ba490fdc13b6a618382c6e6e24969a1cc6bd290a13ae1af85fb
+Both stderr streams are0B. ALL119 genuine prelaunch slot clears from
+arbitrary NONZERO backing preserve both neighbors;ALL119 actual held+
+drained+doublechecked16word reads yield intervals119/missing0/invalidClock0
+through the real native wrapper/owner/code+boot/source/counter seals.
+No CPU timing packet,ready flag,private-owner state or processor history
+is supplied. No NoC packet,reset or lifecycle transition occurs in readout;
+the SAME original restoration/clock/VM/PCI/hosts/reservation/full-END history
+then closes. CLOCK/OS/NoC/GDDR endpoints are simulated,NOT physical timing.
+
+UNCHANGED independent original CPU comparators BOTH ACTUALLY0:5120 embedding
++5120 first-layer words bit-exact. Whole prefix files and comparator stdout
+match. No tolerance,expected word,reference,diagnostic-only exit or validator
+is changed. First-layer accelerator ROOT reserve/access6528/6516B and maximum
+119peer5360/5348B stay within the old8192B reserves. These are accelerator
+instruction observations,NOT HOST kernel/IRQ/indirect-stack certification.
+This closes positive PRIVATE reader qualification ONLY. Scoped IO fault,
+distinct public/native/USER/exchange and physical requirements below remain;
+no module/client is installed,model speedup or usable Work is claimed.
+This supersedes ALL reader33240/88733 LIVE/incomplete statements below.
+Raw closed native+strict comparator logs are archived beside this report.
+
+UPDATE20:16:10UTC: Base sampler R4main13485/clean1448 BOTH ACTUALLY0,
+complete original-model first-layer/cancel/HOLD/drain/normal-restoration/
+full-END stdout+prefix files match. Unchanged independent CPU comparisons
+BOTH ACTUALLY0:5120 embedding+5120 first-layer words bit-exact. This is NOT
+the new reader's lifecycle pass or physical timing. Reader33240/88733 still
+LIVE. Role72238/10980 BOTH ACTUALLY0:4 positives/797 production-only refusals,
+all sampler+older suites first. Whole main/clean role stdout matches.
+The remaining reader IO/fault/public/USER/hardware requirements below remain.
+
+UPDATE20:10:05UTC:after the full inherited-role recheck was added,
+NON-inspect SDK58949/14975 BOTH ACTUALLY0 and independently reproduce the
+SAME1a0429. Role72238/10980 are authoritatively STILL LIVE,not passes.
+The corrected base original-model R4main13485 has advanced past the former
+Q4 publication/sentinel failure to ROOT80,000,180 instructions/phaseb with
+no error;full first-layer/cancel/full-END and CPU comparison remain pending.
+
+UPDATE20:04:40UTC:SDK audit reruns77237/56710 BOTH ACTUALLY0 and still
+reproduce1a0429;old be835 contains none of the new reader entries. Independent
+CLI46871 ACTUALLY0 matches main56280. Corrected role runs98752/41544 BOTH
+ACTUALLY1:their late parent-shader test exposed that the bare read-role
+header did not recheck every inherited parent. The production read-role
+now includes the COMPLETE constant-Q4 parent role on EVERY active include;
+no gate is relaxed. New role72238/10980 and SDK58949/14975 reruns are LIVE,
+not yet passing claims. All four corrected original-model runs remain LIVE
+as separately listed below;no complete new first-layer/full-END/CPU pass.
+This supersedes the pending77237/56710/46871 and98752/41544 status below;
+older dated text is historical,not a concealed successful qualification.
+
+Fresh-slot+held Q4-job reader:PRIVATE implementation,NOT deployable
+================================================================
+2026-11-02 19:59:47UTC. Goal ACTIVE. Correct usable27B Work and20tok/s
+remain UNMET. Last physical generation diagnostic remains0.16253tok/s,
+NO speedup and unchanged strict numerical failure. This turn performs NO
+Pioneer SSH/GPU/module/relay/OS/network/Assistant/SD/mains/hardware operation.
+Last independent physical health is stable041/gen10/64CPUs/fullRAM at
+18:48:44UTC. Do not infer fresh hardware-state certification from this log.
+
+Actual implementation and limits
+----------------------------------
+Separate PRIVATE READ_NATIVE selection adds exact zero+readback for ALL119
+existing saved84500..8453f slots BEFORE any worker launch. Existing Local
+source/reset/mapping/owner gates surround each write/readback;freshness is
+set only after the ENTIRE original runtime preparation closes. No GDDR
+packet,count,code array,RoPE,quant format,saved extent or clock changes.
+The slot was previously saved/restored but NOT cleared;old metrics could
+not establish a fresh run. Old no-reader private subjects remain unchanged.
+
+One fixed16-word peer read is permitted only after genuine terminal,all120
+owned HOLDs and committed-output drain. Caller supplies ONLY peer1..119,
+not an address,length,nonce,shape or ready hint. Pristine64-byte result,
+zero trusted output,alignment/overflow/alias exclusions,exact complete peer
+code and immutable boot,all-core source/FIFO/counter/HOLD and unchanged
+ROOT-frontier checks surround TWO identical reads. No partial output is
+published;each peer consumes one read attempt. No lifecycle,cursor,restore
+or END transition is made. Any IO/scope/unstable-read failure retains the
+actual owners with no following IO/reset/retry. Stable malformed/absent/
+invalid-clock DATA is reported as such,NOT treated as a model/hardware fault;
+normal cleanup remains mandatory. No public driver/packet/USER/Work entry
+selects this feature yet.
+
+The grammar checks worker and STOP-nonce bounds obtained independently
+from the actual closed terminal/peer journal. It does NOT independently
+predict the exact latest-Q4-job nonce. Same-run freshness instead depends
+on genuine prelaunch clearing+exclusive immutable publisher/source lifetime,
+whose complete instruction history STILL needs qualification below. The
+sample is ONE latest Q4 job's inclusive fetch/decode/matrix+affine intervals,
+NOT whole-model/engine utilization,pure DRAM time,a hardware frequency or TPS.
+
+Frozen independent SDK subject;not a lifecycle pass
+---------------------------------------------------
+Main53884 inspect ACTUALLY0 was an initial59533 candidate BEFORE the final
+second peer-boot check;it is superseded,not deployable. Main87638 and clean
+98106 inspect ACTUALLY0 reproduce whole final candidate:
+ 1a04292b5246421f94f398c7d956459eed732c2aad20cf3f850ea8816235141c
+Only then is that pin frozen. Final NON-inspect59492/92510 BOTH ACTUALLY0
+and reproduce it. ALL14 code arrays+2MiB RoPE+10 inert ABI bodies are exact
+to the complete unchanged be835 sampler native subject,rebuilt FIRST with
+all its ancestors. Added individual frames are<=2048B or unchanged larger
+predecessors;this is NOT whole-kernel/combined-stack qualification. Later
+77237/56710 final reruns add the explicit audit that the old private object
+contains NONE of the new reader entries;their terminal status must still
+be checked separately. No exported driver ABI or CPU model reference is
+present. The device sampler ELF remains d5ba,not a new performance kernel.
+
+Closed local tests
+--------------------
+Pure DATA state-machine+grammar ASan/UBSan tests MAIN+independent CLEAN
+ACTUALLY0:17,136 valid/missing/invalid-clock cases and108,528 malformed,
+wrong-worker/STOP-bound/zero/overflow refusals. Record geometry is statically
+cross-checked against the actual sampler class. This is DATA-only,not
+freshness,HOLD,job-identity or physical clock authority.
+Actual HOST observer methods+actual poison loop MAIN79905 ACTUALLY0;
+clean98614's observer component ACTUALLY0. Exactly rows320..335 remain
+private metadata and all supported computed rows0..255 still get the old
+poison and exact arithmetic comparisons. Unused non-metric words retain
+the old poison-only guard;metric words must equal initial/raw publisher
+observations,not arbitrary values. 4,352 changed/unobserved/partial-record
+refusals pass. No physical byte,CPU product or native-owner history is
+supplied by this observer-only test. Old RowsMachine store bounds remain
+unchanged;only the new HOST profile handles exact publisher PC68178 stores.
+
+Main56280 reader CLI ACTUALLY0:32 incomplete/duplicate/shortened/Work
+requests+29 producer overrides refused BEFORE source/compiler/output IO,
+ALL older sampler CLI+ROM-bridge checks FIRST. Independent clean46871 still
+needs its actual terminal observed. Old private mode is legitimately
+available when the OPTIONAL reader is omitted;its SDK object has no reader
+entry/type. Initial role suites28843/98614 ACTUALLY1 because their TEST
+incorrectly demanded refusal for that legitimate omission. Corrected test
+now positively requires no-reader selection0,with no production gate,
+reference,tolerance or expected model result relaxed. New98752/41544 role
+suites are LIVE;do not advertise a final role pass until they close.
+
+Original-model histories remain UNQUALIFIED
+--------------------------------------------
+Earlier sampler R3main1589/clean84772 ACTUALLY1 at the old unused-tail
+sentinel assertion after the new record was published. Code inspection
+also found the old HOST setup overwrote the private slot between jobs.
+Those old rows checks are repaired only for the exact metadata footprint;
+model outputs and FP64 bounds are unchanged. Baseline sampler R4main13485
+and clean1448 are LIVE with the corrected shared backing/observer,not yet
+complete first-layer/cancel/119STOP/120HOLD/drain/full-END or CPU acceptance.
+
+Reader first attempt32429 ACTUALLY1 at that SAME old HOST tail assertion.
+It had already passed genuine851-source initialization,1010 zero jobs,
+ALL119 exact-slot clearing from arbitrary NONZERO bytes with BOTH adjacent
+words unchanged,virgin119 boots,original embedding and first projection.
+It is NOT a reader/full-END pass. Fresh corrected reader main33240/clean
+88733 have been dispatched LIVE;each repeats the ENTIRE original same-open
+model/virgin119+ROOT/first-layer/cancel/STOP/HOLD/drain/normal restoration/
+END history. No saved R1/R3 processor/owner prefix is transplanted. Observe
+SAME handles to ACTUAL terminal,not a timeout or partial progress message.
+HOST clock,OS,NoC and GDDR endpoints are simulated;no result is physical time.
+
+Live local directories:
+ /private/tmp/pioneer-q38-token-matrix-phase-native-20261102-a (R4base)
+ /private/tmp/pioneer-q38-token-matrix-phase-native-clean-20261102-a (R4base)
+ /private/tmp/pioneer-q38-matrix-read-native-20261102-a (reader R2)
+ /private/tmp/pioneer-q38-matrix-read-native-clean-20261102-a (reader)
+All pending statuses above are as of19:59:47UTC;they are not passing claims.
+
+Required next work,objective unchanged
+--------------------------------------
+Close the SAME four original-model handles and compare actual first-layer
+snapshots against unchanged independent original CPU traces. Close repaired
+role/CLI/SDK suites;archive actual failures as failures. Add/read-test scoped
+IO/clock/alias/source-loss faults with no following IO after retention.
+Then qualify a distinct public/native packet+USER reader,exact exchange and
+whole independent module/client builds before ANY physical use. Existing
+db03 module/client/helper cannot select this feature. After actual on-card
+inner timings,target dominant preparation/tensor/wait work with measured
+end-to-end improvement. No20tok/s forecast or usable Assistant Work is
+inferred from an offline image,compiler count,profile record or green unit.

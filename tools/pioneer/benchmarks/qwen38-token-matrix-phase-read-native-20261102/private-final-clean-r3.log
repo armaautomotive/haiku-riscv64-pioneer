@@ -1,0 +1,25 @@
+PASS whole old feaa PRIVATE+a0f0 RETIRED PUBLIC objects byte-exact FIRST;all14 firmware arrays+2MiB RoPE unchanged/all10 renamed ABI bodies/wrappers exact and conventional ABI absent/no Work,CPU reference or HOST engines;static frames<=2048 or unchanged larger predecessor;NOT whole kernel/IRQ/indirect stack proof
+observer_frames [('PioneerQ38TokenNativeOwner::ObserveCommittedFrontier<PioneerSessionIO>(PioneerSessionIO&, PioneerQ38TokenFrontierResult&)::<lambda(unsigned int)>', 80), ('bool PioneerQ38TokenNativeOwner::ObserveCommittedFrontier(IO&, PioneerQ38TokenFrontierResult&) [with IO = PioneerSessionIO]', 208)]
+22a862c26595460dcd2c5e720bbe24079d2cb3a2b371e25d11337602dbbff5c3 frontier-failure-detail-NODRV.o
+PRIVATE_BUILD_ONLY opt-in cached first-failure DATA;NO installable driver,retired010c retry,model,lifecycle,physical speed or Assistant Work qualification
+PASS entire old feaa/private+a0f0/retired-public+22a/QFD1 private reproduce FIRST;all14 firmware arrays+2MiB RoPE/all10 renamed ABI bodies exact;conventional ABI absent/no Work,CPU reference or HOST engine;static frames<=2048 or unchanged larger predecessor;NOT whole kernel/IRQ/indirect stack proof
+QFL1_observer_frames [('PioneerQ38TokenNativeOwner::ObserveCommittedFrontier<PioneerSessionIO>(PioneerSessionIO&, PioneerQ38TokenFrontierResult&)::<lambda(unsigned int)>', 80), ('bool PioneerQ38TokenNativeOwner::ObserveCommittedFrontier(IO&, PioneerQ38TokenFrontierResult&) [with IO = PioneerSessionIO]', 208)]
+3593260a72978b739120eb26a9ba866a622f7a6369b0ffbda4e4bce6c8b518e3 frontier-failure-link-NODRV.o
+FROZEN_QFL1_PRIVATE_BUILD_ONLY;NO installable ABI,native lifecycle,hardware cause or TPS qualification
+PASS old3593 QFL1+22a/feaa/a0f0 whole controls FIRST/all14 new package arrays authenticated/ONLY RootText one instruction changes/13 other arrays+2MiB RoPE+10 inert ABI bodies exact/no conventional ABI,old program namespace,CPU model reference or Work;static frames<=2048 or unchanged larger predecessor;NOT whole-kernel/combined-stack proof
+b688d89b569495d4d027b3880f7e28f2e1ece15974c3d10823f0cfa6d7c36a30 batched-output-closure-NODRV.o
+PRIVATE_BUILD_ONLY corrected FINAL-output ROOT;NO native lifecycle,installation,model,hardware,Work or TPS grant
+PASS ENTIRE oldb688 corrected-output+QFL1 controls FIRST/all14 new arrays authenticated/ONLY complete PeerFront+PeerGdn change/ROOT+12 other arrays+2MiB RoPE+10 inert ABI bodies exact/unchanged53913832B journal geometry/no conventional ABI,old namespace,CPU model reference or Work/static frames<=2048 or unchanged larger predecessor;NOT whole-kernel/combined-stack proof
+de2f80f0419a7cbbaf4082db763de7737959e13aab6dee58f75b63a90bcce3ae wide-gdn-NODRV.o
+PRIVATE_BUILD_ONLY returning wide GDN;NO native lifecycle,installation,original-model,physical,Work,TPS or speed grant
+PASS ENTIRE oldde2 returning-wide-GDN+ancestors FIRST/all14 new arrays authenticated/ONLY complete RootText+RootAux change/12 other arrays+2MiB RoPE+10 inert ABI bodies exact/unchanged53913832B journal geometry/no conventional ABI,old namespace,CPU model reference or Work/static frames<=2048 or unchanged larger predecessor;NOT whole-kernel/combined-stack proof
+2076cee83e0fc5e06914d55c25528752488166399e36a4eedef08fd406278d41 token-phase-profile-NODRV.o
+PRIVATE_BUILD_ONLY full-token phase timing;NO native lifecycle,installation,original-model,physical,Work,TPS or speed grant
+PASS ENTIRE old2076 phase-timing+ancestors FIRST/all14 new arrays authenticated/ONLY complete PeerFront+PeerFetch+PeerAffine+PeerText change/10 other arrays+2MiB RoPE+10 inert ABI bodies exact/unchanged53913832B journal geometry/no conventional ABI,old namespace,CPU model reference or Work/static frames<=2048 or unchanged larger predecessor;NOT whole-kernel/combined-stack proof
+5e2c95a3887920990a3ef0b80cfd0057a68bc95b645f03476c7869d9dd622e63 token-constant-q4-NODRV.o
+PRIVATE_BUILD_ONLY full-worker constant Q4 issue;NO native lifecycle,installation,original-model,physical,Work,TPS or speed grant
+PASS entire old5e2 constant-Q4 PRIVATE+ancestors FIRST/all14 new arrays authenticated/ONLY five complete peer sections change/9 others+2MiB RoPE+10 inert ABI bodies exact/unchanged53913832B journal/no conventional ABI,old namespace,CPU oracle or Work/static frames<=2048 or unchanged predecessors;NOT whole-kernel stack qualification
+be835676df7838a238ef11cdd1941ca6489b6c54b26117ae462307ebdbe9f36f token-matrix-phase-NODRV.o
+PRIVATE_BUILD_ONLY complete returning sampler;NO held sampler readout,lifecycle,model,physical,Work,TPS or deployment grant
+PRIVATE_BUILD_ONLY entire unchanged be835 sampler+ancestors FIRST/all code arrays+RoPE+10 inert ABI bodies exact/fresh16word peer-slot zero+readback/held-drained-doublechecked reader/static frames<=2048 or unchanged predecessors;NOT lifecycle,whole-stack,model,physical,Work,TPS or deployment qualification
+1a04292b5246421f94f398c7d956459eed732c2aad20cf3f850ea8816235141c token-matrix-phase-read-NODRV.o

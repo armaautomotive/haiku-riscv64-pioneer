@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // Immutable expected-ROM DATA only. No ISA engine,device or model products.
-#ifdef PIONEER_Q38_PROGRAM_DATA_BRIDGE_TEST_CONSTANT_Q4
+#ifdef PIONEER_Q38_PROGRAM_DATA_BRIDGE_TEST_MATRIX_PHASE
+#define PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS 1
+#include "../PioneerQ38TokenMatrixPhasePrograms.h"
+#elif defined(PIONEER_Q38_PROGRAM_DATA_BRIDGE_TEST_CONSTANT_Q4)
 #define PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS 1
 #include "../PioneerQ38TokenConstantQ4Programs.h"
 #elif defined(PIONEER_Q38_PROGRAM_DATA_BRIDGE_TEST_TOKEN_PHASE)
@@ -21,7 +24,10 @@
 #include <cstdio>
 #include <initializer_list>
 int main(){
-#ifdef PIONEER_Q38_PROGRAM_DATA_BRIDGE_TEST_CONSTANT_Q4
+#ifdef PIONEER_Q38_PROGRAM_DATA_BRIDGE_TEST_MATRIX_PHASE
+ namespace P=PioneerQ38TokenMatrixPhasePrograms;
+ static_assert(P::MatrixPhase==1 && P::MatrixPhaseVersion==2 && P::ConstantQ4Issue==1 && P::TokenPhaseProfile==1,"actual complete current sampler ROM DATA");
+#elif defined(PIONEER_Q38_PROGRAM_DATA_BRIDGE_TEST_CONSTANT_Q4)
  namespace P=PioneerQ38TokenConstantQ4Programs;
  static_assert(P::ConstantQ4Issue==1 && P::TokenPhaseProfile==1 && P::WideGdn==1 && sizeof(P::PeerGdn)==35944,"actual constant Q4 peer and timing ROOT package ROM DATA");
 #elif defined(PIONEER_Q38_PROGRAM_DATA_BRIDGE_TEST_TOKEN_PHASE)

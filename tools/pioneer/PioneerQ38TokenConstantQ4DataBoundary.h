@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38TokenMatrixPhaseDataBoundary.h"
 // Rechecked on every inclusion; a new full code package is not an old
 // native selector, an oracle, a passing model result or an Assistant target.
 #ifndef PIONEER_Q38_TOKEN_CONSTANT_Q4_SELECTION_H
@@ -28,7 +29,9 @@ enum {PioneerQ38TokenConstantQ4DataSelection=0};
  || defined(PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_FAULT_PROGRAMS_H) \
  || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_PROGRAMS_H) \
  || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS_H) \
- || (defined(PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H) && !defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS_H))
+ || (defined(PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H) && !defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS_H) \
+  && !(defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS) && PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS == 1 \
+   && defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS_H)))
 #error Constant Q4 DATA cannot coexist with old arrays or a selected old namespace
 #endif
 #if defined(__FAST_MATH__) || defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_CLIENT) || defined(PIONEER_Q38_Q4_CONSTANT_ISSUE_IMAGE) \

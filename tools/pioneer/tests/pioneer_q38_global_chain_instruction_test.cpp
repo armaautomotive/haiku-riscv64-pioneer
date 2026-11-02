@@ -142,7 +142,7 @@ struct GlobalChainPeer:NewCohortPeer {
    bytes->ReadRaw(route,base+t*unsigned(tile.size()),tiles[t].data(),unsigned(tile.size()));
    packets.push_back({base+t*unsigned(tile.size()),route,0x90000,unsigned(tile.size()),int(t)});
   }
-  Poison();PoisonTail();for(unsigned i=0;i<4096;i++)buffers[4096+i]=0x7fc00000;active=true;
+  Poison();PoisonTail();for(unsigned i=0;i<4096;i++)if(!PrivateObservationRow(i))buffers[4096+i]=0x7fc00000;active=true;
  }
  void Receive(){
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
