@@ -1,11 +1,17 @@
 #!/bin/sh
-# Exact stable041 <-> failure-detail5920 ONLY;tag75 is NOT code identity.
+# RETIRED APPLY:5920 already captured QFD1/check5/ROOT fault51465431.
+# Preserve only exact failure-detail5920 -> stable041 guarded restoration.
+# Historical two-way source is an INERT hash-pinned synthetic-test fixture.
 # NEVER installs retired010c/34322 or private22a. Diagnostic,NOT Work.
 # No GPU job, force unload, reset,
 # retry, cold-latch clearing or automatic rollback after uncertain replacement.
 set -eu
 [ "$#" = 1 ] || exit 2
-case "$1" in --apply|--restore) mode=$1;; *) exit 2;; esac
+case "$1" in
+ --apply) echo STOP_5920_DIAGNOSTIC_ALREADY_OBSERVED_NO_REAPPLY >&2;exit 1;;
+ --restore) mode=$1;;
+ *) exit 2;;
+esac
 [ "$(uname -s)" = Haiku ] && [ "$(id -u)" = 0 ] || exit 2
 stage=/boot/home/pioneer-p100a-frontier-failure-detail-20261102-a
 installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe

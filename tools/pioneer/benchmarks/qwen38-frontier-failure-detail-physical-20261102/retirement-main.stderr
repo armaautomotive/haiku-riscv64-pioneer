@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_frontier_failure_detail_exchange_test.py", line 126, in <module>
+    assert not (stage/'stable041.backup').exists() and not (stage/'driver.incoming').exists()
+AssertionError

@@ -1,0 +1,30 @@
+PIONEER-P100A: probe open ready
+PIONEER-P100A: probe open ready
+PIONEER-P100A: profile root node begin
+PIONEER-P100A: profile card node search begin
+PIONEER-P100A: profile stage 1 card node found
+PIONEER-P100A: profile stage 2 cached card identity checked
+PIONEER-P100A: profile root peers checked
+PIONEER-P100A: profile root PCI reads begin
+PIONEER-P100A: profile stage 3 root PCI reads complete
+PIONEER-P100A: profile stage 4 FDT identity checked
+P236:SG2042 resource range 0 type 0x2 host 0x4810800000 size 0x400000
+P236:SG2042 resource range 1 type 0x1 host 0x4890000000 size 0x30000000
+P236:SG2042 resource range 2 type 0x1 host 0x48c0000000 size 0x10000000
+P236:SG2042 resource range 3 type 0x1 host 0x4900000000 size 0x200000000
+P236:SG2042 resource range 4 type 0x1 host 0x4b00000000 size 0x100000000
+P236:SG2042 resource ranges complete
+PIONEER-P100A: profile stage 5 host windows checked
+PIONEER-P100A: profile stage 6 validated; no PCI/MMIO writes
+PIONEER-P100A: ARC scratch attempt NoC0 (8,0), TLB 201, read-only target
+PIONEER-P100A: bounded CSM telemetry attempt, whitelisted tags only
+PIONEER-P100A: enabled physical Tensix (1,2), read-only reset-state attempt
+PIONEER-P100A: seven-bank DRAM read-only route transaction, no core start/DMA/flash
+PIONEER-P100A: read-only host-transfer route/inbound/SII audit; no DMA or bus mastering
+PIONEER-P100A: read-only PCIe pending/firmware HDMA ch0 audit; no DMA or bus mastering
+P100A_Q38_CLOCK begin1 state1 mhz800/1350 mode3/3 messages3 uncertain0;NORMAL_FIRMWARE_ONLY
+PIONEER-P100A:54 RETAIN end=0 close=0 worker=0 status=00000000/00000000/00000000 prepared=120 booted=0 closed=0;NO_LATER_CARD_IO
+PIONEER-P100A:54 DETAIL 00000000/00000000/00000000/00000000;ALREADY_READ_VALUES_ONLY
+PIONEER-P100A:54 RETAIN end=0 close=0 worker=0 status=00000000/00000000/00000000 prepared=120 booted=0 closed=0;NO_LATER_CARD_IO
+PIONEER-P100A:54 DETAIL 00000000/00000000/00000000/00000000;ALREADY_READ_VALUES_ONLY
+PIONEER-P100A: probe open ready

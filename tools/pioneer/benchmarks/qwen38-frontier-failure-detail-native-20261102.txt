@@ -1,10 +1,13 @@
 Failure-detail native first-layer/full-END + public BUILD:CLOSED
 =================================================================
-ROLLOUT UPDATE:separate physical5920 probe55172 is now LIVE. See
+ROLLOUT UPDATE:separate physical5920 probe55172 ACTUALLY exits1. See
 qwen38-frontier-failure-detail-physical-20261102.txt BEFORE ANY Pioneer
-operation. Its ENTIRE hash/Open/upload/execution/cleanup lifetime is
-protected;the historical no-new-GPU-action checkpoint below is superseded
-only by that separately recorded rollout,NOT by an inferred success.
+operation. Already returned QFD1 check5 reports the existing ROOT fault
+marker51465431,not a token/rate or underlying cause. Card WAS quarantined;
+new-power-epoch recovery COMPLETE,stable041/gen2 independently idle with
+64CPUs/fullRAM. No physical speedup or numerical acceptance follows.
+Both local and remote5920 APPLY routes are now disabled;active helper85c8
+is RESTORE-only. Old99e6 is recoverably archived/inert,not execution advice.
 
 2026-11-02. Goal ACTIVE;usable27B Work and20tok/s UNMET. No new physical
 model test or inference rate in this checkpoint. Last completed diagnostic

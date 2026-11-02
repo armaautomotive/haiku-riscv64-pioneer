@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-layer29-emitted-clean-20261102.3OnwpP/tools/pioneer/tests/pioneer_q38_frontier_failure_detail_exchange_test.py", line 126, in <module>
+    assert not (stage/'stable041.backup').exists()
+AssertionError

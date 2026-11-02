@@ -1,4 +1,126 @@
-5920 failure-detail probe:LIVE55172;NO result or throughput yet
+5920 failure-detail probe:CLOSED failure;stable041 restored
+============================================================
+2026-11-02 06:54:03UTC. SAME55172 ACTUALLY exits1,observed06:31:17UTC.
+This supersedes ALL historical LIVE/protected/no-result statements below.
+No protected physical process remains. Quarantine was respected throughout
+the failed epoch;ONLY after a controlled new power epoch was stable041
+restored. Do NOT reapply5920 or retry retired010c/34322. Goal ACTIVE;
+usable27B Work and20tok/s remain UNMET.
+
+New information from ALREADY returned failure DATA
+-------------------------------------------------
+The original GGUF SHA and complete851 layout authenticate before Open;
+all19399024640 learned bytes upload and START is acknowledged. The FIRST
+frontier Observe failsB_DEV_NOT_READY/8000a00c. There are NO token records,
+complete END or TPS. Raw reply deliberately has consistent_shape0 because
+the old v1 successful shape refuses the new nonzero diagnostic words.
+Global packet words26..31 are:
+ 31444651 00000005 31545351 51465431 00000000 00000003
+QFD1/check5/marker31545351/error51465431/countUNKNOWN/known-mask3.
+The startup marker was read successfully and is correct. The EXISTING
+error-word read succeeds and returns nonzero51465431. Counter was NOT read.
+Initial Sources and marker checks passed;this is NOT evidence that later
+checks would pass. No further accelerator operation or read was added.
+
+The exact existing fault stub blackhole_qwen38_token_fault_start.S writes
+the saved LINK to75460,then publishes51465431 at75448 under a fence and
+parks. This is an explicit ROOT software fault publication,NOT a hardware
+error code,failed instruction identity,root-cause diagnosis,completed
+layer count or memory/authenticity test. No saved LINK was read by this
+diagnostic;do NOT invent it from phase12 or the zero guard cursor. The
+next fault-localization observation must preserve quarantine/no-following-
+IO rules rather than reading extra registers after this failure.
+
+Unchanged strict f8 reader ACTUALLY exits2 with RECORD_REFUSAL because
+the stderr exceeds the required zero length. No failed packet was stripped
+and no successful rate inferred. Existing serial log has two cached54
+RETAIN/DETAIL messages and NO_LATER_CARD_IO;these do not locate the guard.
+Only a clearly labelled filtered project-tagged serial excerpt is saved;
+it is NOT a full raw UART artifact or independent hardware provenance.
+
+Independent POST-terminal CPU-only health ACTUALLY exits0:whole5920 exact,
+tag75/gen15,cold1/active_owner1,quiesced0/open1/guard1,no compute parent,
+64CPUs/full137034936320B/free133550252032B. Haiku remains SSH-responsive.
+No hot restore,force unload,reset,unreserve or additional GPU test occurs.
+Authorized OFF63630 ACTUALLY exits0,7-second hold,stderr0B,started06:33:07UTC.
+After more than four minutes,SSH45648 ACTUALLY exits255/connect timeout,
+stdout0B;no contradictory powered-on evidence. ON29093 ACTUALLY exits0,
+0.75-second pulse,stderr0B. Exactly ONE OFF and ONE ON were sent;relay
+contact state was not substituted for board power evidence.
+
+New Linux boot is independently confirmed6.1.31/riscv64,boot ID
+a174f1d7-a5f6-4288-97c5-724928224183,CPUs0-63,MemTotal131976904KiB.
+Complete19404B pinned SD-free helper was read before use;SHA9cfc6dc3...
+and root0:0:700:1 metadata exact. Freshq38-qfd-recover-20261102-a
+prepare45155 ACTUALLY exits0;its stderr contains the recorded kexec warning
+"No cmdline or append string provided",NOT a silent clean-stderr claim.
+Boot11208 ACTUALLY exits0,stderr0B;all input hashes recheck. Explicit
+64CPU/memory128-spin-idle7-top-page-nosd-control,NO journal override,
+normal Linux shutdown/default NVMe boot unchanged. Existing UART logger
+was never reopened or reconfigured.
+
+First Haiku SSH74828 times out;observed local link-up and later fresh SSH
+both establish normal boot progression WITHOUT another power pulse. Fresh
+pre-restore SSH ACTUALLY0:exact installed/staged5920,newgen1/cold0/owner0/
+quiesced0/open1/guard1,helper99e6/backup041/adminb0c/guardd1ce exact with
+safe root one-link modes,no compute parent,64CPUs/full137034936320B.
+Only exact99e6 --restore12667 ACTUALLY exits0:5920/gen1 quiesce+close,
+stable041/tag12/gen2 verified. Independent fresh FINAL SSH ACTUALLY0:
+whole installed041/unchanged staged5920/helper99e6/backup/admin/guard
+exact,gen2/cold0/quiesced0/owner0/open1/guard1,no compute parent,
+64CPUs/max137034936320B/free133810216960B. Both final stderr files0B.
+No new inference follows recovery. No mains,SD,hardware connection,
+Assistant,firmware,boot/kernel source or network configuration change.
+The5920 APPLY route is now RETIRED in local source AND the remote stage;
+its guarded RESTORE path and original synthetic controls are preserved.
+
+Prevent duplicate diagnostic installation
+----------------------------------------
+Current exchange source SHA
+85c8136bebdb43a8d5d98f02a9e999e996e2b390e904ccf1235bdc38fd590d8c
+refuses --apply BEFORE uname/id/hash/status/lock/copy/platform access.
+The exact original99e651a9 source is kept as a hash-pinned INERT .txt
+test fixture,never a replacement active installer. Main55020/clean30154
+ACTUALLY exit0. EACH first runs ALL old2valid/58refused endpoint histories,
+then current1valid/59refused,including30 APPLY cases with zero platform/
+admin calls,untouched installed bytes and no created lock/backup/incoming.
+The deliberately existing stale incoming sentinel is preserved unchanged.
+RESTORE still tests all original owner/cold/generation/hash/symlink/parent/
+quiesce/uncertain-wait refusals and no automatic rollback. Both final
+stderr files are empty,including the inherited parent/child test output;
+raw log paths differ,not a claim of byte-identical complete histories.
+These are synthetic FS/API endpoints,NOT another real driver exchange.
+
+Initial main12078/clean73531 each ACTUALLY exit1 in the NEW retirement
+expectation:it wrongly expected the intentionally pre-existing stale
+incoming fixture to be absent. Production early refusal behaved correctly.
+The expectation now requires its exact original stale bytes to survive;
+no production guard was relaxed. Initial logs are retained,not overwritten.
+
+Fresh remote prestage confirms stable041/gen2/idle and exact99e6 helper,
+both new helper and archive filenames absent. Limited-rate SCP ACTUALLY0;
+separate full readback ACTUALLY0 and whole bytes compare exactly to85c8.
+Only after regular/root-one-link/non-writable/hash/idle checks,the old
+helper is recoverably renamed inside its own private stage to
+ RETIRED-original-two-way-exchange-99e651a9.txt
+and verified85c8 takes the old active script pathname. That SSH ACTUALLY0,
+stderr0B:whole active85c8/archived99e6/installed041 exact;stable tag12/gen2/
+cold0/owner0/quiesced0/open1/guard1 unchanged. No driver/GPU/clock/OS/SD
+operation or data erasure occurs in retirement. Old99e6 remains evidence,
+NOT a helper to execute. Future restoration may use only the guarded85c8
+source with matching actual installed5920 and healthy new-epoch state.
+
+Existing offboard full-model17008/75574 are separately confirmed LIVE at
+06:54:03UTC. They are NOT the terminal physical55172 and were not restarted.
+Full-model correctness and speed remain outstanding. The next on-card
+fault-localization experiment needs separately qualified pre-failure DATA;
+never retrieve the saved LINK by reading the already quarantined old card.
+Raw SSH CR endings and process-table trailing padding are deliberately
+preserved in the archived evidence;default Git whitespace warnings there
+are not edited away. Authored code/docs/fixture receive the normal strict
+whitespace check separately from the raw-evidence-aware whole diff check.
+
+Historical launch ledger (superseded;retain provenance)
 ================================================================
 2026-11-02 06:04:28UTC. Goal ACTIVE;usable27B Work and20tok/s UNMET.
 THIS is a protected actual Pioneer client lifetime,NOT the closed offboard
