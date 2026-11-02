@@ -42,7 +42,15 @@ foreign=old['foreign']|set(re.findall(r'defined\(([A-Z_][A-Z0-9_]*)\)',boundary.
 foreign-=required|{guard,'PIONEER_Q38_TOKEN_MATRIX_PHASE_DATA_SELECTION_H'}
 for key in sorted(foreign):
     for value in ('0','1'):
-        check({**base,key:value},False)
+        if key=='PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE' and value=='1':
+            # This is the separately implemented legitimate optional PRIVATE
+            # reader,not a foreign role. New public-boundary checks mention
+            # its name too;do not misclassify the existing extension as an
+            # expected compiler refusal. Defined0 and late selection STILL
+            # fail,and the original no-reader SDK subject remains unchanged.
+            check({**base,key:value},True,include(selected)
+                  +'static_assert(PioneerQ38TokenMatrixPhaseDataSelection==2 && PioneerQ38TokenMatrixPhaseReadSelection==1);\n')
+        else:check({**base,key:value},False)
         check(base,False,include(role)+'#define '+key+' '+value+'\n'+include(role))
 for flag in (primary,context):
     missing=base.copy();del missing[flag]

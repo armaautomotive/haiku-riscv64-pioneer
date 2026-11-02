@@ -1,0 +1,8 @@
+Assertion failed: (scope.Context()==&c), function operator(), file pioneer_q38_token_native_matrix_phase_read_checks.inc, line 56.
+Assertion failed: (got==child && WIFEXITED(status) && WEXITSTATUS(status)==0), function operator(), file pioneer_q38_token_native_matrix_phase_read_checks.inc, line 66.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py", line 659, in <module>
+    subprocess.run([str(binary), *sys.argv[1:]], check=True,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-token-native-init-8zu8s3ea/test', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/qualification-inputs/qwen38-state-zero-20261030', '--execution-end', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/qualification-inputs/mixed-worker-20261030', '/private/tmp/pioneer-q38-token-matrix-phase-main-20261102-a/image-final-r2', '/private/tmp/pioneer-q38-matrix-reader-faults-20261102.zVCFLD/main-r2-prefix.bin']' died with <Signals.SIGABRT: 6>.

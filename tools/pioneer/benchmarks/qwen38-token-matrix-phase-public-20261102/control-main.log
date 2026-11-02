@@ -1,0 +1,6 @@
+PASS actual192B matrix packet+extracted adapter+2 sealed-nonce metadata methods:1072 MOCK ready,invalid-data,unsafe,refused,bad-STOP positives/1741 malformed request,length,scope,metadata refusals/19 request+locked reply-copy+internal inconsistency faults/immutable snapshot+same lock through copy/NO candidate-derived STOP/unsafe retains once per adapter path;MOCK native reader,lifecycle,FD,OS,quarantine,NOT genuine native owner,physical timing,model,Work or deployment proof
+ACTUAL_MATRIX_SOURCE actual_matrix_result.inc 4192ed62005bc2efca1bce5beced1c877656677ce19aa5c7857dc8d303e79251
+ACTUAL_MATRIX_SOURCE actual_matrix_nonce_owner.inc fcd78474813a0e93bc3c678d5108f8f65d26db09a3981c8d29856fe9a8ad0079
+ACTUAL_MATRIX_SOURCE actual_matrix_nonce_state.inc 66d69bf3ba55acc0d6327296113d3d03083fc52bc539b0fffb26598c7072c4f4
+ACTUAL_MATRIX_SOURCE actual_matrix_control.inc 7cd24ac6761f1edea1e4d345606b1098adcbd8f806e7079070c908723f472050
+MOCK FD,scope,lifecycle,held read,STOP source and retention;NOT genuine native/model/physical timing or deployment qualification

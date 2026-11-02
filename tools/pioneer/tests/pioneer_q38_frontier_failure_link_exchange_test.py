@@ -12,12 +12,15 @@ import tempfile
 import sys
 
 here=pathlib.Path(__file__).resolve().parent
-assert sys.argv[1:] in ([],['--qualified-original-endpoints'],['--batched-output-closure-endpoints'],['--wide-gdn-endpoints'],['--token-phase-endpoints'],['--constant-q4-endpoints']) and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
+assert sys.argv[1:] in ([],['--qualified-original-endpoints'],['--batched-output-closure-endpoints'],['--wide-gdn-endpoints'],['--token-phase-endpoints'],['--constant-q4-endpoints'],['--matrix-phase-endpoints']) and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
+matrix_phase=sys.argv[1:]==['--matrix-phase-endpoints']
 constant_q4=sys.argv[1:]==['--constant-q4-endpoints']
 token_phase=sys.argv[1:]==['--token-phase-endpoints']
 output_closure=sys.argv[1:]==['--batched-output-closure-endpoints']
 wide_gdn=sys.argv[1:]==['--wide-gdn-endpoints']
-if constant_q4:
+if matrix_phase:
+    subprocess.run([sys.executable,str(pathlib.Path(__file__).resolve()),'--constant-q4-endpoints'],check=True)
+elif constant_q4:
     subprocess.run([sys.executable,str(pathlib.Path(__file__).resolve()),'--token-phase-endpoints'],check=True)
 elif token_phase:
     subprocess.run([sys.executable,str(pathlib.Path(__file__).resolve()),'--wide-gdn-endpoints'],check=True)
@@ -33,6 +36,8 @@ assert hashlib.sha256(original).hexdigest()=='e37c189e55c63b9a358aad4732d5e9122b
 retired=not sys.argv[1:]
 if retired:
     subprocess.run([sys.executable,str(pathlib.Path(__file__).resolve()),'--qualified-original-endpoints'],check=True)
+elif matrix_phase:
+    production=(here.parent/'pioneer_q38_token_matrix_phase_exchange.sh').read_text()
 elif constant_q4:
     production=(here.parent/'pioneer_q38_token_constant_q4_exchange.sh').read_text()
 elif token_phase:
@@ -54,8 +59,12 @@ if output_closure:pins['candidate']='7c85898c5591115521e5f38c9ee546da7909a1da82b
 if wide_gdn:pins['candidate']='b8c0d49855490e756dfe1c49bed7933a20f2a3afea19436b37e3b4717417b8ed'
 if token_phase:pins['candidate']='0f2066ca48b24ae36550e57dd5334aa29645deb7f65dc8fd7bbbb9629f674e86'
 if constant_q4:pins['candidate']='db032591d905a30debf1e9a36f5990301e3db9ba40bfa8cf945677e3f54e8106'
+if matrix_phase:
+    pins['candidate']='5ae9d64ae4757c4635e4bbc6f59cf8350e8f549427e99e1e99e5897092616e39'
+    pins['client']='559f986ddc88bbc2ff8cbe034dcda1546d385b366177f027a245452e605c7a22'
 candidate_name='tenstorrent_pci_probe-TOKEN-PHASE34-DIAGNOSTIC-ONLY' if token_phase else 'tenstorrent_pci_probe-WIDE-GDN34-DIAGNOSTIC-ONLY' if wide_gdn else 'tenstorrent_pci_probe-BATCHED-OUTPUT-CLOSURE34-DIAGNOSTIC-ONLY' if output_closure else 'tenstorrent_pci_probe-FRONTIER-PREERROR-LINK-DIAGNOSTIC-ONLY'
 if constant_q4:candidate_name='tenstorrent_pci_probe-TOKEN-CONSTANT-Q4-34-DIAGNOSTIC-ONLY'
+if matrix_phase:candidate_name='tenstorrent_pci_probe-TOKEN-MATRIX-PHASE-34-DIAGNOSTIC-ONLY'
 admin_source='''#!/usr/bin/env python3
 import os,pathlib,sys
 p=pathlib.Path(os.environ['FIXTURE_ROOT']);fault=os.environ['FIXTURE_FAULT'];args=sys.argv[1:]
@@ -70,6 +79,7 @@ if args[0]=='--quiesce':
  assert args[1]==('2026102100010012' if os.environ['FIXTURE_MODE']=='--apply' else '2026103100010075')
  if fault=='quiesce':sys.exit(1)
  if fault=='changed_during_quiesce':(p/'bin/tenstorrent_pci_probe').write_bytes(b'changed')
+ if fault=='client_changed_during_quiesce':(p/'stage/pioneer-q38-TOKEN-MATRIX-PHASE-34-DIAGNOSTIC-ONLY').write_bytes(b'changed')
  sys.exit(0)
 if args[0]=='--wait':
  assert args[1]==('2026103100010075' if os.environ['FIXTURE_MODE']=='--apply' else '2026102100010012')
@@ -102,16 +112,21 @@ cases += [(name,'--apply') for name in ('stable','candidate','guard','admin','in
  'private22a_candidate','private22a_installed',
  'retired5920_candidate','retired5920_installed','private3593_candidate','private3593_installed')]
 cases += [('field'+str(i),'--apply') for i in range(9)]
-if output_closure or wide_gdn or token_phase or constant_q4:
+if output_closure or wide_gdn or token_phase or constant_q4 or matrix_phase:
     cases += [(fault,'--apply') for fault in ('retired96a0_candidate','retired96a0_installed')]
-if wide_gdn or token_phase or constant_q4:
+if wide_gdn or token_phase or constant_q4 or matrix_phase:
     cases += [(fault,'--apply') for fault in ('old7c85_candidate','old7c85_installed','privatede2f_candidate','privatede2f_installed')]
-if token_phase or constant_q4:
+if token_phase or constant_q4 or matrix_phase:
     cases += [(fault,'--apply') for fault in ('oldb8c0_candidate','oldb8c0_installed','private2076_candidate','private2076_installed')]
-if constant_q4:
+if constant_q4 or matrix_phase:
     cases += [(fault,'--apply') for fault in ('old0f20_candidate','old0f20_installed',
         'private5e2c_candidate','private5e2c_installed','object657a_candidate','object657a_installed',
         'user3edc_candidate','user3edc_installed')]
+if matrix_phase:
+    cases += [(fault,'--apply') for fault in ('olddb03_candidate','olddb03_installed',
+        'private1a04_candidate','private1a04_installed','objecta498_candidate','objecta498_installed',
+        'user559f_candidate','user559f_installed','client','client_missing','client_symlink',
+        'client_hardlink','client_writable','client_changed_during_quiesce')]
 cases += [(fault,'--restore') for fault,mode in cases if fault!='none']
 passed=0
 for index,(fault,mode) in enumerate(cases):
@@ -123,9 +138,14 @@ for index,(fault,mode) in enumerate(cases):
     data={'stable':b'synthetic-stable041','candidate':b'synthetic-phase0f20' if token_phase else b'synthetic-wideb8c0' if wide_gdn else b'synthetic-corrected7c85' if output_closure else b'synthetic-link96a0','guard':b'synthetic-guard',
           'admin':admin_source.encode()}
     if constant_q4:data['candidate']=b'synthetic-constant-q4-db03'
+    if matrix_phase:
+        data['candidate']=b'synthetic-matrix-phase-5ae9';data['client']=b'synthetic-matrix-client-559f'
     for key in ('stable','guard','admin'):
         paths[key].write_bytes(data[key]);paths[key].chmod(0o755)
     candidate=stage/candidate_name;candidate.write_bytes(data['candidate']);candidate.chmod(0o755)
+    if matrix_phase:
+        client=stage/'pioneer-q38-TOKEN-MATRIX-PHASE-34-DIAGNOSTIC-ONLY'
+        client.write_bytes(data['client']);client.chmod(0o755)
     original=data['stable' if mode=='--apply' else 'candidate']
     paths['installed'].write_bytes(original);paths['installed'].chmod(0o755)
     paths['device'].symlink_to('../../bin/tenstorrent_pci_probe')
@@ -141,7 +161,7 @@ for index,(fault,mode) in enumerate(cases):
         file=stub/name;file.write_text(stub_source);file.chmod(0o755)
     if fault in ('stable','guard','admin','installed'):paths[fault].write_bytes(b'corrupted')
     if fault=='candidate':candidate.write_bytes(b'corrupted')
-    if fault.startswith(('retired010c_','retired34322_','private22a_','retired5920_','private3593_','retired96a0_','old7c85_','privatede2f_','oldb8c0_','private2076_','old0f20_','private5e2c_','object657a_','user3edc_')):
+    if fault.startswith(('retired010c_','retired34322_','private22a_','retired5920_','private3593_','retired96a0_','old7c85_','privatede2f_','oldb8c0_','private2076_','old0f20_','private5e2c_','object657a_','user3edc_','olddb03_','private1a04_','objecta498_','user559f_')):
         target=candidate if fault.endswith('_candidate') else paths['installed']
         target.write_bytes(('synthetic-'+fault.split('_')[0]).encode())
     if fault=='stage_mode':stage.chmod(0o777)
@@ -149,6 +169,11 @@ for index,(fault,mode) in enumerate(cases):
     if fault=='symlink':candidate.unlink();candidate.symlink_to(paths['stable'])
     if fault=='hardlink':os.link(candidate,directory/'hardlink')
     if fault=='writable':candidate.chmod(0o777)
+    if fault=='client':client.write_bytes(b'corrupted')
+    if fault=='client_missing':client.unlink()
+    if fault=='client_symlink':client.unlink();client.symlink_to(paths['stable'])
+    if fault=='client_hardlink':os.link(client,directory/'client-hardlink')
+    if fault=='client_writable':client.chmod(0o777)
     env={**os.environ,'PATH':str(stub)+':'+os.environ['PATH'],'FIXTURE_ROOT':str(directory),
          'FIXTURE_FAULT':fault,'FIXTURE_MODE':mode}
     installed_before=paths['installed'].read_bytes() # includes deliberate foreign/corrupt fixture bytes
@@ -177,10 +202,12 @@ for index,(fault,mode) in enumerate(cases):
             assert paths['installed'].read_bytes()==data['candidate' if mode=='--apply' else 'stable'] and len(calls)==3
             assert 'NO_AUTOMATIC_ROLLBACK' in result.stdout
         elif fault=='changed_during_quiesce':assert paths['installed'].read_bytes()==b'changed' and len(calls)==2
+        elif fault=='client_changed_during_quiesce':
+            assert paths['installed'].read_bytes()==installed_before and len(calls)==2 and client.read_bytes()==b'changed'
         else:assert paths['installed'].read_bytes()==installed_before
-        if fault not in ('wait','quiesce','changed_during_quiesce'):assert len(calls)<=1,(fault,calls)
+        if fault not in ('wait','quiesce','changed_during_quiesce','client_changed_during_quiesce'):assert len(calls)<=1,(fault,calls)
         if fault.startswith('retired96a0_'):
             assert not calls and not (stage/'stable041.backup').exists() and not (stage/'driver.incoming').exists()
-print('exact '+('NEWdb03 constant-Q4 diagnostic' if constant_q4 else 'NEW0f20 token-phase diagnostic' if token_phase else 'NEWb8c0 returning-wide-GDN' if wide_gdn else 'NEW7c85 corrected-output' if output_closure else 'NEW96a0')+' exchange script endpoint fixtures:',passed,'valid /',len(cases)-passed,'refused; NO actual install/reset/GPU')
+print('exact '+('NEW5ae9+559f sampler diagnostic' if matrix_phase else 'NEWdb03 constant-Q4 diagnostic' if constant_q4 else 'NEW0f20 token-phase diagnostic' if token_phase else 'NEWb8c0 returning-wide-GDN' if wide_gdn else 'NEW7c85 corrected-output' if output_closure else 'NEW96a0')+' exchange script endpoint fixtures:',passed,'valid /',len(cases)-passed,'refused; NO actual install/reset/GPU')
 if retired:print('RETIRED96a0 APPLY stops before platform/admin/copy/lock;entire original2way endpoints FIRST;guarded RESTORE unchanged')
 print('raw fixture histories retained at',root)

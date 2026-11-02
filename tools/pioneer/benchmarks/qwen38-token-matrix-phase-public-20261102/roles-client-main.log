@@ -1,0 +1,4 @@
+PASS failed-reply distinct USER/3 positives/91 missing,zero,two,late,native,shader,profile,CPU+Work refusals;NO packet provenance,driver,lifecycle,hardware or TPS grant
+PASS token-phase USER/4 positives/148 missing,zero,two,late,DATA,native,shader,CPU+Work refusals;unchanged failed-reply controls FIRST;NO native lifetime,physical,quality,Work or speed grant
+PASS constant-Q4 USER/4 positives/177 missing,zero,two,late,DATA,native,shader,CPU+Work refusals;unchanged phase-timing controls FIRST;NO native lifetime,physical,quality,Work or speed grant
+PASS sampler USER/4 positives/210 missing,zero,two,late,DATA,native,shader,CPU+Work refusals/whole unchanged constant-Q4+ancestors FIRST;NO native owner,physical timing,quality,Work or deployment grant

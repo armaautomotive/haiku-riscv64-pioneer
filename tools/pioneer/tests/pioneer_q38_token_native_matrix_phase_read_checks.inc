@@ -7,6 +7,85 @@
 #error Exact fresh-slot reader TEST requires SAME original-model first-layer/cancel/HOLD/drain/full-END predecessor
 #endif
 #include "../PioneerQ38TokenMatrixPhaseReadRole.h"
+#include <cerrno>
+#include <sys/wait.h>
+#include <unistd.h>
+static void CheckNativeMatrixPhaseFaults(Fixture& f){
+ namespace Q=PioneerQ38TokenMatrixPhaseData;
+ using IO=TokenHeldEndpoints;
+ auto& c=*f.c;auto& io=f.io;auto* state=c.q38TokenNative;
+ assert(!lockHeld && state->TerminalHeld()
+  && !state->Unsafe() && !io.matrixFaultResult && !io.matrixFaultSeen);
+ const unsigned originalTouches=io.touches,packets=io.runtimePackets,resets=io.resets.size();
+ const auto generation=sReloadGeneration;unsigned faults=0,dataCases=0;
+ auto run=[&](IO::MatrixFault fault,unsigned phase,unsigned worker,unsigned address,unsigned dataCase){
+  // fork is a negative-test-only COW branch of this GENUINELY earned HOLD
+  // history. No copied object is transplanted or accepted as a positive
+  // native/physical run. The parent alone continues normal full END.
+  fflush(nullptr);const pid_t child=fork();assert(child>=0);
+  if(!child){
+   PioneerQ38TokenMatrixPhaseResult result;uint32_t output[Q::Words]={};
+   io.matrixFaultResult=&result;io.matrixFault=fault;io.matrixFaultPhase=phase;
+   io.matrixFaultWorker=worker;io.matrixFaultAddress=address;
+   if(dataCase){
+    // Deliberately fabricated NEGATIVE metric DATA,never a model product,
+    // owner receipt or a claimed authentic current-worker publication.
+    if(dataCase==1)for(unsigned i=0;i<Q::Words;i++)io.Raw(worker,Q::Address+i*4)=0;
+    else if(dataCase==2){io.Raw(worker,Q::Address+7*4)=0;for(unsigned i=8;i<14;i++)io.Raw(worker,Q::Address+i*4)=0;}
+    else if(dataCase==3)io.Raw(worker,Q::Address)^=1;
+    else{assert(dataCase==4);for(unsigned i=8;i<14;i++)io.Raw(worker,Q::Address+i*4)=UINT32_MAX;}
+   }
+   bool okay;
+   {PioneerQ38TokenCallScope scope(&f.cookie);assert(scope.Context()==&c);
+    okay=ReadQ38TokenNativeMatrixPhase(c,worker,output,result);}
+   if(dataCase){
+    const unsigned expected=dataCase==1?Q::Missing:dataCase==2?Q::InvalidClock:Q::Malformed;
+    assert(okay && result.started && result.ready && !result.unsafe && !result.valid
+     && result.metricState==expected && state->TerminalHeld() && !state->Unsafe() && !sColdRecoveryRequired);
+    for(unsigned i=0;i<Q::Words;i++)assert(output[i]==io.Raw(worker,Q::Address+i*4));
+    assert(!io.matrixFaultSeen);
+   }else{
+    if(okay || !io.matrixFaultSeen || io.touches!=io.matrixFaultTouches)
+     fprintf(stderr,"MATRIX_READER_FAULT failure kind%u phase%u requestedWorker%u address%x observed%u touches%u/%u ready%u unsafe%u\n",
+      unsigned(fault),phase,worker,address,io.matrixFaultSeen,io.touches,io.matrixFaultTouches,result.ready,result.unsafe);
+    assert(!okay && result.started && result.unsafe && !result.ready && !result.valid
+     && io.matrixFaultSeen==1 && io.touches==io.matrixFaultTouches);
+    for(auto word:output)assert(!word);
+    f.Unknown(); // actual owner+memory+bank+host+clock retention;NO following IO
+    const unsigned after=io.touches;
+    {PioneerQ38TokenCallScope scope(&f.cookie);assert(!scope.Context());
+     PioneerQ38TokenMatrixPhaseResult again;PioneerQ38TokenRestoreResult restore;
+     assert(!ReadQ38TokenNativeMatrixPhase(c,worker,output,again)
+      && !ReadQ38TokenNativeMatrixPhase(c,worker==1?119:1,output,again)
+      && !RestoreQ38TokenNativeL1(c,restore) && io.touches==after);}
+   }
+   assert(io.runtimePackets==packets && io.resets.size()==resets);
+   _exit(0); // deliberate negative snapshot disposal,NOT driver Close/END proof
+  }
+  int status=0;pid_t got;do{got=waitpid(child,&status,0);}while(got<0 && errno==EINTR);
+  assert(got==child && WIFEXITED(status) && WEXITSTATUS(status)==0);
+  assert(io.touches==originalTouches && io.runtimePackets==packets && io.resets.size()==resets
+   && sReloadGeneration==generation && state->TerminalHeld() && !state->Unsafe());
+  if(dataCase)dataCases++;else faults++;
+ };
+ for(unsigned phase:{2U,3U})for(unsigned word=0;word<Q::Words;word++)
+  run(IO::MatrixGeneration,phase,1,Q::Address+word*4,0);
+ for(unsigned word=0;word<Q::Words;word++)run(IO::MatrixChangedWord,3,1,Q::Address+word*4,0);
+ for(unsigned worker:{60U,119U})for(unsigned word:{0U,Q::Words-1U}){
+  for(unsigned phase:{2U,3U})run(IO::MatrixGeneration,phase,worker,Q::Address+word*4,0);
+  run(IO::MatrixChangedWord,3,worker,Q::Address+word*4,0);
+ }
+ for(unsigned phase:{1U,3U})for(unsigned word:{0U,63U})
+  run(IO::MatrixChangedWord,phase,119,PioneerQ38SelectedGlobalWorker::Boot+word*4,0);
+ for(unsigned phase:{1U,3U})for(unsigned word:{0U,PioneerQ38TokenPrograms::CodeWords(119)-1U})
+  run(IO::MatrixChangedWord,phase,119,PioneerQ38TokenPrograms::CodeAddress(119,word),0);
+ run(IO::MatrixOverflow,1,1,0,0);
+ for(unsigned phase:{1U,2U,3U})for(auto fault:{IO::MatrixBackwards,IO::MatrixDeadline})run(fault,phase,1,0,0);
+ for(unsigned phase:{2U,3U})for(auto fault:{IO::MatrixSource,IO::MatrixCounter,IO::MatrixFifo,IO::MatrixFifoOverflow,IO::MatrixMapping})
+  run(fault,phase,119,0,0);
+ for(unsigned dataCase=1;dataCase<=4;dataCase++)run(IO::MatrixNone,0,119,0,dataCase);
+ printf("EXECUTED %u negative HOST-only COW branches AFTER genuine original-model/cancel/119STOP/120HOLD/drain: generation loss at ALL16 words/BOTH passes,changed second reads,first/middle/last peers,boot+code changes,backwards/deadline/overflow clocks,source+counter+FIFO+mapping failures retain actual owners/output unpublished/NO following IO,reset,packet,retry,restore;plus%u deliberately invalid metric DATA cases remain nonfatal;parent unmodified and full END follows;NOT physical fault,authentic metrics,whole-model,Work or TPS qualification\n",faults,dataCases);
+}
 static void CheckNativeMatrixPhaseUndrained(Fixture& f){
  auto& c=*f.c;auto& io=f.io;const unsigned before=io.touches;
  PioneerQ38TokenMatrixPhaseResult r;uint32_t output[16]={};
@@ -17,6 +96,7 @@ static void CheckNativeMatrixPhaseRead(Fixture& f){
  namespace Q=PioneerQ38TokenMatrixPhaseData;
  auto& c=*f.c;auto& io=f.io;auto* state=c.q38TokenNative;
  assert(!lockHeld && state->TerminalHeld() && !state->Closed() && !state->Unsafe());
+ CheckNativeMatrixPhaseFaults(f);
  const unsigned packets=io.runtimePackets,resets=io.resets.size();unsigned intervals=0,missing=0,invalid=0;
  uint32_t output[Q::Words]={};PioneerQ38TokenMatrixPhaseResult r;unsigned before=io.touches;
  assert(!ReadQ38TokenNativeMatrixPhase(c,1,output,r) && io.touches==before);

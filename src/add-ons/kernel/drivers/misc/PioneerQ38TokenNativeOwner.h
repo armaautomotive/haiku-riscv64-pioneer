@@ -356,6 +356,13 @@ public:
  bool TerminalObserved()const{return terminalObserved && !unsafe && (ExecutionStarted() || ((holding || held) && Bound()));}
  bool HeldAfterTerminal()const{return held && !holding && TerminalObserved() && Bound();} // NOT restored/closed/END
  bool CommittedRecordsRead()const{return readoutDrained && !readoutPending && HeldAfterTerminal() && readoutCursor==observedTerminal[3];}
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_BENCHMARK_NATIVE
+ uint32_t MatrixPhaseStopNonce(unsigned worker)const{
+  if(!worker || worker>=120 || !matrixSlotsInitialized || !matrixPhaseRead[worker]
+   || restoring || l1Restored || !CommittedRecordsRead())return 0;
+  return terminalNonces[worker];
+ } // CPU-only sealed terminal metadata AFTER the actual consumed held read.
+#endif
  bool OriginalL1Restored()const{return l1Restored && !restoring && CommittedRecordsRead() && Bound();} // dispatch/CSR leases STILL owned
  bool DispatchImagesRestored()const{return dispatchRestored && !dispatchRestoring && OriginalL1Restored();} // NIU/scratch/TLB/END still owned
  bool PeerStoresRestored()const{return peersClosed && !peerClosing && DispatchImagesRestored();} // ROOT/shared mappings/END STILL owned

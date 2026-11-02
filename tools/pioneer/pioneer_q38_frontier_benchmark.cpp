@@ -9,6 +9,7 @@
 #include <memory>
 #include "PioneerQ38FrontierFailureReportRole.h"
 #include "PioneerQ38TokenPhaseProfileClientRole.h"
+#include "PioneerQ38TokenMatrixPhaseClientRole.h"
 #ifdef PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT
 #include "PioneerQ38FrontierFailureReport.h"
 #ifndef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT
@@ -17,7 +18,9 @@
 #endif
 #include "PioneerQ38TokenHiddenValidationSession.h"
 #include "PioneerQ38TokenRateSamples.h"
-#if defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_CLIENT)
+#if defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_CLIENT)
+#include "PioneerQ38TokenMatrixPhaseCli.h"
+#elif defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_CLIENT)
 #include "PioneerQ38TokenConstantQ4Cli.h"
 #elif defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT)
 #include "PioneerQ38TokenPhaseProfileCli.h"
@@ -61,7 +64,9 @@ int main(int argc,char** argv){
  if(mode==M::Invalid)return 2;
  namespace V=PioneerQ38TokenDecodeBenchmark;
  setvbuf(stdout,nullptr,_IOLBF,0);
-#ifdef PIONEER_Q38_TOKEN_CONSTANT_Q4_CLIENT
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_CLIENT
+ puts("Q38_MATRIX_PHASE_FIXED34_LATEST_Q4_JOB_HOST_LABEL_NOT_DEVICE_PROVENANCE_OR_WORK");
+#elif defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_CLIENT)
  puts("Q38_CONSTANT_Q4_FIXED34_DIAGNOSTIC_HOST_LABEL_NOT_DEVICE_PROVENANCE_OR_WORK");
 #endif
 #ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT
@@ -120,6 +125,13 @@ int main(int argc,char** argv){
  auto phases=std::make_unique<PioneerQ38TokenPhaseProfileControl::Packet>();
  if(okay)okay=session->CopyPhaseProfile(*phases);
 #endif
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_CLIENT
+ auto matrices=std::make_unique<PioneerQ38TokenMatrixPhaseControl::Packet[]>(119);
+ for(unsigned worker=1;okay && worker<120;worker++){
+  matrices[worker-1].request.worker=worker;
+  okay=session->CopyMatrixPhase(worker,matrices[worker-1]);
+ }
+#endif
 #ifdef PIONEER_Q38_TOKEN_FRONTEND_PROFILE_CLIENT
  if(okay && !frontends->Complete()){why="frontend_terminal_missing";okay=false;}
 #endif
@@ -161,7 +173,25 @@ int main(int argc,char** argv){
  }
  printf("Q38_TOKEN_PHASE_AFTER_CLEAN_END words96 valid%u;ALL34_WITH_BOOTSTRAP_STOP_AND_OBSERVER_COST_RAW_CYCLES_NOT_FREQUENCY_OR_WORK\n",
   phases->reply.detail[7]);
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_CLIENT
+ unsigned states[4]={};
+ for(unsigned worker=1;worker<120;worker++){
+  const auto& p=matrices[worker-1];states[p.reply.detail[8]]++;
+  static_assert(sizeof(p)==48*4,"whole fixed peer timing packet");
+  uint32_t raw[48];std::memcpy(raw,&p,sizeof(raw));
+  for(unsigned row=0;row<6;row++){
+   printf("Q38_MATRIX_PHASE_PACKET worker%03u word%02u",worker,row*8);
+   for(unsigned col=0;col<8;col++)printf(" %08x",raw[row*8+col]);
+   putchar('\n');
+  }
+ }
+ printf("Q38_MATRIX_PHASE_AFTER_CLEAN_END workers119 valid%u missing%u invalid_clock%u malformed%u;LATEST_Q4_JOB_PER_WORKER_INCLUSIVE_BUCKETS_NOT_WHOLE_MODEL_UTILIZATION_OR_FREQUENCY\n",
+  states[PioneerQ38TokenMatrixPhaseData::Intervals],states[PioneerQ38TokenMatrixPhaseData::Missing],
+  states[PioneerQ38TokenMatrixPhaseData::InvalidClock],states[PioneerQ38TokenMatrixPhaseData::Malformed]);
+ return states[PioneerQ38TokenMatrixPhaseData::Intervals]==119 && phases->reply.detail[7]?0:1;
+#else
  return phases->reply.detail[7]?0:1;
+#endif
 #else
  return 0;
 #endif

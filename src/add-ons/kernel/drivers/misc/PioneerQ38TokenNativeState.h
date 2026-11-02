@@ -224,6 +224,11 @@ public:
    && p->InitializationProgress(identity,pages) && pages==512 && p->InitializationPublished(identity)
    && p->MatchesInitializationOwner(banks,proof,identity);
  } // actual initialization-controller seals ONLY;not KV/metadata/input/RUN or END authority
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_BENCHMARK_NATIVE
+ uint32_t MatrixPhaseStopNonce(unsigned worker)const{
+  return phase==RootHeld && !Unsafe() && runtime?runtime->MatrixPhaseStopNonce(worker):0;
+ } // Metadata only;caller still owes the SAME call scope and successful read.
+#endif
  void Fault(){unsafe=true;phase=Unknown;recurrentZero.unsafe=historyZero.unsafe=projectionZero.unsafe=true;
   hosts.Fault();pci.Fault();graph.Fault();if(memory)memory->Fault();if(runtime)runtime->Fault();} // MEMORY ONLY;retain every borrowed resource
 };

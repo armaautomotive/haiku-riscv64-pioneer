@@ -1,0 +1,26 @@
+PASS ROOT frontend TEST gates/1 role positive/40 missing+zero+two+foreign role refusals/12 early CLI refusals/no output/compiler/runtime creation;NO native/model/physical/TPS grant
+PASS prefetch native CLI/24 missing+duplicate+wrongworker+shortened+profile+compile-only refusals/NO source,compiler,runtime or output creation;NOT native execution or device qualification
+PASS batched native CLI/30 missing+duplicate+wrongworker+shortened+profile+compile-only+incompatible-ROOT refusals/ENTIRE old controls FIRST;NO source,compiler,runtime or output creation;NOT native execution or device qualification
+PASS batched HOST observer/2 syntax positives/24 missing+nonexact+old+kernel+native+CPU+runtime-Work refusals;NOT instantiated execution or device qualification
+PASS twin-batch immutable expected-ROM bridge/ALL119 workers/3045448 code words/723 worker,alignment,gap+runtime-buffer refusals/unchanged output;NO ISA engine,native owner,hardware,model arithmetic,Work or TPS proof
+PASS twin native CLI/31 missing+duplicate+old-batched+wrongworker+shortened+profile+compile-only+incompatible-ROOT refusals/ALL old controls FIRST;NO source,compiler,runtime or output creation;NOT native execution
+PASS twin HOST observer/2 syntax positives/26 missing,nonexact,old,kernel,native,CPU+runtime-Work refusals;NOT instantiated execution or hardware qualification
+PASS twin immutable HOST expected-ROM/18 kernel,native,CPU,Work+old-DATA refusals;NO native execution grant
+PASS failure-detail native CLI/36 missing+duplicate+wrongworker+shortened+old+profile+compile-only+incompatible-ROOT refusals/ALL twin+ancestor controls FIRST;NO source,compiler,runtime or output creation;NOT native execution,model or hardware qualification
+PASS QFL1 native CLI/35 missing+duplicate+wrongworker+shortened+old+profile+compile-only+incompatible-ROOT refusals/ALL unchanged QFD1+ancestor controls FIRST;NO source,compiler,runtime or output creation;NOT native lifetime,model or hardware qualification
+PASS corrected-output native CLI/36 missing,duplicate,wrong-worker,shortened,old,profile,compile-only+incompatible-ROOT refusals/ALL unchanged QFL1+ancestors FIRST;NO source,compiler,runtime or output creation;NOT native lifecycle,model or hardware proof
+PASS twin-batch immutable expected-ROM bridge/ALL119 workers/3045448 code words/723 worker,alignment,gap+runtime-buffer refusals/unchanged output;NO ISA engine,native owner,hardware,model arithmetic,Work or TPS proof
+PASS corrected-output immutable peer-ROM bridge/20 role-isolation refusals/20 checked/all119 peer code maps tested with unchanged output on rejection;NOT ROOT execution,native lifetime,model or TPS proof
+PASS twin-batch immutable expected-ROM bridge/ALL119 workers/3061394 code words/723 worker,alignment,gap+runtime-buffer refusals/unchanged output;NO ISA engine,native owner,hardware,model arithmetic,Work or TPS proof
+PASS wide-GDN native CLI/26 missing,duplicate,shortened,old,compile-only,Work aliases refused BEFORE source/compiler/output IO;ALL unchanged corrected-output+QFL1 CLI+const-ROM bridge FIRST;NOT native lifetime,model or hardware proof
+PASS actual wide-GDN const-ROM bridge/all119 peer maps+unchanged output on refusal/28 CPU,Work,native,shader+arithmetic-TEST isolation refusals;NO model or hardware proof
+PASS token-phase native CLI/27 missing,duplicate,shortened,old,compile-only aliases refused BEFORE source/compiler/output IO;unchanged wide-GDN+all older CLI controls FIRST;NOT native lifetime,physical or timing proof
+PASS twin-batch immutable expected-ROM bridge/ALL119 workers/3061394 code words/723 worker,alignment,gap+runtime-buffer refusals/unchanged output;NO ISA engine,native owner,hardware,model arithmetic,Work or TPS proof
+PASS actual token-phase const-ROM bridge/all119 peers+unchanged output on refusal/24 CPU,Work,native,USER,shader isolation refusals;NO original model,ISA history,device or timing proof
+PASS constant-Q4 native CLI/30 missing,duplicate,shortened,old,compile-only aliases refused BEFORE source/compiler/output IO;unchanged phase-profile+all older CLI controls FIRST;NOT native lifetime,physical or timing proof
+PASS twin-batch immutable expected-ROM bridge/ALL119 workers/3073413 code words/723 worker,alignment,gap+runtime-buffer refusals/unchanged output;NO ISA engine,native owner,hardware,model arithmetic,Work or TPS proof
+PASS actual constant-Q4 const-ROM bridge/all119 peers+unchanged output on refusal/32 CPU,Work,native,USER,shader isolation refusals;NO original model,ISA history,device or timing proof
+PASS sampler native CLI/31 missing,duplicate,shortened,old,compile-only refusals BEFORE source/compiler/output IO;ALL old constant-Q4+ancestors FIRST
+PASS twin-batch immutable expected-ROM bridge/ALL119 workers/3121251 code words/723 worker,alignment,gap+runtime-buffer refusals/unchanged output;NO ISA engine,native owner,hardware,model arithmetic,Work or TPS proof
+PASS sampler const-ROM bridge ALL119 peers+unchanged refusals/30 CPU,Work,native,USER,shader exclusions/29 producer early refusals;NO model,ISA,native lifecycle,held metric readout,hardware or TPS proof
+PASS fresh-slot reader TEST CLI/32 incomplete,duplicate,shortened,Work aliases+29 producer refusals BEFORE source/compiler/output IO;ALL sampler+older controls FIRST;omitting optional reader legitimately retains old no-reader subject,NOT a readout grant

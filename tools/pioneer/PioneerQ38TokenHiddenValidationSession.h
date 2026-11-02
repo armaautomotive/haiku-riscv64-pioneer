@@ -61,8 +61,12 @@ static_assert(PioneerQ38DecodeBenchmarkClientSelection==0,"late longer USER diag
 #include <cstring>
 #include <memory>
 #include "PioneerQ38TokenPhaseProfileClientRole.h"
+#include "PioneerQ38TokenMatrixPhaseClientRole.h"
 #ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenPhaseProfilePacket.h"
+#endif
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_CLIENT
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenMatrixPhasePacket.h"
 #endif
 
 // Actual fixed-public uploader and diagnostic lifecycle. ALL learned parts,
@@ -94,6 +98,11 @@ class PioneerQ38TokenHiddenValidationSession {
   std::make_unique<PioneerQ38TokenPhaseProfileControl::Packet>();
  bool phaseCaptured=false;
 #endif
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_CLIENT
+ std::unique_ptr<PioneerQ38TokenMatrixPhaseControl::Packet[]> matrixPhases=
+  std::make_unique<PioneerQ38TokenMatrixPhaseControl::Packet[]>(119);
+ unsigned matrixCaptured=0;
+#endif
  State state=Virgin;int fd=-1;uint64_t epoch=0,generation=0;
  bool attempted=false,prepared=false,preflightAttempted=false,cancelAttempted=false,cancelled=false;
  unsigned committed=0,completedLayers=0,position=0,terminalStage=0;
@@ -109,6 +118,9 @@ class PioneerQ38TokenHiddenValidationSession {
   state=Failed;records.fill(0);hidden->fill(0);captured=false;
 #ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT
   phaseCaptured=false;*phaseProfile=PioneerQ38TokenPhaseProfileControl::Packet{};
+#endif
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_CLIENT
+  matrixCaptured=0;for(unsigned i=0;i<119;i++)matrixPhases[i]=PioneerQ38TokenMatrixPhaseControl::Packet{};
 #endif
   std::memset(hiddenPacket.get(),0,sizeof(*hiddenPacket));Close();return false;
  } // CLOSE ONLY,never automatic retry/cancel/END/reset after uncertainty
@@ -385,6 +397,21 @@ public:
    // returned only after cleanup,not converted into good measurements.
   }
 #endif
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_CLIENT
+  {
+   namespace M=PioneerQ38TokenMatrixPhaseControl;
+   if(matrixCaptured)return Stop("matrix_request_repeated");
+   for(unsigned worker=1;worker<120;worker++){
+    auto& metric=matrixPhases[worker-1];metric.request.worker=worker;
+    if(!M::RequestShape(metric))return Stop("matrix_request");
+    const auto request=metric.request;
+    if(!Call(TT_PCI_PROBE_Q38_TOKEN_MATRIX_PHASE_READ,metric)
+     || std::memcmp(&metric.request,&request,sizeof(request)) || !M::ReplyShape(metric)
+     || !metric.reply.ready)return Stop("matrix_reply");
+    matrixCaptured++;
+   }
+  } // Stable invalid metric DATA still follows the SAME normal Finish+Close.
+#endif
   if(CaptureBoundary()){
    if(!HiddenCall(0) || !HiddenCall(1))return Stop("hidden_read");
    captured=true;
@@ -413,6 +440,16 @@ public:
    || !P::ReplyShape(*phaseProfile) || !phaseProfile->reply.ready)return false;
   output=*phaseProfile;return true;
  } // stored held snapshot ONLY after genuine whole Finish+Close;NO transport call.
+#endif
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_CLIENT
+ __attribute__((noinline)) bool CopyMatrixPhase(unsigned worker,PioneerQ38TokenMatrixPhaseControl::Packet& output)const{
+  namespace M=PioneerQ38TokenMatrixPhaseControl;
+  if(!worker || worker>=120 || state!=Complete || matrixCaptured!=119 || failure || !Current()
+   || output.request.worker!=worker || !M::RequestShape(output))return false;
+  const auto& metric=matrixPhases[worker-1];
+  if(metric.request.worker!=worker || !M::ReplyShape(metric) || !metric.reply.ready)return false;
+  output=metric;return true;
+ } // Stored SAME-FD/HOLD/drained DATA only AFTER full END+Close;NO transport.
 #endif
  bool CopyGenerationRecords(uint32_t* output,unsigned words)const{
 #ifdef PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT

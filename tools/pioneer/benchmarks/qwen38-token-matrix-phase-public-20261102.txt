@@ -1,0 +1,164 @@
+Sampler diagnostic pipeline: BUILD/COMPONENT qualified,NOT physically deployed
+=============================================================================
+CLOSED21:38:18UTC: ALL launched local sessions are terminal. Corrected
+private-role2325/main and52675/clean BOTH ACTUALLY0:4 sampler positives/
+873 refusals,then4 reader positives/797 refusals;whole stdout cmp exact.
+Exchange1880/main and29868/clean BOTH ACTUALLY0:2 valid/130 refused per
+suite,both apply/restore covered,including corrupt/missing/link/
+writable client and client mutation DURING quiesce. All inherited suites
+run first. No production gate is relaxed;the optional private READ=1 is
+tested as its actual existing selection1 rather than mislabelled foreign.
+Both role and exchange stderr streams are0B. This supersedes ALL pending
+role/exchange statements below. Closed raw logs are archived beside this
+report;there is NO physical timing result,staging,installation or speedup.
+
+Full native R3 actual0+strict CPU actual0 remains separately documented.
+Main final frozen public module5ae9/USER559f build actual0 and independent
+clean build actual0 match whole bytes. All local components are qualified
+within their explicitly stated scopes,not as a whole-model or hardware
+certificate. The original full goal,usable accepted Work and20tok/s remain
+UNMET. Next:push this tested checkpoint,then fresh physical admission.
+
+2026-11-02 21:31:58UTC. Goal ACTIVE. Correct usable27B Work and20tok/s
+remain UNMET. This turn performs NO Pioneer SSH,GPU,driver,relay,OS,boot,
+Assistant,network,SD,mains or hardware operation. Last physical generation
+result remains0.16253tok/s with the unchanged strict first-score mismatch;
+NO measured speedup or hardware-authenticity certificate is claimed.
+
+Concrete movement toward measured performance
+-----------------------------------------------
+The preceding goal turn implemented negative reader tests but had no
+closed new native result or deployable public path. This turn closes
+the genuine original-model first-layer/cancel/119STOP/120HOLD/drain/
+85-fault/119-read/normal full-END histories in BOTH source trees,with
+unchanged independent CPU first-layer comparisons bit-exact. It then
+implements a distinct public diagnostic route,USER capture,strict log
+reader and exact reversible exchange. These enable actual inner timing;
+they do NOT themselves optimize arithmetic or prove model speed.
+Native histories and retained failures are documented separately in
+qwen38-token-matrix-phase-read-faults-20261102.txt.
+
+Public fixed DATA/control path
+-------------------------------
+Separate public selection3/read-selection2 is not private selection2/
+read-selection1,shader,CPU-reference,USER,Work or an old namespace alias.
+It requires the complete unchanged public constant-Q4 parents and the
+fresh-slot reader;old private SDK subjects remain byte-identical.
+The fixed192-byte pointer-free packet accepts ONLY worker1..119,not an
+address,count,shape,nonce or ready hint. The same actual FD/team/thread
+scope surrounds the held reader and reply copy. A separate STOP bound
+comes from the SAME native owner's sealed terminal journal AFTER the
+actual consumed read,never metric nonce+1. State/runtime metadata getters
+are CPU-only and compile only for this distinct public subject.
+
+The adapter validates request and reply DATA,clears failed-read output,
+retains on missing/inconsistent STOP metadata or failed reply copy,and
+never copies an internally malformed reply. No commands,DMA,reset,
+cleanup,END or Work capability is added. Stable Missing/InvalidClock/
+Malformed metric DATA remains nonfatal and still owes normal cleanup.
+
+Frozen independent BUILD identities,not execution acceptance
+------------------------------------------------------------
+Main18721 and independent CLEAN79857 inspect builds BOTH ACTUALLY exit0;
+whole native objects and modules cmp exact. Main13401 NON-inspect final
+build ACTUALLY exits0 and verifies the frozen pins:
+ objecta49828b30178c8285502cb0232799f74ff2fe64141942e263fb8b6690a5a6401
+ module5ae9d64ae4757c4635e4bbc6f59cf8350e8f549427e99e1e99e5897092616e39
+Every predecessor private/public subject reproduces FIRST,including
+olddb03 public and current1a0429 private reader. All14 device code arrays
+and2MiB RoPE authenticate;no old array namespace,CPU model reference or
+Work import. Individual kernel frames<=2048B or unchanged predecessors.
+Actual known-module ProbeControl chain5392B,25 unresolved kernel/indirect
+edges;NOT a whole-kernel,IRQ or indirect-stack certificate.
+
+Main24728 and independent CLEAN38145 USER inspect builds BOTH ACTUALLY0,
+whole objects+binaries cmp exact. Main39206 NON-inspect final ACTUALLY0:
+ object5e3de2b89d42b05c2d4ee03ed9d3663d283fb40d0ed8bf216cbf3d886ee60c1c
+ client559f986ddc88bbc2ff8cbe034dcda1546d385b366177f027a245452e605c7a22
+Whole unchanged3edc and ancestors reproduce FIRST. The new CLI is ONLY
+ --profile-q4-jobs-34-positions (plus source-only preflight)
+Old run spellings,CPU and Work are absent. Maximum individual USER frame
+4432B;the separate failed-reply formatter graph is scoped400B with only
+stdio/memory externals,NOT whole USER-stack qualification.
+
+USER behavior and closed component tests
+-----------------------------------------
+Actual USER session captures119 immutable fixed peer packets AFTER the
+same HOLD+record drain+coarse timing read and BEFORE original Finish.
+Invalid telemetry alone does not skip normal END+Close. No copied packet
+is returned until Complete,all119 captures,current source epoch and
+pristine caller output. The client prints raw48-word packets only after
+real Finish+Close;these are latest individual Q4 jobs,NOT full-model or
+pure-engine timing. No runtime CPU model/reference or Assistant Work is
+selected. Actual device CSR/frequency/quality still need physical tests.
+
+Pure192-byte packet ASan/UBSan tests BOTH main+clean ACTUALLY0:
+ 65,812 fabricated DATA successes/87,257 malformed DATA refusals.
+Extracted ACTUAL public adapter+2 ACTUAL metadata methods BOTH ACTUALLY0:
+ 1072 MOCK outcomes/1742 malformed request,scope,length,metadata refusals/
+ 19 copy and internal-consistency faults;allocation failure and partial
+ native output clearing checked. Native/lifecycle/OS authority here is
+ MOCK,not a replacement for the separate genuine native history above.
+Actual USER session tests10758/18501 BOTH ACTUALLY0 and full stdout cmp:
+ 132 negative COW branches/11 CLI refusals/all119 captured/invalid metric
+ still cleans/no early output/no implicit retry or destructor IO.
+Their learned source,STOP,metrics and transport are SYNTHETIC,not native.
+
+Strict posthoc reader leaves old decisions unchanged
+-----------------------------------------------------
+compare_pioneer_q38_token_matrix_phase_log.py authenticates stable log
+file identity/length,exact unique envelope,ALL714 ordered rows/119 full
+packets,separate STOP bounds,detail/raw consistency and exact4-state
+counts. It removes ONLY this exact new envelope in a private normalized
+snapshot,then invokes the UNCHANGED coarse-phase/frontier34/reference
+decisions. Raw logs,original CPU pins,expected bits,tolerances and
+compare_first_three are unchanged. Numeric mismatch remains exit1 even
+when timing is valid. Invalid telemetry never becomes a valid fraction.
+No device clock frequency,GB/s,utilization or TPS forecast is inferred.
+Main15809/CLEAN97101 comparator suites BOTH ACTUALLY0:
+ 1561 SYNTHETIC accepted/cross-language/CLI cases/1536 refusals,including
+ ALL714 rows missing+duplicate,4 metric states,roles,file identities and
+ preserved numeric-failure exits. The C++ shared packet grammar is checked
+ against independent Python DATA decisions;plausible changed cycle/STOP
+ DATA remains syntactically possible and is NOT claimed as provenance.
+
+Role and exact exchange verification status
+--------------------------------------------
+Public55937/main and57463/clean role suites BOTH ACTUALLY0:
+ 3 positives/780 production-only refusals with unchanged ancestors FIRST.
+USER41054/main and69596/clean BOTH ACTUALLY0:4 positives/210 refusals.
+Initial private-regression72886 ACTUALLY1:the ancestor TEST rediscovered
+the legitimate existing optional private READ=1 flag in the new public
+boundary and misclassified it as foreign. Only that TEST expectation is
+fixed to require explicit private selection1;defined0,late selection,
+opposite/public role and all production gates remain refusing. Corrected
+2325/main and52675/clean are ACTUALLY LIVE as of21:31:58UTC,not passes.
+
+New exact exchange helper pins stable041,module5ae9,USER559f,existing
+admin+guard. It additionally checks the client before exchange,before
+and after quiesce,and after replacement. Whole helper SHA:
+ 761dfd1494ed3e7963d643572ece1183b07b702471fc2d528d41712c049315bf
+New stage is /boot/home/pioneer-p100a-token-matrix-phase-20261102-a;
+it is NOT created yet. No GPU launch,reset,force-unload,retry,cold clear
+or automatic rollback. Fixture1880/main and29868/clean are ACTUALLY LIVE
+as of21:31:58UTC. Full inherited endpoint suites run first;new corrupt
+client,wrong module/object/private/USER,permissions,link and quiesce-race
+cases remain pending,not accepted deployment evidence yet.
+
+Scope and next required work
+-----------------------------
+No new physical timing or performance result exists. Finish SAME remaining
+role/exchange sessions,inspect failures without weakening production or
+numerical gates,archive actual logs and push tested checkpoint before
+staging. Then fresh physical admission,exact stage/copy-back/identity and
+exchange checks,ONE protected full parent from same-open GGUF SHA through
+upload/RUN/HOLD/119 reads/drain/END+Close. No other Pioneer query during
+that parent. Independently parse full closed logs;restore exact stable041
+only after actual terminal. Do not promote this diagnostic to Work or
+Assistant. Use real fetch/decode/matrix fractions to choose the next
+architectural optimization;20tok/s and correct usable Work remain UNMET.
+
+Raw task-local tree:
+ /private/tmp/pioneer-q38-matrix-reader-faults-20261102.zVCFLD
+No learned model,CPU reference trace or emitted inference prefix should
+be committed. Kernel/boot/64CPU/fullRAM/network/Assistant unchanged here.

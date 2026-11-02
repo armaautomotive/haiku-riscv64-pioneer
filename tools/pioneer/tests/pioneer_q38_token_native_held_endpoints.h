@@ -1,7 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // TEST hardware/VM endpoints ONLY. Root zero execution and all120 L1/CSR
 // histories belong to ONE fixture from construction through held restoration.
-// No ready flag,private model state,journal or processor history is copied.
+// No ready flag,private model state,journal or processor history is supplied
+// to produce a positive run. Explicit negative-only COW branches below may
+// fork an actually earned HOLD history;they never replace the parent history.
 static unsigned tokenChildFail=0,tokenChildAttempts=0;
 void* operator new(std::size_t bytes,const std::nothrow_t&) noexcept{
  if(tokenChildFail && ++tokenChildAttempts==tokenChildFail)return nullptr;
@@ -17,6 +19,45 @@ struct TokenHeldEndpoints:ZeroControlIO {
  std::array<std::vector<uint32>,120> extra;
  std::vector<uint32> alias=std::vector<uint32>(Words),original;
  unsigned runtimeCore=0,maps=0,aliasReads=0,aliasWrites=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_READ_FIXTURE
+ // Negative HOST endpoint observations ONLY,armed after the actual original
+ // first-layer/cancel/STOP/HOLD/drain history. Never supply owner/ready state.
+ enum MatrixFault {MatrixNone,MatrixGeneration,MatrixChangedWord,MatrixBackwards,
+  MatrixDeadline,MatrixOverflow,MatrixSource,MatrixCounter,MatrixFifo,
+  MatrixFifoOverflow,MatrixMapping};
+ const PioneerQ38TokenMatrixPhaseResult* matrixFaultResult=nullptr;
+ MatrixFault matrixFault=MatrixNone;
+ unsigned matrixFaultPhase=0,matrixFaultWorker=0,matrixFaultAddress=0;
+ unsigned matrixFaultSeen=0,matrixFaultTouches=0,matrixClockReads=0;
+ uint64 matrixClockBase=0;
+ bool MatrixFaultActive()const{
+  return matrixFault!=MatrixNone && !matrixFaultSeen && matrixFaultResult
+   && matrixFaultResult->started && matrixFaultResult->phase==matrixFaultPhase;
+ }
+ bool MatrixFaultSelected()const{return MatrixFaultActive() && runtimeCore==matrixFaultWorker;}
+ void MatrixFaultObserved(){assert(!matrixFaultSeen);matrixFaultSeen=1;matrixFaultTouches=touches;}
+ uint32 MatrixFaultWord(unsigned address,uint32 actual){
+  if(MatrixFaultSelected() && address==matrixFaultAddress
+   && (matrixFault==MatrixGeneration || matrixFault==MatrixChangedWord)){
+   MatrixFaultObserved();
+   if(matrixFault==MatrixGeneration)sReloadGeneration++;else return actual^1U;
+  }
+  return actual;
+ }
+ uint64 Q38CohortNow(){
+  const auto actual=ZeroControlIO::Q38CohortNow();
+  if(matrixFaultResult && matrixFaultResult->started){
+   if(!matrixClockReads++)matrixClockBase=actual;
+   if(MatrixFaultActive() && matrixFault==MatrixOverflow){MatrixFaultObserved();return UINT64_MAX-10;}
+   if(MatrixFaultActive() && matrixClockReads>1
+    && (matrixFault==MatrixBackwards || matrixFault==MatrixDeadline)){
+    assert(matrixClockBase && matrixClockBase<=UINT64_MAX-UINT64_C(30000000));MatrixFaultObserved();
+    return matrixFault==MatrixBackwards?matrixClockBase-1:matrixClockBase+UINT64_C(30000000);
+   }
+  }
+  return actual;
+ }
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FRONTIER_FAILURE_LINK_FIXTURE
  unsigned qflSavedLinkReads=0; // HOST read observation only;never model/owner state
 #endif
@@ -188,7 +229,12 @@ struct TokenHeldEndpoints:ZeroControlIO {
  }
  bool MapRuntime(){Touch();return true;}
  bool MapQ38Panel(){Touch();return C().mapping;}
- bool Q38PanelMappingStable(){Touch();return C().mapping;}
+ bool Q38PanelMappingStable(){Touch();
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_READ_FIXTURE
+  if(MatrixFaultSelected() && matrixFault==MatrixMapping){MatrixFaultObserved();return false;}
+#endif
+  return C().mapping;
+ }
  uint32 Q38PanelRead(uint32 address){SharedMappedAccess();Touch();
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FRONTIER_FAILURE_LINK_FIXTURE
   if(!runtimeCore && address==0x75460)qflSavedLinkReads++;
@@ -203,7 +249,11 @@ struct TokenHeldEndpoints:ZeroControlIO {
    if(trafficFault==2){Core(0).source[11]^=1;trafficObserved=touches;}
   }
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_READ_FIXTURE
+  return MatrixFaultWord(address,value);
+#else
   return value;
+#endif
  }
  void Q38PanelWrite(uint32 address,uint32 value){SharedMappedAccess();Touch();
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
@@ -271,8 +321,18 @@ struct TokenHeldEndpoints:ZeroControlIO {
 #endif
   return actual;
  }
- uint32 SourceRead(unsigned w){SharedMappedAccess();Touch();return Trace("source",w,C().SourceRead(w));}
+ uint32 SourceRead(unsigned w){SharedMappedAccess();Touch();const uint32 actual=Trace("source",w,C().SourceRead(w));
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_READ_FIXTURE
+  if(MatrixFaultSelected() && matrixFault==MatrixSource && w==11){MatrixFaultObserved();return actual^1U;}
+#endif
+  return actual;
+ }
  uint32 ResidentNocRead(uint32 address){SharedMappedAccess();Touch();const uint32 actual=Trace("noc",address,C().ResidentNocRead(address));
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_READ_FIXTURE
+  if(MatrixFaultSelected() && matrixFault==MatrixCounter && address==PioneerQ38PanelCounter(3)){
+   MatrixFaultObserved();return actual^1U;
+  }
+#endif
 #if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(rootStoreFault==3 && !rootStoreFaultSeen && nativeRootStoreResult && nativeRootStoreResult->phase==3 && !runtimeCore && address==0x100){
    rootStoreFaultSeen++;rootStoreFaultTouches=touches;return actual^1U;
@@ -287,6 +347,12 @@ struct TokenHeldEndpoints:ZeroControlIO {
  }
  uint32 TokenFifoStatusWord(uint32 address){
   SharedMappedAccess();Touch();assert(address==0x64 || address==0x68);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_READ_FIXTURE
+  if(MatrixFaultSelected() && ((matrixFault==MatrixFifo && address==0x64)
+   || (matrixFault==MatrixFifoOverflow && address==0x68))){
+   MatrixFaultObserved();return address==0x64?0x1010100fU:1U;
+  }
+#endif
 #if defined(PIONEER_Q38_TOKEN_NATIVE_RESTORE_ROOT_STORE_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_FULL_END_FLOW_FIXTURE)
   if(!rootStoreFaultSeen && nativeRootStoreResult && nativeRootStoreResult->phase==1 && !runtimeCore
    && ((rootStoreFault==5 && address==0x64) || (rootStoreFault==6 && address==0x68))){
@@ -340,7 +406,13 @@ struct TokenHeldEndpoints:ZeroControlIO {
   } // generation loss AFTER an ACTUAL original command write;next native access must refuse
 #endif
  }
- uint32 RuntimeCodeRead(unsigned word){SharedMappedAccess();Touch();return Trace("entry",word,C().RuntimeCodeRead(word));}
+ uint32 RuntimeCodeRead(unsigned word){SharedMappedAccess();Touch();const uint32 actual=Trace("entry",word,C().RuntimeCodeRead(word));
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_READ_FIXTURE
+  return MatrixFaultWord(0x6000+word*4,actual);
+#else
+  return actual;
+#endif
+ }
  void RuntimeCodeWrite(unsigned word,uint32 value){SharedMappedAccess();Touch();C().RuntimeCodeWrite(word,value);}
  uint32 RuntimeControlRead(unsigned word){SharedMappedAccess();Touch();return C().RuntimeControlRead(word);}
  uint32 RuntimeStatusRead(unsigned word){SharedMappedAccess();Touch();return C().RuntimeStatusRead(word);}
@@ -391,6 +463,12 @@ static area_id map_physical_memory(const char*,uint64 physical,unsigned bytes,in
  if(!i)io.SnapshotOriginal();*view=io.alias.data()+offsets[i]/4;return int(i)+37;
 }
 static uint32 PioneerRead32(const volatile uint32* p){auto& io=*tokenHeldEndpoint;io.SharedMappedAccess();io.Touch();io.aliasReads++;
- const auto address=io.Address(p);assert(io.Mapped(address));const auto value=io.Raw(io.runtimeCore,address);io.ObserveAlias(address,false);return value;}
+ const auto address=io.Address(p);assert(io.Mapped(address));const auto value=io.Raw(io.runtimeCore,address);io.ObserveAlias(address,false);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_READ_FIXTURE
+ return io.MatrixFaultWord(address,value);
+#else
+ return value;
+#endif
+}
 static void PioneerWrite32(volatile uint32* p,uint32 value){auto& io=*tokenHeldEndpoint;io.SharedMappedAccess();io.Touch();io.aliasWrites++;
  const auto address=io.Address(p);assert(io.Mapped(address));io.Raw(io.runtimeCore,address)=value;io.ObserveAlias(address,true);}

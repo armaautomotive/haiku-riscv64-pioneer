@@ -2,7 +2,8 @@
 // DATA selection only; no native source/lifetime, journal or launch grant.
 // Rechecked outside the guard so late/defined-zero changes cannot alias data.
 #include "PioneerQ38TokenMatrixPhaseProgramsRole.h"
-#if defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS) && !defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_NATIVE_CONTEXT)
+#if defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS) && !defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_NATIVE_CONTEXT) \
+ && !defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_BENCHMARK_NATIVE)
 #error Matrix-phase DATA requires its distinct private native subject;no old fallback
 #endif
 #include "PioneerQ38TokenConstantQ4ProgramsRole.h"

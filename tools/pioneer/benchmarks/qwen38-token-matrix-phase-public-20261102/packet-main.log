@@ -1,0 +1,1 @@
+PASS pure fixed192-byte matrix timing packet:65812 fabricated DATA successes/87257 malformed request,reply,leaked-output refusals/119 workers,all3 K shapes,1..16 groups,4 metric states/STOP bound checked separately from metric nonce/changed plausible DATA is NOT provenance;NO ioctl route,native owner,HOLD,actual STOP,cleanup,physical timing,model,Work or TPS proof

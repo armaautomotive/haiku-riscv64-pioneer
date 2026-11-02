@@ -1,0 +1,36 @@
+{
+  "kind": "PARTIAL_USER_FAILED_REPLY_FORMATTER_STACK_AND_IMPORT_AUDIT",
+  "roots": [
+    {
+      "root": "_ZL34PioneerQ38WriteFrontierFailedReplyP8_IO_FILEjPKvmii.isra.0",
+      "known_module_chain_bytes": 400,
+      "known_chain": [
+        {
+          "function": "bool PioneerQ38WriteFrontierFailedReply(FILE*, uint32_t, const void*, size_t, int, int)",
+          "frame": 384
+        },
+        {
+          "function": "bool PioneerQ38TokenFrontierControl::ReplyShape(const Packet&)",
+          "frame": 16
+        }
+      ],
+      "unresolved": [
+        "fprintf",
+        "fputc",
+        "memcpy"
+      ],
+      "dynamic": [],
+      "cycles": [],
+      "reached_nodes": 5,
+      "module_graph_closed": false,
+      "whole_kernel_stack_qualified": false
+    }
+  ],
+  "whole_user_thread_stack_qualified": false,
+  "accelerator_calls_in_formatter": 0,
+  "raw_graph_sha256": "f3f78b4511f6f6731ac7d1f48f5ed119980e2f920bc0a4d66bd39c751bef8e10",
+  "focused_graph_sha256": "605c62238317721ad4696f3131ff425b29ee3b8658c53df604ee668d087a6936",
+  "all_raw_records": 739,
+  "focused_records": 12,
+  "limits": "Exact reachable formatter graph only;unreachable records are NOT audited. All reachable conflicts remain errors. Stdio/memory library costs excluded;NOT whole USER stack,driver,hardware or performance qualification."
+}

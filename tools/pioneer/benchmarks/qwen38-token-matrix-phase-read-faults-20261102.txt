@@ -1,0 +1,123 @@
+Fresh-slot Q4 timing reader: native-history fault tests CLOSED
+===================================================================
+CLOSED21:27:16UTC: corrected MAIN90922 and independent CLEAN24492 BOTH
+ACTUALLY exit0. ALL85 negative-only COW branches+4 invalid metric DATA
+cases execute;ALL119 genuine held reads return intervals119/missing0/
+invalidClock0. Parent histories then complete original L1,dispatch,NIU,
+shared TLB,clock,VM,PCI,host,reservation restoration and normal full END.
+Whole18,674B stdout streams match:
+ 32c5117a0b3861f1c53adce19fb992be886112837743bd4e702072a41e3894d9
+Both stderr streams are0B. Independent unchanged CPU comparators BOTH
+ACTUALLY exit0:5120 embedding+5120 first-layer words BIT-EXACT. Whole
+prefixes match4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+No tolerance,expected model word,reference or computed-row comparison is
+changed. This supersedes all LIVE/pending claims below for native R3.
+It is simulated native/ISA/OS/NoC/GDDR endpoint qualification,NOT physical
+card timing,whole-model quality,Assistant Work,20tok/s or a speedup.
+
+Corrected R2 failure remains a failure: MAIN57452/CLEAN39265 BOTH exit1
+after genuine first-layer/cancel/119STOP/120HOLD/drain and the FIRST actual
+negative generation-loss branch. Retention succeeds;the TEST incorrectly
+asserted a new call scope should still admit the quarantined context.
+The production scope correctly refuses it. Only that TEST assertion is
+fixed to require NO context;no production visibility,admission or owner
+gate is relaxed. R2 prefixes independently compare bit-exact but its END
+did NOT complete. Original R2 logs remain intact. New public-role work
+is separately recorded in qwen38-token-matrix-phase-public-20261102.txt.
+
+UPDATE20:50:40UTC: SAME corrected MAIN57452/CLEAN39265 are BOTH STILL
+ACTUALLY RUNNING,not passes. Both have reached actual first-layer ROOT
+70,000,052 instructions/phasea/575 new doors after real recurrent reads+
+writes. Both stderr streams remain0B. The85 new negative branches,4
+invalid metric DATA cases,full normal END and strict CPU comparisons are
+STILL PENDING. No restart or duplicate history was dispatched. Private
+SDK objects compare byte-exact;main/clean CLI and HOST observer stdout
+also compare byte-exact and all six corresponding stderr files are0B.
+The tests remain uncommitted/unpushed until their actual outcomes are
+known. No Pioneer operation or new measured model performance occurs.
+
+2026-11-02 20:37:39UTC. Goal ACTIVE. Correct usable27B Work and20tok/s
+remain UNMET. This turn performs NO Pioneer SSH/GPU/driver/relay/OS/boot/
+Assistant/network/SD/mains/hardware operation. Last completed physical
+generation result remains0.16253tok/s,not a demonstrated improvement.
+
+Previous-turn audit and next real action
+----------------------------------------
+The preceding user-facing status answer did not implement a performance
+improvement. The last implementation checkpoint62885612ae contains closed
+positive PRIVATE sampler/held-reader histories,but not the missing native
+reader fault tests or a deployable public diagnostic. This turn implements
+those missing fault tests,not another status-only wait or a smaller success
+definition. Actual fine-grained card timings,an architectural optimization,
+full numerical/quality acceptance and a usable Assistant Work mode remain.
+
+Implemented TEST changes,not new firmware or a speedup
+------------------------------------------------------
+Only pioneer_q38_token_native_held_endpoints.h and
+pioneer_q38_token_native_matrix_phase_read_checks.inc change executable
+TEST code. Hooks are compiled only for the exact existing private reader
+fixture and are inert until after a genuine native first-layer/cancel/
+119STOP/120HOLD/zero-record-drain predecessor. Negative-only COW child
+processes inherit that actual history;no manufactured ready state,private
+owner journal,processor PC,model product or positive history is injected.
+No child is accepted as a positive full native/physical/END run. The
+unmodified parent alone must complete the existing positive119-worker
+readout,hidden comparison,restoration and normal full END.
+
+Intended cases (NOT yet executed/passing claims)
+------------------------------------------------
+85 negative branches: generation loss after every timing word in each
+pass;changed second-read words;first/middle/last peers;first/last boot and
+code words;backwards,deadline and overflow clocks;source,counter,queued
+FIFO,overflow and mapping observations. Each must leave output unpublished,
+retain actual memory/bank/dispatch/host/clock owners,do no following IO,
+packet,reset,retry or restoration,and refuse subsequent calls without IO.
+Four explicitly fabricated negative metric-DATA snapshots additionally
+check Missing,InvalidClock,Malformed and sum-overflow classification stays
+nonfatal and does not grant END. These children do not prove cleanup;
+the original parent still owes its full genuine normal cleanup history.
+
+Closed independent build and early-refusal controls
+---------------------------------------------------
+Private SDK88048(main) and79176(clean) BOTH ACTUALLY exit0. Full predecessor
+build chains reproduce first;new held-reader objects are byte-identical to
+the already frozen production subject:
+ 1a04292b5246421f94f398c7d956459eed732c2aad20cf3f850ea8816235141c
+CLI72694(main) and21507(clean) BOTH ACTUALLY exit0. Actual HOST observer
+tests main and clean BOTH ACTUALLY exit0. These are NOT evidence that the
+85 new negative history branches have executed or that hardware improved.
+
+Initial compile failure remains a failure
+------------------------------------------
+Initial41254(main)/43837(clean) BOTH ACTUALLY exit1:the new TEST assertion
+tried to inspect the private runtime member. No production visibility,
+friend,owner or role gate is relaxed. That unnecessary private access was
+removed;the caller already requires its ACTUAL successful drained reply.
+Initial logs remain intact and must not be relabelled as passes.
+
+Live authoritatively polled original-model histories
+-----------------------------------------------------
+Corrected MAIN57452 and independent CLEAN39265 are ACTUALLY running as of
+20:37:39UTC. Last returned main progress is actual zero-ROM start480,
+GDNpages52672;not a complete first layer or new fault-test pass. Observe
+these SAME handles;an observation timeout is not terminal. No restart,
+duplicate history or presumed success merely because source compiles.
+
+Raw logs and generated artifacts remain task-local:
+ /private/tmp/pioneer-q38-matrix-reader-faults-20261102.zVCFLD
+ main.log/main.stderr and clean.log/clean.stderr = initial failures
+ main-r2.log/main-r2.stderr and clean-r2.log/clean-r2.stderr = live corrected
+ private-main/ and private-clean/ = closed frozen SDK build controls
+ cli_main/cli_clean and observer-main/observer_clean logs = closed controls
+Do not stage learned model,CPU trace or generated inference prefixes.
+
+Remaining after actual terminal
+--------------------------------
+Inspect whole stdout/stderr;confirm every intended injection was reached,
+no sanitizer error,actual normal END and unchanged independent original
+CPU trace comparison. Archive actual results and only then push the tested
+checkpoint. Keep failed attempts as failures. Next implement the separate
+public packet/native control/USER client and exact exchange,freeze actual
+module/client identities and validate before physical timing. The private
+builder/old constant-Q4 client alone cannot deploy this feature. No Work,
+Assistant,speed,whole-card bandwidth or card-authenticity claim follows.

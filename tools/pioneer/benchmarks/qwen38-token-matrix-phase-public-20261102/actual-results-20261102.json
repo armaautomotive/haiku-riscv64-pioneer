@@ -1,0 +1,122 @@
+{
+  "kind": "LOCAL_Q4_SAMPLER_BUILD_COMPONENT_QUALIFICATION_NOT_PHYSICAL",
+  "closedUTC": "2026-11-02 21:39:26 UTC",
+  "goalAchieved": false,
+  "target20TokensPerSecondMet": false,
+  "usableNumericallyAcceptedWork": false,
+  "lastPhysicalTokensPerSecondApprox": 0.16253,
+  "noPhysicalOperationThisCheckpoint": true,
+  "identities": {
+    "privateNative": "1a04292b5246421f94f398c7d956459eed732c2aad20cf3f850ea8816235141c",
+    "publicObject": "a49828b30178c8285502cb0232799f74ff2fe64141942e263fb8b6690a5a6401",
+    "publicModule": "5ae9d64ae4757c4635e4bbc6f59cf8350e8f549427e99e1e99e5897092616e39",
+    "userObject": "5e3de2b89d42b05c2d4ee03ed9d3663d283fb40d0ed8bf216cbf3d886ee60c1c",
+    "userClient": "559f986ddc88bbc2ff8cbe034dcda1546d385b366177f027a245452e605c7a22",
+    "exchangeHelper": "761dfd1494ed3e7963d643572ece1183b07b702471fc2d528d41712c049315bf",
+    "stableModule": "041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403"
+  },
+  "nativeHistory": {
+    "mainActualExit": 0,
+    "cleanActualExit": 0,
+    "fullEnd": true,
+    "negativeCOWCases": 85,
+    "invalidMetricDataCases": 4,
+    "heldSamples119": true,
+    "stdoutBytes": 18674,
+    "stdoutSha256": "32c5117a0b3861f1c53adce19fb992be886112837743bd4e702072a41e3894d9",
+    "stderrBytes": 0,
+    "scope": "Actual frozen ISA/native callbacks;OS,NoC,GDDR endpoints and clocks simulated;not hardware/model/TPS"
+  },
+  "independentCPUFirstLayer": {
+    "mainActualExit": 0,
+    "cleanActualExit": 0,
+    "embeddingWordsBitExact": 5120,
+    "layer0WordsBitExact": 5120,
+    "toleranceChanged": false,
+    "expectedWordsChanged": false,
+    "referenceChanged": false
+  },
+  "publicBuild": {
+    "mainInspectActualExit": 0,
+    "cleanInspectActualExit": 0,
+    "mainFrozenFinalActualExit": 0,
+    "wholeObjectsAndModulesMatch": true,
+    "knownModuleChainBytes": 5392,
+    "unresolvedEdges": 25,
+    "wholeKernelStackQualified": false
+  },
+  "userBuild": {
+    "mainInspectActualExit": 0,
+    "cleanInspectActualExit": 0,
+    "mainFrozenFinalActualExit": 0,
+    "wholeObjectsAndBinariesMatch": true,
+    "maxIndividualFrameBytes": 4432,
+    "wholeUSERStackQualified": false
+  },
+  "componentScopes": {
+    "packet": {
+      "mainActualExit": 0,
+      "cleanActualExit": 0,
+      "syntheticSuccesses": 65812,
+      "syntheticRefusals": 87257
+    },
+    "adapter": {
+      "mainActualExit": 0,
+      "cleanActualExit": 0,
+      "mockSuccesses": 1072,
+      "mockRefusals": 1742,
+      "copyAndInternalFaults": 19,
+      "nativeAuthorityMocked": true
+    },
+    "userSession": {
+      "mainActualExit": 0,
+      "cleanActualExit": 0,
+      "negativeCOWBranches": 132,
+      "CLIRefusals": 11,
+      "sourceAndTransportSynthetic": true
+    },
+    "comparator": {
+      "mainActualExit": 0,
+      "cleanActualExit": 0,
+      "syntheticAcceptedAndCrossLanguageCases": 1561,
+      "syntheticRefusals": 1536,
+      "numericalFailureExitUnchanged": 1
+    },
+    "publicRoles": {
+      "mainActualExit": 0,
+      "cleanActualExit": 0,
+      "positives": 3,
+      "refusals": 780
+    },
+    "userRoles": {
+      "mainActualExit": 0,
+      "cleanActualExit": 0,
+      "positives": 4,
+      "refusals": 210
+    },
+    "privateReaderRoles": {
+      "mainActualExit": 0,
+      "cleanActualExit": 0,
+      "positives": 4,
+      "refusals": 797
+    },
+    "exchange": {
+      "mainActualExit": 0,
+      "cleanActualExit": 0,
+      "validPerSuite": 2,
+      "refusedPerSuite": 130,
+      "bothDirectionsCovered": true,
+      "filesystemAndAPIEndpointsSynthetic": true
+    }
+  },
+  "retainedFailures": [
+    "initial compiler access to private runtime member",
+    "R2 negative test wrongly expected admission after successful quarantine",
+    "private ancestor TEST misclassified existing optional READ=1 extension"
+  ],
+  "rawEvidence": [
+    "tools/pioneer/benchmarks/qwen38-token-matrix-phase-read-faults-20261102",
+    "tools/pioneer/benchmarks/qwen38-token-matrix-phase-public-20261102"
+  ],
+  "next": "Fresh physical admission and exact staging/copy-back/exchange;one protected actual parent;strict posthoc numerics and timing;then restore stable and target measured dominant work. No Work or performance promotion."
+}
