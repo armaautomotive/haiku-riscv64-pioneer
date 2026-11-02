@@ -1,0 +1,105 @@
+Batched final-output closure: separately pinned ROOT firmware correction
+======================================================================
+2026-11-02. Goal ACTIVE. Correct usable Qwen27B Work and20tok/s remain UNMET.
+No Pioneer command, driver installation, model inference or power operation
+is performed in this checkpoint. The last completed physical model
+diagnostic remains about0.1597tok/s with unresolved numerical differences.
+
+Implemented correction
+----------------------
+The QFL1 physical failure localized a shared fault call to the old6066
+ROOT's DensePartitionRoot::AdmitGlobalOutput. Source inspection found its
+cross-token closure still expected20 Q6 read requests/group, while the
+selected twin-batch worker issues10. Several guards share that fault call;
+this mismatch is a concrete bug, NOT proof of the sole physical cause.
+
+New PIONEER_Q38_BATCHED_OUTPUT_CLOSURE_ROOT_IMAGE=1 explicitly binds that
+call site to PioneerQ38BatchedGlobalOutputClosure::Validate. Its DATA
+predicate was qualified in the preceding47ace checkpoint. Only its comment
+changes here; its predicate is unchanged. The new firmware accepts only
+the batched10 grammar, not a union with old20. Current/Job checks, physical
+counter baselines, boot/owner/frame/nonces, status/proof/reserved fields,
+payload flits and restored final single-tile command all remain unchanged.
+The old/default source path still calls the old closure and reproduces6066.
+
+The new role rechecks its exact batched/flat/job-fold/precise/pushed ROOT
+ancestry on every include. Missing/zero/two/late/removal/wrong architecture,
+HOST diagnostic, shader, old DATA/native, CPU-reference and Work aliases
+are refused. All3 ROOT translation units use the same explicit selection.
+No native/Assistant/Work selector is added by this BUILD-only checkpoint.
+
+Actual emitted change, not just a HOST predicate
+------------------------------------------------
+Both five-artifact builds have exactly the same boot, terminal, auxiliary
+code, sizes and symbol tables as6066. Independent authenticated ELF/section
+inspection establishes that the ENTIRE new program.elf differs ONLY in
+one instruction at0x504e8, inside the actual AdmitGlobalOutput symbol:
+ old01400613 = li a2,20
+ new00a00613 = li a2,10
+The following actual straight-line RV32 arithmetic is interpreted for each
+groups1..16. New reads=groups*10+2, old reads=groups*20+2; both retain
+flits=groups*1060+162 and identical dispatch setup. No fake memory endpoint
+or receipt is used by this calculation test. The entire dense and token
+objects remain byte-exact; only the recurrent object emits this closure.
+This is NOT execution of the complete admission routine or a model token.
+
+Frozen whole-artifact BUILD identity
+-------------------------------------
+ boot.bin       4 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text.bin  129672 7cc62dc2363079c70979211fe2821c7e8b78225d95781e102ea3043b78f71f69
+ terminal.bin   8 468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2
+ conv.bin   32692 19f59e9c75feb02f247e0c3ce1feb8cd3691d79ba5654484cc5ebed2451b0315
+ program.elf191436 c17658fd62d837c13068759e65b164a1eeffe4abc44c536187882215e917f349
+These identify a BUILD subject, not a native owner, numerical acceptance,
+hardware result, performance improvement or permission to reuse96a0.
+
+Closed reproducibility and isolation evidence
+----------------------------------------------
+Initial inspect builds26275/main and45927/clean ACTUALLY exit0. All5 whole
+artifacts compare byte-exact before pins are frozen. Final pinned rebuilds
+66448/main and97058/clean ACTUALLY exit0. Each first reproduces the entire
+old6066 builder and ALL ancestors, then rechecks all3 whole old ROOT TUs
+before compiling the new selection. No predecessor pin is changed.
+
+Each final parent also runs all unchanged flat-role2/109 and batched-root
+3/183 controls FIRST, then new-root3positive/329refused syntax cases.
+These are HOST syntax tests with explicit architecture macro arguments,
+not emitted worker/native tests. Final standalone revision gate ACTUALLY0
+in both trees:whole old/new pins, symbol extents, whole-ELF one-word diff,
+16 old/new emitted arithmetic cases and old generator refusal BEFORE worker
+IO/output. Final paired complete build/role/revision logs compare exact;
+all six associated stderr files are0B. Existing function-bounded opcode,
+undefined-symbol, writable-global, section/address and<=4096B static-frame
+audits pass. This is NOT whole-kernel or dynamic combined-stack evidence.
+
+Independent clean tree is a47ace23515068c7f36bf8c36a62d9bc110bc8160 Git
+export of tools/pioneer,headers and misc driver sources, overlaid with ONLY
+the7 owned source/test changes listed in source-identities.log. All7
+compare byte-exact. Unrelated user work and existing WIP are not overlaid.
+Main:/private/tmp/pioneer-q38-output-closure-main-20261102.ZDkBxd
+Clean:/private/tmp/pioneer-q38-output-closure-clean-20261102.BVnRFx
+The clean frozen builder is run from its independent exported source tree.
+
+Remaining connection and acceptance work
+----------------------------------------
+The old token generator correctly refuses this different ROOT. Create a
+distinct authenticated program package and native subject; do not change
+old pins or force it into the retired96a0 installer. Then execute actual
+ROOT admission against retained final-output receipts from the SAME real
+batched worker histories, full64-layer/multi-token/state/normal+EOS/END and
+reload tests, plus original-model numerical comparisons. Qualify before
+any physical installation; benchmark actual complete generation afterward.
+
+The separate wide-reduction HOST prototype is not an emitted card kernel
+or a runtime CPU fallback. No new speed, model quality, hardware health or
+authenticity claim follows from these gates. Both older offboard full-flow
+handles17008/75574 were SAME-handle confirmed LIVE at09:26:12UTC; neither
+was restarted. Their logs are not accepted as completed token/model proof.
+
+Reproduce (new absolute output directory required):
+ python3 tools/pioneer/build_qwen38_batched_output_closure_root.py SDK NEW_OUT
+ python3 tools/pioneer/tests/run_pioneer_q38_batched_output_closure_root_roles.py
+ python3 tools/pioneer/tests/pioneer_q38_batched_output_closure_root_revision_test.py NEW_OUT NEW_OUT/unchanged-batched
+SDK:/Volumes/HaikuBuildLocal/generated.riscv64. Closed raw logs and source
+identities are in the sibling qwen38-batched-output-closure-root-20261102
+directory. Goal remains ACTIVE;20tok/s and usable no-reference Work UNMET.

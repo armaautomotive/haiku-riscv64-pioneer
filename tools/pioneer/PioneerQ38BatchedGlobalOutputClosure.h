@@ -2,8 +2,9 @@
 #ifndef PIONEER_Q38_BATCHED_GLOBAL_OUTPUT_CLOSURE_H
 #define PIONEER_Q38_BATCHED_GLOBAL_OUTPUT_CLOSURE_H
 #include "PioneerQ38GlobalOutputClosure.h"
-// Separate DATA predicate for Q6 two-tile batches. NOT wired into a ROOT
-// image yet. No owner, execution, completed token or cleanup capability.
+// Separate DATA predicate for Q6 two-tile batches. Only the explicitly
+// selected batched-output-closure ROOT build binds it at the call site.
+// The predicate alone grants no owner, execution, token or cleanup capability.
 // The restored final single-tile COMMAND is unchanged;only actual read
 // packet deltas halve. Payload flits and all other receipt checks stay exact.
 namespace PioneerQ38BatchedGlobalOutputClosure {

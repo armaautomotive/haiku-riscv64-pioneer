@@ -106,7 +106,11 @@ static __attribute__((noinline)) void AdmitGlobalOutput(const uint32_t* d,uint32
   physical[i]=Register(d,tracked,w,0xffb20000+Counter(i));GlobalHeaderSeal(d,header);
   if(physical[i]!=Words(L::Counters)[w*8+i])scalar_fault_park(); // never recapture a new baseline
  }
+#ifdef PIONEER_Q38_BATCHED_OUTPUT_CLOSURE_ROOT_IMAGE
+ if(!PioneerQ38BatchedGlobalOutputClosure::Validate(header,root,Boot(w),d,Words(L::Nonces)[w],job,payload,payload+64,status,physical))scalar_fault_park();
+#else
  if(!PioneerQ38GlobalOutputClosure::Validate(header,root,Boot(w),d,Words(L::Nonces)[w],job,payload,payload+64,status,physical))scalar_fault_park();
+#endif
  ClosedJob(d,tracked,w,false);GlobalHeaderSeal(d,header);
 }
 #endif

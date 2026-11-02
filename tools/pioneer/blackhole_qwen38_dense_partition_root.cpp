@@ -3,6 +3,9 @@
 // supplied by FOUR real QDP producers in the joined qualification. Native
 // source/init/clock/host/joint-memory/Tensix/NoC ownership remains OWED.
 #include "PioneerQ38TidQuiet.h"
+#ifdef PIONEER_Q38_BATCHED_OUTPUT_CLOSURE_ROOT_IMAGE
+#include "PioneerQ38BatchedOutputClosureRootRole.h"
+#endif
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE)
 #include "PioneerQ38GlobalChainComponentRole.h"
 #include "PioneerQ38SelectedGlobalWorker.h"
@@ -67,6 +70,9 @@ namespace Projection {static void PushedReceipt(const uint32_t*,unsigned,const u
 #error Exact returning global recurrent component required for cross-token admission
 #endif
 #include "PioneerQ38GlobalOutputClosure.h"
+#ifdef PIONEER_Q38_BATCHED_OUTPUT_CLOSURE_ROOT_IMAGE
+#include "PioneerQ38BatchedGlobalOutputClosure.h"
+#endif
 #endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL
 #if PIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL != 1 || !defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) || PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE != 1
