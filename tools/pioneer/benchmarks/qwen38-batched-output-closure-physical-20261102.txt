@@ -1,3 +1,77 @@
+Corrected output admission:34-position physical diagnostic CLOSED
+=================================================================
+2026-11-02 11:48:06UTC. SAME28833 ACTUALLY exits0,observed11:46:22UTC.
+This supersedes ALL historical LIVE/protected/no-result statements below.
+No physical compute parent remains. Exact guarded restore11494 ACTUALLY0
+and independent post-restore health ACTUALLY0:stable041/tag12/gen4/cold0/
+quiesced0/owner0/open1/guard1,64CPUs/full137034936320B/free133788581888B.
+Goal ACTIVE;correct usable27B Work and20tok/s remain UNMET.
+
+Actual result,not a prediction or usable Work claim
+---------------------------------------------------
+SAME-open full original GGUF SHA and851 learned bindings authenticate,
+all19399024640 learned allocation bytes upload,START acknowledged,all34
+positions complete,then actual HOLD/drain/full restoration/END+Close and
+34 returned records. Stderr0B and actual process exit0. The changed batched
+cross-token output admission now permits this complete physical history.
+This does NOT prove the earlier software mismatch was the only possible
+hardware/guard problem,or certify the whole card's integrity/authenticity.
+
+Count window32 post-prompt sampled tokens,committed2..34,2007observations:
+ elapsed196487442..196490752us
+ rate0.162857537..0.162860281 tokens/sec.
+Mean about6.1403seconds per sampled token. Authentication,weight loading,
+initialization and restoration are EXCLUDED. These are observation-window
+bounds,not confidence intervals or isolated latency. ONE diagnostic run,
+not sustained arbitrary-prompt/Assistant performance.20tok/s is still far
+away;this result is not a useful-speed breakthrough or a hardware limit.
+
+Unchanged strict F8 decoder main+clean BOTH ACTUALLY exit1,stdout logs
+byte-identical,stderr0B. ALL3 original CPU pins load. Full34 grammar,
+feedback,flags,count/rate arithmetic and first3 greedy selections pass.
+Known maximum-score mismatches remain exactly the prior observed values:
+ position selected observed-max-bits CPU-max-bits
+ 0        70253    413bc1de          413c2358
+ 1        17       41452aa2          414621d3
+ 2        17       4167c42a          4168afd0
+Positions3..33 have NO external numerical acceptance here. No expected
+value,tolerance,trace pin,verifier or exit mode changes. Strict failure
+remains failure;successful cleanup does NOT make the numerical test pass.
+
+Post-terminal preservation and exact restoration
+------------------------------------------------
+ONLY after actual28833 exit0,a fresh independent cached-metadata SSH
+ACTUALLY0:whole7c85/new0d8/F8f8/stablebackup041/adminb0c/guardd1ce exact,
+gen3/cold0/quiesced0/owner0/open1/guard1,no compute parent,64CPUs/fullRAM.
+ONLY exact0d8 --restore executes:11494 ACTUALLY0,quiesce+close+atomic
+replacement,stable041/tag12/gen4. Independent final SSH ACTUALLY0 confirms
+all whole identities/idle metadata/CPU/RAM above. No additional GPU job,
+reset/forced unload/retry/quarantine/reboot/power/SD/mains/hardware/network
+or boot/kernel change.
+Assistant,boot/kernel and unrelated user source are untouched. All four
+physical/post-terminal/restore/post-restore stderr files are0B.
+
+The whole lifetime had NO extra Pioneer query/admin/model operation.
+Local raw file reads and SAME-handle polls ONLY until actual exit. Existing
+UART logger was never reopened or reconfigured;one filtered read of its
+already written project lines observes normal firmware-clock begin. That
+is not a new card query or a model result. Exact physical bytes and closed
+strict/health/restore histories are now archived in the sibling directory.
+
+Next integration,NOT a completed performance goal
+-------------------------------------------------
+Separate pushed7e65297c72d122a12df7e03b73763a2f484837e9 implements a new
+emitted wide recurrent reduction and fixes the known layer29 difference on
+all48 original heads in OFFBOARD main/clean instruction tests. It is NOT
+inside this7c85 driver,and is not yet a qualified returning peer/native
+layout. Integrate that real image+new256B scratch under distinct ownership,
+then whole-model/multitoken/state/fresh-request/EOS/physical numerics before
+Work. Also collect device-side timing/bandwidth evidence to direct real
+scheduling improvements;do not infer time fractions from raw frontend PCs.
+Last physical rate is now about0.16286tok/s;20tok/s and usable Work UNMET.
+
+Historical launch ledger (superseded LIVE status;retain provenance)
+------------------------------------------------------------------
 Corrected batched-output admission:physical diagnostic LIVE
 ===========================================================
 2026-11-02 11:36UTC. Goal ACTIVE;usable correct27B Work and20tok/s UNMET.
