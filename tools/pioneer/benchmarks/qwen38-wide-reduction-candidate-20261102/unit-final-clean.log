@@ -1,0 +1,2 @@
+PASS HOST candidate isolation/21 missing,wrong,CPU,native,Work,fast-math+old-emitted refusals;NOT native or hardware capability
+PASS HOST partial-Blackhole-FMA compensated candidate:4 separate histories/64 successive nonresetting transitions/all16384 next-state+128 output words BITEXACT to independent double-order reference/narrow negative-control6207 differing outputs/97 malformed-input refusals preserve ALL outputs/model evaluations48275456;NOT emitted/native/physical/Work/TPS or arbitrary-input exactness

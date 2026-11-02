@@ -9,9 +9,10 @@ import sys
 import tempfile
 from compare_pioneer_q38_observed_trace import load_cpu, require, stable_bytes
 
-def main(emitted=None):
+def main(emitted=None,wide=False):
     require(len(sys.argv)==4, 'MODEL CPU_TRACE_DIRECTORY PARTIAL_NATIVE_DIRECTORY')
     require(not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ), 'role overrides')
+    require(not (wide and emitted is not None), 'separate arithmetic-candidate and old emitted subjects')
     image_snapshots=[]
     if emitted is not None:
         require(emitted.is_absolute() and emitted.is_dir() and not emitted.is_symlink(), 'absolute emitted image directory')
@@ -56,11 +57,14 @@ def main(emitted=None):
         flags=['-std=c++17','-O1','-g','-ffp-contract=off','-Wall','-Wextra','-Werror','-fsanitize=address,undefined']
         if emitted is not None:
             flags.append('-DPIONEER_Q38_LAYER29_EMITTED_DELTA_DIAGNOSTIC=1')
+        if wide:
+            flags.append('-DPIONEER_Q38_LAYER29_WIDE_REDUCTION_DIAGNOSTIC=1')
         binary=root/'replay'
         subprocess.run([os.environ.get('CXX','c++'),*flags,'-I'+str(root),str(here/'pioneer_q38_layer29_replay.cpp'),
                         str(here/'pioneer_q38_layer29_math_bridge.cpp'),str(here/'pioneer_q38_layer29_precise_beta_bridge.cpp'),
                         str(here/'pioneer_q38_sigmoid_precision_host_bridge.cpp'),
                         *([str(here/'pioneer_q38_layer29_emitted_delta_bridge.cpp')] if emitted is not None else []),
+                        *([str(here/'pioneer_q38_layer29_wide_reduction_bridge.cpp')] if wide else []),
                         str(here/'pioneer_q38_whole_original_bytes.cpp'),'-o',str(binary)],check=True)
         return subprocess.run([str(binary),str(model),str(snapshot),*([str(emitted)] if emitted is not None else [])],env={**os.environ,'UBSAN_OPTIONS':'halt_on_error=1','ASAN_OPTIONS':'quarantine_size_mb=32'}).returncode
 if __name__=='__main__':

@@ -6,8 +6,14 @@
 #include "pioneer_q38_whole_original_bytes.h"
 #include "pioneer_q38_layer29_math_bridge.h"
 #include "pioneer_q38_sigmoid_precision_host_bridge.h"
+#if defined(PIONEER_Q38_LAYER29_EMITTED_DELTA_DIAGNOSTIC) && defined(PIONEER_Q38_LAYER29_WIDE_REDUCTION_DIAGNOSTIC)
+#error Distinct old emitted subject and HOST arithmetic candidate cannot be mixed
+#endif
 #ifdef PIONEER_Q38_LAYER29_EMITTED_DELTA_DIAGNOSTIC
 #include "pioneer_q38_layer29_emitted_delta_bridge.h"
+#endif
+#ifdef PIONEER_Q38_LAYER29_WIDE_REDUCTION_DIAGNOSTIC
+#include "pioneer_q38_layer29_wide_reduction_bridge.h"
 #endif
 #include <cassert>
 #include <cstdio>
@@ -75,10 +81,16 @@ int main(int argc,char** argv){
 #ifdef PIONEER_Q38_LAYER29_EMITTED_DELTA_DIAGNOSTIC
  ,256U,320U,327U
 #endif
+#ifdef PIONEER_Q38_LAYER29_WIDE_REDUCTION_DIAGNOSTIC
+ ,512U,576U,583U
+#endif
  }){
   std::vector<float> conv(10240),raw(6144),gated(6144),state(786432,0),projected;
 #ifdef PIONEER_Q38_LAYER29_EMITTED_DELTA_DIAGNOSTIC
   uint64_t emittedSteps=0,emittedOps=0;
+#endif
+#ifdef PIONEER_Q38_LAYER29_WIDE_REDUCTION_DIAGNOSTIC
+  uint64_t candidateOps=0;
 #endif
   if(mode&1){for(unsigned c=0;c<10240;c+=16)assert(Q38Layer29CardConv(qkv.data()+c,convWeight.data()+c*4,conv.data()+c));}
   else for(unsigned c=0;c<10240;c++){
@@ -104,6 +116,19 @@ int main(int argc,char** argv){
    }
    if(mode&32){uint32_t precise=0;assert(ProbeQ38SigmoidPrecision(Bits(beta[h]),&precise));gates[1]=Float(precise);}
    if(mode&64)assert(Q38Layer29CardPreparePrecise(inQ,inK,alpha[h],beta[h],a[h],dt[h],query,key,gates));
+#ifdef PIONEER_Q38_LAYER29_WIDE_REDUCTION_DIAGNOSTIC
+   if(mode&512){
+    std::vector<float> expectedState(state.begin()+h*16384,state.begin()+(h+1)*16384),expectedOutput(128);
+    assert(Gdn(query,key,conv.data()+4096+h*128,gates[0],gates[1],expectedState.data(),expectedOutput.data()));
+    uint64_t operations=0;
+    assert(Q38Layer29WideReductionCandidate(query,key,conv.data()+4096+h*128,gates[0],gates[1],state.data()+h*16384,raw.data()+h*128,&operations));
+    unsigned stateDifferences=0,outputDifferences=0;
+    for(unsigned i=0;i<16384;i++)stateDifferences+=Bits(state[h*16384+i])!=Bits(expectedState[i]);
+    for(unsigned i=0;i<128;i++)outputDifferences+=Bits(raw[h*128+i])!=Bits(expectedOutput[i]);
+    printf("LAYER29_WIDE_CANDIDATE_HEAD mode%u head%u stateDifferences%u outputDifferences%u;HOST partial-FMA arithmetic only,NOT emitted/native/physical\n",mode,h,stateDifferences,outputDifferences);
+    assert(!stateDifferences && !outputDifferences);candidateOps+=operations;
+   }else
+#endif
 #ifdef PIONEER_Q38_LAYER29_EMITTED_DELTA_DIAGNOSTIC
    if(mode&256){
     std::vector<float> scalarState(state.begin()+h*16384,state.begin()+(h+1)*16384),scalarOutput(128);
@@ -145,6 +170,12 @@ int main(int argc,char** argv){
    assert(cpuDiff==5120 && !nativeDiff && lanes==0 && Different(s0,s1)==1);
    printf("LAYER29_EMITTED_LOCAL_REPLAY mode%u half_images96 state_words786432 output_words6144 RV32steps%llu SFPUops%llu known_CPU_difference_REMAINS_FAILURE native_DATA_exact1;NOT current linked peer/native history/physical/Work/TPS\n",
     mode,static_cast<unsigned long long>(emittedSteps),static_cast<unsigned long long>(emittedOps));
+  }
+#endif
+#ifdef PIONEER_Q38_LAYER29_WIDE_REDUCTION_DIAGNOSTIC
+  if(mode&512){
+   assert(!cpuDiff && nativeDiff==5120 && !lanes && !Different(s0,s1));
+   printf("LAYER29_WIDE_CANDIDATE mode%u all48heads state_words786432 output_words6144 partial_FMA_model_evaluations%llu CPU_hidden_exact1 known_old_native_difference_REMAINS_FAILURE;NOT emitted instructions,linked peer,native history,physical,Work or TPS\n",mode,static_cast<unsigned long long>(candidateOps));
   }
 #endif
   printf("LAYER29_CPU_LOCAL_REPLAY mode%u gated_words%u gated_q8_lanes%u gated_q8_scales%u residual_words%u activation_words%u CPU_hidden_differences%u native_partial_hidden_differences%u;NOT emitted/physical/Work/TPS\n",

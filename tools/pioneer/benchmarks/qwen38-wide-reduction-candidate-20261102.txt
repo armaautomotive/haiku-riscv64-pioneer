@@ -1,0 +1,103 @@
+Partial-Blackhole-FMA wide reduction:HOST candidate repairs layer29 replay
+=======================================================================
+2026-11-02 08:18:38UTC. Goal ACTIVE;usable27B Work and20tok/s UNMET.
+This checkpoint changes HOST diagnostic sources ONLY. NO installed driver,
+firmware,model,Assistant,boot,CPU/RAM or physical state is changed by it.
+The SEPARATE96a0 physical68757 is SAME-handle confirmed LIVE NOW:original
+source authenticated/Open,14839848960/19399024640 uploaded bytes,stderr0B.
+No completed upload/START/record/END/TPS is observed. Its ENTIRE lifetime
+remains protected;see qwen38-frontier-failure-link-physical-20261102.txt.
+
+Evidence that changes the next arithmetic implementation
+-------------------------------------------------------
+The previous actual emitted local recurrence reproduced the native F32
+reduction difference:one Q8 scale changed and all5120 layer29 final hidden
+words differed from the CPU reference. That is STILL the old native result.
+New HOST arithmetic candidates512/576/583 each match ALL786432 next-state
+and6144 output words of the independent double-order GDN calculation on
+the real model-derived position0/layer29 inputs. In all three modes,the
+Q8 lanes/scales match the CPU baseline and ALL5120 final hidden words are
+bit-exact to CPU,not the old partial-native DATA. No tolerance/pin/expected
+word change. The new prototype does NOT fix the currently linked firmware.
+
+Mode512 uses CPU preparation;576 uses actual precise card preparation;
+583 also uses the existing convolution and gated helper. Mode583 still has
+2628 differing unquantized gated words versus the all-CPU baseline,but its
+packed Q8 lanes/scales and downstream residual/activation/hidden words all
+match. Do not call all intermediate floats CPU-identical. This is one real
+layer/initially-zero recurrent state,NOT full-model/long-context acceptance.
+
+Prototype arithmetic and limits
+--------------------------------
+The new isolated bridge uses the existing integer-based bit-perfect
+PioneerBlackholeFma model for EVERY arithmetic primitive,not host std::fma.
+Blackhole MAD is only partially fused. Each product residual uses explicit
+12-bit operand splitting and four partial-MAD terms,then a normalized
+two-float accumulation. Both prediction and output reductions use it;
+the original separate FP32 state-update and post-dot scaling order remain.
+The implementation has NO double,CPU model reference,device/NoC/owner/
+launch API or runtime fallback;only the separate observer TU uses double.
+It is still HOST arithmetic,NOT emitted scalar/SFPU instructions,hardware
+timing or a production performance fix. The36,206,592 model evaluations
+per real-input mode are NOT SFPU instructions,cycles or measured latency.
+
+The bridge requires its explicit HOST-only selector and rejects kernel,
+CPU-reference,Work,fast-math and old-emitted selectors even when0. It stages
+all outputs privately and publishes only after success. This HOST64KiB+
+array is NOT a proposed native stack. It promises no arbitrary-input
+binary64 equivalence:two-float precision and denormal handling need further
+coverage;the tested actual model inputs and synthetic histories are exact.
+
+Closed independent tests,not inferred passes
+-------------------------------------------
+Fresh clean source export at6dea6ae540 plus ONLY the7 owned test edits;
+all7 re-compared byte-exact against main. Candidate final13630/7151 BOTH
+ACTUALLY0. Each executes ALL15 old default modes FIRST,then three new
+48-head candidates. Complete paired logs byte-identical SHA:
+edc5ddbb0d8c6cad3ae528b652545c0a3858ad4e4247311ce0e54478e803b8ba
+Initial candidate99102 also ACTUALLY0 and its log matches the final log.
+The actual original GGUF/full851 layout,all CPU trace pins and original
+partial hidden pin remain mandatory. CPU-local61504B input SHA remains
+bd3faafe2b26c4eea37ede3a34a5db5db0b8f809845856373d96f43d1b687660.
+
+Final isolated ASan/UBSan tests93488/88204 BOTH ACTUALLY0,paired logs exact:
+21 wrong/missing/mixed-role compile refusals;four independent16-step
+NONRESETTING state histories,ALL16384 state+128 output words per step
+bit-exact to independent double-order reference;97 malformed/null/rounding
+mode refusals leave all caller state/output/counters byte-untouched.
+The parallel narrow-order negative control has6207 differing outputs.
+These are HOST calculations,not emitted code/native lifetime/card proof.
+Final unit log SHA
+b1f22dfe97f259969ed69d9d70a72fa79f5b60d831b8267c8f6cd7b6e5e64f43.
+Initial unit4069 ACTUALLY0 before the added isolation/null/rounding checks;
+its smaller90-refusal output remains task-local,not relabelled final.
+
+Unchanged default controls10087/30357 BOTH ACTUALLY0. Complete paired logs
+also match the original20261031 reduction-order log byte-for-byte SHA
+577752362a3c2e6542d86adf783858dfc5f012af73aef7c9aa4b704ad370f045.
+Unchanged emitted controls76904/57407 BOTH ACTUALLY0. Complete paired logs
+match the previous20261102 emitted report's358bb0077ad10e351a24481b9c5595a9621071497fbadb6bdc79c7626cf0fa5b
+exactly,including ALL96 half-images for each of its three old modes and
+their explicit known CPU differences. No old result was reclassified.
+All eight final stderr files0B. Raw logs are in the sibling directory.
+Bridge source SHA
+abfdef5bba3deec856e16b70900d5d56bdcfdea5796700f3cf0aea72613d56d8.
+
+Next implementation,not yet achieved
+-------------------------------------
+Implement the candidate using real SFPU operations with an independently
+checked register/scratch plan,then test emitted instructions on these SAME
+real inputs and multi-step histories before connected peer/ROOT/full-model
+and physical qualification. Do not substitute host products into a native
+history or relabel the HOST prototype as an on-card fix.
+The current128x64 FP32 state already fills ALL512 Dst rows. The official
+Blackhole Dst documentation specifies512x16 FP32 storage;row512 is NOT
+extra scratch. Any emitted plan must remain within those original bounds,
+explicitly own a different tile layout or use a checked reload schedule.
+Source:https://raw.githubusercontent.com/tenstorrent/tt-isa-documentation/main/BlackholeA0/TensixTile/TensixCoprocessor/Dst.md
+
+Reproduce HOST candidate:
+ python3 tools/pioneer/tests/run_pioneer_q38_layer29_wide_reduction_replay.py MODEL CPU_TRACES ORIGINAL_PARTIAL_DIRECTORY
+ python3 tools/pioneer/tests/run_pioneer_q38_wide_reduction_candidate_tests.py
+The default and old emitted commands remain unchanged. No20tok/s,usable
+Assistant Work,full card offload or hardware-authenticity conclusion follows.
