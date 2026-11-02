@@ -2,6 +2,7 @@
 // Rechecked on every geometry/header include. Pure DATA OR a distinct
 // private renamed-ABI OR explicit bounded diagnostic build;NEVER USER,
 // shader or runtime Work authority. Compiled identity grants no launch.
+#include "PioneerQ38TokenBatchedOutputClosureDataBoundary.h"
 #ifndef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_DATA_SELECTION_H
 #define PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_DATA_SELECTION_H
 #ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_BENCHMARK_NATIVE
@@ -27,7 +28,9 @@ enum {PioneerQ38TokenTwinBatchPrefetchDataSelection=0};
  || defined(PIONEER_Q38_TOKEN_FRONTIER_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_JOB_BOOT_FOLD_PROGRAMS_H) \
  || defined(PIONEER_Q38_TOKEN_PRECISE_BETA_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_FAULT_PROGRAMS_H) \
  || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS_H) \
- || (defined(PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H) && !defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS_H))
+ || (defined(PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H) && !defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS_H) \
+  && !(defined(PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_PROGRAMS) && PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_PROGRAMS == 1 \
+   && defined(PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_PROGRAMS_H)))
 #error Twin-batch DATA cannot coexist with old arrays or a selected native namespace
 #endif
 #if defined(__FAST_MATH__) || defined(PIONEER_Q38_TOKEN_NATIVE_TEST_CONTEXT) \

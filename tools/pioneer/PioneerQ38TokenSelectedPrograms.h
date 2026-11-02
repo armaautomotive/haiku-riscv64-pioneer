@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 // DATA selection only; no native source/lifetime, journal or launch grant.
 // Rechecked outside the guard so late/defined-zero changes cannot alias data.
+#include "PioneerQ38TokenBatchedOutputClosureProgramsRole.h"
+#if defined(PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_PROGRAMS) \
+ && !defined(PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_NATIVE_CONTEXT) && !defined(PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_BENCHMARK_NATIVE)
+#error Output closure DATA requires its distinct native subject;no silent old-package fallback
+#endif
 #include "PioneerQ38TokenTwinBatchPrefetchProgramsRole.h"
 #if defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS) \
  && !defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT) && !defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_BENCHMARK_NATIVE)
@@ -70,7 +75,9 @@
 #elif defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
 #error QTP3 native selector requires its actual native parent
 #endif
-#ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_PROGRAMS
+#include "PioneerQ38TokenBatchedOutputClosurePrograms.h"
+#elif defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS)
 #include "PioneerQ38TokenTwinBatchPrefetchPrograms.h"
 #elif defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS)
 #include "PioneerQ38TokenBatchedPrefetchPrograms.h"
@@ -106,7 +113,9 @@
 #include "PioneerQ38TokenFootprint.h"
 #ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
-#ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_PROGRAMS
+namespace PioneerQ38TokenPrograms=PioneerQ38TokenBatchedOutputClosurePrograms;
+#elif defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenTwinBatchPrefetchPrograms;
 #elif defined(PIONEER_Q38_TOKEN_BATCHED_PREFETCH_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenBatchedPrefetchPrograms;

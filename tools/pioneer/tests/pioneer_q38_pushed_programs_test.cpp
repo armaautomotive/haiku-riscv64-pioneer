@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // Immutable DATA access only, not native initialization or model execution.
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_BATCHED_OUTPUT_CLOSURE
+#define PIONEER_Q38_PROGRAM_DATA_TEST_TWIN_BATCH_PREFETCH 1
+#endif
 #ifndef PIONEER_Q38_PUSHED_PROGRAMS_HEADER
 #define PIONEER_Q38_PUSHED_PROGRAMS_HEADER "../PioneerQ38TokenPushedPrograms.h"
 #endif
@@ -13,7 +16,9 @@
 #include <iterator>
 #include <string>
 #include <vector>
-#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_TWIN_BATCH_PREFETCH
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_BATCHED_OUTPUT_CLOSURE
+namespace P=PioneerQ38TokenBatchedOutputClosurePrograms;
+#elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_TWIN_BATCH_PREFETCH)
 namespace P=PioneerQ38TokenTwinBatchPrefetchPrograms;
 #elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_BATCHED_PREFETCH)
 namespace P=PioneerQ38TokenBatchedPrefetchPrograms;
@@ -97,6 +102,10 @@ int main(int argc,char** argv){
  assert(P::TokenFrontier==1 && P::FrontierAddress==0x7570c);
 #ifdef PIONEER_Q38_PROGRAM_DATA_TEST_TWIN_BATCH_PREFETCH
  assert(P::TwinBatchPrefetch==1 && P::FullBatchBuffers==2 && P::RawCopyBytes==0 && P::SecondBatchAddress==0x9a000);
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_BATCHED_OUTPUT_CLOSURE
+ assert(P::BatchedOutputClosure==1 && P::GlobalOutputReadsPerGroup==10);
+ assert(P::RootText[(0x504e8-0x40000)/4]==0x00a00613);
+#endif
  assert(allWords==3086042 && P::CodeWords(0)==40594 && P::CodeWords(1)==25592);
  const unsigned fetchEnd=0x7050c;
 #else

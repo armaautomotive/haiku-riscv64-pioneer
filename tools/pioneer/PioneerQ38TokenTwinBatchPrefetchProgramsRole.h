@@ -2,6 +2,9 @@
 // Pure DATA only. Do not reuse an old native owner just because packet
 // counts match. Exact ROM,buffer lifetime and full END need qualification.
 #include "PioneerQ38TokenTwinBatchPrefetchDataBoundary.h"
+#ifdef PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_PROGRAMS
+static_assert(PioneerQ38TokenBatchedOutputClosureParentBinding==1,"output closure DATA requires its distinct outer role");
+#endif
 #ifndef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PARENT_BINDING_H
 #define PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PARENT_BINDING_H
 #ifdef PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS

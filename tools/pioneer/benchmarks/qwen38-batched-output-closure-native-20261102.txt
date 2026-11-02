@@ -1,0 +1,138 @@
+Corrected final-output ROOT: distinct authenticated native BUILD package
+=======================================================================
+2026-11-02. Goal ACTIVE. Correct usable Qwen27B Work and20tok/s remain UNMET.
+This checkpoint connects the corrected c176 ROOT to a new immutable program
+package, private native object and bounded diagnostic module. It performs
+NO Pioneer command, staging, installation, inference or power operation.
+The last completed physical diagnostic remains about0.1597tok/s with
+unresolved numerical differences. There is no new model-rate result here.
+
+Implemented connection
+-----------------------
+The preceding1c99b46c8545354a62ef9c249668037a1c0b64d5 checkpoint authenticates
+the corrected ROOT:its ENTIRE ELF differs from6066 in ONE instruction at
+0x504e8, li a2,20 -> li a2,10 in AdmitGlobalOutput. The old controller must
+reject an otherwise valid batched Q6 receipt. The shared fault call still
+does NOT prove this was the only failing guard in the96a0 physical test.
+
+New generator mode --batched-output-closure authenticates ALL16 artifacts
+(14 complete code sections and both full ELFs), then emits a separate
+PioneerQ38TokenBatchedOutputClosurePrograms namespace. It consumes the SAME
+authenticated byte snapshots, not an unchecked reopen. Existing modes and
+old committed program headers still reproduce byte-exact. No old pin changes.
+
+The new header has SHA
+1e844aca55fd4920a278fcd702a64b324fe13ea2c29e52d4cd75841e42f06891.
+Selected ROOT ELF c17658fd62d837c13068759e65b164a1eeffe4abc44c536187882215e917f349;
+unchanged twin worker ELF56b470ae508655a070f17294c0a0fe242335214faed7101abaa05fb385ce6e38.
+The native object extraction checks every actual embedded section against
+its SHA. Relative to the old package,ONLY RootText's one instruction changes;
+the other13 arrays and entire2MiB RoPE remain byte-exact. Read counts change
+to10/group;payload flits and restored final3392B single-tile command do NOT.
+
+Separate DATA/private/public selection
+---------------------------------------
+New *_BATCHED_OUTPUT_CLOSURE_PROGRAMS plus the exact private *_NATIVE_CONTEXT
+or public *_BENCHMARK_NATIVE establish a distinct outer binding before
+delegating to complete twin/QFL1 parents. Pure DATA is also separately
+available, but the shared native selector refuses it without its new native
+binding. The native subject requires the QFL1 pre-error LINK observer.
+All include boundaries recheck immutable selection. Missing/zero/two/late/
+removed flags,opposite native mode,old arrays or old selected namespace,
+shader/old HOST TEST/USER/CPU-reference/Work aliases are refused. Old parent
+roles alone cannot acquire the new package. Parent re-includes recognize
+only the explicitly selected new package's own guard, not arbitrary old code.
+
+No Q38WorkControl,CPU model oracle,llama/ggml,HOST instruction model or old
+program namespace is linked into either new native subject. The private
+object has no conventional driver ABI;all5 renamed bodies+5 wrappers match
+the actual inert predecessor. The public module has the expected6 ABI
+exports and only the existing bounded diagnostic controls. Neither a shared
+tag75 nor family/version metadata is code identity or a deployment grant.
+Assistant and its existing Work/validation modes are not changed.
+
+Frozen whole native BUILD identities
+-------------------------------------
+PRIVATE b688d89b569495d4d027b3880f7e28f2e1ece15974c3d10823f0cfa6d7c36a30
+OBJECT  4ea205c3d0ea92554d23f98db09e2da33692b5575274cec259a6b3561e17848a
+MODULE  7c85898c5591115521e5f38c9ee546da7909a1da82b9a025046c5f8c81d1b623
+Module filename:tenstorrent_pci_probe-BATCHED-OUTPUT-CLOSURE34-DIAGNOSTIC-ONLY.
+No installer/exchange helper for this module is added or executed. In
+particular,retired96a0/5920/010c/34322 APPLY paths remain forbidden. Existing
+96a0 restore-only helper and stable041 installation are untouched.
+
+Closed tests and independent reproduction
+------------------------------------------
+Native PRIVATE inspect64442/main and57507/clean ACTUALLY exit0. Whole b688
+objects compare exact BEFORE its pin freezes. Public inspect27076/main and
+39692/clean ACTUALLY exit0;both whole4ea2 objects and whole7c85 modules compare
+exact BEFORE pins freeze. Final frozen1996/main and56862/clean ACTUALLY exit0;
+each also builds the new private subject against its frozen b688 pin.
+Whole final private/object/module pairs compare exact. Entire old feaa/a0f0/
+22a/3593 private controls and old010c/5920/96a0 public controls reproduce FIRST;
+these retired modules are only local build controls,never installation targets.
+
+Program suite15550/main ACTUALLY0. Clean sequence8354 ACTUALLY0,including
+the same program suite and both native-role suites. EACH program suite first
+runs ALL unchanged twin+batched+prefetch+ancestor DATA controls,then new:
+ ALL120 code maps/3,086,042 words match actual authenticated binaries;
+ existing journal geometry covers every word;3,010 gap/runtime/invalid/
+ immutable-output checks;no zero-padded holes or writable code destinations.
+ 32 separate corrupt/truncated artifact refusals before output;
+ 4 wrong-family refusals;3 pure-DATA syntax positives/306 refusals.
+These are immutable code DATA tests,not launched workers or native owners.
+
+Role84175/main ACTUALLY0 runs both modes. EACH main/clean native-role suite
+runs ALL unchanged QFL1+ancestors FIRST,then new PRIVATE3positive/747refused,
+PUBLIC3positive/645refused. These are HOST syntax arguments,not live native
+or model histories. EACH final build parent also runs BUILD CLI40 refusals
+before compiler/output creation;existing sentinel and symlink remain exact.
+The standalone initial pure-package pilot25197 also ACTUALLY0. An earlier
+manual generation attempt correctly refuses a relative output path with
+exit2;the subsequent new absolute output succeeds. It is not relabelled a
+successful generation or a failed hardware run.
+
+Main/clean complete program,private-role,public-role,BUILD-CLI and final
+SDK-build stdout logs compare byte-exact;their10 stderr files are0B.
+Actual static frames remain<=2048B or no larger than the unchanged larger
+predecessor. The compiled callgraph copy is byte-exact to the real object:
+known module entry chain5392B/unresolved25,NO dynamic/cyclic path found in
+that graph. Kernel,IRQ,entry and indirect costs remain outside it. This is
+explicitly PARTIAL,NOT whole-kernel or combined-stack qualification.
+
+Independent clean tree is a1c99b46c8545354a62ef9c249668037a1c0b64d5 export
+of tools/pioneer,headers,build/config_headers and misc driver sources,with
+ONLY19 owned source/test overlays. All19 compare exact. It uses the separate
+clean c176 ROOT and clean56b4 worker in its program tests. No user dirt,
+FlashNext work,dirty llama submodule or NATIVE_BUILD_STATUS edits are copied.
+Main:/private/tmp/pioneer-q38-output-closure-package-main-20261102.L4BmGI
+Clean:/private/tmp/pioneer-q38-output-closure-package-clean-20261102.tWYkgU
+Initial main PRIVATE:/private/tmp/pioneer-q38-output-closure-native-main-20261102.rKwNrD
+
+Still required before a useful model/Work claim
+------------------------------------------------
+Connect this exact package to a separately named native TEST fixture/CLI and
+immutable peer-ROM bridge. Authenticate original851 model layout/bytes and
+execute actual source/init/119 virgin engines/ROOT first-layer/cancel/STOP/
+HOLD/drain/full-END histories. Then cover retained final-output receipts in
+actual emitted ROOT admission,full64-layer/multi-token/state/normal+EOS/END
+and reload paths,numerical comparisons and controlled physical diagnostics.
+No narrow syntax,code-word or SDK build gate proves those unexecuted paths.
+
+The current new subject has NOT run the model,native first-layer/full-END,
+cross-token closure on a device,arbitrary prompts or Assistant. No speedup,
+20tok/s,hardware-capacity/health/authenticity,or numerical-quality conclusion
+follows. The independent wide-reduction HOST prototype is not a card kernel
+or runtime CPU fallback. Older offboard17008/75574 were SAME-handle confirmed
+LIVE at10:00:14UTC;neither was restarted or substituted for a complete result.
+
+Reproduce with fresh absolute outputs:
+ python3 tools/pioneer/generate_qwen38_token_programs.py ROOT WORKER NEW_HEADER --batched-output-closure
+ python3 tools/pioneer/tests/run_pioneer_q38_batched_output_closure_program_tests.py ROOT WORKER
+ python3 tools/pioneer/tests/run_pioneer_q38_batched_output_closure_roles.py
+ python3 tools/pioneer/tests/run_pioneer_q38_batched_output_closure_roles.py --public
+ python3 tools/pioneer/tests/pioneer_q38_batched_output_closure_build_cli_test.py
+ python3 tools/pioneer/build_qwen38_batched_output_closure_native.py NEW_PRIVATE_OUT
+ python3 tools/pioneer/build_qwen38_batched_output_closure_benchmark_native.py NEW_PUBLIC_OUT
+Closed raw logs,partial stack reports and source identities are in the sibling
+qwen38-batched-output-closure-native-20261102 directory. Goal remains ACTIVE.

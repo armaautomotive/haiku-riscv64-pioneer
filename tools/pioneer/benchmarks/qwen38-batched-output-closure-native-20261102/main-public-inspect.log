@@ -1,0 +1,35 @@
+PASS whole old feaa PRIVATE+a0f0 RETIRED PUBLIC objects byte-exact FIRST;all14 firmware arrays+2MiB RoPE unchanged/all10 renamed ABI bodies/wrappers exact and conventional ABI absent/no Work,CPU reference or HOST engines;static frames<=2048 or unchanged larger predecessor;NOT whole kernel/IRQ/indirect stack proof
+observer_frames [('PioneerQ38TokenNativeOwner::ObserveCommittedFrontier<PioneerSessionIO>(PioneerSessionIO&, PioneerQ38TokenFrontierResult&)::<lambda(unsigned int)>', 80), ('bool PioneerQ38TokenNativeOwner::ObserveCommittedFrontier(IO&, PioneerQ38TokenFrontierResult&) [with IO = PioneerSessionIO]', 208)]
+22a862c26595460dcd2c5e720bbe24079d2cb3a2b371e25d11337602dbbff5c3 frontier-failure-detail-NODRV.o
+PRIVATE_BUILD_ONLY opt-in cached first-failure DATA;NO installable driver,retired010c retry,model,lifecycle,physical speed or Assistant Work qualification
+PARTIAL knownModuleChain5392/unresolved25;wholeKernelStackQualified=FALSE
+0e984211811f01a792542fdd1bf5eeb06c99a669ef9f5277a9ee3f23d568d008 frontier-failure-detail-benchmark-native.o
+592084df7cc967b688f0f8ef84421165aaeb4e5bb2b7d2e9ca739bf0188c6716 tenstorrent_pci_probe-FRONTIER-EARLY-FAILURE-DIAGNOSTIC-ONLY
+PUBLIC_BUILD_ONLY distinct cached first-failure diagnostic/ENTIRE old privatefeaa+publica0f0+retired010c+qualified private22a FIRST/all14 unchanged arrays+2MiB RoPE/no runtime CPU reference or Work;NO native lifecycle,install,retired010c retry,hardware safety,model,TPS or speedup grant
+PASS whole old feaa PRIVATE+a0f0 RETIRED PUBLIC objects byte-exact FIRST;all14 firmware arrays+2MiB RoPE unchanged/all10 renamed ABI bodies/wrappers exact and conventional ABI absent/no Work,CPU reference or HOST engines;static frames<=2048 or unchanged larger predecessor;NOT whole kernel/IRQ/indirect stack proof
+observer_frames [('PioneerQ38TokenNativeOwner::ObserveCommittedFrontier<PioneerSessionIO>(PioneerSessionIO&, PioneerQ38TokenFrontierResult&)::<lambda(unsigned int)>', 80), ('bool PioneerQ38TokenNativeOwner::ObserveCommittedFrontier(IO&, PioneerQ38TokenFrontierResult&) [with IO = PioneerSessionIO]', 208)]
+22a862c26595460dcd2c5e720bbe24079d2cb3a2b371e25d11337602dbbff5c3 frontier-failure-detail-NODRV.o
+PRIVATE_BUILD_ONLY opt-in cached first-failure DATA;NO installable driver,retired010c retry,model,lifecycle,physical speed or Assistant Work qualification
+PASS entire old feaa/private+a0f0/retired-public+22a/QFD1 private reproduce FIRST;all14 firmware arrays+2MiB RoPE/all10 renamed ABI bodies exact;conventional ABI absent/no Work,CPU reference or HOST engine;static frames<=2048 or unchanged larger predecessor;NOT whole kernel/IRQ/indirect stack proof
+QFL1_observer_frames [('PioneerQ38TokenNativeOwner::ObserveCommittedFrontier<PioneerSessionIO>(PioneerSessionIO&, PioneerQ38TokenFrontierResult&)::<lambda(unsigned int)>', 80), ('bool PioneerQ38TokenNativeOwner::ObserveCommittedFrontier(IO&, PioneerQ38TokenFrontierResult&) [with IO = PioneerSessionIO]', 208)]
+3593260a72978b739120eb26a9ba866a622f7a6369b0ffbda4e4bce6c8b518e3 frontier-failure-link-NODRV.o
+FROZEN_QFL1_PRIVATE_BUILD_ONLY;NO installable ABI,native lifecycle,hardware cause or TPS qualification
+PARTIAL_QFL1 knownModuleChain5392/unresolved25;wholeKernelStackQualified=FALSE
+370722a7e54c9b76a2bff335d9ecce97528e40316aef75145d3da5770ed98400 frontier-failure-link-benchmark-native.o
+96a030daf8136143aafa1f518b2ff3323178b5aa7b530c7d9395db5bf447e3e2 tenstorrent_pci_probe-FRONTIER-PREERROR-LINK-DIAGNOSTIC-ONLY
+PUBLIC_BUILD_ONLY QFL1 ONE pre-error local savedLINK read;whole old PRIVATE/PUBLIC/retired010c+5920 and frozen3593 private FIRST;all14 firmware arrays+2MiB RoPE exact/no CPU model reference or Work;NO install,native lifetime,physical fault cause or TPS grant
+PASS whole old feaa PRIVATE+a0f0 RETIRED PUBLIC objects byte-exact FIRST;all14 firmware arrays+2MiB RoPE unchanged/all10 renamed ABI bodies/wrappers exact and conventional ABI absent/no Work,CPU reference or HOST engines;static frames<=2048 or unchanged larger predecessor;NOT whole kernel/IRQ/indirect stack proof
+observer_frames [('PioneerQ38TokenNativeOwner::ObserveCommittedFrontier<PioneerSessionIO>(PioneerSessionIO&, PioneerQ38TokenFrontierResult&)::<lambda(unsigned int)>', 80), ('bool PioneerQ38TokenNativeOwner::ObserveCommittedFrontier(IO&, PioneerQ38TokenFrontierResult&) [with IO = PioneerSessionIO]', 208)]
+22a862c26595460dcd2c5e720bbe24079d2cb3a2b371e25d11337602dbbff5c3 frontier-failure-detail-NODRV.o
+PRIVATE_BUILD_ONLY opt-in cached first-failure DATA;NO installable driver,retired010c retry,model,lifecycle,physical speed or Assistant Work qualification
+PASS entire old feaa/private+a0f0/retired-public+22a/QFD1 private reproduce FIRST;all14 firmware arrays+2MiB RoPE/all10 renamed ABI bodies exact;conventional ABI absent/no Work,CPU reference or HOST engine;static frames<=2048 or unchanged larger predecessor;NOT whole kernel/IRQ/indirect stack proof
+QFL1_observer_frames [('PioneerQ38TokenNativeOwner::ObserveCommittedFrontier<PioneerSessionIO>(PioneerSessionIO&, PioneerQ38TokenFrontierResult&)::<lambda(unsigned int)>', 80), ('bool PioneerQ38TokenNativeOwner::ObserveCommittedFrontier(IO&, PioneerQ38TokenFrontierResult&) [with IO = PioneerSessionIO]', 208)]
+3593260a72978b739120eb26a9ba866a622f7a6369b0ffbda4e4bce6c8b518e3 frontier-failure-link-NODRV.o
+FROZEN_QFL1_PRIVATE_BUILD_ONLY;NO installable ABI,native lifecycle,hardware cause or TPS qualification
+PASS old3593 QFL1+22a/feaa/a0f0 whole controls FIRST/all14 new package arrays authenticated/ONLY RootText one instruction changes/13 other arrays+2MiB RoPE+10 inert ABI bodies exact/no conventional ABI,old program namespace,CPU model reference or Work;static frames<=2048 or unchanged larger predecessor;NOT whole-kernel/combined-stack proof
+b688d89b569495d4d027b3880f7e28f2e1ece15974c3d10823f0cfa6d7c36a30 batched-output-closure-NODRV.o
+PRIVATE_BUILD_ONLY corrected FINAL-output ROOT;NO native lifecycle,installation,model,hardware,Work or TPS grant
+PARTIAL corrected-output knownModuleChain5392/unresolved25;wholeKernelStackQualified=FALSE
+4ea205c3d0ea92554d23f98db09e2da33692b5575274cec259a6b3561e17848a batched-output-closure-benchmark-native.o
+7c85898c5591115521e5f38c9ee546da7909a1da82b9a025046c5f8c81d1b623 tenstorrent_pci_probe-BATCHED-OUTPUT-CLOSURE34-DIAGNOSTIC-ONLY
+PUBLIC_BUILD_ONLY corrected FINAL-output ROOT+unchanged twin worker/QFL1 pre-error observer/whole old PRIVATE+PUBLIC controls and frozen new PRIVATE FIRST/all14 arrays+2MiB RoPE authenticated/no old namespace,CPU reference or Work;NO native lifecycle,installation,model,physical or TPS grant

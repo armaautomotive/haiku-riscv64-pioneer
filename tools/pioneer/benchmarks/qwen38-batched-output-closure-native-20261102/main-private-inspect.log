@@ -1,0 +1,11 @@
+PASS whole old feaa PRIVATE+a0f0 RETIRED PUBLIC objects byte-exact FIRST;all14 firmware arrays+2MiB RoPE unchanged/all10 renamed ABI bodies/wrappers exact and conventional ABI absent/no Work,CPU reference or HOST engines;static frames<=2048 or unchanged larger predecessor;NOT whole kernel/IRQ/indirect stack proof
+observer_frames [('PioneerQ38TokenNativeOwner::ObserveCommittedFrontier<PioneerSessionIO>(PioneerSessionIO&, PioneerQ38TokenFrontierResult&)::<lambda(unsigned int)>', 80), ('bool PioneerQ38TokenNativeOwner::ObserveCommittedFrontier(IO&, PioneerQ38TokenFrontierResult&) [with IO = PioneerSessionIO]', 208)]
+22a862c26595460dcd2c5e720bbe24079d2cb3a2b371e25d11337602dbbff5c3 frontier-failure-detail-NODRV.o
+PRIVATE_BUILD_ONLY opt-in cached first-failure DATA;NO installable driver,retired010c retry,model,lifecycle,physical speed or Assistant Work qualification
+PASS entire old feaa/private+a0f0/retired-public+22a/QFD1 private reproduce FIRST;all14 firmware arrays+2MiB RoPE/all10 renamed ABI bodies exact;conventional ABI absent/no Work,CPU reference or HOST engine;static frames<=2048 or unchanged larger predecessor;NOT whole kernel/IRQ/indirect stack proof
+QFL1_observer_frames [('PioneerQ38TokenNativeOwner::ObserveCommittedFrontier<PioneerSessionIO>(PioneerSessionIO&, PioneerQ38TokenFrontierResult&)::<lambda(unsigned int)>', 80), ('bool PioneerQ38TokenNativeOwner::ObserveCommittedFrontier(IO&, PioneerQ38TokenFrontierResult&) [with IO = PioneerSessionIO]', 208)]
+3593260a72978b739120eb26a9ba866a622f7a6369b0ffbda4e4bce6c8b518e3 frontier-failure-link-NODRV.o
+FROZEN_QFL1_PRIVATE_BUILD_ONLY;NO installable ABI,native lifecycle,hardware cause or TPS qualification
+PASS old3593 QFL1+22a/feaa/a0f0 whole controls FIRST/all14 new package arrays authenticated/ONLY RootText one instruction changes/13 other arrays+2MiB RoPE+10 inert ABI bodies exact/no conventional ABI,old program namespace,CPU model reference or Work;static frames<=2048 or unchanged larger predecessor;NOT whole-kernel/combined-stack proof
+b688d89b569495d4d027b3880f7e28f2e1ece15974c3d10823f0cfa6d7c36a30 batched-output-closure-NODRV.o
+PRIVATE_BUILD_ONLY corrected FINAL-output ROOT;NO native lifecycle,installation,model,hardware,Work or TPS grant
