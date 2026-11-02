@@ -1,0 +1,68 @@
+/* SPDX-License-Identifier: MIT */
+// Rechecked every include. Separate firmware BUILD or pure DATA TEST only.
+#ifndef PIONEER_Q38_TOKEN_MATRIX_PHASE_BINDING_H
+#define PIONEER_Q38_TOKEN_MATRIX_PHASE_BINDING_H
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_IMAGE
+enum {PioneerQ38TokenMatrixPhaseSelection=1};
+#elif defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_DATA_TEST)
+enum {PioneerQ38TokenMatrixPhaseSelection=2};
+#else
+enum {PioneerQ38TokenMatrixPhaseSelection=0};
+#endif
+#endif
+#if defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_IMAGE) || defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_DATA_TEST)
+#if defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(__FAST_MATH__) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+ || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS) \
+ || defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_BENCHMARK_NATIVE) \
+ || defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_CLIENT) || defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE) \
+ || defined(PIONEER_Q38_WORK_PEER_PHASE_PROFILE) || defined(PIONEER_Q38_WORK_RAW_UNPACK_CACHE) \
+ || defined(PIONEER_Q38_WORK_Q4_NIBBLE) || defined(PIONEER_Q38_WORK_Q4_DIRECT_DECODE) \
+ || defined(PIONEER_Q38_WORK_LOCAL_Q4) || defined(PIONEER_Q38_WORK_SIGNED_MAG2) \
+ || defined(PIONEER_Q38_WORK_FRONTEND_BARRIER) || defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE)
+#error Matrix phase BUILD/DATA cannot alias native,USER,oracle,Work or old experiments
+#endif
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_IMAGE
+#if PIONEER_Q38_TOKEN_MATRIX_PHASE_IMAGE != 1 \
+ || !defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_PARENT_BINDING) || PIONEER_Q38_TOKEN_MATRIX_PHASE_PARENT_BINDING != 1 \
+ || !defined(PIONEER_Q38_Q4_CONSTANT_ISSUE_IMAGE) || PIONEER_Q38_Q4_CONSTANT_ISSUE_IMAGE != 1 \
+ || !defined(PIONEER_Q38_Q4_CONSTANT_ISSUE) || PIONEER_Q38_Q4_CONSTANT_ISSUE != 1 \
+ || !defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_WORKER_IMAGE) || PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_WORKER_IMAGE != 1 \
+ || !defined(PIONEER_Q38_WORK_TWIN_BATCH_PREFETCH) || PIONEER_Q38_WORK_TWIN_BATCH_PREFETCH != 1 \
+ || !defined(PIONEER_Q38_STATIC_VECTOR) || PIONEER_Q38_STATIC_VECTOR != 1 \
+ || !defined(PIONEER_Q38_REPLAY_OPERAND) || PIONEER_Q38_REPLAY_OPERAND != 1 \
+ || !defined(PIONEER_Q38_NATIVE_OPERAND_STORE) || PIONEER_Q38_NATIVE_OPERAND_STORE != 1 \
+ || !defined(PIONEER_Q38_VECTOR_INLINE) \
+ || defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_DATA_TEST)
+#error Exact complete current constant-Q4 returning worker required for matrix phase BUILD
+#endif
+#include "PioneerQ38Q4ConstantIssueRole.h"
+// The actual returning parent privately defines this legacy feature with
+// an EMPTY replacement list. Permit that spelling or1,but reject0/2.
+#define PIONEER_Q38_MATRIX_PHASE_STRING_RAW(x) #x
+#define PIONEER_Q38_MATRIX_PHASE_STRING(x) PIONEER_Q38_MATRIX_PHASE_STRING_RAW(x)
+static_assert(sizeof(PIONEER_Q38_MATRIX_PHASE_STRING(PIONEER_Q38_VECTOR_INLINE))==1
+ || (sizeof(PIONEER_Q38_MATRIX_PHASE_STRING(PIONEER_Q38_VECTOR_INLINE))==2
+ && PIONEER_Q38_MATRIX_PHASE_STRING(PIONEER_Q38_VECTOR_INLINE)[0]=='1'),"exact legacy inline-issue feature");
+#undef PIONEER_Q38_MATRIX_PHASE_STRING
+#undef PIONEER_Q38_MATRIX_PHASE_STRING_RAW
+static_assert(PioneerQ38TokenMatrixPhaseSelection==1,"late matrix phase BUILD binding");
+#else
+#if PIONEER_Q38_TOKEN_MATRIX_PHASE_DATA_TEST != 1 \
+ || defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_PARENT_BINDING) || defined(PIONEER_Q38_Q4_CONSTANT_ISSUE_IMAGE) \
+ || defined(PIONEER_Q38_Q4_CONSTANT_ISSUE_PARENT_BINDING) \
+ || defined(PIONEER_Q38_Q4_CONSTANT_ISSUE) || defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_WORKER_IMAGE) \
+ || defined(PIONEER_Q38_WORK_TWIN_BATCH_PREFETCH) || defined(PIONEER_Q38_STATIC_VECTOR) \
+ || defined(PIONEER_Q38_REPLAY_OPERAND) || defined(PIONEER_Q38_NATIVE_OPERAND_STORE) || defined(PIONEER_Q38_VECTOR_INLINE) \
+ || defined(PIONEER_ATTENTION_FREESTANDING) || defined(PIONEER_Q38_MIXED_CAPSULE_IMAGE)
+#error Pure matrix phase DATA TEST cannot select a shader or returning worker
+#endif
+static_assert(PioneerQ38TokenMatrixPhaseSelection==2,"late matrix phase DATA binding");
+#endif
+#else
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_PARENT_BINDING
+#error Matrix phase parent requires its separate BUILD
+#endif
+static_assert(PioneerQ38TokenMatrixPhaseSelection==0,"late matrix phase removal");
+#endif

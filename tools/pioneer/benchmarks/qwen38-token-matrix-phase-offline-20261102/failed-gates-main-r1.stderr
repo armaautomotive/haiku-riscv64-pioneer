@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_token_matrix_phase_gates_test.py", line 44, in <module>
+    syntax({**base,key:value},False)
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_token_matrix_phase_gates_test.py", line 27, in syntax
+    assert (result.returncode==0)==okay,(values,body,result.stderr)
+AssertionError: ({'PIONEER_Q38_TOKEN_MATRIX_PHASE_IMAGE': '1', 'PIONEER_Q38_TOKEN_MATRIX_PHASE_PARENT_BINDING': '1', 'PIONEER_Q38_Q4_CONSTANT_ISSUE_IMAGE': '1', 'PIONEER_Q38_Q4_CONSTANT_ISSUE': '1', 'PIONEER_Q38_Q4_CONSTANT_ISSUE_PARENT_BINDING': '1', 'PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_WORKER_IMAGE': '1', 'PIONEER_Q38_WORK_TWIN_BATCH_PREFETCH': '1', 'PIONEER_Q38_STATIC_VECTOR': '1', 'PIONEER_Q38_REPLAY_OPERAND': '1', 'PIONEER_Q38_NATIVE_OPERAND_STORE': '1', 'PIONEER_Q38_VECTOR_INLINE': '1', 'PIONEER_ATTENTION_FREESTANDING': '0'}, None, '')

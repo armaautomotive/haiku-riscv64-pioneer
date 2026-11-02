@@ -1,3 +1,87 @@
+Constant-Q4 physical diagnostic CLOSED:no measured model improvement
+===================================================================
+2026-11-02 18:48:44UTC. SAME36999 ACTUALLY exits0,observed18:45:33UTC.
+This supersedes ALL historical LIVE/no-result statements below. All34
+positions finish,held timing read+restoration+clean END+Close complete,
+and the whole45,173B stdout/0B stderr are returned. No compute parent
+remains. Exact7fa restore53740 ACTUALLY0;independent7235 ACTUALLY0 verifies
+stable041/tag12/gen10/cold0/idle,64CPUs and full137034936320B RAM. Goal ACTIVE;
+correct usable27B Work and20tok/s remain UNMET. No card-authenticity or
+whole-memory-integrity certificate is inferred.
+
+Actual generation result:negative optimization result
+------------------------------------------------------
+Same-open original GGUF SHA/all851 learned bindings authenticate BEFORE
+Open;all19,399,024,640 allocated bytes upload,START acknowledges,all34
+positions finish and actual clean END+Close succeeds.32 post-prompt
+sampled tokens,committed2..34,2011 observations:
+ elapsed196881198..196884561us
+ rate0.162531789..0.162534566 tokens/sec
+Approximately6.153seconds per sampled token. Authentication,upload,
+initialization and restoration are excluded. These are observation-window
+bounds,NOT confidence intervals or isolated token latency. The preceding
+same-day phase diagnostic was0.162818579..0.162821370tok/s. This sample is
+about0.18percent LOWER,not a speedup;one sequential comparison does not
+establish the cause or statistical significance of this small difference.
+The35percent fewer instruction-buffer stores/0.8..1.2percent Q4 RV-count
+reduction did NOT produce a demonstrated end-to-end benefit. Do not
+promote this diagnostic to Work/Assistant as a performance improvement.
+
+Valid coarse cycle DATA,not the missing inner profile
+------------------------------------------------------
+Independent main+clean strict readers BOTH ACTUALLY exit1;their complete
+stdout matches and all stderr streams are0B. Whole96word packet,safe/ready
+reply,all60 metric words+zero padding,committed34/COMPLETE/error0 and all10
+bucket/count/cycle sums pass. Actual valid1,total282592919478 device cycles:
+ Metadata12050451454 (4.264244percent)
+ Recurrent165993296391 (58.739369percent)
+ Dense70138271145 (24.819543percent)
+ HeadMatrix31484601790 (11.141327percent)
+ StateCommit2691943679 (0.952587percent)
+Layer bodies+HeadMatrix account for94.700239percent of this inclusive
+interval. All exact fractions and the other5 buckets remain in the full
+reader logs. These cover ALL34+bootstrap+STOP+observer costs,not the
+separate32-token rate window or pure tensor utilization. Regions include
+arithmetic,packing,controller/NoC work and waits. They do not identify an
+inner cause or justify GHz/GBps/TPS conversion. Runtime CPU-reference
+validation is already absent from this measured diagnostic.
+
+Unchanged strict numerical failure
+-----------------------------------
+All3 original CPU trace pins load. The unchanged complete34 grammar,
+feedback,count/rate checks and first3 greedy choices pass. Maximum bits:
+ position0 selected70253 observed413c2359 /CPU413c2358 (ONE FP32 bit)
+ position1 selected17 observed414621d3 /CPU414621d3
+ position2 selected17 observed4168afd0 /CPU4168afd0
+This is the SAME known first-score difference,not new numerical acceptance.
+Positions3..33 still have NO external numerical control. No tolerance,
+reference,expected word,validator or exit mode is changed. A valid profile
+and clean END do not make usable Work or whole-model quality pass.
+
+Safe exact restoration after actual terminal ONLY
+--------------------------------------------------
+Postterminal31385 ACTUALLY0 independently verifies exactdb03/gen9/cold0/
+idle,all whole installed/staged/client/helper/admin/guard/backup identities,
+no project compute parent,64CPUs/fullRAM. No extra GPU query is used to
+interpret already returned metrics. SAME7fa --restore ONCE:53740 ACTUALLY0,
+quiesce/close/atomic replacement/verified reload. Independent7235 ACTUALLY0:
+installed041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012/gen10/quiesced0/cold0/owner0/open1/guard1,64CPUs/fullRAM/
+free131450179584B. All postterminal/restore/final independent stderr are0B.
+No reset,forced unload,retry,quarantine,reboot,power,SD,mains,hardware,
+network,Assistant,kernel or boot change. UART not reopened/reconfigured.
+Whole closed physical/strict/metadata/restoration logs are archived in the
+sibling directory. Learned model/CPU trace/prefix files are NOT committed.
+
+Next:qualify the separate CURRENT-worker Q4 inner sampler,not another
+tiny issue-count forecast. See qwen38-token-matrix-phase-offline-20261102.txt.
+It passed emitted math/metric/fault tests locally but has NO native owner,
+held readout,original-model or hardware qualification and MUST NOT be
+deployed yet. Measure actual preparation/tensor/wait costs,then target
+dominant work with architectural changes.20tok/s remains unproven/unmet.
+
+Historical protected launch ledger (superseded LIVE status)
+----------------------------------------------------------
 Constant-Q4 full-token diagnostic:ONE protected physical parent LIVE
 ==================================================================
 2026-11-02 18:05:37UTC. SAME36999 is dispatched and ACTUALLY running.

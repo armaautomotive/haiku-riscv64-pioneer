@@ -1,0 +1,3 @@
+PASS_CONSTANT_Q4_BUILDER_PRESDK_REFUSALS 35 NO output or SDK/device invocation
+PASS_MATRIX_PHASE_ROLE positives5 missing,zero,two,late,native,USER,old-profile,shader-mix,CPU+WorkRefusals215;NO execution grant
+PASS_MATRIX_PHASE_BUILDER_PRESDK_REFUSALS 35 no SDK/output/device invocation

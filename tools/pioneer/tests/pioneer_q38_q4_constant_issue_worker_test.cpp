@@ -45,6 +45,7 @@ static void Compare(ConstantIssuePeer& old,ConstantIssuePeer& next) {
 	for(unsigned i=0;i<64;i++)assert(old.mailbox[i]==next.mailbox[i]);
 	if(old.type==12)assert(next.instructionBufferWrites<old.instructionBufferWrites);
 }
+#ifndef PIONEER_Q38_CONSTANT_ISSUE_WORKER_MACHINE_ONLY
 int main(int argc,char** argv) {
 	assert(argc==4);setvbuf(stdout,nullptr,_IOLBF,0);unsigned cases=0,faults=0,stack=0,orderFaults=0;
 	(void)&RunPersistentGdnPair;
@@ -97,3 +98,4 @@ int main(int argc,char** argv) {
 	 "SAME complete Tensix stream,integer+FP32 outputs,rawUNPACK,drains,replay,ACK,source,NoC and STOP;"
 	 "ONLY synthetic endpoints,NO physical/native/whole-model/Work/TPS grant\n",cases,cases*2,faults,orderFaults,stack);
 }
+#endif

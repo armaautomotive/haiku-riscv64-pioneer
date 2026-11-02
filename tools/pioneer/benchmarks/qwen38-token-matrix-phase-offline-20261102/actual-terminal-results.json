@@ -1,0 +1,64 @@
+{
+  "main-final-build": {
+    "id": 61825,
+    "actualExit": 1
+  },
+  "clean-final-build": {
+    "id": 24926,
+    "actualExit": 1
+  },
+  "clean-gates": {
+    "id": 40043,
+    "actualExit": 0
+  },
+  "clean-execution": {
+    "id": 63015,
+    "actualExit": 0
+  },
+  "main-gates-r2": {
+    "id": 50233,
+    "actualExit": 0
+  },
+  "main-execution": {
+    "id": 78383,
+    "actualExit": 0
+  },
+  "main-inspect-build": {
+    "id": 3610,
+    "actualExit": 0
+  },
+  "clean-inspect-build": {
+    "id": 63668,
+    "actualExit": 0
+  },
+  "failed-main-gates-r1": {
+    "id": 67132,
+    "actualExit": 1
+  },
+  "main-final-r2": {
+    "id": 55827,
+    "actualExit": 0
+  },
+  "clean-final-r2": {
+    "id": 69695,
+    "actualExit": 0
+  },
+  "main-gates-final": {
+    "id": 7375,
+    "actualExit": 0
+  },
+  "clean-gates-final": {
+    "id": 8156,
+    "actualExit": 0
+  },
+  "main-gates-r3": {
+    "id": 70118,
+    "actualExit": 0
+  },
+  "data-final-main": {
+    "actualExit": 0
+  },
+  "data-final-clean": {
+    "actualExit": 0
+  }
+}

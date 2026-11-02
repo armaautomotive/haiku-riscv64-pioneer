@@ -1,0 +1,123 @@
+Current returning worker:Q4-job inner sampler,OFFLINE ONLY
+=========================================================
+2026-11-02. Goal ACTIVE;correct usable27B Work and20tok/s UNMET. This is
+instrumentation for the NEXT bottleneck measurement,not an inference
+optimization or speedup. During its implementation,the separate db03
+physical parent36999 was protected/live;it later closed0 with NO speedup
+and stable041 was restored. See the separate closed physical report.
+No Pioneer operation was added during that lifetime;no sampler bytes are
+staged,installed or selected by native/USER/Assistant/Work code.
+
+Why this is needed
+-------------------
+The last closed full-model phase profile places about95percent of inclusive
+device cycles in layer/head-matrix regions,but cannot split packing,tensor
+work and waits. The much older single-peer sampler predates today's full
+returning/twin-prefetch worker and cannot simply be enabled through its
+incompatible role. This separate complete worker retains current e9ef
+constant-Q4 issue and its returning math/controller while adding explicit
+per-Q4-job DATA. No peak-spec or interpreter-count forecast is substituted
+for physical model timing. The20tok/s target remains unproven.
+
+Actual sampler and scope
+-------------------------
+New PioneerQ38TokenMatrixPhase partitions the actual body of ONE full-K
+Q4 job into fetch/wait,metadata+rawUNPACK/pack,and matrix+affine intervals.
+Setup,input validation,inter-block gaps and final output publication are
+outside these buckets. Samples INCLUDE waits,overlap and observer overhead;
+they are not isolated DRAM/SFPU/FPU times,whole-model totals or utilization.
+Only skip-dot-check Q4 jobs sample. Q8/Q6 jobs issue no new clock reads and
+leave the metric canaries untouched in the emitted tests. The new64B DATA
+slot records the LATEST completed Q4 job ONLY,not a run-wide aggregate.
+
+Magic324d5051/version2 binds nonce,worker,type12,K,groups and valid flag;
+three opaque64bit totals and two zero reserved words follow. The disjoint
+84500..8453f slot was already within the old saved runtime extent;this is
+not native permission to read/write it. High/low/high readonly mcycle CSR
+sampling gets four bounded tries. Backwards/unstable/constant/invalid
+timestamps invalidate metrics ONLY;normal arithmetic,ACK,STOP and cleanup
+must still execute. Invalid metrics publish zero totals,not invented time.
+No CSR/counter/config/reset write is added. No frequency/GBps conversion.
+
+Independent frozen complete images
+-----------------------------------
+Both final non-inspect builders ACTUALLY exit0:main55827/clean69695. Whole
+ELFs compare byte-exact. Every build reproduces entire unchanged current
+e9ef worker+ancestors FIRST,including unchanged full matrix object. New:
+ ELF d5ba1c3af9ac040cc1f6f4a8e8d08228a0351f3fadd604ab25f8e5bcb7da93ff
+ text6768/8192B dcc7e7201e7aefd70d50ad11db6a2cce97a296dee00e6f3d24e63656a2f40fcb
+ affine5360/5376B 96d69025bc3b87ebad872089be199308a4f2dcdeebb0c5d01da0b67d49cccbc9
+ fetch1292/1792B cb564c312ec5c798a1e2e7e2f8b08d94e77b2d4734386332d1f88149a711faba
+ service11136/24576B244286c80a33a71d1ca1af87bd73b7d2320cac74a5bffb6878256b9bc62aeecb
+Boot,precise,dense,FFN and GDN sections remain WHOLE byte-identical to e9ef.
+The remaining sections contain the sampler and its relocated references;
+not every unrelated callable has yet had a separate relocation-body audit.
+New helpers fit existing service ROM;no code/stack/operand/runtime extent
+is enlarged. All allocated sections are explicitly bounded,undefined
+symbols and writable globals/GOT are absent. Actual opcode audit finds
+exactly6 readonly cycle CSR sites:3 old rendezvous+3 new sampler. No other
+system opcode/counter write is permitted. Actual compute frame592B,
+sampler clock16B/publisher80B. These are not native/kernel stack proof.
+
+Actual emitted instruction tests,not physical timing
+----------------------------------------------------
+Main78383 and independent clean63015 BOTH ACTUALLY exit0. EACH first runs
+the complete original70f-vs-e9ef returning-worker controls unchanged,then
+the new sampler vs e9ef:27 type/K/group shapes,two retained changed-input
+jobs EACH,actual virgin boot/queued second descriptor/payload ACK+commit/
+real STOP. Full tensor-command streams,integer+FP32 outputs,rawUNPACK,
+replay,drains,NoC requests/responses,sums,affine and payload receipts match.
+All three metric totals are independently reconstructed from the actual
+guest reads of an explicitly FABRICATED clock,not host-provided totals.
+Three unstable/backwards/constant-clock cases still complete with unchanged
+results and invalid/zero metrics. Twelve new NoC-loss cases park inertly,
+2048 actual instructions each,with no retry/reset/next packet. Observed
+combined MATRIX-path stack3540/8192;NOT all GDN/ROOT/native-kernel coverage.
+
+Whole main+clean stdout39,053B matches SHA
+ 37197637d9625f972ecbba5aa7a8a7a8f982fdd3c1346473e542fbfefa932f9b
+Whole stderr7,072B matches SHA
+ 446ad538e1f611c7d75e7560084dfc0cb9e34bb48f40dff3e8ea35c955ea89f5
+These stderr streams are NOT empty:26 expected inert-fault diagnostic
+trails belong to the original14 and new12 negative controls. Outer parents
+exit0;these deliberate fault cases are not successful model executions.
+No original-GGUF/full-model/native-owner/physical timing is proved here.
+
+Pure DATA and boundaries
+-------------------------
+Both ASAN/UBSAN DATA tests ACTUALLY0:1072 synthetic shapes/max nonce/high
+64bit epoch and1086 invalid/incomplete cases,including sticky-invalid
+subsequent calls. Both final gate parents7375/8156 ACTUALLY0:6 positive/
+217 missing,zero,two,late,native,USER,old-profile,shader-mix,CPU+Work refusals,
+plus35 new producer pre-SDK refusals and all35 unchanged old controls first.
+The actual parent privately defines VECTOR_INLINE empty;only that legacy
+spelling or1 is permitted,not0/2. Pure DATA excludes all shader parents.
+
+Initial local harness attempts were failures:missing initializer_list,
+a bare compile without inherited fixture flags,a test that conflated pure
+DATA-only exclusions with legitimate firmware flags,and a numeric check
+on the parent's empty feature macro. Those were repaired. A further test
+audit found refusal cases could fail on the TEST'S own selection assertion;
+negative cases now contain ONLY production role checks. Earlier gate-pass
+counts do NOT certify those exclusions;only the rerun6/217 is evidence.
+Final builders still reproduce the SAME d5ba bytes. No numerical expected
+word,CPU trace,tolerance,model verifier or arithmetic instruction is relaxed.
+
+Remaining BEFORE any hardware use
+----------------------------------
+Bind this exact full worker to the matching full ROOT in its OWN immutable
+DATA/native family. Qualify original851 learned-source/virgin119+ROOT/
+first-layer/cancel/STOP/HOLD/full-END history and unchanged CPU comparisons.
+Add an actual native held+drained,doublechecked readout bound to the real
+job/worker/loaded image and private source lifetime;the latest DATA nonce
+alone is NOT authority. Kernel/public packet/USER/strict-reader/guarded
+exchange fault tests and independent whole builds are required. The old
+db03 module/client/helper cannot silently select or interpret d5ba DATA.
+No new native owner or readout exists at this checkpoint;DO NOT deploy it.
+
+Only then measure real card-side fractions and use targeted experiments to
+identify the dominant inner cost,without replacing an uninstrumented model
+benchmark or advertising a diagnostic's observer overhead as a speedup.
+Correct no-runtime-CPU-reference Assistant Work and20tok/s remain unmet.
+Closed raw logs and source identities are archived in the sibling folder;
+original model/CPU trace/learned prefix files are not committed.

@@ -1,0 +1,38 @@
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/blackhole_qwen38_rows.cpp:239:10:uint64_t MatrixPhaseClock(PioneerQ38TokenMatrixPhase&)	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/blackhole_qwen38_resident_operator_service.cpp:67:17:unsigned int Counter(unsigned int)	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/blackhole_qwen38_resident_operator_service.cpp:83:13:bool IdleAll()	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/blackhole_qwen38_rows.cpp:458:6:void TilePrefetchWait(uint32_t)	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/blackhole_qwen38_rows.cpp:255:13:void Drain()	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/blackhole_qwen38_rows.cpp:265:13:void Config(unsigned int, uint32_t)	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/blackhole_qwen38_resident_operator_service.cpp:122:17:unsigned int Route(unsigned int)	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/blackhole_qwen38_rows.cpp:419:13:void ReadCommand(uint32_t, uint32_t, uint32_t, unsigned int)	64	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/blackhole_qwen38_rows.cpp:451:10:uint32_t TilePrefetchStart(uint32_t, uint32_t, uint32_t, unsigned int)	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/blackhole_qwen38_rows.cpp:466:10:uint32_t TwinBatchTilePrefetchStage(unsigned int, unsigned int, unsigned int, unsigned int, unsigned int, uint32_t, uint32_t, uint32_t&)	48	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/blackhole_qwen38_rows.cpp:399:13:void FetchBlock(uint32_t)	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/blackhole_qwen38_rows.cpp:278:13:void Setup()	32	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/blackhole_qwen38_resident_operator_service.cpp:96:17:unsigned int SourceOffset(unsigned int)	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/blackhole_qwen38_resident_operator_service.cpp:110:13:bool SourceMatches(const uint32_t (&)[16])	32	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38VectorDstInit.h:20:13:void PioneerQ38ReplayDstInit(E&, bool, bool, bool, bool) [with E = VectorPanelEmitter]	32	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38Q4ConstantIssue.h:16:39:bool PioneerQ38Q4ConstantTransform(E&) [with E = VectorPanelEmitter; unsigned int Panel = 0]	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38Q4ConstantIssue.h:16:39:bool PioneerQ38Q4ConstantTransform(E&) [with E = VectorPanelEmitter; unsigned int Panel = 2]	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38VectorAffine.h:29:31:void PioneerQ38VectorAffine(E&) [with E = VectorPanelEmitter]	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerSfpuDivide.h:20:38:void PioneerSfpuLoad32(E&, unsigned int, uint32_t) [with E = VectorPanelEmitter]	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38SfpuAccumulator.h:61:13:bool PioneerQ38SfpuAccumulator(E&, unsigned int, bool, bool, uint32_t, int) [with E = VectorPanelEmitter; bool Integer = true; bool ZeroMinimum = false; bool Defer = true; bool BlockMetadata = true]	32	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38SfpuAccumulator.h:61:13:bool PioneerQ38SfpuAccumulator(E&, unsigned int, bool, bool, uint32_t, int) [with E = VectorPanelEmitter; bool Integer = true; bool ZeroMinimum = false; bool Defer = true; bool BlockMetadata = false]	48	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38TokenMatrixPhase.h:64:37:bool PioneerQ38TokenMatrixPhase::Describe(uint32_t (&)[16], bool) const	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/blackhole_qwen38_rows.cpp:249:6:void PublishMatrixPhase(const PioneerQ38TokenMatrixPhase&)	80	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38TokenMatrixPhase.h:39:34:bool PioneerQ38TokenMatrixPhase::Begin(unsigned int, unsigned int, uint64_t)	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38SfpuAccumulator.h:61:13:bool PioneerQ38SfpuAccumulator(E&, unsigned int, bool, bool, uint32_t, int) [with E = VectorPanelEmitter; bool Integer = true; bool ZeroMinimum = false; bool Defer = false; bool BlockMetadata = false]	48	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38BlockAffineDst.h:19:6:bool PioneerQ38BlockAffineDst(E&, uint32_t) [with E = VectorPanelEmitter]	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38SfpuAccumulator.h:61:13:bool PioneerQ38SfpuAccumulator(E&, unsigned int, bool, bool, uint32_t, int) [with E = VectorPanelEmitter; bool Integer = true; bool ZeroMinimum = true; bool Defer = true; bool BlockMetadata = false]	48	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38TokenMatrixPhase.h:24:32:bool PioneerQ38TokenMatrixPhase::Add(unsigned int, uint64_t)	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38TokenMatrixPhase.h:56:37:bool PioneerQ38TokenMatrixPhase::Executed(unsigned int, uint64_t)	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38TokenMatrixPhase.h:51:36:bool PioneerQ38TokenMatrixPhase::Decoded(unsigned int, uint64_t)	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38TokenMatrixPhase.h:46:36:bool PioneerQ38TokenMatrixPhase::Fetched(uint64_t)	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38TokenMatrixPhase.h:33:33:void PioneerQ38TokenMatrixPhase::Init(unsigned int, unsigned int, unsigned int, unsigned int)	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38TwinBatchPrefetchPlan.h:20:14:static bool PioneerQ38TwinBatchPrefetchPlan::RawInput(unsigned int, uint32_t)	16	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38CachedAffine.h:32:7:bool PioneerQ38CachedAffine::Prepare(unsigned int, const uint8_t*, unsigned int)	32	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38CachedAffine.h:64:7:bool PioneerQ38CachedAffine::Panel(unsigned int, PioneerQ38Panel*)	160	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/PioneerQ38CachedAffine.h:100:7:bool PioneerQ38CachedAffine::BlockQ4(PioneerQ38Panel*, volatile uint32_t*, unsigned int)	144	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/blackhole_qwen38_rows.cpp:580:21:unsigned int q38_compute_once()	592	static
+/private/tmp/pioneer-q38-constant-q4-clean-20261102-a/tools/pioneer/blackhole_qwen38_resident_operator_service.cpp:134:17:void q38_persistent_main()	272	static

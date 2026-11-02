@@ -8,7 +8,11 @@
 // Not a full-K matrix, resident model, decoder, or performance result.
 #include "PioneerQ38TokenPrefetchWorkerRole.h"
 #include "PioneerQ38TokenBatchedPrefetchRole.h"
+#include "PioneerQ38TokenMatrixPhaseRole.h"
 #define PIONEER_ATTENTION_FREESTANDING
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_IMAGE
+#include "PioneerQ38TokenMatrixPhase.h"
+#endif
 #include "PioneerQwen38Panel.h"
 #ifdef PIONEER_Q38_WORK_LOCAL_Q4
 #if !defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_WORK_AFFINE_REPLAY) || !defined(PIONEER_Q38_WORK_DOT_ZERO_ELISION) || !defined(PIONEER_Q38_BLOCK_SCALE_REUSE) || !defined(PIONEER_Q38_BLOCK_AFFINE_DST) || !defined(PIONEER_Q38_PERSISTENT_ROWS) || defined(PIONEER_Q38_WORK_Q4_NIBBLE) || defined(PIONEER_Q38_WORK_Q4_DIRECT_DECODE) || defined(PIONEER_Q38_WORK_SIGNED_MAG2) || defined(PIONEER_Q38_WORK_PEER_PHASE_PROFILE) || defined(PIONEER_Q38_WORK_FRONTEND_BARRIER) || defined(PIONEER_Q38_WORK_RAW_UNPACK_CACHE) || defined(PIONEER_Q38_WORK_BATCH4_FETCH) || defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH) || defined(PIONEER_Q38_PREDECODED_Q4) || defined(PIONEER_Q38_NATIVE_Q8)
@@ -228,6 +232,24 @@ void PublishPeerPhase(PioneerQ38PeerPhaseProfile& profile){
 	uint32_t data[16];(void)profile.Describe(data,true);
 	for(unsigned w=0;w<16;w++)Words(0x84500)[w]=data[w];
 	Fence();
+}
+#endif
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_IMAGE
+static __attribute__((noinline,section(".text.pioneer_q38_token_matrix_phase.Clock")))
+uint64_t MatrixPhaseClock(PioneerQ38TokenMatrixPhase& profile){
+ for(unsigned attempt=0;attempt<4;attempt++){
+  uint32_t high,low,confirm;
+  asm volatile("csrrs %0,0xb80,x0\ncsrrs %1,0xb00,x0\ncsrrs %2,0xb80,x0"
+   : "=r"(high),"=r"(low),"=r"(confirm) :: "memory");
+  if(high==confirm)return (uint64_t(high)<<32)|low;
+ }
+ profile.BadClock();return 0;
+}
+static __attribute__((noinline,section(".text.pioneer_q38_token_matrix_phase.Publish")))
+void PublishMatrixPhase(const PioneerQ38TokenMatrixPhase& profile){
+ uint32_t data[PioneerQ38TokenMatrixPhase::Words];(void)profile.Describe(data,true);
+ for(unsigned w=0;w<PioneerQ38TokenMatrixPhase::Words;w++)Words(PioneerQ38TokenMatrixPhase::Address)[w]=data[w];
+ Fence();
 }
 #endif
 static void Drain()
@@ -718,6 +740,11 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_WORK_PEER_PHASE_PROFILE
 	PioneerQ38PeerPhaseProfile hotProfile(job[11],job[12],type,inputs,groups);
 #endif
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_IMAGE
+ const bool matrixPhaseActive=skipDotCheck && type==12;
+ PioneerQ38TokenMatrixPhase matrixProfile;
+ if(matrixPhaseActive)matrixProfile.Init(job[11],job[12],inputs,groups);
+#endif
 	for (unsigned group=0;group<groups;group++) {
 #ifdef PIONEER_Q38_WORK_TILE_PREFETCH
 	uint32_t nextTileExpected=0; // per-group stack state,NEVER a cache/owner across jobs
@@ -725,6 +752,9 @@ extern "C" unsigned block_main()
 	for (unsigned block=0;block<blocks;block++) {
 #ifdef PIONEER_Q38_WORK_PEER_PHASE_PROFILE
 	if(skipDotCheck)(void)hotProfile.BeginBlock(group,block,PeerPhaseClock(hotProfile));
+#endif
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_IMAGE
+ if(matrixPhaseActive)(void)matrixProfile.Begin(group,block,MatrixPhaseClock(matrixProfile));
 #endif
 #if defined(PIONEER_Q38_WORK_BATCH_RAW_INPUT) || defined(PIONEER_Q38_WORK_TILE_PREFETCH)
 	uint32_t rawBase=0x90000;
@@ -752,6 +782,9 @@ extern "C" unsigned block_main()
 	float scale=Float(Words(0x94000)[block]);
 #ifdef PIONEER_Q38_WORK_PEER_PHASE_PROFILE
 	if(skipDotCheck)(void)hotProfile.Fetched(PeerPhaseClock(hotProfile));
+#endif
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_IMAGE
+ if(matrixPhaseActive)(void)matrixProfile.Fetched(MatrixPhaseClock(matrixProfile));
 #endif
 #else
 	float scale=Float(scaleBits);
@@ -975,6 +1008,9 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_WORK_PEER_PHASE_PROFILE
 		if(skipDotCheck)(void)hotProfile.Decoded(p,PeerPhaseClock(hotProfile));
 #endif
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_IMAGE
+  if(matrixPhaseActive)(void)matrixProfile.Decoded(p,MatrixPhaseClock(matrixProfile));
+#endif
 		Matrix(type
 #ifdef PIONEER_Q38_Q4_GROUP32
 			,pairedQ4 && (p&1)
@@ -1065,6 +1101,9 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_WORK_PEER_PHASE_PROFILE
 		if(skipDotCheck)(void)hotProfile.Executed(p,PeerPhaseClock(hotProfile));
 #endif
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_IMAGE
+  if(matrixPhaseActive)(void)matrixProfile.Executed(p,MatrixPhaseClock(matrixProfile));
+#endif
 	}
 #ifdef PIONEER_Q38_WORK_LOCAL_Q4
 	if(skipDotCheck && type==12) {
@@ -1102,6 +1141,15 @@ extern "C" unsigned block_main()
 		static_assert(0x84000+256*4<0x84500 && 0x84540<0x90000,"disjoint existing saved L1 metric slot");
 		PublishPeerPhase(hotProfile);
 	}
+#endif
+#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_IMAGE
+ // Latest completed Q4 job ONLY. Q8/Q6/checked jobs leave this DATA untouched.
+ // A future native reader must independently bind the actual job/worker,
+ // complete hold/ownership and immutable image before consuming any metric.
+ static_assert(0x84000+256*4<PioneerQ38TokenMatrixPhase::Address
+  && PioneerQ38TokenMatrixPhase::Address+PioneerQ38TokenMatrixPhase::Words*4<0x90000,
+  "disjoint existing saved metric slot;no mapping/ownership grant");
+ if(matrixPhaseActive)PublishMatrixPhase(matrixProfile);
 #endif
 	return groups*blocks*panels;
 }
