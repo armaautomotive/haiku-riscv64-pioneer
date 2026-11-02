@@ -1,0 +1,104 @@
+Full-token timing: ONE controlled physical diagnostic LIVE
+==========================================================
+2026-11-02 15:35:55UTC. SAME38423 is ACTUALLY live after same-handle poll.
+Full SAME-open original GGUF SHA and complete851 learned bindings have
+authenticated BEFORE accelerator Open. Actual upload now reaches
+876253184/19399024640 bytes. This is not a completed benchmark:full upload,
+START,token,closed cycle profile,clean END and speed result are NOT yet
+acknowledged. Earlier15:31 observation contained banners only;this fresh
+progress does not retroactively turn that earlier state into a result.
+Usable numerically accepted27B Work and20tok/s remain UNMET. Last completed
+model diagnostic remains approximately0.16274tok/s with strict failure1.
+
+PROTECT ENTIRE38423 authentication/Open/upload/RUN/HOLD/drain/END+Close
+parent lifetime. NO other Pioneer SSH,status,admin,GPU,model,stage,reload,
+reset,power,OS,network,SD or hardware operation while it lives. Observe
+ONLY SAME38423 and local raw files. Timeout/yield is NOT terminal or
+permission to retry,recover or restore. SSH255 requires resolving the
+actual remote parent before driver/power action. No UART reopen/configure.
+
+Qualified immutable subject BEFORE physical use
+------------------------------------------------
+Source11425862239ab5174c22db7bf715066c8080df47 and completed native evidence
+5b8f78e5c5ad6a3833dc766d6ac46b4a04b416d7 are pushed and independently
+ls-remote verified BEFORE staging. BOTH original-model first-layer/cancel/
+119STOP/120HOLD/drain/actual new held-read/full-END histories ACTUALLY0.
+Both unchanged independent first-layer CPU comparisons ACTUALLY0:5120
+embedding+5120 hidden words bit-exact,no tolerance/reference/diagnostic
+override. Full34/64-layer/state/physical numerics and actual phase timing
+are NOT inferred from those tests. All paired frozen SDK/USER builds,
+DATA/role/CLI/session/packet/fault/parser and guarded-exchange endpoint
+tests finish0. Partial stack audits remain PARTIAL,not whole kernel/IRQ.
+See qwen38-token-phase-native-20261102.txt and its whole raw evidence.
+
+Fresh independent stage/admission and full readback
+---------------------------------------------------
+Prestage SSH ACTUALLY0:exact installed stable041/tag12/gen6/cold0/idle,
+exact backup/admin/guard,correct device link,no compute parent,64CPUs and
+137034936320B RAM. Model is regular root-owned/one-link18973870528B;only
+the running client's SAME-open full SHA can authenticate its contents.
+The new absent root700 stage is created WITHOUT driver/client execution:
+ /boot/home/pioneer-p100a-token-phase-20261102-a
+
+Limited1024Kbit/s SCP47578 ACTUALLY0. Separate whole staged identity/mode
+SSH ACTUALLY0. Independent full copy-back23680 ACTUALLY0;whole local cmp
+matches ALL THREE complete original files:
+ module0f2066ca48b24ae36550e57dd5334aa29645deb7f65dc8fd7bbbb9629f674e86
+ client e80d575933ffbb8211cd30fc84d97f818886d27c92d78faf3938d86ca0a8ec7c
+ helper3a2a9c8ce534627f9ea0e026ed76931bac9beed93d38cae8e5ebb38ef6b75c7d
+Stable041 and every earlier diagnostic stage stay preserved. The old8a55
+helper owns041<->b8c0 ONLY and cannot apply/restore this new0f20 subject.
+
+Pre-exchange wrapper refusal,then ONE actual helper apply
+---------------------------------------------------------
+Initial local preapply wrapper ACTUALLY1 BEFORE calling any helper/admin
+quiesce/copy/driver mutation:it wrongly required755 for the original saved
+stable backup. Independent read-only SSH ACTUALLY0 finds its exact root/
+one-link mode700;installed stable041 remains tag12/gen6/cold0/idle. Only
+the wrapper is corrected to require EXACT700 for this backup;no remote
+permission,object,helper,reference or test expectation is changed. Initial
+wrapper and failed log are retained. This is not a failed driver exchange.
+
+Corrected fresh wrapper + SAME unchanged3a2 --apply ONCE:59774 ACTUALLY0.
+Whole new-stage/installed/admin/guard identities and absent lock/incoming/
+backup admit. Helper quiesces stable041,closes,atomically replaces from
+outside watched directory,and verifies0f20/tag75/gen7/cold0/idle. No GPU
+job or reboot is part of this exchange. There is no reset,force-unload,
+automatic rollback,retry or cold-latch clearing.
+
+Independent new prelaunch SSH3476 ACTUALLY0 verifies all whole installed/
+staged/helper/client/stablebackup/admin/guard identities,exact755 staged
+files/exact700 original+stage backups,correct device symlink,absent incoming/
+lock,tag75/gen7/cold0/quiesced0/owner0/open1/guard1,no compute parent,
+64CPUs/full RAM/free133784342528B. All completed staging/readback/apply-r2/
+prelaunch stderr streams are0B. UART only stat'ed locally BEFORE launch:
+inode15618376,size90298252;never opened/reconfigured.
+
+One explicit diagnostic,NOT Assistant Work
+-------------------------------------------
+Exactly ONE exec of the verified client with
+ --profile-card-phases-34-positions
+starts as protected parent38423 at15:29:45UTC. Raw changing streams remain
+task-local,not archived or accepted as completed evidence:
+ /private/tmp/pioneer-q38-token-phase-physical-20261102.OVl6wt/physical.log
+ /private/tmp/pioneer-q38-token-phase-physical-20261102.OVl6wt/physical.stderr
+
+After ACTUAL terminal ONLY
+---------------------------
+Read WHOLE raw stdout/stderr with unchanged strict numeric comparator
+inside compare_pioneer_q38_token_phase_profile_log.py and ALL3 original
+CPU trace pins. Full34 grammar,feedback/flags/count/rate,whole96-word
+returned packet and all10 phase/count/cycle sums are mandatory. Do not
+filter failed packets or use diagnostic-only acceptance. Cycle fractions
+cover ALL34+bootstrap+STOP+observer cost,not the separate32-token rate
+window,pure tensor utilization or known frequency. Invalid timing DATA
+must not be turned into good measurements or a false cleanup failure.
+Any strict numerical difference stays a failure;the phase reader cannot
+make Work accepted. No GHz/GB/s/TPS extrapolation from fabricated clocks.
+
+Only actual clean END+Close permits fresh independent exact idle identity
+checks and SAME3a2 --restore0f20->stable041,then independently verified new
+generation. Unsafe/quarantined outcomes forbid extra card IO,hot restore,
+reset or unreserve;use authorized controlled recovery only if required.
+No SD,mains or hardware change is authorized. Preserve full objective:
+correct usable no-runtime-CPU-reference27B Work and20tok/s still UNMET.

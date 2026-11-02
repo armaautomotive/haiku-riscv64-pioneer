@@ -1,0 +1,4 @@
+0:1:700 /boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
+0:1:755 /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
+0:1:755 /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+P100A_RELOAD driver55 tag2026102100010012 generation6 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
