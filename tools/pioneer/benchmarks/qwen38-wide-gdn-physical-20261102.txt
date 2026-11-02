@@ -1,0 +1,80 @@
+Returning wide GDN: controlled original27B physical diagnostic LIVE
+=================================================================
+2026-11-02 13:19:40 UTC. Goal ACTIVE. SAME7442 is ACTUALLY LIVE after a
+same-handle poll, not inferred from a log, lock, intention or timeout.
+Current raw output contains only the fixed34/no-runtime-CPU-reference
+diagnostic labels. No full-model authentication/upload/START acknowledgement,
+token record, clean END or new throughput result has returned yet.
+Correct usable Work and20tok/s remain UNMET. Last completed physical
+diagnostic is still about0.16286tok/s with strict numerical differences.
+
+PROTECT THE ENTIRE7442 authentication/Open/upload/RUN/Finish/Close parent.
+NO other Pioneer SSH/status/admin/GPU/model/stage/reload/reset/power/OS/
+network/SD operation while it lives. Observe ONLY SAME7442 and local raw
+files. Timeout/yield is NOT terminal or permission to recover/retry. SSH255
+requires resolving the actual remote process before any driver/power action.
+Do not reopen or reconfigure UART. No additional card query is needed to
+interpret data already returned. No reset/force/automatic rollback is owed.
+
+Qualified subject before rollout
+--------------------------------
+Source ed4a56a6ce8851095f58c40b663136cb8b7db8a5 was committed, pushed to
+origin/pioneer-riscv64 and independently ls-remote verified BEFORE staging.
+Two complete new native original first-layer/cancel/119STOP/HOLD/drain/
+full-END histories ACTUALLY finish0. Independent unchanged original CPU
+prefix comparisons both ACTUALLY0/bit-exact. Both full worker suites and
+native SDK builds, whole-file main/clean comparisons, DATA/role/CLI and
+guarded-exchange endpoint tests close0. Those first-layer tests do NOT
+prove full64-layer, later state, physical numerics or useful model speed.
+See qwen38-wide-gdn-returning-20261102.txt for complete qualification.
+
+Fresh pre-stage SSH actually0: installedstable041/gen4/cold0/idle, exact
+adminb0c/guardd1ce/stablebackup041/copiedF8client,64CPUs/full137034936320B
+RAM, no compute parent. Original model remains a regular root-owned file,
+18973870528B; the running client must authenticate its full SAME-open SHA.
+The NEW absent stage is created root700 and copies the existing exact
+root-one-link755 F8 client WITHOUT executing it:
+ /boot/home/pioneer-p100a-wide-gdn-20261102-a
+
+Limited1024Kbit/s SCP77110 ACTUALLY0. Independent FULL copy-back78237
+ACTUALLY0; whole local cmp is exact for BOTH module and helper:
+ module b8c0d49855490e756dfe1c49bed7933a20f2a3afea19436b37e3b4717417b8ed
+ helper 8a55b8653d31974bcae9052f1c945ac7c7c1cc057b96c14c5976d8896944a693
+ copied diagnostic client f8efe67a51d9685a9e7e3ce57267ed2ae4967600c2802dd21f5f6ee0c24a22c9
+The native subject contains ROOTc176 and the NEW returning worker70fdf,
+not the old narrow56b worker. Stable041 and every old stage stay preserved.
+
+Guarded apply and independent pre-launch observation
+-----------------------------------------------------
+Fresh exact whole-file identities/permissions, absent incoming/lock/backup,
+stable041/gen4/idle and no compute parent pass BEFORE the new8a55 --apply.
+SAME21163 ACTUALLY0: quiesce stable041, close+atomic replacement, reload
+exactb8c0/tag2026103100010075/gen5/cold0/idle. No GPU job or reboot is part
+of this exchange. Independent pre-launch74482 ACTUALLY0 verifies exact
+installed b8c0/staged module/helper/client/stablebackup/admin/guard, correct
+device symlink, absent incoming/lock,gen5/cold0/quiesced0/owner0/open1/
+guard1,no compute parent,64CPUs/full RAM. All closed stage/apply/prelaunch
+stderr files are0B. No forced unload/reset/retry or power action occurs.
+
+Exactly ONE exec of the copied client with
+ --diagnose-frontier-34-positions
+launches at13:18:03UTC as protected parent7442. It is NOT Assistant Work.
+Raw changing streams remain local, not archived as completed results:
+ /private/tmp/pioneer-q38-wide-gdn-physical-20261102.Mbf8j2/physical.log
+ /private/tmp/pioneer-q38-wide-gdn-physical-20261102.Mbf8j2/physical.stderr
+Existing UART cursor before launch: inode15618376,size90233058. It was
+only stat'ed locally; no serial port was opened or reconfigured.
+
+After ACTUAL terminal only
+---------------------------
+Use unchanged compare_pioneer_q38_frontier_failure_report_log.py with ALL3
+original CPU trace pins and the WHOLE physical stdout/stderr. Full34 grammar,
+feedback/flags/count/rate arithmetic and original first3 numerics are required.
+Do not filter failed packets or use a diagnostic-only exit to claim success.
+A clean actual END+Close needs fresh exact idle identities, then ONLY8a55
+--restore b8c0->stable041 and independently verified new generation.
+Old0d8/7c85 and retired96a0 helpers cannot restore/reapply this new subject.
+Any unsafe/quarantined history forbids extra card IO, hot-restore, reset or
+unreserve. Use the authorized controlled OFF ONCE while known on, wait/check
+power evidence, then ON ONCE only when recovery is actually required.
+No SD, hardware or mains-switch change is authorized by this test.
