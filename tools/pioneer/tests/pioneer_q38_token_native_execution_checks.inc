@@ -68,6 +68,9 @@ static void CheckNativeExecution(Fixture& f){
   {
    const unsigned touches=io.touches,steps=io.executionCpu->steps,packets=io.runtimePackets;
    const auto resets=io.resets;PioneerQ38TokenFrontierResult metric;const auto pristineMetric=metric;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FRONTIER_FAILURE_LINK_FIXTURE
+   const unsigned linkReads=io.qflSavedLinkReads;
+#endif
    auto* words=reinterpret_cast<uint32*>(&metric);
    for(unsigned i=0;i<16;i++){
     words[i]^=1;assert(!ObserveQ38TokenNativeFrontier(c,metric) && io.touches==touches && !state->Unsafe());metric=pristineMetric;
@@ -79,7 +82,13 @@ static void CheckNativeExecution(Fixture& f){
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FRONTIER_FAILURE_DETAIL_FIXTURE
    static_assert(PioneerQ38TokenFrontierFailureDetailSelection==1,"actual private diagnostic,not a flag-only old observer");
    for(auto value:metric.reserved)assert(!value);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FRONTIER_FAILURE_LINK_FIXTURE
+   static_assert(PioneerQ38TokenFrontierFailureLinkSelection==1,"actual private QFL1 observer");
+   assert(io.qflSavedLinkReads==linkReads+1);
+   puts("PASS QFL1 observer in SAME genuine851-source/120-journal/119-virgin-engine native history/fresh0+reserved ZERO/EXACTLY ONE extra checked local savedLINK read/no extra processor step,NoC packet,reset or lifecycle transition;positive ONLY,NOT native unsafe-failure,full-END,physical or TPS proof");
+#else
    puts("PASS opt-in failure-detail observer in SAME genuine851-source/120-journal/119-virgin-engine native history/fresh0+all reserved ZERO/no extra processor step,NoC packet,reset or lifecycle transition;positive observation ONLY,NOT injected failure detail,full-END,physical or TPS proof");
+#endif
 #endif
    puts("PASS new frontier reader in SAME genuinely initialized851+staged120+journaled+virgin119booted+ROOT-entered native history/16 non-pristine outputs refused without IO/fresh0 before any model token/source+boot checked/no processor step,NoC packet,reset or lifecycle transition;SIMULATED OS+VM+NoC,NOT committed token/model/physical/TPS proof");
   }

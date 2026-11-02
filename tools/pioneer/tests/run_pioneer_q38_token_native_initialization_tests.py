@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 root_profile=None
+frontier_failure_link='--frontier-failure-link' in sys.argv
+if frontier_failure_link:
+    assert sys.argv.count('--frontier-failure-link')==1
+    sys.argv.remove('--frontier-failure-link')
 frontier_failure_detail='--frontier-failure-detail' in sys.argv
 if frontier_failure_detail:
     assert sys.argv.count('--frontier-failure-detail')==1
@@ -192,6 +196,10 @@ if frontier_failure_detail:
     assert twin_batch_prefetch and token_frontier and not batched_prefetch and not compile_link_only \
         and len(sys.argv)==7 and sys.argv[2]=='--execution-end', \
         'Failure-detail native TEST requires the exact complete twin original-model first-layer/cancel/STOP/HOLD/drain/END history;not compile-only,old,shortened,full-flow or Work aliases'
+if frontier_failure_link:
+    assert frontier_failure_detail and twin_batch_prefetch and not compile_link_only \
+        and len(sys.argv)==7 and sys.argv[2]=='--execution-end', \
+        'Failure-link native TEST requires explicit QFD1 parents and the exact full original twin first-layer/cancel/STOP/HOLD/drain/END history'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -328,6 +336,9 @@ if twin_batch_prefetch:
 if frontier_failure_detail:
     defines.update(PIONEER_Q38_TOKEN_FRONTIER_FAILURE_DETAIL_NATIVE='1',
                    PIONEER_Q38_TOKEN_NATIVE_FRONTIER_FAILURE_DETAIL_FIXTURE='1')
+if frontier_failure_link:
+    defines.update(PIONEER_Q38_TOKEN_FRONTIER_FAILURE_LINK_NATIVE='1',
+                   PIONEER_Q38_TOKEN_NATIVE_FRONTIER_FAILURE_LINK_FIXTURE='1')
 if posted_cancel:
     defines.update(PIONEER_Q38_TOKEN_POSTED_CANCEL='1',PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',
                    PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')

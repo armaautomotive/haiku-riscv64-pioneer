@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38TokenHiddenReadRole.h"
 #include "PioneerQ38TokenFrontierFailureDetailRole.h"
+#include "PioneerQ38TokenFrontierFailureLinkRole.h"
 #ifndef PIONEER_Q38_TOKEN_NATIVE_OWNER_H
 #define PIONEER_Q38_TOKEN_NATIVE_OWNER_H
 #include "PioneerQ38TokenMemory.h"
@@ -665,7 +666,42 @@ public:
    || holding || held || !ExecutionStarted() || !Scope(io))return false;
   r.started=1;r.phase=12;
   namespace C=PioneerQ38GlobalChainLayout;namespace T=PioneerQ38TokenLayout;
-#ifdef PIONEER_Q38_TOKEN_FRONTIER_FAILURE_DETAIL_NATIVE
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_FAILURE_LINK_NATIVE
+  // QFL1 is NOT QFD1:word4 is a saved-LINK snapshot,never a count or PC.
+  // Capture it BEFORE reading the error flag. The two observations are not
+  // atomic;zero/stale LINK is possible if the fault publishes between them.
+  // Never resample after any failed read/check or known nonzero error.
+  static_assert(PioneerQ38TokenPrograms::FaultSavedLinkOffset==32
+   && PioneerQ38TokenPrograms::FaultMarker==0x51465431
+   && C::R::Status+PioneerQ38TokenPrograms::FaultSavedLinkOffset==0x75460,
+   "exact existing local fault DATA only,no mapping or firmware change");
+  uint32_t marker=0,error=0,count=0,link=0,known=0;
+  auto failed=[&](unsigned check){
+   r.reserved[0]=0x314c4651; // QFL1,not v1 success/lifecycle authority
+   r.reserved[1]=check;
+   r.reserved[2]=(known&1)?marker:0;
+   r.reserved[3]=(known&2)?error:0;
+   r.reserved[4]=(known&4)?link:0;
+   r.reserved[5]=known;
+   return Fail(io,r);
+  };
+  if(!Sources(io,0))return failed(1);
+  if(!io.TokenMemoryReadChecked(0,C::R::Status+12,marker))return failed(2);
+  known|=1;
+  if(marker!=T::Magic)return failed(3);
+  if(!io.TokenMemoryReadChecked(0,C::R::Status+PioneerQ38TokenPrograms::FaultSavedLinkOffset,link))return failed(12);
+  known|=4;
+  if(!io.TokenMemoryReadChecked(0,C::R::Status+8,error))return failed(4);
+  known|=2;
+  if(error)return failed(5);
+  r.word=3;
+  if(!io.TokenMemoryReadChecked(0,PioneerQ38TokenPrograms::FrontierAddress,count))return failed(6);
+  if(!Sources(io,0))return failed(7);
+  if(!RootBootSeal(io,r.word))return failed(8);
+  if(count<frontierLast)return failed(9);
+  if(count>frontierLimit)return failed(10);
+  if(terminalObserved && count!=observedTerminal[3])return failed(11);
+#elif defined(PIONEER_Q38_TOKEN_FRONTIER_FAILURE_DETAIL_NATIVE)
   // Private,explicitly selected diagnostic ONLY. Same original ordered IO
   // and fail/retain decision. Never read anything after a failed check.
   // Nonzero reserved words exist ONLY on failure:the old v1 ReplyShape

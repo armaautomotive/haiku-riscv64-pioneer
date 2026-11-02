@@ -17,6 +17,9 @@ struct TokenHeldEndpoints:ZeroControlIO {
  std::array<std::vector<uint32>,120> extra;
  std::vector<uint32> alias=std::vector<uint32>(Words),original;
  unsigned runtimeCore=0,maps=0,aliasReads=0,aliasWrites=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FRONTIER_FAILURE_LINK_FIXTURE
+ unsigned qflSavedLinkReads=0; // HOST read observation only;never model/owner state
+#endif
  std::array<unsigned,4> mappedOffset={},mappedBytes={};
  static constexpr unsigned ExpectedMappedBytes(unsigned i){
   return i==0?(PioneerQ38TokenL1::Precise?131072U:8192U):i==1?131072U:i==2?57344U:i==3?868352U:0U;
@@ -187,6 +190,9 @@ struct TokenHeldEndpoints:ZeroControlIO {
  bool MapQ38Panel(){Touch();return C().mapping;}
  bool Q38PanelMappingStable(){Touch();return C().mapping;}
  uint32 Q38PanelRead(uint32 address){SharedMappedAccess();Touch();
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FRONTIER_FAILURE_LINK_FIXTURE
+  if(!runtimeCore && address==0x75460)qflSavedLinkReads++;
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_EXECUTION_FIXTURE
   if(!runtimeCore && address==PioneerQ38TokenLayout::CancelLocal && executionDropCancel && executionCancelWrites)executionCancelObserved=touches;
 #endif

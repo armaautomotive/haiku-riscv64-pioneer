@@ -1,0 +1,145 @@
+QFL1 pre-error saved-LINK diagnostic: OFFBOARD qualification CLOSED
+================================================================
+2026-11-02 07:48 UTC. No new Pioneer stage, driver exchange or GPU job
+has occurred in this checkpoint. Stable041 was last independently healthy
+at about07:03UTC, generation2/cold0/owner0,64CPUs/full137034936320B RAM.
+That is historical baseline evidence,NOT a fresh hardware admission.
+Goal ACTIVE;correct usable27B Work and20tok/s remain UNMET. Last completed
+physical diagnostic is about0.1597tok/s with unresolved numerical differences.
+
+Purpose and exact scope
+-----------------------
+Previous5920 physical55172 CLOSED1 after all19399024640 learned bytes
+uploaded and START_ACK. Its FIRST frontier observation returned our ROOT
+software fault marker51465431,not a hardware error or fault instruction.
+See qwen38-frontier-failure-detail-physical-20261102.txt. All010c/34322/5920
+APPLY paths remain retired;old85c8 helper stays RESTORE ONLY.
+
+New QFL1 makes ONE fixed checked local L1 saved-LINK read at75460 BEFORE
+the existing error read75448. It does not change any firmware, arithmetic,
+model layout, NoC protocol, mappings, terminal/END guards or CPU reference.
+Order is Sources,marker read/validation,LINK read,error read/check,count,
+existing source/boot/range/terminal checks. Any first failed read/check
+immediately uses the existing Fail/quarantine path with NO following IO.
+Successful results remain byte-exact with reserved ZERO. LINK-read failure
+is check12. Failed reads cannot publish their partially written output.
+
+Failure reserved words are a DISTINCT grammar,NOT old QFD1:
+  [314c4651,check,marker-if-known,error-if-known,savedLINK-if-known,mask]
+Mask bits1=marker,2=error,4=LINK. No count is exported here. A LINK snapshot
+is NOT a fault PC. Reads are not atomic:if ROOT faults between LINK/error,
+the captured LINK can be zero/stale;never resample after the known failure,
+invent a causal link or infer the failing instruction by blindly subtracting4.
+The unchanged v1 ReplyShape rejects this failed nonzero-reserved packet.
+The existing f8 client can report ALL32 raw words without another card read;
+failure remains failure,not a successful shape or timing record.
+
+Closed unit, role, CLI and build gates
+-------------------------------------
+All gates execute unchanged QFD1/twin/earlier controls FIRST. Independent
+source export starts atf00dea1d35 plus ONLY the17 owned QFL1 source edits;
+all17 files independently cmp equal to current main before archiving.
+
+ASan/UBSan actual extracted observer+Fail tests40371/62984 BOTH ACTUALLY0:
+8198 byte-exact successful cases with exactly ONE pre-error LINK read,
+53 first-failure/raw32-word cases,26 pre-IO refusals,late-publication zero
+snapshot preserved and no v1 grammar relaxation. Source-method SHA
+94388a66df1b14c88014ed8c8a7398e69366416428859a35f7fcf59e7d648814.
+Authority/source/boot/quarantine endpoints here are MOCK,NOT native or card.
+The unchanged adapter's193 opaque copies/192 bit mutations/2 copy faults
+and original observer controls also pass FIRST. Final paired logs identical.
+
+Role final main29976/13692/89494 and clean93146/78674/88204 ALL ACTUALLY0:
+private3positive/486refused,public3/395,TEST3/307. Each exact pair's complete
+logs match. CLI87992/54523 BOTH ACTUALLY0:35 NEW early refusals after all
+unchanged controls. Complete paired CLI logs match. These are perimeter
+and mock tests,not instantiated lifecycle or hardware proof.
+
+Private inspect2860/56756 and frozen private as part of public builds pass.
+Public inspect87433/27042 and FROZEN14528/4569 ALL ACTUALLY0. Frozen paired
+logs,whole objects and linked modules match. The ENTIRE old feaa/a0f0/22a/
+010c/5920 subject chain reproduces before new private/public inspection.
+All14 firmware arrays plus2MiB RoPE are exact unchanged bytes;all10 renamed
+ABI bodies are exact;private exports no conventional driver ABI;public has
+the six intended conventional symbols and no Work/CPU-reference/HOST engine.
+Observer/lambda static frames208/80B remain unchanged. Actual GCC callgraph
+recompile matches the object;partial known module chain5392B/unresolved25,
+no dynamic frame/cycle. Kernel/IRQ/entry/indirect costs are EXCLUDED;this is
+NOT whole-kernel stack certification or physical deployment success.
+
+Frozen private object:
+3593260a72978b739120eb26a9ba866a622f7a6369b0ffbda4e4bce6c8b518e3
+Frozen public object:
+370722a7e54c9b76a2bff335d9ecce97528e40316aef75145d3da5770ed98400
+Frozen public module (tag75 is NOT identity):
+96a030daf8136143aafa1f518b2ff3323178b5aa7b530c7d9395db5bf447e3e2
+Filename:tenstorrent_pci_probe-FRONTIER-PREERROR-LINK-DIAGNOSTIC-ONLY
+
+All four genuine native histories CLOSED;independent comparison CLOSED
+---------------------------------------------------------------------
+New main35398/control2233 were observed ACTUALLY0 by07:38:34UTC.
+SAME clean60191/control44209 are observed ACTUALLY0 at07:44UTC,not restarted
+or shortened after a timeout. Each uses the full851 authenticated original
+source owner,1010 actual zero RV32 kernels,120 L1 histories,119 virgin full
+RV32/Tensix engines,original embedding+layer0 Matrix/Conv/GDN/FFN and SAME
+consumed cancellation/ROOT+119 real STOP/120HOLD/drain/token+dispatch+peer+
+ROOT+shared originals/clock/VM/PCI/host/unreserve/context-destruction END.
+OS/NoC/PCI endpoints are SIMULATED. This is NOT a physical whole-model job.
+New observer checks fresh0/reservedZERO and exactly ONE extra LINK read,
+without extra processor steps/NoC packets/reset/lifecycle transitions.
+Actual unsafe QFL1 native failure is NOT covered by that positive history.
+
+Main/clean complete native logs match,as do main/clean unchanged controls.
+New-vs-control logs differ ONLY in the explicitly different observer PASS
+line. All FOUR raw41028B prefixes are byte-identical SHA:
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+Unchanged compare_pioneer_q38_observed_trace.py runs independently FOUR
+times against pinned cpu-original-trace-20261028 with --first-layer-only;
+ALL exit0,embedding5120/layer0 5120 words BITEXACT,no tolerance and NO
+--diagnostic-only. This does not qualify later layers,token quality or TPS.
+
+New exact exchange helper:OFFBOARD ONLY
+--------------------------------------
+Helper e37c189e55c63b9a358aad4732d5e9122bf6daa29375ea894315daaf754056a8
+permits ONLY stable041 <-> new96a0 in a NEW root700 stage
+/boot/home/pioneer-p100a-frontier-failure-link-20261102-a.
+It preserves exact whole-file pins/regular-root-one-link/nonwritable files,
+device symlink/idle-process/cold0/owner0/open1/guard/generation checks,
+outside-driver incoming,stable backup,quiesce+rehash+atomic move+verified
+higher generation. No reset,force,retry,cold clear,retained-owner restore,
+GPU job or automatic rollback. All old modules/private subjects refuse.
+Test eac2def1bccc09de5535a9ae06de8d03cc5b1fac06703cadbc685903a114adc5.
+Final13462/49252 BOTH ACTUALLY0:EACH unchanged99e2valid/58refused and
+retired85c1valid/59refused FIRST,then NEW2valid/66refused. Fixture raw paths
+differ,so complete logs are NOT claimed byte-identical. Endpoints SYNTHETIC;
+this does NOT prove a new physical exchange.
+
+Initial failures preserved,not silently promoted
+------------------------------------------------
+Unit86211 EXIT1:old fixture prefix copied into/tmp could not resolve relative
+include;added actual tests-directory include path,no production relaxation.
+Role18552/38379/8985 ALL EXIT1:new child needed explicit refusal of unrelated
+profile/full-flow/control TEST aliases;late own-TEST-marker check initially
+included an unrelated production perimeter instead of its own TEST header.
+Exchange68544 EXIT1:new fixture expected old installed bytes after its OWN
+intentional corruption;fixed expectation snapshots the actual installed
+bytes after corruption and requires exact preservation on ALL refusals.
+Production helper already refused. Final tests close independently above.
+
+Raw final/initial logs and partial stack reports are archived in the sibling
+qwen38-frontier-failure-link-qualification-20261102/ directory. All final
+stderr files are0B. Raw prefixes remain in the task-local qualification
+directory /private/tmp/pioneer-q38-failure-link-20261102.YfGDdc;not model
+weights or a claim of portable replay without the pinned original inputs.
+
+Next physical admission (NOT yet performed)
+-------------------------------------------
+Push this qualified checkpoint before rollout. Fresh stable idle exact
+identity/64CPU/fullRAM checks must precede a new non-overwriting stage and
+full readback of96a0/helper/f8 client. Apply ONLY the new exact helper.
+Protect the ENTIRE physical source-auth/Open/upload/RUN/Finish/Close parent
+lifetime:no competing Pioneer SSH/status/admin/card/model/reload/reset/
+power/network/SD operations. Poll only its SAME handle/local raw output;
+timeout/lost SSH is not process completion. Failure DATA is not a TPS record.
+Unsafe retained ownership requires a controlled NEW power epoch before
+guarded restore;never reset/hot-unload/unreserve the retained owner.

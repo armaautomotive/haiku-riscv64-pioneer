@@ -1,0 +1,11 @@
+In file included from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_frontier_failure_link_test.cpp:3:
+/private/tmp/pioneer-q38-frontier-failure-link-tkqsvs4o/unchanged_original_detail_fixture.inc:10:10: fatal error: '../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenFrontierPacket.h' file not found
+   10 | #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenFrontierPacket.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1 error generated.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_frontier_failure_link_tests.py", line 28, in <module>
+    subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['c++', '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '-I/private/tmp/pioneer-q38-frontier-failure-link-tkqsvs4o', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_frontier_failure_link_test.cpp', '-o', '/private/tmp/pioneer-q38-frontier-failure-link-tkqsvs4o/test']' returned non-zero exit status 1.
