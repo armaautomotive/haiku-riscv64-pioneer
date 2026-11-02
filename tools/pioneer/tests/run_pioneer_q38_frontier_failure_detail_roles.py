@@ -49,7 +49,7 @@ for value in old['old']['old']['bad_tags']:
     if value is None:del bad['PIONEER_DRIVER_BUILD_TAG']
     else:bad['PIONEER_DRIVER_BUILD_TAG']=value
     check(bad,False)
-for key in sorted(old['foreign']):
+for key in sorted(old['foreign']|{'PIONEER_Q38_TOKEN_FRONTIER_FAILURE_DETAIL_BENCHMARK_NATIVE'}):
     for value in ('0','1'):check({**base,key:value},False)
     check(base,False,include(role)+'#define '+key+' 0\n'+include(role))
 check(old['base'],False,include(role)+'#define '+flag+' 1\n'+include(role))

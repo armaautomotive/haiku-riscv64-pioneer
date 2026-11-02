@@ -3,6 +3,13 @@
 // zero RV32 instructions. OS/MMIO/GDDR endpoints are simulated. No synthetic
 // completion fabric,no old embedding/prefix producer and no completed token.
 #include "pioneer_q38_token_native_fixture_common.h"
+#if defined(PIONEER_Q38_TOKEN_FRONTIER_FAILURE_DETAIL_NATIVE) && !defined(PIONEER_Q38_TOKEN_NATIVE_FRONTIER_FAILURE_DETAIL_FIXTURE)
+#error Failure-detail observer requires its separate TEST binding,not an old fixture alias
+#endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FRONTIER_FAILURE_DETAIL_FIXTURE
+#include "pioneer_q38_token_native_frontier_failure_detail_role.h"
+static_assert(PioneerQ38TokenFrontierFailureDetailSelection==1,"actual diagnostic observer in this native history");
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_TWIN_BATCH_PREFETCH_FIXTURE
 #if !defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS) || PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS != 1 \
  || !defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT) || PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT != 1

@@ -18,6 +18,7 @@ static Context context;static PioneerProbeCookie cookie;
 static unsigned uid=0,copies=0,failCopy=0,scopeEntries=0,scopeExits=0,locks=0;
 static bool failThread=false,admit=true,loseAdmission=false,mutateUser=false;
 static unsigned mode=0,value=0,limit=34;
+static uint32_t failureDetail[6]={}; // caller-independent MOCK observer DATA only
 static unsigned TestUid(){return uid;}
 static int find_thread(const char*){return 17;}
 static status_t get_thread_info(int thread,thread_info* output){
@@ -49,6 +50,7 @@ static bool ObserveQ38TokenNativeFrontier(Context& c,PioneerQ38TokenFrontierResu
  assert(locks==1);c.observes++;
  if(mode==2)return false; // metadata admission refusal,NO device result
  result.started=1;result.phase=12;result.word=63;
+ if(mode==3){result.unsafe=1;memcpy(result.reserved,failureDetail,sizeof(failureDetail));return false;}
  if(mode==1){result.unsafe=1;return false;}
  result.ready=1;result.committed=value;result.limit=limit;result.prompts=2;return true;
 }
@@ -64,6 +66,7 @@ static void Reset(){
  assert(!locks);context={};cookie={};cookie.context=&context;
  uid=copies=failCopy=scopeEntries=scopeExits=mode=value=0;limit=34;
  failThread=loseAdmission=mutateUser=false;admit=true;
+ memset(failureDetail,0,sizeof(failureDetail));
 }
 int main(){
  namespace P=PioneerQ38TokenFrontierControl;
@@ -128,4 +131,24 @@ int main(){
   assert(!P::ReplyShape(packet));refusals++;
  }
  printf("PASS actual typed128B packet+extracted private adapter/%u DATA positives/%u request,range,scope,reply refusals/%u input+held-reply-copy faults/immutable USER snapshot/copy locked/metadata retention without subsequent observation;FD/source/observer/quarantine are MOCK,NOT genuine owner/public driver route/model/physical/clock/TPS proof\n",positives,refusals,copyFaults);
+ unsigned diagnosticCopies=0,diagnosticCopyFaults=0;
+ for(unsigned mutation=0;mutation<=192;mutation++){
+  Reset();mode=3;const uint32_t raw[]={0x31444651,5,0x31545351,0x24,0,3};
+  memcpy(failureDetail,raw,sizeof(raw));
+  if(mutation<192)failureDetail[mutation/32]^=uint32_t(1)<<unsigned(mutation%32);
+  P::Packet packet;
+  assert(Q38TokenFrontierControl(&cookie,&packet,sizeof(packet))==B_DEV_NOT_READY
+   && !P::ReplyShape(packet) && packet.reply.status==B_DEV_NOT_READY && packet.reply.started
+   && packet.reply.unsafe && !packet.reply.ready && !memcmp(packet.reply.detail+10,failureDetail,sizeof(failureDetail))
+   && context.observes==1 && !context.retains && copies==2 && scopeEntries==1 && scopeExits==1 && !locks);
+  diagnosticCopies++;
+ }
+ for(unsigned fail=1;fail<=2;fail++){
+  Reset();mode=3;failCopy=fail;const uint32_t raw[]={0x31444651,5,0x31545351,0x24,0,3};
+  memcpy(failureDetail,raw,sizeof(raw));P::Packet packet;const auto pristine=packet;
+  assert(Q38TokenFrontierControl(&cookie,&packet,sizeof(packet))==-99 && copies==fail && !locks
+   && context.observes==unsigned(fail==2) && context.retains==unsigned(fail==2)
+   && !memcmp(&packet,&pristine,sizeof(packet)));diagnosticCopyFaults++;
+ }
+ printf("PASS actual frontier adapter failure-detail transport/%u opaque six-word copies+all192 bit mutations/%u input+held-output-copy faults/status remains FAILURE/v1 shape still REFUSES/no normalization,retry or subsequent observation;MOCK observer+OS,NOT actual native failure or hardware qualification\n",diagnosticCopies,diagnosticCopyFaults);
 }

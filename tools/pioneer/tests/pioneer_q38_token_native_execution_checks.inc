@@ -76,6 +76,11 @@ static void CheckNativeExecution(Fixture& f){
     && !metric.committed && metric.prompts==2 && metric.limit==3
     && !state->TerminalObserved() && !state->TerminalHeld() && !state->Closed() && !state->Unsafe()
     && io.resets==resets && io.executionCpu->steps==steps && io.runtimePackets==packets);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_FRONTIER_FAILURE_DETAIL_FIXTURE
+   static_assert(PioneerQ38TokenFrontierFailureDetailSelection==1,"actual private diagnostic,not a flag-only old observer");
+   for(auto value:metric.reserved)assert(!value);
+   puts("PASS opt-in failure-detail observer in SAME genuine851-source/120-journal/119-virgin-engine native history/fresh0+all reserved ZERO/no extra processor step,NoC packet,reset or lifecycle transition;positive observation ONLY,NOT injected failure detail,full-END,physical or TPS proof");
+#endif
    puts("PASS new frontier reader in SAME genuinely initialized851+staged120+journaled+virgin119booted+ROOT-entered native history/16 non-pristine outputs refused without IO/fresh0 before any model token/source+boot checked/no processor step,NoC packet,reset or lifecycle transition;SIMULATED OS+VM+NoC,NOT committed token/model/physical/TPS proof");
   }
 #endif

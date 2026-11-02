@@ -1,0 +1,150 @@
+Failure-detail native first-layer/full-END + public BUILD:CLOSED
+=================================================================
+2026-11-02. Goal ACTIVE;usable27B Work and20tok/s UNMET. No new physical
+model test or inference rate in this checkpoint. Last completed diagnostic
+remains about0.1597tok/s with unresolved numerical differences. Pioneer
+remains stable041/tag2026102100010012/gen14,healthy64CPUs/full RAM.
+5920 below is a NEW diagnostic module,NOT a shader/performance fix. The
+retired010c/34322 APPLY routes remain disabled and must NEVER be reused.
+
+Actual genuine native execution and full lifetime:closed
+--------------------------------------------------------
+New main36049/independent-clean21151 and unchanged twin control52621/63665
+ALL ACTUALLY exit0,observed05:32UTC. Each run authenticates the SAME-open
+original GGUF BEFORE actual851-source construction,1010 real zero-ROM
+jobs,120 complete held images/journals and119 VIRGIN RV32+Tensix engines.
+All run the SAME original embedding,layer0 Matrix/Conv/GDN/FFN arithmetic,
+consume cancellation and execute ROOT+119 real STOP loops,120 HOLD,
+zero-commit drain and both actual held-hidden read packets. Original token,
+dispatch,119peer,ROOT/shared stores restore with complete second passes.
+Native clock END,hardware seal,29 OS-view closures,72 checked PCI reads/
+11 exact original writes,3 host releases,same-cookie unreserve,locked
+whole-context destruction and END complete. Endpoints are SIMULATED:these
+are HOST instruction-execution histories attached to the actual production
+native owner,NOT physical P100A runs or successful full-model generation.
+
+The new explicit --frontier-failure-detail selects actual private22a's
+cached-failure observer through the full native fixture. Its actual fresh0
+observation has ALL reserved words zero,with no extra processor step,NoC
+packet,reset or lifecycle transition. Non-pristine outputs still refuse
+without IO. The entire new main/clean logs compare EXACTLY;the entire old
+control main/clean logs compare EXACTLY. New versus old differs ONLY by
+the single explicit opt-in diagnostic PASS line. No raw logs were filtered.
+This positive native lifetime does NOT exercise an actual unsafe failure;
+the separately closed actual-method/transport negative tests cover that
+narrower behavior with MOCK authority,as described below.
+
+Only AFTER actual full exits:unchanged strict posthoc comparisons for ALL
+four prefixes ACTUALLY exit0. Every comparison authenticates ALL3 original
+CPU trace pins;ALL10240 embedding+layer0 words match bit-exactly,maxAbs/L2
+zero. No tolerance or diagnostic-only exit mode. Every41028B prefix SHA:
+ 4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7
+This proves that prefix ONLY,not later layers,committed tokens,vocabulary,
+long-context quality,physical throughput,resident requests or Work.
+
+Fixture boundaries and transport
+---------------------------------
+Explicit diagnostic CLI requires the exact complete twin ROOT+worker/
+first-layer/cancel/STOP/HOLD/drain/full-END predecessor. Main68566/clean84458
+ACTUALLY0,logs exact:ALL old twin/ancestors/expected-ROM controls FIRST,
+then36 missing,duplicate,wrong-worker,shortened,old,profile,compile-only
+and incompatible-ROOT refusals BEFORE model/compiler/output access.
+Initial TEST-role main81633/clean47028 ACTUALLY0:2 syntax positives/89
+refusals. After adding the separately bound public role,final complete
+main10440/clean45290 ACTUALLY0,logs exact:all old ancestors FIRST,private
+3positives/473 refusals,then TEST2positives/92 refusals. New public alias
+is rejected even when defined0;late selection/removal still fails.
+
+Actual-method+formatter final main25480/clean7969 ACTUALLY0,logs exact:
+unchanged8198/26/13 observer controls FIRST;unchanged actual typed-adapter
+9 positives/1176 refusals/6 copy faults;NEW193 opaque six-word failure
+copies (canonical+ALL192 bit mutations) and2 input/held-output-copy faults.
+Status stays FAILURE;public v1 ReplyShape still REJECTS nonzero reserved
+words. Metadata retention after lost output copy adds NO observation.
+Actual paired old/new observers retain8198 byte-identical successes,
+22 first-failure/precedence cases and26 pre-IO refusals;the actual formatter
+retains ALL32 raw caller-owned words. Authority/OS/source/failed-read
+endpoints in these units are MOCK,not hardware or native-fault provenance.
+The production typed adapter is unchanged SHA599929c72020638e8a5f5067daa6b98b0e2227ee24d3edacca51bbfb87c2bce3.
+
+Separate explicit public diagnostic BUILD
+------------------------------------------
+New PIONEER_Q38_TOKEN_FRONTIER_FAILURE_DETAIL_BENCHMARK_NATIVE requires the
+actual observer AND complete old twin public/data parents. Public binding
+selection2 is distinct from private1/default0;missing/zero/two/late/private/
+TEST/USER/shader/CPU/Work aliases cannot promote it. Main32174/clean75139
+ACTUALLY0,logs exact:all old public twin/ancestors FIRST,then3 syntax
+positives/384 refusals. These are syntax checks,NOT execution authority.
+
+Independent inspect45371/30606 and frozen18115/72666 ALL ACTUALLY0.
+Whole new object/module bytes compare exactly between source trees:
+ object0e984211811f01a792542fdd1bf5eeb06c99a669ef9f5277a9ee3f23d568d008
+ module592084df7cc967b688f0f8ef84421165aaeb4e5bb2b7d2e9ca739bf0188c6716
+ tenstorrent_pci_probe-FRONTIER-EARLY-FAILURE-DIAGNOSTIC-ONLY
+EACH build FIRST reproduces whole old privatefeaa/publica0f0/retired010c
+AND new qualified private22a. Public-role extension leaves private22a
+byte-exact;the already running private histories were not restarted or
+given different code. ALL14 frozen firmware arrays and the complete2MiB
+RoPE are unchanged. No runtime CPU reference,llama/ggml,HOST ISA engine,
+synthetic source or Work-control symbols in defined/undefined tables.
+Six conventional ABI names exist ONLY in the separate public object.
+
+Actual GCC callgraph recompilation is whole-object byte-identical. The
+unchanged strict parser/auditor reports known module chain5392B,25
+unresolved costs,no cycles/dynamic frames. Individual frames<=2048 or
+unchanged predecessor. This is PARTIAL:kernel/IRQ/entry/indirect costs
+are excluded. It is NOT a whole kernel-stack or physical safety proof.
+Firmware remains ROOT6066e693+peer56b470ae. No performance improvement or
+fix to the earlier physical failure is implied by the new observation code.
+
+Exact new exchange helper,not a retired apply bypass
+----------------------------------------------------
+Helper99e651a9353bf35808991659c6a3269fb14b9625b2e5d52bfe24406e6bdf8c07
+accepts ONLY complete5920<->stable041;shared tag75 is NOT code identity.
+It preserves exact staged/installed/stable/admin/guard hashes,root-owned
+private stage,regular one-link non-writable files,device symlink,no stale
+incoming,process-inventory/idle/cold/owner/open/generation checks,exact
+backup,pre/post-quiesce identities,atomic incoming move outside the watched
+driver directory and verified higher-generation reload. No GPU job,force,
+reset,retry,cold clearing,retained-owner restoration or automatic rollback.
+
+Main6859/clean79100 ACTUALLY0:2 valid/58 refused synthetic FS/API cases
+EACH,including retired010c,retired34322 and private22a as candidate OR
+installed input,in BOTH directions. These are synthetic endpoint tests,
+not a native-driver or physical ownership proof. Actual whole5920 hashes
+above provide the separate production code identity. Original retired
+helper guards remain untouched. Reserved new staging path (NOT created
+by this qualification checkpoint):
+ /boot/home/pioneer-p100a-frontier-failure-detail-20261102-a
+
+Fresh independent CPU-only board-health check ACTUALLY0:whole stable041,
+gen14/cold0/quiesced0/owner0/open1/guard1,64CPUs/max137034936320B/free
+133775949824B,no compute parent. No new Pioneer GPU job,reload,power,SD,
+OS/network,Assistant,boot-profile or hardware change during this checkpoint.
+All unrelated llama.cpp/status/FlashNext/WIP changes remain untouched.
+
+Next hardware step and limits
+------------------------------
+If proceeding,first commit/push this tested checkpoint,then fresh healthy
+idle64CPU/fullRAM/whole-identity checks,new non-overwriting stage and full
+SCP-O byte readback. Use ONLY new99e6 exchange with exact5920 and existing
+f8 diagnostic client. This is a deliberate bounded failure-detail probe,
+NOT blind retry of010c or an inference performance fix. Protect the ENTIRE
+same-source SHA/Open/upload/start/observe/Finish/Close lifetime against
+other Pioneer operations. On failure preserve raw QFD1 fields and stop;
+unsafe ownership requires new power epoch before guarded restoration.
+Never hot-unload/reset/unreserve quarantined resources. OFF once/wait/check
+evidence/ON once per AGENTS;no mains or SD change. Successful native END
+and first-layer equality do NOT preclude physical failure/quarantine.
+
+Architecture cross-check for later performance work:official Blackhole
+NoC documentation specifies512-bit flits,not Wormhole's256-bit width:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/README.md
+The earlier isolated31B/device-cycle/single-worker read result is NOT a
+full-bank/full-card bandwidth ceiling or proof that changing ports is
+necessary. Actual mcycle frequency and full-model bottlenecks still need
+measurement;no theoretical-token-rate forecast is substituted for a run.
+
+All closed raw logs,compiled commands,partial graphs and prefixes are
+preserved in the sibling directory. Whole-model correctness and fast
+usable self-hosted Assistant Work remain unfinished;goal stays ACTIVE.

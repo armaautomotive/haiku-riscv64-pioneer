@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 root_profile=None
+frontier_failure_detail='--frontier-failure-detail' in sys.argv
+if frontier_failure_detail:
+    assert sys.argv.count('--frontier-failure-detail')==1
+    sys.argv.remove('--frontier-failure-detail')
 twin_batch_prefetch='--twin-batch-prefetch' in sys.argv
 if twin_batch_prefetch:
     assert sys.argv.count('--twin-batch-prefetch')==1 and '--batched-prefetch' not in sys.argv
@@ -184,6 +188,10 @@ if batched_prefetch:
 if twin_batch_prefetch:
     assert prefetch_worker and flat_matrix and counter_gather and not root_profile, \
         'Twin-batch native TEST requires its distinct matching ROOT+worker/full original first-layer/cancel/STOP/HOLD/drain/END,not old batched,shortened or Work aliases'
+if frontier_failure_detail:
+    assert twin_batch_prefetch and token_frontier and not batched_prefetch and not compile_link_only \
+        and len(sys.argv)==7 and sys.argv[2]=='--execution-end', \
+        'Failure-detail native TEST requires the exact complete twin original-model first-layer/cancel/STOP/HOLD/drain/END history;not compile-only,old,shortened,full-flow or Work aliases'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -317,6 +325,9 @@ if twin_batch_prefetch:
     assert hashlib.sha256((here.parent/'PioneerQ38TokenTwinBatchPrefetchPrograms.h').read_bytes()).hexdigest()=='049613d63e3524be9a5aa1d3ef5f234adf4c61e4142a4d79eaf7e3bd50ae9db1'
     defines.update(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS='1',PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_NATIVE_CONTEXT='1',
                    PIONEER_Q38_TOKEN_NATIVE_TWIN_BATCH_PREFETCH_FIXTURE='1')
+if frontier_failure_detail:
+    defines.update(PIONEER_Q38_TOKEN_FRONTIER_FAILURE_DETAIL_NATIVE='1',
+                   PIONEER_Q38_TOKEN_NATIVE_FRONTIER_FAILURE_DETAIL_FIXTURE='1')
 if posted_cancel:
     defines.update(PIONEER_Q38_TOKEN_POSTED_CANCEL='1',PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',
                    PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')

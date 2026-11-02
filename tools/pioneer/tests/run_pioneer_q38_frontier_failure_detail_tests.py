@@ -10,6 +10,7 @@ import tempfile
 assert len(sys.argv)==1 and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 here=pathlib.Path(__file__).resolve().parent
 subprocess.run([sys.executable,str(here/'run_pioneer_q38_token_frontier_method_tests.py')],check=True)
+subprocess.run([sys.executable,str(here/'run_pioneer_q38_token_frontier_control_tests.py')],check=True)
 source=(here.parents[2]/'src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeOwner.h').read_text()
 def extract(signature,text=source):
     assert text.count(signature)==1

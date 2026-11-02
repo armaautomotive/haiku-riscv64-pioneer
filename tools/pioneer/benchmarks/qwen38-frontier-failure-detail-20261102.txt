@@ -1,5 +1,11 @@
 Private first-failure detail:unit/role/native BUILD CLOSED;NOT installed
 =======================================================================
+FOLLOW-ON:the actual original-model native first-layer/full-END histories
+and separate public5920 BUILD are now CLOSED in
+qwen38-frontier-failure-detail-native-20261102.txt. That newer checkpoint
+supersedes this report's private-only/next-qualification operational status.
+Retired010c/34322 remain disabled;new5920 is diagnostic,NOT a speed fix.
+
 2026-11-02. Goal ACTIVE;usable correct27B Work and20tok/s remain UNMET.
 No new inference rate exists. Last completed model diagnostic remains
 about0.1597tok/s with unresolved numerical differences. This checkpoint

@@ -1,0 +1,13 @@
+/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-g++
+-shared
+-nostdlib
+-Wl,--no-undefined,-soname=tenstorrent_pci_probe
+/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/lib/gcc/riscv64-unknown-haiku/13.3.0/crtbeginS.o
+/Volumes/HaikuBuildLocal/generated.riscv64/objects/haiku/riscv64/release/system/glue/haiku_version_glue.o
+/private/tmp/pioneer-q38-detail-native-20261102.Y1VNpv/public-frozen-clean/frontier-failure-detail-benchmark-native.o
+/private/tmp/pioneer-q38-retained-public-frozen-main-20261031-zaa/unchanged-frontier-driver/unchanged-decode-driver/unchanged-short-driver/PioneerPciProfile.o
+/Volumes/HaikuBuildLocal/generated.riscv64/objects/haiku/riscv64/release/system/kernel/kernel.so
+/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/lib/gcc/riscv64-unknown-haiku/13.3.0/libgcc.a
+/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/lib/gcc/riscv64-unknown-haiku/13.3.0/crtendS.o
+-o
+/private/tmp/pioneer-q38-detail-native-20261102.Y1VNpv/public-frozen-clean/tenstorrent_pci_probe-FRONTIER-EARLY-FAILURE-DIAGNOSTIC-ONLY
