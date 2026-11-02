@@ -19,7 +19,7 @@ finally:sys.argv=saved
 args,features,misc,project,reference,sdk,binpath,cxx=(settings[k] for k in
     ('args','features','misc','project','reference','sdk','binpath','cxx'))
 flags=features+['-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1','-DPIONEER_DRAM_SWEEP_DIAGNOSTIC=1',
-               '-DPIONEER_DRIVER_BUILD_TAG=0x2026110200020076ULL']
+               '-DPIONEER_DRIVER_BUILD_TAG=0x2026110200030076ULL']
 subjects=[misc/name for name in ('tenstorrent_pci_probe.cpp','PioneerDramReadSweepNative.inc',
  'PioneerDramReadSweepNativeRole.h','PioneerDramReadSweepOwner.h','BlackholeDramReadSweepImage.h',
  'BlackholeDramSweepArcClock.h','BlackholeDramSweepRoutes.h','PioneerDramSweepControl.inc','PioneerDramSweepProtocol.h')]
@@ -29,7 +29,7 @@ source_identity={str(path):hashlib.sha256(path.read_bytes()).hexdigest() for pat
 role_input=('#include "'+str(misc/'PioneerDramReadSweepNativeRole.h')+'"\n').encode()
 cases=[(flags,True)]
 for required in ('-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1','-DPIONEER_DRAM_SWEEP_DIAGNOSTIC=1',
-                 '-DPIONEER_DRIVER_BUILD_TAG=0x2026110200020076ULL','-DTT_PIONEER_DRIVER_RELOAD',
+                 '-DPIONEER_DRIVER_BUILD_TAG=0x2026110200030076ULL','-DTT_PIONEER_DRIVER_RELOAD',
                  '-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH'):
     cases.append(([value for value in flags if value!=required],False))
 for name in ('PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY','PIONEER_Q38_TOKEN_NATIVE_CONTEXT',

@@ -1,0 +1,160 @@
+Startup guard qualified physically; queued DRAM leaf qualified OFFLINE only
+=========================================================================
+2026-11-02. Goal ACTIVE. Correct usable Qwen27B Work and20tok/s UNMET.
+Previous status-only goal turn:no implementation progress;current turn makes
+code changes and obtains new physical evidence. No model inference is run.
+Last completed model diagnostic remains about0.1597tok/s,with unresolved
+numerical differences. Neither these memory tests nor offline execution is
+a model speedup,whole-card bandwidth/capacity certificate or authenticity test.
+
+Startup-state fix and actual native subject
+--------------------------------------------
+Owner Guard now reads CSR0xffb12234 twice through the already-owned control
+page,refuses TRISC0 alternate-entry bit0 and any changing value,and never
+writes that register. Every guard repeats this check,including after backend
+initialization before launch. Other entry bits are preserved,not forced0.
+Native Access/scope/VM/thread/team/epoch/lock/cold gates still apply;lost scope
+returns UINT32_MAX without another endpoint read. Uncertainty retains memory
+and hardware resources,without cleanup,extra reset,override clearing or retry.
+
+Fresh physical revision3/tag2026110200030076,not the revision2 tuple:
+ module d829860b22bd26d5d47bbd5188cd68534e47a763fd4f085ee021ee470da9ec5b
+ client 5c5b9ed915adbd1b849c647e8ff209e8cb43ca3400b6973afe3e093bb0cb3777
+ helper f4eb6471d0f499e9e490c2a14b582333c37b94d7b59a5600b1ff553d354ef8c8
+ stage /boot/home/pioneer-p100a-dram-sweep-20261102-c
+The exact helper owns ONLYd829<->stable041/tag0003. Prior stagea/b tuples
+remain immutable historical subjects,not interchangeable with revision3.
+The device's scalar ELF7002ccac8cdaf7b4c0cef7890ebc538d666eedbf4b1f407b59ea5e7136cdda5f
+is unchanged. Public request size,frame version,allowed parameters and result
+grammar are unchanged except the exact new build tag. Queued bytes below are
+NOT selectable by this driver or its public ABI.
+
+Closed independent checks before installation
+-----------------------------------------------
+Main owner64812 actually exits0;clean owner31303 component actually exits0:
+each executes unchanged RV32 leaf6valid/38refused,then owner13valid/94refused.
+New tests refuse initial/phase2..8 override changes,unstable double reads and
+entry-read faults;early cases prove no code mutation/launch,and phase4 proves
+no launch after backend init. No further IO after quarantine. Positive high
+bits check avoids treating unrelated entry settings as TRISC0 overrides.
+
+Actual Native.inc/controller/KernelExport endpoint tests main91241 and clean
+31303 each29valid/166refused,including exact control-page offset with distinct
+neighbor canaries and inert access after lost scope. These are explicit
+endpoint models,NOT fabricated successful whole-native engine/ARC executions.
+Main91241 and independent clean31303 SDK/full-module builds ACTUALLY exit0;
+whole module and client compare byte-exact. Actual NODRV adapter object:
+b4679d239f8cadc19803da6d7da5beb636af68604d5f1ab3d45216aab187ed76.
+Default/base55 complete prior/current control objects stay byte-exact:
+aabe86f52abc2d44b15536f6cd9ab1f7ad71d92e9755bafdeb6072575976d425 /
+20bd6ea1e38e94a6510ef64d550efd705ed8413cf9c61de7ce8a0942263c829b.
+Base55 object is NOT the installed feature-rich041 binary. Renamed inert
+entry-body checks and14NODRV/32physical role preprocessor cases pass.
+Driver-TU max frame896B/direct compiler call-chain2304B;unchanged profile
+frame1040B is outside that graph,and external/indirect kernel calls are
+unmeasured. This is not whole-kernel stack certification.
+Exact exchange script fixtures main27636/clean31303 each2valid/46refused.
+All actual stage files are copied back and compare completely before apply;
+current source identities independently match. The first shasum -c command
+refused the builder's one-space manifest syntax;explicit two-space formatting
+then verifies ALL source identities. No hash mismatch is ignored or relaxed.
+
+Actual hardware:single bank,single worker,SERIAL reads
+-------------------------------------------------------
+Fresh SSH confirms64CPUs/max137034936320B/stable041/gen6/cold0/idle. Exact
+apply3525 ACTUALLY exits0 ->revision3/gen7. No-launch preflight exits0 with
+complete0/preflight1,all native closures1. Independent installed SHA and idle
+metadata match before the first core launch. No concurrent Pioneer query,
+model or admin operation runs during either physical command's lifetime.
+
+95336 --run 0 14 1 ACTUALLY exits0:
+ 8388608 bytes /512 requests,start2110,end597839,delta595729 device cycles.
+ 14.081248352858431 bytes/devicecycle;host whole-transaction5805066us.
+93660 --run 0 14 256 ACTUALLY exits0:
+ 2147483648 bytes /131072 requests,start2110,end152400703,
+ delta152398593 device cycles;14.091230146724516 bytes/devicecycle.
+ host whole-transaction5927407us.
+The latter repeatedly reads the SAME8MiB bank0 window256 times:NOT2GiB of
+distinct memory,NOT all7banks,NOT full28GB capacity or integrity testing.
+Both retain the unchanged one-outstanding16KiB leaf. These numbers establish
+sustained SERIAL behavior,not a queued-read or inference speedup. Raw mcycle
+frequency is still independently unverified;firmware1350MHz is not sufficient
+proof for a GB/s conversion. Whole host times include snapshot/upload/check/
+closure,and their difference is not an independent counter calibration.
+
+Both complete1/retained0,phase10 innerclosed1/unsafe0,started/observed/held1,
+saved/restored6490 words,independently compared4096 LAST-chunk words,all native
+views/PCI/reservation closures1,ioctl0/errno0/close0. Last samples47452806/
+7a3796ca match. BUSY1350MHz and normal IDLE800MHz lease closes. Full immutable
+code/frame,master counters,FIFO drain/outstanding,safe park,all-held,L1/NIU/
+TLB restoration predicates pass. These are actual receipts,not PC alone.
+
+Queued performance candidate:actual emitted bytes,NOT installed
+----------------------------------------------------------------
+PioneerDramQueuedReadSweep has a distinct magic/version2 and separate source
+selection (--queued) in the build-only emitter. It uses the same8MiB fixed
+bank window and16KiB L1 footprint. Depth1/2/4/8/16 is allowed only when the
+power-of-two chunk size times depth fits16384B;up to16 captured read requests
+write DISJOINT return buffers. Entire batch must finish before any reuse.
+Each packet checks FIFO capacity and overflow. Drain observes FIFO-empty
+FIRST,then issues counter reads,checks exact response counts and outstanding
+depth with finite bounds. No counter reset,NoC GDDR write,MMIO extension,
+host memory DMA,CPU model products or tensor-engine instruction is added.
+All command flags/coordinates/addresses and complete request sequence are
+independently checked by the instruction model. Return samples now refer
+to the LAST slot,not Raw;native integration MUST account for this difference.
+Do not simply substitute the leaf into the old owner/public protocol.
+
+Actual queued ELF fa245dbebd77f90c93d3898e5a0ac1ab27178efd2760769380af1ae14b62a656
+ text1856B SHA7cecf1a096be0482f0150ecab510f1ad4e56c325a51c53f79d097e57c6fcb4b4
+ boot4B SHAd0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+ main frame288B + sampler16B within unchanged8KiB stack reservation.
+Builder audits actual RV32 ELF,no mutable globals/undefined symbols/forbidden
+CSR writes,exact three read-only cycle CSR instructions and bounded frames.
+Main27636/B and actual independent clean93684/D ACTUALLY exit0,12valid/
+50refused each,ASan/UBSan actual emitted-instruction execution;ELFs compare
+byte-exact. Out-of-order and delayed replies,mutable initiator vs captured
+FIFO commands,simultaneously live disjoint buffers,full8MiB address sequence,
+counter wrap,all last-batch payload words and inert fault parking are checked.
+StalledFIFO,dropped request,overflow/fullFIFO,excess responses,dirty startup,
+bad address readback,changed job and bad clock cases refuse with finite bounds.
+The initial A test correctly failed because its ChangedJob fixture toggled
+the nonce on EVERY completion and accidentally toggled it back;the fixture
+now changes it ONCE. Leaf bytes stayed unchanged;the original refusal
+expectation is retained. An extra C run was from the main tree despite its
+output name;it is NOT counted as independent. D's actual cwd is the clean
+tree. No simulation step/cycle result is advertised as physical performance.
+
+Official FIFO semantics consulted:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md#niu-request-fifos
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/Counters.md#read-requests
+
+Reproduce offline:
+ python3 tools/pioneer/tests/run_pioneer_dram_read_sweep_owner_tests.py SDK NEW_OUT
+ python3 tools/pioneer/tests/run_pioneer_dram_queued_read_sweep_tests.py SDK NEW_OUT
+ python3 tools/pioneer/build_dram_sweep_diagnostic.py SDK NEW_OUT
+SDK used:/Volumes/HaikuBuildLocal/generated.riscv64. Clean tree:
+/private/tmp/pioneer-dram-native-clean-20261102-e.Ps157C;SDK reference original
+tree's kernel headers/pinned623bdaad git source. New driver A output:
+/private/tmp/pioneer-dram-entry-native-sdk-main-20261102-a;clean B output:
+/private/tmp/pioneer-dram-entry-native-sdk-clean-20261102-b.
+
+Preservation and next required work
+-------------------------------------
+Post-terminal independent SSH confirms idle healthy revision3/gen7/64CPUs/
+fullRAM. Exact stagec restore98246 ACTUALLY exits0 ->stable041/gen8. Fresh
+independent final health ACTUALLY exits0:installed041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403,
+tag2026102100010012/gen8/quiesced0/cold0/active_owner0/open1/guard1,
+64CPUs/max137034936320B/free133783908352B. Adminb0c851.../guardd1ce2...
+unchanged. No board power/reboot,SD,mains,firmware,boot/kernel,network,
+Assistant or unrelated user work is changed. Raw receipts/source identities
+are in the sibling directory. No physical diagnostic process remains live.
+
+Next:integrate the queued leaf with its OWN authenticated native image,
+snapshot/report/last-slot checks,public DATA grammar and new exact revision;
+test full native lifecycle BEFORE hardware use. Then compare real queue
+depths and qualify synchronized multi-bank/multi-worker traffic. Do not sum
+isolated worker rates or call the scalar2GiB result a full-card baseline.
+Apply measured findings to Qwen weight/data scheduling and establish correct
+full-model/fresh-request acceptance. Work remains distinct from CPU validation;
+usable Assistant27B,no-reference Work and20tok/s remain outstanding.

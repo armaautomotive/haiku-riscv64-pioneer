@@ -36,7 +36,8 @@ struct PioneerDramSweepNativeIO : PioneerComputeNocIO {
  uint32 DramIdRead(unsigned);
  uint32 ComputeNocRead(uint32);
  uint32 DramTlbRead(unsigned,unsigned);void DramTlbWrite(unsigned,unsigned,uint32);
- uint32 ResetRead();uint32 ResidentNocRead(uint32);void ResidentNocWrite(uint32,uint32);
+ uint32 ResetRead();uint32 SweepEntryOverrideRead();
+ uint32 ResidentNocRead(uint32);void ResidentNocWrite(uint32,uint32);
  bool SweepReadChecked(uint32,uint32&);bool SweepWrite(uint32,uint32);
  bool SweepWindowReadChecked(uint32,uint32&);
  void SweepResetWrite(uint32);uint32 SweepPcRead();void Pause();
@@ -228,6 +229,10 @@ uint32 PioneerDramSweepNativeIO::HostPciRead(unsigned p,uint16 a,uint8 n){
 uint32 PioneerDramSweepNativeIO::DramTlbRead(unsigned s,unsigned i){return Access()?PioneerDramSamplesIO::DramTlbRead(s,i):UINT32_MAX;}
 void PioneerDramSweepNativeIO::DramTlbWrite(unsigned s,unsigned i,uint32 v){if(Access())PioneerDramSamplesIO::DramTlbWrite(s,i,v);}
 uint32 PioneerDramSweepNativeIO::ResetRead(){return Access()?PioneerTensixIO::ResetRead():UINT32_MAX;}
+uint32 PioneerDramSweepNativeIO::SweepEntryOverrideRead(){
+ // Already-owned reset/control page: CSR0xffb12234, never a write.
+ return Access() && owner.ready?PioneerRead32(resetWrite+(0x234-0x1b0)/4):UINT32_MAX;
+}
 uint32 PioneerDramSweepNativeIO::ResidentNocRead(uint32 a){
  if(!Access())return UINT32_MAX;
  const bool extra=(a<=0x24 && !(a&3)) || a==0x64 || a==0x68 || a==0x178

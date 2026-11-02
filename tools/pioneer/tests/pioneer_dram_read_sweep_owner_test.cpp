@@ -37,8 +37,10 @@ struct Rig {
  bool corruptInitialSnapshot=false,corruptRestoredNeighbor=false;
  bool dropReportClear=false;
  bool staleFifo=false,overflowFifo=false,lateFifo=false;
+ uint32_t entryOverride=0;unsigned overridePhase=0,overrideReads=0;
+ bool unstableOverride=false;
  bool badCounter=false,badNonce=false,badImmutableCode=false,loseScope=false,scratchAlias=false;
- enum Kind { TlbRead=1,TlbWrite,ReadL1,WriteL1,ReadNoc,WriteNoc,ReadReset,WriteReset,ReadPci,ReadSource,ReadWindow,BeginClock,EndClock };
+ enum Kind { TlbRead=1,TlbWrite,ReadL1,WriteL1,ReadNoc,WriteNoc,ReadReset,WriteReset,ReadPci,ReadSource,ReadWindow,BeginClock,EndClock,ReadEntry };
  Rig():backing(Image::SavedWords+Image::RawWords,0xfeedabba){
   proof.version=1;proof.state=TT_DRAM_SAMPLE_ROUTES_OK;proof.routes_verified=7;
   proof.tlb_restored=proof.data_restored=1;memcpy(proof.source,source,sizeof(source));
@@ -112,6 +114,13 @@ struct Rig {
   if(held){assert(!running);coreMaskReads++;}
   else assert(Matches(1,0xffa00000,1,2,false));
   return Touch(ReadReset)?(held?0x47800:reset):0;
+ }
+ uint32_t SweepEntryOverrideRead(){
+  assert(Matches(1,0xffa00000,1,2,false));
+  if(!Touch(ReadEntry))return UINT32_MAX;
+  overrideReads++;
+  if(unstableOverride)return overrideReads&1?0:2;
+  return entryOverride|unsigned(overridePhase && result.phase>=overridePhase);
  }
  void SweepResetWrite(uint32_t v){
   if(!Touch(WriteReset))return;
@@ -233,6 +242,17 @@ int main(int argc,char** argv){
  }
  for(unsigned shift:{6U,10U,12U}){Rig r;assert(r.Execute(0,shift));passed++;}
  {Rig r;assert(r.Execute(3,14,2));passed++;}
+ {Rig r;r.entryOverride=0xfffffffe;assert(r.Execute() && r.overrideReads);passed++;}
+ for(unsigned phase:{1U,2U,3U,4U,5U,6U,7U,8U}){
+  Rig r;r.overridePhase=phase;
+  assert(!r.Execute() && r.quarantined && r.result.unsafe && !r.result.closed);
+  if(phase<=3)assert(!r.resetWrites && !r.cpu->steps);
+  if(phase==1)assert(r.memory==r.original && !r.result.savedWords);
+  if(phase==4)assert(r.resetWrites==1 && !r.cpu->steps && !r.result.launched);
+  assert(!r.clockEnds);refused++;
+ }
+ {Rig r;r.unstableOverride=true;assert(!r.Execute() && r.quarantined
+   && !r.resetWrites && !r.cpu->steps && r.memory==r.original);refused++;}
  {Rig r;r.failPhase=1;r.failKind=Rig::TlbWrite;r.failAt=120;
   assert(r.Execute() && r.faultUsed && r.droppedOld==r.droppedRequested && r.result.closed
    && r.memory==r.original && !memcmp(r.tlb,r.originalTlb,sizeof(r.tlb)));
@@ -287,6 +307,7 @@ int main(int argc,char** argv){
   assert(!r.clockEnds && !r.result.restoredWords);refused++;
  }
  const unsigned failures[][2]={{1,Rig::BeginClock},{1,Rig::TlbRead},{1,Rig::TlbWrite},{1,Rig::ReadReset},
+  {1,Rig::ReadEntry},{4,Rig::ReadEntry},{5,Rig::ReadEntry},
   {2,Rig::ReadL1},{2,Rig::ReadSource},{3,Rig::WriteNoc},{3,Rig::WriteL1},{3,Rig::ReadL1},
   {4,Rig::WriteReset},{4,Rig::ReadReset},{5,Rig::ReadSource},{5,Rig::ReadPci},
   {6,Rig::WriteReset},{6,Rig::ReadL1},{7,Rig::ReadWindow},{8,Rig::WriteL1},{8,Rig::ReadL1},

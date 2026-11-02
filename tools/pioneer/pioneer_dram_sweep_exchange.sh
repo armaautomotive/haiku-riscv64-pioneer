@@ -5,7 +5,7 @@ set -eu
 [ "$#" = 1 ] || exit 2
 case "$1" in --apply|--restore) mode=$1;; *) exit 2;; esac
 [ "$(uname -s)" = Haiku ] && [ "$(id -u)" = 0 ] || exit 2
-stage=/boot/home/pioneer-p100a-dram-sweep-20261102-b
+stage=/boot/home/pioneer-p100a-dram-sweep-20261102-c
 installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
 device=/boot/home/config/non-packaged/add-ons/kernel/drivers/dev/misc/tenstorrent_pci_probe
 guard=/boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
@@ -15,7 +15,7 @@ candidate=$stage/tenstorrent_pci_probe-dram-sweep-diagnostic76
 incoming=$stage/driver.incoming
 backup=$stage/stable041.backup
 stable_hash=041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
-candidate_hash=32362d82bfa2179acdf0680c4f99671a6e4a54f580fd35cee16e25b0fc25a8fe
+candidate_hash=d829860b22bd26d5d47bbd5188cd68534e47a763fd4f085ee021ee470da9ec5b
 guard_hash=d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
 admin_hash=b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f
 exact(){
@@ -48,10 +48,10 @@ mkdir "$stage/.exchange-lock" || exit 1
 trap 'rmdir "$stage/.exchange-lock"' 0
 if [ "$mode" = --apply ]; then
  source=$candidate;oldhash=$stable_hash;newhash=$candidate_hash
- oldtag=2026102100010012;newtag=2026110200020076
+ oldtag=2026102100010012;newtag=2026110200030076
 else
  source=$stable;oldhash=$candidate_hash;newhash=$stable_hash
- oldtag=2026110200020076;newtag=2026102100010012
+ oldtag=2026110200030076;newtag=2026102100010012
 fi
 exact "$installed" "$oldhash" && parents_idle || exit 1
 metadata=$("$admin" --status) || exit 1

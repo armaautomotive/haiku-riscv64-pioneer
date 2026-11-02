@@ -4,7 +4,7 @@
 #include "BlackholeComputeNocProbe.h"
 #include "BlackholeDramReadSweepImage.h"
 #include "../../../../../tools/pioneer/PioneerDramReadSweep.h"
-// Separate single-attempt owner component. NOT exposed by an installed driver.
+// Separate single-attempt owner component, only exposed by diagnostic76.
 // IO must bind this EXACT object/proofs/private backing under the native global
 // lock and cold/active-owner gates. Scope/clock/test callbacks are NOT a public
 // authority or substitutes for implementing that native adapter.
@@ -83,6 +83,11 @@ class PioneerDramReadSweepOwner {
     || io.DramTlbRead(1,i)!=BlackholeDramFixedTlbWord(0xffa00000,1,2,false,i))return false;
   }
   if(io.ResetRead()!=reset || io.ResetRead()!=reset)return false;
+  // TRISC0 must use its authenticated L1 boot jump, not a firmware-selected
+  // alternate entry. Read only; never clear someone else's override. Repeat
+  // at every guard, including after backend init and immediately pre-launch.
+  const uint32_t entry=io.SweepEntryOverrideRead();
+  if((entry&1) || io.SweepEntryOverrideRead()!=entry)return false;
   for(unsigned i=0;i<16;i++)if(io.ResidentNocRead(BlackholeDramSourceOffset(i))!=(i?noc->source[0][i]:expectedConfig))return false;
   return !idle || Idle(io,(expectedConfig&0x10000)!=0);
  }

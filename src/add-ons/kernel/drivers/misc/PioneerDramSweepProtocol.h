@@ -24,7 +24,7 @@ static inline bool PioneerDramSweepParameters(const tt_pioneer_dram_sweep& r){
  if(r.version!=1 || r.bank>=7 || !r.nonce || !r.sweeps || r.sweeps>256
   || (r.chunk_shift!=6 && r.chunk_shift!=10 && r.chunk_shift!=12 && r.chunk_shift!=14)
   || r.reserved[0] || r.reserved[1] || r.reserved[2]
-  || r.expected_tag!=UINT64_C(0x2026110200020076) || !r.expected_generation)return false;
+  || r.expected_tag!=UINT64_C(0x2026110200030076) || !r.expected_generation)return false;
  return true;
 }
 static inline bool PioneerDramSweepRequest(const tt_pioneer_dram_sweep& r){

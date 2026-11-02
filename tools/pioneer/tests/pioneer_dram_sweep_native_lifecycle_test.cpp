@@ -168,7 +168,7 @@ struct PioneerDramSweepNativeContext;
 static PioneerDramSweepNativeContext* sDramSweepNativeContext=NULL;
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc"
 #define B_DEVICE_OP_CODES_END 1000
-#define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026110200020076)
+#define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026110200030076)
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDramSweepControl.inc"
 
 struct Fixture {
@@ -219,7 +219,8 @@ int main(){
   if(fault==12)f.fd.context=(PioneerStoreContext*)uintptr_t(1);
   const unsigned before=ioCalls;
   assert(!f.c->Scope() && f.c->io.SourceRead(0)==UINT32_MAX && f.c->quarantined && ioCalls==before);
-  assert(f.c->io.SweepPcRead()==UINT32_MAX && f.c->io.ComputeNocRead(0x44)==UINT32_MAX && ioCalls==before);refused++;
+  assert(f.c->io.SweepPcRead()==UINT32_MAX && f.c->io.ComputeNocRead(0x44)==UINT32_MAX
+   && f.c->io.SweepEntryOverrideRead()==UINT32_MAX && ioCalls==before);refused++;
  }
  for(unsigned fault=0;fault<4;fault++){
   Fixture f;f.Map();auto& v=views.at(f.c->io.sweepArea);
@@ -250,6 +251,12 @@ int main(){
   assert(f.c->io.SweepReadChecked(0x74000,value) && value==0x1234);
   for(unsigned i=0;i<3;i++)f.c->io.DramTlbWrite(0,i,BlackholeDramFixedTlbWord(0x04600000,18,12,true,i));
   assert(!f.c->io.SweepWrite(0x74000,0xdeadbeef) && !f.c->io.SweepReadChecked(0x74000,value));valid++;}
+ {Fixture f;f.Map();
+  auto* page=(volatile uint32*)views.at(f.c->io.controlArea).address;
+  page[0x230/4]=0xbad00001;page[0x234/4]=0x12345678;page[0x238/4]=0xbad00002;
+  assert(f.c->io.SweepEntryOverrideRead()==0x12345678 && page[0x234/4]==0x12345678);
+  page[0x234/4]=1;assert(f.c->io.SweepEntryOverrideRead()==1);valid++;
+ }
  {Fixture f;f.Map();f.c->reply.sweep.phase=4;f.c->io.SweepResetWrite(0x87ffff);
   assert(f.c->resetStage==1 && *f.c->io.resetWrite==0x87ffff);
   f.c->io.SweepResetWrite(0x87ffff);assert(f.c->quarantined && f.c->resetStage==1);refused++;}

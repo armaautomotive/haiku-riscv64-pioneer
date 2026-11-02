@@ -26,7 +26,7 @@ int main(int argc,char** argv){
  tt_pioneer_dram_sweep r={};r.version=1;r.chunk_shift=14;r.sweeps=1;
  if((!support && !preflight && !run) || (run && (!Number(argv[2],r.bank)
   || !Number(argv[3],r.chunk_shift) || !Number(argv[4],r.sweeps))))return 2;
- r.expected_tag=UINT64_C(0x2026110200020076);
+ r.expected_tag=UINT64_C(0x2026110200030076);
  r.nonce=uint32_t(system_time())^(uint32_t(getpid())<<13);if(!r.nonce)r.nonce=1;
  // Shape-check before opening even a metadata FD; generation is queried below.
  r.expected_generation=1;if(!PioneerDramSweepRequest(r))return 2;
