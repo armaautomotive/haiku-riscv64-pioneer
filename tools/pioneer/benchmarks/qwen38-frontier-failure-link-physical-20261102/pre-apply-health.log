@@ -1,0 +1,45 @@
+96a030daf8136143aafa1f518b2ff3323178b5aa7b530c7d9395db5bf447e3e2  /boot/home/pioneer-p100a-frontier-failure-link-20261102-a/tenstorrent_pci_probe-FRONTIER-PREERROR-LINK-DIAGNOSTIC-ONLY
+0:1:755:2873680
+e37c189e55c63b9a358aad4732d5e9122bf6daa29375ea894315daaf754056a8  /boot/home/pioneer-p100a-frontier-failure-link-20261102-a/pioneer_q38_frontier_failure_link_exchange.sh
+0:1:644:4306
+f8efe67a51d9685a9e7e3ce57267ed2ae4967600c2802dd21f5f6ee0c24a22c9  /boot/home/pioneer-p100a-frontier-failure-link-20261102-a/pioneer-q38-FRONTIER34-FAILED-REPLY-DIAGNOSTIC-ONLY
+0:1:755:64648
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+0:1:755:1062376
+b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
+0:1:755:8560
+d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+0:1:755:7176
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133790466048 bytes free      (used/max 3244470272 / 137034936320)
+                           (cached    192819200)
+     64484 semaphores free (used/max       1052 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3901 threads free    (used/max        195 /       4096)
+      2025 teams free      (used/max         23 /       2048)
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   98 /boot/system/servers/registrar                     
+  102 /boot/system/servers/debug_server                  
+  103 /boot/system/servers/mount_server                  
+  104 /boot/system/servers/net_server                    
+  105 /boot/system/servers/package_daemon                
+  106 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  110 /boot/system/servers/power_daemon                  
+  111 /boot/system/servers/syslog_daemon                 
+  116 /boot/system/servers/launch_daemon baron           
+  133 /boot/system/servers/media_server                  
+  179 /boot/system/servers/app_server                    
+  188 /boot/system/Tracker                               
+  190 /boot/system/Deskbar                               
+  209 /boot/system/servers/input_server                  
+  234 /boot/system/servers/media_addon_server            
+  299 /boot/system/servers/notification_server           
+  560 /boot/system/bin/screen_blanker                    
+  632 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  634 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  635 /boot/system/bin/ps -o Id -o Team                  

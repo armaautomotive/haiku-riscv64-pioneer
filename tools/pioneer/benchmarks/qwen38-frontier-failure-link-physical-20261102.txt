@@ -1,0 +1,99 @@
+96a0 pre-error LINK diagnostic:PHYSICAL68757 LIVE,NOT a result
+============================================================
+2026-11-02 07:55:18UTC. Goal ACTIVE;usable27B Work and20tok/s UNMET.
+SAME68757 is independently confirmed LIVE NOW,not inferred from a lock,
+log,previous status or timeout. No completed authentication/Open/upload/
+START/record/END/TPS is observed yet. Current raw stdout has ONLY the two
+client headers and stderr0B;quiet output does NOT establish card health.
+
+PROTECT ENTIRE source-auth/Open/upload/RUN/Finish/Close parent lifetime.
+NO extra Pioneer SSH/status/admin/GPU/model/stage/reload/reset/power/OS/
+network/SD operation while alive. Observe ONLY SAME68757 and local raw
+files. Timeout is not terminal or retry/restoration permission. LostSSH255
+requires resolving actual remote process state before driver/power action.
+No quarantine or recovery authority follows from a frontend/link snapshot.
+
+Qualified subject and independent pre-admission
+-----------------------------------------------
+Checkpointb2961b331d99b27b0800ac31230f6fbf9c8b7d89 was pushed to origin
+pioneer-riscv64 and independently ls-remote verified BEFORE any rollout.
+All four genuine851/1010zero/119virgin/first-layer/cancel/STOP/HOLD/drain/
+fullEND native histories CLOSED0 and all four independent unchanged CPU
+prefix comparisons CLOSED0/bit-exact. All unit/role/CLI/frozen build/partial
+stack/exchange gates CLOSED. Scope/limits and raw qualification evidence:
+qwen38-frontier-failure-link-qualification-20261102.txt.
+Those gates do NOT prove physical success,whole-model quality or speed.
+
+Fresh prestage SSH ACTUALLY0:whole stable041 installed,exact retired5920
+stage+RESTORE-only85c8 helper/adminb0c/guardd1ce,tag12/gen2/cold0/owner0/
+quiesced0/open1/guard1,no compute parent,64CPUs/full137034936320B RAM.
+New stage absent/non-symlink. New root700 private stage created WITHOUT
+overwriting any old file. Existing f8 client copied after root-one-link/
+755/whole-hash verification. Stage-create SSH ACTUALLY0.
+
+Limited-rate1024Kbit/s SCP15846 ACTUALLY0. Separate full module+helper
+readback11015 ACTUALLY0. Both complete readback files cmp byte-for-byte
+against the frozen local subject/source. No rewritten or partial copy was
+accepted. Fresh pre-apply SSH30761 ACTUALLY0:all full hashes and safe regular
+root-one-link modes exact,stable041/gen2 idle,no compute parent,64CPUs/full
+RAM. All stage/pre-apply/readback stderr files0B.
+
+ONLY new exact helper e37c189e55c63b9a358aad4732d5e9122bf6daa29375ea894315daaf754056a8
+/boot/home/pioneer-p100a-frontier-failure-link-20261102-a/pioneer_q38_frontier_failure_link_exchange.sh
+--apply:72728 ACTUALLY0. Stable041/gen2 quiesce+close,then whole96a0/tag75/
+gen3/cold0/owner0/quiesced0/open1/guard1 verified. NO reboot or GPU job.
+Fresh independent prelaunch10898 ACTUALLY0:whole installed+staged96a0,
+helpere37c/clientf8/adminb0c/guardd1ce exact,no compute parent,64CPUs/full
+137034936320B/free133789908992B RAM. Apply/prelaunch stderr0B.
+
+Exact current module/object/client
+----------------------------------
+Installed+staged module:
+96a030daf8136143aafa1f518b2ff3323178b5aa7b530c7d9395db5bf447e3e2
+Object370722a7e54c9b76a2bff335d9ecce97528e40316aef75145d3da5770ed98400.
+Filename:tenstorrent_pci_probe-FRONTIER-PREERROR-LINK-DIAGNOSTIC-ONLY.
+Shared tag2026103100010075/gen3 is metadata,NOT independent code identity.
+All14 firmware arrays+2MiB RoPE unchanged;ROOT6066e693/worker56b470ae.
+Diagnostic ONLY,NOT Assistant Work or a claim of a shader/performance fix.
+
+Client f8efe67a51d9685a9e7e3ce57267ed2ae4967600c2802dd21f5f6ee0c24a22c9:
+ /boot/home/pioneer-p100a-frontier-failure-link-20261102-a/pioneer-q38-FRONTIER34-FAILED-REPLY-DIAGNOSTIC-ONLY
+ --diagnose-frontier-34-positions
+Single68757 launched07:52:42UTC,fixed2prompt/34position diagnostic,NO
+runtime CPU model reference. No competing Pioneer operation follows.
+Raw active files (NOT copied into a closed-results archive):
+ /private/tmp/pioneer-q38-failure-link-20261102.YfGDdc/physical-run.log
+ /private/tmp/pioneer-q38-failure-link-20261102.YfGDdc/physical-run.stderr
+Existing UART logger remains owner;never reopened/reconfigured. Prelaunch
+cursor inode15618376/offset89514709 in existing screenlog.0,not a fresh log.
+Closed staging/exchange/independent-health logs are in the sibling directory.
+Raw process-table padding is intentionally preserved. The initial blanket
+Git whitespace check reports that padding and exits2 BEFORE committing;
+authored prose receives its own strict check and all archived raw files
+are independently cmp-checked against the closed originals,not normalized.
+
+After actual termination ONLY
+-------------------------------
+Use unchanged strict f8 record decoder and pinned CPU corpus. Nonempty
+stderr remains refusal,not something to filter into successful TPS. QFL1
+reserved magic314c4651 is DIFFERENT from old QFD1. Its word4 is savedLINK,
+NOT count or fault PC;known-mask bits1marker/2error/4LINK. Error51465431 is
+our software fault publication,NOT a hardware defect or authenticity test.
+Snapshot may be stale/zero;never resample after first failure/quarantine.
+Classify a saved link against the exact authenticated6066 ELF only;do not
+blindly subtract4 or attribute aliased code exclusively to one symbol.
+
+After a clean complete exit,fresh independent idle identity/health checks
+precede ONLY newe37c --restore96a0->041. Old85c8 RESTORE ONLY helper cannot
+restore this different module;retired010c/34322/5920 APPLY remain forbidden.
+If unsafe/cold1/retained owner,NO hot restore/reset/unload/unreserve/card
+read. Use authorized controlled NEW power epoch:OFF once/wait/check
+available evidence/ON once per AGENTS,then fresh healthy identity before
+the new exact restore. No mains/SD/hardware changes are authorized.
+
+Older offboard17008/75574 were separately SAME-handle confirmed LIVE at
+07:45UTC;local logs now position0/layers62,not complete token/full-model
+acceptance. These are NOT the new physical68757 and must not be restarted.
+Last completed physical diagnostic remains about0.1597tok/s with unresolved
+numerical differences. No new speedup,quality,hardware-health or fake-card
+conclusion follows from this launch or the offline tests.
