@@ -1,3 +1,106 @@
+CLOSED physical Q4 profile: preparation dominates sampled jobs;NO speedup
+======================================================================
+2026-11-02 22:39:19UTC. SAME41158 ACTUALLY exits0,observed22:34:05UTC.
+All34 positions,119 valid held samples,drain,normal restoration and clean
+END+Close complete. Whole stdout126031B/1296lines;stderr0B. No compute
+parent remains. Exact761d --restore71847 ACTUALLY0;independent53085
+ACTUALLY0 verifies stable041/tag12/gen12/cold0/idle,64CPUs and full
+137034936320B RAM/free130775678976B. This CLOSED result supersedes EVERY
+historical LIVE/pending statement below. Goal ACTIVE;usable accepted27B
+Work and20tok/s remain UNMET. No card-authenticity/capacity certificate.
+
+Measured inference: diagnostic,not an optimization
+------------------------------------------------
+Original same-open GGUF SHA/all851 bindings authenticate BEFORE Open;
+all19399024640 allocation bytes upload,START acknowledges,all34 positions
+finish.32 post-prompt sampled tokens,committed2..34,2064 observations:
+ elapsed201999324..202002692us
+ rate0.158413730..0.158416372 tokens/sec
+About6.313seconds per sampled token. Authentication,upload,initialization,
+held readout and restoration are excluded. Bounds are observation windows,
+NOT confidence intervals or isolated latency. The previous constant-Q4
+diagnostic was0.162531789..0.162534566tok/s;this instrumented sample is
+about2.534percent LOWER. Extra sampling is present,but one sequential
+comparison does not establish the cause/statistical significance. No
+speedup or Work promotion is claimed. Runtime CPU-reference is absent.
+
+Actual current-worker inner measurements
+----------------------------------------
+Both unchanged main+clean strict readers ACTUALLY exit1. Complete unique
+envelope,all714 ordered packet rows/all119 fixed192B packets,independent
+STOP bounds,raw/detail/count consistency,coarse phase and frontier34/rate
+checks PASS. Timing states:119 INTERVALS/0missing/0invalid-clock/0malformed.
+The exit1 is the original numerical failure,not a rejected timing packet.
+Whole main+clean strict stdout matches;stderr0B. Separately both posthoc
+summaries ACTUALLY1 with whole stdout matching and stderr0B. No reference,
+expected word,tolerance,validator or exit decision is changed.
+
+ALL latest Q4 samples haveK17408. Group2 has37 workers;group3 has82.
+Descriptive per-worker job percentages (minimum / median / maximum):
+                       group2                        group3
+ FetchWait          4.0931/4.1457/4.1558          4.1713/4.2144/4.2301
+ DecodeUnpackPack  75.8825/75.9119/76.1657       75.4443/75.4754/75.7220
+ MatrixAffine     19.7413/19.9374/19.9620       20.1061/20.3065/20.3312
+Individual inclusive cycles:group2 4384736..4433986;group3 6457260..6527931.
+These are LATEST individual Q4 jobs,not every layer/job or a whole-model
+breakdown. Buckets include waits and observer overhead;setup,inter-block
+gaps and final publication are excluded. Do NOT sum parallel worker times,
+convert toGHz/GBps,call them pure tensor utilization,or forecast model TPS.
+
+This changes the next action:target Q4 operand decode/unpack/packing and
+its synchronization,not further tiny issue-count or PCIe-loading tweaks.
+FetchWait is small for THESE jobs;that does not certify aggregate DRAM
+bandwidth or rule out a bottleneck in a different job. Removing this one
+bucket alone cannot be advertised as the123x-class gain needed for20tok/s.
+Investigate a lossless VECTORIZED/microcoded block/tile preparation path,
+not the already-tested scalar expansion:tag28 was8.509percent SLOWER in
+the closed paired fixed-FFN trial onOctober22 and was not promoted. See
+qwen38-local-q4-qualification-20261021.txt. Do not repeat that unchanged
+experiment or retry quarantined raw-Dst cache22,or silently requantize
+original Q4_K weights. Native block-float conversion is a different numerical path
+and needs separate quality validation,not a relaxed original comparator.
+
+Coarse all34 profile remains inclusive,not the32-token rate interval:
+ total289914144591 cycles;Metadata4.156564percent,Recurrent59.157394percent,
+ Dense24.810605percent,HeadMatrix10.866072percent,StateCommit0.928527percent.
+Other bucket/count/cycle values and exact fractions remain in raw readers.
+There is also repeated on-card metadata preparation in the source;do not
+assume kernel-only changes remove every remaining cost.
+
+Unchanged numerical acceptance failure
+---------------------------------------
+All3 original CPU pins load. First3 greedy choices match. Maximum bits:
+ pos0 selected70253 observed413c2359 /CPU413c2358 (ONE FP32 LSB)
+ pos1 selected17    observed414621d3 /CPU414621d3
+ pos2 selected17    observed4168afd0 /CPU4168afd0
+Positions3..33 have NO external numerical control here. Valid timing and
+clean END are not whole-model quality or usable Assistant Work acceptance.
+
+Safe exact restoration and closed evidence
+------------------------------------------
+Only AFTER actual41158 terminal and complete closed-log validation:
+postterminal81948 ACTUALLY0 verifies exact5ae/gen11/cold0/idle,whole staged/
+installed/client/helper/admin/guard/backups,64CPUs/fullRAM,no compute parent.
+SAME761d --restore ONCE71847 ACTUALLY0:quiesce/close/atomic replacement,
+stable041/tag12/gen12 verified. Independent53085 ACTUALLY0 confirms exact
+whole objects/device link,stable041/gen12/cold0/quiesced0/owner0/open1/
+guard1,no compute parent,64CPUs/fullRAM/free130775678976B. All restoration
+and independent check stderr streams are0B. No reset,force-unload,retry,
+quarantine,reboot,power,SD,mains,hardware,network,Assistant,boot or kernel
+change. UART never reopened/reconfigured. All closed raw logs and actual
+check scripts are archived beside this report;no learned model/CPU trace/
+prefix or driver binary is committed.
+
+Whole raw stdout SHA653d7582435737a5f2f90f89b1b0512c141850ba850f5abf0f60440e51ef9cbf
+Strict stdout SHAd69cf894ce555704955cbe322cf35aa3496953da40915ae798ec195f96d27715
+Summary stdout SHAd0729e6482002fccc2e7ed0bc94d84a55182147fe313dae34e83ecab45f2c1c7
+Summary is posthoc DATA/statistics only,not a replacement validator. Its
+initial syntax-check attempt could not write the default macOS Python cache;
+redirecting that cache to the task-local directory closes syntax checking0.
+No parser/source/reference change was made to obtain the physical result.
+
+Historical protected launch/progress ledger (superseded by CLOSED above)
+---------------------------------------------------------------------
 Progress22:02:21UTC: SAME41158 still ACTUALLY live;model authenticated
 ===================================================================
 The full same-open original GGUF SHA and complete851 learned layout pass

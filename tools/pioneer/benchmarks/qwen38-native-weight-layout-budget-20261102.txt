@@ -1,0 +1,63 @@
+Original27B weight layout: read-only storage bounds,NOT a new backend
+==================================================================
+2026-11-02 22:06:26UTC and22:07:25UTC. While the separate protected
+physical matrix-phase parent41158 remains live,read ONLY the local model
+header through existing tenstorrent_gguf_preflight.inspect. Both actual
+metadata/arithmetic commands exit0. No Pioneer operation,new weight
+encoding,model execution or quality test is performed by this analysis.
+This is complementary investigation while awaiting measured bottlenecks;
+it does not replace the actual inference performance objective.
+
+File:generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf
+Declared full length18973870528B,header10994112B,851 tensors.
+The read is bounded to32MiB. It is NOT new full-file SHA authentication.
+
+ original format   tensors         elements      original tensor bytes
+ Q4_K                 193      18384158720                10341089280
+ Q8_0                 288       6734479360                 7155384320
+ Q6_K                  17       1774714880                 1455820800
+ F32                  353          2645504                   10582016
+All498 quantized tensors are rank2. Total26895998464 elements. Therefore
+this Q4_K_M file is NOT uniformly four-bit:6.734B elements are Q8_0.
+
+Simple storage bounds,BEFORE state,workspace,alignment or reservations
+--------------------------------------------------------------------
+Keep existing F32 tensors unchanged. Expanding ALL quantized values to:
+ 16bits/value:53797287936B
+  8bits/value:26903934976B,EXCLUDING any scale/exponent metadata.
+The existing seven3GiB arenas total22548578304B. Even the8bit values-only
+lower bound exceeds those arenas. A full16bit resident expansion cannot
+fit even the advertised28GB-class card. Do not enlarge an arena or infer
+ownership from a physical capacity specification to bypass this bound.
+
+Conditional compressed-native arithmetic,NOT executable/quality proof
+---------------------------------------------------------------------
+ASSUME32x32 tiles of576B for block-float4 and1088B for block-float8.
+Pad BOTH matrix dimensions to32. This is a conditional storage model,
+not a qualified packer,exact hardware ABI or actual reservation plan.
+Retain original F32 values. Map original Q4_K to block-float4,original
+Q6_K/Q8_0 to block-float8. The resulting mathematical storage is:
+ Q4_K-derived native tiles10341089280B
+ Q6_K-derived native tiles 1885634560B
+ Q8_0-derived native tiles 7163740160B
+ existing F32                10582016B
+ total                    19401046016B
+96 Q8_0 matrices require32-wide padding:7864320 additional elements.
+All-native-block-float8 instead needs28593125376B,also BEFORE runtime state.
+
+The mixed compressed total is not immediately ruled out by aggregate
+capacity,but aggregate arithmetic proves NEITHER per-bank fit nor safe
+reservation nor execution. It is NOT lossless reinterpretation:GGML's
+affine Q4_K coefficients/minima are not native shared-exponent values.
+Conversion changes numerical values and requires separately labelled
+quality validation;the original strict CPU/reference decisions must stay
+unchanged. No native-format loader,driver/Assistant Work selection or
+performance improvement exists at this checkpoint. Do not present these
+storage estimates as achievable bandwidth or tokens/sec.
+
+Primary format background:
+https://github.com/tenstorrent/tt-metal/blob/main/tech_reports/data_formats/data_formats.md
+Actual current arena bounds and original shape/format contracts remain in
+PioneerQwen38PackedPlan.h and PioneerQwen38Gguf.h. No such source is edited.
+Next optimization is still chosen from the actual current-worker timing
+result,not this conditional storage calculation.20tok/s remains UNMET.
