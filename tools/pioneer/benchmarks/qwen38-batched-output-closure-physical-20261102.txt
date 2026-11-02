@@ -1,0 +1,75 @@
+Corrected batched-output admission:physical diagnostic LIVE
+===========================================================
+2026-11-02 11:36UTC. Goal ACTIVE;usable correct27B Work and20tok/s UNMET.
+SAME28833 is ACTUALLY LIVE,not inferred from a lock/log/timeout. Launched
+11:03:43UTC. All19399024640 learned allocation bytes have uploaded,after
+the SAME-open original full GGUF SHA and complete851 learned layout.
+NO START acknowledgement,token record,clean END or new rate is returned
+yet. Stderr0B is NOT proof of hardware health or future completion.
+
+PROTECT ENTIRE authentication/Open/upload/RUN/Finish/Close parent lifetime.
+NO additional Pioneer SSH/status/admin/GPU/model/stage/reload/reset/power/
+OS/network/SD operation while alive. Observe ONLY SAME28833 and local raw
+files. Timeout is NOT terminal or permission to recover/retry. LostSSH255
+requires resolving the actual remote process before any driver/power action.
+No extra hardware-status call is needed to interpret already returned data.
+
+Actual pre-admission and stage
+-------------------------------
+Source checkpoint3ab44c5d7c0db81f111f2bd716748975a45cd8b2 was committed,
+pushed to authorized origin/pioneer-riscv64 and independently ls-remote
+verified BEFORE rollout. Its four original firstlayer/cancel/STOP/HOLD/full
+END histories and unchanged strict CPU comparisons all closed0. These
+checks do NOT exercise the changed cross-token branch or prove model speed.
+
+Fresh prestage read-only SSH ACTUALLY0:installedstable041/adminb0c/guardd1ce/
+retired restore-only7db4/oldF8client whole hashes exact;stabletag12/gen2/
+cold0/quiesced0/owner0/open1/guard1,no compute parent,64CPUs/full137034936320B
+RAM,new stage absent. Exact root-one-link755 F8 source is verified before
+copying into a NEW root700 non-symlink stage,without overwriting old files:
+ /boot/home/pioneer-p100a-batched-output-closure-20261102-a
+Stage creation ACTUALLY0;the copied client is NOT executed at that step.
+
+Limited1024Kbit/s SCP57288 ACTUALLY0. Separate WHOLE module+helper readback
+57548 ACTUALLY0;complete local cmp is exact for BOTH files. Main module:
+ 7c85898c5591115521e5f38c9ee546da7909a1da82b9a025046c5f8c81d1b623
+New exact041<->7c85 helper:
+ 0d8dc2eb62439daefd9acadd9a2addbc21cec36e4ccc713902025001b9a246db
+Copied unchanged F8 no-runtime-CPU-reference fixed34 diagnostic client:
+ f8efe67a51d9685a9e7e3ce57267ed2ae4967600c2802dd21f5f6ee0c24a22c9
+The retired96a0 helper remains RESTORE ONLY7db4;no old APPLY is reactivated.
+
+Guarded apply and independently observed new epoch
+--------------------------------------------------
+Fresh preapply whole identities/stage permissions/absent incoming+backup+
+lock and exact stablegen2 metadata pass. ONLY the new0d8 helper --apply
+executes. SAME45475 ACTUALLY0:quiesce stable041,close/reload exact7c85,
+tag2026103100010075/gen3/cold0/idle;NO reboot or GPU execution at exchange.
+Independent prelaunch SSH ACTUALLY0 verifies whole installed7c85/candidate/
+helper/client/stablebackup/admin/guard,device symlink,absent incoming+lock,
+gen3/cold0/quiesced0/owner0/open1/guard1,no compute parent,64CPUs/fullRAM.
+All closed pre-admission/apply/prelaunch stderr files are0B.
+
+Exactly ONE exec of the copied F8 client with
+ --diagnose-frontier-34-positions
+starts the protected physical parent. It is NOT Assistant Work. Actual
+ROOTc176/package1e84 is separate from the subsequently emitted wide-delta
+standalone image. The running driver does NOT include that numerical fix.
+
+Raw local evidence and next terminal handling
+----------------------------------------------
+ /private/tmp/pioneer-q38-output-closure-physical-20261102.np8u81/physical.log
+ /private/tmp/pioneer-q38-output-closure-physical-20261102.np8u81/physical.stderr
+Existing UART logger is NOT reopened/reconfigured. Prelaunch local cursor:
+inode15618376,size90174423. Closed pre-admission scripts/logs are in the
+sibling archive;the changing physical streams are NOT falsely archived as
+completed. No physical result is inferred from source/build/emulator tests.
+
+After actual terminal ONLY:unchanged strict F8 decoder loads ALL3 CPU pins
+and requires empty stderr+exact full34 grammar and original first3 numerics.
+Nonempty failed packets MUST refuse,not be filtered into throughput. A clean
+completed history needs fresh exact idle identities before ONLY0d8 --restore
+7c85->041. Unsafe/quarantined result forbids extra card IO/hotrestore/reset/
+unreserve;use authorized OFF ONCE while known-on,wait/check available power
+evidence,then ON ONCE,new Linux+SD-freeHaiku epoch and exact guarded restore.
+No mains,SD or hardware change is authorized by this experiment.
