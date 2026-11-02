@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-dram-native-clean-20261102-e.Ps157C/tools/pioneer/build_qwen38_frontier_failure_detail_native.py", line 26, in <module>
+    private=command('qwen38-twin-batch-private-native-20261101/build-main/compile-argv.txt')
+  File "/private/tmp/pioneer-dram-native-clean-20261102-e.Ps157C/tools/pioneer/build_qwen38_frontier_failure_detail_native.py", line 15, in command
+    values=(here/'benchmarks'/relative).read_text().splitlines()
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/pathlib.py", line 1256, in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors) as f:
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/pathlib.py", line 1242, in open
+    return io.open(self, mode, buffering, encoding, errors, newline,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/pathlib.py", line 1110, in _opener
+    return self._accessor.open(self, flags, mode)
+FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/pioneer-dram-native-clean-20261102-e.Ps157C/tools/pioneer/benchmarks/qwen38-twin-batch-private-native-20261101/build-main/compile-argv.txt'

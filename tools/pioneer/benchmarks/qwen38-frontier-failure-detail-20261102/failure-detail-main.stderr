@@ -1,0 +1,13 @@
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_frontier_failure_detail_test.cpp:54:40: error: missing field 'calls' initializer [-Werror,-Wmissing-field-initializers]
+   54 |  Original old;Detailed detail;IO a{&old},b{&detail};
+      |                                        ^
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_frontier_failure_detail_test.cpp:54:51: error: missing field 'calls' initializer [-Werror,-Wmissing-field-initializers]
+   54 |  Original old;Detailed detail;IO a{&old},b{&detail};
+      |                                                   ^
+2 errors generated.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_frontier_failure_detail_tests.py", line 28, in <module>
+    subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['c++', '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '-I/private/tmp/pioneer-q38-frontier-failure-detail-ldr1d0gj', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_frontier_failure_detail_test.cpp', '-o', '/private/tmp/pioneer-q38-frontier-failure-detail-ldr1d0gj/test']' returned non-zero exit status 1.

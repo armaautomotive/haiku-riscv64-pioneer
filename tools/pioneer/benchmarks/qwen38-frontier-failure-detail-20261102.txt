@@ -1,0 +1,159 @@
+Private first-failure detail:unit/role/native BUILD CLOSED;NOT installed
+=======================================================================
+2026-11-02. Goal ACTIVE;usable correct27B Work and20tok/s remain UNMET.
+No new inference rate exists. Last completed model diagnostic remains
+about0.1597tok/s with unresolved numerical differences. This checkpoint
+does NOT fix those differences or the retired batched-driver failure.
+Pioneer is stable041/gen14,healthy idle64CPUs/fullRAM. There is NO protected
+physical run. New22a8 is PRIVATE NODRV,not a loadable driver or Work mode.
+
+Actual production change,not another memory-only benchmark
+----------------------------------------------------------
+Opt-in PIONEER_Q38_TOKEN_FRONTIER_FAILURE_DETAIL_NATIVE selects the actual
+native owner's frontier observer with cached first-failure DATA. It keeps
+the original ordered Sources/marker/error/count/Sources/boot-seal/range
+checks,return decisions and existing quarantine/retention path. There is
+NO extra card read,NoC command,retry,cleanup,reset,HOLD,END or disposal
+authority. The old observer body remains the unchanged default branch.
+
+Only on failure,the six otherwise-zero private result words carry:
+ detail10 0x31444651 (QFD1);detail11 first failed check;
+ detail12 marker;detail13 device error;detail14 committed count;
+ detail15 known mask:1 marker read succeeded,2 error read succeeded,
+ 4 count read succeeded. Values without a corresponding bit are ZERO,
+ even if a failed read wrote an uncertain partial value to its output.
+
+ check  meaning (first failure,not an underlying hardware fault cause)
+  1     initial Sources guard
+  2     marker read failed
+  3     marker differs from token magic
+  4     device-error read failed
+  5     nonzero device-error value
+  6     committed-count read failed
+  7     second Sources guard
+  8     immutable ROOT boot seal
+  9     count regressed
+ 10     count exceeds trusted session limit
+ 11     count differs from independently observed terminal receipt
+
+Success remains byte-exact to the old result,including all reserved zeros.
+The existing public v1 ReplyShape deliberately REJECTS failure-detail
+packets with nonzero reserved words. Its grammar is NOT relaxed. The
+already-existing f8 raw failure logger still copies/prints ALL32 caller-
+owned packet words despite consistent_shape0;it does not accept those
+bytes as success,provenance,root cause,a token or a cleanup receipt.
+
+New selector requires the exact PRIVATE renamed-ABI twin context AND
+the complete program-family role,including all old native/DATA parents.
+Missing/zero/two/late/tag/ABI/foreign/public/USER/shader/CPU/Work aliases
+must be refused. There is no conventional driver ABI or public binding.
+Neither the new object nor retired010c is authorized for installation.
+
+Closed actual-method and native-build evidence
+-----------------------------------------------
+Final main94708 and independent-clean38036 ACTUALLY exit0. Whole logs
+compare exactly. Each first runs the unchanged old observer suite:
+8198 DATA positives,26 pre-IO refusals,13 failures. The new paired suite
+executes BOTH actual extracted production observer+Fail bodies:8198
+byte-exact successful observations,22 first-failure/precedence cases,
+26 pre-IO refusals. Every ordered MOCK IO trace and original decision is
+identical;retention happens once with no following IO. ALL11 diagnostic
+checks,partial-read masking and terminal/range precedence are covered.
+Every failure packet passes through the ACTUAL extracted unchanged raw
+formatter,round-tripping all32 words without caller mutation. This is
+MOCK scope/source/boot/quarantine authority,NOT a genuine model lifetime.
+
+Independent final main15438/clean29177 native builds ACTUALLY exit0.
+New private whole object:
+ 22a862c26595460dcd2c5e720bbe24079d2cb3a2b371e25d11337602dbbff5c3
+The build FIRST reproduces entire old privatefeaa9a9f and retired public
+a0f0b93b objects byte-exactly. It compares ALL14 embedded firmware arrays,
+the complete2MiB RoPE and all10 renamed inert/null/refusal ABI bodies and
+wrappers to the old private control. Conventional ABI and CPU-reference,
+HOST instruction engines and Work symbols are absent. Individual static
+frames are<=2048 or no larger than their qualified predecessor. Observer
+208B and its failure lambda80B are NOT a whole kernel/IRQ/indirect-stack
+qualification. Main/clean inspect/frozen/final objects are distinct build
+histories;only actual closed results above are treated as complete.
+
+Final role main44504/independent-clean69832 BOTH ACTUALLY exit0;complete
+logs compare exactly. Every unchanged twin/batched/prefetch/native ancestor
+runs FIRST,then3 new syntax positives/470 missing,zero,two,late,tag,ABI,
+public,USER,shader,CPU+Work refusals. These are syntax boundaries,NOT a
+native lifecycle,model or hardware-execution proof. No partial ancestor
+PASS line or observation timeout was treated as completion.
+
+Failures preserved,not changed into passes
+-------------------------------------------
+Initial new unit78286 ACTUALLY failed compilation:the test IO aggregate
+omitted its vector initializer under-Werror. An explicit constructor fixed
+the harness;no expectation was weakened. First clean runs failed because
+the earlier DRAM-only mirror lacked the Qwen dependencies. A fresh complete
+git-archive export of HEAD plus ONLY these changes was used instead.
+Initial role main27239/clean52626 ACTUALLY failed:the new selector checked
+the native context discriminator but not every DATA parent. The selector
+was strengthened with the actual complete program-family role. Failed
+logs remain failures;the original missing-parent test remains unchanged.
+The next role runs86402/39639 failed in the harness after those parent
+cases:a nested runpy namespace lookup used the wrong ancestor for ABI/tag
+lists. That lookup was corrected;no case or expected refusal was removed.
+Final complete runs44504/69832 above closed only after that correction.
+
+Aborted duplicate rollout:mistake,NOT a new model result
+-------------------------------------------------------
+Before this change,I relied on the earlier BUILD-only report and missed
+the later physical retirement of EXACT010c in e8b897f60f. This was an
+incorrect duplicate rollout,not a justified new optimization experiment.
+Fresh original state was041/gen12,healthy idle64CPUs/full137034936320B.
+A redundant exact-hash exchange helper75a3a6af was authored/tested and
+staged with010c/f8 under a NEW private non-overwriting directory:
+ /boot/home/pioneer-p100a-q38-twin-prefetch-20261102-a
+Whole SCP-O copy-back bytes and all pins verified. Apply96888 exited0:
+old041 quiesced/closed,new010c/gen13 loaded;NO GPU job in that exchange.
+Independent prelaunch health was clean and all whole identities exact.
+
+Duplicate run60585 started04:32:53UTC,then only printed its two initial
+banners while the original-file SHA child was running. Upon discovering
+the retirement record,I stopped the duplicate. The first process-name
+match was too long for Haiku's truncated Team field and refused without
+sending a signal. A fresh actual inventory identified exact client1547
+and its authentication sha256sum1548. Each received TERM once. The actual
+60585 SSH observer exited255;that alone was NOT taken as remote closure.
+The remote inventory independently showed both processes absent. The
+complete model log never reached accelerator Open,upload or START.
+Fresh metadata independently established cold0/active_owner0,gen13.
+No model inference,token,clean END,quality or TPS result is claimed.
+
+Only after that verified idle state,guarded RESTORE79572 ACTUALLY exited0:
+010c/gen13 quiesced/closed,stable041/tag2026102100010012/gen14 verified.
+Independent fresh post-restore health ACTUALLY0:whole041/adminb0c/guardd1ce
+exact,cold0/quiesced0/owner0/open1/guard1,64CPUs/max137034936320B/free
+133776068608B,no compute parent. No power pulse,reboot,SD,mains,hardware,
+Assistant,network or boot-profile change was needed. Both new redundant
+untracked rollout source/test files were removed;the ORIGINAL retired
+010c/34322 APPLY guards remain intact. Frozen duplicate helper bytes are
+archived as RETIRED-duplicate-exchange-source.txt for audit ONLY. After
+restoration,the EXACT newly staged75a3 helper was recoverably renamed to
+that same retired.txt basename on the Pioneer;its former apply-script path
+no longer exists. Rename actually exits0 and verifies whole75a3 plus
+stable041/gen14/cold0/owner0. DO NOT execute that retired audit source.
+
+The older BUILD/native reports now prominently point to the retirement
+record. Their historical offboard PASS results never override a later
+physical failure or authorize repeating a retired subject.
+
+Next required work
+-------------------
+Preserve all source/program/owner safeguards. Qualify this exact PRIVATE
+diagnostic through the genuine native
+owner/lifecycle with the original model. A future public diagnostic needs
+its OWN explicit binding,whole compiled identity and rollout safeguards;
+do NOT install a NODRV object or reuse010c's retired apply route. The
+purpose is to distinguish the actual early failure before attempting the
+queued model-memory integration,not to substitute microbench rates for
+inference. Whole-model numerical acceptance,fast resident fresh requests,
+arbitrary prompts,usable Assistant Work and20tok/s remain unfinished.
+
+Unrelated llama.cpp/status/FlashNext/WIP worktree changes were preserved.
+Raw histories are in the sibling directory;retain whitespace/CRs. No raw
+partial test output or missing observation was treated as a completed run.

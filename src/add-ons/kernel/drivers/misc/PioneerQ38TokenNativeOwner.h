@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38TokenHiddenReadRole.h"
+#include "PioneerQ38TokenFrontierFailureDetailRole.h"
 #ifndef PIONEER_Q38_TOKEN_NATIVE_OWNER_H
 #define PIONEER_Q38_TOKEN_NATIVE_OWNER_H
 #include "PioneerQ38TokenMemory.h"
@@ -664,6 +665,38 @@ public:
    || holding || held || !ExecutionStarted() || !Scope(io))return false;
   r.started=1;r.phase=12;
   namespace C=PioneerQ38GlobalChainLayout;namespace T=PioneerQ38TokenLayout;
+#ifdef PIONEER_Q38_TOKEN_FRONTIER_FAILURE_DETAIL_NATIVE
+  // Private,explicitly selected diagnostic ONLY. Same original ordered IO
+  // and fail/retain decision. Never read anything after a failed check.
+  // Nonzero reserved words exist ONLY on failure:the old v1 ReplyShape
+  // must reject them. The existing raw failed-reply logger can retain all
+  // 128 caller-owned bytes,NOT accept them as a successful observation.
+  uint32_t marker=0,error=0,count=0,known=0;
+  auto failed=[&](unsigned check){
+   r.reserved[0]=0x31444651; // QFD1,diagnostic DATA not a lifecycle receipt
+   r.reserved[1]=check;
+   r.reserved[2]=(known&1)?marker:0;
+   r.reserved[3]=(known&2)?error:0;
+   r.reserved[4]=(known&4)?count:0;
+   r.reserved[5]=known;
+   return Fail(io,r);
+  };
+  if(!Sources(io,0))return failed(1);
+  if(!io.TokenMemoryReadChecked(0,C::R::Status+12,marker))return failed(2);
+  known|=1;
+  if(marker!=T::Magic)return failed(3);
+  if(!io.TokenMemoryReadChecked(0,C::R::Status+8,error))return failed(4);
+  known|=2;
+  if(error)return failed(5);
+  r.word=3;
+  if(!io.TokenMemoryReadChecked(0,PioneerQ38TokenPrograms::FrontierAddress,count))return failed(6);
+  known|=4;
+  if(!Sources(io,0))return failed(7);
+  if(!RootBootSeal(io,r.word))return failed(8);
+  if(count<frontierLast)return failed(9);
+  if(count>frontierLimit)return failed(10);
+  if(terminalObserved && count!=observedTerminal[3])return failed(11);
+#else
   if(!Sources(io,0))return Fail(io,r);
   uint32_t marker=0,error=0,count=0;
   if(!io.TokenMemoryReadChecked(0,C::R::Status+12,marker) || marker!=T::Magic
@@ -672,6 +705,7 @@ public:
   if(!io.TokenMemoryReadChecked(0,PioneerQ38TokenPrograms::FrontierAddress,count)
    || !Sources(io,0) || !RootBootSeal(io,r.word)
    || count<frontierLast || count>frontierLimit || (terminalObserved && count!=observedTerminal[3]))return Fail(io,r);
+#endif
   frontierLast=count;r.committed=count;r.limit=frontierLimit;r.prompts=frontierPrompts;r.ready=1;return true;
  } // read-only DATA;does NOT set terminalObserved,HOLD,END,readout or disposal state
 #endif

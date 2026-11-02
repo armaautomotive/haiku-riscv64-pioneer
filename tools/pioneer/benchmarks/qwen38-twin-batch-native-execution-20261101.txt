@@ -1,5 +1,11 @@
 Twin-batch native execution path:ENTRY gates CLOSED,full END still LIVE
 ====================================================================
+CURRENT STATUS correction2026-11-02:full native END closed as recorded
+below,but the resulting public010c was later physically tested,FAILED
+and RETIRED. See qwen38-twin-failure-recovery-20261101.txt and
+qwen38-frontier-failure-detail-20261102.txt. Do NOT treat this older
+offboard qualification or its historical next-step text as apply authority.
+
 Native full-END+strict-prefix closure2026-11-01 21:36UTC
 -------------------------------------------------------
 Separately bound public diagnostic BUILD010c is now qualified OFFBOARD;

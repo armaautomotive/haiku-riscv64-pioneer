@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-detail-clean-20261102.zvWaDb/tools/pioneer/tests/run_pioneer_q38_frontier_failure_detail_roles.py", line 44, in <module>
+    for key in old['old']['abi']:
+KeyError: 'abi'

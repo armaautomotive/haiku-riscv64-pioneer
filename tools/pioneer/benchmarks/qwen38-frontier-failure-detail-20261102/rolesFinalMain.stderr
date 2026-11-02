@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_frontier_failure_detail_roles.py", line 44, in <module>
+    for key in old['old']['abi']:
+KeyError: 'abi'

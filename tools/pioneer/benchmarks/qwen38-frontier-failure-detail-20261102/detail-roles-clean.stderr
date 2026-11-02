@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-dram-native-clean-20261102-e.Ps157C/tools/pioneer/tests/run_pioneer_q38_frontier_failure_detail_roles.py", line 14, in <module>
+    old=runpy.run_path(sys.argv[0],run_name='__main__')
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/runpy.py", line 267, in run_path
+    code, fname = _get_code_from_file(run_name, path_name)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/runpy.py", line 237, in _get_code_from_file
+    with io.open_code(decoded_path) as f:
+FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/pioneer-dram-native-clean-20261102-e.Ps157C/tools/pioneer/tests/run_pioneer_q38_twin_batch_prefetch_native_roles.py'

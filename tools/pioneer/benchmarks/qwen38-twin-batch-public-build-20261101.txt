@@ -1,5 +1,12 @@
-Copy-free twin-batch bounded diagnostic BUILD:CLOSED,NOT installed
+Copy-free twin-batch BUILD:CLOSED;physical010c FAILED and is RETIRED
 ================================================================
+CURRENT STATUS correction2026-11-02:the historical BUILD ledger below is
+NOT the latest rollout status. Whole010c was physically tested and failed
+after START_ACK on2026-11-01. Its APPLY route is hard-disabled. Read
+qwen38-twin-failure-recovery-20261101.txt and the newer
+qwen38-frontier-failure-detail-20261102.txt BEFORE any proposed rollout.
+Native/offboard qualification does NOT override that physical retirement.
+
 2026-11-01. Goal ACTIVE;20tok/s UNMET. No new physical rate or usable27B
 Assistant Work result exists. New public BUILD follows,not substitutes
 for,the actual original-model first-layer/native full-END qualification
