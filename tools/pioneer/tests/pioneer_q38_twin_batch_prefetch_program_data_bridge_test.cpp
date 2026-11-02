@@ -1,13 +1,24 @@
 /* SPDX-License-Identifier: MIT */
 // Immutable expected-ROM DATA only. No ISA engine,device or model products.
+#ifdef PIONEER_Q38_PROGRAM_DATA_BRIDGE_TEST_OUTPUT_CLOSURE
+#define PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_PROGRAMS 1
+#include "../PioneerQ38TokenBatchedOutputClosurePrograms.h"
+#else
 #define PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_PROGRAMS 1
 #include "../PioneerQ38TokenTwinBatchPrefetchPrograms.h"
+#endif
 #include "pioneer_q38_precise_beta_program_data_bridge.h"
 #include <cassert>
 #include <cstdio>
 #include <initializer_list>
 int main(){
- namespace P=PioneerQ38TokenTwinBatchPrefetchPrograms;unsigned checked=0,refused=0;
+#ifdef PIONEER_Q38_PROGRAM_DATA_BRIDGE_TEST_OUTPUT_CLOSURE
+ namespace P=PioneerQ38TokenBatchedOutputClosurePrograms;
+ static_assert(P::BatchedOutputClosure==1 && P::GlobalOutputReadsPerGroup==10,"corrected package ROM DATA");
+#else
+ namespace P=PioneerQ38TokenTwinBatchPrefetchPrograms;
+#endif
+ unsigned checked=0,refused=0;
  for(unsigned worker=1;worker<120;worker++){
   for(unsigned span=0;span<P::CodeSpans(worker);span++){
    const auto range=P::CodeSpan(worker,span);

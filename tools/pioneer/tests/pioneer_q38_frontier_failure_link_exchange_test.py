@@ -12,14 +12,20 @@ import tempfile
 import sys
 
 here=pathlib.Path(__file__).resolve().parent
-assert sys.argv[1:] in ([],['--qualified-original-endpoints']) and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
-subprocess.run([sys.executable,str(here/'pioneer_q38_frontier_failure_detail_exchange_test.py')],check=True)
+assert sys.argv[1:] in ([],['--qualified-original-endpoints'],['--batched-output-closure-endpoints']) and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
+output_closure=sys.argv[1:]==['--batched-output-closure-endpoints']
+if output_closure:
+    subprocess.run([sys.executable,str(pathlib.Path(__file__).resolve())],check=True)
+else:
+    subprocess.run([sys.executable,str(here/'pioneer_q38_frontier_failure_detail_exchange_test.py')],check=True)
 production=(here.parent/'pioneer_q38_frontier_failure_link_exchange.sh').read_text()
 original=(here/'fixtures/pioneer_q38_frontier_failure_link_exchange_qualified_INERT.txt').read_bytes()
 assert hashlib.sha256(original).hexdigest()=='e37c189e55c63b9a358aad4732d5e9122bf6daa29375ea894315daaf754056a8'
 retired=not sys.argv[1:]
 if retired:
     subprocess.run([sys.executable,str(pathlib.Path(__file__).resolve()),'--qualified-original-endpoints'],check=True)
+elif output_closure:
+    production=(here.parent/'pioneer_q38_batched_output_closure_exchange.sh').read_text()
 else:
     production=original.decode()
 root=pathlib.Path(tempfile.mkdtemp(prefix='pioneer-frontier-detail-exchange-endpoints-'))
@@ -29,6 +35,8 @@ pins={
  'candidate':'96a030daf8136143aafa1f518b2ff3323178b5aa7b530c7d9395db5bf447e3e2',
  'guard':'d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229',
  'admin':'b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f'}
+if output_closure:pins['candidate']='7c85898c5591115521e5f38c9ee546da7909a1da82b9a025046c5f8c81d1b623'
+candidate_name='tenstorrent_pci_probe-BATCHED-OUTPUT-CLOSURE34-DIAGNOSTIC-ONLY' if output_closure else 'tenstorrent_pci_probe-FRONTIER-PREERROR-LINK-DIAGNOSTIC-ONLY'
 admin_source='''#!/usr/bin/env python3
 import os,pathlib,sys
 p=pathlib.Path(os.environ['FIXTURE_ROOT']);fault=os.environ['FIXTURE_FAULT'];args=sys.argv[1:]
@@ -75,6 +83,8 @@ cases += [(name,'--apply') for name in ('stable','candidate','guard','admin','in
  'private22a_candidate','private22a_installed',
  'retired5920_candidate','retired5920_installed','private3593_candidate','private3593_installed')]
 cases += [('field'+str(i),'--apply') for i in range(9)]
+if output_closure:
+    cases += [(fault,'--apply') for fault in ('retired96a0_candidate','retired96a0_installed')]
 cases += [(fault,'--restore') for fault,mode in cases if fault!='none']
 passed=0
 for index,(fault,mode) in enumerate(cases):
@@ -83,11 +93,11 @@ for index,(fault,mode) in enumerate(cases):
     paths={'stage':stage,'installed':directory/'bin/tenstorrent_pci_probe',
            'device':directory/'dev/misc/tenstorrent_pci_probe','guard':directory/'guard',
            'admin':old/'admin','stable':old/'stable'}
-    data={'stable':b'synthetic-stable041','candidate':b'synthetic-link96a0','guard':b'synthetic-guard',
+    data={'stable':b'synthetic-stable041','candidate':b'synthetic-corrected7c85' if output_closure else b'synthetic-link96a0','guard':b'synthetic-guard',
           'admin':admin_source.encode()}
     for key in ('stable','guard','admin'):
         paths[key].write_bytes(data[key]);paths[key].chmod(0o755)
-    candidate=stage/'tenstorrent_pci_probe-FRONTIER-PREERROR-LINK-DIAGNOSTIC-ONLY';candidate.write_bytes(data['candidate']);candidate.chmod(0o755)
+    candidate=stage/candidate_name;candidate.write_bytes(data['candidate']);candidate.chmod(0o755)
     original=data['stable' if mode=='--apply' else 'candidate']
     paths['installed'].write_bytes(original);paths['installed'].chmod(0o755)
     paths['device'].symlink_to('../../bin/tenstorrent_pci_probe')
@@ -103,7 +113,7 @@ for index,(fault,mode) in enumerate(cases):
         file=stub/name;file.write_text(stub_source);file.chmod(0o755)
     if fault in ('stable','guard','admin','installed'):paths[fault].write_bytes(b'corrupted')
     if fault=='candidate':candidate.write_bytes(b'corrupted')
-    if fault.startswith(('retired010c_','retired34322_','private22a_','retired5920_','private3593_')):
+    if fault.startswith(('retired010c_','retired34322_','private22a_','retired5920_','private3593_','retired96a0_')):
         target=candidate if fault.endswith('_candidate') else paths['installed']
         target.write_bytes(('synthetic-'+fault.split('_')[0]).encode())
     if fault=='stage_mode':stage.chmod(0o777)
@@ -141,6 +151,8 @@ for index,(fault,mode) in enumerate(cases):
         elif fault=='changed_during_quiesce':assert paths['installed'].read_bytes()==b'changed' and len(calls)==2
         else:assert paths['installed'].read_bytes()==installed_before
         if fault not in ('wait','quiesce','changed_during_quiesce'):assert len(calls)<=1,(fault,calls)
-print('exact NEW96a0 exchange script endpoint fixtures:',passed,'valid /',len(cases)-passed,'refused; NO actual install/reset/GPU')
+        if fault.startswith('retired96a0_'):
+            assert not calls and not (stage/'stable041.backup').exists() and not (stage/'driver.incoming').exists()
+print('exact '+('NEW7c85 corrected-output' if output_closure else 'NEW96a0')+' exchange script endpoint fixtures:',passed,'valid /',len(cases)-passed,'refused; NO actual install/reset/GPU')
 if retired:print('RETIRED96a0 APPLY stops before platform/admin/copy/lock;entire original2way endpoints FIRST;guarded RESTORE unchanged')
 print('raw fixture histories retained at',root)

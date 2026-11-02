@@ -2,7 +2,16 @@
 // Actual native factory/lock/phase callbacks/initializers and actual frozen
 // zero RV32 instructions. OS/MMIO/GDDR endpoints are simulated. No synthetic
 // completion fabric,no old embedding/prefix producer and no completed token.
+#if defined(PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_PROGRAMS) && !defined(PIONEER_Q38_TOKEN_NATIVE_BATCHED_OUTPUT_CLOSURE_FIXTURE)
+#error Corrected output package requires its own complete native TEST binding
+#endif
 #include "pioneer_q38_token_native_fixture_common.h"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_BATCHED_OUTPUT_CLOSURE_FIXTURE
+#include "pioneer_q38_token_native_batched_output_closure_role.h"
+static_assert(PioneerQ38TokenBatchedOutputClosureDataSelection==2
+ && PioneerQ38TokenPrograms::BatchedOutputClosure==1 && PioneerQ38TokenPrograms::GlobalOutputReadsPerGroup==10,
+ "actual corrected ROOT package selected in this native history");
+#endif
 #if defined(PIONEER_Q38_TOKEN_FRONTIER_FAILURE_LINK_NATIVE) && !defined(PIONEER_Q38_TOKEN_NATIVE_FRONTIER_FAILURE_LINK_FIXTURE)
 #error Failure-link observer requires its separate complete native TEST binding
 #endif

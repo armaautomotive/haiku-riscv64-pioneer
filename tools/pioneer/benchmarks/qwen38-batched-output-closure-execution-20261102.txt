@@ -1,0 +1,147 @@
+Corrected ROOT native first-layer/full-END qualification CLOSED
+===============================================================
+2026-11-02. Goal ACTIVE. Usable correct27B Work and20tok/s remain UNMET.
+These are OFFBOARD HOST instruction-emulation/native-callback tests with
+simulated OS/VM/NoC/GDDR endpoints,NOT physical P100A inference or a rate.
+No driver/image installation,GPU launch,power,SD or hardware change occurs.
+Two scoped read-only Pioneer metadata calls are separately recorded below.
+
+Closed actual histories,not output-file or timeout inference
+------------------------------------------------------------
+New c176 ROOT14309/main and89362/clean ACTUALLY exit0,observed10:43:56UTC.
+Unchanged6066 QFL1 controls30051/main and41740/clean ACTUALLY exit0,observed
+10:44:56UTC. No history is restarted,abbreviated,retargeted or transplanted.
+Full argv lists are archived;each process starts with original same-open
+GGUF authentication BEFORE native fixture construction. All851 learned
+tensors,1010 actual frozen zero jobs,120 journal histories,119 VIRGIN full
+RV32+Tensix worker engines and ROOT instructions share the native-staged
+raw bytes/CSR/L1 backing. No CPU product is supplied as a guest result.
+
+ALL FOUR complete original embedding+layer0 Matrix/Conv/GDN/FFN arithmetic,
+posted cancellation,ROOT+119 actual STOP loops,120 actual HOLDs,zero-record
+drain,held hidden readout and original full END. Restoration includes token
+and earlier dispatch L1,119 peer NIU/scratch,ROOT-local and shared originals,
+normal clock,hardware seal,29 OS views,actual PCI BEGIN journal/exact ordered
+original writes/final decoder-off checks,3 OS host releases,device unreserve,
+whole-context destruction and scope unlock. Fault/alias/wrong-phase negative
+checks remain in the SAME histories. No cleanup or ready state is fabricated.
+
+New and old first-matrix histories both observe ROOT26618739/peers172524288
+HOST instructions,3840 real tensor matrix operations and48 original rows.
+ROOT reserved/accessed stack5760/5748,maximum peer3552/3540 out of8192 bytes
+EACH in this TEST. These are not timing or whole-kernel/IRQ stack measures.
+The earlier module callgraph remains PARTIAL5392B/unresolved25,not whole
+kernel stack certification. No speedup follows from HOST instruction counts.
+
+Strict independent original-model numeric comparisons
+------------------------------------------------------
+Both new and both unchanged control prefixes are41028B,byte-identical SHA
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7.
+The unchanged compare_pioneer_q38_observed_trace.py loads ALL3 original
+CPU trace pins and runs --first-layer-only independently in main/clean for
+ALL FOUR actual outputs. All ACTUALLY exit0:both5120-word embedding and
+5120-word layer0 hidden outputs bit-exact,maxAbs0,relativeL2zero. No expected
+word,tolerance,trace or verifier is changed;no --diagnostic-only override.
+Comparisons/copying occur ONLY after actual respective native parent exit0.
+Raw prefixes remain task-local;they are not published as model-weight data.
+
+What this executes,and what it DOES NOT
+---------------------------------------
+This implements an explicit --batched-output-closure native TEST selection,
+bound to c17658fd62d837c13068759e65b164a1eeffe4abc44c536187882215e917f349,
+new program package1e844aca55fd4920a278fcd702a64b324fe13ea2c29e52d4cd75841e42f06891,
+and unchanged twin worker56b470ae508655a070f17294c0a0fe242335214faed7101abaa05fb385ce6e38.
+It requires the entire existing QFL1/twin original first-layer/cancel/END
+predecessor,its own TEST marker and a distinct immutable peer-ROM DATA TU.
+The TEST cannot silently borrow an old package,shortened/compile-only/full-
+flow/profile/control/public/CPU-reference/Work alias. ROOT metadata comes
+from a same-snapshot authenticated whole ELF,not a guessed function range.
+
+The actual corrected program is staged/executed in the HOST native history,
+but the one changed final-output admission instruction is reached AFTER
+full vocabulary output and before a subsequent token. A cancelled first
+layer does NOT exercise that branch. Full64/multi-token/state/normal+EOS,
+retained actual final-output receipts in emitted ROOT admission,arbitrary
+prompts,resident fresh requests,physical numerics and useful Assistant Work
+remain unqualified. Known later-score differences and about0.1597tok/s from
+the last physical diagnostic are not resolved by this first-layer result.
+
+Closed syntax,CLI and immutable-ROM gates
+------------------------------------------
+Corrected main role30476 ACTUALLY0;clean6104 ACTUALLY0 including role+CLI.
+Each role suite FIRST runs all unchanged QFL1 TEST/production ancestors,
+then3 positives/564 missing,zero,two,late,ABI,old-array,opposite-native,
+HOST,USER,CPU+Work refusals. CLI99226/main and clean6104 ACTUALLY0:each ALL
+unchanged QFL1+ancestor controls FIRST,then36 own incompatible-history cases
+refused BEFORE source/compiler/output creation. The independent HOST ROM
+bridge tests ALL119 peers/3,045,448 code words,723 worker/alignment/gap/
+runtime-buffer refusals and20 role-isolation refusals. Bridge exports only
+opaque const-ROM reads,never a processor,CPU model product or native owner.
+Paired final role/CLI complete stdout logs compare exact;stderr0B.
+
+Initial role12421 ACTUALLY exits1:the own TEST-marker late-binding case
+first included an unrelated production package header,which deliberately
+does not establish TEST authority. Corrected ONLY the harness to include
+the actual TEST boundary first for that marker. Production/native guards
+and expected refusal are not relaxed. Initial failure stderr is retained.
+
+New guarded exchange helper:local endpoint qualification ONLY
+-------------------------------------------------------------
+Helper pioneer_q38_batched_output_closure_exchange.sh SHA
+0d8dc2eb62439daefd9acadd9a2addbc21cec36e4ccc713902025001b9a246db
+owns ONLY stable041 <-> new diagnostic module
+7c85898c5591115521e5f38c9ee546da7909a1da82b9a025046c5f8c81d1b623.
+It derives from the immutable qualified e37c source with ONLY new subject,
+path and completion-label bindings;the retired96a0 active script is NOT
+reactivated. It verifies root-owned regular one-link whole-file identities,
+device symlink,stage permissions,no incoming/stale lock,project-parent
+absence,exact tag/generation/cold0/idle metadata,backup,incoming+installed
+rechecks,quiesce and one atomic replacement OUTSIDE the watched directory,
+then independently waits for the new higher generation. No reset,force,
+retry,cold clearing or automatic rollback follows uncertainty.
+
+Actual shell endpoint suites80768/main and3778/clean ACTUALLY exit0,EACH
+all prior original+retired96a0/5920/010c controls FIRST,then new2valid/
+70refused cases. Wrong metadata columns,corrupt/symlink/hardlink/writable
+files,live parent,quiesce/copy races and failed replacement verification
+retain exact installed bytes or the observed uncertain state. Retired96a0
+candidate/installed bytes are refused in BOTH directions BEFORE admin/copy/
+backup/incoming. These endpoints rebind ONLY exact paths+SHA pins into
+private synthetic filesystems. They are NOT real reload or device proof.
+The helper is not copied to the Pioneer or executed there in this checkpoint.
+
+Preserved real Pioneer state,read-only evidence
+-----------------------------------------------
+Read-only SSH ACTUALLY0 at10:28:45UTC:whole installed041/adminb0c/guardd1ce/
+active retired restore-only7db4 hashes exact;tag12/gen2/cold0/quiesced0/
+owner0/open1/guard1,64CPUs/full137034936320B RAM/free133799194624B,new stage
+absent. Broad process matching includes the read-only shell itself;the
+separate executable-only classification ACTUALLY0 at10:33:20UTC explicitly
+excludes its own PID and reports0 matching project compute executables.
+No conversation text/unrelated process arguments are displayed. No GPU
+status/read/reset/reload or compute call is made. New7c85 remains LOCAL only.
+Future staging/application requires fresh independent health/identity again.
+
+Independent source and evidence
+---------------------------------
+Clean source is an af4ab5f649801ed26d60d9575ba6deb777ec7928 export of tools,
+headers,build/config_headers and misc driver sources,overlaid with ONLY9
+owned TEST/helper changes. All9 compare exact. No user dirt,FlashNext work,
+dirty llama submodule or NATIVE_BUILD_STATUS changes are imported or edited.
+Main:/private/tmp/pioneer-q38-output-closure-execution-20261102.Kgkpoz
+Clean:/private/tmp/pioneer-q38-output-closure-execution-clean-20261102.mJe5wy
+Zero/mixed inputs are authenticated from generated.pioneer/qualification-inputs/
+qwen38-state-zero-20261030 and mixed-worker-20261030. The new and old main/clean
+ROOTs and workers are recorded in their complete argv files. Raw final logs,
+closed comparisons,initial refusal and helper histories are in the sibling
+qwen38-batched-output-closure-execution-20261102 directory. Raw prefixes stay
+private,not a whole-model or physical-generation acceptance artifact.
+
+Next is a separately admitted,controlled PHYSICAL diagnostic of7c85 to test
+the actual cross-token failure. That experiment is qualification itself,not
+promotion to Work or evidence that unexecuted full-model paths have passed.
+Push before rollout;fresh idle identity and full staged copy-back checks
+precede the exact new helper. Protect the entire physical auth/Open/upload/
+RUN/Finish/Close parent lifetime. Error/quarantine is not a TPS record and
+requires controlled NEW power epoch before guarded restore,never a hot retry.
+Goal remains ACTIVE;correct usable27B Work and20tok/s remain UNMET.

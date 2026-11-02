@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 root_profile=None
+output_closure='--batched-output-closure' in sys.argv
+if output_closure:
+    assert sys.argv.count('--batched-output-closure')==1
+    sys.argv.remove('--batched-output-closure')
 frontier_failure_link='--frontier-failure-link' in sys.argv
 if frontier_failure_link:
     assert sys.argv.count('--frontier-failure-link')==1
@@ -200,6 +204,11 @@ if frontier_failure_link:
     assert frontier_failure_detail and twin_batch_prefetch and not compile_link_only \
         and len(sys.argv)==7 and sys.argv[2]=='--execution-end', \
         'Failure-link native TEST requires explicit QFD1 parents and the exact full original twin first-layer/cancel/STOP/HOLD/drain/END history'
+if output_closure:
+    assert frontier_failure_link and frontier_failure_detail and twin_batch_prefetch and flat_matrix \
+        and not any((batched_prefetch,compile_link_only,root_profile,backend_finish,control_adapter,control_operations)) \
+        and len(sys.argv)==7 and sys.argv[2]=='--execution-end', \
+        'Corrected-output native TEST requires its distinct complete original QFL1/twin first-layer/cancel/STOP/HOLD/drain/END history'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
@@ -339,6 +348,11 @@ if frontier_failure_detail:
 if frontier_failure_link:
     defines.update(PIONEER_Q38_TOKEN_FRONTIER_FAILURE_LINK_NATIVE='1',
                    PIONEER_Q38_TOKEN_NATIVE_FRONTIER_FAILURE_LINK_FIXTURE='1')
+if output_closure:
+    assert hashlib.sha256((here.parent/'PioneerQ38TokenBatchedOutputClosurePrograms.h').read_bytes()).hexdigest()=='1e844aca55fd4920a278fcd702a64b324fe13ea2c29e52d4cd75841e42f06891'
+    defines.update(PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_PROGRAMS='1',
+                   PIONEER_Q38_TOKEN_BATCHED_OUTPUT_CLOSURE_NATIVE_CONTEXT='1',
+                   PIONEER_Q38_TOKEN_NATIVE_BATCHED_OUTPUT_CLOSURE_FIXTURE='1')
 if posted_cancel:
     defines.update(PIONEER_Q38_TOKEN_POSTED_CANCEL='1',PIONEER_Q38_TOKEN_FAULT_PROGRAMS='1',
                    PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC='1')
@@ -494,7 +508,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         # Authenticate ALL frozen artifacts before classifying any TEST
         # request. nm consumes the SAME already authenticated ELF snapshot,
         # not a second unchecked open of the original image pathname.
-        tree=ast.parse((here.parent/('build_qwen38_batched_prefetch_root.py' if batched_prefetch or twin_batch_prefetch else 'build_qwen38_flat_matrix_grammar_root.py' if flat_matrix else 'build_qwen38_empty_receipt_poll_root.py' if empty_receipt else 'build_qwen38_counter_gather_root.py')).read_text())
+        tree=ast.parse((here.parent/('build_qwen38_batched_output_closure_root.py' if output_closure else 'build_qwen38_batched_prefetch_root.py' if batched_prefetch or twin_batch_prefetch else 'build_qwen38_flat_matrix_grammar_root.py' if flat_matrix else 'build_qwen38_empty_receipt_poll_root.py' if empty_receipt else 'build_qwen38_counter_gather_root.py')).read_text())
         pins=next(ast.literal_eval(n.value) for n in tree.body if isinstance(n,ast.Assign)
                   and any(isinstance(t,ast.Name) and t.id=='PINS' for t in n.targets))
         elf=None
@@ -554,7 +568,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
             elif prefetch_worker:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_PREFETCH_TEST=1']
             rom_object=base/'precise-beta-expected-rom-data.o'
             subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
-                            '-fsanitize=address,undefined','-c',str(here/('pioneer_q38_twin_batch_prefetch_program_data_bridge.cpp' if twin_batch_prefetch else 'pioneer_q38_batched_prefetch_program_data_bridge.cpp' if batched_prefetch else 'pioneer_q38_prefetch_program_data_bridge.cpp' if prefetch_worker else 'pioneer_q38_precise_beta_program_data_bridge.cpp')),
+                            '-fsanitize=address,undefined','-c',str(here/('pioneer_q38_batched_output_closure_program_data_bridge.cpp' if output_closure else 'pioneer_q38_twin_batch_prefetch_program_data_bridge.cpp' if twin_batch_prefetch else 'pioneer_q38_batched_prefetch_program_data_bridge.cpp' if batched_prefetch else 'pioneer_q38_prefetch_program_data_bridge.cpp' if prefetch_worker else 'pioneer_q38_precise_beta_program_data_bridge.cpp')),
                             '-o',str(rom_object)],check=True)
             extra += [str(rom_object)] # DATA TU has NO inherited tensor-Work/native/CPU-oracle roles
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
