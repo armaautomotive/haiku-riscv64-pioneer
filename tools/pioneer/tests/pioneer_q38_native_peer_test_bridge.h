@@ -33,6 +33,12 @@ struct Q38NativePeerTestStack {
  uint32_t minimumSp,minimumAccessed;
  uint64_t instructions;
 }; // separate read-only result;the existing64-byte Stats ABI is unchanged
+#ifdef PIONEER_Q38_NATIVE_PEER_MANUAL_WATCHDOG_TEST
+#if PIONEER_Q38_NATIVE_PEER_MANUAL_WATCHDOG_TEST != 1
+#error Explicit offline manual-wait fault endpoint required
+#endif
+struct Q38NativeManualWaitStats {uint32_t ordered,stores,loads,armed;uint64_t blocked;};
+#endif
 class Q38NativePeerTestCpu {
  struct Impl;Impl* impl;
 public:
@@ -48,5 +54,9 @@ public:
  bool ObserveFaulted()const;
  void AdvanceFaulted(unsigned); // actual immutable fault loop,never a supplied fault/ready marker
  bool ObserveLayerBoundary(); // rebase HOST watchdog only AFTER actual down-job arithmetic/DONE/WAIT
+#ifdef PIONEER_Q38_NATIVE_PEER_MANUAL_WATCHDOG_TEST
+ void LoseNextManualCompletion(); // TEST hardware-completion loss,never a guest/owner setter
+ Q38NativeManualWaitStats ManualWaitStats()const;
+#endif
 }; // virgin construction + execution ONLY;NO PC/register/history/ready setters
 #endif

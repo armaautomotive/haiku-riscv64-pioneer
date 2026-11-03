@@ -1,0 +1,7 @@
+Assertion failed: (!lockHeld && !state->Unsafe() && c.q38FfnModelPlan && tokenNativePositions==34), function CheckNativeManualWatchdog, file pioneer_q38_token_native_manual_watchdog_checks.inc, line 10.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py", line 697, in <module>
+    subprocess.run([str(binary), *sys.argv[1:]], check=True,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-token-native-init-mct3tesl/test', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/qualification-inputs/qwen38-state-zero-20261030', '--execution-end', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf', '/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/qualification-inputs/mixed-worker-20261030', '/private/tmp/pioneer-q38-manual-ttsync-20261102.FPQL8G/main-final', '/private/tmp/pioneer-q38-manual-watchdog-20261103.ipSSfU/native-main-r2-prefix.bin']' died with <Signals.SIGABRT: 6>.

@@ -1,3 +1,15 @@
+2026-11-03 update:combined watchdog/native-owner offline gate CLOSED0
+==================================================================
+Main13004 and clean28873 complete original-model first-layer/cancel/STOP/
+HOLD/drain/full-END histories with all3 new lost-completion/caller-watchdog
+cases and unchanged bit-exact CPU prefix comparisons. Both actual exits0,
+whole83-line logs identical. Candidate c01/aaff remains unchanged,staged
+only,NOT deployed;20tok/s/acceptedWork UNMET. See the CURRENT closed report
+qwen38-manual-ttsync-watchdog-20261103.txt;its scope/remaining physical gates
+supersede the historical outstanding-watchdog paragraph below.
+
+Historical integration record
+==============================
 Manual-TTSync guarded diagnostic integration: offboard closure,NOT deployed
 ========================================================================
 2026-11-02 local/November3 UTC. Goal ACTIVE. Accepted usable Qwen27B Work

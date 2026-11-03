@@ -14,6 +14,10 @@ manual_ttsync='--manual-ttsync' in sys.argv
 if manual_ttsync:
     assert sys.argv.count('--manual-ttsync')==1
     sys.argv.remove('--manual-ttsync')
+manual_watchdog='--manual-watchdog' in sys.argv
+if manual_watchdog:
+    assert manual_ttsync and sys.argv.count('--manual-watchdog')==1
+    sys.argv.remove('--manual-watchdog')
 matrix_phase_read='--matrix-phase-held-readout' in sys.argv
 if matrix_phase_read:
     assert sys.argv.count('--matrix-phase-held-readout')==1
@@ -419,6 +423,8 @@ if manual_ttsync:
     assert hashlib.sha256((here.parent/'PioneerQ38TokenManualTTSyncPrograms.h').read_bytes()).hexdigest()=='eaaa4974db72e416f13b2bdd66a4eb5bcdf4d4243a27c990037eea022e009dd1'
     defines.update(PIONEER_Q38_TOKEN_MANUAL_TTSYNC_PROGRAMS='1',PIONEER_Q38_TOKEN_MANUAL_TTSYNC_NATIVE_CONTEXT='1',
                    PIONEER_Q38_TOKEN_NATIVE_MANUAL_TTSYNC_FIXTURE='1')
+if manual_watchdog:
+    defines.update(PIONEER_Q38_TOKEN_NATIVE_MANUAL_WATCHDOG_FIXTURE='1',PIONEER_Q38_NATIVE_PEER_MANUAL_WATCHDOG_TEST='1')
 if matrix_phase_read:
     defines.update(PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE='1',PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_READ_FIXTURE='1')
 if posted_cancel:
@@ -556,6 +562,18 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
     branch = source.split(start, 1)[1].split('\n#endif', 1)[0]+'\n#endif\n'
     assert branch.startswith('#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT\n')
     (base/'token_native_end.inc').write_text(branch)
+    if manual_watchdog:
+        begin='// PIONEER_Q38_DISPATCH_COOKIE_RELEASE_BEGIN'
+        end='// PIONEER_Q38_DISPATCH_COOKIE_RELEASE_END'
+        assert source.count(begin)==source.count(end)==1
+        (base/'token_native_watchdog_release.inc').write_text(source.split(begin,1)[1].split(end,1)[0])
+        caller=(here.parent/'pioneer_q38_frontier_benchmark.cpp').read_text()
+        begin=' const bigtime_t began=system_time();bigtime_t previous=began;'
+        end=' auto records=std::make_unique<uint32_t[]>(V::Positions*64);'
+        assert caller.count(begin)==caller.count(end)==1
+        loop=begin+caller.split(begin,1)[1].split(end,1)[0]
+        assert 'before-began>=INT64_C(1800000000) || polls>=18000' in loop
+        (base/'manual_watchdog_actual_caller.inc').write_text(loop)
 
     def method(signature):
         assert source.count(signature) == 1
@@ -571,6 +589,12 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
         ('bool PioneerSessionIO::StateZeroBeforeCohort()', 'bool PioneerSessionIO::StateZeroOtherCoresHeld()', 'bool PioneerSessionIO::NonRootHeldOwner()')))
     binary = base/'test'
     extra = []
+    if manual_watchdog:
+        watchdog_object=base/'manual-caller-watchdog.o'
+        subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
+                        '-fsanitize=address,undefined','-DPIONEER_Q38_MANUAL_WATCHDOG_HOST_TEST=1','-I'+str(base),
+                        '-c',str(here/'pioneer_q38_manual_watchdog_host.cpp'),'-o',str(watchdog_object)],check=True)
+        extra += [str(watchdog_object)]
     profile_environment={}
     if counter_gather:
         # Authenticate ALL frozen artifacts before classifying any TEST
@@ -634,6 +658,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
             peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_PRECISE_BETA_TEST=1']
             if matrix_phase:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_MATRIX_PHASE_TEST=1']
             if manual_ttsync:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_MANUAL_TTSYNC_TEST=1']
+            if manual_watchdog:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_MANUAL_WATCHDOG_TEST=1']
             if wide_gdn:
                 peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_WIDE_GDN_TEST=1','-DPIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST=1']
             if twin_batch_prefetch:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_TWIN_BATCH_PREFETCH_TEST=1']

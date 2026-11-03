@@ -85,6 +85,9 @@ struct NativePeer:NativePeerBase,CohortBytes {
 #endif
  bool manualOrdered=false;
  unsigned manualStores=0,manualLoads=0;
+#ifdef PIONEER_Q38_NATIVE_PEER_MANUAL_WATCHDOG_TEST
+ unsigned manualLostStore=0;uint64_t manualBlocked=0;
+#endif
  void CompleteManualBackend(){
   assert(manualOrdered && !backendWait && !recordRemaining);
   if(rawPending)CompleteRawUnpack();
@@ -215,6 +218,17 @@ struct NativePeer:NativePeerBase,CohortBytes {
  }
  void StepBlock()override{
   uint32_t expected;assert(ExpectedProgramWord(logicalWorker,pc,expected) && binding.Word(pc)==expected);
+#ifdef PIONEER_Q38_NATIVE_PEER_MANUAL_WATCHDOG_TEST
+#ifndef PIONEER_Q38_NATIVE_PEER_MANUAL_TTSYNC_TEST
+#error Completion-loss endpoint requires the actual manual-wait worker
+#endif
+  if(manualLostStore && manualStores==manualLostStore && pc==0x7200c){
+   assert(expected==0x0007a703 && regs[15]==0xffe80004 && manualOrdered
+    && manualStores==manualLoads+1 && !backendWait && !recordRemaining);
+   manualBlocked++;return;
+  } // actual emitted LOAD cannot retire:PC/registers/operand/Dst/output unchanged.
+    // Scheduler observations have their OWN count,not retired instructions.
+#endif
   const unsigned opcode=expected&127;if(opcode==7 || opcode==0x27 || opcode==0x53)scalarFpInstructions++;
   // Parent service FP decoders may use their immutable ROM byte vectors.
   // ALL instruction bytes must first equal this SAME installed L1 word.
@@ -268,6 +282,16 @@ void Q38NativePeerTestCpu::Link(Q38NativePeerTestCpu& other){
   && ((p.logicalWorker-1)^1U)==q.logicalWorker-1 && impl->binding.bytes.context==other.impl->binding.bytes.context);p.peer=&q;
 }
 void Q38NativePeerTestCpu::Advance(unsigned count){assert(count && count<=10000);impl->cpu->Advance(count);}
+#ifdef PIONEER_Q38_NATIVE_PEER_MANUAL_WATCHDOG_TEST
+void Q38NativePeerTestCpu::LoseNextManualCompletion(){
+ auto& p=*impl->cpu;assert(!p.manualLostStore && !p.manualOrdered && p.manualStores==p.manualLoads);
+ p.manualLostStore=p.manualStores+1;
+} // change only the simulated hardware completion endpoint,not processor/native state
+Q38NativeManualWaitStats Q38NativePeerTestCpu::ManualWaitStats()const{
+ const auto& p=*impl->cpu;return {unsigned(p.manualOrdered),p.manualStores,p.manualLoads,
+  unsigned(p.manualLostStore!=0),p.manualBlocked};
+}
+#endif
 Q38NativePeerTestStats Q38NativePeerTestCpu::Stats()const{
  const auto& p=*impl->cpu;return {p.pc,p.steps,p.matrixInstructions,p.moveInstructions,p.scalarFpInstructions,p.requests,p.responses,unsigned(p.pending),
   p.deviceReads,p.deviceWrites,p.statusWrites,p.minStack,p.sequence,unsigned(p.active),impl->retiredInstructions+p.steps};

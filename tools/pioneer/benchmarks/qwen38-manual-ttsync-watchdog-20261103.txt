@@ -1,0 +1,148 @@
+Combined manual-wait/native-owner watchdog: BOTH healthy parents CLOSED0
+========================================================================
+2026-11-03 04:40:12UTC. Main13004 ACTUALLY exits0 (observed04:36:50UTC),
+independent clean28873 ACTUALLY exits0 (observed04:39:43UTC). Complete83-line/
+17962-byte stdout streams compare byte-for-byte;both stderr0B. Both original
+raw prefixes match each other. AFTER each actual parent terminal,the
+UNCHANGED main and clean CPU prefix readers ACTUALLY exit0,whole stdout
+exact and stderr0B:all3 original CPU trace SHA pins authenticate;5120
+embedding+5120 first-layer words match bit-for-bit,zero tolerance. Both
+current source trees still match all11 recorded source pins. No local
+regression parent remains. Every historical LIVE/pending claim BELOW is
+superseded by this CLOSED entry,not evidence of another live test.
+
+Each selected the actual34-position native startup and complete original
+GGUF/all851 tensors,then executed1010 zero jobs/all119 virgin engines,
+original embedding+RMS+first matrix+COMPLETE original layer0. New child
+cases cover a genuinely blocked immutable manual LOAD combined with the
+original caller's wall deadline,poll18000 limit and backwards-clock policy.
+The actual native frontier/Observe controls and cookie/END retention gate
+leave all resources quarantined/retained,with no following I/O/reset/retry/
+cleanup;LOAD PC/registers/operand/Dst/output never advance. All3 cases pass
+in BOTH trees. The healthy parent then completes the original33 override-
+loss forks,single consumed cancellation,all119 actual STOP,ROOT-first120
+HOLD,zero-record drain,held hidden reads,all L1/dispatch/NIU/ROOT/shared
+restoration,normal clock END,29 VM views,PCI,3 host releases,checked device
+unreserve and locked whole-context destruction. Complete closed histories
+and failure attempts are archived beside this report,not only pass banners.
+
+Actual first-layer ROOT90294554/worker1872123136 instructions;final
+ROOT168636983/peer1873856639 are HOST emulation counts,NOT card cycles or
+performance. ROOT reserved/accessed6528/6516B,maximum peer5360/5348B fit
+their8192B device reserves;this is NOT whole-kernel-stack qualification.
+This closes the specified combined offline watchdog/native-owner gate.
+It is NOT arbitrary-model,full multi-token numerical,public syscall/
+physical lifecycle,hardware performance or Assistant Work acceptance.
+
+Current deployment state at this CLOSED entry
+----------------------------------------------
+Candidate c01/aaff/helper32114 remain staged and independently read back,
+NOT installed or executed. Stable041/tag12/gen16 was independently checked
+with64CPUs/full137034936320B RAM. Current-source main/clean SDK modules and
+USER clients reproduce their original complete frozen identities,all
+recheck commands actually0;default native compile/link0. No production
+driver/client/validator/reference/tolerance/Work code changed for the new
+tests. No power/reset/SD/mains/hardware/Assistant/network/kernel/boot action.
+The next step requires a tested/pushed checkpoint,fresh exact idle checks,
+SAME32114 --apply ONCE,one protected original-model diagnostic through
+actual END+Close,unchanged strict numerical reader,and safe exact restore
+only after terminal+independent idle. Never infer completion from a yield.
+Last actual model diagnostic0.1584tok/s;20tok/s and accepted Work UNMET.
+
+Historical execution ledger (superseded by CLOSED above)
+========================================================
+Combined manual-wait/native-owner watchdog: regressions STILL LIVE
+=================================================================
+2026-11-03 04:33UTC. Main13004 and clean28873 are ACTUALLY live on their
+original local process handles. Main has reached ROOT80M first-layer
+instructions;clean70M. Neither full first-layer/cancel/STOP/HOLD/drain/END
+nor final CPU-prefix acceptance is established yet. Do not restart either
+because observation yields. No candidate installation/GPU test has occurred.
+Stable041/tag12/gen16 remains installed on Pioneer. Goal ACTIVE;accepted
+27B Work and20tok/s remain UNMET. Last physical model diagnostic0.1584tok/s.
+
+New offline coupling,not a new device program or performance result
+-----------------------------------------------------------------
+The previous complete4526cb worker/c01 module/aaff client are UNCHANGED.
+The TEST-only completion endpoint arms one missing hardware completion on
+the SAME virgin worker1 after genuine1010 zero jobs/all119 boots/original
+embedding+RMS+first matrix job submission. At the actual immutable LOAD
+0x7200c (0007a703,registera5=ffe80004),the endpoint withholds retirement.
+No PC/register/operand/Dst/output/status/ready/native-owner state is supplied
+or copied. Block observations have a separate count,not retired instructions.
+
+The exact production fixed34 caller loop is extracted from the current
+pioneer_q38_frontier_benchmark.cpp into a separate HOST-only translation
+unit with the actual DATA sampler. Its virtual host clock/scheduler selects
+wall-clock deadline,poll18000 exhaustion or backwards clock;the original
+1800000000us/18000/100000us policy is unchanged. Actual native frontier and
+Observe control adapters acquire the real fixture FD/thread/team lock and
+copy the observed integer replies. Close uses the actual extracted cookie
+release and native END retention gate. No mock successful token,terminal,
+HOLD or END receipt is provided. This is not full USER Begin/source/upload
+execution,physical hardware or wall-clock-performance qualification.
+
+Both main and clean have now passed all3 child cases. Each verifies the
+blocked LOAD never retires through the caller's failure;no Finish is issued;
+actual cookie close retains ALL owners and quarantines them with ZERO later
+card I/O/reset/retry/cleanup/unreserve. Repeated close is inert. The healthy
+parent remains untouched by forked hardware faults and MUST still complete
+the ORIGINAL full first-layer/cancel/119STOP/120HOLD/drain/full-END history.
+Only this new TEST profile uses an actual34-position startup (same2 original
+prompt IDs);old/default profiles remain3-position with identical behavior.
+
+Closed build evidence
+----------------------
+Fresh current-source SDK recheck38817 ACTUALLY0:main and independent clean
+private/public objects and linked modules reproduce their original whole
+identities. Fresh USER recheck37827 ACTUALLY0:both current objects/clients
+reproduce the old whole aaff binary. Default native fixture compile/link
+80169 ACTUALLY0 with no execution. All corresponding stderr streams0B.
+These are BUILD results,not native lifetime or deployment grants.
+
+module c01f1cda7549ef3b191454ab6c21d697de143f3f11fcc5c9da48c81dd37c1736
+client aaffcaa125a02d1629dc49055d45d26af28f3187049dda631a8b5a272a9c165a
+helper 32114b2ad5139df0dab8a238c1f3c885033c7fc8b34428ebaffaab3982db04cd
+Both full native regressions use ASAN/UBSAN/Werror and the same authenticated
+original GGUF/all851 learned tensors,not a smaller substituted model. Each
+has passed the new3-case coupling and independent first3-worker full-matrix
+FP32/FP64 observers. No performance follows from interpreter instruction
+counts. Both current source trees match the11 recorded source pins.
+
+Preserved failed attempts
+-------------------------
+MainR1 ACTUALLY1 before compilation:file-not-found in the historical empty
+temporary zero-image directory. Use the preserved generated.pioneer
+qualification-inputs directory with its unchanged39817b67 text pin instead.
+MainR2(52219) and cleanR1(1994) ACTUALLY1 at a NEW fixture assertion that
+incorrectly expected the legacy FFN owner. The token source scope requires
+that owner to be absent;the new check now asserts that actual exclusion.
+The close fixture delegates to the exact native END retention gate before
+refusing any generic legacy cleanup,matching production behavior. No
+production driver,validator,reference,tolerance or retention rule changed
+to pass these failures. Corrected mainR3/cleanR2 remain the LIVE runs above.
+
+Isolated staging ONLY;not deployed or executed
+---------------------------------------------
+Fresh read-only Pioneer admissiondb5552 ACTUALLY0:exact stable041/gen16,
+idle/cold0/no compute parent,64CPUs/full137034936320B RAM/free130607230976B;
+all admin/guard/backup hashes and device link match. Existing model stat
+root-owned,single link,18973870528B;stat is NOT content authentication.
+New root700 stage9a4692 ACTUALLY0:
+ /boot/home/pioneer-p100a-token-manual-ttsync-20261103-a
+Limited1024Kbit/s SCP49403 ACTUALLY0. Full staged hashes/ownership verified
+53b2d60. Full independent readback2089 ACTUALLY0,all3 whole cmp0. No apply
+helper,driver exchange,accelerator open,source-only model job or worker run.
+No reboot/power/SD/mains/hardware/Assistant/network/kernel/boot changes;
+UART untouched. Installation waits for both full regressions and unchanged
+posthoc CPU-prefix comparisons,then a tested/pushed checkpoint and fresh
+exact idle checks. Stage existence/source labels/tags are NOT permission.
+
+Task-local LIVE evidence,not archived as completed hardware output
+----------------------------------------------------------------
+ /private/tmp/pioneer-q38-manual-watchdog-20261103.ipSSfU/native-main-r3.log
+ /private/tmp/pioneer-q38-manual-watchdog-20261103.ipSSfU/native-clean-r2.log
+Same handles13004/28873 MUST be observed to actual terminal. Inspect complete
+stdout/stderr,match whole outputs,run unchanged original CPU prefix reader,
+then update this report with actual closure or failure. Do not promote the
+3 passing failure children into a successful healthy parent/native lifetime.

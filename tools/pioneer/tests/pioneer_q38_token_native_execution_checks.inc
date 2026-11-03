@@ -24,6 +24,9 @@
 #ifdef PIONEER_Q38_TOKEN_NATIVE_MANUAL_TTSYNC_FIXTURE
 #include "pioneer_q38_token_native_manual_ttsync_checks.inc"
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MANUAL_WATCHDOG_FIXTURE
+#include "pioneer_q38_token_native_manual_watchdog_checks.inc"
+#endif
 static void CheckNativeExecution(Fixture& f){
  auto& c=*f.c;auto& io=f.io;auto* state=c.q38TokenNative;
  const unsigned before=io.touches,rootResets=io.resets.size(),packets=io.runtimePackets;
@@ -79,7 +82,7 @@ static void CheckNativeExecution(Fixture& f){
     words[i]^=1;assert(!ObserveQ38TokenNativeFrontier(c,metric) && io.touches==touches && !state->Unsafe());metric=pristineMetric;
    }
    assert(ObserveQ38TokenNativeFrontier(c,metric) && metric.started && metric.ready && !metric.unsafe
-    && !metric.committed && metric.prompts==2 && metric.limit==3
+    && !metric.committed && metric.prompts==2 && metric.limit==tokenNativePositions
     && !state->TerminalObserved() && !state->TerminalHeld() && !state->Closed() && !state->Unsafe()
     && io.resets==resets && io.executionCpu->steps==steps && io.runtimePackets==packets);
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FRONTIER_FAILURE_DETAIL_FIXTURE
@@ -252,6 +255,9 @@ static void CheckNativeExecution(Fixture& f){
  CheckNativeLayerDispatch(f);
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FIRST_MATRIX_FIXTURE
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MANUAL_WATCHDOG_FIXTURE
+ CheckNativeManualWatchdog(f);
+#endif
  CheckNativeFirstMatrix(f);
 #endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_FULL_LAYER_FIXTURE

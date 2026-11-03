@@ -29,6 +29,11 @@ struct PioneerProbeCookie{uint32 magic=0x50313030;PioneerStoreContext* context=n
 static PioneerProbeCookie* sRuntimeOwner=nullptr;
 static bool sColdRecoveryRequired=false,sReloadQuiesced=false,sBankStorageOnly=true;
 static uint64 sReloadGeneration=UINT64_C(0x100000007);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MANUAL_WATCHDOG_FIXTURE
+static constexpr unsigned tokenNativePositions=34;
+#else
+static constexpr unsigned tokenNativePositions=3;
+#endif
 struct MockLease {
  bool saved=false,ready=false,pending=false,recovery_required=false,dirty=false,unsafe=false;
  bool running=false,awaiting=false,closed=false;

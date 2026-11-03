@@ -104,6 +104,7 @@ static_assert(PioneerQ38TokenPrograms::FlatMatrixGrammar==1 && PioneerQ38TokenPr
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HIDDEN_READ_FIXTURE
 #include "pioneer_q38_token_native_hidden_read_role.h"
 #endif
+#if defined(PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_MANUAL_WATCHDOG_FIXTURE)
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_BEGIN_FIXTURE
 #include "pioneer_q38_token_native_control_begin_role.h"
@@ -117,13 +118,19 @@ static unsigned tokenControlOperationCounts[7]={};
 #else
 #include "pioneer_q38_token_native_control_role.h"
 #endif
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenControlPacket.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenFrontierPacket.h"
 static unsigned tokenControlUid=0,tokenControlCopies=0,tokenControlFailCopy=0,tokenControlFailureTouches=0;
 static bool tokenControlLoseTeam=false,tokenControlMutateInput=false;
 static const unsigned* tokenControlTouches=nullptr;
 static unsigned TokenControlTestUid(){return tokenControlUid;}
 static status_t TokenControlTestCopy(void* to,const void* from,size_t bytes){
- assert(bytes==sizeof(PioneerQ38TokenControl::Packet));tokenControlCopies++;
+ assert(bytes==sizeof(PioneerQ38TokenControl::Packet)
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MANUAL_WATCHDOG_FIXTURE
+  || bytes==sizeof(PioneerQ38TokenFrontierControl::Packet)
+#endif
+ );tokenControlCopies++;
  if(tokenControlCopies==2)assert(lockHeld==1);
  if(tokenControlCopies==tokenControlFailCopy){tokenControlFailureTouches=tokenControlTouches?*tokenControlTouches:0;return -6;}
  memcpy(to,from,bytes);
@@ -634,10 +641,10 @@ bool PioneerSessionIO::TokenPciLeaseIdentity(const PioneerQ38TokenPciLease&)cons
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE
 #include "pioneer_q38_token_native_backend_init_fault_role.h"
 #endif
-#if defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE)
+#if defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_FINISH_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_BACKEND_INIT_FAULT_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_MANUAL_WATCHDOG_FIXTURE)
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeBackend.inc"
 #endif
-#ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE
+#if defined(PIONEER_Q38_TOKEN_NATIVE_CONTROL_FIXTURE) || defined(PIONEER_Q38_TOKEN_NATIVE_MANUAL_WATCHDOG_FIXTURE)
 #define geteuid TokenControlTestUid
 #define user_memcpy TokenControlTestCopy
 #define B_NO_MEMORY (-5)
@@ -707,6 +714,14 @@ struct Fixture {
   assert(!Recurrent(g) && !History(h) && !Projection(p) && !IncompleteEnd(*c,end,clean) && io.touches==touches);
  }
 };
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MANUAL_WATCHDOG_FIXTURE
+static void EndResidentSession(PioneerProbeCookie* cookie,tt_resident_session_result& result,bool){
+ bool clean=!sColdRecoveryRequired && !cookie->context->Unsafe();
+ if(!IncompleteEnd(*cookie->context,result,clean))return;
+ assert(false && "actual native END gate must stop before legacy cleanup");
+}
+#include "token_native_watchdog_release.inc"
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_RUNTIME_FIXTURE
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTROL_OPERATIONS_FIXTURE
