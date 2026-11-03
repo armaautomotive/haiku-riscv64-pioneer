@@ -1,0 +1,2 @@
+PASS CPU-only original Q8/Q4/Q6 native-weight tiles:118 checks;independent GGUF formulas,widths,padded rows,source loss/epoch atomicity,real converter-to-disk roundtrip and ZERO conversion on hit;NO GPU/model-quality/speed proof
+CPU-only native weight tile/cache evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q38-native-weight-tiles.RUtll21b

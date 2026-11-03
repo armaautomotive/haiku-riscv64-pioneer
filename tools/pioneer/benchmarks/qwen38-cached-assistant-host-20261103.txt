@@ -1,0 +1,57 @@
+Actual cached Assistant host LOAD/UNLOAD and progress-log fix
+==========================================================
+2026-11-03 UTC. Baseline public3d2aad07681e0a3c718e6dedaadc632e1d1866af.
+
+Original protected parent84747 was polled SAME handle until ACTUAL terminal1
+at22:15UTC. Its actual nested probe CLOSED0 and printed:
+ PASS_ACTUAL_ASSISTANT_CACHE_LOAD_UNLOAD verified_tensors851;NO_GENERATE_NO_WEIGHT_UPLOAD_NO_INFERENCE_SPEED_CLAIM
+All851 cache entries reused; no fresh preparation; host-ready497; known-clean
+Unload and worker exit. No Generate/GPU weight upload/inference was requested.
+The OUTER strict parent did NOT pass: nested stderr had93dots plus newline
+(94bytes), so it stopped before postflight and left its historical state file
+RUNNING. That file is not evidence of a live process. Actual terminal handle
+and nested exit0 govern this ledger. No unchanged rerun or implicit cleanup.
+
+Complete nested stdout204440B SHA:
+7eb9b8c50c5d2bce89f9a9998ef9c2ff988cb1b1181715016d3a4db014e87dde
+Nested stderr SHA:
+ddc03b0ae9f48caa43c9292723a9d0a6dc8440de5516e9fdf5da154b5bc797bd
+The frozen parent and all spent outputs are preserved, not overwritten.
+Independent postterminal read-only hashes/stat/exit/tail/byte dump and inventory
+confirm no worker/Assistant/compute owner,stable041/tag12/gen2,cold0/owner0/
+open1/guard1,64 CPUs/max137034936320B RAM. No driver/OS/network/power/SD change.
+
+Cause is directly supported by frozen llama source c060ca974c773c7c3d17fd1b66dc9d312bc292c0:
+src/llama.cpp408..418 installs a default progress callback issuing CONT dots;
+ggml/include/ggml.h640..647 defines WARN3,ERROR4,CONT5. Our old >=WARN logger
+mistook CONT for warning. New worker explicitly preserves WARN/ERROR,excludes
+CONT and supplies a framed host-model progress callback (including final100%).
+Invalid/out-of-range/nonfinite progress,lost channel and bad/backwards clock
+refuse. Warning/numerical comparators are NOT loosened to bless the first run.
+Thirteen actual callback/logger fake clock/channel cases pass;10 actual compute
+gate cases still pass. Full native cached AND flag-off workers LINK/stderr0.
+
+New cached worker861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74
+Flag-off control706c31606a78c16f94e32397e7526bb30da54aaff362b90097573ccc6e1edc31
+New host probe55789fd270446c46820bac93b8ab39c4e0463464408b5ca4cd1c54ac85818b67
+New inference probe57fe9b30221fbee9538a0ed899b51277287f9f177ca41c5ec92535d606cfec4f
+New host parentef69794ed6b349173e24192e6d44a076885043337a91e7f1d840dcb13a81d813
+New inference parent0266fe6b0da6285801777dc12c4876058e79e7e68f97065d289e0253dd512e7e
+Independent new host-progress paths/token; first failed outer test stays spent.
+New parents explicitly record terminal unqualified outputs/postflight failure
+instead of leaving their own state at RUNNING. They still never retry/reset.
+
+The separate actual-client inference probe requires all851 hits/no conversion
+before ONE Hello./4-token Generate, CPU validation OFF. Unknown execution
+_exit70 closes only without destructor Unload; successful Complete can Unload
+once at known boundary. Finite Work stats use honest printed-rounding intervals,
+so a faster result isn't rejected solely for rounded durations.15 fake peers
+test missing/converted/no-banner refusal,fatal/rejected no-Unload,stats/nonfinite/
+inconsistent/validation-on/trailer/empty/unclean failure and valid rounded stats.
+Fake20tok/s fixtures are NOT a card result. Parent tests11 host-flow +11 inference
+flow +9 closed-host admission cases are CPU-only,not whole native preflight proof.
+
+At this checkpoint the fresh quiet-progress live host trial and subsequent
+cached GPU upload/inference remain pending. Installed Assistant unchanged.
+No new startup speedup or tokens/sec claim. Last actual27B rate~0.1643tok/s;
+20tok/s and accepted full-native27B Work remain UNMET. Goal active.

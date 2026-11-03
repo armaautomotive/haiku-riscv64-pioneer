@@ -1,0 +1,2 @@
+PASS actual Assistant load budgets:11 fake-clock cases;ordinary1800s unchanged,exact cache opt-in fixed7200s total,queued Ready cannot bypass cap,repeat/wrong/late banners do not refresh,initial/later clock failure closes only;NO real wait/model/device IO
+CPU-only load-budget evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//assistant-qwen27-load-budget.JMBOTmSV

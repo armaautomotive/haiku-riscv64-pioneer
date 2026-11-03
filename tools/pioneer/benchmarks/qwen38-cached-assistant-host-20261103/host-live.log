@@ -1,0 +1,32 @@
+VERIFIED_PARENT_SHA256_2acd2345_FIXED_ONE_SHOT
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133712633856 bytes free      (used/max 3322302464 / 137034936320)
+                           (cached   38817337344)
+     64485 semaphores free (used/max       1051 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3901 threads free    (used/max        195 /       4096)
+      2025 teams free      (used/max         23 /       2048)
+Verifying lossless weight cache: tensor 846/851, 0.0/0.0 MiB; no GPU session yet.
+Verifying lossless weight cache: tensor 847/851, 5.6/5.6 MiB; no GPU session yet.
+Verifying lossless weight cache: tensor 848/851, 9.8/47.8 MiB; no GPU session yet.
+Verifying lossless weight cache: tensor 848/851, 19.6/47.8 MiB; no GPU session yet.
+Verifying lossless weight cache: tensor 848/851, 29.4/47.8 MiB; no GPU session yet.
+Verifying lossless weight cache: tensor 848/851, 39.2/47.8 MiB; no GPU session yet.
+Verifying lossless weight cache: tensor 848/851, 47.8/47.8 MiB; no GPU session yet.
+Verifying lossless weight cache: tensor 849/851, 9.8/47.8 MiB; no GPU session yet.
+Verifying lossless weight cache: tensor 849/851, 19.6/47.8 MiB; no GPU session yet.
+Verifying lossless weight cache: tensor 849/851, 29.4/47.8 MiB; no GPU session yet.
+Verifying lossless weight cache: tensor 849/851, 39.2/47.8 MiB; no GPU session yet.
+Verifying lossless weight cache: tensor 849/851, 47.8/47.8 MiB; no GPU session yet.
+Verifying lossless weight cache: tensor 850/851, 9.8/47.8 MiB; no GPU session yet.
+Verifying lossless weight cache: tensor 850/851, 19.6/47.8 MiB; no GPU session yet.
+Verifying lossless weight cache: tensor 850/851, 29.4/47.8 MiB; no GPU session yet.
+Verifying lossless weight cache: tensor 850/851, 39.2/47.8 MiB; no GPU session yet.
+Verifying lossless weight cache: tensor 850/851, 47.8/47.8 MiB; no GPU session yet.
+Verifying lossless weight cache: tensor 851/851, 0.0/0.0 MiB; no GPU session yet.
+Loading Qwen27B host mmap/context; P100A upload occurs on first reply.
+PASS_ACTUAL_ASSISTANT_CACHE_LOAD_UNLOAD verified_tensors851;NO_GENERATE_NO_WEIGHT_UPLOAD_NO_INFERENCE_SPEED_CLAIM
+.............................................................................................

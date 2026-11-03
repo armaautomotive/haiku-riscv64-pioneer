@@ -1,0 +1,78 @@
+All-native-BFP8 converted weights (CPU-only experimental alternative)
+==================================================================
+
+This is a NEW REQUANTIZATION recipe, not the lossless Assistant disk cache.
+All supported original Q4_K/Q6_K/Q8_0 matrices become native BFP8_B tiles;
+the default mixed converter remains Q4->BFP4,others->BFP8. No running Work,
+driver or Assistant selects this alternative. No comparator is relaxed and
+the original GGUF bytes remain unchanged. Conversion is CPU preparation of
+immutable weights, NOT runtime CPU learned products or inference fallback.
+
+Build in a NEW absolute directory (no install/model/card operation):
+  python3 tools/pioneer/build_qwen38_native_weight_cache.py /absolute/new-build --all-bfp8
+For Haiku additionally pass --haiku-build /Volumes/HaikuBuildLocal/generated.riscv64.
+The resulting binary is pioneer-q38-native-bfp8-weight-cache. It accepts the
+same CPU-only --build ORIGINAL NEW_PRIVATE_CACHE [--tensor EXACT_NAME] syntax.
+Use a separate dedicated cache, e.g. .p100a-native-bfp8-weights-v2. Do not
+launch a full28.6GB conversion without free disk headroom and a qualified
+consumer/arena plan. It is NOT installed on the Pioneer by this checkpoint.
+Source fingerprint includes the optional converter and explicit recipe choice;
+cache key/version/source/recipe isolation prevents interchange with mixed or
+lossless entries, even when original Q8/Q6 produce the same payload bytes.
+Rebuilding the default converter also changes its source fingerprint, not its
+layout; the previously installed CPU utility and existing entries are untouched.
+
+Actual Mac production-utility create and SEPARATE reuse both CLOSED0,stderr0:
+blk.0.ffn_gate.weight (original Q4) ->94699520B native BFP8,1445 conversion
+chunks on first creation, ZERO on hit. Each invocation fully authenticates the
+same-open19GB original. This is one real matrix, not full cache creation or
+Pioneer/GPU consumption. The generated weight payload is not committed.
+
+Why investigate this recipe?
+----------------------------
+A full same-open18973870528-byte original SHA-authenticated READ-ONLY sample
+checks first/middle/last native tile of all498 quantized matrices (1494tiles).
+Across193 original Q4 matrices/579sample tiles the aggregate relative weight
+L2 error is0.112448567 for BFP4 and0.006959886 for BFP8. This is a deterministic
+weight SAMPLE, NOT full-model quality, logits, perplexity or output equivalence.
+Q8 and Q6 sample errors are unchanged0.007339821 and0.007247010 respectively.
+No new hardware math, GPU throughput or numerical acceptance is inferred.
+The separate existing native BFP8 physical diagnostic remains unqualified.
+
+Read-only sample executable source: pioneer_q38_native_bfp8_inventory.cpp.
+It enforces the exact original SHA/layout before any model sample, creates no
+cache and opens no device. Runtime option: --sample-original-tiles ORIGINAL.
+Full-cache creation remains unnecessary for its metadata/precision checks.
+
+Memory is an explicit remaining constraint
+-----------------------------------------
+All498 native BFP8 matrices:28582543360B. CPU embedding excludes1350860800B,
+leaving497 device matrices27231682560B, plus353 original float weights10582016B.
+The installed seven-bank arena is only7x3GiB=22548578304B: this DOES NOT FIT.
+PioneerQ38NativeBfp8Plan.h is a PURE DATA proposal; it cannot open/allocate/
+extend/authorize device memory. It validates all851 exact shapes and stripes
+whole32-output-row native tile rows, original float weights,128-token KV,
+two delta slots,conv state and7x64MiB workspace into disjoint aligned extents.
+Under a HYPOTHETICAL3.75GiB/bank budget it proposes28032299008B total, about
+4.0046GB per bank. This is NOT proof that those ranges exist or are safe.
+Current3GiB/bank is explicitly refused, with no alternate recipe/CPU fallback.
+No installed bank limit/base/owner/guard is changed. Physical capacity/range/
+alias/firmware-reservation proof and a separately qualified native owner,
+loader and full-model numerical/performance tests remain required.
+
+Tests
+-----
+  sh tools/pioneer/tests/run_pioneer_q38_native_bfp8_weight_tile_tests.sh
+  sh tools/pioneer/tests/run_pioneer_q38_native_bfp8_plan_tests.sh
+  sh tools/pioneer/tests/run_pioneer_q38_native_weight_tile_tests.sh
+  sh tools/pioneer/tests/run_pioneer_blackhole_block_float_tests.sh
+
+All-BFP8 tests:118 synthetic converter/cache checks,36 Q4 tiles with lower
+aggregate squared error,all three storage formats/model widths/padded rows,
+source failure/epoch atomicity,cross-tile/chunk disk reads and ZERO conversion/
+packed reads on hit;3 forbidden driver/Work/validation macro selections.
+DATA plan tests:12 cases,all851 exact shapes,complete non-overlapping tensor/
+state/workspace coverage,capacity/shape/duplicate/context/refusal and failure
+atomicity; reversed source order preserves bank use. Existing mixed/codec
+regressions stay unchanged. Native SDK all-BFP8 and default mixed builds pass.
+These tests do not prove hardware/model quality or achieve20tokens/sec.

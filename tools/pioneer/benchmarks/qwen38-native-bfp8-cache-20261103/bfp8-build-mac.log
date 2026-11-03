@@ -1,0 +1,4 @@
+CONVERSION_SOURCE_SHA256 7db613bfdde463be7f933f25123a00dbe39928cbd8a070aa2481c6cb936753d0
+CONVERSION_LAYOUT ALL_BFP8_B_UNQUALIFIED
+BINARY_SHA256 1704c55dcbad850b5e0f991ed59dd61e023fef0e90621c45ebc70d4e412e5be2
+BUILD_ONLY CPU/userspace converted-weight cache;NO model conversion,installation,GPU,Work or speed proof

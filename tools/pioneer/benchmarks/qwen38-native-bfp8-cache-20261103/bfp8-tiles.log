@@ -1,0 +1,3 @@
+PASS CPU-only separate all-native-BFP8:118 checks,36 synthetic Q4 tiles lower aggregate squared error than BFP4;all Q8/Q4/Q6 independent original formulas,widths,padded rows,atomic source loss/epoch,cross-tile/chunk disk reads and ZERO conversion/packed reads on hit;NO real model quality,bank fit,driver,GPU or speed proof
+PASS all-BFP8 build guards:3 forbidden driver/Work/validation selections rejected
+CPU-only evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q38-native-bfp8-tiles.CA7OHuNb

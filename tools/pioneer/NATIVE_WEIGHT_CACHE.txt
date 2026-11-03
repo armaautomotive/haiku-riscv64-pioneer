@@ -12,6 +12,11 @@ quantization, see LOSSLESS_WEIGHT_CACHE.txt. That is a separate recipe and
 optional Assistant source; these experimental native BFP entries are NOT
 interchangeable with it.
 
+NATIVE_BFP8_WEIGHT_CACHE.txt documents the separate optional all-BFP8 recipe,
+authenticated original-model sampled precision and DATA-only arena proposal.
+It changes neither this default mixed recipe nor installed Work selection.
+It requires more memory and is not physically qualified or installed.
+
 Implemented components
 ----------------------
 PioneerModelWeightCache.{h,cpp}: generic authenticated derived-byte cache.

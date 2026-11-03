@@ -1,0 +1,2 @@
+PASS native-BFP8 DATA proposal:12 cases,all851 exact shapes,497 quantized matrices plus353 float weights,NO CPU embedding copy,128-token double-delta/KV/conv and7x64MiB workspace,disjoint page-aligned complete coverage;current3GiB/bank REFUSED,3.75GiB/bank HYPOTHESIS allocated28032299008;NO physical capacity,driver range,allocation,GPU or speed authority
+CPU DATA proposal only evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q38-native-bfp8-plan.XdOKQCUC

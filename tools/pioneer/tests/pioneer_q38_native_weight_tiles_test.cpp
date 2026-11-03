@@ -49,6 +49,7 @@ struct Source {
 		return (0.0625f*Scale(row,block,i/16))*(int((i+row+block)%64)-32);
 	}
 };
+#ifndef PIONEER_NATIVE_WEIGHT_TILES_FIXTURE_ONLY
 int main(int argc,char** argv) {
 	assert(argc==2);unsigned checked=0;
 	for(unsigned type:{8U,12U,14U})for(unsigned inputs:{5120U,6144U,17408U})for(unsigned outputs:{1U,17U,48U,64U}) {
@@ -100,3 +101,4 @@ int main(int argc,char** argv) {
 	}
 	printf("PASS CPU-only original Q8/Q4/Q6 native-weight tiles:%u checks;independent GGUF formulas,widths,padded rows,source loss/epoch atomicity,real converter-to-disk roundtrip and ZERO conversion on hit;NO GPU/model-quality/speed proof\n",checked);
 }
+#endif

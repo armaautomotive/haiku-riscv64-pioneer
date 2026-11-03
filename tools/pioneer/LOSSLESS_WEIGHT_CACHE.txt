@@ -78,7 +78,7 @@ Isolated warm-cache host-load probe (not inference)
   sh tools/pioneer/build_assistant_qwen27_cache_smoke.sh HAIKU_BUILD /absolute/new-probe
 
 The probe is compiled for the separately staged worker at
-/boot/home/pioneer-lossless-cache-20261103-a/HaikuAssistantQwen27-cached-generate-only,
+/boot/home/pioneer-lossless-cache-20261103-a/HaikuAssistantQwen27-cached-quiet-model-progress,
 not the installed Assistant. Its ONLY runtime option is --load-unload-only.
 It uses the actual Assistant client, requires verification progress for all851
 tensors and no fresh preparation, then requires known-clean unload and worker
@@ -103,11 +103,42 @@ the final host-ready snapshot also requires zero learned projections. Ten
 fake-session cases exercise the actual callback and scope. Full native SDK
 cached and flag-off workers link with that guard; neither replaces installation.
 
+First ACTUAL cached worker LOAD/UNLOAD CLOSED0: all851 verified cache hits,
+zero fresh preparation, host-ready497 and clean worker exit, NO Generate.
+The frozen OUTER parent CLOSED1 because stderr contained93 progress dots and
+a newline. It is NOT promoted to a passing outer test. Independent postterminal
+CPU metadata remains stable041/tag12/gen2,cold0/owner0,64 CPUs/full RAM; no
+retry/reset/power/driver change occurred. All original spent outputs remain.
+Pinned llama CONT=5 is numerically above WARN=3/ERROR=4: the worker's old
+">=WARN" log filter misclassified the default progress continuation as warning.
+The new worker explicitly preserves WARN/ERROR and routes model-loading
+progress through the framed callback, including final100% and channel/clock
+failure refusal. Thirteen actual-method CPU tests pass; neither stderr nor
+numerical comparators are relaxed. A separately named frozen quiet-progress
+host-load parent must independently pass before the GPU inference probe runs.
+
 pioneer_assistant_cache_host_trial.sh is a frozen, ONE-SHOT load/unload parent.
 It pins worker/probe/libraries/normal driver/admin/guard identities and idle
 metadata, preserves previous output paths, never sends Generate, and accepts
 only all851 cache hits and a known-clean exit. Failure grants no retry/reset/
 cleanup authority. Eleven fake-command flow cases are NOT physical proof.
+
+The new host parent is pioneer_assistant_cache_host_progress_trial.sh; it has
+separate host-progress outputs/one-shot token and leaves the first parent alone.
+The new inference parent, pioneer_assistant_cache_inference_trial.sh, requires
+that exact new host parent/worker and completed clean host records BEFORE one
+fixed Hello./four-token Work request through the actual client. Missing hits
+or conversion forbid Generate. Unknown execution closes only (no destructor
+Unload/retry/reset); successful Complete permits one known-clean Unload.
+Fifteen fake-peer and11+9 parent-flow/closed-host-admission cases pass. Those
+are not hardware proof. Timing diagnostics honor the worker's printed rounding
+intervals, retain CPU attention/state disclosure and require validation OFF.
+
+Build ONLY (no stage/run/install):
+  sh tools/pioneer/build_assistant_qwen27_cache_inference_smoke.sh HAIKU_BUILD /absolute/new-probe
+Launch --cached-generate-four-only ONLY through the frozen admitted parent,
+after its independent live host qualification. Four tokens alone do not prove
+model quality, comparative speedup, full-native inference or20tokens/sec.
 
 Tests
 -----
@@ -119,6 +150,10 @@ Tests
   sh tools/pioneer/tests/run_assistant_qwen27_load_budget_tests.sh
   python3 tools/pioneer/tests/assistant_qwen27_compute_gate_test.py
   python3 tools/pioneer/tests/assistant_cache_host_parent_test.py
+  python3 tools/pioneer/tests/assistant_cache_host_progress_parent_test.py
+  python3 tools/pioneer/tests/assistant_cache_inference_parent_test.py
+  python3 tools/pioneer/tests/assistant_qwen27_worker_progress_test.py
+  sh tools/pioneer/tests/run_assistant_qwen27_cache_inference_smoke_tests.sh
 
 The lossless fixture is an explicitly SYNTHETIC sparse851-tensor GGUF, not
 authentication evidence. ASan/UBSan/Werror checks four storage formats,

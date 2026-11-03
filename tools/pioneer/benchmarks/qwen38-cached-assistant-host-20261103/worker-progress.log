@@ -1,0 +1,2 @@
+PASS actual worker host progress:13 fake clock/channel cases;framed bounded progress/final100%,invalid/lost/backwards/error refusal;WARN/ERROR preserved and numeric-CONT not misclassified;NO model/card/driver authority
+CPU-only actual worker progress evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/assistant-qwen27-worker-progress.r8pthvri

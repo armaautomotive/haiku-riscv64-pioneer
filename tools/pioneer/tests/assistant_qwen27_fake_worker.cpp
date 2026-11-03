@@ -50,11 +50,11 @@ int main(int argc,char** argv) {
  const bool clockMode=!strncmp(mode,"clock-",6);
  if(clockMode) { if(strcmp(mode,"clock-start-error"))ClockBurst(f.id,mode); }
  else {
- if(!strcmp(mode,"cachewarm") || !strcmp(mode,"cacheconverted") || !strcmp(mode,"cachemissing")) {
-  Emit(A::Progress,f.id,UINT32_MAX,A::LosslessCachePreparation);
-  if(!strcmp(mode,"cacheconverted")) Emit(A::Progress,f.id,UINT32_MAX,"Preparing lossless weight cache: tensor 1/851, 1.0/1.0 MiB; no GPU session yet.");
+ if(!strcmp(mode,"cachewarm") || !strcmp(mode,"cacheconverted") || !strcmp(mode,"cachemissing") || !strncmp(mode,"cacheinfer-",11)) {
+  if(strcmp(mode,"cacheinfer-nobanner"))Emit(A::Progress,f.id,UINT32_MAX,A::LosslessCachePreparation);
+  if(!strcmp(mode,"cacheconverted") || !strcmp(mode,"cacheinfer-converted")) Emit(A::Progress,f.id,UINT32_MAX,"Preparing lossless weight cache: tensor 1/851, 1.0/1.0 MiB; no GPU session yet.");
   for(unsigned i=1;i<=851;i++) {
-   if(i==2 && !strcmp(mode,"cachemissing"))continue;
+   if(i==2 && (!strcmp(mode,"cachemissing") || !strcmp(mode,"cacheinfer-missing")))continue;
    char message[192];snprintf(message,sizeof(message),"Verifying lossless weight cache: tensor %u/851, 1.0/1.0 MiB; no GPU session yet.",i);
    Emit(A::Progress,f.id,UINT32_MAX,message);
   }
@@ -70,9 +70,31 @@ int main(int argc,char** argv) {
    continue;
   }
   if(f.kind==A::Unload) {
-   Record("unload\n"); Emit(A::Closed,f.id,0,!strcmp(mode,"badclose")?"wrong close":"QWEN27_KNOWN_CLEAN_END"); return 0;
+   Record("unload\n"); Emit(A::Closed,f.id,0,(!strcmp(mode,"badclose") || !strcmp(mode,"cacheinfer-badclose"))?"wrong close":"QWEN27_KNOWN_CLEAN_END"); return 0;
   }
   assert(f.kind==A::Generate && A::Question(f.text) && f.value>=1 && f.value<=32); Record("generate\n");
+  if(!strncmp(mode,"cacheinfer-",11)) {
+   assert(f.text=="Hello." && f.value==4);
+   if(!strcmp(mode,"cacheinfer-fatal")){Emit(A::Error,f.id,A::Fatal,"fake unproven execution");return 70;}
+   if(!strcmp(mode,"cacheinfer-reject")){Emit(A::Done,f.id,A::Rejected,"fake rejected request");continue;}
+   Emit(A::Text,f.id,0,!strcmp(mode,"cacheinfer-empty")?"":"four test tokens");
+   Emit(A::Done,f.id,A::Complete,!strcmp(mode,"cacheinfer-badstats")?
+    "P100A Qwen27B Work:3 output tokens,30.0s; warm generation2 samples/18.293s (0.109 tok/s). CPU attention/state; CPU validation OFF; weights retained; experimental.":
+    !strcmp(mode,"cacheinfer-nan")?
+    "P100A Qwen27B Work:4 output tokens,30.0s; warm generation3 samples/18.293s (nan tok/s). CPU attention/state; CPU validation OFF; weights retained; experimental.":
+    !strcmp(mode,"cacheinfer-badrate")?
+    "P100A Qwen27B Work:4 output tokens,30.0s; warm generation3 samples/18.293s (1000.000 tok/s). CPU attention/state; CPU validation OFF; weights retained; experimental.":
+    !strcmp(mode,"cacheinfer-validation")?
+    "P100A Qwen27B Work:4 output tokens,30.0s; warm generation3 samples/18.293s (0.164 tok/s). CPU attention/state; CPU validation ON; weights retained; experimental.":
+    !strcmp(mode,"cacheinfer-trailer")?
+    "P100A Qwen27B Work:4 output tokens,30.0s; warm generation3 samples/18.293s (0.164 tok/s). CPU attention/state; CPU validation OFF; weights retained; experimental. unexpected trailer":
+    !strcmp(mode,"cacheinfer-fast")?
+    "P100A Qwen27B Work:4 output tokens,0.4s; warm generation3 samples/0.150s (20.000 tok/s). CPU attention/state; CPU validation OFF; weights retained; experimental.":
+    !strcmp(mode,"cacheinfer-rounded")?
+    "P100A Qwen27B Work:4 output tokens,0.4s; warm generation3 samples/0.150s (19.935 tok/s). CPU attention/state; CPU validation OFF; weights retained; experimental.":
+    "P100A Qwen27B Work:4 output tokens,30.0s; warm generation3 samples/18.293s (0.164 tok/s). CPU attention/state; CPU validation OFF; weights retained; experimental.");
+   continue;
+  }
   if(!strcmp(mode,"eof")) return 70;
   if(!strcmp(mode,"fatal")) { Emit(A::Error,f.id,A::Fatal,"unknown execution"); return 70; }
   if(!strcmp(mode,"wrongid")) { Emit(A::Text,f.id+1,0,"wrong request"); return 70; }

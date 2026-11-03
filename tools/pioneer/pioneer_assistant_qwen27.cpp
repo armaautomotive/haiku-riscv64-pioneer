@@ -23,7 +23,9 @@ using Assistant27Session=PioneerQ38NativeSession;
 #endif
 namespace A=Assistant27;
 static double Now() { timespec t={}; return clock_gettime(CLOCK_MONOTONIC,&t)?-1:double(t.tv_sec)+double(t.tv_nsec)*1e-9; }
-static void Log(ggml_log_level level,const char* text,void*) { if (level>=GGML_LOG_LEVEL_WARN) fputs(text,stderr); }
+// CONT is numerically ABOVE ERROR in the frozen ABI, not a warning/error.
+// Keep genuine diagnostics; host progress belongs on the framed channel.
+static void Log(ggml_log_level level,const char* text,void*) { if (level==GGML_LOG_LEVEL_WARN || level==GGML_LOG_LEVEL_ERROR) fputs(text,stderr); }
 struct Runtime {
  Assistant27Source source;
  PioneerQ38NativeTransport io;
@@ -50,6 +52,15 @@ struct Runtime {
  static bool Ready(void* p) { auto& r=*static_cast<Runtime*>(p); return !r.lost && r.source.Ready() && !r.session.Failed(); }
  static bool Finish(void* p) { return static_cast<Runtime*>(p)->session.Finish(); }
  static void Abort(void* p) { static_cast<Runtime*>(p)->session.Abort(); }
+ static bool HostModelProgress(float part,void* p) {
+  auto& r=*static_cast<Runtime*>(p);
+  if (r.lost || !isfinite(part) || part<0 || part>1) return false;
+  const double now=Now(); if (now<0 || now<r.lastProgress) return false;
+  if (part<1 && now-r.lastProgress<.5) return true;
+  r.lastProgress=now; char status[192];
+  snprintf(status,sizeof(status),"Loading Qwen27B host model:%.1f%%; P100A upload deferred until first reply.",double(part)*100);
+  return r.Emit(A::Progress,unsigned(part*1000),status);
+ }
  static bool UploadProgress(void* p,uint64_t bytes,uint64_t total) {
   auto& r=*static_cast<Runtime*>(p); if (!r.PollCancel()) return false;
   double now=Now(); if (now-r.lastProgress<.5 && bytes!=total) return true;
@@ -90,6 +101,7 @@ struct Runtime {
   llama_log_set(Log,nullptr); llama_backend_init();
   llama_model_params mp=llama_model_default_params(); ggml_backend_dev_t hostOnly[]={nullptr};
   mp.devices=hostOnly; mp.n_gpu_layers=0; mp.load_mode=LLAMA_LOAD_MODE_MMAP; mp.use_extra_bufts=false;
+  mp.progress_callback=HostModelProgress; mp.progress_callback_user_data=this;
   if (!Emit(A::Progress,UINT32_MAX,"Loading Qwen27B host mmap/context; P100A upload occurs on first reply.")) return false;
   model=llama_model_load_from_file_ptr(file,mp); if (!model || !source.Ready()) return false;
   PioneerQ38GgmlDispatch d={this,&source.Model(),Ready,Multiply,Finish,Abort};

@@ -1,0 +1,57 @@
+Separate all-BFP8 native weight conversion,original sample and DATA arena plan
+============================================================================
+CPU-only; no new hardware execution,bank policy/driver change,installation,
+full-model quality acceptance or inference speed claim.
+
+New optional --all-bfp8 builder produces a distinct named CPU utility/recipe
+and fingerprints the selected mode and converter. Default mixed format is
+unchanged; installed old utility/cache untouched. Lossless Assistant cache
+source fingerprint independently remains bb0e60700ff8345b8ea493c7c8e178c5400c3141969cb61ea74693139721d25a.
+New all-BFP8 source fingerprint7db613bfdde463be7f933f25123a00dbe39928cbd8a070aa2481c6cb936753d0
+Mac utility1704c55dcbad850b5e0f991ed59dd61e023fef0e90621c45ebc70d4e412e5be2
+Haiku utilitycd0eb43fa703cecffc474f0cc2bde2a4001e27cd13f7a5637a1455d5226df31b
+Both native builds ACTUALLY0/stderr0; default mixed Mac build also0/stderr0.
+The binaries are not installed/staged on Pioneer and are not compared for
+whole-binary reproducibility. No original model/payload is committed.
+
+ASan/UBSan/Werror new conversion/cache tests118 cases,36 Q4 tiles lower aggregate
+squared error;source loss/epoch atomicity,cross-chunk reads and zero conversion/
+packed reads on cache hit.3 driver/Work/validation macro selections refused.
+Existing mixed converter118 and independent codec2252tile/2306048value regressions
+pass unchanged. Native DATA plan12 cases test exact851 shapes and full coverage,
+order independence,capacity/context/shape/duplicate refusal,failure atomicity.
+
+Actual Mac original read-only sample43943 CLOSED0/stderr0. Subsequent updated
+sample+DATA plan82837 also CLOSED0/stderr0. Each independently hashes the FULL
+same-open18973870528-byte source and requires c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+before first/middle/last tiles of all498 quantized matrices (1494tiles).
+Original Q4:193matrices/579tiles,mixed relative L2 .112448567 vs all-BFP8 .006959886.
+Q8:288/864,.007339821 both;Q6:17/51,.007247010 both. Weight SAMPLE precision only;
+no logits,perplexity,complete-output equivalence or new quality tolerance.
+
+All-BFP8 matrix payload28582543360B. Exclude CPU embedding1350860800B ->497
+matrix payload27231682560B;353 float weights10582016B unchanged. Installed
+7x3GiB arena22548578304B explicitly fails; no automatic smaller recipe/fallback.
+Pure DATA hypothetical3.75GiB/bank plan,128tokens,two delta slots,KV/conv,
+7x64MiB workspace:weights27242264576B,state316276736B,workspace469762048B,
+allocated aligned28032299008B. Actual original metadata and synthetic exact
+metadata agree on per-bank use4004589568..4004638720B. No physical range/base/
+owner/guard/capacity is extended or authorized;safe high-range/alias/reservation
+qualification and a new native consumer remain required before hardware use.
+
+Detailed contracts/commands:NATIVE_BFP8_WEIGHT_CACHE.txt. Original strict Work
+and validation stay separate. Prior BFP8 physical arithmetic diagnostic remains
+unqualified. Full native27B and20tok/s UNMET; no new throughput measurement.
+
+Additional actual production-utility bounded cache proof:combined Mac parent
+97465 CLOSED0. First creates native BFP8 tensor7 blk.0.ffn_gate.weight (the
+ORIGINAL Q4 matrix),94699520B/1445conversion_chunks. Separate fresh invocation
+reports cache hit with ZERO conversion_chunks. Both authenticate full original
+on their respective SAME open FD;both stderr0. Recipe SHA
+551c6713a31c749d0dad82e616c592f01aba6854af8781f6756b4f60d85bc897.
+No full new cache generated, no Pioneer install/stage/GPU use of these bytes,
+no speedup claim. Local generated payload is not committed;raw diagnostic
+logs accompany this report.
+Whole derived file SHA a61faf385e1090e7d19777774c8c4c491ce456b07dcb5924ef1e28403e1e73de;
+94746016B,owner501,single link,mode0400. This hash is not the original model
+SHA or a hardware/numerical-quality acceptance token.
