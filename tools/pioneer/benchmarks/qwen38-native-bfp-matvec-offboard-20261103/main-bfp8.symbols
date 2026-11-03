@@ -1,0 +1,7 @@
+00006000 T _start
+00070000 T native_bfp_entry
+0007000c T native_bfp_done
+00070038 T native_bfp_park
+00070040 T native_bfp_fault
+00070058 T native_bfp_fault_park
+00070060 T native_bfp_main

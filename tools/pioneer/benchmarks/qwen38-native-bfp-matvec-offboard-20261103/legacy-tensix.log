@@ -1,0 +1,2 @@
+Offline fixed image: 2401 steps, 13 manual drains, two nonzero matrix fixtures; no hardware timing modeled
+PASS: fixed RV32I image, whitelisted MMIO and reference matrix fixture; no hardware operation

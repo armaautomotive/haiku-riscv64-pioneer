@@ -1,0 +1,98 @@
+Native cached-weight matvec prototype (OFFBOARD ONLY)
+====================================================
+
+Implemented
+------------
+PioneerQ38NativeBfpMatvec.h emits a DISTINCT floating operand path for one
+32x32 cached BFP4_B/BFP8_B tile and a 32-element BF16 activation vector.
+It uses one complete native SrcA unpack and one SrcB unpack, then queued
+matrix phases. There is no GGUF bit decoding, SFPU affine reconstruction,
+scalar dot product, CPU reference or old-worker fallback in the RV32 image.
+
+The CPU converter/cache from NATIVE_WEIGHT_CACHE.txt produces the weight
+bytes this path consumes. The production cache format and installed cache
+command are unchanged. The new kernel remains UNSELECTED by the live driver,
+Assistant and Work/Validation modes. CPU reference arithmetic exists only
+in the explicitly offboard test programs, not the new device image.
+
+Geometry and precision
+-----------------------
+Weights are N32/K32, four native 16x16 faces, with the 64 shared-exponent
+bytes first. UNP0 transposes WITHIN each face into all 64 SrcA rows. SrcB
+holds eight repeated rows of the first K16, followed by eight of the second.
+Four face products accumulate into Dst rows32 and40; the first row of each
+is the desired 32-output vector. Last MVMUL alone flips/releases both banks.
+
+The native hardware ID is NOT the mantissa width: BFP4_B=7, BFP8_B=6,
+BF16=5. ID10 is LF8 and is NOT used. Both explicit source-format overrides
+and implied-format disables are set. Accumulation/readback is FP32; integer
+math and stochastic rounding are disabled.
+
+BFP4 weights with BF16 activations need phases0 AND2. BFP8 weights with
+BF16 activations need all4. Skipping phase2 drops the activation's final
+mantissa bit even for BFP4 weights. No instruction/config/L1 rewrite or
+output read interleaves with the queued matrix phase batch. Real completion
+is required before reading outputs or reusing a tile. Tests use finite
+normal/zero operands; NaN/Inf/subnormal/overflow behavior is not qualified.
+
+Prototype image
+----------------
+The fixed RV32I program executes two independent tile jobs to exercise both
+source banks. Weights at90000 (576/1088B) and activations at91000 (512B)
+have owned 16-byte prefixes. Output is two copies of 32 FP32 words at92000.
+Code starts70000,boot jump6000,private stack6e000..70000,status17ffc0.
+No NoC/GDDR/PCIe/ARC/clock/reset commands or uploader exist in this image.
+The startup requires an independently established exclusive,reset/idle
+coprocessor context. Neither Setup nor a software pass establishes it.
+
+The bounded PCBuf completion protocol parks on failure without cleanup or
+retry. A future physical owner still needs its own hardware admission,
+watchdog,source/lifetime binding,unknown-resource retention,END audit and
+safe restoration. These files do not grant a physical launch or hot swap.
+
+Build and tests (host Mac + configured Haiku cross tools)
+--------------------------------------------------------
+  python3 tools/pioneer/build_q38_native_bfp_matvec.py \
+    /Volumes/HaikuBuildLocal/generated.riscv64 /absolute/new-output 4
+
+Choose 8 instead of 4 for the BFP8 image. The builder only compiles; it does
+not install, open a device or convert a model. Fresh output paths required.
+
+  sh tools/pioneer/tests/run_pioneer_q38_native_bfp_matvec_tests.sh
+  sh tools/pioneer/tests/run_pioneer_q38_native_bfp_image_tests.sh \
+    /Volumes/HaikuBuildLocal/generated.riscv64
+  sh tools/pioneer/tests/run_pioneer_q38_native_bfp_real_tests.sh \
+    /Volumes/HaikuBuildLocal/generated.riscv64 /absolute/original-27B.gguf
+
+The last test authenticates the SAME OPEN complete c600... original GGUF
+and all851 tensor shapes. It selects first/middle/last tiles from each of
+Q8_0/Q4_K/Q6_K, caches them, executes the ACTUAL compiled RV32 instruction
+bytes against a separate unpack/matrix ISA observer, and checks cache hits
+add no conversion calls. Activations are SYNTHETIC BF16, not a full prompt.
+The original strict RV32 Step decoder is reused unchanged. No accelerator
+is opened by any test. ASan/UBSan/-Werror remain enabled.
+
+Quality warning and remaining work
+-----------------------------------
+This changes numerical representation: GGUF->native BFP is requantization.
+Sampled BFP4 embedding-tile products differ by about13..16percent in L2
+from original Q4_K weights for the synthetic inputs tested. Sampled BFP8
+products differ about0.5..1.8percent. These are small K32 tile diagnostics,
+NOT full-projection,full-model/perplexity or end-to-end acceptance results.
+Do not hide this loss,relax the old comparator or promote a fast-but-wrong
+Work mode. Sensitive-tensor precision and full-model quality need evaluation.
+
+Still required:independent isolated-card format/math qualification,proper
+fullK accumulation/streaming,source/recipe-bound bank and arena planning,
+on-card activation preparation,cohort/controller integration,complete model
+quality and honest physical performance measurements. No live driver or
+Assistant speedup is claimed. The20tokens/sec target remains unmet.
+
+Primary facts audited (no vendor code copied)
+---------------------------------------------
+https://github.com/tenstorrent/tt-metal/blob/81989dcdb8f9b340c932ae7a71a346f4f08703eb/tt_metal/hw/inc/blackhole/tensix_types.h
+https://github.com/tenstorrent/tt-metal/blob/81989dcdb8f9b340c932ae7a71a346f4f08703eb/tt_metal/hw/inc/blackhole/cfg_defines.h
+https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/WormholeB0/TensixTile/TensixCoprocessor/UNPACR_Regular.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/WormholeB0/TensixTile/TensixCoprocessor/MVMUL.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/WormholeB0/TensixTile/TensixCoprocessor/MatrixUnit.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/WormholeB0/TensixTile/TensixCoprocessor/SrcASrcB.md

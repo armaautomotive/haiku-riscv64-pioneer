@@ -1,0 +1,2 @@
+Assertion failed: (maxStack==48), function main, file pioneer_q38_native_bfp_image_test.cpp, line 108.
+tools/pioneer/tests/run_pioneer_q38_native_bfp_image_tests.sh: line 12:  9915 Abort trap: 6           ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/test" "$temporary/bfp4" "$temporary/bfp8"

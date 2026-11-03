@@ -1,0 +1,2 @@
+PASS OFFBOARD NEW native BFP4_B/BFP8_B matvec:268 checks;1024 weights ->ONE A unpack/ONE B unpack,no GGUF decode/SFPU affine;all32 outputs/eight rows/dual-bank repeated jobs/asymmetric producer delays/full BF16 fidelity,phase/transpose/producer/flip/completion faults,cached bytes ->opcode observer with ZERO conversion on hit;NO physical timing,model quality,driver or Work grant
+OFFBOARD native BFP matvec evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-native-bfp-matvec.qzog1YFd

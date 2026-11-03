@@ -1,0 +1,6 @@
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+cd686e4ca99c758667748edd07980ddd045b1f8f892deffd007a485eb2cbfca8 1808 text.bin
+OFFBOARD_BUILD_ONLY BFP4_B/FP32 matvec;NO lifecycle,driver,hardware,model-quality,Work or timing permission
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+c21f4692d340b0bab397a513a315b9884b898804022e35948b2d029a6a128b19 1876 text.bin
+OFFBOARD_BUILD_ONLY BFP8_B/FP32 matvec;NO lifecycle,driver,hardware,model-quality,Work or timing permission

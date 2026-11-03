@@ -1,0 +1,1 @@
+/private/tmp/pioneer-native-bfp-panel-20261103.9KBWqzpR/clean-source/tools/pioneer/blackhole_q38_native_bfp_matvec.cpp:29:21:unsigned int native_bfp_main()	48	static

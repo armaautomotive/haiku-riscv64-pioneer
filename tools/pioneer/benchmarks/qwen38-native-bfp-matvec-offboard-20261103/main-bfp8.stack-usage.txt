@@ -1,0 +1,1 @@
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_q38_native_bfp_matvec.cpp:29:21:unsigned int native_bfp_main()	48	static

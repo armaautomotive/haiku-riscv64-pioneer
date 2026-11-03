@@ -1,0 +1,5 @@
+In file included from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_native_bfp_image_test.cpp:3:
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_native_bfp_matvec_test.cpp:24:13: error: unused function 'Equal' [-Werror,-Wunused-function]
+   24 | static bool Equal(const std::array<float,32>& a,const std::array<float,32>& b) {
+      |             ^~~~~
+1 error generated.

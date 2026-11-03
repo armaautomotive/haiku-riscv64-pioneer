@@ -1,0 +1,121 @@
+NEW native BFP cached-weight matvec:OFFBOARD prototype,NOT a live backend
+========================================================================
+2026-11-03. Base2f2c1288781ad0ce3575dd204627a03f0fe44d0f. Previous goal
+turn was PROGRESS:disk cache implemented/tested/installed/pushed. This turn
+implements distinct native-weight RV32 kernels and actual-image observers.
+No P100A compute job,driver swap,Assistant update or new tokens/sec result.
+20tok/s and accepted usable full native27B Work remain UNMET;goal ACTIVE.
+
+CURRENT CORRECTED ENCODING ONLY
+--------------------------------
+BFP4_B hardwareID7 (not bit width4 or LF8 ID10);BFP8_B ID6;BF16 ID5.
+Pinned official tensix_types.h SHA:
+ 9770c4460d96749d02fe3b8eb3ed30b431d85fcd101973a127202c914fd32c7c
+Pinned cfg_defines.h SHA:
+ bc2636abc3ea04e6ca322923e6f2713b242857d021d8ef39b9180a14bcb1a5b8
+Source revision81989dcdb8f9b340c932ae7a71a346f4f08703eb;ISA8a34e25e.
+Independent numeric enum assertion added after external cross-check below.
+
+Main and clean-source actual-image builds/tests BOTH ACTUALLY terminate0,
+stderr0,after this correction. Both boot/text payloads byte-identical cmp0:
+ boot d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4B
+ BFP4 adcec3cf5a66a2f00b979746928e1f8525a1c2274f37d0f3e35d3b6468ee6ef3 1808B
+ BFP8 c21f4692d340b0bab397a513a315b9884b898804022e35948b2d029a6a128b19 1876B
+Whole ELF/debug identity is NOT claimed;these are actual code payloads.
+New image startup/status tags do NOT grant device or loader authority.
+
+What the new path actually does
+--------------------------------
+One native1024-weight A unpack and one BF16 B unpack per32x32 tile;transpose
+within all4 faces into full64-row SrcA bank;route both K16 activation halves
+to the correct faces and32 output columns. Explicit floating formats,FP32
+destination,no integer math,correct0/2(BFP4) or0/1/2/3(BFP8) fidelity.
+Queued same-unit matrix operations;last only flips both source banks.
+Final real completion before scalar result reads or next-tile reuse.
+Device program contains no scalar floating dot,GGUF decode,SFPU affine,
+CPU/model reference,old-worker fallback,NoC/GDDR/host/ARC/clock/reset path.
+
+This is a finite-normal/zero K32 local-L1 prototype,not fullK/full-model
+execution. Private reset/idle FPU/source ownership is an ENTRY REQUIREMENT,
+not something Setup proves. No native lifecycle/watchdog/uploader exists.
+The existing source-cache conversion recipe,installed cache program,
+driver/Work/Validation path and ALL old comparators remain unchanged.
+
+Closed current tests
+----------------------
+Main+clean ASan/UBSan/-Werror BOTH ACTUALLY0/stderr0:
+ * 268 direct-emitter checks:all32 outputs/eight replicated rows,32 changing
+   jobs across BOTH source banks,4 asymmetric producer schedules,exact
+   independently decoded cached weights,fidelity phase omissions,transpose,
+   missing source publication,missing final flip/completion,invalid selector,
+   persistent cache miss/hit -> instruction observer. Hit adds0 conversions.
+ * 37 ACTUAL compiled RV32I-image checks. Reuses the project's strict RV32
+   Step decoder unchanged;new fixed memory/MMIO and independent BFP observer.
+   Both formats,32 fixtures,total two real program jobs per fixture,all32
+   output columns. Readback/earlyACK/finalACK/source failures expose no
+   accepted outputs. Lost final ACK reaches the image's inert fault park
+   with math completion unproven;no automatic cleanup/next job is modeled.
+ * SP allocation48B/touched40B,observed through actual executed instructions;
+   compiler stack-usage report independently48B. Read/write range whitelist
+   forbids scalar weight/input writes and NoC/PCIe/CSR/reset operations.
+ * Existing codec2252tiles/2306048values,cache43 checks/0 unsupported,original
+   quantization-to-native/cache118 checks,AND old Tensix assembly/fixture
+   regression all ACTUALLY0/stderr0. No old expected bits/tolerance changed.
+
+Real learned-weight cache -> actual compiled image (still OFFBOARD)
+-------------------------------------------------------------------
+Main+clean BOTH ACTUALLY0/stderr0. Each independently authenticates SAME OPEN
+original18973870528B GGUF/all851 tensor shapes,full SHA:
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+3 types xfirst/middle/last tile xcreate/hit =18 tile/load checks per tree.
+Uses its own explicitly TEST-ONLY key,not the installed runtime cache key.
+Cumulative producer count stays1 on hit:ZERO ADDITIONAL conversion calls.
+Inputs are SYNTHETIC BF1632-element vectors,NOT actual prompt activations.
+All sampled actual-image outputs agree EXACTLY with the high-precision
+cached-weight oracle (observed maximum difference0);two copies agree.
+The separately PREDECLARED8*float_epsilon*sumAbs accumulation bound is only
+for this NEW offboard floating representation,NOT old/model acceptance.
+It was nonbinding in these samples. Hardware floating order remains unproven.
+
+CRITICAL numerical-loss DATA,not a model-quality pass
+------------------------------------------------------
+Tile output relative L2 versus ORIGINAL GGUF weights,same synthetic inputs:
+ Q8_0 blk.0.attn_gate.weight:0.00623590469,0.00690059951,0.00948033959
+ Q4_K token_embd.weight:0.162051145,0.130887306,0.151301598
+ Q6_K output.weight:0.00625505129,0.00462683876,0.0179244057
+Thus native BFP4 adds about13..16percent sampled product error here;BFP8
+about0.46..1.79percent. This is requantization,NOT lossless repacking. No
+full projection,generation,perplexity or model acceptance follows from the
+tile result. Sensitive-tensor precision policy and FULL model quality still
+need evaluation before Work/Assistant promotion. Do not weaken old gates.
+
+Failed/superseded attempts retained honestly
+---------------------------------------------
+1.Initial actual-image host harness compilation fails -Werror unused shared
+  Equal helper. Shared helpers now inline/used;warning flags remain intact.
+2.Initial image test confuses minimum stack STORE address with allocated SP
+  frame and asserts48 versus observed40. Corrected observer now separately
+  tracks actual SP48 and touched40,retaining exact48 allocation assertion.
+  Native code was unchanged by this test repair.
+3.INITIAL PROTOTYPE/OBSERVER BOTH used formatID10 for BFP4. Their software
+  passes did NOT establish the hardware encoding! Pinned external enum check
+  proves10=LF8,7=BFP4_B. Fixed producer+observer and added independent enum
+  assertion BEFORE ANY DEVICE USE. Historical cd686e4c BFP4 code is INVALID
+  for intended BFP4 hardware use;only CURRENT adcec3cf applies. All main/
+  clean direct,image and learned-weight checks were rerun after correction.
+  This does not change the cache's mantissa-width enum4/8 or cached bytes.
+
+Preserved physical state and next work
+---------------------------------------
+One fresh READONLY health call ACTUALLY0/stderr0:stable041 SHA unchanged,
+tag12/gen18,quiesced0/cold0/owner0/open1/guard1,no project compute parent,
+64 CPUs/full137034936320B RAM/free130489917440B. UART never opened. No
+reboot,power,SD,mains,hardware,network,kernel,Assistant,cache install or
+driver change this turn. No new model timing;prior~0.1643tok/s stands.
+
+Next:independent isolated-card format/math qualification and safe owner;
+then fullK accumulation/streaming,source/recipe-bound native bank planning,
+on-card activation production,full cohort/model quality and real performance.
+Do not grant a live launch based on these tests or replace current Work.
+No learned payload/model/cache entry/binary is committed. Only closed logs
+and source are archived alongside this report. See ../NATIVE_BFP_MATVEC.txt.
