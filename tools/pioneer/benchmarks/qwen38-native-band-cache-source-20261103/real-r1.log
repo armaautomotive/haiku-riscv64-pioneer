@@ -1,0 +1,6 @@
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+37c4a6564b1ad0574fbca4ed37f0d6b7e1aac5a1d27d5ba22362b1fc47e0f397 1700 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 5120 PHASES 4 DIRECT 1 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+19d109aa7b735e46e1cd8d7e03b48e66c75c55b7b47a258ceee9c41598056fd7 1652 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 5120 PHASES 1 DIRECT 1 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission

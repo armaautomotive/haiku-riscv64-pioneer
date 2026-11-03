@@ -67,6 +67,7 @@ struct BandRV32:Machine {
 		return true;
 	}
 };
+#ifndef PIONEER_NATIVE_BFP_BAND_IMAGE_ONLY
 int main(int argc,char** argv) {
 	assert(argc==5);const unsigned width=unsigned(std::stoul(argv[2])),phases=unsigned(std::stoul(argv[3]));
 	assert(!strcmp(argv[4],"mmio") || !strcmp(argv[4],"direct"));const bool direct=!strcmp(argv[4],"direct");
@@ -107,3 +108,4 @@ int main(int argc,char** argv) {
 		printf("PASS actual full-K failure controls:%u cases;config/initial/final completion fault park before result,missing producers/unreleased banks refuse before output,all3 omitted fidelity terms differ from full reference,invalid widths NO command/config IO;NO recovery/reset/physical proof\n",failures);
 	}
 }
+#endif

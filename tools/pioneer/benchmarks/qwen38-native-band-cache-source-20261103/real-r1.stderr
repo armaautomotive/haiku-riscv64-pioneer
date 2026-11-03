@@ -1,0 +1,4 @@
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_native_bfp_band_real_source_test.cpp:38:111: error: use of undeclared identifier 'geteuid'
+   38 |         struct stat directory{};assert(!lstat(argv[2],&directory) && S_ISDIR(directory.st_mode) && directory.st_uid==geteuid() && (directory.st_mode&07777)==0700);
+      |                                                                                                                      ^
+1 error generated.

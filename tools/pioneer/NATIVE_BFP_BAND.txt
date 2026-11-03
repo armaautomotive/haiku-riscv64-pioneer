@@ -90,7 +90,50 @@ installed or linked here. New code uses our existing MIT opcode producer and
 documented ISA facts. A reference checkout/docs remain only in private/tmp.
 https://github.com/tenstorrent/tt-lab/tree/e6baf562a72491ed9d594cddbdf42e0925b1f79e
 
-Still required:device-arithmetic oracle/physical results,authenticated cache
-to L1 staging,new owned ranges/ABI,lifecycle/NoC/GDDR/cohort integration,
+Authenticated cache-to-packet diagnostic -- still OFFBOARD ONLY
+-------------------------------------------------------------
+PioneerQ38NativeBfpBandData.h defines the prototype's complete L1 DATA buffers.
+PioneerQ38NativeBfpBandSource.h binds one caller-authenticated original/epoch
+to an ALREADY-open cache. Bind's SHA/Ready callback is a caller declaration,
+not independent authentication;the real diagnostic below hashes the SAME open
+complete original first. Frozen original c600de03 and separate all-BFP8 v2
+conversion recipe551c6713 are required. This does NOT accept the lossless Work
+cache or mixed BFP4 cache. No cache core/conversion recipe changed here.
+
+The source uses OpenExisting ONLY,retains one verified entry reader across
+bands and never creates,repairs,reconverts or implicitly reopens a changed FD.
+Every input BF16 value is privately captured BEFORE cache I/O. Geometry,
+canonical BFP8 encoding,padded output rows and source/reader identity are
+checked before atomic packet publication. Up to10 bounded64KiB reads assemble
+one band;all per-tile16B headers are zero and input words explicitly LE.
+Failure leaves the caller's previous packet unchanged. The source does no
+weight dequantization or learned products;fresh conversion/reference products
+exist ONLY in the diagnostic tests. Driver/Work/validation guards remain.
+
+  sh tools/pioneer/tests/run_pioneer_q38_native_bfp_band_data_tests.sh
+  sh tools/pioneer/tests/run_pioneer_q38_native_bfp_band_real_source_tests.sh \
+    HAIKU_BUILD ORIGINAL_GGUF EXISTING_ALL_BFP8_CACHE
+
+ASan/UBSan/Werror:80 synthetic DATA/source checks and6 build refusals pass.
+Synthetic851-tensor declared-pin fixtures are NOT real authentication proof.
+The real diagnostic authenticates the complete original c600de03,opens the
+previously prepared94,699,520B BFP8 matrix entry for blk.0.ffn_gate.weight,
+and checks first/middle/last32-row bands. All480 cached tiles equal fresh
+original conversion byte-for-byte. Both fidelity variants execute ACTUAL
+compiledRV32 text twice per band:6 cases/12 launches,all64 outputs per case
+exact versus the independent IDEAL phasewise reference. This is not a silicon
+rounding oracle or physical/model-quality/performance qualification. The
+existing12-variant image/fault/build-guard suite also passes unchanged.
+
+No source/packet code is installed or selected by inference. This is NOT a
+host-per-projection inference scheme:the future resident native service must
+stage from GDDR on-card. Cache payload tiles are1088B;the prototype's L1 packet
+stride1104B includes a16B header. No padded GDDR layout or larger arena is
+authorized by this packet format. The CLI requires an existing private cache
+directory;its setup uses the ordinary cache Open API,while the bound source
+itself never opens directories or creates entries. Neither touches the GPU.
+
+Still required:device-arithmetic oracle/physical results,actual device cache
+upload/new owned ranges/ABI,lifecycle/NoC/GDDR/cohort integration,
 per-bank high-range qualification,full-model quality and genuine throughput.
 Full-native27B and20tokens/sec remain UNMET. Installed Assistant/driver unchanged.

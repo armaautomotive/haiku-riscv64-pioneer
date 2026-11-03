@@ -1,0 +1,3 @@
+PASS native cache-to-band DATA:80 checks;all widths/padded rows/fidelity variants,zero headers/exact payload and BF16 bytes,bounded chunk reads,atomic failure,invalid/corrupt/source-revoked refusal;frozen original/recipe/tensor key,no create/repair/conversion in bound source,changed reader NOT reopened;SYNTHETIC declared pin is NOT authentication,NO GPU/model-quality/speed proof
+PASS native band DATA/source build guards:6 driver/Work/validation selections refused
+CPU-only native band data evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-native-band-data.R2CaVzvv
