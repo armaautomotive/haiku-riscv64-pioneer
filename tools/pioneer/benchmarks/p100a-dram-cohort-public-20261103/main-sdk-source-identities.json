@@ -1,0 +1,15 @@
+{
+  "/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp": "8d64afe4b69fb1f5732cb6f47f3246a986ab9798836ce4fc221ce21eb9a4e0e8",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc": "e3e2ac16af410a331e4531583c7e3df059395464247e61d565e776177a2afebb",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h": "b08e693192e8fa6a77aff1c8897188c3c2898b34b159f09b992d3aeab05c7fd0",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h": "9c3043e99906ea51fb8997e14b3b3eee6c53d9661d4a8e99c8de5b7af6009011",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc": "fc8056038828cd76d3f2f612350f16b5670842d0e9baaff48d345de1c016a35b",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortReadSweepOwner.h": "2c77793793071d852717559080be7c7a9b19b0c3f5cbccd8ceed72f7d1c3c1a3",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholeDramCohortReadSweepImage.h": "284c25cb7ae2060ae153a8768113cbd92a9ad274fa11e672cc20127049804b92",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortProtocol.h": "49bddb3c95a1c8310aeae05c0482fe4a6ae045616d789d3422240ea896ddc6ff",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortControl.inc": "9b9f2058d849aeb92bbb208db73d34895d6bb49d503f7c2a63aaf1f4e8bc046c",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerDramCohortReadSweep.h": "17455fad468ed73d8974aeb1bdd1dd52939cdfe08c6332f151a2c9aea329bd0a",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerDramCohortHostBracket.h": "b8921a3555f145a290019d7db6b72bcf93429914d9e64fd72be089d7deb8455f",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/pioneer_dram_cohort.cpp": "33415ab10e8c014035e60c271e0a0b999b10930566e0e3e3e2e2e411c80b6243",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_dram_cohort_diagnostic.py": "5e16f3b7aed9c1f99ab2f61db725a462564a3842ccbdf1c92b6a033e23462aff"
+}

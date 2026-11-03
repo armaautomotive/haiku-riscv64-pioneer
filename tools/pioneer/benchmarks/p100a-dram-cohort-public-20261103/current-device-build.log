@@ -1,0 +1,3 @@
+boot 4 d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+text 8760 bdfca6485d8f2c20f14bec8e0315b780987784a0027e8dacede82729acedb33b
+BUILD_ONLY seven-bank/eight-worker cohort;ONE coordinator clock including release skew/polls;NO native lease/snapshot/STOP/HOLD/restore,hardware,frequency,GBps,capacity,model or Work proof

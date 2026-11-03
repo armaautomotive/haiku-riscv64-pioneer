@@ -1,0 +1,7 @@
+Assertion failed: (!closed && ioCalls==before && !deletes && !pciWrites), function main, file pioneer_dram_cohort_public_test.cpp, line 108.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_dram_cohort_public_tests.py", line 13, in <module>
+    subprocess.run([str(binary)],check=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-dram-cohort-public-20261103.zRPFHo/main-public-r3/public-test']' died with <Signals.SIGABRT: 6>.

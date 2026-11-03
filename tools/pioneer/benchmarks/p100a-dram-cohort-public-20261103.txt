@@ -1,0 +1,143 @@
+Bounded seven-bank diagnostic77: source/SDK/interface qualified,NOT run yet
+==========================================================================
+2026-11-03 02:25 UTC. Goal ACTIVE. Usable numerically accepted27B Work and
+20tok/s remain UNMET. Latest physical27B diagnostic remains0.158413730..
+0.158416372tok/s with original one-FP32-LSB position0 rejection. NO new model
+throughput,physical bandwidth,clock-frequency,capacity or authenticity result.
+
+Fresh READ-ONLY Pioneer admission ACTUALLY0 at02:22:46UTC:stable041/tag12/
+generation12/quiesced0/cold0/owner0/open1/guard1,no project compute parent,
+64 CPUs,full137034936320B RAM/free130704670720B. Admin/guard/stable whole
+hashes and device symlink match. No driver/GPU/clock/power/Assistant/boot/
+kernel/network/SD/mains/hardware change during this qualification. This
+report is predeployment evidence;later physical results must be separate.
+
+New fixed public subject,not a renamed private driver
+------------------------------------------------------
+Explicit PIONEER_DRAM_COHORT_DIAGNOSTIC=1/native cohort+parent context selects
+tag2026110300010077. Inert DRCNODRV remains separate. Old76/queued/wide/
+compile-only/model/CPU-reference/Work/fast-math aliases refuse,including
+defined0. Reserved77 cannot select an ordinary or old native driver. Physical
+selection is frozen on first include and rechecked for late changes.
+
+Only3 fixed operations:SUPPORT63c0,PREFLIGHT63c1,RUN63c2. Reload metadata/
+quiesce remain available;all legacy model/code-upload/CPU-reference/Work/
+arbitrary commands refuse. DATA request1232B contains bounded sweeps1..256,
+depth1/2/4/8/16,nonzero nonce,exact tag/generation and zero reserved/reply.
+It contains NO pointers,addresses,clock/reset flags or arbitrary tile routes.
+Actual factory checks expected generation UNDER the same execution semaphore
+before PCI reservation. Large request/reply DATA are heap objects,not two
+nested1.2KiB kernel-stack arrays. Failed reply delivery never retries.
+
+No-launch preflight consumes its one-attempt owner. It checks firmware routes,
+all120 held states,all8 exact logical/physical identity/entry/FIFO/NIU idle
+states and source/PCI stability,then restores owned TLB selections. It does
+NO worker launch/reset/L1 payload write/NoC transfer/normal-busy clock lease.
+The OUTER native factory still performs its normal transactional PCI/BAR/VM
+mapping/prerequisite checks and closes/restores those resources;this is NOT
+a wholly read-only system operation. Native closure requires both its internal
+preflight-closed attestation and result receipt,then forwards view closure into
+the actual PCI-close lease. A receipt alone cannot authorize closure.
+
+RUN still selects the exact v6 eight-engine owner and frozen device program,
+with host-clock brackets from4734f732. All code/frame/reports/counters/park/
+HOLD/full final buffers/full L1/NIU/TLB/normal-clock/VM/PCI/reservation closures
+are required. First uncertainty retains/quarantines with no reset,retry or
+implicit legacy cleanup. Closing the public FD cannot invoke old model END.
+
+Independent actual client selects only--support,--preflight,--run SWEEPS DEPTH.
+It checks complete idle reload metadata,including reserved/expected fields,
+before its sole diagnostic request. It closes once and accepts full receipt
+grammar. Only a clean RUN with positive bracket state1 prints bounded GB/s/
+counterGHz relative to host time. State2 returns clean-but-unavailable timing,
+never an invented firmwareMHz estimate. It never sums reader clocks. No
+model file/CPU-reference runtime/install/reset path is linked into this client.
+
+Closed evidence,scope and identities
+--------------------------------------
+Clean source is archive4734f732 plus ONLY18 own files;all18 whole files cmp
+equal to main. No unrelated user dirt copied/staged. Every selected parent
+ACTUALLY exits0,not merely yields or prints a PASS banner.
+
+SDK main57816/clean96980:whole physical module AND client cmp byte-exact.
+All ordinary/private controls compile FIRST and remain complete-object exact:
+ defaultaabe86f52abc2d44b15536f6cd9ab1f7ad71d92e9755bafdeb6072575976d425
+ base5520bd6ea1e38e94a6510ef64d550efd705ed8413cf9c61de7ce8a0942263c829b
+ oldDRSNODRV54b3a7cedcac9f4f11ad12d625540883048da257d02c09f0f55fd83e2e620df6
+ cohortDRCNODRVda21a10338471db5e5acaff1fa8057bc817422ba2b6484676708576242bf6d1e
+Physical role41 cases pass,after old14/private45 cases. Actual native
+Execute/Preflight/ARC/VM/PCI/public-copy bodies are linked,not fixture stubs;
+old model/sample-write/end paths are absent from linked symbols. Driver-TU
+max individual1376B;partial compiler direct chain2592B,70 unresolved targets.
+External/indirect/profile/kernel/IRQ frames remain unmeasured;NOT whole-kernel
+stack certification or physical lifetime proof.
+
+Module e50f1dfdb05827ee020a106aea474b3e926ad7a8f17de3decfbd71cd72b2e0e3
+Client 7d2e3e8ec343c117173d94a706e4c1cbbd75666af094c7fe170a6e33d843e8a4
+Native object03538ea54e0a3dae4c447a65503d82aabd910361086a7f3605138b08714c37cd
+Exact e50<->stable041 exchange helper
+ be8da789613c56f9efa45e8a9fa93d413a123c84d192d69ccb51d179f3aa525e
+Worker whole ELF remains0f697dde151a85b1a7a2808581e842de0a8139f7282fdd6c1bcdd87035791abc;
+current-source rebuild ACTUALLY0 and whole ELF cmp equal. No bytecode change
+or threshold relaxation. Both frozen physical audits ACTUALLY0,whole stdout
+exact:whole module/client pins,current source pins,actual8760B native array
+equal the authenticated text/header,2 syntax positives/14 late-role refusals.
+
+Owner main36299/clean71053:whole stdout exact. Existing actual8-engine
+timed/lost-completion/restore tests remain;new preflight proves no instruction/
+reset/L1 write/clock begin and exact TLB restoration;four preflight faults
+retain without those writes. Combined4 valid/25 refused. Existing bracket
+tests8 valid/28 unavailable/12 malformed run first. Scope/PCI/ARC here remain
+fixture endpoints,NOT actual kernel prerequisites or hardware clock evidence.
+
+Public/native main52282/clean11521:29 valid/1493 refused,whole stdout exact.
+Every1184 reply byte must be pristine before execution. All header fields,
+root/team/size/op/copy/generation failures refuse before card IO. Actual
+factory's profile-failure/unreserve/retention edges execute;post-retention
+replay does no IO. Actual physical preflight-closure glue checks two separate
+flags;clean view/PCI close forwards receipts,partial view failure quarantines.
+Successful model/timing receipts in this suite are SYNTHETIC grammar DATA,
+not native prerequisites/ARC/engine execution or measured performance.
+
+Actual client main and clean each5 valid/25 refused,whole stdout exact:
+12 invalid CLI shapes before open,wrong metadata before execution,no retries,
+close once,malformed receipts/copy/close failures and unavailable timing never
+print a rate. Expected mocked ENODEV open error appears on stderr in both;
+it is an intentional successful test case,not a hardware or test failure.
+Actual native-method regression19411:old45/174,new106/107 unchanged.
+
+Actual exact exchange script main12468/clean11604 each2 valid/46 refused.
+Only subject basename/tag/hash/synthetic labels are rebound in the reused
+fixture suite;the actual new shell algorithm executes. Both directions test
+all metadata columns,corrupt/symlink/hardlink/writable/stale files,live parent,
+quiesce/copy races and unverified replacement. No force unload/reset/retry or
+automatic rollback. Synthetic endpoints are NOT a real driver exchange.
+
+Preserved failures,not passing substitutions
+--------------------------------------------
+main-sdk-r1 refused private control83b6bbd6:an unconditional closure predicate
+refactor changed private code generation. Restored the original private branch
+and kept new preflight logic physical-only;final private object is exactly
+da21a103 again. This is NOT accepting a new hash as preservation evidence.
+main/clean-public-r3 initially expected ZERO endpoint calls on invalid closure
+receipt. Actual scoped closure first revalidates17 OS area descriptors,then
+refuses before card IO/deletion/PCI writes. Final test separately requires
+exactly those17 read-only OS queries and zero card writes/deletes,plus zero
+further activity after quarantine. No production rule or guard was weakened.
+Earlier client79b09804 predates the added reserved reload-metadata checks;
+it is NOT the selected7d2e3e8e client. No original model validator/reference/
+numerical tolerance was changed. Raw failures remain beside this report.
+
+Next physical operation requirements
+--------------------------------------
+Push this tested checkpoint,stage ONLY exact e50/7d2/be8 on the admitted
+Haiku host,perform independent copy-back comparisons and fresh idle identity
+checks,then use SAME helper--apply ONCE. SUPPORT must not launch a worker;
+PREFLIGHT must fully close before any RUN. First RUN is a single bounded
+pilot;its complete SAME parent must be protected through END/Close. No
+concurrent Pioneer status/admin/driver/model/power operation. Only clean
+terminal+independent exact idle check permit normal restoration with SAME
+helper--restore ONCE. Any uncertainty forbids hot restore/reset/retry.
+More sweeps/depth are separately admitted only after a closed clean pilot.
+Seven readers/NoC0/repeated7*8MiB windows are NOT necessarily full-card peak,
+28GB capacity/authenticity,or evidence that Qwen27B can reach20tok/s.

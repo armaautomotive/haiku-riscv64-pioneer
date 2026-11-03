@@ -5,7 +5,7 @@
 #include "BlackholeDramCohortReadSweepImage.h"
 #include "../../../../../tools/pioneer/PioneerDramCohortReadSweep.h"
 #include "../../../../../tools/pioneer/PioneerDramCohortHostBracket.h"
-// PRIVATE algorithm component. No native context/public opcode selects it.
+// Algorithm component,selected ONLY through its exact scoped native context.
 // Every IO method still needs a SAME live native lease/FD/thread/generation,
 // actual owned mappings and per-access bounds. Fixture scope/clock callbacks
 // are NOT that native proof. Never use this component as a model/Work fallback.
@@ -156,6 +156,38 @@ public:
  using SnapshotImage=I;
  using DeviceProgram=P;
  static constexpr unsigned Allocation=I::CohortSavedWords+I::RawWords;
+ // No clock/NoC request/reset/L1 write. Only owned TLB selections, all120
+ // held states and all8 idle entry/identity/FIFO/source checks,then TLB restore.
+ // This consumes its one-attempt owner; execution needs a NEW native context.
+ template<class IO> bool Preflight(IO& io,const tt_dram_samples_result& d,PioneerDramCohortReadSweepResult& r){
+  const PioneerDramCohortReadSweepResult pristine;
+  const auto* a=reinterpret_cast<const uint8_t*>(&r);const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
+  for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=b[i])return false;
+  if(attempted || d.version!=1 || d.state!=TT_DRAM_SAMPLE_ROUTES_OK || d.routes_verified!=7
+   || !d.tlb_restored || !d.data_restored || d.recovery_required || (d.source[0]&0x10000))return false;
+  routes=d;if(!BlackholeDramBuildRoutes(routes))return false;
+  for(unsigned bank=0;bank<7;bank++)for(unsigned i=0;i<2;i++)if(routes.translated[bank][i]!=d.translated[bank][i])return false;
+  if(io.CohortAllocationWords()!=Allocation)return false;
+  saved=io.CohortSavedWords();scratch=io.CohortScratchWords();
+  if(!saved || !scratch || scratch!=saved+I::CohortSavedWords)return false;
+  proof=&d;attempted=true;
+  if(!Scope(io) || !Sources(io))return Fail(io,r);
+  for(unsigned s=0;s<2;s++)for(unsigned i=0;i<3;i++){
+   tlb[s][i]=io.DramTlbRead(s,i);if(i==2 && (tlb[s][i]&0xffffc000))return Fail(io,r);
+  }
+  for(unsigned s=0;s<2;s++)for(unsigned i=0;i<3;i++)if(io.DramTlbRead(s,i)!=tlb[s][i])return Fail(io,r);
+  if(!AllHeld(io))return Fail(io,r);
+  for(unsigned role=0;role<8;role++){
+   if(!Select(io,role) || !Guard(io,role,true) || (io.CohortNocRead(role,0x178)&0xffff))return Fail(io,r);
+   for(unsigned i=0;i<10;i++)if(io.CohortNocRead(role,i*4))return Fail(io,r);
+  }
+  for(unsigned s=0;s<2;s++)for(unsigned i=0;i<3;i++){
+   io.DramTlbWrite(s,i,tlb[s][i]);if(io.DramTlbRead(s,i)!=tlb[s][i])return Fail(io,r);
+  }
+  if(!Sources(io))return Fail(io,r);
+  for(unsigned s=0;s<2;s++)for(unsigned i=0;i<3;i++)if(io.DramTlbRead(s,i)!=tlb[s][i])return Fail(io,r);
+  return true;
+ }
  template<class IO> bool Execute(IO& io,const tt_dram_samples_result& d,unsigned sweeps,unsigned depth,
   uint32_t nonce,PioneerDramCohortReadSweepResult& r){
   static_assert(P::ExternalStartWatchdogRequired==1 && P::Version==6,"owned startup waits require external deadline");

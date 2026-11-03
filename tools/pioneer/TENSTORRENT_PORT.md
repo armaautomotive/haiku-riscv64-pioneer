@@ -2,6 +2,18 @@
 
 ## Status
 
+### November3:bounded public seven-bank diagnostic qualified before hardware
+
+Separate physical77 now exposes only support,no-launch preflight and the
+fixed v6 cohort read test,with same-lock reload generation checks and strict
+pointer-free receipts. Main/independent native modules and clients match
+e50f1dfd/7d2e3e8e;ordinary/private controls remain whole-object byte-exact.
+Public/native refusal,actual CLI and exact exchange-script tests pass. Fresh
+read-only admission confirms stable041/gen12,idle,64 CPUs/full RAM. No new
+card job or model speedup yet. Next exact stage/apply/preflight and a protected
+bounded hardware pilot;accepted27B Work/20tok/s remain UNMET. See the
+[public diagnostic evidence](benchmarks/p100a-dram-cohort-public-20261103.txt).
+
 ### November3:host-clock brackets qualified offboard;hardware result pending
 
 New distinct v6 coordinator markers bracket the actual device cycle samples

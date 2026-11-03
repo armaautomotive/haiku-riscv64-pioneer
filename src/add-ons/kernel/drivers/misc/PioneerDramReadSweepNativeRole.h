@@ -15,8 +15,8 @@
 #endif
 #else
 #ifdef PIONEER_DRAM_COHORT_NATIVE_CONTEXT
-// Its separate rechecked role above requires DRCNODRV and this same inert
-// parent lease. It never instantiates the old single-worker algorithm.
+// Its separately rechecked role above selects either inert DRCNODRV or
+// bounded physical77. Neither instantiates the old single-worker algorithm.
 #else
 #if !defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) || PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY != 1 \
  || PIONEER_DRIVER_BUILD_TAG != 0x4452534e4f445256ULL

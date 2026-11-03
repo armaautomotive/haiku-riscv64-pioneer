@@ -1,0 +1,242 @@
+[
+  {
+    "source": "#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n",
+    "flags": [
+      "-DTT_PIONEER_DRIVER_RELOAD",
+      "-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH",
+      "-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010077ULL",
+      "-DPIONEER_DRAM_COHORT_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_COHORT_DIAGNOSTIC=1"
+    ],
+    "expected": true,
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "source": "#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n",
+    "flags": [
+      "-DTT_PIONEER_DRIVER_RELOAD",
+      "-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH",
+      "-DPIONEER_DRAM_COHORT_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRIVER_BUILD_TAG=0x4452434e4f445256ULL",
+      "-DPIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY=1"
+    ],
+    "expected": true,
+    "exit": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  {
+    "source": "#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n#undef PIONEER_DRAM_COHORT_NATIVE_CONTEXT\n#define PIONEER_DRAM_COHORT_NATIVE_CONTEXT 0\n#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n",
+    "flags": [
+      "-DTT_PIONEER_DRIVER_RELOAD",
+      "-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH",
+      "-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010077ULL",
+      "-DPIONEER_DRAM_COHORT_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_COHORT_DIAGNOSTIC=1"
+    ],
+    "expected": false,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "In file included from /Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h:2,\n                 from <stdin>:4:\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:22:2: error: #error Cohort context requires its actual scoped parent lease\n   22 | #error Cohort context requires its actual scoped parent lease\n      |  ^~~~~\n"
+  },
+  {
+    "source": "#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n#undef PIONEER_DRAM_COHORT_NATIVE_CONTEXT\n#define PIONEER_DRAM_COHORT_NATIVE_CONTEXT 2\n#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n",
+    "flags": [
+      "-DTT_PIONEER_DRIVER_RELOAD",
+      "-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH",
+      "-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010077ULL",
+      "-DPIONEER_DRAM_COHORT_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_COHORT_DIAGNOSTIC=1"
+    ],
+    "expected": false,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "In file included from /Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h:2,\n                 from <stdin>:4:\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:22:2: error: #error Cohort context requires its actual scoped parent lease\n   22 | #error Cohort context requires its actual scoped parent lease\n      |  ^~~~~\n"
+  },
+  {
+    "source": "#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n#undef PIONEER_DRAM_COHORT_NATIVE_CONTEXT\n#define PIONEER_DRAM_COHORT_NATIVE_CONTEXT \n#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n",
+    "flags": [
+      "-DTT_PIONEER_DRIVER_RELOAD",
+      "-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH",
+      "-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010077ULL",
+      "-DPIONEER_DRAM_COHORT_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_COHORT_DIAGNOSTIC=1"
+    ],
+    "expected": false,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "In file included from /Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h:2,\n                 from <stdin>:4:\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:18:40: error: operator '!=' has no left operand\n   18 | #if PIONEER_DRAM_COHORT_NATIVE_CONTEXT != 1 \\\n      |                                        ^~\n"
+  },
+  {
+    "source": "#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n#undef PIONEER_DRAM_COHORT_NATIVE_CONTEXT\n#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n",
+    "flags": [
+      "-DTT_PIONEER_DRIVER_RELOAD",
+      "-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH",
+      "-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010077ULL",
+      "-DPIONEER_DRAM_COHORT_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_COHORT_DIAGNOSTIC=1"
+    ],
+    "expected": false,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "In file included from /Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h:2,\n                 from <stdin>:3:\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:46:2: error: #error Physical cohort diagnostic requires its exact native cohort context\n   46 | #error Physical cohort diagnostic requires its exact native cohort context\n      |  ^~~~~\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:48:49: error: static assertion failed: late physical cohort selection without native context\n   48 | static_assert(PioneerDramCohortPhysicalSelection==0,\"late physical cohort selection without native context\");\n      |               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:48:49: note: the comparison reduces to '(1 == 0)'\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:49:47: error: static assertion failed: late cohort native removal\n   49 | static_assert(PioneerDramCohortNativeSelection==0,\"late cohort native removal\");\n      |               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:49:47: note: the comparison reduces to '(1 == 0)'\n"
+  },
+  {
+    "source": "#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n#undef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT\n#define PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT 0\n#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n",
+    "flags": [
+      "-DTT_PIONEER_DRIVER_RELOAD",
+      "-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH",
+      "-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010077ULL",
+      "-DPIONEER_DRAM_COHORT_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_COHORT_DIAGNOSTIC=1"
+    ],
+    "expected": false,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "In file included from /Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h:2,\n                 from <stdin>:4:\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:22:2: error: #error Cohort context requires its actual scoped parent lease\n   22 | #error Cohort context requires its actual scoped parent lease\n      |  ^~~~~\n"
+  },
+  {
+    "source": "#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n#undef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT\n#define PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT 2\n#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n",
+    "flags": [
+      "-DTT_PIONEER_DRIVER_RELOAD",
+      "-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH",
+      "-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010077ULL",
+      "-DPIONEER_DRAM_COHORT_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_COHORT_DIAGNOSTIC=1"
+    ],
+    "expected": false,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "In file included from /Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h:2,\n                 from <stdin>:4:\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:22:2: error: #error Cohort context requires its actual scoped parent lease\n   22 | #error Cohort context requires its actual scoped parent lease\n      |  ^~~~~\n"
+  },
+  {
+    "source": "#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n#undef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT\n#define PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT \n#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n",
+    "flags": [
+      "-DTT_PIONEER_DRIVER_RELOAD",
+      "-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH",
+      "-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010077ULL",
+      "-DPIONEER_DRAM_COHORT_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_COHORT_DIAGNOSTIC=1"
+    ],
+    "expected": false,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "In file included from /Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h:2,\n                 from <stdin>:4:\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:19:96: error: operator '||' has no right operand\n   19 |  || !defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT) || PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT != 1 \\\n      |                                                                                                ^~\n"
+  },
+  {
+    "source": "#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n#undef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT\n#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n",
+    "flags": [
+      "-DTT_PIONEER_DRIVER_RELOAD",
+      "-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH",
+      "-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010077ULL",
+      "-DPIONEER_DRAM_COHORT_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_COHORT_DIAGNOSTIC=1"
+    ],
+    "expected": false,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "In file included from /Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h:2,\n                 from <stdin>:3:\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:22:2: error: #error Cohort context requires its actual scoped parent lease\n   22 | #error Cohort context requires its actual scoped parent lease\n      |  ^~~~~\n"
+  },
+  {
+    "source": "#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n#undef PIONEER_DRAM_COHORT_DIAGNOSTIC\n#define PIONEER_DRAM_COHORT_DIAGNOSTIC 0\n#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n",
+    "flags": [
+      "-DTT_PIONEER_DRIVER_RELOAD",
+      "-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH",
+      "-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010077ULL",
+      "-DPIONEER_DRAM_COHORT_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_COHORT_DIAGNOSTIC=1"
+    ],
+    "expected": false,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "In file included from /Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h:2,\n                 from <stdin>:4:\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:28:2: error: #error Cohort diagnostic77 requires its distinct physical role,never DRCNODRV\n   28 | #error Cohort diagnostic77 requires its distinct physical role,never DRCNODRV\n      |  ^~~~~\n"
+  },
+  {
+    "source": "#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n#undef PIONEER_DRAM_COHORT_DIAGNOSTIC\n#define PIONEER_DRAM_COHORT_DIAGNOSTIC 2\n#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n",
+    "flags": [
+      "-DTT_PIONEER_DRIVER_RELOAD",
+      "-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH",
+      "-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010077ULL",
+      "-DPIONEER_DRAM_COHORT_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_COHORT_DIAGNOSTIC=1"
+    ],
+    "expected": false,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "In file included from /Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h:2,\n                 from <stdin>:4:\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:28:2: error: #error Cohort diagnostic77 requires its distinct physical role,never DRCNODRV\n   28 | #error Cohort diagnostic77 requires its distinct physical role,never DRCNODRV\n      |  ^~~~~\n"
+  },
+  {
+    "source": "#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n#undef PIONEER_DRAM_COHORT_DIAGNOSTIC\n#define PIONEER_DRAM_COHORT_DIAGNOSTIC \n#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n",
+    "flags": [
+      "-DTT_PIONEER_DRIVER_RELOAD",
+      "-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH",
+      "-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010077ULL",
+      "-DPIONEER_DRAM_COHORT_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_COHORT_DIAGNOSTIC=1"
+    ],
+    "expected": false,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "In file included from /Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h:2,\n                 from <stdin>:4:\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:26:36: error: operator '!=' has no left operand\n   26 | #if PIONEER_DRAM_COHORT_DIAGNOSTIC != 1 || defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) \\\n      |                                    ^~\n"
+  },
+  {
+    "source": "#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n#undef PIONEER_DRAM_COHORT_DIAGNOSTIC\n#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n",
+    "flags": [
+      "-DTT_PIONEER_DRIVER_RELOAD",
+      "-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH",
+      "-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010077ULL",
+      "-DPIONEER_DRAM_COHORT_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_COHORT_DIAGNOSTIC=1"
+    ],
+    "expected": false,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "In file included from /Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h:2,\n                 from <stdin>:3:\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:34:2: error: #error Private DRCNODRV requires its inert renamed SDK subject\n   34 | #error Private DRCNODRV requires its inert renamed SDK subject\n      |  ^~~~~\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:31:49: error: static assertion failed: late physical cohort removal\n   31 | static_assert(PioneerDramCohortPhysicalSelection==0,\"late physical cohort removal\");\n      |               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:31:49: note: the comparison reduces to '(1 == 0)'\n"
+  },
+  {
+    "source": "#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n#undef PIONEER_DRIVER_BUILD_TAG\n#define PIONEER_DRIVER_BUILD_TAG 0x4452434e4f445256ULL\n#undef PIONEER_DRAM_COHORT_DIAGNOSTIC\n#define PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY 1\n#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n",
+    "flags": [
+      "-DTT_PIONEER_DRIVER_RELOAD",
+      "-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH",
+      "-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010077ULL",
+      "-DPIONEER_DRAM_COHORT_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_COHORT_DIAGNOSTIC=1"
+    ],
+    "expected": false,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "In file included from /Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h:2,\n                 from <stdin>:6:\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:31:49: error: static assertion failed: late physical cohort removal\n   31 | static_assert(PioneerDramCohortPhysicalSelection==0,\"late physical cohort removal\");\n      |               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:31:49: note: the comparison reduces to '(1 == 0)'\n"
+  },
+  {
+    "source": "#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n#undef PIONEER_DRIVER_BUILD_TAG\n#define PIONEER_DRIVER_BUILD_TAG 0x2026110300010077ULL\n#undef PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY\n#define PIONEER_DRAM_COHORT_DIAGNOSTIC 1\n#include \"/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h\"\n",
+    "flags": [
+      "-DTT_PIONEER_DRIVER_RELOAD",
+      "-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH",
+      "-DPIONEER_DRAM_COHORT_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1",
+      "-DPIONEER_DRIVER_BUILD_TAG=0x4452434e4f445256ULL",
+      "-DPIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY=1"
+    ],
+    "expected": false,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "In file included from /Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h:2,\n                 from <stdin>:6:\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:25:49: error: static assertion failed: late physical cohort selection\n   25 | static_assert(PioneerDramCohortPhysicalSelection==1,\"late physical cohort selection\");\n      |               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~\n/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h:25:49: note: the comparison reduces to '(0 == 1)'\n"
+  }
+]

@@ -2,7 +2,7 @@
 #ifndef PIONEER_DRAM_COHORT_READ_SWEEP_H
 #define PIONEER_DRAM_COHORT_READ_SWEEP_H
 #include "PioneerDramWideQueuedReadSweep.h"
-// OFFBOARD ONLY: no driver, native owner or public request selects this image.
+// Fixed v6 image for the separately qualified bounded native diagnostic.
 // Seven readers, one firmware-derived bank route EACH, plus a coordinator.
 // The ONLY aggregate time is the coordinator's ONE clock: before the first
 // release packet through receipt of ALL seven done flags. Includes release

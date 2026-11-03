@@ -1,0 +1,228 @@
+0000000000013010 a _DYNAMIC
+0000000000013310 a _GLOBAL_OFFSET_TABLE_
+0000000000003810 a _PROCEDURE_LINKAGE_TABLE_
+000000000000f638 0000000000000882 T GetPioneerPciProfile(device_manager_info*, pci_info const&, tt_pioneer_profile&)
+000000000000b37e 0000000000000172 W bool BlackholeDramConfigure<PioneerDramSweepNativeIO>(PioneerDramSweepNativeIO&, unsigned int, unsigned int, unsigned int, unsigned int, bool)
+000000000000d938 000000000000007a W void BlackholeArcQueueHeader<PioneerDramSweepClockIO>(PioneerDramSweepClockIO&, unsigned int, unsigned int*)
+0000000000009de6 0000000000000206 W bool BlackholeArcScratchProbe<PioneerArcIO>(PioneerArcIO&, tt_arc_scratch_result&)
+000000000000b602 0000000000000544 W bool BlackholeComputeNocProbe<PioneerDramSweepNativeIO>(PioneerDramSweepNativeIO&, tt_dram_samples_result&, tt_compute_noc_result&, unsigned int)
+000000000000a6c2 00000000000005b8 W bool BlackholeDramSweepRoutes<PioneerDramSweepNativeIO>(PioneerDramSweepNativeIO&, tt_arc_telemetry_result const&, tt_tensix_reset_result const&, tt_dram_samples_result&)
+000000000000b4f0 0000000000000112 W bool BlackholeDramAllCoresHeld<PioneerDramSweepNativeIO>(PioneerDramSweepNativeIO&, tt_dram_samples_result&)
+000000000000ae94 00000000000004ea W bool BlackholePioneerMmioBegin<PioneerDramSweepNativeIO>(PioneerDramSweepNativeIO&, tt_pioneer_mmio_result&, tt_pioneer_mmio_transaction&)
+000000000000a4bc 0000000000000206 W bool BlackholeTensixResetProbe<PioneerTensixIO>(PioneerTensixIO&, tt_arc_telemetry_result const&, tt_tensix_reset_result&)
+0000000000009fec 00000000000004d0 W bool BlackholeArcTelemetryProbe<PioneerTelemetryIO>(PioneerTelemetryIO&, tt_arc_scratch_result const&, tt_arc_telemetry_result&, bool)
+000000000000ac7a 000000000000021a W bool BlackholeCardControlsQuiet<PioneerDramSweepNativeIO>(PioneerDramSweepNativeIO&)
+0000000000003d0e 000000000000000e t ProbeClose(void*)
+0000000000003f1c 0000000000000016 t ProbeWrite(void*, long, void const*, unsigned long*)
+0000000000007a8a 00000000000014f6 t ProbeControl(void*, unsigned int, void*, unsigned long)
+0000000000013490 0000000000000004 b sOpenCookies
+00000000000134a0 0000000000000008 b sReloadGuard
+0000000000013540 0000000000000008 b sDeviceManager
+00000000000134a8 0000000000000001 b sReloadQuiesced
+000000000000417e 0000000000000090 t AcquireProbeLock(void const*, bool) [clone .constprop.0]
+00000000000134b0 0000000000000008 b sReloadGeneration
+0000000000003e74 00000000000000a8 t PioneerDramCohortL1(unsigned int, unsigned int) [clone .part.0]
+0000000000013498 0000000000000001 b sColdRecoveryRequired
+0000000000003c38 0000000000000040 t BlackholeTelemetryRange(unsigned int, unsigned int)
+0000000000013538 0000000000000008 b sDramSweepNativeContext
+0000000000003f32 000000000000024c t BlackholeDramBuildRoutes(tt_dram_samples_result&)
+0000000000013548 0000000000000008 b sDramCohortNativeContext
+0000000000008f80 0000000000000040 t BlackholeArcQueueHeaderValid(unsigned int const*)
+0000000000003a3c 00000000000001fc t PioneerMinimumBarLayoutMatches(tt_pioneer_profile const&)
+00000000000134b8 0000000000000008 b sPCI
+00000000000134c0 0000000000000078 b sCard
+00000000000131d0 0000000000000004 d sLock
+00000000000131d8 0000000000000010 d sNames
+0000000000013550 0000000000000001 b sCookie
+0000000000003c78 0000000000000096 t FindCard(pci_module_info*, pci_info&)
+0000000000003d1c 0000000000000016 t ProbeData(void*, long, void*, unsigned long*)
+000000000000420e 00000000000000ba t ProbeFree(void*)
+0000000000003d32 0000000000000142 t ProbeOpen(char const*, unsigned int, void**)
+000000000000907a 0000000000000116 W PioneerMmioIO::Quiet()
+0000000000009190 0000000000000048 W PioneerTelemetryIO::CsmRead(unsigned int)
+000000000000d9b2 0000000000000892 W bool BlackholeDramSweepArc::Queue<PioneerDramSweepClockIO>(PioneerDramSweepClockIO&, tt_arc_scratch_result const&, tt_arc_telemetry_result const&, tt_arc_queue_result&, unsigned int)
+000000000000d870 00000000000000c8 W bool BlackholeDramSweepArc::Configure<PioneerDramSweepClockIO>(PioneerDramSweepClockIO&, bool, tt_arc_queue_result&)
+00000000000061b0 000000000000007c T PioneerDramSweepClockIO::QueueWrite(unsigned int, unsigned int)
+00000000000061b0 000000000000007c t PioneerDramSweepClockIO::QueueWrite(unsigned int, unsigned int) [clone .localalias]
+000000000000622c 0000000000000036 T PioneerDramSweepClockIO::MsiStatusRead()
+000000000000622c 0000000000000036 t PioneerDramSweepClockIO::MsiStatusRead() [clone .localalias]
+000000000000614c 0000000000000064 T PioneerDramSweepClockIO::SetQueueBounds(unsigned int, unsigned int, unsigned int)
+000000000000614c 0000000000000064 t PioneerDramSweepClockIO::SetQueueBounds(unsigned int, unsigned int, unsigned int) [clone .localalias]
+0000000000006006 0000000000000042 T PioneerDramSweepClockIO::MemoryOnlyRetain()
+0000000000006006 0000000000000042 t PioneerDramSweepClockIO::MemoryOnlyRetain() [clone .localalias]
+0000000000005f5a 00000000000000ac T PioneerDramSweepClockIO::Check()
+0000000000005f5a 00000000000000ac t PioneerDramSweepClockIO::Check() [clone .localalias]
+000000000000628c 0000000000000024 T PioneerDramSweepClockIO::Pause()
+000000000000628c 0000000000000024 t PioneerDramSweepClockIO::Pause() [clone .localalias]
+00000000000060e8 0000000000000064 T PioneerDramSweepClockIO::CsmRead(unsigned int)
+00000000000060e8 0000000000000064 t PioneerDramSweepClockIO::CsmRead(unsigned int) [clone .localalias]
+0000000000006048 0000000000000052 T PioneerDramSweepClockIO::TlbRead(unsigned int)
+0000000000006048 0000000000000052 t PioneerDramSweepClockIO::TlbRead(unsigned int) [clone .localalias]
+000000000000609a 000000000000004e T PioneerDramSweepClockIO::TlbWrite(unsigned int, unsigned int)
+000000000000609a 000000000000004e t PioneerDramSweepClockIO::TlbWrite(unsigned int, unsigned int) [clone .localalias]
+0000000000006262 000000000000002a T PioneerDramSweepClockIO::NotifyArc()
+0000000000006262 000000000000002a t PioneerDramSweepClockIO::NotifyArc() [clone .localalias]
+0000000000004e08 0000000000000082 T PioneerDramSweepNativeIO::DramIdRead(unsigned int)
+0000000000004e08 0000000000000082 t PioneerDramSweepNativeIO::DramIdRead(unsigned int) [clone .localalias]
+0000000000004d46 0000000000000036 T PioneerDramSweepNativeIO::ReadNodeId()
+0000000000004d46 0000000000000036 t PioneerDramSweepNativeIO::ReadNodeId() [clone .localalias]
+0000000000004d7c 000000000000008c T PioneerDramSweepNativeIO::SourceRead(unsigned int)
+0000000000004d7c 000000000000008c t PioneerDramSweepNativeIO::SourceRead(unsigned int) [clone .localalias]
+00000000000053e8 00000000000000f8 T PioneerDramSweepNativeIO::SweepWrite(unsigned int, unsigned int)
+0000000000004ff6 000000000000006e T PioneerDramSweepNativeIO::DramTlbRead(unsigned int, unsigned int)
+0000000000004ff6 000000000000006e t PioneerDramSweepNativeIO::DramTlbRead(unsigned int, unsigned int) [clone .localalias]
+0000000000004f68 000000000000008e T PioneerDramSweepNativeIO::HostPciRead(unsigned int, unsigned short, unsigned char)
+00000000000057a6 0000000000000044 T PioneerDramSweepNativeIO::SweepPcRead()
+0000000000005064 0000000000000064 T PioneerDramSweepNativeIO::DramTlbWrite(unsigned int, unsigned int, unsigned int)
+0000000000005064 0000000000000064 t PioneerDramSweepNativeIO::DramTlbWrite(unsigned int, unsigned int, unsigned int) [clone .localalias]
+0000000000007450 0000000000000206 T PioneerDramSweepNativeIO::SweepClockEnd()
+0000000000007450 0000000000000206 t PioneerDramSweepNativeIO::SweepClockEnd() [clone .localalias]
+0000000000004e8a 00000000000000de T PioneerDramSweepNativeIO::ComputeNocRead(unsigned int)
+0000000000004e8a 00000000000000de t PioneerDramSweepNativeIO::ComputeNocRead(unsigned int) [clone .localalias]
+0000000000005144 0000000000000112 T PioneerDramSweepNativeIO::ResidentNocRead(unsigned int)
+0000000000007732 000000000000027c T PioneerDramSweepNativeIO::SweepClockBegin()
+0000000000007732 000000000000027c t PioneerDramSweepNativeIO::SweepClockBegin() [clone .localalias]
+00000000000056b4 00000000000000f2 T PioneerDramSweepNativeIO::SweepResetWrite(unsigned int)
+0000000000005974 0000000000000190 T PioneerDramSweepNativeIO::SweepSavedWords()
+0000000000005256 0000000000000096 T PioneerDramSweepNativeIO::ResidentNocWrite(unsigned int, unsigned int)
+0000000000005c9c 000000000000027c T PioneerDramSweepNativeIO::SweepNativeScope(PioneerDramReadSweepOwnerType<BlackholeDramReadSweepImage, PioneerDramReadSweep, 1u> const*, tt_dram_samples_result const*, tt_compute_noc_result const*, unsigned int*, unsigned int*, unsigned int, unsigned int)
+00000000000052ec 00000000000000fc T PioneerDramSweepNativeIO::SweepReadChecked(unsigned int, unsigned int&)
+0000000000005b04 0000000000000198 T PioneerDramSweepNativeIO::SweepScratchWords()
+000000000000580e 0000000000000166 T PioneerDramSweepNativeIO::SweepAllocationWords()
+00000000000050fe 0000000000000046 T PioneerDramSweepNativeIO::SweepEntryOverrideRead()
+00000000000054e0 00000000000001d4 T PioneerDramSweepNativeIO::SweepWindowReadChecked(unsigned int, unsigned int&)
+0000000000005f18 0000000000000042 T PioneerDramSweepNativeIO::SweepQuarantineMemoryOnly()
+0000000000005f18 0000000000000042 t PioneerDramSweepNativeIO::SweepQuarantineMemoryOnly() [clone .localalias]
+000000000000470e 00000000000004b6 T PioneerDramSweepNativeIO::Map()
+000000000000470e 00000000000004b6 t PioneerDramSweepNativeIO::Map() [clone .localalias]
+00000000000057ea 0000000000000024 T PioneerDramSweepNativeIO::Pause()
+0000000000004d16 0000000000000030 T PioneerDramSweepNativeIO::Quiet()
+000000000000468a 0000000000000084 T PioneerDramSweepNativeIO::Access()
+000000000000468a 0000000000000084 t PioneerDramSweepNativeIO::Access() [clone .localalias]
+0000000000004bc4 000000000000004e T PioneerDramSweepNativeIO::CardRead(unsigned short, unsigned char)
+0000000000004bc4 000000000000004e t PioneerDramSweepNativeIO::CardRead(unsigned short, unsigned char) [clone .localalias]
+0000000000004c68 0000000000000052 T PioneerDramSweepNativeIO::RootRead(unsigned short, unsigned char)
+0000000000004c68 0000000000000052 t PioneerDramSweepNativeIO::RootRead(unsigned short, unsigned char) [clone .localalias]
+0000000000004c12 0000000000000056 T PioneerDramSweepNativeIO::CardWrite(unsigned short, unsigned char, unsigned int)
+0000000000004c12 0000000000000056 t PioneerDramSweepNativeIO::CardWrite(unsigned short, unsigned char, unsigned int) [clone .localalias]
+00000000000050c8 0000000000000036 T PioneerDramSweepNativeIO::ResetRead()
+0000000000004cba 000000000000005c T PioneerDramSweepNativeIO::RootWrite(unsigned short, unsigned char, unsigned int)
+0000000000004cba 000000000000005c t PioneerDramSweepNativeIO::RootWrite(unsigned short, unsigned char, unsigned int) [clone .localalias]
+00000000000045f4 0000000000000096 T PioneerDramSweepNativeIO::PioneerDramSweepNativeIO(PioneerDramSweepNativeContext&, tt_pioneer_profile const&, tt_arc_scratch_result&, tt_arc_telemetry_result&, tt_tensix_reset_result&, tt_dram_samples_result&, tt_compute_noc_result&)
+00000000000045f4 0000000000000096 T PioneerDramSweepNativeIO::PioneerDramSweepNativeIO(PioneerDramSweepNativeContext&, tt_pioneer_profile const&, tt_arc_scratch_result&, tt_arc_telemetry_result&, tt_tensix_reset_result&, tt_dram_samples_result&, tt_compute_noc_result&)
+0000000000006f1e 0000000000000084 T PioneerDramCohortNativeIO::CohortRead(unsigned int, unsigned int, unsigned int&)
+0000000000006f1e 0000000000000084 t PioneerDramCohortNativeIO::CohortRead(unsigned int, unsigned int, unsigned int&) [clone .localalias]
+000000000000639a 0000000000000040 T PioneerDramCohortNativeIO::SourceRead(unsigned int)
+000000000000731e 0000000000000102 T PioneerDramCohortNativeIO::CohortPause()
+000000000000731e 0000000000000102 t PioneerDramCohortNativeIO::CohortPause() [clone .localalias]
+0000000000006fa2 0000000000000094 T PioneerDramCohortNativeIO::CohortWrite(unsigned int, unsigned int, unsigned int)
+0000000000006fa2 0000000000000094 t PioneerDramCohortNativeIO::CohortWrite(unsigned int, unsigned int, unsigned int) [clone .localalias]
+0000000000006486 0000000000000076 T PioneerDramCohortNativeIO::DramTlbRead(unsigned int, unsigned int)
+0000000000006486 0000000000000076 t PioneerDramCohortNativeIO::DramTlbRead(unsigned int, unsigned int) [clone .localalias]
+00000000000063da 00000000000000ac T PioneerDramCohortNativeIO::HostPciRead(unsigned int, unsigned short, unsigned char)
+000000000000729e 0000000000000040 T PioneerDramCohortNativeIO::CohortPcRead(unsigned int)
+000000000000729e 0000000000000040 t PioneerDramCohortNativeIO::CohortPcRead(unsigned int) [clone .localalias]
+0000000000006610 000000000000007a T PioneerDramCohortNativeIO::DramTlbWrite(unsigned int, unsigned int, unsigned int)
+0000000000006610 000000000000007a t PioneerDramCohortNativeIO::DramTlbWrite(unsigned int, unsigned int, unsigned int) [clone .localalias]
+0000000000006d16 000000000000017a T PioneerDramCohortNativeIO::CohortNocRead(unsigned int, unsigned int)
+0000000000006d16 000000000000017a t PioneerDramCohortNativeIO::CohortNocRead(unsigned int, unsigned int) [clone .localalias]
+0000000000007656 00000000000000dc T PioneerDramCohortNativeIO::CohortClockEnd()
+0000000000007656 00000000000000dc t PioneerDramCohortNativeIO::CohortClockEnd() [clone .localalias]
+0000000000006b44 0000000000000120 T PioneerDramCohortNativeIO::CohortHeldRead(unsigned int, unsigned int)
+0000000000006b44 0000000000000120 t PioneerDramCohortNativeIO::CohortHeldRead(unsigned int, unsigned int) [clone .localalias]
+00000000000072de 0000000000000040 T PioneerDramCohortNativeIO::CohortHostTime(unsigned long&)
+0000000000006e90 000000000000008e T PioneerDramCohortNativeIO::CohortNocWrite(unsigned int, unsigned int, unsigned int)
+0000000000006e90 000000000000008e t PioneerDramCohortNativeIO::CohortNocWrite(unsigned int, unsigned int, unsigned int) [clone .localalias]
+0000000000006cb2 0000000000000064 T PioneerDramCohortNativeIO::CohortEntryRead(unsigned int)
+0000000000006cb2 0000000000000064 t PioneerDramCohortNativeIO::CohortEntryRead(unsigned int) [clone .localalias]
+0000000000006c64 000000000000004e T PioneerDramCohortNativeIO::CohortResetRead(unsigned int)
+00000000000079ae 00000000000000dc T PioneerDramCohortNativeIO::CohortClockBegin()
+00000000000079ae 00000000000000dc t PioneerDramCohortNativeIO::CohortClockBegin() [clone .localalias]
+0000000000007192 000000000000010c T PioneerDramCohortNativeIO::CohortResetWrite(unsigned int, unsigned int)
+0000000000007192 000000000000010c t PioneerDramCohortNativeIO::CohortResetWrite(unsigned int, unsigned int) [clone .localalias]
+000000000000677e 000000000000010e T PioneerDramCohortNativeIO::CohortSavedWords()
+000000000000677e 000000000000010e t PioneerDramCohortNativeIO::CohortSavedWords() [clone .localalias]
+0000000000007036 000000000000015c T PioneerDramCohortNativeIO::CohortWindowRead(unsigned int, unsigned int, unsigned int&)
+0000000000007036 000000000000015c t PioneerDramCohortNativeIO::CohortWindowRead(unsigned int, unsigned int, unsigned int&) [clone .localalias]
+00000000000069a4 0000000000000144 T PioneerDramCohortNativeIO::CohortNativeScope(PioneerDramCohortReadSweepOwner const*, tt_dram_samples_result const*, unsigned int*, unsigned int*, unsigned int, unsigned int)
+000000000000688c 0000000000000118 T PioneerDramCohortNativeIO::CohortScratchWords()
+000000000000688c 0000000000000118 t PioneerDramCohortNativeIO::CohortScratchWords() [clone .localalias]
+000000000000668a 00000000000000f4 T PioneerDramCohortNativeIO::CohortAllocationWords()
+0000000000006ae8 000000000000005c T PioneerDramCohortNativeIO::CohortQuarantineMemoryOnly()
+0000000000006ae8 000000000000005c t PioneerDramCohortNativeIO::CohortQuarantineMemoryOnly() [clone .localalias]
+00000000000062b0 00000000000000ea T PioneerDramCohortNativeIO::Access()
+00000000000062b0 00000000000000ea t PioneerDramCohortNativeIO::Access() [clone .localalias]
+00000000000064fc 0000000000000114 T PioneerDramCohortNativeIO::Selected(unsigned int, bool)
+00000000000064fc 0000000000000114 t PioneerDramCohortNativeIO::Selected(unsigned int, bool) [clone .localalias]
+0000000000009c30 0000000000000050 W PioneerDramCohortReadSweep::CoordinatorLink::Offset(unsigned int)
+0000000000009b6c 00000000000000c4 W PioneerDramCohortReadSweep::Shape(unsigned int const*)
+000000000000972c 000000000000033e W PioneerDramSweepNativeContext::ClosePci()
+000000000000c1ea 000000000000016a W bool PioneerDramCohortReadSweepOwner::BeginDeadline<PioneerDramCohortNativeIO>(PioneerDramCohortNativeIO&)
+000000000000c8b4 000000000000026c W bool PioneerDramCohortReadSweepOwner::Set<PioneerDramCohortNativeIO>(PioneerDramCohortNativeIO&, unsigned int, unsigned int, unsigned int, unsigned int, bool)
+000000000000d088 00000000000000bc W bool PioneerDramCohortReadSweepOwner::Idle<PioneerDramCohortNativeIO>(PioneerDramCohortNativeIO&, unsigned int)
+000000000000d144 0000000000000396 W bool PioneerDramCohortReadSweepOwner::Guard<PioneerDramCohortNativeIO>(PioneerDramCohortNativeIO&, unsigned int, bool, unsigned int, unsigned int, unsigned int, bool)
+000000000000bb46 0000000000000146 W bool PioneerDramCohortReadSweepOwner::Scope<PioneerDramCohortNativeIO>(PioneerDramCohortNativeIO&)
+000000000000cb20 00000000000000a4 W bool PioneerDramCohortReadSweepOwner::Select<PioneerDramCohortNativeIO>(PioneerDramCohortNativeIO&, unsigned int)
+000000000000cbc4 00000000000004c4 W bool PioneerDramCohortReadSweepOwner::AllHeld<PioneerDramCohortNativeIO>(PioneerDramCohortNativeIO&)
+000000000000e244 00000000000013f4 W bool PioneerDramCohortReadSweepOwner::Execute<PioneerDramCohortNativeIO>(PioneerDramCohortNativeIO&, tt_dram_samples_result const&, unsigned int, unsigned int, unsigned int, PioneerDramCohortReadSweepResult&)
+000000000000bc8c 0000000000000466 W bool PioneerDramCohortReadSweepOwner::Sources<PioneerDramCohortNativeIO>(PioneerDramCohortNativeIO&)
+000000000000c7b8 00000000000000fc W bool PioneerDramCohortReadSweepOwner::Counters<PioneerDramCohortNativeIO>(PioneerDramCohortNativeIO&, unsigned int, unsigned int const*)
+000000000000c354 000000000000018e W bool PioneerDramCohortReadSweepOwner::Deadline<PioneerDramCohortNativeIO>(PioneerDramCohortNativeIO&, unsigned long)
+000000000000c4e2 00000000000002d6 W bool PioneerDramCohortReadSweepOwner::Progress<PioneerDramCohortNativeIO>(PioneerDramCohortNativeIO&)
+000000000000c0f2 00000000000000f8 W bool PioneerDramCohortReadSweepOwner::CodeFrame<PioneerDramCohortNativeIO>(PioneerDramCohortNativeIO&, unsigned int)
+000000000000d4da 0000000000000396 W bool PioneerDramCohortReadSweepOwner::Preflight<PioneerDramCohortNativeIO>(PioneerDramCohortNativeIO&, tt_dram_samples_result const&, PioneerDramCohortReadSweepResult&)
+0000000000009a6a 0000000000000102 W BlackholeDramCohortReadSweepImage::Address(bool, unsigned int)
+00000000000091d8 00000000000003e6 W PioneerDramSweepNativeContext::ViewsPresent() const
+0000000000008fc0 00000000000000ba t PioneerDramSweepNativeContext::View(int, void const volatile*, unsigned int, unsigned long, bool) const [clone .isra.0]
+00000000000095be 000000000000016e W PioneerDramSweepNativeContext::Scope() const
+0000000000009c80 0000000000000166 W PioneerDramCohortReadSweepOwner::Report(unsigned int, unsigned int const*) const
+                 U std::nothrow@KERNEL_BASE
+00000000000131e8 0000000000000050 d find_device::hooks
+00000000000106e0 0000000000002238 V BlackholeDramCohortReadSweepImage::Code(unsigned int)::text
+                 U operator delete(void*, unsigned long)@KERNEL_BASE
+                 U operator new(unsigned long, std::nothrow_t const&)@KERNEL_BASE
+0000000000012af8 r __EH_FRAME_BEGIN__
+0000000000012af8 r __FRAME_END__
+0000000000013458 B __bss_start
+                 w __cxa_finalize@KERNEL_BASE
+                 w __deregister_frame_info@KERNEL_BASE
+00000000000039c0 t __do_global_dtors_aux
+0000000000013008 d __do_global_dtors_aux_fini_array_entry
+00000000000131c0 d __dso_handle
+0000000000013000 d __frame_dummy_init_array_entry
+                 w __register_frame_info@KERNEL_BASE
+0000000000013458 D _edata
+0000000000013558 B _end
+00000000000131c8 0000000000000004 D _gSharedObjectHaikuABI
+00000000000131cc 0000000000000004 D _gSharedObjectHaikuVersion
+                 U _get_area_info@KERNEL_BASE
+                 U _get_thread_info@KERNEL_BASE
+                 U acquire_sem@KERNEL_BASE
+00000000000131d4 0000000000000004 D api_version
+0000000000013458 0000000000000001 b completed.1
+                 U create_sem@KERNEL_BASE
+                 U delete_area@KERNEL_BASE
+                 U delete_sem@KERNEL_BASE
+                 U dprintf@KERNEL_BASE
+0000000000007420 0000000000000030 T find_device
+                 U find_thread@KERNEL_BASE
+0000000000003a10 t frame_dummy
+                 U free@KERNEL_BASE
+                 U get_module@KERNEL_BASE
+                 U get_sem_count@KERNEL_BASE
+                 U geteuid@KERNEL_BASE
+00000000000043a0 00000000000001a2 T init_driver
+00000000000042c8 00000000000000d8 T init_hardware
+                 U malloc@KERNEL_BASE
+                 U map_physical_memory@KERNEL_BASE
+                 U memcpy@KERNEL_BASE
+                 U memset@KERNEL_BASE
+0000000000013460 0000000000000030 b object.0
+00000000000045e0 0000000000000014 T publish_devices
+                 U put_module@KERNEL_BASE
+                 U release_sem@KERNEL_BASE
+                 U spin@KERNEL_BASE
+                 U strcmp@KERNEL_BASE
+                 U system_time@KERNEL_BASE
+0000000000004542 000000000000009e T uninit_driver
+                 U user_memcpy@KERNEL_BASE

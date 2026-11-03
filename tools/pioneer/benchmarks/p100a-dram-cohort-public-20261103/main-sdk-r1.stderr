@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_dram_cohort_diagnostic.py", line 23, in <module>
+    assert hashlib.sha256((out/'private-controls/cohort-DRCNODRV.o').read_bytes()).hexdigest()=='da21a10338471db5e5acaff1fa8057bc817422ba2b6484676708576242bf6d1e', 'private control changed'
+AssertionError: private control changed

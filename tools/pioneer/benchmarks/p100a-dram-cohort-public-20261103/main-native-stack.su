@@ -1,0 +1,121 @@
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerMinimumBarLayout.h:8:1:bool PioneerMinimumBarLayoutMatches(const tt_pioneer_profile&)	224	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholeArcTelemetryProbe.h:36:1:bool BlackholeTelemetryRange(uint32_t, uint32_t)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholeArcQueueProbe.h:52:20:bool BlackholeArcQueueHeaderValid(const uint32_t*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp:1241:1:bool FindCard(pci_module_info*, pci_info&)	208	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp:1397:17:status_t ProbeClose(void*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp:9819:1:status_t ProbeData(void*, off_t, void*, size_t*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp:1373:1:status_t ProbeOpen(const char*, uint32, void**)	144	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:72:13:0(unsigned int, uint32)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:94:7:bool PioneerDramSweepNativeContext::View(area_id, const volatile void*, unsigned int, size_t, bool) const	160	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp:9826:1:status_t ProbeWrite(void*, off_t, const void*, size_t*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholeDramSamplesProbe.h:66:20:bool BlackholeDramBuildRoutes(tt_dram_samples_result&)	192	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp:963:1:status_t AcquireProbeLock(const void*, bool)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp:1398:17:status_t ProbeFree(void*)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp:1258:1:status_t init_hardware()	176	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp:1287:1:status_t init_driver()	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp:1333:1:void uninit_driver()	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp:1362:1:const char** publish_devices()	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp:1450:7:bool PioneerMmioIO::Quiet()	192	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp:1609:9:uint32 PioneerTelemetryIO::CsmRead(uint32)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:103:7:bool PioneerDramSweepNativeContext::ViewsPresent() const	160	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:123:7:bool PioneerDramSweepNativeContext::Scope() const	128	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:160:7:bool PioneerDramSweepNativeContext::ClosePci()	128	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:193:1:PioneerDramSweepNativeIO::PioneerDramSweepNativeIO(PioneerDramSweepNativeContext&, const tt_pioneer_profile&, tt_arc_scratch_result&, tt_arc_telemetry_result&, tt_tensix_reset_result&, tt_dram_samples_result&, tt_compute_noc_result&)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:198:6:bool PioneerDramSweepNativeIO::Access()	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:202:6:bool PioneerDramSweepNativeIO::Map()	208	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:218:8:uint32 PioneerDramSweepNativeIO::CardRead(uint16, uint8)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:219:6:void PioneerDramSweepNativeIO::CardWrite(uint16, uint8, uint32)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:220:8:uint32 PioneerDramSweepNativeIO::RootRead(uint16, uint8)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:221:6:void PioneerDramSweepNativeIO::RootWrite(uint16, uint8, uint32)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:222:6:bool PioneerDramSweepNativeIO::Quiet()	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:223:8:uint32 PioneerDramSweepNativeIO::ReadNodeId()	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:224:8:uint32 PioneerDramSweepNativeIO::SourceRead(unsigned int)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:225:8:uint32 PioneerDramSweepNativeIO::DramIdRead(unsigned int)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:226:8:uint32 PioneerDramSweepNativeIO::ComputeNocRead(uint32)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:227:8:uint32 PioneerDramSweepNativeIO::HostPciRead(unsigned int, uint16, uint8)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:230:8:uint32 PioneerDramSweepNativeIO::DramTlbRead(unsigned int, unsigned int)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:231:6:void PioneerDramSweepNativeIO::DramTlbWrite(unsigned int, unsigned int, uint32)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:232:8:uint32 PioneerDramSweepNativeIO::ResetRead()	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:233:8:uint32 PioneerDramSweepNativeIO::SweepEntryOverrideRead()	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:237:8:uint32 PioneerDramSweepNativeIO::ResidentNocRead(uint32)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:243:6:void PioneerDramSweepNativeIO::ResidentNocWrite(uint32, uint32)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:254:6:bool PioneerDramSweepNativeIO::SweepReadChecked(uint32, uint32&)	64	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:259:6:bool PioneerDramSweepNativeIO::SweepWrite(uint32, uint32)	64	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:264:6:bool PioneerDramSweepNativeIO::SweepWindowReadChecked(uint32, uint32&)	80	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:278:6:void PioneerDramSweepNativeIO::SweepResetWrite(uint32)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:288:8:uint32 PioneerDramSweepNativeIO::SweepPcRead()	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:289:6:void PioneerDramSweepNativeIO::Pause()	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:290:10:unsigned int PioneerDramSweepNativeIO::SweepAllocationWords()	128	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:291:9:uint32* PioneerDramSweepNativeIO::SweepSavedWords()	144	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:292:9:uint32* PioneerDramSweepNativeIO::SweepScratchWords()	144	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:293:6:bool PioneerDramSweepNativeIO::SweepNativeScope(const PioneerDramReadSweepOwner*, const tt_dram_samples_result*, const tt_compute_noc_result*, uint32*, uint32*, unsigned int, unsigned int)	208	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:302:6:void PioneerDramSweepNativeIO::SweepQuarantineMemoryOnly()	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:320:6:bool PioneerDramSweepClockIO::Check()	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:325:6:void PioneerDramSweepClockIO::MemoryOnlyRetain()	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:326:8:uint32 PioneerDramSweepClockIO::TlbRead(unsigned int)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:327:6:void PioneerDramSweepClockIO::TlbWrite(unsigned int, uint32)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:328:8:uint32 PioneerDramSweepClockIO::CsmRead(uint32)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:329:6:void PioneerDramSweepClockIO::SetQueueBounds(uint32, uint32, uint32)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:330:6:void PioneerDramSweepClockIO::QueueWrite(uint32, uint32)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:331:8:uint32 PioneerDramSweepClockIO::MsiStatusRead()	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:332:6:void PioneerDramSweepClockIO::NotifyArc()	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:333:6:void PioneerDramSweepClockIO::Pause()	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholeDramCohortReadSweepImage.h:384:18:static uint32_t BlackholeDramCohortReadSweepImage::Address(bool, unsigned int)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/../../../../../tools/pioneer/PioneerDramCohortReadSweep.h:22:14:static bool PioneerDramCohortReadSweep::Shape(const uint32_t*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/../../../../../tools/pioneer/PioneerDramCohortReadSweep.h:110:19:static unsigned int PioneerDramCohortReadSweep::CoordinatorLink::Offset(unsigned int)	64	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortReadSweepOwner.h:134:7:bool PioneerDramCohortReadSweepOwner::Report(unsigned int, const uint32_t*) const	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:80:6:bool PioneerDramCohortNativeIO::Access()	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:91:8:uint32 PioneerDramCohortNativeIO::SourceRead(unsigned int)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:92:8:uint32 PioneerDramCohortNativeIO::HostPciRead(unsigned int, uint16, uint8)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:93:8:uint32 PioneerDramCohortNativeIO::DramTlbRead(unsigned int, unsigned int)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:84:6:bool PioneerDramCohortNativeIO::Selected(unsigned int, bool)	80	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:94:6:void PioneerDramCohortNativeIO::DramTlbWrite(unsigned int, unsigned int, uint32)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:95:10:unsigned int PioneerDramCohortNativeIO::CohortAllocationWords()	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:96:9:uint32* PioneerDramCohortNativeIO::CohortSavedWords()	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:97:9:uint32* PioneerDramCohortNativeIO::CohortScratchWords()	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:98:6:bool PioneerDramCohortNativeIO::CohortNativeScope(const PioneerDramCohortReadSweepOwner*, const tt_dram_samples_result*, uint32*, uint32*, unsigned int, unsigned int)	96	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:104:6:void PioneerDramCohortNativeIO::CohortQuarantineMemoryOnly()	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:113:8:uint32 PioneerDramCohortNativeIO::CohortHeldRead(unsigned int, unsigned int)	80	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:118:8:uint32 PioneerDramCohortNativeIO::CohortResetRead(unsigned int)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:119:8:uint32 PioneerDramCohortNativeIO::CohortEntryRead(unsigned int)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:120:8:uint32 PioneerDramCohortNativeIO::CohortNocRead(unsigned int, unsigned int)	80	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:127:6:void PioneerDramCohortNativeIO::CohortNocWrite(unsigned int, unsigned int, uint32)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:134:6:bool PioneerDramCohortNativeIO::CohortRead(unsigned int, uint32, uint32&)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:138:6:bool PioneerDramCohortNativeIO::CohortWrite(unsigned int, uint32, uint32)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:142:6:bool PioneerDramCohortNativeIO::CohortWindowRead(unsigned int, uint32, uint32&)	80	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:149:6:void PioneerDramCohortNativeIO::CohortResetWrite(unsigned int, uint32)	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:159:8:uint32 PioneerDramCohortNativeIO::CohortPcRead(unsigned int)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:160:6:bool PioneerDramCohortNativeIO::CohortHostTime(uint64&)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:165:6:void PioneerDramCohortNativeIO::CohortPause()	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp:9833:1:device_hooks* find_device(const char*)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholeArcScratchProbe.h:44:1:bool BlackholeArcScratchProbe(IO&, tt_arc_scratch_result&) [with IO = PioneerArcIO]	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholeArcTelemetryProbe.h:53:1:bool BlackholeArcTelemetryProbe(IO&, const tt_arc_scratch_result&, tt_arc_telemetry_result&, bool) [with IO = PioneerTelemetryIO]	256	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholeTensixResetProbe.h:32:1:bool BlackholeTensixResetProbe(IO&, const tt_arc_telemetry_result&, tt_tensix_reset_result&) [with IO = PioneerTensixIO]	48	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholeDramSweepRoutes.h:7:25:bool BlackholeDramSweepRoutes(IO&, const tt_arc_telemetry_result&, const tt_tensix_reset_result&, tt_dram_samples_result&) [with IO = PioneerDramSweepNativeIO]	288	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholePioneerMmioProbe.h:35:1:bool BlackholeCardControlsQuiet(IO&) [with IO = PioneerDramSweepNativeIO]	112	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholePioneerMmioProbe.h:70:1:bool BlackholePioneerMmioBegin(IO&, tt_pioneer_mmio_result&, tt_pioneer_mmio_transaction&) [with IO = PioneerDramSweepNativeIO]	128	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholeDramSamplesProbe.h:97:6:bool BlackholeDramConfigure(IO&, unsigned int, uint32_t, uint32_t, uint32_t, bool) [with IO = PioneerDramSweepNativeIO]	128	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholeDramSamplesProbe.h:113:6:bool BlackholeDramAllCoresHeld(IO&, tt_dram_samples_result&) [with IO = PioneerDramSweepNativeIO]	144	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholeComputeNocProbe.h:38:6:bool BlackholeComputeNocProbe(IO&, tt_dram_samples_result&, tt_compute_noc_result&, unsigned int) [with IO = PioneerDramSweepNativeIO]	224	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortReadSweepOwner.h:34:26:bool PioneerDramCohortReadSweepOwner::Scope(IO&) [with IO = PioneerDramCohortNativeIO]	80	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortReadSweepOwner.h:38:26:bool PioneerDramCohortReadSweepOwner::Sources(IO&) [with IO = PioneerDramCohortNativeIO]	128	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortReadSweepOwner.h:104:26:bool PioneerDramCohortReadSweepOwner::CodeFrame(IO&, unsigned int) [with IO = PioneerDramCohortNativeIO]	112	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortReadSweepOwner.h:110:26:bool PioneerDramCohortReadSweepOwner::BeginDeadline(IO&) [with IO = PioneerDramCohortNativeIO]	80	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortReadSweepOwner.h:113:26:bool PioneerDramCohortReadSweepOwner::Deadline(IO&, uint64_t) [with IO = PioneerDramCohortNativeIO]	96	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortReadSweepOwner.h:117:26:bool PioneerDramCohortReadSweepOwner::Progress(IO&) [with IO = PioneerDramCohortNativeIO]	160	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortReadSweepOwner.h:128:26:bool PioneerDramCohortReadSweepOwner::Counters(IO&, unsigned int, const uint32_t*) [with IO = PioneerDramCohortNativeIO]	192	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortReadSweepOwner.h:59:26:bool PioneerDramCohortReadSweepOwner::Set(IO&, unsigned int, uint32_t, unsigned int, unsigned int, bool) [with IO = PioneerDramCohortNativeIO]	144	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortReadSweepOwner.h:67:26:bool PioneerDramCohortReadSweepOwner::Select(IO&, unsigned int) [with IO = PioneerDramCohortNativeIO]	64	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortReadSweepOwner.h:97:26:bool PioneerDramCohortReadSweepOwner::AllHeld(IO&) [with IO = PioneerDramCohortNativeIO]	240	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortReadSweepOwner.h:71:26:bool PioneerDramCohortReadSweepOwner::Idle(IO&, unsigned int) [with IO = PioneerDramCohortNativeIO]	80	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortReadSweepOwner.h:78:26:bool PioneerDramCohortReadSweepOwner::Guard(IO&, unsigned int, bool, uint32_t, unsigned int, unsigned int, bool) [with IO = PioneerDramCohortNativeIO]	128	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortReadSweepOwner.h:162:26:bool PioneerDramCohortReadSweepOwner::Preflight(IO&, const tt_dram_samples_result&, PioneerDramCohortReadSweepResult&) [with IO = PioneerDramCohortNativeIO]	1280	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholeDramSweepArcClock.h:13:25:bool BlackholeDramSweepArc::Configure(IO&, bool, tt_arc_queue_result&) [with IO = PioneerDramSweepClockIO]	80	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholeArcQueueProbe.h:44:25:void BlackholeArcQueueHeader(IO&, uint32_t, uint32_t*) [with IO = PioneerDramSweepClockIO]	64	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholeDramSweepArcClock.h:20:25:bool BlackholeDramSweepArc::Queue(IO&, const tt_arc_scratch_result&, const tt_arc_telemetry_result&, tt_arc_queue_result&, uint32_t) [with IO = PioneerDramSweepClockIO]	240	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:311:6:bool PioneerDramSweepNativeIO::SweepClockEnd()	80	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:109:6:bool PioneerDramCohortNativeIO::CohortClockEnd()	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc:303:6:bool PioneerDramSweepNativeIO::SweepClockBegin()	96	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc:105:6:bool PioneerDramCohortNativeIO::CohortClockBegin()	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortReadSweepOwner.h:191:26:bool PioneerDramCohortReadSweepOwner::Execute(IO&, const tt_dram_samples_result&, unsigned int, unsigned int, uint32_t, PioneerDramCohortReadSweepResult&) [with IO = PioneerDramCohortNativeIO]	1376	static
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp:8422:1:status_t ProbeControl(void*, uint32, void*, size_t)	512	static

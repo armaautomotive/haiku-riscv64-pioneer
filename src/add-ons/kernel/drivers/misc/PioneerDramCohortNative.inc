@@ -3,13 +3,16 @@
 #include "PioneerDramCohortReadSweepOwner.h"
 // Reuse ONLY the actual scoped PCI/VM/ARC/FD lease,not its old sweep factory,
 // algorithm,allocation geometry,L1 allowlist,reset policy or public controls.
-// Separate exact derived object/algorithm/backing/role ledger below. No ioctl
-// or conventional driver entry selects this compile-only private context.
+// Separate exact derived object/algorithm/backing/role ledger below. Inert
+// DRCNODRV remains distinct from the explicit bounded physical77 diagnostic.
 struct PioneerDramCohortNativeContext;
 static PioneerDramCohortNativeContext* sDramCohortNativeContext=NULL;
 struct PioneerDramCohortNativeReply {
  uint32 version=6,phase=0,retained=0,complete=0,busyMHz=0,idleMHz=0;
  uint32 viewsClosed=0,pciClosed=0,reservationClosed=0;
+#ifdef PIONEER_DRAM_COHORT_DIAGNOSTIC
+ uint32 preflight=0; // replaces private ABI padding;public layout is explicit
+#endif
  PioneerDramCohortReadSweepResult sweep;
 };
 struct PioneerDramCohortNativeIO {
@@ -34,6 +37,9 @@ struct PioneerDramCohortNativeContext final:PioneerDramSweepNativeContext {
  const unsigned depth;
  uint32* exactBacking=NULL;
  bool cohortReady=false;
+#ifdef PIONEER_DRAM_COHORT_DIAGNOSTIC
+ bool cohortPreflightClosed=false;
+#endif
  unsigned resetStages[8]={};
  PioneerDramCohortReadSweepOwner cohort;
  PioneerDramCohortNativeReply result;
@@ -47,7 +53,14 @@ struct PioneerDramCohortNativeContext final:PioneerDramSweepNativeContext {
    && !reply.sweep.started && !resetStage && ViewsPresent();
  }
  bool CloseCohortResources(){
+#ifdef PIONEER_DRAM_COHORT_DIAGNOSTIC
+  const bool closed=result.sweep.closed
+   || (cohortPreflightClosed && result.preflight==1 && !result.sweep.started && !result.sweep.unsafe)
+   ;
+  if(!CohortScope() || !closed || quarantined || clockEntered)return false;
+#else
   if(!CohortScope() || !result.sweep.closed || quarantined || clockEntered)return false;
+#endif
   result.phase=3;cohortReady=false;ready=false;closing=true;
   const bool views=CloseViews();result.viewsClosed=reply.viewsClosed=views;
   if(!views)return false;
@@ -152,12 +165,19 @@ bool PioneerDramCohortNativeIO::CohortHostTime(uint64& value){
 void PioneerDramCohortNativeIO::CohortPause(){if(Access())spin(100);}
 
 [[maybe_unused]] static status_t RunPioneerDramCohortNative(PioneerProbeCookie* fd,unsigned sweeps,
- unsigned depth,uint32 nonce,PioneerDramCohortNativeReply& output){
+ unsigned depth,uint32 nonce,PioneerDramCohortNativeReply& output
+#ifdef PIONEER_DRAM_COHORT_DIAGNOSTIC
+ ,bool preflight=false,uint64 expectedGeneration=0
+#endif
+ ){
  if(geteuid()!=0 || !sPCI || !sReloadGuard || sLock<0 || !fd || fd->magic!=0x50313030 || fd->context
   || !nonce || !sweeps || sweeps>256 || !depth || depth>16 || (depth&(depth-1)))return B_BAD_VALUE;
  thread_info t={};status_t status=get_thread_info(find_thread(NULL),&t);
  if(status!=B_OK || t.team!=fd->team)return B_NOT_ALLOWED;
  status=AcquireProbeLock();if(status!=B_OK)return status;
+#ifdef PIONEER_DRAM_COHORT_DIAGNOSTIC
+ if(!expectedGeneration || expectedGeneration!=sReloadGeneration){release_sem(sLock);return B_BAD_VALUE;}
+#endif
  if(sDramSweepNativeContext || sDramCohortNativeContext){release_sem(sLock);return B_BUSY;}
  auto* c=new(std::nothrow) PioneerDramCohortNativeContext(fd,t,depth);
  if(!c){release_sem(sLock);return B_NO_MEMORY;}
@@ -176,8 +196,21 @@ void PioneerDramCohortNativeIO::CohortPause(){if(Access())spin(100);}
   && BlackholeDramSweepRoutes(c->io,c->telemetry,c->tensix,c->dram)
   && BlackholeComputeNocProbe(c->io,c->dram,c->noc,2);
  c->ready=proved && c->Scope() && c->ViewsPresent();c->cohortReady=c->ready;
+#ifdef PIONEER_DRAM_COHORT_DIAGNOSTIC
+ bool okay=false;
+ if(preflight){
+  okay=c->cohortReady && c->cohort.Preflight(c->cohortIO,c->dram,c->result.sweep);
+  c->cohortPreflightClosed=okay;c->result.preflight=okay;
+ }else
+  okay=c->cohortReady && c->cohort.Execute(c->cohortIO,c->dram,sweeps,depth,nonce,c->result.sweep);
+#else
  bool okay=c->cohortReady && c->cohort.Execute(c->cohortIO,c->dram,sweeps,depth,nonce,c->result.sweep);
- if(okay && c->result.sweep.closed && !c->quarantined && !c->clockEntered){
+#endif
+ if(okay && (c->result.sweep.closed
+#ifdef PIONEER_DRAM_COHORT_DIAGNOSTIC
+  || c->cohortPreflightClosed
+#endif
+  ) && !c->quarantined && !c->clockEntered){
   okay=c->CloseCohortResources();
  }else if(!c->transaction.config_attempted && !c->quarantined){c->closing=true;okay=true;}
  if(okay && c->Scope()){
@@ -189,5 +222,9 @@ void PioneerDramCohortNativeIO::CohortPause(){if(Access())spin(100);}
  }
  c->result.complete=c->result.sweep.closed && c->result.viewsClosed && c->result.pciClosed;
  output=c->result;c->lockHeld=false;sDramCohortNativeContext=NULL;sDramSweepNativeContext=NULL;
- delete c;release_sem(sLock);return output.complete?B_OK:B_NOT_ALLOWED;
+ delete c;release_sem(sLock);return (output.complete
+#ifdef PIONEER_DRAM_COHORT_DIAGNOSTIC
+  || output.preflight
+#endif
+  )?B_OK:B_NOT_ALLOWED;
 }

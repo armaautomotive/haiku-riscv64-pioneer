@@ -15,6 +15,12 @@
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x4452434e4f445256ULL && !defined(PIONEER_DRAM_COHORT_NATIVE_CONTEXT)
 #error DRCNODRV tag cannot select an ordinary driver or old native context
 #endif
+#if defined(PIONEER_DRAM_COHORT_DIAGNOSTIC) && !defined(PIONEER_DRAM_COHORT_NATIVE_CONTEXT)
+#error Cohort physical diagnostic requires its distinct native context
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110300010077ULL && !defined(PIONEER_DRAM_COHORT_DIAGNOSTIC)
+#error Physical cohort77 tag cannot select an ordinary driver or private context
+#endif
 #if defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT)
 #error DRAM compile-only flag requires its distinct native context
 #endif
@@ -8361,6 +8367,9 @@ AttentionTileTestControl(PioneerProbeCookie* cookie,void* data,size_t length,boo
 #include "PioneerDramReadSweepNative.inc"
 #ifdef PIONEER_DRAM_COHORT_NATIVE_CONTEXT
 #include "PioneerDramCohortNative.inc"
+#ifdef PIONEER_DRAM_COHORT_DIAGNOSTIC
+#include "PioneerDramCohortControl.inc"
+#endif
 #endif
 #ifdef PIONEER_DRAM_SWEEP_DIAGNOSTIC
 #include "PioneerDramSweepControl.inc"
@@ -8416,9 +8425,15 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 	if (geteuid() != 0 || instance==NULL || instance->magic!=0x50313030)
 #include "PioneerQ38MixedLiveNativeRouting.inc"
 #ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
-#ifdef PIONEER_DRAM_SWEEP_DIAGNOSTIC
+#if defined(PIONEER_DRAM_SWEEP_DIAGNOSTIC) || defined(PIONEER_DRAM_COHORT_DIAGNOSTIC)
  if(operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
   return DriverReloadControl(instance,operation,data,length);
+#endif
+#ifdef PIONEER_DRAM_COHORT_DIAGNOSTIC
+ if(operation==TT_PCI_PROBE_DRAM_COHORT_SUPPORT || operation==TT_PCI_PROBE_DRAM_COHORT_PREFLIGHT || operation==TT_PCI_PROBE_DRAM_COHORT_RUN)
+  return PioneerDramCohortControl(instance,operation,data,length);
+#endif
+#ifdef PIONEER_DRAM_SWEEP_DIAGNOSTIC
  if(operation==TT_PCI_PROBE_DRAM_SWEEP_SUPPORT || operation==TT_PCI_PROBE_DRAM_SWEEP_PREFLIGHT || operation==TT_PCI_PROBE_DRAM_SWEEP_RUN)
   return PioneerDramSweepControl(instance,operation,data,length);
 #endif

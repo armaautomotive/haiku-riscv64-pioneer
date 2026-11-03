@@ -15,6 +15,7 @@ struct CohortRig {
  uint32_t tlb[2][3]={{1,2,3},{4,5,6}},originalTlb[2][3]={{1,2,3},{4,5,6}};
  uint32_t reset[8]={0x47800,0x47800,0x47800,0x47800,0x47800,0x47800,0x47800,0x47800};
  unsigned stage[8]={},holds=0,clockBegins=0,clockEnds=0,allHeldReads=0,touches=0,pauses=0;
+ unsigned l1Writes=0,resetWrites=0;
  bool running[8]={},quarantined=false,scope=true,clock=false,fastHost=false,freezeReady=false;
  bool snapshotCorrupt=false,restoreCorrupt=false,lateFifo=false,otherRunning=false,badCounter=false;
  unsigned corruptRole=3,corruptWord=17,failPhase=0,failKind=0;
@@ -127,12 +128,13 @@ struct CohortRig {
  }
  bool CohortWrite(unsigned r,unsigned a,uint32_t v){
   assert(r<8 && Maps(0,0,X(r),2,false) && !running[r]);if(!Touch(L1Write))return false;
-  WriteValue(r,a,v);
+  l1Writes++;WriteValue(r,a,v);
   if(restoreCorrupt && result.phase==8 && r==3 && a==C::Raw)WriteValue(r,Image::Address(false,3),Value(r,Image::Address(false,3))^1);
   return true;
  }
  void CohortResetWrite(unsigned r,uint32_t v){
   assert(r<8 && Maps(1,0xffa00000,X(r),2,false));if(!Touch(ResetWrite))return;
+  resetWrites++;
   if(v==0x87ffff){assert(stage[r]==0 && !running[r] && !fabric.cores[r]->steps);stage[r]=1;}
   else if(v==0x46800){
    assert(stage[r]==1 && reset[r]==0x87ffff);stage[r]=2;running[r]=!(freezeReady && r==3);
@@ -174,6 +176,21 @@ int main(int argc,char** argv){
  assert(argc==5);const auto boot=Read(argv[1]),text=Read(argv[2]);
  const unsigned good=unsigned(std::stoul(argv[3],nullptr,16)),bad=unsigned(std::stoul(argv[4],nullptr,16));
  unsigned valid=0,refused=0;
+ {CohortRig r(boot,text,good,bad);
+  assert(r.owner->Preflight(r,r.proof,r.result) && r.Original() && !r.result.started && !r.result.closed
+   && !r.result.unsafe && !r.quarantined && !r.clockBegins && !r.clockEnds && !r.l1Writes && !r.resetWrites
+   && !memcmp(r.tlb,r.originalTlb,sizeof(r.tlb)) && r.allHeldReads==240);
+  for(const auto& c:r.fabric.cores)assert(!c->steps && !c->requests);
+  const unsigned before=r.touches;PioneerDramCohortReadSweepResult again;
+  assert(!r.owner->Preflight(r,r.proof,again) && r.touches==before);valid++;
+ }
+ for(unsigned fault=0;fault<4;fault++){
+  CohortRig r(boot,text,good,bad);
+  if(!fault)r.otherRunning=true;
+  else {r.failPhase=0;r.failKind=fault==1?CohortRig::Entry:fault==2?CohortRig::TlbWrite:CohortRig::NocRead;}
+  assert(!r.owner->Preflight(r,r.proof,r.result) && r.quarantined && r.result.unsafe
+   && !r.l1Writes && !r.resetWrites && !r.clockBegins && !r.result.started);refused++;
+ }
  for(unsigned depth:{1U,16U}){
   CohortRig r(boot,text,good,bad,depth);r.corruptWord=UINT32_MAX;
   assert(r.Run() && r.result.closed && !r.result.unsafe && !r.quarantined && r.Original());
