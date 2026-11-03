@@ -4,6 +4,9 @@
  * Optional, root-only Pioneer experiments. Only fixed owned host-buffer DMA;
  * no arbitrary DMA, unowned host writes or firmware flash.
  */
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110300010078ULL && !defined(PIONEER_NATIVE_BFP_DIAGNOSTIC)
+#error Native BFP tag78 is reserved for its distinct fixed-fixture driver
+#endif
 #ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
 #include "PioneerDramReadSweepNativeRole.h"
 #elif defined(TT_PIONEER_DRIVER_RELOAD) && (PIONEER_DRIVER_BUILD_TAG == 0x4452534e4f445256ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026110200010076ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026110200020076ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026110200030076ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026110200040076ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026110200050076ULL)
@@ -9845,5 +9848,9 @@ find_device(const char* name)
 		ProbeOpen, ProbeClose, ProbeFree, ProbeControl, ProbeData, ProbeWrite,
 		NULL, NULL, NULL, NULL
 	};
+#ifdef PIONEER_NATIVE_BFP_DIAGNOSTIC
+	(void)name;(void)hooks;return NULL; // private base body has NO published legacy endpoint
+#else
 	return strcmp(name, TT_PCI_PROBE_DEVICE) == 0 ? &hooks : NULL;
+#endif
 }

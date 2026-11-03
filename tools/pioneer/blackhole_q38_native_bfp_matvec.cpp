@@ -11,7 +11,7 @@ static inline volatile unsigned* Words(unsigned address) { return reinterpret_ca
 struct Emitter {
 	void Op(unsigned instruction) { *Words(0xffe40000)=instruction; }
 	void Drain() {
-		// Existing bounded PCBuf/GPR completion protocol. No guessed delay,
+		// Existing bounded Blackhole STALLWAIT/GPR completion protocol. No guessed delay,
 		// skipped wait or substitution of a source-ready flag for completion.
 		*Words(0xffe000fc)=0;(void)*Words(0xffe000fc);asm volatile("fence":::"memory");
 		Op(0xa2101816);Op(0x4500017e);

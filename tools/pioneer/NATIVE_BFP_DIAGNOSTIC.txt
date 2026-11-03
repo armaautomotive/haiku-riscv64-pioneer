@@ -1,0 +1,116 @@
+Isolated native BFP matvec diagnostic candidate (NOT INSTALLED)
+=============================================================
+
+Purpose
+-------
+Physically qualify native cached-weight-format math before fullK streaming
+and model/cohort integration. This is a real kernel driver/client adapter,
+not Work inference. Only two immutable asymmetric synthetic fixtures are
+accepted:one BFP4_B or BFP8_B32x32 tile with BF16 activations. No caller code,
+weights,pointers,PCI/NoC addresses,routes,clocks or reset commands are accepted.
+The candidate is unselected by the running Assistant and stable041 driver.
+It has not yet been staged,loaded or executed on the Pioneer.
+
+Build
+-----
+  python3 tools/pioneer/build_native_bfp_diagnostic.py \
+    /Volumes/HaikuBuildLocal/generated.riscv64 /absolute/fresh-output
+
+This compiles BOTH RV32I images from source,requires their exact boot/text
+SHA and entry/done/park/fault symbols,then generates immutable code arrays.
+It compiles/links the distinct native driver and fixed-fixture Haiku client,
+plus the unchanged-feature default43 control. It never stages,installs,
+reloads,opens a card or starts a test. Optimized Python is refused so build
+assertions cannot silently vanish. Existing private reload guard is reused,
+not rebuilt/installed by this builder. All conventional native driver entry
+exports are checked,and the compiled legacy find_device is proved NULL-only.
+
+Only an independently prepared/frozen physical trial may install and invoke:
+  pioneer-native-bfp-diagnostic --fixed-bfp4
+or --fixed-bfp8. No default command/automatic device discovery/start exists.
+
+Owner/lifecycle
+---------------
+Distinct tag2026110300010078,private pointer-free360-byte protocol. The
+conventional driver publishes ONLY root/team-bound metadata plus fixed
+SUPPORT/RUN/END;old model/Work/data upload/PCI experiments are not routed.
+Reserved tag78 cannot compile as an ordinary legacy driver. Each open cookie
+can attempt RUN only once;fixed format,generation,nonce and explicit accept
+are bound across END. Foreign owners,cold/quiesced state and extra open FDs
+refuse hardware entry. No reset or cold-latch clear is exposed to userspace.
+
+Exact Pioneer PCI layout,quiet MSI/MSI-X/ROM/commands,firmware18.5 telemetry,
+seven-bank source translation,all120 enabled cores held,and sole-tile NoC0
+identity/routes/idle queues are required before execution. Only host memory
+decoding is enabled,not bus mastering. No host DMA or device NoC command is
+issued. No ARC busy/clock/voltage control or firmware/boot write is performed.
+
+The heap owner retains PCI reservation,mappings,original TLBs and3548 saved
+L1 words:boot4B,code4KiB,private stack8KiB,weight/header1104B,input/header528B,
+output256B,status12B. It stages/reads back the complete fixed footprint and
+publishes boot last. The sole idle context is explicitly reset;TRISC0 alone
+starts. Existing Src/Dst/config/local-RISC state is deliberately disposable,
+NOT preserved as though it belonged to an active model. Other cores stay held.
+
+The image performs both source-bank jobs and copies64 actual FP32 result
+words. The host requires full phase/count/marker,stable source/TLB/reset and
+two allowed frontend PC snapshots;PC alone is NEVER completion. Both guard
+PCs are self-loops. Host polling is capped at20000 iterations/2seconds when
+MMIO returns. It cannot guarantee bounded completion of a platform bus fault.
+The image separately has bounded GPR completion waits and a fault-only park.
+
+RUN returns while the complete image remains PARKED AND OWNED. The separate
+userspace diagnostic checks all64 fixed dyadic outputs BIT-EXACT against
+independent long-double arithmetic. This is debug synthetic validation,not
+CPU learned products in Work. Only an explicit accepted END re-proves terminal
+state,holds/reset-initializes that sole context,proves all cores held,restores
+and verifies L1 then TLBs,then the outer PCI transaction/reservation is closed.
+
+Timeout,fault marker,wrong PC,source/ownership drift,dropped stage/start/STOP,
+restore failure,RUN reply failure,numerical failure or close without END require
+quarantine/retention. No watchdog reset,blind restore,second start,automatic
+END,unreserve,unmap or heap/cookie deletion is authorized after UNKNOWN.
+Outer VM/PCI restoration stops at its FIRST failing step,without retry or
+later device writes;remaining resources and snapshots are retained. A failed
+reply AFTER a proven clean END does not retroactively make resources live.
+The separate KEEP_LOADED guard persists the fault across module reload.
+Recovery is external and controlled under the development-box power policy.
+Never run a second trial or hot-swap on the assumption that an SSH timeout
+means the original parent or its hardware resources have stopped.
+
+Tests / status
+--------------
+  sh tools/pioneer/tests/run_pioneer_native_bfp_owner_tests.sh \
+    /Volumes/HaikuBuildLocal/generated.riscv64
+
+ASan/UBSan/Werror exercise the ACTUAL lease against fake fixed MMIO;starts
+execute the ACTUAL fresh RV32 bytes using the separate existing ISA observer.
+Both fixed formats produce all64 expected bits;complete L1/TLB restoration
+and no-I/O-after-unknown behavior are checked.12 failure cases cover timeout,
+PC,fault marker,source,staging,start,context STOP,L1/TLB restore. Close without
+END retains even an otherwise completed job. The first injection of a dropped
+TLB write was idempotent and did not fault;corrected to an actual coordinate
+change,not accepted as a negative pass.31 further tests execute the ACTUAL
+native FinishMmio/Free source bodies with failing fake VM/PCI endpoints;
+every failed observation stops subsequent IO,and close retains even a
+completed/quarantined owner and cookie. Software passes grant no GPU authority.
+
+Remaining before a hardware trial:actual native Control/user-copy failure
+regression,VM mapping/retention inspection,and a
+frozen single-parent install/run/known-clean-restore-or-retain coordinator.
+Then independently test both formats on hardware. Model quality,fullK
+accumulation/GDDR streaming,cohort integration and real27B performance still
+remain. The20tok/s target and accepted full-native model Work are UNMET.
+
+Primary instruction facts (algorithm/register facts;no vendor code copied)
+-------------------------------------------------------------------------
+https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/BlackholeA0/TensixTile/SoftReset.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/BlackholeA0/TensixTile/BabyRISCV/README.md#riscv-pc-snapshot
+https://github.com/tenstorrent/tt-isa-documentation/blob/8a34e25e04d1ad7dd129ac9231e126b85923fac3/BlackholeA0/TensixTile/TensixCoprocessor/STALLWAIT.md
+https://github.com/tenstorrent/tt-llk/tree/9ec671ce8922ce4cf26cc83e6ee1627cd8231c3b
+
+Blackhole renumbers wait conditions:the emitted a2101816 has scalar block
+B5 and waits C1/C2(unpackers),C4(FPU),C11(SFPU),C12(configuration). The next
+SETDMAREG sentinel cannot pass until those conditions clear,blocking following
+same-thread work. Wormhole C7 is NOT Blackhole's FPU condition. This image
+has an exclusive single thread/context,not arbitrary concurrent LLK use.

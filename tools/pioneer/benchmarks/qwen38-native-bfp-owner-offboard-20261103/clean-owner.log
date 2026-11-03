@@ -1,0 +1,2 @@
+CLOSED local tool exit0; corresponding stderr0 bytes. Scope described in report.
+PASS OFFBOARD actual native-BFP lease:16 cases;fresh real RV32 images/fixed dyadic exact64 results/3548-word L1+TLB restore;timeout,PC,fault,source,stage,start,STOP,restore,close failures retain with NO retry/reset/cleanup;NO physical/Work/model-speed proof

@@ -1,0 +1,108 @@
+Native BFP math: real isolated driver/owner candidate -- 2026-11-03
+================================================================
+
+Progress, NOT model/physical completion
+---------------------------------------
+Implemented and linked a DISTINCT native driver/client around the existing
+native BFP matvec images. This is a concrete fixed-fixture kernel lifecycle,
+not an installed Work mode or an assertion that20tok/s has been achieved.
+No candidate has been transferred to or opened on the card. The only Pioneer
+operation this turn was the CLOSED read-only stable-health check below.
+
+New files: PioneerNativeBfp{Fixture,Protocol,Lease}.h,
+pioneer_native_bfp_driver.cpp,build_native_bfp_diagnostic.py,
+pioneer_native_bfp_diagnostic.cpp;see NATIVE_BFP_DIAGNOSTIC.txt.
+Root/team/generation/cookie-bound fixed4/8-bit fixtures only;no arbitrary
+weights,code,addresses,PCI writes,model/Work upload or user reset command.
+The inherited base driver publishes no legacy endpoint for this role.
+Actual conventional exports and compiled NULL-only legacy entry are checked.
+The old default43 control still builds;stable041 driver was NOT replaced.
+
+The actual adapter uses the existing strict Pioneer PCI/firmware/translation/
+all-core-held/sole-NoC-idle baseline. A HEAP owner holds reservation,mappings,
+two TLB snapshots and3548 saved L1 words. It initializes/reads back the fixed
+footprint,starts only TRISC0,bounds host polling,requires full two-job status
+plus safe PC snapshots,and returns results while still PARKED AND OWNED.
+Only explicit accepted END may stop,prove held,restore L1/TLBs then PCI state.
+No unknown-state reset,cleanup,END,retry,second start or owner deletion exists.
+Free/RUN-reply failure quarantines and retains. Outer cleanup deliberately
+does NOT inherit generic best-effort MMIO End:the first VM/PCI/identity failure
+stops subsequent device I/O. Remaining owners/snapshots persist until external
+controlled recovery;the separate existing guard carries cold across reload.
+
+Closed main and clean builds
+----------------------------
+Base /private/tmp/pioneer-native-bfp-owner-20261103.NO9onJMf
+Main native-final and independently archived clean native-clean-r2 compile/
+link exit0/stderr0. The driver,client AND default43 control cmp byte-identical:
+native e79e070b9e4fe434b868898748834e0cd89b03bcb250d9c1694b4d0b890f46ac
+client ddffa4ff4201e87feb3eba509d67ba41568569027ed78b5cb637eee4ab8ff5e8
+control2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+These are build artifacts,NOT a physical launch allowlist/coordinator.
+Tag2026110300010078;common reload metadata driver55/guard1. No guard-module
+replacement. No dirty llama.cpp,FlashNext,NATIVE_BUILD_STATUS or kernel/boot
+code was used/changed. Existing generated config headers/read-only SDK reused.
+
+Fresh images are rebuilt/verified before embedding:
+boot d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd
+BFP4adcec3cf5a66a2f00b979746928e1f8525a1c2274f37d0f3e35d3b6468ee6ef3/1808B
+BFP8c21f4692d340b0bab397a513a315b9884b898804022e35948b2d029a6a128b19/1876B
+Older scratch native4/cd686e4c... is the SUPERSEDED LF8-ID prototype. It was
+noticed during inventory,NOT used in these builds or sent to hardware.
+New builder refuses mismatched hashes/symbols/guard loops and optimized Python.
+Kernel SDK frames:Control1120B,Free304B,FinishMmio192B;the14KiB L1 snapshot
+is in the retained heap owner,not a kernel-stack allocation. Whole call-stack
+and native Control/user-copy/VM integration still need the remaining audit.
+
+Closed ASan/UBSan/Werror tests
+-----------------------------
+Main and clean ACTUAL lease:16 cases. Both fixed BFP formats execute the ACTUAL
+fresh RV32I bytes using the separate instruction observer. All64 dyadic output
+words agree BIT-EXACT with independent long-double fixture arithmetic;all3548
+L1 words and both TLBs restore.12 fault cases exercise timeout,wrong PC,device
+fault,source drift,staging,start/context-reset,STOP,L1/TLB restore failures.
+After UNKNOWN,END/re-RUN/Abandon produce ZERO further IO/reset/TLB writes.
+Close without END retains even a completed job. No model products or changed
+numerical tolerance are involved. These are fake MMIO/ISA software tests.
+
+Main and clean ACTUAL extracted FinishMmio/Free:31 cases. Fail each of11 PCI
+write readbacks,12 identity checks and VM unmap;the FIRST failed observation
+permits no later device operation. Successful END is idempotent. Ordinary,
+already-quarantined and lock-failed owner closes retain exact cookie/owner;
+foreign metadata close cannot release that owner. Fake CPU teardown is
+explicitly test-only,not production recovery. Full runner tool24488 exit0/
+stderr0 includes both suites plus all real cross-builds. Legacy matmul owner
+regression tool32351 also exit0/stderr0,unchanged original test expectations.
+
+Retained diagnostic corrections (not counted as passes)
+-------------------------------------------------------
+First owner negative fixture dropped an idempotent TLB base write;RUN correctly
+succeeded and the test failed exit134. Changed injection to the first actual
+coordinate change;all16 cases then pass without weakening the assertion.
+First clean archive omitted the existing Sg2042RootPolicy.h dependency and
+failed compile exit1. Added that exact HEAD header;clean-r2 passes. No source
+policy or SDK edits were made to hide the missing test input.
+An audit of the completion mask used actual BLACKHOLE docs/LLK,not Wormhole:
+Blackhole a2101816 waits C4(FPU),C1/C2(unpack),C11(SFPU),C12(config) and blocks
+the scalar sentinel. No barrier bytes were changed. No web fetch success is
+claimed;the pinned local primary source supplied the register/ISA facts.
+
+Fresh external preservation evidence
+------------------------------------
+Read-only SSH tool completed0/stderr0;raw sibling pioneer-health.log:
+PROJECT_COMPUTE_PARENT_COUNT0;stable installed AND backup SHA041fef18...3403,
+admin b0c851b3...137f,guard d1ce2aa4...229 verified;symlink unchanged.
+driver55/tag2026102100010012/generation18/quiesced0/cold0/active_owner0/
+open_count1/guard1;64 CPUs,max RAM137034936320B/free130353917952B.
+No UART open/config,power,network,SD,hardware,Assistant or driver-file mutation.
+
+Next required work -- goal remains active
+----------------------------------------
+Complete actual Control/user-copy and VM lifetime failure checks,then freeze
+a single protected native install/run/known-clean-restore-or-retain parent.
+Fresh admission is required again;this older health record is not authority
+to launch later. Physically qualify both formats,then fullK/GDDR/cohort/model
+integration and quality/performance. Native BFP is requantization:previous
+sampled BFP4 tile errors13..16percent must NOT be hidden or promoted as a
+usable fast model. Existing strict comparators and Work/validation separation
+remain unchanged.20tok/s and accepted usable full-native27B Work are UNMET.

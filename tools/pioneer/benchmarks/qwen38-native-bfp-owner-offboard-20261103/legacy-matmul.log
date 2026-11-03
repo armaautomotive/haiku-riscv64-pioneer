@@ -1,0 +1,2 @@
+CLOSED local tool exit0; corresponding stderr0 bytes. Scope described in report.
+PASS: fixed TRISC0 compute ownership/start/drain/stop, L1 rollback and uncertain-state recovery gates

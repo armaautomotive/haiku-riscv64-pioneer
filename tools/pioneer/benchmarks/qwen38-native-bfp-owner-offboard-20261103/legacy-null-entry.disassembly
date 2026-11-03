@@ -1,0 +1,16 @@
+
+/private/tmp/pioneer-native-bfp-owner-20261103.NO9onJMf/native-final/tenstorrent_pci_probe-native-bfp78:     file format elf64-littleriscv
+
+
+Disassembly of section .plt:
+
+Disassembly of section .text:
+
+0000000000005084 <_Z32PioneerNativeBfpLegacyFindDevicePKc>:
+    5084:	1141                	add	sp,sp,-16
+    5086:	e422                	sd	s0,8(sp)
+    5088:	0800                	add	s0,sp,16
+    508a:	6422                	ld	s0,8(sp)
+    508c:	4501                	li	a0,0
+    508e:	0141                	add	sp,sp,16
+    5090:	8082                	ret
