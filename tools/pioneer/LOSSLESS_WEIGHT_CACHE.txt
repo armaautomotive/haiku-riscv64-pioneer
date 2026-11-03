@@ -63,8 +63,12 @@ This checkpoint has NOT replaced the running Assistant or driver. Complete
 native SDK workers now LINK in both flag-on and flag-off configurations
 against all four authenticated frozen libraries. An isolated cached worker
 and LOAD/UNLOAD-only probe are staged; they are not the installed Assistant.
-The first full cache preparation on the Pioneer is underway. A complete live
-worker loading/upload/inference trial remains required before deployment.
+The first full cache preparation on the Pioneer CLOSED with exit0: all851
+entries,19397646336 bytes,4735959 conversion pages and10653 sampled bank-upload
+pages passed byte-for-byte comparison against fresh original preparation.
+That diagnostic deliberately reconverts sampled pages, not the warm loader.
+A complete live worker loading/upload/inference trial remains required
+before deployment.
 There is no new tokens/sec or startup-speed claim.
 Caching avoids repeated host layout conversion; model bytes still traverse
 PCIe on a cold GPU load, and this does not remove decoding inside old kernels.
@@ -74,12 +78,12 @@ Isolated warm-cache host-load probe (not inference)
   sh tools/pioneer/build_assistant_qwen27_cache_smoke.sh HAIKU_BUILD /absolute/new-probe
 
 The probe is compiled for the separately staged worker at
-/boot/home/pioneer-lossless-cache-20261103-a/HaikuAssistantQwen27-cached,
+/boot/home/pioneer-lossless-cache-20261103-a/HaikuAssistantQwen27-cached-generate-only,
 not the installed Assistant. Its ONLY runtime option is --load-unload-only.
 It uses the actual Assistant client, requires verification progress for all851
 tensors and no fresh preparation, then requires known-clean unload and worker
 exit. It never sends Generate or claims GPU-upload/inference qualification.
-Run it only after the current full preparation has actually finished and the
+Run it only after the full preparation has actually finished and the
 worker/probe/runtime-library identities and idle driver metadata are verified.
 Seven ASan/UBSan fake-peer cases check acceptance/refusal and exact load/unload
 command traces. No physical worker run is claimed by those tests.
@@ -87,7 +91,23 @@ command traces. No physical worker run is claimed by those tests.
 The preparation command now reports original authentication progress every
 64MiB. This changes logging only: original full SHA, same-open identity checks,
 conversion-source fingerprint and cache recipe remain unchanged. The running
-first Pioneer preparation deliberately keeps its original901f160a binary.
+first Pioneer preparation deliberately kept its original901f160a binary.
+
+The actual client permits the exact cache-preparation status to extend the
+ordinary30-minute load budget to a FIXED total2hours from load start. Repeated
+progress never renews that limit; queued Ready frames must also arrive within
+the deadline. Eleven fake-clock cases test this without a long wall-clock wait.
+The worker's actual Multiply callback is explicitly disabled outside a valid
+Generate scope. Load/reserve/idle/close cannot poll, open, prime or multiply;
+the final host-ready snapshot also requires zero learned projections. Ten
+fake-session cases exercise the actual callback and scope. Full native SDK
+cached and flag-off workers link with that guard; neither replaces installation.
+
+pioneer_assistant_cache_host_trial.sh is a frozen, ONE-SHOT load/unload parent.
+It pins worker/probe/libraries/normal driver/admin/guard identities and idle
+metadata, preserves previous output paths, never sends Generate, and accepts
+only all851 cache hits and a known-clean exit. Failure grants no retry/reset/
+cleanup authority. Eleven fake-command flow cases are NOT physical proof.
 
 Tests
 -----
@@ -96,6 +116,9 @@ Tests
   sh tools/pioneer/tests/run_pioneer_q38_public_source_tests.sh
   sh tools/pioneer/tests/run_assistant_qwen27_tests.sh
   sh tools/pioneer/tests/run_assistant_qwen27_cache_smoke_tests.sh
+  sh tools/pioneer/tests/run_assistant_qwen27_load_budget_tests.sh
+  python3 tools/pioneer/tests/assistant_qwen27_compute_gate_test.py
+  python3 tools/pioneer/tests/assistant_cache_host_parent_test.py
 
 The lossless fixture is an explicitly SYNTHETIC sparse851-tensor GGUF, not
 authentication evidence. ASan/UBSan/Werror checks four storage formats,

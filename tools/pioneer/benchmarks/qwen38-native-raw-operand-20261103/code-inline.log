@@ -1,0 +1,7 @@
+RV32I_NATIVE_RAW_OPERAND_SHA256 c93abf9b2c1bb13c6e468e3d7cb27b87fbfa61feb557ea22ac71d042ef9ff619
+BUILD_ONLY functions;NO boot,main,driver,installation,unpack,lifecycle,hardware or performance authority
+PASS actual RV32I raw-operand code:MMIO-port,3 functions,strict unchanged Step,bounded private8KiB ABI stack/callee-register preservation,exact9 SFPU commands each,8832 all-domain/lane recoveries,102 total RISC steps;NO scalar weight/activation access or FP dequant,unpack/Dst scheduling/boot/owner/driver/hardware/speed qualification
+RV32I_NATIVE_RAW_OPERAND_SHA256 d863a8d2f79e4e1bc9d2e2b60330cd8d43c285a0b241a1315f39cc92aabb64ad
+BUILD_ONLY functions;NO boot,main,driver,installation,unpack,lifecycle,hardware or performance authority
+PASS actual RV32I raw-operand code:inline-ZERO-port-writes,3 functions,strict unchanged Step,bounded private8KiB ABI stack/callee-register preservation,exact9 SFPU commands each,8832 all-domain/lane recoveries,45 total RISC steps;NO scalar weight/activation access or FP dequant,unpack/Dst scheduling/boot/owner/driver/hardware/speed qualification
+CPU-only actual RV32 raw operand evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-native-raw-code.rx0pwuw0

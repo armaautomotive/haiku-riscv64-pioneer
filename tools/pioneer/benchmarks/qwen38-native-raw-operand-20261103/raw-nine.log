@@ -1,0 +1,3 @@
+PASS OFFBOARD actual native-raw SFPU recovery:8832 all-domain/lane raw codes,10752 exact Q4/Q6/Q8 overlay cases,negative-infinity raw2/8/128 and Q8 -128 preserved,9 recovery instructions/32 weights versus22 baseline,flags/preserved registers unchanged;NO scalar dequant/FP approximation;NO actual unpack/MOVA2D/scheduling/image/driver/hardware/quality/speed qualification
+PASS native-raw build guards:3 driver/Work/validation selections rejected before use
+CPU-only native raw operand evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-native-raw-operand.1GMOYJb2

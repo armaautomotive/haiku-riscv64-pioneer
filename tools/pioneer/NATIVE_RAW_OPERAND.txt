@@ -1,0 +1,52 @@
+Native BFP raw-code recovery prerequisite (OFFBOARD ONLY)
+=======================================================
+
+This is not the lossless disk-cache recipe and not a driver/Work selection.
+It investigates recovering ORIGINAL unsigned2/4/8-bit codes after a future
+native BFP unpack -> MOVA2D -> SFPLOAD chain, rather than requantizing weights.
+The helpers accept exact naturalFP32 bits from a constant-exponent127 native
+block, with all32 lanes enabled and ready. They do not establish that input.
+Native format IDs are BFP2_b15,BFP4_b7,BFP8_b6; helper bit widths2/4/8 are NOT
+format IDs. Negative-zero raw sign codes2/8/128 unpack to negative-infinity
+bits; preserving those as opaque bits is necessary, including original Q8-128.
+
+PioneerQ38NativeRawOperand.h retains a22-SFPU-instruction baseline and supplies
+an exact9-instruction sequence per32 recovered codes using EXEXP,EXMAN and
+register SHFT. Existing Q4 unsigned overlay, Q6 low4/high2 combination minus32
+and signed Q8 overlay remain unchanged. No floating dequantization/approximation
+or CPU learned products are used. Flags and registers4..6 are preserved.
+Driver/Work/CPU-validation macro selections are deliberately compile-rejected.
+
+CPU-only tests
+--------------
+  sh tools/pioneer/tests/run_pioneer_q38_native_raw_operand_tests.sh
+  sh tools/pioneer/tests/run_pioneer_q38_native_raw_operand_code_tests.sh HAIKU_BUILD
+
+ASan/UBSan/Werror tests cover8832 all-domain/lane raw cases and10752 exact
+overlay cases, invalid bit widths and dropped-shift/collapsed-sign negatives.
+Actual RV32I code is built for three exported functions with the existing SDK
+and executed through the unchanged strict Step decoder. The tests prove exact
+9-command streams, bounded private8KiB ABI stack and callee-register preservation.
+MMIO issue totals102 RISC steps across three functions; direct encoded issue
+totals45 with ZERO issue-port writes. These are instruction counts, NOT card
+latencies, model throughput, loading speed or full-native inference evidence.
+The existing vector-operand regression also passed1053184 cases unchanged.
+
+Still required
+--------------
+Actual native unpack configuration and physical input; Src/Dst bank ownership;
+MOVA2D/SFPLOAD/SFPSTORE layouts and scheduling/hazards; complete launch/bootstrap
+and owner/lifecycle integration; exact independent hardware comparisons; cohort
+and full-model integration/quality/real speed measurement. No raw helper binary
+has been staged or executed on the Pioneer by this checkpoint. Existing Work
+and the accepted driver are unchanged. The20tokens/sec target remains unmet.
+
+Primary ISA fact provenance (not copied implementation)
+-----------------------------------------------------
+https://github.com/tenstorrent/tt-isa-documentation/tree/4a73a7121d95f545b85efa34b243f0b8b316f967
+Blackhole SFPSHFT and shared Wormhole SFPEXEXP/SFPEXMAN and FloatBitPatterns
+specify selected encodings, hidden mantissa bit, unbiased exponent, signed
+register shift/low5 distance and native BFP special patterns. Blackhole EXEXP/
+EXMAN point to the shared behavior. MOVA2D hardware layout/scheduling is NOT
+proven by the helper. The independent test model adds only the selected new
+SFPU forms; the shared RV32 decoder and previous arithmetic model are unchanged.

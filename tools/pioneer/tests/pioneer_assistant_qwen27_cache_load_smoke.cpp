@@ -4,6 +4,7 @@
 #error Compile with an explicit isolated worker; never select the installed Assistant
 #endif
 #include "../../../src/apps/assistant/P100AQwen27.h"
+#include "../../../src/apps/assistant/Qwen27Protocol.h"
 #include <array>
 #include <cstdio>
 #include <cstring>
@@ -15,7 +16,7 @@ int main(int argc,char** argv) {
 	auto progress=[&](float,const char* text) {
 		if(!text)return;
 		puts(text);fflush(stdout);
-		if(!strcmp(text,"Preparing/reusing lossless disk-cached weights before accelerator access."))cacheBanner=true;
+		if(!strcmp(text,Assistant27::LosslessCachePreparation))cacheBanner=true;
 		unsigned ordinal=0,total=0;
 		if(sscanf(text,"Verifying lossless weight cache: tensor %u/%u,",&ordinal,&total)==2 && total==verified.size() && ordinal && ordinal<=total)
 			verified[ordinal-1]=true;

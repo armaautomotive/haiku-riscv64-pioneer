@@ -1,0 +1,58 @@
+Qwen27B lossless disk-cache complete preparation and guarded-loader checkpoint
+============================================================================
+
+2026-11-03 UTC. No new GPU execution, driver install/reload, power action,
+inference or tokens/sec claim in this checkpoint.
+
+The original CPU-only Pioneer preparation was polled using its SAME tool
+handle75526 until terminal exit0. It was not restarted for progress or timeout.
+Full original same-open sourceSHA:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+Conversion-source fingerprint (unchanged):
+bb0e60700ff8345b8ea493c7c8e178c5400c3141969cb61ea74693139721d25a
+Cache recipe:
+124bb237d82846fddb29c91016e3aafb41158fbb48f3f76f5d0275f97909e8ef
+Original utility901f160aec54d227b3760320974cf86e0c0f71c134491745a556360d9cdedb59
+prepared851 entries,19397646336 bytes,4735959 conversion pages. The diagnostic
+additionally verified10653 sampled first/middle/last bank-fragment upload pages
+against fresh original conversion. No requantization or GPU access. Terminal
+marker and full raw log are archived beside this report. Zero stderr.
+The whole CPU qualification ran approximately20:15:13->21:38:01 UTC (82m48s);
+that is NOT an Assistant warm-loading measurement.
+
+The optional Assistant load gets one exact status-controlled fixed total2h
+budget rather than an indefinitely renewable progress timeout. Ready queued
+past the deadline is refused. Ordinary non-cache load remains30minutes.
+The actual worker Multiply callback now requires a validated Generate scope
+BEFORE any cancellation poll/open/prime/multiply. HostReady additionally
+requires no failed snapshot or learned projection. No CPU fallback/validation
+was added to Work. No protocol version/frame-kind change.
+
+Closed CPU-only checks:11 load-budget fake-clock cases, full prior Assistant
+protocol/pool/cancel regression,7 cached-load strict fake-peer cases,10 actual
+Multiply/Generate-scope fake-session cases,11 one-shot parent-flow cases.
+The frozen parent validates exact binaries/libraries/driver and idle metadata,
+never Generates, refuses existing output paths, and gives no post-failure
+retry/reset/cleanup authority. Its complete native preflight is NOT simulated
+by the shell-flow test.
+
+Full native SDK cached worker:
+bb9eac149b3c157e2b8ccf2e046af6713e4a01c8760a19bd77cdea82a2938265
+Full native SDK flag-off control worker:
+d81b9be9e90aa6248e7a3b29daf6a022d6ab02ae1a63fc943d5a4150bb832dab
+Isolated actual-client load/unload probe:
+e0372520695c6893e01b41c64e76b5dbfbf117134f5de79955cd2dba64cab89a
+Frozen one-shot parent:
+2acd2345f21075ef4572ed67b62c14fd4562b82acc8995cf96209bcea1b57d84
+Both cached worker/probe were copied to private staging and rehashed remotely;
+original installed Assistant is untouched. Frozen four runtime library hashes
+and exact SONAME links reverified. CPU metadata only showed normal041fef1898
+driver55/tag2026102100010012/gen2,quiesced0,cold0,owner0,open1,guard1;
+64 CPUs and137034936320bytes RAM. No Assistant/LLM/diagnostic owner present.
+This is preflight evidence, not a completed actual worker load/unload run.
+
+Pending: frozen live warm-cache host-load/unload; cached GPU upload/inference
+qualification; actual loading-time comparison; installation only after those
+pass. Cache removes repeated host layout conversion, not cold GPU PCIe traffic
+or old-kernel decoding. Last actual27B generation remains about0.1643tokens/sec;
+20tokens/sec and accepted full-native27B Work remain unmet.

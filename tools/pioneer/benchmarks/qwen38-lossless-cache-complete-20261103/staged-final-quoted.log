@@ -1,0 +1,60 @@
+Haiku
+0
+0:1:700:137024:/boot/home/pioneer-lossless-cache-20261103-a/HaikuAssistantQwen27-cached-generate-only
+bb9eac149b3c157e2b8ccf2e046af6713e4a01c8760a19bd77cdea82a2938265  /boot/home/pioneer-lossless-cache-20261103-a/HaikuAssistantQwen27-cached-generate-only
+0:1:755:22144:/boot/home/pioneer-lossless-cache-20261103-a/pioneer-assistant-cache-load-generate-only
+e0372520695c6893e01b41c64e76b5dbfbf117134f5de79955cd2dba64cab89a  /boot/home/pioneer-lossless-cache-20261103-a/pioneer-assistant-cache-load-generate-only
+0:1:755:3945272:/boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so.0.2.0
+0ae23a2c211af9fbafb89c3d93bdd136a4bdd574baeeaf2d622f582efcf426af  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so.0.2.0
+0:1:755:41696:/boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml.so.0.21.0
+a3b81c133641bbdacde8dd1d0e0ffa7a0a1ec0c33e95c426df1db59735379c16  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml.so.0.21.0
+0:1:755:719168:/boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-base.so.0.21.0
+9cb45a36558bd78aa4d4b7ed5385cbf9df32de208f9e6c9b6d064e8527dca389  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-base.so.0.21.0
+0:1:755:687552:/boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-cpu.so.0.21.0
+69e9ec2c43a123afbb256c3feb6313cdcebdf1b2a87278ac3cdac8a1a65273d2  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-cpu.so.0.21.0
+lrwxrwxrwx 1 baron root 17 Sep  8  2026 /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so.0 -> libllama.so.0.2.0
+libllama.so.0.2.0
+lrwxrwxrwx 1 baron root 17 Sep  8  2026 /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml.so.0 -> libggml.so.0.21.0
+libggml.so.0.21.0
+lrwxrwxrwx 1 baron root 22 Sep  8  2026 /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-base.so.0 -> libggml-base.so.0.21.0
+libggml-base.so.0.21.0
+lrwxrwxrwx 1 baron root 21 Sep  8  2026 /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-cpu.so.0 -> libggml-cpu.so.0.21.0
+libggml-cpu.so.0.21.0
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  104 /boot/system/servers/net_server                    
+  106 /boot/system/servers/package_daemon                
+  111 /boot/system/servers/launch_daemon baron           
+  113 /boot/system/servers/power_daemon                  
+  117 /boot/system/servers/syslog_daemon                 
+  131 /boot/system/servers/media_server                  
+  175 /boot/system/servers/app_server                    
+  187 /boot/system/Tracker                               
+  189 /boot/system/Deskbar                               
+  208 /boot/system/servers/input_server                  
+  232 /boot/system/servers/media_addon_server            
+  296 /boot/system/servers/notification_server           
+  577 /boot/system/bin/screen_blanker                    
+  599 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  601 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  602 /bin/bash -c set -eu
+uname -s
+id -u
+for f in /boot/home/pioneer 
+  625 /boot/system/bin/ps -o Id -o Team                  
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133713764352 bytes free      (used/max 3321171968 / 137034936320)
+                           (cached   38817312768)
+     64485 semaphores free (used/max       1051 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3901 threads free    (used/max        195 /       4096)
+      2025 teams free      (used/max         23 /       2048)
+STAGED_GUARDED_CACHE_WORKER_PROBE_METADATA_ONLY

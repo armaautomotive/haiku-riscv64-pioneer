@@ -10,7 +10,7 @@ namespace {
 #ifndef ASSISTANT_QWEN27_WORKER
 const char* const Worker="/boot/home/config/non-packaged/servers/HaikuAssistantQwen27";
 #else
-const char* const Worker=ASSISTANT_QWEN27_WORKER; // compile-time offline test ONLY
+const char* const Worker=ASSISTANT_QWEN27_WORKER; // compile-time isolated test/probe ONLY
 #endif
 double Now() { timespec t={}; return clock_gettime(CLOCK_MONOTONIC,&t)?-1:double(t.tv_sec)+double(t.tv_nsec)*1e-9; }
 }
@@ -23,9 +23,10 @@ struct AssistantP100AQwen27::Data {
  void Lose() { fault=true; if (fd>=0) close(fd); fd=-1; } // NO signal/kill/retry/device END
  bool Next(Assistant27::Frame& f,double deadline) {
   for (;;) {
+   const double now=Now(); if (now<0 || now>deadline) return false;
    auto r=receiver.Read(fd,f);
-   if (r==Assistant27::Receiver::Received) return f.id==id;
-   if (r!=Assistant27::Receiver::Waiting || Now()<0 || Now()>deadline) return false;
+   if (r==Assistant27::Receiver::Received) { const double received=Now(); return received>=0 && received<=deadline && f.id==id; }
+   if (r!=Assistant27::Receiver::Waiting) return false;
    pollfd p={fd,POLLIN,0}; int n=poll(&p,1,100); if (n<0 && errno!=EINTR) return false;
   }
  }
@@ -60,9 +61,17 @@ bool AssistantP100AQwen27::Load(const char* path,unsigned threads,std::string& e
  close(pair[1]); if (child<0) { close(pair[0]); error="Cannot start isolated Qwen27B worker."; return false; }
  fData=new Data; fData->child=child; fData->fd=pair[0];
  if (!fData->Send(Assistant27::Load,threads)) { fData->Lose(); fFaulted=true; error="Qwen27B worker channel failed."; return false; }
- Assistant27::Frame f; double deadline=Now()+1800;
- while (fData->Next(f,deadline)) {
-  if (f.kind==Assistant27::Progress && (f.value<=1000 || f.value==UINT32_MAX)) { progress(f.value==UINT32_MAX?-1:float(f.value)/1000,f.text.c_str()); continue; }
+ Assistant27::Frame f; const double loadStarted=Now(); double deadline=loadStarted+1800; bool cacheWait=false;
+ while (loadStarted>=0 && fData->Next(f,deadline)) {
+  if (f.kind==Assistant27::Progress && (f.value<=1000 || f.value==UINT32_MAX)) {
+   // The real full-file authentication + verified cache can exceed30min
+   // on Pioneer. One exact opt-in extends to a FIXED total2h, not2h from
+   // this frame. Repeated status/progress cannot refresh that ceiling.
+   if (!cacheWait && f.value==UINT32_MAX && f.text==Assistant27::LosslessCachePreparation) {
+    cacheWait=true; deadline=loadStarted+7200;
+   }
+   progress(f.value==UINT32_MAX?-1:float(f.value)/1000,f.text.c_str()); continue;
+  }
   if (f.kind==Assistant27::Ready && !f.value && f.text=="QWEN27_WORK_HOST_READY_497") return true;
   if (f.kind==Assistant27::Error && f.value==Assistant27::Rejected) {
    error=f.text; close(fData->fd); fData->fd=-1; int status=0;

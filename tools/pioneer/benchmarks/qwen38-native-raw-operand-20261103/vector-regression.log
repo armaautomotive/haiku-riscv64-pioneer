@@ -1,0 +1,2 @@
+PASS OFFLINE vector operand emitter:1053184 exhaustive Q8/Q4/Q6 raw-byte/plane cases,ALL32 lanes,exact signed -128 and Dst32-high16->SrcA overlays,21 maximum existing integer SFPU instructions per32 weights,no conditional flags/FP approximations;NO unpack/Dst scheduling/image/driver/native/speed qualification
+Offline vector-operand evidence retained at /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q38-vector-operand.bKZ7tl94

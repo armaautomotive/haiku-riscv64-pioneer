@@ -7,7 +7,7 @@ build=$(CDPATH= cd -- "$1" && pwd)
 output=$2
 case "$output" in /*) ;; *) exit 2;; esac
 [ ! -e "$output" ] && [ ! -L "$output" ] || exit 1
-worker=/boot/home/pioneer-lossless-cache-20261103-a/HaikuAssistantQwen27-cached
+worker=/boot/home/pioneer-lossless-cache-20261103-a/HaikuAssistantQwen27-cached-generate-only
 sdk=$build/objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop
 release=$build/objects/haiku/riscv64/release
 set -- -I"$sdk/headers" -idirafter "$sdk/headers/posix"

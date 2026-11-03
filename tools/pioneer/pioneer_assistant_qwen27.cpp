@@ -9,6 +9,7 @@
 #include "llama.h"
 #include <poll.h>
 #include <memory>
+#include <atomic>
 #ifdef PIONEER_Q38_LOSSLESS_WEIGHT_CACHE
 #if !defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) || defined(PIONEER_Q38_CPU_VALIDATION) || !defined(PIONEER_Q38_LOSSLESS_CONVERSION_SHA256)
 #error Lossless disk-cache Assistant is an explicit existing-byte-layout Work build only
@@ -30,6 +31,7 @@ struct Runtime {
  llama_model* model=nullptr; llama_context* context=nullptr;
  A::PoolOwner<ggml_threadpool_t,ggml_threadpool_free> pools;
  A::Receiver receiver; uint32_t request=0; bool opened=false,cancelled=false,lost=false,configured=false;
+ std::atomic<bool> generating{false};
  double lastProgress=0;
  explicit Runtime():session(io,source) {}
  bool Emit(unsigned kind,unsigned value=0,const std::string& text="") {
@@ -56,6 +58,7 @@ struct Runtime {
  }
  static bool Multiply(void* p,unsigned tensor,const float* x,unsigned k,float* y,unsigned n) {
   auto& r=*static_cast<Runtime*>(p);
+  if (!r.generating.load(std::memory_order_acquire)) return false; // Load/reserve/idle/close can NEVER submit BEGIN
   if (!r.PollCancel()) { r.session.Abort(); return false; }
   if (!r.opened) {
    if (!r.session.Open()) return false;
@@ -74,7 +77,7 @@ struct Runtime {
    char status[192];snprintf(status,sizeof(status),"%s lossless weight cache: tensor %u/%u, %.1f/%.1f MiB; no GPU session yet.",verifying?"Verifying":"Preparing",tensor+1,total,double(done)/1048576,double(bytes)/1048576);
    Emit(A::Progress,UINT32_MAX,status);
   };
-  if (!Emit(A::Progress,UINT32_MAX,"Preparing/reusing lossless disk-cached weights before accelerator access.")
+  if (!Emit(A::Progress,UINT32_MAX,A::LosslessCachePreparation)
    || !source.PrepareWeightCache("/boot/home/models/.p100a-lossless-weights-v1",PIONEER_Q38_LOSSLESS_CONVERSION_SHA256,cacheError,cacheProgress,[this]{return !lost;}) || lost) {
    fprintf(stderr,"Lossless disk cache refused: %s\n",cacheError.c_str());return false;
   }
@@ -98,14 +101,23 @@ struct Runtime {
   auto tp=ggml_threadpool_params_default(threads); tp.poll=0; auto pool=ggml_threadpool_new(&tp);
   if (!pool || !pools.Replace(pool)) return false;
   llama_attach_threadpool(context,pool,pool);
-  return source.Ready() && PioneerQ38GgmlSnapshot().recognizedWeights==497 && Emit(A::Ready,0,"QWEN27_WORK_HOST_READY_497");
+  const auto snapshot=PioneerQ38GgmlSnapshot();
+  return source.Ready() && !snapshot.failed && !snapshot.projections && snapshot.recognizedWeights==497 && Emit(A::Ready,0,"QWEN27_WORK_HOST_READY_497");
  }
  bool Generate(const A::Frame& f) {
+  if (generating.load(std::memory_order_acquire)) return false;
   request=f.id; cancelled=false;
   if (!A::Question(f.text) || f.value<1 || f.value>A::MaxTokens) return Emit(A::Done,A::Rejected,"Qwen27B question/token limit exceeded; no request executed.");
   std::string prompt=A::Prompt(f.text),answer; const auto vocab=llama_model_get_vocab(model);
   llama_token tokens[128]; int count=llama_tokenize(vocab,prompt.data(),int(prompt.size()),tokens,128,false,true);
   if (count<1 || count>A::MaxPromptTokens || count+int(f.value)>128) return Emit(A::Done,A::Rejected,"Qwen27B prompt exceeds96 tokens. Shorten the question; no fallback.");
+  struct GenerateScope {
+   std::atomic<bool>& flag;
+   explicit GenerateScope(std::atomic<bool>& value):flag(value) { flag.store(true,std::memory_order_release); }
+   ~GenerateScope() { flag.store(false,std::memory_order_release); }
+   GenerateScope(const GenerateScope&)=delete;
+   GenerateScope& operator=(const GenerateScope&)=delete;
+  } computeScope(generating);
   llama_memory_clear(llama_get_memory(context),true); // CPU recurrent/KV reset,NOT weights/re-upload
   unsigned generated=0,warmSamples=0; double warm=0,began=Now(); llama_token token=0;
   for (int position=0;generated<f.value;position++) {
@@ -153,6 +165,7 @@ struct Runtime {
   return Emit(A::Ready,threads,"QWEN27_WORK_THREADS_READY");
  }
  bool Close() {
+  generating.store(false,std::memory_order_release);
   bool clean=!lost && !session.Failed() && (configured?PioneerQ38GgmlFinish():session.Finish());
   if (!clean) session.Abort();
   if (context) { llama_synchronize(context); llama_detach_threadpool(context); llama_free(context); context=nullptr; }

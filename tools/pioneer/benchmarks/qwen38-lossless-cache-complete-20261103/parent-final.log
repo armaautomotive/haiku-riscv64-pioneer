@@ -1,0 +1,2 @@
+PASS actual guarded cache-host parent flow:11 fake-command cases;one shot,evidence preservation,known-clean checks only after valid success,failed/warning/malformed completion NO retry/metadata/cleanup;NO full preflight or physical proof
+CPU-only parent evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/assistant-cache-host-parent.0l_t72bk

@@ -1,0 +1,2 @@
+PASS actual Assistant compute gate:10 fake-session cases;Load/reserve/idle/close cannot poll/open/prime/multiply;only validated Generate permits existing cold/warm Work dispatch;scope resets on exit;NO device/model/CPU fallback
+CPU-only actual compute-gate evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/assistant-qwen27-compute-gate.etyg_er9
