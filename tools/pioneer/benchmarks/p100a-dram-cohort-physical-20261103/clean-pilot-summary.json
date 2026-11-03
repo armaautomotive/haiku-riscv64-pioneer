@@ -1,0 +1,15 @@
+{
+  "bandwidthGBps": null,
+  "bytes": 58720256,
+  "coordinatorCycles": 668943,
+  "counterGHzRelativeToHost": null,
+  "depth": 1,
+  "firmwareMHzRecordedNotUsed": 1350,
+  "generation": 13,
+  "hostWholeOperationUs": 1109571158,
+  "modelTokensPerSecond": null,
+  "peakOrCapacityOrAuthenticityEstablished": false,
+  "scope": "closed receipt DATA only;not native proof by itself",
+  "sweeps": 1,
+  "timingState": 2
+}

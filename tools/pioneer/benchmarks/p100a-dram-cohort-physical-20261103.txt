@@ -1,0 +1,140 @@
+Physical pilot CLOSED cleanly;host timing unavailable;stable041 restored
+=========================================================================
+2026-11-03 03:08:11UTC. Postterminal exact e50/gen13/cold0/idle/no compute/
+64CPU/fullRAM check e4a2f3 ACTUALLY0. SAMEbe8 --restore ONCE12710 ACTUALLY0:
+quiesce e50,atomic restore stable041/tag12/gen14/cold0/idle verified. Fresh
+independent postrestore5b617a ACTUALLY0:whole installed stable041/admin/guard/
+backup hashes,device symlink,idle,cold0/owner0/open1/guard1,64 CPUs,
+max137034936320B RAM/free130707677184B. No reboot/reset/power/SD/mains/
+hardware/kernel/Assistant/network change. Restoration is COMPLETE,not pending.
+Every historical pending/LIVE statement below is superseded by this CLOSED
+restored entry. No pilot remains active. Goal ACTIVE;20tok/s still UNMET.
+
+Next action follows actual timing evidence:the18.49-minute host operation is
+dominated by journal/validation overhead OUTSIDE the transfer interval. The
+native Selected path redundantly re-enters full17-view scope checks through
+each nested TLB-word read. Investigate eliminating only duplicate scope walks
+while preserving the per-access native lease,all17 views,all actual TLB words,
+per-role L1 bounds,clock/source/PCI checks and retention policy. Qualify before
+hardware. Then increase bounded sweeps to obtain a positive host-time bracket;
+do not rerun the unchanged single-sweep pilot or convert firmwareMHz to GB/s.
+This is test/measurement preparation,NOT a claimed inference optimization.
+
+Independent log reader main/clean each4 valid/259 malformed refusals and whole
+stdout exact;actual pilot main/clean readers each0 and whole JSON exact.
+All closed operational scripts/raw stdout/stderr and independent summaries
+are archived in the sibling directory. No learned model,CPU reference trace,
+worker/driver/client binary or unrelated user file is committed.
+
+Earlier closed-pilot entry (restoration subsequently completed above)
+-------------------------------------------------------------------
+2026-11-03 02:59:55UTC. SAME37664 ACTUALLY exits0,observed02:58:34UTC.
+Complete272-line/7051B stdout and0B stderr. Actual native ioctl0/close0,
+phase3/retained0/complete1,all8 launch/observe/HOLD masks255,saved/restored
+493457 words,full last-batch28672 words independently compared,normal clock
+closure/VM/PCI/reservation all1. All8 exact reports and captured bank routes,
+ordered releases,counter-derived fields and immutable receipt constraints
+pass independent main+clean readers,each ACTUALLY0 with whole stdout exact.
+
+Seven8MiB bank sweeps total58,720,256B;one coordinator delta668943 cycles.
+Timing state2/unavailable:root start host bracket65431667411..65431677254us,
+but no valid end bracket was observed. NO GB/s or calibrated counter frequency
+can be inferred from firmware1350MHz or whole host runtime1109571158us.
+That18.49-minute host operation includes millions of scoped PIO/OS metadata
+checks/snapshots/restoration;it is NOT the card transfer interval or model
+latency. No new model throughput,peak bandwidth,full28GB capacity or card-
+authenticity certificate is established. Last model diagnostic0.1584tok/s.
+
+The independent parser/tests are separate DATA analysis,not native ownership
+authority by themselves. Tests4 valid/259 malformed refusals pass from main
+and independent copied sources,whole stdout exact. No firmware clock guess,
+reader-clock sum,incomplete record or unavailable timing is promoted to a
+rate. All physical scope/cleanup conclusions also require the exact installed
+e50 source/module and actual parent completion recorded above.
+
+The pilot is NO LONGER live. Only after this actual closed validation may a
+fresh independent exact idle/CPU/RAM check run,followed by SAMEbe8 --restore
+ONCE and independent stable041 verification. Those actions are still PENDING
+at this entry. All historical LIVE statements BELOW are superseded by CLOSED
+above,not evidence of another active pilot. Do not rerun the pilot unchanged.
+
+Historical protected-parent ledger (superseded by CLOSED above)
+-----------------------------------------------------------------
+2026-11-03 02:49UTC. Tested public checkpoint8d789f6f8f55fe227a2194242dbd7759a342b0f5
+is pushed;independent GitHub HEAD exact. Goal ACTIVE. Accepted27B Work and
+20tok/s UNMET. Last physical model diagnostic remains0.158413730..0.158416372
+tok/s and original strict one-FP32-LSB rejection. This is NOT a model run.
+
+ONE real pilot parent37664 launched02:39:31UTC and is ACTUALLY still live
+on SAME session poll at02:49:06UTC. Current local stdout/stderr are both0B.
+No new timing,bandwidth,successful worker launch,complete journal restoration,
+native END/Close or card-authenticity/capacity conclusion is proved yet.
+The client prints AFTER ioctl returns and FD close;silence does not identify
+the kernel phase or prove a stall. A yielded/observation timeout is NOT a
+terminal result. Do NOT restart the pilot merely because observation expires.
+
+Protect SAME37664 through actual terminal and COMPLETE closed-log inspection.
+NO concurrent Pioneer SSH/status/admin/driver/model/clock/OS/network/power/
+hardware operation. Observe only SAME handle and local raw files. SSH255 is
+NOT proof that remote work stopped. Never reopen/reconfigure UART. After
+uncertain/faulted completion:no hot restore,reset,retry or implicit cleanup.
+Only actual safe terminal plus independent exact idle evidence permits SAME
+be8 helper--restore ONCE;no automatic rollback on uncertainty.
+
+Exact CLI:
+ /boot/home/pioneer-p100a-dram-cohort-20261103-a/pioneer-dram-cohort-diagnostic77 --run 1 1
+Seven firmware-derived8MiB READ windows,one per reader,one coordinator,
+depth1. All8 full L1 journals total493457 words/1,973,828B are saved/reread/
+restored with per-access native scope/mapping checks. Total host operation
+time is NOT card bandwidth;the separate common coordinator and host-bracket
+interval is the relevant measurement IF all completion/restore checks pass.
+
+Local raw streams (LIVE,not archived as closed evidence):
+ /private/tmp/pioneer-dram-cohort-public-20261103.zRPFHo/pilot.log
+ /private/tmp/pioneer-dram-cohort-public-20261103.zRPFHo/pilot.stderr
+Actual session result and active lease are also saved in this task's stores:
+ dramCohortPublicPilot / q38GlobalPhysicalLease
+
+Closed admission/staging/apply and no-launch hardware checks
+------------------------------------------------------------
+Fresh stable041/gen12/cold0/idle/64CPU/fullRAM admission and new emptyroot700
+stage creation ACTUALLY0. Limited1024Kbit/s three-file upload91537 ACTUALLY0.
+Remote whole hashes/ownership verified before755;full independent copy-back
+10118 ACTUALLY0,and all three complete local cmp checks0. Exact identities:
+ modulee50f1dfdb05827ee020a106aea474b3e926ad7a8f17de3decfbd71cd72b2e0e3
+ client7d2e3e8ec343c117173d94a706e4c1cbbd75666af094c7fe170a6e33d843e8a4
+ helperbe8da789613c56f9efa45e8a9fa93d413a123c84d192d69ccb51d179f3aa525e
+Stable041 original plus new-stage stable041.backup remain exact.
+
+Fresh preapply admission ACTUALLY0. SAMEbe8 --apply ONCE56279 ACTUALLY0:
+stable041/gen12 quiesce,atomic replacement,new e50/tag77/gen13/cold0/idle
+verified. Independent pre-support exact installed/staged/client/helper/admin/
+guard/backups/device symlink/incoming-lock absence/idle/64CPU/fullRAM check0.
+
+Actual support query ACTUALLY0:ioctl0/close0,version6/phase0/retained0/
+complete0/preflight0,busy0/idle0,views0/pci0/reservation0. No worker launches.
+Actual no-launch preflight ACTUALLY0 at02:34:39UTC:host682196us,ioctl0/
+close0,phase3/retained0/complete0/preflight1,views1/pci1/reservation1,busy0/
+idle0. All120 held states and all8 identity/entry/FIFO/NIU-idle/source checks
+close via the genuine native PCI/VM/FD/ARC prerequisite path,with full normal
+resource closure. This did NOT execute the eight read programs or measure
+bandwidth. The later pilot is a separate outstanding operation.
+
+Safety rejection before launch,then authoritative resolution
+-------------------------------------------------------------
+The first pre-pilot SSH check was rejected by auto-review BEFORE CreateProcess
+because it believed a pilot was already active. No pilot handle or pre-pilot/
+pilot output files existed;the actual preceding preflight had exited0. A
+local ps check initially lacked sandbox permission,then an approved escalated
+LOCAL-only ps/rg checkff90e4 found NO Pioneer SSH/diagnostic processes. No
+alternate/indirect board-access workaround was used. The SAME read-only SSH
+check was resubmitted with this evidence,accepted and ACTUALLY0 at02:38:49UTC:
+exact e50/gen13/idle/no compute/64CPU/fullRAM. Only AFTER that was ONE pilot
+37664 launched. Do not confuse this resolved prelaunch rejection with a
+hardware fault,or infer the current pilot has stopped from that old refusal.
+
+All closed prep logs/scripts remain under the same task-local base and can be
+archived after the pilot becomes terminal. Do not copy LIVE raw files into a
+closed-result archive. No reboot,power/SD/mains/hardware/kernel/Assistant or
+network change has occurred. Temporary e50 remains installed while the pilot
+lives;stable041 has NOT yet been restored after this run.

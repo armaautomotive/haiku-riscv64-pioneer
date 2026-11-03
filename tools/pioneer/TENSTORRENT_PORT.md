@@ -2,6 +2,20 @@
 
 ## Status
 
+### November3:first real seven-bank pilot closed;stable driver restored
+
+The actual eight-worker read pilot completed cleanly:seven8MiB bank sweeps,
+all493457 saved words restored,all28672 final-batch words independently
+compared,normal clock/VM/PCI/reservation closure. Main/independent log readers
+pass. Its668943 coordinator cycles are NOT calibrated GB/s:host polling missed
+the end bracket,so timing correctly stays unavailable. Whole host runtime
+18.49minutes includes slow scoped journal checks and is NOT card throughput.
+Stable041/tag12/gen14 is independently verified restored,idle,64 CPUs/fullRAM.
+Next remove redundant measurement-path scope walks without weakening access
+checks,then a longer bounded interval. No model speedup/peak/capacity/authenticity
+claim;accepted27B Work/20tok/s remain UNMET. See the
+[closed physical evidence](benchmarks/p100a-dram-cohort-physical-20261103.txt).
+
 ### November3:bounded public seven-bank diagnostic qualified before hardware
 
 Separate physical77 now exposes only support,no-launch preflight and the
