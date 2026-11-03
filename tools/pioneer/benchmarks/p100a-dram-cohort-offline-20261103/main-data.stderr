@@ -1,0 +1,10 @@
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_dram_cohort_snapshot_data_test.cpp:3:10: fatal error: '../../../../src/add-ons/kernel/drivers/misc/BlackholeDramCohortReadSweepImage.h' file not found
+    3 | #include "../../../../src/add-ons/kernel/drivers/misc/BlackholeDramCohortReadSweepImage.h"
+      |          ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1 error generated.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_dram_cohort_snapshot_data_tests.py", line 22, in <module>
+    subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['c++', '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_dram_cohort_snapshot_data_test.cpp', '-o', '/private/tmp/pioneer-dram-cohort-20261103.GGfeMb/main-data/snapshot-data-test']' returned non-zero exit status 1.

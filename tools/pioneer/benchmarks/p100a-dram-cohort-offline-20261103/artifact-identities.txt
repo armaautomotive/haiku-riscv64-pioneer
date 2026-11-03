@@ -1,0 +1,4 @@
+20b6afaae3376c659596486a207c991c68b5f4f5f7dbdd494815e906200c7674  /private/tmp/pioneer-dram-cohort-20261103.GGfeMb/main-test-self/image/program.elf
+20b6afaae3376c659596486a207c991c68b5f4f5f7dbdd494815e906200c7674  /private/tmp/pioneer-dram-cohort-20261103.GGfeMb/clean-test-self/image/program.elf
+d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6  /private/tmp/pioneer-dram-cohort-20261103.GGfeMb/main-test-self/image/boot.bin
+80698df893407bd90bac692ee8a7a10bc4e3f3628d567a987050f03f22a68bc1  /private/tmp/pioneer-dram-cohort-20261103.GGfeMb/main-test-self/image/text.bin

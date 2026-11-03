@@ -1,0 +1,12 @@
+/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-ld: /private/tmp/pioneer-dram-cohort-20261103.GGfeMb/main-image-r1/sweep.o: in function `.L130':
+blackhole_dram_cohort_read_sweep.cpp:(.text.dram_sweep_main+0x74c): undefined reference to `memset'
+/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-ld: /private/tmp/pioneer-dram-cohort-20261103.GGfeMb/main-image-r1/sweep.o: in function `.L117':
+blackhole_dram_cohort_read_sweep.cpp:(.text.dram_sweep_main+0xd78): undefined reference to `memset'
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_dram_cohort_read_sweep.py", line 23, in <module>
+    run(tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',here/'blackhole_dram_read_sweep.ld',
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_dram_cohort_read_sweep.py", line 16, in run
+    def run(*args):subprocess.run(list(map(str,args)),check=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-ld', '-m', 'elf32lriscv', '--no-relax', '--gc-sections', '-T', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_dram_read_sweep.ld', '/private/tmp/pioneer-dram-cohort-20261103.GGfeMb/main-image-r1/start.o', '/private/tmp/pioneer-dram-cohort-20261103.GGfeMb/main-image-r1/sweep.o', '-Map', '/private/tmp/pioneer-dram-cohort-20261103.GGfeMb/main-image-r1/program.map', '-o', '/private/tmp/pioneer-dram-cohort-20261103.GGfeMb/main-image-r1/program.elf']' returned non-zero exit status 1.

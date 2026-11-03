@@ -1,0 +1,7 @@
+Assertion failed: (!f.Execute() && !f.cores[0]->requests && !f.cores[0]->mmioReads && !f.cores[0]->mmioWrites && !f.cores[0]->csrReads), function main, file pioneer_dram_cohort_read_sweep_image_test.cpp, line 208.
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-manual-native-20261102.20fpwL/clean-source/tools/pioneer/tests/run_pioneer_dram_cohort_read_sweep_tests.py", line 26, in <module>
+    subprocess.run([str(binary),str(image/'boot.bin'),str(image/'text.bin'),format(good,'x'),format(bad,'x')],check=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-dram-cohort-20261103.GGfeMb/clean-test-r2/image-test', '/private/tmp/pioneer-dram-cohort-20261103.GGfeMb/clean-test-r2/image/boot.bin', '/private/tmp/pioneer-dram-cohort-20261103.GGfeMb/clean-test-r2/image/text.bin', '6400c', '64030']' died with <Signals.SIGABRT: 6>.

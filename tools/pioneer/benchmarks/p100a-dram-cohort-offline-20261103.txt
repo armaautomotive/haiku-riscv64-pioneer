@@ -1,0 +1,140 @@
+Seven-bank common-clock memory cohort:OFFBOARD prototype,NOT hardware bandwidth
+=============================================================================
+November3 UTC2026. Goal ACTIVE. Correct usable Qwen27B Work and20tok/s remain
+UNMET. This investigation performs NO Pioneer SSH,device,driver,clock,power,
+Assistant,network,boot,CPU/RAM,SD,mains or hardware-connection operation.
+Last closed model diagnostic remains0.158413730..0.158416372tok/s,with its
+unresolved one-FP32-LSB position0 rejection. No new model speedup is claimed.
+
+Why this test is needed
+-----------------------
+The earlier physical version3 queued reader improved one bank/one worker's
+device-cycle count by2.365x at depth16 vs depth1. Its mcycle frequency is
+not independently calibrated. Adding seven isolated rates is NOT measured
+aggregate bandwidth. New version4 runs seven bank readers concurrently and
+uses ONE coordinator clock from BEFORE the first release to receipt of ALL
+seven completion flags. Reader clocks are never summed or assumed aligned.
+That interval includes seven sequential acknowledged release packets,launch
+skew and completion polling. It excludes upload,post-run readout/restoration.
+
+Fixed topology:coordinator(1,2),readers(2,2)..(7,2) and(10,2),NoC0. Each
+reader binds one of seven DISTINCT firmware-derived bank routes in its DATA
+job and reads the same8MiB source window at0x04000000. Up to16 disjoint16KiB
+returns occupy0x90000..0xcffff per reader. Source is READ-only;coordination
+writes target only owned peer L1 Start words,never GDDR or host memory.
+Nonposted,non-inline0x212 writes request real ACKs. No broadcast,linked VC,
+atomics,counter reset,forced clock or tensor instruction is introduced.
+
+Version4 DATA is32 words with role,nonce,sweep count,depth and seven routes.
+The entire shape is checked BEFORE MMIO/CSR. Actual local NODE_ID/shape
+registers must match the selected role before readiness and after execution;
+coordinator rechecks its identity before EVERY packet. It reads each actual
+peer job and exact matching ready nonce before the common start. Reports
+are published before done;root refuses mismatched roles/nonces/counts/routes,
+reserved words or nonmonotonic time. Seven after-ACK release timestamps are
+retained on the coordinator clock to expose skew. Byte totals are64bit:
+at256 sweeps,7*2GiB is15,032,385,536B,not a wrapped32bit count. This repeats
+seven8MiB windows;it is NOT15GB of distinct memory or a full-capacity test.
+
+The common interval is a measured envelope only AFTER actual native use.
+One reader per bank on NoC0 does NOT by itself prove saturation or peak
+bandwidth:later scaling/more readers/NoC1 may still change the plateau.
+Do not use this prototype or simulated clock values to certify the20tok/s
+target as possible/impossible,or the card as authentic/faulty.
+
+Closed independent instruction evidence
+---------------------------------------
+Main20776 and clean56369 BOTH ACTUALLY exit0,stderr0;COMPLETE stdout and
+complete ELF bytes match. Clean source is the separate tracked HEADf40
+archive plus our explicitly copied new files,not unrelated dirty work.
+Both run the ACTUAL compiled RV32 program in eight virgin instruction
+engines on one independent asynchronous FIFO/NoC/DRAM fabric. No supplied
+completion flags,learned products,native scope or hardware timings.
+
+3 complete positive cases:depth1/4/16. All seven readers genuinely overlap.
+All captured commands retain bank/source/destination/length at issue. The
+model delays and REORDERS replies and checks no live return-buffer reuse.
+All seven512-request/8MiB reads finish with exact master-counter deltas,
+including modulo32 wrap. All final live return words compare independently
+against bank-specific address-derived data,unused tails remain canaries,
+and all seven full reports are copied exactly into coordinator L1. ONE
+coordinator interval brackets every reader's actual requests/completions;
+release skew is recorded,not silently subtracted. No isolated-rate sum.
+
+46 actual-instruction refusals:32 malformed frame words,one valid-but-
+cross-participant mismatched nonce,dirty report,duplicate route,disabled/
+dirty FIFO,wrong tile,wrong start,lost read,extra response,changed job,lost
+start ACK,corrupt peer report,backward root clock and changed tile. Runtime
+faults must actually be injected;every failure leaves the coordinator's
+complete report absent. Lost read retains a genuinely pending packet and
+never publishes done. The HOST observer stops on the first fault park;
+this is NOT a native external-watchdog/quarantine/STOP/restoration proof.
+
+Complete ELF20b6afaae3376c659596486a207c991c68b5f4f5f7dbdd494815e906200c7674
+text7124B/1781words SHA80698df893407bd90bac692ee8a7a10bc4e3f3628d567a987050f03f22a68bc1
+boot4B/d0565e4e unchanged. Exact full ELF,read-only sections and emitted CSR
+instructions are audited:three READ-only mcycle sampler instructions,no
+writable globals,undefined imports,CSR writes,division or forbidden traps.
+Compiler frames:main528B,Packet192B,Cycles16B,Publish16B. Individual frame
+limit1024B is checked;this alone is NOT combined stack/native kernel proof.
+
+Immutable snapshot geometry,NOT implemented native preservation
+---------------------------------------------------------------
+The new frozen DATA header e7a2d67d3f08950189a004499fcc43dab96391d21bb85663bb8595aadc1b9751
+contains all1782 actual boot/text words and separate root/reader address maps.
+Root4154 words;each reader69433;all8 total490185 words/1,960,740B before any
+native bookkeeping/scratch. Root journal includes payload,scratch and all
+seven report copies;readers include their whole256KiB return area. Each has
+its own8KiB stack,128B job/report and disjoint ready/start/done mailboxes.
+
+DATA main68886/clean11482 BOTH ACTUALLY0,stderr0;full stdout matches. All
+490185 addresses are unique PER TILE and match the declared L1 extents;
+88 gap/out-of-range refusals and all actual boot/text words pass. Independent
+regeneration authenticates the whole complete ELF and each section BEFORE
+creating output.32 corruptions+6 truncations refuse before output exists.
+No native driver includes or selects this new header/program. No actual
+snapshot,launch,HOLD,restore or hardware grant follows from these maps.
+
+Preserved development failures
+------------------------------
+Initial link ACTUALLY1:compiler emitted memset for large zeroed local arrays.
+Explicit volatile clearing removes that freestanding import;no libc or unsafe
+compiler option is added. Initial instruction model refused a legitimate
+load from emitted immutable rodata;new model now reads only authenticated
+code/table addresses. Next observer compared unoffset fabric ticks against
+offset CSR time;fixed to compare the SAME declared clock origin. The next
+endpoint schedule did not actually reorder replies;increased independent
+latency separation until the unchanged reorder assertion genuinely passes.
+Next malformed-frame test wrongly treated a nonzero nonce change as inert
+invalid DATA. Zero nonce now tests shape refusal;the valid changed nonce is
+separately refused by actual cross-participant ready checking. Original
+3/44-case successes are retained;adding actual tile-identity guards creates
+the final3/46-case subject above. Initial DATA compile failed due one excess
+parent-directory component in the NEW test include;correct path closes it.
+All failures stay failures and raw logs are archived,not relabelled passes.
+
+Remaining work before physical measurement
+-------------------------------------------
+Implement and qualify ONE eight-participant native owner under the existing
+exclusive global lease,actual firmware routes,normal clock policy,all-held/
+entry-override/FIFO/outstanding guards. Authenticate actual per-tile code and
+jobs;save/readback ALL selected L1/NIU/TLB words before mutation. Handle a
+lost reader or coordinator packet by external timeout/quarantine with NO
+cleanup/retry/forced reset. Require real terminal PCs+idle,counters,all-peer
+HOLD and complete byte-exact snapshots+native resource restoration.
+Independently calibrate the sampled cycle clock against a bounded trusted
+time reference before reportingGB/s. Use long transfers,expose skew/poll
+overhead,compare controls and test scaling before calling a result peak.
+Then use those findings in actual Qwen operand scheduling and benchmark
+original-model inference. This benchmark does not replace full-model
+numerical acceptance,fresh requests,Assistant Work or the20tok/s objective.
+
+Official protocol references checked:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/Counters.md
+
+Reproduce:
+python3 tools/pioneer/tests/run_pioneer_dram_cohort_read_sweep_tests.py SDK NEW_OUT
+python3 tools/pioneer/tests/run_pioneer_dram_cohort_snapshot_data_tests.py NEW_OUT/image NEW_DATA_OUT
+SDK:/Volumes/HaikuBuildLocal/generated.riscv64
+Raw main/clean/failure logs in sibling folder;no compiled binary is committed.
