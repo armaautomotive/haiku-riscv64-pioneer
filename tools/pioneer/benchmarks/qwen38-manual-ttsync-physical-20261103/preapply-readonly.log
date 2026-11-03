@@ -1,0 +1,13 @@
+PROJECT_COMPUTE_PARENT_COUNT 0
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
+b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
+d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+P100A_RELOAD driver55 tag2026102100010012 generation16 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+64 (Unknown), revision 0000 running at 1000MHz
+130590912512 bytes free      (used/max 6444023808 / 137034936320)
+                           (cached   19855953920)
+c01f1cda7549ef3b191454ab6c21d697de143f3f11fcc5c9da48c81dd37c1736  /boot/home/pioneer-p100a-token-manual-ttsync-20261103-a/tenstorrent_pci_probe-TOKEN-MANUAL-TTSYNC-34-DIAGNOSTIC-ONLY
+aaffcaa125a02d1629dc49055d45d26af28f3187049dda631a8b5a272a9c165a  /boot/home/pioneer-p100a-token-manual-ttsync-20261103-a/pioneer-q38-TOKEN-MANUAL-TTSYNC-34-DIAGNOSTIC-ONLY
+32114b2ad5139df0dab8a238c1f3c885033c7fc8b34428ebaffaab3982db04cd  /boot/home/pioneer-p100a-token-manual-ttsync-20261103-a/pioneer_q38_token_manual_ttsync_exchange.sh
+READONLY_STABLE041_GEN16_IDLE_64CPU_FULLRAM_MODEL_STAT_AND_EXACT_STAGED_TUPLE_NO_GPU

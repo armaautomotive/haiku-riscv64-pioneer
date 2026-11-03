@@ -1,0 +1,73 @@
+Manual-TTSync original27B diagnostic: ONE protected physical parent LIVE
+======================================================================
+2026-11-03 04:51:14UTC. SAME actual session39817 remains live on a fresh
+handle poll. Full original same-open GGUF SHA/all851 learned bindings have
+authenticated BEFORE accelerator Open. Upload reaches1683775488/
+19399024640bytes;29 stdout lines/1449bytes,stderr0B. Full upload,START,all34
+positions,held phase read,drain,END and Close are NOT yet established.
+No new token rate,numerical acceptance or speedup is claimed. Last actual
+model diagnostic0.1584tok/s;20tok/s and accepted27B Work remain UNMET.
+
+Protect the ENTIRE SAME39817 parent,including its same-open original GGUF
+SHA/all851 binding authentication BEFORE Open and complete upload/init/
+inference/HOLD/drain/restoration/END/Close. While live:NO concurrent Pioneer
+SSH/status/admin/driver/model/clock/OS/network/power/hardware action. Only
+poll SAME handle or observe local raw files. A yield/observation timeout is
+NOT terminal;SSH255 is NOT proof remote compute ended. No reset/retry/hot
+restore or automatic rollback after uncertainty. UART remains untouched.
+
+Exact CLI:
+ /boot/home/pioneer-p100a-token-manual-ttsync-20261103-a/pioneer-q38-TOKEN-MANUAL-TTSYNC-34-DIAGNOSTIC-ONLY --benchmark-manual-ttsync-34-positions
+Local LIVE raw streams (not archived as completed hardware results):
+ /private/tmp/pioneer-q38-manual-watchdog-20261103.ipSSfU/physical.log
+ /private/tmp/pioneer-q38-manual-watchdog-20261103.ipSSfU/physical.stderr
+
+Closed qualification and deployment
+------------------------------------
+Checkpointd101eb101813458efb246010653188743d82084a committed and pushed;
+actual push64449 exits0 and independent ls-remote275e5b verifies exactHEAD.
+Main13004/clean28873 genuine original-model/native first-layer/cancel/
+119STOP/120HOLD/drain/full-END tests BOTH close0,whole83-line stdout exact,
+both original CPU prefix readers0/bit-exact5120+5120words. The new3-case
+lost-manual-completion/caller-watchdog/native-cookie-retention gate passes
+in BOTH;33 override-loss forks remain. No production driver/client/validator/
+reference/tolerance/Work code was changed for those tests. Current-source
+main/clean SDK modules and USER clients reproduce the same frozen tuple.
+See qwen38-manual-ttsync-watchdog-20261103.txt for exact scope,failures,
+raw histories and limitations;offboard counts are not physical performance.
+
+Fresh original admissiondb55520:stable041/gen16/idle/64CPU/fullRAM. New
+root700 stage only;limited1024Kbit/s SCP49403 actual0,poststage53b2d60,
+full readback2089 actual0 and all3 whole cmp0. This staging happened while
+offline tests ran;no candidate installation/GPU job occurred until BOTH
+full regressions and the tested/pushed checkpoint above were complete.
+
+Exact module c01f1cda7549ef3b191454ab6c21d697de143f3f11fcc5c9da48c81dd37c1736
+Exact client aaffcaa125a02d1629dc49055d45d26af28f3187049dda631a8b5a272a9c165a
+Exact helper 32114b2ad5139df0dab8a238c1f3c885033c7fc8b34428ebaffaab3982db04cd
+Tag75 is NOT module identity or permission to substitute older clients or
+helpers. Only SAME32114 owns this c01/aaff<->stable041 exchange.
+
+Fresh preapply33322 ACTUALLY0:exact stable041/gen16,cold0/idle,whole staged
+tuple/admin/guard/backup/device link,no project compute parent,64CPUs/full
+137034936320B RAM/free130590912512B. SAME32114 --apply ONCE39910 ACTUALLY0:
+quiesce stable041/gen16,atomic replacement,verify c01/tag75/gen17/cold0/
+idle. Fresh independent prelaunch83338 ACTUALLY0:all whole identities,
+correct device link,absent incoming+lock,gen17/cold0/owner0/open1/guard1,
+no compute parent,64CPUs/fullRAM/free130592210944B. Existing original model
+stat root-owned,single link,18973870528B;stat does NOT authenticate content.
+All preapply/apply/prelaunch stderr0B. No reboot,power,reset,SD,mains,
+hardware,network,Assistant,kernel or boot change. UART never reopened.
+
+After actual terminal ONLY
+---------------------------
+Inspect COMPLETE stdout/stderr and actual healthy END+Close. Run unchanged
+compare_pioneer_q38_token_manual_ttsync_log.py from main+independent clean
+sources with ALL original CPU pins. It removes only the HOST label from a
+private snapshot and delegates ALL original phase/frontier/numeric decisions.
+Preserve any strict numerical failure;valid timing is not quality/Work.
+Only actual safe terminal plus fresh independent c01/gen17/idle evidence
+permits SAME32114 --restore ONCE and independent stable041/gen18/idle/full
+CPU/RAM verification. Faulted/uncertain completion forbids hot restore or
+implicit cleanup. Never turn a live log,first label,timeout or parser banner
+into a completed original-model inference or a performance claim.
