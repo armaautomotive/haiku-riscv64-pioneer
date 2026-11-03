@@ -13,10 +13,12 @@ import re
 MARKER='ONE_COORDINATOR_INTERVAL;NO_SUM_OF_READER_CLOCKS;NOT_PEAK_CAPACITY_AUTHENTICITY_OR_MODEL_TPS_PROOF'
 CAPTURED_ROUTES=(0x312,0x3d2,0x492,0x311,0x3d1,0x491,0x551)
 
-def check(body,generation,sweeps,depth):
+def check(body,generation,sweeps,depth,*,direct_tlb=False):
     assert generation>0 and 1<=sweeps<=256 and depth in (1,2,4,8,16)
+    assert isinstance(direct_tlb,bool)
+    tag='2026110300020077' if direct_tlb else '2026110300010077'
     lines=body.splitlines();assert len(lines)==272 and lines[-1]==MARKER,'complete unique envelope'
-    h=re.fullmatch(r'COHORT_DIAGNOSTIC tag2026110300010077 generation([0-9]+) operationrun sweeps([0-9]+) depth([0-9]+) '
+    h=re.fullmatch(r'COHORT_DIAGNOSTIC tag'+tag+r' generation([0-9]+) operationrun sweeps([0-9]+) depth([0-9]+) '
         r'ioctl0 errno0 close0 host_us([0-9]+) version6 phase3 retained0 complete1 preflight0 '
         r'busy_mhz([0-9]+) idle_mhz800 views1 pci1 reservation1',lines[0])
     assert h,'clean closed native receipt'
@@ -73,8 +75,10 @@ def check(body,generation,sweeps,depth):
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('log',type=pathlib.Path)
     p.add_argument('--generation',required=True,type=int);p.add_argument('--sweeps',required=True,type=int)
-    p.add_argument('--depth',required=True,type=int);a=p.parse_args()
-    try:result=check(a.log.read_text(),a.generation,a.sweeps,a.depth)
+    p.add_argument('--depth',required=True,type=int)
+    p.add_argument('--direct-tlb',action='store_true',help='Require the distinct direct-scope revision tag;never auto-detect it.')
+    a=p.parse_args()
+    try:result=check(a.log.read_text(),a.generation,a.sweeps,a.depth,direct_tlb=a.direct_tlb)
     except (AssertionError,UnicodeError,OSError) as error:
         p.exit(1,'STOP closed cohort receipt rejected: '+str(error)+'\n')
     print(json.dumps(result,indent=2,sort_keys=True))

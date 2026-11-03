@@ -3,6 +3,17 @@
 #define PIONEER_DRAM_COHORT_PROTOCOL_H
 #include <stdint.h>
 #include <stddef.h>
+#ifdef PIONEER_DRAM_COHORT_PROTOCOL_TAG
+#error Cohort protocol tag is derived,not caller supplied
+#endif
+#ifdef PIONEER_DRAM_COHORT_DIRECT_TLB
+#if PIONEER_DRAM_COHORT_DIRECT_TLB != 1
+#error Direct TLB client/driver revision requires explicit1,not zero
+#endif
+#define PIONEER_DRAM_COHORT_PROTOCOL_TAG UINT64_C(0x2026110300020077)
+#else
+#define PIONEER_DRAM_COHORT_PROTOCOL_TAG UINT64_C(0x2026110300010077)
+#endif
 #define TT_PCI_PROBE_DRAM_COHORT_SUPPORT (B_DEVICE_OP_CODES_END+0x63c0)
 #define TT_PCI_PROBE_DRAM_COHORT_PREFLIGHT (B_DEVICE_OP_CODES_END+0x63c1)
 #define TT_PCI_PROBE_DRAM_COHORT_RUN (B_DEVICE_OP_CODES_END+0x63c2)
@@ -34,7 +45,7 @@ static inline bool PioneerDramCohortZero(const void* p,size_t size){
 static inline bool PioneerDramCohortParameters(const tt_pioneer_dram_cohort& r){
  if(r.version!=1 || !r.nonce || !r.sweeps || r.sweeps>256 || !r.queue_depth || r.queue_depth>16
   || (r.queue_depth&(r.queue_depth-1)) || !PioneerDramCohortZero(r.reserved,sizeof(r.reserved))
-  || r.expected_tag!=UINT64_C(0x2026110300010077) || !r.expected_generation)return false;
+  || r.expected_tag!=PIONEER_DRAM_COHORT_PROTOCOL_TAG || !r.expected_generation)return false;
  return true;
 }
 static inline bool PioneerDramCohortRequest(const tt_pioneer_dram_cohort& r){

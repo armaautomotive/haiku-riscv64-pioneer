@@ -4,7 +4,12 @@
 #define PIONEER_DRAM_SWEEP_NATIVE_LIFECYCLE_COMPONENT
 #include "pioneer_dram_sweep_native_lifecycle_test.cpp"
 #undef PIONEER_DRIVER_BUILD_TAG
+#ifdef COHORT_DIRECT_ENDPOINT_TEST
+#define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026110300020077)
+#define PIONEER_DRAM_COHORT_DIRECT_TLB 1
+#else
 #define PIONEER_DRIVER_BUILD_TAG UINT64_C(0x2026110300010077)
+#endif
 #define PIONEER_DRAM_COHORT_NATIVE_CONTEXT 1
 #define PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT 1
 #define PIONEER_DRAM_COHORT_DIAGNOSTIC 1
@@ -139,4 +144,5 @@ int main(){
   r.reply.timing.elapsed_min_us=1;assert(!PioneerDramCohortReply(r,TT_PCI_PROBE_DRAM_COHORT_RUN));bad++;
  }
  printf("PASS_COHORT_PUBLIC_NATIVE_ENDPOINTS valid%u refused%u allReplyBytesPristine1 sameLockGeneration1 actualFactoryRefusalRetention1 replyGrammar1;SYNTHETIC_SUCCESS_DATA_NOT_NATIVE_PREREQUISITES_ARC_ENGINE_HARDWARE_BANDWIDTH_OR_WORK\n",good,bad);
+ return 0;
 }

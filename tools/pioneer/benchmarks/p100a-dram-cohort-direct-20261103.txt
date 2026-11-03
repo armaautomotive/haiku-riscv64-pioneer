@@ -1,0 +1,86 @@
+Direct-scope cohort77r2 OFFBOARD qualification;not an inference speedup
+====================================================================
+2026-11-03. Physical deployment/measurement is NOT established by this
+entry. The last model diagnostic remains0.1584tok/s;20tok/s and accepted
+27B Assistant Work remain UNMET. Last physical state is stable041/gen14,
+idle,64CPUs/full137034936320B RAM. No card authenticity certificate.
+
+Motivation and exact scope
+--------------------------
+The previous clean seven-bank pilot took1109571158us for its WHOLE host
+operation,not its on-card transfer interval. Its host-clock bracket was
+unavailable,so no GB/s can be published. The actual native Selected path
+walked all17 VM descriptors again through BOTH nested access wrappers for
+each TLB word. This revision removes ONLY those duplicate walks. Each
+L1 data access still validates the SAME FD/thread/team/generation/held
+semaphore/PCI lease/exact backing/all17 real VM descriptors,then freshly
+reads all6 actual slot201/202 TLB words and one payload word. No binding
+is cached across accesses. Invalid role/L1 domain and running-stage write
+restrictions are unchanged. Source/reset/clock/retention policy unchanged.
+
+Actual endpoint counters:221 descriptor queries previously,17 now,with
+the same6 TLB reads+1 payload read. This is an OPERATION COUNT,not a
+measured elapsed improvement and especially not a model inference gain.
+
+Separate physical-only tag2026110300020077 requires explicit DIRECT_TLB1.
+Old tag2026110300010077 remains the original branch. Ordinary/default,
+base55 and both private contexts retain exact whole control objects.
+The original physical module/client also remain byte-exact. New client
+requires the distinct new tag and same-lock generation/idle metadata;
+there is no automatic revision detection or cross-tag acceptance.
+
+Closed main and independent archive+own-file-copy validation
+------------------------------------------------------------
+Actual ASAN/UBSAN/Werror old/new native IO endpoint runs each exit0 and
+whole stdout matches between main and independent copied sources:
+ old and new public endpoints each29 valid/1493 refused;
+ old and new direct-selection checks each16 valid/252 refused;
+ actual new client5 valid/25 refused.
+All8 roles/all6 TLB word faults,all17 VM descriptor/address/size/protection/
+area-id faults,FD/thread/team/generation/backing/clock/pointer failures,
+L1 bounds,running writes and no I/O after retention are exercised. These
+are real native methods with synthetic kernel/PCI endpoints,NOT native
+prerequisite/ARC/engine/card lifecycle proof. The single mock ENODEV stderr
+line in each endpoint suite is an expected refused open,not a live fault.
+
+Both exact-helper endpoint suites actually exit0:2 valid/46 refused;no
+actual install/reset/GPU. Shell syntax passes. Both log-reader suites exit0:
+8 valid/524 refused,whole stdout exact. Both directions reject cross-tags,
+unknown tags and every previous malformed-receipt case;state2 never prints
+a rate. The previous real gen13 pilot still passes the default old reader0.
+
+Independent cross-build actually exits0 and whole new MODULE+CLIENT each
+cmp exact against main. Old physical module e50f1dfd/client7d2e3e8e and
+ordinary/private controls compiled first and match exact prior pins. The
+first clean build attempt stopped BEFORE compilation because the archived
+tree has no .git;the supported explicit reference-tree argument resolves
+the historical git-show/SDK reference,without changing source or tests.
+Main and clean frozen audits actually exit0,whole stdout exact:current
+source pins,actual8760-byte physical code array,ELF image,3 positive syntax
+roles/19 late refusals. Device program/ABI/journal/host-bracket unchanged.
+Max individual frame1376B/known direct chain2592B/70 unresolved callees;
+this is NOT whole-kernel stack qualification.
+
+Exact new tuple,not interchangeable with previous cohort77r1
+------------------------------------------------------------
+module f35559c24c60a36dfdd94cb6f965502bedcbd38be7f6ffe66ca317a5a872e195
+client 1ad52983872710c801825a09c2e8794842bc02fbc92b8f98edb00948e9c0178a
+helper 9bc85769c6a79a295bb14600d8669b8fd41f4bd5e637a577cb40e7937367a7b0
+stable 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+The new exact helper owns ONLY f355<->041,never old e50. Root-owned single
+link/hash/idle checks,guard/admin pins,backup,quiesce and atomic replacement
+remain mandatory. No forced unload,reset,retry or automatic rollback after
+uncertainty. Deployment requires independent readback and fresh idle checks.
+
+Next bounded physical test,not yet performed here
+------------------------------------------------
+Stage ONLY in new root700 /boot/home/pioneer-p100a-dram-cohort-direct-20261103-a.
+Apply exact helper once after qualification;support then no-launch native
+preflight must close cleanly. A longer bounded --run 256 1 can provide a
+positive observation bracket that the old single sweep missed. Protect
+the SAME whole native parent through actual terminal and full close;
+no concurrent Pioneer status/model/clock/driver/network/OS/power action.
+Only actual safe terminal plus independent idle permits same exact helper
+restore and full stable041/CPU/RAM verification. No firmwareMHz conversion,
+sum of parallel reader clocks,whole-host time or incomplete record may
+be substituted for the transfer bracket. No peak/capacity/model claim.

@@ -23,7 +23,7 @@ int main(int argc,char** argv){
  tt_pioneer_dram_cohort r={};r.version=1;r.sweeps=1;r.queue_depth=1;
  if((!support && !preflight && !run) || (run && (!Number(argv[2],r.sweeps) || !Number(argv[3],r.queue_depth))))return 2;
  r.nonce=uint32_t(system_time())^(uint32_t(getpid())<<13);if(!r.nonce)r.nonce=1;
- r.expected_tag=UINT64_C(0x2026110300010077);r.expected_generation=1;
+ r.expected_tag=PIONEER_DRAM_COHORT_PROTOCOL_TAG;r.expected_generation=1;
  if(!PioneerDramCohortRequest(r))return 2;
  const int fd=open("/dev/misc/tenstorrent_pci_probe",O_RDWR|O_CLOEXEC);
  if(fd<0){perror("STOP cohort diagnostic open");return 1;}

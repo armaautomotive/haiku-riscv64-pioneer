@@ -21,6 +21,12 @@
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110300010077ULL && !defined(PIONEER_DRAM_COHORT_DIAGNOSTIC)
 #error Physical cohort77 tag cannot select an ordinary driver or private context
 #endif
+#if defined(PIONEER_DRAM_COHORT_DIRECT_TLB) && !defined(PIONEER_DRAM_COHORT_DIAGNOSTIC)
+#error Direct TLB selection requires its explicit physical cohort role
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110300020077ULL && !defined(PIONEER_DRAM_COHORT_DIRECT_TLB)
+#error Direct cohort77 tag cannot select a previous or ordinary driver
+#endif
 #if defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT)
 #error DRAM compile-only flag requires its distinct native context
 #endif

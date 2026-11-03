@@ -13,6 +13,9 @@
 #include <string>
 #include <vector>
 using uint32=uint32_t;using bigtime_t=int64_t;
+#ifdef COHORT_DIRECT_ENDPOINT_TEST
+#define PIONEER_DRAM_COHORT_DIRECT_TLB 1
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerDramCohortProtocol.h"
 static unsigned opens=0,requests=0,closes=0,fault=0,operation=0;
@@ -49,7 +52,7 @@ static int TestIoctl(int fd,unsigned long op,void* data,size_t bytes){
  assert(fd==9 && !closes);requests++;
  if(op==TT_PCI_PROBE_RELOAD_STATUS){
   assert(requests==1 && bytes==sizeof(tt_pioneer_driver_reload));auto& s=*static_cast<tt_pioneer_driver_reload*>(data);
-  assert(s.version==1);s={};s.version=1;s.driver=55;s.build_tag=UINT64_C(0x2026110300010077);
+  assert(s.version==1);s={};s.version=1;s.driver=55;s.build_tag=PIONEER_DRAM_COHORT_PROTOCOL_TAG;
   s.generation=7;s.guard_version=s.open_count=1;
   if(fault==1)s.build_tag^=1;
   if(fault==2)s.cold=1;

@@ -84,8 +84,19 @@ bool PioneerDramCohortNativeIO::Access(){
 bool PioneerDramCohortNativeIO::Selected(unsigned r,bool l1){
  if(r>=8 || !Access())return false;
  const unsigned x=PioneerDramCohortX(r);
+#ifdef PIONEER_DRAM_COHORT_DIRECT_TLB
+ // Access JUST revalidated the SAME FD/thread/generation/semaphore/PCI lease,
+ // exact backing and ALL17 real VM descriptors,including tlb at offset096c.
+ // These are precisely the parent's actual slot201/202 word addresses. Read
+ // every required word again;do not cache bindings or skip per-access scope.
+ // Avoid recursively re-walking the same descriptors through BOTH wrappers
+ // for each TLB word. No L1 domain/permissions/source/reset policy changes.
+ for(unsigned i=0;i<3;i++)if((l1 && PioneerRead32(owner.io.tlb-3+i)!=BlackholeDramFixedTlbWord(0,x,2,false,i))
+  || PioneerRead32(owner.io.tlb+i)!=BlackholeDramFixedTlbWord(0xffa00000,x,2,false,i))return false;
+#else
  for(unsigned i=0;i<3;i++)if((l1 && DramTlbRead(0,i)!=BlackholeDramFixedTlbWord(0,x,2,false,i))
   || DramTlbRead(1,i)!=BlackholeDramFixedTlbWord(0xffa00000,x,2,false,i))return false;
+#endif
  return true;
 }
 uint32 PioneerDramCohortNativeIO::SourceRead(unsigned i){return Access()?owner.io.SourceRead(i):UINT32_MAX;}

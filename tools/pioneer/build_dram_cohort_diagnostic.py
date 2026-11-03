@@ -9,20 +9,33 @@ import runpy
 import subprocess
 import sys
 
-assert len(sys.argv) in (3,4) and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
-build,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
+selected_args=sys.argv[1:];direct='--direct-tlb' in selected_args
+if direct:
+    assert selected_args.count('--direct-tlb')==1;selected_args.remove('--direct-tlb')
+assert len(selected_args) in (2,3) and not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
+build,out=map(pathlib.Path,selected_args[:2]);here=pathlib.Path(__file__).resolve().parent
 assert build.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
 out.mkdir(mode=0o700);saved=sys.argv[:]
 try:
-    sys.argv=[str(here/'build_dram_cohort_native.py'),str(build),str(out/'private-controls')]+saved[3:]
-    private=runpy.run_path(sys.argv[0],run_name='__main__')
+    if direct:
+        sys.argv=[str(pathlib.Path(__file__).resolve()),str(build),str(out/'original-physical-controls')]+selected_args[2:]
+        original=runpy.run_path(sys.argv[0],run_name='__main__')
+        assert hashlib.sha256(original['binary'].read_bytes()).hexdigest()=='e50f1dfdb05827ee020a106aea474b3e926ad7a8f17de3decfbd71cd72b2e0e3'
+        assert hashlib.sha256(original['client'].read_bytes()).hexdigest()=='7d2e3e8ec343c117173d94a706e4c1cbbd75666af094c7fe170a6e33d843e8a4'
+        private=original['private']
+    else:
+        sys.argv=[str(here/'build_dram_cohort_native.py'),str(build),str(out/'private-controls')]+selected_args[2:]
+        private=runpy.run_path(sys.argv[0],run_name='__main__')
 finally:sys.argv=saved
 settings=private['old']
 args,features,misc,project,reference,sdk,binpath,cxx=(settings[k] for k in
     ('args','features','misc','project','reference','sdk','binpath','cxx'))
-assert hashlib.sha256((out/'private-controls/cohort-DRCNODRV.o').read_bytes()).hexdigest()=='da21a10338471db5e5acaff1fa8057bc817422ba2b6484676708576242bf6d1e', 'private control changed'
+private_object=original['private_object'] if direct else out/'private-controls/cohort-DRCNODRV.o'
+assert hashlib.sha256(private_object.read_bytes()).hexdigest()=='da21a10338471db5e5acaff1fa8057bc817422ba2b6484676708576242bf6d1e', 'private control changed'
 flags=features+['-DPIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT=1','-DPIONEER_DRAM_COHORT_NATIVE_CONTEXT=1',
- '-DPIONEER_DRAM_COHORT_DIAGNOSTIC=1','-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010077ULL']
+ '-DPIONEER_DRAM_COHORT_DIAGNOSTIC=1',
+ '-DPIONEER_DRIVER_BUILD_TAG='+('0x2026110300020077ULL' if direct else '0x2026110300010077ULL')]
+if direct:flags+=['-DPIONEER_DRAM_COHORT_DIRECT_TLB=1']
 subjects=[misc/p for p in ('tenstorrent_pci_probe.cpp','PioneerDramReadSweepNative.inc','PioneerDramReadSweepNativeRole.h',
  'PioneerDramCohortNativeRole.h','PioneerDramCohortNative.inc','PioneerDramCohortReadSweepOwner.h',
  'BlackholeDramCohortReadSweepImage.h','PioneerDramCohortProtocol.h','PioneerDramCohortControl.inc')]
@@ -33,6 +46,7 @@ role_input=('#include "'+str(misc/'PioneerDramReadSweepNativeRole.h')+'"\n').enc
 cases=[(flags,True)]
 required=['PIONEER_DRIVER_BUILD_TAG','PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT','PIONEER_DRAM_COHORT_NATIVE_CONTEXT',
  'PIONEER_DRAM_COHORT_DIAGNOSTIC','TT_PIONEER_DRIVER_RELOAD','TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH']
+if direct:required+=['PIONEER_DRAM_COHORT_DIRECT_TLB']
 for key in required:
     cases.append(([f for f in flags if not (f=='-D'+key or f.startswith('-D'+key+'='))],False))
 for key in required[1:4]:
@@ -42,6 +56,11 @@ for key in ('PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY','PIONEER_DRAM_SWEEP_DIAGNO
  'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE','PIONEER_Q38_WORK_INFERENCE','PIONEER_Q38_WORK_MODE','PIONEER_Q38_NORMAL_CLOCK',
  'PIONEER_Q38_GDN_MUTABLE_STATE','PIONEER_Q38_DECODER_RUNTIME'):
     cases += [(flags+['-D'+key+'='+str(v)],False) for v in (0,1)]
+if direct:
+    for value in (0,2):cases.append(([f for f in flags if not f.startswith('-DPIONEER_DRAM_COHORT_DIRECT_TLB=')]
+        +['-DPIONEER_DRAM_COHORT_DIRECT_TLB='+str(value)],False))
+else:
+    for value in (0,1):cases.append((flags+['-DPIONEER_DRAM_COHORT_DIRECT_TLB='+str(value)],False))
 for selected,expected in cases:
     r=subprocess.run([str(cxx),'-x','c++','-E','-']+selected,input=role_input,capture_output=True)
     assert (r.returncode==0)==expected,(selected,r.stderr)
@@ -54,7 +73,7 @@ profile=out/'profile.o'
 subprocess.run(args+['-c',str(reference/'src/add-ons/kernel/drivers/misc/PioneerPciProfile.cpp'),'-o',str(profile)],check=True)
 release=build/'objects/haiku/riscv64/release'
 def library(name):return subprocess.check_output([str(cxx),'-print-file-name='+name],text=True).strip()
-binary=out/'tenstorrent_pci_probe-dram-cohort-diagnostic77'
+binary=out/('tenstorrent_pci_probe-dram-cohort-direct77' if direct else 'tenstorrent_pci_probe-dram-cohort-diagnostic77')
 subprocess.run([str(cxx),'-shared','-nostdlib','-Wl,--no-undefined,-soname=tenstorrent_pci_probe',
  library('crtbeginS.o'),str(release/'system/glue/haiku_version_glue.o'),str(obj),str(profile),
  str(release/'system/kernel/kernel.so'),library('libgcc.a'),library('crtendS.o'),'-o',str(binary)],check=True)
@@ -100,9 +119,10 @@ includes=['-I'+str(sdk/'headers'),'-idirafter',str(sdk/'headers/posix')]
 for path in [sdk/'headers/os',*sorted((sdk/'headers/os').iterdir())]:
     if path.is_dir():includes+=['-isystem',str(path)]
 libraries=['-L'+str(p) for p in sorted((build/'build_packages').glob('gcc_syslibs-*/lib'))]
-client_obj=out/'client.o';client=out/'pioneer-dram-cohort-diagnostic77'
+client_obj=out/'client.o';client=out/('pioneer-dram-cohort-direct77' if direct else 'pioneer-dram-cohort-diagnostic77')
+client_flags=['-DPIONEER_DRAM_COHORT_DIRECT_TLB=1'] if direct else []
 subprocess.run([str(cxx),'-std=c++17','-O2','-Wall','-Wextra','-Werror','-fno-exceptions','-fno-rtti',
- '-fstack-usage',*includes,'-c',str(here/'pioneer_dram_cohort.cpp'),'-o',str(client_obj)],check=True)
+ '-fstack-usage',*client_flags,*includes,'-c',str(here/'pioneer_dram_cohort.cpp'),'-o',str(client_obj)],check=True)
 subprocess.run([str(cxx),*includes,*libraries,'-B'+str(release/'system/glue')+'/',
  '-L'+str(release/'system/libroot'),str(client_obj),'-o',str(client)],check=True)
 client_symbols=subprocess.check_output([str(binpath/'riscv64-unknown-haiku-nm'),'-C',str(client)],text=True)
@@ -111,6 +131,7 @@ assert not any(name in client_symbols for name in ('llama_','ggml_','PioneerDram
 for p in (binary,client):print(hashlib.sha256(p.read_bytes()).hexdigest()+' '+p.name,flush=True)
 assert identity=={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in subjects},'source changed during build'
 (out/'source-identities.json').write_text(json.dumps(identity,indent=2)+'\n')
-print('BUILD_ONLY_COHORT77 privateControlExact1 ordinaryControlsExact1 fixedPublicDATA1232 '
+print(('BUILD_ONLY_COHORT77_DIRECT originalPhysicalModuleClientExact1 ' if direct else 'BUILD_ONLY_COHORT77 ')+
+ 'privateControlExact1 ordinaryControlsExact1 fixedPublicDATA1232 '
  'maxIndividualFrame'+str(max(n for n,_ in frames))+' knownDirectChain'+str(known)+' unresolved'+str(len(unresolved))+
  ';NO install/run/native-lifecycle/physical/bandwidth/frequency/model/Work proof',flush=True)

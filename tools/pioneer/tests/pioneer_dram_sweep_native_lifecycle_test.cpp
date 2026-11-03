@@ -47,6 +47,9 @@ static thread_id currentThread=10;
 static team_id currentTeam=20;
 static int32 semCount=0;
 static unsigned ioCalls=0,deletes=0,dropDelete=0,unreserves=0;
+#ifdef COHORT_SCOPE_COUNTER_TEST
+static unsigned areaQueries=0,wordReads=0,wordWrites=0;
+#endif
 static unsigned pciWrites=0,dropPciWrite=0,pciReads=0,badPciRead=0;
 static bool failUnreserve=false,failProfile=false;
 static unsigned effectiveUid=0,copyCalls=0,failCopy=0;
@@ -89,14 +92,27 @@ static area_id map_physical_memory(const char*,uint64,size_t bytes,int,uint32 pr
  views[id]={id,*pointer,bytes,protection};return id;
 }
 static status_t get_area_info(area_id id,area_info* info){
+#ifdef COHORT_SCOPE_COUNTER_TEST
+ areaQueries++;
+#endif
  Touch();if(!views.count(id))return B_BAD_VALUE;*info=views.at(id);return B_OK;
 }
 static status_t delete_area(area_id id){
  Touch();assert(views.count(id));if(++deletes==dropDelete)return B_BUSY;
  free(views.at(id).address);views.erase(id);return B_OK;
 }
-static uint32 PioneerRead32(const volatile uint32* p){Touch();assert(p);return *p;}
-static void PioneerWrite32(volatile uint32* p,uint32 value){Touch();assert(p);*p=value;}
+static uint32 PioneerRead32(const volatile uint32* p){
+#ifdef COHORT_SCOPE_COUNTER_TEST
+ wordReads++;
+#endif
+ Touch();assert(p);return *p;
+}
+static void PioneerWrite32(volatile uint32* p,uint32 value){
+#ifdef COHORT_SCOPE_COUNTER_TEST
+ wordWrites++;
+#endif
+ Touch();assert(p);*p=value;
+}
 static void spin(unsigned){Touch();}
 struct PioneerMmioIO {
  const tt_pioneer_profile& profile;area_id area=-1;const volatile uint32* nodeID=NULL;
