@@ -1,0 +1,162 @@
+Converted-weight disk cache: CPU implementation and bounded verification
+=======================================================================
+2026-11-03. Source baseline 9c492534ef64ce242788366f0ccda624716c7c13.
+This checkpoint adds an experimental native-weight converter and generic
+persistent derived-weight cache. It does NOT change the active GPU driver,
+Assistant selection, original comparator, tolerance, boot, CPU or RAM code.
+No new hardware inference, model-quality pass or tokens/sec gain is claimed.
+The existing ~0.1643 tok/s diagnostic and unmet 20 tok/s goal are unchanged.
+
+Implemented, not yet an enabled native inference path
+-----------------------------------------------------
+CPU conversion of Q4_K -> BFP4_B and Q8_0/Q6_K -> BFP8_B native 32x32 tiles;
+immutable derived payloads keyed by authenticated original SHA-256, complete
+source-fingerprinted conversion recipe, tensor ordinal and byte length.
+Dedicated private marked directory, read-only owner single-link entries,
+whole/index/per64KiB SHA-256, full verification on every open, affected-chunk
+rehash before atomic Reader publication, private fsynced staging and atomic
+rename. Invalid owned entries rebuild; unsafe links/permissions refuse.
+No broad deletion or automatic eviction. Requires entry size plus 2 GiB
+headroom. Source/produce failure BEFORE publication preserves the old entry;
+a later cancellation can leave a complete published entry but returns no
+Reader. Directory fsync is best-effort, not a power-loss certificate.
+
+Native block-float is a different numerical representation (requantization),
+NOT the current lossless packed layout. Neither hardware nor Assistant
+selects these bytes. Native math/format and model-quality qualification,
+bank/arena planning and loader integration remain before Work promotion.
+Cache integrity is data, not device authority or malicious-same-user proof.
+
+Closed local tests and independent clean-source checks
+------------------------------------------------------
+Mac main and clean-source trees both ACTUALLY exit0:
+ codec:2252 tiles/2306048 values, independent long-double numeric oracle,
+ all supported shared exponents, signed mantissas, faces/nibbles, ties,
+ neighbours, exponent gaps, saturation, source/malformed/alias refusals.
+ cache:43 counted checks,0 unsupported filesystem fixtures, NIST SHA
+ vectors, persistent hit ZERO conversion, cross-chunk reads, corruption
+ and atomic rebuild, source/conversion cancellation, key separation,
+ symlink/hardlink/FIFO/permission and arbitrary unmarked-folder refusal.
+ original native tiles:118 checks, independent Q8/Q4/Q6 formulas at real
+ model widths/padded rows, source loss/epoch stops, wrong-fenv refusal,
+ actual converter -> cache -> read bytes equal fresh conversion, second
+ hit ZERO conversion AND ZERO original packed reads in this fixture.
+ASan/UBSan and -Werror retained; all final stderr0. CPU/filesystem only.
+
+Mac and Haiku main/clean builds ACTUALLY0, stderr0; same conversion source
+fingerprint fd9938710b2bd12c424111a07d263683a0b39406c3e15d3cf51f1fac85b2dd4a.
+Raw main/clean binaries differ (including debugging/build identity data);
+do NOT claim whole raw binary reproducibility. Haiku BOTH after objcopy
+--strip-debug are byte-identical, actual cmp0, SHA-256:
+ e141af92f8da0d9d8c35717f74173dee0987388e2a67f0e87f88df6ac970a7f2
+No host Mach-O whole-binary equality is claimed.
+
+Separate CPU metadata inventory authenticates the complete original on the
+same FD and computes all498 supported native matrix payload sizes, actual0:
+ type8 Q8_0:288 entries/7163740160B
+ type12 Q4_K:193 entries/10341089280B
+ type14 Q6_K:17 entries/1885634560B
+ total19390464000B payload;largest1350860800B output.weight.
+This is metadata-derived storage DATA, not completed full conversion,
+per-bank/arena fit, hardware use, model quality or performance proof.
+
+Actual deployed CPU utility SHA-256:
+ 264bc2842e74d38c3ca31cb549a9c8761a6e8fe9c7558e6073f188cb58604c7f
+Mac CPU utility:
+ 16ae22be7567669064345ea9a906fd3aa5161dd31afbb836bd29098765f67235
+Haiku compiler stack usage: ReadRange70960B + ReadFloatTile5744B plus callees,
+userspace only; no kernel-stack safety or device-stack claim.
+
+Actual Haiku tests
+-------------------
+Fresh initial admission: stable041/tag12/gen18, owner0/cold0/open1/guard1,
+no project compute parent,64 CPUs/full137034936320B RAM, writable BFS with
+50.2 GiB free. New root-private stage only:
+ /boot/home/pioneer-native-weight-cache-20261103-a
+SCP limited1024Kbit/s and remote whole binary hashes checked before launch.
+CPU codec2252 tiles/2306048 values ACTUALLY passes on Haiku.
+Corrected filesystem test and native tiles BOTH ACTUALLY complete0:
+ cache42 checks +1 explicitly UNSUPPORTED hard-link fixture (BFS),
+ native tiles118 checks with converter-to-cache byte agreement and zero
+ conversions/packed reads on hit. Both completed stderr0; no GPU access.
+Final filesystem fixture binary:
+ 11ee356c1ca5e07069504a0c65c7ccfa50e677f59b0b70f0c9f67b36466f0b17
+Tile fixture:
+ 9c6c2edc93213bf2b643dfef91d4ed83978c98f2f7f6eb0c1adb2a461acd8247
+Codec fixture:
+ ee249d1063b5641a59a68c3c37dbc6b2f2eed0302668f7b772c8485ea4068138
+
+Bounded REAL original-model tests
+---------------------------------
+Mac main executable ACTUALLY0 on first build and separate second load.
+SAME OPEN full18973870528-byte original GGUF SHA-256 and strict851-tensor
+layout authenticate each time; original source SHA:
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+Tensor11 blk.0.ssm_alpha.weight ->348160 bytes native BFP8_B.
+First create6 conversion chunks; separate second command hit0 conversion.
+Recipe SHA:
+ 6ac6fee8b2f8b83c8c13c94b580ca1aace5e78df0504d27283bb514dcca9c453
+Whole derived cache file SHA:
+ 89878c153dd0f9ff7f43546fe8c7210d1a7a85794f4841fe743fa63af690bb60
+Cache filename:
+ p100a-weight-v1-443b4e6f1f5068b78e1b27f789994d399a567d9edb9db088025fe263a69337c4.cache
+No learned payload/model/binary is committed.
+
+Haiku FIRST original-model create ACTUALLY0,06:11:41..06:19:28UTC,stderr0:
+same original SHA/layout accepted, same tensor348160 bytes/6 conversions,
+same recipe. Whole newly produced cache file SHA is byte-for-byte identical
+to the Mac result89878c15 above (confirmed before separate-reuse launch).
+This interval mostly includes the compulsory full original authentication;
+it is NOT an isolated conversion speed or representative full-model loading
+benchmark. Only this one small real tensor was converted, not the full model.
+
+Haiku SEPARATE reuse parent1964 ACTUALLY terminates0,06:20:44..06:28:27UTC,
+stderr0. It checks the whole cache SHA/size348608B/owner0/singlelink/mode0400,
+authenticates the full original again, and reports:
+ CACHE_HIT_VERIFIED_NO_CONVERSION tensor11 blk.0.ssm_alpha.weight
+ native_bfp8_b bytes348160 conversion_chunks0
+ PASS_NATIVE_WEIGHT_DISK_CACHE entries1 hits1 converted_chunks0
+The observed reuse benefit is ZERO conversion, not a measured loading-time
+or inference-speed gain. Both full CLI intervals include original-model
+authentication and are not isolated cache/convert timings. Closed create
+and reuse logs/scripts are archived alongside this report.
+
+Installation and final independent health
+------------------------------------------
+Previously absent target, owner-only parent preflight, CPU utility copied
+with no-clobber and verified WHOLE SHA before setting0755, ACTUAL install0:
+ /boot/home/config/non-packaged/bin/pioneer-q38-native-weight-cache
+Original GGUF remains18973870528B/owner0/singlelink/mode0600. The small
+derived cache remains in /boot/home/models/.p100a-native-weights-v1.
+No full-model cache generation or automatic Assistant selection enabled.
+
+Fresh final independent readonly health ACTUALLY0/stderr0: same stable041
+driver/tag12/gen18,quiesced0/cold0/owner0/open1/guard1,no project compute
+parent,64 CPUs/full137034936320B RAM/free130507677696B. No driver swap,
+GPU launch/reset/quarantine, OS reboot, power, SD, mains, hardware, network,
+Assistant, kernel or boot changes. UART was never reopened/reconfigured.
+
+Failures retained, not hidden or converted into passes
+-----------------------------------------------------
+* Early new codec test exposed an unnecessarily restricted individual
+  normal-exponent domain. Corrected this NEW codec to the documented shared
+  maximum exponent domain; expanded tiny-normal/all-tiny-group tests. The
+  original model comparator, weights, quality threshold and tests stay intact.
+* Initial Haiku build failed -Werror misleading indentation/signed statvfs
+  comparisons. Corrected code, retained -Werror; current builds0/stderr0.
+* Initial Haiku filesystem fixture assumed hard links were available and
+  asserted. The same private-fixture ln probe returns Operation not allowed;
+  tracked BFS bfs_link explicitly returns B_UNSUPPORTED. Exact aborted CPU
+  team10419 was verified and closed once with KILL; original63353 closes137,
+  NOT a pass. No GPU job, quarantine, reboot or board reset occurred.
+* First test-only portability edit had an else-branch error when a hard
+  link succeeds. Mac main/clean r4 both exit134. Corrected branch, reran
+  Mac main/clean r5:43 checks/0 unsupported. Haiku r3:42/1 unsupported.
+  Unsupported does NOT count as a tested hard-link refusal on BFS.
+
+All CPU-only tests leave the original model, Assistant and driver intact.
+Native GPU use, full19.4GB cache generation, usable long-generation quality,
+loading-time improvement and inference improvement remain UNPROVEN. Original
+authentication and cached-payload verification still read the disk on hits.
+The active long-running performance goal remains ACTIVE, not complete.
+See ../NATIVE_WEIGHT_CACHE.txt for API scope, build, CLI and limitations.

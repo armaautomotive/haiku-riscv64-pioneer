@@ -1,0 +1,119 @@
+Pioneer converted-weight disk cache (experimental CPU/userspace tool)
+===================================================================
+
+Purpose
+-------
+Persist converted model WEIGHTS so a later load can read them without doing
+the same conversion again. Activations, KV cache and recurrent inference
+state are not persistent immutable weights and are not stored here.
+
+Implemented components
+----------------------
+PioneerModelWeightCache.{h,cpp}: generic authenticated derived-byte cache.
+PioneerBlackholeBlockFloat.h: CPU BFP4_B/BFP8_B native-tile codec.
+PioneerQ38NativeWeightTiles.h: original Qwen3.8 Q4_K/Q6_K/Q8_0 GGUF blocks
+  to native 32x32 weight tiles (Q4_K -> BFP4_B; Q6_K/Q8_0 -> BFP8_B).
+pioneer_q38_native_weight_cache.cpp: CPU-only cache builder/reuse command.
+build_qwen38_native_weight_cache.py: source-fingerprinted Mac/Haiku build.
+
+This is a NEW REQUANTIZATION path, not lossless repacking of the current
+driver's byte-major operands. The running Assistant, driver, packed plan,
+and Work/Validation modes DO NOT select this format. Hardware native-tile
+matmul, numerical/model-quality qualification, bank/arena planning, and
+loader integration are still required before enabling it for inference.
+No existing CPU comparator or quality tolerance has been changed.
+
+Installed CPU command on the Pioneer (2026-11-03):
+  /boot/home/config/non-packaged/bin/pioneer-q38-native-weight-cache
+Dedicated cache directory:
+  /boot/home/models/.p100a-native-weights-v1
+Only the bounded real-tensor smoke-test entry is populated. Separate Mac
+and Haiku invocations verified reuse with ZERO conversion calls; complete
+cache-file bytes agree across the two platforms. Full-model creation and
+Assistant/GPU consumption remain untested/unselected. No restart was needed.
+
+Build
+-----
+From the repository root, choose a new absolute output directory:
+
+  python3 tools/pioneer/build_qwen38_native_weight_cache.py /absolute/new-build
+
+For the existing cross-build environment add:
+
+  --haiku-build /Volumes/HaikuBuildLocal/generated.riscv64
+
+The builder compiles only; it does not install, run, download a model, open
+a card, or change Assistant. A conversion source fingerprint covers all
+conversion/cache inputs and the builder itself; it is part of the key.
+Do not share caches between unqualified numerical recipes.
+
+Use
+---
+The original authenticated model must remain available. With absolute paths:
+
+  pioneer-q38-native-weight-cache --build ORIGINAL_GGUF NEW_CACHE_DIRECTORY \
+    --tensor blk.0.ssm_alpha.weight
+
+That bounded smoke test converts one 348160-byte native BFP8_B tensor.
+Invoke the same command again: CACHE_HIT_VERIFIED_NO_CONVERSION must report
+conversion_chunks0. Without --tensor, the tool can prepare supported
+quantized matrices in the pinned 851-tensor Qwen3.8-27B Q4_K_M GGUF. This is
+approximately another 19.4 GB plus metadata and temporary-entry overhead;
+the full-model cache has NOT yet been exercised or enabled for inference.
+Do not launch it without sufficient disk space. This utility is specific
+to that exact model, not an arbitrary Hugging Face/GGUF downloader.
+
+Each invocation parses the original layout and hashes the SAME OPEN
+18973870528-byte GGUF, requiring SHA-256:
+  c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+Cache hits still authenticate the original and verify the entire cached
+payload. The benefit proved so far is avoiding conversion, not eliminating
+all disk reads, proving faster startup, or increasing tokens per second.
+
+Integrity and disk behavior
+---------------------------
+* Entries are separated by original-model SHA-256, full conversion recipe
+  SHA-256, tensor index and payload size. Header/schema version is included.
+* Dedicated mode-0700 directory with an exact private marker; an existing
+  unmarked directory is refused. No arbitrary user-folder takeover.
+* Mode-0400 owner-only regular single-link entries; symlinks, FIFO, foreign
+  ownership, extra links or unsafe permissions are refused, not overwritten.
+* Fixed little-endian 256-byte header; SHA-256 of the payload, SHA-256 of
+  the chunk index, and one SHA-256 per 65536-byte payload chunk.
+* Every open verifies all bytes. Each actual Reader.Read rechecks affected
+  chunks and file identity before publishing at most 65536 bytes atomically.
+* A miss/corrupt owned entry is rebuilt in a private temporary file, fsynced
+  and atomically renamed. Failed conversion leaves an older entry alone.
+  Only the exact same-inode staging file created by that call is cleaned up.
+* Every new entry requires its complete size plus 2 GiB disk headroom.
+  No eviction, broad deletion, original-model modification or disk erasure.
+* Directory fsync is best-effort where unsupported. This is not a blanket
+  crash/power-loss durability certificate; future opens revalidate data.
+* File integrity/versioning is NOT numerical-quality, hardware-capability,
+  or malicious-same-user provenance proof. It grants no driver authority.
+
+Tests
+-----
+  sh tools/pioneer/tests/run_pioneer_blackhole_block_float_tests.sh
+  sh tools/pioneer/tests/run_pioneer_model_weight_cache_tests.sh
+  sh tools/pioneer/tests/run_pioneer_q38_native_weight_tile_tests.sh
+
+These Mac host runners use ASan/UBSan and retain their exact temporary
+fixture directories. No GPU is accessed. The native codec uses an independent
+numeric oracle for faces, exponents, mantissas, alignment/truncation, RNE,
+ties, gaps, saturation and canonical zeros. Tile tests compare original
+quantization formulas and compare cached bytes with fresh conversion.
+The filesystem tests cover corruption/rebuild, cancellation, source/key
+changes, invalid reads and supported link/FIFO/permission refusals. On BFS,
+hard-link creation is unsupported: that fixture is explicitly reported as
+unexercised, not counted as a passing hard-link rejection test.
+
+Native layout references (algorithm/format facts; no vendor code copied)
+-----------------------------------------------------------------------
+https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/impl/data_format/blockfloat_common.cpp
+https://github.com/tenstorrent/tt-metal/blob/main/tech_reports/data_formats/data_formats.md
+https://github.com/tenstorrent/tt-metal/blob/main/docs/source/tt-metalium/tt_metal/advanced_topics/tiles.rst
+
+The B formats use 64 shared exponent bytes, then four 16x16 faces of sign/
+magnitude mantissas, aligning to the group maximum before rounding. Native
+requantization needs its own model-quality evidence before Work selection.

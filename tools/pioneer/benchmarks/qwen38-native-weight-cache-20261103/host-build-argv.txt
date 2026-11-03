@@ -1,0 +1,16 @@
+c++
+-std=c++17
+-O2
+-g
+-Wall
+-Wextra
+-Werror
+-ffp-contract=off
+-fstack-usage
+-ffile-prefix-map=/Users/arma/Documents/ChatGPT/HaikuOS=PioneerSource
+-fdebug-prefix-map=/private/tmp/pioneer-native-block-float-20261103.pLQscAQv/host-current=NativeWeightCacheBuild
+-DPIONEER_Q38_NATIVE_CONVERSION_SHA256="fd9938710b2bd12c424111a07d263683a0b39406c3e15d3cf51f1fac85b2dd4a"
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/pioneer_q38_native_weight_cache.cpp
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerModelWeightCache.cpp
+-o
+/private/tmp/pioneer-native-block-float-20261103.pLQscAQv/host-current/pioneer-q38-native-weight-cache

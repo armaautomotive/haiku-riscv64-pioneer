@@ -1,0 +1,18 @@
+   Device No.: 3
+   Mounted at: /boot
+  Volume Name: "Haiku"
+  File System: bfs
+       Device: /dev/disk/scsi/0/3/0/0
+        Flags: QAM-P-W
+     I/O Size:   64.0 KiB (65536 byte)
+   Block Size:    2.0 KiB (2048 byte)
+ Total Blocks:  111.8 GiB (58610176 blocks)
+  Used Blocks:   61.6 GiB (32313149 blocks)
+  Free Blocks:   50.2 GiB (26297027 blocks)
+      Usage %:   55.1 %
+  Total Nodes: 0
+   Used Nodes: 0
+   Free Nodes: 0
+   Root Inode: 524288
+drwxr-xr-x 1 baron root 2048 Oct 17 23:10 /boot/home/models
+regular file 18973870528 0 1 600

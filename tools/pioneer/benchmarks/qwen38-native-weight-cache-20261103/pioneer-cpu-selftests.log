@@ -1,0 +1,5 @@
+264bc2842e74d38c3ca31cb549a9c8761a6e8fe9c7558e6073f188cb58604c7f  /boot/home/pioneer-native-weight-cache-20261103-a/pioneer-q38-native-weight-cache
+92e501215288390799149547ecb432fc397aad45aa022d77e4a0d2b2ffce34f1  /boot/home/pioneer-native-weight-cache-20261103-a/pioneer-model-weight-cache-test
+ee249d1063b5641a59a68c3c37dbc6b2f2eed0302668f7b772c8485ea4068138  /boot/home/pioneer-native-weight-cache-20261103-a/pioneer-blackhole-block-float-test
+9c6c2edc93213bf2b643dfef91d4ed83978c98f2f7f6eb0c1adb2a461acd8247  /boot/home/pioneer-native-weight-cache-20261103-a/pioneer-q38-native-weight-tiles-test
+PASS CPU-ONLY experimental native BFP4_B/BFP8_B:2252 tiles/2306048 values;independent numerical RNE/alignment oracle,all shared exponents,mantissas,faces,nibbles,ties,gaps,atomic refusals;NO GPU,model quality,source authentication,native integration or throughput proof

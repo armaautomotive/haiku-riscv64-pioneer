@@ -1,0 +1,6 @@
+11ee356c1ca5e07069504a0c65c7ccfa50e677f59b0b70f0c9f67b36466f0b17  /boot/home/pioneer-native-weight-cache-20261103-a/pioneer-model-weight-cache-test-r3
+9c6c2edc93213bf2b643dfef91d4ed83978c98f2f7f6eb0c1adb2a461acd8247  /boot/home/pioneer-native-weight-cache-20261103-a/pioneer-q38-native-weight-tiles-test
+UNSUPPORTED_FIXTURE hard links unavailable on this filesystem;hard-link cache refusal NOT exercised here
+PASS CPU-only converted-weight disk cache:42 checks;1 unsupported filesystem fixtures;verified hits ZERO conversion,full/chunk SHA,source/recipe/version keys,atomic rebuild/cancellation,private marked directory,supported link/FIFO/permission refusals;NO GPU or model-speed claim
+PASS CPU-only original Q8/Q4/Q6 native-weight tiles:118 checks;independent GGUF formulas,widths,padded rows,source loss/epoch atomicity,real converter-to-disk roundtrip and ZERO conversion on hit;NO GPU/model-quality/speed proof
+HAIKU_CPU_ONLY_CACHE_AND_TILE_SELFTESTS_COMPLETED_NO_ACCELERATOR_ACCESS

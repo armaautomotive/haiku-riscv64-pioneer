@@ -1,0 +1,3 @@
+CONVERSION_SOURCE_SHA256 fd9938710b2bd12c424111a07d263683a0b39406c3e15d3cf51f1fac85b2dd4a
+BINARY_SHA256 8305bfb9b29b9deb4d7bbad6bc6e6f7be2425e6ff65a79b6c92229c825b6c8c0
+BUILD_ONLY CPU/userspace converted-weight cache;NO model conversion,installation,GPU,Work or speed proof

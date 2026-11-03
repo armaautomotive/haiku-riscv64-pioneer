@@ -1,0 +1,3 @@
+Filtered diagnostic completion line (the ps/debug-server line is omitted).
+The unedited ln failure is retained in pioneer-hardlink-diagnostic.stderr.
+HARDLINK_PROBE_EXIT1

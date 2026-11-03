@@ -1,0 +1,2 @@
+PASS CPU-ONLY experimental native BFP4_B/BFP8_B:2252 tiles/2306048 values;independent numerical RNE/alignment oracle,all shared exponents,mantissas,faces,nibbles,ties,gaps,atomic refusals;NO GPU,model quality,source authentication,native integration or throughput proof
+CPU-only experimental native block-float evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-blackhole-block-float.xU9t4Yxe

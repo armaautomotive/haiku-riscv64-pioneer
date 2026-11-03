@@ -1,0 +1,2 @@
+Assertion failed: (!mkfifo(target.c_str(),0600)), function main, file pioneer_model_weight_cache_test.cpp, line 109.
+/private/tmp/pioneer-native-block-float-20261103.pLQscAQv/clean-source/tools/pioneer/tests/run_pioneer_model_weight_cache_tests.sh: line 10:  8030 Abort trap: 6           ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/test" "$temporary"
