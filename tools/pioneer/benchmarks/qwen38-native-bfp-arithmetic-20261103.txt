@@ -1,0 +1,109 @@
+Native BFP failure observability and arithmetic investigation -- 2026-11-03
+=========================================================================
+
+RESULT: a separate integer/Fraction calculation predicts the EXACT previously
+recorded BFP8 word4180b500, not the ideal4180b340. This is consistent with
+documented Blackhole intermediate rounding, not evidence of an initialization
+failure or fake card. Only ONE BFP8 hardware word was recorded in that trial;
+the remaining63 remain unobserved. No new physical trial or acceptance claim.
+
+The diagnostic client now preserves all64 already-returned output words on
+failure while retaining the SAME strict comparison and close-only policy.
+The new actual-client fake-syscall regression passes150 cases. With the prior
+103 cases,253 owner/controller/mapping/parent/client software cases pass.
+The separate arithmetic characterization also passes. These are offboard
+evidence, not new model execution or speed.20tok/s/full-native Work UNMET.
+
+Authoritative inputs
+---------------------
+Prior physical record is unchanged:
+ benchmarks/qwen38-native-bfp-physical-20261103/physical.log
+ bdfa746c9d89d212c6e7a11cb1c400f5725059c3faf5b38f236fdf305367bdaa
+It reports BFP4 all64 exact/clean END, then BFP8 pass0,row0
+got4180b500 expected4180b340, parent terminal70 with retained owner. Recovery
+and stable041 restore were completed and archived in the earlier report.
+No old physical failure is reclassified as a passed test.
+
+Primary exact-arithmetic document was discovered through current upstream
+MVMUL.md, then independently pinned with git ls-remote origin HEAD:
+ 4a73a7121d95f545b85efa34b243f0b8b316f967
+ https://github.com/tenstorrent/tt-isa-documentation/blob/4a73a7121d95f545b85efa34b243f0b8b316f967/WormholeB0/TensixTile/TensixCoprocessor/MatrixUnitArithmetic.md
+Raw pinned document was fetched successfully after the web exact-pin view
+returned a cache miss. SHA256:
+ f9f353091033289e8a01aac9db504837ea076c1d6278cac62fcc9d3448681cc8
+The document is kept only in temporary research storage, not copied into
+the repository. Existing image/config source pins remain unchanged.
+
+Arithmetic characterization: NOT a replacement acceptance oracle
+-----------------------------------------------------------------
+tests/pioneer_native_bfp_arithmetic_test.py independently expresses the
+documented arithmetic facts with integers and exact rational normalization,
+without copying vendor implementation text. Eight-product lanes align to
+their maximum exponent with10 fractional bits; lane/previous-Dst alignment
+and final FP32 rounding are separately represented with their documented
+tie directions. Scope is finite normal/zero BF16, Blackhole, FP32 accumulation,
+stochastic rounding OFF. This is not a general SFPU/FPU simulator.
+
+Each row uses the unchanged fixed fixture, two K16 face groups and the actual
+phase order (BFP4:0/2;BFP8:0/1/2/3). Exact-rational ideal values and lane-model
+values are both retained. All32 BFP4 predictions equal ideal arithmetic;
+30/32 BFP8 rows predict differences from ideal. Row0 prediction4180b500 agrees
+bit-for-bit with the only recorded failed BFP8 word; the test reads the prior
+physical log, it does not silently replace its expected value. The other
+BFP8 predictions are STILL NOT HARDWARE OBSERVATIONS. Hand-checked tie,
+zero and unit-product cases are included. No tolerance or Work comparator
+is changed. The original shared RV32 Step/float observer is unmodified.
+
+Revised client: failure data only
+---------------------------------
+pioneer_native_bfp_diagnostic.cpp adds DumpReturnedWords after the first
+strict numerical mismatch. It prints the two32-word arrays already copied
+by the one completed RUN, plus unchanged Expected() words. No new device
+query/readback, END, reset, retry, ownership release or restore is added.
+Unproven RUN results are not treated as valid output snapshots.
+Success still requires ALL64 original strict expected words and accepted
+explicit END with complete restoration. No command-line/ABI/driver/image/
+protocol/build-tag change. The spent frozen first parent still binds its
+old client hash; DO NOT rerun it or replace files in its old staging tuple.
+
+tests/pioneer_native_bfp_client_test.py includes the ACTUAL client source
+and substitutes only syscall endpoints. Both4/8 formats, every one of64
+output positions, metadata/support/open/root/PC/nonce/ioctl/END/close faults
+are checked:150 cases. Every single-word mismatch keeps all64 word records,
+the exact failed index and value, and issues NO END/retry/query after RUN.
+Fake positive words use Expected() to exercise client policy; this is NOT
+independent numerical or physical proof. ASan/UBSan/Werror stay enabled.
+First scratch compile collided with libc's index symbol; the fake variable
+was renamed failedWord. No production gate was relaxed to fix that test.
+
+Closed builds/tests
+-------------------
+Base:/private/tmp/pioneer-bfp8-observe-20261103.hXTOE2Np
+Standalone client r2 tool35735 TERMINAL0/stderr0,150 cases.
+Initial complete owner runner40514 TERMINAL0/stderr0.
+Final runner76152 TERMINAL0/stderr0,253 cases plus separate64-row arithmetic
+characterization, freshly rebuilt both RV32I images and native SDK ELFs.
+Driver still e79e070b9e4fe434b868898748834e0cd89b03bcb250d9c1694b4d0b890f46ac
+Default43 control still2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+New diagnostic client428e7a15ad97501eb711dc6a2e59f30c68d14c1b022acc32b9b753ce793aefb4
+Boot d47a1c29...;BFP4 text adcec3cf...;BFP8 text c21f4692... unchanged.
+The revised client has NOT been staged or executed on the Pioneer.
+
+Live cache job and next gate
+----------------------------
+The previous turn made concrete progress (e9d323cd89 complete cached-worker
+links/probe tests and native cache preparation), not a repeated blocker.
+This turn re-polled the SAME tool75526 and observed it still live, stderr0,
+advancing through more than200 atomically-created/verified entries. No second
+preparation, GPU session, reload, reboot, network change or power pulse was
+issued. Full cache preparation and its sampled-page check are NOT yet closed.
+Do not infer completion or a loading-speed win from partial entries.
+
+Next:finish that same cache job; then qualify the staged warm worker's host
+load/known-clean unload. Before another GPU diagnostic, freeze a new exact
+parent/client tuple and preserve all64 physical BFP8 outputs. Compare those
+observations with BOTH ideal and device-arithmetic predictions without
+changing the existing strict comparator. Native fullK/GDDR/cohort/model quality
+and genuine27B inference performance still require implementation/validation.
+Raw CLOSED evidence is in the sibling directory/SHA256SUMS. Active cache logs
+remain separate and are not represented as terminal evidence.

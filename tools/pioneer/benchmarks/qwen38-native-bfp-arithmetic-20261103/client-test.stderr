@@ -1,0 +1,25 @@
+/var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-client.lbxkkqhx/test.cpp:10:37: error: redefinition of 'index' as different kind of symbol
+   10 | static unsigned scenario=0,format=4,index=0,opened=0,closed=0,supports=0,runs=0,ends=0,queries=0;
+      |                                     ^
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/_strings.h:76:21: note: previous definition is here
+   76 | char *_LIBC_CSTR    index(const char *, int) __POSIX_C_DEPRECATED(200112L);
+      |                     ^
+/var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-client.lbxkkqhx/test.cpp:58:33: error: array subscript is not an integer
+   58 |   if(scenario==1)r.result.output[index]^=1;
+      |                                 ^~~~~~
+/var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-client.lbxkkqhx/test.cpp:68:87: error: non-object type 'char *(const char *, int)' is not assignable
+   68 |  assert(argc==4);scenario=unsigned(atoi(argv[1]));format=unsigned(atoi(argv[2]));index=unsigned(atoi(argv[3]));
+      |                                                                                  ~~~~~^
+/var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-client.lbxkkqhx/test.cpp:69:58: error: comparison between pointer and integer ('char *(*)(const char *, int)' and 'int')
+   69 |  assert(scenario<=11 && (format==4 || format==8) && index<64);
+      |                                                     ~~~~~^~~
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h:75:25: note: expanded from macro 'assert'
+   75 |     (__builtin_expect(!(e), 0) ? __assert_rtn(__func__, __ASSERT_FILE_NAME, __LINE__, #e) : (void)0)
+      |                         ^
+4 errors generated.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_native_bfp_client_test.py", line 97, in <module>
+    subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off',
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['c++', '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '-I/var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-client.lbxkkqhx', '/var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-client.lbxkkqhx/test.cpp', '-o', '/var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-client.lbxkkqhx/test']' returned non-zero exit status 1.

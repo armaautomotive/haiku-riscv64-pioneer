@@ -1,5 +1,5 @@
-Native cached-weight matvec prototype (OFFBOARD ONLY)
-====================================================
+Native cached-weight matvec prototype (NOT MODEL WORK)
+======================================================
 
 Implemented
 ------------
@@ -44,6 +44,9 @@ Code starts70000,boot jump6000,private stack6e000..70000,status17ffc0.
 No NoC/GDDR/PCIe/ARC/clock/reset commands or uploader exist in this image.
 The new separate native diagnostic owner/adapter can upload a FIXED synthetic
 fixture;see NATIVE_BFP_DIAGNOSTIC.txt. It is not installed or Work-enabled.
+The first isolated physical diagnostic passed BFP4 but rejected BFP8 at the
+first exact numerical comparison; stable041 was subsequently restored. This
+does not qualify either format for a full model. See the physical report.
 The startup requires an independently established exclusive,reset/idle
 coprocessor context. Neither Setup nor a software pass establishes it.
 
@@ -51,7 +54,7 @@ The bounded Blackhole STALLWAIT/GPR completion protocol parks on failure
 without cleanup or retry. An isolated heap-retained owner and native adapter
 now implement bounded admission/run/explicit-END restoration. Its software
 tests do not replace physical format/math qualification or the remaining
-controller/VM/reload/watchdog integration audit. These files do not grant a
+fullK/streaming/cohort/model integration. These files do not grant a
 physical launch or hot swap. No live driver or Assistant selects this path.
 
 Build and tests (host Mac + configured Haiku cross tools)
@@ -91,6 +94,12 @@ fullK accumulation/streaming,source/recipe-bound bank and arena planning,
 on-card activation preparation,cohort/controller integration,complete model
 quality and honest physical performance measurements. No live driver or
 Assistant speedup is claimed. The20tokens/sec target remains unmet.
+
+The later exact Blackhole arithmetic documentation describes intermediate
+fixed-point rounding that the older C-float ISA sketch does not model. The
+separate arithmetic characterization predicts the actual failed BFP8 row0
+exactly; it is NOT an acceptance oracle and changes no existing comparator.
+See NATIVE_BFP_DIAGNOSTIC.txt and benchmarks/qwen38-native-bfp-arithmetic-20261103.txt.
 
 Primary facts audited (no vendor code copied)
 ---------------------------------------------

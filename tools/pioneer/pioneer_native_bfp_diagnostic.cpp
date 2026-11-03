@@ -30,6 +30,14 @@ bool Result(const PioneerNativeBfpRequest& r,unsigned bits,uint64_t generation,u
 	return state==PIONEER_NATIVE_BFP_RESULT?(!r.result.held && !r.result.l1_restored && !r.result.tlb_restored)
 		:(r.result.held && r.result.l1_restored && r.result.tlb_restored);
 }
+void DumpReturnedWords(const PioneerNativeBfpRequest& r,unsigned bits) {
+	// CPU copy already returned by the ONE RUN, not another device query.
+	// Preserve every word for diagnosis, without accepting the mismatch or
+	// issuing END/reset/retry/readback against the still-owned parked tile.
+	for(unsigned pass=0;pass<2;pass++)for(unsigned row=0;row<32;row++)
+		fprintf(stderr,"NATIVE_BFP_RETURNED_WORD bits%u pass%u row%u got%08x expected%08x\n",
+			bits,pass,row,r.result.output[pass*32+row],Expected(bits,row));
+}
 }
 int main(int argc,char** argv) {
 	if(argc!=2 || (strcmp(argv[1],"--fixed-bfp4") && strcmp(argv[1],"--fixed-bfp8"))) {
@@ -51,6 +59,7 @@ int main(int argc,char** argv) {
 	}
 	for(unsigned pass=0;pass<2;pass++)for(unsigned row=0;row<32;row++)if(r.result.output[pass*32+row]!=Expected(bits,row)) {
 		fprintf(stderr,"NATIVE_BFP_NUMERICAL_MISMATCH bits%u pass%u row%u got%08x expected%08x;CLOSE_ONLY_NO_END_OR_RETRY\n",bits,pass,row,r.result.output[pass*32+row],Expected(bits,row));
+		DumpReturnedWords(r,bits);
 		close(fd);return 1;
 	}
 	PioneerNativeBfpRequest end={};end.version=1;end.bits=bits;end.expected_tag=PioneerNativeBfpTag;end.expected_generation=metadata.generation;end.nonce=1;end.accept=1;

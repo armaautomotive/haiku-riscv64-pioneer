@@ -1,0 +1,2 @@
+PASS ACTUAL native BFP diagnostic client:150 cases;all128 per-word numerical failures retain all64 returned words and issue NO END/retry/query after RUN;strict acceptance unchanged;FAKE syscalls,no device
+CPU-only actual client evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-client.o42myj6f

@@ -107,9 +107,9 @@ The subsequent physical BFP8 mismatch demonstrates why the CPU instruction
 observer is not hardware qualification or an exact floating-point oracle.
 Neither its expected values nor the old Work comparators were relaxed.
 
-Next: investigate BFP8 arithmetic/fidelity and preserve all returned output
-words in a revised diagnostic before another separately frozen trial. The
-spent first-trial parent must not be rerun. Model quality,fullK
+Next: record all64 actual BFP8 output words in a separately frozen physical
+trial and compare them with the secondary arithmetic characterization below.
+The spent first-trial parent must not be rerun. Model quality,fullK
 accumulation/GDDR streaming,cohort integration and real27B performance still
 remain. The20tok/s target and accepted full-native model Work are UNMET.
 
@@ -125,3 +125,27 @@ B5 and waits C1/C2(unpackers),C4(FPU),C11(SFPU),C12(configuration). The next
 SETDMAREG sentinel cannot pass until those conditions clear,blocking following
 same-thread work. Wormhole C7 is NOT Blackhole's FPU condition. This image
 has an exclusive single thread/context,not arbitrary concurrent LLK use.
+
+Post-trial arithmetic investigation / revised CLIENT ONLY
+----------------------------------------------------------
+The revised diagnostic now records ALL64 already-returned words on a numerical
+failure. It adds no ioctl/readback/END/reset/retry. Exact comparison and the
+original Expected() arithmetic remain unchanged. The old frozen first-parent
+still binds the old client hash and must not be repurposed or rerun.
+150 actual-client fake-syscall cases test every output position in BOTH formats,
+strict acceptance, bad protocol/metadata/END/close, and all64 failure records.
+These join the previous103 cases; no driver/image/Work behavior is changed.
+
+A SEPARATE offboard integer/Fraction characterization implements the documented
+Blackhole intermediate fixed-point rounding, NOT a replacement comparator or
+hardware acceptance oracle. It predicts the exact previously observed BFP8
+row0 word4180b500 (ideal4180b340), while predicting ideal agreement for all32
+BFP4 rows. It predicts ideal differences for30/32 BFP8 rows; the other63 actual
+BFP8 output words were not recorded and are still UNVERIFIED. Only one actual
+BFP8 observation is explained. A new physical trial must be separately frozen
+after other Pioneer jobs have actually finished. No trial has been started
+with this revised client, and no new speed/model-quality claim is made.
+
+Primary exact-arithmetic facts, freshly pinned and verified:
+https://github.com/tenstorrent/tt-isa-documentation/blob/4a73a7121d95f545b85efa34b243f0b8b316f967/WormholeB0/TensixTile/TensixCoprocessor/MatrixUnitArithmetic.md
+See benchmarks/qwen38-native-bfp-arithmetic-20261103.txt for closed evidence.
