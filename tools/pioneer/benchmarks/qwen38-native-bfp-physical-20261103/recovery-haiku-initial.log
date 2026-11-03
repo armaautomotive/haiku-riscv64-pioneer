@@ -1,0 +1,47 @@
+Haiku
+0
+64 (Unknown), revision 0000 running at 1000MHz
+
+133830774784 bytes free      (used/max 3204161536 / 137034936320)
+                           (cached    176627712)
+P100A_RELOAD driver55 tag2026110300010078 generation1 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+   Device No.: 3
+   Mounted at: /boot
+  Volume Name: "Haiku"
+  File System: bfs
+       Device: /dev/disk/scsi/0/3/0/0
+        Flags: QAM-P-W
+     I/O Size:   64.0 KiB (65536 byte)
+   Block Size:    2.0 KiB (2048 byte)
+ Total Blocks:  111.8 GiB (58610176 blocks)
+  Used Blocks:   61.6 GiB (32310296 blocks)
+  Free Blocks:   50.2 GiB (26299880 blocks)
+      Usage %:   55.1 %
+  Total Nodes: 0
+   Used Nodes: 0
+   Free Nodes: 0
+   Root Inode: 524288
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  104 /boot/system/servers/net_server                    
+  106 /boot/system/servers/package_daemon                
+  111 /boot/system/servers/launch_daemon baron           
+  113 /boot/system/servers/power_daemon                  
+  117 /boot/system/servers/syslog_daemon                 
+  131 /boot/system/servers/media_server                  
+  151 /boot/system/bin/sh /boot/home/config/settings/ssh/start-sshd.s 
+  175 /boot/system/servers/app_server                    
+  187 /boot/system/Tracker                               
+  189 /boot/system/Deskbar                               
+  197 /bin/sleep 10                                      
+  208 /boot/system/servers/input_server                  
+  232 /boot/system/servers/media_addon_server            
+  296 /boot/system/servers/notification_server           
+  301 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  303 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  304 /boot/system/bin/ps -o Id -o Team                  

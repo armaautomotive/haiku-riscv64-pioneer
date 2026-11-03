@@ -1,0 +1,95 @@
+First physical native BFP matvec qualification -- 2026-11-03 UTC
+==============================================================
+
+RESULT: BFP4 PASSED64/64 exact output words across two source-bank jobs.
+BFP8 FAILED its first numerical comparison. NO full27B/quality/speed claim.
+The failure was retained/quarantined, not automatically retried or restored.
+Recovery is complete: stable041/tag12/gen2, cold0/owner0,64 CPUs and
+137034936320B maximum RAM, independently verified after one OFF/ON cycle.
+The20tok/s target and accepted full-native27B Work remain UNMET.
+
+Frozen inputs and preflight
+--------------------------
+Source checkpoint1282b6c33c773807effdd93ae9f55ad3f6d55fc7 was pushed before
+the actual trial; independent ls-remote later matched exactly. New driver:
+ e79e070b9e4fe434b868898748834e0cd89b03bcb250d9c1694b4d0b890f46ac
+Client:
+ ddffa4ff4201e87feb3eba509d67ba41568569027ed78b5cb637eee4ab8ff5e8
+Frozen parent:
+ 834d5689e66321a71aad2feb554e2cdefb496e9f21f80d7b7a65e421963c103d
+Remote stage:/boot/home/pioneer-native-bfp-physical-20261103-9V2ncOLK
+Files,root ownership/single links/private stage,stable041/admin/guard hashes,
+idle parent inventory and stable/tag12/gen18/cold0/owner0 were verified first.
+No model/Assistant job was active. Native candidate tag78 installed gen19.
+The immutable .trial-once directory remains; DO NOT rerun that parent.
+
+Software gate closed before hardware
+------------------------------------
+Full runner tool4167 exit0/stderr0. Fresh RV32I boot/BFP4/BFP8 hashes matched
+the pinned images.103 ASan/UBSan/Werror software cases:16 real lease/image,
+31 actual FinishMmio/Free,28 actual Control/user-copy/owner lifecycle,
+24 actual Map/Unmap/Pointer,4 actual protected-parent flow. Map tests enumerate
+all393216 aligned L1 addresses and prove only3548 owned words are reachable.
+The first standalone mapping compile lacked a profile include; it was fixed
+in the test, with no production gate relaxation. No software pass grants
+physical execution or exact-arithmetic authority.
+
+Actual physical parent and failure
+----------------------------------
+SSH parent tool94142 TERMINAL70,remote parent14756. Not a timeout/restart.
+ BFP4:PASS_NATIVE_BFP_FIXED_KERNEL bits4 rows32 dual_jobs2 exact_words64
+ polls1 generation19;EXPLICIT_END_L1_TLB_PCI_RESTORED.
+ BFP8:NATIVE_BFP_NUMERICAL_MISMATCH bits8 pass0 row0
+ got4180b500 expected4180b340;CLOSE_ONLY_NO_END_OR_RETRY.
+The BFP4 client explicitly validated all64 actual FP32 words before END;
+the sole tile was held and L1/TLB/PCI restored, with cold0/owner0 metadata.
+BFP8 reached normal completion and returned output, but the independent
+long-double check rejected the first word. The client currently stops at
+that first mismatch, so the other63 words are NOT recorded or claimed.
+The protected parent stopped immediately: no END, second run, reset, force
+unload, restore, or post-failure GPU/MMIO inspection. CPU-only metadata then
+confirmed cold1/active_owner1/open_count1/guard1. Owner/cookie/reservation,
+remaining mappings and snapshots stayed retained. Original Work comparators,
+expected words and tolerances remain unchanged; this is NOT a qualified BFP8
+implementation. The CPU ISA observer's pass is not contradictory evidence
+that overrides the actual card result.
+
+Controlled recovery, no SD/mains/hardware change
+-----------------------------------------------
+Known-on Haiku sync was requested; ONE seven-second OFF hold completed
+20:04:03 UTC. No second OFF or relay-contact-as-power-state assumption.
+After more than three minutes and no network response, ONE0.75s ON pulse
+completed, tool75087 exit0. Fresh serial bytes were read from the existing
+screen log only; UART was never reopened or reconfigured.
+First two Linux SSH probes timed out during normal boot. Third reached Linux
+6.1.31 via the existing milkv identity/pinned host key. One unprivileged hash
+read refused the root-owned boot helper; a subsequent sudo-n read matched
+9cfc6dc326c938b8d611c8c8622a9a6686ed530270dde768b1f01362f4f61f6e.
+Linux64 CPUs/131976904kB RAM/taint0/kexec0/NVMe root/no MMC were verified.
+Unchanged helper prepare95737 exit0,boot95778 exit0,session
+native-bfp-recovery-20261103-a,64,memory128-spin-idle7-top-page-nosd-control.
+The normal read-only BFS source check passed; no journal override/repair,
+default boot-entry change, SD operation or mains-switch change was needed.
+
+Fresh Haiku tag78/gen1/cold0/owner0 preceded any restore. The reviewed,
+hash-verified one-shot recovery-restore.sh (sibling report directory) required
+new epoch1,idle inventory,64 CPUs/full RAM,exact candidate/stable/admin/guard
+and same-filesystem atomic replacement. It quiesced the idle candidate and
+restored stable041, tool16023 TERMINAL0/stderr0, then verified tag12/gen2/
+cold0/owner0. No GPU execution or old failed-owner cleanup was performed.
+Independent final health tool55449 TERMINAL0/stderr0 confirms installed041,
+64 CPUs,max137034936320B,free133800538112B;original model18973870528B,
+owner0/singlelink/mode0600. Desktop/server teams were present in initial
+post-boot inventory. Physical desktop input was not separately human-tested.
+
+Next boundary
+-------------
+Preserve all returned words in a revised diagnostic and investigate the
+BFP8 arithmetic/fidelity difference against the primary ISA facts before
+another separately versioned/frozen trial. Do not relax the comparator or
+reuse this spent parent. FullK/GDDR/cohort/model-quality/performance work is
+still required. Disk-cached loader preparation is CPU-only and independent
+of this rejected BFP8 route; it uses unchanged original quantization bytes.
+
+Raw closed evidence is in the sibling report directory; SHA256SUMS binds it.
+Local working logs:/private/tmp/pioneer-native-bfp-physical-20261103.9V2ncOLK

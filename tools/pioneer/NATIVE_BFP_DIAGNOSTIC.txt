@@ -1,5 +1,5 @@
-Isolated native BFP matvec diagnostic candidate (NOT INSTALLED)
-=============================================================
+Isolated native BFP matvec diagnostic (NOT A WORK DRIVER)
+=======================================================
 
 Purpose
 -------
@@ -9,7 +9,11 @@ not Work inference. Only two immutable asymmetric synthetic fixtures are
 accepted:one BFP4_B or BFP8_B32x32 tile with BF16 activations. No caller code,
 weights,pointers,PCI/NoC addresses,routes,clocks or reset commands are accepted.
 The candidate is unselected by the running Assistant and stable041 driver.
-It has not yet been staged,loaded or executed on the Pioneer.
+The first physical trial passed BFP4 (all64 output words exactly) but FAILED
+BFP8 at its first output comparison. The failed owner was retained without
+END/reset/retry/restore. A controlled board power cycle followed, and stable041
+was restored in the fresh epoch. BFP8 is NOT qualified. See the physical report:
+  benchmarks/qwen38-native-bfp-physical-20261103.txt
 
 Build
 -----
@@ -95,10 +99,17 @@ native FinishMmio/Free source bodies with failing fake VM/PCI endpoints;
 every failed observation stops subsequent IO,and close retains even a
 completed/quarantined owner and cookie. Software passes grant no GPU authority.
 
-Remaining before a hardware trial:actual native Control/user-copy failure
-regression,VM mapping/retention inspection,and a
-frozen single-parent install/run/known-clean-restore-or-retain coordinator.
-Then independently test both formats on hardware. Model quality,fullK
+Additional software evidence now covers actual Control/user-copy failure
+regression (28 cases), exact native VM mapping/retention (24 cases, all393216
+aligned L1 addresses enumerated), and the protected parent flow (4 cases).
+Together with16 lease/image and31 close/PCI cases,103 software cases pass.
+The subsequent physical BFP8 mismatch demonstrates why the CPU instruction
+observer is not hardware qualification or an exact floating-point oracle.
+Neither its expected values nor the old Work comparators were relaxed.
+
+Next: investigate BFP8 arithmetic/fidelity and preserve all returned output
+words in a revised diagnostic before another separately frozen trial. The
+spent first-trial parent must not be rerun. Model quality,fullK
 accumulation/GDDR streaming,cohort integration and real27B performance still
 remain. The20tok/s target and accepted full-native model Work are UNMET.
 

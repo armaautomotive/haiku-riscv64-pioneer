@@ -1,0 +1,20 @@
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+adcec3cf5a66a2f00b979746928e1f8525a1c2274f37d0f3e35d3b6468ee6ef3 1808 text.bin
+OFFBOARD_BUILD_ONLY BFP4_B/FP32 matvec;NO lifecycle,driver,hardware,model-quality,Work or timing permission
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+c21f4692d340b0bab397a513a315b9884b898804022e35948b2d029a6a128b19 1876 text.bin
+OFFBOARD_BUILD_ONLY BFP8_B/FP32 matvec;NO lifecycle,driver,hardware,model-quality,Work or timing permission
+e79e070b9e4fe434b868898748834e0cd89b03bcb250d9c1694b4d0b890f46ac tenstorrent_pci_probe-native-bfp78
+2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc tenstorrent_pci_probe-default43-control
+ddffa4ff4201e87feb3eba509d67ba41568569027ed78b5cb637eee4ab8ff5e8 pioneer-native-bfp-diagnostic
+BUILD_ONLY fixed native-BFP diagnostic;NO installation,driver reload,physical test,model quality or performance claim
+PASS OFFBOARD actual native-BFP lease:16 cases;fresh real RV32 images/fixed dyadic exact64 results/3548-word L1+TLB restore;timeout,PC,fault,source,stage,start,STOP,restore,close failures retain with NO retry/reset/cleanup;NO physical/Work/model-speed proof
+PASS actual extracted native BFP FinishMmio/Free:31 cases;each VM/PCI/identity failure stops at FIRST observation;known End idempotent;close/quarantined close retains owner/cookie with zero IO;NO physical proof
+CPU-only actual close bodies retained: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-close.tzki4_c0
+PASS ACTUAL native BFP Control/Reply/Fault/Dispose/Free:28 cases;malformed/foreign/stale/busy inputs no hardware entry,same-FD one-shot,owned user copy,failed RUN delivery retained,explicit END only,END-reply failure known closed;FAKE device/lease endpoints,NO physical proof
+CPU-only actual controller evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-control.ord6jxt3
+PASS ACTUAL NativeIO VM/range methods:24 cases;all393216 aligned L1 addresses,exact3548 owned words/physical offsets/protections;7 partial native-map failures/15 fail-first disposals retain remaining views;CPU fixture teardown only,NO physical proof
+CPU-only actual mapping evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-mapping.ypcx1pf9
+PASS ACTUAL protected native-BFP parent flow:4 cases;known-clean restore only,failed/malformed first or second run NO retry/reset/metadata/restore;FAKE commands,no hardware
+CPU-only parent-flow evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-parent.wrs3cqu2
+CPU-only native BFP owner evidence retained: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-native-bfp-owner-tests.VfZr0c1f

@@ -1,0 +1,13 @@
+Haiku
+64 (Unknown), revision 0000 running at 1000MHz
+
+133800538112 bytes free      (used/max 3234398208 / 137034936320)
+                           (cached    188026880)
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+0:1:600:18973870528
+LOSSLESS_STAGE_UNUSED
+/boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-base.so.0.21.0
+/boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-cpu.so.0.21.0
+/boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml.so.0.21.0
+/boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so.0.2.0
