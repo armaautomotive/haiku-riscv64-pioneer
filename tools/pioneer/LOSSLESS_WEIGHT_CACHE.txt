@@ -125,6 +125,11 @@ cleanup authority. Eleven fake-command flow cases are NOT physical proof.
 
 The new host parent is pioneer_assistant_cache_host_progress_trial.sh; it has
 separate host-progress outputs/one-shot token and leaves the first parent alone.
+Its ACTUAL Pioneer run has now CLOSED0,strict stderr0:all851 entries reused,
+host-ready497,known-clean worker unload/exit and postflight stable041/tag12/
+gen2,cold0/owner0,64 CPUs/full137034936320B RAM. Framed host progress includes
+0% and100%;the old failed outer parent is not reclassified. This proves live
+host cache reuse,not GPU upload/inference or faster startup against a baseline.
 The new inference parent, pioneer_assistant_cache_inference_trial.sh, requires
 that exact new host parent/worker and completed clean host records BEFORE one
 fixed Hello./four-token Work request through the actual client. Missing hits
@@ -139,6 +144,9 @@ Build ONLY (no stage/run/install):
 Launch --cached-generate-four-only ONLY through the frozen admitted parent,
 after its independent live host qualification. Four tokens alone do not prove
 model quality, comparative speedup, full-native inference or20tokens/sec.
+The exact frozen parent0266fe6b and probe57fe9b30 have been staged and launched
+ONCE after that successful host qualification. That inference parent is still
+pending at this checkpoint;do not infer output or restart from silence/timeouts.
 
 Tests
 -----

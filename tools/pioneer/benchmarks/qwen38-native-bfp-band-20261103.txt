@@ -1,0 +1,58 @@
+Full-K native BFP8/broadcast kernel:OFFBOARD implementation and actual RV32 test
+============================================================================
+2026-11-03 UTC. Baseline3c8fd42d51942d86070a85d95765bc3304e1831b.
+No new GPU kernel execution,driver install/reload,power/SD/OS/hardware change.
+Installed Work/CPU-validation modes and their comparators unchanged.
+
+New kernel handles one32-output-row band across completeK5120/6144/17408
+(160/192/544tiles). All K work occurs on card after launch; no scalar learned
+products or host per-tile traffic. Immutable preloaded L1 is a caller invariant,
+not implemented NoC/GDDR loading. This is NOT complete matrix/layer/model offload.
+Two explicit variants:all4 fidelity terms or reduced-precision phase0 only.
+Faster mode is NOT a validation toggle and never silently replaces full mode.
+Native BFP8/32 BF16 inputs use broadcast SrcB row0/1;only defined Dst32/40
+are output. Dst is cleared once per band;every tile preserves accumulator,
+uses both bank flips and real bounded completion before descriptor reuse.
+Separate NFB3 completion/fault/geometry record;old NFB1 owner cannot accept it.
+
+ACTUAL compiled RV32I code through UNCHANGED strict Step:12 variants x2 complete
+launches,bit-exact32 outputs each against an independent IDEAL phasewise FP32
+reference;ASan/UBSan/Werror.15 actual fault controls cover configuration,initial
+and final completion parking before output,missing producers,unreleased banks,
+all3 omitted fidelity terms,6 invalid widths with NO IO.3 forbidden driver/Work/
+validation and2-phase-template build refusals. Existing single-tile observer
+and numerical comparator are unchanged;this new observer is NOT the silicon
+rounding oracle. Prior BFP8 hardware result remains rejected/unqualified.
+
+LargestK17408/phases4,two launches:MMIO72364RV32steps/40420issue-port writes;
+direct71107steps/134cold writes. Phase0 MMIO59308steps/27364writes;direct58051/
+134. MMIO ABI stack96Ballocated/88Btouched;direct0/0. Codefits4KiB,private8KiB
+stack;maximum immutable header+weight span600576B,input43520B,result256B,
+all below16c000 and disjoint. NO scalar weight/activation read,NoC,DRAM or
+host reference endpoint exists in executable's accepted scalar memory map.
+Counts are NOT card cycles,latency,model inference rate or performance proof.
+
+Native phase0 operand-view diagnostic130069 cases agrees with independent
+frexp/ldexp for all normal/zero BF16 patterns;invalid inputs atomic.3 forbidden
+Work/driver/validation guards. Updated original READ-ONLY sample ACTUALLY0:
+FULL same-open18973870528B original c600de03... authenticated before1494 tiles.
+Q4 effective weight L2 after phase0 view .020052693 vs full BFP8 .006959886
+and mixed BFP4 .112448567. Q8 .020103634 vs .007339821;Q6 .020011021 vs .007247010.
+No activation/FPU-accumulator/full-model/logit/perplexity quality inferred.
+No conversion-source/cache payload changes from the diagnostic view.
+
+Existing native first-tile image regression37 cases ACTUALLY0/stderr0,including
+original BFP4 adcec3cf5a66a2f00b979746928e1f8525a1c2274f37d0f3e35d3b6468ee6ef3
+and BFP8 c21f4692d340b0bab397a513a315b9884b898804022e35948b2d029a6a128b19.
+No legacy observer/decoder/source/comparator edits. Initial new compile failed
+C++11 constexpr class-completeness in a static_assert;moving that identical
+bound assertion after the class fixed compilation without weakening the bound.
+
+Primary ISA sources and official tt-lab reference pinned/read;see NATIVE_BFP_BAND.txt.
+No upstream implementation copied/executed/linked. Its gpt-oss/Linux/x86 path
+does not support our Qwen/Haiku combination directly. It supplies useful prior
+art for full-device token commands,bit-exact numerics and NoC-pipelined strips.
+
+Next:real cache->L1 band staging,exact device arithmetic/physical qualification,
+new native owner/lifecycle and NoC/GDDR/cohort/full-model integration,high-range
+arena qualification,quality and real performance.20tok/s/full-native Work UNMET.

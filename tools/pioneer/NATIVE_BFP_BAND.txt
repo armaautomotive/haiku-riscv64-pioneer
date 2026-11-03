@@ -1,0 +1,96 @@
+Full-K native BFP8/broadcast band prototype -- OFFBOARD ONLY
+=========================================================
+
+PioneerQ38NativeBfpBand.h and blackhole_q38_native_bfp_band.cpp execute ONE
+32-output-row band across a COMPLETE input width5120,6144 or17408 after one
+launch. This is not the complete output matrix,layer or model. Weights/inputs
+must ALREADY be in the private L1 spans; no cache uploader,NoC/GDDR loader,
+native owner,cohort or installed Work path selects this program. Driver/Work/
+CPU-validation builds are deliberately rejected. Original shaders unchanged.
+
+Two explicit compile-time variants
+----------------------------------
+phases4:all four BF16 fidelity terms (not IEEE-exact accumulator arithmetic).
+phases1:phase0 ONLY,reduced-precision operand views. This is NOT a validation
+toggle or a numerically equivalent optimization. No implicit2-phase selection
+or fallback exists. Both shader variants perform learned products on FPU,
+not scalar RISC or host. CPU reference calculations live only in tests.
+
+The program sets up the private context once,clears Dst ONCE per complete
+band and loops over160/192/544 cached native32x32 tiles. Each tile unpacks
+weights and32 BF16 input values; MVMUL broadcasts SrcB rows0/1 instead of
+loading8 redundant rows. All32 outputs accumulate in FP32 Dst rows32/40.
+Only those valid broadcast rows are read; partially undefined replica rows
+are never treated as output. Last face/phase releases BOTH source banks.
+Real bounded completion precedes every descriptor rewrite and scalar result
+read. This baseline still has per-tile completion/config overhead; eliminating
+that safely with native counters/prefetch remains future performance work.
+
+Private prototype layout DATA (not physical range authority)
+-----------------------------------------------------------
+Code70000..70fff;8KiB ABI stack6e000..6ffff;status17ffc0..17ffcb.
+Weights:payload90000,1104-byte stride (16 header+1088 native BFP8 bytes).
+Inputs:payload124000,80-byte stride (16 header+64 contiguous BF16 bytes).
+Every tile owns its complete header,no overlap-with-previous-data assumption.
+Largest spans600576 weight bytes +43520 input bytes;all headers explicitly0.
+Two32-word results:130000..1300ff. Data extents disjoint and below16c000.
+These spans differ from the accepted first-tile diagnostic; its old owner
+cannot be reused. NFB3 completion and fixed(width,phases) return record differ
+from NFB1,with a separate fault marker. No old diagnostic tuple is changed.
+
+Build and test -- no install/stage/execute authority
+--------------------------------------------------
+  python3 tools/pioneer/build_native_bfp_band.py HAIKU_BUILD NEW_ABSOLUTE_OUTPUT 5120 4
+Add --direct to build direct encoded Tensix issue rather than the MMIO control.
+Use phases1 only as an explicitly reduced-precision alternative.
+  sh tools/pioneer/tests/run_pioneer_q38_native_bfp_band_tests.sh HAIKU_BUILD
+  sh tools/pioneer/tests/run_pioneer_q38_native_fidelity_view_tests.sh
+
+ASan/UBSan/Werror executes ACTUAL compiled RV32I text through the unchanged
+strict Step decoder:3 widths x2 fidelity variants x2 issue variants,each TWO
+complete launches,all32 outputs compared bitwise against a separate IDEAL
+phasewise scalar reference. The new observer extends only band L1/UNPACK/
+broadcast behavior; the existing single-tile model and decoder are untouched.
+This ideal arithmetic is NOT Blackhole's exact rounding model and DOES NOT
+override the previously rejected BFP8 physical result.15 fault controls cover
+config/initial/final completion,producer/bank retention,all3 omitted fidelity
+terms and invalid widths.4 build refusals cover driver/Work/validation and
+implicit2-phase use. Existing first-tile37-case image regression stays exact,
+including original adcec3cf BFP4 and c21f4692 BFP8 text identities.
+
+LargestK17408,phases4,two launches:MMIO40420 issue-port stores/72364 RV32 steps;
+direct134 cold setup stores/71107 steps. Direct variants use no ABI stack;
+MMIO allocates96B/touches88B. These are SOFTWARE counts,not card cycles or
+tokens/sec. No speedup is claimed without physical inference measurements.
+
+Precision diagnostic
+--------------------
+PioneerQ38NativeFidelityView.h is a CPU-only operand VIEW,not an FPU simulator.
+130069 cases check5/7 significant-bit phase0 views against independent
+frexp/ldexp arithmetic for all finite-normal/zero BF16 patterns and invalid
+refusals. A fully authenticated same-open original sample of1494tiles reports
+phase0 effective-weight relative L2 .020103634(Q8),.020052693(Q4),.020011021(Q6).
+Full BFP8 sample errors remain .007339821/.006959886/.007247010. This sample
+does not include activation error,FPU accumulation,logits or language-model
+quality. No cache conversion bytes/recipe or Work comparator changes here.
+
+Primary facts and external reference
+-----------------------------------
+ISA pin4a73a7121d95f545b85efa34b243f0b8b316f967,WormholeB0/TensixTile/
+TensixCoprocessor/MVMUL.md and Dst.md document accumulation,fidelity,broadcast
+valid-row restrictions and completion hazards (including Blackhole notes).
+MVMUL raw SHA b7bd191fe74c397976a5b17314e4745051fdd240bfc8864782b0a1f3bd845050
+Dst raw SHA1871a9ddfe48592c6507479e7c2440b41a4a8375ce00c8f563ec2ba8dcab9b26
+Tenstorrent's official standalone tt-lab was inspected at pinned
+e6baf562a72491ed9d594cddbdf42e0925b1f79e. It documents Linux/x86/gpt-oss
+device-resident execution,BFP8 strips,bit-exact device proxy and pipelined
+NoC staging. It is NOT a Haiku/Qwen/Pioneer backend. Its source/notices were
+read as reference only;no upstream source/build scripts are copied,executed,
+installed or linked here. New code uses our existing MIT opcode producer and
+documented ISA facts. A reference checkout/docs remain only in private/tmp.
+https://github.com/tenstorrent/tt-lab/tree/e6baf562a72491ed9d594cddbdf42e0925b1f79e
+
+Still required:device-arithmetic oracle/physical results,authenticated cache
+to L1 staging,new owned ranges/ABI,lifecycle/NoC/GDDR/cohort integration,
+per-bank high-range qualification,full-model quality and genuine throughput.
+Full-native27B and20tokens/sec remain UNMET. Installed Assistant/driver unchanged.

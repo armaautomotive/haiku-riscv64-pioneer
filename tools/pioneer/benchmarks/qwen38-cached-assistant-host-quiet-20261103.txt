@@ -1,0 +1,38 @@
+Corrected actual cached Assistant host qualification CLOSED0
+=========================================================
+2026-11-03. SAME tool9146 ACTUALLY terminates0,observed22:49:25UTC. No restart
+on observation timeout. Complete outer log/stderr and nested stdout are saved
+in sibling evidence directory,not just a success banner. Parent/probe stderr0.
+
+Exact frozen parentef69794ed6b349173e24192e6d44a076885043337a91e7f1d840dcb13a81d813
+Actual cached worker861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74
+Probe55789fd270446c46820bac93b8ab39c4e0463464408b5ca4cd1c54ac85818b67
+All851 verified hits,NO fresh preparation,host-ready497,known-clean Unload,
+worker exit0,framed model progress0%/100%. NO Generate/GPU weight upload or
+inference. Postflight confirms normal041/tag12/gen2,quiesced0/cold0/owner0/
+open1/guard1,64 CPUs/max137034936320B RAM. Installed Assistant unchanged.
+
+Complete nested stdout204591B SHA:
+1d0e66ec4bea28124ffa4dacabc22e5ca2782dd75cd09ffb6d9764add29f6450
+Independent remote admission verified host-progress.exit0 and exact clean
+state plus whole nested stdout/stderr hashes. Empty stderr e3b0c442... .
+The previous84747 OUTER1/probe0 progress-dots result is preserved,not promoted
+or rerun;the new tuple alone passed the original strict stderr policy.
+
+Next frozen four-token inference has now been launched ONCE after this actual
+terminal and fresh admission. Existing tested public3c8fd42d51 parent:
+0266fe6b0da6285801777dc12c4876058e79e7e68f97065d289e0253dd512e7e
+Probe57fe9b30221fbee9538a0ed899b51277287f9f177ca41c5ec92535d606cfec4f
+Private stage /boot/home/pioneer-lossless-cache-20261103-a;unused probe/parent/
+one-shot/output paths verified before copies. Both copied0 and whole SHA/type/
+mode/owner checked by launch/frozen preflight. No installed replacement.
+
+Tool91327 launched22:51:46UTC;same handle remains ACTUALLY live on latest poll.
+NO result is inferred from silence,locks or state files. Protect entire parent:
+no concurrent Pioneer GPU/status/admin/reload/clock/OS/network/power action.
+Observation timeout is not terminal. Never rerun this spent tuple;failure grants
+no END/retry/reset/restore/cleanup. It authenticates full source/all cache hits
+before ONE Hello./four-token Work request with CPU validation OFF. It retains
+CPU attention/state disclosure and requires known-clean Unload/worker exit.
+No new inference rate,startup speedup,model-quality or20tokens/sec claim yet.
+Last actual27B generation~.1643tok/s;full-native Work and20tok/s remain UNMET.

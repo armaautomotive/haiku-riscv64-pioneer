@@ -1,0 +1,3 @@
+PASS CPU-only native phase0 operand VIEW:130069 cases;all finite-normal/zero BF16 patterns agree with separate frexp/ldexp arithmetic for5/7 significant bits,invalid/nonfinite/subnormal refusal atomic;NOT full FPU/model/hardware/quality/speed proof
+PASS native fidelity VIEW guards:3 driver/Work/validation selections refused
+CPU-only native operand VIEW evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-native-fidelity-view.Nafzn4NI

@@ -3,6 +3,7 @@
 // This never creates a disk cache, opens a device, or grants bank authority.
 #include "PioneerQ38NativeBfp8WeightTiles.h"
 #include "PioneerQ38NativeBfp8Plan.h"
+#include "PioneerQ38NativeFidelityView.h"
 #include "PioneerModelWeightCache.h"
 #include <cmath>
 #include <cstdio>
@@ -13,7 +14,7 @@
 namespace {
 struct Metric {
 	uint64_t tensors=0,tiles=0,mixedBytes=0,bfp8Bytes=0;
-	double energy=0,mixedError=0,bfp8Error=0;
+	double energy=0,mixedError=0,bfp8Error=0,phase0OperandError=0;
 };
 int Run(int argc,char** argv) {
 	if(argc!=3 || strcmp(argv[1],"--sample-original-tiles"))return 2;
@@ -42,6 +43,8 @@ int Run(int argc,char** argv) {
 				|| !Codec::UnpackTile(Codec::Format::Bfp8B,bytes.data(),1088,decoded.data(),decoded.size()))return 1;
 			for(unsigned i=0;i<1024;i++) {
 				const double value=original[i],delta=value-decoded[i];metric.energy+=value*value;metric.bfp8Error+=delta*delta;
+				float phase0=0;if(!PioneerQ38NativePhase0View(decoded[i],5,phase0))return 1;
+				const double extra=value-phase0;metric.phase0OperandError+=extra*extra;
 			}
 			if(!PioneerQ38NativeWeightTiles::ReadRange(source,index,tile*Codec::Bytes(mixed.format),Codec::Bytes(mixed.format),bytes.data(),bytes.size())
 				|| !Codec::UnpackTile(mixed.format,bytes.data(),Codec::Bytes(mixed.format),decoded.data(),decoded.size()))return 1;
@@ -53,10 +56,10 @@ int Run(int argc,char** argv) {
 	uint64_t total=0;
 	for(unsigned i=0;i<stats.size();i++) {
 		const auto& metric=stats[i];if(!metric.tensors || !metric.energy)return 1;total+=metric.bfp8Bytes;
-		printf("ORIGINAL_TYPE%u matrices%llu sampled_tiles%llu mixed_bytes%llu all_bfp8_bytes%llu mixed_sample_relative_L2%.9f all_bfp8_sample_relative_L2%.9f\n",
+		printf("ORIGINAL_TYPE%u matrices%llu sampled_tiles%llu mixed_bytes%llu all_bfp8_bytes%llu mixed_sample_relative_L2%.9f all_bfp8_sample_relative_L2%.9f phase0_weight_operand_sample_relative_L2%.9f\n",
 			i==0?8:i==1?12:14,(unsigned long long)metric.tensors,(unsigned long long)metric.tiles,
 			(unsigned long long)metric.mixedBytes,(unsigned long long)metric.bfp8Bytes,
-			std::sqrt(metric.mixedError/metric.energy),std::sqrt(metric.bfp8Error/metric.energy));
+			std::sqrt(metric.mixedError/metric.energy),std::sqrt(metric.bfp8Error/metric.energy),std::sqrt(metric.phase0OperandError/metric.energy));
 	}
 	const uint64_t currentArena=UINT64_C(7)*3*1024*1024*1024;
 	printf("ALL_BFP8_MATRIX_BYTES%llu EXCLUDED_CPU_EMBEDDING_BYTES%llu OTHER_WEIGHT_BYTES%llu CURRENT_SEVEN_BANK_ARENA_BYTES%llu\n",

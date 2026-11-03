@@ -1,0 +1,13 @@
+In file included from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_q38_native_bfp_band.cpp:3:
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38NativeBfpBand.h:23:77: error: non-constant condition for static assertion
+   23 |         static_assert(WeightEnd(17408)<=Input-16 && InputEnd(17408)<=Output && Output+256<=0x16c000,"private prototype L1 extents disjoint and bounded");
+      |                       ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38NativeBfpBand.h:23:32: error: 'static constexpr unsigned int PioneerQ38NativeBfpBand::WeightEnd(unsigned int)' called in a constant expression before its definition is complete
+   23 |         static_assert(WeightEnd(17408)<=Input-16 && InputEnd(17408)<=Output && Output+256<=0x16c000,"private prototype L1 extents disjoint and bounded");
+      |                       ~~~~~~~~~^~~~~~~
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_native_bfp_band.py", line 39, in <module>
+    subprocess.run(command, check=True, cwd=args.output)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-g++', '-std=c++11', '-O2', '-Wall', '-Wextra', '-Werror', '-ffreestanding', '-fno-exceptions', '-fno-rtti', '-fno-stack-protector', '-fno-pic', '-fno-pie', '-ffunction-sections', '-fdata-sections', '-fno-unwind-tables', '-fno-asynchronous-unwind-tables', '-msmall-data-limit=0', '-mno-relax', '-march=rv32i', '-mabi=ilp32', '-fstack-usage', '-DPIONEER_NATIVE_BFP_BAND_K=17408', '-DPIONEER_NATIVE_BFP_BAND_PHASES=4', '-c', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_q38_native_bfp_band.cpp', '-o', '/private/tmp/pioneer-native-bfp-band-20261103.Yh5jri8q/k17408-full-mmio/program.o']' returned non-zero exit status 1.

@@ -38,6 +38,11 @@ weight SAMPLE, NOT full-model quality, logits, perplexity or output equivalence.
 Q8 and Q6 sample errors are unchanged0.007339821 and0.007247010 respectively.
 No new hardware math, GPU throughput or numerical acceptance is inferred.
 The separate existing native BFP8 physical diagnostic remains unqualified.
+NATIVE_BFP_BAND.txt documents a separate full-input-width/broadcast opcode
+prototype and explicit reduced-precision phase0 experiment. The updated
+read-only sample reports phase0 effective-weight L2 .020052693 for Q4 (not
+full-model quality);full-fidelity BFP8 error stays .006959886. This changes
+no cached weights,recipe or installed Work arithmetic.
 
 Read-only sample executable source: pioneer_q38_native_bfp8_inventory.cpp.
 It enforces the exact original SHA/layout before any model sample, creates no
