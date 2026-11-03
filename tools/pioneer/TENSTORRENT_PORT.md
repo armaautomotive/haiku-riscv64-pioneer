@@ -2,6 +2,19 @@
 
 ## Status
 
+### November3:host-clock brackets qualified offboard;hardware result pending
+
+New distinct v6 coordinator markers bracket the actual device cycle samples
+with scoped host-time observation bounds;missing transitions return timing
+unavailable,never a firmware-MHz-derived estimate. Main/independent source
+tests pass all8 emitted engines,3 complete owner runs/21 faults,including
+clean restoration after a deliberately missed observation window. Whole
+SDK objects match da21a103;default/base55/old native controls remain exact.
+This is NOT deployed or measured card bandwidth,and no new model speedup
+is claimed. Next add the separate public diagnostic/client/exact updater,
+then a controlled aggregate read test. Accepted27B Work/20tok/s remain UNMET.
+See [calibration evidence](benchmarks/p100a-dram-cohort-calibration-20261103.txt).
+
 ### November3:owned seven-bank startup and actual private native adapter
 
 The revised v5 diagnostic corrects physical-vs-logical identity checks for

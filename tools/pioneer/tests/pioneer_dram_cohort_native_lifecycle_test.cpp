@@ -46,7 +46,8 @@ int main(){
  {CohortFixture f;auto& c=*f.c;auto& io=c.cohortIO;
   assert(io.CohortNativeScope(&c.cohort,&c.dram,c.exactBacking,c.exactBacking+BlackholeDramCohortReadSweepImage::CohortSavedWords,
    BlackholeDramCohortReadSweepImage::CohortSavedWords,65536));
-  assert(!io.CohortNativeScope(&c.cohort,&c.dram,c.exactBacking,c.exactBacking,493225,65536));bad++;
+  assert(!io.CohortNativeScope(&c.cohort,&c.dram,c.exactBacking,c.exactBacking,
+   BlackholeDramCohortReadSweepImage::CohortSavedWords,65536));bad++;
   for(unsigned r=0;r<8;r++){
    f.Select(r);uint32_t v=0;
    for(unsigned a:{0x6000U,0x64000U,0x6e000U,0x6fffcU,0x74000U,0x7407cU,0x74100U,0x7417cU,0x74200U,0x74220U,0x74240U}){

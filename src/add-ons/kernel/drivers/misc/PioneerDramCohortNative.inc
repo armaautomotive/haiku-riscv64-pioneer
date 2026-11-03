@@ -8,7 +8,7 @@
 struct PioneerDramCohortNativeContext;
 static PioneerDramCohortNativeContext* sDramCohortNativeContext=NULL;
 struct PioneerDramCohortNativeReply {
- uint32 version=5,phase=0,retained=0,complete=0,busyMHz=0,idleMHz=0;
+ uint32 version=6,phase=0,retained=0,complete=0,busyMHz=0,idleMHz=0;
  uint32 viewsClosed=0,pciClosed=0,reservationClosed=0;
  PioneerDramCohortReadSweepResult sweep;
 };

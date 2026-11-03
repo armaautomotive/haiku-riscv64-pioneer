@@ -20,6 +20,7 @@ struct Core:Machine {
  unsigned requests=0,completed=0,mmioReads=0,mmioWrites=0,csrReads=0,minStack=0x70000;
  unsigned maxPending=0,reordered=0;
  uint64_t firstRead=0,lastRead=0;
+ uint64_t markerTick[4]={};
  Core(Fabric&,unsigned,const std::vector<uint8_t>&,const std::vector<uint8_t>&,unsigned,unsigned,unsigned);
  bool CodeAddress(uint32_t a)const override{return a==0x6000 || (a>=0x64000 && a<0x64000+textBytes);}
  unsigned Index(uint32_t a)override{assert(CodeAddress(a) && !(a&3));l1[8191]=memory.at(a);return 8191;}
@@ -135,6 +136,10 @@ struct Fabric {
    && r(17)==r(14)+14 && r(17)==uint32_t(root.counter[3]-0xfffffff0U));
   const uint64_t a=(uint64_t(r(9))<<32)|r(8),b=(uint64_t(r(11))<<32)|r(10);
   assert(b>a && ((uint64_t(r(13))<<32)|r(12))==b-a);
+  assert(root.markerTick[0]+ClockBase<a && root.markerTick[1]+ClockBase>a
+   && root.markerTick[2]+ClockBase<b && root.markerTick[3]+ClockBase>b);
+  assert(root.memory.at(C::Ready)==0x12345678 && root.memory.at(C::Start)==0x12345678
+   && root.memory.at(C::Done)==0x12345678 && root.memory.at(C::Payload)==~0x12345678U);
   uint64_t release=0;
   for(unsigned role=1;role<=7;role++){
    const auto& m=*cores[role];assert(m.requests==512 && m.completed==512 && m.queued.empty() && m.flying.empty());
@@ -214,6 +219,12 @@ void Core::Store(uint32_t a,uint32_t value){
  if(Local(a)){
   assert(!(a>=C::Job && a<C::Job+128));
   if(a>=0x6e000 && a<0x70000)minStack=std::min(minStack,a);
+  if(!role){
+   if(a==C::Ready && value)markerTick[0]=fabric.tick;
+   if(a==C::Start && value)markerTick[1]=fabric.tick;
+   if(a==C::Done && value)markerTick[2]=fabric.tick;
+   if(a==C::Payload && value==~memory.at(C::Job+12))markerTick[3]=fabric.tick;
+  }
   memory[a]=value;return;
  }
  mmioWrites++;

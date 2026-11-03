@@ -1,0 +1,7 @@
+Assertion failed: (!r.holds && r.result.launched==255 && !r.result.restoredWords), function main, file pioneer_dram_cohort_read_sweep_owner_test.cpp, line 207.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_dram_cohort_read_sweep_owner_tests.py", line 28, in <module>
+    subprocess.run([str(binary),str(image/'boot.bin'),str(image/'text.bin'),format(good,'x'),format(bad,'x')],check=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/main-owner-r3/owner-test', '/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/main-device-r2/image/boot.bin', '/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/main-device-r2/image/text.bin', '6400c', '64030']' died with <Signals.SIGABRT: 6>.

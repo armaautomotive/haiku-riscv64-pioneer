@@ -19,6 +19,10 @@ good,bad=(symbols[k] for k in ('dram_sweep_park','dram_sweep_fault_idle'))
 subprocess.run([str(image.parent/'image-test'),str(old/'boot.bin'),str(old/'text.bin'),
                 format(good,'x'),format(bad,'x'),'--old-raw-coordinate-control'],check=True)
 binary=out/'owner-test'
+bracket=out/'host-bracket-test'
+subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
+                '-fsanitize=address,undefined',str(here/'pioneer_dram_cohort_host_bracket_test.cpp'),'-o',str(bracket)],check=True)
+subprocess.run([str(bracket)],check=True)
 subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
                 '-fsanitize=address,undefined',str(here/'pioneer_dram_cohort_read_sweep_owner_test.cpp'),'-o',str(binary)],check=True)
 subprocess.run([str(binary),str(image/'boot.bin'),str(image/'text.bin'),format(good,'x'),format(bad,'x')],check=True)

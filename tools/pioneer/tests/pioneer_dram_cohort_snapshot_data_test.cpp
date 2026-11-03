@@ -38,15 +38,15 @@ int main(int argc,char** argv){
    assert(!address.count(a));refused++;
   }
   if(coordinator){
-   assert(count==4534 && address.count(0x74300) && address.count(0x74400) && address.count(0x7447c)
+   assert(count==4563 && address.count(0x74300) && address.count(0x74400) && address.count(0x7447c)
     && address.count(0x74500) && address.count(0x7487c) && !address.count(0x90000));
   }else{
-   assert(count==69813 && address.count(0x90000) && address.count(0xcfffc)
+   assert(count==69842 && address.count(0x90000) && address.count(0xcfffc)
     && !address.count(0x74300) && !address.count(0x74400) && !address.count(0x74500));
   }
   for(unsigned bad:{count,count+1,UINT32_MAX}){assert(I::Address(coordinator,bad)==UINT32_MAX);refused++;}
   total+=count;
  }
- assert(total==I::CohortSavedWords && total==493225);
+ assert(total==I::CohortSavedWords && total==493457);
  printf("PASS_COHORT_SNAPSHOT_DATA all8uniqueWords%u codeWordsPerTile%u boundaryRefusals%u disjointL1Extents1;NOT saved native lease/watchdog/STOP/HOLD/restore/hardware/Work authority\n",total,I::CodeWords,refused);
 }

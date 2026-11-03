@@ -14,7 +14,7 @@ sdk,native,image,out=map(pathlib.Path,sys.argv[1:])
 assert all(p.is_absolute() for p in (sdk,native,image,out)) and not out.exists() and not out.is_symlink()
 here=pathlib.Path(__file__).resolve().parent;misc=here.parents[1]/'src/add-ons/kernel/drivers/misc'
 obj=native/'cohort-DRCNODRV.o'
-assert hashlib.sha256(obj.read_bytes()).hexdigest()=='5028658b279b948ad32f1fd555336ce9b136d9e4907b4fdacdadb39082caa5f9'
+assert hashlib.sha256(obj.read_bytes()).hexdigest()=='da21a10338471db5e5acaff1fa8057bc817422ba2b6484676708576242bf6d1e'
 identity=json.loads((native/'source-identities.json').read_text())
 assert all(hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()==digest for p,digest in identity.items())
 spec=importlib.util.spec_from_file_location('cohort_generator',here/'generate_dram_cohort_read_sweep_image.py')
@@ -23,7 +23,7 @@ assert gen.render(image/'program.elf').encode('ascii')==(misc/'BlackholeDramCoho
 out.mkdir(mode=0o700);tool=sdk/'cross-tools-riscv64/bin';prefix=str(tool/'riscv64-unknown-haiku-')
 array=out/'actual-native-code-array.raw'
 subprocess.run([prefix+'objcopy','--dump-section=.rodata._ZZN33BlackholeDramCohortReadSweepImage4CodeEjE4text='+str(array),str(obj)],check=True)
-assert array.read_bytes()==(image/'text.bin').read_bytes() and len(array.read_bytes())==8644
+assert array.read_bytes()==(image/'text.bin').read_bytes() and len(array.read_bytes())==8760
 assert hashlib.sha256(array.read_bytes()).hexdigest()==gen.TEXT_SHA
 # Compiler direct edges only. Unknown/indirect/kernel/IRQ/caller frames remain
 # explicitly unqualified even if every known chain fits this local budget.
@@ -35,7 +35,7 @@ for row in graph.splitlines():
     if m:edges.setdefault(m[1],[]).append(m[2])
 weights={name:int(m[1]) if m else 0 for name,label in nodes.items()
          for m in [re.search(r'([0-9]+) bytes \(static\)',label)]}
-assert nodes and edges and max(weights.values())==1296
+assert nodes and edges and max(weights.values())==1376
 done={}
 def stack(name,active):
     assert name not in active,('unexpected recursion',name)
@@ -45,8 +45,8 @@ def stack(name,active):
 known=max(stack(name,set()) for name in nodes)
 assert known<=8192
 unresolved=sorted({child for name in edges for child in edges[name] if child not in weights or not weights[child]})
-report={'frozenObject':'5028658b279b948ad32f1fd555336ce9b136d9e4907b4fdacdadb39082caa5f9',
-        'maxKnownDirectChainBytes':known,'maxIndividualFrame':1296,'unresolved':unresolved,
+report={'frozenObject':'da21a10338471db5e5acaff1fa8057bc817422ba2b6484676708576242bf6d1e',
+        'maxKnownDirectChainBytes':known,'maxIndividualFrame':1376,'unresolved':unresolved,
         'wholeKernelStackQualified':False,'nativeLifecycleOrHardwareQualified':False}
 (out/'partial-stack.json').write_text(json.dumps(report,indent=2)+'\n')
 flags=['-DTT_PIONEER_DRIVER_RELOAD','-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH',
@@ -66,6 +66,6 @@ cases.append((header+'#undef PIONEER_DRIVER_BUILD_TAG\n#define PIONEER_DRIVER_BU
 for source,selected,expected in cases:
     r=subprocess.run([prefix+'g++','-std=gnu++17','-x','c++','-fsyntax-only','-',*selected],input=source.encode(),capture_output=True)
     assert (r.returncode==0)==expected,(source,selected,r.stderr)
-print('PASS_COHORT_FROZEN_NATIVE_AUDIT actualCodeArrayBytes8644 fullELFAndHeader1 frozenWholeObject1 currentSourcePins1 '
+print('PASS_COHORT_FROZEN_NATIVE_AUDIT actualCodeArrayBytes8760 fullELFAndHeader1 frozenWholeObject1 currentSourcePins1 '
       'syntaxRolePositives2 lateRefusals'+str(len(cases)-2)+' knownDirectChain'+str(known)+' unresolved'+str(len(unresolved))+
       ';wholeKernelStackQualified0 NO native-lifecycle/clock-frequency/physical/bandwidth/model/Work grant',flush=True)

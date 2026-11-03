@@ -19,6 +19,7 @@ struct CohortRig {
  bool snapshotCorrupt=false,restoreCorrupt=false,lateFifo=false,otherRunning=false,badCounter=false;
  unsigned corruptRole=3,corruptWord=17,failPhase=0,failKind=0;
  bool faultUsed=false;
+ bool blindRoot=false,rootAdvanced=false,badProgress=false;
  uint64_t hostTime=1000000;
  enum Kind{Source=1,Pci,TlbRead,TlbWrite,NocRead,NocWrite,L1Read,L1Write,ResetRead,ResetWrite,
   Entry,Pc,Window,Time,ClockBegin,ClockEnd};
@@ -120,6 +121,7 @@ struct CohortRig {
  bool CohortRead(unsigned r,unsigned a,uint32_t& v){
   assert(r<8 && Maps(0,0,X(r),2,false));if(!Touch(L1Read))return false;
   v=Value(r,a);
+  if(badProgress && result.phase==5 && result.launched==255 && r==0 && a==C::Ready)v=0xbad;
   if(snapshotCorrupt && result.phase==2 && r==3 && a==Image::Address(false,3) && !faultUsed){v^=1;faultUsed=true;}
   return true;
  }
@@ -152,8 +154,20 @@ struct CohortRig {
    && offset==0x200000-fabric.depth*16384+corruptWord*4);
   return true;
  }
- bool CohortHostTime(uint64_t& now){if(!Touch(Time))return false;now=hostTime;return true;}
- void CohortPause(){assert(!quarantined);pauses++;hostTime+=fastHost?10000000:100;Advance(2048);}
+ bool CohortHostTime(uint64_t& now){
+  if(!Touch(Time))return false;
+  if(blindRoot && result.phase==5 && result.launched==255 && !rootAdvanced){
+   rootAdvanced=true;Advance(3000000);
+  }
+  now=hostTime+fabric.tick;return true;
+ }
+ void CohortPause(){
+  assert(!quarantined);pauses++;
+  // Accelerate ONLY the intended missing-ready/completion wait,not an
+  // unrelated earlier reader's normal startup. Device ticks are already time.
+  if(fastHost && ((freezeReady && (result.launched&8)) || result.launched==255))hostTime+=10000000;
+  Advance(2048);
+ }
  bool Run(){return owner->Execute(*this,proof,1,fabric.depth,0x32435a67,result);}
 };
 int main(int argc,char** argv){
@@ -166,10 +180,22 @@ int main(int argc,char** argv){
   assert(r.result.launched==255 && r.result.observed==255 && r.result.held==255 && r.holds==8
    && r.result.savedWords==Image::CohortSavedWords && r.result.restoredWords==Image::CohortSavedWords
    && r.result.comparedWords==7*depth*4096 && r.clockBegins==1 && r.clockEnds==1 && !r.clock && r.allHeldReads==480);
+  const auto& timing=r.result.timing;
+  if(timing.state!=1 || timing.elapsedMinUs>timing.cycles || timing.cycles>timing.elapsedMaxUs)
+   fprintf(stderr,"bracket depth%u state%u start%llu..%llu end%llu..%llu delta%llu..%llu cycles%llu\n",depth,
+    timing.state,(unsigned long long)timing.startLowerUs,(unsigned long long)timing.startUpperUs,
+    (unsigned long long)timing.endLowerUs,(unsigned long long)timing.endUpperUs,
+    (unsigned long long)timing.elapsedMinUs,(unsigned long long)timing.elapsedMaxUs,(unsigned long long)timing.cycles);
+  assert(timing.state==1 && timing.bytes==7*8388608 && timing.cycles
+   && timing.elapsedMinUs<=timing.cycles && timing.cycles<=timing.elapsedMaxUs);
   const unsigned stopped=r.touches;PioneerDramCohortReadSweepResult again;
   assert(!r.owner->Execute(r,r.proof,1,depth,1,again) && r.touches==stopped);valid++;
  }
- for(unsigned fault=0;fault<9;fault++){
+ {CohortRig r(boot,text,good,bad);r.corruptWord=UINT32_MAX;r.blindRoot=true;
+  assert(r.Run() && r.rootAdvanced && r.result.closed && !r.quarantined && r.Original()
+   && r.result.timing.state==2 && !r.result.timing.elapsedMinUs && !r.result.timing.elapsedMaxUs);valid++;
+ }
+ for(unsigned fault=0;fault<10;fault++){
   CohortRig r(boot,text,good,bad);r.corruptWord=UINT32_MAX;
   if(fault==0)r.otherRunning=true;
   if(fault==1)r.snapshotCorrupt=true;
@@ -180,9 +206,11 @@ int main(int argc,char** argv){
   if(fault==6)r.lateFifo=true;
   if(fault==7){r.corruptRole=7;r.corruptWord=17;}
   if(fault==8)r.restoreCorrupt=true;
+  if(fault==9)r.badProgress=true;
   const bool accepted=r.Run();if(accepted)fprintf(stderr,"owner unexpected fault success %u\n",fault);
   assert(!accepted && r.quarantined && r.result.unsafe && !r.result.closed && !r.clockEnds);
-  if(fault==2)assert(!r.holds && r.reset[0]==0x87ffff && r.pauses && !r.result.restoredWords);
+  if(fault==2)assert(!r.holds && r.reset[0]==0x87ffff && r.pauses && !r.result.restoredWords
+   && r.result.launched==14 && !r.fabric.cores[3]->steps);
   if(fault==3 || fault==4)assert(!r.holds && r.result.launched==255 && !r.result.restoredWords);
   if(fault==7)assert(r.result.held==255 && r.result.comparedWords==6*65536+17 && !r.result.restoredWords);
   const unsigned stopped=r.touches;PioneerDramCohortReadSweepResult again;

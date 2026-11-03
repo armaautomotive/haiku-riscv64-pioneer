@@ -1,0 +1,230 @@
+[
+  {
+    "case": 0,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 1,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 2,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 3,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 4,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 5,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 6,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 7,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 8,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 9,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 10,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 11,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 12,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 13,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 14,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 15,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 16,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 17,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 18,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 19,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 20,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 21,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 22,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 23,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 24,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 25,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 26,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 27,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 28,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 29,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 30,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 31,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 32,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 22, in render\n    assert stat.S_ISREG(before.st_mode) and 0<before.st_size<1024*1024\nAssertionError\n"
+  },
+  {
+    "case": 33,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 34,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 35,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 36,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  },
+  {
+    "case": 37,
+    "exit": 1,
+    "stdout": "",
+    "stderr": "Traceback (most recent call last):\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 88, in <module>\n    if __name__=='__main__':main()\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 83, in main\n    data=render(source).encode('ascii') # authenticate BEFORE creating output\n  File \"/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/clean-source/tools/pioneer/generate_dram_cohort_read_sweep_image.py\", line 26, in render\n    assert hashlib.sha256(data).hexdigest()==ELF_SHA\nAssertionError\n"
+  }
+]

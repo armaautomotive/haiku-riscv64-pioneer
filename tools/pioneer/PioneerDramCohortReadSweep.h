@@ -10,7 +10,7 @@
 // All eight workers need an exclusive native lease/snapshot/STOP/HOLD/restore
 // owner before deployment. These DATA frames do not supply that authority.
 struct PioneerDramCohortReadSweep:PioneerDramWideQueuedReadSweep {
- enum : uint32_t {Magic=0x35415244,ReportMagic=0x35435244,Version=5,
+ enum : uint32_t {Magic=0x36415244,ReportMagic=0x36435244,Version=6,
   Ready=0x74200,Start=0x74220,Done=0x74240,Payload=0x74300,
   Scratch=0x74400,PeerReports=0x74500,Peers=7,Words=32,
   ExternalStartWatchdogRequired=1};
@@ -167,7 +167,13 @@ struct PioneerDramCohortReadSweep:PioneerDramWideQueuedReadSweep {
   if(!Seal(io,j))return false;
   io.Write(Payload,j[3]);(void)io.Read(Payload);io.Fence();
   uint32_t r[Words];Clear(r);uint64_t began=0,ended=0,lastRelease=0;
+  // Four EXISTING journalled root words bracket the two actual cycle samples.
+  // Readback+fence before each sample drains the L1 store; CSR serialization
+  // and the following fence put the other marker strictly after the sample.
+  // Never equate a marker store itself with the timestamp it brackets.
+  io.Write(Ready,j[3]);io.Fence();if(io.Read(Ready)!=j[3])return false;io.Fence();
   if(!io.Cycles(began))return false;
+  io.Fence();io.Write(Start,j[3]);io.Fence();if(io.Read(Start)!=j[3])return false;io.Fence();
   for(unsigned role=1;role<=Peers;role++){
    if(!link.Packet(io,role,true,Start,4))return false;
    uint64_t now=0;if(!io.Cycles(now) || now<=began || now<lastRelease)return false;
@@ -181,7 +187,11 @@ struct PioneerDramCohortReadSweep:PioneerDramWideQueuedReadSweep {
    const uint32_t v=io.Read(Scratch);if(v && v!=j[3])return false;
    if(v==j[3])mask|=1U<<(role-1);
   }
-  if(mask!=127 || !io.Cycles(ended) || ended<=lastRelease || !Seal(io,j))return false;
+  if(mask!=127)return false;
+  io.Write(Done,j[3]);io.Fence();if(io.Read(Done)!=j[3])return false;io.Fence();
+  if(!io.Cycles(ended) || ended<=lastRelease || !Seal(io,j))return false;
+  // Every nonposted START write was independently ACKed before Payload reuse.
+  io.Fence();io.Write(Payload,~j[3]);io.Fence();if(io.Read(Payload)!=~j[3])return false;io.Fence();
   // End was sampled BEFORE report readout. It includes all release packets
   // and completion observation, but not upload, post-run checking or restore.
   for(unsigned role=1;role<=Peers;role++){

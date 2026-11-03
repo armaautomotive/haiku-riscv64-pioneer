@@ -22,7 +22,7 @@ flags=features+['-DPIONEER_DRIVER_BUILD_TAG=0x4452434e4f445256ULL']
 source=here/'tests/pioneer_dram_cohort_native_compile.cpp';obj=out/'cohort-DRCNODRV.o'
 subjects=[misc/p for p in ('tenstorrent_pci_probe.cpp','PioneerDramReadSweepNative.inc','PioneerDramReadSweepNativeRole.h',
  'PioneerDramCohortNativeRole.h','PioneerDramCohortNative.inc','PioneerDramCohortReadSweepOwner.h','BlackholeDramCohortReadSweepImage.h')]
-subjects += [here/'PioneerDramCohortReadSweep.h',source,pathlib.Path(__file__).resolve()]
+subjects += [here/'PioneerDramCohortReadSweep.h',here/'PioneerDramCohortHostBracket.h',source,pathlib.Path(__file__).resolve()]
 identity={str(p):hashlib.sha256(p.read_bytes()).hexdigest() for p in subjects}
 command=args+flags+['-fcallgraph-info=su','-c',str(source),'-o',str(obj)]
 (out/'compile-argv.json').write_text(json.dumps(command,indent=2)+'\n')

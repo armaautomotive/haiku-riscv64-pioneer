@@ -1,0 +1,2 @@
+actual Native.inc endpoint lifecycle: 45 valid / 174 refused; NOT native hardware, ARC or engine execution
+PASS_COHORT_ACTUAL_NATIVE_ENDPOINTS valid106 refused107 all8bounds1 exactBacking1 realHostClockCall1 oneAttemptResetLedger1 forwardedLeaseClosure1 noIOAfterRetention1;KERNEL_EXPORT_PCI_FIXTURES_NOT_NATIVE_PREREQUISITES_ENGINE_ARC_HARDWARE_BANDWIDTH_OR_WORK

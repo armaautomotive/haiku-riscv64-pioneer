@@ -1,0 +1,7 @@
+Assertion failed: (!f.Execute() && (f.cores[6]->pc==bad || f.cores[7]->pc==bad)), function main, file pioneer_dram_cohort_read_sweep_image_test.cpp, line 246.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_dram_cohort_read_sweep_owner_tests.py", line 19, in <module>
+    subprocess.run([str(image.parent/'image-test'),str(old/'boot.bin'),str(old/'text.bin'),
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-dram-cohort-calibration-20261103.9KXv7M/main-device-r1/image-test', '/private/tmp/pioneer-dram-cohort-20261103.GGfeMb/main-test-final/image/boot.bin', '/private/tmp/pioneer-dram-cohort-20261103.GGfeMb/main-test-final/image/text.bin', '6400c', '64030', '--old-raw-coordinate-control']' died with <Signals.SIGABRT: 6>.

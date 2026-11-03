@@ -1,0 +1,143 @@
+Seven-bank host-clock brackets: OFFBOARD qualification, NOT deployed
+===================================================================
+2026-11-03 01:53 UTC. Goal ACTIVE. Usable accepted27B Work and20tok/s
+remain UNMET. Latest physical27B diagnostic remains0.158413730..0.158416372
+tok/s with the original one-FP32-LSB position0 rejection. NO physical
+bandwidth/frequency/model speedup or card-authenticity result is claimed.
+No Pioneer SSH/device/driver/clock/power/Assistant/boot/network/kernel/CPU/
+RAM/SD/mains/hardware operation occurred in this investigation.
+
+Why this changes the next measurement
+-------------------------------------
+The v5 owner/native checkpoint70335169 measured only device cycles. Firmware
+busyMHz cannot simply be assumed to be that counter's frequency. New distinct
+v6 magic36415244/report36435244/protocol6 brackets the SAME coordinator's
+actual start/end CSR samples with four existing journalled root words:
+ Ready=nonce BEFORE start, Start=nonce AFTER start;
+ Done=nonce BEFORE end, Payload=~nonce AFTER end.
+Root waits for all7 actual done flags before the ending bracket. All7 prior
+nonposted START writes have independently completed/ACKed BEFORE Payload
+reuse. No extra GDDR writes,host DMA,atomics,broadcast or forced clock.
+
+Aligned L1 stores are fenced/read back before the corresponding CSR sample;
+post-sample markers are fenced afterward. The host's actual native system_time
+is read before and after each uncached scoped PIO marker read. These reads
+observe bounds,not exact device event timestamps. Use the last observed
+Ready==0 (or before-root-release fallback) for startLower; first Start==nonce
+for startUpper; last Done==0 for endLower; first valid Payload complement for
+endUpper. Integer-us upper timestamps are conservatively censored by+1us.
+Only a positive [endLower-startUpper,endUpper-startLower] is reportable.
+Missing transitions/overlapping brackets produce unavailable state2,never a
+zero denominator,an infinite rate or a firmware-derived estimate. An actual
+Payload==nonce baseline is required; pristine zero for nonceFFFFFFFF cannot
+masquerade as an end marker. Malformed/nonmonotonic words/time refuse safely.
+
+State1 permits OFFBOARD frequency ratio[cycles*1e6/maxUs,cycles*1e6/minUs]
+and transfer rate[bytes*1e6/maxUs,bytes*1e6/minUs],relative to the host clock.
+These are observation bounds,not confidence intervals or a metrology-grade
+external frequency calibration. The native owner publishes timing only AFTER
+full reports/counters/park/HOLD/data verification,L1/NIU/TLB restoration and
+normal clock closure. Retention/partial reads cannot publish accepted timing.
+
+Ordering evidence,not simulated hardware certification
+-------------------------------------------------------
+Official Blackhole BabyRISCV InstructionSet explains fence store-queue drain,
+L0 flush and CSR serialization,and warns that fence alone is not a device-
+output completion receipt. The code therefore uses aligned L1 readback plus
+fences; NoC START writes still require actual nonposted ACK/counter receipts.
+The docs' common L1 page describes narrow writes as atomic read-modify-write.
+Native PioneerRead32 uses IO fences and the actual parent's uncached mapping.
+Current Haiku riscv64 system_time.cpp returns(CpuTime()*cv_factor)>>32;
+arch_cpu.cpp derives that factor from the host timerFrequency. We do not
+substitute card firmwareMHz. The offboard interpreter does NOT emulate all
+physical buffering/cache behavior; actual card qualification is outstanding.
+
+Primary sources inspected:
+https://raw.githubusercontent.com/tenstorrent/tt-isa-documentation/main/BlackholeA0/TensixTile/BabyRISCV/InstructionSet.md
+https://raw.githubusercontent.com/tenstorrent/tt-isa-documentation/main/BlackholeA0/TensixTile/BabyRISCV/README.md
+https://raw.githubusercontent.com/tenstorrent/tt-isa-documentation/main/BlackholeA0/TensixTile/BabyRISCV/CSRs.md
+https://raw.githubusercontent.com/tenstorrent/tt-isa-documentation/main/WormholeB0/TensixTile/L1.md
+
+Closed main/independent-source evidence
+--------------------------------------
+All selected handles below ACTUALLY exit0; all12 selected stderr streams0B.
+Clean source is archive70335169 plus ONLY14 current authored/generated files;
+all14 complete files cmp equal. Unrelated worktree dirt was not copied/staged.
+
+Device main8381/clean11820:3 valid/50 refused. Whole ELF and entire stdout
+cmp equal. All8 actual emitted RV32 engines execute. Root marker store events
+independently enclose the actual CSR-low samples. All7 readers overlap;
+captured/reordered packets,counter wrap,full final buffers and all prior
+malformed/lost/counter/logical-physical translation refusals remain covered.
+
+Immutable DATA main56522/clean22799:whole stdout exact;493457 per-tile unique
+saved words,2191 actual boot/text words per participant,88 boundary refusals,
+38 corrupted/truncated ELF refusals BEFORE output. Root4563/reader69842 words;
+separate65536-word scratch;total558993-word/2,235,972-byte heap backing.
+No new saved L1 extents are introduced by the four markers.
+
+Owner main59569/clean83682:whole stdout exact. Bracket DATA tests8 valid,
+28 unavailable,12 malformed refusals. Nonce1/80000000/FFFFFFFF and ordinary
+nonce,microsecond censor,missing baseline,missed transitions,backward clocks,
+overlapping ranges,zero cycles/bytes are covered. Coupled actual8-engine owner
+tests3 valid/21 refused:depth1/16 give bounds containing the independently
+known synthetic clock; delayed observer allows complete byte-exact restoration
+but returns unavailable timing. Unknown progress quarantines before HOLD.
+The missing-ready clock fault now targets actual frozen reader3 only,with
+reader1/2 ready and root NOT launched. Lost read/START-ACK deadlines occur
+only AFTER all8 launches. All original restoration/retention/no-IO-after-
+quarantine assertions remain. Scope/PCI/ARC remain fixture endpoints here.
+
+Actual native-method endpoint main91625/clean4556:old45 valid/174 refused
+first;new106 valid/107 refused,whole stdout exact. These are KernelExport/PCI
+endpoint fixtures,NOT end-to-end native prerequisites/ARC/engine execution.
+
+Actual Haiku SDK main2166/clean63763:whole object cmp exact;all old controls
+compiled FIRST and remain byte-exact:defaultaabe86f5,base5520bd6ea1,
+oldDRSNODRV54b3a7ce. Fourteen old/45 new role preprocessing cases pass.
+Five renamed conventional SDK hooks remain machine-byte inert. No model/
+CPU-reference/Work path or public physical opcode selects this private body.
+Driver-TU individual max frame1376B; frozen partial compiler direct chain
+2336B,68 unresolved targets. NOT whole-kernel-stack certification.
+
+Both frozen native audits ACTUALLY0,whole stdout exact:current source pins,
+whole object pin,actual8760-byte native code array equal device text,2 syntax
+positives/11 late-role refusals. No module is linked or installed.
+
+Exact identities
+------------------
+v6 whole ELF0f697dde151a85b1a7a2808581e842de0a8139f7282fdd6c1bcdd87035791abc
+v6 text8760B bdfca6485d8f2c20f14bec8e0315b780987784a0027e8dacede82729acedb33b
+boot4B d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+generated DATA284c25cb7ae2060ae153a8768113cbd92a9ad274fa11e672cc20127049804b92
+SDK private objectda21a10338471db5e5acaff1fa8057bc817422ba2b6484676708576242bf6d1e
+v5 remains the distinct prior70335169 source/75fe960e ELF control;oldv4
+20b6afaa still actually refuses captured physical remapping before DRAM reads.
+Do not substitute old magic/header/helper/module identities for this v6.
+
+Preserved failed attempts,not relabelled passes
+----------------------------------------------
+main-owner-r1 supplied historical9ba5ff0c(v3) instead of the required actual
+20b6afaa(v4) negative control. It refused the harness assertion;no owner run.
+main-owner-r2 failed the bracket check because its fixture added
+100us artificial time per pause on top of actual device-tick time. Corrected
+the fixture clock,not production bounds or expected results. main-owner-r3
+then exposed that accelerated deadline time could expire during an earlier
+normal reader startup. The final fixture advances time only for the intended
+frozen reader or all-launched lost-completion wait and asserts the exact
+launch mask. No original numerical validator/reference/tolerance was changed.
+
+Raw closed stdout/stderr,failure histories,SDK compile identities/argv/stack,
+and frozen audit summaries are archived in the sibling directory. Model,
+CPU traces,driver/worker binaries and unrelated user files are not committed.
+
+Next real requirement
+----------------------
+Add a separate bounded public diagnostic/client/exact exchange pair for this
+new cohort. The DRCNODRV hooks are intentionally inert;NEVER simply install
+that object or use an old single-worker updater. After source/native/public
+qualification,run controlled aggregate hardware measurement and restore041.
+Seven readers/NoC0 and repeated7*8MiB windows are NOT necessarily peak traffic,
+full28GB capacity/authenticity,or a complete Qwen model throughput result.
+Use measured limits to guide quantized operand preparation and scheduling.
+Usable numerically accepted27B Work and20tok/s remain unmet.

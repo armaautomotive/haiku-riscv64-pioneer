@@ -4,13 +4,16 @@
 #include "BlackholeComputeNocProbe.h"
 #include "BlackholeDramCohortReadSweepImage.h"
 #include "../../../../../tools/pioneer/PioneerDramCohortReadSweep.h"
+#include "../../../../../tools/pioneer/PioneerDramCohortHostBracket.h"
 // PRIVATE algorithm component. No native context/public opcode selects it.
 // Every IO method still needs a SAME live native lease/FD/thread/generation,
 // actual owned mappings and per-access bounds. Fixture scope/clock callbacks
 // are NOT that native proof. Never use this component as a model/Work fallback.
 struct PioneerDramCohortReadSweepResult {
- uint32_t version=5,started=0,phase=0,unsafe=0,launched=0,observed=0,held=0,closed=0;
+ uint32_t version=6,started=0,phase=0,unsafe=0,launched=0,observed=0,held=0,closed=0;
  uint32_t savedWords=0,restoredWords=0,comparedWords=0,report[8][32]={};
+ uint32_t reserved=0;
+ PioneerDramCohortHostTiming timing;
 };
 class PioneerDramCohortReadSweepOwner {
  using I=BlackholeDramCohortReadSweepImage;
@@ -22,6 +25,7 @@ class PioneerDramCohortReadSweepOwner {
  uint32_t reset[8]={0x47800,0x47800,0x47800,0x47800,0x47800,0x47800,0x47800,0x47800};
  bool fifo[8]={},attempted=false,unsafe=false;
  uint64_t began=0,lastTime=0;
+ PioneerDramCohortHostBracket bracket;
  static unsigned X(unsigned role){return role?(P::Worker(role)&63):1;}
  static unsigned Offset(unsigned role){return role?I::RootSavedWords+(role-1)*I::ReaderSavedWords:0;}
  template<class IO> bool Fail(IO& io,PioneerDramCohortReadSweepResult& r){
@@ -110,6 +114,17 @@ class PioneerDramCohortReadSweepOwner {
   uint64_t now=0;if(!Scope(io) || !io.CohortHostTime(now) || now<lastTime || now-began>budget)return false;
   lastTime=now;return true;
  }
+ template<class IO> bool Progress(IO& io){
+  const uint32_t address[4]={P::Ready,P::Start,P::Done,P::Payload};
+  for(unsigned i=0;i<4;i++){
+   uint64_t before=0,after=0;uint32_t value=0;
+   if(!Scope(io) || !io.CohortHostTime(before) || before<lastTime
+    || !io.CohortRead(0,address[i],value) || !io.CohortHostTime(after)
+    || !bracket.Observe(i,value,before,after))return false;
+   lastTime=after;
+  }
+  return true;
+ }
  template<class IO> bool Counters(IO& io,unsigned role,const uint32_t* r){
   const uint32_t reads=role?r[15]:r[14],flits=role?reads*256:r[17],writes=role?0:7;
   const uint32_t delta[9]={writes,reads,flits,reads+writes,reads,writes,writes,writes,reads};
@@ -143,7 +158,8 @@ public:
  static constexpr unsigned Allocation=I::CohortSavedWords+I::RawWords;
  template<class IO> bool Execute(IO& io,const tt_dram_samples_result& d,unsigned sweeps,unsigned depth,
   uint32_t nonce,PioneerDramCohortReadSweepResult& r){
-  static_assert(P::ExternalStartWatchdogRequired==1 && P::Version==5,"owned startup waits require external deadline");
+  static_assert(P::ExternalStartWatchdogRequired==1 && P::Version==6,"owned startup waits require external deadline");
+  static_assert(sizeof(PioneerDramCohortReadSweepResult)==1144,"no hidden padding in pristine DATA comparison");
   const PioneerDramCohortReadSweepResult pristine;
   const auto* a=reinterpret_cast<const uint8_t*>(&r);const auto* b=reinterpret_cast<const uint8_t*>(&pristine);
   for(unsigned i=0;i<sizeof(r);i++)if(a[i]!=b[i])return false;
@@ -224,10 +240,11 @@ public:
    if(!ready || !CodeFrame(io,role))return Fail(io,r);
   }
   if(!Select(io,0) || !Guard(io,0,true) || !CodeFrame(io,0) || !BeginDeadline(io))return Fail(io,r);
+  if(!bracket.Arm(nonce,began))return Fail(io,r);
   r.launched|=1;reset[0]=0x46800;io.CohortResetWrite(0,reset[0]);
   bool done=false;
   for(unsigned poll=0;poll<P::PollLimit;poll++){
-   if(!Deadline(io,UINT64_C(120000000)) || !Guard(io,0,false))return Fail(io,r);
+   if(!Deadline(io,UINT64_C(120000000)) || !Guard(io,0,false) || !Progress(io))return Fail(io,r);
    uint32_t v=0;if(!io.CohortRead(0,P::Report,v) || (v && v!=P::ReportMagic))return Fail(io,r);
    if(v==P::ReportMagic){done=true;break;}io.CohortPause();
   }
@@ -254,6 +271,10 @@ public:
    r.observed|=1U<<role;
   }
   if(!Select(io,0) || !Guard(io,0,true))return Fail(io,r);
+  for(unsigned i=0;i<4;i++){
+   const uint32_t address[4]={P::Ready,P::Start,P::Done,P::Payload};uint32_t v=0;
+   if(!io.CohortRead(0,address[i],v) || v!=(i==3?~nonce:nonce))return Fail(io,r);
+  }
   for(unsigned role=1;role<8;role++)for(unsigned i=0;i<32;i++){
    uint32_t v=0;if(!io.CohortRead(0,P::PeerReports+(role-1)*128+i*4,v) || v!=r.report[role][i])return Fail(io,r);
   }
@@ -308,6 +329,8 @@ public:
   }
   if(!Sources(io) || !io.CohortClockEnd() || !Sources(io))return Fail(io,r);
   for(unsigned s=0;s<2;s++)for(unsigned i=0;i<3;i++)if(io.DramTlbRead(s,i)!=tlb[s][i])return Fail(io,r);
+  bracket.Finish((uint64_t(r.report[0][13])<<32)|r.report[0][12],
+   (uint64_t(r.report[0][7])<<32)|r.report[0][6],r.timing);
   r.phase=10;r.closed=1;return true;
  }
 };
