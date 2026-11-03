@@ -1,0 +1,2 @@
+PASS: fragmented/bounded framing, closed-channel SIGPIPE safety, pinned-path/thread/question limits, isolated worker warm reuse, token-boundary cancel, known-clean unload, rejection and malformed/EOF/fatal/wrong-ID fail closed with no unload/retry/reset/fallback; NO DEVICE IO
+Offline Assistant27 evidence retained at /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//assistant-qwen27-test.lfT6gmK0

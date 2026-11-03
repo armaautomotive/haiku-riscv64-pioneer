@@ -1,0 +1,2 @@
+PASS CPU-only converted-weight disk cache:45 checks;0 unsupported filesystem fixtures;verified hits ZERO conversion,full/chunk SHA,source/recipe/version keys,atomic rebuild/cancellation,private marked directory,supported link/FIFO/permission refusals;NO GPU or model-speed claim
+Host-only disk cache fixture retained: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-model-weight-cache.yZ3ycNam

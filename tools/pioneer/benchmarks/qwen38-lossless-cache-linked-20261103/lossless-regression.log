@@ -1,0 +1,2 @@
+PASS lossless weight-cache adapter:61 checks,27247 exact upload pages,4 fragment tails;4 formats;fresh/hit ZERO warm conversion;no GPU/no requantization/no speed claim
+CPU-only lossless weight-cache fixture retained: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q38-lossless-weight-cache.TbZHJ9A3

@@ -151,7 +151,13 @@ int main(int argc,char** argv) {
 		const std::string originalPath=base+"/original-fixture";
 		int fd=open(originalPath.c_str(),O_RDWR|O_CREAT|O_EXCL,0600);assert(fd>=0);
 		assert(write(fd,original.data(),original.size())==ssize_t(original.size()) && lseek(fd,123,SEEK_SET)==123);
-		Cache::Digest hashed{};assert(Cache::HashFile(fd,original.size(),hashed,error) && hashed==Cache::Hash(original.data(),original.size()));
+		uint64_t observed=0;unsigned callbacks=0;
+		auto progress=[&](uint64_t done,uint64_t total,bool verifying) {
+			assert(!verifying && total==original.size() && done>observed && done<=total);
+			observed=done;callbacks++;
+		};
+		Cache::Digest hashed{};assert(Cache::HashFile(fd,original.size(),hashed,error,progress) && hashed==Cache::Hash(original.data(),original.size()));
+		assert(observed==original.size() && callbacks==1);
 		assert(lseek(fd,0,SEEK_CUR)==123);const auto prior=hashed;
 		assert(!Cache::HashFile(fd,original.size()-1,hashed,error) && hashed==prior);
 		auto change=[&](uint64_t,uint64_t,bool) { uint8_t byte=17;assert(pwrite(fd,&byte,1,0)==1 && !fsync(fd)); };

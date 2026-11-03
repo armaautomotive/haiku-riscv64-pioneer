@@ -6,6 +6,7 @@
 #include <poll.h>
 #include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
 namespace A=Assistant27;
 static bool Next(A::Receiver& r,A::Frame& f) {
  for (;;) { auto n=r.Read(0,f); if(n==A::Receiver::Received)return true;
@@ -27,6 +28,15 @@ int main(int argc,char** argv) {
  Record("load\n");
  if(!strcmp(mode,"reject")) { Emit(A::Error,f.id,A::Rejected,"host load rejected"); return 1; }
  if(!strcmp(mode,"badready")) { Emit(A::Ready,f.id,0,"wrong ready"); return 70; }
+ if(!strcmp(mode,"cachewarm") || !strcmp(mode,"cacheconverted") || !strcmp(mode,"cachemissing")) {
+  Emit(A::Progress,f.id,UINT32_MAX,"Preparing/reusing lossless disk-cached weights before accelerator access.");
+  if(!strcmp(mode,"cacheconverted")) Emit(A::Progress,f.id,UINT32_MAX,"Preparing lossless weight cache: tensor 1/851, 1.0/1.0 MiB; no GPU session yet.");
+  for(unsigned i=1;i<=851;i++) {
+   if(i==2 && !strcmp(mode,"cachemissing"))continue;
+   char message[192];snprintf(message,sizeof(message),"Verifying lossless weight cache: tensor %u/851, 1.0/1.0 MiB; no GPU session yet.",i);
+   Emit(A::Progress,f.id,UINT32_MAX,message);
+  }
+ }
  Emit(A::Progress,f.id,500,"host metadata"); Emit(A::Ready,f.id,0,"QWEN27_WORK_HOST_READY_497");
  while(Next(r,f)) {
   if(f.kind==A::Threads) {

@@ -1,0 +1,31 @@
+Starting: 1 interval of 1 second each
+  THID   TOTAL    USER  KERNEL %CPU        TEAM NAME THREAD NAME      
+   531  682.36  657.00   25.00  1.1 pioneer-q38-loss pioneer-q38-loss 
+    84  240.74    0.00  240.00  0.4      kernel_team scsi scheduler 1 
+   160   30.92    0.00   30.00  0.0      kernel_team fbsd callout 
+   231   17.55    6.00   11.00  0.0       app_server w:189:Deskbar 
+   256   13.71    2.00   10.00  0.0          Deskbar w>Deskbar 
+    85    8.26    0.00    8.00  0.0      kernel_team scsi notifier 1 
+   562    0.86    0.00    0.00  0.0 top -d -n 1 -i 1 top 
+   107    0.84    0.00    0.00  0.0        registrar timer_thread 
+    68    0.58    0.00    0.00  0.0      kernel_team page scrubber 
+    70    0.39    0.00    0.00  0.0      kernel_team page daemon 
+    81    0.23    0.00    0.00  0.0      kernel_team xhci finish thre 
+    80    0.20    0.00    0.00  0.0      kernel_team xhci event threa 
+    79    0.19    0.00    0.00  0.0      kernel_team usb explore 
+   105    0.11    0.00    0.00  0.0        registrar message delivere 
+   244    0.09    0.00    0.00  0.0          Deskbar Expando Window W 
+   224    0.09    0.00    0.00  0.0          Tracker w>Desktop 
+   232    0.07    0.00    0.00  0.0 media_addon_serv media_addon_serv 
+   187    0.05    0.00    0.00  0.0          Tracker Tracker 
+   277    0.05    0.00    0.00  0.0          Tracker TrackerTaskLoop 
+    66    0.05    0.00    0.00  0.0      kernel_team kernel daemon 
+   234    0.04    0.00    0.00  0.0     input_server AddOnMonitor 
+   265    0.04    0.00    0.00  0.0          Tracker w>Tracker status 
+   198    0.03    0.00    0.00  0.0      kernel_team ethernet link st 
+    91    0.03    0.00    0.00  0.0      kernel_team media checker 
+    67    0.02    0.00    0.00  0.0      kernel_team resource resizer 
+    72    0.02    0.00    0.00  0.0      kernel_team low resource man 
+    77    0.01    0.00    0.00  0.0      kernel_team block notifier/w 
+    69    0.01    0.00    0.00  0.0      kernel_team page writer: def 
+------  997.00  666.00  330.00  1.6% TOTAL (98.3% idle time,  0.1% unknown)

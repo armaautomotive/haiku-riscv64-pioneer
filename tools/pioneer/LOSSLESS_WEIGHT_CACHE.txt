@@ -59,12 +59,35 @@ to uncached upload or CPU inference. SM7/native-Q8 and CPU-validation builds
 cannot select this cache option. The existing Work kernels/driver, no-runtime-
 CPU-reference policy and all inference comparators remain unchanged.
 
-This checkpoint has NOT replaced the running Assistant or driver. Native
-SDK worker objects compile in both flag-on and flag-off configurations; a
-complete linked-worker/Pioneer full-model loading and inference trial remains
-required before deployment. There is no new tokens/sec or startup-speed claim.
+This checkpoint has NOT replaced the running Assistant or driver. Complete
+native SDK workers now LINK in both flag-on and flag-off configurations
+against all four authenticated frozen libraries. An isolated cached worker
+and LOAD/UNLOAD-only probe are staged; they are not the installed Assistant.
+The first full cache preparation on the Pioneer is underway. A complete live
+worker loading/upload/inference trial remains required before deployment.
+There is no new tokens/sec or startup-speed claim.
 Caching avoids repeated host layout conversion; model bytes still traverse
 PCIe on a cold GPU load, and this does not remove decoding inside old kernels.
+
+Isolated warm-cache host-load probe (not inference)
+--------------------------------------------------
+  sh tools/pioneer/build_assistant_qwen27_cache_smoke.sh HAIKU_BUILD /absolute/new-probe
+
+The probe is compiled for the separately staged worker at
+/boot/home/pioneer-lossless-cache-20261103-a/HaikuAssistantQwen27-cached,
+not the installed Assistant. Its ONLY runtime option is --load-unload-only.
+It uses the actual Assistant client, requires verification progress for all851
+tensors and no fresh preparation, then requires known-clean unload and worker
+exit. It never sends Generate or claims GPU-upload/inference qualification.
+Run it only after the current full preparation has actually finished and the
+worker/probe/runtime-library identities and idle driver metadata are verified.
+Seven ASan/UBSan fake-peer cases check acceptance/refusal and exact load/unload
+command traces. No physical worker run is claimed by those tests.
+
+The preparation command now reports original authentication progress every
+64MiB. This changes logging only: original full SHA, same-open identity checks,
+conversion-source fingerprint and cache recipe remain unchanged. The running
+first Pioneer preparation deliberately keeps its original901f160a binary.
 
 Tests
 -----
@@ -72,6 +95,7 @@ Tests
   sh tools/pioneer/tests/run_pioneer_model_weight_cache_tests.sh
   sh tools/pioneer/tests/run_pioneer_q38_public_source_tests.sh
   sh tools/pioneer/tests/run_assistant_qwen27_tests.sh
+  sh tools/pioneer/tests/run_assistant_qwen27_cache_smoke_tests.sh
 
 The lossless fixture is an explicitly SYNTHETIC sparse851-tensor GGUF, not
 authentication evidence. ASan/UBSan/Werror checks four storage formats,

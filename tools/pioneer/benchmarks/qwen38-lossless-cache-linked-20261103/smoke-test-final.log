@@ -1,0 +1,2 @@
+PASS actual cache load/unload smoke client:7 fake-worker cases;851 verified tensors required,conversion/missing progress and wrong/rejected/unclean peers refused;NO Generate or device IO
+Evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//assistant-qwen27-cache-smoke.vR6jim1m

@@ -1,0 +1,99 @@
+Linked lossless-cache worker and isolated host-load probe -- 2026-11-03
+====================================================================
+
+RESULT: both COMPLETE native Assistant workers link successfully against
+the four exact frozen c060 libraries; flagOFF control and flagON cached.
+An isolated native LOAD/UNLOAD-only probe compiles and passes7 fake-peer
+policy cases. Existing Assistant regression,45 generic cache checks and61
+lossless adapter checks/27247 exact upload pages pass under ASan/UBSan.
+The first Pioneer full cache preparation is RUNNING, NOT a completed test.
+No live worker load, GPU upload/inference or loading-speed result is claimed.
+Installed Assistant/worker/model and stable041 driver remain unchanged by
+this cache work. No learned comparator, tolerance or CPU fallback changed.
+
+Closed complete native links
+----------------------------
+Base:/private/tmp/pioneer-lossless-live-20261103.ulZKfMoS
+SDK:/Volumes/HaikuBuildLocal/generated.riscv64 (read-only).
+build_assistant_qwen27.sh uses pristine c060ca974c773c7c3d17fd1b66dc9d312bc292c0
+headers, NOT the dirty llama.cpp tree. Four libraries located on Pioneer:
+ /boot/home/develop/llama-c060ca974c77/build-pioneer/bin
+Each full hash matched the existing build script pin before copying and
+again locally. No library installation or source rebuild was performed.
+ libllama.so.0.2.0:0ae23a2c211af9fbafb89c3d93bdd136a4bdd574baeeaf2d622f582efcf426af
+ libggml.so.0.21.0:a3b81c133641bbdacde8dd1d0e0ffa7a0a1ec0c33e95c426df1db59735379c16
+ libggml-base.so.0.21.0:9cb45a36558bd78aa4d4b7ed5385cbf9df32de208f9e6c9b6d064e8527dca389
+ libggml-cpu.so.0.21.0:69e9ec2c43a123afbb256c3feb6313cdcebdf1b2a87278ac3cdac8a1a65273d2
+Control link tool38529 TERMINAL0/stderr0:
+ 4c168fdba5bf3ec275afd632f9708fab84b8afe9fe9497fbcc9655355b94704a
+Cached link tool34433 TERMINAL0/stderr0:
+ 84e60a2aea42f4ecbf4096b4b6b02d2038c4af5f59db1e39f65f47e2210bd007
+Both use existing Work mode and CPU attention/state, NO CPU learned reference.
+Cache selection is opt-in; flagOFF/default remains unchanged. Linked is not
+executed, installed, faster, or validated full-native inference.
+
+Isolated host-load probe
+------------------------
+build_assistant_qwen27_cache_smoke.sh cross-links the actual P100AQwen27
+client with the new test entry point. Worker path is explicitly compiled
+to the isolated stage, NEVER the installed Assistant worker. The only option
+is --load-unload-only; code sends Load then ordinary Unload and NEVER Generate,
+Threads, Cancel, signal/kill, reset or a second request after unknown failure.
+It requires the cache banner, verification progress for all851 entries, NO
+fresh cache conversion, actual host-ready497, known-clean unload and normal
+worker exit. Unexpected traces still get one clean unload after host-ready;
+failed channels use the existing close-only/no-retry policy.
+Native probe SHA:
+ 32ebf0ad37fd92aac21fb1b7684b806a75dfbf97ca21980df14074b7e3ace7b6
+The cached worker and probe were staged, hashes checked, in the unused
+root-owned/private /boot/home/pioneer-lossless-cache-20261103-a directory.
+They have NOT been executed there. They do not replace installed files.
+
+Final software chain tool77348 TERMINAL0/stderr0:7 actual smoke-client
+fake-worker cases (cachewarm,cacheconverted,cachemissing,normal,reject,
+badready,badclose), complete existing Assistant protocol/pool/cancel/fault
+regression, and61 lossless adapter checks. Exact negative error prefixes,
+one-line stderr and exact load/unload event traces exclude sanitizer crashes
+from being miscounted as expected rejections. No simulated trace proves
+physical cache reuse, model authentication, driver completion or performance.
+
+Authentication-progress logging
+--------------------------------
+The CPU preparation CLI now reports original full-file authentication every
+64MiB. It still hashes the SAME open file completely against c600de03...,
+checks stability and refuses mismatch. No authentication bypass or cache-
+recipe change. Generic cache45 checks now also assert callback progress,
+full digest, original FILE offset and mutation refusal; closed tool43487.
+Native progress-CLI SHA:
+ 16df0cf7c40044df1c69db0d29ccaf598a50353cd77259b436e6686d3991b7d6
+Mac progress-CLI SHA:
+ 22be65dbd50cb3cdcc14673647e0e47809ded5d713de46e6d6363ab18896ea3f
+Both compile successfully and retain conversion-source SHA
+ bb0e60700ff8345b8ea493c7c8e178c5400c3141969cb61ea74693139721d25a
+The running first Pioneer preparation deliberately keeps original binary
+901f160aec54d227b3760320974cf86e0c0f71c134491745a556360d9cdedb59;
+it was NOT interrupted/replaced/restarted to gain progress logging.
+
+First live preparation: ACTIVE observation, not terminal evidence
+----------------------------------------------------------------
+Exact root-owned/single-link/mode0600 original18973870528B model verified.
+Initial BFS free space50.2GiB, enough for the19.4GB cache plus2GiB headroom.
+CPU-only tool75526 began the full --build with --check-upload-pages.
+At20:29 UTC its same handle remains active, stderr empty. Original complete
+authentication has PASSED and entries0/1 have been atomically created and
+verified. Entry0 is1052876800B; this is partial progress, NOT851 entries or
+an accepted full cache. No second preparation or GPU session was started.
+One finite CPU sample confirmed the process active during authentication;
+this is not an end-to-end loading benchmark. Do not infer that removing
+conversion removes full hashing, cache verification, PCIe upload or GPU unpack.
+
+Resume SAME75526;logs:Base/full-create.log and full-create.stderr. Never
+restart because an observation returns no new output. After actual terminal
+success, preserve the result and test the isolated actual worker warm load/
+known-clean unload with exact identities and idle metadata. Actual upload/
+inference comparison remains necessary before enabling the cached Assistant.
+No20tok/s, full-card model or startup-speed claim. Original Mac full851-entry
+creation/reuse evidence remains in qwen38-lossless-weight-cache-20261103.txt.
+
+Only closed logs are archived in the sibling directory/SHA256SUMS. The active
+full-create stream is intentionally NOT published as though it had closed.

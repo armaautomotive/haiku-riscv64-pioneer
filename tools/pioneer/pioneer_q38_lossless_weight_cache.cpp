@@ -28,7 +28,12 @@ int Run(int argc,char** argv) {
 	};
 	puts("AUTHENTICATING_SAME_OPEN_ORIGINAL_GGUF;CPU_ONLY_LOSSLESS_DISK_CACHE");fflush(stdout);
 	Cache::Digest original;std::string error;
-	if(!Cache::HashFile(fileno(file.get()),PioneerQwen38Gguf::FullBytes,original,error) || !ready()
+	uint64_t authenticated=0;
+	auto authenticationProgress=[&](uint64_t done,uint64_t total,bool) {
+		if(done-authenticated<64*1024*1024 && done!=total)return;
+		authenticated=done;printf("AUTHENTICATING %llu/%llu\n",(unsigned long long)done,(unsigned long long)total);fflush(stdout);
+	};
+	if(!Cache::HashFile(fileno(file.get()),PioneerQwen38Gguf::FullBytes,original,error,authenticationProgress) || !ready()
 		|| Cache::Hex(original)!="c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747") {
 		fprintf(stderr,"Full original authentication/stability refused: %s\n",error.c_str());return 1;
 	}
