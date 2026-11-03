@@ -242,6 +242,14 @@ class PioneerQ38TokenNativeOwner {
  template<class IO> bool SelectedSources(IO& io,unsigned w){
   if(w>=120 || !Scope(io) || !io.TokenMemoryMappingStable(w)
    || io.ResetRead()!=reset[w] || io.ResetRead()!=reset[w])return false;
+#ifdef PIONEER_Q38_TOKEN_MANUAL_TTSYNC_PROGRAMS
+  static_assert(PioneerQ38TokenPrograms::ManualTTSyncOverrideClearRequired==1
+   && PioneerQ38TokenPrograms::ManualTTSyncLocalTimeout==0,"manual wait needs an external owner/watchdog");
+  // Actual selected tile control register,not a caller-ready flag or
+  // speculative PC. OverrideEn+Busy would bypass the blocking LOAD.
+  // Require the entire original ZERO register,including other threads.
+  if(io.RuntimeControlRead(2)!=0)return false;
+#endif
   for(unsigned i=0;i<16;i++){
    const uint32_t expected=!i && (w?peerConfigWritten[w]:rootConfigWritten)?storeConfig[w]:cohort->authority.source[w][i];
    if(io.ResidentNocRead(BlackholeDramSourceOffset(i))!=expected)return false;
@@ -270,11 +278,24 @@ class PioneerQ38TokenNativeOwner {
    for(unsigned i=0;i<8;i++)if(io.ResidentNocRead(PioneerQ38PanelCounter(i))!=memory->counters[w][i])return false;
    return true;
   }
+#ifdef PIONEER_Q38_TOKEN_MANUAL_TTSYNC_PROGRAMS
+  if(!traffic){
+   if(!memory->Guard(io,w))return false;
+   // Held participant/code mapping has just been verified by the same
+   // owner. Recheck at each pre-ARM/release guard,not only preparation.
+   if(io.RuntimeControlRead(2)!=0 || !Scope(io))return false;
+   return true;
+  }
+#else
   if(!traffic)return memory->Guard(io,w);
+#endif
   // ONLY this owner's fixed ROOT packet may be in flight. All host/BME,
   // reset,source,mapping and native lifetime checks still hold. The caller
   // independently bounds EVERY actual counter delta before adoption.
   if(w || !io.SelectRuntimeCore(0) || !io.TokenMemoryMappingStable(0) || io.ResetRead()!=0x47800 || io.ResetRead()!=0x47800)return false;
+#ifdef PIONEER_Q38_TOKEN_MANUAL_TTSYNC_PROGRAMS
+  if(io.RuntimeControlRead(2)!=0)return false;
+#endif
   for(unsigned i=0;i<16;i++)if(io.ResidentNocRead(BlackholeDramSourceOffset(i))!=cohort->authority.source[0][i])return false;
   for(unsigned i=0;i<TT_DRAM_SOURCE_WORDS;i++)if(io.SourceRead(i)!=proof->source[i])return false;
   for(unsigned p=0;p<2;p++)if(!PioneerQ38GraphCsrPciQuiet(io,p))return false;

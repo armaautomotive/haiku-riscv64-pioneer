@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 // DATA selection only; no native source/lifetime, journal or launch grant.
 // Rechecked outside the guard so late/defined-zero changes cannot alias data.
+#include "PioneerQ38TokenManualTTSyncProgramsRole.h"
+#if defined(PIONEER_Q38_TOKEN_MANUAL_TTSYNC_PROGRAMS) && !defined(PIONEER_Q38_TOKEN_MANUAL_TTSYNC_NATIVE_CONTEXT) \
+ && !defined(PIONEER_Q38_TOKEN_MANUAL_TTSYNC_BENCHMARK_NATIVE)
+#error Manual completion DATA requires its separate native subject;no old fallback
+#endif
 #include "PioneerQ38TokenMatrixPhaseProgramsRole.h"
 #if defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS) && !defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_NATIVE_CONTEXT) \
  && !defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_BENCHMARK_NATIVE)
@@ -95,7 +100,9 @@
 #elif defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
 #error QTP3 native selector requires its actual native parent
 #endif
-#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_MANUAL_TTSYNC_PROGRAMS
+#include "PioneerQ38TokenManualTTSyncPrograms.h"
+#elif defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS)
 #include "PioneerQ38TokenMatrixPhasePrograms.h"
 #elif defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS)
 #include "PioneerQ38TokenConstantQ4Programs.h"
@@ -141,7 +148,9 @@
 #include "PioneerQ38TokenFootprint.h"
 #ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
-#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_MANUAL_TTSYNC_PROGRAMS
+namespace PioneerQ38TokenPrograms=PioneerQ38TokenManualTTSyncPrograms;
+#elif defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenMatrixPhasePrograms;
 #elif defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenConstantQ4Programs;

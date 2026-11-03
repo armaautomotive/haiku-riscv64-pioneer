@@ -2,6 +2,26 @@
 
 ## Status
 
+### November3:common-clock seven-bank prototype and offboard driver integration
+
+A separately selected seven-bank/eight-worker READ prototype now passes
+independent main/clean actual-instruction tests:all seven readers overlap,
+one coordinator interval brackets every transfer,depth1/4/16 controls and
+46 refusal cases pass. The frozen immutable map covers490185 per-tile words;
+38 corrupted/truncated artifacts refuse before output. This is OFFBOARD
+evidence only,not measured bandwidth,clock calibration,card authenticity or
+model speed. The actual multi-worker native owner/STOP/HOLD/restoration and
+clock calibration remain to implement before physical use. See the
+[seven-bank report](benchmarks/p100a-dram-cohort-offline-20261103.txt).
+
+The manual-completion diagnostic's independent original-model first-layer/
+cancel/119STOP/120HOLD/full-END simulations also close,with bit-exact original
+CPU first-layer output and33 override-loss refusals. Its combined native
+lost-completion/watchdog coupling is still a deployment gate;successful
+simulation is not a physical inference speedup. No Pioneer/Assistant/boot/
+CPU/RAM change was made. Usable accepted27B Work and20tok/s remain UNMET.
+See the [integration evidence](benchmarks/qwen38-manual-ttsync-native-20261102.txt).
+
 ### November2:physical preparation bottleneck and offboard manual completion
 
 The latest original27B diagnostic measured0.158413730..0.158416372tok/s,

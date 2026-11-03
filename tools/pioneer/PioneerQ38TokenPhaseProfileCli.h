@@ -8,7 +8,9 @@ enum class PioneerQ38TokenPhaseProfileMode {Invalid,SourceOnly,Positions34};
 static inline PioneerQ38TokenPhaseProfileMode PioneerQ38TokenPhaseProfileArguments(int argc,const char* const* argv){
  using M=PioneerQ38TokenPhaseProfileMode;
  if(argc!=2 || !argv || !argv[0] || !argv[1])return M::Invalid;
-#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_CLIENT
+#ifdef PIONEER_Q38_TOKEN_MANUAL_TTSYNC_CLIENT
+ return !std::strcmp(argv[1],"--benchmark-manual-ttsync-34-positions")?M::Positions34:
+#elif defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_CLIENT)
  return !std::strcmp(argv[1],"--profile-q4-jobs-34-positions")?M::Positions34:
 #elif defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_CLIENT)
  return !std::strcmp(argv[1],"--benchmark-constant-q4-34-positions")?M::Positions34:

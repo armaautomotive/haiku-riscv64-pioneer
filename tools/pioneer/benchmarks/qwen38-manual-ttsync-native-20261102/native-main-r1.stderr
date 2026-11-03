@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_native_initialization_tests.py", line 80, in <module>
+    assert empty_receipt is None and flat_matrix is None, 'Distinct ROOT variants cannot alias'
+AssertionError: Distinct ROOT variants cannot alias

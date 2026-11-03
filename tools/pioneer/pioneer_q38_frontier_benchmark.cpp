@@ -18,7 +18,9 @@
 #endif
 #include "PioneerQ38TokenHiddenValidationSession.h"
 #include "PioneerQ38TokenRateSamples.h"
-#if defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_CLIENT)
+#if defined(PIONEER_Q38_TOKEN_MANUAL_TTSYNC_CLIENT)
+#include "PioneerQ38TokenManualTTSyncCli.h"
+#elif defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_CLIENT)
 #include "PioneerQ38TokenMatrixPhaseCli.h"
 #elif defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_CLIENT)
 #include "PioneerQ38TokenConstantQ4Cli.h"
@@ -64,7 +66,9 @@ int main(int argc,char** argv){
  if(mode==M::Invalid)return 2;
  namespace V=PioneerQ38TokenDecodeBenchmark;
  setvbuf(stdout,nullptr,_IOLBF,0);
-#ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_CLIENT
+#ifdef PIONEER_Q38_TOKEN_MANUAL_TTSYNC_CLIENT
+ puts("Q38_MANUAL_TTSYNC_FIXED34_DIAGNOSTIC_HOST_LABEL_NOT_DEVICE_PROVENANCE_OR_WORK");
+#elif defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_CLIENT)
  puts("Q38_MATRIX_PHASE_FIXED34_LATEST_Q4_JOB_HOST_LABEL_NOT_DEVICE_PROVENANCE_OR_WORK");
 #elif defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_CLIENT)
  puts("Q38_CONSTANT_Q4_FIXED34_DIAGNOSTIC_HOST_LABEL_NOT_DEVICE_PROVENANCE_OR_WORK");

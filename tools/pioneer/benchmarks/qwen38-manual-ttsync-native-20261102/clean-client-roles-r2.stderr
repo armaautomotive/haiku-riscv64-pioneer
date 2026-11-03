@@ -1,0 +1,6 @@
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-manual-native-20261102.20fpwL/clean-source/tools/pioneer/tests/run_pioneer_q38_token_manual_ttsync_client_roles.py", line 46, in <module>
+    syntax(bad, False)
+  File "/private/tmp/pioneer-q38-manual-native-20261102.20fpwL/clean-source/tools/pioneer/tests/run_pioneer_q38_token_manual_ttsync_client_roles.py", line 27, in syntax
+    assert (result.returncode == 0) == okay, (values, body, result.stderr)
+AssertionError: ({'PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT': '1', 'PIONEER_Q38_FRONTIER_FAILURE_REPORT_PARENT_BINDING': '1', 'PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_CLIENT': '1', 'PIONEER_Q38_TOKEN_DECODE_BENCHMARK_CLIENT': '1', 'PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_CLIENT': '1', 'PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT': '1', 'PIONEER_Q38_TOKEN_CONSTANT_Q4_CLIENT': '1'}, None, '')

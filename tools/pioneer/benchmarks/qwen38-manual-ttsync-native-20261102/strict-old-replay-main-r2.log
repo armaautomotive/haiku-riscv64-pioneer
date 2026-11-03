@@ -1,0 +1,18 @@
+MANUAL_TTSYNC_HOST_LABEL_ONLY_NOT_DEVICE_PROVENANCE_OR_WORK;UNCHANGED_NUMERICAL_DECISION_FOLLOWS
+PASS TOKEN_PHASE envelope/whole96word reply/UNCHANGED FRONTIER34 grammar;NOT provenance,model acceptance or Work
+OBSERVED_COUNT_WINDOW {'sampled_tokens': 32, 'first_committed': 2, 'last_committed': 34, 'elapsed_min_us': 196881198, 'elapsed_max_us': 196884561, 'lower': 0.162531789, 'upper': 0.162534566, 'observations': 2011}
+DEVICE_CYCLE_PROFILE total282592919478;ALL34_PLUS_BOOTSTRAP_STOP_OBSERVER_COST_NOT_32TOKEN_RATE_WINDOW_NOT_PURE_ENGINE_UTILIZATION
+DEVICE_CYCLE_BUCKET Bootstrap segments1 cycles1889952 fraction314992/47098819913
+DEVICE_CYCLE_BUCKET Metadata segments2176 cycles12050451454 fraction6025225727/141296459739
+DEVICE_CYCLE_BUCKET Recurrent segments1632 cycles165993296391 fraction55331098797/94197639826
+DEVICE_CYCLE_BUCKET Dense segments544 cycles70138271145 fraction23379423715/94197639826
+DEVICE_CYCLE_BUCKET HeadNormalize segments34 cycles64915537 fraction64915537/282592919478
+DEVICE_CYCLE_BUCKET HeadMatrix segments34 cycles31484601790 fraction15742300895/141296459739
+DEVICE_CYCLE_BUCKET Feedback segments34 cycles56254689 fraction18751563/94197639826
+DEVICE_CYCLE_BUCKET StateCommit segments34 cycles2691943679 fraction2691943679/282592919478
+DEVICE_CYCLE_BUCKET Publication segments34 cycles29825646 fraction4970941/47098819913
+DEVICE_CYCLE_BUCKET FinalStop segments1 cycles81469195 fraction81469195/282592919478
+COMPARE_DECODE34_FIRST_THREE position0/sameInput1/CPUgreedy70253/observedGreedy70253/selectedMatch1/maxLogitBitsMatch0
+COMPARE_DECODE34_FIRST_THREE position1/sameInput1/CPUgreedy17/observedGreedy17/selectedMatch1/maxLogitBitsMatch1
+COMPARE_DECODE34_FIRST_THREE position2/sameInput1/CPUgreedy17/observedGreedy17/selectedMatch1/maxLogitBitsMatch1
+FIRST_THREE_RECORD_DATA_BITEXACT=0 NO_TOLERANCE_USED;positions3..33 have NO external numerical control here;NOT full-hidden/vocabulary/native-lifetime/log-provenance/physical/Work/TPS qualification

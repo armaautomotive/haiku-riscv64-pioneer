@@ -42,13 +42,14 @@ def require_complete_sections(units, sources):
                 'section coverage: every authenticated code section exactly once')
 
 def main():
-    require(len(sys.argv) == 5 and sys.argv[4] in ('--cancel-boundary', '--no-cancel', '--precise-activation', '--pushed-completion', '--fault-marker', '--precise-beta', '--job-boot-fold', '--token-frontier', '--retained-conv-closure', '--commit-boundary-seals', '--cohort-local-sources', '--packet-identity-boundary', '--tid-boundary', '--counter-gather', '--empty-receipt-poll', '--flat-matrix-grammar', '--tile-prefetch', '--batched-prefetch', '--twin-batch-prefetch', '--batched-output-closure', '--wide-gdn', '--token-phase-profile', '--constant-q4-issue', '--token-matrix-phase'), 'explicit exact FP32 token variant required')
+    require(len(sys.argv) == 5 and sys.argv[4] in ('--cancel-boundary', '--no-cancel', '--precise-activation', '--pushed-completion', '--fault-marker', '--precise-beta', '--job-boot-fold', '--token-frontier', '--retained-conv-closure', '--commit-boundary-seals', '--cohort-local-sources', '--packet-identity-boundary', '--tid-boundary', '--counter-gather', '--empty-receipt-poll', '--flat-matrix-grammar', '--tile-prefetch', '--batched-prefetch', '--twin-batch-prefetch', '--batched-output-closure', '--wide-gdn', '--token-phase-profile', '--constant-q4-issue', '--token-matrix-phase', '--manual-ttsync'), 'explicit exact FP32 token variant required')
     require(not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ), 'role overrides refused')
     root, worker, output = map(pathlib.Path, sys.argv[1:4])
     require(all(p.is_absolute() for p in (root, worker, output)) and not output.exists() and not output.is_symlink(), 'new absolute output required')
     here = pathlib.Path(__file__).resolve().parent
     matrix_phase = sys.argv[4] == '--token-matrix-phase'
-    constant_q4 = matrix_phase or sys.argv[4] == '--constant-q4-issue'
+    manual_ttsync = sys.argv[4] == '--manual-ttsync'
+    constant_q4 = manual_ttsync or matrix_phase or sys.argv[4] == '--constant-q4-issue'
     phase_profile = constant_q4 or sys.argv[4] == '--token-phase-profile'
     wide_gdn = phase_profile or sys.argv[4] == '--wide-gdn'
     output_closure = wide_gdn or sys.argv[4] == '--batched-output-closure'
@@ -71,7 +72,7 @@ def main():
     precise = pushed or sys.argv[4] == '--precise-activation'
     cancel = precise or sys.argv[4] == '--cancel-boundary'
     r = authenticated(root, pins(here/'build_qwen38_token_phase_profile_root.py', 'PINS') if phase_profile else pins(here/'build_qwen38_batched_output_closure_root.py', 'PINS') if output_closure else pins(here/'build_qwen38_batched_prefetch_root.py', 'PINS') if batched_prefetch else pins(here/'build_qwen38_flat_matrix_grammar_root.py', 'PINS') if flat_grammar else pins(here/'build_qwen38_empty_receipt_poll_root.py', 'PINS') if empty_receipt else pins(here/'build_qwen38_counter_gather_root.py', 'PINS') if counter_gather else pins(here/'build_qwen38_tid_boundary_root.py', 'PINS') if tid_boundary else pins(here/'build_qwen38_packet_identity_boundary_root.py', 'PINS') if packet_identity else pins(here/'build_qwen38_cohort_local_sources_root.py', 'PINS') if local_sources else pins(here/'build_qwen38_commit_boundary_root.py', 'PINS') if commit_boundary else pins(here/'build_qwen38_retained_cohort_root.py', 'PINS') if retained_cohort else pins(here/'build_qwen38_token_fault_marker_image.py', 'FRONTIER_PINS' if frontier else 'JOB_FOLD_PINS' if job_boot_fold else 'PINS') if fault else pins(here/'build_qwen38_token_root.py', 'PINS_CANCEL_F32_PUSHED' if pushed else 'PINS_CANCEL_F32_PRECISE' if precise else 'PINS_CANCEL_F32' if cancel else 'PINS_F32'))
-    w = authenticated(worker, pins(here/'build_qwen38_token_matrix_phase_worker.py' if matrix_phase else here/'build_qwen38_q4_constant_issue_worker_image.py' if constant_q4 else here/'build_qwen38_wide_gdn_worker_image.py' if wide_gdn else here/'build_qwen38_token_twin_batch_prefetch_worker.py' if twin_batch_prefetch else here/'build_qwen38_token_batched_prefetch_worker.py' if batched_prefetch else here/'build_qwen38_token_prefetch_worker.py' if prefetch else here/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here/'build_qwen38_pushed_worker_image.py' if pushed else here/'tests/run_pioneer_q38_precise_worker_tests.py' if precise else here/'build_qwen38_global_worker_image.py', 'PINS'))
+    w = authenticated(worker, pins(here/'build_qwen38_manual_ttsync_worker.py' if manual_ttsync else here/'build_qwen38_token_matrix_phase_worker.py' if matrix_phase else here/'build_qwen38_q4_constant_issue_worker_image.py' if constant_q4 else here/'build_qwen38_wide_gdn_worker_image.py' if wide_gdn else here/'build_qwen38_token_twin_batch_prefetch_worker.py' if twin_batch_prefetch else here/'build_qwen38_token_batched_prefetch_worker.py' if batched_prefetch else here/'build_qwen38_token_prefetch_worker.py' if prefetch else here/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here/'build_qwen38_pushed_worker_image.py' if pushed else here/'tests/run_pioneer_q38_precise_worker_tests.py' if precise else here/'build_qwen38_global_worker_image.py', 'PINS'))
     units = [(r, 'boot', 'RootBoot', 0x6000), (r, 'text', 'RootText', 0x40000),
              (r, 'terminal', 'RootTerminal', 0x60000), (r, 'conv', 'RootAux', 0x64000)]
     units += [(w, name, label, address) for name, label, address in (
@@ -119,7 +120,9 @@ def main():
                     selector = 'PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS'
                 if constant_q4:
                     selector = 'PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS' if matrix_phase else 'PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS'
-                lines += ['#include "PioneerQ38TokenMatrixPhaseProgramsRole.h"' if matrix_phase else '#include "PioneerQ38TokenConstantQ4ProgramsRole.h"' if constant_q4 else '#include "PioneerQ38TokenPhaseProfileProgramsRole.h"' if phase_profile else '#include "PioneerQ38TokenWideGdnProgramsRole.h"' if wide_gdn else '#include "PioneerQ38TokenBatchedOutputClosureProgramsRole.h"' if output_closure else '#include "PioneerQ38TokenTwinBatchPrefetchProgramsRole.h"' if twin_batch_prefetch else '#include "PioneerQ38TokenBatchedPrefetchProgramsRole.h"' if batched_prefetch else '#include "PioneerQ38TokenPrefetchProgramsRole.h"' if prefetch else '#include "PioneerQ38TokenFlatMatrixProgramsRole.h"' if flat_grammar else '#include "PioneerQ38TokenEmptyReceiptPollProgramsRole.h"' if empty_receipt else '#include "PioneerQ38TokenCounterGatherProgramsRole.h"' if counter_gather else '#include "PioneerQ38TokenTidBoundaryProgramsRole.h"' if tid_boundary else '#include "PioneerQ38TokenPacketIdentityBoundaryProgramsRole.h"' if packet_identity else '#include "PioneerQ38TokenCohortLocalSourcesProgramsRole.h"' if local_sources else '#include "PioneerQ38TokenCommitBoundaryProgramsRole.h"' if commit_boundary else '#include "PioneerQ38TokenRetainedCohortProgramsRole.h"' if retained_cohort else '#include "PioneerQ38TokenFrontierProgramsRole.h"' if frontier else '#include "PioneerQ38TokenJobBootFoldProgramsRole.h"',
+                if manual_ttsync:
+                    selector = 'PIONEER_Q38_TOKEN_MANUAL_TTSYNC_PROGRAMS'
+                lines += ['#include "PioneerQ38TokenManualTTSyncProgramsRole.h"' if manual_ttsync else '#include "PioneerQ38TokenMatrixPhaseProgramsRole.h"' if matrix_phase else '#include "PioneerQ38TokenConstantQ4ProgramsRole.h"' if constant_q4 else '#include "PioneerQ38TokenPhaseProfileProgramsRole.h"' if phase_profile else '#include "PioneerQ38TokenWideGdnProgramsRole.h"' if wide_gdn else '#include "PioneerQ38TokenBatchedOutputClosureProgramsRole.h"' if output_closure else '#include "PioneerQ38TokenTwinBatchPrefetchProgramsRole.h"' if twin_batch_prefetch else '#include "PioneerQ38TokenBatchedPrefetchProgramsRole.h"' if batched_prefetch else '#include "PioneerQ38TokenPrefetchProgramsRole.h"' if prefetch else '#include "PioneerQ38TokenFlatMatrixProgramsRole.h"' if flat_grammar else '#include "PioneerQ38TokenEmptyReceiptPollProgramsRole.h"' if empty_receipt else '#include "PioneerQ38TokenCounterGatherProgramsRole.h"' if counter_gather else '#include "PioneerQ38TokenTidBoundaryProgramsRole.h"' if tid_boundary else '#include "PioneerQ38TokenPacketIdentityBoundaryProgramsRole.h"' if packet_identity else '#include "PioneerQ38TokenCohortLocalSourcesProgramsRole.h"' if local_sources else '#include "PioneerQ38TokenCommitBoundaryProgramsRole.h"' if commit_boundary else '#include "PioneerQ38TokenRetainedCohortProgramsRole.h"' if retained_cohort else '#include "PioneerQ38TokenFrontierProgramsRole.h"' if frontier else '#include "PioneerQ38TokenJobBootFoldProgramsRole.h"',
                           '#if !defined('+selector+') || '+selector+' != 1',
                           '#error Exact separate job boot fold program DATA selection required', '#endif']
             else:
@@ -157,7 +160,9 @@ def main():
         program_namespace = 'PioneerQ38TokenWideGdnPrograms'
     if phase_profile:
         program_namespace = 'PioneerQ38TokenPhaseProfilePrograms'
-    if matrix_phase:
+    if manual_ttsync:
+        program_namespace = 'PioneerQ38TokenManualTTSyncPrograms'
+    elif matrix_phase:
         program_namespace = 'PioneerQ38TokenMatrixPhasePrograms'
     elif constant_q4:
         program_namespace = 'PioneerQ38TokenConstantQ4Programs'
@@ -188,7 +193,9 @@ def main():
         guard = 'PIONEER_Q38_TOKEN_WIDE_GDN_PROGRAMS_H'
     if phase_profile:
         guard = 'PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS_H'
-    if matrix_phase:
+    if manual_ttsync:
+        guard = 'PIONEER_Q38_TOKEN_MANUAL_TTSYNC_PROGRAMS_H'
+    elif matrix_phase:
         guard = 'PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS_H'
     elif constant_q4:
         guard = 'PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS_H'
@@ -255,6 +262,9 @@ def main():
     if matrix_phase:
         lines[1] = '// Mechanically generated from full fixed timing ROOT and complete returning Q4-job sampler worker.'
         lines += ['enum {MatrixPhase=1,MatrixPhaseAddress=0x84500,MatrixPhaseWords=16,MatrixPhaseVersion=2}; // latest Q4 job DATA,not whole-model timing or completion']
+    if manual_ttsync:
+        lines[1] = '// Mechanically generated from full fixed timing ROOT and complete manual-completion returning worker.'
+        lines += ['enum {ManualTTSync=1,ManualTTSyncRevision=1,ManualTTSyncOverrideClearRequired=1,ManualTTSyncLocalTimeout=0}; // DATA only;native watchdog/owner/quality remain separate']
     for data_set, name, label, address in units:
         data = data_set[name+'.bin']
         require(data and not len(data)%4 and not address%4 and address+len(data) <= 0x180000, f'{label}: extent')

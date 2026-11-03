@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38TokenManualTTSyncClientRole.h"
 // USER role only. Host label/CLI do NOT attest the loaded driver image.
 #ifndef PIONEER_Q38_TOKEN_CONSTANT_Q4_CLIENT_SELECTION_H
 #define PIONEER_Q38_TOKEN_CONSTANT_Q4_CLIENT_SELECTION_H

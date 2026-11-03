@@ -1,0 +1,6 @@
+0925bb1287c704b4c8841d6f2b7379dade76d258e852987b07526b1ab168e2c2  /private/tmp/pioneer-q38-manual-native-20261102.20fpwL/main-private-r1/token-manual-ttsync-NODRV.o
+92c113f4b10e9a93ef29157bbac54ad697d0a8f3dcc2aa60df0be3115b2d2168  /private/tmp/pioneer-q38-manual-native-20261102.20fpwL/main-public-r1/token-manual-ttsync-benchmark-native.o
+c01f1cda7549ef3b191454ab6c21d697de143f3f11fcc5c9da48c81dd37c1736  /private/tmp/pioneer-q38-manual-native-20261102.20fpwL/main-public-r1/tenstorrent_pci_probe-TOKEN-MANUAL-TTSYNC-34-DIAGNOSTIC-ONLY
+aaffcaa125a02d1629dc49055d45d26af28f3187049dda631a8b5a272a9c165a  /private/tmp/pioneer-q38-manual-native-20261102.20fpwL/main-client-final/pioneer-q38-TOKEN-MANUAL-TTSYNC-34-DIAGNOSTIC-ONLY
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7  /private/tmp/pioneer-q38-manual-native-20261102.20fpwL/native-main-r3-prefix.bin
+4fbe3fee9502804cef55239e730ddb385fdd86a184523ee39480f53358b5acb7  /private/tmp/pioneer-q38-manual-native-20261102.20fpwL/native-clean-r1-prefix.bin

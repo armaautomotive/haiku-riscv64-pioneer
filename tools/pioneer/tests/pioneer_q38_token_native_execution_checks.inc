@@ -21,6 +21,9 @@
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CANCEL_LAYER_FIXTURE
 #include "pioneer_q38_token_native_cancel_layer_checks.inc"
 #endif
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MANUAL_TTSYNC_FIXTURE
+#include "pioneer_q38_token_native_manual_ttsync_checks.inc"
+#endif
 static void CheckNativeExecution(Fixture& f){
  auto& c=*f.c;auto& io=f.io;auto* state=c.q38TokenNative;
  const unsigned before=io.touches,rootResets=io.resets.size(),packets=io.runtimePackets;
@@ -256,6 +259,9 @@ static void CheckNativeExecution(Fixture& f){
  CheckNativeFullFlow(f);return; // no cancel is injected;genuine three-token terminal path retains its native resources
 #else
  CheckNativeFullLayer(f);
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MANUAL_TTSYNC_FIXTURE
+ CheckNativeManualOverrideLoss(f);
+#endif
 #endif
 #endif
  {

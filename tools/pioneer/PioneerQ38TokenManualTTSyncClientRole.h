@@ -1,0 +1,37 @@
+/* SPDX-License-Identifier: MIT */
+// Rechecked USER-only binding. Host labels do not attest the loaded module.
+#ifndef PIONEER_Q38_TOKEN_MANUAL_TTSYNC_CLIENT_SELECTION_H
+#define PIONEER_Q38_TOKEN_MANUAL_TTSYNC_CLIENT_SELECTION_H
+#ifdef PIONEER_Q38_TOKEN_MANUAL_TTSYNC_CLIENT
+enum {PioneerQ38TokenManualTTSyncClientSelection=1};
+#else
+enum {PioneerQ38TokenManualTTSyncClientSelection=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_TOKEN_MANUAL_TTSYNC_CLIENT
+#include "PioneerQ38FrontierFailureReportRole.h"
+#if PIONEER_Q38_TOKEN_MANUAL_TTSYNC_CLIENT != 1 \
+ || !defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_CLIENT) || PIONEER_Q38_TOKEN_CONSTANT_Q4_CLIENT != 1 \
+ || !defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT) || PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT != 1 \
+ || !defined(PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT) || PIONEER_Q38_TOKEN_FRONTIER_FAILURE_REPORT_CLIENT != 1
+#error Manual-completion USER client requires all fixed34 constant-Q4/timing/report parents
+#endif
+#if defined(PIONEER_Q38_TOKEN_MANUAL_TTSYNC_PROGRAMS) || defined(PIONEER_Q38_TOKEN_MANUAL_TTSYNC_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_PROGRAMS) || defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_TOKEN_CONSTANT_Q4_BENCHMARK_NATIVE) || defined(PIONEER_Q38_Q4_CONSTANT_ISSUE_IMAGE) \
+ || defined(PIONEER_Q38_Q4_CONSTANT_ISSUE) || defined(PIONEER_Q38_Q4_CONSTANT_ISSUE_PARENT_BINDING) \
+ || defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_BENCHMARK_NATIVE) || defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE) \
+ || defined(PIONEER_Q38_TOKEN_WIDE_GDN_PROGRAMS) || defined(PIONEER_Q38_TOKEN_WIDE_GDN_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_TOKEN_WIDE_GDN_BENCHMARK_NATIVE) \
+ || defined(PIONEER_Q38_TOKEN_MANUAL_TTSYNC_BENCHMARK_NATIVE) || defined(PIONEER_Q38_MANUAL_TTSYNC_IMAGE) \
+ || defined(PIONEER_Q38_MANUAL_TTSYNC_PARENT_BINDING) || defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_CLIENT) \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(__FAST_MATH__) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)
+#error Manual-completion USER cannot alias shader,DATA,native,oracle,Work or another diagnostic
+#endif
+static_assert(PioneerQ38TokenManualTTSyncClientSelection==1,"late manual-completion USER selection");
+#else
+static_assert(PioneerQ38TokenManualTTSyncClientSelection==0,"late manual-completion USER removal");
+#endif

@@ -10,6 +10,10 @@ import sys
 import tempfile
 
 root_profile=None
+manual_ttsync='--manual-ttsync' in sys.argv
+if manual_ttsync:
+    assert sys.argv.count('--manual-ttsync')==1
+    sys.argv.remove('--manual-ttsync')
 matrix_phase_read='--matrix-phase-held-readout' in sys.argv
 if matrix_phase_read:
     assert sys.argv.count('--matrix-phase-held-readout')==1
@@ -248,6 +252,10 @@ if matrix_phase_read:
         and len(sys.argv)==7 and sys.argv[2]=='--execution-end', \
         'Fresh-slot reader TEST requires SAME exact sampler original-model first-layer/cancel/HOLD/drain/full-END,not an old or shortened alias'
 embedding_modes = ('--execution-embedding', '--execution-embedding-source-loss', '--execution-embedding-readback-loss', '--execution-layer-dispatch')
+if manual_ttsync:
+    assert constant_q4 and token_phase_profile and not matrix_phase and not compile_link_only and not root_profile \
+        and len(sys.argv)==7 and sys.argv[2]=='--execution-end', \
+        'Manual completion TEST requires its own full worker and SAME original first-layer/cancel/STOP/HOLD/drain/full-END history'
 state_contract = len(sys.argv)==5 and sys.argv[2]=='--state-owner-contract'
 state_flow = len(sys.argv)==7 and sys.argv[2]=='--execution-end-state-full-flow'
 state_snapshots = state_contract or state_flow
@@ -316,7 +324,7 @@ here = pathlib.Path(__file__).resolve().parent
 if peer_engines:
     peer_arg = 3 if full_end_contract or peer_bootstrap else 4
     for directory, script in ((pathlib.Path(sys.argv[peer_arg]), here/'run_pioneer_q38_mixed_worker_tests.py'),
-                              (pathlib.Path(sys.argv[peer_arg+1]), here.parent/'build_qwen38_token_matrix_phase_worker.py' if matrix_phase else here.parent/'build_qwen38_q4_constant_issue_worker_image.py' if constant_q4 else here.parent/'build_qwen38_wide_gdn_worker_image.py' if wide_gdn else here.parent/'build_qwen38_token_twin_batch_prefetch_worker.py' if twin_batch_prefetch else here.parent/'build_qwen38_token_batched_prefetch_worker.py' if batched_prefetch else here.parent/'build_qwen38_token_prefetch_worker.py' if prefetch_worker else here.parent/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here.parent/'build_qwen38_pushed_worker_image.py' if pushed_context else here/'run_pioneer_q38_precise_worker_tests.py' if precise_context else here.parent/'build_qwen38_global_worker_image.py')):
+                              (pathlib.Path(sys.argv[peer_arg+1]), here.parent/'build_qwen38_manual_ttsync_worker.py' if manual_ttsync else here.parent/'build_qwen38_token_matrix_phase_worker.py' if matrix_phase else here.parent/'build_qwen38_q4_constant_issue_worker_image.py' if constant_q4 else here.parent/'build_qwen38_wide_gdn_worker_image.py' if wide_gdn else here.parent/'build_qwen38_token_twin_batch_prefetch_worker.py' if twin_batch_prefetch else here.parent/'build_qwen38_token_batched_prefetch_worker.py' if batched_prefetch else here.parent/'build_qwen38_token_prefetch_worker.py' if prefetch_worker else here.parent/'build_qwen38_precise_beta_worker_image.py' if precise_beta else here.parent/'build_qwen38_pushed_worker_image.py' if pushed_context else here/'run_pioneer_q38_precise_worker_tests.py' if precise_context else here.parent/'build_qwen38_global_worker_image.py')):
         assert directory.is_absolute()
         tree = ast.parse(script.read_text())
         pins = next(ast.literal_eval(n.value) for n in tree.body if isinstance(n, ast.Assign) and any(isinstance(t, ast.Name) and t.id == 'PINS' for t in n.targets))
@@ -407,6 +415,10 @@ if matrix_phase:
     assert hashlib.sha256((here.parent/'PioneerQ38TokenMatrixPhasePrograms.h').read_bytes()).hexdigest()=='e42b21bd0a5c0f061f3bbbd2cb620e988d03f561b62fdf444624959ddb03ca09'
     defines.update(PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS='1',PIONEER_Q38_TOKEN_MATRIX_PHASE_NATIVE_CONTEXT='1',
                    PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_FIXTURE='1')
+if manual_ttsync:
+    assert hashlib.sha256((here.parent/'PioneerQ38TokenManualTTSyncPrograms.h').read_bytes()).hexdigest()=='eaaa4974db72e416f13b2bdd66a4eb5bcdf4d4243a27c990037eea022e009dd1'
+    defines.update(PIONEER_Q38_TOKEN_MANUAL_TTSYNC_PROGRAMS='1',PIONEER_Q38_TOKEN_MANUAL_TTSYNC_NATIVE_CONTEXT='1',
+                   PIONEER_Q38_TOKEN_NATIVE_MANUAL_TTSYNC_FIXTURE='1')
 if matrix_phase_read:
     defines.update(PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE='1',PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_READ_FIXTURE='1')
 if posted_cancel:
@@ -621,6 +633,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
             # ROOT code comes from the independently authenticated package.
             peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_PRECISE_BETA_TEST=1']
             if matrix_phase:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_MATRIX_PHASE_TEST=1']
+            if manual_ttsync:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_MANUAL_TTSYNC_TEST=1']
             if wide_gdn:
                 peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_WIDE_GDN_TEST=1','-DPIONEER_Q38_WIDE_GDN_RETURNING_WORKER_TEST=1']
             if twin_batch_prefetch:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_TWIN_BATCH_PREFETCH_TEST=1']
@@ -628,7 +641,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-init-', dir='/priv
             elif prefetch_worker:peer_flags += ['-DPIONEER_Q38_NATIVE_PEER_PREFETCH_TEST=1']
             rom_object=base/'precise-beta-expected-rom-data.o'
             subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
-                            '-fsanitize=address,undefined','-c',str(here/('pioneer_q38_token_matrix_phase_program_data_bridge.cpp' if matrix_phase else 'pioneer_q38_token_constant_q4_program_data_bridge.cpp' if constant_q4 else 'pioneer_q38_token_phase_profile_program_data_bridge.cpp' if token_phase_profile else 'pioneer_q38_wide_gdn_program_data_bridge.cpp' if wide_gdn else 'pioneer_q38_batched_output_closure_program_data_bridge.cpp' if output_closure else 'pioneer_q38_twin_batch_prefetch_program_data_bridge.cpp' if twin_batch_prefetch else 'pioneer_q38_batched_prefetch_program_data_bridge.cpp' if batched_prefetch else 'pioneer_q38_prefetch_program_data_bridge.cpp' if prefetch_worker else 'pioneer_q38_precise_beta_program_data_bridge.cpp')),
+                            '-fsanitize=address,undefined','-c',str(here/('pioneer_q38_token_manual_ttsync_program_data_bridge.cpp' if manual_ttsync else 'pioneer_q38_token_matrix_phase_program_data_bridge.cpp' if matrix_phase else 'pioneer_q38_token_constant_q4_program_data_bridge.cpp' if constant_q4 else 'pioneer_q38_token_phase_profile_program_data_bridge.cpp' if token_phase_profile else 'pioneer_q38_wide_gdn_program_data_bridge.cpp' if wide_gdn else 'pioneer_q38_batched_output_closure_program_data_bridge.cpp' if output_closure else 'pioneer_q38_twin_batch_prefetch_program_data_bridge.cpp' if twin_batch_prefetch else 'pioneer_q38_batched_prefetch_program_data_bridge.cpp' if batched_prefetch else 'pioneer_q38_prefetch_program_data_bridge.cpp' if prefetch_worker else 'pioneer_q38_precise_beta_program_data_bridge.cpp')),
                             '-o',str(rom_object)],check=True)
             extra += [str(rom_object)] # DATA TU has NO inherited tensor-Work/native/CPU-oracle roles
         subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',

@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38TokenManualTTSyncDataBoundary.h"
 // Rechecked every inclusion. Complete immutable program DATA,not metrics,
 // shader BUILD,CPU validation,USER/Work selection or a completion receipt.
 #ifndef PIONEER_Q38_TOKEN_MATRIX_PHASE_DATA_SELECTION_H

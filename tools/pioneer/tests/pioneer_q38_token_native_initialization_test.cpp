@@ -21,6 +21,9 @@
 #error Corrected output package requires its own complete native TEST binding
 #endif
 #include "pioneer_q38_token_native_fixture_common.h"
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MANUAL_TTSYNC_FIXTURE
+#include "pioneer_q38_token_native_manual_ttsync_role.h"
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_MATRIX_PHASE_FIXTURE
 #include "pioneer_q38_token_native_matrix_phase_role.h"
 #endif
@@ -189,6 +192,17 @@ struct PioneerSessionIO:TokenNativeEndpoints {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_HELD_FIXTURE
  unsigned preparationFault=0,preparationFaultSeen=0,preparationFaultTouches=0,preparationMapWrites=0,preparationPanelWrites=0;
  unsigned preparationAuditContracts=0;uint64 preparationAuditLastKey=0;
+#ifdef PIONEER_Q38_TOKEN_NATIVE_MANUAL_TTSYNC_FIXTURE
+ uint32 manualOverrideFault=0;
+ unsigned manualOverrideFaultSeen=0,manualOverrideFaultTouches=0;
+ uint32 RuntimeControlRead(unsigned word){
+  const uint32 actual=TokenHeldEndpoints::RuntimeControlRead(word);
+  if(word==2 && !runtimeCore && manualOverrideFault){
+   manualOverrideFaultSeen++;manualOverrideFaultTouches=touches;return actual^manualOverrideFault;
+  }
+  return actual;
+ }
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_BACKEND_FIXTURE
  void BackendResetEndpoints(uint32);
 #endif

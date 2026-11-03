@@ -78,6 +78,25 @@ using NativePeerBase=NativePrefetchPeer<GlobalChainPeer>;
 using NativePeerBase=GlobalChainPeer;
 #endif
 struct NativePeer:NativePeerBase,CohortBytes {
+#ifdef PIONEER_Q38_NATIVE_PEER_MANUAL_TTSYNC_TEST
+#if PIONEER_Q38_NATIVE_PEER_MANUAL_TTSYNC_TEST != 1 || !defined(PIONEER_Q38_NATIVE_PEER_WIDE_GDN_TEST) \
+ || !defined(PIONEER_Q38_NATIVE_PEER_TWIN_BATCH_PREFETCH_TEST) || defined(PIONEER_Q38_NATIVE_PEER_MATRIX_PHASE_TEST)
+#error Manual completion HOST endpoint requires its complete distinct returning worker
+#endif
+ bool manualOrdered=false;
+ unsigned manualStores=0,manualLoads=0;
+ void CompleteManualBackend(){
+  assert(manualOrdered && !backendWait && !recordRemaining);
+  if(rawPending)CompleteRawUnpack();
+  if(!phaseQueue.empty()){
+   auto batch=phaseQueue;phaseQueue.clear();assert(!executingPhases);executingPhases=true;
+   for(auto word:batch)Instruction(word);executingPhases=false;
+  }
+  for(const auto& cell:pendingAccumulator)StoreFloatDst(cell.first.first,cell.first.second,cell.second);
+  committedStores+=unsigned(pendingAccumulator.size());pendingAccumulator.clear();
+  drained=true;drains++;manualOrdered=false;manualLoads++;
+ } // Existing independent arithmetic retirement,NOT fake ACK words or supplied output.
+#endif
 #ifdef PIONEER_Q38_NATIVE_PEER_MATRIX_PHASE_TEST
 #if PIONEER_Q38_NATIVE_PEER_MATRIX_PHASE_TEST != 1 || !defined(PIONEER_Q38_NATIVE_PEER_WIDE_GDN_TEST)
 #error Separate current sampler HOST clock requires complete returning wide-GDN peer
@@ -150,6 +169,12 @@ struct NativePeer:NativePeerBase,CohortBytes {
  } // actual event DELTAS/explicit writes ONLY;NEVER overwrite an unrelated physical CSR fault
  uint32_t Load(uint32_t address)override{
   deviceReads++;
+#ifdef PIONEER_Q38_NATIVE_PEER_MANUAL_TTSYNC_TEST
+  if(address==0xffe80004){
+   assert(pc==0x7200c && manualOrdered && manualStores==manualLoads+1);
+   CompleteManualBackend();return 0xdeadbeef; // documented undefined bits,not an ACK
+  }
+#endif
   if(CodeAddress(address))return binding.Word(address);
   if(Range(address,0xffb20000,0x2000))for(unsigned i=0;i<16;i++)if(address-0xffb20000==BlackholeDramSourceOffset(i))
    return binding.bytes.noc(binding.bytes.context,logicalWorker,address-0xffb20000);
@@ -158,6 +183,12 @@ struct NativePeer:NativePeerBase,CohortBytes {
   return Range(address,0xffb20000,0x2000)?binding.bytes.noc(binding.bytes.context,logicalWorker,address-0xffb20000):value;
  }
  void Store(uint32_t address,uint32_t value)override{
+#ifdef PIONEER_Q38_NATIVE_PEER_MANUAL_TTSYNC_TEST
+  if(address==0xffe80004){
+   assert(pc==0x72008 && !value && !manualOrdered && manualStores==manualLoads);
+   manualOrdered=true;manualStores++;deviceWrites++;return;
+  }
+#endif
 #ifdef PIONEER_Q38_NATIVE_PEER_MATRIX_PHASE_TEST
   if(Range(address,0x84500,64)){
    // Raw writes ONLY from the exact frozen sampler publisher. Preserve

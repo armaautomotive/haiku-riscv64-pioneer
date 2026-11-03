@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // Immutable DATA access only, not native initialization or model execution.
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_MANUAL_TTSYNC
+#define PIONEER_Q38_PROGRAM_DATA_TEST_CONSTANT_Q4 1
+#endif
 #ifdef PIONEER_Q38_PROGRAM_DATA_TEST_MATRIX_PHASE
 #define PIONEER_Q38_PROGRAM_DATA_TEST_CONSTANT_Q4 1
 #endif
@@ -28,7 +31,9 @@
 #include <iterator>
 #include <string>
 #include <vector>
-#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_MATRIX_PHASE
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_MANUAL_TTSYNC
+namespace P=PioneerQ38TokenManualTTSyncPrograms;
+#elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_MATRIX_PHASE)
 namespace P=PioneerQ38TokenMatrixPhasePrograms;
 #elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_CONSTANT_Q4)
 namespace P=PioneerQ38TokenConstantQ4Programs;
@@ -135,7 +140,11 @@ int main(int argc,char** argv){
  assert(P::WideGdn==1 && P::WideGdnDeltaAddress==0x8e600 && P::WideGdnDeltaWords==64 && P::WideGdnImports==13);
 #ifdef PIONEER_Q38_PROGRAM_DATA_TEST_CONSTANT_Q4
  assert(P::ConstantQ4Issue==1 && P::ConstantQ4WorkerRevision==1);
-#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_MATRIX_PHASE
+#ifdef PIONEER_Q38_PROGRAM_DATA_TEST_MANUAL_TTSYNC
+ assert(P::ManualTTSync==1 && P::ManualTTSyncRevision==1
+  && P::ManualTTSyncOverrideClearRequired==1 && P::ManualTTSyncLocalTimeout==0);
+ assert(sizeof(P::PeerGdn)==35944 && P::CodeWords(0)==40902 && P::CodeWords(1)==25790 && allWords==3109912);
+#elif defined(PIONEER_Q38_PROGRAM_DATA_TEST_MATRIX_PHASE)
  assert(P::MatrixPhase==1 && P::MatrixPhaseVersion==2 && P::MatrixPhaseAddress==0x84500 && P::MatrixPhaseWords==16);
  assert(sizeof(P::PeerGdn)==35944 && P::CodeWords(0)==40902 && P::CodeWords(1)==26229 && allWords==3162153);
 #else

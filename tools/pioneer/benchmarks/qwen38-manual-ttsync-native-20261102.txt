@@ -1,0 +1,206 @@
+Manual-TTSync guarded diagnostic integration: offboard closure,NOT deployed
+========================================================================
+2026-11-02 local/November3 UTC. Goal ACTIVE. Accepted usable Qwen27B Work
+and20tok/s remain UNMET. No new physical inference or speedup is claimed.
+No Pioneer SSH/driver/power/reset/Assistant/boot/network/CPU/RAM/SD/hardware
+operation has been performed in this native-integration investigation.
+
+Separate complete code package and genuine native guards
+--------------------------------------------------------
+The independently executed4526cb71 complete returning worker now has a
+separate14-section immutable DATA namespace with the unchanged91f389 ROOT.
+Only PeerFetch/PeerAffine/PeerText differ from constant-Q4 control;the other
+11 arrays and2MiB RoPE are whole-byte-identical. Source formats,weights,
+arithmetic and original53,913,832-byte journal geometry are unchanged.
+The DATA generator authenticates all sections and BOTH complete ELFs before
+creating a new output. All120 mappings cover3,109,912 actual code words.
+No native or Work permission follows from a DATA header or numeric tag.
+
+The original native preparation already requires all3 real control words
+to be zero before writing the worker image. This NEW native subject also
+rechecks actual RuntimeControlRead(2),offset0x90 in the selected control
+page,inside SelectedSources,held pre-ARM/release Guard and ROOT-traffic
+Guard. Scope/mapping/reset checks precede it;the FIRST nonzero word refuses
+without following source/counter/PCI accesses. All32 bits must be zero,
+not just a caller-supplied ready value or speculative PC. Existing failure
+paths quarantine and retain uncertain resources without retry or cleanup.
+The real blocking shader LOAD has NO local timeout. An external-owner
+watchdog/failure/STOP/HOLD/restoration proof is still a deployment gate.
+
+Distinct private/public program selection requires complete constant-Q4/
+timing parents. Zero,late,missing,old-array,shader,USER,CPU-reference and
+Work aliases are refused. The default selection stays OFF. No new Work or
+Assistant target is introduced. Old mode builders reproduce their original
+whole objects/modules before producing this new subject.
+
+Closed independent BUILD evidence
+---------------------------------
+Base:/private/tmp/pioneer-q38-manual-native-20261102.20fpwL
+ROOT6362 ACTUALLY0,whole91f389+all pinned ancestors reproduced.
+PRIVATE main63918/clean1664 BOTH ACTUALLY0;whole objects compare exact.
+PUBLIC main75892/clean45346 BOTH ACTUALLY0;whole public objects and linked
+modules compare exact. Every old5e2c PRIVATE/db03 PUBLIC and ancestor is
+reproduced FIRST. All14 new code arrays are authenticated in the actual
+native objects;10 inert renamed ABI bodies and the2MiB RoPE remain exact.
+
+Complete identities frozen AFTER independent agreement:
+ DATA eaaa4974db72e416f13b2bdd66a4eb5bcdf4d4243a27c990037eea022e009dd1
+ PRIVATE0925bb1287c704b4c8841d6f2b7379dade76d258e852987b07526b1ab168e2c2
+ PUBLIC 92c113f4b10e9a93ef29157bbac54ad697d0a8f3dcc2aa60df0be3115b2d2168
+ MODULE c01f1cda7549ef3b191454ab6c21d697de143f3f11fcc5c9da48c81dd37c1736
+Module name:tenstorrent_pci_probe-TOKEN-MANUAL-TTSYNC-34-DIAGNOSTIC-ONLY.
+The inherited diagnostic tag is NOT identity or permission to use an old
+exchange helper. A fresh exact whole-module/client/helper deployment proof
+is mandatory. These BUILD results do NOT grant installation or execution.
+Partial actual public graph:5392B known module chain,25 unresolved edges,
+wholeKernelStackQualified=FALSE. No whole-kernel/IRQ/indirect stack claim.
+
+The initial clean PRIVATE attempt ACTUALLY1 because its archive omitted
+kernel headers (vm/vm.h missing). Adding tracked headers/config headers to
+that clean source tree fixes the environment;the new independent attempt
+is the1664 ACTUALLY0 above. No source requirement or compiler check was
+weakened. Initial failure stdout/stderr are retained with the successes.
+
+Closed DATA and production-role checks
+--------------------------------------
+Initial main8084/clean17264 PRIVATE suites ACTUALLY0,whole stdout exact,
+stderr0. Initial main86033/clean87202 PUBLIC suites ACTUALLY0,whole stdout
+exact,stderr0. Each regenerates the entire frozen header,compares all120
+code maps and3010 invalid/gap/runtime/output-alias refusals,then refuses
+all32 corrupted/truncated artifacts and3 wrong code families.
+Native positive macros are derived by preprocessing the ACTUAL SDK compile
+subject with its emitted argv,not guessed HOST substitute roles.5 syntax
+positives/90 production-only refusals pass,including the old constant-Q4
+selection remaining valid. The final version additionally authenticates the
+whole frozen object and refuses the new USER-role flag. Final PRIVATE
+main24869/clean15997 and PUBLIC main12110/clean19796 ALL ACTUALLY0:
+5 syntax positives/94 production refusals each;whole per-mode stdout matches
+and all stderr0. This supersedes the initial90-case boundary count above.
+These are compile/data perimeters,NOT native execution/lifecycle proof.
+
+Separate USER client,not Assistant Work
+--------------------------------------
+Independent inspect USER builds94549/86834 ACTUALLY0,whole objects/clients
+compare exact after ALL old3edc constant-Q4/phase/USER controls reproduce.
+ USERobj e73dbf7df8328c87abaea3689d0e2eea5f588f25e8dd413c07f235c6041a39e7
+ USERbin aaffcaa125a02d1629dc49055d45d26af28f3187049dda631a8b5a272a9c165a
+Client name:pioneer-q38-TOKEN-MANUAL-TTSYNC-34-DIAGNOSTIC-ONLY
+Own mandatory entry:--benchmark-manual-ttsync-34-positions
+Source-only entry:--preflight-source-only
+Older run spellings are NOT accepted by the new parser. Host labels are
+explicitly NOT module provenance. The original851 uploader,one held timing
+read,normal Finish+Close and post-END raw packet publication are retained.
+No runtime CPU model-reference or Work/native/MOCK engine is linked.
+Maximum individual USER frame4432B;formatter graph only,not wholeUSER stack.
+Final frozen non-inspect USER builders97918/73000 BOTH ACTUALLY0/stderr0.
+The final current-source recheck80565 ACTUALLY0 recompiles BOTH private and
+public objects from their actual compiler argv and relinks BOTH modules:
+all four whole objects and both linked modules match the frozen identities.
+That recheck does not itself rerun ancestor or lifecycle tests.
+
+USER session main26122/clean1119 BOTH ACTUALLY0,whole stdout exact/stderr0:
+ALL unchanged parent controls FIRST,original synthetic851 uploader/34records,
+all100 COW packet/transport/END/Close/clock failure branches and own CLI.
+This is synthetic transport/session evidence,not original-model execution.
+Final USER role suites main62568/clean37897 BOTH ACTUALLY0,whole stdout
+exact/stderr0:4 positives/206 production refusals plus all old report91,
+phase148 and constant177 controls. Initial R1 role suites ACTUALLY1 exposed
+a missing report-parent binding;the production role was fixed. R2 ACTUALLY1
+misclassified default-OFF at a bare role boundary as an expected refusal;
+the NEW test now checks omission at the actual dedicated production CLI
+entry instead. Default/legacy OFF remains valid;no test-only assertion or
+original expectation was changed to manufacture a refusal. R3 closes0.
+
+CLOSED original-model native instruction tests:limited acceptance
+----------------------------------------------------------------
+Main95956 and clean17379 BOTH ACTUALLY exit0,observed November3 00:20..24UTC.
+Their COMPLETE82-line stdout streams match byte-for-byte;stderr0 for both.
+They are
+HOST native-controller/ISA tests with simulated OS/MMIO/NoC/GDDR endpoints,
+NOT Pioneer operations or physical timings. No second physical job exists.
+They select/authenticate the complete new ROM and the original same-open
+GGUF/all851 tensors,execute1010 actual zero jobs and119 virgin workers,
+and continue through the ORIGINAL first-layer/cancel/STOP/HOLD/drain/full-END
+history. A separate HOST endpoint implements the documented manual STORE/
+LOAD completion semantics using existing independent UNPACK,matrix and
+deferred-STORE arithmetic primitives,not supplied numerical outputs or
+fabricated ACK instructions. Actual installed L1 words are checked against
+the independently authenticated expected-ROM TU before every instruction.
+
+Both execute the actual first matrix then COMPLETE original first layer,
+including real Conv/GDN/FFN worker instructions and recurrent/history writes:
+ROOT90,294,554 instructions,workers1,872,123,136 instructions before prefix.
+Each then closes all33 override-register-loss forks:each single-bit word
+andffffffff refuses at its FIRST actual scoped frontier read,quarantining
+and retaining all owners with no later IO/reset/retry/cleanup/release.
+The unchanged parent consumes the genuine cancel request,all119 actual STOP,
+ROOT+119 HOLD,zero-record drain,held hidden reads and original complete
+hardware/clock/VM/PCI/host/reservation teardown. Final ROOT168,636,983 and
+peer1,873,856,639 instruction counts are emulation history,NOT performance.
+Actual combined accelerator frames:ROOT6528B/accessed6516,maximum peer5360B/
+accessed5348,each within its own8192B reserve. This is NOT kernel-stack proof.
+
+After actual terminal,unchanged main+clean CPU readers BOTH ACTUALLY0:
+all3 original CPU trace SHA pins authenticate;5120 embedding and5120 first-
+layer output words match bit-for-bit,zero tolerance. Both raw prefixes match
+each other;they are not committed. These checks do not qualify later layers,
+full vocabulary,arbitrary requests,multitoken quality or physical performance.
+
+Initial native command ACTUALLY1: duplicate distinct ROOT switches refused
+before source/compiler/output. Removed the redundant counter-gather option;
+the existing flat-root option already supplies that same captured-byte
+endpoint. R2 ACTUALLY1 during HOST compilation:missing fork/_exit declarations
+and an attempted private runtime-pointer observation. The NEW test now
+includes unistd and checks the actual publicly visible context+dispatch
+owner and original retention assertions;no production privacy was widened.
+R3 and the independent clean run now close0;initial failures stay failures.
+
+New exact exchange helper and strict posthoc reader
+--------------------------------------------------
+The separate c01/aaff<->041 helper requires all whole module/client/admin/
+guard identities in both directions,an idle owner,generation-bound wait,
+safe stage/file identities and atomic replacement. It performs NO GPU job,
+reset,retry or uncertain automatic rollback. Main87133/clean30849 BOTH
+ACTUALLY0,stderr0,after all unchanged old exchange controls FIRST. Each
+executes2 valid/94 refused OWN c01/aaff endpoints in both directions,with
+every metadata field,foreign/private/object/old-client substitution,client
+file identity/loss and quiesce race,live parent and uncertain wait failure.
+The actual production helper is32114b2ad5139df0dab8a238c1f3c885033c7fc8b34428ebaffaab3982db04cd.
+Raw paths differ between runs;both complete per-case histories are retained.
+These are synthetic FS/API endpoints,NOT actual installation or a deployment
+grant from a source path,hash or inherited numeric tag.
+
+Main13441/clean38430 strict-reader suites BOTH ACTUALLY0,whole stdout exact,
+stderr0. Every unchanged old comparator runs first,then386 equivalent parent
+decisions (2 accepted/384 refused),7 label refusals and nonempty stderr.
+Only the exact first HOST label is removed from a PRIVATE snapshot. The
+original phase/frontier/CPU/numerical validators remain unchanged. A replay
+of OLD constant-Q4 hardware DATA with ONLY its HOST label mechanically
+changed is explicitly SYNTHETIC,NOT a manual-worker physical run. MainR2
+and clean BOTH ACTUALLY1 with whole identical stdout:the original position0
+one-FP32-LSB rejection remains,first3 greedy IDs match. Initial main replay
+ACTUALLY2 because its stderr path was relative;using the required absolute
+path fixes invocation only,not the numerical decision. Raw OLD log unchanged.
+
+Outstanding before any physical test
+-------------------------------------
+Native first-layer/override/cancel/full-END,CPU-prefix,source/build/USER/DATA
+and exact exchange endpoint gates above are closed. The blocking
+LOAD still has no local timeout:the COMBINED native-owner external-watchdog/
+lost-completion quarantine contract needs explicit qualification before a
+physical launch;the standalone shader's lost-completion tests alone are not
+that native coupling proof. Old helpers cannot own this subject.
+Independently verify physical idle/
+generation/whole-object identities before any single controlled deployment.
+Then measure original-model inference against a matching fixed control and
+restore stable041. No small leaf,interpreter step count,host label or larger
+number of passing tests is a measured physical speedup.
+
+Unchanged last physical evidence
+--------------------------------
+Latest closed instrumented diagnostic0.158413730..0.158416372tok/s,strict
+numeric failure of one FP32 LSB at position0;not accepted usable Work.
+Earlier constant-Q4 diagnostic0.162531789..0.162534566tok/s is not a new
+paired control for this candidate. Last independent Pioneer health/restore
+verification22:39:19UTC November2:stable041/gen12/idle,64CPUs/full137034936320B
+RAM. No fresh physical health certification is made by these offboard tests.
