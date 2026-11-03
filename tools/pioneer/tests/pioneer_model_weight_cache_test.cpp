@@ -141,6 +141,13 @@ int main(int argc,char** argv) {
 		assert(reopened.GetOrCreate(key,sourceReady,produce,r,hit,error) && hit && produced==before);Exact(r,original);
 	}
 	{
+		Cache::Reader r;const unsigned before=produced;
+		assert(cache.OpenExisting(key,sourceReady,r,error) && produced==before);Exact(r,original);
+		auto absent=key;absent.entry=999;Cache::Reader missing;
+		assert(!cache.OpenExisting(absent,sourceReady,missing,error) && !missing.IsOpen() && !Staging(directory));
+		ready=false;Cache::Reader revoked;assert(!cache.OpenExisting(key,sourceReady,revoked,error));ready=true;cases++;
+	}
+	{
 		const std::string originalPath=base+"/original-fixture";
 		int fd=open(originalPath.c_str(),O_RDWR|O_CREAT|O_EXCL,0600);assert(fd>=0);
 		assert(write(fd,original.data(),original.size())==ssize_t(original.size()) && lseek(fd,123,SEEK_SET)==123);

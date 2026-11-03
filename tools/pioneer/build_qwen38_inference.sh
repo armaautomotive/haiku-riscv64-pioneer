@@ -279,6 +279,14 @@ case "${PIONEER_Q38_ASSISTANT_WORKER:-0}" in
     worker_libraries=-lnetwork;;
  *) exit 2;;
 esac
+case "${PIONEER_Q38_LOSSLESS_WEIGHT_CACHE:-0}" in
+ 0) ;;
+ 1) [ "${PIONEER_Q38_ASSISTANT_WORKER:-0}:${PIONEER_Q38_EXECUTION_MODE:-checked}:${PIONEER_Q38_NATIVE_Q8_LAYOUT:-0}" = 1:work:0 ] || exit 2
+    lossless_fingerprint=$(python3 "$project/tools/pioneer/qwen38_lossless_cache_recipe.py")
+    [ "${#lossless_fingerprint}" = 64 ] || exit 2
+    extra="$extra -DPIONEER_Q38_LOSSLESS_WEIGHT_CACHE -DPIONEER_Q38_LOSSLESS_CONVERSION_SHA256=\"$lossless_fingerprint\"";;
+ *) exit 2;;
+esac
 case "${PIONEER_Q38_FFN_REPEAT_BENCH:-0}" in
  0) ;;
  1) [ "${PIONEER_Q38_EXECUTION_MODE:-checked}:${PIONEER_Q38_SPAN_PRELOAD:-0}:${PIONEER_Q38_SPAN_FAST:-0}:${PIONEER_Q38_CPU_POOL_PROBE:-0}:${PIONEER_Q38_ASSISTANT_WORKER:-0}" = work:1:1:0:0 ] || exit 2
@@ -334,6 +342,11 @@ cxx=$build/cross-tools-riscv64/bin/riscv64-unknown-haiku-g++
 set -- -I"$sdk/headers" -idirafter "$sdk/headers/posix"
 for include in "$sdk/headers/os" "$sdk"/headers/os/*; do [ ! -d "$include" ] || set -- "$@" -isystem "$include"; done
 for library in "$build"/build_packages/gcc_syslibs-*/lib; do set -- "$@" -L"$library"; done
+if [ "${PIONEER_Q38_LOSSLESS_WEIGHT_CACHE:-0}" = 1 ]; then
+ set -- "$@" -I"$project/headers/private/shared" -I"$project/headers/private/libroot" \
+  "$project/tools/pioneer/PioneerModelWeightCache.cpp"
+ worker_libraries="$worker_libraries $release/kits/shared/libshared.a -L$release/kits -lbe"
+fi
 case "${PIONEER_Q38_CPU_POOL_PROBE:-0}" in
  0) program=$project/tools/pioneer/pioneer_q38_inference.cpp
     [ "${PIONEER_Q38_ASSISTANT_WORKER:-0}" = 0 ] || program=$project/tools/pioneer/pioneer_assistant_qwen27.cpp

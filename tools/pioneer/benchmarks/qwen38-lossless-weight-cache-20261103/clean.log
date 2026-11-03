@@ -1,0 +1,7 @@
+CLOSED local command exit0; matching stderr0 bytes. CPU/offboard only.
+CONVERSION_SOURCE_SHA256 bb0e60700ff8345b8ea493c7c8e178c5400c3141969cb61ea74693139721d25a
+BINARY_SHA256 0de32327cc32e08f6dfa6787ef23d621d8b49b979ff8ee94d4a127e41e491fd6
+CONVERSION_SOURCE_SHA256 bb0e60700ff8345b8ea493c7c8e178c5400c3141969cb61ea74693139721d25a
+BINARY_SHA256 c2429b578a7242b70fd5f99596e9c925db242756a1bd471db14b58436865106c
+PASS lossless weight-cache adapter:61 checks,27247 exact upload pages,4 fragment tails;4 formats;fresh/hit ZERO warm conversion;no GPU/no requantization/no speed claim
+CPU-only lossless weight-cache fixture retained: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q38-lossless-weight-cache.5ztAejsr

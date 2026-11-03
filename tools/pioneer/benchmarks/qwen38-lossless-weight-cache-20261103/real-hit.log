@@ -1,0 +1,5 @@
+CLOSED local command exit0; matching stderr0 bytes. CPU/offboard only.
+AUTHENTICATING_SAME_OPEN_ORIGINAL_GGUF;CPU_ONLY_LOSSLESS_DISK_CACHE
+VERIFYING tensor11 276480/276480
+CACHE_HIT_VERIFIED_NO_CONVERSION tensor11 blk.0.ssm_alpha.weight bytes276480 conversion_pages0
+PASS_LOSSLESS_WEIGHT_DISK_CACHE entries1 hits1 conversion_pages0 bytes276480 checked_upload_pages0 recipe_sha256124bb237d82846fddb29c91016e3aafb41158fbb48f3f76f5d0275f97909e8ef;NO_GPU_NO_REQUANTIZATION_NO_SPEED_CLAIM

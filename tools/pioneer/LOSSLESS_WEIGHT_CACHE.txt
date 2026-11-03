@@ -1,0 +1,81 @@
+Qwen27B lossless loader disk cache
+=================================
+
+This cache persists the byte-major tiled WEIGHTS used by the existing Qwen27B
+Work loader. Original Q4_K/Q6_K/Q8_0 quantization bytes remain unchanged;
+float32 weight tensors are copied unchanged. No native BFP requantization,
+CPU learned products, activations, KV cache or recurrent state are stored.
+It is a separate recipe from the experimental NATIVE_WEIGHT_CACHE.txt path.
+
+Implementation
+--------------
+PioneerQ38LosslessWeightCache.h prepares one atomic entry per tensor using
+the existing PioneerQwen38TiledReader permutation. Keys bind the authenticated
+original SHA, tensor ordinal, payload length and complete conversion-source
+fingerprint. The shared PioneerModelWeightCache supplies private marked
+directories, SHA-256 payload/chunk verification, atomic publication, safe
+file-type/ownership/permission checks and 2GiB disk headroom. No eviction or
+deletion of unrelated files is performed. Original GGUF files are read-only.
+
+Preparation finishes BEFORE an accelerator is opened. The upload reader
+uses OpenExisting, never GetOrCreate: missing/corrupt entries cannot trigger
+conversion, repair or disk publication during an accelerator session.
+Only one entry FD and one64KiB verified snapshot are retained; changing a
+cached file revokes even buffered pages. Source identity/epoch is checked
+throughout. Every fragment's final-page padding remains zero, including Q6
+fragments that start/end inside a64KiB cache chunk. Cache bytes do not confer
+device, allocation, bank-address, execution or numerical-validation authority.
+
+CPU preparation utility
+-----------------------
+Build in a fresh absolute output directory:
+  python3 tools/pioneer/build_qwen38_lossless_weight_cache.py /absolute/new-build
+For RISC-V Haiku add:
+  --haiku-build /Volumes/HaikuBuildLocal/generated.riscv64
+
+Bounded preparation/reuse smoke test:
+  pioneer-q38-lossless-weight-cache --build ORIGINAL_GGUF NEW_CACHE_DIR \
+    --tensor blk.0.ssm_alpha.weight
+
+Omit --tensor to prepare all851 tensors. Add --check-upload-pages to compare
+the first/middle/last page of each selected bank fragment with fresh original
+preparation. This explicit diagnostic does extra fresh conversion; omit it
+when checking the warm-path conversion count. The original exact19GB model
+is fully authenticated on the SAME open FD before any cache entry is used:
+  c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+Cache hits still read/hash the original and validate cached files. Do not
+interpret zero conversion as zero disk I/O or as a measured loading speedup.
+
+Optional Assistant loader build (not default / not installed)
+------------------------------------------------------------
+  PIONEER_Q38_LOSSLESS_WEIGHT_CACHE=1 sh tools/pioneer/build_assistant_qwen27.sh \
+    HAIKU_BUILD FROZEN_LLAMA_LIBRARY_DIRECTORY NEW_ABSOLUTE_WORKER_PATH
+
+The ordinary flag-off build remains unchanged. The optional source prepares
+all tensors with progress messages before even the metadata-only accelerator
+capability query. It reads from /boot/home/models/.p100a-lossless-weights-v1.
+Authentication or cache failure rejects the load; there is no silent fallback
+to uncached upload or CPU inference. SM7/native-Q8 and CPU-validation builds
+cannot select this cache option. The existing Work kernels/driver, no-runtime-
+CPU-reference policy and all inference comparators remain unchanged.
+
+This checkpoint has NOT replaced the running Assistant or driver. Native
+SDK worker objects compile in both flag-on and flag-off configurations; a
+complete linked-worker/Pioneer full-model loading and inference trial remains
+required before deployment. There is no new tokens/sec or startup-speed claim.
+Caching avoids repeated host layout conversion; model bytes still traverse
+PCIe on a cold GPU load, and this does not remove decoding inside old kernels.
+
+Tests
+-----
+  sh tools/pioneer/tests/run_pioneer_q38_lossless_weight_cache_tests.sh
+  sh tools/pioneer/tests/run_pioneer_model_weight_cache_tests.sh
+  sh tools/pioneer/tests/run_pioneer_q38_public_source_tests.sh
+  sh tools/pioneer/tests/run_assistant_qwen27_tests.sh
+
+The lossless fixture is an explicitly SYNTHETIC sparse851-tensor GGUF, not
+authentication evidence. ASan/UBSan/Werror checks four storage formats,
+all27247 upload pages for four selected tensors, unaligned Q6 fragment tails,
+separate-owner hits with zero conversion, missing/corrupt read-only refusal,
+buffered-data revocation, invalid plans/pages and source-epoch cancellation.
+The real-model CPU utility additionally enforces full source SHA authentication.

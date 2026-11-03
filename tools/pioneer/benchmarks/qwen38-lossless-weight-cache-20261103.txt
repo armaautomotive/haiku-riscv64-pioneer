@@ -1,0 +1,105 @@
+Qwen27B lossless converted-weight disk cache -- 2026-11-03
+=======================================================
+
+RESULT: implemented CPU preparation + read-only cached upload source for the
+EXISTING byte-major tiled weights. Full real-model Mac preparation851/851
+and separate-invocation reuse851/851 pass; warm conversion_pages0.
+No driver, GPU, Pioneer power/network, running Assistant or boot change.
+No measured Pioneer startup or inference-speed improvement is claimed.
+Optional Assistant loader is SDK-object compiled, NOT linked/deployed/tested
+as a full native runtime. Full native BFP/complete on-card Work remains unmet.
+
+Implementation
+--------------
+PioneerQ38LosslessWeightCache.h: original Q4_K/Q6_K/Q8_0 bytes permuted by
+existing TiledReader; F32 tensors copied unchanged. No requantization. Cache
+keys bind full authenticated original SHA, tensor ordinal/length and complete
+conversion source SHA. Read-only OpenExisting added to generic weight cache;
+upload cannot create/repair/convert entries. One entry reader and64KiB snapshot
+bound FDs/RAM. Source identity/epoch and cached-file identity revoke buffered
+data; zero final-page padding agrees even for unaligned Q6 fragment offsets.
+
+PioneerQ38CachedPublicModelSource.h + opt-in worker/build flag:
+PIONEER_Q38_LOSSLESS_WEIGHT_CACHE=1. All851 entries prepared before accelerator
+capability FD is opened; base source still authenticates the full SAME open
+GGUF. Progress is sent to the existing Models loading display. Lost worker
+channel cancels preparation through the bound readiness callback. Cache/source
+failure rejects load, with no uncached/CPU fallback. Default worker flagOFF;
+SM7/native-Q8 and CPU-validation combinations refused. Existing Work kernels,
+driver, learned comparators and numerical tolerances untouched.
+
+See tools/pioneer/LOSSLESS_WEIGHT_CACHE.txt for commands and boundaries.
+Experimental native BFP cache is a DIFFERENT recipe, not selected by this
+source. No cached bytes grant device execution/address/format authority.
+
+Closed real-model CPU evidence
+-----------------------------
+Base: /private/tmp/pioneer-lossless-cache-20261103.0sTCOkzF
+Original: generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf
+18973870528B/full SHA:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+Conversion-source SHA:
+bb0e60700ff8345b8ea493c7c8e178c5400c3141969cb61ea74693139721d25a
+Conversion-recipe SHA:
+124bb237d82846fddb29c91016e3aafb41158fbb48f3f76f5d0275f97909e8ef
+Mac command SHA27597206ba0286d47539ea08bb0d7c12c80e4f8b58b12687e9f675070f668f61
+Haiku cross-built command SHA901f160aec54d227b3760320974cf86e0c0f71c134491745a556360d9cdedb59
+
+Small tensor11 blk.0.ssm_alpha.weight,276480B: tool session1862 exit0/stderr0,
+68 conversion pages;3 first/mid/last upload pages exactly match fresh original.
+Separate tool session19018 exit0/stderr0:1 verified hit,0 conversion pages.
+
+Full tool session23368 exit0/stderr0:851 entries,1 prior smoke-test hit,
+4735891 conversion pages,19397646336 payload bytes.10653 first/mid/last
+bank-fragment upload pages match fresh original bytes exactly. This is a
+CPU loader/layout test, not physical upload, model generation or performance.
+Separate full tool session38619 exit0/stderr0:851 entries/851 verified hits,
+ZERO conversion pages,19397646336 bytes. No diagnostic fresh-conversion pass
+was requested on that warm invocation. Original full authentication and
+complete cache checksum verification still ran. Full raw log hashes and
+terminal records are in sibling directory/full-model-closed.log.
+
+The complete test cache is retained under Base/real-cache (~19.4GB payload
+plus checksum metadata). No source/user files were erased or overwritten.
+Not installed on the Pioneer. Existing experimental native-cache files on
+the Pioneer are untouched and incompatible by recipe with these files.
+
+Closed software/build evidence
+------------------------------
+ASan/UBSan/Werror main and clean lossless adapter:61 checks,27247 EXACT upload
+pages across F32/Q8/Q4/Q6 and4 partial fragment tails. Fresh then separate-owner
+hits have zero warm converter calls. Missing/corrupt entries are NOT repaired
+in upload phase; buffer revocation, source epoch, invalid plans/pages and
+output atomicity are tested. Sparse fixture SHA is explicitly not a real
+public-model authentication claim.
+Generic cache regression45 checks; native requantization adapter118 checks;
+same-open public-source regression and isolated Assistant channel/cancellation/
+clean-unload/fatal-no-retry regression all exit0/stderr0. These mock tests
+perform no device I/O. Sibling raw closed summaries retained.
+
+Fresh clean-source archive overlays only this cache's source/test files;
+no dirty llama.cpp, FlashNext or NATIVE_BUILD_STATUS inputs. Mac and Haiku
+clean command builds exit0/stderr0, same conversion-source fingerprint as
+main. Whole debug ELFs differ by absolute build/source paths; binary identity
+is NOT claimed. Clean adapter tests pass independently.
+
+Actual complete Assistant worker translation unit compiled with read-only
+Haiku SDK and pristine c060ca974c773c7c3d17fd1b66dc9d312bc292c0 headers,
+flagON and flagOFF, O2/Werror/no exceptions/no RTTI. Current object SHAs:
+cached7a94c7137e0d79d9c51339ed2b8af5af8b1bf4e0d5de613b1dc17f29c015c64e
+control23a1eaeaa55c60edb8402d3aaf927ef796f95c1100498a325fe0eec57f4d738b
+First scratch compile loop accidentally retained cached flags for its second
+object; that run is NOT flagOFF evidence. Corrected control-first loop was
+rerun, then rerun again after adding channel-loss readiness cancellation.
+Only current closed SDK log is cited. This was OBJECT compilation, not a
+full linked worker/native-library/Pioneer execution test.
+
+Remaining before live Assistant enablement
+-----------------------------------------
+Link optional worker with the four authenticated frozen libraries, test the
+complete preparation/channel failure path, prepare/reuse full cache on the
+Pioneer with disk headroom, then controlled actual upload/inference/clean-END
+comparison. Preserve the working worker until that passes. Benchmark cold
+preparation and warm load honestly: caching skips host permutation, not full
+authentication, cache verification, PCIe weight transfer or old GPU unpack.
+No change to20tok/s target status or accepted full-native Work status.

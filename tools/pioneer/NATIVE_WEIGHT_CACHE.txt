@@ -7,6 +7,11 @@ Persist converted model WEIGHTS so a later load can read them without doing
 the same conversion again. Activations, KV cache and recurrent inference
 state are not persistent immutable weights and are not stored here.
 
+For caching the EXISTING lossless byte-major Work loader without changing
+quantization, see LOSSLESS_WEIGHT_CACHE.txt. That is a separate recipe and
+optional Assistant source; these experimental native BFP entries are NOT
+interchangeable with it.
+
 Implemented components
 ----------------------
 PioneerModelWeightCache.{h,cpp}: generic authenticated derived-byte cache.

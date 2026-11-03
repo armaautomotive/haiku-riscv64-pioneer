@@ -52,6 +52,10 @@ public:
 	// leaves an older entry unchanged. Unsafe links/permissions refuse.
 	bool GetOrCreate(const Key&,const Ready&,const Produce&,Reader&,bool& hit,
 		std::string& error,const Progress& progress=Progress());
+	// Read-only phase for loaders AFTER preparation. Missing/corrupt entries
+	// fail; this method never converts, creates, repairs or publishes files.
+	bool OpenExisting(const Key&,const Ready&,Reader&,std::string& error,
+		const Progress& progress=Progress());
 	static Digest Hash(const void*,size_t);
 	// SAME open regular file;pread does not disturb the converter's FILE
 	// position. Caller checks this digest against its trusted model identity.

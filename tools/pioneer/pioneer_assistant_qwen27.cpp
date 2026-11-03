@@ -9,13 +9,24 @@
 #include "llama.h"
 #include <poll.h>
 #include <memory>
+#ifdef PIONEER_Q38_LOSSLESS_WEIGHT_CACHE
+#if !defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) || defined(PIONEER_Q38_CPU_VALIDATION) || !defined(PIONEER_Q38_LOSSLESS_CONVERSION_SHA256)
+#error Lossless disk-cache Assistant is an explicit existing-byte-layout Work build only
+#endif
+#include "PioneerQ38CachedPublicModelSource.h"
+using Assistant27Source=PioneerQ38CachedPublicModelSource;
+using Assistant27Session=PioneerQ38WorkSession<PioneerQ38NativeTransport,Assistant27Source>;
+#else
+using Assistant27Source=PioneerQ38PublicModelSource;
+using Assistant27Session=PioneerQ38NativeSession;
+#endif
 namespace A=Assistant27;
 static double Now() { timespec t={}; return clock_gettime(CLOCK_MONOTONIC,&t)?-1:double(t.tv_sec)+double(t.tv_nsec)*1e-9; }
 static void Log(ggml_log_level level,const char* text,void*) { if (level>=GGML_LOG_LEVEL_WARN) fputs(text,stderr); }
 struct Runtime {
- PioneerQ38PublicModelSource source;
+ Assistant27Source source;
  PioneerQ38NativeTransport io;
- PioneerQ38NativeSession session;
+ Assistant27Session session;
  llama_model* model=nullptr; llama_context* context=nullptr;
  A::PoolOwner<ggml_threadpool_t,ggml_threadpool_free> pools;
  A::Receiver receiver; uint32_t request=0; bool opened=false,cancelled=false,lost=false,configured=false;
@@ -56,6 +67,18 @@ struct Runtime {
  }
  bool Load(unsigned threads) {
   if (!threads || threads>64 || !Emit(A::Progress,UINT32_MAX,"Authenticating pinned19GB Qwen27B file (same file descriptor; no accelerator session yet).") || !source.Open()) return false;
+#ifdef PIONEER_Q38_LOSSLESS_WEIGHT_CACHE
+  std::string cacheError;
+  auto cacheProgress=[&](unsigned tensor,unsigned total,uint64_t done,uint64_t bytes,bool verifying) {
+   const double now=Now();if(now-lastProgress<.5 && done!=bytes)return;lastProgress=now;
+   char status[192];snprintf(status,sizeof(status),"%s lossless weight cache: tensor %u/%u, %.1f/%.1f MiB; no GPU session yet.",verifying?"Verifying":"Preparing",tensor+1,total,double(done)/1048576,double(bytes)/1048576);
+   Emit(A::Progress,UINT32_MAX,status);
+  };
+  if (!Emit(A::Progress,UINT32_MAX,"Preparing/reusing lossless disk-cached weights before accelerator access.")
+   || !source.PrepareWeightCache("/boot/home/models/.p100a-lossless-weights-v1",PIONEER_Q38_LOSSLESS_CONVERSION_SHA256,cacheError,cacheProgress,[this]{return !lost;}) || lost) {
+   fprintf(stderr,"Lossless disk cache refused: %s\n",cacheError.c_str());return false;
+  }
+#endif
   // Capability query is CPU metadata only; BEGIN is deferred until reply.
   int fd=io.Open(); if (fd<0) return false;
   PioneerQ38WorkSessionMode mode; bool supported=mode.Support(io,fd); if (io.Close(fd)) supported=false;

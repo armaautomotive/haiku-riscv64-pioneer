@@ -239,3 +239,12 @@ bool PioneerModelWeightCache::GetOrCreate(const Key& key,const Ready& ready,cons
 	if(!ready()) { reader.data.reset();return Fail(error,"Model source changed during new cache verification."); }
 	error.clear();return true;
 }
+bool PioneerModelWeightCache::OpenExisting(const Key& key,const Ready& ready,Reader& reader,
+	std::string& error,const Progress& progress) {
+	if(directoryFD<0 || !Valid(key) || !ready || reader.data || !ready())
+		return Fail(error,"Read-only cache open requires a valid key and independently ready model source.");
+	bool missing=false,unsafe=false;
+	if(!Load(key,reader,error,progress,missing,unsafe))return false;
+	if(!ready()) { reader.data.reset();return Fail(error,"Model source changed during read-only cache verification."); }
+	error.clear();return true;
+}
