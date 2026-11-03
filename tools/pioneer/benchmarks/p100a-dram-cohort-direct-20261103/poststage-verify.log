@@ -1,0 +1,4 @@
+f35559c24c60a36dfdd94cb6f965502bedcbd38be7f6ffe66ca317a5a872e195  /boot/home/pioneer-p100a-dram-cohort-direct-20261103-a/tenstorrent_pci_probe-dram-cohort-direct77
+1ad52983872710c801825a09c2e8794842bc02fbc92b8f98edb00948e9c0178a  /boot/home/pioneer-p100a-dram-cohort-direct-20261103-a/pioneer-dram-cohort-direct77
+9bc85769c6a79a295bb14600d8669b8fd41f4bd5e637a577cb40e7937367a7b0  /boot/home/pioneer-p100a-dram-cohort-direct-20261103-a/pioneer_dram_cohort_direct_exchange.sh
+EXACT_THREE_DIRECT_STAGED_OBJECTS_VERIFIED_NO_INSTALL_OR_GPU_RUN

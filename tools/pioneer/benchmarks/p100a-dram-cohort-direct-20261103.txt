@@ -1,3 +1,78 @@
+Two physical tests CLOSED;valid host-bracket bandwidth;stable041 restored
+=========================================================================
+2026-11-03 03:54UTC. BOTH actual native parents terminate0;both complete
+272-line logs pass main+independent clean readers0,whole JSON exact. Exact
+helper --restore40808 terminates0. Independent health6a8af8 terminates0:
+installed stable041/tag12/gen16/cold0/quiesced0/owner0/open1/guard1,no compute
+parent,64CPUs/full137034936320B RAM/free130591424512B. All guard/admin/backup
+hashes and device link match. No live diagnostic remains. Restoration is
+COMPLETE. All earlier not-deployed/pending statements below are superseded.
+Goal ACTIVE;20tok/s and accepted27B Work UNMET;NO new model speedup.
+
+Actual seven-bank results,not peak/capacity/authenticity/model certificates
+------------------------------------------------------------------------
+Both run the SAME f355 module/1ad5 client with generation15. Fixed8MiB per
+bank,7 readers,256 repeated sweeps:15,032,385,536 bytes per test. These are
+repeated fixed-window reads,not a full28GB capacity sweep. NO GDDR writes,
+host DMA,model or runtime CPU-reference test. New worker code is unchanged.
+
+queue depth1:actual parent98959 exit0,observed03:48:15UTC
+ common coordinator163704671 cycles
+ start host_us68997985912..68997989371;end68998104626..68998108669
+ elapsed115255..122757us ->122.456442696..130.427187853 GB/s
+ whole host operation162024885us (includes journals/VM checks/restoration)
+ raw SHAfc927f4a4a1df1ce5186d079ddfabca4bd526d829b5cf46c2c72c5d0e25d2e59
+
+queue depth16:actual parent52812 exit0,observed03:53:39UTC
+ common coordinator74008055 cycles
+ start host_us69219714505..69219717981;end69219768451..69219772495
+ elapsed50470..57990us ->259.223754716..297.847940083 GB/s
+ whole host operation272893752us (includes larger final-buffer comparison)
+ raw SHA619b609d6afd37c2ed4a06a8a48815d06d25d2cf39d4f34139669a235b6987d2
+
+Both timingState1;each rate derives from the SAME coordinator interval and
+positive host-clock observation bracket,not an assumed1350MHz clock or a
+sum of parallel reader times. Relative counter bounds are archived but
+are NOT an independent clock calibration or thermal/power certification.
+Each closes normal clock/PCI/VM/reservation,phase3/retained0/complete1,
+all8 launched/observed/held masks255 and all493457 saved/restored words.
+Full final-buffer comparisons:28672 words at depth1,458752 at depth16.
+All8 exact reports,bank routes,counter-derived fields and ordered releases
+pass both unchanged strict readers. All physical-command stderr streams0B.
+
+Interpretation:parallel requests materially raise this read workload's
+observed bandwidth. The upper/lower brackets are observation uncertainty,
+NOT statistical confidence intervals. This is one run per depth,not a
+repeatability study,peak448GB/s proof or a prediction for27B. Successful
+chip-specific worker execution and multi-bank transfers are consistent
+with a functioning accelerator,not an authenticity certificate. A poor
+0.1584tok/s model result cannot be equated with this GDDR capability. Next
+inference work returns to the already-profiled Q4 preparation/synchronization
+path;do not repeat memory-infrastructure work or claim a model gain from it.
+
+Closed deployment/restoration chronology
+---------------------------------------
+Tested source0ffd6aad5fe63a6cb95b6b2972be7741273c9aac pushed48528 exit0;
+independent GitHub ls-remote exact. Fresh admission58a1200:stable041/gen14,
+idle/64CPUs/fullRAM. New root700 stage only;SCP90321 actual0,poststage
+hashes0,full readback23631 actual0 and all3 whole cmp0. Fresh preapply
+90366 actual0. Exact new helper --apply ONCE63261 actual0:tag77r2/gen15.
+Independent955d55 exact tuple/idle/CPU/RAM0;metadata support86fa750.
+Actual no-launch preflight386060 exit0:phase3/retained0/preflight1/all
+closure1,host600139us. No worker/DRAM transfer launched by preflight.
+Fresh pre-pilot5495740,then protected98959 through actual terminal/full
+closed readers. Independent post-depth1dcfebe0 verifies idle/64CPU/RAM;
+then protected52812 through actual terminal/full closed readers. Independent
+post-depth166ed5070,then SAME9bc8 helper --restore ONCE408080. Fresh
+independent6a8af80 closes stable041/gen16/idle/64CPU/fullRAM above. During
+each live whole parent:NO concurrent Pioneer operation;only SAME handle
+polls/local observations. No timeout was treated as terminal and no retry.
+No reset/reboot/power/SD/mains/hardware/network/Assistant/kernel/boot change.
+UART was never reopened or reconfigured. Closed scripts/logs/summaries are
+archived beside this report;no driver/client binary or learned model saved.
+
+Historical offboard qualification (superseded only for deployment state)
+=======================================================================
 Direct-scope cohort77r2 OFFBOARD qualification;not an inference speedup
 ====================================================================
 2026-11-03. Physical deployment/measurement is NOT established by this

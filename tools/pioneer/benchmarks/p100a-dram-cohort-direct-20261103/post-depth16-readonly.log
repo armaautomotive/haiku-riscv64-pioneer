@@ -1,0 +1,14 @@
+f35559c24c60a36dfdd94cb6f965502bedcbd38be7f6ffe66ca317a5a872e195  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+f35559c24c60a36dfdd94cb6f965502bedcbd38be7f6ffe66ca317a5a872e195  /boot/home/pioneer-p100a-dram-cohort-direct-20261103-a/tenstorrent_pci_probe-dram-cohort-direct77
+1ad52983872710c801825a09c2e8794842bc02fbc92b8f98edb00948e9c0178a  /boot/home/pioneer-p100a-dram-cohort-direct-20261103-a/pioneer-dram-cohort-direct77
+9bc85769c6a79a295bb14600d8669b8fd41f4bd5e637a577cb40e7937367a7b0  /boot/home/pioneer-p100a-dram-cohort-direct-20261103-a/pioneer_dram_cohort_direct_exchange.sh
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-p100a-dram-cohort-direct-20261103-a/stable041.backup
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
+b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
+d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+P100A_RELOAD driver55 tag2026110300020077 generation15 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+PROJECT_COMPUTE_PARENT_COUNT 0
+64 (Unknown), revision 0000 running at 1000MHz
+130596282368 bytes free      (used/max 6438653952 / 137034936320)
+                           (cached   19852423168)
+EXACT_COHORT77_DIRECT_GENERATION15_IDLE_64CPU_FULLRAM

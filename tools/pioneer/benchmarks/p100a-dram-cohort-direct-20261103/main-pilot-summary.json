@@ -1,0 +1,25 @@
+{
+  "bandwidthGBps": [
+    "122.4564426957322189365983202587225168422",
+    "130.427187853021560886729426055268751898"
+  ],
+  "bytes": 15032385536,
+  "coordinatorCycles": 163704671,
+  "counterGHzRelativeToHost": [
+    "1.333566892315713156887183622929853287389",
+    "1.420369363585093922172573857967116394083"
+  ],
+  "depth": 1,
+  "firmwareMHzRecordedNotUsed": 1350,
+  "generation": 15,
+  "hostWholeOperationUs": 162024885,
+  "modelTokensPerSecond": null,
+  "observationIntervalUs": [
+    115255,
+    122757
+  ],
+  "peakOrCapacityOrAuthenticityEstablished": false,
+  "scope": "closed receipt DATA only;not native proof by itself",
+  "sweeps": 256,
+  "timingState": 1
+}
