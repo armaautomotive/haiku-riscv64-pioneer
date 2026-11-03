@@ -1,0 +1,6 @@
+CLOSED_LOG_DATA_ONLY all34 first12 words EXACT;NOT external full-model numerical acceptance
+MATCHED_COUNT_WINDOW sampled_tokens32 first_committed2 last_committed34
+PREVIOUS_RATE {'sampled_tokens': 32, 'first_committed': 2, 'last_committed': 34, 'elapsed_min_us': 196881198, 'elapsed_max_us': 196884561, 'lower': 0.162531789, 'upper': 0.162534566, 'observations': 2011}
+CURRENT_RATE {'sampled_tokens': 32, 'first_committed': 2, 'last_committed': 34, 'elapsed_min_us': 194769935, 'elapsed_max_us': 194773313, 'lower': 0.164293555, 'upper': 0.164296404, 'observations': 1987}
+DESCRIPTIVE_RATE_CHANGE_PERCENT_NOT_CONTROLLED_PAIRED_SPEEDUP 1.082224750163797 1.0857045262144798
+NO contemporaneous controlled A/B,repeatability,causal attribution,hardware health or Work claim;unchanged strict CPU readers both exit1

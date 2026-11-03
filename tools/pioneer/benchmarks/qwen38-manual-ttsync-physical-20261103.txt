@@ -1,3 +1,98 @@
+CLOSED manual-TTSync27B:0.1643tok/s;no meaningful breakthrough;stable restored
+============================================================================
+2026-11-03 05:24:21UTC. Actual protected39817 terminates0,observed05:22:48UTC.
+All34 positions,HOLD/drain,held phase read,normal restoration,END and Close
+complete. Whole stdout581lines/45175B;stderr0B. Exact32114 --restore ONCE
+75655 actually0;independent health0183f5 actually0:stable041/tag12/gen18/
+quiesced0/cold0/owner0/open1/guard1,no project compute parent,64CPUs/full
+137034936320B RAM/free130620899328B. This CLOSED result supersedes ALL
+historical LIVE/pending statements below. Goal ACTIVE;20tok/s and accepted
+usable27B Assistant Work remain UNMET. No hardware-authenticity certificate.
+
+Measured original-model inference,not a performance breakthrough
+----------------------------------------------------------------
+Same-open original GGUF SHA/all851 learned bindings authenticate BEFORE
+accelerator Open;all19399024640 allocation bytes upload,START acknowledges
+and all34 generation positions finish. No runtime CPU-reference selected.
+32 post-prompt sampled tokens,committed2..34,1987 observations:
+ elapsed194769935..194773313us
+ rate0.164293555..0.164296404 tokens/sec
+About6.0866seconds per sampled token. Authentication,upload,initialization,
+held readout and restoration are excluded. These are observation-window
+bounds,NOT statistical confidence intervals or isolated token latency.
+
+The older constant-Q4/coarse-phase control was0.162531789..0.162534566tok/s
+(qwen38-token-constant-q4-physical-20261102.txt). This sample is descriptively
+1.0822..1.0857percent above that older sample. This is NOT a contemporaneous
+controlled A/B or repeatability/causal proof. The prior119-worker inner-
+sampler diagnostic0.1584tok/s has different instrumentation and must not
+be substituted as a matching control to advertise a larger gain. No
+meaningful model-speed breakthrough or Assistant/Work promotion is claimed.
+Replacing the completion leaf alone has NOT delivered the required gain.
+Do not repeat tiny wait/issue-count variants as though they can explain
+the remaining roughly122x gap to20tok/s. Return to architectural operand
+preparation/scheduling;native block-float conversion would be a DIFFERENT
+numerical path needing separate format and quality validation,not a relaxed
+version of the original comparator. A supported external hardware/reference
+baseline remains unperformed;poor custom-backend TPS is not counterfeit proof.
+
+Complete closed DATA checks;strict numerical decision remains1
+--------------------------------------------------------------
+Main0dcb06 and independent-clean023d8b strict readers BOTH actually exit1.
+Whole stdout byte-identical;both stderr0B. They validate the complete raw
+frontier34 upload/feedback/count/rate grammar and whole96word phase packet,
+all10 bucket/count/cycle sums,committed34/COMPLETE/error0/valid1. All3
+original CPU trace SHA pins authenticate again. Known maximum-score bits:
+ position selected observed CPU
+ 0        70253    413c2359 413c2358 (ONE FP32 least-significant bit)
+ 1        17       414621d3 414621d3
+ 2        17       4168afd0 4168afd0
+All3 first greedy choices match;positions3..33 have NO external numerical
+acceptance here. No expected word,reference,tolerance,validator or exit
+decision changed. Valid timing and clean END do not make usable Work pass.
+
+Additional main489ce5/clean17bdfc CLOSED-log arithmetic checks actually0,
+whole stdout exact/stderr0:all34 first12 record words,including input,
+greedy ID,maximum bits and flags,match the older constant-Q4 accelerator
+run. This is accelerator-to-accelerator DATA agreement,NOT new CPU/full-
+hidden/vocabulary/long-generation quality acceptance. Initial command-line
+quoting attempts d31c99/cdcd0e failed BEFORE parsing;running the saved same
+program resolves invocation only. Failed streams remain failures.
+
+Current coarse device-cycle profile,not an inner utilization measurement
+------------------------------------------------------------------------
+Total279386538504 cycles across ALL34 positions+bootstrap/STOP/observer:
+ Metadata12050453993 (4.313183percent)
+ Recurrent163757601752 (58.613276percent)
+ Dense69383242575 (24.834139percent)
+ HeadMatrix31268915044 (11.191991percent)
+ StateCommit2691975227 (0.963531percent)
+Other buckets and exact rational fractions are in complete reader logs.
+This is NOT the separate32-token rate interval,pure tensor utilization,
+frequency or a GHz/GBps/TPS forecast. Regions include arithmetic,packing,
+controller/NoC work and waits. The older latest-Q4-job75..76percent decode
+profile was NOT remeasured by this coarse-only subject.
+
+Exact safe restoration AFTER actual clean terminal only
+-------------------------------------------------------
+Postterminal66490 actually0 verifies exactc01/aaff/32114/gen17/cold0/idle,
+all staged/installed/admin/guard/backups,device link,absent incoming/lock,
+no compute parent,64CPUs/fullRAM. SAME32114 --restore ONCE75655 actually0:
+quiesce/close/atomic replacement/verified stable041/gen18. Fresh independent
+0183f5 actually0 confirms stable identities/idle/64CPUs/fullRAM above.
+Every postterminal/restore/independent-health stderr0B. No reset,retry,
+quarantine,reboot,power,SD,mains,hardware,network,Assistant,kernel or boot
+change. UART never reopened/reconfigured. During the WHOLE live parent
+only SAME39817 polls and local raw observations occurred;no competing
+Pioneer operation. No observation timeout was treated as terminal.
+
+Whole raw stdout SHA07a26474d404f73865f2967204d22a969c85c191e6703922bbd1f75e8f8bd37a
+Whole strict stdout SHA972173ef622d2e1beffd04e7b114533e708f3db2d5a99354082e1aebedeccd33
+Closed raw/strict/restoration/health and posthoc DATA streams are archived
+beside this report. No learned model,CPU trace,prefix or binary committed.
+
+Historical protected launch ledger (superseded by CLOSED result above)
+======================================================================
 Manual-TTSync original27B diagnostic: ONE protected physical parent LIVE
 ======================================================================
 2026-11-03 04:51:14UTC. SAME actual session39817 remains live on a fresh
