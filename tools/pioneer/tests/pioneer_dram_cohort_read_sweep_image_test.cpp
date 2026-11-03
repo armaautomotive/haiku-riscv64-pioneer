@@ -14,7 +14,7 @@ struct Core:Machine {
  Fabric& fabric;unsigned role,textBytes,park,bad;
  std::map<uint32_t,uint32_t> memory;
  std::vector<uint32_t> raw;
- uint32_t cmd[10]={},counter[64]={};
+ uint32_t cmd[10]={},counter[64]={},config=0x16005;
  struct Packet{uint32_t source,dest,sourceXY,destXY,bytes;bool write;uint64_t due;};
  std::deque<Packet> queued;std::vector<Packet> flying;
  unsigned requests=0,completed=0,mmioReads=0,mmioWrites=0,csrReads=0,minStack=0x70000;
@@ -38,16 +38,29 @@ struct Core:Machine {
 };
 struct Fabric {
  enum Fault{None,DirtyReport,DuplicateRoute,DisabledFifo,DirtyFifo,WrongTile,WrongStart,
-  LostRead,ExtraResponse,ChangedJob,LostStartAck,CorruptPeerReport,BackwardRootClock,ChangedTile};
+  LostRead,ExtraResponse,ChangedJob,LostStartAck,CorruptPeerReport,BackwardRootClock,ChangedTile,
+  WrongLogical,ChangedLogical,BadTranslation,TranslationDisabled};
  std::vector<std::unique_ptr<Core>> cores;
  uint64_t tick=0;unsigned depth,faultRole=3,peakReaders=0;
  Fault fault=None;bool injected=false;
+ uint32_t bankRoutes[7]={};
  static constexpr uint64_t ClockBase=UINT64_C(0x1fffffff0);
+ static uint32_t Translation(unsigned i){
+  const uint32_t table[12]={0x0a418820,0x1ac4a166,0x127541ee,0x1e280440,0x1662b5c3,0x147,
+   0x0a418820,0x16a4a0e6,0x06a12c20,0x0c72a089,0x0e548c20,2};
+  assert(i<12);return table[i];
+ }
+ static uint32_t Physical(unsigned role){
+  const unsigned xy=role?C::Worker(role):129U,x=xy&63,y=xy>>6;
+  return ((Translation(x/6)>>((x%6)*5))&31)|(((Translation(6+y/6)>>((y%6)*5))&31)<<6);
+ }
  static uint32_t Route(unsigned r){const uint32_t xy[]={17|(12<<6),18|(12<<6),17|(15<<6),
   18|(15<<6),17|(18<<6),18|(18<<6),17|(21<<6)};assert(r>=1 && r<=7);return xy[r-1];}
+ uint32_t BankRoute(unsigned r)const{assert(r>=1 && r<=7);return bankRoutes[r-1];}
  static uint32_t Pattern(unsigned bank,uint32_t a){return (a*0x9e3779b9U)^((a>>11)*0x12345U)^(bank*0x7654321U);}
  unsigned Target(uint32_t xy){for(unsigned r=1;r<=7;r++)if(C::Worker(r)==xy)return r;assert(false);return 0;}
  Fabric(const std::vector<uint8_t>& boot,const std::vector<uint8_t>& text,unsigned park,unsigned bad,unsigned d):depth(d){
+  for(unsigned r=1;r<=7;r++)bankRoutes[r-1]=Route(r);
   for(unsigned r=0;r<=7;r++)cores.emplace_back(new Core(*this,r,boot,text,park,bad,d));
  }
  void Tick(){
@@ -83,7 +96,7 @@ struct Fabric {
       m.counter[2]++;m.counter[3]+=(p.bytes+63)/64;
      }
     }else{
-     assert(!p.write && p.sourceXY==Route(m.role) && p.destXY==C::Worker(m.role) && p.bytes==16384);
+     assert(!p.write && p.sourceXY==BankRoute(m.role) && p.destXY==C::Worker(m.role) && p.bytes==16384);
      for(unsigned w=0;w<p.bytes/4;w++)m.raw[(p.dest-C::Raw)/4+w]=Pattern(m.role,p.source+w*4);
      m.counter[2]++;m.counter[3]+=p.bytes/64;m.lastRead=tick;
      if(fault==ExtraResponse && m.role==faultRole && m.completed==0){m.counter[2]++;injected=true;}
@@ -116,8 +129,10 @@ struct Fabric {
  void Check(){
   assert(peakReaders==7);
   const auto& root=*cores[0];const auto r=[&](unsigned i){return root.memory.at(C::Report+i*4);};
-  assert(r(0)==C::ReportMagic && r(1)==4 && r(2)==0 && r(3)==0x12345678 && r(4)==1 && r(5)==depth);
+  assert(r(0)==C::ReportMagic && r(1)==C::Version && r(2)==0 && r(3)==0x12345678 && r(4)==1 && r(5)==depth);
   assert(((uint64_t(r(7))<<32)|r(6))==uint64_t(C::Span)*7 && r(15)==512*7);
+  assert(r(14)==uint32_t(root.counter[2]-0xfffffff0U) && r(16)==7
+   && r(17)==r(14)+14 && r(17)==uint32_t(root.counter[3]-0xfffffff0U));
   const uint64_t a=(uint64_t(r(9))<<32)|r(8),b=(uint64_t(r(11))<<32)|r(10);
   assert(b>a && ((uint64_t(r(13))<<32)|r(12))==b-a);
   uint64_t release=0;
@@ -143,7 +158,7 @@ Core::Core(Fabric& f,unsigned r,const std::vector<uint8_t>& boot,const std::vect
  assert(boot.size()==4 && text.size()%4==0);memory[0x6000]=Word(boot,0);
  for(unsigned i=0;i<text.size();i+=4)memory[0x64000+i]=Word(text,i);
  for(unsigned i=0;i<32;i++)memory[C::Job+i*4]=memory[C::Report+i*4]=0;
- const uint32_t j[]={C::Magic,4,r,0x12345678,1,14,d};
+ const uint32_t j[]={C::Magic,C::Version,r,0x12345678,1,14,d};
  for(unsigned i=0;i<7;i++)memory[C::Job+i*4]=j[i];
  for(unsigned i=1;i<=7;i++)memory[C::Job+(6+i)*4]=Fabric::Route(i);
  memory[C::Ready]=memory[C::Start]=memory[C::Done]=0;
@@ -166,12 +181,28 @@ uint32_t Core::Load(uint32_t a){
  mmioReads++;
  if(a>=0xffb20000 && a<0xffb20028)return cmd[(a-0xffb20000)/4];
  if(a==0xffb20044){
-  uint32_t xy=role?C::Worker(role):129U;
+  uint32_t xy=Fabric::Physical(role);
   if(role==fabric.faultRole && (fabric.fault==Fabric::WrongTile || (fabric.fault==Fabric::ChangedTile && completed))){xy^=1;fabric.injected=true;}
   return xy|(17U<<12)|(12U<<19);
  }
  if(a==0xffb20048)return 0x10000;
- if(a==0xffb20100)return role==fabric.faultRole && fabric.fault==Fabric::DisabledFifo?0x6005:0x16005;
+ if(a==0xffb20148){
+  uint32_t xy=role?C::Worker(role):129U;
+  if(role==fabric.faultRole && (fabric.fault==Fabric::WrongLogical || (fabric.fault==Fabric::ChangedLogical && completed))){xy^=1;fabric.injected=true;}
+  return xy;
+ }
+ if(a>=0xffb20118 && a<0xffb20148){
+  const unsigned i=(a-0xffb20118)/4;uint32_t v=Fabric::Translation(i);
+  if(role==fabric.faultRole && fabric.fault==Fabric::BadTranslation){v^=1U<<((C::Worker(role)&63)%6)*5;fabric.injected=true;}
+  return v;
+ }
+ if(a==0xffb20150)return 0;
+ if(a==0xffb20154)return 3;
+ if(a==0xffb20100){
+  if(role==fabric.faultRole && fabric.fault==Fabric::DisabledFifo)return config&~0x10000U;
+  if(role==fabric.faultRole && fabric.fault==Fabric::TranslationDisabled){fabric.injected=true;return config&~0x4000U;}
+  return config;
+ }
  if(a==0xffb20064)return role==fabric.faultRole && fabric.fault==Fabric::DirtyFifo?0x1010100f:0x10101000|uint32_t(16-queued.size());
  if(a==0xffb20068)return 0;
  for(unsigned i=0;i<4;i++)if(a==0xffb20040+i*0x800)return 0;
@@ -191,7 +222,7 @@ void Core::Store(uint32_t a,uint32_t value){
  const bool write=cmd[7]==0x212;
  if(role){
   assert(!write && cmd[7]==0 && cmd[0]==C::Base+((requests*16384)&(C::Span-1))
-   && cmd[2]==Fabric::Route(role) && cmd[3]==C::Raw+(requests&(fabric.depth-1))*16384
+   && cmd[2]==fabric.BankRoute(role) && cmd[3]==C::Raw+(requests&(fabric.depth-1))*16384
    && cmd[5]==C::Worker(role) && cmd[8]==16384);
   if(!(requests&(fabric.depth-1)))assert(queued.empty() && flying.empty() && requests==completed);
   if(!firstRead)firstRead=fabric.tick;
@@ -204,9 +235,18 @@ void Core::Store(uint32_t a,uint32_t value){
  maxPending=std::max(maxPending,unsigned(queued.size()+flying.size()));
  assert(maxPending<=(role?fabric.depth:1));
 }
+#ifndef PIONEER_DRAM_COHORT_IMAGE_TEST_COMPONENT
 int main(int argc,char** argv){
- assert(argc==5);const auto boot=Read(argv[1]),text=Read(argv[2]);
+ assert(argc==5 || argc==6);const auto boot=Read(argv[1]),text=Read(argv[2]);
  const unsigned good=unsigned(std::stoul(argv[3],nullptr,16)),bad=unsigned(std::stoul(argv[4],nullptr,16));
+ if(argc==6){
+  assert(std::string(argv[5])=="--old-raw-coordinate-control");
+  Fabric f(boot,text,good,bad,16);
+  for(auto& m:f.cores){m->memory[C::Job]=0x34415244;m->memory[C::Job+4]=4;}
+  assert(!f.Execute() && (f.cores[6]->pc==bad || f.cores[7]->pc==bad));
+  for(unsigned role=1;role<=7;role++)assert(!f.cores[role]->requests);
+  puts("PASS_OLD_V4_COUNTEREXAMPLE actualPhysicalRemapping1 originalFrozenCodeRefusesRemappedReader1 noDRAMRequests1;NOT hardware test");return 0;
+ }
  unsigned valid=0,refused=0;
  for(unsigned depth:{1U,4U,16U}){Fabric f(boot,text,good,bad,depth);assert(f.Execute());f.Check();valid++;}
  for(unsigned word=0;word<32;word++){
@@ -220,7 +260,8 @@ int main(int argc,char** argv){
   for(unsigned role=1;role<=7;role++)assert(!f.cores[role]->requests);
   refused++;}
  for(auto fault:{Fabric::DirtyReport,Fabric::DuplicateRoute,Fabric::DisabledFifo,Fabric::DirtyFifo,Fabric::WrongTile,Fabric::WrongStart,
-  Fabric::LostRead,Fabric::ExtraResponse,Fabric::ChangedJob,Fabric::LostStartAck,Fabric::CorruptPeerReport,Fabric::BackwardRootClock,Fabric::ChangedTile}){
+  Fabric::LostRead,Fabric::ExtraResponse,Fabric::ChangedJob,Fabric::LostStartAck,Fabric::CorruptPeerReport,Fabric::BackwardRootClock,Fabric::ChangedTile,
+  Fabric::WrongLogical,Fabric::ChangedLogical,Fabric::BadTranslation,Fabric::TranslationDisabled}){
   Fabric f(boot,text,good,bad,16);f.fault=fault;
   if(fault==Fabric::DirtyReport)f.cores[3]->memory[C::Report+4]=1;
   if(fault==Fabric::DuplicateRoute)f.cores[0]->memory[C::Job+32]=Fabric::Route(1);
@@ -232,3 +273,4 @@ int main(int argc,char** argv){
  }
  printf("PASS_COHORT_ACTUAL_RV32 valid%u refused%u all8virginEngines1 all7overlap1 commonCoordinatorInterval1 retainedCapturedCommands1 fullFinalBatch1 immutableCode1;ASYNCHRONOUS_SIMULATION_NOT_NATIVE_OR_HARDWARE_BANDWIDTH_FREQUENCY_MODEL_WORK\n",valid,refused);
 }
+#endif

@@ -1,0 +1,12 @@
+{
+  "/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp": "a01c13536e8450b639edc2a2493c22ab099bb90692a99fa09c67e895e2586849",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNative.inc": "e3e2ac16af410a331e4531583c7e3df059395464247e61d565e776177a2afebb",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramReadSweepNativeRole.h": "1525f95c207d19f545492841173968a1f56aaf5909511c706a29bf66a47b45f1",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNativeRole.h": "1018382a5481235c9fe02607d2462f777f6113196e1a1afe54bd9cd1240705cb",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortNative.inc": "08ea2aa7f8c89aa4071b363613583f8273d6f2e0cfa427cf933bdefc79c52524",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/PioneerDramCohortReadSweepOwner.h": "483e62326b6e3912b0a6065d9dad5bf0465f64602f480847c1d68cdbdd548c63",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/BlackholeDramCohortReadSweepImage.h": "69b1818b83f874fac0857f94cbeb64f5365865b80dee0202d94f7f7e807c819f",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerDramCohortReadSweep.h": "1101aab6ed37fd5dbd2f5cb92825e36892a2bcb179f0665616dc738bf397079f",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_dram_cohort_native_compile.cpp": "a0f7043e7f69375d04c20181c1f6ba65c19d804ee2ca708e9fa1080dc24c8099",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_dram_cohort_native.py": "a03789a38571d2330fa779c7dc9662ea1ba52771b2b22b04b54cf9d0eb93b113"
+}

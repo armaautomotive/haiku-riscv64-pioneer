@@ -10,9 +10,10 @@
 // All eight workers need an exclusive native lease/snapshot/STOP/HOLD/restore
 // owner before deployment. These DATA frames do not supply that authority.
 struct PioneerDramCohortReadSweep:PioneerDramWideQueuedReadSweep {
- enum : uint32_t {Magic=0x34415244,ReportMagic=0x34435244,Version=4,
+ enum : uint32_t {Magic=0x35415244,ReportMagic=0x35435244,Version=5,
   Ready=0x74200,Start=0x74220,Done=0x74240,Payload=0x74300,
-  Scratch=0x74400,PeerReports=0x74500,Peers=7,Words=32};
+  Scratch=0x74400,PeerReports=0x74500,Peers=7,Words=32,
+  ExternalStartWatchdogRequired=1};
  static uint32_t Worker(unsigned role){return (role<7?role+1:10)|(2U<<6);}
  static bool Route(uint32_t xy){
   const unsigned x=xy&63,y=xy>>6;
@@ -33,10 +34,21 @@ struct PioneerDramCohortReadSweep:PioneerDramWideQueuedReadSweep {
   return true;
  }
  template<class IO> static bool Self(IO& io,unsigned role){
-  const uint32_t node=io.Read(0xffb20044),shape=io.Read(0xffb20048);
+  // NODE_ID is PHYSICAL, not the translated address used in commands.
+  // Check both identities against the actual firmware translation table.
+  const uint32_t node=io.Read(0xffb20044),shape=io.Read(0xffb20048),logical=io.Read(0xffb20148);
   const unsigned xy=role?Worker(role):129U;
-  return (node&0xfff)==xy && ((node>>12)&127)==17 && ((node>>19)&127)==12
-   && (shape&0xffffff00)==0x10000 && io.Read(0xffb20044)==node && io.Read(0xffb20048)==shape;
+  const unsigned x=xy&63,y=2,table=x<6?0:4,shift=(x<6?x:x-6)*5;
+  // The fixed cohort uses only columns1..7/10,row2. Avoid division-by-six
+  // lowering to MULHU,which this BabyRISCV image deliberately forbids.
+  const uint32_t xt=io.Read(0xffb20118+table),yt=io.Read(0xffb20130);
+  const unsigned physical=((xt>>shift)&31)|(((yt>>10)&31)<<6);
+  return (logical&0xfff)==xy && (node&0xfff)==physical
+   && ((node>>12)&127)==17 && ((node>>19)&127)==12 && (shape&0xffffff00)==0x10000
+   && (io.Read(0xffb20100)&0x5000)==0x4000
+   && !(io.Read(0xffb20150)&(1U<<x)) && !(io.Read(0xffb20154)&(1U<<y))
+   && io.Read(0xffb20044)==node && io.Read(0xffb20048)==shape && io.Read(0xffb20148)==logical
+   && io.Read(0xffb20118+table)==xt && io.Read(0xffb20130)==yt;
  }
  template<class IO> static bool Pristine(IO& io,unsigned role){
   for(unsigned i=0;i<Words;i++)if(io.Read(Report+i*4))return false;
@@ -54,7 +66,11 @@ struct PioneerDramCohortReadSweep:PioneerDramWideQueuedReadSweep {
   if(!role || !Pristine(io,role))return false;
   io.Fence();io.Write(Ready,j[3]);(void)io.Read(Ready);io.Fence();
   bool released=false;
-  for(unsigned poll=0;poll<PollLimit;poll++){
+  // Native owner releases/observes all seven ready readers BEFORE releasing
+  // the coordinator. Host launch skew is not a RISCV loop-count deadline.
+  // Missing Start can wait forever: the EXTERNAL owner must time out and
+  // quarantine, NEVER infer STOP or restore from this flag/PC alone.
+  for(;;){
    const uint32_t start=io.Read(Start);
    if(start && start!=j[3])return false;
    if(start==j[3]){released=true;break;}
@@ -90,6 +106,7 @@ struct PioneerDramCohortReadSweep:PioneerDramWideQueuedReadSweep {
  }
  struct CoordinatorLink {
   uint32_t tracked[9]; // Begin fills every word before the first Packet.
+  unsigned readPackets=0,writePackets=0,readFlits=0;
   static unsigned Offset(unsigned i){
    // ACK,read response,read flits,accepted,read sent,write flits,write sent,
    // write started,read started. All are documented master counters.
@@ -130,6 +147,7 @@ struct PioneerDramCohortReadSweep:PioneerDramWideQueuedReadSweep {
    if(!finished)return false;
    for(unsigned i=0;i<10;i++)if(io.Read(0xffb20000+i*4)!=command[i])return false;
    for(unsigned i=0;i<9;i++)tracked[i]=expected[i];
+   if(write)writePackets++;else{readPackets++;readFlits+=(bytes+63)/64;}
    io.Fence();return true;
   }
  };
@@ -180,6 +198,7 @@ struct PioneerDramCohortReadSweep:PioneerDramWideQueuedReadSweep {
   r[1]=Version;r[2]=0;r[3]=j[3];r[4]=j[4];r[5]=j[6];r[6]=uint32_t(total);r[7]=uint32_t(total>>32);
   r[8]=uint32_t(began);r[9]=uint32_t(began>>32);r[10]=uint32_t(ended);r[11]=uint32_t(ended>>32);
   r[12]=uint32_t(elapsed);r[13]=uint32_t(elapsed>>32);r[15]=(Span/16384)*j[4]*Peers;
+  r[14]=link.readPackets;r[16]=link.writePackets;r[17]=link.readFlits;
   Publish(io,r);return true;
  }
  template<class IO> static bool Run(IO& io){

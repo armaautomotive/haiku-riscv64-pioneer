@@ -1,0 +1,7 @@
+Assertion failed: (!write && cmd[7]==0 && cmd[0]==C::Base+((requests*16384)&(C::Span-1)) && cmd[2]==Fabric::Route(role) && cmd[3]==C::Raw+(requests&(fabric.depth-1))*16384 && cmd[5]==C::Worker(role) && cmd[8]==16384), function Store, file pioneer_dram_cohort_read_sweep_image_test.cpp, line 223.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_dram_cohort_read_sweep_owner_tests.py", line 24, in <module>
+    subprocess.run([str(binary),str(image/'boot.bin'),str(image/'text.bin'),format(good,'x'),format(bad,'x')],check=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-dram-cohort-owner-20261103.an8gg9/main-owner-r1/owner-test', '/private/tmp/pioneer-dram-cohort-owner-20261103.an8gg9/main-v5-r3/image/boot.bin', '/private/tmp/pioneer-dram-cohort-owner-20261103.an8gg9/main-v5-r3/image/text.bin', '6400c', '64030']' died with <Signals.SIGABRT: 6>.

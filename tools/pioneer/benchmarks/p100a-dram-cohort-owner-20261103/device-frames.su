@@ -1,0 +1,4 @@
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerDramCohortReadSweep.h:59:33:static void PioneerDramCohortReadSweep::Publish(IO&, const uint32_t*) [with IO = DramCohortReadSweepIO]	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_dram_cohort_read_sweep.cpp:9:33:bool DramCohortReadSweepIO::Cycles(uint64_t&)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerDramCohortReadSweep.h:116:27:bool PioneerDramCohortReadSweep::CoordinatorLink::Packet(IO&, unsigned int, bool, unsigned int, unsigned int) [with IO = DramCohortReadSweepIO]	192	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_dram_cohort_read_sweep.cpp:20:21:unsigned int dram_sweep_main()	528	static

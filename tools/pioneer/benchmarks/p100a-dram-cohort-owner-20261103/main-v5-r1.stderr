@@ -1,0 +1,10 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_dram_cohort_read_sweep.py", line 30, in <module>
+    assert not re.search(r'\b(?:divu?|remu?|mulh[su]*|ebreak|ecall|csrrw|csrrc|csrrsi|csrrci|csrrwi)\b',dis)
+AssertionError
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_dram_cohort_read_sweep_tests.py", line 14, in <module>
+    subprocess.run([sys.executable,str(here.parent/'build_dram_cohort_read_sweep.py'),str(sdk),str(image)],check=True)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/Library/Developer/CommandLineTools/usr/bin/python3', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_dram_cohort_read_sweep.py', '/Volumes/HaikuBuildLocal/generated.riscv64', '/private/tmp/pioneer-dram-cohort-owner-20261103.an8gg9/main-v5-r1/image']' returned non-zero exit status 1.

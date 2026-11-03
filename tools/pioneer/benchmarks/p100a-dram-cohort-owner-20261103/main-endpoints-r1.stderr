@@ -1,0 +1,12 @@
+In file included from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_dram_cohort_native_lifecycle_test.cpp:6:
+In file included from /Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_dram_sweep_native_lifecycle_test.cpp:172:
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/../../../src/add-ons/kernel/drivers/misc/PioneerDramSweepControl.inc:6:17: error: unused function 'PioneerDramSweepControl' [-Werror,-Wunused-function]
+    6 | static status_t PioneerDramSweepControl(PioneerProbeCookie* fd,uint32 operation,void* data,size_t length){
+      |                 ^~~~~~~~~~~~~~~~~~~~~~~
+1 error generated.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_dram_cohort_native_lifecycle_tests.py", line 12, in <module>
+    subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror',
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['c++', '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_dram_cohort_native_lifecycle_test.cpp', '-o', '/private/tmp/pioneer-dram-cohort-owner-20261103.an8gg9/main-endpoints-r1/pioneer_dram_cohort_native_lifecycle_test']' returned non-zero exit status 1.

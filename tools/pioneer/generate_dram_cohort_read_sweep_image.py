@@ -11,8 +11,8 @@ import stat
 import struct
 import sys
 
-ELF_SHA='20b6afaae3376c659596486a207c991c68b5f4f5f7dbdd494815e906200c7674'
-TEXT_SHA='80698df893407bd90bac692ee8a7a10bc4e3f3628d567a987050f03f22a68bc1'
+ELF_SHA='75fe960e24a46f64babbcfccd48321e61b52ff6e28cb7507bef3ea10c7b40e04'
+TEXT_SHA='f675b881b052fe4271dceed8e225b8d5df84266eea5ba07b83647ecd535899d7'
 BOOT_SHA='d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6'
 
 def render(path):
@@ -38,8 +38,8 @@ def render(path):
         found[name]=(s,data[s[4]:s[4]+s[5]])
     boot=found['.boot'];text=found['.text']
     assert boot[0][3]==0x6000 and len(boot[1])==4 and hashlib.sha256(boot[1]).hexdigest()==BOOT_SHA
-    assert text[0][3]==0x64000 and len(text[1])==7124 and hashlib.sha256(text[1]).hexdigest()==TEXT_SHA
-    words=struct.unpack('<1781I',text[1]);first=struct.unpack('<I',boot[1])[0]
+    assert text[0][3]==0x64000 and len(text[1])==8644 and hashlib.sha256(text[1]).hexdigest()==TEXT_SHA
+    words=struct.unpack('<2161I',text[1]);first=struct.unpack('<I',boot[1])[0]
     rows=['  '+','.join('0x%08xU'%w for w in words[i:i+6])+',' for i in range(0,len(words),6)]
     return '''/* SPDX-License-Identifier: MIT */
 #ifndef BLACKHOLE_DRAM_COHORT_READ_SWEEP_IMAGE_H
@@ -49,9 +49,9 @@ def render(path):
 // OFFBOARD DATA ONLY. No driver/native owner selects these bytes. All eight
 // complete snapshots,exclusive ownership,clock,STOP/HOLD/restore still owed.
 struct BlackholeDramCohortReadSweepImage {
- enum : uint32_t {TextWords=1781,CodeWords=1782,StackWords=2048,
-  FrameWords=32,ReportWords=32,RawWords=65536,RootSavedWords=4154,
-  ReaderSavedWords=69433,CohortSavedWords=490185,
+ enum : uint32_t {TextWords=2161,CodeWords=2162,StackWords=2048,
+  FrameWords=32,ReportWords=32,RawWords=65536,RootSavedWords=4534,
+  ReaderSavedWords=69813,CohortSavedWords=493225,
   Entry=0x64000,Park=0x6400c,FaultPark=0x64030};
  static uint32_t Code(unsigned i){
   static const uint32_t text[TextWords]={
@@ -83,6 +83,6 @@ def main():
     data=render(source).encode('ascii') # authenticate BEFORE creating output
     with out.open('xb') as f:f.write(data)
     print('COHORT_IMMUTABLE_DATA '+hashlib.sha256(data).hexdigest()+
-          ' all8SnapshotWords490185;NO native ownership/driver/install/hardware/Work grant')
+          ' all8SnapshotWords493225;NO native ownership/driver/install/hardware/Work grant')
 
 if __name__=='__main__':main()

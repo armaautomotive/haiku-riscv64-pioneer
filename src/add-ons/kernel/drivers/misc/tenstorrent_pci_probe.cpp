@@ -9,6 +9,12 @@
 #elif defined(TT_PIONEER_DRIVER_RELOAD) && (PIONEER_DRIVER_BUILD_TAG == 0x4452534e4f445256ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026110200010076ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026110200020076ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026110200030076ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026110200040076ULL || PIONEER_DRIVER_BUILD_TAG == 0x2026110200050076ULL)
 #error DRAM tags are reserved for their separate native roles
 #endif
+#if defined(PIONEER_DRAM_COHORT_NATIVE_CONTEXT) && !defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT)
+#error Cohort native context requires its scoped inert parent lease
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x4452434e4f445256ULL && !defined(PIONEER_DRAM_COHORT_NATIVE_CONTEXT)
+#error DRCNODRV tag cannot select an ordinary driver or old native context
+#endif
 #if defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) && !defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT)
 #error DRAM compile-only flag requires its distinct native context
 #endif
@@ -8353,6 +8359,9 @@ AttentionTileTestControl(PioneerProbeCookie* cookie,void* data,size_t length,boo
 
 #ifdef PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT
 #include "PioneerDramReadSweepNative.inc"
+#ifdef PIONEER_DRAM_COHORT_NATIVE_CONTEXT
+#include "PioneerDramCohortNative.inc"
+#endif
 #ifdef PIONEER_DRAM_SWEEP_DIAGNOSTIC
 #include "PioneerDramSweepControl.inc"
 #endif

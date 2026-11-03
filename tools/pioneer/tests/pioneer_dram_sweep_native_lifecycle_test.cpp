@@ -192,6 +192,7 @@ struct Fixture {
   delete c;sDramSweepNativeContext=NULL;sColdRecoveryRequired=false;
  }
 };
+#ifndef PIONEER_DRAM_SWEEP_NATIVE_LIFECYCLE_COMPONENT
 int main(){
  unsigned valid=0,refused=0;
  {Fixture f;f.Map();assert(f.c->Scope());
@@ -401,3 +402,4 @@ int main(){
  }
  printf("actual Native.inc endpoint lifecycle: %u valid / %u refused; NOT native hardware, ARC or engine execution\n",valid,refused);
 }
+#endif

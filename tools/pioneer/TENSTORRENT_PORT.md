@@ -2,6 +2,21 @@
 
 ## Status
 
+### November3:owned seven-bank startup and actual private native adapter
+
+The revised v5 diagnostic corrects physical-vs-logical identity checks for
+harvested columns,and releases coordinator0 only AFTER all7 ready readers.
+Its separate owner passes actual eight-engine runs,external lost-completion
+deadlines,all8 HOLD,entire final-batch comparisons and all493225 saved-word
+restorations. Actual native IO/KernelExport endpoint tests and independent
+Haiku SDK builds pass;whole private objects match5028658b. The actual8644B
+native code array matches the authenticated v5 ELF. Default/base55 and old
+DRSNODRV controls remain byte-exact. This is NOT an installed public driver,
+genuine hardware run,clock calibration or measured bandwidth. No Pioneer
+operation or Assistant/boot/CPU/RAM change. Next separate fixed diagnostic,
+clock bounds and controlled hardware measurement. Accepted27B Work/20tok/s
+remain UNMET. See [owner/native evidence](benchmarks/p100a-dram-cohort-owner-20261103.txt).
+
 ### November3:common-clock seven-bank prototype and offboard driver integration
 
 A separately selected seven-bank/eight-worker READ prototype now passes

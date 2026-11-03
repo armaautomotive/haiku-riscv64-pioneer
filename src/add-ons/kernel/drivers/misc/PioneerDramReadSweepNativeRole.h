@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerDramCohortNativeRole.h"
 #ifndef PIONEER_DRAM_READ_SWEEP_NATIVE_ROLE_H
 #define PIONEER_DRAM_READ_SWEEP_NATIVE_ROLE_H
 #if !defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT) || PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT != 1 \
@@ -13,9 +14,14 @@
 #error DRAM diagnostic76 requires its separate physical role;never expose DRSNODRV
 #endif
 #else
+#ifdef PIONEER_DRAM_COHORT_NATIVE_CONTEXT
+// Its separate rechecked role above requires DRCNODRV and this same inert
+// parent lease. It never instantiates the old single-worker algorithm.
+#else
 #if !defined(PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY) || PIONEER_DRAM_SWEEP_CONTEXT_COMPILE_ONLY != 1 \
  || PIONEER_DRIVER_BUILD_TAG != 0x4452534e4f445256ULL
 #error DRSNODRV requires its renamed inert compile-only perimeter
+#endif
 #endif
 #endif
 #if defined(PIONEER_DRAM_SWEEP_QUEUED) && PIONEER_DRAM_SWEEP_QUEUED != 1

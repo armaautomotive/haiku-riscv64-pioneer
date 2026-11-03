@@ -1,0 +1,170 @@
+Seven-bank owned startup/native context:OFFBOARD qualification,NOT deployed
+=========================================================================
+November3 UTC2026. Goal ACTIVE. Usable accepted27B Work and20tok/s UNMET.
+NO Pioneer SSH,device,driver,clock,power,Assistant,boot,kernel,network,CPU/RAM,
+SD,mains or hardware-connection operation in this investigation. Latest
+closed physical model diagnostic is still0.158413730..0.158416372tok/s,
+with the original one-FP32-LSB position0 rejection. No model speedup claim.
+
+Important correction BEFORE hardware use
+----------------------------------------
+The earlier v4 prototype compared logical command coordinates directly to
+NOC_NODE_ID. That register reports PHYSICAL coordinates. In the captured
+P100A tables,logical column7 maps to physical11,and logical10 to physical12.
+The old synthetic endpoint had made these identical and thus missed the bug.
+The ACTUAL frozen v4 ELF20b6afaa is now executed against actual captured
+remapping:it refuses the remapped reader BEFORE any DRAM requests. This is
+an instruction-level counterexample,NOT a physical-card test or evidence of
+a fake card. Historical v4 build/tests remain their original limited results.
+
+New v5 checks NOC_ID_LOGICAL0x148,actual X/Y translation table words,masks,
+translation/clock-enable configuration,and physical NODE_ID+endpoint type.
+Both identities are rechecked. Fixed-column table access avoids division
+lowering to unsupported MULHU. Distinct v5 magic/report reject old v4 frames.
+Source formats/model kernels/CPU-reference decisions are not changed.
+
+Reader startup no longer treats65536 fast RISCV spins as a host launch-time
+deadline. Readers publish READY then wait for actual START,possibly forever.
+The owner releases/observes all7 ready readers BEFORE releasing coordinator0.
+An independently scoped HOST deadline must quarantine missing-ready/start/
+completion cases;no infinite-wait flag is safe-to-HOLD or restore authority.
+Packet issue/drain loops remain bounded. Root still times ONE common interval
+before the first release packet through receipt of ALL7 done flags. Adds
+complete root read/write/flit counts for independent native CSR comparison;
+never sums reader-local clocks or isolated rates.
+
+Actual owner algorithm and full journals
+----------------------------------------
+New separate PioneerDramCohortReadSweepOwner authenticates the firmware route
+proof,original source/PCI fields,all120 physical held states,and each selected
+tile's real physical+logical identity/override/NIU configuration. It saves
+and rereads all8 L1 journals before enabling FIFO/staging/releasing. All source,
+mapping,FD-scope and counters are checked under one exclusive context.
+All8 terminal reports,exact park PCs,immutable code/jobs,all NIU FIFO/overflow/
+outstanding and9 master-counter deltas are required BEFORE8 HOLD writes.
+Then all120 held states are rechecked;each reader's ENTIRE final live return
+batch is independently PIO-compared. All original L1 words,NIU commands/config,
+TLBs and normal clock lease must close. First uncertainty retains/quarantines
+without later IO,reset,retry,cleanup or clock-close. One attempt per object.
+
+v5 boot/text2162 words per tile,root4534 saved words,each reader69813:
+493225 total words/1,972,900B. Separate65536-word scratch yields558761-word
+native backing/2,235,044B,heap-owned rather than a kernel-stack array.
+Saved roles are not interchangeable:root journals all copied reports/scratch/
+payload;readers journal their entire256KiB return area. Invalid gaps refuse.
+
+Actual native adapter,not a generic IO stub
+------------------------------------------
+Private DRCNODRV context uses the actual existing PCI/VM/ARC/FD/thread/reload-
+generation lease. Its separate derived object,global identity,exact larger
+backing,new owner,role/reset-attempt ledger and L1/MMIO bounds are independently
+bound. It does NOT invoke the old sweep algorithm/factory or inherit the old
+allocation size/L1 allowlist. Actual KernelExport view permissions/addresses,
+current thread/team/held semaphore/PCI reservation and reload generation are
+rechecked per access. Actual system_time supplies HOST deadlines;not shader
+loop counts or firmwareMHz. Only selected per-role L1 writes,known NIU words,
+one ordered reset transition per stage,and held final-bank reads are exposed.
+
+Native closure forwards the new view-closed receipt into the reused lease's
+actual PCI-close precondition before closing PCI and unreserving. A source
+audit caught that initial handoff omission BEFORE hardware. Current exact
+CloseCohortResources is exercised by actual native-method endpoint tests.
+No conventional driver hooks/public opcode/install helper/client selects this
+private subject. Five renamed conventional entry bodies remain inert. The
+DRCNODRV tag is reserved;old physical roles/zero/late/model/Work aliases refuse.
+
+Closed independent evidence and exact identities
+-------------------------------------------------
+Device main48713/clean77196 BOTH ACTUALLY0,stderr0,whole stdout/ELF exact:
+3 positive depth1/4/16 cases,50 malformed/changed/lost/counter/clock/tile/
+logical-identity/translation refusals. All8 virgin RV32 engines,all7 actual
+overlap,independently captured asynchronous commands/reordered replies,
+modulo32 counter wrap and complete final-batch checks. These are simulated
+NoC/GDDR endpoints,not hardware times or card bandwidth.
+Final current-source standalone main63521/clean57524 ALSO ACTUALLY0,
+whole stdout/ELFs remain exact75fe960e after endpoint fixture additions.
+
+Complete v5 ELF75fe960e24a46f64babbcfccd48321e61b52ff6e28cb7507bef3ea10c7b40e04
+text8644B SHA f675b881b052fe4271dceed8e225b8d5df84266eea5ba07b83647ecd535899d7
+boot4B/d0565e4e unchanged;only three READ-only sampler CSR instructions.
+Frozen DATA69b1818b83f874fac0857f94cbeb64f5365865b80dee0202d94f7f7e807c819f.
+DATA main37686/clean70275 BOTH ACTUALLY0,full stdout exact/stderr0:
+all493225 unique PER-TILE addresses/all actual instruction words,88 gap/
+out-of-range refusals,38 corruptions/truncations refused BEFORE output.
+
+Owner main33831/clean70137 BOTH ACTUALLY0,whole stdout exact/stderr0:
+2 complete depth1/16 eight-engine runs restore every original byte;20 failure
+histories include actual missing-ready/lost-read/lost-START-ACK external
+deadlines,late FIFO,bad counters,full final-bank payload mismatch,restore
+damage and IO/clock/mapping failures. Actual pending packets remain pending
+on loss. No cleanup/IO after quarantine;replay is inert. Scope/ARC are fixture
+leases in this coupled engine test,NOT fabricated native prerequisite proof.
+
+Actual new Native.inc KernelExport/PCI endpoint main96041/clean32371 BOTH
+ACTUALLY0,whole stdout exact/stderr0:106 valid/107 refused after unchanged
+old45valid/174refused controls. Covers all8 role domains,backing/scope aliases,
+HOST clock call,one-attempt reset ledger,forwarded view/PCI closure,and no IO
+after retention. Endpoint ready/closed fields are explicitly fixture setup;
+these are NOT genuine ARC/telemetry prerequisites or engine completion.
+
+Actual SDK main63510/clean56586 BOTH ACTUALLY0,whole objects compare exact:
+5028658b279b948ad32f1fd555336ce9b136d9e4907b4fdacdadb39082caa5f9
+Current production native bodies/system_time/get_area_info/thread/sem/PCI/VM
+imports are present;no CPU learned-reference/model/Work symbols. All default/
+base55 prior/current whole objects remain exact aabe86f5/20bd6ea1;preserved
+old DRSNODRV54b3a7ce and14 old-role controls pass FIRST. Base55 is NOT the
+installed feature-rich stable041. New45 production role preprocessing cases
+pass. Individual SDK frames<=1296B. No linked/installable module is produced.
+
+Independent frozen-object audits main+clean BOTH ACTUALLY0:the actual native
+8644B code array equals the complete authenticated v5 ELF's text;current
+source pins match.2 syntax positives/11 late/zero/two/empty/removal refusals
+pass at actual production headers,not test-only assertions. Compiler-known
+direct chain2256B,68 unresolved targets;wholeKernelStackQualified=FALSE.
+External/indirect/IRQ/caller frames remain unmeasured. All artifacts are
+BUILD/OFFBOARD evidence,NOT a physical/native-lifetime/Work grant.
+
+Preserved failures
+------------------
+First v5 SDK device audit refuses MULHU from constant division-by-six in
+identity lookup. Fixed explicit column selection;instruction audit unchanged.
+Initial clean archive copy raced its still-live archive command;copy/tests
+were retried ONLY after actual archive terminal,not called independent passes.
+First owner endpoint still assumed the standalone fixture's arbitrary bank
+order;production correctly used firmware physical-bank order. New endpoint
+uses the separately captured seven-bank order,not a job-supplied response.
+First native SDK build refuses four misleading-indentation warnings;source
+formatting fixes them with -Werror intact. Second SDK build4315c1ea passes
+compilation but predates the closure-handoff fix;NOT the selected5028658b.
+Initial new Native endpoint compile refuses an unused inherited controller;
+the NEW test now actually verifies its NULL-FD refusal before proceeding.
+Original assertions and numerical decisions are not relaxed. Raw failures
+and closed successes remain in the sibling directory;no model/binary saved.
+
+Remaining before physical measurement and Qwen optimization
+------------------------------------------------------------
+The private factory now compiles with genuine native admission/IO/closure;
+the combined actual native prerequisite+ARC+engine lifetime has NOT been run
+on hardware. Add/qualify a separate fixed DATA diagnostic+exact whole-object
+exchange path before any controlled physical use. Clock frequency still needs
+independent bounds/calibration,not firmware1350MHz conversion. Measure long
+common intervals with observed launch/poll skew and observer overhead.
+Seven readers on NoC0 are not automatically full-card saturation:measure
+scaling/other paths before claiming peak bandwidth. Repeating7*8MiB windows
+does not certify28GB capacity or authenticity. Then apply actual findings
+to Qwen operand preparation and measure original-model inference honestly.
+Original whole-model quality/fresh requests/no-reference Assistant Work and
+20tok/s remain outstanding;this diagnostic does not redefine completion.
+
+Reproduce:
+python3 tools/pioneer/tests/run_pioneer_dram_cohort_read_sweep_tests.py SDK NEW_DEVICE_OUT
+python3 tools/pioneer/tests/run_pioneer_dram_cohort_snapshot_data_tests.py NEW_DEVICE_OUT/image NEW_DATA_OUT
+python3 tools/pioneer/tests/run_pioneer_dram_cohort_read_sweep_owner_tests.py NEW_DEVICE_OUT/image NEW_OWNER_OUT OLD_V4_IMAGE
+python3 tools/pioneer/tests/run_pioneer_dram_cohort_native_lifecycle_tests.py NEW_ENDPOINT_OUT
+python3 tools/pioneer/build_dram_cohort_native.py SDK NEW_SDK_OUT [REFERENCE_HEADERS_AND_GIT]
+python3 tools/pioneer/audit_dram_cohort_native.py SDK NEW_SDK_OUT NEW_DEVICE_OUT/image NEW_AUDIT_OUT
+SDK:/Volumes/HaikuBuildLocal/generated.riscv64
+Official register/translation semantics checked against:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md#noc_node_id
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/MemoryMap.md#noc_id_logical
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/NoC/Coordinates.md#coordinate-translation
