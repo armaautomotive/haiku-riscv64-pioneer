@@ -1,0 +1,234 @@
+P100A_RELOAD driver55 tag2026102100010012 generation6 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133778116608 bytes free      (used/max 3256819712 / 137034936320)
+                           (cached   19168296960)
+     64488 semaphores free (used/max       1048 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3901 threads free    (used/max        195 /       4096)
+      2025 teams free      (used/max         23 /       2048)
+P100A_RELOAD driver55 tag2026102100010012 generation6 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation6 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+P100A_RELOAD driver55 tag2026110400010085 generation7 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026110400010085 generation7 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110400010085 generation7 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Q4_SOURCE_AUTH_AND_THREE_SAMPLES_STARTED_WAIT_SAME_PARENT
+AUTHENTICATING_FIXED_ORIGINAL_AND_FRESH_Q4_REFERENCE;CPU_DIAGNOSTIC_ONLY_NO_DEVICE_YET
+AUTHENTICATED_FIXED_Q4_MODEL c600de03 tensor7 matrix_width5120 block_width256 rows32 samples3 payload_and_reference_exact;DEBUG_NOT_WORK
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row0 gotbdddd633 expectedbdddd633
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row1 got3d8e150f expected3d8e150f
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row2 got3d4fafb3 expected3d4fafb3
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row3 gotbd853e90 expectedbd853e90
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row4 gotbdba5035 expectedbdba5035
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row5 got3e0333b4 expected3e0333b4
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row6 got3df15cd1 expected3df15cd1
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row7 gotbec33952 expectedbec33952
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row8 got3d202ab4 expected3d202ab4
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row9 gotbdfc6434 expectedbdfc6434
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row10 got3d78279c expected3d78279c
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row11 gotbe4b8441 expectedbe4b8441
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row12 got3d0779aa expected3d0779aa
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row13 gotbbcd92f0 expectedbbcd92f0
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row14 got3e0a7b6c expected3e0a7b6c
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row15 gotbc4258f0 expectedbc4258f0
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row16 got3eb137e3 expected3eb137e3
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row17 got3d8537f2 expected3d8537f2
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row18 got3e03fb94 expected3e03fb94
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row19 got3d3807d5 expected3d3807d5
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row20 got3e50dce6 expected3e50dce6
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row21 gotbbb4cdb0 expectedbbb4cdb0
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row22 got3e59da9b expected3e59da9b
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row23 gotbe59f9ba expectedbe59f9ba
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row24 got3e3ea21c expected3e3ea21c
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row25 gotbd062e6e expectedbd062e6e
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row26 got3e130333 expected3e130333
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row27 gotbe216d01 expectedbe216d01
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row28 got3d84bf92 expected3d84bf92
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row29 got3da975f9 expected3da975f9
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row30 got3b9ac4a0 expected3b9ac4a0
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass0 row31 got3e81ed9d expected3e81ed9d
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row0 gotbdddd633 expectedbdddd633
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row1 got3d8e150f expected3d8e150f
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row2 got3d4fafb3 expected3d4fafb3
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row3 gotbd853e90 expectedbd853e90
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row4 gotbdba5035 expectedbdba5035
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row5 got3e0333b4 expected3e0333b4
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row6 got3df15cd1 expected3df15cd1
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row7 gotbec33952 expectedbec33952
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row8 got3d202ab4 expected3d202ab4
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row9 gotbdfc6434 expectedbdfc6434
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row10 got3d78279c expected3d78279c
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row11 gotbe4b8441 expectedbe4b8441
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row12 got3d0779aa expected3d0779aa
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row13 gotbbcd92f0 expectedbbcd92f0
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row14 got3e0a7b6c expected3e0a7b6c
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row15 gotbc4258f0 expectedbc4258f0
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row16 got3eb137e3 expected3eb137e3
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row17 got3d8537f2 expected3d8537f2
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row18 got3e03fb94 expected3e03fb94
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row19 got3d3807d5 expected3d3807d5
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row20 got3e50dce6 expected3e50dce6
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row21 gotbbb4cdb0 expectedbbb4cdb0
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row22 got3e59da9b expected3e59da9b
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row23 gotbe59f9ba expectedbe59f9ba
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row24 got3e3ea21c expected3e3ea21c
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row25 gotbd062e6e expectedbd062e6e
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row26 got3e130333 expected3e130333
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row27 gotbe216d01 expectedbe216d01
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row28 got3d84bf92 expected3d84bf92
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row29 got3da975f9 expected3da975f9
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row30 got3b9ac4a0 expected3b9ac4a0
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample0 first0 kblock0 pass1 row31 got3e81ed9d expected3e81ed9d
+PASS_NATIVE_Q4_FPU_BLOCK sample0 tensor7 first0 kblock0 width256 phases4 dual_jobs2 exact_words64 polls1 generation7 saved_l112372;EXPLICIT_END_L1_NIU_TLB_CLOCK_PCI_RESTORED;NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row0 gotbd0f869e expectedbd0f869e
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row1 gotbbbe2500 expectedbbbe2500
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row2 got3dc9d686 expected3dc9d686
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row3 got3de164c1 expected3de164c1
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row4 gotbe195f0f expectedbe195f0f
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row5 got3dbc833f expected3dbc833f
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row6 got3e679ddd expected3e679ddd
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row7 got3e78ff54 expected3e78ff54
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row8 got3ea62506 expected3ea62506
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row9 got3cb4ab58 expected3cb4ab58
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row10 got3cae59b5 expected3cae59b5
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row11 gotbdd92a88 expectedbdd92a88
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row12 got3db7862f expected3db7862f
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row13 got3d283cb4 expected3d283cb4
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row14 gotbc3907b8 expectedbc3907b8
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row15 gotbe0bac62 expectedbe0bac62
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row16 got3da454cf expected3da454cf
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row17 got3dc94ad6 expected3dc94ad6
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row18 gotbe1f2763 expectedbe1f2763
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row19 gotbe3b0b2e expectedbe3b0b2e
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row20 got3e8665c8 expected3e8665c8
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row21 gotbe514412 expectedbe514412
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row22 gotbe0143c1 expectedbe0143c1
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row23 gotbe148c42 expectedbe148c42
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row24 got3de375f6 expected3de375f6
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row25 got3ea039cd expected3ea039cd
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row26 gotbd58323c expectedbd58323c
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row27 got3e1eec0b expected3e1eec0b
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row28 got3da0b22e expected3da0b22e
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row29 got3c80b010 expected3c80b010
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row30 got3e7515b4 expected3e7515b4
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass0 row31 got3e2ace50 expected3e2ace50
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row0 gotbd0f869e expectedbd0f869e
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row1 gotbbbe2500 expectedbbbe2500
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row2 got3dc9d686 expected3dc9d686
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row3 got3de164c1 expected3de164c1
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row4 gotbe195f0f expectedbe195f0f
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row5 got3dbc833f expected3dbc833f
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row6 got3e679ddd expected3e679ddd
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row7 got3e78ff54 expected3e78ff54
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row8 got3ea62506 expected3ea62506
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row9 got3cb4ab58 expected3cb4ab58
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row10 got3cae59b5 expected3cae59b5
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row11 gotbdd92a88 expectedbdd92a88
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row12 got3db7862f expected3db7862f
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row13 got3d283cb4 expected3d283cb4
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row14 gotbc3907b8 expectedbc3907b8
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row15 gotbe0bac62 expectedbe0bac62
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row16 got3da454cf expected3da454cf
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row17 got3dc94ad6 expected3dc94ad6
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row18 gotbe1f2763 expectedbe1f2763
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row19 gotbe3b0b2e expectedbe3b0b2e
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row20 got3e8665c8 expected3e8665c8
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row21 gotbe514412 expectedbe514412
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row22 gotbe0143c1 expectedbe0143c1
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row23 gotbe148c42 expectedbe148c42
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row24 got3de375f6 expected3de375f6
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row25 got3ea039cd expected3ea039cd
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row26 gotbd58323c expectedbd58323c
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row27 got3e1eec0b expected3e1eec0b
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row28 got3da0b22e expected3da0b22e
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row29 got3c80b010 expected3c80b010
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row30 got3e7515b4 expected3e7515b4
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample1 first8704 kblock10 pass1 row31 got3e2ace50 expected3e2ace50
+PASS_NATIVE_Q4_FPU_BLOCK sample1 tensor7 first8704 kblock10 width256 phases4 dual_jobs2 exact_words64 polls1 generation7 saved_l112372;EXPLICIT_END_L1_NIU_TLB_CLOCK_PCI_RESTORED;NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row0 got3e41422a expected3e41422a
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row1 got3db4738a expected3db4738a
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row2 got3d7df191 expected3d7df191
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row3 gotbdd42004 expectedbdd42004
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row4 got3dbad1c3 expected3dbad1c3
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row5 got3e0203cc expected3e0203cc
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row6 gotbec41fd7 expectedbec41fd7
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row7 gotbc0ccb68 expectedbc0ccb68
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row8 gotbe5cdfe7 expectedbe5cdfe7
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row9 gotbdedcc32 expectedbdedcc32
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row10 got3ceb6950 expected3ceb6950
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row11 got3d733234 expected3d733234
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row12 got3e0d8e5a expected3e0d8e5a
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row13 gotbde2a217 expectedbde2a217
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row14 got3d66c4b4 expected3d66c4b4
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row15 got3c215980 expected3c215980
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row16 gotbd7490e8 expectedbd7490e8
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row17 got3ceb372a expected3ceb372a
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row18 gotbd8e3b28 expectedbd8e3b28
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row19 got3d720180 expected3d720180
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row20 gotbcdb6baa expectedbcdb6baa
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row21 gotbe1d8700 expectedbe1d8700
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row22 got3da163cb expected3da163cb
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row23 got3e768d00 expected3e768d00
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row24 got3c359de8 expected3c359de8
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row25 gotbcab9ea0 expectedbcab9ea0
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row26 got3d94e510 expected3d94e510
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row27 gotbd922d9f expectedbd922d9f
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row28 gotbd61383c expectedbd61383c
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row29 gotbe63aca7 expectedbe63aca7
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row30 gotbddbebcb expectedbddbebcb
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass0 row31 gotbe8c6dd8 expectedbe8c6dd8
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row0 got3e41422a expected3e41422a
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row1 got3db4738a expected3db4738a
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row2 got3d7df191 expected3d7df191
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row3 gotbdd42004 expectedbdd42004
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row4 got3dbad1c3 expected3dbad1c3
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row5 got3e0203cc expected3e0203cc
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row6 gotbec41fd7 expectedbec41fd7
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row7 gotbc0ccb68 expectedbc0ccb68
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row8 gotbe5cdfe7 expectedbe5cdfe7
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row9 gotbdedcc32 expectedbdedcc32
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row10 got3ceb6950 expected3ceb6950
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row11 got3d733234 expected3d733234
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row12 got3e0d8e5a expected3e0d8e5a
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row13 gotbde2a217 expectedbde2a217
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row14 got3d66c4b4 expected3d66c4b4
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row15 got3c215980 expected3c215980
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row16 gotbd7490e8 expectedbd7490e8
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row17 got3ceb372a expected3ceb372a
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row18 gotbd8e3b28 expectedbd8e3b28
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row19 got3d720180 expected3d720180
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row20 gotbcdb6baa expectedbcdb6baa
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row21 gotbe1d8700 expectedbe1d8700
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row22 got3da163cb expected3da163cb
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row23 got3e768d00 expected3e768d00
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row24 got3c359de8 expected3c359de8
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row25 gotbcab9ea0 expectedbcab9ea0
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row26 got3d94e510 expected3d94e510
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row27 gotbd922d9f expectedbd922d9f
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row28 gotbd61383c expectedbd61383c
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row29 gotbe63aca7 expectedbe63aca7
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row30 gotbddbebcb expectedbddbebcb
+NATIVE_Q4_FPU_BLOCK_RETURNED_WORD sample2 first17376 kblock19 pass1 row31 gotbe8c6dd8 expectedbe8c6dd8
+PASS_NATIVE_Q4_FPU_BLOCK sample2 tensor7 first17376 kblock19 width256 phases4 dual_jobs2 exact_words64 polls1 generation7 saved_l112372;EXPLICIT_END_L1_NIU_TLB_CLOCK_PCI_RESTORED;NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM
+PASS_NATIVE_Q4_FPU_BLOCKS samples3 exact_words192 clean_ends3;DEBUG_REFERENCE_NOT_WORK_NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM
+P100A_RELOAD driver55 tag2026110400010085 generation7 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110400010085 generation7 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110400010085 generation7 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+P100A_RELOAD driver55 tag2026102100010012 generation8 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026102100010012 generation8 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation8 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133778305024 bytes free      (used/max 3256631296 / 137034936320)
+                           (cached   19170476032)
+     64488 semaphores free (used/max       1048 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3901 threads free    (used/max        195 /       4096)
+      2025 teams free      (used/max         23 /       2048)
+NATIVE_Q4_KNOWN_CLEAN_NO_FULL_MODEL_SPEED_CLAIM

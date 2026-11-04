@@ -1,0 +1,45 @@
+STABLE041_RESTORED_Q4_BLOCKS_EXACT192_PASSED
+0
+713fb9d61e6d41b9106ae41f09d92a6248ca73056835d442ba4c9572b199377d  /boot/home/pioneer-native-q4-fpu-20261104-a/parent
+2422587c9d72fab71cb77f940823017f30e84f1136af859a2df110115d310935  /boot/home/pioneer-native-q4-fpu-20261104-a/tenstorrent_pci_probe-native-q4-fpu85
+904902c7c796173f211b0020e1497de5bcf11e51f1d1da31d1f94d900e89513b  /boot/home/pioneer-native-q4-fpu-20261104-a/pioneer-native-q4-fpu-diagnostic
+5e8b9fde8759b3c992745b21b191a8e0d5ab6b854fbeedace7af641b7285b893  /boot/home/pioneer-native-q4-fpu-20261104-a/q4-reference.log
+c2a3f6e22adbf9260bfae6c64761329b2daeb136ffbed7357afc5a95251584eb  /boot/home/pioneer-native-q4-fpu-20261104-a/q4.stdout
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74  /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
+c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18  /boot/home/config/non-packaged/servers/HaikuAssistantService
+0de9141eb3955cf1c993a67c80ef648b3538ce7155c17677458487ee083a4933  /boot/home/config/non-packaged/apps/HaikuAssistant
+P100A_RELOAD driver55 tag2026102100010012 generation8 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  107 /boot/system/servers/net_server                    
+  108 /boot/system/servers/package_daemon                
+  111 /boot/system/servers/launch_daemon baron           
+  114 /boot/system/servers/power_daemon                  
+  115 /boot/system/servers/syslog_daemon                 
+  133 /boot/system/servers/media_server                  
+  174 /boot/system/servers/app_server                    
+  188 /boot/system/Tracker                               
+  191 /boot/system/Deskbar                               
+  209 /boot/system/servers/input_server                  
+  234 /boot/system/servers/media_addon_server            
+  284 /boot/system/servers/notification_server           
+  534 /boot/system/bin/screen_blanker                    
+ 1323 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+ 1325 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+ 1326 /bin/bash -c set -eu; cat /boot/home/pioneer-native-q4-fpu-2026 
+ 1330 /boot/system/bin/ps -o Id -o Team                  
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133778186240 bytes free      (used/max 3256750080 / 137034936320)
+                           (cached   19170279424)
+     64491 semaphores free (used/max       1045 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3902 threads free    (used/max        194 /       4096)
+      2026 teams free      (used/max         22 /       2048)

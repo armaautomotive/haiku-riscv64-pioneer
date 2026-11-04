@@ -1,10 +1,11 @@
-Diagnostic85:compressed-Q4/SFPU/BF16/FPU native ownership -- OFFBOARD qualified
-===========================================================================
+Diagnostic85:compressed-Q4/SFPU/BF16/FPU -- ACTUAL bounded K256 hardware qualified
+===============================================================================
 This is a SEPARATE fixed diagnostic,not a Work mode or full-model driver.
-Do not install/run it based only on the owner checks below. The new frozen
-client/one-shot physical parent require their separate admission as documented
-in benchmarks/qwen38-native-q4-fpu-client-qualified-20261104.txt.
-Existing spent81/82/83/84 stages MUST NOT be reused. Assistant stays unchanged.
+The recorded85-a parent has finished and MUST NEVER be repeated or repinned
+to bypass admission. New experiments require separately qualified frozen
+roles/parents. See benchmarks/qwen38-native-q4-fpu-client-qualified-20261104.txt
+for its original admission. Spent81/82/83/84/85 stages MUST NOT be reused.
+Assistant stays unchanged.
 
 Purpose
 -------
@@ -82,7 +83,13 @@ all192 independent reference words,three explicit clean ENDs and complete
 output/idle metadata pass. Failure stops,no retry/reset/auto restore. NEVER
 repeat a spent parent or change its pins to bypass failed admission.
 
-Remaining:physical qualification,
+The frozen physical parent has now ACTUALLY CLOSED0:all192 exact real P100A
+words,three explicit clean ENDs and normal041/gen8 restored;64 CPUs/full RAM
+independently confirmed. See benchmarks/qwen38-native-q4-fpu-physical-20261104.txt.
+This proves this single-core/K256 arithmetic+lifecycle only. Stage85-a is
+SPENT and MUST NEVER be repeated. No throughput/model-quality claim.
+
+Remaining:
 on-card full-K GDDR streaming without host round trips/per-block clears,
 Q6/Q8/cohort/attention/recurrent-state integration,full-model quality and
 matched real inference. Full-native27B/20tokens/sec remain UNMET.

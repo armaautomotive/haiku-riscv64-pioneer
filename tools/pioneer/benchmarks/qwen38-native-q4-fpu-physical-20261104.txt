@@ -1,0 +1,82 @@
+ACTUAL compressed-Q4/SFPU/BF16/FPU native85 hardware pipeline -- PASSED
+===================================================================
+2026-11-04 UTC. Original frozen parent98591 ACTUALLY CLOSED0 on the SAME
+tool handle,observed11:27:27UTC. Parent PID1172. No relaunch on observation
+timeout,no parallel Pioneer command/driver/admin/network/OS/power operation
+while it was live. Only local log reads and host-only work during the wait.
+Old spent81/82/83/84 stages and their failed evidence remain untouched.
+New stage /boot/home/pioneer-native-q4-fpu-20261104-a is NOW SPENT:NEVER repeat.
+
+Frozen tuple,source/client/parent checkpointc1ff35c955 pushed BEFORE admission:
+native2422587c9d72fab71cb77f940823017f30e84f1136af859a2df110115d310935
+client904902c7c796173f211b0020e1497de5bcf11e51f1d1da31d1f94d900e89513b
+parent713fb9d61e6d41b9106ae41f09d92a6248ca73056835d442ba4c9572b199377d
+reference5e8b9fde8759b3c992745b21b191a8e0d5ab6b854fbeedace7af641b7285b893
+Image7036B SHA7e3efc36b1447a3880081caf899175a87378f894ea684d7623572625242e04d4.
+Runtime parent/binaries/reference independently rehashed after completion.
+PRIVATE original/converted weights/generated headers/binaries are NOT in Git.
+Only source and non-weight diagnostic results/identity records are published.
+
+Actual run
+----------
+Normal041/tag12/gen6 ->85/tag2026110400010085/gen7 via verified hot reload.
+ONE client fully authenticated SAME-open original18973870528B SHA:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+Fresh original payload/header/gap/input/reference bindings passed BEFORE GPU
+open. Three fixed Q4 samples from layer0 FFN gate tensor7,matrix5120x17408:
+ sample0 rows0..31,Kblock0;sample1 rows8704..8735,Kblock10;
+ sample2 rows17376..17407,Kblock19. Each32x256,4 fidelity phases,2 complete
+jobs. Diagnostic BF16 inputs,NOT prompt hidden states. Single compute core
+(1,2);the other cores remain held,NOT120-worker inference or full-K execution.
+
+On the REAL P100A:raw quant UNPACK,FP32 metadata broadcast/SFPTRANSP,SFPU
+exact BF16-RNE decode,SFPSTORE/MOVD2A and4-phase FPU run end-to-end. Actual
+scalar RV32 program does NOT read weights/inputs or compute learned products.
+All192 returned words match the independently Fraction-qualified originals;
+three RESULTs,polls1 each,three explicit clean ENDs. Full49488B heap L1
+journal restored;staged code/payload/headers/gaps/zeros/output checked BEFORE
+overwriting evidence;NIU commands/counters unchanged (no counter rewinds),
+TLB/clock/actual16 VM views/PCI/reservation closure verified. No GDDR IO or
+NIU writes in this role. This validates arithmetic+ownership of THIS bounded
+K256 pipeline,not full model/state/GDDR/cohort/quality or performance.
+
+Only after complete192-word output gate:85/gen7 ->normal041/gen8. No cold
+recovery/quarantine/reset,reboot,SD,power,mains or hardware intervention.
+Assistant/worker/service/model/cache/runtime/kernel/boot settings unchanged.
+
+Closed records and independent postflight
+----------------------------------------
+Full outer stdout234lines/23054B SHA:
+3144be41ed6e610b654e65c96515f5491904aadee34afea8a9ceeeaffb28f072
+Child stdout198lines/20322B SHA,remote/local agree after fetch35685 CLOSED0:
+c2a3f6e22adbf9260bfae6c64761329b2daeb136ffbed7357afc5a95251584eb
+Outer AND child stderr0. Remote child exit0,state:
+STABLE041_RESTORED_Q4_BLOCKS_EXACT192_PASSED.
+Independent frozen85 child parser accepts all192 words and polls[1,1,1].
+Full child stdout is embedded unchanged in the COMPLETE captured parent.
+Individual child parser success is not substituted for actual outer closure.
+
+First postterminal read26c802 CLOSED0;fresh recorded postflight144a2a CLOSED0
+at11:30:17UTC:normal041/tag12/gen8,quiesced0/cold0/owner0/open1/guard1,
+64 CPUs/maxRAM137034936320B,free133778186240B,no Assistant/model/native
+test process. Installed stable driver SHA:
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Unchanged worker861e5287/servicec509da43/GUI0de9141e hashes pass. Recorded
+postflight SHAfcfb32835d8b2c841fe591d2b97be398d48fc19246ea2b98c0f0dc5f01056b23,
+stderr0. Source records in sibling directory;verify with:
+ python3 tools/pioneer/tests/pioneer_native_q4_fpu_physical_observed_test.py
+That script checks saved evidence ONLY;it never admits/runs/retries hardware.
+
+No speed/model-quality claim
+---------------------------
+End-to-end diagnostic includes a full19GB source SHA,host fresh diagnostic
+reference,thorough journal staging/readback and two hot reloads. Its wall
+time/polls are NOT token-generation or accelerator throughput measurements.
+Last tiny cached real27B generation remains0.204tok/s,NOT a matched speedup.
+Full-native27B/20tokens/sec remain UNMET;no new tokens/sec figure exists.
+
+Next:preserve this exact physical arithmetic baseline;implement a distinct
+qualified full-K on-card GDDR loader with persistent accumulators,prefetch/
+buffer ownership and no host K-block round trips. Then other formats/all
+workers,attention/recurrent state/full-model quality/matched real generation
+and Assistant promotion. Do not reuse the spent85 stage for new tests.
