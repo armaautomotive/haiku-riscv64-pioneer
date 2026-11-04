@@ -1,0 +1,22 @@
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133780152320 bytes free      (used/max 3254784000 / 137034936320)
+                           (cached    191115264)
+     64481 semaphores free (used/max       1055 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3901 threads free    (used/max        195 /       4096)
+      2025 teams free      (used/max         23 /       2048)
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+P100A_RELOAD driver55 tag2026110400010082 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026110400010082 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110400010082 generation3 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+LOAD_ONLY_SOURCE_AUTH_AND_ONE_SAMPLE_STARTED_WAIT_SAME_PARENT
+AUTHENTICATING_FIXED_ORIGINAL_AND_FRESH_LEARNED_REFERENCE;CPU_DIAGNOSTIC_ONLY_NO_DEVICE_YET
+AUTHENTICATED_FIXED_MODEL c600de03 tensor7 width5120 sample0;LOAD_ONLY_NO_FPU_MODEL_OR_WORK
+NATIVE_LOAD_ONLY_END_UNPROVEN state4 cold1 phase5 marker314c444e count80001400 payload_checked272 headers_checked16 mismatch_kind2 mismatch_offset90460;CLOSE_ONLY_NO_END_RETRY_RESET_RESTORE;NO_PRIVATE_WORD_DUMP
+LOAD_ONLY_STOP_RETAIN_OWNER_NO_RETRY

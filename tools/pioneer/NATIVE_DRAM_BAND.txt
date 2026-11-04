@@ -2,11 +2,12 @@ Card-side packed-GDDR native band -- OFFBOARD prototype
 ======================================================
 
 Current follow-on: the actual81 direct-GDDR/FPU trial FAILED and recovered
-to normal041/gen2; see the final section below. A NEW separate LOAD-ONLY82
-diagnostic now has offboard byte/lifecycle/native/client/parent tests. It
-independently checks loaded bytes BEFORE reset and again BEFORE restoration,
-without an FPU path. It is NOT yet staged/run and does NOT fix or reclassify
-the81 failure. See NATIVE_DRAM_LOAD.txt. No new hardware/model/speed pass.
+to normal041/gen2; see the final section below. The NEW separate LOAD-ONLY82
+diagnostic also FAILED on hardware:tile0's1088B matched exactly,but tile1's
+first word at90460 mismatched BEFORE reset and without ANY FPU path. This
+narrows a real transfer issue;it does NOT fix or reclassify81,or prove its
+entire numerical cause. Both stages are SPENT. See NATIVE_DRAM_LOAD.txt and
+benchmarks/qwen38-native-dram-load-failed-20261104.txt. No model/speed pass.
 
 2026-11-04 follow-on:PioneerNativeDramModelBandLease.h now implements the
 full L1/GDDR/NIU/FIFO/TLB/clock journal ALGORITHM with distinct diagnostic81

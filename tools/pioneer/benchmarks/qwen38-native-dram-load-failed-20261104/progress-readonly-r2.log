@@ -1,0 +1,9 @@
+RUNNING_LOAD_ONLY_SOURCE_AUTH_AND_ONE_SAMPLE
+/boot/home/pioneer-native-dram-load-only-20261104-a/load.stdout:92
+/boot/home/pioneer-native-dram-load-only-20261104-a/load.stderr:0
+AUTHENTICATING_FIXED_ORIGINAL_AND_FRESH_LEARNED_REFERENCE;CPU_DIAGNOSTIC_ONLY_NO_DEVICE_YET
+   Id Team                                               
+  600 /bin/sh /boot/home/pioneer-native-dram-load-only-20261104-a/pio 
+  685 /boot/home/pioneer-native-dram-load-only-20261104-a/pioneer-nat 
+  698 /bin/bash -c set -e; stage=/boot/home/pioneer-native-dram-load- 
+  703 /boot/system/bin/awk NR==1 || /pioneer-native-dram|pioneer_nati 

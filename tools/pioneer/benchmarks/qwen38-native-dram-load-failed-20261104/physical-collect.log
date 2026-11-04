@@ -1,0 +1,54 @@
+/boot/home/pioneer-native-dram-load-only-20261104-a/load.stdout:0:1:600:184
+63f6c0619cb2769932daf9d8b83d644076a70c953a867ab061c6135ec597d99d  /boot/home/pioneer-native-dram-load-only-20261104-a/load.stdout
+/boot/home/pioneer-native-dram-load-only-20261104-a/load.stderr:0:1:600:211
+f21f376681d8ab635a7df556cc6f231f3ba52073f92668c27a3922981094da7e  /boot/home/pioneer-native-dram-load-only-20261104-a/load.stderr
+/boot/home/pioneer-native-dram-load-only-20261104-a/load.exit:0:1:600:2
+4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865  /boot/home/pioneer-native-dram-load-only-20261104-a/load.exit
+/boot/home/pioneer-native-dram-load-only-20261104-a/state:0:1:600:54
+510d5c29363f7b079e3d4ca0b0973cd1b05fa7c0fd2a7eab2c4adf2610ecae7e  /boot/home/pioneer-native-dram-load-only-20261104-a/state
+/boot/home/pioneer-native-dram-load-only-20261104-a/cli-refusal.stdout:0:1:600:0
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /boot/home/pioneer-native-dram-load-only-20261104-a/cli-refusal.stdout
+/boot/home/pioneer-native-dram-load-only-20261104-a/cli-refusal.stderr:0:1:600:92
+b758dc0a1cea92cfa07ff21ee5bbeb19cd5ff74f8c9f9f4ee7f197dcf25a07f9  /boot/home/pioneer-native-dram-load-only-20261104-a/cli-refusal.stderr
+/boot/home/pioneer-native-dram-load-only-20261104-a/cli-refusal.exit:0:1:600:2
+53c234e5e8472b6ac51c1ae1cab3fe06fad053beb8ebfd8977b010655bfdd3c3  /boot/home/pioneer-native-dram-load-only-20261104-a/cli-refusal.exit
+/boot/home/pioneer-native-dram-load-only-20261104-a/parent.pid:0:1:600:4
+ab8e9a58c47abe1aeff8ae620a0ed614ee77d507ef52799d4c103d69ff35d85c  /boot/home/pioneer-native-dram-load-only-20261104-a/parent.pid
+UNPROVEN_LOAD_ONLY_NO_FURTHER_END_RESET_RETRY_RESTORE
+1
+P100A_RELOAD driver55 tag2026110400010082 generation3 quiesced0 cold1 active_owner1 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133774327808 bytes free      (used/max 3260608512 / 137034936320)
+                           (cached   19165044736)
+     64481 semaphores free (used/max       1055 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3901 threads free    (used/max        195 /       4096)
+      2025 teams free      (used/max         23 /       2048)
+3df4fdb1d034c39df5c24bc06735012109d3881431c5a9ddaedd16ecc535d3d6  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74  /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
+c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18  /boot/home/config/non-packaged/servers/HaikuAssistantService
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /boot/system/servers/net_server                    
+  104 /boot/system/servers/package_daemon                
+  105 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  111 /boot/system/servers/power_daemon                  
+  113 /boot/system/servers/launch_daemon baron           
+  118 /boot/system/servers/syslog_daemon                 
+  130 /boot/system/servers/media_server                  
+  178 /boot/system/servers/app_server                    
+  187 /boot/system/Tracker                               
+  189 /boot/system/Deskbar                               
+  208 /boot/system/servers/input_server                  
+  233 /boot/system/servers/media_addon_server            
+  283 /boot/system/servers/notification_server           
+  541 /boot/system/bin/screen_blanker                    
+  736 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  738 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  739 /boot/system/bin/ps -o Id -o Team                  

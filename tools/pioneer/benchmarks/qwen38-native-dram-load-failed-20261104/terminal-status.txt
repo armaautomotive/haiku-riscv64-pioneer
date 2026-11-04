@@ -1,0 +1,22 @@
+2026-11-04 UTC. Original handles observed terminal,not progress timeouts:
+30639 physical-parent CLOSED70,observed05:49:33UTC,NO retry
+78524 physical-fetch CLOSED0
+cdfbf3 physical-collect CLOSED0,CPU metadata only
+2be47b recovery-sync CLOSED0
+47512 OFF-once CLOSED0,observed05:52:35UTC,NO repeat OFF
+25182 off-state SSH evidence CLOSED255,connection timeout
+54636 ON-once CLOSED0,started05:55:50UTC,NO repeat ON
+86034 first Linux SSH CLOSED255,normal early-boot timeout
+39847 second Linux SSH CLOSED255,normal early-boot timeout
+40aad0 third Linux SSH CLOSED0,fresh uptime77.19s
+39460 Linux prepare CLOSED0,preserved existing no-cmdline warning
+81759 Linux boot-Haiku CLOSED0
+77861 first Haiku readiness CLOSED255,transient connection timeout
+ac4be5 second Haiku readiness CLOSED0,82/gen1/cold0/owner0
+0977eb recovery-copy CLOSED0
+77a6ef recovery-script-postflight CLOSED0
+62424 fresh-epoch stable restoration CLOSED0
+20076 final independent readonly CLOSED0,observed06:02:09UTC
+18 first-failure flow+8 metadata+11 prior recovery fixtures passed.
+Old failed lease NEVER closed/promoted;new power epoch restored041/gen2.
+No82 physical byte/FPU/full-model/speed pass. Full-native27B/20tok/s UNMET.

@@ -1,0 +1,114 @@
+ACTUAL LOAD-ONLY82 -- FIRST odd tile payload mismatch BEFORE reset
+=================================================================
+2026-11-04 UTC,source checkpoint213e3de49cd9a509e79d23a272c7c37a16bf640f.
+ONE frozen parent30639 launched05:37:11UTC,ACTUALLY CLOSED70 on SAME
+handle,observed05:49:33UTC. No restart on observation timeouts. No parallel
+card/admin/driver/OS/network/power operation during the live child. Only
+read-only scoped output/process/CPU-time snapshots,not extra accelerator FDs.
+Full-native27B/20tok/s remain UNMET. This is NOT inference or a speed result.
+
+Admission,staging and source identity
+-------------------------------------
+Native preflight ACTUALLY CLOSED0,stable041/tag12/gen2/cold0/owner0/open1/
+guard1;64CPUs/max137034936320B RAM. Cached worker861e5287/servicec509da43
+unchanged. Failed81 state/raw hashes and its fresh-epoch recovery preserved.
+New unused private stage:/boot/home/pioneer-native-dram-load-only-20261104-a.
+Initial default scp CLOSED255:SSH has no SFTP subsystem. Independent empty-
+stage check CLOSED0. Supported legacy scp-O CLOSED0;this is a file-transport
+correction BEFORE any GPU test,not an execution retry. Staged hashes match:
+ driver3df4fdb1d034c39df5c24bc06735012109d3881431c5a9ddaedd16ecc535d3d6
+ clientf7ae6e1be5fbcf6618ddd4326715c49166169a0073f868a86ec353519bc4f719
+ parentf6859f95a58524cca324e0f150b358c63d2656e8af12eb3b71af1582726a1ba9
+CLI-invalid-option CLOSED2/no stdout,normal driver unchanged. Parent then
+performed ONE known-idle041/gen2 ->82/gen3 exchange without reboot.
+
+Same original process685 verified alive;its CPU time increased250685 ->
+295765 ->391143ms in preserved snapshots. Full19GB same-open original SHA/
+layout/epoch plus fresh authenticated payload/reference completed before ANY
+device open. No cache repair/conversion publication or model mutation.
+The first exact-basename ps query returned no rows because Haiku truncates
+team arguments;shorter observed basename then showed the SAME live685.
+Neither missing rows nor observation timeout caused a rerun or kill.
+
+Actual failed result,not a fabricated pass
+------------------------------------------
+Child stdout184B contains ONLY the2 authentication banners,NO PASS.
+SHA63f6c0619cb2769932daf9d8b83d644076a70c953a867ab061c6135ec597d99d
+Child stderr211B,ONE exact line,no private word dump:
+NATIVE_LOAD_ONLY_END_UNPROVEN state4 cold1 phase5 marker314c444e count80001400 payload_checked272 headers_checked16 mismatch_kind2 mismatch_offset90460;CLOSE_ONLY_NO_END_RETRY_RESET_RESTORE;NO_PRIVATE_WORD_DUMP
+SHAf21f376681d8ab635a7df556cc6f231f3ba52073f92668c27a3922981094da7e
+Child exit1,state UNPROVEN_LOAD_ONLY_NO_FURTHER_END_RESET_RETRY_RESTORE.
+Outer stdout1806B SHA:
+a36ce019d8e685c02e82712c95ff2edce6a60d91cb5e1cc45a1603af9f136215
+Outer stderr0,parent exit70. Independent remote/local fetch hashes match.
+Postterminal CPU-only metadata:82/gen3/cold1/active_owner1;64 CPUs/full RAM
+still present,cached Assistant files unchanged. No new GPU reads/END/reset/
+retry/restore were attempted after uncertainty. The spent marker stays.
+
+What this proves and what remains hypothesis
+---------------------------------------------
+Exact frozen client flow accepted RUN's lifecycle/sentinel/counter/journal
+predicate before requesting explicit byte-check END. This is an INFERENCE
+from authenticated code/output order;individual raw counters were not dumped.
+Exact native END flow,reported phase5 and comparison counts locate the failure
+before ANY END stop/reset. All272 words of weight tile0 and8 header words
+passed;the8 tile1 header words passed;the first payload word of tile1 at
+90000+1120=90460 failed. No FPU/unpack/math path exists in the82 image.
+Thus a real transfer/data problem exists independently of arithmetic or
+post-reset restoration. This does NOT establish the cause of ALL81 numerical
+differences,or prove the card fake/defective,or characterize other tiles.
+
+Tile0 source/destination are congruent MOD64;tile1 packed GDDR04000440 is
+0mod64 while destination90460 is32mod64. Both satisfy MOD32. A64B placement
+control is now a specific hypothesis worth isolating,not an established fix.
+FIFO snapshot/request handling remains another possible cause. Do not relax
+comparisons,blindly promote a C64 change,or rerun the spent82 stage.
+The pinned ISA's Blackhole alignment page delegates to Wormhole while saying
+similar,not identical. That shared table says Other->L1 C32. The actual failing
+result is retained rather than discarded because the documented table seems
+compatible. Cached copies were reread;web fetch of pinned raw pages missed.
+
+Recovery and next admission
+----------------------------
+Raw diagnostics fetched before one filesystem sync and ONE7s OFF hold.
+OFF47512 ACTUALLY CLOSED0,observed05:52:35UTC;no repeated OFF. SSH-off
+evidence25182 timed out,not contradictory ON evidence. Single ON54636 at
+05:55:50UTC ACTUALLY CLOSED0 after the shutdown interval. Serial showed a
+fresh firmware/Linux boot;no second ON/restart was sent. Two early Linux
+SSH probes timed out;third CLOSED0 with Linux6.1.31/riscv64,uptime77.19s,
+milkv/sudo0 and exact unchanged helper9cfc6dc3.... This was normal boot
+readiness waiting,not grounds to power-cycle or claim a board stall.
+Fresh prepare39460 CLOSED0 with64CPUs/memory128-spin-idle7-top-page-nosd-
+control,session load82-recovery-20261104-a. Existing kexec warning "No
+cmdline or append string provided" retained,not hidden. Boot81759 CLOSED0,
+stderr0 via normal Linux shutdown/default NVMe boot unchanged. First Haiku
+probe77861 timed out;next CLOSED0:exact82/gen1/cold0/owner0,64CPUs/fullRAM.
+The separate82 fresh-epoch restore helper requires EXACT recorded failed
+stdout/stderr hashes/exit/state,program identities,fresh82/gen1/cold0/owner0,
+64CPUs/fullRAM/idle and unused recovery paths. It never cleans the old lease
+and never sends GPU test/END/reset. All18 first-failure flow+8 metadata+
+11 recorded-prior fixture cases passed. New helper SHA:
+4ee287558106aade3ce8d016b85d93db5c18d3fa48cce5818a0481f51d68eb41
+Private copy+hash/metadata postflight CLOSED0. Direct recovery62424 ACTUALLY
+CLOSED0,stderr0;single known-idle fresh82/gen1 ->stable041/gen2. NO old-lease
+END/reset/cleanup or numerical retry. No source disk repair/erase,mains,SD,
+cable/model/cache/Assistant change. Original failure state stays immutable;
+separate recovery.state records the new epoch. Do not relaunch spent82.
+
+Independent final20076 ACTUALLY CLOSED0,stderr0,observed06:02:09UTC:
+stable041/tag12/gen2/cold0/owner0/open1/guard1,64CPUs,max137034936320B,
+free133810208768B. Cached worker861e5287/servicec509da43/GUI0de9141e
+unchanged,no project compute parent. Original metadata0:1:600:18973870528,
+private cache0:700 with851 .cache entry files. This last count is METADATA
+ONLY,not a new content rehash or extra inference qualification. All failed
+trial outputs/markers and previous81 mismatch/recovery remain preserved.
+Independent strict child parser passes3 valid/62 refused cases,including
+old failed81 rejection. The ACTUAL failed82 banners-only stdout is also
+refused. Preparation/software greens do not replace physical comparison.
+
+Next corrected transport candidate needs separate source/image/native lease/
+protocol/build/fixture qualification and a NEW private physical stage. All
+payload/header bytes must pass BEFORE any FPU integration/full-model claim.
+Native full arena/resident stripes/cohort/token state/attention/logits/sampling,
+full quality and real throughput remain unfinished. Lossless851-entry disk
+cache and no-CPU-reference Work policy remain unchanged;no speedup claimed.

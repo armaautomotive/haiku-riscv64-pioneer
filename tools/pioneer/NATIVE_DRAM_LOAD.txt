@@ -1,5 +1,17 @@
-GDDR LOAD-ONLY82 -- preparation, NOT a physical byte or math pass
-===============================================================
+GDDR LOAD-ONLY82 -- ACTUAL pre-reset payload mismatch,NO byte/math pass
+====================================================================
+Current result:the frozen82 parent actually CLOSED70;child CLOSED1. First
+tile1088B was exact,the NEXT tile's FIRST word at L1 0x90460 mismatched.
+Reported phase5/payload_checked272/headers_checked16/mismatch_kind2 means
+the independent comparison failed BEFORE the first END reset/hold/restore.
+No further END/reset/retry/automatic restore was sent. The82 stage is now
+SPENT,not a passing transfer. See the failed observation report/receipts:
+benchmarks/qwen38-native-dram-load-failed-20261104.txt.
+Recovery is complete:ONE OFF,shutdown interval/no contradictory evidence,
+ONE ON,fresh Linux->Haiku64CPU/fullRAM,then the tested fresh82/gen1 ->
+stable041/gen2 restore. Independent postflight confirms cold0/owner0 and
+unchanged Assistant/cache files. This does NOT close/promote the old lease.
+
 2026-11-04 UTC. The actual direct-GDDR/FPU81 test failed all64 returned
 words on its FIRST sample; no END, next sample or automatic restore was
 sent. A controlled new power epoch restored stable041/gen2. The failed
@@ -77,8 +89,8 @@ its driver0ab145ac... and client0091244a... are BYTE IDENTICAL. PRIVATE
 generated headers, weights, objects and diagnostic binaries NEVER enter Git.
 See benchmarks/qwen38-native-dram-load-preparation-20261104.txt for receipts.
 
-One-shot planned physical parent -- NOT YET STAGED OR RUN
----------------------------------------------------------
+Frozen physical parent -- historical pre-trial contract,now SPENT
+----------------------------------------------------------------
 pioneer_native_dram_load_physical.sh requires stable041/gen2/64CPU/fullRAM,
 exact installed cached Assistant/admin/guard identities, NO possible owner,
 and the preserved failed81 raw hashes plus fresh-epoch recovery record.
@@ -93,7 +105,7 @@ failure receipts remain immutable. Publish preparation, freshly preflight,
 privately stage/pin/CLI-refusal-check, then ONE direct exec; observe the SAME
 parent handle to terminal. No retry merely because an observation times out.
 
-Next actual byte proof is still required. If transport bytes pass, FPU
+Corrected actual byte proof is still required. If transport bytes pass, FPU
 descriptor/stride/timing/clock integration remains a separate question.
 Do not blindly change C32 alignment or relax comparisons. Full-model arena,
 resident stripes/cohort/token state/attention/logits/sampling/quality/real

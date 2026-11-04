@@ -1,0 +1,38 @@
+Haiku
+P100A_RELOAD driver55 tag2026110400010082 generation1 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133821034496 bytes free      (used/max 3213901824 / 137034936320)
+                           (cached    184086528)
+     64529 semaphores free (used/max       1007 /      65536)
+      3957 ports free      (used/max        139 /       4096)
+      3905 threads free    (used/max        191 /       4096)
+      2024 teams free      (used/max         24 /       2048)
+3df4fdb1d034c39df5c24bc06735012109d3881431c5a9ddaedd16ecc535d3d6  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74  /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
+c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18  /boot/home/config/non-packaged/servers/HaikuAssistantService
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  107 /boot/system/servers/net_server                    
+  108 /boot/system/servers/package_daemon                
+  111 /boot/system/servers/launch_daemon baron           
+  114 /boot/system/servers/power_daemon                  
+  115 /boot/system/servers/syslog_daemon                 
+  133 /boot/system/servers/media_server                  
+  154 /boot/system/bin/sh /boot/home/config/settings/ssh/start-sshd.s 
+  174 /boot/system/servers/app_server                    
+  188 /boot/system/Tracker                               
+  191 /boot/system/Deskbar                               
+  209 /boot/system/servers/input_server                  
+  234 /boot/system/servers/media_addon_server            
+  284 /boot/system/servers/notification_server           
+  303 /bin/sleep 20                                      
+  422 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  424 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  425 /boot/system/bin/ps -o Id -o Team                  

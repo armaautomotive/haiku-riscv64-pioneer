@@ -1,0 +1,7 @@
+Team                                                  Id #Threads  Gid  Uid 
+/boot/home/pioneer-native-dram-load-only-20261104-a/pioneer-nat   685        1    0    0 
+
+Thread                                   Id    State Prio    UTime    KTime
+pioneer-native-dram-load-diagno         685     wait   10   250685    10003 
+AUTHENTICATING_FIXED_ORIGINAL_AND_FRESH_LEARNED_REFERENCE;CPU_DIAGNOSTIC_ONLY_NO_DEVICE_YET
+0
