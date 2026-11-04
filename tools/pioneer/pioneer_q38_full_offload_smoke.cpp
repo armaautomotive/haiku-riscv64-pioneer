@@ -56,6 +56,7 @@ static bool Progress(const A::Frame& frame){
  if(frame.kind!=A::Progress || (frame.value>1000 && frame.value!=UINT32_MAX))return false;
  printf("FULL_OFFLOAD_PROGRESS id%u value%u %s\n",frame.id,frame.value,frame.text.c_str());return true;
 }
+#ifndef PIONEER_FULL_OFFLOAD_CHANNEL_ONLY
 int main(int argc,char** argv){
  if(argc!=2 || strcmp(argv[1],"--full-card-hello-four"))return 2;
  setvbuf(stdout,nullptr,_IOLBF,0);
@@ -90,3 +91,4 @@ int main(int argc,char** argv){
   numericalText?"PASS":"FAIL",unsigned(numericalText));
  return numericalText?0:1;
 }
+#endif

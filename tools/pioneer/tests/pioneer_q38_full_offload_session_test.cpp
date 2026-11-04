@@ -76,6 +76,19 @@ struct IO {
   }else if(op==TT_PCI_PROBE_Q38_SPAN_END){
    assert(uploaded==source.bytes && source.reads==source.pages && !spanEnds++ && !starts);
    *static_cast<tt_q38_span_end*>(data)={1,0,1,0};
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+  }else if(op==TT_PCI_PROBE_Q38_FULL_OFFLOAD_COUNTER){
+   namespace F=PioneerQ38FullOffload;auto& m=*static_cast<F::CounterPacket*>(data);
+   assert(size==sizeof(m) && F::CounterRequest(m) && starts==1 && !holds && !ends);
+   auto& r=m.reply;r.version=r.operation=r.started=r.ready=1;
+   auto* d=r.detail;d[0]=d[1]=d[6]=1;d[2]=12;d[4]=63;
+   d[7]=polls==2?Records():polls==1?std::min(Records(),prompts+1):0;d[8]=limit;d[9]=prompts;
+   for(unsigned word:{0U,1U,2U,3U,4U,5U,6U,7U})
+    if(sweep.Clone([&]{reinterpret_cast<uint32_t*>(&r)[word]^=1;}))return true;
+   for(unsigned word=0;word<16;word++)if(sweep.Clone([&]{d[word]^=word==7?256U:1U;}))return true;
+   if(polls==2 && sweep.Clone([&]{d[7]=0;}))return true;
+   if(sweep.Clone([&]{m.request.reserved[0]=1;}))return true;
+#endif
   }else if(op==TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL){
    namespace P=PioneerQ38TokenControl;auto& p=*static_cast<P::Packet*>(data);
    assert(size==sizeof(p) && spanEnds==1 && PioneerQ38FullOffload::RequestShape(p));
@@ -89,6 +102,9 @@ struct IO {
     if(polls==1){r.ready=0;r.stage=d[2]=9;}
     else{r.stage=d[2]=11;d[6]=1;d[7]=cancels!=0;d[8]=Records();
      d[9]=cancels?stopRecords-unsigned(stopStage==3):Records()-1;d[10]=cancels?stopLayers:64;d[11]=cancels?stopStage:0;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+     if(sweep.Clone([&]{d[8]=prompts;d[9]=prompts-1;}))return true;
+#endif
      for(unsigned word:{0U,1U,2U,3U,5U,6U,7U,8U,9U,10U,11U,14U,15U})
       if(sweep.Clone([&]{d[word]^=word==8?256U:word==9?256U:1U;}))return true;
     }
@@ -125,6 +141,10 @@ struct IO {
 int main(){
  setvbuf(stdout,nullptr,_IOLBF,0);Fixture fixture;Source source(fixture);Sweep sweep;IO io(source,sweep);
  auto session=std::make_unique<PioneerQ38FullOffloadSession<IO,Source>>(io,source);
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+ auto metric=[&](){PioneerQ38FullOffload::CounterPacket p;return session->ObserveCount(p);};
+ assert(!metric() && !io.calls);
+#endif
  uint32_t prompt[96];for(unsigned i=0;i<96;i++)prompt[i]=i+17;
  uint32_t answer[32];std::fill(answer,answer+32,0xaaaaaaaaU);unsigned count=123;
  assert(session->KnownClean());
@@ -137,8 +157,17 @@ int main(){
   const unsigned eos[]={248044,248046,248063,248064,248065};
   io.earlyEos=variant>=1 && variant<=5;if(io.earlyEos)io.earlyEosToken=eos[variant-1];
   if(variant>=6){io.stopRecords=variant==6?0:variant==7?96:97;io.stopStage=variant==6?1:3;io.stopLayers=variant==6?1:64;assert(session->Cancel());}
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+  assert(metric());
+#endif
   assert(session->Poll() && !session->TerminalReady() && !session->Finish());
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+  assert(metric());
+#endif
   assert(session->Poll() && session->TerminalReady() && !session->CopyGeneratedTokens(answer,32,count));
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+  assert(metric());
+#endif
   assert(session->Finish() && session->Completed() && session->KnownClean() && io.ends==1 && io.closes==2);
   assert(session->CopyGeneratedTokens(answer,32,count));
   assert(count==(variant==0?32U:variant<=6?0U:variant==7?1U:2U));
@@ -147,7 +176,20 @@ int main(){
   const auto calls=io.calls;assert(!session->Begin(prompt,1,1,2,3) && !session->Poll() && !session->Finish() && !session->Cancel());
   session.reset();assert(io.calls==calls);_exit(0);
  }
- if(okay){okay=session->Poll();if(okay)okay=session->Poll();if(okay)okay=session->Finish();}
+ if(okay){
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+  okay=metric();
+#endif
+  if(okay)okay=session->Poll();
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+  if(okay)okay=metric();
+#endif
+  if(okay)okay=session->Poll();
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+  if(okay)okay=metric();
+#endif
+  if(okay)okay=session->Finish();
+ }
  if(sweep.child){
   assert(!okay && session->FailedState() && io.calls==sweep.fence && io.closes==io.opens);
   assert(count==123);for(auto word:answer)assert(word==0xaaaaaaaaU);

@@ -51,5 +51,31 @@ int main(){
  p=std::make_unique<P::Packet>();p->request.magic=P::Magic;p->request.version=1;p->request.operation=P::Start;
  p->request.prompts=2;p->request.limit=3;p->prompt[0]=248319;p->prompt[1]=17;
  assert(PioneerQ38TokenHiddenValidation::ControlRequestShape(*p) && !F::RequestShape(*p));
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+ static_assert(TT_PCI_PROBE_Q38_FULL_OFFLOAD_COUNTER!=TT_PCI_PROBE_Q38_TOKEN_FRONTIER_OBSERVE,
+  "shared integer DATA never aliases the old diagnostic ioctl");
+ unsigned observations=0;
+ F::CounterPacket metric;assert(F::CounterRequest(metric));
+ for(unsigned byte=0;byte<sizeof(metric);byte++){
+  auto bad=metric;reinterpret_cast<uint8_t*>(&bad)[byte]^=1;assert(!F::CounterRequest(bad));refused++;
+ }
+ for(unsigned prompts=1;prompts<=96;prompts++)for(unsigned outputs=1;outputs<=32;outputs++){
+  const unsigned limit=prompts+outputs-1;
+  for(unsigned committed=0;committed<=limit;committed++){
+   F::CounterPacket m;auto& r=m.reply;r.version=r.operation=r.started=r.ready=1;
+   r.detail[0]=r.detail[1]=r.detail[6]=1;r.detail[2]=12;r.detail[4]=63;
+   r.detail[7]=committed;r.detail[8]=limit;r.detail[9]=prompts;
+   assert(F::CounterReply(m) && !F::CounterRequest(m));observations++;
+   r.detail[7]=limit+1;assert(!F::CounterReply(m));refused++;
+  }
+ }
+ for(unsigned mode=0;mode<4;mode++){
+  F::CounterPacket m;auto& r=m.reply;r.version=r.operation=r.started=r.ready=1;
+  r.detail[0]=r.detail[1]=r.detail[6]=1;r.detail[2]=12;r.detail[4]=63;
+  r.detail[8]=mode==0?129:mode==1?97:mode==2?128:4;r.detail[9]=mode==1?97:mode==2?96:1;
+  if(mode==3)r.detail[10]=1;assert(!F::CounterReply(m));refused++;
+ }
+ printf("PASS full-card metrics DATA %u bounded count observations/all request bytes and out-of-range counts refused;NO timing,lifecycle or hardware authority\n",observations);
+#endif
  printf("PASS full-offload pointer-free grammar %u valid/%u refusals;old fixed diagnostic unchanged;NO inference or hardware\n",valid,refused);
 }

@@ -10,6 +10,9 @@ assert __debug__
 args=sys.argv[1:];batched='--batched' in args
 if batched:
     assert args.count('--batched')==1;args.remove('--batched')
+metrics='--metrics' in args
+if metrics:
+    assert batched and args.count('--metrics')==1;args.remove('--metrics')
 assert len(args)==3
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 build,libraries,out=map(pathlib.Path,args)
@@ -38,6 +41,7 @@ source=here/'pioneer_assistant_qwen27_full_offload.cpp';obj=out/'worker.o';binar
 compile=[tool+'g++','-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror','-fno-exceptions','-fno-rtti',
          '-fstack-usage','-DPIONEER_Q38_FULL_OFFLOAD_CLIENT=1',*includes,'-c',str(source),'-o',str(obj)]
 if batched:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=1')
+if metrics:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1')
 link=[tool+'g++',str(obj),'-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),
       '-L'+str(release/'system/libnetwork'),'-L'+str(libraries),*libflags,'-Wl,-rpath-link,'+str(libraries),
       *['-l:'+name for name in pins],'-lnetwork','-o',str(binary)]
@@ -50,10 +54,11 @@ for macro in ('_KERNEL_MODE','PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODE
               'PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_CLIENT','PIONEER_Q38_NATIVE_Q8_LAYOUT'):
     refusals.append((macro+'-defined0',['-D'+macro+'=0']))
 refusals.append(('zero-batched',['-UPIONEER_Q38_FULL_OFFLOAD_BATCHED','-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=0']))
+if metrics:refusals.append(('zero-metrics',['-UPIONEER_Q38_FULL_OFFLOAD_METRICS','-DPIONEER_Q38_FULL_OFFLOAD_METRICS=0']))
 for label,extra in refusals:
     result=subprocess.run([*compile[:compile.index('-c')],*extra,'-fsyntax-only',str(source)],
                           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,cwd=out)
-    assert result.returncode and 'Full-offload client is separate' in result.stderr,label
+    assert result.returncode and any(t in result.stderr for t in ('Full-offload client is separate','Full-card metrics requires')),label
 (out/'role-refusals.txt').write_text('\n'.join('PASS '+label for label,_ in refusals)+'\n')
 undefined=subprocess.check_output([tool+'nm','-u',str(binary)],text=True)
 llama_imports={r.split()[-1] for r in undefined.splitlines() if r.split() and r.split()[-1].startswith('llama_')}
@@ -69,17 +74,27 @@ smoke=out/'pioneer-q38-full-offload-smoke'
 smoke_command=[tool+'g++','-std=c++17','-O2','-Wall','-Wextra','-Werror',*includes,
                '-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),'-L'+str(release/'system/libnetwork'),
                *libflags,str(here/'pioneer_q38_full_offload_smoke.cpp'),'-lnetwork','-o',str(smoke)]
-if batched:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-batched-20261104-a/HaikuAssistantQwen27FullOffload-batched"')
+if metrics:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-metrics-20261104-a/HaikuAssistantQwen27FullOffload-metrics"')
+elif batched:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-batched-20261104-a/HaikuAssistantQwen27FullOffload-batched"')
 subprocess.run(smoke_command,check=True)
+if metrics:
+    rate=out/'pioneer-q38-full-offload-rate-smoke';rate_command=smoke_command[:]
+    rate_command[rate_command.index(str(here/'pioneer_q38_full_offload_smoke.cpp'))]=str(here/'pioneer_q38_full_offload_rate_smoke.cpp')
+    rate_command[rate_command.index('-o')+1]=str(rate)
+    subprocess.run(rate_command,check=True)
+    rate_imports=subprocess.check_output([tool+'nm','-u',str(rate)],text=True)
+    assert 'llama_' not in rate_imports and 'ggml_' not in rate_imports
+    print(hashlib.sha256(rate.read_bytes()).hexdigest(),rate.name,flush=True)
 if not batched:
     assert hashlib.sha256(binary.read_bytes()).hexdigest()=='8cc39a66185e3adb1606a92a91c4f9efeb5943d4e1439cfedc41214b75e8aa5d'
     assert hashlib.sha256(smoke.read_bytes()).hexdigest()=='f172e77c58c4eac025ebe7ac53c686a01dadceacf31f1e25f00f00ca6b651081'
 imports=subprocess.check_output([tool+'nm','-u',str(smoke)],text=True)
 assert 'llama_' not in imports and 'ggml_' not in imports
-(out/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in (compile,link,smoke_command))+'\n')
+(out/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in
+    ([compile,link,smoke_command,rate_command] if metrics else [compile,link,smoke_command]))+'\n')
 (out/'llama-imports.txt').write_text('\n'.join(sorted(llama_imports))+'\n')
 print(hashlib.sha256(binary.read_bytes()).hexdigest(),binary.name,flush=True)
 print(hashlib.sha256(smoke.read_bytes()).hexdigest(),smoke.name,flush=True)
 print('PASS BUILD_ONLY vocabulary-only full-card worker;exact11 vocabulary/model-container API imports;'+str(len(refusals))+' role refusals;NO context,decode,logits,threadpool or hybrid backend imports;frozen libraries/headers',flush=True)
 print('NOT installed or physically/numerically qualified;no performance result',flush=True)
-print('Full-card firmware pairing: '+('batched tag89' if batched else 'original tag88'),flush=True)
+print('Full-card firmware pairing: '+('metrics tag90' if metrics else 'batched tag89' if batched else 'original tag88'),flush=True)

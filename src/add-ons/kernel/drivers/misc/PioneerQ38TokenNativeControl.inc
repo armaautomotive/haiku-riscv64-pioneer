@@ -41,6 +41,31 @@ template<class Result> static void Q38TokenControlDetail(PioneerQ38TokenControl:
  tt_resident_session_result retained={};RetainQ38DispatchOwner(*c,retained);
 } // CPU metadata ONLY,never cancel/retry/END/reset/free or subsequent device IO
 
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+#include "PioneerQ38FullOffloadMetricsRole.h"
+static __attribute__((noinline)) status_t
+Q38FullOffloadCounter(PioneerProbeCookie* cookie,void* data,size_t length){
+ namespace F=PioneerQ38FullOffload;namespace P=PioneerQ38TokenFrontierControl;
+ if(geteuid()!=0)return B_NOT_ALLOWED;
+ if(!cookie || cookie->magic!=0x50313030 || !data || length!=sizeof(F::CounterPacket))return B_BAD_VALUE;
+ thread_info thread={};status_t status=get_thread_info(find_thread(NULL),&thread);
+ if(status!=B_OK || thread.team!=cookie->team)return status!=B_OK?status:B_NOT_ALLOWED;
+ F::CounterPacket packet;status=user_memcpy(&packet,data,sizeof(packet));
+ if(status!=B_OK || !F::CounterRequest(packet))return status!=B_OK?status:B_BAD_VALUE;
+ PioneerQ38TokenCallScope scope(cookie);auto* c=scope.Context();
+ if(!c)return scope.Status()!=B_OK?scope.Status():B_NOT_ALLOWED;
+ PioneerQ38TokenFrontierResult result;const bool okay=ObserveQ38TokenNativeFrontier(*c,result);
+ auto& r=packet.reply;r.version=P::Version;r.operation=P::Observe;
+ r.started=result.started;r.ready=okay && result.ready;r.unsafe=result.unsafe;
+ status=result.unsafe?B_DEV_NOT_READY:okay && result.ready?B_OK:B_NOT_ALLOWED;r.status=status;
+ static_assert(sizeof(r.detail)==sizeof(result),"whole private integer counter result");
+ memcpy(r.detail,&result,sizeof(result));
+ const status_t copied=user_memcpy(data,&packet,sizeof(packet));
+ if(copied!=B_OK){if(okay || result.unsafe)Q38TokenControlReplyFailure(scope);return copied;}
+ return status;
+} // SAME full-card FD/team/thread/source/generation;no supplied count,phase transition or terminal/END authority
+#endif
+
 [[maybe_unused]] static __attribute__((noinline)) status_t
 Q38TokenNativeControl(PioneerProbeCookie* cookie,void* data,size_t length){
  namespace P=PioneerQ38TokenControl;

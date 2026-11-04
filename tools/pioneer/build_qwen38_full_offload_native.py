@@ -11,6 +11,9 @@ assert __debug__
 args=sys.argv[1:];batched='--batched' in args
 if batched:
     assert args.count('--batched')==1;args.remove('--batched')
+metrics='--metrics' in args
+if metrics:
+    assert batched and args.count('--metrics')==1;args.remove('--metrics')
 assert len(args)==2
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 build,out=map(pathlib.Path,args)
@@ -35,8 +38,9 @@ common=[cxx,'-std=gnu++17','-O2','-Wall','-Wextra','-Werror','-fno-exceptions','
 native=['-DTT_PIONEER_EXPERIMENTAL_Q38_'+name+'=1' for name in
         ('BANKS','PANEL','AFFINE','BLOCK','STREAM','ROWS','COHORT','COHORT_SEALED','COHORT_PAYLOAD','DISPATCH','DISPATCH_VECTOR')]
 native+=['-DTT_PIONEER_DRIVER_RELOAD=1','-DPIONEER_DRIVER_BUILD_TAG='+
-         ('0x2026110400010089ULL' if batched else '0x2026110400010088ULL')]
+         ('0x2026110400010090ULL' if metrics else '0x2026110400010089ULL' if batched else '0x2026110400010088ULL')]
 if batched:native+=['-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=1']
+if metrics:native+=['-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1']
 driver=root/'src/add-ons/kernel/drivers/misc'
 commands=[]
 def run(command):
@@ -55,16 +59,24 @@ if batched:
                  ('original-full-tag',['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026110400010088ULL'])]
 else:
     refusals += [('batched-with-original-tag',['-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=1'])]
+if metrics:
+    refusals += [('missing-metrics',['-UPIONEER_Q38_FULL_OFFLOAD_METRICS']),
+                 ('zero-metrics',['-UPIONEER_Q38_FULL_OFFLOAD_METRICS','-DPIONEER_Q38_FULL_OFFLOAD_METRICS=0']),
+                 ('old-batched-tag',['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026110400010089ULL'])]
+else:
+    refusals += [('metrics-with-old-tag',['-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1'])]
 for macro in ('PIONEER_Q38_TOKEN_VALIDATION_NATIVE','PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE',
               'PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY','PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE',
               'PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_NATIVE_Q8_LAYOUT',
               'PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_CLIENT','PIONEER_Q38_FULL_OFFLOAD_CLIENT',
-              'PIONEER_Q38_TOKEN_DECODE_BENCHMARK_NATIVE','PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_NATIVE'):
+              'PIONEER_Q38_TOKEN_DECODE_BENCHMARK_NATIVE','PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_NATIVE',
+              'PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT'):
     refusals.append((macro+'-defined0',['-D'+macro+'=0']))
 for label,extra in refusals:
     result=subprocess.run([*common,*native,*extra,*includes,'-E',str(driver/'pioneer_q38_full_offload_driver.cpp')],
                           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
-    assert result.returncode and ('Full offload requires' in result.stderr or 'Full offload cannot alias' in result.stderr),label
+    assert result.returncode and any(t in result.stderr for t in
+        ('Full offload requires','Full offload cannot alias','Full-card metrics requires')),label
 (out/'role-refusals.txt').write_text('\n'.join('PASS '+label for label,_ in refusals)+'\n')
 def compiler_path(name):
     return subprocess.check_output([cxx,'-print-file-name='+name],text=True).strip()
@@ -76,11 +88,16 @@ sha=lambda path:hashlib.sha256(path.read_bytes()).hexdigest()
 assert sha(out/'tenstorrent_pci_probe-default')=='2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc'
 if not batched:
     assert sha(out/'tenstorrent_pci_probe-native')=='3c5769d2af54798c8fdbe672f3ed25f785cde0b3752253fe591fa06e66169a76'
+elif not metrics:
+    assert sha(out/'tenstorrent_pci_probe-native')=='de688dc5e682fa7714ac53450657c92052b139831eed7dce91b2300f82449eb6'
 table=subprocess.check_output([tool+'nm','-C','--defined-only',str(out/'tenstorrent_pci_probe-native')],text=True)
 undefined=subprocess.check_output([tool+'nm','-u',str(out/'tenstorrent_pci_probe-native')],text=True)
 for name in ('api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device',
              'Q38TokenNativeControl(','BeginQ38TokenNativeBackendScoped(','FinishQ38TokenNativeBackendScoped('):
     assert name in table,name
+if metrics:
+    for name in ('Q38FullOffloadCounter(','ObserveQ38TokenNativeFrontier(','ObserveCommittedFrontier<'):
+        assert name in table,name
 for name in ('llama_','ggml_','Q38WorkControl','ReferenceProducts','OriginalSource','SyntheticIO','NativeQ38PeerInstructionModel'):
     assert name not in table and name not in undefined,name
 # The already-existing immutable G3 package must be present,not silently
@@ -113,6 +130,6 @@ assert token_frames and max(token_frames)<=2048
 (out/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands)+'\n')
 for name in ('native','default'):
     print(sha(out/('tenstorrent_pci_probe-'+name)),'tenstorrent_pci_probe-'+name,flush=True)
-print('PASS BUILD_ONLY distinct full-card '+('batched tag89/all14 arrays exact/ten wide peers unchanged' if batched else 'tag88/all13 arrays exact/nine G3 peers unchanged')+
+print('PASS BUILD_ONLY distinct full-card '+('metrics tag90/all14 arrays exact/ten wide peers unchanged' if metrics else 'batched tag89/all14 arrays exact/ten wide peers unchanged' if batched else 'tag88/all13 arrays exact/nine G3 peers unchanged')+
       ',full5-EOG firmware/default43 BYTE-UNCHANGED,'+str(len(refusals))+' role refusals,no CPU model/reference/ggml Work imports;maxIndividualTokenFrame'+str(max(token_frames)),flush=True)
 print('NOT installed,physical/numerical/Assistant qualified or a speed result;whole-kernel stack not certified',flush=True)

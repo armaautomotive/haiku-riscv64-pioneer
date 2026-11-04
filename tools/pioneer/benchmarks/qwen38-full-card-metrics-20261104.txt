@@ -1,0 +1,63 @@
+Full-card token-count integration:LOCAL main tests closed,not hardware
+===================================================================
+Goal ACTIVE;20TPS remains UNMET. Last actual full-model physical result is
+the batched89 Hello/four-output run in qwen38-full-card-batched-20261104.txt.
+Pioneer stable041/gen14 is restored. No90 staging/execution/installation,
+reboot,power,SD,network,boot,kernel or Assistant change is part of this work.
+
+New tag90 shares EXACTLY all14 batched89 firmware arrays and whole journal.
+Only a new explicit full-card counter route/observer+worker telemetry is
+added. It does not borrow the old fixed diagnostic native selector/ioctl.
+Actual native source/FD/team/thread/generation checks,held zero baseline,
+monotonic count and terminal equality remain real owner checks. Integer
+counts/time DATA never authorize HOLD/END/unload or replace a model result.
+No CPU context,attention,state,learned products or token choice is added.
+
+Actual main local evidence (all final named handles observed terminal0):
+ native-final3848:module2551b50a52f6a2f7c98ca391fa1742640d5d777f23379663733679980bd643d7;
+ all14 arrays exact/default43unchanged,22role refusals;max individual token
+ frame1232B,NOT whole-kernel stack certification. Original+batched native
+ regression98266 reproduces3c5769/de688 and default2df0 byte-exact.
+ final USER/control78078:199680bounded count replies,212150grammar refusals,
+ 280COW USER failure histories,12367kernel-copy/shape refusals. All5EOG and
+ 3cancel boundaries include actual terminal0-count equality. These are
+ synthetic/MOCK endpoints,NOT native physical completion evidence.
+ role15377:3positive/149missing,wrong,zero,late,old-native/CPU/Work refusals.
+ worker-r4/client36096:exact11frozen vocabulary/container imports,13role
+ refusals,NO inference/decode/logits/threadpool/ggml-backend imports.
+ worker989f54c394a42c43b2bf9e0fd64844bfb378ec79fb8fbe65643e8f9bad03242a
+ four-clientd631d37022c444f4331b602333ec4b961ca2a31a2842d8df459a87237f2517ca
+ rate-clientd50896e160e4e7015ce0942ab5d83a0293a356fc90ddb0980be4313f38cfec4e
+ rate-tests58845:actual32-request client/2valid available+unavailable,
+ 11failed/malformed worker histories,3CLI refusals;DATA parser17refusals;
+ real process/channel handling over FAKE workers only. Updated sampler
+ 35synthetic windows/18refusals includes raw endpoint and repeat stability.
+ reader-r2:2valid available/unavailable whole logs/130refusals;independent
+ full-upload/order/count/raw-clock/rate/hex/end validation. Old four-output
+ reader regression4valid/1047refusals/2invalid-time cases still passes;its
+ parse of the ACTUAL closed89 result is byte-identical to the prior reader.
+
+Raw endpoints/observed bounds publish only after actual full END+Close,
+token/source checks and no cancellation. At least16post-prompt commit steps
+are needed. The counter window includes observer cost and may include EOG;
+it is not isolated token latency or broad numerical/model-quality proof.
+No rate is obtained by dividing a cold total or four outputs by a timer.
+The longer public counting request and answer-hex log do not claim exact
+semantic quality by mere successful job closure. No real rate is measured.
+
+Early local failures retained,NOT passed tests/hardware faults:
+ session initial nested COW assertion:fixture treated a legitimate repeated
+ zero as a regression before any higher count. Regression injection moved
+ to the actual final lower-count case;production monotonic check not weakened.
+ worker-r3:one misleading-indentation warning,corrected with braces.
+ reader initial fixture deleted optional pre-prompt zero. That row can be
+ missed legitimately;first/last warm endpoints and full upload/end stay
+ required. Fixture corrected;reader production checks not weakened.
+
+Local evidence /private/tmp/pioneer-full-metrics-20261104.0VNeinG6
+Still required:clean-source rebuild/tests and whole artifact comparisons,
+new guarded helper/failure-flow qualification,fresh actual board admission,
+one protected longer full-model physical run,whole returned evidence and
+independent stable restoration. Do NOT execute spent88/89 stages/helpers.
+Persistent weights,full tensor-engine acceleration,Assistant/broad quality
+and usable20TPS are still incomplete. This is not a release or speed claim.

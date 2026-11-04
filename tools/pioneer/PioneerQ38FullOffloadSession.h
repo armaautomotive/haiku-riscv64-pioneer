@@ -4,7 +4,8 @@
  || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_WORK_INFERENCE) \
  || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) \
  || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_CLIENT) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) \
- || (defined(PIONEER_Q38_FULL_OFFLOAD_BATCHED) && PIONEER_Q38_FULL_OFFLOAD_BATCHED != 1)
+ || (defined(PIONEER_Q38_FULL_OFFLOAD_BATCHED) && PIONEER_Q38_FULL_OFFLOAD_BATCHED != 1) \
+ || (defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) && PIONEER_Q38_FULL_OFFLOAD_METRICS != 1)
 #error Full-offload client is separate from hybrid Work,CPU validation and diagnostics
 #endif
 #ifndef PIONEER_Q38_FULL_OFFLOAD_SESSION_H
@@ -13,6 +14,9 @@
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadMetricsRole.h"
+#endif
 #include <array>
 #include <cstring>
 #include <memory>
@@ -32,6 +36,9 @@ class PioneerQ38FullOffloadSession {
  State state=Virgin;int fd=-1;uint64_t epoch=0,generation=0;
  bool prepared=false,preflightAttempted=false,attempted=false,probed=false,cancelAttempted=false,cancelled=false;
  unsigned prompts=0,limit=0,eos0=0,eos1=0,committed=0,position=0,layers=0,terminalStage=0;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+ unsigned observedCount=0;
+#endif
  bool Current()const{return epoch && source.Ready() && source.Model().Epoch()==epoch && layout.MatchesSource(source.Model());}
  void Close(){if(fd>=0){const int owned=fd;fd=-1;io.Close(owned);}}
  bool Stop(const char* why){if(!failure)failure=why;state=Failed;records.fill(0);Close();return false;}
@@ -171,6 +178,18 @@ public:
    || d[10] || d[11] || d[12] || d[13] || d[14] || d[15])return Stop("cancel_reply");
   return true;
  } // monotonic request;not STOP,HOLD or END authority
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+ bool ObserveCount(PioneerQ38FullOffload::CounterPacket& output){
+  namespace F=PioneerQ38FullOffload;
+  if((state!=Running && state!=Terminal) || !F::CounterRequest(output))return false;
+  F::CounterPacket packet;const auto request=packet.request;
+  if(!Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_COUNTER,packet)
+   || std::memcmp(&packet.request,&request,sizeof(request)) || !F::CounterReply(packet)
+   || packet.reply.detail[8]!=limit || packet.reply.detail[9]!=prompts
+   || packet.reply.detail[7]<observedCount || (state==Terminal && packet.reply.detail[7]!=committed))return Stop("counter");
+  observedCount=packet.reply.detail[7];output=packet;return true;
+ } // read-only progress only;does NOT set Terminal,Held,Drained or Complete
+#endif
  bool Poll(){
   if(state!=Running)return false;
   if(!Control(PioneerQ38TokenControl::Observe))return Stop("observe");
@@ -181,6 +200,9 @@ public:
    return true;
   }
   if(r.stage!=11 || d[3] || d[8]>limit || d[9]>=limit || !d[10] || d[10]>64)return Stop("terminal_reply");
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+  if(d[8]<observedCount)return Stop("terminal_counter_regression");
+#endif
   if(d[7]){
    if(!d[11] || d[11]>3 || d[8]!=d[9]+unsigned(d[11]==3) || (d[11]>1 && d[10]!=64))return Stop("cancelled_terminal_reply");
   }else if(d[8]<prompts || d[8]!=d[9]+1 || d[10]!=64 || d[11])return Stop("normal_terminal_reply");

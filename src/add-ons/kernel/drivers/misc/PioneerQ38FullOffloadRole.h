@@ -28,13 +28,30 @@
 #error Full offload requires the exact native role and all resident parents
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+#include "PioneerQ38FullOffloadMetricsRole.h"
+#else
 #if PIONEER_Q38_FULL_OFFLOAD_BATCHED != 1 || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010089ULL
 #error Full offload requires exact tag89 for its distinct batched firmware
 #endif
+#endif
 #else
-#if PIONEER_DRIVER_BUILD_TAG != 0x2026110400010088ULL
+#if PIONEER_DRIVER_BUILD_TAG != 0x2026110400010088ULL || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS)
 #error Full offload requires exact tag88 for its original firmware
 #endif
+#endif
+#ifndef PIONEER_Q38_FULL_OFFLOAD_METRICS_BINDING_H
+#define PIONEER_Q38_FULL_OFFLOAD_METRICS_BINDING_H
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+enum {PioneerQ38FullOffloadMetricsSelection=1};
+#else
+enum {PioneerQ38FullOffloadMetricsSelection=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+static_assert(PioneerQ38FullOffloadMetricsSelection==1,"late full-card metrics selection");
+#else
+static_assert(PioneerQ38FullOffloadMetricsSelection==0,"late full-card metrics removal");
 #endif
 #ifndef PIONEER_Q38_FULL_OFFLOAD_FIRMWARE_BINDING_H
 #define PIONEER_Q38_FULL_OFFLOAD_FIRMWARE_BINDING_H
@@ -56,6 +73,7 @@ static_assert(PioneerQ38FullOffloadFirmwareSelection==1,"late full-card batched 
  || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) \
  || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_CLIENT) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
  || defined(PIONEER_Q38_TOKEN_DECODE_BENCHMARK_NATIVE) || defined(PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_NATIVE) \
+ || defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) \
  || defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(__FAST_MATH__)
 #error Full offload cannot alias a diagnostic,CPU reference,hybrid Work or client role
 #endif

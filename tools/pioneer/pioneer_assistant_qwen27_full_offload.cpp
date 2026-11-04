@@ -11,6 +11,9 @@
 #include <cstdio>
 #include <memory>
 #include "PioneerQ38FullOffloadSession.h"
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+#include "PioneerQ38TokenRateSamples.h" // observation arithmetic,NO model reference
+#endif
 #include "../../src/apps/assistant/Qwen27Protocol.h"
 #include "llama.h"
 namespace A=Assistant27;
@@ -111,14 +114,38 @@ struct Runtime {
   const double computeStarted=Now();double previous=computeStarted;
   if(computeStarted<0 || !Emit(A::Progress,UINT32_MAX,
    "Qwen27B running entirely on P100A: embeddings,matrices,attention,KV,recurrent state,norms and greedy selection. CPU inference OFF."))return false;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+  PioneerQ38TokenRateSamples samples(unsigned(count),unsigned(count)+frame.value-1);
+  bool timingValid=true;unsigned measured=0,previousCount=UINT32_MAX;
+  auto observeCount=[&](){
+   const auto before=system_time();F::CounterPacket metric;
+   if(!session->ObserveCount(metric))return false;
+   const auto after=system_time();
+   if(timingValid && !samples.Observe(metric,before,after))timingValid=false;
+   measured++;
+   if(metric.reply.detail[7]!=previousCount){
+    previousCount=metric.reply.detail[7];char status[192];
+    snprintf(status,sizeof(status),"Full-card count committed%u prompts%u limit%u;read-only DATA,not a terminal or cleanup receipt.",
+     metric.reply.detail[7],metric.reply.detail[9],metric.reply.detail[8]);
+    if(!Emit(A::Progress,UINT32_MAX,status))return false;
+   }
+   return true;
+  };
+#endif
   for(unsigned observations=0;!session->TerminalReady();observations++){
    const double now=Now();
    if(now<previous || now-computeStarted>=1800 || observations>=18000 || !PollCancel())return false;
    previous=now;
    if(cancelled && !session->CancelRequested() && !session->Cancel())return false;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+   if(!observeCount())return false;
+#endif
    if(!session->Poll())return false;
    if(!session->TerminalReady() && snooze(100000)!=B_OK)return false;
   }
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+  if(!observeCount())return false; // final SAME-FD count AFTER genuine terminal,BEFORE HOLD
+#endif
   const double computeFinished=Now();
   if(computeFinished<previous || !session->Finish())return false;
   uint32_t output[F::MaxOutput]={};unsigned generated=0;
@@ -132,6 +159,18 @@ struct Runtime {
   }
   if(!PollCancel() || !source.Ready())return false;
   if(cancelled || session->WasCancelled())return Emit(A::Done,A::Cancelled,"Card stopped safely; all resources restored. No CPU fallback.");
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+  // Only after genuine full END+Close,record/token checks and final source
+  // stability. Counter DATA alone never grants successful publication.
+  PioneerQ38TokenRateSamples::Bounds bounds;PioneerQ38TokenRateSamples::Window window;char metric[768];
+  if(timingValid && samples.ObservedBounds(bounds) && samples.ObservedWindow(window) && bounds.sampledTokens>=16)
+   snprintf(metric,sizeof(metric),"Full-card observed count rate sampled%u first%u last%u elapsed_min_us%lld elapsed_max_us%lld lower_tps%.9f upper_tps%.9f observations%u first_begin_us%lld first_end_us%lld last_begin_us%lld last_end_us%lld;AFTER_CLEAN_END,post-prompt count window,not isolated latency or broad quality.",
+    bounds.sampledTokens,bounds.firstCommitted,bounds.lastCommitted,(long long)bounds.minElapsedUs,(long long)bounds.maxElapsedUs,
+    bounds.lowerTokensPerSecond,bounds.upperTokensPerSecond,measured,(long long)window.firstBegin,(long long)window.firstEnd,
+    (long long)window.lastBegin,(long long)window.lastEnd);
+  else snprintf(metric,sizeof(metric),"Full-card rate unavailable: insufficient post-prompt window or invalid timing;AFTER_CLEAN_END,no extrapolation.");
+  if(!Emit(A::Progress,UINT32_MAX,metric))return false;
+#endif
   if(!Emit(A::Text,0,answer))return false;
   char status[320];snprintf(status,sizeof(status),
    "P100A full-offload candidate: %u output tokens; prompt+generation %.3fs,total %.3fs. All inference on card; CPU vocabulary/text only. Clean END; weights released. Not a warm-token speed measurement.",
@@ -177,7 +216,9 @@ int main(int argc,char** argv){
   if(frame.kind==A::Load && !runtime.loaded && frame.text.empty()){
    if(runtime.Load(frame.value))continue;
    runtime.Close();runtime.Emit(A::Error,A::Rejected,
-#ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+    "Full-card vocabulary/model authentication or metrics tag90 capability unavailable; no inference or CPU fallback."
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_BATCHED)
     "Full-card vocabulary/model authentication or batched tag89 capability unavailable; no inference or CPU fallback."
 #else
     "Full-card vocabulary/model authentication or tag88 capability unavailable; no inference or CPU fallback."

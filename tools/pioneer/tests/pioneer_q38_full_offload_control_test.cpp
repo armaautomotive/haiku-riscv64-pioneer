@@ -23,6 +23,10 @@ struct PioneerQ38TokenTerminalResult{uint32_t version=1,started=0,phase=0,worker
 struct PioneerQ38TokenHoldResult{uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,held=0,firstPC=0,secondPC=0,reserved[6]={};};
 struct PioneerQ38TokenReadResult{uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,firstRecord=0,
  recordCount=0,packets=0,bytesRead=0,drained=0,firstPC=0,secondPC=0,reserved[2]={};};
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+struct PioneerQ38TokenFrontierResult{uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,committed=0,
+ limit=0,prompts=0,reserved[6]={};};
+#endif
 namespace P=PioneerQ38TokenControl;
 static PioneerStoreContext context;
 static unsigned uid=0,copies=0,locked=0,scopes=0,executions=0,retains=0;
@@ -57,6 +61,12 @@ static PioneerQ38TokenBackendResult FinishQ38TokenNativeBackendScoped(PioneerQ38
  if(r.complete)ended=true;return r;
 }
 template<class Value>static bool Result(Value& r){assert(locked==1);executions++;r.started=1;r.phase=4;r.unsafe=mode==2;return mode==0;}
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+static bool ObserveQ38TokenNativeFrontier(PioneerStoreContext&,PioneerQ38TokenFrontierResult& r){
+ const bool okay=Result(r);r.phase=12;r.word=63;r.ready=okay;
+ if(okay){r.committed=97;r.limit=127;r.prompts=96;}return okay;
+}
+#endif
 static bool ObserveQ38TokenNativeTerminal(PioneerStoreContext&,PioneerQ38TokenTerminalResult& r){const bool okay=Result(r);r.ready=okay;return okay;}
 static bool CancelQ38TokenNativeRoot(PioneerStoreContext&,PioneerQ38TokenExecutionResult& r){const bool okay=Result(r);r.cancelRequested=okay;return okay;}
 static bool HoldQ38TokenNativeStopped(PioneerStoreContext&,PioneerQ38TokenHoldResult& r){const bool okay=Result(r);r.ready=okay;r.held=120;return okay;}
@@ -104,5 +114,21 @@ int main(){
   Reset();support={};reinterpret_cast<uint32_t*>(&support)[word]=1;
   assert(Q38FullOffloadSupport(&support,sizeof(support))==B_BAD_VALUE && !scopes && !executions);refused++;
  }
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+ using Metric=PioneerQ38FullOffload::CounterPacket;
+ for(unsigned word=0;word<sizeof(Metric)/4;word++){
+  Reset();Metric m;reinterpret_cast<uint32_t*>(&m)[word]^=1;
+  assert(Q38FullOffloadCounter(&cookie,&m,sizeof(m))==B_BAD_VALUE && copies==1 && !scopes && !executions);refused++;
+ }
+ for(int failure=0;failure<3;failure++)for(int copy=0;copy<=2;copy++){
+  Reset();mode=failure;copyFail=copy;Metric m;
+  const auto status=Q38FullOffloadCounter(&cookie,&m,sizeof(m));
+  assert(status==(copy?CopyFault:mode==0?B_OK:mode==2?B_DEV_NOT_READY:B_NOT_ALLOWED));
+  assert(executions==unsigned(copy!=1) && !locked && retains==unsigned(copy==2 && (mode==0 || mode==2)));
+  if(!copy && !mode)assert(PioneerQ38FullOffload::CounterReply(m) && m.reply.detail[7]==97);
+ }
+ Reset();Metric m;uid=1;assert(Q38FullOffloadCounter(&cookie,&m,sizeof(m))==B_NOT_ALLOWED && !copies);
+ Reset();admitted=false;assert(Q38FullOffloadCounter(&cookie,&m,sizeof(m))==B_NOT_ALLOWED && copies==1 && !executions);
+#endif
  printf("PASS actual full-offload kernel control %u early shape refusals/all6 operations/copy failures/root+FD+team admission/kernel snapshot/no invalid partial readout;MOCK owner endpoints only\n",refused);
 }

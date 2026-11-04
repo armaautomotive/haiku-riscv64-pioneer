@@ -27,13 +27,8 @@ class InvalidLog(ValueError):
     pass
 def require(condition,message):
     if not condition:raise InvalidLog(message)
-def parse_complete(text,stderr=''):
-    require(isinstance(stderr,str) and not stderr,'nonempty/unknown stderr is not an accepted successful transcript')
-    require(isinstance(text,str) and len(text)<=16*1024*1024 and text.isascii()
-            and text.endswith('\n') and '\r' not in text and '\0' not in text,'whole ASCII/LF transcript required')
-    lines=text[:-1].split('\n')
-    require(len(lines)>=7 and lines[:2]==[AUTH,READY],'exact authentication/vocabulary prefix required')
-    cursor=2;events=0;previous=0
+def upload_prefix(lines,cursor):
+    events=0;previous=0
     while cursor<len(lines) and lines[cursor]!=RUNNING:
         match=UPLOAD.fullmatch(lines[cursor]);require(match is not None,'unexpected,failed or out-of-order upload line')
         value=int(match[1]);shown=Decimal(match[2]);require(0<=value<=1000 and shown<=Decimal('18500.4'),'upload bounds')
@@ -48,6 +43,14 @@ def parse_complete(text,stderr=''):
         require(low<=high,'upload fields cannot describe increasing aligned bytes')
         previous=low;events+=1;cursor+=1
     require(events>0 and previous==TOTAL,'complete upload required,not a progress prefix')
+    return cursor,events
+def parse_complete(text,stderr=''):
+    require(isinstance(stderr,str) and not stderr,'nonempty/unknown stderr is not an accepted successful transcript')
+    require(isinstance(text,str) and len(text)<=16*1024*1024 and text.isascii()
+            and text.endswith('\n') and '\r' not in text and '\0' not in text,'whole ASCII/LF transcript required')
+    lines=text[:-1].split('\n')
+    require(len(lines)>=7 and lines[:2]==[AUTH,READY],'exact authentication/vocabulary prefix required')
+    cursor,events=upload_prefix(lines,2)
     require(len(lines)-cursor==4 and lines[cursor]==RUNNING,'complete execution/done/answer/final suffix required')
     match=DONE.fullmatch(lines[cursor+1]);require(match is not None,'exact four-output completion required')
     require(lines[cursor+2]==ANSWER and lines[cursor+3]==FINAL,'expected public answer and full-worker clean close required')

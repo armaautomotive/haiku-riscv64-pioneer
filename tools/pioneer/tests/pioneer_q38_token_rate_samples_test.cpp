@@ -21,7 +21,8 @@ int main(){
  using S=PioneerQ38TokenRateSamples;unsigned positives=0,refusals=0;
  {
   S s(2,34);S::Bounds b;const auto original=b;
-  assert(!s.ObservedBounds(b) && Same(b,original));
+  S::Window window;
+  assert(!s.ObservedBounds(b) && Same(b,original) && !s.ObservedWindow(window));
   assert(s.Observe(Packet(0),0,10) && s.Observe(Packet(1),20,30) && !s.ObservedBounds(b));
   assert(s.Observe(Packet(2),100,110) && s.Observe(Packet(2),150,160));
   assert(s.Observe(Packet(17),400,410) && !s.ObservedBounds(b));
@@ -29,8 +30,12 @@ int main(){
   assert(b.prompts==2 && b.limit==34 && b.firstCommitted==2 && b.lastCommitted==34 && b.sampledTokens==32
    && b.minElapsedUs==790 && b.maxElapsedUs==810
    && b.lowerTokensPerSecond==32000000.0/810 && b.upperTokensPerSecond==32000000.0/790);
+  assert(s.ObservedWindow(window) && window.firstBegin==100 && window.firstEnd==110
+   && window.lastBegin==900 && window.lastEnd==910 && window.firstCount==2 && window.lastCount==34);
   const auto before=b;assert(s.Observe(Packet(34),10000,10010) && s.ObservedBounds(b)
    && Same(b,before));positives++;
+  S::Window after;assert(s.ObservedWindow(after) && after.firstBegin==window.firstBegin
+   && after.firstEnd==window.firstEnd && after.lastBegin==window.lastBegin && after.lastEnd==window.lastEnd);
  }
  {
   S s(2,34);S::Bounds b;assert(s.Observe(Packet(3),100,120) && s.Observe(Packet(34),1000,1020)

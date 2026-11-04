@@ -51,6 +51,12 @@
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110400010089ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_BATCHED)
 #error Reserved full-offload tag89 requires its distinct batched firmware role
 #endif
+#if defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) && !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE)
+#error Full offload metrics requires its actual full native role
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110400010090ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_METRICS)
+#error Reserved full-offload tag90 requires its distinct read-only counter role
+#endif
 #if (defined(PIONEER_Q38_TOKEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)) && !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT)
 #error Token physical validation cannot substitute an old driver role
 #endif
@@ -8465,6 +8471,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
  // NODRV retains only PRIVATE bank/clock/FD source constructors. The
  // distinct tag74 role additionally routes its bounded validation only.
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
+#ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
+ if(operation==TT_PCI_PROBE_Q38_FULL_OFFLOAD_COUNTER)
+  return Q38FullOffloadCounter(instance,data,length);
+#endif
  if(operation==TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT)
   return Q38FullOffloadSupport(data,length);
  if(operation==TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL)

@@ -104,3 +104,38 @@ Firmware DATA/address checks and synthetic lifecycle tests are not hardware
 or whole-model numerical acceptance. The spent tag88/tag89 physical helpers
 MUST NOT be reused;fresh independent idle/generation/artifact admission
 and separately qualified one-shot exchange are required before execution.
+
+Optional full-card count metrics (tag90,LOCAL candidate only)
+----------------------------------------------------------
+--batched --metrics selects the same14 firmware arrays with a new driver/
+worker identity and a separate read-only ioctl,+0x8802. The old fixed
+frontier diagnostic ioctl/roles are not activated. Only committed-count/
+prompt-limit integers return;no hidden state,attention,KV,logits or matrix
+products cross PCIe. The SAME native owner zeroes/seals the publisher before
+ROOT release and checks source/boot/count monotonicity and terminal equality.
+A count does not set terminal,HOLD,drained,END or disposal authority.
+
+The worker records before/after timestamps around actual count reads. It
+publishes raw first/last endpoints and post-prompt count-window bounds ONLY
+after real restoration/END+Close and source/token checks. At least16 count
+steps are required;early EOG/short/invalid windows report unavailable,not an
+extrapolated rate. This is observer-inclusive count throughput,not isolated
+token latency,all-model quality or evidence of20TPS.
+
+The separately built pioneer-q38-full-offload-rate-smoke uses the actual
+private worker channel and one public counting question,max32outputs. It
+prints answer bytes as hex,checks returned arithmetic,and requires the
+worker's clean channel close/actual exit. A clean job with rate unavailable
+is distinct from an unsafe/unknown job. No CPU inference or fallback exists.
+The whole-log reader checks full upload/order/count/timestamp/arithmetic/
+answer/final suffix independently. Its DATA result is NEVER cleanup or
+hardware/source provenance. Physical use requires a NEW qualified helper,
+fresh artifact/idle/generation admission and completed stable restoration.
+No tag90 hardware job or warm-rate result has been obtained yet.
+
+ python3 tools/pioneer/build_qwen38_full_offload_native.py HAIKU_BUILD NEW_NATIVE --batched --metrics
+ python3 tools/pioneer/build_assistant_qwen27_full_offload.py HAIKU_BUILD FROZEN_LIBRARIES NEW_WORKER --batched --metrics
+ python3 tools/pioneer/tests/run_pioneer_q38_full_offload_tests.py --batched --metrics
+ python3 tools/pioneer/tests/pioneer_q38_full_offload_metrics_role_test.py
+ python3 tools/pioneer/tests/run_pioneer_q38_full_offload_rate_tests.py
+ python3 tools/pioneer/tests/pioneer_q38_full_offload_rate_log_test.py

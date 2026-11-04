@@ -20,6 +20,10 @@ public:
   int64_t minElapsedUs=0,maxElapsedUs=0;
   double lowerTokensPerSecond=0,upperTokensPerSecond=0;
  };
+ struct Window {
+  int64_t firstBegin=0,firstEnd=0,lastBegin=0,lastEnd=0;
+  uint32_t firstCount=0,lastCount=0;
+ };
  explicit PioneerQ38TokenRateSamples(uint32_t promptCount,uint32_t positionLimit):prompts(promptCount),limit(positionLimit){
   valid=prompts && prompts<limit && limit<=8192;
  }
@@ -48,6 +52,10 @@ public:
   result.lowerTokensPerSecond=numerator/double(longest);result.upperTokensPerSecond=numerator/double(shortest);
   output=result;return true;
  } // observed commit-count rate bounds ONLY,not isolated token latency or a clean-END/model-quality certificate
+ bool ObservedWindow(Window& output)const{
+  Bounds ignored;if(!ObservedBounds(ignored))return false;
+  output={first.begin,first.end,last.begin,last.end,first.count,last.count};return true;
+ } // raw SAME observations for independent arithmetic;still no lifecycle/quality authority
 };
 static_assert(sizeof(PioneerQ38TokenRateSamples)<=128,"small host sampler,not an8192-position kernel stack array");
 #endif
