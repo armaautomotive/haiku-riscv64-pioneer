@@ -5,8 +5,10 @@ Latest follow-on:the separate83 C64 LOAD-ONLY hardware test PASSED its fixed
 K5120 payload/header/closure checks and restored normal041/gen4. The new
 distinct84 C64 learned-FPU driver/client/image are now qualified OFFBOARD,
 with actual-address shared NIU/unpack L1 observation,not descriptor rewriting.
-Physical84 math/model/speed success is NOT yet claimed. See NATIVE_DRAM_BAND64.txt
-and benchmarks/qwen38-native-dram-band64-preparation-20261104.txt.
+Physical84 now PASSES all3 fixed K5120 learned bands/192 rounded words and
+three complete original-state ENDs;normal041/gen6 restored without reboot.
+This is NOT full-model quality/inference/speed proof. See NATIVE_DRAM_BAND64.txt
+and benchmarks/qwen38-native-dram-band64-observed-20261104.txt.
 
 Historical checkpoints below include early "missing native" preparation
 notes;those are NOT current implementation status. The native81 binding was

@@ -1,0 +1,5 @@
+STABLE041_RESTORED_GDDR64_BANDS_EXACT192_PASSED
+/boot/home/pioneer-native-dram-model-band64-20261104-a/gddr64.stdout:18182
+/boot/home/pioneer-native-dram-model-band64-20261104-a/gddr64.stderr:0
+AUTHENTICATING_FIXED_ORIGINAL_AND_FRESH_LEARNED_REFERENCE;CPU_DIAGNOSTIC_ONLY_NO_DEVICE_YET
+AUTHENTICATED_FIXED_MODEL c600de03 tensor7 width5120 rows17408 samples3 payload_and_reference_exact;DEBUG_NOT_WORK

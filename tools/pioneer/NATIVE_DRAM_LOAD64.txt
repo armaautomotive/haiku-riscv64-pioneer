@@ -104,6 +104,7 @@ timeout. No parallel device command or retry occurred during the parent.
 The corrected fixed transfer now passes. Next is a SEPARATE exact-role C64
 learned FPU diagnostic with new source/image/protocol/native/fixture proof
 and a NEW physical stage;83 has no arithmetic path or Work authority.
-That separate84 OFFBOARD qualification is now documented in
-NATIVE_DRAM_BAND64.txt;it does not inherit83's physical-byte pass as math proof.
+That separate84 now also ACTUALLY passes3 fixed K5120 learned bands/all192
+rounded words/3 clean ENDs,normal041/gen6 restored. See NATIVE_DRAM_BAND64.txt.
+It supplies its OWN bounded math observation,not inherited83 transfer proof.
 Full-native27B,full-model quality/real throughput and20tok/s remain UNMET.

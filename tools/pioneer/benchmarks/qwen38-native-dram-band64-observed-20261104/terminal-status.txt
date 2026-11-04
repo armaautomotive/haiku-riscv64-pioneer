@@ -1,0 +1,19 @@
+2026-11-04 UTC;source/preparationb15b2e4cf22ceba68c72b0821fb10d8a622a2af8.
+45b779 fresh private84 stage admission/create CLOSED0,normal041/gen4
+6eacb2 exact private SCP-O copy CLOSED0
+89a80d exact staged hashes/invalid CLI2/normal041gen4 postflight CLOSED0
+52333 ONE frozen physical parent ACTUALLY CLOSED0 on SAME handle
+Launched07:48:11UTC;terminal observed07:59:37UTC. NO timeout relaunch.
+Three K5120 samples/192 exact rounded words/three known ENDs,polls1/1/1.
+Normal041/gen6 restored without reboot. Stage now SPENT,never reexecute.
+010f1f project-file progress CLOSED0;full-name ps filter matched no team,
+NOT evidence of completion.02aa4a+78a6e8 actual same client953 CPU advances.
+f859dd project-file terminal success snapshot CLOSED0,then original52333 CLOSED0
+74486 independent remote raw hashes/normal-driver postflight CLOSED0
+59256 independent raw text SCP-O fetch CLOSED0
+f6d96f independent explicit84 Fraction-reference parser CLOSED0
+bb67ab final readonly normal041/gen6/64CPU/fullRAM/cache/programs CLOSED0
+No parallel device/admin/GPU commands during parent;no retry/recovery/reboot/
+power/SD/hardware/network mutation. Planned known STOP/HOLDs only.
+Old81/82 failures and83 transfer pass preserved,NOT reclassified.
+No full-model inference/quality/speedup/20tok/s proof;active goal NOT complete.

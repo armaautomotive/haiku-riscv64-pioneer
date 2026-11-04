@@ -1,0 +1,8 @@
+2cb420909e36182df421058853d706b50d7e819357496141eba385787d49cd1e  /boot/home/pioneer-native-dram-model-band64-20261104-a/tenstorrent_pci_probe-native-dram-model-band84
+9aad44e18f6c88e8c8c4e8cddb7234b4a576d3362b16dfb98e5c2fee364e79a3  /boot/home/pioneer-native-dram-model-band64-20261104-a/pioneer-native-dram-model-band64-diagnostic
+df6675b40f0e1313bb2c1c93faaff56cb34ee223dd15eef9bfbd0477e1fe5ad8  /boot/home/pioneer-native-dram-model-band64-20261104-a/pioneer_native_dram_model_band64_physical.sh
+35142021d16a51e50b38657418800f3dcb102ddadc3961ec680d16ebf693ce83  /boot/home/pioneer-native-dram-model-band64-20261104-a/learned-reference.log
+P100A_RELOAD driver55 tag2026102100010012 generation4 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation4 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+EXACT_PRIVATE84_STAGE_CLI_REFUSED2_NORMAL041_GEN4_NO_DEVICE_OR_DRIVER_CHANGE

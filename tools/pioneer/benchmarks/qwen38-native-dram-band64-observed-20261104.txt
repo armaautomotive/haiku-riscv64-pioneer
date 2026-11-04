@@ -1,0 +1,80 @@
+ACTUAL C64 learned-FPU84 PASS192,three clean ENDs,normal041/gen6 restored
+======================================================================
+2026-11-04 UTC;source/preparationb15b2e4cf22ceba68c72b0821fb10d8a622a2af8.
+ONE physical parent52333 launched07:48:11UTC;ACTUALLY CLOSED0 on SAME handle,
+observed07:59:37UTC. No relaunch on observation timeout;no parallel device/
+admin/driver/OS/network/power command during the parent. Only project output
+files and CPU ps were read. Wall time includes full19GB source authentication
+and diagnostic journals;it is NOT an inference/kernel throughput measurement.
+
+Exact privately staged tuple,NOT generated weight-containing binaries in Git:
+2cb420909e36182df421058853d706b50d7e819357496141eba385787d49cd1e driver84
+9aad44e18f6c88e8c8c4e8cddb7234b4a576d3362b16dfb98e5c2fee364e79a3 client84
+df6675b40f0e1313bb2c1c93faaff56cb34ee223dd15eef9bfbd0477e1fe5ad8 parent84
+7b3ca669be8d9e0714f544bd0d74c045329b0490d8f2132187181a1a92be55cd image4336B
+Tag2026110400010084,opcodes8000..02,NB64 marker3436424e,count04001400.
+Stage:/boot/home/pioneer-native-dram-model-band64-20261104-a;now SPENT.
+NEVER reexecute this or old81/82/83 physical parents,including after success.
+
+Fresh normal041/gen4/idle/64CPU/fullRAM stage creation45b779 CLOSED0.
+Private SCP-O6eacb2 CLOSED0;exact89a80d stage postflight CLOSED0;invalid CLI
+refused2 with zero stdout/NO source prepare/device open/driver change.
+Same staged hashes checked before/after;normal041/gen4 still unchanged.
+
+Actual arithmetic and lifecycle
+--------------------------------
+Known-idle guarded exchange041/gen4 ->84/gen5. Same-open original c600de03
+full SHA/layout/identity/epoch and fresh packed payload+rounded DEBUG
+reference proof finish BEFORE device open. Source is authenticated original
+Qwen3.8-27B-Q4_K_M/tensor7 blk.0.ffn_gate.weight;fixed32-row bands starting
+0/8704/17376,K5120 and fixed diagnostic BF16 vector,NOT actual prompt states.
+Explicit CPU DEBUG comparison is separate from no-reference Work mode.
+
+Each sample makes ONE on-card packed GDDR load320 reads/2880flits,then TWO
+complete4-phase learned FPU jobs without per-tile/job host round trips or
+second GDDR load. All64 returned words per sample match the independent
+Fraction-qualified reference:192 exact words total,polls[1,1,1]. Distinct84
+tag/markers/journals/epoch and strict output order confirmed. The accepted
+End path checks all46080 loaded payload+5120 zero header words AFTER HOLD,
+before ANY restore,then original184320B GDDR/221488B L1 and NIU/FIFO/TLB/
+clock/PCI closure. This math role does NOT claim83's pre-reset byte checks.
+Three explicit known-clean ENDs;only then84/gen5 ->normal041/gen6 reload.
+No quarantine/recovery/reboot/power/SD/hardware/network intervention needed.
+Only the tested planned STOP/HOLD lifecycle transitions occurred.
+
+Raw child18182B/198 lines,stderr0,exit0. Child stdout SHA:
+8f21e56f15b5465e70f6a916ca5ae44b0ce51c2c584a06e3350e7fcb97c00d63
+Raw outer20922B,stderr0,actualexit0. Parent stdout SHA:
+5bccf8e1014512d6423069bb99fa5a4b39e0c1e782d7a06d9482f9e7505d6546
+State:STABLE041_RESTORED_GDDR64_BANDS_EXACT192_PASSED.
+Independent collection74486 CLOSED0,fetched text59256 CLOSED0,stderr0;
+all remote/local raw hashes match. Independent explicit84 Fraction-reference
+parser accepts all192 words/three known ENDs/generation5/polls[1,1,1].
+
+CPU progress records retain same live client953:284967ms userCPU then
+447887ms,run state,only first auth banner/92B stdout. Initial full-name ps
+filter did not match Haiku's truncated team args;no completion was inferred.
+Scoped project-prefix ps found the actual same thread. Last project-file
+snapshot observed terminal success;SAME original parent handle then closed0.
+
+Independent final readonlybb67ab CLOSED0,stderr0,observed08:04:08UTC:
+normal041/tag12/gen6,quiesced0/cold0/owner0/open1/guard1;
+64CPUs,max137034936320B RAM,free133780238336B. Worker861e5287,
+servicec509da43,GUI0de9141e hashes unchanged;no project compute parent.
+Original metadata0:1:600:18973870528;cache private0:700/851 entry files.
+That cache count is METADATA ONLY,not a new content rehash/inference test.
+Old81/82 failure markers and83 transfer-pass marker remain unchanged.
+
+Scope and next integration
+---------------------------
+This is actual learned K5120 GDDR->C64 L1->full4-phase FPU correctness for
+these3 bands,not a universal silicon alignment rule or complete diagnosis
+of old81. Placement/headers/init timing changed too. Old81 numerical and
+old82 pre-reset-byte failures remain immutable FAILED records. Larger-width
+C64 hardware arithmetic,cohort/resident full-model arena/stripes,attention/
+state/logits/sampling,full-model quality and actual throughput remain open.
+The all-BFP8 device-weight DATA plan exceeds the current qualified3GiB/bank
+arena;larger physical ranges/reservations still need separate qualification.
+No runtime CPU-reference Work change or new Assistant target is installed.
+The qualified lossless disk-cache Assistant remains intact. Full-native27B/
+20tok/s UNMET;no comparative speedup or new tokens/sec result is claimed.

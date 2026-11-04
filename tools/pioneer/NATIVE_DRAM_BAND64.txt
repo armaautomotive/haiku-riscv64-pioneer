@@ -1,5 +1,16 @@
-Native C64 learned-band84 -- qualified OFFBOARD,not physical math proof
-======================================================================
+Native C64 learned-band84 -- ACTUAL three learned bands PASS
+============================================================
+The ONE frozen physical parent52333 ACTUALLY CLOSED0,observed2026-11-04
+07:59:37UTC. All3 fixed K5120 samples/two jobs each/all192 returned words
+match the independent Fraction-qualified rounded reference. Three clean
+ENDs restored full original GDDR/L1/NIU/FIFO/TLB/clock/PCI state,then the
+normal041/gen6 driver was restored without reboot. Independent raw fetch,
+explicit84 parser and final readonly health checks pass;64CPUs/fullRAM and
+cached Assistant files remain unchanged. This stage is now SPENT.
+See benchmarks/qwen38-native-dram-band64-observed-20261104.txt.
+These are fixed learned-weight bands with a diagnostic BF16 vector,NOT
+full-model inference,model quality,an Assistant Work target or a speedup.
+
 The separate83 LOAD-ONLY C64 fixed transfer ACTUALLY passed all payload/header
 checks and full closure,restoring normal041/gen4. This new84 reconnects the
 EXACT original full4-phase arithmetic to those C64 descriptors. It is NOT an
@@ -33,7 +44,8 @@ Real compiled RV32 images pass all3 Qwen widths,64 exact rounded reference
 words each;K5120 tests20 frame/NIU/counter/FPU-completion fault parks. Private
 learned data:all3 samples/192 exact words,251 lifecycle/corruption cases,
 EVERY header word on selected boundary/odd/even/middle tiles and payload ends.
-Those CPU observers/fixtures are NOT native ARC/engine/physical math proof.
+Those CPU observers/fixtures are NOT native ARC/engine/physical math proof;
+the separate actual observation above supplies ONLY its bounded K5120 proof.
 
 Actual full Haiku SDK driver/client link with19 role refusals and2 actual
 compiler/template refusals;legacy factory remains NULL-only. Actual native
@@ -47,18 +59,20 @@ Build ONLY;never installs,stages or opens a device:
    PRIVATE_EXPORT NEW_ABSOLUTE_OUTPUT --alignment64-math
 All weight-containing binaries/objects/generated headers stay PRIVATE.
 
-Frozen next physical admission,NOT yet run in this preparation record
----------------------------------------------------------------------
+Frozen physical admission -- ACTUALLY completed,stage SPENT
+-----------------------------------------------------------
 pioneer_native_dram_model_band64_physical.sh requires exact normal041/gen4,
 64CPUs/fullRAM,idle owners,installed program/guard identities and the actual
 83 passing bytes/closure record plus independent Fraction reference. New
 private stage:/boot/home/pioneer-native-dram-model-band64-20261104-a.
-Planned ONLY:041/gen4 ->84/gen5;full same-open original/fresh source proof;
+Actual sequence:041/gen4 ->84/gen5;full same-open original/fresh source proof;
 three fixed samples/all192 words/three exact clean ENDs;then041/gen6 ONLY
 after full strict success. Unknown closes only,no further query/reset/retry/
 automatic restore. ONE stage/token/direct parent,observe SAME handle to
 actual terminal;independent raw fetch/hash/parser/postflight afterward.
 Never reuse any spent81/82/83/84 stage. No power/SD/reboot is implicit.
+That sequence now completed with3 exact samples/3 known ENDs and normal041/
+gen6 restoration. The old81/82 failures remain unchanged,not reclassified.
 
 Native full-model arena/resident stripes/cohort/attention/state/logits/sampling,
 full quality and real inference throughput remain unfinished. Full-native27B/

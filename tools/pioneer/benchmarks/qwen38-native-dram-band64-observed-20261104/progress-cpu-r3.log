@@ -1,0 +1,9 @@
+RUNNING_GDDR64_SOURCE_AUTH_AND_THREE_SAMPLES
+/boot/home/pioneer-native-dram-model-band64-20261104-a/gddr64.stdout:92
+/boot/home/pioneer-native-dram-model-band64-20261104-a/gddr64.stderr:0
+AUTHENTICATING_FIXED_ORIGINAL_AND_FRESH_LEARNED_REFERENCE;CPU_DIAGNOSTIC_ONLY_NO_DEVICE_YET
+Team                                                  Id #Threads  Gid  Uid 
+/boot/home/pioneer-native-dram-model-band64-20261104-a/pioneer-   953        1    0    0 
+
+Thread                                   Id    State Prio    UTime    KTime
+pioneer-native-dram-model-band6         953      run   10   447887    10086 
