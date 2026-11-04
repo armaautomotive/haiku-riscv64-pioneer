@@ -1,0 +1,8 @@
+3c5769d2af54798c8fdbe672f3ed25f785cde0b3752253fe591fa06e66169a76  /boot/home/pioneer-q38-full-offload-20261104-a/tenstorrent_pci_probe-full-offload88
+f172e77c58c4eac025ebe7ac53c686a01dadceacf31f1e25f00f00ca6b651081  /boot/home/pioneer-q38-full-offload-20261104-a/pioneer-q38-full-offload-smoke
+13b3c9510495e3dbedb12718c3604c8ce88d5082b8c316c289c4f996a10bbc0b  /boot/home/pioneer-q38-full-offload-20261104-a/pioneer_q38_full_offload_physical.sh
+8cc39a66185e3adb1606a92a91c4f9efeb5943d4e1439cfedc41214b75e8aa5d  /boot/home/pioneer-q38-full-offload-20261104-a/HaikuAssistantQwen27FullOffload-all5
+0:1:755:2863432
+0:1:755:224960
+0:1:755:7527
+P100A_RELOAD driver55 tag2026102100010012 generation10 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY

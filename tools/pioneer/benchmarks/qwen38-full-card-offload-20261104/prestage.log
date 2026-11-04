@@ -1,0 +1,4 @@
+P100A_RELOAD driver55 tag2026102100010012 generation10 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+8cc39a66185e3adb1606a92a91c4f9efeb5943d4e1439cfedc41214b75e8aa5d  /boot/home/pioneer-q38-full-offload-20261104-a/HaikuAssistantQwen27FullOffload-all5
+FULL88_NATIVE_AND_TRIAL_OUTPUTS_ABSENT

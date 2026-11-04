@@ -96,3 +96,31 @@ new88/worker/smoke tuple and typed stable10->native11->stable12 exchange.
 Only actual known-clean model completion and exact public text may admit
 normal restoration. No numerical result or token rate exists for this new
 path yet. Usable Assistant integration follows physical model acceptance.
+
+ONE physical full-card parent ACTIVE (supersedes not-yet-staged status)
+---------------------------------------------------------------------
+2026-11-04 17:56:26UTC observation. Source checkpoint1c1c01ac2d3533a48417b94b60ff46ce3d32e743
+was pushed and ls-remote verified BEFORE staging. Limited SCP13635 actually0;
+closed staged identity verification0;full independent copy-back88002 actually0
+and all3 whole files cmp-identical. Native3c5769/worker8cc39a/smokef172e7/
+parent13b3c9 exact;root-owned one-link755 files,stage root700. Stable041/
+tag12/gen10/cold0/idle before execution;all trial outputs/marker absent.
+
+Exactly ONE direct exec of the pinned parent --hello-four is launched as
+protected handle83446. SAME83446 is still ACTUALLY live. Mutable local raw:
+ /private/tmp/pioneer-full-offload-20261104.fGJOnFwl/physical.log
+ /private/tmp/pioneer-full-offload-20261104.fGJOnFwl/physical.stderr
+Parent's own returned preamble verifies stable10 quiesce/close and actual
+new tag88/generation11/cold0/idle HOT_RELOAD_VERIFIED,without reboot. The
+bounded client lifetime now owns the trial. No completed model/token/clean
+END/numerical/rate result has returned. Child output is captured remotely;
+its auth/upload/compute phase is not inferred from the quiet outer log.
+The installed Assistant/worker remain untouched. New driver88 IS loaded;
+do not claim stable041 restored while this parent is still active.
+
+PROTECT the ENTIRE SAME83446 auth/Open/upload/ROOT/STOP/HOLD/drain/restore/
+END+Close parent. NO other Pioneer SSH,device/admin/reload/reset,OS/network/
+power,SD or hardware action while live. Read local raw and wait SAME handle
+only. Timeout/yield is not terminal,permission to rerun or recover. SSH255
+requires resolving the actual remote parent before any mutation. No UART
+reopen/reconfigure. Full-card usable Assistant and20TPS remain UNMET.
