@@ -124,3 +124,24 @@ power,SD or hardware action while live. Read local raw and wait SAME handle
 only. Timeout/yield is not terminal,permission to rerun or recover. SSH255
 requires resolving the actual remote parent before any mutation. No UART
 reopen/reconfigure. Full-card usable Assistant and20TPS remain UNMET.
+
+Closed-result reader qualified while SAME parent remains active
+----------------------------------------------------------------
+2026-11-04 18:28UTC. SAME83446 again actually returns still-live;no repeat
+Pioneer command or driver operation. Local-only parser added for eventual
+CLOSED child stdout/stderr:exact source/vocabulary prefix,whole increasing
+4096-aligned19,399,024,640-byte upload (allowing rounded/throttled progress),
+full-card execution phase,four-output completion,exact public answer and
+full-worker clean-close suffix. No prefix,extra/error row or old hybrid
+Ready/Closed is accepted. Bad timing DATA is flagged separately,not turned
+into a speed or a hardware-cleanup failure. No warm rate is extrapolated.
+
+Main and independent clean readers both actually0,stdout byte-identical,
+stderr0:4 valid histories including a1002-row upload,1047 refusals,2 invalid-
+timing DATA cases. Initial fixture wrongly treated omission/duplication of
+a transient rounded progress row as invalid;fixed the FIXTURE to recognize
+that allowed ambiguity,without dropping required full upload or final
+execution/answer/close. Raw failed fixture remains task-local. This is a
+DATA reader only,never native ownership/cleanup/driver-exchange authority.
+It has NOT yet been applied to a completed new full-card model transcript,
+because the same physical parent is still alive. No model result is claimed.
