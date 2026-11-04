@@ -101,7 +101,9 @@
 #error QTP3 native selector requires its actual native parent
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
-#ifdef PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4
+#include "PioneerQ38FullOffloadMacroQ4Programs.h"
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4)
 #include "PioneerQ38FullOffloadVectorQ4Programs.h"
 #else
 #ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
@@ -159,7 +161,14 @@
 #ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
-#ifdef PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4
+namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadMacroQ4Programs;
+static_assert(PioneerQ38TokenPrograms::EogCount==5 && PioneerQ38TokenPrograms::WideGdn==1
+ && PioneerQ38TokenPrograms::VectorQ4Metadata==1 && PioneerQ38TokenPrograms::BatchedOutputClosure==1
+ && PioneerQ38TokenPrograms::TwinBatchPrefetch==1 && PioneerQ38TokenPrograms::MacroQ4Decode==1
+ && PioneerQ38TokenPrograms::MacroQ4PrivateJobConfig==1 && PioneerQ38TokenPrograms::MacroQ4InertReturn==1,
+ "exact full-card macro Q4 package required");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4)
 namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadVectorQ4Programs;
 static_assert(PioneerQ38TokenPrograms::EogCount==5 && PioneerQ38TokenPrograms::WideGdn==1
  && PioneerQ38TokenPrograms::VectorQ4Metadata==1 && PioneerQ38TokenPrograms::BatchedOutputClosure==1

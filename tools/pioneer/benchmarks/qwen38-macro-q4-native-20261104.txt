@@ -1,0 +1,105 @@
+Macro-Q4 tag93 complete native/USER binding -- November4 2026
+==========================================================
+PREREQUISITES FOR ONE CONTROLLED TEST,NOT A PHYSICAL RESULT OR RELEASE.
+Latest actual27B rate remains tag92's0.172813448..0.172816755tok/s.
+20tok/s is UNMET. The installed Assistant remains unchanged.
+
+Actual owner scope,not an invented SFPU snapshot
+----------------------------------------------
+The current driver already exclusively owns the full experimental cohort:
+AcquireProbeLock in tenstorrent_pci_probe.cpp holds sLock and rejects a
+different runtime owner or an ordinary overlapping mutable-state command.
+Native preparation checks each core held at0x47800 before staging. The
+same actual owner controls all120 participants,only releases the selected
+worker processor,requires real terminal/worker STOP/drain before120 HOLD,
+then restores the unchanged complete local-memory/dispatch/store/TLB
+journals. An uncertain execution keeps the existing owner/quarantine and
+never auto-restores or resumes another program. No new access endpoint,
+reset,cohort,processor,memory view,Dst region or ownership exception is added.
+
+LReg,Dst and the newly used LoadMacroConfig are transient computational
+state inside that SAME exclusively running worker,not an interrupted
+external compute context. This checkpoint does NOT claim to snapshot or
+restore arbitrary original SFPU configuration. Only private Q4 matrix
+jobs execute macros;other processors cannot use this worker's vector unit
+concurrently. The original checked/vector matrix setup and source-bank
+ownership remain. Explicit SFPCONFIG writes0..8 touch ONLY macro templates,
+sequences and misc;they do not write LaneConfig15 or add packer/TDMA state.
+The pinned setup defines EVERY macro field subsequently consumed. It uses
+elapsed-cycle scheduling and no macro stores. Every normal Q4 job return
+drains and disables ALL sequences. Any failure remains inert/quarantined
+under the original failure contract;it is not permission to clear state,
+retry or unload the owning driver.
+
+This conclusion combines current actual native owner source,unchanged
+protocol/control failure tests,the complete worker job-return tests and
+the new immutable-ROM audit. It is not derived from a ready enum alone.
+The ROM audit visits actual FUNC bytes in ALL10 worker sections:all12
+SFPCONFIG instructions occur ONLY in Setup/Finish,all16 static macro loads
+ONLY in Decode. Exact command lists pass;56 mutated command lists fail.
+No new lane configuration,macro store or packer use is present. Actual
+hardware arithmetic and complete runtime closure still require the trial.
+
+Distinct exact binding and closed local tests
+--------------------------------------------
+New native/client flag PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4 selects ONLY tag
+0x2026110400010093 and immutable package selection4. Shader build flags,
+tag92 vector package,resident/CPU-reference/hybrid roles cannot alias it.
+The full5-EOG ROOT is unchanged;all10 complete peer sections come from
+independently reproduced shader89f71fc9d6e8... in the prior checkpoint.
+
+Main and clean-source builds ACTUALLY0 and ENTIRE artifacts compare equal:
+ driver61a8cce47e5294f6f6263fe22a331859c22576f7e268416a3433f00c81e7d79e
+ worker103e0c734fbb1f63f2beea6b3de617e42a3699af7450b4ee895e8a056cd81160
+ rate46f4fcb520cf2c5ffa6767c3b3d17371ff5c1d22aeb5dcd98d15100262baa7b3
+ programsda41eb6094faf1d8061ddd297ec399beb209fd6dcf1e903860f4d7421fd46767
+ helpered6d142b5a87c6cd3c7b903255b757803a6dac4a65e298b91ee3f3c7bd56d36e
+
+Native compile gates pass28 clean/29 main refusals(the extra main case is
+unrelated deferred resident WIP,excluded from the clean checkpoint).
+Native max individual token frame1232B;no whole-kernel stack certificate.
+USER gates pass17 refusals. USER imports exactly the11 frozen vocabulary/
+model-container llama APIs,no inference context,decode,logits or CPU pool.
+Frozen library/header ABI c060ca974c77 is used,not dirty submodule code.
+
+Main+clean new DATA/role tests ACTUALLY0:all3151508 actual code words over
+all120 existing journal ranges,10013 invalid/DATA-address refusals,3
+positive and188 missing/zero/wrong/late/package/CPU/shader native+USER
+refusals. Both regenerate the full public code-only header exactly.
+The underlying ASan/UBSan full shader tests already passed27 shapes/54
+retained-input jobs plus12 inert transfer-loss cases in the prior report.
+
+Regression vector92 rebuild ACTUALLY0 reproduces ENTIRE c21b9bb8... driver;
+default43 remains ENTIRE2df0e0f8... unchanged. Unmodified full-offload host
+tests ACTUALLY0:3072 valid/12338 refused pointer-free shapes,all5 EOS,
+3 cancellation boundaries,197 fail-closed USER fixtures,12335 early kernel
+shape refusals and all6 operations with MOCK owner endpoints. These are
+not native-engine execution or numerical results.
+
+Main+clean physical-parent tests ACTUALLY0. The new one-shot93 parent is
+the ENTIRE previously tested92 flow,with ONLY nine immutable revision/
+stage/hash/generation substitutions. All120 prior rate-parent failure
+cases and54 older parent cases run FIRST. No new error cleanup,automatic
+restore,reset,retry,force-unload or tail-acceptance relaxation is introduced.
+
+Fresh read-only preflight96314 ACTUALLY0 before any new staging:stable041/
+tag12/gen18,cold0/quiesced0/owner0/open1/guard1,64CPUs and137034936320B RAM,
+free130821517312B,exact unchanged apps/runtime/guard/admin/backups and
+closed92 raw stream,with no project compute parent. The new stage did
+not exist. That check uses the already-qualified READ-ONLY postflight;
+the spent92 physical helper is NOT rerun. This is not a benchmark result.
+
+One prospective trial
+---------------------
+Fresh stage /boot/home/pioneer-q38-full-macro-q4-20261104-a only.
+Exact stable18 -> native93/gen19 -> stable20,only after complete clean
+child+worker END. The full same-open original GGUF SHA/all851 bindings and
+all19399024640 original upload bytes remain mandatory. Same genuine
+31-prompt/32-output counting request as tag92,no runtime CPU reference.
+Failure retains UNKNOWN/quarantine and stops,without automatic recovery.
+Never reuse the stage/helper after an attempt. No physical request has
+been launched at this source checkpoint;the overall goal remains ACTIVE.
+
+Sibling directory contains CLOSED local build,scope,DATA,parent,regression
+and preflight receipts. No model weights,prepared learned data,private
+model headers,driver or executable binaries are published.

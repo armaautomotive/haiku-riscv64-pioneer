@@ -219,3 +219,17 @@ This has NO native driver/package/Work selection or physical permission.
 Macro-config ownership/restoration and real27B timing are still required.
 Emulator instruction counts are NOT a speedup. Latest actual rate stays
 tag92's0.1728tok/s;20tok/s remains UNMET. No installed software changed.
+
+Macro-Q4 native pairing (tag93,not yet physically measured)
+---------------------------------------------------------
+Distinct --batched --metrics --macro-q4 native/USER build uses package4,
+complete shader89f71fc9... and the unchanged5-EOG ROOT. Main+clean binaries
+agree;all120 immutable code/journal ranges and exact native/client roles
+pass. The macro configuration is private within the existing exclusive
+full-core worker lifetime;normal jobs drain and make sequences inert,
+and failures retain the original quarantine/no-retry contract. No claim
+of arbitrary original SFPU-register restoration is made. See
+benchmarks/qwen38-macro-q4-native-20261104.txt for actual owner/scope proofs,
+all local tests,artifact hashes and the one-shot generation18 admission.
+The installed Assistant/driver are not changed by this BUILD checkpoint.
+No new rate or speedup:hardware arithmetic and real27B timing remain next.

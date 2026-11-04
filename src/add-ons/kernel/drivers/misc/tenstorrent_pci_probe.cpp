@@ -57,6 +57,12 @@
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110400010090ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_METRICS)
 #error Reserved full-offload tag90 requires its distinct read-only counter role
 #endif
+#if defined(PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4) && !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE)
+#error Full-card macro Q4 requires its actual exclusive full native parent
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110400010093ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4)
+#error Reserved full-offload tag93 requires its distinct macro Q4 compute revision
+#endif
 #if defined(PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4) && !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE)
 #error Full-card vector Q4 requires its actual full native parent
 #endif

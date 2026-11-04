@@ -17,6 +17,9 @@ if metrics:
 vector_q4='--vector-q4' in args
 if vector_q4:
     assert metrics and args.count('--vector-q4')==1;args.remove('--vector-q4')
+macro_q4='--macro-q4' in args
+if macro_q4:
+    assert metrics and not vector_q4 and args.count('--macro-q4')==1;args.remove('--macro-q4')
 assert len(args)==2
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 build,out=map(pathlib.Path,args)
@@ -41,10 +44,11 @@ common=[cxx,'-std=gnu++17','-O2','-Wall','-Wextra','-Werror','-fno-exceptions','
 native=['-DTT_PIONEER_EXPERIMENTAL_Q38_'+name+'=1' for name in
         ('BANKS','PANEL','AFFINE','BLOCK','STREAM','ROWS','COHORT','COHORT_SEALED','COHORT_PAYLOAD','DISPATCH','DISPATCH_VECTOR')]
 native+=['-DTT_PIONEER_DRIVER_RELOAD=1','-DPIONEER_DRIVER_BUILD_TAG='+
-         ('0x2026110400010092ULL' if vector_q4 else '0x2026110400010090ULL' if metrics else '0x2026110400010089ULL' if batched else '0x2026110400010088ULL')]
+         ('0x2026110400010093ULL' if macro_q4 else '0x2026110400010092ULL' if vector_q4 else '0x2026110400010090ULL' if metrics else '0x2026110400010089ULL' if batched else '0x2026110400010088ULL')]
 if batched:native+=['-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=1']
 if metrics:native+=['-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1']
 if vector_q4:native+=['-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=1']
+if macro_q4:native+=['-DPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4=1']
 driver=root/'src/add-ons/kernel/drivers/misc'
 commands=[]
 def run(command):
@@ -76,6 +80,14 @@ if vector_q4:
                  ('resident-vector-q4',['-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT=0'])]
 else:
     refusals += [('vector-q4-with-old-tag',['-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=1'])]
+if macro_q4:
+    refusals += [('missing-macro-q4',['-UPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4']),
+                 ('zero-macro-q4',['-UPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4','-DPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4=0']),
+                 ('old-vector-tag',['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026110400010092ULL']),
+                 ('old-metrics-macro-q4',['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026110400010090ULL']),
+                 ('resident-macro-q4',['-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT=0'])]
+else:
+    refusals += [('macro-q4-with-old-tag',['-DPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4=1'])]
 for macro in ('PIONEER_Q38_TOKEN_VALIDATION_NATIVE','PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE',
               'PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY','PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE',
               'PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_NATIVE_Q8_LAYOUT',
@@ -87,7 +99,7 @@ for label,extra in refusals:
     result=subprocess.run([*common,*native,*extra,*includes,'-E',str(driver/'pioneer_q38_full_offload_driver.cpp')],
                           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
     assert result.returncode and any(t in result.stderr for t in
-        ('Full offload requires','Full offload cannot alias','Full-card metrics requires','Full-card vector Q4 requires')),label
+        ('Full offload requires','Full offload cannot alias','Full-card metrics requires','Full-card vector Q4 requires','Full-card macro Q4 requires')),label
 (out/'role-refusals.txt').write_text('\n'.join('PASS '+label for label,_ in refusals)+'\n')
 def compiler_path(name):
     return subprocess.check_output([cxx,'-print-file-name='+name],text=True).strip()
@@ -101,7 +113,7 @@ if not batched:
     assert sha(out/'tenstorrent_pci_probe-native')=='3c5769d2af54798c8fdbe672f3ed25f785cde0b3752253fe591fa06e66169a76'
 elif not metrics:
     assert sha(out/'tenstorrent_pci_probe-native')=='de688dc5e682fa7714ac53450657c92052b139831eed7dce91b2300f82449eb6'
-elif not vector_q4:
+elif not vector_q4 and not macro_q4:
     assert sha(out/'tenstorrent_pci_probe-native')=='2551b50a52f6a2f7c98ca391fa1742640d5d777f23379663733679980bd643d7'
 table=subprocess.check_output([tool+'nm','-C','--defined-only',str(out/'tenstorrent_pci_probe-native')],text=True)
 undefined=subprocess.check_output([tool+'nm','-u',str(out/'tenstorrent_pci_probe-native')],text=True)
@@ -123,14 +135,14 @@ old_header=(here/('PioneerQ38TokenWideGdnPrograms.h' if batched else 'PioneerQ38
 assert hashlib.sha256(old_header).hexdigest()==('d285c9adb421fc0010d8ad48371eb58ca1480fc0d787f7c147afd4a93457a787'
     if batched else '692a5296c0bc3a19af30ffe920728834328acb05f2122c11c9f95abefd09256f')
 old_arrays={label:digest for digest,label in re.findall(r'// SHA256 ([0-9a-f]{64})\nstatic const uint32_t ([A-Za-z]+)\[\]=',old_header.decode())}
-namespace='PioneerQ38FullOffloadVectorQ4Programs' if vector_q4 else 'PioneerQ38FullOffloadBatchedPrograms' if batched else 'PioneerQ38FullOffloadPrograms'
+namespace='PioneerQ38FullOffloadMacroQ4Programs' if macro_q4 else 'PioneerQ38FullOffloadVectorQ4Programs' if vector_q4 else 'PioneerQ38FullOffloadBatchedPrograms' if batched else 'PioneerQ38FullOffloadPrograms'
 header=(here/(namespace+'.h')).read_bytes()
-assert hashlib.sha256(header).hexdigest()==('3ec53793460dbb937368f952da6a5d19f83e82e27d1a027e416952a309bec389' if vector_q4 else '91624761b95d281cb9dd4493790b27a1c5d88d7c327d6df894711561b76b4c84'
+assert hashlib.sha256(header).hexdigest()==('da41eb6094faf1d8061ddd297ec399beb209fd6dcf1e903860f4d7421fd46767' if macro_q4 else '3ec53793460dbb937368f952da6a5d19f83e82e27d1a027e416952a309bec389' if vector_q4 else '91624761b95d281cb9dd4493790b27a1c5d88d7c327d6df894711561b76b4c84'
     if batched else 'fcff4279355cf5cfa1de048aa6bb9ed5fa4d7dca0f3dc9a7669cbd421be2a1cd')
 arrays=re.findall(r'// SHA256 ([0-9a-f]{64})\nstatic const uint32_t ([A-Za-z]+)\[\]=',header.decode())
 assert len(arrays)==(14 if batched else 13)
 for digest,label in arrays:
-    if label.startswith('Peer') and not vector_q4:assert digest==old_arrays[label]
+    if label.startswith('Peer') and not vector_q4 and not macro_q4:assert digest==old_arrays[label]
     names=[n for n in symbols if namespace in n and n.endswith(str(len(label))+label+'E')]
     assert len(names)==1
     name=names[0];first,size=symbols[name];target=out/(label+'.raw')
@@ -143,6 +155,6 @@ assert token_frames and max(token_frames)<=2048
 (out/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands)+'\n')
 for name in ('native','default'):
     print(sha(out/('tenstorrent_pci_probe-'+name)),'tenstorrent_pci_probe-'+name,flush=True)
-print('PASS BUILD_ONLY distinct full-card '+('vector Q4 tag92/all14 arrays exact/new vector calculation peers/unchanged5-EOG ROOT' if vector_q4 else 'metrics tag90/all14 arrays exact/ten wide peers unchanged' if metrics else 'batched tag89/all14 arrays exact/ten wide peers unchanged' if batched else 'tag88/all13 arrays exact/nine G3 peers unchanged')+
+print('PASS BUILD_ONLY distinct full-card '+('macro Q4 tag93/all14 arrays exact/private-job vector macro configuration/unchanged5-EOG ROOT' if macro_q4 else 'vector Q4 tag92/all14 arrays exact/new vector calculation peers/unchanged5-EOG ROOT' if vector_q4 else 'metrics tag90/all14 arrays exact/ten wide peers unchanged' if metrics else 'batched tag89/all14 arrays exact/ten wide peers unchanged' if batched else 'tag88/all13 arrays exact/nine G3 peers unchanged')+
       ',full5-EOG firmware/default43 BYTE-UNCHANGED,'+str(len(refusals))+' role refusals,no CPU model/reference/ggml Work imports;maxIndividualTokenFrame'+str(max(token_frames)),flush=True)
 print('NOT installed,physical/numerical/Assistant qualified or a speed result;whole-kernel stack not certified',flush=True)
