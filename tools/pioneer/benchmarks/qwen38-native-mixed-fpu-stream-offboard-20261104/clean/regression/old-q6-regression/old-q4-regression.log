@@ -1,0 +1,9 @@
+PASS CPU-only Q4 FPU recipe:524288 unchanged packed bytes,65536 exact FP32 metadata fields,subnormal half scales/signed zero retained,256 nonfinite atomic refusals,bounds/overlap/canary checks;NO disk/model/driver/device authority
+PASS OFFBOARD complete compressed-Q4 pipeline:16 K256 jobs across8 two-job trials,all32 outputs exact vs original-decode/BF16-RNE and rounded4-phase reference;actual L1 descriptors/physical Dst/SFPTRANSP/MOVD2A/bank handoff;NO host learned products,NoC/GDDR/native driver/hardware/model-quality/speed proof
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+7e3efc36b1447a3880081caf899175a87378f894ea684d7623572625242e04d4 7036 text.bin
+OFFBOARD_Q4_FPU_BLOCK_BUILD_ONLY;NEW marker/layout/8KiB image;NO native owner/stage/driver/hardware/quality/speed authority
+PASS independent Fraction compressed-Q4 pipeline:all64 actual-RV32 result words,2048 rounded phase predictions,8192 original synthetic weights;no CXX codec/SFPU/FPU oracle shared;NO hardware/model-quality/speed proof
+PASS actual RV32I packed-Q4/SFPU/BF16/FPU K256 pipeline:5 two-job trials/all64 words exact,13 failure/numerical controls,strict unchanged Step,shared L1/physical Dst,SFPTRANSP/MOVD2A,all4 phases;SP96/touched84;NO scalar payload/NoC/GDDR/native driver/hardware/full-model quality/speed proof
+PASS Q4 pipeline compile gates:kernel/Work/validation refused;fixed8KiB/direct-only builder
+OFFBOARD Q4 pipeline build/tests retained: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q4-fpu-block.2r9fzsvN

@@ -1,0 +1,33 @@
+PASS PRIVATE mixed export sample0 type14 tensor48 first0 rows32 K6144:same-open original/exact recipe/32 Fraction goldens;shafd7294157ac8cf005f2f9237be0cf01f37cfab067d83aa68cb4c138dd42b6275
+PASS PRIVATE mixed export sample1 type14 tensor48 first2560 rows32 K6144:same-open original/exact recipe/32 Fraction goldens;sha5145d33a94a20bc7ff09f19ba710fea34de98cb52df191c337e59b6e40c814af
+PASS PRIVATE mixed export sample2 type14 tensor48 first5088 rows32 K6144:same-open original/exact recipe/32 Fraction goldens;sha7bd4e5c4ece502f21013b247f7c8c2fb6898b413fec8378d42d1a7d07942bf45
+PASS PRIVATE mixed export sample3 type14 tensor0 first0 rows32 K5120:same-open original/exact recipe/32 Fraction goldens;sha1178833089fc72a18e5ede004354c0d64414dab6a70b39fc27daa8beea67c616
+PASS PRIVATE mixed export sample4 type14 tensor0 first124160 rows32 K5120:same-open original/exact recipe/32 Fraction goldens;shafc549ee2f1ea533fa82f813d64c819de4ab5f3d91b2e8bd82cfb2ff814660d60
+PASS PRIVATE mixed export sample5 type14 tensor0 first248288 rows32 K5120:same-open original/exact recipe/32 Fraction goldens;sha52202594a259bfc26b271749ff02029bee7e42982ca70ed5dc41dde5cf29c9d1
+PASS PRIVATE mixed export sample6 type8 tensor5 first0 rows32 K5120:same-open original/exact recipe/32 Fraction goldens;sha9aae953f2adbc25df147b03cef1655a6fd04737c37365a22269f132e3451995e
+PASS PRIVATE mixed export sample7 type8 tensor5 first5120 rows32 K5120:same-open original/exact recipe/32 Fraction goldens;sha1246a99a450cbd179ed5d0124703c39f53a9b72d080e7ac90fa1e3714116792e
+PASS PRIVATE mixed export sample8 type8 tensor5 first10208 rows32 K5120:same-open original/exact recipe/32 Fraction goldens;shad94d57bcca1843df43dbb5704cd059b5ea922e2e91de30765fd85e684a6a64c7
+PASS PRIVATE mixed export sample9 type8 tensor16 first0 rows32 K6144:same-open original/exact recipe/32 Fraction goldens;shade0f0c3b10394ea3bba7474b9bf3f70ec1c430132ab3db268d0c08b763bdde97
+PASS PRIVATE mixed export sample10 type8 tensor16 first2560 rows32 K6144:same-open original/exact recipe/32 Fraction goldens;sha8e7d72786b619a8f488e8e64cd9ee814bb5652f01080cc8a30175754702f415a
+PASS PRIVATE mixed export sample11 type8 tensor16 first5088 rows32 K6144:same-open original/exact recipe/32 Fraction goldens;sha1b6ab92815e946353f4a0417092ba1e533c2a831958d9c04972963ee78655be6
+PASS PRIVATE mixed export sample12 type8 tensor49 first0 rows32 K5120:same-open original/exact recipe/32 Fraction goldens;sha4774ee1b183f068f201e67bc367f367ab8c45697360daca49a9103224e37e160
+PASS PRIVATE mixed export sample13 type8 tensor49 first6144 rows32 K5120:same-open original/exact recipe/32 Fraction goldens;shac3016cc428dd36e988bf8bc7c90b84fa7134874f8889f4028013f0240a04e7ef
+PASS PRIVATE mixed export sample14 type8 tensor49 first12256 rows32 K5120:same-open original/exact recipe/32 Fraction goldens;shada7618420f15971c9dbacf2562ee33ac4308c4d76d0236f93a5798d3d69c17ce
+PASS PRIVATE mixed export sample15 type8 tensor11 first0 rows32 K5120:same-open original/exact recipe/32 Fraction goldens;sha8c055f43bdbc7055e05c9fba60963f1d8770f44ee747ef69a283667da64fafde
+PASS PRIVATE mixed export sample16 type8 tensor11 first32 rows16 K5120:same-open original/exact recipe/32 Fraction goldens;sha0c880fea79f6164b978eb6a8232ab560af748fc9a7addf8b5c5925106c9ce65c
+PASS PRIVATE independent mixed87 export:17 original-bound bands/2899968 real weights/2981888 including absent-row padding/745472 rounded phases/544 goldens for1088 two-job words;full original SHA and nanosecond FD identity;NO shared CXX codec/preparer/FPU oracle/weight bytes printed;NOT native/hardware/full-model-quality/speed authority
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+af5b7c2e7ea4d1fa28ba7e0b11f8122bc5168ce8ba1416be1ef5b1319135b867 7848 text.bin
+OFFBOARD_Q6_FPU_STREAM_BUILD_ONLY;NEW Q6S1 marker/two buffers/full-K/8KiB bound;NO native owner/stage/driver/hardware/quality/speed authority
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+f6ced20d6861124fa23134dfe5af9fa70d7eb8ba8cf679b0fa101af242c3934d 7848 text.bin
+OFFBOARD_Q6_FPU_STREAM_BUILD_ONLY;NEW Q6S1 marker/two buffers/full-K/8KiB bound;NO native owner/stage/driver/hardware/quality/speed authority
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+8ab2edda60d0b59f09d3f8162a04a10d2eec6a3aefe9a48f69188d4979c2f66e 6812 text.bin
+OFFBOARD_Q8_FPU_STREAM_BUILD_ONLY;NEW Q8S1 marker/two buffers/full-K/8KiB bound;NO native owner/stage/driver/hardware/quality/speed authority
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+5948d8b1aad1292d5c589449822f0d63c0dcf357c10c77916973d588568bf99d 6812 text.bin
+OFFBOARD_Q8_FPU_STREAM_BUILD_ONLY;NEW Q8S1 marker/two buffers/full-K/8KiB bound;NO native owner/stage/driver/hardware/quality/speed authority
+03e918cc1accdb6446e31b2650816e01edc6e6c0acd15c3ceda748fe814be115 tenstorrent_pci_probe-native-mixed-fpu-stream87
+2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc tenstorrent_pci_probe-default43-control
+PASS BUILD_ONLY actual native87 driver/all methods LINKED,20 role refusals,actual wrong-image/wrong-data refusals,legacy NULL/control unchanged;PRIVATE headers unchanged;NO stage/open/hardware/full-model/speed authority

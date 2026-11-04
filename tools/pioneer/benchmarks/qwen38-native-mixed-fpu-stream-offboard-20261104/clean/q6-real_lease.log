@@ -1,0 +1,7 @@
+PASS PRIVATE actual mixed87 image+header lease sample0 type14 tensor48 first0 rows32 K6144:all64 exact,whole107632B L1/208896B selected GDDR/NIU/FIFO/TLB/clock restored;NO native IO/hardware/full-model quality/speed proof
+PASS PRIVATE actual mixed87 image+header lease sample1 type14 tensor48 first2560 rows32 K6144:all64 exact,whole107632B L1/208896B selected GDDR/NIU/FIFO/TLB/clock restored;NO native IO/hardware/full-model quality/speed proof
+PASS PRIVATE actual mixed87 image+header lease sample2 type14 tensor48 first5088 rows32 K6144:all64 exact,whole107632B L1/208896B selected GDDR/NIU/FIFO/TLB/clock restored;NO native IO/hardware/full-model quality/speed proof
+PASS PRIVATE actual mixed87 image+header lease sample3 type14 tensor0 first0 rows32 K5120:all64 exact,whole107632B L1/174080B selected GDDR/NIU/FIFO/TLB/clock restored;NO native IO/hardware/full-model quality/speed proof
+PASS PRIVATE actual mixed87 image+header lease sample4 type14 tensor0 first124160 rows32 K5120:all64 exact,whole107632B L1/174080B selected GDDR/NIU/FIFO/TLB/clock restored;NO native IO/hardware/full-model quality/speed proof
+PASS PRIVATE actual mixed87 image+header lease sample5 type14 tensor0 first248288 rows32 K5120:all64 exact,whole107632B L1/174080B selected GDDR/NIU/FIFO/TLB/clock restored;NO native IO/hardware/full-model quality/speed proof
+PASS PRIVATE actual mixed87 type14 compiled data/image/RV32 lease:384 exact words/6 bands;NOT physical execution/full-model quality/performance authority

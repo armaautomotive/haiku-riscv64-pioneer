@@ -1,0 +1,7 @@
+PASS OFFBOARD mixed87 lease sample0 type14 rows32 K6144:actual strict RV32/NIU/shared L1/Dst all64 exact;whole107632B L1/208896B selected GDDR/NIU/FIFO/TLB/clock restored;NO native PCI/VM/FD/hardware/quality/speed authority
+PASS OFFBOARD mixed87 lease sample1 type14 rows32 K6144:actual strict RV32/NIU/shared L1/Dst all64 exact;whole107632B L1/208896B selected GDDR/NIU/FIFO/TLB/clock restored;NO native PCI/VM/FD/hardware/quality/speed authority
+PASS OFFBOARD mixed87 lease sample2 type14 rows32 K6144:actual strict RV32/NIU/shared L1/Dst all64 exact;whole107632B L1/208896B selected GDDR/NIU/FIFO/TLB/clock restored;NO native PCI/VM/FD/hardware/quality/speed authority
+PASS OFFBOARD mixed87 lease sample3 type14 rows32 K5120:actual strict RV32/NIU/shared L1/Dst all64 exact;whole107632B L1/174080B selected GDDR/NIU/FIFO/TLB/clock restored;NO native PCI/VM/FD/hardware/quality/speed authority
+PASS OFFBOARD mixed87 lease sample4 type14 rows32 K5120:actual strict RV32/NIU/shared L1/Dst all64 exact;whole107632B L1/174080B selected GDDR/NIU/FIFO/TLB/clock restored;NO native PCI/VM/FD/hardware/quality/speed authority
+PASS OFFBOARD mixed87 lease sample5 type14 rows32 K5120:actual strict RV32/NIU/shared L1/Dst all64 exact;whole107632B L1/174080B selected GDDR/NIU/FIFO/TLB/clock restored;NO native PCI/VM/FD/hardware/quality/speed authority
+PASS OFFBOARD mixed87 type14 lease:61 failure/refusal cases,unknown retains ALL journals,no next IO/END/reset/retry;NOT native hardware/quality/speed proof

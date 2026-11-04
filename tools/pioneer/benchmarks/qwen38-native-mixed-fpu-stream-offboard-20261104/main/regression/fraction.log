@@ -1,0 +1,3 @@
+PASS independent Fraction FULL Q8 K5120:all64 actual RV32 words,continuous rounded accumulation across ALL K256 blocks,original TC8/half/K32 scales;no CXX codec/preparer/SFPU/FPU oracle shared
+PASS independent Fraction FULL Q8 K6144:all64 actual RV32 words,continuous rounded accumulation across ALL K256 blocks,original TC8/half/K32 scales;no CXX codec/preparer/SFPU/FPU oracle shared
+PASS independent Q8 full-K stream:128 returned words/360448 synthetic original weights/90112 rounded phases;NO native/hardware/full-model-quality/speed proof

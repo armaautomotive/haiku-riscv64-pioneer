@@ -1,0 +1,98 @@
+Original Q6/Q8 native full-K streaming owner87 -- OFFBOARD ONLY
+=============================================================
+2026-11-04 UTC. Main parent3165 ACTUALLY CLOSED0,observed by16:20:43;
+clean-archive parent69334 ACTUALLY CLOSED0,observed16:22:27. SAME original
+tool handles followed to terminal;no restarted observation or physical test.
+Each parent requires15 strict exit0/stderr0 children,including the complete
+19-child Q8 and22-child Q6/old-Q4/mixed regressions. Both outer stderr0.
+
+Source closure:894 hashes identical main/clean/current worktree:
+e91063f8047a78f9dbb39079536cc52eae7f4ea3ef3b7bfae39d4d4888ac840d
+Complete runner12d1d9a3b78fe5f085a6ae354a3f452744d3c95f2a6de04ab66f2b900ecc1528
+SDK buildere6ebaea5e70991b20d306ca210327775a7605d4a2feae79b6d5ce073db164fb4
+The clean checkout is HEAD f748387133 plus ONLY the15 new source/test files,
+not the dirty llama submodule,NATIVE_BUILD_STATUS or unrelated WIP sources.
+All private model data,headers,compiled objects and binaries stay outside Git.
+The adjacent raw directory contains356 selected source/hash/pass/exit records
+only,not weight bytes. Original/decoded/prepared arrays are NEVER published.
+
+What changed
+------------
+One new protocol/tag/owner87 for17 FIXED Q6/Q8 bands,not an arbitrary runtime
+operand API. Actual native methods retain exact FD/thread/team/generation/
+semaphore/PCI/card/root/17-VM-view binding. Core1,2/bank0 only;all120 cores
+initially held. Other native roles,Work,CPU validation and fast math forbidden.
+Full heap journal107632B L1 plus format/sample-specific GDDR(max233472B),two
+TLBs,NIU command/FIFO/clock. Both final producer slots and all headers/gaps/
+zero/output/code/frame checked BEFORE restore. Source bytes/route/held state,
+two terminal PCs/nine counters/last NoC command checked. BOOT last on stage
+and restore. Uncertainty retains everything;no next IO/END/reset/retry.
+
+The CPU exporter independently CLOSES0 afresh in EACH qualification parent.
+Same-open original SHA c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747,
+exact18973870528B/owned regular one-link/nanosecond identity/model epoch.
+The Python verifier hashes its OWN SAME original FD,parses GGUF independently
+and compares every selected original row/block without sharing the CXX reader.
+Both layout reconstructions and745472 exact Fraction rounded phases pass:
+2899968 REAL original weights/2981888 including absent-row padding,544 goldens.
+Six Q6 bands and11 Q8 bands include the explicit16-row/48-output alpha tail.
+
+Private data header SHA:
+ada7d5650402e67fac810973b0290e60d7c6561840b91b4c4f0cf83776151f54
+Private expected-metadata header SHA:
+580b4e36ca6fd729a0b5e6340b33bf372ab1ef9d661f8c66ffecfb7e6f98385c
+Generated4-image header SHA:
+f9d5d00eed36db7084cf935c33dc72145934d319c5fbebb483ae0193a948f6bb
+All17 raw/prepared/input/expected files AND generated headers byte-identical
+between independently exported main/clean preparations. No cached export or
+unknown terminal state substituted for a successful child in these parents.
+
+Actual SDK native87(all methods) LINKED driver SHA:
+03e918cc1accdb6446e31b2650816e01edc6e6c0acd15c3ceda748fe814be115
+Default43 control unchanged/identical main+clean:
+2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+20 compile-role refusals and2 actual wrong-image/data template refusals pass.
+Legacy find_device disassembly returnsNULL. Largest observed SDK frame2544B
+belongs to the inert old probe;new Control672B. Full journals live on heap.
+
+Unchanged independently qualified ISA images,byte-identical main/clean:
+Q6,K5120,7848B:af5b7c2e7ea4d1fa28ba7e0b11f8122bc5168ce8ba1416be1ef5b1319135b867
+Q6,K6144,7848B:f6ced20d6861124fa23134dfe5af9fa70d7eb8ba8cf679b0fa101af242c3934d
+Q8,K5120,6812B:8ab2edda60d0b59f09d3f8162a04a10d2eec6a3aefe9a48f69188d4979c2f66e
+Q8,K6144,6812B:5948d8b1aad1292d5c589449822f0d63c0dcf357c10c77916973d588568bf99d
+All4B boot images:d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd
+
+Evidence scope
+--------------
+DATA contract:26908 unique L1 words,all exact17 GDDR domains,both final
+buffers/79616 total payload words/no header or gap alias,561 ABI refusals.
+Actual lease:17 synthetic complete bands and61 failures/refusals PER format;
+unknown retains journals,then no IO/END/reset/retry. Private generated-image+
+generated-data lease uses REAL compiled RV32/NoC/shared L1/physical Dst and
+returns ALL1088 exact original-derived words/34 jobs. Entire saved L1/GDDR,
+including unowned bytes,and NIU/FIFO/TLB/clock are checked restored.
+Actual native/control body fixtures:377 valid/751 refusals,all17 actual VM
+views and all17 format-specific GDDR boundary domains. No completion injection
+or modifications to old Step/observers/arithmetic/comparison gates.
+
+First standalone SDK46223 CLOSED1 on five misleading-indentation warnings
+in the NEW layout file. Formatting fixed;Werror NOT disabled. Failed output
+retained PRIVATE,not reclassified. Independent second SDK60337 CLOSED0,and
+both complete parents subsequently built current sources from scratch.
+The older standalone exporter28367 handle was missing at recovery;its final
+PASS stdout+stderr0 was not treated as terminal0/admission. Both new parents
+run fresh independently authenticated exports,whose actual exit0 is recorded.
+
+Read-only Pioneer SSH CLOSED0,strict stderr0;postflight stdout SHA:
+fb7c0e289433a5bf0a8c28ad3ad60e8e9d30c9c2990ad3b110d4a232a6e154b3
+SameSep8 kernel,64 CPUs,maxRAM137034936320B/free133771087872B.
+Stable installed driver55/tag2026102100010012/generation10,
+quiesced0/cold0/active_owner0/open_count1/guard1. No card work,staging,hot swap,
+driver/app/model/boot/OS/network/power/SD/hardware changes in this qualification.
+
+Next:qualify NEW source-authenticating client+typed one-shot parent/restore
+before physical87 admission. Historical86/restore/older stages remain SPENT.
+Physical87/full-cohort/resident inference integration/quality/real throughput
+are NOT proved. Installed Assistant/cache/Work unchanged;CPU attention/state
+remain,CPU reference validation OFF. Last tiny unmatched0.204tok/s is NOT a
+new speedup;20tok/s and full-native27B remain UNMET. Goal remains ACTIVE.

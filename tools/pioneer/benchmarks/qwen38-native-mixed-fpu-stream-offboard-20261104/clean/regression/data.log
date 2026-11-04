@@ -1,0 +1,1 @@
+PASS OFFBOARD Q8 data:17664 exact unchanged-TC8/coefficient/padded-tail comparisons,37 atomic/admission refusals,448 independent packet byte-coverage checks,private headers/gaps/zero source duplication/poisoned absent rows ignored;NO expanded weights/learned products/driver/cache/owner/hardware/quality/speed authority

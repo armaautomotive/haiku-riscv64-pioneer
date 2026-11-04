@@ -1,0 +1,114 @@
+Original Q6/Q8 full-K native streaming diagnostic87
+=================================================
+
+This is a SEPARATE diagnostic owner,not a Work mode or an installed driver.
+It brings the independently qualified Q6S1 and Q8S1 full-K card programs into
+one source-bound native driver. Native diagnostic87 uses build tag
+2026110400010087,opcode8300 and17 fixed original-model bands. It cannot alias
+diagnostic86/Q4,old native contexts,CPU validation,Work or fast-math builds.
+
+Each card program fetches every K256 block from GDDR into two alternating
+L1 buffers,decodes original quant bytes with SFPU instructions,rounds weights
+to BF16 and accumulates four-phase FPU products across the FULL K. There is
+one accumulator initialization per complete job,not one per K256 fragment.
+Two complete jobs return64 words. There is no host K loop or host learned
+product in the native driver. The input is a fixed diagnostic BF16 vector,
+not live inference state. This alone does NOT run a full model on the card.
+
+Fixed original bands (all32 rows unless noted)
+--------------------------------------------
+samples0..2:  tensor48 blk.3.attn_output.weight,Q6_K,K6144,
+               first0/2560/5088 of5120 outputs.
+samples3..5:  tensor0 output.weight,Q6_K,K5120,
+               first0/124160/248288 of248320 outputs.
+samples6..8:  tensor5 blk.0.attn_qkv.weight,Q8_0,K5120,
+               first0/5120/10208 of10240 outputs.
+samples9..11: tensor16 blk.0.ssm_out.weight,Q8_0,K6144,
+               first0/2560/5088 of5120 outputs.
+samples12..14:tensor49 blk.3.attn_q.weight,Q8_0,K5120,
+               first0/6144/12256 of12288 outputs.
+samples15..16:tensor11 blk.0.ssm_alpha.weight,Q8_0,K5120,
+               first0/32 of48 outputs. Sample16 reads ONLY16 original rows;
+               absent16 rows are explicitly zero-padded,never sourced.
+
+Preparation is a NEW diagnostic recipe,not an installed disk-cache format.
+Q6 preserves ql/qh bytes and exact half*signed8 K16 coefficients;Q8 preserves
+TC8 bytes,including-128,and exact original K32 half coefficients. No host
+dequantized weight array,BF16 weight conversion,requantization or learned
+products are stored in the native driver. Private expected outputs are used
+ONLY in offboard tests and the future diagnostic client,never Work inference.
+
+Source authentication and independent arithmetic
+------------------------------------------------
+The CPU-only exporter opens the original READ ONLY/O_NOFOLLOW,requires owned
+regular one-link exact18973870528B input and hashes the entire SAME open FD:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+Original device/inode/UID/GID/mode/size/nlink/nanosecond timestamps and model
+epoch remain fixed through all band reads. An existing empty owned0700
+directory receives exclusive0600 private files. Nothing is overwritten.
+Original/prepared/decoded weights,generated data headers and binaries MUST
+stay outside Git. Only source,pass/failure metadata and hashes are publishable.
+
+The independent Python test re-authenticates its own same-open original,
+parses GGUF metadata/tensor offsets WITHOUT the CXX GGUF reader,and compares
+EVERY selected original row/block to the private export. It reconstructs
+both preparation layouts and uses exact Fraction arithmetic for all745472
+rounded matrix phases over2981888 logical weights,of which2899968 are real
+original weights and81920 are absent-row padding. All544 goldens are checked
+against the generated metadata;two real RV32 jobs per band yield1088 words.
+It shares no CXX decoder,preparer,SFPU or FPU oracle. This is NOT a full-model
+quality test or a hardware performance measurement.
+
+Native ownership and closure
+----------------------------
+The actual native body binds the exact FD,thread,team,generation,semaphore,
+PCI reservation/card/root identity and17 actual kernel VM views. The only
+selected engine is physical core1,2 and only the proved bank0 GDDR route is
+used. All120 cores must initially be held. There is no user-supplied route,
+address,code,image,format,row-count or arbitrary-operand endpoint.
+
+The heap lease journals107632B of L1,including both producer buffers/all
+headers/gaps/shared zero/output,plus the selected original GDDR bytes (max
+233472B),two TLB slots,NIU command/FIFO and clock state. END verifies BOTH
+final producer slots,code/boot/frame/headers/gaps/zero/captured output and
+the complete staged GDDR payload BEFORE restoring it. BOOT is staged and
+restored last. Nine command/data counters are observed,never rewound.
+
+The first uncertainty retains all journals,maps,reservation and clock state;
+no destructor I/O,implicit END,reset,cleanup or retry follows. The tests drive
+the actual compiled RV32/NoC/shared physical L1+Dst programs,not injected
+completion. The OS/PCI fixtures test actual unchanged native/control bodies,
+but explicitly do NOT establish real prerequisite/ARC/engine operation.
+
+Build/test ONLY;no physical card access
+-------------------------------------
+Run in a NEW absolute output directory OUTSIDE the source checkout:
+  python3 tools/pioneer/tests/run_pioneer_native_mixed_fpu_stream_tests.py \
+    /Volumes/HaikuBuildLocal/generated.riscv64 ORIGINAL_GGUF NEW_PRIVATE_OUTPUT
+
+The parent freezes public source closure,prepares a fresh authenticated
+private export,checks independent source/Fraction results,builds all4 fixed
+card images,links the native SDK driver and unchanged default43 control,
+requires20 role/2 wrong-image-data compilation refusals,and checks inert
+legacy find_device returnsNULL. It runs DATA-domain tests,the actual lease
+with61 failure/refusal cases PER format,real compiled data/image lease tests,
+native OS/PCI endpoint tests and the complete earlier Q8/Q6/Q4 regressions.
+Every admitted child must actually CLOSE0 with strict stderr0. Run the same
+parent again from a clean archive+exact new-source overlay,then compare all
+public source hashes,private headers and4 ISA images byte-for-byte.
+
+Remaining before physical execution and inference
+-------------------------------------------------
+No physical87 client/one-shot parent has been admitted or run. Next requires
+a newly qualified source-authenticating client and typed generation-aware
+parent with fixed candidate/stable hashes and an independently qualified
+restore route. The historical86 physical/restore stages remain SPENT and
+must NEVER be rerun. Recheck actual idle installed identity/generation before
+any future stage;generation11/12 are only expectations if current10 persists.
+
+Even a passing physical87 diagnostic will NOT prove120-worker operation,
+resident full-model weights/state/KV/attention integration,model quality or
+usable throughput. Those remain required for full-card27B inference. Current
+Assistant/cache/normal driver are unchanged;CPU attention/state remain in
+installed Work,CPU reference validation remains OFF. The last tiny unmatched
+warm3-sample Work result was0.204tok/s,NOT20tok/s and NOT a new speedup here.

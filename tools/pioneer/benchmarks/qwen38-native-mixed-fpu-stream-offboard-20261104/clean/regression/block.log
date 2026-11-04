@@ -1,0 +1,1 @@
+PASS OFFBOARD complete original-TC8 pipeline:16 K256 jobs/eight two-job trials,all32 exact BF16-RNE/four-phase outputs,including-128/signed-zero/16-row padded tail;actual L1/physical Dst/SFPTRANSP/MOVD2A/bank handoff;NO host learned products/NoC/GDDR/native driver/hardware/quality/speed proof
