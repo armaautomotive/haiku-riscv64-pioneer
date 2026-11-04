@@ -1,0 +1,8 @@
+0ab145ac3b938238fd3fd139fa8c1e899458932058acd2567f220bb4504cdf27  /boot/home/pioneer-native-dram-model-band-20261104-a/tenstorrent_pci_probe-native-dram-model-band81
+0091244ae265e26075e80fa98f5d6b8b5c6d37304938e3d140d9bab6584e307e  /boot/home/pioneer-native-dram-model-band-20261104-a/pioneer-native-dram-model-band-diagnostic
+577aa3cc051b036f815a94e519b98489fbc6793a4c0e47ee78e7f8539cc4650a  /boot/home/pioneer-native-dram-model-band-20261104-a/pioneer_native_dram_model_band_physical.sh
+35142021d16a51e50b38657418800f3dcb102ddadc3961ec680d16ebf693ce83  /boot/home/pioneer-native-dram-model-band-20261104-a/learned-reference.log
+EXPECTED_CLI_REFUSAL_EXIT2_NATIVE_CLIENT_LOADER_WORKS_NO_SOURCE_OR_DEVICE_OPEN
+P100A_RELOAD driver55 tag2026102100010012 generation10 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+PRIVATE_STAGING_KNOWN_CLEAN_NORMAL_DRIVER_UNCHANGED_NO_GPU_RUN

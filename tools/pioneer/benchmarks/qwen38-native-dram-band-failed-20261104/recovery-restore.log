@@ -1,0 +1,29 @@
+0ab145ac3b938238fd3fd139fa8c1e899458932058acd2567f220bb4504cdf27  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
+577aa3cc051b036f815a94e519b98489fbc6793a4c0e47ee78e7f8539cc4650a  /boot/home/pioneer-native-dram-model-band-20261104-a/pioneer_native_dram_model_band_physical.sh
+0091244ae265e26075e80fa98f5d6b8b5c6d37304938e3d140d9bab6584e307e  /boot/home/pioneer-native-dram-model-band-20261104-a/pioneer-native-dram-model-band-diagnostic
+b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
+d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74  /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
+c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18  /boot/home/config/non-packaged/servers/HaikuAssistantService
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133801472000 bytes free      (used/max 3233464320 / 137034936320)
+                           (cached    186507264)
+     64528 semaphores free (used/max       1008 /      65536)
+      3957 ports free      (used/max        139 /       4096)
+      3907 threads free    (used/max        189 /       4096)
+      2026 teams free      (used/max         22 /       2048)
+P100A_RELOAD driver55 tag2026110400010081 generation1 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-native-dram-model-band-20261104-a/recovery.incoming
+0ab145ac3b938238fd3fd139fa8c1e899458932058acd2567f220bb4504cdf27  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+P100A_RELOAD driver55 tag2026110400010081 generation1 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-native-dram-model-band-20261104-a/recovery.incoming
+0ab145ac3b938238fd3fd139fa8c1e899458932058acd2567f220bb4504cdf27  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+NEW_POWER_EPOCH_STABLE041_RESTORED_NO_GPU_EXECUTION

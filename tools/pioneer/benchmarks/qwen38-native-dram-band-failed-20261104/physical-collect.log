@@ -1,0 +1,21 @@
+/boot/home/pioneer-native-dram-model-band-20261104-a/state 0:1:644:47
+23b89adb8fdd65e65c54e2921aec32ddf7f92586a790db67e9cbab1d64995941  /boot/home/pioneer-native-dram-model-band-20261104-a/state
+/boot/home/pioneer-native-dram-model-band-20261104-a/parent.pid 0:1:644:5
+93f69ad74a25a4dc2ae3931e8afc3949ee0f12503f0fb2d46f3c8cc568be3d5e  /boot/home/pioneer-native-dram-model-band-20261104-a/parent.pid
+/boot/home/pioneer-native-dram-model-band-20261104-a/gddr.stdout 0:1:644:207
+8c864eaa071bb226406bc5b10b96fea1e826b04db6333a1cc5a9c007bb9f7d36  /boot/home/pioneer-native-dram-model-band-20261104-a/gddr.stdout
+/boot/home/pioneer-native-dram-model-band-20261104-a/gddr.stderr 0:1:644:5654
+c853295ad73f590a350937b721fe97ce754fb229ecf73b4da17f17e5f5c37e05  /boot/home/pioneer-native-dram-model-band-20261104-a/gddr.stderr
+/boot/home/pioneer-native-dram-model-band-20261104-a/gddr.exit 0:1:644:2
+4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865  /boot/home/pioneer-native-dram-model-band-20261104-a/gddr.exit
+PHYSICAL_CHILD_EXIT 1
+PHYSICAL_PARENT_STATE UNPROVEN_GDDR_BANDS_NO_END_RESET_RETRY_RESTORE
+P100A_RELOAD driver55 tag2026110400010081 generation11 quiesced0 cold1 active_owner1 open_count1 guard1;CPU_METADATA_ONLY
+0ab145ac3b938238fd3fd139fa8c1e899458932058acd2567f220bb4504cdf27  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74  /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
+c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18  /boot/home/config/non-packaged/servers/HaikuAssistantService
+64 (Unknown), revision 0000 running at 1000MHz
+
+133776539648 bytes free      (used/max 3258396672 / 137034936320)
+                           (cached   19172278272)
+POSTTERMINAL_READONLY_RECORD_COLLECTION_NO_GPU_EXECUTION_OR_WRITES

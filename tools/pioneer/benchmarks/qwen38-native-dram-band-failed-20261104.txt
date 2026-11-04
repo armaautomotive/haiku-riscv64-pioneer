@@ -1,0 +1,109 @@
+ACTUAL direct-GDDR/FPU81 numerical FAILURE and controlled recovery
+=================================================================
+2026-11-04 UTC;preparation154807c8164205372dbe69ed4e68bf07c0372c29.
+Goal ACTIVE. Full-native27B and20tok/s UNMET. No new model inference or
+speedup. Existing disk cache remains installed and its content recipe intact.
+
+One actual trial,not an offboard result or a passing hardware qualification
+-------------------------------------------------------------------------
+Read-only admission395364 CLOSED0,stage create/copy/postflight all CLOSED0,
+stderr0. Exact published driver0ab145ac.../client0091244a.../parent577aa3cc...
+and independent Fraction reference35142021... matched. Actual Haiku client
+invalid-option refusal exited2 as expected WITHOUT source/device open.
+Normal041/gen10/cold0/owner0/64CPU/fullRAM before launch;private new stage:
+/boot/home/pioneer-native-dram-model-band-20261104-a.
+
+ONE direct parent16115 was observed running,same handle polled to ACTUAL
+terminal exit70 at04:33:05UTC. No relaunch on a poll timeout. Original full
+SHA/fresh-reference authentication completed before the first device open.
+The client then failed sample0/pass0/row0:
+ got3e4023c0 (0.1876363754272461)
+ expected3f0795e8 (0.5296311378479004).
+All64 printed words mismatch;both passes give identical32 finite wrong values.
+No sample1/2,no END,no clean restoration marker and no new inference result.
+Client stdout207B/2 banners;stderr5654B/1 mismatch+64 returned-word lines;
+child exit1. Parent7279B stderr0 simply relays that FAILED child and exits70.
+Strict checks were NOT relaxed and the output is NOT a numerical pass.
+
+Actual first-branch evidence is limited:because the exact tested client reached
+its numerical-comparison branch,the earlier RUN result predicate accepted its
+marker/phase/PC/counter/journal fields and source-stability check. This is an
+INFERENCE from the authenticated executable/control flow,not a dump or proof
+of all physical source bytes. No NIU-loaded data readback or END checks ran.
+The card may have loaded different data or the new unpack mapping may behave
+differently;root cause is NOT established. No claim the card is fake/broken.
+
+Postterminal CPU-only collection3f7e20 CLOSED0:81/gen11/cold1/active_owner1,
+64 CPUs/full RAM still responsive;installed worker861e5287/servicec509da43
+unchanged. Independent fetch8681 CLOSED0,all five remote/local hashes agree:
+ gddr.stdout8c864eaa071bb226406bc5b10b96fea1e826b04db6333a1cc5a9c007bb9f7d36
+ gddr.stderrc853295ad73f590a350937b721fe97ce754fb229ecf73b4da17f17e5f5c37e05
+ gddr.exit4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865
+ state23b89adb8fdd65e65c54e2921aec32ddf7f92586a790db67e9cbab1d64995941
+ parent.pid93f69ad74a25a4dc2ae3931e8afc3949ee0f12503f0fb2d46f3c8cc568be3d5e.
+Outer stdout SHAafa8e0dd62bebe1b4dc69712627993eb6a2cad59417f68399f5b2ce727e6c994.
+Original state:UNPROVEN_GDDR_BANDS_NO_END_RESET_RETRY_RESTORE.
+No postfailure GPU reads,END/reset/retry or old-lease cleanup was attempted.
+
+Controlled fresh-power recovery,not old-lease completion
+--------------------------------------------------------
+Filesystem sync37c3ff CLOSED0 before OFF. Single OFF50677 CLOSED0,7second
+button hold,completed04:37:15UTC. Relay contact state is NOT power state.
+After a few minutes SSH1876 timed out;no contradictory live-board evidence.
+Single ON69605 CLOSED0 dispatched04:41:08UTC,3m53s after OFF completion.
+No repeated OFF/ON,SD/mains/cable change or user-presence request. Fresh Linux
+boot was visible on the existing serial log;serial port was never reopened.
+
+First Linux SSH62342 timed out early during startup;NO additional power pulse.
+Second a73320 reached Linux6.1.31/riscv64,sudo UID0,then exited1 only because
+the unprivileged hash read could not traverse the root-owned helper directory.
+Separate sudo read a419d3 CLOSED0:exact pinned helper9cfc6dc3.... No helper
+permissions were changed. Prepare55290 CLOSED0 in new session
+gddr81-recovery-20261104-a,64 CPUs,memory128-spin-idle7-top-page-nosd-control.
+Its existing kexec loader emits the recorded "No cmdline or append string"
+warning;this is retained,not called strict-stderr-zero. Boot7919 CLOSED0,
+stderr0,all pinned input checks OK/default NVMe boot unchanged. No BFS repair,
+erasure,SD or GPU operation. Ordinary readonly source check succeeded;no
+journal-replay fallback was needed. Haiku reboot/normal root mount is separate.
+
+Fresh Haiku73b41f CLOSED0:81/gen1/cold0/owner0,64CPUs/full RAM. New fixed
+pioneer_native_dram_model_band_recovery_restore.sh SHA:
+17f26da89df54a9fa1db5ec1bebc624e382858aeac321bc3ccce2f1d1fa0e9d6.
+Actual-source CPU fixtures pass18 first-failure flow+8 epoch/cold/owner cases.
+It cannot run the diagnostic;requires fresh81/gen1,cold0/owner0/exact failed
+state/identities/idle/no existing recovery marker. Copy/postflight CLOSED0.
+ONE direct recovery90106 ACTUALLY CLOSED0,stderr0:quiesce fresh81,swap stable
+041 and verify normal tag12/gen2. This never closes/disposes the old retained
+owner;the old kernel/power epoch is gone. Failed parent/child files are intact.
+
+Independent final readonly96988 CLOSED0,stderr0:
+ normal041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+ tag2026102100010012/gen2,quiesced0/cold0/owner0/open1/guard1;
+64CPUs,max137034936320B/free133796974592B,project compute-parent count0.
+Worker861e5287/servicec509da43 unchanged. Original GGUF stat exact/private
+cache0:700 and851 entry FILES present. This is metadata,NOT a new full cache
+content rehash or inference test. Original failed state is still unchanged;
+new recovery.state:NEW_POWER_EPOCH_STABLE041_RESTORED_CACHED_ASSISTANT_PRESERVED.
+
+What the failure changes
+-------------------------
+The prior native80 HOST-staged learned-band192-word proof remains separate
+and passing. The new81 direct-GDDR/C32-layout physical path is UNQUALIFIED,
+despite the previously passing explicit-NIU-copy simulator and normalized
+descriptor arithmetic observer. Those software models cannot establish the
+real transfer's byte placement/visibility or physical descriptor equivalence.
+Both new passes repeating the same wrong values narrows the failure to a
+deterministic path,but does not identify its cause or authorize tolerances.
+
+Next concrete step:independent physical NIU-loaded-byte qualification BEFORE
+FPU execution,or otherwise isolate transport from new layout under a new
+frozen diagnostic/owner. Do not blindly rerun this spent stage,substitute
+synthetic inputs as a full model,expand the bank arena or select this in Work.
+After exact native-byte/math qualification,resident stripes/cohort/state/full
+arena/quality/real throughput still remain. Latest real tiny Work speed stays
+0.204tok/s over3 measured samples,CPU attention/state,not a matched speedup.
+
+Independent child parser adds1 valid/622 refused host fixtures,including old
+80 output rejected as81. It will NOT accept this actual failed child stdout.
+Raw public text receipts and SHA256SUMS are in the matching directory;no
+PRIVATE model,cache,payload headers,objects or weight-containing binary.

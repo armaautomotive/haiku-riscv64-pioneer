@@ -1,0 +1,86 @@
+P100A_RELOAD driver55 tag2026102100010012 generation10 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133777563648 bytes free      (used/max 3257372672 / 137034936320)
+                           (cached   19171237888)
+     64485 semaphores free (used/max       1051 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3901 threads free    (used/max        195 /       4096)
+      2025 teams free      (used/max         23 /       2048)
+P100A_RELOAD driver55 tag2026102100010012 generation10 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation10 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+P100A_RELOAD driver55 tag2026110400010081 generation11 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026110400010081 generation11 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110400010081 generation11 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+GDDR_SOURCE_AUTH_AND_THREE_SAMPLES_STARTED_WAIT_SAME_PARENT
+AUTHENTICATING_FIXED_ORIGINAL_AND_FRESH_LEARNED_REFERENCE;CPU_DIAGNOSTIC_ONLY_NO_DEVICE_YET
+AUTHENTICATED_FIXED_MODEL c600de03 tensor7 width5120 rows17408 samples3 payload_and_reference_exact;DEBUG_NOT_WORK
+NATIVE_GDDR_NUMERICAL_MISMATCH sample0 pass0 row0 got3e4023c0 expected3f0795e8;CLOSE_ONLY_NO_END_OR_RETRY
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row0 got3e4023c0 expected3f0795e8
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row1 gotbecf5d58 expected3d07c3c0
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row2 got3e7ccee0 expected3f54ae58
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row3 got3f3ca4e0 expected3afca000
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row4 got3f7ad8d8 expected3f9500f0
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row5 got3f380b00 expected3f809f08
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row6 got3e25e2e0 expected3f3db460
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row7 gotbe50e300 expectedbe88ec60
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row8 gotbe8eb5d0 expectedbea75530
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row9 got3e977890 expected3e2286a0
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row10 got3f60bea0 expected3e85ded0
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row11 got3c749c00 expected3f0814e0
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row12 got3f04f4e0 expected3f26aa88
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row13 got3f915ee4 expected3fb32090
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row14 gotbf524560 expectedbf3d7fa8
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row15 gotbeadf9d0 expectedbf922934
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row16 got3eb19440 expected3f28bb98
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row17 got3e69fa80 expected3f199e1c
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row18 got3f11a480 expectedbee9b960
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row19 gotbde30bc0 expectedbf0497a8
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row20 got3e6b75a0 expected3da2cc40
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row21 got3d65b900 expected3f04def8
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row22 got3f6f0ef8 expected3f8be320
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row23 got3e40ed80 expectedbecac6f0
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row24 got3ee39880 expected3f8155c8
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row25 got3f38a618 expected3f33a6d8
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row26 got3d148480 expectedbf1c8e00
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row27 got3f1095d0 expectedbc5b1800
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row28 gotbf15bac0 expectedbf48e050
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row29 got3d266980 expectedbeab2e60
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row30 gotbf2074c0 expectedbf9f7f98
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass0 row31 got3b8a2400 expectedbf2bc970
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row0 got3e4023c0 expected3f0795e8
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row1 gotbecf5d58 expected3d07c3c0
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row2 got3e7ccee0 expected3f54ae58
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row3 got3f3ca4e0 expected3afca000
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row4 got3f7ad8d8 expected3f9500f0
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row5 got3f380b00 expected3f809f08
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row6 got3e25e2e0 expected3f3db460
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row7 gotbe50e300 expectedbe88ec60
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row8 gotbe8eb5d0 expectedbea75530
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row9 got3e977890 expected3e2286a0
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row10 got3f60bea0 expected3e85ded0
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row11 got3c749c00 expected3f0814e0
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row12 got3f04f4e0 expected3f26aa88
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row13 got3f915ee4 expected3fb32090
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row14 gotbf524560 expectedbf3d7fa8
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row15 gotbeadf9d0 expectedbf922934
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row16 got3eb19440 expected3f28bb98
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row17 got3e69fa80 expected3f199e1c
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row18 got3f11a480 expectedbee9b960
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row19 gotbde30bc0 expectedbf0497a8
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row20 got3e6b75a0 expected3da2cc40
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row21 got3d65b900 expected3f04def8
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row22 got3f6f0ef8 expected3f8be320
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row23 got3e40ed80 expectedbecac6f0
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row24 got3ee39880 expected3f8155c8
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row25 got3f38a618 expected3f33a6d8
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row26 got3d148480 expectedbf1c8e00
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row27 got3f1095d0 expectedbc5b1800
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row28 gotbf15bac0 expectedbf48e050
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row29 got3d266980 expectedbeab2e60
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row30 gotbf2074c0 expectedbf9f7f98
+NATIVE_GDDR_BAND_RETURNED_WORD sample0 first0 pass1 row31 got3b8a2400 expectedbf2bc970
+NATIVE_GDDR_STOP_RETAIN_OWNER_NO_RETRY

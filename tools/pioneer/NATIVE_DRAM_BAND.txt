@@ -165,3 +165,28 @@ Run ONLY the frozen admitted parent,never the client directly on hardware:
   /boot/home/pioneer-native-dram-model-band-20261104-a/pioneer_native_dram_model_band_physical.sh
 This is preparation,not physical execution or full27B Work inference proof.
 See benchmarks/qwen38-native-dram-client-preparation-20261104.txt.
+
+ACTUAL diagnostic81 result -- FAILED,then recovered 2026-11-04
+-------------------------------------------------------------
+The single frozen parent ACTUALLY CLOSED70 after sample0 numerical mismatch.
+Client CLOSED1;both source-authentication banners completed,but zero of64
+returned words matched. Both passes gave the same32 wrong finite values.
+No END or next sample was sent. Metadata was81/gen11/cold1/owner1,not a clean
+close. This is NOT promoted by the passing offboard tests or counters.
+Native GDDR-to-FPU numerical correctness and full restoration remain UNMET.
+
+Failure files were independently fetched/hashed before recovery. Then OFF
+once,waited3m53s with SSH gone,ON once;known Linux boot and pinned SD-free
+64CPU/fullRAM Haiku session;fresh81/gen1/cold0/owner0 allowed the separately
+tested one-shot normal-driver restore. Final independent normal041/gen2,
+cold0/owner0,64 CPUs/full137034936320B RAM,cached Assistant unchanged and851
+cache files present. The original failed state and all outputs remain intact;
+this was a NEW power epoch,not cleanup/END of the old retained lease.
+
+Do not rerun the spent81 stage or install this experimental image in Work.
+Next:distinguish actual loaded-byte correctness from new unpack-descriptor/
+layout behavior BEFORE another compute trial. The current simulator assumes
+NIU byte copying and normalizes new descriptors into the old arithmetic
+observer;that is not proof of physical equivalence. Add targeted independent
+native byte qualification,not a relaxed comparator or a hidden Work reference.
+See benchmarks/qwen38-native-dram-band-failed-20261104.txt.

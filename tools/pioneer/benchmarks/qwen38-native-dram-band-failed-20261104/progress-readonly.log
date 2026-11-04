@@ -1,0 +1,8 @@
+/boot/home/pioneer-native-dram-model-band-20261104-a/state 43 bytes
+RUNNING_GDDR_SOURCE_AUTH_AND_THREE_SAMPLES
+/boot/home/pioneer-native-dram-model-band-20261104-a/gddr.stdout 92 bytes
+AUTHENTICATING_FIXED_ORIGINAL_AND_FRESH_LEARNED_REFERENCE;CPU_DIAGNOSTIC_ONLY_NO_DEVICE_YET
+/boot/home/pioneer-native-dram-model-band-20261104-a/gddr.stderr 0 bytes
+ 1468 /bin/sh /boot/home/pioneer-native-dram-model-band-20261104-a/pi 
+ 1552 /boot/home/pioneer-native-dram-model-band-20261104-a/pioneer-na 
+PROGRESS_FILES_PS_ONLY_NO_PROBE_FD_OR_HARDWARE_ACCESS
