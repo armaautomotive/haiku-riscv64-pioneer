@@ -735,6 +735,9 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_NATIVE_Q8
 	if(skipDotCheck && type==8)PioneerQ38DirectNativeQ8Setup(initEmitter);
 #endif
+#ifdef PIONEER_Q38_MACRO_Q4_DECODE
+	if(skipDotCheck && type==12)PioneerQ38MacroQ4Decode::Setup(initEmitter);
+#endif
 #endif
 #ifdef PIONEER_Q38_MATRIX_PHASE_REUSE
 	VectorPanelEmitter phasesEmitter;
@@ -1027,6 +1030,9 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_WORK_SIGNED_MAG2
 			,skipDotCheck
 #endif
+#ifdef PIONEER_Q38_MACRO_Q4_DECODE
+			,skipDotCheck
+#endif
 		)) block_fault_park();
 #else
 		if (!PioneerQ38VectorUnpack(emitter,type,p)) block_fault_park();
@@ -1185,6 +1191,11 @@ extern "C" unsigned block_main()
   && PioneerQ38TokenMatrixPhase::Address+PioneerQ38TokenMatrixPhase::Words*4<0x90000,
   "disjoint existing saved metric slot;no mapping/ownership grant");
  if(matrixPhaseActive)PublishMatrixPhase(matrixProfile);
+#endif
+#ifdef PIONEER_Q38_MACRO_Q4_DECODE
+	if(skipDotCheck && type==12) {
+		VectorPanelEmitter end;PioneerQ38MacroQ4Decode::Finish(end);
+	}
 #endif
 	return groups*blocks*panels;
 }

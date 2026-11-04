@@ -63,6 +63,9 @@ template<class E> static bool PioneerQ38VectorFixedUnpack(E& e,unsigned type,uns
 #ifdef PIONEER_Q38_WORK_SIGNED_MAG2
 	,bool signedMagnitude2Work=false
 #endif
+#ifdef PIONEER_Q38_MACRO_Q4_DECODE
+	,bool macroQ4Work=false
+#endif
 )
 {
 	PioneerQ38VectorPanelSpan span; if (!PioneerQ38VectorPanel(type,panel,span)) return false;
@@ -123,6 +126,9 @@ template<class E> static bool PioneerQ38VectorFixedUnpack(E& e,unsigned type,uns
 #endif
 #ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
 		,rawCacheWork
+#endif
+#ifdef PIONEER_Q38_MACRO_Q4_DECODE
+		,macroQ4Work
 #endif
 	)) return false;
 	e.Drain(); return true;

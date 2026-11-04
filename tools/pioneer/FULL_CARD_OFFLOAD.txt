@@ -205,3 +205,17 @@ closed artifacts. Installed Assistant remains unchanged. This is a modest
 measured generation-path gain,NOT a released usable-speed hardware mode.
 The tag92 stage/helper is SPENT and MUST NEVER be rerun. No live device
 job remains;future physical work needs a fresh qualified stage/admission.
+
+New Q4 load-macro shader prerequisite (NOT physically measured)
+--------------------------------------------------------------
+Nov4:distinct complete worker89f71fc9d6e8... independently reproduced.
+Original Work-Q4 bytes/metadata/matrix/affine/source/NoC order retained;
+load+exact nibble decoding uses scheduled simple-unit operations and two
+alternating registers. Original explicit native stores/drains remain.
+Main+clean source execute27 shapes/54 retained-input jobs exactly and
+12 inert transfer-loss cases;arithmetic and real compile gates also pass.
+See benchmarks/qwen38-macro-q4-offline-20261104.txt for complete scope.
+This has NO native driver/package/Work selection or physical permission.
+Macro-config ownership/restoration and real27B timing are still required.
+Emulator instruction counts are NOT a speedup. Latest actual rate stays
+tag92's0.1728tok/s;20tok/s remains UNMET. No installed software changed.

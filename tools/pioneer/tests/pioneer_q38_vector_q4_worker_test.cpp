@@ -94,6 +94,7 @@ struct VectorMetadataPeer:ConstantIssuePeer {
 	}
 };
 
+#ifndef PIONEER_Q38_VECTOR_METADATA_WORKER_MACHINE_ONLY
 int main(int argc,char** argv) {
 	assert(argc==4 || (argc==5 && (!strcmp(argv[4],"--pilot") || !strcmp(argv[4],"--faults-only"))));setvbuf(stdout,nullptr,_IOLBF,0);
 	const bool pilot=argc==5 && !strcmp(argv[4],"--pilot"),faultsOnly=argc==5 && !strcmp(argv[4],"--faults-only");
@@ -149,3 +150,4 @@ int main(int argc,char** argv) {
 	}
 	printf("%s_VECTOR_METADATA_COMPLETE_WORKER shapes%u retainedChangedInputJobs%u NoCLossInert%u compiledFiniteRefusals%u stack%u/8192;ACTUAL complete ROM/original quant bytes/matrix+NoC+replay+publisher+STOP checks unchanged;SYNTHETIC_ENDPOINTS_ONLY,NO_NATIVE_HARDWARE_MODEL_TPS_GRANT\n",argc==5?"PARTIAL":"PASS",cases,cases*2,faults,finiteRefusals,stack);
 }
+#endif

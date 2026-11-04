@@ -1,0 +1,30 @@
+AUDITED_VECTOR_METADATA_CALL globalworker 0x21e28 q38_compute_once
+AUDITED_VECTOR_METADATA_DATA ffn 0x61438 0x61440 _ZZN18ProjectionProducerL6PacketEjPKjE5field
+AUDITED_VECTOR_METADATA_DATA ffn 0x61450 0x61464 _ZZN18ProjectionProducerL6PacketEjPKjE4size
+AUDITED_VECTOR_METADATA_DATA ffn 0x61460 0x61468 _ZZN18ProjectionProducerL6PacketEjPKjE5local
+AUDITED_VECTOR_METADATA_DATA ffn 0x62ca0 0x62ca8 _ZZL25PioneerQ38ProjectionRoutejE5route
+AUDITED_VECTOR_METADATA_DATA ffn 0x63058 0x6305c _ZZ31q38_projection_persistent_inputE5delta
+AUDITED_VECTOR_METADATA_DATA service 0x68230 0x68234 _ZZL25PioneerQ38ProjectionRoutejE5route
+AUDITED_VECTOR_METADATA_DATA fetch 0x701d8 0x701e0 CSWTCH
+AUDITED_VECTOR_METADATA_DATA fetch 0x70424 0x70428 CSWTCH
+AUDITED_VECTOR_METADATA_DATA gdn 0xb9c00 0xb9c04 _ZZL25PioneerQ38ProjectionRoutejE5route
+AUDITED_VECTOR_METADATA_DATA gdn 0xb9c00 0xb9c18 _ZZL25PioneerQ38ProjectionRoutejE5route
+AUDITED_VECTOR_METADATA_DATA gdn 0xba0b8 0xba0c0 _ZZL25PioneerQ38ProjectionRoutejE5route
+AUDITED_VECTOR_METADATA_DATA gdn 0xbe1e0 0xbe1e4 _ZZL25PioneerQ38ProjectionRoutejE5route
+AUDITED_VECTOR_METADATA_DATA gdn 0xbe1e0 0xbe1f8 _ZZL25PioneerQ38ProjectionRoutejE5route
+AUDITED_VECTOR_METADATA_DATA gdn 0xbfd70 0xbfd74 _ZZL25PioneerQ38ProjectionRoutejE5route
+AUDITED_VECTOR_METADATA_DATA gdn 0xbfd70 0xbfd8c _ZZL25PioneerQ38ProjectionRoutejE5route
+AUDITED_VECTOR_METADATA_DATA gdn 0xc0304 0xc030c _ZZL25PioneerQ38ProjectionRoutejE5route
+PASS actual QGT1 opcode audit:3 READ-only CSRRS mcycleh/mcycle/mcycleh,x0;NO CSR/control/counter writes
+('boot.bin', 4, 'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c')
+('globalworker.bin', 9232, 'e4dd94af8e3f828bff6482fa255266356de46b28bf5a419816d76e32de98f2b3')
+('precise.bin', 8392, '32c078029e1c74ec4bd9744ea494433f5003f63a936df05445d3066c722a7ecc')
+('dense.bin', 10332, 'd1749707ffe803e28dced9c7d065e763f125009678ace33b4d468109984869ad')
+('fetch.bin', 1292, '22b6fa8a631dd9b952adb8d624888bce309bf24392f004eecd93f9becf991df8')
+('text.bin', 8148, 'a69573017671d2bb86798b392fd38e13b5f8d1a4ac37a9aa7daaeddfc15757cd')
+('affine.bin', 4880, 'eb4b1bc4bc8d766b83083b3cda183fd9d8ad97c9e5eee6d27d93da451dc45b06')
+('ffn.bin', 16456, '051499d768f11fc58757529ae1e639a0cda66c584378021b1b4a03dab5c44c2c')
+('service.bin', 9888, '6e0219d9e66e25df248b1547f0fb642138434e13a5d043bfe3b815e773ec8f3a')
+('gdn.bin', 35944, 'e699263135d4815d9fcf9d41cfdca164d1935862949239f83f89cd4d5e78c77a')
+('program.elf', 145148, '89f71fc9d6e8006d5267ed566c7a288f2406787fae10f91752c2874187c1c5f3')
+BUILD_ONLY complete macro-Q4 worker/original vector metadata and original weights/old closure reproduced/NO native ownership,physical use,quality,TPS or speedup grant

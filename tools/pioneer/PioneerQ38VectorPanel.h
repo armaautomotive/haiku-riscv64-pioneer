@@ -3,6 +3,17 @@
 #define PIONEER_Q38_VECTOR_PANEL_H
 #include "PioneerQ38Q4ConstantIssueRole.h"
 #include "PioneerQ38VectorOperand.h"
+#ifdef PIONEER_Q38_MACRO_Q4_DECODE
+#if PIONEER_Q38_MACRO_Q4_DECODE != 1 || !defined(PIONEER_Q38_MACRO_Q4_DECODE_IMAGE) \
+ || PIONEER_Q38_MACRO_Q4_DECODE_IMAGE != 1 || !defined(PIONEER_Q38_VECTOR_Q4_METADATA) \
+ || defined(PIONEER_Q38_WORK_Q4_NIBBLE) || defined(PIONEER_Q38_WORK_Q4_DIRECT_DECODE) \
+ || defined(PIONEER_Q38_WORK_RAW_UNPACK_CACHE) || defined(PIONEER_Q38_Q4_CONSTANT_ISSUE)
+#error Macro Q4 requires a distinct complete original-layout vector-metadata shader candidate
+#endif
+#include "PioneerQ38MacroQ4Decode.h"
+#elif defined(PIONEER_Q38_MACRO_Q4_DECODE_IMAGE)
+#error Macro Q4 image must not silently use the old scalar-issued decoder
+#endif
 #ifdef PIONEER_Q38_WORK_Q4_DIRECT_DECODE
 #if !defined(PIONEER_Q38_WORK_Q4_NIBBLE) || !defined(PIONEER_Q38_NATIVE_OPERAND_STORE) || !defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_REPLAY_OPERAND) || !defined(PIONEER_Q38_STATIC_VECTOR)
 #error Direct Q4 decoder is a separate OFFLINE nibble/native-store/static Work peer only
@@ -121,9 +132,15 @@ template<class E> static bool PioneerQ38VectorTransform(E& e,unsigned type,unsig
 #ifdef PIONEER_Q38_WORK_RAW_UNPACK_CACHE
 	,bool rawCacheWork=false
 #endif
+#ifdef PIONEER_Q38_MACRO_Q4_DECODE
+	,bool macroQ4Work=false
+#endif
 )
 {
 	PioneerQ38VectorPanelSpan span; if (!PioneerQ38VectorPanel(type,panel,span)) return false;
+#ifdef PIONEER_Q38_MACRO_Q4_DECODE
+	if(macroQ4Work && type==12)return PioneerQ38MacroQ4Decode::Decode(e,panel);
+#endif
 #ifdef PIONEER_Q38_Q4_CONSTANT_ISSUE
 	if (type == 12) return panel & 2
 		? PioneerQ38Q4ConstantTransform<E,2>(e)

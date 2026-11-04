@@ -1,0 +1,3 @@
+PASS_MACRO_Q4_DECODE exactCases4096 all256bytes/all16panels/32lanes timed loads+simple+native stores;negativeSchedules4;OFFLINE_ONLY_NO_NATIVE_OR_SPEED_GRANT
+PARTIAL_MACRO_Q4_COMPLETE_WORKER shapes0 retainedChangedInputJobs0 NoCLossInert12 stack0/8192;ACTUAL_ROM/noCPUinfer/nochangedweights/NO_NATIVE_HARDWARE_TPS_GRANT
+CLOSED_MACRO_Q4_TESTS local only;NO native/card/Assistant/model-quality/TPS/speedup grant

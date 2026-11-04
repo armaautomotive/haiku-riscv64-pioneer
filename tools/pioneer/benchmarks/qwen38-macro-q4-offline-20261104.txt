@@ -1,0 +1,103 @@
+Complete returning Q4 load-macro shader -- November4 2026
+=======================================================
+LOCAL SHADER CHECKPOINT ONLY. NO NEW PHYSICAL RATE OR NATIVE AUTHORITY.
+The real27B baseline remains0.172813448..0.172816755tok/s from tag92.
+20tok/s remains UNMET. No Pioneer action,driver/Assistant installation,
+power/SD/network/kernel/model change or new physical job occurred here.
+
+Calculation change,not interface/residency work
+---------------------------------------------
+The complete returning worker now has a DISTINCT macro-Q4 shader variant.
+It retains the vector-Q4 metadata backend,original packed weights,raw
+UNPACKs,SrcA handoffs,matrix phases,affine FP32 order,NoC protocol and
+publisher. Only Work-Q4 operand decoding uses the new load-macro sequence.
+Checked Q4 and Q8/Q6 keep the old calculation path.
+
+Two explicitly configured simple-unit templates perform EXACT low-nibble
+AND15 or high-nibble logical shift4 after SFPLOADMACRO. The mask is loaded
+once per low panel,not inside each replay chunk. Alternating LReg0/1 lets
+each explicit native-SM7 store follow its corresponding load by TWO SFPU
+instructions. Stores still target the original fully initialized high
+halves;the defined-zero low halves,metadata and accumulator stay intact.
+Both source-bank consumption and the caller's final full drain remain.
+The new path does NOT use macro stores,packer,extra Dst/L1 storage,raw-Dst
+reuse,requantization,host products,CPU inference/reference or fallback.
+
+Official instruction semantics/encodings checked:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPLOADMACRO.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/SFPCONFIG.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPAND.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPSTORE.md
+
+Misc is explicitly elapsed-CYCLE based,with no outstanding instruction-
+count wait. Sequences2/3 are inert. Finish drains and makes all sequences
+inert. This is NOT a claim to restore unknown original macro templates.
+Native ownership/restoration of this additional vector configuration must
+be established separately BEFORE any physical use. No native DATA header,
+driver role,client,physical helper or installed Work selector is added.
+
+Closed local evidence
+---------------------
+Main and independent clean-source builds ACTUALLY0. Both reproduce the
+ENTIRE accepted vector-Q4 matrix object and relink its ENTIRE old ELF
+FIRST,so changed prerequisites cannot pass merely through partial pins.
+The new full ELF bytes agree exactly:
+145148B SHA89f71fc9d6e8006d5267ed566c7a288f2406787fae10f91752c2874187c1c5f3.
+All unrelated section changes pass the original symbolic relocation audit.
+Two existing helpers move into the same reserved affine region to fit:
+text8148/8192B,affine4880/5376B,fetch1292/1792B,service9888/24576B.
+No larger executable/data/stack view or writable global is introduced.
+
+Independent ASan/UBSan arithmetic tests cover4096 combinations of all256
+original byte values,all16 panels and every lane. Four deliberate timing/
+sequence violations are refused. Both real-shader compile-gate runs pass
+one positive and18 negative configurations,including missing/defined0
+roles,CPU-reference/Work/native/kernel/fast-math and conflicting decoders.
+
+Main full actual-ROM test3826 ACTUALLY0:27 shapes,54 complete jobs,original
+and changed retained inputs. Separate main86364 ACTUALLY0 adds all12
+inert NoC-loss cases. Independent clean-source full runner4677 ACTUALLY0:
+same27 shapes/54 jobs,all12 inert NoC-loss cases,max combined stack3540/
+8192B. All27 positive result rows agree exactly between source trees.
+Both failure stderr streams agree exactly and consist ONLY of12 expected
+inherited ACTUAL_BETA_WORKER_FAULT receipts,not sanitizer/assertion errors.
+The main positive stderr and both final build stderr streams are empty.
+
+These tests execute the ACTUAL complete linked worker instructions with
+synthetic raw/NoC endpoints,not supplied inference outputs or skipped PCs.
+The existing matrix,metadata,source-bank,affine,publisher and STOP checks
+remain in force;the new observer independently models macro configuration,
+one-cycle scheduled arithmetic,register reuse and explicit native stores.
+They are NOT real27B model-quality,physical timing or production evidence.
+
+For Q4/K17408/groups16,two retained jobs execute18429537 ->17890063
+emulated RV steps,2.9272249% fewer. The logged vectorIssued counter is a
+SOFTWARE dispatch counter:it includes replay expansion but EXCLUDES the
+simple operation internally scheduled by each new load macro. It is NOT
+total vector arithmetic,front-end stores,cycles,utilization or a speedup.
+Q8/Q6 dispatch counts stay equal;their extra branch/call RV cost remains
+visible. No gain is inferred from any of these emulator counts.
+
+Earlier unchanged negatives are NOT retried:scalar local expansion28 was
+slower,raw-Dst reuse22 remains blocked,and constant-Q4/front-end-barrier
+instruction-count gains did not establish whole-model gains. A proposed
+vector+PACK expansion was not pursued on hardware because packer state
+ownership is not covered by the examined existing local-memory journal.
+
+Reproduce,without card access
+----------------------------
+ python3 tools/pioneer/build_qwen38_macro_q4_decode_worker.py HAIKU_BUILD AUTHENTICATED_VECTOR_CONTROL FRESH_OUTPUT
+ python3 tools/pioneer/tests/run_pioneer_q38_macro_q4_tests.py AUTHENTICATED_VECTOR_CONTROL MACRO_OUTPUT
+ python3 tools/pioneer/tests/pioneer_q38_macro_q4_build_gate_test.py MACRO_OUTPUT
+
+The control is a complete pinned output of the existing vector-Q4 worker
+builder,not an arbitrary object cache. The test runner authenticates and
+copies whole old/new ROMs read-only BEFORE execution. --pilot and
+--faults-only explicitly report PARTIAL,not full shape qualification.
+Sibling directory contains closed raw local outputs and receipts ONLY.
+No learned weights,prepared payloads,private model headers or binaries.
+
+Next required work:establish macro-state ownership and a distinct native
+package,qualify its lifecycle,then use a fresh guarded physical trial and
+the same real27B request before claiming any speedup. Installed driver and
+Assistant remain unchanged. No active local/device job remains here.
