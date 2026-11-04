@@ -1,0 +1,85 @@
+Diagnostic85 actual source/client/one-shot parent qualification -- OFFBOARD
+=======================================================================
+2026-11-04 UTC. Base2b8a2034d5. Native owner checkpoint unchanged. New client
+authenticates same-open COMPLETE18973870528B original before ANY GPU open:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+It checks owner/single-link/permissions/regular-file/no-symlink/size,source
+epoch throughout,fresh6144B prepared payload/all headers+gaps/512B inputs and
+96 fresh rounded original predictions against PRIVATE compiled fixed data.
+This is a DIAGNOSTIC reference,not Work/CPU-validation/full-model inference.
+No cache/model mutation,CPU fallback or runtime code/address/weight parameter.
+
+Fixed tensor7 Q4 gate,matrix5120x17408,32 rows/K256 per sample:rows0/8704/
+17376 and K blocks0/10/19. Diagnostic BF16 inputs,not prompt hidden states.
+New client checks all ABI/result/restore/PC/journal/phase/count/control/epoch
+fields and all64 RUN/END words. No END/query/next sample/retry after unknown
+or a mismatch. Source identity and output-channel failure stop immediately.
+Fresh source preparation and numeric validation stay outside the driver.
+
+Final main11893 CLOSED0;clean98528 CLOSED0;all8 children exit0 AND stderr0.
+Fresh HEAD2b8a2034d5 archive plus ONLY11 new source/test/reference overlays:
+ /private/tmp/pioneer-native-q4-client-clean-20261104.xRlMewxL
+Private outputs:/private/tmp/pioneer-native-q4-client-20261104.QksxJLst
+Same source-SHA manifest;all files unchanged during tests. Dirty llama.cpp/
+NATIVE_BUILD_STATUS/FlashNext/WIP are not inputs. No private weight headers,
+original/converted weights,objects or weight-containing binaries enter Git.
+Raw non-weight closed-child receipts are in sibling main/clean directories.
+
+Actual full SDK userspace client LINKS;6 kernel/Work/CPU-validation/full-
+reference/fast-math compile refusals. Main/clean byte-identical client SHA:
+ 904902c7c796173f211b0020e1497de5bcf11e51f1d1da31d1f94d900e89513b
+Native driver stays2422587c9d72fab71cb77f940823017f30e84f1136af859a2df110115d310935.
+Parent SHA713fb9d61e6d41b9106ae41f09d92a6248ca73056835d442ba4c9572b199377d.
+Reference SHA5e8b9fde8759b3c992745b21b191a8e0d5ab6b854fbeedace7af641b7285b893.
+Reference96 values are diagnostic dot outputs,NOT weight bytes. Its generator
+first runs the unchanged independent Fraction verifier,then emits the exact
+verified predictions. No source/shape or physical-execution authority from it.
+
+1691 ASan/UBSan actual-client cases with explicit source/device fixtures:
+every336 SUPPORT result byte,all64 RUN and END words in ALL3 samples,
+metadata/source/counter/control/PC/epoch/restore/poll/FD failure gates,
+six failed output-delivery points and valid alternate park PC. Counts require
+NO next accelerator command after uncertainty;CPU-only source Ready checks
+are allowed and do not confer accelerator access. These fixtures are not
+actual original-file authentication or native device/engine proofs.
+
+Actual CPU source method independently runs on full authentic original in
+BOTH main and clean trees;compiled payload/inputs/predictions match fresh
+original,epoch stable,one-shot preparation tested. Actual native source-probe
+tool42230 also CLOSED0. No model/cache changes or device opens.
+
+Actual shell parent tests:618 flow/output +7 strict idle inventories +8
+reference/source file gates +20 exchange-step +10 one-shot cases. All192
+missing/duplicate/equal-but-wrong words,order/geometry/journal/clock/fidelity/
+poll/epoch corruption and actual old84 output refuse. Unknown output/failure
+grants no post-run metadata/query/restore/retry. Exchange failure at EVERY
+observable step stops without the next command;existing once/output paths
+and prior contents survive repeat attempts. Independent Python CHILD parser
+accepts1 fixture/rejects617 malformed/old records. Neither is hardware proof.
+
+New fixed physical stage:/boot/home/pioneer-native-q4-fpu-20261104-a
+Parent refuses anything except native/client/reference pins and stable041/
+tag12/generation6,root-owned private new stage,original0600/no links,exact
+admin/guard/Assistant identities,idle process inventory,64 CPUs/full RAM.
+Normal041->85 generation7;ONE source-authenticating three-sample client.
+Only exact192 words/three clean ENDs/strict stderr0 permit85->041 generation8.
+No SD/power/reset/boot action and NO automatic restore after uncertainty.
+
+Fresh predevelopment Pioneer read-only toolb77449 CLOSED0:Haiku/normal041,
+tag12/gen6,cold0/owner0/open1/guard1,idle,64 CPUs/maxRAM137034936320B.
+This report is NOT a physical85 trial or deployment claim. A later actual
+one-shot parent must be observed terminal on the SAME handle;observation
+timeout must not relaunch. Preserve spent stages and all failed evidence.
+
+Development test failures retained:initial test-template replacement changed
+the RELOAD substring inside an opcode;it now substitutes quoted include
+markers only. A fixture initially prohibited CPU-only Ready after a numeric
+response corruption;the fixture now prohibits subsequent GPU operations,
+not harmless source checks. Comparators/lifecycle/qualification gates were
+not weakened. Final main/clean reproduce the exact current sources.
+
+Next:independent admission,stage/execute ONCE,observe actual192 exact words
+and full closure or controlled quarantine recovery. Then full-K on-card
+GDDR streaming without host loops/per-block clears,other formats/all workers,
+attention/recurrent-state/full-model quality and real generation benchmarks.
+Full-native27B/20tokens/sec remain UNMET;no new speedup/throughput measured.

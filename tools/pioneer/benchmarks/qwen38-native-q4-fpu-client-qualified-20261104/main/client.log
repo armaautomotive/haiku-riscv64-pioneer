@@ -1,0 +1,6 @@
+CLIENT_FIXTURES_PROGRESS 400/1691;NO GPU
+CLIENT_FIXTURES_PROGRESS 800/1691;NO GPU
+CLIENT_FIXTURES_PROGRESS 1200/1691;NO GPU
+CLIENT_FIXTURES_PROGRESS 1600/1691;NO GPU
+PASS ACTUAL85 client:1691 ASan/UBSan explicit source/device fixture cases,all336 SUPPORT bytes/all64 RUN+END words in all3 samples;NO END/query/next sample/retry after uncertainty;NOT original authentication/native/GPU/model/speed proof
+CPU-only actual85 client evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-q4-client-test.pk3shnbn

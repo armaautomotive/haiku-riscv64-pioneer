@@ -1,8 +1,9 @@
 Diagnostic85:compressed-Q4/SFPU/BF16/FPU native ownership -- OFFBOARD qualified
 ===========================================================================
 This is a SEPARATE fixed diagnostic,not a Work mode or full-model driver.
-Do not install/run it based only on the offboard checks below. A new frozen
-client/one-shot physical parent and independent admission are still required.
+Do not install/run it based only on the owner checks below. The new frozen
+client/one-shot physical parent require their separate admission as documented
+in benchmarks/qwen38-native-q4-fpu-client-qualified-20261104.txt.
 Existing spent81/82/83/84 stages MUST NOT be reused. Assistant stays unchanged.
 
 Purpose
@@ -71,8 +72,17 @@ NEVER opens/stages/runs/reloads a device. Actual-method OS/PCI fixtures are
 not prerequisite/ARC/native hardware proofs. Canonical L1 RV32 co-simulation
 is not physical execution or a real-generation benchmark.
 
-See benchmarks/qwen38-native-q4-fpu-offboard-20261104.txt for closed main and
-clean reproduction evidence. Remaining:client/parent+physical qualification,
+See benchmarks/qwen38-native-q4-fpu-offboard-20261104.txt for closed owner main
+and clean reproduction evidence. The source-authenticating diagnostic85 client
+and new one-shot physical parent are now SDK/CPU-fixture qualified separately;
+this does NOT claim physical execution. Source reference rejects kernel/Work/
+validation/full-reference/fast-math builds. The parent fixes a new stage,
+native/client/reference hashes and generation6->7->8;it restores041 ONLY after
+all192 independent reference words,three explicit clean ENDs and complete
+output/idle metadata pass. Failure stops,no retry/reset/auto restore. NEVER
+repeat a spent parent or change its pins to bypass failed admission.
+
+Remaining:physical qualification,
 on-card full-K GDDR streaming without host round trips/per-block clears,
 Q6/Q8/cohort/attention/recurrent-state integration,full-model quality and
 matched real inference. Full-native27B/20tokens/sec remain UNMET.

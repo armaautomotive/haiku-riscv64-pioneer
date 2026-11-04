@@ -1,0 +1,2 @@
+PASS actual85 parent:618 flow/output+7 idle+8 reference/source+20 exchange-step+10 one-shot cases;all192 missing/duplicate/equal-but-wrong words refuse;NO next query/restore/retry after uncertainty;NOT hardware proof
+CPU-only actual85 parent evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-q4-parent-test.sc8rmamr
