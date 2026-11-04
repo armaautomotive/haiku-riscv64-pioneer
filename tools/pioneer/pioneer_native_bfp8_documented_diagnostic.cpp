@@ -64,11 +64,18 @@ int main(int argc,char** argv) {
 	int fd=open("/dev/misc/tenstorrent_pci_probe",O_RDWR|O_CLOEXEC);if(fd<0)return 1;
 	tt_pioneer_driver_reload metadata={};metadata.version=1;metadata.expected_tag=PioneerNativeBfpTag;
 	if(ioctl(fd,TT_PCI_PROBE_RELOAD_STATUS,&metadata,sizeof(metadata)) || metadata.version!=1
-		|| metadata.expected_tag!=PioneerNativeBfpTag || metadata.driver!=55 || metadata.build_tag!=PioneerNativeBfpTag
-		|| !metadata.generation || metadata.quiesced || metadata.cold || metadata.active_owner || metadata.open_count!=1 || metadata.guard_version!=1) {close(fd);return 1;}
+		// DriverReloadControl deliberately clears request selectors in its
+		// reply. Authenticate build_tag/generation,NOT an echoed expected_tag.
+		|| metadata.expected_tag || metadata.expected_generation || metadata.reserved[0] || metadata.reserved[1] || metadata.reserved[2]
+		|| metadata.driver!=55 || metadata.build_tag!=PioneerNativeBfpTag
+		|| !metadata.generation || metadata.quiesced || metadata.cold || metadata.active_owner || metadata.open_count!=1 || metadata.guard_version!=1) {
+		fputs("NATIVE_BFP8_DOCUMENTED_METADATA_REFUSED;NO_SUPPORT_OR_RUN\n",stderr);close(fd);return 1;
+	}
 	PioneerNativeBfpRequest r={};r.version=1;r.expected_tag=PioneerNativeBfpTag;r.expected_generation=metadata.generation;
 	if(ioctl(fd,PIONEER_NATIVE_BFP_SUPPORT,&r,sizeof(r)) || !PioneerNativeBfpRequestValid(r)
-		|| r.bits || r.nonce || r.accept || r.expected_generation!=metadata.generation) {close(fd);return 1;}
+		|| r.bits || r.nonce || r.accept || r.expected_generation!=metadata.generation) {
+		fputs("NATIVE_BFP8_DOCUMENTED_SUPPORT_REFUSED;NO_RUN\n",stderr);close(fd);return 1;
+	}
 	r={};r.version=1;r.bits=8;r.expected_tag=PioneerNativeBfpTag;r.expected_generation=metadata.generation;
 	if(ioctl(fd,PIONEER_NATIVE_BFP_RUN,&r,sizeof(r)) || !Result(r,metadata.generation,PIONEER_NATIVE_BFP_RESULT)) {
 		fputs("NATIVE_BFP8_DOCUMENTED_RUN_UNPROVEN;CLOSE_ONLY_NO_END_OR_RETRY\n",stderr);close(fd);return 1;

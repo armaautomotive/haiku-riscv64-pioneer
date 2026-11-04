@@ -3,7 +3,7 @@
 # New documented trial only;NOT either old failed lease's cleanup/END/reset.
 set -eu
 [ "$#" = 0 ] && [ "$(uname -s)" = Haiku ] && [ "$(id -u)" = 0 ] || exit 2
-stage=/boot/home/pioneer-native-bfp8-documented-20261104-a
+stage=/boot/home/pioneer-native-bfp8-documented-20261104-b
 installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
 stable=/boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
 admin=/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
@@ -40,8 +40,8 @@ device=/boot/home/config/non-packaged/add-ons/kernel/drivers/dev/misc/tenstorren
 test -L "$device" && [ "$(readlink "$device")" = ../../bin/tenstorrent_pci_probe ] || exit 1
 [ "$(stat -c '%d' "$stage")" = "$(stat -c '%d' "$installed")" ] || exit 1
 exact "$installed" "$candidate_hash" && exact "$stable" "$stable_hash" || exit 1
-exact "$stage/pioneer_native_bfp8_documented_physical.sh" 7b38656c597dc4809522737bae9dad6a67414326dca1d46c4afc4395db8f8de9 || exit 1
-exact "$stage/pioneer-native-bfp8-documented-diagnostic" 53f89a183edca74fb2acadbfbbd3a2186847d5e5baafe5d533734c051ed95240 || exit 1
+exact "$stage/pioneer_native_bfp8_documented_physical.sh" 307a0909b52a65bd2898f14ada0117227e404b14e356f276d4ef2ce6ba13441d || exit 1
+exact "$stage/pioneer-native-bfp8-documented-diagnostic" e3ca77c4f3f314885fee3cdcb080c155c92d0e005a255b94ae072b84faa95715 || exit 1
 exact "$admin" b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f || exit 1
 exact /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229 || exit 1
 exact /boot/home/config/non-packaged/servers/HaikuAssistantQwen27 861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74 || exit 1

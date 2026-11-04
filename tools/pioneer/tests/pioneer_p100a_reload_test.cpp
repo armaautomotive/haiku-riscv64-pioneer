@@ -36,9 +36,11 @@ int main()
 	uint64 duplicate=99; assert(sGuard.attach(&duplicate)==B_DEV_NOT_READY && !duplicate);
 	PioneerProbeCookie cookie,other; sOpenCookies=1;
 	{
-		auto r=Request(); assert(DriverReloadControl(&cookie,TT_PCI_PROBE_RELOAD_STATUS,&r,sizeof(r))==B_OK
+		auto r=Request(true); assert(DriverReloadControl(&cookie,TT_PCI_PROBE_RELOAD_STATUS,&r,sizeof(r))==B_OK
 			&& r.guard_version==1 && r.driver==55 && r.build_tag==PIONEER_DRIVER_BUILD_TAG && r.generation==1
 			&& !r.quiesced && !r.cold && !r.active_owner && r.open_count==1);
+		assert(r.version==1 && !r.expected_tag && !r.expected_generation
+			&& !r.reserved[0] && !r.reserved[1] && !r.reserved[2]);
 		assert(AcquireProbeLock(&cookie,true)==B_OK); release_sem(sLock);
 	}
 	for (unsigned fault=0;fault<10;fault++) {

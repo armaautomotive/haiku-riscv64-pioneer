@@ -12,7 +12,7 @@ name = 'pioneer_native_bfp8_documented_recovery_restore.sh' if documented else '
 source = (pathlib.Path(__file__).resolve().parent.parent / name).read_text()
 assert 'metadata 2026110300010078 1' in source and 'cold0 active_owner0' in source
 assert ('UNPROVEN_DOCUMENTED_BFP8_NO_END_RESET_RETRY_RESTORE' if documented else 'UNPROVEN_FIXED_BFP8_NO_END_RESET_RETRY_RESTORE') in source
-assert ('7b38656c597dc4809522737bae9dad6a67414326dca1d46c4afc4395db8f8de9' if documented else 'a9e13ea83c7bee6724d560a8ade4eda862360885eae8f8560567a6e4e178f822') in source
+assert ('307a0909b52a65bd2898f14ada0117227e404b14e356f276d4ef2ce6ba13441d' if documented else 'a9e13ea83c7bee6724d560a8ade4eda862360885eae8f8560567a6e4e178f822') in source
 flow = source.split('# NATIVE_BFP8_FRESH_RESTORE_FLOW_BEGIN\n', 1)[1].split('# NATIVE_BFP8_FRESH_RESTORE_FLOW_END')[0]
 temporary = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-bfp8-fresh-restore.'))
 prefix = '''set -eu

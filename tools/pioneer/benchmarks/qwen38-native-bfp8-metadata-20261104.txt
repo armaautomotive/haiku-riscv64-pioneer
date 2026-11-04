@@ -1,0 +1,56 @@
+Fixed-BFP8 metadata admission correction -- 2026-11-04 UTC
+=========================================================
+
+The original documented-client parent19418 actually CLOSED70 on its SAME
+handle. Child exit1,stdout0B,stderr0B. The normal041/gen2 -> native78/gen3
+hot-swap passed; no kernel result or END was produced. CPU-only postterminal
+metadata: native78/gen3,quiesced0,cold0,active_owner0,open1,guard1. Haiku still
+has64 CPUs and137034936320B RAM. Original stage-a/once token/logs remain.
+This is NOT a physical arithmetic qualification or a GPU performance result.
+
+Root cause proven in the exact unchanged driver: DriverReloadControl clears
+the response then returns build_tag/generation; request expected_tag and
+expected_generation are ZERO,not echoed. The53f89a18 client required nonzero
+expected_tag before SUPPORT/RUN,so cannot reach either with this driver.
+No close-owned fault or recovery is needed for this pre-RUN refusal. No
+GPU retry,END,reset,driver restoration or power action has been performed.
+
+Corrected client now requires zero request selectors/reserved fields and
+authenticates the actual build_tag/generation. It reports a named metadata
+or SUPPORT refusal. Numerical,all64,protocol,explicit-END and no-retry gates
+are unchanged. Golden values remain independently predicted/observed; old
+ideal comparator/client/trials remain rejected and untouched.
+
+Client regression30734 CLOSED0,stderr0:198 ASan/UBSan cases+3 forbidden-role
+build guards. Its metadata endpoint now compiles and EXECUTES the ACTUAL
+DriverReloadControl,with only OS copy/team/lock endpoints fake. The old fake
+incorrectly echoed request selectors. New tests reject nonzero selectors and
+each reserved word. The actual guard/control regression also CLOSED0 and
+explicitly asserts both selectors cleared. No acceptance gate was relaxed.
+
+Fresh complete SDK build58110 CLOSED0,stderr0:
+new client e3ca77c4f3f314885fee3cdcb080c155c92d0e005a255b94ae072b84faa95715
+same driver e79e070b9e4fe434b868898748834e0cd89b03bcb250d9c1694b4d0b890f46ac
+same old client428e7a15,bootd47a1c29,BFP8 textc21f4692.
+
+NEW stage-b parent307a0909b52a65bd2898f14ada0117227e404b14e356f276d4ef2ce6ba13441d
+admits the existing native78/gen3 ONLY with exact original stage-a parent7b38/
+client53f identities,exit1,empty saved outputs,and current cold0/owner0/full
+CPU/RAM. It does not reload/restore before the new client's FIRST actual RUN.
+On success,all64 independent historical words and explicit accepted END are
+required before normal041/gen4 restoration. Any failed/unproven result stops
+without next GPU/query/END/retry/reset/restore. The old stage is not reused.
+Parent88182 CLOSED0;final63363 CLOSED0,stderr0:209 flow/output+9 idle+13 actual
+pre-RUN-refusal provenance gate fixtures. This is fake endpoint evidence,
+not physical admission/execution proof.
+
+Optional stage-b FRESH-EPOCH restore7236e6d1ccb5157b721123bd8ed2f14bdd3fc2f77058f62daafbf3955136e5b5
+pins the new tuple;7 cases CLOSED0. It cannot act in current gen3 or against
+an owned/quarantined old epoch. Only a separately recorded authorized OFF/ON
+and Linux->Haiku boot can admit it;it is not automatic or used here.
+
+Preparation ONLY for corrected tuple. Next:publish,stage exact files,new ONE
+complete parent through its actual terminal. Then full-K/broadcast owner,
+NoC/GDDR/cohort/state integration,full-model quality and honest throughput.
+Last actual cached Work tiny warm diagnostic0.204tok/s;no matched speedup,
+full-native27B or20tok/s achieved. Assistant cache binaries/model unchanged.

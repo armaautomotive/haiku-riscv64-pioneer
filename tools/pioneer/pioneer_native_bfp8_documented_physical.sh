@@ -1,9 +1,12 @@
 #!/bin/sh
-# NEW strict documented-rounding fixed fixture;NOT either rejected old trial.
+# NEW strict documented-rounding fixed fixture,metadata-contract revision.
+# Prior53f client stopped BEFORE SUPPORT/RUN:its metadata echo check cannot
+# pass DriverReloadControl's zeroed selectors. No GPU retry/old-owner cleanup.
 # Direct exec only. Failure:retain/close only,NO retry/reset/automatic restore.
 set -eu
 [ "$#" = 0 ] && [ "$(uname -s)" = Haiku ] && [ "$(id -u)" = 0 ] || exit 2
-stage=/boot/home/pioneer-native-bfp8-documented-20261104-a
+stage=/boot/home/pioneer-native-bfp8-documented-20261104-b
+admission=/boot/home/pioneer-native-bfp8-documented-20261104-a
 observed=/boot/home/pioneer-native-bfp8-observe-20261104-a
 installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
 stable=/boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
@@ -12,7 +15,7 @@ candidate=$stage/tenstorrent_pci_probe-native-bfp78
 client=$stage/pioneer-native-bfp8-documented-diagnostic
 stable_hash=041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
 candidate_hash=e79e070b9e4fe434b868898748834e0cd89b03bcb250d9c1694b4d0b890f46ac
-client_hash=53f89a183edca74fb2acadbfbbd3a2186847d5e5baafe5d533734c051ed95240
+client_hash=e3ca77c4f3f314885fee3cdcb080c155c92d0e005a255b94ae072b84faa95715
 exact(){
  test -f "$1" && test ! -L "$1" || return 1
  case "$(stat -c '%u:%h:%a' "$1")" in 0:1:700|0:1:755|0:1:555) ;; *) return 1;; esac
@@ -65,7 +68,7 @@ test -d "$stage" && test ! -L "$stage" && [ "$(stat -c '%u:%a' "$stage")" = 0:70
 device=/boot/home/config/non-packaged/add-ons/kernel/drivers/dev/misc/tenstorrent_pci_probe
 test -L "$device" && [ "$(readlink "$device")" = ../../bin/tenstorrent_pci_probe ] || exit 1
 [ "$(stat -c '%d' "$stage")" = "$(stat -c '%d' "$installed")" ] || exit 1
-exact "$stable" "$stable_hash" && exact "$installed" "$stable_hash" && exact "$candidate" "$candidate_hash" && exact "$client" "$client_hash" || exit 1
+exact "$stable" "$stable_hash" && exact "$installed" "$candidate_hash" && exact "$candidate" "$candidate_hash" && exact "$client" "$client_hash" || exit 1
 exact "$admin" b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f || exit 1
 exact /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229 || exit 1
 exact /boot/home/config/non-packaged/servers/HaikuAssistantQwen27 861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74 || exit 1
@@ -77,18 +80,27 @@ done
 [ "$(cat "$observed/recovery.state")" = NEW_POWER_EPOCH_STABLE041_RESTORED_CACHED_ASSISTANT_PRESERVED ] || exit 1
 digest=$(sha256sum "$observed/fixed8.stderr")
 [ "${digest%% *}" = 66112229d3b318d6e79864ecf6d45ce3007a32ae44b7b6c939ce7b05c6ccdf36 ] || exit 1
-idle && metadata 2026102100010012 2 && health || exit 1
+# NATIVE_BFP8_PRE_RUN_REFUSAL_GATE_BEGIN
+test -d "$admission" && test ! -L "$admission" && [ "$(stat -c '%u:%a' "$admission")" = 0:700 ] || exit 1
+exact "$admission/pioneer_native_bfp8_documented_physical.sh" 7b38656c597dc4809522737bae9dad6a67414326dca1d46c4afc4395db8f8de9 || exit 1
+exact "$admission/pioneer-native-bfp8-documented-diagnostic" 53f89a183edca74fb2acadbfbbd3a2186847d5e5baafe5d533734c051ed95240 || exit 1
+for name in state documented8.exit documented8.stdout documented8.stderr;do
+ test -f "$admission/$name" && test ! -L "$admission/$name" && [ "$(stat -c '%u:%h' "$admission/$name")" = 0:1 ] || exit 1
+done
+[ "$(cat "$admission/state")" = UNPROVEN_DOCUMENTED_BFP8_NO_END_RESET_RETRY_RESTORE ] || exit 1
+[ "$(cat "$admission/documented8.exit")" = 1 ] || exit 1
+test ! -s "$admission/documented8.stdout" && test ! -s "$admission/documented8.stderr" || exit 1
+idle && metadata 2026110300010078 3 && health || exit 1
+# NATIVE_BFP8_PRE_RUN_REFUSAL_GATE_END
 for name in .trial-once stable041.backup driver.incoming documented8.stdout documented8.stderr documented8.exit parent.pid state;do
  test ! -e "$stage/$name" && test ! -L "$stage/$name" || exit 1
 done
 mkdir "$stage/.trial-once" # NEVER removed,including failure
 printf '%s\n' "$$" > "$stage/parent.pid"
-printf '%s\n' ADMITTED_BEFORE_SWAP > "$stage/state"
+printf '%s\n' ADMITTED_NATIVE_IDLE_PRIOR_CLIENT_NEVER_REACHED_SUPPORT_RUN > "$stage/state"
 cp -p "$stable" "$stage/stable041.backup"
 exact "$stage/stable041.backup" "$stable_hash" || exit 1
 # NATIVE_BFP8_DOCUMENTED_FLOW_BEGIN
-exchange "$stable_hash" "$candidate_hash" 2026102100010012 2026110300010078 2 3 "$candidate" || exit 1
-printf '%s\n' NATIVE_INSTALLED_NO_GPU_STARTED > "$stage/state"
 idle && metadata 2026110300010078 3 && exact "$installed" "$candidate_hash" && exact "$client" "$client_hash" || exit 1
 printf '%s\n' RUNNING_ONE_DOCUMENTED_BFP8 > "$stage/state"
 if "$client" --fixed-bfp8-documented-rounding > "$stage/documented8.stdout" 2> "$stage/documented8.stderr";then result=0;else result=$?;fi

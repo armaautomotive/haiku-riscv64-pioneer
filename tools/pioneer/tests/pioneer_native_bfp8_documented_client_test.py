@@ -15,6 +15,8 @@ observed = [int(x, 16) for x in re.findall(rb'RETURNED_WORD bits8 pass[01] row[0
 assert len(observed) == 64 and observed[:32] == observed[32:]
 folder = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-bfp8-documented-client.'))
 (folder / 'Drivers.h').write_text('#pragma once\n#define B_DEVICE_OP_CODES_END 10000\n')
+driver = (here.parents[2] / 'src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp').read_text()
+reload_control = driver.split('// PIONEER_DRIVER_RELOAD_CONTROL_BEGIN\n', 1)[1].split('// PIONEER_DRIVER_RELOAD_CONTROL_END', 1)[0]
 program = r'''
 #include <cassert>
 #include <cstdint>
@@ -53,6 +55,24 @@ static int FakeFlush(FILE*);static int FakeError(FILE*);
 #undef open
 #undef geteuid
 #undef PioneerBlackholeBf16Arithmetic
+// ACTUAL driver's metadata control,not a response-shaped fake that echoes
+// request selectors. Only its OS lock/team/copy endpoints are replaced.
+using status_t=int;using uint32=uint32_t;
+enum{B_OK=0,B_BAD_VALUE=-1,B_NOT_ALLOWED=-2,B_DEV_NOT_READY=-3,B_BUSY=-4};
+constexpr uint64_t PIONEER_DRIVER_BUILD_TAG=PioneerNativeBfpTag;
+constexpr unsigned TT_Q38_DISPATCH_DRIVER=55;
+struct PioneerProbeCookie{int team=7;void* context=nullptr;}base;
+struct thread_info{int team;};
+struct Guard{unsigned version=1;}guard;
+static Guard* sReloadGuard=&guard;static uint64_t sReloadGeneration=19;
+static bool sReloadQuiesced=false,sColdRecoveryRequired=false,locked=false;
+static void* sRuntimeOwner=nullptr;static unsigned sOpenCookies=1;static int sLock=1;
+static int find_thread(void*){return 1;}
+static int get_thread_info(int,thread_info* t){t->team=7;return B_OK;}
+static int acquire_sem(int){assert(!locked);locked=true;return B_OK;}
+static void release_sem(int){assert(locked);locked=false;}
+static int user_memcpy(void* to,const void* from,size_t count){memcpy(to,from,count);return B_OK;}
+ACTUAL_RELOAD_CONTROL
 static uid_t FakeEuid(){return scenario==22?1:0;}
 static int FakeOpen(const char* path,int flags){
  assert(!strcmp(path,"/dev/misc/tenstorrent_pci_probe") && flags==(O_RDWR|O_CLOEXEC) && !opened++ && mathCalls==256);
@@ -75,10 +95,12 @@ static int FakeIoctl(int fd,unsigned long op,void* data,size_t bytes){
  if(op==TT_PCI_PROBE_RELOAD_STATUS){
   assert(bytes==sizeof(tt_pioneer_driver_reload) && !queries++ && !supports && !runs && !ends);
   auto& m=*static_cast<tt_pioneer_driver_reload*>(data);assert(m.version==1 && m.expected_tag==PioneerNativeBfpTag);
-  m.driver=55;m.build_tag=PioneerNativeBfpTag;m.generation=19;m.open_count=m.guard_version=1;
+  assert(!DriverReloadControl(&base,op,&m,bytes) && !locked && !m.expected_tag && !m.expected_generation);
   if(scenario==2)m.cold=1;if(scenario==3)m.build_tag^=1;if(scenario==4)m.generation=0;
   if(scenario==5)m.active_owner=1;if(scenario==6)m.open_count=2;if(scenario==7)m.quiesced=1;
   if(scenario==8)m.guard_version=0;if(scenario==9)m.driver=54;if(scenario==10)m.version=2;
+  if(scenario==67)m.expected_tag=PioneerNativeBfpTag;if(scenario==68)m.expected_generation=19;
+  if(scenario>=69 && scenario<=71)m.reserved[scenario-69]=1;
   return scenario==11?-1:0;
  }
  assert(bytes==sizeof(PioneerNativeBfpRequest));auto& r=*static_cast<PioneerNativeBfpRequest*>(data);
@@ -112,7 +134,7 @@ static int FakeIoctl(int fd,unsigned long op,void* data,size_t bytes){
  return scenario==48?-1:0;
 }
 int main(int argc,char** argv){
- assert(argc==3);scenario=unsigned(atoi(argv[1]));failedWord=unsigned(atoi(argv[2]));assert(scenario<=66 && failedWord<64);
+ assert(argc==3);scenario=unsigned(atoi(argv[1]));failedWord=unsigned(atoi(argv[2]));assert(scenario<=71 && failedWord<64);
  for(unsigned row=0;row<32;row++)assert(Golden[row]==Observed[row]);
  char name[]="new-diagnostic",option[]="--fixed-bfp8-documented-rounding",oldOption[]="--fixed-bfp8";
  char* command[]={name,scenario==64?oldOption:option,nullptr};
@@ -122,21 +144,22 @@ int main(int argc,char** argv){
  assert(opened==unsigned(!noOpen));
  assert(closed==unsigned(!noOpen && scenario!=23));
  assert(queries==unsigned(!noOpen && scenario!=23));
- assert(supports==unsigned(!noOpen && scenario!=23 && !(scenario>=2 && scenario<=11)));
- assert(runs==unsigned(!noOpen && scenario!=23 && !(scenario>=2 && scenario<=19)));
+ assert(supports==unsigned(!noOpen && scenario!=23 && !(scenario>=2 && scenario<=11) && scenario<67));
+ assert(runs==unsigned(!noOpen && scenario!=23 && !(scenario>=2 && scenario<=19) && scenario<67));
  assert(ends==unsigned(scenario==0 || (scenario>=48 && scenario<=62) || scenario==65 || scenario==66));
  assert(mathCalls==(scenario==20?1:scenario==21?8:scenario==22 || scenario==63 || scenario==64?0:256));
  return 0;
 }
 '''.replace('ARITHMETIC_HEADER', str(here.parent / 'PioneerBlackholeBf16Arithmetic.h'))
 program = program.replace('CLIENT_SOURCE', str(here.parent / 'pioneer_native_bfp8_documented_diagnostic.cpp'))
+program = program.replace('ACTUAL_RELOAD_CONTROL', reload_control)
 program = program.replace('OBSERVED_WORDS', ','.join(f'0x{x:08x}' for x in observed))
 (folder / 'test.cpp').write_text(program)
 compiler = os.environ.get('CXX', 'c++')
 subprocess.run([compiler, '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
                 '-fsanitize=address,undefined', '-I' + str(folder), str(folder / 'test.cpp'), '-o', str(folder / 'test')], check=True)
 cases = 0
-for scenario in range(67):
+for scenario in range(72):
     for index in (range(64) if scenario in (1, 49) else (0,)):
         result = subprocess.run([str(folder / 'test'), str(scenario), str(index)], text=True, capture_output=True,
                                 env=dict(os.environ, ASAN_OPTIONS='quarantine_size_mb=32', UBSAN_OPTIONS='halt_on_error=1'))
@@ -165,5 +188,5 @@ for selection in ('_KERNEL_MODE', 'PIONEER_Q38_WORK_INFERENCE', 'PIONEER_Q38_CPU
     check = subprocess.run([compiler, '-std=c++17', '-D' + selection, '-I' + str(folder), '-c', str(here.parent / 'pioneer_native_bfp8_documented_diagnostic.cpp'),
                             '-o', str(folder / (selection + '.o'))], text=True, capture_output=True)
     assert check.returncode and 'Unqualified Blackhole arithmetic characterization is offboard only' in check.stderr
-print(f'PASS ACTUAL separate documented client:{cases} ASan/UBSan cases;independent recorded positives,all64 RUN/END word failures,pre-open spec/golden checks,protocol/owner/metadata/close/CLI failures,NO END/query/retry after failed RUN;3 runtime-role guards;NO device proof')
+print(f'PASS ACTUAL separate documented client:{cases} ASan/UBSan cases;ACTUAL driver metadata control clears request selectors,independent recorded positives,all64 RUN/END word failures,pre-open spec/golden checks,protocol/owner/metadata/close/CLI failures,NO END/query/retry after failed RUN;3 runtime-role guards;NO device proof')
 print('CPU-only actual documented client evidence:', folder)
