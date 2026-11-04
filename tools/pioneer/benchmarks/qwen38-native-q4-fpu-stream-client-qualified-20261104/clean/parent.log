@@ -1,0 +1,2 @@
+PASS actual86 parent:1846 flow/output+7 idle+8 reference/source+20 exchange-step+10 one-shot+14 metadata+8 CPU/RAM cases;all576 missing/duplicate/equal-but-wrong words refuse;NO next query/restore/retry after uncertainty;NOT hardware proof
+CPU-only actual86 parent evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-q4-parent-test.hqxbpro4

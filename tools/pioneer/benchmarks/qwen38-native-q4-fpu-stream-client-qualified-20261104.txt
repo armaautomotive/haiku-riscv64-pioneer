@@ -1,0 +1,86 @@
+Diagnostic86 full-K client/one-shot parent -- qualified OFFBOARD,2026-11-04
+========================================================================
+Parent0023a24d174e56574e8cb3704bef3cdae6663540. New11-file source/test/reference
+overlay,NOT old85 clients or repinned spent parents. Main61221 ACTUALLY
+CLOSED0,observed13:23:58UTC;clean42115 ACTUALLY CLOSED0,observed13:24:53UTC.
+Same handles followed to terminal;no retry on an observation timeout. Each
+ran8 strict exit0/stderr0 children,including full SAME-open original SHA and
+fresh full-K source arithmetic. Clean is a fresh HEAD0023a24d17 archive plus
+ONLY those11 overlays;all11 hashes independently verified main/clean after
+terminal,unchanged. Both manifests SHA:
+73541d9b79802b5ceb364668976212482e0d9fd2418b86b54b805e68b6ba8dea
+
+Admission tuple -- still NOT a physical execution observation
+-----------------------------------------------------------
+Native86 PRIVATE candidate from separately qualified owner checkpoint:
+742d6d57b6a521e035d22be93e3b20afcd3dc3bc35efc0b8e12bd1a9db2f0235
+New PRIVATE client,SDK main/clean binaries cmp IDENTICAL:
+9df5d0308cbc4f14e9b2d10904df6267b02da415c4622f204244808612a22f47
+New frozen parent pioneer_native_q4_fpu_stream_physical.sh:
+a54de1d4ee8218e7c13be3b2fb77a4fb94f88cbecdc69b342b60ec58e36b4f14
+Independent288 dot predictions,NOT weights:
+56ec253884deb7ba3f8a72dc09202f0b2a687752ebb15274843cbf14483008e9
+Original c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+Private data/meta4937303e/2924c553 remain unchanged and OUTSIDE Git,as do
+all learned original/prepared files,generated headers,objects and binaries.
+
+Client/source behavior
+----------------------
+Read-only owned0600 regular/nlink1/no-symlink original is held on SAME open
+FD throughout. Full18973870528B SHA/851-tensor shape/epoch precedes ANY GPU
+open. Fresh original Q4 preparation/input and CONTINUOUS rounded full-K
+reference must match ALL compiled nine bands/goldens before admission. Data
+is gate/up first0/8704/17376 at K5120,down0/2560/5088 at K17408. SourceReady
+is rechecked around every stage. No layout work/reference is added to Work
+inference;kernel/Work/validation/full-reference/fast-math source builds refuse.
+The actual client validates every metadata/support/RUN/END field,all64 output
+words each sample,both-width saved GDDR counts,requests/flits,epoch and known
+park. Any uncertainty is CLOSE ONLY,no END/next query/next sample/retry.
+Only proven output permits one explicit END;unchanged outputs/controls/polls,
+full restore flags and source stability are required afterward.
+
+Frozen parent fixes NEW /boot/home/pioneer-native-q4-fpu-stream-20261104-a,
+unused output/once paths,identities,private backup and generation8->9->10.
+Strict idle/CPU/RAM/device-symlink/same-filesystem/source-permission/reference
+gates precede the swap. One-shot mkdir preserves spent records. All576
+returned words must match independent288 Fraction predictions in exact
+sample/job/row order,and all9 clean END summaries must include exact traffic
+and journals,before any post-run query or stable041 restoration. Failed
+execution,dirty stderr,missing/duplicate/equally-wrong output or source/epoch
+mismatch stops,no automatic restore/reset/retry. Spent85/84 remain untouched.
+
+Closed offboard evidence
+-----------------------
+SDK link+6 role refusals,5291 actual-client ASan/UBSan source/device fixtures:
+all352 SUPPORT bytes,all64 RUN+END words in every one of9 samples,additional
+GDDR journal/traffic/width fields,output-channel failure/epoch/old-image cases.
+These explicit source/endpoint fixtures are NOT original/GPU authentication.
+Actual parent1846 flow/output+7 idle+8 source/reference+20 exchange-step+
+10 one-shot+14 exact metadata+8 CPU/RAM cases. Unknown stops before next
+query/restore;all576 missing/duplicate/equal-but-wrong records refuse.
+Independent child parser1 valid/1866 refused,including old84 and old85 output;
+not a substitute for independently observing actual parent closure.
+Independent Fraction rebuilds full original/prepared bytes and663552 rounded
+phases before emitting288 diagnostic predictions. Actual C++ source method
+also passes full original SHA/epoch,fresh nine payloads/inputs/288 references
+and one-shot checks on the Mac. No GPU opens/staging occur in these suites.
+
+Common main/clean stdout hashes:
+sdk-client 5ade6740d61cea989bd471efd075d42d2e8d55107bab4c3a8a2fe23478cbcc10
+output     235c41535fe16b95cc84064259a2285a1b01b1b7e66b528de898951247f69d83
+reference  56ec253884deb7ba3f8a72dc09202f0b2a687752ebb15274843cbf14483008e9
+source     dcc99a1ccd85458db7a3c2e14b7e4baef9c667b8d28a1e2c9eadbb8a0b732adf
+client main a38a1cfd435b3de98e782bfee41492300f4ede0bda9eedbcfec8b4d5ac0e444c
+client clean10edf36bb1be7184b71dcff1ae465bb9fed21a37853145d57f12421352ea524c
+parent main70cc226efb64ddd44a8b6e8f4560a12ccc9b183c0d312747f455fdf86c49f97e
+parent cleanb0da239dd5844949c5840d4a8ef0646a09658de16103d93c6f5c41b6328a62d3
+Only retained temp-directory names differ in client/parent stdout. All16
+stderr files and syntax/compile stdout are empty. Full receipts/argv retained.
+
+Separate fresh CPU-only Pioneer preflight13:18:13UTC CLOSED0:stable041/gen8,
+cold0/owner0,64 CPUs/maxRAM137034936320B/free133776015360B;no Assistant/model/
+native test processes. Installed041/stable backup/admin/guard/worker861e5287/
+servicec509da43/GUI0de9141e identities match. Model0:1:600:18973870528 and
+NEW stage absent. This is readiness evidence,NOT a native86 physical result.
+Next: independently stage/hash-check tuple,then ONE frozen physical parent.
+No new tokens/sec,real-token/full-model quality or20tokens/sec claim.

@@ -101,3 +101,17 @@ one-shot physical parent,with independent exact reference,hash/generation/
 idle gates and known-clean END/restoration only. Do not stage this candidate
 using old85 clients,old parents or isolated test passes as admission.
 Full-native27B/quality/20tokens/sec remain UNMET;no new throughput measured.
+
+Client/parent qualification -- completed OFFBOARD,physical admission separate
+-------------------------------------------------------------------------
+PioneerNativeQ4FpuStreamSource.h and its new diagnostic client authenticate
+the SAME-open original and ALL nine full-K compiled operands/inputs/fresh
+rounded predictions BEFORE GPU open. The fixed parent uses a NEW86 stage
+and one-shot records,generation8->9->10,strict idle/hash/source/CPU/RAM gates,
+all576 independent words,nine explicit clean ENDs and full restoration only.
+Complete main/clean suites have actually CLOSED0:SDK link/6 role refusals,
+5291 actual-client fixtures,1846 parent flow/output cases plus admission/
+exchange/one-shot/health checks,1866 independent child refusals and actual
+full original-source check. This does NOT admit repeated/manual execution.
+See benchmarks/qwen38-native-q4-fpu-stream-client-qualified-20261104.txt for
+the frozen tuple and readiness evidence;physical execution is still separate.
