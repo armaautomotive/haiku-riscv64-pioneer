@@ -1,0 +1,53 @@
+ACTUAL full-K5120 BFP8/broadcast kernel PASSED -- 2026-11-04 UTC
+=============================================================
+
+Preparation22530ae24b published BEFORE execution. Exact301cd001 native79
+driver,0283070c client,bbdff4cb parent and e16f4282 independent reference
+staged privately/rehash verified. New scripts explicitly mode0700;driver/
+client0755,reference0644,root/singlelinks;stage0700. No old stage reused.
+
+ONE full-K5120 parent14589 launched01:31:36UTC and actually CLOSED0 on the
+SAME handle. No concurrent Pioneer action during complete parent. ONE RUN,
+two device-side math jobs,32 output rows each,ALL64 words exactly equal the
+independent Fraction-qualified documented-arithmetic predictions. ALL four
+fidelity terms,full5120 accumulation and32-value BF16 broadcast path. Polls2,
+generation5. Accepted explicit END,L1/TLB/PCI restoration,identical END words
+and close all pass. No tolerance,CPU fallback,unproven-END acceptance or retry.
+
+Childstdout5071B SHA5c3a33f4a124860f81714eacf3a234204877c73cb31fe2c9f07c43faacdf491e
+independently fetched and equal remoteSHA;exit0,child/outer stderr0. Parent
+independently checked all64 printed values against its separate frozen raw
+reference,not just got==expected. State
+STABLE041_RESTORED_FULL_K5120_BFP8_EXACT64_PASSED.
+Native79/gen5 ->normal041/tag12/gen6 clean restoration passed. Independent
+CPU-only postterminal check confirmscold0/owner0/open1/guard1,64CPUs/full
+137034936320B RAM,normal041 SHA andcached Assistant861e/c509 unchanged.
+No power,SD,hardware,boot/network/OS/model/Assistant change. Cache recipebb0e
+unchanged. This is a synthetic full-K building block,NOT learned-model
+quality,NoC/GDDR/cohort/state integration,full-model offload or throughput.
+
+NEXT fixed remaining-width inputs -- PREPARATION ONLY,not executed here
+--------------------------------------------------------------------
+Newstage:/boot/home/pioneer-native-bfp-band-20261104-b
+Same exact301cd001 driver/0283070c client,no new shader or Work binary.
+Frozen parent0a8a2f0e630be06cc35763647452782076aa10f6f75248eecf05210fefe0caee
+requires accepted physical5120 result+immutable reference,normal041/gen6.
+Swaps79/gen7,one fresh client FD each for6144 then17408. Each requires exact
+ALL64 values+known END andCPU owner0 metadata before the next width. Failure
+stops before any next query/run/reset/restore. Only both accepted results
+permit normal041/gen8 restoration. Two-width parent53574 CLOSED0,stderr0:
+403 actual-flow/output fixtures+6 prior/raw-reference fixtures;every64
+missing/duplicate/equal-but-wrong word in BOTH widths,precision/epoch/poll
+fields and stage1/2 failures rejected. Fake endpoints,NOT hardware evidence.
+
+Optional recovery207ce7dd1692f81e094aa10209d1057108b9a5534201ca75560d70914ee6335d
+pins ONLY newstage/newparent,requires separately recorded OFF/ON+freshHaiku
+79/gen1/cold0/owner0.7 fake cases pass;all previous restore variants also
+pass. NOT automatic failed-owner cleanup/retry/reset. No recovery used.
+
+After remaining-width physical qualification:real authenticated cached model
+bands,then on-card GDDR/NoC/cohort/state integration. Never substitute host-
+per-projection uploads for the requested resident-card Work architecture.
+Full-native27B/20tok/s UNMET;no new generation measurement or speedup claim.
+Raw5120/postflight andclosed remaining preparation logs are archived with
+SHA256SUMS. Original once tokens and correct/rejected trials remain intact.
