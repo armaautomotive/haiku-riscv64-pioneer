@@ -1,0 +1,35 @@
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_native_bfp_band_owner_test.cpp:17:105: error: no member named 'Word' in 'Machine'
+   17 |         static uint32_t Word(unsigned index){const auto& code=images.at(K);return index<code.size()/4?Machine::Word(code,index*4):0;}
+      |                                                                                                       ~~~~~~~~~^
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_native_bfp_band_owner_test.cpp:79:86: error: no member named 'Word' in 'Machine'; did you mean simply 'Word'?
+   79 |                 for(unsigned i=0;i<1024;i++)assert(memory[(0x70000+i*4)/4]==(i<image.code.size()/4?Machine::Word(image.code,i*4):0));
+      |                                                                                                    ^~~~~~~~~~~~~
+      |                                                                                                    Word
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include/assert.h:75:25: note: expanded from macro 'assert'
+   75 |     (__builtin_expect(!(e), 0) ? __assert_rtn(__func__, __ASSERT_FILE_NAME, __LINE__, #e) : (void)0)
+      |                         ^
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_tensix_image_test.cpp:25:17: note: 'Word' declared here
+   25 | static uint32_t Word(const std::vector<uint8_t>& b, unsigned i) {
+      |                 ^
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_native_bfp_band_owner_test.cpp:116:40: error: no member named 'Read' in 'Machine'; did you mean simply 'Read'?
+  116 |         const std::string root=path;images[K]=Machine::Read((root+"/text.bin").c_str());
+      |                                               ^~~~~~~~~~~~~
+      |                                               Read
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_tensix_image_test.cpp:21:29: note: 'Read' declared here
+   21 | static std::vector<uint8_t> Read(const char* path) {
+      |                             ^
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_native_bfp_band_owner_test.cpp:117:18: error: no member named 'Read' in 'Machine'; did you mean simply 'Read'?
+  117 |         const auto boot=Machine::Read((root+"/boot.bin").c_str());assert(boot.size()==4);Image<K>::Boot=Machine::Word(boot,0);
+      |                         ^~~~~~~~~~~~~
+      |                         Read
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_tensix_image_test.cpp:21:29: note: 'Read' declared here
+   21 | static std::vector<uint8_t> Read(const char* path) {
+      |                             ^
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_native_bfp_band_owner_test.cpp:117:98: error: no member named 'Word' in 'Machine'; did you mean simply 'Word'?
+  117 |         const auto boot=Machine::Read((root+"/boot.bin").c_str());assert(boot.size()==4);Image<K>::Boot=Machine::Word(boot,0);
+      |                                                                                                         ^~~~~~~~~~~~~
+      |                                                                                                         Word
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_tensix_image_test.cpp:25:17: note: 'Word' declared here
+   25 | static uint32_t Word(const std::vector<uint8_t>& b, unsigned i) {
+      |                 ^
+5 errors generated.

@@ -1,0 +1,37 @@
+ACTUAL fixed BFP8 documented arithmetic+clean END PASSED -- 2026-11-04 UTC
+======================================================================
+
+Frozen corrected preparation afec9158c6;stage-b parent307a0909/client e3ca77c4
+and UNCHANGED native driver e79e070b/textc21f4692. All stage files privately
+copied once;no old trial/output/once token overwritten. Parent64312 launched
+01:03UTC and actually CLOSED0 on the SAME handle. No parallel Pioneer
+GPU/admin/driver/OS/network/power action during the complete parent.
+
+ONE first actual corrected RUN:bits8,32 rows,two device-side jobs. ALL64
+returned words exactly equal the independent prior documented arithmetic
+predictions and historical physical record. Polls1,generation3. Exact
+protocol/completion/PC/marker checked;explicit END accepted,all64 END words
+unchanged,L1/TLB/PCI restored,close successful. No tolerance or CPU fallback.
+This is a NEW fixed synthetic diagnostic,NOT retroactive acceptance of the
+old rejected ideal-comparator runs or promotion of a model/Work oracle.
+
+Child stdout5142B SHA e952ec44ef26b0c912180ebb2eacb90cb3634098e18716982b867642de48ee20
+independently fetched and matches remoteSHA. Child exit0,stderr0;outerstderr0.
+The parent additionally matched each of64 unique/order-checked printed words
+with the independent original physical record before restoration.
+State STABLE041_RESTORED_DOCUMENTED_BFP8_EXACT64_PASSED.
+
+Clean native78/gen3 ->normal041/tag2026102100010012/gen4 hot-reload succeeded.
+Independent postterminal CPU-only metadata:quiesced0,cold0,active_owner0,
+open1,guard1;all64 CPUs and maxRAM137034936320B. Normal driver SHA remains
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Cached Assistant worker861e5287/servicec509da43 unchanged;no Assistant/LLM
+or diagnostic owner remains. No restart,power/SD/hardware/network/boot change.
+
+This clears only the fixed32x32 BFP8 arithmetic/lifecycle prerequisite. It
+does NOT prove full-K broadcast,NoC/GDDR/cohort/state integration,model-wide
+quality,card-only inference or speed. Full-native27B/20tok/s remain UNMET.
+Last actual cached Work tiny warm measurement0.204tok/s is NOT a matched
+speedup. Next is the separate full-K owner/mapping and on-card data path.
+Raw closed parent,child and independent health records are in the sibling
+directory with SHA256SUMS;spent stage-a/b markers must never be reused.

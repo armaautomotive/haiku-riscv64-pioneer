@@ -1,0 +1,55 @@
+NEW full-K native BFP8 owner -- OFFBOARD qualification,2026-11-04 UTC
+=================================================================
+
+After the separate ACTUAL fixed32x32 hardware arithmetic/END pass64312,
+implemented a distinct full-width owner prototype,not a relaxed old owner.
+PioneerNativeBfpBandLease admits only fixed5120/6144/17408 images with ALL
+four fidelity phases and its own NFB3/count-width terminal proof. It owns
+boot,4KiB code,8KiB stack,each independent16B-header/1088B-weight tile,
+16B-header/64B-input tile,256B two-copy output,and12B status. Boot publishes
+last;all staged words verified before start. Heap snapshots are202000,
+239888,656656B respectively;all unowned holes must remain unchanged.
+
+No destructor IO,automatic END,cleanup,reset,retry,model/CPU learned reference
+or runtime arbitrary payload/code/address. Scope includes stable source,
+exclusive all-core-held admission,exact selected TLBs/reset/control state,
+bounded completion and both guarded parked PCs. Only explicit successful
+END stops/holds/restores each saved word and TLB. Any uncertainty retains
+UNKNOWN and blocks all subsequent IO. Driver/Work/validation builds remain
+FORBIDDEN until a concrete mapping/adapter is separately qualified.
+
+PioneerNativeBfpBandFixture constructs the existing asymmetric n/128 BFP8
+data by pure integer layout,not model conversion. Tests independently pack
+the original floating fixture and compare EVERY weight/input byte for all
+three widths,including native face ordering and canonical signed zero.
+
+Original runner CLOSED1 on a test-only helper namespace typo:Word/Read are
+global functions,not Machine methods. Corrected those qualifiers;no owner,
+shader,reference or acceptance gate changed. Initial raw failure preserved.
+Final runner79257 actually CLOSED0,stderr0,ASan/UBSan/Werror. Fresh actual
+MMIO-issue RV32 images,all phases4:
+K5120  text f69c2803d854bbef87f37df7cb96536e1f5d940060ed98fec6cb3200d50a9ad5
+K6144  text a6516a81cdb2e40b1850a0e51c3c2c2d706eaa2aa0207b29cbf5c2c3feb1a09e
+K17408 text 902a07bf9cc67387d139bee4b18b3a454a1d90baa3b70d2c3f87e2b0f3939575
+Boot unchanged d47a1c29. Original emitter/decoder/ideal observers unchanged.
+Each positive executes the fresh compiled image through the real new owner
+and separate documented-rounding observer,two device-side math jobs/all64
+outputs,exact complete memory/TLB restoration.3 executions/6 math jobs,
+NOT physical runs.21 failure/no-retry/close cases cover bad geometry NO IO,
+stage/TLB/start/completion/PC/source/STOP/L1/TLB-restoration uncertainty,
+old NFB1 marker and wrong-width count refusal,metadata-only Abandon,one-shot
+gating and no subsequent IO after UNKNOWN.3 build-role guards refuse.
+
+Independent Python Fraction test59207 CLOSED0,stderr0:all96 unique full-K
+row predictions match229376 phase instructions. It uses neither the C++
+fixture/PackTile/integer arithmetic/observer nor saved owner state. This
+cross-checks the rounded numerical gate,not provenance or hardware authority.
+
+Next:concrete bounded L1 mapping+distinct full-K driver/protocol,its source/
+mapping/close/ownership fault tests and native build,then ONE frozen physical
+full-K diagnostic. The old NFB1 adapter cannot accept this larger image.
+After full-K qualification,build the resident-GDDR/NoC/cohort/state path;do
+not propose host-per-projection uploads as the production end state.
+No native full-model cache/arena/cohort integration or live Work/Assistant
+change happened here. Normal041/gen4,cache-enabled Assistant and original
+model remain. No new inference throughput:full-native27B/20tok/s UNMET.

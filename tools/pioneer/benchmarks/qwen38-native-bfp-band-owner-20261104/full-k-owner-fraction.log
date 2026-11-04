@@ -1,0 +1,4 @@
+PASS independent Fraction owner arithmetic K5120:all32 predictions match closed synthetic actual-RV32 owner test;NO_PHYSICAL_OR_MODEL_SPEED_PROOF
+PASS independent Fraction owner arithmetic K6144:all32 predictions match closed synthetic actual-RV32 owner test;NO_PHYSICAL_OR_MODEL_SPEED_PROOF
+PASS independent Fraction owner arithmetic K17408:all32 predictions match closed synthetic actual-RV32 owner test;NO_PHYSICAL_OR_MODEL_SPEED_PROOF
+PASS independent Fraction full-K owner:96 words,229376 phase instructions;NO log-provenance/device/driver/Work authorization
