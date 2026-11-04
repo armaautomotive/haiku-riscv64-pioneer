@@ -1,0 +1,49 @@
+Full-card ordinary-question interface:main offline qualification only
+====================================================================
+2026-11-04 20:28UTC. User priority is full P100A inference,NOT more hybrid
+tuning. Prior actual88/89 Hello replies already demonstrated a separate
+full-card path;installed Assistant remains hybrid and is not relabeled.
+
+New separate AssistantP100AQwen27FullOffload one-shot adapter and optional
+CLI accept arbitrary bounded short questions through that same full-card
+worker. CPU handles channel/clock/returned-DATA parsing only. No model or
+device API,CPU context/attention/state/sampling/validation/fallback is added.
+Text withheld until exact full-card summary/known Closed/ACTUAL workerexit0.
+Unknown is close-only;no implicit END/reset/retry/power or cleanup authority.
+Monotonic cancel and pre-BEGIN/clean reject cases have separate outcomes.
+This is not wired into Service/Assistant and has not executed on hardware.
+
+Main FAKE IPC/process tests21335 ACTUALLY0,stderr0:35 histories including
+hybrid Ready/Closed rejection,wrong frame IDs/values/ordering,partial frame,
+duplicate Text/Done,malformed summary,missing Closed/nonzero actual exit,
+clean short/EOG,pre-spawn/pre-BEGIN/running/racing cancellation. One actual
+Cancel frame only;no Threads request;unknown sends no implicit Unload.
+16CLI refusals and8 role refusals pass under address/undefined sanitizers.
+
+Main cross-build31425 ACTUALLY0/stderr0. New ask SHA:
+3fc9c1481623e96892dbb15e9ccb4ae313ec877d833d2a4d72ee77f9ece83f5f
+Whole unchanged metrics worker989f/four-clientd631/rate-clientd508 compare
+byte-for-byte to the prequalified objects already staged on the Pioneer.
+New CLI has no llama/ggml/ioctl/mmap/strong pthread/signal/shell imports.
+Its only weak pthread_cancel hook is also in unchanged Haiku executable
+glue. No CPU pool is created. Whole ask import evidence is retained.
+
+Two earlier BUILD_AUDIT refusals,not hardware faults:initial predicate
+mistook the ordinary weak pthread_cancel startup hook for a strong thread
+pool API;next predicate wrongly required the old client's extra weak mutex/
+once hooks to be present too. Final audit permits ONLY the exact weak cancel
+hook in this new client and proves it is a subset of old glue;all strong
+thread/model/device/kill/shell API refusals remain. Neither failed attempt
+was deployed or called a successful qualification.
+
+Current physical run is a DIFFERENT,already qualified32-request client:
+protected parent93041 launched20:20UTC from stable041/gen14 through90/gen15.
+Stage /boot/home/pioneer-q38-full-metrics-20261104-a is SPENT. All4 staged
+artifacts were read back and whole-compared before launch. Parent remains
+LIVE;no whole stdout/rate/result/cleanup/restoration/worker outcome is
+accepted yet. Do NOT re-run it or access the Pioneer until SAME handle
+actually terminates. ONLY local source work/same-handle observation occurs.
+
+Clean-source rebuild/tests and explicit whole prompt-client comparison
+remain required. Goal ACTIVE,20TPS/broad model quality/persistent weights/
+streaming/Assistant release/full tensor-engine acceleration remain UNMET.

@@ -13,6 +13,9 @@ if batched:
 metrics='--metrics' in args
 if metrics:
     assert batched and args.count('--metrics')==1;args.remove('--metrics')
+prompt_client='--prompt-client' in args
+if prompt_client:
+    assert metrics and args.count('--prompt-client')==1;args.remove('--prompt-client')
 assert len(args)==3
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 build,libraries,out=map(pathlib.Path,args)
@@ -85,13 +88,37 @@ if metrics:
     rate_imports=subprocess.check_output([tool+'nm','-u',str(rate)],text=True)
     assert 'llama_' not in rate_imports and 'ggml_' not in rate_imports
     print(hashlib.sha256(rate.read_bytes()).hexdigest(),rate.name,flush=True)
+if prompt_client:
+    ask=out/'pioneer-q38-full-offload-ask'
+    ask_command=[tool+'g++','-std=c++17','-O2','-ffp-contract=off','-fno-exceptions','-fno-rtti',
+                 '-Wall','-Wextra','-Werror','-DPIONEER_Q38_FULL_OFFLOAD_PROMPT_CLIENT=1',
+                 '-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-metrics-20261104-a/HaikuAssistantQwen27FullOffload-metrics"',
+                 *includes,'-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),
+                 '-L'+str(release/'system/libnetwork'),*libflags,
+                 str(here/'pioneer_q38_full_offload_ask.cpp'),
+                 str(root/'src/apps/assistant/P100AQwen27FullOffload.cpp'),'-lnetwork','-o',str(ask)]
+    subprocess.run(ask_command,check=True)
+    ask_imports=subprocess.check_output([tool+'nm','-u',str(ask)],text=True)
+    for name in ('llama_','ggml_','ioctl','mmap',' kill',' system',' popen'):
+        assert name not in ask_imports,name
+    # Haiku's ordinary executable glue includes a weak pthread_cancel hook,
+    # also present in the unchanged qualified no-model smoke client. Do not
+    # mistake that startup hook for a model CPU pool;no strong pthread API
+    # or additional weak thread hook is admitted in the new client.
+    ask_threads={tuple(r.split()) for r in ask_imports.splitlines() if 'pthread_' in r}
+    smoke_imports=subprocess.check_output([tool+'nm','-u',str(smoke)],text=True)
+    smoke_threads={tuple(r.split()) for r in smoke_imports.splitlines() if 'pthread_' in r}
+    assert ask_threads=={('w','pthread_cancel')} and ask_threads.issubset(smoke_threads),ask_threads
+    (out/'ask-imports.txt').write_text(ask_imports)
+    print(hashlib.sha256(ask.read_bytes()).hexdigest(),ask.name,flush=True)
 if not batched:
     assert hashlib.sha256(binary.read_bytes()).hexdigest()=='8cc39a66185e3adb1606a92a91c4f9efeb5943d4e1439cfedc41214b75e8aa5d'
     assert hashlib.sha256(smoke.read_bytes()).hexdigest()=='f172e77c58c4eac025ebe7ac53c686a01dadceacf31f1e25f00f00ca6b651081'
 imports=subprocess.check_output([tool+'nm','-u',str(smoke)],text=True)
 assert 'llama_' not in imports and 'ggml_' not in imports
-(out/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in
-    ([compile,link,smoke_command,rate_command] if metrics else [compile,link,smoke_command]))+'\n')
+commands=[compile,link,smoke_command,rate_command] if metrics else [compile,link,smoke_command]
+if prompt_client:commands.append(ask_command)
+(out/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands)+'\n')
 (out/'llama-imports.txt').write_text('\n'.join(sorted(llama_imports))+'\n')
 print(hashlib.sha256(binary.read_bytes()).hexdigest(),binary.name,flush=True)
 print(hashlib.sha256(smoke.read_bytes()).hexdigest(),smoke.name,flush=True)

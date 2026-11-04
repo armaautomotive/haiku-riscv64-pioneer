@@ -139,3 +139,33 @@ No tag90 hardware job or warm-rate result has been obtained yet.
  python3 tools/pioneer/tests/pioneer_q38_full_offload_metrics_role_test.py
  python3 tools/pioneer/tests/run_pioneer_q38_full_offload_rate_tests.py
  python3 tools/pioneer/tests/pioneer_q38_full_offload_rate_log_test.py
+
+Separate question interface (source/offline candidate,NOT installed)
+-----------------------------------------------------------------
+AssistantP100AQwen27FullOffload is distinct from the hybrid Work adapter.
+It sends only a short question/token cap to the controlled full-card worker;
+it has no device/model/ggml API,CPU inference,attention,state,thread pool,
+token choice or fallback. It accepts ONLY the full-card Ready/Closed pair.
+One request is bounded to256 question bytes,96 tokenized prompt tokens and
+1..32 output tokens. Each current request still uploads/releases weights;
+this is NOT persistent/warm loading,streaming or usable-speed qualification.
+
+The adapter holds text privately until the worker's completed full-card
+summary,known full-card Closed frame and actual child exit0. Cancellation
+is one monotonic protocol request;even a race with clean completion suppresses
+the answer. Unknown/framing/hybrid/exit failures close the channel only,not
+signal/kill,END/reset/retry/driver exchange or resource-disposal authority.
+Pre-BEGIN rejection and known-clean cancellation stay distinct from Unknown.
+The reusable class is not wired into the installed Assistant or Service.
+
+ python3 tools/pioneer/tests/run_pioneer_q38_full_offload_ask_tests.py
+ python3 tools/pioneer/build_assistant_qwen27_full_offload.py HAIKU_BUILD FROZEN_LIBRARIES NEW_WORKER --batched --metrics --prompt-client
+
+The optional pioneer-q38-full-offload-ask artifact uses a COMPILE-TIME exact
+metrics-stage worker path. Its --full-card-question TEXT --tokens N command
+is NOT permission to run a new physical request. Fresh guarded driver,
+artifact/runtime/source/idle admission and complete restoration are separate
+mandatory gates. Never invoke during another protected device lifetime or
+reuse any spent physical helper. CLI answer output is hexadecimal to avoid
+interpreting model output as terminal controls. Fake channel tests/build
+imports do NOT prove actual model quality,physical ownership or speed.
