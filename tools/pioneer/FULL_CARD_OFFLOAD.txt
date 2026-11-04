@@ -1,5 +1,13 @@
 Qwen27B full-card execution candidate (not an installed Assistant release)
 ======================================================================
+Actual Nov4 hardware milestone:the guarded Hello/four-output run completed
+with expected Hello! How can,whole original authentication/19.4GB upload,
+no CPU inference context or fallback,and clean device/worker closure. The
+stable driver was restored and independently checked with64CPUs/fullRAM.
+This verifies one full-card reply,NOT broad model quality,installed Assistant
+integration,warm throughput or20TPS. See the complete physical benchmark
+ledger/evidence under benchmarks/qwen38-full-card-offload-20261104.txt.
+
 The installed p100a-qwen27-work backend is still hybrid:learned projections
 run on P100A while CPU handles attention/recurrent state and other operations.
 It is NOT relabeled as full offload by this work.

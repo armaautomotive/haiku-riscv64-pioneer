@@ -1,5 +1,58 @@
-Full-card Qwen27B candidate: implemented and built,NOT yet card-executed
-====================================================================
+First full-card Qwen27B reply CLOSED0;fixed Hello/four outputs accepted
+===================================================================
+ACTUAL complete result,superseding all historical LIVE/build-only notes
+----------------------------------------------------------------------
+2026-11-04 18:33:39UTC:the SAME protected83446 actually terminates0. Whole
+outer stdout returns stable10->native11->stable12,closed quiesce/exchange,
+64CPUs/full137034936320B RAM and final PASS. Outer stderr0. No repeat test,
+reset,force unload,quarantine,power,OS/network/SD or hardware intervention.
+
+AFTER actual terminal,independent SSH0 verifies child exit0 and state:
+ FULL_CARD_HELLO_FOUR_CLOSED_STABLE_RESTORED
+The complete child stdout221893B is fetched by actual68388 exit0;local and
+remote full SHA match:
+ bbe48c1d3023e32dc025a8b541e3f609e3f82eb9e847bb374a02f1e73f060aef.
+Child stderr0,outer/fetch/independent-postflight stderr0. Both unchanged
+main+clean complete readers actually0,byte-identical output,stderr0. They
+accept the whole source/vocabulary prefix,2249 upload events reaching ALL
+19399024640 bytes,the full-card run phase,4 output tokens/exact14-byte
+public answer Hello! How can,and successful full-worker close/exit.
+
+The frozen8cc worker creates NO CPU inference context or ggml graph;its
+exact11 vocabulary/container imports were inspected before staging. It
+sends prompt IDs to the separate3c5769/tag88 whole-model kernel owner,which
+runs embedding,matrices,attention,KV/recurrent state,norms/activation,
+classifier and greedy selection on card. No CPU learned outputs/attention/
+state/logits/token selection/reference model or fallback enters the run.
+This is the FIRST verified arbitrary-prompt-interface/full-card reply here,
+not the old fixed2-prompt diagnostic or hybrid497-projection Work path.
+
+Honest timing and remaining work
+--------------------------------
+Returned post-start-ack observed prompt+generation interval175.251s;
+Generate total1924.726s includes cold upload/initialization/cleanup. These
+are not matched warm-token intervals,and must NOT be divided into a new
+warm tokens/sec claim. No speedup or20TPS is established. One public
+Hello/four-token match is NOT broad model-quality/context acceptance.
+Weight residency across separate requests and streaming output are still
+absent;the candidate releases weights after each question. The installed
+Assistant still uses its original hybrid Work backend. Full-card Assistant
+integration and useful speed remain required;goal ACTIVE,not complete.
+
+Independent preservation AFTER the complete parent,not inferred from log
+------------------------------------------------------------------------
+Native3c5769/worker8cc/smokef172/parent13b3 tuple remains exactly the one
+admitted from pushed source1c1c01 and spent stage,NEVER rerun it. Root-held
+restoration/END precedes worker answer publication by that frozen path.
+Independent postflight verifies installed stable041 SHA/tag12/generation12,
+quiesced0/cold0/active_owner0/open_count1/guard1. Installed worker861e5287,
+servicec509da43 and GUI0de9141e remain exactly unchanged. Same Sep8 kernel,
+64CPUs,137034936320B RAM,free131011239936B. No app/driver permanently
+installed or reboot performed. The complete closed outer/child/reader/
+postflight streams are archived beside the earlier qualification evidence.
+
+Historical implementation and admission ledger (superseded statuses)
+=====================================================================
 2026-11-04 UTC. User explicitly redirected all effort to full-card execution.
 Separate peak/capacity/cache/mixed87 physical work is not continued here.
 Installed hybrid Work is NOT relabeled. Full-card/usable Assistant and20TPS
