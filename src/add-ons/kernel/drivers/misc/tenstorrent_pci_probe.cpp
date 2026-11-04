@@ -45,6 +45,12 @@
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110400010088ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE)
 #error Reserved full-offload tag88 requires its distinct native role
 #endif
+#if defined(PIONEER_Q38_FULL_OFFLOAD_BATCHED) && !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE)
+#error Full offload batched firmware requires its distinct full native role
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110400010089ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_BATCHED)
+#error Reserved full-offload tag89 requires its distinct batched firmware role
+#endif
 #if (defined(PIONEER_Q38_TOKEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)) && !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT)
 #error Token physical validation cannot substitute an old driver role
 #endif

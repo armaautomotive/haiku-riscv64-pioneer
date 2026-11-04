@@ -48,6 +48,8 @@ struct IO {
    auto& r=*static_cast<tt_pioneer_driver_reload*>(data);assert(size==sizeof(r) && r.version==1);
    r.driver=55;r.guard_version=1;r.build_tag=PioneerQ38FullOffload::BuildTag;r.generation=9;r.open_count=1;r.active_owner=begins;
    if(sweep.Clone([&]{r.build_tag=0x2026103100010075ULL;}))return true;
+   if(sweep.Clone([&]{r.build_tag=PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110400010088)
+      ?UINT64_C(0x2026110400010089):UINT64_C(0x2026110400010088);} ))return true;
    if(begins && sweep.Clone([&]{r.generation++;}))return true;
   }else if(op==TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT){
    namespace F=PioneerQ38FullOffload;auto& r=*static_cast<F::Support*>(data);assert(size==sizeof(r) && F::SupportRequest(r));

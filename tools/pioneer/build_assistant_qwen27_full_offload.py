@@ -6,9 +6,13 @@ import pathlib
 import subprocess
 import sys
 
-assert __debug__ and len(sys.argv)==4
+assert __debug__
+args=sys.argv[1:];batched='--batched' in args
+if batched:
+    assert args.count('--batched')==1;args.remove('--batched')
+assert len(args)==3
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
-build,libraries,out=map(pathlib.Path,sys.argv[1:])
+build,libraries,out=map(pathlib.Path,args)
 assert build.is_absolute() and libraries.is_absolute() and out.is_absolute()
 assert build.is_dir() and libraries.is_dir() and not out.exists() and not out.is_symlink()
 pins={'libllama.so.0.2.0':'0ae23a2c211af9fbafb89c3d93bdd136a4bdd574baeeaf2d622f582efcf426af',
@@ -33,6 +37,7 @@ libflags=['-L'+str(p) for p in sorted((build/'build_packages').glob('gcc_syslibs
 source=here/'pioneer_assistant_qwen27_full_offload.cpp';obj=out/'worker.o';binary=out/'HaikuAssistantQwen27FullOffload'
 compile=[tool+'g++','-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror','-fno-exceptions','-fno-rtti',
          '-fstack-usage','-DPIONEER_Q38_FULL_OFFLOAD_CLIENT=1',*includes,'-c',str(source),'-o',str(obj)]
+if batched:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=1')
 link=[tool+'g++',str(obj),'-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),
       '-L'+str(release/'system/libnetwork'),'-L'+str(libraries),*libflags,'-Wl,-rpath-link,'+str(libraries),
       *['-l:'+name for name in pins],'-lnetwork','-o',str(binary)]
@@ -44,6 +49,7 @@ for macro in ('_KERNEL_MODE','PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODE
               'PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_FULL_OFFLOAD_NATIVE',
               'PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_CLIENT','PIONEER_Q38_NATIVE_Q8_LAYOUT'):
     refusals.append((macro+'-defined0',['-D'+macro+'=0']))
+refusals.append(('zero-batched',['-UPIONEER_Q38_FULL_OFFLOAD_BATCHED','-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=0']))
 for label,extra in refusals:
     result=subprocess.run([*compile[:compile.index('-c')],*extra,'-fsyntax-only',str(source)],
                           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,cwd=out)
@@ -63,7 +69,11 @@ smoke=out/'pioneer-q38-full-offload-smoke'
 smoke_command=[tool+'g++','-std=c++17','-O2','-Wall','-Wextra','-Werror',*includes,
                '-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),'-L'+str(release/'system/libnetwork'),
                *libflags,str(here/'pioneer_q38_full_offload_smoke.cpp'),'-lnetwork','-o',str(smoke)]
+if batched:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-batched-20261104-a/HaikuAssistantQwen27FullOffload-batched"')
 subprocess.run(smoke_command,check=True)
+if not batched:
+    assert hashlib.sha256(binary.read_bytes()).hexdigest()=='8cc39a66185e3adb1606a92a91c4f9efeb5943d4e1439cfedc41214b75e8aa5d'
+    assert hashlib.sha256(smoke.read_bytes()).hexdigest()=='f172e77c58c4eac025ebe7ac53c686a01dadceacf31f1e25f00f00ca6b651081'
 imports=subprocess.check_output([tool+'nm','-u',str(smoke)],text=True)
 assert 'llama_' not in imports and 'ggml_' not in imports
 (out/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in (compile,link,smoke_command))+'\n')
@@ -72,3 +82,4 @@ print(hashlib.sha256(binary.read_bytes()).hexdigest(),binary.name,flush=True)
 print(hashlib.sha256(smoke.read_bytes()).hexdigest(),smoke.name,flush=True)
 print('PASS BUILD_ONLY vocabulary-only full-card worker;exact11 vocabulary/model-container API imports;'+str(len(refusals))+' role refusals;NO context,decode,logits,threadpool or hybrid backend imports;frozen libraries/headers',flush=True)
 print('NOT installed or physically/numerically qualified;no performance result',flush=True)
+print('Full-card firmware pairing: '+('batched tag89' if batched else 'original tag88'),flush=True)

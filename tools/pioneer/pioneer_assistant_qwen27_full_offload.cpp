@@ -176,7 +176,13 @@ int main(int argc,char** argv){
   previous=runtime.request=frame.id;
   if(frame.kind==A::Load && !runtime.loaded && frame.text.empty()){
    if(runtime.Load(frame.value))continue;
-   runtime.Close();runtime.Emit(A::Error,A::Rejected,"Full-card vocabulary/model authentication or tag88 capability unavailable; no inference or CPU fallback.");return 1;
+   runtime.Close();runtime.Emit(A::Error,A::Rejected,
+#ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
+    "Full-card vocabulary/model authentication or batched tag89 capability unavailable; no inference or CPU fallback."
+#else
+    "Full-card vocabulary/model authentication or tag88 capability unavailable; no inference or CPU fallback."
+#endif
+    );return 1;
   }
   if(frame.kind==A::Generate && runtime.loaded){if(runtime.Generate(frame))continue;break;}
   if(frame.kind==A::Threads && runtime.loaded && frame.text.empty() && frame.value && frame.value<=64){

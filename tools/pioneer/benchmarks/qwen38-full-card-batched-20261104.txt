@@ -1,0 +1,51 @@
+Full-card batched firmware integration:LOCAL BUILD/TEST checkpoint only
+====================================================================
+No Pioneer mutation or execution is part of this checkpoint. The real
+full-card Hello/four-output result remains the separate tag88 run in
+qwen38-full-card-offload-20261104.txt. No new throughput is claimed.
+
+The new tag89 full-card path combines the real five-EOG ROOT with the
+complete ten-peer-section returning-wide package. It includes twin-batch
+prefetch and corrected cross-token output closure. The existing native
+owner/complete53913832B snapshot/STOP/HOLD/drain/restore/END is retained.
+No old diagnostic role is promoted,CPU learned arithmetic/context added,
+quality reference weakened or Assistant backend replaced.
+
+Actual main results so far (all named handles observed terminal0):
+ ROOT5316:complete original corrected-output ROOT reproduced FIRST;new
+ all5-EOG function executed over248320 vocabulary IDs+5 out-of-range IDs.
+ Native49061:new14 arrays exact;ten wide peer arrays exact;18 role refusals;
+ default43 unchanged;max individual token frame1232B,NOT whole-kernel stack.
+ Worker98559:exact11 frozen vocabulary/container API imports;NO inference
+ context/decode/logits/CPU model graph imports. Model is NOT loaded here.
+ Session7955:both original and new pair;3072valid/12338grammar refusals,
+ 197COW USER failure histories,12335kernel-copy/shape refusals per pair.
+ These are synthetic transport/MOCK owner tests,not native hardware proof.
+ DATA44400:generated header exact;all3102004 executable words/all120 workers
+ covered by unchanged journal;10013 invalid/DATA-address refusals;2positive/
+ 230missing/wrong/late/CPU/hybrid/old-firmware binding refusals.
+ Original-pair regression28102 reproduced the physically tested tag88
+ module3c5769.../worker8cc39a.../smokef172... byte-for-byte before final
+ additional defined-zero client refusal was added. Final rebuild pending.
+
+First main artifact identities (final clean reproduction still required):
+ ROOT boot4B32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text129748Bc9f60a2c5b34686b3c7a1e2d6b062d3588821128a09be2e24967a3748204b12c
+ terminal8B468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2
+ auxiliary32680Babc7bf03ad5668530331116092f3aac6c240230922d2b7bb955b0798c99d5ccf
+ whole ELF191492Be93c1a57c21de073233689741e00ddc9e55ad20b1fd74d0758aa3100ce313f66
+ Header91624761b95d281cb9dd4493790b27a1c5d88d7c327d6df894711561b76b4c84
+ Modulede688dc5e682fa7714ac53450657c92052b139831eed7dce91b2300f82449eb6
+ Workerbca5625332f3e94d37a233d30b69d355fce0cc9a2cc835c4348eb2835d3a9cd4
+ Smoke32e1ed595821dc4ee8497ed36a8502f8e443e617d751a149198ab1e676cae80c
+
+Still required:final main/clean rebuild/tests and whole artifact comparison,
+fresh guarded physical admission/execution/clean restoration,arbitrary
+prompt/context quality,persistent weight ownership,streaming,Assistant
+integration and real warm throughput. Target20tokens/sec remains unmet.
+This is not a usable-speed or tensor-engine utilization claim. Keep goal
+active and focus on full-card model execution,not isolated peak diagnostics.
+
+Local raw in-progress evidence:
+ /private/tmp/pioneer-full-batched-20261104.NW4wCN4r
+Unclosed or planned tests above are NOT counted as passed.

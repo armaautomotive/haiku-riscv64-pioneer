@@ -24,8 +24,30 @@
  || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR != 1 \
  || !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) || TT_PIONEER_EXPERIMENTAL_Q38_STREAM != 1 \
  || !defined(TT_PIONEER_DRIVER_RELOAD) || TT_PIONEER_DRIVER_RELOAD != 1 \
- || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010088ULL
-#error Full offload requires the exact tag88 native role and all resident parents
+ || !defined(PIONEER_DRIVER_BUILD_TAG)
+#error Full offload requires the exact native role and all resident parents
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
+#if PIONEER_Q38_FULL_OFFLOAD_BATCHED != 1 || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010089ULL
+#error Full offload requires exact tag89 for its distinct batched firmware
+#endif
+#else
+#if PIONEER_DRIVER_BUILD_TAG != 0x2026110400010088ULL
+#error Full offload requires exact tag88 for its original firmware
+#endif
+#endif
+#ifndef PIONEER_Q38_FULL_OFFLOAD_FIRMWARE_BINDING_H
+#define PIONEER_Q38_FULL_OFFLOAD_FIRMWARE_BINDING_H
+#ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
+enum {PioneerQ38FullOffloadFirmwareSelection=2};
+#else
+enum {PioneerQ38FullOffloadFirmwareSelection=1};
+#endif
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
+static_assert(PioneerQ38FullOffloadFirmwareSelection==2,"late full-card batched selection");
+#else
+static_assert(PioneerQ38FullOffloadFirmwareSelection==1,"late full-card batched removal");
 #endif
 #if defined(PIONEER_Q38_TOKEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE) \
  || defined(PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY) || defined(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT) \

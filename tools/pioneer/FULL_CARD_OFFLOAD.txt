@@ -70,3 +70,29 @@ and independent idle/source/runtime admission.
 --vocabulary-only performs authentication/tokenizer checks but NEVER opens
 the accelerator. It does not prove card execution,model numerics or speed.
 Hardware execution and Assistant integration remain separate release gates.
+
+Separate batched full-card candidate (tag89,not yet physically qualified)
+-----------------------------------------------------------------------
+--batched on the native/worker builders selects a distinct driver/client
+pair. It keeps the same bounded prompt-only ABI and all-card computation,
+but uses the later twin-batch prefetch,corrected cross-token output closure
+and returning-wide recurrent worker. All ten peer code sections are exactly
+the existing returning-wide package;the full-card ROOT is rebuilt with the
+same five-EOG policy. No old diagnostic selector is used to activate it.
+The original tag88 driver/worker and default driver must still reproduce
+byte-for-byte. The new client rejects tag88,and the old client rejects89.
+This integration is NOT a speed result. The earlier fixed diagnostic using
+these optimizations was still slow. It does not add persistent weight reuse,
+streaming,Assistant installation or use of the tensor cores for all products.
+
+ python3 tools/pioneer/build_qwen38_full_offload_batched_root.py HAIKU_BUILD NEW_ROOT
+ python3 tools/pioneer/generate_qwen38_full_offload_batched_programs.py NEW_ROOT NEW_HEADER
+ python3 tools/pioneer/build_qwen38_full_offload_native.py HAIKU_BUILD NEW_NATIVE --batched
+ python3 tools/pioneer/build_assistant_qwen27_full_offload.py HAIKU_BUILD FROZEN_LIBRARIES NEW_WORKER --batched
+ python3 tools/pioneer/tests/run_pioneer_q38_full_offload_tests.py --batched
+ python3 tools/pioneer/tests/run_pioneer_q38_full_offload_batched_data_tests.py NEW_ROOT EXACT_WIDE_WORKER
+
+Firmware DATA/address checks and synthetic lifecycle tests are not hardware
+or whole-model numerical acceptance. The old spent tag88 physical helper
+MUST NOT be reused for89;fresh independent idle/generation/artifact admission
+and separately qualified one-shot exchange are required before execution.
