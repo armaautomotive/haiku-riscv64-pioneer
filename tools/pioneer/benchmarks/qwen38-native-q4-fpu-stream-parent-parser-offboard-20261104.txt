@@ -1,0 +1,37 @@
+Full native86 OUTER transcript parser -- OFFBOARD ONLY,2026-11-04 UTC
+==================================================================
+This checker was prepared locally while the ORIGINAL frozen physical parent
+57599 remained live. It neither queries the Pioneer nor changes the running
+parent/client/native files. NO physical success or process exit is claimed.
+
+New pioneer_native_q4_fpu_stream_parent_output.py SHA:
+a051ef4ab7ed0a4fb79b49e39d83a0c4ea3dbf8ad2e33aba168a75d3e09d2e88
+It checks the ENTIRE624-record outer transcript,not just child output:
+exact ordered normal041/gen8 ->native86/gen9 ->normal041/gen10 events,
+quiesce/reload markers,588-record child with all576 independent Fraction
+words/nine clean END summaries,matching kernel and TWO64-CPU/full-RAM
+reports. Free+used RAM and semaphores/ports/threads/teams must sum exactly
+to their totals. Wrong epoch/owner/cold/restore/order or unknown extra text
+is refused. Parsing a matching transcript is NOT actual process-closure,
+remote identity,hardware admission,real model quality or speed evidence.
+
+Actual --self-test main and clean BOTH CLOSED0,observed13:46:10UTC,stderr0.
+Clean uses the existing HEAD0023a24d17+qualified11-file client overlay with
+ONLY this additional parser copied in. One synthetically assembled valid
+transcript and1883 corrupt/old85 transcripts are checked,including every
+missing/duplicate/changed record,CPU/RAM totals/epoch/cold/owner and old
+physical85 output. Common test stdout SHA:
+750ab64766ba2e6ac4873425c8605bc77bfb73963fb0fd1a9e849aa0f6574cbe
+Raw main/clean stdout and empty stderr are retained in the sibling directory.
+
+An initial self-test exposed significant spacing in real sysinfo free-count
+columns. Accept whitespace between those columns while retaining ALL exact
+numeric totals and framing;final positive/negative tests pass. No numerical
+comparison,epoch,record count or source/hardware gate was relaxed.
+
+Use only as a read-only companion AFTER original physical57599 has actually
+finished. Require its independently observed exit0 AND stderr0,matching
+remote child/exit/state/parent source/identity records and fresh postflight
+before recording physical acceptance. Never use a parser pass to admit,
+repeat,reset,restore or replace the SPENT86-a experiment.
+Full-native27B/accepted quality/20tokens/sec remain UNMET;no new throughput.
