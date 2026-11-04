@@ -1,12 +1,14 @@
 Qwen27B full-card execution candidate (not an installed Assistant release)
 ======================================================================
-Actual Nov4 hardware milestone:the guarded Hello/four-output run completed
-with expected Hello! How can,whole original authentication/19.4GB upload,
-no CPU inference context or fallback,and clean device/worker closure. The
-stable driver was restored and independently checked with64CPUs/fullRAM.
-This verifies one full-card reply,NOT broad model quality,installed Assistant
-integration,warm throughput or20TPS. See the complete physical benchmark
-ledger/evidence under benchmarks/qwen38-full-card-offload-20261104.txt.
+Actual Nov4 hardware milestone:the longer counting request completed with
+32 output tokens,all851 original bindings/whole source authentication,
+19.4GB upload,no CPU inference context or fallback,and clean device/worker
+closure. Observed31-step post-prompt rate0.162595949..0.162598808tok/s,
+about6.15seconds per step. NOT a speedup or20TPS. The stable driver is
+independently verified restored togen16,64CPUs/fullRAM/apps unchanged.
+See benchmarks/qwen38-full-card-metrics-20261104.txt and its full evidence.
+This is one bounded reply/rate window,NOT broad model quality,repeatability
+or an installed full-card Assistant release. Earlier Hello4 replies remain.
 
 The installed p100a-qwen27-work backend is still hybrid:learned projections
 run on P100A while CPU handles attention/recurrent state and other operations.
@@ -105,11 +107,13 @@ or whole-model numerical acceptance. The spent tag88/tag89 physical helpers
 MUST NOT be reused;fresh independent idle/generation/artifact admission
 and separately qualified one-shot exchange are required before execution.
 
-Optional full-card count metrics (tag90,protected trial in progress)
+Optional full-card count metrics (tag90,one actual32-output run completed)
 ----------------------------------------------------------
-Nov4 20:32UTC:the one guarded32-request parent is LIVE. Its entire actual
-lifetime remains protected;whole returned evidence and independent stable
-restoration are still pending. No throughput/model result is accepted yet.
+Nov4 21:04UTC:protected93041 ACTUALLY exited0. Both whole-log readers pass;
+independent postflight verifies stable041/gen16/idle,unchanged apps/runtime,
+64CPUs/fullRAM.32 output tokens count correctly from1 through14 before the
+token limit.31 post-prompt commit steps/190.653..190.657s give observed
+0.162595949..0.162598808tok/s. No speedup,20TPS or broad quality is proved.
 
 --batched --metrics selects the same14 firmware arrays with a new driver/
 worker identity and a separate read-only ioctl,+0x8802. The old fixed
@@ -135,7 +139,8 @@ The whole-log reader checks full upload/order/count/timestamp/arithmetic/
 answer/final suffix independently. Its DATA result is NEVER cleanup or
 hardware/source provenance. Physical use requires a NEW qualified helper,
 fresh artifact/idle/generation admission and completed stable restoration.
-No completed tag90 hardware job or warm-rate result has been obtained yet.
+This one completed observation-window result does not establish sustained
+throughput,repeatability or isolated latency. The stage/helper is SPENT.
 
  python3 tools/pioneer/build_qwen38_full_offload_native.py HAIKU_BUILD NEW_NATIVE --batched --metrics
  python3 tools/pioneer/build_assistant_qwen27_full_offload.py HAIKU_BUILD FROZEN_LIBRARIES NEW_WORKER --batched --metrics

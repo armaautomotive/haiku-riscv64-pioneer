@@ -1,3 +1,60 @@
+ACTUAL full-card27B32-output run CLOSED0;0.162596..0.162599tok/s,NOT a speedup
+=========================================================================
+2026-11-04 21:04UTC. SAME protected93041 ACTUALLY exited0,observed21:02:05UTC.
+This supersedes ALL historical pending/no-hardware statements below. One
+public counting question,31 tokenized prompt IDs,32 returned output tokens,
+complete62 committed positions. Reply is exactly the integers1 through14,
+one per line;truncated at the32-token limit,NOT an EOG/broad quality test.
+All851 original tensor bindings/whole SAME-open model SHA authenticate and
+all19399024640B upload before actual complete full-card inference. No CPU
+context,attention,recurrent state,learned matrix product or token selection.
+CPU loading/vocabulary/tokenization/lifecycle/detokenization remain.
+
+Actual post-prompt count window,NOT cold time divided by output tokens:
+ first31,last62,31 sampled commit steps,3658 observations,63 unique rows
+ elapsed_min190653304us / elapsed_max190656656us
+ lower0.162595949tok/s / upper0.162598808tok/s;approximately6.150s per step
+ raw endpoint us53939200198,53939201878,54129855182,54129856854.
+These are observer-inclusive endpoint bounds,NOT confidence intervals,
+isolated per-token latency,repeatability or a whole-model quality certificate.
+Prompt+generation post-START-ack381.603s;Generate total2128.103s includes
+weight preparation/upload,initialization and cleanup. The32-token answer
+is NOT a claim of32 sampled steps;the first output is predicted at the
+last prompt position. No gain over earlier approximately0.163 diagnostic
+is established. Target20tok/s remains unmet by about123x.
+
+Genuine terminal/120HOLDs/record drain/full restoration/explicit END+Close
+and actual workerexit0 completed. Guarded parent restored041/gen14->90/gen15
+->041/gen16 only after child0+clean worker end. Child exit0,state:
+ FULL_CARD_RATE32_CLOSED_STABLE_RESTORED
+Whole231034B child stdout SHA
+ e55a51402bd27c500363ce58e598ff1f6b6b9047f8b46b1fca296da93300c8a5
+stderr0B. Fetch23836 ACTUALLY0. Unchanged main and independently archived
+clean-source whole readers both ACTUALLY0,byte-equal,stderr0;all2249 upload
+events,63 counter rows,raw timestamp arithmetic,answer bytes and suffix pass.
+Their DATA acceptance is not substituted for actual parent/worker closure.
+
+Fresh independent READ-ONLY postflight7664 ACTUALLY0/stderr0 after closure:
+ stable041/tag2026102100010012/gen16,cold0/quiesced0/owner0/open1/guard1
+ actual installed/staged/backup/admin/guard/runtime/Assistant SHA pins exact
+ same Sept8 kernel,64CPUs/full137034936320B RAM,free130962259968B
+ no model/compute parent;stage incoming absent,remote whole stdout SHA exact.
+No restart/reset/power/OS/network/SD/hardware/Assistant mutation occurred.
+Stage /boot/home/pioneer-q38-full-metrics-20261104-a is SPENT;NEVER rerun.
+Raw full closed streams/readers/postflight are in the sibling directory.
+
+Goal ACTIVE. Full-card generation now has a real longer-request baseline,
+but usable speed/Assistant full-card release/broad quality are NOT achieved.
+User redirected effort to generation speed;new interface and resident-weight
+lifecycle work are set aside. Existing physical Q4 inner profile places
+about75% of sampled job intervals in decode/unpack/pack;tiny instruction-
+issue and barrier changes already failed to improve measured full-model
+throughput. Do not repeat them unchanged or claim local builds are speedups.
+Next changes must address the generation calculation/data-preparation path
+and be compared against this actual full-card baseline.
+
+Historical source/qualification ledger (no-hardware statements superseded)
+------------------------------------------------------------------------
 Full-card32 guarded parent main+clean CLOSED0;hardware NOT started
 ================================================================
 2026-11-04 20:13UTC. Separate new helper:

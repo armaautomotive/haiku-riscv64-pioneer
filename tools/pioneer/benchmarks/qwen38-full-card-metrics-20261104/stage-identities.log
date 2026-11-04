@@ -1,0 +1,10 @@
+2551b50a52f6a2f7c98ca391fa1742640d5d777f23379663733679980bd643d7  /boot/home/pioneer-q38-full-metrics-20261104-a/tenstorrent_pci_probe-full-metrics90
+0:1:700:2868072
+989f54c394a42c43b2bf9e0fd64844bfb378ec79fb8fbe65643e8f9bad03242a  /boot/home/pioneer-q38-full-metrics-20261104-a/HaikuAssistantQwen27FullOffload-metrics
+0:1:700:79328
+d50896e160e4e7015ce0942ab5d83a0293a356fc90ddb0980be4313f38cfec4e  /boot/home/pioneer-q38-full-metrics-20261104-a/pioneer-q38-full-offload-rate-smoke
+0:1:700:228272
+5df0d6ae9714e192b56c1de654c8edd25a76dac8c91853c31b1cef91cb65f91c  /boot/home/pioneer-q38-full-metrics-20261104-a/pioneer_q38_full_offload_rate_physical.sh
+0:1:700:7776
+P100A_RELOAD driver55 tag2026102100010012 generation14 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+STAGED_ONLY_NO_DRIVER_EXCHANGE_OR_MODEL_EXECUTION

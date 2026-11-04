@@ -1,0 +1,28 @@
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
+d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
+861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74  /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
+c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18  /boot/home/config/non-packaged/servers/HaikuAssistantService
+0de9141eb3955cf1c993a67c80ef648b3538ce7155c17677458487ee083a4933  /boot/home/config/non-packaged/apps/HaikuAssistant
+2551b50a52f6a2f7c98ca391fa1742640d5d777f23379663733679980bd643d7  /boot/home/pioneer-q38-full-metrics-20261104-a/tenstorrent_pci_probe-full-metrics90
+989f54c394a42c43b2bf9e0fd64844bfb378ec79fb8fbe65643e8f9bad03242a  /boot/home/pioneer-q38-full-metrics-20261104-a/HaikuAssistantQwen27FullOffload-metrics
+d50896e160e4e7015ce0942ab5d83a0293a356fc90ddb0980be4313f38cfec4e  /boot/home/pioneer-q38-full-metrics-20261104-a/pioneer-q38-full-offload-rate-smoke
+5df0d6ae9714e192b56c1de654c8edd25a76dac8c91853c31b1cef91cb65f91c  /boot/home/pioneer-q38-full-metrics-20261104-a/pioneer_q38_full_offload_rate_physical.sh
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-q38-full-metrics-20261104-a/stable041.backup
+0ae23a2c211af9fbafb89c3d93bdd136a4bdd574baeeaf2d622f582efcf426af  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so.0.2.0
+a3b81c133641bbdacde8dd1d0e0ffa7a0a1ec0c33e95c426df1db59735379c16  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml.so.0.21.0
+9cb45a36558bd78aa4d4b7ed5385cbf9df32de208f9e6c9b6d064e8527dca389  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-base.so.0.21.0
+69e9ec2c43a123afbb256c3feb6313cdcebdf1b2a87278ac3cdac8a1a65273d2  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-cpu.so.0.21.0
+P100A_RELOAD driver55 tag2026102100010012 generation16 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+130962259968 bytes free      (used/max 6072676352 / 137034936320)
+                           (cached   19825790976)
+     59639 semaphores free (used/max       5897 /      65536)
+      3728 ports free      (used/max        368 /       4096)
+      2596 threads free    (used/max       1500 /       4096)
+      1974 teams free      (used/max         74 /       2048)
+e55a51402bd27c500363ce58e598ff1f6b6b9047f8b46b1fca296da93300c8a5  /boot/home/pioneer-q38-full-metrics-20261104-a/rate.stdout
+PASS_INDEPENDENT_POST_TERMINAL_STABLE16_IDLE_64CPU_FULL_RAM_APPS_RUNTIME_UNCHANGED
