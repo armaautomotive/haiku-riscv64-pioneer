@@ -1,13 +1,14 @@
 All-native-BFP8 converted weights (CPU-only experimental alternative)
 ==================================================================
 
-2026-11-04 qualification note:separate fixed native diagnostics79/80 now pass
-all3 full-K synthetic widths AND three authenticated learned-weight bands on
-hardware. They do not select this full cache in Work or qualify a full model.
-NATIVE_DRAM_BAND.txt adds an OFFBOARD packed-GDDR -> aligned-L1 loader and
-combined FPU image;no native owner/deployment yet. Existing cache recipes and
-the installed lossless Assistant path remain unchanged. The historical
-"physical unqualified" statement below predates those bounded diagnostics.
+2026-11-04 qualification note:separate diagnostics79/80 pass all3 synthetic
+full-K widths and three authenticated learned-weight bands on hardware.
+Now84 also PASSES three K5120 learned bands from GDDR through C64 L1 into
+full4-phase FPU:192 exact words/3 clean ENDs,normal041/gen6 restored. See
+NATIVE_DRAM_BAND64.txt. These bounded cases do NOT select this full cache
+in Work or qualify full-model quality/speed. Existing cache recipes and
+installed lossless Assistant remain unchanged. Historical "physical
+unqualified" statements below predate those bounded diagnostics.
 
 This is a NEW REQUANTIZATION recipe, not the lossless Assistant disk cache.
 All supported original Q4_K/Q6_K/Q8_0 matrices become native BFP8_B tiles;
@@ -73,6 +74,34 @@ No installed bank limit/base/owner/guard is changed. Physical capacity/range/
 alias/firmware-reservation proof and a separately qualified native owner,
 loader and full-model numerical/performance tests remain required.
 
+Address and throughput constraints (2026-11-04)
+----------------------------------------------
+The DATA proposal now also excludes the DRAM tile's TOP16MiB register
+window. The vendor's pinned Blackhole constant is0xff000000,not4GiB:
+https://github.com/tenstorrent/tt-umd/blob/aaed35c594b93d88f8224ea340ae095f3fa80efa/tt-umd/api/tt-umd/arch/blackhole_implementation.hpp
+Its DRAM_BANK_SIZE comment distinguishes GDDR from tile registers there.
+With64MiB base,the hypothetical cap cannot exceed0xfb000000. The3.75GiB
+proposal ends at0xf4000000,below that register window. This is ONLY an
+address-class bound,NOT proof of board capacity,free memory,reservation,
+routes,alias safety or usable bytes. Current native3GiB/bank stays unchanged.
+The pinned Metal descriptor agrees on view size and has firmware-dependent
+MRISC endpoint assignments;never replace the Pioneer's firmware-bound routes
+merely from a newer generic descriptor:
+https://github.com/tenstorrent/tt-metal/blob/f3ef8f22aaa8c499a58229dcca1f26864ac1001e/tt_metal/soc_descriptors/blackhole_140_arch.yaml
+
+Rated p100a memory bandwidth is448GB/s,not an observed speed:
+https://docs.tenstorrent.com/aibs/blackhole/index.html
+For NAIVE batch1 decode streaming all27231682560B device matrices per token,
+448e9/bytes gives16.451426 tokens/s IDEALLY,before compute/state/overhead.
+Even optimistically dedicating ALL180MiB SRAM to static weights gives only
+16.566247 in that traffic model. These are conditional analytical bounds,
+NOT real benchmarks or a universal limit on other dataflows/algorithms.
+Thus the20tok/s goal cannot be assumed from all-BFP8 residency alone:lower
+weight traffic (e.g. faithful compressed/native4-bit processing),reuse or a
+separately qualified decoding algorithm remains necessary. No automatic
+lower-precision recipe,relaxed reference,CPU fallback or target change is
+authorized by this calculation. Full-model quality/performance still required.
+
 Tests
 -----
   sh tools/pioneer/tests/run_pioneer_q38_native_bfp8_weight_tile_tests.sh
@@ -84,8 +113,9 @@ All-BFP8 tests:118 synthetic converter/cache checks,36 Q4 tiles with lower
 aggregate squared error,all three storage formats/model widths/padded rows,
 source failure/epoch atomicity,cross-tile/chunk disk reads and ZERO conversion/
 packed reads on hit;3 forbidden driver/Work/validation macro selections.
-DATA plan tests:12 cases,all851 exact shapes,complete non-overlapping tensor/
+DATA plan tests:16 cases,all851 exact shapes,complete non-overlapping tensor/
 state/workspace coverage,capacity/shape/duplicate/context/refusal and failure
-atomicity; reversed source order preserves bank use. Existing mixed/codec
+atomicity;register-window/old-max refusal,exact DATA ceiling,conditional
+traffic budget;reversed source order preserves bank use. Existing mixed/codec
 regressions stay unchanged. Native SDK all-BFP8 and default mixed builds pass.
 These tests do not prove hardware/model quality or achieve20tokens/sec.

@@ -3,13 +3,14 @@ Native C64 learned-band84 -- ACTUAL three learned bands PASS
 The ONE frozen physical parent52333 ACTUALLY CLOSED0,observed2026-11-04
 07:59:37UTC. All3 fixed K5120 samples/two jobs each/all192 returned words
 match the independent Fraction-qualified rounded reference. Three clean
-ENDs restored full original GDDR/L1/NIU/FIFO/TLB/clock/PCI state,then the
+ENDs restored original GDDR/L1,NIU command/FIFO,TLB/clock/PCI state,then the
 normal041/gen6 driver was restored without reboot. Independent raw fetch,
 explicit84 parser and final readonly health checks pass;64CPUs/fullRAM and
 cached Assistant files remain unchanged. This stage is now SPENT.
 See benchmarks/qwen38-native-dram-band64-observed-20261104.txt.
 These are fixed learned-weight bands with a diagnostic BF16 vector,NOT
 full-model inference,model quality,an Assistant Work target or a speedup.
+Cumulative NoC traffic-counter deltas are verified,not reset or rewound.
 
 The separate83 LOAD-ONLY C64 fixed transfer ACTUALLY passed all payload/header
 checks and full closure,restoring normal041/gen4. This new84 reconnects the

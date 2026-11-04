@@ -8,6 +8,11 @@
 // HYPOTHESIS to check, never evidence of usable card memory. Existing3GiB
 // bank capacity is NOT changed here. Original embeddings remain CPU-resident.
 struct PioneerQ38NativeBfp8Plan {
+	// Address DATA only,NOT a board capacity/free-memory/route/owner proof.
+	// Blackhole DRAM-tile addresses >=0xff000000 are tile REGISTERS,not GDDR:
+	// tt-umd aaed35c594b93d88f8224ea340ae095f3fa80efa,
+	// tt-umd/api/tt-umd/arch/blackhole_implementation.hpp (DRAM_BANK_SIZE).
+	static constexpr uint64_t Base=UINT64_C(0x04000000),GddrEnd=UINT64_C(0xff000000),MaxCapacity=GddrEnd-Base;
 	enum Kind {Weight=0,KV=1,Delta=2,Conv=3,Workspace=4};
 	enum Result {Proposed=0,BadShape=1,InsufficientCapacity=2};
 	struct Part {unsigned kind,layer,tensor,bank;uint64_t first,rows,rowBytes,offset,bytes,allocated;};
@@ -36,9 +41,10 @@ private:
 public:
 	static Result Compute(const std::vector<PioneerQ38Tensor>& tensors,unsigned context,bool twoDelta,
 		uint64_t hypotheticalCapacity,Proposal& output) {
-		// Same64MiB base and32-bit address envelope are DATA constraints only.
+		// Same64MiB base;exclude the TOP16MiB register window even from a
+		// hypothetical proposal. Passing still grants NO physical authority.
 		if(tensors.size()!=851 || !context || context>32768 || !hypotheticalCapacity || (hypotheticalCapacity&4095)
-			|| hypotheticalCapacity>UINT64_C(0x100000000)-0x04000000)return BadShape;
+			|| hypotheticalCapacity>MaxCapacity)return BadShape;
 		std::map<std::string,unsigned> names;
 		for(unsigned i=0;i<tensors.size();i++)if(!names.emplace(tensors[i].name,i).second)return BadShape;
 		Proposal next;next.capacity=hypotheticalCapacity;next.context=context;next.doubleDelta=twoDelta;

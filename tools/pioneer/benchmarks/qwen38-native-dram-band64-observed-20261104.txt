@@ -38,6 +38,8 @@ tag/markers/journals/epoch and strict output order confirmed. The accepted
 End path checks all46080 loaded payload+5120 zero header words AFTER HOLD,
 before ANY restore,then original184320B GDDR/221488B L1 and NIU/FIFO/TLB/
 clock/PCI closure. This math role does NOT claim83's pre-reset byte checks.
+NIU restoration means original command/FIFO state and verified cumulative
+traffic-counter deltas;those counters are NOT reset or rewound.
 Three explicit known-clean ENDs;only then84/gen5 ->normal041/gen6 reload.
 No quarantine/recovery/reboot/power/SD/hardware/network intervention needed.
 Only the tested planned STOP/HOLD lifecycle transitions occurred.
