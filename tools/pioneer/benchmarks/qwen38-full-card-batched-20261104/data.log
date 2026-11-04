@@ -1,0 +1,4 @@
+91624761b95d281cb9dd4493790b27a1c5d88d7c327d6df894711561b76b4c84 programs.h
+PASS generated complete full-card batched14-section DATA;all5 EOG ROOT/ten exact wide peers;NO learned weights or hardware
+PASS full-card batched immutable DATA:all14 sections/3102004 actual code words/all120 journal ranges/10013 invalid-or-DATA address refusals;NO model,native lifecycle or physical execution
+PASS full-card batched source/generated identity and binding:2 positives/230 missing,wrong,late,old-firmware,CPU,hybrid and shader refusals;NO hardware or throughput result

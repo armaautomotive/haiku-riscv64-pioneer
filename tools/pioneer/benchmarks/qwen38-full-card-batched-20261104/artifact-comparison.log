@@ -1,0 +1,9 @@
+e93c1a57c21de073233689741e00ddc9e55ad20b1fd74d0758aa3100ce313f66  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/root/program.elf
+e93c1a57c21de073233689741e00ddc9e55ad20b1fd74d0758aa3100ce313f66  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/clean-root/program.elf
+de688dc5e682fa7714ac53450657c92052b139831eed7dce91b2300f82449eb6  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/native/tenstorrent_pci_probe-native
+de688dc5e682fa7714ac53450657c92052b139831eed7dce91b2300f82449eb6  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/clean-native/tenstorrent_pci_probe-native
+bca5625332f3e94d37a233d30b69d355fce0cc9a2cc835c4348eb2835d3a9cd4  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/worker-final/HaikuAssistantQwen27FullOffload
+bca5625332f3e94d37a233d30b69d355fce0cc9a2cc835c4348eb2835d3a9cd4  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/clean-worker/HaikuAssistantQwen27FullOffload
+32e1ed595821dc4ee8497ed36a8502f8e443e617d751a149198ab1e676cae80c  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/worker-final/pioneer-q38-full-offload-smoke
+32e1ed595821dc4ee8497ed36a8502f8e443e617d751a149198ab1e676cae80c  /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/clean-worker/pioneer-q38-full-offload-smoke
+90001ae65aab8eac168406186728a8c20ba9e22cfe96993ef87fedd25359e86d  tools/pioneer/pioneer_q38_full_offload_batched_physical.sh

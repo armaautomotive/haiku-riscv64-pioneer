@@ -1,5 +1,57 @@
-Full-card batched firmware integration:LOCAL BUILD/TEST checkpoint only
-====================================================================
+Full-card batched firmware:main+clean qualification CLOSED,not hardware
+=====================================================================
+2026-11-04 19:03UTC. All final build/test/whole-file comparisons actually
+closed0. This supersedes pending-rebuild notes in the historical ledger
+below. No Pioneer compute parent has been launched for89. Goal ACTIVE.
+
+Source0f232fb7a0 was archived into a NEW independent clean source tree:
+ /private/tmp/pioneer-full-batched-clean-20261104.ZfF3E7Hz
+Only frozen c060 tokenizer headers were read from the local submodule
+object store;no dirty submodule code/objects were used. Full clean ROOT
+24475,clean native+worker34544,clean original+batched USER/control/smoke
+83200,main final original+batched workers53840 and clean DATA+whole-file
+comparisons13928 ACTUALLY exit0. ROOT ELF/all4 sections,driver/default,
+worker and smoke all compare byte-for-byte. Both worker roles have12
+refusals,exact11 permitted vocabulary imports and no CPU inference context.
+Actual native base3c5769/default2df0 and worker8cc39a/smokef172 remain
+byte-exact,so the prior physical result is not silently reassigned.
+Both DATA suites agree on3102004 code words/10013 invalid addresses and
+2positive/230role-refusal cases. Both USER/control pairs pass197COW cases,
+all5EOG,3cancellation boundaries and12335shape/copy refusals. These remain
+immutable-DATA/synthetic-transport/MOCK-owner evidence,not hardware results.
+
+New physical helper90001ae65aab8eac168406186728a8c20ba9e22cfe96993ef87fedd25359e86d
+is a separate fixed89/12->13->14 one-shot flow,not a reused spent88 stage.
+Its entire guarded flow is identical to the prior helper except nine
+explicit profile/comment substitutions. Main+independent copied-source
+parent tests both close0:54typed metadata/idle/64CPU+RAM/failure/one-shot
+cases;unknown child/error/identity never auto-restore. Fake endpoints only.
+Actual smoke process/channel regression48898 and clean83200 pass1valid/
+9failed/3invalid CLI cases;whole-result reader passes4valid/1047refusals/
+2invalid-timing DATA cases. No failed history or missing full result counts
+as successful hardware cleanup. Raw closed evidence is in the sibling dir.
+
+Two early clean launches returned2 because archive extraction was still
+running:neither builder existed yet and no output artifact was created.
+After the archive/clone parent73763 ACTUALLY closed0,the same new output
+paths were built normally. Those early failures are retained explicitly;
+they are NOT passing builds or accelerator failures. Final qualified stderr
+streams are empty. No learned tensors/prepared weights/binaries published.
+
+Fresh independent readonly Pioneer SSH actually0 before any staging:
+Haiku Sep8 kernel,stable041/tag12/gen12,cold0/quiesced0/owner0/open1/guard1,
+64CPUs/full137034936320B RAM,free130976862208B;new89 stage absent. That
+cached metadata is NOT a model run or permission to bypass future admission.
+No OS/kernel/boot/network/Assistant/SD/hardware/power change has occurred.
+
+Next:push this tested checkpoint,then fresh exact artifact/idle admission
+and one guarded full-card Hello trial,protect its entire lifetime and
+observe its actual terminal result before any further Pioneer operation.
+No new throughput or usable20TPS claim. Persistent weights,streaming,
+Assistant integration/broad quality and tensor-engine acceleration remain.
+
+Historical initial build ledger (superseded pending notes)
+---------------------------------------------------------
 No Pioneer mutation or execution is part of this checkpoint. The real
 full-card Hello/four-output result remains the separate tag88 run in
 qwen38-full-card-offload-20261104.txt. No new throughput is claimed.
