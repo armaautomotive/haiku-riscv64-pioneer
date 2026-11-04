@@ -10,7 +10,7 @@ assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 directory=pathlib.Path(sys.argv[1]);command=(directory/'compile-math-argv.txt').read_text().splitlines()
 assert command.count('-o')==1 and command.count('-c')==1
 at=command.index('-o');del command[at:at+2]
-command.remove('-c');command.insert(1,'-fsyntax-only')
+command.remove('-c');command.remove('-fstack-usage');command.insert(1,'-fsyntax-only')
 assert pathlib.Path(command[-1]).name=='blackhole_qwen38_macro_q4_decode_math.cpp'
 assert subprocess.run(command,stdout=subprocess.PIPE,stderr=subprocess.PIPE).returncode==0
 def altered(name,value):
