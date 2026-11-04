@@ -1,0 +1,15 @@
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+cd924896986dabcead8493c9dedca1d7b25fde323fbd972caf67ad93139a9309 4436 text.bin
+OFFBOARD_NATIVE_DRAM_BAND_BUILD_ONLY K 5120 PHASES4 C32_L1_PACKED_GDDR16_QUEUE;NO staging,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD ACTUAL RV32 direct-GDDR K5120:one packed load320 requests/2880 flits,two full4-phase FPU jobs/all64 exact vs prior independent Fraction-qualified rounded reference,C32 descriptors/wholeL1 guards;stack320/touched308,steps82404;NO scalar payload access/host roundtrip/owner/hardware/model quality/speed proof
+PASS ACTUAL RV32 missing-response bounded fault park after43197569 steps;NO math/result/retry;device PollLimit65536 UNCHANGED
+PASS actual RV32 DRAM-band20 failure controls:bad immutable frame/NIU/counters/FIFO/header/job mutation/FPU completion fault park before output;NO retry or cleanup
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+13494a0a5fc262b02dc7b7a6353da5e773a5ec01d732efd29d6525ba58a6e5f2 4432 text.bin
+OFFBOARD_NATIVE_DRAM_BAND_BUILD_ONLY K 6144 PHASES4 C32_L1_PACKED_GDDR16_QUEUE;NO staging,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD ACTUAL RV32 direct-GDDR K6144:one packed load384 requests/3456 flits,two full4-phase FPU jobs/all64 exact vs prior independent Fraction-qualified rounded reference,C32 descriptors/wholeL1 guards;stack320/touched308,steps98172;NO scalar payload access/host roundtrip/owner/hardware/model quality/speed proof
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+ee740295aeffdb555c5fa0706d092e6d1a467b38b6351bc067bbfe7edbb57a45 4436 text.bin
+OFFBOARD_NATIVE_DRAM_BAND_BUILD_ONLY K 17408 PHASES4 C32_L1_PACKED_GDDR16_QUEUE;NO staging,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD ACTUAL RV32 direct-GDDR K17408:one packed load1088 requests/9792 flits,two full4-phase FPU jobs/all64 exact vs prior independent Fraction-qualified rounded reference,C32 descriptors/wholeL1 guards;stack320/touched308,steps271908;NO scalar payload access/host roundtrip/owner/hardware/model quality/speed proof
+OFFBOARD actual direct-GDDR native image evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-native-dram-band-image.pjIKOyEj

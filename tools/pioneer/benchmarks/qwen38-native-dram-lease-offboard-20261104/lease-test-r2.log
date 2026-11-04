@@ -1,0 +1,8 @@
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+cd924896986dabcead8493c9dedca1d7b25fde323fbd972caf67ad93139a9309 4436 text.bin
+OFFBOARD_NATIVE_DRAM_BAND_BUILD_ONLY K 5120 PHASES4 C32_L1_PACKED_GDDR16_QUEUE;NO staging,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD actual GDDR learned-band lease sample0:exact64 rounded words,320 device reads/two full FPU jobs,complete211248B L1+184320B GDDR+NIU/FIFO/TLB/clock restoration;NO native PCI/VM/FD authority/hardware/full-model quality/speed proof
+PASS OFFBOARD actual GDDR learned-band lease sample1:exact64 rounded words,320 device reads/two full FPU jobs,complete211248B L1+184320B GDDR+NIU/FIFO/TLB/clock restoration;NO native PCI/VM/FD authority/hardware/full-model quality/speed proof
+PASS OFFBOARD actual GDDR learned-band lease sample2:exact64 rounded words,320 device reads/two full FPU jobs,complete211248B L1+184320B GDDR+NIU/FIFO/TLB/clock restoration;NO native PCI/VM/FD authority/hardware/full-model quality/speed proof
+PASS OFFBOARD GDDR learned-band lease:35 failure/admission/close cases;first uncertainty retains journals,NO subsequent IO/END/retry/reset/cleanup;PRIVATE weights not printed or published
+PASS GDDR lease3 forbidden production roles;PRIVATE headers unchanged;OFFBOARD evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-dram-learned-lease.ibthug0t

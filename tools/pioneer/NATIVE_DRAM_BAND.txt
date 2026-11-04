@@ -1,6 +1,16 @@
 Card-side packed-GDDR native band -- OFFBOARD prototype
 ======================================================
 
+2026-11-04 follow-on:PioneerNativeDramModelBandLease.h now implements the
+full L1/GDDR/NIU/FIFO/TLB/clock journal ALGORITHM with distinct diagnostic81
+protocol. Software tests exercise3 authenticated real-weight bands/192 exact
+RV32 outputs,35 failure/close cases and current kernel SDK Run/End templates.
+The native PCI/VM/FD/clock implementation/driver/client is still missing;
+the algorithm and compile-only interface are NOT native ownership authority.
+Reset/counter preservation also needs native qualification before deployment.
+See benchmarks/qwen38-native-dram-lease-offboard-20261104.txt. No card,cache,
+installed driver or Assistant change occurs in this offboard checkpoint.
+
 PioneerNativeDramBandLoader.h plus blackhole_q38_native_dram_band.cpp load
 one complete K5120/6144/17408 band FROM resident packed GDDR,then reuse it
 for two complete4-phase FPU jobs. No runtime scalar weight/activation reads,

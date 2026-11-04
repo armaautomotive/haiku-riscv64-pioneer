@@ -1,0 +1,99 @@
+Full GDDR/L1/NIU journal lease algorithm -- OFFBOARD,not a native driver
+====================================================================
+2026-11-04 UTC,baseline ac6d6f46a57d55f16e7327d8c9ba9da666f17982.
+Actual hardware learned-band80 proof remains the prior192 words/3 ENDs.
+This turn implements the missing full journal algorithm for direct-GDDR
+imagecd924896...,but DOES NOT implement/link/publish a native IO/PCI/VM/FD
+adapter,driver/client/factory or physical trial. Do not deploy via79/80.
+Goal ACTIVE:full-native27B/20tok/s UNMET,no new real-model performance data.
+Latest real tiny Work result stays0.204tok/s/3 samples,CPU attention/state,
+not a matched speedup. New production Work/CPU-reference selection is forbidden.
+
+Implementation -- distinct fixed learned diagnostic81
+-----------------------------------------------------
+PioneerNativeDramModelBandProtocol:tag2026110400010081,ops7d00..02,
+pointer-free392B request/352B result,three COMPILED sample selectors only.
+No arbitrary code/weights/addresses/routes/reset or model/Work capability.
+Run/END owner is noncopyable,heap allocated,with52812 L1 words/211248B and
+46080 packed GDDR words/184320B journals. Code8KiB,stack8KiB,job32B,all new
+weight/input/header/output/status spans are covered. New NativeScope contract
+binds exact subject/proof/internal buffer identities and counts,not a generic
+caller assertion. The actual native binding remains TO DO.
+
+Same existing PRIVATE authenticated compiled data/predictions cf8e2ca4... /
+a2c977bc... for tensor7 K5120 real Q4 first/middle/last bands;no exported
+bytes/model/cache/binary/private generated header committed. Original f69
+producer and cached recipes remain unchanged. This is diagnostic-only byte
+comparison/reference work,NOT a CPU fallback hidden in Work inference.
+
+The algorithm saves/rereads all L1/GDDR before mutations,stages packed GDDR
+from compiled data with immediate AND complete final readback,stages new L1
+code/frame/zeros with BOOT LAST,then enables/readbacks NIU FIFO and launches
+the same direct-GDDR image. All4 fidelity terms stay unchanged. Expected
+320 reads/2880flits,defined Dst rows,park PCs,NDB1/count/phase,all source/
+NIU/counter/idle/FD-scope checks precede the64 returned words. Unknown/old/
+fault markers are refused immediately. Empty status may poll only within
+bounded monotonic deadline. No new I/O follows a checked primitive failure.
+
+Only explicit END from known RESULT can STOP/HOLD,check code/frame/every
+NIU-loaded byte and unchanged GDDR source,restore/reread the ENTIRE GDDR
+journal and entire L1 journal,restore NIU commands/FIFO/TLB and close the
+clock. Full readbacks detect later writes damaging earlier staged/restored
+words. First uncertainty retains all journals and invokes MEMORY-ONLY
+quarantine;no implicit END,reset,retry,restoration,destructor IO or disposal.
+Actual native scope/restore/close contracts must still be implemented/tested.
+In particular,the new STOP/reset/counter preservation expectations are NOT
+hardware-proven by mocked IO and need primary-reference/native qualification.
+
+Actual software results -- no device authority
+----------------------------------------------
+First complete real-byte owner test13735 ACTUALLY CLOSED0,stderr0. Later
+14068/61158/final20049 ACTUALLY CLOSED0 with current source,all finalstderr0:
+3 real learned samples x2 actual RV32 FPU jobs,192 returned words EXACT vs
+the independently Fraction-qualified private original-derived predictions;
+complete211248B L1+184320B GDDR+NIU/FIFO/TLB/clock restoration in fake hardware.
+35 failure/admission/close cases check dropped staging/TLB/NIU/reset writes,
+timeout,wrong marker/PC/source/counters,clock/scope/restore failure,changed
+code/frame/loaded/source data,late GDDR damage caught BEFORE any release,
+immutable proof route refusal,invalid sample,and close/abandon without END.
+No subsequent operation or scope callback on repeated Run/End/Abandon.
+This test executes actual cd924896 RV32 but PCI/VM/FD/clock IO are MOCKED.
+It is not native ownership/lifecycle or physical silicon/quality/speed proof.
+
+Actual kernel-SDK probe instantiates FULL Run+End under exact81 role and
+Werror,using the fresh SHA-pinned RV32 image. First probe stopped BEFORE
+object completion on3 misleading-indentation errors;statements were split,
+no compiler check disabled. r2/r3/finalr4 pass,private object SHA:
+1f45bc02a546ffab5788592692eb86cdc0d93f183ca4e278477032b377a636a6
+Run individual frame256B,End192B;owner journals remain heap/reference only.
+19 IO methods+memcpy unresolved by design:there is NO native implementation,
+linkable driver/device entry or whole-kernel-stack qualification here. Object
+contains PRIVATE weights and MUST NOT be published. Stack/unresolved TEXT
+receipts only are archived. Existing unchanged RV32 decoder/all3 widths/
+192 words/20 fault parks regression61158 also passes,all image hashes exact.
+
+Role test10 cases:only exact81+kernel+reload accepts;wrong/missing role/tag/
+reload/kernel,Work/TT-Work/validation/full CPU reference refuse. ABI test
+rejects every352 nonempty-result byte and old80 tag. Private data unchanged.
+Actual namespace/refusal/mapping/control/close/CPU/PCI/VM/ARC tests await the
+concrete native adapter;these gates are not replaced by header-only tests.
+
+Fresh Pioneer READ-ONLY admission -- unchanged clean machine
+------------------------------------------------------------
+783fbb ACTUALLY CLOSED0,stderr0 at03:21UTC:normal041/tag12/gen10,quiesced0/
+cold0/active_owner0/open1/guard1;64 CPUs/max137034936320B/free133780357120B.
+Installed worker861e5287.../servicec509da43... unchanged,original0:1:600:
+18973870528,no LLM/test process. Model BFS has36.6GiB free;no native cache
+conversion is launched without a qualified consumer/arena. No OS/network/
+boot/kernel/Assistant/settings/power/SD/mains/hardware/model/cache change.
+
+Next concrete work:exact separate native adapter with all17 actual VM view
+descriptors,FD/thread/team/generation/semaphore/PCI/guard/backing ownership,
+per-access actual TLB and fixed-domain checks,strict ARC clock source,
+four recorded reset transitions,one checked close/unreserve and retained
+Free/failed-delivery semantics. Resolve reset/NIU/counter semantics before
+physical deployment. Qualify actual native endpoint/mapping/control/close
+and full driver/client build,then ONE admitted new GDDR-to-FPU physical test.
+Still required after that:resident matrix stripes/cohort/token state,
+high-range/alias/reservation-qualified full arena,full-model quality and
+honest throughput. Do not substitute this fixed diagnostic for the full goal.

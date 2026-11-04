@@ -16,7 +16,7 @@ struct DramBandRV32:Machine {
 	IO transfer;NativeBfpBandMachine native;std::vector<uint8_t> code;
 	unsigned minSP=0x70000,minStore=0x70000,stores=0,acks=0,dropAckAt=0,weights=0,inputs=0;
 	bool active=false,awaiting=false,stackSeen=false,changeFrame=false;
-	DramBandRV32(const char* folder,unsigned width):transfer(width),native(width,4) {
+	DramBandRV32(const char* folder,unsigned width,unsigned route=17U|(12U<<6)):transfer(width,route),native(width,4) {
 		const std::string root=folder;code=Read((root+"/text.bin").c_str());const auto boot=Read((root+"/boot.bin").c_str());
 		assert(boot.size()==4 && !code.empty() && code.size()<=8192 && !(code.size()&3));
 		std::fill(std::begin(l1),std::end(l1),0xdeadbeef);l1[0]=Word(boot,0);
@@ -122,6 +122,7 @@ struct DramBandRV32:Machine {
 		transfer.Exact();return true;
 	}
 };
+#ifndef PIONEER_NATIVE_DRAM_BAND_IMAGE_ONLY
 int main(int argc,char** argv) {
 	assert(argc==3);const unsigned width=unsigned(std::stoul(argv[2]));
 	DramBandRV32 image(argv[1],width);assert(image.Execute());
@@ -147,3 +148,4 @@ int main(int argc,char** argv) {
 		printf("PASS actual RV32 DRAM-band%u failure controls:bad immutable frame/NIU/counters/FIFO/header/job mutation/FPU completion fault park before output;NO retry or cleanup\n",failures);
 	}
 }
+#endif
