@@ -1,3 +1,34 @@
+Full-card32 guarded parent main+clean CLOSED0;hardware NOT started
+================================================================
+2026-11-04 20:13UTC. Separate new helper:
+ tools/pioneer/pioneer_q38_full_offload_rate_physical.sh
+ SHA5df0d6ae9714e192b56c1de654c8edd25a76dac8c91853c31b1cef91cb65f91c
+Root-only one-shot new90/stable14->native15->restored16 profile. All exact/
+metadata/idle/health/atomic-exchange functions and whole source/runtime/
+permission admission are byte-identical to the prior guarded parent except
+the exact new profile/file names. Actual child0 and clean worker exit are
+required before new idle admission and stable restore. Final integer DATA
+shape separately permits rate unavailable;it never invents a rate/quality.
+Unknown child/status/stderr/identity never auto-restores,resets or retries.
+
+Main and independent copied-source parent tests ACTUALLY0/stderr0:
+complete old54 cases FIRST,then120 new typed metadata/final DATA/one-shot
+failure cases. Includes66 valid rate-availability/output-count tails and
+wrong/negative/extra/multiline/old/failed tails. Fake endpoints only,NOT an
+actual device exchange or native execution certificate. Whole helper cmp
+is exact. Prior88/89 stages are SPENT and untouched.
+
+Fresh independent readonly Pioneer SSH ACTUALLY0 before any new staging:
+stable041/tag12/gen14,cold0/quiesced0/owner0/open1/guard1;Haiku,64CPUs/full
+137034936320B RAM;new metrics stage absent. No driver/model/power/network/
+kernel/boot/Assistant/SD/hardware change. Fresh admission is repeated by
+the helper before exchange;these cached observations alone are not a grant.
+Next:push tested helper,create new private stage,limited transfer+whole
+readback,then ONE protected actual32-output full-card model run. No90
+physical execution or throughput result yet;goal ACTIVE,20TPS unmet.
+
+Closed source qualification ledger
+---------------------------------
 Full-card token-count/32-request integration:main+clean CLOSED0,not hardware
 ========================================================================
 2026-11-04 20:08UTC. New clean source archive ofbfd5426196:
