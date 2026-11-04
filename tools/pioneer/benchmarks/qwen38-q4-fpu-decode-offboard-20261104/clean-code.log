@@ -1,0 +1,7 @@
+RV32I_Q4_FPU_OPERAND_SHA256 89528c59038e073c130544f98688f43719b9a24939b0a59965eee5a9504dd051 bytes 436
+BUILD_ONLY functions;NO boot/owner/NoC/Dst/unpack/lifecycle/driver/installation/hardware/quality/speed authority
+PASS actual RV32I compressed-Q4 FPU code:MMIO-port,3 functions,32 issued instructions,109 strict RISC steps,32768 exact operand comparisons,private ABI stack/callee registers preserved;NO scalar weight/activation/NoC/config/Dst/unpack/driver/hardware/quality/speed authority
+RV32I_Q4_FPU_OPERAND_SHA256 61056683623c2922d3c31314aef03741561962b6ab101a37782e265880fe98d6 bytes 200
+BUILD_ONLY functions;NO boot/owner/NoC/Dst/unpack/lifecycle/driver/installation/hardware/quality/speed authority
+PASS actual RV32I compressed-Q4 FPU code:inline-ZERO-port-writes,3 functions,32 issued instructions,50 strict RISC steps,32768 exact operand comparisons,private ABI stack/callee registers preserved;NO scalar weight/activation/NoC/config/Dst/unpack/driver/hardware/quality/speed authority
+OFFBOARD actual compressed Q4 FPU RV32I code evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q4-fpu-code.kdTCYxBF

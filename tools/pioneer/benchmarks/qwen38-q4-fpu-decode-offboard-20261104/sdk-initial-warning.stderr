@@ -1,0 +1,10 @@
+In file included from tools/pioneer/tests/pioneer_q38_q4_fpu_block_observer.h:5,
+                 from tools/pioneer/tests/pioneer_q38_q4_fpu_model_test.cpp:3:
+tools/pioneer/tests/pioneer_q38_q4_fpu_decode_test.cpp: In member function 'uint32_t Q4FpuMachine::Read(unsigned int, unsigned int)':
+tools/pioneer/tests/pioneer_q38_q4_fpu_decode_test.cpp:16:17: error: this 'if' clause does not guard... [-Werror=misleading-indentation]
+   16 |                 if(r==9)return 0;if(r==10)return 0x3f800000;
+      |                 ^~
+tools/pioneer/tests/pioneer_q38_q4_fpu_decode_test.cpp:16:34: note: ...this statement, but the latter is misleadingly indented as if it were guarded by the 'if'
+   16 |                 if(r==9)return 0;if(r==10)return 0x3f800000;
+      |                                  ^~
+cc1plus: all warnings being treated as errors

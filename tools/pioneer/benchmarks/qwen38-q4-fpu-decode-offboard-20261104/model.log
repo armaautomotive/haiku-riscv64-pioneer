@@ -1,0 +1,11 @@
+PASS_PRIVATE_Q4_FPU_BAND tensor7 width5120 first0 rows32 weights163840 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_Q4_FPU_BAND tensor7 width5120 first8704 rows32 weights163840 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_Q4_FPU_BAND tensor7 width5120 first17376 rows32 weights163840 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_Q4_FPU_BAND tensor8 width5120 first0 rows32 weights163840 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_Q4_FPU_BAND tensor8 width5120 first8704 rows32 weights163840 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_Q4_FPU_BAND tensor8 width5120 first17376 rows32 weights163840 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_Q4_FPU_BAND tensor6 width17408 first0 rows32 weights557056 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_Q4_FPU_BAND tensor6 width17408 first2560 rows32 weights557056 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_Q4_FPU_BAND tensor6 width17408 first5088 rows32 weights557056 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_Q4_FPU_BINDING matrices3 bands9 weights2654208 same-open full original SHA/epoch;NO card/Assistant/cache/driver changes or model-quality/speed qualification
+PRIVATE original-model read-only Q4 FPU binding evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q4-fpu-model.n8G9OobA

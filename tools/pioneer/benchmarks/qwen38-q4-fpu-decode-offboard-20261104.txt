@@ -1,0 +1,86 @@
+Compressed original Q4 -> BF16 FPU operand:OFFBOARD prerequisite passed
+=====================================================================
+2026-11-04 UTC. New12-instruction/group preparation and10-instruction/32-lane
+decode. This is a register instruction producer,NOT a full kernel,installed
+driver,fast Work mode,physical execution,quality acceptance or speed result.
+Existing Assistant,normal041 driver,caches,CPU/RAM/kernel/boot unchanged.
+Full-native27B/20tokens/sec remain UNMET. No benchmark rate is extrapolated.
+
+Closed evidence
+---------------
+Private qualification base:
+ /private/tmp/pioneer-q4-fpu-qualified-20261104.fNleqZZP
+The sibling public directory retains complete non-weight stdout/stderr and
+actual exit records. All seven accepted records are EXIT_STATUS=0,stderr0:
+ arithmetic,clean-arithmetic,code,clean-code,model,regression,sdk.
+Source/receipt SHA manifests are separate. No model/cached weights,learned
+headers,executables,objects or private weight-derived data are published.
+
+Arithmetic/binding tests ASan+UBSan/Werror,ffp-contract=off:
+ 16,777,216 original finite-half/six-bit scale/min/nibble comparisons.
+ 76,800 BF16 rounding-boundary cases,6,400 even ties,signed zeros.
+ 16,384 independent Python Fraction comparisons,87 zero/cancellation cases;
+ no shared CXX half/FMA/rounding oracle. Exact FP32 then BF16-RNE recipe.
+ 262,144 full packed-block comparisons across32 synthetic two-tile groups.
+ All8 Q4 scale/min groups,both nibble halves,even/odd output lanes and
+ K positions visited exactly once. Coefficients/constants survive reuse.
+ Both dependent MAD-latency gap removals fail the readiness observer.
+ Three negative compile gates reject kernel,Work and CPU-validation roles.
+The observer handles arithmetic only;it does not pretend UNPACK/Dst loads,
+MOVD2A/source-bank publication or NoC/GDDR scheduling have been qualified.
+
+Actual RV32I code (unchanged strict Step decoder),MMIO AND direct issue:
+ prepare12 + low10 + high10 =32 exact emitted Tensix instructions.
+ MMIO text436B,SHA89528c59038e073c130544f98688f43719b9a24939b0a59965eee5a9504dd051
+ inline text200B,SHA61056683623c2922d3c31314aef03741561962b6ab101a37782e265880fe98d6
+ MMIO109 RISC steps;inline50;32,768 exact operand comparisons per variant.
+ Direct variant has ZERO instruction-port writes. Actual ABI stack/callee
+ registers preserved;compiler stack reports16B/function. Only code/private
+ stack/instruction port are addressable in this observer;no scalar weight/
+ activation,NoC/config/Dst access exists in these three probe functions.
+ Fresh HEAD dependency archive plus ONLY12 new files reproduces tests and
+ BOTH exact text binaries byte-for-byte (actual cmp0). Dirty llama.cpp,
+ NATIVE_BUILD_STATUS and FlashNext/unrelated WIP are not build inputs.
+ Actual Haiku RISC-V SDK hosted model-observer TU compiles O2/Werror/no
+ exceptions/no RTTI;object613a923b706253759331711659a9739cc6422835253822d0b3f2ff565fdc8c6b.
+ This is OBJECT compilation,not a native hosted link/run or driver proof.
+ Unchanged original vector-affine million-comparison regression closes0.
+
+Private ORIGINAL model read-only qualification,final parent1635 CLOSED0
+----------------------------------------------------------------------
+SAME open18973870528B GGUF fully hashed/authenticated BEFORE any selected
+band is read;source identity/epoch checked throughout:
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+No model data are printed/saved. All2,654,208 observed weights match original
+Q4 decode followed by the explicit BF16-RNE recipe exactly:
+ tensor7 blk.0.ffn_gate:K5120,first rows0/8704/17376,3x163840 weights.
+ tensor8 blk.0.ffn_up:  K5120,first rows0/8704/17376,3x163840 weights.
+ tensor6 blk.0.ffn_down:K17408,first rows0/2560/5088,3x557056 weights.
+This is NOT full-model quality or physical fast-FPU accumulation acceptance.
+Other layers/all193 Q4 matrices are not claimed tested by these nine bands.
+
+Development failures retained,not reclassified
+----------------------------------------------
+An early test expected3 timing faults,but the independent setup operations
+covered two gaps. Setup now interleaves those products explicitly with no
+padding;both truly dependent decode-gap negative controls remain mandatory.
+The first full-block observer used raw parity address2 as column increment2,
+instead of the documented bool(address&2) increment1. Exact-once visitation
+failed before any hardware use. Corrected mapping passes every row/column.
+An initial model test invented a K6144 Q4 family and stopped after successful
+CPU-embedding bands. That is NOT accepted model evidence. Exact authenticated
+schema says K6144 is Q8/Q6;the final test explicitly selects three real FFN
+Q4 device projection families. Future Q6/Q8 producers remain required.
+First SDK command lacked its hosted include paths;second hit a genuine GCC
+misleading-indentation warning in the new observer. Both stderr files are
+retained. Correct SDK paths and source formatting fix them;Werror remains.
+No arithmetic comparator,expected word,tolerance or Work policy is relaxed.
+
+Next actual integration
+-----------------------
+Qualify original metadata/quant loads into all32 lanes,including tiny half
+scales;transient BF16 Dst stores/MOVD2A and actual fast-FPU consumer;NoC/GDDR
+streaming/ownership/drains;then separate bounded native lease/protocol and
+hardware trial. Existing spent81/82/83/84 stages are untouched. Follow with
+Q6/Q8,full-cohort/state/quality and measured real generation. No host products
+or CPU validation in Work. See Q4_FPU_DECODE.txt for exact contracts/limits.

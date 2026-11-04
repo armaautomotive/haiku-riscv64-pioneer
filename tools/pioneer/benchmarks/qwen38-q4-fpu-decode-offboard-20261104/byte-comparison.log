@@ -1,0 +1,1 @@
+PASS actual cmp0 main-clean MMIO436B and inline200B text binaries;no driver/device/model data mutation

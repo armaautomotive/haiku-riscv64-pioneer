@@ -1,0 +1,72 @@
+Compressed Q4 -> fast FPU operand prerequisite
+============================================
+
+PioneerQ38Q4FpuDecode.h is a NEW OFFBOARD instruction producer. It is not
+selected by any image, driver, installed Assistant or Work mode. The existing
+lossless disk cache and its original quantized bytes remain unchanged.
+
+Why this path
+-------------
+The qualified native BFP8 experiments expand weights before uploading them.
+That has a capacity and batch-one weight-traffic cost (see
+NATIVE_BFP8_WEIGHT_CACHE.txt). This candidate instead decodes small original
+Q4 groups ON THE CARD into transient BF16 operands for the fast matrix unit.
+It does not store an expanded model in GDDR or require CPU learned products.
+The decoder is implemented here; its source-load/FPU pipeline is NOT yet built
+or qualified. No theoretical or measured tokens/sec is implied.
+
+Exact register contract
+-----------------------
+All32 lanes enabled, fresh ready registers and no conditional predication:
+  Prepare:1=finite original half d in FP32,2=half dmin in FP32,
+          3=original unsigned6-bit scale,4=original unsigned6-bit minimum.
+  Output:1=d*scale,2=-(dmin*minimum),4=15,5=1,6=32767,7=0xffff0000.
+  Decode:0=fresh unsigned ORIGINAL packed byte0..255;select low/high nibble.
+  Output:0=nearest-even BF16 value represented in FP32,low16 bits zero.
+  Decode preserves1,2,4,5,6,7;clobbers0,3;changes no lane flags.
+
+Prepare emits12 instructions/group;each decode emits10/32 values. Constants
+are reused ONLY within their original metadata group. d*scale*q contains at
+most21 significant bits,so its FP32 product is exact. A single SFPMAD then
+performs the subtract without removing an original product rounding point.
+The final conversion is EXPLICIT BF16-RNE,not lossless Q4 and not existing
+Work math. BF16 operands and full matrix accumulation still require separate
+quality qualification. No comparator/reference/tolerance is changed.
+
+The half domain implies finite weights below2^26,nonzero spacing at least
+2^-24,so this bounded producer needs no hidden denormal/NaN/overflow path.
+SFPSTORE/BF16 truncates;SFPSTOCHRND nearest is ties-away,not nearest-even.
+Six integer operations implement nearest-even and preserve signed zero.
+Primary ISA pin4a73a7121d95f545b85efa34b243f0b8b316f967:
+https://github.com/tenstorrent/tt-isa-documentation/blob/4a73a7121d95f545b85efa34b243f0b8b316f967/BlackholeA0/TensixTile/TensixCoprocessor/SFPSTORE.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/4a73a7121d95f545b85efa34b243f0b8b316f967/BlackholeA0/TensixTile/TensixCoprocessor/SFPSTOCHRND_FloatFloat.md
+
+Tests/builds (never open a card)
+-------------------------------
+  sh tools/pioneer/tests/run_pioneer_q38_q4_fpu_decode_tests.sh
+  sh tools/pioneer/tests/run_pioneer_q38_q4_fpu_decode_code_tests.sh HAIKU_BUILD
+  sh tools/pioneer/tests/run_pioneer_q38_q4_fpu_model_tests.sh ORIGINAL_GGUF
+The last command reads/authenticates the SAME complete original file before
+selected learned-band observations. It prints/saves no model weight data.
+Build only three RV32I functions (NOT a launchable image):
+  python3 tools/pioneer/build_q38_q4_fpu_decode.py HAIKU_BUILD NEW_ABSOLUTE_DIR --inline
+
+Remaining integration,not inferred from these tests
+---------------------------------------------------
+1. Bind actual original-byte/metadata UNPACK-to-Dst loads,including finite
+   half subnormals,all32 lanes,disjoint physical scratch/RWC formats and exact
+   per-group lifetime. Do not silently depend on SFPLOAD/FP16 to preserve
+   subnormal original half scales;its documented arithmetic path flushes them.
+2. Publish the rounded BF16 operands through independently qualified
+   SFPSTORE/MOVD2A,source-bank handoffs and final REAL drains;connect the fast
+   FPU consumer and GDDR streaming. Test actual emitted full pipeline/faults,
+   not just separately correct register arithmetic. No scalar host fallback.
+3. Add distinct owned native lease/protocol/image/one-shot trial;do not reuse
+   spent81/82/83/84 stages or change their frozen evidence.
+4. Qualify Q6/Q8 operands,all required projection widths/cohort/recurrent/
+   attention state,full-model quality,clean END/restore,then real matched
+   inference timing. This model's K6144 projections are Q8/Q6,NOT Q4.
+5. Only promote a successful complete path to Assistant Work. Keep CPU
+   validation separate. Full-native27B and20tokens/sec remain UNMET.
+
+Closed evidence:benchmarks/qwen38-q4-fpu-decode-offboard-20261104.txt.

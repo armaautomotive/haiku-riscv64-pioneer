@@ -1,0 +1,8 @@
+In file included from tools/pioneer/tests/../PioneerQ38Q4FpuDecode.h:8,
+                 from tools/pioneer/tests/pioneer_q38_q4_fpu_decode_test.cpp:2,
+                 from tools/pioneer/tests/pioneer_q38_q4_fpu_block_observer.h:5,
+                 from tools/pioneer/tests/pioneer_q38_q4_fpu_model_test.cpp:3:
+tools/pioneer/tests/../PioneerSfpuDivide.h:5:10: fatal error: stdint.h: No such file or directory
+    5 | #include <stdint.h>
+      |          ^~~~~~~~~~
+compilation terminated.

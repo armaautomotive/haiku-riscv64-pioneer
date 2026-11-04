@@ -1,0 +1,2 @@
+PASS OFFLINE vector affine:1048576 exact scalar-RISC FP32 comparisons,ALL32 lanes,canonical integer bounds,half/factor metadata,activation scale limits,signed zeros,non-fused rounding;14 instructions and3 dependent-latency faults rejected;NO Dst loading/image/driver/native/cycle-speed qualification
+Offline vector affine evidence retained at /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q38-vector-affine.Ykvrt5XT
