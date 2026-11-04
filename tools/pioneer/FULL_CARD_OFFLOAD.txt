@@ -105,8 +105,12 @@ or whole-model numerical acceptance. The spent tag88/tag89 physical helpers
 MUST NOT be reused;fresh independent idle/generation/artifact admission
 and separately qualified one-shot exchange are required before execution.
 
-Optional full-card count metrics (tag90,LOCAL candidate only)
+Optional full-card count metrics (tag90,protected trial in progress)
 ----------------------------------------------------------
+Nov4 20:32UTC:the one guarded32-request parent is LIVE. Its entire actual
+lifetime remains protected;whole returned evidence and independent stable
+restoration are still pending. No throughput/model result is accepted yet.
+
 --batched --metrics selects the same14 firmware arrays with a new driver/
 worker identity and a separate read-only ioctl,+0x8802. The old fixed
 frontier diagnostic ioctl/roles are not activated. Only committed-count/
@@ -131,7 +135,7 @@ The whole-log reader checks full upload/order/count/timestamp/arithmetic/
 answer/final suffix independently. Its DATA result is NEVER cleanup or
 hardware/source provenance. Physical use requires a NEW qualified helper,
 fresh artifact/idle/generation admission and completed stable restoration.
-No tag90 hardware job or warm-rate result has been obtained yet.
+No completed tag90 hardware job or warm-rate result has been obtained yet.
 
  python3 tools/pioneer/build_qwen38_full_offload_native.py HAIKU_BUILD NEW_NATIVE --batched --metrics
  python3 tools/pioneer/build_assistant_qwen27_full_offload.py HAIKU_BUILD FROZEN_LIBRARIES NEW_WORKER --batched --metrics

@@ -1,0 +1,1 @@
+PASS one-shot full-card prompt adapter/CLI;35 FAKE channel/process cases,16 CLI refusals,8 role refusals;known clean worker+actual exit before answer;unknown close only;NO device/model/numerical/speed or installation result

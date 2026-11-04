@@ -1,3 +1,25 @@
+Full-card ordinary-question interface:main+clean CLOSED0,not hardware
+===================================================================
+2026-11-04 20:32UTC. Clean archive of306bd1f940:
+ /private/tmp/pioneer-full-prompt-clean-20261104.5Tjiwitn
+Archive+local frozen submodule clone64776 ACTUALLY0 before qualification.
+Clean real IPC/CLI/role tests and unchanged4/32-client regressions27265
+ACTUALLY0,stderr0. Clean cross-build94634 ACTUALLY0,stderr0. Main unchanged
+client regressions and FOUR explicit main/clean whole artifact comparisons
+67745 ACTUALLY0,stderr0. New ask3fc9,worker989f,four-clientd631,rate-clientd508
+are all byte-identical. Whole passed logs/import listings/comparison are
+retained in the sibling evidence directory;NO binaries or weights published.
+
+This qualifies SOURCE/build/fake-channel behavior only. The new adapter/ask
+CLI is NOT staged,installed,executed on real hardware or wired into Service.
+Do not infer accelerator ownership/END/model numerics/TPS from these tests.
+Protected actual90 parent93041 STILL LIVE,not timed out or retried. Same
+handle observed20:32UTC;local parent stderr0B. No result/restoration has
+been accepted. NO other Pioneer access during its entire active lifetime.
+Goal ACTIVE;target20TPS and interactive performance remain UNMET.
+
+Historical main qualification ledger (pending-clean now superseded)
+-----------------------------------------------------------------
 Full-card ordinary-question interface:main offline qualification only
 ====================================================================
 2026-11-04 20:28UTC. User priority is full P100A inference,NOT more hybrid
