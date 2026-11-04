@@ -1,0 +1,3 @@
+PASS_VECTOR_Q4_METADATA_ARITHMETIC finiteHalves63488 nonfiniteRefusals2048 factorTriples16842752 exactCoefficientMinimumPairs4063232 halfWords27 baseWords64 groupProductWords16;strict issue-latency+unchanged scalar reference,SYNTHETIC_LANES_ONLY;NO worker/native/hardware/speed result
+PASS_VECTOR_Q4_BLOCK actual raw256B prefix/physical Dst:1024 original-byte blocks/all8 groups/all16 outputs+ALL zero padding EXACT to unchanged scalar BlockQ4;all5 twin addresses;preserved accumulator/otherDst/scale3;one UNPACK/no bank flip/no scalar products or L1 metadata stores;43 domain refusals,8 missing store/transpose/drain controls;SYNTHETIC_ENDPOINTS_ONLY,NO native/hardware/speed grant
+CLOSED_VECTOR_Q4_TESTS local only;NO native/card/Assistant/model-quality/TPS/speedup grant

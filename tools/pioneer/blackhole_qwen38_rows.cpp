@@ -9,6 +9,20 @@
 #include "PioneerQ38TokenPrefetchWorkerRole.h"
 #include "PioneerQ38TokenBatchedPrefetchRole.h"
 #include "PioneerQ38TokenMatrixPhaseRole.h"
+#ifdef PIONEER_Q38_VECTOR_Q4_METADATA
+#if PIONEER_Q38_VECTOR_Q4_METADATA != 1 || !defined(PIONEER_Q38_VECTOR_Q4_METADATA_IMAGE) \
+ || PIONEER_Q38_VECTOR_Q4_METADATA_IMAGE != 1 || !defined(PIONEER_Q38_TOKEN_TWIN_BATCH_PREFETCH_WORKER_IMAGE) \
+ || !defined(PIONEER_Q38_WORK_DIRECT_SRCB) || !defined(PIONEER_Q38_BLOCK_AFFINE_DST) \
+ || !defined(PIONEER_Q38_BLOCK_SCALE_REUSE) || !defined(PIONEER_Q38_CACHED_AFFINE) \
+ || defined(PIONEER_Q38_Q4_CONSTANT_ISSUE) || defined(PIONEER_Q38_PREDECODED_Q4) \
+ || defined(PIONEER_Q38_NATIVE_Q8) || defined(PIONEER_Q38_PREPARED_Q4_BLOCK) \
+ || defined(PIONEER_Q38_PREPARED_Q4_AFFINE) || defined(PIONEER_Q38_WORK_LOCAL_Q4)
+#error Vector metadata is a distinct ORIGINAL-layout returning twin worker candidate ONLY
+#endif
+#include "PioneerQ38VectorQ4Metadata.h"
+#elif defined(PIONEER_Q38_VECTOR_Q4_METADATA_IMAGE)
+#error Vector metadata image must not silently use the old scalar preparation
+#endif
 #define PIONEER_ATTENTION_FREESTANDING
 #ifdef PIONEER_Q38_MANUAL_TTSYNC_IMAGE
 #include "PioneerQ38ManualTTSync.h"
@@ -819,6 +833,11 @@ extern "C" unsigned block_main()
 #endif
 #ifdef PIONEER_Q38_CACHED_AFFINE
 #ifndef PIONEER_Q38_PREPARED_Q4_AFFINE
+#ifdef PIONEER_Q38_VECTOR_Q4_METADATA
+	if(type==12 && skipDotCheck) {
+		if(!PioneerQ38VectorQ4Metadata::FiniteBlock(Words(PIONEER_Q38_RAW_BASE),bytes))block_fault_park();
+	} else
+#endif
 	if (type==12 &&
 #ifdef PIONEER_Q38_PREPARED_Q4_BLOCK
 		!skipDotCheck &&
@@ -831,6 +850,9 @@ extern "C" unsigned block_main()
 #ifdef PIONEER_Q38_BLOCK_AFFINE_DST
 	if (type==12 && skipDotCheck) {
 		VectorPanelEmitter blockEmitter; blockEmitter.Drain(); // prior deferred store completes BEFORE format change
+#ifdef PIONEER_Q38_VECTOR_Q4_METADATA
+		if(!PioneerQ38VectorQ4Metadata::Block(blockEmitter,PIONEER_Q38_RAW_BASE,Bits(scale)))block_fault_park();
+#else
 #ifdef PIONEER_Q38_WORK_LOCAL_Q4
 		static_assert(0x90000+PioneerQ38PredecodedQ4::OriginalBytes<=0x91000
 			&& 0x92000+PioneerQ38PredecodedQ4::Bytes<=0x94000,"disjoint original tile/panel/local scratch/scales inside saved view");
@@ -857,6 +879,7 @@ extern "C" unsigned block_main()
 			,Bits(scale)
 #endif
 		)) block_fault_park();
+#endif // distinct vector metadata replaces scalar BlockQ4+FP32 imports ONLY
 #ifdef PIONEER_Q38_WORK_LOCAL_Q4
 		PioneerQ38LocalQ4Setup(blockEmitter);
 #endif

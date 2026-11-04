@@ -1,0 +1,96 @@
+Qwen27B Work-Q4 vector metadata calculation candidate -- 2026-11-04
+=================================================================
+
+STATUS: COMPLETE WORKER OFFBOARD QUALIFICATION ONLY. NOT INSTALLED.
+No new driver,physical run,whole-model quality result or speedup claim.
+Latest actual full-card27B baseline remains approximately0.162596tok/s;
+20tok/s remains UNMET. See qwen38-full-card-metrics-20261104.txt.
+
+Change to the actual returning worker,not an isolated unused helper:
+- Distinct PIONEER_Q38_VECTOR_Q4_METADATA_IMAGE/metadata selection.
+- Work-Q4 ONLY replaces CachedAffine::Prepare/BlockQ4 scalar products,
+  1024B L1 coefficient stores and16 partial FP32 metadata UNPACK passes.
+- Exactly ONE256B ORIGINAL byte-major prefix UNPACK,no SrcA publication.
+- Exact HALF->FP32 conversion on SFPU,including all HALF subnormals and
+  both signed zeros. No BF16 conversion,requantization or approximation.
+- Four scale/minimum groups calculated together in vector subvectors.
+  SFPTRANSP with explicit+0 registers writes the ORIGINAL metadata and
+  all padding to Dst32 rows128..191,for both column parities.
+- Group7's own not-yet-consumed output temporarily holds immutable bases;
+  it is reloaded BEFORE its final results replace EVERY borrowed word.
+  No extra L1/Dst allocation. Accumulator108..111 remains untouched.
+- Eight original high-byte word reads retain the finite-domain structural
+  refusal. No scalar coefficient product or CPU reference/inference path.
+- Existing original Q4 nibble decoding,integer matrix,affine rounding,
+  replay,NoC packet grammar,source-bank ownership,real drains and returned
+  publisher/STOP remain. Checked Q4,Q8 andQ6 retain their arithmetic paths.
+- Normal boot/kernel/Assistant are not installed or relabeled by this work.
+
+Observed compiler image (actual linked sections,not source attributes):
+Full worker144592B SHA256
+4b3dc0c96d3888b9c43af683f58678cc91cade7c67e955413bad8c5e16d52870
+text8136/8192B,affine4108/5376B,fetch1292/1792B,service9888/24576B.
+GCC's local clone emits the metadata helper in main .text;the source's
+service attribute is NOT treated as physical placement authority.
+All11 exact file/section pins are in the builder. Main and clean builds
+first reproduce ENTIRE old70fdf96d... worker+matrix object byte-for-byte.
+Outside the deliberately changed matrix text/affine regions,every changed
+instruction is audited:one exact q38_compute_once entry relocation and16
+same-name/type/size/ENTIRE-byte-identical immutable-object relocations.
+Live LUI source is required,not a blanket relocation or changed-code waiver.
+No writable globals/GOT,forbidden scalar instructions or new CSR writes.
+
+Terminal evidence (actual process exits,not log tails alone):
+1. Main arithmetic/physical-Dst block tests passed with ASan+UBSan and
+   strict non-fused FP32 semantics. Independent clean combined run repeats:
+   - ALL63488 finite HALF encodings;2048 nonfinite domain refusals.
+   - 16842752 factor cases (all256^3 upper-byte triples+256^2 lower pairs).
+   - 4063232 exact coefficient/minimum pairs versus UNCHANGED integer
+     BinaryScale reference,all64 scale factors times every finite HALF.
+   - 1024 actual raw-byte blocks,all8 groups/all16 output columns/ALL zero
+     padding,all5 checked/twin raw addresses,preserved other physical Dst.
+   - 43 domain/address refusals and8 missing store/transpose/drain controls.
+2. Main complete linked worker suite actual0:
+   27 format/width/group shapes,54 retained changed-input jobs.
+   Q8/Q4/Q6 x K5120/6144/17408 x groups1/3/16. Same matrix products,
+   final FP32 outputs,NoC,source,replay,ACK,queued descriptor and realSTOP.
+3. Main separate latest negative suite actual0:
+   12 lost-transfer fault-inert cases and8 compiled finite-domain refusals.
+   Rejected metadata never enters the new vector helper or publishes.
+4. Independent clean source/archive+ONLY this scoped patch build actual0;
+   ALL11 pins identical. Deferred resident-lifecycle/native WIP excluded.
+5. Clean authenticated whole-ROM runner actual0:
+   Arithmetic+raw block tests and all27 shapes/54 changed-input jobs,
+   plus12 lost-transfer cases and8 compiled finite-domain refusals.
+   Combined stack3540/8192B maximum in these synthetic cases.
+   stderr has exactly20 intentional guest fault diagnostics from the20
+   negative cases,NOT card failures or ASan/UBSan reports.
+6. Main+clean builder gates:30 pre-SDK/ambient-role refusals and14 actual
+   shader role refusals. CPU/reference/native/fast-math aliases rejected.
+
+Example EMULATOR counts,NOT hardware time or model-throughput predictions:
+Q4/K17408/groups16/two jobs:
+old scalar metadata reads974848 -> new17408;
+old RV steps34971443 -> new18429537.
+Q8/Q6 outputs match but RV counts slightly increase with the new selector.
+These counts do not justify a speedup claim;the vector issue/work balance
+can differ on silicon. Actual27B rate must be remeasured after qualification.
+
+Artifacts are the sibling qwen38-vector-q4-metadata-offline-20261104/
+directory. No learned model bytes,prepared products,binaries or generated
+firmware headers are included. Reproduce with:
+python3 tools/pioneer/build_qwen38_vector_q4_metadata_worker.py SDK OUT
+python3 tools/pioneer/tests/pioneer_q38_vector_q4_build_gate_test.py OUT
+python3 tools/pioneer/tests/run_pioneer_q38_vector_q4_tests.py OUT/unchanged-wide OUT
+The last command authenticates whole old/new ROMs before virgin boot.
+
+Pioneer read-only postcheck2026-11-04 about21:37UTC:
+stable041 driver55/tag2026102100010012,generation16,
+quiesced0/cold0/active_owner0/open_count1/guard1;
+Sept8 Haiku kernel,64CPUs,maxRAM137034936320B.
+No new card run,reset,reboot,power,SD,model or installed-app changes.
+
+NEXT: a DISTINCT full-card native package/client identity with these exact
+ten peer sections and unchanged five-EOG ROOT;qualify before hardware,
+then run the same real32-output-token request and compare honest decode
+times. Old physical stages88/89/90 are SPENT and must never be rerun.
