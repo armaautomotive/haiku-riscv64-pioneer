@@ -1,0 +1,43 @@
+Known-CLOSED native86 restore-only admission -- qualified,2026-11-04 UTC
+====================================================================
+Original physical57599 ACTUALLY CLOSED1,observed13:49:29UTC. All576 actual
+words and nine explicit clean ENDs passed;independent child verifier accepts
+polls[1,1,1,1,1,1,2,2,2]. Childexit0/stderr0;remote/local66800B child SHA:
+7588578d8d49a8e65c62c0277fe9f4dc46f3c0186a4ef6abd2bed811b439d347
+Original607-line/68305B outer SHA:
+178f86c96b85a1df0e4bc65d97c618069d2b3b0efee0bd75b91db697b18812ff
+Outerstderr0. It is NOT a passed outer run and will NEVER be rerun/repinned.
+
+Cause:the frozen parent has literal `metadata 2026110400010086 7` AFTER its
+complete output gate,while the new driver's correct generation is9. The
+strict metadata function prints the real generation9,then returns1 BEFORE
+the KnownClosed state write/restoration. Its earlier flow fixtures mocked
+metadata without checking those literal arguments;this was a qualification
+gap,not a kernel/GPU failure. Do NOT edit the SPENT parent's original source.
+Fresh postterminal read-only probe CLOSED0:gen9/cold0/owner0/all hashes match,
+no test/Assistant processes,source state still RUNNING (a stale state file,
+not proof of a live process). Source parent a54de1d4 and all records preserved.
+
+NEW separately named pioneer_native_q4_fpu_stream_closed_restore.sh SHA:
+403b429dce68f09682d4f1334975b45e9198ae7a6ebf45a4693c76fc799d84c3
+It runs from a NEW private restore directory,not the SPENT experiment. It
+requires exact captured outer/child hashes,exit1/exit0/stderr0/source state,
+the unchanged original parent/client,stable/admin/guard/Assistant identities,
+idle and strict native86/gen9/cold0/owner0/CPU/RAM checks. Only then a NEW
+restore-once marker,backup,copy/quiesce/single swap/wait9->10/final health.
+NO diagnostic RUN/END/reset/power/automatic retry or old-record overwrite.
+No unknown GPU resources are cleaned:all9 native ENDs already completed.
+
+Actual-method local flow/metadata fixtures pass main AND clean CLOSED0,
+observed13:59:28UTC,stderr0:23 first-failure flow+10 exact metadata cases.
+They also reproduce the SPENT parent's actual stale7-vs-real9 failure using
+its unmodified strict metadata body. Literal restore metadata9->10 sequence
+and single quiesce/wait are checked,so this specific gap cannot be hidden by
+a permissive fixture. These CPU fixtures are NOT a restore execution claim.
+Test source SHA15fb9eea6af2725862d76591b2d619bbdad68b678b5b0e38014fac1d46c9c897.
+Main/clean stdout and empty stderr retained in sibling directory.
+
+Next:stage/hash-check this NEW restore-only tuple,run ONCE,observe actual
+terminal,then independent stable041/gen10/64CPU/fullRAM/unchanged Assistant
+postflight. Original parent remains CLOSED1 regardless of separate restore.
+No new real tokens/sec/full-model quality/full-native27B/20tokens/sec claim.

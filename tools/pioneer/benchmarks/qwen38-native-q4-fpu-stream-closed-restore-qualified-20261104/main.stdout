@@ -1,0 +1,2 @@
+PASS actual CLOSED86 restore:23 first-failure flow+10 strict epoch/owner/cold cases;SPENT parent stale7-vs-real9 regression reproduced;literal9->10 transitions checked;NO GPU/RUN/END/reset/retry/admission/old-parent-pass authority
+CPU-only closed86 restore evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-closed86-restore.krbma868
