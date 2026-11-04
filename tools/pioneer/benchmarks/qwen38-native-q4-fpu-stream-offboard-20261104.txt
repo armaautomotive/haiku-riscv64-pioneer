@@ -1,0 +1,86 @@
+Native86 full-K compressed-Q4 owner -- OFFBOARD,2026-11-04 UTC
+==========================================================
+Previous goal turn classified PROGRESS: tested streaming source checkpoint
+09a30a402a7c9e80d0c65ea0a75780dd57896e53 pushed and remote-verified.
+This turn adds distinct86 protocol/ownership/SDK/actual-method qualification.
+No Pioneer contact,power/SD/OS/network/boot/driver/Assistant changes occurred.
+Last separately observed physical state remains normal041/gen8/64 CPUs/full
+RAM from native85;this is NOT a new state query or native86 hardware result.
+
+Authoritative execution
+-----------------------
+Private CPU export7390 ACTUALLY CLOSED0,observed12:52:32UTC,after full SAME
+open original SHA/epoch check and nine exact full-K bands. Generated headers:
+4937303ebafd38364cd3aa4cc5fc29bf3de9e633aef7fe4b0d7f5631c822bdf6 data
+2924c553f211cc448d644082aefe07179d2a69b2fc222f0026b6f5c4b7faebbc metadata
+Original c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+Private generated files/objects/binaries/original/prepared weights are NOT
+published. Public receipts contain only hashes,counts and non-weight logs.
+
+Consolidated main34407 ACTUALLY CLOSED0,observed13:00:32UTC;clean66869 ACTUALLY
+CLOSED0,observed by13:01:31UTC. SAME handles followed to terminal,no retry
+because of observation timeout. Each ran8 synchronous strict exit0/stderr0
+children and checked all14 source hashes before/after. Clean is a fresh
+archive of HEAD09a30a402a plus ONLY those14 source/test overlays. Independent
+postterminal source verification passes in main/clean. Manifests identical:
+ddacdade60bc60f232419bef5f679f876e48019c777cd121828ef419fb4c4af6
+Native actual-method source manifest identical:
+0b723e7bf56fbb0ff95c29379130e3e7c4041c7aecfcd41d9612abf0c337772b
+
+Main/clean complete native driver binaries cmp IDENTICAL,PRIVATE hash:
+742d6d57b6a521e035d22be93e3b20afcd3dc3bc35efc0b8e12bd1a9db2f0235
+Default43 control remains2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc.
+Default43 is a BUILD COMPARISON,NOT the installed stable041 or a deployment.
+Pinned7824B image5120 7e4765f9ec803cc5986534ec4f947b93e5a32b4711a01223e5f39741dfce8e03
+Pinned7824B image17408 cc22a0cb005ff037d751c0b307cc74c76586260e1910789616cbc0719d912295
+
+Common main/clean stdout hashes:
+sdk        1340e55da0413628a9421494e9647ddc3b1e3230988cce23f083c865d23cbb79
+contract   594774f7fe1eefb01223fc6bd2f7ea7d132dcccb0a1a76b21a42e87f62ac8cb2
+lease      4fef0275bc83d4a190c122e88fd0d9e70f9024a27725bc03af1af7b1b215e613
+real_lease bd7ce88e009c5212b3e70071055e9bf1d6bdc4bfc1dcb49763b3aa76fa64d7aa
+native main 7d0787cba952ac4c89fea3eef9dc0ff8ddc2bdcbf38b23a25b46d885a9edc4a3
+native clean3dd11d221f06ea78165bf36c8b4dc41ec894e56de035305022fb2f985e32fc93
+Native output differs ONLY by retained output pathname. Compile stdout and
+all16 child stderr files are empty. Full receipts and argv retained below
+the same-named directory;these observations do not admit any GPU run.
+
+Coverage and limits
+-------------------
+Native SDK links all actual driver methods,19 forbidden roles fail,wrong
+image/data roles fail actual template instantiation,legacy find_device NULL.
+DATA contract verifies26908 unique L1 words,both exact GDDR sets,3328 final
+payload words across two slots/no header aliases,and561 dirty-result/tag/
+version/reserved/generation refusals. Nine synthetic full-K lease executions
+return576 exact words;55 failure/admission controls retain unknown resources
+with no next IO/END/retry/reset. Nine authentic private-header/compiled-RV32
+lease cases return576 exact words,full107632B L1 and133120B/452608B GDDR plus
+NIU/FIFO/TLB/clock restore. Canonical L1/GDDR is shared by staging,actual RV32
+scalar operations,NoC responses,UNPACK,SFPU and physical FPU/Dst checks;no
+success-result injection or descriptor normalization. Strict Step unchanged.
+Actual native/control method bodies over OS/PCI fixtures:317 valid/673
+refused,all17 VM views/scope/PCI/selected address domains/reset+FIFO attempts/
+closure failures/wrong-thread END. Assigned result phases in domain fixtures
+are NOT native engine/prerequisite/ARC proof. The actual clock wrapper's
+guards are tested,not real ARC queue execution.
+Independent Python Fraction checks2654208 original weights,all prepared/input
+bytes and663552 rounded phases/288 goldens;no CXX codec/compute oracle shared.
+Diagnostic BF16 inputs are NOT real prompt hidden states or model quality.
+
+Early failures preserved privately and corrected without gate relaxation:
+initial lease fixture hard-coded route17 while authentic prerequisite fixture
+binds bank0 at18;derive fixture route from prerequisite instead. First SDK
+Werror rejected misleading indentation;split statements,keep Werror. First
+actual-method compile rejected unused test-only NoMoreLease;explicitly mark
+that helper referenced,keep Werror. Final complete main/clean suites pass.
+
+Official NoC source was inspected/pinned to tt-metal commit722aab8f75bfb2fbb729edeeac19389478b74d27,
+file blob083fe9e1f32c58ae2833d498f0d3cd0a758cbfdb. Per-read source/destination/
+LEN then GO and ready-before-next-packet support queued varying lengths as
+source-level INFERENCE,not a P100A physical guarantee. Physical86 must check
+actual data/counters/commands/clean END. See NATIVE_Q4_FPU_STREAM_DIAGNOSTIC.txt.
+
+Next: new authenticated client/independent reference/frozen one-shot parent
+and SDK/refusal qualification,then independently admitted physical86 test.
+No old85/84 stage/client/parent reuse. No comparative performance claim,
+no new tokens/sec. Full-native27B/accepted quality/20tokens/sec remain UNMET.

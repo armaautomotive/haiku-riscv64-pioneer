@@ -1,0 +1,103 @@
+Diagnostic86: full-K compressed-Q4 GDDR/SFPU/FPU -- OFFBOARD ONLY
+==============================================================
+This is a NEW separate native owner for Q4_FPU_STREAM.txt's two fixed7824B
+images, NOT an Assistant Work mode or a physically admitted experiment.
+No native86 code has been staged,installed,loaded or executed on the Pioneer.
+No driver/Assistant/boot/network/power/SD action is part of this checkpoint.
+Spent81/82/83/84/85 stages and their physical parents MUST NEVER be reused.
+
+Arithmetic and data
+-------------------
+One core executes two complete32-row full-K jobs without a host K-loop or
+per-K256 accumulator reset. Device-side read prefetch alternates two disjoint
+L1 buffers; unchanged quant bytes and exact scale/minimum metadata feed the
+SFPU's BF16-RNE decode and the original MOVD2A/four-phase FPU path.
+Nine fixed compiled bands: gate tensor7/up tensor8 first0/8704/17376,K5120;
+down tensor6 first0/2560/5088,K17408. Inputs are diagnostic BF16 vectors, NOT
+real prompt hidden states. No learned CPU products/reference/cache utility
+are compiled into the driver. Preparation/oracles stay in separate tools.
+
+Source preparation is read-only on the original SAME open18973870528B GGUF:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+pioneer_native_q4_fpu_stream_export.cpp requires an owned empty0700 directory;
+all outputs use O_EXCL/O_NOFOLLOW0600. Every original/prepared/input file and
+PRIVATE generated weight header/object/binary must remain OUTSIDE Git.
+This6144B recipe per32x256 block does not alias installed disk-cache recipes.
+
+Protocol, ownership and domains
+-------------------------------
+PioneerNativeQ4FpuStreamProtocol.h: role86/tag2026110400010086,opcodes SUPPORT/
+RUN/END at B_DEVICE_OP_CODES_END+8200. Pointer-free392B request/352B result;
+every result byte must start zero. RUN chooses ONLY sample0..8. No code,
+payload,model,address,route,GDDR,reset or Work parameter is accepted. END
+binds nonce/accept/sample and FD/thread/team/generation/semaphore/reservation/
+PCI identity. Wrong-thread END refuses before mutating the lease.
+All17 real VM views must retain exact identity/pointer/length/permissions;
+each primitive checks the owner and selected domains. Legacy hooks are NULL.
+Old roles,Work,CPU reference/validation,wrong image/data roles and fast math
+are refused;normal reload status/quiesce keeps its guarded interface.
+
+Heap journals cover107632B L1 (boot,full8KiB ROM,full8KiB stack,frame,BOTH
+buffers including every header/gap/shared zero/output/status byte) plus the
+selected133120B or452608B GDDR range. Max GDDR heap backing is452608B but
+that never grants access outside the selected sample's exact two ranges.
+Only two TLB slots address the fixed core/control or prerequisite-bound bank0.
+Addresses at/above DRAM-tile registers FF000000 are never data domains.
+
+Lifecycle
+---------
+RUN requires checked route-only prerequisite,all120 cores already held,
+isolated ARC clock lease,full verified L1/GDDR/TLB snapshots and initially
+empty NIU commands/FIFO/credits. Stage and verify GDDR,then all L1 with BOOT
+LAST. Enable FIFO once,attempt reset87ffff->46800 once. Terminal requires
+QFS1/exact selected width/count/park PC,two-job exact requests/flits/nine
+counter deltas,empty queues/all32 credits and exact final command echo.
+Only then read64 finite normal-or-zero FPU words. Wrong marker/PC/count,
+counter/config mismatch or timeout is UNKNOWN,not a retry opportunity.
+
+Known RESULT permits explicit END,never implicit/destructor cleanup. Hold
+once;BEFORE restoring evidence verify boot/code/frame,ALL headers/gaps/zero
+bytes,BOTH final even/odd producer slots and captured outputs. Verify GDDR
+still matches the fixed source;restore/read back the ENTIRE selected GDDR
+journal,then full L1 (BOOT LAST),commands/FIFO,TLB and ARC clock. Counters
+are observed,NEVER rewound. Reverify TLB after clock exit,then close all17
+views,restore PCI BAR/bridge state in checked order and unreserve. Any
+uncertainty retains ALL journals/views/reservation,cold flag and evidence,
+and performs NO next IO,END,retry,reset,automatic restore or rollback.
+
+Build/tests -- never deployment
+------------------------------
+  python3 tools/pioneer/build_native_q4_fpu_stream_diagnostic.py HAIKU_BUILD \
+    PRIVATE_EXPORT NEW_ABSOLUTE_BUILD_DIRECTORY
+  python3 tools/pioneer/tests/run_pioneer_native_q4_fpu_stream_tests.py \
+    HAIKU_BUILD PRIVATE_EXPORT NEW_ABSOLUTE_QUALIFICATION_DIRECTORY
+
+Both main and clean HEAD09a30a402a+14-file overlays ACTUALLY CLOSED0:
+complete native SDK driver link/default43 control byte-identical/legacy NULL,
+19 role refusals/two actual wrong-image/data template-instantiation refusals;
+561 DATA-contract refusals;9 synthetic full-K cases/55 failure/admission cases;
+9 REAL private-header/compiled-RV32 jobs pairs/576 exact words and complete
+journal restoration;317 valid/673 refused ACTUAL native/control body cases.
+Separate Python Fraction rebuilds all2654208 original weights/prepared bytes
+and663552 rounded phases,288 goldens for576 two-job outputs. ASan/UBSan/Werror.
+Native OS/PCI tests use explicit domain fixtures (including assigned phases),
+NOT authentic prerequisite/ARC proofs or physical engine execution. Shared-L1
+co-simulation is actual compiled RV32 arithmetic,not real generation/quality.
+See benchmarks/qwen38-native-q4-fpu-stream-offboard-20261104.txt and receipts.
+
+NoC source evidence,not a substitute for physical observation
+------------------------------------------------------------
+Official tenstorrent/tt-metal commit722aab8f75bfb2fbb729edeeac19389478b74d27,
+tt_metal/hw/inc/internal/tt-1xx/blackhole/noc_nonblocking_api.h,
+blob083fe9e1f32c58ae2833d498f0d3cd0a758cbfdb: read issuer programs source,
+destination and LEN before GO;any-length wrapper waits for command-buffer
+ready between packets with no per-packet response barrier. This supports
+variable-length asynchronous issue as an INFERENCE from official source.
+Our physical test must still prove exact latching/data/counter completion.
+https://github.com/tenstorrent/tt-metal/blob/722aab8f75bfb2fbb729edeeac19389478b74d27/tt_metal/hw/inc/internal/tt-1xx/blackhole/noc_nonblocking_api.h
+
+Next: a NEW source-authenticating diagnostic86 client and separately frozen
+one-shot physical parent,with independent exact reference,hash/generation/
+idle gates and known-clean END/restoration only. Do not stage this candidate
+using old85 clients,old parents or isolated test passes as admission.
+Full-native27B/quality/20tokens/sec remain UNMET;no new throughput measured.

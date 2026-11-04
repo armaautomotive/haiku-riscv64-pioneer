@@ -79,3 +79,7 @@ actual native methods/SDK and a new source-authenticating one-shot client/
 parent before physical staging. Never reuse spent native85/84 paths or use
 their receipts to authorize this new stream. Stable installed041/gen8 is the
 last separately observed hardware state; this checkpoint never contacts it.
+
+The separate native86 owner is now qualified OFFBOARD,not physically admitted.
+See NATIVE_Q4_FPU_STREAM_DIAGNOSTIC.txt for its distinct protocol,full journals,
+SDK/actual-method checks and the required NEW client/physical-parent admission.

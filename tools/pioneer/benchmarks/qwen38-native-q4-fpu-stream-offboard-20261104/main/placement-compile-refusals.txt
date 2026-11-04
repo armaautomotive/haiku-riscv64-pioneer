@@ -1,0 +1,2 @@
+PASS wrong-image-role actual full driver template instantiation
+PASS wrong-data-role actual full driver template instantiation

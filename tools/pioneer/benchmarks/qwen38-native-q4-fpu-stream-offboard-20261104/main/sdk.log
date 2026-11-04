@@ -1,0 +1,19 @@
+PASS PRIVATE full-K export sample0 K5120 all32 Fraction predictions/exact prepared headers/input;sha7e28de361a655a75a6376cd9db1f2ea6f75865c99b5496e5f4fde66d9a255ceb
+PASS PRIVATE full-K export sample1 K5120 all32 Fraction predictions/exact prepared headers/input;sha8a09dba5a81af1dab62cea490ba5a1d3ad5b651b9b84dba582a2b99e15eabcb7
+PASS PRIVATE full-K export sample2 K5120 all32 Fraction predictions/exact prepared headers/input;shacecbf5ec8a7d8801947a406a6ac911cc03e2df28438a5531d3600f5cc2771e68
+PASS PRIVATE full-K export sample3 K5120 all32 Fraction predictions/exact prepared headers/input;sha94900456c349ffacb1ba70fb19212ada6e262a1fb6dcf8e74b667e32648ca2e7
+PASS PRIVATE full-K export sample4 K5120 all32 Fraction predictions/exact prepared headers/input;sha0dd7c0df2c171ca862013d86012ac0cdf2ba0769257f255bbd629d71d1f463c9
+PASS PRIVATE full-K export sample5 K5120 all32 Fraction predictions/exact prepared headers/input;sha207592391b29c3202ccce3251a406c9c8060ebb6a0daa403861a7cce9a8d9629
+PASS PRIVATE full-K export sample6 K17408 all32 Fraction predictions/exact prepared headers/input;sha290139486a5e403b40daaf59ea70f8d48c5a48391c89c9c1de203861226a82e9
+PASS PRIVATE full-K export sample7 K17408 all32 Fraction predictions/exact prepared headers/input;shab2f59e5678cb53decf8cc5d997adb0408a39b04bba248fc59c274210ed5a4edc
+PASS PRIVATE full-K export sample8 K17408 all32 Fraction predictions/exact prepared headers/input;sha531fac60d4b54b55a48838129a397515e360a469c7d3faaa70138e149b8015e2
+PASS PRIVATE independent Fraction full-K export:2654208 original weights/663552 rounded phase predictions/288 goldens for576 two-job words;NO CXX codec/preparer/FPU oracle shared;NOT original-authentication/native/hardware/quality/speed authority
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+7e4765f9ec803cc5986534ec4f947b93e5a32b4711a01223e5f39741dfce8e03 7824 text.bin
+OFFBOARD_Q4_FPU_STREAM_BUILD_ONLY;NEW QFS1 marker/two buffers/full-K/8KiB bound;NO native owner/stage/driver/hardware/quality/speed authority
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+cc22a0cb005ff037d751c0b307cc74c76586260e1910789616cbc0719d912295 7824 text.bin
+OFFBOARD_Q4_FPU_STREAM_BUILD_ONLY;NEW QFS1 marker/two buffers/full-K/8KiB bound;NO native owner/stage/driver/hardware/quality/speed authority
+742d6d57b6a521e035d22be93e3b20afcd3dc3bc35efc0b8e12bd1a9db2f0235 tenstorrent_pci_probe-native-q4-fpu-stream86
+2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc tenstorrent_pci_probe-default43-control
+PASS BUILD_ONLY actual native86 driver/all methods LINKED,19 role refusals,actual wrong-image/wrong-data refusals,legacy NULL/control unchanged;PRIVATE headers unchanged;NO stage/open/hardware/full-model/speed authority

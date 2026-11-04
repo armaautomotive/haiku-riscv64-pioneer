@@ -1,0 +1,10 @@
+PASS PRIVATE actual full-K86 image+header lease sample0 tensor7 first0 K5120:all64 exact,whole107632B L1/133120B GDDR/NIU/FIFO/TLB/clock restored;NO native IO/hardware/full-model quality/speed proof
+PASS PRIVATE actual full-K86 image+header lease sample1 tensor7 first8704 K5120:all64 exact,whole107632B L1/133120B GDDR/NIU/FIFO/TLB/clock restored;NO native IO/hardware/full-model quality/speed proof
+PASS PRIVATE actual full-K86 image+header lease sample2 tensor7 first17376 K5120:all64 exact,whole107632B L1/133120B GDDR/NIU/FIFO/TLB/clock restored;NO native IO/hardware/full-model quality/speed proof
+PASS PRIVATE actual full-K86 image+header lease sample3 tensor8 first0 K5120:all64 exact,whole107632B L1/133120B GDDR/NIU/FIFO/TLB/clock restored;NO native IO/hardware/full-model quality/speed proof
+PASS PRIVATE actual full-K86 image+header lease sample4 tensor8 first8704 K5120:all64 exact,whole107632B L1/133120B GDDR/NIU/FIFO/TLB/clock restored;NO native IO/hardware/full-model quality/speed proof
+PASS PRIVATE actual full-K86 image+header lease sample5 tensor8 first17376 K5120:all64 exact,whole107632B L1/133120B GDDR/NIU/FIFO/TLB/clock restored;NO native IO/hardware/full-model quality/speed proof
+PASS PRIVATE actual full-K86 image+header lease sample6 tensor6 first0 K17408:all64 exact,whole107632B L1/452608B GDDR/NIU/FIFO/TLB/clock restored;NO native IO/hardware/full-model quality/speed proof
+PASS PRIVATE actual full-K86 image+header lease sample7 tensor6 first2560 K17408:all64 exact,whole107632B L1/452608B GDDR/NIU/FIFO/TLB/clock restored;NO native IO/hardware/full-model quality/speed proof
+PASS PRIVATE actual full-K86 image+header lease sample8 tensor6 first5088 K17408:all64 exact,whole107632B L1/452608B GDDR/NIU/FIFO/TLB/clock restored;NO native IO/hardware/full-model quality/speed proof
+PASS PRIVATE actual compiled full-K86 data/image/RV32 lease576 exact words over9 bands;NOT physical execution/full-model quality/performance authority
