@@ -1,0 +1,16 @@
+
+/private/tmp/pioneer-native-dram-binding-20261104.BLJPgyHy/native-build-r5/tenstorrent_pci_probe-native-dram-model-band81:     file format elf64-littleriscv
+
+
+Disassembly of section .plt:
+
+Disassembly of section .text:
+
+00000000000062aa <_Z37PioneerNativeDramBandLegacyFindDevicePKc>:
+    62aa:	1141                	add	sp,sp,-16
+    62ac:	e422                	sd	s0,8(sp)
+    62ae:	0800                	add	s0,sp,16
+    62b0:	6422                	ld	s0,8(sp)
+    62b2:	4501                	li	a0,0
+    62b4:	0141                	add	sp,sp,16
+    62b6:	8082                	ret

@@ -1,0 +1,140 @@
+Diagnostic81 actual native/control binding -- OFFBOARD ONLY
+==========================================================
+2026-11-04 UTC,baseline5492bd6d8519af97c90cc89bd690a9824eb95dac.
+No GPU job,driver install/hot reload,reset,boot,power,SD or hardware change.
+Latest physical learned-band80 proof remains192 exact words/3 clean ENDs.
+Full native27B and20tok/s UNMET. Latest tiny real Work sample remains0.204
+tok/s over3 measured samples,CPU attention/state;not a matched speedup.
+
+User-requested persistent disk cache remains IMPLEMENTED AND INSTALLED.
+Existing exact lossless-cache recipe/source/worker/service/model/cache bytes
+are unchanged. On the next ordinary Assistant start,27B Work reuses that
+cache. New direct-GDDR diagnostic is separate from cache deployment and is
+not silently substituted into Assistant. Cold GPU upload is still required.
+
+Concrete implementation
+------------------------
+New PioneerNativeDramModelBandNative.inc binds the heap-only full journal to
+one81 owner,cookie/FD/thread/team,held semaphore,exact reload generation and
+guard,PCI module/reservation/card/root identity and17 actual VM descriptors.
+The native callback requires the actual original proof and private L1/GDDR
+journal pointers/counts,plus phase/reset/FIFO/clock ledgers. Per checked
+payload/NIU/reset access checks actual selected TLB words;read-only all120
+core reset tuples are accepted ONLY in the exact initial/final held phases.
+TLB snapshots and NIU command snapshots are once-only;final writes must equal
+the captured originals. Host NIU doorbells and counter-reset writes forbidden.
+
+The four new physical mappings are exact2MiB memory,controlRW,PC RO and NIU
+commandRW aliases. Actual source domains remain code8KiB/stack8KiB/frame32B,
+all C32-strided L1/header/payload/output/status spans,and exactly174080B+10240B
+packed bank0 GDDR sources. L1 payload is inaccessible while running,except
+status and64 output words after the exact marker/count/phase/park observations.
+Control offsets below reset register use page-base byte arithmetic,not an
+unsigned underflow. Reset87ffff/46800/87ffff/47800 and FIFO enable/disable
+attempts are recorded BEFORE a potentially effective write. No generic reset,
+host DMA or arbitrary upload/address/code/route capability is introduced.
+
+ClockIO uses the existing separate STRICT ARC transport,not the ordinary
+rollback/retry transport. Entry/exit require actual17 view/FD/PCI checks and
+the private clock-call lease. A missing clock-call lease refuses in memory
+BEFORE VM/PCI observations. Native timers reject nonpositive/overflowing time.
+Unknown execution,Free or failed result delivery retains the owner,backing,
+views and PCI reservation;no destructor END/reset/cleanup follows. Known END
+alone may close:each of17 deletes checked once,PCI commands disabled once,
+six BARs andthree bridge windows restored/read back once,then one unreserve.
+Failed deletion/PCI/unreserve stops later actions and cannot be retried.
+
+Separate driver81 accepts only pointer-free392B request/352B result with
+exact tag/generation/pristine result,three compiled sample selectors and
+one-shot RUN/nonce1+accept1 END. Root/same-team/open-count/owner gates remain.
+Legacy find_device is renamed and remains exact NULL-only;new hooks contain
+no read/write/model/Work endpoints. Reload delegation is metadata only.
+
+Full SDK build -- actual terminal results,not compile-only declarations
+------------------------------------------------------------------------
+Build-r5 parent69341 ACTUALLY CLOSED0,stderr0. Werror/O2/freestanding actual
+native/profile/default objects LINK --no-undefined against the real Haiku
+kernel.so/glue/libgcc;all native IO/control definitions are supplied.
+Final driver SHA (PRIVATE weights embedded;NEVER commit the binary):
+0ab145ac3b938238fd3fd139fa8c1e899458932058acd2567f220bb4504cdf27
+Exact ordinary default-control SHA,unchanged:
+2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+Actual exported API audited;renamed legacy entry disassembly matches exactly
+the NULL-only seven-instruction body.14 actual driver prologue refusal cases:
+missing/wrong role,reload/tag,old contexts,Work,CPU-reference,fast-math.
+Preprocessed PRIVATE stdout is discarded,not saved or published.
+Actual imagecd924896...4436B/bootd47a1c29... unchanged. Full journal-only
+probe object1f45bc02... unchanged;full native driver is a NEW separate artifact.
+Individual emitted frames:Control672B,Free304B,Open160B,Run192B,End192B,
+Map208B,Scope144B. These are NOT a whole-call-chain/kernel-stack certificate.
+
+First build35606 CLOSED1 BEFORE native object completion:missing exact
+SweepQuarantineMemoryOnly callback in route-only prerequisite. Added exact
+MEMORY-ONLY Retain alias;no prerequisite check disabled. r2/r3/r4/r5 builds
+then CLOSED0;all finalstderr0. Original failed receipts remain unreclassified.
+
+Actual native-method endpoint tests -- explicit simulation boundary
+-------------------------------------------------------------------
+Final native endpoint parent4771 ACTUALLY CLOSED0,stderr0:307 valid/643
+refusal cases,ASan/UBSan/Werror over actual new Native.inc and control body.
+Explicit KernelExport/PCI/base-mapping endpoints are reused from the old
+fixture;old native/control implementations and successful baseline are NOT.
+New four physical map addresses/sizes/permissions are checked. All17 current
+descriptors are faulted for ID/address/size/kernel/user/execute permissions.
+Real selected TLBS/fixed domains/source immutability,all120 held reset routes,
+four reset transitions,FIFO ledger,NIU originals,counter/doorbell refusal,
+time bounds,all352 dirty-result bytes,roles/cookie/team/generation,retained
+Free and all17 delete/11 PCI-write/one unreserve failures are exercised.
+The positive private-journal binding uses actual cd924896 real-weight RV32
+co-simulation to obtain authentic proof/journal pointers,not a forged true
+BoundTo predicate. Other explicit result-phase assignments are DOMAIN fixtures,
+not native engine success. No successful ARC/telemetry/native baseline is
+fabricated;the fake prerequisite deliberately asserts if called for success.
+
+Endpoint-r1 CLOSED0 before extra clock/factory tests. Expanded-r2 CLOSED1
+on a missing-clock-lease assertion:the check refused but observed VM/PCI
+first. Moved that MEMORY gate ahead of endpoint observations;comparator not
+weakened. r3/r4/finalr5 CLOSED0;old failed output preserved. Further VM
+permission cases raised refusal count575 to643 without production changes.
+
+Journal regression75586 CLOSED0,stderr0:three real learned bands,two actual
+RV32 FPU jobs each,all192 output words EXACT;full211248B L1+184320B GDDR+
+NIU/FIFO/TLB/clock restoration in MOCKED hardware,35 failure cases. Separate
+protocol-role25864 CLOSED0:10 roles,352 dirty-result bytes,old-tag refusal.
+No new native cache/model/full inference/speed proof follows from these tests.
+
+Primary reset documentation,not silicon proof
+---------------------------------------------
+Read complete official Blackhole SoftReset.md at the existing pinned ISA rev:
+https://github.com/tenstorrent/tt-isa-documentation/blob/4a73a7121d95f545b85efa34b243f0b8b316f967/BlackholeA0/TensixTile/SoftReset.md
+Local17545B SHA7d137de67db11e20edc63e30cea52256c8b01ea7d92675bf8d52a30892116179.
+Listed reset domains cover compute/datapath/RISC resources,not an NIU-counter
+reset. INFERENCE:the compute reset mask does not intentionally reset NIU
+counters. Actual preservation still MUST pass the existing counter checks on
+physical silicon;no mask/counter expectation or comparator was relaxed.
+No vendor implementation code or full external document is imported.
+
+Persistent cache regression and Pioneer READ-ONLY check
+-------------------------------------------------------
+Lossless-cache53285 CLOSED0,stderr0:61 checks,27247 exact upload pages/four
+formats/four fragment tails/zero warm conversion. Storage-cache1880 CLOSED0,
+stderr0:45 checks,full/chunk SHA,atomic publication/source/recipe/cancellation,
+ownership/permissions/link/FIFO refusals. These are CPU fixtures,not new speed.
+Read-only r2 SSH5f9e2e CLOSED0,stderr0:normal041/tag12/gen10,cold0/owner0/
+open1/guard1;64 CPUs/full137034936320B RAM/free133779726336B. Installed worker
+861e5287/servicec509da43 unchanged;original model stat exact/private cache
+directory0:700;project compute-parent count0. No app/service/GPU job started.
+The first readonly health shell CLOSED1 only in the live ps-pipeline parser
+after all identity/driver/CPU/RAM checks;stderr0. Restored the already-used
+snapshot-BEFORE-awk method,so the multiline awk command itself is not part of
+the ps snapshot;r2 passes the unchanged no-owner criteria. No retry of a GPU
+job or power/driver/OS/network action occurred.
+
+NEXT:authenticated fixed-source user client plus separately frozen physical
+parent/admission,source/driver/client identity gates,ONE bounded GDDR-to-FPU
+RUN/END and normal-driver restoration. Then qualified full arena/resident
+matrix stripes/cohort/token state/full-model quality/honest throughput.
+Active goal remains active;no cache speedup/full-native/20tok/s claim.
+Public raw TEXT receipts only are under the matching directory/SHA256SUMS.
+PRIVATE headers,models,caches,generated objects/drivers and endpoint binaries
+are NOT included. Unrelated pre-existing dirty work is deliberately preserved.

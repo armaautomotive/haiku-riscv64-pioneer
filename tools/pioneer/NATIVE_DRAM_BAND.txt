@@ -101,3 +101,42 @@ tests and separate bounded physical diagnostic. Then packed resident weight
 loader/matrix stripes/cohort/token state integration,qualified full-model
 arena,quality and real inference throughput. Never substitute this fixed
 band diagnostic or a CPU reference for the requested no-validation Work path.
+
+Diagnostic81 native binding -- OFFBOARD checkpoint 2026-11-04
+------------------------------------------------------------
+PioneerNativeDramModelBandNative.inc now supplies the concrete journal IO,
+exclusive FD/thread/team/semaphore/generation/guard/PCI owner,17 VM-view
+descriptors,strict ARC clock adapter and one-shot close. The separate
+pioneer_native_dram_model_band_driver.cpp publishes ONLY81 support/run/end
+plus the existing metadata reload controls. Legacy device hooks return NULL;
+old Work/CPU-reference/model/diagnostic contexts cannot select this entry.
+
+All checked accesses bind current ownership and actual mapping descriptors;
+payload/NIU/reset accesses additionally check the real selected TLB words
+and fixed domains. Reset transitions and FIFO changes have recorded ledgers,
+not generic write capabilities. The native callback binds the actual lease,
+original proof pointer and private journal identities/counts. Failure retains
+in memory;Free does not issue END,restore/reset,unmap or release reservation.
+Known closure deletes17 views once,restores/checks PCI once,then unreserves
+once. A failed step stops the sequence;there is no automatic recovery.
+
+Build ONLY,with the existing PRIVATE authenticated three-band export:
+  python3 tools/pioneer/build_native_dram_model_band_diagnostic.py \
+    HAIKU_BUILD PRIVATE_EXPORT NEW_ABSOLUTE_OUTPUT
+  python3 tools/pioneer/tests/run_pioneer_native_dram_model_band_native_tests.py \
+    THAT_OUTPUT PRIVATE_EXPORT NEW_ABSOLUTE_TEST_OUTPUT
+
+Actual SDK Werror/no-undefined driver link and14 forbidden driver-role tests
+pass. The default control remains exact2df0e0f8.... Endpoint fixtures execute
+the actual native/control source:307 valid and643 refusal cases under ASan/
+UBSan/Werror. The real-byte journal/RV32 regression also passes192 words and
+35 failure cases. These are explicit OS/PCI/clock/engine FIXTURES,not native
+prerequisite success,firmware-clock or physical card proof. PRIVATE generated
+headers,weight-containing objects and drivers MUST NOT be published.
+
+NOT installed or staged. Still missing:source-authenticated user client,
+separate one-shot physical parent/admission and actual GDDR-to-FPU RUN/END
+qualification,including NIU counter preservation across compute resets.
+Only after that:resident stripes/cohort/state,qualified full arena,quality
+and honest full-model throughput. Installed cache/Assistant/driver unchanged.
+See benchmarks/qwen38-native-dram-binding-offboard-20261104.txt.

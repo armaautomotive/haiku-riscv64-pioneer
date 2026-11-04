@@ -14,6 +14,7 @@ struct Image {
 };
 struct LeaseIO {
 	Lease& lease;const tt_dram_samples_result* proof=nullptr;
+	const uint32_t* recordedL1=nullptr;const uint32_t* recordedDram=nullptr;
 	std::vector<uint32_t> memory=std::vector<uint32_t>(0x180000/4),gddr=std::vector<uint32_t>(0x200000/4),original,originalDram;
 	uint32_t source[16]={0x6005,0x0a418820,0x1ac4a166,0x127541ee,0x1e280440,0x1662b5c3,0x147,
 		0x0a418820,0x16a4a0e6,0x06a12c20,0x0c72a089,0x0e548c20,2,0,3,0};
@@ -31,7 +32,7 @@ struct LeaseIO {
 	}
 	void Check(){assert(!retained);operations++;}
 	bool NativeScope(const Lease* subject,const tt_dram_samples_result* p,const uint32_t* a,unsigned n,const uint32_t* b,unsigned m) {
-		assert(!retained && subject==&lease && p==proof && lease.BoundTo(p,a,n,b,m));scopeCalls++;return scopeValid;
+		assert(!retained && subject==&lease && p==proof && lease.BoundTo(p,a,n,b,m));recordedL1=a;recordedDram=b;scopeCalls++;return scopeValid;
 	}
 	void NativeRetain(){assert(!retained);retains++;retained=true;}
 	bool NativeSourceRead(unsigned i,uint32_t& v){Check();assert(i<16);v=source[i]^((badSource && started)?1U:0U);return true;}
@@ -128,6 +129,7 @@ static void NoMore(Lease& lease,LeaseIO& io) {
 	assert((!lease.Run<LeaseIO,Image>(io,*io.proof,0) && !lease.End<LeaseIO,Image>(io)));
 	lease.Abandon();assert(events==io.operations && scopes==io.scopeCalls);
 }
+#ifndef PIONEER_NATIVE_DRAM_MODEL_LEASE_TEST_ONLY
 int main(int argc,char** argv) {
 	assert(argc==2);const std::string folder=argv[1];Image::code=Read((folder+"/text.bin").c_str());
 	const auto boot=Read((folder+"/boot.bin").c_str());assert(boot.size()==4);Image::Boot=::Word(boot,0);
@@ -188,3 +190,4 @@ int main(int argc,char** argv) {
 	}
 	printf("PASS OFFBOARD GDDR learned-band lease:%u failure/admission/close cases;first uncertainty retains journals,NO subsequent IO/END/retry/reset/cleanup;PRIVATE weights not printed or published\n",failures);
 }
+#endif

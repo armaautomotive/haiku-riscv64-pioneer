@@ -1,0 +1,6 @@
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+cd924896986dabcead8493c9dedca1d7b25fde323fbd972caf67ad93139a9309 4436 text.bin
+OFFBOARD_NATIVE_DRAM_BAND_BUILD_ONLY K 5120 PHASES4 C32_L1_PACKED_GDDR16_QUEUE;NO staging,owner,driver,hardware,model quality or speed permission
+PASS actual kernel SDK full Run/End template instantiation/Werror;NO native IO definitions/link/device entry or PCI/VM/FD/clock/driver/hardware authority
+COMPILE_ONLY object SHA 1f45bc02a546ffab5788592692eb86cdc0d93f183ca4e278477032b377a636a6
+PRIVATE_HEADERS_UNCHANGED;object/generated PRIVATE build files MUST NOT be published: /private/tmp/pioneer-native-dram-binding-20261104.BLJPgyHy/native-build/lease-probe

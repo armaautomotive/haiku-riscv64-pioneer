@@ -1,0 +1,7 @@
+Assertion failed: (f.c->clock.TlbRead(0)==UINT32_MAX && f.c->retained && ioCalls==stopped), function main, file pioneer_native_dram_model_band_native_test.cpp, line 250.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_native_dram_model_band_native_tests.py", line 69, in <module>
+    subprocess.run([str(binary), str(image)], check=True,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-native-dram-binding-20261104.BLJPgyHy/native-endpoints-r2/native-test', '/private/tmp/pioneer-native-dram-binding-20261104.BLJPgyHy/native-build-r3/lease-probe/image']' died with <Signals.SIGABRT: 6>.

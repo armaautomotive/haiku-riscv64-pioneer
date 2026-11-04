@@ -1,0 +1,9 @@
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74  /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
+c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18  /boot/home/config/non-packaged/servers/HaikuAssistantService
+P100A_RELOAD driver55 tag2026102100010012 generation10 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+64 (Unknown), revision 0000 running at 1000MHz
+133779726336 bytes free      (used/max 3255209984 / 137034936320)
+                           (cached   19170217984)
+PROJECT_COMPUTE_PARENT_COUNT 0
+READONLY_CLEAN041_GEN10_64CPU_FULLRAM_CACHE_ENABLED_WORKER_UNCHANGED_NO_GPU_OR_WRITES
