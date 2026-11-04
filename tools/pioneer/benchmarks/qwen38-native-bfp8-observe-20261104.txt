@@ -1,0 +1,53 @@
+Second native BFP8 observation -- frozen NEW tuple,not a retry of old parent
+========================================================================
+Preparation checkpoint only;NO physical execution claimed in this section.
+Baseline99c46116d5b9ab51bbbacab982da424ff4f8e8ec. Previous goal turn made
+concrete progress:cached Work inference CLOSED0,cache worker861e/servicec509
+installed with retained backups,rounded-arithmetic software prerequisite.
+Full-native27B/20tok/s remain UNMET. Cached0.204tok/s3-sample measurement is
+not a speedup claim. No other Pioneer process is active on fresh read-only
+admission;normal041/tag12/gen2,cold0/owner0,64 CPUs/full RAM. Current apps idle.
+
+Actual complete software runner89532 CLOSED0/stderr0. All253 native diagnostic
+owner/close/control/map/parent/client cases pass plus separate old Fraction
+characterization. Fresh compiled driver and revised all64-word diagnostic:
+e79e070b9e4fe434b868898748834e0cd89b03bcb250d9c1694b4d0b890f46ac driver
+428e7a15ad97501eb711dc6a2e59f30c68d14c1b022acc32b9b753ce793aefb4 client
+Original boot/BFP4/BFP8 images and strict Expected()/END policy unchanged.
+All64 words are CPU data already returned by ONE RUN;no added device readback.
+The original first-trial directory/once token/output/client are NOT reused.
+
+New fixed parent:pioneer_native_bfp8_observe_physical.sh,private stage:
+/boot/home/pioneer-native-bfp8-observe-20261104-a
+Normal generation2 ->native78 generation3. ONE --fixed-bfp8 call only;no BFP4
+repeat. On any failed/unproven/malformed/dirty result:NO metadata,GPU command,
+END,retry,reset,driver restore or implicit cleanup. Full child stdout/stderr
+preserved;parent prints ALL stderr records rather than first40. Strict old
+ideal numerical success alone allows explicit client END/known-clean normal
+restore gen4. Separate device-arithmetic predictions never authorize END.
+The expected rounded-vs-ideal BFP8 difference is NOT silently accepted here.
+16 parent fake-flow/actual-idle-parser checks pass,including path-bearing wrapper
+refusal and direct self exemption. Invoke the frozen parent directly with exec.
+
+Recovery is prepared BEFORE launch,not automatically invoked on mismatch:
+pioneer_native_bfp8_recovery_restore.sh requires separately recorded board
+OFF-once/ON-once plus Linux->Haiku fresh kernel epoch1,cold0/owner0,all64 CPUs/
+full RAM,exact driver/stable/admin/guard/parent/cached-worker/service identities.
+It cannot operate on the failed generation3/cold1/owned lease.7 fake flow
+cases check first-failure stopping and spent marker;no GPU or old-owner cleanup.
+Backups/failed records stay intact;restore writes separate recovery.state.
+
+Reviewed existing relay implementation and pinned302-line normal64CPU/fullRAM
+SD-free Linux boot helper9cfc6dc326c938b8d611c8c8622a9a6686ed530270dde768b1f01362f4f61f6e.
+No helper,default boot-entry,disk,SD,mains,firmware or hardware change proposed.
+If recovery is needed,follow AGENTS.md:one OFF hold only while known-on,allow a
+few minutes/check available evidence/assume off absent contradiction,then one
+ON pulse. Do NOT repeat OFF or use relay-contact state as board power state.
+Linux boot uses fresh session with memory128-spin-idle7-top-page-nosd-control;
+no journal override or SD action is implicitly authorized.
+
+Next:freeze/push source,stage exact binaries in new unused private directory,
+independently admit same whole parent,record terminal/ALL64 actual words,compare
+with BOTH unchanged ideal and separately tested documented-arithmetic model.
+Do not infer physical qualification from software predictions. Native full-K/
+NoC/GDDR/cohort/state,full-model quality and real throughput still remain.

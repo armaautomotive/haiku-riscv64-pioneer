@@ -1,0 +1,1 @@
+PASS actual new BFP8 observation parent:7 fake flow+9 actual idle-parser cases;one BFP8 only,all64 failed words preserved,unknown/malformed/dirty/swap/busy failures NO retry/metadata/restore,strict success only known-clean restoration;NO physical proof
