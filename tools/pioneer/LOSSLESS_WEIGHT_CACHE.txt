@@ -46,8 +46,8 @@ is fully authenticated on the SAME open FD before any cache entry is used:
 Cache hits still read/hash the original and validate cached files. Do not
 interpret zero conversion as zero disk I/O or as a measured loading speedup.
 
-Optional Assistant loader build (not default / not installed)
-------------------------------------------------------------
+Opt-in Assistant loader build (qualified worker now installed)
+-------------------------------------------------------------
   PIONEER_Q38_LOSSLESS_WEIGHT_CACHE=1 sh tools/pioneer/build_assistant_qwen27.sh \
     HAIKU_BUILD FROZEN_LLAMA_LIBRARY_DIRECTORY NEW_ABSOLUTE_WORKER_PATH
 
@@ -59,17 +59,16 @@ to uncached upload or CPU inference. SM7/native-Q8 and CPU-validation builds
 cannot select this cache option. The existing Work kernels/driver, no-runtime-
 CPU-reference policy and all inference comparators remain unchanged.
 
-This checkpoint has NOT replaced the running Assistant or driver. Complete
-native SDK workers now LINK in both flag-on and flag-off configurations
+Complete native SDK workers LINK in both flag-on and flag-off configurations
 against all four authenticated frozen libraries. An isolated cached worker
 and LOAD/UNLOAD-only probe are staged; they are not the installed Assistant.
 The first full cache preparation on the Pioneer CLOSED with exit0: all851
 entries,19397646336 bytes,4735959 conversion pages and10653 sampled bank-upload
 pages passed byte-for-byte comparison against fresh original preparation.
 That diagnostic deliberately reconverts sampled pages, not the warm loader.
-A complete live worker loading/upload/inference trial remains required
-before deployment.
-There is no new tokens/sec or startup-speed claim.
+The separately frozen live trial has now CLOSED cleanly and the qualified
+application-only deployment below is installed. No driver is replaced.
+There is no comparative tokens/sec or startup-speed claim.
 Caching avoids repeated host layout conversion; model bytes still traverse
 PCIe on a cold GPU load, and this does not remove decoding inside old kernels.
 
@@ -144,9 +143,40 @@ Build ONLY (no stage/run/install):
 Launch --cached-generate-four-only ONLY through the frozen admitted parent,
 after its independent live host qualification. Four tokens alone do not prove
 model quality, comparative speedup, full-native inference or20tokens/sec.
-The exact frozen parent0266fe6b and probe57fe9b30 have been staged and launched
-ONCE after that successful host qualification. That inference parent is still
-pending at this checkpoint;do not infer output or restart from silence/timeouts.
+The exact frozen parent0266fe6b and probe57fe9b30 ran ONCE after that successful
+host qualification. SAME tool91327 actually CLOSED0,observed23:51:47UTC on
+2026-11-03. Complete400732B nested stdout SHA:
+316e1655edfac771e3edbda7f7a2408385ec44676c0d0a7e443d730ec38d6a2a
+Both outer/child stderr0,all851 verified hits,known-clean worker unload/exit,
+postflight stable041/tag12/gen2,cold0/owner0,64 CPUs/full137034936320B RAM.
+Four output tokens:"Hello! How can". Host-ready1255.815780s with upload STILL
+deferred;Generate2227.7s INCLUDING first GPU upload and14 prompt tokens.
+Warm generation3 samples/14.683s,printed0.204tok/s. This tiny unmatched
+sample is NOT a comparative speedup,full-model quality or20tok/s proof.
+Cold loading remains slow despite eliminating repeated layout conversion.
+
+Application-only deployment -- completed,services not started
+------------------------------------------------------------
+install_assistant_lossless_cache.sh --apply is ONE frozen deployment,not a
+generic installer. It requires exact closed-inference evidence,old/new program
+hashes,GUI/runtime/driver/guard identities and idle metadata. Invoke it directly
+with exec:an extra shell whose command line contains the staging path is
+conservatively classified as a possible owner. Do not weaken the idle gate.
+7 fake file-flow+9 actual idle-parser tests pass;failure does not retry/rollback
+or start any app/GPU job. Both old executables are backed up before either
+replacement;the marker is retained. Never repeat a completed deployment.
+
+Actual direct installer37386 CLOSED0;independent postflight confirms:
+Worker861e5287 installed at non-packaged/servers/HaikuAssistantQwen27.
+Servicec509da43 installed at non-packaged/servers/HaikuAssistantService;
+it includes the fixed2h cache opt-in budget. GUI0de9141e unchanged. Originals
+ae0e5ddc/ed3a7d00 remain in the private stage's before/ directory:
+/boot/home/pioneer-assistant-cache-installed-20261103-a/before
+No driver/runtime/model/settings/boot/power/SD changes. The native hardware-
+policy test passes with no settings writes. No service is started by this
+installer,leaving hardware idle for the next independently admitted diagnostic.
+On the next ordinary Assistant start,the27B Work option uses the cache.
+See benchmarks/qwen38-cached-assistant-inference-installed-20261103.txt.
 
 Tests
 -----

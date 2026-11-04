@@ -1,0 +1,75 @@
+Native rounded-arithmetic prerequisite -- actual CLOSED software evidence
+========================================================================
+2026-11-03 UTC;baseline b8215ddf6c3b887efc342d48d36808357122b451.
+All work CPU/OFFBOARD ONLY. No installed Assistant/driver/shader/protocol/client
+replacement,no Pioneer GPU/status/admin/network/OS/power/hardware/SD action.
+
+New integer MVMUL diagnostic models Blackhole BF16 normal/zero operands,FP32
+Dst and explicit fidelity phases with stochastic rounding off. Invalid input
+leaves output unchanged;kernel/Work/CPU-validation builds are blocked. This
+is NOT an accepted hardware oracle or new Work learned-product CPU path.
+Existing Python Fraction model,strict RV32 decoder,ideal observers,Expected(),
+physical comparator and fixed BFP4/BFP8 image bytes are UNCHANGED.
+
+Actual tool76064 CLOSED0/stderr0:
+42,304 independent Fraction comparisons,including original fixed fixtures,
+24,000 deterministic random/exponent/cancellation cases and multi-instruction
+accumulation for K5120/6144/17408,both fidelity choices.102 atomic refusals
+cover all16 positions in either input,subnormal/NaN/inf operands,invalid prior
+Dst and invalid fidelity.3 forbidden runtime builds refused. Explicit signed
+division avoids implementation-defined negative shifts. No tolerance gate.
+
+Final actual tool5365 CLOSED0/image-final.stderr0. Earlier tool90149 also
+CLOSED0/image-closed.stderr0;initial positive-only tool9988 CLOSED0/image-r1
+outputs retained. Final wording distinguishes jobs inside one invocation:
+ACTUAL freshly built RV32 text,2 single-tile+12 full-K/phase/issue variants,
+14 positive image executions/28 math jobs,two jobs INSIDE each invocation,
+not two separate launches. Every64 returned words per case EXACT versus
+independent Python Fraction predictions. Original source-bank/config/opcode
+observer must accept before the wrapper publishes the requested defined row's
+integer prediction.9 additional actual-image fault cases check config,
+initial/final completion,missing producers,unreleased banks and all3 omitted
+fidelity terms. Omitted-phase injection remains omitted,not overwritten by
+the prediction wrapper. Config/completion/producer/bank faults publish NO
+output;omitted terms produce output which fails exact numerical comparison.
+Full-band synthetic weight n/128 values are independently
+encoded BF16 and exactly BFP8-representable;no C++ codec/observer is called by
+the rational reference. All32 full-band outputs differ from ideal prediction.
+Single-tile BFP8 row0 predicts4180b500,matching the sole prior physical word;
+OTHER63 BFP8 WORDS ARE STILL NOT PHYSICAL OBSERVATIONS. No completion/END
+authority is conferred by this prediction or by test-wrapper success.
+
+Actual tool56139 CLOSED0/stderr0:
+277 synthetic64-word parser cases,positive/negative bothformats,every output
+position,malformed/duplicate/foreign/missing/changed-ideal words,oversized/UTF8/
+optimized-Python refusal. It explicitly rejects the historical partial log.
+Bounded1MiB read;no physical provenance/run/lease/lifecycle authentication.
+No ioctl/readback/END/retry/reset/cleanup path. The old failure stays failed.
+
+Legacy actual tool35713 CLOSED0/stderr0:37 single-tile image/fault cases.
+Boot d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd
+BFP4 adcec3cf5a66a2f00b979746928e1f8525a1c2274f37d0f3e35d3b6468ee6ef3
+BFP8 c21f4692d340b0bab397a513a315b9884b898804022e35948b2d029a6a128b19
+Legacy actual tool16525 CLOSED0/stderr0:12 full-band variants x2 math jobs,
+15 fault controls and4 build refusals unchanged. No original observer edits.
+
+Primary exact-arithmetic document4a73a712 read completely from pinned copy:
+SHA f9f353091033289e8a01aac9db504837ea076c1d6278cac62fcc9d3448681cc8
+Old Fraction test SHA da2f19d069ab2c997668912734a8055a7a3a508f477a15285f4fa22b419d60d7
+Old single observer SHA63c513825cb590449448814524cf787fca8ba44734300085edcd0c0771f6b2bd
+Old band observer SHA ad3bb6dc7cb3fb2339fe57ac9537a2f6cd043e63c655864cc2df075b6306f8e8
+Client SHA2ddd9851b4ad1597bf5991a6f659ed6bfd9abe43dbeea4fd6a18ac8d4ed8bf23
+No external implementation copied/executed/linked,no cache recipe changed.
+
+Protected cached four-token Work parent91327 still ACTUALLY LIVE on same tool
+poll at23:49:50UTC. No timeout/silence promoted to terminal or result. No new
+GPU inference rate/loading-speed/full-model quality claim.20tok/s and accepted
+full-native27B remain UNMET. Next:finish same parent,then freeze a new physical
+all64-word observation trial before native full-K/device-resident integration.
+
+Later THIS turn the same91327 parent actually CLOSED0,observed23:51:47UTC.
+Its full output and application-only cache deployment are recorded separately
+in qwen38-cached-assistant-inference-installed-20261103.txt. This supersedes
+the earlier live snapshot above,not the strict failure/ownership policy. Native
+rounded-arithmetic images are still OFFBOARD and unselected;no new native GPU
+test was launched. No cache-vs-baseline speedup or20tok/s claim is made.

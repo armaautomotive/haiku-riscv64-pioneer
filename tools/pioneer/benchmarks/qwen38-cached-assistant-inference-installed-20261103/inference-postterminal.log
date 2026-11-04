@@ -1,0 +1,31 @@
+0
+KNOWN_CLEAN_CACHED_FOUR_TOKEN_WORK_REQUEST_COMPLETED
+400732 /boot/home/pioneer-lossless-cache-20261103-a/inference-four.stdout
+     0 /boot/home/pioneer-lossless-cache-20261103-a/inference-four.stderr
+400732 total
+316e1655edfac771e3edbda7f7a2408385ec44676c0d0a7e443d730ec38d6a2a  /boot/home/pioneer-lossless-cache-20261103-a/inference-four.stdout
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /boot/home/pioneer-lossless-cache-20261103-a/inference-four.stderr
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  104 /boot/system/servers/net_server                    
+  106 /boot/system/servers/package_daemon                
+  111 /boot/system/servers/launch_daemon baron           
+  113 /boot/system/servers/power_daemon                  
+  117 /boot/system/servers/syslog_daemon                 
+  131 /boot/system/servers/media_server                  
+  175 /boot/system/servers/app_server                    
+  187 /boot/system/Tracker                               
+  189 /boot/system/Deskbar                               
+  208 /boot/system/servers/input_server                  
+  232 /boot/system/servers/media_addon_server            
+  296 /boot/system/servers/notification_server           
+  577 /boot/system/bin/screen_blanker                    
+  877 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  879 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  880 /boot/system/bin/ps -o Id -o Team                  

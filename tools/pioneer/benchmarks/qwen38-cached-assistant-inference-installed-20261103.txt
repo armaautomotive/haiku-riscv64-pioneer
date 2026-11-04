@@ -1,0 +1,69 @@
+ACTUAL cached Work inference CLOSED0 and guarded Assistant cache deployment
+=========================================================================
+2026-11-03 UTC. Original ONE frozen parent91327 launched22:51:46UTC;actually
+terminal0 on the SAME handle,observed23:51:47UTC. No restart on observation
+timeouts,no parallel Pioneer command/driver/admin/OS/network/power intervention
+during the complete parent. Parent/probe/worker tuple remains unchanged:
+0266fe6b0da6285801777dc12c4876058e79e7e68f97065d289e0253dd512e7e parent
+57fe9b30221fbee9538a0ed899b51277287f9f177ca41c5ec92535d606cfec4f probe
+861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74 worker
+
+Remote exit0,state KNOWN_CLEAN_CACHED_FOUR_TOKEN_WORK_REQUEST_COMPLETED.
+Complete child stdout400732B independently fetched and remote/local SHA equal:
+316e1655edfac771e3edbda7f7a2408385ec44676c0d0a7e443d730ec38d6a2a
+Child/outer/fetch stderr all0. All851 verified cache hits,zero fresh preparation.
+Host-ready1255.815780s;GPU upload deferred. ONE Hello./four-token Generate:
+17807.2MiB uploaded,14 prompt tokens,4 output tokens,14 answer bytes:
+Hello! How can
+Generate2227.7s INCLUDES upload/prompt. Warm3 samples/14.683s,printed0.204tok/s.
+CPU attention/state explicitly retained;CPU reference validation OFF. Known-
+clean Unload/worker exit. This is NOT accepted full-native inference,full-model
+quality,matched performance improvement or20tokens/sec. Cold load remains slow.
+The previous~0.1643tok/s32-token run is not a matched comparison to3 samples.
+
+Parent AND independent postterminal CPU metadata:stable041/tag12/gen2,
+quiesced0/cold0/active_owner0/open1/guard1;64 CPUs,maxRAM137034936320B.
+No Assistant/LLM processes after parent. No quarantine/reset/retry/power/SD/OS
+or driver change. Original frozen output paths/once token are preserved.
+
+Minimal application-only cache update
+------------------------------------
+Fresh complete native SDK Assistant build64116 actually CLOSED0,strictstderr0,
+all four frozen llama libraries authenticated and pristinec060ca97 ABI headers
+archived WITHOUT consuming dirty submodule files. GUI0de9141e/HW997ffa12/
+control88b4ee3f are byte-identical to installed versions,so leave them alone.
+New servicec509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18
+includes fixed2h cache opt-in load budget. Actual client and11 fake-clock budget
+tests pass. Native software-only hardware-policy testc53d2128 passes on Haiku;
+no settings are written. Do not run its optional service/GPU tests implicitly.
+
+Fixed install_assistant_lossless_cache.sh SHA:
+7dbd3c5d1e25a9c0d67eb4cb404fa3692cef54bd2a3cc557bd3d9221928aaf4c
+7 fake flow+9 actual idle-parser tests pass. Exact old/new binaries,completed
+inference record,GUI/libraries/driver/admin/guard identities,idle CPU metadata
+and unused outputs required. Both backups/prepared copies verified before any
+replacement. Worker then service;no app start/kill/retry/automatic rollback.
+First wrapped invocation45665 CLOSED1 BEFORE marker/backup/replacement:its
+wrapper shell command line contained the staging path and tripped the strict
+idle parser. Read-only prefix trace19691 proved this;both old hashes intact,
+no once token or before/ directory existed. NO gate/source/pin was weakened.
+Direct exec removes that extra wrapper. The actual direct37386 CLOSED0,
+installed both files once. Marker/backups retained;do NOT repeat it.
+
+Independent postflight verifies installed:
+non-packaged/servers/HaikuAssistantQwen27 =861e5287... (same qualified worker)
+non-packaged/servers/HaikuAssistantService =c509da43... (new bounded client)
+non-packaged/apps/HaikuAssistant =0de9141e... (UNCHANGED)
+Old worker ae0e5ddc075bb26df0b77ab6c1bcf0d81a7e67b8fc60d2666d7768c7e953fc75
+Old service ed3a7d00f448e49ffc91f975d813141612333ca7c3e4b0d8701abbd38ca93735
+retained under /boot/home/pioneer-assistant-cache-installed-20261103-a/before.
+State CACHED_WORKER_AND_BOUNDED_LOAD_SERVICE_INSTALLED_NOT_STARTED.
+Normal041/tag12/gen2,cold0/owner0,64 CPUs/full RAM remain;free133701099520B.
+No Assistant/service/LLM process started. No GUI/settings/models/runtime/driver/
+boot/network/OS/power/SD/hardware change. Cache is used on next ordinary27B
+Assistant start. This file-only installation is not an extra inference/GUI test.
+
+The separate native rounded-arithmetic work remains OFFBOARD. Next admission:
+new physical all64 BFP8 observation tuple,then native full-K/GDDR/cohort/state
+integration,full-model quality and real performance. Full-native27B/20tok/s
+remain UNMET. Active goal remains intact;no cached speedup is claimed.

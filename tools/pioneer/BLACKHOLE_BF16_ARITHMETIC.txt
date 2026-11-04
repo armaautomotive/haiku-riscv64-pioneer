@@ -1,0 +1,73 @@
+Separate native BF16/FP32 arithmetic characterization -- OFFBOARD ONLY
+===================================================================
+
+PioneerBlackholeBf16Arithmetic.h implements one Blackhole MVMUL output datum
+with integers. Scope:16 BF16 normal/zero values per operand,FP32 accumulation,
+all four fidelity phases,stochastic rounding OFF. It does NOT implement general
+IEEE arithmetic,NaN/subnormal operands,TF32,FP16,integer/SFPU or Wormhole math.
+Previous FP32 Dst accepts normal/zero/infinity;exponent255 is the documented
+ordinary exponent,not IEEE infinity propagation. Generated zero is canonical
+positive0. Invalid inputs/phases leave the caller's output untouched.
+
+The implementation represents two8-product lanes,separately rounded product
+alignment,lane/Dst alignment and final normalization. Signed floor division is
+explicit rather than relying on implementation-defined right shifts. No host
+floating-point learned products occur in this integer routine. It is a CPU
+DIAGNOSTIC,not selected by Work,driver or CPU-validation modes:all3 are compile-
+blocked until independent physical qualification. No existing numerical oracle,
+Expected(),observer,shader,protocol,client or Work comparator is replaced.
+
+  python3 tools/pioneer/tests/pioneer_blackhole_bf16_arithmetic_test.py
+  python3 tools/pioneer/tests/pioneer_blackhole_arithmetic_image_test.py HAIKU_BUILD
+  python3 tools/pioneer/tests/pioneer_native_bfp_arithmetic_words_test.py
+
+ASan/UBSan/Werror:42,304 independent integer-vs-exact-Fraction instruction cases,
+including long accumulation at all3 Qwen widths/both fidelity selections,
+cancellation,exponent/rounding/underflow/overflow stress and102 atomic refusals.
+The independent Python rational characterization is unchanged and reads the
+unchanged historical physical record. Only its previously observed BFP8 row0
+word4180b500 is explained;the other63 outputs are STILL UNOBSERVED.
+
+Separate test wrappers execute ACTUAL unchanged RV32 bytes,using the original
+strict decoder and opcode/config/source-bank observer. Only the requested
+defined output row receives the separately computed arithmetic prediction;
+undefined broadcast replica rows are not promoted to output. Independent
+Python Fraction predictions agree with all64 words per two-job variant:
+2 fixed single-tile formats +12 full-K/phase/issue variants,14 positive RV32
+image executions/28 math jobs (two jobs INSIDE each image invocation,not two
+separate launches).9 additional image fault cases check configuration,initial/final
+completion,missing producers,unreleased banks and all3 omitted fidelity terms;
+an omitted phase is NOT accidentally replaced by the characterization wrapper.
+Full-band ideal and rounded predictions differ in all32 tested rows. This is
+why the existing ideal observer is not an exact silicon arithmetic oracle.
+Both old ideal single-tile37-case and full-band12-variant regressions still
+pass unchanged. These are software tests,NOT new physical qualification.
+
+After a NEW physical parent actually terminates,an optional read-only check is:
+  python3 tools/pioneer/tests/compare_pioneer_native_bfp_arithmetic_words.py \
+    CLOSED_RECORD --bits 8
+
+The parser requires64 unique indices from both jobs,unchanged ideal expected
+fields and exact documented-arithmetic words. It refuses malformed,missing,
+duplicate,foreign-format or mismatched data,oversized/invalid-text records and
+optimized-Python use.277 synthetic checks include every output position and
+explicit refusal to promote the old partial physical log. A parser pass does
+not authenticate record provenance,physical run completion,ownership,lifecycle
+or safe END. It issues no ioctl,device read,END,retry,reset or cleanup. The old
+failed physical test remains failed;its spent parent must NOT be reused.
+
+Primary arithmetic facts (no vendor implementation copied)
+---------------------------------------------------------
+Pinned tt-isa4a73a7121d95f545b85efa34b243f0b8b316f967:
+https://github.com/tenstorrent/tt-isa-documentation/blob/4a73a7121d95f545b85efa34b243f0b8b316f967/WormholeB0/TensixTile/TensixCoprocessor/MatrixUnitArithmetic.md
+Full232-line primary document read from the prior pinned research copy;
+SHA f9f353091033289e8a01aac9db504837ea076c1d6278cac62fcc9d3448681cc8.
+New web exact-pin views were unavailable;no changed upstream facts assumed.
+No external source copied/executed/linked. All new arithmetic is our own
+implementation of the documented mathematical/register facts.
+
+Next gate:record ALL64 actual BFP8 words with the already-built observation
+client in a separately frozen trial,only AFTER the current cached inference
+parent finishes. No hardware authority comes from these software predictions.
+Then qualify native full-K/GDDR/cohort/state integration and full-model quality
+before claiming usable self-hosted27B speed.20tok/s remains UNMET.

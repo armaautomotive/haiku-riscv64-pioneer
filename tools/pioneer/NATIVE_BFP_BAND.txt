@@ -48,7 +48,7 @@ Use phases1 only as an explicitly reduced-precision alternative.
 
 ASan/UBSan/Werror executes ACTUAL compiled RV32I text through the unchanged
 strict Step decoder:3 widths x2 fidelity variants x2 issue variants,each TWO
-complete launches,all32 outputs compared bitwise against a separate IDEAL
+complete math jobs within each RV32 invocation,all32 outputs compared bitwise against a separate IDEAL
 phasewise scalar reference. The new observer extends only band L1/UNPACK/
 broadcast behavior; the existing single-tile model and decoder are untouched.
 This ideal arithmetic is NOT Blackhole's exact rounding model and DOES NOT
@@ -58,7 +58,7 @@ terms and invalid widths.4 build refusals cover driver/Work/validation and
 implicit2-phase use. Existing first-tile37-case image regression stays exact,
 including original adcec3cf BFP4 and c21f4692 BFP8 text identities.
 
-LargestK17408,phases4,two launches:MMIO40420 issue-port stores/72364 RV32 steps;
+LargestK17408,phases4,two math jobs:MMIO40420 issue-port stores/72364 RV32 steps;
 direct134 cold setup stores/71107 steps. Direct variants use no ABI stack;
 MMIO allocates96B/touches88B. These are SOFTWARE counts,not card cycles or
 tokens/sec. No speedup is claimed without physical inference measurements.
@@ -120,7 +120,8 @@ The real diagnostic authenticates the complete original c600de03,opens the
 previously prepared94,699,520B BFP8 matrix entry for blk.0.ffn_gate.weight,
 and checks first/middle/last32-row bands. All480 cached tiles equal fresh
 original conversion byte-for-byte. Both fidelity variants execute ACTUAL
-compiledRV32 text twice per band:6 cases/12 launches,all64 outputs per case
+compiledRV32 text:6 image executions/12 math jobs (two jobs inside each
+invocation),all64 outputs per case
 exact versus the independent IDEAL phasewise reference. This is not a silicon
 rounding oracle or physical/model-quality/performance qualification. The
 existing12-variant image/fault/build-guard suite also passes unchanged.
@@ -137,3 +138,9 @@ Still required:device-arithmetic oracle/physical results,actual device cache
 upload/new owned ranges/ABI,lifecycle/NoC/GDDR/cohort integration,
 per-bank high-range qualification,full-model quality and genuine throughput.
 Full-native27B and20tokens/sec remain UNMET. Installed Assistant/driver unchanged.
+
+Separate rounded-arithmetic test wrappers now also exercise these exact images;
+see BLACKHOLE_BF16_ARITHMETIC.txt. They do NOT replace the ideal observer or
+physical comparator. All12 variants/two math jobs per invocation match independent Fraction
+predictions;the32 defined synthetic full-band outputs differ from the ideal
+model. Actual silicon/full-model quality and performance remain unqualified.

@@ -1,0 +1,8 @@
+total 528
+drwx------ 1 baron root   2048 Jan  1 03:46 .
+drwxr-xr-x 1 baron root  10240 Jan  1 03:46 ..
+-rwxr-xr-x 1 baron root 266360 Jan  1 03:46 Assistant-cached-qualifiedHardwareTest
+-rwxr-xr-x 1 baron root 240073 Jan  1 03:46 Assistant-cached-qualifiedService
+-rw-r--r-- 1 baron root   5877 Jan  1 03:46 install_assistant_lossless_cache.sh
+ae0e5ddc075bb26df0b77ab6c1bcf0d81a7e67b8fc60d2666d7768c7e953fc75  /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
+ed3a7d00f448e49ffc91f975d813141612333ca7c3e4b0d8701abbd38ca93735  /boot/home/config/non-packaged/servers/HaikuAssistantService

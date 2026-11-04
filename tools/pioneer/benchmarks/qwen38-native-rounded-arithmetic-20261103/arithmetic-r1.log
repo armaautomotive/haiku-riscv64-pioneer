@@ -1,0 +1,3 @@
+PASS separate Blackhole BF16/FP32 integer characterization:42304 independent Fraction cases,102 atomic refusals;NO_DEVICE_OR_HARDWARE_ACCEPTANCE_AUTHORITY
+PASS arithmetic build guards:3 forbidden runtime selections;original physical mismatch/comparators UNCHANGED
+OFFBOARD arithmetic evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-blackhole-arithmetic.6db8qxi9

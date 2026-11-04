@@ -1,0 +1,238 @@
++ set -eu
++ '[' 1 = 1 ']'
++ '[' --apply = --apply ']'
+++ uname -s
++ '[' Haiku = Haiku ']'
+++ id -u
++ '[' 0 = 0 ']'
++ umask 077
++ stage=/boot/home/pioneer-assistant-cache-installed-20261103-a
++ qualified=/boot/home/pioneer-lossless-cache-20261103-a
++ base=/boot/home/config/non-packaged/servers
++ worker=/boot/home/config/non-packaged/servers/HaikuAssistantQwen27
++ service=/boot/home/config/non-packaged/servers/HaikuAssistantService
++ newservice=/boot/home/pioneer-assistant-cache-installed-20261103-a/Assistant-cached-qualifiedService
++ newworker=/boot/home/pioneer-lossless-cache-20261103-a/HaikuAssistantQwen27-cached-quiet-model-progress
++ worker_old=ae0e5ddc075bb26df0b77ab6c1bcf0d81a7e67b8fc60d2666d7768c7e953fc75
++ worker_new=861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74
++ service_old=ed3a7d00f448e49ffc91f975d813141612333ca7c3e4b0d8701abbd38ca93735
++ service_new=c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18
++ admin=/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
++ test -d /boot/home/pioneer-assistant-cache-installed-20261103-a
++ test '!' -L /boot/home/pioneer-assistant-cache-installed-20261103-a
+++ stat -c %u:%a /boot/home/pioneer-assistant-cache-installed-20261103-a
++ '[' 0:700 = 0:700 ']'
++ exact /boot/home/config/non-packaged/servers/HaikuAssistantQwen27 ae0e5ddc075bb26df0b77ab6c1bcf0d81a7e67b8fc60d2666d7768c7e953fc75
++ test -f /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
++ test '!' -L /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
++ case "$(stat -c '%u:%h:%a' "$1")" in
+++ stat -c %u:%h:%a /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
+++ sha256sum /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
++ digest='ae0e5ddc075bb26df0b77ab6c1bcf0d81a7e67b8fc60d2666d7768c7e953fc75  /boot/home/config/non-packaged/servers/HaikuAssistantQwen27'
++ '[' ae0e5ddc075bb26df0b77ab6c1bcf0d81a7e67b8fc60d2666d7768c7e953fc75 = ae0e5ddc075bb26df0b77ab6c1bcf0d81a7e67b8fc60d2666d7768c7e953fc75 ']'
++ exact /boot/home/config/non-packaged/servers/HaikuAssistantService ed3a7d00f448e49ffc91f975d813141612333ca7c3e4b0d8701abbd38ca93735
++ test -f /boot/home/config/non-packaged/servers/HaikuAssistantService
++ test '!' -L /boot/home/config/non-packaged/servers/HaikuAssistantService
++ case "$(stat -c '%u:%h:%a' "$1")" in
+++ stat -c %u:%h:%a /boot/home/config/non-packaged/servers/HaikuAssistantService
+++ sha256sum /boot/home/config/non-packaged/servers/HaikuAssistantService
++ digest='ed3a7d00f448e49ffc91f975d813141612333ca7c3e4b0d8701abbd38ca93735  /boot/home/config/non-packaged/servers/HaikuAssistantService'
++ '[' ed3a7d00f448e49ffc91f975d813141612333ca7c3e4b0d8701abbd38ca93735 = ed3a7d00f448e49ffc91f975d813141612333ca7c3e4b0d8701abbd38ca93735 ']'
++ exact /boot/home/pioneer-lossless-cache-20261103-a/HaikuAssistantQwen27-cached-quiet-model-progress 861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74
++ test -f /boot/home/pioneer-lossless-cache-20261103-a/HaikuAssistantQwen27-cached-quiet-model-progress
++ test '!' -L /boot/home/pioneer-lossless-cache-20261103-a/HaikuAssistantQwen27-cached-quiet-model-progress
++ case "$(stat -c '%u:%h:%a' "$1")" in
+++ stat -c %u:%h:%a /boot/home/pioneer-lossless-cache-20261103-a/HaikuAssistantQwen27-cached-quiet-model-progress
+++ sha256sum /boot/home/pioneer-lossless-cache-20261103-a/HaikuAssistantQwen27-cached-quiet-model-progress
++ digest='861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74  /boot/home/pioneer-lossless-cache-20261103-a/HaikuAssistantQwen27-cached-quiet-model-progress'
++ '[' 861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74 = 861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74 ']'
++ exact /boot/home/pioneer-assistant-cache-installed-20261103-a/Assistant-cached-qualifiedService c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18
++ test -f /boot/home/pioneer-assistant-cache-installed-20261103-a/Assistant-cached-qualifiedService
++ test '!' -L /boot/home/pioneer-assistant-cache-installed-20261103-a/Assistant-cached-qualifiedService
++ case "$(stat -c '%u:%h:%a' "$1")" in
+++ stat -c %u:%h:%a /boot/home/pioneer-assistant-cache-installed-20261103-a/Assistant-cached-qualifiedService
+++ sha256sum /boot/home/pioneer-assistant-cache-installed-20261103-a/Assistant-cached-qualifiedService
++ digest='c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18  /boot/home/pioneer-assistant-cache-installed-20261103-a/Assistant-cached-qualifiedService'
++ '[' c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18 = c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18 ']'
++ exact /boot/home/config/non-packaged/apps/HaikuAssistant 0de9141eb3955cf1c993a67c80ef648b3538ce7155c17677458487ee083a4933
++ test -f /boot/home/config/non-packaged/apps/HaikuAssistant
++ test '!' -L /boot/home/config/non-packaged/apps/HaikuAssistant
++ case "$(stat -c '%u:%h:%a' "$1")" in
+++ stat -c %u:%h:%a /boot/home/config/non-packaged/apps/HaikuAssistant
+++ sha256sum /boot/home/config/non-packaged/apps/HaikuAssistant
++ digest='0de9141eb3955cf1c993a67c80ef648b3538ce7155c17677458487ee083a4933  /boot/home/config/non-packaged/apps/HaikuAssistant'
++ '[' 0de9141eb3955cf1c993a67c80ef648b3538ce7155c17677458487ee083a4933 = 0de9141eb3955cf1c993a67c80ef648b3538ce7155c17677458487ee083a4933 ']'
++ exact /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f
++ test -f /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
++ test '!' -L /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
++ case "$(stat -c '%u:%h:%a' "$1")" in
+++ stat -c %u:%h:%a /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
+++ sha256sum /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
++ digest='b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload'
++ '[' b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f = b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f ']'
++ exact /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
++ test -f /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
++ test '!' -L /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
++ case "$(stat -c '%u:%h:%a' "$1")" in
+++ stat -c %u:%h:%a /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+++ sha256sum /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
++ digest='041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe'
++ '[' 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403 = 041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403 ']'
++ exact /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229
++ test -f /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
++ test '!' -L /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
++ case "$(stat -c '%u:%h:%a' "$1")" in
+++ stat -c %u:%h:%a /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+++ sha256sum /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
++ digest='d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard'
++ '[' d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229 = d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229 ']'
++ runtime=/boot/home/develop/llama-c060ca974c77/build-pioneer/bin
++ library libllama.so 2.0 0ae23a2c211af9fbafb89c3d93bdd136a4bdd574baeeaf2d622f582efcf426af
++ exact /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so.0.2.0 0ae23a2c211af9fbafb89c3d93bdd136a4bdd574baeeaf2d622f582efcf426af
++ test -f /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so.0.2.0
++ test '!' -L /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so.0.2.0
++ case "$(stat -c '%u:%h:%a' "$1")" in
+++ stat -c %u:%h:%a /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so.0.2.0
+++ sha256sum /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so.0.2.0
++ digest='0ae23a2c211af9fbafb89c3d93bdd136a4bdd574baeeaf2d622f582efcf426af  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so.0.2.0'
++ '[' 0ae23a2c211af9fbafb89c3d93bdd136a4bdd574baeeaf2d622f582efcf426af = 0ae23a2c211af9fbafb89c3d93bdd136a4bdd574baeeaf2d622f582efcf426af ']'
++ '[' -L /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so.0 ']'
+++ readlink /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so.0
++ '[' libllama.so.0.2.0 = libllama.so.0.2.0 ']'
++ library libggml.so 21.0 a3b81c133641bbdacde8dd1d0e0ffa7a0a1ec0c33e95c426df1db59735379c16
++ exact /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml.so.0.21.0 a3b81c133641bbdacde8dd1d0e0ffa7a0a1ec0c33e95c426df1db59735379c16
++ test -f /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml.so.0.21.0
++ test '!' -L /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml.so.0.21.0
++ case "$(stat -c '%u:%h:%a' "$1")" in
+++ stat -c %u:%h:%a /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml.so.0.21.0
+++ sha256sum /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml.so.0.21.0
++ digest='a3b81c133641bbdacde8dd1d0e0ffa7a0a1ec0c33e95c426df1db59735379c16  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml.so.0.21.0'
++ '[' a3b81c133641bbdacde8dd1d0e0ffa7a0a1ec0c33e95c426df1db59735379c16 = a3b81c133641bbdacde8dd1d0e0ffa7a0a1ec0c33e95c426df1db59735379c16 ']'
++ '[' -L /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml.so.0 ']'
+++ readlink /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml.so.0
++ '[' libggml.so.0.21.0 = libggml.so.0.21.0 ']'
++ library libggml-base.so 21.0 9cb45a36558bd78aa4d4b7ed5385cbf9df32de208f9e6c9b6d064e8527dca389
++ exact /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-base.so.0.21.0 9cb45a36558bd78aa4d4b7ed5385cbf9df32de208f9e6c9b6d064e8527dca389
++ test -f /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-base.so.0.21.0
++ test '!' -L /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-base.so.0.21.0
++ case "$(stat -c '%u:%h:%a' "$1")" in
+++ stat -c %u:%h:%a /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-base.so.0.21.0
+++ sha256sum /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-base.so.0.21.0
++ digest='9cb45a36558bd78aa4d4b7ed5385cbf9df32de208f9e6c9b6d064e8527dca389  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-base.so.0.21.0'
++ '[' 9cb45a36558bd78aa4d4b7ed5385cbf9df32de208f9e6c9b6d064e8527dca389 = 9cb45a36558bd78aa4d4b7ed5385cbf9df32de208f9e6c9b6d064e8527dca389 ']'
++ '[' -L /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-base.so.0 ']'
+++ readlink /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-base.so.0
++ '[' libggml-base.so.0.21.0 = libggml-base.so.0.21.0 ']'
++ library libggml-cpu.so 21.0 69e9ec2c43a123afbb256c3feb6313cdcebdf1b2a87278ac3cdac8a1a65273d2
++ exact /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-cpu.so.0.21.0 69e9ec2c43a123afbb256c3feb6313cdcebdf1b2a87278ac3cdac8a1a65273d2
++ test -f /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-cpu.so.0.21.0
++ test '!' -L /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-cpu.so.0.21.0
++ case "$(stat -c '%u:%h:%a' "$1")" in
+++ stat -c %u:%h:%a /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-cpu.so.0.21.0
+++ sha256sum /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-cpu.so.0.21.0
++ digest='69e9ec2c43a123afbb256c3feb6313cdcebdf1b2a87278ac3cdac8a1a65273d2  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-cpu.so.0.21.0'
++ '[' 69e9ec2c43a123afbb256c3feb6313cdcebdf1b2a87278ac3cdac8a1a65273d2 = 69e9ec2c43a123afbb256c3feb6313cdcebdf1b2a87278ac3cdac8a1a65273d2 ']'
++ '[' -L /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-cpu.so.0 ']'
+++ readlink /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-cpu.so.0
++ '[' libggml-cpu.so.0.21.0 = libggml-cpu.so.0.21.0 ']'
++ exact /boot/home/pioneer-lossless-cache-20261103-a/pioneer-assistant-cache-inference-trial-861e-57fe.sh 0266fe6b0da6285801777dc12c4876058e79e7e68f97065d289e0253dd512e7e
++ test -f /boot/home/pioneer-lossless-cache-20261103-a/pioneer-assistant-cache-inference-trial-861e-57fe.sh
++ test '!' -L /boot/home/pioneer-lossless-cache-20261103-a/pioneer-assistant-cache-inference-trial-861e-57fe.sh
++ case "$(stat -c '%u:%h:%a' "$1")" in
+++ stat -c %u:%h:%a /boot/home/pioneer-lossless-cache-20261103-a/pioneer-assistant-cache-inference-trial-861e-57fe.sh
+++ sha256sum /boot/home/pioneer-lossless-cache-20261103-a/pioneer-assistant-cache-inference-trial-861e-57fe.sh
++ digest='0266fe6b0da6285801777dc12c4876058e79e7e68f97065d289e0253dd512e7e  /boot/home/pioneer-lossless-cache-20261103-a/pioneer-assistant-cache-inference-trial-861e-57fe.sh'
++ '[' 0266fe6b0da6285801777dc12c4876058e79e7e68f97065d289e0253dd512e7e = 0266fe6b0da6285801777dc12c4876058e79e7e68f97065d289e0253dd512e7e ']'
++ for suffix in exit state stdout stderr
++ record=/boot/home/pioneer-lossless-cache-20261103-a/inference-four.exit
++ test -f /boot/home/pioneer-lossless-cache-20261103-a/inference-four.exit
++ test '!' -L /boot/home/pioneer-lossless-cache-20261103-a/inference-four.exit
+++ stat -c %u:%h /boot/home/pioneer-lossless-cache-20261103-a/inference-four.exit
++ '[' 0:1 = 0:1 ']'
++ for suffix in exit state stdout stderr
++ record=/boot/home/pioneer-lossless-cache-20261103-a/inference-four.state
++ test -f /boot/home/pioneer-lossless-cache-20261103-a/inference-four.state
++ test '!' -L /boot/home/pioneer-lossless-cache-20261103-a/inference-four.state
+++ stat -c %u:%h /boot/home/pioneer-lossless-cache-20261103-a/inference-four.state
++ '[' 0:1 = 0:1 ']'
++ for suffix in exit state stdout stderr
++ record=/boot/home/pioneer-lossless-cache-20261103-a/inference-four.stdout
++ test -f /boot/home/pioneer-lossless-cache-20261103-a/inference-four.stdout
++ test '!' -L /boot/home/pioneer-lossless-cache-20261103-a/inference-four.stdout
+++ stat -c %u:%h /boot/home/pioneer-lossless-cache-20261103-a/inference-four.stdout
++ '[' 0:1 = 0:1 ']'
++ for suffix in exit state stdout stderr
++ record=/boot/home/pioneer-lossless-cache-20261103-a/inference-four.stderr
++ test -f /boot/home/pioneer-lossless-cache-20261103-a/inference-four.stderr
++ test '!' -L /boot/home/pioneer-lossless-cache-20261103-a/inference-four.stderr
+++ stat -c %u:%h /boot/home/pioneer-lossless-cache-20261103-a/inference-four.stderr
++ '[' 0:1 = 0:1 ']'
+++ cat /boot/home/pioneer-lossless-cache-20261103-a/inference-four.exit
++ '[' 0 = 0 ']'
+++ cat /boot/home/pioneer-lossless-cache-20261103-a/inference-four.state
++ '[' KNOWN_CLEAN_CACHED_FOUR_TOKEN_WORK_REQUEST_COMPLETED = KNOWN_CLEAN_CACHED_FOUR_TOKEN_WORK_REQUEST_COMPLETED ']'
++ test '!' -s /boot/home/pioneer-lossless-cache-20261103-a/inference-four.stderr
+++ sha256sum /boot/home/pioneer-lossless-cache-20261103-a/inference-four.stdout
++ digest='316e1655edfac771e3edbda7f7a2408385ec44676c0d0a7e443d730ec38d6a2a  /boot/home/pioneer-lossless-cache-20261103-a/inference-four.stdout'
++ '[' 316e1655edfac771e3edbda7f7a2408385ec44676c0d0a7e443d730ec38d6a2a = 316e1655edfac771e3edbda7f7a2408385ec44676c0d0a7e443d730ec38d6a2a ']'
++ idle
+++ ps -o Id -o Team
++ listing='   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  104 /boot/system/servers/net_server                    
+  106 /boot/system/servers/package_daemon                
+  111 /boot/system/servers/launch_daemon baron           
+  113 /boot/system/servers/power_daemon                  
+  117 /boot/system/servers/syslog_daemon                 
+  131 /boot/system/servers/media_server                  
+  175 /boot/system/servers/app_server                    
+  187 /boot/system/Tracker                               
+  189 /boot/system/Deskbar                               
+  208 /boot/system/servers/input_server                  
+  232 /boot/system/servers/media_addon_server            
+  296 /boot/system/servers/notification_server           
+  577 /boot/system/bin/screen_blanker                    
+  964 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  966 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  967 /bin/bash -c stage=/boot/home/pioneer-assistant-cache-installed 
+  971 /boot/system/bin/sh -x -s -- --apply               
+ 1012 /boot/system/bin/ps -o Id -o Team                  '
++ printf '%s\n' '   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  104 /boot/system/servers/net_server                    
+  106 /boot/system/servers/package_daemon                
+  111 /boot/system/servers/launch_daemon baron           
+  113 /boot/system/servers/power_daemon                  
+  117 /boot/system/servers/syslog_daemon                 
+  131 /boot/system/servers/media_server                  
+  175 /boot/system/servers/app_server                    
+  187 /boot/system/Tracker                               
+  189 /boot/system/Deskbar                               
+  208 /boot/system/servers/input_server                  
+  232 /boot/system/servers/media_addon_server            
+  296 /boot/system/servers/notification_server           
+  577 /boot/system/bin/screen_blanker                    
+  964 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  966 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+  967 /bin/bash -c stage=/boot/home/pioneer-assistant-cache-installed 
+  971 /boot/system/bin/sh -x -s -- --apply               
+ 1012 /boot/system/bin/ps -o Id -o Team                  '
++ awk -v self=971 '
+ $1=="Id" && $2=="Team" && NF==2 {header++;next}
+ $1 ~ /^[0-9]+$/ && NF>=2 {
+  teams++;if($1==self)next
+  if($0 ~ /(^|[\/[:space:]])(Assistant|HaikuAssistant|llama-|tenstorrent_haiku|inference-|pioneer_q38|pioneer-q|pioneer-native-bfp|pioneer-dram|pioneer-assistant-cache|graph-csr-debug|source-check)/)owners++
+  next
+ }
+ NF{bad++} END{if(header!=1 || !teams || bad || owners)exit 1}'
++ exit 1

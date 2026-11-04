@@ -149,3 +149,10 @@ with this revised client, and no new speed/model-quality claim is made.
 Primary exact-arithmetic facts, freshly pinned and verified:
 https://github.com/tenstorrent/tt-isa-documentation/blob/4a73a7121d95f545b85efa34b243f0b8b316f967/WormholeB0/TensixTile/TensixCoprocessor/MatrixUnitArithmetic.md
 See benchmarks/qwen38-native-bfp-arithmetic-20261103.txt for closed evidence.
+
+The subsequent separate C++ integer characterization and compiled-image tests
+are described in BLACKHOLE_BF16_ARITHMETIC.txt.42,304 Fraction comparisons and
+2 single-tile+12 full-K image variants pass. A read-only64-word parser refuses
+the old partial record;277 synthetic parser cases pass. Neither the client's
+strict Expected(),its END policy nor any physical acceptance gate changes.
+No new physical BFP8 words are claimed by these additional software checks.

@@ -33,14 +33,15 @@ Recipe551c6713a31c749d0dad82e616c592f01aba6854af8781f6756b4f60d85bc897
 First rows0/8704/17376:480 complete cached1088B tiles equal fresh original
 conversion byte-for-byte. Reference conversion exists ONLY in this diagnostic,
 not source.Stage. Each band executes ACTUAL full-K RV32 text for phases4 and
-phase0-only1,two launches each:6 cases/12 launches,all64 outputs per case exact
+phase0-only1,two math jobs inside each invocation:6 image executions/12 math
+jobs,all64 outputs per case exact
 versus independent IDEAL phasewise reference. This is NOT physical Blackhole
 rounding/model-quality or throughput qualification. CLI setup checks existing
 private cache directory then uses normal cache.Open;the bound source never
 opens directories or creates entries. No learned payload committed.
 
 Actual tool68785 CLOSED0/image-recheck.stderr0:existing12 compiled variants x2
-launches,all32 outputs exact,15 fault controls and4 build refusals unchanged.
+math jobs per image invocation,all32 outputs exact,15 fault controls and4 build refusals unchanged.
 Only image-test main has an include guard for reuse;strict decoder,observer,
 numerical comparator and legacy executable bytes unchanged.
 Initial new real diagnostic compile omitted unistd.h for geteuid;fixed explicit
