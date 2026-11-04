@@ -1,0 +1,11 @@
+35142021d16a51e50b38657418800f3dcb102ddadc3961ec680d16ebf693ce83  /boot/home/pioneer-native-model-band-20261104-a/learned-reference.log
+f63e878f128e9c6d7f23453477c32fdd76b1eccfc643b0b321ed6bacacf9b587  /boot/home/pioneer-native-model-band-20261104-a/pioneer-native-model-band-diagnostic
+5b661f9d0ce6e8e9833e6fc9ee5d23ce53bab06b241bf6ae674faf5bb99912f4  /boot/home/pioneer-native-model-band-20261104-a/pioneer_native_model_band_physical.sh
+e3af9823d2088cc4254490babda1b2cd4b70f077339a3ef4e0fa973989a37266  /boot/home/pioneer-native-model-band-20261104-a/pioneer_native_model_band_recovery_restore.sh
+04a03e6d725a9406843c8808df68e363af3a5d664bc7d65efdac9d5ccbed1327  /boot/home/pioneer-native-model-band-20261104-a/tenstorrent_pci_probe-native-model-band80
+0:1:644 /boot/home/pioneer-native-model-band-20261104-a/learned-reference.log
+0:1:755 /boot/home/pioneer-native-model-band-20261104-a/pioneer-native-model-band-diagnostic
+0:1:700 /boot/home/pioneer-native-model-band-20261104-a/pioneer_native_model_band_physical.sh
+0:1:700 /boot/home/pioneer-native-model-band-20261104-a/pioneer_native_model_band_recovery_restore.sh
+0:1:755 /boot/home/pioneer-native-model-band-20261104-a/tenstorrent_pci_probe-native-model-band80
+P100A_RELOAD driver55 tag2026102100010012 generation8 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY

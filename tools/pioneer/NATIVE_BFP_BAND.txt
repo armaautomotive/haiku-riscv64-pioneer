@@ -1,4 +1,18 @@
-Full-K native BFP8/broadcast band prototype -- OFFBOARD ONLY
+Current qualification -- 2026-11-04
+==================================
+The fixed diagnostic79 MMIO/all4-phase widths5120/6144/17408 have now passed
+on physical hardware:192 exact synthetic outputs/3 explicit ENDs. Separate
+diagnostic80 also passed192 exact outputs/3 explicit ENDs using authenticated
+first/middle/last bands of real tensor7 weights and fixed test inputs. Both
+restore normal041;latest independent health is gen10/64CPU/fullRAM. See
+benchmarks/qwen38-native-bfp-band-physical-20261104.txt and
+benchmarks/qwen38-native-model-band-physical-20261104.txt. This does NOT
+qualify full-model quality,card-resident GDDR/NoC/state/cohort integration,
+direct-issue or reduced-fidelity variants,or a model speedup. Full-native27B
+and20tok/s remain UNMET. Historical prototype-only statements below describe
+their original checkpoint,not the current completed fixed diagnostic state.
+
+Historical full-K native BFP8/broadcast band prototype -- OFFBOARD ONLY
 =========================================================
 
 PioneerQ38NativeBfpBand.h and blackhole_q38_native_bfp_band.cpp execute ONE

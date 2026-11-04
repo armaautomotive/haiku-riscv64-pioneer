@@ -1,0 +1,57 @@
+Authenticated learned-weight native-band diagnostic80 -- CLOSED cleanly
+====================================================================
+2026-11-04 UTC,preparation ea0427cd6b2d78af33423e9e8d709d8d3af33b9d,
+independently verified on GitHub. SAME parent58809 actually terminal0,
+observed02:38:04UTC;no timeout restart or parallel Pioneer action. Source
+authentication and three sequential fresh-FD RUN/END operations complete.
+This is a real-weight arithmetic diagnostic,NOT full-model inference,
+actual hidden activations,language-model quality or tokens/sec evidence.
+Full-native27B and20tok/s remain UNMET. Last real tiny Work sample remains
+0.204tok/s/3 warm samples with CPU attention/state,not a matched speedup.
+
+Exact frozen tuple and source binding
+------------------------------------
+parent5b661f9d0ce6e8e9833e6fc9ee5d23ce53bab06b241bf6ae674faf5bb99912f4
+driver04a03e6d725a9406843c8808df68e363af3a5d664bc7d65efdac9d5ccbed1327
+clientf63e878f128e9c6d7f23453477c32fdd76b1eccfc643b0b321ed6bacacf9b587
+tag2026110400010080/gen9,f69c2803 K5120/phases4 image/d47a1c29 boot.
+SAME-open original18973870528B SHA c600de03.../complete851-tensor layout
+was authenticated BEFORE card open. Fresh original conversion and rounded
+CPU references match PRIVATE compiled payload/reference pins;source remains
+bound/stable across all samples. CPU reference is DEBUG ONLY,not Work.
+Only computed output words/hashes/source code are published,not weights,
+private generated headers,models,caches or private binaries.
+
+Actual tensor7 blk.0.ffn_gate.weight,original Q4,width5120/rows17408,
+32-row bands first0/8704/17376. Fixed finite BF16 diagnostic input,NOT actual
+model hidden states. All3 use two complete jobs/all4 fidelity terms. Every
+sample's64 returned words EXACT versus fresh original-derived predictions
+and separately qualified Python Fraction96-word reference35142021... .
+All3 polls2/gen9;3 explicit ENDs prove complete owned L1/TLB/PCI restoration,
+source still stable and fresh FD closure BEFORE next sample. Total192 words.
+No failed case/retry/reset,implicit END or relaxed comparator.
+
+Saved child198lines/18546B SHA:
+71f8686db0d94af820be42c0e87f2f4b1bb4aa53acf3fbfb9b6e92cd2222d7e6
+Child exit0,child/outer/postflight stderr0. Independently copied back by
+98232 CLOSED0;remote/local whole SHA matches for stdout/stderr/exit/state.
+Parent234lines/21290B includes the child exactly once. Stage/once token
+/boot/home/pioneer-native-model-band-20261104-a is SPENT;never reuse it.
+Finalstate STABLE041_RESTORED_LEARNED_BANDS_EXACT192_PASSED.
+
+Restoration and independent health -- COMPLETE
+----------------------------------------------
+Parent restores normal041/tag12/gen10 only AFTER all192 words/3 ENDs pass.
+Independent CPU-only postflight9bd23f actually CLOSED0 after whole parent
+terminal:installed041fef18...,quiesced0/cold0/active_owner0/open1/guard1,
+64 CPUs/max137034936320B RAM/free133780717568B,no LLM owner. Cached worker
+861e5287... and servicec509da43... unchanged. No reboot/power/SD/mains/
+hardware/network/kernel/boot/model/cache change. No live test remains.
+Raw closed files/SHA256SUMS and independent immutable-record regression
+accompany this report. Preparation-only report is historical,not pending.
+
+Next:resident packed GDDR -> aligned L1 loader/cohort/state integration,
+high-range/alias/reservation-qualified arena,full-model quality and genuine
+throughput. Diagnostic host-staged bands are not the production architecture.
+The packed1088B cache recipe stays fixed;GDDR-to-L1 alignment must be handled
+on-card rather than padding the whole stored model or repeated host uploads.
