@@ -26,8 +26,8 @@ No power,SD,hardware,boot/network/OS/model/Assistant change. Cache recipebb0e
 unchanged. This is a synthetic full-K building block,NOT learned-model
 quality,NoC/GDDR/cohort/state integration,full-model offload or throughput.
 
-NEXT fixed remaining-width inputs -- PREPARATION ONLY,not executed here
---------------------------------------------------------------------
+Remaining-width inputs -- frozen preparation preceding execution below
+---------------------------------------------------------------------
 Newstage:/boot/home/pioneer-native-bfp-band-20261104-b
 Same exact301cd001 driver/0283070c client,no new shader or Work binary.
 Frozen parent0a8a2f0e630be06cc35763647452782076aa10f6f75248eecf05210fefe0caee
@@ -51,3 +51,46 @@ per-projection uploads for the requested resident-card Work architecture.
 Full-native27B/20tok/s UNMET;no new generation measurement or speedup claim.
 Raw5120/postflight andclosed remaining preparation logs are archived with
 SHA256SUMS. Original once tokens and correct/rejected trials remain intact.
+
+LATER ACTUAL6144+17408 execution -- BOTH PASSED
+--------------------------------------------
+Frozen preparationf358a2db24 published before execution. Exact same301cd001
+driver/0283070c client,0a8a2f0e parent,immutablee16f4282 reference and optional
+207ce7dd recovery staged in private newstage-b;all hashes/root/singlelinks/
+modes reverified. Original stage-a outputs/marker remain unchanged.
+
+Parent50915 launched01:38:28UTC,actually CLOSED0 on SAME handle before the
+01:39:41UTC postflight. No concurrent Pioneer action while parent running.
+K6144:ONE fresh FD/RUN,two device math jobs,all64 exact,polls2,generation7;
+clean END/L1/TLB/PCI restoration and close. CPU metadata then proves owner0
+before K17408's fresh FD/RUN:two jobs,all64 exact,polls3,samegeneration7;
+clean END/restoration/close. Independent parent gate checked both complete
+records against the frozen prior Fraction predictions,not got==expected only.
+
+Independently fetched child stdout matches remote SHA:
+6144:5071B,7ea5f7c6a9428f8797b97dc419f40428ca6e02929de242549b85b61724572ae1
+17408:5136B,e357e6b1bdfc5d36f17a136ed1088b12c0163d2223f68a4dffd4dd14c6de79ba
+Both child exits0;all child/outer/postflight stderr0. Final state
+STABLE041_RESTORED_REMAINING_FULL_K_EXACT128_PASSED.
+
+Normal041/tag12/gen8 restored. Independent postterminal metadata verifies
+quiesced0,cold0,active_owner0,open1,guard1;64CPUs/maxRAM137034936320B.
+Normal driver041fef18,cached Assistant worker861e5287/servicec509da43 exact;
+no Assistant/LLM/diagnostic owner. No board/power/SD/network/OS/hardware or
+model change,no recovery needed. Once tokens remain SPENT,never rerun them.
+
+All THREE fixed full-K widths now physically pass,192 returned words total,
+three explicit accepted ENDs and complete owned-memory/TLB/PCI restoration.
+This qualifies synthetic full-width native arithmetic/broadcast/lifecycle,
+NOT learned weights,model-wide quality,resident GDDR/NoC/cohort/state,full-
+model Work or speed. Next is authenticated real cached model bands and the
+card-resident data path.20tok/s/full-native27B remain UNMET;NO new inference
+rate or comparative speedup. Raw records and independent postflight retained
+under remaining/with SHA256SUMS.
+
+New immutable-record regression CLOSED0,stderr0:all192 returned values,
+3 exact SHA/length/exit/stderr/END markers andboth final states agree with
+the96 independent prior Fraction predictions. This checks saved evidence,
+not a new card run or proof of provenance by itself. The first invocation
+used the wrong working directory and did not open the test;its error is
+retained. Correct working-directory invocation passes with NO source change.

@@ -1,0 +1,11 @@
+e16f4282406ea8f21ea3b7bdf3f9100482e3eae1b9fc2e16cbcf4b1c7a3e00cb  /boot/home/pioneer-native-bfp-band-20261104-b/full-k-reference.log
+0283070c764a5d992407bb5e06212cd82d75536bef37caa6cbd825f176618fe3  /boot/home/pioneer-native-bfp-band-20261104-b/pioneer-native-bfp-band-diagnostic
+207ce7dd1692f81e094aa10209d1057108b9a5534201ca75560d70914ee6335d  /boot/home/pioneer-native-bfp-band-20261104-b/pioneer_native_bfp_remaining_recovery_restore.sh
+0a8a2f0e630be06cc35763647452782076aa10f6f75248eecf05210fefe0caee  /boot/home/pioneer-native-bfp-band-20261104-b/pioneer_native_bfp_remaining_widths_physical.sh
+301cd00175c078b447a4204233ae04d5d30e897e888e8c4525189738e22a6189  /boot/home/pioneer-native-bfp-band-20261104-b/tenstorrent_pci_probe-native-bfp-band79
+0:1:644 /boot/home/pioneer-native-bfp-band-20261104-b/full-k-reference.log
+0:1:755 /boot/home/pioneer-native-bfp-band-20261104-b/pioneer-native-bfp-band-diagnostic
+0:1:700 /boot/home/pioneer-native-bfp-band-20261104-b/pioneer_native_bfp_remaining_recovery_restore.sh
+0:1:700 /boot/home/pioneer-native-bfp-band-20261104-b/pioneer_native_bfp_remaining_widths_physical.sh
+0:1:755 /boot/home/pioneer-native-bfp-band-20261104-b/tenstorrent_pci_probe-native-bfp-band79
+P100A_RELOAD driver55 tag2026102100010012 generation6 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
