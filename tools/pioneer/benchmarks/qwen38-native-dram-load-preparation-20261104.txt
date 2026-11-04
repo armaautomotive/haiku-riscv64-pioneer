@@ -1,0 +1,82 @@
+LOAD-ONLY82 -- tested preparation, NOT physical byte/math/model proof
+===================================================================
+2026-11-04 UTC;baseline73e429cf7aba10f19cf5b8225482372b572d1cba.
+No new GPU job,driver/OS/network/power/SD/model/cache/Assistant mutation
+was performed for this checkpoint. Pioneer read-only preflight CLOSED0:
+normal041/tag12/gen2,cold0/owner0/open1/guard1;64 CPUs,max137034936320B;
+cached worker861e5287/servicec509da43 unchanged;new stage absent. Apps idle.
+The earlier81 sample0/all64 numerical mismatch and fresh-epoch recovery
+are preserved, not promoted to a pass or hidden behind this diagnostic.
+
+New code and exact roles
+-------------------------
+PioneerNativeDramLoadProtocol/Lease,blackhole_q38_native_dram_load image,
+separate82 driver,authenticated fixed client and frozen one-shot parent.
+Exact tag2026110400010082;408B request/368B result;NDL1/count80001400.
+NO FPU/unpack/config/Dst/output math,scalar payload/CPU product/card hash.
+Same authenticated packed-GDDR loader/layout as81;known no-math park only.
+Native END independently compares ROM/frame,46080 payload+2560 header
+words+64 sentinels WHILE parked BEFORE ANY reset,then again AFTER HOLD
+BEFORE ANY restore. Mismatch logs kind/address only,not private data words.
+Strict current scope/source/VM/TLB/FIFO/counters/PCI/ARC clock and original
+data readback/closure stay enforced. First failure retains memory only;
+no subsequent IO/END/reset/retry/automatic cleanup. Success is byte/lifecycle
+evidence only,not numerical or model inference. CPU source/reference proof
+is explicit DEBUG BEFORE device open,never Work-mode CPU validation.
+
+Latest actual same-handle local completions -- all exit0/stderr0
+----------------------------------------------------------------
+90592 image+lease:actual compiled RV32I,8 route-shape valid/21 faults;
+ stack272B,touched260B,48638steps;NO FPU/config/Dst/scalar payload access.
+ All3 authenticated real private samples,full46080 payload/2560 header
+ words and restoration;90 mismatch/failure/admission cases,4 role refusals.
+ Pre-reset damage permits NO reset;post-HOLD damage permits NO restore.
+26139 actual82 native/control source fixtures:308 valid/665 refused;
+ all368 dirty result bytes,17 native views,ownership/byte-check closure.
+8030 old81 actual native/control regression:307 valid/643 refused.
+62760 actual client228 ASan/UBSan cases+3 forbidden roles;actual parent
+ 27 flow/output+7 idle+11 prior-failure/recovery/model+20 exchange-step+
+ 10 one-shot cases. No fabricated native prerequisite/ARC/engine authority.
+These are explicit fake endpoints/simulator tests,not hardware observations.
+
+Native SDK builds,PRIVATE files excluded
+----------------------------------------
+Final26756 new82 and45032 old81 rebuilds ACTUALLY CLOSED0,stderr0 on
+their original handles. Earlier completed build outputs are not overwritten.
+RV32 image2268B SHA:
+966507e23929a1d28f62f56de0ea3c3a6c9148d9ff8f59c84138f746eea779a0
+Native82 driver SHA:
+3df4fdb1d034c39df5c24bc06735012109d3881431c5a9ddaedd16ecc535d3d6
+Fixed client SHA:
+f7ae6e1be5fbcf6618ddd4326715c49166169a0073f868a86ec353519bc4f719
+15 actual driver-prologue role/context/Work/CPU-reference/fast-math refusals;
+full kernel.so/glue/libgcc --no-undefined LINK and legacy NULL-only audit.
+Default-control SHA unchanged:
+2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+Old81 rebuilt with shared adapter:driver0ab145ac.../client0091244a... still
+BYTE IDENTICAL,14 actual driver role refusals. PRIVATE headers cf8e2ca4.../
+a2c977bc... unchanged;NO PRIVATE headers/binary/object/model/cache in Git.
+The firstd51c3b...82 driver was superseded BEFORE staging/deployment to add
+the pre-reset comparison. Frozen current parent pins ONLY3df4fdb1/f7ae6e1b.
+
+Frozen planned parent -- NO physical launch at this checkpoint
+--------------------------------------------------------------
+SHA f6859f95a58524cca324e0f150b358c63d2656e8af12eb3b71af1582726a1ba9
+New stage:/boot/home/pioneer-native-dram-load-only-20261104-a.
+Requires prior failed81 raw hashes/state+new-epoch recovery state,exact
+original model metadata and same-open authentication in client,all pinned
+programs/current generation/idle ownership/64CPU/fullRAM. Planned041/gen2
+to82/gen3,one sample0 loader-only run/explicit byte-check END,strict output
+and metadata,then041/gen4 ONLY after known closure. Unknown stops with
+NO further query/END/reset/retry/automatic restore. No spent path reused.
+Next:publish preparation;fresh read-only preflight;new private exact-hash
+stage+CLI-refusal check;ONE direct parent exec;observe SAME handle to actual
+completion;independently preserve raw/exit/hash/restoration evidence.
+
+Diagnostic82 could distinguish transport/lifecycle from FPU integration.
+It cannot establish full-model correctness,high-range arena ownership,
+multiworker resident stripes/cohort/token-state/attention/sampling or speed.
+Full-native27B and20tok/s remain UNMET. Lossless disk cache stays installed
+and warm851-hit/zero-conversion proof unchanged;no new speedup is claimed.
+Public TEXT receipts only in matching SHA256SUMS directory. Preparation
+receipts are never accepted as a new physical observation.

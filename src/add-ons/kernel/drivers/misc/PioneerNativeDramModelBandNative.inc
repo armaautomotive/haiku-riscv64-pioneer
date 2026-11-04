@@ -1,11 +1,23 @@
 /* SPDX-License-Identifier: MIT */
-// Included ONLY by the separate diagnostic81 driver,after inert legacy PCI
-// discovery/baseline definitions. No old sweep/cohort/Work factory selected.
-#include "../../../../../tools/pioneer/PioneerNativeDramModelBandLease.h"
+// Shared physical adapter for EXACT separate81 math/82 LOAD-ONLY drivers.
+// Each gets a different protocol/lease/image/namespace. No runtime mode flag,
+// arbitrary payload or old sweep/cohort/Work factory is introduced.
 #include "BlackholeDramSweepArcClock.h"
 #include "BlackholeDramSweepRoutes.h"
+#if defined(PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC)
+#include "../../../../../tools/pioneer/PioneerNativeDramLoadLease.h"
+#include "PioneerNativeDramLoadGeneratedImage.h"
+namespace PioneerNativeDram82 {
+using PioneerNativeDramModelBandLease=PioneerNativeDramLoadLease;
+constexpr uint32 NativeResultMarker=PioneerNativeDramLoadMarker,NativeResultCount=PioneerNativeDramLoadCount;
+constexpr const char* MapName="P100A isolated GDDR LOAD ONLY82";
+#else
+#include "../../../../../tools/pioneer/PioneerNativeDramModelBandLease.h"
 #include "PioneerNativeDramModelBandGeneratedImage.h"
 namespace PioneerNativeDram81 {
+constexpr uint32 NativeResultMarker=0x3142444e,NativeResultCount=0x04001400;
+constexpr const char* MapName="P100A isolated GDDR native band81";
+#endif
 struct Cookie {PioneerProbeCookie* base=NULL;bool used=false;};
 struct Owner;
 static Owner* current=NULL;
@@ -157,7 +169,7 @@ bool IO::Map() {
 	area_id* ids[]={&memoryArea,&controlArea,&pcArea,&writeArea};void* pages[4]={};
 	for(unsigned i=0;i<4;i++) {
 		if(!Access())return false;
-		*ids[i]=map_physical_memory("P100A isolated GDDR native band81",profile.bar0_host_start+offsets[i],i?B_PAGE_SIZE:0x200000,
+		*ids[i]=map_physical_memory(MapName,profile.bar0_host_start+offsets[i],i?B_PAGE_SIZE:0x200000,
 			B_ANY_KERNEL_ADDRESS,B_KERNEL_READ_AREA|B_UNCACHED_MEMORY|(i==2?0:B_KERNEL_WRITE_AREA),&pages[i]);
 		if(*ids[i]<B_OK)return false;
 	}
@@ -289,9 +301,18 @@ bool IO::NativeL1Read(unsigned a,uint32& v) {
 	if(owner.resetStage==2) {
 		const auto& r=owner.lease.Result().compute;
 		const bool status=a>=0x17ffc0 && a<0x17ffcc;
-		const bool output=a>=0x134000 && a<0x134100 && r.phase==0x7000c && r.count==0x04001400 && r.marker==0x3142444e
+		const bool output=a>=0x134000 && a<0x134100 && r.phase==0x7000c && r.count==NativeResultCount && r.marker==NativeResultMarker
 			&& (r.pc[0]==0x70038 || r.pc[0]==0x7003c) && (r.pc[1]==0x70038 || r.pc[1]==0x7003c);
+#if defined(PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC)
+		// Exact82 image has NO FPU path and only spins at this known park.
+		// Permit READ ONLY comparison of owned bytes BEFORE any stop/reset.
+		const bool loadedPark=r.state==PIONEER_NATIVE_BFP_RESULT && r.completed==1 && r.phase==0x7000c
+			&& r.count==NativeResultCount && r.marker==NativeResultMarker
+			&& (r.pc[0]==0x70038 || r.pc[0]==0x7003c) && (r.pc[1]==0x70038 || r.pc[1]==0x7003c);
+		if(owner.lease.Result().phase!=5 || (!status && !output && !loadedPark))return false;
+#else
 		if(owner.lease.Result().phase!=5 || (!status && !output))return false;
+#endif
 	}
 	if(!Selected())return false;
 	v=PioneerRead32(memory+a/4);return true;
@@ -356,4 +377,4 @@ void ClockIO::QueueWrite(uint32 a,uint32 v){if(Check())PioneerArcQueryIO::QueueW
 uint32 ClockIO::MsiStatusRead(){return Check()?PioneerArcQueryIO::MsiStatusRead():UINT32_MAX;}
 void ClockIO::NotifyArc(){if(Check())PioneerArcQueryIO::NotifyArc();}
 void ClockIO::Pause(){if(Check())PioneerArcQueryIO::Pause();}
-} // namespace PioneerNativeDram81
+} // namespace exact81 or LOAD-ONLY82

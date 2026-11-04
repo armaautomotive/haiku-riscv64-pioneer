@@ -1,0 +1,11 @@
+2026-11-04 UTC. Original execution handles observed terminal,not timeouts:
+90592 image-test-final + lease-test-final CLOSED0
+26139 native-endpoints-final CLOSED0
+8030 math81-endpoints-final CLOSED0
+62760 client-test-final + parent-test-final CLOSED0
+26756 native-build-final CLOSED0
+45032 math81-build-final CLOSED0
+c1d835 preflight read-only CLOSED0
+All corresponding stderr files have length0.
+No82 hardware run/staging/exchange,power,OS,SD or Assistant change.
+Preparation/simulator/fake endpoints are NOT physical byte/math/model proof.

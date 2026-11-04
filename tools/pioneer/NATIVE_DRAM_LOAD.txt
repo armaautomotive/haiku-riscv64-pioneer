@@ -1,0 +1,100 @@
+GDDR LOAD-ONLY82 -- preparation, NOT a physical byte or math pass
+===============================================================
+2026-11-04 UTC. The actual direct-GDDR/FPU81 test failed all64 returned
+words on its FIRST sample; no END, next sample or automatic restore was
+sent. A controlled new power epoch restored stable041/gen2. The failed
+stage is spent and remains unchanged. See NATIVE_DRAM_BAND.txt and
+benchmarks/qwen38-native-dram-band-failed-20261104.txt.
+
+This separate diagnostic isolates transport from FPU/unpack arithmetic.
+It is NOT a proposed fix, an Assistant target or permission to run Work.
+The image uses the same original packed-GDDR loader and C32 L1 layout as81,
+but contains NO FPU/config/Dst/output math path. It never scalar-reads,
+copies or hashes payloads on the card. Its NDL1 marker/count80001400 and
+408-byte protocol are distinct from81's NDB1/count04001400/392-byte ABI.
+Ordinary and81 builds remain separate compile-time roles, not runtime modes.
+
+Independent bytes BEFORE reset, then BEFORE restore
+---------------------------------------------------
+The native heap-only lease preserves the original bounded211248B L1 and
+184320B GDDR journals, exact firmware routes/backing/source/TLB/VM/PCI/FD
+ownership, strict ARC clock and four reset-ledger transitions. RUN stages
+private authenticated source bytes, the fixed loader image, headers and
+sentinels; it requires a known loader-only park,320 requests/2880flits and
+all64 unchanged7fc00001 output sentinels. No numerical result is claimed.
+
+An explicit END acknowledges only that known NO-MATH park. BEFORE ANY
+stop/reset, the host independently reads and compares the entire owned
+ROM/frame, all46080 loaded payload words, all2560 header words and all64
+sentinels. It checks terminal/NIU/counter/source state throughout. Only
+success permits STOP/HOLD, followed by a SECOND complete byte comparison
+BEFORE ANY data restore. This distinguishes a transport/data error from
+a later lifecycle effect. Exact GDDR source comparison precedes its restore;
+complete original GDDR/L1 readback and NIU/FIFO/TLB/clock/PCI closure follow.
+First failure performs memory-only retain: no subsequent IO, reset, retry,
+restoration or destructor cleanup is authorized by an unknown result.
+
+Failure diagnostics report kind/address, NEVER private payload words:
+ 1 header before reset; 2 payload before reset; 3 GDDR source mismatch;
+ 4 ROM/frame/sentinel before reset; 5 byte changed after STOP/HOLD.
+Successful END requires payload_checked46080/headers_checked2560 and no
+mismatch fields. This does not imply numerical, model-quality or speed proof.
+
+Source and application separation
+---------------------------------
+The new client accepts ONLY --fixed-load-only-band and runs sample0 once.
+The existing unchanged same-open proof fully authenticates the original
+19GB model, layout/identity/epoch, fresh payload and rounded DEBUG reference
+BEFORE opening ANY accelerator. This is explicitly CPU diagnostics, not
+runtime CPU validation in Work. Exact82 metadata/support, nonce, generation,
+sentinels, journals, counters and closure flags are enforced. Unknown output,
+source drift or channel/FD failure permits close only, not another END/reset.
+The original model/cache/Assistant/normal driver are not modified here.
+
+Actual offboard tests
+----------------------
+The compiled2268B RV32I image966507e2... runs in the strict instruction VM
+with NO arithmetic observer or descriptor normalization. FPU/config/Dst,
+scalar payload and output-math accesses are refused. Eight route shapes and
+21 frame/NIU/FIFO/counter/header/job faults are tested. The actual lease
+uses all three authenticated private samples and the actual compiled image
+over explicit fake MMIO:46080 payload+2560 header words and complete original
+restoration per sample;90 mismatch/failure/admission cases,4 forbidden roles.
+Pre-reset corruptions prove NO later reset; a post-HOLD corruption proves
+the pre-reset checks completed but NO data restore followed the later error.
+
+Actual native/control methods over explicit OS/PCI fixtures pass308 valid
+and665 refused cases, including all368 dirty result bytes and all17 view
+contracts. Actual client/reload-control fixtures pass228 ASan/UBSan cases
+and3 forbidden roles. Actual parent fixtures pass27 flow/output+7 idle+
+11 prior-failure/recovery/model+20 exchange-step+10 one-shot cases. These
+fixtures are NOT successful native ARC, engine, physical-byte or model proof.
+
+Full native SDK driver/client LINK with15 real role refusals. The inert
+legacy factory is audited NULL-only and the ordinary default-control hash
+is unchanged2df0e0f8.... Existing81 endpoint regression remains307/643;
+its driver0ab145ac... and client0091244a... are BYTE IDENTICAL. PRIVATE
+generated headers, weights, objects and diagnostic binaries NEVER enter Git.
+See benchmarks/qwen38-native-dram-load-preparation-20261104.txt for receipts.
+
+One-shot planned physical parent -- NOT YET STAGED OR RUN
+---------------------------------------------------------
+pioneer_native_dram_load_physical.sh requires stable041/gen2/64CPU/fullRAM,
+exact installed cached Assistant/admin/guard identities, NO possible owner,
+and the preserved failed81 raw hashes plus fresh-epoch recovery record.
+It uses a NEW private stage, once marker and verified stable backup:
+ /boot/home/pioneer-native-dram-load-only-20261104-a
+Planned exchange:041/gen2 ->82/gen3;one authenticated sample0;require exact
+three-line success/zero stderr and all byte checks/known-clean END;then and
+ONLY then exchange to041/gen4. Any uncertainty stops without postfailure
+query/END/retry/reset/automatic restore. Never relaunch a spent parent or
+infer board/card recovery from relay contact state. Existing81 parent and
+failure receipts remain immutable. Publish preparation, freshly preflight,
+privately stage/pin/CLI-refusal-check, then ONE direct exec; observe the SAME
+parent handle to terminal. No retry merely because an observation times out.
+
+Next actual byte proof is still required. If transport bytes pass, FPU
+descriptor/stride/timing/clock integration remains a separate question.
+Do not blindly change C32 alignment or relax comparisons. Full-model arena,
+resident stripes/cohort/token state/attention/logits/sampling/quality/real
+throughput remain unfinished. Full-native27B/20tok/s are UNMET.

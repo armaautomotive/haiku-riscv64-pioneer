@@ -1,6 +1,13 @@
 Card-side packed-GDDR native band -- OFFBOARD prototype
 ======================================================
 
+Current follow-on: the actual81 direct-GDDR/FPU trial FAILED and recovered
+to normal041/gen2; see the final section below. A NEW separate LOAD-ONLY82
+diagnostic now has offboard byte/lifecycle/native/client/parent tests. It
+independently checks loaded bytes BEFORE reset and again BEFORE restoration,
+without an FPU path. It is NOT yet staged/run and does NOT fix or reclassify
+the81 failure. See NATIVE_DRAM_LOAD.txt. No new hardware/model/speed pass.
+
 2026-11-04 follow-on:PioneerNativeDramModelBandLease.h now implements the
 full L1/GDDR/NIU/FIFO/TLB/clock journal ALGORITHM with distinct diagnostic81
 protocol. Software tests exercise3 authenticated real-weight bands/192 exact
