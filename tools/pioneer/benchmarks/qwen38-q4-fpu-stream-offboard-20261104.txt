@@ -1,0 +1,77 @@
+Full-K Q4 double-buffered stream -- OFFBOARD checkpoint,2026-11-04 UTC
+==================================================================
+Parent base981477bb7463e52fadf09bfc107162f13d10d87a. Fifteen source/test
+overlays listed in main/source-sha256.txt and clean/source-sha256.txt beneath
+the same-named receipt directory. Clean tree is a fresh archive of that HEAD
+plus ONLY those overlays. Both manifests SHA:
+019a888e8640ae20005bf9295c519fe0db1aade9fe707acc8bc18525081e6b25
+All15 recorded source hashes independently rechecked against current main
+and clean source; all30 child stderr files empty. Main/clean text images cmp
+identical for each width. No private model/weight binaries are in receipts.
+
+Final run handles88734(main)/22089(clean) were retired when observations were
+recovered12:38UTC; no new parent terminal event is claimed from those handles.
+Their complete end-of-run manifests/test argv exist: the runner writes these
+ONLY after all15 synchronous subprocesses have returned0 with empty stderr,
+three role refusals passed, and source hashes were checked unchanged. Full
+per-child stdout/stderr are preserved here. They were NOT rerun on an
+observation timeout. Earlier same-compute main-r2/clean handles29963/23242
+actually CLOSED0; the final rerun changed only the fault-test log wording
+from an inaccurate count of missing phases to four phases plus zero input.
+
+Actual compiled RV32 images, --size/-Os,7824B each:
+K5120  7e4765f9ec803cc5986534ec4f947b93e5a32b4711a01223e5f39741dfce8e03
+K17408 cc22a0cb005ff037d751c0b307cc74c76586260e1910789616cbc0719d912295
+Both boot4B:
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd
+Original physical85/K256 image remains7036B:
+7e3efc36b1447a3880081caf899175a87378f894ea684d7623572625242e04d4
+
+Common main/clean stdout SHA-256:
+loader   9f74eb111364aab84e91b864f52c7af59285ba4eb3efd9fcbf702819863a18e6
+pipeline 882c9531e7cfb7d23167a22ef3583c00d6bb6b273f12e82aae26d56d70450ca8
+image5120 e1e252b9b751293d884213f6fa82bcc060bdc943e21f6ca4dea6054c448a49c6
+image17408 4b166c454b0b192da7ea23674ab4ea2fc225cdb6bffdcc48bc608ca897e2f0c1
+fault    c0b2070bc46ca80b91b60e324a51e74b3b809d304f9d8d113bd7e34fbf14a2e9
+fraction 3db435027326cbad4458362edf3a2ddedf43a4cbd1806cd43c403bf43af38f39
+model    1cbb6c455ac81510e8e841af867c902391de3a0293c5ce98f9d58767345728a5
+Only old-regression's retained temporary pathname differs in stdout.
+
+Observed tests, not native proof
+-------------------------------
+Loader16 valid/44 refused: both widths x eight route SHAPES, actual56 reads/
+104 flits perK256, delay/counter wrap/two slots/overlap/whole-L1 exact, no
+scalar payload/GDDR write/host IO or next IO after failure/completion. Exact
+old compute events minus one-time init/descriptor translation are checked.
+Actual unchanged strict RV32 decoder runs both7824B images over canonical L1
+with NoC FIFO/replies/counters/real FENCE visibility and physical SFPU/FPU
+state. ONE accumulator initialization per job persists over20/68 blocks.
+Stack416B allocated/404B touched. Missing producer completion refuses before
+metadata arithmetic. Thirty malformed/NIU/config/completion/producer failures
+refuse before output; four missing phases and zero input fail the reference.
+Unknown execution parks; autonomous replies remain owned, never reclaimed.
+Independent Python Fraction predicts128 actual compiled words over720896
+synthetic weights and180224 rounded phases without sharing CXX codecs or
+compute oracle. Actual original model full same-open SHA/epoch authenticates:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+Gate/up first/middle/last32 rows at K5120 and down first/middle/last at K17408:
+9 bands/18 compiled jobs/576 exact words/2654208 original weights. Inputs are
+diagnostic BF16 vectors, NOT live hidden states or full-model quality proof.
+
+Failures addressed without relaxing acceptance
+----------------------------------------------
+-O2 image11024B was rejected by unchanged8KiB bound; -Os yields7824B.
+Strict word-only decoder exposed bool byte stores; new flags use words.
+Old all32-credit polling on every incomplete iteration exceeded the mock's
+unchanged30M-step budget during a stall. Only issuedTID0 is polled incomplete;
+ALL32 credits/all queues still checked before final handoff. Poll65536 stays.
+Invalid-frame test erroneously counted fault-park FENCE as a NoC access;
+corrected to require zero NoC reads/writes/math/output, preserving FENCE in
+event/no-more-IO checks. Numeric comparisons and fault gates unchanged.
+
+No GPU/native owner/driver/Assistant/network/boot/SD/power/hardware changes.
+Last independently observed stable041/gen8/64 CPUs/full RAM remains the
+prior physical85 result, NOT a fresh status query. No new tokens/sec value.
+Next: distinct native ownership and queued variable-LEN hardware semantics,
+SDK/actual failure qualification, then a separately admitted physical test.
+Full-native27B, accepted quality and20tokens/sec remain UNMET; goal active.

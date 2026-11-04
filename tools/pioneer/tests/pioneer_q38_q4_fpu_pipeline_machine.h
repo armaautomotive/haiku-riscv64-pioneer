@@ -13,6 +13,12 @@
 // SFPU and MOVD2A/FPU;never normalize descriptors or insert decoded weights.
 struct Q4FpuPipelineMachine:NativeBfpMachine {
 	struct Fault {};
+	virtual ~Q4FpuPipelineMachine()=default;
+	// Default preserves the original85 observer EXACTLY. New streaming
+	// tests may select a disjoint actual L1 buffer and require its producer
+	// completion;the bytes are NEVER normalized/copied into an old address.
+	virtual unsigned OperandOffset()const{return 0;}
+	virtual bool OperandReady(unsigned,unsigned)const{return true;}
 	uint16_t physical[1024][16]={};bool defined[1024]={},written[1024][16]={};
 	bool decoded[64][16]={},moved[64]={},enabled=false;
 	unsigned dstReady[1024]={},rawLoads=0,metadataLoads=0,zeroLoads=0,inputLoads=0,moves=0,transposes=0;
@@ -65,6 +71,7 @@ struct Q4FpuPipelineMachine:NativeBfpMachine {
 		const bool fp32=config[72]==0,zero=op==0x42000091,publish=op==0x420000c1;
 		const unsigned row=(config[84]&65535)/16-4,address=(config[76]+1)*16,count=xEnd[0]+1;
 		assert(address>=64 && address+count*(fp32?4:1)<=l1.size());
+		if(!OperandReady(address,count*(fp32?4:1)))throw Fault{};
 		for(unsigned h=0;h<64;h++)if(l1[address-64+h])throw Fault{};
 		unpackAttempts++;if(unpackAttempts==skipUnpack || (zero && skipZero))return;
 		if(fp32) {
@@ -73,12 +80,12 @@ struct Q4FpuPipelineMachine:NativeBfpMachine {
 			else {
 				assert(count==16 && config[65]==1 && row>=128 && row<=140 && !(row&3));
 				const unsigned group=(metadataLoads/4)%8,slot=metadataLoads%4;
-				assert(address==0x94000+(group*4+slot)*128 && row==128+slot*4);metadataLoads++;
+				assert(address==0x94000+OperandOffset()+(group*4+slot)*128 && row==128+slot*4);metadataLoads++;
 			}
 		} else {
 			assert(config[1]==0x203c8000 && config[64]==0x10001e && config[65]==16 && config[72]==14 && count==256 && !zero);
 			unsigned group=(rawLoads/4)%8,face=rawLoads%4;
-			assert(row==face*16 && address==0x90000+((group/2)*4+face)*320 && publish==(face==3));
+			assert(row==face*16 && address==0x90000+OperandOffset()+((group/2)*4+face)*320 && publish==(face==3));
 			if(!face){memset(decoded,0,sizeof(decoded));memset(moved,0,sizeof(moved));}rawLoads++;
 		}
 		task={true,zero,publish,fp32,address,row,count,cycle+delay[0]};unpacks[0]++;
@@ -89,7 +96,8 @@ struct Q4FpuPipelineMachine:NativeBfpMachine {
 			&& config[114]==1 && config[115]==0 && config[120]==0x25 && config[121]==0x000f000f
 			&& config[122]==0x17fff && !config[123] && !config[140] && !config[61]);
 		assert(xStart[1]==0 && xEnd[1]==31);unsigned address=(config[124]+1)*16;
-		assert(address==0x96000+(inputLoads%8)*128);
+		assert(address==0x96000+OperandOffset()+(inputLoads%8)*128);
+		if(!OperandReady(address,64))throw Fault{};
 		for(unsigned h=0;h<64;h++)if(l1[address-64+h])throw Fault{};
 		auto& b=source[1][unpackBank[1]];if(b.pending || b.owner)throw Fault{};
 		for(unsigned i=0;i<32;i++)b.values[i/16][i%16]=Float(uint32_t(l1[address+i*2]|(unsigned(l1[address+i*2+1])<<8))<<16);

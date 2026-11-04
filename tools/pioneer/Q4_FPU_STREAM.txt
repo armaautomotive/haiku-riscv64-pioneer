@@ -1,0 +1,81 @@
+Full-K compressed-Q4 streaming prototype -- OFFBOARD ONLY
+=======================================================
+
+This is a separate continuation of Q4_FPU_PIPELINE.txt, not an installed
+driver or an Assistant option. Native85's successful physical K256 test does
+NOT admit this image. No stage, driver reload, GPU run or power action has
+been performed for this streaming prototype.
+
+Data flow
+---------
+One device-side RV32 program loops over all K256 blocks of a32-row matrix
+band, width5120 or17408. Two disjoint L1 buffers alternate as reader/prefetch
+slots. Four14-request slices fill the next slot during the first four groups
+of current-slot math. Each block has56 reads/104 C64 flits:16x256B unchanged
+quant payloads,32x64B exact FP32 scale/minimum metadata,8x64B BF16 inputs.
+Prepared weights are6144B per32x256 band; inputs512B. Private zero64B L1
+headers are initialized/read back once per job, not duplicated in GDDR.
+
+The FPU accumulator is initialized ONCE per full-K job. It persists across
+all20 or68 blocks, with exactly the original SFPU BF16-RNE, MOVD2A and four
+FPU fidelity phases. Only final32 FPU outputs are scalar-read, after all math
+and NoC drains. No scalar learned operand copy, host K-loop, CPU learned
+product, GDDR write, runtime reference, retry or reset is introduced.
+
+The loader requires an empty FIFO, all32 transaction credits/other queues
+idle and source identity before admission. Each slice checks command echo;
+GO/length/source/destination are read back. Handoff requires FIFO drain,
+exact nine monotonic/wrapping counter deltas, full terminal queue/credit and
+command checks, then a visibility FENCE. Only TID0 is issued, so incomplete
+polls check that credit; terminal checks still cover all32. The original
+65536 poll bound is unchanged. A failed or completed loader cannot issue
+more IO. Previously issued autonomous replies are NOT reclaimed on failure.
+
+Memory layout is DATA ONLY, not allocation or execution authority:
+  frame74000, output98000, shared zero97000
+  buffer0 raw90000/meta94000/input96000; buffer1 all+10000
+  GDDR weight04000000/input04100000
+The eight geometric route shapes are not firmware-bound native admission.
+The cache recipe is different from both existing loader/native-BFP8 caches;
+never silently alias their entries or infer full-model memory capacity.
+
+Build and offboard tests
+-----------------------
+  python3 tools/pioneer/tests/run_pioneer_q38_q4_fpu_stream_tests.py \
+    /Volumes/HaikuBuildLocal/generated.riscv64 \
+    /absolute/private/Qwen3.8-27B-Q4_K_M.gguf /absolute/new-output
+
+The build is fixed RV32I, uses --size/-Os and remains inside the ORIGINAL
+8KiB ROM bound. -O2's11024B image was refused, not admitted by enlarging ROM.
+Final text images are7824B; their hashes are pinned in the saved report.
+Stack allocation416B/touched404B stays inside the original8KiB stack.
+The compiler's zero-only memset is restricted to aligned owned stack words.
+Strict RV32 Machine::Step is unchanged; no byte-store decoder relaxation.
+
+Tests cover actual compiled instruction words and one canonical L1 shared
+by NoC replies, unpack, SFPU/FPU, frame, status, stack and output. The old
+pipeline observer gains only default-preserving operand-readiness/address
+hooks; its original7036B image and full regressions remain unchanged.
+Both main and clean HEAD981477bb74+15-file overlays pass:
+  16 valid/44 refused loader cases, all8 route SHAPES and both widths;
+  emitted and compiled full-K jobs, buffer hazards and visibility fences;
+  30 failure controls and5 numerical controls (four phases+zero input);
+  independent Fraction:128 words/720896 synthetic weights/180224 phases;
+  original authenticated model:9 bands/18 jobs/576 exact words, all K;
+  kernel/Work/CPU-validation compile refusals; ASan/UBSan/Werror.
+Original model bytes and derived weights/objects are never published.
+
+See benchmarks/qwen38-q4-fpu-stream-offboard-20261104.txt and its receipts.
+These are offboard arithmetic/lifecycle observations, NOT native hardware,
+full-model quality, real generation, timing, speedup or20tokens/sec proof.
+
+Next admission -- not implemented or authorized by these tests
+-------------------------------------------------------------
+A distinct native owner/protocol/role must bind authenticated firmware and
+source, exclusive GDDR/L1/NIU/FIFO/TLB/clock/PCI leases, failure retention and
+complete clean-END restoration. In particular verify real NIU queued
+variable-length request latching/completion, not just mock behavior. Qualify
+actual native methods/SDK and a new source-authenticating one-shot client/
+parent before physical staging. Never reuse spent native85/84 paths or use
+their receipts to authorize this new stream. Stable installed041/gen8 is the
+last separately observed hardware state; this checkpoint never contacts it.

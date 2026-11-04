@@ -1,0 +1,3 @@
+PASS independent Fraction FULL Q4 K5120:all64 actual RV32 words,continuous rounded accumulation across ALL K256 blocks;no CXX codec/preparer/SFPU/FPU oracle shared
+PASS independent Fraction FULL Q4 K17408:all64 actual RV32 words,continuous rounded accumulation across ALL K256 blocks;no CXX codec/preparer/SFPU/FPU oracle shared
+PASS independent Q4 full-K stream:128 returned words/720896 synthetic weights/180224 rounded phases;NO native/hardware/full-model-quality/speed proof

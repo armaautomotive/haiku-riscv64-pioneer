@@ -1,0 +1,1 @@
+PASS OFFBOARD Q4 stream loader:16 valid/44 refused,full5120/17408 x8 route SHAPES,actual56 packets/104 flits perK256,two buffers/14-command slices/overlap/whole L1 exact/counter wrap,NO scalar payload/GDDR write/host IO;NO next IO after failure or completion;exact old compute events minus one-time init/descriptor translation;NOT native/hardware/quality/speed proof
