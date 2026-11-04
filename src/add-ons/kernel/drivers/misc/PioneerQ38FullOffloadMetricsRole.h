@@ -10,10 +10,14 @@
 #error Full-card metrics requires its distinct exact batched role,never CPU inference or old diagnostic authority
 #endif
 #ifdef _KERNEL_MODE
+#ifdef PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4
+#include "PioneerQ38FullOffloadVectorQ4Role.h"
+#else
 #if _KERNEL_MODE != 1 || !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || PIONEER_Q38_FULL_OFFLOAD_NATIVE != 1 \
  || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010090ULL \
  || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT)
 #error Full-card metrics requires the actual tag90 full native parent
+#endif
 #endif
 #else
 #if !defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) || PIONEER_Q38_FULL_OFFLOAD_CLIENT != 1 \

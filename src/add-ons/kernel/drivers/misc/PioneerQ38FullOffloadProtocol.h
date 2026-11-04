@@ -12,7 +12,13 @@
 #include "PioneerQ38TokenFrontierPacket.h" // pointer-free DATA only,not its old ioctl/diagnostic role
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_COUNTER (B_DEVICE_OP_CODES_END+0x8802)
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4
+#include "PioneerQ38FullOffloadVectorQ4Role.h"
+#endif
 namespace PioneerQ38FullOffload {
+#ifdef PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4
+static constexpr uint64_t BuildTag=UINT64_C(0x2026110400010092);
+#else
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
 #if PIONEER_Q38_FULL_OFFLOAD_METRICS != 1 || !defined(PIONEER_Q38_FULL_OFFLOAD_BATCHED) || PIONEER_Q38_FULL_OFFLOAD_BATCHED != 1
 #error Full offload metrics requires exact batched selection
@@ -25,6 +31,7 @@ static constexpr uint64_t BuildTag=UINT64_C(0x2026110400010090);
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110400010089);
 #else
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110400010088);
+#endif
 #endif
 enum {Version=1,MaxPrompt=96,MaxOutput=32,MaxPositions=128,Vocabulary=248320};
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS

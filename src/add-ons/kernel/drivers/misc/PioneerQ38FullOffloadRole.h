@@ -27,6 +27,9 @@
  || !defined(PIONEER_DRIVER_BUILD_TAG)
 #error Full offload requires the exact native role and all resident parents
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4
+#include "PioneerQ38FullOffloadVectorQ4Role.h"
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
 #include "PioneerQ38FullOffloadMetricsRole.h"
@@ -55,14 +58,20 @@ static_assert(PioneerQ38FullOffloadMetricsSelection==0,"late full-card metrics r
 #endif
 #ifndef PIONEER_Q38_FULL_OFFLOAD_FIRMWARE_BINDING_H
 #define PIONEER_Q38_FULL_OFFLOAD_FIRMWARE_BINDING_H
-#ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
+#ifdef PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4
+enum {PioneerQ38FullOffloadFirmwareSelection=3};
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_BATCHED)
 enum {PioneerQ38FullOffloadFirmwareSelection=2};
 #else
 enum {PioneerQ38FullOffloadFirmwareSelection=1};
 #endif
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
+#ifdef PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4
+static_assert(PioneerQ38FullOffloadFirmwareSelection==3,"late full-card vector Q4 selection");
+#else
 static_assert(PioneerQ38FullOffloadFirmwareSelection==2,"late full-card batched selection");
+#endif
 #else
 static_assert(PioneerQ38FullOffloadFirmwareSelection==1,"late full-card batched removal");
 #endif

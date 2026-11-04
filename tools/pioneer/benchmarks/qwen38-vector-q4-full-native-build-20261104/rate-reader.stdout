@@ -1,0 +1,1 @@
+PASS independent full-card rate whole-log reader:2 valid available/unavailable fixtures/130 truncation,missing,ordering,count,rate,timestamp,hex,stderr refusals;synthetic ONLY,NO physical result or cleanup authority

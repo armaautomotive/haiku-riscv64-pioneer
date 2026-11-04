@@ -1,0 +1,5 @@
+PASS full-card metrics DATA 199680 bounded count observations/all request bytes and out-of-range counts refused;NO timing,lifecycle or hardware authority
+PASS full-offload pointer-free grammar 3072 valid/212150 refusals;old fixed diagnostic unchanged;NO inference or hardware
+PASS actual full-offload USER:96prompt/32output/127positions,two64-record drains,all5 EOS and3 cancellation boundaries,280 fail-closed COW fixtures;synthetic ONLY,no physical or numerical result
+PASS actual full-offload kernel control 12367 early shape refusals/all6 operations/copy failures/root+FD+team admission/kernel snapshot/no invalid partial readout;MOCK owner endpoints only
+PASS full-offload host tests;no original model,native engine,device or speed result

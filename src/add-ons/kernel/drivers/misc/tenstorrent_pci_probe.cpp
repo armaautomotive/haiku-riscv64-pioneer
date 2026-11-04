@@ -57,6 +57,12 @@
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110400010090ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_METRICS)
 #error Reserved full-offload tag90 requires its distinct read-only counter role
 #endif
+#if defined(PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4) && !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE)
+#error Full-card vector Q4 requires its actual full native parent
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110400010092ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4)
+#error Reserved full-offload tag92 requires its distinct vector Q4 compute revision
+#endif
 #if (defined(PIONEER_Q38_TOKEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)) && !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT)
 #error Token physical validation cannot substitute an old driver role
 #endif

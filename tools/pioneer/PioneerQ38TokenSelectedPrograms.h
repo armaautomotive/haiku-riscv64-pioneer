@@ -101,10 +101,14 @@
 #error QTP3 native selector requires its actual native parent
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
+#ifdef PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4
+#include "PioneerQ38FullOffloadVectorQ4Programs.h"
+#else
 #ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
 #include "PioneerQ38FullOffloadBatchedPrograms.h"
 #else
 #include "PioneerQ38FullOffloadPrograms.h"
+#endif
 #endif
 #elif defined(PIONEER_Q38_TOKEN_MANUAL_TTSYNC_PROGRAMS)
 #include "PioneerQ38TokenManualTTSyncPrograms.h"
@@ -155,6 +159,12 @@
 #ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
+#ifdef PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4
+namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadVectorQ4Programs;
+static_assert(PioneerQ38TokenPrograms::EogCount==5 && PioneerQ38TokenPrograms::WideGdn==1
+ && PioneerQ38TokenPrograms::VectorQ4Metadata==1 && PioneerQ38TokenPrograms::BatchedOutputClosure==1
+ && PioneerQ38TokenPrograms::TwinBatchPrefetch==1,"exact full-card vector Q4 package required");
+#else
 #ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
 namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadBatchedPrograms;
 static_assert(PioneerQ38TokenPrograms::EogCount==5 && PioneerQ38TokenPrograms::WideGdn==1
@@ -163,6 +173,7 @@ static_assert(PioneerQ38TokenPrograms::EogCount==5 && PioneerQ38TokenPrograms::W
 #else
 namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadPrograms;
 static_assert(PioneerQ38TokenPrograms::EogCount==5,"full offload cannot silently use the old two-EOS firmware");
+#endif
 #endif
 #elif defined(PIONEER_Q38_TOKEN_MANUAL_TTSYNC_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenManualTTSyncPrograms;

@@ -1,0 +1,93 @@
+Full-card Qwen27B vector-Q4 native/client integration -- 2026-11-04
+================================================================
+
+This checkpoint integrates the independently tested complete vector-Q4
+worker (51e8b85807) into a DISTINCT native full-card backend,tag92.
+NOT a performance result or a production Assistant installation.
+The real32-output-token experiment was launched about22:00:14UTC and is
+still running at this checkpoint. Its one-shot stage is SPENT:
+/boot/home/pioneer-q38-full-vector-q4-20261104-a
+Do NOT retry that stage,hot-reload,reset or otherwise access the Pioneer
+while its actual parent remains live. Quiet logs/timeouts are not failure.
+
+Previous measured full-card27B rate remains0.162595949..0.162598808tok/s;
+20tok/s remains UNMET. No speedup is claimed from build or emulator counts.
+
+Integration:
+- New explicit FULL_OFFLOAD_VECTOR_Q4 revision,tag2026110400010092;
+  firmware selection3,not an old diagnostic/native/hybrid Work alias.
+- New namespace/package:four complete unchanged5-EOG ROOT sections plus
+  all ten exact new peer sections from full worker4b3dc0c96d3888b9...
+- No changed quantization/model bytes,host supplied learned products,
+  native memory/journal extent,counter grammar or terminal/END semantics.
+- Structural bindings reject CPU-reference/hybrid/shader/old-package and
+  deferred resident-lifecycle selectors,including defined0.
+- New vocabulary-only USER worker TU prevents silently building an older
+  compute revision when its vector flag is missing. Tag/pairing is explicit.
+- Installed Assistant/service/worker binaries and normal kernel untouched.
+- Independent clean source starts from51e8b85807+ONLY this vector patch;
+  unfinished resident-lifecycle and other worktree changes are excluded.
+
+Exact artifacts (main AND independent clean match):
+Code DATA header824822B SHA256
+3ec53793460dbb937368f952da6a5d19f83e82e27d1a027e416952a309bec389
+Native driver tag92:
+c21b9bb80bfe7bb6d62540c267254fea33505842c2421cfd2732a389053be014
+Vocabulary-only USER worker:
+1ea9f6ac9c2fc5022bcce92be8949b6432827e76c984835935db3bdc9d2301a9
+Same32-output public counting request client,new exact worker path:
+9aa2ceea44c0143e6af53f5ad8050c50e2101826dc892505b42c60eb392558af
+Guarded parent script:
+d697bfd0d2d44e37464c166b7edf2da67f6133df4dc9f6cff3ea8c02a5ada6d8
+
+Actual completed qualification,not pending logs:
+- Main native build18380 and clean98659 actual0. ALL14 compiled arrays
+  independently extracted/hash-checked. No llama/ggml/CPU Work/reference
+  imports. Max individual Token frame1232B (not a whole-stack certificate).
+  Default driver BYTE-EXACT2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc.
+- Old tag90 regression76139 actual0,BYTE-EXACT2551b50a52f6a2f7...
+- Latest separate USER main23453 and clean2093 actual0,exact11 vocabulary/
+  container APIs only;NO context,decode,logits,threadpool or hybrid imports.
+  All16 actual USER role refusals pass.
+- Main source/generated/DATA+role57829 and clean64126 actual0.
+  All14 sections,3128184 actual code words across ALL120 journal mappings,
+  10013 invalid-or-data-address refusals. Three positive/173 missing,wrong,
+  late,CPU,old-package and shader binding refusals. Raw unbound original
+  DATA declarations alone are not execution;selected/native rebinding is
+  explicitly rechecked/refused in both orders.
+- Main session15923 and clean45582 actual0:3072 valid grammar inputs,
+  212150 refusals,199680 bounded counter snapshots,280 fail-closed USER
+  lifecycle fixtures,12367 early kernel refusals/copy/root/FD/team cases.
+  All use synthetic endpoints;not hardware/quality/throughput evidence.
+- Main parent79664 and clean parent tests actual0:ENTIRE prior guarded
+  rate parent matches except9 immutable stage/revision/hash/generation
+  substitutions. ALL54 old parent and120 rate/failure cases run FIRST.
+  No unknown-error automatic restoration,reset,force-unload or retry.
+- Rate client/parser86422 actual0:actual channel/process client with fake
+  worker;available/unavailable/error/truncation/count/timestamp/hex/clock
+  cases preserved. No fake timing is presented as measured performance.
+- Four staged artifacts read back in31770 actual0 and ALL bytes compared
+  with clean builds. Permission/hash/admission97376 actual0;old stage and
+  runtime/installed apps untouched. Before exchange:stable041/gen16,
+  no owner/quarantine,64CPUs,maxRAM137034936320B.
+
+Physical test observed so far:
+- Single protected parent launched;native driver92 hot-loaded/gen17.
+- No reboot,power,SD,hardware connection or mains change.
+- Job is NOT terminal;no whole transcript,final answer or timing accepted.
+- Expected clean completion would restore stable041/gen18. Only an actual
+  terminal parent and independent closed-stream+postflight audit can prove
+  that. A state file or successful driver exchange is not completion proof.
+
+Closed immutable BUILD/test/admission artifacts are in sibling directory
+qwen38-vector-q4-full-native-build-20261104/. Live physical streams are NOT
+published as a final result. No model weights,prepared payloads,binaries,
+private headers or runtime secrets are included. The generated public
+program header is executable source-code DATA only,not learned data.
+
+Reproduction (build/local tests only;never device IO):
+python3 tools/pioneer/build_qwen38_full_offload_native.py SDK OUT --batched --metrics --vector-q4
+python3 tools/pioneer/build_assistant_qwen27_full_offload.py SDK FROZEN_LIBS OUT --batched --metrics --vector-q4
+python3 tools/pioneer/tests/run_pioneer_q38_full_offload_vector_q4_tests.py FULL_BATCHED_ROOT VECTOR_WORKER
+python3 tools/pioneer/tests/run_pioneer_q38_full_offload_tests.py --batched --metrics --vector-q4
+python3 tools/pioneer/tests/pioneer_q38_full_offload_vector_q4_parent_test.py
