@@ -1,3 +1,60 @@
+Full-card batched Qwen27 reply VERIFIED;whole parent60342 CLOSED0
+==============================================================
+2026-11-04 19:47UTC. This supersedes ALL historical LIVE/no-result/pending
+statements below. SAME60342 ACTUALLY exits0,observed19:45:21UTC. No physical
+compute job remains. No reset,retry,reboot,power or card/SD change occurred.
+Goal ACTIVE;usable self-hosted Assistant/full-card throughput20TPS UNMET.
+
+Actual complete model reply and cold timings
+-------------------------------------------
+Source e7c7ed57a2b41489d10ab9b3fd527e770a59e88f and all4 staged objects
+were independently authenticated before launch. The real whole original
+model/all851 tensors authenticate;all19399024640B upload. Actual full-card
+inference,terminal,120HOLDs,record drain,full restoration/END+Close and
+worker clean exit complete. Reply is exactly Hello! How can,4tokens/14B.
+No CPU inference context,attention,state,learned products or token selection.
+CPU remains responsible for loading/vocabulary/tokenization/lifecycle/text.
+
+Whole closed child stdout222285B/SHA256:
+ d37ed9daeed25894dcc813e296ee4e024d2cad6215ba9ea8b6f4dfae55c10c6f
+Child exit0,stateFULL_CARD_HELLO_FOUR_CLOSED_STABLE_RESTORED,stderr0B.
+Fetch80361 ACTUALLY0. Both unchanged complete-result readers from main and
+independent clean source ACTUALLY0/byte-equal/stderr0. They accept2253valid
+upload progress rows and the exact whole suffix,not an upload prefix.
+Observed post-START-ack prompt+generation interval104.969s;Generate total
+1866.383s includes upload/initialization/cleanup. The earlier tag88 case
+reported175.251s and1924.726s respectively for the same Hello/four outputs.
+This is a single bounded paired request,not a sustained speedup estimate.
+Do NOT divide4 by104.969s or otherwise call these warm tokens/sec;prompt
+positions are included and bootstrap is partly excluded. No broad prompt/
+context quality,repeatability,20TPS or Assistant installation is proved.
+Weights are still released after each request;cross-request residency and
+streaming remain absent. The installed Assistant is deliberately unchanged.
+
+Independent preservation AFTER actual terminal
+--------------------------------------------
+Parent performed actual guarded stable041/gen12->de688/tag89/gen13,then
+new idle admission/quiesce/atomic restoration tostable041/gen14 ONLY after
+child0/clean worker/expected text. Fresh independent SSH32382 ACTUALLY0:
+ stable041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403
+ tag2026102100010012/gen14/cold0/quiesced0/owner0/open1/guard1
+ worker861e5287/servicec509da43/GUI0de9141e whole SHA pins unchanged
+ exact candidate,worker,client,helper,stable backup,admin and guard unchanged
+ same reported Sep8 kernel,64CPUs/full137034936320B RAM;free130947366912B
+ no compute parent,stage incoming absent,child exit/state/whole SHA exact.
+Independent stdout/stderr are archived;all qualified postflight/fetch/
+reader/physical stderr are0B. No hidden extra card query is used to interpret
+the returned result;no serial port was opened/reconfigured.
+
+Next full-card work:the separately selected tag90 count endpoint/worker
+is being developed LOCALLY for honest post-prompt generation-rate windows.
+Its current partial main tests are not clean/physical release authority;
+it has NOT been staged or installed. Do not run the spent89 helper again.
+Persistent model-level ownership,tensor-engine acceleration and usable
+Assistant integration still remain. The full objective is NOT achieved.
+
+Historical protected-live ledger (superseded)
+---------------------------------------------
 Full-card batched firmware:guarded physical parent60342 ACTUALLY LIVE
 ===================================================================
 2026-11-04 19:08:49UTC. SAME60342 is confirmed LIVE by its actual exec

@@ -71,8 +71,16 @@ and independent idle/source/runtime admission.
 the accelerator. It does not prove card execution,model numerics or speed.
 Hardware execution and Assistant integration remain separate release gates.
 
-Separate batched full-card candidate (tag89,not yet physically qualified)
+Separate batched full-card candidate (tag89,one real Hello reply verified)
 -----------------------------------------------------------------------
+The Nov4 protected trial completed with the same four-token Hello! How can
+reply and clean full device/worker closure. Both whole-log readers passed;
+independent postflight verifies stable041/gen14,64CPUs/fullRAM and unchanged
+Assistant. The observed post-START prompt+generation interval was104.969s,
+versus175.251s in the earlier tag88 case. This is ONE short paired request,
+not sustained warm throughput,isolated token latency or broad model quality.
+See benchmarks/qwen38-full-card-batched-20261104.txt for complete evidence.
+
 --batched on the native/worker builders selects a distinct driver/client
 pair. It keeps the same bounded prompt-only ABI and all-card computation,
 but uses the later twin-batch prefetch,corrected cross-token output closure
@@ -81,7 +89,7 @@ the existing returning-wide package;the full-card ROOT is rebuilt with the
 same five-EOG policy. No old diagnostic selector is used to activate it.
 The original tag88 driver/worker and default driver must still reproduce
 byte-for-byte. The new client rejects tag88,and the old client rejects89.
-This integration is NOT a speed result. The earlier fixed diagnostic using
+No sustained-rate result is claimed. The earlier fixed diagnostic using
 these optimizations was still slow. It does not add persistent weight reuse,
 streaming,Assistant installation or use of the tensor cores for all products.
 
@@ -93,6 +101,6 @@ streaming,Assistant installation or use of the tensor cores for all products.
  python3 tools/pioneer/tests/run_pioneer_q38_full_offload_batched_data_tests.py NEW_ROOT EXACT_WIDE_WORKER
 
 Firmware DATA/address checks and synthetic lifecycle tests are not hardware
-or whole-model numerical acceptance. The old spent tag88 physical helper
-MUST NOT be reused for89;fresh independent idle/generation/artifact admission
+or whole-model numerical acceptance. The spent tag88/tag89 physical helpers
+MUST NOT be reused;fresh independent idle/generation/artifact admission
 and separately qualified one-shot exchange are required before execution.
