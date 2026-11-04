@@ -1,0 +1,93 @@
+Card-side packed-GDDR native band -- OFFBOARD prototype
+======================================================
+
+PioneerNativeDramBandLoader.h plus blackhole_q38_native_dram_band.cpp load
+one complete K5120/6144/17408 band FROM resident packed GDDR,then reuse it
+for two complete4-phase FPU jobs. No runtime scalar weight/activation reads,
+CPU products,host/PCIe callback,reconversion,second load or GDDR write.
+The original qualified f69/... full-K producer stays byte-for-byte unchanged;
+PioneerNativeDramBandCompute.h translates ONLY its unpack descriptors. The
+precise same operations/completion/bank/fidelity sequence is retained.
+This is not the full model,layer/output-row loop or production Work engine.
+There is NO native owner/driver/client for this NEW image yet. Do NOT deploy
+it through diagnostic79/80 or promote its passing CPU tests to hardware proof.
+
+Necessary alignment fix,not a cache-format change
+------------------------------------------------
+Pinned primary ISA4a73a7121d95f545b85efa34b243f0b8b316f967:
+https://github.com/tenstorrent/tt-isa-documentation/blob/4a73a7121d95f545b85efa34b243f0b8b316f967/BlackholeA0/NoC/Alignment.md
+explicitly delegates to the shared WormholeB0/NoC/Alignment.md. Other-address
+(GDDR) -> L1 reads require source/destination congruent MOD32. Old L1 strides
+1104/80 are16 modulo32:odd tiles CANNOT be directly read from packed aligned
+GDDR into that layout. Using them would be undefined,not a performance fix.
+The new layout changes ONLY L1:weight stride1120,input stride96,32B zero
+headers. Payloads stay1088/64;the unpacker's immediately preceding16B header
+is preserved. No padded model/cache/GDDR copy or recipe invalidation.
+
+New fixed diagnostic DATA layout,not physical authority:
+ L1 weight payload90000,stride1120,max end124be0;
+ L1 input payload126000,stride96,max end132be0;
+ L1 output134000..1340ff;
+ code70000..71fff (NEW8KiB,old owner only owns4KiB);
+ stack6e000..6ffff,job74000..7401f,status17ffc0..17ffcb.
+ GDDR packed weights04000000..04090800 at largest K;
+ GDDR BF16 vector04100000..04108800.
+Every header/payload/guard is disjoint. These offsets are an OFFBOARD fixed
+window proposal,NOT proof of a reserved/usable range or an upload lease.
+The full-model7x3.75GiB hypothetical arena still needs separate high-range/
+alias/firmware-reservation qualification. No installed arena is enlarged.
+
+Loader and image lifecycle contract
+-----------------------------------
+One-shot loader,only3 widths/firmware-bound legal route shapes,fixed worker
+(1,2),fixed source windows. Shape is not actual bank-source authentication.
+Fresh NODE_ID/translated identity/table/harvest/NIU configuration checks use
+the existing strict Self primitive. Caller still owes independent firmware
+route/source/payload/PCI/VM/clock/exclusive ownership BEFORE launch.
+All32B headers are zero-written AND read back. Packed payloads arrive ONLY
+via READ packets<=1088B,16 per batch,disjoint final L1 destinations. Empty
+FIFO is observed BEFORE completion counters,as required by the primary NIU
+counter rules. Exact read response/data-flit/accepted/sent/started deltas,
+unchanged write counters,all32 outstanding slots,NIU idle and identity must
+pass before another batch/operand/math. Wrapped32-bit counters supported.
+No wait expiry grants retry/reset/implicit cleanup. Subsequent Run on the
+same object performs zero IO,even following an invalid admission. Descriptors
+also suppress further IO after the first invalid mapping.
+
+The image validates all8 immutable frame words before loader entry and after
+load/compute. Its marker is NDB1,not old NFB3;fault NDBE parks without result.
+All responses complete before ANY FPU instruction/configuration. Then two
+complete jobs read only valid Dst32/40 and publish64 outputs. There is no
+attempt to infer owner closure from that marker or from parked PC alone.
+NIU command words/headers/new ROM/frame/GDDR staging all require a NEW full
+native journal/STOP/HOLD/restore owner. No driver admission is loosened.
+
+Software qualification
+-----------------------
+  sh tools/pioneer/tests/run_pioneer_native_dram_band_loader_tests.sh
+  sh tools/pioneer/tests/run_pioneer_native_dram_band_image_tests.sh HAIKU_BUILD
+  python3 tools/pioneer/build_native_dram_band.py HAIKU_BUILD NEW_OUTPUT 5120
+
+ASan/UBSan/Werror actual loader27 valid/36 refused plus3 forbidden roles:
+all3 widths x8 route SHAPES,whole L1/header/guard exact,queue16,mod32,wrapped
+counters,missing/excess/foreign responses,missing FIFO,header/NIU/command
+faults,invalid geometry/route and one-shot no-IO refusal. Exact old/new
+producer operation trace differs ONLY at descriptors,no precision change.
+
+UNCHANGED strict RV32 decoder executes all3 actual freshly compiled images.
+The observer FIRST checks every NEW descriptor,then normalizes addresses to
+reuse the existing independent unpack/source-bank/rounded-arithmetic observer.
+It consumes the exact simulated-NIU-loaded bytes. CPU reference data are test
+fixtures ONLY. All192 outputs match the prior independently Fraction-qualified
+full-K predictions. No scalar payload address is accepted by the decoder's
+memory endpoint. K5120 additionally checks20 actual-image fault parks:all8
+frame words,identity/FIFO/counters including missing response/header,changed
+immutable job and FPU completion. No output/next math/retry/cleanup on fault.
+This proves software behavior,not real NIU/FPU concurrency,timing,ownership,
+model quality,full-native inference or20tok/s. No hardware was touched.
+
+Next:NEW exact driver lease/NIU+L1+GDDR journals,mapping/control/close/failure
+tests and separate bounded physical diagnostic. Then packed resident weight
+loader/matrix stripes/cohort/token state integration,qualified full-model
+arena,quality and real inference throughput. Never substitute this fixed
+band diagnostic or a CPU reference for the requested no-validation Work path.

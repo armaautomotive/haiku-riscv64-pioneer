@@ -1,0 +1,2 @@
+PASS OFFBOARD card-side packed-GDDR loader:27 valid/36 refused;3 widths/8 route SHAPES,whole L1/headers/guards exact,16-request queue/counter wrap,C32 every tile,NO scalar payload reads/GDDR writes/PCIe,exact old4-phase operation sequence except descriptors;one-shot failures/no further IO;NO native ownership/hardware/full-model quality/speed proof
+PASS DRAM loader3 forbidden production roles;OFFBOARD evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-native-dram-band-loader.TiJUPJIP

@@ -1,0 +1,7 @@
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_native_dram_band_image_test.cpp:125:23: error: 'PioneerNativeBfpBandGolden' is not a class, namespace, or enumeration
+  125 |         const auto* expected=PioneerNativeBfpBandGolden::Golden(width,4);assert(expected);
+      |                              ^
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/../PioneerNativeBfpBandGolden.h:8:31: note: 'PioneerNativeBfpBandGolden' declared here
+    8 | static inline const uint32_t* PioneerNativeBfpBandGolden(unsigned width) {
+      |                               ^
+1 error generated.

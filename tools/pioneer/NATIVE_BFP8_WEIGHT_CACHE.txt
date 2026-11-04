@@ -1,6 +1,14 @@
 All-native-BFP8 converted weights (CPU-only experimental alternative)
 ==================================================================
 
+2026-11-04 qualification note:separate fixed native diagnostics79/80 now pass
+all3 full-K synthetic widths AND three authenticated learned-weight bands on
+hardware. They do not select this full cache in Work or qualify a full model.
+NATIVE_DRAM_BAND.txt adds an OFFBOARD packed-GDDR -> aligned-L1 loader and
+combined FPU image;no native owner/deployment yet. Existing cache recipes and
+the installed lossless Assistant path remain unchanged. The historical
+"physical unqualified" statement below predates those bounded diagnostics.
+
 This is a NEW REQUANTIZATION recipe, not the lossless Assistant disk cache.
 All supported original Q4_K/Q6_K/Q8_0 matrices become native BFP8_B tiles;
 the default mixed converter remains Q4->BFP4,others->BFP8. No running Work,

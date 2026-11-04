@@ -1,0 +1,3 @@
+RISC execution bound: pc=00070790 steps=40000000 limit=40000000 allowed=1
+Assertion failed: (steps < StepLimit() && CodeAddress(pc)), function Step, file pioneer_tensix_image_test.cpp, line 306.
+tools/pioneer/tests/run_pioneer_native_dram_band_image_tests.sh: line 9: 63147 Abort trap: 6           ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/test" "$temporary/k$width" "$width"

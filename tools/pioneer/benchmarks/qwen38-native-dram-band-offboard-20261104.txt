@@ -1,0 +1,88 @@
+Packed resident-GDDR -> native FPU band -- new OFFBOARD implementation
+====================================================================
+2026-11-04 UTC,baseline e0869125023c65c10bbf669a0b2478b90dac084b is
+pushed and independently verified. That prior physical learned-band80 test
+passed192 exact outputs/3 ENDs and restored normal041/gen10,64 CPUs/full
+137034936320B RAM. No later Pioneer operation or install was performed by
+this offboard work. Cached Assistant/original/model/cache recipes unchanged.
+Full-native27B/20tok/s remain UNMET;no new real-model throughput is measured.
+
+Actual implementation toward resident execution
+------------------------------------------------
+New PioneerNativeDramBandLoader + separate aligned L1 layout + descriptor
+adapter + complete RV32 kernel/start/linker/builder. One packed GDDR load
+provides the weights/BF16 vector to TWO complete4-phase FPU jobs,without
+scalar payload reads/copies,CPU products,host/PCIe callback,GDDR writes or
+second load. It reuses the exact original qualified instruction producer;
+only unpack descriptor addresses change. Original shaders/frozen roles stay
+unchanged. No generated learned weights/models/private binaries are saved.
+
+Pinned ISA4a73a7121d95f545b85efa34b243f0b8b316f967 documents C32 for
+GDDR -> L1. Old1104/80 L1 strides would misalign odd packed tiles. New L1
+strides1120/96 and32B headers fix this while preserving1088/64 packed GDDR
+and the unpacker's immediately preceding16B header. Stored model/cache size
+does not grow. Every transfer<=1088B,16 queued reads/batch. Empty FIFO FIRST,
+exact master response/flit/accepted/sent/started deltas,unchanged write
+counters,all32 outstanding slots and source identity/idle checks precede
+next work. No first uncertainty grants another packet/math/retry/cleanup.
+Fixed windows and legal route SHAPES are DATA,not actual range/lease authority.
+
+Primary docs downloaded/read as factual references only,no vendor code copied:
+BlackholeA0/NoC/README.md SHA90a4a8e07e0f89b1beebc7494188fbf7cc01d9b8665c1c6fb11ae7dbc7234bc3
+BlackholeA0/NoC/MemoryMap.md SHA82f2629b7cde38da5bc33b2c10a972bf5924cc9d189c25c98ba8f82468f1d69d
+BlackholeA0/NoC/Alignment.md SHA2f6f291aabb6483bc63ff6a6f631e437c9f223378b6b5c330c2aba441abe9ea5
+WormholeB0/NoC/Alignment.md SHA7b898f80a5e6df75046c53ad22bba3283e67ec56e390b13644f650b5e6a43875
+BlackholeA0/NoC/Counters.md SHA01ab63056e9dd47ceefdcfd2bfb8c4677a4cee2af0fa281f1ce72375676c6a88
+The Blackhole alignment page explicitly delegates to the shared document.
+URL/precise contracts/layout/limits in NATIVE_DRAM_BAND.txt.
+
+Closed software checks,not hardware/model performance proof
+------------------------------------------------------------
+Actual templated loader ASan/UBSan/Werror2723 CLOSED0,then final1871 CLOSED0:
+27 valid/36 refused,all3 widths/8 route SHAPES,whole L1 payload/header/guard
+comparison,16 queued requests/counter wrap,exact old/new producer trace
+except descriptors,missing/excess/foreign counters,command/header/identity/
+FIFO faults,invalid shape/route and one-shot zero-IO repeat.3 forbidden
+driver/Work/validation build roles refuse. No scalar payload IO is accepted.
+
+Actual new SDK K5120 build0,then all3 fresh images under unchanged strict RV32
+decoder and existing independent unpack/rounded-arithmetic observer:
+K5120 textcd924896986dabcead8493c9dedca1d7b25fde323fbd972caf67ad93139a9309 4436B
+K6144 text13494a0a5fc262b02dc7b7a6353da5e773a5ec01d732efd29d6525ba58a6e5f2 4432B
+K17408 textee740295aeffdb555c5fa0706d092e6d1a467b38b6351bc067bbfe7edbb57a45 4436B
+All bootd47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd.
+New8KiB ROM (actual4432..4436B),job74000,output134000 and new input/strides are
+NOT covered by old diagnostic80 owner. Max individual frame304B,whole observed
+SP320B/touched308B. This is RV32 stack evidence,not native kernel-stack proof.
+
+ONE load requests/flits:320/2880,384/3456,1088/9792 respectively. Two complete
+FPU jobs per load,all192 outputs exact vs existing independently Fraction-
+qualified full-K predictions. Actual decoder endpoints reject scalar payload
+reads/writes. Observer checks EVERY new descriptor before normalizing addresses
+and consuming the exact simulated-NIU-loaded bytes in the existing model.
+Normal RISC steps82404/98172/271908 are software counts,not device timing.
+
+First image harness compile stopped before running on a mistaken golden API
+name;correct function call fixes it. image-test-r2/85463 CLOSED0:all widths/
+192words/19 failure cases. Added missing-response timeout then image-test-r3
+FAILS the observer's40M step budget before the real bounded timeout ends.
+That failed result is retained,NOT promoted;its surrounding shell continued
+to loader tests,so the outer0 is not image success. No board was involved.
+Device PollLimit65536 and strict decoder NEVER change. The new observer
+budget10M+65536*2048 covers9 master+32 outstanding checks per poll. Final
+set-e combined1871 actually CLOSED0,all stderr0:missing response fault parks
+after43197569 steps,NO math/result/retry;all20 actual-image failure controls
+pass including8 bad frame words,identity/FIFO/counters/header,immutable-job
+mutation and FPU completion. Final image-test-r4 is the accepted run.
+
+Next real requirement,not permission to deploy
+----------------------------------------------
+NEW exact native lease must own/snapshot/restore expanded ROM/frame/headers/
+payload/output/NIU command+FIFO state and separately staged GDDR windows,
+authenticate firmware routes/source/model payload,and prove all-core HOLD,
+STOP/drain/PCI/VM/clock/close/failure-retention contracts. Existing diagnostic
+owners/protocols remain unchanged. Only after concrete native qualification
+may ONE separately admitted physical packed-GDDR test run. Then full resident
+matrix stripes/cohort/token state,high-range/alias/reservation-qualified full
+arena,full-model quality and genuine throughput. This fixed band leaf is NOT
+a substitute full-model Work backend,CPU reference or measured speedup.

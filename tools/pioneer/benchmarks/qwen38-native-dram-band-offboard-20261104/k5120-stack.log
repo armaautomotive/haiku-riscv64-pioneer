@@ -1,0 +1,2 @@
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerNativeDramBandLoader.h:24:33:static bool PioneerNativeDramBandLoader::Quiet(IO&) [with IO = {anonymous}::IO]	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_q38_native_dram_band.cpp:32:21:unsigned int native_dram_band_main()	304	static
