@@ -40,6 +40,35 @@ Offline ASan/UBSan and native Haiku fake-worker tests cover fragmented and
 malformed messages, wrong IDs, EOF, rejection, warm reuse, cancellation,
 known-clean unload and fail-closed/no-retry behavior without device I/O.
 
+### Persistent converted-weight cache (November 3)
+
+The installed Qwen27B Work worker now automatically reuses a disk cache in
+`/boot/home/models/.p100a-lossless-weights-v1` on the Pioneer. Select the
+existing **P100A Work — Qwen3.8 27B** target and use **Models → Load model**;
+there is no additional cache switch. The prepared cache contains all 851
+tensors, about 19.4 GB in addition to the original GGUF. Its byte layout is
+lossless: the original quantization and model file are unchanged.
+
+Entries are keyed by the original model SHA-256, tensor identity and complete
+conversion recipe/version. Preparation runs before opening an accelerator
+session. Verified hits perform no conversion; missing or corrupt owned
+entries are rebuilt privately and published atomically after verification.
+Unsafe links or permissions are refused, not overwritten. During upload,
+entries are read-only: a missing or changed entry stops the request rather
+than silently reconverting weights or falling back to CPU inference.
+
+**Unload model** releases resident memory but keeps the disk cache for the
+next load. **Models** shows preparation/verification progress. Full original
+authentication, cache verification and the first-reply GPU upload still take
+time; this does not remove PCIe transfers or speed up the inference kernels.
+The completed cached inference test recorded 851 hits and zero fresh
+conversion, followed by a clean unload. Its three warm generation samples
+measured 0.204 tok/s; that tiny sample is not a demonstrated speedup or the
+20 tok/s goal. See the
+[installation and qualification record](../../../tools/pioneer/benchmarks/qwen38-cached-assistant-inference-installed-20261103.txt).
+
+### Other experimental hardware modes
+
 Hardware now also offers **P100A — Qwen3 0.6B (experimental, slow)**, using
 the exact, two-core resident Q8_0 runtime. It is currently slower than CPU,
 not a practical acceleration claim. The older TinyStories experiment remains
