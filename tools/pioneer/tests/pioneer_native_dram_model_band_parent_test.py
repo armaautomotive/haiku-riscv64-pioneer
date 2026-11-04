@@ -4,11 +4,20 @@ import hashlib
 import pathlib
 import re
 import subprocess
+import sys
 import tempfile
 
 assert __debug__, 'Assertions required'
+assert sys.argv[1:] in ([], ['--alignment64-math'])
+aligned = len(sys.argv) == 2
+tag = '2026110400010084' if aligned else '2026110400010081'
+label, generation, saved = ('GDDR64', 5, 55372) if aligned else ('GDDR', 11, 52812)
+output_stem = 'gddr64' if aligned else 'gddr'
+prior_stem = 'load' if aligned else 'learned'
+prior_state = 'STABLE041_RESTORED_LOAD64_ONLY_PAYLOAD_AND_HEADERS_PASSED' if aligned else 'STABLE041_RESTORED_LEARNED_BANDS_EXACT192_PASSED'
+prior_hash = 'a8884f789db23da897578ffb73a1c0849fa8e1e972f6e7701d10647b51df698c' if aligned else '71f8686db0d94af820be42c0e87f2f4b1bb4aa53acf3fbfb9b6e92cd2222d7e6'
 here = pathlib.Path(__file__).resolve().parent
-source = (here.parent / 'pioneer_native_dram_model_band_physical.sh').read_text()
+source = (here.parent / ('pioneer_native_dram_model_band64_physical.sh' if aligned else 'pioneer_native_dram_model_band_physical.sh')).read_text()
 assert 'CLIENT_HASH_TO_BE_FROZEN' not in source
 flow = source.split('# NATIVE_GDDR_FLOW_BEGIN\n', 1)[1].split('# NATIVE_GDDR_FLOW_END', 1)[0]
 raw = (here.parent / 'benchmarks/qwen38-native-model-band-preparation-20261104/learned-reference.log').read_bytes()
@@ -30,8 +39,8 @@ for sample, first in enumerate((0, 8704, 17376)):
             positions.append(len(normal))
             word = expected[sample, row]
             normal.append(f'NATIVE_GDDR_BAND_RETURNED_WORD sample{sample} first{first} pass{job} row{row} got{word} expected{word}')
-    normal.append(f'PASS_NATIVE_GDDR_BAND sample{sample} tensor7 first{first} width5120 phases4 dual_jobs2 exact_words64 polls1 generation11 requests320 flits2880 saved_l152812 saved_gddr46080;EXPLICIT_END_GDDR_L1_NIU_FIFO_TLB_CLOCK_PCI_RESTORED;NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM')
-normal.append('PASS_NATIVE_GDDR_BANDS samples3 exact_words192 clean_ends3;DEBUG_REFERENCE_NOT_WORK_NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM')
+    normal.append(f'PASS_NATIVE_{label}_BAND sample{sample} tensor7 first{first} width5120 phases4 dual_jobs2 exact_words64 polls1 generation{generation} requests320 flits2880 saved_l1{saved} saved_gddr46080;EXPLICIT_END_GDDR_L1_NIU_FIFO_TLB_CLOCK_PCI_RESTORED;NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM')
+normal.append(f'PASS_NATIVE_{label}_BANDS samples3 exact_words192 clean_ends3;DEBUG_REFERENCE_NOT_WORK_NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM')
 folder = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-gddr-learned-parent.'))
 client = folder / 'client'
 client.write_text('''#!/bin/sh
@@ -41,7 +50,7 @@ if [ "$mode" = runfail ];then echo UNPROVEN >&2;exit 1;fi
 cat "$stage/output"
 if [ "$mode" = dirty ];then echo UNEXPECTED >&2;fi
 if [ "$mode" = false-pass ];then exit 1;fi
-''')
+'''.replace('--fixed-gddr-learned-bands', '--fixed-gddr64-learned-bands' if aligned else '--fixed-gddr-learned-bands'))
 client.chmod(0o700)
 prefix = '''set -eu
 stage=$1;client=$2;mode=$3;events=$stage/events;reference=$stage/reference
@@ -59,6 +68,10 @@ cases = [('pass', normal), ('runfail', []), ('dirty', normal), ('false-pass', no
          ('missing-auth', normal[1:]), ('missing-verified', normal[:1] + normal[2:]),
          ('duplicate-auth', normal[:1] + normal), ('duplicate-verified', normal[:2] + normal[1:]),
          ('early-final', [normal[-1]] + normal[:-1]), ('extra-final', normal + [normal[-1]]), ('garbage', normal + ['NOISE']), ('short-prior', normal)]
+if aligned:
+    cases.append(('old81-record', [line.replace('GDDR64_', 'GDDR_').replace('generation5', 'generation11').replace('saved_l155372', 'saved_l152812') for line in normal]))
+    for name, first, second in (('reordered-rows',2,3), ('reordered-jobs',2,34), ('reordered-last-rows',194,195)):
+        bad = list(normal);bad[first],bad[second] = bad[second],bad[first];cases.append((name,bad))
 for number, position in enumerate(positions):
     cases.append((f'missing-{number}', normal[:position] + normal[position + 1:]))
     cases.append((f'duplicate-{number}', normal[:position] + [normal[position]] + normal[position:]))
@@ -67,15 +80,15 @@ for number, position in enumerate(positions):
     cases.append((f'both-wrong-{number}', wrong))
 for sample in range(3):
     marker = 66 + sample * 65
-    for label, old, new in (('generation', 'generation11', 'generation9'), ('poll-zero', 'polls1', 'polls0'),
+    for name, old, new in (('generation', 'generation%d' % generation, 'generation9'), ('poll-zero', 'polls1', 'polls0'),
                             ('poll-large', 'polls1', 'polls20001'), ('fidelity', 'phases4', 'phases1'), ('geometry', 'width5120', 'width6144'),
                             ('requests', 'requests320', 'requests319'), ('flits', 'flits2880', 'flits2879'),
-                            ('l1-journal', 'saved_l152812', 'saved_l150500'), ('gddr-journal', 'saved_gddr46080', 'saved_gddr46079'),
+                            ('l1-journal', 'saved_l1%d' % saved, 'saved_l150500'), ('gddr-journal', 'saved_gddr46080', 'saved_gddr46079'),
                             ('clock-end', 'CLOCK_PCI_RESTORED', 'PCI_RESTORED')):
         bad = list(normal)
         assert old in bad[marker]
         bad[marker] = bad[marker].replace(old, new)
-        cases.append((f'{label}-{sample}', bad))
+        cases.append((f'{name}-{sample}', bad))
 for mode, output in cases:
     stage = folder / mode
     stage.mkdir()
@@ -85,10 +98,10 @@ for mode, output in cases:
     events = (stage / 'events').read_text().splitlines()
     if mode == 'pass':
         assert result.returncode == 0 and events.count('run') == 1, (result.stdout, result.stderr)
-        assert events.count('exchange:2026110400010081:2026102100010012') == 1
-        assert (stage / 'state').read_text().strip() == 'STABLE041_RESTORED_GDDR_BANDS_EXACT192_PASSED'
+        assert events.count('exchange:' + tag + ':2026102100010012') == 1
+        assert (stage / 'state').read_text().strip() == f'STABLE041_RESTORED_{label}_BANDS_EXACT192_PASSED'
     else:
-        assert result.returncode != 0 and 'exchange:2026110400010081:2026102100010012' not in events, (mode, events)
+        assert result.returncode != 0 and 'exchange:' + tag + ':2026102100010012' not in events, (mode, events)
         if 'run' in events:
             assert events[-1] == 'run', (mode, events) # no status/restore/IO after unknown
 idle = source.split('idle(){\n', 1)[1].split('\n}\n', 1)[0]
@@ -118,21 +131,21 @@ stat(){
 }
 sha256sum(){ shasum -a 256 "$@"; }
 ''' + gate)
-prior = here.parent / 'benchmarks/qwen38-native-model-band-physical-20261104'
-prior_raw = (prior / 'learned.stdout').read_bytes()
-assert hashlib.sha256(prior_raw).hexdigest() == '71f8686db0d94af820be42c0e87f2f4b1bb4aa53acf3fbfb9b6e92cd2222d7e6'
+prior = here.parent / ('benchmarks/qwen38-native-dram-load64-observed-20261104' if aligned else 'benchmarks/qwen38-native-model-band-physical-20261104')
+prior_raw = (prior / (prior_stem + '.stdout')).read_bytes()
+assert hashlib.sha256(prior_raw).hexdigest() == prior_hash
 gate_cases = ('pass', 'bad-state', 'bad-exit', 'dirty-learned', 'dirty-stderr', 'dirty-reference', 'missing-reference',
               'linked-reference', 'linked-model', 'missing-model', 'bad-model-permission', 'bad-owner', 'linked-prior')
 for mode in gate_cases:
     stage = folder / ('prior-' + mode)
     (stage / 'prior').mkdir(parents=True)
-    (stage / 'prior/state').write_text('STABLE041_RESTORED_LEARNED_BANDS_EXACT192_PASSED\n' if mode != 'bad-state' else 'OTHER\n')
-    (stage / 'prior/learned.exit').write_text('0\n' if mode != 'bad-exit' else '1\n')
-    (stage / 'prior/learned.stderr').write_bytes(b'' if mode != 'dirty-stderr' else b'X')
+    (stage / 'prior/state').write_text(prior_state + '\n' if mode != 'bad-state' else 'OTHER\n')
+    (stage / ('prior/' + prior_stem + '.exit')).write_text('0\n' if mode != 'bad-exit' else '1\n')
+    (stage / ('prior/' + prior_stem + '.stderr')).write_bytes(b'' if mode != 'dirty-stderr' else b'X')
     if mode == 'linked-prior':
-        (stage / 'prior/learned.stdout').symlink_to(prior / 'learned.stdout')
+        (stage / ('prior/' + prior_stem + '.stdout')).symlink_to(prior / (prior_stem + '.stdout'))
     else:
-        (stage / 'prior/learned.stdout').write_bytes(prior_raw if mode != 'dirty-learned' else prior_raw + b'X')
+        (stage / ('prior/' + prior_stem + '.stdout')).write_bytes(prior_raw if mode != 'dirty-learned' else prior_raw + b'X')
     if mode == 'linked-reference':
         (stage / 'target').write_bytes(raw)
         (stage / 'learned-reference.log').symlink_to(stage / 'target')
@@ -176,7 +189,7 @@ assert exchange_count and exchange_count < 100
 once = 'for name in .trial-once' + source.split('for name in .trial-once', 1)[1].split('# NATIVE_GDDR_FLOW_BEGIN', 1)[0]
 once_program = folder / 'once.sh'
 once_program.write_text('set -eu\nstage=$1;stable=$stage/stable;stable_hash=STABLE\nexact(){ :; }\n' + once)
-once_names = ('.trial-once', 'stable041.backup', 'driver.incoming', 'gddr.stdout', 'gddr.stderr', 'gddr.exit', 'parent.pid', 'state')
+once_names = ('.trial-once', 'stable041.backup', 'driver.incoming', output_stem + '.stdout', output_stem + '.stderr', output_stem + '.exit', 'parent.pid', 'state')
 once_count = 0
 for name in ('pass', *once_names):
     stage = folder / ('once-' + name);stage.mkdir();(stage / 'stable').write_text('STABLE')

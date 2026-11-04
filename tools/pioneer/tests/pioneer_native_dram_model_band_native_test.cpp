@@ -97,7 +97,7 @@ int main(int argc,char** argv) {
 	}
 	{
 		NativeFixture f;f.Map();uint32 v=0;const auto before=ioCalls;
-		for(unsigned a:{1U,0x5ffcU,0x6004U,0x72000U,0x74020U,0x8ffdcU,0xbdfE0U,0x12a000U,0x134100U,0x17ffccU,UINT32_MAX}) {
+		for(unsigned a:{1U,0x5ffcU,0x6004U,0x72000U,0x74020U,L::Weight-L::Header-4,L::WeightEnd(5120),L::InputEnd(5120),L::Output+256,0x17ffccU,UINT32_MAX}) {
 			assert(!N::L1Address(a) && !f.c->io.NativeL1Read(a,v) && !f.c->io.NativeL1Write(a,1));refused++;
 		}
 		for(unsigned a:{0x03fffffcU,0x0402a800U,0x040ffffcU,0x04102800U,0x04000001U,UINT32_MAX}) {
@@ -114,14 +114,14 @@ int main(int argc,char** argv) {
 	}
 	{
 		NativeFixture f;f.Map(4);uint32 v=0;
-		for(unsigned a:{0x6000U,0x70000U,0x71ffcU,0x6e000U,0x6fffcU,0x74000U,0x7401cU,0x8ffe0U,0xbbbdcU,0x125fe0U,0x129bdcU,0x134000U,0x1340fcU,0x17ffc0U,0x17ffc8U}) {
+		for(unsigned a:{0x6000U,0x70000U,0x71ffcU,0x6e000U,0x6fffcU,0x74000U,0x7401cU,L::Weight-L::Header,L::WeightEnd(5120)-4,L::Input-L::Header,L::InputEnd(5120)-4,L::Output,L::Output+252,0x17ffc0U,0x17ffc8U}) {
 			assert(f.c->io.NativeL1Write(a,a^0x12340000) && f.c->io.NativeL1Read(a,v) && v==(a^0x12340000));valid++;
 		}
 		f.Result().phase=8;f.c->resetStage=4;assert(f.c->io.NativeL1Write(0x6000,0x11223344));valid++;
 		f.Result().phase=5;f.c->resetStage=2;f.c->fifoStage=1;f.Reset(0x46800);
-		assert(!f.c->io.NativeL1Read(0x70000,v) && !f.c->io.NativeL1Write(0x6000,0) && !f.c->io.NativeL1Read(0x134000,v));refused++;
-		assert(f.c->io.NativeL1Read(0x17ffc8,v));auto& r=f.Result().compute;r.phase=0x7000c;r.count=0x04001400;r.marker=0x3142444e;r.pc[0]=r.pc[1]=0x70038;
-		assert(f.c->io.NativeL1Read(0x134000,v));r.marker^=1;assert(!f.c->io.NativeL1Read(0x134000,v));valid++;refused++;
+		assert(!f.c->io.NativeL1Read(0x70000,v) && !f.c->io.NativeL1Write(0x6000,0) && !f.c->io.NativeL1Read(L::Output,v));refused++;
+		assert(f.c->io.NativeL1Read(0x17ffc8,v));auto& r=f.Result().compute;r.phase=0x7000c;r.count=PioneerNativeDramModelBandVariant::Count;r.marker=PioneerNativeDramModelBandVariant::Marker;r.pc[0]=r.pc[1]=0x70038;
+		assert(f.c->io.NativeL1Read(L::Output,v));r.marker^=1;assert(!f.c->io.NativeL1Read(L::Output,v));valid++;refused++;
 	}
 	{
 		NativeFixture f;f.Map(3);f.Select(true);uint32 v=0;
@@ -223,6 +223,19 @@ int main(int argc,char** argv) {
 			if(fault==9)operation--;if(fault==10)effectiveUid=1;if(fault==11)currentTeam++;
 			assert(N::Control(&f.cookie,operation,&r,length)!=B_OK && ioCalls==before);effectiveUid=0;currentTeam=20;refused++;
 		}
+#if defined(PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64)
+		for(unsigned base:{0x7d00U,0x7e00U,0x7f00U})for(unsigned op=0;op<3;op++) {
+			r=Request();assert(N::Control(&f.cookie,B_DEVICE_OP_CODES_END+base+op,&r,sizeof(r))==B_NOT_ALLOWED && ioCalls==before);refused++;
+		}
+		for(uint64 tag:{UINT64_C(0x2026110400010081),UINT64_C(0x2026110400010082),UINT64_C(0x2026110400010083)}) {
+			r=Request();r.expected_tag=tag;
+			assert(N::Control(&f.cookie,PIONEER_NATIVE_DRAM_MODEL_BAND_SUPPORT,&r,sizeof(r))==B_BAD_VALUE && ioCalls==before);refused++;
+		}
+		uint32 word=0;
+		for(unsigned oldOnly:{0x125fe0U,0x129bdcU,0x134000U,0x1340fcU}) {
+			assert(!N::L1Address(oldOnly) && !f.c->io.NativeL1Read(oldOnly,word) && !f.c->io.NativeL1Write(oldOnly,0) && ioCalls==before);refused++;
+		}
+#endif
 		r=Request(0);assert(N::Control(&f.cookie,PIONEER_NATIVE_DRAM_MODEL_BAND_RUN,&r,sizeof(r))==B_BUSY && ioCalls==before);refused++;
 		r=Request(0);r.nonce=r.accept=1;assert(N::Control(&f.cookie,PIONEER_NATIVE_DRAM_MODEL_BAND_END,&r,sizeof(r))==B_BAD_VALUE && ioCalls==before);refused++;
 	}
@@ -274,5 +287,5 @@ int main(int argc,char** argv) {
 			f.c->resetStage=2;f.c->clockEntered=true;refused++;
 		}
 	}
-	printf("PASS actual native81 endpoint fixtures:valid%u refused%u;NO prerequisite/ARC/engine/hardware/model/speed authority\n",valid,refused);
+	printf("PASS actual native%u endpoint fixtures:valid%u refused%u;NO prerequisite/ARC/engine/hardware/model/speed authority\n",PioneerNativeDramModelBandVariant::Role,valid,refused);
 }

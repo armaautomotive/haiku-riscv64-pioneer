@@ -6,7 +6,7 @@
 // unchanged. Packed GDDR/cache tiles remain1088/64 bytes. ONLY the private
 // L1 strides grow,so both addresses are congruent mod32 on EVERY read.
 // These fixed diagnostic offsets grant no physical range/route/owner lease.
-// Explicit diagnostic83 compile option instead uses C64 starts/64B headers.
+// Explicit diagnostic83/84 compile options use C64 starts/64B headers.
 // It changes L1 placement ONLY,not packed GDDR/cache bytes or fidelity.
 struct PioneerNativeDramBandLayout {
 	using V=PioneerNativeDramLoadVariant;
@@ -30,7 +30,7 @@ static_assert(PioneerNativeDramBandLayout::WeightStride==PioneerNativeDramBandLa
 static_assert(!(PioneerNativeDramBandLayout::Weight&31) && !(PioneerNativeDramBandLayout::Input&31)
 	&& !(PioneerNativeDramBandLayout::WeightStride&31) && !(PioneerNativeDramBandLayout::InputStride&31)
 	&& !(PioneerNativeDramBandLayout::WeightPayload&63) && !(PioneerNativeDramBandLayout::InputPayload&63),"C32 direct GDDR reads,whole64B flits");
-static_assert(PioneerNativeDramLoadVariant::Role!=83 || (!(PioneerNativeDramBandLayout::Weight&63)
+static_assert(PioneerNativeDramLoadVariant::Role<83 || (!(PioneerNativeDramBandLayout::Weight&63)
 	&& !(PioneerNativeDramBandLayout::Input&63) && !(PioneerNativeDramBandLayout::WeightStride&63)
 	&& !(PioneerNativeDramBandLayout::InputStride&63) && PioneerNativeDramBandLayout::Header==64
 	&& PioneerNativeDramLoadVariant::L1Words==55372 && PioneerNativeDramLoadVariant::HeaderWords==5120),"exact C64 placement/journal control");

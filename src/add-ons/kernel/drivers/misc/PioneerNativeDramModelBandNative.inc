@@ -19,8 +19,12 @@ constexpr const char* MapName="P100A isolated GDDR LOAD ONLY82";
 #include "../../../../../tools/pioneer/PioneerNativeDramModelBandLease.h"
 #include "PioneerNativeDramModelBandGeneratedImage.h"
 namespace PioneerNativeDram81 {
-constexpr uint32 NativeResultMarker=0x3142444e,NativeResultCount=0x04001400;
+constexpr uint32 NativeResultMarker=PioneerNativeDramModelBandVariant::Marker,NativeResultCount=PioneerNativeDramModelBandVariant::Count;
+#if defined(PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64)
+constexpr const char* MapName="P100A isolated GDDR native band84 C64";
+#else
 constexpr const char* MapName="P100A isolated GDDR native band81";
+#endif
 #endif
 struct Cookie {PioneerProbeCookie* base=NULL;bool used=false;};
 struct Owner;

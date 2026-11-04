@@ -47,9 +47,15 @@ end_role = '\n#undef PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC\n#undef _KERNEL_MODE\n'
 (output / 'endpoints.h').write_text(prefix + extra[0] + role + '#include "' + str(driver / 'PioneerNativeDramModelBandNative.inc') + '"\n' + control + end_role)
 (output / 'load-component.h').write_text(load_component(here))
 test = (here / 'pioneer_native_dram_model_band_native_test.cpp').read_text()
+# The math84 cross-role assertions deliberately reject load82/83 opcodes.
+# They are NOT load-only fixtures. Remove that exact separately selected
+# block before translating the common explicit endpoint/domain tests.
+test, removed = re.subn(r'#if defined\(PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64\)\n.*?#endif\n', '', test, flags=re.S)
+assert removed == 1
 test = test.replace('#define PIONEER_NATIVE_DRAM_MODEL_LEASE_TEST_ONLY\n#include "pioneer_native_dram_model_band_lease_test.cpp"', '#include "load-component.h"')
 test = test.replace('PioneerNativeDram81', 'PioneerNativeDram%d' % native_role)
-for old, new in [('PioneerNativeDramModelBandResult', 'PioneerNativeDramLoadResult'),
+for old, new in [('PioneerNativeDramModelBandVariant', 'PioneerNativeDramLoadVariant'),
+                 ('PioneerNativeDramModelBandResult', 'PioneerNativeDramLoadResult'),
                  ('PioneerNativeDramModelBandRequest', 'PioneerNativeDramLoadRequest'),
                  ('PioneerNativeDramModelBandNone', 'PioneerNativeDramLoadNone'),
                  ('PioneerNativeDramModelBandTag', 'PioneerNativeDramLoadTag'),
@@ -93,7 +99,7 @@ if aligned:
  }
 '''
     test = test.replace(marker, cross_role + marker)
-test = test.replace('actual native81 endpoint fixtures', 'actual LOAD ONLY%d endpoint fixtures' % native_role)
+test = test.replace('actual native%u endpoint fixtures', 'actual LOAD ONLY%u endpoint fixtures')
 (output / 'test.cpp').write_text(test)
 sources = [driver / 'PioneerNativeDramModelBandNative.inc', driver / 'pioneer_native_dram_load_driver.cpp',
            here.parent / 'PioneerNativeDramLoadLease.h', here / 'pioneer_native_dram_model_band_native_test.cpp',

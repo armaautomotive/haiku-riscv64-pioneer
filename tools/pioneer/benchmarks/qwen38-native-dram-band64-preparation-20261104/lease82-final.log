@@ -1,0 +1,8 @@
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+966507e23929a1d28f62f56de0ea3c3a6c9148d9ff8f59c84138f746eea779a0 2268 text.bin
+OFFBOARD_LOAD_ONLY82_BUILD;NO FPU/unpack/model/Work path,NO native ownership/byte/hardware/speed authority
+PASS OFFBOARD actual LOAD ONLY sample0:real private bytes/actual RV32,46080 payload+2560 header words exact,complete L1/GDDR/NIU/TLB/clock restore;NO FPU/arithmetic observer/native/hardware proof
+PASS OFFBOARD actual LOAD ONLY sample1:real private bytes/actual RV32,46080 payload+2560 header words exact,complete L1/GDDR/NIU/TLB/clock restore;NO FPU/arithmetic observer/native/hardware proof
+PASS OFFBOARD actual LOAD ONLY sample2:real private bytes/actual RV32,46080 payload+2560 header words exact,complete L1/GDDR/NIU/TLB/clock restore;NO FPU/arithmetic observer/native/hardware proof
+PASS actual LOAD ONLY journal:162 mismatch/failure/admission cases,address/kind ONLY,no private word dump;first failure NO later IO/END/retry/reset/cleanup;NO native/physical/quality/speed proof
+PASS LOAD ONLY4 forbidden roles,PRIVATE data unchanged;OFFBOARD evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-dram-load-only-lease.7fxh1oaw

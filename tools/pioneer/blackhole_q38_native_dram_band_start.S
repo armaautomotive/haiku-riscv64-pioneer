@@ -14,7 +14,11 @@ native_dram_band_done:
  sw a0,4(t0)
  la t1,native_dram_band_done
  sw t1,0(t0)
- li t1,0x3142444e /* NDB1:direct-GDDR layout,NEVER accepted as NFB3 */
+.ifdef PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64
+ li t1,0x3436424e /* NB64:distinct84 math,NOT load-only83 ND64 */
+.else
+ li t1,0x3142444e /* NDB1:original81 */
+.endif
  sw t1,8(t0)
  lw t1,8(t0)
  fence
@@ -22,7 +26,11 @@ native_dram_band_park: j native_dram_band_park
  j native_dram_band_park
 native_dram_band_fault:
  li t0,0x17ffc8
- li t1,0x4542444e /* NDBE:uncertain;NO retry/restore authority */
+.ifdef PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64
+ li t1,0x4546424e /* NBFE:uncertain;NO retry/restore authority */
+.else
+ li t1,0x4542444e /* NDBE */
+.endif
  sw t1,0(t0)
  fence
 native_dram_band_fault_park: j native_dram_band_fault_park

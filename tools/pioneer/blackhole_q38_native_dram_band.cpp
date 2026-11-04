@@ -3,6 +3,7 @@
 #define PIONEER_DRAM_SWEEP_FREESTANDING 1
 #include "PioneerNativeDramBandLoader.h"
 #include "PioneerNativeDramBandCompute.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerNativeDramModelBandVariant.h"
 #if !defined(__riscv) || __riscv_xlen != 32 || !defined(PIONEER_NATIVE_DRAM_BAND_K)
 #error Select a fixed RV32I direct-GDDR native band prototype
 #endif
@@ -32,7 +33,7 @@ struct Emitter {
 extern "C" unsigned native_dram_band_main() {
 	// Immutable owned32B diagnostic frame. No arbitrary source addresses.
 	unsigned frame[8];for(unsigned i=0;i<8;i++)frame[i]=Words(0x74000)[i];
-	if(frame[0]!=0x3142444e || frame[1]!=1 || frame[2]!=PIONEER_NATIVE_DRAM_BAND_K
+	if(frame[0]!=PioneerNativeDramModelBandVariant::Marker || frame[1]!=1 || frame[2]!=PIONEER_NATIVE_DRAM_BAND_K
 		|| !PioneerNativeDramBandLoader::Route(frame[3]) || !frame[4] || frame[5] || frame[6] || frame[7])native_dram_band_fault();
 	IO io;PioneerNativeDramBandLoader loader;
 	if(!loader.Run(io,PIONEER_NATIVE_DRAM_BAND_K,frame[3]))native_dram_band_fault();

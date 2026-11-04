@@ -11,18 +11,19 @@
 #include <sys/ioctl.h>
 namespace {
 using Meta=PioneerNativeBfpModelBandMetadata;
+using Variant=PioneerNativeDramModelBandVariant;
 constexpr const char* Original="/boot/home/models/Qwen3.8-27B-Q4_K_M.gguf";
 bool Result(const PioneerNativeDramModelBandRequest& r,unsigned sample,uint64_t generation,unsigned state) {
 	const auto& c=r.result.compute;const unsigned restored=unsigned(state==PIONEER_NATIVE_BFP_CLOSED);
 	if(r.version!=1 || r.sample!=sample || r.expected_tag!=PioneerNativeDramModelBandTag || r.expected_generation!=generation
 		|| r.nonce!=1 || r.reserved || r.accept!=restored || c.state!=state || c.cold || c.started!=1 || c.completed!=1
-		|| !c.polls || c.polls>20000 || c.phase!=0x7000c || c.count!=0x04001400 || c.marker!=0x3142444e
+		|| !c.polls || c.polls>20000 || c.phase!=0x7000c || c.count!=Variant::Count || c.marker!=Variant::Marker
 		|| (c.controls[0]&1) || c.controls[1] || c.controls[2])return false;
 	for(unsigned pc:c.pc)if(pc!=0x70038 && pc!=0x7003c)return false;
 	return c.held==restored && c.l1_restored==restored && c.tlb_restored==restored
 		&& r.result.phase==(restored?10U:5U) && r.result.gddr_restored==restored && r.result.niu_restored==restored
 		&& r.result.clock_restored==restored && r.result.requests==320 && r.result.flits==2880
-		&& r.result.saved_l1==52812 && r.result.saved_gddr==46080;
+		&& r.result.saved_l1==PioneerNativeDramLoadVariant::L1Words && r.result.saved_gddr==46080;
 }
 void Dump(FILE* stream,const PioneerNativeDramModelBandRequest& r,unsigned sample) {
 	const auto* golden=Meta::Golden(sample);
@@ -32,7 +33,11 @@ void Dump(FILE* stream,const PioneerNativeDramModelBandRequest& r,unsigned sampl
 bool Delivered(){return !fflush(stdout) && !ferror(stdout);}
 }
 int main(int argc,char** argv) {
+#if defined(PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64)
+	if(argc!=2 || strcmp(argv[1],"--fixed-gddr64-learned-bands")){fputs("Use --fixed-gddr64-learned-bands for three fixed DEBUG C64 samples,NOT model/Work inference.\n",stderr);return 2;}
+#else
 	if(argc!=2 || strcmp(argv[1],"--fixed-gddr-learned-bands")){fputs("Use --fixed-gddr-learned-bands for three fixed DEBUG samples,NOT model/Work inference.\n",stderr);return 2;}
+#endif
 	if(geteuid()!=0)return 1;
 	PioneerNativeModelBandSource source;std::string error;
 	puts("AUTHENTICATING_FIXED_ORIGINAL_AND_FRESH_LEARNED_REFERENCE;CPU_DIAGNOSTIC_ONLY_NO_DEVICE_YET");if(!Delivered())return 1;
@@ -77,10 +82,18 @@ int main(int argc,char** argv) {
 		}
 		if(close(fd))return 1;
 		Dump(stdout,r,sample);
+#if defined(PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64)
+		printf("PASS_NATIVE_GDDR64_BAND sample%u tensor7 first%u width5120 phases4 dual_jobs2 exact_words64 polls%u generation%llu requests320 flits2880 saved_l155372 saved_gddr46080;EXPLICIT_END_GDDR_L1_NIU_FIFO_TLB_CLOCK_PCI_RESTORED;NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM\n",
+#else
 		printf("PASS_NATIVE_GDDR_BAND sample%u tensor7 first%u width5120 phases4 dual_jobs2 exact_words64 polls%u generation%llu requests320 flits2880 saved_l152812 saved_gddr46080;EXPLICIT_END_GDDR_L1_NIU_FIFO_TLB_CLOCK_PCI_RESTORED;NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM\n",
+#endif
 			sample,Meta::First(sample),r.result.compute.polls,(unsigned long long)metadata.generation);
 		if(!Delivered())return 1; // no next sample on failed output channel
 	}
+#if defined(PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64)
+	puts("PASS_NATIVE_GDDR64_BANDS samples3 exact_words192 clean_ends3;DEBUG_REFERENCE_NOT_WORK_NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM");
+#else
 	puts("PASS_NATIVE_GDDR_BANDS samples3 exact_words192 clean_ends3;DEBUG_REFERENCE_NOT_WORK_NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM");
+#endif
 	return Delivered()?0:1;
 }

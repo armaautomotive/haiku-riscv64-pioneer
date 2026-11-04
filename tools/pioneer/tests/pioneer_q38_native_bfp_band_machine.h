@@ -8,7 +8,14 @@
 // remains that observer's IDEAL phasewise FP32 model, NOT silicon rounding.
 struct NativeBfpBandMachine:NativeBfpMachine {
 	unsigned tiles,phases,clears=0;
-	NativeBfpBandMachine(unsigned k,unsigned fidelity):tiles(k/32),phases(fidelity){assert((k==5120 || k==6144 || k==17408) && (phases==1 || phases==4));}
+	const unsigned weightBase,inputBase,weightStride,inputStride,headerBytes,operandLimit;
+	NativeBfpBandMachine(unsigned k,unsigned fidelity,unsigned w=0x90000,unsigned b=0x124000,
+		unsigned ws=1104,unsigned bs=80,unsigned h=16,unsigned limit=0x130000)
+		:tiles(k/32),phases(fidelity),weightBase(w),inputBase(b),weightStride(ws),inputStride(bs),headerBytes(h),operandLimit(limit) {
+		assert((k==5120 || k==6144 || k==17408) && (phases==1 || phases==4));
+		assert(h>=16 && !(h&15) && ws==1088+h && bs==64+h && w>=h && b>=h);
+		assert(w-h+tiles*ws<=b-h && b-h+tiles*bs<=limit && limit<=l1.size());
+	}
 	void UnpackBand(unsigned which) {
 		assert(which<2 && thread[0]==0 && thread[5]==4);
 		const unsigned base=64+which*48,format=config[base]&15;
@@ -19,10 +26,10 @@ struct NativeBfpBandMachine:NativeBfpMachine {
 		assert(config[base]==(which?0x00200015U:0x01000016U));
 		assert(config[base+1]==(which?0x00010001U:0x00040001U) && config[base+2]==1);
 		const unsigned address=(config[base+12]+1)*16,tile=unpacks[which]%tiles;
-		assert(address==(which?0x124000U+tile*80:0x90000U+tile*1104));
+		assert(address==(which?inputBase+tile*inputStride:weightBase+tile*weightStride));
 		assert(xStart[which]==0 && xEnd[which]==(which?31U:1023U));
-		assert(address>=16 && address+(which?64U:1088U)<=0x130000);
-		for(unsigned h=0;h<16;h++)assert(!l1[address-16+h]);
+		assert(address>=headerBytes && address+(which?64U:1088U)<=operandLimit);
+		for(unsigned h=0;h<headerBytes;h++)assert(!l1[address-headerBytes+h]);
 		auto& s=source[which][unpackBank[which]];if(s.pending || s.owner)throw Unknown;
 		unsigned destinationBase=which?config[61]:config[49]+(config[84]&65535);
 		if(which){assert(!(destinationBase&1));destinationBase/=2;}
@@ -88,8 +95,8 @@ struct NativeBfpBandMachine:NativeBfpMachine {
 	void Stage(const Fixture& data) {
 		assert(data.packed.size()==tiles && data.input.size()==tiles && !unpacks[0] && !unpacks[1]);
 		for(unsigned tile=0;tile<tiles;tile++) {
-			const unsigned wa=0x90000+tile*1104,ba=0x124000+tile*80;
-			memset(l1.data()+wa-16,0,16);memcpy(l1.data()+wa,data.packed[tile].data(),1088);memset(l1.data()+ba-16,0,16);
+			const unsigned wa=weightBase+tile*weightStride,ba=inputBase+tile*inputStride;
+			memset(l1.data()+wa-headerBytes,0,headerBytes);memcpy(l1.data()+wa,data.packed[tile].data(),1088);memset(l1.data()+ba-headerBytes,0,headerBytes);
 			for(unsigned c=0;c<32;c++){l1[ba+c*2]=uint8_t(data.input[tile][c]);l1[ba+c*2+1]=uint8_t(data.input[tile][c]>>8);}
 		}
 	}

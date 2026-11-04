@@ -27,12 +27,17 @@ def reference():
     if len(expected) != 96:
         raise ValueError('Independent reference incomplete')
     return expected
-def verify(text):
-    """Verify actual exact fixed81 child text ONLY,no driver/device authority."""
+def verify(text, alignment64=False):
+    """Explicit-role fixed81/84 child text ONLY,no driver/device authority."""
+    if not isinstance(text, str) or type(alignment64) is not bool:
+        raise ValueError('Exact text and explicit role required')
+    final = FINAL.replace('GDDR_BANDS', 'GDDR64_BANDS') if alignment64 else FINAL
+    suffix = SUFFIX.replace('saved_l152812', 'saved_l155372') if alignment64 else SUFFIX
+    label, generation = ('GDDR64', 5) if alignment64 else ('GDDR', 11)
     if not text.endswith('\n') or len(text) > 262144 or '\r' in text or '\0' in text:
         raise ValueError('Child framing/size refused')
     lines = text.splitlines()
-    if len(lines) != 198 or tuple(lines[:2]) != BANNERS or lines[-1] != FINAL:
+    if len(lines) != 198 or tuple(lines[:2]) != BANNERS or lines[-1] != final:
         raise ValueError('Child banners/count/final refused')
     expected = reference()
     index = 2
@@ -45,15 +50,15 @@ def verify(text):
                 if lines[index] != line:
                     raise ValueError(f'Child word/order/reference refused at sample{sample}/pass{job}/row{row}')
                 index += 1
-        prefix = f'PASS_NATIVE_GDDR_BAND sample{sample} tensor7 first{first} width5120 phases4 dual_jobs2 exact_words64 polls'
-        match = re.fullmatch(re.escape(prefix) + r'([1-9][0-9]*) generation11' + re.escape(SUFFIX), lines[index])
+        prefix = f'PASS_NATIVE_{label}_BAND sample{sample} tensor7 first{first} width5120 phases4 dual_jobs2 exact_words64 polls'
+        match = re.fullmatch(re.escape(prefix) + r'([1-9][0-9]*) generation' + str(generation) + re.escape(suffix), lines[index])
         if not match or int(match[1]) > 20000:
             raise ValueError('Child poll/epoch/fidelity/counter/journal/restore marker refused')
         polls.append(int(match[1]));index += 1
     if index != len(lines) - 1:
         raise ValueError('Child ordering/duplicate refused')
-    return {'samples': 3, 'words': 192, 'ends': 3, 'generation': 11, 'polls': polls}
-def fixture():
+    return {'samples': 3, 'words': 192, 'ends': 3, 'generation': generation, 'polls': polls}
+def fixture(alignment64=False):
     expected = reference();lines = list(BANNERS)
     for sample, first in enumerate((0, 8704, 17376)):
         for job in range(2):
@@ -61,10 +66,11 @@ def fixture():
                 word = expected[sample, row]
                 lines.append(f'NATIVE_GDDR_BAND_RETURNED_WORD sample{sample} first{first} pass{job} row{row} got{word} expected{word}')
         lines.append(f'PASS_NATIVE_GDDR_BAND sample{sample} tensor7 first{first} width5120 phases4 dual_jobs2 exact_words64 polls2 generation11' + SUFFIX)
-    return '\n'.join(lines + [FINAL]) + '\n'
-def self_test():
-    normal = fixture();lines = normal.splitlines();cases = [normal[:-1], normal + 'NOISE\n', normal.replace('\n', '\r\n')]
-    assert verify(normal)['polls'] == [2, 2, 2]
+    text = '\n'.join(lines + [FINAL]) + '\n'
+    return text.replace('PASS_NATIVE_GDDR_', 'PASS_NATIVE_GDDR64_').replace('generation11', 'generation5').replace('saved_l152812', 'saved_l155372') if alignment64 else text
+def self_test(alignment64=False):
+    normal = fixture(alignment64);lines = normal.splitlines();cases = [normal[:-1], normal + 'NOISE\n', normal.replace('\n', '\r\n')]
+    assert verify(normal, alignment64)['polls'] == [2, 2, 2]
     for i in range(len(lines)):
         cases.append('\n'.join(lines[:i] + lines[i+1:]) + '\n')
         cases.append('\n'.join(lines[:i] + [lines[i]] + lines[i:]) + '\n')
@@ -75,24 +81,26 @@ def self_test():
             cases.append('\n'.join(bad) + '\n')
     for sample in range(3):
         marker = 66 + sample * 65
-        for old, new in (('generation11', 'generation10'), ('polls2', 'polls0'), ('polls2', 'polls20001'),
+        for old, new in ((('generation5' if alignment64 else 'generation11'), 'generation10'), ('polls2', 'polls0'), ('polls2', 'polls20001'),
                          ('phases4', 'phases1'), ('width5120', 'width6144'), ('requests320', 'requests321'),
-                         ('flits2880', 'flits2879'), ('saved_l152812', 'saved_l152811'),
+                         ('flits2880', 'flits2879'), (('saved_l155372' if alignment64 else 'saved_l152812'), 'saved_l152811'),
                          ('saved_gddr46080', 'saved_gddr0'), ('CLOCK_PCI_RESTORED', 'PCI_RESTORED')):
             bad = list(lines);assert old in bad[marker];bad[marker] = bad[marker].replace(old, new)
             cases.append('\n'.join(bad) + '\n')
     old = pathlib.Path(__file__).resolve().parents[1] / 'benchmarks/qwen38-native-model-band-physical-20261104/learned.stdout'
     cases.append(old.read_text()) # old exact80 output is NOT new81 proof
+    if alignment64:
+        cases += [fixture(), (old.parent.parent / 'qwen38-native-dram-load64-observed-20261104/load.stdout').read_text()]
     for text in cases:
         try:
-            verify(text)
+            verify(text, alignment64)
         except ValueError:
             continue
         raise AssertionError('Corrupted/old fixture accepted')
-    print(f'PASS independent81 child parser:1 valid/{len(cases)} refused;strict Fraction words/order/epoch/counters/journals;old80 not promoted;NO parent/native/device/model/speed proof')
+    print(f'PASS independent{84 if alignment64 else 81} child parser:1 valid/{len(cases)} refused;strict Fraction words/order/epoch/counters/journals;old records not promoted;NO parent/native/device/model/speed proof')
 if __name__ == '__main__':
-    if sys.argv[1:] == ['--self-test']:
-        self_test()
+    if sys.argv[1:] in (['--self-test'], ['--self-test', '--alignment64-math']):
+        self_test(len(sys.argv) == 3)
     elif len(sys.argv) == 3 and sys.argv[1] == '--check-child-output':
         result = verify(pathlib.Path(sys.argv[2]).read_text())
         print('PASS exact frozen81 CHILD output ONLY:', result, ';parent/native/physical closure must be independently observed')

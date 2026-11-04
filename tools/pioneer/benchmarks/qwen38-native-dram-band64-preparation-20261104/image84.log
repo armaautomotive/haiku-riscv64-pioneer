@@ -1,0 +1,15 @@
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+7b3ca669be8d9e0714f544bd0d74c045329b0490d8f2132187181a1a92be55cd 4336 text.bin
+OFFBOARD_NATIVE_DRAM_BAND_BUILD_ONLY K 5120 PHASES4 C64_ROLE84 L1_PACKED_GDDR16_QUEUE;NO staging,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD ACTUAL RV32 direct-GDDR K5120:one packed load320 requests/2880 flits,two full4-phase FPU jobs/all64 exact vs prior independent Fraction-qualified rounded reference,C64 ACTUAL descriptors/SAME NIU-unpack L1/wholeL1 guards;stack320/touched308,steps94446;NO normalization/shadow payload copy/scalar payload access/host roundtrip/owner/hardware/model quality/speed proof
+PASS ACTUAL RV32 missing-response bounded fault park after42548783 steps;NO math/result/retry;device PollLimit65536 UNCHANGED
+PASS actual RV32 DRAM-band20 failure controls:bad immutable frame/NIU/counters/FIFO/header/job mutation/FPU completion fault park before output;NO retry or cleanup
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+4fe68cd1c14973761b75596fb966f99b98132df2b7dda3e6808787837b24c0c5 4336 text.bin
+OFFBOARD_NATIVE_DRAM_BAND_BUILD_ONLY K 6144 PHASES4 C64_ROLE84 L1_PACKED_GDDR16_QUEUE;NO staging,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD ACTUAL RV32 direct-GDDR K6144:one packed load384 requests/3456 flits,two full4-phase FPU jobs/all64 exact vs prior independent Fraction-qualified rounded reference,C64 ACTUAL descriptors/SAME NIU-unpack L1/wholeL1 guards;stack320/touched308,steps112650;NO normalization/shadow payload copy/scalar payload access/host roundtrip/owner/hardware/model quality/speed proof
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+26b4fd4665819d16b549ceb8f9d25e6488f4f6b3ac435d3fcfeab0bfaa7695fe 4336 text.bin
+OFFBOARD_NATIVE_DRAM_BAND_BUILD_ONLY K 17408 PHASES4 C64_ROLE84 L1_PACKED_GDDR16_QUEUE;NO staging,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD ACTUAL RV32 direct-GDDR K17408:one packed load1088 requests/9792 flits,two full4-phase FPU jobs/all64 exact vs prior independent Fraction-qualified rounded reference,C64 ACTUAL descriptors/SAME NIU-unpack L1/wholeL1 guards;stack320/touched308,steps312894;NO normalization/shadow payload copy/scalar payload access/host roundtrip/owner/hardware/model quality/speed proof
+OFFBOARD actual direct-GDDR native image evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-native-dram-band-image.DRZssWn5

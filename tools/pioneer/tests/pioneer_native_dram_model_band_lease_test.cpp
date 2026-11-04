@@ -8,7 +8,7 @@
 #include <type_traits>
 using Lease=PioneerNativeDramModelBandLease;
 struct Image {
-	static constexpr unsigned Width=5120,Phases=4;
+	static constexpr unsigned Width=5120,Phases=4,LayoutRole=PioneerNativeDramModelBandVariant::Role;
 	static inline unsigned Boot=0;static inline std::vector<uint8_t> code;
 	static unsigned Word(unsigned i){return i<code.size()/4?::Word(code,i*4):0;}
 };
@@ -70,8 +70,8 @@ struct LeaseIO {
 	}
 	bool L1(unsigned a)const {
 		return !(a&3) && (a==0x6000 || DramBandRV32::Range(a,0x70000,8192) || DramBandRV32::Range(a,0x6e000,8192)
-			|| DramBandRV32::Range(a,0x74000,32) || DramBandRV32::Range(a,L::Weight-32,160*L::WeightStride)
-			|| DramBandRV32::Range(a,L::Input-32,160*L::InputStride) || DramBandRV32::Range(a,L::Output,256) || DramBandRV32::Range(a,0x17ffc0,12));
+			|| DramBandRV32::Range(a,0x74000,32) || DramBandRV32::Range(a,L::Weight-L::Header,160*L::WeightStride)
+			|| DramBandRV32::Range(a,L::Input-L::Header,160*L::InputStride) || DramBandRV32::Range(a,L::Output,256) || DramBandRV32::Range(a,0x17ffc0,12));
 	}
 	bool NativeL1Read(unsigned a,uint32_t& v){Check();Selected();assert(L1(a));v=memory[a/4];return true;}
 	bool NativeL1Write(unsigned a,uint32_t v) {
@@ -94,7 +94,7 @@ struct LeaseIO {
 		for(unsigned i=0;i<2048;i++)assert(memory[(0x70000+i*4)/4]==Image::Word(i));
 		for(unsigned i=0;i<Lease::L1Words;i++) {
 			const unsigned a=Lease::L1Address(i),v=memory[a/4];
-			if(DramBandRV32::Range(a,L::Weight-32,160*L::WeightStride) || DramBandRV32::Range(a,L::Input-32,160*L::InputStride)) {
+			if(DramBandRV32::Range(a,L::Weight-L::Header,160*L::WeightStride) || DramBandRV32::Range(a,L::Input-L::Header,160*L::InputStride)) {
 				for(unsigned b=0;b<4;b++)image.transfer.l1[a+b]=uint8_t(v>>(b*8));
 			} else if(!DramBandRV32::Range(a,0x70000+unsigned(image.code.size()),8192-unsigned(image.code.size())))image.l1[image.Index(a)]=v;
 		}
@@ -103,7 +103,7 @@ struct LeaseIO {
 		assert(image.Execute());
 		for(unsigned i=0;i<Lease::L1Words;i++) {
 			const unsigned a=Lease::L1Address(i);
-			if(DramBandRV32::Range(a,L::Weight-32,160*L::WeightStride) || DramBandRV32::Range(a,L::Input-32,160*L::InputStride))memory[a/4]=::Word(image.transfer.l1,a);
+			if(DramBandRV32::Range(a,L::Weight-L::Header,160*L::WeightStride) || DramBandRV32::Range(a,L::Input-L::Header,160*L::InputStride))memory[a/4]=::Word(image.transfer.l1,a);
 			else if(!DramBandRV32::Range(a,0x70000+unsigned(image.code.size()),8192-unsigned(image.code.size())))memory[a/4]=image.l1[image.Index(a)];
 		}
 		for(unsigned i=0;i<16;i++)counters[i]=image.transfer.counters[i];
@@ -139,14 +139,14 @@ int main(int argc,char** argv) {
 		auto lease=std::make_unique<Lease>();LeaseIO io(*lease,argv[1]);auto baseline=io.Baseline();io.proof=&baseline;
 		assert((lease->Run<LeaseIO,Image>(io,baseline,sample)) && io.executed && io.resets==2);
 		const auto& r=lease->Result();assert(r.compute.state==PIONEER_NATIVE_BFP_RESULT && r.compute.completed && !r.compute.cold
-			&& r.requests==320 && r.flits==2880 && r.saved_l1==52812 && r.saved_gddr==46080);
+			&& r.requests==320 && r.flits==2880 && r.saved_l1==Lease::L1Words && r.saved_gddr==46080);
 		for(unsigned i=0;i<64;i++)assert(r.compute.output[i]==PioneerNativeBfpModelBandMetadata::Golden(sample)[i%32]);
 		assert((lease->End<LeaseIO,Image>(io)) && r.compute.state==PIONEER_NATIVE_BFP_CLOSED && r.phase==10
 			&& r.compute.held && r.compute.l1_restored && r.compute.tlb_restored && r.gddr_restored && r.niu_restored && r.clock_restored);
 		assert(io.memory==io.original && io.gddr==io.originalDram && io.resets==4 && !io.retained && io.clockCalls==2 && !io.busyClock && !io.fifo);
 		for(unsigned s=0;s<2;s++)for(unsigned i=0;i<3;i++)assert(io.tlb[s][i]==s*3+i+1);
 		for(unsigned v:io.command)assert(!v);NoMore(*lease,io);
-		printf("PASS OFFBOARD actual GDDR learned-band lease sample%u:exact64 rounded words,320 device reads/two full FPU jobs,complete211248B L1+184320B GDDR+NIU/FIFO/TLB/clock restoration;NO native PCI/VM/FD authority/hardware/full-model quality/speed proof\n",sample);
+		printf("PASS OFFBOARD actual GDDR learned-band lease sample%u:exact64 rounded words,320 device reads/two full FPU jobs,complete%uB L1+184320B GDDR+NIU/FIFO/TLB/clock restoration;NO native PCI/VM/FD authority/hardware/full-model quality/speed proof\n",sample,Lease::L1Words*4);
 	}
 	unsigned failures=0;
 	for(unsigned fault=0;fault<26;fault++) {
@@ -183,6 +183,22 @@ int main(int argc,char** argv) {
 		if(fault==3)baseline.source[0]|=0x10000;if(fault==4)baseline.translated[0][0]^=1;
 		assert((!lease->Run<LeaseIO,Image>(io,baseline,0)) && !io.operations && !io.scopeCalls);NoMore(*lease,io);failures++;
 	}
+#if defined(PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64)
+	// Every header word on boundary/odd/even/middle tiles and both payload
+	// ends. The full actual image executes first;no fake successful math result.
+	static_assert(L::Weight==0x90000 && L::Input==0x12c000 && L::Output==0x140000
+		&& L::WeightStride==1152 && L::InputStride==128 && L::Header==64 && Lease::L1Words==55372,"independent pinned84 geometry");
+	for(unsigned operand=0;operand<2;operand++)for(unsigned tile:{0U,1U,2U,79U,80U,159U})for(unsigned word=0;word<L::Header/4+2;word++) {
+		auto lease=std::make_unique<Lease>();LeaseIO io(*lease,argv[1]);auto baseline=io.Baseline();io.proof=&baseline;
+		assert((lease->Run<LeaseIO,Image>(io,baseline,0)) && io.executed);
+		const unsigned start=(operand?L::Input:L::Weight)+tile*(operand?L::InputStride:L::WeightStride);
+		const unsigned a=word<L::Header/4?start-L::Header+word*4:word==L::Header/4?start:start+(operand?64:1088)-4;
+		io.memory[a/4]^=1;
+		assert((!lease->End<LeaseIO,Image>(io)) && io.retained && io.retains==1 && io.resets==4
+			&& !lease->Result().gddr_restored && io.dramWrites==46080 && io.l1Writes==Lease::L1Words);
+		NoMore(*lease,io);failures++;
+	}
+#endif
 	{
 		auto lease=std::make_unique<Lease>();LeaseIO io(*lease,argv[1]);auto baseline=io.Baseline();io.proof=&baseline;
 		assert((lease->Run<LeaseIO,Image>(io,baseline,0)));const auto events=io.operations;

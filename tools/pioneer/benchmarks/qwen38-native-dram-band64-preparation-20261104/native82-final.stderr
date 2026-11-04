@@ -1,0 +1,28 @@
+/private/tmp/pioneer-native-dram-math64-20261104.9xZ1GXzI/native82-final/test.cpp:135:95: error: use of undeclared identifier 'PioneerNativeDramModelBandVariant'; did you mean 'PioneerNativeDramLoadVariant'?
+  135 |                 assert(f.c->io.NativeL1Read(0x17ffc8,v));auto& r=f.Result().compute;r.phase=0x7000c;r.count=PioneerNativeDramModelBandVariant::Count;r.marker=PioneerNativeDramModelBandVariant::Marker;r.pc[0]=r.pc[1]=0x70038;
+      |                                                                                                             ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                                                                                             PioneerNativeDramLoadVariant
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/../../../../../tools/pioneer/../../src/add-ons/kernel/drivers/misc/PioneerNativeDramLoadVariant.h:22:8: note: 'PioneerNativeDramLoadVariant' declared here
+   22 | struct PioneerNativeDramLoadVariant {
+      |        ^
+/private/tmp/pioneer-native-dram-math64-20261104.9xZ1GXzI/native82-final/test.cpp:135:145: error: use of undeclared identifier 'PioneerNativeDramModelBandVariant'; did you mean 'PioneerNativeDramLoadVariant'?
+  135 |                 assert(f.c->io.NativeL1Read(0x17ffc8,v));auto& r=f.Result().compute;r.phase=0x7000c;r.count=PioneerNativeDramModelBandVariant::Count;r.marker=PioneerNativeDramModelBandVariant::Marker;r.pc[0]=r.pc[1]=0x70038;
+      |                                                                                                                                                               ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                                                                                                                                               PioneerNativeDramLoadVariant
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/../../../../../tools/pioneer/../../src/add-ons/kernel/drivers/misc/PioneerNativeDramLoadVariant.h:22:8: note: 'PioneerNativeDramLoadVariant' declared here
+   22 | struct PioneerNativeDramLoadVariant {
+      |        ^
+/private/tmp/pioneer-native-dram-math64-20261104.9xZ1GXzI/native82-final/test.cpp:302:128: error: use of undeclared identifier 'PioneerNativeDramModelBandVariant'; did you mean 'PioneerNativeDramLoadVariant'?
+  302 |         printf("PASS actual native%u endpoint fixtures:valid%u refused%u;NO prerequisite/ARC/engine/hardware/model/speed authority\n",PioneerNativeDramModelBandVariant::Role,valid,refused);
+      |                                                                                                                                       ^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+      |                                                                                                                                       PioneerNativeDramLoadVariant
+/Users/arma/Documents/ChatGPT/HaikuOS/src/add-ons/kernel/drivers/misc/../../../../../tools/pioneer/../../src/add-ons/kernel/drivers/misc/PioneerNativeDramLoadVariant.h:22:8: note: 'PioneerNativeDramLoadVariant' declared here
+   22 | struct PioneerNativeDramLoadVariant {
+      |        ^
+3 errors generated.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_native_dram_load_native_tests.py", line 102, in <module>
+    subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['c++', '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-ffp-contract=off', '-fsanitize=address,undefined', '-DCOHORT_SCOPE_COUNTER_TEST', '-I/private/tmp/pioneer-native-dram-math64-20261104.9xZ1GXzI/native82-final', '-I/private/tmp/pioneer-native-dram-math64-20261104.9xZ1GXzI/control82', '-I/private/tmp/pioneer-native-model-band-20261104.04JIjqSn/private-export', '-I/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests', '-I/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer', '/private/tmp/pioneer-native-dram-math64-20261104.9xZ1GXzI/native82-final/test.cpp', '-o', '/private/tmp/pioneer-native-dram-math64-20261104.9xZ1GXzI/native82-final/test']' returned non-zero exit status 1.

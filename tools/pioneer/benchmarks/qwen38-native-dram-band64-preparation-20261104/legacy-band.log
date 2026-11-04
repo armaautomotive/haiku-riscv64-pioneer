@@ -1,0 +1,51 @@
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+b8b1fff452e016e12a9927153665ecc66929f196fa10f41a8785469a01647577 2048 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 5120 PHASES 1 DIRECT 0 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD actual full-K BFP8/broadcast RV32I:K5120 phases1 mmio,two complete launches,exact32 outputs each vs independent IDEAL phasewise reference,one Dst clear/launch,two source-bank streams160 tiles,only valid broadcast rows32/40,private8KiB SP96/touched88,RISCsteps18604 portWrites8164;NO scalar weight/activation access,NoC/GDDR/owner/driver/silicon rounding/model quality/speed proof
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+19d109aa7b735e46e1cd8d7e03b48e66c75c55b7b47a258ceee9c41598056fd7 1652 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 5120 PHASES 1 DIRECT 1 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD actual full-K BFP8/broadcast RV32I:K5120 phases1 direct,two complete launches,exact32 outputs each vs independent IDEAL phasewise reference,one Dst clear/launch,two source-bank streams160 tiles,only valid broadcast rows32/40,private8KiB SP0/touched0,RISCsteps18115 portWrites134;NO scalar weight/activation access,NoC/GDDR/owner/driver/silicon rounding/model quality/speed proof
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+f69c2803d854bbef87f37df7cb96536e1f5d940060ed98fec6cb3200d50a9ad5 2096 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 5120 PHASES 4 DIRECT 0 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD actual full-K BFP8/broadcast RV32I:K5120 phases4 mmio,two complete launches,exact32 outputs each vs independent IDEAL phasewise reference,one Dst clear/launch,two source-bank streams160 tiles,only valid broadcast rows32/40,private8KiB SP96/touched88,RISCsteps22444 portWrites12004;NO scalar weight/activation access,NoC/GDDR/owner/driver/silicon rounding/model quality/speed proof
+PASS actual full-K failure controls:15 cases;config/initial/final completion fault park before result,missing producers/unreleased banks refuse before output,all3 omitted fidelity terms differ from full reference,invalid widths NO command/config IO;NO recovery/reset/physical proof
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+37c4a6564b1ad0574fbca4ed37f0d6b7e1aac5a1d27d5ba22362b1fc47e0f397 1700 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 5120 PHASES 4 DIRECT 1 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD actual full-K BFP8/broadcast RV32I:K5120 phases4 direct,two complete launches,exact32 outputs each vs independent IDEAL phasewise reference,one Dst clear/launch,two source-bank streams160 tiles,only valid broadcast rows32/40,private8KiB SP0/touched0,RISCsteps21955 portWrites134;NO scalar weight/activation access,NoC/GDDR/owner/driver/silicon rounding/model quality/speed proof
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+547ce3df52719beeb48b7a50266b7d674135bc8796b64aab048512c19f65044a 2048 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 6144 PHASES 1 DIRECT 0 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD actual full-K BFP8/broadcast RV32I:K6144 phases1 mmio,two complete launches,exact32 outputs each vs independent IDEAL phasewise reference,one Dst clear/launch,two source-bank streams192 tiles,only valid broadcast rows32/40,private8KiB SP96/touched88,RISCsteps21996 portWrites9764;NO scalar weight/activation access,NoC/GDDR/owner/driver/silicon rounding/model quality/speed proof
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+3258caf430eb948c356fd2c2cb1c6d27b568f7841207925b455980b2a81a2bc1 1652 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 6144 PHASES 1 DIRECT 1 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD actual full-K BFP8/broadcast RV32I:K6144 phases1 direct,two complete launches,exact32 outputs each vs independent IDEAL phasewise reference,one Dst clear/launch,two source-bank streams192 tiles,only valid broadcast rows32/40,private8KiB SP0/touched0,RISCsteps21443 portWrites134;NO scalar weight/activation access,NoC/GDDR/owner/driver/silicon rounding/model quality/speed proof
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+a6516a81cdb2e40b1850a0e51c3c2c2d706eaa2aa0207b29cbf5c2c3feb1a09e 2096 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 6144 PHASES 4 DIRECT 0 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD actual full-K BFP8/broadcast RV32I:K6144 phases4 mmio,two complete launches,exact32 outputs each vs independent IDEAL phasewise reference,one Dst clear/launch,two source-bank streams192 tiles,only valid broadcast rows32/40,private8KiB SP96/touched88,RISCsteps26604 portWrites14372;NO scalar weight/activation access,NoC/GDDR/owner/driver/silicon rounding/model quality/speed proof
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+1c87e75237ae68171d0227aa978272bb972fb9e9ea816779a423df5378996ca7 1700 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 6144 PHASES 4 DIRECT 1 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD actual full-K BFP8/broadcast RV32I:K6144 phases4 direct,two complete launches,exact32 outputs each vs independent IDEAL phasewise reference,one Dst clear/launch,two source-bank streams192 tiles,only valid broadcast rows32/40,private8KiB SP0/touched0,RISCsteps26051 portWrites134;NO scalar weight/activation access,NoC/GDDR/owner/driver/silicon rounding/model quality/speed proof
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+985206326fdc46f95f90b19d9e1261abdfafb16e00d38be6a2174a682248b419 2048 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 17408 PHASES 1 DIRECT 0 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD actual full-K BFP8/broadcast RV32I:K17408 phases1 mmio,two complete launches,exact32 outputs each vs independent IDEAL phasewise reference,one Dst clear/launch,two source-bank streams544 tiles,only valid broadcast rows32/40,private8KiB SP96/touched88,RISCsteps59308 portWrites27364;NO scalar weight/activation access,NoC/GDDR/owner/driver/silicon rounding/model quality/speed proof
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+0ec75bc3c0969c9106303bab4a52f995b55b3b8ffc78446649af353b91dd9c79 1652 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 17408 PHASES 1 DIRECT 1 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD actual full-K BFP8/broadcast RV32I:K17408 phases1 direct,two complete launches,exact32 outputs each vs independent IDEAL phasewise reference,one Dst clear/launch,two source-bank streams544 tiles,only valid broadcast rows32/40,private8KiB SP0/touched0,RISCsteps58051 portWrites134;NO scalar weight/activation access,NoC/GDDR/owner/driver/silicon rounding/model quality/speed proof
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+902a07bf9cc67387d139bee4b18b3a454a1d90baa3b70d2c3f87e2b0f3939575 2096 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 17408 PHASES 4 DIRECT 0 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD actual full-K BFP8/broadcast RV32I:K17408 phases4 mmio,two complete launches,exact32 outputs each vs independent IDEAL phasewise reference,one Dst clear/launch,two source-bank streams544 tiles,only valid broadcast rows32/40,private8KiB SP96/touched88,RISCsteps72364 portWrites40420;NO scalar weight/activation access,NoC/GDDR/owner/driver/silicon rounding/model quality/speed proof
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+013ebec80d2903a7a90fac8c9700f938598650b8b82a147c5248db528a8805b4 1700 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 17408 PHASES 4 DIRECT 1 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission
+PASS OFFBOARD actual full-K BFP8/broadcast RV32I:K17408 phases4 direct,two complete launches,exact32 outputs each vs independent IDEAL phasewise reference,one Dst clear/launch,two source-bank streams544 tiles,only valid broadcast rows32/40,private8KiB SP0/touched0,RISCsteps71107 portWrites134;NO scalar weight/activation access,NoC/GDDR/owner/driver/silicon rounding/model quality/speed proof
+PASS native band build guards:3 driver/Work/validation selections and implicit2-phase variant refused
+OFFBOARD actual full-K native BFP band evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-native-bfp-band.ZD6PoBp8

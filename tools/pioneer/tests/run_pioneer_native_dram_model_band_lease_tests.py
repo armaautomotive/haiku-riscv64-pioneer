@@ -7,10 +7,13 @@ import stat
 import subprocess
 import sys
 import tempfile
-if not __debug__ or len(sys.argv) != 3:
+if not __debug__ or len(sys.argv) not in (3, 4) or (len(sys.argv) == 4 and sys.argv[3] != '--alignment64-math'):
     raise SystemExit('Use non-optimized Python SDK PRIVATE_EXPORT_DIRECTORY')
 here = pathlib.Path(__file__).resolve().parent
-sdk, private = map(pathlib.Path, sys.argv[1:])
+sdk, private = map(pathlib.Path, sys.argv[1:3])
+aligned = len(sys.argv) == 4
+options = ['--alignment64-math'] if aligned else []
+flags = ['-DPIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64=1'] if aligned else []
 assert sdk.is_absolute() and private.is_absolute() and not private.is_symlink()
 identity = private.stat()
 assert stat.S_ISDIR(identity.st_mode) and identity.st_uid == os.geteuid() and stat.S_IMODE(identity.st_mode) == 0o700
@@ -22,11 +25,11 @@ for name, digest in pins.items():
     assert stat.S_ISREG(info.st_mode) and info.st_nlink == 1 and info.st_uid == os.geteuid() and stat.S_IMODE(info.st_mode) == 0o600
     assert hashlib.sha256(path.read_bytes()).hexdigest() == digest
 folder = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-native-dram-learned-lease.'))
-subprocess.run([sys.executable, str(here.parent / 'build_native_dram_band.py'), str(sdk), str(folder / 'image'), '5120'], check=True)
-assert hashlib.sha256((folder / 'image/text.bin').read_bytes()).hexdigest() == 'cd924896986dabcead8493c9dedca1d7b25fde323fbd972caf67ad93139a9309'
+subprocess.run([sys.executable, str(here.parent / 'build_native_dram_band.py'), str(sdk), str(folder / 'image'), '5120', *options], check=True)
+assert hashlib.sha256((folder / 'image/text.bin').read_bytes()).hexdigest() == ('7b3ca669be8d9e0714f544bd0d74c045329b0490d8f2132187181a1a92be55cd' if aligned else 'cd924896986dabcead8493c9dedca1d7b25fde323fbd972caf67ad93139a9309')
 compiler = os.environ.get('CXX', 'c++')
 common = [compiler, '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-ffp-contract=off',
-          '-fsanitize=address,undefined', '-I' + str(private), '-I' + str(here.parent)]
+          '-fsanitize=address,undefined', *flags, '-I' + str(private), '-I' + str(here.parent)]
 subprocess.run([*common, str(here / 'pioneer_native_dram_model_band_lease_test.cpp'), '-o', str(folder / 'test')], check=True)
 subprocess.run([str(folder / 'test'), str(folder / 'image')], check=True,
                env=dict(os.environ, ASAN_OPTIONS='quarantine_size_mb=32', UBSAN_OPTIONS='halt_on_error=1'))

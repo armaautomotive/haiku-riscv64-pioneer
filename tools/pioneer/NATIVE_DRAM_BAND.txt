@@ -1,7 +1,18 @@
 Card-side packed-GDDR native band -- OFFBOARD prototype
 ======================================================
 
-Current follow-on: the actual81 direct-GDDR/FPU trial FAILED and recovered
+Latest follow-on:the separate83 C64 LOAD-ONLY hardware test PASSED its fixed
+K5120 payload/header/closure checks and restored normal041/gen4. The new
+distinct84 C64 learned-FPU driver/client/image are now qualified OFFBOARD,
+with actual-address shared NIU/unpack L1 observation,not descriptor rewriting.
+Physical84 math/model/speed success is NOT yet claimed. See NATIVE_DRAM_BAND64.txt
+and benchmarks/qwen38-native-dram-band64-preparation-20261104.txt.
+
+Historical checkpoints below include early "missing native" preparation
+notes;those are NOT current implementation status. The native81 binding was
+implemented and its hardware trial failed. That failure remains unchanged.
+
+Prior outcome: the actual81 direct-GDDR/FPU trial FAILED and recovered
 to normal041/gen2; see the final section below. The NEW separate LOAD-ONLY82
 diagnostic also FAILED on hardware:tile0's1088B matched exactly,but tile1's
 first word at90460 mismatched BEFORE reset and without ANY FPU path. This

@@ -1,0 +1,101 @@
+C64 learned-FPU84 preparation -- NOT a physical arithmetic/model/speed pass
+========================================================================
+2026-11-04 UTC;baselinef26c03710e759eac5e76f71fb9337f2152291f8d.
+Previous goal turn made real progress:83 fixed hardware transport PASSED,
+all46080 payload+5120 header words before reset/after HOLD,complete closure,
+normal041/gen4 restored without reboot. This turn reconnects that layout to
+the full learned FPU path and qualifies it OFFBOARD. Full-native27B/20tok/s
+remain UNMET. No84 GPU launch/driver exchange/power/SD mutation is claimed
+by these preparation receipts. Old failures remain failures.
+
+Exact new tuple,PRIVATE generated binaries/weights NEVER in Git
+--------------------------------------------------------------
+2cb420909e36182df421058853d706b50d7e819357496141eba385787d49cd1e driver84
+9aad44e18f6c88e8c8c4e8cddb7234b4a576d3362b16dfb98e5c2fee364e79a3 fixed client84
+df6675b40f0e1313bb2c1c93faaff56cb34ee223dd15eef9bfbd0477e1fe5ad8 frozen parent84
+7b3ca669be8d9e0714f544bd0d74c045329b0490d8f2132187181a1a92be55cd K5120 image4336B
+4fe68cd1c14973761b75596fb966f99b98132df2b7dda3e6808787837b24c0c5 K6144 image4336B
+26b4fd4665819d16b549ceb8f9d25e6488f4f6b3ac435d3fcfeab0bfaa7695fe K17408 image4336B
+All boot words d47a1c29...4B,entry/done/park/fault PCs unchanged. New exact
+compile-only role84/tag/opcodes8000..02/NB64,count04001400,not a runtime
+fallback/Work/CPU-reference mode. Same392B request/352B result,strict roles.
+
+Same packed original GDDR,source/queue/route/precision/reference recipes.
+ONLY C64 placement/headers/descriptors vs old81:W90000/stride1152,
+I12c000/stride128,headers64,O140000;fixed L1 journal55372 words221488B,
+GDDR46080 words184320B unchanged. Same two full4-phase jobs after ONE load,
+no host roundtrip/scalar payload copying/host learned-product callback.
+Complete native source/PCI/VM/FD/thread/guard/clock/lifecycle checks preserved.
+
+Actual software qualification,not simulated native prerequisites
+----------------------------------------------------------------
+32071 build84-qualified ACTUALLY CLOSED0:full native Haiku SDK Run/End and
+driver/client --no-undefined LINK,19 prologue role refusals,2 REAL compiler
+refusals for cached opposite policy and opposite image/full driver template.
+Legacy factory audited NULL-only/default-control2df0e0f8 unchanged. Earlier
+29668/95374 build84 and frozen builds also CLOSED0,same driver/client hashes.
+The initial offboard compileba068c CLOSED1 because placement policy84 was
+misplaced outside its struct (Role remained82);fixed before any qualified
+build/test,not counted as a successful role-refusal test.
+
+56917 compiled RV32 image VM ACTUALLY CLOSED0:all3 widths/all64 outputs each
+match independent Fraction-qualified rounded predictions. Actual descriptors
+are passed unchanged to the observer;NIU writes and unpack reads use ONE
+shared byte array at actual addresses,NO normalization/shadow payload copy.
+Whole L1 guards,20 K5120 frame/NIU/counter/header/job/FPU-completion faults.
+Missing response parks after42548783 strict RV32 steps,real65536 poll bound
+unchanged. No hardware timing/native ARC/prerequisite success is manufactured.
+63205 full PRIVATE learned lease CLOSED0:3 samples192 exact rounded words,
+full original restoration,251 failure/admission/close cases including all16
+header words at6 boundary/odd/even/middle tiles for both operands and payload
+ends;first mismatch permits NO subsequent restoration/IO. Heap/noncopyable.
+76616 final client+native group CLOSED0:actual client659 ASan/UBSan cases,
+all64 RUN/END words across3 samples,old81 tag/marker/journal refusals,source/
+channel/FD/owner/closure gates;3 forbidden roles. Actual native/control source
+307 valid/659 refused,17 real view contracts,352 dirty-result bytes,all old
+81/82/83 opcodes/tags and old-only spans refused with NO IO after admission
+failure. Fixtures explicitly do NOT supply successful native ARC/engine proof.
+11700 final parent84/81/parser81 group CLOSED0:84 parent624 flow/output,
+7 idle,13 prior/source,20 exchange-step,10 one-shot checks. All192 missing/
+duplicate/equal-but-wrong words,old81/reordered records refuse;no later
+status/restore/retry after uncertainty. Explicit84 parser624 corrupt/old
+records refuse;old81 default parser622 refuse. Source/role84 tests14 cases,
+352 dirty result bytes/old80..84 tag isolation;old81 counterpart12 cases.
+
+Byte-identical legacy controls and regressions
+----------------------------------------------
+Old81 driver0ab145ac/client0091244a and all3 original math images
+cd924896/13494a0a/ee740295 remain BYTE IDENTICAL. Actual-address observer
+also passes old81 images and original old band1/4-phase MMIO/direct variants.
+Old81 lease35 failures/3 learned samples,client641,native307/643,parent620
+flow cases pass. Normal installed041 is separate from build-control2df0e0f8.
+Old82 driver3df4fdb1/clientf7ae6e1b/image966507e2 and old83 driver7ee39a36/
+client10310865/imagefa70be17 remain BYTE IDENTICAL. Old82/83 load leases
+pass all3 real private samples and162/258 failure cases;native endpoints
+308/665 and308/669. Original failed81/82 and passing83 immutable receipt
+tests still pass as their original outcomes,NOT broad mathematical claims.
+
+First native82/83 adapter regressions28176/9880 CLOSED1 AFTER their lease
+tests passed:shared fixture now named the math variant and included math84
+opcode-refusal checks. Actual load-only native fixture extraction is corrected
+to select its OWN marker/count/role and exclude the distinct math84-only
+negative block;production driver hashes remain unchanged. Separate corrected
+89176/99986 CLOSED0. Both original failed stderr/log receipts are retained,
+not overwritten or counted as native successes. No admission gate relaxed.
+
+Fresh read-only native preflight8e4093 CLOSED0,stderr0:normal041/tag12/gen4,
+quiesced0/cold0/owner0/open1/guard1,64CPUs/max137034936320B RAM,
+free133783613440B;worker861e5287/servicec509da43/GUI0de9141e unchanged,
+original metadata0:1:600:18973870528,actual83 success hash/state intact,
+new84 stage ABSENT,no project compute parent. No GPU/driver/power/SD write.
+
+Next actual physical admission
+-------------------------------
+Publish this preparation;fresh native preflight;private NEW exact-hash stage
+plus independent reference;invalid-CLI refusal before swap;ONE direct parent.
+Planned041/gen4 ->84/gen5 ->041/gen6 only after3 exact samples/ENDs. Observe
+SAME physical handle to terminal,never retry on timeout. Unknown means close
+only/NO further query/END/reset/retry/automatic restore. Preserve/fetch raw
+records and independently prove outcome/normal restoration. No stage reuse.
+No physical math pass,full-model quality,comparative speedup or20tok/s claimed.
+Full-model resident arena/cohort/state/attention/logits/sampling remain open.

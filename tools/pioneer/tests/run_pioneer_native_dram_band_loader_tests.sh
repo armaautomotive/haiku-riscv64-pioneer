@@ -1,9 +1,12 @@
 #!/bin/sh
 # CPU-only actual templated loader;never opens a device or modifies cache.
 set -eu
-[ "$#" = 0 ] || { [ "$#" = 1 ] && [ "$1" = --alignment64-control ]; } || exit 2
+[ "$#" = 0 ] || { [ "$#" = 1 ] && { [ "$1" = --alignment64-control ] || [ "$1" = --alignment64-math ]; }; } || exit 2
 variant=
-if [ "$#" = 1 ];then variant=-DPIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64=1;fi
+if [ "$#" = 1 ];then
+ if [ "$1" = --alignment64-control ];then variant=-DPIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64=1
+ else variant=-DPIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64=1;fi
+fi
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-native-dram-band-loader.XXXXXXXX")
 ${CXX:-c++} -std=c++17 -O1 -g -Wall -Wextra -Werror -ffp-contract=off -fsanitize=address,undefined $variant \

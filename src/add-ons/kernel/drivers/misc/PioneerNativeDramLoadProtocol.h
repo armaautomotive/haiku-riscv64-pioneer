@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_NATIVE_DRAM_LOAD_PROTOCOL_H
 #define PIONEER_NATIVE_DRAM_LOAD_PROTOCOL_H
+#if defined(PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64)
+#error LOAD-ONLY protocol never aliases diagnostic84 arithmetic
+#endif
 #include "PioneerNativeBfpProtocol.h"
 #include "PioneerNativeDramLoadVariant.h"
 // Distinct LOAD-ONLY82/default or explicit C64 placement83 compile role.

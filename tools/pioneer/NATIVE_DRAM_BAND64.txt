@@ -1,0 +1,65 @@
+Native C64 learned-band84 -- qualified OFFBOARD,not physical math proof
+======================================================================
+The separate83 LOAD-ONLY C64 fixed transfer ACTUALLY passed all payload/header
+checks and full closure,restoring normal041/gen4. This new84 reconnects the
+EXACT original full4-phase arithmetic to those C64 descriptors. It is NOT an
+Assistant target,Work endpoint,full-model inference or measured speedup.
+Old81/82 failures and the spent83 successful stage remain immutable.
+
+Explicit compile selection,never a runtime fallback
+---------------------------------------------------
+--alignment64-math selects PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64=1.
+Tag2026110400010084/opcodes8000..02/NB64 marker3436424e are distinct from
+old81 NDB1/7d00 and LOAD-ONLY83 ND64/7f00. Count04001400 represents fixed
+K5120/all4 phases;392B pointer-free request/352B result retains strict zero
+input-result checking. Old tags/opcodes/spans and cached opposite policies
+are refused. Work,CPU-reference,load-only and fast-math roles cannot alias84.
+
+Same packed GDDR1088B weight tiles/64B BF16 input tiles/source authentication/
+16-deep queue/320 requests/2880flits. Same full4-phase opcode order/precision,
+two complete32-output jobs from ONE card-side load,no host roundtrip between
+K tiles or jobs. C64 L1 W90000/stride1152,I12c000/stride128,64B zero headers,
+O140000. Private fixed K5120 journal221488B L1+184320B GDDR,heap/noncopyable.
+All original source/FD/thread/guard/17 VM-view/PCI/clock/NIU/FIFO/TLB/reset-
+ledger checks remain. Known exact outputs authorize explicit END only;first
+uncertainty retains everything,NO implicit/destructor END/reset/retry/restore.
+END checks every loaded header/payload word after HOLD/before ANY restore,
+then full original GDDR/L1 and NIU/FIFO/TLB/clock/PCI closure. It does NOT
+inherit83's no-FPU permission to inspect arbitrary L1 while engines run.
+
+Offboard observer now uses ACTUAL descriptors and ONE shared NIU/unpack L1
+array. No normalization/shadow payload copy/old-layout restaging remains.
+Real compiled RV32 images pass all3 Qwen widths,64 exact rounded reference
+words each;K5120 tests20 frame/NIU/counter/FPU-completion fault parks. Private
+learned data:all3 samples/192 exact words,251 lifecycle/corruption cases,
+EVERY header word on selected boundary/odd/even/middle tiles and payload ends.
+Those CPU observers/fixtures are NOT native ARC/engine/physical math proof.
+
+Actual full Haiku SDK driver/client link with19 role refusals and2 actual
+compiler/template refusals;legacy factory remains NULL-only. Actual native
+methods307 valid/659 refused;actual client659 ASan/UBSan cases;parent624
+flow/output+7 idle+13 prior/source+20 exchange+10 one-shot cases. Independent
+explicit84 parser1 valid/624 refused. Old81/82/83 driver/client/images remain
+BYTE IDENTICAL. See benchmarks/qwen38-native-dram-band64-preparation-20261104.txt.
+
+Build ONLY;never installs,stages or opens a device:
+ python3 tools/pioneer/build_native_dram_model_band_diagnostic.py HAIKU_BUILD \
+   PRIVATE_EXPORT NEW_ABSOLUTE_OUTPUT --alignment64-math
+All weight-containing binaries/objects/generated headers stay PRIVATE.
+
+Frozen next physical admission,NOT yet run in this preparation record
+---------------------------------------------------------------------
+pioneer_native_dram_model_band64_physical.sh requires exact normal041/gen4,
+64CPUs/fullRAM,idle owners,installed program/guard identities and the actual
+83 passing bytes/closure record plus independent Fraction reference. New
+private stage:/boot/home/pioneer-native-dram-model-band64-20261104-a.
+Planned ONLY:041/gen4 ->84/gen5;full same-open original/fresh source proof;
+three fixed samples/all192 words/three exact clean ENDs;then041/gen6 ONLY
+after full strict success. Unknown closes only,no further query/reset/retry/
+automatic restore. ONE stage/token/direct parent,observe SAME handle to
+actual terminal;independent raw fetch/hash/parser/postflight afterward.
+Never reuse any spent81/82/83/84 stage. No power/SD/reboot is implicit.
+
+Native full-model arena/resident stripes/cohort/attention/state/logits/sampling,
+full quality and real inference throughput remain unfinished. Full-native27B/
+20tok/s UNMET. Installed851-entry lossless cache/no-reference Work unchanged.

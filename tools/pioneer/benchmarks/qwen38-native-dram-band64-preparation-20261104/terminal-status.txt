@@ -1,0 +1,33 @@
+2026-11-04 UTC,baselinef26c03710e759eac5e76f71fb9337f2152291f8d.
+Previous goal turn:actual83 fixed bytes/closure PASS,publishedf26c03710e.
+This turn:distinct84 C64 learned FPU candidate and actual-address observer.
+56917 image84/all3 widths+20 fault controls CLOSED0
+29668 initial full SDK84 driver/client CLOSED0
+23303 initial control81 SDK CLOSED0
+35958 initial84 learned lease/35 failures CLOSED0
+68885 initial84 native fixtures CLOSED0
+41861 initial84 client CLOSED0
+30665 initial84 roles CLOSED0
+63205 expanded84 private learned lease/251 failures CLOSED0
+95374 frozen SDK84+2 actual compiler refusals CLOSED0
+34550 frozen SDK81+2 actual compiler refusals CLOSED0
+76616 final84 client659+native307/659 CLOSED0
+9924 initial84 parent/parser CLOSED0
+74550 control83 SDK build CLOSED0;original exact hashes
+23605 control82 SDK build CLOSED0;original exact hashes
+7549 original band1/4-phase MMIO/direct regression CLOSED0
+11700 final84/81 parent+old81 parser group CLOSED0
+28473 old81 lease/native/client regressions CLOSED0
+48168 loader84/83/82 template/descriptor regressions CLOSED0
+32071 qualified SDK84 driver/client+19 roles/2 compiler refusals CLOSED0
+8e4093 native readonly041/gen4/64CPU/fullRAM/84stageABSENT CLOSED0
+28176 old83 lease PASSED,then native-adapter compile CLOSED1;NOT native pass
+9880 old82 lease PASSED,then native-adapter compile CLOSED1;NOT native pass
+85919 immutable prior83/prep/failed82/failed81+old81 role tests CLOSED0
+74995 old81 actual-address image/all3 widths regression CLOSED0
+89176 corrected load83 native fixture CLOSED0,308valid/669refused
+99986 corrected load82 native fixture CLOSED0,308valid/665refused
+8076 final81/84 role fixtures CLOSED0
+No84 staging/driver exchange/GPU launch claimed by this preparation record.
+PRIVATE original weights/cache/generated headers/objects/binaries NOT published.
+Full-native27B/20tok/s UNMET;goal ACTIVE,not complete or blocked.

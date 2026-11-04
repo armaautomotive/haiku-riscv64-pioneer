@@ -13,6 +13,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('haiku_build', type=pathlib.Path)
 parser.add_argument('private_export', type=pathlib.Path)
 parser.add_argument('output', type=pathlib.Path)
+parser.add_argument('--alignment64-math', action='store_true')
 args = parser.parse_args()
 build, private, output = args.haiku_build, args.private_export, args.output
 assert build.is_absolute() and build.is_dir() and private.is_absolute() and not private.is_symlink()
@@ -29,14 +30,16 @@ for name, pin in pins.items():
 here = pathlib.Path(__file__).resolve().parent
 root = here.parent.parent
 output.mkdir(mode=0o700)
-subprocess.run(['python3', str(here / 'build_native_dram_band.py'), str(build), str(output / 'image'), '5120'], check=True)
+option = ['--alignment64-math'] if args.alignment64_math else []
+role = 84 if args.alignment64_math else 81
+subprocess.run(['python3', str(here / 'build_native_dram_band.py'), str(build), str(output / 'image'), '5120', *option], check=True)
 boot = (output / 'image/boot.bin').read_bytes()
 text = (output / 'image/text.bin').read_bytes()
 assert hashlib.sha256(boot).hexdigest() == 'd47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd'
-assert hashlib.sha256(text).hexdigest() == 'cd924896986dabcead8493c9dedca1d7b25fde323fbd972caf67ad93139a9309'
+assert hashlib.sha256(text).hexdigest() == ('7b3ca669be8d9e0714f544bd0d74c045329b0490d8f2132187181a1a92be55cd' if args.alignment64_math else 'cd924896986dabcead8493c9dedca1d7b25fde323fbd972caf67ad93139a9309')
 words = struct.unpack('<' + 'I' * (len(text) // 4), text)
 header = ['// Generated code ONLY,not learned weights or owner authority.', 'struct PioneerNativeDramBandLeaseProbeImage {',
-          'static constexpr unsigned Width=5120,Phases=4,Boot=0x%08x;' % struct.unpack('<I', boot)[0],
+          'static constexpr unsigned Width=5120,Phases=4,LayoutRole=%d,Boot=0x%08x;' % (role, struct.unpack('<I', boot)[0]),
           'static unsigned Word(unsigned i){static const unsigned words[]={']
 for first in range(0, len(words), 8):
     header.append(','.join('0x%08x' % word for word in words[first:first + 8]) + ',')
@@ -55,7 +58,8 @@ for path in [sdk / 'headers/os', *sorted((sdk / 'headers/os').iterdir())]:
         includes += ['-isystem', str(path)]
 command = [tool + 'g++', '-std=gnu++17', '-O2', '-Wall', '-Wextra', '-Werror', '-fno-exceptions', '-fno-rtti',
            '-fstack-usage', '-ffreestanding', '-fno-strict-aliasing', '-mcmodel=medany', '-fpic', '-D_KERNEL_MODE',
-           '-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=0x2026110400010081ULL',
+           '-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=0x20261104000100%dULL' % role,
+           *(['-DPIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64=1'] if args.alignment64_math else []),
            '-DPIONEER_NATIVE_DRAM_MODEL_BAND_DIAGNOSTIC=1', *includes, '-c',
            str(here / 'tests/pioneer_native_dram_model_band_kernel_probe.cpp'), '-o', str(output / 'lease.o')]
 subprocess.run(command, check=True, cwd=output)

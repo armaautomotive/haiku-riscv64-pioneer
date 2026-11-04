@@ -2,13 +2,14 @@
 #ifndef PIONEER_NATIVE_DRAM_MODEL_BAND_PROTOCOL_H
 #define PIONEER_NATIVE_DRAM_MODEL_BAND_PROTOCOL_H
 #include "PioneerNativeBfpProtocol.h"
+#include "PioneerNativeDramModelBandVariant.h"
 // Separate learned-weight GDDR->L1/FPU diagnostic81. Fixed compiled samples,
 // never an arbitrary payload/address/route/Work or reset capability.
-constexpr uint64_t PioneerNativeDramModelBandTag=UINT64_C(0x2026110400010081);
+constexpr uint64_t PioneerNativeDramModelBandTag=PioneerNativeDramModelBandVariant::Tag;
 constexpr uint32_t PioneerNativeDramModelBandNone=UINT32_MAX;
-enum {PIONEER_NATIVE_DRAM_MODEL_BAND_SUPPORT=B_DEVICE_OP_CODES_END+0x7d00,
-	PIONEER_NATIVE_DRAM_MODEL_BAND_RUN=B_DEVICE_OP_CODES_END+0x7d01,
-	PIONEER_NATIVE_DRAM_MODEL_BAND_END=B_DEVICE_OP_CODES_END+0x7d02};
+enum {PIONEER_NATIVE_DRAM_MODEL_BAND_SUPPORT=B_DEVICE_OP_CODES_END+PioneerNativeDramModelBandVariant::Opcode,
+	PIONEER_NATIVE_DRAM_MODEL_BAND_RUN=PIONEER_NATIVE_DRAM_MODEL_BAND_SUPPORT+1,
+	PIONEER_NATIVE_DRAM_MODEL_BAND_END=PIONEER_NATIVE_DRAM_MODEL_BAND_SUPPORT+2};
 struct PioneerNativeDramModelBandResult {
 	PioneerNativeBfpResult compute;
 	uint32_t phase,gddr_restored,niu_restored,clock_restored,requests,flits,saved_l1,saved_gddr;

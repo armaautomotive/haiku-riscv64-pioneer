@@ -14,11 +14,15 @@ struct IO {
 	std::array<unsigned,10> command;
 	std::array<uint32_t,16> counters;
 	std::vector<L::Read> pending;
-	std::vector<unsigned char> l1,dram;
-	explicit IO(unsigned k,unsigned xy=17|(12<<6)):width(k),route(xy),l1(0x180000,0xa7),dram(0x110000) {
+	std::vector<unsigned char> ownedL1,dram;
+	std::vector<unsigned char>& l1;
+	explicit IO(unsigned k,unsigned xy=17|(12<<6),std::vector<unsigned char>* shared=nullptr)
+		:width(k),route(xy),ownedL1(shared?0:0x180000,0xa7),dram(0x110000),l1(shared?*shared:ownedL1) {
+		assert(l1.size()==0x180000);
 		command.fill(0xcccccccc);counters.fill(UINT32_MAX-17);
 		for(unsigned i=0;i<dram.size();i++)dram[i]=uint8_t((i*17+i/1088*13)^0x8b);
 	}
+	IO(const IO&)=delete;IO& operator=(const IO&)=delete;
 	bool Header(unsigned a)const {
 		for(unsigned operand=0;operand<2;operand++) {
 			const unsigned start=(operand?L::Input:L::Weight)-L::Header,stride=operand?L::InputStride:L::WeightStride;
@@ -30,7 +34,7 @@ struct IO {
 		assert(pending.size()==16);maxQueue=std::max(maxQueue,unsigned(pending.size()));
 		for(const auto& p:pending) {
 			assert(!(p.source&31) && !(p.destination&31) && !(p.bytes&63) && p.bytes<=16384);
-			if(PioneerNativeDramLoadVariant::Role==83)assert(!(p.source&63) && !(p.destination&63));
+			if(PioneerNativeDramLoadVariant::Role>=83)assert(!(p.source&63) && !(p.destination&63));
 			memcpy(l1.data()+p.destination,dram.data()+p.source-L::DramWeight,p.bytes);
 			counters[2]++;counters[3]+=p.bytes/64;counters[4]++;counters[5]++;counters[14]++;completions++;
 		}

@@ -8,9 +8,11 @@ import stat
 import subprocess
 import sys
 
-if not __debug__ or len(sys.argv) != 4:
+if not __debug__ or len(sys.argv) not in (4, 5) or (len(sys.argv) == 5 and sys.argv[4] != '--alignment64-math'):
     raise SystemExit('Use non-optimized Python NATIVE_BUILD PRIVATE_EXPORT NEW_OUTPUT')
-build, private, output = map(pathlib.Path, sys.argv[1:])
+build, private, output = map(pathlib.Path, sys.argv[1:4])
+aligned = len(sys.argv) == 5
+flags = ['-DPIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64=1', '-DPioneerNativeDram81=PioneerNativeDram84'] if aligned else []
 assert build.is_absolute() and build.is_dir() and private.is_absolute() and not private.is_symlink()
 assert output.is_absolute() and not output.exists() and not output.is_symlink()
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
@@ -25,7 +27,7 @@ for name, digest in pins.items():
     assert stat.S_ISREG(info.st_mode) and info.st_nlink == 1 and info.st_uid == os.geteuid() and stat.S_IMODE(info.st_mode) == 0o600
     assert hashlib.sha256((private / name).read_bytes()).hexdigest() == digest
 image = build / 'lease-probe/image'
-assert hashlib.sha256((image / 'text.bin').read_bytes()).hexdigest() == 'cd924896986dabcead8493c9dedca1d7b25fde323fbd972caf67ad93139a9309'
+assert hashlib.sha256((image / 'text.bin').read_bytes()).hexdigest() == ('7b3ca669be8d9e0714f544bd0d74c045329b0490d8f2132187181a1a92be55cd' if aligned else 'cd924896986dabcead8493c9dedca1d7b25fde323fbd972caf67ad93139a9309')
 assert hashlib.sha256((image / 'boot.bin').read_bytes()).hexdigest() == 'd47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd'
 output.mkdir(mode=0o700)
 # Reuse ONLY the explicit kernel/PCI endpoint definitions,NOT the old owner,
@@ -72,7 +74,7 @@ sources = [driver / 'PioneerNativeDramModelBandNative.inc', driver / 'pioneer_na
 source_pins = {path: hashlib.sha256(path.read_bytes()).hexdigest() for path in sources}
 binary = output / 'native-test'
 subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
-                '-ffp-contract=off', '-fsanitize=address,undefined', '-DCOHORT_SCOPE_COUNTER_TEST',
+                '-ffp-contract=off', '-fsanitize=address,undefined', '-DCOHORT_SCOPE_COUNTER_TEST', *flags,
                 '-I' + str(output), '-I' + str(build), '-I' + str(build / 'lease-probe'),
                 '-I' + str(private), '-I' + str(here.parent), str(here / 'pioneer_native_dram_model_band_native_test.cpp'),
                 '-o', str(binary)], check=True)
@@ -83,4 +85,4 @@ for name, digest in pins.items():
 for path, digest in source_pins.items():
     assert hashlib.sha256(path.read_bytes()).hexdigest() == digest
 (output / 'native-source-sha256.txt').write_text('\n'.join(digest + '  ' + str(path.relative_to(root)) for path, digest in source_pins.items()) + '\n')
-print('PASS actual native81/control endpoint fixtures;PRIVATE headers unchanged;NO native ARC/prerequisite/engine/hardware/full-model/speed proof:', output)
+print('PASS actual native%d/control endpoint fixtures;PRIVATE headers unchanged;NO native ARC/prerequisite/engine/hardware/full-model/speed proof:' % (84 if aligned else 81), output)
