@@ -11,8 +11,9 @@ if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
 
 here = pathlib.Path(__file__).resolve().parent
 root = here.parents[2]
-assert len(sys.argv)==1 or sys.argv[1:]==['--band']
-native = root / ('src/add-ons/kernel/drivers/misc/pioneer_native_bfp_band_driver.cpp' if len(sys.argv)==2 else 'src/add-ons/kernel/drivers/misc/pioneer_native_bfp_driver.cpp')
+assert len(sys.argv)==1 or sys.argv[1:] in (['--band'], ['--model'])
+name = 'pioneer_native_model_band_driver.cpp' if sys.argv[1:]==['--model'] else 'pioneer_native_bfp_band_driver.cpp' if len(sys.argv)==2 else 'pioneer_native_bfp_driver.cpp'
+native = root / 'src/add-ons/kernel/drivers/misc' / name
 source = native.read_text()
 def body(start, end):
     first = source.index(start)

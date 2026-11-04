@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_native_model_band_diagnostic.py", line 37, in <module>
+    run([cxx,'-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror',*user_includes,'-I'+str(private),
+NameError: name 'run' is not defined

@@ -1,0 +1,23 @@
+/* SPDX-License-Identifier: MIT */
+#ifndef PIONEER_NATIVE_MODEL_BAND_PROTOCOL_H
+#define PIONEER_NATIVE_MODEL_BAND_PROTOCOL_H
+#include "PioneerNativeBfpProtocol.h"
+// Distinct fixed learned-weight diagnostic80. Three COMPILED samples only;
+// no runtime weights/code/addresses/route,model inference or Work endpoint.
+constexpr uint64_t PioneerNativeModelBandTag=UINT64_C(0x2026110400010080);
+constexpr uint32_t PioneerNativeModelBandNone=UINT32_MAX;
+enum { PIONEER_NATIVE_MODEL_BAND_SUPPORT=B_DEVICE_OP_CODES_END+0x7c00,
+	PIONEER_NATIVE_MODEL_BAND_RUN=B_DEVICE_OP_CODES_END+0x7c01,
+	PIONEER_NATIVE_MODEL_BAND_END=B_DEVICE_OP_CODES_END+0x7c02 };
+struct PioneerNativeModelBandRequest {
+	uint32_t version,sample;
+	uint64_t expected_tag,expected_generation,nonce;
+	uint32_t accept,reserved;
+	PioneerNativeBfpResult result;
+};
+static_assert(sizeof(PioneerNativeModelBandRequest)==360,"fixed pointer-free learned-band protocol");
+static inline bool PioneerNativeModelBandRequestValid(const PioneerNativeModelBandRequest& r) {
+	return r.version==1 && r.expected_tag==PioneerNativeModelBandTag && r.expected_generation
+		&& !r.reserved && PioneerNativeBfpEmptyResult(r.result);
+}
+#endif

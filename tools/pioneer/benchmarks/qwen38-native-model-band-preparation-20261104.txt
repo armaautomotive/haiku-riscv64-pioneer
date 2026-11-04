@@ -1,0 +1,100 @@
+Fixed LEARNED-weight native-band diagnostic80 -- PREPARATION ONLY
+================================================================
+2026-11-04 UTC,baseline da5ba16bd27bde0cf649ffde554f3a1b3641dbe7.
+Synthetic full-K5120/6144/17408 hardware qualification is complete. This
+checkpoint connects real authenticated cached Q4 weights to that kernel,
+but NO diagnostic80 physical execution has happened yet. Full-native27B/
+20tok/s remain UNMET;no new inference speed or model-quality claim.
+
+PRIVATE source/cache/data proof
+------------------------------
+New CPU exporter29036 actually CLOSED0,stderr0. Its final build utility
+5dad76b8f631a99532d587dac2140200e463eab1f1ffe8907b60c954917a7fc7
+authenticated SAME-open complete18973870528B original c600de03... and851
+tensor layout. Existing all-BFP8 cache recipe551c6713/source7db613bf is read
+only;NO entry creation/repair/conversion by staging. Tensor7 original Q4
+blk.0.ffn_gate.weight K5120/17408rows,first0/8704/17376,all480 cached tiles
+compared byte-for-byte with fresh original conversion. Fixed BF16 test
+activations,not actual model hidden states or a model reply.
+
+Three padded payloads/independent fresh references exported privately:
+0 dd975522b0fbd90320439b310c1f79a2f803e6dd664629714669ae136034a76a
+1 b1e861d94ac6687cb326173712f0afba9a00f7a86a652eec3a55783bfbe627aa
+2 0805dd079b7fac3a233de552bd269087733467582618402c3dfe67e6136ad9a9
+PRIVATE generated learned bytes SHA cf8e2ca4d8489b1e2c9dbf3d23486a5b2b53a678f042629cbb4385e68daaa4f5
+PRIVATE generated metadata SHA a2c977bc4b7d517b5bc7f0ed188ed92eff16b3bc27dd0a59c5899e235c3d439c
+Both mode0600/singlelink/owned in0700 build directory;never committed or
+redistributed. Only source code,hashes and computed diagnostic outputs are
+published. Source/cache/original remain unchanged;lossless recipebb0e intact.
+
+Actual new owner+fresh compiled f69c2803 RV32 kernel test30482 CLOSED0,
+stderr0:all3 real samples/two jobs/all64 exact rounded outputs,complete
+202000B L1+TLB restoration;17 first-failure/no-IO/no-retry/close cases.
+Separate Python Fraction35356 then1851 CLOSED0,stderr0:all96 unique learned
+outputs exact over122880 phase instructions;independent BFP byte decoding,
+no C++ codec/integer-arithmetic calls. Public learned-reference.log contains
+these computed outputs,NOT weights;SHA35142021d16a51e50b38657418800f3dcb102ddadc3961ec680d16ebf693ce83.
+
+Native adapter/source/client
+----------------------------
+Distinct tag2026110400010080/0x7c00..02 pointer-free360B protocol,three
+compiled sample selectors ONLY. No arbitrary weights/code/addresses/routes,
+legacy Work,model inference or production Assistant endpoint. Default/synth
+entry stays NULL-only;new native build audits actual exports/disassembly.
+Model owner maps only fixed5120 geometry,50500 saved words on HEAP;all
+uncertain resources retained with no destructor IO/END/retry/reset/cleanup.
+
+Runtime source authenticates full SAME-open original before card open,
+independently derives all3 payloads/fresh rounded references and compares
+them with the compiled pins. Source FD/epoch/stability remains bound across
+all3 fresh card FDs and before RUN/END/next sample. Source never writes a
+model/cache or supplies a CPU fallback to Work. Actual full-file source
+tests23620/60401 CLOSED0,stderr0:5 file/rounding/symlink/one-shot cases+3
+forbidden driver/Work/validation roles. Eight separate owner role cases pass.
+
+Actual mapped IO/Control/Finish/Free70567 CLOSED0:31/32/31 ASan/UBSan/Werror
+cases. Every393216 aligned L1 address checked vs50500 owned words,including
+holes and wrong widths;partial-map/fail-first teardown,all sample selectors,
+immutable request copies,failed delivery/close retention,explicit END only.
+Existing synth and old versions also pass their unchanged24..32 cases.
+Client16380 CLOSED0,stderr0:492 actual-client/actual-driver-metadata cases,
+each64 RUN andEND word mutation in ALL3 samples,source changes at phase
+boundaries,strict protocol/owner/close/channel failure stops without next
+sample/END/query/retry.3 forbidden production roles refuse compilation.
+
+First driver-only native17394 CLOSED0. Complete-builder first invocation
+failed before directory/compile on a Python ordering typo;fixed placement
+only. Complete17064 CLOSED0;then narrowed mapping admission to ONLY5120.
+Final complete90988 CLOSED0,stderr0,unchanged f69/d47 shader/boot and2df0
+default control. Final native tuple:
+driver04a03e6d725a9406843c8808df68e363af3a5d664bc7d65efdac9d5ccbed1327
+clientf63e878f128e9c6d7f23453477c32fdd76b1eccfc643b0b321ed6bacacf9b587
+Control stack1088B,Free304B. No installed Pioneer binary changed by builds.
+
+ONE frozen physical parent,not yet run
+--------------------------------------
+stage /boot/home/pioneer-native-model-band-20261104-a
+parent5b661f9d0ce6e8e9833e6fc9ee5d23ce53bab06b241bf6ae674faf5bb99912f4
+Requires prior accepted all-width proof,independent learned reference,current
+normal041/gen8/cold0/owner0/full64/fullRAM,original0:1:600:18973870528,
+exact cached Assistant/admin/guard and unused outputs. Swap80/gen9;ONE
+client authenticates source BEFORE any card open,then3 sequential fixed
+learned samples. All192 exact words,auth/sample order,3 accepted ENDs and
+source/close proofs precede normal041/gen10 restoration. On failure:NO next
+GPU/query/END/retry/reset/automatic restore. Parent tests605 output/flow+
+7 idle+12 prior/reference/model-metadata fixtures CLOSED0,stderr0. Explicit
+zero initialization avoids untyped awk concatenation atsample0 admission.
+
+Optional fresh-epoch recoverye3af9823d2088cc4254490babda1b2cd4b70f077339a3ef4e0fa973989a37266
+requires separately recorded OFF/ON+freshHaiku80/gen1/cold0/owner0 and failed
+stage identities;cannot clean/retry an old live owner.7 new+7 prior+7 old
+restore cases CLOSED0. No recovery/power/SD/hardware action needed here.
+
+Fresh CPU-only Pioneer admission:normal041/tag12/gen8,cold0/owner0/open1/
+guard1,64CPUs/maxRAM137034936320B,original identity correct,no LLM owner.
+Next publish/stage exact tuple,ONE complete parent through actual terminal.
+After learned-band proof:resident GDDR/NoC/cohort/state integration,arena
+qualification,full-model quality and honest throughput. Never substitute
+these diagnostic host-staged bands for the requested resident Work engine.
+Closed logs/SHA256SUMS accompany this report;NO generated weight headers,
+model,cache payload or private binaries are committed.

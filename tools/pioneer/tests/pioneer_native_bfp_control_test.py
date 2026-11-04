@@ -8,9 +8,11 @@ import tempfile
 if not __debug__:
     raise SystemExit('Assertions required')
 here = pathlib.Path(__file__).resolve().parent
-assert len(sys.argv)==1 or sys.argv[1:]==['--band']
+assert len(sys.argv)==1 or sys.argv[1:] in (['--band'], ['--model'])
 band = len(sys.argv)==2
-native = here.parents[2] / ('src/add-ons/kernel/drivers/misc/pioneer_native_bfp_band_driver.cpp' if band else 'src/add-ons/kernel/drivers/misc/pioneer_native_bfp_driver.cpp')
+model = sys.argv[1:]==['--model']
+name = 'pioneer_native_model_band_driver.cpp' if model else 'pioneer_native_bfp_band_driver.cpp' if band else 'pioneer_native_bfp_driver.cpp'
+native = here.parents[2] / 'src/add-ons/kernel/drivers/misc' / name
 source = native.read_text()
 def extract(a, b):
     start = source.index(a)
@@ -161,6 +163,17 @@ if band:
  {Reset();auto* c=Cookie();auto r=Request();assert(Control(c,PIONEER_NATIVE_BFP_RUN,&r,sizeof(r))==B_NOT_ALLOWED && !copyCalls && !reserves);FinishFixture(c);cases++;}
  printf("PASS ACTUAL full-K native BFP''')
     prefix = prefix.replace('#include <new>', '#include <new>\n#include <initializer_list>')
+if model:
+    prefix = prefix.replace('PioneerNativeBfpBandProtocol.h', 'PioneerNativeModelBandProtocol.h').replace('PioneerNativeBfpBandRequest', 'PioneerNativeModelBandRequest')
+    prefix = prefix.replace('assert(B::Width==k)', 'assert(B::Width==5120 && k<3)')
+    prefix = prefix.replace('->width=6144', '->width=1').replace('width', 'sample')
+    tests = tests.replace('PioneerNativeBfpBandRequest', 'PioneerNativeModelBandRequest').replace('PioneerNativeBfpBandTag', 'PioneerNativeModelBandTag')
+    tests = tests.replace('unsigned width=5120', 'unsigned sample=0').replace('end.width=6144', 'end.sample=1')
+    tests = tests.replace('owner->width==5120 && r.width==5120', 'owner->sample==0 && r.sample==0').replace('width', 'sample')
+    tests = tests.replace('for(unsigned sample:{5120U,6144U,17408U})', 'for(unsigned sample:{0U,1U,2U})')
+    for old, new in (('PIONEER_NATIVE_BFP_BAND_RUN', 'PIONEER_NATIVE_MODEL_BAND_RUN'), ('PIONEER_NATIVE_BFP_BAND_END', 'PIONEER_NATIVE_MODEL_BAND_END')):
+        tests = tests.replace(old, new)
+    tests = tests.replace('PASS ACTUAL full-K native BFP', 'PASS ACTUAL fixed learned-model native BFP')
 (folder / 'test.cpp').write_text(prefix + code + tests)
 subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
                 '-fsanitize=address,undefined', '-I' + str(native.parent), '-I' + str(here.parent), str(folder / 'test.cpp'), '-o', str(folder / 'test')], check=True)

@@ -1,0 +1,2 @@
+PASS ACTUAL learned-band client:492 ASan/UBSan cases;ACTUAL driver metadata,all64 RUN/END word mutations in ALL3 samples,source mutation at boundaries,strict protocol/owner/close/channel failures,NO next sample/END/query/retry after uncertainty;3 runtime-role guards;NO device proof
+CPU-only actual learned client evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-learned-band-client.szzd34kr

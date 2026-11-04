@@ -1,0 +1,2 @@
+PASS actual extracted native BFP FinishMmio/Free:31 cases;each VM/PCI/identity failure stops at FIRST observation;known End idempotent;close/quarantined close retains owner/cookie with zero IO;NO physical proof
+CPU-only actual close bodies retained: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-close.rzr9qibo

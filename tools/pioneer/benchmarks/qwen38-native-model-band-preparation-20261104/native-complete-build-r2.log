@@ -1,0 +1,7 @@
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+f69c2803d854bbef87f37df7cb96536e1f5d940060ed98fec6cb3200d50a9ad5 2096 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 5120 PHASES 4 DIRECT 0 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission
+eee8b3cbe708a2be636ff3cff8fd9b3d64927e5001503b84215f32cc593abca2 tenstorrent_pci_probe-native-model-band80
+2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc tenstorrent_pci_probe-default43-control
+f63e878f128e9c6d7f23453477c32fdd76b1eccfc643b0b321ed6bacacf9b587 pioneer-native-model-band-diagnostic
+BUILD_ONLY learned-band driver/client;PRIVATE WEIGHT HEADERS NOT COPIED_OR_PUBLISHED;NO install/device/model-quality/speed authority

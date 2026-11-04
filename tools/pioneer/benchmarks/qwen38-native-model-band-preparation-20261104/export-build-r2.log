@@ -1,0 +1,2 @@
+5dad76b8f631a99532d587dac2140200e463eab1f1ffe8907b60c954917a7fc7 pioneer-native-model-band-export
+BUILD_ONLY CPU exporter;NO source/cache read,model conversion,device or private payload generated
