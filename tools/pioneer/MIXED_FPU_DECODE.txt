@@ -45,9 +45,9 @@ ASan/UBSan/Werror,FP contraction disabled. Coverage:
 - Old Q4 regression;kernel/Work/CPU-validation/fast-math/invalid-group refusal.
 
 See benchmarks/qwen38-mixed-fpu-decode-offboard-20261104.txt and raw logs.
-The Q6 full-K GDDR/UNPACK/Dst/MOVD2A pipeline now has separate OFFBOARD
-qualification in Q6_FPU_STREAM.txt;still NO Q6 native ownership/hardware
-admission. Q8 full pipeline,multi-worker/resident-state/full-model quality
+Q6 and Q8 full-K GDDR/UNPACK/Dst/MOVD2A pipelines now have separate OFFBOARD
+qualification in Q6_FPU_STREAM.txt/Q8_FPU_STREAM.txt;still NO Q6/Q8 native
+ownership/hardware admission. Multi-worker/resident-state/full-model quality
 and performance integration remain. These functions
 are NOT allocation/route/owner/launch capability. Never reuse spent physical
 Q4 stages. Installed driver/cache/Assistant unchanged;no runtime CPU reference

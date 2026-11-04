@@ -70,3 +70,7 @@ independent physical admission/observations. Then Q8 pipeline,120-worker/
 resident-state/full-model quality and real performance integration. Installed
 stable041/gen10,64CPUs/full RAM,cached Assistant unchanged. No new tokens/sec;
 full-native27B and20tok/s remain UNMET. No runtime CPU reference added to Work.
+
+Q8 now has its separate OFFBOARD full-K pipeline in Q8_FPU_STREAM.txt,
+including originalTC8/-128 and source-bound16-row tail preparation tests.
+Neither Q6 nor Q8 offboard result admits hardware/native/Work execution.

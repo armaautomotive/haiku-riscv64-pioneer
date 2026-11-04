@@ -1,0 +1,3 @@
+PASS OFFBOARD emitted Q8 fullK5120 two_jobs/all64 exact,ONE initialization/job,canonical dual L1 buffers from actual NoC responses,FIFO/counter/fence-qualified consumer reads,prefetch during math;NO host payload loop or GDDR writes;NOT native/compiled-image/hardware/quality/speed proof
+PASS OFFBOARD emitted Q8 fullK6144 two_jobs/all64 exact,ONE initialization/job,canonical dual L1 buffers from actual NoC responses,FIFO/counter/fence-qualified consumer reads,prefetch during math;NO host payload loop or GDDR writes;NOT native/compiled-image/hardware/quality/speed proof
+PASS OFFBOARD streaming producer-completion omission refuses BEFORE any metadata/weight arithmetic;NOT native authorization

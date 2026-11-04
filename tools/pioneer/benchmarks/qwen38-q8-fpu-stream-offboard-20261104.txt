@@ -1,0 +1,75 @@
+OFFBOARD original-TC8 full-K pipeline -- NOT native/hardware admission
+====================================================================
+2026-11-04;base HEADe872c50731ae0beca9bbb6ec58ca80ee76bce72a+18 NEW files.
+Main16087 ACTUALLY CLOSED0 observed15:31:24UTC;clean27954 ACTUALLY CLOSED0
+observed15:33:56UTC. Followed original handles;no timeout relaunch. Archive
+43767 confirmed actual0 before overlay/copy.19 strict stderr0 children EACH,
+including COMPLETE old-Q6 suite(22 strict children,old-Q4/mixed regressions).
+93 source pins identical/current,including pinned prior74-source manifest:
+309dfbaab539ea41f7cacf860d3713606e6070bc5ad487b892bdca0e1b887027
+Main stdout a60610a9d16eee985d1120b0a71bd124419542ef4058a07e184a83c05c8372b9
+Clean stdout bdf2d315a27927996c0a5a02cfb9e5e391931a9df28456dde37ce1c0ea52d2e4
+Runner59c24f0327fbdc02195037e960fea07801bc0d36470171b7c327ef3efb42cb50
+Data1ec95c491c66f6ee413f1dcb2ea13e8053e188f9f7d3f14fd2c44ec0262e955f
+Compute ad9770ac66137b319888715f2224c1c7bc4cf9880fc93a04482c184ab50bf8a5
+Layout b830583f6720e87a4c7496b64cf1b6e29059d388da1aa35361948cd365cdc77c
+Loader91a581d44ee7527e52a0980718ec1790e7264c7ba2fccbf86643fe62309be48a
+No unrelated dirty submodule/status/FlashNext/Oct29-30 WIP consumed.
+
+NEW recipe:9216B per32x256 (8192 unchangedTC8+1024 exactFP32 originalhalf).
+Original32x8x34=8704B;NO SM7 recoding/clipping/BF16 expansion/host learned
+products. PrepareRows supports ONLY16/32 real rows,absent rows padded+0,
+never read. Future source/cache/native binding must derive real row count,
+not accept an untrusted claim. Original model remains read-only/unchanged.
+Raw90000/32x320,metadata94000/16x128,input96000/8x128,second+10000;shared
+zero97000/output98000/frame74000/private64B headers.56 reads/152 C64 flits
+perK256,four14-request slices overlap math;all32 credits/FIFO/command echo/
+nine counters/FENCE visibility required. Actual physical16-bit Dst shared
+by UNPACK/SFPU BF16-RNE/MOVD2A/ALL4 FPU phases. No remapping,scalar learned-
+payload reads,GDDR writes,host K-loop,per-block clear,retry/reset/cleanup.
+ONE clear/full-K job,two jobs/image;newQ8S1 marker31533851.
+Fixed6812B images/unchanged8KiB ROM,actual main/clean bytes cmp identical:
+5120 8ab2edda60d0b59f09d3f8162a04a10d2eec6a3aefe9a48f69188d4979c2f66e
+6144 5948d8b1aad1292d5c589449822f0d63c0dcf357c10c77916973d588568bf99d
+Strict RV32 Step and original Q4/Q6 observers/sources remain unchanged.
+
+Checks:17664 exact bytes/half/padding,37 atomic/refusal cases,448 independent
+packet-coverage checks;poisoned absent rows ignored.16 valid/44 refused
+loader cases/both widths/eight route SHAPES/whole L1/counter wrap/sticky
+failure/completion. Emitted/compiled K256/full-K results exact,including
+allTC8/-128/signed-zero/16-row tail/delayed producers.32 unknown/frame/NIU/
+config/completion/producer controls stop before output;eight numerical
+controls detect four missing phases,input,TC8 sign,scales,unmasked tail.
+Independent Fraction128 returned words/360448 original SYNTHETIC weights/
+90112 rounded phases,no CXX codec/preparer/SFPU/FPU oracle shared.
+ASan/UBSan/Werror/contraction off;9 kernel/Work/CPU-validation/freestanding/
+fast-math refusals. Full Q6(7848B)/Q4(7824B streams/7036B block) byte identity
+and original mixed decoder regressions preserved by nested complete suite.
+
+SAME-open original18973870528B FULL SHA:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+O_NOFOLLOW/owner/nlink/permissions/device/inode/nanosecond mtime+ctime/length/
+epoch checked.11 authentic bands/22 jobs/704 exact words/1818624 real weights:
+tensor5 attn_qkv K5120 first0/5120/10208 rows32;
+tensor16 ssm_out K6144 first0/2560/5088 rows32;
+tensor49 attn_q K5120 first0/6144/12256 rows32;
+tensor11 ssm_alpha K5120 first0 rows32 and first32 rows16 (rest+0).
+Diagnostic BF16 inputs,NOT real hidden states/full-model quality/inference.
+No original/prepared/decoded weights,private headers/objects/binaries saved
+to public records. Final suites both0;no numerical/ownership gate weakened.
+Private work:/private/tmp/pioneer-q8-fpu-stream-20261104.hlJtf7P4
+Clean:/private/tmp/pioneer-q8-fpu-stream-clean-20261104.3XrAQ3fl
+
+Fresh READ-ONLY SSH ACTUALLY CLOSED0 observed15:35:20UTC,stderr0:
+normal041/tag2026102100010012/gen10/quiesced0/cold0/owner0/open1/guard1,
+same Sep8kernel/64CPUs/max137034936320B/free133771018240B RAM. Driver041/
+cachedworker861e5287/servicec509da43/GUI0de9141e unchanged. Raw stdout SHA:
+b5180dae57c1baea8d7d8edeaf72c5dade5cc09e9d78ce4095ac13bc1d4cca3c
+No GPU execution/driver swap/app launch/model/cache/settings/OS/boot/network/
+power/SD/hardware change. No new tokens/sec or speedup claim.
+
+Next:NEW guarded native ownership/journals/source-authenticated client and
+physical admission for Q6/Q8,then120 workers/resident-state/full-model quality
+and real performance. Old spent86/restore/85/84/etc NEVER reused. No Work
+execution or runtime CPU reference added. Full-native27B/20tok/s UNMET;
+goal remains ACTIVE.

@@ -1,0 +1,61 @@
+Original Q8_0 full-K GDDR/SFPU/four-phase FPU (OFFBOARD)
+=====================================================
+NEW32-row pipeline for the model's Q8 widths5120/6144,NOT native ownership,
+an Assistant/Work selector,physical-card/model-quality or speed evidence.
+
+PioneerQ38Q8FpuBlockData:32 rows x8 ORIGINAL34B blocks ->9216B (8192
+UNCHANGED TC8 bytes+1024 exact FP32 original-half scales). Includes-128;
+NO SM7 recoding,clipping,expanded weights,BF16 preparation or host learned
+products. Separate NEW recipe,NOT an installed cache format. PrepareRows
+accepts ONLY32 or16 original rows;16 pads absent rows with+0 without reading
+them. Future source/cache/owner bindings MUST derive and authenticate the
+real row count and start from tensor metadata,not trust a caller's count.
+
+L1 raw90000/32x320 slots,metadata94000/16x128,input96000/8x128;second
+buffer+10000;shared zero97000/output98000/frame74000. Every packet has its
+own zero64B header. PerK256:56 reads/152 C64 flits (9216 weights+512 input),
+four14-request prefetch slices. ALL32 credits/FIFO/command echo/nine counters
+and actual FENCE witnesses precede visibility. No scalar learned-payload
+reads,GDDR writes,host K-loop,retry/reset/cleanup. ONE accumulator clear/
+full-K job,two jobs/image. Actual physical16-bit Dst is shared by UNPACK,
+SFPU BF16-RNE,SFPSTORE,MOVD2A and all four FPU phases without normalization.
+
+Q8S1 marker31533851,NEW6812B images,unchanged8KiB ROM:
+K5120 8ab2edda60d0b59f09d3f8162a04a10d2eec6a3aefe9a48f69188d4979c2f66e
+K6144 5948d8b1aad1292d5c589449822f0d63c0dcf357c10c77916973d588568bf99d
+Fixed decoder leaf avoids duplicated instruction bodies. Actual compiled
+RV32 code executes under the UNCHANGED strict Step decoder;only private
+word-aligned ABI stack,code/frame/status/results and control IO are scalar-
+addressable. It does not imply firmware/route/allocation/launch authority.
+
+Qualification -- never stage/install
+------------------------------------
+  python3 tools/pioneer/tests/run_pioneer_q38_q8_fpu_stream_tests.py \
+    /Volumes/HaikuBuildLocal/generated.riscv64 /absolute/ORIGINAL.gguf \
+    /absolute/NEW_QUALIFICATION_DIRECTORY
+
+Main16087/clean27954 ACTUALLY CLOSED0,19 strict stderr0 children EACH,including
+the COMPLETE22-child Q6 suite and its Q4/mixed regressions. All93 transitive
+source fingerprints unchanged/identical;actual SDK image bytes cmp identical.
+- 17664 exact TC8/half/padded comparisons,37 atomic/refusal cases and448
+  independent packet byte-coverage checks. Poisoned absent rows ignored.
+- 16 valid/44 refused loader cases,eight route SHAPES/two widths,whole L1,
+  counter wrap,producer/bank handoffs,NO next IO after failure/completion.
+- Emitted/K256/compiled full-K canonical L1/physical Dst/NoC/FENCE/persistent
+  matrix execution;16-row padding,-128,signed-zero and delayed producers.
+- 32 unknown/frame/NIU/config/completion/producer controls stop before output;
+  eight numerical controls detect four phases,input,TC8 sign,scales,tail.
+- Independent Fraction128 returned words/360448 original SYNTHETIC weights/
+  90112 rounded phases,no CXX codec/preparer/SFPU/FPU oracle shared.
+- SAME-open c600de03.../18973870528B original:11 bands/22 jobs/704 exact
+  words/1818624 weights,including all48 output rows of ssm_alpha as32+16.
+  Diagnostic BF16 inputs,NOT real hidden states/full-model quality.
+- ASan/UBSan/Werror/contraction off;9 role/fast-math/freestanding refusals;
+  original Q6/Q4 images remain byte-identical. No runtime CPU reference added.
+
+See benchmarks/qwen38-q8-fpu-stream-offboard-20261104.txt and raw records.
+Next:NEW native protocol/owner/journals/source-authenticated client and
+physical admission for Q6/Q8,then120-worker/resident-state/full-model quality/
+real performance integration. Never reuse spent86/restore/85/84 stages.
+Stable041/gen10,64CPUs/full RAM,cached Assistant unchanged. No new tokens/sec;
+full-native27B and20tok/s remain UNMET.
