@@ -1,0 +1,1 @@
+PASS OFFBOARD Q6 stream loader:16 valid/44 refused,full5120/6144 x8 route SHAPES,64 packets/136 flits perK256,two buffers/16-command slices/overlap/whole L1 exact/counter wrap,NO scalar payload/GDDR write/host IO;NO next IO after failure or completion;NOT native/hardware/quality/speed proof

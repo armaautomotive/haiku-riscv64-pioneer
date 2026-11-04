@@ -1,0 +1,72 @@
+Original Q6_K full-K GDDR -> SFPU -> four-phase FPU (OFFBOARD)
+============================================================
+NEW separate32-row streaming image for the actual Q6 model widths5120/6144.
+It now has complete offboard data/NoC/UNPACK/physical-Dst/MOVD2A/FPU tests.
+It is NOT a native owner/driver/Work mode or a physical-card/quality/speed
+qualification. No old/spent Q4 stage authorizes its execution.
+
+PioneerQ38Q6FpuBlockData prepares32 ORIGINAL210B blocks into8192B:
+4096 unchanged ql bytes,2048 unchanged qh bytes,and2048 exact FP32 original
+half*signed8 scale products. Scales change every16 values. No dequantized
+weight array,BF16 conversion or learned product is prepared on the host.
+This is a NEW storage recipe,not any installed lossless/native cache recipe.
+Nonfinite metadata,overlap,wrong lengths and pointer overflow refuse without
+partial output. Original files stay read-only;prepared bytes remain private.
+
+L1:low90000/high92000/metadata94000/input96000 with private zero64B headers;
+second operand buffer+10000;shared zero97000/output98000/frame74000.
+Raw Dst16 low0..63/high320..383 are separate from matrix FP32 accumulators
+32/40 (physical64..95),decoded FP32 rows64..127 and metadata128..143.
+The observer shares ACTUAL physical16-bit storage between UNPACK,SFPU and
+MOVD2A/FPU:no descriptor normalization or injected decoded payloads.
+The existing Q4 observer and strict RV32 Step remain unchanged.
+
+Per K256:64 read-only NoC packets/136 C64 flits (8192 weights+512 input).
+Four16-request slices prefetch the alternate L1 buffer during current math.
+ALL32 credits/FIFO/command echo/nine counter deltas and real FENCE witnesses
+precede consumer visibility. No scalar learned-payload reads,GDDR writes,
+host K-loop,per-K256 reset,retry or cleanup. ONE accumulator clear/full-K
+job,two jobs per diagnostic image. Known result words alone are NOT clean-
+END/source/route/allocation ownership or permission to run hardware.
+
+Two fixed7848B images fit the UNCHANGED8KiB ROM bound:
+K5120 af5b7c2e7ea4d1fa28ba7e0b11f8122bc5168ce8ba1416be1ef5b1319135b867
+K6144 f6ced20d6861124fa23134dfe5af9fa70d7eb8ba8cf679b0fa101af242c3934d
+NEW Q6S1 marker31533651;not old QFS1/native86. All scalar stack stores are
+aligned,zero-only aggregate memset restricted to owned8KiB stack. Actual
+compiled RV32 uses416B stack/404B touched in the synthetic two-job test.
+Only a fixed internal four-way group leaf is shared to avoid code duplication;
+no external bytecode/format/coordinate/buffer selector is exposed.
+
+Qualification -- never stage/install
+------------------------------------
+  python3 tools/pioneer/tests/run_pioneer_q38_q6_fpu_stream_tests.py \
+    /Volumes/HaikuBuildLocal/generated.riscv64 /absolute/ORIGINAL.gguf \
+    /absolute/NEW_QUALIFICATION_DIRECTORY
+
+Main76351/clean39718 ACTUALLY CLOSED0,22 strict stderr0 children EACH,74
+complete source fingerprints unchanged/identical. SDK image bytes cmp
+identical. ASan/UBSan/Werror/FP contraction off. Coverage:
+- 6656 raw-plane/exact-coefficient checks,28 atomic/admission refusals,
+  512 independent packet byte-coverage checks/private headers/no overlap.
+- 16 valid/44 refused loader cases:both widths/eight route SHAPES,whole L1,
+  counter wrap,buffer leases,NO next IO after failure/completion.
+- K256/emitted/compiled full-K pipelines:actual descriptors,physical Dst,
+  SFPU RNE,K16 scales,producer/bank handoffs/continuous4phase accumulation.
+- 32 unknown/frame/NIU/config/completion/producer failures stop before output;
+  seven controls (four phases,input,high plane,K16 scale) fail the reference.
+- Independent Python Fraction128 returned words/360448 original SYNTHETIC
+  weights/90112 rounded phases,no CXX codec/SFPU/FPU oracle shared.
+- SAME-open original c600de03.../18973870528B,6 authentic first/middle/last
+  bands/12 jobs/384 exact words/1081344 weights,Q6 attention-output6144 and
+  vocabulary-output5120. Diagnostic BF16 inputs,NOT real hidden states.
+- Old Q4 K256/regression/mixed decode and old Q4 full-K7824B images remain
+  identical;9 kernel/Work/validation/freestanding/fast-math compile refusals.
+
+See benchmarks/qwen38-q6-fpu-stream-offboard-20261104.txt and raw logs.
+Next needs a NEW authenticated native protocol/owner/source-bound client,
+complete GDDR/L1/NIU/FIFO/TLB/clock/PCI journals and known-END restoration,
+independent physical admission/observations. Then Q8 pipeline,120-worker/
+resident-state/full-model quality and real performance integration. Installed
+stable041/gen10,64CPUs/full RAM,cached Assistant unchanged. No new tokens/sec;
+full-native27B and20tok/s remain UNMET. No runtime CPU reference added to Work.

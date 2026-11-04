@@ -1,0 +1,1 @@
+PASS OFFBOARD complete compressed-Q6 pipeline:16 K256 jobs across8 two-job trials,all32 outputs exact vs original-decode/BF16-RNE and rounded4-phase reference;actual L1 descriptors/physical Dst/SFPTRANSP/MOVD2A/bank handoff;NO host learned products,NoC/GDDR/native driver/hardware/model-quality/speed proof

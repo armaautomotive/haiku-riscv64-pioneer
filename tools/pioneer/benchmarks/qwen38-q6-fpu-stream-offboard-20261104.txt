@@ -1,0 +1,92 @@
+OFFBOARD full-K Q6 GDDR/SFPU/FPU -- NOT native/hardware admission
+================================================================
+2026-11-04 UTC;base HEAD98806306d23b1c5a2f7c81d398d0639f522781aa+18 NEW
+source/test files. Main76351 ACTUALLY CLOSED0 observed15:01:56UTC;clean39718
+ACTUALLY CLOSED0 observed15:04:14UTC. Followed original handles,NO relaunch
+on observation timeout. Clean archive62004 confirmed actual0 BEFORE overlay.
+22 strict terminal0/stderr0 children EACH;74 source pins identical/current:
+47ce6bc991c48c54e5bb16f436d649f082f6d208bc427ba9d7c80d0aeddd74e2
+Main stdout26031d1f12b7a878bcc35cf2d31ec1c54725eed32ae730270526da88f9d38ab8
+Clean stdout e44eb8cda3ab1b59db38d03094e3ecf740dae76e8ee6e06e3cef91e4d4e02427
+Runner f67c94c8b20c9b33d22bb326d1df06912da396f2201af001e63ce33f07e74aef
+Raw public records in same-name directory. No original/prepared/decoded
+weights,private headers/objects/binaries published. Dirty submodule/status/
+FlashNext/Oct29-30 WIP untouched;no existing Q4 source/model changed.
+
+Implementation
+---------------
+8192B/32x256 NEW recipe:4096 unchangedql+2048 unchangedqh+2048 exact FP32
+half*signed8 coefficients (K16),NOT expanded weights or learned products.
+L1 low90000/high92000/meta94000/input96000,two buffers+10000,sharedzero97000.
+High rawDst16 at320..383 avoids FPU accumulator32/40 PHYSICAL64..95.
+Actual shared physical16-bit Dst backs UNPACK/SFPU/MOVD2A/FPU;no remapping
+or operand substitution. Four-way internal leaf shares original Q6 SFPU
+decoder without duplicating8face/parity x4 group bodies. Four-phase FPU
+rounding retained,ONE clear/full-K job,no host K-loop or scalar payload read.
+
+Q6S1 marker31533651/two jobs,unchanged8KiB ROM ceiling:
+K5120 7848B af5b7c2e7ea4d1fa28ba7e0b11f8122bc5168ce8ba1416be1ef5b1319135b867
+K6144 7848B f6ced20d6861124fa23134dfe5af9fa70d7eb8ba8cf679b0fa101af242c3934d
+Actual main/clean bytes independently cmp identical. Strict RV32 Step remains
+unchanged;scalar code/stack/frame/status/results and NoC replies share exact
+L1 bytes. Actual FENCE words supply producer visibility witnesses. Stack416B,
+touched404B. No byte-store decoder/ROM/poll-bound relaxation.
+64 packets/136 C64 flits perK256:four16-request prefetch slices overlap math,
+private zero64B headers,all32 credits/FIFO/NIU commands/nine counter deltas
+checked. No GDDR writes,host callbacks,retry/reset/automatic cleanup.
+
+Qualification scope
+--------------------
+6656 plane/coefficient checks/28 refusals/512 independent packet byte-coverage
+checks;16 valid/44 refused loader cases,two widths/eight route SHAPES,whole
+L1 and counter wrap,sticky failure/completion;16 K256 pipeline jobs and two
+full-K emitted/compiled jobs per width (all64 results each). Canonical low/
+high planes,K16 metadata,physical Dst/both FP32 halves,SFPTRANSP,MOVD2A,all
+four phases and bank handoffs;no host learned products in image.
+32 unknown/frame/NIU/config/completion/producer failure controls stop before
+result;seven numerical controls detect missing four phases,zero input,
+zero high plane and repeated K32(instead of K16) scales. Independent Fraction
+128 words/360448 original SYNTHETIC weights/90112 rounded phases,no shared
+CXX codec/preparation/SFPU/FPU reference. ASan/UBSan/Werror/contraction off.
+Nine compile refusals keep kernel/Work/CPU-validation/fast-math separate;
+CPU DATA also rejects freestanding. Existing Q4 regression/7036B block and
+both7824B streams retain exact prior bytes;original mixed decoder passes.
+
+SAME-open original FULL SHA c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+18973870528B,O_NOFOLLOW owner/nlink/permissions plus device/inode/nanosecond
+mtime/ctime/length/epoch checked. Six authentic full-K bands/12 jobs/384 exact
+words/1081344 weights:
+tensor48 attn_output K6144 first0/2560/5088
+tensor0 output K5120 first0/124160/248288.
+Original decode/BF16-RNE/rounded-FPU predictions exact. Inputs diagnostic,
+NOT real prompt hidden states/model quality/native execution/throughput.
+
+Initial software-only issue,NOT hidden/reclassified
+---------------------------------------------------
+First fault83627 CLOSED134:skipUnpack14 omitted first high-plane load,then
+observer used completed rawLoads as the next EXPECTED descriptor index.
+The next actual descriptor hit a strict row/address assertion before the
+intended missing-data gate. Saved stderr172B SHA:
+e487e00133d4e87ebcbb073910b10941c8a1e9fef58d468e26b90cc8a78e536c
+Added separate rawInstructions/metadataInstructions;validate EVERY issued
+descriptor,do NOT count dropped loads as data/ownership completion. Numerical
+comparators and descriptor predicates unchanged. Missing data now fails at
+unproven producer/bank/defined-row checks before output;fault-r2 81336 actual0,
+then independent COMPLETE final main/clean0. First literal-backslash-newline
+loader message also corrected (logging only). Candidate image bytes unchanged.
+Earlier private smoke/failure records retained:
+/private/tmp/pioneer-q6-fpu-stream-20261104.ng4ziPoz
+Clean:/private/tmp/pioneer-q6-fpu-stream-clean-20261104.twMiP01G
+
+Fresh READ-ONLY SSH actually CLOSED0 observed15:06:00UTC,stderr0:
+normal041/tag2026102100010012/gen10,quiesced0/cold0/owner0/open1/guard1;
+same Sep8 kernel,64CPUs,max137034936320B/free133771067392B RAM. Stable041
+driver/cached861e5287 worker/c509da43 service/0de9141e GUI unchanged. Raw SHA:
+269913415427bfb27aeccbf9efdbf91cc0a9e748940c089ea7d8bcc658ba0612
+No GPU execution/driver swap/app launch/model/cache/settings/kernel/boot/
+network/power/SD/hardware change. NO real token result or speedup claim.
+
+Next:NEW native owner/protocol/journals/source-authenticated client/physical
+admission;Q8 full pipeline;120 workers/resident-state/full-model quality and
+real performance. Do NOT reuse spent86/restore/85/84/etc. No Work admission
+or runtime CPU reference added. Full-native27B/20tok/s UNMET;goal ACTIVE.
