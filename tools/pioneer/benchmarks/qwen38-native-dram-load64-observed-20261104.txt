@@ -1,0 +1,76 @@
+ACTUAL83 C64 fixed-band transfer CLOSED0;normal driver restored
+==============================================================
+2026-11-04 UTC;source/preparation checkpointcd15af12d8c753722372b0882f938ab2466ce108.
+The ONE physical parent17286 launched06:48:26UTC and ACTUALLY CLOSED0 on
+the SAME handle,observed07:01:18UTC. No retry on observation timeout and
+no parallel admin/device/driver command during the parent. Only project
+output/CPU-thread progress was inspected. Full-native27B/20tok/s UNMET.
+
+Exact privately staged tuple,not generated binaries in Git:
+7ee39a3615bc93e3b81cd21149fdd020f2e5f3e7a7f1b3db8cca24bffd94a85e driver
+10310865e07c34b476632e8e776f76fae603a7a4adea2ec87f226f1f05798ac0 client
+bcee28ab0caa808a4f662c1803980de221892ebcb1ba5998d8137ac01a10456b parent
+fa70be17ca4b3cf3889e5176f6a651b2f5afcdefd0511f98aba4745d6c2b04b7 image2280B
+Tag2026110400010083,opcodes7f00..02,ND64/countc0001400,LoadOnly64.
+Stage:/boot/home/pioneer-native-dram-load64-only-20261104-a;now SPENT.
+NEVER relaunch this or the old81/82 parents,even after a passing result.
+
+Fresh stable041/gen2/64CPU/fullRAM admission and private directory creation
+a12123 CLOSED0. SCP-O8fd210 CLOSED0;exact stage postflightdc86af CLOSED0.
+Invalid CLI refused2,zero stdout,no device open/driver change. Full original
+19GB same-open SHA/layout/epoch and fresh sample/reference proof preceded
+ANY device open;original c600de03,one sample0/tensor7/K5120. This explicit
+CPU DEBUG source proof is not Work-mode runtime CPU-reference validation.
+
+Actual hardware result and closure
+----------------------------------
+Normal041/gen2 ->83/gen3 by known-idle guarded hot reload. ONE image launch,
+320 requests/2880flits,one terminal poll. No FPU/config/Dst/math/scalar
+payload copying exists in this image. Every loaded payload/header word was
+independently compared BEFORE reset,then AGAIN AFTER HOLD/BEFORE restore:
+46080 payload words,5120 header words,55372 saved L1 words,46080 saved GDDR
+words,plus ROM/frame/all64 unchanged output sentinels. Exact GDDR source,
+complete original GDDR/L1 readback,NIU/FIFO/TLB/clock/PCI closure passed.
+The strict client produced exactly3 lines/442B,stderr0,exit0. Its stdout SHA:
+a8884f789db23da897578ffb73a1c0849fa8e1e972f6e7701d10647b51df698c
+Parent3183B stdout SHA:
+b4b8edd29c1d4fad9ad8bb2dd0c9a7b837addce1d7703adc523d198f039e1264
+Parentstderr0/exit0;ending LOAD64_ONLY_KNOWN_CLEAN_NO_FPU_MODEL_OR_SPEED_CLAIM.
+Only after known clean END did83/gen3 ->normal041/gen4 guarded reload occur.
+State:STABLE041_RESTORED_LOAD64_ONLY_PAYLOAD_AND_HEADERS_PASSED.
+No quarantine,reset recovery,reboot,power,SD,hardware or network change needed.
+
+Independent collectionc8bcda CLOSED0 and SCP-O fetch40696 CLOSED0,allstderr0.
+Remote/local raw child hashes match. Explicit-role parser accepts actual83
+polls1 and refuses that record as old82;old failed82 is NOT an83 pass.
+CPU progress retained SAME clientPID669,userCPU274417ms then462290ms;
+first stdout92B auth banner,then186B two auth banners,no inferred completion.
+
+Independent final-readonly314fd0 CLOSED0 observed07:10:33UTC,stderr0:
+normal041/tag12/gen4,quiesced0/cold0/owner0/open1/guard1;
+64CPUs,max137034936320B RAM,free133784285184B. Worker861e5287,
+servicec509da43,GUI0de9141e hashes unchanged,no project compute parent.
+Earlier complete final-readonly snapshot additionally verifies original
+metadata0:1:600:18973870528,private cache0:700 with851 entry files;that is
+METADATA ONLY,not a new content rehash or extra inference qualification.
+The redundant final-readonly-r2 used an unsupported admin --metadata-only
+option and CLOSED2 with empty output;it changed nothing and is not a passing
+health check. Documented --status was then used in distinct-r3 CLOSED0.
+All raw outputs are retained,including that refusal;no record overwritten.
+
+Interpretation and next work
+----------------------------
+This is a real fixed K5120 GDDR->L1 byte/lifecycle pass for C64 placement,
+not a universal silicon alignment rule or proof of why old81 math failed.
+Packed bytes/source/16-deep request order/precision are unchanged,but L1
+placement,padding and initialization timing changed too. Old82 pre-reset
+tile1 failure and old81 numerical mismatch remain immutable FAILED records.
+All weights/cache/generated headers/objects/binaries remain PRIVATE.
+
+Next:new distinct C64 learned-FPU image/native lease/protocol/client with
+offboard actual-address arithmetic observation and failure/closure tests,
+then a NEW independently admitted physical stage. This83 load-only role
+cannot be used for FPU/Work. Full-model resident arena/cohort/stripes,
+attention/state/logits/sampling,quality and real throughput are unfinished.
+Installed lossless851-entry cache/no-runtime-CPU-reference Work unchanged.
+No new model inference,speedup or20tok/s claim is made by this transfer test.

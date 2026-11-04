@@ -1,0 +1,10 @@
+RUNNING_LOAD64_ONLY_SOURCE_AUTH_AND_ONE_SAMPLE
+/boot/home/pioneer-native-dram-load64-only-20261104-a/load.stdout:186
+/boot/home/pioneer-native-dram-load64-only-20261104-a/load.stderr:0
+AUTHENTICATING_FIXED_ORIGINAL_AND_FRESH_LEARNED_REFERENCE;CPU_DIAGNOSTIC_ONLY_NO_DEVICE_YET
+AUTHENTICATED_FIXED_MODEL c600de03 tensor7 width5120 sample0;LOAD64_ONLY_NO_FPU_MODEL_OR_WORK
+Team                                                  Id #Threads  Gid  Uid 
+/boot/home/pioneer-native-dram-load64-only-20261104-a/pioneer-n   669        1    0    0 
+
+Thread                                   Id    State Prio    UTime    KTime
+pioneer-native-dram-load64-diag         669      run   10   462290    38238 

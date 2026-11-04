@@ -1,0 +1,15 @@
+2026-11-04 UTC. Preparation/source checkpointcd15af12d8c753722372b0882f938ab2466ce108.
+a12123 fresh admission/private83 stage creation CLOSED0
+8fd210 private SCP-O copy CLOSED0
+dc86af exact stage/CLI-refusal postflight CLOSED0;invalid CLI child2 no device
+17286 ONE physical parent ACTUALLY CLOSED0 on SAME handle,observed07:01:18UTC
+One child sample0/K5120 exit0;442B stdout/stderr0;all payload/header checks
+before reset and again after HOLD;full original closure;stable041/gen4 restored
+c8bcda independent remote raw hashes/postflight CLOSED0
+40696 independent raw SCP-O fetch CLOSED0
+Original final-readonly complete footer retained;tool terminal not re-inferred
+fdfcf8 redundant readonly unsupported --metadata-only refused2,empty output
+314fd0 documented --status independent final readonly CLOSED0,07:10:33UTC
+No parallel device commands during parent;no retry,recovery,power/SD/OS change
+Stage SPENT. Never relaunch81/82/83 parents. Old failures remain failures.
+ONE fixed C64 transfer/lifecycle PASS;NO FPU/model-quality/speed/full-native proof

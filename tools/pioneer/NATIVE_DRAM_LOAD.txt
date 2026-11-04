@@ -11,11 +11,14 @@ Recovery is complete:ONE OFF,shutdown interval/no contradictory evidence,
 ONE ON,fresh Linux->Haiku64CPU/fullRAM,then the tested fresh82/gen1 ->
 stable041/gen2 restore. Independent postflight confirms cold0/owner0 and
 unchanged Assistant/cache files. This does NOT close/promote the old lease.
-Next83 C64-placement CONTROL now has offboard qualification while default82
-driver/client/image remain byte-identical. It is NOT yet staged/run and is
-not an established fix or a promotion of this failed82 result. The new
-tag/opcodes/marker and compile-time policy/image guards separate the roles.
-See NATIVE_DRAM_LOAD64.txt. Full-native27B/20tok/s remain UNMET.
+Separate83 C64-placement CONTROL now ACTUALLY PASSES one fixed K5120 sample:
+all46080 payload+5120 header words before reset and again after HOLD,full
+original closure,normal041/gen4 restored without reboot. Default82 driver/
+client/image remain byte-identical;this failed82 record is NOT promoted.
+The new tag/opcodes/marker and compile-time policy/image guards separate
+the roles. This is not a universal C64 rule,FPU/model-quality/speed result.
+See NATIVE_DRAM_LOAD64.txt and its new observed report. The83 stage is also
+SPENT. Full-native27B/20tok/s remain UNMET.
 
 2026-11-04 UTC. The actual direct-GDDR/FPU81 test failed all64 returned
 words on its FIRST sample; no END, next sample or automatic restore was
@@ -110,8 +113,8 @@ failure receipts remain immutable. Publish preparation, freshly preflight,
 privately stage/pin/CLI-refusal-check, then ONE direct exec; observe the SAME
 parent handle to terminal. No retry merely because an observation times out.
 
-Corrected actual byte proof is still required. If transport bytes pass, FPU
-descriptor/stride/timing/clock integration remains a separate question.
+Corrected actual byte proof now passes in the separate83 fixed C64 control.
+FPU descriptor/stride/timing/clock integration remains a separate question.
 Do not blindly change C32 alignment or relax comparisons. Full-model arena,
 resident stripes/cohort/token state/attention/logits/sampling/quality/real
 throughput remain unfinished. Full-native27B/20tok/s are UNMET.
