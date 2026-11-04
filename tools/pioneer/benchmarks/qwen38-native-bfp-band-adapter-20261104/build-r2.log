@@ -1,0 +1,9 @@
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+f69c2803d854bbef87f37df7cb96536e1f5d940060ed98fec6cb3200d50a9ad5 2096 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 5120 PHASES 4 DIRECT 0 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+a6516a81cdb2e40b1850a0e51c3c2c2d706eaa2aa0207b29cbf5c2c3feb1a09e 2096 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 6144 PHASES 4 DIRECT 0 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+902a07bf9cc67387d139bee4b18b3a454a1d90baa3b70d2c3f87e2b0f3939575 2096 text.bin
+OFFBOARD_NATIVE_BFP_BAND_BUILD_ONLY K 17408 PHASES 4 DIRECT 0 ;NO staging,NoC,GDDR,owner,driver,hardware,model quality or speed permission

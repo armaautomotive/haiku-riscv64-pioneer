@@ -3,6 +3,7 @@
 import os
 import pathlib
 import subprocess
+import sys
 import tempfile
 
 if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
@@ -10,7 +11,8 @@ if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
 
 here = pathlib.Path(__file__).resolve().parent
 root = here.parents[2]
-native = root / 'src/add-ons/kernel/drivers/misc/pioneer_native_bfp_driver.cpp'
+assert len(sys.argv)==1 or sys.argv[1:]==['--band']
+native = root / ('src/add-ons/kernel/drivers/misc/pioneer_native_bfp_band_driver.cpp' if len(sys.argv)==2 else 'src/add-ons/kernel/drivers/misc/pioneer_native_bfp_driver.cpp')
 source = native.read_text()
 def body(start, end):
     first = source.index(start)

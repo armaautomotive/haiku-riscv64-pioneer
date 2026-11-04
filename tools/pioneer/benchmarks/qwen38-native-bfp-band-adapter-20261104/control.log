@@ -1,0 +1,2 @@
+PASS ACTUAL full-K native BFP Control/Reply/Fault/Dispose/Free:32 cases;malformed/foreign/stale/busy inputs no hardware entry,same-FD one-shot,owned user copy,failed RUN delivery retained,explicit END only,END-reply failure known closed;FAKE device/lease endpoints,NO physical proof
+CPU-only actual controller evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-control.65f1krys

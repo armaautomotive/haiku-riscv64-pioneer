@@ -1,0 +1,1 @@
+PASS actual full-K parent:209 fake-flow/output cases+9 idle+11 prior/raw-reference provenance cases;all64 independent Fraction-qualified synthetic predictions,missing/duplicate/equal-but-wrong values and metadata/order/poll failures refused,NO retry/metadata/restore after unproven result;NO device proof

@@ -1,0 +1,79 @@
+Full-K BFP8/broadcast diagnostic79 -- PREPARED,not yet physically executed
+======================================================================
+2026-11-04 UTC,baseline8ff6bb7d73b44479172f51468d6792a6bd75e7a4.
+Previous actual fixed-tile arithmetic+END64312 passed,normal041/gen4 restored.
+This preparation does NOT prove physical full-K,model offload or throughput.
+
+Added a distinct pointer-free360B protocol/tag2026110400010079,operations
+0x7b00..02,only fixed5120/6144/17408 four-fidelity synthetic fixtures. No
+runtime weights,code,addresses,routes or model/Work/CPU-validation endpoint.
+New concrete driver inherits discovery/reload/read-only baseline machinery,
+but private legacy find_device compiles to NULL ONLY. Original fixed78
+driver/emitter/old ideal comparators are unchanged. No installed file changed.
+
+PioneerNativeBfpBandLayout separates pure geometry DATA from the instruction
+emitter;static tests assert exact agreement with the unchanged emitter. The
+lease admits kernel compilation ONLY for explicit diagnostic79+reload role;
+wrong role/tag/missing reload/Work/validation remain refused. This compile
+admission is NOT hardware qualification or production Work promotion.
+
+NativeIO maps the fixed663552B window8f000..130fff but Pointer rejects ALL
+unowned holes and smaller-width excess spans. All3 widths and1179648 aligned
+addresses checked against independently enumerated saved spans,exact physical
+offsets/protections.31 actual mapping cases,31 actual FinishMmio/Free cases,
+32 actual Control/Reply/Fault/Dispose/Free cases passed ASan/UBSan/Werror.
+Fake OS/device/lease endpoints only;no physical proof. All3 dispatch widths,
+old opcode refusal,immutable request snapshot,explicit END-only disposal,
+failed reply/close retention,first VM/PCI failure stops further IO covered.
+The unchanged old tests also pass24 mapping/31 close/28 controller cases.
+
+Updated actual-RV32 owner suite9361 CLOSED0,stderr0:all3 widths/two math jobs
+each/exact64 documented-rounding outputs,complete L1/TLB restore,21 failure/
+no-retry/close cases,3 base-role+5 diagnostic-role refusals and correct79
+header-only compile. Largest656656B saved owner remains HEAP allocated;new
+native Control stack frame1072B,Free304B. Shader text identities unchanged.
+
+Driver-only build78285 CLOSED0. Complete build52443 CLOSED1 on GCC's
+misleading-indentation warning in new client;split the declaration onto its
+own line,NO warning/gate disabled. Final full SDK build66264 CLOSED0,stderr0:
+driver301cd00175c078b447a4204233ae04d5d30e897e888e8c4525189738e22a6189
+client0283070c764a5d992407bb5e06212cd82d75536bef37caa6cbd825f176618fe3
+default control2df0e0f8 unchanged;exact-SHA images+exports+NULL legacy gate pass.
+
+New client computes all fixed reference rows BEFORE device open and requires
+the96 frozen unique predictions previously independently checked by Fraction
+over229376 phase instructions. It validates the ACTUAL cleared metadata
+selectors,full RUN protocol/completion/NFB3-width marker,all64 exact words,
+accepted END/restoration,identical END words,close and stdout delivery. Failed
+RUN/numerics/protocol CLOSE ONLY;no next ioctl/END/query/retry/reset/fallback.
+Only after clean END prints the64 returned CPU words and distinct marker.
+Actual-client tests68683/90022 CLOSED0,stderr0:200 cases including3 positive
+widths,each64 RUN/END mutation,pre-open reference failure,metadata/control/
+CLI/output failures;3 runtime-role guards. Fake metadata executes ACTUAL
+DriverReloadControl,not the old incorrect echo fake. No model reference in Work.
+
+ONE new frozen stage:/boot/home/pioneer-native-bfp-band-20261104-a
+parentbbdff4cb8cdc68f16cbe702ccdb1a0af7644e08ad877bf61b9132ef55c29774d
+Requires prior accepted fixed-tile result,independent immutable full-K raw
+referencee16f4282,currentnormal041/gen4/cold0/owner0/full64/fullRAM,exact
+cached Assistant/admin/guard andunused outputs. Swaps to79/gen5,runs ONLY
+--fixed-k5120. All64 independent predictions,strict completion+clean END
+required before normal041/gen6 restoration. Any failed/unproven result
+stops without subsequent GPU/query/END/retry/reset/automatic restoration.
+Parent22124/50523 CLOSED0,stderr0:209 flow/output+9 idle+11 raw-reference/
+prior-provenance cases. Prelaunch review corrected old filename/state names
+left by initial scaffolding;new full prior-gate tests cover those exact names.
+
+Optional fresh-epoch restore2df63f768ccc30b51f5e0825c096753ee96f4528499482c54d8d0e9200a840ff
+requires separate authorized OFF/ON+Linux->Haiku boot,exact79/gen1/cold0/
+owner0 and failed stage identity;NOT current failed-owner cleanup or automatic.
+All7 new+7 prior+7 old fake-flow cases85099 CLOSED0. No power action here.
+
+Fresh CPU-only Pioneer admission01:24UTC:normal041/tag12/gen4,cold0/owner0/
+open1/guard1,64CPUs,maxRAM137034936320B,no Assistant/LLM/diagnostic owner.
+Lossless-cache fingerprint stillbb0e6070;cached model/binaries remain intact.
+Next:publish/stage exact tuple,one complete physical5120 parent through actual
+terminal. Then remaining widths,real cached model bands and on-card NoC/GDDR/
+cohort/state integration. This is NOT a host-per-projection Work architecture.
+Full-native27B/20tok/s remain UNMET;last tiny cached Work0.204tok/s NOT a
+matched speedup. Closed logs/SHA256SUMS retained in sibling directory.

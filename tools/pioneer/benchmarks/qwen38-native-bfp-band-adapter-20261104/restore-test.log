@@ -1,0 +1,1 @@
+PASS pioneer_native_bfp_band_recovery_restore.sh:7 fake flow cases;candidate epoch1/cold0/owner0 gate,first failure stops IO,one replacement/wait only,no GPU/old-owner cleanup/retry,spent marker retained

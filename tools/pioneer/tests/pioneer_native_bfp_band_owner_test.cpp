@@ -10,6 +10,11 @@
 using Lease=PioneerNativeBfpBandLease;
 using Data=PioneerNativeBfpBandFixture;
 using Band=PioneerQ38NativeBfpBand;
+using Layout=PioneerNativeBfpBandLayout;
+static_assert(Band::Weight==Layout::Weight && Band::Input==Layout::Input && Band::Output==Layout::Output
+	&& Band::WeightStride==Layout::WeightStride && Band::InputStride==Layout::InputStride
+	&& Band::WeightPayload==Layout::WeightPayload && Band::InputPayload==Layout::InputPayload
+	&& Band::WeightEnd(17408)==Layout::WeightEnd(17408) && Band::InputEnd(17408)==Layout::InputEnd(17408),"owner layout MUST match unchanged emitter");
 static std::map<unsigned,std::vector<uint8_t>> images;
 template<unsigned K>struct Image {
 	static constexpr unsigned Width=K,Phases=4;

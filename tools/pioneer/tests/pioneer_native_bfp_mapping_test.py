@@ -3,11 +3,14 @@
 import os
 import pathlib
 import subprocess
+import sys
 import tempfile
 if not __debug__:
     raise SystemExit('Assertions required')
 here = pathlib.Path(__file__).resolve().parent
-native = here.parents[2] / 'src/add-ons/kernel/drivers/misc/pioneer_native_bfp_driver.cpp'
+assert len(sys.argv)==1 or sys.argv[1:]==['--band']
+band = len(sys.argv)==2
+native = here.parents[2] / ('src/add-ons/kernel/drivers/misc/pioneer_native_bfp_band_driver.cpp' if band else 'src/add-ons/kernel/drivers/misc/pioneer_native_bfp_driver.cpp')
 text = native.read_text()
 first = text.index('\tbool Map() {', text.index('struct NativeIO:'))
 last = text.index('\tuint32 BfpRead(', first)
@@ -63,8 +66,20 @@ int main(){unsigned cases=0;
 }
 '''
 folder = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-native-bfp-mapping.'))
+if band:
+    prefix = prefix.replace('#include "PioneerNativeBfpLease.h"', '#include "PioneerNativeBfpBandLease.h"')
+    prefix = prefix.replace('bool invalid=false;\n', 'bool invalid=false;unsigned width;explicit IO(unsigned k=5120):width(k){}\n')
+    tests = tests.replace('{IO io;assert(io.Map()', 'for(unsigned width:{5120U,6144U,17408U}){IO io(width);assert(io.Map()', 1)
+    tests = tests.replace('PioneerNativeBfpLease::SavedWords', 'PioneerNativeBfpBandLease::SavedWords(width)')
+    tests = tests.replace('PioneerNativeBfpLease::Address(i)', 'PioneerNativeBfpBandLease::Address(width,i)')
+    tests = tests.replace('4096,4096,8192,16384,4096,4096,4096', '4096,4096,8192,0xa2000,4096,4096,4096')
+    tests = tests.replace('assert(io.Unmap() && maps.empty() && deleteCalls==15);assert(io.Unmap() && deleteCalls==15);cases++;',
+                          'assert(io.Unmap() && maps.empty() && deleteCalls==15);assert(io.Unmap() && deleteCalls==15);cases++;Reset();')
+    tests = tests.replace('printf("PASS ACTUAL NativeIO', '''for(unsigned k:{0U,32U,5119U,17409U,UINT32_MAX}){IO io(k);assert(!io.Map() && !mapCalls && !deleteCalls && !io.Pointer(0x6000) && io.invalid);cases++;Reset();}
+ printf("PASS ACTUAL full-K NativeIO''')
+    tests = tests.replace('all393216 aligned L1 addresses,exact3548 owned words', 'all1179648 aligned L1 addresses/across3 widths,exact50500/59972/164164 owned words')
 (folder / 'test.cpp').write_text(prefix + methods + tests)
 subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
-                '-fsanitize=address,undefined', '-I' + str(native.parent), str(folder / 'test.cpp'), '-o', str(folder / 'test')], check=True)
+                '-fsanitize=address,undefined', '-I' + str(native.parent), '-I' + str(here.parent), str(folder / 'test.cpp'), '-o', str(folder / 'test')], check=True)
 subprocess.run([str(folder / 'test')], check=True, env=dict(os.environ, ASAN_OPTIONS='quarantine_size_mb=32', UBSAN_OPTIONS='halt_on_error=1'))
 print('CPU-only actual mapping evidence:', folder)

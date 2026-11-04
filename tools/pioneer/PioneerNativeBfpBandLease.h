@@ -1,19 +1,22 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_NATIVE_BFP_BAND_LEASE_H
 #define PIONEER_NATIVE_BFP_BAND_LEASE_H
-#if defined(_KERNEL_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION)
+#if defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || (defined(_KERNEL_MODE) && !defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC))
 #error Full-K band lease is an offboard owner prototype,not an admitted driver/Work/validation path
+#endif
+#if defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010079ULL)
+#error Full-K kernel owner requires its explicit distinct diagnostic79 role
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/BlackholeDramSamplesProbe.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerNativeBfpProtocol.h"
 #include "PioneerNativeBfpBandFixture.h"
 // Separate NEW full-K/broadcast/four-fidelity lifecycle. Never accepts old
-// NFB1 completion or a runtime payload/code/address. IO is a fake/offboard
-// endpoint until a separately qualified concrete mapping/driver exists.
+// NFB1 completion or a runtime payload/code/address. Kernel compilation is
+// reserved for its distinct diagnostic79 adapter;never installed Work.
 // Allocate this0.66MB saved-state owner on the HEAP,not a kernel stack.
 // No destructor IO. UNKNOWN retains every saved span/TLB and never retries.
 class PioneerNativeBfpBandLease {
-	using B=PioneerQ38NativeBfpBand;
+	using B=PioneerNativeBfpBandLayout;
 	uint32_t saved[164164]={},tlb[2][3]={};
 	unsigned width=0;
 	bool attempted=false,owned=false,modified=false;

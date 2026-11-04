@@ -6,13 +6,14 @@ import sys
 import tempfile
 if not __debug__:
     raise SystemExit('Assertions required')
-assert len(sys.argv)==1 or (len(sys.argv)==2 and sys.argv[1]=='--documented')
-documented = len(sys.argv)==2
-name = 'pioneer_native_bfp8_documented_recovery_restore.sh' if documented else 'pioneer_native_bfp8_recovery_restore.sh'
+assert len(sys.argv)==1 or (len(sys.argv)==2 and sys.argv[1] in ('--documented', '--band'))
+documented = sys.argv[1:]==['--documented']
+band = sys.argv[1:]==['--band']
+name = 'pioneer_native_bfp_band_recovery_restore.sh' if band else 'pioneer_native_bfp8_documented_recovery_restore.sh' if documented else 'pioneer_native_bfp8_recovery_restore.sh'
 source = (pathlib.Path(__file__).resolve().parent.parent / name).read_text()
-assert 'metadata 2026110300010078 1' in source and 'cold0 active_owner0' in source
-assert ('UNPROVEN_DOCUMENTED_BFP8_NO_END_RESET_RETRY_RESTORE' if documented else 'UNPROVEN_FIXED_BFP8_NO_END_RESET_RETRY_RESTORE') in source
-assert ('307a0909b52a65bd2898f14ada0117227e404b14e356f276d4ef2ce6ba13441d' if documented else 'a9e13ea83c7bee6724d560a8ade4eda862360885eae8f8560567a6e4e178f822') in source
+assert ('metadata 2026110400010079 1' if band else 'metadata 2026110300010078 1') in source and 'cold0 active_owner0' in source
+assert ('UNPROVEN_FULL_K5120_BFP8_NO_END_RESET_RETRY_RESTORE' if band else 'UNPROVEN_DOCUMENTED_BFP8_NO_END_RESET_RETRY_RESTORE' if documented else 'UNPROVEN_FIXED_BFP8_NO_END_RESET_RETRY_RESTORE') in source
+assert ('bbdff4cb8cdc68f16cbe702ccdb1a0af7644e08ad877bf61b9132ef55c29774d' if band else '307a0909b52a65bd2898f14ada0117227e404b14e356f276d4ef2ce6ba13441d' if documented else 'a9e13ea83c7bee6724d560a8ade4eda862360885eae8f8560567a6e4e178f822') in source
 flow = source.split('# NATIVE_BFP8_FRESH_RESTORE_FLOW_BEGIN\n', 1)[1].split('# NATIVE_BFP8_FRESH_RESTORE_FLOW_END')[0]
 temporary = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-bfp8-fresh-restore.'))
 prefix = '''set -eu

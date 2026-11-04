@@ -1,0 +1,2 @@
+PASS ACTUAL full-K NativeIO VM/range methods:31 cases;all1179648 aligned L1 addresses/across3 widths,exact50500/59972/164164 owned words/physical offsets/protections;7 partial native-map failures/15 fail-first disposals retain remaining views;CPU fixture teardown only,NO physical proof
+CPU-only actual mapping evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-mapping.48izkkv3

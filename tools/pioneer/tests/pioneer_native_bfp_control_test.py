@@ -3,11 +3,14 @@
 import os
 import pathlib
 import subprocess
+import sys
 import tempfile
 if not __debug__:
     raise SystemExit('Assertions required')
 here = pathlib.Path(__file__).resolve().parent
-native = here.parents[2] / 'src/add-ons/kernel/drivers/misc/pioneer_native_bfp_driver.cpp'
+assert len(sys.argv)==1 or sys.argv[1:]==['--band']
+band = len(sys.argv)==2
+native = here.parents[2] / ('src/add-ons/kernel/drivers/misc/pioneer_native_bfp_band_driver.cpp' if band else 'src/add-ons/kernel/drivers/misc/pioneer_native_bfp_driver.cpp')
 source = native.read_text()
 def extract(a, b):
     start = source.index(a)
@@ -139,8 +142,27 @@ int main(){unsigned cases=0;
 }
 '''
 folder = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-native-bfp-control.'))
+if band:
+    prefix = prefix.replace('#include "PioneerNativeBfpProtocol.h"', '#include "PioneerNativeBfpBandProtocol.h"\n#include "PioneerNativeBfpBandLayout.h"')
+    prefix = prefix.replace('struct PioneerNativeBfpGeneratedImage{};', 'template<unsigned K>struct PioneerNativeBfpBandGeneratedImage{static constexpr unsigned Width=K;};')
+    prefix = prefix.replace('bool Run(A&,int&,unsigned){runs++;', 'bool Run(A&,int&,unsigned k){assert(B::Width==k);runs++;')
+    prefix = prefix.replace('->bits=8', '->bits=6144')
+    tests = tests.replace('unsigned bits=4', 'unsigned bits=5120').replace('end.bits=8', 'end.bits=6144').replace('owner->bits==4 && r.bits==4', 'owner->bits==5120 && r.bits==5120')
+    prefix = prefix.replace('PioneerNativeBfpRequest', 'PioneerNativeBfpBandRequest')
+    tests = tests.replace('PioneerNativeBfpRequest', 'PioneerNativeBfpBandRequest').replace('PioneerNativeBfpTag', 'PioneerNativeBfpBandTag')
+    for old, new in (('PIONEER_NATIVE_BFP_SUPPORT', 'PIONEER_NATIVE_BFP_BAND_SUPPORT'), ('PIONEER_NATIVE_BFP_RUN', 'PIONEER_NATIVE_BFP_BAND_RUN'), ('PIONEER_NATIVE_BFP_END', 'PIONEER_NATIVE_BFP_BAND_END')):
+        tests = tests.replace(old, new)
+    prefix = prefix.replace('bits', 'width')
+    tests = tests.replace('bits', 'width')
+    tests = tests.replace('printf("PASS ACTUAL native BFP', '''for(unsigned width:{5120U,6144U,17408U}){
+  Reset();auto* c=Cookie();auto r=Request(width);assert(!Control(c,PIONEER_NATIVE_BFP_BAND_RUN,&r,sizeof(r)) && owner && owner->width==width);
+  auto end=Request(width);end.accept=1;end.nonce=1;assert(!Control(c,PIONEER_NATIVE_BFP_BAND_END,&end,sizeof(end)) && !owner && ends==1);assert(!Free(c));Reset();cases++;
+ }
+ {Reset();auto* c=Cookie();auto r=Request();assert(Control(c,PIONEER_NATIVE_BFP_RUN,&r,sizeof(r))==B_NOT_ALLOWED && !copyCalls && !reserves);FinishFixture(c);cases++;}
+ printf("PASS ACTUAL full-K native BFP''')
+    prefix = prefix.replace('#include <new>', '#include <new>\n#include <initializer_list>')
 (folder / 'test.cpp').write_text(prefix + code + tests)
 subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
-                '-fsanitize=address,undefined', '-I' + str(native.parent), str(folder / 'test.cpp'), '-o', str(folder / 'test')], check=True)
+                '-fsanitize=address,undefined', '-I' + str(native.parent), '-I' + str(here.parent), str(folder / 'test.cpp'), '-o', str(folder / 'test')], check=True)
 subprocess.run([str(folder / 'test')], check=True, env=dict(os.environ, ASAN_OPTIONS='quarantine_size_mb=32', UBSAN_OPTIONS='halt_on_error=1'))
 print('CPU-only actual controller evidence:', folder)

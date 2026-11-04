@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_NATIVE_BFP_BAND_FIXTURE_H
 #define PIONEER_NATIVE_BFP_BAND_FIXTURE_H
-#include "PioneerQ38NativeBfpBand.h"
+#include "PioneerNativeBfpBandLayout.h"
 // Fixed synthetic DATA for the NEW full-width owner diagnostic. Identical
 // n/128 weights and BF16 inputs to the independent full-band image fixtures;
 // no user data,model,CPU learned product,address or allocation capability.
@@ -20,7 +20,7 @@ struct PioneerNativeBfpBandFixture {
 		return uint16_t(0x3f00+(column*13+tile*7)%256+((column&3)==2?0x8000:0));
 	}
 	static uint32_t Word(unsigned width,unsigned address) {
-		using B=PioneerQ38NativeBfpBand;
+		using B=PioneerNativeBfpBandLayout;
 		if(!B::Width(width) || (address&3))return 0;
 		if(address>=B::Weight-16 && address<B::WeightEnd(width)) {
 			const unsigned relative=address-(B::Weight-16),tile=relative/B::WeightStride,within=relative%B::WeightStride;
