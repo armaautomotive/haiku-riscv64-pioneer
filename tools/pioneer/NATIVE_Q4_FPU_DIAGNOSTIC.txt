@@ -1,0 +1,78 @@
+Diagnostic85:compressed-Q4/SFPU/BF16/FPU native ownership -- OFFBOARD qualified
+===========================================================================
+This is a SEPARATE fixed diagnostic,not a Work mode or full-model driver.
+Do not install/run it based only on the offboard checks below. A new frozen
+client/one-shot physical parent and independent admission are still required.
+Existing spent81/82/83/84 stages MUST NOT be reused. Assistant stays unchanged.
+
+Purpose
+-------
+Q4_FPU_PIPELINE.txt defines the new complete32-output/K256 on-card decode and
+four-phase FPU image. Diagnostic85 supplies a checked native owner for that
+7036B image,not the old expanded-BFP8 weight path. No CPU preparation or
+reference arithmetic is compiled into the driver. The CPU-only exporter
+authenticates the SAME open complete original GGUF before selecting three
+fixed32-row Q4 blocks from tensor7:rows0/8704/17376,K blocks0/10/19.
+Inputs are diagnostic BF16 vectors,NOT real prompt hidden states.
+
+Protocol and ownership
+----------------------
+PioneerNativeQ4FpuProtocol.h:tag2026110400010085,role85,opcodes SUPPORT/RUN/END
+at B_DEVICE_OP_CODES_END+0x8100.376B pointer-free request;all336 result bytes
+must start zero. RUN accepts only sample0..2,not code/weights/address/routes/
+GDDR/reset/model parameters. END requires exact nonce/accept/same sample,
+FD/thread/team/generation/semaphore/reservation/PCI identity and actual VM
+views. Wrong-thread END is rejected BEFORE mutating the existing lease.
+The inert legacy hook is NULL. Old roles,Work,CPU reference and fast-math
+builds refuse. Reload status/quiesce retain their normal guarded interface.
+
+The49488B L1 journal lives on the owner's heap. It covers boot,full8KiB ROM,
+full8KiB stack,every raw/metadata/input header and gap,zero buffer,outputs and
+status. The data layout maps every6144 prepared and512 input byte once.
+No GDDR primitive,NIU write primitive or writable NIU mapping exists here.
+All16 actual views have checked identity/length/pointer/permissions;every
+native access rechecks ownership,views and PCI identity. Two selected TLB
+slots may address only this fixed L1/control target or the held-core scan.
+
+Lifecycle
+---------
+Before RUN:route-only prerequisite/NIU idle proof,isolated ARC clock lease,
+all120 cores held,save/verify full L1/TLB journal;stage ROM/data/status and
+verify everything,BOOT LAST. Reset sequence87ffff->46800 is attempted once.
+QFP1/04000100/known park PC and unchanged NIU counters must agree;only then
+are64 finite output words readable. Wrong marker/PC/counter/timeout is UNKNOWN.
+
+Known RESULT permits explicit END only. Hold once;verify all immutable code/
+payload/header/gap/zero bytes AND captured outputs BEFORE restoring evidence.
+Restore/verify full L1 (BOOT LAST),verify NIU commands/counters UNCHANGED
+(never rewind counters),restore TLB,leave ARC clock and reverify TLB after
+clock exit. Then close all16 views,restore PCI BAR/bridge state in checked
+order and unreserve. Failure at any point retains journals/reservation/views,
+sets cold-recovery-required and performs NO next IO,implicit END,destructor
+cleanup,retry/reset or rollback. FD close is not recovery.
+
+Private build,not deployment
+----------------------------
+Compile pioneer_native_q4_fpu_export.cpp with PioneerModelWeightCache.cpp,
+strict -ffp-contract=off/Werror. Run ORIGINAL_GGUF EMPTY_OWNED_0700_DIRECTORY.
+Every generated file is new O_EXCL/O_NOFOLLOW0600. NEVER publish the original,
+prepared bytes,private generated headers,objects or weight-containing driver.
+The two generated headers are pinned by SHA in the builder/test driver;
+partial/modified/wrong-role data cannot silently select another source.
+
+  python3 tools/pioneer/build_native_q4_fpu_diagnostic.py HAIKU_BUILD \
+    PRIVATE_EXPORT NEW_ABSOLUTE_BUILD_DIRECTORY
+  python3 tools/pioneer/tests/run_pioneer_native_q4_fpu_tests.py HAIKU_BUILD \
+    PRIVATE_EXPORT NEW_ABSOLUTE_QUALIFICATION_DIRECTORY
+
+The consolidated runner requires actual exit0 AND stderr0 for every child,
+stores full non-weight outputs,checks source identities before/after and
+NEVER opens/stages/runs/reloads a device. Actual-method OS/PCI fixtures are
+not prerequisite/ARC/native hardware proofs. Canonical L1 RV32 co-simulation
+is not physical execution or a real-generation benchmark.
+
+See benchmarks/qwen38-native-q4-fpu-offboard-20261104.txt for closed main and
+clean reproduction evidence. Remaining:client/parent+physical qualification,
+on-card full-K GDDR streaming without host round trips/per-block clears,
+Q6/Q8/cohort/attention/recurrent-state integration,full-model quality and
+matched real inference. Full-native27B/20tokens/sec remain UNMET.

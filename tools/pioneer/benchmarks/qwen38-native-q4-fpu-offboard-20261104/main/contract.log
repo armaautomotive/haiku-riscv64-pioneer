@@ -1,0 +1,1 @@
+PASS diagnostic85 DATA contract:12372 unique journal words,all6144 prepared+512 input bytes exactly once,no header/gap aliases,410 dirty-result/tag/version/reserved/generation refusals;NO IO/native ownership authority

@@ -1,0 +1,4 @@
+PASS PRIVATE real-header/actual-RV32 lease sample0 tensor7 first0 kblock0 all64 words exact;whole49488B/TLB/unchanged NIU/clock restored;NO native-IO/hardware/quality/speed proof
+PASS PRIVATE real-header/actual-RV32 lease sample1 tensor7 first8704 kblock10 all64 words exact;whole49488B/TLB/unchanged NIU/clock restored;NO native-IO/hardware/quality/speed proof
+PASS PRIVATE real-header/actual-RV32 lease sample2 tensor7 first17376 kblock19 all64 words exact;whole49488B/TLB/unchanged NIU/clock restored;NO native-IO/hardware/quality/speed proof
+PASS PRIVATE actual compiled diagnostic85 image+header staging/co-simulation192 exact words;NOT physical execution,full-K/model quality or performance authority

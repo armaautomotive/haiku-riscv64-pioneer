@@ -1,0 +1,95 @@
+Diagnostic85 actual native owner/SDK/real-header RV32 lifecycle:OFFBOARD
+=====================================================================
+2026-11-04 UTC. New guarded native driver for the existing7036B packed-Q4
+on-card decode/FPU pipeline. NOT a physical trial,full-K/model inference,
+quality acceptance or speed result. No Pioneer commands/device/driver/
+Assistant/kernel/network/power/SD/hardware changes in this goal turn.
+Normal working installation is deliberately untouched. Target20tok/s UNMET.
+
+Sources:see NATIVE_Q4_FPU_DIAGNOSTIC.txt and the14-file source-SHA receipts.
+New diagnostic85/tag2026110400010085/opcode8100,QFP1 marker/count04000100.
+No runtime code/operands/address/GDDR/reset/Work endpoint. Heap49488B full
+L1 snapshot including all payload/header/gap/zero/ROM/stack/status/output.
+No native GDDR/NIU write method;no writable NIU view.16 actual checked views.
+Same FD/thread/team/generation/semaphore/reservation/PCI identity required.
+Failure stops IO and retains the complete owner;no implicit END/cleanup/retry.
+Explicit successful END checks immutable staged bytes BEFORE overwriting,
+restores full L1/TLB/clock/PCI and verifies NIU counters,never rewinds them.
+
+Actual private original export CLOSED0,tool53159. Complete SAME-open original
+18973870528B full SHA authenticated,epoch stable before and after:
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+Tensor7 gate Q4,rows0/8704/17376,K blocks0/10/19. Each32x256 uses6144B
+prepared weights+512B diagnostic BF16 input. No host learned products in the
+driver;reference exists only in exporter/CPU tests. Private original and
+derived files stay under0700 directories,0600 single-link files,NEVER Git.
+Generated data header SHA8e4c2dfa81b436ffc79e6719c41a4090c4ae2501bf1a1f17f53f5759cd5c548b
+Metadata header SHAd075e5a9e313e221ed626c563d7dd861d50c9334ca96ca7f54255be6193787c9
+Independent Python Fraction tests separately reconstruct ALL6144 prepared
+bytes/sample,original24576 weights,6144 rounded phase predictions and96
+expected words for192 two-job outputs. No CXX codec/preparer/FPU oracle shared.
+These are diagnostic vectors,NOT prompt states or full-model quality.
+
+Authoritative final CLOSED suites
+---------------------------------
+Main final tool20727 CLOSED0,clean final tool34464 CLOSED0;all8 children per suite have
+actual exit0 AND stderr0. Complete non-weight receipts in sibling main/clean
+directories;PRIVATE binaries/headers/weight files are deliberately excluded.
+Private main base:/private/tmp/pioneer-native-q4-owner-20261104.93g4kPlq
+Fresh HEADa530484852 archive +ONLY the14 new code/test overlays:
+ /private/tmp/pioneer-native-q4-clean-20261104.9xUey9zY
+Dirty llama.cpp/NATIVE_BUILD_STATUS/FlashNext/WIP are not build inputs.
+
+SDK:actual complete native RISC-V Haiku driver/all methods LINK with no
+undefined symbols;18 forbidden-role preprocessing refusals and2 actual full
+driver template refusals (wrong image role/wrong private data role). Legacy
+entry disassembly is NULL. Default43 control stays2df0e0f8... unchanged.
+Main AND clean native binary SHA are byte-identical:
+ 2422587c9d72fab71cb77f940823017f30e84f1136af859a2df110115d310935
+Image7036B SHA7e3efc36b1447a3880081caf899175a87378f894ea684d7623572625242e04d4
+Boot4B SHAd47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd
+Actual main/clean image cmp0. Stack-usage records place49488B journal on heap;
+top control frame720B,Run192B,End128B (individual static frames,not a measured
+whole-call-chain high-water bound). RV32 stack unchanged96B/touched84B.
+
+ASan/UBSan/Werror/ffp-contract=off tests:
+ - DATA ABI:12372 unique journal addresses,all6144 prepared+512 input bytes
+   map once,no header/gap aliases;410 dirty-result/tag/version/reserved/
+   generation refusals. Exact old78..84/86 tag values,not decimal suffixes.
+ - Lease:3 synthetic samples/actual compiled RV32/all64 outputs exact;full
+   canonical1.5MiB L1 equals original after restoring49488B owned journal;
+   TLB/unchanged NIU/clock close;repeatRun/End/Abandon perform no IO.
+ -24 deliberate failure/no-retry/no-END/retained-journal cases:TLB/stage/reset
+   drops,timeout/marker/PC/source/counter/scope/clock failures,immutable ROM/
+   raw header/metadata/zero/gap/output corruption,old count and clock-exit
+   TLB damage. These are explicit IO fixtures,not hardware fault injection.
+ - Real PRIVATE generated headers +actual staged compiled image +same
+   canonical L1 operand/code/status/stack observer:3 samples/all192 returned
+   words exact vs independently Fraction-qualified predictions;whole journal/
+   TLB/unchanged NIU/clock restored. No separate normalized operand copy.
+ - Actual Native.inc/control bodies over OS/PCI fixtures:279 valid cases,
+   610 refusals;all16 view identities/permissions/lengths,FD/thread/team/
+   generation/lock/PCI invariants,wrong-thread END before mutation,all map/
+   PCI/unreserve failure stops,phase/reset/TLB/clock gates and authentic
+   lease/proof/backing pointer binding. Prerequisite proof is NOT fabricated.
+
+Development failures are retained as failures
+--------------------------------------------
+First full SDK build11906 CLOSED1 on3 misleading-indentation Werror failures.
+The statements were separated,not suppressed or accepted with weaker flags.
+First clean attempt started before archive87134 was terminal and CLOSED1 on
+the not-yet-extracted rational helper;it is NOT a clean-test pass. Archive
+then actually CLOSED0 and helper existence was checked. Fresh qualification-
+clean-r2 ran independently to CLOSED0. Final suites also reran after removing
+three extra EOF blank lines found by the staged whitespace check;their
+source receipts bind the exact final14 code/test files. Failed output paths remain unchanged.
+No observation timeout restarted a live test,hardware trial or driver.
+
+Next:implement and qualify a separately frozen source-authenticating client/
+one-shot physical parent for85,then one admitted physical execution/restoration.
+Do not use old spent81/82/83/84 stages or stage this binary from unit tests.
+After physical arithmetic qualification:full-K ON-CARD GDDR streaming without
+host block loops/round trips/per-block Dst clears,other formats/all workers,
+attention/recurrent state/full-model quality/real generation/Assistant promotion.
+Last real cached27B tiny sample remains0.204tok/s;NOT a matched speedup and
+NOT full-native inference. This turn makes NO new tokens/sec claim.

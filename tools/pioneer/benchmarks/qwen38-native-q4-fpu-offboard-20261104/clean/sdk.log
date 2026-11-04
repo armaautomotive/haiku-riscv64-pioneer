@@ -1,0 +1,10 @@
+PASS PRIVATE export sample0 all32 Fraction predictions/exact6144B recipe/header/input;shab0b72d329d0065085d9d1e84200e2983054c0ad7a6a8cf74c0422dd1b6c26c3b
+PASS PRIVATE export sample1 all32 Fraction predictions/exact6144B recipe/header/input;shac3ea751612aa0cd762b6dd6cffc04e846ce8f7ff94ddb6cd7f53f863688a087d
+PASS PRIVATE export sample2 all32 Fraction predictions/exact6144B recipe/header/input;sha08161964beb37753b91151304e0292390ff3f2bce3f6d874f8054f70f7161828
+PASS PRIVATE independent Fraction export:24576 original weights,6144 phase predictions,96 predictions for192 two-job words;NO CXX codec/preparer/FPU oracle shared;NOT original-authentication/native/hardware/quality/speed authority
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+7e3efc36b1447a3880081caf899175a87378f894ea684d7623572625242e04d4 7036 text.bin
+OFFBOARD_Q4_FPU_BLOCK_BUILD_ONLY;NEW marker/layout/8KiB image;NO native owner/stage/driver/hardware/quality/speed authority
+2422587c9d72fab71cb77f940823017f30e84f1136af859a2df110115d310935 tenstorrent_pci_probe-native-q4-fpu85
+2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc tenstorrent_pci_probe-default43-control
+PASS BUILD_ONLY actual native85 driver/all methods LINKED,18 role refusals,actual wrong-image/wrong-data refusals,legacy NULL/control unchanged;PRIVATE headers unchanged;NO stage/open/hardware/full-model/speed authority

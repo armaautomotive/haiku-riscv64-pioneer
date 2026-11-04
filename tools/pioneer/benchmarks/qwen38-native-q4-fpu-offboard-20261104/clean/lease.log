@@ -1,0 +1,4 @@
+PASS OFFBOARD Q4 lease sample0:actual RV32/all64 exact,49488B whole L1/TLB/unchanged NIU/clock closure;NO native PCI/VM/FD or hardware/quality/speed proof
+PASS OFFBOARD Q4 lease sample1:actual RV32/all64 exact,49488B whole L1/TLB/unchanged NIU/clock closure;NO native PCI/VM/FD or hardware/quality/speed proof
+PASS OFFBOARD Q4 lease sample2:actual RV32/all64 exact,49488B whole L1/TLB/unchanged NIU/clock closure;NO native PCI/VM/FD or hardware/quality/speed proof
+PASS OFFBOARD Q4 lease:24 failure/no-retry/no-END/retained-journal cases;NO GDDR/NIU write methods,all actual scalar/unpack operand accesses share canonical L1;NOT native authorization
