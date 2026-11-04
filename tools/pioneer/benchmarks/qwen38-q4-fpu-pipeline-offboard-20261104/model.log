@@ -1,0 +1,29 @@
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor7 width5120 first0 kblock0 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor7 width5120 first0 kblock10 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor7 width5120 first0 kblock19 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor7 width5120 first8704 kblock0 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor7 width5120 first8704 kblock10 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor7 width5120 first8704 kblock19 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor7 width5120 first17376 kblock0 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor7 width5120 first17376 kblock10 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor7 width5120 first17376 kblock19 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor8 width5120 first0 kblock0 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor8 width5120 first0 kblock10 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor8 width5120 first0 kblock19 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor8 width5120 first8704 kblock0 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor8 width5120 first8704 kblock10 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor8 width5120 first8704 kblock19 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor8 width5120 first17376 kblock0 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor8 width5120 first17376 kblock10 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor8 width5120 first17376 kblock19 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor6 width17408 first0 kblock0 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor6 width17408 first0 kblock34 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor6 width17408 first0 kblock67 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor6 width17408 first2560 kblock0 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor6 width17408 first2560 kblock34 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor6 width17408 first2560 kblock67 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor6 width17408 first5088 kblock0 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor6 width17408 first5088 kblock34 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_BLOCK tensor6 width17408 first5088 kblock67 two_jobs/all64_words exact;diagnostic BF16 input,NOT real tokens/quality/speed
+PASS_PRIVATE_ACTUAL_Q4_FPU_PIPELINE cases27 jobs54 result_words1728 weights221184,same-open full original SHA/epoch;NO source/converted weights/results printed/saved,NO device/native/model-quality/speed proof
+PRIVATE read-only actual Q4 pipeline observer retained: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q4-fpu-block-model.f11EXvgT

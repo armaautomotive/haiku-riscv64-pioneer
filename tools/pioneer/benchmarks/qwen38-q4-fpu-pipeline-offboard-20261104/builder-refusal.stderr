@@ -1,0 +1,2 @@
+usage: build_q38_q4_fpu_block.py [-h] --direct haiku_build output
+build_q38_q4_fpu_block.py: error: the following arguments are required: --direct

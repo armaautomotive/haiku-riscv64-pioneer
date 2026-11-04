@@ -1,8 +1,9 @@
 Compressed Q4 -> fast FPU operand prerequisite
 ============================================
 
-PioneerQ38Q4FpuDecode.h is a NEW OFFBOARD instruction producer. It is not
-selected by any image, driver, installed Assistant or Work mode. The existing
+PioneerQ38Q4FpuDecode.h is a NEW OFFBOARD instruction producer. Only the new
+Q4 FPU block prototype selects it;no accepted native owner,installed driver,
+Assistant or Work mode does. The existing
 lossless disk cache and its original quantized bytes remain unchanged.
 
 Why this path
@@ -12,8 +13,9 @@ That has a capacity and batch-one weight-traffic cost (see
 NATIVE_BFP8_WEIGHT_CACHE.txt). This candidate instead decodes small original
 Q4 groups ON THE CARD into transient BF16 operands for the fast matrix unit.
 It does not store an expanded model in GDDR or require CPU learned products.
-The decoder is implemented here; its source-load/FPU pipeline is NOT yet built
-or qualified. No theoretical or measured tokens/sec is implied.
+The decoder is implemented here;the separate K256 source-load/FPU pipeline is
+now OFFBOARD-qualified (Q4_FPU_PIPELINE.txt),not physically/native qualified.
+No theoretical or measured tokens/sec is implied.
 
 Exact register contract
 -----------------------

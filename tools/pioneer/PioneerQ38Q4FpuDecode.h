@@ -43,7 +43,9 @@ template<class E> static inline void PioneerQ38Q4FpuRound(E& e)
 	PioneerSfpuAnd(e,0,0,7);
 }
 // Fresh0 is an original unsigned packed byte0..255, NOT native BFP4
-// sign-magnitude. Input1/2 must come from Prepare for THIS nibble's group.
+// sign-magnitude. Input1/2 must equal Prepare's EXACT bits for THIS
+// nibble's group. The separate Q4FpuBlock metadata recipe establishes
+// that same coefficient/negative-product contract without a runtime CAST.
 // A finite FP16 significand has <=11 bits. scale<=63 and q<=15 give
 // <=21 significant bits: d*scale*q is EXACT in FP32. Therefore the fused
 // multiply-subtract below removes NO original product rounding point.

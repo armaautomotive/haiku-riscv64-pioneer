@@ -1,0 +1,69 @@
+
+Discarded input sections
+
+ .text          0x00000000        0x0 /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/start.o
+ .data          0x00000000        0x0 /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/start.o
+ .bss           0x00000000        0x0 /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/start.o
+ .riscv.attributes
+                0x00000000       0x1a /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/start.o
+ .text          0x00000000        0x0 /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/program.o
+ .data          0x00000000        0x0 /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/program.o
+ .bss           0x00000000        0x0 /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/program.o
+ .comment       0x00000000       0x13 /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/program.o
+ .riscv.attributes
+                0x00000000       0x1c /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/program.o
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+
+.boot           0x00006000        0x4
+ *(.boot)
+ .boot          0x00006000        0x4 /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/start.o
+                0x00006000                _start
+
+.text           0x00070000     0x275c
+ *(.text.start)
+ .text.start    0x00070000       0x60 /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/start.o
+                0x00070000                q4_fpu_block_entry
+                0x0007000c                q4_fpu_block_done
+                0x00070038                q4_fpu_block_park
+                0x00070040                q4_fpu_block_fault
+                0x00070058                q4_fpu_block_fault_park
+ *(.text .text.*)
+ .text._ZN20PioneerQ38Q4FpuBlock10HalfDecodeILj1ELj2ELb0EN12_GLOBAL__N_17EmitterEEEvRT2_.isra.0
+                0x00070060      0x30c /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/program.o
+ .text._ZN20PioneerQ38Q4FpuBlock10HalfDecodeILj0ELj0ELb1EN12_GLOBAL__N_17EmitterEEEvRT2_.isra.0
+                0x0007036c      0x308 /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/program.o
+ .text._ZN20PioneerQ38Q4FpuBlock10HalfDecodeILj1ELj0ELb1EN12_GLOBAL__N_17EmitterEEEvRT2_.isra.0
+                0x00070674      0x30c /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/program.o
+ .text._ZN20PioneerQ38Q4FpuBlock10HalfDecodeILj0ELj0ELb0EN12_GLOBAL__N_17EmitterEEEvRT2_.isra.0
+                0x00070980      0x308 /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/program.o
+ .text._ZN20PioneerQ38Q4FpuBlock10HalfDecodeILj0ELj2ELb1EN12_GLOBAL__N_17EmitterEEEvRT2_.isra.0
+                0x00070c88      0x30c /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/program.o
+ .text._ZN20PioneerQ38Q4FpuBlock10HalfDecodeILj1ELj2ELb1EN12_GLOBAL__N_17EmitterEEEvRT2_.isra.0
+                0x00070f94      0x30c /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/program.o
+ .text._ZN20PioneerQ38Q4FpuBlock10HalfDecodeILj0ELj2ELb0EN12_GLOBAL__N_17EmitterEEEvRT2_.isra.0
+                0x000712a0      0x30c /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/program.o
+ .text._ZN20PioneerQ38Q4FpuBlock10HalfDecodeILj1ELj0ELb0EN12_GLOBAL__N_17EmitterEEEvRT2_.isra.0
+                0x000715ac      0x30c /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/program.o
+ .text.q4_fpu_block_main
+                0x000718b8      0xea4 /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/program.o
+                0x000718b8                q4_fpu_block_main
+ *(.rodata .rodata.*)
+
+/DISCARD/
+ *(.riscv.attributes)
+ *(.comment)
+ *(.eh_frame*)
+                0x00000001                        ASSERT ((SIZEOF (.boot) == 0x4), Q4 pipeline boot must be one word)
+                0x00000000                        ASSERT ((SIZEOF (.text) <= 0x2000), Q4 pipeline exceeds its NEW private8KiB ROM)
+                0x00000001                        ASSERT ((q4_fpu_block_park < 0x72000), completion outside private ROM)
+                0x00000001                        ASSERT ((q4_fpu_block_fault_park < 0x72000), fault park outside private ROM)
+LOAD /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/start.o
+LOAD /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/program.o
+OUTPUT(/private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH/mmio/program.elf elf32-littleriscv)

@@ -1,0 +1,97 @@
+Complete compressed-Q4/SFPU/BF16/MOVD2A/fast-FPU K256 pipeline:OFFBOARD
+====================================================================
+2026-11-04 UTC. A NEW complete32-output/K256 block path,all8 Q4 groups,
+all4 matrix fidelity phases,two complete jobs. NOT a native driver/lease,
+hardware trial,full-K/full-model inference,quality acceptance or speed result.
+Assistant/normal041/cache/CPU/RAM/kernel/boot unchanged. No Pioneer command,
+driver/device/power/network/SD/hardware operation in this work turn.
+Full-native27B and20tokens/sec remain UNMET;no new tokens/sec is measured.
+
+Source and exact image
+----------------------
+PioneerQ38Q4FpuBlock.h integrates actual metadata/raw UNPACK-to-Dst loads,
+SFPTRANSP coefficient broadcast,exact BF16-RNE decode,FP32 SFPSTORE,
+MOVD2A publication,all4 MVMUL phases/bank releases and real full drains.
+One Dst clear per complete K256 job,not per32-K group. All scalar payload
+reads/writes are forbidden by the actual-image observer. New private L1
+layout and QFP1/QFPE completion/fault markers cannot authorize old owners.
+No NoC/GDDR loader is hidden in this producer;data must already be owned L1.
+
+NEW CPU preparation recipe:6144B=4096 unchanged packed original quant bytes
++2048 exact FP32 coefficient/negative-minimum bytes. Original Q4 is4608B;
+native BFP8 would be8704B for the same8192 weights. No global BF16 weight
+copy,new whole-model cache,capacity/fragmentation/route claim or promotion.
+The helper's numeric input contract now explicitly permits this exact
+prepared-coefficient equivalence. Decoder instruction words are unchanged.
+
+Fixed8KiB direct image7036B SHA:
+ 7e3efc36b1447a3880081caf899175a87378f894ea684d7623572625242e04d4
+Boot4B SHA:
+ d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd
+Actual strict unchanged RV32I Step executes the whole compiled image.
+Private8KiB ABI stack:maximum allocation96B/touched84B,16-byte alignment.
+No scalar metadata/weight/input/GDDR/NoC/host access. Result reads only after
+known-clean complete jobs;unknown completion parks without next-group/read/
+retry/reset. Code/stack/resource/numeric bounds are NOT loosened to pass.
+
+Closed tests,ASan/UBSan/Werror/ffp-contract=off
+---------------------------------------------
+Raw complete non-weight outputs/exit records in sibling directory. Private:
+ /private/tmp/pioneer-q4-fpu-block-20261104.OiiJqJCH
+Main final suite21576 CLOSED0;clean suite36486 CLOSED0;strictstderr0.
+ 524288 unchanged quant-byte checks;65536 exact FP32 metadata-field checks;
+ subnormal half scales/signed zeros;256 NaN/Inf atomic refusals and bounds.
+ Emitted pipeline:8 two-job trials/16 jobs,all32 outputs exact/bank returns.
+ Actual compiled image:5 two-job trials/all64 output words exact,including
+ tiny half scales and deliberately nonzero DEFINED metadata padding.
+ 13 controls:config/initial/final completion faults;missing A/B producer,
+ missing physical initialization/MOVD2A;all4 omitted fidelity terms;
+ missing transpose/corrupt metadata. Unknowns refuse before outputs;numeric
+ corruptions cannot match unchanged original-decode/BF16/rounded references.
+ Independent Python Fraction check:all64 actual compiled-image words,
+ 2048 rounded phase predictions,8192 original synthetic weights;no CXX
+ codec/SFPU/FPU oracle shared. Old arithmetic characterization also runs.
+ Kernel/Work/CPU-validation compile gates refuse this unqualified path.
+ Fresh HEAD dependency archive plus ONLY this work's source overlays
+ independently reproduces the suite and exact7036B image (actual cmp0).
+ Dirty llama.cpp/NATIVE_BUILD_STATUS/FlashNext/WIP are not build inputs.
+ Actual hosted Haiku RISC-V SDK data-producer test TU compiles O2/Werror/
+ no-exceptions/no-RTTI;object SHA:
+ f4d013ca480b2591bcbd90c460f14a5555a9f9d76a01721d69b46b98393e7409
+ This is OBJECT compilation,not hosted linking/run/native driver proof.
+
+PRIVATE original-model actual-image observer -- not real tokens
+--------------------------------------------------------------
+Main5717 CLOSED0;independent clean8870 CLOSED0;strictstderr0. Same-open FULL
+18973870528B original SHA authenticated before selected blocks,source epoch/
+identity stable throughout:
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+Tensors7/8/6 (layer0 gate/up/down),first/middle/last32-row bands and first/
+middle/last256-K block of each.27 cases,54 complete jobs,1728 returned words,
+221184 original weights match canonical Q4 decode -> BF16-RNE -> rounded
+four-phase matrix reference. Diagnostic BF16 vectors,NOT prompt hidden states.
+No original/converted weights or private numeric results are printed/saved.
+Not all193 Q4 matrices,full-width accumulations/full-model quality or hardware.
+
+Development failures retained as failures
+-----------------------------------------
+First data preparation used negative integer factor for minimum0,which lost
+the required PRODUCT negation sign. Exact field comparison caught it;the
+new producer negates the exact positive-factor product,including signed zero.
+Early new observer lacked the two fixed U0 zero-ADC instructions;added their
+explicit behavior,not a generic unknown-op pass-through. Missing MOVD2A
+then exposed arithmetic-before-readiness in the observer;source readiness
+now refuses BEFORE any arithmetic read. Dropped-phase fault injection also
+retains an undefined initial Dst until a real contribution defines it.
+Nonzero DEFINED metadata padding proved irrelevant to the transpose's used
+subvector;it is a positive control,not relabeled as numerical corruption.
+The first MMIO expansion was10076B and the linker REFUSED fixed8KiB ROM.
+Only7036B direct issue is admitted;missing --direct now refuses before output
+creation. No larger code bound/slower fallback is silently selected.
+
+Remaining:guarded native owner/role/protocol and hardware lifecycle;ON-CARD
+full-K GDDR streaming without host round trips or per-block accumulator
+clears;Q6/Q8/full cohort/attention/recurrent state;full-model quality and real
+matched generation benchmark;Assistant promotion only after full success.
+Existing spent81/82/83/84 stages/failed evidence remain untouched. See
+Q4_FPU_PIPELINE.txt. Work remains distinct from CPU validation.

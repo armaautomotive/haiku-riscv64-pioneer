@@ -1,0 +1,70 @@
+Compressed Q4 block -> BF16 -> fast FPU:OFFBOARD integration
+=========================================================
+
+PioneerQ38Q4FpuBlock.h and blackhole_q38_q4_fpu_block.cpp implement one
+COMPLETE32-output,K256 block,all8 Q4 scale groups,all4 matrix fidelity phases.
+Two complete jobs execute in the NEW distinct QFP1 image. No installed driver,
+native lease,Assistant,cache or Work mode accepts/selects this image.
+
+Data path
+---------
+PioneerQ38Q4FpuBlockData.h is a DIFFERENT explicit CPU-preparation recipe:
+32 original144B row blocks become4096 UNCHANGED packed quant bytes plus2048B
+EXACT FP32 coefficients/negative minima. Finite half subnormals and signed
+zeros are preserved. All metadata validate before atomic publication;no
+BF16 weight expansion,learned products or device IO occurs in preparation.
+Do not substitute this for the installed lossless cache layout/recipe.
+
+The6144B GDDR payload proposal is33.3% larger than original4608B Q4 blocks,
+but29.4% smaller than8704B native BFP8 for the same8192 weights. These are
+DATA sizes,not an allocation,whole-model fit,bandwidth or throughput proof.
+No whole-model prepared cache is built or selected by this prototype.
+
+The prototype's separately owned L1 stages have private zero64B headers:
+ raw panels90000/stride320,16x256B;metadata94000/stride128,32x64B;
+ input96000/stride128,8x64B;immutable zero buffer97000/1024B;results98000.
+No descriptor aliases payload/header data. CPU tests map every actual address;
+there is no descriptor normalization or decoded shadow-operand injection.
+
+For each32-K group,actual UNPACK-to-Dst instructions load all metadata and
+four packed raw faces. A single SFPTRANSP per parity replicates16 exact row
+coefficients/negative minima across needed lanes. Both register groups/all
+eight registers and all32 lanes are defined. Only the original first subvector
+is used after transpose;DEFINED nonzero padding is harmless and tested.
+The exact10-instruction decoder produces BF16-RNE operands. FP32 SFPSTORE
+and MOVD2A publish all64 source rows before the fast MVMUL consumer. ALL4
+fidelity phases,source-bank handoffs and REAL completion waits are retained.
+Dst32 dot rows32/40 are physically disjoint from raw Dst16 rows0..63,
+decoded Dst32 rows64..127 and metadata Dst32 rows128..143. Padding is fully
+initialized BEFORE partial writes. Output is read only after clean completion.
+
+The image performs NO scalar weight/metadata/activation/GDDR/NoC/host reads,
+and no scalar operand writes. Data already must be present in owned L1.
+Future GDDR streaming/native ownership is NOT implemented by this producer.
+
+Build/tests -- no native/card access
+------------------------------------
+  sh tools/pioneer/tests/run_pioneer_q38_q4_fpu_block_tests.sh HAIKU_BUILD
+  python3 tools/pioneer/build_q38_q4_fpu_block.py HAIKU_BUILD NEW_DIR --direct
+  sh tools/pioneer/tests/run_pioneer_q38_q4_fpu_block_model_tests.sh IMAGE_DIR ORIGINAL_GGUF
+The last command fully authenticates the SAME open original19GB source before
+selected private blocks. Its BF16 inputs are diagnostics,NOT prompt states or
+real generation. No private weights/converted data/numerical results are saved.
+Only direct issue is admitted. The early MMIO expansion exceeded fixed8KiB;
+that mode stays refused. The code/stack bounds are not enlarged to accept it.
+
+Primary shared Blackhole/Wormhole instruction facts,ISA4a73a712:
+https://github.com/tenstorrent/tt-isa-documentation/blob/4a73a7121d95f545b85efa34b243f0b8b316f967/WormholeB0/TensixTile/TensixCoprocessor/SFPTRANSP.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/4a73a7121d95f545b85efa34b243f0b8b316f967/WormholeB0/TensixTile/TensixCoprocessor/MOVD2A.md
+
+Next required integration
+-------------------------
+Add a DISTINCT guarded native lease/protocol/role and one-shot hardware test
+with full L1/queue/config/PCI/clock restoration. Never reuse spent81/82/83/84
+stages. First establish actual BF16 decode/MOVD2A/FPU correctness and clean
+END on card. Then stream complete K blocks from GDDR ON CARD,maintaining the
+accumulator across blocks without a host round trip or per-block Dst clear.
+Prove capacity/fragmentation/route/cohort and Q6/Q8 operands;integrate all
+attention/recurrent state;run full-model quality and real matched inference
+benchmarks before Assistant promotion. Keep Work free of CPU references.
+Full-native27B/20tokens/sec remain UNMET;no new real speed is measured here.
