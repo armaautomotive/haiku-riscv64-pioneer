@@ -100,7 +100,9 @@
 #elif defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
 #error QTP3 native selector requires its actual native parent
 #endif
-#ifdef PIONEER_Q38_TOKEN_MANUAL_TTSYNC_PROGRAMS
+#ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
+#include "PioneerQ38FullOffloadPrograms.h"
+#elif defined(PIONEER_Q38_TOKEN_MANUAL_TTSYNC_PROGRAMS)
 #include "PioneerQ38TokenManualTTSyncPrograms.h"
 #elif defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS)
 #include "PioneerQ38TokenMatrixPhasePrograms.h"
@@ -148,7 +150,10 @@
 #include "PioneerQ38TokenFootprint.h"
 #ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
-#ifdef PIONEER_Q38_TOKEN_MANUAL_TTSYNC_PROGRAMS
+#ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
+namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadPrograms;
+static_assert(PioneerQ38TokenPrograms::EogCount==5,"full offload cannot silently use the old two-EOS firmware");
+#elif defined(PIONEER_Q38_TOKEN_MANUAL_TTSYNC_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenManualTTSyncPrograms;
 #elif defined(PIONEER_Q38_TOKEN_MATRIX_PHASE_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenMatrixPhasePrograms;

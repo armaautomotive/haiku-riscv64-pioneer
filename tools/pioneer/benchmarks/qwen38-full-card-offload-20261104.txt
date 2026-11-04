@@ -1,0 +1,98 @@
+Full-card Qwen27B candidate: implemented and built,NOT yet card-executed
+====================================================================
+2026-11-04 UTC. User explicitly redirected all effort to full-card execution.
+Separate peak/capacity/cache/mixed87 physical work is not continued here.
+Installed hybrid Work is NOT relabeled. Full-card/usable Assistant and20TPS
+remain UNMET. Existing active long-running objective is preserved.
+
+Implemented actual path,not just a plan
+--------------------------------------
+New tag88 native role/ioctls bind the complete existing G3 model controller
+to arbitrary1..96-token prompts and1..32 output tokens. CPU authenticates/
+loads/uploads learned weights and vocabulary,then sends IDs only. Native
+embedded control cores and Tensix execute ALL inference,including attention,
+KV,recurrent state,embedding,norms,residual/activation,classifier and greedy
+selection. No CPU learned product/hidden vector enters the request.
+Separate worker loads vocabulary ONLY and creates no llama context/ggml
+graph. Actual linked imports contain precisely11 vocabulary/model-container
+APIs,no llama_decode/context/logits/threadpool or hybrid backend imports.
+CPU vocabulary/text handling is not claimed to disappear.
+
+New source authenticates the whole original same-open18973870528B SHA/all851
+bindings BEFORE accelerator Open. All3551 learned parts/19399024640 bytes
+upload,including embeddings/FP32 metadata. One FD/team/thread/generation-
+bound lifetime must prove terminal,120 HOLDs,one/two64-record drains,restore,
+END and Close before publishing text. Uncertainty closes only,without
+implicit END/retry/reset/fallback. First candidate releases weights per
+request;no cross-request reuse,streaming or speed improvement is claimed.
+Old fixed diagnostic requests and installed Assistant remain unchanged.
+
+Actual tokenizer problem found and fixed BEFORE card admission
+---------------------------------------------------------------
+Initial --vocabulary-only invocation returned3 without output because its
+library search omitted /boot/system/lib. Corrected runtime invocation then
+actually returned1 with FAIL_FULL_OFFLOAD_VOCABULARY_ONLY and no device
+Open. The initial wrapper did not explain which vocabulary check failed.
+Read-only original GGUF metadata plus frozen c060ca97 tokenizer code reveal
+FIVE EOG IDs:248044,248046,248063,248064,248065,not merely EOS/EOT. The new
+candidate now validates the WHOLE set and its separate ROOT stops on all5.
+It does not simply ignore the extra terminators or move sampling to CPU.
+
+Actual emitted RV32 predicate is independently interpreted for EVERY248320
+vocabulary ID plus5 out-of-range values. Exactly5 IDs return1;stack/callee
+registers preserved. No accelerator or model computation is simulated by
+that integer predicate test. New ROOT text130964/131072B and aux32708/32768B
+fit the existing full53913832B journal. Boot and terminal sections match;
+all nine peer sections remain byte-exact G3. Entire old pushed ROOT and
+component builders run FIRST with their unchanged pins.
+
+Actual offboard qualification,all corresponding handles terminal0
+----------------------------------------------------------------
+Main source and separate HEADebb2d100 archive+explicit source overlays:
+ native-r4/clean-native-all5:all13 new firmware arrays exact,15 role refusals,
+ ordinary default43 BYTE-IDENTICAL,no CPU model/reference/ggml Work imports,
+ max individual token frame1232B (NOT whole-kernel stack certification).
+ worker-r6/clean-worker-all5 and final smoke builds:11 client role refusals,
+ frozen runtime/headers,exact11 permitted imports. Worker bytes identical.
+ root/clean-root:all4 new ROOT sections byte-identical,whole old control
+ first,actual RV32 EOG predicate passes. Generated code header SHA:
+ fcff4279355cf5cfa1de048aa6bb9ed5fa4d7dca0f3dc9a7669cbd421be2a1cd.
+ ASan/UBSan main+clean actual protocol/session/control:
+ 3072 valid/12338 refused protocol cases;194 fail-closed COW session cases,
+ all5 EOS,96prompt/32output/127positions/two read batches,3 cancellation
+ boundaries;12335 early kernel-control shape refusals,all6 operations,
+ copy failures/kernel snapshot/root+FD+team admission. Endpoints synthetic.
+ Actual smoke-client process/channel:1 valid/9 failed-worker histories and
+ 3 CLI refusals;old hybrid Ready/Closed rejected. Fake worker,no model/card.
+ Actual parent:54 typed-metadata/idle/64CPU+RAM/one-shot-flow cases. Failed
+ child/stderr/text/identity never auto-restore. Fake endpoints,not hardware.
+ Old hidden USER384 COW histories and old packet tests also ACTUALLY0.
+ Final qualified logs have zero stderr. Earlier compile-only style/fixture
+ failures remain in task-local history and are NOT counted as passes.
+
+Current exact artifacts (code/vocabulary only;NO learned weights published)
+--------------------------------------------------------------------------
+native3c5769d2af54798c8fdbe672f3ed25f785cde0b3752253fe591fa06e66169a76
+worker8cc39a66185e3adb1606a92a91c4f9efeb5943d4e1439cfedc41214b75e8aa5d
+smoke f172e77c58c4eac025ebe7ac53c686a01dadceacf31f1e25f00f00ca6b651081
+parent13b3c9510495e3dbedb12718c3604c8ce88d5082b8c316c289c4f996a10bbc0b
+default43 remains2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc.
+
+Actual real-model vocabulary-only success,NOT inference
+------------------------------------------------------
+SAME40441 actually terminal0,observed17:42:46UTC. Worker8cc at new stage:
+ /boot/home/pioneer-q38-full-offload-20261104-a/HaikuAssistantQwen27FullOffload-all5
+Whole SAME-open original SHA/all851 model layout and frozen tokenizer all5
+EOG set pass;returned PASS vocabulary248320. stderr0. The program explicitly
+does NOT open the accelerator,upload or infer in --vocabulary-only mode.
+Old staged da0 worker and failed logs preserved,not overwritten or promoted.
+Native candidate has not yet been staged/installed or executed at this
+checkpoint. Installed stable041/tag12/gen10/cold0/idle,64CPUs/full137034936320B
+RAM remain the last read-only verified state. No restart/power/OS/SD/hardware
+or installed Assistant/library change.
+
+Next:one guarded public Hello./four-token full-card request,using the exact
+new88/worker/smoke tuple and typed stable10->native11->stable12 exchange.
+Only actual known-clean model completion and exact public text may admit
+normal restoration. No numerical result or token rate exists for this new
+path yet. Usable Assistant integration follows physical model acceptance.

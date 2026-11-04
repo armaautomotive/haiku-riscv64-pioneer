@@ -1,0 +1,64 @@
+Qwen27B full-card execution candidate (not an installed Assistant release)
+======================================================================
+The installed p100a-qwen27-work backend is still hybrid:learned projections
+run on P100A while CPU handles attention/recurrent state and other operations.
+It is NOT relabeled as full offload by this work.
+
+The separate tag88 candidate routes arbitrary bounded prompt token IDs to
+the existing complete G3 token controller. The CPU authenticates/prepares/
+uploads weights,loads vocabulary,tokenizes the prompt,manages the request
+and displays returned token IDs. It creates NO llama inference context or
+ggml graph and never calls llama_decode,reads logits or selects a token.
+Embedding,norms,all learned matrices,attention,KV,convolution/recurrent
+state,residuals/activation,final classifier and greedy selection execute
+on the card,including its own embedded control cores.
+
+This is a new explicit role/ioctl/build tag,not a widened debug endpoint.
+Old fixed diagnostic grammar remains unchanged. No automatic CPU fallback.
+Only the original SHA-pinned Qwen3.8-27B-Q4_K_M.gguf is admitted. The full
+same-open file SHA and all851 tensor bindings authenticate before device
+Open. All3551 learned parts,including embedding and FP32 metadata,upload;
+no host hidden vectors,KV or learned products enter the request ABI.
+
+Bounds:1..96 prompt tokens,1..32 output tokens,total positions at most128.
+The last prompt evaluation predicts output1;limit=prompts+outputs-1.
+The model/frozen tokenizer has FIVE EOG IDs:248044,248046,248063..248065.
+The candidate checks that entire tokenizer set and its new card ROOT
+stops on all five. Old two-EOS image/reader families are not changed.
+The new complete ROOT fits the existing snapshot geometry and retains
+the old boot/STOP sections and all nine peer image sections exactly.
+
+Lifecycle:one FD/team/thread/generation-bound owner;monotonic cancellation;
+real terminal,120 HOLDs,bounded64-record read batches,complete restoration,
+explicit END and successful Close before any answer is published. Unknown
+results close only;no implicit END,retry,reset,forced release or fallback.
+The first candidate releases weights after each request. Persistent
+cross-request weight reuse and streaming output are NOT implemented yet.
+Full offload alone is NOT a speed guarantee;the existing resident diagnostic
+has been slow too. No new token-rate improvement is claimed by a build.
+
+Build/test (all build outputs must be new absolute directories):
+ python3 tools/pioneer/tests/run_pioneer_q38_full_offload_tests.py
+ python3 tools/pioneer/build_qwen38_full_offload_root.py HAIKU_BUILD NEW_ROOT
+ python3 tools/pioneer/build_qwen38_full_offload_native.py HAIKU_BUILD NEW_NATIVE
+ python3 tools/pioneer/build_assistant_qwen27_full_offload.py HAIKU_BUILD FROZEN_LIBRARIES NEW_WORKER
+
+Generated firmware is reproduced separately with:
+ python3 tools/pioneer/generate_qwen38_full_offload_programs.py NEW_ROOT NEW_HEADER
+This is executable code DATA,not learned model weights. The generator pins
+all four ROOT sections;native builder checks all13 code-array digests and
+the ordinary default driver remains byte-identical. Runtime libraries and
+headers are the frozen c060ca97 ABI,not dirty submodule sources.
+
+The worker speaks distinct full-offload Ready/Closed strings over the
+existing private Assistant framing;the installed service deliberately
+does NOT accept these as hybrid Work. The staged smoke client sends one
+public Hello./four-token request and requires Hello! How can after actual
+clean END. That text comparison is not broad model-quality acceptance or
+a sustained warm-generation benchmark. Its --full-card-hello-four option
+executes hardware and must NOT be invoked without guarded driver exchange
+and independent idle/source/runtime admission.
+
+--vocabulary-only performs authentication/tokenizer checks but NEVER opens
+the accelerator. It does not prove card execution,model numerics or speed.
+Hardware execution and Assistant integration remain separate release gates.

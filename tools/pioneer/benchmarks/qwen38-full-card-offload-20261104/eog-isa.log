@@ -1,0 +1,1 @@
+PASS actual emitted RV32 full-card EOG predicate:248320 vocabulary IDs+5 out-of-range;exact5 stop IDs;stack/callee register preserved;NO accelerator or model inference

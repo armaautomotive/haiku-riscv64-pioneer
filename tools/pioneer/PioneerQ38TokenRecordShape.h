@@ -2,6 +2,9 @@
 #ifndef PIONEER_Q38_TOKEN_RECORD_SHAPE_H
 #define PIONEER_Q38_TOKEN_RECORD_SHAPE_H
 #include "PioneerQ38TokenLayout.h"
+#ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
+#include "PioneerQ38FullOffloadEog.h"
+#endif
 // Published-record DATA grammar ONLY. The caller independently owes the
 // genuine terminal/progress,source identity,owned STOP/HOLD,immutable GDDR,
 // current NoC receipts and sequential prompt/greedy input chain. Historical
@@ -18,7 +21,12 @@ static inline bool PioneerQ38TokenRecordShape(const uint32_t* r,const uint32_t* 
   || r[8]!=unsigned(position+1<prompts) || r[10]!=64 || r[11]!=973
   || r[38]!=r[42] || r[44]!=position+1 || r[45]!=48 || r[46]!=119)return false;
  const bool limitEnd=position+1==limit;
- const bool eosEnd=stopEos && position+1>=prompts && (r[4]==eos0 || r[4]==eos1);
+ const bool eosEnd=stopEos && position+1>=prompts &&
+#ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
+  PioneerQ38FullOffloadEog::Contains(r[4]);
+#else
+  (r[4]==eos0 || r[4]==eos1);
+#endif
  const bool end=limitEnd || eosEnd,last=position+1==terminal[3];
  if(r[9]!=unsigned(!end) || (end && !last))return false;
  if(last){

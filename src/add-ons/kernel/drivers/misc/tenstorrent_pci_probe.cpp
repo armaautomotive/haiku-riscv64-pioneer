@@ -39,6 +39,12 @@
 #ifdef PIONEER_Q38_TOKEN_NATIVE_ROLE_TAG_OK
 #error Internal token NODRV witness cannot be supplied by the caller
 #endif
+#if defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) && !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT)
+#error Full offload requires its actual resident token context
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110400010088ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE)
+#error Reserved full-offload tag88 requires its distinct native role
+#endif
 #if (defined(PIONEER_Q38_TOKEN_VALIDATION_NATIVE) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)) && !defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT)
 #error Token physical validation cannot substitute an old driver role
 #endif
@@ -8452,6 +8458,12 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
  // NODRV retains only PRIVATE bank/clock/FD source constructors. The
  // distinct tag74 role additionally routes its bounded validation only.
+#ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
+ if(operation==TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT)
+  return Q38FullOffloadSupport(data,length);
+ if(operation==TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL)
+  return Q38TokenNativeControl(instance,data,length);
+#endif
 #ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_BENCHMARK_NATIVE
  if(operation==TT_PCI_PROBE_Q38_TOKEN_MATRIX_PHASE_READ)
   return Q38TokenMatrixPhaseControl(instance,data,length);

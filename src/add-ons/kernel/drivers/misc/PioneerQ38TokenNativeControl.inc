@@ -2,6 +2,18 @@
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
 #include "PioneerQ38TokenNativeRole.h"
 #include "PioneerQ38TokenControlPacket.h"
+#ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
+#include "PioneerQ38FullOffloadProtocol.h"
+static status_t Q38FullOffloadSupport(void* data,size_t length){
+ namespace F=PioneerQ38FullOffload;
+ if(geteuid()!=0)return B_NOT_ALLOWED;
+ if(!data || length!=sizeof(F::Support))return B_BAD_VALUE;
+ F::Support support={};status_t status=user_memcpy(&support,data,sizeof(support));
+ if(status!=B_OK || !F::SupportRequest(support))return status!=B_OK?status:B_BAD_VALUE;
+ support={55,F::Version,F::MaxPrompt,F::MaxOutput,F::MaxPositions,F::Vocabulary,F::AllCompute,0};
+ return user_memcpy(data,&support,sizeof(support));
+} // capability metadata only;never allocates,uploads,launches or resets
+#endif
 #ifdef PIONEER_Q38_TOKEN_VALIDATION_NATIVE
 #include "PioneerQ38TokenValidationProtocol.h"
 #endif
@@ -39,6 +51,9 @@ Q38TokenNativeControl(PioneerProbeCookie* cookie,void* data,size_t length){
  auto* packet=new(std::nothrow) P::Packet;if(!packet)return B_NO_MEMORY;
  status=user_memcpy(packet,data,sizeof(*packet));
  if(status!=B_OK || !P::RequestShape(*packet)
+#ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
+  || !PioneerQ38FullOffload::RequestShape(*packet)
+#endif
 #ifdef PIONEER_Q38_TOKEN_VALIDATION_NATIVE
   || !PioneerQ38TokenValidation::RequestShape(*packet)
 #endif

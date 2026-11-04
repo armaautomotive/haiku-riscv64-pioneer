@@ -148,6 +148,19 @@ static __attribute__((noreturn,noinline,section(".conv.token"))) void Finish(con
  for(unsigned i=0;i<16;i++)Words(T::TerminalLocal)[20+i]=p->boot[16+i];
  Fence();Words(T::TerminalLocal)[0]=T::TerminalMagic;Fence();q38_global_chain_stopped();
 }
+#ifdef PIONEER_Q38_FULL_OFFLOAD_ROOT_IMAGE
+#if PIONEER_Q38_FULL_OFFLOAD_ROOT_IMAGE != 1 || !defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE) \
+ || !defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || !defined(PIONEER_Q38_TOKEN_CANCEL_BOUNDARY) \
+ || defined(_KERNEL_MODE) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE)
+#error Full-card EOG firmware requires its separate exact pushed ROOT image build
+#endif
+#include "PioneerQ38FullOffloadEog.h"
+// Text has space;the legacy auxiliary ROM has only48 bytes spare. Keep the
+// extra model-specific EOG comparisons out of that almost-full ROM.
+static __attribute__((noinline,section(".text.q38_full_offload_eog"))) bool FullOffloadEog(unsigned id){
+ return PioneerQ38FullOffloadEog::Contains(id);
+}
+#endif
 static __attribute__((noinline,section(".conv.token"))) unsigned RunHead(){
 #ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
  q38_token_phase_mark(QPhase::HeadNormalize);
@@ -175,7 +188,11 @@ static __attribute__((noinline,section(".conv.token"))) unsigned RunHead(){
  if(accepted!=973 || rows!=248320 || bestRow>=248320)scalar_fault_park();
  for(unsigned w=0;w<119;w++)Closed(header,w);
  unsigned reason=p->state[Position]+1>=p->state[Limit]?1:
+#ifdef PIONEER_Q38_FULL_OFFLOAD_ROOT_IMAGE
+  p->state[StopEos] && p->state[Position]+1>=p->state[PromptCount] && FullOffloadEog(bestRow)?2:0;
+#else
   p->state[StopEos] && p->state[Position]+1>=p->state[PromptCount] && (bestRow==p->state[Eos0] || bestRow==p->state[Eos1])?2:0;
+#endif
 #ifdef PIONEER_Q38_TOKEN_CANCEL_BOUNDARY
  q38_token_cancellation_point(); // fully closed head, BEFORE mutable commit
 #endif
