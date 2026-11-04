@@ -1,0 +1,76 @@
+OFFBOARD Q6_K/Q8_0 operands -- NOT hardware/inference qualification
+=================================================================
+2026-11-04 UTC;HEADdc8a0dd7b38c463a8e77a114a78451b17ecbdca1+11 NEW sources.
+Main/clean64-source manifest IDENTICAL/current:
+589f2e29b9855f631c8ffbb68b175bf142a64e36139430f8dbec3169d517e841
+Final runner d0f24926a691778c3ffcede6ad420e5e848dae806533fcaf6fe0509ebbdf7a90
+Header f85caf3901f8eb47a1d66b0d1b486c2081db861d3a619da1dac64693f0ab4eeb
+No unrelated dirty submodule/NATIVE_BUILD_STATUS/FlashNext consumed.
+
+Final main-r2 tool18406 ACTUALLY CLOSED0 observed14:33:30UTC.
+Final clean-r3 tool65176 ACTUALLY CLOSED0 observed14:32:41UTC.
+Both four terminal0/stderr0 children:decode,compiled-code,original-model,
+old-Q4-regression. Full public raw logs/manifests in same-name directory.
+Main stdout45f128b2453220f0c4ab09a7e312899dd07ccd20b265e312b18265cfd4b7b7e2
+Clean stdout9286ed6575f09a36c82d45e49fe49d00fb8486c3945a39f3e572961747176d3e
+NO original/derived weights,private headers/objects/binaries published.
+
+Arithmetic:Q6 original ql/qh -> unsigned0..63 -> exact subtract32 -> exact
+original half*signed8 coefficient product -> explicit BF16-RNE. Coefficient
+changes every16 values. Q8 originalTC8 -> low7-128*bit7 -> original half
+product -> BF16-RNE. ALL256 TC8 including-128,no predicates/clipping/SM7.
+No host learned products accepted,signed zeros and original multiplication
+boundaries preserved. NEW precision recipe,not old Work equivalence.
+2097152 Q6/524288 Q8 exact outputs,all63488 finite half encodings/all256
+scales/all64 Q6/all256 TC8 covered,NOT full Cartesian product. Independent
+Fraction32768+8192 outputs/2859 signed-zero cases,direct rational BF16-RNE,
+no shared CXX half/FMA/rounding oracle. Ten deleted-latency gaps detected.
+Kernel/Work/CPU-validation/fast-math and Q6 group4 compile refused.
+
+Actual compiler output,NOT real card:seven functions/101 exact instruction
+words,MMIO314 strict RISC steps/direct143,327680 comparisons EACH mode,
+private ABI stack/callee registers preserved. Existing Step decoder unchanged.
+MMIO1256B fa8ac1164c1dceef345276caa47bc2d1b4d66368f0f98a7ba9b42951869d113f
+Direct572B d6a4e70771601be5583f7a705d7fd7e36c5f7979625fd03218e4756cd9258669
+Main/clean actual bytes cmp IDENTICAL both modes. No scalar learned data,
+NoC/config/Dst load address allowed. Instruction counts are NOT timing.
+Uses unchanged vendor-derived Blackhole FMA observer;official primary source:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/Miscellaneous/FMA/fma.c
+
+SAME-open read-only original18973870528B FULL SHA:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+O_NOFOLLOW/owner/nlink/permissions+nanosecond mtime/ctime/inode/device/length/
+epoch checked before/after each block. No model copy or derived files.
+15 first/middle/last32-row full-K bands/2654208 weights:
+tensor5 Q8 K5120 first0/5120/10208 (blk.0.attn_qkv)
+tensor16 Q8 K6144 first0/2560/5088 (blk.0.ssm_out)
+tensor49 Q8 K5120 first0/6144/12256 (blk.3.attn_q)
+tensor48 Q6 K6144 first0/2560/5088 (blk.3.attn_output)
+tensor0 Q6 K5120 first0/124160/248288 (output projection).
+All original-decode/BF16-RNE values exact. NOT live hidden states/dot products,
+full-model numerical quality or generation.
+
+Failures retained,NOT promoted:initial bit comparisons passed,but Fraction
+fixture zero-count assertion failed. Added explicit all+0/all-0 and signed
+subnormal trials;did NOT lower threshold/numerical checks. Initial model
+compile missing unistd.h fixed. Early clean copy mistakenly started before
+archive76862 terminal:cp1/Python2(script absent),NO suite ran. Same archive
+followed to actual0 before copy. Preliminary main57533/clean98715 passed56
+pins;final runner adds cacheCPP/vendorSHA/old-regression roots(64) and bad-
+group refusal. Only final18406/65176 qualify final source. Earlier records
+retained:/private/tmp/pioneer-mixed-fpu-20261104.XNKVHCa2
+Clean:/private/tmp/pioneer-mixed-fpu-clean-20261104.Z1WXvcCK
+No unknown GPU lease/retry/reset/cleanup involved;all tests are CPU-only.
+
+Fresh READ-ONLY Pioneer SSH CLOSED0 observed14:34:20UTC,stderr0:
+normal041/tag2026102100010012/gen10,quiesced0/cold0/owner0/open1/guard1;
+same Sep8 kernel,64CPUs,maxRAM137034936320B,free133771132928B.
+Installed041 driver/861e5287 cached worker/c509da43 service/0de9141e GUI
+hashes unchanged. Raw postflight stdout SHA:
+d094bcaad3e37b2ad8f433c8bf71a08eee5b64de340f1225f97510c66169c47c
+No GPU execution,driver swap,app launch/model/cache/settings/kernel/boot/
+network/power/SD/hardware change. NO new tokens/sec result.
+
+Next:Q6/Q8 UNPACK/Dst/MOVD2A+full-K GDDR,multi-worker/resident-state chain,
+full-model quality and real performance. Full-native27B/20tok/s UNMET;goal
+ACTIVE. No installed Work capability/fallback/runtime CPU reference added.

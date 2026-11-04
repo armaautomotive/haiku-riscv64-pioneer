@@ -1,0 +1,4 @@
+sh	/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_mixed_fpu_decode_tests.sh
+sh	/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_mixed_fpu_decode_code_tests.sh	/Volumes/HaikuBuildLocal/generated.riscv64
+sh	/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_mixed_fpu_model_tests.sh	/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf
+sh	/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_q4_fpu_decode_tests.sh

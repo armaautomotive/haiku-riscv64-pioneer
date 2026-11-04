@@ -1,0 +1,4 @@
+PASS OFFBOARD compressed Q4 FPU decode:16777216 exact BF16-RNE original-half/scales/nibble comparisons;76800 rounding-boundary cases,6400 even ties,signed zeros preserved,2 latency faults;prepare12 decode10/10 instructions per32 lanes;NO Dst/unpack/MOVD2A/image/driver/hardware/model-quality/speed qualification
+PASS independent Fraction Q4 decode:16384 synthetic outputs,87 signed-zero/cancellation cases;no CXX half/FMA/rounding reference shared;NO hardware/quality/speed proof
+PASS OFFBOARD packed-Q4 block binding:262144 original decoded BF16-RNE weights,32 complete two-tile groups,all8 scale/min fields,nibble halves,output/K rows and parities visited exactly once;NO physical UNPACK/Dst/driver/model-quality/speed qualification
+OFFBOARD compressed Q4 FPU operand evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-q4-fpu-decode.nKwlLvpm

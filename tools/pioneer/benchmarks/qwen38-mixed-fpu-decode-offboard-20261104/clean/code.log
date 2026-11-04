@@ -1,0 +1,8 @@
+OFFBOARD mixed FPU code fixture directory: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-mixed-fpu-code.32dVlorp
+RV32I_MIXED_FPU_OPERAND_SHA256 fa8ac1164c1dceef345276caa47bc2d1b4d66368f0f98a7ba9b42951869d113f bytes 1256
+BUILD_ONLY seven functions;NO boot/owner/NoC/Dst/unpack/driver/hardware/quality/speed authority
+PASS actual RV32I mixed FPU code:MMIO-port,seven functions,101 exact issued instructions,314 strict RISC steps,327680 exact operand comparisons,ABI/callee registers preserved;NO scalar learned data/NoC/config/Dst/driver/hardware/quality/speed authority
+RV32I_MIXED_FPU_OPERAND_SHA256 d6a4e70771601be5583f7a705d7fd7e36c5f7979625fd03218e4756cd9258669 bytes 572
+BUILD_ONLY seven functions;NO boot/owner/NoC/Dst/unpack/driver/hardware/quality/speed authority
+PASS actual RV32I mixed FPU code:inline-ZERO-port-writes,seven functions,101 exact issued instructions,143 strict RISC steps,327680 exact operand comparisons,ABI/callee registers preserved;NO scalar learned data/NoC/config/Dst/driver/hardware/quality/speed authority
+OFFBOARD actual mixed FPU RV32I code evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-mixed-fpu-code.32dVlorp

@@ -86,3 +86,8 @@ The separate native86 owner is now qualified for the recorded bounded REAL
 arithmetic/lifecycle only. See NATIVE_Q4_FPU_STREAM_DIAGNOSTIC.txt for its
 distinct protocol,journals,tests,SPENT stages and split outer/restore result.
 No old/spent client/physical-parent admission can authorize a new experiment.
+
+The remaining original Q6_K/Q8_0 operand producers now have a separate
+OFFBOARD qualification:see MIXED_FPU_DECODE.txt. They are NOT yet connected
+to UNPACK/Dst/MOVD2A/GDDR or a native owner/Work path;do not treat standalone
+operand/code/original-binding checks as hardware/full-model/speed evidence.

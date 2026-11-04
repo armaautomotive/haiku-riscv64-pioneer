@@ -1,0 +1,4 @@
+sh	/private/tmp/pioneer-mixed-fpu-clean-20261104.Z1WXvcCK/tools/pioneer/tests/run_pioneer_q38_mixed_fpu_decode_tests.sh
+sh	/private/tmp/pioneer-mixed-fpu-clean-20261104.Z1WXvcCK/tools/pioneer/tests/run_pioneer_q38_mixed_fpu_decode_code_tests.sh	/Volumes/HaikuBuildLocal/generated.riscv64
+sh	/private/tmp/pioneer-mixed-fpu-clean-20261104.Z1WXvcCK/tools/pioneer/tests/run_pioneer_q38_mixed_fpu_model_tests.sh	/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf
+sh	/private/tmp/pioneer-mixed-fpu-clean-20261104.Z1WXvcCK/tools/pioneer/tests/run_pioneer_q38_q4_fpu_decode_tests.sh

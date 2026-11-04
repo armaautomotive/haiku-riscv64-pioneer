@@ -1,0 +1,52 @@
+Qwen27B original Q6_K/Q8_0 -> BF16 operand producers (OFFBOARD)
+============================================================
+PioneerQ38MixedFpuDecode.h adds the remaining quant formats for the new
+SFPU/MOVD2A/FPU direction,alongside the separately hardware-tested Q4 stream.
+It is NOT selected by any driver,Assistant or Work path. No new hardware
+execution,installation,model-quality or tokens/sec result is claimed.
+
+Q6 consumes ORIGINAL unsigned ql/qh bytes and the exact FP32 product of
+original finite half*signed8 scale. Four fixed original32-value selectors
+reconstruct unsigned0..63;subtract32 exactly,multiply,then explicit BF16-RNE.
+The coefficient changes EVERY16 values,not every32. Q8 consumes ORIGINAL
+TC8 bytes:low7-128*bit7 reconstructs ALL256 values including-128 without
+predication,clipping or SM7 conversion. Multiply by the original finite half
+scale,then BF16-RNE. Both preserve original multiplication boundaries and
+signed zeros. This BF16 recipe is NEW,not old-Work/lossless equivalence.
+No host dequantized weight array or learned product is an input.
+
+Both producers preserve coefficient1/constants2/4/5/6/7;fresh raw0 and
+scratch3 are replaced per chunk. All32 lanes,load provenance,coefficient
+binding and real drains remain caller obligations. SFPSTORE truncation and
+STOCHRND ties-away CANNOT replace explicit ties-EVEN integer-bias rounding.
+
+Build/test ONLY (no accelerator or installation)
+-----------------------------------------------
+  python3 tools/pioneer/tests/run_pioneer_q38_mixed_fpu_tests.py \
+    /Volumes/HaikuBuildLocal/generated.riscv64 /absolute/ORIGINAL.gguf \
+    /absolute/NEW_QUALIFICATION_DIRECTORY
+
+Final main18406/clean65176 ACTUALLY CLOSED0,four strict stderr0 children each,
+64 source fingerprints unchanged/identical,SDK function bytes cmp identical.
+ASan/UBSan/Werror,FP contraction disabled. Coverage:
+- 2097152 Q6/524288 Q8 exact results;all63488 finite half encodings/all256
+  signed scales/all64 Q6/all256 TC8 covered (not full Cartesian product).
+- Independent Fraction32768 Q6/8192 Q8 outputs,2859 signed-zero cases,direct
+  rational-to-BF16 RNE,no shared CXX half/FMA/rounding oracle. Ten missing
+  latency gaps detected. Coefficients/registers/signed zeros preserved.
+- Actual unchanged strict RV32 Step:seven functions,101 exact issued words,
+  private ABI stack/callee registers;327680 comparisons EACH MMIO/direct mode.
+  MMIO1256B fa8ac1164c1dceef345276caa47bc2d1b4d66368f0f98a7ba9b42951869d113f
+  Direct572B d6a4e70771601be5583f7a705d7fd7e36c5f7979625fd03218e4756cd9258669
+  No scalar weight/activation/NoC/config/Dst address allowed. NOT device timing.
+- SAME-open original c600de03.../18973870528B,15 first/middle/last32-row
+  bands across five Q6/Q8 families,2654208 exact weights. Epoch/ownership/
+  nanosecond inode/time/length unchanged. No weights printed or saved.
+- Old Q4 regression;kernel/Work/CPU-validation/fast-math/invalid-group refusal.
+
+See benchmarks/qwen38-mixed-fpu-decode-offboard-20261104.txt and raw logs.
+Next:actual Q6/Q8 UNPACK/Dst/MOVD2A and full-K GDDR pipeline,multi-worker/
+resident-state/full-model quality/performance integration. These functions
+are NOT allocation/route/owner/launch capability. Never reuse spent physical
+Q4 stages. Installed driver/cache/Assistant unchanged;no runtime CPU reference
+added to Work. Full-native27B and20tokens/sec remain UNMET.

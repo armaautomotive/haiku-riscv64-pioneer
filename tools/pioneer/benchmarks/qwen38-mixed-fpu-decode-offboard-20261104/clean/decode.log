@@ -1,0 +1,4 @@
+OFFBOARD mixed FPU fixture directory: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-mixed-fpu-decode.BG7OaGuH
+PASS OFFBOARD mixed FPU decode:Q6 2097152/Q8 524288 exact original-half/signed-scale/packed-quant BF16-RNE outputs;all63488 finite half encodings/all256 signed scales/all64 Q6/all256 TC8 including-128;10 latency faults;register preservation/signed zeros;NO UNPACK/Dst/MOVD2A/GDDR/image/driver/hardware/model-quality/speed authority
+PASS independent Fraction mixed FPU decode:32768 Q6/8192 Q8 outputs,2859 signed-zero cases;direct rational-to-BF16 rounding,no shared CXX half/FMA/rounding oracle;NO hardware/quality/speed proof
+OFFBOARD mixed FPU operand evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-mixed-fpu-decode.BG7OaGuH

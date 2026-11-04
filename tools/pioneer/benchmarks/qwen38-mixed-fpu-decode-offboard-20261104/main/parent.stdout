@@ -1,0 +1,6 @@
+PASS_CLOSED decode exit0 stdout_sha677979e1a027a36bf1be0bc6d3a79785f833a3649dcfaf51d35610d4dea758b6 stderr0
+PASS_CLOSED code exit0 stdout_sha372bda12edd36978835cf27f91b341e37a4c0b4a44c5bee553bd4216b33b996a stderr0
+PASS_CLOSED model exit0 stdout_shae05902801e42770d103f74255f577d6acee095ece051b27fd3fd5d6be0bea38e stderr0
+PASS_CLOSED old-q4-regression exit0 stdout_sha5d0eab8e15375c6cafa12a128dcb38d38b5a0f2f090f2f413bfe31fe365d82fe stderr0
+PASS compile refusal:invalid original Q6 group4;ZERO execution
+PASS OFFBOARD mixed FPU:4 strict CLOSED0/stderr0 children;Q6/Q8 exact packed-byte/BF16-RNE domain,independent Fraction,actual unchanged strict RV32 MMIO/direct code,15 authenticated original bands/2654208 weights,old Q4 regression;all transitive source hashes unchanged;NO UNPACK/Dst/MOVD2A/GDDR/native ownership/hardware/quality/speed/Work authority

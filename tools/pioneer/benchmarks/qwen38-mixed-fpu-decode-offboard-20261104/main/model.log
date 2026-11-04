@@ -1,0 +1,18 @@
+OFFBOARD private-model mixed FPU fixture directory: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-mixed-fpu-model.m0mkYSSF
+PASS_PRIVATE_MIXED_FPU_BAND tensor5 type8 width5120 first0 rows32 weights163840 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_MIXED_FPU_BAND tensor5 type8 width5120 first5120 rows32 weights163840 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_MIXED_FPU_BAND tensor5 type8 width5120 first10208 rows32 weights163840 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_MIXED_FPU_BAND tensor16 type8 width6144 first0 rows32 weights196608 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_MIXED_FPU_BAND tensor16 type8 width6144 first2560 rows32 weights196608 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_MIXED_FPU_BAND tensor16 type8 width6144 first5088 rows32 weights196608 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_MIXED_FPU_BAND tensor49 type8 width5120 first0 rows32 weights163840 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_MIXED_FPU_BAND tensor49 type8 width5120 first6144 rows32 weights163840 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_MIXED_FPU_BAND tensor49 type8 width5120 first12256 rows32 weights163840 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_MIXED_FPU_BAND tensor48 type14 width6144 first0 rows32 weights196608 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_MIXED_FPU_BAND tensor48 type14 width6144 first2560 rows32 weights196608 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_MIXED_FPU_BAND tensor48 type14 width6144 first5088 rows32 weights196608 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_MIXED_FPU_BAND tensor0 type14 width5120 first0 rows32 weights163840 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_MIXED_FPU_BAND tensor0 type14 width5120 first124160 rows32 weights163840 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_MIXED_FPU_BAND tensor0 type14 width5120 first248288 rows32 weights163840 exact original-decode/BF16-RNE;NO weight bytes printed,NO hardware/model-quality/speed proof
+PASS_PRIVATE_MIXED_FPU_BINDING matrices5 bands15 Q6families2 Q8families3 weights2654208 same-open full original SHA/nanosecond identity/epoch;NO card/Assistant/cache/driver changes or full-model-quality/speed proof
+OFFBOARD private-model mixed FPU evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-mixed-fpu-model.m0mkYSSF
