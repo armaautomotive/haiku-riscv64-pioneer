@@ -1,0 +1,44 @@
+RUNNING_Q4_STREAM_SOURCE_AUTH_AND_NINE_FULL_K_SAMPLES
+0
+  588 66800 /boot/home/pioneer-native-q4-fpu-stream-20261104-a/q4-stream.stdout
+    0     0 /boot/home/pioneer-native-q4-fpu-stream-20261104-a/q4-stream.stderr
+  588 66800 total
+7588578d8d49a8e65c62c0277fe9f4dc46f3c0186a4ef6abd2bed811b439d347  /boot/home/pioneer-native-q4-fpu-stream-20261104-a/q4-stream.stdout
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /boot/home/pioneer-native-q4-fpu-stream-20261104-a/q4-stream.stderr
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  107 /boot/system/servers/net_server                    
+  108 /boot/system/servers/package_daemon                
+  111 /boot/system/servers/launch_daemon baron           
+  114 /boot/system/servers/power_daemon                  
+  115 /boot/system/servers/syslog_daemon                 
+  133 /boot/system/servers/media_server                  
+  174 /boot/system/servers/app_server                    
+  188 /boot/system/Tracker                               
+  191 /boot/system/Deskbar                               
+  209 /boot/system/servers/input_server                  
+  234 /boot/system/servers/media_addon_server            
+  284 /boot/system/servers/notification_server           
+  534 /boot/system/bin/screen_blanker                    
+ 1455 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+ 1457 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+ 1458 /boot/system/bin/sh -s                             
+ 1462 /boot/system/bin/ps -o Id -o Team                  
+P100A_RELOAD driver55 tag2026110400010086 generation9 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+742d6d57b6a521e035d22be93e3b20afcd3dc3bc35efc0b8e12bd1a9db2f0235  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
+742d6d57b6a521e035d22be93e3b20afcd3dc3bc35efc0b8e12bd1a9db2f0235  /boot/home/pioneer-native-q4-fpu-stream-20261104-a/tenstorrent_pci_probe-native-q4-fpu-stream86
+9df5d0308cbc4f14e9b2d10904df6267b02da415c4622f204244808612a22f47  /boot/home/pioneer-native-q4-fpu-stream-20261104-a/pioneer-native-q4-fpu-stream-diagnostic
+a54de1d4ee8218e7c13be3b2fb77a4fb94f88cbecdc69b342b60ec58e36b4f14  /boot/home/pioneer-native-q4-fpu-stream-20261104-a/pioneer_native_q4_fpu_stream_physical.sh
+56ec253884deb7ba3f8a72dc09202f0b2a687752ebb15274843cbf14483008e9  /boot/home/pioneer-native-q4-fpu-stream-20261104-a/q4-stream-reference.log
+0:1:755:2341600 /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+0:1:700:1062376 /boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
+0:1:700:2341600 /boot/home/pioneer-native-q4-fpu-stream-20261104-a/tenstorrent_pci_probe-native-q4-fpu-stream86
+0:1:700:2444464 /boot/home/pioneer-native-q4-fpu-stream-20261104-a/pioneer-native-q4-fpu-stream-diagnostic
+drwx------ 1 baron root 2048 Jan  1 07:46 /boot/home/pioneer-native-q4-fpu-stream-20261104-a
+drwx------ 1 baron root 2048 Jan  1 07:30 /boot/home/pioneer-native-q4-fpu-stream-20261104-a/.trial-once

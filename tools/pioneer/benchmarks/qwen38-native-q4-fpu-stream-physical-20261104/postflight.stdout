@@ -1,0 +1,48 @@
+P100A_RELOAD driver55 tag2026102100010012 generation10 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133771227136 bytes free      (used/max 3263709184 / 137034936320)
+                           (cached   19177046016)
+     64488 semaphores free (used/max       1048 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3901 threads free    (used/max        195 /       4096)
+      2025 teams free      (used/max         23 /       2048)
+   Id Team                                               
+    1 kernel_team                                        
+   94 /boot/system/servers/launch_daemon                 
+   99 /boot/system/servers/registrar                     
+  100 /boot/system/servers/debug_server                  
+  102 /boot/system/servers/mount_server                  
+  103 /bin/sshd -f /dev/null -h /boot/home/config/settings/ssh/ssh_ho 
+  107 /boot/system/servers/net_server                    
+  108 /boot/system/servers/package_daemon                
+  111 /boot/system/servers/launch_daemon baron           
+  114 /boot/system/servers/power_daemon                  
+  115 /boot/system/servers/syslog_daemon                 
+  133 /boot/system/servers/media_server                  
+  174 /boot/system/servers/app_server                    
+  188 /boot/system/Tracker                               
+  191 /boot/system/Deskbar                               
+  209 /boot/system/servers/input_server                  
+  234 /boot/system/servers/media_addon_server            
+  284 /boot/system/servers/notification_server           
+  534 /boot/system/bin/screen_blanker                    
+ 1596 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+ 1598 /packages/openssh-9.8p1-2/.self/lib/openssh/sshd-session -f /de 
+ 1599 /boot/system/bin/sh -s                             
+ 1602 /boot/system/bin/ps -o Id -o Team                  
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
+b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
+d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74  /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
+c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18  /boot/home/config/non-packaged/servers/HaikuAssistantService
+0de9141eb3955cf1c993a67c80ef648b3538ce7155c17677458487ee083a4933  /boot/home/config/non-packaged/apps/HaikuAssistant
+0:1:600:18973870528 /boot/home/models/Qwen3.8-27B-Q4_K_M.gguf
+RUNNING_Q4_STREAM_SOURCE_AUTH_AND_NINE_FULL_K_SAMPLES
+0
+STABLE041_GENERATION10_RESTORED_AFTER_NINE_CLEAN_ENDS_ORIGINAL_PARENT_FAILED
+7588578d8d49a8e65c62c0277fe9f4dc46f3c0186a4ef6abd2bed811b439d347  /boot/home/pioneer-native-q4-fpu-stream-20261104-a/q4-stream.stdout
+a54de1d4ee8218e7c13be3b2fb77a4fb94f88cbecdc69b342b60ec58e36b4f14  /boot/home/pioneer-native-q4-fpu-stream-20261104-a/pioneer_native_q4_fpu_stream_physical.sh
+403b429dce68f09682d4f1334975b45e9198ae7a6ebf45a4693c76fc799d84c3  /boot/home/pioneer-native-q4-stream-restore-20261104-a/pioneer_native_q4_fpu_stream_closed_restore.sh

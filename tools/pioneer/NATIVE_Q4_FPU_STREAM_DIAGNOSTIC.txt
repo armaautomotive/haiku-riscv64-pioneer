@@ -1,10 +1,15 @@
-Diagnostic86: full-K compressed-Q4 GDDR/SFPU/FPU -- OFFBOARD ONLY
-==============================================================
+Diagnostic86: full-K Q4 GDDR/SFPU/FPU -- bounded REAL hardware verified
+====================================================================
 This is a NEW separate native owner for Q4_FPU_STREAM.txt's two fixed7824B
-images, NOT an Assistant Work mode or a physically admitted experiment.
-No native86 code has been staged,installed,loaded or executed on the Pioneer.
-No driver/Assistant/boot/network/power/SD action is part of this checkpoint.
-Spent81/82/83/84/85 stages and their physical parents MUST NEVER be reused.
+images, NOT an Assistant Work mode or full-model/throughput qualification.
+The fixed86-a child passed576 REAL full-K words/nine clean ENDs. Original
+outer57599 CLOSED1 on its stale7-vs-correct9 metadata check,NOT a GPU failure
+and NOT promoted to a passed outer. Separately qualified restore-only9216
+CLOSED0;stable041/gen10/64CPUs/full RAM independently confirmed. No reset,
+reboot,power/SD change or repeated GPU test. BOTH86-a/restore-a are SPENT,
+as are81/82/83/84/85:NEVER rerun/repin these fixed stages or parents.
+See benchmarks/qwen38-native-q4-fpu-stream-physical-20261104.txt for the
+split evidence,qualification gap,strict regression and unchanged Assistant.
 
 Arithmetic and data
 -------------------
@@ -93,13 +98,13 @@ blob083fe9e1f32c58ae2833d498f0d3cd0a758cbfdb: read issuer programs source,
 destination and LEN before GO;any-length wrapper waits for command-buffer
 ready between packets with no per-packet response barrier. This supports
 variable-length asynchronous issue as an INFERENCE from official source.
-Our physical test must still prove exact latching/data/counter completion.
+The fixed nine-band86 experiment now proves data/counter completion for its
+leased single-core/route/geometry only,not universal/all-worker authority.
 https://github.com/tenstorrent/tt-metal/blob/722aab8f75bfb2fbb729edeeac19389478b74d27/tt_metal/hw/inc/internal/tt-1xx/blackhole/noc_nonblocking_api.h
 
-Next: a NEW source-authenticating diagnostic86 client and separately frozen
-one-shot physical parent,with independent exact reference,hash/generation/
-idle gates and known-clean END/restoration only. Do not stage this candidate
-using old85 clients,old parents or isolated test passes as admission.
+Client and physical admission were implemented separately below;their SPENT
+parent MUST NOT be used for another test. Future experiments need NEW typed
+epoch-consistent client/parent/owner qualification,not edits to failed pins.
 Full-native27B/quality/20tokens/sec remain UNMET;no new throughput measured.
 
 Client/parent qualification -- completed OFFBOARD,physical admission separate
@@ -114,4 +119,5 @@ Complete main/clean suites have actually CLOSED0:SDK link/6 role refusals,
 exchange/one-shot/health checks,1866 independent child refusals and actual
 full original-source check. This does NOT admit repeated/manual execution.
 See benchmarks/qwen38-native-q4-fpu-stream-client-qualified-20261104.txt for
-the frozen tuple and readiness evidence;physical execution is still separate.
+the frozen tuple and readiness evidence. The separate actual86 observations
+above retain original outerfailure1 and successful restore0 distinctly.

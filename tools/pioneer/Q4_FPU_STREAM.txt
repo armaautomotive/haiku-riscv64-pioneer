@@ -1,10 +1,12 @@
-Full-K compressed-Q4 streaming prototype -- OFFBOARD ONLY
-=======================================================
+Full-K compressed-Q4 streaming -- prototype + bounded native86 verification
+=========================================================================
 
-This is a separate continuation of Q4_FPU_PIPELINE.txt, not an installed
-driver or an Assistant option. Native85's successful physical K256 test does
-NOT admit this image. No stage, driver reload, GPU run or power action has
-been performed for this streaming prototype.
+This is a separate continuation of Q4_FPU_PIPELINE.txt,not an installed
+Work driver or Assistant option. Native85's K256 result did NOT admit this
+image. A separately qualified native86 owner/client has since passed nine
+real full-K bands/576 words and clean ENDs. Its original outer failed on a
+stale metadata epoch;separate restore0 returned stable041/gen10 without
+reboot/power or repeating GPU work. See NATIVE_Q4_FPU_STREAM_DIAGNOSTIC.txt.
 
 Data flow
 ---------
@@ -80,6 +82,7 @@ parent before physical staging. Never reuse spent native85/84 paths or use
 their receipts to authorize this new stream. Stable installed041/gen8 is the
 last separately observed hardware state; this checkpoint never contacts it.
 
-The separate native86 owner is now qualified OFFBOARD,not physically admitted.
-See NATIVE_Q4_FPU_STREAM_DIAGNOSTIC.txt for its distinct protocol,full journals,
-SDK/actual-method checks and the required NEW client/physical-parent admission.
+The separate native86 owner is now qualified for the recorded bounded REAL
+arithmetic/lifecycle only. See NATIVE_Q4_FPU_STREAM_DIAGNOSTIC.txt for its
+distinct protocol,journals,tests,SPENT stages and split outer/restore result.
+No old/spent client/physical-parent admission can authorize a new experiment.

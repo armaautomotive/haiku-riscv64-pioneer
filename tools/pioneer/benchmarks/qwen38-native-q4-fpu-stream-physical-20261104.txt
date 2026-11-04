@@ -1,0 +1,99 @@
+ACTUAL full-K Q4 streaming arithmetic/lifecycle -- PASSED;outer FAILED separately
+=============================================================================
+2026-11-04 UTC. ONE original frozen parent57599 launched13:30:08UTC,ACTUALLY
+CLOSED1 on the SAME handle,observed13:49:29UTC. PID1372. No relaunch on
+observation timeout,no parallel Pioneer command/driver/network/OS/power
+intervention while it was live. Local capture/serial reads and host-only
+parser qualification only. SPENT stage86-a MUST NEVER be rerun/repinned:
+/boot/home/pioneer-native-q4-fpu-stream-20261104-a
+
+All576 REAL hardware outputs/nine clean ENDs passed. The original OUTER is
+NOT accepted as passed:its stale generation7 post-check failed against the
+correct generation9. A NEW separately qualified restore-only parent9216
+ACTUALLY CLOSED0,observed14:03:19UTC,PID1518. Fresh independent postflight
+CLOSED0 at14:05:15UTC confirms stable041/gen10/64CPUs/full RAM. No quarantine,
+reboot,reset,power/SD/mains/hardware change or repeated GPU experiment.
+
+Frozen admission and scope
+--------------------------
+Client/parent checkpointd975e1edd6 was pushed/remote-verified BEFORE staging:
+native742d6d57b6a521e035d22be93e3b20afcd3dc3bc35efc0b8e12bd1a9db2f0235
+client9df5d0308cbc4f14e9b2d10904df6267b02da415c4622f204244808612a22f47
+parenta54de1d4ee8218e7c13be3b2fb77a4fb94f88cbecdc69b342b60ec58e36b4f14
+reference56ec253884deb7ba3f8a72dc09202f0b2a687752ebb15274843cbf14483008e9
+All4 remote staged hashes verified;outputs/once paths unused. Normal041/gen8
+->native86/gen9 by verified hot reload. Client fully authenticated SAME-open
+original18973870528B c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+and fresh ALL-K payload/input/reference bindings BEFORE GPU open.
+
+Nine fixed32-row bands,each TWO complete jobs/four FPU fidelity phases:
+ tensor7 gate +tensor8 up:rows0/8704/17376,K5120 (20 K256 blocks).
+ tensor6 down:rows0/2560/5088,K17408 (68 K256 blocks).
+Single compute core(1,2),other119 cores held. Diagnostic BF16 inputs,NOT
+prompt hidden states. Device-side GDDR->dual L1 buffers with prefetch/overlap,
+UNPACK/raw quant+FP32 metadata,SFPU BF16-RNE,SFPSTORE/MOVD2A/four-phase FPU.
+Accumulator initialized ONCE/full-K job,not per block;NO host K-block loop,
+scalar learned operand copy/CPU learned products or GPU GDDR writes.
+
+All576 words EXACT vs independently Fraction-qualified original predictions;
+polls[1,1,1,1,1,1,2,2,2],nine explicit RESULT/END pairs. Actual exact request/
+flit checks:2240/4160 for K5120,7616/14144 for K17408,two jobs each. Full
+107632B L1 plus selected133120B/452608B GDDR journals restored/read back;
+both final producer slots/headers/gaps/shared zero/code/frame/output verified
+BEFORE overwriting evidence. NIU commands/FIFO/counters (never rewound),
+TLB/ARC clock/all17 actual VM views/PCI/reservation closure passed each END.
+This is full-K32-row arithmetic/lifecycle,NOT a full17408-row matrix,all120
+workers,all quant formats,state,full-model quality or real-generation speed.
+
+Outer failure -- NOT hidden or reclassified
+-----------------------------------------
+Child exit0/stderr0,588lines/66800B SHA remote/local independently agree:
+7588578d8d49a8e65c62c0277fe9f4dc46f3c0186a4ef6abd2bed811b439d347
+Original outer607lines/68305B SHA,stderr0,exit1:
+178f86c96b85a1df0e4bc65d97c618069d2b3b0efee0bd75b91db697b18812ff
+The complete child occurs once in that outer. All output gates passed,then
+`metadata 2026110400010086 7` printed realgen9 and refused BEFORE recording
+KnownClosed/restoring. State file remained RUNNING,not evidence of a live
+process. The old flow fixture's metadata mock accepted arbitrary arguments;
+it missed this literal-generation bug. Original source/exit/state/PID are
+preserved;new strict regression reproduces7-vs9 failure. The complete-parent
+parser correctly REJECTS this incomplete outer;it is not relaxed to accept it.
+
+Separate known-CLOSED restore,NOT cleanup of unknown hardware
+-----------------------------------------------------------
+Read-only postterminal probe CLOSED0:gen9/cold0/owner0,no test/model processes,
+all source/runtime hashes unchanged. Postterminal SHA:
+38b0e9237e19f2e437b832049a59793e7ba70ececf1309f3c17ed95237b05796
+NEW restore source403b429dce68f09682d4f1334975b45e9198ae7a6ebf45a4693c76fc799d84c3
+qualified main/clean23 first-failure+10 exact metadata cases and stale-parent
+regression;checkpoint161799b06e pushed BEFORE execution. New restore-only
+stage /boot/home/pioneer-native-q4-stream-restore-20261104-a is ALSO SPENT.
+It binds exact actual parent/child/exit/state hashes,closed lease metadata,
+idle/CPU/RAM/source/program identities and a NEW restore-once marker. No
+RUN/END/reset/power/retry capability. One quiesce and swap9->stable041/gen10.
+Actual restore9216 CLOSED0,26lines/1746B stdout SHA:
+c91bb8c8577d805c9602eb1a4f1437aa1641b7366e390432df380cda79084319
+stderr0,state STABLE041_GENERATION10_RESTORED_AFTER_NINE_CLEAN_ENDS_ORIGINAL_PARENT_FAILED.
+
+Independent postflight CLOSED0/stderr0,48lines/3660B SHA:
+328c46df56bfe79ddcd2d11db1a5a3d81300a2a4cd8ab95bab6117b499192225
+Stable041/tag12/gen10,quiesced0/cold0/owner0/open1/guard1,64CPUs,max RAM
+137034936320B/free133771227136B,no model/Assistant/native processes.
+Installed041/adminb0c851b3/guardd1ce2aa4/worker861e5287/servicec509da43/
+GUI0de9141e hashes unchanged. Model0:1:600:18973870528 unchanged;no settings,
+cache,library,kernel/boot/network changes. Raw ps padding remains in pinned
+postterminal/postflight captures (intentional exact bytes,not formatting edits).
+Exit files record independently observed tool terminals;parent.exit is1,NOT0.
+
+Verify READ-ONLY saved evidence with:
+ python3 tools/pioneer/tests/pioneer_native_q4_fpu_stream_physical_observed_test.py
+This never admits/repeats hardware. No original/derived weights,PRIVATE
+generated headers/objects/binaries are published;only source and diagnostic
+dot outputs/identity records. Diagnostic wall time includes19GB authentication,
+fresh CPU reference,journal staging/readback and swaps;NOT inference timing.
+
+Next:preserve this exact Q4 arithmetic+streaming baseline,typed epoch checks,
+implement other formats/cohort scheduling/fully resident state/full-model
+quality and matched generation/Assistant promotion. Last tiny cached27B
+sample remains0.204tok/s,NOT a comparative speedup. Full-native27B/20tok/s
+remain UNMET;no new tokens/sec result exists. Goal remains active.
