@@ -1,8 +1,16 @@
 /* SPDX-License-Identifier: MIT */
-// Exact isolated LOAD-ONLY82,not math81/model/Work or a runtime mode switch.
+// Exact isolated LOAD-ONLY82/default or explicit C64 placement83 build.
+// Never math81/model/Work,a runtime mode switch or an established fix.
 #include <Drivers.h>
+#if defined(PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64)
+#if PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64 != 1 || !defined(PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC) || PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010083ULL
+#error Build only the exact LOAD-ONLY83 C64 reload role
+#endif
+#define PioneerNativeDram82 PioneerNativeDram83
+#else
 #if !defined(PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC) || PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010082ULL
 #error Build only the exact LOAD-ONLY82 reload role
+#endif
 #endif
 #if defined(PIONEER_NATIVE_DRAM_MODEL_BAND_DIAGNOSTIC) || defined(PIONEER_NATIVE_BFP_DIAGNOSTIC) || defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) || defined(PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC) || defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(__FAST_MATH__)
 #error LOAD-ONLY82 cannot alias math/old contexts,Work or CPU reference
@@ -26,7 +34,7 @@ static bool DisposeKnown(Owner* o) {
 static bool Finish(Owner& o) {
 	const auto& r=o.lease.Result();
 	if(o.closeAttempted || !o.Scope() || o.retained || o.clockEntered || r.compute.state!=PIONEER_NATIVE_BFP_CLOSED
-		|| r.payload_checked!=46080 || r.headers_checked!=2560 || r.mismatch_kind || r.mismatch_offset
+		|| r.payload_checked!=46080 || r.headers_checked!=PioneerNativeDramLoadVariant::HeaderWords || r.mismatch_kind || r.mismatch_offset
 		|| !r.compute.l1_restored || !r.compute.tlb_restored || !r.gddr_restored || !r.niu_restored || !r.clock_restored)return false;
 	o.closeAttempted=true;o.closing=true;o.ready=false;
 	return o.CloseViews() && o.ClosePci();
@@ -107,3 +115,6 @@ device_hooks* find_device(const char* name) {
 	static device_hooks hooks={PioneerNativeDram82::Open,ProbeClose,PioneerNativeDram82::Free,PioneerNativeDram82::Control,NULL,NULL,NULL,NULL,NULL,NULL};
 	return name && !strcmp(name,TT_PCI_PROBE_DEVICE)?&hooks:NULL;
 }
+#if defined(PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64)
+#undef PioneerNativeDram82
+#endif

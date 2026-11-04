@@ -1,23 +1,33 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_NATIVE_DRAM_LOAD_LEASE_H
 #define PIONEER_NATIVE_DRAM_LOAD_LEASE_H
+#include "../../src/add-ons/kernel/drivers/misc/PioneerNativeDramLoadVariant.h"
 #if defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_NATIVE_DRAM_MODEL_BAND_DIAGNOSTIC) || (defined(_KERNEL_MODE) && !defined(PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC))
 #error Load-only GDDR lease requires distinct diagnostic82,never math81/Work/validation
 #endif
+#if defined(PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64)
+#if defined(PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010083ULL)
+#error Exact kernel load-only83 reload role required
+#endif
+#else
 #if defined(PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010082ULL)
 #error Exact kernel load-only82 reload role required
+#endif
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/BlackholeComputeNocProbe.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerNativeDramLoadProtocol.h"
 #include "PioneerNativeDramBandLayout.h"
 #include "PioneerNativeBfpModelBandData.h" // PRIVATE,never committed
+#if defined(_KERNEL_MODE) && defined(PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC)
+static_assert(PIONEER_DRIVER_BUILD_TAG==PioneerNativeDramLoadVariant::Tag,"load-only placement policy must bind the exact compiled driver identity");
+#endif
 // Separate noncopyable heap journal for LOAD ONLY,not a numerical result.
 // No destructor IO. END after known loader park independently checks every
 // actual loaded header/payload byte BEFORE any data restore. First mismatch
 // retains everything;address/kind ONLY are reported,never private data words.
 class PioneerNativeDramLoadLease {
 	using L=PioneerNativeDramBandLayout;
-	uint32_t l1[52812]={},dram[46080]={},tlb[2][3]={},command[10]={},before[9]={},frame[8]={};
+	uint32_t l1[PioneerNativeDramLoadVariant::L1Words]={},dram[46080]={},tlb[2][3]={},command[10]={},before[9]={},frame[8]={};
 	tt_dram_samples_result routes={};const tt_dram_samples_result* proof=nullptr;
 	unsigned selection=UINT32_MAX,reset=0x47800;bool attempted=false,owned=false,failed=false,fifo=false;
 	PioneerNativeDramLoadResult result={};
@@ -113,9 +123,9 @@ class PioneerNativeDramLoadLease {
 		for(unsigned operand=0;operand<2;operand++)for(unsigned tile=0;tile<160;tile++) {
 			if(!(tile&15) && (!Guard(io) || !Counters(io)))return Fail(io);
 			const unsigned address=(operand?L::Input:L::Weight)+tile*(operand?L::InputStride:L::WeightStride);
-			for(unsigned i=0;i<8;i++) {
-				uint32_t v=0;if(!io.NativeL1Read(address-32+i*4,v))return Fail(io);
-				if(v)return Mismatch(io,first?1:5,address-32+i*4);
+			for(unsigned i=0;i<L::Header/4;i++) {
+				uint32_t v=0;if(!io.NativeL1Read(address-L::Header+i*4,v))return Fail(io);
+				if(v)return Mismatch(io,first?1:5,address-L::Header+i*4);
 				if(first)result.headers_checked++;
 			}
 			for(unsigned i=0;i<(operand?16U:272U);i++) {
@@ -129,22 +139,22 @@ class PioneerNativeDramLoadLease {
 			uint32_t v=0;if(!io.NativeL1Read(L::Output+i*4,v))return Fail(io);
 			if(v!=0x7fc00001)return Mismatch(io,first?4:5,L::Output+i*4);
 		}
-		return result.payload_checked==46080 && result.headers_checked==2560;
+		return result.payload_checked==46080 && result.headers_checked==PioneerNativeDramLoadVariant::HeaderWords;
 	}
 public:
 	PioneerNativeDramLoadLease()=default;
 	PioneerNativeDramLoadLease(const PioneerNativeDramLoadLease&)=delete;
 	PioneerNativeDramLoadLease& operator=(const PioneerNativeDramLoadLease&)=delete;
-	static constexpr unsigned L1Words=52812,DramWords=46080;
+	static constexpr unsigned L1Words=PioneerNativeDramLoadVariant::L1Words,DramWords=46080;
 	static unsigned L1Address(unsigned index) {
 		if(index>=L1Words)return UINT32_MAX;
 		if(!index)return 0x6000;
 		index--;if(index<2048)return 0x70000+index*4;
 		index-=2048;if(index<2048)return 0x6e000+index*4;
 		index-=2048;if(index<8)return 0x74000+index*4;
-		index-=8;if(index<44800)return L::Weight-32+index*4;
-		index-=44800;if(index<3840)return L::Input-32+index*4;
-		index-=3840;if(index<64)return L::Output+index*4;
+		index-=8;if(index<160*L::WeightStride/4)return L::Weight-L::Header+index*4;
+		index-=160*L::WeightStride/4;if(index<160*L::InputStride/4)return L::Input-L::Header+index*4;
+		index-=160*L::InputStride/4;if(index<64)return L::Output+index*4;
 		return 0x17ffc0+(index-64)*4;
 	}
 	static unsigned DramAddress(unsigned index) {
@@ -169,7 +179,7 @@ public:
 	}
 	void Abandon(){if(owned){failed=true;result.compute.state=PIONEER_NATIVE_BFP_UNKNOWN;result.compute.cold=1;}}
 	template<class IO,class Image> bool Run(IO& io,const tt_dram_samples_result& baseline,unsigned sample) {
-		static_assert(Image::Width==5120 && Image::Phases==0 && Image::LoadOnly,"fixed LOAD ONLY82 image,NO FPU");
+		static_assert(Image::Width==5120 && Image::Phases==0 && Image::LoadOnly==PioneerNativeDramLoadVariant::LoadOnly,"exact LOAD ONLY placement image,NO FPU");
 		if(attempted || sample>=3)return false;
 		attempted=true;result.compute.state=PIONEER_NATIVE_BFP_REFUSED;
 		if(baseline.version!=1 || baseline.state!=TT_DRAM_SAMPLE_ROUTES_OK || baseline.routes_verified!=7
@@ -268,5 +278,6 @@ public:
 		result.clock_restored=result.compute.tlb_restored=1;result.phase=10;result.compute.state=PIONEER_NATIVE_BFP_CLOSED;owned=false;return true;
 	}
 };
-static_assert(PioneerNativeDramLoadLease::L1Words*4==211248 && PioneerNativeDramLoadLease::DramWords*4==184320,"bounded LOAD ONLY heap journals");
+static_assert(PioneerNativeDramLoadLease::L1Words*4==(PioneerNativeDramLoadVariant::Role==83?221488U:211248U)
+	&& PioneerNativeDramLoadLease::DramWords*4==184320,"bounded LOAD ONLY heap journals");
 #endif

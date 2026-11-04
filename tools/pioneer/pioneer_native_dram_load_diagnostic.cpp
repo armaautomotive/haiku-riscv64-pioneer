@@ -20,8 +20,8 @@ bool Result(const PioneerNativeDramLoadRequest& r,uint64_t generation,unsigned s
 	for(unsigned word:c.output)if(word!=0x7fc00001)return false; // sentinel ONLY,not model values
 	return c.held==closed && c.l1_restored==closed && c.tlb_restored==closed && r.result.phase==(closed?10U:5U)
 		&& r.result.gddr_restored==closed && r.result.niu_restored==closed && r.result.clock_restored==closed
-		&& r.result.requests==320 && r.result.flits==2880 && r.result.saved_l1==52812 && r.result.saved_gddr==46080
-		&& r.result.payload_checked==(closed?46080U:0U) && r.result.headers_checked==(closed?2560U:0U);
+		&& r.result.requests==320 && r.result.flits==2880 && r.result.saved_l1==PioneerNativeDramLoadVariant::L1Words && r.result.saved_gddr==46080
+		&& r.result.payload_checked==(closed?46080U:0U) && r.result.headers_checked==(closed?PioneerNativeDramLoadVariant::HeaderWords:0U);
 }
 bool Delivered(){return !fflush(stdout) && !ferror(stdout);}
 void Unknown(const char* stage,const PioneerNativeDramLoadRequest& r) {
@@ -31,14 +31,23 @@ void Unknown(const char* stage,const PioneerNativeDramLoadRequest& r) {
 }
 }
 int main(int argc,char** argv) {
+#if defined(PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64)
+	if(argc!=2 || strcmp(argv[1],"--fixed-load64-only-band")){fputs("Use --fixed-load64-only-band for one fixed DEBUG C64 placement control,NO FPU/model/Work inference.\n",stderr);return 2;}
+#else
 	if(argc!=2 || strcmp(argv[1],"--fixed-load-only-band")){fputs("Use --fixed-load-only-band for one fixed DEBUG load/byte-check,NO FPU/model/Work inference.\n",stderr);return 2;}
+#endif
 	if(geteuid()!=0)return 1;
 	PioneerNativeModelBandSource source;std::string error;
 	puts("AUTHENTICATING_FIXED_ORIGINAL_AND_FRESH_LEARNED_REFERENCE;CPU_DIAGNOSTIC_ONLY_NO_DEVICE_YET");if(!Delivered())return 1;
 	if(!source.Prepare("/boot/home/models/Qwen3.8-27B-Q4_K_M.gguf",error) || !source.Ready()) {
 		fprintf(stderr,"NATIVE_LOAD_ONLY_SOURCE_REFUSED: %s;NO_DEVICE_OPEN\n",error.c_str());return 1;
 	}
-	puts("AUTHENTICATED_FIXED_MODEL c600de03 tensor7 width5120 sample0;LOAD_ONLY_NO_FPU_MODEL_OR_WORK");if(!Delivered() || !source.Ready())return 1;
+#if defined(PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64)
+	puts("AUTHENTICATED_FIXED_MODEL c600de03 tensor7 width5120 sample0;LOAD64_ONLY_NO_FPU_MODEL_OR_WORK");
+#else
+	puts("AUTHENTICATED_FIXED_MODEL c600de03 tensor7 width5120 sample0;LOAD_ONLY_NO_FPU_MODEL_OR_WORK");
+#endif
+	if(!Delivered() || !source.Ready())return 1;
 	const int fd=open("/dev/misc/tenstorrent_pci_probe",O_RDWR|O_CLOEXEC);if(fd<0)return 1;
 	tt_pioneer_driver_reload metadata={};metadata.version=1;metadata.expected_tag=PioneerNativeDramLoadTag;
 	if(ioctl(fd,TT_PCI_PROBE_RELOAD_STATUS,&metadata,sizeof(metadata)) || metadata.version!=1 || metadata.expected_tag || metadata.expected_generation
@@ -66,7 +75,11 @@ int main(int argc,char** argv) {
 		Unknown("END",end);close(fd);return 1;
 	}
 	if(close(fd))return 1;
+#if defined(PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64)
+	printf("PASS_NATIVE_DRAM_LOAD64_ONLY sample0 tensor7 width5120 requests320 flits2880 saved_l155372 saved_gddr46080 payload_checked46080 headers_checked5120 polls%u generation%llu;EXPLICIT_END_GDDR_L1_NIU_FIFO_TLB_CLOCK_PCI_RESTORED;NO_FPU_MODEL_QUALITY_OR_SPEED_CLAIM\n",
+#else
 	printf("PASS_NATIVE_DRAM_LOAD_ONLY sample0 tensor7 width5120 requests320 flits2880 saved_l152812 saved_gddr46080 payload_checked46080 headers_checked2560 polls%u generation%llu;EXPLICIT_END_GDDR_L1_NIU_FIFO_TLB_CLOCK_PCI_RESTORED;NO_FPU_MODEL_QUALITY_OR_SPEED_CLAIM\n",
+#endif
 		r.result.compute.polls,(unsigned long long)metadata.generation);
 	return Delivered()?0:1;
 }

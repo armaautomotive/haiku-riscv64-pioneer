@@ -8,10 +8,12 @@ import subprocess
 import sys
 import tempfile
 
-if not __debug__ or len(sys.argv) != 3:
-    raise SystemExit('Use non-optimized Python SDK PRIVATE_EXPORT')
+if not __debug__ or len(sys.argv) not in (3, 4) or (len(sys.argv) == 4 and sys.argv[3] != '--alignment64-control'):
+    raise SystemExit('Use non-optimized Python SDK PRIVATE_EXPORT [--alignment64-control]')
+aligned = len(sys.argv) == 4
+variant = ['-DPIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64=1'] if aligned else []
 here = pathlib.Path(__file__).resolve().parent
-sdk, private = map(pathlib.Path, sys.argv[1:])
+sdk, private = map(pathlib.Path, sys.argv[1:3])
 assert sdk.is_absolute() and private.is_absolute() and not private.is_symlink()
 assert stat.S_IMODE(private.stat().st_mode) == 0o700 and private.stat().st_uid == os.geteuid()
 pins = {'PioneerNativeBfpModelBandData.h': 'cf8e2ca4d8489b1e2c9dbf3d23486a5b2b53a678f042629cbb4385e68daaa4f5',
@@ -21,12 +23,13 @@ for name, digest in pins.items():
     assert stat.S_ISREG(info.st_mode) and info.st_uid == os.geteuid() and info.st_nlink == 1 and stat.S_IMODE(info.st_mode) == 0o600
     assert hashlib.sha256((private / name).read_bytes()).hexdigest() == digest
 folder = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-dram-load-only-lease.'))
-subprocess.run([sys.executable, str(here.parent / 'build_native_dram_load.py'), str(sdk), str(folder / 'image')], check=True)
-assert hashlib.sha256((folder / 'image/text.bin').read_bytes()).hexdigest() == '966507e23929a1d28f62f56de0ea3c3a6c9148d9ff8f59c84138f746eea779a0'
+subprocess.run([sys.executable, str(here.parent / 'build_native_dram_load.py'), str(sdk), str(folder / 'image'), *sys.argv[3:]], check=True)
+assert hashlib.sha256((folder / 'image/text.bin').read_bytes()).hexdigest() == ('fa70be17ca4b3cf3889e5176f6a651b2f5afcdefd0511f98aba4745d6c2b04b7' if aligned else '966507e23929a1d28f62f56de0ea3c3a6c9148d9ff8f59c84138f746eea779a0')
 # Reuse explicit old fake-MMIO endpoints,NOT its FPU execution or algorithm.
 old = (here / 'pioneer_native_dram_model_band_lease_test.cpp').read_text()
 io = old[old.index('struct LeaseIO {'):old.index('static void NoMore(')]
 io = io.replace('DramBandRV32::Range', 'DramLoadRV32::Range')
+io = io.replace('L::Weight-32', 'L::Weight-L::Header').replace('L::Input-32', 'L::Input-L::Header')
 first = io.index('\tvoid Execute() {')
 last = io.index('\tbool NativeResetWrite(', first)
 execute = r'''
@@ -36,7 +39,7 @@ execute = r'''
   for(unsigned i=0;i<2048;i++)assert(memory[(0x70000+i*4)/4]==Image::Word(i));
   for(unsigned i=0;i<Lease::L1Words;i++) {
    const unsigned a=Lease::L1Address(i),v=memory[a/4];
-   if(DramLoadRV32::Range(a,L::Weight-32,160*L::WeightStride) || DramLoadRV32::Range(a,L::Input-32,160*L::InputStride)) {
+   if(DramLoadRV32::Range(a,L::Weight-L::Header,160*L::WeightStride) || DramLoadRV32::Range(a,L::Input-L::Header,160*L::InputStride)) {
     for(unsigned b=0;b<4;b++)image.transfer.l1[a+b]=uint8_t(v>>(b*8));
    } else if(!DramLoadRV32::Range(a,0x70000+unsigned(image.code.size()),8192-unsigned(image.code.size())))image.l1[image.Index(a)]=v;
   }
@@ -45,7 +48,7 @@ execute = r'''
   assert(image.Execute());
   for(unsigned i=0;i<Lease::L1Words;i++) {
    const unsigned a=Lease::L1Address(i);
-   if(DramLoadRV32::Range(a,L::Weight-32,160*L::WeightStride) || DramLoadRV32::Range(a,L::Input-32,160*L::InputStride))memory[a/4]=::Word(image.transfer.l1,a);
+   if(DramLoadRV32::Range(a,L::Weight-L::Header,160*L::WeightStride) || DramLoadRV32::Range(a,L::Input-L::Header,160*L::InputStride))memory[a/4]=::Word(image.transfer.l1,a);
    else if(!DramLoadRV32::Range(a,0x70000+unsigned(image.code.size()),8192-unsigned(image.code.size())))memory[a/4]=image.l1[image.Index(a)];
   }
   for(unsigned i=0;i<16;i++)counters[i]=image.transfer.counters[i];
@@ -66,7 +69,7 @@ prefix = r'''
 #include <type_traits>
 using Lease=PioneerNativeDramLoadLease;
 struct Image {
- static constexpr unsigned Width=5120,Phases=0,LoadOnly=1;
+ static constexpr unsigned Width=5120,Phases=0,LoadOnly=PioneerNativeDramLoadVariant::LoadOnly;
  static inline unsigned Boot=0;static inline std::vector<uint8_t> code;
  static unsigned Word(unsigned i){return i<code.size()/4?::Word(code,i*4):0;}
 };
@@ -84,24 +87,25 @@ int main(int argc,char** argv){
  for(unsigned sample=0;sample<3;sample++){
   auto lease=std::make_unique<Lease>();LeaseIO io(*lease,argv[1]);auto baseline=io.Baseline();io.proof=&baseline;
   assert((lease->Run<LeaseIO,Image>(io,baseline,sample)) && io.executed && io.resets==2);
-  const auto& r=lease->Result();assert(r.compute.state==PIONEER_NATIVE_BFP_RESULT && r.compute.count==0x80001400
-   && r.compute.marker==0x314c444e && !r.payload_checked && !r.headers_checked && !r.mismatch_kind);
+  const auto& r=lease->Result();assert(r.compute.state==PIONEER_NATIVE_BFP_RESULT && r.compute.count==PioneerNativeDramLoadVariant::Count
+   && r.compute.marker==PioneerNativeDramLoadVariant::Marker && !r.payload_checked && !r.headers_checked && !r.mismatch_kind);
   for(unsigned v:r.compute.output)assert(v==0x7fc00001); // NEVER learned results
   assert((lease->End<LeaseIO,Image>(io)) && r.compute.state==PIONEER_NATIVE_BFP_CLOSED && !r.compute.cold);
-  assert(r.payload_checked==46080 && r.headers_checked==2560 && !r.mismatch_kind && !r.mismatch_offset
+  assert(r.payload_checked==46080 && r.headers_checked==PioneerNativeDramLoadVariant::HeaderWords && !r.mismatch_kind && !r.mismatch_offset
    && r.gddr_restored && r.niu_restored && r.clock_restored && r.compute.l1_restored && r.compute.tlb_restored);
   assert(io.memory==io.original && io.gddr==io.originalDram && io.resets==4 && !io.retained && !io.fifo && !io.busyClock);
   NoMore(*lease,io);
-  printf("PASS OFFBOARD actual LOAD ONLY sample%u:real private bytes/actual RV32,46080 payload+2560 header words exact,complete L1/GDDR/NIU/TLB/clock restore;NO FPU/arithmetic observer/native/hardware proof\n",sample);
+  printf("PASS OFFBOARD actual LOAD ONLY sample%u:real private bytes/actual RV32,46080 payload+%u header words exact,complete L1/GDDR/NIU/TLB/clock restore;NO FPU/arithmetic observer/native/hardware proof\n",sample,PioneerNativeDramLoadVariant::HeaderWords);
  }
  unsigned failed=0;
- for(unsigned operand=0;operand<2;operand++)for(unsigned tile:{0U,1U,79U,80U,158U,159U})for(unsigned site=0;site<5;site++){
+ for(unsigned operand=0;operand<2;operand++)for(unsigned tile:{0U,1U,79U,80U,158U,159U})for(unsigned site=0;site<L::Header/4+3;site++){
   auto lease=std::make_unique<Lease>();LeaseIO io(*lease,argv[1]);auto baseline=io.Baseline();io.proof=&baseline;
   assert((lease->Run<LeaseIO,Image>(io,baseline,0)));
   const unsigned address=(operand?L::Input:L::Weight)+tile*(operand?L::InputStride:L::WeightStride);
-  const unsigned offset=site==0?address-32:site==1?address-4:site==2?address:site==3?address+(operand?32:544):address+(operand?60:1084);
+  const unsigned h=L::Header/4;
+  const unsigned offset=site<h?address-L::Header+site*4:site==h?address:site==h+1?address+(operand?32:544):address+(operand?60:1084);
   io.memory[offset/4]^=1;
-  assert((!lease->End<LeaseIO,Image>(io)) && io.retained && lease->Result().mismatch_kind==(site<2?1U:2U)
+  assert((!lease->End<LeaseIO,Image>(io)) && io.retained && lease->Result().mismatch_kind==(site<h?1U:2U)
    && lease->Result().mismatch_offset==offset && !lease->Result().gddr_restored && io.dramWrites==46080 && io.resets==2);
   NoMore(*lease,io);failed++;
  }
@@ -135,7 +139,7 @@ int main(int argc,char** argv){
   assert((lease->Run<LeaseIO,Image>(io,baseline,0)));io.damageAfterHold=true;
   assert((!lease->End<LeaseIO,Image>(io)) && io.retained && lease->Result().mismatch_kind==5
    && lease->Result().mismatch_offset==L::Weight && lease->Result().payload_checked==46080
-   && lease->Result().headers_checked==2560 && io.resets==4 && io.dramWrites==46080);
+   && lease->Result().headers_checked==PioneerNativeDramLoadVariant::HeaderWords && io.resets==4 && io.dramWrites==46080);
   NoMore(*lease,io);failed++;
  }
  printf("PASS actual LOAD ONLY journal:%u mismatch/failure/admission cases,address/kind ONLY,no private word dump;first failure NO later IO/END/retry/reset/cleanup;NO native/physical/quality/speed proof\n",failed);
@@ -144,14 +148,14 @@ int main(int argc,char** argv){
 (folder / 'test.cpp').write_text(prefix + io + tests)
 compiler = os.environ.get('CXX', 'c++')
 common = [compiler, '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-ffp-contract=off',
-          '-fsanitize=address,undefined', '-I' + str(here), '-I' + str(here.parent), '-I' + str(private)]
+          '-fsanitize=address,undefined', *variant, '-I' + str(here), '-I' + str(here.parent), '-I' + str(private)]
 subprocess.run(common + [str(folder / 'test.cpp'), '-o', str(folder / 'test')], check=True)
 subprocess.run([str(folder / 'test'), str(folder / 'image')], check=True,
                env=dict(os.environ, ASAN_OPTIONS='quarantine_size_mb=32', UBSAN_OPTIONS='halt_on_error=1'))
 for selection in ('_KERNEL_MODE', 'PIONEER_NATIVE_DRAM_MODEL_BAND_DIAGNOSTIC', 'PIONEER_Q38_WORK_INFERENCE', 'PIONEER_Q38_CPU_VALIDATION'):
     result = subprocess.run(common + ['-D' + selection, '-x', 'c++', '-c', '-', '-o', str(folder / 'forbidden.o')],
                             input='#define B_DEVICE_OP_CODES_END 10000\n#include "PioneerNativeDramLoadLease.h"\n', text=True, capture_output=True)
-    assert result.returncode and 'Load-only GDDR lease requires distinct diagnostic82' in result.stderr
+    assert result.returncode and ('Load-only GDDR lease requires distinct diagnostic82' in result.stderr or 'C64 placement requires its separate LOAD-ONLY83 role' in result.stderr or 'C64 kernel placement requires exact LOAD-ONLY83 reload role' in result.stderr)
 for name, digest in pins.items():
     assert hashlib.sha256((private / name).read_bytes()).hexdigest() == digest
 print('PASS LOAD ONLY4 forbidden roles,PRIVATE data unchanged;OFFBOARD evidence:', folder)

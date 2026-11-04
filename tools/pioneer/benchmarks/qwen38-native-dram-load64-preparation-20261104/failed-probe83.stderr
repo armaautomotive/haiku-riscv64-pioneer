@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_native_dram_load_diagnostic.py", line 115, in <module>
+    assert result.returncode and 'load-only placement policy must bind the exact compiled driver identity' in result.stderr
+AssertionError

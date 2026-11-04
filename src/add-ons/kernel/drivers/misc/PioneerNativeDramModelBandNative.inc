@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MIT */
-// Shared physical adapter for EXACT separate81 math/82 LOAD-ONLY drivers.
+// Shared physical adapter for EXACT81 math/82 or explicit83 LOAD-ONLY.
 // Each gets a different protocol/lease/image/namespace. No runtime mode flag,
 // arbitrary payload or old sweep/cohort/Work factory is introduced.
 #include "BlackholeDramSweepArcClock.h"
@@ -10,7 +10,11 @@
 namespace PioneerNativeDram82 {
 using PioneerNativeDramModelBandLease=PioneerNativeDramLoadLease;
 constexpr uint32 NativeResultMarker=PioneerNativeDramLoadMarker,NativeResultCount=PioneerNativeDramLoadCount;
+#if defined(PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64)
+constexpr const char* MapName="P100A isolated GDDR LOAD ONLY83 C64";
+#else
 constexpr const char* MapName="P100A isolated GDDR LOAD ONLY82";
+#endif
 #else
 #include "../../../../../tools/pioneer/PioneerNativeDramModelBandLease.h"
 #include "PioneerNativeDramModelBandGeneratedImage.h"
@@ -293,18 +297,18 @@ bool IO::NativeNiuWrite(unsigned a,uint32 v) {
 static bool L1Address(unsigned a) {
 	using L=PioneerNativeDramBandLayout;
 	return !(a&3) && (a==0x6000 || (a>=0x70000 && a<0x72000) || (a>=0x6e000 && a<0x70000)
-		|| (a>=0x74000 && a<0x74020) || (a>=L::Weight-32 && a<L::WeightEnd(5120))
-		|| (a>=L::Input-32 && a<L::InputEnd(5120)) || (a>=L::Output && a<L::Output+256) || (a>=0x17ffc0 && a<0x17ffcc));
+		|| (a>=0x74000 && a<0x74020) || (a>=L::Weight-L::Header && a<L::WeightEnd(5120))
+		|| (a>=L::Input-L::Header && a<L::InputEnd(5120)) || (a>=L::Output && a<L::Output+256) || (a>=0x17ffc0 && a<0x17ffcc));
 }
 bool IO::NativeL1Read(unsigned a,uint32& v) {
 	if(!L1Address(a))return false;
 	if(owner.resetStage==2) {
 		const auto& r=owner.lease.Result().compute;
 		const bool status=a>=0x17ffc0 && a<0x17ffcc;
-		const bool output=a>=0x134000 && a<0x134100 && r.phase==0x7000c && r.count==NativeResultCount && r.marker==NativeResultMarker
+		const bool output=a>=PioneerNativeDramBandLayout::Output && a<PioneerNativeDramBandLayout::Output+256 && r.phase==0x7000c && r.count==NativeResultCount && r.marker==NativeResultMarker
 			&& (r.pc[0]==0x70038 || r.pc[0]==0x7003c) && (r.pc[1]==0x70038 || r.pc[1]==0x7003c);
 #if defined(PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC)
-		// Exact82 image has NO FPU path and only spins at this known park.
+		// Exact82/83 images have NO FPU path and spin at the known park.
 		// Permit READ ONLY comparison of owned bytes BEFORE any stop/reset.
 		const bool loadedPark=r.state==PIONEER_NATIVE_BFP_RESULT && r.completed==1 && r.phase==0x7000c
 			&& r.count==NativeResultCount && r.marker==NativeResultMarker

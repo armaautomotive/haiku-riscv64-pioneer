@@ -1,0 +1,2 @@
+PASS ACTUAL LOAD-ONLY82 client:228 ASan/UBSan cases;actual reload metadata,all64 sentinel mutations RUN/END,byte-check/counter/restore/marker/role/source/FD/channel gates;no private word dump,no second END/retry;3 forbidden roles;NO hardware proof
+CPU-only actual LOAD-ONLY client evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-load-only-client.y6fic02h

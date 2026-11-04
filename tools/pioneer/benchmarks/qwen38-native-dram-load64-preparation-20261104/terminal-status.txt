@@ -1,0 +1,19 @@
+2026-11-04 UTC. Original handles observed terminal,not progress timeouts:
+89419 frozen83 SDK+image+private lease+actual native fixture group CLOSED0
+86667 actual83 client231 cases CLOSED0
+62163 actual83 parent29+7+11+20+10 cases CLOSED0
+96748 C64 loader27valid/36refused,3 widths CLOSED0
+10072 C32 loader27valid/36refused,3 widths CLOSED0
+715d88 explicit83/default82 parsers+failed81/82 immutable regressions CLOSED0
+11206 default82 SDK16 role+2 real compile refusals CLOSED0,byte identical
+83244 old81 SDK CLOSED0,byte identical
+45795 default82 image/private lease/client/parent group CLOSED0
+49601 default82 native308valid/665refused CLOSED0
+74305 old81 native307valid/643refused CLOSED0
+28164 all3 original math images CLOSED0,byte identical
+58880 corrected83 compile-binding probe build CLOSED0
+72712 first83 negative-probe setup CLOSED1,missing include path,not a pass
+37177 first82 negative-probe setup CLOSED1,missing include path,not a pass
+7b3638 native readonly preflight CLOSED0,stable041/gen2/64CPU/fullRAM
+No83 staging/hardware execution,driver/OS/power/SD/model/cache/Assistant write.
+Full-native27B/model quality/maximal measured speed/20tok/s remain UNMET.

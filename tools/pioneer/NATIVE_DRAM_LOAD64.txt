@@ -1,0 +1,95 @@
+LOAD-ONLY83 C64 placement control -- OFFBOARD preparation,NOT a fix/pass
+======================================================================
+The actual82 C32 transfer test failed at the FIRST word of tile1(90460),
+after tile0's1088B matched and BEFORE reset/FPU. Both addresses were C32,
+but not C64-congruent. That observed failure is preserved at50a47eff54.
+Alignment/placement is a hypothesis;FIFO/request handling remains possible.
+This new controlled candidate is not proof of a silicon alignment rule,
+corrected hardware transfer,learned arithmetic,model quality or throughput.
+
+One compile-time placement choice,not a runtime fallback
+--------------------------------------------------------
+PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64=1 is selected ONLY by the explicit
+--alignment64-control build option. Default builds retain exact82 bytes.
+The compile policy binds83 tag2026110400010083,opcodes7f00..02,ND64 marker
+3436444e,countc0001400 and LoadOnly64 attribute. Existing82 retains tag82,
+7e00..02,NDL1/80001400/LoadOnly1. Same408B pointer-free request/368B result,
+but no cross-role admission. Kernel tag/reload/role,Work/reference/math81/
+fast-math rejection and real template policy/image mismatch checks apply.
+The83 implementation has its own namespace. No installed Work target uses it.
+
+Packed GDDR/cache payloads,private source sample,firmware route,16-request
+queue/order,320 requests/2880flits and all numerical/reference recipes stay
+UNCHANGED. Only private L1 placement/padding changes:
+ weight payload90000,stride1152,payload1088,preceding64B zero header;
+ input payload12c000,stride128,payload64,preceding64B zero header;
+ output140000..1400ff remains64 unchanged7fc00001 sentinels;
+ ROM70000..71fff,stack6e000..6ffff,frame74000..7401f,status17ffc0..17ffcb.
+At largest supported K17408,weight end128fc0,input end13cfc0;all spans
+remain disjoint/below16c000. These are DATA bounds,not new native range
+authority. All headers+payloads fill each stride,with no unchecked gap.
+Every packet's source and destination is64-aligned. The kernel journal is
+still FIXED K5120:55372 L1 words(221488B),46080 GDDR words(184320B).
+No full-model arena enlargement or cache reformat/requantization occurs.
+
+Unchanged strict lifecycle
+---------------------------
+Heap-only/noncopyable native owner,17 real view contracts,exclusive FD/team/
+thread/guard/generation/PCI/source/backing binding,strict ARC clock,exact
+NIU/FIFO/counters and four reset-ledger transitions remain. No destructor IO.
+The actual RV32I2280B imagefa70be17... has NO FPU/config/Dst/math,scalar
+payload copy/hash or host callback. Known no-math park permits explicit END.
+BEFORE ANY stop/reset,the host independently checks ROM/frame,ALL46080
+loaded payload words,ALL5120 header words and64 unchanged sentinels. After
+known STOP/HOLD,it compares them AGAIN BEFORE ANY data restore. GDDR source
+must still match,then complete original GDDR/L1 readback and NIU/FIFO/TLB/
+clock/PCI closure are required. First failure retains memory only;NO later
+IO/reset/retry/automatic restore. Mismatch logs kind/address,not weight words.
+
+Same-open full original19GB SHA/layout/epoch and fresh original payload plus
+rounded DEBUG reference proof finish BEFORE device open. This is explicit
+CPU diagnostics,not Work-mode reference validation. The83 client accepts
+ONLY --fixed-load64-only-band and ONE sample0. It requires exact83 metadata,
+support,markers,counters,journals,sentinels and closure;unknown closes only.
+It never silently falls back to82,CPU inference or another model/source.
+
+Qualification and exact controls
+---------------------------------
+Compiled image strict RV32 VM:8 route shapes/21 faults,NO arithmetic observer
+or descriptor normalization. Full lease:all3 authenticated private samples,
+258 corrupt-header/payload/lifecycle/admission cases;EVERY header word at
+selected boundary/odd/even/middle tiles;pre-reset damage permits NO reset,
+post-HOLD damage permits NO restore. Actual native methods over explicit
+OS/PCI fixtures:308 valid/669 refused. Actual client231 ASan/UBSan cases,
+including old82 tag/count/marker and3 forbidden roles. These are NOT actual
+native prerequisite/ARC/engine/byte observations. Loader-only template tests
+cover all3 widths/8 route shapes:27 valid/36 refused,whole simulated L1 exact.
+Descriptor-emission checks are offboard only;there is no83 FPU image/path.
+
+Full actual SDK83 driver/client LINK,18 prologue role refusals plus2 real
+compiler/template refusals(cached opposite policy,opposite placement image).
+Old82 driver3df4fdb1/clientf7ae6e1b/image966507e2 remain BYTE IDENTICAL.
+Old81 driver0ab145ac/client0091244a/all3 RV32 width images remain BYTE
+IDENTICAL. Default-control2df0e0f8 unchanged. All old numerical/byte failure
+receipts stay failures. Independent parser requires explicit83 selection;
+old32 records cannot become64 passes. No acceptance gates are relaxed.
+
+Build ONLY,never stage/run/install:
+ python3 tools/pioneer/build_native_dram_load_diagnostic.py HAIKU_BUILD \
+   PRIVATE_EXPORT NEW_ABSOLUTE_OUTPUT --alignment64-control
+All generated weight-containing binaries/objects/headers remain PRIVATE,
+outside Git. See benchmarks/qwen38-native-dram-load64-preparation-20261104.txt.
+
+Frozen next physical admission -- NOT YET STAGED OR RUN
+-------------------------------------------------------
+pioneer_native_dram_load64_physical.sh requires stable041/gen2,64CPUs/full
+RAM,exact cached Assistant/admin/guard files,no possible owner and exact
+failed82 raw hashes/state plus fresh-epoch recovery. New private stage:
+ /boot/home/pioneer-native-dram-load64-only-20261104-a
+Planned ONLY:041/gen2 ->83/gen3;one source-authenticated load-only sample0;
+strict3-line/zero-stderr/known byte-check END;then041/gen4 ONLY after clean
+closure. Failure stops without further query/END/reset/retry/restore. New
+marker/output paths are mandatory. Never relaunch spent81/82 stages.
+Observe the SAME parent handle to actual terminal completion,not a timeout.
+Corrected actual transfer proof still precedes new FPU/full-model integration.
+Full-native27B,full-model quality/real throughput and20tok/s remain UNMET.

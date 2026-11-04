@@ -4,25 +4,33 @@ import ast
 import hashlib
 import pathlib
 import subprocess
+import sys
 import tempfile
 
 assert __debug__, 'Assertions required'
+assert len(sys.argv) == 1 or sys.argv[1:] == ['--alignment64-control']
+aligned = len(sys.argv) == 2
+role = 83 if aligned else 82
+word_count = 55372 if aligned else 52812
+header_count = 5120 if aligned else 2560
 here = pathlib.Path(__file__).resolve().parent
-source = (here.parent / 'pioneer_native_dram_load_physical.sh').read_text()
+source = (here.parent / ('pioneer_native_dram_load64_physical.sh' if aligned else 'pioneer_native_dram_load_physical.sh')).read_text()
 flow = source.split('# NATIVE_LOAD_ONLY_FLOW_BEGIN\n', 1)[1].split('# NATIVE_LOAD_ONLY_FLOW_END', 1)[0]
 normal = ['AUTHENTICATING_FIXED_ORIGINAL_AND_FRESH_LEARNED_REFERENCE;CPU_DIAGNOSTIC_ONLY_NO_DEVICE_YET',
           'AUTHENTICATED_FIXED_MODEL c600de03 tensor7 width5120 sample0;LOAD_ONLY_NO_FPU_MODEL_OR_WORK',
           'PASS_NATIVE_DRAM_LOAD_ONLY sample0 tensor7 width5120 requests320 flits2880 saved_l152812 saved_gddr46080 payload_checked46080 headers_checked2560 polls2 generation3;EXPLICIT_END_GDDR_L1_NIU_FIFO_TLB_CLOCK_PCI_RESTORED;NO_FPU_MODEL_QUALITY_OR_SPEED_CLAIM']
+if aligned:
+    normal = [v.replace('LOAD_ONLY', 'LOAD64_ONLY').replace('saved_l152812', 'saved_l155372').replace('headers_checked2560', 'headers_checked5120') for v in normal]
 folder = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-load-only-parent.'))
 client = folder / 'client'
-client.write_text('''#!/bin/sh
+client.write_text(('''#!/bin/sh
 [ "$#" = 1 ] && [ "$1" = --fixed-load-only-band ] || exit 2
 echo run >> "$events"
 if [ "$mode" = runfail ];then echo UNKNOWN >&2;exit 1;fi
 cat "$stage/output"
 if [ "$mode" = dirty ];then echo DIRTY >&2;fi
 if [ "$mode" = false-pass ];then exit 1;fi
-''')
+''').replace('--fixed-load-only-band', '--fixed-load64-only-band' if aligned else '--fixed-load-only-band'))
 client.chmod(0o700)
 program = folder / 'flow.sh'
 program.write_text('''set -eu
@@ -35,13 +43,16 @@ metadata(){ echo "metadata:$1:$2" >> "$events"; };health(){ echo health >> "$eve
 ''' + flow)
 cases = [('pass', normal), ('runfail', []), ('dirty', normal), ('false-pass', normal), ('swapfail', normal), ('busy', normal),
          ('extra', normal + ['NOISE']), ('old-math-marker', normal[:2] + [normal[2].replace('NO_FPU_MODEL_', 'NO_FULL_MODEL_')])]
+if aligned:
+    cases += [('old32-result', [v.replace('LOAD64_ONLY', 'LOAD_ONLY').replace('saved_l155372', 'saved_l152812').replace('headers_checked5120', 'headers_checked2560') for v in normal]),
+              ('old32-journal', normal[:2] + [normal[2].replace('saved_l155372', 'saved_l152812')])]
 for i in range(3):
     cases.append(('missing-' + str(i), normal[:i] + normal[i+1:]))
     cases.append(('duplicate-' + str(i), normal[:i] + [normal[i]] + normal[i:]))
 for i, (old, new) in enumerate((('sample0', 'sample1'), ('tensor7', 'tensor8'), ('width5120', 'width6144'),
-                               ('requests320', 'requests321'), ('flits2880', 'flits2879'), ('saved_l152812', 'saved_l150500'),
+                               ('requests320', 'requests321'), ('flits2880', 'flits2879'), ('saved_l1' + str(word_count), 'saved_l150500'),
                                ('saved_gddr46080', 'saved_gddr0'), ('payload_checked46080', 'payload_checked46079'),
-                               ('headers_checked2560', 'headers_checked0'), ('polls2', 'polls0'), ('polls2', 'polls20001'),
+                               ('headers_checked' + str(header_count), 'headers_checked0'), ('polls2', 'polls0'), ('polls2', 'polls20001'),
                                ('generation3;', 'generation11;'), ('CLOCK_PCI_RESTORED', 'PCI_RESTORED'))):
     cases.append(('bad-field-' + str(i), normal[:2] + [normal[2].replace(old, new)]))
 for mode, output in cases:
@@ -50,10 +61,10 @@ for mode, output in cases:
     events = (stage / 'events').read_text().splitlines()
     if mode == 'pass':
         assert result.returncode == 0 and events.count('run') == 1
-        assert events.count('exchange:2026110400010082:2026102100010012') == 1
-        assert (stage / 'state').read_text().strip() == 'STABLE041_RESTORED_LOAD_ONLY_PAYLOAD_AND_HEADERS_PASSED'
+        assert events.count('exchange:20261104000100%d:2026102100010012' % role) == 1
+        assert (stage / 'state').read_text().strip() == ('STABLE041_RESTORED_LOAD64_ONLY_PAYLOAD_AND_HEADERS_PASSED' if aligned else 'STABLE041_RESTORED_LOAD_ONLY_PAYLOAD_AND_HEADERS_PASSED')
     else:
-        assert result.returncode and 'exchange:2026110400010082:2026102100010012' not in events, (mode, events)
+        assert result.returncode and 'exchange:20261104000100%d:2026102100010012' % role not in events, (mode, events)
         if 'run' in events:
             assert events[-1] == 'run'
 idle = source.split('idle(){\n', 1)[1].split('\n}\n', 1)[0]
@@ -82,24 +93,28 @@ stat(){
 }
 sha256sum(){ shasum -a 256 "$@"; }
 ''' + gate)
-prior = here.parent / 'benchmarks/qwen38-native-dram-band-failed-20261104'
+prior = here.parent / ('benchmarks/qwen38-native-dram-load-failed-20261104' if aligned else 'benchmarks/qwen38-native-dram-band-failed-20261104')
 pins = {'gddr.stdout': '8c864eaa071bb226406bc5b10b96fea1e826b04db6333a1cc5a9c007bb9f7d36',
         'gddr.stderr': 'c853295ad73f590a350937b721fe97ce754fb229ecf73b4da17f17e5f5c37e05'}
+if aligned:
+    pins = {'load.stdout': '63f6c0619cb2769932daf9d8b83d644076a70c953a867ab061c6135ec597d99d',
+            'load.stderr': 'f21f376681d8ab635a7df556cc6f231f3ba52073f92668c27a3922981094da7e'}
 gate_cases = ('pass', 'bad-state', 'bad-exit', 'bad-recovery', 'dirty-stdout', 'dirty-stderr', 'linked-prior',
               'linked-model', 'missing-model', 'bad-model-permission', 'bad-owner')
 for mode in gate_cases:
     stage = folder / ('prior-' + mode);(stage / 'prior').mkdir(parents=True)
-    (stage / 'prior/state').write_text('UNPROVEN_GDDR_BANDS_NO_END_RESET_RETRY_RESTORE\n' if mode != 'bad-state' else 'CLEAN\n')
-    (stage / 'prior/gddr.exit').write_text('1\n' if mode != 'bad-exit' else '0\n')
+    failed_state = 'UNPROVEN_LOAD_ONLY_NO_FURTHER_END_RESET_RETRY_RESTORE' if aligned else 'UNPROVEN_GDDR_BANDS_NO_END_RESET_RETRY_RESTORE'
+    (stage / 'prior/state').write_text(failed_state + '\n' if mode != 'bad-state' else 'CLEAN\n')
+    (stage / ('prior/load.exit' if aligned else 'prior/gddr.exit')).write_text('1\n' if mode != 'bad-exit' else '0\n')
     (stage / 'prior/recovery.state').write_text('NEW_POWER_EPOCH_STABLE041_RESTORED_CACHED_ASSISTANT_PRESERVED\n' if mode != 'bad-recovery' else 'NOT_RECOVERED\n')
     for name, digest in pins.items():
         raw = (prior / name).read_bytes();assert hashlib.sha256(raw).hexdigest() == digest
-        if mode == 'linked-prior' and name == 'gddr.stdout':
+        if mode == 'linked-prior' and name.endswith('.stdout'):
             (stage / 'prior' / name).symlink_to(prior / name)
         else:
             (stage / 'prior' / name).write_bytes(raw + (b'X' if mode == 'dirty-' + name.split('.')[1] else b''))
     if mode == 'linked-model':
-        (stage / 'original').symlink_to(stage / 'prior/gddr.stdout')
+        (stage / 'original').symlink_to(stage / ('prior/load.stdout' if aligned else 'prior/gddr.stdout'))
     elif mode != 'missing-model':
         (stage / 'original').write_bytes(b'METADATA_FIXTURE_NOT_MODEL')
     result = subprocess.run(['sh', str(gate_program), str(stage), mode], text=True, capture_output=True)
@@ -142,5 +157,5 @@ for name in ('pass', *once_names):
         assert again.returncode and before == ((stage / 'state').read_bytes(), (stage / 'parent.pid').read_bytes())
     else:
         assert (stage / name).read_text() == 'EXISTING'
-print(f'PASS actual LOAD ONLY parent:{len(cases)} flow/output+7 idle+{len(gate_cases)} failed-prior/recovery/model+{exchange_count + 1} exchange-step+10 one-shot cases;NO status/restore/retry after uncertainty;NO native byte/hardware/model/speed proof')
+print(f'PASS actual LOAD ONLY{role} parent:{len(cases)} flow/output+7 idle+{len(gate_cases)} failed-prior/recovery/model+{exchange_count + 1} exchange-step+10 one-shot cases;NO status/restore/retry after uncertainty;NO native byte/hardware/model/speed proof')
 print('CPU-only LOAD ONLY parent evidence:', folder)

@@ -1,0 +1,7 @@
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+fa70be17ca4b3cf3889e5176f6a651b2f5afcdefd0511f98aba4745d6c2b04b7 2280 text.bin
+OFFBOARD_LOAD_ONLY83_BUILD;NO FPU/unpack/model/Work path,NO native ownership/byte/hardware/speed authority
+7ee39a3615bc93e3b81cd21149fdd020f2e5f3e7a7f1b3db8cca24bffd94a85e tenstorrent_pci_probe-native-dram-load83
+2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc tenstorrent_pci_probe-default43-control
+10310865e07c34b476632e8e776f76fae603a7a4adea2ec87f226f1f05798ac0 pioneer-native-dram-load64-diagnostic
+BUILD_ONLY full LOAD-ONLY83 native driver/client LINKED/18 forbidden roles/2 actual placement compile refusals/legacy NULL/default unchanged;PRIVATE weight-containing binaries NEVER publish;NO native endpoint/hardware/byte/math/model/speed proof

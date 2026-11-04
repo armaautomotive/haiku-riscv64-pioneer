@@ -1,0 +1,11 @@
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+cd924896986dabcead8493c9dedca1d7b25fde323fbd972caf67ad93139a9309 4436 text.bin
+OFFBOARD_NATIVE_DRAM_BAND_BUILD_ONLY K 5120 PHASES4 C32_L1_PACKED_GDDR16_QUEUE;NO staging,owner,driver,hardware,model quality or speed permission
+PASS actual kernel SDK full Run/End template instantiation/Werror;NO native IO definitions/link/device entry or PCI/VM/FD/clock/driver/hardware authority
+COMPILE_ONLY object SHA 1f45bc02a546ffab5788592692eb86cdc0d93f183ca4e278477032b377a636a6
+PRIVATE_HEADERS_UNCHANGED;object/generated PRIVATE build files MUST NOT be published: /private/tmp/pioneer-native-dram-load64-20261104.5PpqABhb/math81-build-final/lease-probe
+0ab145ac3b938238fd3fd139fa8c1e899458932058acd2567f220bb4504cdf27 tenstorrent_pci_probe-native-dram-model-band81
+2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc tenstorrent_pci_probe-default43-control
+0091244ae265e26075e80fa98f5d6b8b5c6d37304938e3d140d9bab6584e307e pioneer-native-dram-model-band-diagnostic
+PASS actual driver prologue14 forbidden role/context/Work/CPU-reference/fast-math cases;PRIVATE headers unchanged
+BUILD_ONLY actual native81 driver/client/all methods LINKED,legacy hooks NULL/default control unchanged;PRIVATE weight-containing binaries MUST NOT be published;NO install/endpoint tests/hardware/full-model/speed authority

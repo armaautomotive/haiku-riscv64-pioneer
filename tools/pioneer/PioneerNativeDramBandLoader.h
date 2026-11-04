@@ -66,12 +66,13 @@ public:
 		if(!Quiet(io))return false;
 		for(unsigned i=0;i<9;i++)baseline[i]=io.Read(Counter(i));
 		for(unsigned operand=0;operand<2;operand++) {
-			// Complete32B headers make all payloads C32 while retaining the
-			// unpacker's immediately preceding16B header. No GDDR padding.
+			// Complete owned headers retain the immediately preceding16B
+			// unpacker header. Explicit83 uses64B,default82/81 uses32B.
+			// No packed-GDDR/cache padding or source conversion change.
 			for(unsigned tile=0;tile<L::Tiles(k);tile++) {
 				L::Read packet={};if(!L::Packet(k,operand,tile,packet))return false;
-				for(unsigned word=0;word<8;word++) {
-					const unsigned address=packet.destination-32+word*4;
+				for(unsigned word=0;word<L::Header/4;word++) {
+					const unsigned address=packet.destination-L::Header+word*4;
 					io.Write(address,0);if(io.Read(address))return false;
 				}
 			}

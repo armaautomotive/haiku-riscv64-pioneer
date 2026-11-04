@@ -6,6 +6,7 @@ def load_component(here):
     source = (here / 'pioneer_native_dram_model_band_lease_test.cpp').read_text()
     io = source[source.index('struct LeaseIO {'):source.index('static void NoMore(')]
     io = io.replace('DramBandRV32::Range', 'DramLoadRV32::Range')
+    io = io.replace('L::Weight-32', 'L::Weight-L::Header').replace('L::Input-32', 'L::Input-L::Header')
     # Reuse the new load-only runner's exact generated VM bridge/prefix;never
     # execute that runner or its CLI/compile/output actions during extraction.
     tree = ast.parse((here / 'run_pioneer_native_dram_load_lease_tests.py').read_text())

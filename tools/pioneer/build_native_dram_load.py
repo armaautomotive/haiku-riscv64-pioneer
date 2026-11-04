@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build ONLY fixed LOAD-ONLY82 RV32 image;NO driver/device/byte/maths proof."""
+"""Build ONLY LOAD-ONLY82 or explicit C64 control83;NO device/byte/math proof."""
 import argparse
 import hashlib
 import os
@@ -12,6 +12,7 @@ if not __debug__:
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('haiku_build', type=pathlib.Path)
 parser.add_argument('output', type=pathlib.Path)
+parser.add_argument('--alignment64-control', action='store_true', help='separate LOAD-ONLY83 C64 placement,never a fix/pass claim')
 args = parser.parse_args()
 assert args.haiku_build.is_absolute() and args.haiku_build.is_dir()
 assert args.output.is_absolute() and not args.output.exists() and not args.output.is_symlink()
@@ -29,6 +30,9 @@ commands = [
     [tool + 'ld', '-m', 'elf32lriscv', '--no-relax', '--gc-sections', '-T', str(here / 'blackhole_q38_native_dram_load.ld'),
      str(args.output / 'start.o'), str(args.output / 'program.o'), '-Map', str(args.output / 'program.map'), '-o', str(args.output / 'program.elf')],
 ]
+if args.alignment64_control:
+    commands[0].insert(1, '-DPIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64=1')
+    commands[1].insert(1, '--defsym=PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64=1')
 for section in ('boot', 'text'):
     commands.append([tool + 'objcopy', '-O', 'binary', '-j', '.' + section, str(args.output / 'program.elf'), str(args.output / (section + '.bin'))])
 for command in commands:
@@ -46,4 +50,4 @@ for name in ('boot.bin', 'text.bin'):
     if name == 'text.bin':
         assert data[0x38:0x40] == struct.pack('<II', 0x6f, 0xffdff06f)
     print(hashlib.sha256(data).hexdigest(), len(data), name)
-print('OFFBOARD_LOAD_ONLY82_BUILD;NO FPU/unpack/model/Work path,NO native ownership/byte/hardware/speed authority')
+print('OFFBOARD_LOAD_ONLY%d_BUILD;NO FPU/unpack/model/Work path,NO native ownership/byte/hardware/speed authority' % (83 if args.alignment64_control else 82))

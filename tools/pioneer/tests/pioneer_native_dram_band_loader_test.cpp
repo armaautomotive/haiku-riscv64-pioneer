@@ -21,8 +21,8 @@ struct IO {
 	}
 	bool Header(unsigned a)const {
 		for(unsigned operand=0;operand<2;operand++) {
-			const unsigned start=(operand?L::Input:L::Weight)-32,stride=operand?L::InputStride:L::WeightStride;
-			if(a>=start && a-start<L::Tiles(width)*stride && (a-start)%stride<32)return true;
+			const unsigned start=(operand?L::Input:L::Weight)-L::Header,stride=operand?L::InputStride:L::WeightStride;
+			if(a>=start && a-start<L::Tiles(width)*stride && (a-start)%stride<L::Header)return true;
 		}
 		return false;
 	}
@@ -30,6 +30,7 @@ struct IO {
 		assert(pending.size()==16);maxQueue=std::max(maxQueue,unsigned(pending.size()));
 		for(const auto& p:pending) {
 			assert(!(p.source&31) && !(p.destination&31) && !(p.bytes&63) && p.bytes<=16384);
+			if(PioneerNativeDramLoadVariant::Role==83)assert(!(p.source&63) && !(p.destination&63));
 			memcpy(l1.data()+p.destination,dram.data()+p.source-L::DramWeight,p.bytes);
 			counters[2]++;counters[3]+=p.bytes/64;counters[4]++;counters[5]++;counters[14]++;completions++;
 		}
@@ -83,11 +84,11 @@ struct IO {
 	void Fence(){events++;}
 	void Exact()const {
 		assert(issues==2*L::Tiles(width) && completions==issues && maxQueue==16 && pending.empty());
-		assert(headerWrites==16*L::Tiles(width) && headerReads==headerWrites && !scalarPayloadReads);
+		assert(headerWrites==2*(L::Header/4)*L::Tiles(width) && headerReads==headerWrites && !scalarPayloadReads);
 		std::vector<uint8_t> expected(l1.size(),0xa7);
 		for(unsigned operand=0;operand<2;operand++)for(unsigned tile=0;tile<L::Tiles(width);tile++) {
 			L::Read p={};assert(L::Packet(width,operand,tile,p));
-			memset(expected.data()+p.destination-32,0,32);
+			memset(expected.data()+p.destination-L::Header,0,L::Header);
 			memcpy(expected.data()+p.destination,dram.data()+p.source-L::DramWeight,p.bytes);
 		}
 		assert(l1==expected); // whole L1,including every unowned byte/guard
@@ -141,6 +142,6 @@ int main() {
 		adapter.Config(112,0x00200015);const auto before=out.all.size();adapter.Config(76,0);
 		adapter.Op(1);adapter.Drain();adapter.Config(1,2);assert(!adapter.Complete() && out.all.size()==before);refused++;
 	}
-	printf("PASS OFFBOARD card-side packed-GDDR loader:%u valid/%u refused;3 widths/8 route SHAPES,whole L1/headers/guards exact,16-request queue/counter wrap,C32 every tile,NO scalar payload reads/GDDR writes/PCIe,exact old4-phase operation sequence except descriptors;one-shot failures/no further IO;NO native ownership/hardware/full-model quality/speed proof\n",passed,refused);
+	printf("PASS OFFBOARD card-side packed-GDDR loader:%u valid/%u refused;3 widths/8 route SHAPES,whole L1/headers/guards exact,16-request queue/counter wrap,C%u every tile,NO scalar payload reads/GDDR writes/PCIe,exact old4-phase operation sequence except descriptors;one-shot failures/no further IO;NO native ownership/hardware/full-model quality/speed proof\n",passed,refused,L::Header);
 }
 #endif

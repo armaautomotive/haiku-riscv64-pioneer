@@ -1,0 +1,6 @@
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+966507e23929a1d28f62f56de0ea3c3a6c9148d9ff8f59c84138f746eea779a0 2268 text.bin
+OFFBOARD_LOAD_ONLY82_BUILD;NO FPU/unpack/model/Work path,NO native ownership/byte/hardware/speed authority
+PASS actual RV32 LOAD ONLY82:320 requests/2880 flits/marker314c444e sentinel-only output;stack272/touched260/steps48638;NO FPU/config/Dst/scalar payload/model/speed authority
+PASS actual RV32 LOAD ONLY:8 route-shape valid/21 frame/NIU/FIFO/counter/header/job faults;whole simulated L1 exact;NO FPU/normalization/host/device ownership or physical byte proof
+OFFBOARD_LOAD_ONLY82_IMAGE_EVIDENCE: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-dram-load-only-image.bq6t5yt1

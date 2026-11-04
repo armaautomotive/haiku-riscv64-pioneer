@@ -1,0 +1,16 @@
+
+/private/tmp/pioneer-native-dram-load64-20261104.5PpqABhb/build83-frozen/tenstorrent_pci_probe-native-dram-load83:     file format elf64-littleriscv
+
+
+Disassembly of section .plt:
+
+Disassembly of section .text:
+
+000000000000630a <_Z37PioneerNativeDramLoadLegacyFindDevicePKc>:
+    630a:	1141                	add	sp,sp,-16
+    630c:	e422                	sd	s0,8(sp)
+    630e:	0800                	add	s0,sp,16
+    6310:	6422                	ld	s0,8(sp)
+    6312:	4501                	li	a0,0
+    6314:	0141                	add	sp,sp,16
+    6316:	8082                	ret

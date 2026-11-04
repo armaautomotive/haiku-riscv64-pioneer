@@ -1,0 +1,2 @@
+PASS cached-opposite-policy-exact-driver-binding
+PASS opposite-placement-image-full-driver-instantiation

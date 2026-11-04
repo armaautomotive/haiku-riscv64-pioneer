@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build ONLY exact LOAD-ONLY82 driver/client;PRIVATE bytes required;NEVER deploys."""
+"""Build ONLY exact LOAD-ONLY82 or C64 control83;PRIVATE bytes;NEVER deploys."""
 import argparse
 import hashlib
 import os
@@ -16,8 +16,14 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('haiku_build', type=pathlib.Path)
 parser.add_argument('private_export', type=pathlib.Path)
 parser.add_argument('output', type=pathlib.Path)
+parser.add_argument('--alignment64-control', action='store_true', help='distinct LOAD-ONLY83 placement control,never deploys')
 args = parser.parse_args()
 build, private, output = args.haiku_build, args.private_export, args.output
+role = 83 if args.alignment64_control else 82
+variant = ['-DPIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64=1'] if args.alignment64_control else []
+image_option = ['--alignment64-control'] if args.alignment64_control else []
+driver_name = 'tenstorrent_pci_probe-native-dram-load' + str(role)
+client_name = 'pioneer-native-dram-load64-diagnostic' if args.alignment64_control else 'pioneer-native-dram-load-diagnostic'
 assert build.is_absolute() and build.is_dir() and output.is_absolute() and not output.exists() and not output.is_symlink()
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 pins = {'PioneerNativeBfpModelBandData.h': 'cf8e2ca4d8489b1e2c9dbf3d23486a5b2b53a678f042629cbb4385e68daaa4f5',
@@ -32,13 +38,13 @@ private_unchanged()
 here = pathlib.Path(__file__).resolve().parent
 root = here.parent.parent
 output.mkdir(mode=0o700)
-subprocess.run([sys.executable, str(here / 'build_native_dram_load.py'), str(build), str(output / 'image')], check=True)
+subprocess.run([sys.executable, str(here / 'build_native_dram_load.py'), str(build), str(output / 'image'), *image_option], check=True)
 code = (output / 'image/text.bin').read_bytes();boot = (output / 'image/boot.bin').read_bytes()
-assert hashlib.sha256(code).hexdigest() == '966507e23929a1d28f62f56de0ea3c3a6c9148d9ff8f59c84138f746eea779a0'
+assert hashlib.sha256(code).hexdigest() == ('fa70be17ca4b3cf3889e5176f6a651b2f5afcdefd0511f98aba4745d6c2b04b7' if args.alignment64_control else '966507e23929a1d28f62f56de0ea3c3a6c9148d9ff8f59c84138f746eea779a0')
 assert hashlib.sha256(boot).hexdigest() == 'd47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd'
 words = struct.unpack('<' + 'I' * (len(code) // 4), code)
 header = ['// Generated LOAD ONLY code,not source weights or device authority.', 'struct PioneerNativeDramLoadGeneratedImage {',
-          'static constexpr unsigned Width=5120,Phases=0,LoadOnly=1,Boot=0x%08x;' % struct.unpack('<I', boot)[0],
+          'static constexpr unsigned Width=5120,Phases=0,LoadOnly=%d,Boot=0x%08x;' % (64 if args.alignment64_control else 1, struct.unpack('<I', boot)[0]),
           'static unsigned Word(unsigned i){static const unsigned words[]={']
 for first in range(0, len(words), 8):
     header.append(','.join('0x%08x' % word for word in words[first:first + 8]) + ',')
@@ -62,7 +68,7 @@ common = [cxx, '-std=gnu++17', '-O2', '-Wall', '-Wextra', '-Werror', '-fno-excep
           '-fno-strict-aliasing', '-fno-delete-null-pointer-checks', '-mcmodel=medany', '-fpic', '-D_KERNEL_MODE']
 roles = ['BANKS', 'PANEL', 'AFFINE', 'BLOCK', 'STREAM', 'ROWS', 'COHORT', 'COHORT_SEALED', 'COHORT_PAYLOAD', 'DISPATCH', 'DISPATCH_VECTOR']
 native = ['-DTT_PIONEER_EXPERIMENTAL_Q38_' + name for name in roles]
-native += ['-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=0x2026110400010082ULL', '-DPIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC=1']
+native += ['-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=0x20261104000100%dULL' % role, '-DPIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC=1', *variant]
 commands = []
 def run(command):
     commands.append(command);subprocess.run(command, check=True, cwd=output)
@@ -80,20 +86,49 @@ for macro in ('PIONEER_NATIVE_DRAM_MODEL_BAND_DIAGNOSTIC', 'PIONEER_NATIVE_BFP_D
               'TT_PIONEER_Q38_WORK_MODE', 'PIONEER_Q38_WORK_INFERENCE', 'PIONEER_Q38_CPU_VALIDATION', 'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
     cases.append((macro, ['-D' + macro + '=1']))
 cases.append(('fast-math', ['-ffast-math']))
+if args.alignment64_control:
+    cases += [('missing-C64-role', ['-UPIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64']),
+              ('wrong-C64-role', ['-UPIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64', '-DPIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64=2']),
+              ('old82-tag', ['-UPIONEER_DRIVER_BUILD_TAG', '-DPIONEER_DRIVER_BUILD_TAG=0x2026110400010082ULL'])]
+else:
+    cases.append(('C64-must-have83-tag', ['-DPIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64=1']))
 for name, extra in cases:
     # Preprocessed PRIVATE bytes must never be saved/printed.
     result = subprocess.run(common + native + extra + includes + ['-E', str(source)], stdout=subprocess.DEVNULL,
                             stderr=subprocess.PIPE, text=True, cwd=output)
     assert result.returncode and ('Build only the exact LOAD-ONLY82 reload role' in result.stderr
+                                  or 'Build only the exact LOAD-ONLY83 C64 reload role' in result.stderr
                                   or 'LOAD-ONLY82 cannot alias math/old contexts,Work or CPU reference' in result.stderr)
 (output / 'driver-role-refusals.txt').write_text('\n'.join('PASS ' + name for name, _ in cases) + '\n')
+# Compile,not just preprocess: a policy cached before kernel macros must
+# still bind the exact driver identity, and the other image is not accepted.
+policy = ['#include <Drivers.h>', '#undef _KERNEL_MODE', '#undef PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64']
+if not args.alignment64_control:
+    policy.append('#define PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64 1')
+policy += ['#include "' + str(driver / 'PioneerNativeDramLoadVariant.h') + '"', '#undef PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64']
+if args.alignment64_control:
+    policy.append('#define PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64 1')
+policy += ['#define _KERNEL_MODE 1', '#include "PioneerNativeDramLoadLease.h"']
+(output / 'wrong-cached-policy.cpp').write_text('\n'.join(policy) + '\n')
+result = subprocess.run(common + native + includes + ['-fsyntax-only', str(output / 'wrong-cached-policy.cpp')],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True, cwd=output)
+assert result.returncode and 'load-only placement policy must bind the exact compiled driver identity' in result.stderr
+wrong = output / 'wrong-image';wrong.mkdir(mode=0o700)
+wrong_header = '\n'.join(header).replace('LoadOnly=%d,' % (64 if args.alignment64_control else 1),
+                                        'LoadOnly=%d,' % (1 if args.alignment64_control else 64))
+assert wrong_header != '\n'.join(header)
+(wrong / 'PioneerNativeDramLoadGeneratedImage.h').write_text(wrong_header + '\n')
+result = subprocess.run(common + native + ['-I' + str(wrong)] + includes + ['-fsyntax-only', str(source)],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True, cwd=output)
+assert result.returncode and 'exact LOAD ONLY placement image,NO FPU' in result.stderr
+(output / 'placement-compile-refusals.txt').write_text('PASS cached-opposite-policy-exact-driver-binding\nPASS opposite-placement-image-full-driver-instantiation\n')
 def compiler_path(name):
     return subprocess.check_output([cxx, '-print-file-name=' + name], text=True).strip()
-for obj, name in [('native.o', 'tenstorrent_pci_probe-native-dram-load82'), ('control.o', 'tenstorrent_pci_probe-default43-control')]:
+for obj, name in [('native.o', driver_name), ('control.o', 'tenstorrent_pci_probe-default43-control')]:
     run([cxx, '-shared', '-nostdlib', '-Wl,--no-undefined,-soname=tenstorrent_pci_probe', compiler_path('crtbeginS.o'),
          str(release / 'system/glue/haiku_version_glue.o'), str(output / obj), str(output / 'profile.o'),
          str(release / 'system/kernel/kernel.so'), compiler_path('libgcc.a'), compiler_path('crtendS.o'), '-o', str(output / name)])
-binary = output / 'tenstorrent_pci_probe-native-dram-load82'
+binary = output / driver_name
 exports = subprocess.check_output([tool + 'nm', '-D', str(binary)], text=True)
 (output / 'native-exports.txt').write_text(exports)
 assert {'api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device'} <= {r.split()[-1] for r in exports.splitlines() if r.split()}
@@ -108,13 +143,13 @@ for row in disassembly.splitlines():
 assert instructions == [('add', 'sp,sp,-16'), ('sd', 's0,8(sp)'), ('add', 's0,sp,16'), ('ld', 's0,8(sp)'), ('li', 'a0,0'), ('add', 'sp,sp,16'), ('ret', '')]
 assert hashlib.sha256((output / 'tenstorrent_pci_probe-default43-control').read_bytes()).hexdigest() == '2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc'
 libs = ['-L' + str(path) for path in sorted((build / 'build_packages').glob('gcc_syslibs-*/lib'))]
-run([cxx, '-std=c++17', '-O2', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror', *user_includes, '-I' + str(private),
+run([cxx, '-std=c++17', '-O2', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror', *variant, *user_includes, '-I' + str(private),
      '-I' + str(root / 'headers/private/shared'), '-I' + str(root / 'headers/private/libroot'),
      '-B' + str(release / 'system/glue'), '-L' + str(release / 'system/libroot'), '-L' + str(release / 'kits'), *libs,
      str(here / 'pioneer_native_dram_load_diagnostic.cpp'), str(here / 'PioneerModelWeightCache.cpp'),
-     str(release / 'kits/shared/libshared.a'), '-lbe', '-o', str(output / 'pioneer-native-dram-load-diagnostic')])
+     str(release / 'kits/shared/libshared.a'), '-lbe', '-o', str(output / client_name)])
 (output / 'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands) + '\n')
 private_unchanged()
-for name in ('tenstorrent_pci_probe-native-dram-load82', 'tenstorrent_pci_probe-default43-control', 'pioneer-native-dram-load-diagnostic'):
+for name in (driver_name, 'tenstorrent_pci_probe-default43-control', client_name):
     print(hashlib.sha256((output / name).read_bytes()).hexdigest(), name)
-print('BUILD_ONLY full LOAD-ONLY82 native driver/client LINKED/15 forbidden roles/legacy NULL/default unchanged;PRIVATE weight-containing binaries NEVER publish;NO native endpoint/hardware/byte/math/model/speed proof')
+print('BUILD_ONLY full LOAD-ONLY%d native driver/client LINKED/%d forbidden roles/2 actual placement compile refusals/legacy NULL/default unchanged;PRIVATE weight-containing binaries NEVER publish;NO native endpoint/hardware/byte/math/model/speed proof' % (role, len(cases)))

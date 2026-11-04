@@ -2,15 +2,18 @@
 #ifndef PIONEER_NATIVE_DRAM_LOAD_PROTOCOL_H
 #define PIONEER_NATIVE_DRAM_LOAD_PROTOCOL_H
 #include "PioneerNativeBfpProtocol.h"
-// Distinct LOAD-ONLY diagnostic82. No FPU/model/Work results. Exact native
+#include "PioneerNativeDramLoadVariant.h"
+// Distinct LOAD-ONLY82/default or explicit C64 placement83 compile role.
+// Tag/opcodes/marker/count differ;the fixed pointer-free ABI size is shared.
+// No runtime mode switch or FPU/model/Work results. Exact native
 // payload/header verification happens in explicit END BEFORE restoration.
-constexpr uint64_t PioneerNativeDramLoadTag=UINT64_C(0x2026110400010082);
+constexpr uint64_t PioneerNativeDramLoadTag=PioneerNativeDramLoadVariant::Tag;
 constexpr uint32_t PioneerNativeDramLoadNone=UINT32_MAX;
-constexpr uint32_t PioneerNativeDramLoadMarker=0x314c444e; // NDL1,not NDB1
-constexpr uint32_t PioneerNativeDramLoadCount=0x80001400; // LOAD ONLY,K5120
-enum {PIONEER_NATIVE_DRAM_LOAD_SUPPORT=B_DEVICE_OP_CODES_END+0x7e00,
-	PIONEER_NATIVE_DRAM_LOAD_RUN=B_DEVICE_OP_CODES_END+0x7e01,
-	PIONEER_NATIVE_DRAM_LOAD_END=B_DEVICE_OP_CODES_END+0x7e02};
+constexpr uint32_t PioneerNativeDramLoadMarker=PioneerNativeDramLoadVariant::Marker;
+constexpr uint32_t PioneerNativeDramLoadCount=PioneerNativeDramLoadVariant::Count;
+enum {PIONEER_NATIVE_DRAM_LOAD_SUPPORT=B_DEVICE_OP_CODES_END+PioneerNativeDramLoadVariant::Opcode,
+	PIONEER_NATIVE_DRAM_LOAD_RUN=PIONEER_NATIVE_DRAM_LOAD_SUPPORT+1,
+	PIONEER_NATIVE_DRAM_LOAD_END=PIONEER_NATIVE_DRAM_LOAD_SUPPORT+2};
 struct PioneerNativeDramLoadResult {
 	// Lifecycle fields only. output[] must remain staged sentinel7fc00001;
 	// it is NEVER learned math or a model reply in this protocol.

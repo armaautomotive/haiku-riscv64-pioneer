@@ -14,7 +14,7 @@ struct DramLoadRV32:Machine {
 		std::fill(std::begin(l1),std::end(l1),0x7fc00001);l1[0]=Word(boot,0);
 		for(unsigned i=0;i<code.size()/4;i++)l1[1+i]=Word(code,i*4);
 		for(unsigned i=0;i<3;i++)l1[Index(0x17ffc0+i*4)]=0;
-		const unsigned frame[8]={0x314c444e,1,5120,transfer.route,1,0,0,0};
+		const unsigned frame[8]={PioneerNativeDramLoadVariant::Marker,1,5120,transfer.route,1,0,0,0};
 		for(unsigned i=0;i<8;i++)l1[Index(0x74000+i*4)]=frame[i];
 	}
 	static bool Range(uint32_t a,uint32_t first,unsigned bytes){return a>=first && a-first<bytes;}
@@ -52,8 +52,8 @@ struct DramLoadRV32:Machine {
 			if(stackSeen){assert(regs[2]>=0x6e000 && regs[2]<=0x70000 && !(regs[2]&15));minSP=std::min(minSP,regs[2]);}
 		}
 		assert(l1[Index(pc)]==0x0000006f && minStore>=0x6e000);
-		if(pc==0x70058){assert(l1[Index(0x17ffc8)]==0x454c444e);return false;}
-		assert(Loaded() && l1[Index(0x17ffc0)]==0x7000c && l1[Index(0x17ffc4)]==0x80001400 && l1[Index(0x17ffc8)]==0x314c444e);
+		if(pc==0x70058){assert(l1[Index(0x17ffc8)]==(PioneerNativeDramLoadVariant::Role==83?0x4536444eU:0x454c444eU));return false;}
+		assert(Loaded() && l1[Index(0x17ffc0)]==0x7000c && l1[Index(0x17ffc4)]==PioneerNativeDramLoadVariant::Count && l1[Index(0x17ffc8)]==PioneerNativeDramLoadVariant::Marker);
 		for(unsigned i=0;i<64;i++)assert(l1[Index(L::Output+i*4)]==0x7fc00001);
 		transfer.Exact();return true;
 	}
@@ -63,7 +63,7 @@ int main(int argc,char** argv) {
 	assert(argc==2);unsigned valid=0,refused=0;
 	for(unsigned x:{17U,18U})for(unsigned y:{12U,15U,18U,21U}) {
 		DramLoadRV32 vm(argv[1],x|(y<<6));assert(vm.Execute());valid++;
-		if(valid==1)printf("PASS actual RV32 LOAD ONLY:320 requests/2880 flits/NDL1 sentinel-only output;stack%u/touched%u/steps%u;NO FPU/config/Dst/scalar payload/model/speed authority\n",0x70000-vm.minSP,0x70000-vm.minStore,vm.steps);
+		if(valid==1)printf("PASS actual RV32 LOAD ONLY%u:320 requests/2880 flits/marker%x sentinel-only output;stack%u/touched%u/steps%u;NO FPU/config/Dst/scalar payload/model/speed authority\n",PioneerNativeDramLoadVariant::Role,PioneerNativeDramLoadVariant::Marker,0x70000-vm.minSP,0x70000-vm.minStore,vm.steps);
 	}
 	for(unsigned word=0;word<8;word++) {
 		DramLoadRV32 bad(argv[1]);bad.l1[bad.Index(0x74000+word*4)]^=word==4?1:0x80000000;

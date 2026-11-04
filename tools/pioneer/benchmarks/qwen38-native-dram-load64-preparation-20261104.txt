@@ -1,0 +1,111 @@
+LOAD-ONLY83 -- C64 placement control,PREPARATION not physical fix/pass
+===================================================================
+2026-11-04 UTC,baseline50a47eff544f39ebe114ef77bfe13971f2e9c841.
+Previous goal turn made concrete progress:actual pre-reset tile1 data failure,
+preserved failed82 and fresh-epoch restoration. This turn implements/tests
+the separate placement control;no new GPU/driver/OS/power/SD/network/model/
+cache/Assistant mutation. Read-only Pioneer preflight7b3638 CLOSED0:stable
+041/tag12/gen2,cold0/owner0/open1/guard1;64CPUs/max137034936320B RAM;
+worker861e5287/servicec509da43 unchanged,prior failed/recovery states intact,
+83 stage ABSENT,no project compute parent. Full-native27B/20tok/s UNMET.
+
+Candidate and comparison scope
+-------------------------------
+Explicit build option --alignment64-control selects83,never a runtime flag
+or fallback. Tag83/opcodes7f00..02/ND64/countc0001400/LoadOnly64 are distinct
+from82. Shared408B request/368B result require exact role identity. C64 L1
+placement:weight90000/stride1152/header64,input12c000/stride128/header64,
+output140000;largest width spans below16c000 with no overlap/unverified gap.
+Same original packed GDDR1088/64B bytes,source windows,16-deep FIFO packet
+sequence,320 requests/2880flits,source proof,clock/ownership/lifecycle.
+The larger journal55372 L1 words adds ONLY10240B header padding;GDDR journal
+46080 words unchanged. Every header/payload word is independently checked
+BEFORE reset,then AGAIN AFTER HOLD/BEFORE restore. No FPU/unpack/Dst/math,
+scalar payload copy/hash or host callback exists in this image. Mismatches
+retain on first failure,address/kind only. No Work/reference gate relaxed.
+
+New83 final real SDK tuple -- linked,NOT deployed
+-------------------------------------------------
+89419 ACTUALLY CLOSED0,all4 child command stderr0:on original handle,full
+SDK build+compiled image VM+private-data lease+native endpoint fixture tests.
+Image2280B SHA:
+fa70be17ca4b3cf3889e5176f6a651b2f5afcdefd0511f98aba4745d6c2b04b7
+Driver SHA:
+7ee39a3615bc93e3b81cd21149fdd020f2e5f3e7a7f1b3db8cca24bffd94a85e
+Fixed client SHA:
+10310865e07c34b476632e8e776f76fae603a7a4adea2ec87f226f1f05798ac0
+Native --no-undefined kernel.so/glue/libgcc LINK and legacy NULL-only audit;
+18 actual driver-prologue role refusals. TWO actual compiler/template
+refusals:opposite policy cached BEFORE kernel macros still fails exact-tag
+binding;opposite placement image fails actual full-driver instantiation.
+PRIVATE headers cf8e2ca4.../a2c977bc... unchanged. Do NOT publish binaries,
+objects,generated headers/model/cache;only public text receipts are saved.
+
+The first new compile-probe builds72712/37177 CLOSED1 because the generated
+negative TU lacked the driver-header include path. No negative-test success
+was inferred from this unrelated missing include. Corrected absolute include;
+fresh58880/11206 CLOSED0,then final89419 CLOSED0. First failures retained,
+not overwritten. Earlier initial47035 full83 LINK and7528/4714 image/lease
+success do not substitute for this additional compiler-binding coverage.
+
+Actual tests -- explicit simulation/fake endpoints,NOT hardware proof
+---------------------------------------------------------------------
+Final89419 compiled RV32:8 route-shape valid/21 frame/NIU/FIFO/counter/header/
+job faults;stack272B,touched260B,61797 normal steps;no arithmetic observer,
+descriptor normalization,FPU/config/Dst/scalar payload/model access. Full
+lease tests:3 authenticated original private samples,all46080 payload+5120
+header words,full original restoration;258 mismatch/failure/admission cases,
+4 forbidden roles. Covers EVERY header word at selected boundary/odd/even/
+middle tiles,first failure no later IO;pre-reset damage causes NO reset;
+post-HOLD damage causes NO restore. Source recipe/precision/cache unchanged.
+Actual83 native methods/control source:308 valid/669 refused,368 dirty-result
+bytes,17 views,old82 tag/opcode/old-only L1 span refusal,known no-math park
+read-only data access,PCI/TLB/source/FD/guard/generation/backing/clock closure.
+These fixtures do NOT manufacture successful native ARC/prerequisite proof.
+86667 CLOSED0:actual83 client231 ASan/UBSan cases,all64 sentinel mutations
+at RUN/END,metadata/support/source/owner/channel/close/counters/journals and
+old82 tag/count/marker refused;3 forbidden runtime roles,NO private word dump.
+62163 CLOSED0:actual frozen83 parent29 flow/output+7 idle+11 prior-failure/
+recovery/model+20 conditional exchange-step+10 one-shot cases. Old32 success
+prefix/spans refuse. No status/restore/retry occurs after uncertain child.
+96748 CLOSED0:actual loader/descriptor-emission templates27 valid/36 refused,
+all3 widths/8 shapes,whole simulated L1/guards and C64 every packet;3 role
+refusals. No FPU hardware or native wide-width lease is qualified thereby.
+Independent explicit-role parser:3 valid/64 refused,old32 record rejected;
+default old82 parser remains3/62. Both real failed81/82 receipt tests pass.
+
+Byte-identical controls and software regressions
+------------------------------------------------
+11206 actual full82 SDK build CLOSED0,16 role refusals+2 actual placement
+compile refusals;driver3df4fdb1/clientf7ae6e1b/image966507e2 BYTE IDENTICAL.
+83244 old81 SDK CLOSED0:driver0ab145ac/client0091244a BYTE IDENTICAL.
+All ordinary default-control binaries remain2df0e0f8.... Actual normal
+installed041 is a separate unchanged qualified Work driver,not that build.
+45795 CLOSED0:old82 image/lease/client/parent regressions;lease now expands
+to162 failures with all header-word corruptions,all3 private samples still
+exact;client228,parent27+7+11+20+10. 49601 native82 CLOSED0:308/665.
+74305 native81 CLOSED0:307/643. 28164 all3 old math images CLOSED0:K5120
+cd924896...,K6144 13494a0a...,K17408 ee740295... all BYTE IDENTICAL;
+192 exact observer outputs do NOT repair/promote the actual81 failure.
+10072 default loader CLOSED0:27/36. No installed runtime policy/settings change.
+
+Frozen physical parent -- future admission only
+------------------------------------------------
+pioneer_native_dram_load64_physical.sh SHA:
+bcee28ab0caa808a4f662c1803980de221892ebcb1ba5998d8137ac01a10456b
+New private stage:/boot/home/pioneer-native-dram-load64-only-20261104-a.
+Requires exact failed82 stdout63f6c061/stderrf21f3766/state/exit1 and new
+power-epoch recovery record,normal041/gen2/idle/64CPU/fullRAM,all program/
+guard identities,original metadata and full same-open source proof in client.
+Planned ONLY:041/gen2 ->83/gen3;one sample0/byte-check END;strict3-line/
+zero-stderr/known closure;then041/gen4. Unknown stops with NO further
+query/END/reset/retry/automatic restore. No spent output path is reused.
+Publish preparation;fresh native preflight;new private exact-hash stage+
+CLI-refusal check;ONE direct parent exec;observe SAME handle to terminal;
+independently fetch/hash raw child/outer records and prove restoration.
+
+This is a controlled placement/padding hypothesis,not a verified silicon
+C64 requirement or fix. Corrected physical bytes still precede FPU/full-model
+resident-stripe/cohort/arena/attention/state/logits/sampling integration,
+full quality and actual speed measurement. Full-native27B/20tok/s remain
+UNMET. Installed851-entry lossless cache and original model are unchanged.

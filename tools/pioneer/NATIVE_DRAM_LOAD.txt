@@ -11,6 +11,11 @@ Recovery is complete:ONE OFF,shutdown interval/no contradictory evidence,
 ONE ON,fresh Linux->Haiku64CPU/fullRAM,then the tested fresh82/gen1 ->
 stable041/gen2 restore. Independent postflight confirms cold0/owner0 and
 unchanged Assistant/cache files. This does NOT close/promote the old lease.
+Next83 C64-placement CONTROL now has offboard qualification while default82
+driver/client/image remain byte-identical. It is NOT yet staged/run and is
+not an established fix or a promotion of this failed82 result. The new
+tag/opcodes/marker and compile-time policy/image guards separate the roles.
+See NATIVE_DRAM_LOAD64.txt. Full-native27B/20tok/s remain UNMET.
 
 2026-11-04 UTC. The actual direct-GDDR/FPU81 test failed all64 returned
 words on its FIRST sample; no END, next sample or automatic restore was
