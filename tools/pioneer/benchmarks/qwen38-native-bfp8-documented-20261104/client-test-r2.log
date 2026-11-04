@@ -1,0 +1,2 @@
+PASS ACTUAL separate documented client:193 ASan/UBSan cases;independent recorded positives,all64 RUN/END word failures,pre-open spec/golden checks,protocol/owner/metadata/close/CLI failures,NO END/query/retry after failed RUN;3 runtime-role guards;NO device proof
+CPU-only actual documented client evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-bfp8-documented-client.nqwp3213

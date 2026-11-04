@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_native_bfp8_documented_client_test.py", line 136, in <module>
+    assert result.returncode == 0, (scenario, index, result.stdout, result.stderr)
+AssertionError: (21, 0, '', 'NATIVE_BFP8_DOCUMENTED_REFERENCE_CHANGED;NO_DEVICE_OPEN\nAssertion failed: (mathCalls==(scenario==20?1:scenario==21?8:scenario==22 || scenario>=63?0:256)), function main, file test.cpp, line 104.\n')

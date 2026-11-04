@@ -2,13 +2,17 @@
 """Fresh-epoch restore flow and gate shape;fake endpoints,NO power/SSH/GPU."""
 import pathlib
 import subprocess
+import sys
 import tempfile
 if not __debug__:
     raise SystemExit('Assertions required')
-source = (pathlib.Path(__file__).resolve().parent.parent / 'pioneer_native_bfp8_recovery_restore.sh').read_text()
+assert len(sys.argv)==1 or (len(sys.argv)==2 and sys.argv[1]=='--documented')
+documented = len(sys.argv)==2
+name = 'pioneer_native_bfp8_documented_recovery_restore.sh' if documented else 'pioneer_native_bfp8_recovery_restore.sh'
+source = (pathlib.Path(__file__).resolve().parent.parent / name).read_text()
 assert 'metadata 2026110300010078 1' in source and 'cold0 active_owner0' in source
-assert 'UNPROVEN_FIXED_BFP8_NO_END_RESET_RETRY_RESTORE' in source
-assert 'a9e13ea83c7bee6724d560a8ade4eda862360885eae8f8560567a6e4e178f822' in source
+assert ('UNPROVEN_DOCUMENTED_BFP8_NO_END_RESET_RETRY_RESTORE' if documented else 'UNPROVEN_FIXED_BFP8_NO_END_RESET_RETRY_RESTORE') in source
+assert ('7b38656c597dc4809522737bae9dad6a67414326dca1d46c4afc4395db8f8de9' if documented else 'a9e13ea83c7bee6724d560a8ade4eda862360885eae8f8560567a6e4e178f822') in source
 flow = source.split('# NATIVE_BFP8_FRESH_RESTORE_FLOW_BEGIN\n', 1)[1].split('# NATIVE_BFP8_FRESH_RESTORE_FLOW_END')[0]
 temporary = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-bfp8-fresh-restore.'))
 prefix = '''set -eu
@@ -60,4 +64,4 @@ if [ "$mode" = wait-fail ] && [ "$1" = --wait ];then exit 1;fi
     old_events = events
     again = subprocess.run(['sh', str(program), str(stage), mode], text=True, capture_output=True)
     assert again.returncode and (stage / 'events').read_text().splitlines() == old_events
-print('PASS new fresh-epoch restore:7 fake flow cases;candidate epoch1/cold0/owner0 gate,first failure stops IO,one replacement/wait only,no GPU/old-owner cleanup/retry,spent marker retained')
+print('PASS '+name+':7 fake flow cases;candidate epoch1/cold0/owner0 gate,first failure stops IO,one replacement/wait only,no GPU/old-owner cleanup/retry,spent marker retained')

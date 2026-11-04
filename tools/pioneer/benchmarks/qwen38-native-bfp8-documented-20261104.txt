@@ -1,0 +1,70 @@
+NEW strict documented-rounding fixed-BFP8 qualification -- prepared inputs
+=======================================================================
+Preparation checkpoint ONLY;NO physical execution of this new client yet.
+Baselinecf5d4692df44aced59bc56f050f9f1dfc3fe2046. Previous turn made actual
+hardware progress:all64 BFP8 words observed and exactly explained by prior
+documented-arithmetic predictions;old ideal test REJECTED;one controlled OFF/
+ON+SD-free full64/fullRAM recovery restored normal041/tag12/gen2,cold0/owner0.
+Original trials/once tokens/Expected()/428e client remain unchanged and spent.
+Full-native27B and20tok/s remain UNMET,no new inference performance claim.
+
+Separate client:pioneer_native_bfp8_documented_diagnostic.cpp
+Only --fixed-bfp8-documented-rounding accepted. It derives BF16 operands from
+the original fixed synthetic fixture and computes the documented integer
+MVMUL specification BEFORE opening a device. Every32-row prediction must
+match the independently predicted/observed golden values from immutable4691B
+record66112229d3b318d6e79864ecf6d45ce3007a32ae44b7b6c939ce7b05c6ccdf36.
+No tolerance,arbitrary tensor/code/address/route,model or CPU Work path.
+The kernel/Work/CPU-validation compile guards on the arithmetic remain.
+
+Then ONE same-FD RUN,exact ALL64 words,valid full completion/protocol/owner
+metadata,explicit accepted END with L1/TLB/PCI restoration,identical returned
+END words and successful close. Only then print all64 CPU-copy words and the
+NEW distinct PASS marker. Output flush/error failures return nonzero. Failed
+RUN/numerics/protocol closes only:NO END,retry,reset,query or fallback. This is
+a new physically informed SPECIFICATION gate,not a relaxed old comparator or
+retroactive acceptance of either rejected trial. Fixed fixture only,NOT full-K.
+
+Fresh complete SDK builder26342 CLOSED0,then final42503 CLOSED0/stderr0 after
+adding stdout delivery checks. Initial candidateca7a836d was NOT staged/run.
+Final new client:
+53f89a183edca74fb2acadbfbbd3a2186847d5e5baafe5d533734c051ed95240
+Unchanged freshly rebuilt driver e79e070b... and old client428e7a15...;old
+BFP8 textc21f4692...,bootd47a1c29... exact. Legacy null-only entry/export
+checks still pass. No installed file changed by builds.
+
+Actual new-client test55136 CLOSED0/stderr0:193 ASan/UBSan/Werror cases with
+independent physical-record positives,each of64 RUN and64 END word mutations,
+pre-open spec/golden failure,metadata/support/RUN/END/root/open/close/CLI and
+stdout delivery failures;3 forbidden runtime-role builds refused. Initial
+test99750 failed only its fake math-call-count expectation:a repeated LSB
+injection can cancel during later rounding. Injection now flips ONLY the final
+first-row instruction,deterministically testing the SAME strict pre-open gate.
+No production arithmetic/comparator relaxation;initial failure retained.
+
+New frozen parent:pioneer_native_bfp8_documented_physical.sh
+SHA7b38656c597dc4809522737bae9dad6a67414326dca1d46c4afc4395db8f8de9
+Private stage:/boot/home/pioneer-native-bfp8-documented-20261104-a
+Normal041/gen2 ->same native78/gen3. Requires prior rejected record and
+completed fresh-epoch recovery,exact identities,idle64CPU/fullRAM admission.
+New one-shot/output paths. On failed client/result/stderr/output gate:NO next
+metadata/GPU command/retry/reset/restore/cleanup. For success,the ACTUAL awk
+gate independently compares all64 unique printed words with the historical
+physical record,not merely got==expected;then exact marker/count/order/poll/
+generation and known-clean metadata. Only then normal restore gen4.
+Parent test33237 CLOSED0/stderr0:209 fake flow/output+9 actual idle-parser
+cases,including every missing/duplicate/equal-but-wrong output position.
+
+New optional fresh-epoch restore:
+pioneer_native_bfp8_documented_recovery_restore.sh
+SHA34c760005369bc259f4cf8e11e81ef6397996e1932a90b398301a69bb0a75340
+NOT automatic;only after separate authorized OFF/ON and Linux->Haiku recovery.
+Exact new parent/client/persistent identities,epoch1,cold0/owner0/fullCPU/RAM
+required;cannot operate on a failed/owned old epoch.7 fake cases CLOSED0;
+old restore's7 cases also pass. No old frozen source changed.
+
+Next:publish frozen inputs,stage/independently admit exact new tuple,run ONE
+parent through actual terminal. Software passes do NOT grant hardware/full-
+model/speed proof. Then widen to native full-K/broadcast owner and on-card
+NoC/GDDR/cohort/state integration,arena qualification,model quality and real
+throughput. No tiny diagnostic/cache success substitutes for the full goal.
