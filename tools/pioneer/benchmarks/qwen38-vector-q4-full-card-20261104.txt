@@ -1,0 +1,79 @@
+Actual full-card Qwen3.8-27B vector-Q4 result -- 2026-11-04
+=======================================================
+
+ACCEPTED SINGLE-RUN RESULT,NOT20TPS OR PRODUCTION ASSISTANT RELEASE.
+Protected parent80821 ACTUALLY exited0 at22:40:51UTC. The entire closed
+child stream passed unchanged main+independent clean readers. Separate
+read-only postflight13714 ACTUALLY exited0:stable041/gen18 restored,idle,
+unchanged apps/runtime/guard/admin/kernel,64CPUs/full137034936320B maxRAM.
+The native driver and vocabulary-only worker were independently reproduced
+before this single physical trial. Source integration checkpoint113fdbd404.
+
+Same real public32-output request as the accepted tag90 baseline:
+"Count from 1 to 50, one number per line. Do not add explanations."
+31 prompt tokens,32 output tokens,62 actual committed positions.
+Same original SHA/all851 bindings,ALL19399024640 original upload bytes.
+No CPU inference/context,reference calculation,hybrid callback or fallback.
+All model inference remains on card:embedding/norms/matrices/attention/
+KV/recurrent state/residual/activation/greedy. Host loads/prepares/uploads,
+tokenizes/detokenizes and manages lifecycle/observation,as in baseline.
+
+Observed post-prompt window (NOT total load time/isolated token latency):
+sampled commit steps31;first31,last62;63 unique counter rows;
+3441 actual observations;2250 validated increasing upload progress rows.
+Raw endpoints us:
+59901404670,59901406384,60080787139,60080788858
+minimum_us179380755;maximum_us179384188
+lower_tps0.172813448;upper_tps0.172816755
+Average observed seconds/commit step5.786475968..5.786586710.
+These endpoint bounds include observer overhead,NOT statistical confidence
+intervals,repeatability or isolated latency. One genuine request only.
+
+Previous accepted SAME-request tag90 window:
+190653304..190656656us for31 steps;
+0.162595949..0.162598808tok/s (qwen38-full-card-metrics-20261104.txt).
+New/old rate improvement6.282112474..6.286015158%,about6.3% in this pair.
+It is NOT the47% emulator-RV-count reduction as a throughput prediction.
+20tok/s is still about115.7x above this measured result:UNMET.
+Not claimed as sustained performance or broad model-quality qualification.
+
+Reported post-START prompt+generation359.237s (old381.603s).
+Generate total2110.061s (old2128.103s),including upload/init/cleanup,
+excluding the preceding whole-file/vocabulary authentication.
+NEVER divide32 by either total to claim steady decode throughput.
+
+Answer EXACTLY matches baseline,32 bytes at the32-token cap:
+1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14
+hex310a320a330a340a350a360a370a380a390a31300a31310a31320a31330a3134
+This short counting answer is not an all-prompts quality evaluation.
+
+Actual lifecycle/source evidence:
+- One fresh stage /boot/home/pioneer-q38-full-vector-q4-20261104-a,
+  remote parent6913;SPENT FOREVER,DO NOT RERUN.
+- Stable041/tag2026102100010012/gen16 -> native92/gen17 -> stable041/gen18.
+- Native SHA c21b9bb80bfe7bb6d62540c267254fea33505842c2421cfd2732a389053be014
+- Worker SHA 1ea9f6ac9c2fc5022bcce92be8949b6432827e76c984835935db3bdc9d2301a9
+- Client SHA 9aa2ceea44c0143e6af53f5ad8050c50e2101826dc892505b42c60eb392558af
+- Helper SHA d697bfd0d2d44e37464c166b7edf2da67f6133df4dc9f6cff3ea8c02a5ada6d8
+- Parent actual0,child actual0,empty parent/child stderr,normal120-HOLD/
+  drain/restoration/END+Close/worker actual exit before accepting rate.
+- Fetch74908 actual0,whole231133B stdout SHA
+  03565e1c50db8b4352f4c1206d04f9040d3f6d3b7c1f63f6a80cba3dda096ae1.
+- Both complete-source readers actual0,byte-identical JSON andempty stderr.
+- Independent postflight13714 actual0:ALL installed/staged/backup/admin/
+  guard/apps/runtime pins unchanged;no active owner/quarantine/parent or
+  incoming exchange file;Sept8 kernel;64CPUs;freeRAM130907152384B.
+- No reboot,reset,power,SD,mains,hardware connection,model or installed-app
+  change. No extra Pioneer access was made during the protected lifetime.
+
+The vector-Q4 calculation change is hardware-valid for this complete real
+request and modestly faster than the accepted full-card baseline. It is
+NOT usable interactive performance. Keep the stable installed driver and
+Assistant unchanged;do not present this as the production hardware option.
+Further work must improve actual on-card calculation/data-path throughput,
+not infer gains from instruction counts or repeat unchanged negative tests.
+No active physical job remains. The overall performance goal stays ACTIVE.
+
+Sibling qwen38-vector-q4-full-card-20261104/ contains whole raw closed
+streams,actual exit/state/PID,main+clean reader results and independent
+postflight. No model/learned/prepared payload or binary is published.

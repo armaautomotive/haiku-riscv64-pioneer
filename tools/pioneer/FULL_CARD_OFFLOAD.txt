@@ -178,3 +178,30 @@ mandatory gates. Never invoke during another protected device lifetime or
 reuse any spent physical helper. CLI answer output is hexadecimal to avoid
 interpreting model output as terminal controls. Fake channel tests/build
 imports do NOT prove actual model quality,physical ownership or speed.
+
+Vector-Q4 calculation revision (tag92,one actual32-output run completed)
+---------------------------------------------------------------------
+Nov4 22:40:51UTC:protected80821 ACTUALLY exited0. Same31-prompt/32-output
+counting request,all851 original bindings and19399024640 uploaded bytes,
+same exact answer. Both whole readers pass;separate postflight verifies
+stable041/gen18,idle,unchanged apps/runtime/kernel,64CPUs/fullRAM.
+
+Observed post-prompt31-step window179.381..179.384s gives
+0.172813448..0.172816755tok/s,about6.3% faster than accepted tag90's
+0.162595949..0.162598808 in this single-run comparison. About5.79s/step is
+still not usable chat performance;20tok/s remains about115.7x away:UNMET.
+Not statistical repeatability,sustained throughput or broad quality proof.
+
+--batched --metrics --vector-q4 selects a DISTINCT tag92 full-card native/
+USER pair,exact new ten-peer package with unchanged five-EOG ROOT. Only
+Work-Q4 metadata calculation changes:one original256B prefix UNPACK,
+parallel exact HALF/factor products,fully defined original Dst metadata/
+padding,without scalar coefficient products or1024B L1 metadata staging.
+No CPU model/reference/fallback exists. Checked Q4,Q8/Q6 and original
+matrix/source/NoC/replay/rounding/terminal/END semantics are retained.
+
+See benchmarks/qwen38-vector-q4-full-card-20261104.txt and its whole raw
+closed artifacts. Installed Assistant remains unchanged. This is a modest
+measured generation-path gain,NOT a released usable-speed hardware mode.
+The tag92 stage/helper is SPENT and MUST NEVER be rerun. No live device
+job remains;future physical work needs a fresh qualified stage/admission.
