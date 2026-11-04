@@ -140,3 +140,28 @@ qualification,including NIU counter preservation across compute resets.
 Only after that:resident stripes/cohort/state,qualified full arena,quality
 and honest full-model throughput. Installed cache/Assistant/driver unchanged.
 See benchmarks/qwen38-native-dram-binding-offboard-20261104.txt.
+
+Authenticated client and physical parent -- PREPARED,not yet a device result
+-------------------------------------------------------------------------
+pioneer_native_dram_model_band_diagnostic.cpp now fully authenticates the
+SAME-open original and fresh three-band rounded references before device
+open,requires exact81 metadata/support,one constant epoch across all three
+FDs,NDB1/count/phase/PC plus320 requests/2880flits and52812/46080 journal
+word counts. Every64 output words must equal the private fresh-original
+reference. END requires all GDDR/L1/NIU/FIFO/TLB/clock/PCI closure flags and
+unchanged output/control/poll data. Failure closes only,no next END/sample.
+
+The builder now links the actual user client too. Actual client641 ASan/
+UBSan fault cases and3 forbidden roles pass. New frozen physical parent
+requires prior learned80 success,independent Fraction reference,exact files,
+idle041/gen10/64CPU/fullRAM and a new private stage. It may run three fixed
+samples once under81/gen11 and restore041/gen12 ONLY after all192 exact
+words and3 clean ENDs. No fallback,retry/reset or cleanup on uncertainty.
+Actual output/flow/ownership/prior/exchange/one-shot fixtures pass. Explicit
+returns stop every exchange command even when shell errexit is suppressed
+by the caller's conditional invocation. Native binding regression unchanged.
+
+Run ONLY the frozen admitted parent,never the client directly on hardware:
+  /boot/home/pioneer-native-dram-model-band-20261104-a/pioneer_native_dram_model_band_physical.sh
+This is preparation,not physical execution or full27B Work inference proof.
+See benchmarks/qwen38-native-dram-client-preparation-20261104.txt.

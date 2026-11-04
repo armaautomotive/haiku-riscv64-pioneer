@@ -1,0 +1,94 @@
+Authenticated GDDR-to-FPU client and frozen parent -- PREPARATION ONLY
+====================================================================
+2026-11-04 UTC,baselinebc36155d4bdc388de3b7ca6b9996600f478753ee.
+This checkpoint is saved BEFORE staging/launching any new card operation.
+No GPU execution,driver exchange,power/OS/SD/network/model/cache/Assistant
+change is claimed here. Full-native27B/20tok/s UNMET;no speedup claim.
+
+New actual user client
+-----------------------
+pioneer_native_dram_model_band_diagnostic.cpp accepts ONLY the new fixed
+--fixed-gddr-learned-bands option. Original19GB model is opened read-only
+with the existing same-FD full-SHA/layout/identity/stability/fresh learned
+payload+four-phase rounded reference proof BEFORE ANY device open. The
+shared proof helper is unchanged from the independently qualified learned80
+client. This is explicit CPU DEBUG reference,not Assistant/Work inference.
+
+Each sample uses its own exclusive FD and exact81 metadata/support. First
+generation establishes one epoch for all3 samples;later drift refuses before
+support/run. RUN must return NDB1,exact phase/count/park PCs,sane polls and
+controls,320 reads/2880flits,52812 L1+46080 GDDR saved words and no premature
+restoration flags. Every64 returned words matches the authenticated fresh
+reference. Only that known result permits nonce1/accept1 END. END must have
+all closure flags,unchanged output/control/poll data and current source
+identity. Wrong/unknown/source/channel/close results permit close ONLY,no
+later END/query/sample/retry/reset. Output is published after successful END.
+
+Actual tests -- not device proof
+--------------------------------
+First client35033 CLOSED0,stderr0:639 ASan/UBSan cases. Added explicit
+cross-sample epoch check;final29505 CLOSED0,stderr0:641 cases plus3 forbidden
+kernel/Work/validation roles. Compiles the ACTUAL new client and actual
+driver reload-control body,with explicit fake source/device endpoints. All64
+RUN and END word mutations in each3 samples,all new journal/counter/restore
+flags/control fields,source/FD/channel failures and valid-but-changed END
+poll/control data are refused. No new device or model-quality proof implied.
+
+Actual SDK driver/client builds94667 andfinal12044 CLOSED0,stderr0,14 real
+driver role refusals. Driver SHA unchanged from prior native qualification:
+0ab145ac3b938238fd3fd139fa8c1e899458932058acd2567f220bb4504cdf27
+Final client SHA:
+0091244ae265e26075e80fa98f5d6b8b5c6d37304938e3d140d9bab6584e307e
+Ordinary default-control unchanged2df0e0f8.... First client574e7761... is
+superseded BEFORE any deployment by the epoch-bound client0091244a....
+PRIVATE headers/data unchanged. Driver embeds PRIVATE learned data;NEVER
+commit binaries/objects/generated private headers. No driver-source change
+since bc36155d4b. Native endpoint regression67005 CLOSED0,stderr0:307 valid,
+643 refused,including exact journals/actual-source native methods/VM/PCI
+fixtures. This remains offboard,not successful native ARC/engine proof.
+
+New physical parent -- frozen planned authority,NOT an observed run
+------------------------------------------------------------------
+pioneer_native_dram_model_band_physical.sh SHA:
+577aa3cc051b036f815a94e519b98489fbc6793a4c0e47ee78e7f8539cc4650a
+New private stage:/boot/home/pioneer-native-dram-model-band-20261104-a.
+Requires exact driver/client/admin/guard/cache-enabled Assistant identities,
+normal041/gen10/64CPU/full RAM/no possible project owner. Requires the exact
+prior80 completed state/zero exit/empty stderr/rawstdout71f8686d... and new
+independent Fraction-reference35142021.... Original metadata exact;full source
+SHA/fresh learned proof happens inside client before opening the card.
+Never reuse old stage/output paths or any existing .trial-once marker.
+
+Planned sequence only:one new marker+stable backup;known-idle exchange to
+81/gen11;one client run covering3 fixed bands;require zero exit/stderr,strict
+ordered192 returned words equal to independent Fraction refs,exact requests/
+flits/journals and3 ENDs;then known-closed metadata and exchange to041/gen12.
+Failure retains output/state and stops. No retry/reset/automatic restoration,
+no reinterpretation of child success as parent success,and no implicit Work
+or full-model inference authority. No hardware has run this parent yet.
+
+Parent61217 andfinal8293 ACTUALLY CLOSED0,stderr0. Final actual-source tests:
+620 flow/output+7 idle+13 prior/source+20 exchange-step+10 one-shot cases.
+All192 individual missing/duplicate/equal-but-wrong outputs refuse;also source
+banners,order,geometry/fidelity,epoch,polls,new counters/journals/clock markers,
+prior/raw/reference/model metadata and possible owner/prologue repetition.
+Exchange tests inject failure at EACH observable command under the actual
+conditional caller form. Code review caught shell errexit suppression inside
+conditionally called helpers;all copy/chmod/move/sync/printf operations now
+have explicit failure returns,with no postfailure command. First fixture pass
+is not claimed to have exercised this additional conditional-failure coverage.
+
+Pinned primary NIU counter reference was reread in full:it distinguishes
+master request counters from host read/write slave counters and states that
+FIFO requests are uncounted until initiated;responses counted after L1 writes.
+Current implementation checks empty FIFO before completion counters and leaves
+all9 exact counter deltas unchanged. Physical reset/counter preservation and
+concurrency are STILL unproven until the new trial actually runs and closes.
+
+Next:publish this preparation checkpoint,read-only native-machine admission,
+private new-stage transfer+exact metadata/CLI-refusal postflight,ONE direct
+parent exec. Observe the SAME tool/process to actual terminal completion,
+independently fetch/hash child/outer output and verify normal restoration.
+Never restart because a progress poll times out. Then qualified resident
+stripes/cohort/full arena/token state/full-model quality and real throughput.
+Public text receipts only are in the matching SHA256SUMS directory.

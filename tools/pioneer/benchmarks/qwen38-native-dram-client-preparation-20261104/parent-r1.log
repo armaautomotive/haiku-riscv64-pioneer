@@ -1,0 +1,2 @@
+PASS actual GDDR parent:620 flow/output+7 idle+13 prior/source+19 exchange-step+10 one-shot cases;all192 missing/duplicate/equal-but-wrong words refused;no retry/reset/status/restore after uncertainty;NO hardware proof
+CPU-only actual GDDR parent evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-gddr-learned-parent.zvny742z

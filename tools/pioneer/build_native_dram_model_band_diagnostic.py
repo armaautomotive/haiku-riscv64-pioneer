@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build ONLY actual diagnostic81 driver. NEVER installs,opens GPU or publishes PRIVATE weights."""
+"""Build ONLY actual diagnostic81 driver/client. NEVER installs,opens GPU or publishes PRIVATE weights."""
 import argparse
 import hashlib
 import os
@@ -44,9 +44,11 @@ for path in ('kernel', 'kernel/arch/riscv64', 'kernel/arch/generic', '', 'driver
 includes += ['-isystem', str(root / 'build/config_headers'), '-I' + str(release / 'system/kernel'),
              '-I' + str(sdk / 'headers'), '-idirafter', str(sdk / 'headers/posix'), '-I' + str(output),
              '-I' + str(output / 'lease-probe'), '-I' + str(here), '-I' + str(private)]
+user_includes = ['-I' + str(sdk / 'headers'), '-idirafter', str(sdk / 'headers/posix')]
 for path in [sdk / 'headers/os', *sorted((sdk / 'headers/os').iterdir())]:
     if path.is_dir():
         includes += ['-isystem', str(path)]
+        user_includes += ['-isystem', str(path)]
 common = [cxx, '-std=gnu++17', '-O2', '-Wall', '-Wextra', '-Werror', '-fno-exceptions', '-fno-rtti', '-fstack-usage',
           '-ffreestanding', '-finline', '-fno-semantic-interposition', '-fno-tree-vectorize', '-fno-use-cxa-atexit',
           '-fno-strict-aliasing', '-fno-delete-null-pointer-checks', '-mcmodel=medany', '-fpic', '-D_KERNEL_MODE']
@@ -99,9 +101,15 @@ for line in legacy.splitlines():
 assert instructions == [('add', 'sp,sp,-16'), ('sd', 's0,8(sp)'), ('add', 's0,sp,16'), ('ld', 's0,8(sp)'),
                         ('li', 'a0,0'), ('add', 'sp,sp,16'), ('ret', '')]
 assert hashlib.sha256((output / 'tenstorrent_pci_probe-default43-control').read_bytes()).hexdigest() == '2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc'
-for name in ('tenstorrent_pci_probe-native-dram-model-band81', 'tenstorrent_pci_probe-default43-control'):
+libs = ['-L' + str(path) for path in sorted((build / 'build_packages').glob('gcc_syslibs-*/lib'))]
+run([cxx, '-std=c++17', '-O2', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror', *user_includes, '-I' + str(private),
+     '-I' + str(root / 'headers/private/shared'), '-I' + str(root / 'headers/private/libroot'),
+     '-B' + str(release / 'system/glue'), '-L' + str(release / 'system/libroot'), '-L' + str(release / 'kits'), *libs,
+     str(here / 'pioneer_native_dram_model_band_diagnostic.cpp'), str(here / 'PioneerModelWeightCache.cpp'),
+     str(release / 'kits/shared/libshared.a'), '-lbe', '-o', str(output / 'pioneer-native-dram-model-band-diagnostic')])
+for name in ('tenstorrent_pci_probe-native-dram-model-band81', 'tenstorrent_pci_probe-default43-control', 'pioneer-native-dram-model-band-diagnostic'):
     print(hashlib.sha256((output / name).read_bytes()).hexdigest(), name)
 (output / 'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands) + '\n')
 private_unchanged()
 print('PASS actual driver prologue14 forbidden role/context/Work/CPU-reference/fast-math cases;PRIVATE headers unchanged')
-print('BUILD_ONLY actual native81 driver/all methods LINKED,legacy hooks NULL/default control unchanged;PRIVATE weight-containing binaries MUST NOT be published;NO install/endpoint tests/hardware/full-model/speed authority')
+print('BUILD_ONLY actual native81 driver/client/all methods LINKED,legacy hooks NULL/default control unchanged;PRIVATE weight-containing binaries MUST NOT be published;NO install/endpoint tests/hardware/full-model/speed authority')
