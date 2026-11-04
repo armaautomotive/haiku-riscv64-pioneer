@@ -1,0 +1,5 @@
+e79e070b9e4fe434b868898748834e0cd89b03bcb250d9c1694b4d0b890f46ac  /boot/home/pioneer-native-bfp8-observe-20261104-a/tenstorrent_pci_probe-native-bfp78
+428e7a15ad97501eb711dc6a2e59f30c68d14c1b022acc32b9b753ce793aefb4  /boot/home/pioneer-native-bfp8-observe-20261104-a/pioneer-native-bfp-diagnostic
+a9e13ea83c7bee6724d560a8ade4eda862360885eae8f8560567a6e4e178f822  /boot/home/pioneer-native-bfp8-observe-20261104-a/pioneer_native_bfp8_observe_physical.sh
+e40544a4e8db6361e4a22591fc831d0f207f55683413cdce01c0614169f2a67d  /boot/home/pioneer-native-bfp8-observe-20261104-a/pioneer_native_bfp8_recovery_restore.sh
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY

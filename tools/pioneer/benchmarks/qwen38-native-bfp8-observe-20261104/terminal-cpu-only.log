@@ -1,0 +1,17 @@
+1
+UNPROVEN_FIXED_BFP8_NO_END_RESET_RETRY_RESTORE
+   0 /boot/home/pioneer-native-bfp8-observe-20261104-a/fixed8.stdout
+4691 /boot/home/pioneer-native-bfp8-observe-20261104-a/fixed8.stderr
+4691 total
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /boot/home/pioneer-native-bfp8-observe-20261104-a/fixed8.stdout
+66112229d3b318d6e79864ecf6d45ce3007a32ae44b7b6c939ce7b05c6ccdf36  /boot/home/pioneer-native-bfp8-observe-20261104-a/fixed8.stderr
+P100A_RELOAD driver55 tag2026110300010078 generation3 quiesced0 cold1 active_owner1 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133703131136 bytes free      (used/max 3331805184 / 137034936320)
+                           (cached   38821744640)
+     64488 semaphores free (used/max       1048 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3902 threads free    (used/max        194 /       4096)
+      2026 teams free      (used/max         22 /       2048)

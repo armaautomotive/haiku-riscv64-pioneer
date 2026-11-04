@@ -66,8 +66,13 @@ New web exact-pin views were unavailable;no changed upstream facts assumed.
 No external source copied/executed/linked. All new arithmetic is our own
 implementation of the documented mathematical/register facts.
 
-Next gate:record ALL64 actual BFP8 words with the already-built observation
-client in a separately frozen trial,only AFTER the current cached inference
-parent finishes. No hardware authority comes from these software predictions.
+The NEW frozen observation trial has now ACTUALLY recorded ALL64 BFP8 words,
+and every word agrees with the independent prediction (60 differ from ideal).
+See benchmarks/qwen38-native-bfp8-observe-20261104.txt and the immutable4691B
+record. The old comparator rejected this trial and the lease stayed retained;
+the result is NOT retroactively END-accepted. This is one fixed fixture,not a
+general silicon/full-K/model qualification. A separate fresh-epoch strict
+documented-arithmetic diagnostic is still needed before physical promotion.
+No hardware authority comes from these software predictions alone.
 Then qualify native full-K/GDDR/cohort/state integration and full-model quality
 before claiming usable self-hosted27B speed.20tok/s remains UNMET.

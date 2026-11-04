@@ -51,3 +51,64 @@ independently admit same whole parent,record terminal/ALL64 actual words,compare
 with BOTH unchanged ideal and separately tested documented-arithmetic model.
 Do not infer physical qualification from software predictions. Native full-K/
 NoC/GDDR/cohort/state,full-model quality and real throughput still remain.
+
+Actual observation -- terminal70,ALL64 words now physically recorded
+------------------------------------------------------------------
+Published frozen checkpointea7a9775ee9d6112624cd5b863de77646d3c7714 was
+independently verified on GitHub before the new stage was created. All4 staged
+hashes/type/owner/mode/syntax and unused marker checked. ONE actual parent97715
+terminal70,observed00:15:26UTC. No concurrent Pioneer commands during parent.
+Normal041/gen2 ->native78/gen3;ONE fixed8 client,strict first ideal mismatch
+4180b500 vs4180b340,then complete64-word dump. No END/retry/reset/restore or
+post-failure metadata inside the parent. Original earlier trial stays untouched.
+
+Complete root log SHA56b4c6b80fbfbcc246cee998454e6927b2d649d7afa0fb8a389edb774a696d03.
+The extracted65-line mismatch+returned-word section is4691B,exactly equal to
+the remote child stderr's independently read size/SHA:
+66112229d3b318d6e79864ecf6d45ce3007a32ae44b7b6c939ce7b05c6ccdf36
+Child stdout0B,exit1;outer stderr0. All64 ACTUAL values match the separate
+documented-arithmetic Fraction predictions EXACTLY;both32-word jobs identical.
+60/64 differ from ideal arithmetic. Recorded-data regression pins the complete
+record SHA/length and all indices. This proves the rounding explanation for
+this fixed fixture,NOT full-K/NoC/GDDR/model quality/speed or a clean END.
+The trial remains REJECTED by its unchanged strict comparator. The parser
+alone cannot authenticate provenance;the exact driver/client/whole parent,
+terminal/record hashes above and original source gates supply that evidence.
+
+AFTER actual parent terminal,CPU-only records/metadata read confirms native78/
+gen3,cold1/active_owner1/open1.64 CPUs/full137034936320B RAM remain. No new
+GPU readback/END/failed-owner cleanup. Haiku sync requested and CLOSED0;ONE
+7s relay OFF hold69999 CLOSED0,observed00:16:31UTC. No second OFF. Network
+probe27566 terminal255,providing no contradiction to assumed-off state. Recovery
+is in progress;do not infer successful reboot/restore from the OFF command.
+
+Controlled recovery COMPLETE -- independent final health verified
+-----------------------------------------------------------------
+Waited more than3 minutes after the single OFF:ONE0.75s ON29147 CLOSED0,
+launched00:19:58UTC. No second OFF,SD,mains or hardware action. Default Linux
+recovered. Initial explicit default-key login was rejected;the EXISTING
+Pioneer project key succeeded as milkv. No key/password/account modification.
+Linux6.1.31,CPUs0-63/MemTotal131976904kB,taint0/kexec0,NVMe root and unchanged
+helper9cfc verified. Existing screen log only was read;UART never reopened.
+
+Pinned normal prepare12062 CLOSED0,fresh session bfp8-observe-recovery-20261104-a,
+64,memory128-spin-idle7-top-page-nosd-control. Normal read-only BFS source check
+passed;no journal override/repair. Stderr contained the standard kexec warning
+"No cmdline or append string provided",not an error;source helper unchanged.
+Boot6164 CLOSED0/all input hashes OK,normal Linux shutdown/default NVMe entry
+unchanged. Fresh Haiku native78/gen1,cold0/owner0,64 CPUs/full RAM precedes any
+restore. The exact fresh-epoch restore e40544a4...26548 CLOSED0/stderr0 restored
+normal041/tag12/gen2 without GPU execution or failed-old-lease cleanup. Original
+UNPROVEN trial state is preserved;separate recovery.state records restoration.
+
+Independent final health00:25:33UTC CLOSED0/stderr0 confirms normal041/tag12/
+gen2,cold0/owner0/open1/guard1,64 CPUs/max137034936320B,free133809909760B.
+Worker861e/servicec509/GUI0de intact;original GGUF0:1:600:18973870528 and private
+lossless cache directory remain. Desktop/input/network servers present,no
+Assistant/LLM processes. Physical desktop input was not separately human-tested.
+No new inference benchmark or accepted full-native Work result.20tok/s UNMET.
+
+Next:separate fixed-BFP8 documented-arithmetic client with strict64-word check
+and accepted END in a fresh admitted lease,then full-K/broadcast physical
+qualification and on-card NoC/GDDR/cohort/state integration. The old strict-
+ideal rejection is NEVER retroactively converted into a successful END.

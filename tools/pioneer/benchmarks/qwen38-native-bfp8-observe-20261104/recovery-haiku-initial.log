@@ -1,0 +1,13 @@
+Haiku
+P100A_RELOAD driver55 tag2026110300010078 generation1 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133837209600 bytes free      (used/max 3197726720 / 137034936320)
+                           (cached    177102848)
+     64520 semaphores free (used/max       1016 /      65536)
+      3957 ports free      (used/max        139 /       4096)
+      3903 threads free    (used/max        193 /       4096)
+      2024 teams free      (used/max         24 /       2048)
+861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74  /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
+c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18  /boot/home/config/non-packaged/servers/HaikuAssistantService

@@ -156,3 +156,15 @@ are described in BLACKHOLE_BF16_ARITHMETIC.txt.42,304 Fraction comparisons and
 the old partial record;277 synthetic parser cases pass. Neither the client's
 strict Expected(),its END policy nor any physical acceptance gate changes.
 No new physical BFP8 words are claimed by these additional software checks.
+
+SUBSEQUENT actual observation ea7a9775/parent97715 has now recorded all64
+physical BFP8 words;all agree exactly with the independent documented rounding
+prediction,60 differ from ideal. See benchmarks/qwen38-native-bfp8-observe-20261104.txt.
+This later hardware evidence supersedes the earlier one-word-only knowledge,
+NOT the rejected first trial or either trial's unchanged END/comparator policy.
+The new trial returned70 with retained/cold owner;controlled recovery follows.
+That recovery subsequently completed with one OFF/ON cycle and the unchanged
+SD-free64CPU/full-RAM boot profile. Normal041/tag12/gen2,cold0/owner0 and the
+cache-enabled Assistant are independently verified. Failed trial records and
+once token remain intact. Next acceptance requires a NEW documented-arithmetic
+client/lease,not a retroactive END against either rejected old trial.
