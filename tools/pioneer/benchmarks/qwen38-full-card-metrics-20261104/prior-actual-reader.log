@@ -1,0 +1,2 @@
+{"answer": "Hello! How can", "broad_model_quality": false, "execution_or_cleanup_authority_from_log": false, "output_tokens": 4, "reported_generate_total_seconds": "1866.383", "reported_post_start_ack_seconds": "104.969", "scope": "one fixed public Hello/four-output full-card candidate", "timing_fields_valid": true, "upload_events": 2253, "uploaded_bytes": 19399024640, "warm_token_rate": null}
+PASS_COMPLETE_FULL_CARD_TRANSCRIPT_DATA_ONLY;NOT_STEADY_TOKEN_RATE_BROAD_QUALITY_OR_NATIVE_CLEANUP_AUTHORITY

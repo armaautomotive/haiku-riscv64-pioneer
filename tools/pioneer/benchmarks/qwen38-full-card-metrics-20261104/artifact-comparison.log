@@ -1,0 +1,6 @@
+2551b50a52f6a2f7c98ca391fa1742640d5d777f23379663733679980bd643d7  /private/tmp/pioneer-full-metrics-20261104.0VNeinG6/native-final/tenstorrent_pci_probe-native
+2551b50a52f6a2f7c98ca391fa1742640d5d777f23379663733679980bd643d7  /private/tmp/pioneer-full-metrics-20261104.0VNeinG6/clean-native/tenstorrent_pci_probe-native
+989f54c394a42c43b2bf9e0fd64844bfb378ec79fb8fbe65643e8f9bad03242a  /private/tmp/pioneer-full-metrics-20261104.0VNeinG6/worker-r4/HaikuAssistantQwen27FullOffload
+989f54c394a42c43b2bf9e0fd64844bfb378ec79fb8fbe65643e8f9bad03242a  /private/tmp/pioneer-full-metrics-20261104.0VNeinG6/clean-worker/HaikuAssistantQwen27FullOffload
+d50896e160e4e7015ce0942ab5d83a0293a356fc90ddb0980be4313f38cfec4e  /private/tmp/pioneer-full-metrics-20261104.0VNeinG6/worker-r4/pioneer-q38-full-offload-rate-smoke
+d50896e160e4e7015ce0942ab5d83a0293a356fc90ddb0980be4313f38cfec4e  /private/tmp/pioneer-full-metrics-20261104.0VNeinG6/clean-worker/pioneer-q38-full-offload-rate-smoke

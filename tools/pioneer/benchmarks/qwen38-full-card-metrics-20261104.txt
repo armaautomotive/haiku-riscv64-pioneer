@@ -1,3 +1,35 @@
+Full-card token-count/32-request integration:main+clean CLOSED0,not hardware
+========================================================================
+2026-11-04 20:08UTC. New clean source archive ofbfd5426196:
+ /private/tmp/pioneer-full-metrics-clean-20261104.1zVzdix4
+Archive/clone98011 ACTUALLY0 before either clean build/test launch. Frozen
+c060 vocabulary headers/library pins only;dirty submodule work not used.
+Clean native+worker/4-client/32-client70716 ACTUALLY0. Clean USER/control/
+roles/client/sampler/whole-log suites2844 ACTUALLY0. Whole explicit cmp of
+native/default/worker/both clients ACTUALLY0;exact hashes match main below.
+All final clean stdout/stderr and artifact comparison are in the sibling
+evidence directory. Qualified clean stderr streams are0B. No hardware
+job,model execution,token-rate measurement or cleanup authority is inferred.
+
+The old reader's unchanged four-output actual89 parse remains byte-identical;
+the extracted shared upload grammar passed its entire old4valid/1047refusal/
+2invalid-time suite in main+clean. The new whole32 reader passed2available/
+unavailable fixtures/130refusals in both. Full raw four-endpoint clock data
+is now emitted after actual END/token/source checks;independent DATA math
+checks differences and rounded rate values. Client tests2valid/11failures/
+3CLI refusals and sampler35windows/18refusals match main+clean. These are
+synthetic fixtures,not an actual31TPS result or numerical model oracle.
+
+Code+offline qualification only;Pioneer still last verified stable041/gen14.
+Before physical use:separate new one-shot guarded helper/failure-flow tests,
+fresh current-board/artifact/source/idle admission,protected real model run,
+actual terminal/whole-log audit and independent restoration. The helper is
+NOT implemented yet. Do NOT rerun either spent88/89 helper or stage.
+Goal ACTIVE;full self-hosted performance/20TPS,persistent weights and tensor
+engine acceleration remain incomplete. This is not an installed Assistant.
+
+Historical main ledger (pending-clean statements below superseded)
+----------------------------------------------------------------
 Full-card token-count integration:LOCAL main tests closed,not hardware
 ===================================================================
 Goal ACTIVE;20TPS remains UNMET. Last actual full-model physical result is
