@@ -1,3 +1,47 @@
+Full-card batched firmware:guarded physical parent60342 ACTUALLY LIVE
+===================================================================
+2026-11-04 19:08:49UTC. SAME60342 is confirmed LIVE by its actual exec
+handle,not a lock/state file or log inference. No generation/answer/END
+result has returned yet. Previous actual full-card reply remains tag88;
+this new89 run is NOT a measured speedup. Goal ACTIVE,20TPS unmet.
+
+Source+qualification e7c7ed57a2b41489d10ab9b3fd527e770a59e88f was pushed
+and ls-remote independently verified BEFORE staging. Fresh readonly stage
+admission,limited SCP69089,staged metadata,whole readback38836 and all4
+local cmp operations ACTUALLY0/stderr0. Candidate,module/worker/client/
+helper identities remain the exact main+clean subjects recorded below.
+The NEW stage is root700;all4 files root1link700:
+ /boot/home/pioneer-q38-full-batched-20261104-a
+
+Exactly ONE SHA-authenticated helper launch starts parent60342. Its own
+fresh original driver/runtime/admin/guard/apps/idle/health/generation
+checks pass. Actual quiesce->atomic exchange->verified reload advances
+stable041/tag12/gen12 to newde688/tag89/gen13,cold0/quiesced0/owner0/open1
+before child admission.64CPUs/full137034936320B RAM intact. No reboot,
+power,SD,kernel,boot,network,installed Assistant or hardware change.
+
+PROTECT the ENTIRE same60342 authentication/Open/upload/RUN/cleanup/Close
+parent. NO additional Pioneer SSH/admin/status/GPU/model/reload/reset/
+power/OS/network/SD/hardware operation while it lives. Observe ONLY same
+60342 and existing local raw files;never reopen/reconfigure UART. Timeout
+or lost observation is NOT terminal or permission to relaunch/recover.
+If SSH255 occurs,resolve the actual remote child before any mutation.
+
+Local LIVE outer stdout/stderr:
+ /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/physical.log
+ /private/tmp/pioneer-full-batched-20261104.NW4wCN4r/physical.stderr
+Child writes complete full-offload.stdout/.stderr/.exit in its stage.
+Do not fetch while the parent lives. The expected guarded flow restores
+stable041 togen14 ONLY after actual child0,clean worker close,expected
+public text and new idle admission. Unknown/failure never auto-restores.
+After ACTUAL terminal,fetch WHOLE child streams and exact state/exit,
+run unchanged complete-log reader from main+clean and independently audit
+driver/apps/kernel/64CPU/RAM. Logs alone are not cleanup authority.
+No upload-prefix,output-count extrapolation or cold timing is warm TPS.
+The complete SPENT88 helper/stage and all native87 peak work stay untouched.
+
+Closed local qualification and pre-staging ledger
+------------------------------------------------
 Full-card batched firmware:main+clean qualification CLOSED,not hardware
 =====================================================================
 2026-11-04 19:03UTC. All final build/test/whole-file comparisons actually
