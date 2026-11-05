@@ -8,9 +8,13 @@ import re
 import runpy
 import sys
 
-assert __debug__ and len(sys.argv) == 2
+assert __debug__ and (len(sys.argv) == 2 or (len(sys.argv) == 3 and sys.argv[2] == '--compact'))
 text = pathlib.Path(sys.argv[1]).read_text()
-assert text.count('PASS actual RV32I packed-Q4/SFPU/BF16/FPU K256 pipeline:5 two-job trials/all64 words exact,13 failure/numerical controls,') == 1
+compact = len(sys.argv) == 3
+if compact:
+    assert text.count('PASS_COMPACT_ACTUAL_RV32 cases8_twoJobs_each64WordsExact controls7 numerical8 original8KiBROM_8KiBStack_bounds SP96 touched84;') == 1
+else:
+    assert text.count('PASS actual RV32I packed-Q4/SFPU/BF16/FPU K256 pipeline:5 two-job trials/all64 words exact,13 failure/numerical controls,') == 1
 words = {}
 for line in text.splitlines():
     if not line.startswith('Q4_FPU_PIPELINE_REFERENCE'):
@@ -68,4 +72,5 @@ for row in range(32):
             commands += 1
     for job in range(2):
         assert total == words[job, row], (job, row, hex(total), hex(words[job, row]))
-print(f'PASS independent Fraction compressed-Q4 pipeline:all64 actual-RV32 result words,{commands} rounded phase predictions,8192 original synthetic weights;no CXX codec/SFPU/FPU oracle shared;NO hardware/model-quality/speed proof')
+name = 'compact-original-metadata Q4 pipeline' if compact else 'compressed-Q4 pipeline'
+print(f'PASS independent Fraction {name}:all64 actual-RV32 result words,{commands} rounded phase predictions,8192 original synthetic weights;no CXX codec/SFPU/FPU oracle shared;NO hardware/model-quality/speed proof')

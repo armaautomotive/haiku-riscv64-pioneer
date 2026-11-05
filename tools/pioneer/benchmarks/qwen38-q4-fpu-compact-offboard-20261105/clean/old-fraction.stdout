@@ -1,0 +1,1 @@
+PASS independent Fraction compressed-Q4 pipeline:all64 actual-RV32 result words,2048 rounded phase predictions,8192 original synthetic weights;no CXX codec/SFPU/FPU oracle shared;NO hardware/model-quality/speed proof

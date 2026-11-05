@@ -4,8 +4,13 @@
 #include "pioneer_q38_native_bfp_machine.h"
 #include "pioneer_blackhole_arithmetic_observer.h"
 #include "pioneer_blackhole_sfp_load.h"
+#ifdef PIONEER_Q38_COMPACT_FPU_PIPELINE_MODEL
+#define PIONEER_Q38_VECTOR_Q4_METADATA_MODEL_ONLY
+#include "pioneer_q38_vector_q4_metadata_test.cpp"
+#else
 #define PIONEER_Q38_Q4_FPU_DECODE_MODEL_ONLY
 #include "pioneer_q38_q4_fpu_decode_test.cpp"
+#endif
 #include "../PioneerQ38Q4FpuBlock.h"
 #include "../PioneerQ38Q4FpuBlockData.h"
 // NEW OFFBOARD observer,not hardware timing/ownership authority. One actual
@@ -23,7 +28,11 @@ struct Q4FpuPipelineMachine:NativeBfpMachine {
 	bool decoded[64][16]={},moved[64]={},enabled=false;
 	unsigned dstReady[1024]={},rawLoads=0,metadataLoads=0,zeroLoads=0,inputLoads=0,moves=0,transposes=0;
 	unsigned skipUnpack=0,unpackAttempts=0,skipMove=0,skipTranspose=0;bool skipZero=false,dirtyPadding=false;
+#ifdef PIONEER_Q38_COMPACT_FPU_PIPELINE_MODEL
+	MetadataMachine vector; // SAME physical LRegs;strict existing arithmetic
+#else
 	Q4FpuMachine vector;
+#endif
 	struct Task {bool pending=false,zero=false,publish=false,fp32=false;unsigned address=0,row=0,count=0,due=0;} task;
 	static unsigned Adj(unsigned row){return ((row&0x1f8)<<1)|(row&0x207);}
 	uint32_t FloatDst(unsigned row,unsigned col) {

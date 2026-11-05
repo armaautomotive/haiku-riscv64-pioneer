@@ -1,0 +1,117 @@
+Compact ORIGINAL-metadata Q4 -> SFPU/BF16/FPU:OFFBOARD checkpoint
+===============================================================
+2026-11-05 UTC;fresh HEAD5621b04897 plus exactly15 source overlays.
+New K256/32-output program decodes original Q4 metadata ON CARD instead
+of reading expanded FP32 coefficients. Actual compiled RV32 tests pass,
+including original-model samples. NOT full-K/resident/cohort/native/Work
+integration,model quality,physical timing or an inference-speed result.
+Last measured full-card run remains0.164361584..0.164365058tok/s;20 UNMET.
+
+Why this is different from existing full-K FPU work
+--------------------------------------------------
+The existing qualified86 full-K diagnostic already supports6144B prepared
+Q4 blocks;it must NOT be restarted as new work. That recipe stores4096B
+unchanged quant payload plus2048B expanded exact FP32 factors per32x256.
+New compact recipe stores the SAME4096 quant bytes plus512 ORIGINAL
+metadata bytes:4608B total,25% less weight storage/transfer than6144B,
+75% less metadata. This is exact DATA arithmetic,not measured throughput.
+No full-model fit,NoC packet reduction or bandwidth speedup is proved here.
+No new layout is silently aliased to existing installed cache/Work formats.
+
+CPU Prepare only losslessly transposes quant and original metadata bytes;
+NO coefficient multiplication,dequantization,BF16 conversion or learned
+product. All domain/size/alias/overflow/finite checks precede its first
+destination write. BF16 is still the distinct EXISTING FPU numerical
+recipe,not the old exact K16 Work oracle. Full-model quality remains due.
+
+On-card metadata and complete program
+------------------------------------
+Two actual raw256B UNPACKs import the original byte-major16-row prefixes.
+Existing qualified HALF/significand/factor vector operations reconstruct
+all exact coefficients. Minimum negates the PRODUCT,including signed0,
+matching existing FPU storage;old K16 negative-integer-factor semantics
+are not substituted. Both output halves/all eight groups and all padding
+are explicitly written. No scalar learned operand access or host products.
+
+New logical FP32 Dst128..255 is initialized through real zero UNPACKs,
+with BOTH physical halves defined. This is a NEW scratch scope,NOT an
+existing native journal grant. Raw bytes0..63,decoded weights64..127,
+matrix accumulator32/40 and metadata128..255 have distinct physical
+mapping in the observer. Other physical Dst is checked preserved in the
+metadata test. Both source banks retain the old handoffs/four FPU phases.
+No old ownership/reset/cleanup or precision assertion is weakened.
+
+Separate RV32 TU/startup/markers QFC1/QFCE,not old QFP1/QFPE. Direct issue
+for constant words,explicit MMIO for dynamic words;strict unchanged Step
+executes every instruction. Decode loops avoid duplicated half/parity
+functions. Image4948B fits ORIGINAL8192B ROM;no code-bound expansion.
+Actual observed combined ABI stack96B/touched84B within original8192B.
+Individual static frame max64B is NOT substituted for that combined result.
+Builder reproduces unchanged original7036B text FIRST;only a friend
+declaration is added to production old helper (no old emitted-code change).
+New image is pinned by boot/text/ELF size+SHA;no unresolved/writable globals.
+
+Actual boot4B:
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd
+Actual text4948B:
+0dce59d83dd56c3c800bde8bbb2bcd4e32d26cf1f71e2292f9eca7490fe978df
+Actual ELF16632B:
+294911c76c35db871e2f27fadd14af7e0b32cd5d17e467f0da4937c2b9850633
+
+Closed main AND independent fresh clean archive tests
+----------------------------------------------------
+Complete main20736/clean24712 ACTUALLY0;strict outer stderr0. Each requires
+15 actual child0/strict stderr0 results,25 image-role refusals including
+defined0 native/client/kernel/CPU-reference/Work aliases. ASan+UBSan,Werror,
+ffp-contract=off. ALL public child/outer streams,15-exit maps,50-file source
+closure and whole generated ELF compare byte-identical main/clean.
+No dirty llama/kernel/native-WIP or mixed-FPU-client WIP is a build input.
+
+ Metadata:512 original-byte blocks;all512 real factor words plus1536
+ padding words per block exact to old expanded-FPU recipe. Quant4096
+ bytes exact and all512 original metadata bytes checked. Signed0,smallest
+ HALF subnormals,largest finite scales,factor0/63;134 atomic refusals,
+ six omitted store/transpose controls. Explicit completed-prefix endpoint,
+ not falsely described as compiled import/initialization qualification.
+
+ Emitted full pipeline:16 jobs,all32 outputs exact to unchanged original
+ decode -> BF16-RNE -> four-phase rounded matrix reference. All source
+ handoffs and actual raw metadata import/initialized physical Dst observed.
+
+ Actual RV32 image:eight two-job trials/all64 returned words exact each.
+ Seven config/ACK/initialization/MOVD2A/producer failures yield NO outputs;
+ eight missing metadata-store/fidelity-term controls cannot match results.
+ No scalar payload/NoC/GDDR/host access is accepted by this image observer.
+ These are mocked functional endpoints,not asynchronous silicon timing.
+
+ Independent Python Fraction:all64 actual synthetic image words,2048
+ rounded phase predictions,8192 original synthetic weights. No CXX codec,
+ SFPU or FPU oracle shared. Explicit --compact checks the NEW full pass
+ record;default old-reader shape/requirements remain unchanged. Old emitted
+ pipeline,old actual7036B image and old Fraction regression also pass.
+
+ EACH tree authenticates FULL SAME-OPEN18973870528B original GGUF SHA:
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+ Original read-only/O_NOFOLLOW/owned regular one-link FD;nanosecond identity
+ and model epoch stable through closure. All193 Q4 tensors,first/middle/
+ last32-row bands x first/middle/last K256 block:1737 samples,3474 ACTUAL
+ compiled jobs,111168 returned words exact to existing FPU oracle per tree.
+ Diagnostic BF16 inputs,NOT real prompt hidden states or broad model quality.
+ No original/converted weights or private output arrays are printed/saved.
+
+Remaining toward the actual objective
+------------------------------------
+Integrate compact metadata into a full-K persistent-accumulator stream,
+qualified double-buffer NoC source layout,all required formats and full
+cohort/resident graph. Do not clear accumulators per K256 block. Prove new
+Dst/journal scope and finite provenance under native ownership;retain unknown
+resources,not implicit END/retry. Bind a distinct lossless source/cache
+recipe and live on-card activations. Validate full-model numerical quality,
+then matched real inference speed before any Assistant Work promotion.
+No assumption that25% fewer tile bytes yields25% faster model inference.
+
+No Pioneer device/admin/status/stage/reload/relay/reboot/Assistant/OS/network/
+SD/mains/hardware command occurred in this work. Last independent observed
+normal041/gen36/64CPU/full137034936320B state is left unchanged. Goal ACTIVE.
+Complete non-weight stdout/stderr/actual exits/source closure accompany this
+report. Private generated binaries and original/model/cache remain outside Git.

@@ -1,0 +1,18 @@
+{
+  "scope": "Actual offline tool process results, not hardware or throughput qualification",
+  "base_head": "5621b04897095dee2d5467b1e0da7625e5437f66",
+  "complete_main": {"session": 20736, "exit": 0},
+  "complete_clean": {"session": 24712, "exit": 0},
+  "strict_outer_stderr_empty": true,
+  "all_public_streams_and_exit_maps_byte_identical": true,
+  "source_closure_files": 50,
+  "source_closure_byte_identical": true,
+  "whole_candidate_elf_byte_identical": true,
+  "actual_child_exits_per_tree": 15,
+  "image_role_refusals_per_tree": 25,
+  "original_model_tensors_per_tree": 193,
+  "original_sampled_blocks_per_tree": 1737,
+  "actual_original_sample_jobs_per_tree": 3474,
+  "private_numeric_outputs_published": false,
+  "new_physical_inference_rate_measured": false
+}
