@@ -1,0 +1,14 @@
+edd270242413f6fdc7b6310aaedaa0daa89d1b1250c8c0533959ca356bc39be1  /boot/home/pioneer-q38-full-prepared-counter-q4-20261105-a/tenstorrent_pci_probe-full-prepared-counter-q4-98
+37bf461710e8890581e525a747607c0792c1a555fdb82eca1a5ce75b6db0aa85  /boot/home/pioneer-q38-full-prepared-counter-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-counter-q4
+ec343e34dc3257572487bf66d5b8481896a4c7d91dcc8ae5ae3291610ac0e03e  /boot/home/pioneer-q38-full-prepared-counter-q4-20261105-a/pioneer-q38-full-offload-rate-smoke
+24e89dca2138e9ee70c9c4340d000298acd4b7621fec9277e22a4b8ecfd43594  /boot/home/pioneer-q38-full-prepared-counter-q4-20261105-a/physical.sh
+P100A_RELOAD driver55 tag2026102100010012 generation24 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+130784952320 bytes free      (used/max 6249984000 / 137034936320)
+                           (cached   31398113280)
+     59581 semaphores free (used/max       5955 /      65536)
+      3713 ports free      (used/max        383 /       4096)
+      2588 threads free    (used/max       1508 /       4096)
+      1972 teams free      (used/max         76 /       2048)

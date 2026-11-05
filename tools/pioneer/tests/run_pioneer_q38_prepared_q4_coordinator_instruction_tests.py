@@ -11,10 +11,13 @@ import tempfile
 from compare_pioneer_q38_observed_trace import require, stable_bytes
 
 require(__debug__ and not os.environ.get('PYTHONOPTIMIZE'), 'no optimized Python')
-require(len(sys.argv) == 3, 'ABS_PREPARED_ROOT ABS_PREPARED_WORKER')
+args=sys.argv[1:];counter_unroll='--counter-unroll-root' in args
+if counter_unroll:
+    require(args.count('--counter-unroll-root')==1,'one counter-unroll selector');args.remove('--counter-unroll-root')
+require(len(args) == 2, 'ABS_PREPARED_ROOT ABS_PREPARED_WORKER [--counter-unroll-root]')
 require(not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ), 'no role override')
 here = pathlib.Path(__file__).resolve().parent
-root_image, worker = map(pathlib.Path, sys.argv[1:])
+root_image, worker = map(pathlib.Path, args)
 fixture = worker / 'unchanged-original/unchanged-vector/unchanged-wide/unchanged-twin/unchanged-batched/unchanged-prefetch/unchanged-beta/unchanged-pushed/unchanged-precise/unchanged-global/qualified-math'
 tool = '/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-'
 
@@ -35,7 +38,8 @@ def snapshot(directory, records):
     return result
 
 
-root = snapshot(root_image, [('program.elf', 194980, '0306100598ee1aa4e20bf3399165f5fbc2714ab2a694021fa98d63f4f64bb8f1')])
+root_pin=('program.elf',197724,'38a8f64f9bf75946953d87ec08d3bba07b44ea36303936ab912c89771f68d039') if counter_unroll else ('program.elf',194980,'0306100598ee1aa4e20bf3399165f5fbc2714ab2a694021fa98d63f4f64bb8f1')
+root = snapshot(root_image, [root_pin])
 snapshots = [snapshot(directory, pins(script)) for directory, script in (
     (fixture, here / 'run_pioneer_q38_mixed_worker_tests.py'),
     (worker, here.parent / 'build_qwen38_prepared_exact_q4_worker.py'))]

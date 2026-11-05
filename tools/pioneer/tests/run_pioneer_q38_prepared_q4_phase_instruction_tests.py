@@ -11,11 +11,17 @@ import tempfile
 from compare_pioneer_q38_observed_trace import require, stable_bytes
 
 require(__debug__ and not os.environ.get('PYTHONOPTIMIZE'), 'no optimized Python')
-require(len(sys.argv) == 5, 'ABS_ROOT ABS_WORKER ABS_MODEL ABS_EXISTING_CACHE')
+args=sys.argv[1:];profile='--profile-root' in args
+if profile:
+    require(args.count('--profile-root')==1,'one profile selector');args.remove('--profile-root')
+counter_unroll='--counter-unroll-root' in args
+if counter_unroll:
+    require(args.count('--counter-unroll-root')==1,'one counter-unroll selector');args.remove('--counter-unroll-root')
+require(len(args) == 4, 'ABS_ROOT ABS_WORKER ABS_MODEL ABS_EXISTING_CACHE [--profile-root] [--counter-unroll-root]')
 require(not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ), 'no role override')
 here = pathlib.Path(__file__).resolve().parent
 repo = here.parent.parent.parent
-root_image, worker, model, cache = map(pathlib.Path, sys.argv[1:])
+root_image, worker, model, cache = map(pathlib.Path, args)
 require(all(p.is_absolute() for p in (root_image, worker, model, cache)), 'absolute inputs')
 fixture = worker / 'unchanged-original/unchanged-vector/unchanged-wide/unchanged-twin/unchanged-batched/unchanged-prefetch/unchanged-beta/unchanged-pushed/unchanged-precise/unchanged-global/qualified-math'
 tool = '/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-'
@@ -60,7 +66,8 @@ for name, data in sorted(writer_sources.items()):
     digest.update(name.encode() + b'\0' + len(data).to_bytes(8, 'little') + data)
 writer = digest.hexdigest()
 require(writer == '70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6', 'unchanged original cache recipe')
-snapshots = [snapshot(root_image, [('program.elf', 194980, '0306100598ee1aa4e20bf3399165f5fbc2714ab2a694021fa98d63f4f64bb8f1')]),
+root_pin=('program.elf',197724,'38a8f64f9bf75946953d87ec08d3bba07b44ea36303936ab912c89771f68d039') if counter_unroll else ('program.elf',194980,'0306100598ee1aa4e20bf3399165f5fbc2714ab2a694021fa98d63f4f64bb8f1')
+snapshots = [snapshot(root_image, [root_pin]),
              snapshot(fixture, pins(here / 'run_pioneer_q38_mixed_worker_tests.py')),
              snapshot(worker, pins(here.parent / 'build_qwen38_prepared_exact_q4_worker.py'))]
 legacy_pins = [(name + '.bin', size, digest) for name, size, digest in pins(here / 'run_pioneer_q38_resident_gdn_output_operator_service_image_tests.py')]
@@ -98,6 +105,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-prepared-full-phase-', dir='/pr
         target.chmod(0o400)
     binary = base / 'test'
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off',
+                    *(['-DPIONEER_Q38_PREPARED_ROOT_PROFILE=1'] if profile else []),
                     '-Wall', '-Wextra', '-Werror', '-Wno-deprecated-declarations', '-fsanitize=address,undefined', *flags,
                     '-DPIONEER_Q38_REFERENCE_ROUNDING_BOUND', '-DPIONEER_Q38_REF_DIAGNOSTIC',
                     '-DPIONEER_NATIVE_Q4_PREPARATION_SHA256="' + writer + '"',

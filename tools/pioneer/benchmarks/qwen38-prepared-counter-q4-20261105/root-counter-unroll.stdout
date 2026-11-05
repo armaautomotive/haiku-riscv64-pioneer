@@ -1,0 +1,7 @@
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 127640, 'abd1f65941fe7f876f86bc7adde0fa3521ab84174e531f1580bd31c6d35d46fb')
+('terminal.bin', 8, '468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2')
+('conv.bin', 32680, 'a04a37941b1d3125b53cf9c813ab1e4fe2e935fe5558c25f13aa7d92b9e28934')
+('prepared.bin', 5744, '687732ae88835e1f0834b7543b153e95042b352910b1c5c40eef684876d8c8fe')
+('program.elf', 197724, '38a8f64f9bf75946953d87ec08d3bba07b44ea36303936ab912c89771f68d039')
+INSPECT_BUILD_ONLY prepared ROOT staged authentic-index ledger+per-worker descriptors;NEW6c000_code_view_NOT_NATIVE_AUTHORIZED;NO execution/source/card/model/TPS grant

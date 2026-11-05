@@ -22,7 +22,12 @@ static auto Bytes(const char* directory,const char* name){
 int main(int argc,char** argv){
  assert(argc==3 && P::Family==S::Family && P::EogCount==5);
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL
+ assert(PioneerQ38FullOffloadFirmwareSelection==6 && P::CounterUnroll==1);
+#else
  assert(PioneerQ38FullOffloadFirmwareSelection==5 && P::PreparedQ4==1 && P::NativeQ4Exact==1 && P::RootSections==5);
+#endif
+ assert(P::PreparedQ4==1 && P::NativeQ4Exact==1 && P::RootSections==5);
  assert(S::PreparedQ4==1 && S::SavedWords==13480506 && S::SavedBytes==53922024);
 #else
  assert(PioneerQ38FullOffloadFirmwareSelection==3);

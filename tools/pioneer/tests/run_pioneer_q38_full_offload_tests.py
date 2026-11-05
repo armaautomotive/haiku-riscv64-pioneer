@@ -7,11 +7,12 @@ import subprocess
 import sys
 import tempfile
 
-assert sys.argv[1:] in ([], ['--batched'], ['--batched','--metrics'], ['--batched','--metrics','--vector-q4'], ['--batched','--metrics','--prepared-q4'])
+assert sys.argv[1:] in ([], ['--batched'], ['--batched','--metrics'], ['--batched','--metrics','--vector-q4'], ['--batched','--metrics','--prepared-q4'], ['--batched','--metrics','--prepared-q4','--counter-unroll'])
 batched = bool(sys.argv[1:])
 metrics = '--metrics' in sys.argv
 vector_q4 = '--vector-q4' in sys.argv
 prepared_q4 = '--prepared-q4' in sys.argv
+counter_unroll = '--counter-unroll' in sys.argv
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 here=pathlib.Path(__file__).resolve().parent
 with tempfile.TemporaryDirectory(prefix='pioneer-full-offload-tests-',dir='/private/tmp') as temporary:
@@ -24,7 +25,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-full-offload-tests-',dir='/priv
         + ('\n#define PIONEER_Q38_FULL_OFFLOAD_METRICS 1' if metrics else '')
         + ('\n#define PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4 1' if vector_q4 else '')
         + ('\n#define PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4 1' if prepared_q4 else '')
-        + '\n#define PIONEER_DRIVER_BUILD_TAG '+('0x2026110500010097ULL' if prepared_q4 else '0x2026110400010092ULL' if vector_q4 else '0x2026110400010090ULL' if metrics else '0x2026110400010089ULL' if batched else '0x2026110400010088ULL')+'\n')
+        + ('\n#define PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL 1' if counter_unroll else '')
+        + '\n#define PIONEER_DRIVER_BUILD_TAG '+('0x2026110500010098ULL' if counter_unroll else '0x2026110500010097ULL' if prepared_q4 else '0x2026110400010092ULL' if vector_q4 else '0x2026110400010090ULL' if metrics else '0x2026110400010089ULL' if batched else '0x2026110400010088ULL')+'\n')
     for name in ('protocol','session','control'):
         source=here/('pioneer_q38_full_offload_'+name+'_test.cpp')
         binary=pathlib.Path(temporary)/name
@@ -34,6 +36,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-full-offload-tests-',dir='/priv
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1'] if metrics else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=1'] if vector_q4 else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4=1'] if prepared_q4 else []),
+                        *(['-DPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL=1'] if counter_unroll else []),
                         *(['-DPIONEER_NATIVE_Q4_PREPARATION_SHA256="70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6"'] if prepared_q4 else []),
                         *(['-DPIONEER_Q38_FULL_OFFLOAD_CLIENT=1'] if (vector_q4 or prepared_q4) and name!='control' else []),
                         '-I'+temporary,str(source),'-o',str(binary)],check=True)

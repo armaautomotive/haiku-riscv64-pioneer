@@ -14,12 +14,16 @@
  || defined(__FAST_MATH__)
 #error Full-card prepared Q4 requires its distinct source/firmware role,not raw weights,CPU validation or hybrid Work
 #endif
+#if defined(PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL) && PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL != 1
+#error Full-card prepared Q4 requires exact counter-unroll revision1
+#endif
 #ifdef _KERNEL_MODE
 #if _KERNEL_MODE != 1 || !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || PIONEER_Q38_FULL_OFFLOAD_NATIVE != 1 \
  || !defined(TT_PIONEER_DRIVER_RELOAD) || TT_PIONEER_DRIVER_RELOAD != 1 \
- || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026110500010097ULL \
+ || !defined(PIONEER_DRIVER_BUILD_TAG) \
+ || PIONEER_DRIVER_BUILD_TAG != (defined(PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL)?0x2026110500010098ULL:0x2026110500010097ULL) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT)
-#error Full-card prepared Q4 requires the exact tag97 native parent
+#error Full-card prepared Q4 requires its exact tag97 or counter-unroll tag98 native parent
 #endif
 #else
 #if !defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) || PIONEER_Q38_FULL_OFFLOAD_CLIENT != 1 \

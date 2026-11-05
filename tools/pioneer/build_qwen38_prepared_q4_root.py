@@ -3,6 +3,9 @@
 import hashlib,os,pathlib,re,runpy,subprocess,sys
 if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):raise SystemExit('Refuse optimized Python;whole ROOT checks are required')
 args=sys.argv[1:];assert args.count('--inspect-candidate')==1;args.remove('--inspect-candidate')
+counter_unroll='--counter-unroll' in args
+if counter_unroll:
+ assert args.count('--counter-unroll')==1;args.remove('--counter-unroll')
 reuse=None
 if '--control' in args:
  assert args.count('--control')==1;at=args.index('--control');reuse=pathlib.Path(args[at+1]);del args[at:at+2]
@@ -41,6 +44,7 @@ for kind,original in zip(('recurrent','dense','token'),(base/'output-closure-rec
  assert old.read_bytes()==original.read_bytes(),'ENTIRE old ROOT TU FIRST'
  target=out/('prepared-'+kind+'.o');command[command.index('-o')+1]=str(target)
  command=[command[0],'-DPIONEER_Q38_PREPARED_Q4_ROOT_IMAGE=1','-include',str(here/'PioneerQ38PreparedQ4RootRole.h'),*command[1:]]
+ if counter_unroll:command[1:1]=['-DPIONEER_Q38_ROOT_COUNTER_UNROLL_IMAGE=1','-include',str(here/'PioneerQ38RootCounterUnrollRole.h')]
  run(*command);objects.append(target);(out/('compile-'+kind+'-argv.txt')).write_text('\n'.join(command)+'\n')
  frames=[row.split('\t') for row in target.with_suffix('.su').read_text().splitlines()]
  assert frames and all(len(row)==3 and row[2]=='static' and int(row[1])<=4096 for row in frames)
@@ -57,6 +61,7 @@ assert layout.count(anchor)==1
 # New,explicit code DATA below the unchanged stack. Existing native code
 # journals do NOT cover this by assumption;whole native ownership is owed.
 layout=layout.replace(anchor,' .prepared 0x6c000 : { *(.text.q38_prepared_q4_* .text.*PioneerQ38PreparedQ4RootLayout* .text.*PioneerQ38PreparedQ4Layout*) . = ALIGN(4); }\n'+anchor)
+if counter_unroll:layout=layout.replace('*(.text.q38_prepared_q4_*','*(.prepared.transfer .text.q38_prepared_q4_*')
 layout=layout.replace(' ASSERT(SIZEOF(.forbidden)==0',
  ' ASSERT(SIZEOF(.prepared)>0 && SIZEOF(.prepared)<=0x2000,"distinct prepared ROOT code below stack;NO native grant")\n ASSERT(SIZEOF(.forbidden)==0')
 (out/'program.ld').write_text(layout)

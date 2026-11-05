@@ -23,6 +23,9 @@ if macro_q4:
 prepared_q4='--prepared-q4' in args
 if prepared_q4:
     assert metrics and not vector_q4 and not macro_q4 and args.count('--prepared-q4')==1;args.remove('--prepared-q4')
+counter_unroll='--counter-unroll' in args
+if counter_unroll:
+    assert prepared_q4 and args.count('--counter-unroll')==1;args.remove('--counter-unroll')
 assert len(args)==2
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 build,out=map(pathlib.Path,args)
@@ -47,12 +50,13 @@ common=[cxx,'-std=gnu++17','-O2','-Wall','-Wextra','-Werror','-fno-exceptions','
 native=['-DTT_PIONEER_EXPERIMENTAL_Q38_'+name+'=1' for name in
         ('BANKS','PANEL','AFFINE','BLOCK','STREAM','ROWS','COHORT','COHORT_SEALED','COHORT_PAYLOAD','DISPATCH','DISPATCH_VECTOR')]
 native+=['-DTT_PIONEER_DRIVER_RELOAD=1','-DPIONEER_DRIVER_BUILD_TAG='+
-         ('0x2026110500010097ULL' if prepared_q4 else '0x2026110400010093ULL' if macro_q4 else '0x2026110400010092ULL' if vector_q4 else '0x2026110400010090ULL' if metrics else '0x2026110400010089ULL' if batched else '0x2026110400010088ULL')]
+         ('0x2026110500010098ULL' if counter_unroll else '0x2026110500010097ULL' if prepared_q4 else '0x2026110400010093ULL' if macro_q4 else '0x2026110400010092ULL' if vector_q4 else '0x2026110400010090ULL' if metrics else '0x2026110400010089ULL' if batched else '0x2026110400010088ULL')]
 if batched:native+=['-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=1']
 if metrics:native+=['-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1']
 if vector_q4:native+=['-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=1']
 if macro_q4:native+=['-DPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4=1']
 if prepared_q4:native+=['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4=1']
+if counter_unroll:native+=['-DPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL=1']
 driver=root/'src/add-ons/kernel/drivers/misc'
 commands=[]
 def run(command):
@@ -100,6 +104,12 @@ if prepared_q4:
                  ('resident-prepared-q4',['-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT=0'])]
 else:
     refusals += [('prepared-q4-with-old-tag',['-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4=1'])]
+if counter_unroll:
+    refusals += [('missing-counter-unroll',['-UPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL']),
+                 ('zero-counter-unroll',['-UPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL','-DPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL=0']),
+                 ('old-prepared-tag',['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026110500010097ULL'])]
+else:
+    refusals += [('counter-unroll-with-old-tag',['-DPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL=1'])]
 for macro in ('PIONEER_Q38_TOKEN_VALIDATION_NATIVE','PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE',
               'PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY','PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE',
               'PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_NATIVE_Q8_LAYOUT',
@@ -111,7 +121,7 @@ for label,extra in refusals:
     result=subprocess.run([*common,*native,*extra,*includes,'-E',str(driver/'pioneer_q38_full_offload_driver.cpp')],
                           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
     assert result.returncode and any(t in result.stderr for t in
-        ('Full offload requires','Full offload cannot alias','Full-card metrics requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Tag97 requires')),label
+        ('Full offload requires','Full offload cannot alias','Full-card metrics requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Tag97 requires','Tag98 requires')),label
 (out/'role-refusals.txt').write_text('\n'.join('PASS '+label for label,_ in refusals)+'\n')
 def compiler_path(name):
     return subprocess.check_output([cxx,'-print-file-name='+name],text=True).strip()
@@ -147,9 +157,9 @@ old_header=(here/('PioneerQ38TokenWideGdnPrograms.h' if batched else 'PioneerQ38
 assert hashlib.sha256(old_header).hexdigest()==('d285c9adb421fc0010d8ad48371eb58ca1480fc0d787f7c147afd4a93457a787'
     if batched else '692a5296c0bc3a19af30ffe920728834328acb05f2122c11c9f95abefd09256f')
 old_arrays={label:digest for digest,label in re.findall(r'// SHA256 ([0-9a-f]{64})\nstatic const uint32_t ([A-Za-z]+)\[\]=',old_header.decode())}
-namespace='PioneerQ38FullOffloadPreparedQ4Programs' if prepared_q4 else 'PioneerQ38FullOffloadMacroQ4Programs' if macro_q4 else 'PioneerQ38FullOffloadVectorQ4Programs' if vector_q4 else 'PioneerQ38FullOffloadBatchedPrograms' if batched else 'PioneerQ38FullOffloadPrograms'
+namespace='PioneerQ38FullOffloadPreparedCounterQ4Programs' if counter_unroll else 'PioneerQ38FullOffloadPreparedQ4Programs' if prepared_q4 else 'PioneerQ38FullOffloadMacroQ4Programs' if macro_q4 else 'PioneerQ38FullOffloadVectorQ4Programs' if vector_q4 else 'PioneerQ38FullOffloadBatchedPrograms' if batched else 'PioneerQ38FullOffloadPrograms'
 header=(here/(namespace+'.h')).read_bytes()
-assert hashlib.sha256(header).hexdigest()==('94368390b71f3ca725d6e791a04dd4b892e0655d7764515b9ce5a35ca9c6e84b' if prepared_q4 else 'da41eb6094faf1d8061ddd297ec399beb209fd6dcf1e903860f4d7421fd46767' if macro_q4 else '3ec53793460dbb937368f952da6a5d19f83e82e27d1a027e416952a309bec389' if vector_q4 else '91624761b95d281cb9dd4493790b27a1c5d88d7c327d6df894711561b76b4c84'
+assert hashlib.sha256(header).hexdigest()==('c3bf57c0dfd9320c87a2f0bcba0b2ec1d6d6e0212688a364c8a46290061b4dad' if counter_unroll else '94368390b71f3ca725d6e791a04dd4b892e0655d7764515b9ce5a35ca9c6e84b' if prepared_q4 else 'da41eb6094faf1d8061ddd297ec399beb209fd6dcf1e903860f4d7421fd46767' if macro_q4 else '3ec53793460dbb937368f952da6a5d19f83e82e27d1a027e416952a309bec389' if vector_q4 else '91624761b95d281cb9dd4493790b27a1c5d88d7c327d6df894711561b76b4c84'
     if batched else 'fcff4279355cf5cfa1de048aa6bb9ed5fa4d7dca0f3dc9a7669cbd421be2a1cd')
 arrays=re.findall(r'// SHA256 ([0-9a-f]{64})\nstatic const uint32_t ([A-Za-z]+)\[\]=',header.decode())
 assert len(arrays)==(15 if prepared_q4 else 14 if batched else 13)
@@ -167,6 +177,6 @@ assert token_frames and max(token_frames)<=2048
 (out/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands)+'\n')
 for name in ('native','default'):
     print(sha(out/('tenstorrent_pci_probe-'+name)),'tenstorrent_pci_probe-'+name,flush=True)
-print('PASS BUILD_ONLY distinct full-card '+('prepared Q4 tag97/all15 arrays exact/extended ROOT journal/source publication required' if prepared_q4 else 'macro Q4 tag93/all14 arrays exact/private-job vector macro configuration/unchanged5-EOG ROOT' if macro_q4 else 'vector Q4 tag92/all14 arrays exact/new vector calculation peers/unchanged5-EOG ROOT' if vector_q4 else 'metrics tag90/all14 arrays exact/ten wide peers unchanged' if metrics else 'batched tag89/all14 arrays exact/ten wide peers unchanged' if batched else 'tag88/all13 arrays exact/nine G3 peers unchanged')+
+print('PASS BUILD_ONLY distinct full-card '+('prepared counter Q4 tag98/all15 arrays exact/same journal and source publication/ordered counter checks' if counter_unroll else 'prepared Q4 tag97/all15 arrays exact/extended ROOT journal/source publication required' if prepared_q4 else 'macro Q4 tag93/all14 arrays exact/private-job vector macro configuration/unchanged5-EOG ROOT' if macro_q4 else 'vector Q4 tag92/all14 arrays exact/new vector calculation peers/unchanged5-EOG ROOT' if vector_q4 else 'metrics tag90/all14 arrays exact/ten wide peers unchanged' if metrics else 'batched tag89/all14 arrays exact/ten wide peers unchanged' if batched else 'tag88/all13 arrays exact/nine G3 peers unchanged')+
       ',full5-EOG firmware/default43 BYTE-UNCHANGED,'+str(len(refusals))+' role refusals,no CPU model/reference/ggml Work imports;maxIndividualTokenFrame'+str(max(token_frames)),flush=True)
 print('NOT installed,physical/numerical/Assistant qualified or a speed result;whole-kernel stack not certified',flush=True)

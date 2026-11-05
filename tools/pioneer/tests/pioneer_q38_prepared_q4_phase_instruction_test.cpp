@@ -111,6 +111,32 @@ struct PhaseRoot:ScalarMachine {
  std::map<uint64_t,unsigned> dram;
  unsigned entry=0,packets=0,scatter=0,minimumStack=0x70000,faultWrites=0,role=0,completed=0;
  unsigned jobWrites=0,doorbells=0,receipts=0,preciseCompleted=0;
+#ifdef PIONEER_Q38_PREPARED_ROOT_PROFILE
+ std::array<uint64_t,0x70000/4> instructionsByPC{};
+ void StepScalar(){
+  assert(pc<0x70000 && !(pc&3));instructionsByPC[pc/4]++;
+  ScalarMachine::StepScalar();
+ }
+ void ReportProfile(const char* directory)const{
+  std::ifstream symbols(std::string(directory)+"/program.symbols");std::string at,kind,name;
+  std::map<unsigned,std::string> functions;
+  while(symbols>>at>>kind>>name){const unsigned address=unsigned(std::stoul(at,nullptr,16));
+   if((kind=="T" || kind=="t" || kind=="W") && image.Find(address))functions.emplace(address,name);}
+  assert(!functions.empty());std::map<unsigned,uint64_t> counts;uint64_t total=0;
+  for(unsigned i=0;i<instructionsByPC.size();i++)if(instructionsByPC[i]){
+   auto function=functions.upper_bound(i*4);assert(function!=functions.begin());--function;
+   counts[function->first]+=instructionsByPC[i];total+=instructionsByPC[i];
+  }
+  assert(total==steps);
+  std::vector<std::pair<uint64_t,unsigned>> ranked;
+  for(const auto& entry:counts)ranked.emplace_back(entry.second,entry.first);
+  std::sort(ranked.rbegin(),ranked.rend());
+  for(unsigned i=0;i<std::min(25U,unsigned(ranked.size()));i++)printf("PREPARED_ROOT_INSTRUCTION_PROFILE rank%u address%08x instructions%llu symbol%s\n",
+   i+1,ranked[i].second,(unsigned long long)ranked[i].first,functions.at(ranked[i].second).c_str());
+  printf("PREPARED_ROOT_INSTRUCTION_PROFILE_TOTAL instructions%llu symbolRanges%zu;EMITTED_INSTRUCTION_COUNTS_NOT_HARDWARE_CYCLES_OR_TPS\n",
+   (unsigned long long)total,ranked.size());
+ }
+#endif
  PhaseRoot(const PreparedRootImage& rom,PhaseSource& data,const char* fixture,const char* worker):ScalarMachine(0,0),image(rom),source(data){
   assert(canonical->Build());std::ifstream sym;
   for(unsigned i=0;i<16;i++)sources[i]=i?0x76540000+i:0x16005;
@@ -333,5 +359,8 @@ int main(int argc,char** argv){
  for(unsigned role:{5U,2U,3U,4U}){root->SetPhase(role,runs[0]);root->RunPhase();}
  assert(root->preciseCompleted==68);
  for(auto& p:root->peers){assert(p->referenceEvaluations==4 && p->referenceReuses);p->StopLocal();}
+#ifdef PIONEER_Q38_PREPARED_ROOT_PROFILE
+ root->ReportProfile(argv[1]);
+#endif
  printf("PASS_PREPARED_COMPLETE_PHASE_HISTORY workers119 wholeRuns4 actualMatrixJobs476 actualPreciseProducers68 actualSTOP119 realSourceAndCache1;NO_COMPLETE_LAYER_NATIVE_CARD_MODEL_OR_TPS\n");
 }

@@ -1,0 +1,84 @@
+Prepared Q4 controller counter optimization -- 2026-11-05
+=======================================================
+
+OFFLINE EXECUTED INSTRUCTION REDUCTION,NOT A TOKENS/SEC RESULT.
+Last accepted real full-card27B rate is still0.172813448..0.172816755tok/s.
+20tok/s remains unmet. No completed whole-model inference/speed result for
+tag97 or98 exists at the offline checkpoint. Assistant is unchanged;the
+later guarded tag98 trial's temporary driver exchange is recorded below.
+
+Profile actual emitted ROOT instructions,not host elapsed test time:
+-The complete recurrent Projection::Run phases execute on the SAME119
+ retained workers:Q8 cold,gate,up,down.476 matrix jobs,68 real precise
+ activation producers,119 actual STOPs;real authenticated original model
+ and existing prepared cache. Same FP32 rows/independent FP64 bounds pass.
+-Original ROOT030610... executes22,970,748 instructions. Transfer accounts
+ for7,687,610(33.47%). This includes cold admission and is NOT a full-model
+ hotspot share,hardware cycle profile,or throughput prediction.
+-New ROOT38a8f64f... unrolls ONLY two fixed eight-counter loops in Transfer.
+ All ordered volatile reads,immediate pre-transfer mismatch refusals,
+ finite poll bound,source/TID/quiet checks,command readbacks,counter deltas,
+ closures,seals and ownership/lifetime rules remain. No CPU fallback,
+ numerical-validation removal,queue caching or ready-bit substitution.
+-New total21,723,832:1,246,916 fewer instructions(5.4283%). New Transfer
+6,440,694:16.2198% fewer. The entire total delta equals Transfer's delta;
+ every other printed function-region count and remaining aggregate match.
+ This is NOT evidence of a5.4% hardware tokens/sec improvement.
+-Both full four-phase tests actually exit0,empty stderr. The new paired
+ coordinator/worker test also exits0:1428 descriptor jobs,160 mutations,
+3 coupled virgin workers,actual STOPs,max stack3540/8192. These tests do
+NOT establish whole native ownership or complete model quality by themselves.
+
+Paired candidate/lifetime integration:
+-Distinct full prepared-counter native/client role/tag2026110500010098,
+ never silently substituted for tag97. Same authenticated source schema,
+ cache writer recipe,1344 side spans,192 tables and journal53922024B.
+-New ROOT ELF197724B SHA38a8f64f9bf75946953d87ec08d3bba07b44ea36303936ab912c89771f68d039.
+ Prepared code5744B stays below6e000;both Transfer copies are explicitly
+ inside the already-expanded prepared journal. Workerb283... unchanged.
+-Generated15-section header SHA
+ c3bf57c0dfd9320c87a2f0bcba0b2ec1d6d6e0212688a364c8a46290061b4dad.
+ All3,375,661 actual installed code words across120 cores match the paired
+ ELF sections and journal ranges;10014 invalid/data-address refusals.
+-Native main and clean builds agree:
+ edd270242413f6fdc7b6310aaedaa0daa89d1b1250c8c0533959ca356bc39be1.
+ Default43 remains2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc.
+33 main/32 clean role refusals;max individual native token frame1232B.
+-USER main and independent clean compilation agree:
+37bf461710e8890581e525a747607c0792c1a555fdb82eca1a5ce75b6db0aa85.
+ Exact11 vocabulary/container imports;no model context,decode,CPU inference
+ or ggml backend.21 role refusals. Rate helper
+ ec343e34dc3257572487bf66d5b8481896a4c7d91dcc8ae5ae3291610ac0e03e.
+-Tag98 protocol/session/control passes all prior prepared tests,including
+4895 uploads,194 pre-START publications,704 fail-closed USER cases,all5 EOS,
+3 cancellation boundaries and copy-failure/admission checks.
+-New physical parent is the ENTIRE tested tag97 lifetime with only8 exact
+revision/stage/hash substitutions,not a new restoration policy. Still fixed
+to stable generation24 -> native25 -> stable26. Parent source SHA
+24e89dca2138e9ee70c9c4340d000298acd4b7621fec9277e22a4b8ecfd43594.
+Its fake failure tests actually exit0;unknown child failures never auto-restore.
+-Counter option OFF reproduces the ENTIRE old ROOT030610... byte-for-byte.
+Rebuilt tag97 native remainsf4d98a7f6c561703ec0ed9111ddaa7f263898c02e305804c2af918347643ed88.
+The original cache recipe70c2c7d0... is unchanged;no rekey/regeneration.
+
+Physical trial status -- 09:02UTC,NOT a success or speed result:
+Pioneer cache preparation ACTUALLY exits0,empty stderr:1351 fragments,
+4,488,320 blocks,10,341,089,280 primary bytes,1,150,803,968 extra allocated,
+4053 sampled lossless round trips,13,464,960 converted tiles,original recipe
+70c2c7d0... . Same-read-only original model and all bank-cap checks pass.
+Fresh complete read-only parent admission exits0:64CPUs/full137034936320B,
+stable041/gen24,idle,pinned apps/libraries unchanged. The first diagnostic
+shell was itself caught by the idle process-name filter;no trial or driver
+exchange occurred in that read-only refusal. A direct-stdin check passes.
+The guarded tag98 trial starts ONCE. Actual wrapper13227 and parent13228;
+stable041/gen24 -> tag98/gen25 is logged. State is
+FULL_CARD_RATE32_ACTIVE_DO_NOT_INTERVENE;worker is authenticating the model.
+No terminal,generation rate,clean END or restoration is claimed yet.
+Tag97's unused stage is retained,not installed or claimed measured.
+Prefer the tested lower-instruction tag98 pair for that trial;do not spend
+two full model-load trials merely to measure both compatible controller
+variants. Still require actual clean terminal/END/restoration and whole raw
+log verification before any speed figure. Poll only the specific protected
+processes/scoped files;no other driver/device command,reset or retry while
+live. A timeout/disconnect does NOT prove completion. The spent one-shot
+directory must never be rerun;unknown failure must retain its resources.

@@ -101,7 +101,9 @@
 #error QTP3 native selector requires its actual native parent
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL
+#include "PioneerQ38FullOffloadPreparedCounterQ4Programs.h"
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4)
 #include "PioneerQ38FullOffloadPreparedQ4Programs.h"
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4)
 #include "PioneerQ38FullOffloadMacroQ4Programs.h"
@@ -163,7 +165,11 @@
 #ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL
+namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadPreparedCounterQ4Programs;
+static_assert(PioneerQ38TokenPrograms::EogCount==5 && PioneerQ38TokenPrograms::CounterUnroll==1
+ && PioneerQ38TokenPrograms::PreparedQ4==1 && PioneerQ38TokenPrograms::RootSections==5,"exact counter-unroll prepared ROOT+worker package required");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4)
 namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadPreparedQ4Programs;
 static_assert(PioneerQ38TokenPrograms::EogCount==5 && PioneerQ38TokenPrograms::PreparedQ4==1
  && PioneerQ38TokenPrograms::NativeQ4Exact==1 && PioneerQ38TokenPrograms::WideGdn==1

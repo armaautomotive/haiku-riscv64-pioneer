@@ -153,7 +153,13 @@ static void FrameSeal(unsigned w){
 #endif
 }
 static void Copy(unsigned to,unsigned from,unsigned words){for(unsigned i=0;i<words;i++)Words(to)[i]=Words(from)[i];}
-static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned remote,unsigned bytes,bool write){
+#ifdef PIONEER_Q38_ROOT_COUNTER_UNROLL_IMAGE
+#include "PioneerQ38RootCounterUnrollRole.h"
+static __attribute__((noinline,section(".prepared.transfer")))
+#else
+static
+#endif
+void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned remote,unsigned bytes,bool write){
  unsigned local=L::Scratch+(remote&31);
  if(w>=
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_DENSE_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_PROJECTION_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_JOINED_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
@@ -198,6 +204,9 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
  FrameSeal(w);unsigned route=Frame(w)[14];
 #endif
  uint32_t expected[8];
+#ifdef PIONEER_Q38_ROOT_COUNTER_UNROLL_IMAGE
+#pragma GCC unroll 8
+#endif
  for(unsigned i=0;i<8;i++){
   if(*Words(0xffb20000+Counter(i))!=tracked[i])scalar_fault_park();
   unsigned delta=i==(write?5U:1U)?(bytes+63)>>6:i==2 || i==6 || i==(write?4U:0U) || i==(write?7U:3U)?1U:0U;
@@ -215,7 +224,11 @@ static void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned rem
  for(unsigned i=0;i<10;i++)if(Words(0xffb20000)[i]!=command[i])scalar_fault_park();
  Fence();*Words(0xffb20040)=1;(void)*Words(0xffb20040);Fence();
  for(unsigned poll=0;poll<65536;poll++){
-  bool done=!*Words(0xffb20040);for(unsigned i=0;i<8;i++)done &= *Words(0xffb20000+Counter(i))==expected[i];
+  bool done=!*Words(0xffb20040);
+#ifdef PIONEER_Q38_ROOT_COUNTER_UNROLL_IMAGE
+#pragma GCC unroll 8
+#endif
+  for(unsigned i=0;i<8;i++)done &= *Words(0xffb20000+Counter(i))==expected[i];
   if(done){
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BOUNDARY_SEALS
 #ifdef PIONEER_Q38_READ_SOURCE_BOUNDARY_IMAGE
