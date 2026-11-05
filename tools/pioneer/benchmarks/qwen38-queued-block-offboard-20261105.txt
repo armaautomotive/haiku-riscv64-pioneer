@@ -37,9 +37,9 @@ it does not simulate silicon timing or a finite physical frontend queue.
 Current E artifact,main/clean complete ELF byte-identical:
 155272B SHA8fee1277ca109e5e19423dbfdedeb746796c6eb1b46c1c06000c47c65c89ce8d
  global9720B6b04a57f... EXACT9f;boot/precise/dense/FFN/GDN also EXACT.
- service20416/24576B4f2a8204... NEW SUBJECT.
- text7884/8192B85d7259c... NEW SUBJECT.
- fetch1292Badc62da7... andaffine4680B60b52b60... have UNAUDITED differences.
+ service20416/24576B4f2a8204... three named NEW Q4 function subjects.
+ text7884/8192B85d7259c... only one relocated literal and40B new table.
+ fetch1292Badc62da7... andaffine4680B60b52b60... only audited relocations.
  No section limit,stack,descriptor,model/cache,ROOT or native journal was
  enlarged. Correction slots fall inside the existing worker data journal.
  An INSPECT_PINS identity authenticates this test image,NOT physical use.
@@ -62,6 +62,35 @@ Actually CLOSED evidence:
  Role main/clean BOTH0/empty stderr/identical stdout:1positive/44 missing,
  zero,two,late,native/CPU/Work/fast-math refusals.
 
+Follow-up actually CLOSED17:50UTC (same complete E image,not a new worker):
+ Whole-ROM audit main/clean BOTH0,identical stdout/empty stderr. Six full
+ sections and original9888 service bytes exact. BOTH service tails are
+ completely partitioned into named functions and zero alignment gaps;
+ eight common whole helper bodies exact after explicit relocations. Three
+ NEW Q4 function bodies have exact size/hash bindings,NOT a correctness
+ proof. All other differences are nine LUI/ADDI or AUIPC/JALR address
+ relocations resolved to COMPLETE unchanged objects/helpers;the entire
+ old236-byte readonly tail is exact at+40,with the new40-byte field table
+ exact. Raw ROMs are extracted from and compared to the actual ELF.
+ Mutation tests main/clean BOTH0:EVERY byte of ALL four changed sections
+ (34272 separate corruptions),18 old-section samples and68 subject/target
+ symbol corruptions refused. Whole outputs identical,stderr empty.
+ Runner now requires this audit over the SAME pinned readonly copies it
+ executes. Updated audited pilots main23105/clean24683 BOTH0,exact stdout,
+ empty stderr,K5120/groups1/two changed jobs,unchanged1554215RV/3556stack.
+
+ Actual compiled final-config failure tests main24266/clean25756 BOTH0,
+ whole stdout AND stderr identical. Six fields changed inside the queue:
+ 50,64,72,76,84,124 (1/65/73/86 are outside this queued span). Each final
+ read value AND each persistent final config word independently corrupted:
+ 12 failures detected after the real final ACK and64 phase waits. Each
+ parks2048 further RV steps with NO following config read/write,NoC I/O,
+ output,commit or pretend normal restore. Twelve EXPECTED fault-PC rows,
+ exactly39 fields each,no other stderr. Positive full job and normal STOP
+ also pass. These are MOCK endpoints,NOT finite-queue/backend-fault proof.
+ Initial harness compile/order/symbol-selection mistakes were corrected;
+ earlier failed logs remain private. No old ISA/model gate was relaxed.
+
 NOT a speed result:
  Same K5120/groups1/two-job fixture current9f takes1,443,247 retired RV
  instructions;candidate E takes1,554,215 (MORE,about7.69%). The older 8a
@@ -81,21 +110,30 @@ Failures retained privately:
  the final constant-index inline implementation needs no such attributes.
 
 Required NEXT before ANY physical/native integration:
- 1. Strict whole-symbol/relocation audit of all changed sections,including
- the newly inserted40B readonly index table;every old non-math byte must
- be exact or an authenticated relocation,not a blanket section waiver.
- 2. Actual compiled config failure and missing/delayed completion/finite-
- queue/inert failure tests;coupled GDN/history/current data ownership tests.
+ 1. DONE: strict whole-ROM/symbol/relocation binding and negative tests
+ described above. New-body/failure qualification is a SEPARATE obligation.
+ 2. Final config readback failures DONE as above. Missing/delayed backend
+ completion/finite-queue/inert uncertainty tests STILL DUE;coupled GDN/
+ history/current data ownership tests ALSO DUE. Do not claim a local
+ timeout just because the CPU poll at block end is bounded.
  3. Exact full120-worker code/data journal coverage;distinct native/USER/
  program identity with no CPU inference;all admission/lifecycle tests.
- Then,and ONLY then,one fresh real27B comparison after the existing trial
- has actually closed/restored. Preserve every spent stage and failed result.
+ Then,and ONLY then,one fresh real27B comparison. The preceding prefetch
+ trial has now actually closed/restored. Preserve every spent stage/result.
  No Assistant,boot,CPU/RAM,SD,relay,mains or physical connection change.
 
 Primary contracts inspected2026-11-05:
 https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/STALLWAIT.md
 https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/RMWCIB.md
 https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/tt-llk/tt_llk_blackhole/common/inc/ckernel_ops.h
+
+Additional PRIMARY frontend contract inspected2026-11-05:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/PushTensixInstruction.md
+The initial FIFO nominal32 capacity is NOT sufficient to model admission:
+the independent instruction tracker stalls pushes with13 outstanding.
+Replay-load exceptions and downstream expansion also matter. Do not
+qualify this queue using an unbounded observer or a32-only FIFO model.
+No timing or speed prediction is derived from this documentation.
 
 Raw component/role/build/pilot/all-shape records are in the sibling folder.
 All learned weights,shader/driver binaries and unrelated WIP stay out of Git.
