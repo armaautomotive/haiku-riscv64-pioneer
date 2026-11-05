@@ -1,0 +1,109 @@
+Lossless Q4 native-mantissa source prerequisite -- 2026-11-04
+===========================================================
+DATA-only work,NOT a new inference backend or measured performance result.
+The separate protected macro-Q4 full-card trial29482/parent7743 remains
+live during this local work. No additional Pioneer connection,device query,
+driver exchange,compute,reset,power or hardware action is made here.
+The accepted real27B rate remains0.172813448..0.172816755tok/s until a
+new physical trial has ACTUALLY closed and passed its complete readers.
+20tok/s remains UNMET;the active goal is not complete.
+
+Purpose
+-------
+Avoid repeating scalar-issued Q4 nibble decoding by storing an EXACT native
+sign/magnitude primary representation plus an additional correction bit:
+ q=z+7+escape; z=min(q,14)-7; escape=(q==15).
+All sixteen original q codes are preserved. z is an integer in[-7,7],
+exactly representable in native BFP4_B at forced shared exponent129.
+Original256-byte metadata remains BYTE-EXACT. This is NOT dequantized
+floating-weight requantization and does not inherit old approximate-BFP4
+quality claims. A future kernel must reconstruct the INTEGER dot BEFORE
+the original FP32 coefficient/minimum arithmetic. Folding7 into the minimum
+is not a permitted arithmetic substitution.
+
+Native UNPACK format facts were checked against official
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/UNPACR_Regular.md
+The forced-exponent/no-exponent-stream path has strict alignment/burst,
+format and scheduling requirements. The new DATA codec implements/proves
+NONE of the corresponding native commands,ownership or physical arithmetic.
+
+Closed local checks
+-------------------
+Main tree and CLEAN git-archive870d2694 source plus ONLY these four new
+source/test files BOTH ACTUALLY exit0,stderr0:
+ * ASan+UBSan and independent optimized builds:256 original tiled fixtures,
+   all nibble/panel positions,65536 exact integer-dot identities,257 complete
+   sparse/dense/zero-mask transitions,18 refusal/tail/atomicity checks.
+ * Six forbidden build configurations refuse:kernel,freestanding,Work,
+   CPU-validation,fast-math and disabled assertions. This codec is not a
+   CPU inference/reference path and grants no runtime/driver authority.
+ * Each read-only inventory independently authenticates the SAME OPEN
+   original18973870528B GGUF,full SHA
+   c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747,
+   all851 actual tensor shapes,full8192 context and TWO recurrent-state
+   slots. All193 Q4 matrices INCLUDING on-card embedding are retained.
+ * All4488320 Q4 blocks/18384158720 integer codes scanned;611778662 escape
+   bits. Raw uncompressed masks would add2298019840B and EXCEED the current
+   seven-bank total by463970304B. That dense representation is rejected as
+   a viable full-layout direction;the source model is never changed.
+ * Sparse16-bit row masks:32-byte row-presence bitmap plus nonzero rows,
+   canonical zero/no-payload and dense fallback. Actual masks need
+   1098657456B unaligned or1103146000B with4-byte record alignment,plus
+   17953280B of4-byte indices. These are DATA counts,not native allocations.
+ * First/middle/last block of ALL1351 Q4 fragments:4053 real learned tiles
+   compare independently reconstructed GGUF row-major bytes with the ACTUAL
+   existing tiled page reader,including page crossings. Full encode/decode
+   preserves original bytes;raw-derived escape masks and sparse round trips
+   agree. Only aggregate results are printed;no learned data is saved.
+
+Append-only OFFLINE per-bank geometry
+------------------------------------
+Retain every current primary-weight/state/workspace extent in its existing
+bank. Primary Q4 tiles stay2304B;append separate correction index/mask data.
+Use16-aligned per-fragment index tables and individual payload records,
+then round each append extent to4KiB. All1351 fragment indices stay below
+the proposed30-bit per-fragment offset limit. No bank-cap extension or
+reduced context,CPU embedding,fallback or missing state is used.
+
+Bank originalB  addedB    totalB     remainingB
+0    2958131200 164577280 3122708480 98516992
+1    2961707008 164331520 3126038528 95186944
+2    2958098432 164454400 3122552832 98672640
+3    2958106624 164102144 3122208768 99016704
+4    2962288640 164679680 3126968320 94257152
+5    2958098432 164229120 3122327552 98897920
+6    2958098432 164429824 3122528256 98697216
+
+Per-bank capacity3221225472B. Total additional1150803968B. Every bank fits
+this OFFLINE proposal,not merely the aggregate sum. It is NOT proof that
+the live allocator/owner accepts these new ranges or that a kernel exists.
+Whole main/clean inventory stdout is BYTE-IDENTICAL,cmp0,SHA
+3106ad0da732d4d37dfeb07b4f44caf5cced3566d3c57ff52d6c6e5dbb09c983.
+The sibling evidence directory contains the complete closed aggregate logs.
+
+Reproduce
+---------
+ sh tools/pioneer/tests/run_pioneer_q38_q4_escape_tests.sh
+ c++ -std=c++17 -O3 -ffp-contract=off -Wall -Wextra -Werror \
+  -Wno-deprecated-declarations tools/pioneer/pioneer_q38_q4_escape_inventory.cpp \
+  tools/pioneer/PioneerModelWeightCache.cpp -o /private/tmp/q4-escape-inventory
+ /private/tmp/q4-escape-inventory /absolute/path/to/the/original.gguf
+CommonCrypto deprecation suppression is for the EXISTING Mac SHA helper,
+not arithmetic warnings. Assertions may not be disabled. The inventory is
+read-only,has no device path and never writes model/cache/prepared payloads.
+
+Failed local attempt retained honestly
+--------------------------------------
+The first new per-bank inventory repeatedly called Parts(),which rechecks
+file stability on each access. That unnecessary metadata-loop overhead was
+found while PID62936 was live;this LOCAL read-only attempt was explicitly
+terminated once,actual143. It was not mistaken for a completed scan. A
+stable metadata reference with final same-FD identity checks replaces the
+loop. Final main and clean attempts above both complete0. This did not
+touch or interrupt the protected Pioneer benchmark.
+
+Next:an exact native matrix/escape-correction implementation,actual-image
+tests and independently owned physical arithmetic qualification;then full
+backend/source/cache/bank integration and REAL generation measurement.
+No decoder-count or memory-fit result is a tokens/sec prediction. No new
+Assistant/Work mode or installed driver is selected by this checkpoint.
