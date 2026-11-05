@@ -30,6 +30,9 @@ using PreparedQ4Affine=PioneerQ38ExactQ4Affine;
 #endif
 using PreparedQ4=PioneerQ38PreparedQ4Layout;
 #ifdef PIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE
+#ifdef PIONEER_Q38_QUEUED_Q4_DELTA_CONFIG_IMAGE
+#include "PioneerQ38QueuedQ4DeltaConfig.h"
+#endif
 #include "PioneerQ38QueuedQ4Block.h"
 static_assert(PioneerQ38QueuedQ4Block::EscapeBase-16>=PreparedQ4::DenseMask+512
  && PioneerQ38QueuedQ4Block::EscapeBase-16+PioneerQ38QueuedQ4Block::EscapeBytes<=0xa0000,
@@ -59,7 +62,12 @@ void PreparedQ4Inputs(unsigned inputs){
 struct PioneerQ38ExactQ4WorkEmitter {
  unsigned metadataRow=128,primary=0x98100,input=PreparedQ4::InputFirst,mask=PreparedQ4::DenseMask;
 #ifdef PIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE
- PioneerQ38QueuedQ4Block queue;unsigned queued=0; // fixed RV32 word state,not byte stores
+#ifdef PIONEER_Q38_QUEUED_Q4_DELTA_CONFIG_IMAGE
+ PioneerQ38QueuedQ4DeltaConfig queue;
+#else
+ PioneerQ38QueuedQ4Block queue;
+#endif
+ unsigned queued=0; // fixed RV32 word state,not byte stores
  unsigned escape=PioneerQ38QueuedQ4Block::EscapeBase;
  __attribute__((always_inline)) void BeginQueued(){if(queued || !queue.Begin())block_fault_park();queued=true;}
  __attribute__((always_inline)) bool ReadConfig(unsigned index,unsigned& value){value=Words(0xffef0000+index*4)[0];return true;}

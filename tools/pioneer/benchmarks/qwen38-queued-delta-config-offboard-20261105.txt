@@ -1,0 +1,69 @@
+Queued Q4 byte-delta configuration experiment -- 2026-11-05
+==========================================================
+
+REJECTED FOR PROMOTION: a functional pilot saves configuration words but
+INCREASES executed guest controller instructions. NO physical speed claim.
+Do not install this image,add it to Work,or use these pins as device permission.
+
+Subject: PIONEER_Q38_QUEUED_Q4_DELTA_CONFIG_IMAGE=1,under the distinct
+offboard queued/prepared/replay13 parent roles. The ordinary queued-E
+image,full-model tag102,driver,USER,ROOT and current hardware trial remain
+unchanged. The builder first reproduces the ENTIRE existing E ELF exactly
+before compiling this subject. It never widens a code/stack/data bound.
+
+The first access to EVERY configuration field in EVERY block still emits
+all four RMWCIB bytes,regardless of initial hardware state or prior jobs.
+Subsequent accesses emit only bytes differing from this block's expected
+value. Backend waits,real final bounded ACK and final readback remain.
+No GPR borrowing,new MMIO,host/CPU inference or validation in Work is added.
+
+Candidate identity,main and clean independently byte-identical:
+ program.elf 161960B
+  4a7f43837bcf4a8ab2a6fc4ed85003948b537e600637092b9d26ada19b1e6e66
+ service.bin 23292B of unchanged24576-byte extent,1284B headroom
+  f5b30f84fb0f61eb767a2370be8459c8eb0138774724f1ea9b3ce420fa55511b
+All NINE other sections equal E byte-for-byte,including main text7884B.
+These pins identify this rejected local experiment,not qualification.
+
+Actually closed test processes:
+ - main combined role/component3880=0 and clean30125=0;empty stderr;
+   role1 positive/52 missing,zero,two,late,native,CPU/Work/fast-math refusals.
+   ASan+UBSan component10240 field/byte/value cases,246 bad-field refusals,
+   20 final-read faults and inert following calls;whole stdout identical.
+   The component omits71720 instruction words across its SYNTHETIC cases,
+   not a complete worker or elapsed-time measurement.
+ - independent clean image rebuild93204=0;empty stderr;whole ELF matches
+   main and the earlier clean build. Default whole-E reproduction runs first.
+ - full compiled-worker PILOT main21881=0,clean84140=0;empty stderr;
+   whole stdout identical. Authenticated frozen ROMs,actual RISC-V code,
+   original full K5120/groups1 arithmetic,two changed-input jobs,genuine
+   source reads,payload ACK then commit,missing-ACK inertness,and STOP
+   execute under the existing strict functional model with ASan+UBSan.
+
+Comparable executed RISC-V instruction counts for K5120/groups1,two jobs:
+ existing queued E          1554215
+ this byte-delta candidate  1620873   +66658 / +4.288853%
+ previous9f prefetch        1443247
+The runner ALSO prints3010979 for its older three-product teacher. That
+is NOT the current baseline and must NOT be used to claim a speedup.
+Fewer configuration words did not outweigh dynamic seen/XOR/byte-branch
+bookkeeping in this pilot. Counts are NOT silicon cycles or tokens/sec.
+
+Deliberately NOT completed for this rejected subject:whole function-body/
+relocation equivalence audit,all27 geometries,compiled fault injection,
+finite asynchronous frontend,retained96-worker history,native ownership/
+loader integration,physical inference or Assistant installation. The new
+runner prints UNQUALIFIED and does NOT weaken/reuse E's admission audit.
+
+Protected physical queued-E comparison is a DIFFERENT subject. At the
+latest observation used here,2026-11-05 18:51:06 GMT,wrapper24689,parent24690,
+rate24776 and USER24777 were live,authentication had finished and upload
+had reached1380.0/19522.4MiB;parent/rate exits absent,all stderr empty.
+No metadata/admin query,reload,second job,reboot or power action was issued.
+No new physical rate is available. Previous closed prefetch101 result is
+0.162480719..0.162484114tok/s,best vector92 is0.172813448..0.172816755;
+20tok/s remains unmet. CPU only does vocabulary/text/file/lifecycle work.
+
+Raw reproducible pilot,component,role and builder output is in the sibling
+qwen38-queued-delta-config-offboard-20261105 directory. This is an honest
+negative checkpoint,not another successful performance milestone.

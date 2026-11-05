@@ -1,0 +1,63 @@
+#!/usr/bin/env python3
+"""INSPECT ONLY: reproduce the ENTIRE running E image first; no device grant."""
+import hashlib,os,pathlib,re,subprocess,sys
+from generate_qwen38_token_programs import authenticated,pins
+INSPECT_PINS=(
+ ('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
+ ('globalworker.bin',9720,'6b04a57faf2e6a17ee7ac9d9881420ed56a97b3e2b65bcbf0e7f215e093cb533'),
+ ('precise.bin',8392,'32c078029e1c74ec4bd9744ea494433f5003f63a936df05445d3066c722a7ecc'),
+ ('dense.bin',10332,'d1749707ffe803e28dced9c7d065e763f125009678ace33b4d468109984869ad'),
+ ('ffn.bin',16456,'e6533bc2035a251dbc0f4aad1da9d5222fcf8649ff2577db375843dc746014b7'),
+ ('service.bin',23292,'f5b30f84fb0f61eb767a2370be8459c8eb0138774724f1ea9b3ce420fa55511b'),
+ ('fetch.bin',1292,'adc62da76663386222c2842cecb4cd02c65fe93f0a76bdd15a528d8510cb7ca7'),
+ ('affine.bin',4680,'60b52b6031eaed56a710f1b42685bba596eac616cc10982a3328f23396a59fc6'),
+ ('text.bin',7884,'85d7259c4ae19b8278bc234b11adbbed5871fbff6acd2f5c7f9c6f99a7c47dd2'),
+ ('gdn.bin',35944,'7ae46e0cea089f93ae7662d2033e469393c4a39859dbc3745d40c456033944c3'),
+ ('program.elf',161960,'4a7f43837bcf4a8ab2a6fc4ed85003948b537e600637092b9d26ada19b1e6e66'),
+) # Unqualified experiment identity ONLY,not native/hardware permission.
+if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):raise SystemExit('Checks required')
+assert len(sys.argv)==4 and sys.argv[3]=='--inspect-candidate'
+assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
+parent,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
+assert parent.is_absolute() and parent.is_dir() and not parent.is_symlink()
+assert out.is_absolute() and not out.exists() and not out.is_symlink()
+baseline=authenticated(parent,pins(here/'build_qwen38_queued_q4_block_worker.py','INSPECT_PINS'))
+out.mkdir(mode=0o700)
+tool='/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-'
+command=(parent/'compile-math-argv.txt').read_text().splitlines()
+assert command[0]==tool+'g++' and command[-4]=='-c' and command[-2]=='-o'
+assert command.count('-DPIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE=1')==1
+old_object=command[-1];command[-1]=str(out/'math.o')
+command[-3]=str(here/'blackhole_qwen38_prepared_exact_q4_math.cpp')
+link=(parent/'link-argv.txt').read_text().splitlines()
+assert link[0]==tool+'ld' and link.count(old_object)==1
+link[link.index(old_object)]=str(out/'math.o')
+for option,name in (('-T','program.ld'),('-Map','program.map'),('-o','program.elf')):
+ assert link.count(option)==1;link[link.index(option)+1]=str(out/name)
+(out/'program.ld').write_bytes((parent/'program.ld').read_bytes())
+subprocess.run(command,check=True);subprocess.run(link,check=True)
+assert (out/'program.elf').read_bytes()==baseline['program.elf'],'ENTIRE running E unchanged FIRST'
+(out/'program.elf').rename(out/'unchanged-E.elf');(out/'math.o').rename(out/'unchanged-E-math.o')
+command.insert(1,'-DPIONEER_Q38_QUEUED_Q4_DELTA_CONFIG_IMAGE=1')
+subprocess.run(command,check=True);subprocess.run(link,check=True)
+(out/'compile-math-argv.txt').write_text('\n'.join(command)+'\n')
+(out/'link-argv.txt').write_text('\n'.join(link)+'\n')
+elf=out/'program.elf'
+assert not subprocess.check_output([tool+'nm','-u',str(elf)]).strip()
+symbols=subprocess.check_output([tool+'nm','-n',str(elf)],text=True)
+assert not re.search(r'^[0-9a-f]+ [bBdDgGsS] ',symbols,re.M)
+frames=[row.split('\t') for row in (out/'math.su').read_text().splitlines()]
+assert frames and all(len(row)==3 and row[2]=='static' and int(row[1])<=4096 for row in frames)
+sys.path.insert(0,str(here/'tests'))
+from pioneer_q38_vector_q4_relocations import BASES
+rows=subprocess.check_output([tool+'objdump','-h',str(elf)],text=True).splitlines()
+for i,row in enumerate(rows):
+ m=re.match(r'\s*\d+\s+(\S+)\s+([0-9a-fA-F]+)\s+',row)
+ if m and 'ALLOC' in rows[i+1]:assert m[1][1:] in BASES,row
+for section in BASES:
+ target=out/(section+'.bin');subprocess.run([tool+'objcopy','-O','binary','-j','.'+section,str(elf),str(target)],check=True)
+ data=target.read_bytes();assert data and len(data)%4==0
+ print(section,len(data),hashlib.sha256(data).hexdigest(),'EXACT_E' if data==baseline[target.name] else 'NEW_UNAUDITED',flush=True)
+(out/'program.symbols').write_text(symbols)
+print('INSPECT_ONLY_UNQUALIFIED_DELTA_CONFIG '+hashlib.sha256(elf.read_bytes()).hexdigest(),flush=True)
+print('NO relocation/body/failure/history/native/model/hardware/TPS qualification',flush=True)

@@ -39,6 +39,7 @@ struct Stream {
  void Escape(unsigned,unsigned){escapes++;}
  void SealData(){seals++;}
 };
+#ifndef PIONEER_Q38_QUEUED_Q4_WORD_MODEL_ONLY
 int main(){
  static_assert(Q::WaitAll==0xa2ff9816U && ((Q::WaitAll>>15)&511)==511 && (Q::WaitAll&8191)==0x1816,"Blackhole all-class wait");
  static_assert(Q::EscapeBase==0x9c610 && Q::EscapeStride==80 && Q::EscapeBytes==16*80,"sixteen separate header+payload planes");
@@ -84,3 +85,4 @@ int main(){
   && oldMapped.seals==1 && nextMapped.seals==1);
  printf("PASS queued-Q4 block component:word cases%u unsupported-register refusals%u final-readback faults%u;exact original dot/control stream;1280B immutable correction workspace;NO complete-worker,native,device or speed result\n",valid,invalid,faults);
 }
+#endif
