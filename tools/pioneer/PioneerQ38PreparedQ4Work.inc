@@ -12,8 +12,19 @@
 #endif
 #include "PioneerQ38ExactQ4TwoProduct.h"
 using PreparedQ4Dot=PioneerQ38ExactQ4TwoProductDot;
-using PreparedQ4Affine=PioneerQ38ExactQ4TwoProductAffine;
+#ifdef PIONEER_Q38_PREPARED_TWO_PRODUCT_REPLAY_IMAGE
+#if PIONEER_Q38_PREPARED_TWO_PRODUCT_REPLAY_IMAGE != 1
+#error Distinct offboard replay13 two-product worker only
+#endif
+#include "PioneerQ38ExactQ4TwoProductReplay.h"
+using PreparedQ4Affine=PioneerQ38ExactQ4TwoProductReplay;
 #else
+using PreparedQ4Affine=PioneerQ38ExactQ4TwoProductAffine;
+#endif
+#else
+#ifdef PIONEER_Q38_PREPARED_TWO_PRODUCT_REPLAY_IMAGE
+#error Replay13 worker requires its two-product parent
+#endif
 using PreparedQ4Dot=PioneerQ38ExactQ4Corrected;
 using PreparedQ4Affine=PioneerQ38ExactQ4Affine;
 #endif
@@ -106,7 +117,12 @@ static unsigned PioneerQ38ExactQ4Work(const volatile uint32_t* job){
     e.Config(124,e.input/16-1);e.Config(65,0x10001);e.Config(73,0xf010f);e.Config(86,0x01000100);
     PioneerQ38ExactQ4Affine::PanelEmitter<PioneerQ38ExactQ4WorkEmitter> panel(e);
     if(!PreparedQ4Dot::Run(panel))block_fault_park();
-    e.metadataRow=128+(p/2)*8;PreparedQ4Affine::Affine(e,scale,sum);
+    e.metadataRow=128+(p/2)*8;
+#ifdef PIONEER_Q38_PREPARED_TWO_PRODUCT_REPLAY_IMAGE
+    PreparedQ4Affine::Affine(e,scale,sum,block==0 && p==0);
+#else
+    PreparedQ4Affine::Affine(e,scale,sum);
+#endif
    }
   }
   e.Drain();e.Config(3,0);

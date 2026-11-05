@@ -1,0 +1,16 @@
+Actual observed local tool/process returns,NOT card cleanup receipts:
+main final direct/zero/golden/image/role suite:0
+independent clean final direct/zero/golden/image/role suite:0
+main whole-original-weight projection suite:0
+independent clean whole-original-weight projection suite:0
+main pinned complete worker build:0
+independent clean pinned complete worker build:0
+main complete worker shape/fault/history suite:0
+independent clean complete worker shape/fault/history suite:0
+main/clean complete worker ELF/stdout/expected-fault-stderr cmps:all0
+old prepared complete worker regression suite:0
+old two-product direct/image/role regression suite:0
+
+Each complete worker stderr has exactly32 EXPECTED synthetic fault lines,
+all ACTUAL_BETA_WORKER_FAULT. Other recorded stderr files are empty.
+No physical inference,model quality,TPS or native/driver grant follows.

@@ -25,10 +25,26 @@ PINS=(
  ('gdn.bin',35944,'7ae46e0cea089f93ae7662d2033e469393c4a39859dbc3745d40c456033944c3'),
  ('program.elf',154280,'e47497e6053c8a2415760a7d36dc2b4830cee58c8afeb634b5fcbe2a4b18e217'),
 ) # Main + independent clean BUILD identity;not native/physical admission.
+REPLAY_PINS=(
+ ('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
+ ('globalworker.bin',9504,'35bb8e77470d792b6a040b4aed99b2c966f2a7fb8e1a16a16deb3f9fc4bd5496'),
+ ('precise.bin',8392,'32c078029e1c74ec4bd9744ea494433f5003f63a936df05445d3066c722a7ecc'),
+ ('dense.bin',10332,'d1749707ffe803e28dced9c7d065e763f125009678ace33b4d468109984869ad'),
+ ('fetch.bin',1292,'a74f8f6303787360f35b588e22746074adc9bcc780ae5a274be25331f765f4c6'),
+ ('text.bin',7844,'fa783006d1943e886d777982f4aecc93fc0c321937e15f6d87755a14ddc07e00'),
+ ('affine.bin',4680,'a8f650e58052aba96187bcbee08c25a24de4b8aa8d92c5bb7c34ccfeeca4682d'),
+ ('ffn.bin',16456,'e6533bc2035a251dbc0f4aad1da9d5222fcf8649ff2577db375843dc746014b7'),
+ ('service.bin',17512,'2f5374449725d034c1e4eb0d685926f9046541bc1377ace57ed2939982f01610'),
+ ('gdn.bin',35944,'7ae46e0cea089f93ae7662d2033e469393c4a39859dbc3745d40c456033944c3'),
+ ('program.elf',154344,'92ffea6e1fd3da9e355756903fbd72839b6695551e4df30df67721800a44bcf8'),
+) # Main/independent clean BUILD pins,not native/card timing authority.
 if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):raise SystemExit('Refuse optimized Python')
 args=sys.argv[1:];inspect='--inspect-candidate' in args
 if inspect:assert args.count('--inspect-candidate')==1;args.remove('--inspect-candidate')
-assert len(args)==2 and (inspect or PINS),'SDK OUTPUT --inspect-candidate until independently pinned'
+affine_replay='--affine-replay' in args
+if affine_replay:assert args.count('--affine-replay')==1;args.remove('--affine-replay')
+selected_pins=REPLAY_PINS if affine_replay else PINS
+assert len(args)==2 and (inspect or selected_pins),'SDK OUTPUT [--affine-replay] --inspect-candidate until independently pinned'
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,args)
 assert sdk.is_absolute() and sdk.is_dir() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -56,6 +72,12 @@ link=[str(out/'math.o') if value==original else value for value in old['link']]
 assert sum(value==str(out/'math.o') for value in link)==1
 for option,name in (('-T','program.ld'),('-Map','program.map'),('-o','program.elf')):link[link.index(option)+1]=str(out/name)
 subprocess.run(link,check=True);(out/'link-argv.txt').write_text('\n'.join(link)+'\n')
+if affine_replay:
+ assert hashlib.sha256((out/'program.elf').read_bytes()).hexdigest()=='e47497e6053c8a2415760a7d36dc2b4830cee58c8afeb634b5fcbe2a4b18e217','ENTIRE old two-product ELF FIRST'
+ (out/'program.elf').rename(out/'two-product-control.elf')
+ command=[command[0],'-DPIONEER_Q38_PREPARED_TWO_PRODUCT_REPLAY_IMAGE=1',*command[1:]]
+ subprocess.run(command,check=True);subprocess.run(link,check=True)
+ (out/'compile-math-argv.txt').write_text('\n'.join(command)+'\n')
 elf=out/'program.elf'
 assert not subprocess.check_output([tool+'nm','-u',str(elf)]).strip()
 symbols=subprocess.check_output([tool+'nm','-n',str(elf)],text=True)
@@ -84,5 +106,5 @@ observed=[]
 for name in (*(s+'.bin' for s in sections),'program.elf'):
  data=(out/name).read_bytes();assert data and not len(data)%4
  item=(name,len(data),hashlib.sha256(data).hexdigest());observed.append(item);print(item,flush=True)
-if not inspect:assert tuple(observed)==PINS
-print('BUILD_ONLY_TWO_PRODUCT_WORKER original_perK16_FP32 same_source_codec no_constant7_product;NO native/ROOT/physical/model/TPS grant',flush=True)
+if not inspect:assert tuple(observed)==selected_pins
+print('BUILD_ONLY_'+('REPLAY13_' if affine_replay else '')+'TWO_PRODUCT_WORKER original_perK16_FP32 same_source_codec no_constant7_product;NO native/ROOT/physical/model/TPS grant',flush=True)

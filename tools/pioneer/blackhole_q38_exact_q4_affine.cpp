@@ -7,9 +7,20 @@ typedef __UINT32_TYPE__ uint32_t;
 #if PIONEER_EXACT_Q4_TWO_PRODUCT != 1 || defined(PIONEER_EXACT_Q4_AFFINE_FIXED)
 #error Separate two-product packet image only
 #endif
+#ifdef PIONEER_EXACT_Q4_TWO_PRODUCT_REPLAY
+#if PIONEER_EXACT_Q4_TWO_PRODUCT_REPLAY != 1
+#error Separate replay two-product packet image only
+#endif
+#include "PioneerQ38ExactQ4TwoProductReplay.h"
+using SelectedQ4Affine=PioneerQ38ExactQ4TwoProductReplay;
+#else
 #include "PioneerQ38ExactQ4TwoProduct.h"
 using SelectedQ4Affine=PioneerQ38ExactQ4TwoProductAffine;
+#endif
 #else
+#ifdef PIONEER_EXACT_Q4_TWO_PRODUCT_REPLAY
+#error Replay packet image requires two-product parent
+#endif
 using SelectedQ4Affine=PioneerQ38ExactQ4Affine;
 #endif
 #ifdef PIONEER_EXACT_Q4_AFFINE_FIXED

@@ -1,0 +1,93 @@
+Replay13 two-product Q4 complete worker -- 2026-11-05
+==================================================
+
+OFFBOARD ONLY. No driver/USER/paired-program selection or hardware launch
+grant is added by this checkpoint. Physical tag99 is already CLOSED and
+normal041/gen28 restored;its actual0.161777026..0.161780396tok/s and prior
+best vector92's0.1728 are STILL the measured rates.20tok/s remains unmet.
+
+Actual optimization:
+Retain the exact two-product reconstruction of original Q4,then record
+the ORIGINAL13-word register-only FP32 affine in per-thread replay slots
+12..24. Record+execute the first parity of the FIRST panel of EVERY output
+group;subsequent parities/panels replay it. Dynamic dot,coefficient,minimum,
+scale,sum and prior accumulator are loaded outside the recorded sequence.
+No memory,config,source publication,NoC,drain or nested replay is recorded;
+no load-only replay. Every original non-fused rounding and MAD wait remains.
+
+Remove the preceding six-word zero cleanup ONLY in this new path. The
+mandatory exact SFPADD restoring7*sum already makes zero positive:sum0
+has offset+0,and opposing nonzero exact integers cancel to+0. Integers
+stay below2^15,so this changes no original q dot or affine rounding point.
+This is not a general zero relaxation,K32 reassociation or requantization.
+No CPU learned product,Work validation/fallback or cache rewrite is added.
+
+Completed actual local tool/process exits0,ASan+UBSan:
+-Vendor-derived bit-perfect Blackhole FMA proof:all4097 cancellation sums,
+both raw zero signs,98307 broad integer-extreme additions. Restored dot
+equals the original exact integer;without restoration,raw -0 is retained
+as a counterexample to a blanket elision claim.
+-Replay frontend/golden words:exact13 original instructions,156 expanded
+words,15 undefined/range/reserved-bit/load-only/nested/memory/config/source
+faults. Low0..11 and high25..31 words remain unchanged;fresh record after
+poisoning earlier job contents is required.
+-Main/clean direct/full-RV packet suites:12 changing-data full-K jobs,
+108 extreme jobs,16 arithmetic/range/geometry controls,13 actual compiled
+image cases over5120/6144/17408,both producer orders,changed second source,
+missing config/ACK/matrix drain/producers,invalid scale and omitted first
+replay record. Original FP32 output/padding exact;stack176/8192. Three
+role refusals,one incompatible-variant refusal,positive header parse pass.
+-Main/clean original-weight suites:whole same-open read-only GGUF SHA
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747,
+all851 source tensors authenticated. All193 Q4 tensors sampled with ONE
+16-row group apiece,full K,two synthetic inputs:386 projections,221824
+panels,6176 exact FP32 outputs. Not every weight row or model generation.
+-Main/clean COMPLETE workers:27 shapes,54 changed-input jobs,5 fragmented
+mask controls,16 NoC-loss inert parks,16 descriptor refusals;real source
+reads/payload/ACK/commit/STOP. One additional missing-affine-record fault
+refuses before any payload/commit. The actual existing legacy replay
+words/validity array is SHARED,not a parallel invented cache;all group/job
+record/replay/expansion counts checked. GDN history3 pairs/6 workers/12
+half jobs preserves actual next state and STOP. Stack3540,history4804/8192.
+Main/clean whole stdout AND stderr byte-identical. Each full worker stderr
+contains exactly32 expected ACTUAL_BETA_WORKER_FAULT diagnostics from the
+injected faults;no sanitizer/unexpected output is disregarded.
+-Old prepared complete shape/fault/history suite and old two-product
+direct/actual-image/role suite pass again. Main/clean pinned builds FIRST
+reproduce the ENTIRE old original8a7c6543,preparedb283d788,and two-product
+e47497e6 ELF identities before selecting the new compile flag.
+
+New --affine-replay builder mode has separate REPLAY_PINS;closed worker
+tests require --two-product-replay and both explicit test roles. Production
+macro PIONEER_Q38_PREPARED_TWO_PRODUCT_REPLAY_IMAGE requires its exact
+two-product parent. Default nonreplay PINS remain e47497e6,not overwritten.
+New complete ELF154344B SHA
+92ffea6e1fd3da9e355756903fbd72839b6695551e4df30df67721800a44bcf8.
+Only service changes:17512B SHA
+2f5374449725d034c1e4eb0d685926f9046541bc1377ace57ed2939982f01610.
+Other9 firmware sections are exact old prepared binaries. Strict nonmath
+audit accounts for exact9888B service prefix/all11 named tail functions.
+
+Instruction-count observation,NOT hardware throughput:
+Same K5120/groups1 two-job case:old prepared1471733 RV steps,nonreplay
+two-product1459849,new replay13:1443269. Standalone longest packet image
+3115299 vs nonreplay3287147 steps. Runtime depends on actual card execution,
+NoC/control waits and other kernels;neither reduction predicts a TPS gain
+or the requested ~124x. No on-card candidate measurement is claimed.
+
+Next:pair this actual complete worker with the unchanged executed ROOT,
+under a DISTINCT whole-model native/USER/program identity. Validate all
+code words/journal coverage/native lifecycle/client/refusal paths before
+one guarded real27B trial. Do not reopen the spent tag99 trial or promote
+this offline result into Assistant.
+
+Complete raw logs/exits are in the sibling evidence directory. Full worker
+stdout SHA5b20af8556823b6ba5805c673ec7ed8cd1c76e04efb2da35904219498410318a;
+expected fault stderr SHAbd209eaa52b10d1cd09c632d67c07811860a67ed265e36218c7d650b5f2df1a2.
+No Pioneer driver/app/boot/CPU/RAM/power/SD/hardware change was made here.
+
+Primary semantics rechecked (not a physical qualification):
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/REPLAY.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/REPLAY.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPADD.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/Miscellaneous/FMA/fma.c

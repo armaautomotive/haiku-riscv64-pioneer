@@ -2,9 +2,16 @@
 // CPU VALIDATION ONLY. Independent original-q FP32 reference;no device.
 #include "pioneer_q38_exact_q4_affine_machine.h"
 #include "../PioneerQ38ExactQ4TwoProduct.h"
+#ifdef PIONEER_Q38_TWO_PRODUCT_REPLAY_TEST
+#include "../PioneerQ38ExactQ4TwoProductReplay.h"
+#endif
 struct TwoProductMachine:ExactAffineMachine {
  bool omitRestore=false,omitCast=false;
- TwoProductMachine(){twoProducts=true;}
+ TwoProductMachine(){twoProducts=true;
+#ifdef PIONEER_Q38_TWO_PRODUCT_REPLAY_TEST
+  allowRegisterReplay=true;
+#endif
+ }
  void Op(unsigned op){
   if(omitCast && op==0x90000660)return;
   if(omitRestore && op==(0x850a0000|(6<<8)))return;
@@ -29,16 +36,27 @@ static std::array<uint32_t,16> ExtremeFixture(TwoProductMachine& m,unsigned widt
  m.ObserveFence();std::array<uint32_t,16> result;result.fill(m.Bits(expected));return result;
 }
 int main(){
+#ifdef PIONEER_Q38_TWO_PRODUCT_REPLAY_TEST
+ using P=PioneerQ38ExactQ4TwoProductReplay;
+ puts("TWO_PRODUCT_REPLAY13_LOCAL_ARITHMETIC_VALIDATION_ONLY_NO_DEVICE");
+#else
  using P=PioneerQ38ExactQ4TwoProductAffine;
+#endif
  unsigned jobs=0,products=0,refusals=0,extremes=0;
  for(unsigned width:{5120U,6144U,17408U})for(unsigned order=0;order<2;order++){
   TwoProductMachine m;m.delay[0]=order?1:100003;m.delay[1]=order?100003:1;
   for(unsigned pass=0;pass<2;pass++){
+#ifdef PIONEER_Q38_TWO_PRODUCT_REPLAY_TEST
+   m.replay.Poison(); // emulate arbitrary replay contents from an earlier job
+#endif
    const auto expected=ExactAffineFixture(m,width,37+order*3+pass*139);
    assert(P::Run(m,width) && m.Results()==expected && m.Clean());jobs++;products+=width*16;
   }
   assert(!m.sevenWrites && m.matrixOps==4*width/16 && m.unpacks[0]==4*width/16
    && m.stageCalls==2*width/16 && m.metadataLoads==2*width/16 && m.zeroLoads==2 && m.affineStores==4*width/16);
+#ifdef PIONEER_Q38_TWO_PRODUCT_REPLAY_TEST
+  assert(m.replay.records==2 && m.replay.replays==4*width/16-2 && m.replay.expanded==4*width/16*13);
+#endif
  }
  for(unsigned fault=0;fault<4;fault++){
   TwoProductMachine m;const auto expected=ExactAffineFixture(m,5120,37);bool detected=false;

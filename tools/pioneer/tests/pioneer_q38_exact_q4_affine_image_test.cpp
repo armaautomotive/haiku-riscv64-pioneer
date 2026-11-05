@@ -10,10 +10,12 @@ struct ExactAffineImage:Machine {
  ExactAffineMachine native;std::vector<uint8_t> code;
  unsigned width,minSP=0x70000,results=0,acks=0,sourceReads=0,maskReads=0;
  bool awaiting=false,stackSeen=false,dropAck=false,dropMatrixDrain=false;
+ bool dropAffineRecord=false;
  unsigned dropConfig=~0U;bool change=true;unsigned nextSeed=176;
  std::array<uint32_t,16> expected[2];
- ExactAffineImage(const char* directory,unsigned k,bool twoProduct=false):Machine(),width(k){
+ ExactAffineImage(const char* directory,unsigned k,bool twoProduct=false,bool registerReplay=false):Machine(),width(k){
   native.twoProducts=twoProduct;
+  native.allowRegisterReplay=registerReplay;if(registerReplay)native.replay.Poison();
   const std::string root=directory;code=Read((root+"/text.bin").c_str());auto boot=Read((root+"/boot.bin").c_str());
   assert(boot.size()==4 && code.size()<=8192 && !(code.size()&3));
   std::fill(std::begin(l1),std::end(l1),0x7fc00001U);l1[0]=Word(boot,0);
@@ -21,7 +23,7 @@ struct ExactAffineImage:Machine {
   expected[0]=ExactAffineFixture(native,k,37);expected[1]=expected[0];
  }
  static bool Range(unsigned a,unsigned first,unsigned bytes){return a>=first && a-first<bytes;}
- virtual void NextFixture(){expected[1]=ExactAffineFixture(native,width,nextSeed);}
+ virtual void NextFixture(){if(native.allowRegisterReplay)native.replay.Poison();expected[1]=ExactAffineFixture(native,width,nextSeed);}
  virtual unsigned ExpectedSourceReads()const{return 2*width/16*138;}
  unsigned Index(unsigned a)override{
   assert(!(a&3));
@@ -41,7 +43,7 @@ struct ExactAffineImage:Machine {
    if(!dropAck && !(dropMatrixDrain && native.mathPending && native.matrixOps==(native.twoProducts?2U:3U))){
     native.Drain();gpr63=1;awaiting=false;
    }
-  }else native.Op(op);
+  }else if(!(dropAffineRecord && op==0x040300d3))native.Op(op);
  }
  bool DataWrite(unsigned a)const{
   return Range(a,0x90000,128) || Range(a,0x90100,128) || Range(a,0x90200,64) || Range(a,0x90300,32)
@@ -92,6 +94,7 @@ struct ExactAffineImage:Machine {
    && native.affineStores==4*width/16 && sourceReads==ExpectedSourceReads() && maskReads==2*width/16*8
    && !native.unpackBank[0] && !native.unpackBank[1] && !native.matrixBank[0] && !native.matrixBank[1]);
   if(native.twoProducts)assert(!native.sevenWrites && native.unpacks[0]==4*width/16);
+  if(native.allowRegisterReplay)assert(native.replay.records==2 && native.replay.replays==4*width/16-2 && native.replay.expanded==4*width/16*13);
   return true;
  }
 };

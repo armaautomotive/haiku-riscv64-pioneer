@@ -22,6 +22,10 @@ struct PreparedQ4Peer:ExactQ4WorkPeer {
   static_assert(PIONEER_Q38_TWO_PRODUCT_WORKER_TEST==1,"distinct CPU validation variant only");
   twoProducts=true;
 #endif
+#ifdef PIONEER_Q38_TWO_PRODUCT_REPLAY_WORKER_TEST
+  static_assert(PIONEER_Q38_TWO_PRODUCT_REPLAY_WORKER_TEST==1,"distinct replay13 CPU validation variant only");
+  assert(twoProducts);registerAffineReplay=true;
+#endif
   if(prefix){assert(type==12);base+=prefix*2304;matrixJob[6]=base;memory[0x74018]=base;}
   matrixJob[8]=sourceRoute;memory[0x74020]=sourceRoute;
   inputPackets.assign(packets.begin(),packets.begin()+inputReads);PrepareSource(1);
@@ -197,6 +201,10 @@ struct PreparedQ4Peer:ExactQ4WorkPeer {
  void CheckEnd()override{
   ExactQ4WorkPeer::CheckEnd();if(type!=12)return;
   assert(memory.at(L::Summary)==L::SummaryMagic && memory.at(L::Summary+20)==extraReads && memory.at(L::Summary+24)==extraFlits);
+  if(registerAffineReplay){
+   const unsigned all=exactJobs*FfnPersistentPeer::groups,parities=inputs/16*2;
+   assert(affineReplayRecords==all && affineReplayRuns==all*(parities-1) && affineReplayWords==all*parities*13 && !recordRemaining);
+  }
  }
  void ReceivePreparedQueued(){ExactQ4WorkPeer::ReceiveQueued();PrepareSource(2);}
 };
@@ -206,6 +214,9 @@ int main(int argc,char** argv){
  setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;(void)&Compare;(void)&Round;
 #ifdef PIONEER_Q38_TWO_PRODUCT_WORKER_TEST
  puts("TWO_PRODUCT_PREPARED_Q4_COMPLETE_WORKER_VALIDATION_ONLY_NO_DEVICE");
+#endif
+#ifdef PIONEER_Q38_TWO_PRODUCT_REPLAY_WORKER_TEST
+ puts("REPLAY13_TWO_PRODUCT_COMPLETE_WORKER_SHARED_PHYSICAL_REPLAY_WORDS_NO_DEVICE");
 #endif
  const bool pilot=argc==5 && !strcmp(argv[4],"--pilot"),groupPilot=argc==5 && !strcmp(argv[4],"--group-pilot"),faultsOnly=argc==5 && !strcmp(argv[4],"--faults-only"),controlsOnly=argc==5 && !strcmp(argv[4],"--controls-only");
  unsigned cases=0,faults=0,semantic=0,controls=0,stack=0;
@@ -275,6 +286,16 @@ int main(int argc,char** argv){
    assert(p->pc==p->faultPC && p->memory==memory && p->requests==requests && p->responses==responses);semantic++;
   }
  }
+#ifdef PIONEER_Q38_TWO_PRODUCT_REPLAY_WORKER_TEST
+ if(!pilot && !groupPilot && !controlsOnly){
+  auto p=std::make_unique<PreparedQ4Peer>(argv[1],argv[3],12,5120,1);p->dropAffineReplayRecord=true;
+  p->delay=3;p->BootPushed();p->Prepare();p->StagePushed();bool refused=false;
+  try{p->AwaitPayload();}catch(const PreparedQ4Peer::ReplayAccessFault&){refused=true;}
+  assert(refused && p->affineReplayRecords==1 && p->affineReplayWords==13 && !p->affineReplayRuns
+   && !p->heldPayload && !p->pushes && !p->mailbox[0]);
+  puts("PASS_REPLAY13_ACTUAL_WORKER_MISSING_RECORD_REFUSED_NO_PAYLOAD_OR_COMMIT");
+ }
+#endif
  printf("%s_PREPARED_Q4_COMPLETE_WORKER shapes%u changedInputJobs%u fragmentMaskControls%u NoCLossInert%u descriptorRefusals%u stack%u/8192;"
   "originalFP32_sourceNoC_ACK_commit_STOP_NO_NATIVE_ROOT_MODEL_HARDWARE_OR_TPS\n",argc==5?"PARTIAL":"PASS",cases,cases*2,controls,faults,semantic,stack);
 }

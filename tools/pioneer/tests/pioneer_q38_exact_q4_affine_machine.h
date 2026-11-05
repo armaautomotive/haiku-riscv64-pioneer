@@ -5,6 +5,7 @@
 #define PIONEER_Q38_VECTOR_AFFINE_TEST_MODEL_ONLY
 #include "pioneer_q38_vector_affine_test.cpp"
 #include "../PioneerQ38ExactQ4Affine.h"
+#include "pioneer_q38_register_affine_replay_model.h"
 // Functional instruction/physical-Dst observer,NOT timing or hardware proof.
 // The previously qualified corrected FPU observer consumes actual L1 bytes;
 // SFPU consumes the SAME physical Dst after real completion. No shortcut
@@ -38,13 +39,14 @@ struct ExactAffineVector:AffineVector {
 struct ExactAffineMachine:ExactCorrectedMachine {
  using Kernel=PioneerQ38ExactQ4Affine;
  ExactAffineVector vector;
+ ExactRegisterAffineReplay replay;bool allowRegisterReplay=false;
  uint16_t physical[1024][16]={};bool defined[1024]={},written[1024][16]={};unsigned ready[1024]={};
  unsigned metadataLoads=0,zeroLoads=0,affineStores=0,stageCalls=0;
  bool enabled=false,metaPending=false,skipZero=false,wrongDotCast=false,broadClear=false;
  bool sfpuPending=false;unsigned storeDue=0,metaOp=0,metaAddress=0,metaRow=0,metaCount=0;
  static unsigned Adj(unsigned row){return ((row&0x1f8)<<1)|(row&0x207);}
  bool Pending()const{return metaPending || ExactCorrectedMachine::Pending();}
- bool Clean()const{return !metaPending && !sfpuPending && ExactCorrectedMachine::Clean();}
+ bool Clean()const{return !replay.remaining && !metaPending && !sfpuPending && ExactCorrectedMachine::Clean();}
  void StoreFloat(unsigned row,unsigned col,uint32_t bits,unsigned due) {
   const unsigned hi=Adj(row),lo=hi+8,h=bits>>16;
   physical[hi][col]=uint16_t((h&0x8000)|((h&127)<<8)|((h>>7)&255));physical[lo][col]=uint16_t(bits);
@@ -55,8 +57,9 @@ struct ExactAffineMachine:ExactCorrectedMachine {
   if(!defined[hi] || !defined[lo] || !written[hi][col] || !written[lo][col] || ready[hi]>cycle || ready[lo]>cycle)throw Unknown;
   const unsigned h=physical[hi][col];return (((h&0x8000)|((h&255)<<7)|((h>>8)&127))<<16)|physical[lo][col];
  }
- void Config(unsigned i,unsigned v){if(Pending() || sfpuPending)throw Unknown;ExactCorrectedMachine::Config(i,v);}
+ void Config(unsigned i,unsigned v){if(replay.remaining || Pending() || sfpuPending)throw Unknown;ExactCorrectedMachine::Config(i,v);}
  void Drain() {
+  if(replay.remaining)throw Unknown;
   if(metaPending){
    if(dropProducer==1)throw Unknown;cycle+=delay[0];
    for(unsigned i=0;i<metaCount;i++)StoreFloat(metaRow+i/16,i%16,metaOp==0x42000091?0:Read(metaAddress+i*4),cycle);
@@ -105,7 +108,7 @@ struct ExactAffineMachine:ExactCorrectedMachine {
   }else vector.Op(op);
   if(!vector.okay)throw Unknown;
  }
- void Op(unsigned op) {
+ void PlainOp(unsigned op) {
   const unsigned code=op>>24;
   if(op==0x5120000a || op==0x5420000f){cycle++;assert(thread[5]==0);return;} // metadata Y/Z/W counters zero
   if(code==0x42 && thread[5]==0){cycle++;FloatUnpack(op);return;}
@@ -122,6 +125,13 @@ struct ExactAffineMachine:ExactCorrectedMachine {
   if(sfpuPending || metaPending)throw Unknown;
   ExactCorrectedMachine::Op(op);
   if(code==0x26)for(unsigned row=32;row<40;row++)for(unsigned col=0;col<16;col++)StoreFloat(row,col,Bits(destination[row][col]),cycle);
+ }
+ void Op(unsigned op){
+  if(replay.remaining || op>>24==4){
+   if(!allowRegisterReplay)throw Unknown;
+   (void)replay.Push(op,Unknown,[this](unsigned word){PlainOp(word);});return;
+  }
+  PlainOp(op);
  }
  std::array<uint32_t,16> Results(){if(!Clean())throw Unknown;std::array<uint32_t,16> result;for(unsigned n=0;n<16;n++)result[n]=FloatDst(108,n);outputReads+=16;return result;}
 };

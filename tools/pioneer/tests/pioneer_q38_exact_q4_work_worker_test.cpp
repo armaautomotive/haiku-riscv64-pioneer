@@ -31,7 +31,9 @@ struct ExactQ4WorkPeer:ConstantIssuePeer {
   throw Fault{line};
  }
  unsigned exactPC=0,exactReturn=0,exactJobs=0,nativeUnpacks=0,exactStores=0,tick=0;
- bool exact=false,dirty=false,fpuPending=false,sfpuPending=false,twoProducts=false;
+ bool exact=false,dirty=false,fpuPending=false,sfpuPending=false,twoProducts=false,registerAffineReplay=false;
+ bool dropAffineReplayRecord=false;
+ unsigned affineReplayRecords=0,affineReplayRuns=0,affineReplayWords=0;
  unsigned storeDue=0,unpack[2]={},matrix[2]={},partial[2]={},rwcA=0,rwcB=0,crA=0,crB=0;
  bool owned[2][2]={};float srcA[2][64][16]={},srcB[2][8][16]={};
  bool fpValid[1024]={};unsigned fpReady[1024]={};ExactWorkVector math;
@@ -43,7 +45,7 @@ struct ExactQ4WorkPeer:ConstantIssuePeer {
  }
  unsigned MatrixPhasesPerPanel()const override{return type==12?(twoProducts?2:3):ConstantIssuePeer::MatrixPhasesPerPanel();}
  bool Tasks()const{return tasks[0].active || tasks[1].active;}
- bool MathIdle()const{return !Tasks() && !fpuPending && !sfpuPending;}
+ bool MathIdle()const{return !recordRemaining && !Tasks() && !fpuPending && !sfpuPending;}
  bool BanksFree()const{return !owned[0][0] && !owned[0][1] && !owned[1][0] && !owned[1][1]
   && unpack[0]==matrix[0] && unpack[1]==matrix[1] && !partial[0] && !partial[1];}
  virtual void NativeOperand(const Task& t,unsigned w){
@@ -168,7 +170,7 @@ struct ExactQ4WorkPeer:ConstantIssuePeer {
   }else math.Op(op);
   if(!math.okay)Fail(__LINE__);memcpy(lr,math.lanes,sizeof(lr));vectorOps++;drained=false;
  }
- void Instruction(unsigned op)override{
+ void PlainInstruction(unsigned op){
   if(!exact){ConstantIssuePeer::Instruction(op);return;}
   tick++;
   if(pending){if(!DisjointPrefetchCompute())Fail(__LINE__);overlapOps++;}
@@ -193,6 +195,25 @@ struct ExactQ4WorkPeer:ConstantIssuePeer {
   if(code==0x26){IssueMatrix(op);return;}
   if((code>=0x70 && code<=0x90)){IssueSfpu(op);return;}
   fprintf(stderr,"UNKNOWN_EXACT_WORK_TENSIX %08x\n",op);assert(false);
+ }
+ void Instruction(unsigned op)override{
+  if(exact && (recordRemaining || op>>24==4)){
+   if(!registerAffineReplay || !twoProducts)Fail(__LINE__);
+   // SAME physical replay words/validity as the legacy decoder,not a
+   // parallel invented cache. Its later jobs must re-record their own data.
+   if(recordRemaining){
+    const unsigned c=op>>24;
+    if((c!=0x90 && c!=0x85 && c!=0x86 && c!=0x8f) || recordNext<12 || recordNext>=25 || !recordExecute)Fail(__LINE__);
+    replay[recordNext]=op;replayDefined[recordNext++]=!dropReplayRecord && !dropAffineReplayRecord;recordRemaining--;affineReplayWords++;
+    PlainInstruction(op);return;
+   }
+   if(op!=0x040300d3 && op!=0x040300d0)Fail(__LINE__);
+   if(op&1){recordNext=12;recordRemaining=13;recordExecute=true;replayRecords++;affineReplayRecords++;return;}
+   for(unsigned i=12;i<25;i++)if(!replayDefined[i])throw ReplayAccessFault{};
+   for(unsigned i=12;i<25;i++){affineReplayWords++;PlainInstruction(replay[i]);}
+   replayExpansions++;affineReplayRuns++;return;
+  }
+  PlainInstruction(op);
  }
  void StepBlock()override{
   if(pc==exactPC){assert(type==12 && !exact && !exactReturn && !rawPending && phaseQueue.empty() && pendingAccumulator.empty() && BanksFree());exact=true;exactReturn=regs[1];memcpy(math.lanes,lr,sizeof(lr));}

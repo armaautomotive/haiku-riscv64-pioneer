@@ -7,6 +7,7 @@ p.add_argument('sdk',type=pathlib.Path);p.add_argument('output',type=pathlib.Pat
 variant=p.add_mutually_exclusive_group()
 variant.add_argument('--fixed-fixture',action='store_true',help='distinct fixed synthetic17408 qualification image,not packet/model data')
 variant.add_argument('--two-product',action='store_true',help='distinct OFFBOARD two-product plus exact input-sum restoration;not a native/Work selector')
+variant.add_argument('--two-product-replay',action='store_true',help='distinct OFFBOARD two-product/replay13 with restoration-proven positive zero;not native/Work')
 a=p.parse_args()
 assert not a.fixed_fixture or a.width==17408
 assert a.sdk.is_absolute() and a.sdk.is_dir() and a.output.is_absolute() and not a.output.exists() and not a.output.is_symlink()
@@ -20,6 +21,7 @@ commands=[
  [tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',str(here/'blackhole_q38_exact_q4_affine.ld'),str(a.output/'start.o'),str(a.output/'program.o'),'-Map',str(a.output/'program.map'),'-o',str(a.output/'program.elf')]]
 if a.fixed_fixture:commands[0][1:1]=['-DPIONEER_EXACT_Q4_AFFINE_FIXED=1']
 if a.two_product:commands[0][1:1]=['-DPIONEER_EXACT_Q4_TWO_PRODUCT=1']
+if a.two_product_replay:commands[0][1:1]=['-DPIONEER_EXACT_Q4_TWO_PRODUCT=1','-DPIONEER_EXACT_Q4_TWO_PRODUCT_REPLAY=1']
 for section in ('boot','text'):commands.append([tool+'objcopy','-O','binary','-j','.'+section,str(a.output/'program.elf'),str(a.output/(section+'.bin'))])
 for command in commands:subprocess.run(command,check=True,cwd=a.output)
 (a.output/'compile-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands)+'\n')
@@ -28,4 +30,4 @@ for suffix,name in (('nm','program.symbols'),('objdump','program.disassembly')):
 for name in ('boot.bin','text.bin'):
  data=(a.output/name).read_bytes();assert len(data)==4 if name=='boot.bin' else 0<len(data)<=8192 and len(data)%4==0
  print(hashlib.sha256(data).hexdigest(),len(data),name)
-print('OFFBOARD_ONLY '+('TWO_PRODUCT_' if a.two_product else 'FIXED_SYNTHETIC_' if a.fixed_fixture else '')+'fullK'+str(a.width)+' ORIGINAL_PER_K16_AFFINE;NO native,model,hardware or TPS authority')
+print('OFFBOARD_ONLY '+('REPLAY13_TWO_PRODUCT_' if a.two_product_replay else 'TWO_PRODUCT_' if a.two_product else 'FIXED_SYNTHETIC_' if a.fixed_fixture else '')+'fullK'+str(a.width)+' ORIGINAL_PER_K16_AFFINE;NO native,model,hardware or TPS authority')
