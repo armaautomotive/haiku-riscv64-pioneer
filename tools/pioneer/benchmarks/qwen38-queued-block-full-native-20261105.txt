@@ -1,7 +1,20 @@
 Queued-block full27B integration -- 2026-11-05
 ============================================
 
-BUILD/OFFBOARD QUALIFIED TO THE SCOPES BELOW. NOT INSTALLED OR EXECUTED.
+LIVE UPDATE18:36UTC: source7ccf966117 pushed and remote ref verified.
+Fresh complete admission actually passes stable041/gen32,guard1,idle/
+no owner,unchanged apps/runtime/64CPUs/fullRAM. One temporary tag102/gen33
+trial is NOW LIVE,authenticating the original model. Protected processes
+24689/24690/24776/24777 remain present,parent/rate exits ABSENT,all stderr
+empty. Read-only observer90158 is active. No measured inference result.
+The stage and launcher are SPENT FOREVER;never relaunch on a timeout.
+No device metadata/admin,new GPU job,owner/source mutation,reload,reboot
+or relay intervention while it remains live or uncertain. After actual
+clean closure,independent gated stable34 postflight is still REQUIRED.
+
+HISTORICAL BUILD/OFFBOARD CHECKPOINT (below),before that one launch:
+BUILD/OFFBOARD QUALIFIED TO THE SCOPES BELOW. NOT INSTALLED OR EXECUTED AT
+THAT CHECKPOINT;superseded only by the LIVE update above,not by a result.
 NO inference speed result for this candidate.20 tokens/sec remains UNMET.
 Last physical prefetch101 result0.162480719..0.162484114tok/s was effectively
 unchanged and is NOT a measurement of this queued-block build.

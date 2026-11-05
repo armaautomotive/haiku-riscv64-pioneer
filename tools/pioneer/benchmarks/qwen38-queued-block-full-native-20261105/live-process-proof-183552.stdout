@@ -1,0 +1,95 @@
+Thu Nov  5 18:33:50 GMT 2026
+PROTECTED wrapper24689 parent24690
+24689 /bin/sh                                            
+24690 /bin/sh /boot/home/pioneer-q38-full-queued-q4-20261105-a/physic 
+24776 /boot/home/pioneer-q38-full-queued-q4-20261105-a/pioneer-q38-fu 
+24777 /boot/home/pioneer-q38-full-queued-q4-20261105-a/HaikuAssistant 
+state: FULL_CARD_RATE32_ACTIVE_DO_NOT_INTERVENE
+parent.exit: ABSENT
+rate.exit: ABSENT
+physical-parent.stdout bytes1319
+P100A_RELOAD driver55 tag2026110500010102 generation33 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026110500010102 generation33 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110500010102 generation33 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+physical-parent.stderr bytes0
+rate.stdout bytes139
+FULL_OFFLOAD_PROGRESS id1 value4294967295 Authenticating Qwen27B; CPU will load vocabulary only,not model weights or an inference context.
+rate.stderr bytes0
+launcher.stderr bytes0
+Thu Nov  5 18:34:20 GMT 2026
+PROTECTED wrapper24689 parent24690
+24689 /bin/sh                                            
+24690 /bin/sh /boot/home/pioneer-q38-full-queued-q4-20261105-a/physic 
+24776 /boot/home/pioneer-q38-full-queued-q4-20261105-a/pioneer-q38-fu 
+24777 /boot/home/pioneer-q38-full-queued-q4-20261105-a/HaikuAssistant 
+state: FULL_CARD_RATE32_ACTIVE_DO_NOT_INTERVENE
+parent.exit: ABSENT
+rate.exit: ABSENT
+physical-parent.stdout bytes1319
+P100A_RELOAD driver55 tag2026110500010102 generation33 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026110500010102 generation33 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110500010102 generation33 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+physical-parent.stderr bytes0
+rate.stdout bytes139
+FULL_OFFLOAD_PROGRESS id1 value4294967295 Authenticating Qwen27B; CPU will load vocabulary only,not model weights or an inference context.
+rate.stderr bytes0
+launcher.stderr bytes0
+Thu Nov  5 18:34:51 GMT 2026
+PROTECTED wrapper24689 parent24690
+24689 /bin/sh                                            
+24690 /bin/sh /boot/home/pioneer-q38-full-queued-q4-20261105-a/physic 
+24776 /boot/home/pioneer-q38-full-queued-q4-20261105-a/pioneer-q38-fu 
+24777 /boot/home/pioneer-q38-full-queued-q4-20261105-a/HaikuAssistant 
+state: FULL_CARD_RATE32_ACTIVE_DO_NOT_INTERVENE
+parent.exit: ABSENT
+rate.exit: ABSENT
+physical-parent.stdout bytes1319
+P100A_RELOAD driver55 tag2026110500010102 generation33 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026110500010102 generation33 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110500010102 generation33 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+physical-parent.stderr bytes0
+rate.stdout bytes139
+FULL_OFFLOAD_PROGRESS id1 value4294967295 Authenticating Qwen27B; CPU will load vocabulary only,not model weights or an inference context.
+rate.stderr bytes0
+launcher.stderr bytes0
+Thu Nov  5 18:35:21 GMT 2026
+PROTECTED wrapper24689 parent24690
+24689 /bin/sh                                            
+24690 /bin/sh /boot/home/pioneer-q38-full-queued-q4-20261105-a/physic 
+24776 /boot/home/pioneer-q38-full-queued-q4-20261105-a/pioneer-q38-fu 
+24777 /boot/home/pioneer-q38-full-queued-q4-20261105-a/HaikuAssistant 
+state: FULL_CARD_RATE32_ACTIVE_DO_NOT_INTERVENE
+parent.exit: ABSENT
+rate.exit: ABSENT
+physical-parent.stdout bytes1319
+P100A_RELOAD driver55 tag2026110500010102 generation33 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026110500010102 generation33 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110500010102 generation33 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+physical-parent.stderr bytes0
+rate.stdout bytes139
+FULL_OFFLOAD_PROGRESS id1 value4294967295 Authenticating Qwen27B; CPU will load vocabulary only,not model weights or an inference context.
+rate.stderr bytes0
+launcher.stderr bytes0
+Thu Nov  5 18:35:52 GMT 2026
+PROTECTED wrapper24689 parent24690
+24689 /bin/sh                                            
+24690 /bin/sh /boot/home/pioneer-q38-full-queued-q4-20261105-a/physic 
+24776 /boot/home/pioneer-q38-full-queued-q4-20261105-a/pioneer-q38-fu 
+24777 /boot/home/pioneer-q38-full-queued-q4-20261105-a/HaikuAssistant 
+state: FULL_CARD_RATE32_ACTIVE_DO_NOT_INTERVENE
+parent.exit: ABSENT
+rate.exit: ABSENT
+physical-parent.stdout bytes1319
+P100A_RELOAD driver55 tag2026110500010102 generation33 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026110500010102 generation33 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110500010102 generation33 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+physical-parent.stderr bytes0
+rate.stdout bytes139
+FULL_OFFLOAD_PROGRESS id1 value4294967295 Authenticating Qwen27B; CPU will load vocabulary only,not model weights or an inference context.
+rate.stderr bytes0
+launcher.stderr bytes0
