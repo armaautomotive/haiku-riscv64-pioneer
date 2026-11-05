@@ -1,0 +1,92 @@
+Exact original Q4 empty-correction inventory -- 2026-11-05
+========================================================
+
+DATA ONLY,NOT A SHADER,MODEL RUN OR TOKENS/SECOND MEASUREMENT.
+Decision:do NOT prioritize a conditional zero-correction matrix kernel.
+Only4316 of66846720 FFN K16xN16 panels have no q==15 correction at all:
+0.006456562%. Nearly every real panel has a nonempty correction operand;
+skipping based on the mask alone therefore covers very few panels.
+This is an operation-opportunity count,NOT a measured runtime bound or a
+whole-model weighted speed forecast. No zero-skipping kernel is installed
+or claimed here. The separate fixed-config103 build remains unchanged.
+
+Why measure before implementing
+-------------------------------
+The accepted exact representation is q=z+7+escape,where z=min(q,14)-7
+and escape=(q==15). The second matrix product supplies that correction.
+For an ENTIRE K16xN16 panel with no escape,it could in principle be omitted
+with a newly qualified publication/bank/final-config sequence. An overall
+3.3% escape-code density does NOT tell us how many complete panels are empty.
+This scan measures actual panel coverage instead of assuming sparsity.
+
+Closed original-file evidence,not cached/timing assumptions
+----------------------------------------------------------
+Both inventories open the same original18973870528B GGUF O_RDONLY with
+O_NOFOLLOW,authenticate its complete SHA before parsing:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+All851 tensor shapes and the existing full8192/two-state packed plan pass.
+All193 Q4 tensors/1351 fragments/4488320 tiles/71813120 panels are scanned.
+Original FD identity/mtime/ctime remain unchanged at closure. No cache
+directory is opened;no PrepareNext,GetOrCreate,repair,conversion publication,
+weight mutation,device metadata,driver or inference context is invoked.
+
+Each panel stops scanning once its first q==15 is found. This exactly
+counts EMPTY panels;it deliberately does NOT recount total escape bits.
+First/middle/last tiles of EVERY fragment,4053 actual tiles,are independently
+read through the existing tiled page reader,compared with row-major source
+bytes,then passed through the unchanged native codec. Its real correction
+panel bitmap must match the scanner. Private temporary codec output is
+validation DATA only;no prepared/cache bytes are written.
+
+Original Q4 scope       panels       empty      empty percent
+all193 Q4 tensors       71813120       4723       0.006576793
+192 FFN matrix tensors  66846720       4316       0.006456562
+embedding tensor         4966400        407       0.008195071
+FFN K5120               44564480       2873       0.006446838
+FFN K17408              22282240       1443       0.006476010
+Embedding is reported separately because its full-file geometry is NOT
+the amount of embedding work per generated token. No Q8/Q6 or other model
+phase is represented by these Q4-only percentages.
+
+Actually completed main and independent clean-source checks
+----------------------------------------------------------
+Main build/component91063=0;clean24468=0. ASan+UBSan/Werror component has
+39177 cases/39 inert refusals. Every K16xN16 nibble position is tested at
+all3 supported widths5120/6144/17408 and first/middle/last blocks,plus257
+fixtures per geometry. Independent complete bit-loop AND native codec
+agree. Invalid pointer/width/length/block leaves output/count untouched.
+Whole main/clean component stdout matches;stderr0.
+
+Role suite18468=0:main and clean each1 positive/28 zero,one,late,kernel,
+freestanding,native,client,Work,CPU-reference,fast-math refusals. Data helper
+cannot be used to introduce a host inference path. Outputs exact,stderr0.
+
+Actual full inventories main57868=0/clean36572=0,optimized checked C++17,
+whole stdout byte-identical and stderr0. Both authenticate and scan the
+complete file independently;neither is a partial sample extrapolation.
+Whole stdout SHA:
+da695e90710c06df0fe25b27b1c02fcc7607010e7009e6ea0ca5702bd7c3f69f
+Only aggregate counts are printed/saved,no learned values or products.
+
+Protected physical trial
+------------------------
+During this local work the SAME queued-E102 physical observer90158 remained
+live. At20:02:45GMT all4 exact trial PIDs24689/24690/24776/24777 were still
+live,all62 positions committed,actual exits absent,stderr empty. Finished
+computation is NOT proof of completed drain/END/close/parent restoration.
+No concurrent Pioneer metadata/admin/status,new GPU job,stage mutation,
+reload,reboot,relay,Assistant,boot,kernel,network,SD,mains or hardware action
+was issued. Keep protecting that trial until actual terminal and postflight.
+No new physical rate is published by this DATA inventory.20tok/s is unmet.
+
+Reproduce
+---------
+c++ -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror \
+ -fsanitize=address,undefined tools/pioneer/tests/pioneer_q38_q4_escape_panel_scan_test.cpp -o /private/tmp/escape-panel-component
+c++ -std=c++17 -O3 -ffp-contract=off -Wall -Wextra -Werror \
+ -Wno-deprecated-declarations tools/pioneer/pioneer_q38_q4_escape_panel_inventory.cpp \
+ tools/pioneer/PioneerModelWeightCache.cpp -o /private/tmp/escape-panel-inventory
+Run the inventory with the absolute original GGUF path as its ONLY argument.
+CommonCrypto suppression is for the unchanged existing Mac SHA helper.
+No test,source comparator,quality threshold or Work validation is relaxed.
+Complete raw streams are archived in the sibling directory.

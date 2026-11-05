@@ -1,0 +1,1 @@
+PASS escape-panel host DATA roles:1 positive/28 zero,one,late,kernel,native,client,Work,CPU-reference,fast-math refusals;NO hardware or speed permission
