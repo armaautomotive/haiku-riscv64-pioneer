@@ -9,7 +9,7 @@
 struct ExactCorrectedMachine:ExactPrimaryMachine {
  struct Transfer {bool active=false,flip=false;unsigned bank=0,row=0,count=0,due=0;float values[256]={};} pending[2];
  unsigned partial[2]={},completed[2]={},maskReads=0,sevenWrites=0,escapeWrites=0,fences=0;
- bool dirty=false;
+ bool dirty=false,twoProducts=false;
  bool Pending()const{return pending[0].active || pending[1].active;}
  bool Clean()const{return !Pending() && !partial[0] && !partial[1] && NativeBfpMachine::Clean();}
  void Config(unsigned word,unsigned value){if(Pending())throw Unknown;NativeBfpMachine::Config(word,value);}
@@ -31,7 +31,7 @@ struct ExactCorrectedMachine:ExactPrimaryMachine {
    for(unsigned i=0;i<p.count;i++)s.values[p.row+i/16][i%16]=p.values[i];
    if(!w) {
     partial[p.bank]|=1U<<(p.row/16);
-    if(p.flip){assert(partial[p.bank]==7);completed[p.bank]=7;partial[p.bank]=0;}
+    if(p.flip){const unsigned mask=twoProducts?3:7;assert(partial[p.bank]==mask);completed[p.bank]=mask;partial[p.bank]=0;}
    }
    if(p.flip){s.owner=true;unpackBank[w]^=1;}
    p.active=false;
@@ -56,10 +56,11 @@ struct ExactCorrectedMachine:ExactPrimaryMachine {
     && config[base+8]==(format==7?0x27U:15U) && xEnd[which]==255 && !config[49]
     && (config[84]>>16)==64 && ((config[84]&65535)%16)==0 && !(address&15));
    p.count=256;p.row=(config[84]&65535)/16-4;
+   const unsigned escapeRow=twoProducts?16:32;
    assert((p.row==0 && address==0x90000 && !flip && !partial[p.bank])
-    || (p.row==16 && address==0x90100 && !flip && partial[p.bank]==1)
-    || (p.row==32 && address==0x90200 && flip && partial[p.bank]==3));
-   assert(format==(p.row==32?15U:7U) && config[50]==(p.row==32?0x17fU:0x181U));
+    || (!twoProducts && p.row==16 && address==0x90100 && !flip && partial[p.bank]==1)
+    || (p.row==escapeRow && address==0x90200 && flip && partial[p.bank]==(twoProducts?1U:3U)));
+   assert(format==(p.row==escapeRow?15U:7U) && config[50]==(p.row==escapeRow?0x17fU:0x181U));
   }
   for(unsigned i=0;i<p.count;i++) {
    float value;
@@ -78,9 +79,9 @@ struct ExactCorrectedMachine:ExactPrimaryMachine {
    && thread[2]==1 && thread[3]==1 && !thread[11] && !thread[13] && !thread[48]);
   assert(((op>>14)&3)==1 && !(op&0x003fbc00));
   auto& a=source[0][matrixBank[0]];auto& b=source[1][matrixBank[1]];
-  if(!a.owner || !b.owner || completed[matrixBank[0]]!=7)throw Unknown;
+  if(!a.owner || !b.owner || completed[matrixBank[0]]!=(twoProducts?3U:7U))throw Unknown;
   const unsigned ar=rwcA&0x38,br=rwcB&0x38,dr=op&1023,phase=(fidelity+thread[11])&3;
-  assert((ar==0 || ar==16 || ar==32) && br==0 && dr==32 && phase==0);visits[phase]++;
+  assert((ar==0 || ar==16 || (!twoProducts && ar==32)) && br==0 && dr==32 && phase==0);visits[phase]++;
   for(unsigned row=0;row<8;row++)for(unsigned n=0;n<16;n++) {
    long double sum=0;for(unsigned k=0;k<16;k++)sum+=static_cast<long double>(Part(b.values[row][k],phase,false))*Part(a.values[ar+k][n],phase,true);
    if(phase!=dropPhase)destination[dr+row][n]=float(float(sum)+(valid[dr+row]?destination[dr+row][n]:0));

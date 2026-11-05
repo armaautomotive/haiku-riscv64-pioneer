@@ -18,6 +18,10 @@ struct PreparedQ4Peer:ExactQ4WorkPeer {
  unsigned sourceRoute=0x47;
  bool descriptorReady=false,indexReady=false,payloadReady=false;
  PreparedQ4Peer(const char* fixture,const char* image,unsigned type,unsigned k,unsigned groups,unsigned prefix=0,unsigned worker=69,unsigned route=0x47):ExactQ4WorkPeer(fixture,image,type,k,groups,worker),prefixTiles(prefix),sourceRoute(route){
+#ifdef PIONEER_Q38_TWO_PRODUCT_WORKER_TEST
+  static_assert(PIONEER_Q38_TWO_PRODUCT_WORKER_TEST==1,"distinct CPU validation variant only");
+  twoProducts=true;
+#endif
   if(prefix){assert(type==12);base+=prefix*2304;matrixJob[6]=base;memory[0x74018]=base;}
   matrixJob[8]=sourceRoute;memory[0x74020]=sourceRoute;
   inputPackets.assign(packets.begin(),packets.begin()+inputReads);PrepareSource(1);
@@ -112,14 +116,14 @@ struct PreparedQ4Peer:ExactQ4WorkPeer {
  }
  void NativeOperand(const Task& t,unsigned w)override{
   if(type!=12){ExactQ4WorkPeer::NativeOperand(t,w);return;}
-  const unsigned panel=(matrixInstructions/3)%16,block=(matrixInstructions/3/16)%Blocks();
+  const unsigned phases=MatrixPhasesPerPanel(),panel=(matrixInstructions/phases)%16,block=(matrixInstructions/phases/16)%Blocks();
   if(w){
    assert(t.address==L::Input(block*128+panel*8));
    for(unsigned at=t.address-16;at<t.address+256;at+=4)assert(inputDefined.count(at));
   }else if(t.row==0){assert(!t.flip && !partial[unpack[0]] && t.address==RawInputBase()+256+panel*128);}
   else{
-   assert((t.row==16 && t.address==0x9c140 && !t.flip && partial[unpack[0]]==1)
-    || (t.row==32 && t.address==0x9c240 && t.flip && partial[unpack[0]]==3));
+   assert((!twoProducts && t.row==16 && t.address==0x9c140 && !t.flip && partial[unpack[0]]==1)
+    || (t.row==(twoProducts?16U:32U) && t.address==0x9c240 && t.flip && partial[unpack[0]]==(twoProducts?1U:3U)));
    for(unsigned at=t.address-16;at<t.address;at+=4)assert(!memory.at(at));
   }
  }
@@ -200,6 +204,9 @@ struct PreparedQ4Peer:ExactQ4WorkPeer {
 int main(int argc,char** argv){
  assert(argc==4 || (argc==5 && (!strcmp(argv[4],"--pilot") || !strcmp(argv[4],"--group-pilot") || !strcmp(argv[4],"--controls-only") || !strcmp(argv[4],"--faults-only"))));
  setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;(void)&Compare;(void)&Round;
+#ifdef PIONEER_Q38_TWO_PRODUCT_WORKER_TEST
+ puts("TWO_PRODUCT_PREPARED_Q4_COMPLETE_WORKER_VALIDATION_ONLY_NO_DEVICE");
+#endif
  const bool pilot=argc==5 && !strcmp(argv[4],"--pilot"),groupPilot=argc==5 && !strcmp(argv[4],"--group-pilot"),faultsOnly=argc==5 && !strcmp(argv[4],"--faults-only"),controlsOnly=argc==5 && !strcmp(argv[4],"--controls-only");
  unsigned cases=0,faults=0,semantic=0,controls=0,stack=0;
  for(unsigned type:{8U,12U,14U})for(unsigned k:{5120U,6144U,17408U})for(unsigned groups:{1U,3U,16U}){

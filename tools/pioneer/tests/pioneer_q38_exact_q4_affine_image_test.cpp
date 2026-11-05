@@ -12,7 +12,8 @@ struct ExactAffineImage:Machine {
  bool awaiting=false,stackSeen=false,dropAck=false,dropMatrixDrain=false;
  unsigned dropConfig=~0U;bool change=true;unsigned nextSeed=176;
  std::array<uint32_t,16> expected[2];
- ExactAffineImage(const char* directory,unsigned k):Machine(),width(k){
+ ExactAffineImage(const char* directory,unsigned k,bool twoProduct=false):Machine(),width(k){
+  native.twoProducts=twoProduct;
   const std::string root=directory;code=Read((root+"/text.bin").c_str());auto boot=Read((root+"/boot.bin").c_str());
   assert(boot.size()==4 && code.size()<=8192 && !(code.size()&3));
   std::fill(std::begin(l1),std::end(l1),0x7fc00001U);l1[0]=Word(boot,0);
@@ -37,7 +38,7 @@ struct ExactAffineImage:Machine {
   if(op==0xa2101816){assert(!gpr63 && !awaiting);awaiting=true;}
   else if(op==0x4500017e){
    assert(awaiting && !gpr63);acks++;
-   if(!dropAck && !(dropMatrixDrain && native.mathPending && native.matrixOps==3)){
+   if(!dropAck && !(dropMatrixDrain && native.mathPending && native.matrixOps==(native.twoProducts?2U:3U))){
     native.Drain();gpr63=1;awaiting=false;
    }
   }else native.Op(op);
@@ -87,9 +88,10 @@ struct ExactAffineImage:Machine {
   assert(native.Clean() && results==32 && native.outputReads==32);
   for(unsigned pass=0;pass<2;pass++)for(unsigned n=0;n<16;n++)assert(l1[Index(0x92000+pass*64+n*4)]==expected[pass][n]);
   for(unsigned n=32;n<64;n++)assert(l1[Index(0x92000+n*4)]==0x7fc00001);
-  assert(native.matrixOps==6*width/16 && native.metadataLoads==2*width/16 && native.zeroLoads==2
+  assert(native.matrixOps==(native.twoProducts?4U:6U)*width/16 && native.metadataLoads==2*width/16 && native.zeroLoads==2
    && native.affineStores==4*width/16 && sourceReads==ExpectedSourceReads() && maskReads==2*width/16*8
    && !native.unpackBank[0] && !native.unpackBank[1] && !native.matrixBank[0] && !native.matrixBank[1]);
+  if(native.twoProducts)assert(!native.sevenWrites && native.unpacks[0]==4*width/16);
   return true;
  }
 };

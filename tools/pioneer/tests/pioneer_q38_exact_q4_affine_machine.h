@@ -12,6 +12,16 @@
 struct ExactAffineVector:AffineVector {
  void Op(unsigned w) {
   const unsigned code=w>>24;
+  if(w==0x90000660){
+   // Additional exact SM32 operand used ONLY by the two-product fixture.
+   // The original shared vector model's sum4 limit remains unchanged.
+   for(unsigned lane=0;lane<32;lane++){
+    const uint32_t bits=Read(6,lane),magnitude=bits&0x7fffffff;
+    assert(magnitude<=14336 && (magnitude || !bits));
+    lr[6][lane]=PioneerFmaBits(float(int(magnitude)*((bits>>31)?-1:1)));
+   }
+   ready[6]=cycle+1;cycle++;return;
+  }
   if(code!=0x71 && code!=0x7e && code!=0x79 && code!=0x7a){AffineVector::Op(w);return;}
   unsigned d=(w>>4)&15,c=(w>>8)&15,b=(w>>12)&15,mode=(w>>16)&15;
   if(code==0x71)d=(w>>20)&15;

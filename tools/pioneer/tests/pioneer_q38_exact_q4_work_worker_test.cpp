@@ -6,6 +6,14 @@
 // Shared PHYSICAL Dst contains BOTH actual FPU and metadata/SFPU writes.
 struct ExactWorkVector:MetadataMachine {
  void Op(uint32_t word){
+  if(word==0x90000660){
+   assert(okay);uint32_t out[32];
+   for(unsigned lane=0;lane<32;lane++){
+    const unsigned sm=Read(6,lane);assert((sm&0x7fffffff)<=14336 && ((sm&0x7fffffff) || !sm));
+    out[lane]=Bits(float(int(sm&0x7fffffff)*(sm&0x80000000?-1:1)));
+   }
+   for(unsigned lane=0;lane<32;lane++)lanes[6][lane]=out[lane];ready[6]=cycle+1;cycle++;return;
+  }
   if(word!=0x90000440){MetadataMachine::Op(word);return;}
   assert(okay);uint32_t out[32];
   for(unsigned lane=0;lane<32;lane++){
@@ -23,7 +31,7 @@ struct ExactQ4WorkPeer:ConstantIssuePeer {
   throw Fault{line};
  }
  unsigned exactPC=0,exactReturn=0,exactJobs=0,nativeUnpacks=0,exactStores=0,tick=0;
- bool exact=false,dirty=false,fpuPending=false,sfpuPending=false;
+ bool exact=false,dirty=false,fpuPending=false,sfpuPending=false,twoProducts=false;
  unsigned storeDue=0,unpack[2]={},matrix[2]={},partial[2]={},rwcA=0,rwcB=0,crA=0,crB=0;
  bool owned[2][2]={};float srcA[2][64][16]={},srcB[2][8][16]={};
  bool fpValid[1024]={};unsigned fpReady[1024]={};ExactWorkVector math;
@@ -33,7 +41,7 @@ struct ExactQ4WorkPeer:ConstantIssuePeer {
   while(symbols>>at>>kind>>name)if(name=="_ZL21PioneerQ38ExactQ4WorkPVKj"){assert(!exactPC);exactPC=unsigned(std::stoul(at,nullptr,16));}
   assert(exactPC);
  }
- unsigned MatrixPhasesPerPanel()const override{return type==12?3:ConstantIssuePeer::MatrixPhasesPerPanel();}
+ unsigned MatrixPhasesPerPanel()const override{return type==12?(twoProducts?2:3):ConstantIssuePeer::MatrixPhasesPerPanel();}
  bool Tasks()const{return tasks[0].active || tasks[1].active;}
  bool MathIdle()const{return !Tasks() && !fpuPending && !sfpuPending;}
  bool BanksFree()const{return !owned[0][0] && !owned[0][1] && !owned[1][0] && !owned[1][1]
@@ -85,7 +93,7 @@ struct ExactQ4WorkPeer:ConstantIssuePeer {
       srcA[unpack[w]][t.row+i/16][i%16]=value;
      }
     }
-    if(!w){partial[unpack[0]]|=1U<<(t.row/16);if(t.flip && partial[unpack[0]]!=7)Fail(__LINE__);}
+    if(!w){partial[unpack[0]]|=1U<<(t.row/16);if(t.flip && partial[unpack[0]]!=(twoProducts?3U:7U))Fail(__LINE__);}
     if(t.flip){if(owned[w][unpack[w]])Fail(__LINE__);owned[w][unpack[w]]=true;unpack[w]^=1;}
    }
    tasks[w].active=false;
@@ -109,8 +117,9 @@ struct ExactQ4WorkPeer:ConstantIssuePeer {
    if(w){assert(t.format==5 && config[112]==0x00800015 && t.count==128 && t.flip);t.row=0;}
    else{
     t.row=(config[84]&65535)/16-4;
-    assert(t.count==256 && (t.row==0 || t.row==16 || t.row==32) && t.format==(t.row==32?15U:7U));
-    assert(config[65]==0x10001 && config[73]==0xf010f && config[50]==(t.row==32?0x17fU:0x181U));
+    const unsigned escapeRow=twoProducts?16:32;
+    assert(t.count==256 && (t.row==0 || t.row==16 || (!twoProducts && t.row==32)) && t.format==(t.row==escapeRow?15U:7U));
+    assert(config[65]==0x10001 && config[73]==0xf010f && config[50]==(t.row==escapeRow?0x17fU:0x181U));
    }
    NativeOperand(t,w);nativeUnpacks++;
   }
@@ -120,8 +129,8 @@ struct ExactQ4WorkPeer:ConstantIssuePeer {
   assert(!Tasks() && !sfpuPending && config[0]==0x42b5 && config[1]==0x60aa0000 && !config[2] && !config[3]
    && thread[2]==1 && thread[3]==1 && !thread[11] && !thread[13] && !thread[48]);
   assert(op==0x26004020 || op==0x26c04020);
-  const unsigned ab=matrix[0],bb=matrix[1],row=rwcA&0x38;assert(!rwcB && (row==0 || row==16 || row==32));
-  if(!owned[0][ab] || !owned[1][bb] || partial[ab]!=7)Fail(__LINE__);
+  const unsigned ab=matrix[0],bb=matrix[1],row=rwcA&0x38;assert(!rwcB && (row==0 || row==16 || (!twoProducts && row==32)));
+  if(!owned[0][ab] || !owned[1][bb] || partial[ab]!=(twoProducts?3U:7U))Fail(__LINE__);
   for(unsigned r=0;r<8;r++)for(unsigned n=0;n<16;n++){
    int dot=0;for(unsigned k=0;k<16;k++){
     const float a=srcA[ab][row+k][n],b=srcB[bb][r][k];assert(a==float(int(a)) && b==float(int(b)) && a>=-7 && a<=7);

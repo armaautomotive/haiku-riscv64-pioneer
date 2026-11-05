@@ -24,7 +24,8 @@ TAIL = HELPERS | {
 }
 
 
-def audit(control, image, tool):
+def audit(control, image, tool, *, two_product=False):
+    assert type(two_product) is bool
     directories = tuple(map(pathlib.Path, (control, image)))
     assert hashlib.sha256((directories[0]/'program.elf').read_bytes()).hexdigest() == \
         '8a7c6543e59a4067cee72d67843ca2d33119c307a8277bd14a70cb80f2f41e2f'
@@ -80,7 +81,13 @@ def audit(control, image, tool):
     limit=BASES['service']+len(raw[1]['service'])
     assert end<limit<=0x6e000
     tail=sorted((at,*item) for at,item in maps[1].items() if end<=at<limit)
-    assert {r[1] for r in tail}==TAIL and len(tail)==len(TAIL)
+    expected_tail=TAIL
+    if two_product:
+        original='_ZN26PioneerQ38ExactQ4Corrected3RunIN23PioneerQ38ExactQ4Affine12PanelEmitterI28PioneerQ38ExactQ4WorkEmitterEEEEbRT_'
+        candidate='_ZN30PioneerQ38ExactQ4TwoProductDot3RunIN23PioneerQ38ExactQ4Affine12PanelEmitterI28PioneerQ38ExactQ4WorkEmitterEEEEbRT_'
+        affine='_ZN33PioneerQ38ExactQ4TwoProductAffine6AffineI28PioneerQ38ExactQ4WorkEmitterEEvRT_ji'
+        expected_tail=(TAIL-{original})|{candidate,affine}
+    assert {r[1] for r in tail}==expected_tail and len(tail)==len(expected_tail), ('explicit tail',sorted(r[1] for r in tail),sorted(expected_tail))
     cursor=end
     for at,name,size,kind in tail:
         assert kind=='FUNC' and size and cursor<=at and at-cursor<=12 and at+size<=limit

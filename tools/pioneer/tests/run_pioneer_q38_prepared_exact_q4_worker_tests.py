@@ -12,11 +12,15 @@ from compare_pioneer_q38_observed_trace import require, stable_bytes
 from pioneer_q38_prepared_q4_relocations import audit
 
 require(__debug__ and not os.environ.get('PYTHONOPTIMIZE'),'no optimized Python')
+two_product='--two-product' in sys.argv[1:]
+if two_product:
+    require(sys.argv.count('--two-product')==1,'one explicit two-product CPU validation selector')
+    sys.argv.remove('--two-product')
 require(len(sys.argv) in (2,3),'IMAGE [--pilot|--group-pilot|--controls-only|--faults-only|--history-only]')
 require(len(sys.argv)!=3 or sys.argv[2] in ('--pilot','--group-pilot','--controls-only','--faults-only','--history-only'),'explicit test scope')
 require(not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ),'no role override')
 here=pathlib.Path(__file__).resolve().parent
-image=pathlib.Path(sys.argv[1]);control=image/'unchanged-original'
+image=pathlib.Path(sys.argv[1]);control=image/('unchanged-prepared/unchanged-original' if two_product else 'unchanged-original')
 fixture=control/'unchanged-vector/unchanged-wide/unchanged-twin/unchanged-batched/unchanged-prefetch/unchanged-beta/unchanged-pushed/unchanged-precise/unchanged-global/qualified-math'
 tool='/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-'
 environment={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'}
@@ -43,7 +47,7 @@ def snapshot(directory, records):
 snapshots=[snapshot(directory,pins(script)) for directory,script in (
     (fixture,here/'run_pioneer_q38_mixed_worker_tests.py'),
     (control,here.parent/'build_qwen38_exact_q4_work_worker.py'),
-    (image,here.parent/'build_qwen38_prepared_exact_q4_worker.py'))]
+    (image,here.parent/('build_qwen38_two_product_q4_worker.py' if two_product else 'build_qwen38_prepared_exact_q4_worker.py')))]
 legacy=[(name+'.bin',size,digest) for name,size,digest in pins(here/'run_pioneer_q38_resident_gdn_output_operator_service_image_tests.py')]
 legacy.append(('program.elf',96148,'44bac0c1061f298ed8ccd2a1eb4780371bc7c80031cb230ad2da27f476202d19'))
 legacy=snapshot(fixture/'unchanged-worker',legacy)
@@ -62,11 +66,14 @@ with tempfile.TemporaryDirectory(prefix='pioneer-prepared-q4-closed-tests-',dir=
         target=original/name
         with target.open('xb') as stream:stream.write(data)
         target.chmod(0o400)
-    audit(images[1],images[2],tool)
+    audit(images[1],images[2],tool,two_product=two_product)
     data_test=root/'prepared-data'
     subprocess.run([*common,str(here/'pioneer_q38_prepared_q4_data_test.cpp'),'-o',str(data_test)],check=True)
     subprocess.run([str(data_test)],check=True,env=environment)
     flags=re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?',(here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
+    if two_product:
+        flags.append('-DPIONEER_Q38_TWO_PRODUCT_WORKER_TEST=1')
+        print('TWO_PRODUCT_CLOSED_WORKER_CPU_VALIDATION_ONLY_NO_DEVICE',flush=True)
     history_only=len(sys.argv)==3 and sys.argv[2]=='--history-only'
     if not history_only:
         binary=root/'worker'
@@ -76,4 +83,4 @@ with tempfile.TemporaryDirectory(prefix='pioneer-prepared-q4-closed-tests-',dir=
         history=root/'gdn-history'
         subprocess.run([*common,*flags,str(here/'pioneer_q38_prepared_q4_gdn_history_test.cpp'),'-o',str(history)],check=True)
         subprocess.run([str(history),str(images[0]),str(images[2])],check=True,env=environment)
-print('CLOSED_PREPARED_Q4_WORKER_TESTS whole immutable ROMs;NO native/ROOT/source/card/Assistant/full-model/TPS grant',flush=True)
+print(('TWO_PRODUCT_' if two_product else '')+'CLOSED_PREPARED_Q4_WORKER_TESTS whole immutable ROMs;NO native/ROOT/source/card/Assistant/full-model/TPS grant',flush=True)

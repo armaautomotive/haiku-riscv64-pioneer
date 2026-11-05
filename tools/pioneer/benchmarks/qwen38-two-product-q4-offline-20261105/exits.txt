@@ -1,0 +1,20 @@
+Actual observed local tool/process exits,not fabricated card receipts:
+main packet/direct/extreme/role suite:0
+clean packet/direct/extreme/role suite:0
+main actual-original-weight projection suite:0
+clean actual-original-weight projection suite:0
+main pinned complete worker build:0
+clean pinned complete worker build:0
+main complete worker shape/fault/history suite:0
+clean complete worker shape/fault/history suite:0
+old prepared complete worker shape/fault/history regression suite:0
+old corrected panel/direct/image suite:0
+old affine direct/image regression suite:0
+main/clean complete worker ELF cmp:0
+main/clean complete worker stdout cmp:0
+main/clean complete worker expected-fault stderr cmp:0
+old before/after unflagged affine text cmp,all three widths:0
+
+Worker stderr is NOT empty:exactly32 expected synthetic fault lines per
+full suite. Other recorded test/build stderr files are empty. No physical
+run or physical exit is represented by this offline evidence.

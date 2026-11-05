@@ -19,7 +19,7 @@ static bool SameSource(const struct stat& a,const struct stat& b){
 }
 struct RealAffineImage:ExactAffineImage {
  std::vector<uint8_t> original;unsigned tensor;
- RealAffineImage(const char* image,unsigned k,const std::vector<uint8_t>& rows,unsigned index):ExactAffineImage(image,k),original(rows),tensor(index){expected[0]=StageReal(3);}
+ RealAffineImage(const char* image,unsigned k,const std::vector<uint8_t>& rows,unsigned index,bool twoProduct=false):ExactAffineImage(image,k,twoProduct),original(rows),tensor(index){expected[0]=StageReal(3);}
  std::array<uint32_t,16> StageReal(unsigned seed){
   assert(native.Clean());using P=PioneerQ38ExactQ4Affine;using Escape=PioneerQ38Q4EscapeTiles;
   const unsigned blocks=width/256,rowBytes=blocks*144;assert(original.size()==16*rowBytes);
@@ -66,6 +66,13 @@ struct RealAffineImage:ExactAffineImage {
 };
 int main(int argc,char** argv){
  assert(argc==5);setvbuf(stdout,nullptr,_IOLBF,0);
+#ifdef PIONEER_Q38_TWO_PRODUCT_REAL_TEST
+ static_assert(PIONEER_Q38_TWO_PRODUCT_REAL_TEST==1,"explicit CPU validation variant only");
+ constexpr bool twoProduct=true;
+ puts("TWO_PRODUCT_ACTUAL_RV32_ORIGINAL_WEIGHT_VALIDATION_ONLY_NO_DEVICE");
+#else
+ constexpr bool twoProduct=false;
+#endif
  const int fd=open(argv[4],O_RDONLY|O_CLOEXEC|O_NOFOLLOW);assert(fd>=0);FILE* file=fdopen(fd,"rb");assert(file);
  struct stat before{},after{};assert(!fstat(fd,&before) && S_ISREG(before.st_mode));
  using Cache=PioneerModelWeightCache;Cache::Digest sha{};std::string error;
@@ -80,13 +87,13 @@ int main(int argc,char** argv){
   const unsigned width=unsigned(t.inputs),rowBytes=width/256*144;
   const unsigned first=index%3==0?0:index%3==1?unsigned(t.outputs/32)*16:unsigned(t.outputs)-16;
   std::vector<uint8_t> rows(rowBytes*16);assert(source->ReadPacked(index,uint64_t(first)*rowBytes,rows.size(),rows.data(),rows.size()));
-  RealAffineImage image(argv[width==5120?1:width==6144?2:3],width,rows,index);
+  RealAffineImage image(argv[width==5120?1:width==6144?2:3],width,rows,index,twoProduct);
   image.native.delay[0]=index&1?100003:1;image.native.delay[1]=index&1?1:100003;
   assert(image.Execute());maxStack=std::max(maxStack,0x70000-image.minSP);tensors++;jobs+=2;panelJobs+=2*width/16;outputs+=32;
   printf("REAL_Q4_FULLK_AFFINE tensors%u jobs%u panelJobs%u aggregateOutputs%u_ONLY\n",tensors,jobs,panelJobs,outputs);
  }
  assert(tensors==193 && jobs==386 && outputs==6176 && source->Stable());
  assert(!fstat(fd,&after) && SameSource(before,after));assert(!fclose(file));
- printf("PASS_ACTUAL_RV32_REAL_Q4_FULLK_AFFINE tensors%u completeProjectionJobs%u panelJobs%u exactOutputs%u stack%u;"
-  "all851OriginalSourceAuthenticated;SYNTHETIC_INPUT_LOCAL_VALIDATION_NOT_MODEL_HARDWARE_OR_TPS\n",tensors,jobs,panelJobs,outputs,maxStack);
+ printf("PASS_ACTUAL_RV32_REAL_Q4_FULLK_%sAFFINE tensors%u completeProjectionJobs%u panelJobs%u exactOutputs%u stack%u;"
+  "all851OriginalSourceAuthenticated;SYNTHETIC_INPUT_LOCAL_VALIDATION_NOT_MODEL_HARDWARE_OR_TPS\n",twoProduct?"TWO_PRODUCT_":"",tensors,jobs,panelJobs,outputs,maxStack);
 }

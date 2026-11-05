@@ -3,6 +3,15 @@
 #define PIONEER_ATTENTION_FREESTANDING
 typedef __UINT32_TYPE__ uint32_t;
 #include "PioneerQ38ExactQ4Affine.h"
+#ifdef PIONEER_EXACT_Q4_TWO_PRODUCT
+#if PIONEER_EXACT_Q4_TWO_PRODUCT != 1 || defined(PIONEER_EXACT_Q4_AFFINE_FIXED)
+#error Separate two-product packet image only
+#endif
+#include "PioneerQ38ExactQ4TwoProduct.h"
+using SelectedQ4Affine=PioneerQ38ExactQ4TwoProductAffine;
+#else
+using SelectedQ4Affine=PioneerQ38ExactQ4Affine;
+#endif
 #ifdef PIONEER_EXACT_Q4_AFFINE_FIXED
 #if PIONEER_EXACT_Q4_AFFINE_FIXED != 1 || PIONEER_EXACT_Q4_AFFINE_K != 17408
 #error Distinct fixed17408 synthetic qualification only
@@ -75,7 +84,7 @@ extern "C" unsigned exact_q4_affine_main(){
 #ifdef PIONEER_EXACT_Q4_AFFINE_FIXED
   e.seed=pass?176:37;
 #endif
-  if(!PioneerQ38ExactQ4Affine::Run(e,PIONEER_EXACT_Q4_AFFINE_K))exact_q4_affine_fault();
+  if(!SelectedQ4Affine::Run(e,PIONEER_EXACT_Q4_AFFINE_K))exact_q4_affine_fault();
   for(unsigned n=0;n<16;n++)Words(PioneerQ38ExactQ4Affine::Output+pass*64)[n]=Words(0xffbd8000+108*64)[n];
   asm volatile("fence":::"memory");
  }

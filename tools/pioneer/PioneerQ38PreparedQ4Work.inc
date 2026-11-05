@@ -6,6 +6,17 @@
 #include "PioneerQ38PreparedQ4Mask.h"
 #include "PioneerQ38ExactQ4Original.h"
 #include "PioneerQ38ExactQ4Affine.h"
+#ifdef PIONEER_Q38_PREPARED_TWO_PRODUCT_IMAGE
+#if PIONEER_Q38_PREPARED_TWO_PRODUCT_IMAGE != 1
+#error Distinct offboard two-product worker image only
+#endif
+#include "PioneerQ38ExactQ4TwoProduct.h"
+using PreparedQ4Dot=PioneerQ38ExactQ4TwoProductDot;
+using PreparedQ4Affine=PioneerQ38ExactQ4TwoProductAffine;
+#else
+using PreparedQ4Dot=PioneerQ38ExactQ4Corrected;
+using PreparedQ4Affine=PioneerQ38ExactQ4Affine;
+#endif
 using PreparedQ4=PioneerQ38PreparedQ4Layout;
 // Source descriptor is at a FIXED root-owned slot,not an arbitrary job
 // pointer. A future native ROOT producer must bind its complete lifetime.
@@ -67,7 +78,7 @@ static unsigned PioneerQ38ExactQ4Work(const volatile uint32_t* job){
  PreparedQ4Read(PreparedQ4::RootSlot(job[11]),1|(2<<6),PreparedQ4::Descriptor,64,reads,flits);
  const auto* descriptor=Words(PreparedQ4::Descriptor);if(!PreparedQ4::Shape(descriptor,job))block_fault_park();
  PreparedQ4Inputs(inputs);PioneerQ38ExactQ4WorkEmitter e;
- if(!PioneerQ38ExactQ4Corrected::Setup(e))block_fault_park();
+ if(!PreparedQ4Dot::Setup(e))block_fault_park();
  for(unsigned i=0;i<4;i++){Words(0x9c130)[i]=0;Words(0x9c230)[i]=0;}Fence();
  for(unsigned group=0;group<groups;group++){
   e.Drain();const auto window=PreparedQ4Group(descriptor,group,reads,flits);
@@ -94,8 +105,8 @@ static unsigned PioneerQ38ExactQ4Work(const volatile uint32_t* job){
     e.primary=raw+256+p*128;e.input=PreparedQ4::Input(block*128+p*8);e.mask=PreparedQ4::DenseMask+p*32;
     e.Config(124,e.input/16-1);e.Config(65,0x10001);e.Config(73,0xf010f);e.Config(86,0x01000100);
     PioneerQ38ExactQ4Affine::PanelEmitter<PioneerQ38ExactQ4WorkEmitter> panel(e);
-    if(!PioneerQ38ExactQ4Corrected::Run(panel))block_fault_park();
-    e.metadataRow=128+(p/2)*8;PioneerQ38ExactQ4Affine::Affine(e,scale,sum);
+    if(!PreparedQ4Dot::Run(panel))block_fault_park();
+    e.metadataRow=128+(p/2)*8;PreparedQ4Affine::Affine(e,scale,sum);
    }
   }
   e.Drain();e.Config(3,0);

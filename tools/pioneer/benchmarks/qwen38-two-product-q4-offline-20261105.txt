@@ -1,0 +1,80 @@
+Two-product exact Q4 worker candidate -- 2026-11-05
+=================================================
+
+OFFBOARD QUALIFICATION ONLY. No native/ROOT/Assistant selection,physical
+execution,model generation or tokens/sec result is granted here. The live
+tag99 phase-profile trial is left frozen. Best accepted physical rate
+remains vector92's0.1728tok/s;tag98 was0.1617. Target20tok/s is unmet.
+
+Actual arithmetic change:
+Original unsigned Q4 q=z+7+escape. The old path performs THREE matrix
+products (primary z,constant7,escape) before the original FP32 affine.
+The candidate performs TWO (primary z,escape),then restores EXACTLY
+7*sum(input) with SFPU BEFORE the SAME original per-K16 non-fused affine.
+All participating integers are below2^15 in magnitude,so the additional
+FP32 addition has no rounding loss. No K32 reassociation,requantization,
+CPU learned dot,source codec/cache rewrite or host inference is added.
+The bounded integer sum*7 is computed by the on-CARD RV controller.
+
+The explicit OFFBOARD worker-image flag is
+PIONEER_Q38_PREPARED_TWO_PRODUCT_IMAGE=1;the CPU test runner requires its
+separate --two-product selector and whole new ROM pins. Neither is a
+Work-mode or native launch selector. Existing prototype kernel/Work/CPU
+reference compile guards continue to reject accidental inclusion.
+
+Completed checks,all actual tool/process exits0:
+-ASan+UBSan direct instruction-model tests:12 changing-data full-K jobs,
+108 extreme full-K jobs (K5120/6144/17408,x=-128/0/127,q=0/7/14/15,
+scale=+1/-1/-0),16 faults/invalid-range/geometry controls. Every output
+matches the independent original-q,original-FP32 reference bit-for-bit.
+-Actual compiled RV32 packet images through the unchanged scalar Step
+decoder:12 cases including both producer orders,changed second jobs,
+missing config/ACK/matrix drain/producers and invalid scale. All outputs
+and untouched padding exact;stack192/8192. Two,not three,matrix products
+and no constant7 write/unpack observed. Role refusals3,incompatible image
+variant refusal1,and a positive standalone header parse pass.
+-Actual-weight qualification in BOTH main/independent clean trees:
+original18973870528B GGUF authenticated via SAME read-only FD to
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+All851 source tensors authenticated;all193 Q4 tensors sampled with ONE
+16-row group apiece (first/middle/last selected by tensor index),full K,
+two synthetic activation jobs.386 projections,221824 panels,6176 exact
+FP32 outputs. This is NOT every model weight row or full-model quality.
+-Complete worker:main and separate clean exported tree both pass all27
+shapes (types8/12/14,K5120/6144/17408,groups1/3/16),54 changed input jobs,
+5 fragment-mask controls,16 NoC-loss inert parks,16 descriptor refusals,
+actual payload/ACK/commit/STOP. Stack3540/8192. GDN history additionally
+passes3 head pairs/6 virgin workers/12 half jobs,retained next state and
+STOP;stack4804/8192. Main/clean stdout AND stderr are byte-identical.
+Each worker stderr has exactly32 EXPECTED injected-fault diagnostic lines,
+all ACTUAL_BETA_WORKER_FAULT;no sanitizer/unexpected diagnostic is ignored.
+-Old prepared worker passes the SAME full shape/fault/history suite with
+default three-product observer. Old corrected panel tests pass16384 jobs
+and261 actual-image cases. Original affine tests pass12 direct+12 image
+cases;all three unflagged text images are byte-identical before/after.
+-Pinned default builds in main/clean both pass the whole-image identity
+check. New complete ELF154332B SHA
+45707f586c7575a36b066bfe2c5addc7909fe64bf297de299b2df03fb345466f.
+Only service changes (17636B,SHA184c0d1c7b039706a246425c627910ddafb57482ad6682eb4b35280f4bdedd48).
+Boot/global/precise/dense/fetch/text/affine/FFN/GDN binary sections remain
+exactly the accepted prepared worker. The complete nonmath relocation
+audit accounts for the exact9888B service prefix and all12 named tail
+functions. No arbitrary tail/opcode waiver. Read-only CSR gate unchanged.
+
+Important performance caveat:
+Removing one of three matrix operations is NOT a measured1.5x speedup.
+The packet prototype executes3287147 maximum RV steps vs old3263167.
+The complete worker's K5120/groups1 changed-two-job case executes1485615
+RV steps vs old prepared1471733 (about0.94% MORE controller work).
+Those are offboard instruction counts,NOT device cycles,bandwidth or TPS.
+The candidate may be slower if controller work dominates. Do not promote
+it or skip physical phase evidence merely because its arithmetic passes.
+
+Raw evidence is in the sibling qwen38-two-product-q4-offline-20261105/
+directory. Main complete-worker stdout SHA
+53f8c6b8d9e653f362192fb78123381ac5e1de01e3c3765cbc81b6600fe3f7a4;
+its expected fault stderr SHA
+ade1c52d9fd55023dca036f9aba08f71cab3d3c5e7b979b0610e6d7e3aa8542d.
+All hardware/native ownership,whole-model quality,throughput and safe
+restoration remain separate gates. No hardware/driver/Assistant/boot/SD
+or power change was made by this candidate's qualification.
