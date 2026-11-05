@@ -1,0 +1,240 @@
+{
+  "base": "aa3842120afdb5a37c468dd6b35ac36eb24b6b24",
+  "client": {
+    "bytes": 1944800,
+    "sha256": "64c8c252d2c423de227e112b8da78045eb271ed0988923c3d15183114a132dc7"
+  },
+  "files": {
+    "clean/actual-child-exits.txt": {
+      "bytes": 110,
+      "sha256": "028b4a9b84282efc56f06c5e09c4f7aa3e85021817c7f003674ea83ec15f669f"
+    },
+    "clean/client.log": {
+      "bytes": 938,
+      "sha256": "888562e14e12311f4c51e515f797218fc1900dae03f83d8d0e4488c1a9b60ae8"
+    },
+    "clean/client.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/outer.log": {
+      "bytes": 1253,
+      "sha256": "e522fc2a104f2126326e85d80a7b2d569f152caaba50192e182fe28dc41b4dff"
+    },
+    "clean/outer.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/output.log": {
+      "bytes": 172,
+      "sha256": "346e55cb547ec3a7cf5b3acb297a10a3d4011914b4b6a5d509c6994703d20eec"
+    },
+    "clean/output.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/parent-output.log": {
+      "bytes": 237,
+      "sha256": "9d118c7e4d13e8b0d6fd8e34572967e33aea90f62295787ef1b41169a004e7d3"
+    },
+    "clean/parent-output.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/parent-syntax.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/parent-syntax.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/parent.log": {
+      "bytes": 358,
+      "sha256": "40b2bcdd2b5c792a7029f13cf4be5b6ba21f5ecac0085db1ced903721b2397f1"
+    },
+    "clean/parent.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/reference.log": {
+      "bytes": 23974,
+      "sha256": "56ec253884deb7ba3f8a72dc09202f0b2a687752ebb15274843cbf14483008e9"
+    },
+    "clean/reference.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/sdk-client.log": {
+      "bytes": 301,
+      "sha256": "7f3d47c678d354740b728a8b691b2372eec22d338839eb609e97ae28238df16d"
+    },
+    "clean/sdk-client.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/source-compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/source-compile.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/source-sha256.txt": {
+      "bytes": 3259,
+      "sha256": "665c46fe10b8e592545d3028281aab04236a7a671848a3bb2b26731b7e9246e9"
+    },
+    "clean/source.log": {
+      "bytes": 280,
+      "sha256": "9eaa53030aaee175f1e42fac0d67a29ef4e013c666043764c98e60431245a920"
+    },
+    "clean/source.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/actual-child-exits.txt": {
+      "bytes": 110,
+      "sha256": "028b4a9b84282efc56f06c5e09c4f7aa3e85021817c7f003674ea83ec15f669f"
+    },
+    "main/client.log": {
+      "bytes": 938,
+      "sha256": "cfc0f91389d3c36f7a10867d0d2b7027c60f8bc06c8e2906d3a63d23062fb8ad"
+    },
+    "main/client.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/outer.log": {
+      "bytes": 1253,
+      "sha256": "f419f90d53035ab263753d3273181afb86cfecb424da4ac2952def5e322af53d"
+    },
+    "main/outer.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/output.log": {
+      "bytes": 172,
+      "sha256": "346e55cb547ec3a7cf5b3acb297a10a3d4011914b4b6a5d509c6994703d20eec"
+    },
+    "main/output.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/parent-output.log": {
+      "bytes": 237,
+      "sha256": "9d118c7e4d13e8b0d6fd8e34572967e33aea90f62295787ef1b41169a004e7d3"
+    },
+    "main/parent-output.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/parent-syntax.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/parent-syntax.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/parent.log": {
+      "bytes": 358,
+      "sha256": "7896c09fa6c9985007a969580d312e65505d255b606dcee5d26ace646ba25987"
+    },
+    "main/parent.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/reference.log": {
+      "bytes": 23974,
+      "sha256": "56ec253884deb7ba3f8a72dc09202f0b2a687752ebb15274843cbf14483008e9"
+    },
+    "main/reference.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/sdk-client.log": {
+      "bytes": 301,
+      "sha256": "7f3d47c678d354740b728a8b691b2372eec22d338839eb609e97ae28238df16d"
+    },
+    "main/sdk-client.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/source-compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/source-compile.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/source-sha256.txt": {
+      "bytes": 3259,
+      "sha256": "665c46fe10b8e592545d3028281aab04236a7a671848a3bb2b26731b7e9246e9"
+    },
+    "main/source.log": {
+      "bytes": 280,
+      "sha256": "9eaa53030aaee175f1e42fac0d67a29ef4e013c666043764c98e60431245a920"
+    },
+    "main/source.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "new_sources": [
+    "tools/pioneer/PioneerNativeCompactQ4StreamSource.h",
+    "tools/pioneer/pioneer_native_compact_q4_stream_diagnostic.cpp",
+    "tools/pioneer/build_native_compact_q4_stream_client.py",
+    "tools/pioneer/pioneer_native_compact_q4_stream_physical.sh",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_client_test.py",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_parent_test.py",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_output.py",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_parent_output.py",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_reference.py",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_source_probe.cpp",
+    "tools/pioneer/tests/run_pioneer_native_compact_q4_stream_client_tests.py"
+  ],
+  "parent_sha256": "fb8949d50e06ab69cfc921369286ad072fe1c60fbd210762188cf8e7e8f0608a",
+  "scope": "OFFBOARD client qualification;not physical closure or tokens/sec",
+  "sources": {
+    "src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h": "e798ab45d12bb41bba3b39c40b2c83830a92afdf187ac0fd30c76fa458cfd78c",
+    "src/add-ons/kernel/drivers/misc/PioneerNativeBfpProtocol.h": "f4fc9e6cb1e62260e5f93d98eeb49d2505487d8cd527884cf4ec18221a788dc4",
+    "src/add-ons/kernel/drivers/misc/PioneerNativeCompactQ4StreamProtocol.h": "2af6089aa286a24177761ea4efae5e4931d6ffbe5c91f652933cac0fd75ab600",
+    "src/libs/libsolv/solv/sha2.h": "87b8c55903f2197a2ede0b1fb95648a6f25595f9780fbb1414f72e3131d5a8af",
+    "tools/pioneer/PioneerAttentionMath.h": "8d9d0a3dc53a642af20e38cd4e5c25eb0da8958aabda2d5915a57f0d9f545421",
+    "tools/pioneer/PioneerBlackholeBf16Arithmetic.h": "48f1ef26db8e1491a6001bcb82ca808d4532b4c043a853abf0f650f065444bf4",
+    "tools/pioneer/PioneerModelWeightCache.cpp": "2c56f7ee522de23a8f775d8c1e6e041dd92d55086690b20e6b4db63ead18887d",
+    "tools/pioneer/PioneerModelWeightCache.h": "5caa3faa6bea60670d0fb7aba2c978829b809ed370c0a80d40496e70e5174ae0",
+    "tools/pioneer/PioneerNativeCompactQ4StreamSource.h": "131ea1f6aa4b4f90d5c084e108a593cc67694009309edf4ddfa26c506752eeec",
+    "tools/pioneer/PioneerQ38Q4FpuCompactData.h": "34235732ab413d7ea01ce2a4ac495372475cdc751e09bbd8320d4785f8815de0",
+    "tools/pioneer/PioneerQwen38Gguf.h": "79fcf53c4f7ca8ef09224d943ba3e277e3a0ae9c81ed09f82debb4844d5aced7",
+    "tools/pioneer/TenstorrentGgufQuant.h": "443bcb05580394e7ae2f51844e4e6c28b8e90af22d076bfd3770db948d805b71",
+    "tools/pioneer/TenstorrentGgufTensor.h": "d13ad1b092dead33d27def5274af15daba44176d14a09c84442294c138a59e71",
+    "tools/pioneer/TenstorrentQ4K.h": "5a8b889f6ec6a77eee4791834a49234dcb89b751feadadb5c7c64a18dd4db697",
+    "tools/pioneer/benchmarks/qwen38-native-q4-fpu-stream-reference-20261104.log": "56ec253884deb7ba3f8a72dc09202f0b2a687752ebb15274843cbf14483008e9",
+    "tools/pioneer/build_native_compact_q4_stream_client.py": "60d25b686049952a9082c3a3989d2dfc2deb01ce9943f4764b83f8420e0b2771",
+    "tools/pioneer/pioneer_native_compact_q4_stream_diagnostic.cpp": "ccd1124f4dc6fc3ee7022bf734556395031fefa6e86f13889a217de9ef08b2d9",
+    "tools/pioneer/pioneer_native_compact_q4_stream_physical.sh": "fb8949d50e06ab69cfc921369286ad072fe1c60fbd210762188cf8e7e8f0608a",
+    "tools/pioneer/tests/pioneer_native_bfp_arithmetic_test.py": "da2f19d069ab2c997668912734a8055a7a3a508f477a15285f4fa22b419d60d7",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_client_test.py": "aca8dd3764b9ebdf3e41042b386d2d65ecb078d9992bedc44a27dabad117510a",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_export_test.py": "a9bd738d0739b9833b239533b94b778d8eb75876b8273805d86782a7947b91a8",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_output.py": "1ea147b0d9c78f1acc6e2d54b1928132df8617ebb68f7c456c28722d09a6df6b",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_parent_output.py": "32039015401e4c560e19fff94ae1d8e0232228a471b901f50911ad8bc03681c9",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_parent_test.py": "ad51fb40d20479ddf98ffd38de3309afef82b33cd339cb2e3a1d4340c433be23",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_reference.py": "439afe28eedcdb46c4805ddff3749860ef52ec0d19ed506171dd361e9375c126",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_source_probe.cpp": "6771fdf4c8cddcfd5d5988865901233234e8b837be29a90c809105707d43be41",
+    "tools/pioneer/tests/run_pioneer_native_compact_q4_stream_client_tests.py": "3726413c50b5ecb5ac5bc3f36e750f0d9346de7d7510c9d1942d6a541055ba56"
+  },
+  "terminal": {
+    "clean": {
+      "exit": 0,
+      "session": 9075
+    },
+    "main": {
+      "exit": 0,
+      "session": 25389
+    }
+  },
+  "version": 1
+}

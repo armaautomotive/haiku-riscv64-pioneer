@@ -2,7 +2,7 @@ Compact original-Q4 native diagnostic104 -- OFFBOARD qualified only
 ================================================================
 This is a distinct native owner for the compact full-K Q4/SFPU/FPU image,
 NOT an Assistant Work mode,physical qualification or measured speedup.
-The installed driver/Assistant/boot configuration is unchanged. The last
+The offboard checkpoint did not change Assistant/boot/installed Work. The last
 actual full27B rate remains0.164361584..0.164365058tok/s;20tok/s UNMET.
 
 The fixed two-width7644B programs consume4608 original quant/metadata bytes
@@ -70,7 +70,14 @@ See benchmarks/qwen38-native-compact-q4-stream-offboard-20261105.txt and
 the associated frozen receipts/verifier. Preliminary build/archive attempts
 that failed are recorded separately,not promoted to passed qualifications.
 
-Next:distinct source-authenticating client/typed one-shot parent and fresh
-generation/power-state/idle admission,then a bounded on-card test. Old86 and
-fixed81..103 stages remain SPENT;do not rerun or repin them for104. Full
-mixed-format resident inference and real tokens/sec measurement remain.
+The distinct client/typed one-shot parent is now independently OFFBOARD
+qualified in main25389/clean9075:27 identical source files,9 actual0 children
+each,SDK client byte-identical,5292 actual-client fixtures,1846 parent-flow
+cases plus strict live-epoch regression,1866 child/1883 parent parser
+refusals,actual full-original source and12 FD-identity/error checks.
+See benchmarks/qwen38-native-compact-q4-stream-client-20261105.txt.
+Its fixed36->37->38 stage104-a was launched ONCE after fresh live gates;
+do not rerun it. A progress observation is not physical closure;read the
+separate physical result when available. Old86 and fixed81..103 stages
+also remain SPENT. Full mixed-format resident inference and real model
+tokens/sec measurements remain;this is NOT Assistant Work integration.

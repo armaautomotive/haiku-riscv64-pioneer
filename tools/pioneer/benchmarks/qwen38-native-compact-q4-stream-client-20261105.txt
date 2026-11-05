@@ -1,0 +1,92 @@
+Compact104 source-authenticating client/one-shot parent -- OFFBOARD qualified
+==========================================================================
+2026-11-05 UTC;baseaa3842120afdb5a37c468dd6b35ac36eb24b6b24+11 new source
+files. This report qualifies the client/parent,NOT physical execution or
+model speed. A separate single-use104-a hardware run was subsequently
+launched;its actual outcome must be observed separately. NEVER rerun it.
+Last full27B rate0.164361584..0.164365058tok/s;20tok/s remains UNMET.
+
+Actual closed qualifications
+----------------------------
+Main25389 and clean9075 actually EXIT0,each nine children EXIT0 and empty
+outer/child stderr. Full source closure27 files is byte-identical in both
+trees and unchanged during each suite. Clean is archiveaa3842120a+ONLY the
+11 new overlays;unrelated native/resident/llama WIP remains untouched.
+SDK client1944800B is byte-identical in BOTH builds,SHA256:
+64c8c252d2c423de227e112b8da78045eb271ed0988923c3d15183114a132dc7
+Exact parent SHA256:
+fb8949d50e06ab69cfc921369286ad072fe1c60fbd210762188cf8e7e8f0608a
+Native candidate is the prior independently qualified104 owner,SHA256:
+4722e956bfda10a5f8dbc2317bd5dd12d2de1b1099c3d33286b4b6447930f61e
+No private learned headers,binaries or objects are published.
+
+Nine actual children per tree:SDK client,parent syntax,actual client
+fixtures,actual parent flow fixtures,independent full-parent parser,
+independent child parser,independent original/Fraction reference,actual
+source-method compile and actual original source-method execution. Child
+stdout is exact across trees except two explicit temporary-fixture-directory
+lines. The old frozen numerical reference is deliberately reused ONLY as
+arithmetic data,not an old role/epoch/stage/hardware admission:
+56ec253884deb7ba3f8a72dc09202f0b2a687752ebb15274843cbf14483008e9
+
+What is now bound
+-----------------
+The actual client authenticates the SAME read-only original19GB FD,its
+complete SHA256/layout/epoch/nanosecond identity,ALL9 full-K original-row
+compact payloads/inputs and fresh rounded predictions BEFORE GPU open.
+Source changes refuse,not fallback. CPU reference exists ONLY in this
+diagnostic;the no-reference Work mode/Assistant are not changed by it.
+
+The fixed native104 client requires generation37 on EVERY fresh sample FD,
+including the first. It accepts only9 compiled sample selections and checks
+every RESULT/END field,all64 words,controls/polls/full-K journal sizes and
+the new26-read/80-flit traffic. Known numeric success permits explicit END;
+any uncertainty closes only,with NO next query/sample/END/retry/reset.
+SDK role checks refuse kernel/Work/CPU-validation even when defined0,plus
+fast math:11 refusals. Native104 owner isolation remains separately proved.
+
+Actual-client fixtures:5292 independent ASan/UBSan/Werror processes,all352
+SUPPORT result bytes/all64 RUN+END output words at every sample,wrong tag,
+generation (including first FD),source,geometry,controls,journals,traffic,
+output-channel delivery and lifecycle. Independent cases now execute four
+at a time;no cases,checks or process isolation were removed.
+
+Actual-parent fixtures:1846 flow/output+7 idle+8 reference/source+20
+exchange-step+10 one-shot+14 metadata+8 CPU/RAM cases,plus explicit rejection
+of the historical stale generation7 check. Metadata fixtures now TRACK the
+actual simulated36->37->38 state rather than unconditionally accepting a
+query. All576 missing/duplicate/equal-but-wrong words refuse before restore.
+Independent child parser1 valid/1866 refused;FULL parent parser1 valid/
+1883 refused,624 exact ordered records/two64-CPU/full-RAM snapshots.
+
+The actual source method checks ALL9 real full-K selections against fresh
+original bytes and288 predictions. Twelve explicit FD-identity/error
+fixtures,including both nanosecond timestamps,refuse Ready without changing
+the original. One-shot preparation/null/retry handling is checked too.
+The independent Python parser/Fraction checker reauthenticates the whole
+original and2654208 original weights/663552 rounded phases before emitting
+the identical288-word numerical reference. This is NOT prompt quality.
+
+Physical-run contract,not a physical result
+------------------------------------------
+Fixed fresh stage:/boot/home/pioneer-native-compact-q4-stream-20261105-a.
+Typed36 normal041 ->37 diagnostic104 ->38 normal041. Hash/permission/link/
+filesystem/idle/model/Assistant/guard/CPU/RAM gates precede the one-shot
+marker. Known completed child576 exact words/nine clean ENDs and live37
+metadata are required before restoring041. Unknown never auto-restores.
+No card/SD/mains change is authorized or needed by this parent. A failure
+requires observation and separately authorized recovery,not editing pins.
+
+Before staging,live read-only checks proved normal041/tag12/gen36,owner0,
+one metadata cookie,guard1,64CPUs/full137034936320 RAM,unchanged Assistant/
+service/admin/guard hashes,original permissions/size,idle and absent stage.
+The four uploaded private artifacts were checked before single activation.
+At23:48:42GMT parent32948/wrapper32941 remained live,client was still in
+original authentication (NO GPU OPEN YET),stderr0. This is only a progress
+observation,NOT successful GPU execution or physical closure.
+
+Preliminary failures are not counted as passed qualifications:initial
+namespace spelling/reference-marker/escaped-newline fixture defects were
+corrected;two obsolete frozen full runs83544/55780 were explicitly stopped
+with SIGTERM143. Final passed suites above are fresh runs of unchanged
+corrected source. Prior-stage markers were not removed or reused.
