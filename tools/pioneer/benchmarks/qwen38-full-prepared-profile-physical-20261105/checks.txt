@@ -1,0 +1,14 @@
+Actual observed closed-run/tool evidence,not inferred from log shape:
+physical parent's recorded actual exit:0
+rate helper's recorded actual exit:0
+fresh independent gated postflight actual SSH/tool exit:0
+closed-log SCP copy actual tool exit:0
+main complete reader --prepared-q4 --phase-profile actual exit:0
+independent clean reader,identical explicit flags,actual exit:0
+main/clean complete reader stdout cmp actual exit:0
+physical rate/parent stderr,postflight stderr,both reader stderr:all0B
+all4 protected PIDs absent before any independent driver metadata call
+stable041/gen28 actual status,no active owner/quarantine;64CPU/fullRAM
+
+The one-shot physical trial is spent and CLOSED. It must never be rerun
+by deleting markers or assuming that a monitor completion is a card exit.

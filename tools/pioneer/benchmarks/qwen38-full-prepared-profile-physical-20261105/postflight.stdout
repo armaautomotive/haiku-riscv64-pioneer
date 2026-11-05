@@ -1,0 +1,11 @@
+P100A_RELOAD driver55 tag2026102100010012 generation28 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+130725801984 bytes free      (used/max 6309134336 / 137034936320)
+                           (cached   31405707264)
+     59581 semaphores free (used/max       5955 /      65536)
+      3713 ports free      (used/max        383 /       4096)
+      2588 threads free    (used/max       1508 /       4096)
+      1973 teams free      (used/max         75 /       2048)
+PASS_READONLY_POSTFLIGHT_parent_and_child_actual0_protected_pids_absent_idle_stable041_gen28_apps_runtime_guard_64CPU_fullRAM_preserved

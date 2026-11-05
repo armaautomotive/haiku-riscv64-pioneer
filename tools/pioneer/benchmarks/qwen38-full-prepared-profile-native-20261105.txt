@@ -1,6 +1,11 @@
 Current full-model prepared phase profiler -- 2026-11-05
 =====================================================
 
+SUBSEQUENT PHYSICAL TRIAL ACTUALLY CLOSED with valid phase data and
+stable041/gen28 restored. See qwen38-full-prepared-profile-physical-20261105.txt
+and its whole raw evidence. The build/admission record below is historical;
+it is NOT a currently active lease or a new launch grant.
+
 INTEGRATED AND OFFLINE-TESTED;NOT YET A PHYSICAL TIMING/SPEED RESULT.
 Prior real tag98 result0.161666352..0.161669502tok/s is a regression;
 best accepted vector92 remains0.172813448..0.172816755.20tok/s unmet.

@@ -1,0 +1,81 @@
+Full-card Qwen27B physical phase profile -- 2026-11-05
+===================================================
+
+ACTUALLY CLOSED,VALID TIMING DATA,NO USEFUL-SPEED CLAIM. One unchanged
+prepared worker b283d788 trial with instrumented ROOT74cae450/tag99.
+This is NOT the new two-product e47497e6 worker's performance result.
+
+Actual parent.exit0,rate.exit0,all four protected PIDs absent,both physical
+stderr files empty,and FULL_CARD_RATE32_CLOSED_STABLE_RESTORED. Whole
+physical-parent transcript shows stable041/gen26 -> tag99/gen27 ->
+stable041/gen28. Fresh independent READ-ONLY postflight actually exits0:
+idle normal041/gen28,no owner/quarantine,unchanged Assistant/server/runtime
+and guard hashes,64 CPUs and137034936320B maximum RAM. No reboot,relay,
+SD,mains,hardware connection or Assistant installation was required.
+
+Real original851-tensor Qwen3.8-27B-Q4_K_M source,all inference on card.
+CPU vocabulary/text,source loading and lifecycle ONLY;no CPU context,
+learned dot,reference or fallback. Uploaded exactly20470759424B;6393
+progress rows.31 prompt positions,32 output tokens,62 total commits,all63
+increasing count observations.3655 timestamp observations.
+Observed POST-PROMPT rate:0.161777026..0.161780396 tokens/sec.
+31 commit steps31->62 take191.617778..191.621769sec (~6.18135sec/step).
+This is essentially unchanged from tag98's0.161666352..0.161669502.
+Midpoint difference+0.06853% is NOT claimed as a speed improvement;it is
+another backend/loader revision with instrumentation,not a controlled
+ablation or repeated performance study. It remains6.38624% below accepted
+vector92's0.172813448..0.172816755.20tok/s remains unmet.
+
+Reported prompt+generation383.727sec,total4538.545sec. Total includes
+upload/startup/cleanup,NOT preceding Load authentication/planning. No
+warm-resident request speed is claimed. Startup and cleanup visibly take
+minutes;observing a complete upload or committed62 did NOT grant END.
+
+The public32-byte counting answer exactly matches tags98/vector92:
+310a320a330a340a350a360a370a380a390a31300a31310a31320a31330a3134
+(1 through14,one per line). One public counting request is NOT broad model
+quality or an isolated-latency benchmark.
+
+Actual CLOSED on-card clock data,valid1,state2,error0,committed62:
+begin9933,end517514969613,total517514959680 cycles. Both independent
+whole-log readers accept EXACT ordered bucket counts and the whole sum:
+phase                 segments     cycles          share
+bootstrap                    1       1887757       0.000365%
+metadata                  3968   21973903898       4.246042%
+recurrent_layer           2976  305738981342      59.078289%
+dense_layer                992  126987310857      24.537901%
+head_normalize              62     118348872       0.022869%
+head_matrix                 62   57542521741      11.119006%
+feedback                    62     104566203       0.020205%
+state_commit                62    4911025119       0.948963%
+publication                 62      54877457       0.010604%
+final_stop                   1      81536434       0.015755%
+No clock frequency is assumed or inferred. These fractions aggregate
+prompt+generation over62 positions,NOT just the31-step rate window.
+
+Interpretation / next action:
+Recurrent+dense layers+head matrix consume94.73520% of timed cycles.
+Layer categories include their FFN/projection/attention work and on-card
+control/NoC waits;59% recurrent_layer is NOT59% attention or proof that
+FPU arithmetic alone dominates. The first optimization target is the
+complete on-card layer workers,not a UI change or host CPU fallback.
+Removing only metadata/state-copy overhead cannot deliver the requested
+orders-of-magnitude change. These data do NOT estimate maximum card
+capacity,prove a fake card,or justify promising20tok/s.
+
+Integrate the qualified two-product worker into a DISTINCT whole-model
+native/program identity,then compare the same real32-output request and
+closed phase data. Do not reuse spent tag99 or promote an offline result
+to Assistant. The small two-product change alone is not expected to bridge
+the ~124x gap to20;further structural command/synchronization/weight-stream
+work must be selected from measurements,not repeated unchanged trials.
+
+Raw complete stdout/stderr,actual exits/state/PIDs,independent postflight,
+main/clean whole-reader outputs are in the sibling evidence directory.
+Both readers explicitly use --prepared-q4 --phase-profile and produce
+byte-identical results. Neither accepts a live/truncated log or grants
+native cleanup authority from DATA alone.
+rate.stdout SHA978bcc0726e8849f406e29ecf336fa810a85fceb7f493a8539e59970bd2fb54f
+physical-parent.stdout SHA65c75476b20c8b37eb591b7889d558f318f27ab3fbebdef49c9ad6dea90580b3
+postflight.stdout SHAac1a44d9f5a3d5cb5425e60127f386d41bd4b8c1ac4190ed4b252ff2249a6350
+reader-main.stdout SHA21bd0fe607ce2c689a1e29a31aa74b9d0b47b439fea8a0036b6ae7ba17b2593d
