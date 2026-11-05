@@ -2,6 +2,10 @@
 // DISTINCT QGW1 whole-model/global-output front end. Fresh cohort required.
 // Reuses returning arithmetic ONLY; this is not an old live-cohort update.
 #include "PioneerQ38TokenBatchedPrefetchRole.h"
+#ifdef PIONEER_Q38_INSTRUCTION_PREFETCH_WORKER_IMAGE
+#include "PioneerQ38InstructionPrefetchWorkerRole.h"
+#include "PioneerBlackholeInstructionPrefetch.h"
+#endif
 #ifdef PIONEER_Q38_PREPARED_EXACT_Q4_WORKER_IMAGE
 #if PIONEER_Q38_PREPARED_EXACT_Q4_WORKER_IMAGE != 1
 #error Exact distinct prepared-source global-worker role required
@@ -51,6 +55,18 @@ namespace M=PioneerQ38GlobalWorkerLayout;
 namespace D=PioneerQ38DensePartitionLayout;
 static volatile uint32_t* Words(unsigned a){return reinterpret_cast<volatile uint32_t*>(a);}
 static void Fence(){asm volatile("fence" ::: "memory");}
+#ifdef PIONEER_Q38_INSTRUCTION_PREFETCH_WORKER_IMAGE
+struct InstructionPrefetchIO {
+ __attribute__((always_inline)) inline bool ReadConfig(unsigned index,unsigned& value){
+  if(index!=PioneerBlackholeInstructionPrefetch::Limit && index!=PioneerBlackholeInstructionPrefetch::Control)return false;
+  value=*Words(0xffef0000+index*4);return true;
+ }
+ __attribute__((always_inline)) inline bool WriteConfig(unsigned index,unsigned value){
+  if(index!=PioneerBlackholeInstructionPrefetch::Limit && index!=PioneerBlackholeInstructionPrefetch::Control)return false;
+  *Words(0xffef0000+index*4)=value;return true;
+ }
+};
+#endif
 static unsigned Source(unsigned i){return !i?0x100:i<=6?0x118+(i-1)*4:i<=12?0x130+(i-7)*4:i==13?0x150:i==14?0x154:0x16c;}
 static unsigned Counter(unsigned i){return i==0?0x208:i==1?0x20c:(i==2 || i==6)?0x210:i==3?0x214:i==4?0x204:i==5?0x220:0x228;}
 static bool Quiet(){
@@ -136,6 +152,10 @@ extern "C" void q38_global_worker_main(){
  for(unsigned i=0;i<8;i++)counters[i]=*Words(0xffb20000+Counter(i));
  if(counters[2]!=counters[6])block_fault_park();
  asm volatile("mv s11,%0"::"r"(&seal):"s11","memory");
+#ifdef PIONEER_Q38_INSTRUCTION_PREFETCH_WORKER_IMAGE
+ InstructionPrefetchIO instructionIO;PioneerBlackholeInstructionPrefetch instructionPrefetch;
+ if(!instructionPrefetch.Begin(instructionIO))block_fault_park();
+#endif
  for(unsigned i=0;i<16;i++)Words(M::Status)[i]=0;
  Words(M::Status)[3]=M::Magic;Fence();
  unsigned previous=0,densePhase=0,modelLayer=0,modelPosition=0,globalWave=0;
@@ -171,6 +191,9 @@ extern "C" void q38_global_worker_main(){
   }
   Words(M::Status)[0]=request;Words(M::Status)[4]=op;Fence();
   if(op==M::Stop){
+#ifdef PIONEER_Q38_INSTRUCTION_PREFETCH_WORKER_IMAGE
+   if(!instructionPrefetch.Restore(instructionIO))block_fault_park();
+#endif
    q38_mixed_seal();Words(M::Status)[1]=request;Words(M::Status)[4]=2;Fence();block_peer_stopped();
   }
   if(op>=M::DenseScores && !outputJob){

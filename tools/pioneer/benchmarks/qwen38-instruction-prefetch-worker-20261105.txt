@@ -1,0 +1,92 @@
+Bounded instruction-prefetch worker -- 2026-11-05
+================================================
+
+BUILD/OFFBOARD QUALIFIED ONLY. NO NEW NATIVE/USER/PAIRED PROGRAM SELECTION
+OR HARDWARE LAUNCH GRANT. The DIFFERENT replay13/tag100 trial remains
+protected and LIVE;only its exact PID/log observer is used on the Pioneer.
+Latest closed physical rate remains0.161777026..0.161780396tok/s;best
+accepted vector92 remains0.172813448..0.172816755;20tok/s UNMET.
+
+Candidate changes only the global worker frontend,not the arithmetic:
+globalworker.bin9720B SHA
+6b04a57faf2e6a17ee7ac9d9881420ed56a97b3e2b65bcbf0e7f215e093cb533
+complete ELF154332B SHA
+9f1518398a3145ee30254ce06cd291403366070815dfdcbe26635f0340265f26.
+All OTHER9 sections are byte-for-byte the qualified replay13 worker92ff...
+including its complete service2f537444... . No weight/cache/learned math,
+precision,FP32 rounding,CPU inference/reference/fallback or ROOT change.
+
+Actual behavior under its distinct IMAGE compile flag:
+After boot/source/counter checks,the sole running T0 saves backend config
+203 (prefetch limit) and208 (prefetch control),reads each twice and refuses
+instability. It disables T0 prefetch,sets the bound to0xc0c67 (last byte of
+the highest immutable program section),then enables T0 with request count4.
+Other enable/reserved bits are preserved;only T0 and the low4 count bits
+are changed. BEFORE publishing normal STOP,it verifies that the selected
+values still belong to this scope,disables T0 prefetch,restores the original
+limit,and restores the entire original control word. Every write is read
+back and consumed. Failure parks;NO retry,rollback,following config IO or
+fabricated STOP. The native owner would still owe its normal full lifetime;
+these helper/fixture checks are not hardware ownership authority.
+
+The fixed policy assumes exclusive tile ownership with all other RISCVs
+held. Current native launch code requires reset0x46800 while T0 runs:
+bits11/13/14/18 hold B/T1/T2/NC;bit12 releases T0. This source invariant
+matches the vendor's reset bit assignments. No reset behavior is changed.
+Any future integration must retain that owner and restore/quarantine
+contract;do NOT select this worker under an old native/program identity.
+
+Completed actual checks:
+-Main and independent clean strict builds return0/empty stderr and match
+ whole ELF/sections. BOTH FIRST reproduce the ENTIRE unchanged replay13
+ 92ff... ELF with the default global source. Old default behavior survives.
+-Strict nonmath audit retains all existing bytes except the named frontend
+ main/its12 bounded dispatch targets and authenticated literal relocations.
+ No writable globals/GOT or new arithmetic/control CSR opcodes;all3 existing
+ GDN read-only clock CSR operations remain exact. Frontend main frame1104B;
+ all its individual helper frames are<=2048B,not a whole-kernel stack claim.
+ Existing code/journal extents fit;no new L1 range.13 compile-role refusals.
+-Main/clean fixed-policy ASan+UBSan tests:65556 initial-state combinations,
+ including all low16 control values/upper reserved-bit cases;exact18-IO
+ normal restoration;30 injected read/write faults and2 owner changes.
+ A failed write MAY have committed;tests enforce unsafe/no following IO.
+-Main/clean actual compiled full-worker tests return0 and match WHOLE
+ stdout AND stderr:27 geometries/54 changed-input jobs,5 fragmented-mask
+ cases,16 NoC-loss inert parks,16 descriptor refusals,missing replay-record
+ refusal;original FP32 outputs/source ACK/commit/STOP. Matrix stack3556/8192.
+-Retained GDN history:3 pairs/6 workers/12 half-jobs preserve next state
+ and normal STOP,stack4820/8192. Additional main/clean history-only tests
+ use DIFFERENT nonzero original config values on each core and restore
+ them exactly after the recurrent calls. Both return0/empty stderr.
+-Actual compiled frontend fault tests cover ALL18 register IO positions:
+ 10 init faults and8 restoration faults reach real guest fault park and
+ remain inert for2048 subsequent steps,without more config/NoC access.
+ One nonzero-config Q4 job restores normally;4 additional boot states pass.
+ Endpoints and instruction-cache effects are MOCK,not hardware timing.
+-Each full-worker stderr has EXACTLY50 expected ACTUAL_BETA_WORKER_FAULT
+ rows from deliberate fault injection (32 prior+18 new),no other lines.
+ These are NOT empty-stderr claims. Complete stdout SHA
+ 62e65e91e4ced8459c01d14c620c967f8e9790f35be5c0b6da704dd9df095f41
+ and expected-fault stderr SHA
+ 0933768b5b5cc961cb4fc090c0011636fee194422ca4f9f12050f56aedc28fdb.
+
+Motivation is the actual instruction attribution in
+qwen38-replay13-worker-instruction-profile-20261105.txt,not a measured
+cache fault. The CURRENT card's original prefetch configuration has NOT
+been read or changed. No model throughput or useful-speed gain is claimed.
+Do not infer that prefetch alone can close the~116x best-result gap to20.
+
+Next,AFTER the running tag100 trial actually closes:parse its whole
+rate/profile output,verify normal stable041/gen30 restoration,then pair
+this candidate with the unchanged ROOT under a NEW full-model native/
+USER/program identity and qualify that integration before any new launch.
+Do not reopen spent stages or repeat unchanged predecessors.
+
+Primary sources inspected2026-11-05:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/InstructionCache.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/BabyRISCV/InstructionCache.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/BackendConfiguration.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/SoftReset.md
+https://github.com/tenstorrent/tt-metal/blob/81989dcdb8f9b340c932ae7a71a346f4f08703eb/tt_metal/hw/inc/blackhole/cfg_defines.h
+The pinned vendor header was actually read via HTTPS when the web viewer
+could not fetch it:203/208 definitions and masks verified,not guessed.

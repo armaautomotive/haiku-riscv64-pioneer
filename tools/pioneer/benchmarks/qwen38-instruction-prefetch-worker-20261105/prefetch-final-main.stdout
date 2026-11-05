@@ -1,0 +1,14 @@
+PASS_PREPARED_Q4_NONMATH exactOldService9888 explicitTailFunctions11 globalMainAnd12TargetDispatchDeliberatelyChanged prefixRelocations5 NO_NATIVE_ROOT_OR_EXECUTION_AUTHORITY
+PASS actual QGT1 opcode audit:3 READ-only CSRRS mcycleh/mcycle/mcycleh,x0;NO CSR/control/counter writes
+('boot.bin', 4, 'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c')
+('globalworker.bin', 9720, '6b04a57faf2e6a17ee7ac9d9881420ed56a97b3e2b65bcbf0e7f215e093cb533')
+('precise.bin', 8392, '32c078029e1c74ec4bd9744ea494433f5003f63a936df05445d3066c722a7ecc')
+('dense.bin', 10332, 'd1749707ffe803e28dced9c7d065e763f125009678ace33b4d468109984869ad')
+('ffn.bin', 16456, 'e6533bc2035a251dbc0f4aad1da9d5222fcf8649ff2577db375843dc746014b7')
+('service.bin', 17512, '2f5374449725d034c1e4eb0d685926f9046541bc1377ace57ed2939982f01610')
+('fetch.bin', 1292, 'a74f8f6303787360f35b588e22746074adc9bcc780ae5a274be25331f765f4c6')
+('affine.bin', 4680, 'a8f650e58052aba96187bcbee08c25a24de4b8aa8d92c5bb7c34ccfeeca4682d')
+('text.bin', 7844, 'fa783006d1943e886d777982f4aecc93fc0c321937e15f6d87755a14ddc07e00')
+('gdn.bin', 35944, '7ae46e0cea089f93ae7662d2033e469393c4a39859dbc3745d40c456033944c3')
+('program.elf', 154332, '9f1518398a3145ee30254ce06cd291403366070815dfdcbe26635f0340265f26')
+BUILD_INSPECT_ONLY T0prefetch distinct global worker;old replay13 whole ELF FIRST/all9 other sections unchanged;13 role refusals;NO_NATIVE_PHYSICAL_OR_TPS_GRANT

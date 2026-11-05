@@ -208,6 +208,12 @@ struct PreparedQ4Peer:ExactQ4WorkPeer {
  }
  void ReceivePreparedQueued(){ExactQ4WorkPeer::ReceiveQueued();PrepareSource(2);}
 };
+#ifdef PIONEER_Q38_INSTRUCTION_PREFETCH_WORKER_TEST
+#include "pioneer_q38_instruction_prefetch_worker_observer.h"
+using PreparedTestPeer=InstructionPrefetchPeer;
+#else
+using PreparedTestPeer=PreparedQ4Peer;
+#endif
 #ifndef PIONEER_Q38_PREPARED_WORKER_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==4 || (argc==5 && (!strcmp(argv[4],"--pilot") || !strcmp(argv[4],"--group-pilot") || !strcmp(argv[4],"--controls-only") || !strcmp(argv[4],"--faults-only"))));
@@ -225,7 +231,7 @@ int main(int argc,char** argv){
   if(groupPilot && (type!=12 || k!=5120 || groups!=3))continue;
   printf("PREPARED_Q4_COMPLETE_CASE type%u K%u groups%u\n",type,k,groups);
   auto old=std::make_unique<ExactQ4WorkPeer>(argv[1],argv[2],type,k,groups);
-  auto next=std::make_unique<PreparedQ4Peer>(argv[1],argv[3],type,k,groups);
+  auto next=std::make_unique<PreparedTestPeer>(argv[1],argv[3],type,k,groups);
   for(unsigned side=0;side<2;side++){
    auto& p=side?static_cast<ExactQ4WorkPeer&>(*next):*old;p.delay=3;
    p.BootPushed();p.Prepare();p.StagePushed();p.AwaitPayload();p.FinishPushed(true);p.CheckEnd();
@@ -248,7 +254,7 @@ int main(int argc,char** argv){
  if(!pilot && !groupPilot && !faultsOnly){
   for(unsigned nonzero:{0U,1U,239U,240U,256U}){
    auto old=std::make_unique<ExactQ4WorkPeer>(argv[1],argv[2],12,5120,3);
-   auto next=std::make_unique<PreparedQ4Peer>(argv[1],argv[3],12,5120,3,13);
+   auto next=std::make_unique<PreparedTestPeer>(argv[1],argv[3],12,5120,3,13);
    old->base+=13*2304;old->matrixJob[6]=old->base;old->memory[0x74018]=old->base;
    for(auto& p:old->packets)if(p.tile>=0)p.address+=13*2304;
    for(unsigned t=0;t<next->tiles.size();t++)for(unsigned panel=0;panel<16;panel++)for(unsigned i=0;i<256;i++){
@@ -270,14 +276,14 @@ int main(int argc,char** argv){
  }
  if(!pilot && !groupPilot && !controlsOnly){
   for(unsigned type:{8U,12U,14U})for(unsigned which=0;which<(type==12?8U:4U);which++){
-   auto p=std::make_unique<PreparedQ4Peer>(argv[1],argv[3],type,17408,3);
+   auto p=std::make_unique<PreparedTestPeer>(argv[1],argv[3],type,17408,3);
    p->delay=3;p->BootPushed();p->Prepare();p->StagePushed();
    p->faultAt=which==0?1:which==1?p->inputReads+1:which==2?p->inputReads+2:which==3?unsigned(p->packets.size())
     :which==4?p->inputReads+3:which==5?p->inputReads+4:which==6?p->inputReads+5:p->inputReads+6;
    p->ReadFault();faults++;
   }
   for(unsigned field=0;field<16;field++){
-   auto p=std::make_unique<PreparedQ4Peer>(argv[1],argv[3],12,5120,1);p->descriptor[field]^=0x80000001U;
+   auto p=std::make_unique<PreparedTestPeer>(argv[1],argv[3],12,5120,1);p->descriptor[field]^=0x80000001U;
    p->delay=3;p->BootPushed();p->Prepare();p->StagePushed();
    while(p->pc!=p->faultPC && !p->heldPayload)p->StepBlock();
    assert(p->pc==p->faultPC && !p->heldPayload && !p->matrixInstructions && !p->pushes && !p->mailbox[0]);
@@ -288,7 +294,7 @@ int main(int argc,char** argv){
  }
 #ifdef PIONEER_Q38_TWO_PRODUCT_REPLAY_WORKER_TEST
  if(!pilot && !groupPilot && !controlsOnly){
-  auto p=std::make_unique<PreparedQ4Peer>(argv[1],argv[3],12,5120,1);p->dropAffineReplayRecord=true;
+  auto p=std::make_unique<PreparedTestPeer>(argv[1],argv[3],12,5120,1);p->dropAffineReplayRecord=true;
   p->delay=3;p->BootPushed();p->Prepare();p->StagePushed();bool refused=false;
   try{p->AwaitPayload();}catch(const PreparedQ4Peer::ReplayAccessFault&){refused=true;}
   assert(refused && p->affineReplayRecords==1 && p->affineReplayWords==13 && !p->affineReplayRuns

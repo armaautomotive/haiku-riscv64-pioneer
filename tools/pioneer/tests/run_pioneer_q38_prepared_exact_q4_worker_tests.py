@@ -12,6 +12,11 @@ from compare_pioneer_q38_observed_trace import require, stable_bytes
 from pioneer_q38_prepared_q4_relocations import audit
 
 require(__debug__ and not os.environ.get('PYTHONOPTIMIZE'),'no optimized Python')
+instruction_prefetch=None
+if '--instruction-prefetch-image' in sys.argv:
+    require(sys.argv.count('--instruction-prefetch-image')==1,'one explicit new image')
+    at=sys.argv.index('--instruction-prefetch-image');require(at+1<len(sys.argv),'new image required')
+    instruction_prefetch=pathlib.Path(sys.argv[at+1]);del sys.argv[at:at+2]
 two_product_replay='--two-product-replay' in sys.argv[1:]
 two_product='--two-product' in sys.argv[1:] or two_product_replay
 if two_product_replay:
@@ -24,6 +29,7 @@ require(len(sys.argv) in (2,3),'IMAGE [--pilot|--group-pilot|--controls-only|--f
 require(len(sys.argv)!=3 or sys.argv[2] in ('--pilot','--group-pilot','--controls-only','--faults-only','--history-only','--instruction-profile'),'explicit test scope')
 instruction_profile=len(sys.argv)==3 and sys.argv[2]=='--instruction-profile'
 require(not instruction_profile or two_product_replay,'profile the explicit qualified replay13 variant only')
+require(not instruction_prefetch or (two_product_replay and not instruction_profile),'new prefetch image is an explicit replay13 worker,not a profile/old mode')
 require(not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ),'no role override')
 here=pathlib.Path(__file__).resolve().parent
 image=pathlib.Path(sys.argv[1]);control=image/('unchanged-prepared/unchanged-original' if two_product else 'unchanged-original')
@@ -54,6 +60,10 @@ snapshots=[snapshot(directory,pins(script,variable)) for directory,script,variab
     (fixture,here/'run_pioneer_q38_mixed_worker_tests.py','PINS'),
     (control,here.parent/'build_qwen38_exact_q4_work_worker.py','PINS'),
     (image,here.parent/('build_qwen38_two_product_q4_worker.py' if two_product else 'build_qwen38_prepared_exact_q4_worker.py'),'REPLAY_PINS' if two_product_replay else 'PINS'))]
+if instruction_prefetch:
+    candidate=snapshot(instruction_prefetch,pins(here.parent/'build_qwen38_instruction_prefetch_worker.py'))
+    parent=dict(snapshots[2]);require(all(data==parent[name] for name,data in candidate if name not in ('globalworker.bin','program.elf')),'ALL9 math/other sections unchanged')
+    snapshots[2]=candidate
 legacy=[(name+'.bin',size,digest) for name,size,digest in pins(here/'run_pioneer_q38_resident_gdn_output_operator_service_image_tests.py')]
 legacy.append(('program.elf',96148,'44bac0c1061f298ed8ccd2a1eb4780371bc7c80031cb230ad2da27f476202d19'))
 legacy=snapshot(fixture/'unchanged-worker',legacy)
@@ -67,7 +77,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-prepared-q4-closed-tests-',dir=
             target.chmod(0o400)
         (directory/'program.symbols').write_bytes(subprocess.check_output([tool+'nm','-n',str(directory/'program.elf')]))
         (directory/'program.symbols').chmod(0o400);images.append(directory)
-        if instruction_profile:
+        if instruction_profile or instruction_prefetch:
             rows=[r.split() for r in subprocess.check_output([tool+'readelf','-sW',str(directory/'program.elf')],text=True).splitlines()]
             functions=[r for r in rows if len(r)==8 and r[3]=='FUNC' and r[6].isdigit() and r[2].isdigit() and int(r[2])]
             require(bool(functions),'actual ELF STT_FUNC extents,not nm text/data labels')
@@ -89,6 +99,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-prepared-q4-closed-tests-',dir=
     if two_product_replay:
         flags.append('-DPIONEER_Q38_TWO_PRODUCT_REPLAY_WORKER_TEST=1')
         print('REPLAY13_SHARED_PHYSICAL_BUFFER_CLOSED_WORKER_VALIDATION_ONLY',flush=True)
+    if instruction_prefetch:
+        flags.append('-DPIONEER_Q38_INSTRUCTION_PREFETCH_WORKER_TEST=1')
+        print('INSTRUCTION_PREFETCH_COMPILED_FRONTEND_FIXED18_IO_SEQUENCE_MOCK_ONLY_NO_CACHE_TIMING',flush=True)
     history_only=len(sys.argv)==3 and sys.argv[2]=='--history-only'
     if not history_only:
         binary=root/'worker'
@@ -99,4 +112,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-prepared-q4-closed-tests-',dir=
         history=root/'gdn-history'
         subprocess.run([*common,*flags,str(here/'pioneer_q38_prepared_q4_gdn_history_test.cpp'),'-o',str(history)],check=True)
         subprocess.run([str(history),str(images[0]),str(images[2])],check=True,env=environment)
+    if instruction_prefetch and len(sys.argv)==2:
+        faults=root/'prefetch-faults'
+        subprocess.run([*common,*flags,str(here/'pioneer_q38_instruction_prefetch_worker_faults.cpp'),'-o',str(faults)],check=True)
+        subprocess.run([str(faults),str(images[0]),str(images[2])],check=True,env=environment)
 print(('REPLAY13_TWO_PRODUCT_' if two_product_replay else 'TWO_PRODUCT_' if two_product else '')+'CLOSED_PREPARED_Q4_WORKER_TESTS whole immutable ROMs;NO native/ROOT/source/card/Assistant/full-model/TPS grant',flush=True)
