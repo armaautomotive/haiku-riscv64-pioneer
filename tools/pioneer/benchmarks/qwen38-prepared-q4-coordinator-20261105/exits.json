@@ -1,0 +1,18 @@
+{
+  "coordinator_main_exit": 0,
+  "coordinator_clean_exit": 0,
+  "standalone_pilot_exit": 0,
+  "standalone_controls_exit": 0,
+  "all_four_stderr_bytes": 0,
+  "coordinator_stdout_identical": true,
+  "optimized_python_exit": 1,
+  "optimization_environment_exit": 1,
+  "role_override_exit": 1,
+  "coordinator_actual_matrix_job_calls": 1428,
+  "coordinator_refusal_cases": 160,
+  "coupled_virgin_workers": 3,
+  "complete_projection_run": false,
+  "native_owner_tested": false,
+  "hardware_access": false,
+  "new_inference_tps": null
+}

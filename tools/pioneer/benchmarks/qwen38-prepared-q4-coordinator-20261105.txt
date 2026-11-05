@@ -1,0 +1,93 @@
+Prepared Q4 coordinator/worker instruction integration -- 2026-11-05
+=================================================================
+
+ACTUAL LINKED FUNCTION/WORKER EXECUTION, SYNTHETIC RAW BYTE ENDPOINTS.
+NOT a complete ROOT boot/Run/119-worker history, native owner, real model,
+hardware trial, installed Assistant update, or a throughput measurement.
+The last accepted physical 27B rate remains 0.172813448..0.172816755tok/s.
+The target 20tok/s is still unmet.
+
+What was executed (not merely compiled):
+-The complete authenticated ROOT ELF 0306100598ee1aa4e20bf3399165f5fbc2714ab2a694021fa98d63f4f64bb8f1
+ and prepared worker ELF b283d788a682681f8994058ab51b19b2b1e79f72945d7e839c9cdd81737ff9c3.
+-ROOT stage/read functions, the recurrent component's actual private seal,
+ MatrixJob, Transfer, and pushed receipt consumer. No host seal stub or PC
+ skip is used. ROOT functions receive synthetic initial ABI arguments;
+ this is explicitly NOT evidence of whole-ROOT owner acquisition or Run.
+-Six metadata phases: layers0/63 x FFN gate/up/down roles2/3/4. Each reads
+ 64B header +9536B body through actual emitted, delayed NoC read commands.
+ Each phase stamps all119 slots and repeats the SAME stamp,1428 actual
+ MatrixJob calls total. This is descriptor coverage,NOT119 worker histories.
+-Three coupled virgin workers: logical1/96 at K5120 and119 at K17408,
+ one16-row group each,fragment tile prefixes0/13/13. Each executes its real
+ boot before ROOT's actual job-write and doorbell-write functions dispatch.
+-The descriptor read is served from the actual ROOT L1 slot written by
+ emitted MatrixJob instructions,NOT the old standalone descriptor vector.
+ The source-bank route is the real bank0 route786,not fixture route0x47.
+-Workers execute960/960/3264 tensor instructions,respectively. Original
+ raw tensor and prepared/correction byte endpoints remain synthetic;
+ quantized inputs are fixture raw inputs,NOT the whole ROOT quantizer.
+-Actual emitted worker payload and commit packets populate ROOT's receipt
+ slot. The sender stalls2048 steps without payload ACK,then emits commit
+ only after ACK. The real ROOT receipt consumer accepts those bytes against
+ independent expected read/flit counts retained BEFORE worker launch.
+ No expected frontier is adopted from the worker's reported counters.
+-All three workers complete their actual STOP. Shared tensor state is not
+ copied/reset between firmware stages. Maximum observed stack3540/8192B.
+
+160 executed failure cases per complete coordinator test:
+36 staged descriptor/header/ledger mutations;1 stale request;4 first/second
+read loss or wrong-counter cases;5 post-transfer immutable-source changes;
+16 invalid source header words;20 pre-issue command readback/post-response
+command changes;54 corrupt real receipt fields;24 independent expected
+counter changes. Failures reach the real fault-report writer and retain
+its fault marker for2048 inert instructions,with no later packet or retry.
+The request field deliberately permits the SAME existing stamp;its refusal
+test uses a DIFFERENT request instead of mislabeling idempotence as failure.
+
+Main and independent clean HEAD-archive source builds ACTUALLY exited0,
+with ASan+UBSan,empty stderr,and byte-identical complete stdout:
+705674fe440bd460eb04d78b3d6c45181904c0dc9ee5f9760c9a95f9639f4aaa
+The clean source contains only HEAD plus these three pending test changes;
+unrelated native/resident/llama working-tree edits are not included.
+Both runs authenticate and copy immutable whole ROM snapshots before use;
+ROOT sections are extracted from the authenticated ELF and compared with
+the supplied sections. Symbols come from that SAME immutable ELF.
+
+Standalone prepared-worker observer regressions ACTUALLY exited0:
+-Pilot: exact old/new K5120 Q4 one-group arithmetic,two changed-input jobs,
+ queued-next-descriptor behavior,unchanged outputs and metadata.
+-Controls: all five zero/sparse/dense correction masks at0/1/239/240/256
+ nonzero rows,three groups,prefix13,and actual STOP. These are existing
+ controls rerun for the changed source-byte/route observer,not new claims
+ of all27 previously qualified shapes or full-model performance.
+-Python -O,PYTHONOPTIMIZE=1,and role-override environment each refuse before
+ compiling or executing the coordinator test. No driver/card is opened.
+
+Test-only implementation changes:
+PreparedQ4Peer gains an optional bank route (default0x47 unchanged) and a
+virtual raw source-word endpoint,allowing the coupled test to read actual
+ROOT descriptor memory. No firmware/native/Assistant production code or
+accepted ROM identity changes in this checkpoint.
+
+Required next integration work is STILL outstanding:
+1.Execute the COMPLETE Projection::Run path with real cold admission,
+ ROOT quantization,all119 worker histories,gather/scatter and mixed phases.
+ Function ABI coverage above must not substitute for that scope.
+2.Add native correction reservations/initialized pages,source/package
+ overlays,prepared ROOT code/data and extended worker service journals,
+ exact paired-program selection,restoration/quarantine on uncertainty.
+3.Connect a distinct prepared upload client/session;keep original embedding
+ source layout and CPU validation separate from no-reference Work.
+4.Qualify the whole package,then measure a controlled real27B inference run.
+ Do not infer a speedup from local instruction counts or these test passes.
+
+Reproduce after building the pinned inspect ROOT and prepared worker:
+python3 tools/pioneer/tests/run_pioneer_q38_prepared_q4_coordinator_instruction_tests.py ABS_PREPARED_ROOT ABS_PREPARED_WORKER
+python3 tools/pioneer/tests/run_pioneer_q38_prepared_exact_q4_worker_tests.py ABS_PREPARED_WORKER --pilot
+python3 tools/pioneer/tests/run_pioneer_q38_prepared_exact_q4_worker_tests.py ABS_PREPARED_WORKER --controls-only
+
+Sibling qwen38-prepared-q4-coordinator-20261105/ contains actual closed
+stdout and exit/guard records only. No executable,learned/prepared model
+payload,device logs or private credentials are published. No hardware or
+installed application was changed. Overall performance goal stays active.

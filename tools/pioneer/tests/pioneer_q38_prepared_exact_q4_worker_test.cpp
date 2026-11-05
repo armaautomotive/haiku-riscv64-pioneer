@@ -15,9 +15,11 @@ struct PreparedQ4Peer:ExactQ4WorkPeer {
  std::map<unsigned,unsigned> extraMemory;
  std::set<unsigned> inputDefined,maskDefined;
  unsigned maskTile=UINT32_MAX,extraReads=0,extraFlits=0,payloadWritten=0,expectedPayload=0,prefixTiles=0;
+ unsigned sourceRoute=0x47;
  bool descriptorReady=false,indexReady=false,payloadReady=false;
- PreparedQ4Peer(const char* fixture,const char* image,unsigned type,unsigned k,unsigned groups,unsigned prefix=0,unsigned worker=69):ExactQ4WorkPeer(fixture,image,type,k,groups,worker),prefixTiles(prefix){
+ PreparedQ4Peer(const char* fixture,const char* image,unsigned type,unsigned k,unsigned groups,unsigned prefix=0,unsigned worker=69,unsigned route=0x47):ExactQ4WorkPeer(fixture,image,type,k,groups,worker),prefixTiles(prefix),sourceRoute(route){
   if(prefix){assert(type==12);base+=prefix*2304;matrixJob[6]=base;memory[0x74018]=base;}
+  matrixJob[8]=sourceRoute;memory[0x74020]=sourceRoute;
   inputPackets.assign(packets.begin(),packets.begin()+inputReads);PrepareSource(1);
  }
  static unsigned Get(const uint8_t* p){return p[0]|(unsigned(p[1])<<8)|(unsigned(p[2])<<16)|(unsigned(p[3])<<24);}
@@ -47,35 +49,37 @@ struct PreparedQ4Peer:ExactQ4WorkPeer {
    if(mask.bytes){correction.resize(offset+((mask.bytes+15)&~15U),0);memcpy(correction.data()+offset,packed.data(),mask.bytes);}
   }
   const unsigned logical=unsigned(correction.size());correction.resize((logical+4095)&~4095U,0);
-  descriptor={L::Magic,logicalWorker,request,12,inputs,FfnPersistentPeer::groups,base,0x47,
+  descriptor={L::Magic,logicalWorker,request,12,inputs,FfnPersistentPeer::groups,base,sourceRoute,
    CorrectionBase,logical,prefixTiles,totalTiles,base-prefixTiles*2304,totalTiles*2304,1,0};
   unsigned fakeJob[16]={};fakeJob[1]=12;fakeJob[2]=2304;fakeJob[5]=inputs;fakeJob[6]=base;fakeJob[7]=FfnPersistentPeer::groups;
-  fakeJob[8]=0x47;fakeJob[11]=logicalWorker;fakeJob[12]=request;fakeJob[14]=1;assert(L::Shape(descriptor.data(),fakeJob));
+  fakeJob[8]=sourceRoute;fakeJob[11]=logicalWorker;fakeJob[12]=request;fakeJob[14]=1;assert(L::Shape(descriptor.data(),fakeJob));
   packets=inputPackets;packets.push_back({0xab400+(logicalWorker-1)*64,129,L::Descriptor,64,-2});
   for(unsigned group=0;group<FfnPersistentPeer::groups;group++){
    const unsigned indexOffset=(prefixTiles+group*Blocks())*4,indexStart=indexOffset/64*64,indexBytes=(indexOffset%64+Blocks()*4+63)/64*64;
-   packets.push_back({CorrectionBase+indexStart,0x47,L::Index,indexBytes,-3});
+   packets.push_back({CorrectionBase+indexStart,sourceRoute,L::Index,indexBytes,-3});
    const auto window=ExpectedGroup(group);
    for(unsigned copied=0;copied<window.bytes;){
     const unsigned n=std::min(16384U,window.bytes-copied);
-    packets.push_back({CorrectionBase+window.start+copied,0x47,L::Payload+copied,n,-4});copied+=n;
+    packets.push_back({CorrectionBase+window.start+copied,sourceRoute,L::Payload+copied,n,-4});copied+=n;
    }
    for(unsigned b=0;b<Blocks();b+=Batch()){
-    const unsigned t=group*Blocks()+b;packets.push_back({base+t*2304,0x47,Buffer(t),Batch()*2304,int(t)});
+    const unsigned t=group*Blocks()+b;packets.push_back({base+t*2304,sourceRoute,Buffer(t),Batch()*2304,int(t)});
    }
   }
   completedTiles.assign(tiles.size(),false);extraMemory.clear();inputDefined.clear();maskDefined.clear();maskTile=UINT32_MAX;
   descriptorReady=indexReady=payloadReady=false;extraReads=extraFlits=payloadWritten=expectedPayload=0;
  }
  unsigned ExpectedReadPackets()const override{return type==12?unsigned(packets.size()):ExactQ4WorkPeer::ExpectedReadPackets();}
+ virtual unsigned PreparedSourceWord(const Packet& p,unsigned at)const{
+  if(p.tile>=0)return Word(native.at(unsigned(p.tile)+at/2304),at%2304);
+  if(p.tile==-1)return root.at(p.address+at);
+  if(p.tile==-2)return descriptor.at(at/4);
+  return Get(correction.data()+p.address-CorrectionBase+at);
+ }
  void CompletePreparedRead(){
   assert(pending && requests && requests!=faultAt);const auto& p=packets.at(requests-1);
   for(unsigned at=0;at<p.bytes;at+=4){
-   unsigned value;
-   if(p.tile>=0)value=Word(native.at(unsigned(p.tile)+at/2304),at%2304);
-   else if(p.tile==-1)value=root.at(p.address+at);
-   else if(p.tile==-2)value=descriptor.at(at/4);
-   else value=Get(correction.data()+p.address-CorrectionBase+at);
+   const unsigned value=PreparedSourceWord(p,at);
    memory[p.destination+at]=value;if(p.tile<-1)extraMemory[p.destination+at]=value;
   }
   if(p.tile>=0)for(unsigned i=0;i<p.bytes/2304;i++)completedTiles.at(unsigned(p.tile)+i)=true;
@@ -154,7 +158,7 @@ struct PreparedQ4Peer:ExactQ4WorkPeer {
   // retargets it later. Observe all four exact original fields/readbacks.
   if(!exact && requests==inputReads && !stageCalls && !pushes && Range(a,0xffb20000,40)){
    assert(MathIdle() && drained && !pending && !(a&3));const unsigned w=(a-0xffb20000)/4;
-   assert((w==0 && value==base) || (w==2 && value==0x47) || (w==3 && value==0x90000) || (w==8 && value==2304));
+   assert((w==0 && value==base) || (w==2 && value==sourceRoute) || (w==3 && value==0x90000) || (w==8 && value==2304));
    command[w]=value;readback[w]=false;return;
   }
   // FetchStage restores the legacy last-tile command without issuing a
