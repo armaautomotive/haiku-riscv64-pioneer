@@ -1,0 +1,11 @@
+Actual tool/process exits, not inferred from transcript success text:
+observer43986: 0
+independent read-only postflight44256: 0
+archive76610: 0
+complete transcript readers main and clean: 0
+complete reader stdout comparison: 0
+all six captured stderr files: zero bytes
+parent.exit: 0; rate.exit: 0; final state CLOSED_STABLE_RESTORED
+Independent postflight checks actual protected-process absence before
+device metadata, normal041/gen32, no owner, guard1, unchanged app/runtime
+hashes, 64CPUs and137034936320B max RAM. No benchmark/observer remains.

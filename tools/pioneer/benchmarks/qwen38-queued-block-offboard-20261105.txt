@@ -2,10 +2,11 @@ Queued Q4 block experiment -- 2026-11-05
 ========================================
 
 OFFBOARD EXPERIMENT ONLY. NOT NATIVE/PHYSICAL QUALIFIED OR INSTALLED.
-Current real27B hardware trial is the SEPARATE prefetch9f/tag101 build.
-Its full20,470,759,424B upload has completed;all4 protected processes
-20341/20342/20427/20428 remain live with no actual exits/errors at17:24:39GMT.
-Do NOT intervene in that trial or use its result as this prototype's rate.
+The SEPARATE prefetch9f/tag101 real27B trial actually closed17:37:51GMT,
+parent/rate0,all4 processes absent,normal041/gen32 restored and independent
+health postflight0. Its0.162480719..0.162484114tok/s is effectively unchanged
+and is NOT this prototype's rate. Full result is in
+qwen38-instruction-prefetch-full-physical-20261105.txt.
 20tokens/sec remains UNMET;NO speed improvement is claimed here.
 
 Purpose:remove repeated RISCV controller ACK polling inside each Q4 K256

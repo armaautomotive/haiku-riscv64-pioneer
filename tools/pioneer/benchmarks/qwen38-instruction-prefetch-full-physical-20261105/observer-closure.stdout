@@ -1,0 +1,41 @@
+Thu Nov  5 17:37:21 GMT 2026
+PROTECTED wrapper20341 parent20342
+20341 /bin/sh                                            
+20342 /bin/sh /boot/home/pioneer-q38-full-instruction-prefetch-q4-202 
+20427 /boot/home/pioneer-q38-full-instruction-prefetch-q4-20261105-a/ 
+20428 /boot/home/pioneer-q38-full-instruction-prefetch-q4-20261105-a/ 
+state: FULL_CARD_RATE32_ACTIVE_DO_NOT_INTERVENE
+parent.exit: ABSENT
+rate.exit: ABSENT
+physical-parent.stdout bytes1319
+P100A_RELOAD driver55 tag2026110500010101 generation31 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026110500010101 generation31 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110500010101 generation31 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+physical-parent.stderr bytes0
+rate.stdout bytes641655
+FULL_OFFLOAD_PROGRESS id2 value4294967295 Full-card phase profile bucket8 segments62 cycles54867701;AFTER_CLEAN_END,clock DATA,no frequency assumption.
+FULL_OFFLOAD_PROGRESS id2 value4294967295 Full-card phase profile bucket9 segments1 cycles81536756;AFTER_CLEAN_END,clock DATA,no frequency assumption.
+FULL_OFFLOAD_RATE_DONE P100A full-offload candidate: 32 output tokens; prompt+generation 381.924s,total 4579.299s. All inference on card; CPU vocabulary/text only. Clean END; weights released. Not a warm-token speed measurement.
+FULL_OFFLOAD_RATE_ANSWER bytes32 hex=310a320a330a340a350a360a370a380a390a31300a31310a31320a31330a3134
+rate.stderr bytes0
+launcher.stderr bytes0
+Thu Nov  5 17:37:51 GMT 2026
+PROTECTED wrapper20341 parent20342
+state: FULL_CARD_RATE32_CLOSED_STABLE_RESTORED
+parent.exit: 0
+rate.exit: 0
+physical-parent.stdout bytes2712
+      3712 ports free      (used/max        384 /       4096)
+      2561 threads free    (used/max       1535 /       4096)
+      1969 teams free      (used/max         79 /       2048)
+PASS_FULL_CARD_RATE32_STABLE_RESTORED_NO_ASSISTANT_INSTALL_OR_SPEED_CLAIM
+physical-parent.stderr bytes0
+rate.stdout bytes641820
+FULL_OFFLOAD_PROGRESS id2 value4294967295 Full-card phase profile bucket9 segments1 cycles81536756;AFTER_CLEAN_END,clock DATA,no frequency assumption.
+FULL_OFFLOAD_RATE_DONE P100A full-offload candidate: 32 output tokens; prompt+generation 381.924s,total 4579.299s. All inference on card; CPU vocabulary/text only. Clean END; weights released. Not a warm-token speed measurement.
+FULL_OFFLOAD_RATE_ANSWER bytes32 hex=310a320a330a340a350a360a370a380a390a31300a31310a31320a31330a3134
+PASS_FULL_OFFLOAD_RATE_JOB clean_worker_exit1 rate_available1 output_tokens32;CPU_INFERENCE_CONTEXTS0;POST_PROMPT_COUNT_WINDOW_NOT_BROAD_QUALITY_OR_ISOLATED_LATENCY
+rate.stderr bytes0
+launcher.stderr bytes0
+OBSERVER_ACTUALLY_CLOSED_parent0_rate0_all_trial_processes_absent_NO_DEVICE_METADATA

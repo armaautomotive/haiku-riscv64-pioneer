@@ -1,0 +1,85 @@
+Instruction-prefetch full 27B physical result -- 2026-11-05
+========================================================
+
+ACTUALLY CLOSED. NO USEFUL OR ESTABLISHED SPEED IMPROVEMENT.
+Observed post-prompt rate: 0.162480719..0.162484114 tokens/sec.
+31 committed steps (31 -> 62) take 190.787882..190.791869 sec,
+or 6.154448..6.154576 sec/step. The previous same-profile replay13
+result was 0.162411264..0.162414644 tokens/sec. Midpoint difference
++0.042769% is effectively unchanged; this single comparison does NOT
+establish an instruction-prefetch benefit. Do not repeat this unchanged
+experiment or promote it as a faster Assistant mode.
+
+Still 5.97904% below best accepted vector92's ~0.172815 tokens/sec.
+20 tokens/sec is UNMET, approximately 123x this measured rate.
+One public 32-output counting request, not broad model-quality testing,
+isolated token latency, a repeatability study, or a warm-resident request.
+
+This ran the original 851-tensor Qwen3.8-27B-Q4_K_M, with all model
+inference on the P100A. CPU vocabulary/text, file loading and lifecycle
+only; no CPU inference context, learned math, attention, validation or
+fallback. Upload 20,470,759,424 bytes in 6406 progress rows; 31 prompt
+positions, 32 output tokens, 62 commits, 63 count rows, 3636 timestamp
+observations. Prompt+generation 381.924 sec; total 4579.299 sec includes
+upload/startup/cleanup but excludes the preceding model authentication.
+Answer is identical to the preceding counting runs, 1 through 14 on
+separate lines (32 bytes):
+310a320a330a340a350a360a370a380a390a31300a31310a31320a31330a3134
+
+Executed identity: temporary tag2026110500010101/gen31, ROOT74cae450,
+instruction-prefetch worker9f151839, nativefbca121f, USERf0462866,
+rate55894b0c. Complete identities/admission/source pairing are recorded
+in qwen38-instruction-prefetch-full-native-20261105.txt and its evidence.
+Source integration f1196bf948; admitted-live record092d4ac150.
+This is NOT the separate queued-block8fee prototype, which remains
+OFFBOARD ONLY and has no physical inference-rate measurement.
+
+Closure is independently verified, not inferred from transcript text:
+- Observer43986 actually exits0 after parent.exit0/rate.exit0, normal
+  worker END and CLOSED_STABLE_RESTORED, with all four protected PIDs
+  20341/20342/20427/20428 absent. All trial stderr files are empty.
+- Parent proves stable041/gen30 -> candidate101/gen31 -> stable041/gen32,
+  no owner/quarantine and guard1. No retry, forced unload or recovery.
+- Independent gated read-only postflight actually exits0, stderr empty,
+  and checks actual process absence BEFORE driver metadata. Normal041
+  hash, gen32, guard, Assistant/server/runtime hashes, 64 CPUs and full
+  137034936320-byte max RAM are preserved.
+- Main and clean complete transcript readers actually exit0, empty
+  stderr and whole stdout identical, with --prepared-q4 --phase-profile.
+  These readers supply DATA, not hardware cleanup authority.
+
+No reboot, relay, SD, mains, cable/hardware, network or Assistant install
+change occurred. The one-shot stage is SPENT FOREVER, never relaunch:
+/boot/home/pioneer-q38-full-instruction-prefetch-q4-20261105-a
+No live benchmark or observer remains. Board is Haiku idle with the
+normal041/tag2026102100010012/gen32, not the experimental driver.
+
+Closed card-clock profile: valid1/state2/error0, committed62;
+begin9933, end515041085819, whole515041075886 cycles.
+ phase                segments          cycles       share
+ bootstrap                   1         1887615    0.000366%
+ metadata                 3968     21973865321    4.266430%
+ recurrent_layer          2976    303948868199   59.014491%
+ dense_layer               992    126345451770   24.531141%
+ head_normalize             62       118351192    0.022979%
+ head_matrix                62     57500562202   11.164267%
+ feedback                   62       104567270    0.020303%
+ state_commit               62      4911117860    0.953539%
+ publication                62        54867701    0.010653%
+ final_stop                  1        81536756    0.015831%
+Ordered counts and whole cycle sum pass both readers. No clock frequency
+is assumed. This covers prompt+generation, not only the rate window.
+Layer+head buckets total94.709899%; they include preparation, control,
+NoC and waits, not pure FPU utilization. Whole cycles are only0.047821%
+below replay13. Neither this nor the tiny rate change establishes a gain.
+
+Whole raw records and independent health/reader evidence are in the
+sibling directory. Source hashes:
+rate.stdout 7afc1e990b963a1a5eb7100fc505667d5eb6ab585421bfed9db3983ec30d801b
+physical-parent.stdout 275b2a3ef5af14396827759ec770dd639447aff460e5be8a672bb32d9de9521b
+postflight.stdout 569bb8aebef7808a994a23bc460b1e99b71dbc55c5a474455017e8b9828383dc
+
+Next: structural reduction of card-side preparation/issue and synchronization
+cost, not another unchanged prefetch run or CPU fallback. Queued-block E
+has closed component/shape tests but still needs queue/failure/history/
+journal and distinct native lifecycle qualification before any hardware use.

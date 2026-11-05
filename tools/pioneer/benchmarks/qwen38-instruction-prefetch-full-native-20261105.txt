@@ -1,7 +1,15 @@
 Instruction-prefetch full27B integration -- 2026-11-05
 ====================================================
 
-LIVE UPDATE16:08:25UTC:sourcef1196bf948 pushed and remote ref verified.
+FINAL UPDATE17:40UTC: the one real trial ACTUALLY CLOSED, parent/rate0,
+all protected PIDs absent, stable041/gen32 restored; independent gated
+postflight0 verifies guard/apps/runtime/64CPUs/fullRAM. Actual rate
+0.162480719..0.162484114 tokens/sec, effectively unchanged (+0.042769%
+midpoint versus replay13). NO useful or established speed improvement.
+See qwen38-instruction-prefetch-full-physical-20261105.txt and complete
+raw evidence. No trial/observer remains; stage SPENT FOREVER.20tok/s UNMET.
+
+HISTORICAL LIVE UPDATE16:08:25UTC:sourcef1196bf948 pushed and remote ref verified.
 ONE real27B trial started after complete fresh admission. Actual processes
 20341/20342/20427/20428 remain LIVE,tag101/gen31,original model
 authentication in progress,parent/rate exits ABSENT,all stderr empty.
@@ -9,6 +17,7 @@ This is NOT a completed inference run or a speed result. No second launch,
 device metadata call,reset or intervention while the trial remains live.
 Below records the preceding offline checkpoint,not a claim of current idle.
 
+HISTORICAL BUILD/OFFLINE CHECKPOINT ONLY; superseded by the result above.
 BUILD/OFFLINE QUALIFIED ONLY. NOT INSTALLED OR EXECUTED AT THAT CHECKPOINT.
 NO inference speed result for this candidate. Target20 tokens/sec remains
 UNMET. Previous real replay13 result0.162411264..0.162414644tok/s is NOT a
