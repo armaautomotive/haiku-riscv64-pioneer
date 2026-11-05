@@ -9,7 +9,7 @@
 #error Full-card instruction prefetch requires its distinct whole-model role and paired firmware
 #endif
 #ifdef _KERNEL_MODE
-#if PIONEER_DRIVER_BUILD_TAG != 0x2026110500010101ULL
+#if PIONEER_DRIVER_BUILD_TAG != (defined(PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4)?0x2026110500010102ULL:0x2026110500010101ULL)
 #error Full-card instruction prefetch requires exact tag101 native parent
 #endif
 #endif

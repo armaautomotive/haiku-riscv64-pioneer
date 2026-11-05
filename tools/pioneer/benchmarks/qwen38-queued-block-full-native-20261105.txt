@@ -1,0 +1,89 @@
+Queued-block full27B integration -- 2026-11-05
+============================================
+
+BUILD/OFFBOARD QUALIFIED TO THE SCOPES BELOW. NOT INSTALLED OR EXECUTED.
+NO inference speed result for this candidate.20 tokens/sec remains UNMET.
+Last physical prefetch101 result0.162480719..0.162484114tok/s was effectively
+unchanged and is NOT a measurement of this queued-block build.
+
+Distinct complete-model tag102/firmware selection10 pairs the SAME
+ROOT74cae450 with the tested queued-E worker8fee1277. The original851
+tensors,learned arithmetic/precision,cache format/source writer and
+full native ownership/snapshot/STOP/HOLD/drain/END policy are unchanged.
+No CPU inference/reference/fallback or Assistant installation is added.
+Work and CPU-validation image roles remain distinct and fail closed.
+
+The worker batches configuration into the Tensix stream and removes
+per-phase controller ACK polling WITHIN each K256 block,not the64 backend
+phase waits. All GPU-read correction planes are immutable until one REAL
+bounded block-end ACK and final config readbacks. A full instruction queue
+can stall the controller BEFORE that poll:there is no claimed local timeout
+in that case. Native UNKNOWN ownership retention remains mandatory.
+
+Complete main/clean binaries are BYTE-IDENTICAL:
+ ROOT ELF74cae45049174dd53c96203104a0b4b501f757b2210b2de86da5507334ebacc5
+ worker ELF8fee1277ca109e5e19423dbfdedeb746796c6eb1b46c1c06000c47c65c89ce8d
+ paired headera43ddbef9de5155b94a4db36dbcc67b15181a3650d56cbdd3eb04b328f9e263b
+ native8574549d046c51b369ec6298002017fff0b2de82d4968fed5e991eddd04be689
+ USER549b34032aaaa29c41a7696052129dbf66743c52680f5e06fc1ae6b663ba54fe
+ ratec3b0224228592314c0f5e2948bf3bdcd1a23ae6b8f58945b9397ec46ee7d8e26
+ smoke8c67465fa80a368695f683c85460bc2e92a91d8b8b6ce162349558cd3a58348f
+
+Actually CLOSED local verification,all stderr empty:
+- Native main55045/clean10657 BOTH0. Every one of15 complete embedded
+  arrays extracted from native.o and checked against the fixed header.
+  Parent101 nativefbca121f,parent100ea526a25,parent9950170113 and default43
+  2df0e0f8 all reproduce BEFORE the new build. No model/ggml/CPU-reference
+  imports;maximum individual token/full-offload frame1232 bytes,not a
+  whole-kernel call-chain stack certificate.66main/65clean role refusals:
+  the one pre-existing main resident-WIP gate is preserved;complete code
+  remains byte-identical. Those unrelated edits are NOT this checkpoint.
+- USER main55087/clean1870 BOTH0,old101/100/99 USER+rate reproduce first.
+  Exactly11 vocabulary/container imports;no context,decode,logits,ggml
+  inference or CPU-validation path.47 role refusals. The initial wrapper
+  attempt failed on a parent-path lookup AFTER compiling;fixed wrapper
+  completes independently in both trees. No failed artifact was installed.
+- Data main1668/clean3639 BOTH0:all15 regenerated arrays exact,3466647
+  actual code words through all120 journal ranges,48094 DATA/address
+  refusals. Every correction-buffer word9c600..9cb00 is saved DATA,never
+  program code. Existing53922024-byte journal unchanged;no code/stack or
+  descriptor reservation enlarged. Main text7884/8192,service20416/24576.
+- Session main75385/clean98239 BOTH0:3072 valid pointer-free requests,
+  803 fail-closed COW fixtures,13511 kernel early-shape refusals,all194
+  same-FD source publications,all4895 upload spans. Phase read occurs
+  once after HOLD/full record drain and before END;all96 packet-word
+  mutations tested. MOCK transport/owner,not physical inference.
+- Roles main50480/clean2387 BOTH0:3 positives/183 missing,zero,two,late,
+  old-package/parent,offboard-image,CPU/reference/Work/native-USER aliases
+  refused. Old101 cannot silently select this package or vice versa.
+- Parent+held-read main80755/clean54020 BOTH0. The ENTIRE accepted prior
+  physical parent is unchanged except nine explicit identity/stage/tag/
+  generation substitutions. UNKNOWN stops without retry,forced unload or
+  automatic restore. Source pinned stable32 -> temporary33 -> stable34;
+  generation must still be checked against fresh actual board admission.
+  Actual held-phase method+Fail:63 successes/101 refusals/905 IO and
+  second-pass faults. Unsafe paths retain once/no following IO;invalid
+  timing alone is not hardware failure. MOCK lifecycle authority only.
+  Method+Fail SHA bb9c9b9c03910aa8acf6f0a290155fdb78d548c5c71b2133e2b54d16de168299.
+  All data/session/role/parent/held-read WHOLE outputs match main/clean.
+
+Worker qualification is recorded in qwen38-queued-block-offboard-20261105.txt:
+27shapes/54changed jobs,whole-ROM audit with34272 every-byte corruptions,
+12 compiled final-config faults,12 conservative delayed finite-queue
+schedules/128 missing phases,and ALL96 workers through retained Q4/GDN/
+changed-state-GDN/Q4/STOP. Maximum combined worker stack4820/8192.
+The finite admission model is conservative,not a silicon timing,full MOP/
+replay/fused-store/RV-store-queue model. It does not supply measured TPS.
+
+Next:push this tested source/evidence checkpoint,then fresh read-only
+physical admission with stable041/gen32,guard1,idle/no quarantined owner,
+64CPUs/fullRAM and unchanged app/runtime/source identities. Only after
+successful admission,stage one distinct trial at
+/boot/home/pioneer-q38-full-queued-q4-20261105-a.
+No current hardware/physical-launch or speed claim is made by this report.
+Keep every previously spent stage untouched;never repeat prefetch101.
+Actual parent0,rate0,normal END,stable34 and independent postflight are
+required before accepting any future result or starting another GPU job.
+
+Whole raw local build/data/session/role/parent/held-read records accompany
+this report. No model weights,driver binaries or unrelated WIP are in Git.

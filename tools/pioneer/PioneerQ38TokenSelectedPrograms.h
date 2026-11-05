@@ -101,7 +101,9 @@
 #error QTP3 native selector requires its actual native parent
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
-#ifdef PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH
+#ifdef PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4
+#include "PioneerQ38FullOffloadQueuedQ4Programs.h"
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH)
 #include "PioneerQ38FullOffloadInstructionPrefetchQ4Programs.h"
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_TWO_PRODUCT_REPLAY)
 #include "PioneerQ38FullOffloadTwoProductReplayQ4Programs.h"
@@ -171,7 +173,16 @@
 #ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
-#ifdef PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH
+#ifdef PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4
+namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadQueuedQ4Programs;
+static_assert(PioneerQ38TokenPrograms::QueuedQ4Block==1 && PioneerQ38TokenPrograms::QueuedQ4Wait==0xa2ff9816U
+ && PioneerQ38TokenPrograms::QueuedQ4EscapeBase==0x9c610 && PioneerQ38TokenPrograms::QueuedQ4EscapeStride==80
+ && PioneerQ38TokenPrograms::QueuedQ4EscapeBytes==1280 && PioneerQ38TokenPrograms::InstructionPrefetch==1
+ && PioneerQ38TokenPrograms::TwoProductQ4==1 && PioneerQ38TokenPrograms::AffineReplayWords==13
+ && PioneerQ38TokenPrograms::TokenPhaseProfile==1 && PioneerQ38TokenPrograms::CounterUnroll==1
+ && PioneerQ38TokenPrograms::PreparedQ4==1 && PioneerQ38TokenPrograms::RootSections==5
+ && PioneerQ38TokenPrograms::EogCount==5,"exact queued-block ROOT+worker package required");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH)
 namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadInstructionPrefetchQ4Programs;
 static_assert(PioneerQ38TokenPrograms::InstructionPrefetch==1 && PioneerQ38TokenPrograms::PrefetchLimitRegister==203
  && PioneerQ38TokenPrograms::PrefetchControlRegister==208 && PioneerQ38TokenPrograms::PrefetchRequests==4

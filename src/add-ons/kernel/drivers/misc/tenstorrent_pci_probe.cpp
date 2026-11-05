@@ -66,6 +66,12 @@
 #ifdef PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH
 #include "PioneerQ38FullOffloadInstructionPrefetchRole.h"
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4
+#include "PioneerQ38FullOffloadQueuedQ4Role.h"
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110500010102ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4)
+#error Tag102 requires the distinct queued Q4 complete-model revision
+#endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110500010101ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH)
 #error Tag101 requires the distinct full-model instruction-prefetch revision
 #endif

@@ -23,6 +23,9 @@ if two_product_replay:
 instruction_prefetch='--instruction-prefetch' in args
 if instruction_prefetch:
     assert two_product_replay and args.count('--instruction-prefetch')==1;args.remove('--instruction-prefetch')
+queued_block='--queued-block' in args
+if queued_block:
+    assert instruction_prefetch and args.count('--queued-block')==1;args.remove('--queued-block')
 assert len(args) == 3 and not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 root, worker, output = map(pathlib.Path, args)
 assert all(p.is_absolute() for p in (root, worker, output)) and not output.exists() and not output.is_symlink()
@@ -40,7 +43,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-prepared-programs-', dir='/priv
         data = target.read_bytes()
         assert data and not len(data) % 4 and data == (root / target.name).read_bytes()
         sections[name] = data
-peer = authenticated(worker, pins(here / ('build_qwen38_instruction_prefetch_worker.py' if instruction_prefetch else 'build_qwen38_two_product_q4_worker.py' if two_product_replay else 'build_qwen38_prepared_exact_q4_worker.py'), 'REPLAY_PINS' if two_product_replay and not instruction_prefetch else 'PINS'))
+peer = authenticated(worker, pins(here / ('build_qwen38_queued_q4_block_worker.py' if queued_block else 'build_qwen38_instruction_prefetch_worker.py' if instruction_prefetch else 'build_qwen38_two_product_q4_worker.py' if two_product_replay else 'build_qwen38_prepared_exact_q4_worker.py'), 'INSPECT_PINS' if queued_block else 'REPLAY_PINS' if two_product_replay and not instruction_prefetch else 'PINS'))
 source = (here / 'PioneerQ38FullOffloadBatchedPrograms.h').read_bytes()
 assert hashlib.sha256(source).hexdigest() == '91624761b95d281cb9dd4493790b27a1c5d88d7c327d6df894711561b76b4c84'
 text = source.decode('ascii')
@@ -106,6 +109,11 @@ if instruction_prefetch:
     text=text.replace('PIONEER_Q38_FULL_OFFLOAD_TWO_PRODUCT_REPLAY_Q4_PROGRAMS_H','PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH_Q4_PROGRAMS_H')
     text=text.replace('enum {TwoProductQ4=1,','enum {InstructionPrefetch=1,PrefetchLimitRegister=203,PrefetchControlRegister=208,PrefetchRequests=4,PrefetchLastByte=0xc0c67};\nenum {TwoProductQ4=1,')
     text=text.replace('exact replay13 two-product Q4 worker','bounded instruction-prefetch replay13 worker')
+if queued_block:
+    text=text.replace('PioneerQ38FullOffloadInstructionPrefetchQ4','PioneerQ38FullOffloadQueuedQ4')
+    text=text.replace('PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH_Q4_PROGRAMS_H','PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4_PROGRAMS_H')
+    text=text.replace('enum {InstructionPrefetch=1,','enum {QueuedQ4Block=1,QueuedQ4Wait=0xa2ff9816U,QueuedQ4EscapeBase=0x9c610,QueuedQ4EscapeStride=80,QueuedQ4EscapeBytes=1280};\nenum {InstructionPrefetch=1,')
+    text=text.replace('bounded instruction-prefetch replay13 worker','tested queued-block worker; native qualification SEPARATE')
 with output.open('x', encoding='ascii') as stream:
     stream.write(text)
 print(hashlib.sha256(output.read_bytes()).hexdigest(), output.name, flush=True)
