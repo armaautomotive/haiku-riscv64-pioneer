@@ -1,6 +1,12 @@
 Bounded instruction-prefetch worker -- 2026-11-05
 ================================================
 
+SUBSEQUENT tag100/replay13 trial CLOSED,not a prefetch measurement:
+0.162411264..0.162414644tok/s,NO useful gain;stable041/gen30 restored.
+See qwen38-replay13-full-physical-20261105.txt. Historical LIVE statements
+below are superseded. This prefetch worker is STILL NOT native-integrated
+or hardware-measured;its separate qualification record follows.
+
 BUILD/OFFBOARD QUALIFIED ONLY. NO NEW NATIVE/USER/PAIRED PROGRAM SELECTION
 OR HARDWARE LAUNCH GRANT. The DIFFERENT replay13/tag100 trial remains
 protected and LIVE;only its exact PID/log observer is used on the Pioneer.

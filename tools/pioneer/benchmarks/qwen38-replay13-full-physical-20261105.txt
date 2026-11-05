@@ -1,0 +1,83 @@
+Replay13 full27B physical comparison -- 2026-11-05
+================================================
+
+ACTUALLY CLOSED;NO USEFUL OR ESTABLISHED SPEED IMPROVEMENT.
+Actual parent0,rate0,worker clean exit0,all four protected PIDs absent;
+normal STOP/HOLD/drain/END completes,stable041/gen30 restored. Fresh
+independent gated read-only postflight actually returns0/empty stderr:
+idle,no owner/quarantine,guard1/open_count1(self),64CPUs and full
+137034936320B max RAM,unchanged Assistant/server/runtime/guard hashes.
+No reboot,relay,SD,mains,hardware connection or Assistant install occurred.
+
+Observed POST-PROMPT rate:0.162411264..0.162414644 tokens/sec.
+31 committed steps31->62 take190.869488..190.873461sec
+(6.157080..6.157208sec/step). This is ONE public32-output counting request,
+not isolated latency,broad model quality or a repeatability study.
+
+Previous same-profile worker:0.161777026..0.161780396tok/s.
+Midpoint difference+0.39204% is too small to claim a useful or statistically
+established gain from this single comparison. The current result remains
+6.01924% below best accepted vector92's0.172813448..0.172816755.
+20tok/s is UNMET,still~123x the current observed rate. Not promoted to
+Assistant. Removing one FPU product/replaying the small affine did NOT
+deliver the required performance change;do not repeat this unchanged run.
+
+Actual original851-tensor Qwen3.8-27B-Q4_K_M,all inference on card.
+CPU vocabulary/text,file loading and lifecycle ONLY;no CPU learned math,
+attention/context,reference validation or fallback. Exactly20470759424B
+uploaded,6407 progress rows,31 prompt positions,32 output tokens,62
+commits,63 increasing count rows,3640 timestamp observations.
+Prompt+generation382.123sec,total4554.767sec. Total includes upload/startup/
+cleanup but excludes preceding Load authentication/planning. No warm-
+resident request speed is claimed. The public32-byte answer equals prior
+tags99/98/vector92 (1 through14,one per line):
+310a320a330a340a350a360a370a380a390a31300a31310a31320a31330a3134.
+
+The executed pairing is tag100/gen29:ROOT74cae450... plus actual replay13
+worker92ffea6e...;nativeea526a25...,USER088ab8eb...,rate2ad68fab... .
+This is NOT the separately qualified instruction-prefetch9f151839 worker.
+Entire physical parent transcript proves stable28 -> temporary29 ->
+stable30;both full raw log readers (main/clean) actually return0 and their
+whole output is identical,with empty stderr. Log parsing supplies DATA,
+not cleanup authority;actual exits/state/PID absence and postflight are
+independently checked before accepting this result.
+
+Actual closed ROOT profile,valid1/state2/error0/committed62:
+begin9933,end515287502219,total515287492286 cycles.
+ phase                 segments      cycles          share
+ bootstrap                    1          1887613     0.000366%
+ metadata                  3968      21973775468     4.264372%
+ recurrent_layer           2976     304066448342    59.009088%
+ dense_layer                992     126429638838    24.535748%
+ head_normalize              62        118350450     0.022968%
+ head_matrix                 62      57545434784    11.167637%
+ feedback                    62        104562478     0.020292%
+ state_commit                62       4910994267     0.953059%
+ publication                 62         54864936     0.010647%
+ final_stop                   1         81535110     0.015823%
+The whole sum and ordered segment counts pass both readers. No clock
+frequency is assumed. These fractions include prompt+generation/observer
+cost,not just the31-step rate window. Layer buckets include preparation,
+FFN/projection/attention,control/NoC and waits,not pure FPU utilization.
+Layers+head still consume94.71247% of timed cycles. Total cycles are
+0.43042% lower than tag99;this does not establish a practical speedup.
+
+Safe closure:
+Observer19263 actually terminates0 after actual parent.exit0/rate.exit0,
+CLOSED_STABLE_RESTORED and all16500/16501/16585/16586 absent. Only THEN
+independent postflight checks driver metadata and complete preservation.
+The tag100 stage is SPENT FOREVER;never remove its markers or relaunch it:
+/boot/home/pioneer-q38-full-two-product-replay-q4-20261105-a.
+No live compute or read-only observer remains. The board is Haiku idle
+with normal041/tag2026102100010012/gen30,not temporary tag100.
+
+Whole raw records are in the sibling evidence directory. Accepted source:
+rate.stdout SHA3b94804a120ffe8d9db758c28e648a8918c7862ef9e944bab3c4f3ceb8b73f5c
+physical-parent.stdout SHA03bae8617aa6735b650b572f5327026f4da7ac7f9c3809cbe9a4e4034ea0f5c3.
+
+Next:integrate the separately tested bounded instruction-prefetch worker
+9f151839... into a DISTINCT full-model native/USER/paired-program identity,
+preserving this executed ROOT,all arithmetic and original cache. Qualify
+that integration before any hardware launch;do not claim it is already
+installed or fast. Continue structural card-side preparation/issue work,
+not CPU fallback,UI changes or unmeasured peak-throughput predictions.

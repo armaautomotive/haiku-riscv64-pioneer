@@ -1,6 +1,11 @@
 Replay13 two-product Q4 full-model integration -- 2026-11-05
 =========================================================
 
+SUBSEQUENT PHYSICAL TRIAL ACTUALLY CLOSED;stable041/gen30 restored.
+Observed0.162411264..0.162414644tok/s,NO useful gain. See the separate
+qwen38-replay13-full-physical-20261105.txt and whole raw evidence.
+The historical LIVE/admission entries below are NOT a current lease.
+
 OFFLINE INTEGRATION QUALIFIED;NO NEW HARDWARE SPEED RESULT YET.
 Latest closed physical profile remains0.161777026..0.161780396tok/s;
 best accepted vector92 remains0.172813448..0.172816755.20tok/s unmet.
