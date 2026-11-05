@@ -9,10 +9,11 @@ import subprocess
 import sys
 import tempfile
 from compare_pioneer_q38_observed_trace import require, stable_bytes
+from pioneer_q38_q4_block_integer_relocations import audit
 
 require(__debug__ and not os.environ.get('PYTHONOPTIMIZE'), 'checks required')
-require(len(sys.argv) == 5 and sys.argv[4] in ('--pilot', '--all-shapes', '--controls', '--history'),
-        'REPLAY PREFETCH CANDIDATE --pilot|--all-shapes|--controls|--history')
+require(len(sys.argv) == 5 and sys.argv[4] in ('--pilot', '--all-shapes', '--controls', '--history', '--backend'),
+        'REPLAY PREFETCH CANDIDATE --pilot|--all-shapes|--controls|--history|--backend')
 require(not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ), 'no role override')
 replay, prefetch, candidate = map(Path, sys.argv[1:4])
 here = Path(__file__).resolve().parent
@@ -65,6 +66,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-block-integer-inspect-', dir='/
         functions = [row for row in rows if len(row) == 8 and row[3] == 'FUNC' and row[6].isdigit() and row[2].isdigit() and int(row[2])]
         require(bool(functions), 'actual ELF FUNC extents')
         (target / 'program.functions').write_text(''.join(row[7] + ' FUNC ' + row[1] + ' ' + row[2] + '\n' for row in functions))
+    # Audit the SAME immutable ROM snapshots that the interpreter executes,
+    # not separately reopened mutable caller paths or an extracted Work body.
+    audit(directories[1], directories[2], tool)
     prior = directories[0] / 'unchanged-worker'
     prior.mkdir(mode=0o700)
     for name, data in legacy:
@@ -75,11 +79,13 @@ with tempfile.TemporaryDirectory(prefix='pioneer-block-integer-inspect-', dir='/
     flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here / 'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
     binary = root / 'worker'
     history = sys.argv[4] == '--history'
-    source = here / ('pioneer_q38_q4_block_integer_history_test.cpp' if history else 'pioneer_q38_q4_block_integer_worker_test.cpp')
+    backend = sys.argv[4] == '--backend'
+    source = here / ('pioneer_q38_q4_block_integer_backend_test.cpp' if backend else
+                     'pioneer_q38_q4_block_integer_history_test.cpp' if history else 'pioneer_q38_q4_block_integer_worker_test.cpp')
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
                     '-fsanitize=address,undefined', *flags, str(source), '-o', str(binary)], check=True)
-    print('UNQUALIFIED_BLOCK_INTEGER_SAME_READONLY_WHOLE_ROM_PINS_ONLY_NO_BODY_AUDIT_OR_HARDWARE_GRANT', flush=True)
-    arguments = [directories[0], directories[2]] if history else [*directories, sys.argv[4]]
+    print('BOUND_BLOCK_INTEGER_SAME_READONLY_WHOLE_ROM_AUDIT_COMPLETE;FUNCTIONAL_TEST_ONLY_NO_NATIVE_OR_HARDWARE_GRANT', flush=True)
+    arguments = [directories[0], directories[2]] if history or backend else [*directories, sys.argv[4]]
     subprocess.run([str(binary), *map(str, arguments)], check=True,
                    env={**os.environ, 'ASAN_OPTIONS': 'quarantine_size_mb=32', 'UBSAN_OPTIONS': 'halt_on_error=1'})
-print('PARTIAL_BLOCK_INTEGER_COMPLETE_WORKER_FUNCTIONAL_ONLY_NO_FULL_FAILURE_HISTORY_BODY_NATIVE_MODEL_OR_TPS_QUALIFICATION', flush=True)
+print('PARTIAL_BLOCK_INTEGER_COMPLETE_WORKER_FUNCTIONAL_AND_IMAGE_BOUNDARY_ONLY_NO_FULL_FAILURE_NATIVE_MODEL_OR_TPS_QUALIFICATION', flush=True)

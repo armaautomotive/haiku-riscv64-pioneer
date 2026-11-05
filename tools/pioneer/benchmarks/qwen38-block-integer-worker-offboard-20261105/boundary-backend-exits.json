@@ -1,0 +1,18 @@
+{
+  "scope": "Actual local process exits, not hardware or throughput qualification",
+  "image": "2d5e30bb86b2ca6ba77e8337a4e538fb028cce6c02b376ac84c47cb1b6ca1fcb",
+  "boundary_main": {"session": 13542, "exit": 0},
+  "boundary_clean": {"session": 36717, "exit": 0},
+  "audited_pilot_main": {"session": 9837, "exit": 0},
+  "audited_pilot_clean": {"session": 5188, "exit": 0},
+  "backend_main_a_compile_failure": {"exit": 1},
+  "backend_main_b": {"session": 79409, "exit": 0},
+  "backend_final_main_c": {"session": 22016, "exit": 0},
+  "backend_final_clean_c": {"session": 9464, "exit": 0},
+  "boundary_full_stdout_equal": true,
+  "boundary_stderr_empty": true,
+  "audited_pilot_full_stdout_equal": true,
+  "audited_pilot_stderr_empty": true,
+  "backend_final_full_stdout_and_stderr_equal": true,
+  "backend_final_expected_fault_stderr_rows_per_tree": 8
+}

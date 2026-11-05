@@ -22,8 +22,8 @@ Service19896B within SAME24576B,4680B headroom:
 All NINE other sections and the COMPLETE9888B convolution prefix are exact
 9f bytes. No unresolved symbols,writable globals/GOT,new allocated section
 or forbidden RV instruction pattern. Existing linker code/stack bounds
-unchanged. Whole-function/common-tail relocation/body audit still pending;
-fixed pins and functional tests are NOT a substitute for that audit.
+unchanged. Whole-function/common-tail boundary audit now passes separately
+as recorded below;binding the new Work body does NOT statically prove it.
 
 Integration and the failure caught by the wider test
 --------------------------------------------------
@@ -97,13 +97,54 @@ NOT physical cycles/configuration latency/utilization or tokens/sec. Old
 13-word affine already uses REPLAY. Do not infer a large model gain from
 the new arithmetic word-count ratio or promote merely from these counts.
 
-Remaining before hardware:whole service/common-body boundary audit,
-backend missing-completion/fault-inert qualification,native saved-state/
-data/code/session/USER integration,separate full-model quality validation
+Remaining before hardware:native saved-state/data/code/session/USER
+integration,separate full-model quality validation
 and a real matched benchmark. Check actual inherited zero Dst/Sp/address
 modifiers:old Setup zeros thread fields and AddrMod1 changes fidelity only;
 do not assume arbitrary backend state is compatible. No GPR/config-bank/
 MOP ownership expansion is authorized by this functional checkpoint.
+
+Whole-image and missing-backend completion follow-up
+--------------------------------------------------
+Main audit13542 and independent-clean36717 ACTUALLY0. Both authenticate the
+entire9f parent and compare ALL nine other sections/9888 convolution bytes.
+Both service tails are fully partitioned into11 nonoverlapping complete
+functions,zero alignment only,no hidden suffix. Ten common helper bodies
+match after54 explicitly decoded AUIPC/JALR relocations. Opcode/register
+bits and EACH complete actual target match. The two Work bodies alone
+are bounded by their exact size/SHA,NOT statically proved correct.
+
+One real target,block_fault_park,has zero-size NOTYPE assembly metadata,
+not STT_FUNC. Loader requires its two exact actual ELF labels/addresses
+and the following complete function boundary,then binds ALL36 bytes,
+including BOTH stop-loop jumps,by SHA. Arbitrary unmapped/equal addresses
+still refuse. Mutation suite refuses every19896 new service byte plus54
+other-section/control mutations and120 symbol mutations. Main/clean full
+stdout byte-identical,stderr0. The initial incomplete auditor correctly
+refused that missing FUNC target;no unknown-target waiver was added.
+
+Runner now performs this audit on the SAME read-only ROM snapshots that
+the interpreter executes. Newly audited pilots9837/5188 ACTUALLY0,whole
+stdout exact,stderr0. Prior27-shape/history records above retain their
+original UNQUALIFIED labels;they are not retroactively rewritten. No
+unchanged full matrix/history suite was rerun merely to increase counts.
+
+Backend final main22016/clean9464 ACTUALLY0. Eight explicit completion
+conditions:scratch112 initialization,raw metadata UNPACK,decoded metadata,
+A/B source UNPACK,FPU product,first integer panel,half spill,final output
+store. Each delayed ACK is held for257 ACTUAL guest poll loads,then retires
+the SAME pending work and passes exact new oracle/payload ACK/commit/STOP.
+Each missing ACK executes ALL1000000 compiled bounded polls,then the real
+fault handler.2048 subsequent fault-loop instructions leave memory,Dst,
+LRegs,config/thread/source-bank state,counters and publications unchanged.
+Pending ownership is RETAINED;no result,commit,STOP,restore or END is
+claimed. Entire main/clean stdout AND exactly8 expected fault stderr rows
+match. This is a functional mocked completion endpoint,NOT asynchronous
+silicon timing or a new native cleanup grant. Existing NoC/descriptor
+failure tests remain distinct. First backend build failed CXX auto-type
+deduction before execution;its raw failure is retained. Intermediate B
+passed;C adds explicit whole Dst/bank inertness checks. Worker ELF itself
+is unchanged throughout this follow-up. No new native/hardware/TPS result.
 
 The existing compressed-Q4/SFPU/BF16/MOVD2A native-FPU pipeline and mixed
 BFP8 work are separate possible larger-throughput routes,not a new result

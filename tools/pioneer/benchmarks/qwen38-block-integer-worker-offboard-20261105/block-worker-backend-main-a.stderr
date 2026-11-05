@@ -1,0 +1,10 @@
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_q4_block_integer_backend_test.cpp:55:8: error: 'auto' deduced as 'std::map<uint32_t, uint32_t>' (aka 'map<unsigned int, unsigned int>') in declaration of 'memory' and deduced as 'std::array<uint32_t, 64>' (aka 'array<unsigned int, 64>') in declaration of 'mailbox'
+   55 |  const auto memory=p->memory,mailbox=p->mailbox;
+      |        ^           ~~~~~~~~~         ~~~~~~~~~~
+1 error generated.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_q4_block_integer_worker_inspect.py", line 85, in <module>
+    subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['c++', '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '-DPIONEER_Q38_TEST_WORK_DOT_ZERO_ELISION', '-DPIONEER_Q38_TEST_AFFINE_REPLAY', '-DPIONEER_Q38_BLOCK_AFFINE_DST', '-DPIONEER_Q38_TEST_BLOCK_SCALE_REUSE', '-DPIONEER_Q38_WORK_DEFER_AFFINE', '-DPIONEER_Q38_WORK_INPUT_SUM_CACHE', '-DPIONEER_Q38_WORK_ZERO_MINIMUM', '-DPIONEER_Q38_NATIVE_OPERAND_STORE', '-DPIONEER_Q38_WORK_SKIP_DOT_CHECK', '-DPIONEER_Q38_REPLAY_OPERAND', '-DPIONEER_Q38_CACHED_AFFINE', '-DPIONEER_Q38_STATIC_VECTOR', '-DPIONEER_Q38_PIPELINED_MATRIX', '-DPIONEER_Q38_INT_SFPU', '-DTT_PIONEER_Q38_WORK_MODE', '-DPIONEER_Q38_WORK_COHORT_CACHE', '-DPIONEER_Q38_QUEUED_MATRIX_ENTRY', '-DPIONEER_Q38_WORK_OUTPUT_DMA', '-DPIONEER_Q38_SPAN_FAST', '-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR', '-DPIONEER_Q38_TEST_INT_ACCUMULATOR', '-DPIONEER_Q38_TEST_PIPELINED_MATRIX', '-DPIONEER_Q38_Q4_TWO_PHASE', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_q4_block_integer_backend_test.cpp', '-o', '/private/tmp/pioneer-block-integer-inspect-_53vj9j8/worker']' returned non-zero exit status 1.
