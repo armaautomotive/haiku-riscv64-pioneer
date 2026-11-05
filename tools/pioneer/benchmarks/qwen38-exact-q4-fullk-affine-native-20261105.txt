@@ -1,0 +1,92 @@
+Fixed full-K original-Q4 affine native candidate -- SOURCE QUALIFICATION
+=====================================================================
+2026-11-05UTC. Base94be4c630f. NO physical trial in this phase. The goal
+remains ACTIVE/UNMET and actual accepted full27B rate stays0.1728tok/s.
+This is not another model/Work/Assistant release or throughput result.
+
+New complete diagnostic image uses SAME PioneerQ38ExactQ4Affine kernel
+as the qualified packet/full-K prototype. Its separate FIXED DATA emitter
+generates two changed SYNTHETIC K17408 fixtures on card (seeds37/176),with
+no CPU-inserted input between jobs. Original q0..15/int8 inputs/FP32 scale,
+coefficient and negative minimum are constructed using integer bits,not
+scalar learned dots or FP affine arithmetic. Three matrix products recover
+each original integer dot;SFPU retains original non-fused K16 affine order.
+No source packet/model/mask allocation is admitted by this fixed fixture.
+
+Distinct native identity0x2026110500010096;pointer-free opcode family
+B_DEVICE_OP_CODES_END+8d00/8d01/8d02. No user source/data/code/address/route,
+old BFP/tag95 or model/Work operation is published. Exactly one FD/team/
+generation owner,existing runtime lock/reservation and explicit END only.
+Failed arithmetic/delivery/close retains cookie/reservation/mappings/saved
+bytes and cold quarantine with NO query,retry,reset or automatic disposal.
+
+Actual native owner changes,not a blanket larger mapping capability:
+- SAME all120-core-held/source/route/reset/idle admission and sole tile1,2
+  private disposable compute context. Arbitrary old FPU/SFPU registers are
+  NOT claimed snapshotted/restored;no other live model/tile is admitted.
+- Exact saved set4872 unique words:previous3548,additional4KiB ROM,
+  metadata93ff0/80B and94070/80B,zero95ff0/1040B. Boot published LAST and
+  every saved/staged/restored word read back. Full shader6156B fits owned
+  8KiB ROM;stack192B fits owned8192. No global GDDR-bank cap grows.
+- Exact Pointer access matches ONLY those4872 words;7 VM views remain.
+  ROM view8KiB and containing data view32KiB do not expose their holes via
+  Pointer. Exhaustive address/protection and fail-first-unmap tests pass.
+- Actual program writes primary/mask/input/metadata/zero/stack/scratch;
+  ALL actual modified bytes are copied back by the fake-MMIO execution
+  before exact pretrial L1/TLB restoration is compared. No staged/restore
+  oracle omits the new GPU-written ranges. True final matrix/SFPU drains,
+  statusQ4A1 and repeated park/source/reset checks precede output or END.
+
+Qualified actual terminal0 receipts,all final stderr EMPTY:
+- Main native master18961;independent clean master26694. Clean source is
+  git archive94be4c630f of committed source/deps plus ONLY selected changes;
+  unrelated dirty resident/FlashNext/native87 work excluded. Whole native,
+  default43,USER binaries and generated image header compare byte-identical.
+- Actual compiled fixed image:two changed fullK17408 jobs,32 original
+  FP32 output words exact,32 padding words untouched,no host operand
+  injection. No source/model or throughput conclusion follows.
+- Actual native lease16 cases:full staged bytes ->actual compiled image,
+  exact4872-word+TLB restoration,old12 owner faults/close/unsupportedBFP8.
+- Actual common PCI/close31 cases;actual mapping24 cases/all393216 aligned
+  L1 addresses,7 partial map failures/15 fail-first disposal failures.
+- Actual Control/Reply/Fault/Dispose/Free356 cases including320 dirty
+  result bytes,wrong lengths/stale/foreign/busy/old-family requests.
+- Actual USER client88 fake-syscall cases,all64 per-word arithmetic/padding
+  mutations retain complete returned data and issue NO END/query/retry.
+  Incorrect private user privilege exit was corrected OFFBOARD before
+  final build;no failing candidate touched the Pioneer.
+- Existing documented Blackhole lane/rounding test8208 original integer
+  checks passes unchanged,including old BFP8 characterization regression.
+- Actual protected parent4 flow cases+4 spent re-entry refusals. Only a
+  successful strictly validated actual child can restore stable driver.
+- Legacy95 master56987 and old78 master39494 actual0;old/default whole
+  binaries preserve their PREVIOUS hashes,not just compatible interfaces.
+- Normal packet kernel/master71503 actual0 with original per-K16 affine,
+  all widths/dual changed jobs/faults and the old5448B shader hashes intact.
+
+Frozen artifacts,main and clean:
+ native20eb2f3c01973ac7d59e6c23ed37e577a778ab5f5228d99ec4cb0e73c3f6469d
+ USER36090c79b9a501062ee0ffa0938a2ba9333cc51035298dbb53d88f0fb152c9ec
+ shader005227143dcb82bcf53cfb3f65b26b72a16da7a098f805d55c098e2d1d5cbb72
+ helperda7b39552219d03a38df67c872c727b6e5454c2b21ae8d74fbf32b21d350d66a
+ old95 remains734d64f3daaebda9b67a10909d5a2302a025dae93b3d51ae7ec31ab53914b6a7
+ old78 remainse79e070b9e4fe434b868898748834e0cd89b03bcb250d9c1694b4d0b890f46ac
+ default43 remains2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+
+Local reproduction,NO physical execution permission:
+ sh tools/pioneer/tests/run_pioneer_native_exact_q4_affine_tests.sh HAIKU_SDK
+
+Predeclared one-shot helper,pending physical admission:
+ tools/pioneer/pioneer_native_exact_q4_affine_physical.sh --fixed-exact-q4-affine-once
+Fresh stage /boot/home/pioneer-native-exact-q4-affine-20261105-a must be
+resolved absent,created,all artifacts SHA checked and whole-file readback
+verified after fresh stable041/gen22/idle/64CPU/fullRAM/unchanged-app checks.
+Expected closed sequence stable22->native23->stable24. Never invoke during
+another protected job or reuse a spent stage. Parent/client output alone
+is NOT restoration authority;actual terminal0,whole closed fetch and an
+independent postflight are required. Future full-model integration still
+owes production source/sparse-mask/NoC/cohort and real generation gates.
+
+Sibling directory contains whole local source-qualification streams only,
+no models/prepared learned data/binaries. Nothing is installed or measured
+on hardware by this report. The next action is the guarded full-K test.

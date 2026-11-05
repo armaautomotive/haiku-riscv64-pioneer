@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 #define B_DEVICE_OP_CODES_END 10000
-#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+#define PIONEER_Q38_EXACT_Q4_AFFINE_FIXED_IMAGE_ONLY
+#include "pioneer_q38_exact_q4_affine_fixed_image_test.cpp"
+static unsigned checked=0;
+#elif defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC)
 #define PIONEER_Q38_EXACT_Q4_CORRECTED_IMAGE_ONLY
 #include "pioneer_q38_exact_q4_corrected_image_test.cpp"
 #else
@@ -12,7 +16,12 @@
 #include <set>
 using Lease=PioneerNativeBfpLease;
 using Image=PioneerNativeBfpGeneratedImage;
-#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+static uint32_t ReferenceWord(unsigned word){
+ static const auto first=FixedAffineExpected(37),second=FixedAffineExpected(176);
+ return word>=32?0x7fc00001:word<16?first[word]:second[word-16];
+}
+#elif defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC)
 using FixtureData=PioneerNativeExactQ4Fixture;
 static uint32_t ReferenceWord(unsigned word) {
  if(word>=32)return 0x7fc00001;int sum=0;
@@ -66,7 +75,9 @@ struct IO {
 	uint32_t BfpControlRead(unsigned i) { Window();reads++;assert(i<3);return 0; }
 	uint32_t BfpPcRead() { Window();reads++;return badPC?0x70040:pauses&1?0x70038:0x7003c; }
 	void Execute() {
-#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+		FixedAffineImage image(directory.c_str());
+#elif defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC)
 		CorrectedImage image(directory.c_str());
 #else
 		NativeBfpRV32 image(directory.c_str());
@@ -75,7 +86,11 @@ struct IO {
 		for(unsigned i=0;i<image.code.size()/4;i++)image.l1[1+i]=memory[(0x70000+i*4)/4];
 		for(unsigned i=0;i<8192/4;i++)image.l1[image.Index(0x6e000+i*4)]=memory[(0x6e000+i*4)/4];
 		for(unsigned i=0;i<64;i++)image.l1[image.Index(0x92000+i*4)]=memory[(0x92000+i*4)/4];
-#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+		for(unsigned i=0;i<Lease::SavedWords;i++){
+			const unsigned a=Lease::Address(i);if(image.DataWrite(a))image.native.Write(a,memory[a/4]);
+		}
+#elif defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC)
 		// Copy ACTUAL staged byte payloads,not re-encoded fixture inputs.
 		for(unsigned a=0x8fff0;a<0x90440;a++)image.native.l1[a]=uint8_t(memory[a/4]>>((a%4)*8));
 		for(unsigned a=0x90ff0;a<0x91200;a++)image.native.l1[a]=uint8_t(memory[a/4]>>((a%4)*8));
@@ -87,7 +102,12 @@ struct IO {
 		image.native.Stage(weights.data(),FixtureData::WeightBytes(bits),input);
 #endif
 		assert(image.Execute());
-#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+		for(unsigned i=0;i<Lease::SavedWords;i++){
+			const unsigned a=Lease::Address(i);if(image.DataWrite(a))memory[a/4]=image.native.Read(a);
+		}
+		assert(image.native.sevenWrites==64 && image.native.affineStores==4*17408/16);
+#elif defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC)
 		for(unsigned a=0x90100;a<0x90180;a+=4)memory[a/4]=image.native.Read(a);
 		for(unsigned a=0x90200;a<0x90240;a+=4)memory[a/4]=image.native.Read(a);
 		assert(image.native.sevenWrites==32 && image.scratchStores==32);
@@ -101,7 +121,10 @@ struct IO {
 		Window();assert(v==0x87ffff || v==0x46800 || v==0x47800);
 		if(++resets==dropReset)return;
 		if(v==0x46800) { assert(reset==0x87ffff && !started);started=true;reset=v;if(!timeout)Execute();if(faultMarker)memory[0x17ffc8/4]=
-#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+
+#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+			0x46413451;
+#elif defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC)
 			0x46433451;
 #else
 			0x4642464e;
@@ -126,9 +149,15 @@ int main(int argc,char** argv) {
 	assert(argc==3);checked=0;
 	std::set<uint32_t> addresses;
 	for(unsigned i=0;i<Lease::SavedWords;i++)assert(addresses.insert(Lease::Address(i)).second);
-	assert(addresses.size()==3548 && Lease::Address(3548)==UINT32_MAX);checked++;
+	const unsigned expectedWords=
+#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+		4872;
+#else
+		3548;
+#endif
+	assert(addresses.size()==expectedWords && Lease::Address(expectedWords)==UINT32_MAX);checked++;
 	const std::vector<unsigned> formats=
-#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+#if defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC) || defined(PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC)
 		{4};
 #else
 		{4,8};
@@ -139,7 +168,7 @@ int main(int argc,char** argv) {
 		assert(result.state==PIONEER_NATIVE_BFP_RESULT && result.started && result.completed && !result.cold && io.resets==2);
 		for(unsigned word=0;word<64;word++) {
 			const unsigned expected=
-#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+#if defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC) || defined(PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC)
 			ReferenceWord(word)
 #else
 			Reference(bits,word%32)
@@ -180,10 +209,12 @@ int main(int argc,char** argv) {
 		const auto reads=io.reads,writes=io.writes,resets=io.resets,tlb=io.tlbWrites;lease.Abandon();
 		assert(lease.Result().cold && io.reads==reads && io.writes==writes && io.resets==resets && io.tlbWrites==tlb);NoMoreIO(lease,io,b);checked++;
 	}
-#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+#if defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC) || defined(PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC)
 	{IO io(8,argv[1]);auto b=io.Baseline();Lease lease;assert((!lease.Run<IO,Image>(io,b,8)) && !io.reads && !io.writes && !io.resets && !io.tlbWrites);checked++;}
 #endif
-#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+	printf("PASS OFFBOARD actual exact-Q4 full-K affine lease:%u cases;actual staged bytes->compiled K17408 dual jobs/32 original FP32 outputs+32 padding/4872-word L1+TLB restore INCLUDING ALL GPU-written scratch/metadata/zero/stack;old12 faults+close+unsupportedBFP8 retain with NO retry/reset/cleanup;NO physical/Work/model-speed proof\n",checked);
+#elif defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC)
 	printf("PASS OFFBOARD actual exact-Q4 lease:%u cases;actual staged bytes ->compiled RV32/32 original integer dots+32 untouched padding words/3548-word L1+TLB restore INCLUDING GPU scratch writes;old12 owner faults+close+unsupportedBFP8 retain/no retry/reset/cleanup;NO physical/Work/model-speed proof\n",checked);
 #else
 	printf("PASS OFFBOARD actual native-BFP lease:%u cases;fresh real RV32 images/fixed dyadic exact64 results/3548-word L1+TLB restore;timeout,PC,fault,source,stage,start,STOP,restore,close failures retain with NO retry/reset/cleanup;NO physical/Work/model-speed proof\n",checked);

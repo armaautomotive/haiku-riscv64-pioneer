@@ -10,8 +10,9 @@ import tempfile
 if not __debug__:
     raise SystemExit('Assertions required')
 here = pathlib.Path(__file__).resolve().parent
-assert len(sys.argv)==1 or sys.argv[1:]==['--exact-q4']
-exact = sys.argv[1:]==['--exact-q4']
+assert len(sys.argv)==1 or sys.argv[1:] in (['--exact-q4'],['--exact-q4-affine'])
+affine=sys.argv[1:]==['--exact-q4-affine']
+exact = sys.argv[1:] in (['--exact-q4'],['--exact-q4-affine'])
 folder = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-native-bfp-client.'))
 (folder / 'Drivers.h').write_text('#pragma once\n#define B_DEVICE_OP_CODES_END 10000\n')
 program = r'''
@@ -113,6 +114,10 @@ if exact:
   if(scenario==18)r.result.held=1;if(scenario==19)r.result.l1_restored=1;if(scenario==20)r.result.tlb_restored=1;
   if(scenario==21)r.result.cold=1;if(scenario==22)r.bits=8;if(scenario==23)r.reserved=1;''')
     program = program.replace('scenario!=11);', 'scenario!=11 && scenario<12);')
+if affine:
+    program=program.replace('pioneer_native_exact_q4_diagnostic.cpp','pioneer_native_exact_q4_affine_diagnostic.cpp')
+    program=program.replace('PioneerNativeExactQ4','PioneerNativeExactQ4Affine').replace('PIONEER_NATIVE_EXACT_Q4_','PIONEER_NATIVE_EXACT_Q4_AFFINE_')
+    program=program.replace('0x31433451','0x31413451').replace('"--fixed-exact-q4"','"--fixed-exact-q4-full-k"')
 (folder / 'test.cpp').write_text(program)
 subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off',
                 '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '-I' + str(folder),
@@ -126,15 +131,17 @@ for bits in ((4,) if exact else (4, 8)):
                                     ASAN_OPTIONS='quarantine_size_mb=32', UBSAN_OPTIONS='halt_on_error=1'))
             assert result.returncode == 0, (bits, scenario, index, result.stdout, result.stderr)
             if scenario == 0:
-                assert not result.stderr and result.stdout.startswith('PASS_NATIVE_EXACT_Q4_FIXED_KERNEL ' if exact else 'PASS_NATIVE_BFP_FIXED_KERNEL ')
+                assert not result.stderr and result.stdout.startswith('PASS_NATIVE_EXACT_Q4_AFFINE_FIXED_KERNEL ' if affine else 'PASS_NATIVE_EXACT_Q4_FIXED_KERNEL ' if exact else 'PASS_NATIVE_BFP_FIXED_KERNEL ')
             elif scenario == 1:
                 assert not result.stdout
                 lines = result.stderr.splitlines()
-                assert len(lines) == 65 and lines[0].startswith('EXACT_Q4_NUMERICAL_MISMATCH ' if exact else 'NATIVE_BFP_NUMERICAL_MISMATCH ')
+                assert len(lines) == 65 and lines[0].startswith('EXACT_Q4_AFFINE_NUMERICAL_MISMATCH ' if affine else 'EXACT_Q4_NUMERICAL_MISMATCH ' if exact else 'NATIVE_BFP_NUMERICAL_MISMATCH ')
                 assert (f'index{index} ' if exact else f'pass{index//32} row{index%32} ') in lines[0]
                 mismatches = 0
                 for word, line in enumerate(lines[1:]):
-                    match = re.fullmatch(r'EXACT_Q4_RETURNED_WORD index([0-9]+) got([0-9a-f]{8}) expected([0-9a-f]{8})' if exact else r'NATIVE_BFP_RETURNED_WORD bits(4|8) pass([01]) row([0-9]+) got([0-9a-f]{8}) expected([0-9a-f]{8})', line)
+                    pattern=r'EXACT_Q4_RETURNED_WORD index([0-9]+) got([0-9a-f]{8}) expected([0-9a-f]{8})' if exact else r'NATIVE_BFP_RETURNED_WORD bits(4|8) pass([01]) row([0-9]+) got([0-9a-f]{8}) expected([0-9a-f]{8})'
+                    if affine:pattern=pattern.replace('EXACT_Q4_RETURNED','EXACT_Q4_AFFINE_RETURNED')
+                    match = re.fullmatch(pattern,line)
                     assert match and (int(match[1])==word if exact else tuple(map(int, match.groups()[:3])) == (bits, word//32, word%32))
                     got, expected = map(lambda v: int(v, 16), match.groups()[1:] if exact else match.groups()[3:])
                     assert got == (expected ^ int(word == index))

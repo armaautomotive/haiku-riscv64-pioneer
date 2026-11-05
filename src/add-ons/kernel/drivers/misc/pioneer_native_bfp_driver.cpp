@@ -9,7 +9,11 @@
 #if defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT)
 #error Native BFP fixed qualification never selects a model/Work/old native context
 #endif
-#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+#if PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC != 1 || defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC) || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110500010096ULL
+#error Distinct fixed full-K original-affine identity required
+#endif
+#elif defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC)
 #if PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110500010095ULL
 #error Distinct exact-Q4 fixed qualification identity required
 #endif
@@ -21,12 +25,19 @@
 #undef find_device
 #include "PioneerNativeBfpLease.h"
 #include "PioneerNativeBfpGeneratedImage.h"
+#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+#include "PioneerNativeExactQ4AffineProtocol.h"
+#endif
 #ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
 #include "PioneerNativeExactQ4Protocol.h"
 #endif
 
 namespace {
-#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+using ActiveRequest=PioneerNativeExactQ4AffineRequest;
+static constexpr uint32 kSupport=PIONEER_NATIVE_EXACT_Q4_AFFINE_SUPPORT,kRun=PIONEER_NATIVE_EXACT_Q4_AFFINE_RUN,kEnd=PIONEER_NATIVE_EXACT_Q4_AFFINE_END;
+static bool RequestValid(const ActiveRequest& r){return PioneerNativeExactQ4AffineRequestValid(r);}
+#elif defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC)
 using ActiveRequest=PioneerNativeExactQ4Request;
 static constexpr uint32 kSupport=PIONEER_NATIVE_EXACT_Q4_SUPPORT,kRun=PIONEER_NATIVE_EXACT_Q4_RUN,kEnd=PIONEER_NATIVE_EXACT_Q4_END;
 static bool RequestValid(const ActiveRequest& r){return PioneerNativeExactQ4RequestValid(r);}
@@ -43,7 +54,11 @@ struct NativeIO: PioneerComputeNocIO {
 	bool Map() {
 		if(!PioneerComputeNocIO::Map())return false;
 		const uint32_t offsets[]={0x19006000,0x19070000,0x1906e000,0x1908f000,0x1917f000,0x19312000,0x19313000};
+#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+		const unsigned sizes[]={4096,8192,8192,32768,4096,4096,4096};
+#else
 		const unsigned sizes[]={4096,4096,8192,16384,4096,4096,4096};
+#endif
 		for(unsigned i=0;i<7;i++) {
 			views[i]=map_physical_memory("P100A isolated native BFP owned view",profile.bar0_host_start+offsets[i],sizes[i],
 				B_ANY_KERNEL_ADDRESS,B_KERNEL_READ_AREA|(i==6?0:B_KERNEL_WRITE_AREA)|B_UNCACHED_MEMORY,&pages[i]);
@@ -65,9 +80,18 @@ struct NativeIO: PioneerComputeNocIO {
 	volatile uint32* Pointer(uint32_t address) {
 		unsigned view=0,offset=0;
 		if(address==0x6000) {view=0;offset=0;}
-		else if(Within(address,0x70000,4096)) {view=1;offset=address-0x70000;}
+		else if(Within(address,0x70000,
+#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+			8192
+#else
+			4096
+#endif
+		)) {view=1;offset=address-0x70000;}
 		else if(Within(address,0x6e000,8192)) {view=2;offset=address-0x6e000;}
 		else if(Within(address,0x8fff0,1104) || Within(address,0x90ff0,528) || Within(address,0x92000,256)) {view=3;offset=address-0x8f000;}
+#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+		else if(Within(address,0x93ff0,80) || Within(address,0x94070,80) || Within(address,0x95ff0,1040)) {view=3;offset=address-0x8f000;}
+#endif
 		else if(Within(address,0x17ffc0,12)) {view=4;offset=address-0x17f000;}
 		else {invalid=true;return NULL;}
 		if(!pages[view]) {invalid=true;return NULL;}
@@ -188,7 +212,7 @@ static status_t Control(void* value,uint32 operation,void* data,size_t length) {
 		else {r.result.state=sColdRecoveryRequired?PIONEER_NATIVE_BFP_UNKNOWN:PIONEER_NATIVE_BFP_EMPTY;r.result.cold=sColdRecoveryRequired;status=user_memcpy(data,&r,sizeof(r));}
 		release_sem(sLock);return status;
 	}
-#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+#if defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC) || defined(PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC)
 	if(r.bits!=4)return B_BAD_VALUE;
 #endif
 	if((r.bits!=4 && r.bits!=8) || (operation==kRun?(r.nonce || r.accept):r.nonce!=1 || r.accept!=1))return B_BAD_VALUE;

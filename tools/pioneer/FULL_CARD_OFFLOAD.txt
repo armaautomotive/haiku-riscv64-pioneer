@@ -317,3 +317,19 @@ Its dense local packets/new ROM are NOT source-bank/native authority.
 Next physical/native/source/cohort gates and actual full-model answer/rate
 remain required. Correct full27B rate stays0.1728tok/s;goal ACTIVE/UNMET.
 See benchmarks/qwen38-exact-q4-fullk-affine-20261105.txt and whole logs.
+
+Fixed full-K/affine native candidate (tag96,SOURCE-qualified,not yet run)
+--------------------------------------------------------------------
+A separate fixed synthetic K17408/dual changed-input diagnostic now uses
+the SAME corrected full-K/original FP32 affine kernel. Tag96/new pointer-
+free opcode family admits no model/user weights/code/address. Exact4872-
+word L1 journal includes8KiB ROM,new metadata/zero and every GPU-written
+scratch region. Same sole-owner/all120-held/explicit END/quarantine rules.
+
+Main+clean native/USER whole binaries agree;actual compiled image/lease,
+exhaustive mapping,controller,close,client,documented integer rounding and
+protected-parent tests pass. Old95/78/default43 binaries remain BYTE-EXACT.
+Fresh staged/idle/generation admission and ONE physical arithmetic trial
+are next;source tests grant NO hardware/model-speed proof. Production
+source/NoC/cohort/full-generation integration still remains. See
+benchmarks/qwen38-exact-q4-fullk-affine-native-20261105.txt and whole logs.

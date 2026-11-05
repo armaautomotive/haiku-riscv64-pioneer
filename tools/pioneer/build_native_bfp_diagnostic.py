@@ -14,7 +14,9 @@ if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('haiku_build', type=pathlib.Path)
 parser.add_argument('output', type=pathlib.Path)
-parser.add_argument('--exact-q4-corrected', action='store_true', help='distinct tag95 fixed original-Q4 arithmetic qualification only')
+variant=parser.add_mutually_exclusive_group()
+variant.add_argument('--exact-q4-corrected', action='store_true', help='distinct tag95 fixed original-Q4 arithmetic qualification only')
+variant.add_argument('--exact-q4-affine-fixed',action='store_true',help='distinct tag96 fixed synthetic K17408/original-affine qualification only')
 args = parser.parse_args()
 assert args.haiku_build.is_absolute() and args.haiku_build.is_dir()
 assert args.output.is_absolute() and not args.output.exists() and not args.output.is_symlink()
@@ -26,14 +28,19 @@ output = args.output
 output.mkdir(mode=0o700)
 expected = {4: 'adcec3cf5a66a2f00b979746928e1f8525a1c2274f37d0f3e35d3b6468ee6ef3',
             8: 'c21f4692d340b0bab397a513a315b9884b898804022e35948b2d029a6a128b19'}
-formats = (4,) if args.exact_q4_corrected else (4, 8)
+formats = (4,) if args.exact_q4_corrected or args.exact_q4_affine_fixed else (4, 8)
 if args.exact_q4_corrected:
     expected[4] = 'cfb51ae48bd7eb34e2187e9a7dec4dd03468e0672d5ed3890be23e84428d6dc7'
+if args.exact_q4_affine_fixed:
+    expected[4]='005227143dcb82bcf53cfb3f65b26b72a16da7a098f805d55c098e2d1d5cbb72'
 images = {}
 for bits in formats:
     folder = output / ('bfp' + str(bits))
-    subprocess.run(['python3', str(here / 'build_q38_native_bfp_matvec.py'), str(build), str(folder), str(bits)]
-                   + (['--exact-q4-corrected'] if args.exact_q4_corrected else []), check=True)
+    if args.exact_q4_affine_fixed:
+        subprocess.run(['python3',str(here/'build_q38_exact_q4_affine.py'),str(build),str(folder),'17408','--fixed-fixture'],check=True)
+    else:
+        subprocess.run(['python3', str(here / 'build_q38_native_bfp_matvec.py'), str(build), str(folder), str(bits)]
+                       + (['--exact-q4-corrected'] if args.exact_q4_corrected else []), check=True)
     boot = (folder / 'boot.bin').read_bytes()
     text = (folder / 'text.bin').read_bytes()
     assert hashlib.sha256(boot).hexdigest() == 'd47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd'
@@ -42,9 +49,11 @@ for bits in formats:
     for line in (folder / 'program.symbols').read_text().splitlines():
         value, _, name = line.split()
         symbols[name] = int(value, 16)
-    for name, value in {'native_bfp_entry': 0x70000, 'native_bfp_done': 0x7000c,
+    wanted={'native_bfp_entry': 0x70000, 'native_bfp_done': 0x7000c,
                         'native_bfp_park': 0x70038, 'native_bfp_fault': 0x70040,
-                        'native_bfp_fault_park': 0x70058}.items():
+                        'native_bfp_fault_park': 0x70058}
+    if args.exact_q4_affine_fixed:wanted={name.replace('native_bfp','exact_q4_affine'):value for name,value in wanted.items()}
+    for name,value in wanted.items():
         assert symbols[name] == value
     assert text[0x38:0x40] == struct.pack('<II', 0x6f, 0xffdff06f)
     images[bits] = struct.unpack('<' + 'I' * (len(text) // 4), text)
@@ -59,7 +68,7 @@ for bits in formats:
     for start in range(0, len(words), 8):
         header.append('   ' + ','.join('0x%08x' % w for w in words[start:start+8]) + ',')
     header.append('  };')
-selector = '  return bits==4?(index<sizeof(code4)/4?code4[index]:0):0;' if args.exact_q4_corrected else '  return bits==4?(index<sizeof(code4)/4?code4[index]:0):bits==8?(index<sizeof(code8)/4?code8[index]:0):0;'
+selector = '  return bits==4?(index<sizeof(code4)/4?code4[index]:0):0;' if args.exact_q4_corrected or args.exact_q4_affine_fixed else '  return bits==4?(index<sizeof(code4)/4?code4[index]:0):bits==8?(index<sizeof(code8)/4?code8[index]:0):0;'
 header += [selector,
            ' }', '};', '#endif']
 (output / 'PioneerNativeBfpGeneratedImage.h').write_text('\n'.join(header) + '\n')
@@ -87,6 +96,10 @@ client_name = 'pioneer-native-exact-q4-diagnostic' if args.exact_q4_corrected el
 if args.exact_q4_corrected:
     native.remove('-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010078ULL')
     native += ['-DPIONEER_DRIVER_BUILD_TAG=0x2026110500010095ULL', '-DPIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC=1']
+if args.exact_q4_affine_fixed:
+    native.remove('-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010078ULL')
+    native += ['-DPIONEER_DRIVER_BUILD_TAG=0x2026110500010096ULL','-DPIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC=1']
+    native_name='tenstorrent_pci_probe-native-exact-q4-affine-96';client_name='pioneer-native-exact-q4-affine-diagnostic'
 commands = []
 def run(command):
     commands.append(command)
@@ -122,8 +135,8 @@ for path in sorted((build / 'build_packages').glob('gcc_syslibs-*/lib')):
     libs += ['-L' + str(path)]
 run([cxx, '-std=c++17', '-O2', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror', *user_includes,
      '-B' + str(release / 'system/glue'), '-L' + str(release / 'system/libroot'), *libs,
-     str(here / ('pioneer_native_exact_q4_diagnostic.cpp' if args.exact_q4_corrected else 'pioneer_native_bfp_diagnostic.cpp')), '-o', str(output / client_name)])
+     str(here / ('pioneer_native_exact_q4_affine_diagnostic.cpp' if args.exact_q4_affine_fixed else 'pioneer_native_exact_q4_diagnostic.cpp' if args.exact_q4_corrected else 'pioneer_native_bfp_diagnostic.cpp')), '-o', str(output / client_name)])
 (output / 'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands) + '\n')
 for name in (native_name, 'tenstorrent_pci_probe-default43-control', client_name):
     print(hashlib.sha256((output / name).read_bytes()).hexdigest(), name)
-print('BUILD_ONLY fixed ' + ('exact-Q4' if args.exact_q4_corrected else 'native-BFP') + ' diagnostic;NO installation,driver reload,physical test,model quality or performance claim')
+print('BUILD_ONLY fixed ' + ('exact-Q4-fullK-affine' if args.exact_q4_affine_fixed else 'exact-Q4' if args.exact_q4_corrected else 'native-BFP') + ' diagnostic;NO installation,driver reload,physical test,model quality or performance claim')

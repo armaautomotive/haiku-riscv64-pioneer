@@ -21,6 +21,7 @@ struct ExactAffineImage:Machine {
  }
  static bool Range(unsigned a,unsigned first,unsigned bytes){return a>=first && a-first<bytes;}
  virtual void NextFixture(){expected[1]=ExactAffineFixture(native,width,nextSeed);}
+ virtual unsigned ExpectedSourceReads()const{return 2*width/16*138;}
  unsigned Index(unsigned a)override{
   assert(!(a&3));
   if(a==0x6000)return 0;
@@ -87,7 +88,7 @@ struct ExactAffineImage:Machine {
   for(unsigned pass=0;pass<2;pass++)for(unsigned n=0;n<16;n++)assert(l1[Index(0x92000+pass*64+n*4)]==expected[pass][n]);
   for(unsigned n=32;n<64;n++)assert(l1[Index(0x92000+n*4)]==0x7fc00001);
   assert(native.matrixOps==6*width/16 && native.metadataLoads==2*width/16 && native.zeroLoads==2
-   && native.affineStores==4*width/16 && sourceReads==2*width/16*138 && maskReads==2*width/16*8
+   && native.affineStores==4*width/16 && sourceReads==ExpectedSourceReads() && maskReads==2*width/16*8
    && !native.unpackBank[0] && !native.unpackBank[1] && !native.matrixBank[0] && !native.matrixBank[1]);
   return true;
  }

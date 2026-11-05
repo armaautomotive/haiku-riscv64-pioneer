@@ -8,8 +8,9 @@ import tempfile
 if not __debug__:
     raise SystemExit('Assertions required')
 here = pathlib.Path(__file__).resolve().parent
-assert len(sys.argv)==1 or sys.argv[1:]==['--band'] or (len(sys.argv)==3 and sys.argv[1]=='--model')
-band = len(sys.argv)>1
+assert len(sys.argv)==1 or sys.argv[1:] in (['--band'],['--exact-q4-affine']) or (len(sys.argv)==3 and sys.argv[1]=='--model')
+affine=sys.argv[1:]==['--exact-q4-affine']
+band = sys.argv[1:]==['--band'] or (len(sys.argv)==3 and sys.argv[1]=='--model')
 model = len(sys.argv)==3
 name = 'pioneer_native_model_band_driver.cpp' if model else 'pioneer_native_bfp_band_driver.cpp' if band else 'pioneer_native_bfp_driver.cpp'
 native = here.parents[2] / 'src/add-ons/kernel/drivers/misc' / name
@@ -68,6 +69,10 @@ int main(){unsigned cases=0;
 }
 '''
 folder = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-native-bfp-mapping.'))
+if affine:
+    prefix=prefix.replace('#include "PioneerNativeBfpLease.h"','#define PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC 1\n#include "PioneerNativeBfpLease.h"')
+    tests=tests.replace('4096,4096,8192,16384,4096,4096,4096','4096,8192,8192,32768,4096,4096,4096')
+    tests=tests.replace('exact3548 owned words','exact4872 owned words').replace('PASS ACTUAL NativeIO','PASS ACTUAL fixed full-K affine NativeIO')
 if band:
     prefix = prefix.replace('#include "PioneerNativeBfpLease.h"', '#include "PioneerNativeBfpBandLease.h"')
     prefix = prefix.replace('bool invalid=false;\n', 'bool invalid=false;unsigned width;explicit IO(unsigned k=5120):width(k){}\n')

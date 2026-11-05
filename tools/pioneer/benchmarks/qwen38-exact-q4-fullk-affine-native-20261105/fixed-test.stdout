@@ -1,0 +1,1 @@
+PASS_ACTUAL_RV32_FIXED_Q4_FULLK_AFFINE changedDualJobs_K17408 originalFP32Words32 padding32;allSyntheticDataGeneratedOnCard_noHostOperandInjection stack192/8192;NO_NATIVE_MODEL_OR_TPS_CLAIM

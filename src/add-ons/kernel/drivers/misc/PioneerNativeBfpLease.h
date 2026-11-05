@@ -4,9 +4,16 @@
 #include "BlackholeDramSamplesProbe.h"
 #include "PioneerNativeBfpProtocol.h"
 #include "PioneerNativeBfpFixture.h"
+#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+#if PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC != 1 || defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC)
+#error Distinct fixed full-K affine lease role required
+#endif
+#endif
+#if defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC) || defined(PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC)
 #ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
 #if PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC != 1
 #error Distinct fixed exact-Q4 diagnostic mode required
+#endif
 #endif
 #include "PioneerNativeExactQ4Fixture.h"
 #endif
@@ -15,6 +22,12 @@
 // remain in its retained HEAP owner. No destructor IO, guessed completion,
 // retry, watchdog reset, numeric fallback or automatic cleanup on UNKNOWN.
 class PioneerNativeBfpLease {
+#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+	using Fixture=PioneerNativeExactQ4Fixture; // initial disposable DATA;shader replaces every consumed panel
+	static constexpr uint32_t DoneMarker=0x31413451,FaultMarker=0x46413451;
+	static constexpr unsigned RomWords=2048,ExtraWords=300;
+#else
+	static constexpr unsigned RomWords=1024,ExtraWords=0;
 #ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
 	using Fixture=PioneerNativeExactQ4Fixture;
 	static constexpr uint32_t DoneMarker=0x31433451,FaultMarker=0x46433451;
@@ -22,7 +35,8 @@ class PioneerNativeBfpLease {
 	using Fixture=PioneerNativeBfpFixture;
 	static constexpr uint32_t DoneMarker=0x3142464e,FaultMarker=0x4642464e;
 #endif
-	uint32_t saved[3548]={},tlb[2][3]={};
+#endif
+	uint32_t saved[2524+RomWords+ExtraWords]={},tlb[2][3]={};
 	unsigned bits=0;
 	bool attempted=false,owned=false,modified=false;
 	PioneerNativeBfpResult result={};
@@ -49,20 +63,27 @@ class PioneerNativeBfpLease {
 			&& io.BfpRead(0x17ffc0)==result.phase && io.BfpRead(0x17ffc4)==2 && io.BfpRead(0x17ffc8)==result.marker;
 	}
 public:
-	static constexpr unsigned SavedWords=3548;
+	static constexpr unsigned SavedWords=2524+RomWords+ExtraWords;
 	static uint32_t Address(unsigned index) {
 		if(!index)return 0x6000;
-		index--;if(index<1024)return 0x70000+index*4;
-		index-=1024;if(index<2048)return 0x6e000+index*4;
+		index--;if(index<RomWords)return 0x70000+index*4;
+		index-=RomWords;if(index<2048)return 0x6e000+index*4;
 		index-=2048;if(index<276)return 0x8fff0+index*4;
 		index-=276;if(index<132)return 0x90ff0+index*4;
 		index-=132;if(index<64)return 0x92000+index*4;
-		index-=64;return index<3?0x17ffc0+index*4:UINT32_MAX;
+		index-=64;
+#ifdef PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC
+		if(index<20)return 0x93ff0+index*4;
+		index-=20;if(index<20)return 0x94070+index*4;
+		index-=20;if(index<260)return 0x95ff0+index*4;
+		index-=260;
+#endif
+		return index<3?0x17ffc0+index*4:UINT32_MAX;
 	}
 	template<class Image> static uint32_t StagedWord(unsigned bits,unsigned index) {
 		const uint32_t address=Address(index);
 		if(address==0x6000)return Image::Boot;
-		if(address>=0x70000 && address<0x71000)return Image::Word(bits,(address-0x70000)/4);
+		if(address>=0x70000 && address<0x70000+RomWords*4)return Image::Word(bits,(address-0x70000)/4);
 		if(address>=0x90000 && address<0x90000+Fixture::WeightBytes(bits))
 			return Fixture::WeightWord(bits,(address-0x90000)/4);
 		if(address>=0x91000 && address<0x91200)return Fixture::InputWord((address-0x91000)/4);
@@ -72,7 +93,7 @@ public:
 	const PioneerNativeBfpResult& Result() const { return result; }
 	void Abandon() { if(owned)Unknown(); } // CPU metadata ONLY; no IO on close/failed reply
 	template<class IO,class Image> bool Run(IO& io,tt_dram_samples_result& baseline,unsigned format) {
-#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+#if defined(PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC) || defined(PIONEER_NATIVE_EXACT_Q4_AFFINE_DIAGNOSTIC)
 		if(format!=4)return false; // no old general-BFP8 route in this family
 #endif
 		if(attempted || (format!=4 && format!=8))return false;
