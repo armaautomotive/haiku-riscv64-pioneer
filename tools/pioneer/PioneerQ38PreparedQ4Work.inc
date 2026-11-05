@@ -6,6 +6,10 @@
 #include "PioneerQ38PreparedQ4Mask.h"
 #include "PioneerQ38ExactQ4Original.h"
 #include "PioneerQ38ExactQ4Affine.h"
+#ifdef PIONEER_Q38_Q4_BLOCK_INTEGER_IMAGE
+#include "PioneerQ38Q4BlockIntegerImageRole.h"
+#include "PioneerQ38Q4BlockIntegerState.h"
+#endif
 #ifdef PIONEER_Q38_PREPARED_TWO_PRODUCT_IMAGE
 #if PIONEER_Q38_PREPARED_TWO_PRODUCT_IMAGE != 1
 #error Distinct offboard two-product worker image only
@@ -150,13 +154,22 @@ static unsigned PioneerQ38ExactQ4Work(const volatile uint32_t* job){
  for(unsigned group=0;group<groups;group++){
   e.Drain();const auto window=PreparedQ4Group(descriptor,group,reads,flits);
   e.Config(50,0x100);VectorPanelEmitter init;PioneerQ38VectorDstInit(init,true,true,true,true);
+#ifdef PIONEER_Q38_Q4_BLOCK_INTEGER_IMAGE
+  PioneerQ38Q4BlockIntegerState integer;VectorPanelEmitter integerEmitter;
+  if(!integer.Init(integerEmitter))block_fault_park();
+#endif
   uint32_t expected=0;
   for(unsigned block=0;block<blocks;block++){
    const unsigned raw=TwinBatchTilePrefetchStage(12,inputs,groups,group,block,first,source,expected),scale=Words(0x94000)[block];
    const unsigned index=Words(PreparedQ4::Index)[PreparedQ4::IndexWordsBefore(descriptor,group)+block];
    if(!PioneerQ38PreparedQ4Mask::Expand(e,index,window) || !PioneerQ38VectorQ4Metadata::FiniteBlock(Words(raw),2304))block_fault_park();
-   e.Drain();e.Config(50,0x100);VectorPanelEmitter metadata;
+   e.Drain();e.Config(50,0x100);
+#ifdef PIONEER_Q38_Q4_BLOCK_INTEGER_IMAGE
+   if(!integer.Begin(integerEmitter,raw))block_fault_park();
+#else
+   VectorPanelEmitter metadata;
    if(!PioneerQ38VectorQ4Metadata::Block(metadata,raw,scale))block_fault_park();
+#endif
    e.Config(1,0x60aa0000);
 #ifdef PIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE
    // Every correction buffer is immutable until the block's real ACK.
@@ -201,13 +214,20 @@ static unsigned PioneerQ38ExactQ4Work(const volatile uint32_t* job){
     PioneerQ38ExactQ4Affine::PanelEmitter<PioneerQ38ExactQ4WorkEmitter> panel(e);
     if(!PreparedQ4Dot::Run(panel))block_fault_park();
 #endif
+#ifdef PIONEER_Q38_Q4_BLOCK_INTEGER_IMAGE
+    if(!integer.Panel(integerEmitter,p,sum))block_fault_park();
+#else
     e.metadataRow=128+(p/2)*8;
 #ifdef PIONEER_Q38_PREPARED_TWO_PRODUCT_REPLAY_IMAGE
     PreparedQ4Affine::Affine(e,scale,sum,block==0 && p==0);
 #else
     PreparedQ4Affine::Affine(e,scale,sum);
 #endif
+#endif
    }
+#ifdef PIONEER_Q38_Q4_BLOCK_INTEGER_IMAGE
+   if(!integer.Finish(integerEmitter,scale))block_fault_park();
+#endif
 #ifdef PIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE
    e.EndQueued();
 #endif

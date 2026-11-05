@@ -1,0 +1,12 @@
+Initial A build main21278=0 clean98481=0;whole unchanged9f first;A not accepted
+A pilot45953=0 ONLY K5120/groups1
+A full shapes37156=1 clean12221=1;original drained cache-store guard correctly refused
+A controls60702=1 clean94864=1;same cache-order failure
+A image-role harness failed before PASS;wrong component-vs-image admission test,fixed test
+Final B build main17299=0 clean37149=0;unchanged9f first;whole B ELF/mainclean stdout exact
+B full shapes main68422=0 clean19441=0;27 shapes/54 changed jobs,whole stdout exact,stderr0
+B controls main13629=0 clean33066=0;5 masks/16 NoC-loss/16 descriptor;whole stdout+32 expected stderr rows exact
+B history main63626=0 clean70989=0;48 pairs/96 workers/192 Q4+192 GDN jobs,whole stdout exact,stderr0
+B image/component roles+state/original regressions main2006=0 clean16429=0;all stderr0
+All semantic regression stdout exact;only last private artifact path differs
+No hardware/native/model-quality/physical-speed acceptance

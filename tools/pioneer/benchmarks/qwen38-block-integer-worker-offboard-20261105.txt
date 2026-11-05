@@ -1,0 +1,126 @@
+Complete Q4 block-integer worker:OFFBOARD functional checkpoint
+=============================================================
+2026-11-05 UTC. Distinct complete compiled RISC-V worker now executes the
+new arithmetic through real UNPACK/MVMUL/SFPU/source-bank/NoC/ACK/commit/
+STOP instruction flow. ENDPOINTS ARE SIMULATED. NOT a native driver,model
+quality acceptance,physical benchmark or useful-speed claim.20tok/s UNMET.
+
+Actual image and default preservation
+------------------------------------
+PIONEER_Q38_Q4_BLOCK_INTEGER_IMAGE=1 with explicit offboard arithmetic role
+and exact unqueued prepared/two-product/replay/twin parents. Separate TU;
+native/client/CPU-reference/Work and queued/fixed/pair/delta siblings refuse,
+including defined0. Generic component-only freestanding denial is retained;
+ONLY the fully gated new IMAGE may compile as a freestanding shader.
+
+Builder authenticates both original parents and reproduces ENTIRE unchanged
+9f ELF FIRST. Main21278/clean98481 compiled initial A,then corrected final B
+main17299/clean37149 all actually0. B ELF155004B matches main/clean EXACTLY:
+ 2d5e30bb86b2ca6ba77e8337a4e538fb028cce6c02b376ac84c47cb1b6ca1fcb
+Service19896B within SAME24576B,4680B headroom:
+ 1219d4e806dc22e5485c9b91713a0eb34ee2e7e3ac250896e3ee9e3d51ea2a0d
+All NINE other sections and the COMPLETE9888B convolution prefix are exact
+9f bytes. No unresolved symbols,writable globals/GOT,new allocated section
+or forbidden RV instruction pattern. Existing linker code/stack bounds
+unchanged. Whole-function/common-tail relocation/body audit still pending;
+fixed pins and functional tests are NOT a substitute for that audit.
+
+Integration and the failure caught by the wider test
+--------------------------------------------------
+PreparedQ4Work selects the new state only under its new IMAGE flag. Once
+per output group explicitly initialize112..127;per block import original
+metadata,accumulate both split dot halves,and finish once into108..111.
+Original prepared inputs/masks/source descriptor/twin prefetch,sum cache,
+TWO-product dot,NoC and outer completion remain. Use the DIRECT instruction
+emitter for metadata/state,not the dot emitter's operand-address remaps.
+No host products,CPU inference/fallback,weight conversion/cache rewrite,
+native/Assistant target,source-bank geometry or device-capacity change.
+
+Initial A ELF8e2f0796... passed the K5120/groups1 pilot45953=0 but BOTH
+wider suites37156/12221 failed at the first groups>1 input-sum cache write.
+The last register clears in Begin followed its final drain,so the original
+strict cache writer correctly refused undrained state. Fixed by MOVING that
+existing final drain after the clears;NO extra drain,oracle relaxation or
+cache-guard exception. Initial A controls60702/94864 also fail;A is NOT
+accepted or promoted. Final B alone is pinned by the runner.
+
+The image-role test initially exercised component headers without requiring
+the IMAGE admission header,so removing IMAGE legitimately selected a valid
+host component and failed the test's expectation. The test now explicitly
+includes the image role;no production gate was relaxed to pass it.
+
+Actually closed final B tests:main AND independent clean source
+-------------------------------------------------------------
+ASan+UBSan,Werror,ffp-contract=off. Actual immutable authenticated ROM copies
+are the SAME bytes executed,including actual ELF symbols/function extents.
+No PC/register/result injection or unknown-op pass-through. Source-only
+test reuse change makes IssueSfpu virtual;old implementation stays strict.
+New subclass handles ONLY explicit new MAD/cast/112..123 stores and a
+separate Q4 block-int64/non-fused-FP32 oracle. Q8/Q6 use old exact teacher.
+Old Q4 K16 teacher remains unchanged and runs on its pinned control ROM.
+
+ Full shapes main68422=0/clean19441=0:all27 Q8/Q4/Q6 x K5120/6144/17408 x
+ groups1/3/16,54 changed-input jobs,actual queued next descriptor/payload
+ ACK/commit and normal STOP. Q8/Q6 outputs and executed RV counts exact to
+ control. Q4 outputs exact to DISTINCT new arithmetic plus independent
+ FP64 expanded bound,not asserted bit-identical old K16 rounding. Entire
+ main/clean stdout exact,all stderr0. Observed combined stack3556/8192.
+
+ Controls main13629=0/clean33066=0:5 fragmented/sparse/dense mask controls
+ with prefix13/groups3 and genuine STOP;16 lost input/descriptor/correction/
+ tile NoC reads park/inert under old strict source checks;16 invalid source
+ descriptor fields refuse before matrix/publication. Whole stdout EXACT;
+ exactly32 EXPECTED controlled-fault stderr rows EXACT,not empty stderr.
+
+ Retained history main63626=0/clean70989=0:48 coupled pairs/96 workers,
+ actual Q4 -> GDN sequence2 -> changed beta/prior GDN3 -> changed-input Q4
+ sequence4 -> real STOP5.192 Q4 jobs and192 GDN half-jobs. All guest PC,
+ registers,configuration,replay,Dst,LRegs,banks and physical counter history
+ retained;only mock packet/receipt observations retired. Entire stdout
+ exact,stderr0. Observed combined stack4820/8192. No reset between modes.
+
+ Roles+component/original regressions main2006=0/clean16429=0:IMAGE2positive/
+ 96 refusals plus unchanged component2positive/88 refusals. Retained768
+ emitted blocks,14 missing-step controls,18 grammar/domain refusals and
+ old1024-block metadata/43-refusal/8-control suite pass. EACH tree fully
+ hashes SAME-OPEN original18973870528B source before actual193-tensor/1737
+ block/3474 changed-input samples and stable identity closure:
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+ Full semantic stdout exact;only component runner's private temp path
+ differs. All accepted regression stderr0. No cache/device access.
+
+Counts are not a speed result
+----------------------------
+Two-job K5120/groups1 retired RV count:9f1443247 -> B1420703,1.562033%
+lower. K17408/groups16:43147777 ->42014495,2.626513% lower. This is modest,
+NOT physical cycles/configuration latency/utilization or tokens/sec. Old
+13-word affine already uses REPLAY. Do not infer a large model gain from
+the new arithmetic word-count ratio or promote merely from these counts.
+
+Remaining before hardware:whole service/common-body boundary audit,
+backend missing-completion/fault-inert qualification,native saved-state/
+data/code/session/USER integration,separate full-model quality validation
+and a real matched benchmark. Check actual inherited zero Dst/Sp/address
+modifiers:old Setup zeros thread fields and AddrMod1 changes fidelity only;
+do not assume arbitrary backend state is compatible. No GPR/config-bank/
+MOP ownership expansion is authorized by this functional checkpoint.
+
+The existing compressed-Q4/SFPU/BF16/MOVD2A native-FPU pipeline and mixed
+BFP8 work are separate possible larger-throughput routes,not a new result
+here. Their existing reports must be used rather than restarting that work.
+Any changed precision needs its own quality gates;do not silently weaken
+this or the old exact oracle,or mistake an expanded layout for owned memory.
+
+Protected physical103 comparison remains independent
+--------------------------------------------------
+At21:48:07GMT wrapper28724,parent28725,rate28809,USER28810 were LIVE,
+upload16992.9/19522.4MiB,actual parent/rate exits absent,all stderr0,SAME
+observer36806. No concurrent accelerator metadata/admin/new job,live-stage
+mutation,reload,reboot,relay,Assistant/OS/boot/network/CPU/RAM/SD/mains or
+hardware-setting change. No new worker executed on Pioneer. Stage103 is
+SPENT FOREVER;its later numerical/rate/restoration result is NOT inferred.
+Last closed102 rate0.162052093..0.162055547tok/s;comparable vector92
+0.172813448..0.172816755. This candidate has NO physical inference rate.
+
+Complete non-weight raw streams/actual exits accompany this report. Failed
+A records remain failures;no binary/model/learned tensor is committed.

@@ -56,7 +56,7 @@ private:
   e.Config(1,0xa03c8000);e.Config(64,0x10001e);e.Config(65,16);e.Config(72,14);e.Config(73,0x13);
   e.Config(84,0x00400040);e.Config(76,(raw-16)/16);e.Op(0x42000081);e.Drain();
   e.Op(0xb2050004);e.Op(0x3700000f);e.Op(0x8a000002);e.Drain();
-  MetadataParity<0>(e);MetadataParity<2>(e);e.Drain();
+  MetadataParity<0>(e);MetadataParity<2>(e);
  }
  template<unsigned Parity,class E> static void PanelParity(E& e,unsigned panel,int sum){
   e.Op(0x70030000|32|Parity);
@@ -83,7 +83,7 @@ public:
   if(failed || active || !initialized || !PioneerQ38VectorQ4Metadata::RawBase(raw))return Refuse();
   active=1;next=0;Metadata(e,raw);
   for(unsigned reg=4;reg<8;reg++)PioneerSfpuLoad32(e,reg,0);
-  return true;
+  e.Drain();return true;
  }
  // Entry requires the real TWO-product FPU dot and source-bank release.
  // Both output parities consume the same original K16 scalar input sum.

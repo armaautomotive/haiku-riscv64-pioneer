@@ -1,0 +1,7 @@
+UNQUALIFIED_BLOCK_INTEGER_SAME_READONLY_WHOLE_ROM_PINS_ONLY_NO_BODY_AUDIT_OR_HARDWARE_GRANT
+BLOCK_INTEGER_ACTUAL_CASE type12 K5120 groups1
+PASS QGW3 worker69/type12/ACTUAL fullK5120+640tensor instructions/15 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type12/ACTUAL fullK5120+640tensor instructions/15 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_BLOCK_INTEGER_ACTUAL_CASE type12 K5120 groups1 changedJobs2 RV9f1443247 candidate1420703 integerMads2560 casts2560 halfBaseStores240 REAL_STOP;NEW_EXACT_ORACLE_NOT_OLD_K16;EMULATOR_COUNTS_NOT_TIME_OR_TPS
+PASS_BLOCK_INTEGER_COMPLETE_WORKER cases1 changedJobs2 maxCombinedStack3556/8192;actualROM_UNPACK_MVMUL_SFPU_sourcebanks_NoC_ACK_commit_STOP;SYNTHETIC_ENDPOINTS_NO_NATIVE_MODEL_QUALITY_OR_PHYSICAL_TPS
+PARTIAL_BLOCK_INTEGER_COMPLETE_WORKER_FUNCTIONAL_ONLY_NO_FULL_FAILURE_HISTORY_BODY_NATIVE_MODEL_OR_TPS_QUALIFICATION

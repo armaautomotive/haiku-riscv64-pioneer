@@ -1,0 +1,14 @@
+UNQUALIFIED_BLOCK_INTEGER_SAME_READONLY_WHOLE_ROM_PINS_ONLY_NO_BODY_AUDIT_OR_HARDWARE_GRANT
+PASS QGW3 worker69/type12/ACTUAL fullK5120+1920tensor instructions/36 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor0;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_BLOCK_INTEGER_FRAGMENT prefix13 groups3 nonzeroRows0 REAL_STOP_NEW_EXACT_ORACLE
+PASS QGW3 worker69/type12/ACTUAL fullK5120+1920tensor instructions/39 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor0;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_BLOCK_INTEGER_FRAGMENT prefix13 groups3 nonzeroRows1 REAL_STOP_NEW_EXACT_ORACLE
+PASS QGW3 worker69/type12/ACTUAL fullK5120+1920tensor instructions/39 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor0;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_BLOCK_INTEGER_FRAGMENT prefix13 groups3 nonzeroRows239 REAL_STOP_NEW_EXACT_ORACLE
+PASS QGW3 worker69/type12/ACTUAL fullK5120+1920tensor instructions/39 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor0;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_BLOCK_INTEGER_FRAGMENT prefix13 groups3 nonzeroRows240 REAL_STOP_NEW_EXACT_ORACLE
+PASS QGW3 worker69/type12/ACTUAL fullK5120+1920tensor instructions/39 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor0;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_BLOCK_INTEGER_FRAGMENT prefix13 groups3 nonzeroRows256 REAL_STOP_NEW_EXACT_ORACLE
+PASS_BLOCK_INTEGER_COMPLETE_WORKER cases0 changedJobs0 maxCombinedStack3556/8192;actualROM_UNPACK_MVMUL_SFPU_sourcebanks_NoC_ACK_commit_STOP;SYNTHETIC_ENDPOINTS_NO_NATIVE_MODEL_QUALITY_OR_PHYSICAL_TPS
+PASS_BLOCK_INTEGER_WORKER_CONTROLS fragmentedMasks5 NoCLossInert16 descriptorRefusals16;NO_NATIVE_MODEL_HARDWARE_OR_TPS
+PARTIAL_BLOCK_INTEGER_COMPLETE_WORKER_FUNCTIONAL_ONLY_NO_FULL_FAILURE_HISTORY_BODY_NATIVE_MODEL_OR_TPS_QUALIFICATION

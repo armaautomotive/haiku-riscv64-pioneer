@@ -1,9 +1,13 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_Q4_BLOCK_INTEGER_IMAGE
+#include "PioneerQ38Q4BlockIntegerImageRole.h"
+#endif
 #if !defined(PIONEER_Q38_Q4_BLOCK_INTEGER_AFFINE_OFFBOARD) \
  || PIONEER_Q38_Q4_BLOCK_INTEGER_AFFINE_OFFBOARD != 1
 #error Separate offboard block-integer arithmetic selection required
 #endif
-#if defined(_KERNEL_MODE) || defined(PIONEER_ATTENTION_FREESTANDING) \
+#if defined(_KERNEL_MODE) \
+ || (defined(PIONEER_ATTENTION_FREESTANDING) && !defined(PIONEER_Q38_Q4_BLOCK_INTEGER_IMAGE)) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) \
  || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
@@ -12,7 +16,9 @@
 #endif
 #ifndef PIONEER_Q38_Q4_BLOCK_INTEGER_AFFINE_H
 #define PIONEER_Q38_Q4_BLOCK_INTEGER_AFFINE_H
+#ifndef PIONEER_ATTENTION_FREESTANDING
 #include <stdint.h>
+#endif
 #include "PioneerQ38VectorAffine.h"
 
 // New rounding contract,NOT the old K16 affine or GGML's accumulation order.

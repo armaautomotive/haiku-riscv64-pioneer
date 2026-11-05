@@ -1,0 +1,7 @@
+Assertion failed: (memory.at(0x74038)==1 && groups>1 && (!pending || DisjointPrefetchCompute()) && drained && !(at&3)), function Store, file pioneer_q38_input_sum_cache_test.cpp, line 28.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_q4_block_integer_worker_inspect.py", line 80, in <module>
+    subprocess.run([str(binary), *map(str, directories), sys.argv[4]], check=True,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-block-integer-inspect-de_9y10w/worker', '/private/tmp/pioneer-block-integer-inspect-de_9y10w/EXACT_UNQUALIFIED_ROM_0', '/private/tmp/pioneer-block-integer-inspect-de_9y10w/EXACT_UNQUALIFIED_ROM_1', '/private/tmp/pioneer-block-integer-inspect-de_9y10w/EXACT_UNQUALIFIED_ROM_2', '--controls']' died with <Signals.SIGABRT: 6>.

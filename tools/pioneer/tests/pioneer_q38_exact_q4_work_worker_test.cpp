@@ -146,7 +146,7 @@ struct ExactQ4WorkPeer:ConstantIssuePeer {
   ownerA=owned[0][matrix[0]];for(unsigned bank=0;bank<2;bank++)sources[bank]=owned[0][bank];mathBank=matrix[0];
   matrixInstructions++;fpuPending=true;drained=false;
  }
- void IssueSfpu(unsigned op){
+ virtual void IssueSfpu(unsigned op){
   if(Tasks() || fpuPending)Fail(__LINE__);const unsigned code=op>>24;math.cycle=tick;
   if(op==0x8a000002){enabled=true;return;}if(!enabled)Fail(__LINE__);
   if(code==0x70 || code==0x72){

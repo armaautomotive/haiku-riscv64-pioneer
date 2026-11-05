@@ -1,0 +1,43 @@
+UNQUALIFIED_BLOCK_INTEGER_SAME_READONLY_WHOLE_ROM_PINS_ONLY_NO_BODY_AUDIT_OR_HARDWARE_GRANT
+BLOCK_INTEGER_ACTUAL_CASE type8 K5120 groups1
+PASS QGW3 worker69/type8/ACTUAL fullK5120+1280tensor instructions/42 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK5120+1280tensor instructions/42 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_BLOCK_INTEGER_ACTUAL_CASE type8 K5120 groups1 changedJobs2 RV9f931023 candidate931023 integerMads0 casts0 halfBaseStores0 REAL_STOP;NEW_EXACT_ORACLE_NOT_OLD_K16;EMULATOR_COUNTS_NOT_TIME_OR_TPS
+BLOCK_INTEGER_ACTUAL_CASE type8 K5120 groups3
+PASS QGW3 worker69/type8/ACTUAL fullK5120+3840tensor instructions/122 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK5120+3840tensor instructions/122 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_BLOCK_INTEGER_ACTUAL_CASE type8 K5120 groups3 changedJobs2 RV9f2315959 candidate2315959 integerMads0 casts0 halfBaseStores0 REAL_STOP;NEW_EXACT_ORACLE_NOT_OLD_K16;EMULATOR_COUNTS_NOT_TIME_OR_TPS
+BLOCK_INTEGER_ACTUAL_CASE type8 K5120 groups16
+PASS QGW3 worker69/type8/ACTUAL fullK5120+20480tensor instructions/642 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK5120+20480tensor instructions/642 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_BLOCK_INTEGER_ACTUAL_CASE type8 K5120 groups16 changedJobs2 RV9f11318043 candidate11318043 integerMads0 casts0 halfBaseStores0 REAL_STOP;NEW_EXACT_ORACLE_NOT_OLD_K16;EMULATOR_COUNTS_NOT_TIME_OR_TPS
+BLOCK_INTEGER_ACTUAL_CASE type8 K6144 groups1
+PASS QGW3 worker69/type8/ACTUAL fullK6144+1536tensor instructions/50 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK6144+1536tensor instructions/50 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_BLOCK_INTEGER_ACTUAL_CASE type8 K6144 groups1 changedJobs2 RV9f1095087 candidate1095087 integerMads0 casts0 halfBaseStores0 REAL_STOP;NEW_EXACT_ORACLE_NOT_OLD_K16;EMULATOR_COUNTS_NOT_TIME_OR_TPS
+BLOCK_INTEGER_ACTUAL_CASE type8 K6144 groups3
+PASS QGW3 worker69/type8/ACTUAL fullK6144+4608tensor instructions/146 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK6144+4608tensor instructions/146 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_BLOCK_INTEGER_ACTUAL_CASE type8 K6144 groups3 changedJobs2 RV9f2755927 candidate2755927 integerMads0 casts0 halfBaseStores0 REAL_STOP;NEW_EXACT_ORACLE_NOT_OLD_K16;EMULATOR_COUNTS_NOT_TIME_OR_TPS
+BLOCK_INTEGER_ACTUAL_CASE type8 K6144 groups16
+PASS QGW3 worker69/type8/ACTUAL fullK6144+24576tensor instructions/770 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK6144+24576tensor instructions/770 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_BLOCK_INTEGER_ACTUAL_CASE type8 K6144 groups16 changedJobs2 RV9f13551387 candidate13551387 integerMads0 casts0 halfBaseStores0 REAL_STOP;NEW_EXACT_ORACLE_NOT_OLD_K16;EMULATOR_COUNTS_NOT_TIME_OR_TPS
+BLOCK_INTEGER_ACTUAL_CASE type8 K17408 groups1
+PASS QGW3 worker69/type8/ACTUAL fullK17408+4352tensor instructions/140 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK17408+4352tensor instructions/140 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_BLOCK_INTEGER_ACTUAL_CASE type8 K17408 groups1 changedJobs2 RV9f2915335 candidate2915335 integerMads0 casts0 halfBaseStores0 REAL_STOP;NEW_EXACT_ORACLE_NOT_OLD_K16;EMULATOR_COUNTS_NOT_TIME_OR_TPS
+BLOCK_INTEGER_ACTUAL_CASE type8 K17408 groups3
+PASS QGW3 worker69/type8/ACTUAL fullK17408+13056tensor instructions/412 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK17408+13056tensor instructions/412 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_BLOCK_INTEGER_ACTUAL_CASE type8 K17408 groups3 changedJobs2 RV9f7617647 candidate7617647 integerMads0 casts0 halfBaseStores0 REAL_STOP;NEW_EXACT_ORACLE_NOT_OLD_K16;EMULATOR_COUNTS_NOT_TIME_OR_TPS
+BLOCK_INTEGER_ACTUAL_CASE type8 K17408 groups16
+PASS QGW3 worker69/type8/ACTUAL fullK17408+69632tensor instructions/2180 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK17408+69632tensor instructions/2180 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_BLOCK_INTEGER_ACTUAL_CASE type8 K17408 groups16 changedJobs2 RV9f38182675 candidate38182675 integerMads0 casts0 halfBaseStores0 REAL_STOP;NEW_EXACT_ORACLE_NOT_OLD_K16;EMULATOR_COUNTS_NOT_TIME_OR_TPS
+BLOCK_INTEGER_ACTUAL_CASE type12 K5120 groups1
+PASS QGW3 worker69/type12/ACTUAL fullK5120+640tensor instructions/15 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type12/ACTUAL fullK5120+640tensor instructions/15 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_BLOCK_INTEGER_ACTUAL_CASE type12 K5120 groups1 changedJobs2 RV9f1443247 candidate1420703 integerMads2560 casts2560 halfBaseStores240 REAL_STOP;NEW_EXACT_ORACLE_NOT_OLD_K16;EMULATOR_COUNTS_NOT_TIME_OR_TPS
+BLOCK_INTEGER_ACTUAL_CASE type12 K5120 groups3
+PASS QGW3 worker69/type12/ACTUAL fullK5120+1920tensor instructions/39 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
