@@ -1,0 +1,7 @@
+PASS full-card metrics DATA 199680 bounded count observations/all request bytes and out-of-range counts refused;NO timing,lifecycle or hardware authority
+PASS full-offload pointer-free grammar 3072 valid/212150 refusals;old fixed diagnostic unchanged;NO inference or hardware
+PASS prepared USER all4895_upload_spans and194_same_FD_source_publications before_START;synthetic cache/transport,no native/card/TPS
+PASS actual full-offload USER:96prompt/32output/127positions,two64-record drains,all5 EOS and3 cancellation boundaries,704 fail-closed COW fixtures;synthetic ONLY,no physical or numerical result
+PASS actual prepared-source ioctl194 locked publications/copy failure revokes metadata/pre-native admission;MOCK source-owner,no card
+PASS actual full-offload kernel control 13415 early shape refusals/all6 operations/copy failures/root+FD+team admission/kernel snapshot/no invalid partial readout;MOCK owner endpoints only
+PASS full-offload host tests;no original model,native engine,device or speed result

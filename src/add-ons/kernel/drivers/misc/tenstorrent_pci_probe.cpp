@@ -57,6 +57,12 @@
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110400010090ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_METRICS)
 #error Reserved full-offload tag90 requires its distinct read-only counter role
 #endif
+#if defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4) && !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE)
+#error Prepared Q4 requires its distinct full-offload native parent
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110500010097ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4)
+#error Tag97 requires its distinct prepared-source full-offload role
+#endif
 #if defined(PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4) && !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE)
 #error Full-card macro Q4 requires its actual exclusive full native parent
 #endif
@@ -3372,6 +3378,9 @@ struct PioneerMatmulIO : PioneerDramSamplesIO {
 // explicit END or the final close of this FD. No firmware/core start is
 // performed here. Storage/compute commands will use this same owner.
 struct PioneerStoreContext {
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+ PioneerQ38PreparedNativeSource* q38PreparedSource=NULL; // context-owned immutable side-page/table binding
+#endif
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
  PioneerQ38TokenNativeState* q38TokenNative=NULL; // DISTINCT full851 retained model,never old prefix readiness
 #endif
@@ -3509,6 +3518,9 @@ struct PioneerStoreContext {
 	~PioneerStoreContext() {
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
   delete q38TokenNative; // only known-clean context destruction;active/unknown END retains this object
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+  delete q38PreparedSource; // after the native borrower;whole bank owner still retained until known-clean END
 #endif
 #ifdef PIONEER_Q38_RECURRENT_PREFIX_NATIVE_CONTEXT
   delete q38RecurrentPrefixNative; // known-clean END only,before borrowed embedding/graph/hosts
@@ -8483,6 +8495,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
  // NODRV retains only PRIVATE bank/clock/FD source constructors. The
  // distinct tag74 role additionally routes its bounded validation only.
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+ if(operation==TT_PCI_PROBE_Q38_PREPARED_SOURCE)
+  return Q38PreparedSourceControl(instance,data,length);
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
  if(operation==TT_PCI_PROBE_Q38_FULL_OFFLOAD_COUNTER)
   return Q38FullOffloadCounter(instance,data,length);

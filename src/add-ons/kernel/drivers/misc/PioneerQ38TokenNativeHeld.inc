@@ -125,6 +125,9 @@ void PioneerSessionIO::TokenMemoryRetainHostOwners(){
   okay=c.io.PrepareTokenNativeParticipant(w);
   if(!okay)d.prepared=w+1;
  }
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+ if(okay)okay=s->preparedSource && startup->BindPreparedSource(*s->preparedSource);
+#endif
  if(okay)okay=startup->Build(s->canonical,s->bank,s->identity,&d.authority.source[0][0],s->prompt,s->prompts,s->limit,s->stopEos,s->eos[0],s->eos[1])
   && startup->LearnedPagesPresent(c.initialized,PioneerResidentBanks::Pages);
  if(okay){s->phase=PioneerQ38TokenNativeState::MemoryPreparing;

@@ -1,0 +1,75 @@
+Prepared Q4 native/loader integration -- 2026-11-05
+================================================
+
+IMPLEMENTED AND OFFLINE-TESTED;NOT A NEW PHYSICAL INFERENCE SPEED RESULT.
+The last accepted full-card27B speed remains0.172813448..0.172816755tok/s.
+20tok/s remains unmet. Installed Assistant and stable041 driver unchanged.
+
+What is now connected rather than another isolated arithmetic milestone:
+-Distinct tag97 native+USER role selects the executed ROOT030610... and
+ workerb283d7... pair,five ROOT and ten worker code sections.
+-ROOT6c000..6e000 now has an explicit extra8192B restoration journal.
+ Full120-worker saved bytes53922024;old default43 remains byte-identical.
+-The public loader binds preparation to its SAME authenticated original
+ model/FD,not a second pathname or mutable public model accessor. Original
+ cache writer recipe70c2c7d0... is unchanged;no cache rekey/regeneration.
+-Preparation/verification completes BEFORE device Open. All4895 spans,
+ 20470759424 bytes,include1344 FFN primaries and1344 correction side spans;
+ embedding remains original. No CPU inference/reference/fallback is added.
+-After SpanEnd,the SAME FD publishes BEGIN,192 phase tables,and SEAL.
+ Native binding refuses absent/incomplete/abandoned publications before
+ native allocation,firmware installation or launch. Side pages are checked
+ against the actual initialized upload ledger and retained bank owner.
+-Every phase validates119 worker assignments against the private canonical
+ schedule. Startup overlays metadata only in existing package slack. Any
+ source withdrawal invalidates subsequent startup/binding reads.
+-Existing terminal/HOLD/read/drain/restoration/END/Close lifecycle remains.
+ Failed metadata reply-copy abandons the publication,not GPU cleanup.
+
+ACTUAL completed checks,all exit0:
+1.Native build and independent clean source build:identical
+ f4d98a7f6c561703ec0ed9111ddaa7f263898c02e305804c2af918347643ed88.
+ Default43 both2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc.
+ Thirty main/29 clean compile refusals(the extra main one is unrelated
+ resident WIP,excluded from the clean source). Max individual native token
+ frame1232B;this is NOT a complete kernel call-stack certification.
+2.Prepared USER build+clean compile using the frozen vocabulary headers:
+ identical10df2a16c8fee1208743117418a5b155e986a6868c09ea237c6e0dac56a37bd0.
+ Exact11 vocabulary/container imports;no decode/context/logits/ggml backend.
+ Nineteen role refusals. The old vector92 worker and its helper rebuild
+ byte-identically to their accepted physical artifacts.
+3.ASan+UBSan actual native source/startup:1344 retained side spans,192 phase
+ tables,22848 canonical worker bindings,2048 full package chunks(32MiB).
+ All non-table bytes independently match the original package serializer.
+ Forty-two mutation/admission refusals;no bank/NoC packet is issued.
+4.Actual prepared USER lifecycle over synthetic source/transport:4895 spans,
+194 publications BEFORE START,704 fail-closed fork fixtures,all5 EOS and
+3 cancellation boundaries,two record drains. Actual metadata ioctl body
+also passes its194 locked operations,admission and failed-reply checks.
+Main and clean complete stdout are identical. Endpoint mocks do NOT prove
+physical numerical inference or whole native ownership by themselves.
+5.Actual production source helper with SAME read-only authenticated public
+ GGUF and existing real cache:1351 warm fragments,convertedTiles0,all4895
+ spans,194 publications,192 phase headers and9790 sampled page reads.
+ Entire source snapshot unchanged afterward;no accelerator was opened.
+6.Generated paired programs reproduce byte-for-byte. All3375593 installed
+ code words across120 workers match the authenticated binary sections and
+ lie inside their restoration journals;10014 invalid/data address refusals.
+ This is code/data coverage,NOT model throughput.
+7.Old vector92 protocol/session/control regressions pass,including280
+ fail-closed USER fixtures. Prepared physical parent retains the entire
+ previously tested rate lifecycle except nine exact revision substitutions.
+
+Pioneer observations during integration:
+Haiku reachable;stable041/tag2026102100010012/gen24,idle,no active owner.
+36.5GiB free;the new cache leaf was absent. CPU-only,original-recipe Haiku
+preparer c2048725c0f6db0321e194fb8da49e6b2c73ef65bbe850c34746ce5a173e9cdc
+was built/staged and started separately. It opens NO accelerator. Its final
+exit and cache completeness are still owed;do not infer them from a PID/log.
+No driver exchange,reboot,SD/hardware or installed Assistant change here.
+
+Next decisive evidence:finish/verify Haiku cache preparation,then one guarded
+real27B rate trial of the paired native/USER build,including actual clean
+terminal/END/restoration and original counting-answer comparison. The new
+physical parent is fixed to stable generation24 and is not reusable after
+an exchange. Do not call supporting tests a demonstrated speed improvement.

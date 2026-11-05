@@ -2,6 +2,9 @@
 #ifdef PIONEER_Q38_TOKEN_NATIVE_CONTEXT
 #include "PioneerQ38TokenNativeRole.h"
 #include "PioneerQ38TokenControlPacket.h"
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#include "PioneerQ38PreparedSourceNative.inc"
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
 #include "PioneerQ38FullOffloadProtocol.h"
 static status_t Q38FullOffloadSupport(void* data,size_t length){

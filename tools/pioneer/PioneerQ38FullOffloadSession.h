@@ -20,16 +20,26 @@
 #include <array>
 #include <cstring>
 #include <memory>
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#include "PioneerQ38PreparedQ4SessionSource.h"
+#endif
 
 // Host work is authentication,weight-format loading,token IDs and lifecycle
 // metadata ONLY. No llama context,ggml graph,learned products,host KV or hidden
 // state. All inference arithmetic,including greedy selection,is on card.
 // IO/Source substitution is for explicit offline transport tests,not fallback.
-template<class IO,class Source=PioneerQ38PublicModelSource>
+template<class IO,class Source=PioneerQ38PublicModelSource
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+ ,class Prepared=PioneerQ38PreparedQ4SessionSource<Source>
+#endif
+ >
 class PioneerQ38FullOffloadSession {
  using Packet=PioneerQ38TokenControl::Packet;
  enum State {Virgin,Running,Terminal,Held,Drained,Complete,Failed};
  IO& io;Source& source;PioneerQwen38PackedPlan layout;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+ std::unique_ptr<Prepared> preparedData=std::make_unique<Prepared>();
+#endif
  std::unique_ptr<Packet> packet=std::make_unique<Packet>();
  std::array<uint32_t,PioneerQ38FullOffload::MaxPositions*64> records={};
  std::array<uint32_t,PioneerQ38FullOffload::MaxPrompt> prompt={};
@@ -39,7 +49,11 @@ class PioneerQ38FullOffloadSession {
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
  unsigned observedCount=0;
 #endif
- bool Current()const{return epoch && source.Ready() && source.Model().Epoch()==epoch && layout.MatchesSource(source.Model());}
+ bool Current()const{return epoch && source.Ready() && source.Model().Epoch()==epoch && layout.MatchesSource(source.Model())
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+  && (!prepared || preparedData->Ready())
+#endif
+  ;}
  void Close(){if(fd>=0){const int owned=fd;fd=-1;io.Close(owned);}}
  bool Stop(const char* why){if(!failure)failure=why;state=Failed;records.fill(0);Close();return false;}
  template<class T>bool Call(unsigned op,T& value){
@@ -57,6 +71,23 @@ class PioneerQ38FullOffloadSession {
   PioneerQ38FullOffload::Support support={};
   return Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT,support) && PioneerQ38FullOffload::Supported(support);
  }
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+ bool PublishPreparedSource(){
+  namespace P=PioneerQ38PreparedSource;
+  auto p=std::make_unique<P::Packet>();
+  for(unsigned step=0;step<P::Phases+2;step++){
+   const unsigned op=step==0?P::Begin:step==P::Phases+1?P::Seal:P::Phase;
+   const unsigned index=op==P::Begin?0:op==P::Phase?step-1:unsigned(P::Phases);
+   if(!preparedData->Publication(op,index,*p) || !P::RequestShape(*p))return false;
+   const auto request=p->request;
+   if(!Call(TT_PCI_PROBE_Q38_PREPARED_SOURCE,*p) || std::memcmp(&p->request,&request,sizeof(request)))return false;
+   const auto& r=p->reply;
+   if(r.version!=P::Version || r.operation!=op || r.status || r.accepted!=1 || r.ready!=unsigned(op==P::Seal)
+    || r.parts!=P::Parts || r.phases!=(op==P::Begin?0:op==P::Phase?index+1:unsigned(P::Phases)) || r.reserved)return false;
+  }
+  return Current();
+ }
+#endif
  bool Control(unsigned action,unsigned count=0){
   namespace P=PioneerQ38TokenControl;
   std::memset(packet.get(),0,sizeof(*packet));auto& q=packet->request;
@@ -114,6 +145,11 @@ public:
   unsigned weights=0;
   for(const auto& p:layout.Parts())if(p.kind==PIONEER_Q38_WEIGHT){weights++;bytesPlanned+=p.allocated;}
   if(layout.Parts().size()!=4678 || weights!=3551 || bytesPlanned!=UINT64_C(19399024640) || !Current())return Stop("model_geometry");
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+  if(!preparedData->Build(source,layout) || !preparedData->Ready())return Stop("prepared_source");
+  bytesPlanned=preparedData->Bytes();
+  if(preparedData->Spans().size()!=4895 || bytesPlanned!=UINT64_C(20470759424) || !Current())return Stop("prepared_geometry");
+#endif
   prepared=true;return true;
  } // whole same-open original authentication BEFORE any accelerator Open
  bool Probe(){
@@ -143,15 +179,34 @@ public:
   if(!Call(TT_PCI_PROBE_Q38_BANK_BEGIN,begin) || begin.result.version!=1 || begin.result.state!=TT_RESIDENT_SESSION_READY
    || begin.result.active!=1 || begin.result.host_ready!=1 || begin.result.cold || begin.result.capabilities
    || begin.result.bytes!=UINT64_C(21)*1024*1024*1024)return Stop("begin");
-  auto upload=std::make_unique<tt_q38_span_upload>();const auto& parts=layout.Parts();
+  auto upload=std::make_unique<tt_q38_span_upload>();
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+  const auto& parts=preparedData->Spans();
+#else
+  const auto& parts=layout.Parts();
+#endif
   for(unsigned f=0;f<parts.size();f++){
-   const auto& p=parts[f];if(p.kind!=PIONEER_Q38_WEIGHT)continue;
+   const auto& p=parts[f];
+#ifndef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+   if(p.kind!=PIONEER_Q38_WEIGHT)continue;
+#endif
    for(unsigned at=0;at<p.allocated/4096;){
     const unsigned pages=std::min(256U,p.allocated/4096-at);std::memset(upload.get(),0,sizeof(*upload));
     upload->version=1;upload->bank=p.bank;upload->bytes=pages*4096;
-    upload->offset=uint64_t(p.proposedAddress)-layout.Base+uint64_t(at)*4096;
+    upload->offset=uint64_t(
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+     p.address
+#else
+     p.proposedAddress
+#endif
+     )-layout.Base+uint64_t(at)*4096;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+    for(unsigned page=0;page<pages;page++)if(!preparedData->ReadPage(f,at+page,
+     reinterpret_cast<uint8_t*>(upload->data+page*1024),4096))return Stop("prepared_read");
+#else
     for(unsigned page=0;page<pages;page++)if(!source.ReadWeightPage(layout,f,at+page,
      reinterpret_cast<uint8_t*>(upload->data+page*1024),4096))return Stop("source_read");
+#endif
     if(!Call(TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD,*upload))return Stop("upload");
     const auto& r=upload->result;
     if(r.version!=1 || r.state!=TT_RUNTIME_PASSED || r.bytes!=pages*4096 || r.pages!=pages || r.nonce!=uploadSpans+1
@@ -161,10 +216,22 @@ public:
    }
    partsUploaded++;
   }
-  if(partsUploaded!=3551 || pagesUploaded*4096!=bytesPlanned)return Stop("upload_count");
+  if(partsUploaded!=
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+   4895
+#else
+   3551
+#endif
+   || pagesUploaded*4096!=bytesPlanned)return Stop("upload_count");
   tt_q38_span_end end={1,0,0,0};
   if(!Call(TT_PCI_PROBE_Q38_SPAN_END,end) || end.version!=1 || end.reserved || end.closed!=1 || end.recovery_required)return Stop("span_end");
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+  if(!Identity(1))return Stop("start_identity");
+  if(!PublishPreparedSource())return Stop("prepared_publication");
+  if(!Control(PioneerQ38TokenControl::Start))return Stop("start");
+#else
   if(!Identity(1) || !Control(PioneerQ38TokenControl::Start))return Stop("start");
+#endif
   const auto& r=packet->reply;const auto* d=r.detail;
   if(r.ready!=1 || r.stage!=8 || d[3]!=1 || d[4] || d[5] || d[6] || d[7])return Stop("start_reply");
   state=Running;return true;

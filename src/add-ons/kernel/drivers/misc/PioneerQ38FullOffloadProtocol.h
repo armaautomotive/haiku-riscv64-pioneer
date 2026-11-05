@@ -12,6 +12,9 @@
 #include "PioneerQ38TokenFrontierPacket.h" // pointer-free DATA only,not its old ioctl/diagnostic role
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_COUNTER (B_DEVICE_OP_CODES_END+0x8802)
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#include "PioneerQ38FullOffloadPreparedQ4Role.h"
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4
 #include "PioneerQ38FullOffloadMacroQ4Role.h"
 #endif
@@ -19,7 +22,9 @@
 #include "PioneerQ38FullOffloadVectorQ4Role.h"
 #endif
 namespace PioneerQ38FullOffload {
-#ifdef PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+static constexpr uint64_t BuildTag=UINT64_C(0x2026110500010097);
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110400010093);
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110400010092);

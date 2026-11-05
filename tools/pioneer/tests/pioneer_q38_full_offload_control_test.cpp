@@ -13,7 +13,29 @@ using status_t=int;
 static constexpr status_t B_OK=0,B_NOT_ALLOWED=-5,B_BAD_VALUE=-6,B_NO_MEMORY=-7,B_DEV_NOT_READY=-8,CopyFault=-19;
 struct thread_info{int team=17;};
 struct PioneerProbeCookie{unsigned magic=0x50313030;int team=17;};
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+// Explicit source-owner endpoint mock. Actual canonical/ledger validation
+// is exercised by pioneer_q38_prepared_q4_native_source_test.cpp.
+class PioneerQ38PreparedNativeSource {
+ bool begun=false,sealed=false,failed=false;unsigned phases=0;
+public:
+ bool Begin(const void*,const void*,const void*,const uint8_t*,int64_t,uint64_t,const int&,const int&,const uint32_t*,unsigned,unsigned);
+ bool Accept(unsigned,const uint32_t*,unsigned);
+ bool Seal();bool Ready()const{return begun && sealed && !failed && phases==192;}
+ unsigned AcceptedPhases()const{return phases;}
+ void Abandon(){failed=true;}
+};
+struct PreparedIO {bool TokenModelSourceScope(bool);};
+struct PioneerStoreContext{
+ void* q38TokenNative=reinterpret_cast<void*>(1);PioneerQ38PreparedNativeSource* q38PreparedSource=nullptr;
+ unsigned hashValue=1;const void* hashes=&hashValue;uint8_t initialized[1]={1};int banks=1;PreparedIO io;
+ struct {struct {struct {struct {int dram=1;}baseline;}baseline;}baseline;}baseline;
+};
+struct PioneerResidentBanks{enum {Pages=5505024};};
+static uint64_t sReloadGeneration=9;
+#else
 struct PioneerStoreContext{void* q38TokenNative=reinterpret_cast<void*>(1);};
+#endif
 struct tt_resident_session_result{};
 struct PioneerQ38TokenBackendResult{uint32_t version=1,started=0,stage=0,ready=0,unsafe=0,complete=0,reserved[2]={},detail[8]={};};
 struct PioneerQ38TokenExecutionResult{uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,armed=0,released=0,
@@ -33,6 +55,18 @@ static unsigned uid=0,copies=0,locked=0,scopes=0,executions=0,retains=0;
 static int copyFail=0,threadStatus=0,threadTeam=17,mode=0;
 static bool admitted=true,ended=false,mutateInput=false;
 static P::Packet* original=nullptr;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+bool PreparedIO::TokenModelSourceScope(bool beginning){assert(locked==1 && beginning);return mode==0;}
+bool PioneerQ38PreparedNativeSource::Begin(const void* c,const void* fd,const void* h,const uint8_t* ledger,int64_t team,uint64_t gen,
+ const int&,const int&,const uint32_t*,unsigned parts,unsigned pages){
+ assert(locked==1 && c==&context && fd && h==context.hashes && ledger==context.initialized && team==17 && gen==9
+  && parts==1344 && pages==5505024);executions++;if(begun || failed)return false;begun=true;return true;
+}
+bool PioneerQ38PreparedNativeSource::Accept(unsigned index,const uint32_t*,unsigned words){
+ assert(locked==1);executions++;if(!begun || failed || sealed || index!=phases || words!=2400)return false;phases++;return true;
+}
+bool PioneerQ38PreparedNativeSource::Seal(){assert(locked==1);executions++;if(!begun || failed || sealed || phases!=192)return false;sealed=true;return true;}
+#endif
 static unsigned geteuid(){return uid;}
 static int find_thread(void*){return 1;}
 static int get_thread_info(int,thread_info* t){t->team=threadTeam;return threadStatus;}
@@ -129,6 +163,39 @@ int main(){
  }
  Reset();Metric m;uid=1;assert(Q38FullOffloadCounter(&cookie,&m,sizeof(m))==B_NOT_ALLOWED && !copies);
  Reset();admitted=false;assert(Q38FullOffloadCounter(&cookie,&m,sizeof(m))==B_NOT_ALLOWED && copies==1 && !executions);
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+ {
+  namespace S=PioneerQ38PreparedSource;
+  auto packet=std::make_unique<S::Packet>();
+  auto fresh=[&](unsigned operation,unsigned index){*packet=S::Packet{};auto& q=packet->request;q.operation=operation;q.index=index;
+   q.words=operation==S::Begin?S::BeginWords:operation==S::Phase?S::Words:0;
+   if(operation==S::Begin)std::copy(S::Identity,S::Identity+16,q.data);
+  };
+  context.q38TokenNative=nullptr;Reset();
+  for(unsigned step=0;step<194;step++){
+   const unsigned operation=step==0?S::Begin:step==193?S::Seal:S::Phase;
+   const unsigned index=step==0?0:step==193?192:step-1;fresh(operation,index);Reset();
+   assert(Q38PreparedSourceControl(&cookie,packet.get(),sizeof(*packet))==B_OK && copies==2 && scopes==1 && executions==1 && !locked);
+   assert(packet->reply.accepted==1 && packet->reply.ready==unsigned(step==193) && packet->reply.parts==1344
+    && packet->reply.phases==(step==0?0:step==193?192:step));
+  }
+  assert(context.q38PreparedSource->Ready());delete context.q38PreparedSource;context.q38PreparedSource=nullptr;
+  fresh(S::Begin,0);Reset();copyFail=2;
+  assert(Q38PreparedSourceControl(&cookie,packet.get(),sizeof(*packet))==CopyFault && context.q38PreparedSource
+   && !context.q38PreparedSource->Ready() && executions==1 && !retains);
+  fresh(S::Phase,0);Reset();assert(Q38PreparedSourceControl(&cookie,packet.get(),sizeof(*packet))==B_NOT_ALLOWED
+   && !packet->reply.accepted && !context.q38PreparedSource->Ready());
+  delete context.q38PreparedSource;context.q38PreparedSource=nullptr;
+  for(unsigned field=0;field<sizeof(S::Request)/4;field++){
+   if(field>=8 && field<8+S::BeginWords)continue;
+   fresh(S::Begin,0);reinterpret_cast<uint32_t*>(&packet->request)[field]^=0x80000001;Reset();
+   assert(Q38PreparedSourceControl(&cookie,packet.get(),sizeof(*packet))==B_BAD_VALUE && copies==1 && !scopes && !executions);refused++;
+  }
+  fresh(S::Begin,0);Reset();context.q38TokenNative=reinterpret_cast<void*>(1);
+  assert(Q38PreparedSourceControl(&cookie,packet.get(),sizeof(*packet))==B_NOT_ALLOWED && !context.q38PreparedSource && !executions);
+  puts("PASS actual prepared-source ioctl194 locked publications/copy failure revokes metadata/pre-native admission;MOCK source-owner,no card");
+ }
 #endif
  printf("PASS actual full-offload kernel control %u early shape refusals/all6 operations/copy failures/root+FD+team admission/kernel snapshot/no invalid partial readout;MOCK owner endpoints only\n",refused);
 }

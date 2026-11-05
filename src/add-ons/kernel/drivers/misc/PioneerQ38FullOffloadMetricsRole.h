@@ -10,7 +10,9 @@
 #error Full-card metrics requires its distinct exact batched role,never CPU inference or old diagnostic authority
 #endif
 #ifdef _KERNEL_MODE
-#ifdef PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#include "PioneerQ38FullOffloadPreparedQ4Role.h"
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4)
 #include "PioneerQ38FullOffloadMacroQ4Role.h"
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4)
 #include "PioneerQ38FullOffloadVectorQ4Role.h"

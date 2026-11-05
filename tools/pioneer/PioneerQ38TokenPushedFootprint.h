@@ -2,6 +2,9 @@
 #ifndef PIONEER_Q38_TOKEN_PUSHED_FOOTPRINT_H
 #define PIONEER_Q38_TOKEN_PUSHED_FOOTPRINT_H
 #include <stdint.h>
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadPreparedQ4Role.h"
+#endif
 // Proposed QTP3/QGW3 GEOMETRY ONLY, in a distinct namespace. Not selected by
 // the existing native owner and not an image, mapping, journal or RUN grant.
 // The fixed 9128-byte sender front end exceeds QTP2's 8192-byte journal.
@@ -9,7 +12,12 @@
 namespace PioneerQ38TokenPushedL1 {
 struct Span {uint32_t address,words;};
 enum {Family=0x33505451,Precise=1,Pushed=1,Workers=120,FrontBytes=0x3000,
- RootSavedWords=316939,PeerSavedWords=110601,
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+ PreparedQ4=1,RootAuxWords=10240,RootSavedWords=318987,
+#else
+ PreparedQ4=0,RootAuxWords=8192,RootSavedWords=316939,
+#endif
+ PeerSavedWords=110601,
  SavedWords=RootSavedWords+119*PeerSavedWords,SavedBytes=SavedWords*4};
 static inline unsigned SnapshotSpans(unsigned worker){return worker>=Workers?0:worker?8:7;}
 static inline Span SnapshotSpan(unsigned worker,unsigned span){
@@ -18,7 +26,7 @@ static inline Span SnapshotSpan(unsigned worker,unsigned span){
  if(!worker)switch(span){
   case 1:return {0x40000,32768};
   case 2:return {0x60000,2};
-  case 3:return {0x64000,8192};
+  case 3:return {0x64000,RootAuxWords};
   case 4:return {0x6e000,2048};
   case 5:return {0x74000,273920};
   default:return {0x17ffc0,8};
@@ -49,10 +57,15 @@ static inline bool SnapshotContains(unsigned worker,uint32_t address){
  }
  return false;
 }
-static_assert(1+32768+2+8192+2048+273920+8==RootSavedWords,"complete ROOT including receipt slots and terminals");
+static_assert(1+32768+2+RootAuxWords+2048+273920+8==RootSavedWords,"complete ROOT including receipt slots and terminals");
 static_assert(1+3072+16384+4096+16384+61440+9216+8==PeerSavedWords,"QGW3 front window including padding");
-static_assert(SavedWords==13478458 && SavedBytes==53913832,"distinct full120 proposed QTP3 journal;HEAP ONLY");
+static_assert(SavedWords==13478458+PreparedQ4*2048 && SavedBytes==53913832+PreparedQ4*8192,"distinct full120 QTP3 journal;HEAP ONLY");
 }
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+static_assert(PioneerQ38TokenPushedL1::PreparedQ4==1,"late prepared Q4 journal selection");
+#else
+static_assert(PioneerQ38TokenPushedL1::PreparedQ4==0,"late prepared Q4 journal removal");
 #endif
 // Every generated QTP3 package includes this common geometry AFTER setting
 // its own DATA guard. Recheck outside the geometry guard so direct old

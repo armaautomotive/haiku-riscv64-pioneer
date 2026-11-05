@@ -5,6 +5,9 @@
 #include "PioneerQ38TokenLayout.h"
 #include "PioneerQ38GlobalHeadPlan.h"
 #include <new>
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38PreparedNativeSource.h"
+#endif
 // Complete immutable startup DATA for the persistent parent. This is NOT
 // the three-layer prefix, an initialized native owner, source authentication,
 // a completed embedding/state, RUN/STOP or permission to release hardware.
@@ -12,6 +15,9 @@
 // plan, source, clock, bank reservation, upload ledger and session lifetimes.
 class PioneerQ38TokenStartupPlan {
  const PioneerQ38CanonicalModelPlan* canonical=nullptr;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+ const PioneerQ38PreparedNativeSource* preparedSource=nullptr;
+#endif
  PioneerQ38TokenPackage* layers[64]={};
  PioneerQ38GlobalHeadPlan head;
  PioneerQ38GdnIdentity identity={};
@@ -19,6 +25,9 @@ class PioneerQ38TokenStartupPlan {
  unsigned bank=7,workspace=0;bool attempted=false,ready=false,published=false;
  bool Binding(const PioneerQ38CanonicalModelPlan& c)const{
   return ready && canonical==&c && c.Ready() && bank<7 && identity.Valid()
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+   && preparedSource && preparedSource->MatchesPlan(c)
+#endif
    && c.Workspace(bank) && workspace==c.Base+c.Workspace(bank)->offset
    && PioneerQ38TokenLayout::Session(session,boot,bank,workspace);
  }
@@ -26,6 +35,9 @@ class PioneerQ38TokenStartupPlan {
   const uintptr_t o=reinterpret_cast<uintptr_t>(output),self=reinterpret_cast<uintptr_t>(this),c=reinterpret_cast<uintptr_t>(canonical);
   if(!output || !bytes || o>UINTPTR_MAX-bytes || (o<self+sizeof(*this) && self<o+bytes)
    || (canonical && o<c+sizeof(*canonical) && c<o+bytes))return false;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+  if(!preparedSource || !preparedSource->Output(output,bytes))return false;
+#endif
   // Reject cross-layer aliases too, not only the selected package's object.
   for(const auto* layer:layers)if(layer){const uintptr_t p=reinterpret_cast<uintptr_t>(layer);
    if(o<p+sizeof(*layer) && p<o+bytes)return false;}
@@ -42,6 +54,12 @@ public:
  PioneerQ38TokenStartupPlan(const PioneerQ38TokenStartupPlan&)=delete;
  PioneerQ38TokenStartupPlan& operator=(const PioneerQ38TokenStartupPlan&)=delete;
  ~PioneerQ38TokenStartupPlan(){for(auto* layer:layers)delete layer;}
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+ bool BindPreparedSource(const PioneerQ38PreparedNativeSource& source){
+  if(attempted || ready || preparedSource || !source.Ready())return false;
+  preparedSource=&source;return true;
+ }
+#endif
  bool Build(const PioneerQ38CanonicalModelPlan& c,unsigned selected,const PioneerQ38GdnIdentity& id,const uint32_t* source,
   const uint32_t* input,unsigned prompts,unsigned limit,bool stopEos,unsigned eos0,unsigned eos1){
   namespace T=PioneerQ38TokenLayout;namespace C=T::C;
@@ -128,7 +146,11 @@ public:
  }
  bool ReadPackage(unsigned layer,unsigned offset,uint8_t* output,unsigned bytes)const{
   return canonical && Binding(*canonical) && layer<64 && layers[layer] && Output(output,bytes)
-   && layers[layer]->Read(offset,output,bytes);
+   && layers[layer]->Read(offset,output,bytes)
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+   && preparedSource->Overlay(layer,offset,output,bytes)
+#endif
+   ;
  }
  bool ReadPublishedPackage(unsigned layer,unsigned offset,uint8_t* output,unsigned bytes)const{
   // SAME one-shot private publication as MatchesPublishedBinding;never a
@@ -136,7 +158,11 @@ public:
   // checks are shared with strict ReadPackage. No periodic corruption
   // revalidation or native IO/ownership/initialization permission is added.
   return published && canonical && Binding(*canonical) && layer<64 && layers[layer] && Output(output,bytes)
-   && layers[layer]->ReadBound<false>(offset,output,bytes);
+   && layers[layer]->ReadBound<false>(offset,output,bytes)
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+   && preparedSource->Overlay(layer,offset,output,bytes)
+#endif
+   ;
  }
  bool PublishedOutput(const void* output,unsigned bytes)const{
   return published && canonical && Binding(*canonical) && bytes<=16384 && !(bytes&63) && Output(output,bytes);

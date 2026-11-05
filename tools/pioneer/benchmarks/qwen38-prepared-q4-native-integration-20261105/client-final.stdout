@@ -1,0 +1,7 @@
+588133ca6b05dadd1bc6b3075e08542813116bec73ec7dce0a5f23dd5afe6c0f pioneer-q38-full-offload-rate-smoke
+294ea28558664962a3f86b822bdcace6496ad10b711c9e4f6bbbf5f2572aa07c pioneer-q38-full-offload-ask
+10df2a16c8fee1208743117418a5b155e986a6868c09ea237c6e0dac56a37bd0 HaikuAssistantQwen27FullOffload
+557e3739d35c65eea6d95a45a0b726ab5a6b47127a8a768864db970a8efdb468 pioneer-q38-full-offload-smoke
+PASS BUILD_ONLY vocabulary-only full-card worker;exact11 vocabulary/model-container API imports;19 role refusals;NO context,decode,logits,threadpool or hybrid backend imports;frozen libraries/headers
+NOT installed or physically/numerically qualified;no performance result
+Full-card firmware pairing: prepared Q4 tag97

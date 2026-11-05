@@ -27,6 +27,9 @@
  || !defined(PIONEER_DRIVER_BUILD_TAG)
 #error Full offload requires the exact native role and all resident parents
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#include "PioneerQ38FullOffloadPreparedQ4Role.h"
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4
 #include "PioneerQ38FullOffloadMacroQ4Role.h"
 #endif
@@ -61,7 +64,9 @@ static_assert(PioneerQ38FullOffloadMetricsSelection==0,"late full-card metrics r
 #endif
 #ifndef PIONEER_Q38_FULL_OFFLOAD_FIRMWARE_BINDING_H
 #define PIONEER_Q38_FULL_OFFLOAD_FIRMWARE_BINDING_H
-#ifdef PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+enum {PioneerQ38FullOffloadFirmwareSelection=5};
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4)
 enum {PioneerQ38FullOffloadFirmwareSelection=4};
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4)
 enum {PioneerQ38FullOffloadFirmwareSelection=3};
@@ -72,7 +77,9 @@ enum {PioneerQ38FullOffloadFirmwareSelection=1};
 #endif
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
-#ifdef PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+static_assert(PioneerQ38FullOffloadFirmwareSelection==5,"late full-card prepared Q4 selection");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4)
 static_assert(PioneerQ38FullOffloadFirmwareSelection==4,"late full-card macro Q4 selection");
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4)
 static_assert(PioneerQ38FullOffloadFirmwareSelection==3,"late full-card vector Q4 selection");
@@ -107,6 +114,11 @@ enum {PioneerQ38TokenNativeProfile=3};
 #endif
 static_assert(PioneerQ38TokenNativeProfile==3,"full offload requires actual G3 programs");
 #ifdef PIONEER_Q38_TOKEN_FOOTPRINT_H
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+static_assert(PioneerQ38TokenL1::Family==0x33505451 && PioneerQ38TokenL1::PreparedQ4==1
+ && PioneerQ38TokenL1::SavedBytes==53922024,"prepared ROOT code must be journaled through6e000");
+#else
 static_assert(PioneerQ38TokenL1::Family==0x33505451 && PioneerQ38TokenL1::SavedBytes==53913832,
  "full offload retains the whole checked G3 journal");
+#endif
 #endif

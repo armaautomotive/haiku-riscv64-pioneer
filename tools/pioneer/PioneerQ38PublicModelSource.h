@@ -5,6 +5,13 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <errno.h>
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadPreparedQ4Role.h"
+#include "PioneerQ38NativeQ4WeightCache.h"
+#if !defined(PIONEER_NATIVE_Q4_PREPARATION_SHA256)
+#error Prepared full-card source requires the original cache writer fingerprint
+#endif
+#endif
 #ifdef PIONEER_Q38_NATIVE_Q8_LAYOUT
 #if !defined(PIONEER_Q38_WORK_INFERENCE) || !defined(PIONEER_Q38_SPAN_PRELOAD) || !defined(PIONEER_Q38_SPAN_FAST) || defined(PIONEER_Q38_CPU_VALIDATION)
 #error New SM7 source requires its separate fast-span Work producer;NEVER CPU validation or legacy upload
@@ -39,6 +46,22 @@ public:
 			&& !fstat(fileno(file),&current) && Same(identity,current);
 	}
 	const PioneerQwen38Gguf& Model() const { return model; }
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+	// Bind preparation to this SAME authenticated model/FD. Do not borrow or
+	// reopen the model pathname,and do not expose a mutable model accessor.
+	bool BindPreparedCache(PioneerQ38NativeQ4WeightCache& cache,const PioneerQwen38PackedPlan& plan,
+		const char* directory,std::string& error) {
+		if (!Ready() || !plan.MatchesSource(model)
+			|| strcmp(PIONEER_NATIVE_Q4_PREPARATION_SHA256,"70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6")) return false;
+		PioneerModelWeightCache::Digest original{};
+		const char* hex="c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747";
+		auto nibble=[](char c){return unsigned(c<='9'?c-'0':c-'a'+10);};
+		for(unsigned i=0;i<32;i++)original[i]=uint8_t(nibble(hex[i*2])*16+nibble(hex[i*2+1]));
+		const auto recipe=PioneerQ38NativeQ4WeightCache::Recipe(PIONEER_NATIVE_Q4_PREPARATION_SHA256);
+		return cache.Bind(directory,model,plan,original,PioneerModelWeightCache::Hash(recipe.data(),recipe.size()),
+			[this]{return Ready();},error) && Ready();
+	}
+#endif
 #ifdef PIONEER_Q38_BENCHMARK_HOST
 	// POSIX stdio active-handle barrier before a SINGLE-THREADED benchmark
 	// parent forks. SAME already fully authenticated open description only;

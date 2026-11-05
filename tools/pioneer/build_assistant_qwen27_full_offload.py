@@ -3,6 +3,7 @@
 import hashlib
 import os
 import pathlib
+import re
 import subprocess
 import sys
 
@@ -19,6 +20,9 @@ if vector_q4:
 macro_q4='--macro-q4' in args
 if macro_q4:
     assert metrics and not vector_q4 and args.count('--macro-q4')==1;args.remove('--macro-q4')
+prepared_q4='--prepared-q4' in args
+if prepared_q4:
+    assert metrics and not vector_q4 and not macro_q4 and args.count('--prepared-q4')==1;args.remove('--prepared-q4')
 prompt_client='--prompt-client' in args
 if prompt_client:
     assert metrics and args.count('--prompt-client')==1;args.remove('--prompt-client')
@@ -49,13 +53,39 @@ libflags=['-L'+str(p) for p in sorted((build/'build_packages').glob('gcc_syslibs
 source=here/'pioneer_assistant_qwen27_full_offload.cpp';obj=out/'worker.o';binary=out/'HaikuAssistantQwen27FullOffload'
 if vector_q4:source=here/'pioneer_assistant_qwen27_vector_q4_full_offload.cpp'
 if macro_q4:source=here/'pioneer_assistant_qwen27_macro_q4_full_offload.cpp'
+if prepared_q4:source=here/'pioneer_assistant_qwen27_prepared_q4_full_offload.cpp'
 compile=[tool+'g++','-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror','-fno-exceptions','-fno-rtti',
          '-fstack-usage','-DPIONEER_Q38_FULL_OFFLOAD_CLIENT=1',*includes,'-c',str(source),'-o',str(obj)]
 if batched:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=1')
 if metrics:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1')
 if vector_q4:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=1')
 if macro_q4:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4=1')
-link=[tool+'g++',str(obj),'-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),
+if prepared_q4:
+    # Preserve the exact ORIGINAL writer identity. No silent cache rekey or
+    # regeneration merely because the new loader/runtime changed.
+    writer_sources={}
+    def writer_collect(path):
+        assert path.is_file() and not path.is_symlink()
+        relative=path.relative_to(root).as_posix()
+        if relative in writer_sources:return
+        data=path.read_bytes();writer_sources[relative]=data
+        for name in re.findall(r'^\s*#\s*include\s*"([^"\n]+)"',data.decode(),re.M):
+            candidate=path.parent/name;assert not candidate.is_symlink()
+            candidate=candidate.resolve();candidate.relative_to(root);writer_collect(candidate)
+    for name in ('pioneer_q38_native_q4_prepare.cpp','PioneerModelWeightCache.cpp'):writer_collect(here/name)
+    fingerprint=hashlib.sha256()
+    for name,data in sorted(writer_sources.items()):fingerprint.update(name.encode()+b'\0'+len(data).to_bytes(8,'little')+data)
+    writer=fingerprint.hexdigest()
+    assert writer=='70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6','original cache writer changed'
+    # Keep the original cache writer byte-identical,including its compact
+    # statement formatting;do not rekey11GB merely to silence this warning.
+    compile[1:1]=['-Wno-misleading-indentation','-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4=1','-DPIONEER_NATIVE_Q4_PREPARATION_SHA256="'+writer+'"']
+objects=[str(obj)]
+if prepared_q4:
+    cache_obj=out/'weight-cache.o'
+    cache_compile=[tool+'g++','-std=c++17','-O2','-Wall','-Wextra','-Werror','-I'+str(root/'headers/private/libroot'),*includes,'-c',str(here/'PioneerModelWeightCache.cpp'),'-o',str(cache_obj)]
+    subprocess.run(cache_compile,check=True);objects.append(str(cache_obj))
+link=[tool+'g++',*objects,'-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),
       '-L'+str(release/'system/libnetwork'),'-L'+str(libraries),*libflags,'-Wl,-rpath-link,'+str(libraries),
       *['-l:'+name for name in pins],'-lnetwork','-o',str(binary)]
 subprocess.run(compile,check=True);subprocess.run(link,check=True)
@@ -77,10 +107,17 @@ if macro_q4:
                  ('zero-macro-q4',['-UPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4','-DPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4=0']),
                  ('resident-macro-q4',['-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT=0']),
                  ('vector-macro-q4',['-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=0'])]
+if prepared_q4:
+    refusals += [('missing-prepared-q4',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4']),
+                 ('zero-prepared-q4',['-UPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4','-DPIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4=0']),
+                 ('prepared-raw-vector',['-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=0']),
+                 ('prepared-raw-macro',['-DPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4=0']),
+                 ('prepared-resident',['-DPIONEER_Q38_FULL_OFFLOAD_RESIDENT=0']),
+                 ('prepared-missing-writer',['-UPIONEER_NATIVE_Q4_PREPARATION_SHA256'])]
 for label,extra in refusals:
     result=subprocess.run([*compile[:compile.index('-c')],*extra,'-fsyntax-only',str(source)],
                           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,cwd=out)
-    assert result.returncode and any(t in result.stderr for t in ('Full-offload client is separate','Full-card metrics requires','Full-card vector Q4 requires','Full-card macro Q4 requires')),label
+    assert result.returncode and any(t in result.stderr for t in ('Full-offload client is separate','Full-card metrics requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Prepared full-card source requires')),label
 (out/'role-refusals.txt').write_text('\n'.join('PASS '+label for label,_ in refusals)+'\n')
 undefined=subprocess.check_output([tool+'nm','-u',str(binary)],text=True)
 llama_imports={r.split()[-1] for r in undefined.splitlines() if r.split() and r.split()[-1].startswith('llama_')}
@@ -96,7 +133,8 @@ smoke=out/'pioneer-q38-full-offload-smoke'
 smoke_command=[tool+'g++','-std=c++17','-O2','-Wall','-Wextra','-Werror',*includes,
                '-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),'-L'+str(release/'system/libnetwork'),
                *libflags,str(here/'pioneer_q38_full_offload_smoke.cpp'),'-lnetwork','-o',str(smoke)]
-if macro_q4:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-macro-q4-20261104-a/HaikuAssistantQwen27FullOffload-macro-q4"')
+if prepared_q4:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-q4"')
+elif macro_q4:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-macro-q4-20261104-a/HaikuAssistantQwen27FullOffload-macro-q4"')
 elif vector_q4:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-vector-q4-20261104-a/HaikuAssistantQwen27FullOffload-vector-q4"')
 elif metrics:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-metrics-20261104-a/HaikuAssistantQwen27FullOffload-metrics"')
 elif batched:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-batched-20261104-a/HaikuAssistantQwen27FullOffload-batched"')
@@ -126,6 +164,10 @@ if prompt_client:
         old='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-metrics-20261104-a/HaikuAssistantQwen27FullOffload-metrics"'
         assert ask_command.count(old)==1
         ask_command[ask_command.index(old)]='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-macro-q4-20261104-a/HaikuAssistantQwen27FullOffload-macro-q4"'
+    if prepared_q4:
+        old='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-metrics-20261104-a/HaikuAssistantQwen27FullOffload-metrics"'
+        assert ask_command.count(old)==1
+        ask_command[ask_command.index(old)]='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-q4"'
     subprocess.run(ask_command,check=True)
     ask_imports=subprocess.check_output([tool+'nm','-u',str(ask)],text=True)
     for name in ('llama_','ggml_','ioctl','mmap',' kill',' system',' popen'):
@@ -146,6 +188,7 @@ if not batched:
 imports=subprocess.check_output([tool+'nm','-u',str(smoke)],text=True)
 assert 'llama_' not in imports and 'ggml_' not in imports
 commands=[compile,link,smoke_command,rate_command] if metrics else [compile,link,smoke_command]
+if prepared_q4:commands.insert(0,cache_compile)
 if prompt_client:commands.append(ask_command)
 (out/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands)+'\n')
 (out/'llama-imports.txt').write_text('\n'.join(sorted(llama_imports))+'\n')
@@ -153,4 +196,4 @@ print(hashlib.sha256(binary.read_bytes()).hexdigest(),binary.name,flush=True)
 print(hashlib.sha256(smoke.read_bytes()).hexdigest(),smoke.name,flush=True)
 print('PASS BUILD_ONLY vocabulary-only full-card worker;exact11 vocabulary/model-container API imports;'+str(len(refusals))+' role refusals;NO context,decode,logits,threadpool or hybrid backend imports;frozen libraries/headers',flush=True)
 print('NOT installed or physically/numerically qualified;no performance result',flush=True)
-print('Full-card firmware pairing: '+('macro Q4 tag93' if macro_q4 else 'vector Q4 tag92' if vector_q4 else 'metrics tag90' if metrics else 'batched tag89' if batched else 'original tag88'),flush=True)
+print('Full-card firmware pairing: '+('prepared Q4 tag97' if prepared_q4 else 'macro Q4 tag93' if macro_q4 else 'vector Q4 tag92' if vector_q4 else 'metrics tag90' if metrics else 'batched tag89' if batched else 'original tag88'),flush=True)

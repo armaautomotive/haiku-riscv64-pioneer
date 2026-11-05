@@ -19,6 +19,9 @@ struct Sweep {
 struct Source {
  Fixture& file;PioneerQwen38Gguf model;PioneerQwen38PackedPlan plan;
  bool valid=true,opened=false;unsigned opens=0;uint64_t pages=0,bytes=0,reads=0;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+ std::vector<PioneerQ38PreparedQ4UploadPlan<>::Span> preparedSpans;
+#endif
  explicit Source(Fixture& f):file(f){}
  bool Open(){assert(!opens++);opened=model.Open(file.file) && plan.Build(model,8192,true,true);
   if(opened)for(const auto& p:plan.Parts())if(p.kind==PIONEER_Q38_WEIGHT){pages+=p.allocated/4096;bytes+=p.allocated;}
@@ -30,12 +33,52 @@ struct Source {
   memset(output,int((f+page)%251+1),4096);reads++;return true;
  }
 };
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+// Synthetic cache endpoint ONLY. Native-source tests separately exercise
+// all real canonical table validation;this fixture isolates USER lifecycle.
+struct PreparedFixture {
+ Source* source=nullptr;bool ready=false;
+ bool Ready()const{return ready && source && source->Ready();}
+ bool Build(Source& owner,const PioneerQwen38PackedPlan& plan){
+  assert(!source && owner.Ready());source=&owner;uint64_t next[7]={};
+  for(unsigned b=0;b<7;b++)next[b]=plan.Used(b);
+  unsigned remaining=1344;uint64_t extra=(UINT64_C(20470759424)-owner.bytes)/4096;
+  for(unsigned f=0;f<plan.Parts().size();f++){
+   const auto& p=plan.Parts()[f];if(p.kind!=PIONEER_Q38_WEIGHT)continue;
+   const bool native=p.layer<64 && p.role>=2 && p.role<=4;
+   owner.preparedSpans.push_back({f,p.bank,native?1U:0U,p.proposedAddress,p.bytes,p.allocated});
+   if(native){const unsigned allocated=unsigned(extra/remaining)*4096;
+    owner.preparedSpans.push_back({f,p.bank,2,plan.Base+unsigned(next[p.bank]),allocated,allocated});
+    next[p.bank]+=allocated;extra-=allocated/4096;remaining--;assert(next[p.bank]<=plan.Capacity);}
+  }
+  assert(!remaining && !extra && owner.preparedSpans.size()==4895);
+  owner.bytes=UINT64_C(20470759424);owner.pages=owner.bytes/4096;ready=true;return Ready();
+ }
+ const auto& Spans()const{return source->preparedSpans;}
+ uint64_t Bytes()const{return Ready()?source->bytes:0;}
+ bool ReadPage(unsigned f,unsigned page,uint8_t* output,unsigned capacity){
+  assert(Ready() && capacity==4096 && page<Spans()[f].allocated/4096);
+  memset(output,int((f+page)%251+1),4096);source->reads++;return true;
+ }
+ bool Publication(unsigned op,unsigned index,PioneerQ38PreparedSource::Packet& p)const{
+  namespace P=PioneerQ38PreparedSource;assert(Ready());p=P::Packet{};
+  auto& q=p.request;q.operation=op;q.index=index;
+  if(op==P::Begin){q.words=P::BeginWords;std::copy(P::Identity,P::Identity+16,q.data);unsigned n=16;
+   for(const auto& s:Spans())if(s.kind==2)q.data[n++]=s.bytes;assert(n==P::BeginWords);}
+  else if(op==P::Phase)q.words=P::Words;
+  return P::RequestShape(p);
+ }
+};
+#endif
 struct IO {
  Source& source;Sweep& sweep;
  unsigned opens=0,closes=0,calls=0,begins=0,uploads=0,spanEnds=0,starts=0,polls=0,cancels=0,holds=0,reads=0,ends=0;
  unsigned prompts=0,limit=0,eos0=0,eos1=0,fragment=0,page=0,cursor=0;
  unsigned stopRecords=0,stopStage=1,stopLayers=1,earlyEosToken=248044;bool earlyEos=false;
  uint32_t ids[96]={};uint64_t uploaded=0;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+ unsigned publications=0;
+#endif
  IO(Source& s,Sweep& w):source(s),sweep(w){sweep.calls=&calls;}
  unsigned Records()const{return cancels?stopRecords:earlyEos?prompts:limit;}
  unsigned Token(unsigned pos)const{return earlyEos && pos+1==Records()?earlyEosToken:1000+pos;}
@@ -64,10 +107,20 @@ struct IO {
    r.version=1;r.state=TT_RESIDENT_SESSION_READY;r.active=r.host_ready=1;r.bytes=UINT64_C(21)*1024*1024*1024;
   }else if(op==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD){
    assert(begins==1 && !spanEnds && !starts);auto& r=*static_cast<tt_q38_span_upload*>(data);
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+   const auto& parts=source.preparedSpans;
+#else
    const auto& parts=source.plan.Parts();while(fragment<parts.size() && parts[fragment].kind!=PIONEER_Q38_WEIGHT)fragment++;
+#endif
    const auto& p=parts.at(fragment);const unsigned count=std::min(256U,p.allocated/4096-page);
    assert(size==sizeof(r) && r.version==1 && !r.reserved && r.bank==p.bank && r.bytes==count*4096
-    && r.offset==p.proposedAddress-0x04000000U+uint64_t(page)*4096);
+    && r.offset==
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+    p.address
+#else
+    p.proposedAddress
+#endif
+    -0x04000000U+uint64_t(page)*4096);
    for(unsigned n=0;n<count;n++){const auto* raw=reinterpret_cast<const uint8_t*>(r.data+n*1024);
     assert(raw[0]==(fragment+page+n)%251+1 && raw[4095]==raw[0]);}
    uploads++;uploaded+=r.bytes;page+=count;if(page==p.allocated/4096){fragment++;page=0;}
@@ -76,6 +129,19 @@ struct IO {
   }else if(op==TT_PCI_PROBE_Q38_SPAN_END){
    assert(uploaded==source.bytes && source.reads==source.pages && !spanEnds++ && !starts);
    *static_cast<tt_q38_span_end*>(data)={1,0,1,0};
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+  }else if(op==TT_PCI_PROBE_Q38_PREPARED_SOURCE){
+   namespace P=PioneerQ38PreparedSource;auto& p=*static_cast<P::Packet*>(data);
+   assert(size==sizeof(p) && P::RequestShape(p) && spanEnds==1 && !starts && publications<P::Phases+2);
+   const unsigned action=publications==0?P::Begin:publications==P::Phases+1?P::Seal:P::Phase;
+   assert(p.request.operation==action && p.request.index==(action==P::Begin?0:action==P::Phase?publications-1:unsigned(P::Phases)));
+   const unsigned phases=action==P::Begin?0:action==P::Phase?publications:unsigned(P::Phases);publications++;
+   p.reply={P::Version,action,0,1,unsigned(action==P::Seal),P::Parts,phases,0};
+   if(action!=P::Phase || p.request.index==0 || p.request.index==191){
+    for(unsigned field=0;field<8;field++)if(sweep.Clone([&]{reinterpret_cast<uint32_t*>(&p.reply)[field]^=1;}))return true;
+    if(sweep.Clone([&]{p.request.data[0]^=1;}))return true;
+   }
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
   }else if(op==TT_PCI_PROBE_Q38_FULL_OFFLOAD_COUNTER){
    namespace F=PioneerQ38FullOffload;auto& m=*static_cast<F::CounterPacket*>(data);
@@ -95,6 +161,9 @@ struct IO {
    auto& r=p.reply;const unsigned action=p.request.operation;r.version=1;r.operation=action;r.started=r.ready=1;
    auto* d=r.detail;d[0]=d[1]=1;
    if(action==P::Start){
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+    assert(publications==194);
+#endif
     assert(!starts++);prompts=p.request.prompts;limit=p.request.limit;eos0=p.request.eos0;eos1=p.request.eos1;
     std::copy(p.prompt,p.prompt+prompts,ids);r.stage=d[2]=8;d[3]=1;
    }else if(action==P::Observe){
@@ -140,7 +209,11 @@ struct IO {
 };
 int main(){
  setvbuf(stdout,nullptr,_IOLBF,0);Fixture fixture;Source source(fixture);Sweep sweep;IO io(source,sweep);
- auto session=std::make_unique<PioneerQ38FullOffloadSession<IO,Source>>(io,source);
+ auto session=std::make_unique<PioneerQ38FullOffloadSession<IO,Source
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+  ,PreparedFixture
+#endif
+  >>(io,source);
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
  auto metric=[&](){PioneerQ38FullOffload::CounterPacket p;return session->ObserveCount(p);};
  assert(!metric() && !io.calls);
@@ -197,5 +270,9 @@ int main(){
  }
  assert(okay && session->CopyGeneratedTokens(answer,32,count) && count==32 && io.reads==2 && io.ends==1);
  assert(source.opens==1 && io.opens==2 && io.closes==2 && source.reads==source.pages);
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+ assert(io.publications==194 && session->partsUploaded==4895 && session->bytesPlanned==UINT64_C(20470759424));
+ puts("PASS prepared USER all4895_upload_spans and194_same_FD_source_publications before_START;synthetic cache/transport,no native/card/TPS");
+#endif
  printf("PASS actual full-offload USER:96prompt/32output/127positions,two64-record drains,all5 EOS and3 cancellation boundaries,%u fail-closed COW fixtures;synthetic ONLY,no physical or numerical result\n",sweep.cases);
 }

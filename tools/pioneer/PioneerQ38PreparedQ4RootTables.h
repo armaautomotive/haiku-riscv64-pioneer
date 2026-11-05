@@ -67,8 +67,8 @@ public:
   memcpy(output,stage.data(),bytes);return true;
  }
 };
-static_assert(PioneerQ38PreparedQ4RootLayout::Offset>=PioneerQ38LayerChainLayout::DenseBytes
- && PioneerQ38PreparedQ4RootLayout::Offset>=PioneerQ38RecurrentPrefixLayout::Bytes
+static_assert(unsigned(PioneerQ38PreparedQ4RootLayout::Offset)>=unsigned(PioneerQ38LayerChainLayout::DenseBytes)
+ && unsigned(PioneerQ38PreparedQ4RootLayout::Offset)>=unsigned(PioneerQ38RecurrentPrefixLayout::Bytes)
  && PioneerQ38PreparedQ4RootLayout::Offset+3*PioneerQ38PreparedQ4RootLayout::Stride<=PioneerQ38TokenStateLayout::Offset,
  "prepared metadata uses proven package slack,not numeric recipes,frames or recurrent state");
 #endif

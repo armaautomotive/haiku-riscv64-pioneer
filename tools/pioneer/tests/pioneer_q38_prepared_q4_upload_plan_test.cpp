@@ -64,6 +64,7 @@ struct WithdrawingPlan {
   return Ready() && source.Describe(f,first,groups,worker,request,output,error);
  }
 };
+#ifndef PIONEER_Q38_PREPARED_UPLOAD_FIXTURE_ONLY
 int main(){
  setvbuf(stdout,nullptr,_IOLBF,0);Fixture fixture;PioneerQwen38Gguf model;assert(model.Open(fixture.file));
  PioneerQwen38PackedPlan original;assert(original.Build(model,8192,true,true));Weights weights(original);Pages pages(weights);Plan plan;std::string error;
@@ -176,3 +177,4 @@ int main(){
  weights.ready=false;output.fill(0x93);const auto prior=output;assert(!plan.ReadPage(0,0,output.data(),output.size(),raw,error) && output==prior && !plan.Ready() && !tables.Ready());refusals++;
  printf("PASS_PREPARED_Q4_UPLOAD_PLAN originalSpans%u preparedPrimaries%u correctionSpans%u preservedEmbeddingStripes%u full119Jobs%u ROOTBindings%u multiChunkGroups%u sampledTailPages%u refusals%u;SYNTHETIC_CACHE_NO_DEVICE_ROOT_MODEL_OR_TPS\n",originals,primaries,sides,embedding,jobs,bound,multichunk,sampled,refusals);
 }
+#endif

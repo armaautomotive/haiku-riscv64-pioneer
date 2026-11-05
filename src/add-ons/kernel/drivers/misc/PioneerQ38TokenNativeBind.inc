@@ -131,13 +131,23 @@ bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
 static uint64 sQ38TokenModelEpoch=0; // SAME global call lock;never wrap/reuse
 [[maybe_unused]] static bool BindQ38TokenNative(PioneerStoreContext& c,unsigned bank){
  if(bank>=7 || sQ38TokenModelEpoch==UINT64_MAX || !c.io.TokenModelSourceScope(true))return false;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+ if(!c.q38PreparedSource || !c.q38PreparedSource->Matches(&c,sRuntimeOwner,c.hashes,c.initialized,sRuntimeOwner->team,sReloadGeneration))return false;
+#endif
  const PioneerQ38GdnIdentity identity={sQ38TokenModelEpoch+1,1,1,sReloadGeneration};
  auto* state=new(std::nothrow) PioneerQ38TokenNativeState(c,sRuntimeOwner,c.hashes,c.initialized,sRuntimeOwner->team,bank,identity);
  if(!state)return false;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+ state->preparedSource=c.q38PreparedSource;
+#endif
  // FULL851 coverage BEFORE epoch/reservation/model publication,without
  // inventing120 NoC source identities to build a startup template early.
  if(!state->canonical.Build() || !PioneerQ38TokenStartupPlan::CanonicalLearnedPagesPresent(state->canonical,c.initialized,PioneerResidentBanks::Pages)
-  || !c.io.TokenModelSourceScope(true)){
+  || !c.io.TokenModelSourceScope(true)
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+  || !state->preparedSource->MatchesPlan(state->canonical)
+#endif
+  ){
   delete state;return false; // unpublished CPU heap only,no claims/device IO
  }
  sQ38TokenModelEpoch++;c.q38TokenNative=state;c.runtimeCoreMode=1;c.io.q38SpanAllowed=false;

@@ -12,6 +12,9 @@
 #include "PioneerQ38StateZeroController.h"
 #include "PioneerQ38ConvHistoryZeroController.h"
 #include "PioneerQ38ProjectionZeroController.h"
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+#include "PioneerQ38PreparedNativeSource.h"
+#endif
 struct PioneerStoreContext;struct PioneerSessionIO;
 [[maybe_unused]] static bool Q38TokenExecutionOutput(const PioneerStoreContext&,const void*,size_t);
 [[maybe_unused]] static bool BindQ38TokenNative(PioneerStoreContext&,unsigned);
@@ -115,6 +118,9 @@ class PioneerQ38TokenNativeState {
  const uint8_t* const ledger;const int64_t team;const unsigned bank;
  const PioneerQ38GdnIdentity identity;
  PioneerQ38CanonicalModelPlan canonical;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+ const PioneerQ38PreparedNativeSource* preparedSource=nullptr; // SAME immutable context-owned upload publication
+#endif
  PioneerQ38ProjectionMutableBanks graph;
  PioneerQ38StateZeroLease recurrentZero;
  PioneerQ38ConvHistoryZeroLease historyZero;
@@ -196,7 +202,11 @@ public:
  } // necessary SAME private bootstrap owner,not legacy boot flags or ROOT/RUN permission
  bool MatchesBinding(const PioneerStoreContext& c,const void* fd,const void* h,const uint8_t* uploaded,int64_t owner,uint64_t generation)const{
   return context==&c && cookie==fd && fd && hashes==h && h && ledger==uploaded && uploaded && team==owner && owner>=0
-   && identity.Valid() && generation && identity.driverGeneration==generation && bank<7 && canonical.Ready() && !Unsafe();
+   && identity.Valid() && generation && identity.driverGeneration==generation && bank<7 && canonical.Ready() && !Unsafe()
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
+   && preparedSource && preparedSource->Matches(&c,fd,h,uploaded,owner,generation) && preparedSource->MatchesPlan(canonical)
+#endif
+   ;
  }
  bool MatchesReservation(const PioneerResidentBanks& banks,const tt_dram_samples_result& proof)const{
   return !Unsafe() && graph.CanonicalModel(identity)==&canonical && graph.MatchesInitializationOwner(banks,proof,identity);
