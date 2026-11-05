@@ -101,7 +101,9 @@
 #error QTP3 native selector requires its actual native parent
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#ifdef PIONEER_Q38_FULL_OFFLOAD_TWO_PRODUCT_REPLAY
+#include "PioneerQ38FullOffloadTwoProductReplayQ4Programs.h"
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
 #include "PioneerQ38FullOffloadPreparedProfileQ4Programs.h"
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL)
 #include "PioneerQ38FullOffloadPreparedCounterQ4Programs.h"
@@ -167,7 +169,13 @@
 #ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
-#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#ifdef PIONEER_Q38_FULL_OFFLOAD_TWO_PRODUCT_REPLAY
+namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadTwoProductReplayQ4Programs;
+static_assert(PioneerQ38TokenPrograms::EogCount==5 && PioneerQ38TokenPrograms::TwoProductQ4==1
+ && PioneerQ38TokenPrograms::AffineReplayWords==13 && PioneerQ38TokenPrograms::TokenPhaseProfile==1
+ && PioneerQ38TokenPrograms::CounterUnroll==1 && PioneerQ38TokenPrograms::PreparedQ4==1
+ && PioneerQ38TokenPrograms::RootSections==5,"exact replay13 two-product ROOT+worker package required");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
 namespace PioneerQ38TokenPrograms=PioneerQ38FullOffloadPreparedProfileQ4Programs;
 static_assert(PioneerQ38TokenPrograms::EogCount==5 && PioneerQ38TokenPrograms::TokenPhaseProfile==1
  && PioneerQ38TokenPrograms::CounterUnroll==1 && PioneerQ38TokenPrograms::PreparedQ4==1

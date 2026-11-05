@@ -16,6 +16,9 @@ static std::unique_ptr<P::Packet> Request(unsigned count,unsigned outputs){
  return p;
 }
 int main(){
+#ifdef PIONEER_Q38_FULL_OFFLOAD_TWO_PRODUCT_REPLAY
+ static_assert(F::BuildTag==UINT64_C(0x2026110500010100),"exact replay13 USER/native identity");
+#endif
  unsigned valid=0,refused=0;
  for(unsigned count=1;count<=96;count++)for(unsigned output=1;output<=32;output++){
   auto p=Request(count,output);assert(F::RequestShape(*p));valid++;

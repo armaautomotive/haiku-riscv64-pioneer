@@ -63,6 +63,12 @@
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
 #include "PioneerQ38FullOffloadPhaseProfileRole.h"
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_TWO_PRODUCT_REPLAY
+#include "PioneerQ38FullOffloadTwoProductReplayRole.h"
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110500010100ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_TWO_PRODUCT_REPLAY)
+#error Tag100 requires its distinct two-product replay whole-model role
+#endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110500010099ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
 #error Tag99 requires its distinct full-model phase-profile role
 #endif

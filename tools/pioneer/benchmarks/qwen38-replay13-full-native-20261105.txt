@@ -1,0 +1,69 @@
+Replay13 two-product Q4 full-model integration -- 2026-11-05
+=========================================================
+
+OFFLINE INTEGRATION QUALIFIED;NO NEW HARDWARE SPEED RESULT YET.
+Latest closed physical profile remains0.161777026..0.161780396tok/s;
+best accepted vector92 remains0.172813448..0.172816755.20tok/s unmet.
+This small worker optimization is NOT expected to bridge the~124x gap.
+
+Distinct full-model tag100/firmware selection8 pairs unchanged profiled
+ROOT74cae45049174dd53c96203104a0b4b501f757b2210b2de86da5507334ebacc5
+with qualified replay13 worker
+92ffea6e1fd3da9e355756903fbd72839b6695551e4df30df67721800a44bcf8.
+Worker qualification is recorded in qwen38-replay13-two-product-offline-20261105.txt.
+Paired header SHA
+3b5cf6b84791f97b0195b28d12df0f69879b96db44c06dc2a90f0354dd1fd4b5.
+No alternate cache recipe,CPU learned calculation,reference or fallback.
+
+New fixed-purpose BUILD ONLY wrappers FIRST reproduce the entire old
+tag99 native50170113... and default43 driver2df0e0f8...,and old USER
+f47b04f4.../ratef810d61b... before selecting the distinct replay role.
+No existing resident WIP builder branch is modified by these wrappers.
+
+Main and independent clean-tree builds match byte-for-byte:
+native ea526a252a4793d8f20fba8e4cedc47f4726e6426f29ef5c58791a0086181949
+USER   088ab8eb999a81221d38d8b4aa4bdea33198c46f726efb7765d8b0e4700d2265
+rate   2ad68fab59193abeef362e00e3719abfcf992891d300edc8f708b942bd01c98b
+Native43 main/42 clean role refusals;one extra main refusal is pre-existing
+resident WIP excluded from the clean tree. Max individual token frame1232B.
+All15 actual embedded firmware arrays authenticated,not merely headers.
+USER28 compile refusals;exact11 vocabulary/container imports;no CPU
+context/decode/logits/ggml inference imports. Original cache writer
+70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6
+and original20,470,759,424B upload remain unchanged.
+
+Main/clean ASan+UBSan selected DATA tests pass:all15 sections and
+3,372,637 actual installed code words across120 cores match binary
+sections and existing53,922,024B journal ranges;10,014 invalid/DATA
+address refusals. No new saved extent or arbitrary address grant.
+
+Main/clean actual USER/kernel-body synthetic transport tests pass with
+identical whole output:4895 upload spans,194 pre-START same-FD source
+publications,803 fail-closed COW fixtures,all5 EOS/3 cancellation bounds,
+two record drains,all96 phase packet mutations,invalid-clock cleanup,
+and13,511 early control refusals. Actual held-member/Fail source tests:
+63 DATA successes,101 preflight refusals,905 every-event/change faults.
+Lifecycle/source/HOLD/clock authority in those fixtures is MOCK,not
+native lifetime,physical numerical correctness or card throughput proof.
+Main/clean timing-log tests match:235 profile suffix refusals and original
+130 reader refusals. Actual rate-client fake-process tests also pass.
+All completed test/build processes actually returned0;these stderrs empty.
+
+New one-shot physical parent retains the ENTIRE qualified tag99 flow,
+with ONLY9 exact revision/stage/hash/generation substitutions. All prior
+fake failure cases run first. Admission28 -> candidate29 -> restored30;
+unknown failure NEVER permits retry,auto-restore,reset or forced unload.
+Physical parent SHA
+3bdc162cdbb85f635fa83a1f77db718846956a09843a3e76e37db84b4c342888.
+Distinct stage:/boot/home/pioneer-q38-full-two-product-replay-q4-20261105-a.
+This record itself grants no launch;fresh full admission still required.
+
+Initial independent read-only Pioneer check actually returned0:spent99
+parent/child0,protected PIDs absent,idle stable041/gen28,no quarantine,
+unchanged Assistant/runtime/guard hashes,64CPUs/full137034936320B RAM.
+No hardware,relay,SD,mains,boot or Assistant installation change here.
+
+Next:ONE real same32-output comparison,accept results only after actual
+parent/worker0,STOP/HOLD/drain/END,stable restoration,whole-log parsing
+and independent postflight. Complete raw qualification stdout/stderr is
+saved in the sibling evidence directory. No new inference rate is claimed.
