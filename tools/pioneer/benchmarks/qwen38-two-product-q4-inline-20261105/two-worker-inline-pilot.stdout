@@ -1,0 +1,10 @@
+PASS_PREPARED_Q4_NONMATH exactOldService9888 explicitTailFunctions11 globalMainAnd12TargetDispatchDeliberatelyChanged prefixRelocations5 NO_NATIVE_ROOT_OR_EXECUTION_AUTHORITY
+PASS_PREPARED_Q4_DATA exactMaskExpansions1028 nativeGeometries27 refusals435 all8704InputWordsDisjoint;NO_ROM_NATIVE_MODEL_OR_TPS
+TWO_PRODUCT_CLOSED_WORKER_CPU_VALIDATION_ONLY_NO_DEVICE
+TWO_PRODUCT_PREPARED_Q4_COMPLETE_WORKER_VALIDATION_ONLY_NO_DEVICE
+PREPARED_Q4_COMPLETE_CASE type12 K5120 groups1
+PASS QGW3 worker69/type12/ACTUAL fullK5120+960tensor instructions/12 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type12/ACTUAL fullK5120+640tensor instructions/15 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_PREPARED_Q4_COMPLETE_CASE type12 K5120 groups1 changedJobs2 sourceReads15 extraReads3 extraFlits162 RV3010979/1459849;NOT_SILICON_TPS
+PARTIAL_PREPARED_Q4_COMPLETE_WORKER shapes1 changedInputJobs2 fragmentMaskControls0 NoCLossInert0 descriptorRefusals0 stack3540/8192;originalFP32_sourceNoC_ACK_commit_STOP_NO_NATIVE_ROOT_MODEL_HARDWARE_OR_TPS
+TWO_PRODUCT_CLOSED_PREPARED_Q4_WORKER_TESTS whole immutable ROMs;NO native/ROOT/source/card/Assistant/full-model/TPS grant

@@ -1,6 +1,10 @@
 Two-product exact Q4 worker candidate -- 2026-11-05
 =================================================
 
+Historical INITIAL candidate at669d7cf1b2. The default offboard build's
+subsequent inline-loop identity/results are recorded separately in
+qwen38-two-product-q4-inline-20261105.txt;raw results below are unmodified.
+
 OFFBOARD QUALIFICATION ONLY. No native/ROOT/Assistant selection,physical
 execution,model generation or tokens/sec result is granted here. The live
 tag99 phase-profile trial is left frozen. Best accepted physical rate

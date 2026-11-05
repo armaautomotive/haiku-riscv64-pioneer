@@ -1,0 +1,54 @@
+Two-product Q4 inline-loop followup -- 2026-11-05
+===============================================
+
+OFFBOARD INSTRUCTION-COUNT IMPROVEMENT ONLY,NOT PHYSICAL TOKENS/SEC.
+The historical669d7cf1b2 candidate removed one matrix product but added
+controller work. Force-inline its affine helper into the complete worker
+instead of paying an extra RV call/register-spill cost for every panel.
+No arithmetic instruction/rounding/codec/host inference change is made.
+No native/Assistant selector or deployment is added.
+
+Actual closed K5120/groups1 two-job instruction counts:
+old prepared b283d788 worker:1471733 RV instructions;
+first two-product45707f58 worker:1485615;
+this inlined e47497e6 worker:1459849.
+That is11884 fewer than old prepared and25766 fewer than the first
+candidate. These are the same synthetic-endpoint RV Step counts,NOT a
+hardware cycle/time/TPS estimate. The physical profile must still decide
+the next target;no useful-performance claim follows from this result.
+
+Main and independent clean pinned default builds both actually exit0.
+All11 complete-image identities agree;ELF154280B SHA
+e47497e6053c8a2415760a7d36dc2b4830cee58c8afeb634b5fcbe2a4b18e217.
+Service17516B SHA
+eec0c2364058285f597bddec2235f91b12626acbb2c7a2393a86ea83e908bec0.
+Boot/global/precise/dense/fetch/text/affine/FFN/GDN are still EXACT old
+prepared binaries. The strict nonmath audit now requires11 named tail
+functions:the affine helper MUST be inlined,not allowed as an extra tail.
+Entire unchanged old objects and original/prepared full ELF pins pass FIRST.
+
+Main/clean actual complete-worker ASan+UBSan suites both actually exit0:
+27 shapes,54 changed-input jobs,5 mask controls,16 inert NoC-loss faults,
+16 descriptor refusals,real payload/ACK/commit/STOP;stack3540/8192.
+GDN history3 pairs/6 virgin workers/12 half jobs and actual next-state
+retention/STOP also pass;stack4804/8192. Main/clean whole stdout AND
+stderr are byte-identical. Each stderr consists of exactly32 EXPECTED
+ACTUAL_BETA_WORKER_FAULT diagnostics from the injected faults,not physical
+card faults. No sanitizer/unexpected message is disregarded.
+
+The standalone direct/extreme/actual-image/role suite actually exits0
+again. ALL THREE RV packet text images are byte-identical to the previous
+qualified images,not merely semantically similar. Thus the recorded
+main/clean actual-original-weight qualification (193 sampled16-row Q4
+projections/two synthetic jobs,6176 exact FP32 outputs,whole original851
+tensors authenticated) covers the SAME packet executables. It was not
+rerun or represented as a new full-model/physical inference benchmark.
+
+Raw closed build/test logs and actual exits are in the sibling
+qwen38-two-product-q4-inline-20261105/ directory. Main full worker stdout
+SHA a8cdee0600a73d8fdcdb611f6a7fc66bbeecb91056aa4e88e664746a554d81bf;
+expected fault stderr SHA
+4a39a05dcdb0f0439ace7cfdc69a018f79db4c6cd4c566f4caad06c1a109c24b.
+The live protected tag99 trial remains on its original frozen payload;
+no new driver/status/ownership call,power/SD or hardware change occurs here.
+Best accepted physical throughput is STILL0.1728tok/s and20 remains unmet.

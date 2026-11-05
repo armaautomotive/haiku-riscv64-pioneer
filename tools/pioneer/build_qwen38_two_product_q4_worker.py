@@ -21,9 +21,9 @@ PINS=(
  ('text.bin',7844,'fa783006d1943e886d777982f4aecc93fc0c321937e15f6d87755a14ddc07e00'),
  ('affine.bin',4680,'a8f650e58052aba96187bcbee08c25a24de4b8aa8d92c5bb7c34ccfeeca4682d'),
  ('ffn.bin',16456,'e6533bc2035a251dbc0f4aad1da9d5222fcf8649ff2577db375843dc746014b7'),
- ('service.bin',17636,'184c0d1c7b039706a246425c627910ddafb57482ad6682eb4b35280f4bdedd48'),
+ ('service.bin',17516,'eec0c2364058285f597bddec2235f91b12626acbb2c7a2393a86ea83e908bec0'),
  ('gdn.bin',35944,'7ae46e0cea089f93ae7662d2033e469393c4a39859dbc3745d40c456033944c3'),
- ('program.elf',154332,'45707f586c7575a36b066bfe2c5addc7909fe64bf297de299b2df03fb345466f'),
+ ('program.elf',154280,'e47497e6053c8a2415760a7d36dc2b4830cee58c8afeb634b5fcbe2a4b18e217'),
 ) # Main + independent clean BUILD identity;not native/physical admission.
 if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):raise SystemExit('Refuse optimized Python')
 args=sys.argv[1:];inspect='--inspect-candidate' in args

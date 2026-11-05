@@ -85,8 +85,9 @@ def audit(control, image, tool, *, two_product=False):
     if two_product:
         original='_ZN26PioneerQ38ExactQ4Corrected3RunIN23PioneerQ38ExactQ4Affine12PanelEmitterI28PioneerQ38ExactQ4WorkEmitterEEEEbRT_'
         candidate='_ZN30PioneerQ38ExactQ4TwoProductDot3RunIN23PioneerQ38ExactQ4Affine12PanelEmitterI28PioneerQ38ExactQ4WorkEmitterEEEEbRT_'
-        affine='_ZN33PioneerQ38ExactQ4TwoProductAffine6AffineI28PioneerQ38ExactQ4WorkEmitterEEvRT_ji'
-        expected_tail=(TAIL-{original})|{candidate,affine}
+        # Candidate affine is forced inline into its one worker caller;
+        # an unexpected out-of-line helper is NOT a blanket tail waiver.
+        expected_tail=(TAIL-{original})|{candidate}
     assert {r[1] for r in tail}==expected_tail and len(tail)==len(expected_tail), ('explicit tail',sorted(r[1] for r in tail),sorted(expected_tail))
     cursor=end
     for at,name,size,kind in tail:

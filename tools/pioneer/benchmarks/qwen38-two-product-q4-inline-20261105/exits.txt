@@ -1,0 +1,17 @@
+Actual local tool/process returns;NOT physical/driver cleanup receipts:
+main inspect build:0
+independent clean inspect build:0
+main pinned default build:0
+independent clean pinned default build:0
+main/clean whole complete-worker ELF cmp:0
+main complete-worker shape/fault/history suite:0
+clean complete-worker shape/fault/history suite:0
+main/clean complete-worker whole stdout cmp:0
+main/clean complete-worker expected-fault stderr cmp:0
+direct/extreme/actual-image/role suite:0
+all three prior/current packet text-image byte cmps:0
+
+Exactly32 expected synthetic-fault stderr lines in each full worker suite;
+other recorded stderr files are empty. No physical inference or speed test
+is claimed. The actual-weight suite was NOT rerun:all three executables it
+qualified are byte-identical,as recorded by the actual cmp results.

@@ -34,7 +34,7 @@ struct PioneerQ38ExactQ4TwoProductDot {
  }
 };
 struct PioneerQ38ExactQ4TwoProductAffine:PioneerQ38ExactQ4Affine {
- template<class E> static void Affine(E& e,unsigned scale,int sum){
+ template<class E> static __attribute__((always_inline)) inline void Affine(E& e,unsigned scale,int sum){
   e.Op(0x3700000f);e.Op(0x8a000002);
   for(unsigned parity=0;parity<4;parity+=2){
    e.Op(0x70030000|32|parity);
