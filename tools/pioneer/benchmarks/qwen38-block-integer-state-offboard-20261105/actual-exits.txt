@@ -1,0 +1,11 @@
+Actual process records,not planned acceptance:
+initial state test compile:refused Werror logical-parentheses warning;binary not run
+36942:0,initial emitted-state suite before extra4 scale predicates
+6941:0,first authenticated emitted-state original sample run
+39656:0,complete main emitted-state+roles+old-metadata+authenticated original suite
+81136:0,complete independent clean emitted-state+roles+old-metadata+authenticated original suite
+77488:0,default arithmetic+original regression and shell/diff checks
+all accepted stderr0
+main/clean entire semantic stdout compare0;only last temporary-artifact path differs
+default semantic stdout compare0 against530552c;only last temporary-artifact path differs
+No compiled complete worker/native driver/model-quality/physical-speed acceptance

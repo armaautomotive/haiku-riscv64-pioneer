@@ -2,6 +2,13 @@
 // Original-weight arithmetic samples with synthetic activations,not inference.
 #define PIONEER_Q38_Q4_BLOCK_INTEGER_AFFINE_TEST_MODEL_ONLY
 #include "pioneer_q38_q4_block_integer_affine_test.cpp"
+#ifdef PIONEER_Q38_BLOCK_INTEGER_STATE_ORIGINAL_TEST
+#if PIONEER_Q38_BLOCK_INTEGER_STATE_ORIGINAL_TEST != 1
+#error Separate emitted-state original-sample test only
+#endif
+#define PIONEER_Q38_Q4_BLOCK_INTEGER_STATE_MACHINE_ONLY
+#include "pioneer_q38_q4_block_integer_state_test.cpp"
+#endif
 #include "../PioneerModelWeightCache.h"
 #include "../PioneerQwen38Gguf.h"
 #include "../PioneerQwen38Panel.h"
@@ -42,8 +49,15 @@ int main(int argc,char** argv){
    for(unsigned job=0;job<2;job++){
     IntegerVector m;std::array<std::array<int64_t,32>,2> dot{},minimum{},saved{};
     std::array<std::array<float,32>,2> legacy{};std::array<std::array<uint32_t,32>,2> second{},savedMin{};
-    int input[256];for(auto& x:input)x=int(random()%256)-128;
+    std::array<int,256> input;for(auto& x:input)x=int(random()%256)-128;
     const float activation=Float(job?0x3b812345:0x3f800000);
+#ifdef PIONEER_Q38_BLOCK_INTEGER_STATE_ORIGINAL_TEST
+    const unsigned bases[]={0x90000,0x98000,0x98900,0x9a000,0x9a900};
+    auto stateMachine=std::make_unique<IntegerStateMachine>(bases[(tensor+first+block+job)%5]);State state;
+    assert(state.Init(*stateMachine));memcpy(stateMachine->tile.data(),tile,2304);
+    assert(state.Begin(*stateMachine,stateMachine->base));stateMachine->Closed();assert(!MetadataCheck(*stateMachine));
+    stateMachine->Config(1,0x60aa0000);
+#endif
     for(unsigned p=0;p<16;p++){
      if(p==8)for(unsigned parity=0;parity<2;parity++)for(unsigned lane=0;lane<32;lane++){
       saved[parity][lane]=dot[parity][lane];dot[parity][lane]=0;m.lr[4+parity*2][lane]=0;
@@ -74,7 +88,16 @@ int main(int argc,char** argv){
        assert(m.Read(5+parity*2,lane)==Bits(float(minimum[parity][lane])));
       }
      }
+#ifdef PIONEER_Q38_BLOCK_INTEGER_STATE_ORIGINAL_TEST
+     int panelSum=0;for(unsigned k=0;k<16;k++)panelSum+=input[p*16+k];
+     stateMachine->Dot(p,input);assert(state.Panel(*stateMachine,p,panelSum));stateMachine->Closed();
+#endif
     }
+#ifdef PIONEER_Q38_BLOCK_INTEGER_STATE_ORIGINAL_TEST
+    assert(state.Finish(*stateMachine,Bits(activation)));stateMachine->Closed();
+    assert(!state.failed && !state.active && state.next==16 && stateMachine->zeroUnpacks==1 && stateMachine->unpacks==1);
+    for(unsigned r=109;r<112;r++)for(unsigned c=0;c<16;c++)assert(!(stateMachine->FloatDst(r,c)&0x7fffffff));
+#endif
     for(unsigned parity=0;parity<2;parity++)for(unsigned lane=0;lane<32;lane++){
      second[parity][lane]=m.lr[4+parity*2][lane];savedMin[parity][lane]=m.lr[5+parity*2][lane];
     }
@@ -92,7 +115,12 @@ int main(int argc,char** argv){
       changed+=expected[lane]!=Bits(legacy[parity][lane]);
      }
      for(auto word:finishes[parity].words)m.Op(word);assert(m.okay);
-     for(unsigned lane=0;lane<32;lane++){assert(m.Read(0,lane)==expected[lane]);words++;}
+     for(unsigned lane=0;lane<32;lane++){
+      assert(m.Read(0,lane)==expected[lane]);words++;
+#ifdef PIONEER_Q38_BLOCK_INTEGER_STATE_ORIGINAL_TEST
+      if(lane<8)assert(stateMachine->FloatDst(108,lane*2+parity)==expected[lane]);
+#endif
+     }
     }
     jobs++;
    }
@@ -101,4 +129,8 @@ int main(int argc,char** argv){
  assert(tensors==193 && jobs==3474 && words==222336 && changed);
  assert(model->Stable() && !fstat(fd,&after) && Same(before,after) && !fclose(file));
  printf("PASS ORIGINAL_BLOCK_INTEGER tensors%u sampledBlocks1737 changedInputJobs%u laneWords%u uniqueRowOutputs55584 changedFromOldK16%u;firstMiddleLastRowsAndKBlocks;fullSameOpenSHAStable;syntheticActivations duplicatedFourSubvectors;NEW_ROUNDING_NO_DST_NATIVE_INFERENCE_QUALITY_OR_SPEED\n",tensors,jobs,words,changed);
+#ifdef PIONEER_Q38_BLOCK_INTEGER_STATE_ORIGINAL_TEST
+ puts("PASS ORIGINAL_EMITTED_BLOCK_INTEGER_STATE tensors193_sampledBlocks1737_changedInputJobs3474_physicalDstWords222336_includingPadding;actualRawMetadataLoads_firstHalfStores_originalQdotReconstruction_55584uniqueRowOutputs;SYNTHETIC_COMPLETED_FPU_DOT_NOT_COMPILED_WORKER_NATIVE_QUALITY_OR_SPEED");
+ (void)&Run;(void)&Check;(void)&Round;
+#endif
 }

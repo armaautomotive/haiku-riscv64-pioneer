@@ -1,0 +1,113 @@
+Q4 block-integer emitted metadata/accumulator state:OFFBOARD
+=========================================================
+2026-11-05 UTC. Extends530552c arithmetic into actual emitted raw metadata,
+FP32 Dst loads/stores,original qdot reconstruction and split-half lifetime.
+NOT a compiled complete worker,native driver,model-quality acceptance or
+physical speed measurement. No production target selects this helper.
+
+Implemented source,not merely a proposed memory map
+--------------------------------------------------
+PioneerQ38Q4BlockIntegerState.h initializes COMPLETE logical FP32 rows
+112..127 with one256-datum,16-row,all-zero UNPACK from already validated
+input storage. Current old initializer only covers64..79,96..111 and its
+metadata rows:112..127 were NOT already initialized. No partial-column
+store may borrow those undefined rows. The new explicit initialization is
+necessary and is tested by omitting it,not assumed from stale contents.
+
+Within that scope112..115 store original d,116..119 original dmin and
+120..123 first-half weighted-dot integers. Original live accumulator
+108..111 remains unchanged until complete block Finish. Original eight
+scale/minimum factors become EXACT FP32 small integers in128..191;all
+padding is explicitly zeroed. Original bases are exact HALF->FP32,including
+subnormals and both zero signs. No weight products are supplied by host.
+
+Metadata uses the same original256B raw prefix and five bounded twin
+addresses. Both parities load byte planes,transpose,decode original packed
+six-bit factors and store complete factors/bases. Per-panel TWO-product
+dot(z+escape,x) becomes original qdot by exact +7*inputSum. Input sum is
+cast independently;the two weighted integer MADs retain both independent
+parities in4/5 and6/7. At panel8,store BOTH first halves BEFORE clearing
+ONLY4/6. Finish adds exact halves,loads original bases/activation scale,
+performs the separately specified new affine and writes existing108.
+Parity0 Finish preserves6/7 for parity2. Every panel and Finish drains.
+
+Explicit Init/Begin/Panel0..15/Finish grammar refuses early,duplicate,
+out-of-order,invalid raw/sum/scale calls before issue and latches failure.
+After protocol failure all further methods issue nothing. This local
+latch is NOT a claim of native quarantine or complete worker STOP handling.
+Caller still owes actual finite source check,source provenance,bank release,
+all Dst/LReg ownership and whole-worker lifetime. No native owner/journal,
+code/stack bounds or7x3GiB device capacity is silently enlarged.
+
+Primary layout contracts checked:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPLOAD.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPSTORE.md
+The existing adjusted FP32 high/low physical-row mapping makes these new
+scratch rows disjoint from old108..111 and metadata128..191. Component
+tests check untouched rows in their512-row physical endpoint,NOT the
+entire silicon/journal/1024-row/native ownership contract.
+
+Actually closed complete suites
+------------------------------
+Main39656=0,independent clean81136=0. ASan+UBSan,Werror,ffp-contract=off.
+Full semantic stdout byte-identical;only final private artifact-path line
+differs. All accepted stderr empty. Complete raw streams in sibling folder.
+
+ Emitted synthetic state:768 retained blocks,49152 physical Dst output
+ words,three successive changed blocks without resetting the old
+ accumulator,random/-128/zero activation cases,finite half extremes,
+ signed zeros/subnormals,all5 twin addresses,all metadata padding,first-half
+ stores and old-accumulator preservation until Finish.312 unrelated
+ physical endpoint rows preserved.18 grammar/domain refusals and14 omitted
+ zero/store/transpose/drain/half-clear controls detected. Fault controls
+ are observer/comparator checks,NOT proven native fault parking/recovery.
+
+ Actual original source:FULL SAME-OPEN18973870528B original authenticated
+ before reading any sample,stable identity/size/timestamps after:
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+ All193 Q4 tensors,first/middle/last row bands AND K blocks,1737 sampled
+ blocks,3474 changed-input jobs. Emitted metadata/loading/half stores/final
+ affine produce222336 physical Dst words INCLUDING padding;55584 unique
+ original learned-row outputs match the separate int64/FP32 arithmetic
+ contract. Scalar raw code/coefficient/minimum fields independently match
+ the unchanged original canonical decoder. The lane-only arithmetic
+ regression also runs in that process.173268 lane words intentionally
+ differ from old K16 rounding;no old comparator/tolerance was changed.
+
+ These inputs are SYNTHETIC activations and a SYNTHETIC completed FPU-dot
+ endpoint. Actual UNPACK/MVMUL/source handoffs are NOT executed here and
+ must not be replaced by this endpoint in a native worker. No prompt hidden
+ state,whole-model logits/perplexity/token-quality result or TPS measured.
+ Only O_RDONLY original source;no cache create/repair/publication/device IO.
+
+ Roles:both headers,2 positive/88 missing/zero/two/late/native/client/Work/
+ reference/fastmath/parity refusals. All state templates instantiate in the
+ positive syntax probe. Native/Work role denial remains intact,including0.
+ Unchanged old metadata suite:1024 original-byte blocks,all groups/padding,
+ 43 domain refusals/8 missing-store/transpose/drain controls,main+clean0.
+ Only a test-model reuse guard surrounds its main;its checks are unchanged.
+ Default arithmetic+original source regression77488=0,stderr0;semantic
+ stdout exactly matches accepted530552c,excluding final temporary path.
+
+ Initial new state-test compile refused a missing logical-parentheses
+ warning under Werror;fixed the test expression. A draft patch did not
+ match the original-test source and made no changes. No failing numerical
+ fixture was accepted and no unknown instruction pass-through was added.
+
+Remaining implementation boundary and protected physical wait
+------------------------------------------------------------
+Next integrate into a DISTINCT complete offboard worker image with real
+FPU/source-bank/NoC/ACK/retained-history/STOP tests and a separately labelled
+new-arithmetic oracle. Existing K16 teacher and no-CPU-reference Work stay
+unchanged. Only after native integration and quality checks may hardware
+model timing establish whether this is useful. Do NOT turn arithmetic word
+counts into a speed prediction;old affine already uses REPLAY.
+
+Separate fixed103 trial at21:16:36GMT:wrapper28724,parent28725,rate28809,
+USER28810 all live,upload7136.5/19522.4MiB,actual parent/rate exits absent,
+all stderr0,SAME observer36806. No accelerator metadata/admin/new job,
+live-stage mutation,reload,reboot,relay,Assistant,boot/network/CPU/RAM/SD/
+mains/hardware setting changed. Source530552c checkpoint does NOT imply
+the physical103 trial has closed. Stage remains SPENT FOREVER.
+Last closed queued102 rate0.162052093..0.162055547tok/s;comparable vector92
+0.172813448..0.172816755. No rate for this new state helper;20tok/s UNMET.

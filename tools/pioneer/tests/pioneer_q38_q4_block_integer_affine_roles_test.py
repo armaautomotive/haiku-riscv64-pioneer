@@ -6,9 +6,8 @@ import shlex
 import subprocess
 
 root = Path(__file__).resolve().parents[1]
-header = '#include "PioneerQ38Q4BlockIntegerAffine.h"\n'
 selection = '#define PIONEER_Q38_Q4_BLOCK_INTEGER_AFFINE_OFFBOARD 1\n'
-body = ('struct E { void Op(unsigned) {} };\n'
+body = ('struct E { void Op(unsigned) {} void Config(unsigned,unsigned) {} void Drain() {} };\n'
         'int main(){E e;PioneerQ38Q4BlockIntegerAffine::Panel<0>(e);'
         'PioneerQ38Q4BlockIntegerAffine::Panel<2>(e);'
         'PioneerQ38Q4BlockIntegerAffine::Finish<0>(e);'
@@ -25,26 +24,34 @@ def check(source, success, extra=()):
         assert not result.stderr and not result.stdout
 
 
-check(selection + header + body, True)
-refusals = 0
-for value in (None, 0, 2):
-    prefix = '' if value is None else f'#define PIONEER_Q38_Q4_BLOCK_INTEGER_AFFINE_OFFBOARD {value}\n'
-    check(prefix + header + body, False)
-    refusals += 1
-for name in ('_KERNEL_MODE', 'PIONEER_ATTENTION_FREESTANDING',
-             'PIONEER_Q38_WORK_INFERENCE', 'PIONEER_Q38_CPU_VALIDATION',
-             'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE', 'PIONEER_Q38_FULL_OFFLOAD_NATIVE',
-             'PIONEER_Q38_FULL_OFFLOAD_CLIENT', 'PIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE',
-             '__FAST_MATH__'):
-    for value in (0, 1):
-        define = f'#define {name} {value}\n'
-        check(selection + define + header + body, False)
-        check(selection + header + define + header + body, False)
+refusals = positives = 0
+for name in ('PioneerQ38Q4BlockIntegerAffine.h', 'PioneerQ38Q4BlockIntegerState.h'):
+    header = f'#include "{name}"\n'
+    selected_body = body
+    if name.endswith('State.h'):
+        selected_body = body.replace('int main(){E e;',
+                                    'int main(){E e;PioneerQ38Q4BlockIntegerState s;'
+                                    's.Init(e);s.Begin(e,0x98000);s.Panel(e,0,0);s.Finish(e,0x3f800000);')
+    check(selection + header + selected_body, True)
+    positives += 1
+    for value in (None, 0, 2):
+        prefix = '' if value is None else f'#define PIONEER_Q38_Q4_BLOCK_INTEGER_AFFINE_OFFBOARD {value}\n'
+        check(prefix + header + selected_body, False)
+        refusals += 1
+    for forbidden in ('_KERNEL_MODE', 'PIONEER_ATTENTION_FREESTANDING',
+                      'PIONEER_Q38_WORK_INFERENCE', 'PIONEER_Q38_CPU_VALIDATION',
+                      'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE', 'PIONEER_Q38_FULL_OFFLOAD_NATIVE',
+                      'PIONEER_Q38_FULL_OFFLOAD_CLIENT', 'PIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE',
+                      '__FAST_MATH__'):
+        for value in (0, 1):
+            define = f'#define {forbidden} {value}\n'
+            check(selection + define + header + selected_body, False)
+            check(selection + header + define + header + selected_body, False)
+            refusals += 2
+    for parity in (1, 3):
+        check(selection + header + selected_body.replace('Panel<0>', f'Panel<{parity}>'), False)
+        check(selection + header + selected_body.replace('Finish<0>', f'Finish<{parity}>'), False)
         refusals += 2
-for parity in (1, 3):
-    check(selection + header + body.replace('Panel<0>', f'Panel<{parity}>'), False)
-    check(selection + header + body.replace('Finish<0>', f'Finish<{parity}>'), False)
-    refusals += 2
-check(selection + header + body, False, ('-ffast-math',))
-refusals += 1
-print(f'PASS block-integer arithmetic roles1positive/{refusals}refusals;missing/zero/two/late/native/client/Work/reference/fastmath/parity;NO_HARDWARE')
+    check(selection + header + selected_body, False, ('-ffast-math',))
+    refusals += 1
+print(f'PASS block-integer arithmetic+state roles{positives}positives/{refusals}refusals;missing/zero/two/late/native/client/Work/reference/fastmath/parity;NO_HARDWARE')

@@ -109,6 +109,7 @@ static unsigned Check(const BlockMetadataMachine& machine) {
 		different+=machine.FloatDst(128+group*8+kind*4+pad,col)!=(pad?0:scratch[group*32+kind*16+col]);
 	return different;
 }
+#ifndef PIONEER_Q38_VECTOR_Q4_BLOCK_MACHINE_ONLY
 int main() {
 	uint32_t seed=0x91385742;auto random=[&](){seed^=seed<<13;seed^=seed>>17;seed^=seed<<5;return seed;};
 	const unsigned bases[]={0x90000,0x98000,0x98900,0x9a000,0x9a900};
@@ -158,3 +159,4 @@ int main() {
 	printf("PASS_VECTOR_Q4_BLOCK actual raw256B prefix/physical Dst:%u original-byte blocks/all8 groups/all16 outputs+ALL zero padding EXACT to unchanged scalar BlockQ4;all5 twin addresses;preserved accumulator/otherDst/scale3;one UNPACK/no bank flip/no scalar products or L1 metadata stores;%u domain refusals,%u missing store/transpose/drain controls;SYNTHETIC_ENDPOINTS_ONLY,NO native/hardware/speed grant\n",cases,refused,faults);
 	(void)&Round;
 }
+#endif
