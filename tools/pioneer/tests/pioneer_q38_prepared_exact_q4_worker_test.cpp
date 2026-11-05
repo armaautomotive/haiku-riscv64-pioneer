@@ -208,7 +208,10 @@ struct PreparedQ4Peer:ExactQ4WorkPeer {
  }
  void ReceivePreparedQueued(){ExactQ4WorkPeer::ReceiveQueued();PrepareSource(2);}
 };
-#ifdef PIONEER_Q38_INSTRUCTION_PREFETCH_WORKER_TEST
+#ifdef PIONEER_Q38_QUEUED_Q4_BLOCK_WORKER_TEST
+#include "pioneer_q38_queued_q4_block_observer.h"
+using PreparedTestPeer=QueuedQ4BlockPeer;
+#elif defined(PIONEER_Q38_INSTRUCTION_PREFETCH_WORKER_TEST)
 #include "pioneer_q38_instruction_prefetch_worker_observer.h"
 using PreparedTestPeer=InstructionPrefetchPeer;
 #else

@@ -1,0 +1,1 @@
+PASS queued-Q4 block component:word cases10240 unsupported-register refusals246 final-readback faults20;exact original dot/control stream;1280B immutable correction workspace;NO complete-worker,native,device or speed result

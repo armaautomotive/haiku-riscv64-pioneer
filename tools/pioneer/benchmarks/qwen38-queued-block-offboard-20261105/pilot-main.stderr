@@ -1,0 +1,7 @@
+Assertion failed: (f3 == 1 || f3 == 2), function Step, file pioneer_tensix_image_test.cpp, line 346.
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_queued_q4_block_inspect.py", line 52, in <module>
+    subprocess.run([str(binary),*map(str,directories),sys.argv[3]],check=True,
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/private/tmp/pioneer-queued-q4-inspect-eks69sh_/pilot', '/private/tmp/pioneer-queued-q4-inspect-eks69sh_/EXACT_UNQUALIFIED_ROM_0', '/private/tmp/pioneer-queued-q4-inspect-eks69sh_/EXACT_UNQUALIFIED_ROM_1', '/private/tmp/pioneer-queued-q4-inspect-eks69sh_/EXACT_UNQUALIFIED_ROM_2', '--pilot']' died with <Signals.SIGABRT: 6>.

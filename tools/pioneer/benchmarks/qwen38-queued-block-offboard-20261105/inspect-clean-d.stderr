@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/private/tmp/pioneer-q38-replay-native-clean.4vfnMz5w/tools/pioneer/build_qwen38_queued_q4_block_worker.py", line 37, in <module>
+    assert link[0]==tool+'ld' and link.count(old_object)==1
+AssertionError

@@ -1,0 +1,101 @@
+Queued Q4 block experiment -- 2026-11-05
+========================================
+
+OFFBOARD EXPERIMENT ONLY. NOT NATIVE/PHYSICAL QUALIFIED OR INSTALLED.
+Current real27B hardware trial is the SEPARATE prefetch9f/tag101 build.
+Its full20,470,759,424B upload has completed;all4 protected processes
+20341/20342/20427/20428 remain live with no actual exits/errors at17:24:39GMT.
+Do NOT intervene in that trial or use its result as this prototype's rate.
+20tokens/sec remains UNMET;NO speed improvement is claimed here.
+
+Purpose:remove repeated RISCV controller ACK polling inside each Q4 K256
+block without removing backend completion barriers or changing arithmetic.
+Original two-product dot and FP32 affine/replay13 order remain. All16
+correction planes are prepared into disjoint16B-header+64B-payload slots,
+9c600..9cb00,BEFORE queueing. Source,original inputs and correction planes
+stay immutable until one REAL bounded ACK Drain at block end. CPU-private
+stack and integer sum-cache stores are not GPU-read operands.
+
+Inside the block,64 original phase waits become64 in-stream ALL9-class
+STALLWAITs (0xa2ff9816;conditions0x1816). Configuration uses RMWCIB0..3
+full-byte updates,without borrowing GPRs,then complete final word readbacks
+after the real block-end Drain. Fields65/73/86 are invariant across16panels
+and now configured/read back once before the block. The distinct image
+role forbids kernel/native/client/CPU-reference/hybrid-Work/fast-math aliases.
+Default OFF reproduces the ENTIRE existing9f worker before each build.
+
+A stalled backend could fill the instruction queue and prevent reaching
+the final bounded CPU poll. NO local timeout is claimed for that condition.
+Missing-completion/front-end backpressure/fault retention MUST be modeled
+and qualified before any native or hardware use. A successful functional
+CompleteMath callback is NOT proof of that missing-completion behavior.
+Current strict observer checks actual source packets,immutable planes,
+configuration opcodes,current Config0 thread selection and phase ordering;
+it does not simulate silicon timing or a finite physical frontend queue.
+
+Current E artifact,main/clean complete ELF byte-identical:
+155272B SHA8fee1277ca109e5e19423dbfdedeb746796c6eb1b46c1c06000c47c65c89ce8d
+ global9720B6b04a57f... EXACT9f;boot/precise/dense/FFN/GDN also EXACT.
+ service20416/24576B4f2a8204... NEW SUBJECT.
+ text7884/8192B85d7259c... NEW SUBJECT.
+ fetch1292Badc62da7... andaffine4680B60b52b60... have UNAUDITED differences.
+ No section limit,stack,descriptor,model/cache,ROOT or native journal was
+ enlarged. Correction slots fall inside the existing worker data journal.
+ An INSPECT_PINS identity authenticates this test image,NOT physical use.
+ The builder accepts ONLY --inspect-candidate;no production build exists.
+
+Actually CLOSED evidence:
+ Main E inspect19190 and clean E92428 BOTH0,stderr empty,whole output+ELF
+ identical. Both reproduce entire9f FIRST,including unchanged default code.
+ Main E pilot31213 andclean8450 BOTH0,stderr empty,whole stdout identical:
+ K5120/groups1,two retained changed-input jobs,exact FP32/source/ACK/commit.
+ Main shapes6375 andclean25387 BOTH0,whole stdout AND stderr identical:
+ Q8_0/Q4_K/Q6_K xK5120/6144/17408 xgroups1/3/16 =27shapes,54changed jobs.
+ Five correction-mask controls,16NoC losses with inert parks,16descriptor
+ refusals and missing-replay refusal pass. Recorded stack3556/8192B.
+ The32 stderr lines are EXPECTED deliberate ACTUAL_BETA_WORKER_FAULT trails,
+ exactly39 fields each;no extra stderr. These are not hardware errors.
+ Word/component main/clean BOTH0/empty stderr/identical whole stdout:
+ 10240 word cases,246 unsupported-register refusals,20 final-readback faults,
+ original AND mapped dot/control streams exact,CPU-store fence preserved.
+ Role main/clean BOTH0/empty stderr/identical stdout:1positive/44 missing,
+ zero,two,late,native/CPU/Work/fast-math refusals.
+
+NOT a speed result:
+ Same K5120/groups1/two-job fixture current9f takes1,443,247 retired RV
+ instructions;candidate E takes1,554,215 (MORE,about7.69%). The older 8a
+ three-product test control's3,010,979 is NOT the current performance baseline.
+ Earlier D prototype2,081,731 was reduced,not a measured device gain.
+ Fewer controller ACK waits can change stall time,but instruction counts
+ cannot prove a hardware benefit. Do not call this faster or promote it.
+ Full27B generation rate remains unmeasured for this image.
+
+Failures retained privately:
+ A link rejected code-window overflow;no bounds were widened. R3 pilot
+ correctly refused an unsupported RV byte store;queued state was changed to
+ a fixed32-bit word instead of relaxing the RV ISA validator. D then passes
+ its partial pilot. A clean D build using the wrong replay parent path
+ refused before compiling;clean E uses its actual clean replay parent.
+ The initial host component compile rejected GCC-only placement attributes;
+ the final constant-index inline implementation needs no such attributes.
+
+Required NEXT before ANY physical/native integration:
+ 1. Strict whole-symbol/relocation audit of all changed sections,including
+ the newly inserted40B readonly index table;every old non-math byte must
+ be exact or an authenticated relocation,not a blanket section waiver.
+ 2. Actual compiled config failure and missing/delayed completion/finite-
+ queue/inert failure tests;coupled GDN/history/current data ownership tests.
+ 3. Exact full120-worker code/data journal coverage;distinct native/USER/
+ program identity with no CPU inference;all admission/lifecycle tests.
+ Then,and ONLY then,one fresh real27B comparison after the existing trial
+ has actually closed/restored. Preserve every spent stage and failed result.
+ No Assistant,boot,CPU/RAM,SD,relay,mains or physical connection change.
+
+Primary contracts inspected2026-11-05:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/STALLWAIT.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/RMWCIB.md
+https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/tt-llk/tt_llk_blackhole/common/inc/ckernel_ops.h
+
+Raw component/role/build/pilot/all-shape records are in the sibling folder.
+All learned weights,shader/driver binaries and unrelated WIP stay out of Git.
+This is a checkpoint toward faster full-model execution,NOT completion.

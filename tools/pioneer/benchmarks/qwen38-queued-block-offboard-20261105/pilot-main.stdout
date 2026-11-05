@@ -1,0 +1,4 @@
+TWO_PRODUCT_PREPARED_Q4_COMPLETE_WORKER_VALIDATION_ONLY_NO_DEVICE
+REPLAY13_TWO_PRODUCT_COMPLETE_WORKER_SHARED_PHYSICAL_REPLAY_WORDS_NO_DEVICE
+PREPARED_Q4_COMPLETE_CASE type12 K5120 groups1
+PASS QGW3 worker69/type12/ACTUAL fullK5120+960tensor instructions/12 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS

@@ -29,6 +29,12 @@ using PreparedQ4Dot=PioneerQ38ExactQ4Corrected;
 using PreparedQ4Affine=PioneerQ38ExactQ4Affine;
 #endif
 using PreparedQ4=PioneerQ38PreparedQ4Layout;
+#ifdef PIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE
+#include "PioneerQ38QueuedQ4Block.h"
+static_assert(PioneerQ38QueuedQ4Block::EscapeBase-16>=PreparedQ4::DenseMask+512
+ && PioneerQ38QueuedQ4Block::EscapeBase-16+PioneerQ38QueuedQ4Block::EscapeBytes<=0xa0000,
+ "distinct private escape planes do not overlap masks or original inputs");
+#endif
 // Source descriptor is at a FIXED root-owned slot,not an arbitrary job
 // pointer. A future native ROOT producer must bind its complete lifetime.
 static __attribute__((noinline,noclone,section(".text.pioneer_q38_resident_service")))
@@ -52,6 +58,17 @@ void PreparedQ4Inputs(unsigned inputs){
 }
 struct PioneerQ38ExactQ4WorkEmitter {
  unsigned metadataRow=128,primary=0x98100,input=PreparedQ4::InputFirst,mask=PreparedQ4::DenseMask;
+#ifdef PIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE
+ PioneerQ38QueuedQ4Block queue;unsigned queued=0; // fixed RV32 word state,not byte stores
+ unsigned escape=PioneerQ38QueuedQ4Block::EscapeBase;
+ __attribute__((always_inline)) void BeginQueued(){if(queued || !queue.Begin())block_fault_park();queued=true;}
+ __attribute__((always_inline)) bool ReadConfig(unsigned index,unsigned& value){value=Words(0xffef0000+index*4)[0];return true;}
+ __attribute__((always_inline)) void EndQueued(){
+  if(!queued)block_fault_park();
+  ::Drain();queued=false; // real bounded ACK BEFORE any CPU read/reuse
+  if(!queue.Verify(*this))block_fault_park();
+ }
+#endif
  __attribute__((always_inline)) inline void Op(unsigned word){
   if((word&~2U)==0x70130060)word=0x70130000|metadataRow|(word&2);
   else if((word&~2U)==0x70230064)word=0x70230000|(metadataRow+4)|(word&2);
@@ -61,9 +78,21 @@ struct PioneerQ38ExactQ4WorkEmitter {
   if(index==76 && value==0x8fff)value=primary/16-1;
   else if(index==76 && (value==0x900f || value==0x901f))value+=0xc04;
   if(index==124 && value==0x90ff)value=input/16-1;
+#ifdef PIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE
+  if(queued){
+   if(index==76 && value==0x901f+0xc04)value=escape/16-1;
+   if(!queue.Config(*this,index,value))block_fault_park();
+   return;
+  }
+#endif
   ::Config(index,value);
  }
- void Drain(){::Drain();}void SealData(){Fence();}
+ void Drain(){
+#ifdef PIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE
+  if(queued){PioneerQ38QueuedQ4Block::Wait(*this);return;}
+#endif
+  ::Drain();
+ }void SealData(){Fence();}
  unsigned Mask(unsigned i){return Words(mask)[i];}
  void Escape(unsigned i,unsigned v){Words(0x9c240)[i]=v;}
  void Seven(unsigned i,unsigned v){Words(0x9c140)[i]=v;}
@@ -102,6 +131,23 @@ static unsigned PioneerQ38ExactQ4Work(const volatile uint32_t* job){
    e.Drain();e.Config(50,0x100);VectorPanelEmitter metadata;
    if(!PioneerQ38VectorQ4Metadata::Block(metadata,raw,scale))block_fault_park();
    e.Config(1,0x60aa0000);
+#ifdef PIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE
+   // Every correction buffer is immutable until the block's real ACK.
+   for(unsigned p=0;p<16;p++){
+    const unsigned at=PioneerQ38QueuedQ4Block::EscapeBase+p*PioneerQ38QueuedQ4Block::EscapeStride;
+    for(unsigned word=0;word<4;word++)Words(at-16)[word]=0;
+    for(unsigned pair=0;pair<8;pair++){
+     const unsigned bits=Words(PreparedQ4::DenseMask)[p*8+pair];
+     Words(at)[pair*2]=PioneerQ38ExactQ4Corrected::Spread(bits);
+     Words(at)[pair*2+1]=PioneerQ38ExactQ4Corrected::Spread(bits>>16);
+    }
+   }
+   Fence();
+   // These three fields remain unchanged through all16 panels. Metadata
+   // imports occur outside this block and are complete before this point.
+   e.Config(65,0x10001);e.Config(73,0xf010f);e.Config(86,0x01000100);
+   e.BeginQueued();
+#endif
    for(unsigned p=0;p<16;p++){
     int sum=0;
     if(group)sum=int(Words(0x95000)[block*16+p]);
@@ -114,9 +160,16 @@ static unsigned PioneerQ38ExactQ4Work(const volatile uint32_t* job){
     }
     if(sum<-2048 || sum>2048)block_fault_park();
     e.primary=raw+256+p*128;e.input=PreparedQ4::Input(block*128+p*8);e.mask=PreparedQ4::DenseMask+p*32;
-    e.Config(124,e.input/16-1);e.Config(65,0x10001);e.Config(73,0xf010f);e.Config(86,0x01000100);
+    e.Config(124,e.input/16-1);
+#ifdef PIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE
+    PioneerQ38QueuedQ4Block::PanelEmitter<PioneerQ38ExactQ4WorkEmitter> panel(e);
+    e.escape=PioneerQ38QueuedQ4Block::EscapeBase+p*PioneerQ38QueuedQ4Block::EscapeStride;
+    if(!PioneerQ38QueuedQ4Block::Dot(panel))block_fault_park();
+#else
+    e.Config(65,0x10001);e.Config(73,0xf010f);e.Config(86,0x01000100);
     PioneerQ38ExactQ4Affine::PanelEmitter<PioneerQ38ExactQ4WorkEmitter> panel(e);
     if(!PreparedQ4Dot::Run(panel))block_fault_park();
+#endif
     e.metadataRow=128+(p/2)*8;
 #ifdef PIONEER_Q38_PREPARED_TWO_PRODUCT_REPLAY_IMAGE
     PreparedQ4Affine::Affine(e,scale,sum,block==0 && p==0);
@@ -124,6 +177,9 @@ static unsigned PioneerQ38ExactQ4Work(const volatile uint32_t* job){
     PreparedQ4Affine::Affine(e,scale,sum);
 #endif
    }
+#ifdef PIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE
+   e.EndQueued();
+#endif
   }
   e.Drain();e.Config(3,0);
   for(unsigned n=0;n<16;n++){
