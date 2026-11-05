@@ -69,6 +69,12 @@
 #ifdef PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4
 #include "PioneerQ38FullOffloadQueuedQ4Role.h"
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4
+#include "PioneerQ38FullOffloadFixedConfigQ4Role.h"
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110500010103ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4)
+#error Tag103 requires the distinct fixed-config Q4 complete-model revision
+#endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110500010102ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4)
 #error Tag102 requires the distinct queued Q4 complete-model revision
 #endif

@@ -64,7 +64,10 @@ static_assert(PioneerQ38FullOffloadMetricsSelection==0,"late full-card metrics r
 #endif
 #ifndef PIONEER_Q38_FULL_OFFLOAD_FIRMWARE_BINDING_H
 #define PIONEER_Q38_FULL_OFFLOAD_FIRMWARE_BINDING_H
-#ifdef PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4
+#include "PioneerQ38FullOffloadFixedConfigQ4Role.h"
+enum {PioneerQ38FullOffloadFirmwareSelection=11};
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4)
 #include "PioneerQ38FullOffloadQueuedQ4Role.h"
 enum {PioneerQ38FullOffloadFirmwareSelection=10};
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH)
@@ -90,7 +93,10 @@ enum {PioneerQ38FullOffloadFirmwareSelection=1};
 #endif
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
-#ifdef PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4
+#include "PioneerQ38FullOffloadFixedConfigQ4Role.h"
+static_assert(PioneerQ38FullOffloadFirmwareSelection==11,"late full-card fixed-config Q4 selection");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4)
 #include "PioneerQ38FullOffloadQueuedQ4Role.h"
 static_assert(PioneerQ38FullOffloadFirmwareSelection==10,"late full-card queued Q4 selection");
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH)

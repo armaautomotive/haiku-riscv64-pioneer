@@ -23,7 +23,13 @@ int main(int argc,char** argv){
  assert(argc==3 && P::Family==S::Family && P::EogCount==5);
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
 #ifdef PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4
+ assert(PioneerQ38FullOffloadFirmwareSelection==11 && P::FixedConfigQ4==1 && P::FixedConfigFields==6);
+ assert(P::FixedConfigSeedWords==24 && P::FixedConfigLowBytes==2 && P::FixedConfigFinalReads==6);
+ assert(P::QueuedQ4Block==1 && P::QueuedQ4Wait==0xa2ff9816U);
+#else
  assert(PioneerQ38FullOffloadFirmwareSelection==10 && P::QueuedQ4Block==1 && P::QueuedQ4Wait==0xa2ff9816U);
+#endif
  assert(P::QueuedQ4EscapeBase==0x9c610 && P::QueuedQ4EscapeStride==80 && P::QueuedQ4EscapeBytes==1280);
  assert(P::InstructionPrefetch==1 && P::TwoProductQ4==1 && P::AffineReplayWords==13 && P::TokenPhaseProfile==1 && P::CounterUnroll==1);
  assert(P::PhaseProfileAddress==0x75710 && P::PhaseProfileWords==60);
@@ -101,7 +107,11 @@ int main(int argc,char** argv){
  assert(total==3128184);
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4
+ assert(total==3444156);
+#else
  assert(total==3466647);
+#endif
 #endif
  for(unsigned worker:{120U,121U,UINT32_MAX}){
   uint32_t word=0xdeadbeef;assert(!P::CodeSpans(worker) && !P::CodeWords(worker)

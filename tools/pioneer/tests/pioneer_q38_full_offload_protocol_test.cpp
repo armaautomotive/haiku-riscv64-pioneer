@@ -16,7 +16,9 @@ static std::unique_ptr<P::Packet> Request(unsigned count,unsigned outputs){
  return p;
 }
 int main(){
-#ifdef PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4
+ static_assert(F::BuildTag==UINT64_C(0x2026110500010103),"exact fixed-config Q4 USER/native identity");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4)
  static_assert(F::BuildTag==UINT64_C(0x2026110500010102),"exact queued Q4 USER/native identity");
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH)
  static_assert(F::BuildTag==UINT64_C(0x2026110500010101),"exact instruction-prefetch USER/native identity");

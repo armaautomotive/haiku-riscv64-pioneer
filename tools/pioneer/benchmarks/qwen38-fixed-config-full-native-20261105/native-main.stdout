@@ -1,0 +1,16 @@
+50170113b3b55d973b104c82afbad7987c1dd7b71e1935e930eea6ebb4eb7e45 tenstorrent_pci_probe-native
+2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc tenstorrent_pci_probe-default
+PASS BUILD_ONLY distinct full-card prepared profile Q4 tag99/all15 arrays exact/held-read after drain before END,full5-EOG firmware/default43 BYTE-UNCHANGED,38 role refusals,no CPU model/reference/ggml Work imports;maxIndividualTokenFrame1232
+NOT installed,physical/numerical/Assistant qualified or a speed result;whole-kernel stack not certified
+ea526a252a4793d8f20fba8e4cedc47f4726e6426f29ef5c58791a0086181949 tenstorrent_pci_probe-native
+PASS BUILD_ONLY replay13 tag100/selection8/all15 embedded arrays exact;tag99/default43 reproduced;43 role refusals;no CPU inference/reference;maxIndividualTokenFrame1232
+NOT installed or hardware-qualified;NO speed result
+fbca121f3394491e702f66213f6d5e9d3e3fc38a749b07a9821e50a9543c64eb tenstorrent_pci_probe-native
+PASS BUILD_ONLY instruction-prefetch tag101/selection9/all15 embedded arrays exact;tag100/tag99/default43 reproduced;52 role refusals;no CPU inference/reference;maxIndividualTokenFrame1232
+NOT installed or hardware-qualified;NO speed result
+8574549d046c51b369ec6298002017fff0b2de82d4968fed5e991eddd04be689 tenstorrent_pci_probe-native
+PASS BUILD_ONLY queued-block tag102/selection10/all15 embedded arrays exact;tag101/tag100/tag99/default43 reproduced;66 role refusals;no CPU inference/reference;maxIndividualTokenFrame1232
+NOT installed or hardware-qualified;NO speed result
+608ae0a091b944c3e9ae96d08bdc4aa74a3bd059c56ee65a414445f29b1ced20 tenstorrent_pci_probe-native
+PASS BUILD_ONLY fixed-config tag103/selection11/all15 embedded arrays exact;tag102/tag101/tag100/tag99/default43 reproduced;74 role refusals;no CPU inference/reference;maxIndividualTokenFrame1232
+NOT installed or hardware-qualified;NO speed result

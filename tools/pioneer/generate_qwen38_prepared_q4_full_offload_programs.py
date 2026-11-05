@@ -26,6 +26,9 @@ if instruction_prefetch:
 queued_block='--queued-block' in args
 if queued_block:
     assert instruction_prefetch and args.count('--queued-block')==1;args.remove('--queued-block')
+fixed_config='--fixed-config' in args
+if fixed_config:
+    assert queued_block and args.count('--fixed-config')==1;args.remove('--fixed-config')
 assert len(args) == 3 and not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 root, worker, output = map(pathlib.Path, args)
 assert all(p.is_absolute() for p in (root, worker, output)) and not output.exists() and not output.is_symlink()
@@ -43,7 +46,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-prepared-programs-', dir='/priv
         data = target.read_bytes()
         assert data and not len(data) % 4 and data == (root / target.name).read_bytes()
         sections[name] = data
-peer = authenticated(worker, pins(here / ('build_qwen38_queued_q4_block_worker.py' if queued_block else 'build_qwen38_instruction_prefetch_worker.py' if instruction_prefetch else 'build_qwen38_two_product_q4_worker.py' if two_product_replay else 'build_qwen38_prepared_exact_q4_worker.py'), 'INSPECT_PINS' if queued_block else 'REPLAY_PINS' if two_product_replay and not instruction_prefetch else 'PINS'))
+peer = authenticated(worker, pins(here / ('build_qwen38_queued_q4_pair_config_worker.py' if fixed_config else 'build_qwen38_queued_q4_block_worker.py' if queued_block else 'build_qwen38_instruction_prefetch_worker.py' if instruction_prefetch else 'build_qwen38_two_product_q4_worker.py' if two_product_replay else 'build_qwen38_prepared_exact_q4_worker.py'), 'FIXED_INSPECT_PINS' if fixed_config else 'INSPECT_PINS' if queued_block else 'REPLAY_PINS' if two_product_replay and not instruction_prefetch else 'PINS'))
 source = (here / 'PioneerQ38FullOffloadBatchedPrograms.h').read_bytes()
 assert hashlib.sha256(source).hexdigest() == '91624761b95d281cb9dd4493790b27a1c5d88d7c327d6df894711561b76b4c84'
 text = source.decode('ascii')
@@ -114,6 +117,11 @@ if queued_block:
     text=text.replace('PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH_Q4_PROGRAMS_H','PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4_PROGRAMS_H')
     text=text.replace('enum {InstructionPrefetch=1,','enum {QueuedQ4Block=1,QueuedQ4Wait=0xa2ff9816U,QueuedQ4EscapeBase=0x9c610,QueuedQ4EscapeStride=80,QueuedQ4EscapeBytes=1280};\nenum {InstructionPrefetch=1,')
     text=text.replace('bounded instruction-prefetch replay13 worker','tested queued-block worker; native qualification SEPARATE')
+if fixed_config:
+    text=text.replace('PioneerQ38FullOffloadQueuedQ4','PioneerQ38FullOffloadFixedConfigQ4')
+    text=text.replace('PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4_PROGRAMS_H','PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4_PROGRAMS_H')
+    text=text.replace('enum {QueuedQ4Block=1,','enum {FixedConfigQ4=1,FixedConfigFields=6,FixedConfigSeedWords=24,FixedConfigLowBytes=2,FixedConfigFinalReads=6};\nenum {QueuedQ4Block=1,')
+    text=text.replace('tested queued-block worker; native qualification SEPARATE','offboard-tested fixed-config queued worker; native qualification SEPARATE')
 with output.open('x', encoding='ascii') as stream:
     stream.write(text)
 print(hashlib.sha256(output.read_bytes()).hexdigest(), output.name, flush=True)

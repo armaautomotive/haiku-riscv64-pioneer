@@ -1,0 +1,122 @@
+Fixed-config Q4 complete native/USER build -- 2026-11-05
+======================================================
+
+BUILD/LOCAL QUALIFICATION ONLY. NOT INSTALLED,STAGED OR RUN ON THE PIONEER.
+The separate queued-E tag102/gen33 full-model trial remains LIVE. No new
+hardware rate exists;20tok/s remains unmet. This checkpoint does not turn
+the offboard4.26% instruction-count reduction into a model speed claim.
+
+Implemented a distinct complete-model selector rather than installing an
+offboard worker image directly:
+ PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4=1
+ driver tag2026110500010103,firmware selection11
+ all queued/prepared/profile/replay/prefetch parents remain required.
+New namespace/package/client identity reject old queued-E packages and
+offboard fixed/delta/pair image aliases,including defined-zero aliases.
+No CPU inference,CPU-reference validation,ggml Work fallback or host model
+products are introduced. Ordinary integrity/lifetime checks remain.
+
+Exact artifacts:main and independent clean source builds BYTE-IDENTICAL
+--------------------------------------------------------------------
+ native608ae0a091b944c3e9ae96d08bdc4aa74a3bd059c56ee65a414445f29b1ced20
+ USER  c50acf30e31890f0abf65bd061f2cdee65e3ec31aa30d43dcfabcfad9d870bff
+ rate  3988d149f607deca9c41c83b538b161a5c448af0b37a3d6253c5f5e62d1759db
+ smoke c53ff4f9d49324e647640e3dfcbb5d8906bec9dc3322744851e76e18d459c912
+ headera6ed6aa3278d229b4e24d3e0ee92a24b73f9542834c2bfbb075fac6c7f2a347b
+ parent9cc4960a2af3038741a014d8de20764b06b327c03dcdafa6e292c83da059ab18
+ ROOT  74cae45049174dd53c96203104a0b4b501f757b2210b2de86da5507334ebacc5
+ worker a8ada7ade029df16cc8a04e5d05166ea902dd1d162290ed15ba24aa83dd0ed64
+
+Only the worker service section changes from queued E:19660B/24576B.
+All9 other worker sections and complete ROOT remain unchanged. Original
+saved journal53922024B,code/data/stack reservations,source/cache encoding,
+8192 context and two recurrent-state slots are unchanged. Cache writer
+70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6
+is unchanged. No GGUF/prepared weights or learned outputs are modified.
+
+Actually closed local checks
+----------------------------
+Native main93742=0/clean80284=0,stderr0:previous tag102 module8574549d...
+reproduces FIRST,as do tag101fbca121f...,tag100ea526a25...,tag9950170113...
+and previous default binary2df0e0f8.... All15 embedded firmware arrays are
+extracted from actual native.o and match their complete pinned raw bytes.
+Conventional driver/control/frontier/profile symbols remain;llama/ggml/
+reference/mock-model imports absent. Maximum individual token/full-offload
+frame1232B;NOT a whole-kernel call-chain stack certificate.74main/73clean
+role refusals:the one pre-existing resident-WIP refusal in main is preserved,
+not copied into clean source. Whole native binaries nevertheless match.
+The separate live rollback driver041fef18... is NOT replaced by default2df0.
+
+USER main38797=0/clean26164=0,stderr0:previous tag102 USER549b3403... and
+ratec3b02242... reproduce FIRST,as do earlier USER/rate packages. Exactly11
+vocabulary/container llama imports;no model context,decode,logits or ggml
+inference imports.54 role refusals;static frame bounds retained. New rate/
+smoke clients contain the distinct fixed-config worker path,not an old
+worker selected by discovery or runtime relabeling. All3 binaries match.
+
+DATA main73246=0/clean13962=0,whole stdout exact,stderr0:generator reproduces
+the full new header;all15 arrays/3444156 actual code words/all120 journal
+ranges and48094 invalid-or-DATA addresses checked. The complete correction
+workspace9c600..9cb00 remains saved DATA,not executable code. No reservation
+is enlarged to accommodate the new image. The live queued-E paired header
+remainsa43ddbef9de5155b94a4db36dbcc67b15181a3650d56cbdd3eb04b328f9e263b.
+
+Session/control main56667=0/clean74706=0,whole stdout exact,stderr0:
+3072 valid grammar shapes/212150 refusals,199680 bounded count observations,
+803 fail-closed COW fixtures,13511 early kernel-shape refusals,all6 operations,
+194 same-FD source publications and4895 upload spans. Phase read occurs
+ONCE after HOLD+complete record drain,before END;all96 packet-word mutations
+and source withdrawal/copy failures tested. These execute actual USER/
+control methods on MOCK transport/native-owner endpoints,NOT on the card.
+
+Roles main60721=0/clean50995=0:fixed selection3 positives/201 missing,zero,
+two,late,parent,old-package,CPU/Work refusals. Updated ordinary queued-E
+regression3 positives/190 refusals also passes BOTH trees;whole role stdout
+exact and stderr0. USER requires tag103 while native selection binds11.
+
+Physical-parent TEST main0/clean50995=0,whole stdout exact,stderr0. Entire
+queued-E parent is preserved except NINE explicit revision/stage/hash/tag/
+generation substitutions. All preceding54 typed metadata/idle/health and
+120 failure/one-shot cases run first on FAKE endpoints. Unknown child,
+stderr,identity or output failures never auto-restore,retry,reset or force
+unload. Shell syntax passes. This is NOT execution of the physical parent.
+
+Worker arithmetic/control qualification is recorded independently in
+qwen38-queued-fixed-config-offboard-20261105.txt:27 shapes,54 changed jobs,
+full-image boundary and mutation checks,real final-read faults,finite
+asynchronous frontend and retained96-worker Q4/GDN histories. Those are
+offboard execution tests,not silicon timing or full-model quality evidence.
+The fixed program initializes ALL6 fields fully per block and retains
+all64 waits,real final ACK and6 actual configuration readbacks.
+
+Preservation and physical boundary
+---------------------------------
+Only local source/build/test work occurred. All new artifacts use separate
+paths;no existing live/staged binary or full102 paired header was modified.
+Unrelated9 dirty tracked files/resident/FlashNext/mixed-FPU work remain.
+Only our new hunks of the three overlapping role/protocol/PCI source files
+belong to this checkpoint;the clean versions exclude unrelated resident WIP.
+
+Planned fixed stage: /boot/home/pioneer-q38-full-fixed-config-q4-20261105-a
+It has NOT been created on the Pioneer and its parent has NOT been launched.
+Its exact admission is stable041 generation34,candidate35,restored36. Those
+are future required states,NOT evidence that current trial has finished.
+Do not run it unless queued E ACTUALLY closes parent/rate/worker0,all exact
+PIDs are absent and independent normal041/gen34/apps/guard/64CPU/full-RAM
+postflight passes. No timeout,quiet log or state marker alone proves closure.
+
+At last observation2026-11-05 19:36:51GMT,queued-E wrapper24689,parent24690,
+rate24776 and USER24777 were live;upload15916.5/19522.4MiB,exits absent,
+stderr empty. Same observer90158 only;no concurrent metadata/admin/status,
+new GPU job,Pioneer stage mutation,reload,reboot,relay,SD,mains,network or
+hardware action. The prologue owner0 metadata is historical,not current.
+
+Last CLOSED physical prefetch101 result remains0.162480719..0.162484114tok/s;
+best vector92 is0.172813448..0.172816755. Original model/Assistant usability
+and20tok/s are not established by these local integration checks. Preserve
+the ongoing queued-E comparison,then measure honestly before promoting any
+candidate. Do not rerun unchanged slow/quarantined experiments.
+
+Complete raw local build/test streams are archived beside this report.
+No live physical log,learned tensor,GGUF,driver/client binary or private
+cache payload is committed. No installed Assistant/boot/kernel change.

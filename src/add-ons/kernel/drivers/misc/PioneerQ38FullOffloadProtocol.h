@@ -3,6 +3,9 @@
 #define PIONEER_Q38_FULL_OFFLOAD_PROTOCOL_H
 #include "PioneerQ38TokenControlPacket.h"
 #include "../../../../../tools/pioneer/PioneerQ38FullOffloadEog.h"
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4
+#include "PioneerQ38FullOffloadFixedConfigQ4Role.h"
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4
 #include "PioneerQ38FullOffloadQueuedQ4Role.h"
 #endif
@@ -40,7 +43,9 @@
 #endif
 namespace PioneerQ38FullOffload {
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
-#ifdef PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4
+#ifdef PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4
+static constexpr uint64_t BuildTag=UINT64_C(0x2026110500010103);
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110500010102);
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110500010101);
