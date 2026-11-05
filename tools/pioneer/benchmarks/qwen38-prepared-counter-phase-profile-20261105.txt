@@ -1,0 +1,45 @@
+Current prepared-counter ROOT phase profiler -- 2026-11-05
+=======================================================
+
+BUILD/HELPER CHECKPOINT ONLY;NOT installed or physically measured.
+Existing accepted27B rate remains0.172813448..0.172816755tok/s.
+The live tag98 rate trial and all staged device files are unchanged.
+
+Reuse the existing ten-bucket read-only on-card clock profiler in the
+CURRENT prepared-counter token firmware,rather than treating the old
+output-closure diagnostic image as compatible with this model revision.
+Buckets:bootstrap,metadata,recurrent layer,dense layer,head normalization,
+head matrix,feedback,state commit,publication and final worker STOP.
+This will separate layer execution/head/state-copy costs when integrated
+with a matching native held-reader and exercised on the physical card.
+
+The optional --phase-profile requires --counter-unroll. First the builder
+reproduces the ENTIRE unprofiled38a8f64f... image. Only the token-controller
+object is then recompiled with existing phase marks and the existing clock
+helper is linked. Existing recurrent/dense component objects and worker
+firmware are unchanged. All code fits existing five saved code extents.
+The audit checks all emitted phase-call sites and permits exactly THREE
+CSRRS instructions,mcycleh/mcycle/mcycleh,with x0 source and nonzero
+destinations,only inside the clock helper. No counter/control writes,
+clock-frequency assumption or new inference/cleanup authority is added.
+
+Two builds reproduce entire ELF198204B SHA
+74cae45049174dd53c96203104a0b4b501f757b2210b2de86da5507334ebacc5.
+Text128860/131072B,aux32692/32768B,prepared5744/8192B.
+ASan+UBSan executes actual linked clock-helper RV32 instructions over21
+fabricated-clock histories:1/2/34 positions,rollover,64-bit totals,nine
+sticky invalid-metric cases,ABI/first-four-progress-word preservation.
+Both EXISTING prepared firmware generators reject the new complete ROOT
+before opening a worker path or creating output. This deliberately does
+NOT qualify native ownership,whole ROOT execution,model quality or TPS.
+Builder and helper-test stderr are empty;actual combined command exits0.
+
+Still owed before physical use:distinct paired-program/native identity,
+same-owner held read after record drain and before normal END,matching
+USER publication only after clean END,complete lifetime/failure tests,
+then one guarded real-model run. Never install this code into the live
+tag98 generation or infer a throughput improvement from helper tests.
+
+Reproduce:
+python3 tools/pioneer/build_qwen38_prepared_q4_root.py ABS_SDK ABS_NEW_OUTPUT --inspect-candidate --counter-unroll --phase-profile --control ABS_ACCEPTED_FULL_CONTROL
+python3 tools/pioneer/tests/run_pioneer_q38_prepared_q4_profile_image_tests.py ABS_NEW_OUTPUT
