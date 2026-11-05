@@ -139,7 +139,7 @@ Q38TokenNativeControl(PioneerProbeCookie* cookie,void* data,size_t length){
 #ifdef PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT
 #include "PioneerQ38TokenFrontierControl.inc"
 #endif
-#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
+#if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) || defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
 #include "PioneerQ38TokenPhaseProfileControl.inc"
 #endif
 #ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_BENCHMARK_NATIVE

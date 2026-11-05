@@ -7,6 +7,9 @@
 #include "pioneer_qwen38_gguf_test.cpp"
 #include "../PioneerQ38FullOffloadSession.h"
 #include <sys/wait.h>
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#include "pioneer_q38_full_offload_phase_profile_fixture.h"
+#endif
 struct Sweep {
  bool child=false,enabled=true;unsigned cases=0,fence=0;const unsigned* calls=nullptr;
  template<class Change>bool Clone(Change change){
@@ -78,6 +81,10 @@ struct IO {
  uint32_t ids[96]={};uint64_t uploaded=0;
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
  unsigned publications=0;
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+ unsigned phaseReads=0;bool invalidPhaseClock=false;
+ std::function<void()> duringPhaseRead;
 #endif
  IO(Source& s,Sweep& w):source(s),sweep(w){sweep.calls=&calls;}
  unsigned Records()const{return cancels?stopRecords:earlyEos?prompts:limit;}
@@ -155,6 +162,15 @@ struct IO {
    if(polls==2 && sweep.Clone([&]{d[7]=0;}))return true;
    if(sweep.Clone([&]{m.request.reserved[0]=1;}))return true;
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+  }else if(op==TT_PCI_PROBE_Q38_FULL_OFFLOAD_PHASE_PROFILE){
+   namespace C=PioneerQ38TokenPhaseProfileControl;auto& p=*static_cast<C::Packet*>(data);
+   assert(size==sizeof(p) && C::RequestShape(p) && holds==1 && reads && cursor==Records() && !ends && !phaseReads++);
+   if(duringPhaseRead)duringPhaseRead();
+   FillFullPhaseMetric(p,Records(),invalidPhaseClock);
+   for(unsigned word=0;word<sizeof(p)/4;word++)
+    if(sweep.Clone([&]{reinterpret_cast<uint32_t*>(&p)[word]^=1;}))return true;
+#endif
   }else if(op==TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL){
    namespace P=PioneerQ38TokenControl;auto& p=*static_cast<P::Packet*>(data);
    assert(size==sizeof(p) && spanEnds==1 && PioneerQ38FullOffload::RequestShape(p));
@@ -192,7 +208,11 @@ struct IO {
      if(count && sweep.Clone([&]{p.records[word]^=word==4?0x80000000U:word==5?0x40000000U:1U;}))return true;
     for(unsigned word:{7U,8U,9U,10U,11U,14U,15U})if(sweep.Clone([&]{d[word]^=1;}))return true;
     cursor+=count;
-   }else if(action==P::Finish){assert(cursor==Records() && reads && !ends++);r.stage=d[2]=11;r.complete=1;d[3]=d[5]=1;}
+   }else if(action==P::Finish){assert(cursor==Records() && reads && !ends++);
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+    assert(phaseReads==1);
+#endif
+    r.stage=d[2]=11;r.complete=1;d[3]=d[5]=1;}
    else assert(!"no hybrid matrix or CPU fallback operation");
    for(unsigned word:{0U,1U,3U,4U,5U,7U,8U,9U})
     if(sweep.Clone([&]{reinterpret_cast<uint32_t*>(&r)[word]^=1;}))return true;
@@ -214,6 +234,12 @@ int main(){
   ,PreparedFixture
 #endif
   >>(io,source);
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+ PioneerQ38TokenPhaseProfileControl::Packet unavailable;
+ assert(!session->CopyPhaseProfile(unavailable) && !io.calls);
+ io.duringPhaseRead=[&]{PioneerQ38TokenPhaseProfileControl::Packet p;
+  const auto calls=io.calls;assert(!session->CopyPhaseProfile(p) && io.calls==calls && PioneerQ38TokenPhaseProfileControl::RequestShape(p));};
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
  auto metric=[&](){PioneerQ38FullOffload::CounterPacket p;return session->ObserveCount(p);};
  assert(!metric() && !io.calls);
@@ -226,6 +252,14 @@ int main(){
  bool okay=session->Probe();
  if(okay){assert(io.opens==1 && io.closes==1 && !io.begins && !io.starts);okay=session->Begin(prompt,96,32,248044,248046);}
  if(okay)assert(!session->KnownClean());
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+ if(okay && sweep.Clone([&]{sweep.enabled=false;io.invalidPhaseClock=true;})){
+  assert(session->Poll() && session->Poll() && session->Finish() && session->Completed() && io.phaseReads==1 && io.ends==1);
+  PioneerQ38TokenPhaseProfileControl::Packet p;
+  assert(session->CopyPhaseProfile(p) && !p.reply.detail[7] && PioneerQ38TokenPhaseProfileControl::ReplyShape(p));
+  assert(session->CopyGeneratedTokens(answer,32,count) && count==32);_exit(0);
+ }
+#endif
  if(okay)for(unsigned variant=0;variant<9;variant++)if(sweep.Clone([&]{sweep.enabled=false;})){
   const unsigned eos[]={248044,248046,248063,248064,248065};
   io.earlyEos=variant>=1 && variant<=5;if(io.earlyEos)io.earlyEosToken=eos[variant-1];
@@ -273,6 +307,17 @@ int main(){
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
  assert(io.publications==194 && session->partsUploaded==4895 && session->bytesPlanned==UINT64_C(20470759424));
  puts("PASS prepared USER all4895_upload_spans and194_same_FD_source_publications before_START;synthetic cache/transport,no native/card/TPS");
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+ {PioneerQ38TokenPhaseProfileControl::Packet p;const auto calls=io.calls;
+  assert(io.phaseReads==1 && session->CopyPhaseProfile(p) && p.reply.detail[7] && p.reply.detail[8]==127 && io.calls==calls);
+  auto dirty=p;const auto before=dirty;
+  assert(!session->CopyPhaseProfile(dirty) && !memcmp(&dirty,&before,sizeof(dirty)) && io.calls==calls);
+  assert(!session->CopyPhaseProfile(*reinterpret_cast<PioneerQ38TokenPhaseProfileControl::Packet*>(session.get())));
+  source.valid=false;PioneerQ38TokenPhaseProfileControl::Packet stale;
+  assert(!session->CopyPhaseProfile(stale) && io.calls==calls && PioneerQ38TokenPhaseProfileControl::RequestShape(stale));
+  puts("PASS full-model phase read exactly_ONCE after_HOLD_and_FULL_record_drain before_END;all96_packet_word_mutations;invalid_clock_still_cleans;no_metric_publication_before_END_Close_or_after_source_withdrawal;NO_DEVICE_OR_TPS");
+ }
 #endif
  printf("PASS actual full-offload USER:96prompt/32output/127positions,two64-record drains,all5 EOS and3 cancellation boundaries,%u fail-closed COW fixtures;synthetic ONLY,no physical or numerical result\n",sweep.cases);
 }

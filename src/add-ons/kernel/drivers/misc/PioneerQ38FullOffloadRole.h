@@ -64,7 +64,9 @@ static_assert(PioneerQ38FullOffloadMetricsSelection==0,"late full-card metrics r
 #endif
 #ifndef PIONEER_Q38_FULL_OFFLOAD_FIRMWARE_BINDING_H
 #define PIONEER_Q38_FULL_OFFLOAD_FIRMWARE_BINDING_H
-#ifdef PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+enum {PioneerQ38FullOffloadFirmwareSelection=7};
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL)
 enum {PioneerQ38FullOffloadFirmwareSelection=6};
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4)
 enum {PioneerQ38FullOffloadFirmwareSelection=5};
@@ -79,7 +81,9 @@ enum {PioneerQ38FullOffloadFirmwareSelection=1};
 #endif
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
-#ifdef PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+static_assert(PioneerQ38FullOffloadFirmwareSelection==7,"late full-card phase-profile selection");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL)
 static_assert(PioneerQ38FullOffloadFirmwareSelection==6,"late full-card prepared counter Q4 selection");
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4)
 static_assert(PioneerQ38FullOffloadFirmwareSelection==5,"late full-card prepared Q4 selection");

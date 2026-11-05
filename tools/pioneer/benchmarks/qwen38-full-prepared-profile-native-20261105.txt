@@ -1,0 +1,73 @@
+Current full-model prepared phase profiler -- 2026-11-05
+=====================================================
+
+INTEGRATED AND OFFLINE-TESTED;NOT YET A PHYSICAL TIMING/SPEED RESULT.
+Prior real tag98 result0.161666352..0.161669502tok/s is a regression;
+best accepted vector92 remains0.172813448..0.172816755.20tok/s unmet.
+No slower candidate is promoted into Assistant.
+
+Distinct tag99/firmware selection7 pairs the already-built74cae450... ROOT
+with the SAME prepared workerb283d788... . All64 layers and learned math
+are unchanged;only existing ten-bucket clock marks/helper are added to ROOT.
+Program header SHAe8eb2d83ccbadc01f64b142b7d97c300a273c737be1191afc86c0b65c06943e2.
+No old phase diagnostic macro/endpoint is promoted into full-model authority.
+
+New full-model fixed384B read endpoint0x8806 is ROOT-only and holds the
+same real FD/team/thread/global lock through read AND reply copy. It uses
+the existing native held-member body:record drain required,all120 held,
+same source/frontier checked,two identical60-word reads,all120 re-held.
+One read only;unexpected transport/source/HOLD/copy failure retains unsafe
+resources. No live device read,arbitrary address,count or CPU model product.
+Invalid clock DATA is not an inference fault;normal END is still required.
+
+The USER session reads the metric AFTER full STOP/HOLD/record drain and
+BEFORE existing restoration/END. No metric is copied to a caller until
+actual END+Close and original source stability. Ten bucket counts/cycles
+are published as diagnostic Progress frames only AFTER clean END. No clock
+frequency or tokens/sec is inferred from cycles. The whole-log reader has
+an explicit --prepared-q4 --phase-profile selector;it checks exact ordered
+counts,all ten cycles and the complete sum,not inferred mode or extra rows.
+
+Completed checks,actual exit0/empty stderr:
+-Main/independent clean native builds are byte-identical:
+50170113b3b55d973b104c82afbad7987c1dd7b71e1935e930eea6ebb4eb7e45.
+38 main/37 clean role refusals;max individual token frame1232B. The extra
+main refusal is unrelated pre-existing resident WIP,excluded from the
+clean tree. Default43 remains2df0e0f8...;unprofiled98 remainsedd27024... .
+-Main/clean USER binaries byte-identical:
+f47b04f4f0e21211520d0d8a2285353c0a40807fc0f016daa7f3e2234870ef8d.
+Exact11 vocabulary/container imports,24 compile refusals;no CPU context,
+decode,logits,threadpool or hybrid backend imports. Rate helper
+f810d61b543f07751ad1a3667f250afe3f4dc72454c8b6e9acbb1e7f60c0a5e0.
+Original cache recipe70c2c7d0... unchanged;index-reuse loader is included.
+-All15 generated code arrays reproduce;3375969 installed code words
+across120 cores match actual binary sections and existing53922024B
+journal ranges.10014 invalid/DATA address refusals. No new saved extent.
+-Main/clean ASan+UBSan full USER/control tests have identical output:
+all4895 upload spans/194 pre-START source publications,803 fail-closed
+COW cases,all5 EOS and3 cancellation boundaries,two record drains,
+all96 phase-packet word mutations,premature/aliased/stale publication,
+invalid-clock cleanup. Actual ioctl body passes locked384B shape and
+read/copy-failure checks over MOCK native endpoints.
+-Existing actual held-member/Fail test:63 valid/invalid DATA successes,
+101 preflight/alias refusals,905 every-event/second-pass-change faults;
+atomic60-word publication/zero padding/one read and unsafe-retain-once.
+Authority/source/HOLD/clock in that fixture are MOCK,not a native lifetime.
+-Main/clean complete timing-suffix tests identical:235 new refusals,
+original130 rate-reader refusals;prepared20GB reader regressions pass.
+The COMPLETE closed real98 transcript still parses to its unchanged rate.
+-New physical parent is the ENTIRE tested98 flow with ONLY9 exact
+revision/stage/hash/generation substitutions. All preceding fake failure
+tests pass. Admission26 -> temporary27 -> restored28;unknown failures
+never auto-restore/retry. Parent SHA
+7f86b18aee1c509a6cffa7a65d1e4d6bbc404f605ce48c1cf9a24723afdb03ff.
+
+Fresh read-only Pioneer observation before staging:idle stable041/gen26,
+all64CPUs and137034936320B maximum RAM;app/runtime/guard hashes unchanged.
+No reboot,SD,relay,mains,hardware or installed Assistant change here.
+
+Next:one guarded whole-model profile trial,then accept timing only after
+actual parent/worker0,normal STOP/HOLD/drain/restoration/END,whole raw log
+checks and fresh independent postflight. Use measured dominant phases to
+select the next optimization. Do not call this checkpoint a speedup or
+claim that these MOCK/helper checks prove physical numerical correctness.

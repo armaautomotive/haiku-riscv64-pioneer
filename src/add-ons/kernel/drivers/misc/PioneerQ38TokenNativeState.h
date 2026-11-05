@@ -37,7 +37,7 @@ struct PioneerStoreContext;struct PioneerSessionIO;
 #ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE
 [[maybe_unused]] static bool ReadQ38TokenNativeMatrixPhase(PioneerStoreContext&,unsigned,uint32_t*,PioneerQ38TokenMatrixPhaseResult&);
 #endif
-#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
+#if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) || defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
 [[maybe_unused]] static bool ReadQ38TokenNativePhaseProfile(PioneerStoreContext&,uint32_t*,PioneerQ38TokenPhaseProfileResult&);
 #endif
 #if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)
@@ -91,7 +91,7 @@ class PioneerQ38TokenNativeState {
 #ifdef PIONEER_Q38_TOKEN_MATRIX_PHASE_READ_NATIVE
  friend bool ReadQ38TokenNativeMatrixPhase(PioneerStoreContext&,unsigned,uint32_t*,PioneerQ38TokenMatrixPhaseResult&);
 #endif
-#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
+#if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) || defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
  friend bool ReadQ38TokenNativePhaseProfile(PioneerStoreContext&,uint32_t*,PioneerQ38TokenPhaseProfileResult&);
 #endif
 #if defined(PIONEER_Q38_TOKEN_HELD_HIDDEN_DIAGNOSTIC) || defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)

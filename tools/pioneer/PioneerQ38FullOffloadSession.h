@@ -49,6 +49,10 @@ class PioneerQ38FullOffloadSession {
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
  unsigned observedCount=0;
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+ PioneerQ38TokenPhaseProfileControl::Packet phaseProfile;
+ bool phaseProfileRead=false;
+#endif
  bool Current()const{return epoch && source.Ready() && source.Model().Epoch()==epoch && layout.MatchesSource(source.Model())
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
   && (!prepared || preparedData->Ready())
@@ -293,11 +297,30 @@ public:
    std::copy(packet->records,packet->records+count*64,records.begin()+cursor*64);cursor+=count;
   }while(cursor<committed);
   state=Drained;
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+  {namespace C=PioneerQ38TokenPhaseProfileControl;
+   C::Packet observed;const auto request=observed.request;
+   if(phaseProfileRead || !Call(TT_PCI_PROBE_Q38_FULL_OFFLOAD_PHASE_PROFILE,observed)
+    || std::memcmp(&observed.request,&request,sizeof(request)) || !C::ReplyShape(observed)
+    || observed.reply.status || observed.reply.ready!=1 || observed.reply.detail[8]!=committed)return Stop("phase_profile");
+   phaseProfile=observed;phaseProfileRead=true;}
+#endif
   if(!Control(P::Finish))return Stop("finish");
   {const auto& r=packet->reply;const auto* d=r.detail;
    if(r.ready!=1 || r.stage!=11 || d[3]!=1 || d[4] || d[5]!=1 || d[6] || d[7])return Stop("finish_reply");}
   const int owned=fd;fd=-1;if(io.Close(owned))return Stop("close");state=Complete;return true;
  } // full STOP/HOLD/drain/restore/END before any answer is published
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+ bool CopyPhaseProfile(PioneerQ38TokenPhaseProfileControl::Packet& output)const{
+  const uintptr_t out=reinterpret_cast<uintptr_t>(&output),self=reinterpret_cast<uintptr_t>(this);
+  if(out>UINTPTR_MAX-sizeof(output) || self>UINTPTR_MAX-sizeof(*this)
+   || (out<self+sizeof(*this) && self<out+sizeof(output)))return false;
+  namespace C=PioneerQ38TokenPhaseProfileControl;
+  if(state!=Complete || failure || !Current() || !phaseProfileRead || !C::RequestShape(output)
+   || !C::ReplyShape(phaseProfile))return false;
+  output=phaseProfile;return true;
+ } // observation only,AFTER actual END+Close;bad timing still requires normal cleanup
+#endif
  bool CopyGeneratedTokens(uint32_t* output,unsigned capacity,unsigned& count)const{
   if(state!=Complete || failure || !Current() || !output || capacity<PioneerQ38FullOffload::MaxOutput)return false;
   if(!cancelled && (layers!=64 || terminalStage || committed!=position+1))return false;

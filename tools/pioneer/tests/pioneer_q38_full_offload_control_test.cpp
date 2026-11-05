@@ -9,6 +9,9 @@
 #define B_DEVICE_OP_CODES_END 1000
 #include "full_offload_role_defines.inc"
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadProtocol.h"
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#include "pioneer_q38_full_offload_phase_profile_fixture.h"
+#endif
 using status_t=int;
 static constexpr status_t B_OK=0,B_NOT_ALLOWED=-5,B_BAD_VALUE=-6,B_NO_MEMORY=-7,B_DEV_NOT_READY=-8,CopyFault=-19;
 struct thread_info{int team=17;};
@@ -45,6 +48,11 @@ struct PioneerQ38TokenTerminalResult{uint32_t version=1,started=0,phase=0,worker
 struct PioneerQ38TokenHoldResult{uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,held=0,firstPC=0,secondPC=0,reserved[6]={};};
 struct PioneerQ38TokenReadResult{uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,firstRecord=0,
  recordCount=0,packets=0,bytesRead=0,drained=0,firstPC=0,secondPC=0,reserved[2]={};};
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+struct PioneerQ38TokenPhaseProfileResult{uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,valid=0,
+ committed=0,words=0,metricState=0,metricError=0,firstPC=0,secondPC=0,reserved[2]={};};
+static bool invalidPhaseClock=false;
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
 struct PioneerQ38TokenFrontierResult{uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,ready=0,committed=0,
  limit=0,prompts=0,reserved[6]={};};
@@ -95,6 +103,13 @@ static PioneerQ38TokenBackendResult FinishQ38TokenNativeBackendScoped(PioneerQ38
  if(r.complete)ended=true;return r;
 }
 template<class Value>static bool Result(Value& r){assert(locked==1);executions++;r.started=1;r.phase=4;r.unsafe=mode==2;return mode==0;}
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+static bool ReadQ38TokenNativePhaseProfile(PioneerStoreContext&,uint32_t* words,PioneerQ38TokenPhaseProfileResult& r){
+ if(!Result(r))return false;
+ PioneerQ38TokenPhaseProfileControl::Packet p;FillFullPhaseMetric(p,34,invalidPhaseClock);
+ memcpy(&r,p.reply.detail,sizeof(r));memcpy(words,p.words,sizeof(p.words));return true;
+}
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
 static bool ObserveQ38TokenNativeFrontier(PioneerStoreContext&,PioneerQ38TokenFrontierResult& r){
  const bool okay=Result(r);r.phase=12;r.word=63;r.ready=okay;
@@ -195,6 +210,24 @@ int main(){
   fresh(S::Begin,0);Reset();context.q38TokenNative=reinterpret_cast<void*>(1);
   assert(Q38PreparedSourceControl(&cookie,packet.get(),sizeof(*packet))==B_NOT_ALLOWED && !context.q38PreparedSource && !executions);
   puts("PASS actual prepared-source ioctl194 locked publications/copy failure revokes metadata/pre-native admission;MOCK source-owner,no card");
+ }
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+ {namespace C=PioneerQ38TokenPhaseProfileControl;
+  for(unsigned word=0;word<sizeof(C::Packet)/4;word++){
+   Reset();C::Packet p;reinterpret_cast<uint32_t*>(&p)[word]^=1;
+   assert(Q38TokenPhaseProfileControl(&cookie,&p,sizeof(p))==B_BAD_VALUE && copies==1 && !scopes && !executions);refused++;
+  }
+  for(unsigned invalid=0;invalid<2;invalid++)for(int failure=0;failure<3;failure++)for(int copy=0;copy<=2;copy++){
+   Reset();invalidPhaseClock=invalid;mode=failure;copyFail=copy;C::Packet p;
+   const auto status=Q38TokenPhaseProfileControl(&cookie,&p,sizeof(p));
+   assert(status==(copy?CopyFault:mode==0?B_OK:mode==2?B_DEV_NOT_READY:B_NOT_ALLOWED));
+   assert(!locked && executions==unsigned(copy!=1) && retains==unsigned(copy==2 && (mode==0 || mode==2)));
+   if(!copy && !mode)assert(C::ReplyShape(p) && p.reply.detail[7]==!invalid && p.reply.detail[8]==34);
+  }
+  Reset();C::Packet p;uid=1;assert(Q38TokenPhaseProfileControl(&cookie,&p,sizeof(p))==B_NOT_ALLOWED && !copies);
+  Reset();admitted=false;assert(Q38TokenPhaseProfileControl(&cookie,&p,sizeof(p))==B_NOT_ALLOWED && copies==1 && !executions);
+  puts("PASS actual full-model phase control_body fixed384B/all96_pristine_words/copy_failure_retains_after_read/invalid_timing_not_hardware_failure/same_FD_team_lock;MOCK_NATIVE_OWNER_ONLY");
  }
 #endif
  printf("PASS actual full-offload kernel control %u early shape refusals/all6 operations/copy failures/root+FD+team admission/kernel snapshot/no invalid partial readout;MOCK owner endpoints only\n",refused);

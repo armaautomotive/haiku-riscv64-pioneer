@@ -1,0 +1,25 @@
+/* SPDX-License-Identifier: MIT */
+// Distinct full-model timing revision;never an old diagnostic/Work alias.
+#if !defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) || PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE != 1 \
+ || !defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4) || PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4 != 1 \
+ || !defined(PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL) || PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL != 1 \
+ || !defined(PIONEER_Q38_FULL_OFFLOAD_BATCHED) || PIONEER_Q38_FULL_OFFLOAD_BATCHED != 1 \
+ || !defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || PIONEER_Q38_FULL_OFFLOAD_METRICS != 1 \
+ || defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_NATIVE_CONTEXT) \
+ || defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_BENCHMARK_NATIVE) || defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT) \
+ || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) \
+ || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(__FAST_MATH__)
+#error Full-card phase profile requires its exact prepared-counter full-model role,not old diagnostics or CPU inference
+#endif
+#ifdef _KERNEL_MODE
+#if _KERNEL_MODE != 1 || !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || PIONEER_Q38_FULL_OFFLOAD_NATIVE != 1 \
+ || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026110500010099ULL \
+ || !defined(TT_PIONEER_DRIVER_RELOAD) || TT_PIONEER_DRIVER_RELOAD != 1 || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT)
+#error Full-card phase profile requires its distinct tag99 native parent
+#endif
+#else
+#if !defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) || PIONEER_Q38_FULL_OFFLOAD_CLIENT != 1 \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_DRIVER_BUILD_TAG)
+#error Full-card phase profile requires its distinct USER client
+#endif
+#endif

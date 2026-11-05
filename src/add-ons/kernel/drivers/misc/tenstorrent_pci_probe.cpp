@@ -60,6 +60,12 @@
 #if defined(PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL) && !defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4)
 #error Full-card prepared Q4 counter unroll requires its distinct prepared parent
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#include "PioneerQ38FullOffloadPhaseProfileRole.h"
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110500010099ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
+#error Tag99 requires its distinct full-model phase-profile role
+#endif
 #if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110500010098ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL)
 #error Tag98 requires its distinct prepared counter-unroll full-offload role
 #endif
@@ -8508,6 +8514,10 @@ ProbeControl(void* cookie, uint32 operation, void* data, size_t length)
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
  if(operation==TT_PCI_PROBE_Q38_FULL_OFFLOAD_COUNTER)
   return Q38FullOffloadCounter(instance,data,length);
+#endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+ if(operation==TT_PCI_PROBE_Q38_FULL_OFFLOAD_PHASE_PROFILE)
+  return Q38TokenPhaseProfileControl(instance,data,length);
 #endif
  if(operation==TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT)
   return Q38FullOffloadSupport(data,length);

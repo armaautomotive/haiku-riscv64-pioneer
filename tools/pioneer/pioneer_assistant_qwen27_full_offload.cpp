@@ -171,6 +171,23 @@ struct Runtime {
   else snprintf(metric,sizeof(metric),"Full-card rate unavailable: insufficient post-prompt window or invalid timing;AFTER_CLEAN_END,no extrapolation.");
   if(!Emit(A::Progress,UINT32_MAX,metric))return false;
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+  {namespace Q=PioneerQ38TokenPhaseProfileData;
+   PioneerQ38TokenPhaseProfileControl::Packet p;
+   if(!session->CopyPhaseProfile(p))return false;
+   char description[320];
+   snprintf(description,sizeof(description),"Full-card phase profile valid%u committed%u begin_cycles%llu end_cycles%llu state%u error%u;AFTER_CLEAN_END,clock DATA,no frequency assumption.",
+    p.reply.detail[7],p.reply.detail[8],(unsigned long long)Q::Get(p.words,Q::BeginCycle),
+    (unsigned long long)Q::Get(p.words,Q::EndCycle),p.words[Q::State],p.words[Q::Error]);
+   if(!Emit(A::Progress,UINT32_MAX,description))return false;
+   if(p.reply.detail[7])for(unsigned phase=0;phase<Q::Phases;phase++){
+    const unsigned bucket=Q::Buckets+phase*3;
+    snprintf(description,sizeof(description),"Full-card phase profile bucket%u segments%u cycles%llu;AFTER_CLEAN_END,clock DATA,no frequency assumption.",
+     phase,p.words[bucket],(unsigned long long)Q::Get(p.words,bucket+1));
+    if(!Emit(A::Progress,UINT32_MAX,description))return false;
+   }
+  }
+#endif
   if(!Emit(A::Text,0,answer))return false;
   char status[320];snprintf(status,sizeof(status),
    "P100A full-offload candidate: %u output tokens; prompt+generation %.3fs,total %.3fs. All inference on card; CPU vocabulary/text only. Clean END; weights released. Not a warm-token speed measurement.",

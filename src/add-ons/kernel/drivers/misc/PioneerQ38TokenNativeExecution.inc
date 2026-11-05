@@ -126,7 +126,7 @@
  return s->runtime->ReadMatrixPhase(c.io,worker,output,result);
 } // one fixed held peer slot ONLY;not a caller-provided address,count,nonce or receipt.
 #endif
-#ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS
+#if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) || defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
 [[maybe_unused]] static __attribute__((noinline)) bool ReadQ38TokenNativePhaseProfile(PioneerStoreContext& c,
  uint32_t* output,PioneerQ38TokenPhaseProfileResult& result){
  const PioneerQ38TokenPhaseProfileResult pristine;

@@ -1,5 +1,9 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
+#include "PioneerQ38FullOffloadPhaseProfileRole.h"
+#else
 #include "PioneerQ38TokenPhaseProfileRole.h"
+#endif
 #include "PioneerQ38TokenPhaseProfilePacket.h"
 // SAME real FD/team/thread lock covers held read AND reply copy.
 [[maybe_unused]] static __attribute__((noinline)) status_t

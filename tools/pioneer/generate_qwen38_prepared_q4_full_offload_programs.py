@@ -14,13 +14,16 @@ if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
 args=sys.argv[1:];counter_unroll='--counter-unroll' in args
 if counter_unroll:
     assert args.count('--counter-unroll')==1;args.remove('--counter-unroll')
+phase_profile='--phase-profile' in args
+if phase_profile:
+    assert counter_unroll and args.count('--phase-profile')==1;args.remove('--phase-profile')
 assert len(args) == 3 and not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 root, worker, output = map(pathlib.Path, args)
 assert all(p.is_absolute() for p in (root, worker, output)) and not output.exists() and not output.is_symlink()
 here = pathlib.Path(__file__).resolve().parent
 tool = '/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-'
 elf = (root / 'program.elf').read_bytes()
-assert (len(elf),hashlib.sha256(elf).hexdigest()) == ((197724,'38a8f64f9bf75946953d87ec08d3bba07b44ea36303936ab912c89771f68d039') if counter_unroll else (194980,'0306100598ee1aa4e20bf3399165f5fbc2714ab2a694021fa98d63f4f64bb8f1'))
+assert (len(elf),hashlib.sha256(elf).hexdigest()) == ((198204,'74cae45049174dd53c96203104a0b4b501f757b2210b2de86da5507334ebacc5') if phase_profile else (197724,'38a8f64f9bf75946953d87ec08d3bba07b44ea36303936ab912c89771f68d039') if counter_unroll else (194980,'0306100598ee1aa4e20bf3399165f5fbc2714ab2a694021fa98d63f4f64bb8f1'))
 sections = {}
 with tempfile.TemporaryDirectory(prefix='pioneer-prepared-programs-', dir='/private/tmp') as temporary:
     private = pathlib.Path(temporary)
@@ -82,6 +85,10 @@ if counter_unroll:
     text=text.replace('PioneerQ38FullOffloadPreparedQ4','PioneerQ38FullOffloadPreparedCounterQ4')
     text=text.replace('PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4_PROGRAMS_H','PIONEER_Q38_FULL_OFFLOAD_PREPARED_COUNTER_Q4_PROGRAMS_H')
     text=text.replace('enum {PreparedQ4=1,','enum {CounterUnroll=1,PreparedQ4=1,')
+if phase_profile:
+    text=text.replace('PioneerQ38FullOffloadPreparedCounterQ4','PioneerQ38FullOffloadPreparedProfileQ4')
+    text=text.replace('PIONEER_Q38_FULL_OFFLOAD_PREPARED_COUNTER_Q4_PROGRAMS_H','PIONEER_Q38_FULL_OFFLOAD_PREPARED_PROFILE_Q4_PROGRAMS_H')
+    text=text.replace('enum {CounterUnroll=1,','enum {TokenPhaseProfile=1,PhaseProfileAddress=0x75710,PhaseProfileWords=60};\nenum {CounterUnroll=1,')
 with output.open('x', encoding='ascii') as stream:
     stream.write(text)
 print(hashlib.sha256(output.read_bytes()).hexdigest(), output.name, flush=True)

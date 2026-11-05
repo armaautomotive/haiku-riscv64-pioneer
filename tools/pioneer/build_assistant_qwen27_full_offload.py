@@ -27,6 +27,9 @@ prompt_client='--prompt-client' in args
 counter_unroll='--counter-unroll' in args
 if counter_unroll:
     assert prepared_q4 and args.count('--counter-unroll')==1;args.remove('--counter-unroll')
+phase_profile='--phase-profile' in args
+if phase_profile:
+    assert counter_unroll and args.count('--phase-profile')==1;args.remove('--phase-profile')
 if prompt_client:
     assert metrics and args.count('--prompt-client')==1;args.remove('--prompt-client')
 assert len(args)==3
@@ -58,6 +61,7 @@ if vector_q4:source=here/'pioneer_assistant_qwen27_vector_q4_full_offload.cpp'
 if macro_q4:source=here/'pioneer_assistant_qwen27_macro_q4_full_offload.cpp'
 if prepared_q4:source=here/'pioneer_assistant_qwen27_prepared_q4_full_offload.cpp'
 if counter_unroll:source=here/'pioneer_assistant_qwen27_prepared_counter_q4_full_offload.cpp'
+if phase_profile:source=here/'pioneer_assistant_qwen27_prepared_profile_q4_full_offload.cpp'
 compile=[tool+'g++','-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror','-fno-exceptions','-fno-rtti',
          '-fstack-usage','-DPIONEER_Q38_FULL_OFFLOAD_CLIENT=1',*includes,'-c',str(source),'-o',str(obj)]
 if batched:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_BATCHED=1')
@@ -65,6 +69,7 @@ if metrics:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1')
 if vector_q4:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4=1')
 if macro_q4:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_MACRO_Q4=1')
 if counter_unroll:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL=1')
+if phase_profile:compile.insert(1,'-DPIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE=1')
 if prepared_q4:
     # Preserve the exact ORIGINAL writer identity. No silent cache rekey or
     # regeneration merely because the new loader/runtime changed.
@@ -122,10 +127,14 @@ if prepared_q4:
 if counter_unroll:
     refusals += [('missing-counter-unroll',['-UPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL']),
                  ('zero-counter-unroll',['-UPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL','-DPIONEER_Q38_FULL_OFFLOAD_COUNTER_UNROLL=0'])]
+if phase_profile:
+    refusals += [('missing-phase-profile',['-UPIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE']),
+                 ('zero-phase-profile',['-UPIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE','-DPIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE=0']),
+                 ('old-phase-client',['-DPIONEER_Q38_TOKEN_PHASE_PROFILE_CLIENT=1'])]
 for label,extra in refusals:
     result=subprocess.run([*compile[:compile.index('-c')],*extra,'-fsyntax-only',str(source)],
                           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,cwd=out)
-    assert result.returncode and any(t in result.stderr for t in ('Full-offload client is separate','Full-card metrics requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Full-card prepared counter Q4 requires','Prepared full-card source requires')),label
+    assert result.returncode and any(t in result.stderr for t in ('Full-offload client is separate','Full-card metrics requires','Full-card vector Q4 requires','Full-card macro Q4 requires','Full-card prepared Q4 requires','Full-card prepared counter Q4 requires','Full-card phase profile requires','Prepared full-card source requires')),label
 (out/'role-refusals.txt').write_text('\n'.join('PASS '+label for label,_ in refusals)+'\n')
 undefined=subprocess.check_output([tool+'nm','-u',str(binary)],text=True)
 llama_imports={r.split()[-1] for r in undefined.splitlines() if r.split() and r.split()[-1].startswith('llama_')}
@@ -141,7 +150,8 @@ smoke=out/'pioneer-q38-full-offload-smoke'
 smoke_command=[tool+'g++','-std=c++17','-O2','-Wall','-Wextra','-Werror',*includes,
                '-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),'-L'+str(release/'system/libnetwork'),
                *libflags,str(here/'pioneer_q38_full_offload_smoke.cpp'),'-lnetwork','-o',str(smoke)]
-if counter_unroll:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-counter-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-counter-q4"')
+if phase_profile:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-profile-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-profile-q4"')
+elif counter_unroll:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-counter-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-counter-q4"')
 elif prepared_q4:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-prepared-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-q4"')
 elif macro_q4:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-macro-q4-20261104-a/HaikuAssistantQwen27FullOffload-macro-q4"')
 elif vector_q4:smoke_command.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-full-vector-q4-20261104-a/HaikuAssistantQwen27FullOffload-vector-q4"')
@@ -181,6 +191,10 @@ if prompt_client:
         old='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-q4"'
         assert ask_command.count(old)==1
         ask_command[ask_command.index(old)]='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-counter-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-counter-q4"'
+    if phase_profile:
+        old='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-counter-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-counter-q4"'
+        assert ask_command.count(old)==1
+        ask_command[ask_command.index(old)]='-DASSISTANT_QWEN27_FULL_OFFLOAD_WORKER="/boot/home/pioneer-q38-full-prepared-profile-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-profile-q4"'
     subprocess.run(ask_command,check=True)
     ask_imports=subprocess.check_output([tool+'nm','-u',str(ask)],text=True)
     for name in ('llama_','ggml_','ioctl','mmap',' kill',' system',' popen'):
@@ -209,4 +223,4 @@ print(hashlib.sha256(binary.read_bytes()).hexdigest(),binary.name,flush=True)
 print(hashlib.sha256(smoke.read_bytes()).hexdigest(),smoke.name,flush=True)
 print('PASS BUILD_ONLY vocabulary-only full-card worker;exact11 vocabulary/model-container API imports;'+str(len(refusals))+' role refusals;NO context,decode,logits,threadpool or hybrid backend imports;frozen libraries/headers',flush=True)
 print('NOT installed or physically/numerically qualified;no performance result',flush=True)
-print('Full-card firmware pairing: '+('prepared counter Q4 tag98' if counter_unroll else 'prepared Q4 tag97' if prepared_q4 else 'macro Q4 tag93' if macro_q4 else 'vector Q4 tag92' if vector_q4 else 'metrics tag90' if metrics else 'batched tag89' if batched else 'original tag88'),flush=True)
+print('Full-card firmware pairing: '+('prepared profile Q4 tag99' if phase_profile else 'prepared counter Q4 tag98' if counter_unroll else 'prepared Q4 tag97' if prepared_q4 else 'macro Q4 tag93' if macro_q4 else 'vector Q4 tag92' if vector_q4 else 'metrics tag90' if metrics else 'batched tag89' if batched else 'original tag88'),flush=True)
