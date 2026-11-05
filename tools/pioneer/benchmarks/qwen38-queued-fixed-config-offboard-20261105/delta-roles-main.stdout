@@ -1,0 +1,1 @@
+PASS delta-config image-only role:1 positive/56 missing,zero,two,late,native,sibling,CPU/Work/fast-math refusals;NO hardware qualification

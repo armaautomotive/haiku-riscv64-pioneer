@@ -4,8 +4,8 @@ import os,pathlib,re,subprocess,sys
 if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):raise SystemExit('Checks required')
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 here=pathlib.Path(__file__).resolve().parent
-assert sys.argv[1:] in ([],['--pair-config'])
-pair=bool(sys.argv[1:]);subject='Pair' if pair else 'Delta'
+assert sys.argv[1:] in ([],['--pair-config'],['--fixed-config'])
+subject='Fixed' if sys.argv[1:]==['--fixed-config'] else 'Pair' if sys.argv[1:] else 'Delta'
 roles=[here.parent/name for name in ('PioneerQ38QueuedQ4BlockRole.h','PioneerQ38QueuedQ4'+subject+'ConfigRole.h')]
 header=here.parent/('PioneerQ38QueuedQ4'+subject+'Config.h')
 required=set().union(*(set(re.findall(r'!defined\(([A-Z_][A-Z0-9_]*)\)\s*\|\|\s*\1\s*!=\s*1\b',role.read_text())) for role in roles))
@@ -33,6 +33,6 @@ for key in sorted(required):
 for key in ('_KERNEL_MODE','PIONEER_DRIVER_BUILD_TAG','TT_PIONEER_DRIVER_RELOAD','PIONEER_Q38_CPU_VALIDATION',
  'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE',
  'PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_FULL_OFFLOAD_CLIENT','PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4','__FAST_MATH__',
- 'PIONEER_Q38_QUEUED_Q4_'+('DELTA' if pair else 'PAIR')+'_CONFIG_IMAGE'):
+ *('PIONEER_Q38_QUEUED_Q4_'+s+'_CONFIG_IMAGE' for s in ('DELTA','PAIR','FIXED') if s!=subject.upper())):
  for value in ('0','1'):check({**base,key:value},False,include())
 print(f'PASS {subject.lower()}-config image-only role:{positive} positive/{negative} missing,zero,two,late,native,sibling,CPU/Work/fast-math refusals;NO hardware qualification',flush=True)

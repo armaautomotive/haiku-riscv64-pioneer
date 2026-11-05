@@ -30,6 +30,9 @@ using PreparedQ4Affine=PioneerQ38ExactQ4Affine;
 #endif
 using PreparedQ4=PioneerQ38PreparedQ4Layout;
 #ifdef PIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE
+#ifdef PIONEER_Q38_QUEUED_Q4_FIXED_CONFIG_IMAGE
+#include "PioneerQ38QueuedQ4FixedConfig.h"
+#endif
 #ifdef PIONEER_Q38_QUEUED_Q4_PAIR_CONFIG_IMAGE
 #include "PioneerQ38QueuedQ4PairConfig.h"
 #endif
@@ -65,7 +68,9 @@ void PreparedQ4Inputs(unsigned inputs){
 struct PioneerQ38ExactQ4WorkEmitter {
  unsigned metadataRow=128,primary=0x98100,input=PreparedQ4::InputFirst,mask=PreparedQ4::DenseMask;
 #ifdef PIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE
-#ifdef PIONEER_Q38_QUEUED_Q4_PAIR_CONFIG_IMAGE
+#ifdef PIONEER_Q38_QUEUED_Q4_FIXED_CONFIG_IMAGE
+ PioneerQ38QueuedQ4FixedConfig queue;
+#elif defined(PIONEER_Q38_QUEUED_Q4_PAIR_CONFIG_IMAGE)
  PioneerQ38QueuedQ4PairConfig queue;
 #elif defined(PIONEER_Q38_QUEUED_Q4_DELTA_CONFIG_IMAGE)
  PioneerQ38QueuedQ4DeltaConfig queue;
@@ -74,7 +79,16 @@ struct PioneerQ38ExactQ4WorkEmitter {
 #endif
  unsigned queued=0; // fixed RV32 word state,not byte stores
  unsigned escape=PioneerQ38QueuedQ4Block::EscapeBase;
+#ifdef PIONEER_Q38_QUEUED_Q4_FIXED_CONFIG_IMAGE
+ __attribute__((always_inline)) void BeginQueued(unsigned block,unsigned raw){
+  const unsigned lastEscape=PioneerQ38QueuedQ4Block::EscapeBase+15*PioneerQ38QueuedQ4Block::EscapeStride;
+  if(queued || !queue.Begin(*this,PreparedQ4::Input(block*128)/16-1,(raw+256)/16-1,
+    PreparedQ4::Input(block*128+15*8)/16-1,lastEscape/16-1))block_fault_park();
+  queued=true;
+ }
+#else
  __attribute__((always_inline)) void BeginQueued(){if(queued || !queue.Begin())block_fault_park();queued=true;}
+#endif
  __attribute__((always_inline)) bool ReadConfig(unsigned index,unsigned& value){value=Words(0xffef0000+index*4)[0];return true;}
  __attribute__((always_inline)) void EndQueued(){
   if(!queued)block_fault_park();
@@ -159,7 +173,11 @@ static unsigned PioneerQ38ExactQ4Work(const volatile uint32_t* job){
    // These three fields remain unchanged through all16 panels. Metadata
    // imports occur outside this block and are complete before this point.
    e.Config(65,0x10001);e.Config(73,0xf010f);e.Config(86,0x01000100);
+#ifdef PIONEER_Q38_QUEUED_Q4_FIXED_CONFIG_IMAGE
+   e.BeginQueued(block,raw);
+#else
    e.BeginQueued();
+#endif
 #endif
    for(unsigned p=0;p<16;p++){
     int sum=0;

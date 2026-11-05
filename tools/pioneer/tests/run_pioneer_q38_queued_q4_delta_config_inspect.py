@@ -4,8 +4,9 @@ import ast,hashlib,os,pathlib,re,subprocess,sys,tempfile
 from compare_pioneer_q38_observed_trace import require,stable_bytes
 require(__debug__ and not os.environ.get('PYTHONOPTIMIZE'),'checks required')
 pair=len(sys.argv)==6 and sys.argv[5]=='--pair-config'
-require((len(sys.argv)==5 or pair) and sys.argv[4] in ('--pilot','--group-pilot','--all-shapes','--config-faults','--frontend','--history'),'REPLAY PREFETCH CANDIDATE --pilot|--group-pilot|--all-shapes|--config-faults|--frontend|--history [--pair-config] ONLY')
-label='PAIR_CONFIG' if pair else 'DELTA'
+fixed=len(sys.argv)==7 and sys.argv[5]=='--fixed-config'
+require((len(sys.argv)==5 or pair or fixed) and sys.argv[4] in ('--pilot','--group-pilot','--all-shapes','--config-faults','--frontend','--history'),'REPLAY PREFETCH CANDIDATE --pilot|--group-pilot|--all-shapes|--config-faults|--frontend|--history [--pair-config|--fixed-config QUEUED_E_CONTROL] ONLY')
+label='FIXED_CONFIG' if fixed else 'PAIR_CONFIG' if pair else 'DELTA'
 require(not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ),'no role override')
 here=pathlib.Path(__file__).resolve().parent
 image,prefetch,candidate=map(pathlib.Path,sys.argv[1:4])
@@ -23,8 +24,9 @@ def snapshot(directory,records):
 snapshot(image,pins(here.parent/'build_qwen38_two_product_q4_worker.py','REPLAY_PINS'))
 images=[snapshot(fixture,pins(here/'run_pioneer_q38_mixed_worker_tests.py')),
  snapshot(control,pins(here.parent/'build_qwen38_exact_q4_work_worker.py')),
- snapshot(candidate,pins(here.parent/('build_qwen38_queued_q4_pair_config_worker.py' if pair else 'build_qwen38_queued_q4_delta_config_worker.py'),'INSPECT_PINS'))]
+ snapshot(candidate,pins(here.parent/('build_qwen38_queued_q4_pair_config_worker.py' if pair or fixed else 'build_qwen38_queued_q4_delta_config_worker.py'),'FIXED_INSPECT_PINS' if fixed else 'INSPECT_PINS'))]
 prefetch_image=snapshot(prefetch,pins(here.parent/'build_qwen38_instruction_prefetch_worker.py'))
+queued_control=snapshot(pathlib.Path(sys.argv[6]),pins(here.parent/'build_qwen38_queued_q4_block_worker.py','INSPECT_PINS')) if fixed else None
 legacy=[(name+'.bin',size,digest) for name,size,digest in pins(here/'run_pioneer_q38_resident_gdn_output_operator_service_image_tests.py')]
 legacy.append(('program.elf',96148,'44bac0c1061f298ed8ccd2a1eb4780371bc7c80031cb230ad2da27f476202d19'))
 old=snapshot(fixture/'unchanged-worker',legacy)
@@ -46,9 +48,19 @@ with tempfile.TemporaryDirectory(prefix='pioneer-queued-q4-inspect-',dir='/priva
   path=baseline/filename
   with path.open('xb') as stream:stream.write(data)
   path.chmod(0o400)
- # New explicit UNQUALIFIED subject. Do NOT relax the old E auditor.
- # Snapshot pins authorize this local experiment,NOT body/native/physical use.
- print('UNQUALIFIED_'+label+'_PINNED_ROM_ONLY_NO_BODY_OR_RELOCATION_AUDIT',flush=True)
+ if fixed:
+  # Audit the SAME readonly ROMs which will execute,not a second mutable
+  # path. New function bodies are bound,NOT statically proved equivalent.
+  e_control=root/'EXACT_QUEUED_E_CONTROL';e_control.mkdir(mode=0o700)
+  for filename,data in queued_control:
+   path=e_control/filename
+   with path.open('xb') as stream:stream.write(data)
+   path.chmod(0o400)
+  from pioneer_q38_queued_q4_fixed_config_relocations import audit
+  audit(e_control,directories[2],tool)
+ else:
+  # No blanket waiver or relaxation of the independent old E auditor.
+  print('UNQUALIFIED_'+label+'_PINNED_ROM_ONLY_NO_BODY_OR_RELOCATION_AUDIT',flush=True)
  old_directory=directories[0]/'unchanged-worker';old_directory.mkdir(mode=0o700)
  for filename,data in old:
   path=old_directory/filename
@@ -65,4 +77,5 @@ with tempfile.TemporaryDirectory(prefix='pioneer-queued-q4-inspect-',dir='/priva
  arguments=[directories[0],directories[2]] if fault_mode else directories
  subprocess.run([str(binary),*map(str,arguments),*([] if fault_mode or sys.argv[4]=='--all-shapes' else [sys.argv[4]])],check=True,
   env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
-print('PARTIAL_UNQUALIFIED_'+label+' actual compiled worker;NO whole body/relocation audit,full fault/history/native/model/hardware/TPS qualification',flush=True)
+if fixed:print('PARTIAL_FIXED_CONFIG actual compiled worker+whole image boundary;NEW bodies bound NOT statically equivalent;NO native/model/hardware/TPS qualification',flush=True)
+else:print('PARTIAL_UNQUALIFIED_'+label+' actual compiled worker;NO whole body/relocation audit,full fault/history/native/model/hardware/TPS qualification',flush=True)

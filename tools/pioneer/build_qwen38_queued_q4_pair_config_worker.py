@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""INSPECT ONLY: reproduce ENTIRE E before the distinct pair-write subject."""
+"""INSPECT ONLY: reproduce ENTIRE E before distinct pair/fixed subjects."""
 import hashlib,os,pathlib,re,subprocess,sys
 from generate_qwen38_token_programs import authenticated,pins
 # Actual linked experiment identity ONLY,never a device grant.
@@ -16,8 +16,22 @@ INSPECT_PINS=(
  ('gdn.bin',35944,'7ae46e0cea089f93ae7662d2033e469393c4a39859dbc3745d40c456033944c3'),
  ('program.elf',160232,'fea877fc1b69071058b42f3f45485dce56a129d55604dd1d5f9e131e1dc7775e'),
 )
+FIXED_INSPECT_PINS=(
+ ('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
+ ('globalworker.bin',9720,'6b04a57faf2e6a17ee7ac9d9881420ed56a97b3e2b65bcbf0e7f215e093cb533'),
+ ('precise.bin',8392,'32c078029e1c74ec4bd9744ea494433f5003f63a936df05445d3066c722a7ecc'),
+ ('dense.bin',10332,'d1749707ffe803e28dced9c7d065e763f125009678ace33b4d468109984869ad'),
+ ('ffn.bin',16456,'e6533bc2035a251dbc0f4aad1da9d5222fcf8649ff2577db375843dc746014b7'),
+ ('service.bin',19660,'f9a0b695f5b4c926c5c34dfaeb20dd110c73c2ce7fee4535efceef57b61a4fdb'),
+ ('fetch.bin',1292,'adc62da76663386222c2842cecb4cd02c65fe93f0a76bdd15a528d8510cb7ca7'),
+ ('affine.bin',4680,'60b52b6031eaed56a710f1b42685bba596eac616cc10982a3328f23396a59fc6'),
+ ('text.bin',7884,'85d7259c4ae19b8278bc234b11adbbed5871fbff6acd2f5c7f9c6f99a7c47dd2'),
+ ('gdn.bin',35944,'7ae46e0cea089f93ae7662d2033e469393c4a39859dbc3745d40c456033944c3'),
+ ('program.elf',155084,'a8ada7ade029df16cc8a04e5d05166ea902dd1d162290ed15ba24aa83dd0ed64'),
+) # Explicit UNQUALIFIED fixed-program experiment,NOT native permission.
 if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):raise SystemExit('Checks required')
-assert len(sys.argv)==4 and sys.argv[3]=='--inspect-candidate'
+assert len(sys.argv)==4 and sys.argv[3] in ('--inspect-candidate','--inspect-fixed-candidate')
+fixed=sys.argv[3]=='--inspect-fixed-candidate'
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 parent,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert parent.is_absolute() and parent.is_dir() and not parent.is_symlink()
@@ -39,7 +53,7 @@ for option,name in (('-T','program.ld'),('-Map','program.map'),('-o','program.el
 subprocess.run(command,check=True);subprocess.run(link,check=True)
 assert (out/'program.elf').read_bytes()==baseline['program.elf'],'ENTIRE running E unchanged FIRST'
 (out/'program.elf').rename(out/'unchanged-E.elf');(out/'math.o').rename(out/'unchanged-E-math.o')
-command.insert(1,'-DPIONEER_Q38_QUEUED_Q4_PAIR_CONFIG_IMAGE=1')
+command.insert(1,'-DPIONEER_Q38_QUEUED_Q4_'+('FIXED' if fixed else 'PAIR')+'_CONFIG_IMAGE=1')
 subprocess.run(command,check=True);subprocess.run(link,check=True)
 (out/'compile-math-argv.txt').write_text('\n'.join(command)+'\n')
 (out/'link-argv.txt').write_text('\n'.join(link)+'\n')
@@ -62,5 +76,5 @@ for section in BASES:
  data=target.read_bytes();assert data and len(data)%4==0
  print(section,len(data),hashlib.sha256(data).hexdigest(),'EXACT_E' if data==baseline[target.name] else 'NEW_UNAUDITED',flush=True)
 (out/'program.symbols').write_text(symbols);(out/'program.disassembly').write_text(dis)
-print('INSPECT_ONLY_UNQUALIFIED_PAIR_CONFIG '+hashlib.sha256(elf.read_bytes()).hexdigest(),flush=True)
+print('INSPECT_ONLY_UNQUALIFIED_'+('FIXED' if fixed else 'PAIR')+'_CONFIG '+hashlib.sha256(elf.read_bytes()).hexdigest(),flush=True)
 print('NO relocation/body/failure/history/native/model/hardware/TPS qualification',flush=True)

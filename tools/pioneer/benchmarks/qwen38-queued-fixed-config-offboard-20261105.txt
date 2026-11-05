@@ -1,0 +1,148 @@
+Fixed-block queued Q4 configuration: OFFBOARD checkpoint -- 2026-11-05
+===================================================================
+
+NOT A NATIVE DRIVER OR PHYSICAL SPEED RESULT. No new Work target is
+installed.20tok/s remains unmet. This candidate reduces executed RISC-V
+instructions relative to queued E,but is still above unqueued9f;physical
+latency cannot be inferred from instruction or configuration-word counts.
+
+Change in the actual compiled worker
+-----------------------------------
+Distinct PIONEER_Q38_QUEUED_Q4_FIXED_CONFIG_IMAGE=1;requires all exact
+prepared/two-product/replay13/queued offboard parents. Native/USER/CPU/Work,
+fast-math and both delta/pair sibling aliases refuse,EVEN when defined0.
+Default E WHOLE ELF reproduces first in both builds,not merely old headers.
+
+The sixteen-panel program has six fixed configuration fields. At EVERY
+block start ALL FOUR bytes of each are seeded using that block's actual
+first-input/primary addresses and known formats. The final expected words
+are bound ONCE for that fixed program,including its actual final-input and
+final-escape addresses. Subsequent Config calls check the field/high half
+and ALWAYS write BOTH low bytes. There is no per-panel seen/XOR/expected
+cache update. This is NOT a general arbitrary-command transaction API.
+
+The original dot/FP32 affine order,immutable escape planes,all64 ALL-class
+backend waits,real bounded final ACK and SIX actual final configuration
+reads remain. New blocks never assume prior hardware values. No GPR use,
+new MMIO address,NoC permission,code/stack/data enlargement,weight change,
+CPU inference/reference,fake completion or output override is introduced.
+
+Exact main/clean image
+----------------------
+ program.elf155084B
+  a8ada7ade029df16cc8a04e5d05166ea902dd1d162290ed15ba24aa83dd0ed64
+ service.bin19660B within SAME24576B,4916B headroom
+  f9a0b695f5b4c926c5c34dfaeb20dd110c73c2ce7fee4535efceef57b61a4fdb
+NINE other sections equal queued E byte-for-byte,including main7884B.
+Main image94139=0;clean image+initial pilot21883=0;whole ELF identical;
+all builder/pilot stderr empty. No unresolved symbols,writable globals/GOT,
+unsupported instruction patterns,extra allocated section,or individual
+math frame>4096B accepted. Individual frames are NOT a native kernel-stack
+certificate. ROOT74cae450... and live paired full102 headera43ddbef... are
+unchanged;this experiment does not modify any live/staged executable.
+
+Measured OFFBOARD instruction screen,NOT hardware timing
+-------------------------------------------------------
+Same K5120/groups1,two changed-input jobs,actual compiled RISC-V:
+ queued E         1554215
+ fixed-block      1488003  -66212 / -4.260157%
+ unqueued9f       1443247  fixed-block is STILL+3.101063%
+ byte-delta A     1620873
+ pair-byte B      1574963
+The runner's3010979 teacher is older three-product code,NOT the current
+baseline. No tokens/sec,engine utilization or clock conversion is made.
+Audited pilot main23712=0/clean9382=0;whole stdout identical,stderr0.
+
+Closed functional/failure checks,main AND independent clean tree
+---------------------------------------------------------------
+Executable C++ tests use ASan+UBSan/Werror. Compiled-worker suites use
+actual immutable ROMs and existing strict arithmetic/source/read-ACK/
+payload-ACK/commit/STOP checks;no expected result or PC is injected into
+the worker. Roles are syntax checks;component word observers are NOT whole
+workers. All processes below ACTUALLY terminate0.
+
+ Component+roles main20910/clean46572:3072 field/low-byte/value cases,
+ 250 unsupported fields,96 high-half refusals,65 invalid Begin arguments,
+ 12 read faults. Full six-field seeding repeats after deliberately changed
+ hardware words. Early/wrong-final verification latches failure;following
+ calls do no I/O. One positive/56 missing,zero,two,late,native,sibling,
+ CPU/Work/fast-math role refusals. Whole stdout identical,stderr0.
+ Delta/pair sibling regressions51487=0:both directions refuse fixed mode;
+ main+clean outputs exact,stderr0. Earlier pair54 counts belong to its
+ historical pre-fixed checkpoint,not the current56-refusal role suites.
+
+ All geometries main3530/clean1082:Q8/Q4/Q6 x K5120/6144/17408 x
+ groups1/3/16 =27 shapes,54 changed-input jobs,5 fragmented-mask controls,
+ 16 NoC-loss inert cases,16 descriptor refusals,missing replay record.
+ Whole stdout AND32 expected controlled-fault stderr rows byte-identical.
+ Actual functional stack3556/8192B. These two complete suites finished on
+ the SAME candidate pins before the new auditor was wired into its runner;
+ their honest raw labels say UNQUALIFIED. No whole-image permission is
+ inferred from those old labels. Later audited pilots/frontend/history
+ execute exactly those same authenticated ROM bytes through the new gate.
+
+ Final-read failures main94566/clean4904:all6 read-value corruptions plus
+ all6 final-state corruptions. Each parks at its real fault handler;2048
+ following steps have no further read/write/NoC/output/commit/restore.
+ Normal complete job+STOP also pass.12 expected stderr traces exact.
+ Main ran before audit wiring,clean after:only wrapper's first/last lines
+ differ;ENTIRE functional middle stdout and stderr compare byte-exact.
+
+ Finite asynchronous frontend main29745/clean70363:whole stdout and2
+ expected fault stderr rows exact.12 schedules,depth1/2/8/13,delays0/31/
+ 257/4099,all3 widths,two changed jobs,groups3.128 missing completions:
+ 126 producer stalls and2 bounded final-poll faults;no pretend completion.
+ Combined tracked quota<=13;delay observations are SYNTHETIC,not clocks.
+ This is NOT a full silicon MOP/fusion/frontend or RISC store-queue model.
+
+ Retained history main43765/clean15285:all48 pairs/96 workers,192 Q4 jobs
+ plus192 GDN half-jobs,changed beta/prior state,return to changed-input Q4,
+ real STOP. Same worker boots once;no CPU/config/replay/Dst/counter reset.
+ Actual combined functional stack4820/8192;whole stdout exact,stderr0.
+ This is compiled worker execution with MOCK endpoints,not native/model.
+
+Whole-image boundary and mutation checks
+----------------------------------------
+Main54964=0/clean38125=0,whole stdout exact,stderr0. Every byte of the
+19660-byte new service is mutation-tested,plus54 other-section/control
+mutations and110 tail-symbol mutations. All are refused. All9 other ROM
+sections and9888-byte original convolution prefix are unchanged. Both
+ENTIRE service tails partition into explicit complete functions and zero
+alignment only. Eight complete common helpers compare exact after ONE
+symbol-resolved AUIPC/JALR pair to the complete unchanged GroupWindow.
+All opcode/register bits stay unchanged;the target move is exactly344B.
+Three new complete subjects are BOUND by actual ELF extent+SHA:Work5424B,
+TwoProductSetup544B,BfpSetup1796B. They are NOT statically proved equivalent;
+the functional/fault/history tests above address the new program behavior.
+
+For fixed mode the current runner REQUIRES an explicit exact queued-E
+control and runs this audit on the SAME readonly copied ROMs it executes.
+It does not relax the old queued-E auditor or accept pair/delta pins as E.
+Invocation after an independent fixed image build:
+ build_qwen38_queued_q4_pair_config_worker.py E FRESH --inspect-fixed-candidate
+ tests/run_pioneer_q38_queued_q4_delta_config_inspect.py REPLAY PREF FRESH \
+   --all-shapes --fixed-config E
+Substitute --pilot,--config-faults,--frontend or --history for that mode.
+
+Protected physical comparison and remaining work
+------------------------------------------------
+The DIFFERENT queued-E tag102/gen33 full27B trial remains live. At the
+latest observation19:17:01GMT wrapper24689,parent24690,rate24776,USER24777
+were live;upload9629.2/19522.4MiB,parent/rate exits absent,all stderr0.
+Only exact trial PID/log observation occurred;no metadata/admin/status,
+new accelerator job,stage mutation,reload,reboot,relay or hardware action.
+Do not restart an observation timeout or relaunch a spent stage.
+
+First close that SAME trial,require actual parent/rate/worker0 and absent
+PIDs,then independent stable041/gen34 postflight and strict raw-log readers
+before publishing its rate. Fixed-config has NO full-native selector,
+paired image/header,loader/journal/session/USER integration or physical
+measurement yet;do not install this offboard image directly. No Assistant,
+boot,kernel,64CPU/full-RAM,SD,mains,hardware or network setting changed.
+Last closed model result stays0.162480719..0.162484114tok/s,best vector92
+0.172813448..0.172816755. This checkpoint does not claim progress toward
+20tok/s from a physical measurement;that target remains unmet.
+
+Complete raw build/component/role/audit/shape/fault/frontend/history/pilot
+streams are in the sibling directory. No learned tensors,GGUF,CPU model,
+driver/client binary or live physical log is committed.
