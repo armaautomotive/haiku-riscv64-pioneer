@@ -7,11 +7,12 @@
 
 // Reuse the UNCHANGED project's strict RV32I Step decoder. Override ONLY
 // this NEW image's fixed memory/MMIO map and independent BFP FPU observer.
-struct NativeBfpRV32:Machine {
-	NativeBfpMachine native;std::vector<uint8_t> code;
+template<class Arithmetic=NativeBfpMachine,unsigned Columns=32> struct NativeBfpRV32Image:Machine {
+	static_assert(Columns==16 || Columns==32,"explicit prototype image geometry");
+	Arithmetic native;std::vector<uint8_t> code;
 	unsigned minStack=0x70000,minSP=0x70000,resultStores=0,ackRequests=0,dropAckAt=0;bool dropAck=false,awaitingAck=false,stackSeen=false;
 	unsigned dropConfig=~0U;
-	NativeBfpRV32(const char* directory):Machine() {
+	NativeBfpRV32Image(const char* directory):Machine() {
 		const std::string root=directory;code=Read((root+"/text.bin").c_str());auto boot=Read((root+"/boot.bin").c_str());
 		assert(boot.size()==4 && code.size()<=4096 && !(code.size()&3));
 		std::fill(std::begin(l1),std::end(l1),0xdeadbeef);
@@ -68,19 +69,18 @@ struct NativeBfpRV32:Machine {
 			if(stackSeen) { assert(regs[2]>=0x6e000 && regs[2]<=0x70000 && !(regs[2]&15));minSP=std::min(minSP,regs[2]); }
 		}
 		assert(l1[Index(pc)]==0x0000006f && minStack>=0x6e000);
-		if(pc==0x70058) { assert(l1[Index(0x17ffc8)]==0x4642464e && !resultStores);return false; }
-		assert(l1[Index(0x17ffc0)]==0x7000c && l1[Index(0x17ffc4)]==2 && l1[Index(0x17ffc8)]==0x3142464e);
-		assert(native.Clean() && resultStores==64 && native.outputReads==64 && native.unpacks[0]==2 && native.unpacks[1]==2);
+		if(pc==0x70058) { assert(l1[Index(0x17ffc8)]==(Columns==16?0x46503451U:0x4642464eU) && !resultStores);return false; }
+		assert(l1[Index(0x17ffc0)]==0x7000c && l1[Index(0x17ffc4)]==2 && l1[Index(0x17ffc8)]==(Columns==16?0x31503451U:0x3142464eU));
+		assert(native.Clean() && resultStores==Columns*2 && native.outputReads==Columns*2 && native.unpacks[0]==2 && native.unpacks[1]==2);
 		assert(!native.unpackBank[0] && !native.unpackBank[1] && !native.matrixBank[0] && !native.matrixBank[1]);return true;
 	}
-	void Exact(const std::array<float,32>& expected) {
+	void Exact(const std::array<float,Columns>& expected) {
 		for(unsigned pass=0;pass<2;pass++) {
-			std::array<float,32> observed;
-			for(unsigned row=0;row<32;row++)observed[row]=Float(l1[Index(0x92000+pass*128+row*4)]);
-			assert(Equal(observed,expected));
+			for(unsigned row=0;row<Columns;row++)assert(l1[Index(0x92000+pass*Columns*4+row*4)]==Bits(expected[row]));
 		}
 	}
 };
+using NativeBfpRV32=NativeBfpRV32Image<>;
 #ifndef PIONEER_NATIVE_BFP_IMAGE_ONLY
 int main(int argc,char** argv) {
 	assert(argc==3);unsigned maxStack=0,maxTouched=0;

@@ -1,0 +1,84 @@
+Exact Q4 primary matrix prototype -- 2026-11-04
+================================================
+OFFBOARD ONLY,not a live backend,full Q4 kernel or speed measurement.
+Source-layout prerequisite02094f59e90c04659436d2d27871529ab60c44ec is pushed.
+This checkpoint begins actual execution-engine work for that representation,
+not additional Assistant UI or weight-residency plumbing. The independent
+macro-Q4 physical trial29482 is left undisturbed throughout these tests.
+
+Implemented
+-----------
+Distinct1848-byte RV32I image consumes one native SM3[-7,7] K16xN16 primary
+panel directly with UNP0;forced shared exponent129 omits an exponent stream.
+No original-Q4 nibble decoder,SFPU transform,MOVD2A,packer,TDMA,NoC or scalar
+dot exists in this primitive. UNP1 supplies128 BF16 values:8 repetitions of
+16 EXACT INTEGER activations[-128,127]. A single phase0 MVMUL forms all16
+primary sums,eight duplicate destination rows. Its last/only matrix opcode
+releases BOTH source banks. Real completion precedes Dst reads and reuse.
+
+This produces dot(z,x),NOT the final original dot(q,x). The escape correction
+and7*sum(x) STILL NEED AN ON-CARD IMPLEMENTATION before original FP32 affine
+updates. FullK,original coefficients,NoC streaming,bank/cache/source binding,
+native ownership,cohort integration and actual model qualification remain.
+This primitive is not selected by any installed driver/Assistant/Work mode.
+
+Why one phase is exact for this bounded contract
+------------------------------------------------
+Official SrcASrcB fidelity table:BF16 phase0 consumes the implicit bit plus
+4 A mantissa bits and implicit bit plus6 B mantissa bits. z needs at most3
+significant bits;integer x[-128,127] needs at most7. All products/16-term
+sums fit exactly in FP32. A deliberate arbitrary8-significant-bit BF16 test
+demonstrates that phase0 alone DOES LOSE a term outside this contract.
+Never substitute this producer for the old arbitrary-BF16 path or lower
+its fidelity. Input-contract enforcement by a future native owner is NOT
+implemented/proven by this offboard image.
+
+Primary official facts,not copied vendor implementation:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/SrcASrcB.md#fidelity-phases-floating-point
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/UNPACR_Regular.md
+Previously pinned official Blackhole cfg_defines.h SHA
+bc2636abc3ea04e6ca322923e6f2713b242857d021d8ef39b9180a14bcb1a5b8
+was rechecked:forced exponent is word50 bits0..7,existing add-destination
+counter bit8 retained;force-shared field is word73 bit8. x4 mode,aligned
+128-byte primary payload,no tileize/transpose,SrcA row0 burst alignment.
+
+Actual closed evidence
+-----------------------
+Main and CLEAN git-archive02094f59 source plus ONLY these changes BOTH0,
+stderr0. Clean tree explicitly includes the committed misc test headers:
+ * ASan/UBSan/-Werror direct producer:16384 changing panel jobs,262144
+   exact integer-dot identities,four asymmetric producer schedules,BOTH
+   alternating source banks. All signed8-bit activations including-128.
+ * Missing A/B publication,missing final source release and missing matrix
+   completion refuse outputs;arbitrary-BF16 fidelity counterexample above.
+ *261 ACTUAL compiled RV32I-image cases,256 successful fixtures/two real
+   jobs per fixture. Existing strict RV32 decoder unchanged. Config-readback,
+   ACK,producer and FINAL matrix-completion failures yield no accepted output.
+   A lost final ACK leaves math completion UNPROVEN and takes inert fault
+   park;no cleanup/retry/reset or new work is inferred from it.
+ *Scalar memory map permits code/stack/status/config and completed Dst reads,
+   but NO scalar weight/activation reads or writes,NoC/PCIe/CSR/reset access.
+   New Q4P1/Q4PF completion/fault tags cannot alias old BFP completion.
+ *Observed actual SP allocation32/8192B matches compiler stack usage32B.
+ *Complete main/clean boot,text AND whole ELF byte-identical,cmp0:
+  boot d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4B
+  text 816b6824cca6b8035532138659e2557eda741d149eef0fb94347fd2524b903e4 1848B
+  ELF  a1fd02b50ff5b2550592d38b6d6f1c6f5ad3bacff34ad50f08f3a7a190700136
+ *Old BFP image suite runs independently in both trees:37 cases0,
+   stderr0. Old BFP4 text adcec3cf5a66a2f00b979746928e1f8525a1c2274f37d0f3e35d3b6468ee6ef3
+   and BFP8 c21f4692d340b0bab397a513a315b9884b898804022e35948b2d029a6a128b19
+   remain byte-exact. Old numerical expectations/tolerances are unchanged.
+
+Initial clean-only image test compile failed because the archive contained
+tools but omitted committed BlackholeTensixImage.h test dependencies. Those
+dependencies were archived from HEAD,not copied from dirty working files;
+both complete clean runners then ACTUALLY0. No native/source arithmetic
+or acceptance rule was changed to address the missing-header failure.
+
+Reproduce,NO accelerator access
+--------------------------------
+ sh tools/pioneer/tests/run_pioneer_q38_exact_q4_primary_tests.sh /absolute/haiku/build
+ sh tools/pioneer/tests/run_pioneer_q38_native_bfp_image_tests.sh /absolute/haiku/build
+Sibling logs contain complete closed results,not learned weights or binary
+artifacts. None of these software checks establishes physical arithmetic,
+timing,full-model quality or safe native ownership. No new tokens/sec claim.

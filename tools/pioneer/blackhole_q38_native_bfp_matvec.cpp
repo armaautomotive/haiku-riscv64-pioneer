@@ -1,6 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 // OFFBOARD image prototype only;no installed handler launches this program.
 #include "PioneerQ38NativeBfpMatvec.h"
+#ifdef PIONEER_Q38_EXACT_Q4_PRIMARY_IMAGE
+#if PIONEER_Q38_EXACT_Q4_PRIMARY_IMAGE != 1 || PIONEER_Q38_NATIVE_BFP_BITS != 4
+#error Exact integer-input primary requires its distinct Q4 image
+#endif
+#include "PioneerQ38ExactQ4Primary.h"
+#endif
 #if !defined(__riscv) || __riscv_xlen != 32 || !defined(PIONEER_Q38_NATIVE_BFP_BITS)
 #error Build the distinct fixed-format RV32 native BFP prototype
 #endif
@@ -28,13 +34,23 @@ struct Emitter {
 }
 extern "C" unsigned native_bfp_main() {
 	Emitter emitter;
+#ifdef PIONEER_Q38_EXACT_Q4_PRIMARY_IMAGE
+	if(!PioneerQ38ExactQ4Primary::Setup(emitter))native_bfp_fault();
+#else
 	if(!PioneerQ38NativeBfpMatvec::Setup(emitter,PIONEER_Q38_NATIVE_BFP_BITS))native_bfp_fault();
+#endif
 	for(unsigned pass=0;pass<2;pass++) {
+#ifdef PIONEER_Q38_EXACT_Q4_PRIMARY_IMAGE
+		if(!PioneerQ38ExactQ4Primary::Run(emitter))native_bfp_fault();
+		constexpr unsigned rows=1;
+#else
 		if(!PioneerQ38NativeBfpMatvec::Run(emitter,PIONEER_Q38_NATIVE_BFP_BITS))native_bfp_fault();
-		// BOTH32-output copies consume actual FPU Dst after real completion.
+		constexpr unsigned rows=2;
+#endif
+		// Both result copies consume actual FPU Dst after real completion.
 		// No scalar multiplication,dequantization or CPU reference exists.
-		for(unsigned row=0;row<2;row++)for(unsigned column=0;column<16;column++)
-			Words(0x92000+pass*128)[row*16+column]=Words(0xffbd8000+(row?40:32)*64)[column];
+		for(unsigned row=0;row<rows;row++)for(unsigned column=0;column<16;column++)
+			Words(0x92000+pass*rows*64)[row*16+column]=Words(0xffbd8000+(row?40:32)*64)[column];
 		asm volatile("fence":::"memory");
 	}
 	return 2;
