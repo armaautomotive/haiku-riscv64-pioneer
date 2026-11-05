@@ -26,6 +26,9 @@ class PioneerQ38NativeQ4CachedPages {
    && weights->KeyFor(fragment,false,actual) && Same(actual,key);
  }
 public:
+ bool ReadyFor(const PioneerQ38NativeQ4WeightCache& source)const{
+  return weights==&source && source.AllPrepared() && sourceReady && sourceReady();
+ }
  bool Bind(const char* directory,PioneerQ38NativeQ4WeightCache& source,const Cache::Ready& ready,std::string& error){
   if(attempted)return Fail(error,"Native Q4 cached-page binding is one-shot.");attempted=true;
   if(!ready || !ready() || !source.OriginalPlan().Ready() || !cache.Open(directory,error))return false;

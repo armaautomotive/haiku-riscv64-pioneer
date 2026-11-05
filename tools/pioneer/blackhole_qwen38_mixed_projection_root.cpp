@@ -9,6 +9,10 @@
 #include "blackhole_qwen38_dense_partition_root.cpp"
 #undef scalar_main
 #include "PioneerQ38ProjectionInput.h"
+#ifdef PIONEER_Q38_PREPARED_Q4_ROOT_IMAGE
+#include "PioneerQ38PreparedQ4RootRole.h"
+#include "PioneerQ38PreparedQ4RootLayout.h"
+#endif
 #if defined(PIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_LIVE_BLOCK_ROOT_IMAGE) || defined(PIONEER_Q38_MIXED_RECURRENT_PROJECTION_ROOT_IMAGE)
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38BlockFfnRecipe.h"
 #endif
@@ -21,6 +25,9 @@ extern "C" void* memset(void* target,int value,__SIZE_TYPE__ bytes){
 }
 namespace Projection {
 using namespace DensePartitionRoot;
+#ifdef PIONEER_Q38_PREPARED_Q4_ROOT_IMAGE
+#include "blackhole_qwen38_prepared_q4_root.inc"
+#endif
 static void CaptureRecipe(const uint32_t* d){
  Copy(L::RecipeShadow,L::Header,64);Copy(L::HeaderShadow,L::MatrixHeader,16);Copy(L::BankShadow,L::Banks,8);
  Copy(L::PartsShadow,L::Parts,119*8);Copy(L::RowsShadow,L::Rows,119);
@@ -86,6 +93,9 @@ static void MatrixJob(const uint32_t* d,unsigned w,unsigned sequence){
 #endif
  for(unsigned i=0;i<10;i++)Words(L::Scratch)[16+i]=job[i];
  Words(L::Scratch)[26]=1;
+#ifdef PIONEER_Q38_PREPARED_Q4_ROOT_IMAGE
+ if(d[15]==12){unsigned reads=0,flits=0;q38_prepared_q4_bind_shared(d,w,sequence,reads,flits);}
+#endif
 }
 #ifndef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
 static void MatrixWait(const uint32_t* d,uint32_t* tracked,unsigned w){
@@ -126,6 +136,13 @@ static void Gather(const uint32_t* d,uint32_t* tracked,unsigned w){
  unsigned reads=groups*weightReadBlocks+(k*2+16383)/16384+1,flits=groups*blocks*L::Tile(type)/64+(k*2+((blocks*4+63)&~63U))/64;
 #else
  unsigned reads=groups*weightReadBlocks+(k*2+16383)/16384+1,flits=groups*blocks*(type==8?576:3392)/64+(k*2+((blocks*4+63)&~63U))/64;
+#endif
+#ifdef PIONEER_Q38_PREPARED_Q4_ROOT_IMAGE
+ if(type==12){
+  // MatrixJob just bound this exact immutable template+request to the
+  // canonical current job. The ledger was planned BEFORE worker launch.
+  reads+=Words(PreparedRoot::RootLedger+w*16)[0];flits+=Words(PreparedRoot::RootLedger+w*16)[1];
+ }
 #endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
  uint32_t receiptAfter[8];
@@ -197,6 +214,9 @@ static unsigned Run(const uint32_t* d){
  for(unsigned i=0;i<64;i++)Words(L::Summary)[i]=0;
  for(unsigned i=0;i<8;i++)before[i]=tracked[i]=*Words(0xffb20000+Counter(i));
  if(tracked[2]!=tracked[6])scalar_fault_park();
+#ifdef PIONEER_Q38_PREPARED_Q4_ROOT_IMAGE
+ if(d[15]==12)q38_prepared_q4_stage_shared(d,tracked,Seal);
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
  if(!PreciseDown(d)) // PreparePrecise already admits/proves ALL119 histories.
 #endif

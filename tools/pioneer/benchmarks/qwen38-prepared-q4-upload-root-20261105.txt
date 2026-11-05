@@ -1,0 +1,127 @@
+Prepared FFN upload plan and coordinator ledgers -- 2026-11-05
+=============================================================
+
+REAL SOURCE/PREPARATION + HOST DATA TESTS + ROOT BUILD CHECKPOINT.
+NOT ROOT execution,native ownership,installed Assistant or a speed result.
+Last accepted physical27B rate remains0.172813448..0.172816755tok/s.
+20tok/s remains unmet. No new Pioneer/card access occurred here.
+
+Critical integration distinction:
+The existing on-card embedding decoder still reads ORIGINAL Q4 tile bytes
+(blackhole_qwen38_global_feedback_decode.cpp -> Embedding::Decode).
+Replacing ALL193 Q4 tensors with the native primary format would break it.
+The new upload plan therefore prepares only the192 gate/up/down tensors,
+while preserving all7 original embedding stripes and ALL other weights.
+
+Complete real upload DATA,not a claimed completed PCIe upload:
+-Original weight spans2207,prepared primary spans1344,correction spans1344.
+-All3551 original weight locations/lengths preserved;4895 total spans.
+-Correction offsets are relative data in the cache,so their device-address
+ proposals can be repacked AFTER the complete original plan's Used(bank).
+ Unused embedding correction payloads are not uploaded/reserved by this plan.
+-20470759424 planned upload bytes,versus19399024640 originally.
+-All851 tensors,8192 context,two recurrent state slots,KV and workspace
+ retain their original geometry. Each original bank cap remains3GiB.
+
+Real bank proposal totals/spare bytes:
+0 3111419904 109805568
+1 3114680320 106545152
+2 3111264256 109961216
+3 3110928384 110297088
+4 3115679744 105545728
+5 3111026688 110198784
+6 3111264256 109961216
+These are validated PROPOSALS,not a new native reservation/lifetime grant.
+
+Main and independent clean real-source probes ACTUALLY exited0:
+-Same read-only O_NOFOLLOW open original18973870528B;FULL SHA256
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+-Ready brackets retain same FD/stat/epoch identity. No pathname reopening,
+ driver FD,vocabulary,chat,CPU learned products or inference fallback.
+-1351 existing manifest AND bundle hits,convertedTiles0. The original
+ writer fingerprint70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6
+ is checked independently;no recipe change or model-cache regeneration.
+-9790 genuine first/last upload pages across ALL4895 spans,with chunk
+ authentication,source identity,zero padding,and captured-index equality.
+-22848 jobs:64layers x3FFN matrices x119 workers. Independently planned
+ additional worker read packets362797,flits17607031,from cached indices.
+ These are expected counts,NOT retired hardware counters or throughput.
+-192 serialized coordinator tables,22848 HOST metadata bindings.
+ HOST bindings do NOT mean ROOT RISC instructions or inference ran.
+-Verified integer indices are captured once. All job/table planning makes
+ ZERO further disk-window fills,avoiding whole-bundle reopens as workers
+ interleave banks. Actual upload rereads/checks the bytes against that copy.
+
+Main/clean probe binaries identical:
+d2cb7268e9c81a0876e31e865c2d0a70d909e0f103888ea137efffeb6fc84e97
+Source snapshots include66 local files. Both final binaries actually ran
+the full original/cache probe after source-withdrawal hardening.
+Main/clean real aggregate streams are byte-identical.
+
+Main/clean ASan+UBSan metadata tests ACTUALLY exited0:
+-All2207/1344/1344 spans and7 original embedding stripes.
+-All22848 schedules/expected read ledgers and22848 coordinator bindings.
+-Multi-chunk groups,1359 sampled synthetic tail pages.
+-6935 refusals:every table header/descriptor/ledger field,stale sequence,
+ invalid bank,source withdrawal,read failures,padding and changed index.
+-Output buffers remain unchanged on refusal. No repeated disk reads while
+ planning. Existing native-Q4 cache regression and7 role gates pass too.
+-The upload plan retains its own immutable part metadata,avoiding a
+ Ready-dependent empty-vector access if source readiness withdraws.
+-Coordinator table reads handle a withdrawn/null plan between checks and
+ stage their output before publication. Targeted early-build and late-read
+ withdrawal tests prove clean refusal without null dereference or partial
+ output. These fixes affect host metadata preparation,not inference math.
+
+New coordinator firmware candidate,INSPECT ONLY:
+-Stages each phase's header64B and descriptor/ledger block9536B ON CARD
+ from its canonical layer package. No host handoff per inference job.
+-Fixed ROOT descriptors are stamped with the actual worker request. Counts
+ are independently retained expected ledgers,NOT adopted worker summaries.
+-A phase-captured shadow prevents template/ledger/header recapture during
+ packet publication/gathering. Templates allow only initial0 or SAME request.
+-All original boot+STOP bytes and five-EOG policy remain unchanged.
+-Each table uses9600B in package slack at70000+(role-2)*2800,below the
+ existing recurrent-state descriptor at78000. ROOT descriptor/header and
+ shadow DATA occupy ab400..aff00,on ROOT only;not another core's L1.
+-A NEW EXPLICIT .prepared code view occupies6c000..6cbb8(3000B),below the
+ unchanged6e000..70000 stack. Existing native journals MUST NOT be assumed
+ to own/save/restore this view. No installed native path selects it.
+
+Whole candidate ROOT194980B:
+0306100598ee1aa4e20bf3399165f5fbc2714ab2a694021fa98d63f4f64bb8f1
+prepared.bin3000B:
+14fe1e9d6fcc9124eaa4009b72da7ec616d67d65e232802366f983aa0272a97e
+Main/clean five-section images and whole ELF are identical;both builds
+ACTUALLY exited0. Old WHOLE e93c1a57c21de073233689741e00ddc9e55ad20b1fd74d0758aa3100ce313f66
+ROOT and all three original translation units reproduce FIRST. Clean
+iteration may reuse this authenticated control,then relinks its ENTIRE old
+ELF and recompiles all original TUs byte-exact before new compilation.
+This avoids repeated ancestor builds,not any old-ROM/source check.
+Nine new ROOT role refusals pass. CSR/div/FMA/absolute-JALR/section/global/
+static-frame/boot+STOP audits pass. This is NOT emitted execution proof.
+
+Required next work before any hardware trial:
+1.Execute the new complete coordinator path,including real reads/stamps/
+ counters,shadow mutations,NoC failures,all119 histories and mixed phases.
+ Do not freeze/promote inspect-only build identity as execution authority.
+2.Add the matching native owner:correction reservations+initialized pages,
+ SAME source metadata and immutable package overlays,new code/data journals,
+ exact paired-program identity,and restoration/quarantine on uncertainty.
+3.Connect a distinct client/session to this upload reader and metadata.
+ The old FullOffloadSession/raw loader MUST NOT consume the new format.
+ Preserve original embedding source and keep CPU validation separate.
+4.Qualify the WHOLE paired native/ROOT/worker/client package,then perform
+ a controlled real-model run and an honestly closed inference benchmark.
+
+Reproduce local DATA tests:
+sh tools/pioneer/tests/run_pioneer_q38_prepared_q4_upload_plan_tests.sh
+Build the read-only original/cache probe:
+python3 tools/pioneer/build_prepared_q4_upload_probe.py NEWOUT
+NEWOUT/probe ABS_MODEL ABS_CACHE --existing-cache
+ROOT candidate BUILD only:
+python3 tools/pioneer/build_qwen38_prepared_q4_root.py SDK NEWOUT --inspect-candidate
+Optional --control ABS_OLD_COMPLETE_CONTROL still requires whole old ELF
+and all original objects to reproduce. No native or launch option exists.
+Generated evidence contains logs/identities only,not learned payloads or
+executables. Existing unrelated native/resident WIP is excluded.

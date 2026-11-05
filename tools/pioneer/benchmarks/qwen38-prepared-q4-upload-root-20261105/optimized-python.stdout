@@ -1,0 +1,3 @@
+PASS_OPTIMIZED_PYTHON_REFUSAL build_prepared_q4_upload_probe.py
+PASS_OPTIMIZED_PYTHON_REFUSAL build_qwen38_prepared_q4_root.py
+PASS_OPTIMIZED_PYTHON_REFUSAL tests/pioneer_q38_prepared_q4_root_build_gate_test.py
