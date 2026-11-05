@@ -1,0 +1,152 @@
+Real exact-native Q4 prepared-weight cache -- 2026-11-05
+=====================================================
+
+PREPARATION/READ-ONLY UPLOAD CODE,NOT A NEW CARD BACKEND OR SPEED RESULT.
+The real27B measured baseline remains0.172813448..0.172816755tok/s.
+20tok/s remains UNMET. The Pioneer,installed driver,Assistant,runtime,
+boot,CPUs and RAM were NOT accessed or changed during this work.
+
+Why this is needed
+------------------
+The preceding complete-worker integration(c326d999cd) converted original
+Q4 bytes into native operands again for each projection. Its increased
+emulated scalar instruction count was NOT a speed improvement. This
+checkpoint prepares and persists those weights ONCE instead. It does NOT
+claim that the inference worker is already consuming this new format.
+
+Separate exact source format
+----------------------------
+PioneerQ38NativeQ4WeightCache snapshots the complete original tiled plan.
+Every original851-tensor/state/workspace extent stays where it was,with
+full8192 context and TWO recurrent-state slots. Only Q4 primary data uses
+the lossless native permutation;other formats and ALL256 original metadata
+bytes per Q4 tile remain untouched. Integer q=z+7+escape,where
+z=min(q,14)-7 and escape=(q==15). No weight requantization,learned float
+products,CPU inference/reference outputs or fallback is prepared/uploaded.
+
+Each Q4 fragment has two keyed,private,verified cache entries:
+ * Fixed64B-header manifest plus aligned4B-per-tile correction indices.
+ * ONE atomic bundle:original-size native primary plus correction sidecar.
+Index high2bits are dense0,sparse1,empty2;low30bits are sidecar-relative
+16-aligned offsets. Empty masks have offset0/no payload. Sparse payloads
+contain32B row-presence bits followed by nonzero16bit row masks;dense
+fallback is512B. Original metadata is byte-exact. Layout padding is zero.
+Manifest geometry/reserved fields/order/overlap/tails are checked before
+bundle preparation. Missing/corrupt upload entries fail without repair.
+The ordinary cache still owns atomic publication,SHA and filesystem checks.
+
+No device addresses are stored in cache payloads. Correction proposals are
+assigned deterministically AFTER all original allocations in EACH SAME
+bank,rounded4KiB,within the EXISTING seven3GiB caps. A proposal is NOT a
+native allocation/mapping/NoC capability. No legacy loader or device ABI
+selects these bytes. Separate ReadPage(primary/correction) interfaces avoid
+silently feeding native bytes to the original raw-weight loader.
+
+PioneerQ38NativeQ4CachedPages is a read-only upload adapter. One verified
+64KiB snapshot serves consecutive4KiB pages without hashing that same
+chunk16 times. Every buffered read rechecks original readiness,exact
+prepared key and the cache file identity. A source change or corruption
+outside the currently requested chunk also revokes the snapshot. Payload
+reads have NO conversion,payload creation,repair or device submission path.
+Initial binding uses the existing private marked-cache directory API.
+
+Closed real-model preparation
+-----------------------------
+Main cold process77291 ACTUALLY exited0,stderr0. Same-open O_RDONLY/
+O_NOFOLLOW original18973870528B file authenticated against full SHA:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+All851 layouts validated. ALL193 Q4 tensors,including embedding,were
+prepared as1351 fragments/4488320 original tiles. Native primary bytes:
+10341089280. Added bank allocations1150803968B,exactly matching the
+previous actual-mask inventory,not a dense-mask capacity assumption.
+Original file identity remained unchanged before/after the complete run.
+
+Actual prepared per-bank geometry:
+bank originalB   addedB    totalB     remainingB
+0    2958131200 164577280 3122708480 98516992
+1    2961707008 164331520 3126038528 95186944
+2    2958098432 164454400 3122552832 98672640
+3    2958106624 164102144 3122208768 99016704
+4    2962288640 164679680 3126968320 94257152
+5    2958098432 164229120 3122327552 98897920
+6    2958098432 164429824 3122528256 98697216
+These are checked source proposals,NOT physical ownership/capacity proofs.
+
+First/middle/last tile of EVERY fragment:4053 prepared primary+mask
+round trips compared with the original source. Primary/correction tail
+page padding also checked. Only aggregate results were printed.
+Cold manifestHits0,bundleHits0,convertedTiles13464960. Cold preparation
+currently scans tiles to size masks,write primary and write masks;this
+extra work is confined to cache creation,not repeated on a verified hit.
+
+Independent clean build reopened the SAME complete cache in process68642,
+ACTUALLY exit0,stderr0:manifestHits1351,bundleHits1351,convertedTiles0.
+All4053 round trips and bank geometry passed again. ZERO weight encoding
+means the cache preparer did not invoke its weight encoder;the separate
+test-only round-trip sampler still decodes/compares sampled cached data.
+No generation,tokenization,CPU model context or card access took place.
+
+Whole cold stdout SHA:
+0d72ac1671ae1587dfcd5a7becc988188aacd3e3bc611e264cb28aa8e049a74c
+Whole clean warm stdout SHA:
+10d8a8d8d0d0947bc44f21926abd016e801c43bdc7f2364ee97f985bc520baae
+Complete aggregate streams are in the sibling evidence directory.
+
+Independent source/build/unit evidence
+-------------------------------------
+Main32541 and clean12098 host builds ACTUALLY exit0. Both fingerprint and
+snapshot13 complete transitive local preparation sources BEFORE compile;
+identical binary SHA:
+f7377d65793d92ba725ec11dfe768ca4d98e47a7a1327a640815ec0ad7823972
+Exact recipe fingerprint:
+70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6
+The separate read-only upload adapter does not change on-disk encoding.
+
+Final main92306/clean17076 ASan+UBSan tests BOTH ACTUALLY exit0,stderr0:
+102297600B synthetic original fragment,24975 exact native primary pages,
+52 correction pages,dense40/sparse40/empty44320 masks. Every primary byte
+compared with independent scalar original-nibble expectations;every sparse
+index/mask/padding byte compared with independently built expected data.
+Verified warm owners do ZERO encoding. Invalid semantic manifests,source
+epoch/readiness changes,wrong pages/geometry,cancellation and post-read
+cache corruption refuse without output publication or upload-time repair.
+Caller plan rebuild cannot replace the retained8192/two-state snapshot.
+The64KiB adapter requires exactly ceil(bundleBytes/65536) window fills for
+the complete primary+correction traversal,not one per4KiB page.
+
+Seven forbidden build cases refuse for their intended reasons:kernel,
+shader/freestanding,legacy shader Work,CPU validation,fast math,NDEBUG
+tests and Python-O provenance bypass. The new PREPARATION format is not
+silently selected in the old Work/runtime build.
+Regressions ACTUALLY exit0:generic disk cache45 checks;old lossless adapter
+61 checks/27247 exact pages/four tails;Q4 codec sanitized+optimized256
+fixtures/65536 integer identities/257 mask transitions/18 refusals/six
+role refusals. Existing cache/loader/kernel sources were NOT modified.
+
+Actual local data retained,NEVER publish
+---------------------------------------
+Derived weights occupy about11.5GB in the existing git-ignored tree:
+/Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/weight-caches/native-q4-v1
+Only that dedicated cache leaf was created;original model was read-only.
+No learned/prepared payload or binary is committed. Cache files must NOT
+be copied to the current raw-format accelerator loader.
+Private builds/logs:
+/private/tmp/pioneer-native-q4-preparation-20261105.nwkvxhC7
+Independent clean source:
+/private/tmp/pioneer-native-q4-cache-clean-20261105.1kXwLVrw
+
+Reproduce and remaining work
+---------------------------
+ sh tools/pioneer/tests/run_pioneer_q38_native_q4_weight_cache_tests.sh
+ python3 tools/pioneer/build_native_q4_preparation.py /absolute/new/build
+ /absolute/new/build/prepare /absolute/original.gguf /absolute/new/cache --prepare
+The original full SHA/architecture is mandatory,not a supplied digest.
+
+Next integrate the correction index/mask source into the COMPLETE Work
+worker:direct native-primary unpack,original metadata and exact affine,
+bounded correction fetch/expansion,and reuse converted activation data.
+Its native source owner must separately admit every appended extent and
+the new sealed descriptor/USER/firmware pair. Validate actual complete
+worker bytes BEFORE hardware use,then benchmark the SAME real public27B
+request. Cache preparation and emulated instruction counts are NOT TPS.
+Overall performance goal stays ACTIVE;no speedup/completion claim.
