@@ -1,0 +1,49 @@
+Prepared Q4 planning-index reuse -- 2026-11-05
+===========================================
+
+LOADER STARTUP CHANGE,NOT A TOKENS/SEC RESULT. Not installed on Pioneer.
+Last accepted complete27B rate remains0.172813448..0.172816755tok/s;
+20tok/s is unmet. The separate tag98 physical trial is still live,with its
+original frozen37bf4617... USER worker and unchanged driver/code/files.
+
+Source inspection found that PrepareNext retains its just-verified bundle
+reader,but subsequent upload planning independently reopened/hashed those
+same1344 FFN bundles only to capture their integer correction indices.
+The production session helper now captures those indices immediately after
+each PrepareNext,using that retained verified reader. This removes those
+redundant planning-only whole-bundle reopen/hash passes;it does not remove
+original model/cache verification or change weight encoding or inference.
+
+The new adapter supplies private metadata-only pages ONLY while building
+the pre-device upload plan. FinishPlanning irreversibly discards them.
+All later primary/correction upload reads delegate to the original
+read-only CachedPages adapter,including its whole-file/chunk checks.
+The upload plan still compares actual uploaded indices with its retained
+planning indices. No synthetic metadata-page tail can be uploaded.
+Original cache recipe remains byte-identical70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6.
+
+Closed checks,actual exits0 and empty stderr:
+-ASan+UBSan production adapter fixture:1344 captures,4993 synthetic planning
+ reads,ZERO payload planning reads,2690 actual runtime-reader delegates;
+ one-way phase switch,28 refusals including output aliases,incomplete and
+ duplicate capture,mid-capture failure,source withdrawal and bind failures.
+-ASan+UBSan SAME open authenticated REAL model/cache:1351 warm fragments,
+ zero converted tiles,4992 captured index pages/4992 planning reads,
+ zero payload window fills during planning. All4895 spans/20470759424B,
+194 publications,192 phase headers and9790 sampled actual payload pages
+ pass. Source withdrawal afterward refuses without modifying output.
+-RISC-V USER build:7c9aaba7d368bb1a5161f27ae7025150a7ac52fd8ffb5af462e3ec945488e8a6.
+ Exact11 vocabulary/container imports,21 compile refusals,no CPU context,
+ decode,logits,threadpool or hybrid inference imports. Original writer
+ fingerprint rechecked by both real-model runner and USER builder.
+ Rate helper stays ec343e34dc3257572487bf66d5b8481896a4c7d91dcc8ae5ae3291610ac0e03e.
+
+No physical startup-time gain has been measured for this change. It cannot
+improve generation tokens/sec by itself and is not a replacement for the
+running complete-model throughput measurement. No driver,kernel,Assistant,
+boot,CPU/RAM,SD,relay or hardware change was made for this checkpoint.
+
+Reproduce:
+sh tools/pioneer/tests/run_pioneer_q38_prepared_q4_planning_pages_tests.sh
+python3 tools/pioneer/tests/run_pioneer_q38_prepared_q4_session_source_tests.py ABS_NEW_OUTPUT ABS_ORIGINAL_MODEL ABS_EXISTING_CACHE
+python3 tools/pioneer/build_assistant_qwen27_full_offload.py ABS_SDK ABS_FROZEN_LIBRARIES ABS_NEW_OUTPUT --batched --metrics --prepared-q4 --counter-unroll --prompt-client

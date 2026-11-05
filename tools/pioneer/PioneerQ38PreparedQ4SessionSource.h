@@ -3,6 +3,7 @@
 #ifndef PIONEER_Q38_PREPARED_Q4_SESSION_SOURCE_H
 #define PIONEER_Q38_PREPARED_Q4_SESSION_SOURCE_H
 #include "PioneerQ38PreparedQ4RootTables.h"
+#include "PioneerQ38PreparedQ4PlanningPages.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38PreparedSourceProtocol.h"
 
 // Own the pre-device preparation/readers for ONE public full-card session.
@@ -12,15 +13,17 @@
 template<class Source>
 class PioneerQ38PreparedQ4SessionSource {
  PioneerQ38NativeQ4WeightCache weights;
- PioneerQ38NativeQ4CachedPages pages;
- PioneerQ38PreparedQ4UploadPlan<> upload;
- PioneerQ38PreparedQ4RootTables<> tables;
+ PioneerQ38NativeQ4CachedPages payload;
+ PioneerQ38PreparedQ4PlanningPages<> pages{payload};
+ using Upload=PioneerQ38PreparedQ4UploadPlan<PioneerQ38NativeQ4WeightCache,PioneerQ38PreparedQ4PlanningPages<>>;
+ Upload upload;
+ PioneerQ38PreparedQ4RootTables<Upload> tables;
  Source* source=nullptr;
  const PioneerQwen38PackedPlan* original=nullptr;
  PioneerQ38NativeQ4WeightCache::Statistics statistics;
  bool attempted=false,ready=false;
 public:
- using Span=PioneerQ38PreparedQ4UploadPlan<>::Span;
+ using Span=typename Upload::Span;
  std::string error;
  bool Ready()const{return ready && source && original && source->Ready() && original->MatchesSource(source->Model())
   && upload.Ready() && tables.Ready();}
@@ -30,16 +33,20 @@ public:
   attempted=true;
   if(!owner.Ready() || !owner.BindPreparedCache(weights,layout,directory,error))return false;
   while(!weights.AllPrepared()){
-   if(!weights.PrepareNext(statistics,error))return false;
+   const unsigned fragment=weights.NextFragment();
+   if(!weights.PrepareNext(statistics,error) || !pages.Capture(weights,fragment,error))return false;
   }
   if(statistics.fragments!=1351 || !pages.Bind(directory,weights,[&owner]{return owner.Ready();},error)
-   || !upload.Build(weights,pages,error) || !tables.Build(upload,owner.Model(),error)
+   || !upload.Build(weights,pages,error) || !pages.FinishPlanning() || !tables.Build(upload,owner.Model(),error)
    || upload.Spans().size()!=4895 || upload.Primaries()!=1344 || upload.Bytes()!=UINT64_C(20470759424))return false;
   source=&owner;original=&layout;ready=true;return Ready();
  }
  const std::vector<Span>& Spans()const{return upload.Spans();}
  uint64_t Bytes()const{return Ready()?upload.Bytes():0;}
  const auto& PreparationStatistics()const{return statistics;}
+ uint64_t CapturedIndexPages()const{return pages.CapturedPages();}
+ uint64_t PlanningIndexReads()const{return pages.PlanningReads();}
+ uint64_t PayloadWindowFills()const{return payload.WindowFills();}
  bool ReadPage(unsigned span,unsigned page,uint8_t* output,unsigned capacity){
   if(!Ready())return false;
   auto raw=[this](unsigned f,unsigned p,uint8_t* out,unsigned bytes){return source->ReadWeightPage(*original,f,p,out,bytes);};

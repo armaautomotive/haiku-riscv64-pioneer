@@ -47,6 +47,11 @@ int main(int argc,char** argv){
  assert(prepared->Ready() && prepared->Spans().size()==4895 && prepared->Bytes()==UINT64_C(20470759424));
  const auto& stats=prepared->PreparationStatistics();
  assert(stats.fragments==1351 && stats.manifestHits==1351 && stats.bundleHits==1351 && !stats.convertedTiles);
+ unsigned indexPages=0;
+ for(const auto& p:layout.Parts())if(p.kind==PIONEER_Q38_WEIGHT && p.layer<64 && p.role>=2 && p.role<=4)
+  indexPages+=((p.bytes/2304*4+15)/16*16+4095)/4096;
+ assert(prepared->CapturedIndexPages()==indexPages && prepared->PlanningIndexReads()==indexPages
+  && !prepared->PayloadWindowFills()); // planning never reopens the payload bundles
  auto packet=std::make_unique<PioneerQ38PreparedSource::Packet>();unsigned phases=0;std::array<uint8_t,4096> page{};
  for(unsigned step=0;step<194;step++){
   namespace P=PioneerQ38PreparedSource;const unsigned op=step==0?P::Begin:step==193?P::Seal:P::Phase;
@@ -59,6 +64,11 @@ int main(int argc,char** argv){
   for(unsigned at:{0U,span.allocated/4096-1}){assert(prepared->ReadPage(s,at,page.data(),page.size()));sampled++;}
  }
  assert(phases==192 && source.Ready() && prepared->Ready());
- printf("PASS_REAL_PREPARED_SESSION_SOURCE production_helper4895_spans bytes%llu publications194 phases%u sampledPages%u "
-  "SAME_ORIGINAL_FD warm1351 converted0 no_device_or_CPU_inference_OR_TPS\n",(unsigned long long)prepared->Bytes(),phases,sampled);
+ const auto before=page;source.authenticated=false;
+ assert(!prepared->Ready() && !prepared->ReadPage(0,0,page.data(),page.size()) && page==before);
+ assert(!prepared->Publication(PioneerQ38PreparedSource::Begin,0,*packet));
+ printf("PASS_REAL_PREPARED_SESSION_SOURCE production_helper4895_spans bytes20470759424 publications194 phases%u sampledPages%u "
+  "capturedIndexPages%u planningReads%llu payloadPlanningFills0 sourceWithdrawalRefused "
+  "SAME_ORIGINAL_FD warm1351 converted0 no_device_or_CPU_inference_OR_TPS\n",phases,sampled,indexPages,
+  (unsigned long long)prepared->PlanningIndexReads());
 }
