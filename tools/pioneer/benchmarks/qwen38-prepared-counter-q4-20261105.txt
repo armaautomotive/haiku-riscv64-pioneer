@@ -95,3 +95,11 @@ The new reader also rechecks the COMPLETE old real vector92 transcript and
 returns its unchanged0.172813448..0.172816755tok/s result. No live transcript
 has been accepted as completed. Current protected processes13227/13228 are
 still live;no actual parent exit or restoration is claimed.
+
+Closed physical follow-up -- 10:34UTC:
+The one guarded trial actually exits0 and restores stable041/gen26.
+Its real rate is0.161666352..0.161669502tok/s,a6.45035% regression versus
+the previous vector92 midpoint,NOT a speedup. The32-byte counting output
+matches exactly. Fresh independent postflight and main/clean whole-log
+readers pass. See qwen38-prepared-counter-q4-physical-20261105.txt and
+its complete raw evidence. Do NOT promote tag98 or rerun its spent trial.

@@ -1,0 +1,67 @@
+Prepared-counter Q4 real27B physical result -- 2026-11-05
+======================================================
+
+REGRESSION,NOT A SPEEDUP. Do not promote this candidate into Assistant.
+The complete tag98 real-model trial actually finishes with parent.exit0,
+rate.exit0,both stderr files empty,worker exited,and stable041/gen26
+restored. No reboot,power,SD or hardware change was required.
+
+Observed post-prompt rate:0.161666352..0.161669502 tokens/sec.
+31 commit steps from31 to62 take191.749214..191.752951 seconds,
+approximately6.186 seconds/step. Previous accepted vector92 result was
+0.172813448..0.172816755 tokens/sec. Midpoint comparison:-6.45035%.
+These runs compare COMBINED backend revisions,not a controlled ablation
+of just ROOT counter unrolling or just prepared weight encoding. The
+offline ROOT instruction reduction did NOT establish a hardware speedup.
+Best accepted speed remains vector92's0.1728;20tok/s remains unmet.
+
+Actual request/result scope:
+-Original full851-tensor Qwen3.8-27B-Q4_K_M.gguf authenticated by the
+ worker's same read-only FD. All inference on card,including embedding,
+64 layers,attention/KV/recurrent state and greedy output selection.
+-CPU vocabulary/tokenization,loading,observation and lifecycle ONLY;
+ no CPU inference/reference/fallback. Frozen USER37bf461710e8890581e525a747607c0792c1a555fdb82eca1a5ce75b6db0aa85.
+-Native edd270242413f6fdc7b6310aaedaa0daa89d1b1250c8c0533959ca356bc39be1,
+ ROOT38a8f64f...,workerb283d788...;temporary driver generation25.
+-31 prompt positions,32 output tokens,62 total commits;all63 increasing
+ count observations including0. Exact20470759424B prepared upload over
+4771 progress rows. Rate observer records3669 samples.
+-The32-byte answer is EXACTLY the old public counting answer:
+ hex310a320a330a340a350a360a370a380a390a31300a31310a31320a31330a3134
+ (numbers1 through14,one per line;32-token output budget). This is not
+ broad model-quality validation or a separate isolated-latency benchmark.
+-Reported prompt+generation383.970s,total4075.907s for this request.
+ Total includes upload/startup/cleanup,not the preceding Load authentication
+ and cache planning. No warm-resident-request performance is claimed.
+
+Independent completed checks:
+-Main and separate clean-source whole transcript readers both accept the
+ COMPLETE closed stdout/stderr with explicit --prepared-q4. All geometry,
+ timestamps,rate arithmetic,answer length and final worker-exit grammar
+ pass;no live/truncated log or inferred upload mode was accepted.
+-The actual physical parent proves stable041/gen24 -> tag98/gen25 ->
+ stable041/gen26 and full normal STOP/HOLD/read/drain/restoration/END.
+-Fresh READ-ONLY postflight independently verifies actual parent/child0,
+ protected PIDs absent,idle stable041/gen26,no owner/quarantine,unchanged
+ Assistant/server/runtime/guard hashes,64CPUs and137034936320B RAM maximum.
+ Initial postflight observer refused its OWN multiline awk process in a
+ simultaneous ps pipeline. Snapshotting ps BEFORE starting awk,exactly
+ as the tested parent does,fixes that diagnostic self-observation. No
+ ownership/integrity check was removed;no board/driver change was needed.
+
+Whole raw evidence SHA256:
+rate.stdout d397858d9108d25bdb2cb9c4d391cee47dc9ba12ff71efc327d82cc6762aa43e
+physical-parent.stdout 1b615d45d868c0c0f4e9c6de9e024a0fe5102e0f4acfd7c392617e32068befd9
+postflight.stdout c8d73f0faa8f242e20ce3f5108c6bda0267c0ed3ab66800619cef97b48e6905b
+Raw closed logs/exits and postflight are in the sibling evidence directory.
+
+Next decision from this evidence:
+Do NOT rerun unchanged tag97/98 or claim that source preparation alone
+makes inference fast. Integrate the now-built ten-bucket on-card phase
+profiler with the same-owner held-reader/USER lifecycle and a DISTINCT
+native/program identity,then measure the physical time distribution.
+Prioritize the measured dominant phase. Existing74cae450... clock-helper
+tests are preparation only,not physical timing or native launch authority.
+The existing source's quantization/configuration/synchronization/state-copy
+costs are hypotheses until those physical measurements distinguish them.
+The overall goal remains ACTIVE and no useful-performance claim is made.
