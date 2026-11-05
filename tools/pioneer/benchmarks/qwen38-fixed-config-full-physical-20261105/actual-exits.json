@@ -1,0 +1,15 @@
+{
+  "scope": "Recorded actual process results; archived DATA alone cannot grant device cleanup authority",
+  "observer": {"session": 36806, "exit": 0, "terminal_remote_snapshot": "2026-11-05 22:11:59 GMT"},
+  "independent_gated_postflight": {"session": 49615, "exit": 0},
+  "closed_log_copy": {"session": 74445, "exit": 0},
+  "unchanged_strict_main_reader_exit": 0,
+  "unchanged_strict_clean_reader_exit": 0,
+  "parent_exit": 0,
+  "rate_exit": 0,
+  "trial_processes_verified_absent": [28724, 28725, 28809, 28810],
+  "restored_driver_sha256": "041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403",
+  "restored_generation": 36,
+  "stage_spent_forever": "/boot/home/pioneer-q38-full-fixed-config-q4-20261105-a",
+  "target_20_tokens_per_second_achieved": false
+}

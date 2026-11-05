@@ -1,0 +1,92 @@
+Fixed-config Q4 tag103:CLOSED real27B result,no useful speedup
+===========================================================
+2026-11-05 UTC. Actual post-prompt count rate:
+0.164361584..0.164365058 tokens/sec;31 committed steps in
+188604563..188608550us. One comparison is1.425144% above queued102
+(0.162052093..0.162055547),but4.890649% BELOW accepted vector92
+(0.172813448..0.172816755). Neither repeatability nor a statistically
+significant gain is established.20tokens/sec UNMET,about121.682x away.
+Do not promote this as useful performance or repeat the spent stage.
+
+Actual closure,not a token-count or launch receipt
+------------------------------------------------
+SAME observer36806 ACTUALLY exits0. Its22:11:59GMT snapshot shows actual
+parent.exit0/rate.exit0,CLOSED_STABLE_RESTORED,all wrapper28724/parent28725/
+rate28809/USER28810 absent,and parent/rate/launcher stderr0. Count62 first
+appeared earlier while all processes remained LIVE;that was NOT cleanup
+authority. No timeout,quiet log or count was used to restart the job.
+
+Only AFTER closure,separate gated read-only postflight49615 ACTUALLY0,
+stderr0. Installed normal041fef18.../tag2026102100010012/generation36,
+quiesced0/cold0/active_owner0/open_count1/guard1;whole driver/backup/admin/
+reload guard/three installed Assistant/four runtime-library hashes match.
+All64 CPUs and137034936320B RAM preserved. No Assistant/kernel/boot/network/
+SD/mains/hardware change,relay action or reboot. No new block-integer
+worker ran on Pioneer. Stage pioneer-q38-full-fixed-config-q4-20261105-a
+is SPENT FOREVER;never clear its markers or relaunch it.
+
+Archive copy74445 ACTUALLY0. All11 complete remote-file SHA values match
+the entire local copies,including the executed7813B parent script. Main
+and independent-clean UNCHANGED strict readers ACTUALLY0,full stdout
+byte-identical,stderr0;--prepared-q4 --phase-profile required. Complete
+source/ready/upload/count/rate/ten-profile-bucket/done/answer/clean-child
+transcript is checked. DATA readers do not replace actual exits/postflight.
+
+Full inference scope and executed identities
+-------------------------------------------
+Same-open original18973870528B GGUF SHA
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+authenticates;original851 bindings/full8192/two-state layout unchanged.
+Prepared upload20470759424B,6421 progress rows.31 prompt tokens,32 output
+tokens,62 committed positions,63 count rows,3595 timing observations.
+Timestamp endpoints144543679373/144543681361 to144732285924/144732287923us.
+Bounds are observation-window uncertainty,not statistical confidence or
+an isolated/warm-token latency test. Prompt+generation377.533s,total
+4592.124s;neither upload nor whole-operation time substitutes for rate.
+
+All inference is on card:embedding,matrices,attention,KV,recurrent state,
+norms and greedy choice. CPU vocabulary/text/file/lifecycle only;CPU
+inference contexts0,no reference/fallback. One public counting request
+outputs32 bytes (1 through14 separated by newlines),NOT broad model
+quality/Assistant Work acceptance. Full answer hex:
+310a320a330a340a350a360a370a380a390a31300a31310a31320a31330a3134
+
+Executed source26f51eb6a083eab0078f6ac5dbd48e576ba547e4,tag103/gen35:
+ native608ae0a091b944c3e9ae96d08bdc4aa74a3bd059c56ee65a414445f29b1ced20
+ USERc50acf30e31890f0abf65bd061f2cdee65e3ec31aa30d43dcfabcfad9d870bff
+ rate3988d149f607deca9c41c83b538b161a5c448af0b37a3d6253c5f5e62d1759db
+ parent9cc4960a2af3038741a014d8de20764b06b327c03dcdafa6e292c83da059ab18
+ paired headera6ed6aa3278d229b4e24d3e0ee92a24b73f9542834c2bfbb075fac6c7f2a347b
+ ROOT74cae45049174dd53c96203104a0b4b501f757b2210b2de86da5507334ebacc5
+ workera8ada7ade029df16cc8a04e5d05166ea902dd1d162290ed15ba24aa83dd0ed64
+
+Inclusive on-card phase DATA,not FPU utilization
+----------------------------------------------
+Valid state2/error0/all62 positions;ROOT total509097893702 cycles,
+begin9933/end509097903635;NO physical clock-frequency assumption.
+ recurrent layers299491250576 cycles,58.827831402%
+ dense layers124859899532,24.525715207%
+ head matrix57500734710,11.294632215%
+ metadata21973881328,4.316238900%.
+These phases include preparation,NoC,issue,arithmetic and waits. Do not
+sum parallel-worker durations,call them pure math utilization or forecast
+20TPS from them. All ten exact buckets/segment counts remain in raw JSON.
+
+Consequence for next work
+------------------------
+Fixed-config's modest guest-instruction reduction has not translated into
+a useful real-model gain. The new block-integer worker separately passed
+complete-ROM/image-boundary/history/delayed-and-missing-completion offline
+tests;its1.6..2.6% lower guest instruction counts are NOT a hardware speed
+result. It still lacks native integration and full-model quality evidence.
+Do not spend another unchanged full upload merely to rerun this candidate.
+Prioritize a materially more efficient on-card matrix/issue/operand path;
+retain separate precision validation and honest matched physical timings.
+
+Whole raw rate stdout SHA:
+4557ef837f1d28589f73bbec0736331987f3b039d8db11c1810b96283dff4e0a
+Whole physical parent stdout SHA:
+9a67ff9bc5e5f6f1696656fae2a4ed1a440b8adad0dcc156046ce3661270ae3f
+Complete raw logs/exits/state/PIDs,remote hashes,executed parent,separate
+postflight and both strict-reader outputs accompany this report. No model,
+cache,learned tensor or executable binary is committed. Goal stays ACTIVE.
