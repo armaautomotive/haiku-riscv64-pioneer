@@ -1,0 +1,100 @@
+Prepared Q4 complete matrix-phase execution -- 2026-11-05
+======================================================
+
+MAIN AND INDEPENDENT CLEAN FOUR-PHASE TESTS ACTUALLY EXITED0.
+This is local execution of the linked firmware with modeled NoC/register
+endpoints. It is NOT native ownership,physical-card inference,whole-model
+quality,an installed Assistant update,or a tokens/sec measurement.
+Last accepted physical27B speed remains0.172813448..0.172816755tok/s.
+Target20tok/s is still unmet.
+
+What is new beyond the previous isolated-function checkpoint4529a7b8ca:
+-The COMPLETE actual recurrent component Projection::Run executes,including
+ recipe capture,cold admission,ROOT quantization,dispatch,gather,independent
+ expected-counter receipt validation,scatter,and returned row count.
+-ALL119 workers are genuinely booted ONCE,then retained through four whole
+ phases:Q8 role5 -> prepared Q4 gate2 -> prepared Q4 up3 -> prepared down4.
+ A cold FFN request would violate the existing Virgin policy. That guard
+ is preserved;the actual preceding Q8 phase admits the full cold cohort.
+-476 actual matrix jobs,68 actual precise activation producers,and119
+ actual STOPs. No processor PC/register/private nonce/tensor state is copied
+ or reset at a transition. Only raw NoC endpoint/per-job observer bookkeeping
+ changes;the cumulative physical counters remain identical across it.
+-46,080 output rows total:6144 Q8,17408 gate,17408 up,5120 down. Every row
+ matches the original FP32 arithmetic check and its independent FP64 bound.
+ ROOT's emitted scatter bytes match the actual worker output row-by-row.
+-Down uses the REAL emitted PreparePrecise path,all68 producers' genuine
+ gate/up reads,native/scale writes,wire proofs and actual WAITs. The down
+ matrix consumes those produced native inputs,NOT supplied activation
+ products or a second CPU quantizer.
+-ROOT expected transfer counts come from the prepared source's integer
+ indices retained before dispatch,NOT a worker's self-reported counts.
+ After every phase,all8 retained ROOT frontiers equal the actual worker
+ counters,including their initial wraparound.476 genuine pushed receipts.
+
+Real source bytes,not synthetic learned weights:
+-Same O_RDONLY|O_NOFOLLOW original FD,full18973870528B authentication:
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+-Existing1351 cache fragments authenticate with convertedTiles0. Original
+ writer recipe remains70c2c7d0ed6c4fc28842960fa445e0a5af12baca2eac31a3326fa6c5341bebe6.
+ No11GB cache regeneration,model rewrite,driver FD or network/device access.
+-Complete selected layer0 original/primary/correction spans are loaded into
+ ONE consistent bank-address byte fabric. No per-worker aliased fragment
+ can return different bytes at the same shared source address.
+-Immutable ROOT0306100598ee1aa4e20bf3399165f5fbc2714ab2a694021fa98d63f4f64bb8f1
+ and workerb283d788a682681f8994058ab51b19b2b1e79f72945d7e839c9cdd81737ff9c3
+ WHOLE ELFs/sections are authenticated before use. No firmware change here.
+
+Precise scope limits:
+-These are complete MATRIX-PHASE function executions with legitimate initial
+ private ABI arguments,not an acquired native ROOT owner or its whole boot.
+-Raw deterministic phase inputs are test inputs. Gate/up use deliberately
+ changed raw phase inputs;the activation consumes their actual outputs.
+ This is NOT a full hidden-layer or full64-layer model evaluation.
+-The recurrent component entry executes. The other dense ROOT entry and
+ complete Conv/GDN/dense/token histories are not qualified by this test.
+-Host reference math is TEST VALIDATION ONLY. No CPU reference/fallback or
+ host learned arithmetic is linked into the frozen Work firmware.
+-The STOPs execute actual worker programs through the raw command endpoint.
+ They are not whole-ROOT EOG/END/Close or native cleanup authority.
+-To avoid recalculating the same expensive CPU reference for every emitted
+ publisher command word,the observer checks it once per job/sequence and
+ then compares ALL4096 output/canary words on every reuse. The final test
+ proves exactly4 full reference evaluations per worker. No firmware RISC,
+ tensor,NoC,source or completion instruction is skipped. This is a local
+ test-speed improvement,NOT an inference-throughput improvement.
+
+Current result:
+-Main and independent clean four-phase processes ACTUALLY exited0,empty
+ stderr,ASan+UBSan enabled. Complete stdout is byte-identical,SHA256:
+ 38bcead763a2f2e7285db39b2b85b09f373da7e0435da65f3739263daa114024.
+-The changed coordinator-test main guard also passes its unchanged default
+ execution:1428 descriptor calls,160 faults,3 coupled workers,actual STOPs.
+ Its complete stdout exactly matches the accepted4529a7b8ca evidence:
+ 705674fe440bd460eb04d78b3d6c45181904c0dc9ee5f9760c9a95f9639f4aaa.
+-Python -O,PYTHONOPTIMIZE=1,and a role override each refuse before reading
+ source/cache data or compiling. Both final phase sources and their test
+ runner match byte-for-byte between main and clean source trees.
+
+Next work:
+Add the matching native source/initialization ownership,prepared firmware
+selection and upload session,qualify its whole lifetime and remaining
+mixed-phase integration,then run a controlled real27B benchmark. Do not
+rerun these unchanged complete phases simply to restate their results.
+
+Native integration observation from the current source:
+The old L1 journal already contains ROOTab400..aff00 data and the longer
+peer service68000..6c4d8. The missing journal span is ROOT6c000..6e000:
+the existing ROOT auxiliary snapshot stops at6c000. Its existing native VM
+alias already covers that range,so a distinct prepared-only journal needs
+an additional8192B,not a larger VM alias. This is inspected geometry,NOT
+implemented native ownership or a new permission to launch the candidate.
+
+Reproduce after building the pinned inspect ROOT and prepared worker:
+python3 tools/pioneer/tests/run_pioneer_q38_prepared_q4_phase_instruction_tests.py ABS_PREPARED_ROOT ABS_PREPARED_WORKER ABS_MODEL ABS_EXISTING_CACHE
+
+The installed driver,Assistant,boot system,SD cards,CPU/RAM configuration
+and hardware connections are unchanged. No actual Pioneer access occurred.
+Sibling qwen38-prepared-q4-complete-phases-20261105/ holds closed actual
+stdout/exit/guard records only,not binaries or learned/prepared payloads.
+The overall performance goal remains active.

@@ -1,0 +1,22 @@
+{
+  "main_four_phase_exit": 0,
+  "clean_four_phase_exit": 0,
+  "main_clean_complete_stdout_identical": true,
+  "main_clean_stdout_sha256": "38bcead763a2f2e7285db39b2b85b09f373da7e0435da65f3739263daa114024",
+  "coordinator_default_regression_exit": 0,
+  "coordinator_stdout_matches_prior_checkpoint": true,
+  "all_three_stderr_bytes": 0,
+  "optimized_python_exit": 1,
+  "optimized_environment_exit": 1,
+  "role_override_exit": 1,
+  "retained_workers_per_phase_run": 119,
+  "whole_projection_run_calls_per_phase_run": 4,
+  "matrix_jobs_per_phase_run": 476,
+  "precise_activation_producers_per_phase_run": 68,
+  "worker_stops_per_phase_run": 119,
+  "checked_output_rows_per_phase_run": 46080,
+  "whole_hidden_layer_or_model": false,
+  "native_owner": false,
+  "physical_card_access": false,
+  "new_inference_tps": null
+}

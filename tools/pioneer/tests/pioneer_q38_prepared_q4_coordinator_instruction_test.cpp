@@ -204,6 +204,7 @@ struct CoordinatorPeer:PreparedQ4Peer {
   if(send){assert(coordinator);coordinator->Incoming(*this,bytes);}
  }
 };
+#ifndef PIONEER_Q38_PREPARED_COORDINATOR_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==4);setvbuf(stdout,nullptr,_IOLBF,0);(void)&RunPersistentGdnPair;(void)&Compare;(void)&Round;
  PreparedRootImage image(argv[1]);unsigned stamps=0,refusals=0,workers=0,stack=0;
@@ -288,3 +289,4 @@ int main(int argc,char** argv){
  }
  printf("PASS_PREPARED_COORDINATOR_INSTRUCTIONS actualMatrixJobs%u refusals%u coupledVirginWorkers%u maxStack%u/8192;FUNCTION_ABI_SYNTHETIC_SOURCE_NOT_WHOLE_ROOT_NATIVE_MODEL_CARD_OR_TPS\n",stamps,refusals,workers,stack);
 }
+#endif
