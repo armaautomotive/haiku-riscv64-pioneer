@@ -1,0 +1,124 @@
+Corrected Q4 integrated into the complete returning worker -- 2026-11-05
+=====================================================================
+
+OFFBOARD CORRECTNESS CHECKPOINT ONLY. NOT A NEW DRIVER OR SPEED RESULT.
+The measured complete27B baseline remains0.172813448..0.172816755tok/s.
+20tok/s remains unmet. No Pioneer IO,install,reboot,power,SD,model or
+Assistant change occurred while producing this checkpoint.
+
+What changed
+------------
+The Q4 Work branch now uses the previously physically checked native
+three-product integer dot and ORIGINAL per-K16 FP32 affine inside the
+actual full returning worker,not a detached arithmetic diagnostic.
+Q8/Q6 and checked Q4 retain their original paths. Same complete worker,
+original authenticated2304B weight tiles,metadata helper,NoC/source plan,
+descriptor/control/publisher/ACK/commit/STOP paths. No CPU inference,
+learned-product upload,reference callback,requantization or fallback was
+added to Work. CPU arithmetic expectations exist ONLY in local tests.
+
+This first integration deliberately retains the original source format:
+on-card pure integer operations convert q exactly to z+7+escape,where
+z=min(q,14)-7. Native integer-input FPU products reconstruct the original
+dot BEFORE its original non-fused affine update. Input conversion retains
+-128;the validated original native activation buffer is not overwritten.
+The new temporary operand headers/data end9d140,within the existing
+private peer extent,and preserve all original batch/input canaries.
+
+The complete-worker test found a genuine integration error:the metadata
+byte-import helper left Config1 in its byte-import format. The new Work
+branch now explicitly restores0x60aa0000 before native matrix operations.
+The observer also needed to observe actual RV fences in service/text,not
+just the wrapper sections. Neither change inserts expected results or
+skips guest code. Unknown operations,undefined/pending data,unsafe source
+ownership/configuration changes and premature output reads still fail.
+
+Source/build evidence
+---------------------
+Independent main and clean-source builds produced the SAME149880B ELF:
+8a7c6543e59a4067cee72d67843ca2d33119c307a8277bd14a70cb80f2f41e2f
+Each build FIRST reproduced the entire accepted vector92 worker and its
+matrix object,whole old ELF4b3dc0c96d3888b9c43af683f58678cc91cade7c67e955413bad8c5e16d52870.
+The unchanged non-math audit checks EVERY old service byte,not a blanket
+service exclusion. Only six explicitly named arithmetic/helper functions
+may follow the old9888B service prefix. Other changed non-math words must
+be symbolic calls/data addresses to verified entire original targets.
+The old convolution/service functions remain intact.
+
+New code fits EXISTING linker caps,without implying native authority:
+text7844/8192B;affine4680/5376B;service15196/24576B;fetch1292/1792B.
+No undefined symbols,writable globals/GOT,unbounded/dynamic frames or
+unqualified rendezvous CSR was admitted. Reserved return-register use
+remains the exact original two moves. Combined tested stack3540/8192B.
+Native packaging/mapping/lifetime qualification has NOT been added.
+
+Executed evidence
+-----------------
+Main complete-image ASan+UBSan process81740 ACTUALLY exited0:
+27 shapes(Q8/Q4/Q6 x K5120/6144/17408 x groups1/3/16),54 changed-input
+jobs through retained real guest state,12 NoC-loss inert refusals,8
+non-finite metadata refusals. Every output matched original independent
+FP32 expectations and the accepted complete control image. Both jobs use
+actual source reads,held payload,ACK-before-commit and real STOP.
+The strict observer consumes actual L1 operands and shares physical Dst
+between native FPU and metadata/affine SFPU instructions. It executes
+the real RV32 and Tensix stream,with ONLY synthetic IO/NoC endpoints.
+
+Complete main stdout20647B SHA:
+3b5a6bfcb60fd83f9f27f4975b18d253bd0d6e8fffdedfa9263aaf8264f19d84
+Main stderr5440B SHA:
+e7be489d8842112e0ea11f22f268b457da6bf0a65413ab3076aa8f5a7d03ff88
+Stderr contains20 EXPECTED injected-fault diagnostics(12 NoC failures,
+8 non-finite metadata refusals),not a failed positive case. No sanitizer
+failure occurred;no physical/native test was run.
+
+Immutable-whole-ROM runner separately authenticated ALL new/control/
+legacy fixture bytes. Clean pilot62495 and main fault runner35426 both
+ACTUALLY exited0. Main+clean data conversion checks cover131072 nibble
+combinations,all65536 possible native operand patterns and1280 complete
+panels across all five allowed original raw addresses.
+
+Clean full closed runner89930 ACTUALLY exited0 with the SAME27 shapes,
+54 changed-input jobs,12 NoC-loss inert refusals and8 finite refusals.
+All immutable ROM/control/legacy snapshots authenticated before execution.
+Complete clean stdout22508B SHA:
+eb76d7417f5d5e9bb9151291f3e5a6676c07361811e736802482bf0efd404692
+Its5440B expected-fault stderr is BYTE-IDENTICAL to main above.
+The final summary explicitly reports realStopCases27;fault-only runs are
+labelled PARTIAL and report0 realStopCases rather than claiming coverage
+of positive paths they did not execute.
+
+Reproduce from this repository:
+ python3 tools/pioneer/build_qwen38_exact_q4_work_worker.py \
+  /Volumes/HaikuBuildLocal/generated.riscv64 /absolute/new/private/output
+ python3 tools/pioneer/tests/run_pioneer_q38_exact_q4_work_tests.py \
+  /absolute/new/private/output
+Only --inspect-candidate bypasses the immutable whole-image pins in the
+builder;the closed execution runner never bypasses those pins.
+
+Performance constraint,not a prediction
+--------------------------------------
+This version spends MORE on-card scalar instructions converting original
+weights and repeating BF16 inputs. For example,K5120/groups16/two jobs:
+accepted control5522145 versus new44090461 executed RV instructions.
+K17408/groups16:18429537 versus149547997. These are EMULATOR instruction
+counts,NOT physical time,tokens/sec or a predicted slowdown/speedup.
+They are a reason NOT to promote this as the fast driver without work
+on its data path. No claim is made that three FPU products are faster
+than the old two integer-overlay matrix operations.
+
+Next performance work must remove repeated conversion,not add UI or
+another unchanged fixed diagnostic. Use the already lossless native
+primary+escape format in the prepared weights/source path,within the
+EXISTING measured seven source-bank caps;dense masks exceed those caps,
+so the measured sparse-mask/index allocation is required. Preserve exact
+original metadata and rounding. Reuse activation conversion safely.
+Then qualify the actual complete native worker/USER pair and measure the
+same public real27B request before claiming a performance improvement.
+
+Private logs/builds:
+/private/tmp/pioneer-q4-work-20261105.A90ma5xQ
+Independent source:
+/private/tmp/pioneer-q4-work-clean-20261105.M2EqCD8W
+No learned weights/prepared payloads or binaries are published.
+Overall goal remains ACTIVE;no speed or full-backend completion claim.

@@ -570,6 +570,9 @@ Batch4Stage(
 #endif
 #endif
 #endif
+#ifdef PIONEER_Q38_EXACT_Q4_WORK_IMAGE
+#include "PioneerQ38ExactQ4Work.inc"
+#endif
 #ifdef PIONEER_Q38_SFPU_ACCUMULATOR
 // Private fixed-frame caller ONLY:sealed loops p=0..last per fetched block,
 // raw90000..90d40,metadata91000..91280,stack6e000..70000 are DISJOINT.
@@ -705,6 +708,9 @@ extern "C" unsigned block_main()
 		for(unsigned word=0;word<56;word++)Words(inputBase)[inputs/2+word]=0;
 		(void)Words(inputBase)[inputs/2+55];Fence();
 	}
+#endif
+#ifdef PIONEER_Q38_EXACT_Q4_WORK_IMAGE
+	if(skipDotCheck && type==12)return PioneerQ38ExactQ4Work(job);
 #endif
 	Setup();
 #ifdef PIONEER_Q38_VECTOR_PANEL

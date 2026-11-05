@@ -1,0 +1,109 @@
+EXACT_Q4_WORK_ACTUAL_CASE type8 K5120 groups1
+PASS QGW3 worker69/type8/ACTUAL fullK5120+1280tensor instructions/42 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK5120+1280tensor instructions/42 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type8 K5120 groups1 changedInputJobs2 nativeUnpacks0 exactStores0 RV930919/930939;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type8 K5120 groups3
+PASS QGW3 worker69/type8/ACTUAL fullK5120+3840tensor instructions/122 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK5120+3840tensor instructions/122 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type8 K5120 groups3 changedInputJobs2 nativeUnpacks0 exactStores0 RV2315855/2315875;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type8 K5120 groups16
+PASS QGW3 worker69/type8/ACTUAL fullK5120+20480tensor instructions/642 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK5120+20480tensor instructions/642 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type8 K5120 groups16 changedInputJobs2 nativeUnpacks0 exactStores0 RV11317939/11317959;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type8 K6144 groups1
+PASS QGW3 worker69/type8/ACTUAL fullK6144+1536tensor instructions/50 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK6144+1536tensor instructions/50 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type8 K6144 groups1 changedInputJobs2 nativeUnpacks0 exactStores0 RV1094983/1095003;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type8 K6144 groups3
+PASS QGW3 worker69/type8/ACTUAL fullK6144+4608tensor instructions/146 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK6144+4608tensor instructions/146 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type8 K6144 groups3 changedInputJobs2 nativeUnpacks0 exactStores0 RV2755823/2755843;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type8 K6144 groups16
+PASS QGW3 worker69/type8/ACTUAL fullK6144+24576tensor instructions/770 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK6144+24576tensor instructions/770 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type8 K6144 groups16 changedInputJobs2 nativeUnpacks0 exactStores0 RV13551283/13551303;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type8 K17408 groups1
+PASS QGW3 worker69/type8/ACTUAL fullK17408+4352tensor instructions/140 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK17408+4352tensor instructions/140 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type8 K17408 groups1 changedInputJobs2 nativeUnpacks0 exactStores0 RV2915231/2915251;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type8 K17408 groups3
+PASS QGW3 worker69/type8/ACTUAL fullK17408+13056tensor instructions/412 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK17408+13056tensor instructions/412 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type8 K17408 groups3 changedInputJobs2 nativeUnpacks0 exactStores0 RV7617543/7617563;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type8 K17408 groups16
+PASS QGW3 worker69/type8/ACTUAL fullK17408+69632tensor instructions/2180 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type8/ACTUAL fullK17408+69632tensor instructions/2180 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type8 K17408 groups16 changedInputJobs2 nativeUnpacks0 exactStores0 RV38182571/38182591;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type12 K5120 groups1
+PASS QGW3 worker69/type12/ACTUAL fullK5120+640tensor instructions/12 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type12/ACTUAL fullK5120+960tensor instructions/12 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type12 K5120 groups1 changedInputJobs2 nativeUnpacks2560 exactStores2720 RV671653/3010979;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type12 K5120 groups3
+PASS QGW3 worker69/type12/ACTUAL fullK5120+1920tensor instructions/32 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type12/ACTUAL fullK5120+2880tensor instructions/32 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type12 K5120 groups3 changedInputJobs2 nativeUnpacks7680 exactStores8160 RV1320051/8489909;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type12 K5120 groups16
+PASS QGW3 worker69/type12/ACTUAL fullK5120+10240tensor instructions/162 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type12/ACTUAL fullK5120+15360tensor instructions/162 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type12 K5120 groups16 changedInputJobs2 nativeUnpacks40960 exactStores43520 RV5522145/44090461;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type12 K6144 groups1
+PASS QGW3 worker69/type12/ACTUAL fullK6144+768tensor instructions/14 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type12/ACTUAL fullK6144+1152tensor instructions/14 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type12 K6144 groups1 changedInputJobs2 nativeUnpacks3072 exactStores3264 RV783817/3591015;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type12 K6144 groups3
+PASS QGW3 worker69/type12/ACTUAL fullK6144+2304tensor instructions/38 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type12/ACTUAL fullK6144+3456tensor instructions/38 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type12 K6144 groups3 changedInputJobs2 nativeUnpacks9216 exactStores9792 RV1560799/10164481;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type12 K6144 groups16
+PASS QGW3 worker69/type12/ACTUAL fullK6144+12288tensor instructions/194 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type12/ACTUAL fullK6144+18432tensor instructions/194 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type12 K6144 groups16 changedInputJobs2 nativeUnpacks49152 exactStores52224 RV6596193/52877021;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type12 K17408 groups1
+PASS QGW3 worker69/type12/ACTUAL fullK17408+2176tensor instructions/38 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type12/ACTUAL fullK17408+3264tensor instructions/38 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type12 K17408 groups1 changedInputJobs2 nativeUnpacks8704 exactStores9248 RV2030317/9984107;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type12 K17408 groups3
+PASS QGW3 worker69/type12/ACTUAL fullK17408+6528tensor instructions/106 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type12/ACTUAL fullK17408+9792tensor instructions/106 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type12 K17408 groups3 changedInputJobs2 nativeUnpacks26112 exactStores27744 RV4222539/28598285;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type12 K17408 groups16
+PASS QGW3 worker69/type12/ACTUAL fullK17408+34816tensor instructions/548 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type12/ACTUAL fullK17408+52224tensor instructions/548 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type12 K17408 groups16 changedInputJobs2 nativeUnpacks139264 exactStores147968 RV18429537/149547997;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type14 K5120 groups1
+PASS QGW3 worker69/type14/ACTUAL fullK5120+1280tensor instructions/12 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type14/ACTUAL fullK5120+1280tensor instructions/12 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type14 K5120 groups1 changedInputJobs2 nativeUnpacks0 exactStores0 RV966371/966391;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type14 K5120 groups3
+PASS QGW3 worker69/type14/ACTUAL fullK5120+3840tensor instructions/32 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type14/ACTUAL fullK5120+3840tensor instructions/32 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type14 K5120 groups3 changedInputJobs2 nativeUnpacks0 exactStores0 RV2426683/2426703;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type14 K5120 groups16
+PASS QGW3 worker69/type14/ACTUAL fullK5120+20480tensor instructions/162 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type14/ACTUAL fullK5120+20480tensor instructions/162 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type14 K5120 groups16 changedInputJobs2 nativeUnpacks0 exactStores0 RV11918711/11918731;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type14 K6144 groups1
+PASS QGW3 worker69/type14/ACTUAL fullK6144+1536tensor instructions/14 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type14/ACTUAL fullK6144+1536tensor instructions/14 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type14 K6144 groups1 changedInputJobs2 nativeUnpacks0 exactStores0 RV1137527/1137547;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type14 K6144 groups3
+PASS QGW3 worker69/type14/ACTUAL fullK6144+4608tensor instructions/38 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type14/ACTUAL fullK6144+4608tensor instructions/38 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type14 K6144 groups3 changedInputJobs2 nativeUnpacks0 exactStores0 RV2888823/2888843;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type14 K6144 groups16
+PASS QGW3 worker69/type14/ACTUAL fullK6144+24576tensor instructions/194 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type14/ACTUAL fullK6144+24576tensor instructions/194 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type14 K6144 groups16 changedInputJobs2 nativeUnpacks0 exactStores0 RV14272247/14272267;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type14 K17408 groups1
+PASS QGW3 worker69/type14/ACTUAL fullK17408+4352tensor instructions/38 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type14/ACTUAL fullK17408+4352tensor instructions/38 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type14 K17408 groups1 changedInputJobs2 nativeUnpacks0 exactStores0 RV3032931/3032951;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type14 K17408 groups3
+PASS QGW3 worker69/type14/ACTUAL fullK17408+13056tensor instructions/106 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type14/ACTUAL fullK17408+13056tensor instructions/106 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type14 K17408 groups3 changedInputJobs2 nativeUnpacks0 exactStores0 RV7985867/7985887;NOT_SILICON_TPS
+EXACT_Q4_WORK_ACTUAL_CASE type14 K17408 groups16
+PASS QGW3 worker69/type14/ACTUAL fullK17408+69632tensor instructions/548 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS QGW3 worker69/type14/ACTUAL fullK17408+69632tensor instructions/548 genuine reads+256B payload ACK THEN4B commit/2048 missing-ACK steps/no ROOT master-counter change/ROOT slave delta2,5,2,2/real sequence1 WAIT/queued-next-descriptor1;SYNTHETIC endpoints,NOT model/native/physical/TPS
+PASS_EXACT_Q4_WORK_ACTUAL_CASE type14 K17408 groups16 changedInputJobs2 nativeUnpacks0 exactStores0 RV40179951/40179971;NOT_SILICON_TPS
+PASS_EXACT_Q4_WORK_ACTUAL_RETURNING_IMAGE shapes27 changedInputJobs54 NoCLossInert12 nonfiniteRefusals8 stack3540/8192;originalFP32Outputs sourceNoCPublisherACK retainedPhysicalState realSTOP;NO_NATIVE_HARDWARE_MODEL_OR_TPS
