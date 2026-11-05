@@ -1,0 +1,99 @@
+Original-Q4 full-K + original FP32 affine -- OFFBOARD,2026-11-05UTC
+=================================================================
+
+ACCEPTED SOURCE/COMPILED-IMAGE QUALIFICATION ONLY. NOT A NEW MODEL RATE.
+This extends the physically passed corrected K16 integer-panel primitive
+to COMPLETE K5120/K6144/K17408 projections and the original affine order.
+There is NO Pioneer connection,driver exchange or GPU launch in this phase.
+Installed Assistant/Work/stable driver remain unchanged;last real full27B
+accepted rate is still0.172813448..0.172816755tok/s,20tok/s UNMET.
+
+New code,not another residency/UI change:
+- PioneerQ38ExactQ4Affine runs all K16 panels,with three complete corrected
+  integer matrix products each. Original integer activations are represented
+  EXACTLY in BF16;no arbitrary BF16 fidelity truncation is authorized.
+- FP32 dot result is loaded AS FP32 and is NOT cast as integer-encoded Dst.
+  SFPU preserves EVERY old non-fused rounding point:
+  old+((coefficient*scale)*dot+(negativeMinimum*scale)*sum).
+  Metadata is reused across the adjacent K32 pair,but TWO separate K16
+  affine updates are retained. No shifted-minimum/combined-dot shortcut.
+- The wrapper changes only the primitive's ALL-Dst clear into physical
+  faces4/5 selective clears. Coefficient/minimum/accumulator Dst32 rows
+  96..111 survive every following panel. A full zero UNPACK initializes
+  all of those rows/physical halves/padding once per complete projection.
+- Original metadata uses no-flip FP32 UNPACK;the actual corrected-panel
+  descriptors and thread fields are restored before the next integer dot.
+  Every original producer/matrix/SFPU completion precedes consumer/config
+  rewrite/publication. No guessed waits,NoC/PCIe intermediate or CPU model
+  callback is introduced.
+- The actual new RV32I image copies only already prepared local panel,
+  mask,integer-input,metadata/scale/sum DATA. Its RISC controller performs
+  no learned dot or FP32 affine math. GPU matrix/SFPU units do that work.
+
+PRIVATE prototype geometry is not a production source-bank fit claim:
+fixed corrected-panel scratch90000/90100/90200/90300,input91000,output92000,
+metadata94000/94080 with private headers,zero95ff0..96400,sourcea0000 plus
+352B/panel. Source includes DENSE per-panel masks and repeated metadata;
+it is NOT the qualified sparse-mask global layout or a new allocation cap.
+New code is5448B,within its private offboard8KiB ROM but NOT the fixed
+tag95 diagnostic's4KiB ownership. No installed/native owner can launch it.
+Separate source/NoC/cohort/native ownership and full-model gates remain.
+
+Actual terminal0 local receipts (all final stderr EMPTY):
+- Main master97149:three cross-compiled images,direct and actual-image tests.
+- Independent clean master39921:git archive c335784f43 of committed source
+  and dependencies,plus ONLY these new files. Unrelated dirty resident/
+  FlashNext/native87 work is excluded. All three whole boot/text binaries
+  compare byte-identically against main,not just selected instructions.
+- ASan/UBSan direct observer:12 complete jobs,1835008 original scalar
+  reference products,10 negative controls. Changed source/inputs/metadata/
+  scale across jobs;two asymmetric producer schedules/all three widths.
+- Actual compiled RV32I execution:12 cases;all three full widths/two jobs
+  with changed source,ALL16 original FP32 outputs exact and32 padding words
+  unchanged. Config readback/missing ACK/final matrix wait/missing producer/
+  invalid scale failures publish NO output. Maximum allocated stack176B
+  of8192,maximum executed RV instructions3263167;NOT a speed prediction.
+- Independent physical-Dst observer checks full initialization,selective
+  clear preservation,real SFPU load/store ordering and original rounding.
+  Wrong integer dot conversion or broad Dst clear is rejected. Its SFPU
+  arithmetic uses the existing bit-level Blackhole FMA model,not host FMA.
+
+Real ORIGINAL model source,still LOCAL validation with SYNTHETIC inputs:
+- Main36130 actual0;independent clean14728 actual0.
+- SAME open O_NOFOLLOW/read-only source descriptor is whole-file SHA checked
+  c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+  All851 tensors/source metadata validated;FD identity/times stable at end.
+- ALL193 Q4 matrices,one rotating first/middle/last output band per matrix,
+  COMPLETE K,386 actual-image projection jobs with changed synthetic
+  activation/scale input.221824 panel jobs,6176 original FP32 output words
+  match the independent original row-major GGUF integer/affine reference.
+  Original HALF/factors also match the actual preparation helper exactly.
+- Whole main/clean real transcripts compare byte-identically,SHA
+  2ae16a2556df5b90a856655f8f20c4709b3a0b7274796d790ea18bde7363c59a.
+  Only aggregate counts are published,no learned/prepared weights or binary.
+  These are NOT real hidden activations,model generation,quality or timing.
+
+Whole shader text hashes,5448B each,identical main/clean:
+ K5120 e211a595faa7a61159e5a3bb8748925f75a88003a61cd9bc63012f9fcdb73d2a
+ K6144 d7987b9a641b89c4212fd3c71dbb2a8f84d1c37f9a09c1ac6e41fdcb0e63b61e
+ K17408 477a360ad05c5428beca060b2f132b705a6a4e4b76f729d18d2b9d4996f2d76f
+Each4B boot SHA d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd.
+Qualified fixed tag95 primitive and old/default/native backends are unedited.
+
+Reproduce locally,NO hardware permission:
+ sh tools/pioneer/tests/run_pioneer_q38_exact_q4_affine_tests.sh HAIKU_SDK
+ sh tools/pioneer/tests/run_pioneer_q38_exact_q4_affine_real_tests.sh IMAGE5120 IMAGE6144 IMAGE17408 ORIGINAL_GGUF
+Both use ASan/UBSan and disable FP contraction. CPU reference code exists
+ONLY in tests;the new producer explicitly refuses kernel/Work/validation
+role inclusion. Earlier local-only observer failures (new metadata ADC
+coverage and pending SFPU store readiness) were corrected without changing
+the expected original arithmetic. No failing candidate touched hardware.
+
+Official instruction semantics consulted for selective clear and FP32 load:
+ https://raw.githubusercontent.com/tenstorrent/tt-isa-documentation/main/WormholeB0/TensixTile/TensixCoprocessor/ZEROACC.md
+ https://raw.githubusercontent.com/tenstorrent/tt-isa-documentation/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPLOAD.md
+
+Next:guarded physical full-K/affine qualification,production source/mask
+loader and complete cohort integration,then the SAME actual full-card
+request/answer comparison and measured generation window. No performance
+conclusion follows from these operation/instruction counts or local passes.

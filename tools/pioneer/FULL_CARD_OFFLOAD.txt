@@ -298,3 +298,22 @@ stage/helper is SPENT FOREVER;never rerun unchanged. Correct full27B rate
 remains tag92's0.1728tok/s. Next integrate full-K and original affine/group
 order before full backend/model equivalence and throughput measurement.
 See benchmarks/qwen38-exact-q4-physical-20261105.txt and whole evidence.
+
+Corrected-Q4 full-K/original affine integration (OFFBOARD,not deployed)
+------------------------------------------------------------------
+PioneerQ38ExactQ4Affine now executes the physically passed integer-panel
+primitive across complete K5120/6144/17408 and retains EVERY original K16
+FP32 affine update. FP32 dots are consumed as FP32,not integer-encoded Dst.
+Selective dot-only clears preserve resident metadata/accumulator rows;
+full zero initialization defines all physical halves/padding. No new host
+model calculation/round trip exists in the compiled producer.
+
+Main+independent clean actual compiled-image tests pass with identical
+whole binaries. ALL193 original Q4 matrices pass386 full-width projection
+jobs/6176 exact original FP32 outputs using changed SYNTHETIC activations.
+The same open whole-SHA-authenticated851-source file remains stable. This
+is local validation,NOT physical full-K/model inference or tokens/sec.
+Its dense local packets/new ROM are NOT source-bank/native authority.
+Next physical/native/source/cohort gates and actual full-model answer/rate
+remain required. Correct full27B rate stays0.1728tok/s;goal ACTIVE/UNMET.
+See benchmarks/qwen38-exact-q4-fullk-affine-20261105.txt and whole logs.
