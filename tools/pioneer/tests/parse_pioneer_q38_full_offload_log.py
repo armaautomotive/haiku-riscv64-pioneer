@@ -14,6 +14,7 @@ import pathlib
 import re
 
 TOTAL=19399024640
+PREPARED_TOTAL=20470759424
 MIB=1048576
 AUTH='FULL_OFFLOAD_PROGRESS id1 value4294967295 Authenticating Qwen27B; CPU will load vocabulary only,not model weights or an inference context.'
 READY='FULL_OFFLOAD_VOCABULARY_READY_NO_CPU_CONTEXT;GPU_UPLOAD_NOT_YET_STARTED'
@@ -27,22 +28,25 @@ class InvalidLog(ValueError):
     pass
 def require(condition,message):
     if not condition:raise InvalidLog(message)
-def upload_prefix(lines,cursor):
+def upload_prefix(lines,cursor,total=TOTAL):
+    require(type(total) is int and total in (TOTAL,PREPARED_TOTAL),'known exact source upload layout required')
+    displayed=format(total/MIB,'.1f')
+    pattern=UPLOAD if total==TOTAL else re.compile(r'FULL_OFFLOAD_PROGRESS id2 value('+NUMBER+r') Full-card Qwen27B upload ('+NUMBER+r'\.[0-9])/'+re.escape(displayed)+r' MiB\. No CPU inference\.')
     events=0;previous=0
     while cursor<len(lines) and lines[cursor]!=RUNNING:
-        match=UPLOAD.fullmatch(lines[cursor]);require(match is not None,'unexpected,failed or out-of-order upload line')
-        value=int(match[1]);shown=Decimal(match[2]);require(0<=value<=1000 and shown<=Decimal('18500.4'),'upload bounds')
+        match=pattern.fullmatch(lines[cursor]);require(match is not None,'unexpected,failed or out-of-order upload line')
+        value=int(match[1]);shown=Decimal(match[2]);require(0<=value<=1000 and shown<=Decimal(displayed),'upload bounds')
         # Display rounds to0.1MiB;percent is floor(realBytes*1000/TOTAL).
         # Require at least one increasing,4096-aligned original byte count
         # that satisfies BOTH fields,not an invented exact count from text.
         low=max(0,int(((shown-Decimal('.05'))*MIB).to_integral_value(rounding=ROUND_CEILING)))
-        high=min(TOTAL,int(((shown+Decimal('.05'))*MIB).to_integral_value(rounding=ROUND_FLOOR)))
-        low=max(low,(value*TOTAL+999)//1000,previous+4096)
-        high=min(high,((value+1)*TOTAL+999)//1000-1)
+        high=min(total,int(((shown+Decimal('.05'))*MIB).to_integral_value(rounding=ROUND_FLOOR)))
+        low=max(low,(value*total+999)//1000,previous+4096)
+        high=min(high,((value+1)*total+999)//1000-1)
         low=(low+4095)//4096*4096
         require(low<=high,'upload fields cannot describe increasing aligned bytes')
         previous=low;events+=1;cursor+=1
-    require(events>0 and previous==TOTAL,'complete upload required,not a progress prefix')
+    require(events>0 and previous==total,'complete upload required,not a progress prefix')
     return cursor,events
 def parse_complete(text,stderr=''):
     require(isinstance(stderr,str) and not stderr,'nonempty/unknown stderr is not an accepted successful transcript')

@@ -1,0 +1,2 @@
+PASS independent full-card rate whole-log reader:2 valid available/unavailable fixtures/130 truncation,missing,ordering,count,rate,timestamp,hex,stderr refusals;synthetic ONLY,NO physical result or cleanup authority
+PASS prepared rate reader exact20GB layout/legacy regression/19523 increasing upload rows/118 truncation,mode,bytes,rate,exit,stderr refusals;SYNTHETIC_NO_HARDWARE_OR_TPS

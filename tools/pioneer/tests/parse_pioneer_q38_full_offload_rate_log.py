@@ -9,7 +9,7 @@ from decimal import Decimal
 import json
 import pathlib
 import re
-from parse_pioneer_q38_full_offload_log import AUTH,RUNNING,TOTAL,NUMBER,InvalidLog,require,stable_text,upload_prefix
+from parse_pioneer_q38_full_offload_log import AUTH,RUNNING,TOTAL,PREPARED_TOTAL,NUMBER,InvalidLog,require,stable_text,upload_prefix
 
 READY='FULL_OFFLOAD_RATE_READY_NO_CPU_CONTEXT;REQUEST_MAX32_PUBLIC_COUNTING'
 PREFIX='FULL_OFFLOAD_PROGRESS id2 value4294967295 '
@@ -19,12 +19,14 @@ UNAVAILABLE=PREFIX+'Full-card rate unavailable: insufficient post-prompt window 
 DONE=re.compile(r'FULL_OFFLOAD_RATE_DONE P100A full-offload candidate: ('+NUMBER+r') output tokens; prompt\+generation ('+NUMBER+r'\.[0-9]{3})s,total ('+NUMBER+r'\.[0-9]{3})s\. All inference on card; CPU vocabulary/text only\. Clean END; weights released\. Not a warm-token speed measurement\.')
 ANSWER=re.compile(r'FULL_OFFLOAD_RATE_ANSWER bytes('+NUMBER+r') hex=([0-9a-f]*)')
 FINAL=re.compile(r'PASS_FULL_OFFLOAD_RATE_JOB clean_worker_exit1 rate_available([01]) output_tokens('+NUMBER+r');CPU_INFERENCE_CONTEXTS0;POST_PROMPT_COUNT_WINDOW_NOT_BROAD_QUALITY_OR_ISOLATED_LATENCY')
-def parse_complete(text,stderr=''):
+def parse_complete(text,stderr='',*,prepared_q4=False):
+    require(type(prepared_q4) is bool,'explicit prepared-layout selector required')
+    planned=PREPARED_TOTAL if prepared_q4 else TOTAL
     require(isinstance(stderr,str) and not stderr,'nonempty/unknown stderr')
     require(isinstance(text,str) and len(text)<=16*1024*1024 and text.isascii() and text.endswith('\n')
             and '\r' not in text and '\0' not in text,'whole ASCII/LF transcript required')
     lines=text[:-1].split('\n');require(len(lines)>=9 and lines[:2]==[AUTH,READY],'exact full-card source/ready prefix')
-    cursor,uploads=upload_prefix(lines,2)
+    cursor,uploads=upload_prefix(lines,2,planned)
     require(cursor<len(lines) and lines[cursor]==RUNNING,'exact running marker');cursor+=1
     counts=[];prompts=limit=first_warm=None
     while cursor<len(lines):
@@ -62,13 +64,14 @@ def parse_complete(text,stderr=''):
     require(length<=8192 and len(answer[2])==length*2 and len(raw)==length and b'\0' not in raw,'answer hex/length')
     return {'scope':'one public counting request,maximum32 outputs,full-card candidate','output_tokens':tokens,
             'answer_hex':answer[2],'answer_utf8_preview':raw.decode('utf8',errors='replace'),'prompts':prompts,
-            'count_rows':len(counts),'upload_rows':uploads,'uploaded_bytes':TOTAL,'rate_available':available,
+            'count_rows':len(counts),'upload_rows':uploads,'uploaded_bytes':planned,'rate_available':available,
             'observed_post_prompt_count_rate_bounds':bounds,'broad_model_quality':False,
             'execution_or_cleanup_authority_from_log':False,'isolated_token_latency':False}
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('stdout',type=pathlib.Path);parser.add_argument('stderr',type=pathlib.Path)
+    parser.add_argument('--prepared-q4',action='store_true',help='require exact20470759424B prepared FFN layout,never infer mode from a log')
     args=parser.parse_args()
-    try:result=parse_complete(stable_text(args.stdout),stable_text(args.stderr))
+    try:result=parse_complete(stable_text(args.stdout),stable_text(args.stderr),prepared_q4=args.prepared_q4)
     except (OSError,InvalidLog,ValueError) as error:raise SystemExit('REFUSE_FULL_CARD_RATE_LOG '+str(error))
     print(json.dumps(result,sort_keys=True))
     print('PASS_COMPLETE_FULL_CARD_RATE_TRANSCRIPT_DATA_ONLY;NOT_BROAD_QUALITY_ISOLATED_LATENCY_OR_NATIVE_CLEANUP_AUTHORITY')

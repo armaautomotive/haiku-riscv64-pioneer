@@ -82,3 +82,16 @@ log verification before any speed figure. Poll only the specific protected
 processes/scoped files;no other driver/device command,reset or retry while
 live. A timeout/disconnect does NOT prove completion. The spent one-shot
 directory must never be rerun;unknown failure must retain its resources.
+
+Post-start reader preparation,NO running device/code change:
+The original whole-log reader deliberately expects19399024640 upload bytes.
+The prepared variant now has an EXPLICIT --prepared-q4 selector requiring
+20470759424B/19522.4MiB;it never infers/relaxes the source layout from text.
+All original count/timestamp/rate/answer/clean-exit checks are unchanged.
+Main+clean tests exit0 with identical output:19523 increasing synthetic
+upload rows,118 prepared-mode/truncation/bytes/rate/exit/stderr refusals,
+plus the original130 rate-reader and1047 four-token-reader refusals.
+The new reader also rechecks the COMPLETE old real vector92 transcript and
+returns its unchanged0.172813448..0.172816755tok/s result. No live transcript
+has been accepted as completed. Current protected processes13227/13228 are
+still live;no actual parent exit or restoration is claimed.
