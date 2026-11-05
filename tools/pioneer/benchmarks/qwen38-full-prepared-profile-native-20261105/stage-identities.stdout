@@ -1,0 +1,8 @@
+50170113b3b55d973b104c82afbad7987c1dd7b71e1935e930eea6ebb4eb7e45  /boot/home/pioneer-q38-full-prepared-profile-q4-20261105-a/tenstorrent_pci_probe-full-prepared-profile-q4-99
+f47b04f4f0e21211520d0d8a2285353c0a40807fc0f016daa7f3e2234870ef8d  /boot/home/pioneer-q38-full-prepared-profile-q4-20261105-a/HaikuAssistantQwen27FullOffload-prepared-profile-q4
+f810d61b543f07751ad1a3667f250afe3f4dc72454c8b6e9acbb1e7f60c0a5e0  /boot/home/pioneer-q38-full-prepared-profile-q4-20261105-a/pioneer-q38-full-offload-rate-smoke
+7f86b18aee1c509a6cffa7a65d1e4d6bbc404f605ce48c1cf9a24723afdb03ff  /boot/home/pioneer-q38-full-prepared-profile-q4-20261105-a/physical.sh
+9da2779fff0a8e6bfee69c936a7cd99a4b8a2147f17a6e88ea420127c2c3e9d3  /boot/home/P100APhaseWait-20261105.sh
+0e94b45cd03c64790c035259b5da8058ac4130ad282b839e157191c52578affe  /boot/home/P100APhaseLaunch-20261105.sh
+0:1:700 /boot/home/P100APhaseWait-20261105.sh
+0:1:700 /boot/home/P100APhaseLaunch-20261105.sh

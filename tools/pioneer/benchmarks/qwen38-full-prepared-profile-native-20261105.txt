@@ -71,3 +71,27 @@ actual parent/worker0,normal STOP/HOLD/drain/restoration/END,whole raw log
 checks and fresh independent postflight. Use measured dominant phases to
 select the next optimization. Do not call this checkpoint a speedup or
 claim that these MOCK/helper checks prove physical numerical correctness.
+
+Physical start -- 11:19:52UTC,NOT a completed timing result:
+Fresh whole read-only admission ACTUALLY exits0,empty stderr:all pinned
+stage/app/runtime/guard identities,idle stable041/gen26,64CPUs/full RAM.
+Initial modern scp refused because Haiku has no SFTP subsystem;the stage
+was confirmed empty before successful legacy scp -O transfer. All staged
+hashes/ownership/modes then match. No SSH identity check was weakened.
+ONE launch only:wrapper14503,actual physical parent14504,rate helper14599,
+USER worker14600. All four are confirmed live. The parent logs the actual
+stable26 -> tag99/gen27 exchange and FULL_CARD_RATE32_ACTIVE_DO_NOT_INTERVENE.
+The worker is authenticating the original;there is no parent.exit yet and
+no physical phase timing,speed,terminal,restoration or success claim.
+The stage is /boot/home/pioneer-q38-full-prepared-profile-q4-20261105-a;
+its one-shot markers must never be removed or reused. Only scoped PID/log
+reads while active:NO external driver/status/unload/kill/reset/power/file
+changes. A transport timeout is NOT termination. The exact wrapper records
+the physical parent's ACTUAL return;it has no retry/cleanup authority.
+Expected clean restoration is stable041/gen28,not the previous gen26.
+
+Primary clock-register specification independently rechecked before launch:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/CSRs.md
+The table explicitly defines mcycle0xb00 and mcycleh0xb80. Our emitted code
+uses only the already-audited read-only CSRRS/x0 high-low-high sequence;
+it neither writes counter/control CSRs nor assumes a clock frequency.
