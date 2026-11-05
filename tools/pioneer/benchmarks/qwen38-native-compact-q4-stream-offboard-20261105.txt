@@ -1,0 +1,94 @@
+Native compact Q4 full-K owner104 -- OFFBOARD checkpoint
+========================================================
+2026-11-05 UTC. Base2114f5e3a9fe8597ca17bc5b74c7805858091973+14
+new source files. This closes the missing native owner for the existing
+compact full-K kernels. No Pioneer SSH/device/admin/power/stage/install
+command was issued during this work;installed Assistant/driver unchanged.
+Last actual full27B0.164361584..0.164365058tok/s;20tok/s UNMET.
+
+Actual terminal qualifications
+------------------------------
+Main49969 EXIT0 and fresh clean71892 EXIT0,each eight children EXIT0 and
+all outer/child stderr empty. Children:SDK,contract compile+run,synthetic
+lease compile+run,private original-model lease compile+run,native endpoints.
+The clean tree is a full git archive of the base plus ONLY the14 new source
+overlays. It does not copy the pre-existing dirty native/resident WIP.
+
+Native driver1843416B SHA256:
+4722e956bfda10a5f8dbc2317bd5dd12d2de1b1099c3d33286b4b6447930f61e
+Default43 control925616B,unchanged baseline SHA256:
+2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+Both drivers,profile/native/control objects,generated GPU image header,
+both boot/text images and BOTH complete GPU ELFs are byte-identical between
+the independent builds. Seven child stdout streams are byte-identical;
+native stdout differs only in its exact qualification-directory line.
+Outer stdout honestly records different hashes for that native path line.
+
+The private compact weight header SHA:
+4db508f0cecda10062b7373d43f4b6e7308ad8cdcff03c361759ac0523a896b1
+Private prediction header SHA:
+c856c1747045a50c43e5b1f47a7e75999526bbc61960eed075246423392872de
+No generated learned bytes or binaries are published.
+
+What actually ran
+-----------------
+SDK:actual Haiku kernel compile/link with Werror,legacy NULL/default43
+unchanged,41 wrong/missing/old/defined0/fast-math role refusals. Actual
+template instantiation rejects wrong image role,three wrong Dst scope
+fields and wrong data role. New104 does not inherit86/87/Work authority.
+
+DATA contract:26908 unique L1 addresses,exact selected GDDR domains,both
+final buffers2560 payload words with all headers/gaps disjoint;692 dirty-
+result/tag/version/reserved/generation refusals. Fixed request392/result352.
+
+Synthetic actual compiled RV32/NIU/shared L1/SFPU/FPU lease:nine full-K
+cases,64 exact outputs each,complete107632B L1 and102400/348160B GDDR
+restoration.57 failure/refusal cases,including both compact metadata
+producer slots. Unknown retains all journals and no next IO/END/reset/retry.
+Native clock is a fixture clock here,NOT a kernel timing measurement.
+
+Private original-model actual compiled RV32 lease:nine first/middle/last
+gate/up/down bands,K5120/17408,two jobs each,576 exact words and complete
+GDDR/L1/NIU/FIFO/TLB/clock restoration. The unchanged strict instruction
+decoder runs the actual canonical L1 image;no result injection/PC skipping,
+payload copy or host K loop. Diagnostic inputs,NOT real prompt states.
+
+Native/control source bodies:317 valid/679 refused endpoint-fixture cases.
+FD/thread/team/generation/held semaphore/PCI identity/all17 VM domains,
+reset/FIFO/phase ledgers,known close order,uncertainty retention,wrong-thread
+END and every physical-domain boundary. Assigned phases are domain fixtures,
+NOT authentic physical ARC/prerequisite/completion proofs.
+
+Each tree independently hashes the full SAME-open original18973870528B
+GGUF c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747,
+parses its tensor directory without shared CXX code,compares EVERY selected
+row/block,checks every compact prepared/input/header byte and predicts288
+goldens using independent Fraction arithmetic:2654208 original weights,
+663552 rounded phases. Nanosecond source FD identity remains unchanged.
+No CPU learned/reference computation is compiled into the new driver.
+
+Source and evidence scope
+-------------------------
+All14 new files are identical in main and clean. Broad quoted-include
+closures frozen before/after:898 main/895 clean. The ONLY differing common
+files are the pre-existing dirty MetricsRole/FullOffloadProtocol/Role,
+TokenCallScope/TokenNativeEnd and tenstorrent_pci_probe.cpp;main additionally
+finds three inactive resident WIP files. Complete native/control binaries
+nevertheless match. These unrelated edits were neither changed nor staged.
+The adjacent receipt verifier checks the raw streams/source hashes and
+retains those explicit differences instead of claiming identical sources.
+
+Preliminary failures retained privately,not counted as passed tests:
+31312 EXIT1 on a misleading-indentation Werror before layout formatting
+was corrected. An initial clean launch raced archive extraction and EXIT1
+on a missing file;archive50523 then EXIT0,overlays were recopied and the
+fresh clean-b71892 qualification ran to EXIT0. No hardware action followed
+either failure. The final source was unchanged during both passed suites.
+
+Remaining
+---------
+No104 physical run or token-rate gain is proved. The next concrete step is
+a new source-authenticating client/typed one-shot parent with fresh runtime
+admission,then real on-card compact execution. All old fixed stages remain
+SPENT. This is not model-quality/full-format/cohort/resident-graph or Work
+qualification,and not completion of the20tok/s goal.

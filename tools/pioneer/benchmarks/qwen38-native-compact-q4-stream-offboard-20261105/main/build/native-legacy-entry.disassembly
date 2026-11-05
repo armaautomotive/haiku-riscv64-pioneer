@@ -1,0 +1,16 @@
+
+/private/tmp/pioneer-native-compact104-20261105.fJHpbQbr/main/build/tenstorrent_pci_probe-native-q4-fpu-stream104:     file format elf64-littleriscv
+
+
+Disassembly of section .plt:
+
+Disassembly of section .text:
+
+0000000000007016 <_Z44PioneerNativeCompactQ4StreamLegacyFindDevicePKc>:
+    7016:	1141                	add	sp,sp,-16
+    7018:	e422                	sd	s0,8(sp)
+    701a:	0800                	add	s0,sp,16
+    701c:	6422                	ld	s0,8(sp)
+    701e:	4501                	li	a0,0
+    7020:	0141                	add	sp,sp,16
+    7022:	8082                	ret

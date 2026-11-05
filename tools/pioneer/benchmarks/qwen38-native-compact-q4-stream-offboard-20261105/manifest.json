@@ -1,0 +1,300 @@
+{
+  "base_commit": "2114f5e3a9fe8597ca17bc5b74c7805858091973",
+  "files": {
+    "clean/actual-child-exits.txt": {
+      "bytes": 103,
+      "sha256": "ed746d8697693d95385d8e529a6a64a9077a162c9dd161bae22cee7aa1ccf6e9"
+    },
+    "clean/build/driver-role-refusals.txt": {
+      "bytes": 1604,
+      "sha256": "ea4bd74d14fab47cd2b2628e8d5dacaed683ce57080d28156af33881475bec36"
+    },
+    "clean/build/native-legacy-entry.disassembly": {
+      "bytes": 581,
+      "sha256": "8f346e958ee7a5bb6d9aa314d0ec99a0957546362c1e812cae7f5415e0861e15"
+    },
+    "clean/build/placement-compile-refusals.txt": {
+      "bytes": 156,
+      "sha256": "84788e5c0b3f57cdb99de9c71d84ecb5bd73e7145c09251f8bd9536bb235d247"
+    },
+    "clean/contract-compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/contract-compile.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/contract.log": {
+      "bytes": 242,
+      "sha256": "4e482a8f8e398b4f3719a7a61da32b3307f35d494264ef10b8460a7b9a51c0ed"
+    },
+    "clean/contract.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/lease-compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/lease-compile.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/lease.log": {
+      "bytes": 2091,
+      "sha256": "fe4edba6414078deb3595b69d65cbf7089c88eaf8c5203ca9b0faa67268f63e9"
+    },
+    "clean/lease.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/native.log": {
+      "bytes": 331,
+      "sha256": "0a2638858f1fdb6ca35baf2bff0412cd371fa3137848f8fe73de2278f3bb0ff7"
+    },
+    "clean/native.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/native/native-source-sha256.txt": {
+      "bytes": 1188,
+      "sha256": "2c7bc9d1bb05895ba9f34857d948b00106752eb9e6e5e0164ffc62bd78e9ad33"
+    },
+    "clean/outer.log": {
+      "bytes": 1041,
+      "sha256": "e5644f70a4285a12b18937fe9c7facce867a61bdb3523f9778267021ca601d24"
+    },
+    "clean/outer.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/real_lease-compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/real_lease-compile.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/real_lease.log": {
+      "bytes": 2055,
+      "sha256": "8804a4b0ea54f9b8c37d1da54c196cfde4d8447a6c2966b53d29ed87fe9e62f5"
+    },
+    "clean/real_lease.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/sdk.log": {
+      "bytes": 3856,
+      "sha256": "97b7672ee82c5cefb1730c4a40a1ba380052589bea77e82d732788df5f87c517"
+    },
+    "clean/sdk.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "clean/source-sha256.txt": {
+      "bytes": 114181,
+      "sha256": "1679221e0e53ae20fc16863a1b50137fec2441232b862ceb9872fb5a388e9e3e"
+    },
+    "main/actual-child-exits.txt": {
+      "bytes": 103,
+      "sha256": "ed746d8697693d95385d8e529a6a64a9077a162c9dd161bae22cee7aa1ccf6e9"
+    },
+    "main/build/driver-role-refusals.txt": {
+      "bytes": 1604,
+      "sha256": "ea4bd74d14fab47cd2b2628e8d5dacaed683ce57080d28156af33881475bec36"
+    },
+    "main/build/native-legacy-entry.disassembly": {
+      "bytes": 578,
+      "sha256": "f9cab82b05c55cadfecf53f0c3c9b2825760048be73094a5dc6e4fbff552f899"
+    },
+    "main/build/placement-compile-refusals.txt": {
+      "bytes": 156,
+      "sha256": "84788e5c0b3f57cdb99de9c71d84ecb5bd73e7145c09251f8bd9536bb235d247"
+    },
+    "main/contract-compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/contract-compile.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/contract.log": {
+      "bytes": 242,
+      "sha256": "4e482a8f8e398b4f3719a7a61da32b3307f35d494264ef10b8460a7b9a51c0ed"
+    },
+    "main/contract.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/lease-compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/lease-compile.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/lease.log": {
+      "bytes": 2091,
+      "sha256": "fe4edba6414078deb3595b69d65cbf7089c88eaf8c5203ca9b0faa67268f63e9"
+    },
+    "main/lease.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/native.log": {
+      "bytes": 328,
+      "sha256": "d240556864b30c0b0a95ba66242e5bd206f372ec916cbfaa86ce3f48e38efeb4"
+    },
+    "main/native.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/native/native-source-sha256.txt": {
+      "bytes": 1188,
+      "sha256": "2c7bc9d1bb05895ba9f34857d948b00106752eb9e6e5e0164ffc62bd78e9ad33"
+    },
+    "main/outer.log": {
+      "bytes": 1041,
+      "sha256": "5cfd8674071f2d76cf605dd0ec04a891663fa1214e683217005e879a5cc1087e"
+    },
+    "main/outer.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/real_lease-compile.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/real_lease-compile.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/real_lease.log": {
+      "bytes": 2055,
+      "sha256": "8804a4b0ea54f9b8c37d1da54c196cfde4d8447a6c2966b53d29ed87fe9e62f5"
+    },
+    "main/real_lease.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/sdk.log": {
+      "bytes": 3856,
+      "sha256": "97b7672ee82c5cefb1730c4a40a1ba380052589bea77e82d732788df5f87c517"
+    },
+    "main/sdk.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "main/source-sha256.txt": {
+      "bytes": 114591,
+      "sha256": "b5e2ddffea06178e5f0cad4d304b5dde458b4aa2e6dd73a6207bfed488545147"
+    }
+  },
+  "lexical_source_counts": {
+    "clean": 895,
+    "main": 898
+  },
+  "matched_private_artifacts": {
+    "PioneerNativeCompactQ4StreamGeneratedImage.h": {
+      "bytes": 43022,
+      "sha256": "5a427080e27a851ebe2c4b64ecc8db640c408d695a143e1b3b88bad19e055e66"
+    },
+    "control.o": {
+      "bytes": 1951528,
+      "sha256": "3d9a35c051e19e537caea61c39944b1d15776fa396572a2b5b156bc7d1b42998"
+    },
+    "image17408/boot.bin": {
+      "bytes": 4,
+      "sha256": "d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd"
+    },
+    "image17408/program.elf": {
+      "bytes": 19796,
+      "sha256": "a8bb45834ee5f5181e6f24c2ff21a918edd10befa911de809991bc69a6ab5a36"
+    },
+    "image17408/text.bin": {
+      "bytes": 7644,
+      "sha256": "c95e0cc41971b37dd89786a2c3747b6d8ef6ebbde3a2ec837c63198982373b92"
+    },
+    "image5120/boot.bin": {
+      "bytes": 4,
+      "sha256": "d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd"
+    },
+    "image5120/program.elf": {
+      "bytes": 19796,
+      "sha256": "1d4cc347c45f9fe4735becf3ba7bea3faeef2e118071e4356a29bcca93ecfacb"
+    },
+    "image5120/text.bin": {
+      "bytes": 7644,
+      "sha256": "f67b7b5bc07bddcf5f3ddfccfbe1013c2680650ea1994231565f050d1f0d89c5"
+    },
+    "native.o": {
+      "bytes": 2133776,
+      "sha256": "83769577ad568bc3a882459896d2a89cd0041f03e6816dec3771ca3fd742d547"
+    },
+    "profile.o": {
+      "bytes": 12128,
+      "sha256": "d958ae2ca22f7b1b8be37e1446e62a704e9f5eaa450e86ba751a92d139184bed"
+    },
+    "tenstorrent_pci_probe-default43-control": {
+      "bytes": 925616,
+      "sha256": "2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc"
+    },
+    "tenstorrent_pci_probe-native-q4-fpu-stream104": {
+      "bytes": 1843416,
+      "sha256": "4722e956bfda10a5f8dbc2317bd5dd12d2de1b1099c3d33286b4b6447930f61e"
+    }
+  },
+  "new_sources": {
+    "src/add-ons/kernel/drivers/misc/PioneerNativeCompactQ4StreamNative.inc": "076d8374c542bc2dbf727c0d91877de38c512f6c56a746731f9d6f6b73e883c4",
+    "src/add-ons/kernel/drivers/misc/PioneerNativeCompactQ4StreamProtocol.h": "2af6089aa286a24177761ea4efae5e4931d6ffbe5c91f652933cac0fd75ab600",
+    "src/add-ons/kernel/drivers/misc/pioneer_native_compact_q4_stream_driver.cpp": "4cf951394306912c452ff3f49d7a02ab7fbbb6fcef7d2b1fe1ae66452d9ebd14",
+    "tools/pioneer/PioneerNativeCompactQ4StreamLayout.h": "355cf9271e7aa31dd69817988dbfa1877e52e8e375ba04c8df2c2290e2184aa2",
+    "tools/pioneer/PioneerNativeCompactQ4StreamLease.h": "0ff55211b71df9d8951d503eb1b0d6d7e4f1a54d45288fba3e4ffc7c64d77378",
+    "tools/pioneer/build_native_compact_q4_stream_diagnostic.py": "f24a6c113a2dacd5c1ec7e1792223c1c1ad69c83edb6cda048b27299dc91193d",
+    "tools/pioneer/pioneer_native_compact_q4_stream_export.cpp": "bdfde3bbfa67745476065019e1e9113c2bfae2ebe2c4de6bc4ac6aefd46a4516",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_contract_test.cpp": "f3cf9be60b7a53d4ec984dde9575c9f9213ce1a8fbcc40fd313f4add20822285",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_export_test.py": "a9bd738d0739b9833b239533b94b778d8eb75876b8273805d86782a7947b91a8",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_lease_test.cpp": "1fa77899838b8ae4bf6570f0b6d452d5dd87b8e6ae0f21814f55622308359521",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_native_test.cpp": "ad7e66bf6e2e9d50bda2848fc262c5ad7c64bdeab2a7bdcebd4ccc536b5f221b",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_real_lease_test.cpp": "db21795d66a5dd589d16ad5fc160c27f88c2a2cf9f4c004e736f29bd0ae268bf",
+    "tools/pioneer/tests/run_pioneer_native_compact_q4_stream_native_tests.py": "376fc6b8764f5d5a31308039b6def10b36d4da646d51406df6118973a04d5ef7",
+    "tools/pioneer/tests/run_pioneer_native_compact_q4_stream_tests.py": "b564234599aef93736e8576f71a6a07e5f85478f98544e8020c3524f06dd5ee9"
+  },
+  "preexisting_differences": [
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadMetricsRole.h",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadProtocol.h",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadRole.h",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38TokenCallScope.inc",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeEnd.inc",
+    "src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp"
+  ],
+  "preexisting_main_only": [
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadResidentNative.inc",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadResidentProtocol.h",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadResidentRole.h"
+  ],
+  "preliminary_failed_attempts": {
+    "31312": "SDK formatting warning EXIT1 before correction",
+    "initial_clean": "archive extraction incomplete EXIT1;not counted"
+  },
+  "private_data_sha256": "4db508f0cecda10062b7373d43f4b6e7308ad8cdcff03c361759ac0523a896b1",
+  "private_prediction_sha256": "c856c1747045a50c43e5b1f47a7e75999526bbc61960eed075246423392872de",
+  "scope": "OFFBOARD ONLY;no hardware/stage/inference-speed authority",
+  "terminal": {
+    "clean": {
+      "exit": 0,
+      "qualification_path": "/private/tmp/pioneer-native-compact104-20261105.fJHpbQbr/clean-b",
+      "session_id": 71892
+    },
+    "main": {
+      "exit": 0,
+      "qualification_path": "/private/tmp/pioneer-native-compact104-20261105.fJHpbQbr/main",
+      "session_id": 49969
+    }
+  },
+  "version": 1
+}

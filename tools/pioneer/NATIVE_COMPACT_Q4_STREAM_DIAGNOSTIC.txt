@@ -1,0 +1,76 @@
+Compact original-Q4 native diagnostic104 -- OFFBOARD qualified only
+================================================================
+This is a distinct native owner for the compact full-K Q4/SFPU/FPU image,
+NOT an Assistant Work mode,physical qualification or measured speedup.
+The installed driver/Assistant/boot configuration is unchanged. The last
+actual full27B rate remains0.164361584..0.164365058tok/s;20tok/s UNMET.
+
+The fixed two-width7644B programs consume4608 original quant/metadata bytes
+per32x256 block,plus512B BF16 inputs:26 reads/80 C64 flits rather than the
+old expanded56 reads/104 flits. Metadata conversion happens on-card. One
+initialization per full-K job,two producer buffers and two complete jobs;
+there is no host K-loop or learned CPU arithmetic/reference in this driver.
+The separate exporter and independent Fraction oracle are diagnostics only.
+
+The pointer-free392B request/352B result selects ONLY one of nine compiled
+gate/up/down bands at K5120 or17408. Role104/tag2026110500010104/opcodes8400
+and QCS1/QCSE markers do not alias old86/87 or full-model roles. No caller
+code,payload,route,address,reset or arbitrary format endpoint is exposed.
+Build-time checks bind exact code/recipe,including Dst128..255 metadata
+scope;the8KiB ROM and8KiB stack bounds are unchanged.
+
+The distinct owner binds FD/thread/team/generation/semaphore/reservation/
+PCI identity and17 exact kernel VM views. Heap journals cover107632B L1
+and the selected102400B or348160B GDDR domains. All120 workers must already
+be held. It leases clocks,stages/readbacks fixed operands/code with BOOT
+LAST and starts one core once. Known completion permits explicit END only:
+verify both final producer buffers and all immutable bytes BEFORE restoring
+GDDR,L1,NIU,FIFO,TLB,ARC clocks,VM views and PCI mapping/reservation.
+Any uncertainty retains all resources/evidence,with no implicit cleanup,
+retry,END,reset or rollback. This document grants no physical admission.
+
+Source/export data are authenticated against the SAME read-only open
+18973870528B original GGUF,full SHA256:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+Both the exporter and independent Python parser check nanosecond FD
+identity. Every selected original row/block is checked independently.
+Private generated headers,weights,predictions,objects and binaries remain
+outside Git. Exported learned files are exclusively created0600 in an owned0700
+directory. They do not replace installed disk-cache recipes.
+
+Build/test commands -- OFFBOARD only
+------------------------------------
+  python3 tools/pioneer/build_native_compact_q4_stream_diagnostic.py \
+    HAIKU_BUILD PRIVATE_EXPORT ORIGINAL_GGUF NEW_ABSOLUTE_OUTPUT
+  python3 tools/pioneer/tests/run_pioneer_native_compact_q4_stream_tests.py \
+    HAIKU_BUILD PRIVATE_EXPORT ORIGINAL_GGUF NEW_ABSOLUTE_OUTPUT
+
+Main49969 and clean71892 actually exited0;each eight children exited0
+with empty stderr. Actual native SDK link,41 role/defined0 refusals,four
+wrong-image/Dst-scope refusals and one wrong-data-role refusal. Default43
+control is byte-identical to its fixed baseline;legacy entry remains NULL.
+Contract:26908 unique L1 words,2560 final payload words/two slots,no header/
+gap alias,692 malformed-request refusals. Actual compiled RV32 lease:
+nine synthetic bands,57 failure/refusal cases;all576 original-model words
+exact across nine further bands with complete journal restoration. Actual
+native/control bodies:317 valid/679 refused explicit OS/PCI fixture cases.
+Fixtures and co-simulation are NOT real ARC/prerequisite/hardware proofs.
+
+Independent Fraction arithmetic checks2654208 original weights,663552
+rounded phase predictions and288 goldens for576 two-job outputs. Inputs
+are diagnostic BF16 vectors,NOT real prompt hidden states or model quality.
+Main and clean native/control binaries,three objects,generated image header
+and both complete GPU ELFs compare byte-identical. Seven child streams are
+byte-identical;the native stream differs ONLY in its output-directory line.
+Broad lexical source closures are separately frozen:898 main/895 clean.
+Six pre-existing dirty files and three inactive resident WIP files differ;
+none is bundled into this checkpoint. All14 new source files match exactly.
+
+See benchmarks/qwen38-native-compact-q4-stream-offboard-20261105.txt and
+the associated frozen receipts/verifier. Preliminary build/archive attempts
+that failed are recorded separately,not promoted to passed qualifications.
+
+Next:distinct source-authenticating client/typed one-shot parent and fresh
+generation/power-state/idle admission,then a bounded on-card test. Old86 and
+fixed81..103 stages remain SPENT;do not rerun or repin them for104. Full
+mixed-format resident inference and real tokens/sec measurement remain.

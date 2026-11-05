@@ -1,0 +1,10 @@
+PASS OFFBOARD compact104 full-K Q4 lease sample0 K5120:actual strict RV32/NIU/shared L1/FPU all64 exact;whole107632B L1/102400B GDDR/NIU/FIFO/TLB/clock restored;NO native PCI/VM/FD/hardware/quality/speed authority
+PASS OFFBOARD compact104 full-K Q4 lease sample1 K5120:actual strict RV32/NIU/shared L1/FPU all64 exact;whole107632B L1/102400B GDDR/NIU/FIFO/TLB/clock restored;NO native PCI/VM/FD/hardware/quality/speed authority
+PASS OFFBOARD compact104 full-K Q4 lease sample2 K5120:actual strict RV32/NIU/shared L1/FPU all64 exact;whole107632B L1/102400B GDDR/NIU/FIFO/TLB/clock restored;NO native PCI/VM/FD/hardware/quality/speed authority
+PASS OFFBOARD compact104 full-K Q4 lease sample3 K5120:actual strict RV32/NIU/shared L1/FPU all64 exact;whole107632B L1/102400B GDDR/NIU/FIFO/TLB/clock restored;NO native PCI/VM/FD/hardware/quality/speed authority
+PASS OFFBOARD compact104 full-K Q4 lease sample4 K5120:actual strict RV32/NIU/shared L1/FPU all64 exact;whole107632B L1/102400B GDDR/NIU/FIFO/TLB/clock restored;NO native PCI/VM/FD/hardware/quality/speed authority
+PASS OFFBOARD compact104 full-K Q4 lease sample5 K5120:actual strict RV32/NIU/shared L1/FPU all64 exact;whole107632B L1/102400B GDDR/NIU/FIFO/TLB/clock restored;NO native PCI/VM/FD/hardware/quality/speed authority
+PASS OFFBOARD compact104 full-K Q4 lease sample6 K17408:actual strict RV32/NIU/shared L1/FPU all64 exact;whole107632B L1/348160B GDDR/NIU/FIFO/TLB/clock restored;NO native PCI/VM/FD/hardware/quality/speed authority
+PASS OFFBOARD compact104 full-K Q4 lease sample7 K17408:actual strict RV32/NIU/shared L1/FPU all64 exact;whole107632B L1/348160B GDDR/NIU/FIFO/TLB/clock restored;NO native PCI/VM/FD/hardware/quality/speed authority
+PASS OFFBOARD compact104 full-K Q4 lease sample8 K17408:actual strict RV32/NIU/shared L1/FPU all64 exact;whole107632B L1/348160B GDDR/NIU/FIFO/TLB/clock restored;NO native PCI/VM/FD/hardware/quality/speed authority
+PASS OFFBOARD compact104 full-K Q4 lease:57 failure/refusal cases,unknown retains ALL journals,no next IO/END/reset/retry;NOT native hardware/quality/speed proof

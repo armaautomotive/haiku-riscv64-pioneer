@@ -1,0 +1,1 @@
+PASS diagnostic104 DATA contract:26908 unique L1 words,both widths/exact bounded GDDR sets,2560 final payload words/two slots with no header/gap alias,692 dirty-result/tag/version/reserved/generation refusals;NO native IO/ownership authority

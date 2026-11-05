@@ -1,0 +1,8 @@
+sdk 0
+contract-compile 0
+contract 0
+lease-compile 0
+lease 0
+real_lease-compile 0
+real_lease 0
+native 0
