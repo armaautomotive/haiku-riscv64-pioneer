@@ -8,6 +8,7 @@ image=pathlib.Path(sys.argv[1]);assert image.is_absolute() and image.is_dir()
 assert hashlib.sha256((image/'program.elf').read_bytes()).hexdigest()=='0306100598ee1aa4e20bf3399165f5fbc2714ab2a694021fa98d63f4f64bb8f1'
 base=(image/'compile-recurrent-argv.txt').read_text().splitlines();assert base.count('-c')==base.count('-o')==1
 source=base[base.index('-c')+1];at=base.index('-o');del base[at:at+2];base.remove('-c')
+base.remove('-fstack-usage') # syntax-only role checks must not emit a default .su into the caller's cwd
 at=base.index(source);base.insert(at,'-fsyntax-only')
 positive=subprocess.run(base,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
 assert positive.returncode==0,positive.stderr
