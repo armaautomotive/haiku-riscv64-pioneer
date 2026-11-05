@@ -1,0 +1,3 @@
+PASS_REJECT old-convolution-opcode
+PASS_REJECT old-global-prefix-opcode
+PASS_REJECT whole-global-literal

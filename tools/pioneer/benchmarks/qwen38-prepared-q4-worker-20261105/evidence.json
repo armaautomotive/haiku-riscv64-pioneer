@@ -1,0 +1,75 @@
+{
+  "scope": "OFFLINE ONLY;not native/ROOT/model/card/TPS;goal remains active",
+  "actual_exits": {
+    "frozen-main-22139": 0,
+    "frozen-clean-14533": 0,
+    "closed-main-44769": 0,
+    "closed-clean-94128": 0,
+    "closed-history-main-38808": 0,
+    "closed-history-clean-74728": 0,
+    "original-regression-35359": 0
+  },
+  "matrix_history_separate_processes": true,
+  "files": {
+    "frozen-main.stdout": {
+      "bytes": 25927,
+      "sha256": "c74c41e9c79d7bb3770df840ed413e89daf54d6726709f62140259d8f3cbad70"
+    },
+    "frozen-main.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "frozen-clean.stdout": {
+      "bytes": 25940,
+      "sha256": "8f65d80199e25e92452f5e84f10dfa5238b452a1aa63724ee3e193a195d7c809"
+    },
+    "frozen-clean.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "closed-main.stdout": {
+      "bytes": 24584,
+      "sha256": "7d3b5df3530d1ef28a291e89a082f9e76775122f057a204a33d796f8b54a7323"
+    },
+    "closed-main.stderr": {
+      "bytes": 8704,
+      "sha256": "dd700615c5d3cd10f346a537ed450f9d9e324c4e0deca9885400eba5e841a8bc"
+    },
+    "closed-clean.stdout": {
+      "bytes": 24584,
+      "sha256": "7d3b5df3530d1ef28a291e89a082f9e76775122f057a204a33d796f8b54a7323"
+    },
+    "closed-clean.stderr": {
+      "bytes": 8704,
+      "sha256": "dd700615c5d3cd10f346a537ed450f9d9e324c4e0deca9885400eba5e841a8bc"
+    },
+    "closed-history-main.stdout": {
+      "bytes": 2596,
+      "sha256": "1fb3ac646ffa2a6f334b3b4ae19c86aa7e453aa3bb97d6ac06df587068f94917"
+    },
+    "closed-history-main.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "closed-history-clean.stdout": {
+      "bytes": 2596,
+      "sha256": "1fb3ac646ffa2a6f334b3b4ae19c86aa7e453aa3bb97d6ac06df587068f94917"
+    },
+    "closed-history-clean.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "original-regression.stdout": {
+      "bytes": 2838,
+      "sha256": "a74caf80ab18fe504154a0b775ebd2d4d8ce2b94f3e465f5d41318d8ae536212"
+    },
+    "original-regression.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "audit-negative.stdout": {
+      "bytes": 105,
+      "sha256": "333597f43d0575bd988f845b56a87693e6e66483013de58225adc50478a976c8"
+    }
+  }
+}

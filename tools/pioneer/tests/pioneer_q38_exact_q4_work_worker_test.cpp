@@ -28,7 +28,7 @@ struct ExactQ4WorkPeer:ConstantIssuePeer {
  bool owned[2][2]={};float srcA[2][64][16]={},srcB[2][8][16]={};
  bool fpValid[1024]={};unsigned fpReady[1024]={};ExactWorkVector math;
  struct Task{bool active=false,flip=false,dst=false,zero=false;unsigned address=0,row=0,count=0,format=0,exponent=0;} tasks[2];
- ExactQ4WorkPeer(const char* old,const char* image,unsigned type,unsigned k,unsigned groups):ConstantIssuePeer(old,image,69,type,k,groups){
+ ExactQ4WorkPeer(const char* old,const char* image,unsigned type,unsigned k,unsigned groups,unsigned worker=69):ConstantIssuePeer(old,image,worker,type,k,groups){
   std::ifstream symbols(std::string(image)+"/program.symbols");std::string at,kind,name;
   while(symbols>>at>>kind>>name)if(name=="_ZL21PioneerQ38ExactQ4WorkPVKj"){assert(!exactPC);exactPC=unsigned(std::stoul(at,nullptr,16));}
   assert(exactPC);
@@ -38,6 +38,13 @@ struct ExactQ4WorkPeer:ConstantIssuePeer {
  bool MathIdle()const{return !Tasks() && !fpuPending && !sfpuPending;}
  bool BanksFree()const{return !owned[0][0] && !owned[0][1] && !owned[1][0] && !owned[1][1]
   && unpack[0]==matrix[0] && unpack[1]==matrix[1] && !partial[0] && !partial[1];}
+ virtual void NativeOperand(const Task& t,unsigned w){
+  if(w)assert(t.address==0x9d040);
+  else assert((t.row==0 && t.address==0x9c040 && !t.flip && !partial[unpack[0]])
+   || (t.row==16 && t.address==0x9c140 && !t.flip && partial[unpack[0]]==1)
+   || (t.row==32 && t.address==0x9c240 && t.flip && partial[unpack[0]]==3));
+  for(unsigned a=t.address-16;a<t.address;a+=4)assert(!memory.at(a));
+ }
  static bool Scratch(unsigned a){return Range(a,0x9c030,144) || Range(a,0x9c130,144) || Range(a,0x9c230,80)
   || Range(a,0x9c340,32) || Range(a,0x9d030,272);}
  unsigned Byte(unsigned at)const{const unsigned word=memory.at(at&~3U);return (word>>((at&3)*8))&255;}
@@ -99,15 +106,13 @@ struct ExactQ4WorkPeer:ConstantIssuePeer {
     || (t.format==14 && config[1]==0xa03c8000 && config[65]==16 && config[72]==14 && t.row==0));
   }else{
    if(thread[5]!=4 || dirty || owned[w][unpack[w]])Fail(__LINE__);
-   if(w){assert(t.format==5 && config[112]==0x00800015 && t.count==128 && t.address==0x9d040 && t.flip);t.row=0;}
+   if(w){assert(t.format==5 && config[112]==0x00800015 && t.count==128 && t.flip);t.row=0;}
    else{
     t.row=(config[84]&65535)/16-4;
-    assert(t.count==256 && ((t.row==0 && t.address==0x9c040 && t.format==7 && !t.flip && !partial[unpack[0]])
-     || (t.row==16 && t.address==0x9c140 && t.format==7 && !t.flip && partial[unpack[0]]==1)
-     || (t.row==32 && t.address==0x9c240 && t.format==15 && t.flip && partial[unpack[0]]==3)));
+    assert(t.count==256 && (t.row==0 || t.row==16 || t.row==32) && t.format==(t.row==32?15U:7U));
     assert(config[65]==0x10001 && config[73]==0xf010f && config[50]==(t.row==32?0x17fU:0x181U));
    }
-   for(unsigned a=t.address-16;a<t.address;a+=4)assert(!memory.at(a));nativeUnpacks++;
+   NativeOperand(t,w);nativeUnpacks++;
   }
   rawPending=true;drained=false;
  }
@@ -202,6 +207,7 @@ struct ExactQ4WorkPeer:ConstantIssuePeer {
   ConstantIssuePeer::Store(a,value);
  }
 };
+#ifndef PIONEER_Q38_EXACT_Q4_WORK_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==4 || (argc==5 && (!strcmp(argv[4],"--pilot") || !strcmp(argv[4],"--faults-only"))));setvbuf(stdout,nullptr,_IOLBF,0);
  (void)&RunPersistentGdnPair;(void)&Compare;(void)&Round;
@@ -257,3 +263,4 @@ int main(int argc,char** argv){
   "originalFP32Outputs sourceNoCPublisherACK retainedPhysicalState realStopCases%u;NO_NATIVE_HARDWARE_MODEL_OR_TPS\n",
   pilot || faultsOnly?"PARTIAL":"PASS",cases,cases*2,faults,finite,stack,cases);
 }
+#endif

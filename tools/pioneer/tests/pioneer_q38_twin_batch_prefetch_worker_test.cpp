@@ -122,12 +122,15 @@ struct TwinBatchPrefetchPeer:PreciseBetaPeer {
   PreciseBetaPeer::Store(at,value);
   if(matrixScope && at==0xffb20040 && !command[7] && asynchronous)readyAt=uint64_t(steps)+latency;
  }
- void CheckEnd(){
+ virtual void CheckScratchCanaries()const{
+  for(unsigned at=0;at<tile.size();at+=4)assert(memory.at(0x90000+at)==0x7fc17fc1);
+  for(unsigned at:{0x97ffcU,0x99a80U,0x99ffcU,0x9ba80U,0x9bffcU})assert(memory.at(at)==0xdec0adfe);
+ }
+ virtual void CheckEnd(){
   assert(CorrectRows() && !pending && !rawPending && phaseQueue.empty() && pendingAccumulator.empty()
    && restoreCommands==FfnPersistentPeer::groups && stageCalls==tiles.size() && metadataReads && !stageReturn
    && requests==ExpectedReadPackets() && responses==requests && !dotProbeReads && !rawWrites);
-  for(unsigned at=0;at<tile.size();at+=4)assert(memory.at(0x90000+at)==0x7fc17fc1);
-  for(unsigned at:{0x97ffcU,0x99a80U,0x99ffcU,0x9ba80U,0x9bffcU})assert(memory.at(at)==0xdec0adfe);
+  CheckScratchCanaries();
   if(!asynchronous)assert(overlapOps);
   matrixScope=false;
  }

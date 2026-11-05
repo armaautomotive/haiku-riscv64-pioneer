@@ -7,6 +7,9 @@
  || defined(_KERNEL_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION)
 #error Separate original-source corrected-Q4 returning shader only
 #endif
+#ifdef PIONEER_Q38_PREPARED_EXACT_Q4_IMAGE
+#include "PioneerQ38PreparedQ4Work.inc"
+#else
 #include "PioneerQ38ExactQ4Original.h"
 #include "PioneerQ38ExactQ4Affine.h"
 // SAME already-saved6e000..b0000 private peer extent. Two complete raw
@@ -100,3 +103,4 @@ static unsigned PioneerQ38ExactQ4Work(const volatile uint32_t* job){
  }
  return groups*blocks*16;
 }
+#endif

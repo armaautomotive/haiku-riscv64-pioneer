@@ -1,0 +1,101 @@
+Prepared-weight complete Q4 worker -- 2026-11-05
+================================================
+
+OFFLINE EXECUTION CHECKPOINT,NOT A NATIVE OR ASSISTANT RELEASE.
+No new physical speed result. The last accepted real full-card 27B rate
+remains0.172813448..0.172816755tok/s;20tok/s remains unmet.
+
+Implemented connection from the saved lossless native-Q4 data format to a
+complete returning worker. The GPU no longer reconstructs the native Q4
+primary panels from original nibbles for each matrix. It reads prepared
+2304-byte primary tiles directly,fetches bounded correction-index/payload
+windows,and expands exact zero/sparse/dense masks. Original FP32 metadata
+and nonfused per-K16 affine arithmetic are retained. Original validated
+integer activations are converted to exact BF16 once per job,not replicated
+for each weight panel/group. These are on-card control-work reductions,
+NOT measured silicon latency or throughput improvements.
+
+The companion data-cache checkpoint15cf26e305 prepared every real Q4
+fragment with zero conversion on a verified warm hit. Its generated model
+data is private and is neither included nor changed in this checkpoint.
+
+Whole candidate BUILD identity:
+program.elf154308B
+b283d788a682681f8994058ab51b19b2b1e79f72945d7e839c9cdd81737ff9c3
+Complete original-source control rebuilt FIRST,including old math AND
+global-worker objects byte-exact:
+8a7c6543e59a4067cee72d67843ca2d33119c307a8277bd14a70cb80f2f41e2f
+Main and independent clean archive builds produce identical whole ELF and
+all ten sections. Frozen builders both actually exited0. Text7844/8192B,
+affine4680/5376B,service17624/24576B;no larger code mapping is granted.
+
+Main and independent clean CLOSED ASan/UBSan worker runs ACTUALLY exited0:
+-27 shapes:Q8/Q4/Q6 x K5120/6144/17408 x groups1/3/16.
+-54 changed-input jobs,retained actual guest state between queued jobs.
+-ALL output FP32 words match the accepted original-source exact worker;
+ existing original-weight FP32/FP64 arithmetic observers remain active.
+-Real retired RV/Tensix instructions,source NoC requests/completions,
+ payload ACK before commit,unchanged command restoration,and actual STOP.
+-5 extra original-vs-prepared controls start13 tiles INTO a fragment:
+ zero,1,239,240,256 nonzero mask rows. Zero-mask groups issue no payload read.
+-16 injected NoC losses park inert;16 malformed descriptors park before
+ matrix work/publication. All retain2048 further fault-loop observations.
+-Matrix maximum combined stack3540/8192B.
+
+The first expanded run exposed an OBSERVER bug:an unchanged FetchStage
+last-tile command restoration was misclassified as the next group's new
+correction read. Actual pc70100/stage19/read15 restored0400ab00;the next
+packet was correctly20000040. The new observer now leaves restoration
+inside the original exact handler while separately validating new reads.
+No guest execution code or original restore invariant was weakened.
+
+Additional main/clean CLOSED history runs ACTUALLY exited0:
+-6 virgin workers,heads0/34/47;each executes the prepared Q4 matrix with a
+ fragment offset,then two recurrent steps in the SAME retained history.
+-12 GDN half-jobs,exact sigmoid-beta checks,retained next-state,real STOP.
+-Maximum combined stack4804/8192B. This is not every model phase/history.
+The final runner runs matrix+history by default;--history-only also permits
+the separately closed history proof. Matrix and history are separate actual
+processes in the saved evidence,not one invented combined completion.
+
+Pure data tests:1028 mask expansions,27 descriptor geometries,435 refusals,
+all8704 activation words disjoint. Original exact-worker closed pilot also
+actually exited0 after the test-observer refactor.
+
+Nonmath audit:all boot/precise/dense/FFN/fetch/GDN bytes exact;first9888
+service bytes exact;all11 service-tail functions explicitly accounted for.
+Four original service helpers retain exact instruction bodies except
+symbol-resolved relative calls. Global main deliberately gains completed-
+read accounting;its12-target compiler dispatch table deliberately moves.
+Every prefix change is one of5 resolved literal relocations;remaining
+global literals are exact. Three negative mutations(old convolution,
+old global opcode,global literal)are rejected. Whole-section/ELF pins
+additionally cover the deliberately changed arithmetic and global main.
+
+Boundary before ANY native/physical use:
+1.ROOT must produce and retain the fixed per-worker64-byte descriptor at
+ ab400+(worker-1)*64. The existing private16-word capsule is NOT extended.
+2.ROOT/native source ownership must bind authentic original fragment,
+ prepared primary,correction extent/index,initialized4KiB padding,and the
+ SAME source bank/lifetime. Existing raw-source authority is not reusable.
+3.ROOT expected counters must independently account for correction reads
+ and flits from the authentic index geometry. The worker's bounded summary
+ is completed-I/O DATA,not independent ROOT authority. Do not substitute
+ receipt/self-reported counts for the retained expected frontier.
+4.The client must use the verified prepared cache BEFORE device Open and
+ upload BOTH primary+correction data,with no conversion/repair mid-session.
+5.Build/qualify a distinct WHOLE native+ROOT+worker+client package,including
+ full model phase/memory lifetimes,then run a controlled real-model test.
+ Only a closed actual inference benchmark can change the reported tok/s.
+
+No Pioneer access,power,driver,Assistant,kernel,SD,mains or hardware change
+was performed for this checkpoint. Existing unrelated native/resident WIP
+is excluded. Do not present this build as an installed P100A Work option.
+
+Reproduce from this source tree:
+python3 tools/pioneer/build_qwen38_prepared_exact_q4_worker.py SDK NEWOUT
+python3 tools/pioneer/tests/run_pioneer_q38_prepared_exact_q4_worker_tests.py NEWOUT
+SDK=/Volumes/HaikuBuildLocal/generated.riscv64
+All tests are local;synthetic source/NoC endpoints are NOT physical hardware.
+Sibling evidence directory contains generated closed logs and identities,
+not model weights,prepared learned payloads or executable binaries.

@@ -2,6 +2,12 @@
 // DISTINCT QGW1 whole-model/global-output front end. Fresh cohort required.
 // Reuses returning arithmetic ONLY; this is not an old live-cohort update.
 #include "PioneerQ38TokenBatchedPrefetchRole.h"
+#ifdef PIONEER_Q38_PREPARED_EXACT_Q4_WORKER_IMAGE
+#if PIONEER_Q38_PREPARED_EXACT_Q4_WORKER_IMAGE != 1
+#error Exact distinct prepared-source global-worker role required
+#endif
+#include "PioneerQ38PreparedQ4Layout.h"
+#endif
 #ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
 #include "PioneerQ38PreciseWorkerImageRole.h"
 #else
@@ -70,6 +76,13 @@ static void Matrix(const uint32_t* j,const uint32_t* source,unsigned worker,unsi
 #endif
   +(j[5]*2+16383)/16384+1;
  unsigned flits=j[7]*blocks*j[2]/64+(j[5]*2+((blocks*4+63)&~63U))/64;
+#ifdef PIONEER_Q38_PREPARED_EXACT_Q4_WORKER_IMAGE
+ if(j[1]==12 && j[14]==1){
+  unsigned extraReads=0,extraFlits=0;
+  if(!PioneerQ38PreparedQ4Layout::SummaryShape(Words(PioneerQ38PreparedQ4Layout::Summary),j,extraReads,extraFlits))block_fault_park();
+  reads+=extraReads;flits+=extraFlits;
+ }
+#endif
  if(count!=j[7]*j[5]/16 || !Quiet() || *Words(0xffb20014)!=self)block_fault_park();
  auto* p=Words(0x83f00);
  for(unsigned i=0;i<8;i++){
