@@ -1,0 +1,79 @@
+Full-K original-Q4/FP32 affine -- actual P100A pass,2026-11-05UTC
+================================================================
+
+ACCEPTED FIXED SYNTHETIC FULL-K ARITHMETIC. NOT A FULL-MODEL RATE.
+The SAME corrected integer matrix/per-K16 FP32 affine kernel used in the
+qualified full-width packet prototype now runs correctly on the physical
+P100A for two changed K17408 test fixtures. No scalar/CPU learned dot,
+FP affine fallback or intermediate host/PCIe calculation is used by this
+program. USER-side CPU arithmetic is FIXED synthetic validation ONLY.
+The full27B goal remains ACTIVE/UNMET. Last accepted measured generation
+rate remains tag92,0.172813448..0.172816755tok/s,not this diagnostic.
+
+Source141714a4ae913f618e0a8a0ec30e4a653ced4383 was committed,pushed and
+remote-verified BEFORE physical execution. Main and clean native/USER
+whole binaries agreed;old95/78/default43 remained byte-exact. All lease/
+mapping/controller/close/client/integer rounding/protected-parent tests
+passed before physical use. See qwen38-exact-q4-fullk-affine-native-20261105.txt.
+
+Fresh admission and whole artifact transfer:
+- Read-only61271 actual0 verified stable041/gen22/idleness/64CPUs/fullRAM/
+  unchanged installed apps/runtime/guard/kernel and ABSENT new stage.
+- Fresh root-only stage created0,upload5156 actual0,stage verify actual0.
+- Whole readback92196 actual0;all THREE complete files compare byte-exact
+  against qualified local artifacts,stderr empty. No code ran during this.
+
+One actual protected lifetime:
+- Foreground protected44388 ACTUALLY exited0. The wrapper recorded
+  PROTECTED_EXACT_Q4_AFFINE_ACTUAL_EXIT0,not just a state-file marker.
+- Remote parent10833,child actual0,parent and child stderr EMPTY.
+- Stage /boot/home/pioneer-native-exact-q4-affine-20261105-a SPENT FOREVER.
+  Never invoke that same stage/helper/client as a new experiment.
+- stable041/gen22 -> distinct native96/gen23 -> stable041/gen24.
+- Native SHA20eb2f3c01973ac7d59e6c23ed37e577a778ab5f5228d99ec4cb0e73c3f6469d
+- USER SHA36090c79b9a501062ee0ffa0938a2ba9333cc51035298dbb53d88f0fb152c9ec
+- Helper SHAda7b39552219d03a38df67c872c727b6e5454c2b21ae8d74fbf32b21d350d66a
+- Whole child stdout175B,SHA
+  1752c2e86cecc581ce57fa794cb6dbcef261ac752dbd19b74ebd8b5225bcecf8.
+- Whole parent stdout2912B,SHA
+  767bafa91eed44764a9f27ab2ceab79a160d203797f4a3613da5279c030be0cd.
+
+The pinned client checked BOTH complete K17408 jobs'32 original FP32
+output words and32 untouched padding words EXACTLY. Synthetic weights,
+integer inputs and metadata/scale change between jobs (seeds37/176),and
+are generated ON CARD with no host-inserted payload between jobs. Only
+exact numerical/owner/tag/generation/status/PC/control success admits END.
+This checks repeated source-bank/config changes,selective dot clears,
+resident affine preservation and true final matrix/SFPU completion,not
+merely an isolated K16 dot.321 polls is NOT an elapsed-time or TPS result.
+
+The original FP32 rounding order is retained for EVERY K16 panel. Dot is
+consumed AS FP32,not integer-encoded Dst. Coefficient/minimum scale chains
+are non-fused;adjacent K32-shared metadata does NOT combine affine updates.
+Whole main and clean DATA readers pass with identical JSON. Reader tests
+pass3 positive and25 malformed/truncated/extra/stale/poll/stderr refusals.
+DATA from a reader NEVER grants execution/disposal/cleanup authority.
+
+AFTER actual parent terminal0 and whole fetch97748 actual0/reader pass,
+separate read-only postflight83067 ACTUALLY exited0,stderr EMPTY. It checks
+all staged/installed/stable/admin/guard/apps/runtime hashes,parent10833
+absent,no competing inference process,incoming file absent and identical
+closed stdout. Stable tag12/gen24,cold0/quiesced0/active_owner0/open_count1/
+guard1. Sept8 kernel,64CPUs,137034936320B maxRAM,130781569024B free at check.
+Installed Assistant/Service/worker/frozen llama runtime remain unchanged.
+No reboot,power,SD,mains,hardware connection or model-file change occurred.
+No extra Pioneer access was made during the protected lifetime.
+
+Scope:fixed synthetic full-width matrix+original affine on ONE tile.
+It is NOT real hidden activations,NoC/GDDR full-model streaming,multi-tile
+cohort integration,embedding/attention/state/token generation,quality or
+performance qualification. This image is NOT installed as an Assistant
+hardware option. The old real full-card model runner still measures0.1728
+tok/s;no speed improvement is inferred from the diagnostic or its polls.
+
+Sibling directory contains WHOLE closed child/parent outputs,actual exit/
+PID/state,main+clean readers/tests and independent postflight script/output.
+No model/prepared learned payloads or binaries are published. No physical
+job remains. Next integrate this kernel into the complete Q4 Work worker
+and perform the SAME full-card request/answer/throughput comparison;keep
+all original source ownership and no-CPU-reference Work requirements.

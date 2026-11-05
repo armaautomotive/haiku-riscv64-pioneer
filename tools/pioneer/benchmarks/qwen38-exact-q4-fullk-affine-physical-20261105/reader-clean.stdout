@@ -1,0 +1,2 @@
+{"checked_output_words": 32, "checked_padding_words": 32, "execution_or_cleanup_authority_from_log": false, "generation": 23, "jobs": 2, "model_quality": false, "polls": 321, "rows": 16, "scope": "fixed synthetic original Q4 fullK/original perK16 FP32 affine,not model", "tokens_per_second": null, "width": 17408}
+PASS_WHOLE_EXACT_Q4_AFFINE_TRANSCRIPT_DATA_ONLY;NOT_MODEL_SPEED_OR_CLEANUP_AUTHORITY

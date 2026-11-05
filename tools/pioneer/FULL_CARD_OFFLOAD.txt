@@ -318,8 +318,8 @@ Next physical/native/source/cohort gates and actual full-model answer/rate
 remain required. Correct full27B rate stays0.1728tok/s;goal ACTIVE/UNMET.
 See benchmarks/qwen38-exact-q4-fullk-affine-20261105.txt and whole logs.
 
-Fixed full-K/affine native candidate (tag96,SOURCE-qualified,not yet run)
---------------------------------------------------------------------
+Fixed full-K/affine native candidate (tag96,SOURCE qualification)
+--------------------------------------------------------------
 A separate fixed synthetic K17408/dual changed-input diagnostic now uses
 the SAME corrected full-K/original FP32 affine kernel. Tag96/new pointer-
 free opcode family admits no model/user weights/code/address. Exact4872-
@@ -333,3 +333,22 @@ Fresh staged/idle/generation admission and ONE physical arithmetic trial
 are next;source tests grant NO hardware/model-speed proof. Production
 source/NoC/cohort/full-generation integration still remains. See
 benchmarks/qwen38-exact-q4-fullk-affine-native-20261105.txt and whole logs.
+
+Full-K/original-affine PHYSICAL arithmetic gate (tag96,actual pass)
+----------------------------------------------------------------
+Nov5UTC:protected44388 ACTUALLY exits0,remote parent10833. BOTH changed
+synthetic K17408 jobs produce32 exact original FP32 outputs with32 padding
+words untouched. Inputs/weights/metadata are generated ON CARD,no inserted
+host payload or CPU inference. Client validates and explicitly ENDs;
+parent restores stable041/gen24. Whole main+clean DATA readers pass;
+independent postflight83067 ACTUALLY0 confirms idle/cold0,parent absent,
+unchanged apps/runtime/kernel,64CPUs/full137034936320B maxRAM. No reboot,
+power,SD,hardware/model/installed-app change. The stage is SPENT FOREVER.
+
+This proves fixed full-K/per-K16 ORIGINAL affine on one tile,NOT a full
+model/cohort/source streaming or speed result.321 polls is NOT a latency
+or rate measurement. The next task is complete Q4 Work-worker integration
+and actual full-model answer/throughput comparison,not another unchanged
+diagnostic. Correct full27B rate stays0.1728tok/s;20tok/s goal ACTIVE/UNMET.
+See benchmarks/qwen38-exact-q4-fullk-affine-physical-20261105.txt and whole
+closed evidence. Installed Assistant remains on the stable older backend.

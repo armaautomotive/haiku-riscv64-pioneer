@@ -1,0 +1,27 @@
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
+d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
+861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74  /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
+c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18  /boot/home/config/non-packaged/servers/HaikuAssistantService
+0de9141eb3955cf1c993a67c80ef648b3538ce7155c17677458487ee083a4933  /boot/home/config/non-packaged/apps/HaikuAssistant
+20eb2f3c01973ac7d59e6c23ed37e577a778ab5f5228d99ec4cb0e73c3f6469d  /boot/home/pioneer-native-exact-q4-affine-20261105-a/tenstorrent_pci_probe-native-exact-q4-affine-96
+36090c79b9a501062ee0ffa0938a2ba9333cc51035298dbb53d88f0fb152c9ec  /boot/home/pioneer-native-exact-q4-affine-20261105-a/pioneer-native-exact-q4-affine-diagnostic
+da7b39552219d03a38df67c872c727b6e5454c2b21ae8d74fbf32b21d350d66a  /boot/home/pioneer-native-exact-q4-affine-20261105-a/physical.sh
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-native-exact-q4-affine-20261105-a/stable041.backup
+0ae23a2c211af9fbafb89c3d93bdd136a4bdd574baeeaf2d622f582efcf426af  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so.0.2.0
+a3b81c133641bbdacde8dd1d0e0ffa7a0a1ec0c33e95c426df1db59735379c16  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml.so.0.21.0
+9cb45a36558bd78aa4d4b7ed5385cbf9df32de208f9e6c9b6d064e8527dca389  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-base.so.0.21.0
+69e9ec2c43a123afbb256c3feb6313cdcebdf1b2a87278ac3cdac8a1a65273d2  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-cpu.so.0.21.0
+P100A_RELOAD driver55 tag2026102100010012 generation24 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+130781569024 bytes free      (used/max 6253367296 / 137034936320)
+                           (cached   19840450560)
+     59604 semaphores free (used/max       5932 /      65536)
+      3716 ports free      (used/max        380 /       4096)
+      2594 threads free    (used/max       1502 /       4096)
+      1973 teams free      (used/max         75 /       2048)
+1752c2e86cecc581ce57fa794cb6dbcef261ac752dbd19b74ebd8b5225bcecf8  /boot/home/pioneer-native-exact-q4-affine-20261105-a/fixed.stdout
+PASS_INDEPENDENT_POST_TERMINAL_STABLE24_IDLE_64CPU_FULL_RAM_APPS_RUNTIME_UNCHANGED
