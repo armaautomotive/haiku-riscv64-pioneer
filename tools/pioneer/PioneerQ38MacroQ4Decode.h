@@ -8,10 +8,14 @@
 #include "PioneerSfpuDivide.h"
 #include "PioneerQ38NativeOperand.h"
 
-// Blackhole SFPLOADMACRO: load an ORIGINAL unsigned byte and schedule its
-// exact nibble operation on the simple sub-unit in the following cycle.
-// Alternate LReg0/1. Each explicit native store follows its load by TWO
-// SFPU instructions,so it cannot read before the scheduled operation.
+// REJECTED PHYSICAL CANDIDATE:tag93's real27B counting run returned repeated
+// "tera",not the accepted answer. Offline exactness tests MISSED the actual
+// numerical failure;root cause is not yet established. DO NOT promote or
+// repeat unchanged. See qwen38-macro-q4-full-card-rejected-20261104.txt.
+// Experimental Blackhole SFPLOADMACRO:the intended simple-unit operation
+// follows an ORIGINAL unsigned-byte load. Alternate LReg0/1;explicit native
+// stores follow their loads by TWO SFPU instructions. The emulator's timing
+// assumptions are NOT proof that hardware observes the intended values.
 // No macro stores/address modifiers,backdoor template writes,packer,new
 // Dst/L1 storage,raw-byte reuse,approximation or changed matrix order.
 // ISA:BlackholeA0/.../SFPLOADMACRO.md;WormholeB0/.../SFPCONFIG.md.

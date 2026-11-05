@@ -1,0 +1,72 @@
+Actual full-card macro-Q4 trial -- NUMERICAL RESULT REJECTED
+==========================================================
+Stage date20261104;actual terminal observed Nov5UTC. Source870d2694.
+Protected exec29482 ACTUALLY exits0;remote parent7743. Whole fetch92552
+ACTUALLY0. Unchanged main+clean full-log readers both0,byte-identical
+results,stderr0. Independent postflight40324 ACTUALLY0/stderr0 verifies
+stable041/gen20,idle/cold0,64CPUs/full137034936320B RAM,unchanged kernel,
+Assistant/service/worker/runtime/admin/guard/model identity. No recovery,
+reboot,power,SD,mains,hardware or installed Assistant change was needed.
+
+REJECTION,not a successful optimization
+---------------------------------------
+SAME public request as accepted tag90/tag92:
+ "Count from 1 to 50, one number per line. Do not add explanations."
+31 prompt tokens,32 output tokens,62 committed positions. All851 original
+source bindings,whole same-open SHA authentication,19399024640B original
+upload. ALL model inference on card;NO CPU inference/reference/fallback.
+The candidate returns128 bytes:"tera" repeated32 times. The accepted
+baseline returns32 bytes:integers1 through14,one per line,at the token cap.
+Exact byte comparison fails. Correctness is NOT optional in Work mode.
+
+The protocol/timing reader's PASS establishes only its explicitly stated
+DATA checks;it never certifies model numerics or accepts a speedup. This
+separate answer check rejects the actual candidate despite clean lifecycle
+and the earlier exact software/emulator passes. Do NOT lower tolerances,
+change the expected answer or relabel the result as usable generation.
+The failure's precise cause is UNKNOWN;do not claim a diagnosed timing,
+macro-config,load hazard or arithmetic issue without a narrower test.
+
+Raw INVALID-model timing retained only for diagnosis
+----------------------------------------------------
+31 post-prompt count steps179317127..179320498us:
+ 0.172874827..0.172878077raw counted steps/sec.
+Raw timestamp endpoints66077949915,66077951587,66257268714,66257270413.
+3444 observations,63 increasing count rows,2250 upload rows.
+Prompt+generation359.225s;Generate total2107.735s including upload/init/
+cleanup,excluding prior whole-file/vocabulary authentication.
+These numbers are NOT an accepted model rate or speed improvement. Even
+numerically they are essentially unchanged from correct tag92's0.1728.
+20tok/s stays UNMET. The accepted baseline is unchanged.
+
+Actual lifecycle
+----------------
+stable041/gen18 -> native93/gen19 -> stable041/gen20.
+The parent observes actual child0,worker clean END and real120 HOLD/drain/
+restoration before exchanging back. Its stage/helper is SPENT FOREVER:
+ /boot/home/pioneer-q38-full-macro-q4-20261104-a
+NEVER rerun unchanged. No extra Pioneer operation was made while29482
+lived;only its SAME live handle and local observer files were watched.
+The single parent performed all protected device operations/restoration.
+Normal closure is not a numerical pass;the installed driver remains stable.
+
+Native SHA61a8cce47e5294f6f6263fe22a331859c22576f7e268416a3433f00c81e7d79e
+Worker SHA103e0c734fbb1f63f2beea6b3de617e42a3699af7450b4ee895e8a056cd81160
+Client SHA46f4fcb520cf2c5ffa6767c3b3d17371ff5c1d22aeb5dcd98d15100262baa7b3
+Helper SHAed6d142b5a87c6cd3c7b903255b757803a6dac4a65e298b91ee3f3c7bd56d36e
+Whole CLOSED child stdout231325B SHA
+ c76445557a006e3c8f2aa03cb73c8ea2eedb6ffa600241ba19a45002173cb7b0.
+Sibling directory contains the full closed raw stream,actual exit/state/
+parent files,both readers,independent postflight/script and complete parent
+observer. No learned/prepared payload,model bytes or binaries are published.
+
+Direction after this rejection
+-------------------------------
+Do not spend repeated full-model uploads on the unchanged macro decoder.
+The lossless native-primary source layout fits all seven banks at full8192
+context/two-state/all851 scope (02094f59);actual compiled direct-matrix
+primary prototype is independently reproduced (894438e4). Those are still
+OFFBOARD,not a replacement backend or measured gain. Implement correction,
+qualify actual card arithmetic,then integrate and measure real generation.
+Do not infer20tok/s from instruction counts,memory fit or primary-only tests.
+Overall performance goal remains ACTIVE,not achieved or blocked.

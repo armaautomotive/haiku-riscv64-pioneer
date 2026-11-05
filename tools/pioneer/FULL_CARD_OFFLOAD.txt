@@ -1,5 +1,10 @@
 Qwen27B full-card execution candidate (not an installed Assistant release)
 ======================================================================
+Current accepted result:tag92's correct counting answer at about0.1728tok/s.
+Later tag93 macro-Q4 trial completed but produced the WRONG answer and is
+REJECTED,not a speedup. Independent postflight confirms stable041/gen20,
+idle,64CPUs/fullRAM/unchanged apps. See the rejected report at the end.
+
 Actual Nov4 hardware milestone:the longer counting request completed with
 32 output tokens,all851 original bindings/whole source authentication,
 19.4GB upload,no CPU inference context or fallback,and clean device/worker
@@ -206,7 +211,7 @@ measured generation-path gain,NOT a released usable-speed hardware mode.
 The tag92 stage/helper is SPENT and MUST NEVER be rerun. No live device
 job remains;future physical work needs a fresh qualified stage/admission.
 
-New Q4 load-macro shader prerequisite (NOT physically measured)
+Historical Q4 load-macro software prerequisite (physical trial REJECTED)
 --------------------------------------------------------------
 Nov4:distinct complete worker89f71fc9d6e8... independently reproduced.
 Original Work-Q4 bytes/metadata/matrix/affine/source/NoC order retained;
@@ -215,12 +220,11 @@ alternating registers. Original explicit native stores/drains remain.
 Main+clean source execute27 shapes/54 retained-input jobs exactly and
 12 inert transfer-loss cases;arithmetic and real compile gates also pass.
 See benchmarks/qwen38-macro-q4-offline-20261104.txt for complete scope.
-This has NO native driver/package/Work selection or physical permission.
-Macro-config ownership/restoration and real27B timing are still required.
-Emulator instruction counts are NOT a speedup. Latest actual rate stays
-tag92's0.1728tok/s;20tok/s remains UNMET. No installed software changed.
+These offline passes did NOT predict the actual numerical failure below.
+Emulator instruction counts are NOT a speedup. Accepted rate stays
+tag92's0.1728tok/s;20tok/s remains UNMET. No installed Assistant changed.
 
-Macro-Q4 native pairing (tag93,not yet physically measured)
+Macro-Q4 native pairing (tag93,physical numerical result REJECTED)
 ---------------------------------------------------------
 Distinct --batched --metrics --macro-q4 native/USER build uses package4,
 complete shader89f71fc9... and the unchanged5-EOG ROOT. Main+clean binaries
@@ -231,5 +235,14 @@ and failures retain the original quarantine/no-retry contract. No claim
 of arbitrary original SFPU-register restoration is made. See
 benchmarks/qwen38-macro-q4-native-20261104.txt for actual owner/scope proofs,
 all local tests,artifact hashes and the one-shot generation18 admission.
-The installed Assistant/driver are not changed by this BUILD checkpoint.
-No new rate or speedup:hardware arithmetic and real27B timing remain next.
+Nov5UTC:protected29482 ACTUALLY exits0,all62 positions committed,clean
+device/worker END and stable041/gen20 restoration. But the SAME public
+counting request returns128 bytes of repeated "tera",not the accepted
+32-byte counting answer. Whole readers pass protocol/timing DATA,NOT
+numerical equivalence. Therefore REJECT the candidate and its raw rate;
+no speedup or model-quality acceptance follows. No retry unchanged.
+Separate postflight40324 ACTUALLY0 confirms idle/cold0,64CPUs/fullRAM and
+unchanged apps/runtime/guard/kernel. No reboot/power/SD/hardware change.
+See benchmarks/qwen38-macro-q4-full-card-rejected-20261104.txt and whole
+closed evidence. Root cause is unproven;offline timing assumptions must
+not be treated as physical arithmetic proof. Correct tag92 remains best.
