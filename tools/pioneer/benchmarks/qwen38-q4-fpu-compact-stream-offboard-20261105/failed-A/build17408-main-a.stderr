@@ -1,0 +1,7 @@
+/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-ld: Q4 stream exceeds its private8KiB ROM
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/build_q38_q4_fpu_compact_stream.py", line 29, in <module>
+    subprocess.run(command, check=True, cwd=out)
+  File "/Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/lib/python3.9/subprocess.py", line 528, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['/Volumes/HaikuBuildLocal/generated.riscv64/cross-tools-riscv64/bin/riscv64-unknown-haiku-ld', '-m', 'elf32lriscv', '--no-relax', '--gc-sections', '-T', '/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_q38_q4_fpu_compact_stream.ld', '/private/tmp/pioneer-q38-compact-stream-20261105.VnZ8Wb6J/image17408-main-a/start.o', '/private/tmp/pioneer-q38-compact-stream-20261105.VnZ8Wb6J/image17408-main-a/program.o', '-Map', '/private/tmp/pioneer-q38-compact-stream-20261105.VnZ8Wb6J/image17408-main-a/program.map', '-o', '/private/tmp/pioneer-q38-compact-stream-20261105.VnZ8Wb6J/image17408-main-a/program.elf']' returned non-zero exit status 1.

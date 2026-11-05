@@ -1,0 +1,17 @@
+{
+  "scope": "Actual offline parent results, not native execution or throughput authority",
+  "base_head": "f66bf2c51e90a2bc8706e9c48f84c42e36c612e2",
+  "main": {"session": 35829, "exit": 0},
+  "clean": {"session": 10971, "exit": 0},
+  "children_per_tree": 17,
+  "nested_block_regression_children_per_tree": 15,
+  "all_accepted_stderr_empty": true,
+  "source_closure_files": 76,
+  "role_and_width_refusals": 31,
+  "new_text_bytes_each_width": 7644,
+  "original_rom_bound": 8192,
+  "observed_combined_stack": 432,
+  "observed_stack_touched": 420,
+  "full_original_model_samples": {"bands": 9, "jobs": 18, "words": 576},
+  "no_new_physical_rate": true
+}

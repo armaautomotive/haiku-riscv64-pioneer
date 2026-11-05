@@ -18,7 +18,8 @@ struct CompactFpuPipelineMachine:Q4FpuPipelineMachine {
    const unsigned address=(config[76]+1)*16;
    assert(config[49]==0 && config[64]==0x10001e && config[65]==16 && config[72]==14 && config[73]==0x13
     && config[84]==0x00400040 && config[86]==0x100010 && xStart[0]==0 && xEnd[0]==255
-    && address==0x94000+(compactImports%2)*320);
+    && address==0x94000+OperandOffset()+(compactImports%2)*320);
+   if(!OperandReady(address,256))throw Fault{};
    for(unsigned h=0;h<64;h++)assert(!l1[address-64+h]);
    cycle++;compactImports++;unpacks[0]++;
    if(compactImports!=dropCompactImport)task={true,false,false,false,address,0,256,cycle+delay[0]};return;

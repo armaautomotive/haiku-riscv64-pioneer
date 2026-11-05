@@ -11,6 +11,7 @@
 // Complete GDDR streaming/native lease/model quality still unqualified.
 struct PioneerQ38Q4FpuBlock {
  friend struct PioneerQ38Q4FpuCompactBlock;
+ friend struct PioneerQ38Q4FpuCompactStreamCompute;
 	static constexpr unsigned Raw=0x90000,RawStride=320,Metadata=0x94000,MetadataStride=128;
 	static constexpr unsigned Input=0x96000,InputStride=128,Zero=0x97000,Output=0x98000;
 	static constexpr unsigned Header=64,Rows=32,Width=256,PreparedBytes=6144;

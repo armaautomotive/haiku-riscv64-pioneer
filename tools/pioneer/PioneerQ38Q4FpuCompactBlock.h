@@ -9,6 +9,7 @@
 // private zero64B headers;zero buffer/input/raw ownership stays explicit.
 // Logical FP32 Dst128..255 is a NEW scope,NOT an existing native lease grant.
 struct PioneerQ38Q4FpuCompactBlock {
+ friend struct PioneerQ38Q4FpuCompactStreamCompute;
  using B=PioneerQ38Q4FpuBlock;using M=PioneerQ38Q4FpuCompactMetadata;
  enum : unsigned {Metadata=B::Metadata,MetadataStride=320};
 private:

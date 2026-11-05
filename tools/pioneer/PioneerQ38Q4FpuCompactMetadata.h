@@ -31,6 +31,16 @@ private:
   e.Op(0x72230000|Row(First+2,Half)|Parity);e.Op(0x72630000|(Row(First+2,Half)+4)|Parity);
   e.Op(0x72330000|Row(First+3,Half)|Parity);e.Op(0x72730000|(Row(First+3,Half)+4)|Parity);
  }
+ template<class E> static void StoreDynamic(E& e,unsigned half,unsigned first,unsigned parity){
+  PioneerSfpuMove(e,0,6);PioneerSfpuMove(e,4,7);
+  for(unsigned r=1;r<4;r++)PioneerSfpuLoad32(e,r,0);
+  for(unsigned r=5;r<8;r++)PioneerSfpuLoad32(e,r,0);
+  e.Op(0x8c000000);
+  for(unsigned r=0;r<4;r++){
+   e.Op(0x72030000|(r<<20)|Row(first+r,half)|parity);
+   e.Op(0x72430000|(r<<20)|(Row(first+r,half)+4)|parity);
+  }
+ }
  template<unsigned Half,unsigned Parity,class E> static void ParityBlock(E& e){
   e.Op(0x700d0000|Parity);
   PioneerSfpuMove(e,1,0);PioneerSfpuMove(e,2,0);PioneerSfpuMove(e,3,0);
@@ -47,6 +57,30 @@ public:
  template<unsigned Half,class E> static void Decode(E& e){
   static_assert(Half<2,"two original16-output metadata prefixes only");
   ParityBlock<Half,0>(e);ParityBlock<Half,2>(e);e.Drain();
+ }
+ // SAME issued words,one shared stream function instead of half/parity
+ // copies. Dynamic addresses change issue encoding only,not arithmetic.
+ template<class E> static
+#ifdef __riscv
+ __attribute__((noinline,noclone))
+#else
+ __attribute__((noinline))
+#endif
+ bool DecodeDynamic(E& e,unsigned half){
+  if(half>=2)return false; // ZERO IO
+  for(unsigned parity=0;parity<=2;parity+=2){
+   e.Op(0x700d0000|parity);
+   PioneerSfpuMove(e,1,0);PioneerSfpuMove(e,2,0);PioneerSfpuMove(e,3,0);
+   for(unsigned r=4;r<8;r++)PioneerSfpuLoad32(e,r,0);
+   e.Op(0x8c000000);PioneerQ38VectorQ4Metadata::RawBases(e);
+   e.Op(0x72430000|Row(7,half)|parity);e.Op(0x72530000|(Row(7,half)+4)|parity);
+   e.Op(0x700d0000|4|parity);e.Op(0x701d0000|8|parity);
+   PioneerQ38VectorQ4Metadata::Factors<0>(e);Products(e);StoreDynamic(e,half,0,parity);
+   e.Op(0x700d0000|12|parity);e.Op(0x701d0000|4|parity);e.Op(0x702d0000|8|parity);
+   e.Op(0x70430000|Row(7,half)|parity);e.Op(0x70530000|(Row(7,half)+4)|parity);
+   PioneerQ38VectorQ4Metadata::Factors<4>(e);Products(e);StoreDynamic(e,half,4,parity);
+  }
+  e.Drain();return true;
  }
 };
 #endif

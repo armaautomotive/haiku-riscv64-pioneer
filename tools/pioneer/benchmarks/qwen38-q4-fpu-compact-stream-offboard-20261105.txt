@@ -1,0 +1,114 @@
+Compact full-K original-Q4/SFPU/BF16/FPU stream:OFFBOARD checkpoint
+================================================================
+2026-11-05 UTC;fresh HEADf66bf2c51e plus19 exact source overlays.
+NEW complete compiled programs process32 output rows across ALL K5120 or
+K17408,with one accumulator initialization per job and two complete jobs.
+This is NOT resident/cohort/full-model/native/Work/hardware/quality or speed
+qualification. Last real model rate remains0.164361584..0.164365058tok/s;
+20tok/s UNMET. No Pioneer device/admin/network/power/stage/install command.
+
+Complete on-card dataflow
+-------------------------
+Distinct compact source:4608B original Q4 per32x256 (4096 quant+512 original
+metadata),plus512B BF16 inputs.26 requests/80 C64 flits per block instead
+of expanded56 requests/104 flits. Exact byte/request counts,NOT a measured
+bandwidth or model-speed gain. Packet test independently covers EVERY4608
+weight byte and512 input bytes exactly once,all headers disjoint,8 geometry
+cases and20 atomic invalid-layout refusals. No arena/capacity grant.
+
+Two13-request slices alternate two L1 producer buffers. Prefetch begins
+before current metadata decode;second slice issues before group0 math.
+Acquire requires complete FIFO/nine wrapping-counter deltas/all32 credits/
+command echo/visibility fence. ALL original poll limits and failure rules
+remain:the new loader body is checked exact to old algorithm after only
+distinct type/guard names and explanatory comment substitutions. No scalar
+payload copy,GDDR write,host K-loop,CPU learned product or fallback.
+
+Begin initializes ONCE per full-width job. Each K256 block imports its own
+two completed original metadata prefixes,then all8 groups add to the SAME
+FPU accumulator32/40. New LoadMetadata calls require producer visibility
+for the actual selected buffer,not just arrived bytes. Dst128..255 factor
+storage and zero initialization remain explicit;not a native journal grant.
+Only final32 outputs are scalar-read AFTER all math/NoC completion checks.
+
+Keeping the original code bounds
+--------------------------------
+First A full-K link REFUSED8656B against unchanged8192B ROM in BOTH widths.
+Failed builds remain failed;no larger ROM or slower fallback was admitted.
+One shared DecodeDynamic function now emits the SAME half/parity words,
+rather than duplicating instruction-generating code. Compute-event tests
+compare the ENTIRE compact block sequence against Begin+LoadMetadata+
+eight Group calls,and compare buffer1 with only exact descriptor offsets.
+No arithmetic/precision/readiness assertion is loosened to save code.
+
+Final B text7644B per width,548B headroom;ORIGINAL8192B ROM/8192B stack.
+Distinct QCS1/QCSE markers,role and width flags;old QFS1/native86 cannot
+authorize it. Actual strict unchanged RV32 Step observes combined stack432B,
+touched420B. Individual main frame304B is not the combined stack claim.
+Word-only stack memset remains restricted to its owned ABI stack;no byte
+store decoder relaxation. Old7824B full-K images reproduce EXACTLY FIRST,
+and unchanged4948B compact/7036B expanded block regressions pass too.
+
+Actual B boot4B common:
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd
+K5120 text7644B:
+f67b7b5bc07bddcf5f3ddfccfbe1013c2680650ea1994231565f050d1f0d89c5
+K5120 ELF19796B:
+1d4cc347c45f9fe4735becf3ba7bea3faeef2e118071e4356a29bcca93ecfacb
+K17408 text7644B:
+c95e0cc41971b37dd89786a2c3747b6d8ef6ebbde3a2ec837c63198982373b92
+K17408 ELF19796B:
+a8bb45834ee5f5181e6f24c2ff21a918edd10befa911de809991bc69a6ab5a36
+
+Actually closed main AND independent clean archive
+--------------------------------------------------
+Main35829/clean10971 ACTUALLY0,outer stderr0. Each requires17 actual child0
+results with strict stderr0,including the15-child earlier compact-block
+regression.31 role/defined0/native/client/kernel/CPU-reference/Work/old-mode/
+wrong-width refusals. ASan+UBSan,Werror,ffp-contract=off. Whole public outer/
+child streams,exit maps,76-file source closure and BOTH complete generated
+ELFs compare byte-identical. User dirty kernel/llama/resident/mixed-client
+WIP is not selected as build input. No generated binary/learned bytes in Git.
+
+Loader:16 valid/44 refused cases,all8 route SHAPES/two widths,whole L1
+payload/header/unowned-byte comparison,counter wrap,no next IO after failure
+or completion. Emitted pipeline:two jobs per width,all64 exact,one init/job;
+missing producer visibility refuses before raw metadata or any matrix work.
+Actual compiled image:two jobs/all64 exact per width,canonical shared L1
+for NoC replies/UNPACK/code/stack/frame/results and actual FENCE witnessing.
+No descriptor normalization,PC skip or supplied numerical completion.
+
+Faults:32 unknown/frame/NIU/config/completion/producer/initialization cases
+refuse before outputs. Actual fault parks execute2048 further guest loop
+instructions with no new NIU reads/writes/requests/math/output. Autonomous
+replies remain allowed;pending resources/counters are NOT reclaimed/reset/
+rewound. Nine numerical omissions (metadata stores,phases,zero input) cannot
+match the unchanged reference. Mock endpoints are NOT silicon timing or
+permission to clean up an unknown native engine.
+
+Independent Python Fraction checks128 actual compiled output words across
+ALL K256 blocks,720896 synthetic weights/180224 rounded phases;no CXX
+decoder/preparer/SFPU/FPU oracle shared. FPU BF16-RNE recipe is unchanged;
+this is not old exact-K16/GGML equivalence or broad model quality.
+
+EACH tree hashes the FULL SAME-OPEN18973870528B original GGUF:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+Read-only/O_NOFOLLOW/owned regular one-link,nanosecond identity/epoch stable.
+Gate/up/down first/middle/last32-row bands:9 full-K cases,18 actual compiled
+jobs,576 exact words,2654208 original weights. Diagnostic BF16 inputs,NOT
+real prompt states. Original/derived numeric arrays are not printed/saved.
+The nested earlier-block regression also repeats its193-tensor/1737-block
+original sample suite without changing its old exact comparisons.
+
+Remaining toward actual fast27B inference
+-----------------------------------------
+Qualify a distinct native owner/protocol/source/cache binding and NEW scratch
+scope for this new format/code/lifecycle. Existing native86 expanded tests
+and all SPENT stages are immutable;do not rerun them to admit compact code.
+Then measure real hardware learned full-K behavior and timings,integrate
+Q6/Q8/full cohort/resident graph/live on-card activations,validate full-model
+quality and real matched inference speed. No Assistant Work promotion yet.
+25% fewer prepared weight bytes alone does NOT imply25% faster inference.
+Normal041/gen36/64CPU/full137034936320B last observed state is left unchanged.
+Complete public logs/actual exits/source identities accompany this report.
+Goal remains ACTIVE;no new tokens/sec or hardware speedup is claimed.
