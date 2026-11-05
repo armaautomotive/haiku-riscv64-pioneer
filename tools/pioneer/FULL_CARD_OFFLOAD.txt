@@ -246,3 +246,20 @@ unchanged apps/runtime/guard/kernel. No reboot/power/SD/hardware change.
 See benchmarks/qwen38-macro-q4-full-card-rejected-20261104.txt and whole
 closed evidence. Root cause is unproven;offline timing assumptions must
 not be treated as physical arithmetic proof. Correct tag92 remains best.
+
+Exact native Q4 correction kernel (OFFBOARD,not a released backend)
+-----------------------------------------------------------------
+The new source representation q=z+7+escape retains every original integer
+weight/metadata byte and fits the existing full8192/two-state/all851 bank
+plan. The corrected2880B compiled RV32 prototype now forms the COMPLETE
+integer dot(q,x) with three on-card matrix products,including BOTH correction
+terms,before any original FP32 affine step. No scalar/CPU dot,requantized
+learned weight,old SFPU nibble decode or PCIe intermediate is used by this
+primitive. It is still NOT fullK/affine/cohort/backend integration.
+
+Main+clean software checks pass,including actual compiled-image execution
+of9264 real learned panels across all193 Q4 matrices/whole authenticated
+851-source layout,with synthetic integer inputs. Hardware arithmetic and
+full-generation equivalence/performance remain separate REQUIRED gates.
+See benchmarks/qwen38-exact-q4-corrected-20261104.txt. No installed driver,
+Assistant or accepted0.1728tok/s baseline is changed by these local tests.

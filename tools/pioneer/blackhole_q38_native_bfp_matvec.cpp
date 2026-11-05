@@ -1,6 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 // OFFBOARD image prototype only;no installed handler launches this program.
 #include "PioneerQ38NativeBfpMatvec.h"
+#ifdef PIONEER_Q38_EXACT_Q4_CORRECTED_IMAGE
+#if PIONEER_Q38_EXACT_Q4_CORRECTED_IMAGE != 1 || PIONEER_Q38_NATIVE_BFP_BITS != 4 || defined(PIONEER_Q38_EXACT_Q4_PRIMARY_IMAGE)
+#error Distinct corrected integer Q4 image required
+#endif
+#include "PioneerQ38ExactQ4Corrected.h"
+#endif
 #ifdef PIONEER_Q38_EXACT_Q4_PRIMARY_IMAGE
 #if PIONEER_Q38_EXACT_Q4_PRIMARY_IMAGE != 1 || PIONEER_Q38_NATIVE_BFP_BITS != 4
 #error Exact integer-input primary requires its distinct Q4 image
@@ -15,6 +21,12 @@ extern "C" void native_bfp_fault() __attribute__((noreturn));
 namespace {
 static inline volatile unsigned* Words(unsigned address) { return reinterpret_cast<volatile unsigned*>(address); }
 struct Emitter {
+#ifdef PIONEER_Q38_EXACT_Q4_CORRECTED_IMAGE
+	unsigned Mask(unsigned i){return Words(0x90300)[i];}
+	void Seven(unsigned i,unsigned v){Words(0x90100)[i]=v;}
+	void Escape(unsigned i,unsigned v){Words(0x90200)[i]=v;}
+	void SealData(){asm volatile("fence":::"memory");}
+#endif
 	void Op(unsigned instruction) { *Words(0xffe40000)=instruction; }
 	void Drain() {
 		// Existing bounded Blackhole STALLWAIT/GPR completion protocol. No guessed delay,
@@ -34,13 +46,18 @@ struct Emitter {
 }
 extern "C" unsigned native_bfp_main() {
 	Emitter emitter;
-#ifdef PIONEER_Q38_EXACT_Q4_PRIMARY_IMAGE
+#ifdef PIONEER_Q38_EXACT_Q4_CORRECTED_IMAGE
+	if(!PioneerQ38ExactQ4Corrected::Setup(emitter))native_bfp_fault();
+#elif defined(PIONEER_Q38_EXACT_Q4_PRIMARY_IMAGE)
 	if(!PioneerQ38ExactQ4Primary::Setup(emitter))native_bfp_fault();
 #else
 	if(!PioneerQ38NativeBfpMatvec::Setup(emitter,PIONEER_Q38_NATIVE_BFP_BITS))native_bfp_fault();
 #endif
 	for(unsigned pass=0;pass<2;pass++) {
-#ifdef PIONEER_Q38_EXACT_Q4_PRIMARY_IMAGE
+#ifdef PIONEER_Q38_EXACT_Q4_CORRECTED_IMAGE
+		if(!PioneerQ38ExactQ4Corrected::Run(emitter))native_bfp_fault();
+		constexpr unsigned rows=1;
+#elif defined(PIONEER_Q38_EXACT_Q4_PRIMARY_IMAGE)
 		if(!PioneerQ38ExactQ4Primary::Run(emitter))native_bfp_fault();
 		constexpr unsigned rows=1;
 #else

@@ -1,0 +1,117 @@
+Exact native Q4 correction matrix kernel -- OFFBOARD ONLY
+=======================================================
+2026-11-04 local date;Nov5UTC. Basee58c4f34b9. Previous goal turn was
+PROGRESS:macro93 physical result rejected numerically,stable20 independently
+restored,exact source layout/primary kernel implemented/tested/pushed.
+This checkpoint implements the MISSING CORRECTION ARITHMETIC,not UI or
+residency work. No Pioneer connection/device/power/driver operation occurred.
+Correct full-card tag92 remains0.1728tok/s;20tok/s remains UNMET/goal ACTIVE.
+
+Complete original integer panel,NOT just primary
+----------------------------------------------
+ q=z+7+escape;z=min(q,14)-7;escape=(q==15).
+The new actual RV32 image performs THREE MVMUL products into the SAME FP32
+Dst rows:dot(z,x),7*sum(x),dot(escape,x). The result is the EXACT original
+integer dot(q,x),BEFORE original coefficient/minimum FP32 arithmetic.
+No minima adjustment or dequantized-weight requantization is substituted.
+There is no scalar/CPU dot,CPU model inference/fallback,SFPU nibble decoder,
+MOVD2A,packer or TDMA operation in the prototype. Learned products do NOT
+cross PCIe. This is not yet fullK/affine/cohort/native backend integration.
+
+Private original-layout primary128B at90000;constant7 at90100/128B;escape
+scratch90200/64B;original one-bit mask90300/32B;BF16 input91000/256B.
+Separate16B headers precede unpack payloads. All these DATA extents fit
+inside the EXISTING isolated BFP owner's saved L1 geometry. No new mapping,
+bank cap,context reduction,CPU embedding or model binding omission follows.
+This fit is not a native owner/physical execution grant.
+
+RV32 only permutes the original16-bit mask rows into native SM1 scratch
+using fixed SWAR operations. Original1-bit compressed source representation
+still has the already proved full8192/two-state/all851 per-bank geometry.
+It does NOT persist a doubled BFP2 mask or expanded FP weights in DRAM.
+
+Actual operations and precision
+--------------------------------
+UNP0 writes primary/constant/escape into SrcA rows0/16/32 of the SAME bank.
+The first two UNPACKs DO NOT flip;after real completion,only the last hands
+the complete bank to FPU. UNP1 supplies8 replicas of16 BF16 integer inputs
+[-128,127]. Explicit matrix BF16 format5 ignores the differing unpack
+input formats;implied formats stay disabled. Native input IDs are7 for
+BFP4_B and15 for BFP2_B,NOT BFP2_A11. Forced exponents129/127,no exponent
+stream,aligned payloads,legal burst starts,x4 BFP4/x1 BFP2,no tileize or
+transpose. CPU/RV fences order scalar scratch stores before UNPACK reads;
+a RISC fence is NEVER used as proof that FPU work has completed.
+
+Each product uses phase0 only under the bounded INTEGER input contract:
+A has<=3 significant bits,B<=7. Intermediate/final integer sums fit EXACTLY
+in FP32. Fidelity resets between all three products;only the final MVMUL
+releases BOTH source banks. A real final matrix drain precedes Dst reads
+or reuse. Arbitrary BF16 inputs are OUTSIDE this contract;old general-BF16
+producer retains its original multiple fidelity phases and payload bytes.
+
+Primary source facts rechecked (not vendor implementation copied):
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/UNPACR_Regular.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/SrcASrcB.md
+Pinned official enum confirms BFP2_B15;its tensix_types.h SHA remains
+9770c4460d96749d02fe3b8eb3ed30b431d85fcd101973a127202c914fd32c7c.
+
+Closed independent software checks
+-----------------------------------
+Main and CLEAN git-archivee58c4f34 source plus ONLY these changes,including
+committed misc test-header dependencies,BOTH ACTUALLY0/stderr0:
+ *Old BFP actual-image suite37 cases;old primary suite16384 direct jobs/
+  261 actual-image cases runs first. All old numerical rules remain intact.
+ *Corrected ASan/UBSan/-Werror:16384 changing panel jobs,262144 ORIGINAL
+  integer dots,four asymmetric producer schedules,both source banks.
+ *All65536 row masks prove the bit permutation.96 constant extreme cases
+  include q0/q15,x-128/127 and exact cancellation;256 single-bit escape cases
+  isolate EACH correction position from an identical all7 primary panel.
+ *Omitting bias or escape produces a WRONG result despite otherwise clean
+  lifecycle;missing data fence refuses outputs. Neither check is weakened.
+ *261 ACTUAL compiled RV32-image cases,256 fixtures with CHANGED input/
+  primary/mask for the second job,not merely repeated cached bytes. Config,
+  missing-source,ACK and final-matrix-completion failures expose no accepted
+  outputs. Missing final ACK leaves mathPending and inert Q4CF fault park.
+ *Scalar primary-weight/activation reads are forbidden;only32 mask bytes are read
+  by RV32,plus code/stack/status/config/completed Dst. Only fixed constant7
+  and escape scratch writes are admitted. No arbitrary addresses/NoC/CSR/
+  reset/PCIe/model execution authority exists in this image observer.
+ *Existing strict RV Step decoder unchanged;one optional observer BeforeStep
+  hook records EXECUTED RISC fence opcodes without asserting FPU completion.
+ *Observed SP80/8192B equals compiler stack report80. Maximum1866 RV steps
+  for two successful fixed jobs is an EMULATOR COUNT,NOT cycles or speed.
+ *Main/clean boot,text AND whole ELF byte-identical,cmp0:
+  boot d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4B
+  text cfb51ae48bd7eb34e2187e9a7dec4dd03468e0672d5ed3890be23e84428d6dc7 2880B
+  ELF  d379fdbf7086f7ca1ef285f2415e985fbc5e1e97d1bc0c32fab799ac4c183cd9
+ *Old BFP4/adcec3cf,BFP8/c21f4692 and primary/816b6824 payloads unchanged.
+
+Real learned Q4 data -> actual image,still OFFBOARD
+--------------------------------------------------
+Both trees independently authenticate the SAME OPEN original18973870528B
+GGUF/all851 shapes/SHAc600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+All193 Q4 matrices INCLUDING embedding:first/middle/last tile =579 tiles,
+9264 panels/two actual jobs each,296448 ORIGINAL integer-dot comparisons.
+Independent GGUF row-major extraction supplies the exact reference;native
+image receives lossless primary/mask bytes only. Inputs are SYNTHETIC int8,
+not an actual prompt's hidden vectors or a model-quality evaluation.
+Each complete runner ACTUALLY0/stderr0;aggregate logs byte-identical cmp0.
+Whole aggregate stdout SHAe2932131dc428e55d1f692c277ff9c5acac191b07a465936aef676645a8f3859.
+No learned values/model/prepared payload/cache/binary artifact is printed
+or published. This is not fullK,FP32 affine or physical arithmetic proof.
+
+Reproduce without any device access
+------------------------------------
+ sh tools/pioneer/tests/run_pioneer_q38_exact_q4_corrected_tests.sh HAIKU_BUILD
+The real-data runner is tests/pioneer_q38_exact_q4_corrected_real_test.cpp,
+linked with PioneerModelWeightCache.cpp using the same sanitizer/warning/
+FP flags as the image test. Arguments:EXACT_IMAGE_DIRECTORY ORIGINAL_GGUF.
+All binaries use new private output directories. The discarded initial
+mask location93000 was moved to90300 BEFORE final qualification so all
+scratch remains inside existing saved L1 geometry. Initial2876B image is
+SUPERSEDED;only final2880B cfb51ae4 applies. No initial image hit hardware.
+
+Next:separately bounded native owner/fixed synthetic physical arithmetic
+qualification,then fullK/affine/cohort/source/cache/backend integration and
+real generation/answer comparison. Software passes are NOT hardware proof,
+as the REJECTED macro93 case demonstrated. No tokens/sec claim from this.

@@ -7,8 +7,9 @@
 
 // Reuse the UNCHANGED project's strict RV32I Step decoder. Override ONLY
 // this NEW image's fixed memory/MMIO map and independent BFP FPU observer.
-template<class Arithmetic=NativeBfpMachine,unsigned Columns=32> struct NativeBfpRV32Image:Machine {
+template<class Arithmetic=NativeBfpMachine,unsigned Columns=32,unsigned Variant=(Columns==16?1:0)> struct NativeBfpRV32Image:Machine {
 	static_assert(Columns==16 || Columns==32,"explicit prototype image geometry");
+	static_assert(Variant<=2 && (Columns==32)==(Variant==0),"explicit prototype variant");
 	Arithmetic native;std::vector<uint8_t> code;
 	unsigned minStack=0x70000,minSP=0x70000,resultStores=0,ackRequests=0,dropAckAt=0;bool dropAck=false,awaitingAck=false,stackSeen=false;
 	unsigned dropConfig=~0U;
@@ -63,15 +64,16 @@ template<class Arithmetic=NativeBfpMachine,unsigned Columns=32> struct NativeBfp
 		assert(CodeAddress(a) || Range(a,0x6e000,8192) || Range(a,0x17ffc0,12));
 		return l1[Index(a)];
 	}
+	virtual void BeforeStep() {} // observer extension only;strict RV decoder unchanged
 	bool Execute() {
 		while(pc!=0x70038 && pc!=0x70058) {
-			Step();if(regs[2])stackSeen=true;
+			BeforeStep();Step();if(regs[2])stackSeen=true;
 			if(stackSeen) { assert(regs[2]>=0x6e000 && regs[2]<=0x70000 && !(regs[2]&15));minSP=std::min(minSP,regs[2]); }
 		}
 		assert(l1[Index(pc)]==0x0000006f && minStack>=0x6e000);
-		if(pc==0x70058) { assert(l1[Index(0x17ffc8)]==(Columns==16?0x46503451U:0x4642464eU) && !resultStores);return false; }
-		assert(l1[Index(0x17ffc0)]==0x7000c && l1[Index(0x17ffc4)]==2 && l1[Index(0x17ffc8)]==(Columns==16?0x31503451U:0x3142464eU));
-		assert(native.Clean() && resultStores==Columns*2 && native.outputReads==Columns*2 && native.unpacks[0]==2 && native.unpacks[1]==2);
+		if(pc==0x70058) { assert(l1[Index(0x17ffc8)]==(Variant==2?0x46433451U:Variant==1?0x46503451U:0x4642464eU) && !resultStores);return false; }
+		assert(l1[Index(0x17ffc0)]==0x7000c && l1[Index(0x17ffc4)]==2 && l1[Index(0x17ffc8)]==(Variant==2?0x31433451U:Variant==1?0x31503451U:0x3142464eU));
+		assert(native.Clean() && resultStores==Columns*2 && native.outputReads==Columns*2 && native.unpacks[0]==(Variant==2?6U:2U) && native.unpacks[1]==2);
 		assert(!native.unpackBank[0] && !native.unpackBank[1] && !native.matrixBank[0] && !native.matrixBank[1]);return true;
 	}
 	void Exact(const std::array<float,Columns>& expected) {

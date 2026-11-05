@@ -10,9 +10,11 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('haiku_build', type=pathlib.Path)
 parser.add_argument('output', type=pathlib.Path)
 parser.add_argument('bits', type=int, choices=(4, 8))
-parser.add_argument('--exact-q4-primary', action='store_true', help='distinct integer-input primary-dot-only prototype; not full Q4')
+variant = parser.add_mutually_exclusive_group()
+variant.add_argument('--exact-q4-primary', action='store_true', help='distinct integer-input primary-dot-only prototype; not full Q4')
+variant.add_argument('--exact-q4-corrected', action='store_true', help='distinct corrected integer Q4 panel; not fullK/affine/model')
 args = parser.parse_args()
-assert not args.exact_q4_primary or args.bits == 4
+assert not (args.exact_q4_primary or args.exact_q4_corrected) or args.bits == 4
 assert args.haiku_build.is_absolute() and args.haiku_build.is_dir()
 assert args.output.is_absolute() and not args.output.exists() and not args.output.is_symlink()
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
@@ -35,6 +37,9 @@ commands = [
 if args.exact_q4_primary:
     commands[0][1:1] = ['-DPIONEER_Q38_EXACT_Q4_PRIMARY_IMAGE=1']
     commands[1][1:1] = ['--defsym', 'PIONEER_Q38_EXACT_Q4_PRIMARY_IMAGE=1']
+if args.exact_q4_corrected:
+    commands[0][1:1] = ['-DPIONEER_Q38_EXACT_Q4_CORRECTED_IMAGE=1']
+    commands[1][1:1] = ['--defsym', 'PIONEER_Q38_EXACT_Q4_CORRECTED_IMAGE=1']
 for section in ('boot', 'text'):
     commands.append([tool + 'objcopy', '-O', 'binary', '-j', '.' + section, str(args.output / 'program.elf'), str(args.output / (section + '.bin'))])
 for command in commands:
@@ -48,4 +53,5 @@ for name in ('boot.bin', 'text.bin'):
     value = (args.output / name).read_bytes()
     assert len(value) == 4 if name == 'boot.bin' else 0 < len(value) <= 4096 and len(value) % 4 == 0
     print(hashlib.sha256(value).hexdigest(), len(value), name)
-print('OFFBOARD_BUILD_ONLY ' + ('EXACT_Q4_PRIMARY_ONLY_INTEGER_INPUT' if args.exact_q4_primary else 'BFP' + str(args.bits) + '_B/FP32 matvec') + ';NO lifecycle,driver,hardware,model-quality,Work or timing permission')
+label = 'EXACT_Q4_CORRECTED_INTEGER_PANEL' if args.exact_q4_corrected else 'EXACT_Q4_PRIMARY_ONLY_INTEGER_INPUT' if args.exact_q4_primary else 'BFP' + str(args.bits) + '_B/FP32 matvec'
+print('OFFBOARD_BUILD_ONLY ' + label + ';NO lifecycle,driver,hardware,model-quality,Work or timing permission')
