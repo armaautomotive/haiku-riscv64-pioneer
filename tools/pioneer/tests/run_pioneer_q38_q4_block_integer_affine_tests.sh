@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+[ "$#" -le 1 ] || exit 2
+directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-q38-block-integer.XXXXXXXX")
+${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize=address,undefined \
+ "$directory/pioneer_q38_q4_block_integer_affine_test.cpp" -o "$temporary/test"
+ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/test"
+if [ "$#" = 1 ];then
+ ${CXX:-c++} -std=c++17 -O1 -g -ffp-contract=off -Wall -Wextra -Werror -fsanitize=address,undefined \
+  "$directory/pioneer_q38_q4_block_integer_original_test.cpp" "$directory/../PioneerModelWeightCache.cpp" -o "$temporary/original"
+ ASAN_OPTIONS=quarantine_size_mb=32 UBSAN_OPTIONS=halt_on_error=1 "$temporary/original" "$1"
+fi
+printf 'Offboard block-integer arithmetic evidence retained at %s\n' "$temporary"

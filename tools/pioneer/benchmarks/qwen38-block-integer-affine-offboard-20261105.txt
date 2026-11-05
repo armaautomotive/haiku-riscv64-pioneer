@@ -1,0 +1,107 @@
+Q4 block-integer SFPU arithmetic:distinct OFFBOARD prerequisite
+============================================================
+2026-11-05 UTC. New arithmetic words,NOT an installed worker,native driver,
+model inference,quality acceptance or physical speed result.20tok/s UNMET.
+Current fixed-config103 physical trial remains protected independently.
+
+Why this differs from old group32
+--------------------------------
+The old group32 experiment already completed physical full-model testing
+on October21 and did not improve full-model throughput. It is not rerun.
+This candidate instead accumulates ORIGINAL integer scale*qdot and
+minimum*inputSum over a complete256-input Q4_K block,then applies the
+original d/dmin and activation scale once. No weight approximation,new
+quantization,BF16 conversion or host inference product is introduced.
+
+Each16-input qdot magnitude<=30720,scale/minimum<=63,inputSum<=2048.
+Eight-panel weighted-dot magnitude<=15482880<2^24. Both halves therefore
+accumulate EXACT integers in FP32,including cancellation. Save the first
+half,clear ONLY the dot accumulators,then accumulate the second half.
+Their final standalone FP32 add equals RN(the exact complete integer).
+Sixteen-panel minimum sum magnitude<=2064384 and is also EXACT in FP32.
+One unsplit dot accumulator is NOT exact:64 control outputs demonstrate
+lost information that the split-half version avoids. A separate64 outputs
+exercise actual final rounding for complete dots larger than2^24.
+
+PioneerQ38Q4BlockIntegerAffine emits two independent SFPMADs plus one
+complete tail latency word per panel. Registers4/5 and6/7 retain independent
+output parities;inputs0..3 and the other parity are preserved. Its final
+six non-fused mul/add operations preserve6/7 so parity0 cannot destroy
+parity2 before its final affine. Old K16 arithmetic/comparators unchanged.
+NEW accumulation rounding and zero-sign contract:NOT bit-exact old K16,
+NOT claimed identical to GGML's eight interleaved accumulators,and NOT
+accepted on semantic model quality merely because these tests pass.
+
+Primary instruction contracts consulted:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPMAD.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPCAST_IntFloat.md
+The exact-integer domain avoids general partially-fused MAD error. The
+retained local Blackhole FMA bit model executes actual emitted words.
+
+Actually closed tests:main AND independent clean source tree
+----------------------------------------------------------
+ASan+UBSan,Werror,ffp-contract=off. Main complete component+original run
+2363=0,clean59944=0. Entire functional stdout exact;only the runner's final
+temporary-artifact directory line differs. All test stderr empty.
+
+ Synthetic:131072 final words,4194304 exact intermediate integer checks,
+ all32 lanes/both parities,half extremes/subnormals/signed zeros,activation
+ scale/old-accumulator cases,14 invalid-domain refusals,2 missing-latency
+ faults. Register preservation checked after every panel and final affine.
+ No model,Dst/source-bank or silicon state is hidden in this lane observer.
+
+ Actual original:each process independently authenticates the FULL SAME
+ OPEN18973870528B GGUF SHA before samples:
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+ All851 metadata shapes accepted. All193 Q4 tensors,first/middle/last row
+ bands AND K blocks:1737 sampled original blocks,3474 changed-input jobs,
+ 222336 lane words/55584 unique row outputs. Actual packed codes and exact
+ coefficients/minima cross-check the unchanged canonical original decoder.
+ First8+last8 integer accumulation and final affine match their distinct
+ independently evaluated integer/FP32 contract.173268 lane words differ
+ from old K16 rounding as EXPECTED. Synthetic activations,not prompt hidden
+ states;four duplicated subvectors per original row,NOT a Dst layout proof.
+ Final source identity/size/timestamps remain stable. O_RDONLY source only;
+ no cache opening/creation/repair,weight publication,device or GPU operation.
+
+ Roles main42271=0/clean59944=0:1 positive/44 missing,zero,two,late,native,
+ client,Work,reference,fast-math and invalid-parity refusals. Gates are
+ rechecked outside the header guard. No production/native role selects it.
+ Unchanged old affine regression main42271=0 and clean initial shell0:
+ 1048576 original exact FP32 words,3 dependency faults. Functional stdout
+ exact;only old runner's temporary path differs. No old tolerance changed.
+
+ Development failures retained privately,not relabeled as passes:initial
+ synthetic test failed its own rounding-COVERAGE assertion because random
+ sums never exceeded2^24;added explicit odd large-total/cancellation cases,
+ not a comparator relaxation. First original link omitted existing cache
+ hash implementation and failed;linked that unchanged implementation.
+ Initial clean overlay used incorrect relative source paths and did not
+ run the new suite;fresh absolute overlay+set-e ran the complete59944 suite.
+
+Arithmetic word count is NOT a speedup
+------------------------------------
+Per parity the new arithmetic is16*3+12=60 words versus16*13=208 words for
+the OLD affine subexpression ONLY. This excludes qdot reconstruction,
+metadata production,operand loads,half storage,source handoffs,all FPU
+operations/waits and journal/lifecycle work. Old13-word affine already uses
+REPLAY,so host issue traffic is NOT proportional to those word counts.
+No cycles,utilization,bandwidth,latency or tokens/sec inferred from them.
+
+Next implementation boundary
+----------------------------
+Need ORIGINAL raw factors/bases from on-card metadata,actual Dst/LReg loads,
+first-half storage without aliasing/live-accumulator loss,strict worker
+ownership/source-bank/STOP lifetime and complete compiled-worker tests.
+Then distinct native/model integration,separate quality validation and a
+real matched model benchmark. CPU reference must NEVER enter Work mode.
+Do not install this arithmetic helper directly or relax an old comparator.
+Expanded all-BFP8/prior predecoded layout work also already exists;do not
+blindly repeat it or enlarge7x3GiB owned arenas from advertised capacity.
+
+Physical boundary at20:59:20GMT:fixed103 wrapper28724,parent28725,rate28809,
+USER28810 live,SAME observer36806,upload1758.6/19522.4MiB,actual exits absent,
+all stderr0. No concurrent accelerator status/admin/new job,stage mutation,
+reload,reboot,relay,Assistant,OS/boot,network,SD,mains or hardware change.
+Last closed queued102 rate0.162052093..0.162055547tok/s,no useful gain;
+best vector92 0.172813448..0.172816755. None is a rate for this new math.

@@ -1,0 +1,14 @@
+Actual closed process records,not planned acceptance:
+initial synthetic component:134,rounding coverage assertion;fixed fixtures
+32673:0,first component+role suite
+11982:0,split-half controls+role suite
+92484:1,original utility unresolved hash link;fixed unchanged implementation link
+initial clean overlay shell:0 BUT failed to copy/run NEW files;NOT new-suite acceptance
+2363:0,complete main component+authenticated original suite,stderr0
+59944:0,complete independent clean component+authenticated original+roles,stderr0
+42271:0,main unchanged old-affine regression+new roles,stderr0
+initial clean shell old-affine invocation:0,old regression only,stderr0
+functional main/clean component+original stdout compare0;only temporary path differs
+whole main/clean role stdout compare0;all accepted stderr0
+functional main/clean old-affine stdout compare0;only temporary path differs
+No physical execution/driver/quality/speed acceptance for this arithmetic helper

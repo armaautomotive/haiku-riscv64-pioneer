@@ -1,6 +1,29 @@
 Fixed-config Q4 complete native/USER build -- 2026-11-05
 ======================================================
 
+LIVE DEPLOYMENT UPDATE20:48UTC: fixed-config103 is now installed ONLY for
+ONE protected physical comparison,tag2026110500010103/generation35.
+Source26f51eb6a083eab0078f6ac5dbd48e576ba547e4;all artifact pins below
+remain unchanged. Independent normal041/gen34/64CPU/fullRAM/apps/runtime
+admission completed0 before distinct stage creation99995=0. All FIVE
+legacy-SCP transfers completed0;remote identities/hashes and full local
+readbacks matched,readback31433=0. Fresh staged admission63219=0 preceded
+ONE launch24220=0. That last0 is a DETACHED LAUNCH RECEIPT,NOT a trial exit.
+Stage/launch markers are SPENT FOREVER;never relaunch this comparison.
+
+Protected wrapper28724,parent28725,rate28809,USER28810 remain live via SAME
+readonly observer36806 at20:48:09GMT. Authenticating original model;actual
+parent/rate exits ABSENT,all stderr empty. No numerical or speed acceptance
+exists for103. No concurrent accelerator metadata/admin/new job,stage
+mutation,reload,reboot,relay,SD,mains,network or hardware operation occurs.
+Historical pre-runtime owner0 metadata does NOT prove current idle state.
+Actual clean parent/rate/worker0+normal STOP/HOLD/drain/END+all four PIDs
+absent must precede independent normal041/gen36/apps/runtime/64CPU/fullRAM
+postflight and complete raw-log/strict-rate-reader acceptance. Prepared
+postflight script is NOT evidence of execution. Closed deployment receipts
+are in the sibling directory;no live physical log is archived as closed.
+All NOT INSTALLED/future-stage statements below are HISTORICAL.
+
 STATE UPDATE20:04UTC: the DIFFERENT queued-E102 trial has now actually
 closed,independent normal041/gen34/64CPU/fullRAM/apps postflight0. Its rate
 0.162052093..0.162055547tok/s shows no useful gain. See the complete result
