@@ -64,7 +64,10 @@ static_assert(PioneerQ38FullOffloadMetricsSelection==0,"late full-card metrics r
 #endif
 #ifndef PIONEER_Q38_FULL_OFFLOAD_FIRMWARE_BINDING_H
 #define PIONEER_Q38_FULL_OFFLOAD_FIRMWARE_BINDING_H
-#ifdef PIONEER_Q38_FULL_OFFLOAD_TWO_PRODUCT_REPLAY
+#ifdef PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH
+#include "PioneerQ38FullOffloadInstructionPrefetchRole.h"
+enum {PioneerQ38FullOffloadFirmwareSelection=9};
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_TWO_PRODUCT_REPLAY)
 #include "PioneerQ38FullOffloadTwoProductReplayRole.h"
 enum {PioneerQ38FullOffloadFirmwareSelection=8};
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
@@ -84,7 +87,10 @@ enum {PioneerQ38FullOffloadFirmwareSelection=1};
 #endif
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_BATCHED
-#ifdef PIONEER_Q38_FULL_OFFLOAD_TWO_PRODUCT_REPLAY
+#ifdef PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH
+#include "PioneerQ38FullOffloadInstructionPrefetchRole.h"
+static_assert(PioneerQ38FullOffloadFirmwareSelection==9,"late full-card instruction-prefetch selection");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_TWO_PRODUCT_REPLAY)
 #include "PioneerQ38FullOffloadTwoProductReplayRole.h"
 static_assert(PioneerQ38FullOffloadFirmwareSelection==8,"late full-card two-product replay selection");
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)

@@ -1,0 +1,16 @@
+f810d61b543f07751ad1a3667f250afe3f4dc72454c8b6e9acbb1e7f60c0a5e0 pioneer-q38-full-offload-rate-smoke
+f47b04f4f0e21211520d0d8a2285353c0a40807fc0f016daa7f3e2234870ef8d HaikuAssistantQwen27FullOffload
+a7e2769a106d0ae6a6ad89d75a768e2b2f2ecfe4f1b87a1fe7d9867de7ae5734 pioneer-q38-full-offload-smoke
+PASS BUILD_ONLY vocabulary-only full-card worker;exact11 vocabulary/model-container API imports;24 role refusals;NO context,decode,logits,threadpool or hybrid backend imports;frozen libraries/headers
+NOT installed or physically/numerically qualified;no performance result
+Full-card firmware pairing: prepared profile Q4 tag99
+94e1c1fa09cadc95ec9c4465171c9fd582f627ea22932fdbd551274814f8893e pioneer-q38-full-offload-smoke
+2ad68fab59193abeef362e00e3719abfcf992891d300edc8f708b942bd01c98b pioneer-q38-full-offload-rate-smoke
+088ab8eb999a81221d38d8b4aa4bdea33198c46f726efb7765d8b0e4700d2265 HaikuAssistantQwen27FullOffload
+PASS BUILD_ONLY replay13 USER/tag100;exact11 vocabulary/container imports;tag99 USER/rate reproduced;28 role refusals;no CPU context/decode/logits/ggml inference;unchanged original cache writer
+NOT installed or hardware-qualified;NO speed result
+bb79c2aea57f9e5f8f3f6d0e62792b775b3c0b08b49b679ad3db30a924f62bb9 pioneer-q38-full-offload-smoke
+55894b0cf48f74409c6648cd64ca98851552dceebfbff3a02e6be5a02a0460cd pioneer-q38-full-offload-rate-smoke
+f0462866387e5a4ab422a43c5b0184724091186a233ee59cc6e7e2b31ea9ac18 HaikuAssistantQwen27FullOffload
+PASS BUILD_ONLY instruction-prefetch USER/tag101;exact11 vocabulary/container imports;tag100/tag99 USER/rate reproduced;35 role refusals;no CPU context/decode/logits/ggml inference;unchanged original cache writer
+NOT installed or hardware-qualified;NO speed result

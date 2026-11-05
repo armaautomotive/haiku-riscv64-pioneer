@@ -63,6 +63,12 @@
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
 #include "PioneerQ38FullOffloadPhaseProfileRole.h"
 #endif
+#ifdef PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH
+#include "PioneerQ38FullOffloadInstructionPrefetchRole.h"
+#endif
+#if defined(TT_PIONEER_DRIVER_RELOAD) && PIONEER_DRIVER_BUILD_TAG == 0x2026110500010101ULL && !defined(PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH)
+#error Tag101 requires the distinct full-model instruction-prefetch revision
+#endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_TWO_PRODUCT_REPLAY
 #include "PioneerQ38FullOffloadTwoProductReplayRole.h"
 #endif

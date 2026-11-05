@@ -20,6 +20,9 @@ if phase_profile:
 two_product_replay='--two-product-replay' in args
 if two_product_replay:
     assert phase_profile and args.count('--two-product-replay')==1;args.remove('--two-product-replay')
+instruction_prefetch='--instruction-prefetch' in args
+if instruction_prefetch:
+    assert two_product_replay and args.count('--instruction-prefetch')==1;args.remove('--instruction-prefetch')
 assert len(args) == 3 and not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 root, worker, output = map(pathlib.Path, args)
 assert all(p.is_absolute() for p in (root, worker, output)) and not output.exists() and not output.is_symlink()
@@ -37,7 +40,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-prepared-programs-', dir='/priv
         data = target.read_bytes()
         assert data and not len(data) % 4 and data == (root / target.name).read_bytes()
         sections[name] = data
-peer = authenticated(worker, pins(here / ('build_qwen38_two_product_q4_worker.py' if two_product_replay else 'build_qwen38_prepared_exact_q4_worker.py'), 'REPLAY_PINS' if two_product_replay else 'PINS'))
+peer = authenticated(worker, pins(here / ('build_qwen38_instruction_prefetch_worker.py' if instruction_prefetch else 'build_qwen38_two_product_q4_worker.py' if two_product_replay else 'build_qwen38_prepared_exact_q4_worker.py'), 'REPLAY_PINS' if two_product_replay and not instruction_prefetch else 'PINS'))
 source = (here / 'PioneerQ38FullOffloadBatchedPrograms.h').read_bytes()
 assert hashlib.sha256(source).hexdigest() == '91624761b95d281cb9dd4493790b27a1c5d88d7c327d6df894711561b76b4c84'
 text = source.decode('ascii')
@@ -98,6 +101,11 @@ if two_product_replay:
     text=text.replace('enum {CounterUnroll=1,','enum {TwoProductQ4=1,AffineReplayWords=13};\nenum {CounterUnroll=1,')
     text=text.replace('Generated executed prepared ROOT and exact prepared Q4 workers:five+ten sections.',
                       'Generated qualified ROOT and exact replay13 two-product Q4 worker:five+ten sections.')
+if instruction_prefetch:
+    text=text.replace('PioneerQ38FullOffloadTwoProductReplayQ4','PioneerQ38FullOffloadInstructionPrefetchQ4')
+    text=text.replace('PIONEER_Q38_FULL_OFFLOAD_TWO_PRODUCT_REPLAY_Q4_PROGRAMS_H','PIONEER_Q38_FULL_OFFLOAD_INSTRUCTION_PREFETCH_Q4_PROGRAMS_H')
+    text=text.replace('enum {TwoProductQ4=1,','enum {InstructionPrefetch=1,PrefetchLimitRegister=203,PrefetchControlRegister=208,PrefetchRequests=4,PrefetchLastByte=0xc0c67};\nenum {TwoProductQ4=1,')
+    text=text.replace('exact replay13 two-product Q4 worker','bounded instruction-prefetch replay13 worker')
 with output.open('x', encoding='ascii') as stream:
     stream.write(text)
 print(hashlib.sha256(output.read_bytes()).hexdigest(), output.name, flush=True)

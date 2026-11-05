@@ -1,0 +1,88 @@
+Instruction-prefetch full27B integration -- 2026-11-05
+====================================================
+
+BUILD/OFFLINE QUALIFIED ONLY. NOT INSTALLED OR EXECUTED AT THIS CHECKPOINT.
+NO inference speed result for this candidate. Target20 tokens/sec remains
+UNMET. Previous real replay13 result0.162411264..0.162414644tok/s is NOT a
+measurement of this build. Best accepted vector92 remains~0.1728tok/s.
+
+This integrates the already qualified9f151839 whole worker into DISTINCT
+full-model tag101/selection9,not a CPU fallback or a diagnostic renamed Work.
+ROOT74cae450,all learned arithmetic,precision,weights/cache format and all
+nine non-global-worker sections remain unchanged. The only compute-worker
+change is bounded T0 instruction prefetch:203 limit0xc0c67,208 request count4.
+The existing complete native lifetime holds non-T0 compute processors reset.
+Worker setup and normal STOP restoration are readback-checked;unknown
+faults park and retain resources. The policy never retries a failed write.
+This is a performance HYPOTHESIS;fetch stalls have NOT been measured on
+hardware and no benefit is assumed.
+
+Exact main/clean artifacts:
+ ROOT ELF74cae45049174dd53c96203104a0b4b501f757b2210b2de86da5507334ebacc5
+ worker ELF9f1518398a3145ee30254ce06cd291403366070815dfdcbe26635f0340265f26
+ global9720B6b04a57faf2e6a17ee7ac9d9881420ed56a97b3e2b65bcbf0e7f215e093cb533
+ paired490ea103cd04cc05768dd9c002dbe8c138613e846c4bd781e2869c4fc23ed513
+ nativefbca121f3394491e702f66213f6d5e9d3e3fc38a749b07a9821e50a9543c64eb
+ USERf0462866387e5a4ab422a43c5b0184724091186a233ee59cc6e7e2b31ea9ac18
+ rate55894b0cf48f74409c6648cd64ca98851552dceebfbff3a02e6be5a02a0460cd
+ smokebb79c2aea57f9e5f8f3f6d0e62792b775b3c0b08b49b679ad3db30a924f62bb9
+
+ALL below ACTUALLY EXIT0,not background intention or partial stdout:
+ Native main86481/clean56707:all15 compiled object arrays exact;strict
+ no-CPU/reference imports;individual Token frame<=1232B;old tag100,
+ tag99 and default43 REPRODUCED EXACT before new build. Main52/clean51
+ refusal cases pass;the difference is one pre-existing resident-WIP gate
+ in main's inherited base builder,NOT a binary difference. Entire native
+ binaries are byte-identical. Build stdout honestly preserves that count.
+ USER main99550/clean78987:byte-identical worker/smoke/rate binaries,
+ same exact11 vocabulary/container imports,no CPU decode/context/logits/
+ ggml inference;35 refusal cases;old tag100/tag99 USER/rate exact first.
+ DATA main18977/clean24012:regenerated whole header exact;all15sections,
+ 3379063 actual codewords across120workers,alljournal ranges covered,
+ 10014 invalid-or-DATA address refusals. Saved extent53922024B unchanged.
+ Session main17816/clean53308:original USER and kernel control bodies,
+ 803 fail-closed COW fixtures,13511 early kernel shape refusals,
+ 194 same-FD publications/all4895 upload spans before START,
+ 96 phase packet mutations;full drain/HOLD/read/END,EOS/cancel and
+ source withdrawal/copy failures. MOCK owner only,not card evidence.
+ Role main93809/clean88070:3 positives/167 missing,zero,two,late,parent,
+ old-package,CPU/Work refusals,including USER/native tag101 identity.
+ Parent main/clean:all previously qualified fake physical failure
+ fixtures run FIRST;WHOLE tag100 tested parent source equals tag101
+ after ONLY9 exact revision/stage/hash/generation substitutions.
+ Held-read main/clean:actual held method+Fail body,63successes/
+ 101refusals/905 changed IO event faults;authority explicitly MOCK.
+ Every DATA/session/role/parent/held-read WHOLE stdout matches main/clean;
+ ALL stderr empty. Final binary comparisons also actually return0.
+
+Earlier worker qualification remains2832eee4fe:whole main/clean actual
+ELF interpreter executes all27 prepared shapes,54 changed jobs,GDN history,
+normal STOP and18 new config fault boundaries;exact arithmetic/source/
+ACK/commit expected and inert fault parks. This integration changes NO
+worker bits from those tests;does not substitute host tests for hardware.
+
+Two earlier integration commands FAILED CLOSED before hardware access:
+ first native wrapper selected an absent runpy driver key;corrected to
+ actual parent's source. First protocol test correctly rejected old
+ tag100 assertion for newtag101;added an explicit tag101 assertion.
+ Final clean-source builds/tests independently pass after both fixes.
+
+Fresh independent read-only admission80439 ACTUALLY0/empty stderr:
+ stable041/tag2026102100010012/gen30,idle,no owner/quarantine,guard1,
+ open_count1(self),64CPU,137034936320B maxRAM,unchanged Assistant/server/
+ runtime/guard hashes. Old tag100 parent/child0,protected processes absent.
+ This does NOT launch the card or prove prefetch settings work on hardware.
+
+Stage reserved for ONE trial,only after source checkpoint push:
+ /boot/home/pioneer-q38-full-instruction-prefetch-q4-20261105-a
+ exact physical parent requires stable30 -> temporary101/gen31 -> stable32,
+ actual worker/child0,normal STOP/HOLD/drain/END before restoration.
+ UNKNOWN means stop with resources retained,no automatic retry/reset,
+ force unload or restoration. Stages100/99/98 remain spent forever.
+ No Assistant install,boot change,reboot,relay,SD,mains or hardware action.
+
+Raw local test/build/admission stdout/stderr and import/refusal lists are
+retained in the sibling evidence directory. Source-only clean-export
+staging preserves unrelated resident/FlashNext/mixed-FPU work and the
+dirty llama submodule. This checkpoint is preparation for a measured
+real27B comparison;it is NOT a claim that the requested usable speed exists.

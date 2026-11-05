@@ -1,0 +1,11 @@
+llama_log_set
+llama_model_default_params
+llama_model_free
+llama_model_get_vocab
+llama_model_load_from_file_ptr
+llama_token_to_piece
+llama_tokenize
+llama_vocab_eos
+llama_vocab_eot
+llama_vocab_is_eog
+llama_vocab_n_tokens
