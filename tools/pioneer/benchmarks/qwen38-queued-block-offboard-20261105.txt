@@ -91,6 +91,58 @@ Follow-up actually CLOSED17:50UTC (same complete E image,not a new worker):
  Initial harness compile/order/symbol-selection mistakes were corrected;
  earlier failed logs remain private. No old ISA/model gate was relaxed.
 
+Follow-up actually CLOSED18:10UTC,still the SAME E8fee worker:
+ Asynchronous frontend main81160/clean39900 BOTH0,whole stdout AND stderr
+ identical. Twelve schedules:K5120/6144/17408 xdepth1/2/8/13,each two
+ retained changed-input jobs/groups3. Delayed condition schedules0/31/
+ 257/4099 are synthetic stress parameters,NOT hardware clocks or latency.
+ Actual RV queues instructions and continues;independent service applies
+ real compiled instructions to the existing strict math/source model.
+ Every original backend wait and final real ACK remains. Exact FP32 rows,
+ actual source planes,NoC reads,replay history,payload ACK,commit and STOP
+ match the same immediate-completion E control. No guest PC skip or
+ supplied result. At every depth high-water stays within the selected bound.
+
+ Missing each of64 first-block phase completions atdepth2 AND13 gives128
+ cases.126 actually backpressure the emitting RV store before it returns;
+ the test does NOT call this a guest timeout or successful park. The two
+ final-phase losses reach the existing bounded CPU ACK poll and fault park,
+ with two queued instructions still pending. All128 retain the missing
+ condition and queued work for2048 further external observations,without
+ subsequent source/config/NoC changes,payload,commit,normal restore or a
+ cleanup claim. The two EXPECTED39-field fault-PC rows are the ONLY stderr.
+ Native UNKNOWN/quarantine/lifetime behavior is STILL a separate obligation.
+
+ The old sum-cache observer required a globally drained backend even for
+ CPU-only integer scratch. Under the delayed schedule,this refused legal
+ writes. ONLY this new test subclass handles that precise private range,
+ retaining original job/order/alignment/value/bounds rules and proving no
+ active GPU operand overlaps it. All actual GPU-source writes stay refused
+ while the queue is active. Longer-delay cases observe600/720/2040 such
+ private writes for the three widths;read/write counts and final rows match.
+ No shared old decoder/model guard or production code was weakened.
+
+ Retained coupled history main2803/clean13350 BOTH0,whole stdout identical,
+ stderr empty:ALL48 recurrent head pairs/96 actual workers,192 Q4 jobs and
+192 GDN half-jobs. Each SAME worker boots once,executes queued Q4,then two
+ paired GDN steps with changed beta/prior,returns to changed-input Q4 with
+ genuine payload-ACK/commit,then actual STOP. Endpoint/receipt bookkeeping
+ retires each prior job while preserving actual counters,PC,registers,
+ config,Dst,LRegs,banks,replay and private frontier. No code reload/reset.
+ Q4 uses1280 delayed waits/job,2560/worker across the two Q4 jobs. Maximum
+ observed combined stack4820/8192B;no stack/code extent enlargement.
+ The earlier3-pair one-way history run was also0,but is not substituted
+ for these complete96-worker round-trip records. Mock learned endpoints,
+ NOT full-model/native/physical inference or a new rate.
+
+ Model limitation:the combined finite admission bound is conservative;
+ the nominal32 FIFO and13 tracked-instruction limit are NOT two additive
+ pools. Waits latch then block following instructions. Existing register-
+ only replay executes via the strict functional decoder,not a new cycle-
+ accurate multi-stage replay/MOP/fused-store/RV store-queue implementation.
+ This is a safety interleaving test,NOT a claim to simulate all silicon
+ schedules. No instruction count or synthetic delay is converted to TPS.
+
 NOT a speed result:
  Same K5120/groups1/two-job fixture current9f takes1,443,247 retired RV
  instructions;candidate E takes1,554,215 (MORE,about7.69%). The older 8a
@@ -112,10 +164,11 @@ Failures retained privately:
 Required NEXT before ANY physical/native integration:
  1. DONE: strict whole-ROM/symbol/relocation binding and negative tests
  described above. New-body/failure qualification is a SEPARATE obligation.
- 2. Final config readback failures DONE as above. Missing/delayed backend
- completion/finite-queue/inert uncertainty tests STILL DUE;coupled GDN/
- history/current data ownership tests ALSO DUE. Do not claim a local
- timeout just because the CPU poll at block end is bounded.
+ 2. Final config failure,conservative delayed finite-queue/missing-phase
+ and96-worker Q4/GDN/Q4 history checks DONE to the scope above. This is
+ NOT full silicon-front-end or native failure containment qualification.
+ Preserve the two DIFFERENT missing-completion outcomes;never claim a
+ local timeout merely because the block-end CPU poll is bounded.
  3. Exact full120-worker code/data journal coverage;distinct native/USER/
  program identity with no CPU inference;all admission/lifecycle tests.
  Then,and ONLY then,one fresh real27B comparison. The preceding prefetch

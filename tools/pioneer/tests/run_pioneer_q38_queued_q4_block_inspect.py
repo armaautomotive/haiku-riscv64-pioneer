@@ -3,7 +3,7 @@
 import ast,hashlib,os,pathlib,re,subprocess,sys,tempfile
 from compare_pioneer_q38_observed_trace import require,stable_bytes
 require(__debug__ and not os.environ.get('PYTHONOPTIMIZE'),'checks required')
-require(len(sys.argv)==5 and sys.argv[4] in ('--pilot','--group-pilot','--all-shapes','--config-faults'),'REPLAY PREFETCH CANDIDATE --pilot|--group-pilot|--all-shapes|--config-faults ONLY')
+require(len(sys.argv)==5 and sys.argv[4] in ('--pilot','--group-pilot','--all-shapes','--config-faults','--frontend','--history'),'REPLAY PREFETCH CANDIDATE --pilot|--group-pilot|--all-shapes|--config-faults|--frontend|--history ONLY')
 require(not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ),'no role override')
 here=pathlib.Path(__file__).resolve().parent
 image,prefetch,candidate=map(pathlib.Path,sys.argv[1:4])
@@ -57,8 +57,8 @@ with tempfile.TemporaryDirectory(prefix='pioneer-queued-q4-inspect-',dir='/priva
  flags+=['-DPIONEER_Q38_TWO_PRODUCT_WORKER_TEST=1','-DPIONEER_Q38_TWO_PRODUCT_REPLAY_WORKER_TEST=1',
          '-DPIONEER_Q38_INSTRUCTION_PREFETCH_WORKER_TEST=1','-DPIONEER_Q38_QUEUED_Q4_BLOCK_WORKER_TEST=1']
  binary=root/'pilot'
- fault_mode=sys.argv[4]=='--config-faults'
- source='pioneer_q38_queued_q4_block_config_faults.cpp' if fault_mode else 'pioneer_q38_prepared_exact_q4_worker_test.cpp'
+ fault_mode=sys.argv[4] in ('--config-faults','--frontend','--history')
+ source={'--config-faults':'pioneer_q38_queued_q4_block_config_faults.cpp','--frontend':'pioneer_q38_queued_q4_block_frontend_test.cpp','--history':'pioneer_q38_queued_q4_block_history_test.cpp'}.get(sys.argv[4],'pioneer_q38_prepared_exact_q4_worker_test.cpp')
  subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-O1','-g','-ffp-contract=off','-Wall','-Wextra','-Werror',
   '-fsanitize=address,undefined',*flags,str(here/source),'-o',str(binary)],check=True)
  arguments=[directories[0],directories[2]] if fault_mode else directories
