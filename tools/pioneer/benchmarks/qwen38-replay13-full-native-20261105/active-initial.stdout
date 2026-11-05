@@ -1,0 +1,22 @@
+PROTECTED wrapper16500 parent16501
+16500 /bin/sh                                            
+16501 /bin/sh /boot/home/pioneer-q38-full-two-product-replay-q4-20261 
+16585 /boot/home/pioneer-q38-full-two-product-replay-q4-20261105-a/pi 
+16586 /boot/home/pioneer-q38-full-two-product-replay-q4-20261105-a/Ha 
+state: FULL_CARD_RATE32_ACTIVE_DO_NOT_INTERVENE
+parent.exit: ABSENT
+rate.exit: ABSENT
+physical-parent.stdout bytes1319
+      1974 teams free      (used/max         74 /       2048)
+P100A_RELOAD driver55 tag2026102100010012 generation28 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation28 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+P100A_RELOAD driver55 tag2026110500010100 generation29 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026110500010100 generation29 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110500010100 generation29 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+physical-parent.stderr bytes0
+rate.stdout bytes139
+FULL_OFFLOAD_PROGRESS id1 value4294967295 Authenticating Qwen27B; CPU will load vocabulary only,not model weights or an inference context.
+rate.stderr bytes0
+launcher.stderr bytes0

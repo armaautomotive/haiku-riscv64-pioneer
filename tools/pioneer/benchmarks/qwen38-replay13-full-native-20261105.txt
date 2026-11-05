@@ -67,3 +67,21 @@ Next:ONE real same32-output comparison,accept results only after actual
 parent/worker0,STOP/HOLD/drain/END,stable restoration,whole-log parsing
 and independent postflight. Complete raw qualification stdout/stderr is
 saved in the sibling evidence directory. No new inference rate is claimed.
+
+Subsequent physical start,14:06..14:10UTC -- STILL LIVE,NOT A RESULT:
+Integration checkpoint ab1085d0345ed2dc7ab2565aae163b0e27964772 is pushed.
+Fresh read-only admission actually returns0,empty stderr:all staged
+hashes/permissions,stable041/gen28,idle,64CPU/fullRAM,apps/runtime/guard.
+Four artifacts copied with scp -O into the distinct stage above;no old
+spent stage was reused and no installed Assistant change was made.
+ONE launch only:wrapper16500,physical parent16501,rate helper16585,
+USER16586. All four are actually observed live. Parent logs the completed
+stable28 -> tag100/gen29 hot swap and ACTIVE_DO_NOT_INTERVENE. No reboot.
+Original-model authentication is in progress;actual parent.exit/rate.exit
+are ABSENT. Both physical stderrs and launcher.stderr are empty so far.
+These observations grant NO completion,clean END,speed or numerical claim.
+Expected clean restoration is stable041/gen30. The one-shot markers are
+SPENT FOREVER. While active:ONLY scoped PID/log reads;NO independent
+driver/status/device/unload/reset/kill/power/stage changes or relaunch.
+Observation timeout is not termination. Accept only actual complete
+parent/rate0,all four PIDs absent,clean full transcript and postflight.
