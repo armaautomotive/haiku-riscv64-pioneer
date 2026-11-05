@@ -1,7 +1,15 @@
 Instruction-prefetch full27B integration -- 2026-11-05
 ====================================================
 
-BUILD/OFFLINE QUALIFIED ONLY. NOT INSTALLED OR EXECUTED AT THIS CHECKPOINT.
+LIVE UPDATE16:08:25UTC:sourcef1196bf948 pushed and remote ref verified.
+ONE real27B trial started after complete fresh admission. Actual processes
+20341/20342/20427/20428 remain LIVE,tag101/gen31,original model
+authentication in progress,parent/rate exits ABSENT,all stderr empty.
+This is NOT a completed inference run or a speed result. No second launch,
+device metadata call,reset or intervention while the trial remains live.
+Below records the preceding offline checkpoint,not a claim of current idle.
+
+BUILD/OFFLINE QUALIFIED ONLY. NOT INSTALLED OR EXECUTED AT THAT CHECKPOINT.
 NO inference speed result for this candidate. Target20 tokens/sec remains
 UNMET. Previous real replay13 result0.162411264..0.162414644tok/s is NOT a
 measurement of this build. Best accepted vector92 remains~0.1728tok/s.

@@ -1,0 +1,57 @@
+Thu Nov  5 16:07:24 GMT 2026
+PROTECTED wrapper20341 parent20342
+20341 /bin/sh                                            
+20342 /bin/sh /boot/home/pioneer-q38-full-instruction-prefetch-q4-202 
+20427 /boot/home/pioneer-q38-full-instruction-prefetch-q4-20261105-a/ 
+20428 /boot/home/pioneer-q38-full-instruction-prefetch-q4-20261105-a/ 
+state: FULL_CARD_RATE32_ACTIVE_DO_NOT_INTERVENE
+parent.exit: ABSENT
+rate.exit: ABSENT
+physical-parent.stdout bytes1319
+P100A_RELOAD driver55 tag2026110500010101 generation31 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026110500010101 generation31 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110500010101 generation31 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+physical-parent.stderr bytes0
+rate.stdout bytes139
+FULL_OFFLOAD_PROGRESS id1 value4294967295 Authenticating Qwen27B; CPU will load vocabulary only,not model weights or an inference context.
+rate.stderr bytes0
+launcher.stderr bytes0
+Thu Nov  5 16:07:55 GMT 2026
+PROTECTED wrapper20341 parent20342
+20341 /bin/sh                                            
+20342 /bin/sh /boot/home/pioneer-q38-full-instruction-prefetch-q4-202 
+20427 /boot/home/pioneer-q38-full-instruction-prefetch-q4-20261105-a/ 
+20428 /boot/home/pioneer-q38-full-instruction-prefetch-q4-20261105-a/ 
+state: FULL_CARD_RATE32_ACTIVE_DO_NOT_INTERVENE
+parent.exit: ABSENT
+rate.exit: ABSENT
+physical-parent.stdout bytes1319
+P100A_RELOAD driver55 tag2026110500010101 generation31 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026110500010101 generation31 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110500010101 generation31 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+physical-parent.stderr bytes0
+rate.stdout bytes139
+FULL_OFFLOAD_PROGRESS id1 value4294967295 Authenticating Qwen27B; CPU will load vocabulary only,not model weights or an inference context.
+rate.stderr bytes0
+launcher.stderr bytes0
+Thu Nov  5 16:08:25 GMT 2026
+PROTECTED wrapper20341 parent20342
+20341 /bin/sh                                            
+20342 /bin/sh /boot/home/pioneer-q38-full-instruction-prefetch-q4-202 
+20427 /boot/home/pioneer-q38-full-instruction-prefetch-q4-20261105-a/ 
+20428 /boot/home/pioneer-q38-full-instruction-prefetch-q4-20261105-a/ 
+state: FULL_CARD_RATE32_ACTIVE_DO_NOT_INTERVENE
+parent.exit: ABSENT
+rate.exit: ABSENT
+physical-parent.stdout bytes1319
+P100A_RELOAD driver55 tag2026110500010101 generation31 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026110500010101 generation31 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110500010101 generation31 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+physical-parent.stderr bytes0
+rate.stdout bytes139
+FULL_OFFLOAD_PROGRESS id1 value4294967295 Authenticating Qwen27B; CPU will load vocabulary only,not model weights or an inference context.
+rate.stderr bytes0
+launcher.stderr bytes0
