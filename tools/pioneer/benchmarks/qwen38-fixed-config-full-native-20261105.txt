@@ -1,6 +1,12 @@
 Fixed-config Q4 complete native/USER build -- 2026-11-05
 ======================================================
 
+STATE UPDATE20:04UTC: the DIFFERENT queued-E102 trial has now actually
+closed,independent normal041/gen34/64CPU/fullRAM/apps postflight0. Its rate
+0.162052093..0.162055547tok/s shows no useful gain. See the complete result
+qwen38-queued-block-full-physical-20261105.txt. Fixed-config103 remains
+BUILD-ONLY and NOT INSTALLED. LIVE statements below are historical.
+
 BUILD/LOCAL QUALIFICATION ONLY. NOT INSTALLED,STAGED OR RUN ON THE PIONEER.
 The separate queued-E tag102/gen33 full-model trial remains LIVE. No new
 hardware rate exists;20tok/s remains unmet. This checkpoint does not turn

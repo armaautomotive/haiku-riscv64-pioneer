@@ -1,6 +1,12 @@
 Queued-block full27B integration -- 2026-11-05
 ============================================
 
+CLOSED UPDATE20:04UTC: the tag102 trial completed and normal041/gen34,
+64CPUs/fullRAM/apps/runtime preservation independently passed. Measured
+0.162052093..0.162055547tok/s,no useful gain. Complete authoritative result
+and raw evidence:qwen38-queued-block-full-physical-20261105.txt. All LIVE
+statements below are historical launch/progress records,not current state.
+
 LIVE UPDATE18:36UTC: source7ccf966117 pushed and remote ref verified.
 Fresh complete admission actually passes stable041/gen32,guard1,idle/
 no owner,unchanged apps/runtime/64CPUs/fullRAM. One temporary tag102/gen33

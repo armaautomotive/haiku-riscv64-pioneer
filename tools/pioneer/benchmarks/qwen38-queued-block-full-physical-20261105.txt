@@ -1,0 +1,111 @@
+Queued Q4 tag102: CLOSED real27B result,no useful speedup -- 2026-11-05
+====================================================================
+
+Actual measured post-prompt rate:0.162052093..0.162055547 tokens/sec.
+31 sampled committed steps,frontier31->62,in191292434..191296511us.
+About6.17079s per sampled commit,NOT an isolated token latency measure.
+Previous prefetch101:0.162480719..0.162484114tok/s. Midpoint difference
+is-0.263780%,essentially unchanged/slightly lower in this ONE comparison.
+This does NOT establish a statistically significant regression or speedup.
+Best accepted vector92 is0.172813448..0.172816755;this sample is6.227049%
+below its midpoint.20tok/s remains unmet,about123.416x this sample.
+
+Authoritative closure and independent preservation
+--------------------------------------------------
+SAME observer90158 ACTUALLY terminates0,observed20:05:06UTC;its remote
+snapshot20:04:17GMT proves wrapper24689,parent24690,rate24776,USER24777
+all absent;actual parent.exit0/rate.exit0;stateCLOSED_STABLE_RESTORED;
+all parent/rate/launcher stderr0. No observation timeout was treated as
+terminal. All62 committed positions alone were NOT used as END evidence.
+
+Only AFTER that actual closure,the separately gated read-only postflight
+19468 ACTUALLY0,stderr0:installed normal041fef18.../tag2026102100010012/
+generation34/quiesced0/cold0/active_owner0/open_count1/guard1. Whole normal
+driver/backup/admin/reload-guard/3 installed Assistant binaries/4 runtime
+library hashes and device link match.64CPUs and full137034936320B RAM are
+verified;free130711351296B reported. No Assistant/kernel/boot install,
+power/reboot/relay,SD,mains,hardware or network change was needed.
+
+Complete archive copies16724 ACTUALLY0. All11 exact remote-file SHA values
+match the entire local copies,including parent2196a468... and actual
+exit/state/PID receipts. No live/incomplete physical log is represented as
+closed. A first local hash-format sanity predicate mistakenly required a
+PROPER subset of hexadecimal characters;it stopped before checking file
+hashes. Correcting it to allow all16 hex characters then verifies EVERY
+file. No digest,reader,rate or numerical acceptance rule was changed.
+
+Unchanged main AND independent clean strict readers ACTUALLY0;ENTIRE
+stdout byte-identical,stderr0. Explicit --prepared-q4 --phase-profile
+required. Complete source/ready/upload/count/rate/10-bucket-profile/done/
+answer/clean-child suffix is checked,not a tail or extracted rate line.
+These readers check transcript DATA only;actual exits and postflight
+above independently establish the lifetime/restoration evidence.
+
+Scope of the actual run
+------------------------
+Original18973870528B GGUF
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+authenticates on its same open FD,all851 original
+bindings/full8192/two-state layout retained. Full prepared upload is
+20470759424B/6406 progress rows.31 prompt tokens,32 generated tokens,
+62 committed positions,63 count rows,3647 timing observations.
+First timestamp window136875093491..136875095513us;
+last137066387947..137066390002us. Bounds reflect observation windows,
+NOT statistical confidence,repeatability or an isolated/warm-token test.
+Worker reports prompt+generation383.125s,total4559.731s. Neither whole
+operation time nor upload time is substituted for the191.29s rate window.
+
+Inference is entirely on card:embedding,matrices,attention,KV,recurrent
+state,norms and greedy choice. Host vocabulary/text/file/lifecycle only;
+CPU inference contexts0,no CPU reference/fallback. This is ONE public
+counting request,NOT broad model quality or Assistant Work acceptance.
+32 output bytes decode to1..14 separated by newlines;full raw hex:
+310a320a330a340a350a360a370a380a390a31300a31310a31320a31330a3134
+
+Actual executed identities,not the newer uninstalled103 candidate
+---------------------------------------------------------------
+ native8574549d046c51b369ec6298002017fff0b2de82d4968fed5e991eddd04be689
+ USER549b34032aaaa29c41a7696052129dbf66743c52680f5e06fc1ae6b663ba54fe
+ ratec3b0224228592314c0f5e2948bf3bdcd1a23ae6b8f58945b9397ec46ee7d8e26
+ parent2196a4686709016be72ac0b106271f7ea9f7124a1b2f123e7456581770e32efd
+ paired headera43ddbef9de5155b94a4db36dbcc67b15181a3650d56cbdd3eb04b328f9e263b
+ ROOT74cae45049174dd53c96203104a0b4b501f757b2210b2de86da5507334ebacc5
+ worker8fee1277ca109e5e19423dbfdedeb746796c6eb1b46c1c06000c47c65c89ce8d
+Driver tag102/gen33 during inference;stable041/gen34 after normal exchange.
+Source/full-build qualification is recorded in7ccf9661171454ee56b721009bcac2e938da6d3e.
+The stage pioneer-q38-full-queued-q4-20261105-a is SPENT FOREVER. Never
+clear its marker,relaunch it or repeat this unchanged candidate for a gain.
+
+Inclusive on-card phase DATA,not a tensor-utilization diagnosis
+--------------------------------------------------------------
+Complete ROOT interval516632484329 cycles,begin9933/end516632494262;
+all62 positions,valid/state2/error0,no physical frequency assumed.
+ metadata21973769983 cycles,4.253269132%
+ recurrent layers305140800679,59.063417407%
+ dense layers126744669648,24.532849461%
+ head matrix57500801100,11.129923658%
+Layer+head phases sum94.726190526%,but include preparation,NoC,issue,
+arithmetic and waits. Do not call them pure matrix math,FPU utilization,
+sum parallel worker times,convert using an assumed clock,or forecast20TPS.
+Full ten ordered buckets and exact segment/cycle checks remain in raw JSON.
+
+What this changes next
+-----------------------
+Queued E has NO demonstrated useful gain. The distinct fixed-config103
+driver/USER build26f51eb6a083eab0078f6ac5dbd48e576ba547e4 is ready locally,
+not installed or physically measured. Its4.26% fewer guest instructions
+relative to E are NOT a throughput result. Any fresh physical admission
+must independently recheck normal041/gen34 and use its own one-shot stage.
+Consider structural on-card operand/issue/matrix work,not UI/host CPU or
+more claims from tiny instruction screens. Actual-model empty-correction
+inventory24a02ab04a shows only0.006456562% FFN panels empty:mask-only
+second-product omission is not a priority. No precision/comparator change
+or CPU inference path is smuggled into this result.
+
+Whole raw rate stdout SHA:
+373072845f872e644635712b077f74722453052d251c2116fc515bace2db5f04
+Whole physical parent stdout SHA:
+00afbe8323b067bca157202bc276db314fd87e4a13069bc121368a2230b5afac
+Raw logs,actual exit/state/PID receipts,parent source,remote manifest,
+independent postflight and both strict-reader outputs are beside this
+report. No model/cache/learned tensor or executable binary is committed.
