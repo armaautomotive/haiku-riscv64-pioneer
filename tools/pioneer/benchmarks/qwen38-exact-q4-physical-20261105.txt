@@ -1,0 +1,60 @@
+Fixed corrected-Q4 arithmetic -- actual P100A pass,2026-11-05UTC
+================================================================
+
+ACCEPTED ISOLATED ARITHMETIC ONLY. NO FULL-K,AFFINE,MODEL OR SPEED CLAIM.
+The complete original Q4 integer dot,including both correction terms,
+has now run correctly on the physical card for the fixed synthetic fixture.
+The full27B goal remains ACTIVE/UNMET. Its last accepted measured result
+remains tag92,0.172813448..0.172816755tok/s,not this diagnostic.
+
+Qualified source0c6f5321f36889806987d744fe7b9188066f91fe was committed,
+pushed and remote-verified BEFORE physical execution. Native/client/helper
+whole files were independently reproduced and fetched byte-identically.
+Prior source/owner/arithmetic evidence is in
+qwen38-exact-q4-native-20261105.txt and its sibling directory.
+
+Actual lifecycle:
+- Protected foreground SSH session95658 ACTUALLY exited0. Its wrapper
+  recorded PROTECTED_EXACT_Q4_ACTUAL_EXIT0,not merely a state-file claim.
+- Remote parent10304,child actual0,empty child and parent stderr.
+- Fresh stage /boot/home/pioneer-native-exact-q4-20261105-a is SPENT FOREVER.
+  Never rerun that stage/client/helper as a new experiment.
+- stable041/gen20 -> distinct native95/gen21 -> stable041/gen22.
+- Native SHA734d64f3daaebda9b67a10909d5a2302a025dae93b3d51ae7ec31ab53914b6a7
+- Client SHAd3db09a76b66184b033f301bcfc561d4df2469882a364c63f382fa87f9b9171f
+- Helper SHA820a2c9d14cdb6314ea61d0306240b61502f247c7f955fdf83a6594251764508
+- Whole child stdout172B,SHA
+  39f52b7945afcf69e527fd66836e89ecd5b96cbff775c329554ff1f1ca328112.
+- Whole parent stdout2941B,SHA
+  639263213dcf24697ac203137d5090e1527ed90d991b342736206fdbc7330d89.
+
+The pinned client checked BOTH jobs'32 valid FP32 integer-dot words and
+32 untouched padding words exactly,with strict owner/tag/generation/
+terminal/control checks. Only that successful actual return admitted its
+explicit END. No CPU learned-weight calculation or model inference ran;
+the USER oracle is fixed synthetic validation,not Work-mode fallback.
+The three on-card matrix products compute z + constant7 + escape terms
+before any original FP32 scale/min update. This fixture includes -128
+integer inputs. It does NOT test full-K,learned inputs,affine execution,
+multi-tile cohort,full generation,quality or throughput.
+
+The new whole-file DATA reader passed the unchanged fetched stream in
+main and clean source trees,byte-identical JSON,empty stderr. Its tests
+pass3 positive poll counts and24 malformed/truncated/extra/generation/
+stderr refusals. A log reader NEVER grants device/cleanup authority.
+
+AFTER the actual parent terminal0 and whole fetch/reader pass,independent
+read-only postflight19189 ACTUALLY exited0,empty stderr. It independently
+verified all staged/installed/stable/admin/guard/app/runtime hashes,
+parent10304 absent,no competing inference process,no incoming exchange,
+unchanged whole child stream,and stable tag12/gen22/cold0/quiesced0/
+active_owner0/open_count1/guard1. The Sept8 kernel still reports64CPUs
+and137034936320B maximumRAM,130844463104B free at this check. Installed
+Assistant/Service/worker and frozen llama runtime were not replaced.
+No reboot,power,SD,mains,hardware connection or model-file change occurred.
+
+Sibling qwen38-exact-q4-physical-20261105/ contains WHOLE fetched child/
+parent outputs,state/exit/PID,reader outputs/tests and the actual read-only
+postflight script/output. It contains no model weights/prepared payloads
+or binaries. No physical job remains. Next is full-K with ORIGINAL FP32
+affine/group order,then full backend integration and actual model timing.

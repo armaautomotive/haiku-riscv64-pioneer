@@ -1,0 +1,38 @@
+PROTECTED_EXACT_Q4_ONE_FOREGROUND_TRIAL_BEGIN
+P100A_RELOAD driver55 tag2026102100010012 generation20 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+130795884544 bytes free      (used/max 6239051776 / 137034936320)
+                           (cached   19836215296)
+     59601 semaphores free (used/max       5935 /      65536)
+      3716 ports free      (used/max        380 /       4096)
+      2593 threads free    (used/max       1503 /       4096)
+      1972 teams free      (used/max         76 /       2048)
+P100A_RELOAD driver55 tag2026102100010012 generation20 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation20 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+P100A_RELOAD driver55 tag2026110500010095 generation21 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026110500010095 generation21 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110500010095 generation21 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+PASS_NATIVE_EXACT_Q4_FIXED_KERNEL rows16 dual_jobs2 exact_words32 padding_words32 polls1 generation21;EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_FULLK_AFFINE_MODEL_OR_SPEED_CLAIM
+P100A_RELOAD driver55 tag2026110500010095 generation21 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110500010095 generation21 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110500010095 generation21 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+P100A_RELOAD driver55 tag2026102100010012 generation22 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026102100010012 generation22 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation22 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+130796802048 bytes free      (used/max 6238134272 / 137034936320)
+                           (cached   19838390272)
+     59598 semaphores free (used/max       5938 /      65536)
+      3716 ports free      (used/max        380 /       4096)
+      2592 threads free    (used/max       1504 /       4096)
+      1972 teams free      (used/max         76 /       2048)
+PASS_EXACT_Q4_STABLE22_RESTORED_NO_MODEL_SPEED_CLAIM
+PROTECTED_EXACT_Q4_ACTUAL_EXIT0

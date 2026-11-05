@@ -264,7 +264,7 @@ full-generation equivalence/performance remain separate REQUIRED gates.
 See benchmarks/qwen38-exact-q4-corrected-20261104.txt. No installed driver,
 Assistant or accepted0.1728tok/s baseline is changed by these local tests.
 
-Fixed native corrected-Q4 qualification (tag95,not yet physically run)
+Fixed native corrected-Q4 qualification (tag95,source qualification)
 ------------------------------------------------------------------
 The --exact-q4-corrected native diagnostic build has a separate tag95 and
 pointer-free opcode family. It stages ONLY a fixed synthetic integer Q4
@@ -281,3 +281,20 @@ dots exactly;this is stronger than ideal floating arithmetic alone,but is
 still NOT physical proof. The one-shot physical helper requires fresh
 stable20 admission and separately verified staging before it may run.
 See benchmarks/qwen38-exact-q4-native-20261105.txt. No new tokens/sec claim.
+
+Corrected-Q4 physical arithmetic gate (tag95,actual isolated pass)
+---------------------------------------------------------------
+Nov5UTC:protected95658 ACTUALLY exits0,remote parent10304. BOTH fixed
+synthetic jobs match32 exact integer-dot words and32 untouched padding
+words;the validated client explicitly ENDs. Parent restores stable041/
+gen22 from native95/gen21. Separate read-only postflight19189 ACTUALLY0
+confirms idle/cold0,parent absent,unchanged apps/runtime/kernel,64CPUs and
+full137034936320B maxRAM. Whole main+clean DATA readers pass. No reboot,
+power,SD,hardware change or installed Assistant replacement occurred.
+
+This is physical proof for the corrected INTEGER-panel primitive,NOT
+full-K/original FP32 affine,learned model generation or speed. The tag95
+stage/helper is SPENT FOREVER;never rerun unchanged. Correct full27B rate
+remains tag92's0.1728tok/s. Next integrate full-K and original affine/group
+order before full backend/model equivalence and throughput measurement.
+See benchmarks/qwen38-exact-q4-physical-20261105.txt and whole evidence.
