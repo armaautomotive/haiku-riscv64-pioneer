@@ -9,7 +9,11 @@
 #if defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT)
 #error Native BFP fixed qualification never selects a model/Work/old native context
 #endif
-#if !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110300010078ULL
+#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+#if PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110500010095ULL
+#error Distinct exact-Q4 fixed qualification identity required
+#endif
+#elif !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110300010078ULL
 #error Distinct exact native-BFP diagnostic identity required
 #endif
 #define find_device PioneerNativeBfpLegacyFindDevice
@@ -17,8 +21,20 @@
 #undef find_device
 #include "PioneerNativeBfpLease.h"
 #include "PioneerNativeBfpGeneratedImage.h"
+#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+#include "PioneerNativeExactQ4Protocol.h"
+#endif
 
 namespace {
+#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+using ActiveRequest=PioneerNativeExactQ4Request;
+static constexpr uint32 kSupport=PIONEER_NATIVE_EXACT_Q4_SUPPORT,kRun=PIONEER_NATIVE_EXACT_Q4_RUN,kEnd=PIONEER_NATIVE_EXACT_Q4_END;
+static bool RequestValid(const ActiveRequest& r){return PioneerNativeExactQ4RequestValid(r);}
+#else
+using ActiveRequest=PioneerNativeBfpRequest;
+static constexpr uint32 kSupport=PIONEER_NATIVE_BFP_SUPPORT,kRun=PIONEER_NATIVE_BFP_RUN,kEnd=PIONEER_NATIVE_BFP_END;
+static bool RequestValid(const ActiveRequest& r){return PioneerNativeBfpRequestValid(r);}
+#endif
 struct NativeCookie { PioneerProbeCookie* base=NULL;bool used=false; };
 struct NativeIO: PioneerComputeNocIO {
 	area_id views[7]={-1,-1,-1,-1,-1,-1,-1};void* pages[7]={};bool invalid=false;
@@ -95,7 +111,7 @@ struct NativeOwner {
 };
 static NativeOwner* owner=NULL; // under sLock; retained intact on UNKNOWN
 static void Fault(NativeOwner& o) { o.lease.Abandon();sColdRecoveryRequired=true; }
-static void Reply(PioneerNativeBfpRequest& r,const NativeOwner& o) {
+static void Reply(ActiveRequest& r,const NativeOwner& o) {
 	r.result=o.lease.Result();r.nonce=1;
 	if(sColdRecoveryRequired) {r.result.state=PIONEER_NATIVE_BFP_UNKNOWN;r.result.cold=1;}
 }
@@ -161,21 +177,24 @@ static status_t Control(void* value,uint32 operation,void* data,size_t length) {
 	if(status!=B_OK || thread.team!=n->base->team)return status!=B_OK?status:B_NOT_ALLOWED;
 	if(operation==TT_PCI_PROBE_RELOAD_STATUS || operation==TT_PCI_PROBE_RELOAD_QUIESCE)
 		return DriverReloadControl(n->base,operation,data,length);
-	if(operation!=PIONEER_NATIVE_BFP_SUPPORT && operation!=PIONEER_NATIVE_BFP_RUN && operation!=PIONEER_NATIVE_BFP_END)return B_NOT_ALLOWED;
-	if(!data || length!=sizeof(PioneerNativeBfpRequest))return B_BAD_VALUE;
-	PioneerNativeBfpRequest r={};status=user_memcpy(&r,data,sizeof(r));
-	if(status!=B_OK || !PioneerNativeBfpRequestValid(r))return status!=B_OK?status:B_BAD_VALUE;
-	if(operation==PIONEER_NATIVE_BFP_SUPPORT) {
+	if(operation!=kSupport && operation!=kRun && operation!=kEnd)return B_NOT_ALLOWED;
+	if(!data || length!=sizeof(ActiveRequest))return B_BAD_VALUE;
+	ActiveRequest r={};status=user_memcpy(&r,data,sizeof(r));
+	if(status!=B_OK || !RequestValid(r))return status!=B_OK?status:B_BAD_VALUE;
+	if(operation==kSupport) {
 		if(r.bits || r.nonce || r.accept)return B_BAD_VALUE;
 		status=acquire_sem(sLock);if(status!=B_OK)return status;
 		if(r.expected_generation!=sReloadGeneration)status=B_BAD_VALUE;
 		else {r.result.state=sColdRecoveryRequired?PIONEER_NATIVE_BFP_UNKNOWN:PIONEER_NATIVE_BFP_EMPTY;r.result.cold=sColdRecoveryRequired;status=user_memcpy(data,&r,sizeof(r));}
 		release_sem(sLock);return status;
 	}
-	if((r.bits!=4 && r.bits!=8) || (operation==PIONEER_NATIVE_BFP_RUN?(r.nonce || r.accept):r.nonce!=1 || r.accept!=1))return B_BAD_VALUE;
+#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+	if(r.bits!=4)return B_BAD_VALUE;
+#endif
+	if((r.bits!=4 && r.bits!=8) || (operation==kRun?(r.nonce || r.accept):r.nonce!=1 || r.accept!=1))return B_BAD_VALUE;
 	status=AcquireProbeLock(n->base);if(status!=B_OK)return status;
 	if(r.expected_generation!=sReloadGeneration || !sReloadGuard || sReloadGuard->version!=1 || sOpenCookies!=1)status=B_BUSY;
-	else if(operation==PIONEER_NATIVE_BFP_RUN) {
+	else if(operation==kRun) {
 		if(n->used || owner || sRuntimeOwner)status=B_BUSY;
 		else {
 			n->used=true;

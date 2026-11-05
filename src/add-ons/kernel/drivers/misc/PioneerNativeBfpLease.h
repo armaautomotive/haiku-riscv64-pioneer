@@ -4,11 +4,24 @@
 #include "BlackholeDramSamplesProbe.h"
 #include "PioneerNativeBfpProtocol.h"
 #include "PioneerNativeBfpFixture.h"
+#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+#if PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC != 1
+#error Distinct fixed exact-Q4 diagnostic mode required
+#endif
+#include "PioneerNativeExactQ4Fixture.h"
+#endif
 
 // Concrete sole-tile lifecycle used by the native adapter. Saved L1/TLBs
 // remain in its retained HEAP owner. No destructor IO, guessed completion,
 // retry, watchdog reset, numeric fallback or automatic cleanup on UNKNOWN.
 class PioneerNativeBfpLease {
+#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+	using Fixture=PioneerNativeExactQ4Fixture;
+	static constexpr uint32_t DoneMarker=0x31433451,FaultMarker=0x46433451;
+#else
+	using Fixture=PioneerNativeBfpFixture;
+	static constexpr uint32_t DoneMarker=0x3142464e,FaultMarker=0x4642464e;
+#endif
 	uint32_t saved[3548]={},tlb[2][3]={};
 	unsigned bits=0;
 	bool attempted=false,owned=false,modified=false;
@@ -26,7 +39,7 @@ class PioneerNativeBfpLease {
 	template<class IO> bool Terminal(IO& io,const tt_dram_samples_result& baseline) {
 		if(!Scope(io,baseline,0x46800))return false;
 		result.phase=io.BfpRead(0x17ffc0);result.count=io.BfpRead(0x17ffc4);result.marker=io.BfpRead(0x17ffc8);
-		if(result.phase!=0x7000c || result.count!=2 || result.marker!=0x3142464e)return false;
+		if(result.phase!=0x7000c || result.count!=2 || result.marker!=DoneMarker)return false;
 		io.Pause();result.pc[0]=io.BfpPcRead();io.Pause();result.pc[1]=io.BfpPcRead();
 		// PC snapshots are frontend/speculative. BOTH fixed park addresses
 		// contain self-loop guards; neither snapshot substitutes for status
@@ -50,15 +63,18 @@ public:
 		const uint32_t address=Address(index);
 		if(address==0x6000)return Image::Boot;
 		if(address>=0x70000 && address<0x71000)return Image::Word(bits,(address-0x70000)/4);
-		if(address>=0x90000 && address<0x90000+PioneerNativeBfpFixture::WeightBytes(bits))
-			return PioneerNativeBfpFixture::WeightWord(bits,(address-0x90000)/4);
-		if(address>=0x91000 && address<0x91200)return PioneerNativeBfpFixture::InputWord((address-0x91000)/4);
+		if(address>=0x90000 && address<0x90000+Fixture::WeightBytes(bits))
+			return Fixture::WeightWord(bits,(address-0x90000)/4);
+		if(address>=0x91000 && address<0x91200)return Fixture::InputWord((address-0x91000)/4);
 		if(address>=0x92000 && address<0x92100)return 0x7fc00001; // invalid until device writes BOTH copies
 		return 0; // private stack,headers,unused weight/code padding,status
 	}
 	const PioneerNativeBfpResult& Result() const { return result; }
 	void Abandon() { if(owned)Unknown(); } // CPU metadata ONLY; no IO on close/failed reply
 	template<class IO,class Image> bool Run(IO& io,tt_dram_samples_result& baseline,unsigned format) {
+#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+		if(format!=4)return false; // no old general-BFP8 route in this family
+#endif
 		if(attempted || (format!=4 && format!=8))return false;
 		attempted=true;result.state=PIONEER_NATIVE_BFP_REFUSED;bits=format;
 		if(baseline.version!=1 || baseline.state!=TT_DRAM_SAMPLE_ROUTES_OK || baseline.routes_verified!=7
@@ -91,8 +107,8 @@ public:
 			if(!Scope(io,baseline,0x46800))return Unknown();
 			const uint64_t now=io.BfpNow();if(now<began || now-began>UINT64_C(2000000000))return Unknown();
 			const uint32_t marker=io.BfpRead(0x17ffc8);
-			if(marker==0x4642464e)return Unknown();
-			if(marker==0x3142464e) { complete=Terminal(io,baseline);break; }
+			if(marker==FaultMarker)return Unknown();
+			if(marker==DoneMarker) { complete=Terminal(io,baseline);break; }
 			io.Pause();
 		}
 		if(!complete)return Unknown();

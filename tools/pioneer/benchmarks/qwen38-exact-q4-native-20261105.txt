@@ -1,0 +1,118 @@
+Corrected-Q4 fixed native qualification -- source/build only
+===========================================================
+2026-11-05UTC. Baseae7d11079f. No physical trial or Pioneer connection in
+this SOURCE-QUALIFICATION phase. User's full27B/20tok/s goal stays ACTIVE,
+UNMET. Correct full-card tag92 remains about0.1728tok/s;failed macro93 is
+not retried or relabeled as a speedup. New tag95 is a local arithmetic
+qualification,NOT a new Work/Assistant/model backend or performance result.
+
+Actual bounded native owner
+---------------------------
+The existing PioneerNativeBfpLease/NativeIO lifecycle is preserved. Only
+mode-specific immutable fixture,done/fault markers and a4-only format gate
+are selected under PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC=1. Public family has
+exact tag2026110500010095 and ops+8c00..8c02. Old BFP tag/opcodes,BFP8,
+model/Work modes,arbitrary user weights/code/addresses/routes are refused.
+The legacy find_device export still compiles to null,not a hidden compute
+backdoor. Default native-BFP behavior/payload/binary remains unchanged.
+
+ONE same-FD/team/generation owner under existing lock/runtime owner;all120
+cores held,exact source/route/PCI/device identity,sole tile(1,2),idle controls
+and disposable reset context required. Address() and3548-word heap journal
+are UNCHANGED:boot,4KiB ROM,8KiB stack,1104B weight/header scope,528B input/
+header scope,256B output scope and3 status words. Primary90000,constant7
+90100,escape90200,mask90300 andBF16 input91000 fit those SAME scopes. No
+new mapping,bank limit or snapshot extent. No arbitrary original FPU/SFPU
+register preservation is claimed;this is the existing private reset context.
+
+Boot published LAST/read back;start may occur once. Actual compiled2880B
+corrected kernel performs two jobs with three FPU matrix products per job,
+not scalar/CPU arithmetic. MarkerQ4C1 is written only AFTER actual final
+matrix completion and output copies. BOTH parked PC guards and repeated
+status/source checks are still required. Explicit validated END alone may
+STOP/reset the private context,restore EVERY journal word/TLB/PCI field,
+and dispose the owner. Unknown/failed delivery/close retains owner,cookie,
+saved bytes/mappings/reservation and cold latch,NO retry/reset/auto cleanup.
+
+Fixed asymmetric synthetic fixture only:original q0..15,input integers
+including-128. Kernel receives lossless primary+escape bytes/BF16 inputs.
+Client uses a separate USER-side fixed synthetic oracle,NOT CPU learned
+products or model inference.32 valid output words +32 untouched sentinel
+padding words must ALL match. Any mismatch prints all64 returned words
+from the SAME reply and closes only,NO END/query/reset/retry. No tolerance
+is widened. This CPU validation program is distinct from no-reference Work.
+
+Closed main/clean qualification
+--------------------------------
+Main and CLEAN git-archiveae7d11079f source plus ONLY selected new changes,
+committed headers/config_headers/PCI bus dependencies,BOTH ACTUALLY0 with
+stderr0. All3 WHOLE native/client/default binaries and generated code DATA
+header are byte-identical,cmp0:
+ native95 734d64f3daaebda9b67a10909d5a2302a025dae93b3d51ae7ec31ab53914b6a7
+ client   d3db09a76b66184b033f301bcfc561d4df2469882a364c63f382fa87f9b9171f
+ default43 2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc
+Old native78 remains EXACT e79e070b9e4fe434b868898748834e0cd89b03bcb250d9c1694b4d0b890f46ac.
+Shader text remains cfb51ae48bd7eb34e2187e9a7dec4dd03468e0672d5ed3890be23e84428d6dc7.
+
+ *16 actual lease+actual ROM cases:32 original integer dots +32 padding,
+  exact3548-word/TLB restoration INCLUDING actual simulated GPU scratch
+  writes,all12 previous timeout/PC/source/stage/start/STOP/restore failures,
+  close and unsupported-BFP8 refusals. Unknown has no subsequent device IO.
+ *31 actual common FinishMmio/Free failure cases;24 actual common mapping
+  cases/all393216 aligned addresses/exact3548 word/protection allowlist.
+ *356 actual new controller cases:malformed/foreign/stale/busy,all320 dirty
+  result bytes,wrong sizes,old-tag/old-op/BFP8 cross-family refusals,one-shot
+  sameFD,owned request copy,failed RUN delivery retains,explicit END only.
+ *88 actual client cases:ALL64 per-word mismatches,no subsequent END/query/
+  retry;strict controls/nonce/accept/state/restore fields,END delivery/data
+  failure and old CLI-mode refusal. Zero unsupported/suppressed cases.
+ *Actual one-shot parent:four pass/fail/malformed/stderr flows plus FOUR
+  spent-directory re-entry refusals. On failure its LAST device action is
+  the one client call;no status/admin/retry/reset/restore follows it.
+ *8208 exact integer-dot comparisons against the existing independent
+  DOCUMENTED Blackhole eight-product lane exponent-alignment/rounding/
+  accumulation model,NOT merely ideal long-double products. Includes all
+  q0..15/x-128..127 constants,mixed vectors and the fixed native fixture.
+  Existing model and old BFP8 observed-hardware regression are UNCHANGED.
+ *Old owner/master suite independently passes in BOTH trees:16 lease,
+  31 close,28 controller,24 mapping,4 parent,150 client and old arithmetic
+  characterization. Old expectations/tolerances are not modified.
+
+Primary bit-level arithmetic source rechecked:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/MatrixUnitArithmetic.md
+Its alignment/rounding/zero behavior still needs ACTUAL device confirmation.
+
+Predeclared one-shot physical helper,not execution evidence
+---------------------------------------------------------
+ tools/pioneer/pioneer_native_exact_q4_physical.sh --fixed-exact-q4-once
+ SHA820a2c9d14cdb6314ea61d0306240b61502f247c7f955fdf83a6594251764508
+Fresh fixed stage /boot/home/pioneer-native-exact-q4-20261105-a must first
+be resolved absent/created/whole-file staged+readback verified,after fresh
+independent stable041/gen20/idle/64CPU/fullRAM/unchanged-app admission.
+ONE native95/gen21 client call. Only actual child0/clean END/exact transcript
+admits stable041/gen22 restoration. .trial-once is SPENT FOREVER even on
+failure. No trap cleanup/force unload/cold clear/mains/SD/power operation.
+Do NOT invoke while another protected owner/job lives. Parent/source tests
+or a state file are NOT physical terminal/restoration authority.
+
+Honest local failures resolved before hardware
+----------------------------------------------
+ *First new lease host test compile redefined a test-only image macro with
+  different replacement text. The conflicting definition was moved into
+  the old-only include branch;no native instructions or rules changed.
+ *Actual owner/ROM test then failed at word32:gotdeadbeef vs7fc00001. Its
+  first32 calculated words already matched. The old harness never copied
+  staged output bytes because old kernels overwrote all64. It now copies
+  ALL actual staged output bytes before execution;unchanged padding oracle
+  then passes. No expected value/tolerance was changed to hide the failure.
+ *Initial clean builds omitted committed Sg2042RootPolicy.h PCI dependencies.
+  Those were archived from HEAD;both complete clean suites then actually0.
+No initial failing attempt hit hardware. Sibling logs contain complete
+closed main/clean new+old results,not learned data or binary artifacts.
+
+Reproduce OFFBOARD
+-------------------
+ sh tools/pioneer/tests/run_pioneer_native_exact_q4_tests.sh HAIKU_BUILD
+ sh tools/pioneer/tests/run_pioneer_native_bfp_owner_tests.sh HAIKU_BUILD
+Next:ONE actual isolated arithmetic trial,independent postflight,then fullK/
+affine/cohort/source-cache/backend integration and REAL model measurements.

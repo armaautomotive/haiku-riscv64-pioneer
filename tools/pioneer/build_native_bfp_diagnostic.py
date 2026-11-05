@@ -14,6 +14,7 @@ if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('haiku_build', type=pathlib.Path)
 parser.add_argument('output', type=pathlib.Path)
+parser.add_argument('--exact-q4-corrected', action='store_true', help='distinct tag95 fixed original-Q4 arithmetic qualification only')
 args = parser.parse_args()
 assert args.haiku_build.is_absolute() and args.haiku_build.is_dir()
 assert args.output.is_absolute() and not args.output.exists() and not args.output.is_symlink()
@@ -25,10 +26,14 @@ output = args.output
 output.mkdir(mode=0o700)
 expected = {4: 'adcec3cf5a66a2f00b979746928e1f8525a1c2274f37d0f3e35d3b6468ee6ef3',
             8: 'c21f4692d340b0bab397a513a315b9884b898804022e35948b2d029a6a128b19'}
+formats = (4,) if args.exact_q4_corrected else (4, 8)
+if args.exact_q4_corrected:
+    expected[4] = 'cfb51ae48bd7eb34e2187e9a7dec4dd03468e0672d5ed3890be23e84428d6dc7'
 images = {}
-for bits in (4, 8):
+for bits in formats:
     folder = output / ('bfp' + str(bits))
-    subprocess.run(['python3', str(here / 'build_q38_native_bfp_matvec.py'), str(build), str(folder), str(bits)], check=True)
+    subprocess.run(['python3', str(here / 'build_q38_native_bfp_matvec.py'), str(build), str(folder), str(bits)]
+                   + (['--exact-q4-corrected'] if args.exact_q4_corrected else []), check=True)
     boot = (folder / 'boot.bin').read_bytes()
     text = (folder / 'text.bin').read_bytes()
     assert hashlib.sha256(boot).hexdigest() == 'd47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd'
@@ -48,13 +53,14 @@ header = ['/* Generated from freshly compiled, exact-SHA RV32I images. */',
           'struct PioneerNativeBfpGeneratedImage {',
           ' static constexpr unsigned Boot=0x%08x;' % struct.unpack('<I', boot)[0],
           ' static unsigned Word(unsigned bits,unsigned index) {']
-for bits in (4, 8):
+for bits in formats:
     words = images[bits]
     header.append('  static const unsigned code%d[]={' % bits)
     for start in range(0, len(words), 8):
         header.append('   ' + ','.join('0x%08x' % w for w in words[start:start+8]) + ',')
     header.append('  };')
-header += ['  return bits==4?(index<sizeof(code4)/4?code4[index]:0):bits==8?(index<sizeof(code8)/4?code8[index]:0):0;',
+selector = '  return bits==4?(index<sizeof(code4)/4?code4[index]:0):0;' if args.exact_q4_corrected else '  return bits==4?(index<sizeof(code4)/4?code4[index]:0):bits==8?(index<sizeof(code8)/4?code8[index]:0):0;'
+header += [selector,
            ' }', '};', '#endif']
 (output / 'PioneerNativeBfpGeneratedImage.h').write_text('\n'.join(header) + '\n')
 sdk = build / 'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop'
@@ -76,6 +82,11 @@ common = [cxx, '-std=gnu++17', '-O2', '-Wall', '-Wextra', '-Werror', '-fno-excep
 roles = ['BANKS', 'PANEL', 'AFFINE', 'BLOCK', 'STREAM', 'ROWS', 'COHORT', 'COHORT_SEALED', 'COHORT_PAYLOAD', 'DISPATCH', 'DISPATCH_VECTOR']
 native = ['-DTT_PIONEER_EXPERIMENTAL_Q38_' + name for name in roles]
 native += ['-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010078ULL', '-DPIONEER_NATIVE_BFP_DIAGNOSTIC=1']
+native_name = 'tenstorrent_pci_probe-native-exact-q4-95' if args.exact_q4_corrected else 'tenstorrent_pci_probe-native-bfp78'
+client_name = 'pioneer-native-exact-q4-diagnostic' if args.exact_q4_corrected else 'pioneer-native-bfp-diagnostic'
+if args.exact_q4_corrected:
+    native.remove('-DPIONEER_DRIVER_BUILD_TAG=0x2026110300010078ULL')
+    native += ['-DPIONEER_DRIVER_BUILD_TAG=0x2026110500010095ULL', '-DPIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC=1']
 commands = []
 def run(command):
     commands.append(command)
@@ -87,17 +98,17 @@ run(common + native + includes + ['-c', str(driver / 'pioneer_native_bfp_driver.
 run(common + includes + ['-c', str(driver / 'tenstorrent_pci_probe.cpp'), '-o', str(output / 'control.o')])
 def compiler_path(name):
     return subprocess.check_output([cxx, '-print-file-name=' + name], text=True).strip()
-for obj, name in [('native.o', 'tenstorrent_pci_probe-native-bfp78'), ('control.o', 'tenstorrent_pci_probe-default43-control')]:
+for obj, name in [('native.o', native_name), ('control.o', 'tenstorrent_pci_probe-default43-control')]:
     run([cxx, '-shared', '-nostdlib', '-Wl,--no-undefined,-soname=tenstorrent_pci_probe', compiler_path('crtbeginS.o'),
          str(release / 'system/glue/haiku_version_glue.o'), str(output / obj), str(output / 'profile.o'),
          str(release / 'system/kernel/kernel.so'), compiler_path('libgcc.a'), compiler_path('crtendS.o'), '-o', str(output / name)])
 tool_prefix = str(build / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
-exports = subprocess.check_output([tool_prefix + 'nm', '-D', str(output / 'tenstorrent_pci_probe-native-bfp78')], text=True)
+exports = subprocess.check_output([tool_prefix + 'nm', '-D', str(output / native_name)], text=True)
 (output / 'native-exports.txt').write_text(exports)
 names = {line.split()[-1] for line in exports.splitlines() if line.split()}
 assert {'api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device'} <= names
 legacy = subprocess.check_output([tool_prefix + 'objdump', '-d', '--disassemble=_Z32PioneerNativeBfpLegacyFindDevicePKc',
-                                  str(output / 'tenstorrent_pci_probe-native-bfp78')], text=True)
+                                  str(output / native_name)], text=True)
 (output / 'native-legacy-entry.disassembly').write_text(legacy)
 instructions = []
 for line in legacy.splitlines():
@@ -111,8 +122,8 @@ for path in sorted((build / 'build_packages').glob('gcc_syslibs-*/lib')):
     libs += ['-L' + str(path)]
 run([cxx, '-std=c++17', '-O2', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror', *user_includes,
      '-B' + str(release / 'system/glue'), '-L' + str(release / 'system/libroot'), *libs,
-     str(here / 'pioneer_native_bfp_diagnostic.cpp'), '-o', str(output / 'pioneer-native-bfp-diagnostic')])
+     str(here / ('pioneer_native_exact_q4_diagnostic.cpp' if args.exact_q4_corrected else 'pioneer_native_bfp_diagnostic.cpp')), '-o', str(output / client_name)])
 (output / 'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands) + '\n')
-for name in ('tenstorrent_pci_probe-native-bfp78', 'tenstorrent_pci_probe-default43-control', 'pioneer-native-bfp-diagnostic'):
+for name in (native_name, 'tenstorrent_pci_probe-default43-control', client_name):
     print(hashlib.sha256((output / name).read_bytes()).hexdigest(), name)
-print('BUILD_ONLY fixed native-BFP diagnostic;NO installation,driver reload,physical test,model quality or performance claim')
+print('BUILD_ONLY fixed ' + ('exact-Q4' if args.exact_q4_corrected else 'native-BFP') + ' diagnostic;NO installation,driver reload,physical test,model quality or performance claim')

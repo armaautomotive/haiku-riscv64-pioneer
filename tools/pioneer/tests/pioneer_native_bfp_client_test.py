@@ -4,11 +4,14 @@ import os
 import pathlib
 import re
 import subprocess
+import sys
 import tempfile
 
 if not __debug__:
     raise SystemExit('Assertions required')
 here = pathlib.Path(__file__).resolve().parent
+assert len(sys.argv)==1 or sys.argv[1:]==['--exact-q4']
+exact = sys.argv[1:]==['--exact-q4']
 folder = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-native-bfp-client.'))
 (folder / 'Drivers.h').write_text('#pragma once\n#define B_DEVICE_OP_CODES_END 10000\n')
 program = r'''
@@ -93,36 +96,53 @@ int main(int argc,char** argv){
  return 0;
 }
 '''.replace('CLIENT_SOURCE', str(here.parent / 'pioneer_native_bfp_diagnostic.cpp'))
+if exact:
+    program = program.replace('pioneer_native_bfp_diagnostic.cpp', 'pioneer_native_exact_q4_diagnostic.cpp')
+    program = program.replace('PioneerNativeBfpRequestValid', 'PioneerNativeExactQ4RequestValid').replace('PioneerNativeBfpRequest', 'PioneerNativeExactQ4Request').replace('PioneerNativeBfpTag', 'PioneerNativeExactQ4Tag')
+    program = program.replace('0x3142464e', '0x31433451').replace('Expected(format,word%32)', 'Expected(word)')
+    for old,new in (('PIONEER_NATIVE_BFP_SUPPORT','PIONEER_NATIVE_EXACT_Q4_SUPPORT'),('PIONEER_NATIVE_BFP_RUN','PIONEER_NATIVE_EXACT_Q4_RUN'),('PIONEER_NATIVE_BFP_END','PIONEER_NATIVE_EXACT_Q4_END')):
+        program = program.replace(old,new)
+    program = program.replace('"--fixed-bfp4"', '"--fixed-exact-q4"')
+    program = program.replace('scenario<=11', 'scenario<=24')
+    program = program.replace('const int result=CapturedDiagnosticMain(2,command);', '''
+ if(scenario==24){command[1]=eight;assert(CapturedDiagnosticMain(2,command)==2 && !opened && !queries && !runs && !ends);return 0;}
+ const int result=CapturedDiagnosticMain(2,command);''')
+    program = program.replace('if(scenario==11)return -1;', '''if(scenario==11)return -1;
+  if(scenario==12)r.result.controls[0]=1;if(scenario==13)r.result.controls[1]=1;if(scenario==14)r.result.controls[2]=1;
+  if(scenario==15)r.accept=1;if(scenario==16)r.result.started=2;if(scenario==17)r.result.completed=2;
+  if(scenario==18)r.result.held=1;if(scenario==19)r.result.l1_restored=1;if(scenario==20)r.result.tlb_restored=1;
+  if(scenario==21)r.result.cold=1;if(scenario==22)r.bits=8;if(scenario==23)r.reserved=1;''')
+    program = program.replace('scenario!=11);', 'scenario!=11 && scenario<12);')
 (folder / 'test.cpp').write_text(program)
 subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-ffp-contract=off',
                 '-Wall', '-Wextra', '-Werror', '-fsanitize=address,undefined', '-I' + str(folder),
                 str(folder / 'test.cpp'), '-o', str(folder / 'test')], check=True)
 cases = 0
-for bits in (4, 8):
-    for scenario in range(12):
+for bits in ((4,) if exact else (4, 8)):
+    for scenario in range(25 if exact else 12):
         for index in (range(64) if scenario == 1 else (0,)):
             result = subprocess.run([str(folder / 'test'), str(scenario), str(bits), str(index)],
                                     text=True, capture_output=True, env=dict(os.environ,
                                     ASAN_OPTIONS='quarantine_size_mb=32', UBSAN_OPTIONS='halt_on_error=1'))
             assert result.returncode == 0, (bits, scenario, index, result.stdout, result.stderr)
             if scenario == 0:
-                assert not result.stderr and result.stdout.startswith('PASS_NATIVE_BFP_FIXED_KERNEL ')
+                assert not result.stderr and result.stdout.startswith('PASS_NATIVE_EXACT_Q4_FIXED_KERNEL ' if exact else 'PASS_NATIVE_BFP_FIXED_KERNEL ')
             elif scenario == 1:
                 assert not result.stdout
                 lines = result.stderr.splitlines()
-                assert len(lines) == 65 and lines[0].startswith('NATIVE_BFP_NUMERICAL_MISMATCH ')
-                assert f'pass{index//32} row{index%32} ' in lines[0]
+                assert len(lines) == 65 and lines[0].startswith('EXACT_Q4_NUMERICAL_MISMATCH ' if exact else 'NATIVE_BFP_NUMERICAL_MISMATCH ')
+                assert (f'index{index} ' if exact else f'pass{index//32} row{index%32} ') in lines[0]
                 mismatches = 0
                 for word, line in enumerate(lines[1:]):
-                    match = re.fullmatch(r'NATIVE_BFP_RETURNED_WORD bits(4|8) pass([01]) row([0-9]+) got([0-9a-f]{8}) expected([0-9a-f]{8})', line)
-                    assert match and tuple(map(int, match.groups()[:3])) == (bits, word//32, word%32)
-                    got, expected = map(lambda v: int(v, 16), match.groups()[3:])
+                    match = re.fullmatch(r'EXACT_Q4_RETURNED_WORD index([0-9]+) got([0-9a-f]{8}) expected([0-9a-f]{8})' if exact else r'NATIVE_BFP_RETURNED_WORD bits(4|8) pass([01]) row([0-9]+) got([0-9a-f]{8}) expected([0-9a-f]{8})', line)
+                    assert match and (int(match[1])==word if exact else tuple(map(int, match.groups()[:3])) == (bits, word//32, word%32))
+                    got, expected = map(lambda v: int(v, 16), match.groups()[1:] if exact else match.groups()[3:])
                     assert got == (expected ^ int(word == index))
                     mismatches += int(got != expected)
                 assert mismatches == 1
             else:
-                assert not result.stdout and 'NATIVE_BFP_RETURNED_WORD' not in result.stderr
+                assert not result.stdout and ('EXACT_Q4_RETURNED_WORD' if exact else 'NATIVE_BFP_RETURNED_WORD') not in result.stderr
                 assert 'AddressSanitizer' not in result.stderr and 'runtime error:' not in result.stderr
             cases += 1
-print(f'PASS ACTUAL native BFP diagnostic client:{cases} cases;all128 per-word numerical failures retain all64 returned words and issue NO END/retry/query after RUN;strict acceptance unchanged;FAKE syscalls,no device')
+print(f'PASS ACTUAL {"exact Q4" if exact else "native BFP"} diagnostic client:{cases} cases;all{64 if exact else 128} per-word numerical failures retain all64 returned words and issue NO END/retry/query after RUN;strict acceptance unchanged;FAKE syscalls,no device')
 print('CPU-only actual client evidence:', folder)

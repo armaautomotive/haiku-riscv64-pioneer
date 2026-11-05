@@ -1,12 +1,25 @@
 /* SPDX-License-Identifier: MIT */
 #define B_DEVICE_OP_CODES_END 10000
+#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+#define PIONEER_Q38_EXACT_Q4_CORRECTED_IMAGE_ONLY
+#include "pioneer_q38_exact_q4_corrected_image_test.cpp"
+#else
 #define PIONEER_NATIVE_BFP_IMAGE_ONLY 1
 #include "pioneer_q38_native_bfp_image_test.cpp"
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerNativeBfpLease.h"
 #include "PioneerNativeBfpGeneratedImage.h"
 #include <set>
 using Lease=PioneerNativeBfpLease;
 using Image=PioneerNativeBfpGeneratedImage;
+#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+using FixtureData=PioneerNativeExactQ4Fixture;
+static uint32_t ReferenceWord(unsigned word) {
+ if(word>=32)return 0x7fc00001;int sum=0;
+ for(unsigned k=0;k<16;k++)sum+=int(FixtureData::Quant(k,word%16))*FixtureData::Input(k);
+ return NativeBfpMachine::Bits(float(sum));
+}
+#else
 using FixtureData=PioneerNativeBfpFixture;
 static uint32_t Reference(unsigned bits,unsigned row) {
 	long double sum=0;
@@ -17,6 +30,7 @@ static uint32_t Reference(unsigned bits,unsigned row) {
 	}
 	return NativeBfpMachine::Bits(float(sum));
 }
+#endif
 struct IO {
 	std::vector<uint32_t> memory=std::vector<uint32_t>(0x180000/4),original;
 	uint32_t source[16]={0x6005,0x0a418820,0x1ac4a166,0x127541ee,0x1e280440,0x1662b5c3,0x147,
@@ -52,16 +66,32 @@ struct IO {
 	uint32_t BfpControlRead(unsigned i) { Window();reads++;assert(i<3);return 0; }
 	uint32_t BfpPcRead() { Window();reads++;return badPC?0x70040:pauses&1?0x70038:0x7003c; }
 	void Execute() {
+#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+		CorrectedImage image(directory.c_str());
+#else
 		NativeBfpRV32 image(directory.c_str());
+#endif
 		image.l1[0]=memory[0x6000/4];
 		for(unsigned i=0;i<image.code.size()/4;i++)image.l1[1+i]=memory[(0x70000+i*4)/4];
 		for(unsigned i=0;i<8192/4;i++)image.l1[image.Index(0x6e000+i*4)]=memory[(0x6e000+i*4)/4];
+		for(unsigned i=0;i<64;i++)image.l1[image.Index(0x92000+i*4)]=memory[(0x92000+i*4)/4];
+#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+		// Copy ACTUAL staged byte payloads,not re-encoded fixture inputs.
+		for(unsigned a=0x8fff0;a<0x90440;a++)image.native.l1[a]=uint8_t(memory[a/4]>>((a%4)*8));
+		for(unsigned a=0x90ff0;a<0x91200;a++)image.native.l1[a]=uint8_t(memory[a/4]>>((a%4)*8));
+#else
 		std::array<uint8_t,1088> weights{};std::array<uint16_t,32> input{};
 		for(unsigned i=0;i<FixtureData::WeightBytes(bits);i++)weights[i]=uint8_t(memory[(0x90000+i)/4]>>((i%4)*8));
 		for(unsigned i=0;i<32;i++)input[i]=FixtureData::InputBits(i);
 		for(unsigned i=0;i<128;i++)assert(memory[(0x91000+i*4)/4]==FixtureData::InputWord(i));
 		image.native.Stage(weights.data(),FixtureData::WeightBytes(bits),input);
+#endif
 		assert(image.Execute());
+#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+		for(unsigned a=0x90100;a<0x90180;a+=4)memory[a/4]=image.native.Read(a);
+		for(unsigned a=0x90200;a<0x90240;a+=4)memory[a/4]=image.native.Read(a);
+		assert(image.native.sevenWrites==32 && image.scratchStores==32);
+#endif
 		for(unsigned i=0;i<64;i++)memory[(0x92000+i*4)/4]=image.l1[image.Index(0x92000+i*4)];
 		for(unsigned i=0;i<3;i++)memory[(0x17ffc0+i*4)/4]=image.l1[image.Index(0x17ffc0+i*4)];
 		for(unsigned i=0;i<8192/4;i++)memory[(0x6e000+i*4)/4]=image.l1[image.Index(0x6e000+i*4)];
@@ -70,7 +100,13 @@ struct IO {
 	void BfpResetWrite(uint32_t v) {
 		Window();assert(v==0x87ffff || v==0x46800 || v==0x47800);
 		if(++resets==dropReset)return;
-		if(v==0x46800) { assert(reset==0x87ffff && !started);started=true;reset=v;if(!timeout)Execute();if(faultMarker)memory[0x17ffc8/4]=0x4642464e; }
+		if(v==0x46800) { assert(reset==0x87ffff && !started);started=true;reset=v;if(!timeout)Execute();if(faultMarker)memory[0x17ffc8/4]=
+#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+			0x46433451;
+#else
+			0x4642464e;
+#endif
+		}
 		else { if(started)assert(executed && !timeout && !badPC && !sourceChanged && !faultMarker);reset=v; }
 	}
 	uint64_t BfpNow() { return now; }
@@ -91,11 +127,27 @@ int main(int argc,char** argv) {
 	std::set<uint32_t> addresses;
 	for(unsigned i=0;i<Lease::SavedWords;i++)assert(addresses.insert(Lease::Address(i)).second);
 	assert(addresses.size()==3548 && Lease::Address(3548)==UINT32_MAX);checked++;
-	for(unsigned bits:{4U,8U}) {
+	const std::vector<unsigned> formats=
+#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+		{4};
+#else
+		{4,8};
+#endif
+	for(unsigned bits:formats) {
 		IO io(bits,argv[bits==4?1:2]);auto b=io.Baseline();Lease lease;
 		assert((lease.Run<IO,Image>(io,b,bits)));const auto result=lease.Result();
 		assert(result.state==PIONEER_NATIVE_BFP_RESULT && result.started && result.completed && !result.cold && io.resets==2);
-		for(unsigned pass=0;pass<2;pass++)for(unsigned row=0;row<32;row++)assert(result.output[pass*32+row]==Reference(bits,row));
+		for(unsigned word=0;word<64;word++) {
+			const unsigned expected=
+#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+			ReferenceWord(word)
+#else
+			Reference(bits,word%32)
+#endif
+		;
+			if(result.output[word]!=expected)fprintf(stderr,"OWNER_WORD_MISMATCH word%u got%08x expected%08x\n",word,result.output[word],expected);
+			assert(result.output[word]==expected);
+		}
 		assert(lease.End(io,b) && lease.Result().state==PIONEER_NATIVE_BFP_CLOSED && io.memory==io.original && io.resets==4);
 		for(unsigned s=0;s<2;s++)for(unsigned w=0;w<3;w++)assert(io.tlb[s][w]==s*3+w+1);
 		NoMoreIO(lease,io,b);checked++;
@@ -124,9 +176,16 @@ int main(int argc,char** argv) {
 		NoMoreIO(lease,io,b);checked++;
 	}
 	{
-		IO io(8,argv[2]);auto b=io.Baseline();Lease lease;assert((lease.Run<IO,Image>(io,b,8)));
+		const unsigned format=formats.back();IO io(format,argv[format==4?1:2]);auto b=io.Baseline();Lease lease;assert((lease.Run<IO,Image>(io,b,format)));
 		const auto reads=io.reads,writes=io.writes,resets=io.resets,tlb=io.tlbWrites;lease.Abandon();
 		assert(lease.Result().cold && io.reads==reads && io.writes==writes && io.resets==resets && io.tlbWrites==tlb);NoMoreIO(lease,io,b);checked++;
 	}
+#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+	{IO io(8,argv[1]);auto b=io.Baseline();Lease lease;assert((!lease.Run<IO,Image>(io,b,8)) && !io.reads && !io.writes && !io.resets && !io.tlbWrites);checked++;}
+#endif
+#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC
+	printf("PASS OFFBOARD actual exact-Q4 lease:%u cases;actual staged bytes ->compiled RV32/32 original integer dots+32 untouched padding words/3548-word L1+TLB restore INCLUDING GPU scratch writes;old12 owner faults+close+unsupportedBFP8 retain/no retry/reset/cleanup;NO physical/Work/model-speed proof\n",checked);
+#else
 	printf("PASS OFFBOARD actual native-BFP lease:%u cases;fresh real RV32 images/fixed dyadic exact64 results/3548-word L1+TLB restore;timeout,PC,fault,source,stage,start,STOP,restore,close failures retain with NO retry/reset/cleanup;NO physical/Work/model-speed proof\n",checked);
+#endif
 }

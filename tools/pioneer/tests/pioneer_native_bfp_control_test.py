@@ -8,8 +8,9 @@ import tempfile
 if not __debug__:
     raise SystemExit('Assertions required')
 here = pathlib.Path(__file__).resolve().parent
-assert len(sys.argv)==1 or sys.argv[1:] in (['--band'], ['--model'])
-band = len(sys.argv)==2
+assert len(sys.argv)==1 or sys.argv[1:] in (['--band'], ['--model'], ['--exact-q4'])
+exact = sys.argv[1:]==['--exact-q4']
+band = sys.argv[1:] in (['--band'], ['--model'])
 model = sys.argv[1:]==['--model']
 name = 'pioneer_native_model_band_driver.cpp' if model else 'pioneer_native_bfp_band_driver.cpp' if band else 'pioneer_native_bfp_driver.cpp'
 native = here.parents[2] / 'src/add-ons/kernel/drivers/misc' / name
@@ -18,6 +19,9 @@ def extract(a, b):
     start = source.index(a)
     return source[start:source.index(b, start)]
 code = extract('static void Fault(', 'static bool FinishMmio(')
+if not band:
+    alias_begin = source.index('#ifdef PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC', source.index('namespace {'))
+    code = source[alias_begin:source.index('struct NativeCookie', alias_begin)] + code
 code += extract('static void DisposeKnown(', 'static status_t Open(')
 code += extract('static status_t Free(', 'static status_t Control(')
 code += source[source.index('static status_t Control('):source.rindex('\n}\ndevice_hooks* find_device')]
@@ -144,6 +148,28 @@ int main(){unsigned cases=0;
 }
 '''
 folder = pathlib.Path(tempfile.mkdtemp(prefix='pioneer-native-bfp-control.'))
+if exact:
+    prefix = prefix.replace('#include "PioneerNativeBfpProtocol.h"', '#include "PioneerNativeExactQ4Protocol.h"\n#define PIONEER_NATIVE_EXACT_Q4_DIAGNOSTIC 1')
+    tests = tests.replace('r.expected_tag=PioneerNativeBfpTag', 'r.expected_tag=PioneerNativeExactQ4Tag')
+    for old, new in (('PIONEER_NATIVE_BFP_RUN', 'PIONEER_NATIVE_EXACT_Q4_RUN'), ('PIONEER_NATIVE_BFP_END', 'PIONEER_NATIVE_EXACT_Q4_END')):
+        tests = tests.replace(old, new)
+    tests = tests.replace('printf("PASS ACTUAL native BFP', '''
+ for(unsigned kind=0;kind<3;kind++){
+  Reset();auto* c=Cookie();auto r=Request();
+  if(kind==0)r.expected_tag=PioneerNativeBfpTag;else if(kind==1)r.bits=8;
+  const unsigned op=kind==2?PIONEER_NATIVE_BFP_RUN:PIONEER_NATIVE_EXACT_Q4_RUN;
+  assert(Control(c,op,&r,sizeof(r)) && !owner && !reserves && !runs);FinishFixture(c);cases++;
+ }
+ for(unsigned byte=0;byte<sizeof(PioneerNativeBfpResult);byte++){
+  Reset();auto* c=Cookie();auto r=Request();reinterpret_cast<unsigned char*>(&r.result)[byte]=1;
+  assert(Control(c,PIONEER_NATIVE_EXACT_Q4_RUN,&r,sizeof(r)) && !owner && !reserves && !runs && !baselines);FinishFixture(c);cases++;
+ }
+ for(unsigned length:{0U,1U,359U,361U,720U}){
+  Reset();auto* c=Cookie();auto r=Request();
+  assert(Control(c,PIONEER_NATIVE_EXACT_Q4_RUN,&r,length) && !copyCalls && !owner && !reserves && !runs);FinishFixture(c);cases++;
+ }
+ printf("PASS ACTUAL exact Q4''')
+    prefix = prefix.replace('#include <new>', '#include <new>\n#include <initializer_list>')
 if band:
     prefix = prefix.replace('#include "PioneerNativeBfpProtocol.h"', '#include "PioneerNativeBfpBandProtocol.h"\n#include "PioneerNativeBfpBandLayout.h"')
     prefix = prefix.replace('struct PioneerNativeBfpGeneratedImage{};', 'template<unsigned K>struct PioneerNativeBfpBandGeneratedImage{static constexpr unsigned Width=K;};')

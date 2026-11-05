@@ -1,0 +1,87 @@
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+adcec3cf5a66a2f00b979746928e1f8525a1c2274f37d0f3e35d3b6468ee6ef3 1808 text.bin
+OFFBOARD_BUILD_ONLY BFP4_B/FP32 matvec;NO lifecycle,driver,hardware,model-quality,Work or timing permission
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd 4 boot.bin
+c21f4692d340b0bab397a513a315b9884b898804022e35948b2d029a6a128b19 1876 text.bin
+OFFBOARD_BUILD_ONLY BFP8_B/FP32 matvec;NO lifecycle,driver,hardware,model-quality,Work or timing permission
+e79e070b9e4fe434b868898748834e0cd89b03bcb250d9c1694b4d0b890f46ac tenstorrent_pci_probe-native-bfp78
+2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc tenstorrent_pci_probe-default43-control
+428e7a15ad97501eb711dc6a2e59f30c68d14c1b022acc32b9b753ce793aefb4 pioneer-native-bfp-diagnostic
+BUILD_ONLY fixed native-BFP diagnostic;NO installation,driver reload,physical test,model quality or performance claim
+PASS OFFBOARD actual native-BFP lease:16 cases;fresh real RV32 images/fixed dyadic exact64 results/3548-word L1+TLB restore;timeout,PC,fault,source,stage,start,STOP,restore,close failures retain with NO retry/reset/cleanup;NO physical/Work/model-speed proof
+PASS actual extracted native BFP FinishMmio/Free:31 cases;each VM/PCI/identity failure stops at FIRST observation;known End idempotent;close/quarantined close retains owner/cookie with zero IO;NO physical proof
+CPU-only actual close bodies retained: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-close.uc8htxx2
+PASS ACTUAL native BFP Control/Reply/Fault/Dispose/Free:28 cases;malformed/foreign/stale/busy inputs no hardware entry,same-FD one-shot,owned user copy,failed RUN delivery retained,explicit END only,END-reply failure known closed;FAKE device/lease endpoints,NO physical proof
+CPU-only actual controller evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-control.ta2zkxio
+PASS ACTUAL NativeIO VM/range methods:24 cases;all393216 aligned L1 addresses,exact3548 owned words/physical offsets/protections;7 partial native-map failures/15 fail-first disposals retain remaining views;CPU fixture teardown only,NO physical proof
+CPU-only actual mapping evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-mapping.f3e1_1co
+PASS ACTUAL protected native-BFP parent flow:4 cases;known-clean restore only,failed/malformed first or second run NO retry/reset/metadata/restore;FAKE commands,no hardware
+CPU-only parent-flow evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-parent.i2rjjujb
+PASS ACTUAL native BFP diagnostic client:150 cases;all128 per-word numerical failures retain all64 returned words and issue NO END/retry/query after RUN;strict acceptance unchanged;FAKE syscalls,no device
+CPU-only actual client evidence: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T/pioneer-native-bfp-client.gtnirjyk
+CHARACTERIZATION bits4 row0 ideal41580800 lane_model41580800 strict_equal1
+CHARACTERIZATION bits4 row1 idealc002e000 lane_modelc002e000 strict_equal1
+CHARACTERIZATION bits4 row2 idealc0be0000 lane_modelc0be0000 strict_equal1
+CHARACTERIZATION bits4 row3 ideal407c5000 lane_model407c5000 strict_equal1
+CHARACTERIZATION bits4 row4 ideal41d80800 lane_model41d80800 strict_equal1
+CHARACTERIZATION bits4 row5 idealc021c000 lane_modelc021c000 strict_equal1
+CHARACTERIZATION bits4 row6 idealbfbc0000 lane_modelbfbc0000 strict_equal1
+CHARACTERIZATION bits4 row7 ideal410aa800 lane_model410aa800 strict_equal1
+CHARACTERIZATION bits4 row8 ideal42580800 lane_model42580800 strict_equal1
+CHARACTERIZATION bits4 row9 idealbf82e000 lane_modelbf82e000 strict_equal1
+CHARACTERIZATION bits4 row10 idealc03e0000 lane_modelc03e0000 strict_equal1
+CHARACTERIZATION bits4 row11 ideal417c5000 lane_model417c5000 strict_equal1
+CHARACTERIZATION bits4 row12 ideal41580800 lane_model41580800 strict_equal1
+CHARACTERIZATION bits4 row13 idealbfa1c000 lane_modelbfa1c000 strict_equal1
+CHARACTERIZATION bits4 row14 idealc0bc0000 lane_modelc0bc0000 strict_equal1
+CHARACTERIZATION bits4 row15 ideal408aa800 lane_model408aa800 strict_equal1
+CHARACTERIZATION bits4 row16 ideal41d80800 lane_model41d80800 strict_equal1
+CHARACTERIZATION bits4 row17 idealc082e000 lane_modelc082e000 strict_equal1
+CHARACTERIZATION bits4 row18 idealbfbe0000 lane_modelbfbe0000 strict_equal1
+CHARACTERIZATION bits4 row19 ideal40fc5000 lane_model40fc5000 strict_equal1
+CHARACTERIZATION bits4 row20 ideal42580800 lane_model42580800 strict_equal1
+CHARACTERIZATION bits4 row21 idealbf21c000 lane_modelbf21c000 strict_equal1
+CHARACTERIZATION bits4 row22 idealc03c0000 lane_modelc03c0000 strict_equal1
+CHARACTERIZATION bits4 row23 ideal418aa800 lane_model418aa800 strict_equal1
+CHARACTERIZATION bits4 row24 ideal41580800 lane_model41580800 strict_equal1
+CHARACTERIZATION bits4 row25 idealc002e000 lane_modelc002e000 strict_equal1
+CHARACTERIZATION bits4 row26 idealc0be0000 lane_modelc0be0000 strict_equal1
+CHARACTERIZATION bits4 row27 ideal407c5000 lane_model407c5000 strict_equal1
+CHARACTERIZATION bits4 row28 ideal41d80800 lane_model41d80800 strict_equal1
+CHARACTERIZATION bits4 row29 idealc021c000 lane_modelc021c000 strict_equal1
+CHARACTERIZATION bits4 row30 idealbfbc0000 lane_modelbfbc0000 strict_equal1
+CHARACTERIZATION bits4 row31 ideal410aa800 lane_model410aa800 strict_equal1
+CHARACTERIZATION bits8 row0 ideal4180b340 lane_model4180b500 strict_equal0
+CHARACTERIZATION bits8 row1 ideal3f17a800 lane_model3f171800 strict_equal0
+CHARACTERIZATION bits8 row2 ideal402a9000 lane_model402aa000 strict_equal0
+CHARACTERIZATION bits8 row3 ideal3fa39a00 lane_model3fa3a200 strict_equal0
+CHARACTERIZATION bits8 row4 ideal420212c0 lane_model42021500 strict_equal0
+CHARACTERIZATION bits8 row5 idealc083fe00 lane_modelc0841200 strict_equal0
+CHARACTERIZATION bits8 row6 ideal3ef08000 lane_model3ef06000 strict_equal0
+CHARACTERIZATION bits8 row7 ideal3fad4400 lane_model3fad6400 strict_equal0
+CHARACTERIZATION bits8 row8 ideal42796480 lane_model42796900 strict_equal0
+CHARACTERIZATION bits8 row9 idealbfcb6600 lane_modelbfcb6a00 strict_equal0
+CHARACTERIZATION bits8 row10 ideal4001f800 lane_model4001f200 strict_equal0
+CHARACTERIZATION bits8 row11 idealc061ac00 lane_modelc0617400 strict_equal0
+CHARACTERIZATION bits8 row12 ideal416ab380 lane_model416ab480 strict_equal0
+CHARACTERIZATION bits8 row13 idealc07ece00 lane_modelc07ece00 strict_equal1
+CHARACTERIZATION bits8 row14 ideal4051a000 lane_model4051c400 strict_equal0
+CHARACTERIZATION bits8 row15 idealbf9e4e00 lane_modelbf9e4e00 strict_equal1
+CHARACTERIZATION bits8 row16 ideal41eca280 lane_model41eca440 strict_equal0
+CHARACTERIZATION bits8 row17 idealc04d6c00 lane_modelc04dac00 strict_equal0
+CHARACTERIZATION bits8 row18 idealbed76000 lane_modelbed78000 strict_equal0
+CHARACTERIZATION bits8 row19 ideal40193a00 lane_model40193800 strict_equal0
+CHARACTERIZATION bits8 row20 ideal42737180 lane_model42737500 strict_equal0
+CHARACTERIZATION bits8 row21 idealbfad9e00 lane_modelbfad9600 strict_equal0
+CHARACTERIZATION bits8 row22 ideal3fbd0000 lane_model3fbd1000 strict_equal0
+CHARACTERIZATION bits8 row23 ideal41046100 lane_model41046700 strict_equal0
+CHARACTERIZATION bits8 row24 ideal417f2080 lane_model417f2480 strict_equal0
+CHARACTERIZATION bits8 row25 idealc0a0c300 lane_modelc0a0cf00 strict_equal0
+CHARACTERIZATION bits8 row26 idealbe928000 lane_modelbe93c000 strict_equal0
+CHARACTERIZATION bits8 row27 idealbe19b000 lane_modelbe199000 strict_equal0
+CHARACTERIZATION bits8 row28 ideal41f7ff80 lane_model41f80300 strict_equal0
+CHARACTERIZATION bits8 row29 idealbf3b7000 lane_modelbf3c1000 strict_equal0
+CHARACTERIZATION bits8 row30 ideal3f823000 lane_model3f822800 strict_equal0
+CHARACTERIZATION bits8 row31 idealc03a2e00 lane_modelc03a2200 strict_equal0
+PASS separate Blackhole arithmetic characterization:all32 BFP4 predictions agree with ideal;BFP8 recorded row0 predicted EXACTLY,30/32 rows predict ideal differences;OTHER BFP8 HARDWARE WORDS UNOBSERVED;strict diagnostic/old observer/Work comparators UNCHANGED;NO GPU OR ACCEPTANCE AUTHORITY
+CPU-only native BFP owner evidence retained: /var/folders/f7/mf96p7qx3s1_r6lwbgpmlntm0000gn/T//pioneer-native-bfp-owner-tests.5XgGGEAP

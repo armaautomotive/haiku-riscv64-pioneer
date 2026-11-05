@@ -263,3 +263,21 @@ of9264 real learned panels across all193 Q4 matrices/whole authenticated
 full-generation equivalence/performance remain separate REQUIRED gates.
 See benchmarks/qwen38-exact-q4-corrected-20261104.txt. No installed driver,
 Assistant or accepted0.1728tok/s baseline is changed by these local tests.
+
+Fixed native corrected-Q4 qualification (tag95,not yet physically run)
+------------------------------------------------------------------
+The --exact-q4-corrected native diagnostic build has a separate tag95 and
+pointer-free opcode family. It stages ONLY a fixed synthetic integer Q4
+fixture,including -128 activations,into the EXISTING3548-word saved L1
+scope. No model/Work/user-code/data/address endpoint is published. Old
+tag78/default43 native binaries remain byte-exact. All120 cores must be
+held before the disposable sole-tile context is acquired. No arbitrary
+original FPU/register snapshot/restore is claimed.
+
+Main+clean full native/client builds and actual source/ROM/lease/controller/
+mapping/close/client/parent tests pass. A separate DOCUMENTED bit-level
+Blackhole lane/rounding model also confirms8208 bounded original integer
+dots exactly;this is stronger than ideal floating arithmetic alone,but is
+still NOT physical proof. The one-shot physical helper requires fresh
+stable20 admission and separately verified staging before it may run.
+See benchmarks/qwen38-exact-q4-native-20261105.txt. No new tokens/sec claim.
