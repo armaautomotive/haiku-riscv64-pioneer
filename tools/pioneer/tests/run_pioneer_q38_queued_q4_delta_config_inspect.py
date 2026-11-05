@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""UNQUALIFIED delta worker functional experiment; NO body audit or hardware grant."""
+"""UNQUALIFIED delta/pair worker experiment; NO body audit or hardware grant."""
 import ast,hashlib,os,pathlib,re,subprocess,sys,tempfile
 from compare_pioneer_q38_observed_trace import require,stable_bytes
 require(__debug__ and not os.environ.get('PYTHONOPTIMIZE'),'checks required')
-require(len(sys.argv)==5 and sys.argv[4] in ('--pilot','--group-pilot','--all-shapes','--config-faults','--frontend','--history'),'REPLAY PREFETCH CANDIDATE --pilot|--group-pilot|--all-shapes|--config-faults|--frontend|--history ONLY')
+pair=len(sys.argv)==6 and sys.argv[5]=='--pair-config'
+require((len(sys.argv)==5 or pair) and sys.argv[4] in ('--pilot','--group-pilot','--all-shapes','--config-faults','--frontend','--history'),'REPLAY PREFETCH CANDIDATE --pilot|--group-pilot|--all-shapes|--config-faults|--frontend|--history [--pair-config] ONLY')
+label='PAIR_CONFIG' if pair else 'DELTA'
 require(not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ),'no role override')
 here=pathlib.Path(__file__).resolve().parent
 image,prefetch,candidate=map(pathlib.Path,sys.argv[1:4])
@@ -21,7 +23,7 @@ def snapshot(directory,records):
 snapshot(image,pins(here.parent/'build_qwen38_two_product_q4_worker.py','REPLAY_PINS'))
 images=[snapshot(fixture,pins(here/'run_pioneer_q38_mixed_worker_tests.py')),
  snapshot(control,pins(here.parent/'build_qwen38_exact_q4_work_worker.py')),
- snapshot(candidate,pins(here.parent/'build_qwen38_queued_q4_delta_config_worker.py','INSPECT_PINS'))]
+ snapshot(candidate,pins(here.parent/('build_qwen38_queued_q4_pair_config_worker.py' if pair else 'build_qwen38_queued_q4_delta_config_worker.py'),'INSPECT_PINS'))]
 prefetch_image=snapshot(prefetch,pins(here.parent/'build_qwen38_instruction_prefetch_worker.py'))
 legacy=[(name+'.bin',size,digest) for name,size,digest in pins(here/'run_pioneer_q38_resident_gdn_output_operator_service_image_tests.py')]
 legacy.append(('program.elf',96148,'44bac0c1061f298ed8ccd2a1eb4780371bc7c80031cb230ad2da27f476202d19'))
@@ -46,7 +48,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-queued-q4-inspect-',dir='/priva
   path.chmod(0o400)
  # New explicit UNQUALIFIED subject. Do NOT relax the old E auditor.
  # Snapshot pins authorize this local experiment,NOT body/native/physical use.
- print('UNQUALIFIED_DELTA_PINNED_ROM_ONLY_NO_BODY_OR_RELOCATION_AUDIT',flush=True)
+ print('UNQUALIFIED_'+label+'_PINNED_ROM_ONLY_NO_BODY_OR_RELOCATION_AUDIT',flush=True)
  old_directory=directories[0]/'unchanged-worker';old_directory.mkdir(mode=0o700)
  for filename,data in old:
   path=old_directory/filename
@@ -63,4 +65,4 @@ with tempfile.TemporaryDirectory(prefix='pioneer-queued-q4-inspect-',dir='/priva
  arguments=[directories[0],directories[2]] if fault_mode else directories
  subprocess.run([str(binary),*map(str,arguments),*([] if fault_mode or sys.argv[4]=='--all-shapes' else [sys.argv[4]])],check=True,
   env={**os.environ,'ASAN_OPTIONS':'quarantine_size_mb=32','UBSAN_OPTIONS':'halt_on_error=1'})
-print('PARTIAL_UNQUALIFIED_DELTA actual compiled worker;NO whole body/relocation audit,full fault/history/native/model/hardware/TPS qualification',flush=True)
+print('PARTIAL_UNQUALIFIED_'+label+' actual compiled worker;NO whole body/relocation audit,full fault/history/native/model/hardware/TPS qualification',flush=True)

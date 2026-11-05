@@ -1,0 +1,59 @@
+Queued Q4 pair-byte configuration experiment -- 2026-11-05
+=========================================================
+
+NOT PROMOTED. Distinct local PIONEER_Q38_QUEUED_Q4_PAIR_CONFIG_IMAGE=1.
+First access per field per block writes all4 bytes;later accesses always
+write low2 bytes and conditionally write high2 together. Original waits,
+final real ACK and all final configuration readbacks remain unchanged.
+No GPR borrowing or CPU inference/reference is added to Work.
+
+Main61315=0 and clean builder+pilot30720=0,stderr0;default WHOLE E ELF
+reproduced BEFORE the pair build;main/clean whole pair ELF byte-identical.
+ program.elf160232B
+  fea877fc1b69071058b42f3f45485dce56a129d55604dd1d5f9e131e1dc7775e
+ service.bin21788B within24576B,2788B headroom
+  04ee0c98328df7d34bfa47f891788d503f84d1b522f703758b5f0a2428857423
+All NINE other sections equal existing E;no bound/loader/driver change.
+
+Main pilot3816=0 and clean30720=0,whole stdout identical,stderr0. Actual
+authenticated compiled RISC-V worker executes under the existing strict
+functional observer,ASan+UBSan;K5120/groups1,two changed-input jobs,source
+reads,payload ACK then commit,missing-ACK inertness and STOP. Instruction
+counts for the SAME geometry/jobs:
+ queued E       1554215
+ pair update    1574963  +20748 / +1.334950%
+ byte-delta A   1620873
+ previous9f     1443247
+The printed3010979 teacher is older three-product code,NOT current E.
+This is fewer controller instructions than byte-delta A,but still MORE
+than existing E. No silicon timing or model speed follows from counts;
+fewer backend writes could have different physical latency. This screen
+does NOT establish a runtime slowdown or speedup. No physical trial of
+either delta variant is authorized by these local results.
+
+ASan+UBSan component main0/clean88454=0:10240 cases,246 unsupported fields,
+20 final-read faults;whole stdout identical,stderr0. Component omitted
+30760 words in synthetic cases,NOT model work or elapsed time. Roles main
+8665=0/clean88454=0:each delta and pair1 positive/54 missing,zero,two,late,
+native,sibling,CPU/Work/fast-math refusals;all stdout exact and stderr0.
+Each explicitly rejects the other sibling flag EVEN if its value is0.
+
+Only the explicit --pair-config runner argument selects these pair pins.
+Default delta-A mode keeps its old ROM identity. Both are UNQUALIFIED;
+neither bypasses or relaxes the independently qualified queued-E auditor.
+No complete body/relocation,27-shape,fault/frontend/history,native,physical
+or Assistant qualification is claimed. Nine unchanged sections and a
+functional pilot are NOT whole-driver/model correctness evidence.
+
+Next local approach removes repeated transaction bookkeeping by binding
+the FIXED block's initial and final six-field states once,not caching/
+comparing arbitrary configuration updates at every panel. It must retain
+full initialization,range/role checks,backend waits and final real reads.
+That approach is not implemented or qualified by this checkpoint.
+
+Protected queued-E full-model trial tag102/gen33 remains separate and live.
+At2026-11-05 19:00:15GMT all4 exact trial PIDs24689/24690/24776/24777 were
+live,upload4334.4/19522.4MiB;no actual exit and no new rate. No concurrent
+device metadata/admin/job/reload/reboot/power or stage mutation was issued.
+Last closed model rate remains0.162480719..0.162484114tok/s;best accepted
+vector92 is0.172813448..0.172816755;20tok/s remains unmet. Raw logs beside.

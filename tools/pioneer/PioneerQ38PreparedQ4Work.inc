@@ -30,6 +30,9 @@ using PreparedQ4Affine=PioneerQ38ExactQ4Affine;
 #endif
 using PreparedQ4=PioneerQ38PreparedQ4Layout;
 #ifdef PIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE
+#ifdef PIONEER_Q38_QUEUED_Q4_PAIR_CONFIG_IMAGE
+#include "PioneerQ38QueuedQ4PairConfig.h"
+#endif
 #ifdef PIONEER_Q38_QUEUED_Q4_DELTA_CONFIG_IMAGE
 #include "PioneerQ38QueuedQ4DeltaConfig.h"
 #endif
@@ -62,7 +65,9 @@ void PreparedQ4Inputs(unsigned inputs){
 struct PioneerQ38ExactQ4WorkEmitter {
  unsigned metadataRow=128,primary=0x98100,input=PreparedQ4::InputFirst,mask=PreparedQ4::DenseMask;
 #ifdef PIONEER_Q38_QUEUED_Q4_BLOCK_IMAGE
-#ifdef PIONEER_Q38_QUEUED_Q4_DELTA_CONFIG_IMAGE
+#ifdef PIONEER_Q38_QUEUED_Q4_PAIR_CONFIG_IMAGE
+ PioneerQ38QueuedQ4PairConfig queue;
+#elif defined(PIONEER_Q38_QUEUED_Q4_DELTA_CONFIG_IMAGE)
  PioneerQ38QueuedQ4DeltaConfig queue;
 #else
  PioneerQ38QueuedQ4Block queue;
