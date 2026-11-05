@@ -1,0 +1,94 @@
+Actual replay13 worker instruction attribution -- 2026-11-05
+===========================================================
+
+OFFBOARD DIAGNOSTIC ONLY,NOT HARDWARE CYCLES OR A SPEED IMPROVEMENT.
+The distinct real27B replay13 trial remains LIVE in its separate stage.
+Its wrapper16500,parent16501,rate16585,USER16586 were observed live;
+original authentication completed and weight upload is progressing.
+No actual parent/rate exit exists yet;NO device/status/driver/power/stage
+operation was added. Only scoped read-only PID/log observation is allowed.
+Latest accepted hardware rate remains0.161777026..0.161780396tok/s;
+best accepted vector92 is0.172813448..0.172816755;20tok/s unmet.
+
+Purpose:attribute the ACTUAL qualified92ffea6e... compiled worker's guest
+instruction stream instead of assuming that all card-side work is tensor
+math. This changes NO firmware,driver,runtime,cache,model or Assistant.
+Explicit --two-product-replay --instruction-profile selects this local
+test ONLY;normal complete-worker modes and their pass/fail policy remain.
+
+Actual checks,main and independent clean source,ASan+UBSan:
+Both processes return0,empty stderr,whole stdout byte-identical. Whole
+ROMs are authenticated exactly as in the existing closed-worker runner.
+Each of six geometries runs two changed-input jobs through real source
+reads,payload ACK,commit,and STOP in the existing strict instruction model.
+Each is paired with an UNINSTRUMENTED instance of the SAME current worker:
+identical retired steps,all memory,mailbox,source reads/responses,replay
+counts and exported FP32 output. Intercepted-but-unretired calls are
+tracked separately;all six cases actually have zero of these.
+
+ k      groups   full worker RV   exact-kernel RV   jobs
+ 5120     1          1443269          1209298         2
+ 5120     3          2969175          2735202         2
+ 6144     1          1705705          1446070         2
+ 6144     3          3530439          3270802         2
+17408     1          4615671          4061444         2
+17408     3          9756803          9202574         2
+
+The exact-kernel scope is the actual PioneerQ38ExactQ4Work entry through
+its return,including its callees. The full-worker count also includes
+boot/validation/queued protocol and deliberate fixture ACK delays. These
+are SYNTHETIC source/fabric delays,not a silicon timing simulation.
+
+K5120/groups1 exact-scope counts:
+ PreparedQ4Inputs              365604 (30.23% of exact-scope instructions)
+ ExactQ4Work body              452552
+ TwoProductDot::Run            257920
+ Config helper                 63994
+For groups3,PreparedQ4Inputs is still365604 (13.37%);the latter three
+functions total2176360 (79.57% of exact-scope instructions). This is
+evidence of repeated conversion/command/preparation work,NOT elapsed-time
+fractions or a proof that an entire function is removable. Activation
+conversion amortizes with larger output groups;do not extrapolate a
+single-group percentage to the whole model or its large output head.
+
+K5120/groups3 exact-scope memory CALLBACK counts across both jobs:
+ Config register:28184 loads and28184 stores
+ Drain ACK:16820 loads and8410 stores
+ NoC registers:724 loads and408 stores
+ Dynamic instruction port:34936 stores
+Inline Tensix instructions are not stores to that port. These callbacks
+do not measure memory latency,physical polling duration or engine cycles.
+Configuration ordering/readbacks/completion cannot simply be deleted
+from this count evidence. No CPU-reference check was added to Work.
+
+Function attribution uses actual ELF STT_FUNC ranges. An initial attempt
+using nm's generic text labels correctly refused overlapping switch-table
+data labels;that aborted run is NOT an accepted profile. Final mapping
+uses readelf function types/sizes,only identical-range aliases canonicalize,
+different overlaps refuse,and unattributed instructions stay explicit.
+Final whole stdout SHA
+0d68ab664b4a8f5a63fc1623bff254020c3c1d784197ea455f14d8efc5b18508.
+Existing replay13 --pilot runner regression also actually exits0/empty
+stderr. This is a partial runner regression,not another full qualification.
+
+Next action remains whole-model measurement,then structural on-card
+operand/issue/synchronization improvements,not UI/host CPU tweaks.
+Earlier actual K17408 preparation timing is recorded separately in
+qwen38-token-matrix-phase-physical-20261102.txt;its~75% sampled decode/
+unpack/pack result belongs to that OLDER worker,not this new program.
+Do not repeat unchanged scalar-conversion or quarantined cache experiments.
+The closed seven-bank transfer test in p100a-dram-cohort-direct-20261103.txt
+already measures259.22..297.85GB/s for its repeated-window/depth16 case;
+that is NOT model bandwidth,peak throughput or a20tok/s forecast.
+
+Potential instruction-fetch issue is RESEARCH ONLY,not an active-card
+configuration diagnosis. Official cache documentation says prefetch is
+off at reset and describes small instruction caches. The CURRENT card's
+prefetch state has NOT been read or changed during the protected trial.
+Any future initialization change must first identify exact owned register
+fields and preserve snapshot/restoration;no speculative live write.
+Primary docs checked2026-11-05:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/README.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/InstructionCache.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/BabyRISCV/InstructionCache.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/BackendConfiguration.md

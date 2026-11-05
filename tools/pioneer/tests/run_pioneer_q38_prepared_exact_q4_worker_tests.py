@@ -20,8 +20,10 @@ if two_product_replay:
 elif two_product:
     require(sys.argv.count('--two-product')==1,'one explicit two-product CPU validation selector')
     sys.argv.remove('--two-product')
-require(len(sys.argv) in (2,3),'IMAGE [--pilot|--group-pilot|--controls-only|--faults-only|--history-only]')
-require(len(sys.argv)!=3 or sys.argv[2] in ('--pilot','--group-pilot','--controls-only','--faults-only','--history-only'),'explicit test scope')
+require(len(sys.argv) in (2,3),'IMAGE [--pilot|--group-pilot|--controls-only|--faults-only|--history-only|--instruction-profile]')
+require(len(sys.argv)!=3 or sys.argv[2] in ('--pilot','--group-pilot','--controls-only','--faults-only','--history-only','--instruction-profile'),'explicit test scope')
+instruction_profile=len(sys.argv)==3 and sys.argv[2]=='--instruction-profile'
+require(not instruction_profile or two_product_replay,'profile the explicit qualified replay13 variant only')
 require(not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ),'no role override')
 here=pathlib.Path(__file__).resolve().parent
 image=pathlib.Path(sys.argv[1]);control=image/('unchanged-prepared/unchanged-original' if two_product else 'unchanged-original')
@@ -65,6 +67,12 @@ with tempfile.TemporaryDirectory(prefix='pioneer-prepared-q4-closed-tests-',dir=
             target.chmod(0o400)
         (directory/'program.symbols').write_bytes(subprocess.check_output([tool+'nm','-n',str(directory/'program.elf')]))
         (directory/'program.symbols').chmod(0o400);images.append(directory)
+        if instruction_profile:
+            rows=[r.split() for r in subprocess.check_output([tool+'readelf','-sW',str(directory/'program.elf')],text=True).splitlines()]
+            functions=[r for r in rows if len(r)==8 and r[3]=='FUNC' and r[6].isdigit() and r[2].isdigit() and int(r[2])]
+            require(bool(functions),'actual ELF STT_FUNC extents,not nm text/data labels')
+            (directory/'program.functions').write_text(''.join(r[7]+' FUNC '+r[1]+' '+r[2]+'\n' for r in functions))
+            (directory/'program.functions').chmod(0o400)
     original=images[0]/'unchanged-worker';original.mkdir(mode=0o700)
     for name,data in legacy:
         target=original/name
@@ -84,8 +92,9 @@ with tempfile.TemporaryDirectory(prefix='pioneer-prepared-q4-closed-tests-',dir=
     history_only=len(sys.argv)==3 and sys.argv[2]=='--history-only'
     if not history_only:
         binary=root/'worker'
-        subprocess.run([*common,*flags,str(here/'pioneer_q38_prepared_exact_q4_worker_test.cpp'),'-o',str(binary)],check=True)
-        subprocess.run([str(binary),*map(str,images),*sys.argv[2:]],check=True,env=environment)
+        source=here/('pioneer_q38_prepared_worker_instruction_profile.cpp' if instruction_profile else 'pioneer_q38_prepared_exact_q4_worker_test.cpp')
+        subprocess.run([*common,*flags,str(source),'-o',str(binary)],check=True)
+        subprocess.run([str(binary),*map(str,images),*(() if instruction_profile else sys.argv[2:])],check=True,env=environment)
     if len(sys.argv)==2 or history_only:
         history=root/'gdn-history'
         subprocess.run([*common,*flags,str(here/'pioneer_q38_prepared_q4_gdn_history_test.cpp'),'-o',str(history)],check=True)
