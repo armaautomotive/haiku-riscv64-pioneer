@@ -1,0 +1,54 @@
+Returning cached-Q4 FPU/BF16 services: OFFBOARD ONLY
+=================================================
+2026-11-05 Pacific; base b11cf8d4d794f57cdadea7dc02dacb1caf0d688f.
+No Pioneer, driver, Assistant, network, power, SD or hardware mutation.
+No new full-model generation or tokens/sec measurement.
+
+Programs
+--------
+Matrix text8872 bytes SHA256:
+ef56a80719789d1469c20748d9dfb6716918453022f55f78fa0ee143074d5ecb
+Producer text812 bytes SHA256:
+c9d98be7be9a68bc1364a0530f8eb5a6084ae8678a9185c439aecdcbcf74163a
+Both use distinct16KiB harness placements; old104's domain is unchanged.
+The builder rejects26 wrong/mixed/defined-zero/fast-math cases per image.
+Return-only matrix object has no unexpected unresolved helper/global.
+
+Executed checks
+---------------
+*3168 transport-layout cases: existing paired16-row cache bytes and typed
+ coordinator input, both widths/buffers,119 unique worker geometries.
+*262144 BF16 lane/rounding cases and atomic chunk/canary refusals.
+*6 emitted producer/matrix cases,704 exact synthetic outputs at32/64/256
+ rows and both full model K widths; actual asynchronous read responses,
+ double-buffer/math overlap, finite outputs and reserved s11 preservation.
+*9 emitted original-model full-K bands,288 exact outputs. The source is
+ reauthenticated on the SAME-open original18973870528-byte GGUF with SHA:
+ c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+ Private compiled samples/goldens are separately pinned and excluded from
+ Git. This is sampled weight arithmetic, NOT a complete model response.
+*4 warm changing-width/route/row-count requests,416 exact outputs on the
+ same live scalar/math/NoC/L1 state; no engine/counter reset between jobs.
+*32 emitted malformed-frame/NIU/source/counter/command/producer refusals;
+ invalid jobs do not access device registers, and injected transport
+ faults park without subsequent IO/math/output (2048 extra instructions).
+*128 actual producer lanes independently checked with Fraction nearest
+ BF16/ties-to-even rather than reusing the service's integer rounder.
+
+All test binaries use ASan/UBSan, warnings-as-errors and FP contraction off.
+Main and clean-archive suites each have12 actual child exits0/stderr0.
+The clean archive is base HEAD plus ONLY the18 new service/test sources;
+the9 pre-existing tracked modifications and unrelated WIP are excluded.
+Both complete builds and all test result stdout agree byte-for-byte;
+both ELF/text/boot files agree byte-for-byte. Source closure:60 files.
+Raw public receipts and replay verifier are in the sibling directory.
+
+Limits
+------
+This does not prove ROOT/worker dispatch, live model producer provenance,
+canonical full-matrix partition, native memory ownership, real-card
+execution, complete-model correctness or speed. Work/defaults remain as
+before. Actual full-model result remains about0.16436 tokens/sec, not a
+new result or a speedup.20 tokens/sec remains unmet.
+Next: connect the live BF16 producer and returning worker/ROOT dispatch;
+retain inputs on the peer to avoid repeated per-pair coordinator reads.

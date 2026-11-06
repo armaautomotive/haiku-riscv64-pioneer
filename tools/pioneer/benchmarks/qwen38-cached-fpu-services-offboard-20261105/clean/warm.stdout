@@ -1,0 +1,5 @@
+PASS WARM cached-FPU request17 K5120 rows64 route786:all64 outputs exact,same actual RV32/NoC/FPU/SFPU/L1/counters live,no engine reset
+PASS WARM cached-FPU request18 K17408 rows32 route1361:all32 outputs exact,same actual RV32/NoC/FPU/SFPU/L1/counters live,no engine reset
+PASS WARM cached-FPU request19 K5120 rows256 route786:all256 outputs exact,same actual RV32/NoC/FPU/SFPU/L1/counters live,no engine reset
+PASS WARM cached-FPU request20 K17408 rows64 route1361:all64 outputs exact,same actual RV32/NoC/FPU/SFPU/L1/counters live,no engine reset
+PASS WARM cached-FPU4 alternating-width requests/416 exact outputs;caller changes source width/route without clearing live engine or counters;NOT actual persistent-worker/native/full-model/hardware/performance authority

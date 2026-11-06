@@ -1,0 +1,67 @@
+Returning cached-Q4 FPU service and live-activation BF16 producer
+==============================================================
+2026-11-05 Pacific. OFFBOARD checkpoint, not an installed Work target.
+
+Purpose
+-------
+Replace the fixed, one-shot compact104 experiment with a returning matrix
+leaf that can consume the model's EXISTING 16-row byte-major Q4_K cache.
+Two adjacent groups make a 32-row FPU computation. Jobs cover 32..256 rows
+in pairs, K=5120 or17408, and logical compute workers1..119. Learned
+weights, metadata and coordinator activations arrive by real NoC reads in
+the emitted program; scalar code does not copy or multiply their payloads.
+
+The separate RV32 producer packs live FP32 bits to BF16, round-to-nearest
+ties-to-even, without Q8 clipping/scales. A256-value chunk is published
+only after every lane passes. Invalid/overflow/subnormal lanes fault;
+there is no CPU fallback. Whole-width publication still requires an
+external completion/producer-lifetime proof: a late bad chunk may leave
+earlier chunks written. QBI1 is a format identifier, NOT that proof.
+
+Memory and ABI
+--------------
+The standalone harness reserves a DISTINCT16KiB text/constant region at
+0x70000..0x74000, with descriptor0x74000 and the existing8KiB local stack
+0x6e000..0x70000. This does not enlarge/regrant compact104's8KiB domain.
+Matrix output is0x84000; input is coordinator129 L1at0xa0000. The producer
+harness reads FP32 at0xb0000: that is an OFFBOARD placement, not an existing
+ROOT/native mapping. The reusable pack helper must be bound to actual
+owned producer buffers during integration.
+
+The matrix also builds as a returning-only object. Every service reserves
+s11 for the persistent worker's private seal. Tests check that sentinel
+after EVERY actual scalar instruction. The returning object still needs
+linkage/failure binding and combined-stack checks in its actual caller.
+
+Evidence
+--------
+See benchmarks/qwen38-cached-fpu-services-offboard-20261105.txt and its
+receipt directory. Real emitted RV32 instructions, the unchanged scalar
+decoder and existing FPU/SFPU semantics execute against canonical L1.
+Two independent NoC source spaces represent original-cache GDDR and the
+coordinator's actual BF16 producer output. No PC skip, substitute tensor
+product, descriptor rewriting or scalar learned-payload injection.
+
+The tests cover704 synthetic output words,288 independently authenticated
+original-model band outputs,416 warm output words across changing widths,
+32 emitted refusal/fault cases, and independent Fraction BF16 rounding.
+These are COMPONENT arithmetic/transport tests, not full-model quality or
+physical performance. The preceding compact104 physical experiment is
+closed/spent and is NOT admission for these new services.
+
+Remaining integration toward real inference
+------------------------------------------
+1. Use the BF16 packer at actual projection/gated-activation producers;
+   preserve actual request, layer, token, chunk and source lifetime.
+2. Repartition full matrices into paired rows with exact canonical coverage;
+   update worker/ROOT dispatch and actual transport accounting together.
+3. Integrate returning Q6/Q8 paths for the model's remaining matrix types.
+4. Bind all new code/L1/source/producer extents in the native owner, then
+   qualify the complete caller before a fresh hardware cohort.
+5. Measure real full-model inference and quality.20 tokens/sec is UNMET.
+
+Known optimization: this baseline reloads BF16 inputs from the coordinator
+for each32-row pair (26 reads/80 flits per K256 block/pair). Peer-local
+input retention can remove that repeated traffic but needs explicit L1
+ownership and real descriptor/consumer testing. No speedup is inferred
+from simulator steps, transport counts, or the earlier polls=1 receipt.

@@ -1,0 +1,14 @@
+{
+  "build": 0,
+  "contract": 0,
+  "contract-compile": 0,
+  "fault": 0,
+  "fault-compile": 0,
+  "fraction": 0,
+  "image": 0,
+  "image-compile": 0,
+  "original": 0,
+  "original-compile": 0,
+  "warm": 0,
+  "warm-compile": 0
+}
