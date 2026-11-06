@@ -1,0 +1,305 @@
+{
+  "scope": "ONE_SAVED_CLOSED_PHYSICAL27B_REQUEST_NOT_LIVE_ADMISSION_OR_BROAD_QUALITY",
+  "source_commit": "f934d9f7afa93aeb88ec73c689b26b487485a7e7",
+  "package_commit": "cd8c379cd962a4dbba3e5cbaf021bcad838deee6",
+  "actual_exits": {
+    "primary_waiter": 0,
+    "independent_postflight": 0,
+    "whole_archive_copy": 0,
+    "reader_main": 0,
+    "reader_clean": 0
+  },
+  "pids_absent": [
+    41588,
+    41593,
+    41677,
+    41678
+  ],
+  "normal_restored_generation": 50,
+  "stage_spent_forever": "/boot/home/pioneer-q38-bf16-deferred-110-a",
+  "measured_20tokens_per_second_in_this_short_run": false,
+  "assistant_promotion": "REJECTED_SLOWER_THAN_EARLIER92_AND103",
+  "executables": {
+    "driver": {
+      "path": "/private/tmp/pioneer-q38-deferred-native110-clean-20261106-a/native/tenstorrent_pci_probe-bf16-deferred",
+      "bytes": 2897528,
+      "sha256": "fab6d0e741cbb06ab540af07d4d1d4864cf84ec29eaf02b5048d11464bc771e9"
+    },
+    "worker": {
+      "path": "/private/tmp/pioneer-q38-deferred-native110.JNpeUFrU/final/client-clean/sdk/HaikuAssistantQwen27Bf16DeferredFullOffload",
+      "bytes": 82984,
+      "sha256": "4b526caefad509819b6453ebc99e0199e7e5e6ad079534f76e848cfe66706d00"
+    },
+    "rate": {
+      "path": "/private/tmp/pioneer-q38-deferred-native110.JNpeUFrU/final/client-clean/sdk/pioneer-q38-bf16-deferred-rate-smoke",
+      "bytes": 231968,
+      "sha256": "47eb2c07d49e540db8c6bd02a38c6cad9dac8147ddeb60e83d17b89c75a33dbd"
+    },
+    "tag": "2026110600010110",
+    "namespace": "PioneerQ38TokenBf16DeferredPrograms Version4/PairedIssue1/DeferredAudit1",
+    "headerSHA": "553cd9a5d0e575ec278e32cc5405217649f4c4bc0419636e0e350655698e011e",
+    "ROOT": "212232 d065a29672996db27471e19e0cc0f396eea32242043d7e89a95f197ac25e9fb5",
+    "peer": "146988 536d2b09214572116a05ada8927193506ab9056949d2e242e10a44854260f675"
+  },
+  "parsed": {
+    "answer_hex": "310a320a330a340a350a360a370a380a390a31300a31310a31320a31330a3134",
+    "answer_utf8_preview": "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14",
+    "bf16_profile": true,
+    "broad_model_quality": false,
+    "count_rows": 63,
+    "execution_or_cleanup_authority_from_log": false,
+    "host_startup_observations": {
+      "answer_ready_us": 2562911990,
+      "available": true,
+      "first_commit_available": true,
+      "first_commit_is_streamed_text": false,
+      "first_commit_maximum_us": 1962616995,
+      "first_commit_minimum_us": 1962511042,
+      "request_setup_us": 1585526808,
+      "upload_calls": 20367,
+      "upload_ioctl_sum_us": 1080931219,
+      "upload_window_includes_between_call_preparation": true,
+      "upload_window_us": 1244364788,
+      "uploaded_bytes": 19399024640,
+      "vocabulary_authentication_us": 314627910
+    },
+    "isolated_token_latency": false,
+    "observed_post_prompt_count_rate_bounds": {
+      "first_committed": 31,
+      "last_committed": 62,
+      "lower_tps": "0.082246701",
+      "maximum_us": 376914815,
+      "minimum_us": 376911419,
+      "observations": 7233,
+      "raw_endpoints_us": [
+        203990351235,
+        203990352957,
+        204367264376,
+        204367266050
+      ],
+      "sampled_commit_steps": 31,
+      "upper_tps": "0.082247442"
+    },
+    "on_card_phase_profile": {
+      "begin_cycles": 9963,
+      "buckets": [
+        {
+          "cycles": 1887562,
+          "name": "bootstrap",
+          "phase": 0,
+          "segments": 1,
+          "share_percent": "0.0001854450239949198366579513724"
+        },
+        {
+          "cycles": 21977269817,
+          "name": "metadata",
+          "phase": 1,
+          "segments": 3968,
+          "share_percent": "2.159174283311696509845697704"
+        },
+        {
+          "cycles": 236838355318,
+          "name": "recurrent_layer",
+          "phase": 2,
+          "segments": 26784,
+          "share_percent": "23.26837183883965671131459987"
+        },
+        {
+          "cycles": 66686689662,
+          "name": "dense_layer",
+          "phase": 3,
+          "segments": 7936,
+          "share_percent": "6.551686654272210720377150216"
+        },
+        {
+          "cycles": 118322339,
+          "name": "head_normalize",
+          "phase": 4,
+          "segments": 62,
+          "share_percent": "0.01162467192865190080689627643"
+        },
+        {
+          "cycles": 59484404439,
+          "name": "head_matrix",
+          "phase": 5,
+          "segments": 62,
+          "share_percent": "5.844092436971008658335671909"
+        },
+        {
+          "cycles": 104558868,
+          "name": "feedback",
+          "phase": 6,
+          "segments": 62,
+          "share_percent": "0.01027246881699337869256760768"
+        },
+        {
+          "cycles": 30262345966,
+          "name": "state_commit",
+          "phase": 7,
+          "segments": 62,
+          "share_percent": "2.973148152912294019152289374"
+        },
+        {
+          "cycles": 54874260,
+          "name": "publication",
+          "phase": 8,
+          "segments": 62,
+          "share_percent": "0.005391165144458020343663389428"
+        },
+        {
+          "cycles": 82631581,
+          "name": "final_stop",
+          "phase": 9,
+          "segments": 1,
+          "share_percent": "0.008118205135133660283110318030"
+        },
+        {
+          "cycles": 277627722069,
+          "name": "matrix_prepare",
+          "phase": 10,
+          "segments": 30752,
+          "share_percent": "27.27575548815913886781393217"
+        },
+        {
+          "cycles": 43996218405,
+          "name": "matrix_dispatch",
+          "phase": 11,
+          "segments": 30752,
+          "share_percent": "4.322443330497731329657067614"
+        },
+        {
+          "cycles": 231799293721,
+          "name": "matrix_gather_wait",
+          "phase": 12,
+          "segments": 30752,
+          "share_percent": "22.77330524035571601320953335"
+        },
+        {
+          "cycles": 48820723125,
+          "name": "matrix_finish",
+          "phase": 13,
+          "segments": 30752,
+          "share_percent": "4.796430618631315290331162251"
+        }
+      ],
+      "committed": 62,
+      "end_cycles": 1017855307095,
+      "error": 0,
+      "physical_clock_frequency_assumed": false,
+      "state": 2,
+      "total_cycles": 1017855297132,
+      "valid": true
+    },
+    "output_tokens": 32,
+    "prompts": 31,
+    "rate_available": true,
+    "scope": "one public counting request,maximum32 outputs,full-card candidate",
+    "upload_rows": 2298,
+    "uploaded_bytes": 19399024640
+  },
+  "comparisons": {
+    "bf16_109": "0.078651925..0.078652599",
+    "earlier_fixed_config103": "0.164361584..0.164365058",
+    "earlier_vector92": "0.172813448..0.172816755",
+    "single_comparison_not_repeatability": true,
+    "previous_summary_best103_was_incomplete": true
+  },
+  "saved_records": {
+    "primary.stdout": {
+      "sha256": "c6592683721aa6a6bca80329084a77f2c09af0b273bb55fb8cb35f6728b45dac",
+      "bytes": 45
+    },
+    "primary.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "postflight.stdout": {
+      "sha256": "80f179335c4600c0b82534cdb92024755db536f381793dd2918abefaa1498ad3",
+      "bytes": 3983
+    },
+    "postflight.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "postflight110.sh": {
+      "sha256": "8224215952a3adb378c65b806ebe635a20312ca145188a4b4c74b84fbc2f59f1",
+      "bytes": 4001
+    },
+    "launch-once.sh": {
+      "sha256": "bc7d11aa9cd3e58a4df034301925b771c916755fd90a1b2916a7643d034908b3",
+      "bytes": 1056
+    },
+    "prepare.stdout": {
+      "sha256": "ff216a549b90011266669492e9c5e0a71c16f3acbe8176db1e7a1e8bfc75c3d9",
+      "bytes": 184
+    },
+    "prepare.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "preflight.stdout": {
+      "sha256": "2dedce7898ba7eb60a67b3d5ff43052779fe53461c0bd00114d7959ece89d95a",
+      "bytes": 1283
+    },
+    "preflight.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "reader-main.stdout": {
+      "sha256": "2c17d16b361b46ad526812816eaff0f28d4631bfce4fac30444aef2bfbc6be29",
+      "bytes": 3442
+    },
+    "reader-main.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "reader-clean.stdout": {
+      "sha256": "2c17d16b361b46ad526812816eaff0f28d4631bfce4fac30444aef2bfbc6be29",
+      "bytes": 3442
+    },
+    "reader-clean.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "remote/pioneer_q38_bf16_deferred_full_offload_physical.sh": {
+      "sha256": "b1a7c8ac9d830fe78bc3b1174e48bd694499fc49d16dcd61aa118f2b8459e1dc",
+      "bytes": 7785
+    },
+    "remote/direct-parent.stdout": {
+      "sha256": "bdbc4fd40b87cf627a157ba349135a2af5928d6c1694b3f96f8d24414f1f45ea",
+      "bytes": 2712
+    },
+    "remote/direct-parent.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "remote/direct-parent.exit": {
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    "remote/rate.stdout": {
+      "sha256": "b70e2b5a823fb1336314548a1ea12c9d6c9d69763a517cea5d954fc7c154f219",
+      "bytes": 238646
+    },
+    "remote/rate.stderr": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    "remote/rate.exit": {
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+      "bytes": 2
+    },
+    "remote/state": {
+      "sha256": "22f61d22dc3c969bbe2b1b82211755d5906e6af0567523f5f48e3944d71ff06b",
+      "bytes": 40
+    },
+    "remote/parent.pid": {
+      "sha256": "b9f9ba77ae55cbe2691d02fa3738610cb57e7abd4180f3c037a6046a5a10aed8",
+      "bytes": 6
+    },
+    "remote/direct-launcher.pid": {
+      "sha256": "6da1031c98c34af2722ad3aa60b913a8fd93bb24acda44b2e3425391b3d05e6e",
+      "bytes": 6
+    }
+  }
+}

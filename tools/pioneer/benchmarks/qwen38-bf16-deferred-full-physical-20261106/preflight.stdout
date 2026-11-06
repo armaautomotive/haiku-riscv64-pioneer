@@ -1,0 +1,15 @@
+fab6d0e741cbb06ab540af07d4d1d4864cf84ec29eaf02b5048d11464bc771e9  /boot/home/pioneer-q38-bf16-deferred-110-a/tenstorrent_pci_probe-bf16-deferred
+4b526caefad509819b6453ebc99e0199e7e5e6ad079534f76e848cfe66706d00  /boot/home/pioneer-q38-bf16-deferred-110-a/HaikuAssistantQwen27Bf16DeferredFullOffload
+47eb2c07d49e540db8c6bd02a38c6cad9dac8147ddeb60e83d17b89c75a33dbd  /boot/home/pioneer-q38-bf16-deferred-110-a/pioneer-q38-bf16-deferred-rate-smoke
+b1a7c8ac9d830fe78bc3b1174e48bd694499fc49d16dcd61aa118f2b8459e1dc  /boot/home/pioneer-q38-bf16-deferred-110-a/pioneer_q38_bf16_deferred_full_offload_physical.sh
+P100A_RELOAD driver55 tag2026102100010012 generation48 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+130542981120 bytes free      (used/max 6491955200 / 137034936320)
+                           (cached   31479181312)
+     59589 semaphores free (used/max       5947 /      65536)
+      3716 ports free      (used/max        380 /       4096)
+      2589 threads free    (used/max       1507 /       4096)
+      1972 teams free      (used/max         76 /       2048)
+PASS_EXACT_110_PARENT_PREFLIGHT_NORMAL48_ALL_PRESERVATION_PINS_NO_TRIAL

@@ -1,0 +1,98 @@
+Deferred110 -- real27B completed,small BF16 gain,still unusable
+=============================================================
+November6,2026. Executed parent source f934d9f7afa93aeb88ec73c689b26b487485a7e7,
+qualified package cd8c379cd962a4dbba3e5cbaf021bcad838deee6. ONE110-a cohort,
+normal48 -> candidate49 -> normal50. Actual primary and postflight CLOSED0.
+Stage /boot/home/pioneer-q38-bf16-deferred-110-a SPENT FOREVER;never replay,
+repin or clear its once markers. No active trial remains after postflight.
+
+Result / explicit decision
+--------------------------
+Complete SAME original27B public counting request:31prompt/32output tokens,
+62 committed positions,answer1 through14 newline-separated,32bytes. SAME
+answer hex as109 and earlier vector92. All model inference on P100A;CPU
+file/preparation/vocabulary/text/lifecycle only,no CPU inference context,
+reference or fallback. This is NOT broad quality or Assistant acceptance.
+
+Measured post-prompt count rate0.082246701..0.082247442tokens/sec (~12.16sec
+per step).31steps in376911419..376914815us,7233observations. Raw endpoints:
+203990351235/203990352957 ->204367264376/204367266050us. Bounds are timestamp
+observation uncertainty,NOT statistical confidence or isolated token latency.
+
+Previous BF16-109:0.078651925..0.078652599tok/s. This pair's improvement is
+4.5695909..4.5714292%,NOT a repeatability result or useful interactive speed.
+Earlier103:0.164361584..0.164365058;earlier vector92:0.172813448..0.172816755.
+Correction:the previous current-status discussion called103 the best;the
+saved92 real SAME-request result is faster. Neither is usable performance.
+REJECT110 for Assistant promotion:slower than BOTH earlier implementations.
+20tok/s remains unmet,roughly243x this rate and116x earlier92.
+
+What this closes
+----------------
+The deferred audit now has real complete-model/native integration evidence
+for this short request,including both matrix widths,the real matrix/idle
+closures and final END/Close. It is no longer local/MOCK-only qualification.
+This does NOT prove all numerical prompts,fault-injected hardware cleanup,
+kernel stack high-water or a warm/persistent loaded service. No more full
+emulator work or closed-prefix rechecks are required to accept THIS result.
+
+Actual14-bucket ROOT profile
+---------------------------
+Valid62positions,state2/error0,begin9963/end1017855307095,sum1017855297132
+cycles. Prior109 sum1064504417404:4.3822383% fewer total ROOT elapsed cycles.
+Preparation324266187265 ->277627722069cycles (14.3827716% fewer).
+New shares:preparation27.275755%,recurrent outside matrix calls23.268372%,
+matrix gather/wait22.773305%,dense outside matrix calls6.551687%,head5.844092%,
+finish4.796431%,dispatch4.322443%,state commit2.973148%,metadata2.159174%.
+Exclusive ROOT categories,NOT aggregate worker/FPU utilization or pure
+arithmetic;gather includes compute/NoC/receipt checks. No physical clock-Hz
+assumption or cycle-to-seconds conversion. All exact buckets are archived.
+
+Separate loading and host latency
+--------------------------------
+Authentication/vocabulary/metadata probe314.627910s BEFORE Generate.
+Generate -> completed START setup1585.526808s (26.43min).
+Upload20367calls/19399024640B:window1244.364788s includes between-call
+preparation;summed upload ioctls1080.931219s is NOT pure DMA bandwidth.
+First generated card commit1962.511042..1962.616995s after Generate.
+Answer-ready2562.911990s (42.72min) after Generate. NOT streamed/visible
+text/UI latency. Prompt+generation754.388s. These intervals are not additive
+independent stages. Weights released at END;warm-request residency unmet.
+
+Lifecycle / independent preservation
+-----------------------------------
+Primary SSH69044 ACTUALLY0,DIRECT_DEFERRED_FULL_110_PARENT_ACTUAL_EXIT0.
+Independent postflight37244 ACTUALLY0 at14:46:07GMT,stderr0:launcher41588,
+parent41593,client41677,USER41678 absent;no matching inference/test owner.
+Normal041/tag2026102100010012/generation50/quiesced0/cold0/owner0/open1/guard1.
+64CPU/137034936320B RAM;driver/admin/guard,three Assistant files,four runtime
+libraries and original model metadata preserved. No reboot,power,SD,mains,
+network,kernel,Assistant or hardware change. Only controlled hot-swap/restore.
+
+Fresh normal48/idle/unused stage;exclusive root700 staging;all four hashes,
+permissions,complete SCP byte readback and exact parent preflight passed.
+Code was pushed BEFORE staging. During START a metadata query waited behind
+setup;separate read-only log/PID checks remained responsive. We waited on
+the SAME primary handle,never interpreted quiet logs/read delay/count62 as
+termination,never retried/reset/forced unload. Final cleanup/restore is
+proved separately,not inferred from a counter or a parser's PASS line.
+
+Whole SCP58162 ACTUALLY0,all10 archived remote text/source records match
+postflight hashes. Unchanged main+independent-clean readers ACTUALLY0,
+stdout byte-identical,stderr0;explicit --phase-profile --bf16-profile
+--startup-timing. No learned data,GGUF,converted weights or binaries saved.
+Sibling directory manifest.json binds actual exits,artifacts,parsed result
+and saved files. verify_evidence.py checks closed DATA only,NOT a live
+admission/cleanup authority or evidence20TPS was achieved.
+
+Next bounded performance task
+-----------------------------
+Close this preparation-audit experiment. It delivered a measured small
+gain,not the requested capability. Even removing all remaining preparation
+would give only~1.38x if other costs stayed fixed. Investigate/replace a
+dominant per-block conversion/issue sequence in the actual matrix path,
+using earlier92/103 as faster comparison points. Require numerical evidence
+offboard,then a genuinely changed complete-model comparison. No another
+unchanged baseline upload,scheduling-only micro-trial,UI work or repeated
+closed infrastructure qualification. Keep Work/CPU validation separate.
+Goal remains ACTIVE and unachieved;20TPS feasibility remains unproven.

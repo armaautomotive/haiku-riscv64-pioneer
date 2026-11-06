@@ -1,133 +1,92 @@
 P100A / Qwen 27B -- current status
 ================================
-Updated November 6, 2026. Saved results, not live telemetry.
-Goal: usable self-hosted27B,aiming for20tokens/sec. NOT ACHIEVED.
-
-IN-FLIGHT110 -- last observed13:58:58UTC November6,not live authority
-----------------------------------------------------------------
-Source f934d9f7afa93aeb88ec73c689b26b487485a7e7 published BEFORE staging.
-Exact parent admission and full four-file SCP byte readback passed.
-ONE110-a trial started:launcher41588,parent41593,client41677,USER41678
-all observed live;candidate tag2026110600010110/generation49 loaded.
-Worker authenticating original model;no CPU inference context/reference.
-No rate,END/Close or normal-driver restoration result yet. Do not infer
-failure from a quiet log,intervene in the active lifetime,or launch again.
-Stage /boot/home/pioneer-q38-bf16-deferred-110-a is SPENT FOREVER.
-Revalidate actual PIDs/primary waiter and state before any next action.
+Updated November6,2026 after actual110 closure/postflight14:46:07UTC.
+Saved evidence,NOT fresh telemetry or permission to repeat a spent trial.
+Goal:usable self-hosted27B,aiming for20tokens/sec. ACTIVE,NOT ACHIEVED.
 
 What works / what does not
 -------------------------
-Complete short27B requests run on the real P100A with all model inference
-on card,no CPU model context,numerical reference or fallback. CPU handles
-files/preparation,vocabulary,text and lifecycle. This is not broad answer-
-quality proof. Usable loading and generation speed have NOT been delivered.
+Complete short real27B requests run entirely on P100A for model inference.
+CPU:file/preparation/vocabulary/text/lifecycle only;no CPU inference context,
+numerical reference or fallback. Usable loading/generation speed,persistent
+warm requests and broad answer-quality qualification remain UNDELIVERED.
 
-Measured generation -- matched public counting request
------------------------------------------------------
-Better earlier implementation103: 0.16436 tokens/sec (~6.1sec/token).
-Previous BF16 experiment106:       0.07846 tokens/sec (~12.7sec/token).
-New paired BF16 experiment109:     0.07865 tokens/sec (~12.7sec/token).
+Measured generation -- SAME31prompt/32output public counting request
+------------------------------------------------------------------
+Earlier vector92:       0.172813448..0.172816755 tokens/sec.
+Earlier fixed-config103:0.164361584..0.164365058.
+Previous BF16-109:      0.078651925..0.078652599.
+New deferred-BF16-110:  0.082246701..0.082247442 (~12.16sec/step).
 
-109 finished with the SAME32-token answer as106. Its rate was only
-0.2440..0.2457% higher in this one comparison,not a repeatability study or
-useful performance improvement. It remains slower than103 and has NOT
-replaced Assistant.20tokens/sec is still roughly254x away from this rate.
-The earlier6.6..6.8% leaf-kernel cycle reduction did NOT translate into a
-comparable complete-model improvement.
+110 gives4.5696..4.5714% higher rate than109 in ONE comparison,not a
+repeatability/statistical result. SAME32-byte answer1..14,62positions.
+REJECT110 for Assistant promotion:still slower than BOTH92 and103.
+Correction:earlier summaries called103 the best;the saved vector92 real
+SAME-request result is faster. Neither is useful interactive performance.
+20TPS remains unproven,roughly243x110 or116x earlier92.
 
-109 loading/latency,now separately measured
-------------------------------------------
-Authentication/vocabulary/metadata probe:313.7sec. NOT GPU readiness.
-Upload window:1237.9sec (20.6min),including BETWEEN-call preparation.
-Summed upload ioctls:1073.2sec. NOT pure DMA bandwidth.
-Entire Generate-entry -> completed START setup:1579.2sec (26.3min).
-First card token commit:1973.495..1973.601sec after Generate entry.
-Answer ready after clean END/Close:2591.3sec (43.2min) after Generate entry.
-Card commit is NOT streamed/visible text;answer publication follows cleanup.
-Vocabulary/authentication precedes Generate. Weights are released at END;
-usable persistent warm-request loading has not been delivered.
+Latest completed milestone -- preparation audit experiment110
+-------------------------------------------------------------
+Source f934d9f7af;qualified package cd8c379cd9. Fresh admission,exclusive
+staging,whole four-file SCP byte readback,one-shot guarded hot-swap and
+complete real-model run passed. BOTH widths/matrix/final119 closures now
+have real integration evidence for THIS short request,not MOCK-only.
+Native END/Close,actual child/parent exit and independent restore all pass.
+Not broad quality,hardware-fault-injected cleanup or stack high-water proof.
+Normal48 ->110/gen49 ->normal50.110-a is SPENT FOREVER;no active test remains.
 
-Compact work plan -- one next task
+Actual ROOT profile:1017855297132 cycles,4.38224% lower than109.
+Preparation277627722069 cycles,14.38277% lower;still27.27576% of total.
+Recurrent outside matrix calls23.26837%,matrix gather/wait22.77331%.
+Exclusive ROOT elapsed categories,NOT FPU utilization or summed workers.
+Even deleting all remaining preparation gives only~1.38x if others fixed.
+This small measured gain is NOT a route by itself to20TPS. Close this task.
+
+Loading/latency remains poor
+---------------------------
+110 authentication/vocabulary probe314.6s precedes Generate,NOT GPU ready.
+Generate -> START setup1585.5s (26.43min). Upload window1244.4s includes
+between-call preparation;1080.9s summed ioctls is NOT pure DMA bandwidth.
+First card commit1962.511..1962.617s after Generate;answer-ready2562.9s
+(42.72min). NOT streamed/visible text/UI latency. Weights released at END;
+no usable persistent warm-load service delivered. Do not conflate intervals.
+
+One next bounded performance task
 ---------------------------------
-1. CHECKPOINT / OFFBOARD INTEGRATION: COMPLETE (f0f34a67f8).
-   Independent clean builds and scoped source inventory;old builds preserved.
-2. MEASURE / ACCEPT OR REJECT: COMPLETE (executed4163b2c17c,trial109-a).
-   Real full-model run,distinct timings,actual clean closure and independently
-   verified normal-driver restoration. REJECTED for Assistant promotion.
-3. REDUCE REPEATED PREPARATION AUDITS: LOCALLY QUALIFIED,110 trial in flight.
-   An opt-in prototype defers one duplicate idle-worker audit to the final
-   matrix/idle closure. All119 final closures are required before Scatter.
-   Local clean builds,MOCK routing/fault tests and a conservative whole-call
-   stack bound(8000/8192bytes) pass. Defaults are byte-identical.
-   The first K5120 preparation branch now also passes actual compiled RV32
-   execution over a simulated fabric: SAME119 reset histories,20 genuine
-   producers,5120 exact packed values and6 guest fault rejections per image.
-   Control emits1485 duplicate idle requests;candidate emits0 (simulation,
-   NOT physical packet timing or TPS). Test stops BEFORE matrix submission.
-   Compiled RV32 bookkeeping guard now also passes both widths,missing/
-   duplicate/partition/shape cases and416 bit faults. Calls are MOCK closure
-   observations,NOT genuine worker receipts. No full-integration claim.
-   Distinct110 native/USER/code package passes clean builds,transport,
-   identity,journal and complete code/snapshot geometry tests. Main/clean
-   artifacts match;startup telemetry is included and required. No install.
-   Full K17408/matrix/final119/native lifetime integration remains unproven
-   until a controlled physical trial. This replaces the earlier plan to
-   simulate every remaining stage;the unproven scope is NOT called complete.
-   The110 one-shot physical parent now passes the inherited54+120 fake
-   endpoint failure cases and exact whole-policy identity comparison.
-   Fresh read-only Haiku check:normal48,idle,64CPU/fullRAM,110stage absent.
-   Next:publish the parent,stage/readback/preflight,then SAME31prompt/32output
-   actual model comparison and independently verify restoration;accept/reject.
-   Parent qualification created no stage;subsequent staging/readback and
-   launch are now complete. Wait for THIS actual lifetime;never replay.
-   Source budget:at least239040 fewer tiny control requests/token,NOT time
-   telemetry. Even deleting the whole30.46% phase only gives~1.44x if other
-   costs stay fixed. This prototype cannot solve the122x gap from best103
-   to20TPS. Larger kernel/math/dataflow changes remain necessary.
+Investigate/replace one dominant repeated conversion/issue sequence in the
+actual matrix path,using faster earlier92/103 as comparison points. Require
+offboard numerical evidence,then a genuinely changed complete-model timing
+and accept/reject. No more preparation-audit polishing,unchanged full-model
+baseline uploads,closed-prefix/emulator reruns,scheduling-only micro-trials
+or unrelated UI work. Keep no-reference Work separate from validation.
+Build/test passes do NOT count as inference speed gains.20TPS feasibility
+remains unproven;do not substitute a small test milestone for the real goal.
 
-How progress will be reported
------------------------------
-One bounded change at a time: implementation,local checks,real measurement,
-accept/reject. Build/test passes are NOT inference speed improvements.
-No further closed-baseline reruns or scheduling-only card micro-trials.
-Working code and incomplete experiments remain separate,not deleted/reset.
-The overall20TPS goal is still active and unachieved;feasibility is unproven.
+Last independent platform check -- after110,not current live authority
+---------------------------------------------------------------------
+Normal041/tag2026102100010012/generation50/quiesced0/cold0/owner0/open1/guard1.
+64CPU/137034936320B RAM. Launcher41588,parent41593,client41677,USER41678 absent.
+Driver/admin/guard,three Assistant files,four runtime libraries and original
+model metadata preserved. No reboot,power,SD,mains,network,kernel,Assistant
+or hardware change. Primary69044,postflight37244,archive58162 ACTUALLY0;
+unchanged main+clean readers0/byte-identical/empty stderr. All jobs CLOSED.
+Stages81..110-a SPENT FOREVER:never replay,repin or clear once markers.
 
-Hardware/preservation -- independently checked after109
------------------------------------------------------
-Normal041/tag2026102100010012/generation48 restored;quiesced0,cold0,
-owner0,open1,guard1.64CPUs/137034936320B RAM. All four trial PIDs absent.
-No trial job remained at that check. Driver/admin/guard,three Assistant files,four runtime
-libraries and model metadata preserved. No reboot,power,SD,network,kernel,
-Assistant or hardware-connection change. Those post109 checks do NOT prove
-the in-flight110 trial's closure or restoration. Stages81..110-a SPENT FOREVER:
-never replay,repin or clear once markers.
+Nine previously dirty baseline paths and unrelated Resident/FlashNext/mixed-
+FPU WIP remain preserved,not deleted/reset or silently included in commits.
 
-The whole worktree is NOT clean. Nine previously dirty baseline paths and
-unrelated Resident/FlashNext/mixed-FPU WIP remain preserved,not deleted or
-silently included. Checkpoint inventories identify the exact scope. Do not
-redo closed offload/memory infrastructure,UI or baseline card trials without
-new evidence requiring it. Work remains separate from CPU validation.
-
-Evidence -- paths relative to this directory
--------------------------------------------
-Latest actual result and saved-result verifier:
+Evidence -- relative to this directory
+--------------------------------------
+Latest result + whole closed archive/manifest/verifier:
+ benchmarks/qwen38-bf16-deferred-full-physical-20261106.txt
+ benchmarks/qwen38-bf16-deferred-full-physical-20261106/verify_evidence.py
+Faster earlier measurements (no new baseline run):
+ benchmarks/qwen38-vector-q4-full-card-20261104.txt
+ benchmarks/qwen38-fixed-config-full-physical-20261105.txt
+Previous BF16 baseline:
  benchmarks/qwen38-bf16-pair-issue-full-physical-20261106.txt
- benchmarks/qwen38-bf16-pair-issue-full-physical-20261106/verify_evidence.py
-Previous complete-model baseline:
- benchmarks/qwen38-bf16-profile-full-physical-20261105.txt
-Code/build qualification and inventories:
- benchmarks/qwen38-bf16-pair-issue-full-offboard-20261106.txt
- benchmarks/qwen38-bf16-pair-issue-startup-offboard-20261106.txt
-Kernel-only result,NOT model TPS:
- benchmarks/qwen38-q4-pair-issue-physical-20261106.txt
-Conditional analytical budget,NOT a demonstrated hardware limit:
- benchmarks/qwen38-performance-budget-20261106.txt
-Current preparation prototype,BUILD/MOCK/static stack only:
- benchmarks/qwen38-bf16-deferred-prepare-offboard-20261106.txt
-First compiled connected preparation branch,BEFORE matrix submission:
- benchmarks/qwen38-bf16-deferred-prepare-connected-20261106.txt
-Experimental110 package,compiled guard/host journal only,NOT card execution:
+Exact local qualification scopes,not themselves physical speed proof:
  benchmarks/qwen38-bf16-deferred-native-offboard-20261106.txt
-Experimental110 physical-parent qualification,NOT a card run:
  benchmarks/qwen38-bf16-deferred-parent-20261106.txt
+Conditional operation/traffic budget,NOT a demonstrated hardware limit:
+ benchmarks/qwen38-performance-budget-20261106.txt
