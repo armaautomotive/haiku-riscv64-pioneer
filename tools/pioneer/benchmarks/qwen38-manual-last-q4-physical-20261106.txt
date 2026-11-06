@@ -1,0 +1,81 @@
+Native113 physical Q4 comparison: CORRECT, BUT SLOWER
+====================================================
+November 6, 2026. Source checkpoint 35ac679aa80c8d59d96e447ceba9178d0380289a
+was pushed before the fresh 113-b launch. The four staged artifacts were
+read back byte-for-byte before execution. 113-a was refused before any
+GPU action; 113-b ran ONCE. Both stages are SPENT and must not be replayed,
+repinned or have their once markers cleared.
+
+Result
+-------
+Primary SSH 55830 ACTUALLY exited 0. Launcher 770 recorded parent 775 exit 0;
+client 859 exited 0. Independent postflight SSH 96943 ACTUALLY exited 0.
+All nine closed records were copied to the Mac, and every local SHA-256
+matched the independently reported remote digest. Complete streams,
+terminal records and independent postflight are in the sibling archive.
+
+Original 19 GB GGUF full SHA, all 9 compiled payloads and both independently
+computed arithmetic references authenticated before GPU open. Only samples
+0 and 6 actually ran: 32 output rows at input widths 5120 and 17408, using
+fixed diagnostic inputs, not a natural-language model request.
+Both old/new output sets match their OWN predefined numerical contracts:
+128 exact finite/normal-or-zero words total, with matching complete DATA
+and post-END observations. Two explicit ENDs verified full saved resource
+restoration. This establishes these cases, not arbitrary inputs, whole-model
+quality, repeatability, or bit equivalence between old/new arithmetic.
+The pack-boundary correction fixes the previously observed error in these
+tested cases; no comparator was relaxed or CPU answer substituted.
+
+Measured complete-job clock windows
+------------------------------------
+Input width   Output rows   Old BF16 cycles   New factored cycles   New cost
+5120          32            633156            831907                +31.39%
+17408         32            1971169           2645544               +34.21%
+
+ONE old/new pair per shape on the same core (1,2); other 119 cores held.
+Available state1 timers have exact 64-bit end-start differences:
+  5120 old: 1251..634407; new: 635177..1467084.
+  17408 old: 1250..1972419; new: 1973189..4618733.
+Old/new cycle ratios are 0.761089881441 and 0.745090234749.
+These windows include on-card loader/setup/prefetch/NoC/math/drains.
+They exclude source authentication, CPU references, host staging/readback,
+journal preparation, output extraction and host cleanup. Operands are staged
+in GDDR; this is NOT the whole-model ROOT-L1 pipeline or a model benchmark.
+No nominal clock-frequency conversion, absolute tokens/sec, whole-model
+speedup or repeatability claim follows from these two observations.
+
+Decision
+---------
+Close candidate113: ACCEPT the narrow physical arithmetic result;
+REJECT promotion as a performance improvement. Do not spend a whole-model
+upload or Assistant integration on a routine already slower in both shapes.
+The extra cost is 198751/674375 cycles, about 9938/9917 per 256-input block.
+That suggests a recurring block-level cost, not proof of a particular
+instruction bottleneck. Next: attribute that cost and remove a demonstrated
+hotspot before another controlled old/new comparison. The correctness fix
+and failed performance evidence remain saved; do not reset or discard them.
+
+Platform preservation
+----------------------
+Normal041/tag2026102100010012/gen4 restored and independently verified:
+quiesced0, cold0, active_owner0, open_count1, guard1; no test/inference owner.
+64 CPUs and 137034936320B max RAM; exact unchanged three Assistant files,
+four runtime libraries, admin and reload guard. Installed 041 is the rollback
+driver, NOT best measured whole-model tag 92. No new Assistant UI test.
+No reboot, relay, SD, mains or hardware action was needed for this trial.
+
+Pins
+-----
+ native 1852824B SHA 7ba43209502612a99cfbf9a51ce33f5251432661f22937559b195fb327addfd4
+ client 1949024B SHA f373138506859094a8010380babde1c7622165b42e3a2f6f0e243c3eecfe5bac
+ core 11788B SHA 6542780a82026f4a3a7f410468bb1081a7143991aeb202d39f379a67153dcedd
+ parent SHA 440343848717ffa24ba354e6cef68790441e61bd72f24bbd5dc6f0dbf4fe7468
+ wrapper SHA 30e198a11fee44aa1a485ea9b0547fe9214bea56abdc85a4840c92fa5c6f2c0a
+ child stdout SHA 7fe204a9a016a98f02e280fbcc19f59847840bb74f6bd0d72a25dfa99354900a
+ parent stdout SHA c864b3024f5d36d7af8b97b5783456c578182515d35d02b20c2a843e728795f0
+ stderr streams are EMPTY. All 9 record digests are retained in postflight.
+Local qualification remains the earlier 302-source main/clean checkpoint;
+this report adds physical evidence, not a claim that unchanged suites reran.
+
+Best real 27B rate remains 0.173 tok/s; latest real 27B rate remains 0.082 tok/s.
+No new full-model measurement. 20 tok/s remains unmet and unproven.

@@ -1,146 +1,77 @@
-P100A / Qwen 27B: bounded work plan
+P100A / Qwen 27B: four compact goals
 ====================================
+Updated November 6, 2026. One implementation checkpoint active at a time.
+Model: Qwen3.8-27B Q4_K_M.
+These checkpoints organize, not replace or reduce, the overall objective:
+usable self-hosted 27B on P100A, as fast as safely possible, targeting 20 tok/s.
+Work has no CPU model inference, reference or fallback; validation is separate.
+Preserve Haiku boot, 64 CPUs, full RAM and Assistant; push tested checkpoints.
+20 tok/s is UNMET and UNPROVEN. No completion date or percentage is claimed.
 
-Updated November 6, 2026. These checkpoints organize the work; they do not
-replace or reduce the overall goal.
+Baseline already established
+-----------------------------
+Full-card 27B inference exists, including attention/state, but only a short
+counting answer is qualified. Best: 0.173 tok/s. Latest: 0.082 tok/s.
+Current normal041/gen4 is an idle rollback, NOT best experimental tag92.
+P100A_CURRENT_STATUS.txt is the short scoreboard. Detailed evidence stays
+in benchmarks/. Source/documentation consolidation is already complete;
+do not reopen it as another performance prerequisite or delete old work.
 
-Overall goal
--------------
+1. Correct one complete on-card Q4 calculation -- NARROW PASS
+-------------------------------------------------------------
+Deliver original packed Q4, original scale/minimum metadata, full-K output
+accumulation, real completion and resource restoration for real 27B widths.
+Separate predefined diagnostic references from Work; never relax a failing
+comparison or substitute a CPU answer.
+Native111/112 failed; the trace found bad packing before the matrix dot.
+The pack-boundary correction now PASSES physical113-b at 5,120/17,408 inputs
+and 32 outputs: 128 exact old/new words, two clean ENDs, independent restoration.
+This closes correctness for those two fixed cases, not arbitrary-input
+coverage, new-order whole-model quality or a released Work engine.
+Evidence: benchmarks/qwen38-manual-last-q4-physical-20261106.txt.
 
-Usable self-hosted Qwen3.8-27B Q4_K_M on P100A, as fast as safely possible,
-targeting 20 tokens/second. Work has no CPU model inference/reference or
-fallback. CPU validation stays separate. Preserve Haiku boot, 64 CPUs,
-full RAM and working Assistant. Push tested checkpoints.
-20 tokens/second is UNMET and UNPROVEN.
+2. Make that calculation faster -- CURRENT
+-------------------------------------------
+Question: can the new path materially beat the existing card calculation?
+Native113 now has a definite answer: NO in the measured cases. It costs
+31.39%/34.21% more cycles. CLOSE that candidate; do not integrate it as faster.
+The added cost is about 9,900 cycles per 256-input block in both widths.
 
-Best saved model rate: about 0.173 tokens/second (92).
-Most recent model rate: about 0.082 tokens/second (110).
-P100A_CURRENT_STATUS.txt is the authoritative plain-language summary.
+Next bounded work:
+  a. Attribute recurring cost using compiled code and, only if needed, a
+     bounded new on-card profile. Do not guess a bottleneck from test counts.
+  b. Change ONE supported hotspot while retaining the numerical contract,
+     original compressed weights, bounded L1/GDDR ownership and safe END.
+  c. Use one fresh old/new physical comparison at identical shapes/input.
+  d. Deliver exact outputs, complete-job cycles, setup separately, and an
+     accept/reject decision. Small isolated gains are NOT model tokens/sec.
+  e. Use measured costs/weight traffic to decide whether full integration
+     is worthwhile; document assumptions and uncertainty about 20 tok/s.
 
-1. Consolidate baseline and experiments -- LOCALLY CLOSED
----------------------------------------------------------
+Do not replay spent trials, repeat unchanged suites as new evidence, upload
+an unchanged whole model, or work on UI while this checkpoint is unresolved.
+A failed candidate is closed evidence, not permission for endless scope growth.
 
-Deliver:
-  * One current status page with best/latest rates and honest limitations.
-  * Separate stable installed rollback state from best measured experiment.
-  * Preserve existing dirty work; no cleanup deletes or resets.
-  * Checkpoint the unfinished Q4 component with exact test scope and a
-    reproduction command, not as an installed or hardware-proven driver.
-  * Mark older README performance sections as historical.
+3. Integrate accepted engine and measure 27B -- DEFERRED
+-------------------------------------------------------
+Only after goal 2 accepts a useful path: integrate full-card Work, including
+remaining formats, attention and state. Validate broader prompts, then run
+matched full-model benchmarks against tag92. Report answer quality, loading,
+prompt processing and generation separately, with repeatability evidence.
+A correct small matrix calculation is not whole-model correctness.
+A completed request is not usable performance.
 
-Evidence: current status, this plan, README current-status section, and
-benchmarks/qwen38-factored-q4-tile-offboard-20261106.txt plus its archive.
-Main and clean-export suites actually exited 0; whole stdout, tile binary
-and all 61 consumed project sources match.
-This closes source/documentation consolidation, NOT model performance.
+4. Deliver a usable Assistant engine -- DEFERRED
+------------------------------------------------
+After a proven engine: retain weights safely between requests; verify repeated
+warm requests, load/unload lifetime and actual Assistant behavior.
+Do not replace working Assistant with an unqualified or slower experiment.
 
-2. One complete, fast Q4 matrix job -- CURRENT / INCOMPLETE
-----------------------------------------------------------
-
-Question: can a materially different Q4 algorithm outperform the existing
-on-card path at a shape actually used by the 27B model?
-
-Finish criteria:
-  a. Complete original packed Q4 -> original scale/minimum metadata ->
-     output affine -> full-K accumulation for one 32-output job.
-     K must come from a real 27B tensor. Supplied dots/sums do not count.
-  b. Integrate a bounded returning worker, private code/L1 ownership,
-     actual completion, source-bank lifetime and safe cleanup.
-     Retain compressed GDDR weights; no unbudgeted expanded model.
-  c. Validate the new numerical contract separately, with comparison
-     expectations defined before hardware acceptance. Do not loosen a
-     failing comparator. Work itself does not run a CPU reference.
-  d. Perform a fresh isolated physical old/new comparison at the SAME
-     shape/input. Report complete-job timing, accuracy and setup costs
-     separately. Never replay closed historical trial stages.
-  e. Accept or reject this candidate from measured results.
-
-Local work now includes original metadata/output affine, full-K
-accumulation and a compiled returning routine using the existing two-buffer
-loader. Both widths and repeated jobs pass instruction-model tests.
-Native code/L1/Dst ownership qualification and physical correctness/timing
-for the whole-model returning service are NOT finished. An isolated
-native111 old/new comparison package passed local qualification,but its
-physical test FAILED the first new output. Candidate111 is rejected;
-the17408 job was not run and no valid timing was accepted. Recovery has
-independently restored normal041/gen2,64CPU/fullRAM and preserved apps.
-Next bounded subtask:identify the first incorrect on-card intermediate;
-retain complete returned values/stage observations on a failure. Do not
-replay111-a,relax comparison or repeat full-model uploads. This checkpoint
-stays open until correct arithmetic and a real timing comparison exist.
-The new trace component has now passed local issue correspondence,
-compiled-image and complete-word-reporting mechanics checks. Fresh native
-driver/client/source binding was qualified as native112. Its physical probe
-is now COMPLETE and REJECTED:all64 observations were saved,59 mismatched,
-and the FIRST failing observed stage is the packed weight tile before the
-matrix dot. First input sum,coefficient/minimum and initial accumulator
-match. A wrong-face/address-context hypothesis needs proof,not comparator
-relaxation.112-a is spent;no timing was accepted.
-Recovery checkpoint CLOSED:one OFF/ON,pinned SD-free64CPU/fullRAM boot,
-fresh-epoch restoration and independent postflight both0.Normal041/gen2
-is idle;apps/runtime unchanged;all9 trial-record hashes survived unchanged.
-Next implementation scope is ONE corrected on-card Q4 operation and its
-old/new hardware timing,NOT full-model uploads,UI work or repeated recovery.
-See benchmarks/qwen38-factored-q4-trace-physical-20261106.txt.
-Candidate fix now LOCAL-PASS:PACK automatic-end counters are disabled while
-the explicit final Last remains.New regression is red on old code,green on
-the correction;main/clean suites13children0,91matching consumed sources.
-A conditional premature-boundary reconstruction of the old compiled112
-program matches all64 hardware observations,not just the first value.
-This is NOT a card-proven fix.Next:new isolated native identity and real
-arithmetic/timing comparison.No111/112 replay or repinning is permitted.
-See benchmarks/qwen38-q4-pack-boundary-offboard-20261106.txt.
-Fresh native113 comparison package now passes main/clean local qualification:
-12children each,302 consumed sources,exact candidate/client/core binaries.
-It is NOT yet hardware-proven.New113 endpoint/driver identity leaves111/112
-pins and spent markers untouched.Next:ONE controlled physical old/new
-arithmetic/timing comparison,then an accept/reject decision.
-See benchmarks/qwen38-manual-last-q4-native-20261106.txt.
-The new operation order differs from old per-weight BF16 rounding;
-local bit tests do not prove model quality.
-
-Simulator passes, UI features, repeated baseline uploads and nominal
-peak specifications cannot finish this checkpoint.
-
-3. Decide the performance route -- NOT STARTED
-----------------------------------------------
-
-Use isolated timings, existing model profiles and weight-traffic budget
-to identify costs actually removed and costs remaining.
-Record a conditional achievable range, assumptions and uncertainty,
-not a guaranteed whole-model speed.
-Decision: integrate a demonstrated useful candidate, or reject/change the
-algorithm. A small gain does not show 20 tokens/second is close.
-This decision does not finish the overall objective.
-
-4. Integrate and measure the complete model -- NOT STARTED
------------------------------------------------------------
-
-Use the accepted path in full-card Work, including remaining formats,
-attention and state. Complete real requests and assess more than the
-existing counting answer. Run the matched public throughput workload and
-compare with faster saved tag 92.
-Report quality, loading, prompt processing and generation separately.
-Require actual process exits, independent restoration/platform checks
-and a pushed checkpoint. A completed request is not usable speed.
-
-5. Make the accepted engine usable -- NOT STARTED
---------------------------------------------------
-
-Keep weights loaded between requests with explicit load/unload lifetime,
-avoid repeated preparation where safe, then expose the proven mode in
-Assistant. Verify repeated warm requests and actual UI behavior.
-Do not replace working Assistant with an unqualified slower experiment.
-
-Reporting rules
-----------------
-
-Only one implementation checkpoint is current. Close each with:
-  Changed code / local tests / hardware tests / answer quality /
-  measured speed / decision / next checkpoint.
-
-Say "not tested" where appropriate. Test counts, commits, instruction-model
-passes and microbenchmarks are not model throughput or percentage complete.
-Do not reopen closed trials or create parallel work streams without a
-concrete dependency on the current checkpoint.
-Do not promise a completion date or 20 tokens/second without evidence.
+Report each closed checkpoint in seven short fields
+----------------------------------------------------
+Changed code / local tests / hardware result / quality scope /
+measured speed / decision / next action.
+Keep failed results visible and best/latest rates separate.
+Do not count commits, test totals, recovery or instruction-model passes as
+model performance. Preserve the original goal; do not mark it complete merely
+because the current small checkpoint passed.

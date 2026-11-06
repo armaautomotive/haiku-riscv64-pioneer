@@ -1,0 +1,42 @@
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-native-factored-q4-manual113-b/stable041.backup
+7ba43209502612a99cfbf9a51ce33f5251432661f22937559b195fb327addfd4  /boot/home/pioneer-native-factored-q4-manual113-b/tenstorrent_pci_probe-native-q4-fpu-stream113
+f373138506859094a8010380babde1c7622165b42e3a2f6f0e243c3eecfe5bac  /boot/home/pioneer-native-factored-q4-manual113-b/pioneer-native-factored-q4-manual-last
+440343848717ffa24ba354e6cef68790441e61bd72f24bbd5dc6f0dbf4fe7468  /boot/home/pioneer-native-factored-q4-manual113-b/pioneer_native_factored_q4_manual_last_physical.sh
+30e198a11fee44aa1a485ea9b0547fe9214bea56abdc85a4840c92fa5c6f2c0a  /boot/home/pioneer-native-factored-q4-manual113-b/launch.sh
+b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
+d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74  /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
+c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18  /boot/home/config/non-packaged/servers/HaikuAssistantService
+0de9141eb3955cf1c993a67c80ef648b3538ce7155c17677458487ee083a4933  /boot/home/config/non-packaged/apps/HaikuAssistant
+0ae23a2c211af9fbafb89c3d93bdd136a4bdd574baeeaf2d622f582efcf426af  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so.0.2.0
+a3b81c133641bbdacde8dd1d0e0ffa7a0a1ec0c33e95c426df1db59735379c16  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml.so.0.21.0
+9cb45a36558bd78aa4d4b7ed5385cbf9df32de208f9e6c9b6d064e8527dca389  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-base.so.0.21.0
+69e9ec2c43a123afbb256c3feb6313cdcebdf1b2a87278ac3cdac8a1a65273d2  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-cpu.so.0.21.0
+P100A_RELOAD driver55 tag2026102100010012 generation4 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133781450752 bytes free      (used/max 3253485568 / 137034936320)
+                           (cached   19180503040)
+     64486 semaphores free (used/max       1050 /      65536)
+      3945 ports free      (used/max        151 /       4096)
+      3901 threads free    (used/max        195 /       4096)
+      2025 teams free      (used/max         23 /       2048)
+launcher.pid 770
+parent.pid 775
+state STABLE041_RESTORED_FACTORED_Q4_COMPARE_EXACT128
+parent.exit 0
+factored-q4-compare.exit 0
+c864b3024f5d36d7af8b97b5783456c578182515d35d02b20c2a843e728795f0  /boot/home/pioneer-native-factored-q4-manual113-b/parent.stdout
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /boot/home/pioneer-native-factored-q4-manual113-b/parent.stderr
+7fe204a9a016a98f02e280fbcc19f59847840bb74f6bd0d72a25dfa99354900a  /boot/home/pioneer-native-factored-q4-manual113-b/factored-q4-compare.stdout
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /boot/home/pioneer-native-factored-q4-manual113-b/factored-q4-compare.stderr
+861094a5ea51766fadea98142c2f19638ace3b7dc03641902800090902d732dc  /boot/home/pioneer-native-factored-q4-manual113-b/state
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  /boot/home/pioneer-native-factored-q4-manual113-b/parent.exit
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  /boot/home/pioneer-native-factored-q4-manual113-b/factored-q4-compare.exit
+04ac70e5b43f47d205e6483b65209eb41e2e951aa57bf17e5b466112bbed9def  /boot/home/pioneer-native-factored-q4-manual113-b/parent.pid
+98bd1be5197ced0a092b8f5ae7a961b66d3e7d81063a9870e3be2a72aff64257  /boot/home/pioneer-native-factored-q4-manual113-b/launcher.pid
+Fri Nov  6 20:23:38 GMT 2026
+NATIVE113_INDEPENDENT_POSTFLIGHT_CLOSED_NORMAL4_IDLE64_FULLRAM_APPS_PRESERVED

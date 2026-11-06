@@ -1,146 +1,65 @@
-P100A / Qwen 27B: current project status
-=======================================
+P100A / Qwen 27B: current status
+================================
+Updated November 6, 2026. This is the short project scoreboard.
+Model: Qwen3.8-27B Q4_K_M.
+The objective remains fast, self-hosted 27B inference on P100A, targeting
+20 tokens/sec. It has NOT been delivered; 20 tokens/sec is unproven.
 
-Updated November 6, 2026. This is the main status summary.
-Detailed experiment logs are evidence, not separate completion claims.
+Delivered
+----------
+* Haiku boot, 64 CPUs and 137,034,936,320 bytes max RAM preserved.
+* A short 27B counting response completed with ALL model inference on the
+  P100A, including attention/state. CPU handled files, preparation, text and
+  lifecycle, not model inference, reference or fallback.
+* This is a prototype, not broad answer-quality or production qualification.
 
-FULL-CARD INFERENCE DEMONSTRATED; USABLE SPEED NOT DELIVERED.
-Target: 20 tokens/second. Feasibility is still unproven.
+Actual full-model speed
+-----------------------
+Best saved: tag 92, 0.173 tokens/sec, about 5.8 seconds/token.
+Latest full-model experiment: tag 110, 0.082 tokens/sec, about 12.2 seconds/token.
+One public 31-prompt/32-output-token counting request per variant; not
+repeatability data. Latest setup took 26.43 minutes; the answer was ready
+42.72 minutes after Generate. Weights were released at END; a warm,
+persistently loaded service remains unfinished.
+No subsequent local test or small card calculation changes these rates.
 
-What has actually worked
-------------------------
+Latest completed experiment
+----------------------------
+The replacement Q4 calculation is now correct for BOTH isolated test shapes:
+32 output rows at input widths 5,120/17,408. All 128 old/new words match their
+respective predefined references; two clean ENDs and independent restoration.
+But it used 31.39%/34.21% MORE cycles than the old calculation.
+Decision: close native113 as correct for these cases, but REJECT speed
+promotion. No full-model upload or Assistant integration of this candidate.
+These are fixed diagnostic inputs, not whole-model quality or throughput.
 
-A real Qwen3.8-27B Q4_K_M request completed with all model inference on the
-P100A, including attention and recurrent state. The CPU handled files,
-preparation, vocabulary/text and lifecycle, not model inference, CPU
-numerical reference or fallback.
+Current checkpoint: make one Q4 calculation demonstrably faster
+---------------------------------------------------------------
+Next action: attribute the added block-level cost and remove a demonstrated
+hotspot, then compare old/new on the physical card. A passing software test
+does not count as a speed improvement. Keep one active implementation path.
 
-The answer was a short counting response: 31 prompt tokens, 32 output
-tokens, 62 committed positions. This is not broad quality qualification
-or an arbitrary-prompt production Assistant release.
+Four compact goals
+-------------------
+1. Correct calculation on card: PASS for the two pinned native113 cases only.
+2. Faster calculation on card: CURRENT. Candidate113 rejected as slower.
+3. Complete 27B quality/speed with accepted engine: NOT STARTED for new path.
+4. Persistent loading and proven Assistant mode: NOT STARTED.
 
-After the native112 diagnostic and controlled recovery, independent
-postflight passed: Haiku has 64 CPUs and 137,034,936,320 bytes of RAM,
-normal041/gen2 is idle, and Assistant/runtime files are unchanged.
-No test process remains. This is preservation, not a new Assistant UI test.
-
-Measured full-model performance
--------------------------------
-
-Same public request; one run per variant, not repeatability data:
-
-  Variant                        Approx. tokens/sec   Decision
-  vector Q4, tag 92               0.173                Best saved result
-  fixed configuration, tag 103    0.164                Slower than 92
-  BF16 pair issue, tag 109        0.0787               Slower than 92
-  deferred preparation, tag 110   0.0822               Reject promotion
-
-Best: about one token every 5.8 seconds. Latest: about one every 12.2
-seconds. 20 tokens/second is about 116 times the best saved rate.
-Recent local code tests are NOT new model speed measurements.
-
-Tag 110 improved on 109 by about 4.57% in one comparison, but remained
-slower than 92. START/setup took 26.43 minutes; the answer was ready
-42.72 minutes after Generate. Different intervals, not a streaming/UI
-benchmark. Weights were released at END; a usable warm, persistently
-loaded service remains unfinished.
-
-Current experimental code
+Current verified platform
 --------------------------
-
-A different Q4 matrix algorithm is intended to reduce repeated per-weight
-conversion work. It keeps original compressed weights, creates temporary
-native tiles on the card, then applies scale/minimum correction to outputs.
-
-Locally completed:
-  * Code extraction and separate FP32 output-affine arithmetic.
-  * Original-byte UNPACK -> vector extraction -> integer PACK -> temporary
-    native tile -> matrix dot product and genuine input sum.
-  * Compiled RV32 functions tested by the existing strict software model,
-    including packing/source-bank completion checks.
-  * Original metadata/output correction and full-K accumulation are now
-    integrated in a returning routine. Compiled software-model tests cover
-    both 5,120/17,408 input widths and repeated jobs without context reset.
-
-NOT completed:
-  * Native integration of the whole-model returning service. The isolated
-    native111 comparison package is locally qualified, not a Work release.
-  * Correct physical arithmetic: native111 and native112 FAILED. The new
-    hardware trace locates incorrect packed weight data BEFORE the matrix
-    calculation. First input sum, coefficient/minimum and initial accumulator
-    match. A pack-boundary correction is now implemented and passes local
-    main/clean tests; it is NOT yet card-validated. The old compiled program
-    conditionally reproduces all64 observations with premature face endings.
-  * Whole-model quality and throughput measurement of the new algorithm.
-
-This is a new operation order, not previous BF16/GGML bit equivalence.
-Synthetic tests do not establish full-model quality or hardware speed.
-The unfinished component is checkpointed separately from working inference.
-
-Next bounded checkpoint
-------------------------
-
-P100A_WORK_PLAN.txt defines the sequence and finish criteria:
-  1. Consolidation / baseline-experiment separation: locally closed.
-  2. One complete representative Q4 job on real hardware: INCOMPLETE.
-  3. Evidence-based feasibility decision.
-  4. Whole-model integration and matched quality/throughput measurement.
-  5. Persistent loading and Assistant usability.
-
-No additional UI work, unchanged full-model uploads or repeated closed
-infrastructure experiments are prerequisites for checkpoint 2.
-
-Preservation and test state
----------------------------
-
-Installed rollback driver: normal 041, tag 2026102100010012, generation 2,
-quiesced 0, cold 0, owner 0, open 1, guard 1. It is NOT experimental tag 92.
-The112 hardware trace returned all64 observations:59 mismatches and no
-accepted timing. It reproduced111's final-value error and narrowed the
-first failing stage to packing. Both candidates are rejected.
-Complete original trace is privately saved; all nine record hashes survived
-the controlled recovery unchanged. No failed-epoch END/reset/retry/restore.
-One OFF/ON and the pinned SD-free full-memory boot created a fresh idle
-epoch; separate restoration and independent postflight both exited0.
-No SD,mains or hardware change; no GPU program ran during recovery.
-Candidate correction disables automatic PACK endings while retaining the
-explicit final Last. NEW isolated native113 driver/client now pass complete
-main/clean local qualification; no113 hardware result yet. Next:ONE physical
-old/new comparison before whole-model or UI integration.
-The113-a launcher was refused before trial admission or any driver/GPU
-action.Normal041/gen2 remains idle.The launch-filter regression is fixed
-by stdin invocation for fresh113-b;no old stage is replayed or repinned.
-
-Historical stages 81 through 112-a are SPENT: never replay, repin identities
-or clear once markers. Future hardware testing needs a fresh identity and
-fresh idle-state/ownership admission.
-Existing dirty native/driver/submodule work and unrelated experiments are
-preserved, not reset, deleted or silently included in this checkpoint.
+Normal041/gen4 rollback driver, idle, cold0/owner0; 64 CPUs and full RAM.
+Three Assistant files and four runtime libraries unchanged; not a new UI test.
+No test/inference process remains after independent postflight.
+No reboot or power/SD/hardware change was needed for native113.
+Saved experiments and pre-existing dirty work are preserved, not deleted.
+Full-card inference already exists; the missing outcome is USABLE SPEED.
 
 Evidence (relative to tools/pioneer)
 ------------------------------------
-
-Best real model: benchmarks/qwen38-vector-q4-full-card-20261104.txt
-Latest real model: benchmarks/qwen38-bf16-deferred-full-physical-20261106.txt
-Conditional budget, NOT a card limit or achieved rate:
-  benchmarks/qwen38-performance-budget-20261106.txt
-New arithmetic, software-model tests only:
-  benchmarks/qwen38-factored-q4-arithmetic-offboard-20261106.txt
-New packing/dot/sum, software-model tests only:
-  benchmarks/qwen38-factored-q4-tile-offboard-20261106.txt
-New complete arithmetic/returning routine, software-model tests only:
-  benchmarks/qwen38-factored-q4-returning-offboard-20261106.txt
-Isolated native111 old/new comparison package, qualified locally only:
-  benchmarks/qwen38-factored-q4-native-offboard-20261106.txt
-Physical111 numerical rejection and separate successful recovery:
-  benchmarks/qwen38-factored-q4-native-physical-20261106.txt
-New trace component mechanics,not a native or physical qualification:
-  benchmarks/qwen38-factored-q4-trace-component-20261106.txt
-Native112/source/client package,local qualification:
-  benchmarks/qwen38-factored-q4-trace-native-20261106.txt
-Physical112 first-failure trace and completed independent recovery:
-  benchmarks/qwen38-factored-q4-trace-physical-20261106.txt
-Candidate pack-boundary correction, LOCAL tests only:
-  benchmarks/qwen38-q4-pack-boundary-offboard-20261106.txt
-Fresh native113 comparison package, LOCAL qualification only:
-  benchmarks/qwen38-manual-last-q4-native-20261106.txt
+Best model: benchmarks/qwen38-vector-q4-full-card-20261104.txt
+Latest model: benchmarks/qwen38-bf16-deferred-full-physical-20261106.txt
+Latest card result: benchmarks/qwen38-manual-last-q4-physical-20261106.txt
+That report's sibling directory contains the complete closed trial/postflight.
+Detailed historical experiments remain under benchmarks/, not new progress.
+P100A_WORK_PLAN.txt defines finish criteria and what is deliberately deferred.
