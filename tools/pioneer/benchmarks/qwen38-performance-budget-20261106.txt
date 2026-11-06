@@ -1,0 +1,115 @@
+27B performance budget: a specific reason to change the Q4 kernel
+================================================================
+2026-11-06. Analytical investigation, NOT a new inference speed result.
+20 tokens/sec remains unmet. No driver, firmware, Assistant, network,
+power, boot, or model/cache file was changed or installed for this audit.
+
+Decision
+--------
+Do not repeat the existing memory sanity test. It already measured useful
+bandwidth. Do not expect controller preparation tuning alone to deliver
+20 tokens/sec with the unchanged tag106 Q4 kernel. Its operation budget
+itself exceeds the nominal single-stream issue budget at that target.
+Next bounded task: time the existing Q4 kernel in isolation on the card,
+then replace/reduce its dominant conversion/issue work. No additional
+full-model run is needed merely to reproduce the known slow baseline.
+This audit does NOT finish the raw-compute capability check: isolated
+kernel latency/throughput is still unmeasured, and no universal card or
+attainable model-speed ceiling has been established.
+
+Inputs actually checked
+-----------------------
+The SAME full 18973870528-byte original GGUF was read and SHA-256 checked:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+Header architecture qwen35, display name Qwen3.8-27B, 851 tensors.
+The model was not executed, changed, dequantized or copied into evidence.
+
+The complete old depth16 seven-bank receipt was checked again with the
+existing strict reader, explicit direct-TLB revision/gen15/sweeps256.
+Raw SHA619b609d6afd37c2ed4a06a8a48815d06d25d2cf39d4f34139669a235b6987d2.
+It remains 15032385536 bytes in 50470..57990us: 259.223755..297.847940GB/s.
+These are repeated 8MiB windows per bank, not model geometry or peak proof.
+Its complete physical closure/restoration record remains in:
+  p100a-dram-cohort-direct-20261103.txt and its sibling directory.
+There was NO new memory test in this audit.
+
+One-pass weight-traffic MODEL, not actual traffic telemetry
+----------------------------------------------------------
+The existing lossless 16-row tiled layout gives these active matrix bytes:
+ Q4_K 192 matrices   9625927680
+ Q8_0 288 matrices   7576289280
+ Q6_K  17 matrices   1469685760
+ Plus non-embedding F32 weights 10582016.
+Total 18682484736 bytes assuming one complete pass per generated token.
+The entire embedding table is excluded: inference looks up a token, not
+every embedding. Actual embedding reads, activations, recurrent/KV state,
+extra copies/reads and computations are additional costs, not counted here.
+
+20 tokens/sec would require 373.649695GB/s JUST for that weight pass,
+83.403950% of the advertised 448GB/s. At the advertisement's full bandwidth
+this conditional weight-only roof is 23.979680 tokens/sec. Substituting
+the old memory test's observed bandwidth gives 13.875229..15.942630, but
+that is an analytical substitution, NOT predicted/measured model speed.
+Reuse, different layouts/algorithms or bandwidth scaling can change it.
+The card is not proven incapable of 20 tokens/sec by this traffic model.
+
+Actual-template operation count, not a timing simulation
+--------------------------------------------------------
+pioneer_q38_bf16_issue_inventory.cpp instantiates the SAME compute templates
+as blackhole_q38_cached_fpu_matrix.cpp, with a counting emitter. It emits
+no learned products, no numerical reference, and opens no accelerator.
+All nine transitive project headers match hardware source3158041e2a.
+Actual host compile/run closed0, Werror plus ASan/UBSan, stderr empty.
+Both buffers/all eight groups agree; invalid selectors have zero effects.
+
+Per 32-output full-K job initialization:94 Op,69 Config,20 Drain calls.
+Per 32-output K256 block:4664 Op,182 Config,98 Drain calls.
+Only128 of those4664 Op calls are matrix instructions. This is an operation
+mix, NOT a time/utilization share: different instructions cost differently.
+The full model has79872 output pairs and2088960 pair/K256 blocks in Q4
+feed-forward matrices. Therefore per generated token, the current Q4 path
+requests AT LEAST9750417408 explicit Op calls. The extra operations inside
+the real Drain emitter, all Config/NoC/loop/guard work and ALL other model
+formats/attention/controller work are excluded from that lower count.
+Its loader also explicitly submits54312960 reads per generated token:
+9625927680 weight bytes plus1069547520 root-L1 input bytes. These are
+source-derived request/byte counts, NOT physical transaction telemetry.
+
+Current emitter sends into ONE Tensix instruction stream per worker.
+Vendor documentation specifies at most one dequeue per thread per cycle;
+four-instruction TRISC enqueue fusion does not increase that dequeue rate.
+At the documented nominal1.35GHz, even perfect distribution over all119
+workers gives119*1.35e9/9750417408=16.476218 tokens/sec for ONLY these Q4
+Op calls. This is a conditional budget, NOT calibrated card timing, an
+attainable full-model rate, or a limit on a redesigned kernel/dataflow.
+It explains why the next work must reduce the kernel's requested work,
+not only make its existing root controller dispatch it more efficiently.
+
+Reproduce (host only, from repository root)
+-------------------------------------------
+budget_dir=$(mktemp -d /private/tmp/pioneer-q38-budget.XXXXXXXX)
+c++ -std=c++17 -O2 -Wall -Wextra -Werror \
+  tools/pioneer/pioneer_q38_bf16_issue_inventory.cpp \
+  -o "$budget_dir/issue-inventory"
+python3 tools/pioneer/qwen27_p100a_performance_budget.py \
+  generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf \
+  --issue-inventory <("$budget_dir/issue-inventory") \
+  --closed-cohort-log tools/pioneer/benchmarks/p100a-dram-cohort-direct-20261103/depth16.log
+python3 tools/pioneer/tests/pioneer_qwen27_performance_budget_test.py
+Process substitution requires bash or zsh. The JSON output is deterministic.
+The first test attempt exposed a handwritten expected-total typo; correcting
+the exact arithmetic, not changing production code or a tolerance, fixed it.
+
+Fresh read-only SSH also confirmed Haiku/64CPUs/137034936320B RAM and no
+model/native-test processes. Latest full-model evidence verifier passed
+again:0.078459792..0.078460452tok/s, NOT a new rate or a speed improvement.
+No physical clock assumption was used to reinterpret its recorded cycles.
+
+Primary sources checked 2026-11-06
+---------------------------------
+Rated p100a specifications (448GB/s,120 cores,1.35GHz):
+https://tenstorrent.com/en/hardware/cards
+Single-issue baby RISCVs, nominal clock, and fusion qualifications:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/README.md
+Instruction streams, stores, fusion and one dequeue/thread/cycle:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/PushTensixInstruction.md

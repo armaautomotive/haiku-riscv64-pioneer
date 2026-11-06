@@ -1,0 +1,20 @@
+BEGIN buffer0 group0 ops94 configs69 drains20 matrix0
+METADATA buffer0 group0 ops608 configs22 drains10 matrix0
+GROUP buffer0 group0 ops507 configs20 drains11 matrix16
+GROUP buffer0 group1 ops507 configs20 drains11 matrix16
+GROUP buffer0 group2 ops507 configs20 drains11 matrix16
+GROUP buffer0 group3 ops507 configs20 drains11 matrix16
+GROUP buffer0 group4 ops507 configs20 drains11 matrix16
+GROUP buffer0 group5 ops507 configs20 drains11 matrix16
+GROUP buffer0 group6 ops507 configs20 drains11 matrix16
+GROUP buffer0 group7 ops507 configs20 drains11 matrix16
+METADATA buffer1 group0 ops608 configs22 drains10 matrix0
+GROUP buffer1 group0 ops507 configs20 drains11 matrix16
+GROUP buffer1 group1 ops507 configs20 drains11 matrix16
+GROUP buffer1 group2 ops507 configs20 drains11 matrix16
+GROUP buffer1 group3 ops507 configs20 drains11 matrix16
+GROUP buffer1 group4 ops507 configs20 drains11 matrix16
+GROUP buffer1 group5 ops507 configs20 drains11 matrix16
+GROUP buffer1 group6 ops507 configs20 drains11 matrix16
+GROUP buffer1 group7 ops507 configs20 drains11 matrix16
+HOST_TEMPLATE_OPERATION_COUNTS_ONLY;NO_DEVICE_NO_CYCLE_OR_TPS_MEASUREMENT

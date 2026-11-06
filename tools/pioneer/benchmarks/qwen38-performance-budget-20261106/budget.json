@@ -1,0 +1,64 @@
+{
+  "conditional_q4_only_issue_ceiling_tps_at_nominal_1_35GHz": "16.4762177122991943197843453801",
+  "conditional_weight_only_tps_at_rated_bandwidth": "23.9796797016368776012471406630",
+  "conditional_weight_only_tps_at_test_bandwidth": [
+    "13.8752290382885824825551008203",
+    "15.9426299173836912653729006652"
+  ],
+  "existing_memory_test_observed_GBps": [
+    "259.2237547163304017934126573547163304018",
+    "297.8479400832177531206657420249653259362"
+  ],
+  "layout": {
+    "active_quantized_matrix_counts": {
+      "Q4_K": 192,
+      "Q6_K": 17,
+      "Q8_0": 288
+    },
+    "non_embedding_f32_bytes": 10582016,
+    "one_pass_weight_bytes_excluding_embedding": 18682484736,
+    "q4_output_pairs": 79872,
+    "q4_pair_k256_blocks": 2088960,
+    "quantized_dense_multiply_add_flops": 51243909120,
+    "tiled_quantized_bytes_by_format": {
+      "Q4_K": 9625927680,
+      "Q6_K": 1469685760,
+      "Q8_0": 7576289280
+    }
+  },
+  "limitations": [
+    "Weight budget assumes one pass over tiled non-embedding weights;not actual traffic telemetry.",
+    "Embedding lookup,activation/state traffic,extra reads and all computation add costs.",
+    "Memory test repeated fixed 8MiB windows;not model access geometry or peak bandwidth.",
+    "Operation inventory runs host templates;does not execute or time the card.",
+    "Issue budget assumes documented one T0 dequeue/cycle at nominal clock;not clock calibration.",
+    "Other algorithms,formats,parallel streams or reuse can change these conditional budgets."
+  ],
+  "model_bytes": 18973870528,
+  "model_sha256": "c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747",
+  "q4_explicit_read_requests_per_token": 54312960,
+  "q4_root_l1_input_read_bytes_per_token": 1069547520,
+  "q4_template_begin": {
+    "configs": 69,
+    "drains": 20,
+    "matrix": 0,
+    "ops": 94
+  },
+  "q4_template_k256_block": {
+    "configs": 182,
+    "drains": 98,
+    "matrix": 128,
+    "ops": 4664
+  },
+  "q4_template_operations_per_token": {
+    "configs": 385701888,
+    "drains": 206315520,
+    "matrix": 267386880,
+    "ops": 9750417408
+  },
+  "q4_weight_read_bytes_per_token": 9625927680,
+  "rated_memory_GBps_not_measured": "448",
+  "required_one_pass_weight_GBps_at_20_tps": "373.64969472",
+  "required_percent_of_rated_bandwidth": "83.4039497142857142857142857143",
+  "scope": "conditional analytical budgets;NOT measured model speed or universal card limits"
+}

@@ -1,6 +1,7 @@
 P100A / Qwen27B -- read this first
 ================================
-Updated after the completed106-a benchmark. Saved evidence, NOT live telemetry.
+Updated after the 2026-11-06 performance-budget audit. Saved evidence,
+NOT live telemetry. No new hardware inference was run during that audit.
 Overall goal unchanged: usable self-hosted 27B, targeting 20 tokens/sec.
 That goal is NOT achieved. Small milestones below do not redefine success.
 
@@ -68,10 +69,19 @@ Small milestones, in order
    at30.38%;more detailed cost attribution within it is the next step.
    Offline instruction counts are a lead, not physical timing or a speedup.
 
-4. NEXT: Optimize measured matrix-preparation overhead, then benchmark.
-   Publish before/after measurements and correctness results, even if slower.
-   Keep Work free of CPU reference computation; keep Debug separate.
-   Reassess feasibility from measurements rather than promise 20 tokens/sec.
+4. IN PROGRESS: Bounded capability check; budget analysis complete.
+   The old seven-bank memory test ALREADY measured259..298GB/s;do not redo it.
+   Exact model layout needs373.65GB/s for20tok/s in a one-pass weight model,
+   before state/activation traffic or computation. This is NOT a prediction.
+   Host counts of the actual BF16 Q4 templates expose9.750billion explicit
+   Tensix operations/token in Q4 FFNs alone. At nominal1.35GHz/119 workers,
+   a perfect one-stream schedule has a conditional16.48tok/s Q4-only roof.
+   This is analytical,NOT a new hardware rate or a universal card limit.
+   NEXT: isolated Q4 kernel timing,then reduce its conversion/issue work.
+   Controller-only tuning cannot make that unchanged nominal budget hit20.
+   Keep Work free of CPU reference computation;keep Debug separate.
+   Publish before/after real-model results before any Assistant promotion.
+   Details/reproduction:benchmarks/qwen38-performance-budget-20261106.txt.
 
 Clean build command (from project root)
 ---------------------------------------
