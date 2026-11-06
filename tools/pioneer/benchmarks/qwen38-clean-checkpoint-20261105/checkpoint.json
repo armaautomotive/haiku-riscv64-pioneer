@@ -1,0 +1,34 @@
+{
+  "source_commit": "17d8162774564f8b57746880b72e273a6040f1b0",
+  "llama_headers_commit": "c060ca974c773c7c3d17fd1b66dc9d312bc292c0",
+  "artifacts": {
+    "native/tenstorrent_pci_probe-bf16": {
+      "bytes": 2884184,
+      "sha256": "d8b1c561c9895841c6389576b53027d6e6998b3761dac12f47dbec961fb8bbb9"
+    },
+    "client/HaikuAssistantQwen27Bf16FullOffload": {
+      "bytes": 77584,
+      "sha256": "0190291350ca5eb56a235fcf6c2d6e3c000a7146f9f4b86fd7cd28a13051feec"
+    },
+    "client/pioneer-q38-bf16-full-offload-smoke": {
+      "bytes": 224952,
+      "sha256": "aa9aac510e66d7bfba98b61019181ddc6662639badbb7ebc4edcdb2f91d822ef"
+    }
+  },
+  "actual_exits": {
+    "export": 0,
+    "unpack": 0,
+    "llama-objects": 0,
+    "llama-commit": 0,
+    "native-build": 0,
+    "client-build": 0
+  },
+  "scope": "BUILD_ONLY: byte-identical to completed 105-a trial; no hardware action",
+  "not_proven": [
+    "new execution",
+    "broad model quality",
+    "warm tokens/sec",
+    "speedup"
+  ],
+  "warning": "105-a is spent; do not execute its old smoke/parent on hardware"
+}

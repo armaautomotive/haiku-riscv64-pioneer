@@ -1,0 +1,72 @@
+[
+  {
+    "name": "export",
+    "argv": [
+      "git",
+      "-C",
+      "/Users/arma/Documents/ChatGPT/HaikuOS",
+      "archive",
+      "--format=tar",
+      "--output=/private/tmp/pioneer-clean-checkpoint.iHCZAzMb/build2/checkpoint-source.tar",
+      "17d8162774564f8b57746880b72e273a6040f1b0",
+      "headers",
+      "build/config_headers",
+      "src/add-ons/kernel",
+      "src/apps/assistant",
+      "tools/pioneer"
+    ]
+  },
+  {
+    "name": "unpack",
+    "argv": [
+      "tar",
+      "-xf",
+      "/private/tmp/pioneer-clean-checkpoint.iHCZAzMb/build2/checkpoint-source.tar",
+      "-C",
+      "/private/tmp/pioneer-clean-checkpoint.iHCZAzMb/build2/source"
+    ]
+  },
+  {
+    "name": "llama-objects",
+    "argv": [
+      "git",
+      "clone",
+      "--quiet",
+      "--shared",
+      "--no-checkout",
+      "--",
+      "/Users/arma/Documents/ChatGPT/HaikuOS/src/libs/llama.cpp",
+      "/private/tmp/pioneer-clean-checkpoint.iHCZAzMb/build2/source/src/libs/llama.cpp"
+    ]
+  },
+  {
+    "name": "llama-commit",
+    "argv": [
+      "git",
+      "-C",
+      "/private/tmp/pioneer-clean-checkpoint.iHCZAzMb/build2/source/src/libs/llama.cpp",
+      "cat-file",
+      "-t",
+      "c060ca974c773c7c3d17fd1b66dc9d312bc292c0"
+    ]
+  },
+  {
+    "name": "native-build",
+    "argv": [
+      "/Library/Developer/CommandLineTools/usr/bin/python3",
+      "/private/tmp/pioneer-clean-checkpoint.iHCZAzMb/build2/source/tools/pioneer/build_q38_bf16_full_native.py",
+      "/Volumes/HaikuBuildLocal/generated.riscv64",
+      "/private/tmp/pioneer-clean-checkpoint.iHCZAzMb/build2/native"
+    ]
+  },
+  {
+    "name": "client-build",
+    "argv": [
+      "/Library/Developer/CommandLineTools/usr/bin/python3",
+      "/private/tmp/pioneer-clean-checkpoint.iHCZAzMb/build2/source/tools/pioneer/build_assistant_qwen27_bf16_full_offload.py",
+      "/Volumes/HaikuBuildLocal/generated.riscv64",
+      "/private/tmp/pioneer-lossless-live-20261103.ulZKfMoS/libraries",
+      "/private/tmp/pioneer-clean-checkpoint.iHCZAzMb/build2/client"
+    ]
+  }
+]

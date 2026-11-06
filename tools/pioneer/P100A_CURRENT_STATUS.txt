@@ -1,40 +1,83 @@
-P100A / Qwen27B -- current project checkpoint
-=============================================
-Updated after the completed BF16 trial,2026-11-06 04:36UTC.
-This is a checkpoint summary,not live telemetry.
+P100A / Qwen27B -- read this first
+================================
+Updated 2026-11-06 05:03 UTC. Saved evidence, NOT live board telemetry.
+Overall goal unchanged: usable self-hosted 27B, targeting 20 tokens/sec.
+That goal is NOT achieved. Small milestones below do not redefine success.
 
-Goal:usable self-hosted Qwen3.8-27B Q4_K_M;target20tokens/sec.UNMET.
+What works
+----------
+The complete 27B model has executed on the actual P100A without CPU model
+inference. The last completed experiment returned four expected tokens:
+"Hello! How can". This proves one complete request, not broad correctness.
+The experiment ended cleanly and restored the normal driver. Its separate
+postflight verified 64 CPUs, 137034936320 bytes RAM and unchanged Assistant
+and runtime files. There were no live hardware jobs at that checkpoint.
 
-DEMONSTRATED
-*The new BF16/FPU implementation completed a full27B fixed-prompt run on
- the actual P100A,without CPU model inference,and returned Hello! How can.
-*It completed cleanly and restored the normal driver. Independent checks
- confirm64CPUs,full137034936320B RAM and unchanged Assistant/runtime files.
-*Both the older full-card implementation and the new one can run the model.
+What does NOT work yet
+---------------------
+Usable speed is not delivered. The last measured older path achieved about
+0.16436 tokens/sec after the prompt (about six seconds per output token).
+The newer BF16 path has no comparable warm-generation rate yet. Its short
+prompt-plus-four-output test took 216.622 seconds versus 175.251 previously:
+about 24% LONGER, not a speedup. Neither interval is warm tokens/sec.
+The slower experimental candidate has NOT replaced Assistant's backend.
 
-NOT DELIVERED
-*The new implementation is NOT faster in this test:216.622seconds for
- prompt+4 outputs,versus175.251seconds in the older matched test (~24% more).
-*Those intervals are NOT warm tokens/sec. Last measured old-path
- post-prompt rate remains~0.16436tokens/sec;no new BF16 warm rate exists.
-*Broad model quality,fast Assistant integration and usable speed remain
- unfinished. The slow new candidate is not promoted to Assistant.
+Small milestones, in order
+--------------------------
+1. DONE: Reproducible clean checkpoint (build only).
+   A single command exports the hardware-tested Git commit and rebuilds
+   the driver, vocabulary-only USER worker and smoke launcher. All three
+   match the completed trial's exact byte lengths and SHA-256 hashes.
+   Six child commands exited 0 with empty stderr; ten host refusal/path
+   tests passed. The saved hardware-result verifier also passed again.
+   No installation, SSH, power action or new inference was performed.
 
-ONE NEXT PERFORMANCE MILESTONE
-Obtain comparable post-prompt timing and physical control-versus-math
-profiling on this working BF16 path;optimize one dominant measured cost.
-An offline prefix profile points to controller transfer/checking overhead,
-but its instruction counts are NOT physical timing or a speed result.
+2. NEXT: Comparable generation benchmark.
+   One public fixed prompt, requesting up to 32 output tokens. Report actual
+   output count, loading time, first-token time and post-prompt rate separately.
+   If the model stops early or timing is unavailable, say so; invent no rate.
+   Requires a fresh guarded run, NOT replaying the old trial.
 
-CODE / EVIDENCE
-Hardware-tested source:17d8162774564f8b57746880b72e273a6040f1b0.
-Later72b18fd9a5 adds offline profiling only;card code unchanged.
-Build:build_q38_bf16_full_native.py and
- build_assistant_qwen27_bf16_full_offload.py in this directory.
-Whole result:benchmarks/qwen38-bf16-full-physical-20261105.txt.
-Profile:benchmarks/qwen38-bf16-prefix-profile-offboard-20261105.txt.
+3. PENDING: Physical bottleneck measurement.
+   Measure controller preparation, dispatch, completion wait and computation.
+   Timing source edits exist locally but are UNBUILT and UNQUALIFIED.
+   Offline instruction counts are a lead, not physical timing or a speedup.
 
-No hardware job remains active at this checkpoint. Normal041/tag12/gen40
-was independently verified after closure. Stage105-a is SPENT forever;
-never rerun it or substitute new binaries into its old admission.
-No code/history was deleted and the active overall goal is unchanged.
+4. PENDING: One targeted optimization, then the same benchmark.
+   Publish before/after measurements and correctness results, even if slower.
+   Keep Work free of CPU reference computation; keep Debug separate.
+   Reassess feasibility from measurements rather than promise 20 tokens/sec.
+
+Clean build command (from project root)
+---------------------------------------
+python3 tools/pioneer/reproduce_qwen27_p100a_checkpoint.py \
+  --sdk /Volumes/HaikuBuildLocal/generated.riscv64 \
+  --libraries /private/tmp/pioneer-lossless-live-20261103.ulZKfMoS/libraries \
+  --out /private/tmp/pioneer-qwen27-checkpoint-NEW
+
+Output must be a NEW absolute directory with an existing canonical parent.
+Requires the existing Haiku SDK, four pinned runtime libraries and local
+llama Git objects. The command reads only the fixed llama header commit,
+not dirty submodule sources. It exports source commit:
+17d8162774564f8b57746880b72e273a6040f1b0
+The embedded firmware is reused exactly, not newly regenerated by this
+command. A hash mismatch fails; it is not accepted as an equivalent build.
+
+Important: this is NOT a hardware-run command. Its exact historical smoke
+binary points to spent stage 105-a. NEVER execute that old stage again or
+substitute new binaries into its admission. The next benchmark needs fresh
+paths, identities and admission checks. No one-command fresh run exists yet.
+
+Evidence and work separation
+----------------------------
+Clean rebuild: benchmarks/qwen38-clean-checkpoint-20261105/
+Actual card run: benchmarks/qwen38-bf16-full-physical-20261105.txt
+Full result audit:
+  python3 tools/pioneer/benchmarks/qwen38-bf16-full-physical-20261105/verify_evidence.py
+Checkpoint host tests:
+  python3 tools/pioneer/tests/pioneer_qwen27_checkpoint_test.py
+
+Local profiling edits and unrelated earlier experiments remain untouched.
+They are excluded by exporting the fixed Git commit, not by deleting or
+moving user work. The current worktree is intentionally NOT called clean.
+No code/history was deleted; the overall long-running goal remains active.
