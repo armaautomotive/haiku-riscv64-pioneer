@@ -1,0 +1,49 @@
+
+/private/tmp/pioneer-q38-factored-q4.SObZVWKd/main-final/inline/operand.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00070000 <pioneer_q4_factored_init>:
+   70000:	ff010113          	add	sp,sp,-16
+   70004:	00812623          	sw	s0,12(sp)
+   70008:	01010413          	add	s0,sp,16
+   7000c:	c5c801e1          	.word	0xc5c801e1
+   70010:	00c12403          	lw	s0,12(sp)
+   70014:	01010113          	add	sp,sp,16
+   70018:	00008067          	ret
+
+0007001c <pioneer_q4_factored_low>:
+   7001c:	ff010113          	add	sp,sp,-16
+   70020:	00812623          	sw	s0,12(sp)
+   70024:	01010413          	add	s0,sp,16
+   70028:	e800c005          	.word	0xe800c005
+   7002c:	f8001c05          	.word	0xf8001c05
+   70030:	00c12403          	lw	s0,12(sp)
+   70034:	01010113          	add	sp,sp,16
+   70038:	00008067          	ret
+
+0007003c <pioneer_q4_factored_high>:
+   7003c:	ff010113          	add	sp,sp,-16
+   70040:	00812623          	sw	s0,12(sp)
+   70044:	01010413          	add	s0,sp,16
+   70048:	ebffc005          	.word	0xebffc005
+   7004c:	f8001c05          	.word	0xf8001c05
+   70050:	00c12403          	lw	s0,12(sp)
+   70054:	01010113          	add	sp,sp,16
+   70058:	00008067          	ret
+
+0007005c <pioneer_q4_factored_affine>:
+   7005c:	ff010113          	add	sp,sp,-16
+   70060:	00812623          	sw	s0,12(sp)
+   70064:	01010413          	add	s0,sp,16
+   70068:	1808254a          	.word	0x1808254a
+   7006c:	180c658a          	.word	0x180c658a
+   70070:	3c000002          	.word	0x3c000002
+   70074:	14295942          	.word	0x14295942
+   70078:	3c000002          	.word	0x3c000002
+   7007c:	14291502          	.word	0x14291502
+   70080:	3c000002          	.word	0x3c000002
+   70084:	00c12403          	lw	s0,12(sp)
+   70088:	01010113          	add	sp,sp,16
+   7008c:	00008067          	ret

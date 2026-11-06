@@ -1,0 +1,10 @@
+{
+  "scope": "OFFBOARD_ARITHMETIC_AND_ACTUAL_COMPILED_FUNCTIONS_NOT_NATIVE_MATRIX_OR_SPEED",
+  "main_final_suite": 0,
+  "clean_all_dependencies_suite": 0,
+  "whole_stdout_and_both_compiled_text_comparisons": 0,
+  "initial_component_compile_unused_round": 1,
+  "initial_clean_missing_native_header": 1,
+  "partial_clean_missing_transitive_native_headers": 1,
+  "hardware_or_model_executions": 0
+}

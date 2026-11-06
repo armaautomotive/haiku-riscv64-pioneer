@@ -1,0 +1,99 @@
+Factored Q4 -> native BFP8 code arithmetic -- OFFBOARD prototype
+==============================================================
+November6,2026. Base74a29435d2dfa9780088f05fbf42074774c53002.
+NEW arithmetic,not a driver/full worker/real-model speed result.
+No model/cache/device/SSH/power/Assistant access in this work.
+Latest actual27B result remains110:0.082246701..0.082247442tok/s.
+20TPS is unmet;no inference speed improvement is claimed here.
+
+Decision / substantive change
+------------------------------
+Do not replace BF16-RNE with the hardware one-instruction rounding shortcut:
+documented ties-away and zero normalization are not equivalent. Instead
+prototype a DIFFERENT operation order:compute qdot=sum(q*x) for ORIGINAL
+unsigned Q4 codes q0..15 using native BFP8_B,then correct each output with
+  oldAccumulator + ((d*scale)*qdot + (-(dmin*minimum))*sum(x)).
+This is NOT the old per-weight BF16-RNE or GGML accumulation order. No
+rounding-equivalence/model-quality claim is made. It needs independent
+numerical validation before any Work/Assistant selection.
+
+Native BFP8_B exponent130 and positive magnitude q*8 represent every q
+EXACTLY,including0 and15. TWO simple SFPU integer instructions extract
+that code byte from either half of an original packed byte. This replaces
+the old ten-operation nibble/cast/MAD/BF16-round SUBEXPRESSION ONLY.
+It EXCLUDES raw loads,stores,PACK,L1 exponent assembly,UNPACK,four-fidelity
+matrix work,metadata,input-sum production,output correction and lifetime.
+Do NOT infer5x kernel/model speed,utilization or a new whole-model budget.
+
+Intended integration keeps original compressed GDDR weights and creates
+temporary native tiles ON CARD in L1. This is a design direction,NOT a
+delivered packer/layout/residency guarantee. No expanded global BFP8 weight
+model is created here. Real L1/source-bank/format/ownership proof is missing.
+
+Implemented code and scope
+-------------------------
+PioneerQ38Q4FactoredBfp8.h:separate OFFBOARD arithmetic selection,original
+byte -> BFP8 magnitude operations and7-word separate-FP32 affine. Two
+independent products cover their first latency slots;three explicit tail
+NOPs preserve dependency readiness. Inputs0..3/constant7 are preserved.
+blackhole_q38_q4_factored_bfp8.cpp:four BUILD-only RV32 functions,not a
+bootable/returning matrix service. No learned payload/scalar model IO.
+build_q38_q4_factored_bfp8.py:distinct inline/MMIO functions,source hashes
+frozen before/after compilation. Old helpers/kernels/defaults unchanged.
+tests/run_pioneer_q38_q4_factored_bfp8_tests.sh:reproducible complete runner.
+
+Actually closed qualification
+------------------------------
+Main78061 ACTUALLY0;clean14206 ACTUALLY0. Werror,ASan,UBSan,
+ffp-contract=off,stderr0. Whole functional stdout EXACT main/clean.
+16384 code/lane checks exhaust all256 packed-byte cases/both nibbles;
+all original code values and independently decoded BFP8 values exact.
+131072 synthetic affine results BIT-EXACT with the NEW separate-FP32
+contract;131072 independent long-double absolute roundoff-bound checks.
+BF16 fixture inputs yield exact integer-scaled qdot/input sums;these are
+SUPPLIED fixture values,NOT actual matrix/producer receipts.1024 signed-
+zero cases pass;48 removed latency words are rejected by the UNCHANGED
+strict SFPU observer. No existing comparator/tolerance was relaxed.
+
+Actual linked RV32 ROM runs through the UNCHANGED strict Step decoder:
+four functions,12 issued words,all exact;callee registers/stack ABI and
+code/8KiB-stack/instruction-port stores bounded. Inline36 guest steps,
+MMIO59,touched stack4B (NOT whole-kernel reserved stack/high-water proof).
+Inline text144B SHA455c60867c618023d894f10ad2e9a74d8a88d0f512dcd9ce9b2eae80ef46cef5.
+MMIO text236B SHA334a7dec58f5b1a4723e359eb9546abea33c90cc5857c09c646cf142bc8baaa0.
+Both binaries byte-identical main/clean. No native executable is built.
+Roles:1positive/37 missing,zero,two,production,late-inclusion and wrong-
+architecture refusals. Existing Work/native/client/reference roles refuse.
+
+Clean source:tracked tools/pioneer from base74a plus ONLY seven new source
+files and26 exact tracked native headers imported by the existing RV32
+decoder's transitive includes. Nine dirty baseline paths/WIP excluded.
+Development failures NOT counted as passes:initial component compile
+found an unused old-model Round helper under Werror;retained explicit RNE
+tie controls to exercise it. First two clean attempts lacked transitive
+native headers;exported the compiler-listed26 HEAD dependencies,then ran
+fresh clean-all-deps. No comparator or ISA guard was weakened.
+
+Next bounded implementation
+----------------------------
+Implement the REAL on-card byte pack/exponent section/native FPU tile and
+genuine BF16 input sum. Verify a complete tile/group result from ORIGINAL
+packed codes through PACK/UNPACK/matrix/output affine,including real source-
+bank completion,not injected qdot/sum. Reuse the existing strict pipeline;
+do not build another whole GPU emulator or repeat closed110 infrastructure.
+Then full-K returning-worker integration and numerical/model acceptance,
+native owner/code journal,one fresh complete-model timing. NOT complete yet.
+
+Primary instruction contracts checked November6,2026
+---------------------------------------------------
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPSTOCHRND_FloatFloat.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/FloatBitPatterns.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPMAD.md
+Shared exponent/magnitude formula and dependency semantics inform ONLY
+this arithmetic prerequisite;hardware behavior and model speed unmeasured.
+
+Reproduce from repository root (new absolute output directory required):
+sh tools/pioneer/tests/run_pioneer_q38_q4_factored_bfp8_tests.sh \
+ /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/fresh-factored-q4-run
+Sibling directory stores main/clean outputs,actual exits,source pins and
+compiled-function disassembly/symbols,NOT models/learned data or binaries.

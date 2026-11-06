@@ -1,0 +1,72 @@
+
+/private/tmp/pioneer-q38-factored-q4.SObZVWKd/main-final/mmio/operand.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00070000 <pioneer_q4_factored_init>:
+   70000:	ff010113          	add	sp,sp,-16
+   70004:	00812623          	sw	s0,12(sp)
+   70008:	01010413          	add	s0,sp,16
+   7000c:	00c12403          	lw	s0,12(sp)
+   70010:	717207b7          	lui	a5,0x71720
+   70014:	07878793          	add	a5,a5,120 # 71720078 <__global_pointer$+0x716ae78c>
+   70018:	ffe40737          	lui	a4,0xffe40
+   7001c:	00f72023          	sw	a5,0(a4) # ffe40000 <__global_pointer$+0xffdce714>
+   70020:	01010113          	add	sp,sp,16
+   70024:	00008067          	ret
+
+00070028 <pioneer_q4_factored_low>:
+   70028:	ff010113          	add	sp,sp,-16
+   7002c:	00812623          	sw	s0,12(sp)
+   70030:	01010413          	add	s0,sp,16
+   70034:	7a003737          	lui	a4,0x7a003
+   70038:	00c12403          	lw	s0,12(sp)
+   7003c:	ffe406b7          	lui	a3,0xffe40
+   70040:	00170713          	add	a4,a4,1 # 7a003001 <__global_pointer$+0x79f91715>
+   70044:	7e0007b7          	lui	a5,0x7e000
+   70048:	00e6a023          	sw	a4,0(a3) # ffe40000 <__global_pointer$+0xffdce714>
+   7004c:	70178793          	add	a5,a5,1793 # 7e000701 <__global_pointer$+0x7df8ee15>
+   70050:	00f6a023          	sw	a5,0(a3)
+   70054:	01010113          	add	sp,sp,16
+   70058:	00008067          	ret
+
+0007005c <pioneer_q4_factored_high>:
+   7005c:	ff010113          	add	sp,sp,-16
+   70060:	00812623          	sw	s0,12(sp)
+   70064:	01010413          	add	s0,sp,16
+   70068:	7afff737          	lui	a4,0x7afff
+   7006c:	00c12403          	lw	s0,12(sp)
+   70070:	ffe406b7          	lui	a3,0xffe40
+   70074:	00170713          	add	a4,a4,1 # 7afff001 <__global_pointer$+0x7af8d715>
+   70078:	7e0007b7          	lui	a5,0x7e000
+   7007c:	00e6a023          	sw	a4,0(a3) # ffe40000 <__global_pointer$+0xffdce714>
+   70080:	70178793          	add	a5,a5,1793 # 7e000701 <__global_pointer$+0x7df8ee15>
+   70084:	00f6a023          	sw	a5,0(a3)
+   70088:	01010113          	add	sp,sp,16
+   7008c:	00008067          	ret
+
+00070090 <pioneer_q4_factored_affine>:
+   70090:	ff010113          	add	sp,sp,-16
+   70094:	00812623          	sw	s0,12(sp)
+   70098:	860216b7          	lui	a3,0x86021
+   7009c:	01010413          	add	s0,sp,16
+   700a0:	ffe407b7          	lui	a5,0xffe40
+   700a4:	95268693          	add	a3,a3,-1710 # 86020952 <__global_pointer$+0x85faf066>
+   700a8:	86032737          	lui	a4,0x86032
+   700ac:	00d7a023          	sw	a3,0(a5) # ffe40000 <__global_pointer$+0xffdce714>
+   700b0:	96270713          	add	a4,a4,-1694 # 86031962 <__global_pointer$+0x85fc0076>
+   700b4:	00e7a023          	sw	a4,0(a5)
+   700b8:	850a56b7          	lui	a3,0x850a5
+   700bc:	8f000737          	lui	a4,0x8f000
+   700c0:	00e7a023          	sw	a4,0(a5)
+   700c4:	65068693          	add	a3,a3,1616 # 850a5650 <__global_pointer$+0x85033d64>
+   700c8:	00d7a023          	sw	a3,0(a5)
+   700cc:	850a46b7          	lui	a3,0x850a4
+   700d0:	00e7a023          	sw	a4,0(a5)
+   700d4:	00c12403          	lw	s0,12(sp)
+   700d8:	54068693          	add	a3,a3,1344 # 850a4540 <__global_pointer$+0x85032c54>
+   700dc:	00d7a023          	sw	a3,0(a5)
+   700e0:	00e7a023          	sw	a4,0(a5)
+   700e4:	01010113          	add	sp,sp,16
+   700e8:	00008067          	ret

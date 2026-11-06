@@ -1,0 +1,11 @@
+00070000 T pioneer_q4_factored_init
+00070028 T pioneer_q4_factored_low
+0007005c T pioneer_q4_factored_high
+00070090 T pioneer_q4_factored_affine
+000710ec T __BSS_END__
+000710ec T __DATA_BEGIN__
+000710ec T __SDATA_BEGIN__
+000710ec T __bss_start
+000710ec T _edata
+000710ec T _end
+000718ec A __global_pointer$

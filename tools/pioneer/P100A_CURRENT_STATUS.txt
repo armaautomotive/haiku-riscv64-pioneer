@@ -51,16 +51,21 @@ First card commit1962.511..1962.617s after Generate;answer-ready2562.9s
 (42.72min). NOT streamed/visible text/UI latency. Weights released at END;
 no usable persistent warm-load service delivered. Do not conflate intervals.
 
-One next bounded performance task
----------------------------------
-Investigate/replace one dominant repeated conversion/issue sequence in the
-actual matrix path,using faster earlier92/103 as comparison points. Require
-offboard numerical evidence,then a genuinely changed complete-model timing
-and accept/reject. No more preparation-audit polishing,unchanged full-model
-baseline uploads,closed-prefix/emulator reruns,scheduling-only micro-trials
-or unrelated UI work. Keep no-reference Work separate from validation.
-Build/test passes do NOT count as inference speed gains.20TPS feasibility
-remains unproven;do not substitute a small test milestone for the real goal.
+Current bounded performance task -- factored Q4 matrix path
+----------------------------------------------------------
+NEW offboard arithmetic prototype keeps original q0..15 as exact native
+BFP8 codes,then applies scale/minimum to matrix outputs,not every weight.
+Code-extraction SUBEXPRESSION2 instructions instead of10;NOT a5x speedup.
+131072 synthetic affine cases/1024 signed-zero cases/48 missing-latency
+faults and actual compiled RV32 functions pass in main/clean builds.
+This is a NEW FP32 operation order,NOT old BF16/GGML bit equivalence.
+No native/model execution,packing or source-bank integration is delivered.
+Next:REAL on-card byte packing/exponents,FPU tile and genuine input sum;
+prove a complete group result from original bytes,not supplied dot/sum.
+Then returning-worker/native integration and genuinely changed model test,
+compared with faster earlier92/103. No preparation-audit polishing,closed
+baseline reruns,new full GPU emulator or unrelated UI work. Keep Work and
+CPU validation separate. Builds are NOT speed gains;20TPS remains unproven.
 
 Last independent platform check -- after110,not current live authority
 ---------------------------------------------------------------------
@@ -90,3 +95,5 @@ Exact local qualification scopes,not themselves physical speed proof:
  benchmarks/qwen38-bf16-deferred-parent-20261106.txt
 Conditional operation/traffic budget,NOT a demonstrated hardware limit:
  benchmarks/qwen38-performance-budget-20261106.txt
+NEW factored-code/output-affine prerequisite,NOT a working matrix kernel:
+ benchmarks/qwen38-factored-q4-arithmetic-offboard-20261106.txt
