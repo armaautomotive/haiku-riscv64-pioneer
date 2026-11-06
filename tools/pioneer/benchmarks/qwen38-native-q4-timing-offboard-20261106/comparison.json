@@ -1,0 +1,208 @@
+{
+  "base_commit": "e1169998314871d8a9c25e4e258de919d287843d",
+  "children": {
+    "child-reader": {
+      "exit_main": 0,
+      "exit_clean": 0,
+      "stderr_bytes": 0,
+      "stdout_main_sha256": "9933832545afd2a5e3045eac034a34608471cb12954f07af90b657d0ed040563",
+      "stdout_clean_sha256": "9933832545afd2a5e3045eac034a34608471cb12954f07af90b657d0ed040563"
+    },
+    "client-fixtures": {
+      "exit_main": 0,
+      "exit_clean": 0,
+      "stderr_bytes": 0,
+      "stdout_main_sha256": "a2928e7588948780c800916fd4c6a2dd13069ee9c7e2c767ce827c29480ce704",
+      "stdout_clean_sha256": "5b14e80babff683596353f89fc71bc121db9cedf0000f37787665f79c5345c0e"
+    },
+    "client107": {
+      "exit_main": 0,
+      "exit_clean": 0,
+      "stderr_bytes": 0,
+      "stdout_main_sha256": "a60507d228ebb9cb3dbb406de76f5bd8f7e10d92336a2058234c0f833c845698",
+      "stdout_clean_sha256": "a60507d228ebb9cb3dbb406de76f5bd8f7e10d92336a2058234c0f833c845698"
+    },
+    "default-client104": {
+      "exit_main": 0,
+      "exit_clean": 0,
+      "stderr_bytes": 0,
+      "stdout_main_sha256": "7f3d47c678d354740b728a8b691b2372eec22d338839eb609e97ae28238df16d",
+      "stdout_clean_sha256": "7f3d47c678d354740b728a8b691b2372eec22d338839eb609e97ae28238df16d"
+    },
+    "default104": {
+      "exit_main": 0,
+      "exit_clean": 0,
+      "stderr_bytes": 0,
+      "stdout_main_sha256": "97b7672ee82c5cefb1730c4a40a1ba380052589bea77e82d732788df5f87c517",
+      "stdout_clean_sha256": "97b7672ee82c5cefb1730c4a40a1ba380052589bea77e82d732788df5f87c517"
+    },
+    "lease": {
+      "exit_main": 0,
+      "exit_clean": 0,
+      "stderr_bytes": 0,
+      "stdout_main_sha256": "4e21eef8e9aba46825c1e32eebf6ca8012daf6d8ff1ad380813e9df6a080c09b",
+      "stdout_clean_sha256": "4e21eef8e9aba46825c1e32eebf6ca8012daf6d8ff1ad380813e9df6a080c09b"
+    },
+    "lease-compile": {
+      "exit_main": 0,
+      "exit_clean": 0,
+      "stderr_bytes": 0,
+      "stdout_main_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_clean_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "native-endpoints": {
+      "exit_main": 0,
+      "exit_clean": 0,
+      "stderr_bytes": 0,
+      "stdout_main_sha256": "30c5c127c7e76aa0e7a3b4e0efc60c14ab019d0ca14bd7647eb81ce3bca796cc",
+      "stdout_clean_sha256": "c52a8b1091eb1cffb7557918d81ef82f1e32ea10fc73ddfd6a196ca7508cebd3"
+    },
+    "native107": {
+      "exit_main": 0,
+      "exit_clean": 0,
+      "stderr_bytes": 0,
+      "stdout_main_sha256": "4f51f1e859526767367617ef39fbe321e08869a50655a6446229ae1e2ea3feb1",
+      "stdout_clean_sha256": "4f51f1e859526767367617ef39fbe321e08869a50655a6446229ae1e2ea3feb1"
+    },
+    "parent": {
+      "exit_main": 0,
+      "exit_clean": 0,
+      "stderr_bytes": 0,
+      "stdout_main_sha256": "c80e1a758935090eb16679094a1a08207525c89ae627579a681ceedd4e4a13cc",
+      "stdout_clean_sha256": "c80e1a758935090eb16679094a1a08207525c89ae627579a681ceedd4e4a13cc"
+    },
+    "parent-syntax": {
+      "exit_main": 0,
+      "exit_clean": 0,
+      "stderr_bytes": 0,
+      "stdout_main_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_clean_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "real-lease": {
+      "exit_main": 0,
+      "exit_clean": 0,
+      "stderr_bytes": 0,
+      "stdout_main_sha256": "9f354f8182b06f1e34be5a87d2fe941de0026877fabeae68dd38ffb1b08b05b2",
+      "stdout_clean_sha256": "9f354f8182b06f1e34be5a87d2fe941de0026877fabeae68dd38ffb1b08b05b2"
+    },
+    "real-lease-compile": {
+      "exit_main": 0,
+      "exit_clean": 0,
+      "stderr_bytes": 0,
+      "stdout_main_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_clean_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "roles": {
+      "exit_main": 0,
+      "exit_clean": 0,
+      "stderr_bytes": 0,
+      "stdout_main_sha256": "5afd893ec8c47d10e28b6612ecd03f7cf421f1a8511b7995807c95ebe6582b3b",
+      "stdout_clean_sha256": "5afd893ec8c47d10e28b6612ecd03f7cf421f1a8511b7995807c95ebe6582b3b"
+    },
+    "timer-journal": {
+      "exit_main": 0,
+      "exit_clean": 0,
+      "stderr_bytes": 0,
+      "stdout_main_sha256": "aa25290017abc3139a89eb771f457d51f92a13314de2d7d60ea155a33ceb7ade",
+      "stdout_clean_sha256": "aa25290017abc3139a89eb771f457d51f92a13314de2d7d60ea155a33ceb7ade"
+    },
+    "timer-journal-compile": {
+      "exit_main": 0,
+      "exit_clean": 0,
+      "stderr_bytes": 0,
+      "stdout_main_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_clean_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "identical_artifacts": {
+    "native107/tenstorrent_pci_probe-native-q4-fpu-stream107": {
+      "bytes": 1844208,
+      "sha256": "505312ca317175c6ce1e481ddf34b25f17f00abc7b5d7d20eb5e57dcdebcfb4b"
+    },
+    "client107/pioneer-native-compact-q4-timing-diagnostic": {
+      "bytes": 1944800,
+      "sha256": "eabdd33a0ccf8e931e1118b250847f549759657b26e4c987588bf1bd97b84fd2"
+    },
+    "default104/tenstorrent_pci_probe-native-q4-fpu-stream104": {
+      "bytes": 1843416,
+      "sha256": "4722e956bfda10a5f8dbc2317bd5dd12d2de1b1099c3d33286b4b6447930f61e"
+    },
+    "default-client104/pioneer-native-compact-q4-stream-diagnostic": {
+      "bytes": 1944800,
+      "sha256": "64c8c252d2c423de227e112b8da78045eb271ed0988923c3d15183114a132dc7"
+    },
+    "native107/tenstorrent_pci_probe-default43-control": {
+      "bytes": 925616,
+      "sha256": "2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc"
+    },
+    "default104/tenstorrent_pci_probe-default43-control": {
+      "bytes": 925616,
+      "sha256": "2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc"
+    },
+    "native107/native.o": {
+      "bytes": 2134968,
+      "sha256": "e4bccdd2025a6d860e5de2fc94d9001c81dd11c0ccace05372d473afecb13f0c"
+    },
+    "native107/profile.o": {
+      "bytes": 12128,
+      "sha256": "d958ae2ca22f7b1b8be37e1446e62a704e9f5eaa450e86ba751a92d139184bed"
+    },
+    "native107/control.o": {
+      "bytes": 1951528,
+      "sha256": "3d9a35c051e19e537caea61c39944b1d15776fa396572a2b5b156bc7d1b42998"
+    },
+    "native107/PioneerNativeCompactQ4StreamGeneratedImage.h": {
+      "bytes": 44848,
+      "sha256": "68cc6855feb436053e17e1609da50b30fd4eadd5f5bee7523acf59960af78fe1"
+    },
+    "native107/image5120/boot.bin": {
+      "bytes": 4,
+      "sha256": "d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd"
+    },
+    "native107/image5120/text.bin": {
+      "bytes": 7972,
+      "sha256": "8156dd4e49912270887cf45f98e9b7c2892a0549a72c909dbefc502aa2205512"
+    },
+    "native107/image5120/program.elf": {
+      "bytes": 20300,
+      "sha256": "b53df880ebdfb803b1a6f4c19ff4a4e7b30395aad6771b81007a4ab586e6019f"
+    },
+    "native107/image17408/boot.bin": {
+      "bytes": 4,
+      "sha256": "d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd"
+    },
+    "native107/image17408/text.bin": {
+      "bytes": 7972,
+      "sha256": "9723a83e4550cd66e36613f49d0959251ac0d5f755b903568e8725d4a345ac3f"
+    },
+    "native107/image17408/program.elf": {
+      "bytes": 20300,
+      "sha256": "b04587b1df60e7527cfb26400f71aae44495eb9f00f89ca791ba09e860f5980f"
+    }
+  },
+  "source_count_main": 920,
+  "source_count_clean": 917,
+  "differing_source_files": [
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadMetricsRole.h",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadProtocol.h",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadRole.h",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38TokenCallScope.inc",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeEnd.inc",
+    "src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp"
+  ],
+  "main_only_sources": [
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadResidentNative.inc",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadResidentProtocol.h",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadResidentRole.h"
+  ],
+  "scope": "OFFBOARD native107 qualification,not hardware timing or model speed",
+  "source_pins": {
+    "src/add-ons/kernel/drivers/misc/PioneerNativeCompactQ4TimingRole.h": "29adf981fc16b67528bf6228fcdc228c4c37efd2d43cb9e2791572b0b4d64ae2",
+    "tools/pioneer/pioneer_native_compact_q4_timing_physical.sh": "c0e44445ce8c29ef80589d2887c17a42d9f6aacf36ebd96222cc8a7d061524b4",
+    "tools/pioneer/tests/pioneer_native_compact_q4_timing_lease_test.cpp": "d807970a61a8e5b6fd1f523a4cccc68dc5bc26b4e5b6fd0309d7771f3edfeabb",
+    "tools/pioneer/tests/pioneer_native_compact_q4_timing_output.py": "4ee27732bd664916f5a68e2bff53683a1aedd87cd4ea2d87df43d617b1b26427",
+    "tools/pioneer/tests/pioneer_native_compact_q4_timing_parent_test.py": "f666082aef0e14c8e42d70cd0d5aaaf91645902102d5997dec738020f6f33316",
+    "tools/pioneer/tests/pioneer_native_compact_q4_timing_role_test.py": "d4584b26071b7e848b976c4176cafc919f5255b93994782792c1aebea0a6ce17",
+    "tools/pioneer/tests/run_pioneer_native_compact_q4_timing_tests.py": "8045515593def03639e25eddd9503f21dd501fa1d9abbc5dbadb42aeea535bc6"
+  }
+}

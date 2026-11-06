@@ -4,7 +4,9 @@
 #if defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_NATIVE_Q4_FPU_DIAGNOSTIC) || defined(PIONEER_NATIVE_DRAM_MODEL_BAND_DIAGNOSTIC) || defined(PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC) || defined(__FAST_MATH__) || (defined(_KERNEL_MODE) && !defined(PIONEER_NATIVE_COMPACT_Q4_STREAM_DIAGNOSTIC))
 #error Q4 stream lease requires separate diagnostic104,never Work/reference/old roles
 #endif
-#if defined(PIONEER_NATIVE_COMPACT_Q4_STREAM_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_COMPACT_Q4_STREAM_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110500010104ULL)
+#if defined(PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING)
+#include "../../src/add-ons/kernel/drivers/misc/PioneerNativeCompactQ4TimingRole.h"
+#elif defined(PIONEER_NATIVE_COMPACT_Q4_STREAM_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_COMPACT_Q4_STREAM_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110500010104ULL)
 #error Exact kernel diagnostic104 reload identity required
 #endif
 #if defined(PIONEER_NATIVE_Q4_FPU_STREAM_DIAGNOSTIC) || defined(PIONEER_NATIVE_MIXED_FPU_STREAM_DIAGNOSTIC) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT)
@@ -134,7 +136,7 @@ public:
 	}
 	void Abandon(){if(owned){failed=true;result.compute.state=PIONEER_NATIVE_BFP_UNKNOWN;result.compute.cold=1;}}
 	template<class IO,class Image,class Data> bool Run(IO& io,const tt_dram_samples_result& baseline,unsigned sample) {
-		static_assert(Image::Samples==9 && Image::Rows==32 && Image::Phases==4 && Image::LayoutRole==104 && Image::Bytes==7644 && Image::MetadataFirst==128 && Image::MetadataRows==128 && Image::DstLast==255,"exact compact QCS1 two-width image and Dst scope only");
+		static_assert(Image::Samples==9 && Image::Rows==32 && Image::Phases==4 && Image::LayoutRole==V::Role && Image::Bytes==V::ImageBytes && Image::MetadataFirst==128 && Image::MetadataRows==128 && Image::DstLast==255,"exact compact QCS1 two-width image and Dst scope only");
 		static_assert(Data::Version==1 && Data::Rows==32 && Data::Samples==9 && Data::Role==104 && Data::PreparedBytes==4608,"exact compiled diagnostic104 data only");
 		if(attempted || sample>=V::Samples)return false;
 		attempted=true;result.compute.state=PIONEER_NATIVE_BFP_REFUSED;
@@ -201,6 +203,12 @@ public:
 			if(e==255 || (!e && m))return Fail(io);
 		}
 		if(!Terminal(io))return Fail(io);
+	#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+		// Preserve raw DATA only after the SAME independently proven terminal.
+		// Unstable/invalid clocks do not invalidate completed math or grant END.
+		for(unsigned i=0;i<16;i++)if(!io.NativeL1Read(PioneerQ38Q4KernelTiming::Address+i*4,result.timing[i]))return Fail(io);
+		if(!Terminal(io))return Fail(io);
+	#endif
 		result.requests=2*(V::Width(selection)/256)*L::Packets;result.flits=2*(V::Width(selection)/256)*L::Flits;result.compute.completed=1;result.compute.state=PIONEER_NATIVE_BFP_RESULT;return true;
 	}
 	template<class IO,class Image,class Data> bool End(IO& io) {
@@ -218,6 +226,11 @@ public:
 			if(!io.NativeL1Read(a,got) || got!=expected)return Fail(io);
 		}
 		for(unsigned i=0;i<64;i++){uint32_t v=0;if(!io.NativeL1Read(L::Output+i*4,v) || v!=result.compute.output[i])return Fail(io);}
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+		for(unsigned i=0;i<16;i++){
+			uint32_t v=0;if(!io.NativeL1Read(PioneerQ38Q4KernelTiming::Address+i*4,v) || v!=result.timing[i])return Fail(io);
+		}
+#endif
 		if(!FinalCommands(io))return Fail(io);
 
 		result.phase=7;if(!Select(io,true) || !Guard(io,true))return Fail(io);

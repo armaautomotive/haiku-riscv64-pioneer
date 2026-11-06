@@ -7,7 +7,11 @@ import pathlib
 import subprocess
 import sys
 import tempfile
+timing=sys.argv[-1:] == ['--timing']
+if timing:sys.argv.pop()
 assert __debug__ and len(sys.argv) == 2
+sample_count=2 if timing else 9
+result_bytes=416 if timing else 352
 private = pathlib.Path(sys.argv[1])
 here = pathlib.Path(__file__).resolve().parent
 root = here.parents[2]
@@ -116,18 +120,41 @@ int main(int argc,char** argv){assert(argc==4);scenario=unsigned(strtoul(argv[1]
 }
 '''
 program = program.replace('"PROTOCOL"', '"' + str(root / 'src/add-ons/kernel/drivers/misc/PioneerNativeCompactQ4StreamProtocol.h') + '"').replace('"RELOAD"', '"' + str(root / 'src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h') + '"').replace('"CLIENT"', '"' + str(here.parent / 'pioneer_native_compact_q4_stream_diagnostic.cpp') + '"')
+if timing:
+    program=program.replace('m.generation=37;','m.generation=43;').replace('r.expected_generation==37','r.expected_generation==43')
+    program=program.replace('r.sample==opens-1','r.sample==(opens==1?0U:6U)')
+    program=program.replace('--fixed-compact-q4-full-k-stream','--fixed-compact-q4-timing-full-k-stream')
+    program=program.replace('bool okay=!scenario || scenario==201;','bool okay=!scenario || scenario==201 || scenario==202 || scenario==203;')
+    program=program.replace('opens==9 && closes==9 && queries==9 && supports==9 && runs==9 && ends==9',
+                            'opens==2 && closes==2 && queries==2 && supports==2 && runs==2 && ends==2')
+    program=program.replace('word==12?9:word-2','word==5?2:word-2')
+    marker=' const unsigned base=end?100:50;'
+    assert program.count(marker)==1
+    program=program.replace(marker,r'''
+ for(unsigned pass=0;pass<2;pass++){
+  auto* t=r.result.timing+pass*8;t[0]=0x314d5451;t[1]=scenario==202?0x20001:0x10001;
+  t[2]=PioneerNativeCompactQ4StreamVariant::Width(r.sample);t[3]=pass;
+  if(scenario!=202){t[4]=1000+pass*3000;t[6]=t[4]+2000;}
+  if(scenario==203)t[0]^=1;
+ }
+ if(Fail() && scenario==204 && end){r.result.timing[word]^=1;poisoned=true;return 0;}
+''' + marker)
 (folder / 'test.cpp').write_text(program)
 subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-ffp-contract=off', '-fsanitize=address,undefined',
+                *(['-DPIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING=1'] if timing else []),
                 '-I' + str(folder), '-I' + str(private), '-I' + str(here.parent), str(folder / 'test.cpp'), '-o', str(folder / 'test')], check=True)
 cases = [(0, 0, 0), (1, 0, 0), (2, 0, 0), (6, 0, 0), (9, 0, 0), (201, 0, 0)]
-cases += [(200, 0, point) for point in range(1,13)]
-for target in range(9):
+cases += [(200, 0, point) for point in range(1,sample_count+4)]
+if timing:
+    cases += [(202,0,0),(203,0,0)]
+    cases += [(204,target,word) for target in range(2) for word in range(16)]
+for target in range(sample_count):
     for scenario in (3, 4, 5, 7, 8, *range(10, 25), 26, *range(31, 38), 39, *range(50, 89), *range(100, 139)):
         for word in (range(64) if scenario in (78, 128) else (0,)):
             cases.append((scenario, target, word))
-    for byte in range(352):
+    for byte in range(result_bytes):
         cases.append((30, target, byte))
-for target in range(9):
+for target in range(sample_count):
     cases.append((25, target, 0))
 def check_case(case):
     scenario, target, word = case
@@ -136,12 +163,15 @@ def check_case(case):
     assert result.returncode == 0, (scenario, target, word, result.stdout.decode(), result.stderr.decode())
     assert b'AddressSanitizer' not in result.stderr and b'runtime error:' not in result.stderr
     if not scenario:
-        assert not result.stderr and result.stdout.count(b'NATIVE_COMPACT_Q4_STREAM_RETURNED_WORD') == 576 and result.stdout.count(b'PASS_NATIVE_COMPACT_Q4_STREAM_SAMPLE sample') == 9
+        assert not result.stderr and result.stdout.count(b'NATIVE_COMPACT_Q4_STREAM_RETURNED_WORD') == sample_count*64 and result.stdout.count(b'PASS_NATIVE_COMPACT_Q4_STREAM_SAMPLE sample') == sample_count
+        if timing:assert result.stdout.count(b'NATIVE_COMPACT_Q4_TIMING sample')==4 and result.stdout.count(b'cycles2000;CARD_CYCLES_ONLY_NO_FREQUENCY_ASSUMPTION')==4
+    if timing and scenario in (202,203):
+        assert not result.stderr and result.stdout.count(b'UNAVAILABLE_NO_TIMING_OR_CLEANUP_AUTHORITY')==4 and b' cycles' not in result.stdout
 with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
     for index, _ in enumerate(pool.map(check_case, cases)):
         if index and not index % 400:
             print(f'CLIENT_FIXTURES_PROGRESS {index}/{len(cases)};NO GPU', flush=True)
 
 assert hashlib.sha256(meta.read_bytes()).hexdigest() == 'c856c1747045a50c43e5b1f47a7e75999526bbc61960eed075246423392872de'
-print(f'PASS ACTUAL104 client:{len(cases)} ASan/UBSan explicit source/device fixture cases,all352 SUPPORT bytes/all64 RUN+END words in all9 samples plus GDDR journal/traffic/width fields;NO END/query/next sample/retry after uncertainty;NOT original authentication/native/GPU/model/speed proof')
+print(f'PASS ACTUAL{107 if timing else 104} client:{len(cases)} ASan/UBSan explicit source/device fixture cases,all{result_bytes} SUPPORT bytes/all64 RUN+END words in all{sample_count} samples plus GDDR journal/traffic/width fields;NO END/query/next sample/retry after uncertainty;NOT original authentication/native/GPU/model/speed proof')
 print('CPU-only actual104 client evidence:', folder)

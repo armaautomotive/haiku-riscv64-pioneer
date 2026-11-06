@@ -287,7 +287,11 @@ bool IO::NativeL1Read(unsigned a,uint32& v) {
 	if(owner.resetStage==2) {
 		const auto& r=owner.lease.Result().compute;
 		const bool status=a>=0x17ffc0 && a<0x17ffcc;
-		const bool output=a>=PioneerNativeCompactQ4StreamLayout::Output && a<PioneerNativeCompactQ4StreamLayout::Output+256 && r.phase==0x7000c && r.count==PioneerNativeCompactQ4StreamVariant::Count(owner.sample) && r.marker==NativeResultMarker
+		const bool output=((a>=PioneerNativeCompactQ4StreamLayout::Output && a<PioneerNativeCompactQ4StreamLayout::Output+256)
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+			|| (a>=PioneerQ38Q4KernelTiming::Address && a<PioneerQ38Q4KernelTiming::Address+64)
+#endif
+			) && r.phase==0x7000c && r.count==PioneerNativeCompactQ4StreamVariant::Count(owner.sample) && r.marker==NativeResultMarker
 			&& (r.pc[0]==0x70038 || r.pc[0]==0x7003c) && (r.pc[1]==0x70038 || r.pc[1]==0x7003c);
 		if(owner.lease.Result().phase!=5 || (!status && !output))return false;
 

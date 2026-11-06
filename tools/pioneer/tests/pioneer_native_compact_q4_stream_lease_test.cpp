@@ -1,13 +1,20 @@
 /* SPDX-License-Identifier: MIT */
 #define B_DEVICE_OP_CODES_END 10000
 #define PIONEER_Q4_COMPACT_STREAM_IMAGE_ONLY
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+#define PIONEER_Q4_KERNEL_TIMING_MACHINE_ONLY
+#include "pioneer_q38_q4_kernel_timing_image_test.cpp"
+using NMachine=Q4TimingRV32;
+#else
 #include "pioneer_q38_q4_fpu_compact_stream_image_test.cpp"
+using NMachine=CompactStreamRV32;
+#endif
 #include "../PioneerNativeCompactQ4StreamLease.h"
 #include <type_traits>
 using NLease=PioneerNativeCompactQ4StreamLease;using NL=PioneerNativeCompactQ4StreamLayout;
 using NV=PioneerNativeCompactQ4StreamVariant;
 struct NImage {
-	static constexpr unsigned Samples=9,Rows=32,Phases=4,LayoutRole=104,Bytes=7644,MetadataFirst=128,MetadataRows=128,DstLast=255;
+	static constexpr unsigned Samples=9,Rows=32,Phases=4,LayoutRole=NV::Role,Bytes=NV::ImageBytes,MetadataFirst=128,MetadataRows=128,DstLast=255;
 	static inline unsigned Boot=0;static inline std::vector<uint8_t> code[2];
 	static unsigned Width(unsigned s){return NV::Width(s);}
 	static unsigned Word(unsigned s,unsigned i){const auto& c=code[s<6?0:1];return i<c.size()/4?::Word(c,i*4):0;}
@@ -35,13 +42,16 @@ struct NData {
 // and GDDR vectors. No completed-result injection,post-BOOT payload copying,
 // normalized descriptor,host K loop or reference in the native driver.
 struct NLeaseIO {
-	NLease& lease;CompactStreamRV32 vm;std::vector<uint8_t> original,originalDram;
+	NLease& lease;NMachine vm;std::vector<uint8_t> original,originalDram;
 	const tt_dram_samples_result* proof=nullptr;unsigned sample;const uint32_t* recordedL1=nullptr;const uint32_t* recordedDram=nullptr;
 	uint32_t source[16]={0x6005,0x0a418820,0x1ac4a166,0x127541ee,0x1e280440,0x1662b5c3,0x147,
 		0x0a418820,0x16a4a0e6,0x06a12c20,0x0c72a089,0x0e548c20,2,0,3,0};
 	uint32_t tlb[2][3]={{1,2,3},{4,5,6}},reset=0x47800;
 	unsigned operations=0,scopes=0,retains=0,resets=0,l1Writes=0,dramWrites=0,niuWrites=0,tlbWrites=0,clockCalls=0;
 	unsigned dropTlb=0,dropReset=0,dropL1=0,dropDram=0,dropNiu=0;
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+	unsigned timingReads=0,dropTimingRead=0;
+#endif
 	bool retained=false,scopeValid=true,clock=false,started=false,executed=false,fifo=false;
 	bool timeout=false,badMarker=false,badPc=false,badSource=false,badCounter=false,beginFail=false,endFail=false;
 	bool restoreL1Fail=false,restoreDramFail=false,clockTlbDamage=false,earlierDramDamage=false;
@@ -81,7 +91,13 @@ struct NLeaseIO {
 		Check();Selected();assert(reset==0x47800 && (a==0x100 || (a<=0x24 && !(a&3))));if(++niuWrites==dropNiu)return true;
 		if(a==0x100){assert(v==source[0] || v==(source[0]|0x10000));fifo=bool(v&0x10000);}else vm.bus.command[a/4]=v;return true;
 	}
-	bool NativeL1Read(unsigned a,uint32_t& v){Check();Selected();assert(NL::Contains(a));v=vm.ReadL1(a);return true;}
+	bool NativeL1Read(unsigned a,uint32_t& v){Check();Selected();assert(NL::Contains(a));
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+		if(started && (lease.Result().phase==5 || lease.Result().phase==6)
+			&& a>=PioneerQ38Q4KernelTiming::Address && a<PioneerQ38Q4KernelTiming::Address+64
+			&& ++timingReads==dropTimingRead)return false;
+#endif
+		v=vm.ReadL1(a);return true;}
 	bool NativeL1Write(unsigned a,uint32_t v) {
 		Check();Selected();assert(NL::Contains(a) && reset==0x47800 && (lease.Result().phase==4 || lease.Result().phase==8));
 		if(++l1Writes!=dropL1 && !(restoreL1Fail && started && v==::Word(original,a)))vm.WriteL1(a,v);return true;
@@ -112,7 +128,7 @@ static void NoMoreLease(NLease& l,NLeaseIO& io) {
 #ifndef PIONEER_NATIVE_COMPACT_Q4_STREAM_LEASE_ONLY
 int main(int argc,char** argv) {
 	assert(argc==3);static_cast<void>(&NoMore);
-	for(unsigned w=0;w<2;w++){std::string d=argv[w+1];NImage::code[w]=Read((d+"/text.bin").c_str());assert(NImage::code[w].size()==7644);NImage::Boot=::Word(Read((d+"/boot.bin").c_str()),0);}
+	for(unsigned w=0;w<2;w++){std::string d=argv[w+1];NImage::code[w]=Read((d+"/text.bin").c_str());assert(NImage::code[w].size()==NV::ImageBytes);NImage::Boot=::Word(Read((d+"/boot.bin").c_str()),0);}
 	for(unsigned s=0;s<9;s++)NData::samples.emplace_back(NV::Width(s),s);
 	static_assert(!std::is_copy_constructible<NLease>::value && !std::is_copy_assignable<NLease>::value,"unique heap journals");
 	for(unsigned s=0;s<9;s++) {
@@ -125,7 +141,7 @@ int main(int argc,char** argv) {
 			&& r.compute.tlb_restored && r.gddr_restored && r.niu_restored && r.clock_restored);
 		assert(io->vm.native.l1==io->original && io->vm.bus.dram==io->originalDram && io->resets==4 && io->clockCalls==2 && !io->clock && !io->fifo && !io->retained);
 		for(unsigned a=0;a<2;a++)for(unsigned i=0;i<3;i++)assert(io->tlb[a][i]==a*3+i+1);for(unsigned v:io->vm.bus.command)assert(!v);NoMoreLease(*l,*io);
-		printf("PASS OFFBOARD compact104 full-K Q4 lease sample%u K%u:actual strict RV32/NIU/shared L1/FPU all64 exact;whole107632B L1/%uB GDDR/NIU/FIFO/TLB/clock restored;NO native PCI/VM/FD/hardware/quality/speed authority\n",s,NV::Width(s),NL::DramWords(NV::Width(s))*4);fflush(stdout);
+		printf("PASS OFFBOARD compact%u full-K Q4 lease sample%u K%u:actual strict RV32/NIU/shared L1/FPU all64 exact;whole107632B L1/%uB GDDR/NIU/FIFO/TLB/clock restored;NO native PCI/VM/FD/hardware/quality/speed authority\n",NV::Role,s,NV::Width(s),NL::DramWords(NV::Width(s))*4);fflush(stdout);
 	}
 	unsigned failed=0;
 	for(unsigned f=0;f<45;f++) {

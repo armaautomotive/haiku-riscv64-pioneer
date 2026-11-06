@@ -6,6 +6,8 @@ import pathlib
 import stat
 import subprocess
 import sys
+timing=sys.argv[-1:] == ['--timing']
+if timing:sys.argv.pop()
 assert __debug__ and len(sys.argv) == 4 and not os.environ.get('PYTHONOPTIMIZE')
 build, private, output = map(pathlib.Path, sys.argv[1:])
 assert build.is_absolute() and build.is_dir() and output.is_absolute() and not output.exists() and not output.is_symlink()
@@ -31,8 +33,9 @@ for path in [sdk / 'headers/os', *sorted((sdk / 'headers/os').iterdir())]:
     if path.is_dir():
         includes += ['-isystem', str(path)]
 libs = ['-L' + str(path) for path in sorted((build / 'build_packages').glob('gcc_syslibs-*/lib'))]
-binary = output / 'pioneer-native-compact-q4-stream-diagnostic'
-command = [cxx, '-std=c++17', '-O2', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror', *includes,
+binary = output / ('pioneer-native-compact-q4-timing-diagnostic' if timing else 'pioneer-native-compact-q4-stream-diagnostic')
+selected=['-DPIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING=1'] if timing else []
+command = [cxx, '-std=c++17', '-O2', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror', *selected,*includes,
     '-I' + str(private), '-I' + str(here), '-I' + str(root / 'headers/private/shared'), '-I' + str(root / 'headers/private/libroot'),
     '-B' + str(release / 'system/glue'), '-L' + str(release / 'system/libroot'), '-L' + str(release / 'kits'), *libs,
     str(here / 'pioneer_native_compact_q4_stream_diagnostic.cpp'), str(here / 'PioneerModelWeightCache.cpp'),
@@ -42,9 +45,9 @@ subprocess.run(command, check=True)
 cases = [['-D' + macro + '=' + str(value)] for value in (0, 1) for macro in ('_KERNEL_MODE', 'PIONEER_Q38_WORK_INFERENCE', 'TT_PIONEER_Q38_WORK_MODE', 'PIONEER_Q38_CPU_VALIDATION', 'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE')]
 cases.append(['-ffast-math'])
 for flags in cases:
-    result = subprocess.run([cxx, '-std=c++17', *flags, *includes, '-I' + str(private), '-I' + str(here),
+    result = subprocess.run([cxx, '-std=c++17', *selected,*flags, *includes, '-I' + str(private), '-I' + str(here),
                             '-fsyntax-only', str(here / 'pioneer_native_compact_q4_stream_diagnostic.cpp')], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True)
     assert result.returncode and 'Compact Q4 full-K source reference is a separate diagnostic' in result.stderr
 unchanged()
 print(hashlib.sha256(binary.read_bytes()).hexdigest(), binary.name)
-print('PASS BUILD_ONLY actual SDK diagnostic104 client LINKED,11 source/Work/validation/fast-math-role refusals;PRIVATE operands unchanged;NO stage/device/hardware/full-model/quality/speed authority')
+print('PASS BUILD_ONLY actual SDK diagnostic'+('107' if timing else '104')+' client LINKED,11 source/Work/validation/fast-math-role refusals;PRIVATE operands unchanged;NO stage/device/hardware/full-model/quality/speed authority')

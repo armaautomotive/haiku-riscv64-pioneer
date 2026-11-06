@@ -126,6 +126,9 @@ int main(int argc,char** argv) {
 	}
 	{
 		NativeFixture f;f.Map(3);f.Select(true);uint32 v=0;
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+		assert(sizeof(PioneerNativeCompactQ4StreamRequest)==456);
+#endif
 		for(unsigned a:{0x04000000U,0x040167fcU,0x04100000U,0x041027fcU}) {
 			assert(f.c->io.NativeDramWrite(a,a^0x98760000) && f.c->io.NativeDramRead(a,v) && v==(a^0x98760000));valid++;
 		}
@@ -295,5 +298,29 @@ int main(int argc,char** argv) {
 			f.c->resetStage=2;f.c->clockEntered=true;refused++;
 		}
 	}
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+	{
+		NativeFixture f;f.Map(4);auto& r=f.Result().compute;uint32 value=0;
+		f.Result().phase=5;f.c->resetStage=2;f.c->fifoStage=1;f.Reset(0x46800);
+		for(unsigned word=0;word<16;word++){
+			const unsigned address=PioneerQ38Q4KernelTiming::Address+word*4,before=ioCalls;
+			assert(!f.c->io.NativeL1Read(address,value) && !f.c->io.NativeL1Write(address,1) && ioCalls==before);refused+=2;
+		}
+		r.phase=0x7000c;r.count=NV::Count(0);r.marker=NV::Marker;r.pc[0]=r.pc[1]=0x70038;
+		for(unsigned word=0;word<16;word++){
+			const unsigned address=PioneerQ38Q4KernelTiming::Address+word*4;
+			assert(f.c->io.NativeL1Read(address,value));valid++;
+			const unsigned before=ioCalls;assert(!f.c->io.NativeL1Write(address,1) && ioCalls==before);refused++;
+		}
+		for(unsigned fault=0;fault<5;fault++){
+			if(fault==0)r.phase^=1;if(fault==1)r.count^=1;if(fault==2)r.marker^=1;if(fault==3)r.pc[0]=0x70040;if(fault==4)r.pc[1]=0x70040;
+			const unsigned before=ioCalls;assert(!f.c->io.NativeL1Read(PioneerQ38Q4KernelTiming::Address,value) && ioCalls==before);refused++;
+			r.phase=0x7000c;r.count=NV::Count(0);r.marker=NV::Marker;r.pc[0]=r.pc[1]=0x70038;
+		}
+		for(unsigned address:{PioneerQ38Q4KernelTiming::Address+64,PioneerQ38Q4KernelTiming::Address+1}){
+			const unsigned before=ioCalls;assert(!f.c->io.NativeL1Read(address,value) && ioCalls==before);refused++;
+		}
+	}
+#endif
 	printf("PASS actual native%u endpoint fixtures:valid%u refused%u;NO prerequisite/ARC/engine/hardware/model/speed authority\n",PioneerNativeCompactQ4StreamVariant::Role,valid,refused);
 }

@@ -3,6 +3,9 @@
 #define PIONEER_NATIVE_COMPACT_Q4_STREAM_LAYOUT_H
 #include <stdint.h>
 #include "PioneerQ38Q4FpuCompactStreamLayout.h"
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+#include "PioneerQ38Q4KernelTiming.h"
+#endif
 // Distinct fixed DATA scopes. Full L1 journal includes BOTH buffers/gaps;
 // GDDR access is ONLY the selected exact weight+input domains,not2MiB.
 struct PioneerNativeCompactQ4StreamLayout:PioneerQ38Q4FpuCompactStreamLayout {
@@ -57,8 +60,18 @@ struct PioneerNativeCompactQ4StreamLayout:PioneerQ38Q4FpuCompactStreamLayout {
    at=InputIndex(local);if(at!=UINT32_MAX)return WeightBytes(k)/4+block*128+at/4;
   }return UINT32_MAX;
  }
- static bool Immutable(unsigned a){return Contains(a) && (a==0x6000 || (a>=0x70000 && a<0x72000)
+ static bool Immutable(unsigned a){
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+  if(a>=PioneerQ38Q4KernelTiming::Address && a<PioneerQ38Q4KernelTiming::Address+PioneerQ38Q4KernelTiming::Words*4)return false;
+#endif
+  return Contains(a) && (a==0x6000 || (a>=0x70000 && a<0x72000)
   || (a>=Frame && a<Frame+32) || (a>=DataBegin && a<DataEnd && !(a>=Output && a<Output+256)));}
 };
 static_assert(PioneerNativeCompactQ4StreamLayout::L1Words*4==107632 && PioneerNativeCompactQ4StreamLayout::MaxDramWords*4==348160,"exact compact dual-buffer journals");
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+static_assert(PioneerQ38Q4KernelTiming::Address==PioneerNativeCompactQ4StreamLayout::Output+256
+ && PioneerQ38Q4KernelTiming::Words==16
+ && PioneerQ38Q4KernelTiming::Address+64<PioneerNativeCompactQ4StreamLayout::DataEnd
+ && PioneerQ38Q4KernelTiming::Address+64<0xa0000-64,"timing DATA within same journal and outside either producer slot");
+#endif
 #endif

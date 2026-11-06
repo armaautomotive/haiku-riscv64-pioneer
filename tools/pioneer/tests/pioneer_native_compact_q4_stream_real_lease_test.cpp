@@ -19,8 +19,8 @@ int main(int argc,char** argv) {
 		const auto n=io->operations;
 		assert((!l->Run<NLeaseIO,PioneerNativeCompactQ4StreamGeneratedImage,PioneerNativeCompactQ4StreamData>(*io,p,s)
 			&& !l->End<NLeaseIO,PioneerNativeCompactQ4StreamGeneratedImage,PioneerNativeCompactQ4StreamData>(*io)) && io->operations==n);
-		printf("PASS PRIVATE actual compact full-K104 image+header lease sample%u tensor%u first%u K%u:all64 exact,whole107632B L1/%uB GDDR/NIU/FIFO/TLB/clock restored;NO native IO/hardware/full-model quality/speed proof\n",
-			s,NV::Tensor(s),NV::First(s),NV::Width(s),NL::DramWords(NV::Width(s))*4);fflush(stdout);
+		printf("PASS PRIVATE actual compact full-K%u image+header lease sample%u tensor%u first%u K%u:all64 exact,whole107632B L1/%uB GDDR/NIU/FIFO/TLB/clock restored;NO native IO/hardware/full-model quality/speed proof\n",
+			NV::Role,s,NV::Tensor(s),NV::First(s),NV::Width(s),NL::DramWords(NV::Width(s))*4);fflush(stdout);
 	}
 	puts("PASS PRIVATE actual compiled compact full-K104 data/image/RV32 lease576 exact words over9 bands;NOT physical execution/full-model quality/performance authority");
 }

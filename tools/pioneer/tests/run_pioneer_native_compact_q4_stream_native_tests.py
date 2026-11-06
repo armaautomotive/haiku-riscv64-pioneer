@@ -8,6 +8,8 @@ import stat
 import subprocess
 import sys
 
+timing=sys.argv[-1:] == ['--timing']
+if timing:sys.argv.pop()
 if not __debug__ or len(sys.argv) != 4:
     raise SystemExit('Use non-optimized Python NATIVE_BUILD PRIVATE_EXPORT NEW_OUTPUT')
 build, private, output = map(pathlib.Path, sys.argv[1:4])
@@ -26,9 +28,9 @@ for name, digest in pins.items():
     assert hashlib.sha256((private / name).read_bytes()).hexdigest() == digest
 image = build / 'image5120'
 large = build / 'image17408'
-assert hashlib.sha256((image / 'text.bin').read_bytes()).hexdigest() == 'f67b7b5bc07bddcf5f3ddfccfbe1013c2680650ea1994231565f050d1f0d89c5'
+assert hashlib.sha256((image / 'text.bin').read_bytes()).hexdigest() == ('8156dd4e49912270887cf45f98e9b7c2892a0549a72c909dbefc502aa2205512' if timing else 'f67b7b5bc07bddcf5f3ddfccfbe1013c2680650ea1994231565f050d1f0d89c5')
 assert hashlib.sha256((image / 'boot.bin').read_bytes()).hexdigest() == 'd47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd'
-assert hashlib.sha256((large / 'text.bin').read_bytes()).hexdigest() == 'c95e0cc41971b37dd89786a2c3747b6d8ef6ebbde3a2ec837c63198982373b92'
+assert hashlib.sha256((large / 'text.bin').read_bytes()).hexdigest() == ('9723a83e4550cd66e36613f49d0959251ac0d5f755b903568e8725d4a345ac3f' if timing else 'c95e0cc41971b37dd89786a2c3747b6d8ef6ebbde3a2ec837c63198982373b92')
 output.mkdir(mode=0o700)
 # Reuse ONLY the explicit kernel/PCI endpoint definitions,NOT the old owner,
 # old native methods or a successful ARC/baseline proof. Native.inc/control
@@ -72,10 +74,13 @@ sources = [driver / 'PioneerNativeCompactQ4StreamNative.inc', driver / 'pioneer_
            here / 'pioneer_dram_sweep_native_lifecycle_test.cpp', here / 'pioneer_native_compact_q4_stream_native_test.cpp',
            here / 'pioneer_native_compact_q4_stream_lease_test.cpp', pathlib.Path(__file__).resolve(), here.parent / 'PioneerNativeCompactQ4StreamLease.h',
            here.parent / 'PioneerNativeCompactQ4StreamLayout.h', driver / 'PioneerNativeCompactQ4StreamProtocol.h']
+sources += [driver/'PioneerNativeCompactQ4TimingRole.h',here.parent/'PioneerQ38Q4KernelTiming.h',
+            here/'pioneer_q38_q4_kernel_timing_image_test.cpp']
 source_pins = {path: hashlib.sha256(path.read_bytes()).hexdigest() for path in sources}
 binary = output / 'native-test'
 subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
                 '-ffp-contract=off', '-fsanitize=address,undefined', '-DCOHORT_SCOPE_COUNTER_TEST',
+                *(['-DPIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING=1'] if timing else []),
                 '-I' + str(output), '-I' + str(build),
                 '-I' + str(private), '-I' + str(here.parent), str(here / 'pioneer_native_compact_q4_stream_native_test.cpp'),
                 '-o', str(binary)], check=True)
@@ -86,4 +91,4 @@ for name, digest in pins.items():
 for path, digest in source_pins.items():
     assert hashlib.sha256(path.read_bytes()).hexdigest() == digest
 (output / 'native-source-sha256.txt').write_text('\n'.join(digest + '  ' + str(path.relative_to(root)) for path, digest in source_pins.items()) + '\n')
-print('PASS actual native104/control endpoint fixtures;PRIVATE headers unchanged;NO native ARC/prerequisite/engine/hardware/full-model/speed proof:', output)
+print('PASS actual native'+('107' if timing else '104')+'/control endpoint fixtures;PRIVATE headers unchanged;NO native ARC/prerequisite/engine/hardware/full-model/speed proof:', output)

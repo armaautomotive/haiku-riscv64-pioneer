@@ -9,10 +9,17 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <sys/ioctl.h>
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+#include "PioneerQ38Q4KernelTiming.h"
+#endif
 namespace {
 using Meta=PioneerNativeCompactQ4StreamMetadata;
 using Variant=PioneerNativeCompactQ4StreamVariant;
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+constexpr uint64_t ExpectedGeneration=43; // requires fresh independent admission
+#else
 constexpr uint64_t ExpectedGeneration=37; // exact fresh native104 parent epoch
+#endif
 constexpr const char* Original="/boot/home/models/Qwen3.8-27B-Q4_K_M.gguf";
 bool Result(const PioneerNativeCompactQ4StreamRequest& r,unsigned sample,uint64_t generation,unsigned state) {
 	const auto& c=r.result.compute;const unsigned restored=unsigned(state==PIONEER_NATIVE_BFP_CLOSED);
@@ -34,16 +41,38 @@ void Dump(FILE* stream,const PioneerNativeCompactQ4StreamRequest& r,unsigned sam
 			sample,Meta::Tensor(sample),Meta::First(sample),Meta::Width(sample),pass,row,r.result.compute.output[pass*32+row],golden[row]);
 }
 bool Delivered(){return !fflush(stdout) && !ferror(stdout);}
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+void DumpTiming(const PioneerNativeCompactQ4StreamRequest& r,unsigned sample){
+	using T=PioneerQ38Q4KernelTiming;
+	for(unsigned pass=0;pass<2;pass++){
+		const auto* p=r.result.timing+pass*8;const unsigned state=T::State(p,Variant::Width(sample),pass);
+		if(state==1){
+			const uint64_t start=uint64_t(p[4])|(uint64_t(p[5])<<32),end=uint64_t(p[6])|(uint64_t(p[7])<<32);
+			printf("NATIVE_COMPACT_Q4_TIMING sample%u width%u pass%u state1 start%llu end%llu cycles%llu;CARD_CYCLES_ONLY_NO_FREQUENCY_ASSUMPTION\n",
+				sample,Variant::Width(sample),pass,(unsigned long long)start,(unsigned long long)end,(unsigned long long)(end-start));
+		}else printf("NATIVE_COMPACT_Q4_TIMING sample%u width%u pass%u state%u;UNAVAILABLE_NO_TIMING_OR_CLEANUP_AUTHORITY\n",sample,Variant::Width(sample),pass,state);
+	}
+}
+#endif
 }
 int main(int argc,char** argv) {
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+	if(argc!=2 || strcmp(argv[1],"--fixed-compact-q4-timing-full-k-stream")){fputs("Use --fixed-compact-q4-timing-full-k-stream for two fixed full-K DEBUG bands,NOT model/Work inference.\n",stderr);return 2;}
+#else
 	if(argc!=2 || strcmp(argv[1],"--fixed-compact-q4-full-k-stream")){fputs("Use --fixed-compact-q4-full-k-stream for nine fixed full-K DEBUG samples,NOT model/Work inference.\n",stderr);return 2;}
+#endif
 	if(geteuid()!=0)return 1;
 	PioneerNativeCompactQ4StreamSource source;std::string error;
 	puts("AUTHENTICATING_FIXED_ORIGINAL_AND_FRESH_COMPACT_Q4_STREAM_REFERENCE;CPU_DIAGNOSTIC_ONLY_NO_DEVICE_YET");if(!Delivered())return 1;
 	if(!source.Prepare(Original,error) || !source.Ready()){fprintf(stderr,"NATIVE_COMPACT_Q4_STREAM_SOURCE_REFUSED: %s;NO_DEVICE_OPEN\n",error.c_str());return 1;}
 	puts("AUTHENTICATED_FIXED_COMPACT_Q4_STREAM_MODEL c600de03 samples9 widths5120_17408 rows32 full_k_payload_and_reference_exact;DEBUG_NOT_WORK");if(!Delivered())return 1;
 	uint64_t seriesGeneration=0;
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+	for(unsigned selected=0;selected<2;selected++) {
+		const unsigned sample=selected?6:0; // Representative fixed model widths.
+#else
 	for(unsigned sample=0;sample<9;sample++) {
+#endif
 		if(!source.Ready())return 1;
 		const int fd=open("/dev/misc/tenstorrent_pci_probe",O_RDWR|O_CLOEXEC);if(fd<0)return 1;
 		tt_pioneer_driver_reload metadata={};metadata.version=1;metadata.expected_tag=PioneerNativeCompactQ4StreamVariant::Tag;
@@ -76,6 +105,9 @@ int main(int argc,char** argv) {
 		if(ioctl(fd,PIONEER_NATIVE_COMPACT_Q4_STREAM_END,&end,sizeof(end)) || !Result(end,sample,metadata.generation,PIONEER_NATIVE_BFP_CLOSED)
 			|| memcmp(end.result.compute.output,r.result.compute.output,sizeof(r.result.compute.output))
 			|| memcmp(end.result.compute.controls,r.result.compute.controls,sizeof(r.result.compute.controls))
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+			|| memcmp(end.result.timing,r.result.timing,sizeof(r.result.timing))
+#endif
 			|| end.result.compute.polls!=r.result.compute.polls || !source.Ready()) {
 			fputs("NATIVE_COMPACT_Q4_STREAM_END_SOURCE_UNPROVEN;CLOSE_ONLY_NO_RETRY\n",stderr);close(fd);return 1;
 		}
@@ -84,8 +116,15 @@ int main(int argc,char** argv) {
 		printf("PASS_NATIVE_COMPACT_Q4_STREAM_SAMPLE sample%u tensor%u first%u width%u phases4 dual_jobs2 exact_words64 polls%u generation%llu saved_l126908 saved_gddr%u requests%u flits%u;EXPLICIT_END_L1_GDDR_NIU_FIFO_TLB_CLOCK_PCI_RESTORED;NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM\n",
 			sample,Meta::Tensor(sample),Meta::First(sample),Meta::Width(sample),r.result.compute.polls,(unsigned long long)metadata.generation,
 			r.result.saved_gddr,r.result.requests,r.result.flits);
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+		DumpTiming(r,sample); // AFTER actual clean END and close,never cleanup authority.
+#endif
 		if(!Delivered())return 1; // no next sample on failed output channel
 	}
+#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+	puts("PASS_NATIVE_COMPACT_Q4_STREAM samples2 exact_words128 clean_ends2;DEBUG_REFERENCE_NOT_WORK_NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM");
+#else
 	puts("PASS_NATIVE_COMPACT_Q4_STREAM samples9 exact_words576 clean_ends9;DEBUG_REFERENCE_NOT_WORK_NO_FULL_MODEL_QUALITY_OR_SPEED_CLAIM");
+#endif
 	return Delivered()?0:1;
 }

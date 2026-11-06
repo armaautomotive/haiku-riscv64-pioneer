@@ -1,0 +1,67 @@
+Isolated Q4 timing diagnostic107 -- native interface qualified OFFBOARD
+=====================================================================
+2026-11-06. Basee116999831 plus20 scoped source files. No card run or
+new inference-speed result yet.20tokens/sec remains unmet.
+
+New107 is explicit opt-in,not an update to104 or Assistant Work. It uses
+tag2026110600010107/QCT1,7972-byte kernels and a456-byte pointer-free
+request/416-byte result,including16 preserved timestamp words. Original
+104 remains392/352 bytes and QCS1. Late role changes/cross-tag/BUILD/Work/
+CPU-reference selections refuse. SAME fixed104 learned payload/metadata
+headers are retained and authenticated;their source role is NOT retagged.
+
+The existing107632-byte L1 journal already includes0x98100..0x98140.
+Only those64 bytes become mutable in107;no allocation/range grows.
+Raw timing reads require the same proven terminal phase/count/marker/PC
+gate as outputs and the same FD/thread/team/generation/lock/PCI/all17
+VM/6TLB checks. No running writes or arbitrary clock/register access.
+Run captures raw records after completed math. END holds the core,then
+compares those exact raw words before restoring memory. Clock shape is
+NOT completion/cleanup authority. Unavailable clocks still cleanly close.
+
+The new client launches only fixed bands0/6 (K5120 gate,K17408 down),
+two complete32-output passes each. Original full-source authentication,
+fresh diagnostic CPU reference and strict64-word comparisons precede
+each explicit END. Work remains separate and has no CPU reference added.
+Cycle DATA is printed only AFTER END/close;no assumed-frequency conversion.
+Source preparation authenticates all9 compiled bands,not9 physical runs.
+
+Main and independent clean export EACH actually exit0:16 children each,
+all stderr empty.16 complete driver/client/GPU/header/control artifacts
+are byte-identical.Original104 driver4722e956 and client64c8c252 and default
+control2df0e0f8 are exact existing hashes. New driver505312ca/new client
+eabdd33a match between both trees and the fresh one-shot parent pins.
+Source closures920main/917clean frozen before/after;only the SAME6 old
+dirty native files differ and SAME3 inactive resident WIP files are absent
+from clean. They remain untouched. Different temporary path receipt lines
+in two host test outputs are recorded,not called byte-identical.
+
+Actual compiled timed RV32/NoC/SFPU/FPU journal tests:all9 original bands,
+576 exact words,whole L1/GDDR/NIU/FIFO/TLB/clock restoration.57 pre-existing
+failure/refusal fixtures also pass on the new program. Additional tests:
+ 4 clock cases close safely,16 raw-word mutations and32 read faults retain
+ without further requested IO. Native endpoints333 valid/798 refused.
+ ABI/role3 positive/27 refused. Actual client1345 source/syscall fixtures,
+ all416 SUPPORT bytes,all64 RUN/END words and all16 returned timing words.
+ Independent child parser2 positive/412 refused;actual shell flow418
+ cases and173 incomplete-parent refusals. Unavailable timing permits
+ known-safe normal-driver restoration;unknown math/END never does.
+These are explicit host/kernel/PCI fixtures,NOT physical engine proof.
+
+The staged parent (NOT EXECUTED by this qualification) is restricted to
+fresh /boot/home/pioneer-native-compact-q4-timing107-a,42->43->44,exact
+binary/source/reference identities and one-shot markers. Same original
+idle/metadata/CPU/RAM/exchange procedures,guard and Assistant checks.
+Previous stages,including104/105/106,are spent and MUST NOT be replayed.
+Fresh read-only Pioneer check before qualification:normal041/gen42,
+cold0/owner0,64CPUs/full137034936320B,no model/native-test process.
+
+Reproduce (host only,new output directory):
+python3 tools/pioneer/tests/run_pioneer_native_compact_q4_timing_tests.py \
+ /Volumes/HaikuBuildLocal/generated.riscv64 \
+ /private/tmp/pioneer-native-compact104-20261105.fJHpbQbr/export \
+ /Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf \
+ /private/tmp/NEW-NATIVE-Q4-TIMING-QUALIFICATION
+No learned payload or binary is committed. Next:push this checkpoint,
+fresh runtime admission/stage/readback,one protected physical parent,
+actual exit/closed-reader and independent normal-driver preservation.
