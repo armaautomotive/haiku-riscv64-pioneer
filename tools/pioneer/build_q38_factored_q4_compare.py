@@ -7,6 +7,8 @@ from pathlib import Path
 import re
 import subprocess
 import sys
+configured=sys.argv[-1:]==['--configured']
+if configured:sys.argv.pop()
 assert __debug__ and len(sys.argv)==3 and not os.environ.get('PYTHONOPTIMIZE')
 sdk,out=map(Path,sys.argv[1:]);here=Path(__file__).resolve().parent
 assert sdk.is_absolute() and sdk.is_dir() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -17,6 +19,7 @@ flags=['-std=c++17','-Os','-Wall','-Wextra','-Werror','-ffreestanding','-fno-bui
  '-fno-exceptions','-fno-rtti','-fno-stack-protector','-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections',
  '-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables','-msmall-data-limit=0','-mno-relax',
  '-mabi=ilp32','-ffixed-s11','-fomit-frame-pointer','-fstack-usage','-DPIONEER_Q38_FACTORED_Q4_COMPARE_BUILD=1']
+if configured:flags+=['-DPIONEER_Q38_FACTORED_CONFIGURED_COMPUTE=1']
 commands=[
  [tool+'g++',*flags,'-DPIONEER_Q38_Q4_FACTORED_BFP8_BUILD=1','-march=rv32i','-c',str(here/(stem+'.cpp')),'-o',str(out/'program.o')],
  [tool+'g++',*flags,'-march=rv32i_zicsr','-c',str(here/'blackhole_q38_q4_kernel_clock.cpp'),'-o',str(out/'clock.o')],

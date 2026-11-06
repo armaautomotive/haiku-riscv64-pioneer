@@ -12,6 +12,12 @@
 #include "PioneerQ38Q4FpuCompactStreamLoader.h"
 #include "PioneerQ38Q4FpuCompactStreamCompute.h"
 #include "PioneerQ38Q4FactoredCompute.h"
+#ifdef PIONEER_Q38_FACTORED_CONFIGURED_COMPUTE
+#if PIONEER_Q38_FACTORED_CONFIGURED_COMPUTE!=1
+#error Exact separate configured-compute comparison selection required
+#endif
+#include "PioneerQ38Q4FactoredConfiguredCompute.h"
+#endif
 #include "PioneerQ38Q4KernelTiming.h"
 extern "C" __attribute__((noreturn)) void factored_compare_fault();
 extern "C" unsigned q38_q4_kernel_clock(uint32_t*);
@@ -76,7 +82,11 @@ extern "C" unsigned factored_compare_main(){
  // SAME original weights/input,one context/loader/layout,old then new.
  // One pair only,not repeatability,nominal clock-Hz or model TPS authority.
  Run<PioneerQ38Q4FpuCompactStreamCompute,32>(frame[2],frame[3],0);
+#ifdef PIONEER_Q38_FACTORED_CONFIGURED_COMPUTE
+ Run<PioneerQ38Q4FactoredConfiguredCompute,80>(frame[2],frame[3],1);
+#else
  Run<PioneerQ38Q4FactoredCompute,80>(frame[2],frame[3],1);
+#endif
  for(unsigned i=0;i<8;i++)if(Words(L::Frame)[i]!=frame[i])factored_compare_fault();
  return 0x04000000|frame[2];
 }

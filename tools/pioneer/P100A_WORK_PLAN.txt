@@ -37,6 +37,14 @@ Native113 now has a definite answer: NO in the measured cases. It costs
 31.39%/34.21% more cycles. CLOSE that candidate; do not integrate it as faster.
 The added cost is about 9,900 cycles per 256-input block in both widths.
 
+Next candidate implemented: fixed configuration is initialized once per job;
+the immediately paired matrix reuses its setup. Local main/clean checks pass,
+with 664->336 write/readback pairs per block plus 22 once/job. All arithmetic
+words/drains/results match the base producer; historical113 image unchanged.
+This is a source-count reduction, NOT a measured card speedup. Next: give it
+fresh native bindings and validate ownership/endpoints, then compare on card.
+Evidence: benchmarks/qwen38-configured-q4-component-20261106.txt.
+
 Next bounded work:
   a. Attribute recurring cost using compiled code and, only if needed, a
      bounded new on-card profile. Do not guess a bottleneck from test counts.

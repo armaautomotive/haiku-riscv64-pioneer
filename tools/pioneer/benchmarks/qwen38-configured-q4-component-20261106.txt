@@ -1,0 +1,87 @@
+Configured Q4 candidate: LOCAL PASS, CARD SPEED NOT TESTED
+=========================================================
+November 6, 2026. Source base 21d83a55325d0ea42e5e2d94d8f6ad88176fe38b
+plus the eight scoped implementation/test files in this checkpoint.
+
+Why this change
+----------------
+Native113 now passes the physical arithmetic comparison, but its new
+routine used 31.39%/34.21% more cycles than the old routine. The source
+issues 664 on-card configuration write/readback pairs per K256 block.
+Many repeat fixed values or the preceding ones-matrix setup. These are
+on-card control-core transactions, NOT PCIe trips to CPU inference.
+The cycle cost attributable to them has NOT been measured separately.
+
+Changed code
+-------------
+A distinct PioneerQ38Q4FactoredConfiguredCompute producer:
+* Programs 16 fixed PACK fields and six fixed SrcB fields once per job.
+* Reuses the 19 unchanged matrix settings between the ones dot and the
+  immediately following weighted dot. The changed tile pointer remains.
+* Retains explicit address/context words 68/69/76/124 where applicable,
+  all arithmetic instructions, drains, PACK completion waits, source-bank
+  flips, metadata import, output-affine order and full-K accumulation.
+* Forwards unrecognized/different settings; this is not a general MMIO
+  cache, unchecked write path or generic permission to reuse foreign state.
+* Requires exclusive Config0 ownership from Begin through all blocks.
+
+Selection is opt-in through build_q38_factored_q4_compare.py --configured.
+The default historical113 component stays byte-identical. No native driver,
+client, Work or Assistant selection has been added. New native bindings,
+ownership/endpoint qualification and a fresh physical comparison remain
+required; the old113 identity must not be repinned to this new image.
+
+Local qualification actually completed
+---------------------------------------
+Main session 88864 and independent clean session 6033 ACTUALLY exited 0.
+Seven children per suite, all stderr empty. All 61 consumed project-source
+pins match exactly, as do all seven complete child stdout files and both
+default/configured component text/boot binaries. The clean tree was
+exported completely before the eight overlays were copied.
+
+Strict producer/model:
+* Both widths 5120/17408, two jobs each in the same live context.
+* 45056 per-group output words match the unchanged independent numerical
+  contract. ALL emitted Tensix words and Drain events match the base
+  producer after each group, including initialization and metadata.
+* Poisoned initial configuration, asynchronous source/PACK delays and
+  invalid-argument zero-I/O checks retained.
+* Three controls refuse missing PACK initialization, missing SrcB
+  initialization or missing changed native-tile pointer.
+
+Actual compiled RV32 instruction model, same original fixture bytes:
+* Both widths return exact64 old/new words each, independent references,
+  complete shared NoC/PACK/FPU/SFPU context and unchanged strict Step.
+* Old calculation's configuration counts stay 3709/12445.
+* New calculation's counts change 13342->6804 and 45214->22932.
+* This removes 6538/22282 write/readback pairs per complete job, including
+  the 22 extra initialization pairs. Per block 664->336, not a cycle result.
+* RV32 steps for the complete OLD+NEW program change 911662->840879 and
+  2856999->2615768. These are synthetic instruction counts, NOT card cycles.
+* Candidate stack/touched extent 608 bytes in these compiled cases.
+* Role checks: one positive, 21 refused Work/native/driver/reference aliases,
+  fast-math and invalid configured selectors.
+
+Exact components:
+ default113 text 11788B SHA 6542780a82026f4a3a7f410468bb1081a7143991aeb202d39f379a67153dcedd
+ configured text 12108B SHA 43a1b152f0c7e958b907c1eb7127628b5c67aebe64345227dd71f3c8d17de2ed
+ boot 4B SHA d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd
+
+Decision and next action
+-------------------------
+Local component PASS only. Take this candidate to a NEW isolated native
+identity and validate its endpoints/ownership before ONE old/new card
+comparison. If it does not win, reject performance promotion. Do not run
+an unchanged full-model upload or integrate it into Assistant first.
+No Pioneer command, GPU job, driver change, restart or power action occurred
+in this local implementation/qualification checkpoint.
+
+Best real 27B rate remains 0.173 tok/s; latest 0.082 tok/s. No new model TPS,
+card speed, whole-model quality or 20 tok/s feasibility claim.
+
+Reproduce local component checks only (fresh absolute output directory):
+ python3 tools/pioneer/tests/run_pioneer_q38_configured_tests.py SDK OUTPUT
+
+Sibling archive retains main/clean actual exits and all 61 source pins,
+plus complete build/operator/compiled/role stdout. No binary, model or
+learned payload is published. Private complete child logs remain saved.

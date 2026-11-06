@@ -35,9 +35,11 @@ These are fixed diagnostic inputs, not whole-model quality or throughput.
 
 Current checkpoint: make one Q4 calculation demonstrably faster
 ---------------------------------------------------------------
-Next action: attribute the added block-level cost and remove a demonstrated
-hotspot, then compare old/new on the physical card. A passing software test
-does not count as a speed improvement. Keep one active implementation path.
+A separate configuration-reuse candidate now passes local checks: 664 to
+336 configuration write/readback pairs per block, plus 22 setup pairs/job.
+Same arithmetic operations/results; default113 image unchanged. NOT yet
+card-tested. Next: new native bindings and one physical old/new comparison.
+The cycle saving remains unproven. Keep one active implementation path.
 
 Four compact goals
 -------------------
@@ -60,6 +62,7 @@ Evidence (relative to tools/pioneer)
 Best model: benchmarks/qwen38-vector-q4-full-card-20261104.txt
 Latest model: benchmarks/qwen38-bf16-deferred-full-physical-20261106.txt
 Latest card result: benchmarks/qwen38-manual-last-q4-physical-20261106.txt
+New candidate, local only: benchmarks/qwen38-configured-q4-component-20261106.txt
 That report's sibling directory contains the complete closed trial/postflight.
 Detailed historical experiments remain under benchmarks/, not new progress.
 P100A_WORK_PLAN.txt defines finish criteria and what is deliberately deferred.
