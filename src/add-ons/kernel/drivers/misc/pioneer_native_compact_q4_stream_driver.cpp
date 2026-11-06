@@ -3,7 +3,9 @@
 #include <Drivers.h>
 #ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
 #include "PioneerNativeCompactQ4TimingRole.h"
-#ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
+#ifdef PIONEER_NATIVE_FACTORED_Q4_TRACE
+#define PIONEER_COMPACT_Q4_EXPECTED_TAG 0x2026110600010112ULL
+#elif defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE)
 #define PIONEER_COMPACT_Q4_EXPECTED_TAG 0x2026110600010111ULL
 #elif defined(PIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING)
 #define PIONEER_COMPACT_Q4_EXPECTED_TAG 0x2026110600010108ULL
@@ -74,7 +76,7 @@ static status_t Control(void* value,uint32 operation,void* data,size_t length) {
 		else {r.result.compute.state=sColdRecoveryRequired?PIONEER_NATIVE_BFP_UNKNOWN:PIONEER_NATIVE_BFP_EMPTY;r.result.compute.cold=sColdRecoveryRequired;status=user_memcpy(data,&r,sizeof(r));}
 		release_sem(sLock);return status;
 	}
-	if(r.sample>=9 || (operation==PIONEER_NATIVE_COMPACT_Q4_STREAM_RUN?(r.nonce || r.accept):(r.nonce!=1 || r.accept!=1)))return B_BAD_VALUE;
+	if(r.sample>=PioneerNativeCompactQ4StreamVariant::Samples || (operation==PIONEER_NATIVE_COMPACT_Q4_STREAM_RUN?(r.nonce || r.accept):(r.nonce!=1 || r.accept!=1)))return B_BAD_VALUE;
 	status=AcquireProbeLock(n->base);if(status!=B_OK)return status;
 	if(r.expected_generation!=sReloadGeneration || !sReloadGuard || sReloadGuard->version!=1 || sOpenCookies!=1)status=B_BUSY;
 	else if(operation==PIONEER_NATIVE_COMPACT_Q4_STREAM_RUN) {

@@ -19,8 +19,9 @@ selection=parser.add_mutually_exclusive_group()
 selection.add_argument('--timing',action='store_true',help='Distinct107 timed kernel diagnostic;NEVER104 deployment')
 selection.add_argument('--pair-issue',action='store_true',help='Distinct108 paired timed kernel;NEVER107 replay')
 selection.add_argument('--factored-compare',action='store_true',help='Distinct111 old/new arithmetic comparison;NEW L1/code scope')
+selection.add_argument('--factored-trace',action='store_true',help='Distinct112 fixed sample0 observations;NOT111 replay or speed test')
 args = parser.parse_args()
-if args.pair_issue or args.factored_compare:args.timing=True
+if args.pair_issue or args.factored_compare or args.factored_trace:args.timing=True
 assert args.original.is_absolute() and args.original.is_file()
 build, private, output = args.haiku_build, args.private_export, args.output
 assert build.is_absolute() and build.is_dir() and output.is_absolute() and not output.exists() and not output.is_symlink()
@@ -41,13 +42,17 @@ private_unchanged()
 subprocess.run([sys.executable, str(here / 'tests/pioneer_native_compact_q4_stream_export_test.py'), str(private), str(args.original)], check=True)
 output.mkdir(mode=0o700)
 images = {}
-role=111 if args.factored_compare else 108 if args.pair_issue else 107 if args.timing else 104
-image_bytes=11792 if args.factored_compare else 7820 if args.pair_issue else 7972 if args.timing else 7644
+role=112 if args.factored_trace else 111 if args.factored_compare else 108 if args.pair_issue else 107 if args.timing else 104
+image_bytes=12104 if args.factored_trace else 11792 if args.factored_compare else 7820 if args.pair_issue else 7972 if args.timing else 7644
 image_words=image_bytes//4
-for width, digest in ((5120, 'f67b7b5bc07bddcf5f3ddfccfbe1013c2680650ea1994231565f050d1f0d89c5'),
-                      (17408, 'c95e0cc41971b37dd89786a2c3747b6d8ef6ebbde3a2ec837c63198982373b92')):
+widths=((5120,''),) if args.factored_trace else ((5120, 'f67b7b5bc07bddcf5f3ddfccfbe1013c2680650ea1994231565f050d1f0d89c5'),
+                      (17408, 'c95e0cc41971b37dd89786a2c3747b6d8ef6ebbde3a2ec837c63198982373b92'))
+for width,digest in widths:
     directory = output / ('image' + str(width))
-    if args.factored_compare:
+    if args.factored_trace:
+        digest='f281b1419c35b1cb818e7c0278adef916ef6d19e1a2932453ee460510f560dad'
+        command=[sys.executable,str(here/'build_q38_factored_q4_trace.py'),str(build),str(directory)]
+    elif args.factored_compare:
         digest='1e2cc3d675161216bcf5593a79ca483e37c384dab815b34009161cbf36dce280'
         command=[sys.executable,str(here/'build_q38_factored_q4_compare.py'),str(build),str(directory)]
     elif args.pair_issue:
@@ -66,17 +71,21 @@ for width, digest in ((5120, 'f67b7b5bc07bddcf5f3ddfccfbe1013c2680650ea199423156
     assert len(boot) == 4 and hashlib.sha256(boot).hexdigest() == 'd47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd'
     images[width] = code
 header = ('#include <stdint.h>\nstruct PioneerNativeCompactQ4StreamGeneratedImage {\n'
-          f' static constexpr unsigned Samples=9,Rows=32,Phases=4,LayoutRole={role},Bytes={image_bytes},MetadataFirst=128,MetadataRows=128,DstLast=255;\n'
+          f' static constexpr unsigned Samples={1 if args.factored_trace else 9},Rows=32,Phases=4,LayoutRole={role},Bytes={image_bytes},MetadataFirst=128,MetadataRows=128,DstLast=255;\n'
           ' static constexpr uint32_t Boot=0x%08x;\n' % int.from_bytes(boot, 'little') +
           ' static unsigned Width(unsigned s){return s<6?5120:s<9?17408:0;}\n'
           ' static uint32_t Word(unsigned s,unsigned i){\n')
-if args.factored_compare:
+if args.factored_trace:
+    header=header.replace(' static unsigned Width(unsigned s){return s<6?5120:s<9?17408:0;}', ' static unsigned Width(unsigned s){return s==0?5120:0;}')
+    header=header.replace(' static constexpr uint32_t Boot=', ' static constexpr unsigned FactoredTrace=1,TraceWords=64,TraceBlocks=20,NewPhases=2,Accumulator=80;\n static constexpr uint32_t Boot=')
+elif args.factored_compare:
     header=header.replace(' static constexpr uint32_t Boot=', ' static constexpr unsigned FactoredComparison=1,NewPhases=2,Accumulator=80;\n static constexpr uint32_t Boot=')
 for width, code in images.items():
     words = [int.from_bytes(code[i:i+4], 'little') for i in range(0,len(code),4)]
     header += (' static const uint32_t code%d[%d]={\n' % (width,image_words))
     header += ',\n'.join(','.join('0x%08x' % w for w in words[i:i+8]) for i in range(0,len(words),8)) + '\n };\n'
-header += f' return s>=9 || i>={image_words}?0:s<6?code5120[i]:code17408[i];}}\n}};\n'
+header += (f' return s!=0 || i>={image_words}?0:code5120[i];}}\n}};\n' if args.factored_trace else
+           f' return s>=9 || i>={image_words}?0:s<6?code5120[i]:code17408[i];}}\n}};\n')
 (output / 'PioneerNativeCompactQ4StreamGeneratedImage.h').write_text(header)
 sdk = build / 'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop'
 release = build / 'objects/haiku/riscv64/release'
@@ -95,11 +104,12 @@ common = [cxx, '-std=gnu++17', '-O2', '-Wall', '-Wextra', '-Werror', '-fno-excep
           '-fno-strict-aliasing', '-fno-delete-null-pointer-checks', '-mcmodel=medany', '-fpic', '-D_KERNEL_MODE']
 roles = ['BANKS', 'PANEL', 'AFFINE', 'BLOCK', 'STREAM', 'ROWS', 'COHORT', 'COHORT_SEALED', 'COHORT_PAYLOAD', 'DISPATCH', 'DISPATCH_VECTOR']
 native = ['-DTT_PIONEER_EXPERIMENTAL_Q38_' + name for name in roles]
-tag='2026110600010111' if args.factored_compare else '2026110600010108' if args.pair_issue else '2026110600010107' if args.timing else '2026110500010104'
+tag='2026110600010112' if args.factored_trace else '2026110600010111' if args.factored_compare else '2026110600010108' if args.pair_issue else '2026110600010107' if args.timing else '2026110500010104'
 native += ['-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=0x'+tag+'ULL', '-DPIONEER_NATIVE_COMPACT_Q4_STREAM_DIAGNOSTIC=1']
 if args.timing:native.append('-DPIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING=1')
 if args.pair_issue:native.append('-DPIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING=1')
 if args.factored_compare:native.append('-DPIONEER_NATIVE_FACTORED_Q4_COMPARE=1')
+if args.factored_trace:native.append('-DPIONEER_NATIVE_FACTORED_Q4_TRACE=1')
 commands = []
 def run(command):
     commands.append(command)
@@ -126,6 +136,12 @@ if args.factored_compare:
               ('wrong-comparison',['-UPIONEER_NATIVE_FACTORED_Q4_COMPARE','-DPIONEER_NATIVE_FACTORED_Q4_COMPARE=0']),
               ('old107-tag',['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026110600010107ULL']),
               ('old108-alias',['-DPIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING=1'])]
+if args.factored_trace:
+    cases += [('missing-trace',['-UPIONEER_NATIVE_FACTORED_Q4_TRACE']),
+              ('wrong-trace',['-UPIONEER_NATIVE_FACTORED_Q4_TRACE','-DPIONEER_NATIVE_FACTORED_Q4_TRACE=0']),
+              ('old111-tag',['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026110600010111ULL']),
+              ('old111-alias',['-DPIONEER_NATIVE_FACTORED_Q4_COMPARE=1']),
+              ('old108-alias',['-DPIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING=1'])]
 for macro in ('PIONEER_NATIVE_Q4_FPU_DIAGNOSTIC', 'PIONEER_NATIVE_DRAM_MODEL_BAND_DIAGNOSTIC', 'PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64',
               'PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC', 'PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64', 'PIONEER_NATIVE_BFP_DIAGNOSTIC',
               'PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC', 'PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC',
@@ -141,7 +157,8 @@ for label, extra in cases:
     assert result.returncode and any(message in result.stderr for message in ('Build only the exact diagnostic104',
         'Diagnostic104 cannot alias','Exact separate timed compact Q4 diagnostic107 role required','Exact diagnostic107 kernel identity required',
         'Exact separate paired compact Q4 diagnostic108 role required','Exact diagnostic108 kernel identity required',
-        'Exact separate factored-Q4 comparison111 role required','Exact comparison111 kernel identity required')),label
+        'Exact separate factored-Q4 comparison111 role required','Exact comparison111 kernel identity required',
+        'Exact separate factored-Q4 trace112 role required','Exact trace112 kernel identity required')),label
 (output / 'driver-role-refusals.txt').write_text('\n'.join('PASS ' + label for label, _ in cases) + '\n')
 wrong = output / 'wrong-image';wrong.mkdir(mode=0o700)
 (wrong / 'PioneerNativeCompactQ4StreamGeneratedImage.h').write_text(header.replace('LayoutRole='+str(role), 'LayoutRole=86'))
@@ -157,6 +174,11 @@ if args.factored_compare:
         (wrong / 'PioneerNativeCompactQ4StreamGeneratedImage.h').write_text(header.replace(field,value))
         result=subprocess.run(common+native+['-I'+str(wrong)]+includes+['-fsyntax-only',str(driver/'pioneer_native_compact_q4_stream_driver.cpp')],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,cwd=output)
         assert result.returncode and 'exact comparison111 changed arithmetic and ownership' in result.stderr
+if args.factored_trace:
+    for field,value in (('FactoredTrace=1','FactoredTrace=0'),('TraceWords=64','TraceWords=32'),('TraceBlocks=20','TraceBlocks=68'),('NewPhases=2','NewPhases=4'),('Accumulator=80','Accumulator=32')):
+        (wrong / 'PioneerNativeCompactQ4StreamGeneratedImage.h').write_text(header.replace(field,value))
+        result=subprocess.run(common+native+['-I'+str(wrong)]+includes+['-fsyntax-only',str(driver/'pioneer_native_compact_q4_stream_driver.cpp')],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,cwd=output)
+        assert result.returncode and 'exact trace112 fixed observations and ownership' in result.stderr
 wrong_data = output / 'wrong-data';wrong_data.mkdir(mode=0o700)
 (wrong_data / 'PioneerNativeCompactQ4StreamData.h').write_text('#include <stdint.h>\nstruct PioneerNativeCompactQ4StreamData {static constexpr unsigned Version=1,Rows=32,Samples=9,Role=86,PreparedBytes=4608;static unsigned Width(unsigned s){return s<6?5120:17408;}static unsigned Words(unsigned s){return Width(s)/256*1280;}static uint32_t Word(unsigned,unsigned){return 0;}};\n')
 

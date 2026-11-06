@@ -132,7 +132,7 @@ public:
 	}
 	template<class Image,class Data> uint32_t FinalWord(unsigned index)const {
 		const unsigned a=L1Address(index);
-#ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
+#if defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE) || defined(PIONEER_NATIVE_FACTORED_Q4_TRACE)
 		// Actual last group's packed unsigned Q4 codes,not an unaudited
 		// mutable scratch exemption. Constants/header/exponents are exact too.
 		for(unsigned slot=0;slot<2;slot++) {
@@ -161,8 +161,10 @@ public:
 	}
 	void Abandon(){if(owned){failed=true;result.compute.state=PIONEER_NATIVE_BFP_UNKNOWN;result.compute.cold=1;}}
 	template<class IO,class Image,class Data> bool Run(IO& io,const tt_dram_samples_result& baseline,unsigned sample) {
-		static_assert(Image::Samples==9 && Image::Rows==32 && Image::Phases==4 && Image::LayoutRole==V::Role && Image::Bytes==V::ImageBytes && Image::MetadataFirst==128 && Image::MetadataRows==128 && Image::DstLast==255,"exact compact QCS1 two-width image and Dst scope only");
-#ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
+		static_assert(Image::Samples==V::Samples && Image::Rows==32 && Image::Phases==4 && Image::LayoutRole==V::Role && Image::Bytes==V::ImageBytes && Image::MetadataFirst==128 && Image::MetadataRows==128 && Image::DstLast==255,"exact compact QCS1 two-width image and Dst scope only");
+#ifdef PIONEER_NATIVE_FACTORED_Q4_TRACE
+		static_assert(Image::FactoredTrace==1 && Image::TraceWords==64 && Image::TraceBlocks==20 && Image::NewPhases==2 && Image::Accumulator==80,"exact trace112 fixed observations and ownership");
+#elif defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE)
 		static_assert(Image::FactoredComparison==1 && Image::NewPhases==2 && Image::Accumulator==80,"exact comparison111 changed arithmetic and ownership");
 #endif
 		static_assert(Data::Version==1 && Data::Rows==32 && Data::Samples==9 && Data::Role==104 && Data::PreparedBytes==4608,"exact compiled diagnostic104 data only");
@@ -227,9 +229,20 @@ public:
 		if(!complete)return Fail(io);
 		for(unsigned i=0;i<64;i++) {
 			if(!io.NativeL1Read(L::Output+i*4,result.compute.output[i]))return Fail(io);
+#ifndef PIONEER_NATIVE_FACTORED_Q4_TRACE
+			unsigned e=(result.compute.output[i]>>23)&255,m=result.compute.output[i]&0x7fffff;
+			if(e==255 || (!e && m))return Fail(io);
+#endif
+		}
+#ifdef PIONEER_NATIVE_FACTORED_Q4_TRACE
+		// Capture ALL returned DATA first. Final32 and six FP32 first-group
+		// observations keep the finite/normal rule. Words32..57 are opaque
+		// integer fingerprints/packed bytes,not floating-point numbers.
+		for(unsigned i=0;i<64;i++)if(i<32 || i>=58){
 			unsigned e=(result.compute.output[i]>>23)&255,m=result.compute.output[i]&0x7fffff;
 			if(e==255 || (!e && m))return Fail(io);
 		}
+#endif
 		if(!Terminal(io))return Fail(io);
 	#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
 		// Preserve raw DATA only after the SAME independently proven terminal.
@@ -286,7 +299,7 @@ public:
 	}
 };
 static_assert(PioneerNativeCompactQ4StreamLease::L1Words*4==
-#ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
+#if defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE) || defined(PIONEER_NATIVE_FACTORED_Q4_TRACE)
  148544
 #else
  107632

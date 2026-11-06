@@ -104,11 +104,11 @@ Recovery used one OFF/ON and the known SD-free full-memory Haiku boot;
 no SD,mains or hardware change. Recent small trial-log files were damaged
 after forced power-off;complete Mac copies had already been verified.
 Original damaged records were preserved,not rewritten to pass a guard.
-The diagnostic trace component now builds and passes local mechanics
-checks,including all64 returned-word logging on mismatch. It is not wired
-into a native driver/client or physically tested. The software model did
-not predict111's failure,so these passes are not card-correctness evidence.
-Next:wire the fresh isolated trace,then locate the incorrect intermediate.
+Native112 trace driver/client/source integration now passes main/clean local
+qualification,including all64 returned-word logging on mismatch. It has NOT
+been physically tested. The software model did not predict111's failure,
+so these passes are not card-correctness evidence. Next:stage the fresh
+isolated trace and locate the incorrect on-card intermediate.
 
 Historical stages 81 through 111-a are SPENT: never replay, repin identities
 or clear once markers. Future hardware testing needs a fresh identity and
@@ -135,3 +135,5 @@ Physical111 numerical rejection and separate successful recovery:
   benchmarks/qwen38-factored-q4-native-physical-20261106.txt
 New trace component mechanics,not a native or physical qualification:
   benchmarks/qwen38-factored-q4-trace-component-20261106.txt
+Native112/source/client package,qualified LOCALLY only:
+  benchmarks/qwen38-factored-q4-trace-native-20261106.txt

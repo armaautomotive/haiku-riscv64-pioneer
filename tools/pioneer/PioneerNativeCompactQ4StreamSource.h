@@ -13,6 +13,9 @@
 #ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
 #include "PioneerQ38FactoredQ4Reference.h"
 #endif
+#ifdef PIONEER_NATIVE_FACTORED_Q4_TRACE
+#include "PioneerQ38Q4FactoredTraceReference.h"
+#endif
 #include <array>
 #include <cfenv>
 #include <fcntl.h>
@@ -30,6 +33,9 @@ class PioneerNativeCompactQ4StreamSource {
 #ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
 	std::array<std::array<uint32_t,32>,9> factored{};
 #endif
+#ifdef PIONEER_NATIVE_FACTORED_Q4_TRACE
+	PioneerQ38Q4FactoredTraceReference trace;
+#endif
 	static bool Fail(std::string& error,const char* text){error=text;return false;}
 	static bool Same(const struct stat& a,const struct stat& b){
 		if(a.st_dev!=b.st_dev || a.st_ino!=b.st_ino || a.st_uid!=b.st_uid || a.st_gid!=b.st_gid || a.st_mode!=b.st_mode || a.st_nlink!=b.st_nlink || a.st_size!=b.st_size || a.st_mtime!=b.st_mtime || a.st_ctime!=b.st_ctime)return false;
@@ -45,6 +51,9 @@ public:
 	bool Ready()const{return prepared && Stable();}
 #ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
 	const uint32_t* FactoredGolden(unsigned sample)const{return sample<9 && Ready()?factored[sample].data():nullptr;}
+#endif
+#ifdef PIONEER_NATIVE_FACTORED_Q4_TRACE
+	bool TraceGolden(uint32_t* output)const{return Ready() && trace.Export(output);}
 #endif
 	bool Prepare(const char* path,std::string& error) {
 		static_assert(Data::Version==1 && Data::Role==104 && Data::PreparedBytes==4608 && Data::Samples==9 && Data::Rows==32 && Meta::Samples==9 && Meta::Rows==32,"exact diagnostic104 private recipe");
@@ -80,6 +89,12 @@ public:
 #ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
 				uint16_t bf16[256];for(unsigned c=0;c<256;c++)bf16[c]=uint16_t(input[c*2])|uint16_t(input[c*2+1])<<8;
 				if(!PioneerQ38FactoredQ4Reference::Block(original.data(),bf16,factored[sample].data()))return Fail(error,"Fresh factored Q4 reference refused.");
+#endif
+#ifdef PIONEER_NATIVE_FACTORED_Q4_TRACE
+				if(!sample){
+					uint16_t bf16[256];for(unsigned c=0;c<256;c++)bf16[c]=uint16_t(input[c*2])|uint16_t(input[c*2+1])<<8;
+					if(!trace.Block(original.data(),bf16,block))return Fail(error,"Fresh original-byte trace prediction refused.");
+				}
 #endif
 				for(unsigned row=0;row<32;row++) {
 					float weights[256];if(!PioneerDecodeQ4K(original.data()+row*144,weights))return Fail(error,"Original Q4 decode refused.");

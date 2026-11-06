@@ -227,8 +227,11 @@ int main(int argc,char** argv) {
 			if(fault==9)operation--;if(fault==10)effectiveUid=1;if(fault==11)currentTeam++;
 			assert(N::Control(&f.cookie,operation,&r,length)!=B_OK && ioCalls==before);effectiveUid=0;currentTeam=20;refused++;
 		}
-		for(unsigned base=0x7b00;base<=0x8300;base+=0x100)for(unsigned op=0;op<3;op++) {
+		for(unsigned base=0x7b00;base<PioneerNativeCompactQ4StreamVariant::Opcode;base+=0x100)for(unsigned op=0;op<3;op++) {
 			r=Request();assert(N::Control(&f.cookie,B_DEVICE_OP_CODES_END+base+op,&r,sizeof(r))==B_NOT_ALLOWED && ioCalls==before);refused++;
+		}
+		for(unsigned sample=NV::Samples;sample<9;sample++){
+			r=Request(sample);assert(N::Control(&f.cookie,PIONEER_NATIVE_COMPACT_Q4_STREAM_RUN,&r,sizeof(r))==B_BAD_VALUE && ioCalls==before);refused++;
 		}
 
 		r=Request(0);assert(N::Control(&f.cookie,PIONEER_NATIVE_COMPACT_Q4_STREAM_RUN,&r,sizeof(r))==B_BUSY && ioCalls==before);refused++;
@@ -240,6 +243,7 @@ int main(int argc,char** argv) {
 		assert(N::Control(&f.cookie,PIONEER_NATIVE_COMPACT_Q4_STREAM_END,&r,sizeof(r))==B_NOT_ALLOWED && ioCalls==before && !f.c->retained);refused++;
 	}
 	for(unsigned sample:{0U,6U}) {
+		if(sample>=NV::Samples)continue;
 		NativeFixture f(sample);f.Map(3);f.Select(true);uint32 v=0;unsigned k=NV::Width(sample);
 		for(unsigned a:{L::DramWeight,L::DramWeight+L::WeightBytes(k)-4,L::DramInput,L::DramInput+L::InputBytes(k)-4}) {
 			assert(f.c->io.NativeDramWrite(a,0x12345678) && f.c->io.NativeDramRead(a,v) && v==0x12345678);valid++;
@@ -281,7 +285,7 @@ int main(int argc,char** argv) {
 	{
 		NativeFixture f;f.Map();
 		for(unsigned w=0;w<2;w++){std::string d=argv[w+1];Image::code[w]=Read((d+"/text.bin").c_str());Image::Boot=::Word(Read((d+"/boot.bin").c_str()),0);}
-		for(unsigned i=0;i<9;i++)Data::samples.emplace_back(NV::Width(i),i);
+		for(unsigned i=0;i<NV::Samples;i++)Data::samples.emplace_back(NV::Width(i),i);
 		LeaseIO shadow(f.c->lease,argv[1],argv[2],0);f.c->dram=shadow.Baseline();shadow.proof=&f.c->dram;
 		assert((f.c->lease.Run<LeaseIO,Image,Data>(shadow,f.c->dram,0)) && shadow.executed && shadow.recordedL1 && shadow.recordedDram);
 

@@ -9,7 +9,7 @@
 // Distinct fixed DATA scopes. Full L1 journal includes BOTH buffers/gaps;
 // GDDR access is ONLY the selected exact weight+input domains,not2MiB.
 struct PioneerNativeCompactQ4StreamLayout:PioneerQ38Q4FpuCompactStreamLayout {
-#ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
+#if defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE) || defined(PIONEER_NATIVE_FACTORED_Q4_TRACE)
  static constexpr unsigned CodeWords=4096,DataBegin=0x87ff0;
 #else
  static constexpr unsigned CodeWords=2048,DataBegin=Raw-64;
@@ -73,7 +73,7 @@ struct PioneerNativeCompactQ4StreamLayout:PioneerQ38Q4FpuCompactStreamLayout {
   || (a>=Frame && a<Frame+32) || (a>=DataBegin && a<DataEnd && !(a>=Output && a<Output+256)));}
 };
 static_assert(PioneerNativeCompactQ4StreamLayout::L1Words*4==
-#ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
+#if defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE) || defined(PIONEER_NATIVE_FACTORED_Q4_TRACE)
  148544
 #else
  107632

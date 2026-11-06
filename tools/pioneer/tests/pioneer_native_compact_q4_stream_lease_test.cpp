@@ -1,9 +1,13 @@
 /* SPDX-License-Identifier: MIT */
 #define B_DEVICE_OP_CODES_END 10000
 #define PIONEER_Q4_COMPACT_STREAM_IMAGE_ONLY
-#ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
+#if defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE) || defined(PIONEER_NATIVE_FACTORED_Q4_TRACE)
 #include "pioneer_q38_factored_q4_compare_machine.h"
+#ifdef PIONEER_NATIVE_FACTORED_Q4_TRACE
+struct NMachine:FactoredCompareRV32 {NMachine(const char* folder,unsigned width):FactoredCompareRV32(folder,width,true){}};
+#else
 using NMachine=FactoredCompareRV32;
+#endif
 using CompactStreamData=FactoredCompareData;
 #elif defined(PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING)
 #define PIONEER_Q4_KERNEL_TIMING_MACHINE_ONLY
@@ -24,8 +28,10 @@ using NMachine=CompactStreamRV32;
 using NLease=PioneerNativeCompactQ4StreamLease;using NL=PioneerNativeCompactQ4StreamLayout;
 using NV=PioneerNativeCompactQ4StreamVariant;
 struct NImage {
-	static constexpr unsigned Samples=9,Rows=32,Phases=4,LayoutRole=NV::Role,Bytes=NV::ImageBytes,MetadataFirst=128,MetadataRows=128,DstLast=255;
-#ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
+	static constexpr unsigned Samples=NV::Samples,Rows=32,Phases=4,LayoutRole=NV::Role,Bytes=NV::ImageBytes,MetadataFirst=128,MetadataRows=128,DstLast=255;
+#ifdef PIONEER_NATIVE_FACTORED_Q4_TRACE
+	static constexpr unsigned FactoredTrace=1,TraceWords=64,TraceBlocks=20,NewPhases=2,Accumulator=80;
+#elif defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE)
 	static constexpr unsigned FactoredComparison=1,NewPhases=2,Accumulator=80;
 #endif
 	static inline unsigned Boot=0;static inline std::vector<uint8_t> code[2];

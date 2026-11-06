@@ -1,0 +1,58 @@
+Native112 trace package locally qualified;physical diagnosis still pending
+========================================================================
+November6,2026. Baseb894926c10. No physical execution or TPS result yet.
+
+New tag2026110600010112/opcode8800/fixed sample0 only. Other8 bands are
+refused before IO/owner allocation. Uses the same private16KiB code and
+148544B L1 journal as111,but a different12104B image and marker31525151.
+The rejected111-a tuple remains spent. No original stage/marker was repinned.
+
+The client authenticates the same-open full original SHA/all9 compiled
+payloads and independently predicts all64 stage/result words. It prints
+ALL returned words BEFORE the numerical decision,including on an unproven
+result,which it labels as unproven. Exact final32 and trace32 plus source,
+terminal and ownership checks are required before explicit END. Hashes do
+not replace exact numeric outputs. No CPU inference/reference enters Work.
+
+Corrected local integration:words32..57 are opaque integer data,not FP32.
+Final32 and six float observations retain finite/normal checks;all64 data
+are captured before those checks. The old111/default float rule is unchanged.
+The new parent gate initially caught an uninitialized AWK word index;
+explicit integer initialization fixes index0 without weakening comparison.
+
+Main7306 and clean43851 ACTUALLY0;10 children0 each,stderr0. Driver,client
+and actual RV32 text bytes match. Test stdout matches except the endpoint
+wrapper's final output-directory footer;BOTH complete raw texts retained.
+305 consumed project sources recorded,including BOTH actual client/crypto
+translation units. Only the preserved pre-existing dirty probe.cpp differs
+between main/clean sources;native and default43 control bytes are identical.
+That unrelated33-line change is not included in this checkpoint.
+
+SDK links:49 kernel-role refusals,17 client-role refusals;wrong code/data/
+trace layout refusals,legacy NULL and default-control2df0e0f8 unchanged.
+Actual native/control fixtures:329 valid/813 refused,including unsupported
+bands and previous opcodes. Actual compiled lease matches independent64
+observations and restores whole L1/GDDR/NIU/TLB/FIFO/clock;12 new-domain
+mutations retain resources. Private original-model/source/compiled lease
+test passes all64,including expected final row0=3f3b54c5. Parent DATA gate
+rejects79 missing/changed/duplicate cases. These are LOCAL tests,not ARC or
+physical arithmetic proofs;the software model already missed111's failure.
+
+Native4c07e7b3176a113a2d4dab828e753765dd3825531dd753bd6181494efb52ff27
+Client6b3a12905d0a9d1ff451e1a9db9fdbd349f0acb462a46036dd52a726ce23249e
+Imagef281b1419c35b1cb818e7c0278adef916ef6d19e1a2932453ee460510f560dad
+
+Next:publish,stage exact clean bytes in unused112-a,whole byte readback,
+fresh normal041/gen2 idle admission,one parent2->3->4. No SD/reboot needed
+unless numerical rejection quarantines the card. Failure/closure receipts
+are now explicitly synced before later power recovery. Keep an independent
+Mac copy too. Added observations can hide timing bugs;this is NOT a speed
+benchmark. No full-model upload,Assistant change or20TPS claim is warranted.
+The overall performance goal stays ACTIVE/unmet.
+
+Reproduce LOCAL only,with a fresh absolute output directory:
+python3 tools/pioneer/tests/run_pioneer_native_factored_q4_trace_tests.py \
+ /Volumes/HaikuBuildLocal/generated.riscv64 PRIVATE_COMPACT104_EXPORT \
+ ORIGINAL_QWEN27_GGUF /private/tmp/fresh-native112-tests 3
+No binary,model or learned private header is published. SiblingJSON contains
+complete selected stdout,source inventory,actual exits and exact pins.
