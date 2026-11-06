@@ -3,22 +3,32 @@
 #define PIONEER_NATIVE_COMPACT_Q4_STREAM_LAYOUT_H
 #include <stdint.h>
 #include "PioneerQ38Q4FpuCompactStreamLayout.h"
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+#include "PioneerQ38PreparedBf16Q4StreamLayout.h"
+#endif
 #ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
 #include "PioneerQ38Q4KernelTiming.h"
 #endif
 // Distinct fixed DATA scopes. Full L1 journal includes BOTH buffers/gaps;
 // GDDR access is ONLY the selected exact weight+input domains,not2MiB.
 struct PioneerNativeCompactQ4StreamLayout:PioneerQ38Q4FpuCompactStreamLayout {
-#if defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE) || defined(PIONEER_NATIVE_FACTORED_Q4_TRACE)
+#if defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE) || defined(PIONEER_NATIVE_FACTORED_Q4_TRACE) || defined(PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE)
  static constexpr unsigned CodeWords=4096,DataBegin=0x87ff0;
 #else
  static constexpr unsigned CodeWords=2048,DataBegin=Raw-64;
 #endif
  static constexpr unsigned CodeEnd=0x70000+CodeWords*4,DataEnd=0xa6400,DataWords=(DataEnd-DataBegin)/4;
- static constexpr unsigned L1Words=1+CodeWords+2048+8+DataWords+3,MaxDramWords=68*1280;
+ static constexpr unsigned L1Words=1+CodeWords+2048+8+DataWords+3;
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+ static constexpr unsigned MaxDramWords=68*2688,TotalPackets=29,TotalFlits=176;
+ static constexpr unsigned PreparedBytes(unsigned k){return Width(k)?(k/256)*5632:0;}
+#else
+ static constexpr unsigned MaxDramWords=68*1280,TotalPackets=2*Packets,TotalFlits=2*Flits;
+ static constexpr unsigned PreparedBytes(unsigned){return 0;}
+#endif
  static constexpr unsigned WeightBytes(unsigned k){return Width(k)?(k/256)*4608:0;}
  static constexpr unsigned InputBytes(unsigned k){return Width(k)?(k/256)*512:0;}
- static constexpr unsigned DramWords(unsigned k){return (WeightBytes(k)+InputBytes(k))/4;}
+ static constexpr unsigned DramWords(unsigned k){return (WeightBytes(k)+PreparedBytes(k)+InputBytes(k))/4;}
  static unsigned Address(unsigned i){
   if(i>=L1Words)return UINT32_MAX;
   if(!i)return 0x6000;
@@ -36,10 +46,18 @@ struct PioneerNativeCompactQ4StreamLayout:PioneerQ38Q4FpuCompactStreamLayout {
   || (a>=Frame && a<Frame+32) || (a>=DataBegin && a<DataEnd) || (a>=0x17ffc0 && a<0x17ffcc));}
  static unsigned DramAddress(unsigned k,unsigned i){
   if(!Width(k) || i>=DramWords(k))return UINT32_MAX;
-  return i<WeightBytes(k)/4?DramWeight+i*4:DramInput+(i-WeightBytes(k)/4)*4;
+  if(i<WeightBytes(k)/4)return DramWeight+i*4;
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+  if(i<(WeightBytes(k)+PreparedBytes(k))/4)return 0x04080000+(i-WeightBytes(k)/4)*4;
+#endif
+  return DramInput+(i-(WeightBytes(k)+PreparedBytes(k))/4)*4;
  }
  static bool DramContains(unsigned k,unsigned a){return Width(k) && !(a&3)
-  && ((a>=DramWeight && a-DramWeight<WeightBytes(k)) || (a>=DramInput && a-DramInput<InputBytes(k)));}
+  && ((a>=DramWeight && a-DramWeight<WeightBytes(k)) || (a>=DramInput && a-DramInput<InputBytes(k))
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+  || (a>=0x04080000 && a-0x04080000<PreparedBytes(k))
+#endif
+  );}
  static unsigned PackedIndex(unsigned a){
   if(a>=Raw-64 && a<Raw-64+16*RawStride){
    const unsigned rel=a-(Raw-64),slot=rel/RawStride,within=rel%RawStride;
@@ -62,7 +80,7 @@ struct PioneerNativeCompactQ4StreamLayout:PioneerQ38Q4FpuCompactStreamLayout {
   for(unsigned b=0;b<2;b++){
    const unsigned local=a-b*BufferStride,block=k/256-2+b;
    unsigned at=PackedIndex(local);if(at!=UINT32_MAX)return block*1152+at/4;
-   at=InputIndex(local);if(at!=UINT32_MAX)return WeightBytes(k)/4+block*128+at/4;
+   at=InputIndex(local);if(at!=UINT32_MAX)return (WeightBytes(k)+PreparedBytes(k))/4+block*128+at/4;
   }return UINT32_MAX;
  }
  static bool Immutable(unsigned a){
@@ -73,12 +91,18 @@ struct PioneerNativeCompactQ4StreamLayout:PioneerQ38Q4FpuCompactStreamLayout {
   || (a>=Frame && a<Frame+32) || (a>=DataBegin && a<DataEnd && !(a>=Output && a<Output+256)));}
 };
 static_assert(PioneerNativeCompactQ4StreamLayout::L1Words*4==
-#if defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE) || defined(PIONEER_NATIVE_FACTORED_Q4_TRACE)
+#if defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE) || defined(PIONEER_NATIVE_FACTORED_Q4_TRACE) || defined(PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE)
  148544
 #else
  107632
 #endif
- && PioneerNativeCompactQ4StreamLayout::MaxDramWords*4==348160,"exact compact dual-buffer journals");
+ && PioneerNativeCompactQ4StreamLayout::MaxDramWords*4==
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+ 731136
+#else
+ 348160
+#endif
+ ,"exact compact dual-buffer journals");
 #ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
 static_assert(PioneerQ38Q4KernelTiming::Address==PioneerNativeCompactQ4StreamLayout::Output+256
  && PioneerQ38Q4KernelTiming::Words==16

@@ -5,7 +5,15 @@
 #include "../../../../../tools/pioneer/PioneerNativeCompactQ4StreamLease.h"
 #include "PioneerNativeCompactQ4StreamGeneratedImage.h"
 #include "PioneerNativeCompactQ4StreamData.h" // PRIVATE generated weights,NEVER commit
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+#include "PioneerNativePreparedBf16Q4Data.h" // PRIVATE derived operands,NEVER commit
+#endif
 namespace PioneerNativeCompactQ4Stream104 {
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+using BoundSourceData=PioneerNativePreparedBf16Q4Data;
+#else
+using BoundSourceData=PioneerNativeCompactQ4StreamData;
+#endif
 constexpr uint32 NativeResultMarker=PioneerNativeCompactQ4StreamVariant::Marker;
 constexpr const char* MapName="P100A isolated full-K Q4 compact streaming104";
 struct Cookie {PioneerProbeCookie* base=NULL;bool used=false;};

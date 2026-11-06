@@ -251,6 +251,15 @@ int main(int argc,char** argv) {
 		const auto before=ioCalls;
 		for(unsigned a:{L::DramWeight-4,L::DramWeight+L::WeightBytes(k),L::DramInput-4,L::DramInput+L::InputBytes(k),0xff000000U})
 			{assert(!f.c->io.NativeDramRead(a,v) && !f.c->io.NativeDramWrite(a,0) && ioCalls==before);refused++;}
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+  for(unsigned a:{0x04080000U,0x04080000U+L::PreparedBytes(k)-4}){
+   assert(f.c->io.NativeDramWrite(a,0x624bf115) && f.c->io.NativeDramRead(a,v) && v==0x624bf115);valid++;
+  }
+  const auto bounded=ioCalls;
+  for(unsigned a:{0x0407fffcU,0x04080000U+L::PreparedBytes(k),0x04080001U}){
+   assert(!f.c->io.NativeDramRead(a,v) && !f.c->io.NativeDramWrite(a,0) && ioCalls==bounded);refused++;
+  }
+#endif
 	}
 	for(unsigned fault=0;fault<5;fault++) {
 		NativeFixture f;delete f.c;f.c=nullptr;N::current=nullptr;sRuntimeOwner=nullptr;f.cookie.used=false;failProfile=true;
@@ -286,6 +295,9 @@ int main(int argc,char** argv) {
 		NativeFixture f;f.Map();
 		for(unsigned w=0;w<2;w++){std::string d=argv[w+1];Image::code[w]=Read((d+"/text.bin").c_str());Image::Boot=::Word(Read((d+"/boot.bin").c_str()),0);}
 		for(unsigned i=0;i<NV::Samples;i++)Data::samples.emplace_back(NV::Width(i),i);
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+  Data::Prepare115();
+#endif
 		LeaseIO shadow(f.c->lease,argv[1],argv[2],0);f.c->dram=shadow.Baseline();shadow.proof=&f.c->dram;
 		assert((f.c->lease.Run<LeaseIO,Image,Data>(shadow,f.c->dram,0)) && shadow.executed && shadow.recordedL1 && shadow.recordedDram);
 

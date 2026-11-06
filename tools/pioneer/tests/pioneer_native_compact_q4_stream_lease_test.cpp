@@ -1,7 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 #define B_DEVICE_OP_CODES_END 10000
 #define PIONEER_Q4_COMPACT_STREAM_IMAGE_ONLY
-#if defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE) || defined(PIONEER_NATIVE_FACTORED_Q4_TRACE)
+#if defined(PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE)
+#include "pioneer_q38_prepared_bf16_q4_compare_machine.h"
+using NMachine=PreparedCompareRV32;
+using CompactStreamData=PreparedCompareData;
+#elif defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE) || defined(PIONEER_NATIVE_FACTORED_Q4_TRACE)
 #include "pioneer_q38_factored_q4_compare_machine.h"
 #ifdef PIONEER_NATIVE_FACTORED_Q4_TRACE
 struct NMachine:FactoredCompareRV32 {NMachine(const char* folder,unsigned width):FactoredCompareRV32(folder,width,true){}};
@@ -29,6 +33,9 @@ using NLease=PioneerNativeCompactQ4StreamLease;using NL=PioneerNativeCompactQ4St
 using NV=PioneerNativeCompactQ4StreamVariant;
 struct NImage {
 	static constexpr unsigned Samples=NV::Samples,Rows=32,Phases=4,LayoutRole=NV::Role,Bytes=NV::ImageBytes,MetadataFirst=128,MetadataRows=128,DstLast=255;
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+	static constexpr unsigned PreparedBf16Comparison=1,NewPhases=2,Accumulator=80;
+#endif
 #ifdef PIONEER_NATIVE_FACTORED_Q4_CONFIGURED
 	static constexpr unsigned Configured=1;
 #endif
@@ -45,12 +52,30 @@ struct NImage {
 	static unsigned Word(unsigned s,unsigned i){const auto& c=code[s<6?0:1];return i<c.size()/4?::Word(c,i*4):0;}
 };
 struct NData {
-	static constexpr unsigned Version=1,Rows=32,Samples=9,Role=104,PreparedBytes=4608;
+	static constexpr unsigned Version=1,Rows=32,Samples=9,
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+ Role=115,PreparedBytes=5632;
+ static inline std::vector<std::vector<uint32_t>> prepared;
+ static void Prepare115(){
+  assert(samples.size()==9);prepared.clear();prepared.resize(9);
+  for(unsigned s=0;s<9;s++)for(const auto& block:samples[s].blocks){
+   std::array<uint8_t,5632> data{};assert(PioneerQ38PreparedBf16Q4BlockData::Prepare(block.original.data(),4608,data.data(),data.size()));
+   for(unsigned i=0;i<data.size();i+=4)prepared[s].push_back(unsigned(data[i])|unsigned(data[i+1])<<8|unsigned(data[i+2])<<16|unsigned(data[i+3])<<24);
+  }
+ }
+#else
+ Role=104,PreparedBytes=4608;
+#endif
 	static inline std::vector<CompactStreamData> samples;
 	static unsigned Width(unsigned s){return NV::Width(s);}
 	static unsigned Words(unsigned s){return NL::DramWords(Width(s));}
 	static unsigned Word(unsigned s,unsigned i) {
 		assert(s<9 && i<Words(s));const auto& data=samples[s];unsigned k=Width(s);
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+  const unsigned raw=NL::WeightBytes(k)/4,extra=NL::PreparedBytes(k)/4;
+  if(i>=raw && i<raw+extra){assert(s<prepared.size() && prepared[s].size()==extra);return prepared[s][i-raw];}
+  if(i>=raw+extra)i-=extra;
+#endif
 		if(i<NL::WeightBytes(k)/4){
 			const auto& raw=data.blocks[i/1152].original;unsigned value=0;
 			for(unsigned b=0;b<4;b++){
@@ -87,7 +112,7 @@ struct NLeaseIO {
 	}
 	void Check(){assert(!retained);operations++;}
 	bool NativeScope(const NLease* l,const tt_dram_samples_result* p,const uint32_t* a,unsigned n,const uint32_t* b,unsigned m) {
-		assert(!retained && l==&lease && p==proof && lease.BoundTo(p,a,n,b,m) && n==NL::L1Words && m==87040);recordedL1=a;recordedDram=b;scopes++;return scopeValid;
+		assert(!retained && l==&lease && p==proof && lease.BoundTo(p,a,n,b,m) && n==NL::L1Words && m==NL::MaxDramWords);recordedL1=a;recordedDram=b;scopes++;return scopeValid;
 	}
 	void NativeRetain(){assert(!retained);retained=true;retains++;}
 	bool NativeSourceRead(unsigned i,uint32_t& v){Check();assert(i<16);v=source[i]^((badSource && started)?1U:0U);return true;}

@@ -1,0 +1,95 @@
+Prepared BF16 Q4 native115 qualification -- 2026-11-06
+======================================================
+BUILD/SOFTWARE QUALIFIED ONLY. No physical115 trial or speed result here.
+Best complete27B remains0.173tok/s;20tok/s unmet/unproven. Do not promote
+the experimental engine to Assistant or count this qualification as speed.
+
+Changed code / actual boundary
+-------------------------------
+Distinct115/tag2026110600010115/opcode8b00 selects the returning14788B
+prepared-BF16 comparison,marker31425151/fault45425151. No alias with older
+111..114,Work,CPU-validation or arbitrary code/payload/route endpoints.
+The same kernel owner/FD/thread/team/generation/semaphore/PCI/VM/ARC gates
+remain. A new bound source type selects ONLY private fixed compiled operands.
+
+Existing148544B L1 journal covers both buffers/guards. Added exact prepared
+GDDR source0x04080000 +blocks*5632 BETWEEN raw weights and unchanged input;
+max382976B extra,731136B total across THREE exact nonoverlapping spans.
+No broad2MiB snapshot/extra capacity assumption/global dense cache change.
+All bytes are snapshotted,verified,staged,verified and restored. Exact final
+L1 prediction checks native primary/masks in BOTH buffers,final mask-derived
+escape planes,ones,transition marker AND remaining old-buffer/metadata bytes.
+No mutable scratch exemption. Counters29requests/176flits per block and
+final512B input command replace the old52/160 recipe for115 ONLY.
+First uncertainty still retains ALL resources;no retry/reset/implicit END.
+
+CPU source preparation/reference remains a SEPARATE DIAGNOSTIC. Exporter
+retains the existing SAME read-only authenticated original FD. Its already
+verified byte permutation supplies lossless native primaries/dense mask
+bits,not floating learned products. Runtime source binds all9 compiled raw,
+prepared and input streams,computes BOTH fresh references before GPU Open,
+and retains original readiness through END. No Work CPU fallback is added.
+The sparse model cache/recipe/seven3GiB source caps remain untouched.
+
+Actual completed tests
+-----------------------
+Final frozen main/independent clean runner ACTUALLY0:26 children,all stderr0,
+334 public/2 private transitive source dependencies. Clean snapshot excludes
+pre-existing user work. Only consumed-source difference:33 pre-existing
+guarded lines in tenstorrent_pci_probe.cpp. Native/client/data bytes are
+IDENTICAL despite that difference;the unrelated edits are NOT published.
+
+* Actual SDK native driver fully links,56 intended role refusals and8 actual
+  image/scope/data placement refusals;legacy find_device remains inert.
+  Default43 control remains byte-exact2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc.
+* Actual Haiku client links for fresh generation7,33 role refusals. Captures
+  ALL64 returned words before acceptance/END;exact own-arithmetic references,
+  unchanged returned DATA/timing across explicit END,unknown close-only.
+* Actual native/control methods against OS/PCI/view fixtures:337 positives,
+  825 refusals. Newly admitted prepared-range endpoints and immediate outside/
+  unaligned boundaries tested. Wrong FD/thread/view/phase/ownership paths
+  issue no following device IO. These are NOT real ARC/prerequisite proofs.
+* Actual compiled RV32+NoC over authentic journal primitives:both widths,
+  128 exact old/new outputs,whole L1/GDDR/NIU/TLB/FIFO/clock restored.
+  Thirty-six COW fault cases damage constants,mask planes,both source/input
+  buffers,old residual data,code/timing and all three GDDR domains. Every
+  case retains once/UNKNOWN,no subsequent IO or automatic restore. Parent
+  fixture then completes its own independent clean END.
+* Same-open actual original18973870528B/full SHA c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747:
+  all9 compiled old/prepared/input bindings and fresh references BEFORE
+  device open. Actual compiled115 lease for fixed samples0/6 matches128
+  words and restores all resources in main AND clean.
+* Changed shared lease/layout still runs/restores old114 with its unchanged
+  12108B/43a1b152... image;9 old mutation cases still retain.
+* Physical parent's DATA gate:3 positive/277 changed-or-missing refusals;
+  independent closed-receipt reader3/8 validates actual64-bit differences
+  and pre-/post-END words;idle filter8fixtures preserves stdin-wrapper rule.
+
+Exact package / physical decision still owed
+---------------------------------------------
+Native:a60cf8573b5561c278d0e91ae1be5001230e913199c5a5b35aaf116fa05a8a3e
+Client:0d3f6dad1b137b14e684f64caf1f5195884739b2bf00ff34cf0a7a662ac81b87
+Core14788B:7caadb532dc62ec3dfd8b136554b9d7e953e3ce1b0fa8e85eaf7750c2249acd9
+Private prepared header:b0a8a3b44b2677ba79489a789a0748d6521f0b3a59267a8c4420cbc018f9910e
+Parent:800f3972ce1a9c47947f5c3f5adbc9577cd1269a08dfde1fe966b17983a0f481
+No learned bytes,derived payloads or binaries are published.
+Three early qualification attempts stopped only on harness dependency
+collection/snapshot omissions,BEFORE any hardware. Corrected final-r4 closes
+all26 actual children;native/client bytes were unchanged by those fixes.
+
+Fresh READ-ONLY Pioneer check ACTUALLY0:normal041/gen6,idle/cold0/owner0,
+64CPUs/max137034936320B RAM;new115-a stage absent. No driver exchange/reboot/
+power/SD/hardware/Assistant change was made during qualification.
+Next:publish source,stage byte-exact package,then ONE protected115-a trial:
+normal6 ->115gen7 ->normal8,independent postflight. UNKNOWN stops without
+forced unload/reset/retry. No outcome or performance is assumed in advance.
+Complete-job cycle comparison is NOT whole-model TPS or repeatability;
+more waits/mask expansion/bytes can still make the new calculation slower.
+
+Reproduce:
+python3 tools/pioneer/tests/run_pioneer_native_prepared_bf16_q4_tests.py \
+ /Volumes/HaikuBuildLocal/generated.riscv64 /absolute/private104headers \
+ /absolute/original.gguf /absolute/discovery-build /absolute/new/output 7
+Completed evidence:/private/tmp/pioneer-native-prepared115.HPihtB/final-r4
+Sibling directory contains whole selected child streams,actual26 exits and
+source maps. Overall fast self-hosted27B/usable Assistant goal remains active.

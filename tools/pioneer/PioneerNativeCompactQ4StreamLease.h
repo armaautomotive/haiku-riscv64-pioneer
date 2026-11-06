@@ -15,6 +15,9 @@
 #include "../../src/add-ons/kernel/drivers/misc/BlackholeComputeNocProbe.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerNativeCompactQ4StreamProtocol.h"
 #include "PioneerNativeCompactQ4StreamLayout.h"
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+#include "PioneerNativePreparedBf16Q4FinalData.h"
+#endif
 #if defined(_KERNEL_MODE)
 static_assert(PioneerNativeCompactQ4StreamVariant::Tag==PIONEER_DRIVER_BUILD_TAG,"exact cached math policy/driver binding");
 #endif
@@ -93,14 +96,19 @@ class PioneerNativeCompactQ4StreamLease {
 	template<class IO> bool Counters(IO& io) {
 		for(unsigned i=0;i<9;i++) {
 			uint32_t v=0;const unsigned blocks=V::Width(selection)/256;
-			const unsigned expected=i==2?2*blocks*L::Flits:(i==1 || i==3 || i==4 || i==8)?2*blocks*L::Packets:0;
+			const unsigned expected=i==2?blocks*L::TotalFlits:(i==1 || i==3 || i==4 || i==8)?blocks*L::TotalPackets:0;
 			if(!io.NativeNiuRead(Counter(i),v) || uint32_t(v-before[i])!=expected)return false;
 		}
 		return true;
 	}
 	template<class IO> bool FinalCommands(IO& io) {
 		const unsigned k=V::Width(selection),route=routes.translated[0][0]|(routes.translated[0][1]<<6);
-		L::Read last={};if(!L::Packet(k,k/256-1,1,L::Packets-1,last))return false;
+		L::Read last={};
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+		if(!PioneerQ38PreparedBf16Q4StreamLayout::Packet(k,k/256-1,1,2,last))return false;
+#else
+		if(!L::Packet(k,k/256-1,1,L::Packets-1,last))return false;
+#endif
 		const uint32_t expected[10]={last.source,0,route,last.destination,0,129,0,0,last.bytes,0};
 		for(unsigned i=0;i<10;i++){uint32_t v=0;if(!io.NativeNiuRead(i*4,v) || v!=expected[i])return false;}
 		return true;
@@ -132,6 +140,9 @@ public:
 	}
 	template<class Image,class Data> uint32_t FinalWord(unsigned index)const {
 		const unsigned a=L1Address(index);
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+		uint32_t known=0;if(PioneerNativePreparedBf16Q4FinalData::Known<Data>(selection,V::Width(selection),a,known))return known;
+#endif
 #if defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE) || defined(PIONEER_NATIVE_FACTORED_Q4_TRACE)
 		// Actual last group's packed unsigned Q4 codes,not an unaudited
 		// mutable scratch exemption. Constants/header/exponents are exact too.
@@ -162,6 +173,9 @@ public:
 	void Abandon(){if(owned){failed=true;result.compute.state=PIONEER_NATIVE_BFP_UNKNOWN;result.compute.cold=1;}}
 	template<class IO,class Image,class Data> bool Run(IO& io,const tt_dram_samples_result& baseline,unsigned sample) {
 		static_assert(Image::Samples==V::Samples && Image::Rows==32 && Image::Phases==4 && Image::LayoutRole==V::Role && Image::Bytes==V::ImageBytes && Image::MetadataFirst==128 && Image::MetadataRows==128 && Image::DstLast==255,"exact compact QCS1 two-width image and Dst scope only");
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+		static_assert(Image::PreparedBf16Comparison==1 && Image::NewPhases==2 && Image::Accumulator==80,"exact prepared BF16 comparison115 image only");
+#endif
 #ifdef PIONEER_NATIVE_FACTORED_Q4_MANUAL_LAST
 		static_assert(Image::ManualLast==1,"exact comparison113 manual-Last image only");
 #endif
@@ -173,7 +187,11 @@ public:
 #elif defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE)
 		static_assert(Image::FactoredComparison==1 && Image::NewPhases==2 && Image::Accumulator==80,"exact comparison111 changed arithmetic and ownership");
 #endif
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+		static_assert(Data::Version==1 && Data::Rows==32 && Data::Samples==9 && Data::Role==115 && Data::PreparedBytes==5632,"exact compiled diagnostic115 prepared data only");
+#else
 		static_assert(Data::Version==1 && Data::Rows==32 && Data::Samples==9 && Data::Role==104 && Data::PreparedBytes==4608,"exact compiled diagnostic104 data only");
+#endif
 		if(attempted || sample>=V::Samples)return false;
 		attempted=true;result.compute.state=PIONEER_NATIVE_BFP_REFUSED;
 		if(Image::Width(sample)!=V::Width(sample) || Data::Width(sample)!=V::Width(sample) || Data::Words(sample)!=L::DramWords(V::Width(sample)))return false;
@@ -256,7 +274,7 @@ public:
 		for(unsigned i=0;i<16;i++)if(!io.NativeL1Read(PioneerQ38Q4KernelTiming::Address+i*4,result.timing[i]))return Fail(io);
 		if(!Terminal(io))return Fail(io);
 	#endif
-		result.requests=2*(V::Width(selection)/256)*L::Packets;result.flits=2*(V::Width(selection)/256)*L::Flits;result.compute.completed=1;result.compute.state=PIONEER_NATIVE_BFP_RESULT;return true;
+		result.requests=L::TotalPackets*(V::Width(selection)/256);result.flits=L::TotalFlits*(V::Width(selection)/256);result.compute.completed=1;result.compute.state=PIONEER_NATIVE_BFP_RESULT;return true;
 	}
 	template<class IO,class Image,class Data> bool End(IO& io) {
 		if(!owned || failed || result.compute.state!=PIONEER_NATIVE_BFP_RESULT || !result.compute.completed)return false;
@@ -305,11 +323,17 @@ public:
 	}
 };
 static_assert(PioneerNativeCompactQ4StreamLease::L1Words*4==
-#if defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE) || defined(PIONEER_NATIVE_FACTORED_Q4_TRACE)
+#if defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE) || defined(PIONEER_NATIVE_FACTORED_Q4_TRACE) || defined(PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE)
  148544
 #else
  107632
 #endif
  &&
- PioneerNativeCompactQ4StreamLease::MaxDramWords*4==348160,"bounded separate heap journals");
+ PioneerNativeCompactQ4StreamLease::MaxDramWords*4==
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+ 731136
+#else
+ 348160
+#endif
+ ,"bounded separate heap journals");
 #endif

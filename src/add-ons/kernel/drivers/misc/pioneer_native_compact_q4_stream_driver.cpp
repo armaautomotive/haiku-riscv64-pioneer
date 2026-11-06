@@ -3,7 +3,9 @@
 #include <Drivers.h>
 #ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
 #include "PioneerNativeCompactQ4TimingRole.h"
-#ifdef PIONEER_NATIVE_FACTORED_Q4_CONFIGURED
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+#define PIONEER_COMPACT_Q4_EXPECTED_TAG 0x2026110600010115ULL
+#elif defined(PIONEER_NATIVE_FACTORED_Q4_CONFIGURED)
 #define PIONEER_COMPACT_Q4_EXPECTED_TAG 0x2026110600010114ULL
 #elif defined(PIONEER_NATIVE_FACTORED_Q4_MANUAL_LAST)
 #define PIONEER_COMPACT_Q4_EXPECTED_TAG 0x2026110600010113ULL
@@ -99,7 +101,7 @@ static status_t Control(void* value,uint32 operation,void* data,size_t length) {
 					const bool proved=begun && o->Views() && o->io.PioneerTensixIO::AfterNodeId(o->mapping.node_id[0])
 						&& BlackholeDramSweepRoutes(o->io,o->telemetry,o->tensix,o->dram) && BlackholeComputeNocProbe(o->io,o->dram,o->noc,2);
 					o->ready=proved && o->Scope() && o->Views() && o->Identity(true);
-					const bool ran=o->ready && o->lease.Run<IO,PioneerNativeCompactQ4StreamGeneratedImage,PioneerNativeCompactQ4StreamData>(o->io,o->dram,r.sample);
+					const bool ran=o->ready && o->lease.Run<IO,PioneerNativeCompactQ4StreamGeneratedImage,BoundSourceData>(o->io,o->dram,r.sample);
 					if(!ran) {
 						if(!o->transaction.config_attempted && !o->retained) {
 							if(DisposeKnown(o)){r.result.compute.state=PIONEER_NATIVE_BFP_REFUSED;o=NULL;}
@@ -116,7 +118,7 @@ static status_t Control(void* value,uint32 operation,void* data,size_t length) {
 		else if(!current->Scope())status=B_NOT_ALLOWED; // wrong thread/FD context:reject BEFORE lease mutation
 		else {
 			auto* o=current;
-			if(!o->lease.End<IO,PioneerNativeCompactQ4StreamGeneratedImage,PioneerNativeCompactQ4StreamData>(o->io) || !Finish(*o))o->Retain();
+			if(!o->lease.End<IO,PioneerNativeCompactQ4StreamGeneratedImage,BoundSourceData>(o->io) || !Finish(*o))o->Retain();
 			Reply(r,*o);
 			if(!r.result.compute.cold && !DisposeKnown(o)){o->Retain();Reply(r,*o);}
 			status=user_memcpy(data,&r,sizeof(r));

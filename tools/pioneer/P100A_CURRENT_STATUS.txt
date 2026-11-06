@@ -44,9 +44,11 @@ New bounded change: consume that SAME weight format with full-BF16 inputs,
 without per-weight decoding/PACK. The complete RETURNING comparison now
 passes compiled RV32/NoC/output checks,including authenticated real model
 bytes at BOTH widths. Main/clean14788B images identical. This is SOFTWARE
-evidence,not a native driver/hardware speed result. Next: extend/verify the
-native owner's exact prepared-source journal,then one physical comparison.
-The existing driver MUST NOT run this new source range without that work.
+evidence,not hardware speed. The distinct native115 driver/client now pass
+main/clean SDK,actual endpoint and exact restoration tests,including real
+original weights. No physical trial has run yet. Next: one fresh guarded
+comparison using115,then independent normal-driver/platform restoration.
+Never run this new source range using an older diagnostic lease.
 
 Four compact goals
 -------------------
@@ -71,6 +73,7 @@ Latest model: benchmarks/qwen38-bf16-deferred-full-physical-20261106.txt
 Latest card result: benchmarks/qwen38-configured-q4-physical-20261106.txt
 New prepared-BF16 code: benchmarks/qwen38-prepared-bf16-q4-component-20261106.txt
 Returning comparison: benchmarks/qwen38-prepared-bf16-q4-returning-20261106.txt
+Native115 qualification: benchmarks/qwen38-prepared-bf16-q4-native-20261106.txt
 New candidate, local only: benchmarks/qwen38-configured-q4-component-20261106.txt
 Native package, local only: benchmarks/qwen38-configured-q4-native-20261106.txt
 That report's sibling directory contains the complete closed trial/postflight.

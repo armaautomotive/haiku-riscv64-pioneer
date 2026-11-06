@@ -57,9 +57,11 @@ PACK from the newer output-affine calculation. Main/clean local arithmetic
 AND the returning full-K RV32/NoC comparison now pass,including actual
 authenticated original weights; NOT native integration or a speedup. New
 FP32 reassociation has its own predefined original-byte oracle, NOT old
-integer/old BF16 numerical equivalence. Next: extend the native source
-journal/scope and exact final-data check,then qualify ONE distinct physical
-comparison. The old lease does NOT cover the appended prepared source.
+integer/old BF16 numerical equivalence. Native115's exact source journal,
+final-data check,SDK driver/client and endpoint/lifetime qualification now
+PASS in source-frozen main/clean builds. Next: ONE distinct physical
+comparison,then independent restore. The old lease must never be used for
+the appended prepared source. See prepared-bf16-q4-native report.
 Retain seven3GiB source caps, original metadata/correction/source ownership;
 no cache recipe change/regeneration or global BFP8 expansion. Never feed
 prepared bytes to the raw loader. See prepared-bf16-q4-component report.

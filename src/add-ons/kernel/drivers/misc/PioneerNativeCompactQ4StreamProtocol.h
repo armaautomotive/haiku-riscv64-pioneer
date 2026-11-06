@@ -5,7 +5,11 @@
 #include "PioneerNativeBfpProtocol.h"
 // NEW104 fixed9 full-K bands;no caller code/payload/route/address/reset capability.
 struct PioneerNativeCompactQ4StreamVariant {
-#ifdef PIONEER_NATIVE_FACTORED_Q4_CONFIGURED
+#ifdef PIONEER_NATIVE_PREPARED_BF16_Q4_COMPARE
+ static constexpr unsigned Role=115,Marker=0x31425151,Fault=0x45425151,Opcode=0x8b00,Samples=9;
+ static constexpr uint64_t Tag=UINT64_C(0x2026110600010115);
+ static constexpr unsigned ImageBytes=14788,ReplyExtraBytes=64;
+#elif defined(PIONEER_NATIVE_FACTORED_Q4_CONFIGURED)
  static constexpr unsigned Role=114,Marker=0x31435151,Fault=0x45435151,Opcode=0x8a00,Samples=9;
  static constexpr uint64_t Tag=UINT64_C(0x2026110600010114);
  static constexpr unsigned ImageBytes=12108,ReplyExtraBytes=64;
