@@ -8,10 +8,20 @@
  || (defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) && PIONEER_Q38_FULL_OFFLOAD_METRICS != 1)
 #error Full-offload client is separate from hybrid Work,CPU validation and diagnostics
 #endif
+#ifdef PIONEER_Q38_BF16_FULL_CLIENT
+#include "PioneerQ38Bf16FullClientRole.h"
+#elif defined(PIONEER_Q38_BF16_FULL_PROTOCOL_H)
+#error BF16 full-card protocol cannot become an old client through a late selector change
+#endif
 #ifndef PIONEER_Q38_FULL_OFFLOAD_SESSION_H
 #define PIONEER_Q38_FULL_OFFLOAD_SESSION_H
 #include "PioneerQ38PublicModelSource.h"
+#ifdef PIONEER_Q38_BF16_FULL_CLIENT
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38Bf16FullProtocol.h"
+static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110500010105),"exact BF16 USER/native identity");
+#else
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadProtocol.h"
+#endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS

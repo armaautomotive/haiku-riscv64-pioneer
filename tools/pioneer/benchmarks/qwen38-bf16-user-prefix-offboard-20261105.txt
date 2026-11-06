@@ -1,0 +1,75 @@
+BF16 full-card USER pairing and real cold-prefix integration
+==========================================================
+Base42d50228e7c1535bea2252b2037cacdf1db10bb6. 2026-11-05 Pacific.
+This checkpoint is preparation for a controlled full-model card trial,
+NOT a completed BF16 model run or speed result.20tokens/sec remains unmet.
+
+Actual integration result
+-------------------------
+The unchanged immutable BF16 ROOT executes from reset with SAME119 workers
+that really boot once. It performs its actual embedding,5 Q8 projections
+(363 real jobs),119 convolution and96 recurrent-state jobs,post-residual
+normalization,canonical119-way paired metadata transform and FP32 input
+shadow. It reaches the first typed BF16 producer descriptor BEFORE submit.
+All worker nonces are checked against the actual canonical recipe widths;
+the two narrow projections must NOT be counted as119-worker matrices.
+No completed worker,private seal,PC,product or expected result is supplied.
+Actual reserved ROOT stack to this point6496B. Three children exit0/stderr0,
+199 test source dependencies frozen before/after. This is prefix-only:
+it does NOT execute the following BF16 producer/matrix/full layer/token.
+
+Earlier exploratory run failed on an old profiler address map;the next
+run faulted after its harness omitted RunTokens' periodic worker scheduler.
+The accepted run uses that same scheduler and advances real instructions
+and cycles,not fabricated completion. Production firmware bytes unchanged.
+
+Production USER worker
+----------------------
+Added separate BF16 tag105 USER identity and builder. The existing session
+retains same-open full-model authentication,driver-tag/generation pairing,
+pointer-free prompt IDs,upload,lifecycle,cancellation and close-only failure.
+It cannot silently bind an old driver or fall back to CPU model inference.
+Exact11 vocabulary/container imports;no context,decode,logit or CPU-backend
+imports. CPU tokenization/file handling is not model inference.
+
+Main and clean42d502+6-source copies each close5 children0/stderr0:
+3072 legal/12338 refused protocol cases;197 synthetic USER failure fixtures,
+all5 EOG tokens and3 cancellation boundaries;actual RISC-V SDK USER build
+with12 BF16 role refusals.59 test and55 SDK source dependencies frozen.
+USER and smoke binaries are byte-identical between copies. The unchanged
+tag88 USER and smoke still reproduce their old fixed byte hashes.
+Clean SDK archive initially lacked the llama git object database;the
+accepted rerun reads the original database for fixed commitc060ca974c77
+headers ONLY,never dirty submodule files. No new source-commit pin.
+
+USER77584B SHA2560190291350ca5eb56a235fcf6c2d6e3c000a7146f9f4b86fd7cd28a13051feec
+smoke224952B SHA256aa9aac510e66d7bfba98b61019181ddc6662639badbb7ebc4edcdb2f91d822ef
+native driver remains the previously qualified tag105 d8b1c561.../2884184B.
+
+Trial preparation,not an executed trial
+--------------------------------------
+New one-shot parent105-a is an exact substitution of the old guarded
+HELLO-four flow:only identities,paths,hashes and fresh generations38/39/40
+change.54 metadata/idle/health/failure/one-shot cases pass in main+clean;
+unchanged original88 and batched89 cases also pass. Actual smoke process
+passes1 good/9 bad histories and3 wrong CLI cases over a FAKE worker.
+These are host transport/flow tests,NOT GPU ownership or numerical proof.
+
+Static inspection of exact ROOT ELF62f24f28... walks209 function intervals,
+1019 direct transfers and9 manually inspected immutable switch tables;
+all SP writes are resolved. Conservative additive call-graph bound7936B
+against8192B reserved. Worst chain is dense layer -> projection -> BF16
+prepare -> producer gather -> closed job -> worker grammar -> boot grammar.
+256B margin;this is NOT a measured full-model runtime stack peak. The
+saved script refuses changed ELF bytes or unknown indirect/SP operations.
+
+Fresh READ-ONLY Pioneer check:Haiku/64 CPUs/full137034936320B RAM;no matching
+accelerator-owner process;normal041/tag12/gen38,quiesced0/cold0/owner0,
+open_count1/guard1. Installed normal driver/admin/reload-guard hashes match.
+No install,quiesce,reset,inference,power,SD or Assistant change occurred
+during that check. Historical stages81..104 remain SPENT;never rerun them.
+The next experiment must use fresh105-a and its complete preflight once.
+
+Still required:execute the complete new model,check output and clean END,
+then obtain comparable real inference timings. No throughput is inferred
+from instruction counts,component correctness,static stack or a build.

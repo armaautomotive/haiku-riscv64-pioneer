@@ -1,6 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 #define B_DEVICE_OP_CODES_END 1000
+#ifdef PIONEER_Q38_BF16_FULL_CLIENT
+#include "../PioneerQ38Bf16FullClientRole.h"
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Bf16FullProtocol.h"
+#else
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadProtocol.h"
+#endif
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenHiddenValidationProtocol.h"
 #include <cassert>
 #include <cstdio>
@@ -16,7 +21,9 @@ static std::unique_ptr<P::Packet> Request(unsigned count,unsigned outputs){
  return p;
 }
 int main(){
-#ifdef PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4
+#ifdef PIONEER_Q38_BF16_FULL_CLIENT
+ static_assert(F::BuildTag==UINT64_C(0x2026110500010105),"exact BF16 Q4 USER/native identity");
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4)
  static_assert(F::BuildTag==UINT64_C(0x2026110500010103),"exact fixed-config Q4 USER/native identity");
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4)
  static_assert(F::BuildTag==UINT64_C(0x2026110500010102),"exact queued Q4 USER/native identity");

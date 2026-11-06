@@ -1,0 +1,1 @@
+PASS actual full-offload USER:96prompt/32output/127positions,two64-record drains,all5 EOS and3 cancellation boundaries,197 fail-closed COW fixtures;synthetic ONLY,no physical or numerical result

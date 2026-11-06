@@ -1,0 +1,23 @@
+PASS distinct full-token startup builder/ALL64x512KiB published DATA+state spans+ZERO slack/root+head EXACT vs prior independently loaded numeric metadata/192 strict first+middle+last chunk controls/strict full geometry before+after/actual session+prompt initialized from builder/ZERO ROOT instructions;geometry NOT native ownership or model products
+START actual BF16 ROOT prefix/virgin SAME119/no predecessor state transplant
+PASS actual next embedding position0/token248319/5120 bit-exact/20raw+2writes+2readbacks/no CPU product upload
+BEGIN actual persistent token0/layer0/inputToken248319/previous committed0/SAME119 histories
+ROOT prefix observed10000000 instructions phase2 Q8jobs0 Conv0 GDN0 PC4d9e0
+OBSERVED connected layer0 matrix1 role10/actual quantized input/same workers
+ROOT prefix observed20000000 instructions phase2 Q8jobs3 Conv0 GDN0 PC4dad0
+ROOT prefix observed30000000 instructions phase3 Q8jobs3 Conv0 GDN0 PC4862c
+OBSERVED connected layer0 matrix2 role11/actual quantized input/same workers
+ROOT prefix observed40000000 instructions phase4 Q8jobs6 Conv0 GDN0 PC48650
+ROOT prefix observed50000000 instructions phase4 Q8jobs6 Conv0 GDN0 PC4d174
+OBSERVED connected layer0 matrix3 role5/actual quantized input/same workers
+ROOT prefix observed60000000 instructions phase4 Q8jobs125 Conv0 GDN0 PC4d278
+OBSERVED connected layer0 matrix4 role6/actual quantized input/same workers
+ROOT prefix observed70000000 instructions phase5 Q8jobs244 Conv0 GDN0 PC48648
+ROOT prefix observed80000000 instructions phase6 Q8jobs244 Conv0 GDN0 PC560a0
+ROOT prefix observed90000000 instructions phase6 Q8jobs244 Conv0 GDN0 PC48624
+ROOT prefix observed100000000 instructions phase6 Q8jobs244 Conv119 GDN0 PC48b6c
+ROOT prefix observed110000000 instructions phase6 Q8jobs244 Conv119 GDN0 PC5313c
+ROOT prefix observed120000000 instructions phase8 Q8jobs244 Conv119 GDN96 PC21418
+OBSERVED connected layer0 matrix5 role13/actual quantized input/same workers
+ROOT prefix observed130000000 instructions phase8 Q8jobs363 Conv119 GDN96 PC4d258
+PASS ACTUAL BF16 ROOT prefix/reset->embedding->5 Q8 projections363 jobs->119 Conv+96 GDN closures->postRMS->on-card119 paired recipe transform+FP32 shadow->first typed BF16 descriptor BEFORE submission;SAME119 real recipe-derived histories,stack6496;RAW synthetic inputs,NOT executed BF16 producer/matrix/whole layer/native/physical/full-model quality/TPS proof

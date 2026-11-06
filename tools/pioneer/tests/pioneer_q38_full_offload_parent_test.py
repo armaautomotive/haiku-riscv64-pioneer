@@ -6,10 +6,10 @@ import subprocess
 import sys
 import tempfile
 
-assert sys.argv[1:] in ([], ['--batched'])
-batched=bool(sys.argv[1:])
+assert sys.argv[1:] in ([], ['--batched'], ['--bf16'])
+batched=sys.argv[1:]==['--batched'];bf16=sys.argv[1:]==['--bf16']
 here=pathlib.Path(__file__).resolve().parent
-path=here.parent/('pioneer_q38_full_offload_batched_physical.sh' if batched else 'pioneer_q38_full_offload_physical.sh')
+path=here.parent/('pioneer_q38_bf16_full_offload_physical.sh' if bf16 else 'pioneer_q38_full_offload_batched_physical.sh' if batched else 'pioneer_q38_full_offload_physical.sh')
 text=path.read_text();subprocess.run(['sh','-n',str(path)],check=True)
 if batched:
     previous=(here.parent/'pioneer_q38_full_offload_physical.sh').read_text()
@@ -26,6 +26,22 @@ if batched:
         assert previous.count(old)==1
         previous=previous.replace(old,new)
     assert previous==text,'new parent must preserve the complete old guarded flow'
+if bf16:
+    previous=(here.parent/'pioneer_q38_full_offload_physical.sh').read_text()
+    changes=(('pioneer-q38-full-offload-20261104-a','pioneer-q38-bf16-full-105-a'),
+             ('tenstorrent_pci_probe-full-offload88','tenstorrent_pci_probe-bf16'),
+             ('HaikuAssistantQwen27FullOffload-all5','HaikuAssistantQwen27Bf16FullOffload'),
+             ('client=$stage/pioneer-q38-full-offload-smoke','client=$stage/pioneer-q38-bf16-full-offload-smoke'),
+             ('3c5769d2af54798c8fdbe672f3ed25f785cde0b3752253fe591fa06e66169a76','d8b1c561c9895841c6389576b53027d6e6998b3761dac12f47dbec961fb8bbb9'),
+             ('8cc39a66185e3adb1606a92a91c4f9efeb5943d4e1439cfedc41214b75e8aa5d','0190291350ca5eb56a235fcf6c2d6e3c000a7146f9f4b86fd7cd28a13051feec'),
+             ('f172e77c58c4eac025ebe7ac53c686a01dadceacf31f1e25f00f00ca6b651081','aa9aac510e66d7bfba98b61019181ddc6662639badbb7ebc4edcdb2f91d822ef'),
+             ('native_tag=2026110400010088','native_tag=2026110500010105'),
+             ('stable_generation=10 native_generation=11 restored_generation=12','stable_generation=38 native_generation=39 restored_generation=40'),
+             ('# ONE full-card trial.','# ONE BF16 full-card tag105 trial;fixed generation38 admission.'))
+    for old,new in changes:
+        assert previous.count(old)==1
+        previous=previous.replace(old,new)
+    assert previous==text,'BF16 parent must preserve the complete old guarded flow'
 metadata=text[text.index('metadata(){'):text.index('idle(){')]
 health=text[text.index('health(){'):text.index('exchange(){')]
 idle=text[text.index('idle(){'):text.index('health(){')]
@@ -42,12 +58,16 @@ if batched:
     base=base.replace('native_tag=2026110400010088','native_tag=2026110400010089').replace(
         'stable_generation=10;native_generation=11;restored_generation=12',
         'stable_generation=12;native_generation=13;restored_generation=14')
+if bf16:
+    base=base.replace('native_tag=2026110400010088','native_tag=2026110500010105').replace(
+        'stable_generation=10;native_generation=11;restored_generation=12',
+        'stable_generation=38;native_generation=39;restored_generation=40')
 def run(script,extra=None):
     return subprocess.run(['sh','-c',script],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,env={**env,**(extra or {})})
 checks=0
-for role,tag,generation in (('stable-before','2026102100010012',12 if batched else 10),
-                            ('native','2026110400010089' if batched else '2026110400010088',13 if batched else 11),
-                            ('stable-after','2026102100010012',14 if batched else 12)):
+for role,tag,generation in (('stable-before','2026102100010012',38 if bf16 else 12 if batched else 10),
+                            ('native','2026110500010105' if bf16 else '2026110400010089' if batched else '2026110400010088',39 if bf16 else 13 if batched else 11),
+                            ('stable-after','2026102100010012',40 if bf16 else 14 if batched else 12)):
     value=f'P100A_RELOAD driver55 tag{tag} generation{generation} quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY'
     script=base+metadata+'\nmetadata '+role+'\n'
     assert run(script,{'FAKE_METADATA':value}).returncode==0;checks+=1
@@ -113,4 +133,4 @@ run_fake_client(){
                            'EXCHANGE native stable-after','METADATA stable-after','HEALTH']
             assert (stage/'state').read_text().strip()=='FULL_CARD_HELLO_FOUR_CLOSED_STABLE_RESTORED'
         checks+=1
-print(f'PASS actual full-card {"batched89" if batched else "original88"} parent: {checks} typed-metadata/idle/64CPU+RAM/one-shot-flow cases;unknown child/stderr/text/identity failures never auto-restore;FAKE endpoints ONLY,no hardware exchange')
+print(f'PASS actual full-card {"BF16-105" if bf16 else "batched89" if batched else "original88"} parent: {checks} typed-metadata/idle/64CPU+RAM/one-shot-flow cases;unknown child/stderr/text/identity failures never auto-restore;FAKE endpoints ONLY,no hardware exchange')
