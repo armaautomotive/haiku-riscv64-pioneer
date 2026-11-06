@@ -1,0 +1,76 @@
+Q4 pack boundary correction: LOCAL PASS, fresh hardware test required
+====================================================================
+November 6, 2026. Source base c0ca2bd42e069d5c34d02c68f00ac73d32a5e095.
+One production-component change: PACK_COUNTERS configuration 0x41004 ->
+0x100, disabling automatic Last while retaining the existing explicit Last,
+16 four-row PACRs and final packer completion wait. No inference, driver,
+Assistant, boot, power or hardware setting was changed on the Pioneer.
+This is NOT a card-validated fix, new native driver or speed result.
+
+Why this is a concrete candidate
+--------------------------------
+The112 hardware trace found wrong packed bytes before matrix arithmetic.
+A private original-byte search over625 face maps (including zero faces)
+uniquely matches its complete packed-stage fingerprint when face3 occupies
+face0's address and the remaining three faces are zero. The first dot also
+matches that reconstruction. This rules out a mere face permutation.
+Register definitions do NOT support the earlier SRCA_SET/SFPU-offset theory.
+
+The current vendor Blackhole packer setup explicitly disables auto-Last
+with zero auto counters and only reads_per_xy_plane=1 (configuration0x100).
+Our0x41004 enabled auto counters despite supplying Last in software.
+Using empirical four-PACR premature closures in the diagnostic model, the
+EXACT historical compiled112 program reproduces ALL64 hardware observations,
+including incorrect final outputs, stage and block fingerprints. This is
+CONDITIONAL on the initially zero native tail inferred from the trace, not
+a direct initial-L1 measurement or general auto-Last silicon specification.
+Original/private learned observations are not published.
+
+What the regression now proves locally
+---------------------------------------
+New test first ran against unchanged old producer:actual exit1, rejecting
+0x41004 before any numerical decision. After the source correction:actual0.
+64 complete synthetic tiles overwrite all1024 bytes with correct codes,
+with prior tail poison0 AND0xa7. Legacy reconstruction preserves the real
+unwritten tail, never manufactures zeros. The strict default model rejects
+legacy auto counters BEFORE a PACR; reconstruction requires explicit opt-in.
+
+Main suite14038 and independent clean suite64697 ACTUALLY exited0; each
+13children0/stderr0. All91 consumed source hashes match, along with both
+compiled binaries and five arithmetic/trace test stdout files. The clean
+tree is HEAD's tracked tools/misc sources plus only the four scoped source
+overlays; no pre-existing dirty driver/submodule/WIP is included. An initial
+tools-only export lacked a transitive misc header and was refused during
+dependency collection; the complete tracked misc export preceded the final
+clean run. No live run was restarted.
+
+Coverage includes fullK5120/17408,32/64 outputs,repeated jobs in live model
+context,384 compiled returning outputs,45056 group comparisons,trace64
+independent original-byte comparisons and unchanged arithmetic/default
+pipeline regressions. These counts are NOT throughput or quality results.
+Returning binary SHA256:
+  6bf95a840155a37b574725e0ca0c5d1a2d818b0018b05cb4a5bcf7eb5819709c
+Tile binary SHA256:
+  5e6377c42127127bb574618679c8995fbd7ae2e58f830e60ac7b4bcac79f6cca
+Sibling evidence has actual child exits, all source pins and unit output.
+
+Next / acceptance boundary
+---------------------------
+Build a fresh isolated native candidate with a NEW identity. Preserve111/112
+pins and spent markers; do not replay or repin them. Verify corrected exact
+arithmetic on real hardware, then compare complete old/new operation timing.
+No full-model upload or UI work is required before that decision. Best model
+rate remains0.173tok/s; latest0.082tok/s;20tok/s remains unmet/unproven.
+
+Reproduce local suite (fresh absolute output directory):
+python3 tools/pioneer/tests/run_pioneer_q38_factored_q4_tests.py \
+ /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/fresh-pack-boundary-run
+
+Primary references checked at exact vendor revisions
+-----------------------------------------------------
+Manual boundary configuration, lines661..671:
+https://github.com/tenstorrent/tt-metal/blob/df1a544fecce8d1d06cf4e3e612fd003ab9e2b2a/tt_metal/tt-llk/tt_llk_blackhole/common/inc/cpack_common.h#L661
+PACK counter field definitions:
+https://github.com/tenstorrent/tt-metal/blob/81989dcdb8f9b340c932ae7a71a346f4f08703eb/tt_metal/hw/inc/blackhole/cfg_defines.h#L2263
+PACR Last/read-interface behavior (not a full auto-Last specification):
+https://github.com/tenstorrent/tt-isa-documentation/blob/ab0559c017ba3828e544d8f6cc78f8d2b017f322/BlackholeA0/TensixTile/TensixCoprocessor/PACR.md

@@ -82,6 +82,14 @@ is idle;apps/runtime unchanged;all9 trial-record hashes survived unchanged.
 Next implementation scope is ONE corrected on-card Q4 operation and its
 old/new hardware timing,NOT full-model uploads,UI work or repeated recovery.
 See benchmarks/qwen38-factored-q4-trace-physical-20261106.txt.
+Candidate fix now LOCAL-PASS:PACK automatic-end counters are disabled while
+the explicit final Last remains.New regression is red on old code,green on
+the correction;main/clean suites13children0,91matching consumed sources.
+A conditional premature-boundary reconstruction of the old compiled112
+program matches all64 hardware observations,not just the first value.
+This is NOT a card-proven fix.Next:new isolated native identity and real
+arithmetic/timing comparison.No111/112 replay or repinning is permitted.
+See benchmarks/qwen38-q4-pack-boundary-offboard-20261106.txt.
 The new operation order differs from old per-weight BF16 rounding;
 local bit tests do not prove model quality.
 

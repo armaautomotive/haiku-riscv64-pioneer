@@ -46,7 +46,12 @@ struct PioneerQ38Q4FactoredTile {
   e.Config(0,0x7ab6);e.Config(2,0);e.Config(8,0);e.Config(12,0x00100001);e.Config(13,0);
   e.Config(14,0);e.Config(15,0);e.Config(16,64*16);e.Config(17,0);
   e.Config(18,4);e.Config(19,0);e.Config(20,0);e.Config(24,65535);
-  e.Config(28,0x00041004);e.Config(68,0);e.Config(69,(Native+64)/16);
+  // Manual Last below owns the WHOLE64-row tile. Disable automatic Last;
+  // old0x41004 enabled auto boundaries, a suspected same-address restart.
+  // Vendor BH cpack_common df1a544f uses only reads_per_xy_plane=1 here.
+  // Trace112 matches last-face data plus an untouched tail; a fresh card
+  // test is still required to prove this correction, not just this model.
+  e.Config(28,0x00000100);e.Config(68,0);e.Config(69,(Native+64)/16);
   e.Config(70,0x9ee1);e.Config(71,65535);e.Config(100,0x1ffff);e.Config(101,0);e.Config(180,0);
   e.Op(0xb2250004); // PACK AddrMod0:Ysrc+=4,all other increments0
   e.Op(0x5e803c00);e.Op(0x5180000b);e.Op(0x5480000f);

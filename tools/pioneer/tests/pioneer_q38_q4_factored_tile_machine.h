@@ -12,6 +12,12 @@ struct FactoredTileMachine:Q4FpuPipelineMachine {
  unsigned nativeInputs=0,groups=0,sumReads=0,codeStores=0,packWaits=0;
  bool packOpen=false,packLast=false,packPending=false,packWait=false,missingPack=false;
  bool fourPhaseReference=false;
+ // Default accepts only explicit Last/manual boundaries. The legacy mode
+ // is a112-specific diagnostic reconstruction, NOT a general auto-Last ISA
+ // model: four PACRs/face close at the same L1 base and overwrite that face.
+ // It is never eligible for a passing production arithmetic comparison.
+ bool reconstruct112AutoLast=false;
+ unsigned packCursor=0,autoLasts=0;
  std::array<uint8_t,1024> pendingBytes{};
  unsigned skippedPack=~0U,skippedStore=~0U;bool skipPackWait=false,skipLast=false,forceTranspose=false;
  static void Need(bool okay){if(!okay)throw Fault{};}
@@ -34,9 +40,15 @@ struct FactoredTileMachine:Q4FpuPipelineMachine {
   Need(intermediate==14);
   Need(config[2]==0 && config[8]==0 && config[12]==0x100001 && !config[13] && !config[14] && !config[15]);
   Need(config[16]==1024 && config[17]==0 && config[18]==4 && config[19]==0 && config[20]==0 && config[24]==65535);
-  Need(config[28]==0x41004 && config[68]==0 && config[69]==(F::Native+64)/16 && config[70]==0x9ee1 && config[71]==65535);
+  Need((config[28]==0x100 || (reconstruct112AutoLast && config[28]==0x41004))
+   && config[68]==0 && config[69]==(F::Native+64)/16 && config[70]==0x9ee1 && config[71]==65535);
   Need(config[100]==0x1ffff && !config[101] && !config[180] && thread[37]==4 && packX==0 && packEnd==15);
-  if(!packOpen){Need(packY==0 && !packPending);packOpen=true;packBytes=0;missingPack=false;}
+  if(!packOpen){
+   Need(packY==0 && !packPending);packOpen=true;packBytes=packCursor=0;missingPack=false;
+   // Never invent untouched bytes: a premature boundary preserves the
+   // actual prior L1 tail, including poison, rather than completing a tile.
+   std::copy(l1.begin()+F::Native+64,l1.begin()+F::Native+64+1024,pendingBytes.begin());
+  }
   Need(packY<64 && !(packY&3) && packBytes==packY*16 && !packLast);
   const unsigned row0=(config[16]+packY*(config[12]>>16))/16;
   Need(row0==64+packY && row0+4<=128);
@@ -44,10 +56,11 @@ struct FactoredTileMachine:Q4FpuPipelineMachine {
    Need(defined[row] && written[row][col] && dstReady[row]<=cycle && decoded[row-64][col]);
    const unsigned datum=physical[row][col];
    Need((datum&31)==16 && !(datum&0x8000));
-   pendingBytes[packBytes++]=uint8_t((datum>>5)&127);
+   Need(packCursor<1024);pendingBytes[packCursor++]=uint8_t((datum>>5)&127);packBytes++;
   }
   packs++;if(packs==skippedPack)missingPack=true;
   packY+=thread[37]&15;packLast=bool(op&1) && !skipLast;
+  if(config[28]==0x41004 && !(packBytes%256)){packCursor=0;autoLasts++;}
   if(packLast)Need(packBytes==1024);
   packPending=true;packDue=cycle+packDelay;
  }

@@ -15,7 +15,9 @@ here = Path(__file__).resolve().parent
 root = here.parents[2]
 cc = os.environ.get('CXX', 'c++')
 cross = str(sdk / 'cross-tools-riscv64/bin/riscv64-unknown-haiku-g++')
-units = {'operator': here / 'pioneer_q38_q4_factored_operator_test.cpp',
+units = {'pack-boundary': here / 'pioneer_q38_q4_pack_boundary_test.cpp',
+         'trace': here / 'pioneer_q38_q4_factored_trace_test.cpp',
+         'operator': here / 'pioneer_q38_q4_factored_operator_test.cpp',
          'matrix': here / 'pioneer_q38_factored_q4_matrix_test.cpp',
          'arithmetic-regression': here / 'pioneer_q38_q4_factored_bfp8_test.cpp'}
 dependencies = {Path(__file__).resolve(), here / 'pioneer_q38_factored_q4_roles_test.py',

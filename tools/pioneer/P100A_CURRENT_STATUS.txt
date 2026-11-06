@@ -68,7 +68,9 @@ NOT completed:
   * Correct physical arithmetic: native111 and native112 FAILED. The new
     hardware trace locates incorrect packed weight data BEFORE the matrix
     calculation. First input sum, coefficient/minimum and initial accumulator
-    match. The proposed addressing fix is not implemented or proven.
+    match. A pack-boundary correction is now implemented and passes local
+    main/clean tests; it is NOT yet card-validated. The old compiled program
+    conditionally reproduces all64 observations with premature face endings.
   * Whole-model quality and throughput measurement of the new algorithm.
 
 This is a new operation order, not previous BF16/GGML bit equivalence.
@@ -101,8 +103,9 @@ the controlled recovery unchanged. No failed-epoch END/reset/retry/restore.
 One OFF/ON and the pinned SD-free full-memory boot created a fresh idle
 epoch; separate restoration and independent postflight both exited0.
 No SD,mains or hardware change; no GPU program ran during recovery.
-Next:fix the wrong packed-face behavior, then validate ONE operation on
-hardware and measure it before any whole-model integration or UI change.
+Candidate correction disables automatic PACK endings while retaining the
+explicit final Last. Next:NEW isolated native identity,hardware arithmetic
+validation and timing of ONE operation before whole-model/UI integration.
 
 Historical stages 81 through 112-a are SPENT: never replay, repin identities
 or clear once markers. Future hardware testing needs a fresh identity and
@@ -133,3 +136,5 @@ Native112/source/client package,local qualification:
   benchmarks/qwen38-factored-q4-trace-native-20261106.txt
 Physical112 first-failure trace and completed independent recovery:
   benchmarks/qwen38-factored-q4-trace-physical-20261106.txt
+Candidate pack-boundary correction, LOCAL tests only:
+  benchmarks/qwen38-q4-pack-boundary-offboard-20261106.txt
