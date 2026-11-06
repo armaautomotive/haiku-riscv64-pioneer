@@ -3,6 +3,18 @@ P100A / Qwen 27B -- current status
 Updated November 6, 2026. Saved results, not live telemetry.
 Goal: usable self-hosted27B,aiming for20tokens/sec. NOT ACHIEVED.
 
+IN-FLIGHT110 -- last observed13:58:58UTC November6,not live authority
+----------------------------------------------------------------
+Source f934d9f7afa93aeb88ec73c689b26b487485a7e7 published BEFORE staging.
+Exact parent admission and full four-file SCP byte readback passed.
+ONE110-a trial started:launcher41588,parent41593,client41677,USER41678
+all observed live;candidate tag2026110600010110/generation49 loaded.
+Worker authenticating original model;no CPU inference context/reference.
+No rate,END/Close or normal-driver restoration result yet. Do not infer
+failure from a quiet log,intervene in the active lifetime,or launch again.
+Stage /boot/home/pioneer-q38-bf16-deferred-110-a is SPENT FOREVER.
+Revalidate actual PIDs/primary waiter and state before any next action.
+
 What works / what does not
 -------------------------
 Complete short27B requests run on the real P100A with all model inference
@@ -42,7 +54,7 @@ Compact work plan -- one next task
 2. MEASURE / ACCEPT OR REJECT: COMPLETE (executed4163b2c17c,trial109-a).
    Real full-model run,distinct timings,actual clean closure and independently
    verified normal-driver restoration. REJECTED for Assistant promotion.
-3. REDUCE REPEATED PREPARATION AUDITS: LOCALLY QUALIFIED,not installed.
+3. REDUCE REPEATED PREPARATION AUDITS: LOCALLY QUALIFIED,110 trial in flight.
    An opt-in prototype defers one duplicate idle-worker audit to the final
    matrix/idle closure. All119 final closures are required before Scatter.
    Local clean builds,MOCK routing/fault tests and a conservative whole-call
@@ -66,7 +78,8 @@ Compact work plan -- one next task
    Fresh read-only Haiku check:normal48,idle,64CPU/fullRAM,110stage absent.
    Next:publish the parent,stage/readback/preflight,then SAME31prompt/32output
    actual model comparison and independently verify restoration;accept/reject.
-   No110 physical stage was created by parent qualification.
+   Parent qualification created no stage;subsequent staging/readback and
+   launch are now complete. Wait for THIS actual lifetime;never replay.
    Source budget:at least239040 fewer tiny control requests/token,NOT time
    telemetry. Even deleting the whole30.46% phase only gives~1.44x if other
    costs stay fixed. This prototype cannot solve the122x gap from best103
@@ -86,8 +99,8 @@ Normal041/tag2026102100010012/generation48 restored;quiesced0,cold0,
 owner0,open1,guard1.64CPUs/137034936320B RAM. All four trial PIDs absent.
 No trial job remained at that check. Driver/admin/guard,three Assistant files,four runtime
 libraries and model metadata preserved. No reboot,power,SD,network,kernel,
-Assistant or hardware-connection change. New prototype tests are local only,
-not a fresh hardware check. Stages81..109-a SPENT FOREVER:
+Assistant or hardware-connection change. Those post109 checks do NOT prove
+the in-flight110 trial's closure or restoration. Stages81..110-a SPENT FOREVER:
 never replay,repin or clear once markers.
 
 The whole worktree is NOT clean. Nine previously dirty baseline paths and
