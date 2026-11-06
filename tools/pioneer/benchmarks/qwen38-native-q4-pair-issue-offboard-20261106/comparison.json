@@ -1,0 +1,208 @@
+{
+  "actual_children_each": 21,
+  "actual_parent_exit_each": 0,
+  "all_child_stderr_bytes": 0,
+  "archived_main_files": {
+    "actual-exits.json": {
+      "bytes": 443,
+      "sha256": "7243de5a392f2047a2948ae000ac39d507d22b9fa8debe533413efd469fdbcfb"
+    },
+    "child-reader.stdout": {
+      "bytes": 127,
+      "sha256": "9933832545afd2a5e3045eac034a34608471cb12954f07af90b657d0ed040563"
+    },
+    "child-reader107.stdout": {
+      "bytes": 127,
+      "sha256": "9933832545afd2a5e3045eac034a34608471cb12954f07af90b657d0ed040563"
+    },
+    "client-fixtures.stdout": {
+      "bytes": 518,
+      "sha256": "c766975ce05e3fc4c3f7a482b7a587ce0cef2d7d55073312ccc475a7c8135d66"
+    },
+    "lease.stdout": {
+      "bytes": 2091,
+      "sha256": "ac5a809815e04743e71ebd14bf03c3932f2c295cc179cbaebe28c5f6b87b6ab8"
+    },
+    "native-endpoints.stdout": {
+      "bytes": 323,
+      "sha256": "97ef56e23173c563675650236a1633cc3203b287e8ef7eb6b76ed8d7b35ca337"
+    },
+    "parent.stdout": {
+      "bytes": 154,
+      "sha256": "c80e1a758935090eb16679094a1a08207525c89ae627579a681ceedd4e4a13cc"
+    },
+    "parent107.stdout": {
+      "bytes": 154,
+      "sha256": "c80e1a758935090eb16679094a1a08207525c89ae627579a681ceedd4e4a13cc"
+    },
+    "real-lease.stdout": {
+      "bytes": 2055,
+      "sha256": "d4a239234ee2afa5fbda6b03996114e93ab81ca85c3bfe528e46e2ef2d3cefd7"
+    },
+    "roles.stdout": {
+      "bytes": 112,
+      "sha256": "258ce44eef8be7e0539b8409dea2f94ebef78560f44030ac74d7198a27c9c83b"
+    },
+    "roles107.stdout": {
+      "bytes": 112,
+      "sha256": "5afd893ec8c47d10e28b6612ecd03f7cf421f1a8511b7995807c95ebe6582b3b"
+    },
+    "timer-journal.stdout": {
+      "bytes": 168,
+      "sha256": "aa25290017abc3139a89eb771f457d51f92a13314de2d7d60ea155a33ceb7ade"
+    }
+  },
+  "artifacts": {
+    "client108/pioneer-native-compact-q4-pair-issue-diagnostic": {
+      "bytes": 1944800,
+      "sha256": "cc57303dda69059a7d9762eee56ded50e2c68d77035a25357921d8ccd9de3cad"
+    },
+    "default-client104/pioneer-native-compact-q4-stream-diagnostic": {
+      "bytes": 1944800,
+      "sha256": "64c8c252d2c423de227e112b8da78045eb271ed0988923c3d15183114a132dc7"
+    },
+    "default-client107/pioneer-native-compact-q4-timing-diagnostic": {
+      "bytes": 1944800,
+      "sha256": "eabdd33a0ccf8e931e1118b250847f549759657b26e4c987588bf1bd97b84fd2"
+    },
+    "default104/PioneerNativeCompactQ4StreamGeneratedImage.h": {
+      "bytes": 43022,
+      "sha256": "5a427080e27a851ebe2c4b64ecc8db640c408d695a143e1b3b88bad19e055e66"
+    },
+    "default104/image17408/boot.bin": {
+      "bytes": 4,
+      "sha256": "d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd"
+    },
+    "default104/image17408/program.elf": {
+      "bytes": 19796,
+      "sha256": "a8bb45834ee5f5181e6f24c2ff21a918edd10befa911de809991bc69a6ab5a36"
+    },
+    "default104/image17408/text.bin": {
+      "bytes": 7644,
+      "sha256": "c95e0cc41971b37dd89786a2c3747b6d8ef6ebbde3a2ec837c63198982373b92"
+    },
+    "default104/image5120/boot.bin": {
+      "bytes": 4,
+      "sha256": "d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd"
+    },
+    "default104/image5120/program.elf": {
+      "bytes": 19796,
+      "sha256": "1d4cc347c45f9fe4735becf3ba7bea3faeef2e118071e4356a29bcca93ecfacb"
+    },
+    "default104/image5120/text.bin": {
+      "bytes": 7644,
+      "sha256": "f67b7b5bc07bddcf5f3ddfccfbe1013c2680650ea1994231565f050d1f0d89c5"
+    },
+    "default104/tenstorrent_pci_probe-default43-control": {
+      "bytes": 925616,
+      "sha256": "2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc"
+    },
+    "default104/tenstorrent_pci_probe-native-q4-fpu-stream104": {
+      "bytes": 1843416,
+      "sha256": "4722e956bfda10a5f8dbc2317bd5dd12d2de1b1099c3d33286b4b6447930f61e"
+    },
+    "default107/PioneerNativeCompactQ4StreamGeneratedImage.h": {
+      "bytes": 44848,
+      "sha256": "68cc6855feb436053e17e1609da50b30fd4eadd5f5bee7523acf59960af78fe1"
+    },
+    "default107/image17408/boot.bin": {
+      "bytes": 4,
+      "sha256": "d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd"
+    },
+    "default107/image17408/program.elf": {
+      "bytes": 20300,
+      "sha256": "b04587b1df60e7527cfb26400f71aae44495eb9f00f89ca791ba09e860f5980f"
+    },
+    "default107/image17408/text.bin": {
+      "bytes": 7972,
+      "sha256": "9723a83e4550cd66e36613f49d0959251ac0d5f755b903568e8725d4a345ac3f"
+    },
+    "default107/image5120/boot.bin": {
+      "bytes": 4,
+      "sha256": "d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd"
+    },
+    "default107/image5120/program.elf": {
+      "bytes": 20300,
+      "sha256": "b53df880ebdfb803b1a6f4c19ff4a4e7b30395aad6771b81007a4ab586e6019f"
+    },
+    "default107/image5120/text.bin": {
+      "bytes": 7972,
+      "sha256": "8156dd4e49912270887cf45f98e9b7c2892a0549a72c909dbefc502aa2205512"
+    },
+    "default107/tenstorrent_pci_probe-default43-control": {
+      "bytes": 925616,
+      "sha256": "2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc"
+    },
+    "default107/tenstorrent_pci_probe-native-q4-fpu-stream107": {
+      "bytes": 1844208,
+      "sha256": "505312ca317175c6ce1e481ddf34b25f17f00abc7b5d7d20eb5e57dcdebcfb4b"
+    },
+    "native108/PioneerNativeCompactQ4StreamGeneratedImage.h": {
+      "bytes": 44002,
+      "sha256": "8a87e850c34ba2d61c3aacfb51edcaac25c1503ba87529f77d0f2ea40a3c7d6e"
+    },
+    "native108/image17408/boot.bin": {
+      "bytes": 4,
+      "sha256": "d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd"
+    },
+    "native108/image17408/clock.o": {
+      "bytes": 1068,
+      "sha256": "cf9755cda2ae35870a14add13c4352c54311982dfdac216e8bac1c3e9e8dea14"
+    },
+    "native108/image17408/program.elf": {
+      "bytes": 20236,
+      "sha256": "3d2381a78918700bed5e11254f5e62176f2458614106b0fc9ba10830f57519ac"
+    },
+    "native108/image17408/text.bin": {
+      "bytes": 7820,
+      "sha256": "1fc0e0076948d68a8c8112de23145162bca6de9a30a8f2b7025d3b1f6465d4da"
+    },
+    "native108/image5120/boot.bin": {
+      "bytes": 4,
+      "sha256": "d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd"
+    },
+    "native108/image5120/clock.o": {
+      "bytes": 1068,
+      "sha256": "cf9755cda2ae35870a14add13c4352c54311982dfdac216e8bac1c3e9e8dea14"
+    },
+    "native108/image5120/program.elf": {
+      "bytes": 20236,
+      "sha256": "6793281923b9c159c1c6e3a57fdf37e56ceb5738ea888de59c126d71a7645949"
+    },
+    "native108/image5120/text.bin": {
+      "bytes": 7820,
+      "sha256": "04b846ca7cb1fcbf0457abfa1790fda9ee68662d58215e76af5d3984bffee261"
+    },
+    "native108/tenstorrent_pci_probe-default43-control": {
+      "bytes": 925616,
+      "sha256": "2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc"
+    },
+    "native108/tenstorrent_pci_probe-native-q4-fpu-stream108": {
+      "bytes": 1843904,
+      "sha256": "d6d457fdb4a5535d84a82ae19b138d156ef295a0dcb66142274580a4bc78bf52"
+    }
+  },
+  "inactive_dirty_differences": [
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadMetricsRole.h",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadProtocol.h",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadRole.h",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38TokenCallScope.inc",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeEnd.inc",
+    "src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp"
+  ],
+  "inactive_untracked_main_only": [
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadResidentNative.inc",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadResidentProtocol.h",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadResidentRole.h"
+  ],
+  "scope": "OFFBOARD native108 qualification ONLY;NOT hardware execution/card timing/model TPS",
+  "source_base": "01721136e1 plus15 scoped native108 changes",
+  "source_counts": {
+    "clean": 934,
+    "main": 937
+  },
+  "source_manifests": {
+    "clean": "b0b90f528ad359e69157404ca712820702f9840f1832f49d35d61603e9e50ecb",
+    "main": "93ae7d25c75c4755421578f5a3055f802accfc14a75bc294526f6cc71a0f8eb8"
+  }
+}

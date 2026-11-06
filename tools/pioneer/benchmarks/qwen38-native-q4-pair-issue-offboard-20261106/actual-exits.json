@@ -1,0 +1,23 @@
+{
+  "child-reader": 0,
+  "child-reader107": 0,
+  "client-fixtures": 0,
+  "client108": 0,
+  "default-client104": 0,
+  "default-client107": 0,
+  "default104": 0,
+  "default107": 0,
+  "lease": 0,
+  "lease-compile": 0,
+  "native-endpoints": 0,
+  "native108": 0,
+  "parent": 0,
+  "parent-syntax": 0,
+  "parent107": 0,
+  "real-lease": 0,
+  "real-lease-compile": 0,
+  "roles": 0,
+  "roles107": 0,
+  "timer-journal": 0,
+  "timer-journal-compile": 0
+}

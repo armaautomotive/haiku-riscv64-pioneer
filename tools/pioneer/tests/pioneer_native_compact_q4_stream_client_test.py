@@ -7,7 +7,8 @@ import pathlib
 import subprocess
 import sys
 import tempfile
-timing=sys.argv[-1:] == ['--timing']
+paired=sys.argv[-1:] == ['--pair-issue']
+timing=paired or sys.argv[-1:] == ['--timing']
 if timing:sys.argv.pop()
 assert __debug__ and len(sys.argv) == 2
 sample_count=2 if timing else 9
@@ -121,9 +122,10 @@ int main(int argc,char** argv){assert(argc==4);scenario=unsigned(strtoul(argv[1]
 '''
 program = program.replace('"PROTOCOL"', '"' + str(root / 'src/add-ons/kernel/drivers/misc/PioneerNativeCompactQ4StreamProtocol.h') + '"').replace('"RELOAD"', '"' + str(root / 'src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h') + '"').replace('"CLIENT"', '"' + str(here.parent / 'pioneer_native_compact_q4_stream_diagnostic.cpp') + '"')
 if timing:
-    program=program.replace('m.generation=37;','m.generation=43;').replace('r.expected_generation==37','r.expected_generation==43')
+    generation=45 if paired else 43
+    program=program.replace('m.generation=37;',f'm.generation={generation};').replace('r.expected_generation==37',f'r.expected_generation=={generation}')
     program=program.replace('r.sample==opens-1','r.sample==(opens==1?0U:6U)')
-    program=program.replace('--fixed-compact-q4-full-k-stream','--fixed-compact-q4-timing-full-k-stream')
+    program=program.replace('--fixed-compact-q4-full-k-stream','--fixed-compact-q4-pair-issue-full-k-stream' if paired else '--fixed-compact-q4-timing-full-k-stream')
     program=program.replace('bool okay=!scenario || scenario==201;','bool okay=!scenario || scenario==201 || scenario==202 || scenario==203;')
     program=program.replace('opens==9 && closes==9 && queries==9 && supports==9 && runs==9 && ends==9',
                             'opens==2 && closes==2 && queries==2 && supports==2 && runs==2 && ends==2')
@@ -142,6 +144,7 @@ if timing:
 (folder / 'test.cpp').write_text(program)
 subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror', '-ffp-contract=off', '-fsanitize=address,undefined',
                 *(['-DPIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING=1'] if timing else []),
+                *(['-DPIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING=1'] if paired else []),
                 '-I' + str(folder), '-I' + str(private), '-I' + str(here.parent), str(folder / 'test.cpp'), '-o', str(folder / 'test')], check=True)
 cases = [(0, 0, 0), (1, 0, 0), (2, 0, 0), (6, 0, 0), (9, 0, 0), (201, 0, 0)]
 cases += [(200, 0, point) for point in range(1,sample_count+4)]

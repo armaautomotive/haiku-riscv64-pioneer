@@ -1,0 +1,68 @@
+Native108 paired Q4 timing -- OFFBOARD qualification before the card test
+=======================================================================
+2026-11-06. Same paired kernel as01721136e1,now bound to a distinct native
+diagnostic. At this checkpoint NO hardware stage,swap or run has occurred.
+No full-model speedup or20tokens/sec result is claimed.
+
+Native identity and unchanged scope
+-----------------------------------
+Explicit PIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING=1 requires the existing
+timed diagnostic role. Role108/tag2026110600010108/opcode8600/7820B image,
+QCP1/QCPE marker,456B request,16 raw clock words. Old107/104 defaults retain
+their exact images,driver and USER hashes. Both role bindings reject late
+add/remove,wrong tag,BUILD/native alias and Work/CPU-reference selection.
+
+Expected fresh sequence:normal44 -> native45 -> normal46. New client option
+--fixed-compact-q4-pair-issue-full-k-stream. Fixed original samples0/6,
+same32 rows/two passes per sample. Private payload role remains104;no data
+retagging,expanded memory,caller code,address,route or reset capability.
+Held/known-terminal reads,FD/thread/team/epoch/PCI/VM/TLB ownership,raw clock
+preservation,explicit END,UNKNOWN retention and no-retry rules unchanged.
+New parent has its own108-a once-only stage;107-a remains spent forever.
+
+Actual checks completed
+------------------------
+Main51664 and independent clean5021 ACTUALLY EXIT0. Each21 actual children
+exit0 with empty stderr. All32 selected GPU/header/driver/client/control/
+clock artifacts match byte-for-byte. Clean base01721136e1 plus ONLY15 scoped
+source overlays. Frozen closures937/main and934/clean differ ONLY in the
+six pre-existing inactive dirty source files and three inactive Resident
+WIP files absent from clean. Those existing changes were not included in
+the checkpoint. The working tree is not claimed clean.
+
+Actual native endpoint bodies:333 valid/798 refused cases. Client:1345
+ASan/UBSan fixtures,all416 SUPPORT bytes/all64 RUN+END words/both samples,
+all16 timestamp mutations;unknown stops with no END/retry/next sample.
+Its legacy ACTUAL107 banner names the old fixture family;the actual108
+build selects the distinct pair macro,new CLI and generation45.
+Roles:3 positives/36 refusals. Journal:4 clock cases/48 word/read faults,
+unavailable clocks still permit independently known-safe END/restoration.
+Full actual-image leases:576 original words across9 compiled private bands,
+complete L1/GDDR/NIU/FIFO/TLB/clock restoration;57 additional lease failures.
+Strict child reader:412 refusals. Actual shell flow:418 cases/173 missing
+parent records;UNKNOWN never restores. Default107 role/reader/parent tests
+also pass. Parent helper procedures and original reference gate remain
+byte-equal to the old qualified parent. Shell syntax passes.
+
+Pinned executed-build candidates (not an execution grant)
+----------------------------------------------------------
+driver d6d457fdb4a5535d84a82ae19b138d156ef295a0dcb66142274580a4bc78bf52
+USER cc57303dda69059a7d9762eee56ded50e2c68d77035a25357921d8ccd9de3cad
+parent b1df413ac0665e7c166786b1dc8eb372a953a422eb326cebae06cc22b3f5e26b
+GPU text5120 04b846ca7cb1fcbf0457abfa1790fda9ee68662d58215e76af5d3984bffee261
+GPU text17408 1fc0e0076948d68a8c8112de23145162bca6de9a30a8f2b7025d3b1f6465d4da
+
+Fresh read-only SSH before this build verified normal041/gen44,64CPUs,
+137034936320B RAM,unchanged Assistant/runtime and no matching owners.
+This is not a substitute for fresh admission before a physical test.
+One offline parent fixture initially refused the new stream because its
+copied AWK key had been renamed but the shared timer DATA label had not.
+Corrected that key;no hardware stage or driver was touched by that failure.
+
+Reproduce OFFBOARD only (NEW output directory)
+-----------------------------------------------
+python3 tools/pioneer/tests/run_pioneer_native_compact_q4_timing_tests.py \
+ SDK PRIVATE_ORIGINAL104_EXPORT ORIGINAL_GGUF NEW_OUTPUT --pair-issue
+All four paths must be absolute. SDK/private/model inputs are the same as
+the107 qualification;no learned headers or binaries are committed here.
+Next:publish this checkpoint,then one guarded fresh108-a timing trial.

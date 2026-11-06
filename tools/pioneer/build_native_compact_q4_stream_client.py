@@ -6,7 +6,8 @@ import pathlib
 import stat
 import subprocess
 import sys
-timing=sys.argv[-1:] == ['--timing']
+paired=sys.argv[-1:] == ['--pair-issue']
+timing=paired or sys.argv[-1:] == ['--timing']
 if timing:sys.argv.pop()
 assert __debug__ and len(sys.argv) == 4 and not os.environ.get('PYTHONOPTIMIZE')
 build, private, output = map(pathlib.Path, sys.argv[1:])
@@ -33,8 +34,9 @@ for path in [sdk / 'headers/os', *sorted((sdk / 'headers/os').iterdir())]:
     if path.is_dir():
         includes += ['-isystem', str(path)]
 libs = ['-L' + str(path) for path in sorted((build / 'build_packages').glob('gcc_syslibs-*/lib'))]
-binary = output / ('pioneer-native-compact-q4-timing-diagnostic' if timing else 'pioneer-native-compact-q4-stream-diagnostic')
+binary = output / ('pioneer-native-compact-q4-pair-issue-diagnostic' if paired else 'pioneer-native-compact-q4-timing-diagnostic' if timing else 'pioneer-native-compact-q4-stream-diagnostic')
 selected=['-DPIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING=1'] if timing else []
+if paired:selected.append('-DPIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING=1')
 command = [cxx, '-std=c++17', '-O2', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror', *selected,*includes,
     '-I' + str(private), '-I' + str(here), '-I' + str(root / 'headers/private/shared'), '-I' + str(root / 'headers/private/libroot'),
     '-B' + str(release / 'system/glue'), '-L' + str(release / 'system/libroot'), '-L' + str(release / 'kits'), *libs,
@@ -50,4 +52,4 @@ for flags in cases:
     assert result.returncode and 'Compact Q4 full-K source reference is a separate diagnostic' in result.stderr
 unchanged()
 print(hashlib.sha256(binary.read_bytes()).hexdigest(), binary.name)
-print('PASS BUILD_ONLY actual SDK diagnostic'+('107' if timing else '104')+' client LINKED,11 source/Work/validation/fast-math-role refusals;PRIVATE operands unchanged;NO stage/device/hardware/full-model/quality/speed authority')
+print('PASS BUILD_ONLY actual SDK diagnostic'+('108' if paired else '107' if timing else '104')+' client LINKED,11 source/Work/validation/fast-math-role refusals;PRIVATE operands unchanged;NO stage/device/hardware/full-model/quality/speed authority')

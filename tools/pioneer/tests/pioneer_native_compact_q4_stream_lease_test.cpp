@@ -4,7 +4,13 @@
 #ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
 #define PIONEER_Q4_KERNEL_TIMING_MACHINE_ONLY
 #include "pioneer_q38_q4_kernel_timing_image_test.cpp"
+#ifdef PIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING
+struct NMachine:Q4TimingRV32 {
+ NMachine(const char* directory,unsigned width):Q4TimingRV32(directory,width,true){}
+};
+#else
 using NMachine=Q4TimingRV32;
+#endif
 #else
 #include "pioneer_q38_q4_fpu_compact_stream_image_test.cpp"
 using NMachine=CompactStreamRV32;

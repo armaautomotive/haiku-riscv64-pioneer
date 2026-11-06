@@ -15,7 +15,9 @@
 namespace {
 using Meta=PioneerNativeCompactQ4StreamMetadata;
 using Variant=PioneerNativeCompactQ4StreamVariant;
-#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+#ifdef PIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING
+constexpr uint64_t ExpectedGeneration=45; // exact fresh108 admission only
+#elif defined(PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING)
 constexpr uint64_t ExpectedGeneration=43; // requires fresh independent admission
 #else
 constexpr uint64_t ExpectedGeneration=37; // exact fresh native104 parent epoch
@@ -56,7 +58,9 @@ void DumpTiming(const PioneerNativeCompactQ4StreamRequest& r,unsigned sample){
 #endif
 }
 int main(int argc,char** argv) {
-#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+#ifdef PIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING
+	if(argc!=2 || strcmp(argv[1],"--fixed-compact-q4-pair-issue-full-k-stream")){fputs("Use --fixed-compact-q4-pair-issue-full-k-stream for two fixed full-K DEBUG bands,NOT model/Work inference.\n",stderr);return 2;}
+#elif defined(PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING)
 	if(argc!=2 || strcmp(argv[1],"--fixed-compact-q4-timing-full-k-stream")){fputs("Use --fixed-compact-q4-timing-full-k-stream for two fixed full-K DEBUG bands,NOT model/Work inference.\n",stderr);return 2;}
 #else
 	if(argc!=2 || strcmp(argv[1],"--fixed-compact-q4-full-k-stream")){fputs("Use --fixed-compact-q4-full-k-stream for nine fixed full-K DEBUG samples,NOT model/Work inference.\n",stderr);return 2;}

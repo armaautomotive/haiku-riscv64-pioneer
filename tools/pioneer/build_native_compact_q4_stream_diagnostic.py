@@ -15,8 +15,11 @@ parser.add_argument('haiku_build', type=pathlib.Path)
 parser.add_argument('private_export', type=pathlib.Path)
 parser.add_argument('original', type=pathlib.Path)
 parser.add_argument('output', type=pathlib.Path)
-parser.add_argument('--timing',action='store_true',help='Distinct107 timed kernel diagnostic;NEVER104 deployment')
+selection=parser.add_mutually_exclusive_group()
+selection.add_argument('--timing',action='store_true',help='Distinct107 timed kernel diagnostic;NEVER104 deployment')
+selection.add_argument('--pair-issue',action='store_true',help='Distinct108 paired timed kernel;NEVER107 replay')
 args = parser.parse_args()
+if args.pair_issue:args.timing=True
 assert args.original.is_absolute() and args.original.is_file()
 build, private, output = args.haiku_build, args.private_export, args.output
 assert build.is_absolute() and build.is_dir() and output.is_absolute() and not output.exists() and not output.is_symlink()
@@ -37,13 +40,17 @@ private_unchanged()
 subprocess.run([sys.executable, str(here / 'tests/pioneer_native_compact_q4_stream_export_test.py'), str(private), str(args.original)], check=True)
 output.mkdir(mode=0o700)
 images = {}
-role=107 if args.timing else 104
-image_bytes=7972 if args.timing else 7644
+role=108 if args.pair_issue else 107 if args.timing else 104
+image_bytes=7820 if args.pair_issue else 7972 if args.timing else 7644
 image_words=image_bytes//4
 for width, digest in ((5120, 'f67b7b5bc07bddcf5f3ddfccfbe1013c2680650ea1994231565f050d1f0d89c5'),
                       (17408, 'c95e0cc41971b37dd89786a2c3747b6d8ef6ebbde3a2ec837c63198982373b92')):
     directory = output / ('image' + str(width))
-    if args.timing:
+    if args.pair_issue:
+        from build_q38_q4_pair_issue import INSPECT_PINS
+        digest=INSPECT_PINS[width][0]
+        command=[sys.executable,str(here/'build_q38_q4_pair_issue.py'),str(build),str(directory),str(width)]
+    elif args.timing:
         from build_q38_q4_kernel_timing import INSPECT_PINS
         digest=INSPECT_PINS[width][0]
         command=[sys.executable,str(here/'build_q38_q4_kernel_timing.py'),str(build),str(directory),str(width)]
@@ -82,9 +89,10 @@ common = [cxx, '-std=gnu++17', '-O2', '-Wall', '-Wextra', '-Werror', '-fno-excep
           '-fno-strict-aliasing', '-fno-delete-null-pointer-checks', '-mcmodel=medany', '-fpic', '-D_KERNEL_MODE']
 roles = ['BANKS', 'PANEL', 'AFFINE', 'BLOCK', 'STREAM', 'ROWS', 'COHORT', 'COHORT_SEALED', 'COHORT_PAYLOAD', 'DISPATCH', 'DISPATCH_VECTOR']
 native = ['-DTT_PIONEER_EXPERIMENTAL_Q38_' + name for name in roles]
-tag='2026110600010107' if args.timing else '2026110500010104'
+tag='2026110600010108' if args.pair_issue else '2026110600010107' if args.timing else '2026110500010104'
 native += ['-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=0x'+tag+'ULL', '-DPIONEER_NATIVE_COMPACT_Q4_STREAM_DIAGNOSTIC=1']
 if args.timing:native.append('-DPIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING=1')
+if args.pair_issue:native.append('-DPIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING=1')
 commands = []
 def run(command):
     commands.append(command)
@@ -102,6 +110,10 @@ if args.timing:
     cases += [('missing-timing',['-UPIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING']),
               ('wrong-timing',['-UPIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING','-DPIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING=0']),
               ('untimed-tag',['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026110500010104ULL'])]
+if args.pair_issue:
+    cases += [('missing-pair',['-UPIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING']),
+              ('wrong-pair',['-UPIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING','-DPIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING=0']),
+              ('old107-tag',['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026110600010107ULL'])]
 for macro in ('PIONEER_NATIVE_Q4_FPU_DIAGNOSTIC', 'PIONEER_NATIVE_DRAM_MODEL_BAND_DIAGNOSTIC', 'PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64',
               'PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC', 'PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64', 'PIONEER_NATIVE_BFP_DIAGNOSTIC',
               'PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC', 'PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC',
@@ -115,7 +127,8 @@ for label, extra in cases:
     result = subprocess.run(common + native + extra + includes + ['-E', str(driver / 'pioneer_native_compact_q4_stream_driver.cpp')],
                             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True, cwd=output)
     assert result.returncode and any(message in result.stderr for message in ('Build only the exact diagnostic104',
-        'Diagnostic104 cannot alias','Exact separate timed compact Q4 diagnostic107 role required','Exact diagnostic107 kernel identity required')),label
+        'Diagnostic104 cannot alias','Exact separate timed compact Q4 diagnostic107 role required','Exact diagnostic107 kernel identity required',
+        'Exact separate paired compact Q4 diagnostic108 role required','Exact diagnostic108 kernel identity required')),label
 (output / 'driver-role-refusals.txt').write_text('\n'.join('PASS ' + label for label, _ in cases) + '\n')
 wrong = output / 'wrong-image';wrong.mkdir(mode=0o700)
 (wrong / 'PioneerNativeCompactQ4StreamGeneratedImage.h').write_text(header.replace('LayoutRole='+str(role), 'LayoutRole=86'))
