@@ -1,0 +1,123 @@
+Performance-route decision -- 27B/P100A, November 6, 2026
+========================================================
+NO NEW MODEL SPEEDUP OR HARDWARE CAPACITY MEASUREMENT.
+Best complete full-card request remains tag92/0.173 tok/s; latest110/0.082.
+20 tok/s remains unmet. This assessment closes a decision checkpoint,
+not the overall usable self-hosted 27B/Assistant objective.
+
+Decision
+---------
+Do not continue blind BF16 Q4 arithmetic replacements. Native113/114/115
+are correct for their fixed cases but slower than their paired old path;
+the complete BF16 engine110 is already over2x slower than earlier92.
+Use the faster original-layout vector92 engine as the next profiling
+subject, preserving its actual math, all learned tensors and row cover.
+There is NO evidenced 116x improvement path yet. A peak-bandwidth estimate
+does not supply one. Return to measured controller/worker attribution before
+another implementation, not another cache rewrite or UI feature.
+
+New read-only exact-model inventory
+-----------------------------------
+The sibling inventory.cpp uses the existing strict GGUF851 parser and
+actual native tile sizes. It parsed the current local file header, actual0,
+checking all fixed shapes and file stability. No weight values, inference,
+device calls, conversion or fresh full-file SHA authentication were run.
+The published probe was rebuilt and reproduced identical whole stdout;
+bad argument count returns2 and /dev/null metadata returns4 as intended.
+The known original has18973870528 bytes; tensor payload18962876416 bytes.
+Canonical parameter count26895998464. It is NOT uniformly four-bit:
+
+Format  Tensors  Parameters      Original packed bytes
+F32     353      2645504         10582016
+Q8_0    288      6734479360      7155384320
+Q4_K    193      18384158720     10341089280
+Q6_K    17       1774714880      1455820800
+
+For a single dense decode pass, exclude the complete715161600B embedding
+table, which is a row lookup, not a full matrix read every token. Summing
+every other tensor gives18247714816 original packed bytes. With our actual
+Q8/Q4/Q6 card tile sizes576/2304/3392 per16 output rows, this becomes
+18682484736 bytes (18.6825 decimal GB) for a SINGLE ideal weight pass.
+This is an inventory/traffic MODEL, NOT an observed bus-byte counter.
+
+Conditional weight-traffic limit
+--------------------------------
+Tenstorrent's current p100a specification lists28GB GDDR6 and448GB/sec.
+Primary source, checked November6: https://tenstorrent.com/en/hardware/cards
+Use the advertised448000000000 bytes/sec, NOT an assumed clock frequency:
+  ideal weight-only rate =448000000000/18682484736 =23.97968 tokens/sec
+  weight traffic at20tok/s =373649694720 bytes/sec =83.40395% of that peak.
+At hypothetical50%/80% of peak, the weight-only rates would be11.99/19.18.
+These are scenarios, NOT measured/expected application performance.
+
+Assumptions: one pass/token with no retained weight reuse or extra fetches;
+no embedding lookup, KV/GDN state, activations, protocol or cache-correction
+traffic; no math, control, synchronization or host latency. On-chip retained
+weights could lower traffic; extra passes/padding/corrections raise it.
+The prepared-cache path has additional sparse correction/index traffic;
+do NOT apply the original-layout figure to it as an exact byte count.
+Longer context also adds attention traffic. Therefore20 is not ruled out
+by this simple nominal weight-only bound, but is aggressive and UNPROVEN.
+No calibrated aggregate GB/s result for this installation is established:
+the earlier seven-bank physical pilot closed with timing UNAVAILABLE.
+Do not convert its firmwareMHz/device cycles into a bandwidth claim.
+
+What existing measured phases do and do not prove
+-------------------------------------------------
+Rechecked saved110 archive integrity with its existing verifier, actual0.
+Its14 exclusive ROOT buckets sum1017855297132 measured device cycles.
+ROOT is a controller ON THE CARD, not Pioneer CPU inference/fallback.
+For a cost fraction p, ideal elimination gives total/(total-removed):
+
+Removed entire category       Share      Conditional whole-run limit
+Matrix gather/wait            22.7733%   1.29489x
+Matrix preparation            27.2758%   1.37506x
+All four matrix-call phases   59.1679%   2.44906x
+Metadata plus state commit     5.1323%   1.05410x
+
+Assume everything else unchanged and removal is free. These are NOT achieved
+gains or decode-token-rate predictions. The profile covers62 prompt+decode
+positions of SLOWER110, not just the31-step generation window or faster92.
+Gather/wait includes NoC/receipt/control work, not pure FPU time. Recurrent
+and dense buckets outside it include more matrix/control/attention work.
+The table rejects a single-bucket explanation, not the card's potential.
+
+Code trace / one next measurement
+---------------------------------
+Projection::Run separates preparation, dispatch, gather/wait and finish.
+Preparation also admits worker histories; gather includes completion,
+source/counter receipts and output collection. Some duplicate audits have
+ALREADY been removed/deferred in tested variants; do not redo them.
+The full-model global worker uses119 compute participants plus the root;
+full-card execution does not imply the compute units are kept efficiently
+busy. Tenstorrent documents separate Tensix instruction streams and a
+paired unpack/math pipeline; that is an architectural option, not evidence
+that our current kernel is limited by thread count or will gain116x:
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/BabyRISCV/PushTensixInstruction.md
+https://github.com/tenstorrent/tt-metal/blob/main/tt_metal/tt-llk/tt_llk_blackhole/llk_lib/llk_math_matmul.h
+
+NEXT: one distinct, qualified fast-engine ROOT phase profile. Keep vector92
+worker/math bytes unchanged; instrument the complete ORIGINAL-layout root
+to split preparation/dispatch/gather/finish and outside-call work during
+the actual post-prompt window. Preserve the original851 source,8192context,
+two recurrent slots, full vocabulary/row cover, ownership and clean END.
+Do not use BF16 phase percentages as its result or reuse a spent stage.
+Finish with measured dominant cost and ONE supported structural change
+(or explicitly insufficient data), while separately reporting real rate,
+prompt/setup time, quality scope and restoration. No model promotion from
+instrumentation. A calibrated all-bank traffic test is only warranted if
+the measured fast path actually points to weight-fetch bandwidth.
+
+Evidence / reproduction
+------------------------
+Sibling inventory.cpp/stdout/bounds.json contain the probe and exact maths.
+Build: c++ -std=c++17 -O2 -ffp-contract=off -Wall -Wextra -Werror -I tools/pioneer tools/pioneer/benchmarks/qwen38-performance-route-20261106/inventory.cpp -o /absolute/private/inventory
+Run: /absolute/private/inventory /absolute/original.gguf
+PioneerQwen38Gguf.h SHA79fcf53c4f7ca8ef09224d943ba3e277e3a0ae9c81ed09f82debb4844d5aced7
+PioneerQwen38Panel.h SHAbc7d4c9d16c582c7eb43802323239b2d94cdd98d40ad1d0dfc0847dba5d7c855
+Saved110 reader SHA2c17d16b361b46ad526812816eaff0f28d4631bfce4fac30444aef2bfbc6be29
+Full physical evidence remains in vector-q4-full-card, bf16-deferred-full-
+physical, prepared-bf16-q4-physical and dram-cohort reports/archives.
+No Pioneer operations, code deployment, reboot, model/cache/Assistant or
+hardware changes were made for this assessment. Last independent platform
+check remains normal041/gen8,64CPUs/fullRAM, idle and apps/runtime preserved.

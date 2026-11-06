@@ -44,9 +44,12 @@ Native115 consumed that SAME format with full-BF16 inputs and no per-weight
 decoding/PACK. Its qualified package now has a real two-shape hardware
 result, exact128/two clean ENDs and independent normal-driver restoration.
 Fewer static operations did NOT make it faster. No replay or promotion.
-Next bounded task: assess a credible performance route from existing
-profiles and measured costs before another kernel rewrite; name any exact
-missing measurement. This is not a new UI/cache/infrastructure task.
+Performance-route assessment CLOSED: exact model inventory is18.68GB per
+ideal single-pass card-format weight read. Advertised448GB/s gives a
+weight-only ideal limit~24tok/s;20 would need83% of peak before other costs.
+This is NOT measured/expected speed or proof20 is feasible. No supported
+116x improvement route yet. Next ONE qualified profile of faster vector92's
+ROOT during actual decode, before another kernel rewrite. No UI/cache detour.
 
 Four compact goals
 -------------------
@@ -69,6 +72,7 @@ Evidence (relative to tools/pioneer)
 Best model: benchmarks/qwen38-vector-q4-full-card-20261104.txt
 Latest model: benchmarks/qwen38-bf16-deferred-full-physical-20261106.txt
 Latest card result: benchmarks/qwen38-prepared-bf16-q4-physical-20261106.txt
+Performance-route decision: benchmarks/qwen38-performance-route-20261106.txt
 New prepared-BF16 code: benchmarks/qwen38-prepared-bf16-q4-component-20261106.txt
 Returning comparison: benchmarks/qwen38-prepared-bf16-q4-returning-20261106.txt
 Native115 qualification: benchmarks/qwen38-prepared-bf16-q4-native-20261106.txt

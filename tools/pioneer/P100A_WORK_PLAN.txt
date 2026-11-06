@@ -71,16 +71,28 @@ Retain seven3GiB source caps, original metadata/correction/source ownership;
 no cache recipe change/regeneration or global BFP8 expansion. Never feed
 prepared bytes to the raw loader. See prepared-bf16-q4-component report.
 
-Immediate bounded task: a performance-route decision, NOT another rewrite.
-Use existing full-model profiles and measured costs to identify a supported
-bottleneck and credible structural improvement. Keep best tag92 distinct
-from the slower BF16 engine. State assumptions and whether one specific
-additional measurement is necessary; do not infer speed from static counts.
-Close with an evidence-backed next experiment or an explicit feasibility
-limit, not an automatic chain of new candidates. This does NOT close or
-reduce the overall fast 27B/Assistant objective.
+Performance-route decision is CLOSED, not a speed gain. The exact metadata
+inventory gives18.6825GB for one original-layout nonembedding tiled weight
+pass. At advertised448GB/s, ideal weight-only limit23.98tok/s;20 needs83.4%
+of that peak BEFORE state/activation/protocol/correction traffic and compute.
+No measured aggregate bandwidth or credible116x implementation gain exists.
+Existing110 profile cannot identify faster92's decode bottleneck: it is a
+different engine and aggregates prompt+generation. See performance-route
+report for conditional Amdahl limits, assumptions and exact inventory.
 
-Only after that decision, any further implementation must:
+Immediate bounded task: ONE distinct fast-engine ROOT phase profile.
+Keep accepted vector92 worker/math bytes unchanged, and split actual
+post-prompt preparation/dispatch/gather/finish/outside-call costs. Preserve
+all851 tensors,8192context,two state slots,full vocabulary/row cover and
+ownership/clean END. Qualify new telemetry/native identity; never reuse a
+spent stage or borrow BF16 percentages. Finish with measured dominant cost
+and ONE supported structural change, or explicit insufficient data. Report
+real rate/setup/quality/restoration separately; instrumentation is not an
+Assistant promotion. Only pursue all-bank bandwidth calibration if the
+fast-path evidence points to fetch. This does NOT close or reduce the
+overall fast 27B/Assistant objective.
+
+After that profile, any further implementation must:
   a. Attribute recurring cost using compiled code and, only if needed, a
      bounded new on-card profile. Do not guess a bottleneck from test counts.
   b. Change ONE supported hotspot while retaining the numerical contract,

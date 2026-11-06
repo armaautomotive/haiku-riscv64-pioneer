@@ -1,0 +1,49 @@
+{
+  "conditionalAmdahl": {
+    "gatherWait": {
+      "removedCycles": "231799293721",
+      "totalCycles": "1017855297132",
+      "remainingCycles": "786056003411",
+      "fraction": 0.22773305240355715,
+      "maximumWholeRunSpeedupIfCostVanishes": 1.2948890317167396
+    },
+    "preparation": {
+      "removedCycles": "277627722069",
+      "totalCycles": "1017855297132",
+      "remainingCycles": "740227575063",
+      "fraction": 0.27275755488159137,
+      "maximumWholeRunSpeedupIfCostVanishes": 1.3750572545819728
+    },
+    "allFourMatrixPhases": {
+      "removedCycles": "602243957320",
+      "totalCycles": "1017855297132",
+      "remainingCycles": "415611339812",
+      "fraction": 0.591679346776439,
+      "maximumWholeRunSpeedupIfCostVanishes": 2.4490556431699444
+    },
+    "metadataAndStateCommit": {
+      "removedCycles": "52239615783",
+      "totalCycles": "1017855297132",
+      "remainingCycles": "965615681349",
+      "fraction": 0.051323224362239905,
+      "maximumWholeRunSpeedupIfCostVanishes": 1.0540998005645676
+    }
+  },
+  "weightTrafficRoofline": {
+    "manufacturerPeakGBps": 448,
+    "rawNonembeddingGBPerPass": 18.247714816,
+    "cardTiledNonembeddingGBPerPass": 18.682484736,
+    "rawWeightOnlyIdealTPS": 24.55101937515944,
+    "tiledWeightOnlyIdealTPS": 23.97967970163688,
+    "GBpsRequiredFor20TPS": 373.64969472,
+    "manufacturerPeakFractionNeeded": 0.8340394971428572,
+    "halfPeakWeightOnlyTPS": 11.98983985081844,
+    "eightyPercentPeakWeightOnlyTPS": 19.1837437613095,
+    "assumptions": "one pass/token, no persistent weight reuse or extra fetch; excludes embedding lookup and state/activation/protocol traffic; advertised NOT measured bandwidth; not achievable model rate"
+  },
+  "profileSHA": "2c17d16b361b46ad526812816eaff0f28d4631bfce4fac30444aef2bfbc6be29",
+  "inventoryActual0": true,
+  "scope": "READ_ONLY_ASSESSMENT_NOT_NEW_HARDWARE_MODEL_SPEED_OR_PROOF_20TPS",
+  "profileWindow": "tag110 all62 prompt+generation positions, NOT tag92 or decode-only",
+  "metadataProbe": "exact851 header geometry only; no fresh full SHA or learned payload read"
+}
