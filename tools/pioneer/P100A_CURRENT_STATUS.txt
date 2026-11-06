@@ -39,11 +39,14 @@ Compact work plan -- one active task
    Previous 106 driver/client/launcher builds still reproduce unchanged.
    This is NOT a hardware-qualified 109 run or a new inference-speed result.
 
-2. MEASURE THIS CANDIDATE: NEXT / NOT YET RUN.
+2. MEASURE THIS CANDIDATE: IN PROGRESS, no result yet.
    Startup/upload/first-commit measurement code and the fresh109 parent
    have passed independent clean-source builds and offboard tests. The
-   prior106 host worker/launcher remain byte-identical. No new card run yet.
-   Next run the same complete 31-prompt/32-output benchmark on P100A.
+   prior106 host worker/launcher remain byte-identical. The single109-a
+   31-prompt/32-output benchmark has STARTED from source4163b2c17c.
+   Last observed:experimental driver109/generation47,model authentication,
+   no stderr;the SAME protected parent is still live. Upload/inference and
+   clean closure/restoration must finish before there is a usable result.
    Restore and verify the normal driver; publish the measured comparison.
    Done means a recorded improvement OR a recorded rejection of a slower
    candidate. Only a full-model improvement justifies Assistant promotion.
@@ -57,14 +60,20 @@ completion is not completion of that goal. Paired issue leaves the GPU math
 operation count unchanged; larger kernel/dataflow changes remain necessary.
 Do not redo closed offload/memory infrastructure, UI work or baseline trials
 without evidence requiring it. Hardware stages 81-a through 108-a are spent;
-never replay, repin or clear their once markers. Candidate 109-a is unused.
+never replay, repin or clear their once markers. Candidate109-a is now ACTIVE
+and its once marker is SPENT:never launch it a second time,even if quiet.
 
-Last recorded hardware state
-----------------------------
+Last completed run / current run
+-------------------------------
 The new kernel test finished with 128 exact outputs and clean closure.
 The normal driver was independently verified restored at generation 46,
 with 64 CPUs, 137034936320 bytes RAM and unchanged Assistant/runtime files.
-No hardware job remains. Assistant's backend was not changed.
+No108 job remains. Assistant's backend was not changed.
+109 is now active under the experimental driver;normal restoration is NOT
+yet proved. Its authoritative records are in:
+ /boot/home/pioneer-q38-bf16-pair-issue-109-a/
+Inspect its actual parent/child exit records and processes,not a quiet log
+or a state file alone. Do not restart or intervene while the job is live.
 
 Evidence -- paths relative to this directory
 --------------------------------------------
