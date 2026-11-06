@@ -19,33 +19,32 @@ The latest path is slower and has NOT replaced Assistant's backend.
 No newer full-model speed result exists. Model loading time and first-token
 latency also still need separate measurements.
 
+Completed bounded task
+----------------------
+The paired Q4 kernel passed its actual card test, with 128 exact outputs
+and two clean completions. Compared with the saved baseline, its two
+sample operations used 6.81% and 6.55% fewer card cycles (two-pass means).
+This is a measured kernel improvement, NOT a full-model speed result.
+It preserves the arithmetic, GPU instruction order, formats, completion
+checks, transfers and existing memory limits. Offline checks also passed
+using 576 original-weight outputs and independent clean-source builds.
+
 Current bounded task
 --------------------
-Make the GPU's Q4 weight-processing kernel faster, then measure it on-card.
-
-Completed offline: an issue-overhead optimization that processes adjacent
-chunks together. It preserves the arithmetic, GPU instruction order,
-formats, completion checks, transfers and existing memory limits.
-It passed output checks using original model weights: 576 exact results.
-Independent working-tree and clean-source test runs passed.
-The compiled-program test executes 5.1-5.3% fewer RV32 instructions.
-That is NOT a measured improvement in card time or model tokens/second.
-No installed driver or Assistant backend was changed.
-
-Next: test this candidate through a fresh diagnostic build and measure
-the same two operations against the completed on-card baseline.
-Never replay the old, already-used 107-a hardware trial.
-If faster, integrate it and repeat the same complete 27B benchmark.
+Integrate this paired policy into the full-model cached matrix service,
+qualify that path, then repeat the same complete 27B benchmark.
+Measure loading, first-token latency and generation rate separately.
 Only a measured full-model improvement justifies promotion to Assistant.
 This small change leaves the GPU math-operation count unchanged; reaching
 the overall target will require larger kernel/dataflow improvements too.
+Never replay the already-used 107-a or 108-a hardware trials.
 
 Last recorded hardware state
 ----------------------------
-The baseline kernel test finished with 128 exact outputs and clean closure.
-The normal driver was independently verified restored, with 64 CPUs,
-137034936320 bytes RAM and unchanged Assistant/runtime files.
-No hardware job remained. This work made no subsequent hardware change.
+The new kernel test finished with 128 exact outputs and clean closure.
+The normal driver was independently verified restored at generation 46,
+with 64 CPUs, 137034936320 bytes RAM and unchanged Assistant/runtime files.
+No hardware job remains. Assistant's backend was not changed.
 
 Evidence -- paths relative to this directory
 --------------------------------------------
@@ -53,7 +52,9 @@ Full-model measurements:
  benchmarks/qwen38-bf16-profile-full-physical-20261105.txt
 Completed on-card kernel baseline:
  benchmarks/qwen38-q4-kernel-timing-physical-20261106.txt
-Current offline optimization and reproduction command:
+Measured paired-kernel improvement:
+ benchmarks/qwen38-q4-pair-issue-physical-20261106.txt
+Kernel implementation and offline reproduction:
  benchmarks/qwen38-q4-pair-issue-offboard-20261106.txt
 Analytical budget, not a demonstrated hardware limit:
  benchmarks/qwen38-performance-budget-20261106.txt
@@ -62,15 +63,17 @@ Saved-result checks:
  python3 tools/pioneer/benchmarks/qwen38-bf16-profile-full-physical-20261105/verify_evidence.py
  python3 tools/pioneer/benchmarks/qwen38-q4-kernel-timing-physical-20261106/verify_evidence.py
  python3 tools/pioneer/benchmarks/qwen38-q4-pair-issue-offboard-20261106/verify_evidence.py
+ python3 tools/pioneer/benchmarks/qwen38-q4-pair-issue-physical-20261106/verify_evidence.py
 
 Preservation
 ------------
 Previous experiments and unrelated local changes are preserved, not deleted.
-The whole worktree is NOT clean. The current candidate was independently
-rebuilt from Git base d9f11f807a plus only its 11 scoped source changes.
-Existing 104/107 GPU images still reproduce byte-for-byte.
-Work remains separate from CPU validation. No Assistant, boot, kernel,
-network, power, SD, hardware connection or disk-content change was made.
+The whole worktree is NOT clean. The hardware-tested source is
+bebac899260f1b97e922d4d512440f2c21392d7e; its driver/client/kernel artifacts
+matched an independent clean-source build. Older 104/107 builds still
+reproduce byte-for-byte. Work remains separate from CPU validation.
+The separate test driver was hot-swapped and restored. No Assistant,
+boot, kernel, network, power, SD or hardware-connection change was made.
 The historical checkpoint reproduction tool is BUILD ONLY:
  tools/pioneer/reproduce_qwen27_p100a_checkpoint.py
 Never launch its old, already-used hardware-stage binaries as a new test.

@@ -1,0 +1,79 @@
+Paired Q4 kernel108 -- actual card cycles reduced,NOT model tokens/sec
+====================================================================
+2026-11-06. Executed sourcebebac899260f1b97e922d4d512440f2c21392d7e.
+ONE fresh108-a cohort,normal44 -> native45 -> normal46;ACTUAL exit0.
+108-a is now SPENT forever. Never replay,repin or clear its once marker.
+
+Measured result
+----------------
+Same original Q4 bands as the completed107 baseline,32 output rows/full K,
+two passes per band. All128 output words equal the independent original
+predictions;two explicit clean ENDs,polls1 each. Four valid clock records:
+
+ K5120,gate tensor7/first0:
+  pass0 start1228 end644549 =643321 cycles
+  pass1 start645160 end1288389 =643229 cycles
+  Previous107:690318/690195 cycles. Mean cycle count reduced6.806383%.
+
+ K17408,down tensor6/first0:
+  pass0 start1228 end1995659 =1994431 cycles
+  pass1 start1996270 end3990782 =1994512 cycles
+  Previous107:2134279/2134325 cycles. Mean cycle count reduced6.551580%.
+
+This is a measured improvement in THESE kernel intervals. Two passes are
+not a repeatability study or a statistical confidence interval. No nominal
+clock-frequency assumption,seconds conversion or model-rate extrapolation.
+
+Scope and limitations
+-----------------------
+ONE active compute core(1,2),other119 held. Intervals include the on-card
+loader/setup/prefetch/NoC/math/drains;exclude original-file authentication,
+fresh CPU DEBUG reference,journal staging/readback,output copy and cleanup.
+Diagnostic BF16 inputs,NOT real prompt states;not a whole FFN/cohort/model.
+The diagnostic input comes from GDDR;the full-model returning cached service
+uses ROOT L1. Shared math does not establish equal full-pipeline timing.
+The GPU instruction stream is unchanged;RV32 issue overhead was reduced.
+The full-model9.750billion Q4Op/token budget is NOT reduced by this change.
+
+No new full-model generation. Latest full-model rate remains0.07846tok/s,
+older matched path0.16436tok/s.20tok/s remains unmet. Assistant unchanged.
+
+Actual closure and independent preservation
+--------------------------------------------
+Primary SSH12432 ACTUALLY exits0,DIRECT_PAIRED_Q4_108_PARENT_ACTUAL_EXIT0.
+Launcher38711,parent38712,client38791 subsequently absent. Actual child and
+parent exit files0,both stderr files empty;state
+STABLE041_RESTORED_COMPACT_Q4_PAIR_ISSUE_EXACT128.
+Independent postflight34734 ACTUALLY exits0:normal041/tag12/generation46,
+quiesced0/cold0/owner0/open1/guard1,64CPUs,137034936320B RAM,unchanged three
+Assistant files/four runtime libraries/driver/admin/reload guard/model
+metadata. No reboot,power,SD,mains,network,kernel or Assistant change.
+No live hardware job remains. SCP archive99935 ACTUALLY exits0;all9 remote
+records match hashes captured by the independent postflight. Both working
+and clean strict whole-parent readers ACTUALLY exit0 with identical data.
+
+Checkpoint pushed BEFORE staging. Fresh idle normal44,file hashes,unused
+stage,all4 staged hashes and whole SCP readback cmp passed. Same protected
+parent preserved throughout authentication,compute,END and restore. Only
+read-only log/ps observations while active. CPU time advanced during the
+expensive original-file/reference check. Empty name-filter observations
+were due to Haiku's truncated process names,NOT process exit or a restart.
+
+Archive,not a LIVE tail
+------------------------
+Child137 lines/15920B SHAeb908182a31e3a63929b1d825443c03b519cb7d888dbe0cdcb1bdd1164c15712
+Parent173 lines/18697B SHA6385bb9b334e5aba9ce7ddc832fb32f0a7de00b66a6c424a45ac46704047e40f
+Saved records and verifier:qwen38-q4-pair-issue-physical-20261106/.
+Build/lifecycle qualification:qwen38-native-q4-pair-issue-offboard-20261106.txt.
+Kernel implementation:qwen38-q4-pair-issue-offboard-20261106.txt.
+
+Next bounded task
+-------------------
+Integrate this exact paired policy into the full-model returning cached
+matrix service under a distinct opt-in build. Qualify its ROOT-L1 loader,
+return ABI and full ownership path,then run the same complete27B counting
+benchmark. Report loading,first-token latency and generation rate separately.
+Do not promote to Assistant or claim an inference speedup from kernel timing.
+Keep CPU reference confined to DEBUG tests. Larger kernel/dataflow changes
+remain necessary for the overall20tokens/sec ambition. Do not redo the
+completed107/108 baseline trials or memory infrastructure.

@@ -1,0 +1,126 @@
+{
+  "actual_independent_postflight_exit": 0,
+  "actual_primary_exit": 0,
+  "comparison": [
+    {
+      "baseline_cycles": [
+        690318,
+        690195
+      ],
+      "candidate_cycles": [
+        643321,
+        643229
+      ],
+      "mean_cycle_reduction_percent": 6.806382844638192,
+      "sample": 0,
+      "width": 5120
+    },
+    {
+      "baseline_cycles": [
+        2134279,
+        2134325
+      ],
+      "candidate_cycles": [
+        1994431,
+        1994512
+      ],
+      "mean_cycle_reduction_percent": 6.551579860769474,
+      "sample": 6,
+      "width": 17408
+    }
+  ],
+  "files": {
+    "compact-q4-stream.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "compact-q4-stream.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compact-q4-stream.stdout": {
+      "bytes": 15920,
+      "sha256": "eb908182a31e3a63929b1d825443c03b519cb7d888dbe0cdcb1bdd1164c15712"
+    },
+    "direct-launcher.pid": {
+      "bytes": 6,
+      "sha256": "a24b5688ecfd434c0be1333adee9a414510c24ea30961039a5e8aa70b5db2268"
+    },
+    "direct-parent.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "direct-parent.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "direct-parent.stdout": {
+      "bytes": 18697,
+      "sha256": "6385bb9b334e5aba9ce7ddc832fb32f0a7de00b66a6c424a45ac46704047e40f"
+    },
+    "parent.pid": {
+      "bytes": 6,
+      "sha256": "320aa0086422b7a911ec7fcac4b3d5305b2d6d34fc81222d2baae9cb2aa77be3"
+    },
+    "postflight.stdout": {
+      "bytes": 3966,
+      "sha256": "4b59e4f126f89d07e3f6f51de77a5fddc266c9356ef17cda703fc75893bcbc6d"
+    },
+    "postflight108.sh": {
+      "bytes": 3744,
+      "sha256": "9d08417ae76e21bd3d87558013d14d1d561b4937f417f7a668d808eb8a675cb3"
+    },
+    "state": {
+      "bytes": 50,
+      "sha256": "baf437c34d8347c9caffeaf92bc9a805148850ccbf3161e5e265530b326a3146"
+    }
+  },
+  "hardware_source": "bebac899260f1b97e922d4d512440f2c21392d7e",
+  "observed": {
+    "ends": 2,
+    "generation": 45,
+    "polls": [
+      1,
+      1
+    ],
+    "restored_generation": 46,
+    "samples": 2,
+    "scope": "receipt DATA only;no process-exit/native/hardware/clock-frequency/model-TPS authority",
+    "timing": [
+      {
+        "cycles": 643321,
+        "end": 644549,
+        "pass": 0,
+        "sample": 0,
+        "start": 1228,
+        "state": 1
+      },
+      {
+        "cycles": 643229,
+        "end": 1288389,
+        "pass": 1,
+        "sample": 0,
+        "start": 645160,
+        "state": 1
+      },
+      {
+        "cycles": 1994431,
+        "end": 1995659,
+        "pass": 0,
+        "sample": 6,
+        "start": 1228,
+        "state": 1
+      },
+      {
+        "cycles": 1994512,
+        "end": 3990782,
+        "pass": 1,
+        "sample": 6,
+        "start": 1996270,
+        "state": 1
+      }
+    ],
+    "words": 128
+  },
+  "scope": "Two fixed diagnostic bands on ONE card core;NOT full model/inference TPS/frequency conversion/repeatability proof"
+}
