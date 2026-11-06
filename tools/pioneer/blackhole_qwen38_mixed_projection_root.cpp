@@ -16,6 +16,10 @@
 #include "PioneerQ38Bf16RootPairs.h"
 #include "PioneerQ38Bf16MatrixReceipt.h"
 #endif
+#ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
+#include "PioneerQ38Bf16DeferredAuditRole.h"
+#include "PioneerQ38Bf16DeferredAudit.h"
+#endif
 #ifdef PIONEER_Q38_PREPARED_Q4_ROOT_IMAGE
 #include "PioneerQ38PreparedQ4RootRole.h"
 #include "PioneerQ38PreparedQ4RootLayout.h"
@@ -223,12 +227,19 @@ static void Scatter(const uint32_t* d,uint32_t* tracked){
  }
 }
 static unsigned Run(const uint32_t* d){
+#ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
+ PioneerQ38Bf16DeferredAudit audit;
+#endif
 #ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
  PioneerQ38Bf16ProfileScope timing(PioneerQ38Bf16ProfileData::MatrixPrepare);
 #endif
  CaptureRecipe(d);
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
- if(BfQ4(d))BfPrepare(d);else
+ if(BfQ4(d))BfPrepare(d
+#ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
+  ,audit
+#endif
+ );else
 #elif defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION)
  if(PreciseDown(d))PreparePrecise(d);else
 #endif
@@ -258,7 +269,12 @@ static unsigned Run(const uint32_t* d){
 #ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
  timing.Next(PioneerQ38Bf16ProfileData::MatrixGatherWait);
 #endif
- for(unsigned w=0;w<d[7];w++)Gather(d,tracked,w);
+ for(unsigned w=0;w<d[7];w++){
+  Gather(d,tracked,w);
+#ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
+  if(BfQ4(d) && !audit.MatrixClosed(w))scalar_fault_park();
+#endif
+ }
 #ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
  timing.Next(PioneerQ38Bf16ProfileData::MatrixFinish);
 #endif
@@ -278,9 +294,17 @@ static unsigned Run(const uint32_t* d){
   ;w<119;w++){
   Wait(d,tracked,w,0);BootSeal(d,tracked,w);ClosedJob(d,tracked,w,false);
   for(unsigned i=0;i<8;i++)if(Register(d,tracked,w,0xffb20000+Counter(i))!=Words(L::Counters)[w*8+i])scalar_fault_park();
+#ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
+  if(BfQ4(d) && !audit.IdleClosed(w))scalar_fault_park();
+#endif
  }
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
  PushedEnd(d,incoming);
+#endif
+#ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
+ // All119 are now freshly validated by genuine matrix Gather or the full
+ // idle audit above. No projected-data scatter or return before coverage.
+ if(BfQ4(d) && !audit.Closed())scalar_fault_park();
 #endif
  Scatter(d,tracked);InputsSeal(d);Seal(d);for(unsigned w=0;w<119;w++)FrameSeal(w);
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION

@@ -104,7 +104,11 @@ static BF_ROOT_FN void BfGatherProducer(const uint32_t* d,uint32_t* tracked,unsi
  if(!BFP::Line(line,desc,job[12]))scalar_fault_park();
  for(unsigned i=0;i<8;i++)Words(L::Counters)[w*8+i]=after[i];
 }
-static BF_ROOT_FN void BfPrepare(const uint32_t* d){
+static BF_ROOT_FN void BfPrepare(const uint32_t* d
+#ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
+ ,PioneerQ38Bf16DeferredAudit& audit
+#endif
+ ){
  Seal(d);BfBuildPairs(d);uint32_t tracked[8],desc[64],job[64];
  static_assert(unsigned(L::InputShadow)==unsigned(BFP::ProjectionInput) && unsigned(L::Native)==0xa0000,"actual QGW4 ROOT buffers");
  if(d[43]!=4)for(unsigned i=0;i<5120;i++){
@@ -112,6 +116,9 @@ static BF_ROOT_FN void BfPrepare(const uint32_t* d){
  }
  for(unsigned i=0;i<8;i++){tracked[i]=*Words(0xffb20000+Counter(i));if(i==6 && tracked[6]!=tracked[2])scalar_fault_park();}
  for(unsigned w=0;w<119;w++)Admit(d,tracked,w);
+#ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
+ if(!audit.Begin(d[14],d[7]))scalar_fault_park();
+#endif
  const unsigned chunks=d[14]/256;
  for(unsigned w=0;w<chunks;w++)if(Words(L::Nonces)[w]>=0x7ffffffc)scalar_fault_park();
  for(unsigned w=0;w<chunks;w++){
@@ -121,10 +128,17 @@ static BF_ROOT_FN void BfPrepare(const uint32_t* d){
  }
  for(unsigned w=0;w<chunks;w++){*Words(L::Scratch)=Words(L::Nonces)[w]+1;Transfer(d,tracked,w,M::Doorbell,4,true);Words(L::Nonces)[w]++;}
  for(unsigned w=0;w<chunks;w++)BfGatherProducer(d,tracked,w);
+#ifndef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
  for(unsigned w=chunks;w<119;w++){
   Wait(d,tracked,w,0);BootSeal(d,tracked,w);ClosedJob(d,tracked,w,false);
   for(unsigned i=0;i<8;i++)if(Register(d,tracked,w,0xffb20000+Counter(i))!=Words(L::Counters)[w*8+i])scalar_fault_park();
  }
+#endif
+ // Opt-in policy: producer-unused workers have received NO commands since
+ // initial Admit. Their extra pre-matrix idle audit is deferred,not a fresh
+ // receipt. Run MUST gather/audit ALL119 before Scatter/return;the ledger
+ // enforces that boundary. Worker private admission and all transfer guards
+ // remain. An idle fault can be detected later than under the old policy.
  for(unsigned at=0;at<d[14]*2;at+=16384){
   unsigned bytes=d[14]*2-at;if(bytes>16384)bytes=16384;
   BfBankRead(d,tracked,BFP::NativeOffset+at,bytes);Copy(L::Native+at,L::Scratch,bytes/4);

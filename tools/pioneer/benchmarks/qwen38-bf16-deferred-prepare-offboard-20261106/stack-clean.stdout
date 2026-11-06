@@ -1,0 +1,66 @@
+{
+  "elf_sha256": "d065a29672996db27471e19e0cc0f396eea32242043d7e89a95f197ac25e9fb5",
+  "conservativeBytes": 8000,
+  "stackBytes": 8192,
+  "functions": 216,
+  "calls": 1041,
+  "switches": 9,
+  "path": [
+    {
+      "address": "0x6000",
+      "name": "_start",
+      "frame": 0
+    },
+    {
+      "address": "0x40000",
+      "name": "scalar_entry",
+      "frame": 0
+    },
+    {
+      "address": "0x46644",
+      "name": "q38_global_chain_main",
+      "frame": 1616
+    },
+    {
+      "address": "0x5ef50",
+      "name": "q38_return_dense_layer",
+      "frame": 1584
+    },
+    {
+      "address": "0x5e038",
+      "name": "_ZN9LiveBlockL7ComputeEPN30PioneerQ38MixedBlockRootLayout11PrivateSealE",
+      "frame": 528
+    },
+    {
+      "address": "0x52400",
+      "name": "_ZN10ProjectionL3RunEPKj",
+      "frame": 864
+    },
+    {
+      "address": "0x26b0c",
+      "name": "_ZN10ProjectionL9BfPrepareEPKjR27PioneerQ38Bf16DeferredAudit",
+      "frame": 608
+    },
+    {
+      "address": "0x260ac",
+      "name": "_ZN10ProjectionL16BfGatherProducerEPKjPjj",
+      "frame": 928
+    },
+    {
+      "address": "0x4ee70",
+      "name": "_ZN18DensePartitionRootL9ClosedJobEPKjPjjb",
+      "frame": 288
+    },
+    {
+      "address": "0x24ac4",
+      "name": "_ZN26PioneerQ38Bf16WorkerLayoutL8JobShapeEPKjS1_jj",
+      "frame": 1056
+    },
+    {
+      "address": "0x24884",
+      "name": "_ZN26PioneerQ38Bf16WorkerLayoutL9BootShapeEPKj",
+      "frame": 528
+    }
+  ],
+  "scope": "sum of all negative SP immediates/function plus direct call/tail/branch callees; fixed inspected intra-function switches; NOT execution/native/hardware/TPS"
+}

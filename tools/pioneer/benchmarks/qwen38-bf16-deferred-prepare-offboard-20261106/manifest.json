@@ -1,0 +1,144 @@
+{
+  "base": "e76a0254684b076e828decf735d51fe129b04948",
+  "scope": "BUILD_MOCK_CONTROL_FLOW_AND_CONSERVATIVE_STACK_ONLY;NO_NATIVE_CARD_MODEL_SPEED_RESULT",
+  "sources": {
+    "tools/pioneer/PioneerQ38Bf16DeferredAudit.h": "6ca746f6841bbbbcc7271b0c5d7788fe20559d23ad17e86a72fe32d5471ebe77",
+    "tools/pioneer/PioneerQ38Bf16DeferredAuditRole.h": "c3888b0b64a049e13a0b8e24cea6eb4909bb1f967c4a8cf357a541631fbe7617",
+    "tools/pioneer/blackhole_q38_bf16_projection_root.inc": "60d75e4602b27ea67d543931559e83ccba10191333aa12b65dae4f76efdc21d7",
+    "tools/pioneer/blackhole_qwen38_mixed_projection_root.cpp": "1c1dec651a97d8bb5ce9adb0fe7f4031beb3e0295c3a2b7fd4edf7bf52cc20ef",
+    "tools/pioneer/build_qwen38_global_token_components.py": "db65de82a5be81375bc59331bc1e7a9543ccd7a0012c087a8ca20cebc49b9dcb",
+    "tools/pioneer/build_qwen38_token_root.py": "9c2c3ab16f92f4b04ed697f3479967a6f917fa6416736d939f06e43e76d50876",
+    "tools/pioneer/tests/pioneer_q38_bf16_deferred_audit_test.cpp": "373f6a167ddf3bcf437470cd054d622cba5f5b68eb901a0fa9c40fb6afea164f",
+    "tools/pioneer/tests/pioneer_q38_bf16_deferred_flow_test.cpp": "c7c9eb888d4c07bb800e9d601616b20a0cf16d6d5ab69497aa2dee9f20a747fb",
+    "tools/pioneer/tests/run_pioneer_q38_bf16_deferred_flow_tests.py": "2c725f056008ff6f3e7a6b75c9c0ea33c8b40bd856c4e2ed86e28cee38e425b6",
+    "tools/pioneer/tests/run_pioneer_q38_bf16_deferred_role_tests.py": "073edb57c5cb8f9614da065d309033644f7f8f1d786bdb21ba0b9550905c2654",
+    "tools/pioneer/tests/inspect_pioneer_q38_bf16_deferred_stack.py": "5be5a8a6873c4712e8d146057ee645a57d9e2d54f830f45eb42307a40bb909f6"
+  },
+  "stack_actual_exits": {
+    "stack-main": 0,
+    "stack-clean": 0,
+    "stack-refuse-old": 1
+  },
+  "stack_commands": [
+    [
+      "stack-main",
+      "/Library/Developer/CommandLineTools/usr/bin/python3",
+      "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/inspect_pioneer_q38_bf16_deferred_stack.py",
+      "/Volumes/HaikuBuildLocal/generated.riscv64",
+      "/private/tmp/pioneer-q38-deferred-prepare.ZxJFWsCb/candidate2/program.elf"
+    ],
+    [
+      "stack-clean",
+      "/Library/Developer/CommandLineTools/usr/bin/python3",
+      "/private/tmp/pioneer-q38-deferred-clean-20261106-a/source/tools/pioneer/tests/inspect_pioneer_q38_bf16_deferred_stack.py",
+      "/Volumes/HaikuBuildLocal/generated.riscv64",
+      "/private/tmp/pioneer-q38-deferred-clean-20261106-a/candidate/program.elf"
+    ],
+    [
+      "stack-refuse-old",
+      "/Library/Developer/CommandLineTools/usr/bin/python3",
+      "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/inspect_pioneer_q38_bf16_deferred_stack.py",
+      "/Volumes/HaikuBuildLocal/generated.riscv64",
+      "/private/tmp/pioneer-q38-deferred-clean-20261106-a/control/program.elf"
+    ]
+  ],
+  "saved_records": {
+    "clean-actual-exits.json": {
+      "bytes": 143,
+      "sha256": "0d7d7ce26891f0e467784b43da8f3a323fcd3fcd627b3d06b4703492877abb72"
+    },
+    "clean-candidate-build.stdout": {
+      "bytes": 2919,
+      "sha256": "ba496b361d0ca9824120979be2ec0471d1712a0c38909862466685df5bd2412d"
+    },
+    "clean-commands.json": {
+      "bytes": 2812,
+      "sha256": "64e672d0948b0e004116cc3ad325e1ba63d96100eef0fc1dd7930ad50eaac8f0"
+    },
+    "clean-control-build.stdout": {
+      "bytes": 2918,
+      "sha256": "5c42bf073644880bdb6b35284ffb8ab565477f458ad8c82a696145db2054dbb0"
+    },
+    "clean-flow.stdout": {
+      "bytes": 496,
+      "sha256": "1f9c584f6cecfb0970739fd78a7a9193503d5810281fd79e86e6f68e929720f4"
+    },
+    "clean-ledger.stdout": {
+      "bytes": 221,
+      "sha256": "74f54de264de19aa6f1dfa3da9c08f598f4bda7579f4d6dd2e7ac11a742dc96c"
+    },
+    "clean-qualification.json": {
+      "bytes": 2706,
+      "sha256": "76aaae410e0afbb70cb4c0a44cac89a3f8e8636bc1ac6720ef36ef1d489e9d3a"
+    },
+    "clean-role.stdout": {
+      "bytes": 162,
+      "sha256": "7c5c58f27ebf8b600673553a4ea45d6094fc9a92f761e179cf36d7ec720b46a9"
+    },
+    "flow-actual-exits.json": {
+      "bytes": 181,
+      "sha256": "4d96dfa482917d965ea77c576f51f6cb8ed178d8dbf490b4aa6f126be0d11239"
+    },
+    "flow-commands.json": {
+      "bytes": 3050,
+      "sha256": "d8ece9f87f7d13e87570cdf8c903922eb3b899713da27c37da53eb0eb43db9c3"
+    },
+    "flow-deferred.stdout": {
+      "bytes": 2082,
+      "sha256": "f1f2270aa065b3050ec11f600c94cf0b49baf2fddae69ab61e49f3664ab3fa8e"
+    },
+    "flow-extracted-sha256.json": {
+      "bytes": 189,
+      "sha256": "885f4904736c783beb55583bbc7e80500cc8a94dd411ae01a818a25a85093cc1"
+    },
+    "flow-missing-idle.stdout": {
+      "bytes": 194,
+      "sha256": "7a6802b021d134042027315cc37efa3b90c9b9f3b4097e200fcd795534f35f59"
+    },
+    "flow-missing-matrix.stdout": {
+      "bytes": 194,
+      "sha256": "522a17916daae3375101ac2545141e8ca47d8ce0853fbbfaa8eb3d2deb5c6f47"
+    },
+    "flow-old.stdout": {
+      "bytes": 2102,
+      "sha256": "69b5d9c21db56502ecfd6ec8eea17dc5d31ed49d70c9d98181773012616101ae"
+    },
+    "flow-source-sha256.txt": {
+      "bytes": 608,
+      "sha256": "30b82dc5664ac1ae87c8c9a200966a45093683d0763b117eb59f232da456d9ff"
+    },
+    "stack-clean.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stack-clean.stdout": {
+      "bytes": 1629,
+      "sha256": "d2f0d4ba3661faf62d7c5ed9026a525b77b47f367c48a87f77e013fe5988bd2f"
+    },
+    "stack-main.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "stack-main.stdout": {
+      "bytes": 1629,
+      "sha256": "d2f0d4ba3661faf62d7c5ed9026a525b77b47f367c48a87f77e013fe5988bd2f"
+    },
+    "stack-refuse-old.stderr": {
+      "bytes": 270,
+      "sha256": "bf3253b883adece1959193a245d9f70e7532d302005fa47a9d7c9f71bbe55847"
+    },
+    "stack-refuse-old.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "not_proven": [
+    "actual RV32 new controller execution",
+    "connected new policy/119 real histories",
+    "new native subject and physical lifetime",
+    "model quality/speedup",
+    "20tokens/sec"
+  ],
+  "stack_qualification": "fixed ELF conservative all-direct-call-graph8000B <=8192B;not actual execution/high-water telemetry",
+  "no_hardware_action": true
+}

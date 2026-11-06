@@ -1,0 +1,23 @@
+4b1550f36d8bf6e225684db0a97ba62ad885817c1497d78226443b0c7867533f recurrent.o bytes145120
+29204d287e38fe0ead7fd24c2de44aad7b46d2bcb38e23daa4b55d1cebb6c8e9 dense.o bytes115164
+78cf19c422c773a8c9c47c180df78ecd66609e4614dd75ee2d66344cab0ea25c layer-components-NOBOOT.o bytes228380
+PASS both ACTUAL returning layer bodies retained, separate private seal types/s11 bind+restore, same worker-chain/hidden-slot ADDRESSES;ROOTbytes93044/131072 Convbytes7500/32768 maxFrame2112
+RELOCATABLE COMPONENTS ONLY/NO boot or host wait/STOP/old main/native ABI;sole unresolved fault park. NOT a connected pipeline,initialized state,token commit,physical/Work or throughput qualification. DO NOT INSTALL
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 117016, 'e58aff9bf5be041992ba5435bca334bdd43ac51c3d3c6af47c5ac6de7cdbfd8d')
+('terminal.bin', 8, '6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5')
+('conv.bin', 7500, 'aec9aeacaf188b46ae223bd79fafb928ac39a3369b3c9753bf8145966eb44cea')
+('program.elf', 149964, 'ca0f6beb05e1a20d243332e65ce9b0bc4e3e080fc350768067266b9e1d7209a2')
+BUILD/INSPECT ONLY NEW QGC1/all64 returning arithmetic+final norm+973 vocab jobs+greedy candidate+real global STOP/maxFrame1872/on-card provisional next embedding;NO runtime/combined reserved stack/original model/native/physical/token commit/multi-token/Work/TPS qualification. DO NOT INSTALL
+('recurrent.o', 190352, 'f5d0caa708ff6b9260da0d879e21fabf4b67e6c8438e35556ed55c8c323dab25')
+('dense.o', 154432, '9e795b93b218a6f1f8eebbd8570f9131714a8a76c5fb3ecd0bf9816bb2826d33')
+('token-components-NOBOOT.o', 306668, 'af68ebfa4adc5c1de70c7a333764db585d15940fb64b55d44c1a173689e2d63c')
+BUILD ONLY actual returning recurrent path includes strict previous-global output admission;ROOTbytes101780/131072 Conv9020/32768 maxFrame2112;NO boot/persistent parent/model token-state commit/native/physical/Work/TPS or combined-stack proof. DO NOT INSTALL
+PASS actual emitted RV32 full-card EOG predicate:248320 vocabulary IDs+5 out-of-range;exact5 stop IDs;stack/callee register preserved;NO accelerator or model inference
+('boot.bin', 4, '32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca')
+('text.bin', 129716, 'cbac8fb2287175f21755c88aba55b7c7f1cbc9c61cf67ddfb1070297b396475e')
+('terminal.bin', 8, '6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5')
+('conv.bin', 20796, '71b3b7ac708b384f9ccff092bdeb9c2a9b7b703a3f78297b29137366a768eabb')
+('bf16.bin', 29796, '550a7f141a2ee04d78196e0bf5509c8874095ee9a52088662c7dc97fa280c86b')
+('program.elf', 212232, 'd065a29672996db27471e19e0cc0f396eea32242043d7e89a95f197ac25e9fb5')
+BUILD ONLY persistent parent/bootstrap/prompt+generation/all64+973/recurrent state copy+readback/token stream/final119STOP;maxFrame1616;NO runtime/combined stack/original full-model/native/physical/cancellation/Work/Assistant/TPS qualification. DO NOT INSTALL

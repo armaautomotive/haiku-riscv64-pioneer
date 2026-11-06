@@ -1,0 +1,61 @@
+{
+  "base": "e76a0254684b076e828decf735d51fe129b04948",
+  "scope": "BUILD_AND_MOCK_ROUTING_ONLY_NO_HARDWARE_OR_TPS",
+  "scoped_sources": {
+    "tools/pioneer/PioneerQ38Bf16DeferredAudit.h": "6ca746f6841bbbbcc7271b0c5d7788fe20559d23ad17e86a72fe32d5471ebe77",
+    "tools/pioneer/PioneerQ38Bf16DeferredAuditRole.h": "c3888b0b64a049e13a0b8e24cea6eb4909bb1f967c4a8cf357a541631fbe7617",
+    "tools/pioneer/blackhole_q38_bf16_projection_root.inc": "60d75e4602b27ea67d543931559e83ccba10191333aa12b65dae4f76efdc21d7",
+    "tools/pioneer/blackhole_qwen38_mixed_projection_root.cpp": "1c1dec651a97d8bb5ce9adb0fe7f4031beb3e0295c3a2b7fd4edf7bf52cc20ef",
+    "tools/pioneer/build_qwen38_global_token_components.py": "db65de82a5be81375bc59331bc1e7a9543ccd7a0012c087a8ca20cebc49b9dcb",
+    "tools/pioneer/build_qwen38_token_root.py": "9c2c3ab16f92f4b04ed697f3479967a6f917fa6416736d939f06e43e76d50876",
+    "tools/pioneer/tests/pioneer_q38_bf16_deferred_audit_test.cpp": "373f6a167ddf3bcf437470cd054d622cba5f5b68eb901a0fa9c40fb6afea164f",
+    "tools/pioneer/tests/pioneer_q38_bf16_deferred_flow_test.cpp": "c7c9eb888d4c07bb800e9d601616b20a0cf16d6d5ab69497aa2dee9f20a747fb",
+    "tools/pioneer/tests/run_pioneer_q38_bf16_deferred_flow_tests.py": "2c725f056008ff6f3e7a6b75c9c0ea33c8b40bd856c4e2ed86e28cee38e425b6",
+    "tools/pioneer/tests/run_pioneer_q38_bf16_deferred_role_tests.py": "073edb57c5cb8f9614da065d309033644f7f8f1d786bdb21ba0b9550905c2654"
+  },
+  "actual_exits": {
+    "export": 0,
+    "unpack": 0,
+    "ledger-compile": 0,
+    "ledger": 0,
+    "flow": 0,
+    "role": 0,
+    "control-build": 0,
+    "candidate-build": 0
+  },
+  "candidate_artifacts": {
+    "boot.bin": {
+      "bytes": 4,
+      "sha256": "32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca"
+    },
+    "text.bin": {
+      "bytes": 129716,
+      "sha256": "cbac8fb2287175f21755c88aba55b7c7f1cbc9c61cf67ddfb1070297b396475e"
+    },
+    "terminal.bin": {
+      "bytes": 8,
+      "sha256": "6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5"
+    },
+    "conv.bin": {
+      "bytes": 20796,
+      "sha256": "71b3b7ac708b384f9ccff092bdeb9c2a9b7b703a3f78297b29137366a768eabb"
+    },
+    "bf16.bin": {
+      "bytes": 29796,
+      "sha256": "550a7f141a2ee04d78196e0bf5509c8874095ee9a52088662c7dc97fa280c86b"
+    },
+    "program.elf": {
+      "bytes": 212232,
+      "sha256": "d065a29672996db27471e19e0cc0f396eea32242043d7e89a95f197ac25e9fb5"
+    }
+  },
+  "old_ROOT6pins_exact": true,
+  "not_proven": [
+    "actual RV32 new controller execution",
+    "combined whole-call stack",
+    "connected new policy/119 real histories",
+    "new native subject and physical lifetime",
+    "model quality/speedup",
+    "20tokens/sec"
+  ]
+}

@@ -1,0 +1,1 @@
+PASS deferred-audit DATA positive238 missing/duplicate/wrong-partition/shape/order refusals84984 single-bit faults416;all119 closures required,sticky poison,52B stack;MOCK closures NOT actual receipts/native/hardware/TPS

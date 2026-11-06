@@ -1,0 +1,99 @@
+Qwen 27B preparation: deferred duplicate idle audit prototype
+===========================================================
+November 6, 2026. BUILD / MOCK CONTROL FLOW / STATIC STACK ONLY.
+No new native driver, card execution, model answer or performance result.
+Best matched model rate remains 0.16436 tokens/sec; latest 0.07865.
+20 tokens/sec remains unmet. This is NOT an Assistant release.
+
+Change and intended benefit
+--------------------------
+The measured latest ROOT preparation phase was 30.46% of elapsed cycles.
+BfPrepare first admits every worker, runs and closes the BF16 producers,
+then used to audit the producer-unused workers again. Run already performs
+matrix Gather or a full idle audit on every worker before Scatter.
+
+The new explicit --deferred-prepare-audit BUILD omits ONLY that extra
+pre-matrix idle audit. A private 52-byte stack coverage ledger requires all
+119 final closures, exactly once in their proper matrix/idle partition,
+before Scatter. It does not manufacture a source, numerical or lifetime
+receipt. Initial all-worker admission, genuine producer proofs, transfer
+guards, worker-private pre-request admission and final closure remain.
+
+This deliberately changes fault-observation timing: an idle fault arising
+after initial admission may be detected later, during matrix Gather or the
+final idle audit. No claim of identical intermediate observations is made.
+Trusted worker instructions remain a requirement, not something this ledger
+proves. The real connected execution and native ownership are NOT qualified.
+
+Source-derived traffic budget, NOT measured time or packet telemetry
+-------------------------------------------------------------------
+The omitted idle success path contains at least 15 Transfer calls:
+Wait has 3 per successful poll, BootSeal 1, ClosedJob 3, counters 8.
+Their requested payload sums to 684 bytes; tiny reads still incur control
+and packet overhead. Extra Wait polls would increase the old cost.
+K5120: 99 omitted idle audits; K17408: 51 omitted idle audits.
+For the model's 64 layers with two K5120 and one K17408 Q4 projections,
+this removes at least 239,040 such serial control requests per token,
+10,900,224 requested payload bytes. This is a source-path calculation,
+NOT a physical transaction counter or a model speedup prediction.
+
+Even eliminating the ENTIRE measured preparation category would only give
+about 1.44x speedup if every other cost remained fixed. This smaller change
+cannot by itself close the roughly 122x gap from the best rate to 20 TPS.
+No additional model trial was run merely to repeat the known slow baseline.
+
+Completed local qualification
+-----------------------------
+Base e76a0254684b076e828decf735d51fe129b04948, exactly ten prototype source
+files overlaid in a clean export, excluding previously dirty kernel/native
+and unrelated WIP files. Eight export/build/test children actually exited
+0 with empty stderr. All six old ROOT artifact pins are unchanged. All six
+new artifacts match the independent working-copy build byte for byte.
+
+Ledger: 238 partitions, 84,984 invalid/missing/duplicate/order cases and
+416 single-bit faults. These are coverage DATA tests with MOCK closures.
+Actual extracted BfPrepare and Run source: 18 old / 18 new cases, every
+callback fault (40,708 old / 25,858 new), missing closure-mark mutants and
+four latent-idle-fault cases. Protocol, IO and closure callbacks are MOCK;
+this is not actual compiled controller execution or numerical proof.
+Real RV32 compiler role tests: one positive / 84 refused invalid roles.
+
+The separately added exact-ELF stack inspection actually passed for main
+and clean artifacts, with identical output: conservative 8,000 / 8,192
+bytes across the full direct-call graph, 216 functions, 1,041 call sites,
+nine newly inspected guarded switches. The old ELF is correctly refused.
+No unknown indirect target or SP adjustment was assumed safe. This is a
+static bound, not actual high-water telemetry; only 192 bytes of conservative
+headroom remain. The original profile inspector and limits are unchanged.
+
+ROOT ELF: 212232 bytes
+d065a29672996db27471e19e0cc0f396eea32242043d7e89a95f197ac25e9fb5
+ROOT text: 129716 / 131072 bytes. No new mutable globals or CSR instructions.
+
+Reproduce and remaining acceptance gate
+--------------------------------------
+Use a fresh absolute output directory with build_qwen38_token_root.py:
+ SDK OUT --inspect-candidate --cancel-boundary --f32-hidden
+ --unroll-dense-seals --boundary-seals --unroll-quiet
+ --worker-local-source-guards --precise-activation --single-closed-audit
+ --worker-sealed-admission --bf16-fpu --bf16-profile
+ --deferred-prepare-audit
+Tests:
+ tests/run_pioneer_q38_bf16_deferred_flow_tests.py NEW_ABSOLUTE_OUT
+ tests/run_pioneer_q38_bf16_deferred_role_tests.py SDK
+ tests/inspect_pioneer_q38_bf16_deferred_stack.py SDK ROOT/program.elf
+ tests/pioneer_q38_bf16_deferred_audit_test.cpp (C++17, ASan/UBSan)
+
+Next gate: exercise the new branch in actual compiled RV32 controller
+execution with connected worker histories and fault boundaries. Only after
+that, qualify a distinct native package and controlled physical comparison.
+The old prefix harness stops BEFORE typed BF16 work and does not cover this.
+No 110 subject/stage exists, and no native capability selects this BUILD.
+
+Evidence directory: qwen38-bf16-deferred-prepare-offboard-20261106/.
+manifest.json inventories the eleven scoped sources and saved actual results.
+It lists unproven execution/ownership/quality/speed requirements explicitly.
+No binary, learned payload, GGUF or converted weights were archived.
+No SSH, install, reboot, power, SD, network or Assistant action occurred.
+Last verified normal driver state remains generation 48 after trial109;
+this local qualification is NOT fresh hardware telemetry.

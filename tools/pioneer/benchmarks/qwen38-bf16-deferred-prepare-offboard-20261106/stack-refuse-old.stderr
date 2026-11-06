@@ -1,0 +1,4 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/inspect_pioneer_q38_bf16_deferred_stack.py", line 21, in <module>
+    assert digest == 'd065a29672996db27471e19e0cc0f396eea32242043d7e89a95f197ac25e9fb5'
+AssertionError

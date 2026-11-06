@@ -42,21 +42,36 @@ Compact work plan -- one next task
 2. MEASURE / ACCEPT OR REJECT: COMPLETE (executed4163b2c17c,trial109-a).
    Real full-model run,distinct timings,actual clean closure and independently
    verified normal-driver restoration. REJECTED for Assistant promotion.
-3. SUBSTANTIVE BOTTLENECK CHANGE: NEXT,not yet implemented.
-   Inspect repeated packing/setup/conversion in matrix preparation,the
-   largest measured ROOT phase(30.46%). Prototype one concrete reduction,
-   validate it,and compare before opening another experiment. No more
-   scheduling-only card micro-trials. One30% category alone cannot close
-   the overall~254x gap;larger math/dataflow changes remain necessary.
-   No promise of20TPS feasibility.
+3. REDUCE REPEATED PREPARATION AUDITS: IN PROGRESS,not installed.
+   An opt-in prototype defers one duplicate idle-worker audit to the final
+   matrix/idle closure. All119 final closures are required before Scatter.
+   Local clean builds,MOCK routing/fault tests and a conservative whole-call
+   stack bound(8000/8192bytes) pass. Defaults are byte-identical.
+   This is NOT new actual RV32 controller/card execution or a speedup.
+   Next acceptance gate: actual compiled controller execution with connected
+   histories/faults,then distinct native qualification BEFORE a card trial.
+   No110subject/stage exists. Fault detection can occur later;documented.
+   Source budget:at least239040 fewer tiny control requests/token,NOT time
+   telemetry. Even deleting the whole30.46% phase only gives~1.44x if other
+   costs stay fixed. This prototype cannot solve the122x gap from best103
+   to20TPS. Larger kernel/math/dataflow changes remain necessary.
+
+How progress will be reported
+-----------------------------
+One bounded change at a time: implementation,local checks,real measurement,
+accept/reject. Build/test passes are NOT inference speed improvements.
+No further closed-baseline reruns or scheduling-only card micro-trials.
+Working code and incomplete experiments remain separate,not deleted/reset.
+The overall20TPS goal is still active and unachieved;feasibility is unproven.
 
 Hardware/preservation -- independently checked after109
 -----------------------------------------------------
 Normal041/tag2026102100010012/generation48 restored;quiesced0,cold0,
 owner0,open1,guard1.64CPUs/137034936320B RAM. All four trial PIDs absent.
-No job remains. Driver/admin/guard,three Assistant files,four runtime
+No trial job remained at that check. Driver/admin/guard,three Assistant files,four runtime
 libraries and model metadata preserved. No reboot,power,SD,network,kernel,
-Assistant or hardware-connection change. Stages81..109-a SPENT FOREVER:
+Assistant or hardware-connection change. New prototype tests are local only,
+not a fresh hardware check. Stages81..109-a SPENT FOREVER:
 never replay,repin or clear once markers.
 
 The whole worktree is NOT clean. Nine previously dirty baseline paths and
@@ -79,3 +94,5 @@ Kernel-only result,NOT model TPS:
  benchmarks/qwen38-q4-pair-issue-physical-20261106.txt
 Conditional analytical budget,NOT a demonstrated hardware limit:
  benchmarks/qwen38-performance-budget-20261106.txt
+Current preparation prototype,BUILD/MOCK/static stack only:
+ benchmarks/qwen38-bf16-deferred-prepare-offboard-20261106.txt
