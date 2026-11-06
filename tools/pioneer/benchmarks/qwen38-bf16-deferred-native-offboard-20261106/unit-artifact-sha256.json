@@ -1,0 +1,14 @@
+{
+  "boot.bin": {
+    "bytes": 4,
+    "sha256": "d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6"
+  },
+  "code.bin": {
+    "bytes": 2060,
+    "sha256": "dc1f0d9693ba8860ba7c4e31908cd1715407029ef4e4d0abb4b9f93631142517"
+  },
+  "program.elf": {
+    "bytes": 10952,
+    "sha256": "e2ea89fe6fca8b9c86306814117a07fe0ed5998c36a9c703acd84e8e3b296e82"
+  }
+}

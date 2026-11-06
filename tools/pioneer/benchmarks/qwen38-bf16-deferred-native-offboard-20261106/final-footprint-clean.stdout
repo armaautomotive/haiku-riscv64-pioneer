@@ -1,0 +1,1 @@
+PASS FP32 token program DATA/cancel1/ALL15 section bytes/ALL120 exact code3258437 words/snapshot15444538 words=61778152bytes/terminal60000+60004 NEW vs old prefix/runtime+padding covered/963 refusals/no implicit padding or immutable-output alias;NOT native/journal-execution/physical/model/Work/TPS authority

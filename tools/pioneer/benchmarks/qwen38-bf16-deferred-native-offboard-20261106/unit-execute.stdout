@@ -1,0 +1,1 @@
+PASS ACTUAL_RV32_DEFERRED_LEDGER positive36/refusals1125/singleBitFaults416/reservedWrittenStack84/instructions16793344;all119 closure DATA required,both widths,word+partition boundaries,sticky poison;MOCK closure calls,NOT connected worker receipts/ROOT matrix/native/hardware/TPS

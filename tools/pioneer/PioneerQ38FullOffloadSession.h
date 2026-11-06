@@ -18,7 +18,9 @@
 #include "PioneerQ38PublicModelSource.h"
 #ifdef PIONEER_Q38_BF16_FULL_CLIENT
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38Bf16FullProtocol.h"
-#ifdef PIONEER_Q38_BF16_PAIR_ISSUE_FULL
+#ifdef PIONEER_Q38_BF16_DEFERRED_FULL
+static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110600010110),"exact deferred BF16 USER/native identity");
+#elif defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL)
 static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110600010109),"exact paired BF16 USER/native identity");
 #elif defined(PIONEER_Q38_BF16_FULL_PROFILE)
 static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110500010106),"exact BF16 timing USER/native identity");

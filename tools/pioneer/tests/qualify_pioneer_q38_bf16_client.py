@@ -9,9 +9,11 @@ import sys
 
 args=sys.argv[1:];paired='--pair-issue' in args
 if paired:assert args.count('--pair-issue')==1;args.remove('--pair-issue')
+deferred='--deferred-audit' in args
+if deferred:assert args.count('--deferred-audit')==1 and not paired;args.remove('--deferred-audit')
 profile='--profile' in args
 if profile:assert args.count('--profile')==1;args.remove('--profile')
-profile=profile or paired
+profile=profile or paired or deferred
 assert __debug__ and len(args)==3 and not os.environ.get('PYTHONOPTIMIZE')
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,libraries,out=map(Path,args);here=Path(__file__).resolve().parent;root=here.parents[2]
@@ -23,12 +25,14 @@ common=[cxx,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-Wno-misleading
 flags=['-DPIONEER_Q38_FULL_OFFLOAD_CLIENT=1','-DPIONEER_Q38_BF16_FULL_CLIENT=1']
 if profile:flags += ['-DPIONEER_Q38_BF16_FULL_PROFILE=1','-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1','-DPIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE=1']
 if paired:flags.append('-DPIONEER_Q38_BF16_PAIR_ISSUE_FULL=1')
+if deferred:flags.append('-DPIONEER_Q38_BF16_DEFERRED_FULL=1')
 dependencies={Path(__file__).resolve(),here.parent/'build_assistant_qwen27_bf16_full_offload.py',
  here.parent/'build_assistant_qwen27_full_offload.py',here.parent/'pioneer_assistant_qwen27_bf16_full_offload.cpp',
  here.parent/'pioneer_assistant_qwen27_full_offload.cpp'}
 if profile:dependencies.add(here.parent/'pioneer_assistant_qwen27_bf16_profile_full_offload.cpp')
 if paired:dependencies.add(here.parent/'pioneer_assistant_qwen27_bf16_pair_issue_full_offload.cpp')
-if paired:
+if deferred:dependencies.add(here.parent/'pioneer_assistant_qwen27_bf16_deferred_full_offload.cpp')
+if paired or deferred:
  dependencies.update(here/name for name in ('pioneer_q38_startup_timing_log_test.py',
   'parse_pioneer_q38_full_offload_rate_log.py','parse_pioneer_q38_full_offload_log.py',
   'pioneer_q38_bf16_profile_rate_log_test.py','pioneer_q38_full_offload_phase_profile_log_test.py',
@@ -58,13 +62,13 @@ def run(name,argv):
 for name in ('protocol','session'):
  source=here/('pioneer_q38_full_offload_'+name+'_test.cpp');binary=out/name
  run(name+'-compile',[*common,*flags,source,'-o',binary]);run(name,[binary])
-if paired:
+if paired or deferred:
  run('startup-compile',[*common,here/'pioneer_q38_startup_timing_test.cpp','-o',out/'startup'])
  run('startup',[out/'startup'])
  run('startup-log',[sys.executable,here/'pioneer_q38_startup_timing_log_test.py'])
  run('startup-rate-client',[sys.executable,here/'run_pioneer_q38_full_offload_rate_tests.py','--startup-timing'])
  run('legacy-rate-client',[sys.executable,here/'run_pioneer_q38_full_offload_rate_tests.py'])
-run('sdk-build',[sys.executable,here.parent/'build_assistant_qwen27_bf16_full_offload.py',sdk,libraries,out/'sdk',*(['--pair-issue'] if paired else ['--profile'] if profile else [])])
+run('sdk-build',[sys.executable,here.parent/'build_assistant_qwen27_bf16_full_offload.py',sdk,libraries,out/'sdk',*(['--deferred-audit'] if deferred else ['--pair-issue'] if paired else ['--profile'] if profile else [])])
 assert all(hashlib.sha256(p.read_bytes()).hexdigest()==digest for p,digest in frozen.items())
 (out/'source-sha256.txt').write_text(''.join(frozen[p]+'  '+str(p.relative_to(root))+'\n' for p in sorted(frozen)))
 (out/'test-argv.json').write_text(json.dumps(commands,indent=2)+'\n')

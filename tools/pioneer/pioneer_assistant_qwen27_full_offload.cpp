@@ -14,7 +14,7 @@
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
 #include "PioneerQ38TokenRateSamples.h" // observation arithmetic,NO model reference
 #endif
-#ifdef PIONEER_Q38_BF16_PAIR_ISSUE_FULL
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
 #include "PioneerQ38StartupTiming.h"
 #endif
 #include "../../src/apps/assistant/Qwen27Protocol.h"
@@ -30,7 +30,7 @@ struct Runtime {
   Runtime& runtime;
   int Open(){return open("/dev/misc/tenstorrent_pci_probe",O_RDWR|O_CLOEXEC);}
   bool Call(int fd,unsigned operation,void* data,size_t bytes){
-#ifdef PIONEER_Q38_BF16_PAIR_ISSUE_FULL
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
    if(operation==TT_PCI_PROBE_Q38_SPAN_WORK_UPLOAD && bytes==sizeof(tt_q38_span_upload)){
     const auto count=static_cast<const tt_q38_span_upload*>(data)->bytes;
     const auto before=system_time();const bool okay=!runtime.lost && ioctl(fd,operation,data,bytes)==0;
@@ -58,7 +58,7 @@ struct Runtime {
  unsigned eos0=0,eos1=0;bool loaded=false,lost=false,cancelled=false,failed=false;
  const char* vocabularyFailure="not_started";
  double lastProgress=0;
-#ifdef PIONEER_Q38_BF16_PAIR_ISSUE_FULL
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
  PioneerQ38StartupTiming startup;
 #endif
  bool Emit(unsigned kind,unsigned value=0,const std::string& text=""){
@@ -101,7 +101,7 @@ struct Runtime {
   return true;
  } // source/vocabulary ONLY;no accelerator FD or model context
  bool Load(unsigned threads){
-#ifdef PIONEER_Q38_BF16_PAIR_ISSUE_FULL
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
   startup.LoadBegin(system_time());
 #endif
   if(loaded || !threads || threads>64 || !Emit(A::Progress,UINT32_MAX,
@@ -109,13 +109,13 @@ struct Runtime {
   session=std::make_unique<Session>(io,source);
   if(!session->Probe())return false; // metadata only,never BEGIN during Load
   loaded=true;
-#ifdef PIONEER_Q38_BF16_PAIR_ISSUE_FULL
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
   startup.LoadReady(system_time());
 #endif
   return Emit(A::Ready,0,"QWEN27_FULL_OFFLOAD_VOCAB_READY");
  }
  bool Generate(const A::Frame& frame){
-#ifdef PIONEER_Q38_BF16_PAIR_ISSUE_FULL
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
   const auto requestBegin=system_time();
 #endif
   if(!loaded || failed || lost)return false;
@@ -133,11 +133,11 @@ struct Runtime {
   if(session->Completed())session=std::make_unique<Session>(io,source);
   const double began=Now();if(began<0 || !PollCancel())return false;
   if(cancelled)return Emit(A::Done,A::Cancelled,"Stopped before accelerator BEGIN.");
-#ifdef PIONEER_Q38_BF16_PAIR_ISSUE_FULL
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
   startup.Begin(requestBegin,unsigned(count),unsigned(count)+frame.value-1);
 #endif
   if(!session->Begin(ids,unsigned(count),frame.value,eos0,eos1))return false;
-#ifdef PIONEER_Q38_BF16_PAIR_ISSUE_FULL
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
   startup.Ready(system_time());
 #endif
   if(!PollCancel())return false;
@@ -151,7 +151,7 @@ struct Runtime {
    const auto before=system_time();F::CounterPacket metric;
    if(!session->ObserveCount(metric))return false;
    const auto after=system_time();
-#ifdef PIONEER_Q38_BF16_PAIR_ISSUE_FULL
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
    startup.Observe(metric.reply.detail[7],metric.reply.detail[9],metric.reply.detail[8],before,after);
 #endif
    if(timingValid && !samples.Observe(metric,before,after))timingValid=false;
@@ -221,7 +221,7 @@ struct Runtime {
    }
   }
 #endif
-#ifdef PIONEER_Q38_BF16_PAIR_ISSUE_FULL
+#if defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL) || defined(PIONEER_Q38_BF16_DEFERRED_FULL)
   // All genuine END/Close,token/source/cancel checks above have succeeded.
   // Answer-ready is not first visible text: IPC/UI delivery happens later.
   char startupMetric[768];

@@ -42,7 +42,7 @@ Compact work plan -- one next task
 2. MEASURE / ACCEPT OR REJECT: COMPLETE (executed4163b2c17c,trial109-a).
    Real full-model run,distinct timings,actual clean closure and independently
    verified normal-driver restoration. REJECTED for Assistant promotion.
-3. REDUCE REPEATED PREPARATION AUDITS: IN PROGRESS,not installed.
+3. REDUCE REPEATED PREPARATION AUDITS: LOCALLY QUALIFIED,not installed.
    An opt-in prototype defers one duplicate idle-worker audit to the final
    matrix/idle closure. All119 final closures are required before Scatter.
    Local clean builds,MOCK routing/fault tests and a conservative whole-call
@@ -52,9 +52,18 @@ Compact work plan -- one next task
    producers,5120 exact packed values and6 guest fault rejections per image.
    Control emits1485 duplicate idle requests;candidate emits0 (simulation,
    NOT physical packet timing or TPS). Test stops BEFORE matrix submission.
-   Remaining gate: K17408/matrix/final119 compiled closure coverage,then
-   distinct native qualification BEFORE a controlled card trial.
-   No110subject/stage exists. Fault detection can occur later;documented.
+   Compiled RV32 bookkeeping guard now also passes both widths,missing/
+   duplicate/partition/shape cases and416 bit faults. Calls are MOCK closure
+   observations,NOT genuine worker receipts. No full-integration claim.
+   Distinct110 native/USER/code package passes clean builds,transport,
+   identity,journal and complete code/snapshot geometry tests. Main/clean
+   artifacts match;startup telemetry is included and required. No install.
+   Full K17408/matrix/final119/native lifetime integration remains unproven
+   until a controlled physical trial. This replaces the earlier plan to
+   simulate every remaining stage;the unproven scope is NOT called complete.
+   Next:qualify fresh110 parent+preflight,then SAME31prompt/32output actual
+   model comparison and independently verify restoration;accept/reject.
+   No110 physical stage was created by this qualification.
    Source budget:at least239040 fewer tiny control requests/token,NOT time
    telemetry. Even deleting the whole30.46% phase only gives~1.44x if other
    costs stay fixed. This prototype cannot solve the122x gap from best103
@@ -102,3 +111,5 @@ Current preparation prototype,BUILD/MOCK/static stack only:
  benchmarks/qwen38-bf16-deferred-prepare-offboard-20261106.txt
 First compiled connected preparation branch,BEFORE matrix submission:
  benchmarks/qwen38-bf16-deferred-prepare-connected-20261106.txt
+Experimental110 package,compiled guard/host journal only,NOT card execution:
+ benchmarks/qwen38-bf16-deferred-native-offboard-20261106.txt

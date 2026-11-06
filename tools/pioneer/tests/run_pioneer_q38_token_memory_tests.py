@@ -7,6 +7,10 @@ import subprocess
 import sys
 import tempfile
 args = sys.argv[1:]
+bf16_deferred='--bf16-deferred-audit' in args
+if bf16_deferred:
+    assert args.count('--bf16-deferred-audit')==1
+    args.remove('--bf16-deferred-audit')
 bf16_paired='--bf16-pair-issue' in args
 if bf16_paired:
     assert args.count('--bf16-pair-issue')==1
@@ -29,6 +33,7 @@ if bf16:
     args.remove('--bf16-programs')
 assert not bf16_profile or bf16, 'timing journal requires its explicit QTP4 DATA parent'
 assert not bf16_paired or (bf16_profile and bf16),'paired journal requires its explicit QTP4/timing DATA parents'
+assert not bf16_deferred or (bf16_profile and bf16 and not bf16_paired),'deferred journal requires its distinct QTP4/timing DATA parents'
 sdk = None
 if len(args) >= 2 and args[-2] == '--sdk':
     sdk = pathlib.Path(args[-1])
@@ -46,6 +51,7 @@ if bf16_profile:
 profile = ['-DPIONEER_Q38_TOKEN_BF16_PROGRAMS=1'] if bf16 else ['-DPIONEER_Q38_TOKEN_PUSHED_PROGRAMS=1'] if pushed else ['-DPIONEER_Q38_TOKEN_PRECISE_PROGRAMS=1'] if precise else []
 if bf16_profile:profile+=['-DPIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS=1']
 if bf16_paired:profile+=['-DPIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS=1']
+if bf16_deferred:profile+=['-DPIONEER_Q38_TOKEN_BF16_DEFERRED_PROGRAMS=1']
 with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/tmp') as tmp:
     binary = pathlib.Path(tmp)/'test'
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',

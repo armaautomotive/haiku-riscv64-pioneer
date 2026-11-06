@@ -68,13 +68,15 @@ int main(int argc,char** argv){
 #ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
  assert(P::Family==0x34505451 && S::Bf16==1 && P::EogCount==5 && P::CancelBoundary==1
   && P::CodeWords(0)==
-#ifdef PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_BF16_DEFERRED_PROGRAMS
+  45080
+#elif defined(PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS)
   44687
 #else
   44275
 #endif
   && P::CodeWords(1)==
-#ifdef PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS
+#if defined(PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_BF16_DEFERRED_PROGRAMS)
   27003
 #else
   27044
@@ -82,7 +84,9 @@ int main(int argc,char** argv){
   && S::SavedWords==15444538 && S::SavedBytes==61778152);
 #ifdef PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS
  assert(P::Version==
-#ifdef PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_BF16_DEFERRED_PROGRAMS
+  4
+#elif defined(PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS)
   3
 #else
   2

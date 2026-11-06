@@ -1,0 +1,9 @@
+{
+  "rv32-compile": 0,
+  "assemble": 0,
+  "link": 0,
+  "extract-boot": 0,
+  "extract-text": 0,
+  "host-compile": 0,
+  "execute": 0
+}

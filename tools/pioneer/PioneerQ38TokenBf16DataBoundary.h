@@ -1,5 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 // Recheck on direct old-header and selector includes,including defined-zero.
+#if (defined(PIONEER_Q38_TOKEN_BF16_DEFERRED_PROGRAMS) || defined(PIONEER_Q38_TOKEN_BF16_DEFERRED_PROGRAMS_H)) \
+ && (defined(PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS_H) \
+ || defined(PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS_H))
+#error Deferred BF16 DATA cannot coexist with an older BF16 code package
+#endif
 #if defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS_H)
 #if defined(PIONEER_Q38_TOKEN_PROGRAMS_H) || defined(PIONEER_Q38_TOKEN_PUSHED_FOOTPRINT_H) \
  || defined(PIONEER_Q38_TOKEN_PRECISE_FOOTPRINT_H) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS) \

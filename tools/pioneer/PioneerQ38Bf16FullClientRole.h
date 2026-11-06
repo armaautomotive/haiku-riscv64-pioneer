@@ -2,6 +2,10 @@
 // USER-side identity selection only. No accelerator capability is granted
 // until the existing session checks the actual driver's tag and generation.
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38Bf16FullProfileBinding.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38Bf16DeferredFullBinding.h"
+#ifdef PIONEER_Q38_BF16_DEFERRED_FULL
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38Bf16DeferredFullRole.h"
+#endif
 #ifdef PIONEER_Q38_BF16_PAIR_ISSUE_FULL
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38Bf16PairIssueFullRole.h"
 #endif
@@ -16,6 +20,7 @@
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) || defined(PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS) \
  || defined(PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS) \
+ || defined(PIONEER_Q38_TOKEN_BF16_DEFERRED_PROGRAMS) \
  || defined(PIONEER_Q38_BF16_PROFILE_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_PROTOCOL_H) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_BATCHED) \

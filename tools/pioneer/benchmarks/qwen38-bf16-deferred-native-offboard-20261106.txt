@@ -1,0 +1,91 @@
+Deferred preparation: experimental110 local package qualification
+================================================================
+November 6, 2026. LOCAL ONLY. No install, SSH, card access or speed result.
+Best matched real-model rate remains 0.16436 tokens/sec; latest109 0.07865.
+20 tokens/sec remains unmet. Neither this build nor tests establish it.
+
+What is ready / what is not
+--------------------------
+The deferred-preparation ROOT now has its own immutable Version4 code-DATA
+package and tag2026110600010110 native/USER pair. It includes the previously
+tested paired FPU worker. It cannot silently alias105/106/109,BUILD/unit,
+CPU reference or Work. All old default pins remain fixed. It is NOT installed
+or promoted to Assistant; no110 physical stage was created by this work.
+
+The change omits one duplicate idle audit during BF16 preparation, retaining
+initial admission, genuine producer/worker proofs and all119 final closures
+before Scatter. Idle-fault observation can occur later, explicitly documented.
+Source-derived requests removed are NOT inference timing measurements.
+Even removing the entire measured30.46% preparation phase would only yield
+~1.44x with other costs fixed, nowhere near the122x gap from best103 to20TPS.
+
+Changed validation plan, with limits kept explicit
+------------------------------------------------
+db72a254ea already executed the compiled first K5120 preparation from reset
+with SAME119 genuine Q8/Conv/GDN histories and20 BF16 producers. It stopped
+BEFORE matrix submission. That result is not being rerun or overstated.
+
+The remaining small bookkeeping class is now tested directly as compiled
+RV32 code:36 width/partition cases,1125 missing/duplicate/wrong-partition/
+shape/restart refusals and416 single-bit corruptions. Actual7 build/execute
+children close0/stderr0. Written-stack peak84B;16,793,344 interpreted
+instructions. The SAME class header is used; closure calls here are MOCK,
+not native receipts. Main and clean unit artifacts match byte for byte.
+An initial fixture used byte fault stores unsupported by its generic
+interpreter. The accepted test uses explicit may_alias word fault injection
+over the known52-byte/13-word object; no ordinary ISA guard was relaxed.
+
+Full new-controller K17408, following BF16 matrix, final119/Gather/Scatter,
+whole model and native physical lifetime remain UNPROVEN. These are reserved
+for a controlled physical trial after its parent/preflight qualification;
+we are not constructing a second complete GPU emulator to call them proven.
+Unit/host checks do not grant cleanup or replace actual owner/END/Close.
+
+Local package evidence
+----------------------
+Clean export db72a254ea plus29 scoped sources,excluding nine previously dirty
+baseline paths and unrelated WIP. No deletion or whole-worktree-clean claim.
+Native, corrected USER and rate smoke are byte-identical main vs clean.
+All15 exact section bytes,120-core code/snapshot geometry checked:
+  code3258437 words; saved15444538 words =61778152bytes,unchanged reservation.
+No implicit executable padding or immutable-output alias;963 refusals.
+Original arbitrary and UINT32_MAX journal save/install/restore tests pass,
+including52 faults/33 inert preconditions and27 capsule faults. Clean/main
+outputs agree. Endpoints are SIMULATED; no native IO or physical restoration.
+Roles:110 six positives/615 refusals;old109 six/589 and106 five/551 pass.
+USER:379 fail-closed COW fixtures,96prompt/32output/127positions,all5 EOG and
+3 cancellation boundaries,held phase read once before END,publication only
+after successful END+Close. Exact11 vocabulary/container llama imports;
+no CPU context,decode,logits or backend fallback. Debug tests remain separate.
+Native maximum individual frame2560B,not a whole-kernel-stack certification.
+Existing exact ROOT static bound remains8000/8192B,not physical high-water.
+
+One packaging mismatch was caught:the initial110 worker omitted startup
+telemetry while its smoke expected it. That USER is SUPERSEDED. The corrected
+worker selects the same timing implementation as109 and the builder now
+requires the actual startup-record string in the linked worker. Corrected
+main+clean USER/transport/SDK tests passed;the benchmark requirement was not
+weakened. Old109 complete header regenerates exactly;new header independently
+regenerates exactly in the clean snapshot. No model/learned bytes archived.
+
+Accepted artifacts (build identities, not installation authorization)
+-------------------------------------------------------------------
+native2897528B fab6d0e741cbb06ab540af07d4d1d4864cf84ec29eaf02b5048d11464bc771e9
+USER82984B 4b526caefad509819b6453ebc99e0199e7e5e6ad079534f76e848cfe66706d00
+rate231968B 47eb2c07d49e540db8c6bd02a38c6cad9dac8147ddeb60e83d17b89c75a33dbd
+ROOT212232B d065a29672996db27471e19e0cc0f396eea32242043d7e89a95f197ac25e9fb5
+worker146988B 536d2b09214572116a05ada8927193506ab9056949d2e242e10a44854260f675
+header553cd9a5d0e575ec278e32cc5405217649f4c4bc0419636e0e350655698e011e
+
+Next bounded task
+-----------------
+Qualify a fresh single-use110 physical parent,check actual normal-driver
+state/stage absence,then run the same31prompt/32output complete-model test.
+Prove actual END/Close and normal restoration,compare with109 AND best103,
+and accept/reject. Never replay spent81..109 or promote a slower candidate.
+Last saved normal state is generation48 after109;this is NOT fresh telemetry.
+
+Evidence: qwen38-bf16-deferred-native-offboard-20261106/manifest.json,
+verify_evidence.py,29-source inventory,actual exits,commands and complete
+local result records. Verifier checks saved DATA only,not launch/cleanup.
+No job remains;no reboot,power,SD,network,kernel or Assistant action occurred.

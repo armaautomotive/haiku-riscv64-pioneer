@@ -9,6 +9,8 @@ from PioneerQ38Bf16ProgramPins import ROOT_PINS, WORKER_PINS
 
 args=sys.argv[1:];paired='--pair-issue' in args
 if paired:assert args.count('--pair-issue')==1;args.remove('--pair-issue')
+deferred='--deferred-audit' in args
+if deferred:assert args.count('--deferred-audit')==1 and not paired;args.remove('--deferred-audit')
 profile='--profile' in args
 if profile:
  assert args.count('--profile')==1;args.remove('--profile')
@@ -16,6 +18,9 @@ if profile:
 if paired:
  profile=True
  from PioneerQ38Bf16PairIssueProgramPins import ROOT_PINS,WORKER_PINS
+if deferred:
+ profile=True
+ from PioneerQ38Bf16DeferredProgramPins import ROOT_PINS,WORKER_PINS
 assert __debug__ and len(args)==3
 root, worker, out=map(Path,args)
 assert all(p.is_absolute() for p in (root,worker,out)) and not out.exists() and not out.is_symlink()
@@ -28,15 +33,16 @@ units += [(w,name,label,address) for name,label,address in (
  ('dense','PeerDense',0x40000),('cachedfpu','PeerFpu',0x50000),('ffn','PeerFfn',0x60000),
  ('service','PeerService',0x68000),('affine','PeerAffine',0x70b00),('text','PeerText',0x72000),('gdn','PeerGdn',0xb8000))]
 require_complete_sections(units,(r,w))
-namespace='PioneerQ38TokenBf16PairIssuePrograms' if paired else 'PioneerQ38TokenBf16ProfilePrograms' if profile else 'PioneerQ38TokenBf16Programs'
-guard='PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS_H' if paired else 'PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS_H' if profile else 'PIONEER_Q38_TOKEN_BF16_PROGRAMS_H'
-role='PioneerQ38TokenBf16PairIssueProgramsRole.h' if paired else 'PioneerQ38TokenBf16ProfileProgramsRole.h' if profile else 'PioneerQ38TokenBf16ProgramsRole.h'
+namespace='PioneerQ38TokenBf16DeferredPrograms' if deferred else 'PioneerQ38TokenBf16PairIssuePrograms' if paired else 'PioneerQ38TokenBf16ProfilePrograms' if profile else 'PioneerQ38TokenBf16Programs'
+guard='PIONEER_Q38_TOKEN_BF16_DEFERRED_PROGRAMS_H' if deferred else 'PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS_H' if paired else 'PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS_H' if profile else 'PIONEER_Q38_TOKEN_BF16_PROGRAMS_H'
+role='PioneerQ38TokenBf16DeferredProgramsRole.h' if deferred else 'PioneerQ38TokenBf16PairIssueProgramsRole.h' if paired else 'PioneerQ38TokenBf16ProfileProgramsRole.h' if profile else 'PioneerQ38TokenBf16ProgramsRole.h'
 lines=['/* SPDX-License-Identifier: MIT */','// Generated complete QTP4/QGW4 immutable code DATA;no runtime qualification.',
  '#include "'+role+'"','#ifndef '+guard,
  '#define '+guard,'#include "PioneerQ38TokenBf16Footprint.h"',
  'namespace '+namespace+' {',
- 'enum {Family=0x34505451,Version='+str(3 if paired else 2 if profile else 1)+',CancelBoundary=1,Bf16=1,EogCount=5};']
-if paired:lines+=['enum {PairedIssue=1};']
+ 'enum {Family=0x34505451,Version='+str(4 if deferred else 3 if paired else 2 if profile else 1)+',CancelBoundary=1,Bf16=1,EogCount=5};']
+if paired or deferred:lines+=['enum {PairedIssue=1};']
+if deferred:lines+=['enum {DeferredAudit=1};']
 if profile:
  lines+=['enum {TokenFrontier=1,FrontierAddress=0x7570c,TokenPhaseProfile=1,PhaseProfileAddress=0x75710,PhaseProfileWords=60};']
 for source,name,label,address in units:
