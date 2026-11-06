@@ -1,0 +1,53 @@
+Live BF16 activation producer: OFFBOARD component execution only
+==============================================================
+2026-11-05 Pacific. Base89c2eeef12d2ae43ca5aa06f3339435106ba1608.
+No Pioneer/driver/Assistant/power/network/card/disk mutation. No inference
+or physical timing benchmark.20 tokens/sec remains unmet.
+
+The new returning q38_bf16_activation_producer uses the actual persistent
+worker's LOCAL buffers:FP32 gate/projection90000,up90400,activated90800,
+BF16 output90c00. Operation1 packs the live projection FP32 directly.
+Operation2 computes(gate*precise_sigmoid(gate))*up, in the existing precise
+producer's order/domain, and packs that FP32 result directly to BF16.
+There is no integer-Q8 quantization, clipping, scale calculation, learned
+host inference, or CPU fallback. The emitted symbol table contains no
+integer activation quantizer. The source/activation outputs are staged;
+a bad last lane cannot partially publish either output.
+
+These are ON-CARD INSTRUCTIONS executed in the strict existing RV32IMF
+instruction harness, NOT a new test on the physical P100A. The local
+harness has distinct16KiB code bounds and an8KiB stack, not native owner
+authority. Both the standalone and returning-only objects reserve s11.
+The complete caller's combined stack/ownership remain to be qualified.
+
+Main and isolated clean-archive suites each have4 actual child exits0,
+all stderr0, ASan/UBSan and warnings-as-errors.61-source dependency closure
+is frozen before/after both runs. Both complete ELF/boot/code binaries
+and test result stdout agree byte-for-byte. The clean archive contains
+base HEAD plus ONLY7 new producer/build/test files; other WIP is excluded.
+
+Actual emitted execution:
+22 accepted projection/gated cases,5632 values,64 refused cases including
+all32 dirty descriptor fields and bad first/last input lanes. Source
+buffers/descriptor/guard words are unchanged; outputs remain untouched
+on refusal, terminal loops are inert, s11 checked after every instruction.
+Maximum observed combined stack2304B. Gated FP32 outputs match the
+existing precise ROOT order; separate libm values check bounded error.
+128 actual BF16 output lanes additionally pass independent Fraction
+nearest/ties-to-even checking. This is not full-model accuracy evidence.
+
+Emitted code3984B SHA256:
+10e6bc19d84bd35a582153685fb91f728e4a3e2e0a22754d4178fdf7fee499d1
+ELF13476B SHA256:
+92d22366c961539cce6d63f4eb238b21450a8c44b3604f03afd2ce13a0a34adb
+21 wrong/mixed/defined-zero/fast-math roles are rejected. No undefined
+symbol except the explicit fault-park binding in the returning object.
+No forbidden arithmetic,CSR,writable globals or use of reserved s11.
+
+NEXT: bind this local leaf into the actual returning producer's NoC
+read/write/trailer lifecycle with a NEW typed BF16 witness; update ROOT
+gather and paired-Q4 matrix dispatch together. Old integer-scale markers
+and producer proofs must NOT authorize BF16 data. Then link/qualify the
+full worker/ROOT/native owner and measure actual full-model generation.
+This local checkpoint alone changes neither the installed Work target nor
+its throughput. Full-model speedup has NOT been demonstrated here.

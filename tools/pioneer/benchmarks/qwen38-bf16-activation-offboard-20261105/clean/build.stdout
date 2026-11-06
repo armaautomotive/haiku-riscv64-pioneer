@@ -1,0 +1,4 @@
+BF16_ACTIVATION_BUILD boot.bin 4 d0565e4ef0f59aa08ad0be91ffae61ceb85aedff5f36f346c95312b0f9407ac6
+BF16_ACTIVATION_BUILD code.bin 3984 10e6bc19d84bd35a582153685fb91f728e4a3e2e0a22754d4178fdf7fee499d1
+BF16_ACTIVATION_BUILD program.elf 13476 92d22366c961539cce6d63f4eb238b21450a8c44b3604f03afd2ce13a0a34adb
+PASS BUILD_ONLY live BF16 producer projection/precise-gated-FFN,no Q8 quantizer or scale;return-only/s11 fixed/roles21;NO native/worker/ROOT/hardware/model-quality/TPS authority

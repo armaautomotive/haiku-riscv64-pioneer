@@ -1,0 +1,35 @@
+[
+  [
+    "build",
+    "/Library/Developer/CommandLineTools/usr/bin/python3",
+    "/private/tmp/pioneer-bf16-activation-clean.1x0qT7f3/tools/pioneer/build_q38_bf16_activation.py",
+    "/Volumes/HaikuBuildLocal/generated.riscv64",
+    "/private/tmp/pioneer-q38-cached-fpu.g3na5Ej4/activation-clean-suite/image"
+  ],
+  [
+    "compile",
+    "c++",
+    "-std=c++17",
+    "-O1",
+    "-g",
+    "-Wall",
+    "-Wextra",
+    "-Werror",
+    "-ffp-contract=off",
+    "-fsanitize=address,undefined",
+    "/private/tmp/pioneer-bf16-activation-clean.1x0qT7f3/tools/pioneer/tests/pioneer_q38_bf16_activation_test.cpp",
+    "-o",
+    "/private/tmp/pioneer-q38-cached-fpu.g3na5Ej4/activation-clean-suite/producer-test"
+  ],
+  [
+    "producer",
+    "/private/tmp/pioneer-q38-cached-fpu.g3na5Ej4/activation-clean-suite/producer-test",
+    "/private/tmp/pioneer-q38-cached-fpu.g3na5Ej4/activation-clean-suite/image"
+  ],
+  [
+    "fraction",
+    "/Library/Developer/CommandLineTools/usr/bin/python3",
+    "/private/tmp/pioneer-bf16-activation-clean.1x0qT7f3/tools/pioneer/tests/pioneer_q38_cached_bf16_fraction_test.py",
+    "/private/tmp/pioneer-q38-cached-fpu.g3na5Ej4/activation-clean-suite/producer.stdout"
+  ]
+]
