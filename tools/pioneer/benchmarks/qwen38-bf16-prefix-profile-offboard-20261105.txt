@@ -1,0 +1,49 @@
+BF16 cold-prefix ROOT instruction attribution -- diagnostic only
+===============================================================
+Base17d8162774564f8b57746880b72e273a6040f1b0. No production change.
+The real27B hardware trial105-a continues separately;this diagnostic does
+not modify its driver,firmware,processes,weights or model arithmetic.
+
+Executed result
+----------------
+Two actual children (compile,profile) exit0/stderr0,ASan+UBSan enabled.
+183 source dependencies frozen before/after. Complete fixed ROOT/worker
+ELFs and .bin files are authenticated against their existing BUILD pins.
+The symbol map is derived from that same ROOT ELF,not supplied execution
+state. Map SHA25609ddd19d0394389f7a61ebb71797d54b8fef20bfd8982a319844e19382aed4cd.
+
+Actual ROOT starts cold;SAME119 virgin workers boot and execute their real
+5 Q8 projections363jobs,119Conv+96GDN jobs. It reaches the first BF16
+descriptor BEFORE submit. Real recipe-derived worker nonces/closure and
+the full-token parent's uncommitted position0 are checked. No PC,private
+seal,completion,learned product or ready flag is supplied to the guest.
+138797427 ROOT instructions are attributed;reserved-stack peak6496B to
+this prefix boundary. Every counted PC maps through the existing host
+diagnostic profiler. Worker instruction counts are NOT part of this sum.
+
+Largest EXCLUSIVE ROOT instruction categories in this synthetic execution:
+ recurrent packet seal             34477441   24.840115%
+ DensePartitionRoot::Transfer       33751273   24.316930%
+ DensePartitionRoot::Quiet          22906200   16.503332%
+ MixedRecurrentCohort::Packet       11027898    7.945319%
+The first three account for91134914 instructions,65.660377% of this prefix.
+Transfer includes useful transport work;these are NOT all redundant checks.
+The complete top20 and actual exits are archived in the sibling directory.
+
+Limits and next action
+-----------------------
+These are instruction counts,NOT physical cycles,wall time or tokens/sec.
+Polling includes the simulator's worker scheduling/response model. The
+prefix does not run the following BF16 matrix or a whole layer/token.
+No hardware bottleneck share,card maximum or speedup follows from it.
+The old measured full-model rate (~0.164tok/s) is not replaced by this.
+
+This provides a concrete place to investigate controller overhead and
+packet batching AFTER checking the real-model trial,not a justification
+to disable address,source,FIFO/counter or ownership checks blindly. A
+new optimization must retain bounded transfers,explicit ownership and
+fail-closed cleanup,and earn its own complete-model measurement.
+
+Initial profile-a failed to compile due to a misqualified host helper;
+profile-b fixes that spelling and is the accepted actual result. Neither
+attempt changes the immutable card code.20tokens/sec remains unmet.

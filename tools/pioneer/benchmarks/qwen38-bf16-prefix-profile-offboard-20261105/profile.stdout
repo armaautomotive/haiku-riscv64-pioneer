@@ -1,0 +1,31 @@
+PASS distinct full-token startup builder/ALL64x512KiB published DATA+state spans+ZERO slack/root+head EXACT vs prior independently loaded numeric metadata/192 strict first+middle+last chunk controls/strict full geometry before+after/actual session+prompt initialized from builder/ZERO ROOT instructions;geometry NOT native ownership or model products
+START actual BF16 cold-prefix instruction profile/diagnostic only/no products or processor history supplied
+PASS actual next embedding position0/token248319/5120 bit-exact/20raw+2writes+2readbacks/no CPU product upload
+BEGIN actual persistent token0/layer0/inputToken248319/previous committed0/SAME119 histories
+OBSERVED connected layer0 matrix1 role10/actual quantized input/same workers
+OBSERVED connected layer0 matrix2 role11/actual quantized input/same workers
+OBSERVED connected layer0 matrix3 role5/actual quantized input/same workers
+OBSERVED connected layer0 matrix4 role6/actual quantized input/same workers
+OBSERVED connected layer0 matrix5 role13/actual quantized input/same workers
+ROOT_INSTRUCTION_PROFILE total138797427/functions105/EXCLUSIVE actual PCs incl SIMULATED polling/NOT physical cycles or token speed
+ROOT_INSTRUCTION_FUNCTION 34477441 q38_layer_return_recurrent_packet_seal
+ROOT_INSTRUCTION_FUNCTION 33751273 DensePartitionRoot::Transfer(unsigned int const*, unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+ROOT_INSTRUCTION_FUNCTION 22906200 DensePartitionRoot::Quiet()
+ROOT_INSTRUCTION_FUNCTION 11027898 MixedRecurrentCohort::Packet(unsigned int*, unsigned int, unsigned int, unsigned int, bool)
+ROOT_INSTRUCTION_FUNCTION 3096704 MixedRecurrentCohort::Audit()
+ROOT_INSTRUCTION_FUNCTION 2569120 PioneerQ38ProjectionQuantize(unsigned int, float const*, unsigned int, PioneerQ38ProjectionInput*) [clone .constprop.0]
+ROOT_INSTRUCTION_FUNCTION 2395480 PioneerQ38Bf16WorkerLayout::BootShape(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 2170054 PioneerQ38ConvBatchShape(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 1974227 PioneerQ38Bf16WorkerLayout::JobShape(unsigned int const*, unsigned int const*, unsigned int, unsigned int)
+ROOT_INSTRUCTION_FUNCTION 1890014 q38_layer_return_recurrent_seal
+ROOT_INSTRUCTION_FUNCTION 1715530 PioneerQ38MixedRecurrentRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*) [clone .constprop.0]
+ROOT_INSTRUCTION_FUNCTION 1356996 Projection::Run(unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 1332625 RecurrentBlock::Private()
+ROOT_INSTRUCTION_FUNCTION 1219418 PioneerQ38MixedRecurrentRecipe(unsigned int const*, unsigned int const*, unsigned int const*, unsigned int const (*) [8], unsigned int const*)
+ROOT_INSTRUCTION_FUNCTION 1146478 DensePartitionRoot::Admit(unsigned int const*, unsigned int*, unsigned int)
+ROOT_INSTRUCTION_FUNCTION 991970 Projection::MatrixWait(unsigned int const*, unsigned int*, unsigned int)
+ROOT_INSTRUCTION_FUNCTION 775834 RecurrentBlock::RecipeSeal(unsigned int)
+ROOT_INSTRUCTION_FUNCTION 772102 MixedRecurrentCohort::StageConv(unsigned int*)
+ROOT_INSTRUCTION_FUNCTION 766315 DensePartitionRoot::ClosedJob(unsigned int const*, unsigned int*, unsigned int, bool)
+ROOT_INSTRUCTION_FUNCTION 694052 PioneerQ38ConvShape(unsigned int const*)
+PASS ACTUAL cold-prefix instruction attribution/ROOT instructions138797427/reservedStack6496/5Q8+Conv+GDN real SAME119;synthetic raw inputs,NOT BF16 matrix/full model/physical cycles/frequency/TPS proof
