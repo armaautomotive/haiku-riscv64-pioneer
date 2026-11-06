@@ -1,0 +1,38 @@
+Fri Nov  6 04:36:10 GMT 2026
+ALL_TRIAL_PIDS_ABSENT_NO_MATCHING_OWNER
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
+d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74  /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
+c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18  /boot/home/config/non-packaged/servers/HaikuAssistantService
+0de9141eb3955cf1c993a67c80ef648b3538ce7155c17677458487ee083a4933  /boot/home/config/non-packaged/apps/HaikuAssistant
+0ae23a2c211af9fbafb89c3d93bdd136a4bdd574baeeaf2d622f582efcf426af  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so.0.2.0
+a3b81c133641bbdacde8dd1d0e0ffa7a0a1ec0c33e95c426df1db59735379c16  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml.so.0.21.0
+9cb45a36558bd78aa4d4b7ed5385cbf9df32de208f9e6c9b6d064e8527dca389  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-base.so.0.21.0
+69e9ec2c43a123afbb256c3feb6313cdcebdf1b2a87278ac3cdac8a1a65273d2  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-cpu.so.0.21.0
+P100A_RELOAD driver55 tag2026102100010012 generation40 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+130580131840 bytes free      (used/max 6454804480 / 137034936320)
+                           (cached   31458025472)
+     59598 semaphores free (used/max       5938 /      65536)
+      3716 ports free      (used/max        380 /       4096)
+      2592 threads free    (used/max       1504 /       4096)
+      1973 teams free      (used/max         75 /       2048)
+aa6baf6d22cd4bdca6521ffce66d46451b49abf9e748a5c7b978c527aaf007b8  /boot/home/pioneer-q38-bf16-full-105-a/pioneer_q38_bf16_full_offload_physical.sh
+ae0e61d023760a533b71d6bbfec8e63ea7a0d7e1bba37aa487a94dfe5b1c01a3  /boot/home/pioneer-q38-bf16-full-105-a/direct-parent.stdout
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /boot/home/pioneer-q38-bf16-full-105-a/direct-parent.stderr
+787d63f33294ed681a16a361bd31345e10dadcba87c957a04056b99ad8e74960  /boot/home/pioneer-q38-bf16-full-105-a/full-offload.stdout
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /boot/home/pioneer-q38-bf16-full-105-a/full-offload.stderr
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  /boot/home/pioneer-q38-bf16-full-105-a/full-offload.exit
+9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa  /boot/home/pioneer-q38-bf16-full-105-a/direct-parent.exit
+ec132c9dcaf31bb82d08621f816f1263ffc4ca553c2cd0a032c820077cd9df58  /boot/home/pioneer-q38-bf16-full-105-a/state
+bbf2b3a808b3ad5f7b001650d460ae54b5bc693ce4232a1da89bbb7e931946f6  /boot/home/pioneer-q38-bf16-full-105-a/parent.pid
+2aac7ffa3331fdcce1d97d9299336dfed7d7968bf46e77b7f5e5264223158e6e  /boot/home/pioneer-q38-bf16-full-105-a/direct-launcher.pid
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /boot/home/pioneer-q38-bf16-full-105-a/launcher.stderr
+3391aab0d5a5d50d415d265a846263c7360eaebefc8fa8cf9d2a76153e01c9b9  /boot/home/pioneer-q38-bf16-full-105-a/launcher.pid
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /boot/home/pioneer-q38-bf16-full-105-a/parent.stdout
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /boot/home/pioneer-q38-bf16-full-105-a/parent.stderr
+4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865  /boot/home/pioneer-q38-bf16-full-105-a/parent.exit
+PASS_INDEPENDENT_BF16_105_CLOSED_NORMAL041_GEN40_64CPU_FULLRAM_ASSISTANT_RUNTIME_PRESERVED

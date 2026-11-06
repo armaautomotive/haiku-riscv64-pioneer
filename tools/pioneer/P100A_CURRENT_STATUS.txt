@@ -1,0 +1,40 @@
+P100A / Qwen27B -- current project checkpoint
+=============================================
+Updated after the completed BF16 trial,2026-11-06 04:36UTC.
+This is a checkpoint summary,not live telemetry.
+
+Goal:usable self-hosted Qwen3.8-27B Q4_K_M;target20tokens/sec.UNMET.
+
+DEMONSTRATED
+*The new BF16/FPU implementation completed a full27B fixed-prompt run on
+ the actual P100A,without CPU model inference,and returned Hello! How can.
+*It completed cleanly and restored the normal driver. Independent checks
+ confirm64CPUs,full137034936320B RAM and unchanged Assistant/runtime files.
+*Both the older full-card implementation and the new one can run the model.
+
+NOT DELIVERED
+*The new implementation is NOT faster in this test:216.622seconds for
+ prompt+4 outputs,versus175.251seconds in the older matched test (~24% more).
+*Those intervals are NOT warm tokens/sec. Last measured old-path
+ post-prompt rate remains~0.16436tokens/sec;no new BF16 warm rate exists.
+*Broad model quality,fast Assistant integration and usable speed remain
+ unfinished. The slow new candidate is not promoted to Assistant.
+
+ONE NEXT PERFORMANCE MILESTONE
+Obtain comparable post-prompt timing and physical control-versus-math
+profiling on this working BF16 path;optimize one dominant measured cost.
+An offline prefix profile points to controller transfer/checking overhead,
+but its instruction counts are NOT physical timing or a speed result.
+
+CODE / EVIDENCE
+Hardware-tested source:17d8162774564f8b57746880b72e273a6040f1b0.
+Later72b18fd9a5 adds offline profiling only;card code unchanged.
+Build:build_q38_bf16_full_native.py and
+ build_assistant_qwen27_bf16_full_offload.py in this directory.
+Whole result:benchmarks/qwen38-bf16-full-physical-20261105.txt.
+Profile:benchmarks/qwen38-bf16-prefix-profile-offboard-20261105.txt.
+
+No hardware job remains active at this checkpoint. Normal041/tag12/gen40
+was independently verified after closure. Stage105-a is SPENT forever;
+never rerun it or substitute new binaries into its old admission.
+No code/history was deleted and the active overall goal is unchanged.

@@ -1,0 +1,92 @@
+BF16/FPU full27B path -- first complete real-model trial,CLOSED0
+=============================================================
+Hardware source17d8162774564f8b57746880b72e273a6040f1b0.
+Later72b18fd9a5 is diagnostic HOST profiling only,not different card code.
+One actual105-a GPU trial;normal38 -> BF16/native39 -> normal40.
+Primary SSH waiter97096 ACTUALLY exits0 (DIRECT_PARENT_ACTUAL_EXIT0).
+Fresh04:34:56UTC process/log observation finds all four trial PIDs absent,
+full-offload.exit0,direct-parent.exit0,all stderr0 and
+FULL_CARD_HELLO_FOUR_CLOSED_STABLE_RESTORED.
+
+Actual full-model result,not component/build proof
+-------------------------------------------------
+All19399024640 weight bytes upload in2257 accepted progress events.
+The full27B controller then completes the fixed public Hello. request,
+four output tokens and exact14-byte text Hello! How can. Worker clean
+STOP/HOLD/drain/original-image restore/END and its actual exit precede
+the accepted final smoke marker. It is not a single-layer/FPU microtest.
+The separate new USER binary imports only the11 vocabulary/container APIs;
+it creates no CPU inference context and sends prompt IDs,not learned
+products. Embedding,matrices,attention,KV/recurrent state,norms,activation,
+classifier and greedy selection execute on the card. Typed Q4 projections
+use the new BF16 producers/FPU workers;non-Q4 capsules retain integer
+formats. No hybrid fallback or CPU numerical reference enters this run.
+This proves ONE complete fixed-prompt result,not broad model quality.
+
+Performance -- no speedup
+-------------------------
+Reported post-start-ack prompt+generation interval216.622seconds.
+Generate total2007.300seconds includes upload,startup and cleanup;earlier
+source authentication/vocabulary loading is outside that Generate total.
+The older matched Hello/four-output run reported175.251seconds for its
+post-start-ack interval. This new observed interval is23.606713% LONGER.
+It is one comparison,not a repeated/statistical performance study.
+Neither interval is a warm post-prompt window:do NOT divide four outputs
+by216.622 or treat the result as warm tokens/sec. The new BF16 mode has
+no measured comparable32-output post-prompt rate. The last old-path
+measurement(~0.16436tok/s) is not replaced.20tokens/sec remains UNMET.
+The new path is functionally integrated,but not a performance win and
+must NOT be promoted to Assistant as a faster backend on this evidence.
+
+Independent AFTER-EXIT preservation
+-----------------------------------
+Separate postflight25192 ACTUALLY0,stderr0,on2026-11-06 04:36:10UTC.
+Normal041 SHA/tag2026102100010012/generation40,quiesced0/cold0/owner0,
+open_count1/guard1.64CPUs,137034936320B RAM. Installed driver/admin/reload
+guard,all three Assistant binaries and all four runtime-library SHA values
+match the admission pins. Model remains the same root-owned single-link
+18973870528B file. No kernel/Assistant/boot/network/SD/mains change,power
+action,reboot,quarantine or forced cleanup was required by the GPU trial.
+The experimental driver was hot-swapped in and normal driver restored.
+
+Full archive and unmodified readers
+------------------------------------
+SCP86545 ACTUALLY0 copies all15 closed remote files,including the actual
+executed parent. Every complete local SHA matches its corresponding
+postflight remote-file SHA. Main and independent-clean UNCHANGED strict
+whole-transcript readers both ACTUALLY0,byte-identical stdout,stderr0.
+They accept the full source/vocabulary/upload/run/result/answer/clean-exit
+stream,not a tail or LIVE snapshot. Readers alone do not grant cleanup;
+actual process exits and independent postflight are separate evidence.
+Whole stdout SHA787d63f33294ed681a16a361bd31345e10dadcba87c957a04056b99ad8e74960
+Whole parent SHAae0e61d023760a533b71d6bbfec8e63ea7a0d7e1bba37aa487a94dfe5b1c01a3
+Postflight SHA014ac0a60b80b8ce65d82bdf6d345f8864b01ae7b0f8ccf45f0a8fead265cf33
+
+Executed identities
+---------------------
+native d8b1c561c9895841c6389576b53027d6e6998b3761dac12f47dbec961fb8bbb9
+USER0190291350ca5eb56a235fcf6c2d6e3c000a7146f9f4b86fd7cd28a13051feec
+smoke aa9aac510e66d7bfba98b61019181ddc6662639badbb7ebc4edcdb2f91d822ef
+parent aa6baf6d22cd4bdca6521ffce66d46451b49abf9e748a5c7b978c527aaf007b8
+Same original model SHA
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+
+Launcher history,not a retried GPU cohort
+----------------------------------------
+The initial sh-c wrapper was mistaken for another owner by the idle guard
+and exited1 BEFORE .trial-once,backup,driver exchange or inference. Empty
+original parent stdout/stderr and that exit1 are preserved. An inert argv
+reproduction identified the cause;fresh preflight still proved normal38.
+Using an stdin launcher fixed argv without weakening the guard or clearing
+any marker. Actual parent34879 then acquired the still-unused trial once;
+launcher34874,smoke34963 and USER34964 all actually terminated. No GPU
+cohort was retried.105-a is now SPENT forever;never rerun or repin it.
+
+Next bounded performance work
+------------------------------
+Measure comparable post-prompt performance and finer physical breakdown
+of controller/transfer/wait versus tensor computation on this now-working
+BF16 path. The offline prefix's65.66% packet-related instruction share is
+a lead,NOT physical time. Select one dominant measured cost,retain explicit
+ownership/bounded transfers/fail-closed cleanup,and earn a before/after
+full-model result. No interface/cache/UI detour substitutes for speed.
