@@ -1,0 +1,8 @@
+Traceback (most recent call last):
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/generate_qwen38_bf16_programs.py", line 14, in <module>
+    r=authenticated(root,ROOT_PINS);w=authenticated(worker,WORKER_PINS)
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/generate_qwen38_token_programs.py", line 26, in authenticated
+    require(stat.S_ISREG(before.st_mode) and before.st_size == size, f'artifact {name}: type/length')
+  File "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/generate_qwen38_token_programs.py", line 12, in require
+    raise ValueError(message)
+ValueError: artifact text.bin: type/length

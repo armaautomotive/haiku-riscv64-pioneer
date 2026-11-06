@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // Recheck every include. Profiling is a distinct BUILD, never a Work grant.
 #ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
+#ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
+#include "PioneerQ38Bf16ProfileBuildRole.h"
+#else
 #if PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE != 1 \
  || !defined(__riscv) || __riscv != 1 \
  || !defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE) || PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE != 1 \
@@ -19,6 +22,7 @@
  || defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_ROOT_IMAGE) \
  || defined(PIONEER_Q38_ROOT_CYCLE_IMAGE) || defined(PIONEER_Q38_TOKEN_FRONTEND_PROFILE_NATIVE)
 #error Phase timing BUILD is not kernel,native,CPU,worker,old parent or Work
+#endif
 #endif
 #endif
 #ifndef PIONEER_Q38_TOKEN_PHASE_PROFILE_BINDING_H

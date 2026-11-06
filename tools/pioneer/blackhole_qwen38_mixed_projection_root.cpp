@@ -9,6 +9,9 @@
 #include "blackhole_qwen38_dense_partition_root.cpp"
 #undef scalar_main
 #include "PioneerQ38ProjectionInput.h"
+#ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
+#include "PioneerQ38Bf16ProfileScope.h"
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
 #include "PioneerQ38Bf16RootPairs.h"
 #include "PioneerQ38Bf16MatrixReceipt.h"
@@ -220,6 +223,9 @@ static void Scatter(const uint32_t* d,uint32_t* tracked){
  }
 }
 static unsigned Run(const uint32_t* d){
+#ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
+ PioneerQ38Bf16ProfileScope timing(PioneerQ38Bf16ProfileData::MatrixPrepare);
+#endif
  CaptureRecipe(d);
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
  if(BfQ4(d))BfPrepare(d);else
@@ -244,9 +250,18 @@ static unsigned Run(const uint32_t* d){
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
  uint32_t incoming[4];PushedBegin(d,tracked,incoming);
 #endif
+#ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
+ timing.Next(PioneerQ38Bf16ProfileData::MatrixDispatch);
+#endif
  for(unsigned w=0;w<d[7];w++){MatrixJob(d,w,Words(L::Nonces)[w]+1);Transfer(d,tracked,w,M::Job,256,true);}
  for(unsigned w=0;w<d[7];w++){*Words(L::Scratch)=Words(L::Nonces)[w]+1;Transfer(d,tracked,w,M::Doorbell,4,true);Words(L::Nonces)[w]++;}
+#ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
+ timing.Next(PioneerQ38Bf16ProfileData::MatrixGatherWait);
+#endif
  for(unsigned w=0;w<d[7];w++)Gather(d,tracked,w);
+#ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
+ timing.Next(PioneerQ38Bf16ProfileData::MatrixFinish);
+#endif
  // Non-pushed Gather observes DONE/WAIT,boot/job and current counters.
  // G3 instead binds the pushed receipt,arithmetic proof and expected counter
  // frontier;that is NOT a fresh physical observation. No later command is

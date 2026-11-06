@@ -1,0 +1,1 @@
+PASS BF16 timing DATA:90 cases/14 exclusive buckets/496 matrix scopes per token/8192-token bounds/all60 word corruptions/64-bit sums/sticky invalid/no old grammar alias;NO hardware or speed proof

@@ -7,8 +7,13 @@
 #include "PioneerQ38TokenLayout.h"
 #include "PioneerQ38TokenMetadata.h"
 #ifdef PIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE
+#ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
+#include "PioneerQ38Bf16ProfileData.h"
+namespace QPhase=PioneerQ38Bf16ProfileData;
+#else
 #include "PioneerQ38TokenPhaseProfileData.h"
 namespace QPhase=PioneerQ38TokenPhaseProfileData;
+#endif
 static_assert(QPhase::Address==PioneerQ38GlobalChainLayout::Progress+16
  && QPhase::Address+QPhase::Words*4==PioneerQ38MixedProjectionRootLayout::Parts,
  "phase telemetry preserves first4 progress words and following projection metadata");

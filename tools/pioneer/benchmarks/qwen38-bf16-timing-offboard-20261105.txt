@@ -1,0 +1,58 @@
+BF16 timing firmware -- offline checkpoint, NOT a speed improvement
+=================================================================
+Based on c3fa59ff8d49a524f47b428b052e752df2181abd. 2026-11-05 Pacific.
+No Pioneer, SSH, driver installation, model run or power action occurred.
+20 tokens/sec remains unmet. The 32-output hardware benchmark is pending.
+
+Implemented
+-----------
+Added an explicit --bf16-profile BUILD to the existing BF16 controller.
+It retains the precise arithmetic, worker admission, all model guards and
+unchanged QGW4 worker kernels. Existing coarse phases remain; returning
+matrix calls add preparation, dispatch, gather/wait and finish phases.
+The outer layer phase resumes only on the real returning function path.
+An aligned committed-token observation word is published by the existing
+helper after the complete output publication/readback. No CPU reference
+or new model computation is introduced on the host.
+
+The profile uses the existing 60 reserved progress words, after the first
+four words. New magic/version distinguish 14 exclusive buckets from the
+old ten-bucket grammar. Clock uncertainty/overflow invalidates telemetry
+only; it grants neither model success nor terminal/HOLD/cleanup permission.
+Exactly three static read-only CSRRS instructions, in the actual sampler
+function only, read mcycleh/mcycle/mcycleh with at most four attempts.
+No CSR writes, clock-frequency assumption or new persistent global state.
+
+Evidence
+--------
+Main and independent c3fa59ff+16-scoped-source copies reproduce every whole
+ELF/code-section pin. ELF bf644a1c140bcb5dcbbbbf632af5965bb51f4b96d49d128c6689f32395b2a44b.
+Each copy closes five observer-test children with exit 0 and empty stderr:
+6 positive/133 refused BUILD roles; 90 observer DATA cases including all
+60 single-word corruptions; 21 direct linked-helper histories, actual RV32
+instructions with synthetic clocks, rollover, 64-bit sums and sticky invalid.
+All 14 bucket cycle sums match the sampled CSR stream. Stack/callee ABI and
+the first four progress words are preserved. These are HELPER tests, not
+execution of the persistent ROOT, its workers, a layer or a model token.
+
+The emitted EOG predicate passes all 248320 vocabulary IDs plus five invalid
+IDs. A separate exact-ELF call-graph inspection resolves 216 functions,
+1051 direct transfers and nine newly inspected immutable switch tables.
+Conservative stack bound 7936/8192 bytes; NOT a measured runtime stack peak.
+
+The non-timing BF16 build still exactly reproduces its six old pins,
+including ELF 62f24f28379cabacd81cce767f0d852a649da400551d8a31d9a42752a87d746b.
+Legacy phase BUILD and private frontier role tests pass. The old BF16 DATA
+generator refuses the new ROOT before opening the worker or creating output.
+This new image is NOT compatible with silently replaying the spent 105-a trial.
+
+Interpretation and next step
+----------------------------
+The new phases measure elapsed ROOT-controller cycles. Preparation includes
+real packing/producer waits; gather/wait includes worker computation and
+receipt checking. They are NOT isolated tensor-compute times, worker
+utilization, physical seconds or tokens/sec. Overlap must not be double-counted.
+Full ROOT/model execution and fresh native/USER integration remain required.
+Next: bind the timing/frontier observers to a distinct tag106 native+USER
+subject with held-only profile reads, validate that lifecycle, then admit a
+fresh guarded 32-output run. Do NOT install this BUILD-only checkpoint.

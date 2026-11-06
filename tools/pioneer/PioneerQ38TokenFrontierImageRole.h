@@ -1,6 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 // Re-evaluate on every include. This is only a distinct ROOT BUILD profile.
 #ifdef PIONEER_Q38_TOKEN_FRONTIER_IMAGE
+#ifdef PIONEER_Q38_BF16_PROFILE_IMAGE
+#include "PioneerQ38Bf16ProfileBuildRole.h"
+#else
 #if PIONEER_Q38_TOKEN_FRONTIER_IMAGE != 1 \
  || !defined(__riscv) || __riscv != 1 \
  || !defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE) || PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE != 1 \
@@ -16,6 +19,7 @@
  || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_GLOBAL_WORKER_IMAGE) \
  || defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) || defined(__FAST_MATH__)
 #error Frontier BUILD is not kernel,native,CPU,worker,returning component or Work
+#endif
 #endif
 #endif
 #ifndef PIONEER_Q38_TOKEN_FRONTIER_IMAGE_BINDING_H

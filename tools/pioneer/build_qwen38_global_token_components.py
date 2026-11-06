@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=17 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--bf16-fpu'}
+assert 3<=len(sys.argv)<=18 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--bf16-fpu','--bf16-profile'}
 inspect='--inspect-candidate' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or f32,'separate dense-unroll candidate requires explicit FP32-hidden components'
 assert not boundary or (f32 and unroll),'boundary candidate requires explicit FP32-hidden and unrolled components'
@@ -25,6 +25,8 @@ pushed='--pushed-completion' in options
 assert not pushed or worker_admission,'QGW3 receiver requires the entire explicit returning worker-admission profile'
 bf16='--bf16-fpu' in options
 assert not bf16 or (inspect and precise and worker_admission and not pushed),'QGW4 requires its separate inspect/precise/admission profile,not QGW3 receipts'
+bf16_profile='--bf16-profile' in options
+assert not bf16_profile or bf16,'BF16 timing requires the explicit BF16 inspect profile'
 packet_unroll='--unroll-packet-seals' in options
 assert not packet_unroll or (pushed and inspect),'unfrozen packet-seal BUILD requires explicit QGW3 and inspect-candidate;not a pinned image'
 packet_eight='--unroll-packet-seals-eight' in options
@@ -44,6 +46,7 @@ flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exc
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
+ *(['-DPIONEER_Q38_BF16_PROFILE_IMAGE=1'] if bf16_profile else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1'] if bf16 else []),
  *(['-DPIONEER_Q38_JOB_BOOT_FOLD_IMAGE=1'] if fold_job_boot else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL=1'] if packet_unroll else []),
@@ -60,6 +63,7 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_
  '-DPIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL=1',
  '-DPIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT=1','-c',here/'blackhole_qwen38_return_recurrent_layer.cpp','-o',out/'recurrent.o')
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
+ *(['-DPIONEER_Q38_BF16_PROFILE_IMAGE=1'] if bf16_profile else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1'] if bf16 else []),
  *(['-DPIONEER_Q38_JOB_BOOT_FOLD_IMAGE=1'] if fold_job_boot else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT=1'] if single_audit else []),
@@ -82,7 +86,8 @@ relocations=subprocess.check_output([tool+'objdump','-r',str(raw)],text=True)
 for name in dead:assert not re.search(r'\b'+name+r'\b',relocations),name
 run(tool+'objcopy',*['--strip-symbol='+name for name in dead],raw,capsule)
 symbols=subprocess.check_output([tool+'nm','-C',str(capsule)],text=True)
-assert subprocess.check_output([tool+'nm','-u',str(capsule)],text=True).split()==['U','scalar_fault_park']
+undefined=subprocess.check_output([tool+'nm','-u',str(capsule)],text=True)
+assert set(undefined.split())==({'U','scalar_fault_park','q38_bf16_profile_enter','q38_token_phase_mark'} if bf16_profile else {'U','scalar_fault_park'}),undefined
 for name in ('q38_return_recurrent_layer','q38_return_dense_layer','q38_global_chain_learned_rms','q38_global_chain_quantize14'):
  assert re.search(r' T '+name+r'$',symbols,re.M),name
 assert 'DensePartitionRoot::AdmitGlobalOutput(' in symbols,'the REAL returning admission path must retain the new code'

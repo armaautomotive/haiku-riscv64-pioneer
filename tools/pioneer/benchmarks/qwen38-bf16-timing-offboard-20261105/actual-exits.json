@@ -1,0 +1,10 @@
+{
+  "main_final_root_build": 0,
+  "main_observer_tests": 0,
+  "main_exact_elf_stack": 0,
+  "main_unchanged_bf16_build": 0,
+  "clean_root_build": 0,
+  "clean_final_observer_and_stack": 0,
+  "legacy_phase_and_private_frontier_roles": 0,
+  "old_bf16_generator_expected_refusal": 1
+}

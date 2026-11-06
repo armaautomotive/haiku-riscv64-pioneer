@@ -3,14 +3,24 @@
 // This is direct helper execution ONLY, not full ROOT/model qualification.
 #define PIONEER_TENSIX_MACHINE_ONLY
 #include "pioneer_tensix_image_test.cpp"
+#ifdef PIONEER_Q38_BF16_PROFILE_HELPER_TEST
+#include "../PioneerQ38Bf16ProfileData.h"
+#else
 #include "../PioneerQ38TokenPhaseProfileData.h"
+#endif
 #include <array>
 #include <map>
 #include <memory>
 #include <string>
+#ifdef PIONEER_Q38_BF16_PROFILE_HELPER_TEST
+namespace Q=PioneerQ38Bf16ProfileData;
+static constexpr unsigned MatrixSamples=5*496;
+#else
 namespace Q=PioneerQ38TokenPhaseProfileData;
+static constexpr unsigned MatrixSamples=0;
+#endif
 struct PhaseMachine:Machine {
- std::vector<uint8_t> text,conv;
+ std::vector<uint8_t> text,conv,bf16;
  std::map<std::string,unsigned> symbols;
  std::map<uint32_t,uint32_t> memory;
  std::vector<std::pair<unsigned,uint32_t>> clocks;
@@ -20,15 +30,20 @@ struct PhaseMachine:Machine {
  static constexpr unsigned Return=0x17ff80;
  PhaseMachine(const char* path){
   text=Read((std::string(path)+"/text.bin").c_str());conv=Read((std::string(path)+"/conv.bin").c_str());
+#ifdef PIONEER_Q38_BF16_PROFILE_HELPER_TEST
+  bf16=Read((std::string(path)+"/bf16.bin").c_str());assert(!bf16.empty() && bf16.size()<=0x10000);
+#endif
   assert(text.size()<=0x20000 && conv.size()<=0x8000);
   std::ifstream file(std::string(path)+"/program.symbols");assert(file.good());std::string line;
   while(std::getline(file,line)){unsigned at=0;char type=0,name[256]={};if(sscanf(line.c_str(),"%x %c %255s",&at,&type,name)==3)symbols[name]=at;}
   for(unsigned i=0;i<64;i++)memory[0x75700+i*4]=i<4?0xa55a0000+i:0;
  }
  static bool Range(unsigned at,unsigned first,unsigned size){return at>=first && at-first<size;}
- bool CodeAddress(uint32_t at)const override{return Range(at,0x40000,unsigned(text.size())) || Range(at,0x64000,unsigned(conv.size()));}
+ bool CodeAddress(uint32_t at)const override{return Range(at,0x40000,unsigned(text.size())) || Range(at,0x64000,unsigned(conv.size())) || Range(at,0x20000,unsigned(bf16.size()));}
  unsigned Index(uint32_t at)override{
-  assert(!(at&3) && CodeAddress(at));l1[8189]=Range(at,0x40000,unsigned(text.size()))?Word(text,at-0x40000):Word(conv,at-0x64000);return 8189;
+  assert(!(at&3) && CodeAddress(at));
+  l1[8189]=Range(at,0x40000,unsigned(text.size()))?Word(text,at-0x40000):
+   Range(at,0x64000,unsigned(conv.size()))?Word(conv,at-0x64000):Word(bf16,at-0x20000);return 8189;
  }
  uint32_t Load(uint32_t at)override{
   assert(!(at&3) && (Range(at,Q::Address,Q::Words*4) || Range(at,0x6e000,8192)));
@@ -49,7 +64,7 @@ struct PhaseMachine:Machine {
   if(unstable && csr==0xb80 && clocks.size()%3==2)value++;
   clocks.emplace_back(csr,value);return value;
  }
- unsigned StepLimit()const override{return 10000000;}
+ unsigned StepLimit()const override{return MatrixSamples?100000000:10000000;}
  void Call(const char* name,unsigned argument=0){
   assert(symbols.count(name));pc=symbols.at(name);regs[1]=Return;regs[2]=0x70000;regs[10]=argument;
   for(unsigned r=8;r<10;r++)regs[r]=0xcaf00000+r;
@@ -67,7 +82,16 @@ struct PhaseMachine:Machine {
  void Full(unsigned tokens){
   Call("q38_token_phase_begin");
   for(unsigned token=0;token<tokens;token++){
-   for(unsigned layer=0;layer<64;layer++){Call("q38_token_phase_mark",Q::Metadata);Call("q38_token_phase_mark",layer%4==3?Q::Dense:Q::Recurrent);}
+   for(unsigned layer=0;layer<64;layer++){
+    Call("q38_token_phase_mark",Q::Metadata);Call("q38_token_phase_mark",layer%4==3?Q::Dense:Q::Recurrent);
+#ifdef PIONEER_Q38_BF16_PROFILE_HELPER_TEST
+    for(unsigned job=0;job<(layer%4==3?7U:8U);job++){
+     Call("q38_bf16_profile_enter",Q::MatrixPrepare);
+     const unsigned previous=regs[10];assert(previous==unsigned(layer%4==3?Q::Dense:Q::Recurrent));
+     for(unsigned phase:std::array<unsigned,4>{Q::MatrixDispatch,Q::MatrixGatherWait,Q::MatrixFinish,previous})Call("q38_token_phase_mark",phase);
+    }
+#endif
+   }
    for(unsigned phase:{Q::HeadNormalize,Q::HeadMatrix,Q::Feedback,Q::StateCommit,Q::Publication})Call("q38_token_phase_mark",phase);
   }
   Call("q38_token_phase_mark",Q::FinalStop);Call("q38_token_phase_complete",tokens);
@@ -79,11 +103,19 @@ struct PhaseMachine:Machine {
    assert(clocks[i].first==0xb80 && clocks[i+1].first==0xb00 && clocks[i+2].first==0xb80);
    if(clocks[i].second==clocks[i+2].second)samples.push_back((uint64_t(clocks[i].second)<<32)|clocks[i+1].second);
   }
-  assert(samples.size()==133*tokens+3);
+  assert(samples.size()==(133+MatrixSamples)*tokens+3);
   std::array<uint64_t,Q::Phases> expected={};unsigned sample=1,current=Q::Bootstrap;
   auto mark=[&](unsigned next){assert(sample<samples.size());expected[current]+=samples[sample]-samples[sample-1];sample++;current=next;};
   for(unsigned token=0;token<tokens;token++){
-   for(unsigned layer=0;layer<64;layer++){mark(Q::Metadata);mark(layer%4==3?Q::Dense:Q::Recurrent);}
+   for(unsigned layer=0;layer<64;layer++){
+    mark(Q::Metadata);mark(layer%4==3?Q::Dense:Q::Recurrent);
+#ifdef PIONEER_Q38_BF16_PROFILE_HELPER_TEST
+    for(unsigned job=0;job<(layer%4==3?7U:8U);job++){
+     for(unsigned phase:{Q::MatrixPrepare,Q::MatrixDispatch,Q::MatrixGatherWait,Q::MatrixFinish,
+       layer%4==3?Q::Dense:Q::Recurrent})mark(phase);
+    }
+#endif
+   }
    for(unsigned phase:{Q::HeadNormalize,Q::HeadMatrix,Q::Feedback,Q::StateCommit,Q::Publication})mark(phase);
   }
   mark(Q::FinalStop);mark(Q::Phases);assert(sample==samples.size());
@@ -112,7 +144,10 @@ int main(int argc,char** argv){
   const auto before=m->Record();assert(before[Q::State]==Q::Invalid && !Q::Closed(before.data()));
   unsigned reads=unsigned(m->clocks.size()),writes=m->writes;
   m->Call("q38_token_phase_mark",Q::FinalStop);m->Call("q38_token_phase_complete",34);
+#ifdef PIONEER_Q38_BF16_PROFILE_HELPER_TEST
+  m->Call("q38_bf16_profile_enter",Q::MatrixPrepare);assert(m->regs[10]==Q::Phases);
+#endif
   assert(before==m->Record() && reads==m->clocks.size() && writes==m->writes);cases++;
  }
- printf("PASS ACTUAL linked phase-helper RV32:%uhistories/1+2+34 positions/rawCSR stream exact per10buckets/rollover/64-bit sums/9faults sticky metric invalid/no later CSR or metric writes/ABI and first4progress untouched/NO MMIO or coprocessor IO;DIRECT_HELPERS_ONLY,fabricated clocks,NOT full ROOT,native,physical frequency or speed\n",cases);
+ printf("PASS ACTUAL linked phase-helper RV32:%uhistories/1+2+34 positions/rawCSR stream exact per%ubuckets/rollover/64-bit sums/9faults sticky metric invalid/no later CSR or metric writes/ABI and first4progress untouched/NO MMIO or coprocessor IO;DIRECT_HELPERS_ONLY,fabricated clocks,NOT full ROOT,native,physical frequency or speed\n",cases,unsigned(Q::Phases));
 }

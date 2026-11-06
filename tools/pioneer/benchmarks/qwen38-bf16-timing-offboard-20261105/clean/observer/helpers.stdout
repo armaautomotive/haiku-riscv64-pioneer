@@ -1,0 +1,1 @@
+PASS ACTUAL linked phase-helper RV32:21histories/1+2+34 positions/rawCSR stream exact per14buckets/rollover/64-bit sums/9faults sticky metric invalid/no later CSR or metric writes/ABI and first4progress untouched/NO MMIO or coprocessor IO;DIRECT_HELPERS_ONLY,fabricated clocks,NOT full ROOT,native,physical frequency or speed

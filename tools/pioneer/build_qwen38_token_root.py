@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=19 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--token-frontier','--bf16-fpu'}
+assert 3<=len(sys.argv)<=20 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--token-frontier','--bf16-fpu','--bf16-profile'}
 inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or (cancel and f32),'dense-unroll candidate requires explicit cancel+FP32 profile'
 assert not boundary or (cancel and f32 and unroll),'boundary candidate requires explicit cancel+FP32+unrolled profile'
@@ -25,6 +25,8 @@ pushed='--pushed-completion' in options
 assert not pushed or worker_admission,'QGW3 receiver requires the entire explicit worker-admission/cancel/FP32 profile'
 bf16='--bf16-fpu' in options
 assert not bf16 or (inspect and precise and worker_admission and not pushed),'QGW4 requires separate inspect/precise/admission and no old pushed receipts'
+bf16_profile='--bf16-profile' in options
+assert not bf16_profile or (bf16 and cancel and f32),'BF16 timing requires explicit BF16/cancel/FP32 inspect parents'
 packet_unroll='--unroll-packet-seals' in options
 assert not packet_unroll or (pushed and inspect),'unfrozen packet-seal BUILD requires explicit QGW3 and inspect-candidate;not a pinned image'
 packet_eight='--unroll-packet-seals-eight' in options
@@ -33,6 +35,7 @@ fold_job_boot='--fold-job-boot' in options
 assert not fold_job_boot or (packet_eight and inspect),'job boot fold BUILD requires the explicit eight-way QGW3 inspect profile;NO native/Work permission'
 frontier='--token-frontier' in options
 assert not frontier or (fold_job_boot and inspect),'token frontier BUILD requires the complete job-fold ROOT profile;NO native/readout/Work permission'
+frontier=frontier or bf16_profile
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 sdk,out=map(pathlib.Path,sys.argv[1:3]);here=pathlib.Path(__file__).resolve().parent
 assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -42,11 +45,12 @@ def run(*args):subprocess.run([str(a) for a in args],check=True)
 # Reproduce the strict returning components and unchanged whole feedback
 # image FIRST. Neither an old native owner nor a component alone can launch.
 components=out/'qualified-components'
-run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []),*(['--pushed-completion'] if pushed else []),*(['--unroll-packet-seals'] if packet_unroll else []),*(['--unroll-packet-seals-eight'] if packet_eight else []),*(['--fold-job-boot'] if fold_job_boot else []),*(['--bf16-fpu'] if bf16 else []))
+run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []),*(['--pushed-completion'] if pushed else []),*(['--unroll-packet-seals'] if packet_unroll else []),*(['--unroll-packet-seals-eight'] if packet_eight else []),*(['--fold-job-boot'] if fold_job_boot else []),*(['--bf16-fpu'] if bf16 else []),*(['--bf16-profile'] if bf16_profile else []))
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1',
+ *(['-DPIONEER_Q38_BF16_PROFILE_IMAGE=1','-DPIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE=1'] if bf16_profile else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1'] if bf16 else []),
  *(['-DPIONEER_Q38_FULL_OFFLOAD_ROOT_IMAGE=1'] if bf16 else []),
  *(['-DPIONEER_Q38_TOKEN_FRONTIER_IMAGE=1'] if frontier else []),
@@ -55,6 +59,14 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_G
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION=1'] if pushed else []),
  *(['-DPIONEER_Q38_TOKEN_CANCEL_BOUNDARY=1'] if cancel else []),
  '-c',here/'blackhole_qwen38_token_root.cpp','-o',out/'program.o')
+profile_objects=[]
+if bf16_profile:
+ profile_objects=[out/'bf16-profile.o']
+ run(tool+'g++',*flags,'-DPIONEER_Q38_BF16_PROFILE_IMAGE=1','-DPIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE=1',
+  '-DPIONEER_Q38_TOKEN_FRONTIER_IMAGE=1','-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1',
+  '-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1','-DPIONEER_Q38_TOKEN_CANCEL_BOUNDARY=1',
+  '-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1','-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1',
+  '-c',here/'blackhole_q38_bf16_profile.cpp','-o',profile_objects[0])
 run(tool+'as','-march=rv32imf','-mabi=ilp32','-mno-relax',here/'blackhole_qwen38_global_chain_start.S','-o',out/'start.o')
 link=here/'blackhole_qwen38_global_chain.ld'
 if bf16:
@@ -62,7 +74,7 @@ if bf16:
  text=text.replace('SECTIONS {','SECTIONS {\n .bf16 0x20000 : { *(.bf16*) . = ALIGN(4); }\n ASSERT(SIZEOF(.bf16)>0 && SIZEOF(.bf16)<=0x10000,"NEW BF16 coordinator code extent,not old native ownership")')
  link=out/'program.ld';link.write_text(text)
 run(tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',link,
- out/'start.o',out/'program.o',components/'token-components-NOBOOT.o',components/'unchanged-feedback/feedback.o',
+ out/'start.o',out/'program.o',*profile_objects,components/'token-components-NOBOOT.o',components/'unchanged-feedback/feedback.o',
  '-Map',out/'program.map','-o',out/'program.elf')
 for section in ('boot','text','terminal','conv',*(['bf16'] if bf16 else [])):run(tool+'objcopy','-O','binary','-j','.'+section,out/'program.elf',out/(section+'.bin'))
 symbols=subprocess.check_output([tool+'nm','-nC',str(out/'program.elf')],text=True)
@@ -89,7 +101,7 @@ for name in ('q38_layer_chain_main','q38_run_final_dense_and_stop','mixed_recurr
 dis=subprocess.check_output([tool+'objdump','-d',str(out/'program.elf')],text=True)
 # The linker intentionally puts read-only constants in .text too. Decode
 # ONLY literal-ELF function intervals, not data bytes masquerading as opcodes.
-intervals=[(0x6000,0x6004),(0x40000,0x40010),(0x60000,0x60008)]
+intervals=[(0x6000,0x6004),(0x40000,0x40010),(0x60000,0x60008)];clock_intervals=[]
 for line in subprocess.check_output([tool+'objdump','-t',str(out/'program.elf')],text=True).splitlines():
  p=line.split()
  if len(p)==6 and p[2]=='F':
@@ -98,20 +110,28 @@ for line in subprocess.check_output([tool+'objdump','-t',str(out/'program.elf')]
    assert not (start|size)&3
    assert (0x40000<=start and start+size<=0x60000) or (0x64000<=start and start+size<=0x6c000) or (bf16 and 0x20000<=start and start+size<=0x30000)
    intervals.append((start,start+size))
-instructions=[]
+   if p[5]=='q38_token_phase_clock':clock_intervals.append((start,start+size))
+assert len(clock_intervals)==int(bf16_profile),'only the separate BF16 timing image has a clock sampler'
+instructions=[];clock_reads=[]
 for line in dis.splitlines():
  m=re.match(r'\s*[0-9a-f]+:\s+([0-9a-f]{8})\s',line)
  if not m:continue
  address=int(line.split(':',1)[0].strip(),16)
  if not any(begin<=address and address+4<=end for begin,end in intervals):continue
  assert not address&3 and int(m[1],16)&3==3,'RV32IMF functions contain only 32-bit instructions'
- assert int(m[1],16)&127!=0x73,'no controller CSR'
+ word=int(m[1],16)
+ if word&127==0x73:
+  assert bf16_profile and any(begin<=address<end for begin,end in clock_intervals),'no CSR outside the separate sampler'
+  assert (word>>12)&7==2 and not ((word>>15)&31) and (word>>7)&31,'only read-only CSRRS with rs1=x0 and a result register'
+  clock_reads.append(word>>20)
  assert not (int(m[1],16)&127==0x67 and not ((int(m[1],16)>>15)&31)), 'absolute JALR through x0 cannot reach owned ROOT ROM'
  instructions.append(line)
+assert clock_reads==([0xb80,0xb00,0xb80] if bf16_profile else []),'exact bounded mcycleh/mcycle/mcycleh read sequence only'
 code='\n'.join(instructions)
 assert not re.search(r'\b(?:divu?|remu?|mulh[su]*|fdiv\.[sd]|fsqrt\.[sd]|fmadd|fmsub|fnmadd|fnmsub|fcvt\.wu?\.s|ebreak)\b',code)
 assert len([s for s in instructions if re.search(r'\bmv\s+s11,\w+\s*$',s)])==5,'one parent + two existing bind/restore pairs'
 frames=[int(line.split('\t')[1]) for line in (out/'program.su').read_text().splitlines()]
+if bf16_profile:frames += [int(line.split('\t')[1]) for line in (out/'bf16-profile.su').read_text().splitlines()]
 assert frames and max(frames)<=2048,max(frames)
 sections=subprocess.check_output([tool+'objdump','-h',str(out/'program.elf')],text=True).splitlines()
 for i,row in enumerate(sections):
