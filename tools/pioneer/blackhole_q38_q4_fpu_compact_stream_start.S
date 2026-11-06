@@ -1,6 +1,14 @@
 /* SPDX-License-Identifier: MIT */
 .option norvc
 .option norelax
+.ifdef PIONEER_Q38_Q4_PAIR_ISSUE_IMAGE
+ .if PIONEER_Q38_Q4_PAIR_ISSUE_IMAGE != 1
+  .error "Exact paired issue BUILD only"
+ .endif
+ .ifndef PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE
+  .error "Paired issue requires timing BUILD"
+ .endif
+.endif
 .section .boot,"ax"
 .global _start
 _start: j q4_fpu_compact_stream_entry
@@ -14,10 +22,14 @@ q4_fpu_compact_stream_done:
  sw a0,4(t0)
  la t1,q4_fpu_compact_stream_done
  sw t1,0(t0)
+.ifdef PIONEER_Q38_Q4_PAIR_ISSUE_IMAGE
+ li t1,0x31504351 /* QCP1:paired issue,NOT107 */
+.else
 .ifdef PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE
  li t1,0x31544351 /* QCT1:distinct timed diagnostic,NOT104 */
 .else
  li t1,0x31534351 /* QCS1:NOT old85 or old84 */
+.endif
 .endif
  sw t1,8(t0)
  lw t1,8(t0)
@@ -26,10 +38,14 @@ q4_fpu_compact_stream_park: j q4_fpu_compact_stream_park
  j q4_fpu_compact_stream_park
 q4_fpu_compact_stream_fault:
  li t0,0x17ffc8
+.ifdef PIONEER_Q38_Q4_PAIR_ISSUE_IMAGE
+ li t1,0x45504351 /* QCPE:unknown,never cleanup authority */
+.else
 .ifdef PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE
  li t1,0x45544351 /* QCTE:unknown,never cleanup authority */
 .else
  li t1,0x45534351 /* QCSE:unknown,never cleanup authority */
+.endif
 .endif
  sw t1,0(t0)
  fence

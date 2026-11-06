@@ -11,9 +11,9 @@ struct CompactStreamRV32:Machine {
 	CompactStreamPipeline native;StreamIO bus;std::vector<uint8_t> code;
 	unsigned width,minSP=0x70000,minStore=0x70000,stores=0,acks=0,dropAckAt=0,portWrites=0,directIssues=0;
 	bool awaiting=false,stackSeen=false;unsigned dropConfig=~0U;
-	CompactStreamRV32(const char* folder,unsigned k,bool timing=false):bus(k,17|(12<<6),&native.l1),width(k) {
+	CompactStreamRV32(const char* folder,unsigned k,bool timing=false,bool pairIssue=false):bus(k,17|(12<<6),&native.l1),width(k) {
 		std::string path=folder;code=Read((path+"/text.bin").c_str());auto boot=Read((path+"/boot.bin").c_str());
-		assert(boot.size()==4 && code.size()==(timing?7972U:7644U));native.blocks=k/256;native.bus=&bus;native.delay[0]=100003;native.delay[1]=7;
+		assert((!pairIssue || timing) && boot.size()==4 && code.size()==(pairIssue?7820U:timing?7972U:7644U));native.blocks=k/256;native.bus=&bus;native.delay[0]=100003;native.delay[1]=7;
 		std::fill(native.l1.begin(),native.l1.end(),0xa7);std::fill(std::begin(l1),std::end(l1),0xdeadbeef);
 		WriteL1(0x6000,::Word(boot,0));for(unsigned i=0;i<code.size();i+=4)WriteL1(0x70000+i,::Word(code,i));
 		unsigned frame[8]={0x31534351,1,k,bus.route,1,0,0,0};for(unsigned i=0;i<8;i++)WriteL1(SL::Frame+i*4,frame[i]);

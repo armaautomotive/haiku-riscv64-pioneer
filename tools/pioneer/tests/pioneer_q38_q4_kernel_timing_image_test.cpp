@@ -9,9 +9,9 @@
 struct Q4TimingRV32:CompactStreamRV32 {
  using T=PioneerQ38Q4KernelTiming;
  enum Clock {Monotonic,Unstable,Backward,Zero};
- Clock clock=Monotonic;unsigned clockReads=0,timerStores=0;
+ Clock clock=Monotonic;unsigned clockReads=0,timerStores=0;bool pairIssue;
  std::vector<unsigned> csrPc;
- Q4TimingRV32(const char* directory,unsigned k):CompactStreamRV32(directory,k,true){
+ Q4TimingRV32(const char* directory,unsigned k,bool paired=false):CompactStreamRV32(directory,k,true,paired),pairIssue(paired){
   for(unsigned i=0;i<code.size();i+=4){
    const unsigned word=::Word(code,i);
    if((word&0x7f)==0x73){
@@ -23,7 +23,7 @@ struct Q4TimingRV32:CompactStreamRV32 {
   assert((::Word(code,csrPc[0]-0x70000)>>20)==0xb80
    && (::Word(code,csrPc[1]-0x70000)>>20)==0xb00
    && (::Word(code,csrPc[2]-0x70000)>>20)==0xb80);
-  WriteL1(SL::Frame,0x31544351); // Actual timed wire frame,not a ready flag.
+  WriteL1(SL::Frame,pairIssue?0x31504351:0x31544351); // Actual distinct wire frame,not a ready flag.
  }
  unsigned Index(unsigned a)override{
   if(Range(a,T::Address,T::Words*4)){assert(!(a&3));return 4172+(a-T::Address)/4;}
@@ -59,8 +59,8 @@ struct Q4TimingRV32:CompactStreamRV32 {
    if(stackSeen){assert(regs[2]>=0x6e000 && regs[2]<=0x70000 && !(regs[2]&15));minSP=std::min(minSP,regs[2]);}
   }
   assert(l1[Index(pc)]==0x0000006f && minStore>=0x6e000);
-  if(pc==0x70058){assert(ReadL1(0x17ffc8)==0x45544351);return false;}
-  assert(ReadL1(0x17ffc0)==0x7000c && ReadL1(0x17ffc4)==(0x04000000|width) && ReadL1(0x17ffc8)==0x31544351);
+  if(pc==0x70058){assert(ReadL1(0x17ffc8)==(pairIssue?0x45504351U:0x45544351U));return false;}
+  assert(ReadL1(0x17ffc0)==0x7000c && ReadL1(0x17ffc4)==(0x04000000|width) && ReadL1(0x17ffc8)==(pairIssue?0x31504351U:0x31544351U));
   assert(native.Clean() && stores==64 && native.outputReads==64 && timerStores==16
    && native.zeroLoads==10 && native.extraZeroLoads==14 && native.compactImports==4*(width/256)
    && !native.metadataLoads && native.matrixOps==2*(width/256)*128

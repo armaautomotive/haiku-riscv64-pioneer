@@ -1,0 +1,70 @@
+Q4 paired issue -- fewer RV32 instructions,NOT a measured card speedup
+====================================================================
+2026-11-06. One bounded optimization after physical timing107. OFFBOARD ONLY.
+No driver installed,no card opened,no model inference/power/Assistant change.
+20tokens/sec remains unmet. Latest full-model rate remains0.07846tok/s.
+
+Change and reason
+-----------------
+Pair adjacent four-row Q4 chunks,amortizing RV32 address/loop construction.
+The main image also uses -fomit-frame-pointer. The separate clock object is
+byte unchanged. Inline the ORIGINAL ten-word nibble arithmetic so -Os cannot
+replace each six-word rounding body with a call. No precision/format/order,
+latency slot,config,drain,NoC packet,buffer or ownership rule is removed.
+New BUILD-only selector PIONEER_Q38_Q4_PAIR_ISSUE_IMAGE=1 and distinct
+QCP1/QCPE frame/terminal markers. NO native owner accepts this image yet.
+
+Observed in the strict actual-linked-RV32 machine (NOT hardware timing)
+-----------------------------------------------------------------------
+Two32-output jobs per width,same canonical L1/NoC/FPU arithmetic machine:
+ K5120:  old887866 -> paired840475 RV32 steps (5.3376% fewer).
+ K17408: old2744058 -> paired2603259 RV32 steps (5.1311% fewer).
+Entire expanded Tensix instruction streams are BYTE EQUAL:194668/661228
+words respectively. MMIO instruction writes remain36294/123078. Stack high
+water464 ->432 bytes. These counts are NOT retired-cycle/utilization/TPS
+measurements. In particular,the9.750billion Q4Op/token budget is unchanged.
+This issue-overhead optimization alone does not remove that nominal limit.
+
+Main AND independent clean qualification ACTUALLY EXIT0
+------------------------------------------------------
+Main24183 and clean55931 actual parent exits0. Each14 actual child commands
+exit0 with empty stderr. Clean Git base d9f11f807a plus ONLY11 scoped source
+overlays;all67 source hashes equal. All26 inspected GPU/control/clock
+artifacts and all14 child stdout files match byte-for-byte between trees.
+Candidate text7820B remains under ORIGINAL8192B ROM,152B below old timing
+image. Existing104 and107 text/ELF/boot pins reproduce unchanged. Clock
+object unchanged;only the original3 read-only cycle CSRRS are present.
+
+All576 original-weight outputs across9 bands/18 jobs equal the independent
+original-decode/BF16-RNE/four-phase reference,after full SAME-open original
+GGUF SHA authentication. No learned bytes or predictions archived here.
+Both widths also pass26 loader/frame/config/ack refusals,4 intentionally
+wrong matrix-phase cases and3 unavailable-clock modes. Faults park with no
+later IO. All16 group/buffer traces plus initialization/metadata equal old
+Op/config/drain streams;invalid selectors have zero effects.28 BUILD/role
+refusals pass. Old timed-image clocks/fault tests still pass unchanged.
+
+Rejected attempts (not installed)
+---------------------------------
+First paired source exceeded8KiB by124B;the bound was NOT enlarged. Then
+-Os outlined rounding:K5120 rose887866 ->896475 steps despite exact outputs.
+That version was rejected. Explicit inlining produced the final candidate.
+One assembly attempt used unsupported .elseifdef;fixed to nested .ifdef.
+No hardware trial was consumed by these offline attempts.
+
+Next acceptance gate
+---------------------
+Bind this exact candidate to a FRESH native diagnostic identity,qualify the
+existing lease/END/restore path,and measure the same two bands on the card
+against the saved107 cycle records. NEVER rerun/repin spent107-a. Then use
+a full-model matched benchmark before claiming/promoting an inference gain.
+Do not repeat baseline/memory infrastructure or claim the5% step reduction
+as5% hardware/model acceleration. Work remains free of CPU reference math.
+
+Reproduce from project root (NEW output directory required)
+----------------------------------------------------------
+python3 tools/pioneer/tests/run_pioneer_q38_q4_pair_issue_tests.py \
+ /Volumes/HaikuBuildLocal/generated.riscv64 \
+ /Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf \
+ /private/tmp/pioneer-q4-pair-NEW
+Saved records:benchmarks/qwen38-q4-pair-issue-offboard-20261106/.

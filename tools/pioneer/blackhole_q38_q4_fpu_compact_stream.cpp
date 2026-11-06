@@ -15,6 +15,12 @@
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQ38Q4FpuCompactStreamLoader.h"
 #include "PioneerQ38Q4FpuCompactStreamCompute.h"
+#ifdef PIONEER_Q38_Q4_PAIR_ISSUE_IMAGE
+#if PIONEER_Q38_Q4_PAIR_ISSUE_IMAGE != 1 || !defined(PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE) || PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE != 1
+#error Paired Q4 issue requires its explicit timed BUILD
+#endif
+#include "PioneerQ38Q4FpuPairIssueCompute.h"
+#endif
 #ifdef PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE
 #if PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE != 1
 #error Exact Q4 timing BUILD selection required
@@ -34,7 +40,12 @@ extern "C" __attribute__((noinline)) void* memset(void* destination,int value,un
 	return destination;
 }
 namespace {
-using L=PioneerQ38Q4FpuCompactStreamLayout;using C=PioneerQ38Q4FpuCompactStreamCompute;
+using L=PioneerQ38Q4FpuCompactStreamLayout;
+#ifdef PIONEER_Q38_Q4_PAIR_ISSUE_IMAGE
+using C=PioneerQ38Q4FpuPairIssueCompute;
+#else
+using C=PioneerQ38Q4FpuCompactStreamCompute;
+#endif
 static inline volatile unsigned* Words(unsigned a){return reinterpret_cast<volatile unsigned*>(a);}
 struct IO {
 	unsigned Read(unsigned a){return *Words(a);}
@@ -59,7 +70,11 @@ extern "C" unsigned q4_fpu_compact_stream_main() {
 	unsigned frame[8];for(unsigned i=0;i<8;i++)frame[i]=Words(L::Frame)[i];
 	if(frame[0]!=
 #ifdef PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE
+#ifdef PIONEER_Q38_Q4_PAIR_ISSUE_IMAGE
+		0x31504351
+#else
 		0x31544351
+#endif
 #else
 		0x31534351
 #endif
