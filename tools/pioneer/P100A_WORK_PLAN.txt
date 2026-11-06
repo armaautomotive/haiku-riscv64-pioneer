@@ -12,7 +12,7 @@ Baseline already established
 -----------------------------
 Full-card 27B inference exists, including attention/state, but only a short
 counting answer is qualified. Best: 0.173 tok/s. Latest: 0.082 tok/s.
-Current normal041/gen4 is an idle rollback, NOT best experimental tag92.
+Current normal041/gen6 is an idle rollback, NOT best experimental tag92.
 P100A_CURRENT_STATUS.txt is the short scoreboard. Detailed evidence stays
 in benchmarks/. Source/documentation consolidation is already complete;
 do not reopen it as another performance prerequisite or delete old work.
@@ -24,8 +24,9 @@ accumulation, real completion and resource restoration for real 27B widths.
 Separate predefined diagnostic references from Work; never relax a failing
 comparison or substitute a CPU answer.
 Native111/112 failed; the trace found bad packing before the matrix dot.
-The pack-boundary correction now PASSES physical113-b at 5,120/17,408 inputs
-and 32 outputs: 128 exact old/new words, two clean ENDs, independent restoration.
+The pack-boundary correction PASSES physical113-b and114-a at 5,120/17,408
+inputs and 32 outputs: 128 exact old/new words/two ENDs in each trial,
+with independent restoration.
 This closes correctness for those two fixed cases, not arbitrary-input
 coverage, new-order whole-model quality or a released Work engine.
 Evidence: benchmarks/qwen38-manual-last-q4-physical-20261106.txt.
@@ -41,11 +42,19 @@ Next candidate implemented: fixed configuration is initialized once per job;
 the immediately paired matrix reuses its setup. Local main/clean checks pass,
 with 664->336 write/readback pairs per block plus 22 once/job. All arithmetic
 words/drains/results match the base producer; historical113 image unchanged.
-This is a source-count reduction, NOT a measured card speedup. Fresh native114
-bindings now pass main/clean local ownership/endpoint/source/client checks.
-Next: ONE physical old/new comparison, not another unchanged local suite.
+Native114 physical result is now CLOSED: exact128/two ENDs, independent
+restoration, but 8.17%/8.72% MORE cycles than old. REJECT speed promotion.
+Do not replay it or spend a full-model upload on this slower candidate.
 Evidence: benchmarks/qwen38-configured-q4-component-20261106.txt.
 Native binding evidence: benchmarks/qwen38-configured-q4-native-20261106.txt.
+Physical decision: benchmarks/qwen38-configured-q4-physical-20261106.txt.
+
+Next route: inspect/reuse the existing NativeQ4WeightCache/SM3+escape source
+and existing input-sum cache, then implement the missing direct execution
+piece. Retain the seven 3GiB source caps, original metadata, exact correction
+source and safe ownership. Do not recreate already completed preparation or
+assume a larger native format fits. No speed/quality claim until measured.
+Never feed these prepared bytes to the existing raw-format loader.
 
 Next bounded work:
   a. Attribute recurring cost using compiled code and, only if needed, a

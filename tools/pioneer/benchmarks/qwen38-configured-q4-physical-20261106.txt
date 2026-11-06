@@ -1,0 +1,83 @@
+Native114 physical comparison: CORRECT, STILL SLOWER
+====================================================
+November 6, 2026. Source 07470d4a7a0edf525571f4b3c64cc72c890f11a7 was
+pushed before staging. All four qualified files were read back byte-for-byte
+before the ONE 114-a launch, invoked through SSH sh -s/stdin.
+Stage /boot/home/pioneer-native-factored-q4-configured114-a is SPENT:
+never replay, repin or clear once markers.
+
+Closed result
+--------------
+Primary 98498 ACTUALLY exited 0. Launcher 1105 recorded parent 1110 exit 0;
+client 1194 exited 0. Independent postflight 30338 ACTUALLY exited 0.
+The old/new calculations returned all 128 predefined exact words, with
+matching complete DATA and post-END observations, and two explicit clean
+ENDs. Original full SHA/all 9 payloads/both fresh references authenticated
+before device open. Both stderr streams are empty.
+
+Only two fixed diagnostic cases were executed: 32 output rows at widths
+5120/17408, not arbitrary inputs or a natural-language model request.
+Each algorithm matches its OWN numerical contract; the new output-affine
+order is not claimed bit-equivalent to old BF16/GGML rounding.
+
+Real same-run cycle comparison
+-------------------------------
+Input width  Rows  Old BF16 cycles  Configured factored cycles  Extra cost
+5120         32    640612           692976                      +8.1741%
+17408        32    1996215          2170214                     +8.7164%
+
+ONE pair per shape, core (1,2), other 119 held; not repeatability evidence.
+All four state1 records have exact 64-bit end-start differences:
+  5120 old 1221..641833; new 642601..1335577.
+  17408 old 1220..1997435; new 1998218..4168432.
+Old/new cycle ratios: 0.924436055506 and 0.919824035786.
+
+Intervals include on-card load/setup/prefetch/NoC/math/drains. They exclude
+source authentication, CPU references, host staging/journal/readback,
+output extraction and host cleanup. GDDR-staged diagnostic operands are
+not the whole-model ROOT-L1 pipeline. No nominal-Hz conversion, new model
+tokens/sec, steady-state claim or 20 tok/s feasibility result follows.
+
+Decision
+---------
+REJECT speed promotion: this configuration-reuse candidate remains slower
+than the same-run old calculation in BOTH shapes. Retain the correctness
+and configuration-reuse code as tested components, not a Work release.
+The local 664->336 configuration-pair reduction did not produce a winning
+complete calculation. Historical113 was 31.39%/34.21% slower in its own
+pairs; 114 narrowed that overhead but did not remove it. Those separate
+runs do not establish a repeatable 113-to114 speedup or model improvement.
+Do not upload an unchanged whole model or integrate this candidate into
+Assistant merely because it passes arithmetic.
+
+Next bounded implementation route
+----------------------------------
+Use the EXISTING native Q4 prepared-weight cache/SM3+escape codec to
+investigate removing per-inference conversion, not another blind setup
+tweak or a duplicate cache implementation. The existing cache is a
+preparation/read-only upload format, NOT an inference-backend completion.
+Its original source plan uses seven 3GiB caps; a proposal is not physical
+ownership. Keep those bounds and validate correction fetch/expansion and
+the complete matrix/affine path before native use. Existing input-sum
+cache code/evidence must also be inspected before recreating that work.
+This route is still unproven; no implementation or speed claim here.
+
+Preservation and evidence
+--------------------------
+Normal041/tag2026102100010012/gen6 independently verified idle:
+quiesced0, cold0, owner0, open1, guard1. 64 CPUs and 137034936320B max RAM;
+exact unchanged three Assistant files, four runtime libraries, admin/guard.
+This is not a new Assistant UI test or repeated CPU/RAM stress test.
+No test/inference process remains. No restart, power, SD, mains or hardware
+change was needed. 041 is the rollback, NOT best whole-model tag92.
+
+All nine closed records were fetched and hashes matched the independent
+postflight. Complete parent/child streams, exits, state, PIDs, postflight
+and independently parsed cycle JSON are in the sibling archive.
+ child stdout SHA 03e912fefa55a7d68b2f09d3479874a3d42998f214e02722e612e4c2c34f2a25
+ parent stdout SHA fcb1c6fec13a96a14bdfedcf3259df115bd4e7a609f324bab7378510a78979a7
+Native/client/core/parent/wrapper pins remain in the prior local native
+qualification report; nothing in the spent stage was rewritten.
+
+Best real 27B remains 0.173 tok/s; latest 0.082 tok/s. No new model speed.
+Target 20 tok/s remains unmet and unproven. Overall goal remains active.
