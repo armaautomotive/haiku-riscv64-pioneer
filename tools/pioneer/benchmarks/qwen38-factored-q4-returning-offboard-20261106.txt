@@ -1,0 +1,115 @@
+Factored Q4 full-K arithmetic and returning routine: LOCAL result
+================================================================
+
+November 6, 2026. Source base 423ea414dcadda504fdabf59c82bbe290149506c.
+Checkpoint 2 advances, but remains INCOMPLETE until a physical comparison.
+No Pioneer connection, driver install, hardware execution or model run.
+
+Implemented since the packing-only checkpoint
+----------------------------------------------
+
+Original packed Q4 bytes -> integer native-code packing -> genuine FPU
+dot/input sum -> original HALF/6-bit scale/minimum vector metadata ->
+separate FP32 output affine -> accumulated output across full K.
+
+PioneerQ38Q4FactoredCompute.h connects the complete arithmetic. Begin runs
+once per job; original metadata is imported once per K256 block. The old
+full-Dst clear now occurs only at Begin. Each matrix pass invalidates just
+logical FP32 rows32..47, preserving metadata128..255 and accumulator80/88.
+An explicit first-eight-lane predicate reads only defined broadcast output
+rows, not undefined padding. A real ones-matrix sum stays in SFPU r1
+through the code-dot matrix: NO scalar input-sum read or host product.
+
+blackhole_q38_factored_q4_matrix.cpp is a new returning BUILD component.
+It uses the existing original compressed 16-row cache and canonical
+two-buffer/26-packet loader, actual completion/visibility fences, prefetch
+and full-K loop. Accumulator outputs are read only after loader completion.
+It has distinct entry/completion/fault symbols and strict source roles.
+No expanded global weight model, CPU inference/reference/fallback or
+Assistant/Work selection is introduced.
+
+This is NOT yet native driver authorization. A new lease must cover its
+code, computational constants at L1 0x88000/0x88800, zero buffer, temporary
+PACK tile, metadata, accumulator and full-Dst initialization, and preserve
+source/config/FPU/NoC lifetimes. Existing cached-worker ownership is not
+silently treated as sufficient.
+
+Actually completed local tests
+--------------------------------
+
+Working-tree runner11528 and clean-export runner11900 ACTUALLY exited0.
+Each runner records nine actual child exits0 with empty stderr, frozen
+before/after source hashes. All87 consumed project sources, whole runner
+stdout and boot/text binaries match between main and independent export.
+Clean source: tracked tools/pioneer from base plus26 exact tracked native
+headers, overlaid ONLY the14 scoped changed/new component files.
+Pre-existing dirty native/driver/submodule work and unrelated WIP excluded.
+
+Host pipeline: four full-K jobs, K5120 and17408,45056 intermediate output
+word comparisons bit-exact with independently decoded original metadata
+and the NEW separate-FP32 contract. Six missing clear/mask/initialization/
+metadata import/store/output-store controls fail or numerically disagree.
+
+Actual linked RV32 returning routine: eight cases /384 final words,
+K5120/17408,32/64 output rows, repeated jobs in the SAME live simulated
+context. Original cached bytes and BF16 ROOT input travel through the
+existing delayed NoC/visibility model into the same L1/physical Dst used
+by PACK,UNPACK,FPU and SFPU. No normalized descriptors, inserted expected
+products, host K loop in the compiled worker, scalar learned/input/sum
+reads, changed Step decoder or widened RV32 instruction whitelist.
+Observed stack depth/touched bytes496, NOT hardware stack high-water proof.
+
+New mask support is explicit in the test observer; default remains all32
+lanes. Existing numerical FMA/rounding/latency formulas are unchanged.
+Thirty-nine actual-source role/architecture/selector cases refuse; two
+positive roles pass. Existing arithmetic131072-result/signed-zero/latency
+checks and default tile/16-job old pipeline regression pass.
+The optional buffer parameter changes the old tile ROM to3672B, while
+preserving its tested behavior; no old tile byte-identity is claimed.
+The old arithmetic-only probe remains byte-identical144B.
+
+Returning text9496B:
+55bcb9494395de4a7fb2144b2d1a12aefea9924909d8dd016185ecfa7d155bb6
+Boot4B:
+d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd
+
+Development failures retained as failures, not passes: initial RV32 build
+stopped on misleading indentation under Werror; the line was split.
+Initial image-test compile stopped on an unused fixture helper; it was
+explicitly marked maybe-unused. No comparator/tolerance was weakened.
+
+Scope / next action
+--------------------
+
+These are SYNTHETIC original-byte fixtures, not the actual27B GGUF request.
+The algorithm changes FP32 operation order versus per-weight BF16 rounding.
+Neither model answer quality nor a hardware speed improvement is proven.
+The best saved model result remains about0.173tokens/sec; latest about0.082.
+20tokens/sec is unmet/unproven. No speed estimate is inferred from RV32
+instruction counts, binary size or these local tests.
+
+Next: qualify the new native code/L1/Dst ownership and returning linkage,
+then ONE fresh isolated physical old/new matrix comparison at the same
+shape/input. Do not repeat this closed local suite as performance work or
+perform another unchanged full-model upload. Work remains CPU-reference-free;
+diagnostic numerical comparison is separate.
+
+Reproduce (repository root; fresh absolute output directory)
+-------------------------------------------------------------
+
+python3 tools/pioneer/tests/run_pioneer_q38_factored_q4_tests.py \
+ /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/fresh-factored-matrix-run
+
+No device is opened. Archive contains whole text receipts/source pins/
+actual exits/build arguments/symbols/stack usage, not executable binaries,
+learned payloads or the model.
+
+Primary contracts checked for new scoped clear/predication
+-----------------------------------------------------------
+
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/ZEROACC.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/LReg.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/SFPENCC.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/SFPSETCC.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPLOAD.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/SFPSTORE.md

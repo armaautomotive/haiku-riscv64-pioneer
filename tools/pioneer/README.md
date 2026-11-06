@@ -12,6 +12,8 @@ The 20 tokens/sec target remains unmet, and feasibility is unproven.
 The new factored-Q4 packing/matrix component is **local experimental code**,
 not an installed fast driver. Its test command and exact limitations are in
 [the component report](benchmarks/qwen38-factored-q4-tile-offboard-20261106.txt).
+The [returning-routine report](benchmarks/qwen38-factored-q4-returning-offboard-20261106.txt)
+records its later full-K metadata/output integration, still tested locally only.
 The current checkpoint is one complete representative Q4 matrix job with a
 real hardware comparison, not further interface work.
 

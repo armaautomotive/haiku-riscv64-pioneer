@@ -1,0 +1,71 @@
+{
+  "scope": "Complete original-Q4 arithmetic and returning BUILD routine tested locally; NOT native ownership, physical correctness, model quality or throughput.",
+  "base": "423ea414dcadda504fdabf59c82bbe290149506c",
+  "runnerActualExits": {
+    "main": {
+      "session": 11528,
+      "exit": 0
+    },
+    "clean": {
+      "session": 11900,
+      "exit": 0
+    }
+  },
+  "sourceCount": 87,
+  "wholeStdoutAndSourcePinsAndBootTextIdentical": true,
+  "stderrEmpty": true,
+  "nativeHardwareTest": false,
+  "fullModelQuality": false,
+  "modelTokensPerSecond": null,
+  "text": {
+    "bytes": 9496,
+    "sha256": "55bcb9494395de4a7fb2144b2d1a12aefea9924909d8dd016185ecfa7d155bb6"
+  },
+  "boot": {
+    "bytes": 4,
+    "sha256": "d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd"
+  },
+  "compiledFixtures": {
+    "cases": 8,
+    "outputWords": 384,
+    "K": [
+      5120,
+      17408
+    ],
+    "outputRows": [
+      32,
+      64
+    ],
+    "configurations": 4,
+    "repeatedJobsPerConfiguration": 2,
+    "stackDepthAndTouchedBytes": 496,
+    "scalarLearnedInputOrSumReads": 0
+  },
+  "hostFixtures": {
+    "jobs": 4,
+    "groupOutputWords": 45056,
+    "corruptionControls": 6
+  },
+  "roles": {
+    "positive": 2,
+    "refusals": 39
+  },
+  "notes": [
+    "Synthetic original packed weights/metadata and BF16 inputs, not a real GGUF model run.",
+    "Source observer additions are scoped integer-PACK/metadata/partial-ZEROACC/lane-mask cases. Existing strict RV32 Step and numeric FMA/latency formulas are unchanged; lane-mask default remains all32.",
+    "New FP32 output-affine operation order is not old per-weight BF16/GGML equivalence.",
+    "Earlier default tile compiled bytes changed to3672/SHA7800543d44e6cd2516b2f887b4200a121a8cdb0a4211d72a7fda96c59490a841 due optional buffer arguments; default behavior regression passes, not byte-identity to prior tile build.",
+    "Arithmetic-only default remains144B/SHA455c60867c618023d894f10ad2e9a74d8a88d0f512dcd9ce9b2eae80ef46cef5."
+  ],
+  "childActualExits": {
+    "arithmetic-regression": 0,
+    "arithmetic-regression-compile": 0,
+    "build": 0,
+    "default-tile-regression": 0,
+    "matrix": 0,
+    "matrix-compile": 0,
+    "operator": 0,
+    "operator-compile": 0,
+    "roles": 0
+  }
+}

@@ -17,6 +17,7 @@ struct MetadataMachine:Q4FpuMachine {
 		if(code!=0x7a && !(code==0x79 && mod==5) && code!=0x90){Q4FpuMachine::Op(word);return;}
 		assert(okay && reg<8 && source<8);uint32_t output[32]={};
 		for(unsigned lane=0;lane<32;lane++) {
+			if(!LaneEnabled(lane))continue;
 			const uint32_t value=Read(source,lane);
 			if(code==0x90) {
 				assert(!(word&0x00fff00f) && (value&0x7fffffff)<=2047);
@@ -31,7 +32,7 @@ struct MetadataMachine:Q4FpuMachine {
 				assert(source==reg);output[lane]=value+uint32_t(int32_t(word<<8)>>20);
 			}
 		}
-		for(unsigned lane=0;lane<32;lane++)lanes[reg][lane]=output[lane];
+		for(unsigned lane=0;lane<32;lane++)if(LaneEnabled(lane))lanes[reg][lane]=output[lane];
 		ready[reg]=cycle+1;cycle++;
 	}
 	void Execute(const Q4FpuWords& words){for(uint32_t word:words.words)Op(word);assert(okay);}

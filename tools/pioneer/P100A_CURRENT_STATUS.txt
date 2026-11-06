@@ -57,11 +57,13 @@ Locally completed:
     native tile -> matrix dot product and genuine input sum.
   * Compiled RV32 functions tested by the existing strict software model,
     including packing/source-bank completion checks.
+  * Original metadata/output correction and full-K accumulation are now
+    integrated in a returning routine. Compiled software-model tests cover
+    both 5,120/17,408 input widths and repeated jobs without context reset.
 
 NOT completed:
-  * Combining original metadata/output correction with the tile pipeline.
-  * Full-K accumulation and a returning native worker for this new path.
-  * Native ownership/code/memory integration and hardware timing.
+  * Native ownership/code/memory qualification for the new returning routine.
+  * Physical numerical checks and old/new matrix timing on the P100A.
   * Whole-model quality and throughput measurement of the new algorithm.
 
 This is a new operation order, not previous BF16/GGML bit equivalence.
@@ -90,10 +92,10 @@ This normal driver is NOT the faster experimental tag 92.
 The latest physical trial closed and independently restored normal.
 All four recorded trial processes were independently confirmed absent.
 
-This consolidation made no Pioneer connection, installation, Assistant,
+This local operator checkpoint made no Pioneer connection, installation, Assistant,
 kernel/network change, relay action, SD/mains/hardware change.
-Local main and clean-export factored-tile suites exited 0. All 61 consumed
-project source files and both compiled tile binaries match.
+Local main and clean-export operator/returning suites exited 0. All 87
+consumed project sources and both compiled boot/text binaries match.
 These are software-model tests ONLY, not a current hardware test.
 
 Historical stages 81 through 110-a are SPENT: never replay, repin identities
@@ -113,3 +115,5 @@ New arithmetic, software-model tests only:
   benchmarks/qwen38-factored-q4-arithmetic-offboard-20261106.txt
 New packing/dot/sum, software-model tests only:
   benchmarks/qwen38-factored-q4-tile-offboard-20261106.txt
+New complete arithmetic/returning routine, software-model tests only:
+  benchmarks/qwen38-factored-q4-returning-offboard-20261106.txt

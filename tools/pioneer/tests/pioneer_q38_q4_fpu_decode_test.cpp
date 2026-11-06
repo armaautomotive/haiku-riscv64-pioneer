@@ -12,6 +12,10 @@ struct Q4FpuWords {std::vector<uint32_t> words;void Op(uint32_t word){words.push
 // loads, register assumptions, or shared decode/rounding oracle hidden here.
 struct Q4FpuMachine {
 	uint32_t lanes[8][32]={};unsigned ready[8]={},cycle=0;bool okay=true;
+	// Default is the original all-lanes contract. A separate operator test
+	// explicitly models documented lane flags; arithmetic/latency is unchanged.
+	uint32_t activeLanes=UINT32_MAX;
+	bool LaneEnabled(unsigned lane)const{return (activeLanes>>lane)&1;}
 	uint32_t Read(unsigned r,unsigned lane) {
 		if(r==9)return 0;
 		if(r==10)return 0x3f800000;
@@ -24,6 +28,7 @@ struct Q4FpuMachine {
 		if(code==0x71)d=(w>>20)&15;
 		assert(d<8);uint32_t out[32]={};unsigned latency=1;
 		for(unsigned lane=0;lane<32;lane++) {
+			if(!LaneEnabled(lane))continue;
 			if(code==0x71) {
 				assert(!(w&0x000f0000) || ((w>>16)&15)==2 || ((w>>16)&15)==10);
 				unsigned mode=(w>>16)&15;
@@ -46,7 +51,7 @@ struct Q4FpuMachine {
 			else if(code==0x8d) {assert(!mod && c<8);out[lane]=Read(d,lane)^Read(c,lane);}
 			else {fprintf(stderr,"UNKNOWN_Q4_FPU_OPCODE %08x\n",w);assert(false);}
 		}
-		for(unsigned lane=0;lane<32;lane++)lanes[d][lane]=out[lane];
+		for(unsigned lane=0;lane<32;lane++)if(LaneEnabled(lane))lanes[d][lane]=out[lane];
 		ready[d]=cycle+latency;cycle++;
 	}
 	void Execute(const Q4FpuWords& words){for(uint32_t word:words.words)Op(word);}

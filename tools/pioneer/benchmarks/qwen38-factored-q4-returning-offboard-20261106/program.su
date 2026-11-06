@@ -1,0 +1,25 @@
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerSfpuDivide.h:20:38:void PioneerSfpuLoad32(E&, unsigned int, uint32_t) [with E = FactoredQ4::Emitter]	0	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38VectorQ4Metadata.h:44:32:static void PioneerQ38VectorQ4Metadata::Half0(E&) [with E = FactoredQ4::Emitter]	0	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38Q4FpuCompactMetadata.h:34:32:static void PioneerQ38Q4FpuCompactMetadata::StoreDynamic(E&, unsigned int, unsigned int, unsigned int) [with E = FactoredQ4::Emitter]	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerDramQueuedReadSweep.h:24:33:static bool PioneerDramQueuedReadSweep::Fifo(IO&, uint32_t&) [with IO = FactoredQ4::IO]	0	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38Q4FpuCachedLoader.h:33:26:bool PioneerQ38Q4FpuCachedLoader::Commands(IO&) const [with IO = FactoredQ4::IO]	0	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_q38_factored_q4_matrix.cpp:41:7:void FactoredQ4::Emitter::Config(unsigned int, unsigned int)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_q38_factored_q4_matrix.cpp:36:7:void FactoredQ4::Emitter::Drain()	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38Q4FactoredCompute.h:19:32:static void PioneerQ38Q4FactoredCompute::FloatUnpack(E&) [with E = FactoredQ4::Emitter]	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38Q4FactoredTile.h:59:55:static bool PioneerQ38Q4FactoredTile::Matrix(E&, unsigned int, unsigned int, unsigned int) [with bool PreserveDst = true; E = FactoredQ4::Emitter]	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38Q4FpuCompactMetadata.h:17:32:static void PioneerQ38Q4FpuCompactMetadata::Products(E&) [with E = FactoredQ4::Emitter]	0	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38Q4FpuCompactStreamLayout.h:23:18:static unsigned int PioneerQ38Q4FpuCompactStreamLayout::HeaderAddress(unsigned int, unsigned int)	0	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38Q4FpuCachedLayout.h:13:18:static unsigned int PioneerQ38Q4FpuCachedLayout::Peer(unsigned int)	0	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38Q4FpuCachedLayout.h:41:33:static bool PioneerQ38Q4FpuCachedLayout::Self(IO&, unsigned int) [with IO = FactoredQ4::IO]	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38Q4FpuCachedLoader.h:29:26:bool PioneerQ38Q4FpuCachedLoader::Quiet(IO&) [with IO = FactoredQ4::IO]	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38Q4FpuCachedLoader.h:37:26:bool PioneerQ38Q4FpuCachedLoader::Drain(IO&) [with IO = FactoredQ4::IO]	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38Q4FpuCachedLoader.h:112:26:bool PioneerQ38Q4FpuCachedLoader::Wait(IO&) [with IO = FactoredQ4::IO]	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38Q4FpuCachedLoader.h:91:26:bool PioneerQ38Q4FpuCachedLoader::Open(IO&, unsigned int, unsigned int) [with IO = FactoredQ4::IO]	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38Q4FpuCachedLayout.h:14:14:static bool PioneerQ38Q4FpuCachedLayout::Shape(const Job&)	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38Q4FpuCachedLayout.h:25:14:static bool PioneerQ38Q4FpuCachedLayout::SelectedPacket(const Job&, unsigned int, unsigned int, unsigned int, unsigned int, Read&)	0	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38Q4FpuCachedLoader.h:98:26:bool PioneerQ38Q4FpuCachedLoader::Slice(IO&) [with IO = FactoredQ4::IO]	80	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_q38_factored_q4_matrix.cpp:19:44:void* memset(void*, int, unsigned int)	16	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38Q4FpuCompactMetadata.h:69:7:static bool PioneerQ38Q4FpuCompactMetadata::DecodeDynamic(E&, unsigned int) [with E = FactoredQ4::Emitter]	64	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/PioneerQ38Q4FactoredCompute.h:36:32:static bool PioneerQ38Q4FactoredCompute::LoadMetadata(E&, unsigned int) [with E = FactoredQ4::Emitter]	32	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_q38_factored_q4_matrix.cpp:44:21:unsigned int q38_factored_q4_matrix(const unsigned int*)	384	static
+/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/blackhole_q38_factored_q4_matrix.cpp:81:21:unsigned int factored_q4_main()	0	static

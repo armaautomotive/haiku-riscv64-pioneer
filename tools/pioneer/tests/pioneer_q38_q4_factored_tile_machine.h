@@ -76,7 +76,7 @@ struct FactoredTileMachine:Q4FpuPipelineMachine {
   Need(config[120]==0x25 && config[121]==0xf000f && config[122]==0x17fff && config[123]==0 && config[140]==0 && config[61]==0);
   Need(xStart[1]==0 && xEnd[1]==31 && rawLoads>=4);
   const unsigned group=(rawLoads/4-1)%8,address=(config[124]+1)*16;
-  Need(address==F::Input+group*128);
+  Need(address==F::Input+OperandOffset()+group*128);
   for(unsigned h=0;h<64;h++)Need(!l1[address-64+h]);
   auto& b=source[1][unpackBank[1]];Need(!b.pending && !b.owner);
   for(unsigned k=0;k<32;k++)b.values[k/16][k%16]=Float(uint32_t(l1[address+k*2]|unsigned(l1[address+k*2+1])<<8)<<16);

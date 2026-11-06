@@ -20,14 +20,14 @@ struct PioneerQ38Q4FactoredTile {
   for(unsigned a=Ones+64;a<Ones+TileBytes;a+=4)io.Write(a,0x08080808);
  }
  template<class E> static void Begin(E& e){PioneerQ38NativeBfpMatvec::Setup(e,8);}
- template<class E> static bool PackCodes(E& e,unsigned group){
-  if(group>=8)return false; // ZERO IO
+ template<class E> static bool PackCodes(E& e,unsigned group,unsigned buffer=0){
+  if(group>=8 || buffer>=2)return false; // ZERO IO
   e.Op(0x3700000f);e.Op(0xb2050000);e.Drain();
   e.Config(1,0x203c8000);e.Config(64,0x10001e);e.Config(65,16);e.Config(66,1);
   e.Config(67,0);e.Config(70,8);e.Config(71,0);e.Config(72,14);e.Config(73,0x13);
   e.Config(86,0x100010);e.Op(0x5e23fc00);e.Op(0x5120000a);e.Op(0x5420000f);e.Drain();
   for(unsigned face=0;face<4;face++){
-   e.Config(76,(Raw+((group/2)*4+face)*320)/16-1);
+   e.Config(76,(Raw+buffer*0x10000+((group/2)*4+face)*320)/16-1);
    e.Config(84,0x00400000+(face*16+4)*16);
    e.Op(0x42000081);e.Drain(); // raw Dst ONLY,no dummy SrcA publication
   }
@@ -56,8 +56,8 @@ struct PioneerQ38Q4FactoredTile {
   e.Op(0xa210181e);e.Drain(); // LAST,NEVER Flush (Blackhole hazard)
   return true;
  }
- template<class E> static bool Matrix(E& e,unsigned tile,unsigned group){
-  if((tile!=Native && tile!=Ones) || group>=8)return false;
+ template<bool PreserveDst=false,class E> static bool Matrix(E& e,unsigned tile,unsigned group,unsigned buffer=0){
+  if((tile!=Native && tile!=Ones) || group>=8 || buffer>=2)return false;
   e.Op(0xb2050004);e.Drain();
   // q<=15 and the ones tile have <=4 significant bits:the FPU's leading
   // five SrcA bits are exact. Need B high/low phases0/2,NOT A-low1/3.
@@ -68,8 +68,12 @@ struct PioneerQ38Q4FactoredTile {
   e.Config(70,8);e.Config(71,0);e.Config(72,0x26);e.Config(73,0x000f000f);
   e.Config(76,tile/16-1);e.Config(84,0x00400040);e.Config(86,0x01000100);
   e.Config(112,0x00200015);e.Config(113,0x00010001);e.Config(114,1);e.Config(115,0);
-  e.Config(120,0x25);e.Config(121,0x000f000f);e.Config(124,(Input+group*128)/16-1);
-  e.Op(0x3700000f);e.Op(0x10180000);e.Op(0x5e2ffc00);e.Op(0x5e407c00);
+  e.Config(120,0x25);e.Config(121,0x000f000f);e.Config(124,(Input+buffer*0x10000+group*128)/16-1);
+  e.Op(0x3700000f);
+  // Blackhole ZEROACC mode1,UseDst32b=1,face2:ONLY logical32..47.
+  // Metadata128..255 and accumulated outputs80/88 must survive.
+  if constexpr(PreserveDst)e.Op(0x100c0002);else e.Op(0x10180000);
+  e.Op(0x5e2ffc00);e.Op(0x5e407c00);
   e.Op(0x5160000b);e.Op(0x5460000f);e.Op(0x420000c1);e.Op(0x428000c1);e.Drain();
   for(unsigned face=0;face<4;face++){
    if(face){e.Op(0x37040201);e.Op(0x37040201);}

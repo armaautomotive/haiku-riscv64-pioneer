@@ -55,9 +55,11 @@ Finish criteria:
      separately. Never replay closed historical trial stages.
   e. Accept or reject this candidate from measured results.
 
-Partial work: extraction/packing/genuine dot/sum pass local instruction-
-model and compiled-function tests. Original metadata/output affine,
-full-K returning worker and real timing are NOT finished.
+Local work now includes original metadata/output affine, full-K
+accumulation and a compiled returning routine using the existing two-buffer
+loader. Both widths and repeated jobs pass instruction-model tests.
+Native code/L1/Dst ownership qualification and physical correctness/timing
+are NOT finished. This checkpoint remains open until the real comparison.
 The new operation order differs from old per-weight BF16 rounding;
 local bit tests do not prove model quality.
 
