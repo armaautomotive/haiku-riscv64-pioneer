@@ -1,0 +1,64 @@
+Native113 manual-Last Q4 comparison: LOCAL QUALIFICATION ONLY
+===========================================================
+November6,2026. Source base ff35bcf2c591753a23b3cc826a200ef4ac4aa1b8.
+New driver tag2026110600010113,role113,opcode8900. Comparison-v1 arithmetic
+frame is intentionally compatible;the driver identity,endpoint,image role,
+exact image bytes/hash and ManualLast binding are distinct.111/112 pins,
+parent files and spent stages are NOT repinned or replayed.
+
+Only arithmetic change is the prior checkpoint's PACK counter correction.
+Both fixed widths5120/17408 retain old then new calculation,original packed
+weights/BF16 inputs,metadata/accumulation and complete restored lifetime.
+No Work/Assistant/CPU-inference path changed.No hardware execution at this
+publication checkpoint;fresh isolated physical validation is still required.
+
+Final main83912 and independent clean82401 ACTUALLY exited0:12children each,
+all stderr empty.302 consumed sources;only source-map difference is the
+pre-existing33-line dirty tenstorrent_pci_probe.cpp,excluded from this commit.
+All candidate/control/client/core binaries match exactly.11 whole child
+stdout files match;endpoint stdout differs ONLY in its output-directory
+footer.Both original strings are retained privately,not normalized to claim
+whole stdout equality.The clean tree is tracked HEAD plus15 scoped overlays,
+copied only AFTER the export actually completed.
+
+Verified local scope:
+ * SDK driver/all native methods link;52 role refusals,wrong image/data/scope
+   and manual-Last binding refusals;legacy entry remains NULL;default43
+   control remains2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc.
+ * Actual endpoint bodies over OS/PCI fixtures:333 valid,813 refused cases.
+ * Strict compiled arithmetic:both widths,128 old/new outputs;624B touched
+   stack.Same-open original SHA/all9 payloads and both independent references
+   pass through the compiled lease and complete L1/GDDR/NIU/TLB/FIFO/clock
+   restoration.Nine new-domain mutations retain resources rather than END.
+ * Manual113 protocol:2 positive/19 refused,including late selection/removal,
+   old tags and Work/reference/trace aliases.Client:24 role refusals.
+ * New client captures ALL64 completed words BEFORE comparison/END/timing
+   acceptance.Parent gate requires those128 DATA words plus128 post-END
+   exact words,two clean ends and four timing records:3 positive/277 refused.
+ * New parent uses fresh normal2->113/gen3->normal4 admission,one-shot markers,
+   pinned binaries,platform/app/runtime guards and sync on rejection/success.
+   It never retries,resets or automatically restores an unknown failed epoch.
+
+Exact artifacts (PRIVATE binaries/learned payloads are not published):
+ native1852824B SHA7ba43209502612a99cfbf9a51ce33f5251432661f22937559b195fb327addfd4
+ client1949024B SHA f373138506859094a8010380babde1c7622165b42e3a2f6f0e243c3eecfe5bac
+ core11788B SHA6542780a82026f4a3a7f410468bb1081a7143991aeb202d39f379a67153dcedd
+ parent SHAd7bc64442bfebbecf65a52941a2568c56f2f646ca1189366ac3262172e280352
+ private wrapper SHA0b35ffdb14baa9090221d8389bd0aea325fae2e77e5d6d69806042be0bda25ef
+ Boot4B staysd47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd.
+
+Fresh read-only SSH confirmed normal041/gen2,idle,64CPUs/full137034936320B
+RAM before staging.No power,SD,mains,hardware or app change in qualification.
+NEXT:publish this checkpoint,read back exact staged files,then ONE113-a
+comparison,only proceeding from K5120 to K17408 after exact arithmetic/END.
+Accept timing only after actual terminal exits and independent restoration.
+Clock cycles for two small jobs are not whole-model tokens/sec or quality.
+Best model0.173tok/s;latest0.082tok/s;20tok/s unmet and feasibility unproven.
+
+Reproduce LOCAL qualification only (fresh absolute output directory):
+python3 tools/pioneer/tests/run_pioneer_native_factored_q4_compare_tests.py \
+ /Volumes/HaikuBuildLocal/generated.riscv64 PRIVATE_EXPORT ORIGINAL_GGUF \
+ /private/tmp/fresh-manual113-qualification 3 --manual-last
+
+Sibling archive contains actual child exits,main/clean source pins and
+selected complete unit output.No model,prepared payload or binary is saved.

@@ -90,6 +90,12 @@ program matches all64 hardware observations,not just the first value.
 This is NOT a card-proven fix.Next:new isolated native identity and real
 arithmetic/timing comparison.No111/112 replay or repinning is permitted.
 See benchmarks/qwen38-q4-pack-boundary-offboard-20261106.txt.
+Fresh native113 comparison package now passes main/clean local qualification:
+12children each,302 consumed sources,exact candidate/client/core binaries.
+It is NOT yet hardware-proven.New113 endpoint/driver identity leaves111/112
+pins and spent markers untouched.Next:ONE controlled physical old/new
+arithmetic/timing comparison,then an accept/reject decision.
+See benchmarks/qwen38-manual-last-q4-native-20261106.txt.
 The new operation order differs from old per-weight BF16 rounding;
 local bit tests do not prove model quality.
 

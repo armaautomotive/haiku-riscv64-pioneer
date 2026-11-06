@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
-"""Build fixed diagnostic111 client for one fresh generation,NO device access."""
+"""Build fixed111/NEW113 comparison client for one fresh generation;NO device access."""
 import hashlib
 import os
 from pathlib import Path
 import stat
 import subprocess
 import sys
+manual=sys.argv[-1:]==['--manual-last']
+if manual:sys.argv.pop()
 assert __debug__ and len(sys.argv)==5 and not os.environ.get('PYTHONOPTIMIZE')
 build,private,out=map(Path,sys.argv[1:4]);generation=int(sys.argv[4]);assert 2<=generation<2**63
 assert all(p.is_absolute() for p in (build,private,out)) and build.is_dir() and not out.exists() and not out.is_symlink()
@@ -24,8 +26,10 @@ for p in [sdk/'headers/os',*sorted((sdk/'headers/os').iterdir())]:
  if p.is_dir():includes+=['-isystem',str(p)]
 includes+=['-I'+str(private),'-I'+str(here),'-I'+str(root/'headers/private/shared'),'-I'+str(root/'headers/private/libroot')]
 flags=['-DPIONEER_NATIVE_FACTORED_Q4_COMPARE=1','-DPIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING=1',
- '-DPIONEER_NATIVE_FACTORED_Q4_EXPECTED_GENERATION='+str(generation)]
-binary=out/'pioneer-native-factored-q4-compare'
+ '-DPIONEER_NATIVE_FACTORED_Q4_EXPECTED_GENERATION='+str(generation),
+ '-DPIONEER_NATIVE_FACTORED_Q4_CLIENT_ROLE='+('113' if manual else '111')]
+if manual:flags+=['-DPIONEER_NATIVE_FACTORED_Q4_MANUAL_LAST=1']
+binary=out/('pioneer-native-factored-q4-manual-last' if manual else 'pioneer-native-factored-q4-compare')
 command=[cc,'-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror','-ffile-prefix-map='+str(root)+'=/pioneer-source',*flags,*includes,
  '-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),'-L'+str(release/'kits'),
  *['-L'+str(p) for p in sorted((build/'build_packages').glob('gcc_syslibs-*/lib'))],
@@ -39,6 +43,11 @@ for role in ('PIONEER_NATIVE_FACTORED_Q4_COMPARE','PIONEER_NATIVE_FACTORED_Q4_EX
  for value in (None,0,1 if role.endswith('GENERATION') else 2):
   cases.append(['-U'+role]+([] if value is None else ['-D'+role+'='+str(value)]))
 cases.append(['-ffast-math'])
+if manual:
+ for role in ('PIONEER_NATIVE_FACTORED_Q4_MANUAL_LAST','PIONEER_NATIVE_FACTORED_Q4_CLIENT_ROLE'):
+  for value in (None,0,2 if role.endswith('LAST') else 111):
+   cases.append(['-U'+role]+([] if value is None else ['-D'+role+'='+str(value)]))
+ cases.append(['-DPIONEER_NATIVE_FACTORED_Q4_TRACE=1'])
 for extra in cases:
  r=subprocess.run([cc,'-std=c++17',*flags,*extra,*includes,'-fsyntax-only',str(here/'pioneer_native_factored_q4_compare_diagnostic.cpp')],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
  assert r.returncode and b'error:' in r.stderr,extra

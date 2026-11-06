@@ -5,7 +5,12 @@
 #include "PioneerNativeBfpProtocol.h"
 // NEW104 fixed9 full-K bands;no caller code/payload/route/address/reset capability.
 struct PioneerNativeCompactQ4StreamVariant {
-#ifdef PIONEER_NATIVE_FACTORED_Q4_TRACE
+#ifdef PIONEER_NATIVE_FACTORED_Q4_MANUAL_LAST
+ // The arithmetic frame stays comparison-v1; tag/opcode/image role are NEW.
+ static constexpr unsigned Role=113,Marker=0x31435151,Fault=0x45435151,Opcode=0x8900,Samples=9;
+ static constexpr uint64_t Tag=UINT64_C(0x2026110600010113);
+ static constexpr unsigned ImageBytes=11788,ReplyExtraBytes=64;
+#elif defined(PIONEER_NATIVE_FACTORED_Q4_TRACE)
  static constexpr unsigned Role=112,Marker=0x31525151,Fault=0x45525151,Opcode=0x8800,Samples=1;
  static constexpr uint64_t Tag=UINT64_C(0x2026110600010112);
  static constexpr unsigned ImageBytes=12104,ReplyExtraBytes=64;

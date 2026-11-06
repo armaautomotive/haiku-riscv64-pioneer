@@ -39,7 +39,13 @@ struct FactoredCompareRV32:CompareState,ServiceMachine {
  StreamIO bus;unsigned width,drainedGroups=0,acks=0,timerStores=0,clockReads=0;bool awaiting=false;
  std::vector<unsigned> csrPc;bool diagnostic=false;unsigned diagnosticReads=0;
  FactoredCompareRV32(const char* folder,unsigned k,bool observe=false):ServiceMachine(folder,native.l1),bus(k,17|(12<<6),&native.l1),width(k),diagnostic(observe){
-  assert(diagnostic?(k==5120 && code.size()<=16384):code.size()==11792);native.bus=&bus;native.delay[0]=100003;native.delay[1]=7;native.packDelay=100019;
+  assert(diagnostic?(k==5120 && code.size()<=16384):code.size()==
+#ifdef PIONEER_NATIVE_FACTORED_Q4_MANUAL_LAST
+   11788
+#else
+   11792
+#endif
+  );native.bus=&bus;native.delay[0]=100003;native.delay[1]=7;native.packDelay=100019;
   for(unsigned off=0;off<code.size();off+=4)if((::Word(code,off)&127)==0x73)csrPc.push_back(0x70000+off);
   assert(diagnostic?csrPc.empty():(csrPc.size()==3 && csrPc[1]==csrPc[0]+4 && csrPc[2]==csrPc[0]+8));
   unsigned frame[8]={diagnostic?0x31525151U:0x31435151U,1,k,bus.route,1,0,0,0};for(unsigned i=0;i<8;i++)Put(SL::Frame+i*4,frame[i]);

@@ -162,6 +162,9 @@ public:
 	void Abandon(){if(owned){failed=true;result.compute.state=PIONEER_NATIVE_BFP_UNKNOWN;result.compute.cold=1;}}
 	template<class IO,class Image,class Data> bool Run(IO& io,const tt_dram_samples_result& baseline,unsigned sample) {
 		static_assert(Image::Samples==V::Samples && Image::Rows==32 && Image::Phases==4 && Image::LayoutRole==V::Role && Image::Bytes==V::ImageBytes && Image::MetadataFirst==128 && Image::MetadataRows==128 && Image::DstLast==255,"exact compact QCS1 two-width image and Dst scope only");
+#ifdef PIONEER_NATIVE_FACTORED_Q4_MANUAL_LAST
+		static_assert(Image::ManualLast==1,"exact comparison113 manual-Last image only");
+#endif
 #ifdef PIONEER_NATIVE_FACTORED_Q4_TRACE
 		static_assert(Image::FactoredTrace==1 && Image::TraceWords==64 && Image::TraceBlocks==20 && Image::NewPhases==2 && Image::Accumulator==80,"exact trace112 fixed observations and ownership");
 #elif defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE)

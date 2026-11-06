@@ -13,6 +13,12 @@
 #if !defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE) || PIONEER_NATIVE_FACTORED_Q4_COMPARE!=1 || !defined(PIONEER_NATIVE_FACTORED_Q4_EXPECTED_GENERATION) || PIONEER_NATIVE_FACTORED_Q4_EXPECTED_GENERATION<2
 #error Exact comparison111/fresh generation client required
 #endif
+#ifndef PIONEER_NATIVE_FACTORED_Q4_CLIENT_ROLE
+#define PIONEER_NATIVE_FACTORED_Q4_CLIENT_ROLE 111
+#endif
+#if (PIONEER_NATIVE_FACTORED_Q4_CLIENT_ROLE!=111 && PIONEER_NATIVE_FACTORED_Q4_CLIENT_ROLE!=113) || ((PIONEER_NATIVE_FACTORED_Q4_CLIENT_ROLE==113)!=defined(PIONEER_NATIVE_FACTORED_Q4_MANUAL_LAST))
+#error Exact comparison111/113 client role and manual-Last selection required
+#endif
 namespace {
 using V=PioneerNativeCompactQ4StreamVariant;using M=PioneerNativeCompactQ4StreamMetadata;using R=PioneerNativeCompactQ4StreamRequest;
 constexpr uint64_t Generation=PIONEER_NATIVE_FACTORED_Q4_EXPECTED_GENERATION;
@@ -39,7 +45,7 @@ void Timing(const R& r,unsigned sample){
 }
 }
 int main(int argc,char** argv){
- if(argc!=2 || strcmp(argv[1],"--fixed-old-new-q4")){fputs("Use --fixed-old-new-q4 for isolated comparison111,NOT Work or full-model inference.\n",stderr);return 2;}
+ if(argc!=2 || strcmp(argv[1],"--fixed-old-new-q4")){fprintf(stderr,"Use --fixed-old-new-q4 for isolated comparison%u,NOT Work or full-model inference.\n",V::Role);return 2;}
  if(geteuid()!=0)return 1;
  PioneerNativeCompactQ4StreamSource source;std::string error;
  puts("FACTORED_COMPARE_AUTHENTICATING_ORIGINAL_AND_BOTH_CPU_REFERENCES;NO_DEVICE_OPEN");if(!Delivered())return 1;
@@ -68,12 +74,28 @@ int main(int argc,char** argv){
    fprintf(stderr,"FACTORED_COMPARE_RUN_UNPROVEN sample%u state%u cold%u started%u completed%u polls%u pc%x/%x phase%x count%x marker%x journal%u saved_l1%u;CLOSE_ONLY_NO_END_RETRY\n",sample,c.state,c.cold,c.started,c.completed,c.polls,c.pc[0],c.pc[1],c.phase,c.count,c.marker,r.result.phase,r.result.saved_l1);
    close(fd);return 1;
   }
+#ifdef PIONEER_NATIVE_FACTORED_Q4_MANUAL_LAST
+  // Completed DATA is captured in full BEFORE deciding, END or accepting
+  // timing. Unlike111's first-mismatch loop this preserves every returned
+  // value on failure. Exact comparisons/ownership rules remain unchanged.
+  unsigned mismatches=0;
+  for(unsigned word=0;word<64;word++){
+   const unsigned expected=word<32?old[word]:fresh[word-32],actual=r.result.compute.output[word];
+   const bool exact=actual==expected;if(!exact)mismatches++;
+   printf("FACTORED_COMPARE_DATA_WORD sample%u kind%u row%u got%08x expected%08x exact%u\n",sample,word/32,word%32,actual,expected,unsigned(exact));
+  }
+  printf("FACTORED_COMPARE_DATA_DONE sample%u words64 mismatches%u;DATA_ONLY_NO_END_OR_SPEED_AUTHORITY\n",sample,mismatches);
+  if(!Delivered() || mismatches || !source.Ready()){
+   fprintf(stderr,"FACTORED_COMPARE_REJECTED sample%u mismatches%u;CLOSE_ONLY_NO_END_RESET_RETRY\n",sample,mismatches);close(fd);return 1;
+  }
+#else
   for(unsigned word=0;word<64;word++){
    const unsigned expected=word<32?old[word]:fresh[word-32];
    if(r.result.compute.output[word]!=expected){
     fprintf(stderr,"FACTORED_COMPARE_MISMATCH sample%u kind%u row%u got%08x expected%08x;CLOSE_ONLY_NO_END_RETRY\n",sample,word/32,word%32,r.result.compute.output[word],expected);close(fd);return 1;
    }
   }
+#endif
   if(!source.Ready()){close(fd);return 1;}
   R end={};end.version=1;end.sample=sample;end.expected_tag=V::Tag;end.expected_generation=Generation;end.nonce=1;end.accept=1;
   if(ioctl(fd,PIONEER_NATIVE_COMPACT_Q4_STREAM_END,&end,sizeof(end)) || !Result(end,sample,true)
