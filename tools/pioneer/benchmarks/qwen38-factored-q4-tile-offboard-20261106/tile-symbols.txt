@@ -1,0 +1,12 @@
+00070000 T pioneer_q4_factored_tile_fault
+00070018 t _ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0
+000703b4 T pioneer_q4_factored_tile_constants
+0007046c T pioneer_q4_factored_tile_begin
+000708a0 T pioneer_q4_factored_tile_group
+00071e34 T __BSS_END__
+00071e34 T __DATA_BEGIN__
+00071e34 T __SDATA_BEGIN__
+00071e34 T __bss_start
+00071e34 T _edata
+00071e34 T _end
+00072634 A __global_pointer$

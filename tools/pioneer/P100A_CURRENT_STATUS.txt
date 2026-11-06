@@ -1,99 +1,115 @@
-P100A / Qwen 27B -- current status
-================================
-Updated November6,2026 after actual110 closure/postflight14:46:07UTC.
-Saved evidence,NOT fresh telemetry or permission to repeat a spent trial.
-Goal:usable self-hosted27B,aiming for20tokens/sec. ACTIVE,NOT ACHIEVED.
+P100A / Qwen 27B: current project status
+=======================================
 
-What works / what does not
--------------------------
-Complete short real27B requests run entirely on P100A for model inference.
-CPU:file/preparation/vocabulary/text/lifecycle only;no CPU inference context,
-numerical reference or fallback. Usable loading/generation speed,persistent
-warm requests and broad answer-quality qualification remain UNDELIVERED.
+Updated November 6, 2026. This is the main status summary.
+Detailed experiment logs are evidence, not separate completion claims.
 
-Measured generation -- SAME31prompt/32output public counting request
-------------------------------------------------------------------
-Earlier vector92:       0.172813448..0.172816755 tokens/sec.
-Earlier fixed-config103:0.164361584..0.164365058.
-Previous BF16-109:      0.078651925..0.078652599.
-New deferred-BF16-110:  0.082246701..0.082247442 (~12.16sec/step).
+FULL-CARD INFERENCE DEMONSTRATED; USABLE SPEED NOT DELIVERED.
+Target: 20 tokens/second. Feasibility is still unproven.
 
-110 gives4.5696..4.5714% higher rate than109 in ONE comparison,not a
-repeatability/statistical result. SAME32-byte answer1..14,62positions.
-REJECT110 for Assistant promotion:still slower than BOTH92 and103.
-Correction:earlier summaries called103 the best;the saved vector92 real
-SAME-request result is faster. Neither is useful interactive performance.
-20TPS remains unproven,roughly243x110 or116x earlier92.
+What has actually worked
+------------------------
 
-Latest completed milestone -- preparation audit experiment110
--------------------------------------------------------------
-Source f934d9f7af;qualified package cd8c379cd9. Fresh admission,exclusive
-staging,whole four-file SCP byte readback,one-shot guarded hot-swap and
-complete real-model run passed. BOTH widths/matrix/final119 closures now
-have real integration evidence for THIS short request,not MOCK-only.
-Native END/Close,actual child/parent exit and independent restore all pass.
-Not broad quality,hardware-fault-injected cleanup or stack high-water proof.
-Normal48 ->110/gen49 ->normal50.110-a is SPENT FOREVER;no active test remains.
+A real Qwen3.8-27B Q4_K_M request completed with all model inference on the
+P100A, including attention and recurrent state. The CPU handled files,
+preparation, vocabulary/text and lifecycle, not model inference, CPU
+numerical reference or fallback.
 
-Actual ROOT profile:1017855297132 cycles,4.38224% lower than109.
-Preparation277627722069 cycles,14.38277% lower;still27.27576% of total.
-Recurrent outside matrix calls23.26837%,matrix gather/wait22.77331%.
-Exclusive ROOT elapsed categories,NOT FPU utilization or summed workers.
-Even deleting all remaining preparation gives only~1.38x if others fixed.
-This small measured gain is NOT a route by itself to20TPS. Close this task.
+The answer was a short counting response: 31 prompt tokens, 32 output
+tokens, 62 committed positions. This is not broad quality qualification
+or an arbitrary-prompt production Assistant release.
 
-Loading/latency remains poor
+At the last independent platform check, Haiku had 64 CPUs and
+137,034,936,320 bytes of RAM. Assistant and its runtime were preserved.
+This is saved evidence, not a fresh claim about the board's power/state.
+
+Measured full-model performance
+-------------------------------
+
+Same public request; one run per variant, not repeatability data:
+
+  Variant                        Approx. tokens/sec   Decision
+  vector Q4, tag 92               0.173                Best saved result
+  fixed configuration, tag 103    0.164                Slower than 92
+  BF16 pair issue, tag 109        0.0787               Slower than 92
+  deferred preparation, tag 110   0.0822               Reject promotion
+
+Best: about one token every 5.8 seconds. Latest: about one every 12.2
+seconds. 20 tokens/second is about 116 times the best saved rate.
+Recent local code tests are NOT new model speed measurements.
+
+Tag 110 improved on 109 by about 4.57% in one comparison, but remained
+slower than 92. START/setup took 26.43 minutes; the answer was ready
+42.72 minutes after Generate. Different intervals, not a streaming/UI
+benchmark. Weights were released at END; a usable warm, persistently
+loaded service remains unfinished.
+
+Current experimental code
+--------------------------
+
+A different Q4 matrix algorithm is intended to reduce repeated per-weight
+conversion work. It keeps original compressed weights, creates temporary
+native tiles on the card, then applies scale/minimum correction to outputs.
+
+Locally completed:
+  * Code extraction and separate FP32 output-affine arithmetic.
+  * Original-byte UNPACK -> vector extraction -> integer PACK -> temporary
+    native tile -> matrix dot product and genuine input sum.
+  * Compiled RV32 functions tested by the existing strict software model,
+    including packing/source-bank completion checks.
+
+NOT completed:
+  * Combining original metadata/output correction with the tile pipeline.
+  * Full-K accumulation and a returning native worker for this new path.
+  * Native ownership/code/memory integration and hardware timing.
+  * Whole-model quality and throughput measurement of the new algorithm.
+
+This is a new operation order, not previous BF16/GGML bit equivalence.
+Synthetic tests do not establish full-model quality or hardware speed.
+The unfinished component is checkpointed separately from working inference.
+
+Next bounded checkpoint
+------------------------
+
+P100A_WORK_PLAN.txt defines the sequence and finish criteria:
+  1. Consolidation / baseline-experiment separation: locally closed.
+  2. One complete representative Q4 job on real hardware: INCOMPLETE.
+  3. Evidence-based feasibility decision.
+  4. Whole-model integration and matched quality/throughput measurement.
+  5. Persistent loading and Assistant usability.
+
+No additional UI work, unchanged full-model uploads or repeated closed
+infrastructure experiments are prerequisites for checkpoint 2.
+
+Preservation and test state
 ---------------------------
-110 authentication/vocabulary probe314.6s precedes Generate,NOT GPU ready.
-Generate -> START setup1585.5s (26.43min). Upload window1244.4s includes
-between-call preparation;1080.9s summed ioctls is NOT pure DMA bandwidth.
-First card commit1962.511..1962.617s after Generate;answer-ready2562.9s
-(42.72min). NOT streamed/visible text/UI latency. Weights released at END;
-no usable persistent warm-load service delivered. Do not conflate intervals.
 
-Current bounded performance task -- factored Q4 matrix path
-----------------------------------------------------------
-NEW offboard arithmetic prototype keeps original q0..15 as exact native
-BFP8 codes,then applies scale/minimum to matrix outputs,not every weight.
-Code-extraction SUBEXPRESSION2 instructions instead of10;NOT a5x speedup.
-131072 synthetic affine cases/1024 signed-zero cases/48 missing-latency
-faults and actual compiled RV32 functions pass in main/clean builds.
-This is a NEW FP32 operation order,NOT old BF16/GGML bit equivalence.
-No native/model execution,packing or source-bank integration is delivered.
-Next:REAL on-card byte packing/exponents,FPU tile and genuine input sum;
-prove a complete group result from original bytes,not supplied dot/sum.
-Then returning-worker/native integration and genuinely changed model test,
-compared with faster earlier92/103. No preparation-audit polishing,closed
-baseline reruns,new full GPU emulator or unrelated UI work. Keep Work and
-CPU validation separate. Builds are NOT speed gains;20TPS remains unproven.
+Last verified installed rollback driver: normal 041, tag 2026102100010012,
+generation 50, quiesced 0, cold 0, owner 0, open 1, guard 1.
+This normal driver is NOT the faster experimental tag 92.
+The latest physical trial closed and independently restored normal.
+All four recorded trial processes were independently confirmed absent.
 
-Last independent platform check -- after110,not current live authority
----------------------------------------------------------------------
-Normal041/tag2026102100010012/generation50/quiesced0/cold0/owner0/open1/guard1.
-64CPU/137034936320B RAM. Launcher41588,parent41593,client41677,USER41678 absent.
-Driver/admin/guard,three Assistant files,four runtime libraries and original
-model metadata preserved. No reboot,power,SD,mains,network,kernel,Assistant
-or hardware change. Primary69044,postflight37244,archive58162 ACTUALLY0;
-unchanged main+clean readers0/byte-identical/empty stderr. All jobs CLOSED.
-Stages81..110-a SPENT FOREVER:never replay,repin or clear once markers.
+This consolidation made no Pioneer connection, installation, Assistant,
+kernel/network change, relay action, SD/mains/hardware change.
+Local main and clean-export factored-tile suites exited 0. All 61 consumed
+project source files and both compiled tile binaries match.
+These are software-model tests ONLY, not a current hardware test.
 
-Nine previously dirty baseline paths and unrelated Resident/FlashNext/mixed-
-FPU WIP remain preserved,not deleted/reset or silently included in commits.
+Historical stages 81 through 110-a are SPENT: never replay, repin identities
+or clear once markers. Future hardware testing needs a fresh identity and
+fresh idle-state/ownership admission.
+Existing dirty native/driver/submodule work and unrelated experiments are
+preserved, not reset, deleted or silently included in this checkpoint.
 
-Evidence -- relative to this directory
---------------------------------------
-Latest result + whole closed archive/manifest/verifier:
- benchmarks/qwen38-bf16-deferred-full-physical-20261106.txt
- benchmarks/qwen38-bf16-deferred-full-physical-20261106/verify_evidence.py
-Faster earlier measurements (no new baseline run):
- benchmarks/qwen38-vector-q4-full-card-20261104.txt
- benchmarks/qwen38-fixed-config-full-physical-20261105.txt
-Previous BF16 baseline:
- benchmarks/qwen38-bf16-pair-issue-full-physical-20261106.txt
-Exact local qualification scopes,not themselves physical speed proof:
- benchmarks/qwen38-bf16-deferred-native-offboard-20261106.txt
- benchmarks/qwen38-bf16-deferred-parent-20261106.txt
-Conditional operation/traffic budget,NOT a demonstrated hardware limit:
- benchmarks/qwen38-performance-budget-20261106.txt
-NEW factored-code/output-affine prerequisite,NOT a working matrix kernel:
- benchmarks/qwen38-factored-q4-arithmetic-offboard-20261106.txt
+Evidence (relative to tools/pioneer)
+------------------------------------
+
+Best real model: benchmarks/qwen38-vector-q4-full-card-20261104.txt
+Latest real model: benchmarks/qwen38-bf16-deferred-full-physical-20261106.txt
+Conditional budget, NOT a card limit or achieved rate:
+  benchmarks/qwen38-performance-budget-20261106.txt
+New arithmetic, software-model tests only:
+  benchmarks/qwen38-factored-q4-arithmetic-offboard-20261106.txt
+New packing/dot/sum, software-model tests only:
+  benchmarks/qwen38-factored-q4-tile-offboard-20261106.txt

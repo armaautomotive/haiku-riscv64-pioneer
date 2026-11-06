@@ -1,0 +1,135 @@
+Factored Q4 packing / native dot / input sum: LOCAL checkpoint
+==============================================================
+
+November 6, 2026. Source base 7c3c2429e71573ba6ac2d6a2159b673c1f6063f1.
+This is an unfinished component, NOT a new installed driver, complete Q4
+operator, hardware benchmark, model-quality result or tokens/sec gain.
+No Pioneer/model/cache/SSH/Assistant/power access in this checkpoint.
+
+Why this code exists
+---------------------
+
+The proposed algorithm computes dot products of original unsigned Q4
+codes using native BFP8, then corrects outputs with original scale/minimum
+metadata and the input sum. This is a DIFFERENT operation order from old
+per-weight BF16 rounding. Full-model quality is not established.
+
+The arithmetic prerequisite was checkpointed separately. This component
+connects original packed bytes through vector extraction, integer PACK,
+temporary L1 tile and native matrix instructions to real dot/input-sum
+results in the strict SOFTWARE instruction model. It does NOT yet connect
+original metadata and final affine correction or accumulate the full K.
+
+Implemented
+-------------
+
+PioneerQ38Q4FactoredTile.h and blackhole_q38_q4_factored_tile.cpp produce
+BUILD-only functions, not a native owner/returning worker/Work selection.
+Original byte-major panels remain at L1 0x90000 and input at 0x96000.
+New temporary native-code/ones tiles at 0x88000/0x88800 require a new
+explicit memory-ownership journal before native use.
+
+Raw UINT8 UNPACK populates physical Dst without dummy source publication.
+Two SFPU bit operations extract q*8; INT8 store and PACK preserve those
+magnitude bytes. Exponent 130 represents q exactly for q in 0..15.
+Only computational constants/headers are scalar-written. No scalar
+learned-weight/input reads or host-supplied dot/input-sum are permitted.
+
+PACK uses 16 four-row groups, Last on the final group, never Flush.
+The explicit 0xa210181e wait includes PACK, unlike generic 0xa2101816.
+Global destination-format override is explicitly INT8 during PACK and
+restored to FP32 for matrices. Shared PACK/UNPACK config words are restored.
+The existing input-major layout requires no within-face transpose here.
+
+Each group executes a genuine ones-tile matrix, reads its completed sum
+from on-card destination MMIO, then executes the packed-code matrix.
+The latter leaves qdot in Dst rows 32/40. Both source banks retain their
+real publication/consumption history across all eight groups.
+
+Two fidelity phases are used ONLY because q<=15/ones have at most four
+significant bits; arbitrary BFP8 weights are not granted this shortcut.
+The same packed tiles/inputs also pass a separate four-phase control.
+This instruction-model evidence is not a physical hardware guarantee.
+
+Tests actually closed
+-----------------------
+
+Final working-tree suite session 99892: actual exit 0.
+Final clean-export suite session 76620: actual exit 0.
+Werror, ASan/UBSan, ffp-contract=off. Whole stdout byte-identical,
+stderr empty, compiled tile binary byte-identical. All 61 consumed project
+sources match. Clean export excludes the nine pre-existing dirty paths
+and unrelated WIP. Exact source pins and exits are in the sibling archive.
+
+Host chain: 256 groups / 8192 qdot words from original packed bytes;
+input sums are produced by actual modeled matrix instructions.
+4096 qdot words plus sums match the full four-phase schedule over the
+same tiles/inputs, including normal BF16 inputs across exponents and zero.
+23 missing producer/store/PACK/wait/Last/flip/format or illegal-Flush
+cases refuse acceptance; two wrong-transpose/missing-phase controls alter
+the numerical result as expected. Invalid selectors cause zero IO.
+
+Actual linked RV32 functions run through the UNCHANGED strict Step decoder:
+64 groups / 2048 qdot words; only permitted completed sum MMIO reads,
+ABI/store bounds checked. 20 bytes of touched stack and 83744 guest steps
+are component-test observations, NOT native whole-kernel stack proof.
+Tile text 3636 bytes, SHA-256:
+ba0e97f1161ac3d3287bc2228a7713beaa01b6aad746c1611ea7d30b2ebca18d
+Actual source role selectors: one positive, 23 refusals.
+
+The shared model's RawPublishesLast hook defaults to its old behavior.
+The old 16-job pipeline regression passes. Builder --tile is opt-in;
+the default arithmetic probe remains 144 bytes, SHA-256:
+455c60867c618023d894f10ad2e9a74d8a88d0f512dcd9ce9b2eae80ef46cef5
+
+Audit correction / limits
+--------------------------
+
+Earlier main-final/clean-final suites exited 0 but were superseded:
+the first model omitted the global destination-format override, which
+would override local integer PACK format. Code now selects the integer
+override explicitly; the model decodes it independently and a new negative
+case rejects the old setting. No hardware ran this code.
+
+Earlier corrected logs had complete PASS output, but their original
+runner handles were not retained across context; actual exits are not
+asserted from those logs. A process-list check confirmed those runners
+absent before the final main/clean suites above were launched and their
+actual exit results retained. No quiet/live job was blindly restarted.
+
+The fixture reuses the existing physical Dst/UNPACK/FPU observer, adding
+only the new integer PACK subset. It is not a new whole-card emulator.
+Software models can miss hardware behavior; native tests remain required.
+No equality to the old BF16/GGML operation order, full-model quality,
+hardware utilization, attainable speed or 20 tokens/sec is claimed.
+
+Next: checkpoint 2 in P100A_WORK_PLAN.txt
+-----------------------------------------
+
+Complete original metadata/output affine and full-K accumulation, then
+a bounded returning worker with explicit native ownership. Validate and
+time ONE complete representative old/new matrix job on the real card.
+Do not substitute further component tests for that physical comparison.
+Latest model result remains 0.082247 tokens/sec; best remains 0.172817.
+The overall performance goal stays active and unachieved.
+
+Reproduce LOCAL tests from repository root (fresh absolute output path)
+-----------------------------------------------------------------------
+
+sh tools/pioneer/tests/run_pioneer_q38_q4_factored_tile_tests.sh \
+ /Volumes/HaikuBuildLocal/generated.riscv64 /private/tmp/fresh-factored-tile-run
+
+The command does not contact or launch code on the Pioneer.
+Sibling archive saves source pins, actual exits, whole logs, build argv,
+disassembly and symbols, not weights, model payloads or executable binaries.
+
+Instruction/config references used for the implementation audit
+----------------------------------------------------------------
+
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/PACR.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/BlackholeA0/TensixTile/TensixCoprocessor/STALLWAIT.md
+https://github.com/tenstorrent/tt-isa-documentation/blob/main/WormholeB0/TensixTile/TensixCoprocessor/Packers/FormatConversion.md
+https://raw.githubusercontent.com/tenstorrent/tt-metal/81989dcdb8f9b340c932ae7a71a346f4f08703eb/tt_metal/hw/inc/blackhole/cfg_defines.h
+https://raw.githubusercontent.com/tenstorrent/tt-metal/81989dcdb8f9b340c932ae7a71a346f4f08703eb/tt_metal/hw/inc/blackhole/tensix_types.h
+Config/type definitions were audited at the same 81989dcdb source pin as
+the existing component; downloaded vendor files remain outside the repo.

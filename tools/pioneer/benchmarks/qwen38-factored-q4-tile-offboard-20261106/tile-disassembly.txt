@@ -1,0 +1,924 @@
+
+/private/tmp/pioneer-q38-factored-pack.XPV7fmAU/main-checkpoint/compiled/operand.elf:     file format elf32-littleriscv
+
+
+Disassembly of section .text:
+
+00070000 <pioneer_q4_factored_tile_fault>:
+   70000:	ff010113          	add	sp,sp,-16
+   70004:	00812623          	sw	s0,12(sp)
+   70008:	01010413          	add	s0,sp,16
+   7000c:	10500073          	wfi
+   70010:	10500073          	wfi
+   70014:	ff9ff06f          	j	7000c <pioneer_q4_factored_tile_fault+0xc>
+
+00070018 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0>:
+   70018:	fffff7b7          	lui	a5,0xfffff
+   7001c:	7ff78793          	add	a5,a5,2047 # fffff7ff <__global_pointer$+0xfff8d1cb>
+   70020:	00f577b3          	and	a5,a0,a5
+   70024:	00088737          	lui	a4,0x88
+   70028:	00e78663          	beq	a5,a4,70034 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x1c>
+   7002c:	00000513          	li	a0,0
+   70030:	00008067          	ret
+   70034:	00700793          	li	a5,7
+   70038:	00050613          	mv	a2,a0
+   7003c:	00000513          	li	a0,0
+   70040:	00b7f463          	bgeu	a5,a1,70048 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x30>
+   70044:	00008067          	ret
+   70048:	c8140012          	.word	0xc8140012
+   7004c:	ffe006b7          	lui	a3,0xffe00
+   70050:	0e06ae23          	sw	zero,252(a3) # ffe000fc <__global_pointer$+0xffd8dac8>
+   70054:	0fc6a783          	lw	a5,252(a3)
+   70058:	0fc68693          	add	a3,a3,252
+   7005c:	0ff0000f          	fence
+   70060:	8840605a          	.word	0x8840605a
+   70064:	140005f9          	.word	0x140005f9
+   70068:	000f47b7          	lui	a5,0xf4
+   7006c:	24078793          	add	a5,a5,576 # f4240 <__global_pointer$+0x81c0c>
+   70070:	00c0006f          	j	7007c <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x64>
+   70074:	fff78793          	add	a5,a5,-1
+   70078:	30078e63          	beqz	a5,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   7007c:	0006a703          	lw	a4,0(a3)
+   70080:	fe070ae3          	beqz	a4,70074 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x5c>
+   70084:	0ff0000f          	fence
+   70088:	c8750002          	.word	0xc8750002
+   7008c:	000047b7          	lui	a5,0x4
+   70090:	ffef0737          	lui	a4,0xffef0
+   70094:	2b678793          	add	a5,a5,694 # 42b6 <pioneer_q4_factored_tile_fault-0x6bd4a>
+   70098:	00f72023          	sw	a5,0(a4) # ffef0000 <__global_pointer$+0xffe7d9cc>
+   7009c:	00072703          	lw	a4,0(a4)
+   700a0:	2ef71a63          	bne	a4,a5,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   700a4:	ffef07b7          	lui	a5,0xffef0
+   700a8:	60ac0737          	lui	a4,0x60ac0
+   700ac:	00e7a223          	sw	a4,4(a5) # ffef0004 <__global_pointer$+0xffe7d9d0>
+   700b0:	00478793          	add	a5,a5,4
+   700b4:	0007a783          	lw	a5,0(a5)
+   700b8:	2ce79e63          	bne	a5,a4,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   700bc:	010007b7          	lui	a5,0x1000
+   700c0:	ffef0737          	lui	a4,0xffef0
+   700c4:	01678793          	add	a5,a5,22 # 1000016 <__global_pointer$+0xf8d9e2>
+   700c8:	10f72023          	sw	a5,256(a4) # ffef0100 <__global_pointer$+0xffe7dacc>
+   700cc:	10070713          	add	a4,a4,256
+   700d0:	00072703          	lw	a4,0(a4)
+   700d4:	2cf71063          	bne	a4,a5,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   700d8:	000407b7          	lui	a5,0x40
+   700dc:	ffef0737          	lui	a4,0xffef0
+   700e0:	00178793          	add	a5,a5,1 # 40001 <pioneer_q4_factored_tile_fault-0x2ffff>
+   700e4:	10f72223          	sw	a5,260(a4) # ffef0104 <__global_pointer$+0xffe7dad0>
+   700e8:	10470713          	add	a4,a4,260
+   700ec:	00072703          	lw	a4,0(a4)
+   700f0:	2af71263          	bne	a4,a5,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   700f4:	ffef07b7          	lui	a5,0xffef0
+   700f8:	00100713          	li	a4,1
+   700fc:	10e7a423          	sw	a4,264(a5) # ffef0108 <__global_pointer$+0xffe7dad4>
+   70100:	10878793          	add	a5,a5,264
+   70104:	0007a783          	lw	a5,0(a5)
+   70108:	28e79663          	bne	a5,a4,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   7010c:	ffef07b7          	lui	a5,0xffef0
+   70110:	1007a623          	sw	zero,268(a5) # ffef010c <__global_pointer$+0xffe7dad8>
+   70114:	10c7a703          	lw	a4,268(a5)
+   70118:	26071e63          	bnez	a4,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   7011c:	00800713          	li	a4,8
+   70120:	10e7ac23          	sw	a4,280(a5)
+   70124:	11878793          	add	a5,a5,280
+   70128:	0007a783          	lw	a5,0(a5)
+   7012c:	26e79463          	bne	a5,a4,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   70130:	ffef07b7          	lui	a5,0xffef0
+   70134:	1007ae23          	sw	zero,284(a5) # ffef011c <__global_pointer$+0xffe7dae8>
+   70138:	11c7a703          	lw	a4,284(a5)
+   7013c:	24071c63          	bnez	a4,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   70140:	02600713          	li	a4,38
+   70144:	12e7a023          	sw	a4,288(a5)
+   70148:	12078793          	add	a5,a5,288
+   7014c:	0007a783          	lw	a5,0(a5)
+   70150:	24e79263          	bne	a5,a4,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   70154:	000f07b7          	lui	a5,0xf0
+   70158:	ffef0737          	lui	a4,0xffef0
+   7015c:	00f78793          	add	a5,a5,15 # f000f <__global_pointer$+0x7d9db>
+   70160:	12f72223          	sw	a5,292(a4) # ffef0124 <__global_pointer$+0xffe7daf0>
+   70164:	12472683          	lw	a3,292(a4)
+   70168:	22f69663          	bne	a3,a5,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   7016c:	00465613          	srl	a2,a2,0x4
+   70170:	ffef07b7          	lui	a5,0xffef0
+   70174:	fff60613          	add	a2,a2,-1
+   70178:	12c7a823          	sw	a2,304(a5) # ffef0130 <__global_pointer$+0xffe7dafc>
+   7017c:	13078793          	add	a5,a5,304
+   70180:	0007a783          	lw	a5,0(a5)
+   70184:	20f61863          	bne	a2,a5,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   70188:	004007b7          	lui	a5,0x400
+   7018c:	ffef0737          	lui	a4,0xffef0
+   70190:	04078793          	add	a5,a5,64 # 400040 <__global_pointer$+0x38da0c>
+   70194:	14f72823          	sw	a5,336(a4) # ffef0150 <__global_pointer$+0xffe7db1c>
+   70198:	15070713          	add	a4,a4,336
+   7019c:	00072703          	lw	a4,0(a4)
+   701a0:	1ef71a63          	bne	a4,a5,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   701a4:	010007b7          	lui	a5,0x1000
+   701a8:	ffef0737          	lui	a4,0xffef0
+   701ac:	10078793          	add	a5,a5,256 # 1000100 <__global_pointer$+0xf8dacc>
+   701b0:	14f72c23          	sw	a5,344(a4) # ffef0158 <__global_pointer$+0xffe7db24>
+   701b4:	15870713          	add	a4,a4,344
+   701b8:	00072703          	lw	a4,0(a4)
+   701bc:	1cf71c63          	bne	a4,a5,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   701c0:	002007b7          	lui	a5,0x200
+   701c4:	ffef0737          	lui	a4,0xffef0
+   701c8:	01578793          	add	a5,a5,21 # 200015 <__global_pointer$+0x18d9e1>
+   701cc:	1cf72023          	sw	a5,448(a4) # ffef01c0 <__global_pointer$+0xffe7db8c>
+   701d0:	1c070713          	add	a4,a4,448
+   701d4:	00072703          	lw	a4,0(a4)
+   701d8:	1af71e63          	bne	a4,a5,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   701dc:	000107b7          	lui	a5,0x10
+   701e0:	ffef0737          	lui	a4,0xffef0
+   701e4:	00178793          	add	a5,a5,1 # 10001 <pioneer_q4_factored_tile_fault-0x5ffff>
+   701e8:	1cf72223          	sw	a5,452(a4) # ffef01c4 <__global_pointer$+0xffe7db90>
+   701ec:	1c470713          	add	a4,a4,452
+   701f0:	00072703          	lw	a4,0(a4)
+   701f4:	1af71063          	bne	a4,a5,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   701f8:	ffef07b7          	lui	a5,0xffef0
+   701fc:	00100713          	li	a4,1
+   70200:	1ce7a423          	sw	a4,456(a5) # ffef01c8 <__global_pointer$+0xffe7db94>
+   70204:	1c87a803          	lw	a6,456(a5)
+   70208:	18e81663          	bne	a6,a4,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   7020c:	ffef07b7          	lui	a5,0xffef0
+   70210:	1c07a623          	sw	zero,460(a5) # ffef01cc <__global_pointer$+0xffe7db98>
+   70214:	1cc7a603          	lw	a2,460(a5)
+   70218:	16061e63          	bnez	a2,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   7021c:	02500713          	li	a4,37
+   70220:	1ee7a023          	sw	a4,480(a5)
+   70224:	1e078793          	add	a5,a5,480
+   70228:	0007a783          	lw	a5,0(a5)
+   7022c:	16e79463          	bne	a5,a4,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   70230:	ffef07b7          	lui	a5,0xffef0
+   70234:	1ed7a223          	sw	a3,484(a5) # ffef01e4 <__global_pointer$+0xffe7dbb0>
+   70238:	1e47a703          	lw	a4,484(a5)
+   7023c:	14d71c63          	bne	a4,a3,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   70240:	000017b7          	lui	a5,0x1
+   70244:	2c078793          	add	a5,a5,704 # 12c0 <pioneer_q4_factored_tile_fault-0x6ed40>
+   70248:	00f587b3          	add	a5,a1,a5
+   7024c:	00779793          	sll	a5,a5,0x7
+   70250:	0047d793          	srl	a5,a5,0x4
+   70254:	ffef0737          	lui	a4,0xffef0
+   70258:	fff78793          	add	a5,a5,-1
+   7025c:	1ef72823          	sw	a5,496(a4) # ffef01f0 <__global_pointer$+0xffe7dbbc>
+   70260:	1f070713          	add	a4,a4,496
+   70264:	00072703          	lw	a4,0(a4)
+   70268:	12e79663          	bne	a5,a4,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   7026c:	dc00003c          	.word	0xdc00003c
+   70270:	40600000          	.word	0x40600000
+   70274:	78bff001          	.word	0x78bff001
+   70278:	7901f001          	.word	0x7901f001
+   7027c:	4580002d          	.word	0x4580002d
+   70280:	5180003d          	.word	0x5180003d
+   70284:	08000305          	.word	0x08000305
+   70288:	0a000305          	.word	0x0a000305
+   7028c:	ffe006b7          	lui	a3,0xffe00
+   70290:	0e06ae23          	sw	zero,252(a3) # ffe000fc <__global_pointer$+0xffd8dac8>
+   70294:	0fc6a783          	lw	a5,252(a3)
+   70298:	0fc68693          	add	a3,a3,252
+   7029c:	0ff0000f          	fence
+   702a0:	8840605a          	.word	0x8840605a
+   702a4:	140005f9          	.word	0x140005f9
+   702a8:	000f47b7          	lui	a5,0xf4
+   702ac:	24078793          	add	a5,a5,576 # f4240 <__global_pointer$+0x81c0c>
+   702b0:	00c0006f          	j	702bc <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x2a4>
+   702b4:	fff78793          	add	a5,a5,-1
+   702b8:	0c078e63          	beqz	a5,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   702bc:	0006a703          	lw	a4,0(a3)
+   702c0:	fe070ae3          	beqz	a4,702b4 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x29c>
+   702c4:	0ff0000f          	fence
+   702c8:	370006b7          	lui	a3,0x37000
+   702cc:	ffe407b7          	lui	a5,0xffe40
+   702d0:	00a68693          	add	a3,a3,10 # 3700000a <__global_pointer$+0x36f8d9d6>
+   702d4:	260845b7          	lui	a1,0x26084
+   702d8:	00d7a023          	sw	a3,0(a5) # ffe40000 <__global_pointer$+0xffdcd9cc>
+   702dc:	02058593          	add	a1,a1,32 # 26084020 <__global_pointer$+0x260119ec>
+   702e0:	26084737          	lui	a4,0x26084
+   702e4:	37000537          	lui	a0,0x37000
+   702e8:	00b7a023          	sw	a1,0(a5)
+   702ec:	02870713          	add	a4,a4,40 # 26084028 <__global_pointer$+0x260119f4>
+   702f0:	40a50513          	add	a0,a0,1034 # 3700040a <__global_pointer$+0x36f8ddd6>
+   702f4:	00100893          	li	a7,1
+   702f8:	00b7a023          	sw	a1,0(a5)
+   702fc:	dc100804          	.word	0xdc100804
+   70300:	dc100804          	.word	0xdc100804
+   70304:	0a060463          	beqz	a2,703ac <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x394>
+   70308:	00d7a023          	sw	a3,0(a5)
+   7030c:	00e7a023          	sw	a4,0(a5)
+   70310:	00e7a023          	sw	a4,0(a5)
+   70314:	dc100804          	.word	0xdc100804
+   70318:	dc100804          	.word	0xdc100804
+   7031c:	00300613          	li	a2,3
+   70320:	00a7a023          	sw	a0,0(a5)
+   70324:	07160063          	beq	a2,a7,70384 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x36c>
+   70328:	260846b7          	lui	a3,0x26084
+   7032c:	02868693          	add	a3,a3,40 # 26084028 <__global_pointer$+0x260119f4>
+   70330:	26c84737          	lui	a4,0x26c84
+   70334:	00d7a023          	sw	a3,0(a5)
+   70338:	02870713          	add	a4,a4,40 # 26c84028 <__global_pointer$+0x26c119f4>
+   7033c:	ffe006b7          	lui	a3,0xffe00
+   70340:	00e7a023          	sw	a4,0(a5)
+   70344:	0e06ae23          	sw	zero,252(a3) # ffe000fc <__global_pointer$+0xffd8dac8>
+   70348:	0fc6a783          	lw	a5,252(a3)
+   7034c:	0fc68693          	add	a3,a3,252
+   70350:	0ff0000f          	fence
+   70354:	8840605a          	.word	0x8840605a
+   70358:	140005f9          	.word	0x140005f9
+   7035c:	000f47b7          	lui	a5,0xf4
+   70360:	24078793          	add	a5,a5,576 # f4240 <__global_pointer$+0x81c0c>
+   70364:	00c0006f          	j	70370 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x358>
+   70368:	fff78793          	add	a5,a5,-1
+   7036c:	02078463          	beqz	a5,70394 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x37c>
+   70370:	0006a703          	lw	a4,0(a3)
+   70374:	fe070ae3          	beqz	a4,70368 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x350>
+   70378:	0ff0000f          	fence
+   7037c:	00100513          	li	a0,1
+   70380:	00008067          	ret
+   70384:	26084337          	lui	t1,0x26084
+   70388:	02030313          	add	t1,t1,32 # 26084020 <__global_pointer$+0x260119ec>
+   7038c:	0067a023          	sw	t1,0(a5)
+   70390:	f69ff06f          	j	702f8 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x2e0>
+   70394:	ff010113          	add	sp,sp,-16
+   70398:	00812423          	sw	s0,8(sp)
+   7039c:	00112623          	sw	ra,12(sp)
+   703a0:	01010413          	add	s0,sp,16
+   703a4:	00000097          	auipc	ra,0x0
+   703a8:	c5c080e7          	jalr	-932(ra) # 70000 <pioneer_q4_factored_tile_fault>
+   703ac:	00080613          	mv	a2,a6
+   703b0:	f71ff06f          	j	70320 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0+0x308>
+
+000703b4 <pioneer_q4_factored_tile_constants>:
+   703b4:	ff010113          	add	sp,sp,-16
+   703b8:	00812623          	sw	s0,12(sp)
+   703bc:	01010413          	add	s0,sp,16
+   703c0:	00088537          	lui	a0,0x88
+   703c4:	fe052823          	sw	zero,-16(a0) # 87ff0 <__global_pointer$+0x159bc>
+   703c8:	000885b7          	lui	a1,0x88
+   703cc:	fe05aa23          	sw	zero,-12(a1) # 87ff4 <__global_pointer$+0x159c0>
+   703d0:	00088637          	lui	a2,0x88
+   703d4:	000887b7          	lui	a5,0x88
+   703d8:	828286b7          	lui	a3,0x82828
+   703dc:	00088737          	lui	a4,0x88
+   703e0:	fe062c23          	sw	zero,-8(a2) # 87ff8 <__global_pointer$+0x159c4>
+   703e4:	fe07ae23          	sw	zero,-4(a5) # 87ffc <__global_pointer$+0x159c8>
+   703e8:	28268693          	add	a3,a3,642 # 82828282 <__global_pointer$+0x827b5c4e>
+   703ec:	000887b7          	lui	a5,0x88
+   703f0:	04070713          	add	a4,a4,64 # 88040 <__global_pointer$+0x15a0c>
+   703f4:	00d7a023          	sw	a3,0(a5) # 88000 <__global_pointer$+0x159cc>
+   703f8:	00478793          	add	a5,a5,4
+   703fc:	fee79ce3          	bne	a5,a4,703f4 <pioneer_q4_factored_tile_constants+0x40>
+   70400:	00088837          	lui	a6,0x88
+   70404:	7e082823          	sw	zero,2032(a6) # 887f0 <__global_pointer$+0x161bc>
+   70408:	00088537          	lui	a0,0x88
+   7040c:	7e052a23          	sw	zero,2036(a0) # 887f4 <__global_pointer$+0x161c0>
+   70410:	000885b7          	lui	a1,0x88
+   70414:	00088637          	lui	a2,0x88
+   70418:	000897b7          	lui	a5,0x89
+   7041c:	828286b7          	lui	a3,0x82828
+   70420:	00089737          	lui	a4,0x89
+   70424:	7e05ac23          	sw	zero,2040(a1) # 887f8 <__global_pointer$+0x161c4>
+   70428:	7e062e23          	sw	zero,2044(a2) # 887fc <__global_pointer$+0x161c8>
+   7042c:	80078793          	add	a5,a5,-2048 # 88800 <__global_pointer$+0x161cc>
+   70430:	28268693          	add	a3,a3,642 # 82828282 <__global_pointer$+0x827b5c4e>
+   70434:	84070713          	add	a4,a4,-1984 # 88840 <__global_pointer$+0x1620c>
+   70438:	00d7a023          	sw	a3,0(a5)
+   7043c:	00478793          	add	a5,a5,4
+   70440:	fee79ce3          	bne	a5,a4,70438 <pioneer_q4_factored_tile_constants+0x84>
+   70444:	080816b7          	lui	a3,0x8081
+   70448:	00089737          	lui	a4,0x89
+   7044c:	80868693          	add	a3,a3,-2040 # 8080808 <__global_pointer$+0x800e1d4>
+   70450:	c4070713          	add	a4,a4,-960 # 88c40 <__global_pointer$+0x1660c>
+   70454:	00d7a023          	sw	a3,0(a5)
+   70458:	00478793          	add	a5,a5,4
+   7045c:	fee79ce3          	bne	a5,a4,70454 <pioneer_q4_factored_tile_constants+0xa0>
+   70460:	00c12403          	lw	s0,12(sp)
+   70464:	01010113          	add	sp,sp,16
+   70468:	00008067          	ret
+
+0007046c <pioneer_q4_factored_tile_begin>:
+   7046c:	c8000002          	.word	0xc8000002
+   70470:	ffe006b7          	lui	a3,0xffe00
+   70474:	0e06ae23          	sw	zero,252(a3) # ffe000fc <__global_pointer$+0xffd8dac8>
+   70478:	0fc6a783          	lw	a5,252(a3)
+   7047c:	0fc68693          	add	a3,a3,252
+   70480:	0ff0000f          	fence
+   70484:	8840605a          	.word	0x8840605a
+   70488:	140005f9          	.word	0x140005f9
+   7048c:	000f47b7          	lui	a5,0xf4
+   70490:	24078793          	add	a5,a5,576 # f4240 <__global_pointer$+0x81c0c>
+   70494:	00c0006f          	j	704a0 <pioneer_q4_factored_tile_begin+0x34>
+   70498:	fff78793          	add	a5,a5,-1
+   7049c:	3e078663          	beqz	a5,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   704a0:	0006a703          	lw	a4,0(a3)
+   704a4:	fe070ae3          	beqz	a4,70498 <pioneer_q4_factored_tile_begin+0x2c>
+   704a8:	0ff0000f          	fence
+   704ac:	000107b7          	lui	a5,0x10
+   704b0:	b2000537          	lui	a0,0xb2000
+   704b4:	ffe405b7          	lui	a1,0xffe40
+   704b8:	00010637          	lui	a2,0x10
+   704bc:	004406b7          	lui	a3,0x440
+   704c0:	00a7e733          	or	a4,a5,a0
+   704c4:	00e5a023          	sw	a4,0(a1) # ffe40000 <__global_pointer$+0xffdcd9cc>
+   704c8:	00c787b3          	add	a5,a5,a2
+   704cc:	fed79ae3          	bne	a5,a3,704c0 <pioneer_q4_factored_tile_begin+0x54>
+   704d0:	c8080006          	.word	0xc8080006
+   704d4:	c80c0006          	.word	0xc80c0006
+   704d8:	c8140012          	.word	0xc8140012
+   704dc:	c8748002          	.word	0xc8748002
+   704e0:	ffe006b7          	lui	a3,0xffe00
+   704e4:	0e06ae23          	sw	zero,252(a3) # ffe000fc <__global_pointer$+0xffd8dac8>
+   704e8:	0fc6a783          	lw	a5,252(a3)
+   704ec:	0fc68693          	add	a3,a3,252
+   704f0:	0ff0000f          	fence
+   704f4:	8840605a          	.word	0x8840605a
+   704f8:	140005f9          	.word	0x140005f9
+   704fc:	000f47b7          	lui	a5,0xf4
+   70500:	24078793          	add	a5,a5,576 # f4240 <__global_pointer$+0x81c0c>
+   70504:	00c0006f          	j	70510 <pioneer_q4_factored_tile_begin+0xa4>
+   70508:	fff78793          	add	a5,a5,-1
+   7050c:	36078e63          	beqz	a5,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   70510:	0006a703          	lw	a4,0(a3)
+   70514:	fe070ae3          	beqz	a4,70508 <pioneer_q4_factored_tile_begin+0x9c>
+   70518:	0ff0000f          	fence
+   7051c:	000047b7          	lui	a5,0x4
+   70520:	ffef0737          	lui	a4,0xffef0
+   70524:	2b678793          	add	a5,a5,694 # 42b6 <pioneer_q4_factored_tile_fault-0x6bd4a>
+   70528:	00f72023          	sw	a5,0(a4) # ffef0000 <__global_pointer$+0xffe7d9cc>
+   7052c:	00072703          	lw	a4,0(a4)
+   70530:	34f71c63          	bne	a4,a5,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   70534:	ffef07b7          	lui	a5,0xffef0
+   70538:	60ac0737          	lui	a4,0x60ac0
+   7053c:	00e7a223          	sw	a4,4(a5) # ffef0004 <__global_pointer$+0xffe7d9d0>
+   70540:	00478793          	add	a5,a5,4
+   70544:	0007a783          	lw	a5,0(a5)
+   70548:	34e79063          	bne	a5,a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   7054c:	ffef07b7          	lui	a5,0xffef0
+   70550:	0007a423          	sw	zero,8(a5) # ffef0008 <__global_pointer$+0xffe7d9d4>
+   70554:	0087a703          	lw	a4,8(a5)
+   70558:	32071863          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   7055c:	0007a623          	sw	zero,12(a5)
+   70560:	00c7a703          	lw	a4,12(a5)
+   70564:	32071263          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   70568:	0007ac23          	sw	zero,24(a5)
+   7056c:	0187a703          	lw	a4,24(a5)
+   70570:	30071c63          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   70574:	0007ae23          	sw	zero,28(a5)
+   70578:	01c7a703          	lw	a4,28(a5)
+   7057c:	30071663          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   70580:	3607a823          	sw	zero,880(a5)
+   70584:	3707a703          	lw	a4,880(a5)
+   70588:	30071063          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   7058c:	0c07a223          	sw	zero,196(a5)
+   70590:	0c47a703          	lw	a4,196(a5)
+   70594:	2e071a63          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   70598:	10000713          	li	a4,256
+   7059c:	0ce7a423          	sw	a4,200(a5)
+   705a0:	0c878793          	add	a5,a5,200
+   705a4:	0007a783          	lw	a5,0(a5)
+   705a8:	2ee79063          	bne	a5,a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   705ac:	ffef07b7          	lui	a5,0xffef0
+   705b0:	0e07a023          	sw	zero,224(a5) # ffef00e0 <__global_pointer$+0xffe7daac>
+   705b4:	0e07a703          	lw	a4,224(a5)
+   705b8:	2c071863          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   705bc:	0e07a223          	sw	zero,228(a5)
+   705c0:	0e47a703          	lw	a4,228(a5)
+   705c4:	2c071263          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   705c8:	0e07a423          	sw	zero,232(a5)
+   705cc:	0e87a703          	lw	a4,232(a5)
+   705d0:	2a071c63          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   705d4:	0e07a623          	sw	zero,236(a5)
+   705d8:	0ec7a703          	lw	a4,236(a5)
+   705dc:	2a071663          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   705e0:	0e07aa23          	sw	zero,244(a5)
+   705e4:	0f47a703          	lw	a4,244(a5)
+   705e8:	2a071063          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   705ec:	0e07ac23          	sw	zero,248(a5)
+   705f0:	0f87a703          	lw	a4,248(a5)
+   705f4:	28071a63          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   705f8:	010007b7          	lui	a5,0x1000
+   705fc:	ffef0737          	lui	a4,0xffef0
+   70600:	01678793          	add	a5,a5,22 # 1000016 <__global_pointer$+0xf8d9e2>
+   70604:	10f72023          	sw	a5,256(a4) # ffef0100 <__global_pointer$+0xffe7dacc>
+   70608:	10070713          	add	a4,a4,256
+   7060c:	00072703          	lw	a4,0(a4)
+   70610:	26f71c63          	bne	a4,a5,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   70614:	000407b7          	lui	a5,0x40
+   70618:	ffef0737          	lui	a4,0xffef0
+   7061c:	00178793          	add	a5,a5,1 # 40001 <pioneer_q4_factored_tile_fault-0x2ffff>
+   70620:	10f72223          	sw	a5,260(a4) # ffef0104 <__global_pointer$+0xffe7dad0>
+   70624:	10470713          	add	a4,a4,260
+   70628:	00072703          	lw	a4,0(a4)
+   7062c:	24f71e63          	bne	a4,a5,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   70630:	ffef07b7          	lui	a5,0xffef0
+   70634:	00100713          	li	a4,1
+   70638:	10e7a423          	sw	a4,264(a5) # ffef0108 <__global_pointer$+0xffe7dad4>
+   7063c:	10878793          	add	a5,a5,264
+   70640:	0007a783          	lw	a5,0(a5)
+   70644:	24e79263          	bne	a5,a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   70648:	ffef07b7          	lui	a5,0xffef0
+   7064c:	1007a623          	sw	zero,268(a5) # ffef010c <__global_pointer$+0xffe7dad8>
+   70650:	10c7a703          	lw	a4,268(a5)
+   70654:	22071a63          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   70658:	00800713          	li	a4,8
+   7065c:	10e7ac23          	sw	a4,280(a5)
+   70660:	11878793          	add	a5,a5,280
+   70664:	0007a783          	lw	a5,0(a5)
+   70668:	22e79063          	bne	a5,a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   7066c:	ffef07b7          	lui	a5,0xffef0
+   70670:	1007ae23          	sw	zero,284(a5) # ffef011c <__global_pointer$+0xffe7dae8>
+   70674:	11c7a703          	lw	a4,284(a5)
+   70678:	20071863          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   7067c:	12600713          	li	a4,294
+   70680:	12e7a023          	sw	a4,288(a5)
+   70684:	12078793          	add	a5,a5,288
+   70688:	0007a783          	lw	a5,0(a5)
+   7068c:	1ee79e63          	bne	a5,a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   70690:	000f07b7          	lui	a5,0xf0
+   70694:	ffef0737          	lui	a4,0xffef0
+   70698:	00f78793          	add	a5,a5,15 # f000f <__global_pointer$+0x7d9db>
+   7069c:	12f72223          	sw	a5,292(a4) # ffef0124 <__global_pointer$+0xffe7daf0>
+   706a0:	12470713          	add	a4,a4,292
+   706a4:	00072703          	lw	a4,0(a4)
+   706a8:	1ef71063          	bne	a4,a5,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   706ac:	000187b7          	lui	a5,0x18
+   706b0:	ffef0737          	lui	a4,0xffef0
+   706b4:	fff78793          	add	a5,a5,-1 # 17fff <pioneer_q4_factored_tile_fault-0x58001>
+   706b8:	12f72423          	sw	a5,296(a4) # ffef0128 <__global_pointer$+0xffe7daf4>
+   706bc:	12870713          	add	a4,a4,296
+   706c0:	00072703          	lw	a4,0(a4)
+   706c4:	1cf71263          	bne	a4,a5,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   706c8:	ffef07b7          	lui	a5,0xffef0
+   706cc:	1207a623          	sw	zero,300(a5) # ffef012c <__global_pointer$+0xffe7daf8>
+   706d0:	12c7a703          	lw	a4,300(a5)
+   706d4:	1a071a63          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   706d8:	000097b7          	lui	a5,0x9
+   706dc:	ffef0737          	lui	a4,0xffef0
+   706e0:	fff78793          	add	a5,a5,-1 # 8fff <pioneer_q4_factored_tile_fault-0x67001>
+   706e4:	12f72823          	sw	a5,304(a4) # ffef0130 <__global_pointer$+0xffe7dafc>
+   706e8:	13070713          	add	a4,a4,304
+   706ec:	00072703          	lw	a4,0(a4)
+   706f0:	18f71c63          	bne	a4,a5,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   706f4:	004007b7          	lui	a5,0x400
+   706f8:	ffef0737          	lui	a4,0xffef0
+   706fc:	04078793          	add	a5,a5,64 # 400040 <__global_pointer$+0x38da0c>
+   70700:	14f72823          	sw	a5,336(a4) # ffef0150 <__global_pointer$+0xffe7db1c>
+   70704:	15070713          	add	a4,a4,336
+   70708:	00072703          	lw	a4,0(a4)
+   7070c:	16f71e63          	bne	a4,a5,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   70710:	010007b7          	lui	a5,0x1000
+   70714:	ffef0737          	lui	a4,0xffef0
+   70718:	10078793          	add	a5,a5,256 # 1000100 <__global_pointer$+0xf8dacc>
+   7071c:	14f72c23          	sw	a5,344(a4) # ffef0158 <__global_pointer$+0xffe7db24>
+   70720:	15870713          	add	a4,a4,344
+   70724:	00072703          	lw	a4,0(a4)
+   70728:	16f71063          	bne	a4,a5,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   7072c:	ffef07b7          	lui	a5,0xffef0
+   70730:	1607a823          	sw	zero,368(a5) # ffef0170 <__global_pointer$+0xffe7db3c>
+   70734:	1707a703          	lw	a4,368(a5)
+   70738:	14071863          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   7073c:	010007b7          	lui	a5,0x1000
+   70740:	ffef0737          	lui	a4,0xffef0
+   70744:	01578793          	add	a5,a5,21 # 1000015 <__global_pointer$+0xf8d9e1>
+   70748:	1cf72023          	sw	a5,448(a4) # ffef01c0 <__global_pointer$+0xffe7db8c>
+   7074c:	1c070713          	add	a4,a4,448
+   70750:	00072703          	lw	a4,0(a4)
+   70754:	12f71a63          	bne	a4,a5,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   70758:	000107b7          	lui	a5,0x10
+   7075c:	ffef0737          	lui	a4,0xffef0
+   70760:	00178793          	add	a5,a5,1 # 10001 <pioneer_q4_factored_tile_fault-0x5ffff>
+   70764:	1cf72223          	sw	a5,452(a4) # ffef01c4 <__global_pointer$+0xffe7db90>
+   70768:	1c470713          	add	a4,a4,452
+   7076c:	00072703          	lw	a4,0(a4)
+   70770:	10f71c63          	bne	a4,a5,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   70774:	ffef07b7          	lui	a5,0xffef0
+   70778:	00100713          	li	a4,1
+   7077c:	1ce7a423          	sw	a4,456(a5) # ffef01c8 <__global_pointer$+0xffe7db94>
+   70780:	1c878793          	add	a5,a5,456
+   70784:	0007a783          	lw	a5,0(a5)
+   70788:	10e79063          	bne	a5,a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   7078c:	ffef07b7          	lui	a5,0xffef0
+   70790:	1c07a623          	sw	zero,460(a5) # ffef01cc <__global_pointer$+0xffe7db98>
+   70794:	1cc7a703          	lw	a4,460(a5)
+   70798:	0e071863          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   7079c:	00800713          	li	a4,8
+   707a0:	1ce7ac23          	sw	a4,472(a5)
+   707a4:	1d878793          	add	a5,a5,472
+   707a8:	0007a783          	lw	a5,0(a5)
+   707ac:	0ce79e63          	bne	a5,a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   707b0:	ffef07b7          	lui	a5,0xffef0
+   707b4:	1c07ae23          	sw	zero,476(a5) # ffef01dc <__global_pointer$+0xffe7dba8>
+   707b8:	1dc7a703          	lw	a4,476(a5)
+   707bc:	0c071663          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   707c0:	02500713          	li	a4,37
+   707c4:	1ee7a023          	sw	a4,480(a5)
+   707c8:	1e078793          	add	a5,a5,480
+   707cc:	0007a783          	lw	a5,0(a5)
+   707d0:	0ae79c63          	bne	a5,a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   707d4:	000f07b7          	lui	a5,0xf0
+   707d8:	ffef0737          	lui	a4,0xffef0
+   707dc:	00f78793          	add	a5,a5,15 # f000f <__global_pointer$+0x7d9db>
+   707e0:	1ef72223          	sw	a5,484(a4) # ffef01e4 <__global_pointer$+0xffe7dbb0>
+   707e4:	1e470713          	add	a4,a4,484
+   707e8:	00072703          	lw	a4,0(a4)
+   707ec:	08f71e63          	bne	a4,a5,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   707f0:	000187b7          	lui	a5,0x18
+   707f4:	ffef0737          	lui	a4,0xffef0
+   707f8:	fff78793          	add	a5,a5,-1 # 17fff <pioneer_q4_factored_tile_fault-0x58001>
+   707fc:	1ef72423          	sw	a5,488(a4) # ffef01e8 <__global_pointer$+0xffe7dbb4>
+   70800:	1e870713          	add	a4,a4,488
+   70804:	00072703          	lw	a4,0(a4)
+   70808:	08f71063          	bne	a4,a5,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   7080c:	ffef07b7          	lui	a5,0xffef0
+   70810:	1e07a623          	sw	zero,492(a5) # ffef01ec <__global_pointer$+0xffe7dbb8>
+   70814:	1ec7a703          	lw	a4,492(a5)
+   70818:	06071863          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   7081c:	000097b7          	lui	a5,0x9
+   70820:	ffef0737          	lui	a4,0xffef0
+   70824:	0ff78793          	add	a5,a5,255 # 90ff <pioneer_q4_factored_tile_fault-0x66f01>
+   70828:	1ef72823          	sw	a5,496(a4) # ffef01f0 <__global_pointer$+0xffe7dbbc>
+   7082c:	1f070713          	add	a4,a4,496
+   70830:	00072703          	lw	a4,0(a4)
+   70834:	04f71a63          	bne	a4,a5,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   70838:	ffef07b7          	lui	a5,0xffef0
+   7083c:	2207a823          	sw	zero,560(a5) # ffef0230 <__global_pointer$+0xffe7dbfc>
+   70840:	2307a703          	lw	a4,560(a5)
+   70844:	04071263          	bnez	a4,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   70848:	ffe006b7          	lui	a3,0xffe00
+   7084c:	0e06ae23          	sw	zero,252(a3) # ffe000fc <__global_pointer$+0xffd8dac8>
+   70850:	0fc6a783          	lw	a5,252(a3)
+   70854:	0fc68693          	add	a3,a3,252
+   70858:	0ff0000f          	fence
+   7085c:	8840605a          	.word	0x8840605a
+   70860:	140005f9          	.word	0x140005f9
+   70864:	000f47b7          	lui	a5,0xf4
+   70868:	24078793          	add	a5,a5,576 # f4240 <__global_pointer$+0x81c0c>
+   7086c:	00c0006f          	j	70878 <pioneer_q4_factored_tile_begin+0x40c>
+   70870:	fff78793          	add	a5,a5,-1
+   70874:	00078a63          	beqz	a5,70888 <pioneer_q4_factored_tile_begin+0x41c>
+   70878:	0006a703          	lw	a4,0(a3)
+   7087c:	fe070ae3          	beqz	a4,70870 <pioneer_q4_factored_tile_begin+0x404>
+   70880:	0ff0000f          	fence
+   70884:	00008067          	ret
+   70888:	ff010113          	add	sp,sp,-16
+   7088c:	00812423          	sw	s0,8(sp)
+   70890:	00112623          	sw	ra,12(sp)
+   70894:	01010413          	add	s0,sp,16
+   70898:	fffff097          	auipc	ra,0xfffff
+   7089c:	768080e7          	jalr	1896(ra) # 70000 <pioneer_q4_factored_tile_fault>
+
+000708a0 <pioneer_q4_factored_tile_group>:
+   708a0:	fe010113          	add	sp,sp,-32
+   708a4:	00812c23          	sw	s0,24(sp)
+   708a8:	00112e23          	sw	ra,28(sp)
+   708ac:	01312623          	sw	s3,12(sp)
+   708b0:	02010413          	add	s0,sp,32
+   708b4:	00700793          	li	a5,7
+   708b8:	02a7f063          	bgeu	a5,a0,708d8 <pioneer_q4_factored_tile_group+0x38>
+   708bc:	01c12083          	lw	ra,28(sp)
+   708c0:	01812403          	lw	s0,24(sp)
+   708c4:	00000993          	li	s3,0
+   708c8:	00098513          	mv	a0,s3
+   708cc:	00c12983          	lw	s3,12(sp)
+   708d0:	02010113          	add	sp,sp,32
+   708d4:	00008067          	ret
+   708d8:	00912a23          	sw	s1,20(sp)
+   708dc:	01212823          	sw	s2,16(sp)
+   708e0:	00050493          	mv	s1,a0
+   708e4:	00058913          	mv	s2,a1
+   708e8:	dc00003c          	.word	0xdc00003c
+   708ec:	c8140002          	.word	0xc8140002
+   708f0:	ffe006b7          	lui	a3,0xffe00
+   708f4:	0e06ae23          	sw	zero,252(a3) # ffe000fc <__global_pointer$+0xffd8dac8>
+   708f8:	0fc6a783          	lw	a5,252(a3)
+   708fc:	0fc68693          	add	a3,a3,252
+   70900:	0ff0000f          	fence
+   70904:	8840605a          	.word	0x8840605a
+   70908:	140005f9          	.word	0x140005f9
+   7090c:	000f47b7          	lui	a5,0xf4
+   70910:	24078793          	add	a5,a5,576 # f4240 <__global_pointer$+0x81c0c>
+   70914:	00c0006f          	j	70920 <pioneer_q4_factored_tile_group+0x80>
+   70918:	fff78793          	add	a5,a5,-1
+   7091c:	26078663          	beqz	a5,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70920:	0006a703          	lw	a4,0(a3)
+   70924:	fe070ae3          	beqz	a4,70918 <pioneer_q4_factored_tile_group+0x78>
+   70928:	0ff0000f          	fence
+   7092c:	ffef07b7          	lui	a5,0xffef0
+   70930:	203c8737          	lui	a4,0x203c8
+   70934:	00e7a223          	sw	a4,4(a5) # ffef0004 <__global_pointer$+0xffe7d9d0>
+   70938:	00478793          	add	a5,a5,4
+   7093c:	0007a783          	lw	a5,0(a5)
+   70940:	24e79463          	bne	a5,a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70944:	001007b7          	lui	a5,0x100
+   70948:	ffef0737          	lui	a4,0xffef0
+   7094c:	01e78793          	add	a5,a5,30 # 10001e <__global_pointer$+0x8d9ea>
+   70950:	10f72023          	sw	a5,256(a4) # ffef0100 <__global_pointer$+0xffe7dacc>
+   70954:	10070713          	add	a4,a4,256
+   70958:	00072703          	lw	a4,0(a4)
+   7095c:	22f71663          	bne	a4,a5,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70960:	ffef07b7          	lui	a5,0xffef0
+   70964:	01000713          	li	a4,16
+   70968:	10e7a223          	sw	a4,260(a5) # ffef0104 <__global_pointer$+0xffe7dad0>
+   7096c:	10478793          	add	a5,a5,260
+   70970:	0007a783          	lw	a5,0(a5)
+   70974:	20e79a63          	bne	a5,a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70978:	ffef07b7          	lui	a5,0xffef0
+   7097c:	00100713          	li	a4,1
+   70980:	10e7a423          	sw	a4,264(a5) # ffef0108 <__global_pointer$+0xffe7dad4>
+   70984:	1087a983          	lw	s3,264(a5)
+   70988:	20e99063          	bne	s3,a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   7098c:	ffef07b7          	lui	a5,0xffef0
+   70990:	1007a623          	sw	zero,268(a5) # ffef010c <__global_pointer$+0xffe7dad8>
+   70994:	10c7a703          	lw	a4,268(a5)
+   70998:	1e071863          	bnez	a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   7099c:	00800713          	li	a4,8
+   709a0:	10e7ac23          	sw	a4,280(a5)
+   709a4:	11878793          	add	a5,a5,280
+   709a8:	0007a783          	lw	a5,0(a5)
+   709ac:	1ce79e63          	bne	a5,a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   709b0:	ffef07b7          	lui	a5,0xffef0
+   709b4:	1007ae23          	sw	zero,284(a5) # ffef011c <__global_pointer$+0xffe7dae8>
+   709b8:	11c7a683          	lw	a3,284(a5)
+   709bc:	1c069663          	bnez	a3,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   709c0:	00e00713          	li	a4,14
+   709c4:	12e7a023          	sw	a4,288(a5)
+   709c8:	12078793          	add	a5,a5,288
+   709cc:	0007a783          	lw	a5,0(a5)
+   709d0:	1ae79c63          	bne	a5,a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   709d4:	ffef07b7          	lui	a5,0xffef0
+   709d8:	01300713          	li	a4,19
+   709dc:	12e7a223          	sw	a4,292(a5) # ffef0124 <__global_pointer$+0xffe7daf0>
+   709e0:	12478793          	add	a5,a5,292
+   709e4:	0007a783          	lw	a5,0(a5)
+   709e8:	1ae79063          	bne	a5,a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   709ec:	001007b7          	lui	a5,0x100
+   709f0:	ffef0737          	lui	a4,0xffef0
+   709f4:	01078793          	add	a5,a5,16 # 100010 <__global_pointer$+0x8d9dc>
+   709f8:	14f72c23          	sw	a5,344(a4) # ffef0158 <__global_pointer$+0xffe7db24>
+   709fc:	15870713          	add	a4,a4,344
+   70a00:	00072703          	lw	a4,0(a4)
+   70a04:	18f71263          	bne	a4,a5,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70a08:	788ff001          	.word	0x788ff001
+   70a0c:	44800029          	.word	0x44800029
+   70a10:	5080003d          	.word	0x5080003d
+   70a14:	ffe00637          	lui	a2,0xffe00
+   70a18:	0e062e23          	sw	zero,252(a2) # ffe000fc <__global_pointer$+0xffd8dac8>
+   70a1c:	0fc62783          	lw	a5,252(a2)
+   70a20:	0fc60613          	add	a2,a2,252
+   70a24:	0ff0000f          	fence
+   70a28:	8840605a          	.word	0x8840605a
+   70a2c:	140005f9          	.word	0x140005f9
+   70a30:	000f47b7          	lui	a5,0xf4
+   70a34:	24078793          	add	a5,a5,576 # f4240 <__global_pointer$+0x81c0c>
+   70a38:	00c0006f          	j	70a44 <pioneer_q4_factored_tile_group+0x1a4>
+   70a3c:	fff78793          	add	a5,a5,-1
+   70a40:	14078463          	beqz	a5,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70a44:	00062703          	lw	a4,0(a2)
+   70a48:	fe070ae3          	beqz	a4,70a3c <pioneer_q4_factored_tile_group+0x19c>
+   70a4c:	0ff0000f          	fence
+   70a50:	0014d793          	srl	a5,s1,0x1
+   70a54:	00279513          	sll	a0,a5,0x2
+   70a58:	00f50533          	add	a0,a0,a5
+   70a5c:	00851513          	sll	a0,a0,0x8
+   70a60:	004005b7          	lui	a1,0x400
+   70a64:	ffef08b7          	lui	a7,0xffef0
+   70a68:	ffef0837          	lui	a6,0xffef0
+   70a6c:	ffe00637          	lui	a2,0xffe00
+   70a70:	00400337          	lui	t1,0x400
+   70a74:	000907b7          	lui	a5,0x90
+   70a78:	00f50533          	add	a0,a0,a5
+   70a7c:	04058593          	add	a1,a1,64 # 400040 <__global_pointer$+0x38da0c>
+   70a80:	13088893          	add	a7,a7,304 # ffef0130 <__global_pointer$+0xffe7dafc>
+   70a84:	15080813          	add	a6,a6,336 # ffef0150 <__global_pointer$+0xffe7db1c>
+   70a88:	0fc60613          	add	a2,a2,252 # ffe000fc <__global_pointer$+0xffd8dac8>
+   70a8c:	44030313          	add	t1,t1,1088 # 400440 <__global_pointer$+0x38de0c>
+   70a90:	00455793          	srl	a5,a0,0x4
+   70a94:	fff78793          	add	a5,a5,-1 # 8ffff <__global_pointer$+0x1d9cb>
+   70a98:	00f8a023          	sw	a5,0(a7)
+   70a9c:	0008a703          	lw	a4,0(a7)
+   70aa0:	0ee79463          	bne	a5,a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70aa4:	00b82023          	sw	a1,0(a6)
+   70aa8:	00082783          	lw	a5,0(a6)
+   70aac:	0cb79e63          	bne	a5,a1,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70ab0:	08000205          	.word	0x08000205
+   70ab4:	00062023          	sw	zero,0(a2)
+   70ab8:	00062783          	lw	a5,0(a2)
+   70abc:	0ff0000f          	fence
+   70ac0:	8840605a          	.word	0x8840605a
+   70ac4:	140005f9          	.word	0x140005f9
+   70ac8:	000f47b7          	lui	a5,0xf4
+   70acc:	24078793          	add	a5,a5,576 # f4240 <__global_pointer$+0x81c0c>
+   70ad0:	00c0006f          	j	70adc <pioneer_q4_factored_tile_group+0x23c>
+   70ad4:	fff78793          	add	a5,a5,-1
+   70ad8:	0a078863          	beqz	a5,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70adc:	00062703          	lw	a4,0(a2)
+   70ae0:	fe070ae3          	beqz	a4,70ad4 <pioneer_q4_factored_tile_group+0x234>
+   70ae4:	0ff0000f          	fence
+   70ae8:	10058593          	add	a1,a1,256
+   70aec:	14050513          	add	a0,a0,320 # b2000140 <__global_pointer$+0xb1f8db0c>
+   70af0:	fa6590e3          	bne	a1,t1,70a90 <pioneer_q4_factored_tile_group+0x1f0>
+   70af4:	2800000a          	.word	0x2800000a
+   70af8:	c5c801e1          	.word	0xc5c801e1
+   70afc:	700d05b7          	lui	a1,0x700d0
+   70b00:	72050637          	lui	a2,0x72050
+   70b04:	0014f313          	and	t1,s1,1
+   70b08:	700d08b7          	lui	a7,0x700d0
+   70b0c:	ffe40737          	lui	a4,0xffe40
+   70b10:	72050837          	lui	a6,0x72050
+   70b14:	00258593          	add	a1,a1,2 # 700d0002 <__global_pointer$+0x7005d9ce>
+   70b18:	00260613          	add	a2,a2,2 # 72050002 <__global_pointer$+0x71fdd9ce>
+   70b1c:	04000513          	li	a0,64
+   70b20:	0340006f          	j	70b54 <pioneer_q4_factored_tile_group+0x2b4>
+   70b24:	e800c005          	.word	0xe800c005
+   70b28:	f8001c05          	.word	0xf8001c05
+   70b2c:	0107ee33          	or	t3,a5,a6
+   70b30:	01c72023          	sw	t3,0(a4) # ffe40000 <__global_pointer$+0xffdcd9cc>
+   70b34:	00b6ee33          	or	t3,a3,a1
+   70b38:	01c72023          	sw	t3,0(a4)
+   70b3c:	e800c005          	.word	0xe800c005
+   70b40:	f8001c05          	.word	0xf8001c05
+   70b44:	00c7e7b3          	or	a5,a5,a2
+   70b48:	00f72023          	sw	a5,0(a4)
+   70b4c:	00468693          	add	a3,a3,4
+   70b50:	04a68063          	beq	a3,a0,70b90 <pioneer_q4_factored_tile_group+0x2f0>
+   70b54:	0116e7b3          	or	a5,a3,a7
+   70b58:	00f72023          	sw	a5,0(a4)
+   70b5c:	04068793          	add	a5,a3,64
+   70b60:	fc0302e3          	beqz	t1,70b24 <pioneer_q4_factored_tile_group+0x284>
+   70b64:	ebffc005          	.word	0xebffc005
+   70b68:	f8001c05          	.word	0xf8001c05
+   70b6c:	0107ee33          	or	t3,a5,a6
+   70b70:	01c72023          	sw	t3,0(a4)
+   70b74:	00b6ee33          	or	t3,a3,a1
+   70b78:	01c72023          	sw	t3,0(a4)
+   70b7c:	ebffc005          	.word	0xebffc005
+   70b80:	f8001c05          	.word	0xf8001c05
+   70b84:	fc1ff06f          	j	70b44 <pioneer_q4_factored_tile_group+0x2a4>
+   70b88:	fffff097          	auipc	ra,0xfffff
+   70b8c:	478080e7          	jalr	1144(ra) # 70000 <pioneer_q4_factored_tile_fault>
+   70b90:	ffe006b7          	lui	a3,0xffe00
+   70b94:	0e06ae23          	sw	zero,252(a3) # ffe000fc <__global_pointer$+0xffd8dac8>
+   70b98:	0fc6a783          	lw	a5,252(a3)
+   70b9c:	0fc68693          	add	a3,a3,252
+   70ba0:	0ff0000f          	fence
+   70ba4:	8840605a          	.word	0x8840605a
+   70ba8:	140005f9          	.word	0x140005f9
+   70bac:	000f47b7          	lui	a5,0xf4
+   70bb0:	24078793          	add	a5,a5,576 # f4240 <__global_pointer$+0x81c0c>
+   70bb4:	00c0006f          	j	70bc0 <pioneer_q4_factored_tile_group+0x320>
+   70bb8:	fff78793          	add	a5,a5,-1
+   70bbc:	fc0786e3          	beqz	a5,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70bc0:	0006a703          	lw	a4,0(a3)
+   70bc4:	fe070ae3          	beqz	a4,70bb8 <pioneer_q4_factored_tile_group+0x318>
+   70bc8:	0ff0000f          	fence
+   70bcc:	000087b7          	lui	a5,0x8
+   70bd0:	ffef0737          	lui	a4,0xffef0
+   70bd4:	ab678793          	add	a5,a5,-1354 # 7ab6 <pioneer_q4_factored_tile_fault-0x6854a>
+   70bd8:	00f72023          	sw	a5,0(a4) # ffef0000 <__global_pointer$+0xffe7d9cc>
+   70bdc:	00072703          	lw	a4,0(a4)
+   70be0:	faf714e3          	bne	a4,a5,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70be4:	ffef07b7          	lui	a5,0xffef0
+   70be8:	0007a423          	sw	zero,8(a5) # ffef0008 <__global_pointer$+0xffe7d9d4>
+   70bec:	0087a703          	lw	a4,8(a5)
+   70bf0:	f8071ce3          	bnez	a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70bf4:	0207a023          	sw	zero,32(a5)
+   70bf8:	0207a703          	lw	a4,32(a5)
+   70bfc:	f80716e3          	bnez	a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70c00:	001007b7          	lui	a5,0x100
+   70c04:	ffef0737          	lui	a4,0xffef0
+   70c08:	00178793          	add	a5,a5,1 # 100001 <__global_pointer$+0x8d9cd>
+   70c0c:	02f72823          	sw	a5,48(a4) # ffef0030 <__global_pointer$+0xffe7d9fc>
+   70c10:	03070713          	add	a4,a4,48
+   70c14:	00072703          	lw	a4,0(a4)
+   70c18:	f6f718e3          	bne	a4,a5,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70c1c:	ffef07b7          	lui	a5,0xffef0
+   70c20:	0207aa23          	sw	zero,52(a5) # ffef0034 <__global_pointer$+0xffe7da00>
+   70c24:	0347a703          	lw	a4,52(a5)
+   70c28:	f60710e3          	bnez	a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70c2c:	0207ac23          	sw	zero,56(a5)
+   70c30:	0387a703          	lw	a4,56(a5)
+   70c34:	f4071ae3          	bnez	a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70c38:	0207ae23          	sw	zero,60(a5)
+   70c3c:	03c7a703          	lw	a4,60(a5)
+   70c40:	f40714e3          	bnez	a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70c44:	40000713          	li	a4,1024
+   70c48:	04e7a023          	sw	a4,64(a5)
+   70c4c:	04078793          	add	a5,a5,64
+   70c50:	0007a783          	lw	a5,0(a5)
+   70c54:	f2e79ae3          	bne	a5,a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70c58:	ffef07b7          	lui	a5,0xffef0
+   70c5c:	0407a223          	sw	zero,68(a5) # ffef0044 <__global_pointer$+0xffe7da10>
+   70c60:	0447a703          	lw	a4,68(a5)
+   70c64:	f20712e3          	bnez	a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70c68:	00400713          	li	a4,4
+   70c6c:	04e7a423          	sw	a4,72(a5)
+   70c70:	04878793          	add	a5,a5,72
+   70c74:	0007a783          	lw	a5,0(a5)
+   70c78:	f0e798e3          	bne	a5,a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70c7c:	ffef07b7          	lui	a5,0xffef0
+   70c80:	0407a623          	sw	zero,76(a5) # ffef004c <__global_pointer$+0xffe7da18>
+   70c84:	04c7a703          	lw	a4,76(a5)
+   70c88:	f00710e3          	bnez	a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70c8c:	0407a823          	sw	zero,80(a5)
+   70c90:	0507a703          	lw	a4,80(a5)
+   70c94:	ee071ae3          	bnez	a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70c98:	000107b7          	lui	a5,0x10
+   70c9c:	ffef0737          	lui	a4,0xffef0
+   70ca0:	fff78793          	add	a5,a5,-1 # ffff <pioneer_q4_factored_tile_fault-0x60001>
+   70ca4:	06f72023          	sw	a5,96(a4) # ffef0060 <__global_pointer$+0xffe7da2c>
+   70ca8:	06072683          	lw	a3,96(a4)
+   70cac:	ecf69ee3          	bne	a3,a5,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70cb0:	000417b7          	lui	a5,0x41
+   70cb4:	ffef0737          	lui	a4,0xffef0
+   70cb8:	00478793          	add	a5,a5,4 # 41004 <pioneer_q4_factored_tile_fault-0x2effc>
+   70cbc:	06f72823          	sw	a5,112(a4) # ffef0070 <__global_pointer$+0xffe7da3c>
+   70cc0:	07070713          	add	a4,a4,112
+   70cc4:	00072703          	lw	a4,0(a4)
+   70cc8:	ecf710e3          	bne	a4,a5,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70ccc:	ffef07b7          	lui	a5,0xffef0
+   70cd0:	1007a823          	sw	zero,272(a5) # ffef0110 <__global_pointer$+0xffe7dadc>
+   70cd4:	1107a703          	lw	a4,272(a5)
+   70cd8:	ea0718e3          	bnez	a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70cdc:	000097b7          	lui	a5,0x9
+   70ce0:	ffef0737          	lui	a4,0xffef0
+   70ce4:	80478793          	add	a5,a5,-2044 # 8804 <pioneer_q4_factored_tile_fault-0x677fc>
+   70ce8:	10f72a23          	sw	a5,276(a4) # ffef0114 <__global_pointer$+0xffe7dae0>
+   70cec:	11470713          	add	a4,a4,276
+   70cf0:	00072703          	lw	a4,0(a4)
+   70cf4:	e8f71ae3          	bne	a4,a5,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70cf8:	0000a7b7          	lui	a5,0xa
+   70cfc:	ffef0737          	lui	a4,0xffef0
+   70d00:	ee178793          	add	a5,a5,-287 # 9ee1 <pioneer_q4_factored_tile_fault-0x6611f>
+   70d04:	10f72c23          	sw	a5,280(a4) # ffef0118 <__global_pointer$+0xffe7dae4>
+   70d08:	11870713          	add	a4,a4,280
+   70d0c:	00072703          	lw	a4,0(a4)
+   70d10:	e6f71ce3          	bne	a4,a5,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70d14:	ffef07b7          	lui	a5,0xffef0
+   70d18:	10d7ae23          	sw	a3,284(a5) # ffef011c <__global_pointer$+0xffe7dae8>
+   70d1c:	11c7a703          	lw	a4,284(a5)
+   70d20:	e6d714e3          	bne	a4,a3,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70d24:	000207b7          	lui	a5,0x20
+   70d28:	ffef0737          	lui	a4,0xffef0
+   70d2c:	fff78793          	add	a5,a5,-1 # 1ffff <pioneer_q4_factored_tile_fault-0x50001>
+   70d30:	18f72823          	sw	a5,400(a4) # ffef0190 <__global_pointer$+0xffe7db5c>
+   70d34:	19070713          	add	a4,a4,400
+   70d38:	00072703          	lw	a4,0(a4)
+   70d3c:	e4f716e3          	bne	a4,a5,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70d40:	ffef07b7          	lui	a5,0xffef0
+   70d44:	1807aa23          	sw	zero,404(a5) # ffef0194 <__global_pointer$+0xffe7db60>
+   70d48:	1947a703          	lw	a4,404(a5)
+   70d4c:	e2071ee3          	bnez	a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70d50:	2c07a823          	sw	zero,720(a5)
+   70d54:	2d07a703          	lw	a4,720(a5)
+   70d58:	e20718e3          	bnez	a4,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70d5c:	c8940012          	.word	0xc8940012
+   70d60:	7a00f001          	.word	0x7a00f001
+   70d64:	4600002d          	.word	0x4600002d
+   70d68:	5200003d          	.word	0x5200003d
+   70d6c:	00f00793          	li	a5,15
+   70d70:	ffe40737          	lui	a4,0xffe40
+   70d74:	410006b7          	lui	a3,0x41000
+   70d78:	00d72023          	sw	a3,0(a4) # ffe40000 <__global_pointer$+0xffdcd9cc>
+   70d7c:	fff78793          	add	a5,a5,-1
+   70d80:	fe079ce3          	bnez	a5,70d78 <pioneer_q4_factored_tile_group+0x4d8>
+   70d84:	410007b7          	lui	a5,0x41000
+   70d88:	00178793          	add	a5,a5,1 # 41000001 <__global_pointer$+0x40f8d9cd>
+   70d8c:	00f72023          	sw	a5,0(a4)
+   70d90:	8840607a          	.word	0x8840607a
+   70d94:	ffe00737          	lui	a4,0xffe00
+   70d98:	0e072e23          	sw	zero,252(a4) # ffe000fc <__global_pointer$+0xffd8dac8>
+   70d9c:	0fc72783          	lw	a5,252(a4)
+   70da0:	0fc70713          	add	a4,a4,252
+   70da4:	0ff0000f          	fence
+   70da8:	8840605a          	.word	0x8840605a
+   70dac:	140005f9          	.word	0x140005f9
+   70db0:	000f47b7          	lui	a5,0xf4
+   70db4:	24078793          	add	a5,a5,576 # f4240 <__global_pointer$+0x81c0c>
+   70db8:	00c0006f          	j	70dc4 <pioneer_q4_factored_tile_group+0x524>
+   70dbc:	fff78793          	add	a5,a5,-1
+   70dc0:	dc0784e3          	beqz	a5,70b88 <pioneer_q4_factored_tile_group+0x2e8>
+   70dc4:	00072683          	lw	a3,0(a4)
+   70dc8:	fe068ae3          	beqz	a3,70dbc <pioneer_q4_factored_tile_group+0x51c>
+   70dcc:	0ff0000f          	fence
+   70dd0:	00089537          	lui	a0,0x89
+   70dd4:	00048593          	mv	a1,s1
+   70dd8:	80050513          	add	a0,a0,-2048 # 88800 <__global_pointer$+0x161cc>
+   70ddc:	fffff097          	auipc	ra,0xfffff
+   70de0:	23c080e7          	jalr	572(ra) # 70018 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0>
+   70de4:	04050263          	beqz	a0,70e28 <pioneer_q4_factored_tile_group+0x588>
+   70de8:	ffbd97b7          	lui	a5,0xffbd9
+   70dec:	00048593          	mv	a1,s1
+   70df0:	00088537          	lui	a0,0x88
+   70df4:	8007a483          	lw	s1,-2048(a5) # ffbd8800 <__global_pointer$+0xffb661cc>
+   70df8:	fffff097          	auipc	ra,0xfffff
+   70dfc:	220080e7          	jalr	544(ra) # 70018 <_ZN24PioneerQ38Q4FactoredTile6MatrixI19FactoredTileEmitterEEbRT_jj.isra.0>
+   70e00:	02050463          	beqz	a0,70e28 <pioneer_q4_factored_tile_group+0x588>
+   70e04:	01c12083          	lw	ra,28(sp)
+   70e08:	01812403          	lw	s0,24(sp)
+   70e0c:	00992023          	sw	s1,0(s2)
+   70e10:	00098513          	mv	a0,s3
+   70e14:	01412483          	lw	s1,20(sp)
+   70e18:	01012903          	lw	s2,16(sp)
+   70e1c:	00c12983          	lw	s3,12(sp)
+   70e20:	02010113          	add	sp,sp,32
+   70e24:	00008067          	ret
+   70e28:	01412483          	lw	s1,20(sp)
+   70e2c:	01012903          	lw	s2,16(sp)
+   70e30:	a8dff06f          	j	708bc <pioneer_q4_factored_tile_group+0x1c>

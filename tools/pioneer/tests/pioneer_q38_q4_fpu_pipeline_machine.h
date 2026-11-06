@@ -24,6 +24,9 @@ struct Q4FpuPipelineMachine:NativeBfpMachine {
 	// completion;the bytes are NEVER normalized/copied into an old address.
 	virtual unsigned OperandOffset()const{return 0;}
 	virtual bool OperandReady(unsigned,unsigned)const{return true;}
+	// Distinct factored PACK tests retain raw bytes in Dst without publishing
+	// a dummy source bank. Default old85/cached behavior stays unchanged.
+	virtual bool RawPublishesLast()const{return true;}
 	uint16_t physical[1024][16]={};bool defined[1024]={},written[1024][16]={};
 	bool decoded[64][16]={},moved[64]={},enabled=false;
 	unsigned dstReady[1024]={},rawLoads=0,metadataLoads=0,zeroLoads=0,inputLoads=0,moves=0,transposes=0;
@@ -94,7 +97,7 @@ struct Q4FpuPipelineMachine:NativeBfpMachine {
 		} else {
 			assert(config[1]==0x203c8000 && config[64]==0x10001e && config[65]==16 && config[72]==14 && count==256 && !zero);
 			unsigned group=(rawLoads/4)%8,face=rawLoads%4;
-			assert(row==face*16 && address==0x90000+OperandOffset()+((group/2)*4+face)*320 && publish==(face==3));
+			assert(row==face*16 && address==0x90000+OperandOffset()+((group/2)*4+face)*320 && publish==(face==3 && RawPublishesLast()));
 			if(!face){memset(decoded,0,sizeof(decoded));memset(moved,0,sizeof(moved));}rawLoads++;
 		}
 		task={true,zero,publish,fp32,address,row,count,cycle+delay[0]};unpacks[0]++;

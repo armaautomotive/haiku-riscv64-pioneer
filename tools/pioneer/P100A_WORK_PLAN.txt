@@ -1,0 +1,108 @@
+P100A / Qwen 27B: bounded work plan
+====================================
+
+Updated November 6, 2026. These checkpoints organize the work; they do not
+replace or reduce the overall goal.
+
+Overall goal
+-------------
+
+Usable self-hosted Qwen3.8-27B Q4_K_M on P100A, as fast as safely possible,
+targeting 20 tokens/second. Work has no CPU model inference/reference or
+fallback. CPU validation stays separate. Preserve Haiku boot, 64 CPUs,
+full RAM and working Assistant. Push tested checkpoints.
+20 tokens/second is UNMET and UNPROVEN.
+
+Best saved model rate: about 0.173 tokens/second (92).
+Most recent model rate: about 0.082 tokens/second (110).
+P100A_CURRENT_STATUS.txt is the authoritative plain-language summary.
+
+1. Consolidate baseline and experiments -- LOCALLY CLOSED
+---------------------------------------------------------
+
+Deliver:
+  * One current status page with best/latest rates and honest limitations.
+  * Separate stable installed rollback state from best measured experiment.
+  * Preserve existing dirty work; no cleanup deletes or resets.
+  * Checkpoint the unfinished Q4 component with exact test scope and a
+    reproduction command, not as an installed or hardware-proven driver.
+  * Mark older README performance sections as historical.
+
+Evidence: current status, this plan, README current-status section, and
+benchmarks/qwen38-factored-q4-tile-offboard-20261106.txt plus its archive.
+Main and clean-export suites actually exited 0; whole stdout, tile binary
+and all 61 consumed project sources match.
+This closes source/documentation consolidation, NOT model performance.
+
+2. One complete, fast Q4 matrix job -- CURRENT / INCOMPLETE
+----------------------------------------------------------
+
+Question: can a materially different Q4 algorithm outperform the existing
+on-card path at a shape actually used by the 27B model?
+
+Finish criteria:
+  a. Complete original packed Q4 -> original scale/minimum metadata ->
+     output affine -> full-K accumulation for one 32-output job.
+     K must come from a real 27B tensor. Supplied dots/sums do not count.
+  b. Integrate a bounded returning worker, private code/L1 ownership,
+     actual completion, source-bank lifetime and safe cleanup.
+     Retain compressed GDDR weights; no unbudgeted expanded model.
+  c. Validate the new numerical contract separately, with comparison
+     expectations defined before hardware acceptance. Do not loosen a
+     failing comparator. Work itself does not run a CPU reference.
+  d. Perform a fresh isolated physical old/new comparison at the SAME
+     shape/input. Report complete-job timing, accuracy and setup costs
+     separately. Never replay closed historical trial stages.
+  e. Accept or reject this candidate from measured results.
+
+Partial work: extraction/packing/genuine dot/sum pass local instruction-
+model and compiled-function tests. Original metadata/output affine,
+full-K returning worker and real timing are NOT finished.
+The new operation order differs from old per-weight BF16 rounding;
+local bit tests do not prove model quality.
+
+Simulator passes, UI features, repeated baseline uploads and nominal
+peak specifications cannot finish this checkpoint.
+
+3. Decide the performance route -- NOT STARTED
+----------------------------------------------
+
+Use isolated timings, existing model profiles and weight-traffic budget
+to identify costs actually removed and costs remaining.
+Record a conditional achievable range, assumptions and uncertainty,
+not a guaranteed whole-model speed.
+Decision: integrate a demonstrated useful candidate, or reject/change the
+algorithm. A small gain does not show 20 tokens/second is close.
+This decision does not finish the overall objective.
+
+4. Integrate and measure the complete model -- NOT STARTED
+-----------------------------------------------------------
+
+Use the accepted path in full-card Work, including remaining formats,
+attention and state. Complete real requests and assess more than the
+existing counting answer. Run the matched public throughput workload and
+compare with faster saved tag 92.
+Report quality, loading, prompt processing and generation separately.
+Require actual process exits, independent restoration/platform checks
+and a pushed checkpoint. A completed request is not usable speed.
+
+5. Make the accepted engine usable -- NOT STARTED
+--------------------------------------------------
+
+Keep weights loaded between requests with explicit load/unload lifetime,
+avoid repeated preparation where safe, then expose the proven mode in
+Assistant. Verify repeated warm requests and actual UI behavior.
+Do not replace working Assistant with an unqualified slower experiment.
+
+Reporting rules
+----------------
+
+Only one implementation checkpoint is current. Close each with:
+  Changed code / local tests / hardware tests / answer quality /
+  measured speed / decision / next checkpoint.
+
+Say "not tested" where appropriate. Test counts, commits, instruction-model
+passes and microbenchmarks are not model throughput or percentage complete.
+Do not reopen closed trials or create parallel work streams without a
+concrete dependency on the current checkpoint.
+Do not promise a completion date or 20 tokens/second without evidence.

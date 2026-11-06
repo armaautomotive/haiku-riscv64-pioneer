@@ -1,4 +1,23 @@
-# Pioneer relay control
+# Pioneer development tools
+
+## Current P100A / Qwen 27B status (November 6)
+
+Start with [the current status](P100A_CURRENT_STATUS.txt) and
+[the bounded work plan](P100A_WORK_PLAN.txt). Full-card 27B inference has
+completed a short real request, but usable performance has **not** been
+delivered: the best saved result is about **0.173 tokens/sec**; the latest
+experiment measured about **0.082 tokens/sec** and was not promoted.
+The 20 tokens/sec target remains unmet, and feasibility is unproven.
+
+The new factored-Q4 packing/matrix component is **local experimental code**,
+not an installed fast driver. Its test command and exact limitations are in
+[the component report](benchmarks/qwen38-factored-q4-tile-offboard-20261106.txt).
+The current checkpoint is one complete representative Q4 matrix job with a
+real hardware comparison, not further interface work.
+
+The October 19 performance/mode sections below are historical checkpoints.
+Their statements about incomplete offloading and then-current rates do not
+describe the later full-card experiments. Relay instructions remain below.
 
 ## 27B Work performance and weight preloading (October 19)
 
@@ -42,10 +61,11 @@ CXX='c++ -DPIONEER_Q38_SPAN_FAST' sh tools/pioneer/tests/run_pioneer_q38_span_se
 ```
 
 These remain fixed-public test programs, not installed 27B Assistant targets.
-The latest completed four-position 27B Work smoke measured **0.0786 tokens/sec**
+At this October 19 checkpoint, a four-position 27B Work smoke measured **0.0786 tokens/sec**
 over its three warm positions, versus 0.0734 and 0.0397 previously. It ended cleanly
 with unchanged token IDs. This is still unusably slow for the requested
-20 tokens/sec; whole-GPU model execution has **not** been achieved.
+20 tokens/sec; whole-GPU model execution had **not yet** been achieved.
+See the current-status section above for later full-card results.
 
 `PIONEER_Q38_INT_SFPU=1` passed native exact-output qualification:
 the matrix stays integer, while its repeated affine accumulation moves

@@ -1,0 +1,33 @@
+{
+  "scope": "Local software-model qualification only; no Pioneer connection, native launch, model quality or speed measurement.",
+  "base": "7c3c2429e71573ba6ac2d6a2159b673c1f6063f1",
+  "actualExecResults": {
+    "main": {
+      "sessionId": 99892,
+      "chunk_id": "83fdfe",
+      "wall_time_seconds": 0.000006333,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    },
+    "clean": {
+      "sessionId": 76620,
+      "chunk_id": "969773",
+      "wall_time_seconds": 0.000006,
+      "exit_code": 0,
+      "original_token_count": 0,
+      "output": ""
+    }
+  },
+  "equalityChecks": {
+    "wholeStdout": true,
+    "stderrEmpty": true,
+    "tileBinaryBytes": true,
+    "projectSourceSha256": true
+  },
+  "sourceCount": 61,
+  "priorRuns": "Earlier corrected PASS logs existed but original runner handles were not retained. They are not used as actual-exit proof. A scoped process-list check confirmed no prior runner was live before these final checkpoint suites were started. Initial main-final/clean-final passes were superseded by the global integer destination-format audit correction.",
+  "nativeHardwareTest": false,
+  "fullModelTest": false,
+  "speedResult": null
+}
