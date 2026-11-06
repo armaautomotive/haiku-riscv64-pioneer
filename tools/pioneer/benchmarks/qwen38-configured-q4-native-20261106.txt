@@ -1,0 +1,76 @@
+Native114 configuration-reuse comparison: LOCAL QUALIFICATION ONLY
+=================================================================
+November 6, 2026. Source base 79e6b4ab3a5e1056c48ff856facf2a039e46d498
+plus 16 scoped integration/test files. The prior configured component is
+already qualified; its unchanged 61-source suite was NOT restarted here.
+This checkpoint adds native/client/image/ownership bindings, NOT Work.
+
+New identity
+-------------
+Role 114, tag 2026110600010114, opcode 8a00, image 12108B. Comparison-v1 frame
+and ABI remain compatible; the tag, opcode, image role/hash and Configured=1
+binding are distinct. ManualLast=1 is a required arithmetic sub-selection,
+NOT reuse of the old 113 identity. 111/112/113 pins and spent stages remain.
+The new client is bound to generation 5;the one-shot parent requires
+normal041/gen4 -> native114/gen5 -> normal041/gen6.
+
+Main 20444 and independent clean 29203 ACTUALLY exited 0: 14 children each,
+all stderr empty. 304 consumed project sources, including actual RV32
+producer dependencies,not only the generated driver header. The only
+source-map difference is the existing 33-line dirty tenstorrent_pci_probe.cpp,
+excluded from publication. All target native/client/core/control binaries
+and generated image headers match exactly. 13 whole child stdout streams
+match; the endpoint stdout differs ONLY in its output-directory footer.
+Both full original endpoint streams are retained, not normalized into a
+false whole-stream equality claim. Clean export completed BEFORE overlays.
+
+Verified local scope
+---------------------
+* Actual SDK driver/all methods linked; 57 role refusals, wrong image/data,
+  Dst-scope, arithmetic and Configured-image binding refusals;legacy entry
+  remains NULL. Default43 control remains byte-identical.
+* Actual native/control endpoint bodies over OS/PCI fixtures:
+  333 valid, 816 refused cases. This is NOT native hardware execution.
+* Compiled full-K old/new arithmetic at 5120/17408: 128 exact words, 608B
+  stack/touched extent. No scalar learned-input or host product injection.
+* Same-open original full SHA, all 9 original payloads and fresh independent
+  old/new references pass through the actual compiled lease, both widths
+  and full L1/GDDR/NIU/TLB/FIFO/clock restoration. Nine mutations of the
+  new code/temporary tile/output domains retain resources rather than END.
+* Configured protocol: positive2/refused26,including late selection/removal,
+  old tags and prohibited roles. Historical 113 protocol still passes its
+  separate positive2/refused19 checks. New client:28 role refusals.
+* Real DATA/END parent gate: positive3/refused277. Real idle admission:
+  eight fixtures, including rejection of pathname-wrapper collision and
+  acceptance of stdin wrapper; foreign owners/malformed listings still fail.
+* Parent preserves complete completed DATA before a failure decision,
+  syncs evidence, and never retries, resets or restores an unknown lease.
+  K17408 starts only after K5120 has exact arithmetic and a clean END.
+
+Exact PRIVATE artifacts (no weights or binaries published)
+----------------------------------------------------------
+ native 1855168B SHA 9ed3e3dfbf6ce1c1ef42a2877c937d688f5325489b7f7fbd5e614a3931cf8b5f
+ client 1949024B SHA bb53beb82381e03be60f1fbf35c62ff082bd525fe7895cb7b04d457fac2aea60
+ core 12108B SHA 43a1b152f0c7e958b907c1eb7127628b5c67aebe64345227dd71f3c8d17de2ed
+ parent SHA 1bc75db34efe6783ade0cbaa229fc642290677df21b956a543e69c76bcdecc02
+ private wrapper SHA b115c4a9f9fdc4a46c0133f0471ca108ef3fe252a8445e9ca8f6fa727b0b38b8
+ boot 4B stays d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd.
+ control stays 2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc.
+
+Read-only Pioneer metadata still showed normal041/gen4, cold0/owner0.
+No driver staging/swap, GPU execution, power, SD, mains, hardware or app change
+has occurred at this qualification checkpoint. Next: publish, read back all
+four staged files byte-for-byte, then ONE fresh 114-a physical comparison.
+Invoke the pinned wrapper using SSH sh -s/stdin,NOT its pathname.
+
+The component removes configuration pairs 664->336 per K256 block plus 22
+once/job; that is NOT measured card latency. Native113 was correct but
+31.39%/34.21% slower in cycles. Native114's correctness and speed remain
+unproven on the card. No new model TPS. Best 27B 0.173 tok/s; latest 0.082 tok/s;
+20 tok/s remains unmet and feasibility unproven.
+
+Reproduce LOCAL package qualification only:
+ python3 tools/pioneer/tests/run_pioneer_native_factored_q4_compare_tests.py \
+ SDK PRIVATE_EXPORT ORIGINAL_GGUF FRESH_OUTPUT 5 --configured
+Sibling archive retains actual exits, both source maps and complete selected
+unit streams. Private payloads/binaries remain outside the repository.

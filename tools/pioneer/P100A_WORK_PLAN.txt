@@ -41,9 +41,11 @@ Next candidate implemented: fixed configuration is initialized once per job;
 the immediately paired matrix reuses its setup. Local main/clean checks pass,
 with 664->336 write/readback pairs per block plus 22 once/job. All arithmetic
 words/drains/results match the base producer; historical113 image unchanged.
-This is a source-count reduction, NOT a measured card speedup. Next: give it
-fresh native bindings and validate ownership/endpoints, then compare on card.
+This is a source-count reduction, NOT a measured card speedup. Fresh native114
+bindings now pass main/clean local ownership/endpoint/source/client checks.
+Next: ONE physical old/new comparison, not another unchanged local suite.
 Evidence: benchmarks/qwen38-configured-q4-component-20261106.txt.
+Native binding evidence: benchmarks/qwen38-configured-q4-native-20261106.txt.
 
 Next bounded work:
   a. Attribute recurring cost using compiled code and, only if needed, a

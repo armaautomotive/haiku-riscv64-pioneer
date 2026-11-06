@@ -165,6 +165,9 @@ public:
 #ifdef PIONEER_NATIVE_FACTORED_Q4_MANUAL_LAST
 		static_assert(Image::ManualLast==1,"exact comparison113 manual-Last image only");
 #endif
+#ifdef PIONEER_NATIVE_FACTORED_Q4_CONFIGURED
+		static_assert(Image::Configured==1,"exact comparison114 configured image only");
+#endif
 #ifdef PIONEER_NATIVE_FACTORED_Q4_TRACE
 		static_assert(Image::FactoredTrace==1 && Image::TraceWords==64 && Image::TraceBlocks==20 && Image::NewPhases==2 && Image::Accumulator==80,"exact trace112 fixed observations and ownership");
 #elif defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE)

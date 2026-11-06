@@ -29,6 +29,9 @@ using NLease=PioneerNativeCompactQ4StreamLease;using NL=PioneerNativeCompactQ4St
 using NV=PioneerNativeCompactQ4StreamVariant;
 struct NImage {
 	static constexpr unsigned Samples=NV::Samples,Rows=32,Phases=4,LayoutRole=NV::Role,Bytes=NV::ImageBytes,MetadataFirst=128,MetadataRows=128,DstLast=255;
+#ifdef PIONEER_NATIVE_FACTORED_Q4_CONFIGURED
+	static constexpr unsigned Configured=1;
+#endif
 #ifdef PIONEER_NATIVE_FACTORED_Q4_MANUAL_LAST
 	static constexpr unsigned ManualLast=1;
 #endif

@@ -21,7 +21,9 @@ selection.add_argument('--pair-issue',action='store_true',help='Distinct108 pair
 selection.add_argument('--factored-compare',action='store_true',help='Distinct111 old/new arithmetic comparison;NEW L1/code scope')
 selection.add_argument('--factored-trace',action='store_true',help='Distinct112 fixed sample0 observations;NOT111 replay or speed test')
 selection.add_argument('--manual-last-compare',action='store_true',help='NEW113 corrected pack boundaries;NEVER111/112 replay or repinning')
+selection.add_argument('--configured-compare',action='store_true',help='NEW114 configuration reuse;NEVER113 replay or repinning')
 args = parser.parse_args()
+if args.configured_compare:args.manual_last_compare=True
 if args.manual_last_compare:args.factored_compare=True
 if args.pair_issue or args.factored_compare or args.factored_trace:args.timing=True
 assert args.original.is_absolute() and args.original.is_file()
@@ -44,8 +46,8 @@ private_unchanged()
 subprocess.run([sys.executable, str(here / 'tests/pioneer_native_compact_q4_stream_export_test.py'), str(private), str(args.original)], check=True)
 output.mkdir(mode=0o700)
 images = {}
-role=113 if args.manual_last_compare else 112 if args.factored_trace else 111 if args.factored_compare else 108 if args.pair_issue else 107 if args.timing else 104
-image_bytes=11788 if args.manual_last_compare else 12104 if args.factored_trace else 11792 if args.factored_compare else 7820 if args.pair_issue else 7972 if args.timing else 7644
+role=114 if args.configured_compare else 113 if args.manual_last_compare else 112 if args.factored_trace else 111 if args.factored_compare else 108 if args.pair_issue else 107 if args.timing else 104
+image_bytes=12108 if args.configured_compare else 11788 if args.manual_last_compare else 12104 if args.factored_trace else 11792 if args.factored_compare else 7820 if args.pair_issue else 7972 if args.timing else 7644
 image_words=image_bytes//4
 widths=((5120,''),) if args.factored_trace else ((5120, 'f67b7b5bc07bddcf5f3ddfccfbe1013c2680650ea1994231565f050d1f0d89c5'),
                       (17408, 'c95e0cc41971b37dd89786a2c3747b6d8ef6ebbde3a2ec837c63198982373b92'))
@@ -55,8 +57,8 @@ for width,digest in widths:
         digest='f281b1419c35b1cb818e7c0278adef916ef6d19e1a2932453ee460510f560dad'
         command=[sys.executable,str(here/'build_q38_factored_q4_trace.py'),str(build),str(directory)]
     elif args.factored_compare:
-        digest='6542780a82026f4a3a7f410468bb1081a7143991aeb202d39f379a67153dcedd' if args.manual_last_compare else '1e2cc3d675161216bcf5593a79ca483e37c384dab815b34009161cbf36dce280'
-        command=[sys.executable,str(here/'build_q38_factored_q4_compare.py'),str(build),str(directory)]
+        digest='43a1b152f0c7e958b907c1eb7127628b5c67aebe64345227dd71f3c8d17de2ed' if args.configured_compare else '6542780a82026f4a3a7f410468bb1081a7143991aeb202d39f379a67153dcedd' if args.manual_last_compare else '1e2cc3d675161216bcf5593a79ca483e37c384dab815b34009161cbf36dce280'
+        command=[sys.executable,str(here/'build_q38_factored_q4_compare.py'),str(build),str(directory),*(['--configured'] if args.configured_compare else [])]
     elif args.pair_issue:
         from build_q38_q4_pair_issue import INSPECT_PINS
         digest=INSPECT_PINS[width][0]
@@ -84,6 +86,8 @@ elif args.factored_compare:
     header=header.replace(' static constexpr uint32_t Boot=', ' static constexpr unsigned FactoredComparison=1,NewPhases=2,Accumulator=80;\n static constexpr uint32_t Boot=')
 if args.manual_last_compare:
     header=header.replace(' static constexpr uint32_t Boot=', ' static constexpr unsigned ManualLast=1;\n static constexpr uint32_t Boot=')
+if args.configured_compare:
+    header=header.replace(' static constexpr uint32_t Boot=', ' static constexpr unsigned Configured=1;\n static constexpr uint32_t Boot=')
 for width, code in images.items():
     words = [int.from_bytes(code[i:i+4], 'little') for i in range(0,len(code),4)]
     header += (' static const uint32_t code%d[%d]={\n' % (width,image_words))
@@ -108,13 +112,14 @@ common = [cxx, '-std=gnu++17', '-O2', '-Wall', '-Wextra', '-Werror', '-fno-excep
           '-fno-strict-aliasing', '-fno-delete-null-pointer-checks', '-mcmodel=medany', '-fpic', '-D_KERNEL_MODE']
 roles = ['BANKS', 'PANEL', 'AFFINE', 'BLOCK', 'STREAM', 'ROWS', 'COHORT', 'COHORT_SEALED', 'COHORT_PAYLOAD', 'DISPATCH', 'DISPATCH_VECTOR']
 native = ['-DTT_PIONEER_EXPERIMENTAL_Q38_' + name for name in roles]
-tag='2026110600010113' if args.manual_last_compare else '2026110600010112' if args.factored_trace else '2026110600010111' if args.factored_compare else '2026110600010108' if args.pair_issue else '2026110600010107' if args.timing else '2026110500010104'
+tag='2026110600010114' if args.configured_compare else '2026110600010113' if args.manual_last_compare else '2026110600010112' if args.factored_trace else '2026110600010111' if args.factored_compare else '2026110600010108' if args.pair_issue else '2026110600010107' if args.timing else '2026110500010104'
 native += ['-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=0x'+tag+'ULL', '-DPIONEER_NATIVE_COMPACT_Q4_STREAM_DIAGNOSTIC=1']
 if args.timing:native.append('-DPIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING=1')
 if args.pair_issue:native.append('-DPIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING=1')
 if args.factored_compare:native.append('-DPIONEER_NATIVE_FACTORED_Q4_COMPARE=1')
 if args.factored_trace:native.append('-DPIONEER_NATIVE_FACTORED_Q4_TRACE=1')
 if args.manual_last_compare:native.append('-DPIONEER_NATIVE_FACTORED_Q4_MANUAL_LAST=1')
+if args.configured_compare:native.append('-DPIONEER_NATIVE_FACTORED_Q4_CONFIGURED=1')
 commands = []
 def run(command):
     commands.append(command)
@@ -152,12 +157,17 @@ if args.manual_last_compare:
               ('wrong-manual-last',['-UPIONEER_NATIVE_FACTORED_Q4_MANUAL_LAST','-DPIONEER_NATIVE_FACTORED_Q4_MANUAL_LAST=0']),
               ('old111-tag',['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026110600010111ULL']),
               ('old112-alias',['-DPIONEER_NATIVE_FACTORED_Q4_TRACE=1'])]
+if args.configured_compare:
+    cases += [('missing-configured',['-UPIONEER_NATIVE_FACTORED_Q4_CONFIGURED']),
+              ('wrong-configured',['-UPIONEER_NATIVE_FACTORED_Q4_CONFIGURED','-DPIONEER_NATIVE_FACTORED_Q4_CONFIGURED=0']),
+              ('old113-tag',['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026110600010113ULL'])]
 for macro in ('PIONEER_NATIVE_Q4_FPU_DIAGNOSTIC', 'PIONEER_NATIVE_DRAM_MODEL_BAND_DIAGNOSTIC', 'PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64',
               'PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC', 'PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64', 'PIONEER_NATIVE_BFP_DIAGNOSTIC',
               'PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC', 'PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC',
               'PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT', 'PIONEER_Q38_TOKEN_NATIVE_CONTEXT', 'TT_PIONEER_Q38_WORK_MODE',
               'PIONEER_Q38_WORK_INFERENCE', 'PIONEER_Q38_CPU_VALIDATION', 'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE', 'PIONEER_NATIVE_Q4_FPU_STREAM_DIAGNOSTIC',
-              'PIONEER_NATIVE_MIXED_FPU_STREAM_DIAGNOSTIC', 'PIONEER_Q38_FULL_OFFLOAD_NATIVE', 'PIONEER_Q38_FULL_OFFLOAD_CLIENT'):
+              'PIONEER_NATIVE_MIXED_FPU_STREAM_DIAGNOSTIC', 'PIONEER_Q38_FULL_OFFLOAD_NATIVE', 'PIONEER_Q38_FULL_OFFLOAD_CLIENT',
+              *(['PIONEER_Q38_FACTORED_CONFIGURED_COMPUTE'] if args.configured_compare else [])):
     for value in (0, 1):
         cases.append((macro + '=' + str(value), ['-D' + macro + '=' + str(value)]))
 for label, extra in cases:
@@ -169,7 +179,7 @@ for label, extra in cases:
         'Exact separate paired compact Q4 diagnostic108 role required','Exact diagnostic108 kernel identity required',
         'Exact separate factored-Q4 comparison111 role required','Exact comparison111 kernel identity required',
         'Exact separate factored-Q4 trace112 role required','Exact trace112 kernel identity required',
-        'Exact separate manual-Last comparison113 role required')),label
+        'Exact separate manual-Last comparison113 role required','Exact separate configured comparison114 role required')),label
 (output / 'driver-role-refusals.txt').write_text('\n'.join('PASS ' + label for label, _ in cases) + '\n')
 wrong = output / 'wrong-image';wrong.mkdir(mode=0o700)
 (wrong / 'PioneerNativeCompactQ4StreamGeneratedImage.h').write_text(header.replace('LayoutRole='+str(role), 'LayoutRole=86'))
@@ -189,6 +199,10 @@ if args.manual_last_compare:
     (wrong / 'PioneerNativeCompactQ4StreamGeneratedImage.h').write_text(header.replace('ManualLast=1','ManualLast=0'))
     result=subprocess.run(common+native+['-I'+str(wrong)]+includes+['-fsyntax-only',str(driver/'pioneer_native_compact_q4_stream_driver.cpp')],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,cwd=output)
     assert result.returncode and 'exact comparison113 manual-Last image only' in result.stderr
+if args.configured_compare:
+    (wrong / 'PioneerNativeCompactQ4StreamGeneratedImage.h').write_text(header.replace('Configured=1','Configured=0'))
+    result=subprocess.run(common+native+['-I'+str(wrong)]+includes+['-fsyntax-only',str(driver/'pioneer_native_compact_q4_stream_driver.cpp')],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,cwd=output)
+    assert result.returncode and 'exact comparison114 configured image only' in result.stderr
 if args.factored_trace:
     for field,value in (('FactoredTrace=1','FactoredTrace=0'),('TraceWords=64','TraceWords=32'),('TraceBlocks=20','TraceBlocks=68'),('NewPhases=2','NewPhases=4'),('Accumulator=80','Accumulator=32')):
         (wrong / 'PioneerNativeCompactQ4StreamGeneratedImage.h').write_text(header.replace(field,value))

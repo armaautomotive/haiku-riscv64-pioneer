@@ -39,7 +39,9 @@ struct FactoredCompareRV32:CompareState,ServiceMachine {
  StreamIO bus;unsigned width,drainedGroups=0,acks=0,timerStores=0,clockReads=0;bool awaiting=false;
  std::vector<unsigned> csrPc;bool diagnostic=false;unsigned diagnosticReads=0;
  static constexpr unsigned HistoricalImageBytes=
-#ifdef PIONEER_NATIVE_FACTORED_Q4_MANUAL_LAST
+#ifdef PIONEER_NATIVE_FACTORED_Q4_CONFIGURED
+   12108
+#elif defined(PIONEER_NATIVE_FACTORED_Q4_MANUAL_LAST)
    11788
 #else
    11792
