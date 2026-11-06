@@ -4,6 +4,7 @@
 #if defined(_KERNEL_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(__FAST_MATH__)
 #error BF16 producer integration is not an installed native/Work/reference capability
 #endif
+#include "PioneerQ38Bf16Wire.h"
 #ifndef PIONEER_ATTENTION_FREESTANDING
 #include <stdint.h>
 #else
@@ -13,8 +14,7 @@ typedef __UINTPTR_TYPE__ uintptr_t;
 // On-card integer-bit RNE packing of LIVE FP32 activations,not weights or
 // learned host arithmetic. Publish a chunk only after every lane validates.
 // No integer-Q8 scale,clipping,NaN/Inf/subnormal acceptance or fallback.
-struct PioneerQ38Bf16Input {
- enum : unsigned {Magic=0x31494251,Version=1,Values=256,Words=128}; // QBI1
+struct PioneerQ38Bf16Input:PioneerQ38Bf16Wire {
  static bool Lane(uint32_t bits,uint32_t& out){
   const unsigned exponent=bits&0x7f800000;
   if(exponent==0x7f800000 || (!exponent && (bits&0x7fffff)))return false;

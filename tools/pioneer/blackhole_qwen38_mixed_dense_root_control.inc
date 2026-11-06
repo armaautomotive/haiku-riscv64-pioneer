@@ -203,6 +203,12 @@ void Admit(const uint32_t* d,uint32_t* tracked,unsigned w){
 #endif
  ClosedJob(d,tracked,w,true);
  const auto* previous=reinterpret_cast<const uint32_t*>(L::PeerJobs+w*256);
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
+ // A genuine preceding QCM1 matrix has a different arithmetic receipt
+ // from the old integer capsule. Preserve the ROOT's already closed
+ // frontier and require fresh physical observations;do not recapture it.
+ if(Projection::BfAdmitPrevious(d,tracked,w,previous))return;
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT
  if(previous[2]==M::GlobalMatrix){AdmitGlobalOutput(d,tracked,w);return;}
 #endif

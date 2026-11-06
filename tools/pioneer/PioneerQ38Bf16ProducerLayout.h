@@ -2,10 +2,12 @@
 #ifndef PIONEER_Q38_BF16_PRODUCER_LAYOUT_H
 #define PIONEER_Q38_BF16_PRODUCER_LAYOUT_H
 #include "PioneerQ38GlobalWorkerLayout.h"
+#include "PioneerQ38Bf16Wire.h"
 // NEW typed wire DATA,not an old integer-scale producer or native grant.
 namespace PioneerQ38Bf16ProducerLayout {
-enum : unsigned {Magic=0x31504251,Format=0x31494251,Witness=0x31574251,
- Descriptor=0x74200,GateOffset=0x400000,UpOffset=0x411000,NativeOffset=0x20000,LinesOffset=0x30000}; // QBP1/QBI1/QBW1
+enum : unsigned {Magic=0x31504251,Format=PioneerQ38Bf16Wire::Magic,Witness=0x31574251,
+ Descriptor=0x74200,GateOffset=0x400000,UpOffset=0x411000,NativeOffset=0x20000,LinesOffset=0x30000,
+ ProjectionInput=0xe0000,InputRoot=129}; // QBP1/QBI1/QBW1
 static inline unsigned Width(const uint32_t* d){return d[43]==4?17408U:5120U;}
 static inline unsigned Reads(const uint32_t* d){return d[43]==4?2U:1U;}
 static inline bool DescriptorShape(const uint32_t* d){
@@ -15,7 +17,7 @@ static inline bool DescriptorShape(const uint32_t* d){
  const unsigned width=Width(d),chunks=width/256;
  if(d[5]>=chunks || !d[6] || d[6]>=0x7fffffff || d[7]!=d[5]+1
   || d[8]!=PioneerQ38ProjectionRoute(d[3]) || d[9]!=PioneerQ38GlobalWorkerLayout::Peer(d[7])
-  || d[10]!=(d[43]==4?unsigned(GateOffset):0U)+d[5]*1024
+  || d[10]!=(d[43]==4?unsigned(GateOffset):unsigned(ProjectionInput))+d[5]*1024
   || d[11]!=(d[43]==4?unsigned(UpOffset)+d[5]*1024:width)
   || d[12]!=NativeOffset+d[5]*512 || d[13]!=LinesOffset+d[5]*128
   || d[14]!=Format || d[15]!=chunks || !d[16])return false;

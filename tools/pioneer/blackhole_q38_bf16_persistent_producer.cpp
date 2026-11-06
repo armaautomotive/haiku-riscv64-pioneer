@@ -25,10 +25,12 @@ static __attribute__((noinline)) void Packet(unsigned p,const uint32_t* d){
  const unsigned reads=P::Reads(d);if(p>=reads+2)block_fault_park();Seal(d);
  const bool write=p>=reads,trailer=p==reads+1;
  const unsigned here=write?(trailer?0x90e00:0x90c00):(p?0x90400:0x90000);
- const unsigned size=write?(trailer?128U:512U):1024U,offset=write?d[trailer?13:12]:d[10+p],remote=d[4]+offset;
+ const unsigned size=write?(trailer?128U:512U):1024U,offset=write?d[trailer?13:12]:d[10+p];
+ const bool rootInput=!write && reads==1;
+ const unsigned remote=rootInput?offset:d[4]+offset,sourceRoute=rootInput?unsigned(P::InputRoot):d[8];
  uint32_t expected[8];const unsigned delta[]={write?0U:1U,write?0U:size/64,1,write?0U:1U,write?1U:0U,write?size/64:0U,1,write?1U:0U};
  for(unsigned i=0;i<8;i++){expected[i]=*Words(0xffb20000+Counter(i))+delta[i];if(i==6 && expected[6]!=expected[2])block_fault_park();}
- const unsigned command[]={write?here:remote,0,write?d[9]:d[8],write?remote:here,0,write?d[8]:d[9],0,write?0x212U:0,size,0};
+ const unsigned command[]={write?here:remote,0,write?d[9]:sourceRoute,write?remote:here,0,write?d[8]:d[9],0,write?0x212U:0,size,0};
  for(unsigned i=0;i<10;i++)Words(0xffb20000)[i]=command[i];
  for(unsigned i=0;i<10;i++)if(Words(0xffb20000)[i]!=command[i])block_fault_park();
  Fence();*Words(0xffb20040)=1;(void)*Words(0xffb20040);Fence();

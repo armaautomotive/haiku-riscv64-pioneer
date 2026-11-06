@@ -1,5 +1,15 @@
 /* SPDX-License-Identifier: MIT */
 // DATA selection only, not an image/native/producer capability.
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+#if PIONEER_Q38_TOKEN_BF16_PROGRAMS != 1 || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) \
+ || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS) || defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU) \
+ || defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION)
+#error Exact QGW4 worker DATA cannot alias integer/pushed DATA or BUILD selectors
+#endif
+#endif
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
+#include "PioneerQ38Bf16RootRole.h"
+#endif
 #ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
 #if PIONEER_Q38_TOKEN_PUSHED_PROGRAMS != 1 || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) \
  || defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION)
@@ -22,18 +32,22 @@
 #endif
 #ifndef PIONEER_Q38_SELECTED_GLOBAL_WORKER_H
 #define PIONEER_Q38_SELECTED_GLOBAL_WORKER_H
-#if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU) || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS)
+#include "PioneerQ38Bf16WorkerLayout.h"
+namespace PioneerQ38SelectedGlobalWorker=PioneerQ38Bf16WorkerLayout;
+enum {PioneerQ38SelectedWorkerBootEnd=49,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=0,PioneerQ38SelectedWorkerBf16=1};
+#elif defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
 #include "PioneerQ38PushedWorkerLayout.h"
 namespace PioneerQ38SelectedGlobalWorker=PioneerQ38PushedWorkerLayout;
-enum {PioneerQ38SelectedWorkerBootEnd=55,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=1};
+enum {PioneerQ38SelectedWorkerBootEnd=55,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=1,PioneerQ38SelectedWorkerBf16=0};
 #elif defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
 #include "PioneerQ38PreciseWorkerLayout.h"
 namespace PioneerQ38SelectedGlobalWorker=PioneerQ38PreciseWorkerLayout;
-enum {PioneerQ38SelectedWorkerBootEnd=49,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=0};
+enum {PioneerQ38SelectedWorkerBootEnd=49,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=0,PioneerQ38SelectedWorkerBf16=0};
 #else
 #include "PioneerQ38GlobalWorkerLayout.h"
 namespace PioneerQ38SelectedGlobalWorker=PioneerQ38GlobalWorkerLayout;
-enum {PioneerQ38SelectedWorkerBootEnd=46,PioneerQ38SelectedWorkerPrecise=0,PioneerQ38SelectedWorkerPushed=0};
+enum {PioneerQ38SelectedWorkerBootEnd=46,PioneerQ38SelectedWorkerPrecise=0,PioneerQ38SelectedWorkerPushed=0,PioneerQ38SelectedWorkerBf16=0};
 #endif
 #endif
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
@@ -41,8 +55,13 @@ static_assert(PioneerQ38SelectedWorkerPushed==1,"late QGW3 DATA selection");
 #else
 static_assert(PioneerQ38SelectedWorkerPushed==0,"late old worker DATA selection");
 #endif
-#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS) || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS)
 static_assert(PioneerQ38SelectedWorkerPrecise==1,"late worker DATA profile change");
 #else
 static_assert(PioneerQ38SelectedWorkerPrecise==0,"late worker DATA profile change");
+#endif
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU) || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS)
+static_assert(PioneerQ38SelectedWorkerBf16==1,"late BF16 worker DATA profile change");
+#else
+static_assert(PioneerQ38SelectedWorkerBf16==0,"late BF16 worker DATA profile change");
 #endif

@@ -9,6 +9,10 @@
 #include "blackhole_qwen38_dense_partition_root.cpp"
 #undef scalar_main
 #include "PioneerQ38ProjectionInput.h"
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
+#include "PioneerQ38Bf16RootPairs.h"
+#include "PioneerQ38Bf16MatrixReceipt.h"
+#endif
 #ifdef PIONEER_Q38_PREPARED_Q4_ROOT_IMAGE
 #include "PioneerQ38PreparedQ4RootRole.h"
 #include "PioneerQ38PreparedQ4RootLayout.h"
@@ -67,12 +71,17 @@ static void Quantize(const uint32_t* d){
  for(unsigned i=0;i<padded;i++)Words(L::ScaleShadow)[i]=Words(L::Scales)[i];
  Fence();
 }
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
+#include "blackhole_q38_bf16_projection_root.inc"
+#elif defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION)
 #include "blackhole_qwen38_precise_activation_root.inc"
 #endif
 static void InputsSeal(const uint32_t* d){
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
+ if(BfQ4(d)){BfInputsSeal(d);return;}
+#endif
  unsigned k=d[14],blocks=k>>(d[15]==8?5:8),padded=(blocks+15)&~15U;
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) && !defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU)
  // This route's source is the genuine packed worker producer, not a
  // fabricated or stale local activated-F32 vector.
  if(!PreciseDown(d))
@@ -82,6 +91,9 @@ static void InputsSeal(const uint32_t* d){
  for(unsigned i=0;i<padded;i++)if(Words(L::Scales)[i]!=Words(L::ScaleShadow)[i])scalar_fault_park();
 }
 static void MatrixJob(const uint32_t* d,unsigned w,unsigned sequence){
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
+ if(BfQ4(d)){BfMatrixJob(d,w,sequence);return;}
+#endif
  const auto* p=Words(L::PartsShadow+w*32);
  for(unsigned i=0;i<64;i++)Words(L::Scratch)[i]=0;
  const uint32_t head[]={M::Magic,sequence,1,w+1,M::Peer(w+1),d[42],d[40],d[6]};
@@ -119,6 +131,9 @@ static void MatrixWait(const uint32_t* d,uint32_t* tracked,unsigned w){
 #include "blackhole_qwen38_pushed_completion_root.inc"
 #endif
 static void Gather(const uint32_t* d,uint32_t* tracked,unsigned w){
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
+ if(BfQ4(d)){BfGatherMatrix(d,tracked,w);return;}
+#endif
 #ifndef PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION
  MatrixWait(d,tracked,w);BootSeal(d,tracked,w);
  MatrixJob(d,w,Words(L::Nonces)[w]);Copy(L::PeerJobs+w*256,L::Scratch,64);ClosedJob(d,tracked,w,false);
@@ -206,7 +221,9 @@ static void Scatter(const uint32_t* d,uint32_t* tracked){
 }
 static unsigned Run(const uint32_t* d){
  CaptureRecipe(d);
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
+ if(BfQ4(d))BfPrepare(d);else
+#elif defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION)
  if(PreciseDown(d))PreparePrecise(d);else
 #endif
  Quantize(d);
@@ -217,7 +234,9 @@ static unsigned Run(const uint32_t* d){
 #ifdef PIONEER_Q38_PREPARED_Q4_ROOT_IMAGE
  if(d[15]==12)q38_prepared_q4_stage_shared(d,tracked,Seal);
 #endif
-#ifdef PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
+ if(!BfQ4(d)) // BF16 preparation already admitted/proved ALL119 histories.
+#elif defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION)
  if(!PreciseDown(d)) // PreparePrecise already admits/proves ALL119 histories.
 #endif
  for(unsigned w=0;w<119;w++)Admit(d,tracked,w);

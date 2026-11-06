@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=18 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--token-frontier'}
+assert 3<=len(sys.argv)<=19 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--token-frontier','--bf16-fpu'}
 inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or (cancel and f32),'dense-unroll candidate requires explicit cancel+FP32 profile'
 assert not boundary or (cancel and f32 and unroll),'boundary candidate requires explicit cancel+FP32+unrolled profile'
@@ -23,6 +23,8 @@ worker_admission='--worker-sealed-admission' in options
 assert not worker_admission or single_audit,'worker-sealed admission requires the explicit QGW2 single-closed-audit profile'
 pushed='--pushed-completion' in options
 assert not pushed or worker_admission,'QGW3 receiver requires the entire explicit worker-admission/cancel/FP32 profile'
+bf16='--bf16-fpu' in options
+assert not bf16 or (inspect and precise and worker_admission and not pushed),'QGW4 requires separate inspect/precise/admission and no old pushed receipts'
 packet_unroll='--unroll-packet-seals' in options
 assert not packet_unroll or (pushed and inspect),'unfrozen packet-seal BUILD requires explicit QGW3 and inspect-candidate;not a pinned image'
 packet_eight='--unroll-packet-seals-eight' in options
@@ -40,11 +42,12 @@ def run(*args):subprocess.run([str(a) for a in args],check=True)
 # Reproduce the strict returning components and unchanged whole feedback
 # image FIRST. Neither an old native owner nor a component alone can launch.
 components=out/'qualified-components'
-run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []),*(['--pushed-completion'] if pushed else []),*(['--unroll-packet-seals'] if packet_unroll else []),*(['--unroll-packet-seals-eight'] if packet_eight else []),*(['--fold-job-boot'] if fold_job_boot else []))
+run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []),*(['--pushed-completion'] if pushed else []),*(['--unroll-packet-seals'] if packet_unroll else []),*(['--unroll-packet-seals-eight'] if packet_eight else []),*(['--fold-job-boot'] if fold_job_boot else []),*(['--bf16-fpu'] if bf16 else []))
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1',
+ *(['-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1'] if bf16 else []),
  *(['-DPIONEER_Q38_TOKEN_FRONTIER_IMAGE=1'] if frontier else []),
  *(['-DPIONEER_Q38_JOB_BOOT_FOLD_IMAGE=1'] if fold_job_boot else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1'] if precise else []),
@@ -52,10 +55,15 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_G
  *(['-DPIONEER_Q38_TOKEN_CANCEL_BOUNDARY=1'] if cancel else []),
  '-c',here/'blackhole_qwen38_token_root.cpp','-o',out/'program.o')
 run(tool+'as','-march=rv32imf','-mabi=ilp32','-mno-relax',here/'blackhole_qwen38_global_chain_start.S','-o',out/'start.o')
-run(tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',here/'blackhole_qwen38_global_chain.ld',
+link=here/'blackhole_qwen38_global_chain.ld'
+if bf16:
+ text=link.read_text();assert text.count('SECTIONS {')==1
+ text=text.replace('SECTIONS {','SECTIONS {\n .bf16 0x20000 : { *(.bf16*) . = ALIGN(4); }\n ASSERT(SIZEOF(.bf16)>0 && SIZEOF(.bf16)<=0x10000,"NEW BF16 coordinator code extent,not old native ownership")')
+ link=out/'program.ld';link.write_text(text)
+run(tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',link,
  out/'start.o',out/'program.o',components/'token-components-NOBOOT.o',components/'unchanged-feedback/feedback.o',
  '-Map',out/'program.map','-o',out/'program.elf')
-for section in ('boot','text','terminal','conv'):run(tool+'objcopy','-O','binary','-j','.'+section,out/'program.elf',out/(section+'.bin'))
+for section in ('boot','text','terminal','conv',*(['bf16'] if bf16 else [])):run(tool+'objcopy','-O','binary','-j','.'+section,out/'program.elf',out/(section+'.bin'))
 symbols=subprocess.check_output([tool+'nm','-nC',str(out/'program.elf')],text=True)
 if pushed:
  for name in ('q38_pushed_begin_shared','q38_pushed_receipt_shared','q38_pushed_end_shared'):
@@ -87,7 +95,7 @@ for line in subprocess.check_output([tool+'objdump','-t',str(out/'program.elf')]
   start,size=int(p[0],16),int(p[4],16)
   if size:
    assert not (start|size)&3
-   assert (0x40000<=start and start+size<=0x60000) or (0x64000<=start and start+size<=0x6c000)
+   assert (0x40000<=start and start+size<=0x60000) or (0x64000<=start and start+size<=0x6c000) or (bf16 and 0x20000<=start and start+size<=0x30000)
    intervals.append((start,start+size))
 instructions=[]
 for line in dis.splitlines():
@@ -107,7 +115,7 @@ assert frames and max(frames)<=2048,max(frames)
 sections=subprocess.check_output([tool+'objdump','-h',str(out/'program.elf')],text=True).splitlines()
 for i,row in enumerate(sections):
  m=re.match(r'\s*\d+\s+(\S+)\s+([0-9a-fA-F]+)\s+',row)
- if m and 'ALLOC' in sections[i+1]:assert m[1] in ('.boot','.text','.terminal','.conv'),row
+ if m and 'ALLOC' in sections[i+1]:assert m[1] in ('.boot','.text','.terminal','.conv') or (bf16 and m[1]=='.bf16'),row
 (out/'program.symbols').write_text(subprocess.check_output([tool+'nm','-n',str(out/'program.elf')],text=True))
 (out/'program.disassembly').write_text(dis)
 PINS=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
@@ -133,7 +141,7 @@ PINS_CANCEL_F32=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd
  ('conv.bin',21340,'8d208e783507fbda17b7309d46c7e5a2b07f37874c6b600bacb375b69f0dd721'),
  ('program.elf',178180,'5d870cb7efcee1067ceaf146d05b916de80ca5b0f1be39f55a9303db3c018f70'))
 observed=[]
-for name in ('boot.bin','text.bin','terminal.bin','conv.bin','program.elf'):
+for name in ('boot.bin','text.bin','terminal.bin','conv.bin',*(['bf16.bin'] if bf16 else []),'program.elf'):
  data=(out/name).read_bytes();item=(name,len(data),hashlib.sha256(data).hexdigest());observed.append(item);print(repr(item),flush=True)
 # Separate independent main/clean BUILD pins,not a native ROM/launch grant.
 PINS_CANCEL_F32_UNROLLED_DENSE=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),

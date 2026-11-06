@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "../PioneerQ38Q4FpuCachedLayout.h"
+#include "../PioneerQ38Bf16Input.h"
 #include "../PioneerQ38Q4FpuCompactData.h"
 #include <array>
 #include <cassert>

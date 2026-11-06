@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=16 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot'}
+assert 3<=len(sys.argv)<=17 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--bf16-fpu'}
 inspect='--inspect-candidate' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or f32,'separate dense-unroll candidate requires explicit FP32-hidden components'
 assert not boundary or (f32 and unroll),'boundary candidate requires explicit FP32-hidden and unrolled components'
@@ -23,6 +23,8 @@ worker_admission='--worker-sealed-admission' in options
 assert not worker_admission or single_audit,'worker-sealed admission requires the explicit QGW2 single-closed-audit profile'
 pushed='--pushed-completion' in options
 assert not pushed or worker_admission,'QGW3 receiver requires the entire explicit returning worker-admission profile'
+bf16='--bf16-fpu' in options
+assert not bf16 or (inspect and precise and worker_admission and not pushed),'QGW4 requires its separate inspect/precise/admission profile,not QGW3 receipts'
 packet_unroll='--unroll-packet-seals' in options
 assert not packet_unroll or (pushed and inspect),'unfrozen packet-seal BUILD requires explicit QGW3 and inspect-candidate;not a pinned image'
 packet_eight='--unroll-packet-seals-eight' in options
@@ -42,6 +44,7 @@ flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exc
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
+ *(['-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1'] if bf16 else []),
  *(['-DPIONEER_Q38_JOB_BOOT_FOLD_IMAGE=1'] if fold_job_boot else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL=1'] if packet_unroll else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL_EIGHT=1'] if packet_eight else []),
@@ -57,6 +60,7 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_
  '-DPIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL=1',
  '-DPIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT=1','-c',here/'blackhole_qwen38_return_recurrent_layer.cpp','-o',out/'recurrent.o')
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
+ *(['-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1'] if bf16 else []),
  *(['-DPIONEER_Q38_JOB_BOOT_FOLD_IMAGE=1'] if fold_job_boot else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT=1'] if single_audit else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION=1'] if worker_admission else []),
@@ -96,14 +100,16 @@ for line in dis.splitlines():
 assert len([s for s in dis.splitlines() if re.search(r'\bmv\s+s11,\w+\s*$',s)])==4,'two existing bind/restore pairs only'
 frames=[int(line.split('\t')[1]) for path in (out/'recurrent.su',out/'dense.su',old/'root_conv.su') for line in path.read_text().splitlines()]
 assert frames and max(frames)<=4096,max(frames)
-sections=subprocess.check_output([tool+'objdump','-h',str(capsule)],text=True).splitlines();text=conv=0
+sections=subprocess.check_output([tool+'objdump','-h',str(capsule)],text=True).splitlines();text=conv=bf16bytes=0
 for i,row in enumerate(sections):
  m=re.match(r'\s*\d+\s+(\S+)\s+([0-9a-fA-F]+)\s+',row)
  if not m or 'ALLOC' not in sections[i+1]:continue
- name,size=m[1],int(m[2],16);assert name.startswith(('.text','.rodata','.srodata','.conv')),name
- if name.startswith('.conv'):conv+=size
+ name,size=m[1],int(m[2],16);assert name.startswith(('.text','.rodata','.srodata','.conv')) or (bf16 and name.startswith('.bf16')),name
+ if name.startswith('.bf16'):bf16bytes+=size
+ elif name.startswith('.conv'):conv+=size
  else:text+=size
 assert text<=131072 and conv<=32768,(text,conv)
+assert (0<bf16bytes<=65536) if bf16 else not bf16bytes
 (out/'components.symbols').write_text(symbols);(out/'components.disassembly').write_text(dis)
 PINS=(('recurrent.o',159428,'45263bb08b5cee6af697e2163cdf570b3ad2a86e1234a8927148674e9e25e60a'),
  ('dense.o',120792,'38e7bc8cc2e8d00c33eb9ee0424891e9a8c2099fbb767701420b57d347270278'),

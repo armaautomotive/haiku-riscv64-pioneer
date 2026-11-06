@@ -5,6 +5,7 @@
 #define PIONEER_CACHED_FPU_IMAGE_ONLY
 #include "pioneer_q38_cached_fpu_image_test.cpp"
 #include "../PioneerQ38Bf16WorkerLayout.h"
+#include "../PioneerQ38Bf16MatrixReceipt.h"
 #include "pioneer_q38_paired_projection_probe.h"
 namespace BW=PioneerQ38Bf16WorkerLayout;
 struct FullFpuPeer:CachedMatrixRV32 {
@@ -46,7 +47,7 @@ struct FullFpuPeer:CachedMatrixRV32 {
   if(Range(a,BW::Status,64) || Range(a,0x74000,96) || a==0x74100 || Range(a,0x83f00,256)){Put(a,value);return;}
   CachedMatrixRV32::Store(a,value);
  }
- void StepWorker(){
+ virtual void StepWorker(){
   const unsigned instruction=l1[Index(pc)];Step();if(instruction==0x0ff0000f)FenceObserved();Progress();
   if(regs[27]){if(!seal)seal=regs[27];assert(regs[27]==seal);}
   if(regs[2]){assert(regs[2]>=0x6e000 && regs[2]<=0x70000 && !(regs[2]&15));minSP=std::min(minSP,regs[2]);}
@@ -73,8 +74,9 @@ struct FullFpuPeer:CachedMatrixRV32 {
   while(pc!=stopPC && pc!=faultPC)StepWorker();assert(pc==stopPC && Get(BW::Status+4)==request);
  }
 };
+#ifndef PIONEER_BF16_FULL_FPU_MACHINE_ONLY
 int main(int argc,char** argv){
- assert(argc==4);unsigned outputs=0,jobs=0,maxStack=0;
+ assert(argc==4);unsigned outputs=0,jobs=0,maxStack=0,receiptRefusals=0;
  const unsigned metadataJobs=ProbePairedCoverage();
  assert(metadataJobs==22848);
  for(unsigned worker:{1U,119U}){
@@ -106,11 +108,26 @@ int main(int argc,char** argv){
    }
    assert(peer->Get(0x83f40)==job.words[4]*(width/16) && peer->Get(0x83f44)==sequence && peer->Get(0x83f48)==worker
     && peer->Get(0x83f4c)==CL::Magic && peer->Get(0x83fc0)==BW::Producer::Format && peer->Get(0x83fd8)==part.firstRow);
+   uint32_t proof[64],outer[64],prior[8],current[8];
+   for(unsigned i=0;i<64;i++){proof[i]=peer->Get(0x83f00+i*4);outer[i]=peer->Get(BW::Job+i*4);}
+   for(unsigned i=0;i<8;i++){prior[i]=before[indices[i]];current[i]=peer->bus.counters[indices[i]];}
+   assert(PioneerQ38Bf16MatrixReceipt::Matrix(proof,outer,peer->boot.data(),prior,current));
+   // Posthoc observer only:the ROOT uses this SAME predicate with its
+   // independently authenticated closed job and actual physical counters.
+   // Never install a repaired receipt or an expected product in the guest.
+   for(unsigned word=0;word<64;word++)for(unsigned bit=0;bit<32;bit++){
+    proof[word]^=1U<<bit;assert(!PioneerQ38Bf16MatrixReceipt::Matrix(proof,outer,peer->boot.data(),prior,current));
+    proof[word]^=1U<<bit;receiptRefusals++;
+   }
+   for(unsigned i=0;i<8;i++){
+    current[i]++;assert(!PioneerQ38Bf16MatrixReceipt::Matrix(proof,outer,peer->boot.data(),prior,current));current[i]--;receiptRefusals++;
+   }
    maxStack=std::max(maxStack,0x70000-peer->minSP);jobs++;
    printf("PASS ACTUAL full QGW4->linked returning FPU worker%u phase%u K%u rows%u all exact;actual sealed dispatcher,canonical NoC bytes,shared live FPU/NIU/L1 across requests\n",worker,phase,width,job.words[4]*16);fflush(stdout);
   }
   peer->Stop(sequence+1,worker==119?1:0);
  }
  assert(jobs==5 && outputs && maxStack<=8192);
- printf("PASS ACTUAL QGW4/FPU dispatch jobs%u/outputs%u/maxCombinedStack%u/canonical stripe metadata jobs%u/all64layers/real WAIT and STOP;separate actual coordinator pack image supplies typed inputs,synthetic bytes at REAL unchanged stripe addresses;NOT connected live producer/ROOT/native/hardware/full-model quality/TPS proof\n",jobs,outputs,maxStack,metadataJobs);
+ printf("PASS ACTUAL QGW4/FPU dispatch jobs%u/outputs%u/maxCombinedStack%u/canonical stripe metadata jobs%u/receiptRefusals%u/all64layers/real WAIT and STOP;separate actual coordinator pack image supplies typed inputs,synthetic bytes at REAL unchanged stripe addresses;NOT connected live producer/ROOT/native/hardware/full-model quality/TPS proof\n",jobs,outputs,maxStack,metadataJobs,receiptRefusals);
 }
+#endif

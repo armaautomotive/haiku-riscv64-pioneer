@@ -1,0 +1,1 @@
+PASS cached-FPU DATA transport:3168 paired16-row cache/K-block/buffer cases exact4608B original compact bytes+512B coordinator BF16;119 unique worker shapes;41 atomic refusals;262144 BF16 lane cases and chunk canaries;NO native/producer-lifetime/full-worker/hardware/quality/speed authority

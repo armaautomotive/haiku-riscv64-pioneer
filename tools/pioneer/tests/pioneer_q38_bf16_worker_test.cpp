@@ -44,8 +44,9 @@ struct Bf16Peer:GlobalInitialPeer {
   const unsigned reads=BP::Reads(descriptor.data()),p=activationPackets++;
   assert(p<reads+2);const bool write=p>=reads,trailer=p==reads+1;
   const unsigned local=write?(trailer?0x90e00:0x90c00):(p?0x90400:0x90000),bytes=write?(trailer?128U:512U):1024U;
-  const unsigned remote=descriptor[4]+(write?descriptor[trailer?13:12]:descriptor[10+p]);
-  const unsigned expected[]={write?local:remote,0,write?selfRoute:descriptor[8],write?remote:local,0,
+  const unsigned offset=write?descriptor[trailer?13:12]:descriptor[10+p];
+  const unsigned remote=!write && reads==1?offset:descriptor[4]+offset,sourceRoute=!write && reads==1?unsigned(BP::InputRoot):descriptor[8];
+  const unsigned expected[]={write?local:remote,0,write?selfRoute:sourceRoute,write?remote:local,0,
    write?descriptor[8]:selfRoute,0,write?0x212U:0,bytes,0};
   for(unsigned i=0;i<10;i++)assert(command[i]==expected[i]);
   if(activationPackets==failPacket){pending=true;return;}
@@ -74,7 +75,7 @@ struct Bf16Peer:GlobalInitialPeer {
   activationPackets=activatedWrites=nativeWrites=scaleWrites=0;freshLine.fill(0xa5a5a5a5);
   auto& d=descriptor;d={};d[0]=BP::Magic;d[1]=1;d[2]=67108864;d[3]=(logicalWorker-1)%7;d[4]=0x04000000;
   d[5]=logicalWorker-1;d[6]=2025;d[7]=logicalWorker;d[8]=PioneerQ38ProjectionRoute(d[3]);d[9]=selfRoute;
-  d[10]=(gated?unsigned(BP::GateOffset):0U)+d[5]*1024;d[11]=gated?BP::UpOffset+d[5]*1024:5120;
+  d[10]=(gated?unsigned(BP::GateOffset):unsigned(BP::ProjectionInput))+d[5]*1024;d[11]=gated?BP::UpOffset+d[5]*1024:5120;
   d[12]=BP::NativeOffset+d[5]*512;d[13]=BP::LinesOffset+d[5]*128;d[14]=BP::Format;d[15]=gated?68:20;
   for(unsigned i=0;i<16;i++)d[16+i]=source[i];for(unsigned i=0;i<8;i++)d[32+i]=boot[8+i];
   d[40]=0;d[41]=248319;d[42]=0;d[43]=phase;

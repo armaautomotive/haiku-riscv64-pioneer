@@ -1,5 +1,6 @@
 /* SPDX-License-Identifier: MIT */
 #include "pioneer_q38_cached_fpu_machine.h"
+#include "../PioneerQ38Bf16Input.h"
 struct CachedData {
  std::vector<std::vector<Q4PipelineFixture>> pairs;std::vector<std::array<uint32_t,32>> expected;
  CachedData(unsigned width,unsigned groups,unsigned trial){

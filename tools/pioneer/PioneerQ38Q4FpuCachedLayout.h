@@ -2,7 +2,7 @@
 #ifndef PIONEER_Q38_Q4_FPU_CACHED_LAYOUT_H
 #define PIONEER_Q38_Q4_FPU_CACHED_LAYOUT_H
 #include "PioneerQ38Q4FpuCompactStreamLayout.h"
-#include "PioneerQ38Bf16Input.h"
+#include "PioneerQ38Bf16Wire.h"
 // Returning matrix-service DATA. Canonical root partition/source/producer
 // ownership remains EXTERNAL. Never aliases104's fixed source or native role.
 struct PioneerQ38Q4FpuCachedLayout:PioneerQ38Q4FpuCompactStreamLayout {
@@ -15,7 +15,7 @@ struct PioneerQ38Q4FpuCachedLayout:PioneerQ38Q4FpuCompactStreamLayout {
   const auto* w=j.words;
   if(w[0]!=Magic || w[1]!=Version || !Width(w[2]) || w[3]<0x04000000 || (w[3]&63)
    || !w[4] || w[4]>16 || (w[4]&1) || !Route(w[5]) || !w[6] || w[6]>=120 || w[7]!=Peer(w[6])
-   || w[8]!=PioneerQ38Bf16Input::Magic || w[9]!=InputBase || w[10]!=InputRoot
+   || w[8]!=PioneerQ38Bf16Wire::Magic || w[9]!=InputBase || w[10]!=InputRoot
    || !w[11] || w[11]>=0x7fffffff || w[12]!=Output || w[13] || w[14] || w[15])return false;
   const unsigned bytes=GroupBytes(w[2],w[4]);
   return w[3]<=0xc4000000-bytes;

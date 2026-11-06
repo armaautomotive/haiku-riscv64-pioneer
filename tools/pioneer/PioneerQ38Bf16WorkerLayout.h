@@ -9,7 +9,12 @@ namespace Base=PioneerQ38GlobalWorkerLayout;namespace Producer=PioneerQ38Bf16Pro
 using namespace Base;
 enum : unsigned {Magic=0x34574751,Fault=0x46574754,JobWitness=0x344f4751};
 static inline unsigned BootWord(unsigned i){return i==40?unsigned(JobWitness):i==46?unsigned(Producer::Magic):i==47?unsigned(Producer::Format):i==48?32U:Base::BootWord(i);}
-static __attribute__((noinline)) bool BootShape(const uint32_t* b){
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
+#define QGW4_GRAMMAR __attribute__((noinline,section(".bf16.root")))
+#else
+#define QGW4_GRAMMAR __attribute__((noinline))
+#endif
+static QGW4_GRAMMAR bool BootShape(const uint32_t* b){
  if(!b || b[0]!=Magic)return false;
  uint32_t old[64];for(unsigned i=0;i<64;i++){
   if((i==40 || (i>=46 && i<=48)) && b[i]!=BootWord(i))return false;
@@ -20,7 +25,7 @@ static __attribute__((noinline)) bool BootShape(const uint32_t* b){
 static inline bool FpuJob(const uint32_t* j){return j && j[2]==1 && j[16]==PioneerQ38Q4FpuCachedLayout::Magic;}
 // Keep temporary grammar copies out of the persistent caller's frame;
 // they must not remain live throughout the activation's staging buffers.
-static __attribute__((noinline)) bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
+static QGW4_GRAMMAR bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
  if(!j || !BootShape(b) || j[0]!=Magic)return false;
  if(FpuJob(j) || j[2]==3 || j[2]==5){
   if(densePhase || previous>=0x7ffffffe || j[1]!=previous+1 || !j[1] || j[1]>=0x7fffffff
@@ -54,5 +59,6 @@ static __attribute__((noinline)) bool JobShape(const uint32_t* j,const uint32_t*
  oldBoot[0]=oldJob[0]=Base::Magic;if(j[2]==GlobalMatrix){if(j[31]!=JobWitness)return false;oldJob[31]=Base::JobWitness;}
  return Base::JobShape(oldJob,oldBoot,previous,densePhase);
 }
+#undef QGW4_GRAMMAR
 }
 #endif

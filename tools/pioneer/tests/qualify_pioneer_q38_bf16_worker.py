@@ -26,7 +26,7 @@ for name in ('blackhole_qwen38_global_worker.cpp','blackhole_q38_bf16_persistent
 collect(tool+'g++',here.parent/'blackhole_q38_cached_fpu_matrix.cpp',['-march=rv32i','-mabi=ilp32','-DPIONEER_Q38_CACHED_FPU_MATRIX_IMAGE=1','-DPIONEER_Q38_CACHED_FPU_RETURN_ONLY=1'])
 flags=re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?',(here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
 collect(cxx,here/'pioneer_q38_bf16_worker_test.cpp',flags)
-for name in ('pioneer_q38_bf16_worker_probe.cpp','pioneer_q38_sigmoid_precision_host_bridge.cpp','pioneer_q38_bf16_worker_fpu_test.cpp','pioneer_q38_paired_projection_probe.cpp'):
+for name in ('pioneer_q38_bf16_worker_probe.cpp','pioneer_q38_sigmoid_precision_host_bridge.cpp','pioneer_q38_bf16_worker_fpu_test.cpp','pioneer_q38_bf16_producer_fpu_test.cpp','pioneer_q38_paired_projection_probe.cpp'):
  collect(cxx,here/name)
 assert all(p.is_relative_to(root) for p in dependencies)
 frozen={p:hashlib.sha256(p.read_bytes()).hexdigest() for p in dependencies}
@@ -43,6 +43,9 @@ run('cached-regression',[sys.executable,here/'run_pioneer_q38_cached_fpu_tests.p
 run('fpu-compile',[cxx,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off','-fsanitize=address,undefined',
  here/'pioneer_q38_bf16_worker_fpu_test.cpp',here/'pioneer_q38_paired_projection_probe.cpp','-o',out/'fpu-test'])
 run('fpu',[out/'fpu-test',out/'worker',out/'cached-regression/services/bf16_producer',out/'cached-regression/services/cached_fpu_matrix'])
+run('connected-compile',[cxx,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-ffp-contract=off','-fsanitize=address,undefined',
+ here/'pioneer_q38_bf16_producer_fpu_test.cpp',here/'pioneer_q38_paired_projection_probe.cpp','-o',out/'connected-test'])
+run('connected',[out/'connected-test',out/'worker',out/'cached-regression/services/cached_fpu_matrix'])
 assert all(hashlib.sha256(p.read_bytes()).hexdigest()==digest for p,digest in frozen.items())
 (out/'source-sha256.txt').write_text(''.join(frozen[p]+'  '+str(p.relative_to(root))+'\n' for p in sorted(frozen)))
 (out/'test-argv.json').write_text(json.dumps(commands,indent=2)+'\n')
