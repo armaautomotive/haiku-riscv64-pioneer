@@ -1,0 +1,84 @@
+{
+  "client_commit": "4a73fc00cad22d07bfc73220dc53fcd0acf2fa39",
+  "client_sha256": "64c8c252d2c423de227e112b8da78045eb271ed0988923c3d15183114a132dc7",
+  "files": {
+    "compact-q4-stream.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "compact-q4-stream.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compact-q4-stream.stdout": {
+      "bytes": 69166,
+      "sha256": "e6df8adcd77297a443525ee3327a865ca4b00fa48f4e0eeb98ce73532ae9c0e2"
+    },
+    "parent.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "parent.pid": {
+      "bytes": 6,
+      "sha256": "1280c96bee6e61a2598f0717f9397f88e0c570ba9dd306c1477632d3579cd205"
+    },
+    "parent.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "parent.stdout": {
+      "bytes": 71946,
+      "sha256": "e083fa567f468ad6dc37aa3fcbd96acbcdc00583d0156c3d47ac364692ab7c85"
+    },
+    "postflight.sh": {
+      "bytes": 3012,
+      "sha256": "cd7f304e16adf312a99c75d89c9e48a149517284899e3547e666f2d43f539fb0"
+    },
+    "postflight.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "postflight.stdout": {
+      "bytes": 722,
+      "sha256": "d647e77937fe7d6ca20afad8f2289757f07b536ff8a13027a53b61855286a1be"
+    },
+    "state": {
+      "bytes": 53,
+      "sha256": "c288d92b6bb62290207259e001e79bff6cc85f8cc34a606461c3c61d2fadb505"
+    },
+    "wrapper.pid": {
+      "bytes": 6,
+      "sha256": "774a26152e0bec1c69c63b850699dc60be2b2d52550bd87c51fc8276edd75ce2"
+    }
+  },
+  "native_commit": "aa3842120afdb5a37c468dd6b35ac36eb24b6b24",
+  "native_sha256": "4722e956bfda10a5f8dbc2317bd5dd12d2de1b1099c3d33286b4b6447930f61e",
+  "normal_sha256": "041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403",
+  "parent_pid": 32948,
+  "readers": {
+    "tools/pioneer/benchmarks/qwen38-native-q4-fpu-stream-reference-20261104.log": "56ec253884deb7ba3f8a72dc09202f0b2a687752ebb15274843cbf14483008e9",
+    "tools/pioneer/pioneer_native_compact_q4_stream_physical.sh": "fb8949d50e06ab69cfc921369286ad072fe1c60fbd210762188cf8e7e8f0608a",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_output.py": "1ea147b0d9c78f1acc6e2d54b1928132df8617ebb68f7c456c28722d09a6df6b",
+    "tools/pioneer/tests/pioneer_native_compact_q4_stream_parent_output.py": "32039015401e4c560e19fff94ae1d8e0232228a471b901f50911ad8bc03681c9"
+  },
+  "restored_generation": 38,
+  "scope": "HISTORICAL bounded physical104 result;NOT full-model quality/speed or current admission",
+  "spent": true,
+  "stage": "/boot/home/pioneer-native-compact-q4-stream-20261105-a",
+  "terminal": {
+    "collection": {
+      "exit": 0,
+      "session": 8675
+    },
+    "outer": {
+      "exit": 0,
+      "session": 73746
+    },
+    "postflight": {
+      "exit": 0,
+      "session": 7457
+    }
+  },
+  "version": 1,
+  "wrapper_pid": 32941
+}

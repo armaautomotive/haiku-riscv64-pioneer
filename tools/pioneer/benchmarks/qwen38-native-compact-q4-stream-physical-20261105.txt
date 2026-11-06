@@ -1,0 +1,93 @@
+Compact original-Q4 full-K FPU native104 -- REAL CARD,known clean
+===============================================================
+Run started2026-11-05 UTC;observed terminal2026-11-06 00:03:06UTC.
+Client/base4a73fc00cad22d07bfc73220dc53fcd0acf2fa39;native owneraa3842120a.
+NEW104-a executed ONCE. ALL576 real returned words/nine explicit clean ENDs
+passed;whole parent actually EXIT0 and independent postflight actually0.
+Normal041/tag12/gen38/64CPUs/full RAM/Assistant hashes independently proved.
+No recovery reset,board reboot,power,SD,mains or connection change was required.
+Stage104-a is SPENT forever;so are earlier fixed81..103/old86/restore stages.
+Never rerun/repin104-a or its generation37 client as another experiment.
+
+What this proves -- and does not
+-------------------------------
+Real execution of the two compact full-K original-Q4/SFPU/BF16/FPU programs
+on the leased single core/route,not just host simulation. Nine fixed gate/
+up/down first/middle/last bands,32 output rows each,two full-K jobs each:
+K5120 six samples,K17408 three. Every returned word equals the independent
+original-derived Fraction reference;no model/payload/result injection or
+CPU learned inference occurs in the native driver. Source authentication
+and fresh diagnostic predictions happen in the separate DEBUG client.
+
+This is NOT full27B/FPU/cohort/resident-graph/Assistant Work integration,
+prompt quality,bandwidth or tokens/sec proof. Last actual full-model rate
+remains0.164361584..0.164365058tok/s;20tok/s UNMET. Do not turn polls1 into
+a kernel time or extrapolated speed. Source hashing and full PCIe journals
+are validation overhead,not inference timings.
+
+Frozen identities
+-----------------
+Native104 driver1843416B:
+4722e956bfda10a5f8dbc2317bd5dd12d2de1b1099c3d33286b4b6447930f61e
+Client1944800B:
+64c8c252d2c423de227e112b8da78045eb271ed0988923c3d15183114a132dc7
+Parent script:
+fb8949d50e06ab69cfc921369286ad072fe1c60fbd210762188cf8e7e8f0608a
+Original18973870528B same-open source:
+c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747
+Independent288 numerical words (576 two-job returns):
+56ec253884deb7ba3f8a72dc09202f0b2a687752ebb15274843cbf14483008e9
+Compiled7644B text,K5120:
+f67b7b5bc07bddcf5f3ddfccfbe1013c2680650ea1994231565f050d1f0d89c5
+Compiled7644B text,K17408:
+c95e0cc41971b37dd89786a2c3747b6d8ef6ebbde3a2ec837c63198982373b92
+The code/8KiB ROM and8KiB stack bounds and all ownership/timeouts remain.
+
+Authoritative closure,not flags alone
+------------------------------------
+Actual SSH/wrapper tool handle73746 exited0,printing
+COMPACT104_PARENT_TERMINAL exit0. Remote parent32948/wrapper32941 both gone
+at independent postflight. Exact remote parent.exit and child.exit are0;
+both stderr files empty. Child stdout588 exact records;parent stdout624
+exact ordered records independently accepted from RAW ASCII bytes,without
+universal-newline normalization. No stale7-versus37 metadata defect.
+Parent script was independently qualified against tracked36->37->38 state
+before deployment;all staged artifacts checked exact before activation.
+
+Each real sample returned64 exact normal/zero FPU words,polls1,selected
+width/count/QCS1 marker/park PCs,known terminal NIU state and explicit END:
+samples0..5:25600 GDDR words/1040 read requests/3200 C64 flits each;
+samples6..8:87040 GDDR words/3536 read requests/10880 C64 flits each.
+One accumulator clear per full-K job,not per K256. Compact original bytes
+stay4608 per32x256;input512B. Two producer buffers/prefetch,26 reads/80
+C64 flits per block. These are exact counts,not a measured speed gain.
+
+All nine ENDs verify both final producer slots,headers/gaps/shared zero,
+boot/code/frame/captured outputs and fixed source GDDR BEFORE restoring.
+Full107632B L1 and selected102400B/348160B GDDR journals,NIU commands/FIFO,
+two TLB slots,ARC clock,17 views and PCI mapping/reservation closed cleanly.
+No uncertainty was ignored or force-cleaned. No fallback or repeated run.
+
+After real parent exit0,separate postflight7457 actually EXIT0 with empty
+stderr:both exit records/state/SPENT marker/PIDs,independent process absence,
+idle,exact normal041/stable/admin/guard/Assistant/server/service hashes,
+live driver55/tag2026102100010012/gen38/quiesced0/cold0/owner0/open1/guard1,
+64 CPUs and max RAM137034936320. File collection8675 actually EXIT0. The
+postflight was read-only and did not start another GPU test.
+
+Raw scoped records and checked postflight script are in the adjacent
+directory. Its verifier checks hashes and typed child/parent/health framing;
+it verifies historical records,NOT current hardware readiness or permission
+to repeat a SPENT stage. No private learned header/object/binary is in Git.
+
+Next implementation target
+--------------------------
+Use the qualified FPU math in FULL-model matrix jobs,not another unchanged
+single-core benchmark. Current integer activation buffers are NOT BF16:
+on-card projection and gated-activation producers must publish typed BF16
+inputs. Full-model weights already use16-row byte-major tiles;paired tiles
+can supply the compact32-row FPU layout without a whole-model disk rewrite
+(integration plan,inference from inspected byte layouts,not yet a tested
+consumer). Canonical pair partitioning/root receipts and other Q6/Q8 FPU
+matrix formats still need integration. Then real prompt/quality checks in
+DEBUG and honest no-reference Work tokens/sec,with the model resident.

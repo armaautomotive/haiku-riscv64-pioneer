@@ -1,7 +1,7 @@
-Compact original-Q4 native diagnostic104 -- OFFBOARD qualified only
-================================================================
+Compact original-Q4 native diagnostic104 -- bounded REAL card verified
+=====================================================================
 This is a distinct native owner for the compact full-K Q4/SFPU/FPU image,
-NOT an Assistant Work mode,physical qualification or measured speedup.
+NOT an Assistant Work mode,full-model qualification or measured speedup.
 The offboard checkpoint did not change Assistant/boot/installed Work. The last
 actual full27B rate remains0.164361584..0.164365058tok/s;20tok/s UNMET.
 
@@ -76,8 +76,11 @@ each,SDK client byte-identical,5292 actual-client fixtures,1846 parent-flow
 cases plus strict live-epoch regression,1866 child/1883 parent parser
 refusals,actual full-original source and12 FD-identity/error checks.
 See benchmarks/qwen38-native-compact-q4-stream-client-20261105.txt.
-Its fixed36->37->38 stage104-a was launched ONCE after fresh live gates;
-do not rerun it. A progress observation is not physical closure;read the
-separate physical result when available. Old86 and fixed81..103 stages
-also remain SPENT. Full mixed-format resident inference and real model
-tokens/sec measurements remain;this is NOT Assistant Work integration.
+Its fixed36->37->38 stage104-a ran ONCE and is now SPENT. Actual parent73746
+EXIT0,576 REAL returned words/nine clean ENDs,raw child/full-parent parsers
+passed,separate postflight7457 EXIT0 proves normal041/tag12/gen38,owner0,
+cold0/guard1,64CPUs/full RAM and unchanged Assistant. No recovery reset/reboot/power/
+SD/mains change. See benchmarks/qwen38-native-compact-q4-stream-physical-20261105.txt.
+Old86 and fixed81..103 stages also remain SPENT. Full mixed-format resident
+inference/typed BF16 activation producers/full-model matrix partitioning and
+real Work tokens/sec remain;this is NOT Assistant Work integration.
