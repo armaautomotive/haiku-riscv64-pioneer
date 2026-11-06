@@ -1,0 +1,48 @@
+Factored-Q4 trace component:local diagnostic mechanics completed
+===============================================================
+November6,2026. Base7504b10e9d. This is NOT a new driver or hardware result.
+The rejected111-a trial remains spent and was not replayed. No Pioneer
+installation,relay,power,boot,SD,network,Assistant or Work change this turn.
+
+Changed:fixed-K5120 diagnostic observes completed packing,ones/qdot,
+metadata and affine stages. Its issued Op/Config/Drain stream is exactly
+the production Group sequence;only scalar DIAGNOSTIC reads are added.
+No learned scalar reads or CPU references are added to Work. Result64:
+exact final32,20 per-block fingerprints,4 stage fingerprints,8 first-group
+direct intermediates. Fingerprints locate faults;they do not replace
+exact final output acceptance or authorize END/cleanup. The pure data
+reporter preserves ALL64 returned words even on first/last mismatches.
+
+Main44083 and independent clean export77514 ACTUALLY0;10 children0 each,
+stderr0. All64 consumed project sources,whole selected stdout and actual
+boot/text bytes match. ASan/UBSan tests exercise160 groups,exact issue
+correspondence,compiled RV32 in shared L1/Dst/NoC/FPU/SFPU,all64 independent
+original-byte predictions,64,835 completed-boundary observations and
+656B observed stack.65 default-off/wrong/late/Work/native role refusals.
+Reporter7 mismatch/equal cases retain ALL64. The old pinned compiled111
+image regression still passes locally;no old source/image was repinned.
+
+Actual new program12,104B,zero CSRs,private16KiB scope;SHA256:
+f281b1419c35b1cb818e7c0278adef916ef6d19e1a2932453ee460510f560dad
+Build corrections:fixed mixed auto declarations and misleading indentation;
+changed diagnostic fingerprints to shift/add (no RV32 multiply runtime);
+word-sized publication state keeps stack operations word-sized. The shared
+scalar instruction decoder and all production arithmetic stayed unchanged.
+
+LIMIT:the existing software model missed111's physical numerical failure.
+These passes qualify tracing mechanics,NOT card arithmetic. Added reads
+may also hide timing hazards. No new TPS,quality or feasibility claim.
+
+Next:bind this component/reference/ALL64 reporter into a fresh isolated
+native diagnostic identity and one-shot parent;then physically locate the
+first failing stage. Do not replay111-a,rebuild closed infrastructure as
+proof of correctness,or attempt another full-model upload before diagnosis.
+The original20TPS performance goal remains ACTIVE/unmet.
+
+Reproduce LOCAL only (fresh absolute output directory):
+python3 tools/pioneer/tests/run_pioneer_q38_q4_factored_trace_tests.py \
+ /Volumes/HaikuBuildLocal/generated.riscv64 PINNED_111_IMAGE_DIRECTORY \
+ /private/tmp/fresh-factored-trace-tests
+The old image is authenticated by its recorded boot/text hashes. No model
+weights,binary,private export or learned header is published. SiblingJSON
+holds complete selected stdout,actual exits and consumed-source hashes.

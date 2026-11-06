@@ -68,6 +68,10 @@ Next bounded subtask:identify the first incorrect on-card intermediate;
 retain complete returned values/stage observations on a failure. Do not
 replay111-a,relax comparison or repeat full-model uploads. This checkpoint
 stays open until correct arithmetic and a real timing comparison exist.
+The new trace component has now passed local issue correspondence,
+compiled-image and complete-word-reporting mechanics checks. Fresh native
+driver/client binding and a physical probe are still required;the software
+model's passes do NOT resolve the hardware failure.
 The new operation order differs from old per-weight BF16 rounding;
 local bit tests do not prove model quality.
 

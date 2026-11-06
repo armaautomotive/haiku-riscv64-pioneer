@@ -37,12 +37,12 @@ struct CompareState {ComparePipeline native;};
 // reset,host K loop,descriptor normalization or injected learned result.
 struct FactoredCompareRV32:CompareState,ServiceMachine {
  StreamIO bus;unsigned width,drainedGroups=0,acks=0,timerStores=0,clockReads=0;bool awaiting=false;
- std::vector<unsigned> csrPc;
- FactoredCompareRV32(const char* folder,unsigned k):ServiceMachine(folder,native.l1),bus(k,17|(12<<6),&native.l1),width(k){
-  assert(code.size()==11792);native.bus=&bus;native.delay[0]=100003;native.delay[1]=7;native.packDelay=100019;
+ std::vector<unsigned> csrPc;bool diagnostic=false;unsigned diagnosticReads=0;
+ FactoredCompareRV32(const char* folder,unsigned k,bool observe=false):ServiceMachine(folder,native.l1),bus(k,17|(12<<6),&native.l1),width(k),diagnostic(observe){
+  assert(diagnostic?(k==5120 && code.size()<=16384):code.size()==11792);native.bus=&bus;native.delay[0]=100003;native.delay[1]=7;native.packDelay=100019;
   for(unsigned off=0;off<code.size();off+=4)if((::Word(code,off)&127)==0x73)csrPc.push_back(0x70000+off);
-  assert(csrPc.size()==3 && csrPc[1]==csrPc[0]+4 && csrPc[2]==csrPc[0]+8);
-  unsigned frame[8]={0x31435151,1,k,bus.route,1,0,0,0};for(unsigned i=0;i<8;i++)Put(SL::Frame+i*4,frame[i]);
+  assert(diagnostic?csrPc.empty():(csrPc.size()==3 && csrPc[1]==csrPc[0]+4 && csrPc[2]==csrPc[0]+8));
+  unsigned frame[8]={diagnostic?0x31525151U:0x31435151U,1,k,bus.route,1,0,0,0};for(unsigned i=0;i<8;i++)Put(SL::Frame+i*4,frame[i]);
  }
  bool InlineTensix()const override{return true;}
  unsigned Index(unsigned a)override{
@@ -82,6 +82,12 @@ struct FactoredCompareRV32:CompareState,ServiceMachine {
   if(Range(a,0xffef0000,224*4)){assert(!native.Pending() && !native.mathPending);return native.config[(a-0xffef0000)/4];}
   if(SL::HeaderWord(a) || Range(a,0xffb20000,0x2000))return bus.Read(a);
   const unsigned row=(a-0xffbd8000)/64;
+  if(diagnostic && !native.old && (Range(a,0x87ff0,1104) ||
+   (Range(a,0xffbd8000,256*64) && (row==32 || row==40 || row==80 || row==88 || row>=128)))){
+   assert(native.Clean() && !awaiting);diagnosticReads++;
+   if(a<0xffbd8000)return ReadL1(a);
+   return native.FloatDst(row,(a%64)/4);
+  }
   if((native.old && (Range(a,0xffbd8800,64) || Range(a,0xffbd8a00,64)))
    || (!native.old && (Range(a,0xffbd9400,64) || Range(a,0xffbd9600,64)))){
    assert(native.Clean() && !awaiting && bus.reader==2);native.outputReads++;return native.FloatDst(row,(a%64)/4);
@@ -101,10 +107,11 @@ struct FactoredCompareRV32:CompareState,ServiceMachine {
    if(regs[2]){assert(regs[2]>=0x6e000 && regs[2]<=0x70000 && !(regs[2]&15));minSP=std::min(minSP,regs[2]);}
    assert(regs[27]==0x13579bdf && steps<StepLimit());
   }
-  if(pc==0x70058){assert(ReadL1(0x17ffc8)==0x45435151);return false;}
-  assert(ReadL1(0x17ffc0)==0x7000c && ReadL1(0x17ffc4)==(0x04000000|width) && ReadL1(0x17ffc8)==0x31435151);
-  assert(native.Clean() && !awaiting && bus.reader==2 && bus.jobs==2 && stores==64 && timerStores==16 && clockReads==12);
-  assert(bus.issues==2*(width/256)*SL::Packets && bus.completed==bus.issues && native.outputReads==64);
+  if(pc==0x70058){assert(ReadL1(0x17ffc8)==(diagnostic?0x45525151U:0x45435151U));return false;}
+  assert(ReadL1(0x17ffc0)==0x7000c && ReadL1(0x17ffc4)==(0x04000000|width) && ReadL1(0x17ffc8)==(diagnostic?0x31525151U:0x31435151U));
+  assert(native.Clean() && !awaiting && bus.reader==2 && bus.jobs==2 && stores==(diagnostic?96U:64U) && timerStores==16 && clockReads==(diagnostic?0U:12U));
+  assert(bus.issues==2*(width/256)*SL::Packets && bus.completed==bus.issues && native.outputReads==(diagnostic?32U:64U));
+  assert(!diagnostic || diagnosticReads==64835);
   return true;
  }
 };
