@@ -7,11 +7,19 @@ import re
 import runpy
 import subprocess
 import sys
+paired=sys.argv[-1:]==['--pair-issue']
+if paired:sys.argv.pop()
 assert __debug__ and len(sys.argv)==3 and not os.environ.get('PYTHONOPTIMIZE')
 sdk,out=map(Path,sys.argv[1:]);here=Path(__file__).resolve().parent
 assert sdk.is_absolute() and sdk.is_dir() and out.is_absolute() and not out.exists() and not out.is_symlink()
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 out.mkdir(mode=0o700);saved=sys.argv[:]
+if paired:
+ subprocess.run([sys.executable,str(Path(__file__).resolve()),str(sdk),str(out/'unchanged-bf16')],check=True)
+ from PioneerQ38Bf16ProgramPins import WORKER_PINS
+ for leaf,size,digest in WORKER_PINS:
+  data=(out/'unchanged-bf16'/leaf).read_bytes()
+  assert len(data)==size and hashlib.sha256(data).hexdigest()==digest,leaf
 try:
  sys.argv=[str(here/'build_qwen38_global_worker_image.py'),str(sdk),str(out/'unchanged-global')]
  parent=runpy.run_path(sys.argv[0],run_name='__main__')
@@ -20,12 +28,15 @@ tool=str(parent['cross'])+'-';flags=parent['flags']
 def run(*args):subprocess.run(list(map(str,args)),check=True)
 for source,name,opt in (('blackhole_qwen38_global_worker.cpp','global','-Os'),('blackhole_q38_bf16_persistent_producer.cpp','bf16','-O2')):
  run(tool+'g++',*flags,opt,'-ffixed-s11','-DPIONEER_Q38_BF16_WORKER_IMAGE=1','-c',here/source,'-o',out/(name+'.o'))
-run(tool+'g++','-std=c++17','-Os','-Wall','-Wextra','-Werror','-ffreestanding','-fno-builtin',
+cached_command=[tool+'g++','-std=c++17','-Os','-Wall','-Wextra','-Werror','-ffreestanding','-fno-builtin',
  '-fno-tree-loop-distribute-patterns','-fno-exceptions','-fno-rtti','-fno-stack-protector','-fno-pic','-fno-pie',
  '-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables','-msmall-data-limit=0',
  '-mno-relax','-march=rv32i','-mabi=ilp32','-ffixed-s11','-fstack-usage','-Dcached_fpu_fault=block_fault_park',
  '-DPIONEER_Q38_CACHED_FPU_MATRIX_IMAGE=1','-DPIONEER_Q38_CACHED_FPU_RETURN_ONLY=1',
- '-c',here/'blackhole_q38_cached_fpu_matrix.cpp','-o',out/'cached.o')
+ '-c',here/'blackhole_q38_cached_fpu_matrix.cpp','-o',out/'cached.o']
+if paired:cached_command[1:1]=['-DPIONEER_Q38_CACHED_FPU_PAIR_ISSUE_IMAGE=1','-fomit-frame-pointer']
+run(*cached_command)
+(out/'cached-compile-argv.txt').write_text('\n'.join(map(str,cached_command))+'\n')
 assert set(row.split()[-1] for row in subprocess.check_output([tool+'nm','-u',str(out/'cached.o')],text=True).splitlines())=={'block_fault_park'},'cached leaf must not call byte libc memset'
 run(tool+'as','-march=rv32imf','-mabi=ilp32','-mno-relax',here/'blackhole_q38_bf16_worker_start.S','-o',out/'start.o')
 link=(out/'unchanged-global/program.ld').read_text();assert link.count('SECTIONS {')==1
@@ -74,5 +85,10 @@ for source in ('blackhole_qwen38_global_worker.cpp','blackhole_q38_bf16_persiste
 (out/'role-refusals.txt').write_text('\n'.join(refusals)+'\n')
 for section in sections:
  data=(out/(section+'.bin')).read_bytes();assert data and not len(data)%4
+ if paired and section not in ('globalworker','cachedfpu'):
+  assert data==(out/'unchanged-bf16'/(section+'.bin')).read_bytes(),section
  print('BF16_WORKER_BUILD',section,len(data),hashlib.sha256(data).hexdigest(),flush=True)
+if paired:
+ assert (out/'cachedfpu.bin').read_bytes()!=(out/'unchanged-bf16/cachedfpu.bin').read_bytes()
+ print('PAIRED_CACHED_FPU_BUILD only paired capsule/front relocation changed;old11 whole-worker pins reproduced;NOT_NATIVE_OR_HARDWARE_TPS',flush=True)
 print('PASS BUILD_ONLY QGW4 returning producer/typed BF16/paired Q4 FPU/old non-Q4 capsules/private seal/roles'+str(len(refusals))+';NO ROOT/native/owner/model-quality/hardware/TPS authority')

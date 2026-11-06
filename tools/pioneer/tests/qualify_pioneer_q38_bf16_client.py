@@ -7,8 +7,11 @@ from pathlib import Path
 import subprocess
 import sys
 
-args=sys.argv[1:];profile='--profile' in args
+args=sys.argv[1:];paired='--pair-issue' in args
+if paired:assert args.count('--pair-issue')==1;args.remove('--pair-issue')
+profile='--profile' in args
 if profile:assert args.count('--profile')==1;args.remove('--profile')
+profile=profile or paired
 assert __debug__ and len(args)==3 and not os.environ.get('PYTHONOPTIMIZE')
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 sdk,libraries,out=map(Path,args);here=Path(__file__).resolve().parent;root=here.parents[2]
@@ -19,10 +22,12 @@ common=[cxx,'-std=c++17','-O1','-g','-Wall','-Wextra','-Werror','-Wno-misleading
  '-ffp-contract=off','-fsanitize=address,undefined']
 flags=['-DPIONEER_Q38_FULL_OFFLOAD_CLIENT=1','-DPIONEER_Q38_BF16_FULL_CLIENT=1']
 if profile:flags += ['-DPIONEER_Q38_BF16_FULL_PROFILE=1','-DPIONEER_Q38_FULL_OFFLOAD_METRICS=1','-DPIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE=1']
+if paired:flags.append('-DPIONEER_Q38_BF16_PAIR_ISSUE_FULL=1')
 dependencies={Path(__file__).resolve(),here.parent/'build_assistant_qwen27_bf16_full_offload.py',
  here.parent/'build_assistant_qwen27_full_offload.py',here.parent/'pioneer_assistant_qwen27_bf16_full_offload.cpp',
  here.parent/'pioneer_assistant_qwen27_full_offload.cpp'}
 if profile:dependencies.add(here.parent/'pioneer_assistant_qwen27_bf16_profile_full_offload.cpp')
+if paired:dependencies.add(here.parent/'pioneer_assistant_qwen27_bf16_pair_issue_full_offload.cpp')
 for name in ('protocol','session'):
  source=here/('pioneer_q38_full_offload_'+name+'_test.cpp')
  text=subprocess.check_output([cxx,'-std=c++17',*flags,'-MM',str(source)],text=True)
@@ -40,7 +45,7 @@ def run(name,argv):
 for name in ('protocol','session'):
  source=here/('pioneer_q38_full_offload_'+name+'_test.cpp');binary=out/name
  run(name+'-compile',[*common,*flags,source,'-o',binary]);run(name,[binary])
-run('sdk-build',[sys.executable,here.parent/'build_assistant_qwen27_bf16_full_offload.py',sdk,libraries,out/'sdk',*(['--profile'] if profile else [])])
+run('sdk-build',[sys.executable,here.parent/'build_assistant_qwen27_bf16_full_offload.py',sdk,libraries,out/'sdk',*(['--pair-issue'] if paired else ['--profile'] if profile else [])])
 assert all(hashlib.sha256(p.read_bytes()).hexdigest()==digest for p,digest in frozen.items())
 (out/'source-sha256.txt').write_text(''.join(frozen[p]+'  '+str(p.relative_to(root))+'\n' for p in sorted(frozen)))
 (out/'test-argv.json').write_text(json.dumps(commands,indent=2)+'\n')

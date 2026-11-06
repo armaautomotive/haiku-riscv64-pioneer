@@ -2,6 +2,11 @@
 // Rechecked every include. DISTINCT native BF16 image/ownership revision,
 // never an old held G3 cohort,hybrid Work or CPU validation capability.
 #include "PioneerQ38Bf16FullProfileBinding.h"
+#ifdef PIONEER_Q38_BF16_PAIR_ISSUE_FULL
+#include "PioneerQ38Bf16PairIssueFullRole.h"
+#elif defined(PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS)
+#error Paired BF16 DATA requires its distinct109 native subject
+#endif
 #ifdef PIONEER_Q38_BF16_FULL_PROFILE
 #include "PioneerQ38Bf16FullProfileRole.h"
 #elif defined(PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS)
@@ -30,7 +35,7 @@
  || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR != 1 \
  || !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) || TT_PIONEER_EXPERIMENTAL_Q38_STREAM != 1 \
  || !defined(TT_PIONEER_DRIVER_RELOAD) || TT_PIONEER_DRIVER_RELOAD != 1 \
- || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != (defined(PIONEER_Q38_BF16_FULL_PROFILE)?0x2026110500010106ULL:0x2026110500010105ULL)
+ || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != (defined(PIONEER_Q38_BF16_PAIR_ISSUE_FULL)?0x2026110600010109ULL:defined(PIONEER_Q38_BF16_FULL_PROFILE)?0x2026110500010106ULL:0x2026110500010105ULL)
 #error BF16 full-card native requires exact tag105 and all exclusive native parents
 #endif
 #if defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT) \

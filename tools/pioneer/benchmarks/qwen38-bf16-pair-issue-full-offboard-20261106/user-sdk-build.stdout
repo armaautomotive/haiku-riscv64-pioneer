@@ -1,0 +1,9 @@
+8cc39a66185e3adb1606a92a91c4f9efeb5943d4e1439cfedc41214b75e8aa5d HaikuAssistantQwen27FullOffload
+f172e77c58c4eac025ebe7ac53c686a01dadceacf31f1e25f00f00ca6b651081 pioneer-q38-full-offload-smoke
+PASS BUILD_ONLY vocabulary-only full-card worker;exact11 vocabulary/model-container API imports;12 role refusals;NO context,decode,logits,threadpool or hybrid backend imports;frozen libraries/headers
+NOT installed or physically/numerically qualified;no performance result
+Full-card firmware pairing: original tag88
+worker.o 240272 77c5852b4c4b8288fc769c70354c984a14032a0e72985087e9bd1653a10eb347
+HaikuAssistantQwen27Bf16PairIssueFullOffload 82344 594733c87141ae64849e39899e554b4231706e69855c96423b89f3e7dab7d5ad
+pioneer-q38-bf16-pair-issue-rate-smoke 228272 78610f2af4c6173cc9b50ef21274713ae6f1abb8eb93d82647dd50dd8c4e8fc4
+PASS BUILD_ONLY BF16 tag109 USER worker/exact11 vocabulary imports/no CPU context,decode,logits or fallback/11 role refusals/unchanged tag88 USER pins;NOT installed/native execution/model-quality/TPS proof

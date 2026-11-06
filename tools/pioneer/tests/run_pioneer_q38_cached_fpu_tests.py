@@ -7,6 +7,8 @@ from pathlib import Path
 import subprocess
 import sys
 
+paired=sys.argv[-1:]==['--pair-issue']
+if paired:sys.argv.pop()
 assert __debug__ and not os.environ.get('PYTHONOPTIMIZE') and len(sys.argv) == 5
 sdk, original, private, out = map(Path, sys.argv[1:])
 assert all(p.is_absolute() for p in (sdk, original, private, out))
@@ -40,7 +42,7 @@ def collect(compiler_name, unit, flags=()):
             assert path.parent == private and path.name in pins
 
 units = {}
-for name in ('contract', 'image', 'fault', 'warm', 'original'):
+for name in ('contract', 'image', 'fault', 'warm', 'original',*(['pair_issue'] if paired else [])):
     unit = here/('pioneer_q38_cached_fpu_'+name+'_test.cpp')
     extra = [here.parent/'PioneerModelWeightCache.cpp'] if name == 'original' else []
     flags = ['-I'+str(private)] if name == 'original' else []
@@ -50,11 +52,13 @@ for name in ('contract', 'image', 'fault', 'warm', 'original'):
 for name, role in (('cached_fpu_matrix', 'PIONEER_Q38_CACHED_FPU_MATRIX_IMAGE'),
                    ('bf16_producer', 'PIONEER_Q38_BF16_PRODUCER_IMAGE')):
     collect(tool+'g++', here.parent/('blackhole_q38_'+name+'.cpp'),
-            ['-march=rv32i', '-mabi=ilp32', '-D'+role+'=1'])
+            ['-march=rv32i', '-mabi=ilp32', '-D'+role+'=1',
+             *(['-DPIONEER_Q38_CACHED_FPU_PAIR_ISSUE_IMAGE=1'] if paired and name=='cached_fpu_matrix' else [])])
     dependencies.update(here.parent/('blackhole_q38_'+name+suffix) for suffix in ('_start.S', '.ld'))
 frozen = {p: hashlib.sha256(p.read_bytes()).hexdigest() for p in dependencies}
 
 def run(name, argv):
+    assert all(hashlib.sha256(p.read_bytes()).hexdigest()==digest for p,digest in frozen.items())
     commands.append([name, *map(str, argv)])
     with (out/(name+'.stdout')).open('xb') as stdout, (out/(name+'.stderr')).open('xb') as stderr:
         result = subprocess.run(list(map(str, argv)), stdout=stdout, stderr=stderr, check=False)
@@ -63,13 +67,14 @@ def run(name, argv):
     assert result.returncode == 0 and not (out/(name+'.stderr')).stat().st_size, name
     print('CLOSED_CACHED_FPU_OFFBOARD', name, result.returncode, flush=True)
 
-run('build', [sys.executable, here.parent/'build_q38_cached_fpu_services.py', sdk, out/'services'])
+run('build', [sys.executable, here.parent/'build_q38_cached_fpu_services.py', sdk, out/'services',*(['--pair-issue'] if paired else [])])
 producer = out/'services/bf16_producer'
 matrix = out/'services/cached_fpu_matrix'
 for name, (unit, extra, flags) in units.items():
     binary = out/(name+'-test')
     run(name+'-compile', [*compiler, *flags, unit, *extra, '-o', binary])
     args = [] if name == 'contract' else [producer, matrix, *([original] if name == 'original' else [])]
+    if name=='pair_issue':args=[producer,out/'services/unchanged/cached_fpu_matrix',matrix]
     run(name, [binary, *args])
 run('fraction', [sys.executable, here/'pioneer_q38_cached_bf16_fraction_test.py', out/'image.stdout'])
 assert all(hashlib.sha256(p.read_bytes()).hexdigest() == digest for p, digest in frozen.items())

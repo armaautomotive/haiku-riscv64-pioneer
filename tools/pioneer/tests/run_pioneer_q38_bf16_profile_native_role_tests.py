@@ -4,14 +4,20 @@ import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 
 here=Path(__file__).resolve().parents[1]
 driver=here.parents[1]/'src/add-ons/kernel/drivers/misc'
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
+paired=sys.argv[1:]==['--pair-issue']
+assert paired or not sys.argv[1:]
 flags={name:1 for name in re.findall(r'^#define ([A-Z][A-Z0-9_]+) 1$',(driver/'pioneer_q38_bf16_full_driver.cpp').read_text(),re.M)}
 flags.update({'_KERNEL_MODE':1,'TT_PIONEER_DRIVER_RELOAD':1,'PIONEER_DRIVER_BUILD_TAG':'0x2026110500010105ULL'})
 flags.update({name:1 for name in re.findall(r'^#define ([A-Z][A-Z0-9_]+) 1$',(driver/'pioneer_q38_bf16_profile_full_driver.cpp').read_text(),re.M)})
 flags['PIONEER_DRIVER_BUILD_TAG']='0x2026110500010106ULL'
+if paired:
+ flags.update({'PIONEER_Q38_BF16_PAIR_ISSUE_FULL':1,'PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS':1,
+  'PIONEER_DRIVER_BUILD_TAG':'0x2026110600010109ULL'})
 for name in ('BANKS','PANEL','COHORT','DISPATCH','DISPATCH_VECTOR','STREAM'):flags['TT_PIONEER_EXPERIMENTAL_Q38_'+name]=1
 positive=refused=0
 
@@ -44,7 +50,8 @@ for header in (driver/'PioneerQ38Bf16FullNativeRole.h',driver/'PioneerQ38TokenNa
    check(header,flags,False,'#define '+name+' '+str(value)+'\n')
 selected=here/'PioneerQ38TokenSelectedPrograms.h'
 data={'PIONEER_Q38_TOKEN_BF16_PROGRAMS':1,'PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS':1}
-check(selected,data,True,body='static_assert(PioneerQ38TokenPrograms::Family==0x34505451 && PioneerQ38TokenPrograms::Version==2 && PioneerQ38TokenPrograms::TokenPhaseProfile==1 && PioneerQ38TokenL1::SavedBytes==61778152);\n')
+if paired:data['PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS']=1
+check(selected,data,True,body='static_assert(PioneerQ38TokenPrograms::Family==0x34505451 && PioneerQ38TokenPrograms::Version=='+str(3 if paired else 2)+' && PioneerQ38TokenPrograms::TokenPhaseProfile==1 && PioneerQ38TokenL1::SavedBytes==61778152);\n')
 check(selected,flags,True)
 check(selected,{'PIONEER_Q38_TOKEN_BF16_PROGRAMS':0},False)
 check(selected,{},False,'#define PIONEER_Q38_TOKEN_BF16_PROGRAMS 1\n')
@@ -60,9 +67,16 @@ check(selected,data,False,'#undef PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS\n')
 check(selected,{'PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS':1},False)
 client={'PIONEER_Q38_BF16_FULL_CLIENT':1,'PIONEER_Q38_FULL_OFFLOAD_CLIENT':1,
  'PIONEER_Q38_BF16_FULL_PROFILE':1,'PIONEER_Q38_FULL_OFFLOAD_METRICS':1,'PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE':1}
+if paired:client['PIONEER_Q38_BF16_PAIR_ISSUE_FULL']=1
 header=here/'PioneerQ38Bf16FullClientRole.h';check(header,client,True)
 for name in client:
- check(header,{k:v for k,v in client.items() if k!=name},False)
+ if paired and name=='PIONEER_Q38_BF16_PAIR_ISSUE_FULL':
+  # With no fixed kernel tag,a FIRST include without the optional paired
+  # selector is legitimately the old106 USER subject,never109 authority.
+  check(header,{k:v for k,v in client.items() if k!=name},True,body=
+   '#define B_DEVICE_OP_CODES_END 1000\n#include "'+str(driver/'PioneerQ38Bf16FullProtocol.h')+'"\n'
+   'static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110500010106));\n')
+ else:check(header,{k:v for k,v in client.items() if k!=name},False)
  for value in (0,2):check(header,{**client,name:value},False)
  check(header,client,False,'#undef '+name+'\n#define '+name+' 0\n')
 for name in ('_KERNEL_MODE','PIONEER_Q38_BF16_FULL_NATIVE','PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS',
@@ -70,4 +84,16 @@ for name in ('_KERNEL_MODE','PIONEER_Q38_BF16_FULL_NATIVE','PIONEER_Q38_TOKEN_BF
  for value in (0,1):check(header,{**client,name:value},False)
 check(here/'PioneerQ38SelectedPhaseProfileData.h',{},False,'#define PIONEER_Q38_BF16_FULL_PROFILE 1\n')
 check(here/'PioneerQ38SelectedPhaseProfileData.h',{'PIONEER_Q38_BF16_FULL_PROFILE':1},False,'#undef PIONEER_Q38_BF16_FULL_PROFILE\n')
+if paired:
+ for tag in ('0x2026110500010105ULL','0x2026110500010106ULL','0x2026110600010108ULL'):
+  check(driver/'PioneerQ38Bf16FullNativeRole.h',{**flags,'PIONEER_DRIVER_BUILD_TAG':tag},False)
+ for macro in ('PIONEER_Q38_CACHED_FPU_PAIR_ISSUE_IMAGE','PIONEER_Q38_Q4_PAIR_ISSUE_IMAGE','PIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING'):
+  for value in (0,1):
+   check(driver/'PioneerQ38Bf16FullNativeRole.h',{**flags,macro:value},False)
+   check(header,{**client,macro:value},False)
+ check(selected,data,False,'#include "'+str(here/'PioneerQ38TokenBf16ProfilePrograms.h')+'"\n')
+ check(selected,data,False,'#undef PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS\n')
+ check(header,client,False,'#undef PIONEER_Q38_BF16_PAIR_ISSUE_FULL\n')
+ check(header,{k:v for k,v in client.items() if k!='PIONEER_Q38_BF16_PAIR_ISSUE_FULL'},False,
+  '#define PIONEER_Q38_BF16_PAIR_ISSUE_FULL 1\n')
 print(f'PASS exact BF16 timing native/USER/DATA roles positive{positive}/refusals{refused}/missing+zero+late+old+CPU+Work separation;NOT hardware/lifecycle/model-quality/TPS permission')

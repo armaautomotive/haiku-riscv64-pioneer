@@ -29,15 +29,33 @@ It preserves the arithmetic, GPU instruction order, formats, completion
 checks, transfers and existing memory limits. Offline checks also passed
 using 576 original-weight outputs and independent clean-source builds.
 
-Current bounded task
---------------------
-Integrate this paired policy into the full-model cached matrix service,
-qualify that path, then repeat the same complete 27B benchmark.
-Measure loading, first-token latency and generation rate separately.
-Only a measured full-model improvement justifies promotion to Assistant.
-This small change leaves the GPU math-operation count unchanged; reaching
-the overall target will require larger kernel/dataflow improvements too.
-Never replay the already-used 107-a or 108-a hardware trials.
+Compact work plan -- one active task
+-----------------------------------
+1. CHECKPOINT / OFFBOARD INTEGRATION: COMPLETE.
+   Paired issue is integrated into a separate full-model candidate (109).
+   Its driver, host worker, benchmark launcher and card code reproduce
+   byte-for-byte from a scoped clean-source snapshot. Connected worker,
+   original-weight, transport and simulated memory-restore tests passed.
+   Previous 106 driver/client/launcher builds still reproduce unchanged.
+   This is NOT a hardware-qualified 109 run or a new inference-speed result.
+
+2. MEASURE THIS CANDIDATE: NEXT / NOT YET RUN.
+   Add and test separate startup/upload/first-token measurements, then run
+   the same complete 31-prompt/32-output 27B counting benchmark on P100A.
+   Restore and verify the normal driver; publish the measured comparison.
+   Done means a recorded improvement OR a recorded rejection of a slower
+   candidate. Only a full-model improvement justifies Assistant promotion.
+
+3. ONE BOTTLENECK CHANGE: QUEUED, not another open-ended rewrite.
+   Select one measured dominant cost, make one specific change, and compare
+   the same benchmark before starting the next experiment.
+
+The overall 20 tokens/sec goal is unchanged and remains unmet. Checkpoint
+completion is not completion of that goal. Paired issue leaves the GPU math
+operation count unchanged; larger kernel/dataflow changes remain necessary.
+Do not redo closed offload/memory infrastructure, UI work or baseline trials
+without evidence requiring it. Hardware stages 81-a through 108-a are spent;
+never replay, repin or clear their once markers. Candidate 109-a is unused.
 
 Last recorded hardware state
 ----------------------------
@@ -56,6 +74,10 @@ Measured paired-kernel improvement:
  benchmarks/qwen38-q4-pair-issue-physical-20261106.txt
 Kernel implementation and offline reproduction:
  benchmarks/qwen38-q4-pair-issue-offboard-20261106.txt
+Full-model integration checkpoint (BUILD/OFFBOARD ONLY):
+ benchmarks/qwen38-bf16-pair-issue-full-offboard-20261106.txt
+Exact scoped source/artifact inventory and closed test results:
+ benchmarks/qwen38-bf16-pair-issue-full-offboard-20261106/qualification.json
 Analytical budget, not a demonstrated hardware limit:
  benchmarks/qwen38-performance-budget-20261106.txt
 
@@ -68,7 +90,11 @@ Saved-result checks:
 Preservation
 ------------
 Previous experiments and unrelated local changes are preserved, not deleted.
-The whole worktree is NOT clean. The hardware-tested source is
+The whole worktree is NOT clean. The new checkpoint covers exactly 29 source
+files, not the nine previously dirty baseline paths or unrelated old WIP.
+Those excluded paths are listed in the checkpoint inventory. The 536-file
+dependency manifest describes its clean snapshot, not the dirty worktree.
+The hardware-tested kernel source remains
 bebac899260f1b97e922d4d512440f2c21392d7e; its driver/client/kernel artifacts
 matched an independent clean-source build. Older 104/107 builds still
 reproduce byte-for-byte. Work remains separate from CPU validation.

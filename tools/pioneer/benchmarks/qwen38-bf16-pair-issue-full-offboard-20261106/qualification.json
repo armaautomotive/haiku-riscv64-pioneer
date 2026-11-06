@@ -1,0 +1,226 @@
+{
+  "base": "625539ec4ddb77ccd7ef18bf4a3627e892d7f0ea",
+  "scope": "SCOPED_CLEAN_SOURCE_BUILD_AND_OFFBOARD_ONLY;NO_HARDWARE_OR_TPS",
+  "scoped_sources": {
+    "src/add-ons/kernel/drivers/misc/PioneerQ38Bf16FullNativeRole.h": "707be22f3fccf879cd018b7d2ad52d8550d0af79ae51a3024d0d6d5fda79c8e0",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38Bf16FullProfileBinding.h": "d840f5d64e25f3037337d9d4afe1d3893a4d6b4dd337846477bdff46b8df43fa",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38Bf16FullProfileRole.h": "11ed90d808acd124bfcc11d959dba54484dd6955d1badc4de7b052d19fe88e79",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38Bf16FullProtocol.h": "31a27fcd9e61b0271767de46bce00c516b09996dd0e50b9a82a86c8da534a8e0",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38Bf16PairIssueFullBinding.h": "3ed0a1f3e5b149464ddf41eddffca223876d3e928c4f8ad34b8d829d7e9d07b7",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38Bf16PairIssueFullRole.h": "c24c084fc697768cc7c8c97b582e64301c89864895651e37fd90c7f61d821502",
+    "src/add-ons/kernel/drivers/misc/pioneer_q38_bf16_pair_issue_full_driver.cpp": "4eb460ce532ad116f231abf1d854db4639c1ecba9277dbee264f1e4ec614b91d",
+    "tools/pioneer/PioneerQ38Bf16FullClientRole.h": "27ba81fb9868f75e774b34974a5549d369674c03cd25342330634ca7395984ab",
+    "tools/pioneer/PioneerQ38Bf16PairIssueProgramPins.py": "346e032d0a464001e35c84bbe3963e24a069bf4c0dcce2859769adc4f85af1d7",
+    "tools/pioneer/PioneerQ38FullOffloadSession.h": "d8935fecef05e700c1ba8eb101150c309e67d9ada1ba4a9107dff665e53911a4",
+    "tools/pioneer/PioneerQ38TokenBf16PairIssuePrograms.h": "f5acbad8017f608b5e12c4ea39c839f1b49e8b9a4331daeec04b6fb76b217db8",
+    "tools/pioneer/PioneerQ38TokenBf16PairIssueProgramsRole.h": "8ebfa4f2c1ad3ec97a3656dbbccee29652e836d8c66d9423eaa9ddab05c5e0ca",
+    "tools/pioneer/PioneerQ38TokenBf16ProfileProgramsRole.h": "d2c952c03b0d3d51351bf02c6d755ce65e4a3868ca9f6a2c024c71b25cf6a11d",
+    "tools/pioneer/PioneerQ38TokenSelectedPrograms.h": "cd4e7bf142d7f62b2d92fccdbdceb543886a6b2cb69cecbf819089e31f9f51bc",
+    "tools/pioneer/blackhole_q38_cached_fpu_matrix.cpp": "e6fbec4b91f135e24da06e5272466d568dbaf7804126d1cdd3d0ec346337754a",
+    "tools/pioneer/build_assistant_qwen27_bf16_full_offload.py": "0840a574c81463974d9768f93a98795da7f68e1d578e31c3261c78b10ca35113",
+    "tools/pioneer/build_q38_bf16_full_native.py": "721248a4e5b141475c1ae73fcf38f1d7a496d7cdbc95abab697eea7603989b21",
+    "tools/pioneer/build_q38_bf16_worker.py": "267c6bc280b963a140db369838a81a5d600630f472dcf80dde39c2329d99d6df",
+    "tools/pioneer/build_q38_cached_fpu_services.py": "0d62a9d75d080913a619be6af9c398936196ce1ee46f557359d6ec22aaf1807f",
+    "tools/pioneer/generate_qwen38_bf16_programs.py": "cc6433bf7f4db38f506da89b29768bef70253a05154466b1e5643b96a6bc07cb",
+    "tools/pioneer/pioneer_assistant_qwen27_bf16_pair_issue_full_offload.cpp": "61777d48a8abf05640d12b984e6d81c825814317a1c255a86417e8f3f2b269d3",
+    "tools/pioneer/tests/pioneer_q38_cached_fpu_pair_issue_test.cpp": "97c38d65180416b5a7d069601ebe9f025f8d4fd9c6a1f293f1510487edf62acb",
+    "tools/pioneer/tests/pioneer_q38_full_offload_protocol_test.cpp": "62b5de5d854c31c0cf78aca9fccf0bfca9287a32cb6f642e17a2ff7f2baa354b",
+    "tools/pioneer/tests/pioneer_q38_token_footprint_test.cpp": "0d4ea9e68af9c3bad2664d7f79ffdca36b1d5f97874b28d8339643b10addc2be",
+    "tools/pioneer/tests/qualify_pioneer_q38_bf16_client.py": "396bd974302d73fdae4211ccad1f55091487cda06630dfb5a2dacf7653237d21",
+    "tools/pioneer/tests/qualify_pioneer_q38_bf16_worker.py": "5c0ab9e0b4a73c6284762584a1785aa60f86522694a0bebd1bac1a63020b3c58",
+    "tools/pioneer/tests/run_pioneer_q38_bf16_profile_native_role_tests.py": "b88c330e6fb76a56022e00482adb1eecf24ab6e06dcf1367a7757311e9e010ab",
+    "tools/pioneer/tests/run_pioneer_q38_cached_fpu_tests.py": "14f3329b61f14f028b7fdc1fcb07f081a3745be0e9f5cf37728a2c6671eb63f9",
+    "tools/pioneer/tests/run_pioneer_q38_token_memory_tests.py": "f85108a24ccdbca0a63b952e28e9c63831766bcfb0e06e5414a5825ab1d2be81"
+  },
+  "closure_sources": 536,
+  "artifacts": {
+    "native/tenstorrent_pci_probe-bf16-pair-issue": {
+      "bytes": 2893456,
+      "sha256": "adbb988ced6b3ccfdd4e73f43d4b9eac3101c5f0ca6289bb60654af9498223e1"
+    },
+    "client/sdk/HaikuAssistantQwen27Bf16PairIssueFullOffload": {
+      "bytes": 82344,
+      "sha256": "594733c87141ae64849e39899e554b4231706e69855c96423b89f3e7dab7d5ad"
+    },
+    "client/sdk/pioneer-q38-bf16-pair-issue-rate-smoke": {
+      "bytes": 228272,
+      "sha256": "78610f2af4c6173cc9b50ef21274713ae6f1abb8eb93d82647dd50dd8c4e8fc4"
+    },
+    "root/program.elf": {
+      "bytes": 212204,
+      "sha256": "bf644a1c140bcb5dcbbbbf632af5965bb51f4b96d49d128c6689f32395b2a44b"
+    },
+    "worker-qual/worker/program.elf": {
+      "bytes": 146988,
+      "sha256": "536d2b09214572116a05ada8927193506ab9056949d2e242e10a44854260f675"
+    }
+  },
+  "actual_exits": {
+    "export": 0,
+    "unpack": 0,
+    "llama-objects": 0,
+    "worker-qual": 0,
+    "root-build": 0,
+    "generate": 0,
+    "native-build": 0,
+    "client-qual": 0,
+    "roles": 0,
+    "footprint-compile": 0,
+    "footprint": 0,
+    "journal--positive": 0,
+    "journal--faults": 0,
+    "journal--capsule-faults": 0,
+    "phase-read": 0,
+    "phase-control": 0
+  },
+  "baseline_dirty_changes_preserved": [
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadMetricsRole.h",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadProtocol.h",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadRole.h",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38TokenCallScope.inc",
+    "src/add-ons/kernel/drivers/misc/PioneerQ38TokenNativeEnd.inc",
+    "src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp",
+    "src/libs/llama.cpp",
+    "tools/pioneer/NATIVE_BUILD_STATUS.md",
+    "tools/pioneer/build_qwen38_full_offload_native.py"
+  ],
+  "not_proven": [
+    "physical109 lifecycle",
+    "model loading time",
+    "first-token latency",
+    "full-model speedup",
+    "20 tokens/sec"
+  ],
+  "clean106_controls": {
+    "control-native106/tenstorrent_pci_probe-bf16-profile": {
+      "bytes": 2893592,
+      "sha256": "b635aab47e10b3bf657b290e27eb2a41460ba7db71866a0f9ecf475d70a0c954"
+    },
+    "control-client106/HaikuAssistantQwen27Bf16ProfileFullOffload": {
+      "bytes": 82336,
+      "sha256": "e3c784766d6ff46513157bc9ae5849e5aac73a02f4b9c77e48f7dbfb24f72a26"
+    },
+    "control-client106/pioneer-q38-bf16-profile-rate-smoke": {
+      "bytes": 228264,
+      "sha256": "509856b35bb9f8c7da34c5537f1a459bcd21ca7c95343a680fbb647dcaaa35c7"
+    }
+  },
+  "clean106_controls_actual_exits": {
+    "native_build": 0,
+    "client_build": 0
+  },
+  "saved_records": {
+    "commands.json": {
+      "bytes": 5564,
+      "sha256": "9a552c379cc1d69346e9cf3c40306fd0bde6ede912e036cda52de9feda6a6e4d"
+    },
+    "scoped-source-sha256.json": {
+      "bytes": 3775,
+      "sha256": "24299075a7e02aa58f290c4ba1f96f77a9627c246436a2c754387e0d7ca0adce"
+    },
+    "closure-sha256.json": {
+      "bytes": 69656,
+      "sha256": "236e26fa957cb690760e0187a547f24f096796fcbeb944c810f60724bb8b48d7"
+    },
+    "worker-commands.json": {
+      "bytes": 3076,
+      "sha256": "1f38657a5f3299f473d3bb14078514a1aa35181189f7cd6b8e057084bea6523e"
+    },
+    "client-commands.json": {
+      "bytes": 1992,
+      "sha256": "ae1ab5f9b6e3bc4b5e145bbb6a91d8ebdb33c844af2f1c36685e1e28eb0f73b2"
+    },
+    "native-build-argv.json": {
+      "bytes": 7706,
+      "sha256": "63644340c162c9031bf87e5a566aaab908d4091ab93cda653bbd444e2cd550fd"
+    },
+    "user-build-argv.json": {
+      "bytes": 11154,
+      "sha256": "db1963ddfb47492b50f02959ad0787242c073ac71366da274fe56f77d9243da9"
+    },
+    "worker-actual-exits.json": {
+      "bytes": 136,
+      "sha256": "19a3160cb8107d62e737a1a07832b4c93e30b1729842992a78db503048a6f262"
+    },
+    "cached-actual-exits.json": {
+      "bytes": 270,
+      "sha256": "192a6209a7361d89239c3e8cc4841d05c981f3b837fe3ad9e584e246888178f7"
+    },
+    "producer-actual-exits.json": {
+      "bytes": 103,
+      "sha256": "318b9c297b5d5adf49c3415904738adef1ebc561da84a64b68c4cb63b0306fbf"
+    },
+    "client-actual-exits.json": {
+      "bytes": 103,
+      "sha256": "0f2978c5d4bde33e544949ab83b9669bc42c62667823a4ccc281ba6b005b1ce6"
+    },
+    "worker-fpu.stdout": {
+      "bytes": 1440,
+      "sha256": "4e88d9fdd8f90c1c7c9eb7c14f10f8e1f2281ea207f4a680dc009c5bb46baec3"
+    },
+    "worker-connected.stdout": {
+      "bytes": 351,
+      "sha256": "7deb9081016bec3fc630d9a0c0d7b1d09baecdabc94ea4239be82af08d53d617"
+    },
+    "paired-cached-stream.stdout": {
+      "bytes": 1319,
+      "sha256": "0fd89da2207cf824d9c151d0b8f2114736518cd06b99ea03be06f8071237537f"
+    },
+    "original-weight-bands.stdout": {
+      "bytes": 2377,
+      "sha256": "bba99cdbca6a1e92bc7f1feb9c076c707a70c62eeeba68da5de53e47c39a835f"
+    },
+    "alternating-widths.stdout": {
+      "bytes": 770,
+      "sha256": "a87030cd20cd0a2b1a48a3ee202435b9cc32030ea1303234533842750577a66f"
+    },
+    "cached-faults.stdout": {
+      "bytes": 278,
+      "sha256": "1b81d0dd71bdc76ddc94fae481b5379b56dada715258d1df9b9b77c394b8426b"
+    },
+    "client-protocol.stdout": {
+      "bytes": 276,
+      "sha256": "075a0d88931f8660fb9ecbc85091f1330021e69f0379cfaab2ea411cf445dedb"
+    },
+    "client-session.stdout": {
+      "bytes": 417,
+      "sha256": "3164a5bd149c9865965afb6e8368f58365f45f2ceaa22b9cb0e52aed3fda4939"
+    },
+    "user-sdk-build.stdout": {
+      "bytes": 1022,
+      "sha256": "0c176bbd158acbce02ad0fc2a8dfd09eaede94761def7a8fed8c5cc6ced61129"
+    },
+    "native-sdk-build.stdout": {
+      "bytes": 972,
+      "sha256": "9c25358854e2f171fff89f9c584f2a34eca0c12b7be3583ce1974751ba3cf3dc"
+    },
+    "roles.stdout": {
+      "bytes": 162,
+      "sha256": "c238988e1414988942177a860a62d37fc5f113e963ae7a7988fe2b47571555ef"
+    },
+    "footprint.stdout": {
+      "bytes": 309,
+      "sha256": "a3ede617c9d32ca167bdecbd964e914306532abb710c3371ed4543411c389865"
+    },
+    "journal-positive.stdout": {
+      "bytes": 282,
+      "sha256": "c508645d7dead225816cc30140268b1cb8d9825bba39a5c060d037a1aa329b3b"
+    },
+    "journal-faults.stdout": {
+      "bytes": 296,
+      "sha256": "14711d7657eee4b0e9d352c6558dba47e1b20552586d90b791d9b88f6bce085a"
+    },
+    "journal-capsule-faults.stdout": {
+      "bytes": 265,
+      "sha256": "eeea92d184b2e36d5dcfdbdf9df932a2034820c2dc4435b819b817d14a0fec2a"
+    },
+    "held-phase-read.stdout": {
+      "bytes": 584,
+      "sha256": "af420ca772a6d7487b024c56e6e5044d1c9c33e0d9c24083727f5751951b5db8"
+    },
+    "held-phase-control.stdout": {
+      "bytes": 534,
+      "sha256": "4f83b4e7f05eea6463730ac0ce3d065b743e6e5ccaa048b3aff5a175c85c0e12"
+    }
+  }
+}

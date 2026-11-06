@@ -1,0 +1,115 @@
+Qwen27B paired cached service -- full-model candidate109 checkpoint
+=================================================================
+November 6, 2026. BUILD/OFFBOARD ONLY. No109 physical model run or speedup.
+The complete-model measurements remain0.07846tok/s (latest experiment)
+and0.16436tok/s (better earlier matched test).20tok/s remains unmet.
+
+What changed
+------------
+The paired Q4 issue policy already tested on card in108 is now selected by
+the full-model returning cached matrix service. This is the ROOT-L1 input
+path, not the108 diagnostic's GDDR-input loader. Defaults remain unchanged.
+Only the selected cached capsule uses the paired policy/fomit-frame-pointer;
+the whole worker reserves s11 and retains its placements,return ABI,formats,
+checks,NoC traffic and memory limits. Only cachedfpu and its front call
+relocation differ in the worker package. All other sections are unchanged.
+
+The new opt-in native/USER pair has tag2026110600010109 and a distinct
+Version3 code-DATA namespace. It cannot silently alias106,108,BUILD,CPU
+reference or legacy Work roles. No CPU model context,decode,logits or
+fallback is linked;the11 permitted llama imports are vocabulary/container
+APIs. Debug references remain confined to offboard validation.
+
+Closed qualification
+--------------------
+One clean snapshot was exported from625539ec4d with exactly29 scoped source
+files overlaid. Nine pre-existing dirty baseline paths and unrelated WIP
+were excluded,not discarded. All16 top-level export/build/test children
+ACTUALLY exited0 with empty stderr;all nested qualification children also
+closed0. The compiled dependency manifest binds536 clean-snapshot files.
+This is NOT a claim that the entire worktree is clean or fully qualified.
+
+Independent clean driver,USER,rate launcher,ROOT ELF and worker ELF match
+the prior working-copy builds byte-for-byte. The complete15-section code
+header regenerated exactly. The unchanged ROOT106 ELF is still exact.
+All11 old whole-worker pins were reproduced before the candidate build.
+Separate clean106 driver,USER and rate launcher match the completed106
+physical trial's three binary identities,not just their source names.
+
+Important coverage:
+ * Six actual linked ROOT-L1 old/new service cases,704 outputs exact:
+   K5120/17408,rows32/64/256,workers1/59/119. Entire issued Tensix/config
+   streams and packet counts agree;paired RV32 step counts are lower.
+   These are offboard counts,NOT card time or model tokens/sec.
+ *288 original-weight outputs across9 full-K bands,whole original model
+   authentication,same-open source identity and independent predictions.
+ * Actual compiled dispatcher -> returning capsule:608 exact outputs,
+   worker1 and119,sealed metadata/real simulated WAIT and STOP.
+ * Connected gated producers68/packets272/17408 BF16 values -> SAME
+   worker1 live simulated NoC/FPU/L1 -> K17408 rows64,exact arithmetic.
+   Maximum combined stack3712B. This is NOT executed ROOT/all119/model.
+ * USER protocol/session/SDK:379 fail-closed COW fixtures,96prompt/32output,
+   127positions,two record drains,all5 EOS/3cancel boundaries;held timing
+   read once before END,publication only after clean END+Close/source checks.
+ * Native/USER/DATA selection:6positive/589refusals. Complete code/snapshot
+   geometry:3258044 code words,15444538 saved words=61778152B,963refusals.
+ * Real journal algorithm with SIMULATED endpoints:full arbitrary/UINT32_MAX
+   save/install/restore,52faults/33precondition refusals,27capsule faults.
+ * Unchanged held phase-read/control algorithms with MOCK OS/owner/source:
+   read63success/101refusal/905fault;adapter5positive/3561refusal/8copyfault.
+   Invalid timing DATA never becomes cleanup or successful-run authority.
+
+Two earlier fixture assumptions were corrected before the successful run:
+the protocol test now explicitly expects109 in its109 branch,and a FIRST
+USER include without the optional paired selector correctly selects old106.
+Defined0/2,late selector changes,missing109 kernel parents and wrong tags
+remain refusals. No production guard was weakened to make a fixture pass.
+
+Artifacts -- build identities, NOT installation authorization
+-----------------------------------------------------------
+driver2893456B adbb988ced6b3ccfdd4e73f43d4b9eac3101c5f0ca6289bb60654af9498223e1
+USER82344B 594733c87141ae64849e39899e554b4231706e69855c96423b89f3e7dab7d5ad
+rate228272B 78610f2af4c6173cc9b50ef21274713ae6f1abb8eb93d82647dd50dd8c4e8fc4
+ROOT212204B bf644a1c140bcb5dcbbbbf632af5965bb51f4b96d49d128c6689f32395b2a44b
+worker146988B 536d2b09214572116a05ada8927193506ab9056949d2e242e10a44854260f675
+header886267B f5acbad8017f608b5e12c4ea39c839f1b49e8b9a4331daeec04b6fb76b217db8
+Native maximum individual static frame2560B;not a whole-call-stack proof.
+The USER/rate identities must be updated after adding startup telemetry.
+
+Reproduction and saved evidence
+------------------------------
+Directory:qwen38-bf16-pair-issue-full-offboard-20261106/.
+qualification.json contains the29-file inventory,artifact identities,
+actual exits,three clean106 control identities and saved-record hashes.
+commands.json and nested *commands/build-argv records give exact commands.
+closure-sha256.json refers to the CLEAN snapshot,not unrelated dirty files.
+No learned payload,GGUF,converted weight cache or executable was archived.
+
+Existing entry points,with fresh output directories:
+ tests/qualify_pioneer_q38_bf16_worker.py SDK ORIGINAL PRIVATE OUT --pair-issue
+ build_qwen38_token_root.py SDK ROOT --inspect-candidate --cancel-boundary
+  --f32-hidden --unroll-dense-seals --boundary-seals --unroll-quiet
+  --worker-local-source-guards --precise-activation --single-closed-audit
+  --worker-sealed-admission --bf16-fpu --bf16-profile
+ generate_qwen38_bf16_programs.py ROOT WORKER NEW_HEADER --pair-issue
+ build_q38_bf16_full_native.py SDK OUT --pair-issue
+ tests/qualify_pioneer_q38_bf16_client.py SDK LIBRARIES OUT --pair-issue
+ tests/run_pioneer_q38_bf16_profile_native_role_tests.py --pair-issue
+ tests/run_pioneer_q38_token_memory_tests.py --bf16-programs --bf16-profile
+  --bf16-pair-issue [--positive|--faults|--capsule-faults]
+ tests/run_pioneer_q38_token_phase_profile_{read,control}_tests.py --bf16-profile
+
+Boundary / next bounded task
+---------------------------
+NO SSH,driver install,card access,Assistant restart,power,SD,network or
+hardware-connection action occurred in this qualification. No job remains.
+Last saved card state is normal041/tag12/generation46,64CPU/fullRAM;
+this turn did not perform a fresh live health check.
+
+Add/test distinct startup/upload/first-commit observation timings. Then
+qualify a fresh single-use109 physical parent and run the SAME31prompt/
+32output complete27B counting benchmark,verify clean closure and restored
+normal driver,and publish the comparison.109-a has NOT been staged or used.
+Do not replay spent81..108,repeat closed baseline infrastructure or replace
+Assistant with an unmeasured/slower candidate. A rejection is a closed
+experiment,not an excuse to leave it open indefinitely.

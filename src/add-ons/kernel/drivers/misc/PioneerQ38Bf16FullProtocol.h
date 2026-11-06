@@ -1,4 +1,8 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38Bf16PairIssueFullBinding.h"
+#ifdef PIONEER_Q38_BF16_PAIR_ISSUE_FULL
+#include "PioneerQ38Bf16PairIssueFullRole.h"
+#endif
 #ifndef PIONEER_Q38_BF16_FULL_PROTOCOL_H
 #define PIONEER_Q38_BF16_FULL_PROTOCOL_H
 #include "PioneerQ38TokenControlPacket.h"
@@ -15,7 +19,9 @@
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_PHASE_PROFILE (B_DEVICE_OP_CODES_END+0x8806)
 #endif
 namespace PioneerQ38FullOffload {
-#ifdef PIONEER_Q38_BF16_FULL_PROFILE
+#ifdef PIONEER_Q38_BF16_PAIR_ISSUE_FULL
+static constexpr uint64_t BuildTag=UINT64_C(0x2026110600010109);
+#elif defined(PIONEER_Q38_BF16_FULL_PROFILE)
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110500010106);
 #else
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110500010105);

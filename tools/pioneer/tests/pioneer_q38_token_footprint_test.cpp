@@ -73,9 +73,21 @@ int main(int argc,char** argv){
 #else
   44275
 #endif
-  && P::CodeWords(1)==27044 && S::SavedWords==15444538 && S::SavedBytes==61778152);
+  && P::CodeWords(1)==
+#ifdef PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS
+  27003
+#else
+  27044
+#endif
+  && S::SavedWords==15444538 && S::SavedBytes==61778152);
 #ifdef PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS
- assert(P::Version==2 && P::TokenFrontier==1 && P::FrontierAddress==0x7570c
+ assert(P::Version==
+#ifdef PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS
+  3
+#else
+  2
+#endif
+  && P::TokenFrontier==1 && P::FrontierAddress==0x7570c
   && P::TokenPhaseProfile==1 && P::PhaseProfileAddress==0x75710 && P::PhaseProfileWords==60);
 #endif
  for(unsigned address:{0x20000U,0x2fffcU,0xe0000U,0x168000U,0x16c1fcU})assert(S::SnapshotContains(0,address));

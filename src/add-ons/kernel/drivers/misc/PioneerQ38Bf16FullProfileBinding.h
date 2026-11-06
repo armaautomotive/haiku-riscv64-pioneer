@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38Bf16PairIssueFullBinding.h"
 #ifndef PIONEER_Q38_BF16_FULL_PROFILE_BINDING_H
 #define PIONEER_Q38_BF16_FULL_PROFILE_BINDING_H
 #ifdef PIONEER_Q38_BF16_FULL_PROFILE

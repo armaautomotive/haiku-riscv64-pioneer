@@ -1,9 +1,16 @@
 /* SPDX-License-Identifier: MIT */
+#if defined(PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS) && (!defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) || PIONEER_Q38_TOKEN_BF16_PROGRAMS != 1 \
+ || !defined(PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS) || PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS != 1)
+#error Paired BF16 DATA requires its complete distinct program selection
+#endif
 #if defined(PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS) && (!defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) || PIONEER_Q38_TOKEN_BF16_PROGRAMS != 1)
 #error BF16 timing DATA requires its actual QTP4 parent,not a silent old-package fallback
 #endif
 #ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
-#ifdef PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS
+#include "PioneerQ38TokenBf16PairIssueProgramsRole.h"
+#include "PioneerQ38TokenBf16PairIssuePrograms.h"
+#elif defined(PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS)
 #include "PioneerQ38TokenBf16ProfileProgramsRole.h"
 #include "PioneerQ38TokenBf16ProfilePrograms.h"
 #else
@@ -13,14 +20,18 @@
 #include "PioneerQ38TokenFootprint.h"
 #ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
-#ifdef PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS
+namespace PioneerQ38TokenPrograms=PioneerQ38TokenBf16PairIssuePrograms;
+#elif defined(PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS)
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenBf16ProfilePrograms;
 #else
 namespace PioneerQ38TokenPrograms=PioneerQ38TokenBf16Programs;
 #endif
 #endif
 static_assert(PioneerQ38TokenPrograms::Family==0x34505451,"late BF16 immutable package selection");
-#ifdef PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_BF16_PAIR_ISSUE_PROGRAMS
+static_assert(PioneerQ38TokenPrograms::Version==3 && PioneerQ38TokenPrograms::PairedIssue==1,"late paired BF16 program selection");
+#elif defined(PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS)
 static_assert(PioneerQ38TokenPrograms::Version==2,"late BF16 timing program selection");
 #endif
 #else
