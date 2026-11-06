@@ -49,12 +49,18 @@ Evidence: benchmarks/qwen38-configured-q4-component-20261106.txt.
 Native binding evidence: benchmarks/qwen38-configured-q4-native-20261106.txt.
 Physical decision: benchmarks/qwen38-configured-q4-physical-20261106.txt.
 
-Next route: inspect/reuse the existing NativeQ4WeightCache/SM3+escape source
-and existing input-sum cache, then implement the missing direct execution
-piece. Retain the seven 3GiB source caps, original metadata, exact correction
-source and safe ownership. Do not recreate already completed preparation or
-assume a larger native format fits. No speed/quality claim until measured.
-Never feed these prepared bytes to the existing raw-format loader.
+Audit correction: NativeQ4WeightCache/SM3+escape source already feeds the
+earlier integer-activation prepared engine (tags97..103); both integration
+and physical measurements exist. Do NOT reimplement or repeat that work.
+The NEW path reuses its format with full-BF16 activations, removing decode/
+PACK from the newer output-affine calculation. Main/clean local arithmetic
+and RV32 codegen pass; NOT native integration or a measured speedup. New
+FP32 reassociation has its own predefined original-byte oracle, NOT old
+integer/old BF16 numerical equivalence. Complete source-transfer/returning
+comparison is next, then qualify ONE distinct native hardware comparison.
+Retain seven3GiB source caps, original metadata/correction/source ownership;
+no cache recipe change/regeneration or global BFP8 expansion. Never feed
+prepared bytes to the raw loader. See prepared-bf16-q4-component report.
 
 Next bounded work:
   a. Attribute recurring cost using compiled code and, only if needed, a

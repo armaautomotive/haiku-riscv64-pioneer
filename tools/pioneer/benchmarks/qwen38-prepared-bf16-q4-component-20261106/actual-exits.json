@@ -1,0 +1,12 @@
+{
+  "clean-arithmetic": 0,
+  "clean-compile": 0,
+  "clean-regression": 0,
+  "clean-regression-compile": 0,
+  "clean-rv32": 0,
+  "main-arithmetic": 0,
+  "main-compile": 0,
+  "main-regression": 0,
+  "main-regression-compile": 0,
+  "main-rv32": 0
+}

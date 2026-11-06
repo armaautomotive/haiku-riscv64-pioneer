@@ -1,0 +1,77 @@
+Prepared-weight / full-BF16 Q4 consumer -- 2026-11-06
+===================================================
+LOCAL COMPONENT ONLY. No Pioneer access/driver swap/Assistant installation.
+Best full-model speed remains0.173tok/s;20tok/s unmet and unproven.
+
+Changed code
+------------
+New PreparedBf16Q4Compute consumes the EXISTING lossless native-cache SM3
+faces and escape bits, using original full-BF16 activations and metadata.
+No per-weight floating decode or PACK, no expanded global BFP8 allocation,
+new cache recipe, cache regeneration or CPU inference/fallback. Bit-mask
+expansion reuses ExactQ4Corrected::Spread; metadata code is reused unchanged.
+Fixed unpack configuration is restored once per K256 block. These fixed L1
+proposals do NOT grant source/bank/native ownership. The code-generation
+entry points are NOT a bootable/returning engine or native Work mode.
+
+Important audit correction
+--------------------------
+The prepared source/loader/complete integer-activation engine already exists
+and has physical tag97..103 results. Describing all direct integration as
+missing was incorrect. This change reuses its weight format for the newer
+full-BF16/output-affine path, NOT a recreation of that previous engine.
+No cache or model file was changed/re-encoded by these synthetic tests.
+
+Local tests / quality scope
+---------------------------
+Independent original-GGML-byte oracle defined with the new producer:
+S=ones dot; accumulated Z dot then escape dot; Q=(Z+E)+round(7*S);
+acc += round(round(coefficient*Q)+round(negativeMinimum*S)). FPU phases0/2
+for EVERY K16 product, before the original output affine. Unlike integer
+activation reconstruction, full-BF16 reassociation can change rounding.
+This is NOT old per-weight BF16/GGML equivalence or broad model quality.
+
+Main/independent copied-source clean ASan+UBSan runs ACTUALLY0,stderr0:
+46080 exact per-group output words;5120/17408 widths twice each,8 jobs in
+the SAME retained context,alternating two staging buffers; additional
+wide-exponent/low-BF16-bit/signed-zero/q15-heavy inputs. Five changed-data/
+missing-fence/fidelity/source-producer/release controls refuse or mismatch.
+Invalid buffer/group/metadata geometry issues zero IO. Input payloads and
+learned operands are not read by the arithmetic emitter's scalar code;
+only side-mask bits are read/permuted into private correction planes.
+Old factored operator regression:45056 words/six fault controls,unchanged.
+
+Both RV32 code-generation objects:11404B,whole SHA
+47b134b4fa7ebad611a248b0097aade116e70dda6c0c37931330691b0726a91d.
+Only unresolved symbol is the caller-owned fault endpoint;no float helper,
+host model/reference dependency. Largest individual static frame80B,NOT
+whole-call-chain certification. Ten children ACTUALLY0,all stderr0;42
+consumed source files frozen before main/clean builds. Eight native/Work/
+reference/client/fast-math/wrong-build selections refuse compilation.
+
+Measured speed / decision
+--------------------------
+NO PHYSICAL SPEED MEASUREMENT. Static emitted K256 commands only:
+recipe       ops  configPairs drains PACKs MVMULs maskReads scratchWrites
+oldBF16      4664     182       98      0    128       0          0
+rejected114  2768     336      130    128    128       0          0
+preparedBF16 1970     256      179      0    160     256        512
+Eight RISC fences also accompany the new scratch publication. These are
+NOT RV instruction counts,actual memory traffic,card cycles or tokens/sec.
+Fewer arithmetic commands but MORE waits/configuration:hardware may reject
+this candidate. Do not promote to Assistant or perform a full-model upload.
+
+Next action
+------------
+Connect real prepared-source scatter/escape reads to a returning full-K
+comparison,exercise its actual RV32 image/transfer/output/cleanup contract,
+then qualify ONE distinct native comparison. Accept/reject on complete-job
+cycles at identical inputs,not the static counts above. The full27B usable
+performance objective remains active;this local checkpoint does not close it.
+
+Reproduce:
+python3 tools/pioneer/tests/run_pioneer_q38_prepared_bf16_q4_tests.py \
+ /Volumes/HaikuBuildLocal/generated.riscv64 /absolute/fresh/private/output
+Private completed evidence:/private/tmp/pioneer-prepared-bf16-q4.FejRGF/final
+Sibling directory retains complete main/clean arithmetic/regression outputs,
+actual-exits,source fingerprints and RV32 identity. No learned data/binary.
