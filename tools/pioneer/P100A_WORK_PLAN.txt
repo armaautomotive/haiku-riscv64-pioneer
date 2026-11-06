@@ -60,9 +60,14 @@ accumulation and a compiled returning routine using the existing two-buffer
 loader. Both widths and repeated jobs pass instruction-model tests.
 Native code/L1/Dst ownership qualification and physical correctness/timing
 for the whole-model returning service are NOT finished. An isolated
-native111 old/new comparison package now passes local qualification;
-its physical test has not run. This checkpoint remains open until that
-real comparison, and whole-model integration remains separate.
+native111 old/new comparison package passed local qualification,but its
+physical test FAILED the first new output. Candidate111 is rejected;
+the17408 job was not run and no valid timing was accepted. Recovery has
+independently restored normal041/gen2,64CPU/fullRAM and preserved apps.
+Next bounded subtask:identify the first incorrect on-card intermediate;
+retain complete returned values/stage observations on a failure. Do not
+replay111-a,relax comparison or repeat full-model uploads. This checkpoint
+stays open until correct arithmetic and a real timing comparison exist.
 The new operation order differs from old per-weight BF16 rounding;
 local bit tests do not prove model quality.
 

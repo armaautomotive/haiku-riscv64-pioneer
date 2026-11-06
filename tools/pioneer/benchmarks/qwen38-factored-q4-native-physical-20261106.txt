@@ -1,0 +1,74 @@
+Native111 physical comparison: REJECTED on numerical mismatch
+============================================================
+
+November6,2026. Frozen source9b86ff940edf33a29d34f6a38f076e99be6fd042
+was pushed before staging. Candidate/client/parent/wrapper were whole-byte
+read back and matched locally qualified clean artifacts. ONE111-a trial:
+normal041/gen50 ->native111/gen51. Stage111-a is SPENT:never replay it,
+change its acceptance rules,repin identities or clear its once markers.
+
+Actual result
+-------------
+Primary SSH80873 ACTUALLY exited70;parent44029 exit70;client44113 exit1.
+Launcher44024,parent and client were independently absent after termination.
+Original full GGUF/all9 payloads/both old and new independent references
+authenticated before device open. The compiled old/new K5120 program
+returned its completed result. In the frozen client's first-mismatch loop,
+old32 words passed;the FIRST new word failed:
+
+  sample0,kind1,row0: actual c1b7ebf1; expected 3f3b54c5.
+
+Only that mismatch was printed;the other actual new words and timer values
+were NOT logged. Do not reconstruct or claim them. K17408 was NOT run.
+No END,retry,reset,automatic restore or accepted cycle/TPS measurement.
+CPU-only reload status then reported native111/gen51,cold1/owner1.
+This is numerical rejection/quarantine,NOT a timeout or hardware hang.
+No tolerance was relaxed and no CPU answer was substituted into Work.
+
+Decision:reject this candidate for whole-model/Assistant integration.
+Local/software-model qualification was insufficient to prove physical
+arithmetic. Best actual27B rate stays0.173tok/s;latest stays0.082tok/s.
+20tok/s remains unmet and feasibility unproven.
+
+Failure evidence and recovery
+-----------------------------
+All9 complete remote text records were fetched and their hashes checked
+BEFORE power recovery. Their original parent/child exits and state are
+archived alongside this report. They are the authoritative trial stream.
+One OFF hold actually0,SSH timed out,serial log stayed quiet for several
+minutes,then one ON pulse actually0. No second OFF,no mains/SD/card change.
+Linux6.1.31 booted via normal NVMe;existing pinned helper9cfc6dc3 prepared
+and booted fresh session factored111-recover-20261106-a with64 CPUs and
+memory128-spin-idle7-top-page-nosd-control. Both commands actually0.
+Fresh Haiku had native111/gen1,cold0/owner0,64 CPUs/full RAM.
+
+The first guarded recovery refused BEFORE quiesce/write because recent
+small trial-state/log contents did not survive the forced power-off intact.
+The already archived pre-power bytes remain authoritative. Checked driver,
+client,parent,wrapper,backup and stable binaries still match their pins.
+Damaged original trial records were NOT rewritten or used to authorize END.
+This records power-loss damage;it does NOT establish its filesystem cause.
+
+A separate fresh recovery directory,not the spent trial,admitted only
+fresh gen1,cold0/owner0,exact artifacts and idle64CPU/fullRAM state. It
+quiesced the EMPTY new epoch and restored exact normal041/gen2. Restore
+55325 ACTUALLY0;independent postflight37774 ACTUALLY0/stderr0. The postflight
+proves normal041/tag2026102100010012/gen2,quiesced0/cold0/owner0/open1/guard1,
+64CPUs/137034936320B RAM,unchanged three Assistant files/four runtime libs,
+admin/guard/stable/backup/staged binaries and original-model metadata.
+No GPU program ran in recovery;this is NOT the failed lease's cleanup.
+Postflight hashes explicitly distinguish damaged post-power records from
+the pre-power archived logs. Haiku's fresh clock showed1970;ordering/dates
+here use the Mac/SSH execution records,not that clock as timing authority.
+
+Next bounded task
+------------------
+Find the FIRST incorrect on-card intermediate in the new packed-Q4 path.
+The next diagnostic must preserve all returned words even on mismatch and
+observe enough packing/dot/sum/metadata stages to distinguish causes.
+Do not spend another full-model upload or unchanged111 replay on this.
+Do not weaken acceptance,rerun closed local qualification as proof of a
+fix,or guess a throughput improvement. Correctness precedes valid timing.
+Future forced recovery must flush completed text evidence before OFF and
+keep the independent Mac copy;the GPU quarantine does not require skipping
+a filesystem sync. The overall performance goal remains ACTIVE/unfinished.

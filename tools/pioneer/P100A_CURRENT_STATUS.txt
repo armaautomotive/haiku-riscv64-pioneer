@@ -64,7 +64,8 @@ Locally completed:
 NOT completed:
   * Native integration of the whole-model returning service. The isolated
     native111 comparison package is locally qualified, not a Work release.
-  * Physical numerical checks and old/new matrix timing on the P100A.
+  * Correct physical arithmetic: native111 FAILED its first new output
+    (c1b7ebf1 instead of 3f3b54c5). Candidate rejected; no accepted timing.
   * Whole-model quality and throughput measurement of the new algorithm.
 
 This is a new operation order, not previous BF16/GGML bit equivalence.
@@ -88,20 +89,24 @@ Preservation and test state
 ---------------------------
 
 Last verified installed rollback driver: normal 041, tag 2026102100010012,
-generation 50, quiesced 0, cold 0, owner 0, open 1, guard 1.
+generation 2 after power recovery, quiesced 0, cold 0, owner 0, open 1, guard 1.
 This normal driver is NOT the faster experimental tag 92.
-The latest physical trial closed and independently restored normal.
-All four recorded trial processes were independently confirmed absent.
+The native111 trial exited70 on numerical mismatch and quarantined the
+card. It did NOT complete cleanly or restore its resources. A separate
+power recovery restored normal041/gen2; independent postflight passed.
+No trial process remains. Assistant/runtime/64CPU/fullRAM checks passed.
 
-Native111 preparation used read-only Pioneer checks: normal041/gen50,
-all64 CPUs/full RAM and no project inference job. No installation,
-Assistant/kernel/network change, relay action, SD/mains/hardware change.
-Local main and clean-export native111 suites exited0;driver,client and
-card program binaries match. Their300-source inventories differ only in
-the preserved pre-existing dirty probe.cpp,with identical compiled bytes.
-These are local tests ONLY. The physical comparison has not run yet.
+Native111 was physically tested after publication and exact byte readback.
+The old calculation passed its32 comparisons;the first new value failed.
+The17408-width job was not run and no speed result was accepted. Local
+main/clean qualification had passed,but did not prove physical arithmetic.
+Recovery used one OFF/ON and the known SD-free full-memory Haiku boot;
+no SD,mains or hardware change. Recent small trial-log files were damaged
+after forced power-off;complete Mac copies had already been verified.
+Original damaged records were preserved,not rewritten to pass a guard.
+Next: isolate the first incorrect intermediate,not whole-model integration.
 
-Historical stages 81 through 110-a are SPENT: never replay, repin identities
+Historical stages 81 through 111-a are SPENT: never replay, repin identities
 or clear once markers. Future hardware testing needs a fresh identity and
 fresh idle-state/ownership admission.
 Existing dirty native/driver/submodule work and unrelated experiments are
@@ -122,3 +127,5 @@ New complete arithmetic/returning routine, software-model tests only:
   benchmarks/qwen38-factored-q4-returning-offboard-20261106.txt
 Isolated native111 old/new comparison package, qualified locally only:
   benchmarks/qwen38-factored-q4-native-offboard-20261106.txt
+Physical111 numerical rejection and separate successful recovery:
+  benchmarks/qwen38-factored-q4-native-physical-20261106.txt

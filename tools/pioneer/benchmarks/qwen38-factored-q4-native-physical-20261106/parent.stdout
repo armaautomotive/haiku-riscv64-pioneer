@@ -1,0 +1,22 @@
+P100A_RELOAD driver55 tag2026102100010012 generation50 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+130473021440 bytes free      (used/max 6561914880 / 137034936320)
+                           (cached   31485427712)
+     59575 semaphores free (used/max       5961 /      65536)
+      3713 ports free      (used/max        383 /       4096)
+      2586 threads free    (used/max       1510 /       4096)
+      1972 teams free      (used/max         76 /       2048)
+P100A_RELOAD driver55 tag2026102100010012 generation50 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026102100010012 generation50 quiesced1 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+QUIESCED_CLOSED;NEW_HARDWARE_WORK_BLOCKED_UNTIL_RELOAD
+P100A_RELOAD driver55 tag2026110600010111 generation51 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+HOT_RELOAD_VERIFIED;NO_REBOOT_NO_GPU_EXECUTION
+P100A_RELOAD driver55 tag2026110600010111 generation51 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+P100A_RELOAD driver55 tag2026110600010111 generation51 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+FACTORED_Q4_COMPARE_SOURCE_AUTH_AND_TWO_FIXED_BANDS_STARTED_WAIT_SAME_PARENT
+FACTORED_COMPARE_AUTHENTICATING_ORIGINAL_AND_BOTH_CPU_REFERENCES;NO_DEVICE_OPEN
+FACTORED_COMPARE_AUTHENTICATED c600de03 all9_originalPayloads_bothArithmeticReferences;CPU_DIAGNOSTIC_NOT_WORK
+FACTORED_COMPARE_MISMATCH sample0 kind1 row0 gotc1b7ebf1 expected3f3b54c5;CLOSE_ONLY_NO_END_RETRY
+NATIVE_FACTORED_Q4_COMPARE_STOP_RETAIN_OWNER_NO_RETRY
