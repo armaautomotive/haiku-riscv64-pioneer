@@ -21,7 +21,7 @@ struct CachedData {
   }
  }
  void StageCache(CachedIO& io)const{
-  unsigned base=io.job.words[3]-CL::DramWeight,blocks=io.width/256;
+  unsigned base=io.job.words[3]-io.dramBase,blocks=io.width/256;
   for(unsigned pair=0;pair<pairs.size();pair++)for(unsigned block=0;block<blocks;block++)for(unsigned row=0;row<32;row++)for(unsigned byte=0;byte<144;byte++)
    io.dram[base+((pair*2+row/16)*blocks+block)*2304+byte*16+row%16]=pairs[pair][block].original[row*144+byte];
  }

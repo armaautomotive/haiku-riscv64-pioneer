@@ -1,0 +1,7 @@
+PASS PAIRED Q4 canonical metadata192 matrices/jobs22848/refusals2304/all64layers/exact original7-bank stripe coverage/NO weight repack or runtime/producer/native grant
+PASS ACTUAL full QGW4->linked returning FPU worker1 phase2 K5120 rows160 all exact;actual sealed dispatcher,canonical NoC bytes,shared live FPU/NIU/L1 across requests
+PASS ACTUAL full QGW4->linked returning FPU worker1 phase3 K5120 rows160 all exact;actual sealed dispatcher,canonical NoC bytes,shared live FPU/NIU/L1 across requests
+PASS ACTUAL full QGW4->linked returning FPU worker119 phase2 K5120 rows128 all exact;actual sealed dispatcher,canonical NoC bytes,shared live FPU/NIU/L1 across requests
+PASS ACTUAL full QGW4->linked returning FPU worker119 phase3 K5120 rows128 all exact;actual sealed dispatcher,canonical NoC bytes,shared live FPU/NIU/L1 across requests
+PASS ACTUAL full QGW4->linked returning FPU worker119 phase4 K17408 rows32 all exact;actual sealed dispatcher,canonical NoC bytes,shared live FPU/NIU/L1 across requests
+PASS ACTUAL QGW4/FPU dispatch jobs5/outputs608/maxCombinedStack2752/canonical stripe metadata jobs22848/all64layers/real WAIT and STOP;separate actual coordinator pack image supplies typed inputs,synthetic bytes at REAL unchanged stripe addresses;NOT connected live producer/ROOT/native/hardware/full-model quality/TPS proof

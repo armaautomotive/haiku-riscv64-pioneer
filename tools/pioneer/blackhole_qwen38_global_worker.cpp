@@ -12,7 +12,9 @@
 #endif
 #include "PioneerQ38PreparedQ4Layout.h"
 #endif
-#ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
+#ifdef PIONEER_Q38_BF16_WORKER_IMAGE
+#include "PioneerQ38Bf16WorkerImageRole.h"
+#elif defined(PIONEER_Q38_PRECISE_WORKER_IMAGE)
 #include "PioneerQ38PreciseWorkerImageRole.h"
 #else
 #include "PioneerQ38GlobalWorkerImageRole.h"
@@ -23,7 +25,11 @@
 #include "PioneerQ38BatchedPrefetchPlan.h"
 #endif
 #include "PioneerQ38GlobalWorkerLayout.h"
-#ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
+#ifdef PIONEER_Q38_BF16_WORKER_IMAGE
+#include "PioneerQ38Bf16WorkerLayout.h"
+extern "C" void q38_bf16_persistent_producer(const uint32_t*,const uint32_t*,unsigned,unsigned);
+extern "C" unsigned q38_cached_fpu_matrix(const unsigned*);
+#elif defined(PIONEER_Q38_PRECISE_WORKER_IMAGE)
 #include "PioneerQ38PreciseWorkerLayout.h"
 #ifdef PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE
 #include "PioneerQ38PushedWorkerLayout.h"
@@ -45,7 +51,9 @@ extern "C" void q38_resident_persistent_gdn(const uint32_t*,const uint32_t*,unsi
 extern "C" void q38_resident_persistent_gdn_output(const uint32_t*,const uint32_t*,unsigned,unsigned);
 extern "C" void q38_mixed_dense_phase(const uint32_t*,unsigned,unsigned,float*,float*);
 namespace GlobalWorker {
-#ifdef PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE
+#ifdef PIONEER_Q38_BF16_WORKER_IMAGE
+namespace M=PioneerQ38Bf16WorkerLayout;
+#elif defined(PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE)
 namespace M=PioneerQ38PushedWorkerLayout;
 #elif defined(PIONEER_Q38_PRECISE_WORKER_IMAGE)
 namespace M=PioneerQ38PreciseWorkerLayout;
@@ -112,6 +120,24 @@ static void Matrix(const uint32_t* j,const uint32_t* source,unsigned worker,unsi
  for(unsigned i=48;i<64;i++)p[i]=0;
  Fence();
 }
+#ifdef PIONEER_Q38_BF16_WORKER_IMAGE
+static void FpuMatrix(const uint32_t* j,const uint32_t* outer,const uint32_t* source,unsigned worker,unsigned self){
+ q38_mixed_seal();uint32_t before[8];for(unsigned i=0;i<8;i++)before[i]=*Words(0xffb20000+Counter(i));
+ const unsigned count=q38_cached_fpu_matrix(j),pairs=j[4]/2,blocks=j[2]/256;
+ q38_mixed_seal();if(count!=j[4]*(j[2]/16) || !Quiet() || *Words(0xffb20014)!=self)block_fault_park();
+ auto* p=Words(0x83f00);for(unsigned i=0;i<8;i++){
+  const unsigned after=*Words(0xffb20000+Counter(i)),delta=i==1?pairs*blocks*80:i==0 || i==2 || i==3 || i==6?pairs*blocks*26:0;
+  if(uint32_t(after-before[i])!=delta)block_fault_park();
+  p[i]=before[i];p[8+i]=after;
+ }
+ p[16]=count;p[17]=outer[1];p[18]=worker;p[19]=PioneerQ38Q4FpuCachedLayout::Magic;
+ for(unsigned i=0;i<10;i++)p[20+i]=Words(0xffb20000)[i];
+ p[30]=source[0];p[31]=self;
+ for(unsigned i=0;i<16;i++)p[32+i]=source[i];
+ p[48]=M::Producer::Format;p[49]=j[2];p[50]=j[4];p[51]=outer[7];p[52]=outer[5];p[53]=outer[6];
+ p[54]=outer[32];p[55]=outer[33];p[56]=outer[34];for(unsigned i=57;i<64;i++)p[i]=0;Fence();
+}
+#endif
 static void GlobalPartial(const uint32_t* j,const uint32_t* boot){
  // Read ALL freshly generated rows, never a host-supplied maximum. Only
  // finite logits; canonical +/-0 ties choose the smallest vocabulary row.
@@ -159,7 +185,7 @@ extern "C" void q38_global_worker_main(){
  for(unsigned i=0;i<16;i++)Words(M::Status)[i]=0;
  Words(M::Status)[3]=M::Magic;Fence();
  unsigned previous=0,densePhase=0,modelLayer=0,modelPosition=0,globalWave=0;
-#ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
+#if defined(PIONEER_Q38_PRECISE_WORKER_IMAGE) || defined(PIONEER_Q38_BF16_WORKER_IMAGE)
  bool preciseInputReady=false;
 #endif
  const unsigned finalWaves=worker<=21?9U:8U;
@@ -170,7 +196,10 @@ extern "C" void q38_global_worker_main(){
   q38_mixed_seal();if(!Quiet())block_fault_park();
   for(unsigned i=0;i<8;i++)if(*Words(0xffb20000+Counter(i))!=counters[i])block_fault_park();
   unsigned op=seal.job[2];const bool outputJob=op==M::GlobalMatrix;
-#ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
+#ifdef PIONEER_Q38_BF16_WORKER_IMAGE
+  const bool fpuJob=M::FpuJob(seal.job),downJob=fpuJob && seal.job[18]==17408;
+  if((preciseInputReady && !downJob && op!=M::Stop) || (downJob && worker<=68 && !preciseInputReady))block_fault_park();
+#elif defined(PIONEER_Q38_PRECISE_WORKER_IMAGE)
   const bool downJob=op==1 && seal.job[17]==12 && seal.job[21]==17408;
   if((preciseInputReady && !downJob && op!=M::Stop) || (downJob && worker<=68 && !preciseInputReady))block_fault_park();
 #endif
@@ -211,19 +240,32 @@ extern "C" void q38_global_worker_main(){
   }else{
    for(unsigned i=0;i<10;i++)capsule[i]=seal.job[16+i];
    capsule[10]=TT_Q38_FFN_PERSISTENT_MARKER;capsule[11]=worker;capsule[12]=request;
+#ifdef PIONEER_Q38_BF16_WORKER_IMAGE
+   if(op==3 || op==5)capsule[10]=M::Producer::Witness;
+#endif
    capsule[13]=outputJob?1U:op;capsule[14]=seal.job[26];capsule[15]=0;
    if(op>=3 && !outputJob){
     const auto* d=Words(op==7?unsigned(TT_Q38_CONV_BATCH_TABLE):op==8?0x74a00U:0x74200U);
     if(d[op==7 || op==8?5:42]!=seal.job[5] || d[40]!=seal.job[6] || d[6]!=seal.job[7]
      || capsule[3]!=seal.job[7])block_fault_park();
     for(unsigned i=0;i<8;i++)if(d[32+i]!=seal.boot[8+i])block_fault_park();
-#ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
+#ifdef PIONEER_Q38_BF16_WORKER_IMAGE
+    if((op==3 || op==5) && (d[41]!=seal.job[27] || d[43]!=seal.job[28] || d[14]!=M::Producer::Format))block_fault_park();
+#elif defined(PIONEER_Q38_PRECISE_WORKER_IMAGE)
     if(op==3 && d[41]!=seal.job[27])block_fault_park();
 #endif
    }
+#ifdef PIONEER_Q38_BF16_WORKER_IMAGE
+   if(fpuJob)for(unsigned i=0;i<16;i++)capsule[i]=seal.job[16+i];
+#endif
    for(unsigned i=0;i<16;i++)Words(0x74000)[i]=capsule[i];
    for(unsigned i=0;i<8;i++)Words(0x74040)[i]=i==0?unsigned(TT_Q38_FFN_PERSISTENT_MARKER):i==1?worker:i==2?self:i==3?seal.boot[16]:0;
    *Words(0x74100)=request;Fence();
+#ifdef PIONEER_Q38_BF16_WORKER_IMAGE
+   if(fpuJob)FpuMatrix(capsule,seal.job,seal.boot+16,worker,self);
+   else if(op==3 || op==5)q38_bf16_persistent_producer(capsule,seal.boot+16,worker,self);
+   else
+#endif
    if(op==1 || outputJob)Matrix(capsule,seal.boot+16,worker,self);
 #ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
    else if(op==3)q38_precise_persistent_activation(capsule,seal.boot+16,worker,self);
@@ -237,12 +279,18 @@ extern "C" void q38_global_worker_main(){
   q38_mixed_seal();if(!Quiet())block_fault_park();
   for(unsigned i=0;i<8;i++)counters[i]=*Words(0xffb20000+Counter(i));
   if(counters[2]!=counters[6])block_fault_park();
-#ifdef PIONEER_Q38_PRECISE_WORKER_IMAGE
+#if defined(PIONEER_Q38_PRECISE_WORKER_IMAGE) || defined(PIONEER_Q38_BF16_WORKER_IMAGE)
   if(op==3)preciseInputReady=true;
   else if(downJob)preciseInputReady=false;
 #endif
   if(outputJob){GlobalPartial(seal.job,seal.boot);globalWave++;}
-  else if(op==1 && capsule[1]==12 && capsule[5]==17408)modelLayer++;
+  else if(op==1 &&
+#ifdef PIONEER_Q38_BF16_WORKER_IMAGE
+   fpuJob && capsule[2]==17408
+#else
+   capsule[1]==12 && capsule[5]==17408
+#endif
+   )modelLayer++;
 #ifdef PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE
   if(op==1)PushCompletion(seal.boot,seal.job,counters);
 #endif

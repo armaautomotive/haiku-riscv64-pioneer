@@ -17,12 +17,12 @@
 class PioneerQ38Q4FpuCachedLoader {
 	using L=PioneerQ38Q4FpuCachedLayout;using Q=PioneerDramQueuedReadSweep;
 	enum {Free,Loading,Ready,Reading};
-	L::Job job={};
-	unsigned pair=0,width=0,next=0,pending=2,reader=2,packet=0,issued=0,flits=0;
-	unsigned state[2]={Free,Free},block[2]={~0U,~0U};
+	L::Job job;
+	unsigned pair,width,next,pending,reader,packet,issued,flits;
+	unsigned state[2],block[2];
 	// Word flags keep scalar stores inside the already qualified RV32
 	// word-only ABI;do not broaden the strict decoder to accept byte stores.
-	uint32_t counters[9]={},command[10]={};unsigned attempted=0,failed=0,completed=0;
+	uint32_t counters[9],command[10];unsigned attempted,failed,completed;
 	bool Fail(){failed=true;return false;} // MEMORY ONLY;caller parks/retains
 	static unsigned Counter(unsigned i){static const unsigned indices[]={1,2,3,4,5,8,10,12,14};return 0xffb20200+indices[i]*4;}
 	unsigned Expected(unsigned i)const{return i==2?flits:(i==1 || i==3 || i==4 || i==8)?issued:0;}
@@ -58,7 +58,15 @@ class PioneerQ38Q4FpuCachedLoader {
 		return false;
 	}
 public:
-	PioneerQ38Q4FpuCachedLoader()=default;
+	PioneerQ38Q4FpuCachedLoader(){
+		// Explicit volatile WORD initialization avoids a compiler-generated
+		// libc byte-memset in the actual returning full-worker linkage.
+		volatile uint32_t* copied=job.words;for(unsigned i=0;i<16;i++)copied[i]=0;
+		pair=width=next=packet=issued=flits=attempted=failed=completed=0;
+		pending=reader=2;state[0]=state[1]=Free;block[0]=block[1]=~0U;
+		volatile uint32_t* c=counters;for(unsigned i=0;i<9;i++)c[i]=0;
+		volatile uint32_t* h=command;for(unsigned i=0;i<10;i++)h[i]=0;
+	}
 	PioneerQ38Q4FpuCachedLoader(const PioneerQ38Q4FpuCachedLoader&)=delete;
 	PioneerQ38Q4FpuCachedLoader& operator=(const PioneerQ38Q4FpuCachedLoader&)=delete;
 	template<class IO> bool Begin(IO& io,const L::Job& selected,unsigned selectedPair) {
@@ -74,8 +82,10 @@ public:
 		}
 		io.Fence();
 		L::Read first={};if(!L::SelectedPacket(job,pair,0,0,0,first))return Fail();
-		const uint32_t initial[10]={first.source,0,first.route,first.destination,0,job.words[7],0,0,first.bytes,0};
-		for(unsigned i=0;i<10;i++){command[i]=initial[i];io.Write(0xffb20000+i*4,command[i]);}
+		for(unsigned i=0;i<10;i++){
+			const unsigned value=i==0?first.source:i==2?first.route:i==3?first.destination:i==5?job.words[7]:i==8?first.bytes:0;
+			volatile uint32_t* word=command+i;*word=value;io.Write(0xffb20000+i*4,value);
+		}
 		return (Commands(io) && Quiet(io)) || Fail();
 	}
 	template<class IO> bool Open(IO& io,unsigned kblock,unsigned buffer) {

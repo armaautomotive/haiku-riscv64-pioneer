@@ -1,0 +1,83 @@
+QGW4 returning BF16 producer + paired Q4 FPU worker integration
+============================================================
+2026-11-05 Pacific. Basea60c4b2e56b6274c055a54ded205b0f26a0dbb1c.
+OFFBOARD ONLY. No Pioneer/network/device/driver/Assistant/power/SD action.
+No new inference throughput measurement.20 tokens/sec remains unmet.
+
+Implemented
+-----------
+The actual whole-model worker front end now has a DISTINCT QGW4 build,
+boot/job/fault grammar and typed QBP1/BF16 producer witnesses. It calls the
+returning Q4 FPU service and preserves its private s11 seal. Old integer
+Q4 descriptors and integer-scale completion records do not authorize it.
+Existing non-Q4 arithmetic capsules remain linked,not reinterpreted.
+Old/default worker binaries independently reproduce their original pins.
+
+Producer op5 performs an actual1024B source read,FP32-to-BF16 packing,
+512B BF16 write and128B typed freshness write. Op3 reads both gate/up,
+computes the existing precise(gate*sigmoid(gate))*up order ON CARD,then
+writes BF16 and its freshness line. Each command is checked before/after,
+with actual counters/source/descriptor/private-envelope checks. No host
+reference,integer quantizer,CPU fallback,retry or reset enters the image.
+
+Integration found and fixed a real libc dependency: compiler initialization
+called an old byte-memset. New loader state and initial command words use
+explicit word stores;returning cached.o now resolves ONLY block_fault_park.
+Temporary grammar copies no longer stay in the persistent caller's frame;
+observed combined producer stack fell4640->3712B,within the existing8KiB.
+This is a stack/code result,NOT a model inference speedup.
+
+Canonical cache compatibility
+-----------------------------
+The existing model is split into7 bank stripes with64-row boundaries.
+Flat119-worker row balancing can cross these boundaries and was discarded.
+PioneerQ38PairedProjectionJobs instead allocates32-row units WITHIN each
+unchanged stripe,up to8 pairs/job,for119 peers. No weights move or repack.
+Worker frames check bounded even-row geometry;the ROOT still owes binding
+that geometry to the exact authenticated canonical source/coverage owner.
+
+Executed qualification
+----------------------
+Main and clean-archive runs each close5 top-level children/stderr0,plus
+the producer suite's5 and cached-regression suite's12 recorded children0.
+187 new-worker/test dependency sources are frozen before/after execution.
+The clean archive contains base HEAD plus ONLY19 relevant source files;
+pre-existing9 tracked dirty files and unrelated WIP are excluded.
+Complete worker ELF and every exported section,standalone service ELF/
+boot/text,and result stdout match byte-for-byte between both runs. Raw
+ancestor build logs differ ONLY in their output-directory path strings.
+
+*108 actual immutable-worker producer jobs:20 gate-input,20 up-input,
+ 68 gated-output chunks;13824 BF16 packed words,typed freshness checks,
+ real returning WAIT->STOP histories,18 inert terminal fault cases and
+ a warm projection->projection->gated sequence. Max combined stack3712B.
+*5 actual full-worker CALLS into its linked returning FPU capsule,608 exact
+ outputs,including warm width changes and real WAIT/STOP. The instructions
+ issue the original-cache byte reads at real canonical stripe addresses/
+ bank routes into one shared live FPU/NIU/L1 state. Byte endpoints are
+ synthetic;this is NOT reading the physical card or a full trained model.
+ Separate actual coordinator packing code supplies these test inputs;
+ it is NOT yet a connected persistent-producer->ROOT-gather->FPU history.
+ Max combined FPU-dispatch stack2752B.
+*192 canonical FFN matrices/all64 layers:22848 planned jobs,exact once-only
+ row coverage within original stripes,2304 refused metadata corruptions.
+ These are metadata/source-geometry checks,NOT22848 executed matrix jobs.
+*Current cached-service regression:704 synthetic,288 freshly authenticated
+ original-model band,and416 warm outputs;32 emitted faults/refusals and
+ independent exact-rational BF16 checks. No full-model quality assertion.
+*60 wrong/mixed/defined-zero/fast-math worker roles refused;no undefined
+ image symbols,writable globals,unexpected exported sections,unsupported
+ arithmetic or extra s11 uses. Host observers stay in separate test units.
+
+Worker sections:global8892B,producer7360B,cachedFPU8336B. Exact hashes,
+actual exits,source pins and raw public receipts are in the sibling folder.
+No binary,original model or private learned sample/golden is committed.
+
+Remaining before a real speed result
+-----------------------------------
+Update the actual model ROOT to dispatch/prove the typed BF16 producers,
+gather their genuine wire output,and construct Q4 jobs from the paired
+canonical stripe plan. Bind its full immutable recipe and new code/L1/
+source/producer extents in a fresh native owner. Then qualify the connected
+model path,run a fresh controlled hardware cohort,and measure actual model
+quality and tokens/sec. These tests alone DO NOT authorize installation.

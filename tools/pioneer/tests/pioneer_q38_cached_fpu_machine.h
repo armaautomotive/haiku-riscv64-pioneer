@@ -10,6 +10,7 @@ using CL=PioneerQ38Q4FpuCachedLayout;
 struct CachedIO {
 	struct Packet {CL::Read data;unsigned due,buffer,block;};
 	CL::Job job;const std::vector<uint8_t>& root;
+	unsigned dramBase=CL::DramWeight; // Byte endpoint address-window map,not a descriptor rewrite.
 	unsigned width,route,events=0,reads=0,writes=0,ticks=0,issues=0,completed=0,headerWrites=0,headerReads=0,maxQueued=0;
 	unsigned fault=0,dropCommand=99,reader=2,overlap=0,jobStart=0,jobs=0,pairBase=0,requestStart=0;
 	std::array<unsigned,10> command;std::array<uint32_t,16> counters;
@@ -33,7 +34,9 @@ struct CachedIO {
 		if(!queued.empty() && fault!=4) {Packet p=queued.front();queued.erase(queued.begin());p.due=ticks+100;responses.push_back(p);}
 		for(auto it=responses.begin();it!=responses.end();) {
 			if(it->due>ticks){it++;continue;}
-			const auto& p=*it;assert(reader!=p.buffer);const auto* bytes=p.data.route==CL::InputRoot?root.data()+p.data.source:dram.data()+p.data.source-CL::DramWeight;
+			const auto& p=*it;assert(reader!=p.buffer);
+			if(p.data.route!=CL::InputRoot)assert(p.data.source>=dramBase && p.data.source-dramBase<=dram.size()-p.data.bytes);
+			const auto* bytes=p.data.route==CL::InputRoot?root.data()+p.data.source:dram.data()+p.data.source-dramBase;
 			memcpy(l1.data()+p.data.destination,bytes,p.data.bytes);
 			counters[2]++;counters[3]+=p.data.bytes/64;counters[4]++;counters[5]++;counters[14]++;completed++;copies[p.buffer]++;
 			if(fault==5)counters[2]++;if(fault==6)counters[3]++;if(fault==7)counters[1]++;
