@@ -31,6 +31,9 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
  unsigned sourceCopies=0,stateWrites=0,stateReadbacks=0,tokenPublications=0;
  unsigned kvPhase=0,kvWrites=0,kvReadbacks=0;
  unsigned kvFaults=0,kvFault=0;bool kvInjected=false;
+#ifdef PIONEER_Q38_TEST_BF16_CONNECTED_PREPARE
+ unsigned bf16ProducerJobs=0;
+#endif
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
  unsigned preciseJobs=0;
  static void ObservePreciseDoorbell(unsigned worker,unsigned matrices,bool dense,unsigned layer,
@@ -425,6 +428,13 @@ struct TokenFlowMachine:GlobalChainInstructionMachine {
     if(remote==M::Doorbell){
      unsigned op=p.memory.at(M::Job+8);
      if(op==1)matrixJobs++;else if(op==7)convJobs++;else if(op==8)gdnJobs++;else if(op>=9 && op<=11)denseJobs++;
+#ifdef PIONEER_Q38_TEST_BF16_CONNECTED_PREPARE
+     else if(op==3 || op==5){
+      assert(Phase()==10 && matrices==5 && !layer && !position && !completed && !committed
+       && op==5 && w<20 && p.memory.at(M::Job+27*4)==currentToken);
+      bf16ProducerJobs++;
+     }
+#endif
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
      else if(op==G::ActivationOperation){
       std::array<uint32_t,64> job;for(unsigned i=0;i<64;i++)job[i]=p.memory.at(M::Job+i*4);

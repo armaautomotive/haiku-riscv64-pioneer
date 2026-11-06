@@ -47,9 +47,13 @@ Compact work plan -- one next task
    matrix/idle closure. All119 final closures are required before Scatter.
    Local clean builds,MOCK routing/fault tests and a conservative whole-call
    stack bound(8000/8192bytes) pass. Defaults are byte-identical.
-   This is NOT new actual RV32 controller/card execution or a speedup.
-   Next acceptance gate: actual compiled controller execution with connected
-   histories/faults,then distinct native qualification BEFORE a card trial.
+   The first K5120 preparation branch now also passes actual compiled RV32
+   execution over a simulated fabric: SAME119 reset histories,20 genuine
+   producers,5120 exact packed values and6 guest fault rejections per image.
+   Control emits1485 duplicate idle requests;candidate emits0 (simulation,
+   NOT physical packet timing or TPS). Test stops BEFORE matrix submission.
+   Remaining gate: K17408/matrix/final119 compiled closure coverage,then
+   distinct native qualification BEFORE a controlled card trial.
    No110subject/stage exists. Fault detection can occur later;documented.
    Source budget:at least239040 fewer tiny control requests/token,NOT time
    telemetry. Even deleting the whole30.46% phase only gives~1.44x if other
@@ -96,3 +100,5 @@ Conditional analytical budget,NOT a demonstrated hardware limit:
  benchmarks/qwen38-performance-budget-20261106.txt
 Current preparation prototype,BUILD/MOCK/static stack only:
  benchmarks/qwen38-bf16-deferred-prepare-offboard-20261106.txt
+First compiled connected preparation branch,BEFORE matrix submission:
+ benchmarks/qwen38-bf16-deferred-prepare-connected-20261106.txt

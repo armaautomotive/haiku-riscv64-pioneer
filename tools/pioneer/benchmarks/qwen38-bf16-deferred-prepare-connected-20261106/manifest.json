@@ -1,0 +1,127 @@
+{
+  "base": "666aee4624277ac2394271c258d70841b51b3ee7",
+  "scope": "ACTUAL_COMPILED_RESET_AND_FIRST_K5120_PREPARATION_WITH_SAME119_IN_SIMULATED_FABRIC;BEFORE_MATRIX_SUBMISSION",
+  "actual_exits": {
+    "compile": 0,
+    "control": 0,
+    "deferred": 0
+  },
+  "old_prefix_syntax": {
+    "actual_exit": 0,
+    "command": [
+      "c++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Werror",
+      "-DPIONEER_Q38_TEST_WORK_DOT_ZERO_ELISION",
+      "-DPIONEER_Q38_TEST_AFFINE_REPLAY",
+      "-DPIONEER_Q38_BLOCK_AFFINE_DST",
+      "-DPIONEER_Q38_TEST_BLOCK_SCALE_REUSE",
+      "-DPIONEER_Q38_WORK_DEFER_AFFINE",
+      "-DPIONEER_Q38_WORK_INPUT_SUM_CACHE",
+      "-DPIONEER_Q38_WORK_ZERO_MINIMUM",
+      "-DPIONEER_Q38_NATIVE_OPERAND_STORE",
+      "-DPIONEER_Q38_WORK_SKIP_DOT_CHECK",
+      "-DPIONEER_Q38_REPLAY_OPERAND",
+      "-DPIONEER_Q38_CACHED_AFFINE",
+      "-DPIONEER_Q38_STATIC_VECTOR",
+      "-DPIONEER_Q38_PIPELINED_MATRIX",
+      "-DPIONEER_Q38_INT_SFPU",
+      "-DTT_PIONEER_Q38_WORK_MODE",
+      "-DPIONEER_Q38_WORK_COHORT_CACHE",
+      "-DPIONEER_Q38_QUEUED_MATRIX_ENTRY",
+      "-DPIONEER_Q38_WORK_OUTPUT_DMA",
+      "-DPIONEER_Q38_SPAN_FAST",
+      "-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR",
+      "-DPIONEER_Q38_TEST_INT_ACCUMULATOR",
+      "-DPIONEER_Q38_TEST_PIPELINED_MATRIX",
+      "-DPIONEER_Q38_Q4_TWO_PHASE",
+      "-DPIONEER_Q38_TOKEN_BF16_PROGRAMS=1",
+      "-fsyntax-only",
+      "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/pioneer_q38_bf16_root_prefix_test.cpp"
+    ]
+  },
+  "frozen_dependencies": 187,
+  "saved_records": {
+    "actual-exits.json": {
+      "bytes": 52,
+      "sha256": "b40361e3b82440df3aab2da5078b5b8701bc3b969532a20b06d59b33b8182a4b"
+    },
+    "commands.json": {
+      "bytes": 2111,
+      "sha256": "735375c958f85b54f641f02bb56e74e7e1051cb7fddfb1f9b6b8662328b25133"
+    },
+    "control.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "control.stdout": {
+      "bytes": 3328,
+      "sha256": "6e84204e545f708c52c5ab1d7d1288b3978b8b53b311949f679bbdf154fe6903"
+    },
+    "deferred.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "deferred.stdout": {
+      "bytes": 3346,
+      "sha256": "cb6d67b476264f2ddaeedae4de4c5f8c6e775114c3f954555c975953887637cd"
+    },
+    "old-prefix-syntax.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "old-prefix-syntax.stdout": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "source-sha256.txt": {
+      "bytes": 22486,
+      "sha256": "dbd153031ad7e29864c724fd7fe6eddd50185a74cd284edab744ec51bcc6bb04"
+    }
+  },
+  "candidate_ROOT": {
+    "boot.bin": {
+      "bytes": 4,
+      "sha256": "32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca"
+    },
+    "text.bin": {
+      "bytes": 129716,
+      "sha256": "cbac8fb2287175f21755c88aba55b7c7f1cbc9c61cf67ddfb1070297b396475e"
+    },
+    "terminal.bin": {
+      "bytes": 8,
+      "sha256": "6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5"
+    },
+    "conv.bin": {
+      "bytes": 20796,
+      "sha256": "71b3b7ac708b384f9ccff092bdeb9c2a9b7b703a3f78297b29137366a768eabb"
+    },
+    "bf16.bin": {
+      "bytes": 29796,
+      "sha256": "550a7f141a2ee04d78196e0bf5509c8874095ee9a52088662c7dc97fa280c86b"
+    },
+    "program.elf": {
+      "bytes": 212232,
+      "sha256": "d065a29672996db27471e19e0cc0f396eea32242043d7e89a95f197ac25e9fb5"
+    }
+  },
+  "comparison": {
+    "control_duplicate_idle_requests": 1485,
+    "deferred_duplicate_idle_requests": 0,
+    "packed_values_exact": 5120,
+    "faults_each": 6,
+    "root_reserved_stack_to_boundary": 6496
+  },
+  "not_proven": [
+    "K17408 gated controller preparation",
+    "BF16 matrix execution with this controller",
+    "final119 ledger/Gather/Scatter closure in compiled controller",
+    "new native package and physical lifetime",
+    "model answer quality",
+    "hardware speedup",
+    "20tokens/sec"
+  ],
+  "native_or_hardware_access": false
+}

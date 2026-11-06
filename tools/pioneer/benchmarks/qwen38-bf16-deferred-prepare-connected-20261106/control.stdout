@@ -1,0 +1,35 @@
+PASS distinct full-token startup builder/ALL64x512KiB published DATA+state spans+ZERO slack/root+head EXACT vs prior independently loaded numeric metadata/192 strict first+middle+last chunk controls/strict full geometry before+after/actual session+prompt initialized from builder/ZERO ROOT instructions;geometry NOT native ownership or model products
+START compiled connected prepare control;RAW synthetic inputs,actual reset history,NO processor/product setters
+PASS actual next embedding position0/token248319/5120 bit-exact/20raw+2writes+2readbacks/no CPU product upload
+BEGIN actual persistent token0/layer0/inputToken248319/previous committed0/SAME119 histories
+OBSERVE compiled prepare control steps10000000 phase2 Q80 BF16producers0 PC4ddb4
+OBSERVED connected layer0 matrix1 role10/actual quantized input/same workers
+OBSERVE compiled prepare control steps20000000 phase2 Q83 BF16producers0 PC4d444
+OBSERVE compiled prepare control steps30000000 phase3 Q83 BF16producers0 PC488c0
+OBSERVED connected layer0 matrix2 role11/actual quantized input/same workers
+OBSERVE compiled prepare control steps40000000 phase4 Q86 BF16producers0 PC4d450
+OBSERVE compiled prepare control steps50000000 phase4 Q86 BF16producers0 PC4d474
+OBSERVED connected layer0 matrix3 role5/actual quantized input/same workers
+OBSERVE compiled prepare control steps60000000 phase4 Q8125 BF16producers0 PC488f4
+OBSERVED connected layer0 matrix4 role6/actual quantized input/same workers
+OBSERVE compiled prepare control steps70000000 phase5 Q8244 BF16producers0 PC4d52c
+OBSERVE compiled prepare control steps80000000 phase6 Q8244 BF16producers0 PC563fc
+OBSERVE compiled prepare control steps90000000 phase6 Q8244 BF16producers0 PC532d8
+OBSERVE compiled prepare control steps100000000 phase6 Q8244 BF16producers0 PC48f34
+OBSERVE compiled prepare control steps110000000 phase6 Q8244 BF16producers0 PC4d5e4
+OBSERVE compiled prepare control steps120000000 phase8 Q8244 BF16producers0 PC4df30
+OBSERVED connected layer0 matrix5 role13/actual quantized input/same workers
+OBSERVE compiled prepare control steps130000000 phase8 Q8363 BF16producers0 PC4dd38
+OBSERVE guest fault afterPC4d554;no BF16 matrix submitted
+PASS COMPILED_PREPARE_FAULT control fault1 actual scalar park/no matrix/no publication/inert2048
+OBSERVE guest fault afterPC22864;no BF16 matrix submitted
+PASS COMPILED_PREPARE_FAULT control fault2 actual scalar park/no matrix/no publication/inert2048
+OBSERVE guest fault afterPC233a8;no BF16 matrix submitted
+PASS COMPILED_PREPARE_FAULT control fault3 actual scalar park/no matrix/no publication/inert2048
+OBSERVE guest fault afterPC233a8;no BF16 matrix submitted
+PASS COMPILED_PREPARE_FAULT control fault4 actual scalar park/no matrix/no publication/inert2048
+OBSERVE guest fault afterPC233a8;no BF16 matrix submitted
+PASS COMPILED_PREPARE_FAULT control fault5 actual scalar park/no matrix/no publication/inert2048
+OBSERVE guest fault afterPC4d838;no BF16 matrix submitted
+PASS COMPILED_PREPARE_FAULT control fault6 actual scalar park/no matrix/no publication/inert2048
+PASS COMPILED_CONNECTED_PREPARE control SAME119 reset/Q8jobs363/Conv119/GDN96 -> real BF16producers20/60packets/5120values -> real ROOT proof+line+native reads/shadows/idleControlRequests1485/stack6496;BEFORE matrix submission,NOT final119closure/native/hardware/quality/TPS

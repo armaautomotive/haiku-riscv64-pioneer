@@ -1,0 +1,35 @@
+PASS distinct full-token startup builder/ALL64x512KiB published DATA+state spans+ZERO slack/root+head EXACT vs prior independently loaded numeric metadata/192 strict first+middle+last chunk controls/strict full geometry before+after/actual session+prompt initialized from builder/ZERO ROOT instructions;geometry NOT native ownership or model products
+START compiled connected prepare deferred;RAW synthetic inputs,actual reset history,NO processor/product setters
+PASS actual next embedding position0/token248319/5120 bit-exact/20raw+2writes+2readbacks/no CPU product upload
+BEGIN actual persistent token0/layer0/inputToken248319/previous committed0/SAME119 histories
+OBSERVE compiled prepare deferred steps10000000 phase2 Q80 BF16producers0 PC4dda8
+OBSERVED connected layer0 matrix1 role10/actual quantized input/same workers
+OBSERVE compiled prepare deferred steps20000000 phase2 Q83 BF16producers0 PC4dda0
+OBSERVE compiled prepare deferred steps30000000 phase3 Q83 BF16producers0 PC4dd28
+OBSERVED connected layer0 matrix2 role11/actual quantized input/same workers
+OBSERVE compiled prepare deferred steps40000000 phase4 Q86 BF16producers0 PC4db9c
+OBSERVE compiled prepare deferred steps50000000 phase4 Q86 BF16producers0 PC4d43c
+OBSERVED connected layer0 matrix3 role5/actual quantized input/same workers
+OBSERVE compiled prepare deferred steps60000000 phase4 Q8125 BF16producers0 PC4d3f0
+OBSERVED connected layer0 matrix4 role6/actual quantized input/same workers
+OBSERVE compiled prepare deferred steps70000000 phase5 Q8244 BF16producers0 PC4de8c
+OBSERVE compiled prepare deferred steps80000000 phase6 Q8244 BF16producers0 PC56b14
+OBSERVE compiled prepare deferred steps90000000 phase6 Q8244 BF16producers0 PC4d544
+OBSERVE compiled prepare deferred steps100000000 phase6 Q8244 BF16producers0 PC47050
+OBSERVE compiled prepare deferred steps110000000 phase6 Q8244 BF16producers0 PC53cf4
+OBSERVE compiled prepare deferred steps120000000 phase8 Q8244 BF16producers0 PC4ddac
+OBSERVED connected layer0 matrix5 role13/actual quantized input/same workers
+OBSERVE compiled prepare deferred steps130000000 phase8 Q8363 BF16producers0 PC4dd2c
+OBSERVE guest fault afterPC4d554;no BF16 matrix submitted
+PASS COMPILED_PREPARE_FAULT deferred fault1 actual scalar park/no matrix/no publication/inert2048
+OBSERVE guest fault afterPC22864;no BF16 matrix submitted
+PASS COMPILED_PREPARE_FAULT deferred fault2 actual scalar park/no matrix/no publication/inert2048
+OBSERVE guest fault afterPC233a8;no BF16 matrix submitted
+PASS COMPILED_PREPARE_FAULT deferred fault3 actual scalar park/no matrix/no publication/inert2048
+OBSERVE guest fault afterPC233a8;no BF16 matrix submitted
+PASS COMPILED_PREPARE_FAULT deferred fault4 actual scalar park/no matrix/no publication/inert2048
+OBSERVE guest fault afterPC233a8;no BF16 matrix submitted
+PASS COMPILED_PREPARE_FAULT deferred fault5 actual scalar park/no matrix/no publication/inert2048
+OBSERVE guest fault afterPC4d838;no BF16 matrix submitted
+PASS COMPILED_PREPARE_FAULT deferred fault6 actual scalar park/no matrix/no publication/inert2048
+PASS COMPILED_CONNECTED_PREPARE deferred SAME119 reset/Q8jobs363/Conv119/GDN96 -> real BF16producers20/60packets/5120values -> real ROOT proof+line+native reads/shadows/idleControlRequests0/stack6496;BEFORE matrix submission,NOT final119closure/native/hardware/quality/TPS

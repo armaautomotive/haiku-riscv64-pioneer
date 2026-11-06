@@ -1,0 +1,75 @@
+Deferred preparation: first compiled connected branch passes
+==========================================================
+November 6, 2026. Actual RV32 instructions over SIMULATED byte endpoints.
+No card access, native installation, model benchmark or new speed result.
+Best matched real-model rate remains 0.16436 tokens/sec; 20 TPS is unmet.
+
+Result / bounded decision
+-------------------------
+Both the unchanged profile ROOT and the deferred-audit ROOT execute from
+reset with the SAME 119 workers, which boot once and retain their actual
+embedding / 363 Q8 jobs / 119 convolution / 96 GDN job histories.
+The test now continues BEYOND the old prefix's first BF16 descriptor.
+
+Twenty real returning BF16 producers execute their emitted instructions
+and 60 packets. Their actual writes feed the real ROOT's descriptor, job,
+proof, physical-counter and trailer checks, native reads and shadow copy.
+All 5,120 packed values match independently observed BF16 rounding of the
+actual preceding projection input. Expected values are never uploaded.
+No PC, private seal, completed worker, tensor product or ready flag is set
+by the host. Transport bookkeeping preserves physical counters and the
+existing live processor/Tensix state; ClearTensorState only asserts quiet.
+
+Control ROOT emits 1,485 extra idle-worker control requests after producer
+admission; deferred ROOT emits zero. This confirms the earlier source-path
+budget for this FIRST K5120 projection in a simulated fabric. It is NOT a
+physical transaction measurement, latency result or model tokens/sec.
+The candidate's actual stack ledger is initialized/armed and has zero
+final closure bits at the boundary, as expected BEFORE matrix execution.
+Observed ROOT reserved-stack peak to this boundary is 6,496 bytes for both
+images; the prior conservative full-call bound remains 8,000 / 8,192 bytes.
+
+Six fault branches fork from each genuinely reached first trailer read:
+ROOT source change, ROOT counter change, trailer corruption, next worker
+proof corruption, next worker counter change and current frame corruption.
+All twelve forks reach the actual scalar fault park before any BF16 matrix
+job or model publication. Each remains NoC/peer-write inert for 2,048 more
+instructions. Parent history remains unchanged; no repaired receipt or
+fabricated fault completion is supplied.
+
+Compile, control and deferred children ACTUALLY exited 0 with empty stderr;
+187 source dependencies match before/after. The old prefix, with the new
+TEST selector absent, also passes a separate syntax-only regression (not a
+repeated execution). All candidate/control/worker/old-math artifact pins
+were independently reauthenticated after completion. No job remains.
+
+Coverage limits -- do not promote this to a full offload claim
+------------------------------------------------------------
+Observation stops BEFORE the first BF16 matrix job submission. This test
+does NOT cover the K17408 gated controller branch, the following BF16
+matrix, final 119 ledger/Gather/Scatter closure, a whole layer/token,
+native ownership/restoration, original-model quality, hardware or TPS.
+The unchanged worker kernel already has separate FPU/component tests;
+those do not fill this connected-controller coverage gap.
+
+Next acceptance work is the remaining controller/closure coverage and
+distinct native package qualification before a controlled physical trial.
+No 110 subject/stage was created. Stages 81..109-a remain spent forever.
+
+Reproduce (fresh absolute OUT, all input artifact pins enforced)
+-------------------------------------------------------------
+python3 tests/run_pioneer_q38_bf16_connected_prepare_tests.py \
+  DEFERRED_ROOT PROFILE_ROOT OLD_MATH PAIRED_BF16_WORKER OUT
+Runner is relative to tools/pioneer. The new HOST TEST selector is separate
+from all native/image selectors; existing default harness behavior is kept.
+The first exploratory run compiled but its control child refused cycle
+CSR reads from the profiled ROOT. The accepted run adds ONLY the dedicated
+fixture's read-only mcycle/mcycleh hook in the fixed clock-helper range,
+using the existing synthetic scheduler clock. No ordinary harness CSR
+policy or production code changed, and synthetic ticks imply no frequency.
+
+Evidence: qwen38-bf16-deferred-prepare-connected-20261106/manifest.json,
+actual exits, commands, source inventory and complete control/deferred
+stdout. No executable, model, converted weights or learned payload saved.
+This turn changed HOST TEST code only; no SSH, card, power, SD, network,
+kernel, production firmware or Assistant action occurred.

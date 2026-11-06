@@ -16,7 +16,17 @@ namespace CL=PioneerQ38GlobalChainLayout;
 namespace G=PioneerQ38SelectedGlobalWorker;
 namespace H=PioneerQ38GlobalHeadLayout;
 namespace DL=PioneerQ38MixedLiveBlockRootLayout;
+#ifdef PIONEER_Q38_TEST_BF16_CONNECTED_PREPARE
+#if PIONEER_Q38_TEST_BF16_CONNECTED_PREPARE != 1 || !defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS) \
+ || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS) \
+ || defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION)
+#error Connected BF16 preparation is an explicit separate HOST TEST only
+#endif
+#endif
 struct GlobalChainPeer:NewCohortPeer {
+#ifdef PIONEER_Q38_TEST_BF16_CONNECTED_PREPARE
+#include "PioneerQ38Bf16ConnectedPreparePeer.inc"
+#endif
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
  void* pushedContext=nullptr;
  void (*pushedBytes)(void*,unsigned,const uint32_t*,const uint32_t*)=nullptr;
@@ -37,6 +47,10 @@ struct GlobalChainPeer:NewCohortPeer {
   std::ifstream symbols(std::string(image)+"/program.symbols");std::string address,kind,name;waitPC=stopPC=faultPC=0;
   while(symbols>>address>>kind>>name){unsigned a=unsigned(std::stoul(address,nullptr,16));if(name=="block_peer_wait_load")waitPC=a;if(name=="block_peer_stopped")stopPC=a;if(name=="block_fault_stopped")faultPC=a;}
   assert(waitPC && stopPC && faultPC);boot[0]=G::Magic;for(unsigned i=40;i<PioneerQ38SelectedWorkerBootEnd;i++)boot[i]=G::BootWord(i);
+#ifdef PIONEER_Q38_TEST_BF16_CONNECTED_PREPARE
+  bf16ProducerCode=Read((std::string(image)+"/bf16producer.bin").c_str());
+  assert(!bf16ProducerCode.empty() && bf16ProducerCode.size()<=65536);
+#endif
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
   preciseCode=Read((std::string(image)+"/precise.bin").c_str());assert(!preciseCode.empty() && preciseCode.size()<=0x10000);
 #endif
@@ -89,6 +103,9 @@ struct GlobalChainPeer:NewCohortPeer {
   return pc==waitPC && !sequence && !requests && !responses && !pending && memory.at(M::Status+12)==G::Magic && !memory.at(M::Status+8);
  }
  void Store(uint32_t a,uint32_t value)override{
+#ifdef PIONEER_Q38_TEST_BF16_CONNECTED_PREPARE
+  if(bf16Producing && Range(a,0x90800,1664)){ClearTensorState();assert(!pending && !(a&3));memory[a]=value;return;}
+#endif
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
   if(Range(a,G::PushBuffer,256)){
    assert(Range(pc,M::Code,unsigned(front.size())) && !pending && drained);memory[a]=value;return;
@@ -149,6 +166,10 @@ struct GlobalChainPeer:NewCohortPeer {
   pushing=false;pushWords=pushPackets=0;pushReadback.fill(false); // reached transport boundary ONLY;no processor/tensor state setter.
 #endif
   unsigned op=memory.at(M::Job+8);
+#ifdef PIONEER_Q38_TEST_BF16_CONNECTED_PREPARE
+  if(op==3 || op==5){ReceiveBf16Producer();return;}
+  bf16Producing=false;
+#endif
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
   if(op==3){ReceivePrecise();return;}
   preciseActive=false;
