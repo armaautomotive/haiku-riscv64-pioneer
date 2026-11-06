@@ -1,0 +1,99 @@
+Prepared BF16 Q4 -- returning source/compute comparison,2026-11-06
+================================================================
+LOCAL SOFTWARE QUALIFICATION ONLY. No Pioneer access or hardware timing.
+Best complete27B remains0.173tok/s;20tok/s unmet/unproven. No Assistant,
+driver,kernel,CPU/RAM,model/cache or hardware/power change was made here.
+
+Changed code
+------------
+The direct consumer now reads TWO existing2304B native-cache primaries
+contiguously. Their original metadata prefixes feed the unchanged metadata
+decoder directly;no per-face scatter,header insertion or metadata copy.
+Forced-exponent UNPACK skips the preceding16B rather than interpreting it,
+as in the already integrated prepared integer worker. Fixed NoC spans still
+have zero guards;private constant/correction scratch retains its guards.
+Original full-BF16 inputs also remain contiguous. Arithmetic/oracle is the
+SAME separately rounded contract defined in the preceding component report.
+
+Distinct returning comparison runs old per-weight-BF16 then new prepared
+output-affine arithmetic in ONE canonical physical-Dst/L1/source-bank model.
+Both complete-K outputs,frame integrity,bounded math drains,NoC counters,
+credits,visibility and return marker are checked. Only three read-only clock
+CSRs;simulated clocks are NOT real timings. No payload-result injection,
+descriptor normalization,NoC writes,CPU Work inference/reference/fallback.
+
+The exact existing queue/credit/counter state machine is shared through a
+private class-body include. Legacy class/method names and behavior remain;
+the old114 image independently rebuilds to the SAME12108B/SHA43a1b152f0c7e958
+b907c1eb7127628b5c67aebe64345227dd71f3c8d17de2ed in main AND clean trees.
+Prepared layout uses THREE reads/K256:4608B primary,1024B dense corrections,
+512B input,96flits versus old26reads/80flits. Fewer commands but MORE bytes;
+no claim these ratios predict speed. This isolated dense-mask bundle does
+NOT change the model's sparse cache recipe or seven3GiB capacity plan.
+Full-model integration must reuse the existing sparse source,NOT expand
+all masks globally or silently enlarge the bank caps.
+
+Completed tests / numerical scope
+----------------------------------
+Frozen main/clean runner ACTUALLY0:24 children,all stderr empty;84 public
+and2 private source dependencies. BOTH complete14788B images identical:
+7caadb532dc62ec3dfd8b136554b9d7e953e3ce1b0fa8e85eaf7750c2249acd9.
+Boot4B unchanged:d47a1c29c265663f5bd4bd49aaf28248b7345d7feb5a4f770caa27315deaa4dd.
+
+* Complete emitted RV32 comparison at5120/17408 inputs/32 output rows:
+  128 old/new words exactly match THEIR predefined original-byte oracles.
+  BOTH recipes share actual byte-addressed L1,physical Dst and source banks;
+  double-buffer prefetch overlaps current math. Entire GDDR stays unchanged.
+  12 invalid-frame/late source-counter-credit-command cases never publish a
+  new answer. Invalid frames issue ZERO payload reads/matrix instructions.
+* New loader16 route/width positives,44 refusals. Independent literal packet
+  observer,whole L1 including all UNOWNED bytes exact,wrapped counters,
+  all32 transaction IDs/credit proof,zero IO after failure/completion.
+  Legacy loader's16positive/44refusal suite also passes unchanged.
+* Direct arithmetic regression:8 retained-context jobs/46080 exact group
+  words/five missing-source/fence/fidelity/correction/release controls.
+  Full-BF16 low bits,wide exponents,signed zero and q15 corrections covered.
+* Real original18973870528B file: SAME read-only retained FD/full original
+  SHA c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747.
+  Existing source verifies ALL9 compiled payloads and fresh old references
+  against fresh original reads. Exact inverse byte permutation feeds the
+  NEW original-row oracle:288 new reference words;actual compiled comparison
+  for samples0/6(two widths)matches128 old/new words. Original remains
+  stable/ready after all cases. Both main/clean actual processes exit0.
+* Eighteen build-role/clock-alias refusals. Work/native/client/reference/
+  wrong build cannot silently select this comparison or clock policy.
+
+Quality/speed decision
+-----------------------
+The image is a verified returning component,NOT a qualified native driver.
+New arithmetic is NOT bit-equivalent to old per-weight BF16/GGML/integer
+activation inference. These tests do NOT establish broad model quality.
+RV simulated steps1103308/3609503,stack/touched688B are code/dataflow scope
+observations,NOT card cycles,Haiku kernel stack certification or TPS.
+The preceding static-operation counts remain unchanged. Extra waits/mask
+expansion/read bytes can still make it slower. NO Work promotion/full-model
+upload/hardware speed claim is justified by this local checkpoint.
+
+Next concrete step -- native ownership,then the physical comparison
+-------------------------------------------------------------------
+The old native lease journals ONLY original compact weights and inputs.
+It MUST NOT run this image as-is. New exact prepared GDDR domain:
+0x04080000 +blocks*5632,between unchanged raw weights and0x04100000 input;
+at maximum width it adds382976B. It needs its OWN bound snapshot/staging/
+verification/restoration and source-role/image identity BEFORE launch.
+Update counter totals to29requests/176flits per block and final command to
+the new512B input read. Final L1 checks must cover BOTH prepared buffers,
+mask-derived final scratch,constant ones and transition marker,while checking
+the untouched residual old-buffer bytes. No broad mutable scratch exemption,
+forced cleanup/retry or borrowing the spent114 trial. Then SDK/owner/client
+qualification and ONE fresh guarded physical trial,with independent restore.
+No new native/PCI/VM ownership or real END/restoration proof is claimed here.
+
+Reproduce:
+python3 tools/pioneer/tests/run_pioneer_q38_prepared_bf16_q4_returning_tests.py \
+ /Volumes/HaikuBuildLocal/generated.riscv64 /absolute/private104headers \
+ /absolute/original.gguf /absolute/fresh/private/output
+Completed private evidence:/private/tmp/pioneer-prepared-q4-returning.rY4Dze/final
+Sibling directory retains complete nonempty child streams,actual24 exits,
+source fingerprints,private-header identities and18 role refusals. No
+weights,derived payloads,model output tensors or compiled binaries published.

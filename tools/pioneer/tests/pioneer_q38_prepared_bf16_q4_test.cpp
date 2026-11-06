@@ -27,12 +27,10 @@ static void StagePrepared(const TileFixture& f,PreparedBf16Q4Machine& m,unsigned
   memcpy(tiled.data(),f.compact.data()+4096+half*256,256);
   memcpy(tiled.data()+256,f.compact.data()+half*2048,2048);
   assert(PioneerQ38Q4EscapeTiles::Encode(tiled.data(),tiled.size(),encoded.data(),encoded.size()));
-  for(unsigned p=0;p<16;p++){
-   const unsigned address=Prepared::Face(buffer,p/2,half,p%2);
-   memset(m.l1.data()+address-64,0,64);memcpy(m.l1.data()+address,encoded.data()+256+p*128,128);
-  }
+  memcpy(m.l1.data()+Prepared::Primary+buffer*0x10000+half*2304,encoded.data(),2304);
   memcpy(m.l1.data()+0x8c000+buffer*0x10000+half*512,encoded.data()+2304,512);
  }
+ memcpy(m.l1.data()+Prepared::F::Input+buffer*0x10000,f.input.data(),512);
 }
 int main(){
  assert(Round(0x3f808000)==0x3f800000);static_cast<void>(&ReferenceGroup);

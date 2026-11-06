@@ -8,7 +8,11 @@
  || defined(__FAST_MATH__)
 #error Exact separate Q4 kernel timing BUILD only
 #endif
-#ifdef PIONEER_Q38_FACTORED_Q4_COMPARE_BUILD
+#if defined(PIONEER_Q38_PREPARED_BF16_COMPARE_BUILD)
+#if PIONEER_Q38_PREPARED_BF16_COMPARE_BUILD!=1 || defined(PIONEER_Q38_FACTORED_Q4_COMPARE_BUILD) || defined(PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE) || defined(PIONEER_Q38_COMPACT_Q4_FPU_STREAM_IMAGE) || defined(PIONEER_Q4_FPU_COMPACT_STREAM_K)
+#error Exact separate prepared BF16 comparison clock role only
+#endif
+#elif defined(PIONEER_Q38_FACTORED_Q4_COMPARE_BUILD)
 #if PIONEER_Q38_FACTORED_Q4_COMPARE_BUILD!=1 || defined(PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE) || defined(PIONEER_Q38_COMPACT_Q4_FPU_STREAM_IMAGE) || defined(PIONEER_Q4_FPU_COMPACT_STREAM_K)
 #error Exact separate comparison clock role only
 #endif

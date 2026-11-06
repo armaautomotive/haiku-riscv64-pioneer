@@ -11,8 +11,11 @@
 // nibble decode, learned floating products on the controller, PACK, global
 // BFP8 expansion or changed cache recipe. Original metadata is unchanged.
 //
-// Each owned L1 face has a preceding private64B zero header. The caller
-// scatters128B cache faces into Primary (no numeric conversion). Dense masks
+// The two original2304B cache primaries remain CONTIGUOUS in L1; no face
+// scatter/copy/header insertion. Forced-exponent UNPACK skips its16B header
+// at address-16, as in the existing prepared integer worker, without parsing
+// the preceding metadata/face bytes. Only each NoC span's guard is zeroed.
+// Dense masks
 // are expanded by the EXISTING sparse-mask reader before Group. MaskWord
 // reads their four current faces; EscapeWord writes only the private BFP2
 // scratch. These bit permutations are NOT model inference on the host.
@@ -27,10 +30,10 @@
 // is PioneerQ38PreparedBf16Q4Reference, NEVER a Work fallback.
 struct PioneerQ38PreparedBf16Q4Compute: PioneerQ38Q4FactoredCompute {
  using Base=PioneerQ38Q4FactoredCompute;
- enum : unsigned {Primary=0x90000,FaceStride=192,Escape=0x8a000,EscapeStride=128,
-  Ones=0x88800,BufferStride=0x10000};
+ enum : unsigned {Primary=0x90000,TileBytes=2304,Escape=0x8a000,EscapeStride=128,
+  Ones=0x88800,BufferStride=0x10000,InputStride=64};
  static constexpr unsigned Face(unsigned buffer,unsigned group,unsigned outputHalf,unsigned inputHalf){
-  return Primary+buffer*BufferStride+(outputHalf*16+group*2+inputHalf)*FaceStride;
+  return Primary+buffer*BufferStride+outputHalf*TileBytes+256+(group*2+inputHalf)*128;
  }
  template<class IO> static void Constants(IO& io){
   for(unsigned at=Zero-64;at<Zero+1024;at+=4)io.Write(at,0);
@@ -39,6 +42,16 @@ struct PioneerQ38PreparedBf16Q4Compute: PioneerQ38Q4FactoredCompute {
   for(unsigned face=0;face<4;face++)for(unsigned at=Escape+face*EscapeStride-64;at<Escape+face*EscapeStride;at+=4)io.Write(at,0);
  }
 private:
+ template<class E> struct MetadataSource {
+  E& e;unsigned buffer;
+  void Op(unsigned v){e.Op(v);}void Drain(){e.Drain();}
+  void Config(unsigned i,unsigned v){
+   if(i==76)for(unsigned half=0;half<2;half++)if(v==(Metadata+buffer*BufferStride+half*320)/16-1){
+    e.Config(i,(Primary+buffer*BufferStride+half*TileBytes)/16-1);return;
+   }
+   e.Config(i,v);
+  }
+ };
  template<class E> static void Format(E& e,bool escape){
   e.Config(50,escape?0x17f:0x181); // exponent127 for SM1,129 for SM3
   e.Config(64,escape?0x0100001f:0x01000017);e.Config(72,escape?15:0x27);
@@ -56,7 +69,7 @@ public:
  // This owner must remain exclusive until the next LoadMetadata/END.
  template<class E> static bool LoadMetadata(E& e,unsigned buffer){
   if(buffer>=2)return false;
-  if(!Base::LoadMetadata(e,buffer))return false;
+  MetadataSource<E> source{e,buffer};if(!Base::LoadMetadata(source,buffer))return false;
   e.Op(0xb2050004);e.Op(0xb21d4000);e.Drain();
   e.Config(0,0x42b5);e.Config(1,0x60aa0000);
   e.Config(65,0x00010001);e.Config(66,1);e.Config(67,0);e.Config(70,8);e.Config(71,0);
@@ -75,15 +88,15 @@ public:
   e.SealData();
   Format(e,false);
   e.Op(0x100c0002); // only scratch32..47; retain original metadata and acc
-  for(unsigned half=0;half<2;half++)Matrix(e,Ones,F::Input+buffer*BufferStride+group*128+half*32,32);
+  for(unsigned half=0;half<2;half++)Matrix(e,Ones,F::Input+buffer*BufferStride+group*InputStride+half*32,32);
   e.Op(0x8a001002);PioneerSfpuMove(e,7,15);PioneerSfpuAddI(e,7,-16);e.Op(0x7b000700);
   e.Op(0x70130020); // only defined first-row lanes0..7, genuine on-card S
   e.Op(0x100c0002);
   for(unsigned output=0;output<2;output++)for(unsigned half=0;half<2;half++)
-   Matrix(e,Face(buffer,group,output,half),F::Input+buffer*BufferStride+group*128+half*32,32+output*8);
+   Matrix(e,Face(buffer,group,output,half),F::Input+buffer*BufferStride+group*InputStride+half*32,32+output*8);
   Format(e,true);
   for(unsigned output=0;output<2;output++)for(unsigned half=0;half<2;half++)
-   Matrix(e,Escape+(output*2+half)*EscapeStride,F::Input+buffer*BufferStride+group*128+half*32,32+output*8);
+   Matrix(e,Escape+(output*2+half)*EscapeStride,F::Input+buffer*BufferStride+group*InputStride+half*32,32+output*8);
   for(unsigned half=0;half<2;half++)for(unsigned parity=0;parity<=2;parity+=2){
    const unsigned row=M::Row(group,half),acc=Accumulator+half*8;
    e.Op(0x70230000|row|parity);e.Op(0x70330000|(row+4)|parity);
@@ -97,6 +110,6 @@ public:
   e.Op(0x8a000002);e.Drain();return true;
  }
 };
-static_assert(PioneerQ38PreparedBf16Q4Compute::Primary+32*192<0x94000
+static_assert(PioneerQ38PreparedBf16Q4Compute::Primary+2*2304<0x94000
  && PioneerQ38PreparedBf16Q4Compute::Escape+4*128<0x8b000,"distinct bounded L1 proposals, NOT ownership");
 #endif

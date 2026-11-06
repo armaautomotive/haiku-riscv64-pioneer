@@ -54,10 +54,12 @@ earlier integer-activation prepared engine (tags97..103); both integration
 and physical measurements exist. Do NOT reimplement or repeat that work.
 The NEW path reuses its format with full-BF16 activations, removing decode/
 PACK from the newer output-affine calculation. Main/clean local arithmetic
-and RV32 codegen pass; NOT native integration or a measured speedup. New
+AND the returning full-K RV32/NoC comparison now pass,including actual
+authenticated original weights; NOT native integration or a speedup. New
 FP32 reassociation has its own predefined original-byte oracle, NOT old
-integer/old BF16 numerical equivalence. Complete source-transfer/returning
-comparison is next, then qualify ONE distinct native hardware comparison.
+integer/old BF16 numerical equivalence. Next: extend the native source
+journal/scope and exact final-data check,then qualify ONE distinct physical
+comparison. The old lease does NOT cover the appended prepared source.
 Retain seven3GiB source caps, original metadata/correction/source ownership;
 no cache recipe change/regeneration or global BFP8 expansion. Never feed
 prepared bytes to the raw loader. See prepared-bf16-q4-component report.

@@ -11,6 +11,7 @@ struct PreparedBf16Q4Machine:FactoredOperatorMachine {
  using P=PioneerQ38PreparedBf16Q4Compute;
  unsigned panels=0,maskReads=0,escapeWrites=0,sourceReads=0;
  bool scratchDirty=false,dropEscape=false,dropSeal=false,reportFaults=true;
+ virtual bool PreparedSourceReady(unsigned,unsigned)const{return true;}
  bool PreparedMode()const{return config[0]==0x42b5 && config[1]==0x60aa0000 && thread[5]==4;}
  void Write(unsigned a,unsigned v){
   if((a>=P::Ones-64 && a<P::Ones+128) || (a>=P::Escape-64 && a<P::Escape+4*128)){
@@ -21,6 +22,7 @@ struct PreparedBf16Q4Machine:FactoredOperatorMachine {
  unsigned MaskWord(unsigned b,unsigned g,unsigned face,unsigned word){
   Need(Clean() && b<2 && g<8 && face<4 && word<8);maskReads++;
   const unsigned a=0x8c000+b*0x10000+(face/2)*512+(g*2+face%2)*32+word*4;
+  Need(PreparedSourceReady(a,4));
   return l1[a]|unsigned(l1[a+1])<<8|unsigned(l1[a+2])<<16|unsigned(l1[a+3])<<24;
  }
  void EscapeWord(unsigned face,unsigned word,unsigned value){
@@ -36,7 +38,7 @@ struct PreparedBf16Q4Machine:FactoredOperatorMachine {
    Need(config[112]==0x00100015 && config[113]==0x10001 && config[114]==1 && !config[115]
     && config[120]==0x25 && config[121]==0xf000f && !config[61] && !xStart[1] && xEnd[1]==15);
    const unsigned in=(panels-1)%10<2?(panels-1)%2:((panels-3)%4)%2;
-   Need(address==P::F::Input+buffer*0x10000+(groups%8)*128+in*32);
+   Need(address==P::F::Input+buffer*0x10000+(groups%8)*P::InputStride+in*32 && PreparedSourceReady(address,32));
    for(unsigned k=0;k<16;k++)s.values[0][k]=Float(uint32_t(l1[address+2*k]|unsigned(l1[address+2*k+1])<<8)<<16);
   }else{
    const bool escape=(config[64]&15)==15;const unsigned width=escape?2:4;
@@ -48,7 +50,8 @@ struct PreparedBf16Q4Machine:FactoredOperatorMachine {
    if(within<2)Need(address==P::Ones && !escape);
    else if(within<6)Need(address==P::Face(buffer,groups%8,(within-2)/2,(within-2)%2) && !escape);
    else Need(address==P::Escape+(within-6)*128 && escape);
-   for(unsigned h=0;h<64;h++)Need(!l1[address-64+h]);
+   if(within<2 || escape)for(unsigned h=0;h<64;h++)Need(!l1[address-64+h]);
+   else Need(PreparedSourceReady(address,128)); // preceding face bytes are NOT parsed headers
    for(unsigned i=0;i<256;i++){
     const unsigned code=(l1[address+i*width/8]>>((i*width)%8))&((1U<<width)-1),mag=code&((1U<<(width-1))-1);
     Need(code!=(1U<<(width-1)));
@@ -71,6 +74,17 @@ struct PreparedBf16Q4Machine:FactoredOperatorMachine {
   fidelity=(fidelity+2)&3;matrixOps++;mathPending=true;
  }
  void ExecuteOp(unsigned op){
+  if(op==0x42000081 && config[1]==0xa03c8000){
+   const unsigned a=(config[76]+1)*16,half=compactImports%2;
+   buffer=a>=P::Primary+0x10000?1:0;
+   Need(!Pending() && !packPending && !mathPending && !thread[0] && !thread[5]
+    && config[64]==0x10001e && config[65]==16 && config[72]==14 && config[73]==0x13
+    && config[84]==0x400040 && config[86]==0x100010 && !xStart[0] && xEnd[0]==255
+    && a==P::Primary+buffer*0x10000+half*2304 && PreparedSourceReady(a,256));
+   cycle++;compactImports++;unpacks[0]++;
+   if(compactImports!=missingMetadataImport)task={true,false,false,false,a,0,256,cycle+delay[0]};
+   return;
+  }
   if(PreparedMode() && (op==0x420000c1 || op==0x428000c1)){cycle++;PreparedUnpack((op>>23)&1);return;}
   if(PreparedMode() && (op>>24)==0x26){
    cycle++;PioneerBlackholeArithmeticObserver::Matrix(*this,op,true,[&]{PreparedMatrix(op);});

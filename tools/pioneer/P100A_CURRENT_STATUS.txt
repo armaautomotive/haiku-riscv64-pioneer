@@ -41,10 +41,12 @@ Audit correction: the EXISTING native Q4 cache/SM3+escape route was already
 integrated in the earlier integer-activation engine (tags97..103). Do NOT
 rebuild that route or describe it as missing. It did not beat tag92.
 New bounded change: consume that SAME weight format with full-BF16 inputs,
-without per-weight decoding/PACK. Local arithmetic passes46080 words,
-8 retained-context jobs; main/clean RV32 objects identical. NOT a returning
-native driver or hardware speed result. More completion waits may offset
-fewer instructions. Next: returning full-K/source-transfer comparison.
+without per-weight decoding/PACK. The complete RETURNING comparison now
+passes compiled RV32/NoC/output checks,including authenticated real model
+bytes at BOTH widths. Main/clean14788B images identical. This is SOFTWARE
+evidence,not a native driver/hardware speed result. Next: extend/verify the
+native owner's exact prepared-source journal,then one physical comparison.
+The existing driver MUST NOT run this new source range without that work.
 
 Four compact goals
 -------------------
@@ -68,6 +70,7 @@ Best model: benchmarks/qwen38-vector-q4-full-card-20261104.txt
 Latest model: benchmarks/qwen38-bf16-deferred-full-physical-20261106.txt
 Latest card result: benchmarks/qwen38-configured-q4-physical-20261106.txt
 New prepared-BF16 code: benchmarks/qwen38-prepared-bf16-q4-component-20261106.txt
+Returning comparison: benchmarks/qwen38-prepared-bf16-q4-returning-20261106.txt
 New candidate, local only: benchmarks/qwen38-configured-q4-component-20261106.txt
 Native package, local only: benchmarks/qwen38-configured-q4-native-20261106.txt
 That report's sibling directory contains the complete closed trial/postflight.

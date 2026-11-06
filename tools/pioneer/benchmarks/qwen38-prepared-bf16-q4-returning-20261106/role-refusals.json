@@ -1,0 +1,20 @@
+[
+  "image:missing",
+  "image:zero",
+  "image:two",
+  "image:old",
+  "image:codegen",
+  "image:old-configured",
+  "image:cached",
+  "image:stream",
+  "image:kernel",
+  "image:work",
+  "image:reference",
+  "image:native",
+  "image:client",
+  "image:fast-math",
+  "clock:-DPIONEER_Q38_FACTORED_Q4_COMPARE_BUILD=1",
+  "clock:-DPIONEER_Q38_COMPACT_Q4_TIMING_IMAGE=1",
+  "clock:-DPIONEER_Q38_COMPACT_Q4_FPU_STREAM_IMAGE=1",
+  "clock:-DPIONEER_Q4_FPU_COMPACT_STREAM_K=5120"
+]
