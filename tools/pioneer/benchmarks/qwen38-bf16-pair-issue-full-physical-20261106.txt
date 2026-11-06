@@ -1,0 +1,107 @@
+Paired BF16 candidate109 -- complete real27B run,not a useful speed result
+========================================================================
+Executed source4163b2c17c76959a9b182bba80b88b25ff5d2129,November6,2026.
+ONE unused109-a cohort,normal46 -> candidate47 -> normal48. CLOSED0.
+109-a SPENT FOREVER. Never replay,repin or clear its once marker.
+
+Measured result / decision
+-------------------------
+31prompt tokens,32outputs,62committed model positions. SAME counting answer
+as106:1 through14 separated by newlines,32bytes. All inference on P100A;
+CPU file/vocabulary/lifecycle/observation only,no CPU inference context,
+numerical reference or fallback. One short answer is NOT broad quality.
+
+Post-prompt count-rate bounds0.078651925..0.078652599tokens/sec:
+31steps over394138277..394141658microseconds,7565observations. Raw endpoints
+193344578185/193344579870 ->193738718147/193738719843microseconds.
+These bounds quantify observation-window uncertainty,NOT statistical
+confidence or isolated per-token latency. Rough reciprocal12.7sec/token.
+Prompt+generation788.979sec;Generate total2591.332sec includes setup/cleanup.
+
+Previous106 same-geometry/same-answer0.078459792..0.078460452tok/s.
+New/old difference only+0.2440376..+0.2457399% in this one comparison.
+No repeated trials/confidence interval;do not claim a repeatable gain.
+Older matched103 remains faster at0.164361584..0.164365058tok/s.
+REJECT109 for Assistant promotion.20tok/s unmet,roughly254x away.
+The6.6..6.8% one-core kernel cycle reduction from108 did NOT deliver a
+comparable full-model improvement. Scheduling-only tweaks are insufficient.
+
+Separate loading/latency,after genuine clean END+Close
+----------------------------------------------------
+Vocabulary/authentication/metadata-probe313693434us (313.693434sec).
+Generate-entry -> completed native START1579248741us (1579.248741sec).
+Upload20367calls/19399024640bytes:
+ first ioctl entry -> last return1237876110us (1237.876110sec),including
+ BETWEEN-call preparation,excluding preparation before first ioctl.
+ sum of upload ioctls1073151166us (1073.151166sec),NOT pure DMA bandwidth.
+First generated card commit1973495062..1973600992us after Generate entry
+ (1973.495062..1973.600992sec),bounded by actual same-clock observations.
+Answer-ready2591332969us after Generate entry (2591.332969sec).
+This is NOT first visible/streamed text:publication follows END/Close.
+Authentication/vocabulary precedes Generate;do not conflate it with GPU
+readiness or invent exact IPC/UI latency by summing these records.
+Weights released at END;not persistent warm-request loading.
+
+Actual ROOT card-cycle profile
+------------------------------
+All62positions,state2/error0,14ordered buckets,sum1064504417404cycles.
+Previous106 sum1067263476804cycles;new total0.258517% lower. No frequency
+assumption or card-cycle -> seconds conversion.
+ matrix preparation                  30.461704%
+ recurrent work outside matrix calls 22.261396%
+ matrix gather/wait                  21.763811%
+ dense work outside matrix calls      6.258974%
+ head matrix                          5.588074%
+ matrix finish                        4.589033%
+ matrix dispatch                      4.135622%
+ recurrent state commit               2.842849%
+ metadata                             2.064508%
+ other phases together               <0.05%
+Exclusive ROOT elapsed categories,NOT isolated FPU utilization or aggregate
+parallel-worker time. Preparation includes packing/producer work and checks;
+gather/wait includes computation,NoC and receipt checks. Gather/wait fell
+234436237320 ->231676731625cycles. Most other absolute categories,including
+324266187265cycles preparation,were essentially unchanged. That largest
+phase is a next inspection target,not a claim that one30% fix closes254x.
+
+Actual exits / independent preservation
+---------------------------------------
+Primary SSH12998 ACTUALLY0,DIRECT_PAIRED_FULL_109_PARENT_ACTUAL_EXIT0.
+Independent postflight51144 ACTUALLY0 after launcher39502,parent39503,
+client39587,USER39588 absent. rate.exit0,direct-parent.exit0,stderr empty,
+stateFULL_CARD_RATE32_CLOSED_STABLE_RESTORED. Normal041/tag2026102100010012/
+generation48/quiesced0/cold0/owner0/open1/guard1,64CPU/137034936320B RAM;
+driver/admin/guard,three Assistant files,four runtime libraries and original
+model metadata independently preserved. No reboot,power,SD,mains,network,
+kernel or Assistant change. Experimental driver hot-swapped/restored;no job.
+
+Code pushed BEFORE staging. Fresh idle normal46/stage absence,all4 staged
+hashes/permissions and complete SCP readback/cmp passed. Initial read-only
+staging check refused an awk argv wrapped across ps lines;stage was absent,
+no job/once marker existed. The tested snapshot-BEFORE-awk idiom resolved it
+without weakening any parent policy. SAME protected run retained throughout
+authentication,upload,inference,END and restore;only read-only observations.
+Monitor cell2982 was stopped at inference-phase handoff;benchmark12998 was
+NOT stopped and subsequently remained verifiably live. No timeout or quiet
+log was treated as terminal or permission to replay.
+
+Closed archive / saved-result checks
+-----------------------------------
+Whole SCP32225 ACTUALLY0;all10 saved remote text/source records match hashes
+independently captured AFTER actual exit. Main and clean readers ACTUALLY0,
+stderr0,byte-identical output,explicit --phase-profile --bf16-profile
+--startup-timing. DATA consistency only,not admission/cleanup authority.
+No learned payload,GGUF,converted weights or executable binary archived.
+Directory:qwen38-bf16-pair-issue-full-physical-20261106/.
+manifest.json binds source,actual exits,remote hashes,measurements and
+preservation. verify_evidence.py audits the saved whole result,not a LIVE
+tail,new execution,repeatability proof or claim that20TPS is achieved.
+
+Next bounded task
+-----------------
+Close this scheduling-only experiment. Inspect repeated packing/setup/
+conversion in matrix preparation;prototype one substantive reduction,
+validate it before hardware,and compare the same workload. Retain numerical
+and ownership checks or prove a bounded equivalent;do not blindly remove
+them. No more closed-baseline infrastructure reruns or scheduling-only card
+micro-trials. Larger kernel/math/dataflow changes remain necessary.

@@ -1,0 +1,192 @@
+{
+  "actual_exits": {
+    "independent_postflight": 0,
+    "primary_waiter": 0,
+    "reader_clean": 0,
+    "reader_main": 0,
+    "whole_archive_copy": 0
+  },
+  "measured_20tokens_per_second_in_this_short_run": false,
+  "normal_restored_generation": 48,
+  "parsed": {
+    "answer_hex": "310a320a330a340a350a360a370a380a390a31300a31310a31320a31330a3134",
+    "answer_utf8_preview": "1\n2\n3\n4\n5\n6\n7\n8\n9\n10\n11\n12\n13\n14",
+    "bf16_profile": true,
+    "broad_model_quality": false,
+    "count_rows": 63,
+    "execution_or_cleanup_authority_from_log": false,
+    "host_startup_observations": {
+      "answer_ready_us": 2591332969,
+      "available": true,
+      "first_commit_available": true,
+      "first_commit_is_streamed_text": false,
+      "first_commit_maximum_us": 1973600992,
+      "first_commit_minimum_us": 1973495062,
+      "request_setup_us": 1579248741,
+      "upload_calls": 20367,
+      "upload_ioctl_sum_us": 1073151166,
+      "upload_window_includes_between_call_preparation": true,
+      "upload_window_us": 1237876110,
+      "uploaded_bytes": 19399024640,
+      "vocabulary_authentication_us": 313693434
+    },
+    "isolated_token_latency": false,
+    "observed_post_prompt_count_rate_bounds": {
+      "first_committed": 31,
+      "last_committed": 62,
+      "lower_tps": "0.078651925",
+      "maximum_us": 394141658,
+      "minimum_us": 394138277,
+      "observations": 7565,
+      "raw_endpoints_us": [
+        193344578185,
+        193344579870,
+        193738718147,
+        193738719843
+      ],
+      "sampled_commit_steps": 31,
+      "upper_tps": "0.078652599"
+    },
+    "on_card_phase_profile": {
+      "begin_cycles": 9963,
+      "buckets": [
+        {
+          "cycles": 1887570,
+          "name": "bootstrap",
+          "phase": 0,
+          "segments": 1,
+          "share_percent": "0.0001773191326535971249125843332"
+        },
+        {
+          "cycles": 21976776019,
+          "name": "metadata",
+          "phase": 1,
+          "segments": 3968,
+          "share_percent": "2.064507733335162737734881803"
+        },
+        {
+          "cycles": 236973543244,
+          "name": "recurrent_layer",
+          "phase": 2,
+          "segments": 26784,
+          "share_percent": "22.26139594816392014739923457"
+        },
+        {
+          "cycles": 66627054120,
+          "name": "dense_layer",
+          "phase": 3,
+          "segments": 7936,
+          "share_percent": "6.258973944183619603101954701"
+        },
+        {
+          "cycles": 118309114,
+          "name": "head_normalize",
+          "phase": 4,
+          "segments": 62,
+          "share_percent": "0.01111400874113041887789866331"
+        },
+        {
+          "cycles": 59485297637,
+          "name": "head_matrix",
+          "phase": 5,
+          "segments": 62,
+          "share_percent": "5.588074287382142433982605501"
+        },
+        {
+          "cycles": 104537694,
+          "name": "feedback",
+          "phase": 6,
+          "segments": 62,
+          "share_percent": "0.009820315659650844336046619606"
+        },
+        {
+          "cycles": 30262251070,
+          "name": "state_commit",
+          "phase": 7,
+          "segments": 62,
+          "share_percent": "2.842848801304212046565043359"
+        },
+        {
+          "cycles": 54869859,
+          "name": "publication",
+          "phase": 8,
+          "segments": 62,
+          "share_percent": "0.005154498008924262457423507306"
+        },
+        {
+          "cycles": 82629911,
+          "name": "final_stop",
+          "phase": 9,
+          "segments": 1,
+          "share_percent": "0.007762289160012038897303266225"
+        },
+        {
+          "cycles": 324266187265,
+          "name": "matrix_prepare",
+          "phase": 10,
+          "segments": 30752,
+          "share_percent": "30.46170424128307913495640857"
+        },
+        {
+          "cycles": 44023879805,
+          "name": "matrix_dispatch",
+          "phase": 11,
+          "segments": 30752,
+          "share_percent": "4.135622087164349151578581888"
+        },
+        {
+          "cycles": 231676731625,
+          "name": "matrix_gather_wait",
+          "phase": 12,
+          "segments": 30752,
+          "share_percent": "21.76381120051981923809151562"
+        },
+        {
+          "cycles": 48850462471,
+          "name": "matrix_finish",
+          "phase": 13,
+          "segments": 30752,
+          "share_percent": "4.589033325961324344896189345"
+        }
+      ],
+      "committed": 62,
+      "end_cycles": 1064504427367,
+      "error": 0,
+      "physical_clock_frequency_assumed": false,
+      "state": 2,
+      "total_cycles": 1064504417404,
+      "valid": true
+    },
+    "output_tokens": 32,
+    "prompts": 31,
+    "rate_available": true,
+    "scope": "one public counting request,maximum32 outputs,full-card candidate",
+    "upload_rows": 2266,
+    "uploaded_bytes": 19399024640
+  },
+  "pids_absent": [
+    39502,
+    39503,
+    39587,
+    39588
+  ],
+  "saved_remote_hashes": {
+    "HaikuAssistantQwen27Bf16PairIssueFullOffload": "d6e10432f86dcecf2034986f887c6c2f5ab0e1314a2e3e2e5ed342cb6e5dce33",
+    "direct-launcher.pid": "ac82d1b67ac28b6533ae100921581fbdda25b1e50fc9c530eb8f82d1052ce842",
+    "direct-parent.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "direct-parent.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "direct-parent.stdout": "cb0d6f2db616bc79e2fed3f3613bb5c2fddf783dffffb91c88b8e1e571eec69e",
+    "parent.pid": "762318c915c97ca818f73d78264753a4864d365170cfa16c10b53a3fe15ebbe8",
+    "pioneer-q38-bf16-pair-issue-rate-smoke": "afe31e8d68cb0ccd5dc4ee74a11ad1c1bbcd0af3cd300cb6ce903e0936f6fe7b",
+    "pioneer_q38_bf16_pair_issue_full_offload_physical.sh": "51b5dcaaa41982c47a49f620f509162b867b23e1409c28a60f3e2abb8c3fe67e",
+    "rate.exit": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "rate.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "rate.stdout": "4d767744c365c6a2c20425a8f1713b6d8276cbd9ce7898c90443ae6c433c943e",
+    "stable041.backup": "041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403",
+    "state": "22f61d22dc3c969bbe2b1b82211755d5906e6af0567523f5f48e3944d71ff06b",
+    "tenstorrent_pci_probe-bf16-pair-issue": "adbb988ced6b3ccfdd4e73f43d4b9eac3101c5f0ca6289bb60654af9498223e1"
+  },
+  "source_commit": "4163b2c17c76959a9b182bba80b88b25ff5d2129",
+  "stage_spent_forever": "/boot/home/pioneer-q38-bf16-pair-issue-109-a",
+  "warning": "one matched short public answer,not broad model quality or a repeatability study"
+}
