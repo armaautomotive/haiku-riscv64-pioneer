@@ -1,8 +1,18 @@
 P100A / Qwen27B -- read this first
 ================================
-Updated after the offline timing-firmware checks. Saved evidence, NOT live telemetry.
+Updated during the admitted106-a benchmark. Saved observation, NOT live telemetry.
 Overall goal unchanged: usable self-hosted 27B, targeting 20 tokens/sec.
 That goal is NOT achieved. Small milestones below do not redefine success.
+
+Benchmark in progress (2026-11-06 about06:06 UTC)
+------------------------------------------------
+One controlled32-output request is ACTIVE in stage106-a. Driver106/generation41
+is loaded; the model is authenticating. Parent36443, client36527 and worker36528
+were observed live. Normal-driver restoration is PENDING until clean completion.
+No new tokens/sec or completed-model result exists. Do NOT restart/replay106-a,
+launch another GPU job or query device/admin endpoints while this job is live.
+Monitor the same processes/logs; timeout is not terminal. Stage106-a is spent.
+Hardware-test source is3158041e2a71c465792e2b007cccd332681d51a2 on GitHub.
 
 What works
 ----------
@@ -32,7 +42,7 @@ Small milestones, in order
    tests passed. The saved hardware-result verifier also passed again.
    No installation, SSH, power action or new inference was performed.
 
-2. NEXT: Comparable generation benchmark.
+2. RUNNING: Comparable generation benchmark.
    One public fixed prompt, requesting up to 32 output tokens. Report actual
    output count, loading time, first-token time and post-prompt rate separately.
    If the model stops early or timing is unavailable, say so; invent no rate.
@@ -46,7 +56,8 @@ Small milestones, in order
    Timing firmware now builds identically in main and clean source copies;
    its observer DATA and compiled helper tests pass offline. It is now
    bound to the separate tag106 native/USER subject, with held-only reads.
-   It has NOT yet been installed or measured on the card at this checkpoint.
+   It is installed for the active controlled test; completed measurements
+   remain pending. It has NOT been promoted to Assistant.
    Preparation and gather/wait include mixed controller/worker costs, not
    isolated tensor-compute time. Hardware measurement remains pending.
    Offline instruction counts are a lead, not physical timing or a speedup.
