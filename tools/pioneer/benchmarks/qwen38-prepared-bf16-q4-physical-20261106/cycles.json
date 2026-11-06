@@ -1,0 +1,55 @@
+{
+  "new_model_speed_measurement": false,
+  "samples": [
+    {
+      "exact_old_and_new_words": 64,
+      "exact_ratio_denominator": 1030493,
+      "exact_ratio_numerator": 650796,
+      "input_width": 5120,
+      "observed_pairs": 1,
+      "old_over_new_cycle_ratio": 0.6315384966224904,
+      "output_rows": 32,
+      "sample": 0,
+      "timings": [
+        {
+          "cycles": 650796,
+          "end": 652026,
+          "start": 1230,
+          "state": 1
+        },
+        {
+          "cycles": 1030493,
+          "end": 1683288,
+          "start": 652795,
+          "state": 1
+        }
+      ]
+    },
+    {
+      "exact_old_and_new_words": 64,
+      "exact_ratio_denominator": 3466745,
+      "exact_ratio_numerator": 2030589,
+      "input_width": 17408,
+      "observed_pairs": 1,
+      "old_over_new_cycle_ratio": 0.5857335915967283,
+      "output_rows": 32,
+      "sample": 6,
+      "timings": [
+        {
+          "cycles": 2030589,
+          "end": 2031818,
+          "start": 1229,
+          "state": 1
+        },
+        {
+          "cycles": 3466745,
+          "end": 5499332,
+          "start": 2032587,
+          "state": 1
+        }
+      ]
+    }
+  ],
+  "schema": 1,
+  "scope": "isolated_on_card_load_compute_clock_windows_not_model_TPS_or_repeatability"
+}

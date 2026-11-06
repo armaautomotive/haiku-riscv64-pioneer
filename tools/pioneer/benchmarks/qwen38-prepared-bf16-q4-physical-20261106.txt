@@ -1,0 +1,87 @@
+Native115 prepared-BF16 Q4: CORRECT, SLOWER -- REJECT
+====================================================
+November 6, 2026. This closes the pending experiment, not the overall goal.
+Best complete 27B remains 0.173 tok/s; latest complete experiment 0.082 tok/s.
+Target 20 tok/s remains unmet and unproven. No new model rate was measured.
+
+Changed code
+-------------
+Executed the already qualified prepared-BF16 calculation from published
+checkpoint 2c63377dbec5161e18b598d35d70e3bc889f978c. No arithmetic/source
+changes during this trial. The existing native weight format is consumed
+without per-weight decoding/PACK, with separate diagnostic dense masks.
+This is NOT a new cache implementation or a full-model dense-mask plan.
+Exact native/client/core/parent pins are in the native qualification report.
+All FOUR staged files were fetched and compared byte-for-byte before launch.
+
+Local tests
+------------
+The previous frozen main/clean qualification was not repeated. Both the
+current and independently frozen clean CLOSED-receipt readers actually
+exited 0 on the NEW complete physical data; their JSON is byte-identical.
+All NINE fetched closed records match independent postflight whole hashes.
+These readers interpret data; they do not establish live device ownership.
+
+Hardware result
+----------------
+ONE fresh 115-a trial, through SSH sh -s/stdin, primary session48641 actual0.
+Remote launcher1436/parent1441 and client exited0; two explicit clean ENDs.
+Normal041/gen6 -> native115/gen7 -> normal041/gen8. Independent read-only
+postflight16881 actual0 at 23:34:34 GMT. Primary processes independently
+observed absent, no test/inference owner, no quarantine or incoming driver.
+Both stderr streams empty. Source full SHA/all9 compiled payloads and both
+fresh CPU DIAGNOSTIC references passed BEFORE device open. No CPU Work
+reference, inference or fallback was added.
+Stage /boot/home/pioneer-native-prepared-bf16-q4-compare115-a is SPENT:
+never replay, repin, clear once markers or retry it.
+
+Quality scope
+--------------
+Two fixed real-weight diagnostic cases, 32 output rows, input widths
+5120/17408. All128 old/new words match their OWN predefined arithmetic
+references, both before and after END. This does not mean the two algorithms
+are bit-equivalent to each other or GGML. No natural-language request,
+arbitrary-input coverage or broad model-quality test was run here.
+
+Measured speed
+---------------
+Input width  Rows  Old BF16 cycles  New prepared-BF16 cycles  Extra cost
+5120         32    650796           1030493                    +58.343475%
+17408        32    2030589          3466745                    +70.726080%
+
+ONE pair per shape, not repeatability. Exact 64-bit end-start windows:
+  5120 old1230..652026; new652795..1683288.
+  17408 old1229..2031818; new2032587..5499332.
+Old/new cycle ratios 0.631538496622 and 0.585733591597.
+Intervals include on-card load/setup/prefetch/NoC/math/drains, excluding
+source authentication/references, host journal/staging/readback and cleanup.
+This diagnostic GDDR pipeline is not the complete-model pipeline. No
+nominal-Hz conversion, token-rate extrapolation or 20 tok/s estimate follows.
+
+Decision
+---------
+REJECT speed promotion in BOTH shapes. Do not integrate this candidate
+into Work/Assistant or spend a complete-model upload on it. Fewer static
+instructions/read commands did NOT produce faster complete calculations.
+Retain the code and negative evidence; do not repeat this spent trial.
+
+Next action
+------------
+Close this candidate. Before another rewrite, use existing full-model
+profiles and the measured calculation costs to identify a supported
+bottleneck and a credible structural improvement. Explicitly distinguish
+the faster tag92 engine from the newer/slower BF16 engine. If one essential
+measurement is missing, name that specific bounded measurement; do not
+substitute another general infrastructure or UI task for usable speed.
+
+Preservation / evidence
+------------------------
+Normal041/gen8 independently idle/cold0/owner0/open1/guard1; 64 CPUs and
+137034936320B max RAM. Installed driver, backup, admin/guard, three Assistant
+files and four runtime libraries match their prior pins. No reboot, power,
+SD, mains, hardware, original model or installed Assistant change.
+Whole streams, exits, PIDs, state, postflight, actual-exit ledger and parsed
+cycles are in the sibling archive. No binaries or learned payloads saved.
+ child stdout e379608b04dd31483c44814c59e69829334d363734154d3d4d622eb77112a2cb
+ parent stdout a421805df58d594f7990b94384d1627ac6f8cfd0b8d52e624a2b8e7e33ad4b50
+The overall fast self-hosted 27B/usable Assistant objective remains active.

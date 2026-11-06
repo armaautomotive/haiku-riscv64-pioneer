@@ -1,0 +1,19 @@
+{
+  "source_checkpoint": "2c63377dbec5161e18b598d35d70e3bc889f978c",
+  "package_whole_readback_scp_session58019": 0,
+  "package_whole_file_comparisons": [0, 0, 0, 0],
+  "physical_primary_session48641": 0,
+  "remote_launcher_pid": 1436,
+  "remote_parent_pid": 1441,
+  "remote_parent_exit": 0,
+  "remote_client_exit": 0,
+  "independent_postflight_session16881": 0,
+  "closed_records_scp_session78183": 0,
+  "closed_records_whole_hashes_matching_postflight": 9,
+  "main_closed_receipt_reader": 0,
+  "frozen_clean_closed_receipt_reader": 0,
+  "reader_json_whole_comparison": 0,
+  "decision": "reject_speed_promotion",
+  "new_complete_model_speed_measurement": false,
+  "overall_goal_complete": false
+}

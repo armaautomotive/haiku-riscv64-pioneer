@@ -25,44 +25,42 @@ No subsequent local test or small card calculation changes these rates.
 
 Latest completed experiment
 ----------------------------
-The replacement Q4 calculation is now correct for BOTH isolated test shapes:
+The replacement Q4 calculations are correct for BOTH isolated test shapes:
 32 output rows at input widths 5,120/17,408. All 128 old/new words match their
 respective predefined references; two clean ENDs and independent restoration.
-Latest native114 configuration-reuse test used 8.17%/8.72% MORE cycles than
-the old calculation. Earlier native113 used 31.39%/34.21% more cycles.
-Decision: both are correct for these cases, but REJECT speed promotion.
+Latest native115 prepared-BF16 test used 58.34%/70.73% MORE cycles than the
+same-run old calculation. Native114 used 8.17%/8.72% more; native113 used
+31.39%/34.21% more. Decision: REJECT speed promotion for all three.
 No full-model upload or Assistant integration of these slower candidates.
 These are fixed diagnostic inputs, not whole-model quality or throughput.
 
 Current checkpoint: make one Q4 calculation demonstrably faster
 ---------------------------------------------------------------
-Configuration reuse is now card-tested but still slower than the old path.
+The pending prepared-BF16 experiment is now CLOSED: correct but slower.
 Audit correction: the EXISTING native Q4 cache/SM3+escape route was already
 integrated in the earlier integer-activation engine (tags97..103). Do NOT
 rebuild that route or describe it as missing. It did not beat tag92.
-New bounded change: consume that SAME weight format with full-BF16 inputs,
-without per-weight decoding/PACK. The complete RETURNING comparison now
-passes compiled RV32/NoC/output checks,including authenticated real model
-bytes at BOTH widths. Main/clean14788B images identical. This is SOFTWARE
-evidence,not hardware speed. The distinct native115 driver/client now pass
-main/clean SDK,actual endpoint and exact restoration tests,including real
-original weights. No physical trial has run yet. Next: one fresh guarded
-comparison using115,then independent normal-driver/platform restoration.
-Never run this new source range using an older diagnostic lease.
+Native115 consumed that SAME format with full-BF16 inputs and no per-weight
+decoding/PACK. Its qualified package now has a real two-shape hardware
+result, exact128/two clean ENDs and independent normal-driver restoration.
+Fewer static operations did NOT make it faster. No replay or promotion.
+Next bounded task: assess a credible performance route from existing
+profiles and measured costs before another kernel rewrite; name any exact
+missing measurement. This is not a new UI/cache/infrastructure task.
 
 Four compact goals
 -------------------
-1. Correct calculation on card: PASS for two pinned cases in native113/114.
-2. Faster calculation on card: CURRENT. Candidates113/114 rejected as slower.
+1. Correct calculation on card: PASS for two pinned cases in native113/114/115.
+2. Faster calculation on card: UNMET. Candidates113/114/115 rejected as slower.
 3. Complete 27B quality/speed with accepted engine: NOT STARTED for new path.
 4. Persistent loading and proven Assistant mode: NOT STARTED.
 
 Current verified platform
 --------------------------
-Normal041/gen6 rollback driver, idle, cold0/owner0; 64 CPUs and full RAM.
+Normal041/gen8 rollback driver, idle, cold0/owner0; 64 CPUs and full RAM.
 Three Assistant files and four runtime libraries unchanged; not a new UI test.
 No test/inference process remains after independent postflight.
-No reboot or power/SD/hardware change was needed for native113/114.
+No reboot or power/SD/hardware change was needed for native113/114/115.
 Saved experiments and pre-existing dirty work are preserved, not deleted.
 Full-card inference already exists; the missing outcome is USABLE SPEED.
 
@@ -70,12 +68,10 @@ Evidence (relative to tools/pioneer)
 ------------------------------------
 Best model: benchmarks/qwen38-vector-q4-full-card-20261104.txt
 Latest model: benchmarks/qwen38-bf16-deferred-full-physical-20261106.txt
-Latest card result: benchmarks/qwen38-configured-q4-physical-20261106.txt
+Latest card result: benchmarks/qwen38-prepared-bf16-q4-physical-20261106.txt
 New prepared-BF16 code: benchmarks/qwen38-prepared-bf16-q4-component-20261106.txt
 Returning comparison: benchmarks/qwen38-prepared-bf16-q4-returning-20261106.txt
 Native115 qualification: benchmarks/qwen38-prepared-bf16-q4-native-20261106.txt
-New candidate, local only: benchmarks/qwen38-configured-q4-component-20261106.txt
-Native package, local only: benchmarks/qwen38-configured-q4-native-20261106.txt
-That report's sibling directory contains the complete closed trial/postflight.
+The physical report's sibling contains the complete closed trial/postflight.
 Detailed historical experiments remain under benchmarks/, not new progress.
 P100A_WORK_PLAN.txt defines finish criteria and what is deliberately deferred.
