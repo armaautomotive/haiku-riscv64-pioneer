@@ -107,6 +107,9 @@ Candidate correction disables automatic PACK endings while retaining the
 explicit final Last. NEW isolated native113 driver/client now pass complete
 main/clean local qualification; no113 hardware result yet. Next:ONE physical
 old/new comparison before whole-model or UI integration.
+The113-a launcher was refused before trial admission or any driver/GPU
+action.Normal041/gen2 remains idle.The launch-filter regression is fixed
+by stdin invocation for fresh113-b;no old stage is replayed or repinned.
 
 Historical stages 81 through 112-a are SPENT: never replay, repin identities
 or clear once markers. Future hardware testing needs a fresh identity and

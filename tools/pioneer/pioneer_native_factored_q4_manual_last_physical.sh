@@ -2,7 +2,7 @@
 # ONE fresh diagnostic113 manual-Last comparison. UNKNOWN stops;NO retry/reset/auto restore.
 set -eu
 [ "$#" = 0 ] && [ "$(uname -s)" = Haiku ] && [ "$(id -u)" = 0 ] || exit 2
-stage=/boot/home/pioneer-native-factored-q4-manual113-a
+stage=/boot/home/pioneer-native-factored-q4-manual113-b
 installed=/boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
 stable=/boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
 admin=/boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload

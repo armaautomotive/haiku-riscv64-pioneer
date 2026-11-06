@@ -62,3 +62,29 @@ python3 tools/pioneer/tests/run_pioneer_native_factored_q4_compare_tests.py \
 
 Sibling archive contains actual child exits,main/clean source pins and
 selected complete unit output.No model,prepared payload or binary is saved.
+
+Launch admission delta:113-a REFUSED BEFORE any GPU action
+---------------------------------------------------------
+Published source f48980d17068337553589569596cbbaf82ee8891 was staged with
+whole4-file byte readback.Primary18664 ACTUALLY exited1,wrapper630/parent1;
+parent stdout/stderr are empty.No .trial-once,state,parent.pid,backup,
+incoming driver or child record was created.CPU-only metadata independently
+remains normal041/gen2,cold0/owner0;read-only entry-prefix checks all pass
+through sh -s,including exact files,apps/runtime and64CPUs/fullRAM.
+This is a launch admission refusal,NOT a GPU arithmetic/timing failure.
+
+The path-named wrapper matches the production idle filter's project-owner
+pattern.The real extracted awk filter now has8 regression fixtures:reject
+that collision,accept stdin wrapper,still reject a foreign owner/malformed
+listing.The old stage/markers/records remain unchanged and SPENT.
+
+Use a fresh113-b directory and invoke the reviewed wrapper with SSH sh -s
+through stdin.Native/client/core binaries,tag and expected generation are
+UNCHANGED and no native113 RUN has occurred.The parent's ONLY source change
+from the qualified f489 version is literal directory113-a->113-b;the real
+DATA/END gate again passes3 positives/277 refusals.Original302-source build
+evidence remains explicitly for f489,not falsely re-labelled as a new build.
+No unchanged SDK/reference suites were restarted for this launcher-only
+delta.No power recovery or GPU reset is needed or performed.
+New parent SHA440343848717ffa24ba354e6cef68790441e61bd72f24bbd5dc6f0dbf4fe7468.
+New private wrapper SHA30e198a11fee44aa1a485ea9b0547fe9214bea56abdc85a4840c92fa5c6f2c0a.
