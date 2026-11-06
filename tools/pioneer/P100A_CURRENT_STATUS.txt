@@ -1,7 +1,7 @@
 P100A / Qwen27B -- read this first
 ================================
-Updated after the 2026-11-06 native Q4 timer qualification. Saved evidence,
-NOT live telemetry. No new hardware inference was run during that work.
+Updated after the 2026-11-06 completed Q4 kernel107 card test. Saved evidence,
+NOT live telemetry. This was isolated kernel work,NOT new full-model inference.
 Overall goal unchanged: usable self-hosted 27B, targeting 20 tokens/sec.
 That goal is NOT achieved. Small milestones below do not redefine success.
 
@@ -15,6 +15,15 @@ gather/wait21.97%. These mixed phases are not isolated tensor-compute times.
 The job exited0 and normal041/tag12/gen42 was independently verified restored:
 64 CPUs,full RAM and unchanged Assistant/runtime files. No live job remains.
 Stage106-a is spent forever. Hardware source is3158041e2a71c465792e2b007cccd332681d51a2.
+
+Latest completed kernel subtest (NOT model tokens/sec)
+------------------------------------------------------
+107-a:32 output rows atK5120 took690195..690318 card cycles;atK17408,
+2134279..2134325.128 exact outputs,two clean ENDs,actual parent exit0.
+Independent postflight confirms normal041/gen44,64CPUs/fullRAM/unchanged
+Assistant and runtime. No live job;107-a is spent forever. No frequency-
+based conversion to seconds or model-rate extrapolation is claimed.
+Report:benchmarks/qwen38-q4-kernel-timing-physical-20261106.txt.
 
 What works
 ----------
@@ -82,9 +91,11 @@ Small milestones, in order
    576 exact outputs,main/clean builds,unavailable-clock/fault handling.
    Its distinct native107 driver/client now pass main/clean integration,
    lifecycle,raw-clock preservation and strict two-band parent tests.
-   It has NOT run on the card;fresh one-shot card timing is next.
+   The fresh107-a card test now completed:128 exact outputs and4 valid
+   cycle intervals;normal driver restored and independently verified.
    See benchmarks/qwen38-q4-kernel-timing-offboard-20261106.txt.
    Native details:benchmarks/qwen38-native-q4-timing-offboard-20261106.txt.
+   NEXT:one Q4 conversion/issue optimization,then before/after card timing.
    Controller-only tuning cannot make that unchanged nominal budget hit20.
    Keep Work free of CPU reference computation;keep Debug separate.
    Publish before/after real-model results before any Assistant promotion.

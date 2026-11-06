@@ -1,0 +1,65 @@
+Q4 kernel107 -- actual P100A timing,clean closure and normal driver restored
+==========================================================================
+2026-11-06. Hardware sourcee83a3bf83e294e2f2e4ee05db61677ed4358bd78.
+ONE fresh107-a cohort,normal42 -> timed43 -> normal44. ACTUAL exit0.
+Stage107-a is now SPENT forever. Never replay,repin or clear its markers.
+20tokens/sec remains unmet. This is a kernel measurement,NOT a model speedup.
+
+Measured card cycles,32-output full-K jobs
+-----------------------------------------
+Original Q4 gate band,tensor7/first0/K5120:
+ pass0 start1259 end691577 =690318 cycles
+ pass1 start692189 end1382384 =690195 cycles
+Original Q4 down band,tensor6/first0/K17408:
+ pass0 start1259 end2135538 =2134279 cycles
+ pass1 start2136149 end4270474 =2134325 cycles
+All128 returned words exactly match the independent original predictions.
+Two explicit clean ENDs;polls1 each. Raw record state1 in all four cases.
+
+These intervals include on-card loader/setup/prefetch/NoC/math/drains.
+They exclude original-file authentication,fresh DEBUG reference,journal
+staging/readback,output extraction and host cleanup. ONE active compute
+core(1,2),other119 held. Two passes are not a repeatability study. Diagnostic
+BF16 inputs,not real prompt states;32 rows,not a complete FFN/cohort/model.
+The diagnostic vector comes from GDDR;the complete model's cached service
+uses ROOT L1. Shared compute templates do not prove identical full-pipeline
+timing. No counter-frequency assumption or cycles-to-seconds/TPS conversion.
+Normalized totals34509.75..34515.9 cycles/K256 atK5120 and
+31386.456..31387.132 atK17408 include fixed/transport costs;these are NOT
+isolated SFPU/FPU instruction latencies or a utilization percentage.
+
+Actual exits and independent preservation
+-----------------------------------------
+Primary SSH24884 ACTUALLY exits0 with DIRECT_TIMED_Q4_107_PARENT_ACTUAL_EXIT0.
+Launcher37995,parent37996,client38074 subsequently absent. Actual child and
+parent exit files0;stderr0;state STABLE041_RESTORED_COMPACT_Q4_TIMING_EXACT128.
+Independent postflight93674 ACTUALLY0;separate complete capture20074 ACTUALLY0.
+Normal041/tag12/generation44,quiesced0/cold0/owner0/open1/guard1 confirmed.
+64 CPUs,137034936320B RAM,three Assistant files,four runtime libraries,
+normal driver/admin/reload guard and original model identity preserved.
+No reboot,power,SD,mains,network,OS/kernel or Assistant change. No live job.
+
+GitHub checkpoint verified BEFORE staging. Fresh idle normal42,source/file
+identities,all four staged SHA hashes and complete SCP readback cmp passed.
+Protected SAME parent through authentication,engine work,ENDs and restore;
+only read-only logs/ps observations while live. An observer's awk quoting
+error affected only that read-only observation;it did not terminate,restart
+or modify the protected parent. A subsequent observation confirmed same PIDs.
+No timeout/quiet log was treated as terminal or as permission to rerun.
+
+Complete archived child137 lines/15920B SHA:
+fad5a589dcc1325ac6cce8fe1cd33a94b5480b02e1758d3b97436c96a4c91ba8
+Complete archived parent173 lines/18689B SHA:
+ad1dc1f378c2962345087500b98b5d0bd0cb375009e3b58cf5a1cf4141d584bf
+Both strict readers pass;all9 archived remote records match independently
+captured postflight hashes. Actual terminal results are not inferred from
+these DATA parsers. Verify saved evidence read-only with:
+ python3 tools/pioneer/benchmarks/qwen38-q4-kernel-timing-physical-20261106/verify_evidence.py
+
+Next bounded work
+------------------
+Test one reduction in Q4 conversion/issue work,retaining identical math,
+bounded memory and fail-closed lifetime. Compare actual card cycles with
+these records before another full-model run. Do not repeat this unchanged
+trial or memory infrastructure. Complete-model speed and broad quality
+remain separate acceptance steps;latest full-model rate stays0.07846tok/s.

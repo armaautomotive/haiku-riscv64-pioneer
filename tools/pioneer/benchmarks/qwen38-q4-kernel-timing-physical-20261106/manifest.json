@@ -1,0 +1,102 @@
+{
+  "actual_captured_postflight_exit": 0,
+  "actual_independent_postflight_exit": 0,
+  "actual_primary_exit": 0,
+  "files": {
+    "compact-q4-stream.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "compact-q4-stream.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "compact-q4-stream.stdout": {
+      "bytes": 15920,
+      "sha256": "fad5a589dcc1325ac6cce8fe1cd33a94b5480b02e1758d3b97436c96a4c91ba8"
+    },
+    "direct-launcher.pid": {
+      "bytes": 6,
+      "sha256": "9916b951dcf9af61df8a1edeffbd5c0b7d9e0d61e86706d00f5e55da84b06c69"
+    },
+    "direct-parent.exit": {
+      "bytes": 2,
+      "sha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa"
+    },
+    "direct-parent.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "direct-parent.stdout": {
+      "bytes": 18689,
+      "sha256": "ad1dc1f378c2962345087500b98b5d0bd0cb375009e3b58cf5a1cf4141d584bf"
+    },
+    "parent.pid": {
+      "bytes": 6,
+      "sha256": "b490eb9347e84503da7481cc22d7f5e21ab88208958f7f262f8924e57bb47cae"
+    },
+    "postflight.stderr": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "postflight.stdout": {
+      "bytes": 3906,
+      "sha256": "194806b9a955f9b3dcfcfb2bca446850b157acf4b475bda2af212e56753e94de"
+    },
+    "postflight107.sh": {
+      "bytes": 3728,
+      "sha256": "0e233f8db632b2731a6664dc6cf70df9eb079d85b3b7c5724d9f10caae21f274"
+    },
+    "state": {
+      "bytes": 46,
+      "sha256": "247903f3fa057b6a2edf1d32b463e074300f2e2f9d7f93c4c6cf75b4da8b2ebb"
+    }
+  },
+  "hardware_source": "e83a3bf83e294e2f2e4ee05db61677ed4358bd78",
+  "observed": {
+    "ends": 2,
+    "generation": 43,
+    "polls": [
+      1,
+      1
+    ],
+    "restored_generation": 44,
+    "samples": 2,
+    "scope": "receipt DATA only;no process-exit/native/hardware/clock-frequency/model-TPS authority",
+    "timing": [
+      {
+        "cycles": 690318,
+        "end": 691577,
+        "pass": 0,
+        "sample": 0,
+        "start": 1259,
+        "state": 1
+      },
+      {
+        "cycles": 690195,
+        "end": 1382384,
+        "pass": 1,
+        "sample": 0,
+        "start": 692189,
+        "state": 1
+      },
+      {
+        "cycles": 2134279,
+        "end": 2135538,
+        "pass": 0,
+        "sample": 6,
+        "start": 1259,
+        "state": 1
+      },
+      {
+        "cycles": 2134325,
+        "end": 4270474,
+        "pass": 1,
+        "sample": 6,
+        "start": 2136149,
+        "state": 1
+      }
+    ],
+    "words": 128
+  }
+}
