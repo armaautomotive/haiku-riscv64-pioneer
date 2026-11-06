@@ -1,5 +1,8 @@
 /* SPDX-License-Identifier: MIT */
 // Distinct full-model timing revision;never an old diagnostic/Work alias.
+#ifdef PIONEER_Q38_BF16_FULL_PROFILE
+#include "PioneerQ38SelectedFullMetricsRole.h"
+#else
 #ifdef PIONEER_Q38_FULL_OFFLOAD_TWO_PRODUCT_REPLAY
 #include "PioneerQ38FullOffloadTwoProductReplayRole.h"
 #endif
@@ -24,5 +27,6 @@
 #if !defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) || PIONEER_Q38_FULL_OFFLOAD_CLIENT != 1 \
  || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_DRIVER_BUILD_TAG)
 #error Full-card phase profile requires its distinct USER client
+#endif
 #endif
 #endif

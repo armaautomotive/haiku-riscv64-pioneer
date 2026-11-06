@@ -8,9 +8,11 @@ import runpy
 import subprocess
 import sys
 
-assert __debug__ and len(sys.argv)==4 and not os.environ.get('PYTHONOPTIMIZE')
+args=sys.argv[1:];profile='--profile' in args
+if profile:assert args.count('--profile')==1;args.remove('--profile')
+assert __debug__ and len(args)==3 and not os.environ.get('PYTHONOPTIMIZE')
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
-sdk,libraries,out=map(Path,sys.argv[1:]);here=Path(__file__).resolve().parent;root=here.parents[1]
+sdk,libraries,out=map(Path,args);here=Path(__file__).resolve().parent;root=here.parents[1]
 assert all(p.is_absolute() for p in (sdk,libraries,out)) and sdk.is_dir() and libraries.is_dir()
 assert not out.exists() and not out.is_symlink()
 out.mkdir(mode=0o700)
@@ -19,7 +21,8 @@ try:
  sys.argv=[str(here/'build_assistant_qwen27_full_offload.py'),str(sdk),str(libraries),str(out/'unchanged-client')]
  old=runpy.run_path(sys.argv[0],run_name='__main__')
 finally:sys.argv=saved
-source=here/'pioneer_assistant_qwen27_bf16_full_offload.cpp';obj=out/'worker.o';binary=out/'HaikuAssistantQwen27Bf16FullOffload'
+source=here/('pioneer_assistant_qwen27_bf16_profile_full_offload.cpp' if profile else 'pioneer_assistant_qwen27_bf16_full_offload.cpp')
+obj=out/'worker.o';binary=out/('HaikuAssistantQwen27Bf16ProfileFullOffload' if profile else 'HaikuAssistantQwen27Bf16FullOffload')
 compile=old['compile'][:]
 compile[compile.index(str(old['source']))]=str(source);compile[compile.index(str(old['obj']))]=str(obj)
 compile.insert(1,'-DPIONEER_Q38_BF16_FULL_CLIENT=1')
@@ -40,6 +43,7 @@ for label,extra in [('missing-bf16',['-UPIONEER_Q38_BF16_FULL_CLIENT']),
  (name+'-defined0',['-D'+name+'=0']) for name in ('PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_CPU_VALIDATION',
  'PIONEER_Q38_FULL_MODEL_CPU_REFERENCE','PIONEER_Q38_WORK_INFERENCE','PIONEER_Q38_FULL_OFFLOAD_BATCHED',
  'PIONEER_Q38_FULL_OFFLOAD_METRICS','PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4','PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4')]:
+ if profile and label=='PIONEER_Q38_FULL_OFFLOAD_METRICS-defined0':continue # source selects observers; direct role tests cover this refusal
  result=subprocess.run([*compile[:compile.index('-c')],*extra,'-fsyntax-only',str(source)],stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True)
  assert result.returncode and 'BF16 full-card client requires' in result.stderr,label
  refusals.append(label)
@@ -48,13 +52,18 @@ llama={r.split()[-1] for r in imports.splitlines() if r.split() and r.split()[-1
 assert llama==old['expected'],llama
 for name in ('llama_decode','llama_init_from_model','llama_get_logits','ggml_backend','ggml_threadpool','PioneerQ38Ggml'):
  assert name not in imports,name
-smoke=out/'pioneer-q38-bf16-full-offload-smoke';smokeCommand=old['smoke_command'][:]
+smoke=out/('pioneer-q38-bf16-profile-rate-smoke' if profile else 'pioneer-q38-bf16-full-offload-smoke');smokeCommand=old['smoke_command'][:]
 smokeCommand[smokeCommand.index(str(old['smoke']))]=str(smoke)
-smokeCommand.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="/boot/home/pioneer-q38-bf16-full-105-a/HaikuAssistantQwen27Bf16FullOffload"');run(smokeCommand)
+if profile:
+ old_source=str(here/'pioneer_q38_full_offload_smoke.cpp')
+ assert smokeCommand.count(old_source)==1
+ smokeCommand[smokeCommand.index(old_source)]=str(here/'pioneer_q38_full_offload_rate_smoke.cpp')
+worker='/boot/home/pioneer-q38-bf16-profile-106-a/HaikuAssistantQwen27Bf16ProfileFullOffload' if profile else '/boot/home/pioneer-q38-bf16-full-105-a/HaikuAssistantQwen27Bf16FullOffload'
+smokeCommand.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="'+worker+'"');run(smokeCommand)
 assert all(hashlib.sha256(p.read_bytes()).hexdigest()==digest for p,digest in frozen.items())
 (out/'source-sha256.txt').write_text(''.join(frozen[p]+'  '+str(p.relative_to(root))+'\n' for p in sorted(frozen)))
 (out/'build-argv.json').write_text(json.dumps(commands,indent=2)+'\n');(out/'worker.imports').write_text(imports)
 (out/'role-refusals.txt').write_text('\n'.join('PASS '+label for label in refusals)+'\n')
 for path in (obj,binary,smoke):print(path.name,path.stat().st_size,hashlib.sha256(path.read_bytes()).hexdigest(),flush=True)
-print('PASS BUILD_ONLY BF16 tag105 USER worker/exact11 vocabulary imports/no CPU context,decode,logits or fallback/'
+print('PASS BUILD_ONLY BF16 tag'+('106' if profile else '105')+' USER worker/exact11 vocabulary imports/no CPU context,decode,logits or fallback/'
  +str(len(refusals))+' role refusals/unchanged tag88 USER pins;NOT installed/native execution/model-quality/TPS proof',flush=True)

@@ -1,6 +1,12 @@
 /* SPDX-License-Identifier: MIT */
 // Rechecked every include. DISTINCT native BF16 image/ownership revision,
 // never an old held G3 cohort,hybrid Work or CPU validation capability.
+#include "PioneerQ38Bf16FullProfileBinding.h"
+#ifdef PIONEER_Q38_BF16_FULL_PROFILE
+#include "PioneerQ38Bf16FullProfileRole.h"
+#elif defined(PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS)
+#error BF16 timing DATA requires its distinct full profile subject
+#endif
 #if !defined(_KERNEL_MODE) || _KERNEL_MODE != 1 \
  || !defined(PIONEER_Q38_BF16_FULL_NATIVE) || PIONEER_Q38_BF16_FULL_NATIVE != 1 \
  || !defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || PIONEER_Q38_FULL_OFFLOAD_NATIVE != 1 \
@@ -24,7 +30,7 @@
  || !defined(TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR) || TT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR != 1 \
  || !defined(TT_PIONEER_EXPERIMENTAL_Q38_STREAM) || TT_PIONEER_EXPERIMENTAL_Q38_STREAM != 1 \
  || !defined(TT_PIONEER_DRIVER_RELOAD) || TT_PIONEER_DRIVER_RELOAD != 1 \
- || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != 0x2026110500010105ULL
+ || !defined(PIONEER_DRIVER_BUILD_TAG) || PIONEER_DRIVER_BUILD_TAG != (defined(PIONEER_Q38_BF16_FULL_PROFILE)?0x2026110500010106ULL:0x2026110500010105ULL)
 #error BF16 full-card native requires exact tag105 and all exclusive native parents
 #endif
 #if defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT) \
@@ -34,13 +40,16 @@
  || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU) || defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE) \
  || defined(PIONEER_Q38_BF16_WORKER_IMAGE) || defined(PIONEER_Q38_FULL_OFFLOAD_BATCHED) \
- || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_FULL_OFFLOAD_RESIDENT) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_RESIDENT) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4) || defined(PIONEER_Q38_FULL_OFFLOAD_MACRO_Q4) \
- || defined(PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4) || defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE) \
+ || defined(PIONEER_Q38_FULL_OFFLOAD_VECTOR_Q4) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4) || defined(PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4) \
  || defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_FRONTIER_BENCHMARK_NATIVE) \
  || defined(PIONEER_Q38_TOKEN_DECODE_BENCHMARK_NATIVE) || defined(__FAST_MATH__)
 #error BF16 full-card native cannot alias old G3,BUILD,reference,Work or diagnostic roles
+#endif
+#if !defined(PIONEER_Q38_BF16_FULL_PROFILE) && (defined(PIONEER_Q38_FULL_OFFLOAD_METRICS) || defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE))
+#error BF16 full-card native tag105 cannot alias timing observers
 #endif
 #if defined(api_version) || defined(init_hardware) || defined(init_driver) || defined(uninit_driver) || defined(publish_devices) || defined(find_device)
 #error BF16 full-card native requires its actual conventional driver entries

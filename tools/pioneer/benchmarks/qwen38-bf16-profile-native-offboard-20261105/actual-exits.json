@@ -1,0 +1,15 @@
+{
+  "main_native_final": 0,
+  "main_client_qualification": 0,
+  "main_footprint": 0,
+  "main_profile_roles": 0,
+  "main_held_read_and_adapter": 0,
+  "main_journal_and_all_faults": 0,
+  "main_baseline_native_and_client": 0,
+  "main_legacy_observers_and_roles": 0,
+  "main_log_parent_rate_client": 0,
+  "clean_native": 0,
+  "clean_client_qualification": 0,
+  "clean_final_log_parent_roles": 0,
+  "read_only_pioneer_preflight": 0
+}

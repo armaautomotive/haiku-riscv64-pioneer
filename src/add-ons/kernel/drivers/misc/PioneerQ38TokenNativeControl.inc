@@ -49,7 +49,7 @@ template<class Result> static void Q38TokenControlDetail(PioneerQ38TokenControl:
 } // CPU metadata ONLY,never cancel/retry/END/reset/free or subsequent device IO
 
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
-#include "PioneerQ38FullOffloadMetricsRole.h"
+#include "PioneerQ38SelectedFullMetricsRole.h"
 static __attribute__((noinline)) status_t
 Q38FullOffloadCounter(PioneerProbeCookie* cookie,void* data,size_t length){
  namespace F=PioneerQ38FullOffload;namespace P=PioneerQ38TokenFrontierControl;

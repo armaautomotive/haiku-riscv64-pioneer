@@ -7,6 +7,10 @@ import subprocess
 import sys
 import tempfile
 args = sys.argv[1:]
+bf16_profile = '--bf16-profile' in args
+if bf16_profile:
+    assert args.count('--bf16-profile') == 1
+    args.remove('--bf16-profile')
 precise = '--precise-programs' in args
 if precise:
     assert args.count('--precise-programs') == 1
@@ -19,6 +23,7 @@ bf16 = '--bf16-programs' in args
 if bf16:
     assert args.count('--bf16-programs') == 1 and not precise and not pushed
     args.remove('--bf16-programs')
+assert not bf16_profile or bf16, 'timing journal requires its explicit QTP4 DATA parent'
 sdk = None
 if len(args) >= 2 and args[-2] == '--sdk':
     sdk = pathlib.Path(args[-1])
@@ -29,7 +34,12 @@ assert not bf16 or sdk is None, 'QTP4 kernel subject is built by build_q38_bf16_
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 here = pathlib.Path(__file__).resolve().parent
 flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
+if bf16_profile:
+    # Use non-Work dispatcher metadata,as in the BF16 native build,not the
+    # unrelated legacy shader-test feature set. Do not bypass the DATA role.
+    flags=['-DTT_PIONEER_EXPERIMENTAL_Q38_DISPATCH_VECTOR','-DPIONEER_Q38_SPAN_FAST']
 profile = ['-DPIONEER_Q38_TOKEN_BF16_PROGRAMS=1'] if bf16 else ['-DPIONEER_Q38_TOKEN_PUSHED_PROGRAMS=1'] if pushed else ['-DPIONEER_Q38_TOKEN_PRECISE_PROGRAMS=1'] if precise else []
+if bf16_profile:profile+=['-DPIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS=1']
 with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/tmp') as tmp:
     binary = pathlib.Path(tmp)/'test'
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',

@@ -37,12 +37,16 @@ Small milestones, in order
    output count, loading time, first-token time and post-prompt rate separately.
    If the model stops early or timing is unavailable, say so; invent no rate.
    Requires a fresh guarded run, NOT replaying the old trial.
+   The distinct tag106 driver, worker and 32-output launcher now build and
+   pass offline integration checks. Main/clean artifact hashes match;
+   the original105 rollback artifacts still match their hardware trial.
 
 3. PENDING: Physical bottleneck measurement.
    Measure controller preparation, dispatch, completion wait and computation.
    Timing firmware now builds identically in main and clean source copies;
-   its observer DATA and compiled helper tests pass offline. It is NOT yet
-   bound to a new native/USER subject, installed or measured on the card.
+   its observer DATA and compiled helper tests pass offline. It is now
+   bound to the separate tag106 native/USER subject, with held-only reads.
+   It has NOT yet been installed or measured on the card at this checkpoint.
    Preparation and gather/wait include mixed controller/worker costs, not
    isolated tensor-compute time. Hardware measurement remains pending.
    Offline instruction counts are a lead, not physical timing or a speedup.
@@ -76,6 +80,7 @@ Evidence and work separation
 ----------------------------
 Clean rebuild: benchmarks/qwen38-clean-checkpoint-20261105/
 Timing firmware: benchmarks/qwen38-bf16-timing-offboard-20261105.txt
+Timing integration: benchmarks/qwen38-bf16-profile-native-offboard-20261105.txt
 Actual card run: benchmarks/qwen38-bf16-full-physical-20261105.txt
 Full result audit:
   python3 tools/pioneer/benchmarks/qwen38-bf16-full-physical-20261105/verify_evidence.py

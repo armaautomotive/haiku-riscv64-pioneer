@@ -36,11 +36,18 @@ struct PioneerQ38TokenCallScope {
  status_t Status()const{return owned?B_OK:-82;}
 };
 static std::array<uint32_t,60> RawMetric(){
- namespace Q=PioneerQ38TokenPhaseProfileData;
+ namespace Q=PioneerQ38SelectedPhaseProfileData;
  std::array<uint32_t,60> p={};uint64_t now=UINT64_C(1)<<40;Q::Initialize(p.data(),true,now);
  auto mark=[&](unsigned next){now+=19;Q::Advance(p.data(),true,now,next);};
  for(unsigned token=0;token<34;token++){
-  for(unsigned layer=0;layer<64;layer++){mark(Q::Metadata);mark(layer%4==3?Q::Dense:Q::Recurrent);}
+  for(unsigned layer=0;layer<64;layer++){
+   mark(Q::Metadata);mark(layer%4==3?Q::Dense:Q::Recurrent);
+#ifdef PIONEER_Q38_BF16_FULL_PROFILE
+   for(unsigned job=0;job<(layer%4==3?7U:8U);job++)
+    for(unsigned phase:{Q::MatrixPrepare,Q::MatrixDispatch,Q::MatrixGatherWait,Q::MatrixFinish,
+      layer%4==3?Q::Dense:Q::Recurrent})mark(phase);
+#endif
+  }
   for(unsigned next:{Q::HeadNormalize,Q::HeadMatrix,Q::Feedback,Q::StateCommit,Q::Publication})mark(next);
  }
  mark(Q::FinalStop);Q::Advance(p.data(),true,now+19,Q::Phases,34);assert(Q::Closed(p.data()));return p;

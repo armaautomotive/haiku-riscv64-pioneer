@@ -67,7 +67,17 @@ int main(int argc,char** argv){
  assert(snapshots==S::SavedWords && code==P::CodeWords(0)+119*P::CodeWords(1));
 #ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
  assert(P::Family==0x34505451 && S::Bf16==1 && P::EogCount==5 && P::CancelBoundary==1
-  && P::CodeWords(0)==44275 && P::CodeWords(1)==27044 && S::SavedWords==15444538 && S::SavedBytes==61778152);
+  && P::CodeWords(0)==
+#ifdef PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS
+  44687
+#else
+  44275
+#endif
+  && P::CodeWords(1)==27044 && S::SavedWords==15444538 && S::SavedBytes==61778152);
+#ifdef PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS
+ assert(P::Version==2 && P::TokenFrontier==1 && P::FrontierAddress==0x7570c
+  && P::TokenPhaseProfile==1 && P::PhaseProfileAddress==0x75710 && P::PhaseProfileWords==60);
+#endif
  for(unsigned address:{0x20000U,0x2fffcU,0xe0000U,0x168000U,0x16c1fcU})assert(S::SnapshotContains(0,address));
  assert(!S::SnapshotContains(0,0x30000));
  for(unsigned worker=1;worker<120;worker++){

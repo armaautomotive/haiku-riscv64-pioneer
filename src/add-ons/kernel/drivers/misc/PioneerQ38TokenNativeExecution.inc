@@ -44,7 +44,7 @@
 } // bounded source/marker/PC observation while firmware owns NoC;NEVER a token/STOP/END receipt
 #if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS)
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
-#include "PioneerQ38FullOffloadMetricsRole.h"
+#include "PioneerQ38SelectedFullMetricsRole.h"
 #else
 #include "PioneerQ38TokenFrontierNativeRole.h"
 #endif

@@ -18,14 +18,18 @@
 #include "PioneerQ38PublicModelSource.h"
 #ifdef PIONEER_Q38_BF16_FULL_CLIENT
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38Bf16FullProtocol.h"
+#ifdef PIONEER_Q38_BF16_FULL_PROFILE
+static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110500010106),"exact BF16 timing USER/native identity");
+#else
 static_assert(PioneerQ38FullOffload::BuildTag==UINT64_C(0x2026110500010105),"exact BF16 USER/native identity");
+#endif
 #else
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadProtocol.h"
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SpanProtocol.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerDriverReloadProtocol.h"
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
-#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38FullOffloadMetricsRole.h"
+#include "../../src/add-ons/kernel/drivers/misc/PioneerQ38SelectedFullMetricsRole.h"
 #endif
 #include <array>
 #include <cstring>

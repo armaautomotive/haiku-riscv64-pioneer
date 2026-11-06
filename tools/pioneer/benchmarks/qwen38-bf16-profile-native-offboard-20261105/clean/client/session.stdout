@@ -1,0 +1,2 @@
+PASS full-model phase read exactly_ONCE after_HOLD_and_FULL_record_drain before_END;all96_packet_word_mutations;invalid_clock_still_cleans;no_metric_publication_before_END_Close_or_after_source_withdrawal;NO_DEVICE_OR_TPS
+PASS actual full-offload USER:96prompt/32output/127positions,two64-record drains,all5 EOS and3 cancellation boundaries,379 fail-closed COW fixtures;synthetic ONLY,no physical or numerical result

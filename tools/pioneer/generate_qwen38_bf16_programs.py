@@ -7,8 +7,12 @@ import sys
 from generate_qwen38_token_programs import authenticated, require_complete_sections
 from PioneerQ38Bf16ProgramPins import ROOT_PINS, WORKER_PINS
 
-assert __debug__ and len(sys.argv)==4
-root, worker, out=map(Path,sys.argv[1:])
+args=sys.argv[1:];profile='--profile' in args
+if profile:
+ assert args.count('--profile')==1;args.remove('--profile')
+ from PioneerQ38Bf16ProfileProgramPins import ROOT_PINS
+assert __debug__ and len(args)==3
+root, worker, out=map(Path,args)
 assert all(p.is_absolute() for p in (root,worker,out)) and not out.exists() and not out.is_symlink()
 assert not any(k.startswith(('PIONEER_','TT_PIONEER_')) for k in os.environ)
 r=authenticated(root,ROOT_PINS);w=authenticated(worker,WORKER_PINS)
@@ -19,11 +23,16 @@ units += [(w,name,label,address) for name,label,address in (
  ('dense','PeerDense',0x40000),('cachedfpu','PeerFpu',0x50000),('ffn','PeerFfn',0x60000),
  ('service','PeerService',0x68000),('affine','PeerAffine',0x70b00),('text','PeerText',0x72000),('gdn','PeerGdn',0xb8000))]
 require_complete_sections(units,(r,w))
+namespace='PioneerQ38TokenBf16ProfilePrograms' if profile else 'PioneerQ38TokenBf16Programs'
+guard='PIONEER_Q38_TOKEN_BF16_PROFILE_PROGRAMS_H' if profile else 'PIONEER_Q38_TOKEN_BF16_PROGRAMS_H'
+role='PioneerQ38TokenBf16ProfileProgramsRole.h' if profile else 'PioneerQ38TokenBf16ProgramsRole.h'
 lines=['/* SPDX-License-Identifier: MIT */','// Generated complete QTP4/QGW4 immutable code DATA;no runtime qualification.',
- '#include "PioneerQ38TokenBf16ProgramsRole.h"','#ifndef PIONEER_Q38_TOKEN_BF16_PROGRAMS_H',
- '#define PIONEER_Q38_TOKEN_BF16_PROGRAMS_H','#include "PioneerQ38TokenBf16Footprint.h"',
- 'namespace PioneerQ38TokenBf16Programs {',
- 'enum {Family=0x34505451,Version=1,CancelBoundary=1,Bf16=1,EogCount=5};']
+ '#include "'+role+'"','#ifndef '+guard,
+ '#define '+guard,'#include "PioneerQ38TokenBf16Footprint.h"',
+ 'namespace '+namespace+' {',
+ 'enum {Family=0x34505451,Version='+str(2 if profile else 1)+',CancelBoundary=1,Bf16=1,EogCount=5};']
+if profile:
+ lines+=['enum {TokenFrontier=1,FrontierAddress=0x7570c,TokenPhaseProfile=1,PhaseProfileAddress=0x75710,PhaseProfileWords=60};']
 for source,name,label,address in units:
  data=source[name+'.bin'];assert data and not len(data)%4
  words=[int.from_bytes(data[i:i+4],'little') for i in range(0,len(data),4)]
@@ -57,6 +66,6 @@ lines += ['  }else switch(i){']
 for i,(_,_,label,_) in enumerate(units[5:]):lines.append('   case %u:data=%s;break;'%(i,label))
 lines += ['  }if(!data)return false;output=data[(address-s.address)/4];return true;',
  ' }return false; // no implicit executable padding or runtime-data access','}',
- '}','#endif','static_assert(PioneerQ38TokenBf16Programs::Family==0x34505451,"late QTP4 code DATA selection");']
+ '}','#endif','static_assert('+namespace+'::Family==0x34505451,"late QTP4 code DATA selection");']
 out.write_text('\n'.join(lines)+'\n')
 print('PASS COMPLETE BF16 code DATA15 sections/two authenticated whole ELFs/SHA256 '+hashlib.sha256(out.read_bytes()).hexdigest()+';NOT execution/native authority')

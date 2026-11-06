@@ -1,0 +1,2 @@
+PASS full-card metrics DATA 199680 bounded count observations/all request bytes and out-of-range counts refused;NO timing,lifecycle or hardware authority
+PASS full-offload pointer-free grammar 3072 valid/212150 refusals;old fixed diagnostic unchanged;NO inference or hardware

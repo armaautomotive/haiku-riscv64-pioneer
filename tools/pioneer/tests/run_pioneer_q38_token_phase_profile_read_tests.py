@@ -4,9 +4,12 @@ import hashlib
 import os
 import pathlib
 import subprocess
+import sys
 import tempfile
 
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
+assert sys.argv[1:] in ([],['--bf16-profile'])
+flags=['-DPIONEER_Q38_BF16_FULL_PROFILE=1'] if sys.argv[1:] else []
 here = pathlib.Path(__file__).resolve().parent
 kernel = here.parents[2] / 'src/add-ons/kernel/drivers/misc'
 source = (kernel / 'PioneerQ38TokenNativeOwner.h').read_text()
@@ -31,7 +34,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-q38-phase-read-', dir='/private
     (out / 'actual_phase_fail.inc').write_text(failure + '\n')
     binary = out / 'test'
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
-                    '-fsanitize=address,undefined', '-I' + str(out), str(here / 'pioneer_q38_token_phase_profile_read_test.cpp'),
+                    '-fsanitize=address,undefined', *flags, '-I' + str(out), str(here / 'pioneer_q38_token_phase_profile_read_test.cpp'),
                     '-o', str(binary)], check=True)
     subprocess.run([str(binary)], check=True, env={**os.environ, 'UBSAN_OPTIONS': 'halt_on_error=1'})
 print('ACTUAL_PHASE_READ_PLUS_FAIL_SHA256 ' + hashlib.sha256(

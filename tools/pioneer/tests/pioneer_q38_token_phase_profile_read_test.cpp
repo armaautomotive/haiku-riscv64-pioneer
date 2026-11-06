@@ -1,14 +1,14 @@
 /* SPDX-License-Identifier: MIT */
 // ACTUAL member/Fail source, explicitly MOCK lifecycle/source/HOLD/clock
 // authority. This is not a real native owner, model or card lifetime.
-#include "../PioneerQ38TokenPhaseProfileData.h"
+#include "../PioneerQ38SelectedPhaseProfileData.h"
 #include <array>
 #include <cassert>
 #include <cstdio>
 #include <cstring>
 #include <algorithm>
 #include "actual_phase_result.inc"
-namespace Q=PioneerQ38TokenPhaseProfileData;
+namespace Q=PioneerQ38SelectedPhaseProfileData;
 namespace PioneerQ38TokenPrograms {enum {TokenPhaseProfile=1,PhaseProfileAddress=0x75710,PhaseProfileWords=60};}
 struct PioneerResidentBanks {enum {Pages=16};};
 struct PioneerQ38TokenReadResult {unsigned word=0;};
@@ -64,7 +64,14 @@ static std::array<uint32_t,Q::Words> Metric(){
  Q::Initialize(p.data(),true,now);
  auto mark=[&](unsigned next){now+=19;Q::Advance(p.data(),true,now,next);};
  for(unsigned token=0;token<34;token++){
-  for(unsigned layer=0;layer<64;layer++){mark(Q::Metadata);mark(layer%4==3?Q::Dense:Q::Recurrent);}
+  for(unsigned layer=0;layer<64;layer++){
+   mark(Q::Metadata);mark(layer%4==3?Q::Dense:Q::Recurrent);
+#ifdef PIONEER_Q38_BF16_FULL_PROFILE
+   for(unsigned job=0;job<(layer%4==3?7U:8U);job++)
+    for(unsigned phase:{Q::MatrixPrepare,Q::MatrixDispatch,Q::MatrixGatherWait,Q::MatrixFinish,
+      layer%4==3?Q::Dense:Q::Recurrent})mark(phase);
+#endif
+  }
   for(unsigned next:{Q::HeadNormalize,Q::HeadMatrix,Q::Feedback,Q::StateCommit,Q::Publication})mark(next);
  }
  mark(Q::FinalStop);Q::Advance(p.data(),true,now+19,Q::Phases,34);assert(Q::Closed(p.data()));return p;

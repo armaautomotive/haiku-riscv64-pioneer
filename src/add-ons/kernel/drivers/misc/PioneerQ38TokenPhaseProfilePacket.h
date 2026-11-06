@@ -3,7 +3,7 @@
 #define PIONEER_Q38_TOKEN_PHASE_PROFILE_PACKET_H
 #include <stdint.h>
 #include <stddef.h>
-#include "../../../../../tools/pioneer/PioneerQ38TokenPhaseProfileData.h"
+#include "../../../../../tools/pioneer/PioneerQ38SelectedPhaseProfileData.h"
 // Distinct fixed held-read DATA. No address/count/generation or action input.
 #define TT_PCI_PROBE_Q38_TOKEN_PHASE_PROFILE_READ (B_DEVICE_OP_CODES_END+0x6609)
 namespace PioneerQ38TokenPhaseProfileControl {
@@ -33,7 +33,7 @@ static inline bool ReplyShape(const Packet& p){
  for(auto value:p.request.reserved)if(value)return false;
  for(unsigned i=DataWords;i<PacketWords;i++)if(p.words[i])return false;
  if(r.ready){
-  namespace Q=PioneerQ38TokenPhaseProfileData;
+  namespace Q=PioneerQ38SelectedPhaseProfileData;
   const bool valid=Q::Closed(p.words) && p.words[Q::Committed]==d[8];
   return !r.status && r.started && !r.unsafe && !d[3] && d[2]==4 && d[4]==59 && d[8]<=8192 && d[9]==DataWords
    && d[10]==p.words[Q::State] && d[11]==p.words[Q::Error] && d[7]==unsigned(valid) && !d[12] && !d[13];

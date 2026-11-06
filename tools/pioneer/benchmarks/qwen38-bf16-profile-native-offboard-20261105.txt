@@ -1,0 +1,62 @@
+BF16 tag106 timing driver + USER integration -- OFFBOARD checkpoint
+==================================================================
+Base d9d1ebe1a1d0a2a62cf7ed65448b61e5a15c5ff8, 2026-11-05 Pacific.
+No new inference or throughput result. Target20tokens/sec remains unmet.
+The separate read-only Pioneer preflight passed; no driver exchange yet.
+
+Implemented
+-----------
+Distinct tag106 kernel and vocabulary-only USER selections bind the already
+tested fourteen-phase ROOT and unchanged QGW4 workers. All15 code sections
+are authenticated from the complete pinned ELFs. New DATA namespace/version
+cannot silently select the old105 arrays or old ten-phase metric grammar.
+The original QTP4 61778152-byte arbitrary-original journal is unchanged.
+
+The actual existing committed-count observer now serves this new subject.
+The actual held-only phase member reads twice under the original guards,
+only after complete record drain; the actual FD/team/thread adapter retains
+the same lock through reply copy. Invalid timing remains diagnostic DATA,
+not model success, quarantine by itself, or permission to release resources.
+CPU code does file/vocabulary/lifecycle/time arithmetic, not model inference.
+The new rate launcher requests32 outputs, independently of load/prompt time.
+
+Executed evidence
+-----------------
+Main and independent d9d1+38-scoped-source trees produce byte-identical
+driver, USER and rate-launcher artifacts. No existing local dirty source was
+copied into that clean tree except the explicit new scope. Four baseline
+native dependencies still differ in raw source; compiled artifacts match.
+
+*USER:5 actual children0/stderr0,68 frozen test sources;3072 legal/212150
+ refused pointer-free/counter cases;379 synthetic lifecycle failure fixtures;
+ all5 EOG and3 cancellation boundaries;full phase read once after HOLD/drain,
+ before END;invalid-clock cleanup;no metric publication before clean close.
+*Native/USER/DATA roles:5 positive/551 refusals;old105 roles4/472 still pass.
+*All15 sections compared across120 core mappings:3262923 code words,
+ 15444538 saved words,963 refusals. Real journal save/install/restore algorithm
+ executes over arbitrary SIMULATED endpoints, including UINT32_MAX data:
+ 52 faults,33 inert preconditions,27 ROOT/producer/FPU/padding faults.
+*Actual held-read+Fail:63 valid/invalid DATA successes,101 preconditions,
+ 905 IO/mismatch faults;actual adapter5 positives/3561 corruptions/8 copy faults.
+ These use MOCK lifecycle/OS/source/HOLD authority, NOT a real native lifetime.
+*Fourteen-phase log grammar:199 mode/order/count/cycle/truncation refusals,
+ old ten-phase and original rate readers still pass. Entire tested rate-parent
+ policy is unchanged except10 exact identity substitutions. Actual host rate
+ client passes2 valid/11 failed FAKE-worker histories and3 CLI refusals.
+*Non-timing105 driver/USER/smoke retain ALL three physical-trial byte hashes.
+
+Fixed artifacts
+---------------
+driver2893592B b635aab47e10b3bf657b290e27eb2a41460ba7db71866a0f9ecf475d70a0c954
+USER82336B e3c784766d6ff46513157bc9ae5849e5aac73a02f4b9c77e48f7dbfb24f72a26
+rate228264B 509856b35bb9f8c7da34c5537f1a459bcd21ca7c95343a680fbb647dcaaa35c7
+code header4d46d439897aa2530dafc285e7f0ddebe8125d1e1ebb2be8c357d9359e4625cb
+Driver max INDIVIDUAL frame2560B,not whole kernel stack certification.
+ROOT's previously qualified static bound remains7936/8192;not a runtime peak.
+
+Still required
+--------------
+Fresh complete controlled physical run, genuine native RUN/STOP/HOLD/END,
+independent preservation check and strict whole-transcript interpretation.
+One-shot106-a is prepared for generations40->41->42 but is NOT executed here.
+No Assistant install or speedup claim. Historical stages81..105 remain spent.

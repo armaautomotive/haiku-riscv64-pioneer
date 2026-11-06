@@ -22,7 +22,11 @@ static std::unique_ptr<P::Packet> Request(unsigned count,unsigned outputs){
 }
 int main(){
 #ifdef PIONEER_Q38_BF16_FULL_CLIENT
+#ifdef PIONEER_Q38_BF16_FULL_PROFILE
+ static_assert(F::BuildTag==UINT64_C(0x2026110500010106),"exact BF16 timing USER/native identity");
+#else
  static_assert(F::BuildTag==UINT64_C(0x2026110500010105),"exact BF16 Q4 USER/native identity");
+#endif
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_FIXED_CONFIG_Q4)
  static_assert(F::BuildTag==UINT64_C(0x2026110500010103),"exact fixed-config Q4 USER/native identity");
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_QUEUED_Q4)

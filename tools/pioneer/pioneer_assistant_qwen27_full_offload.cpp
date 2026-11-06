@@ -172,7 +172,7 @@ struct Runtime {
   if(!Emit(A::Progress,UINT32_MAX,metric))return false;
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE
-  {namespace Q=PioneerQ38TokenPhaseProfileData;
+  {namespace Q=PioneerQ38SelectedPhaseProfileData;
    PioneerQ38TokenPhaseProfileControl::Packet p;
    if(!session->CopyPhaseProfile(p))return false;
    char description[320];

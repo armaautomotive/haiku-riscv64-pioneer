@@ -3,11 +3,18 @@
 #define PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE_FIXTURE_H
 // Fabricated timing DATA only. No native owner,device or model computation.
 static void FillFullPhaseMetric(PioneerQ38TokenPhaseProfileControl::Packet& p,unsigned committed,bool invalid=false){
- namespace Q=PioneerQ38TokenPhaseProfileData;
+ namespace Q=PioneerQ38SelectedPhaseProfileData;
  uint64_t now=UINT64_C(1)<<40;Q::Initialize(p.words,true,now);
  auto mark=[&](unsigned next){now+=19;Q::Advance(p.words,true,now,next);};
  for(unsigned token=0;token<committed;token++){
-  for(unsigned layer=0;layer<64;layer++){mark(Q::Metadata);mark(layer%4==3?Q::Dense:Q::Recurrent);}
+  for(unsigned layer=0;layer<64;layer++){
+   mark(Q::Metadata);mark(layer%4==3?Q::Dense:Q::Recurrent);
+#ifdef PIONEER_Q38_BF16_FULL_PROFILE
+   for(unsigned job=0;job<(layer%4==3?7U:8U);job++)
+    for(unsigned phase:{Q::MatrixPrepare,Q::MatrixDispatch,Q::MatrixGatherWait,Q::MatrixFinish,
+      layer%4==3?Q::Dense:Q::Recurrent})mark(phase);
+#endif
+  }
   for(unsigned next:{Q::HeadNormalize,Q::HeadMatrix,Q::Feedback,Q::StateCommit,Q::Publication})mark(next);
  }
  mark(Q::FinalStop);Q::Advance(p.words,true,now+19,Q::Phases,committed);

@@ -8,7 +8,7 @@
 #include "../../../../../tools/pioneer/PioneerQ38TokenMatrixPhaseData.h"
 #endif
 #if defined(PIONEER_Q38_TOKEN_PHASE_PROFILE_PROGRAMS) || defined(PIONEER_Q38_FULL_OFFLOAD_PHASE_PROFILE)
-#include "../../../../../tools/pioneer/PioneerQ38TokenPhaseProfileData.h"
+#include "../../../../../tools/pioneer/PioneerQ38SelectedPhaseProfileData.h"
 #endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_OWNER_H
 #define PIONEER_Q38_TOKEN_NATIVE_OWNER_H
@@ -39,7 +39,7 @@ struct PioneerQ38TokenExecutionResult {
 };
 #if defined(PIONEER_Q38_TOKEN_FRONTIER_NATIVE_CONTEXT) || defined(PIONEER_Q38_FULL_OFFLOAD_METRICS)
 #ifdef PIONEER_Q38_FULL_OFFLOAD_METRICS
-#include "PioneerQ38FullOffloadMetricsRole.h"
+#include "PioneerQ38SelectedFullMetricsRole.h"
 #else
 #include "PioneerQ38TokenFrontierNativeRole.h"
 #endif

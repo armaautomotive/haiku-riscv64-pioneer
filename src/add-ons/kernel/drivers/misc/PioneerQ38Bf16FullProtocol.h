@@ -7,9 +7,29 @@
 // CPU hidden/logit/reference data or arbitrary program/addresses accepted.
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_SUPPORT (B_DEVICE_OP_CODES_END+0x8800)
 #define TT_PCI_PROBE_Q38_FULL_OFFLOAD_CONTROL (B_DEVICE_OP_CODES_END+0x8801)
+#ifdef PIONEER_Q38_BF16_FULL_PROFILE
+#include "PioneerQ38Bf16FullProfileRole.h"
+#include "PioneerQ38TokenFrontierPacket.h"
+#include "PioneerQ38TokenPhaseProfilePacket.h"
+#define TT_PCI_PROBE_Q38_FULL_OFFLOAD_COUNTER (B_DEVICE_OP_CODES_END+0x8802)
+#define TT_PCI_PROBE_Q38_FULL_OFFLOAD_PHASE_PROFILE (B_DEVICE_OP_CODES_END+0x8806)
+#endif
 namespace PioneerQ38FullOffload {
+#ifdef PIONEER_Q38_BF16_FULL_PROFILE
+static constexpr uint64_t BuildTag=UINT64_C(0x2026110500010106);
+#else
 static constexpr uint64_t BuildTag=UINT64_C(0x2026110500010105);
+#endif
 enum {Version=1,MaxPrompt=96,MaxOutput=32,MaxPositions=128,Vocabulary=248320};
+#ifdef PIONEER_Q38_BF16_FULL_PROFILE
+using CounterPacket=PioneerQ38TokenFrontierControl::Packet;
+static inline bool CounterRequest(const CounterPacket& p){return PioneerQ38TokenFrontierControl::RequestShape(p);}
+static inline bool CounterReply(const CounterPacket& p){
+ return PioneerQ38TokenFrontierControl::ReplyShape(p) && p.reply.ready==1
+  && p.reply.detail[8]<=MaxPositions && p.reply.detail[9]<=MaxPrompt
+  && p.reply.detail[8]-p.reply.detail[9]+1<=MaxOutput;
+}
+#endif
 enum {Matrices=1,Attention=2,Recurrent=4,KV=8,Embedding=16,Normalize=32,
  Residual=64,Activation=128,Greedy=256,AllCompute=511};
 struct Support {uint32_t driver,version,prompt,output,positions,vocabulary,compute,reserved;};

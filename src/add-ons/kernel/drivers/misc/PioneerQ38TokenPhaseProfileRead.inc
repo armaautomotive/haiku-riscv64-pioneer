@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Member of the actual token owner ONLY. No mock-ready state or live reads.
 template<class IO> __attribute__((noinline)) bool ReadPhaseProfile(IO& io,uint32_t* output,PioneerQ38TokenPhaseProfileResult& r){
- namespace Q=PioneerQ38TokenPhaseProfileData;
+ namespace Q=PioneerQ38SelectedPhaseProfileData;
  static_assert(PioneerQ38TokenPrograms::TokenPhaseProfile==1
   && unsigned(PioneerQ38TokenPrograms::PhaseProfileAddress)==unsigned(Q::Address)
   && unsigned(PioneerQ38TokenPrograms::PhaseProfileWords)==unsigned(Q::Words),"actual matching full timing ROOT required");
