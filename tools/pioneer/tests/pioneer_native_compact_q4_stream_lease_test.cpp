@@ -1,7 +1,11 @@
 /* SPDX-License-Identifier: MIT */
 #define B_DEVICE_OP_CODES_END 10000
 #define PIONEER_Q4_COMPACT_STREAM_IMAGE_ONLY
-#ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
+#ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
+#include "pioneer_q38_factored_q4_compare_machine.h"
+using NMachine=FactoredCompareRV32;
+using CompactStreamData=FactoredCompareData;
+#elif defined(PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING)
 #define PIONEER_Q4_KERNEL_TIMING_MACHINE_ONLY
 #include "pioneer_q38_q4_kernel_timing_image_test.cpp"
 #ifdef PIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING
@@ -21,6 +25,9 @@ using NLease=PioneerNativeCompactQ4StreamLease;using NL=PioneerNativeCompactQ4St
 using NV=PioneerNativeCompactQ4StreamVariant;
 struct NImage {
 	static constexpr unsigned Samples=9,Rows=32,Phases=4,LayoutRole=NV::Role,Bytes=NV::ImageBytes,MetadataFirst=128,MetadataRows=128,DstLast=255;
+#ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
+	static constexpr unsigned FactoredComparison=1,NewPhases=2,Accumulator=80;
+#endif
 	static inline unsigned Boot=0;static inline std::vector<uint8_t> code[2];
 	static unsigned Width(unsigned s){return NV::Width(s);}
 	static unsigned Word(unsigned s,unsigned i){const auto& c=code[s<6?0:1];return i<c.size()/4?::Word(c,i*4):0;}
@@ -68,7 +75,7 @@ struct NLeaseIO {
 	}
 	void Check(){assert(!retained);operations++;}
 	bool NativeScope(const NLease* l,const tt_dram_samples_result* p,const uint32_t* a,unsigned n,const uint32_t* b,unsigned m) {
-		assert(!retained && l==&lease && p==proof && lease.BoundTo(p,a,n,b,m) && n==26908 && m==87040);recordedL1=a;recordedDram=b;scopes++;return scopeValid;
+		assert(!retained && l==&lease && p==proof && lease.BoundTo(p,a,n,b,m) && n==NL::L1Words && m==87040);recordedL1=a;recordedDram=b;scopes++;return scopeValid;
 	}
 	void NativeRetain(){assert(!retained);retained=true;retains++;}
 	bool NativeSourceRead(unsigned i,uint32_t& v){Check();assert(i<16);v=source[i]^((badSource && started)?1U:0U);return true;}

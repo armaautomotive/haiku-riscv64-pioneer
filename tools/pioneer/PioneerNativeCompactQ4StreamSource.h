@@ -10,6 +10,9 @@
 #include "PioneerBlackholeBf16Arithmetic.h"
 #include "PioneerNativeCompactQ4StreamData.h" // PRIVATE fixed compiled operands
 #include "PioneerNativeCompactQ4StreamMetadata.h" // PRIVATE independent predictions
+#ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
+#include "PioneerQ38FactoredQ4Reference.h"
+#endif
 #include <array>
 #include <cfenv>
 #include <fcntl.h>
@@ -24,6 +27,9 @@ class PioneerNativeCompactQ4StreamSource {
 	std::unique_ptr<FILE,decltype(&fclose)> file{nullptr,&fclose};
 	struct stat identity={};
 	PioneerQwen38Gguf model;uint64_t epoch=0;bool attempted=false,prepared=false;
+#ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
+	std::array<std::array<uint32_t,32>,9> factored{};
+#endif
 	static bool Fail(std::string& error,const char* text){error=text;return false;}
 	static bool Same(const struct stat& a,const struct stat& b){
 		if(a.st_dev!=b.st_dev || a.st_ino!=b.st_ino || a.st_uid!=b.st_uid || a.st_gid!=b.st_gid || a.st_mode!=b.st_mode || a.st_nlink!=b.st_nlink || a.st_size!=b.st_size || a.st_mtime!=b.st_mtime || a.st_ctime!=b.st_ctime)return false;
@@ -37,6 +43,9 @@ class PioneerNativeCompactQ4StreamSource {
 	static uint32_t Word(const uint8_t* p){return uint32_t(p[0])|(uint32_t(p[1])<<8)|(uint32_t(p[2])<<16)|(uint32_t(p[3])<<24);}
 public:
 	bool Ready()const{return prepared && Stable();}
+#ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
+	const uint32_t* FactoredGolden(unsigned sample)const{return sample<9 && Ready()?factored[sample].data():nullptr;}
+#endif
 	bool Prepare(const char* path,std::string& error) {
 		static_assert(Data::Version==1 && Data::Role==104 && Data::PreparedBytes==4608 && Data::Samples==9 && Data::Rows==32 && Meta::Samples==9 && Meta::Rows==32,"exact diagnostic104 private recipe");
 		if(attempted)return Fail(error,"Q4 source preparation is one-shot.");
@@ -68,6 +77,10 @@ public:
 				for(unsigned c=0;c<256;c++){uint16_t bits=uint16_t(0x3e80+(c*19+block*11)%384+((c&3)==2?0x8000:0));input[c*2]=uint8_t(bits);input[c*2+1]=uint8_t(bits>>8);}
 				for(unsigned i=0;i<1152;i++)if(Data::Word(sample,block*1152+i)!=Word(packed.data()+i*4))return Fail(error,"Compiled Q4 payload/metadata differs from original.");
 				for(unsigned i=0;i<128;i++)if(Data::Word(sample,blocks*1152+block*128+i)!=Word(input.data()+i*4))return Fail(error,"Compiled Q4 input differs from original.");
+#ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
+				uint16_t bf16[256];for(unsigned c=0;c<256;c++)bf16[c]=uint16_t(input[c*2])|uint16_t(input[c*2+1])<<8;
+				if(!PioneerQ38FactoredQ4Reference::Block(original.data(),bf16,factored[sample].data()))return Fail(error,"Fresh factored Q4 reference refused.");
+#endif
 				for(unsigned row=0;row<32;row++) {
 					float weights[256];if(!PioneerDecodeQ4K(original.data()+row*144,weights))return Fail(error,"Original Q4 decode refused.");
 					for(unsigned first=0;first<256;first+=16) {

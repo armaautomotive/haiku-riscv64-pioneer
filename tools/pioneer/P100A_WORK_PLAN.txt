@@ -59,7 +59,10 @@ Local work now includes original metadata/output affine, full-K
 accumulation and a compiled returning routine using the existing two-buffer
 loader. Both widths and repeated jobs pass instruction-model tests.
 Native code/L1/Dst ownership qualification and physical correctness/timing
-are NOT finished. This checkpoint remains open until the real comparison.
+for the whole-model returning service are NOT finished. An isolated
+native111 old/new comparison package now passes local qualification;
+its physical test has not run. This checkpoint remains open until that
+real comparison, and whole-model integration remains separate.
 The new operation order differs from old per-weight BF16 rounding;
 local bit tests do not prove model quality.
 

@@ -1,6 +1,7 @@
 /* SPDX-License-Identifier: MIT */
 // Rechecked on every include,including late selector changes.
 #include "PioneerNativeCompactQ4PairIssueRole.h"
+#include "PioneerNativeFactoredQ4CompareRole.h"
 #ifdef PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING
 #if PIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING != 1 \
  || defined(PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE) || defined(PIONEER_Q38_COMPACT_Q4_FPU_STREAM_IMAGE) \
@@ -13,7 +14,7 @@
 #ifdef _KERNEL_MODE
 #if !defined(PIONEER_NATIVE_COMPACT_Q4_STREAM_DIAGNOSTIC) || PIONEER_NATIVE_COMPACT_Q4_STREAM_DIAGNOSTIC != 1 \
  || !defined(TT_PIONEER_DRIVER_RELOAD) \
- || (!defined(PIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING) && PIONEER_DRIVER_BUILD_TAG != 0x2026110600010107ULL)
+ || (!defined(PIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING) && PIONEER_DRIVER_BUILD_TAG != (defined(PIONEER_NATIVE_FACTORED_Q4_COMPARE)?0x2026110600010111ULL:0x2026110600010107ULL))
 #error Exact diagnostic107 kernel identity required
 #endif
 #endif

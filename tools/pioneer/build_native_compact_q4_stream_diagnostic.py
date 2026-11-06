@@ -18,8 +18,9 @@ parser.add_argument('output', type=pathlib.Path)
 selection=parser.add_mutually_exclusive_group()
 selection.add_argument('--timing',action='store_true',help='Distinct107 timed kernel diagnostic;NEVER104 deployment')
 selection.add_argument('--pair-issue',action='store_true',help='Distinct108 paired timed kernel;NEVER107 replay')
+selection.add_argument('--factored-compare',action='store_true',help='Distinct111 old/new arithmetic comparison;NEW L1/code scope')
 args = parser.parse_args()
-if args.pair_issue:args.timing=True
+if args.pair_issue or args.factored_compare:args.timing=True
 assert args.original.is_absolute() and args.original.is_file()
 build, private, output = args.haiku_build, args.private_export, args.output
 assert build.is_absolute() and build.is_dir() and output.is_absolute() and not output.exists() and not output.is_symlink()
@@ -40,13 +41,16 @@ private_unchanged()
 subprocess.run([sys.executable, str(here / 'tests/pioneer_native_compact_q4_stream_export_test.py'), str(private), str(args.original)], check=True)
 output.mkdir(mode=0o700)
 images = {}
-role=108 if args.pair_issue else 107 if args.timing else 104
-image_bytes=7820 if args.pair_issue else 7972 if args.timing else 7644
+role=111 if args.factored_compare else 108 if args.pair_issue else 107 if args.timing else 104
+image_bytes=11792 if args.factored_compare else 7820 if args.pair_issue else 7972 if args.timing else 7644
 image_words=image_bytes//4
 for width, digest in ((5120, 'f67b7b5bc07bddcf5f3ddfccfbe1013c2680650ea1994231565f050d1f0d89c5'),
                       (17408, 'c95e0cc41971b37dd89786a2c3747b6d8ef6ebbde3a2ec837c63198982373b92')):
     directory = output / ('image' + str(width))
-    if args.pair_issue:
+    if args.factored_compare:
+        digest='1e2cc3d675161216bcf5593a79ca483e37c384dab815b34009161cbf36dce280'
+        command=[sys.executable,str(here/'build_q38_factored_q4_compare.py'),str(build),str(directory)]
+    elif args.pair_issue:
         from build_q38_q4_pair_issue import INSPECT_PINS
         digest=INSPECT_PINS[width][0]
         command=[sys.executable,str(here/'build_q38_q4_pair_issue.py'),str(build),str(directory),str(width)]
@@ -66,6 +70,8 @@ header = ('#include <stdint.h>\nstruct PioneerNativeCompactQ4StreamGeneratedImag
           ' static constexpr uint32_t Boot=0x%08x;\n' % int.from_bytes(boot, 'little') +
           ' static unsigned Width(unsigned s){return s<6?5120:s<9?17408:0;}\n'
           ' static uint32_t Word(unsigned s,unsigned i){\n')
+if args.factored_compare:
+    header=header.replace(' static constexpr uint32_t Boot=', ' static constexpr unsigned FactoredComparison=1,NewPhases=2,Accumulator=80;\n static constexpr uint32_t Boot=')
 for width, code in images.items():
     words = [int.from_bytes(code[i:i+4], 'little') for i in range(0,len(code),4)]
     header += (' static const uint32_t code%d[%d]={\n' % (width,image_words))
@@ -89,10 +95,11 @@ common = [cxx, '-std=gnu++17', '-O2', '-Wall', '-Wextra', '-Werror', '-fno-excep
           '-fno-strict-aliasing', '-fno-delete-null-pointer-checks', '-mcmodel=medany', '-fpic', '-D_KERNEL_MODE']
 roles = ['BANKS', 'PANEL', 'AFFINE', 'BLOCK', 'STREAM', 'ROWS', 'COHORT', 'COHORT_SEALED', 'COHORT_PAYLOAD', 'DISPATCH', 'DISPATCH_VECTOR']
 native = ['-DTT_PIONEER_EXPERIMENTAL_Q38_' + name for name in roles]
-tag='2026110600010108' if args.pair_issue else '2026110600010107' if args.timing else '2026110500010104'
+tag='2026110600010111' if args.factored_compare else '2026110600010108' if args.pair_issue else '2026110600010107' if args.timing else '2026110500010104'
 native += ['-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=0x'+tag+'ULL', '-DPIONEER_NATIVE_COMPACT_Q4_STREAM_DIAGNOSTIC=1']
 if args.timing:native.append('-DPIONEER_NATIVE_COMPACT_Q4_STREAM_TIMING=1')
 if args.pair_issue:native.append('-DPIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING=1')
+if args.factored_compare:native.append('-DPIONEER_NATIVE_FACTORED_Q4_COMPARE=1')
 commands = []
 def run(command):
     commands.append(command)
@@ -114,6 +121,11 @@ if args.pair_issue:
     cases += [('missing-pair',['-UPIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING']),
               ('wrong-pair',['-UPIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING','-DPIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING=0']),
               ('old107-tag',['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026110600010107ULL'])]
+if args.factored_compare:
+    cases += [('missing-comparison',['-UPIONEER_NATIVE_FACTORED_Q4_COMPARE']),
+              ('wrong-comparison',['-UPIONEER_NATIVE_FACTORED_Q4_COMPARE','-DPIONEER_NATIVE_FACTORED_Q4_COMPARE=0']),
+              ('old107-tag',['-UPIONEER_DRIVER_BUILD_TAG','-DPIONEER_DRIVER_BUILD_TAG=0x2026110600010107ULL']),
+              ('old108-alias',['-DPIONEER_NATIVE_COMPACT_Q4_PAIR_ISSUE_TIMING=1'])]
 for macro in ('PIONEER_NATIVE_Q4_FPU_DIAGNOSTIC', 'PIONEER_NATIVE_DRAM_MODEL_BAND_DIAGNOSTIC', 'PIONEER_NATIVE_DRAM_MODEL_BAND_ALIGNMENT64',
               'PIONEER_NATIVE_DRAM_LOAD_DIAGNOSTIC', 'PIONEER_NATIVE_DRAM_LOAD_ALIGNMENT64', 'PIONEER_NATIVE_BFP_DIAGNOSTIC',
               'PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC', 'PIONEER_NATIVE_MODEL_BAND_DIAGNOSTIC',
@@ -128,7 +140,8 @@ for label, extra in cases:
                             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True, cwd=output)
     assert result.returncode and any(message in result.stderr for message in ('Build only the exact diagnostic104',
         'Diagnostic104 cannot alias','Exact separate timed compact Q4 diagnostic107 role required','Exact diagnostic107 kernel identity required',
-        'Exact separate paired compact Q4 diagnostic108 role required','Exact diagnostic108 kernel identity required')),label
+        'Exact separate paired compact Q4 diagnostic108 role required','Exact diagnostic108 kernel identity required',
+        'Exact separate factored-Q4 comparison111 role required','Exact comparison111 kernel identity required')),label
 (output / 'driver-role-refusals.txt').write_text('\n'.join('PASS ' + label for label, _ in cases) + '\n')
 wrong = output / 'wrong-image';wrong.mkdir(mode=0o700)
 (wrong / 'PioneerNativeCompactQ4StreamGeneratedImage.h').write_text(header.replace('LayoutRole='+str(role), 'LayoutRole=86'))
@@ -139,6 +152,11 @@ for field, value in (('MetadataFirst=128', 'MetadataFirst=0'), ('MetadataRows=12
     (wrong / 'PioneerNativeCompactQ4StreamGeneratedImage.h').write_text(header.replace(field, value))
     result = subprocess.run(common + native + ['-I' + str(wrong)] + includes + ['-fsyntax-only', str(driver / 'pioneer_native_compact_q4_stream_driver.cpp')], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True, cwd=output)
     assert result.returncode and 'exact compact QCS1 two-width image and Dst scope only' in result.stderr
+if args.factored_compare:
+    for field,value in (('FactoredComparison=1','FactoredComparison=0'),('NewPhases=2','NewPhases=4'),('Accumulator=80','Accumulator=32')):
+        (wrong / 'PioneerNativeCompactQ4StreamGeneratedImage.h').write_text(header.replace(field,value))
+        result=subprocess.run(common+native+['-I'+str(wrong)]+includes+['-fsyntax-only',str(driver/'pioneer_native_compact_q4_stream_driver.cpp')],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,cwd=output)
+        assert result.returncode and 'exact comparison111 changed arithmetic and ownership' in result.stderr
 wrong_data = output / 'wrong-data';wrong_data.mkdir(mode=0o700)
 (wrong_data / 'PioneerNativeCompactQ4StreamData.h').write_text('#include <stdint.h>\nstruct PioneerNativeCompactQ4StreamData {static constexpr unsigned Version=1,Rows=32,Samples=9,Role=86,PreparedBytes=4608;static unsigned Width(unsigned s){return s<6?5120:17408;}static unsigned Words(unsigned s){return Width(s)/256*1280;}static uint32_t Word(unsigned,unsigned){return 0;}};\n')
 

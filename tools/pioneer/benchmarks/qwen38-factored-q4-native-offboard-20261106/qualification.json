@@ -1,0 +1,45 @@
+{
+  "scope": "Native111 isolated old/new matrix package LOCAL qualification. No physical trial yet.",
+  "base": "de91ff9830dd3c61c2239e077107fb35098012a0",
+  "actualExits": {
+    "main": {
+      "session": 96432,
+      "exit": 0
+    },
+    "clean": {
+      "session": 35601,
+      "exit": 0
+    }
+  },
+  "consumedSources": 300,
+  "sourceDifferences": [
+    "src/add-ons/kernel/drivers/misc/tenstorrent_pci_probe.cpp — pre-existing 33-line dirty change, not included in checkpoint; compiled native/control bytes nevertheless identical. Clean build uses committed base plus scoped changes."
+  ],
+  "binaryEquality": {
+    "native": true,
+    "client": true,
+    "program": true,
+    "runnerStdout": true
+  },
+  "stderrEmpty": true,
+  "nativeSha": "1050163f12ecf72ffe123cea91451dbb8995fcedc2df12e5fe96083e4dd9438d",
+  "clientSha": "f8a1b2ec227aaae16f3d74b07aa03c36294e6002b08389cdbfc7714100362934",
+  "program": {
+    "bytes": 11792,
+    "sha": "1e2cc3d675161216bcf5593a79ca483e37c384dab815b34009161cbf36dce280"
+  },
+  "controlSha": "2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc",
+  "privateHeaderPins": {
+    "Data": "4db508f0cecda10062b7373d43f4b6e7308ad8cdcff03c361759ac0523a896b1",
+    "Metadata": "c856c1747045a50c43e5b1f47a7e75999526bbc61960eed075246423392872de"
+  },
+  "plannedAdmission": {
+    "stage": "pioneer-native-factored-q4-compare111-a",
+    "normalBefore": 50,
+    "candidate": 51,
+    "normalAfter": 52,
+    "driverTag": "2026110600010111"
+  },
+  "physicalTrial": false,
+  "modelTokensPerSecond": null
+}

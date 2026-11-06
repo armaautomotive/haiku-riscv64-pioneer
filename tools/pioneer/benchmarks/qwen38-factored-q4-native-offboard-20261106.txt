@@ -1,0 +1,99 @@
+Factored Q4 comparison111: native package qualified LOCALLY
+===========================================================
+
+November 6, 2026. Base de91ff9830dd3c61c2239e077107fb35098012a0.
+No physical trial, native installation, model quality or TPS result yet.
+
+Package
+--------
+
+One fixed program runs the old compact per-weight BF16 matrix and the new
+factored-Q4 matrix on the SAME original32-row full-K weights/BF16 input,
+same core/context, same two-buffer loader and same GDDR/NoC layout.
+K5120 and17408; representative fixed original-model bands0 and6 planned.
+Old reference and new separate-FP32 reference are independent predictions;
+the new answer is NOT compared to old bit patterns or substituted by CPU.
+
+This diagnostic intentionally uses existing flat compact DRAM inputs,
+not the returning whole-model cached service's ROOT input. On this isolated
+core129, that ROOT input address would alias its own buffer1. The matrix
+compute producer is unchanged from the new returning routine.
+This is a matrix experiment,NOT whole-model integration or a comparison
+against the fastest vector92 full-model implementation.
+
+New native111 role/opcode/tag,16KiB code scope and148544B L1 journal cover
+the temporary native/ones tiles and preserve existing held-reset/PCI/VM/
+thread/FD/generation/clock/NIU/FIFO/GDDR lifetimes. Full arbitrary L1/GDDR
+contents are restored only after explicit known-complete END.
+Final packed native bytes,headers,exponents and ones are audited too,
+not exempted as mutable scratch. Unknown retains resources;no retry/reset.
+
+Actual local qualification
+---------------------------
+
+Main96432 and clean35601 ACTUALLY exited0;11 child exits0 each,stderr0.
+Driver/client/RV32 program and runner stdout match byte-for-byte.
+300 consumed project sources recorded. The only main/clean source
+difference is the pre-existing33-line dirty tenstorrent_pci_probe.cpp:
+it is excluded from publication;native and default-control binaries are
+nevertheless identical. Other pre-existing dirty work remains untouched.
+Clean export adds the exact tracked Sg2042RootPolicy.h dependency.
+
+Actual compiled old/new jobs on shared canonical L1/physical Dst/NoC:
+both widths,128 final words match separate original-byte references;
+observed stack/touched624B. Timer clocks here are SYNTHETIC,not card speed.
+Actual expanded journal closes/restores both widths;9 mutations in new
+code/temporary tiles/output/timing retain resources with no further IO.
+Actual native/control bodies:333 valid/798 refused endpoint fixtures,
+including private journal binding,VM/PCI/FD/thread/lock/epoch/lifetime.
+These endpoint fixtures do not fabricate a successful ARC/hardware proof.
+PRIVATE actual-model test authenticates SAME-open original SHA/all9
+payloads/inputs and fresh old/new arithmetic;actual compiled lease returns
+all128 correct words for the two widths and restores whole L1/GDDR state.
+
+SDK native driver links,48 source-role refusals and wrong placement/data/
+new-arithmetic-scope refusals pass;legacy entry stays NULL.
+SDK generation51 client links,17 source/Work/generation/role refusals pass.
+Parent DATA gate accepts complete receipts and rejects missing/changed
+ones. It executes NO hardware during tests.
+Old timed5120 image remains pinned/byte-identical;default control remains
+2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc.
+
+Native1050163f12ecf72ffe123cea91451dbb8995fcedc2df12e5fe96083e4dd9438d
+Client f8a1b2ec227aaae16f3d74b07aa03c36294e6002b08389cdbfc7714100362934
+Program11792B:
+1e2cc3d675161216bcf5593a79ca483e37c384dab815b34009161cbf36dce280
+
+Qualification corrections,not hidden passes
+-------------------------------------------
+
+First aggregate runner found a consumed PCI policy header outside the
+snapshot/export;its11 children passed but final audit failed. Added exact
+tracked dependency and expanded the snapshot. No hardware ran.
+Main/clean client originally differed due to an absolute assertion filename
+in PioneerBlackholeFma.h. A file-prefix-map makes it reproducible without
+altering arithmetic/validation. Final package pins are checked by the runner.
+
+Next / unchanged limits
+------------------------
+
+Publish this checkpoint,stage exact bytes in UNUSED111-a,read back whole
+files,then invoke the pinned one-shot parent. Fresh read-only Pioneer
+check showed normal041/gen50,64CPUs/137034936320B RAM,idle,no project job.
+This is admission evidence at that check,not permission to ignore later state.
+Planned sequence50 ->111/gen51 ->normal52;no SD/power/app change needed.
+
+Two card cycle measurements will NOT establish model TPS,repeatability,
+broad model quality or20tokens/sec. Best saved model rate remains0.173,
+latest0.082. Checkpoint2 stays open until physical correctness/timing.
+
+Reproduce LOCAL package qualification (fresh absolute output directory)
+------------------------------------------------------------------------
+
+python3 tools/pioneer/tests/run_pioneer_native_factored_q4_compare_tests.py \
+ /Volumes/HaikuBuildLocal/generated.riscv64 PRIVATE_COMPACT104_EXPORT \
+ ORIGINAL_QWEN27_GGUF /private/tmp/fresh-native111-qualification 51
+
+The private export remains required;no learned headers/model/binary is
+published. Archive holds whole text receipts,source inventories and actual
+exits only. Closed stages81..110-a must never be replayed.

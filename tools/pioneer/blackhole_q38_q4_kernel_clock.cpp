@@ -1,16 +1,21 @@
 /* SPDX-License-Identifier: MIT */
 // Timed BUILD only;not a native driver,model or Work selector.
 #if !defined(__riscv) || __riscv_xlen!=32 \
- || !defined(PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE) || PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE!=1 \
- || !defined(PIONEER_Q38_COMPACT_Q4_FPU_STREAM_IMAGE) || PIONEER_Q38_COMPACT_Q4_FPU_STREAM_IMAGE!=1 \
- || !defined(PIONEER_Q4_FPU_COMPACT_STREAM_K) \
- || (PIONEER_Q4_FPU_COMPACT_STREAM_K!=5120 && PIONEER_Q4_FPU_COMPACT_STREAM_K!=17408) \
  || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
  || defined(__FAST_MATH__)
 #error Exact separate Q4 kernel timing BUILD only
+#endif
+#ifdef PIONEER_Q38_FACTORED_Q4_COMPARE_BUILD
+#if PIONEER_Q38_FACTORED_Q4_COMPARE_BUILD!=1 || defined(PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE) || defined(PIONEER_Q38_COMPACT_Q4_FPU_STREAM_IMAGE) || defined(PIONEER_Q4_FPU_COMPACT_STREAM_K)
+#error Exact separate comparison clock role only
+#endif
+#else
+#if !defined(PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE) || PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE!=1 || !defined(PIONEER_Q38_COMPACT_Q4_FPU_STREAM_IMAGE) || PIONEER_Q38_COMPACT_Q4_FPU_STREAM_IMAGE!=1 || !defined(PIONEER_Q4_FPU_COMPACT_STREAM_K) || (PIONEER_Q4_FPU_COMPACT_STREAM_K!=5120 && PIONEER_Q4_FPU_COMPACT_STREAM_K!=17408)
+#error Exact separate Q4 kernel timing BUILD only
+#endif
 #endif
 typedef __UINT32_TYPE__ uint32_t;
 extern "C" __attribute__((noinline,noclone)) unsigned q38_q4_kernel_clock(uint32_t* out){

@@ -62,7 +62,8 @@ Locally completed:
     both 5,120/17,408 input widths and repeated jobs without context reset.
 
 NOT completed:
-  * Native ownership/code/memory qualification for the new returning routine.
+  * Native integration of the whole-model returning service. The isolated
+    native111 comparison package is locally qualified, not a Work release.
   * Physical numerical checks and old/new matrix timing on the P100A.
   * Whole-model quality and throughput measurement of the new algorithm.
 
@@ -92,11 +93,13 @@ This normal driver is NOT the faster experimental tag 92.
 The latest physical trial closed and independently restored normal.
 All four recorded trial processes were independently confirmed absent.
 
-This local operator checkpoint made no Pioneer connection, installation, Assistant,
-kernel/network change, relay action, SD/mains/hardware change.
-Local main and clean-export operator/returning suites exited 0. All 87
-consumed project sources and both compiled boot/text binaries match.
-These are software-model tests ONLY, not a current hardware test.
+Native111 preparation used read-only Pioneer checks: normal041/gen50,
+all64 CPUs/full RAM and no project inference job. No installation,
+Assistant/kernel/network change, relay action, SD/mains/hardware change.
+Local main and clean-export native111 suites exited0;driver,client and
+card program binaries match. Their300-source inventories differ only in
+the preserved pre-existing dirty probe.cpp,with identical compiled bytes.
+These are local tests ONLY. The physical comparison has not run yet.
 
 Historical stages 81 through 110-a are SPENT: never replay, repin identities
 or clear once markers. Future hardware testing needs a fresh identity and
@@ -117,3 +120,5 @@ New packing/dot/sum, software-model tests only:
   benchmarks/qwen38-factored-q4-tile-offboard-20261106.txt
 New complete arithmetic/returning routine, software-model tests only:
   benchmarks/qwen38-factored-q4-returning-offboard-20261106.txt
+Isolated native111 old/new comparison package, qualified locally only:
+  benchmarks/qwen38-factored-q4-native-offboard-20261106.txt

@@ -126,9 +126,34 @@ public:
 	template<class Image> uint32_t Stage(unsigned index)const {
 		const unsigned a=L1Address(index);
 		if(a==0x6000)return Image::Boot;
-		if(a>=0x70000 && a<0x72000)return Image::Word(selection,(a-0x70000)/4);
+		if(a>=0x70000 && a<L::CodeEnd)return Image::Word(selection,(a-0x70000)/4);
 		if(a>=0x74000 && a<0x74020)return frame[(a-0x74000)/4];
 		return a>=L::Output && a<L::Output+256?0x7fc00001:0;
+	}
+	template<class Image,class Data> uint32_t FinalWord(unsigned index)const {
+		const unsigned a=L1Address(index);
+#ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
+		// Actual last group's packed unsigned Q4 codes,not an unaudited
+		// mutable scratch exemption. Constants/header/exponents are exact too.
+		for(unsigned slot=0;slot<2;slot++) {
+			const unsigned tile=slot?0x88800:0x88000;
+			if(a>=tile-16 && a<tile)return 0;
+			if(a>=tile && a<tile+64)return 0x82828282;
+			if(a>=tile+64 && a<tile+1088) {
+				if(tile==0x88800)return 0x08080808;
+				uint32_t word=0;const unsigned block=V::Width(selection)/256-1;
+				for(unsigned b=0;b<4;b++) {
+					const unsigned i=a+b-tile-64,face=i/256,k=i/16%16,c=i%16;
+					const unsigned at=(face/2)*2048+(96+(face%2)*16+k)*16+c;
+					const unsigned raw=Data::Word(selection,block*1152+at/4)>>((at%4)*8);
+					word|=((raw>>4)&15)*8<<(b*8);
+				}return word;
+			}
+		}
+#endif
+		const unsigned at=L::FinalPayloadIndex(V::Width(selection),a);
+		if(at!=UINT32_MAX)return Payload<Data>(selection,at);
+		return Stage<Image>(index);
 	}
 	const PioneerNativeCompactQ4StreamResult& Result()const{return result;}
 	bool BoundTo(const tt_dram_samples_result* p,const uint32_t* a,unsigned n,const uint32_t* b,unsigned m)const {
@@ -137,6 +162,9 @@ public:
 	void Abandon(){if(owned){failed=true;result.compute.state=PIONEER_NATIVE_BFP_UNKNOWN;result.compute.cold=1;}}
 	template<class IO,class Image,class Data> bool Run(IO& io,const tt_dram_samples_result& baseline,unsigned sample) {
 		static_assert(Image::Samples==9 && Image::Rows==32 && Image::Phases==4 && Image::LayoutRole==V::Role && Image::Bytes==V::ImageBytes && Image::MetadataFirst==128 && Image::MetadataRows==128 && Image::DstLast==255,"exact compact QCS1 two-width image and Dst scope only");
+#ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
+		static_assert(Image::FactoredComparison==1 && Image::NewPhases==2 && Image::Accumulator==80,"exact comparison111 changed arithmetic and ownership");
+#endif
 		static_assert(Data::Version==1 && Data::Rows==32 && Data::Samples==9 && Data::Role==104 && Data::PreparedBytes==4608,"exact compiled diagnostic104 data only");
 		if(attempted || sample>=V::Samples)return false;
 		attempted=true;result.compute.state=PIONEER_NATIVE_BFP_REFUSED;
@@ -221,8 +249,8 @@ public:
 		// BEFORE overwriting evidence,verify code/boot/frame plus BOTH final
 		// producer slots,ALL headers/gaps/shared zero bytes and captured outputs.
 		for(unsigned i=0;i<L1Words;i++)if(L::Immutable(L1Address(i))) {
-			unsigned a=L1Address(i),at=L::FinalPayloadIndex(V::Width(selection),a);
-			uint32_t expected=at==UINT32_MAX?Stage<Image>(i):Payload<Data>(selection,at),got=0;
+			unsigned a=L1Address(i);
+			uint32_t expected=FinalWord<Image,Data>(i),got=0;
 			if(!io.NativeL1Read(a,got) || got!=expected)return Fail(io);
 		}
 		for(unsigned i=0;i<64;i++){uint32_t v=0;if(!io.NativeL1Read(L::Output+i*4,v) || v!=result.compute.output[i])return Fail(io);}
@@ -257,6 +285,12 @@ public:
 		result.clock_restored=result.compute.tlb_restored=1;result.phase=10;result.compute.state=PIONEER_NATIVE_BFP_CLOSED;owned=false;return true;
 	}
 };
-static_assert(PioneerNativeCompactQ4StreamLease::L1Words*4==107632 &&
+static_assert(PioneerNativeCompactQ4StreamLease::L1Words*4==
+#ifdef PIONEER_NATIVE_FACTORED_Q4_COMPARE
+ 148544
+#else
+ 107632
+#endif
+ &&
  PioneerNativeCompactQ4StreamLease::MaxDramWords*4==348160,"bounded separate heap journals");
 #endif

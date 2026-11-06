@@ -98,7 +98,7 @@ int main(int argc,char** argv) {
 	}
 	{
 		NativeFixture f;f.Map();uint32 v=0;const auto before=ioCalls;
-		for(unsigned a:{1U,0x5ffcU,0x6004U,0x72000U,0x74020U,L::DataBegin-4,L::DataEnd,0x17ffccU,UINT32_MAX}) {
+		for(unsigned a:{1U,0x5ffcU,0x6004U,L::CodeEnd==L::Frame?L::Frame+32:L::CodeEnd,0x74020U,L::DataBegin-4,L::DataEnd,0x17ffccU,UINT32_MAX}) {
 			assert(!N::L1Address(a) && !f.c->io.NativeL1Read(a,v) && !f.c->io.NativeL1Write(a,1));refused++;
 		}
 		for(unsigned a:{0x03fffffcU,0x04016800U,0x040ffffcU,0x04102800U,0x04000001U,UINT32_MAX}) {
@@ -115,7 +115,7 @@ int main(int argc,char** argv) {
 	}
 	{
 		NativeFixture f;f.Map(4);uint32 v=0;
-		for(unsigned a:{0x6000U,0x70000U,0x71ffcU,0x6e000U,0x6fffcU,0x74000U,0x7401cU,L::DataBegin,0x90000U,0xa0000U,0xa4000U,0xa6000U,L::DataEnd-4,L::Output,L::Output+252,0x17ffc0U,0x17ffc8U}) {
+		for(unsigned a:{0x6000U,0x70000U,L::CodeEnd-4,0x6e000U,0x6fffcU,0x74000U,0x7401cU,L::DataBegin,0x90000U,0xa0000U,0xa4000U,0xa6000U,L::DataEnd-4,L::Output,L::Output+252,0x17ffc0U,0x17ffc8U}) {
 			assert(f.c->io.NativeL1Write(a,a^0x12340000) && f.c->io.NativeL1Read(a,v) && v==(a^0x12340000));valid++;
 		}
 		f.Result().phase=8;f.c->resetStage=4;assert(f.c->io.NativeL1Write(0x6000,0x11223344));valid++;
