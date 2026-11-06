@@ -1,7 +1,7 @@
 P100A / Qwen27B -- read this first
 ================================
-Updated after the 2026-11-06 performance-budget audit. Saved evidence,
-NOT live telemetry. No new hardware inference was run during that audit.
+Updated after the 2026-11-06 offline Q4 timer qualification. Saved evidence,
+NOT live telemetry. No new hardware inference was run during that work.
 Overall goal unchanged: usable self-hosted 27B, targeting 20 tokens/sec.
 That goal is NOT achieved. Small milestones below do not redefine success.
 
@@ -66,7 +66,7 @@ Small milestones, in order
    the normal driver. It has NOT been promoted to Assistant.
    Preparation and gather/wait include mixed controller/worker costs, not
    isolated tensor-compute time. Matrix preparation is the largest phase
-   at30.38%;more detailed cost attribution within it is the next step.
+   at30.38%;kernel/transport costs remain mixed,not raw card capacity.
    Offline instruction counts are a lead, not physical timing or a speedup.
 
 4. IN PROGRESS: Bounded capability check; budget analysis complete.
@@ -78,6 +78,10 @@ Small milestones, in order
    a perfect one-stream schedule has a conditional16.48tok/s Q4-only roof.
    This is analytical,NOT a new hardware rate or a universal card limit.
    NEXT: isolated Q4 kernel timing,then reduce its conversion/issue work.
+   The separate timed kernel now passes offline original-weight tests:
+   576 exact outputs,main/clean builds,unavailable-clock/fault handling.
+   It has NOT run on the card;its distinct native diagnostic is next.
+   See benchmarks/qwen38-q4-kernel-timing-offboard-20261106.txt.
    Controller-only tuning cannot make that unchanged nominal budget hit20.
    Keep Work free of CPU reference computation;keep Debug separate.
    Publish before/after real-model results before any Assistant promotion.

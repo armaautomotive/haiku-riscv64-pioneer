@@ -1,0 +1,74 @@
+Isolated Q4 kernel timer -- OFFBOARD implementation qualified
+============================================================
+2026-11-06. Basebaeadf1cb2 plus11 scoped source changes. No hardware
+timing or inference speed result exists for this new program yet.
+20tokens/sec remains unmet;this is not a performance improvement.
+
+Implemented
+-----------
+Explicit BUILD-only PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE=1 creates QCT1,
+not104's QCS1. It wraps each of the two complete32-output full-K jobs in
+bounded read-only mcycleh/mcycle/mcycleh sampling. Interval includes the
+on-card loader/setup/prefetch/NoC/math/drains,not host authentication,
+staging,output readback or cleanup. Same numerical compute templates,
+packets,barriers,counters,poll limits,producer slots and operands.
+This is not an isolated FPU-only measurement or all119-worker benchmark.
+The diagnostic's input is in GDDR;the full model's cached service reads
+its vector from ROOT L1,so future timings must retain that distinction.
+
+Two eight-word records occupy0x98100..0x98140,already inside the complete
+old L1 journal. They do NOT fit104's immutable-zero policy:old104 must
+NEVER run these images. A separate native identity/interface is still
+required to capture/verify/restore the records safely. No owner,staging
+script,installed driver or Work selector accepts this new BUILD here.
+Clock failure/backward/zero yields explicit unavailable DATA. It neither
+changes math nor supplies a completion/cleanup grant. No cycles/seconds
+or tokens/sec conversion is made from a synthetic clock.
+
+Actual validation
+-----------------
+Fresh main and independent clean export EACH actually exit0:14 children
+each,all child stderr empty. All64 transitive project sources frozen
+before/after and equal between trees. Clean uses Git archivebaeadf1cb2
+plusONLY11 scoped overlays;no unrelated dirty native/resident WIP copied.
+All12 complete GPU artifacts (timed and untimed boot/text/ELF,2 widths)
+are byte-identical. Every child's whole stdout also matches.
+
+Actual linked RV32/NoC/SFPU/FPU execution,not an injected result:
+ 8 valid clock cases:K5120/17408 times monotonic/unstable/backward/zero.
+ All64 outputs exact per case;12 CSR reads normally,48 on exhausted
+ bounded retries;16 timer stores,observed peak stack464B in8KiB scope.
+ 57 timing-DATA checks;26 hardware-domain fault fixtures park with no
+ subsequent requested IO,4 numerical corruptions remain mismatches.
+ 34 wrong-role/CSR/bounds refusals. Only3 actual CSRRS words are allowed,
+ inside the linked sampler,rs1=x0,rd nonzero,exactb80/b00/b80 sequence.
+ Original fixed compact and expanded kernels reproduce their old pins;
+ both compact kernels run again on the original strict CSR-free machine.
+
+The full SAME-open original19GB GGUF is SHA-authenticated and its source
+identity remains stable. Nine first/middle/last gate/up/down bands execute
+the timed programs:576 exact outputs,18 complete full-K jobs,2654208
+original Q4 weights. Diagnostic inputs,NOT full-model prompt states or
+broad model-quality acceptance. No learned payload or binary is committed.
+
+Timed GPU text7972B of8192B,ELF20300B,boot4B unchanged:
+ K5120 text8156dd4e49912270887cf45f98e9b7c2892a0549a72c909dbefc502aa2205512
+ K17408 text9723a83e4550cd66e36613f49d0959251ac0d5f755b903568e8725d4a345ac3f
+Native acceptance MUST NOT follow from BUILD pins or these host tests.
+
+Reproduce (host only)
+---------------------
+python3 tools/pioneer/tests/run_pioneer_q38_q4_kernel_timing_tests.py \
+ /Volumes/HaikuBuildLocal/generated.riscv64 \
+ /Users/arma/Documents/ChatGPT/HaikuOS/generated.pioneer/models/Qwen3.8-27B-Q4_K_M.gguf \
+ /private/tmp/NEW-Q4-TIMING-QUALIFICATION-DIRECTORY
+python3 tools/pioneer/benchmarks/qwen38-q4-kernel-timing-offboard-20261106/verify_evidence.py
+The output directory must be new. First scratch builds failed on the
+freestanding stdint include and missing sampler-only Zicsr assembler
+selection;both were fixed before qualification. An initial tiny DATA
+test compile needed its explicit initializer_list include. Failed scratch
+attempts were not counted as passed and no hardware action followed them.
+
+Next:separate native timed diagnostic,exact record preservation and
+closed-lifecycle tests,then a fresh one-shot card run. Do not replay104-a,
+105-a,106-a or another spent stage;do not replace Assistant with this test.

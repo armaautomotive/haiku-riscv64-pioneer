@@ -15,6 +15,13 @@
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQ38Q4FpuCompactStreamLoader.h"
 #include "PioneerQ38Q4FpuCompactStreamCompute.h"
+#ifdef PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE
+#if PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE != 1
+#error Exact Q4 timing BUILD selection required
+#endif
+#include "PioneerQ38Q4KernelTiming.h"
+extern "C" unsigned q38_q4_kernel_clock(uint32_t*);
+#endif
 static_assert(PioneerQ38Q4FpuCompactStreamLayout::Width(PIONEER_Q4_FPU_COMPACT_STREAM_K),"exact Q4 model widths only");
 extern "C" void q4_fpu_compact_stream_fault() __attribute__((noreturn));
 // Compiler aggregate initialization ONLY. Word stores are restricted to the
@@ -50,9 +57,18 @@ struct Emitter {
 }
 extern "C" unsigned q4_fpu_compact_stream_main() {
 	unsigned frame[8];for(unsigned i=0;i<8;i++)frame[i]=Words(L::Frame)[i];
-	if(frame[0]!=0x31534351 || frame[1]!=1 || frame[2]!=PIONEER_Q4_FPU_COMPACT_STREAM_K
+	if(frame[0]!=
+#ifdef PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE
+		0x31544351
+#else
+		0x31534351
+#endif
+		|| frame[1]!=1 || frame[2]!=PIONEER_Q4_FPU_COMPACT_STREAM_K
 		|| !L::Route(frame[3]) || !frame[4] || frame[5] || frame[6] || frame[7])q4_fpu_compact_stream_fault();
 	for(unsigned pass=0;pass<2;pass++) {
+#ifdef PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE
+		uint32_t start[2],end[2];const bool startValid=q38_q4_kernel_clock(start);
+#endif
 		IO io;Emitter emitter;PioneerQ38Q4FpuCompactStreamLoader loader;
 		if(!loader.Begin(io,PIONEER_Q4_FPU_COMPACT_STREAM_K,frame[3]) || !loader.Open(io,0,0))q4_fpu_compact_stream_fault();
 		for(unsigned slice=0;slice<2;slice++)if(!loader.Slice(io))q4_fpu_compact_stream_fault();
@@ -70,6 +86,11 @@ extern "C" unsigned q4_fpu_compact_stream_main() {
 			if(!loader.Release(block,buffer) || (next && !loader.Wait(io)))q4_fpu_compact_stream_fault();
 		}
 		if(!loader.Complete(io))q4_fpu_compact_stream_fault();
+#ifdef PIONEER_Q38_COMPACT_Q4_TIMING_IMAGE
+		const bool endValid=q38_q4_kernel_clock(end);uint32_t record[8];
+		PioneerQ38Q4KernelTiming::Record(PIONEER_Q4_FPU_COMPACT_STREAM_K,pass,start,startValid,end,endValid,record);
+		for(unsigned i=0;i<8;i++)Words(PioneerQ38Q4KernelTiming::Address+pass*32)[i]=record[i];
+#endif
 		for(unsigned row=0;row<2;row++)for(unsigned col=0;col<16;col++)
 			Words(L::Output+pass*128)[row*16+col]=Words(0xffbd8000+(row?40:32)*64)[col];
 		asm volatile("fence":::"memory");

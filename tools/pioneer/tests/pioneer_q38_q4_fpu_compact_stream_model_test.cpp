@@ -1,7 +1,14 @@
 /* SPDX-License-Identifier: MIT */
 // Private full-K original samples;no learned bytes or predictions printed.
 #define PIONEER_Q4_COMPACT_STREAM_IMAGE_ONLY
+#ifdef PIONEER_Q4_KERNEL_TIMING_MODEL_TEST
+#define PIONEER_Q4_KERNEL_TIMING_MACHINE_ONLY
+#include "pioneer_q38_q4_kernel_timing_image_test.cpp"
+using TestedCompactStream=Q4TimingRV32;
+#else
 #include "pioneer_q38_q4_fpu_compact_stream_image_test.cpp"
+using TestedCompactStream=CompactStreamRV32;
+#endif
 #include "../PioneerQwen38Gguf.h"
 #include "../PioneerModelWeightCache.h"
 #include <fcntl.h>
@@ -31,7 +38,7 @@ int main(int argc,char** argv){
    for(unsigned block=0;block<k/256;block++)for(unsigned row=0;row<32;row++)
     assert(source->ReadPacked(index,(uint64_t(first+row)*(k/256)+block)*144,144,data.blocks[block].original.data()+row*144,144));
    assert(source->Stable() && source->Epoch()==epoch);data.Refresh();
-   auto image=std::make_unique<CompactStreamRV32>(k==5120?argv[1]:argv[2],k);data.Stage(image->bus);
+   auto image=std::make_unique<TestedCompactStream>(k==5120?argv[1]:argv[2],k);data.Stage(image->bus);
    assert(image->Execute() && image->Matches(data.expected));cases++;
    printf("PASS_PRIVATE_ACTUAL_COMPACT_FULL_K tensor%u width%u first%u twoJobs_all64WordsExact_persistentAccumulator_actualNoC_L1_RV32;NO_REAL_PROMPT_QUALITY_OR_SPEED\n",index,k,first);
   }
