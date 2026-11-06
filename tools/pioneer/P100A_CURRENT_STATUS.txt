@@ -1,24 +1,26 @@
 P100A / Qwen27B -- read this first
 ================================
-Updated during the admitted106-a benchmark. Saved observation, NOT live telemetry.
+Updated after the completed106-a benchmark. Saved evidence, NOT live telemetry.
 Overall goal unchanged: usable self-hosted 27B, targeting 20 tokens/sec.
 That goal is NOT achieved. Small milestones below do not redefine success.
 
-Benchmark in progress (2026-11-06 about06:06 UTC)
-------------------------------------------------
-One controlled32-output request is ACTIVE in stage106-a. Driver106/generation41
-is loaded; the model is authenticating. Parent36443, client36527 and worker36528
-were observed live. Normal-driver restoration is PENDING until clean completion.
-No new tokens/sec or completed-model result exists. Do NOT restart/replay106-a,
-launch another GPU job or query device/admin endpoints while this job is live.
-Monitor the same processes/logs; timeout is not terminal. Stage106-a is spent.
-Hardware-test source is3158041e2a71c465792e2b007cccd332681d51a2 on GitHub.
+Latest completed benchmark
+--------------------------
+32 outputs from31 prompt tokens on the actual P100A,without CPU inference.
+Measured post-prompt count rate:0.078459792..0.078460452 tokens/sec (about
+12.7 seconds per generated step). This is SLOWER than older103's0.16436tok/s.
+Actual card timing:matrix preparation30.38%,other recurrent work22.20%,matrix
+gather/wait21.97%. These mixed phases are not isolated tensor-compute times.
+The job exited0 and normal041/tag12/gen42 was independently verified restored:
+64 CPUs,full RAM and unchanged Assistant/runtime files. No live job remains.
+Stage106-a is spent forever. Hardware source is3158041e2a71c465792e2b007cccd332681d51a2.
 
 What works
 ----------
 The complete 27B model has executed on the actual P100A without CPU model
-inference. The last completed experiment returned four expected tokens:
-"Hello! How can". This proves one complete request, not broad correctness.
+inference. The latest experiment returned32 output tokens counting from1
+through14;the earlier short test returned "Hello! How can". These prove
+complete requests, not broad correctness.
 The experiment ended cleanly and restored the normal driver. Its separate
 postflight verified 64 CPUs, 137034936320 bytes RAM and unchanged Assistant
 and runtime files. There were no live hardware jobs at that checkpoint.
@@ -27,7 +29,7 @@ What does NOT work yet
 ---------------------
 Usable speed is not delivered. The last measured older path achieved about
 0.16436 tokens/sec after the prompt (about six seconds per output token).
-The newer BF16 path has no comparable warm-generation rate yet. Its short
+The BF16 path now has the slower generation measurement above. Its earlier
 prompt-plus-four-output test took 216.622 seconds versus 175.251 previously:
 about 24% LONGER, not a speedup. Neither interval is warm tokens/sec.
 The slower experimental candidate has NOT replaced Assistant's backend.
@@ -42,7 +44,7 @@ Small milestones, in order
    tests passed. The saved hardware-result verifier also passed again.
    No installation, SSH, power action or new inference was performed.
 
-2. RUNNING: Comparable generation benchmark.
+2. PARTIAL: Generation rate measured; finer startup timing pending.
    One public fixed prompt, requesting up to 32 output tokens. Report actual
    output count, loading time, first-token time and post-prompt rate separately.
    If the model stops early or timing is unavailable, say so; invent no rate.
@@ -50,19 +52,23 @@ Small milestones, in order
    The distinct tag106 driver, worker and 32-output launcher now build and
    pass offline integration checks. Main/clean artifact hashes match;
    the original105 rollback artifacts still match their hardware trial.
+   The actual post-prompt rate is now recorded. Exact first-token latency
+   and isolated loading time were NOT separately captured;the next planned
+   optimization run should add those timestamps,not invent them afterward.
 
-3. PENDING: Physical bottleneck measurement.
+3. DONE: Initial physical phase breakdown.
    Measure controller preparation, dispatch, completion wait and computation.
    Timing firmware now builds identically in main and clean source copies;
    its observer DATA and compiled helper tests pass offline. It is now
    bound to the separate tag106 native/USER subject, with held-only reads.
-   It is installed for the active controlled test; completed measurements
-   remain pending. It has NOT been promoted to Assistant.
+   It completed the controlled32-output test and was removed in favor of
+   the normal driver. It has NOT been promoted to Assistant.
    Preparation and gather/wait include mixed controller/worker costs, not
-   isolated tensor-compute time. Hardware measurement remains pending.
+   isolated tensor-compute time. Matrix preparation is the largest phase
+   at30.38%;more detailed cost attribution within it is the next step.
    Offline instruction counts are a lead, not physical timing or a speedup.
 
-4. PENDING: One targeted optimization, then the same benchmark.
+4. NEXT: Optimize measured matrix-preparation overhead, then benchmark.
    Publish before/after measurements and correctness results, even if slower.
    Keep Work free of CPU reference computation; keep Debug separate.
    Reassess feasibility from measurements rather than promise 20 tokens/sec.
@@ -92,13 +98,14 @@ Evidence and work separation
 Clean rebuild: benchmarks/qwen38-clean-checkpoint-20261105/
 Timing firmware: benchmarks/qwen38-bf16-timing-offboard-20261105.txt
 Timing integration: benchmarks/qwen38-bf16-profile-native-offboard-20261105.txt
+Latest real result: benchmarks/qwen38-bf16-profile-full-physical-20261105.txt
 Actual card run: benchmarks/qwen38-bf16-full-physical-20261105.txt
 Full result audit:
-  python3 tools/pioneer/benchmarks/qwen38-bf16-full-physical-20261105/verify_evidence.py
+  python3 tools/pioneer/benchmarks/qwen38-bf16-profile-full-physical-20261105/verify_evidence.py
 Checkpoint host tests:
   python3 tools/pioneer/tests/pioneer_qwen27_checkpoint_test.py
 
-The qualified timing BUILD is separate from the hardware-tested checkpoint.
+The timed hardware-tested candidate is separate from the non-timing baseline.
 Unrelated earlier experiments remain untouched. The baseline excludes them
 by exporting the fixed Git commit, not by deleting or moving user work.
 The current worktree is intentionally NOT called clean.

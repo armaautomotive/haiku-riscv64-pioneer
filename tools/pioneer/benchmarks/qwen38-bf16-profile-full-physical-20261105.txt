@@ -1,0 +1,88 @@
+BF16 tag106 -- complete real27B counting run and physical phase breakdown
+======================================================================
+Hardware source3158041e2a71c465792e2b007cccd332681d51a2.
+One controlled106-a cohort,normal40 -> timed41 -> normal42;CLOSED0.
+20tokens/sec remains UNMET. This candidate is NOT a speed improvement.
+
+Measured result
+---------------
+31 prompt tokens,32 output tokens,62 committed model positions. Public
+counting answer is 1 through14 separated by newlines (32 bytes). All model
+inference ran on P100A;CPU vocabulary/file/lifecycle/observation only,no CPU
+inference context,numerical reference or fallback. One prompt is NOT broad
+model-quality proof. Full upload19399024640B in2253 progress events.
+
+Post-prompt observed count-rate bounds:
+0.078459792 .. 0.078460452 tokens/sec.
+31 committed steps in395103510 .. 395106832 microseconds;7586 observations.
+Raw host timestamp intervals:
+175546468320/175546469980 -> 175941573490/175941575152 microseconds.
+These bounds describe observation-window uncertainty,not statistical
+confidence or isolated per-token latency. Rough reciprocal:12.745 seconds
+per generated step. Prompt+generation791.024s;Generate total2583.803s includes
+upload/startup/cleanup,with source authentication/vocabulary before that total.
+Exact first-token latency and isolated loading time were not separately
+recorded. Do not infer them from sparse LIVE observations or total-minus-rate.
+
+Older fixed-config103 matched counting test:0.164361584..0.164365058tok/s,
+same31-prompt/32-output/62-position geometry and exact answer. Different
+integer/prepared implementation;one run each,not a repeated experiment.
+New BF16 rate is about48% of that older rate. Do NOT promote it to Assistant.
+
+Actual on-card ROOT elapsed cycles
+---------------------------------
+Valid fourteen-bucket record,state2/error0,all62 positions;sum1067263476804.
+No physical clock-frequency assumption and no conversion of cycles to seconds.
+  matrix preparation                 30.382964%
+  recurrent work outside matrix calls22.203868%
+  matrix gathering/waiting            21.966107%
+  dense work outside matrix calls      6.242806%
+  head matrix                         5.573628%
+  matrix finish                       4.577162%
+  matrix dispatch                     4.124892%
+  recurrent state commit              2.835504%
+  metadata                            2.059129%
+  other phases together              <0.04%
+The first three categories total74.552939%. Preparation includes real
+packing/producer work and checks;gather/wait includes computation,NoC and
+receipt checks. These are exclusive ROOT elapsed phases,NOT isolated tensor
+compute or aggregate worker utilization. Do not add parallel-worker times.
+The old offline packet-instruction share is not substituted for these timings.
+
+Actual exits and independent preservation
+-----------------------------------------
+Primary SSH82252 ACTUALLY exits0: DIRECT_BF16_106_PARENT_ACTUAL_EXIT0.
+Parent36443/launcher36439/client36527/USER36528 subsequently absent.
+rate.exit0,direct-parent.exit0,all relevant stderr empty;whole parent final
+marker CLOSED_STABLE_RESTORED. No timeout or quiet log was treated as terminal.
+Independent after-exit postflight8989 ACTUALLY0;normal041/tag12/generation42,
+quiesced0/cold0/active_owner0/open_count1/guard1.64 CPUs,137034936320B RAM,
+driver/admin/reload guard,three Assistant files,four runtime libraries and
+original model file metadata preserved. No reboot,power,SD,mains,network,
+kernel or Assistant change. Experimental driver was hot-swapped and restored.
+Archive89857 ACTUALLY0. Main and independent-clean strict whole readers
+ACTUALLY0,byte-identical stdout,stderr0;--phase-profile --bf16-profile required.
+Complete source/ready/upload/count/rate/fourteen-phase/done/answer/clean-child
+stream,not a LIVE tail. Every complete archived text file matches its remote
+postflight SHA. Readers are DATA consistency checks,not cleanup authority.
+
+Next bounded optimization
+--------------------------
+Target matrix preparation first,using this measured30.38% lead. Inspect its
+producer admission,transfer and receipt work;separate redundant controller
+cost from necessary packing/math before changing it. Keep numerical/ownership
+guards or prove a bounded equivalent;do not blindly remove checks. Reuse this
+same counting benchmark and retain the old implementation for comparison.
+This single category cannot explain the roughly255x gap to20tok/s;multiple
+costs remain. No speedup is claimed from a plan or a build.
+
+Immutable executed identities
+-------------------------------
+driver b635aab47e10b3bf657b290e27eb2a41460ba7db71866a0f9ecf475d70a0c954
+USER e3c784766d6ff46513157bc9ae5849e5aac73a02f4b9c77e48f7dbfb24f72a26
+rate509856b35bb9f8c7da34c5537f1a459bcd21ca7c95343a680fbb647dcaaa35c7
+parent1629ccb23e997e04449ab178984f8351eb734408ae9da7f958de6ec3e9b0fa67
+whole rate stdout13b7d8bc3902af690a0adac7c6a6aec29d07583160c74ad3ab5bb5e4eb39b4ee
+whole parent stdout54b843e81247cf158218da35484f09dcefcba925c9054cb1df4b1cd287e002f5
+Stages81..106-a are SPENT forever;never rerun,repin or clear their markers.
+Goal stays ACTIVE. No learned payload,model,cache or executable binary committed.
