@@ -28,6 +28,19 @@ dependencies={Path(__file__).resolve(),here.parent/'build_assistant_qwen27_bf16_
  here.parent/'pioneer_assistant_qwen27_full_offload.cpp'}
 if profile:dependencies.add(here.parent/'pioneer_assistant_qwen27_bf16_profile_full_offload.cpp')
 if paired:dependencies.add(here.parent/'pioneer_assistant_qwen27_bf16_pair_issue_full_offload.cpp')
+if paired:
+ dependencies.update(here/name for name in ('pioneer_q38_startup_timing_log_test.py',
+  'parse_pioneer_q38_full_offload_rate_log.py','parse_pioneer_q38_full_offload_log.py',
+  'pioneer_q38_bf16_profile_rate_log_test.py','pioneer_q38_full_offload_phase_profile_log_test.py',
+  'pioneer_q38_full_offload_rate_log_test.py','run_pioneer_q38_full_offload_rate_tests.py'))
+ for unit,extra in (
+  (here/'pioneer_q38_startup_timing_test.cpp',[]),
+  (here/'pioneer_q38_full_offload_rate_fake.cpp',['-DPIONEER_FULL_OFFLOAD_STARTUP_TIMING=1']),
+  (here.parent/'pioneer_q38_full_offload_rate_smoke.cpp',['-DPIONEER_FULL_OFFLOAD_STARTUP_TIMING=1']),
+  (here/'pioneer_q38_full_offload_rate_data_test.cpp',[]),
+  (here/'pioneer_q38_token_rate_samples_test.cpp',['-DB_DEVICE_OP_CODES_END=1000'])):
+  text=subprocess.check_output([cxx,'-std=c++17',*extra,'-MM',str(unit)],text=True)
+  dependencies.update(Path(p).resolve() for p in text.replace('\\\n','').split(':',1)[1].split())
 for name in ('protocol','session'):
  source=here/('pioneer_q38_full_offload_'+name+'_test.cpp')
  text=subprocess.check_output([cxx,'-std=c++17',*flags,'-MM',str(source)],text=True)
@@ -45,9 +58,15 @@ def run(name,argv):
 for name in ('protocol','session'):
  source=here/('pioneer_q38_full_offload_'+name+'_test.cpp');binary=out/name
  run(name+'-compile',[*common,*flags,source,'-o',binary]);run(name,[binary])
+if paired:
+ run('startup-compile',[*common,here/'pioneer_q38_startup_timing_test.cpp','-o',out/'startup'])
+ run('startup',[out/'startup'])
+ run('startup-log',[sys.executable,here/'pioneer_q38_startup_timing_log_test.py'])
+ run('startup-rate-client',[sys.executable,here/'run_pioneer_q38_full_offload_rate_tests.py','--startup-timing'])
+ run('legacy-rate-client',[sys.executable,here/'run_pioneer_q38_full_offload_rate_tests.py'])
 run('sdk-build',[sys.executable,here.parent/'build_assistant_qwen27_bf16_full_offload.py',sdk,libraries,out/'sdk',*(['--pair-issue'] if paired else ['--profile'] if profile else [])])
 assert all(hashlib.sha256(p.read_bytes()).hexdigest()==digest for p,digest in frozen.items())
 (out/'source-sha256.txt').write_text(''.join(frozen[p]+'  '+str(p.relative_to(root))+'\n' for p in sorted(frozen)))
 (out/'test-argv.json').write_text(json.dumps(commands,indent=2)+'\n')
-print('PASS_BF16_USER_PAIRING children5_stderr0_sources'+str(len(frozen))+
+print('PASS_BF16_USER_PAIRING children'+str(len(exits))+'_stderr0_sources'+str(len(frozen))+
  '_SDK_VOCABULARY_ONLY_AND_SYNTHETIC_TRANSPORT_NOT_NATIVE_EXECUTION_MODEL_QUALITY_OR_TPS',flush=True)

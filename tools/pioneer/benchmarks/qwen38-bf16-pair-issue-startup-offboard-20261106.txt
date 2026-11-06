@@ -1,0 +1,70 @@
+Candidate109 startup/first-commit instrumentation and physical-parent build
+=========================================================================
+November6,2026. BUILD/OFFBOARD ONLY. No new full-model speed result yet.
+Delta overf0f34a67f8;driver/card code unchanged from that qualified checkpoint.
+
+Measurements,all one monotonic system_time microsecond domain
+-----------------------------------------------------------
+vocab_us:worker Load entry through source authentication,vocabulary and
+ metadata-only probe. NOT GPU weight readiness.
+setup_us:worker Generate entry,including prompt handling,through completed
+ native START. Includes bank/owner setup,weight preparation/upload and START.
+upload_window_us:first upload ioctl entry through last upload ioctl return.
+ Includes BETWEEN-call preparation;excludes preparation before first ioctl.
+upload_ioctl_us:sum of upload ioctl durations,not a pure DMA-bandwidth claim.
+first_commit_min/max_us:bounds since Generate entry for the first generated
+ commit (count==prompts). Prior below-prompt read's BEGIN is a lower bound;
+ the first matching read's END is an upper bound. If no below-prompt read,
+ lower bound0. If first observed warm count skips that position,the first
+ commit is unavailable instead of fabricating an exact timestamp.
+answer_ready_us:after genuine END+Close,token/source checks and earlier
+ rate/phase DATA,just BEFORE startup/answer publication. NOT UI latency.
+Current answers are not streamed;first card commit is not first visible text.
+
+Only109 emits these records. Invalid/incomplete clock samples produce an
+explicit unavailable record without changing inference or cleanup policy.
+All publication remains AFTER clean END+Close. Integer parsing is bounded
+before conversion;negative/overflow/noncanonical/duplicate/out-of-order DATA
+are rejected. The selected actual rate client requires exactly one timing
+record before text,including the legitimate unavailable case.
+
+Qualification
+-------------
+Main USER qualification:10 actual0/stderr0 children,88 frozen source files.
+Independent clean export off0f34a67f8 +12 scoped sources:6 top-level actual0/
+stderr0 children. Its10-child USER suite passed,and new USER/rate artifacts
+are byte-identical to main. Previous106 USER and rate binaries still equal
+the physical106 hashes. No worker/service/journal baseline reruns needed:
+card code and native ownership path were not changed.
+Timing DATA tests cover interval arithmetic,24 invalid/incomplete histories,
+parser constraints,skipped first commit and a fresh second request. Selected
+real request client over FAKE workers:3 valid/15 rejected histories plus3 CLI
+refusals. Default client also passes its old2valid/11failure/3CLI cases.
+Independent Python reader:110 startup mode/order/bounds/truncation refusals,
+plus unchanged historical full-rate/10phase/14phase fixtures. Explicit
+--phase-profile --bf16-profile --startup-timing is required for new logs.
+Actual parent source is WHOLE previous106 tested policy except10 exact
+subject substitutions;all prior fake lifetime/failure cases pass. UNKNOWN
+never grants retry,reset,force-unload or automatic restoration.
+
+Fresh read-only SSH admission actual0 showed normal041/tag12/generation46,
+quiesced0/cold0/owner0/open1/guard1,64CPU/137034936320B RAM,no inference owners,
+original model metadata unchanged,and109 stage absent. Recheck before use.
+Parent pins one unused109-a cohort,normal46 -> candidate47 -> normal48.
+Stages81..108 remain spent forever. No109 stage or once marker created yet.
+
+Build identities
+----------------
+driver2893456B adbb988ced6b3ccfdd4e73f43d4b9eac3101c5f0ca6289bb60654af9498223e1
+USER82992B d6e10432f86dcecf2034986f887c6c2f5ab0e1314a2e3e2e5ed342cb6e5dce33
+rate231968B afe31e8d68cb0ccd5dc4ee74a11ad1c1bbcd0af3cd300cb6ce903e0936f6fe7b
+parent7790B 51b5dcaaa41982c47a49f620f509162b867b23e1409c28a60f3e2abb8c3fe67e
+Closed records/source inventory/commands:qwen38-bf16-pair-issue-startup-offboard-20261106/.
+Reproduce USER suite with tests/qualify_pioneer_q38_bf16_client.py
+ SDK LIBRARIES NEW_OUT --pair-issue;parent test:
+ tests/pioneer_q38_bf16_pair_issue_parent_test.py.
+
+Next:push source checkpoint,stage/whole-readback-verify four artifacts,run
+the one protected matched27B parent to actual closure,independently verify
+normal restoration,archive and compare full-model results. Assistant remains
+unchanged.20tok/s unmet;old best0.16436,latest0.07846tok/s. No speedup inferred.

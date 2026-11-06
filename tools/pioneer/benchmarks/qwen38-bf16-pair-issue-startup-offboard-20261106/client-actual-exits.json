@@ -1,0 +1,12 @@
+{
+  "legacy-rate-client": 0,
+  "protocol": 0,
+  "protocol-compile": 0,
+  "sdk-build": 0,
+  "session": 0,
+  "session-compile": 0,
+  "startup": 0,
+  "startup-compile": 0,
+  "startup-log": 0,
+  "startup-rate-client": 0
+}

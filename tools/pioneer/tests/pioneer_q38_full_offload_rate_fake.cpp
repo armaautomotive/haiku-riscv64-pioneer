@@ -36,7 +36,18 @@ int main(){
  const char* unavailable="Full-card rate unavailable: insufficient post-prompt window or invalid timing;AFTER_CLEAN_END,no extrapolation.";
  if(mode!=8 && !Reply(A::Progress,2,UINT32_MAX,mode==1?unavailable:metric))return 0;
  if(mode==7)return 0;
+#ifdef PIONEER_FULL_OFFLOAD_STARTUP_TIMING
+ const char* startup="Full-card startup timing vocab_us1000000 setup_us1000000 upload_calls20000 upload_bytes19399024640 upload_window_us800000 upload_ioctl_us600000 first_commit_valid1 first_commit_min_us1100000 first_commit_max_us1200000 answer_ready_us4000000;AFTER_CLEAN_END,host_us,first_commit_not_streamed_text,upload_window_includes_between_call_preparation.";
+ const char* missing="Full-card startup timing unavailable: invalid clock or incomplete samples;AFTER_CLEAN_END,no extrapolation.";
+ if(mode==14)startup="Full-card startup timing malformed";
+ if(mode==17)startup="Full-card startup timing vocab_us1000000 setup_us1000000 upload_calls20000 upload_bytes19399024640 upload_window_us800000 upload_ioctl_us600000 first_commit_valid0 first_commit_min_us0 first_commit_max_us0 answer_ready_us4000000;AFTER_CLEAN_END,host_us,first_commit_not_streamed_text,upload_window_includes_between_call_preparation.";
+ if(mode!=13 && !Reply(A::Progress,2,UINT32_MAX,mode==1?missing:startup))return 0;
+ if(mode==15 && !Reply(A::Progress,2,UINT32_MAX,startup))return 0;
+#endif
  if(!Reply(A::Text,2,0,"1\n2\n3\n4\n5\n6\n7\n8"))return 0;
+#ifdef PIONEER_FULL_OFFLOAD_STARTUP_TIMING
+ if(mode==16){Reply(A::Progress,2,UINT32_MAX,startup);return 0;}
+#endif
  if(mode==8)return 0;
  if(mode==9){Reply(A::Text,2,0,"duplicate");return 0;}
  if(mode==10){Count(51);return 0;}

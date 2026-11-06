@@ -62,7 +62,9 @@ if profile:
  assert smokeCommand.count(old_source)==1
  smokeCommand[smokeCommand.index(old_source)]=str(here/'pioneer_q38_full_offload_rate_smoke.cpp')
 worker='/boot/home/pioneer-q38-bf16-pair-issue-109-a/HaikuAssistantQwen27Bf16PairIssueFullOffload' if paired else '/boot/home/pioneer-q38-bf16-profile-106-a/HaikuAssistantQwen27Bf16ProfileFullOffload' if profile else '/boot/home/pioneer-q38-bf16-full-105-a/HaikuAssistantQwen27Bf16FullOffload'
-smokeCommand.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="'+worker+'"');run(smokeCommand)
+smokeCommand.insert(1,'-DPIONEER_FULL_OFFLOAD_SMOKE_WORKER="'+worker+'"')
+if paired:smokeCommand.insert(1,'-DPIONEER_FULL_OFFLOAD_STARTUP_TIMING=1')
+run(smokeCommand)
 assert all(hashlib.sha256(p.read_bytes()).hexdigest()==digest for p,digest in frozen.items())
 (out/'source-sha256.txt').write_text(''.join(frozen[p]+'  '+str(p.relative_to(root))+'\n' for p in sorted(frozen)))
 (out/'build-argv.json').write_text(json.dumps(commands,indent=2)+'\n');(out/'worker.imports').write_text(imports)

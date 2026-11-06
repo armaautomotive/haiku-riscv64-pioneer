@@ -1,0 +1,100 @@
+{
+  "base": "f0f34a67f81a8de36d0ec075b43c91ff83bcbc1a",
+  "scope": "BUILD_OFFBOARD_ONLY_NO_HARDWARE_OR_TPS",
+  "scoped_sources": {
+    "tools/pioneer/PioneerQ38StartupTiming.h": "e227bf461f1f51da5e2333ad9b7878f056ed35b533b587ba72a69231789fe67c",
+    "tools/pioneer/PioneerQ38FullOffloadRateData.h": "c04c0707f1644537c6d7e3a87f112ea9a91d04fc24fc9f9ddabc7a1f5c333dbf",
+    "tools/pioneer/pioneer_assistant_qwen27_full_offload.cpp": "c96cdbf1c2c35f3472cad61297cee53b62b49258e3a1e98cd28f900be59f2091",
+    "tools/pioneer/build_assistant_qwen27_bf16_full_offload.py": "4cff8d3ad26c242041c39c07fca6685c20d4fd01a8de644cc74bd5c9fcdb347a",
+    "tools/pioneer/tests/pioneer_q38_startup_timing_test.cpp": "07514df85c2810cb7a77b4f7ac554a06f41fb489bb8e7c8c9dea9893aa3b03d7",
+    "tools/pioneer/tests/pioneer_q38_startup_timing_log_test.py": "4235171115ada4bf179755f58e87277b7b559e3b3bb128447275d568c41ba3ee",
+    "tools/pioneer/tests/parse_pioneer_q38_full_offload_rate_log.py": "aeaacac9d35e9c463c00c7dc67e959da87c6dd4d9de94e0596914895e7a664c8",
+    "tools/pioneer/tests/pioneer_q38_full_offload_rate_fake.cpp": "8dc738faecdd4ab275685e0180734273dd44349696501641750c23c20b4abc9a",
+    "tools/pioneer/tests/run_pioneer_q38_full_offload_rate_tests.py": "a5069ea46cf0d9c639c8c8fa3013b3611735b9a2721b596f0a765b67dda4b14c",
+    "tools/pioneer/tests/qualify_pioneer_q38_bf16_client.py": "29151005587ed1b081a1e111e3cc37d24a8952243795b754cd7d32931a756efe",
+    "tools/pioneer/pioneer_q38_bf16_pair_issue_full_offload_physical.sh": "51b5dcaaa41982c47a49f620f509162b867b23e1409c28a60f3e2abb8c3fe67e",
+    "tools/pioneer/tests/pioneer_q38_bf16_pair_issue_parent_test.py": "a45bc6a0c6913dff5073e48744dd91f05450d08e9540b22e4cc1479757b02fa1"
+  },
+  "actual_exits": {
+    "export": 0,
+    "unpack": 0,
+    "llama-objects": 0,
+    "client": 0,
+    "old106": 0,
+    "parent": 0
+  },
+  "artifacts": {
+    "HaikuAssistantQwen27Bf16PairIssueFullOffload": {
+      "bytes": 82992,
+      "sha256": "d6e10432f86dcecf2034986f887c6c2f5ab0e1314a2e3e2e5ed342cb6e5dce33"
+    },
+    "pioneer-q38-bf16-pair-issue-rate-smoke": {
+      "bytes": 231968,
+      "sha256": "afe31e8d68cb0ccd5dc4ee74a11ad1c1bbcd0af3cd300cb6ce903e0936f6fe7b"
+    },
+    "pioneer_q38_bf16_pair_issue_full_offload_physical.sh": {
+      "bytes": 7790,
+      "sha256": "51b5dcaaa41982c47a49f620f509162b867b23e1409c28a60f3e2abb8c3fe67e"
+    }
+  },
+  "old106_user_rate_byte_unchanged": true,
+  "driver_unchanged_from_f0f34a67f8": true,
+  "saved_records": {
+    "commands.json": {
+      "bytes": 1858,
+      "sha256": "f543c4ecb4e8477b3624ab7af1c3300d1e3751fc3069b3fb5f09172a3e530723"
+    },
+    "client-commands.json": {
+      "bytes": 3225,
+      "sha256": "4a7279a5592dfdbc2b143d4221b8c6c49489126145894d5d182fb417178aa380"
+    },
+    "client-actual-exits.json": {
+      "bytes": 218,
+      "sha256": "5aea1c479f631ebab7a40d13393829374c0a632f2831ca418aaf1b7a6e6b9370"
+    },
+    "client-source-sha256.txt": {
+      "bytes": 10772,
+      "sha256": "1ad077787f6dbe021cdbc72872aa27065e4072f86bc47a37019346aee8153b80"
+    },
+    "sdk-source-sha256.txt": {
+      "bytes": 8254,
+      "sha256": "f08e25e5cff31d330228a9f0f4488e269c1fc2165b439732ab4d6a72465da586"
+    },
+    "sdk-build-argv.json": {
+      "bytes": 11231,
+      "sha256": "fa5db829765a3ffd49bf822823ff2c797ce5e57a3e50575d028a591ff94b5a6f"
+    },
+    "startup.stdout": {
+      "bytes": 182,
+      "sha256": "ff92722dbc78284dab2a30267888e2a854cef47a2d987ebee312154860ddddc5"
+    },
+    "startup-log.stdout": {
+      "bytes": 727,
+      "sha256": "2732978594cca237d29f1497767050118b3be8953610e61c3b154f2a90c0d33a"
+    },
+    "startup-rate-client.stdout": {
+      "bytes": 863,
+      "sha256": "8aab6a225a53c6e718bbd5d26905bbec0006727976c25df7501aa534f8ef932c"
+    },
+    "legacy-rate-client.stdout": {
+      "bytes": 796,
+      "sha256": "77eb700b88b85788b0277e0e5d6f13208d97c185e28d80188f55cd9c8a07dd67"
+    },
+    "session.stdout": {
+      "bytes": 417,
+      "sha256": "3164a5bd149c9865965afb6e8368f58365f45f2ceaa22b9cb0e52aed3fda4939"
+    },
+    "sdk-build.stdout": {
+      "bytes": 1022,
+      "sha256": "cf0f8f9225e27064d6cfcde2f1395fd5e05b8a2390a500009812954c8b1d5022"
+    },
+    "old106.stdout": {
+      "bytes": 1017,
+      "sha256": "6f5704f2becaa9b9f4c6cafddc49165a5640ba657bd49b89c522d6bfd96cc174"
+    },
+    "parent.stdout": {
+      "bytes": 1249,
+      "sha256": "62524056379a5310c2a17b06a07c313e0147041c3e524a6e89478c49fe89e2cf"
+    }
+  }
+}

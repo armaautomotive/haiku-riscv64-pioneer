@@ -40,8 +40,10 @@ Compact work plan -- one active task
    This is NOT a hardware-qualified 109 run or a new inference-speed result.
 
 2. MEASURE THIS CANDIDATE: NEXT / NOT YET RUN.
-   Add and test separate startup/upload/first-token measurements, then run
-   the same complete 31-prompt/32-output 27B counting benchmark on P100A.
+   Startup/upload/first-commit measurement code and the fresh109 parent
+   have passed independent clean-source builds and offboard tests. The
+   prior106 host worker/launcher remain byte-identical. No new card run yet.
+   Next run the same complete 31-prompt/32-output benchmark on P100A.
    Restore and verify the normal driver; publish the measured comparison.
    Done means a recorded improvement OR a recorded rejection of a slower
    candidate. Only a full-model improvement justifies Assistant promotion.
@@ -78,6 +80,8 @@ Full-model integration checkpoint (BUILD/OFFBOARD ONLY):
  benchmarks/qwen38-bf16-pair-issue-full-offboard-20261106.txt
 Exact scoped source/artifact inventory and closed test results:
  benchmarks/qwen38-bf16-pair-issue-full-offboard-20261106/qualification.json
+Startup measurement delta and fresh single-use109 parent:
+ benchmarks/qwen38-bf16-pair-issue-startup-offboard-20261106.txt
 Analytical budget, not a demonstrated hardware limit:
  benchmarks/qwen38-performance-budget-20261106.txt
 

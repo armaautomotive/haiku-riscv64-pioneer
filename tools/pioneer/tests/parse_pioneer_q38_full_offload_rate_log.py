@@ -21,6 +21,24 @@ ANSWER=re.compile(r'FULL_OFFLOAD_RATE_ANSWER bytes('+NUMBER+r') hex=([0-9a-f]*)'
 FINAL=re.compile(r'PASS_FULL_OFFLOAD_RATE_JOB clean_worker_exit1 rate_available([01]) output_tokens('+NUMBER+r');CPU_INFERENCE_CONTEXTS0;POST_PROMPT_COUNT_WINDOW_NOT_BROAD_QUALITY_OR_ISOLATED_LATENCY')
 PHASE_HEADER=re.compile(re.escape(PREFIX)+r'Full-card phase profile valid([01]) committed('+NUMBER+r') begin_cycles('+NUMBER+r') end_cycles('+NUMBER+r') state('+NUMBER+r') error('+NUMBER+r');AFTER_CLEAN_END,clock DATA,no frequency assumption\.')
 PHASE_BUCKET=re.compile(re.escape(PREFIX)+r'Full-card phase profile bucket('+NUMBER+r') segments('+NUMBER+r') cycles('+NUMBER+r');AFTER_CLEAN_END,clock DATA,no frequency assumption\.')
+STARTUP=re.compile(re.escape(PREFIX)+r'Full-card startup timing vocab_us('+NUMBER+r') setup_us('+NUMBER+r') upload_calls('+NUMBER+r') upload_bytes('+NUMBER+r') upload_window_us('+NUMBER+r') upload_ioctl_us('+NUMBER+r') first_commit_valid([01]) first_commit_min_us('+NUMBER+r') first_commit_max_us('+NUMBER+r') answer_ready_us('+NUMBER+r');AFTER_CLEAN_END,host_us,first_commit_not_streamed_text,upload_window_includes_between_call_preparation\.')
+STARTUP_UNAVAILABLE=PREFIX+'Full-card startup timing unavailable: invalid clock or incomplete samples;AFTER_CLEAN_END,no extrapolation.'
+def startup_suffix(lines,cursor,planned):
+    require(cursor<len(lines),'explicit startup timing row required')
+    line=lines[cursor];row=STARTUP.fullmatch(line)
+    if line==STARTUP_UNAVAILABLE:return cursor+1,{'available':False}
+    require(row,'exact startup timing DATA')
+    vocab,setup,calls,size,window,ioctl,first_valid,first_min,first_max,answer_ready=map(int,row.groups())
+    require(max(vocab,setup,window,ioctl,first_min,first_max,answer_ready)<=2**63-1
+            and 0<calls<=2**32-1 and size==planned and calls*4096<=size<=calls*1048576,'startup integer/upload bounds')
+    require(0<=ioctl<=window<=setup<=answer_ready and 0<=first_min<=first_max<=answer_ready,'startup interval ordering')
+    require((not first_valid and first_min==first_max==0) or
+            (first_valid and first_max>=setup and (first_min==0 or first_min>=setup)),'first generated commit bounds')
+    return cursor+1,{'available':True,'vocabulary_authentication_us':vocab,'request_setup_us':setup,
+        'upload_calls':calls,'uploaded_bytes':size,'upload_window_us':window,'upload_ioctl_sum_us':ioctl,
+        'first_commit_available':bool(first_valid),'first_commit_minimum_us':first_min,
+        'first_commit_maximum_us':first_max,'answer_ready_us':answer_ready,
+        'first_commit_is_streamed_text':False,'upload_window_includes_between_call_preparation':True}
 def phase_profile_suffix(lines,cursor,committed,*,bf16_profile=False):
     require(cursor<len(lines),'complete explicit phase header required')
     header=PHASE_HEADER.fullmatch(lines[cursor]);require(header,'exact phase header');cursor+=1
@@ -45,10 +63,11 @@ def phase_profile_suffix(lines,cursor,committed,*,bf16_profile=False):
     for row in buckets:row['share_percent']=str(Decimal(row['cycles'])*100/Decimal(total))
     result.update(total_cycles=total,buckets=buckets)
     return cursor,result
-def parse_complete(text,stderr='',*,prepared_q4=False,phase_profile=False,bf16_profile=False):
+def parse_complete(text,stderr='',*,prepared_q4=False,phase_profile=False,bf16_profile=False,startup_timing=False):
     require(type(prepared_q4) is bool,'explicit prepared-layout selector required')
     require(type(bf16_profile) is bool and (not bf16_profile or (phase_profile is True and prepared_q4 is False)),'explicit distinct BF16 timing selector required')
     require(type(phase_profile) is bool and (not phase_profile or prepared_q4 or bf16_profile),'explicit compatible phase-profile selector required')
+    require(type(startup_timing) is bool and (not startup_timing or bf16_profile is True),'startup timing requires explicit BF16 profile')
     planned=PREPARED_TOTAL if prepared_q4 else TOTAL
     require(isinstance(stderr,str) and not stderr,'nonempty/unknown stderr')
     require(isinstance(text,str) and len(text)<=16*1024*1024 and text.isascii() and text.endswith('\n')
@@ -84,6 +103,8 @@ def parse_complete(text,stderr='',*,prepared_q4=False,phase_profile=False,bf16_p
     else:require(lines[cursor]==UNAVAILABLE,'unavailable is explicit,never an inferred rate')
     cursor+=1;profile=None
     if phase_profile:cursor,profile=phase_profile_suffix(lines,cursor,counts[-1],bf16_profile=bf16_profile)
+    startup=None
+    if startup_timing:cursor,startup=startup_suffix(lines,cursor,planned)
     require(len(lines)-cursor==3,'exact done/answer/final suffix,no unselected timing rows')
     done=DONE.fullmatch(lines[cursor]);answer=ANSWER.fullmatch(lines[cursor+1]);final=FINAL.fullmatch(lines[cursor+2])
     require(done and answer and final,'whole exact completion/answer/clean-worker suffix')
@@ -100,14 +121,16 @@ def parse_complete(text,stderr='',*,prepared_q4=False,phase_profile=False,bf16_p
             'execution_or_cleanup_authority_from_log':False,'isolated_token_latency':False}
     if phase_profile:result['on_card_phase_profile']=profile
     if bf16_profile:result['bf16_profile']=True
+    if startup_timing:result['host_startup_observations']=startup
     return result
 def main():
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('stdout',type=pathlib.Path);parser.add_argument('stderr',type=pathlib.Path)
     parser.add_argument('--prepared-q4',action='store_true',help='require exact20470759424B prepared FFN layout,never infer mode from a log')
     parser.add_argument('--phase-profile',action='store_true',help='require the complete card-clock timing suffix;requires --prepared-q4 or --bf16-profile')
     parser.add_argument('--bf16-profile',action='store_true',help='require separate BF16 fourteen-phase timing and original weight layout;requires --phase-profile')
+    parser.add_argument('--startup-timing',action='store_true',help='require explicit host startup/first-commit DATA;requires --bf16-profile')
     args=parser.parse_args()
-    try:result=parse_complete(stable_text(args.stdout),stable_text(args.stderr),prepared_q4=args.prepared_q4,phase_profile=args.phase_profile,bf16_profile=args.bf16_profile)
+    try:result=parse_complete(stable_text(args.stdout),stable_text(args.stderr),prepared_q4=args.prepared_q4,phase_profile=args.phase_profile,bf16_profile=args.bf16_profile,startup_timing=args.startup_timing)
     except (OSError,InvalidLog,ValueError) as error:raise SystemExit('REFUSE_FULL_CARD_RATE_LOG '+str(error))
     print(json.dumps(result,sort_keys=True))
     print('PASS_COMPLETE_FULL_CARD_RATE_TRANSCRIPT_DATA_ONLY;NOT_BROAD_QUALITY_ISOLATED_LATENCY_OR_NATIVE_CLEANUP_AUTHORITY')

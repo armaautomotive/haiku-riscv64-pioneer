@@ -1,0 +1,8 @@
+PASS actual full-card batched89 parent: 54 typed-metadata/idle/64CPU+RAM/one-shot-flow cases;unknown child/stderr/text/identity failures never auto-restore;FAKE endpoints ONLY,no hardware exchange
+PASS actual full-card90 rate parent:120 typed metadata/final DATA/one-shot failure cases;ALL old54 parent cases FIRST;clean-unavailable distinct from failure;no unknown auto-restore;FAKE endpoints ONLY,no hardware
+PASS vector-Q4 full-card92 rate parent:ENTIRE prior source EXACT except9 immutable revision/stage/hash/generation substitutions;ALL prior fake failure cases FIRST;NO hardware or speed result
+PASS prepared Q4 tag97 parent exact tested lifecycle except9 immutable revision substitutions;NO card or speed claim
+PASS prepared counter Q4 tag98 parent exact tested lifetime except8 paired revision substitutions;NO card or speed claim
+PASS profile tag99 physical parent WHOLE tested lifetime except9 exact revision/stage/generation substitutions;NO device or speed claim
+PASS BF16 profile106 parent WHOLE tested rate lifetime except10 exact subject substitutions;FAKE endpoints only,NOT hardware admission or speed
+PASS paired109 parent WHOLE tested lifetime except10 exact stage/tag/hash/generation substitutions;FAKE_ONLY_NOT_HARDWARE_OR_TPS
