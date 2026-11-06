@@ -1,0 +1,22 @@
+"""Immutable BUILD pins,not runtime/ownership/model-quality permission."""
+ROOT_PINS = (
+ ('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
+ ('text.bin',127036,'389d51912af443cdfbdcd2037554bc604c2019f9ce71b5a2a3a1ee93980f6d35'),
+ ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),
+ ('conv.bin',21328,'0a56fa31e4959f9bb397ae4facd9dbf714e3b881181ff32d6f35c186f70333ca'),
+ ('bf16.bin',28724,'14fc2af8b3ae3b9f34c4694dd7d1f7ca92320b0e91f08fad82edfdae120081cc'),
+ ('program.elf',212316,'62f24f28379cabacd81cce767f0d852a649da400551d8a31d9a42752a87d746b'),
+)
+WORKER_PINS = (
+ ('boot.bin',4,'a12af9d63593a1f882750a147dd7a511ac476c5c7a55526bd4d51c685173991c'),
+ ('globalworker.bin',8892,'00994e28af78e4183e862b72cfa503a7d0a4c5ec445d2c95d16f6c442ef5ae67'),
+ ('bf16producer.bin',7360,'ce35edda207c1b06a1257d67e92ebb13368900929cc45c1eefb3cbb1651df390'),
+ ('cachedfpu.bin',8336,'41ab4c57ce228eb27290395852d56b72829a4118bcbe086baed6a023c38117f5'),
+ ('dense.bin',10332,'3beb0155075671e891e3558e4e0c7b4d6a1e44e393f6a7957bb663739a70c0a7'),
+ ('ffn.bin',16456,'62dfefb0c9bb0f0587f069c78fb8ab2a23a7d14233f991f681f61ce30ec7fdd2'),
+ ('service.bin',9888,'a298c82eb1728a893a8260ef7bd25f8d24492e9249689e239a71b414ac55e5d0'),
+ ('affine.bin',5360,'47c52fee6ccfb0a8847fe17a9d43d4016e7cfc6c68cc1427673f6869cd287b78'),
+ ('text.bin',5984,'62df737dc10ecd6fe55f62b9a14c0a6f74b0c8f8bd5c9bf34b0a4fbc4de0a0a1'),
+ ('gdn.bin',35564,'a3e68e2680af14d67056248c9ff37f89abf3beae99af7f62c461851f7ad9120b'),
+ ('program.elf',151044,'dd83ded66b3fd9cd7671db489c097fe2c510a916dac2b9e4f1e7dbed118ecf4e'),
+)

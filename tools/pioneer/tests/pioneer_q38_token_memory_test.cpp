@@ -137,9 +137,11 @@ int main(int argc,char** argv){
   printf("PASS DISTINCT full-token HELD journal/ALL120/saved%u/installed%u/restored%u/secondOriginal%u/arbitrary+UINT32_MAX/NEW terminal60000+60004/fullstack+runtime+padding/startup+851page binding;SIMULATED endpoints,NO start/reset/NoC/native execution/Work/TPS grant\n",f.result.savedWords,f.result.installedWords,f.result.restoredWords,f.result.verifiedOriginalWords);return 0;
  }
  if(!strcmp(argv[1],"--capsule-faults")){
-#if defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
+#if defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS) || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS)
   unsigned cases=0;
-#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+  constexpr unsigned family=4;
+#elif defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
   constexpr unsigned family=3;
 #else
   constexpr unsigned family=2;
@@ -152,7 +154,12 @@ int main(int argc,char** argv){
 #else
    const bool extendedFront=false;
 #endif
-   assert(worker && TOKL::SnapshotContains(worker,address) && (precise || extendedFront));
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+   const bool bf16Extent=worker?address>=0x50000 && address<0x60000:address>=0x20000 && address<0x30000;
+#else
+   const bool bf16Extent=false;
+#endif
+   assert(TOKL::SnapshotContains(worker,address) && (precise || extendedFront || bf16Extent));
    if(phase==3){
     unsigned index=0;while(index<TOKP::CodeWords(worker) && TOKP::CodeAddress(worker,index)!=address)index++;
     assert(index<TOKP::CodeWords(worker));f.io.badOrdinal=index;
@@ -165,6 +172,15 @@ int main(int argc,char** argv){
   fault(3,3,1,0x30000);fault(5,3,1,0x30000);fault(2,3,1,0x30000);
   fault(3,6,1,0x30000);fault(3,6,119,0x3fffc);fault(1,7,119,0x3fffc);
   assert(cases==9);
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+  fault(1,1,0,0x20000);fault(1,1,0,0x2fffc);fault(1,2,0,0x2fffc);
+  fault(3,3,0,0x20000);fault(5,3,0,0x20000);fault(2,3,0,0x20000);
+  fault(3,6,0,0x20000);fault(3,6,0,0x2fffc);fault(1,7,0,0x2fffc);
+  fault(1,1,1,0x50000);fault(1,1,119,0x5fffc);fault(1,2,1,0x5fffc);
+  fault(3,3,1,0x50000);fault(5,3,1,0x50000);fault(2,3,119,0x50000);
+  fault(3,6,1,0x50000);fault(3,6,119,0x5fffc);fault(1,7,119,0x5fffc);
+  assert(cases==27);
+#endif
 #ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
   uint32_t last;assert(TOKL::Family==0x33505451 && TOKL::SavedBytes==53913832 && TOKP::ProgramWord(119,0x223a4,last)
    && !TOKP::ProgramWord(119,0x223a8,last) && TOKL::SnapshotContains(119,0x22ffc));

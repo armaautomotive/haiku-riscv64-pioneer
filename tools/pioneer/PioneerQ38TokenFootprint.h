@@ -1,4 +1,23 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38TokenBf16DataBoundary.h"
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+#if PIONEER_Q38_TOKEN_BF16_PROGRAMS != 1 || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
+#error Exact QTP4 footprint cannot alias old program DATA
+#endif
+#endif
+#ifndef PIONEER_Q38_TOKEN_BF16_FOOTPRINT_BINDING_H
+#define PIONEER_Q38_TOKEN_BF16_FOOTPRINT_BINDING_H
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+enum {PioneerQ38TokenBf16FootprintSelection=1};
+#else
+enum {PioneerQ38TokenBf16FootprintSelection=0};
+#endif
+#endif
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+static_assert(PioneerQ38TokenBf16FootprintSelection==1,"late QTP4 footprint selection");
+#else
+static_assert(PioneerQ38TokenBf16FootprintSelection==0,"late QTP4 footprint removal");
+#endif
 #ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
 #if PIONEER_Q38_TOKEN_PUSHED_PROGRAMS != 1 || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS) \
  || defined(PIONEER_Q38_TOKEN_PROGRAMS_H)
@@ -10,7 +29,10 @@
 #endif
 #ifndef PIONEER_Q38_TOKEN_FOOTPRINT_H
 #define PIONEER_Q38_TOKEN_FOOTPRINT_H
-#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+#include "PioneerQ38TokenBf16Footprint.h"
+namespace PioneerQ38TokenL1=PioneerQ38TokenBf16L1;
+#elif defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
 #include "PioneerQ38TokenPushedFootprint.h"
 namespace PioneerQ38TokenL1=PioneerQ38TokenPushedL1;
 #elif defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
@@ -70,7 +92,9 @@ static_assert(SavedWords==11406906 && SavedBytes==45627624,"ALL120 arbitrary ori
 }
 #endif
 #endif
-#ifdef PIONEER_Q38_TOKEN_PUSHED_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+static_assert(PioneerQ38TokenL1::Family==0x34505451 && PioneerQ38TokenL1::Bf16==1,"late QTP4 footprint selection");
+#elif defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
 static_assert(PioneerQ38TokenL1::Family==0x33505451 && PioneerQ38TokenL1::Pushed==1,"late QTP3 footprint selection");
 #elif defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
 static_assert(PioneerQ38TokenL1::Precise==1,"late QTP2 footprint profile change");

@@ -826,7 +826,7 @@ public:
  } // read-only DATA;does NOT set terminalObserved,HOLD,END,readout or disposal state
 #endif
 private:
-#if defined(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
+#if defined(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT) || defined(PIONEER_Q38_BF16_FULL_NATIVE)
  // Keep the selected QGW2/QGW3 grammar's translation buffers out of the
  // terminal observer's own frame. This is not a combined-stack proof.
  static __attribute__((noinline)) bool PreciseTerminalJobShape(const uint32_t* job,const uint32_t* boot,unsigned previous){
@@ -928,7 +928,7 @@ private:
    for(unsigned i=0;i<64;i++){uint32_t cached=0;r.word=i;
     if(!io.TokenMemoryReadChecked(0,R::PeerBoots+(w-1)*256+i*4,cached) || cached!=boot[i]
      || !io.TokenMemoryReadChecked(0,R::PeerJobs+(w-1)*256+i*4,job[i]))return Fail(io,r);}
-#if defined(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
+#if defined(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT) || defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT) || defined(PIONEER_Q38_BF16_FULL_NATIVE)
    const bool jobShape=PreciseTerminalJobShape(job,boot,nonce-1);
 #else
    const bool jobShape=W::JobShape(job,boot,nonce-1,0);

@@ -1,0 +1,89 @@
+QTP4 complete BF16 native image,journal and actual cold startup
+============================================================
+2026-11-05 Pacific. Basedf603cfd4eee7330ed15e2a05e40744ee842d9d9.
+OFFBOARD ONLY. No Pioneer/SSH/device/power/SD/Assistant action.
+No new model throughput measurement;20 tokens/sec remains unmet.
+
+Production integration
+----------------------
+Added a distinct tag105 kernel build and QTP4/QGW4 immutable program
+selection. It embeds all15 actual code sections:five ROOT,ten worker.
+The existing token owner now sees the new worker grammar and complete
+journal,not an old G3 held-owner retag. Its pointer-free full-model control
+accepts prompt IDs/limits only;no CPU hidden states,logits,weights,addresses,
+firmware or expected products can be supplied through that endpoint.
+No ggml/llama/CPU-reference or hybrid Work backend is linked.
+
+The BF16 ROOT also retains the existing full-card all5-EOG stop policy.
+Its emitted integer predicate is executed for every248320 vocabulary IDs
+plus5 out-of-range values. This is not a generated-token/model-quality test.
+
+The new full120-core original-L1 journal owns61778152 bytes. It includes
+the ROOT20000..2ffff coordinator,the worker50000..5ffff cached FPU capsule,
+the complete30000..3ffff producer,front-end padding,all existing code,
+stack and runtime data. New pair tables168000..16c200 and direct inpute0000
+are within the ROOT's retained runtime span. Saved padding is NOT executable
+program DATA. Code arrays come from fixed length/SHA256-authenticated whole
+ELF snapshots and every authenticated .bin section appears exactly once.
+Kernel-readable wire/layout DATA does not import a CPU arithmetic packer.
+
+Executed evidence
+-----------------
+Main and clean-base+28-scoped-source copies each close9 native qualification
+children/all exit0/stderr0,with558 frozen dependencies. Nested ROOT/worker
+qualification closes4 children,worker7,producer5,cached12,all0/stderr0.
+The ROOT/worker suites from the preceding checkpoint are repeated,including
+the68-producer->same-worker fullK FPU history and original-model-band checks.
+
+*All15 literal code sections are compared byte-for-byte against the arrays
+ for every120 cores:3262511 code words,15444538 snapshot words,963 refusals.
+*The REAL held journal algorithm saves15444538 arbitrary original words,
+ verifies them,installs all3262511 code words,restores every original and
+ verifies30889076 original words across both passes. UINT32_MAX is data,
+ not an error sentinel. No processor is launched by this test.
+*52 general emitted journal faults plus33 inert precondition refusals;
+ 27 additional producer/ROOT-BF16/FPU code+padding save/install/restore
+ faults. First UNKNOWN retains all owners and prevents subsequent IO,
+ retry or cleanup. These are simulated endpoints,not native running/END.
+*Exact native+DATA roles:4 positives,472 wrong/missing/zero/late/old/CPU/
+ Work/renamed-driver-entry refusals. Full real RISC-V SDK driver links.
+*Independent actual cold-bootstrap qualification in both trees:178 frozen
+ test dependencies,one child0/stderr0 each. SAME119 workers really execute
+ their new boot code once;the actual immutable persistent ROOT executes
+ embedding5120,20raw reads+2writes+2readbacks,stages the exact first frame/
+ eight recipes/720 Conv+96 GDN records,and reaches the first returning
+ layer entry.16 emitted faults are inert for2048 extra instructions.
+ No processor/nonce/private-seal/completion/model product is transplanted.
+ Actual ROOT reserved stack2992B,written2984B UP TO THAT ENTRY ONLY.
+
+Root,worker,standalone service,generated header,native object and complete
+driver artifacts match byte-for-byte between main and clean source copies.
+Default and tag88 drivers also reproduce their existing fixed pins.
+The9 pre-existing dirty files and unrelated WIP are NOT included in this
+checkpoint. Four of those files are native build dependencies;their raw
+source hashes differ between main/clean and are recorded separately:
+TokenCallScope.inc,TokenNativeEnd.inc,tenstorrent_pci_probe.cpp and the old
+build_qwen38_full_offload_native.py. Compiled artifacts STILL match exactly.
+The clean manifest authenticates their base-commit versions;the main
+manifest authenticates the untouched existing local versions. This is not
+a claim that all main/clean source bytes were identical.
+
+Fixed artifacts
+---------------
+ROOT ELF212316B SHA25662f24f28379cabacd81cce767f0d852a649da400551d8a31d9a42752a87d746b
+worker ELF151044B SHA256dd83ded66b3fd9cd7671db489c097fe2c510a916dac2b9e4f1e7dbed118ecf4e
+code header SHA2562df93172725190daa7f8b24f27a6af986850f22a2da6d8c235727643667c8d04
+native driver2884184B SHA256d8b1c561c9895841c6389576b53027d6e6998b3761dac12f47dbec961fb8bbb9
+Native compiler maximum INDIVIDUAL frame2560B;not combined kernel stack.
+Public raw receipts/hashes are in the sibling directory;no model/private
+learned payload or executable binary is committed.
+
+Still required
+--------------
+The new image is NOT installed or hardware-qualified. Cold startup is NOT
+a complete layer/token. Execute the real Q8/recurrent prefix and new BF16
+producer/FPU transitions,then complete model/token-state and numerical
+checks,actual native running lifecycle and combined stack validation.
+Only after the necessary admission checks should a fresh controlled
+physical cohort run and produce an honest full-model tokens/sec result.
+The longer prefix test is separate ongoing work,not a claimed pass here.

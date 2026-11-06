@@ -18,7 +18,8 @@ assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 out.mkdir(mode=0o700)
 tool = str(sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku-')
 dependencies = {Path(__file__).resolve(), here/'qualify_pioneer_q38_bf16_worker.py',
-                here/'run_pioneer_q38_bf16_root_role_tests.py', here/'run_pioneer_q38_precise_root_role_tests.py'}
+                here/'run_pioneer_q38_bf16_root_role_tests.py', here/'run_pioneer_q38_precise_root_role_tests.py',
+                here/'pioneer_q38_full_offload_eog_isa_test.py'}
 for name in ('build_qwen38_token_root.py', 'build_qwen38_global_token_components.py',
              'build_qwen38_global_chain_root.py', 'blackhole_qwen38_global_chain.ld',
              'blackhole_qwen38_global_chain_start.S'):

@@ -224,6 +224,9 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
  std::map<uint64_t,uint32_t> dram;std::map<uint64_t,Span> spans;
  std::map<uint64_t,unsigned> rawZero; // immutable raw initial bytes, NEVER a product/readiness cache
  std::vector<uint8_t> bootRom,text,conv,terminal;
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+ std::vector<uint8_t> bf16Root; // NEW literal immutable ROOT section,not old-code padding
+#endif
  std::array<uint32_t,64> boot={};std::array<uint32_t,128> outer={};
  std::array<uint32_t,16> source={};std::array<uint32_t,10> command={};std::array<uint32_t,8> counts={};
  std::array<uint32_t,5120> input={};std::array<unsigned,119> nonceBefore={};
@@ -313,6 +316,9 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
  GlobalChainInstructionMachine(const char* image,const char* worker,const char* global):ScalarMachine(0,0){
   assert(canonical->Build());bootRom=Read((std::string(image)+"/boot.bin").c_str());text=Read((std::string(image)+"/text.bin").c_str());
   conv=Read((std::string(image)+"/conv.bin").c_str());terminal=Read((std::string(image)+"/terminal.bin").c_str());
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+  bf16Root=Read((std::string(image)+"/bf16.bin").c_str());assert(!bf16Root.empty() && bf16Root.size()<=65536);
+#endif
   std::ifstream rootSymbols(std::string(image)+"/program.symbols");std::string symbolAddress,symbolKind,symbolName;
   while(rootSymbols>>symbolAddress>>symbolKind>>symbolName){
    if(symbolName=="q38_global_chain_feedback_decode")feedback=true;
@@ -379,13 +385,21 @@ struct GlobalChainInstructionMachine:ScalarMachine,CohortBytes {
   for(unsigned i=0;i<5120;i++)Put(PioneerQ38ProjectionRoute(bank),initial+i*4,input[i]=Bits(float(sin(i*.017+.27))));
   memory[RB::Doorbell]=1;pc=0x6000;
  }
- bool CodeAddress(uint32_t a)const override{return a==0x6000 || Range(a,0x40000,unsigned(text.size())) || Range(a,0x64000,unsigned(conv.size())) || Range(a,0x60000,8);}
+ bool CodeAddress(uint32_t a)const override{return a==0x6000 || Range(a,0x40000,unsigned(text.size())) || Range(a,0x64000,unsigned(conv.size())) || Range(a,0x60000,8)
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+  || Range(a,0x20000,unsigned(bf16Root.size()))
+#endif
+  ;}
  unsigned Index(uint32_t a)override{
   assert(CodeAddress(a) && !(a&3));if(a==0x6000)return 0;
   // Measure actual reserved SP as well as lowest written stack word. Do not
   // infer combined runtime depth from a per-function compiler frame limit.
   if(regs[2]){assert(regs[2]>=0x6e000 && regs[2]<=0x70000);minSp=std::min(minSp,regs[2]);}
-  l1[8180]=Range(a,0x40000,unsigned(text.size()))?Word(text,a-0x40000):Range(a,0x64000,unsigned(conv.size()))?Word(conv,a-0x64000):Word(terminal,a-0x60000);return 8180;
+  l1[8180]=
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+   Range(a,0x20000,unsigned(bf16Root.size()))?Word(bf16Root,a-0x20000):
+#endif
+   Range(a,0x40000,unsigned(text.size()))?Word(text,a-0x40000):Range(a,0x64000,unsigned(conv.size()))?Word(conv,a-0x64000):Word(terminal,a-0x60000);return 8180;
  }
  unsigned StepLimit()const override{return PioneerQ38InstructionWindows::Limit;}
  uint32_t Load(uint32_t a)override{

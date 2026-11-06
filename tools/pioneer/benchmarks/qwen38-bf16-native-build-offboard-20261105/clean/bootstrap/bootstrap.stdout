@@ -1,0 +1,3 @@
+PASS ACTUAL persistent ROOT 8 session/prompt faults/no embedding or peer work/inert2048;NOT late-state/full-model proof
+PASS ACTUAL persistent ROOT 8 packet/counter/source/session/header/outer/write+readback corruption faults before/after real provisional writes/no later packet or peer work/inert2048;NOT state-commit/terminal/native proof
+PASS ACTUAL persistent ROOT bootstrap/last-vocabulary Q4_K embedding5120 bit-exact BEFORE writes/20raw reads+2writes+2readbacks/actual first-frame+all8recipes+720Conv+96GDN stage EXACT/SAME119 still virgin/no peer jobs/first returning entry reached/stack reserved2992 written2984;NOT all64/multi-token/state commit/native/physical/Work/TPS

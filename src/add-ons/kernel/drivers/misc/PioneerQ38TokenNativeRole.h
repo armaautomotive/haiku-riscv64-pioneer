@@ -1,5 +1,7 @@
 /* SPDX-License-Identifier: MIT */
-#ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
+#ifdef PIONEER_Q38_BF16_FULL_NATIVE
+#include "PioneerQ38Bf16FullNativeRole.h"
+#elif defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE)
 #include "PioneerQ38FullOffloadRole.h"
 #elif defined(PIONEER_Q38_TOKEN_HIDDEN_VALIDATION_NATIVE)
 #include "PioneerQ38TokenHiddenValidationRole.h"

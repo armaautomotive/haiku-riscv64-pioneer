@@ -73,3 +73,4 @@ static_assert(PioneerQ38TokenPushedL1::PreparedQ4==0,"late prepared Q4 journal r
 #include "PioneerQ38TokenPrefetchDataBoundary.h"
 #include "PioneerQ38TokenBatchedPrefetchDataBoundary.h"
 #include "PioneerQ38TokenTwinBatchPrefetchDataBoundary.h"
+#include "PioneerQ38TokenBf16DataBoundary.h"

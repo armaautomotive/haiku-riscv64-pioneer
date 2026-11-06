@@ -16,7 +16,13 @@
 // PC -> actual ELF symbol mapping is diagnostic metadata ONLY. It cannot
 // select/change ROM, PC, registers, clocks, products or an execution grant.
 class PioneerQ38InstructionProfile {
- enum {TextWords=32768,ConvWords=8192,Slots=TextWords+ConvWords+3};
+ enum {TextWords=32768,ConvWords=8192,
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+  Bf16Words=16384,
+#else
+  Bf16Words=0,
+#endif
+  Slots=TextWords+ConvWords+3+Bf16Words};
  std::array<uint16_t,Slots> owner={};
  std::vector<std::string> names={"unmapped entry/terminal/symbol"};
  std::vector<uint64_t> counts={0};uint64_t total=0;
@@ -26,6 +32,9 @@ class PioneerQ38InstructionProfile {
   if(pc>=0x64000 && pc<0x6c000)return TextWords+(pc-0x64000)/4;
   if(pc==0x6000)return TextWords+ConvWords;
   if(pc==0x60000 || pc==0x60004)return TextWords+ConvWords+1+(pc-0x60000)/4;
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+  if(pc>=0x20000 && pc<0x30000)return TextWords+ConvWords+3+(pc-0x20000)/4;
+#endif
   assert(false && "profile PC outside unchanged ROOT ROM map");return Slots;
  }
 public:

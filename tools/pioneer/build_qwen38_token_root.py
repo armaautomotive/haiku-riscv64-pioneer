@@ -48,6 +48,7 @@ flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exc
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1',
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1'] if bf16 else []),
+ *(['-DPIONEER_Q38_FULL_OFFLOAD_ROOT_IMAGE=1'] if bf16 else []),
  *(['-DPIONEER_Q38_TOKEN_FRONTIER_IMAGE=1'] if frontier else []),
  *(['-DPIONEER_Q38_JOB_BOOT_FOLD_IMAGE=1'] if fold_job_boot else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION=1'] if precise else []),
@@ -118,6 +119,7 @@ for i,row in enumerate(sections):
  if m and 'ALLOC' in sections[i+1]:assert m[1] in ('.boot','.text','.terminal','.conv') or (bf16 and m[1]=='.bf16'),row
 (out/'program.symbols').write_text(subprocess.check_output([tool+'nm','-n',str(out/'program.elf')],text=True))
 (out/'program.disassembly').write_text(dis)
+if bf16:run(sys.executable,here/'tests/pioneer_q38_full_offload_eog_isa_test.py',sdk,out)
 PINS=(('boot.bin',4,'32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca'),
  ('text.bin',128868,'4a110bff8be856fdf02011750bbb2ecf083c2d4a3e6e1c9decd92253018742c7'),
  ('terminal.bin',8,'6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5'),

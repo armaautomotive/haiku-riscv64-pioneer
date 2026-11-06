@@ -1,0 +1,10 @@
+[
+  "/Library/Developer/CommandLineTools/usr/bin/python3",
+  "/Users/arma/Documents/ChatGPT/HaikuOS/tools/pioneer/tests/run_pioneer_q38_token_bootstrap_tests.py",
+  "/private/tmp/pioneer-bf16-native.l7zPkIeW/qual-main/root-and-worker/root",
+  "/private/tmp/pioneer-bf16-native.l7zPkIeW/qual-main/root-and-worker/worker-suite/worker/unchanged-global/qualified-math",
+  "/private/tmp/pioneer-bf16-native.l7zPkIeW/qual-main/root-and-worker/worker-suite/worker",
+  "--cancel-boundary",
+  "--f32-hidden",
+  "--bf16-fpu"
+]

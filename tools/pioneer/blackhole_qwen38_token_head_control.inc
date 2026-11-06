@@ -150,9 +150,9 @@ static __attribute__((noreturn,noinline,section(".conv.token"))) void Finish(con
 }
 #ifdef PIONEER_Q38_FULL_OFFLOAD_ROOT_IMAGE
 #if PIONEER_Q38_FULL_OFFLOAD_ROOT_IMAGE != 1 || !defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE) \
- || !defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || !defined(PIONEER_Q38_TOKEN_CANCEL_BOUNDARY) \
+ || (!defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) && !defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU)) || !defined(PIONEER_Q38_TOKEN_CANCEL_BOUNDARY) \
  || defined(_KERNEL_MODE) || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE)
-#error Full-card EOG firmware requires its separate exact pushed ROOT image build
+#error Full-card EOG firmware requires its separate exact pushed or BF16 ROOT image build
 #endif
 #include "PioneerQ38FullOffloadEog.h"
 // Text has space;the legacy auxiliary ROM has only48 bytes spare. Keep the

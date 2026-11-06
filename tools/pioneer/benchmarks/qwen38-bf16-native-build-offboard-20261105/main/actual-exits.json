@@ -1,0 +1,11 @@
+{
+  "footprint": 0,
+  "footprint-compile": 0,
+  "generate": 0,
+  "journal-capsule": 0,
+  "journal-faults": 0,
+  "journal-positive": 0,
+  "native-build": 0,
+  "roles": 0,
+  "root-and-worker": 0
+}

@@ -1,4 +1,14 @@
 /* SPDX-License-Identifier: MIT */
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+#include "PioneerQ38TokenBf16ProgramsRole.h"
+#include "PioneerQ38TokenBf16Programs.h"
+#include "PioneerQ38TokenFootprint.h"
+#ifndef PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
+#define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
+namespace PioneerQ38TokenPrograms=PioneerQ38TokenBf16Programs;
+#endif
+static_assert(PioneerQ38TokenPrograms::Family==0x34505451,"late BF16 immutable package selection");
+#else
 // DATA selection only; no native source/lifetime, journal or launch grant.
 // Rechecked outside the guard so late/defined-zero changes cannot alias data.
 #include "PioneerQ38TokenManualTTSyncProgramsRole.h"
@@ -300,3 +310,4 @@ static_assert(PioneerQ38TokenPrograms::Family==0x33505451,"late QTP3 package sel
 #endif
 #include "PioneerQ38TokenPrograms.h"
 #endif
+#endif // distinct QTP4 selection versus all old packages

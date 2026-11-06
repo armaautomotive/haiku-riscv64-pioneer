@@ -20,12 +20,23 @@ static std::vector<unsigned char> Bytes(const char* directory,const char* name){
 }
 int main(int argc,char** argv){
  assert(argc==4 && unsigned(std::stoul(argv[3]))==P::CancelBoundary);setvbuf(stdout,nullptr,_IOLBF,0);
- const char* root[]={"boot","text","terminal","conv"};
+ const char* root[]={"boot",
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+  "bf16",
+#endif
+  "text","terminal","conv"};
  const char* peer[]={"boot","globalworker",
 #ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS
   "precise",
 #endif
-  "dense","ffn","service","affine","text","gdn"};
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+  "bf16producer",
+#endif
+  "dense",
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+  "cachedfpu",
+#endif
+  "ffn","service","affine","text","gdn"};
  unsigned snapshots=0,code=0,refusals=0;
  for(unsigned worker=0;worker<120;worker++){
   unsigned words=0,last=0;
@@ -54,7 +65,17 @@ int main(int argc,char** argv){
   }
  }
  assert(snapshots==S::SavedWords && code==P::CodeWords(0)+119*P::CodeWords(1));
-#ifdef PIONEER_Q38_TOKEN_PRECISE_PROGRAMS
+#ifdef PIONEER_Q38_TOKEN_BF16_PROGRAMS
+ assert(P::Family==0x34505451 && S::Bf16==1 && P::EogCount==5 && P::CancelBoundary==1
+  && P::CodeWords(0)==44275 && P::CodeWords(1)==27044 && S::SavedWords==15444538 && S::SavedBytes==61778152);
+ for(unsigned address:{0x20000U,0x2fffcU,0xe0000U,0x168000U,0x16c1fcU})assert(S::SnapshotContains(0,address));
+ assert(!S::SnapshotContains(0,0x30000));
+ for(unsigned worker=1;worker<120;worker++){
+  for(unsigned address:{0x22000U,0x22ffcU,0x30000U,0x3fffcU,0x50000U,0x5fffcU})assert(S::SnapshotContains(worker,address));
+  uint32_t word=0xa7a7a7a7;assert(P::ProgramWord(worker,0x50000,word));
+  assert(!P::ProgramWord(worker,0x5fffc,word)); // journal padding is NOT executable DATA
+ }
+#elif defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
  assert(P::Family==0x32505451 && S::Precise==1 && P::CancelBoundary==1
   && P::CodeWords(0)==40017 && P::CodeWords(1)==24776 && S::SavedWords==13356602);
  for(unsigned worker=1;worker<120;worker++){
@@ -78,5 +99,5 @@ int main(int argc,char** argv){
  }
  uint32_t* rootAlias=const_cast<uint32_t*>(P::RootText);const uint32_t before=*rootAlias;
  assert(!P::ProgramWord(0,0x6000,*rootAlias) && *rootAlias==before);refusals++;
- printf("PASS FP32 token program DATA/cancel%u/ALL%u section bytes/ALL120 exact code%u words/snapshot%u words=%ubytes/terminal60000+60004 NEW vs old prefix/runtime+padding covered/%u refusals/no implicit padding or immutable-output alias;NOT native/journal-execution/physical/model/Work/TPS authority\n",P::CancelBoundary,4+P::CodeSpans(1),code,snapshots,S::SavedBytes,refusals);
+ printf("PASS FP32 token program DATA/cancel%u/ALL%u section bytes/ALL120 exact code%u words/snapshot%u words=%ubytes/terminal60000+60004 NEW vs old prefix/runtime+padding covered/%u refusals/no implicit padding or immutable-output alias;NOT native/journal-execution/physical/model/Work/TPS authority\n",P::CancelBoundary,P::CodeSpans(0)+P::CodeSpans(1),code,snapshots,S::SavedBytes,refusals);
 }

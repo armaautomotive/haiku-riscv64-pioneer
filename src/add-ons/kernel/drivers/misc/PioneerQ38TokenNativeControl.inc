@@ -6,7 +6,11 @@
 #include "PioneerQ38PreparedSourceNative.inc"
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_NATIVE
+#ifdef PIONEER_Q38_BF16_FULL_NATIVE
+#include "PioneerQ38Bf16FullProtocol.h"
+#else
 #include "PioneerQ38FullOffloadProtocol.h"
+#endif
 static status_t Q38FullOffloadSupport(void* data,size_t length){
  namespace F=PioneerQ38FullOffload;
  if(geteuid()!=0)return B_NOT_ALLOWED;

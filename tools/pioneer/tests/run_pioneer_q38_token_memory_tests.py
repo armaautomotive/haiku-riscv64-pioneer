@@ -15,16 +15,21 @@ pushed = '--pushed-programs' in args
 if pushed:
     assert args.count('--pushed-programs') == 1 and not precise, 'distinct QTP3 cannot mix with QTP2 DATA'
     args.remove('--pushed-programs')
+bf16 = '--bf16-programs' in args
+if bf16:
+    assert args.count('--bf16-programs') == 1 and not precise and not pushed
+    args.remove('--bf16-programs')
 sdk = None
 if len(args) >= 2 and args[-2] == '--sdk':
     sdk = pathlib.Path(args[-1])
     args = args[:-2]
 assert args in ([], ['--positive'], ['--faults'], ['--capsule-faults'])
-assert args != ['--capsule-faults'] or precise or pushed, 'capsule faults require explicit QTP2/QTP3 DATA'
+assert args != ['--capsule-faults'] or precise or pushed or bf16, 'capsule faults require explicit code DATA'
+assert not bf16 or sdk is None, 'QTP4 kernel subject is built by build_q38_bf16_full_native.py,not the old NODRV template'
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 here = pathlib.Path(__file__).resolve().parent
 flags = re.findall(r'-D[A-Z][A-Z0-9_]*(?:=[0-9]+)?', (here/'run_pioneer_q38_ffn_persistent_image_tests.sh').read_text())
-profile = ['-DPIONEER_Q38_TOKEN_PUSHED_PROGRAMS=1'] if pushed else ['-DPIONEER_Q38_TOKEN_PRECISE_PROGRAMS=1'] if precise else []
+profile = ['-DPIONEER_Q38_TOKEN_BF16_PROGRAMS=1'] if bf16 else ['-DPIONEER_Q38_TOKEN_PUSHED_PROGRAMS=1'] if pushed else ['-DPIONEER_Q38_TOKEN_PRECISE_PROGRAMS=1'] if precise else []
 with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/tmp') as tmp:
     binary = pathlib.Path(tmp)/'test'
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
