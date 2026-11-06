@@ -72,6 +72,8 @@ performance objective remains active;this local checkpoint does not close it.
 Reproduce:
 python3 tools/pioneer/tests/run_pioneer_q38_prepared_bf16_q4_tests.py \
  /Volumes/HaikuBuildLocal/generated.riscv64 /absolute/fresh/private/output
-Private completed evidence:/private/tmp/pioneer-prepared-bf16-q4.FejRGF/final
+Private completed evidence:/private/tmp/pioneer-prepared-bf16-q4.FejRGF/final-private
+Final harness keeps dependency/role-check stack artifacts outside the repo;
+all numeric/regression/exit/RV32 records unchanged after that runner fix.
 Sibling directory retains complete main/clean arithmetic/regression outputs,
 actual-exits,source fingerprints and RV32 identity. No learned data/binary.

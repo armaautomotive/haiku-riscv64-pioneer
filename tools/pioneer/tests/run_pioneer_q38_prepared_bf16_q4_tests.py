@@ -29,7 +29,7 @@ flags = ['-std=c++17', '-Os', '-Wall', '-Wextra', '-Werror', '-ffreestanding', '
          '-DPIONEER_Q38_PREPARED_BF16_Q4_BUILD=1', '-DPIONEER_Q38_Q4_FACTORED_BFP8_BUILD=1']
 dependencies = {Path(__file__).resolve()}
 for cc, path, extra in ((host, unit, []), (host, regression, []), (cross, producer, flags)):
-    data = subprocess.check_output([cc, '-std=c++17', *extra, '-MM', str(root/path)], text=True)
+    data = subprocess.check_output([cc, '-std=c++17', *(f for f in extra if f != '-fstack-usage'), '-MM', str(root/path)], text=True)
     for name in data.replace('\\\n', '').split(':', 1)[1].split():
         p = Path(name).resolve()
         assert p.is_relative_to(root)
@@ -78,7 +78,7 @@ for label, extra in (
         ('kernel', ['-D_KERNEL_MODE']), ('work', ['-DPIONEER_Q38_WORK_INFERENCE=1']),
         ('cpu-reference', ['-DPIONEER_Q38_CPU_VALIDATION=1']), ('native', ['-DPIONEER_Q38_FULL_OFFLOAD_NATIVE=1']),
         ('client', ['-DPIONEER_Q38_FULL_OFFLOAD_CLIENT=1']), ('fast-math', ['-ffast-math'])):
-    result = subprocess.run([cross, *flags, *extra, '-fsyntax-only', str(root/producer)], capture_output=True, text=True)
+    result = subprocess.run([cross, *(f for f in flags if f != '-fstack-usage'), *extra, '-fsyntax-only', str(root/producer)], capture_output=True, text=True, cwd=out)
     assert result.returncode and ('Exact separate prepared BF16 Q4' in result.stderr or 'Factored-Q4 arithmetic has NO' in result.stderr), label
     refused += 1
 same()
