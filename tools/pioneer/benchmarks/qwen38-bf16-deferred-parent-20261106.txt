@@ -1,0 +1,42 @@
+Deferred110 -- bounded physical-parent qualification,not inference
+=================================================================
+November6,2026;package checkpoint cd8c379cd962a4dbba3e5cbaf021bcad838deee6.
+Purpose:one actual SAME31prompt/32output comparison of the deferred audit
+candidate,then accept/reject and independently prove normal-driver restore.
+This overhead experiment CANNOT close the roughly122x best103-to20TPS gap.
+
+Fresh read-only SSH actual0 at13:52:15GMT:normal041/tag2026102100010012/
+generation48,quiesced0,cold0,owner0,open1,guard1;64CPU/137034936320B RAM.
+Installed normal SHA041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403.
+Scoped inference/test-owner rows0. Both110-a and110-a.incoming ABSENT.
+This observation does not replace launch-time admission or postflight.
+
+New parent:pioneer_q38_bf16_deferred_full_offload_physical.sh.
+New test:tests/pioneer_q38_bf16_deferred_parent_test.py,python3 ACTUAL0.
+Inherited54+120 fake endpoint metadata/idle/health/failure/one-shot tests
+pass. Exact ENTIRE parent comparison permits ONLY10 subject substitutions
+from109:comment,stage,three executable names,three hashes,tag,generations.
+No guard/admission/actual-exit/UNKNOWN/restoration policy weakening.
+These are FAKE endpoints;not hardware execution or a cleanup guarantee.
+
+One-shot stage /boot/home/pioneer-q38-bf16-deferred-110-a is NEW;once spent,
+never replay,repin or clear. Expected normal48 -> candidate49 -> normal50.
+Candidate tag2026110600010110. Local executable SHA256 rechecked:
+driver fab6d0e741cbb06ab540af07d4d1d4864cf84ec29eaf02b5048d11464bc771e9
+USER   4b526caefad509819b6453ebc99e0199e7e5e6ad079534f76e848cfe66706d00
+rate   47eb2c07d49e540db8c6bd02a38c6cad9dac8147ddeb60e83d17b89c75a33dbd
+Corrected startup-enabled USER82984B,NOT superseded82336B build.
+Local source/build/test inventory remains in deferred-native-offboard report.
+
+Before launch:publish parent,unused-stage/idle/exact normal48 recheck,
+exclusive root700 staging,hash+permissions plus complete local SCP readback,
+exact parent preflight. SAME original GGUF authenticated by the USER before
+BEGIN/upload/execution;no CPU model/reference/fallback. Keep parent alive
+through real END/Close and actual child exit. On UNKNOWN stop;never infer
+cleanup from a log line or auto-force-unload/retry. All81..109 remain spent.
+
+After actual exit:independent scoped PID absence,status/hash/CPU/RAM and
+Assistant/runtime/model preservation;archive actual result;strict parser
+--phase-profile --bf16-profile --startup-timing. Compare109 AND faster103;
+do not promote slower code. No110 stage,install or model result in this
+qualification checkpoint. No power/SD/mains/Assistant/network change.

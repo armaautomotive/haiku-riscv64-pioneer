@@ -61,9 +61,12 @@ Compact work plan -- one next task
    Full K17408/matrix/final119/native lifetime integration remains unproven
    until a controlled physical trial. This replaces the earlier plan to
    simulate every remaining stage;the unproven scope is NOT called complete.
-   Next:qualify fresh110 parent+preflight,then SAME31prompt/32output actual
-   model comparison and independently verify restoration;accept/reject.
-   No110 physical stage was created by this qualification.
+   The110 one-shot physical parent now passes the inherited54+120 fake
+   endpoint failure cases and exact whole-policy identity comparison.
+   Fresh read-only Haiku check:normal48,idle,64CPU/fullRAM,110stage absent.
+   Next:publish the parent,stage/readback/preflight,then SAME31prompt/32output
+   actual model comparison and independently verify restoration;accept/reject.
+   No110 physical stage was created by parent qualification.
    Source budget:at least239040 fewer tiny control requests/token,NOT time
    telemetry. Even deleting the whole30.46% phase only gives~1.44x if other
    costs stay fixed. This prototype cannot solve the122x gap from best103
@@ -113,3 +116,5 @@ First compiled connected preparation branch,BEFORE matrix submission:
  benchmarks/qwen38-bf16-deferred-prepare-connected-20261106.txt
 Experimental110 package,compiled guard/host journal only,NOT card execution:
  benchmarks/qwen38-bf16-deferred-native-offboard-20261106.txt
+Experimental110 physical-parent qualification,NOT a card run:
+ benchmarks/qwen38-bf16-deferred-parent-20261106.txt
