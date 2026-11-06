@@ -1,0 +1,42 @@
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/config/non-packaged/add-ons/kernel/drivers/bin/tenstorrent_pci_probe
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-p100a-hot-reload-20261019-a/tenstorrent_pci_probe-scale-reuse-qualification-041fef18
+041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403  /boot/home/pioneer-native-factored-q4-trace112-a/stable041.backup
+4c07e7b3176a113a2d4dab828e753765dd3825531dd753bd6181494efb52ff27  /boot/home/pioneer-native-factored-q4-trace112-a/tenstorrent_pci_probe-native-q4-fpu-stream112
+6b3a12905d0a9d1ff451e1a9db9fdbd349f0acb462a46036dd52a726ce23249e  /boot/home/pioneer-native-factored-q4-trace112-a/pioneer-native-factored-q4-trace
+fbf3f10d66e3055acf8f2ede8e66ccefcd312a6674cbb6755f9b2e81a05bf004  /boot/home/pioneer-native-factored-q4-trace112-a/pioneer_native_factored_q4_trace_physical.sh
+8b7d092b33c24035880a2ac5f15104c9d42ed73782d92d2f869b10b467263ba4  /boot/home/pioneer-native-factored-q4-trace112-a/launch.sh
+b0c851b302014e4677cee250d09634d8058be0eae223480a2aac45b3d285137f  /boot/home/pioneer-p100a-hot-reload-20261019-a/pioneer-p100a-reload
+d1ce2aa4d4d0f83a711c848e911005622fcb684cd38edbb5cc9c104c0acc7229  /boot/home/config/non-packaged/add-ons/kernel/generic/pioneer_p100a_reload_guard
+861e5287e6f417c28968422d01721c95bc2c73ed17e9111806dfa76477984a74  /boot/home/config/non-packaged/servers/HaikuAssistantQwen27
+c509da438d06f7e0dbcb23f4ef0fec2b000bfab923f5c7e86836127736d29e18  /boot/home/config/non-packaged/servers/HaikuAssistantService
+0de9141eb3955cf1c993a67c80ef648b3538ce7155c17677458487ee083a4933  /boot/home/config/non-packaged/apps/HaikuAssistant
+0ae23a2c211af9fbafb89c3d93bdd136a4bdd574baeeaf2d622f582efcf426af  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libllama.so.0.2.0
+a3b81c133641bbdacde8dd1d0e0ffa7a0a1ec0c33e95c426df1db59735379c16  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml.so.0.21.0
+9cb45a36558bd78aa4d4b7ed5385cbf9df32de208f9e6c9b6d064e8527dca389  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-base.so.0.21.0
+69e9ec2c43a123afbb256c3feb6313cdcebdf1b2a87278ac3cdac8a1a65273d2  /boot/home/develop/llama-c060ca974c77/build-pioneer/bin/libggml-cpu.so.0.21.0
+P100A_RELOAD driver55 tag2026102100010012 generation2 quiesced0 cold0 active_owner0 open_count1 guard1;CPU_METADATA_ONLY
+Kernel name: kernel_riscv64 built on: Sep  8 2026 15:18:31 version 0xa01
+64 (Unknown), revision 0000 running at 1000MHz
+
+133805268992 bytes free      (used/max 3229667328 / 137034936320)
+                           (cached    198975488)
+     64533 semaphores free (used/max       1003 /      65536)
+      3957 ports free      (used/max        139 /       4096)
+      3907 threads free    (used/max        189 /       4096)
+      2026 teams free      (used/max         22 /       2048)
+launcher.pid 622
+parent.pid 627
+state UNPROVEN_FACTORED_Q4_TRACE_NO_END_RESET_RETRY_RESTORE
+parent.exit 70
+factored-q4-trace.exit 1
+85165bd74ef80edc836eadec853ba465d361e292dc33f24236f0335bcf359871  /boot/home/pioneer-native-factored-q4-trace112-a/parent.stdout
+e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  /boot/home/pioneer-native-factored-q4-trace112-a/parent.stderr
+6945a2e7d50b06baff8c9b8c7ecf2a3ec628558d033f66800f7f630052b10308  /boot/home/pioneer-native-factored-q4-trace112-a/factored-q4-trace.stdout
+754fefa98b23d35c75508bd8364919239893a082eb1512fa123f29166bf4fa9c  /boot/home/pioneer-native-factored-q4-trace112-a/factored-q4-trace.stderr
+1953b1a72b073c595c2da71cd3f76fa0164fd4ba31fc711a2a02767426a098de  /boot/home/pioneer-native-factored-q4-trace112-a/state
+6442bc26a7c562f5afe6467dab36365c709909f6a81afcecfc0c25cff0f1bab0  /boot/home/pioneer-native-factored-q4-trace112-a/parent.exit
+4355a46b19d348dc2f57c046f8ef63d4538ebb936000f3c9ee954a27460dd865  /boot/home/pioneer-native-factored-q4-trace112-a/factored-q4-trace.exit
+5eac2d898682427b63fa106d573be06d9da64e8c42e6c8260e577521cdde9808  /boot/home/pioneer-native-factored-q4-trace112-a/parent.pid
+f23d6f1eefc536ecaefac8405466631513676cf8c77f1aa4d785ab875a879707  /boot/home/pioneer-native-factored-q4-trace112-a/launcher.pid
+Fri Nov  6 19:25:55 GMT 2026
+NATIVE112_FRESH_POWER_RECOVERY_INDEPENDENT_NORMAL2_IDLE64_FULLRAM_APPS_PRESERVED_NOT_TRIAL_END

@@ -70,9 +70,18 @@ replay111-a,relax comparison or repeat full-model uploads. This checkpoint
 stays open until correct arithmetic and a real timing comparison exist.
 The new trace component has now passed local issue correspondence,
 compiled-image and complete-word-reporting mechanics checks. Fresh native
-driver/client/source binding is now locally qualified as native112;its
-physical probe is still required. The software model's passes do NOT
-resolve the hardware failure.
+driver/client/source binding was qualified as native112. Its physical probe
+is now COMPLETE and REJECTED:all64 observations were saved,59 mismatched,
+and the FIRST failing observed stage is the packed weight tile before the
+matrix dot. First input sum,coefficient/minimum and initial accumulator
+match. A wrong-face/address-context hypothesis needs proof,not comparator
+relaxation.112-a is spent;no timing was accepted.
+Recovery checkpoint CLOSED:one OFF/ON,pinned SD-free64CPU/fullRAM boot,
+fresh-epoch restoration and independent postflight both0.Normal041/gen2
+is idle;apps/runtime unchanged;all9 trial-record hashes survived unchanged.
+Next implementation scope is ONE corrected on-card Q4 operation and its
+old/new hardware timing,NOT full-model uploads,UI work or repeated recovery.
+See benchmarks/qwen38-factored-q4-trace-physical-20261106.txt.
 The new operation order differs from old per-weight BF16 rounding;
 local bit tests do not prove model quality.
 

@@ -19,9 +19,10 @@ The answer was a short counting response: 31 prompt tokens, 32 output
 tokens, 62 committed positions. This is not broad quality qualification
 or an arbitrary-prompt production Assistant release.
 
-At the last independent platform check, Haiku had 64 CPUs and
-137,034,936,320 bytes of RAM. Assistant and its runtime were preserved.
-This is saved evidence, not a fresh claim about the board's power/state.
+After the native112 diagnostic and controlled recovery, independent
+postflight passed: Haiku has 64 CPUs and 137,034,936,320 bytes of RAM,
+normal041/gen2 is idle, and Assistant/runtime files are unchanged.
+No test process remains. This is preservation, not a new Assistant UI test.
 
 Measured full-model performance
 -------------------------------
@@ -64,8 +65,10 @@ Locally completed:
 NOT completed:
   * Native integration of the whole-model returning service. The isolated
     native111 comparison package is locally qualified, not a Work release.
-  * Correct physical arithmetic: native111 FAILED its first new output
-    (c1b7ebf1 instead of 3f3b54c5). Candidate rejected; no accepted timing.
+  * Correct physical arithmetic: native111 and native112 FAILED. The new
+    hardware trace locates incorrect packed weight data BEFORE the matrix
+    calculation. First input sum, coefficient/minimum and initial accumulator
+    match. The proposed addressing fix is not implemented or proven.
   * Whole-model quality and throughput measurement of the new algorithm.
 
 This is a new operation order, not previous BF16/GGML bit equivalence.
@@ -88,29 +91,20 @@ infrastructure experiments are prerequisites for checkpoint 2.
 Preservation and test state
 ---------------------------
 
-Last verified installed rollback driver: normal 041, tag 2026102100010012,
-generation 2 after power recovery, quiesced 0, cold 0, owner 0, open 1, guard 1.
-This normal driver is NOT the faster experimental tag 92.
-The native111 trial exited70 on numerical mismatch and quarantined the
-card. It did NOT complete cleanly or restore its resources. A separate
-power recovery restored normal041/gen2; independent postflight passed.
-No trial process remains. Assistant/runtime/64CPU/fullRAM checks passed.
+Installed rollback driver: normal 041, tag 2026102100010012, generation 2,
+quiesced 0, cold 0, owner 0, open 1, guard 1. It is NOT experimental tag 92.
+The112 hardware trace returned all64 observations:59 mismatches and no
+accepted timing. It reproduced111's final-value error and narrowed the
+first failing stage to packing. Both candidates are rejected.
+Complete original trace is privately saved; all nine record hashes survived
+the controlled recovery unchanged. No failed-epoch END/reset/retry/restore.
+One OFF/ON and the pinned SD-free full-memory boot created a fresh idle
+epoch; separate restoration and independent postflight both exited0.
+No SD,mains or hardware change; no GPU program ran during recovery.
+Next:fix the wrong packed-face behavior, then validate ONE operation on
+hardware and measure it before any whole-model integration or UI change.
 
-Native111 was physically tested after publication and exact byte readback.
-The old calculation passed its32 comparisons;the first new value failed.
-The17408-width job was not run and no speed result was accepted. Local
-main/clean qualification had passed,but did not prove physical arithmetic.
-Recovery used one OFF/ON and the known SD-free full-memory Haiku boot;
-no SD,mains or hardware change. Recent small trial-log files were damaged
-after forced power-off;complete Mac copies had already been verified.
-Original damaged records were preserved,not rewritten to pass a guard.
-Native112 trace driver/client/source integration now passes main/clean local
-qualification,including all64 returned-word logging on mismatch. It has NOT
-been physically tested. The software model did not predict111's failure,
-so these passes are not card-correctness evidence. Next:stage the fresh
-isolated trace and locate the incorrect on-card intermediate.
-
-Historical stages 81 through 111-a are SPENT: never replay, repin identities
+Historical stages 81 through 112-a are SPENT: never replay, repin identities
 or clear once markers. Future hardware testing needs a fresh identity and
 fresh idle-state/ownership admission.
 Existing dirty native/driver/submodule work and unrelated experiments are
@@ -135,5 +129,7 @@ Physical111 numerical rejection and separate successful recovery:
   benchmarks/qwen38-factored-q4-native-physical-20261106.txt
 New trace component mechanics,not a native or physical qualification:
   benchmarks/qwen38-factored-q4-trace-component-20261106.txt
-Native112/source/client package,qualified LOCALLY only:
+Native112/source/client package,local qualification:
   benchmarks/qwen38-factored-q4-trace-native-20261106.txt
+Physical112 first-failure trace and completed independent recovery:
+  benchmarks/qwen38-factored-q4-trace-physical-20261106.txt

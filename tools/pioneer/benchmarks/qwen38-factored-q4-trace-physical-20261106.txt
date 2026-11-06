@@ -1,0 +1,94 @@
+Native112 hardware trace: wrong packed weights; recovery COMPLETE
+================================================================
+
+November 6, 2026. Source checkpoint 6d317ad2d6a52801aa394a3b396f47184098b581
+was published before this one physical trial. The locally qualified native,
+client, parent and wrapper were read back byte-for-byte before execution.
+Trial /boot/home/pioneer-native-factored-q4-trace112-a is SPENT. Never replay
+it, change acceptance rules, repin its artifacts or clear its once marker.
+
+Result and decision
+-------------------
+Primary SSH 79496 actually exited 70; parent 627 exit 70; client 711 exit 1.
+Launcher 622, parent and client were independently absent after termination.
+The calculation returned completed data and all 64 observations were saved
+before the decision. There were 59 mismatches, including every final output.
+The first final result reproduced native111's numerical failure.
+
+The earliest failing observed stage is the packed native weight tile,
+BEFORE the matrix dot product. First-group input sum, coefficient, negative
+minimum and initial accumulator match the independent original-byte oracle.
+The complete metadata-stage fingerprint also matches. Packed tile and dot
+observations do not match; subsequent affine/final values are incorrect.
+This narrows the problem to packing/addressing before matrix arithmetic;
+it does not prove a particular fix or establish whole-model correctness.
+
+A separate local original-byte search found the two observed first packed
+words uniquely at the LAST unpacked face, rather than the expected first
+face. Missing destination-address-context restoration is a hypothesis, not
+yet a hardware-proven cause. The software model passed the faulty candidate
+and needs an appropriate addressing test, not a relaxed comparator.
+
+REJECT candidate112. No END, reset, retry or restoration in the failed epoch.
+Reload metadata reported native112/gen3, cold1/owner1. This is numerical
+rejection/quarantine, not a test timeout. No speed measurement is accepted.
+Best full-model rate remains about 0.173 tok/s; latest about 0.082 tok/s.
+20 tok/s is still unmet and its feasibility is unproven.
+
+Evidence preservation
+---------------------
+All nine completed remote records were copied privately and hashes checked
+BEFORE power-off. Both failed wrappers and a separate successful sync
+flushed text evidence before OFF. Original records remained unchanged after
+recovery: all nine hashes matched the pre-power copies. The complete raw
+trace remains private because it includes a few original learned-code and
+metadata observations; this report publishes only comparisons and digests.
+
+  parent.stdout SHA256:
+    85165bd74ef80edc836eadec853ba465d361e292dc33f24236f0335bcf359871
+  factored-q4-trace.stdout SHA256:
+    6945a2e7d50b06baff8c9b8c7ecf2a3ec628558d033f66800f7f630052b10308
+  factored-q4-trace.stderr SHA256:
+    754fefa98b23d35c75508bd8364919239893a082eb1512fa123f29166bf4fa9c
+
+Recovery checkpoint: CLOSED
+---------------------------
+OFF was sent ONCE while Haiku was known on and actually completed 0.
+After more than eight quiet minutes, unchanged serial size and SSH absence,
+ON was sent ONCE and actually completed 0. No second OFF, SD, mains or
+hardware change. Linux 6.1.31 booted normally from NVMe.
+
+The exact helper SHA 9cfc6dc326c938b8d611c8c8622a9a6686ed530270dde768b1f01362f4f61f6e
+prepared and booted fresh session factored112-recover-20261106-a, 64 CPUs,
+memory128-spin-idle7-top-page-nosd-control; both actions actually exited 0.
+An initial unprivileged helper-hash read was refused before preparation;
+the required sudo read matched, then the single preparation succeeded.
+
+Fresh Haiku reported native112/gen1, cold0/owner0 and all CPUs/RAM. A separate
+recovery directory admitted only that empty new epoch and exact artifacts.
+Restoration actually exited 0: normal041/tag2026102100010012/gen2,
+quiesced0/cold0/owner0/open1/guard1. No GPU calculation ran in recovery.
+This does NOT clean up or accept the failed old lease.
+
+The first read-only postflight refused because its process-name filter
+matched its OWN shell path. Shell tracing confirmed the self match. A v2
+check excludes only its own PID; local fixtures accept self-only and still
+reject a separate test process. No restoration was repeated or acceptance
+rule for GPU output changed. The independent v2 postflight actually exited
+0: no test/Assistant inference process, exact installed/staged/backup/admin/
+guard binaries, unchanged three Assistant files and four runtime libraries,
+model metadata unchanged, 64 CPUs and 137034936320 bytes max RAM.
+This verifies preservation, not a new Assistant UI or inference test.
+
+Sibling recovery.stdout and recovery-postflight.stdout retain complete
+successful restoration and independent postflight output, with all nine
+post-power trial-record hashes. Mac UTC gives ordering; Haiku wall clock
+is not inference timing authority.
+
+Next bounded implementation checkpoint
+--------------------------------------
+Correct and hardware-validate ONE representative packed-Q4 operation, then
+measure old/new complete-job timing. First explain/reproduce the observed
+wrong-face behavior; do not guess speed, replay112, relax comparisons, run
+unchanged full-model uploads or modify the UI. Use a new candidate identity.
+Recovery is complete; arithmetic and the overall performance goal are not.
