@@ -7,13 +7,13 @@
 #endif
 #include "PioneerQ38NativeBfpMatvec.h"
 
-// One query against 32 keys, each 256 BF16 elements. The caller supplies
-// eight consecutive K32 tiles via stage.Tile(i), which must fill the private
+// Matrix-vector product for 32 output rows and either 32 or 256 BF16 inputs.
+// The caller supplies one or eight K32 tiles via stage.Tile(i), filling the
 // caller-selected matrix and vector operands and their headers, then fence.
 // Matrix operands are four face-major 16x16 BF16 faces; the query has eight
 // copies of each 16-element half. Padded key rows must be zeroed by stage.
 // Dst rows 32/40 retain the sums until the caller consumes them, and score
-// scaling/masking/softmax is intentionally outside this producer.
+// scaling/masking/softmax and cross-chunk PV merging are outside this producer.
 //
 // The caller must own L1, FPU configuration, both unpack/source banks and Dst
 // for the whole call. This is neither a device ownership grant nor integrated
@@ -21,10 +21,10 @@
 // quality, real instructions and timing still require qualification.
 struct PioneerQ38DenseBf16Matrix {
  static constexpr unsigned Width=256, TileWidth=32, Tiles=Width/TileWidth;
- template<class E,class Stage> static bool Scores(E& e,Stage& stage,unsigned matrix,unsigned vector) {
+ template<class E,class Stage> static bool Product(E& e,Stage& stage,unsigned matrix,unsigned vector,unsigned tiles) {
   // Header, payload and address ownership are caller duties; these two
   // spans must not overlap even when the caller supplies malformed input.
-  if((matrix&15) || (vector&15) || matrix<16 || vector<16
+  if((tiles!=1 && tiles!=Tiles) || (matrix&15) || (vector&15) || matrix<16 || vector<16
     || matrix>0x16b800 || vector>0x16be00
     || !(matrix+2048<=vector-16 || vector+512<=matrix-16))return false;
   // Start from the existing four-fidelity-phase setup; change *both* SrcA
@@ -35,7 +35,7 @@ struct PioneerQ38DenseBf16Matrix {
   e.Config(84,0x00400080);
   e.Config(76,matrix/16-1);e.Config(124,vector/16-1);
   e.Op(0x3700000f);e.Op(0x10180000);e.Drain(); // clear once, NOT per K32
-  for(unsigned tile=0;tile<Tiles;tile++) {
+  for(unsigned tile=0;tile<tiles;tile++) {
    if(!stage.Tile(tile))return false; // no successful score publication
    e.Op(0x3700000f);e.Op(0x5e2ffc00);e.Op(0x5e43fc00);
    e.Op(0x5160000b);e.Op(0x5460000f);
@@ -49,6 +49,12 @@ struct PioneerQ38DenseBf16Matrix {
    e.Drain(); // both source banks released before stage can rewrite inputs
   }
   return true;
+ }
+ template<class E,class Stage> static bool Scores(E& e,Stage& stage,unsigned matrix,unsigned vector){
+  return Product(e,stage,matrix,vector,Tiles);
+ }
+ template<class E,class Stage> static bool Values(E& e,Stage& stage,unsigned matrix,unsigned vector){
+  return Product(e,stage,matrix,vector,1);
  }
 };
 #endif

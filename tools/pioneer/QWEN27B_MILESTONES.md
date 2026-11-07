@@ -25,6 +25,23 @@ model quality is not established. See the
 [physical band result](benchmarks/qwen38-matched-band-physical-20261107.txt)
 and [CPU-only hybrid comparison](benchmarks/qwen38-bfp-hybrid-cpu-quality-20261106.txt).
 
+## Matrix-engine attention: experimental, not yet measured
+
+A separate dense-attention worker now puts QK and PV products on matrix
+engines. Its actual instructions passed simulated six-head and 24-partition
+tests, with a test-only global controller; it has not been integrated into
+the full model or run on the card. The more accurate PV path uses four matrix
+products, so whether it is faster remains unknown. See the
+[experiment and qualification limits](benchmarks/qwen38-dense-bf16-matrix-experiment-20261107.txt).
+
+**Hardware recovery is on hold:** after reboot, several saved trial records
+read back as unrelated old binary bytes. Their pre-reboot copies still match
+their recorded hashes, and a check-only filesystem scan did not report
+missing or multiply allocated blocks, but did report freeable blocks. The
+driver-restoration guard refused and the unqualified tag125 driver remains
+installed. No recovery guard has been bypassed and no new card test has run.
+See the [file-integrity investigation](benchmarks/qwen38-hybrid125-postboot-file-integrity-20261107.txt).
+
 ## Milestone 1: upload the prepared model
 
 **Passed for upload and release.** On November 7 the one-shot test verified

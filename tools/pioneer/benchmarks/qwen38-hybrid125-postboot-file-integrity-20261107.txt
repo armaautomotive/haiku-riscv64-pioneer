@@ -1,0 +1,47 @@
+Hybrid125 recovery: changed on-disk records
+==========================================
+After a single OFF, settle, single ON, verified Linux host fingerprint, and
+fresh 64-CPU/full-memory Haiku boot, the existing reviewed one-shot recovery
+helper refused before changing the installed driver. It found that the
+on-disk state, trial.stdout, trial.stderr and trial.exit no longer matched
+the four recorded pre-power hashes. The preserved pre-power Mac copies still
+match every recorded SHA-256, including parent.stdout. Parent.stdout on the
+Haiku volume also no longer matches. The exact one-shot trial marker remains
+in place. No failed trial was rerun, and no card computation was issued.
+
+Read-only analysis of the copied post-boot records found state equals 41
+bytes at offset 69632 of the already present stable.backup, trial.stderr
+equals 38 bytes at offset 65536, and the entire 4704-byte trial.stdout equals
+the first 4704 bytes of that backup. Two-byte trial.exit also appears in that
+binary but is too short to identify its origin. Parent.stdout begins with
+25 bytes found in the saved run.sh; it is not a full match. A local postboot
+copy is in /private/tmp/pioneer-hybrid125-after-20261107-a and the pre-power
+copy is in /private/tmp/pioneer-hybrid125-failed.h6FLuiMP. Temporary copies
+are not archival backups. None of this proves the cause; stale file data,
+cache/flush problems, wrong block mapping and other explanations remain open.
+
+The BFS inode maps were read without mutation. The affected state, stderr and
+stdout data occupy group118 blocks 3694, 3692 and 3660-3662 respectively;
+stable.backup occupies 118:65124-65475 and 119:62946-63112. Thus their
+recorded allocations do not overlap. Reads via the Haiku block-device path
+of state block 7736942 and backup block 7798406 produced identical SHA-256
+for the first 41 bytes; stderr block 7736940 and backup block 7798404 matched
+for the first 38; stdout block 7736908 and backup block 7798372 matched for
+2048 bytes. These are device-path reads through the running OS, not an
+independent offline disk image; caching or storage I/O issues remain possible.
+
+The Haiku host key matched the previously recorded fingerprint. A read-only
+checkfs --check-only /boot completed twice. The filtered second run reported
+58178 nodes, zero missing allocated blocks, zero multiply allocated blocks,
+and 39436 blocks that could be freed (2048 bytes per block, about 77 MiB).
+These allocation findings do not establish file-content integrity or the
+reason for the stale data; open/deleted files and concurrent activity can
+also affect accounting. No repair was requested or executed. Filtered BFS,
+journal and I/O error searches of the current system log yielded no lines.
+
+Driver125 and the stable041 binary separately matched their pinned hashes.
+Fresh boot CPU-only reload metadata reported tag125/generation1/cold0/owner0.
+This is not proof of full storage safety or authorization to weaken the
+guard. The installed driver remains tag125 and no accelerator experiment is
+authorized by these observations. Investigate persistence and protect the
+filesystem before any new restore or physical inference trial.

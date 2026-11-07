@@ -6,7 +6,11 @@
 #endif
 // NEW96-worker attention DATA. Not an old QDA/QFP/native ownership alias.
 namespace PioneerQ38DensePartitionLayout {
+#ifdef PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT
+enum {Magic=0x324d4451,Fault=0x464d4451,Header=0x74600,Summary=0x74800,
+#else
 enum {Magic=0x31574451,Fault=0x46574451,Header=0x74600,Summary=0x74800,
+#endif
  Job=0x74a00,Doorbell=0x74a80,Status=0x74b00,
  HalfQuery=0x80000,NewK=0x81800,NewV=0x81a00,Parameters=0x82000,
  PrivateQuery=0x85000,PrivateK=0x86800,PrivateV=0x86a00,

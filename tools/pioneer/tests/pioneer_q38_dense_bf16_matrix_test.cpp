@@ -40,6 +40,16 @@ static uint16_t Sample(unsigned n){
  return uint16_t(((n%7==0)?0x8000:0) | ((124+(n%6))<<7) | ((n*29+3)&127));
 }
 int main(){
+ unsigned splitCases=0;
+ for(unsigned half=0;half<65536;half++){
+  if((half&0x7c00)==0x7c00)continue;
+  const float original=PioneerAttentionHalf(uint16_t(half));unsigned high=0,low=0;
+  assert(PioneerQ38DenseBf16ValuesStage<L1IO>::Split(PioneerAttentionBits(original),false,high));
+  assert(PioneerQ38DenseBf16ValuesStage<L1IO>::Split(PioneerAttentionBits(original),true,low));
+  assert(PioneerAttentionFloat(high<<16)+PioneerAttentionFloat(low<<16)==original);
+  splitCases++;
+ }
+ assert(splitCases==63488);std::printf("PASS %u finite FP16 values reconstructed by two BF16 components\n",splitCases);
  for(unsigned count: {1U,17U,32U}) {
   NativeBfpMachine machine;TileStage stage{machine,{},{}};
   for(unsigned i=0;i<256;i++)stage.query[i]=Sample(i*17+5);
@@ -109,4 +119,48 @@ int main(){
  assert(!PioneerQ38DenseBf16Matrix::Scores(invalid,invalidStage,0x90000,0x91000));
  assert(invalid.matrixOps==0 && io.fences==0);
  std::puts("nonfinite K refused before any matrix multiply");
+ // PV uses a different layout: transpose token-major FP16 values into
+ // output-dimension rows, with probabilities as the BF16 vector.
+ for(unsigned count: {1U,17U,32U})for(unsigned block: {0U,3U,7U}){
+  NativeBfpMachine card;L1IO valueIO{card};
+  const unsigned v=0xa0000,p=0x82000,matrix=0x90000,vector=0x91000;
+  for(unsigned t=0;t<count;t++){
+   float probability=PioneerAttentionHalf(PioneerAttentionToHalf(float(t+1)/600.0f));
+   valueIO.Write(p+t*4,PioneerAttentionBits(probability));
+   for(unsigned d=0;d<256;d+=2){
+    unsigned lo=0x3000+((t*83+d*31)%0x1000),hi=0x3000+((t*83+(d+1)*31)%0x1000);
+    if((t+d)%3==0)lo|=0x8000;if((t+d)%5==0)hi|=0x8000;
+    valueIO.Write(v+t*512+d*2,lo|(hi<<16));
+   }
+  }
+  PioneerQ38DenseBf16ValuesStage<L1IO> actual(valueIO,v,p,matrix,vector,count,block);
+  assert(PioneerQ38DenseBf16Matrix::Values(card,actual,matrix,vector));
+  const auto result=card.Results();double squared=0,referenceSquared=0,maxAbsolute=0;
+  for(unsigned row=0;row<32;row++){
+   const unsigned d=block*32+row;double reference=0,absolute=0;
+   for(unsigned t=0;t<count;t++){
+    unsigned pair=valueIO.Read(v+t*512+(d&~1U)*2);
+    const uint16_t half=uint16_t(d&1?pair>>16:pair);
+    double product=double(PioneerAttentionHalf(half))*PioneerAttentionFloat(valueIO.Read(p+t*4));
+    reference+=product;absolute+=std::abs(product);
+   }
+   const double error=std::abs(result[row]-reference);
+   maxAbsolute=std::max(maxAbsolute,error);squared+=error*error;referenceSquared+=reference*reference;
+   assert(error<=0.01*absolute+0.000001);
+  }
+  assert(valueIO.fences==1 && card.matrixOps==16);
+  std::printf("pv rows=%u block=%u simulated_max_abs_error=%.9g relative_l2=%.9g\n",count,block,maxAbsolute,std::sqrt(squared/referenceSquared));
+ }
+ for(unsigned badKind: {0U,1U}){
+  NativeBfpMachine card;L1IO valueIO{card};
+  valueIO.Write(0xa0000,badKind==0?0x00007c00:0x00000000);
+  valueIO.Write(0x82000,badKind==1?0x7f800000:0);
+  PioneerQ38DenseBf16ValuesStage<L1IO> invalidPV(valueIO,0xa0000,0x82000,0x90000,0x91000,1,0);
+  assert(!PioneerQ38DenseBf16Matrix::Values(card,invalidPV,0x90000,0x91000));
+  assert(card.matrixOps==0 && valueIO.fences==0);
+ }
+ NativeBfpMachine invalidBlock;L1IO blockIO{invalidBlock};
+ PioneerQ38DenseBf16ValuesStage<L1IO> blockStage(blockIO,0xa0000,0x82000,0x90000,0x91000,1,8);
+ assert(!blockStage.Tile(0) && blockIO.fences==0);
+ std::puts("nonfinite V/probability and invalid PV block refused");
 }

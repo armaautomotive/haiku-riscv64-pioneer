@@ -44,3 +44,19 @@ extern "C" unsigned q38_dense_bf16_scores(unsigned count,unsigned head){
  for(unsigned row=0;row<32;row++)*Words(0x9e000+row*4)=values[row];
  asm volatile("fence":::"memory");return count;
 }
+// Single high-by-high BF16 PV product for one chunk/block; this diagnostic
+// leaf does NOT include the three residual products used by the worker.
+// Caller owns cross-chunk merge and preservation of probabilities.
+extern "C" unsigned q38_dense_bf16_values(unsigned count,unsigned head,unsigned first,unsigned block){
+ if(!count || count>32 || head>=6 || first>=384 || count>384-first || block>=8)return 0;
+ L1 io;Emitter e;
+ PioneerQ38DenseBf16ValuesStage<L1> stage(io,0xa0000,0x90000+(head*384+first)*4,0xa5000,0xa6000,count,block);
+ if(!PioneerQ38DenseBf16Matrix::Values(e,stage,0xa5000,0xa6000))scalar_fault_park();
+ unsigned values[32];
+ for(unsigned row=0;row<32;row++){
+  values[row]=*Words(0xffbd8000+(row<16?32:40)*64+(row&15)*4);
+  if((values[row]&0x7f800000)==0x7f800000)scalar_fault_park();
+ }
+ for(unsigned row=0;row<32;row++)*Words(0x9e000+row*4)=values[row];
+ asm volatile("fence":::"memory");return count;
+}

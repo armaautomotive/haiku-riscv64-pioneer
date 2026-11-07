@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+"""Build isolated QDM2 matrix attention only. No native/Work/device authority."""
+import hashlib
+import os
+import pathlib
+import re
+import subprocess
+import sys
+
+if len(sys.argv) != 3 or any(k.startswith('PIONEER_') for k in os.environ):
+    raise SystemExit(2)
+sdk, out = map(pathlib.Path, sys.argv[1:])
+assert sdk.is_absolute() and out.is_absolute() and not out.exists() and not out.is_symlink()
+here = pathlib.Path(__file__).resolve().parent
+cross = sdk / 'cross-tools-riscv64/bin/riscv64-unknown-haiku'
+assert pathlib.Path(str(cross) + '-g++').is_file()
+out.mkdir(mode=0o700)
+
+def run(*args):
+    subprocess.run([str(a) for a in args], check=True)
+
+run(str(cross)+'-g++', '-std=c++11', '-O2', '-Wall', '-Wextra', '-Werror', '-ffreestanding',
+    '-fno-exceptions', '-fno-rtti', '-fno-stack-protector', '-fno-pic', '-fno-pie',
+    '-ffp-contract=off', '-ffunction-sections', '-fdata-sections', '-fno-unwind-tables',
+    '-fno-asynchronous-unwind-tables', '-msmall-data-limit=0', '-mno-relax', '-march=rv32imf',
+    '-mabi=ilp32', '-fstack-usage', '-DPIONEER_Q38_DENSE_PARTITION_IMAGE=1',
+    '-DPIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT=1', '-c',
+    here/'blackhole_qwen38_dense_partition.cpp', '-o', out/'program.o')
+run(str(cross)+'-as', '-march=rv32imf', '-mabi=ilp32', '-mno-relax',
+    here/'blackhole_qwen38_dense_matrix_start.S', '-o', out/'start.o')
+run(str(cross)+'-ld', '-m', 'elf32lriscv', '--no-relax', '--gc-sections',
+    '-T', here/'blackhole_qwen38_dense_partition.ld', out/'start.o', out/'program.o',
+    '-Map', out/'program.map', '-o', out/'program.elf')
+for section, name in (('text', 'code'), ('boot', 'boot')):
+    run(str(cross)+'-objcopy', '-O', 'binary', '-j', '.'+section, out/'program.elf', out/(name+'.bin'))
+for tool, args, name in (('nm', ['-n'], 'symbols'), ('nm', ['-u'], 'undefined'),
+                         ('objdump', ['-d'], 'disassembly')):
+    with (out/('program.'+name)).open('w') as target:
+        subprocess.run([str(cross)+'-'+tool, *args, str(out/'program.elf')], stdout=target, check=True)
+assert not (out/'program.undefined').read_bytes()
+symbols = (out/'program.symbols').read_text()
+disassembly = (out/'program.disassembly').read_text()
+assert not re.search(r'^[0-9a-f]+ [bBdDgGsS] ', symbols, re.M)
+assert not re.search(r'\b(?:sb|divu?|remu?|mulh[su]*|fdiv\.[sd]|fsqrt\.[sd]|fmadd|fmsub|fnmadd|fnmsub|fcvt\.wu?\.s|ebreak)\b', disassembly)
+for line in disassembly.splitlines():
+    match = re.match(r'\s*[0-9a-f]+:\s+([0-9a-f]{8})\s', line)
+    if match:
+        assert int(match[1], 16) & 127 != 0x73
+for name, address in (('scalar_entry', 0x40000), ('scalar_done', 0x4000c),
+                      ('scalar_park', 0x40038), ('scalar_fault_park', 0x4003c),
+                      ('partition_wait_load', 0x40064), ('partition_wait_branch', 0x40068)):
+    assert re.search('^'+format(address, '08x')+' T '+name+'$', symbols, re.M), name
+frames = [int(line.split('\t')[1]) for line in (out/'program.su').read_text().splitlines()]
+assert frames and max(frames) <= 2048
+for name in ('boot.bin', 'code.bin', 'program.elf'):
+    data = (out/name).read_bytes()
+    print(hashlib.sha256(data).hexdigest(), name, 'bytes'+str(len(data)))
+print('PASS QDM2 isolated matrix-attention image; NOT hardware/Work/native/inference')

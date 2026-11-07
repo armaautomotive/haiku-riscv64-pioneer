@@ -10,8 +10,14 @@ words for a 32-key by 256-element query score batch. Its staging code reads
 the existing private-query FP32 and token-major FP16 key-chunk layouts and
 converts them to BF16. Padded keys are zeroed. All four fidelity phases are
 issued and eight K32 tiles accumulate in Dst before score publication.
-Softmax, PV, recurrent attention and integration are NOT implemented by this
-experiment. The staging conversion itself currently uses card scalar work;
+It now also implements a separate one-chunk, 32-output-dimension PV product
+using the same matrix engine: the stage transposes token-major FP16 values
+and uses the existing normalized FP16-rounded probabilities. The worker
+splits each FP16 operand into two BF16 parts and sums all four matrix
+products. This gains precision over one BF16 product but needs four times as
+many PV matrix operations, before packing/setup costs. Cross-chunk PV merge
+and softmax use the existing worker code; recurrent attention and native
+integration are NOT implemented here. The staging conversion uses card scalar work;
 its speed and any alternative packing or reuse are unmeasured.
 
 The offline ISA observer exercised 1, 17 and 32 keys, 128 matrix commands per
@@ -23,13 +29,48 @@ they do not establish real-model accuracy, token quality or equivalence to
 the existing compensated FP16 path. The observer is a software model, not
 proof that the BF16 unpack configuration works on physical Blackhole silicon.
 
+The initial ONE-PRODUCT PV variant passed the software instruction observer for sequence
+chunks of 1, 17 and 32 and dimension blocks 0, 3 and 7. It issued 16 matrix
+commands per chunk/block; the synthetic relative L2 error versus original
+FP16 inputs ranged from 0.00103 to 0.00288. These are not the final worker's
+four-product results. A host check verified that all 63488 finite FP16 values
+reconstruct exactly as high BF16 plus low BF16.
+
 Reproduce with:
   sh tools/pioneer/tests/run_pioneer_q38_dense_bf16_matrix_tests.sh
 
-The RV32 experiment also compiled with the local Haiku cross-compiler and
-freestanding rv32imf options. No integration, complete L1 coexistence proof,
+The experimental QK and PV methods are now wired into the existing QDW1
+three-phase partition source behind an opt-in standalone-only build, with
+a separate QDM2 header/boot identity. Both products compile into an isolated
+RV32 image; softmax and the existing high/low cross-chunk merge remain in the
+worker. The ordinary QDW1 image still rebuilds byte-for-byte unchanged, and
+its existing role/build guards passed. The individual math/staging observers
+above do NOT execute the new complete QDM2 phase protocol. The QDM2 code.bin
+SHA-256 was 0896f4edc570ab4f338550353448ae0d587b89895ffdf35684edd55aa9902f12
+for this exact source and SDK. To reproduce in a new output directory:
+  python3 tools/pioneer/build_qwen38_dense_matrix_image.py ABSOLUTE_SDK ABSOLUTE_OUTPUT
+
+An instruction-level observer executes the actual QDM2 RV32 image through
+phases 1, 2, 3 and STOP for six heads, using simulated NoC, scalar and matrix
+units. A synthetic 33-token local partition exercises two K/V chunks; its
+score relative L2 error versus FP16 reference was 0.000463 and its PV error
+versus FP16 values and the worker's own probabilities was zero in that
+fixture. Local partitions of lengths 1, 2 and 3 also passed. Test-only control
+then reduced all 24 workers for synthetic sequences of 1, 33 and 65 tokens.
+Relative L2 of merged output versus the existing QDA reference was 0, 0.00109
+and 0.00169 respectively. The four-product PV replaced an earlier one-product
+attempt that failed the 0.01 threshold at 65 tokens (relative L2 0.01226;
+isolated PV contribution 0.01204). That fix has not been shown to improve
+speed, and the extra products may make it slower. The global controller and
+NoC are synthetic: these are not real model data, silicon execution, model
+quality, or a speed measurement. One first
+compile emitted an unsupported byte store; the flag is now word-sized and the
+builder explicitly rejects byte stores. Run the observer with:
+  python3 tools/pioneer/tests/run_pioneer_q38_dense_matrix_worker_tests.py ABSOLUTE_QDM2_DIR ABSOLUTE_QDA_DIR
+
+No mixed/native integration, complete L1 coexistence proof,
 physical ownership, timeout recovery, silicon correctness or measurement is
-established. Do not substitute this leaf into the production Work path yet.
+established. Do not substitute this experimental worker into production yet.
 
 Recovery caution: following a single OFF/ON and confirmed fresh Linux/Haiku
 boot, SSH host keys were verified. The existing one-shot stable-driver restore

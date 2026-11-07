@@ -14,6 +14,13 @@
 #define PIONEER_ATTENTION_FREESTANDING
 #include "PioneerQ38LearnedRms.h"
 #include "PioneerQ38DensePartitionLayout.h"
+#ifdef PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT
+#if PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 || defined(PIONEER_Q38_MIXED_DENSE_CAPSULE_IMAGE)
+#error Matrix attention is an isolated standalone experiment, not a mixed/native worker
+#endif
+#include "PioneerQ38DenseBf16Matrix.h"
+#include "PioneerQ38DenseBf16Stage.h"
+#endif
 extern "C" void scalar_fault_park() __attribute__((noreturn));
 extern "C" unsigned partition_wait(unsigned);
 namespace DensePartition {
@@ -24,7 +31,9 @@ static volatile uint32_t* Words(unsigned a){return reinterpret_cast<volatile uin
 static float* Floats(unsigned a){return reinterpret_cast<float*>(a);}
 static void Fence(){asm volatile("fence" ::: "memory");}
 static void Emit(uint32_t op){*Words(0xffe40000)=op;}
+#ifndef PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT
 static unsigned Lane(unsigned lane){return (lane>>3)*16+(lane&7)*2;}
+#endif
 static unsigned Counter(unsigned i){return i==0?0x208:i==1?0x20c:(i==2 || i==6)?0x210:i==3?0x214:i==4?0x204:i==5?0x220:0x228;}
 static unsigned Source(unsigned i){return !i?0x100:i<=6?0x118+(i-1)*4:i<=12?0x130+(i-7)*4:i==13?0x150:i==14?0x154:0x16c;}
 static bool Quiet(){
@@ -45,6 +54,7 @@ static void Drain(){
  for(unsigned i=0;i<1000000;i++)if(*Words(0xffe000fc)){Fence();return;}
  scalar_fault_park(); // UNKNOWN,no reset/retry/publication
 }
+#ifndef PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT
 static void Setup(){
  Emit(0xb2000000);Drain();for(unsigned i=1;i<68;i++)Emit(0xb2000000|(i<<16));
  Emit(0x3700000f);Emit(0x8a000002);Drain();
@@ -57,6 +67,7 @@ static void AddProduct(){
  Emit(0x850a2772);Emit(0x850a4662);Emit(0x850a7670);Emit(0x850a3730);Emit(0x7c000520);Drain();
 } // exact half product plus compensated high2/low3,not partially-fused MAD accumulation
 static void Constant(float x){unsigned p=PioneerAttentionBits(x);Emit(0x71100000|(p>>16));Emit(0x711a0000|(p&65535));}
+#endif
 static void Read(unsigned which,unsigned first,unsigned previous,const uint32_t* d,uint32_t* tracked,const uint32_t* job,const uint32_t* params){
  if(which>1 || !previous || previous>32 || first>=d[4] || previous>d[4]-first)scalar_fault_park();
  JobSeal(job,job[2]);if(params)ParametersSeal(params);
@@ -94,6 +105,7 @@ static unsigned Chunk(unsigned which,unsigned first,const uint32_t* d,uint32_t* 
  }
  return count;
 }
+#ifndef PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT
 static void Scores(unsigned first,unsigned count,unsigned head){
  auto* dst=Words(0xffbd8000);const auto* k=reinterpret_cast<const uint16_t*>(L::Chunk);
  Emit(0x702b0000);Emit(0x703b0000);Drain();
@@ -130,6 +142,52 @@ static void Values(unsigned first,unsigned count,unsigned head){
   }
  }
 }
+#else
+// Experimental standalone worker ONLY. This replaces both dense products,
+// not softmax or the existing compensated partial-output merge. These scratch
+// addresses are disjoint from QDW1's declared Chunk and result ranges, but
+// have NOT been proven disjoint from a complete mixed/native worker layout.
+struct MatrixIO {
+ unsigned Read(unsigned a){return *Words(a);}
+ void Write(unsigned a,unsigned v){*Words(a)=v;}
+ void Fence(){DensePartition::Fence();}
+};
+struct MatrixEmitter {
+ void Op(unsigned v){Emit(v);}
+ void Config(unsigned i,unsigned v){*Words(0xffef0000+i*4)=v;if(*Words(0xffef0000+i*4)!=v)scalar_fault_park();}
+ void Drain(){DensePartition::Drain();}
+};
+static void Scores(unsigned first,unsigned count,unsigned head){
+ MatrixIO io;MatrixEmitter e;
+ PioneerQ38DenseBf16Stage<MatrixIO> stage(io,L::Chunk,L::PrivateQuery+head*1024,0xa5000,0xa6000,count);
+ if(!PioneerQ38DenseBf16Matrix::Scores(e,stage,0xa5000,0xa6000))scalar_fault_park();
+ for(unsigned row=0;row<count;row++){
+  const unsigned bits=*Words(0xffbd8000+(row<16?32:40)*64+(row&15)*4);
+  const float score=PioneerAttentionFloat(bits)*.0625f;
+  if((PioneerAttentionBits(score)&0x7f800000)==0x7f800000)scalar_fault_park();
+  Floats(L::Scores)[head*L::Stride+first+row]=score;
+ }
+}
+static void Values(unsigned first,unsigned count,unsigned head){
+ for(unsigned block=0;block<8;block++){
+  for(unsigned part=0;part<4;part++){
+  MatrixIO io;MatrixEmitter e;
+  PioneerQ38DenseBf16ValuesStage<MatrixIO> stage(io,L::Chunk,L::Scores+(head*L::Stride+first)*4,0xa5000,0xa6000,count,block,part);
+  if(!PioneerQ38DenseBf16Matrix::Values(e,stage,0xa5000,0xa6000))scalar_fault_park();
+  for(unsigned row=0;row<32;row++){
+   unsigned bits=*Words(0xffbd8000+(row<16?32:40)*64+(row&15)*4);
+   if((bits&0x7f800000)==0x7f800000)scalar_fault_park();
+   const unsigned highIndex=head*512+block*64+row,lowIndex=highIndex+32;
+   float high=PioneerAttentionFloat(Words(L::Accumulate)[highIndex]);
+   float low=PioneerAttentionFloat(Words(L::Accumulate)[lowIndex]);
+   PioneerAttentionAdd(PioneerAttentionFloat(bits),high,low);
+   Words(L::Accumulate)[highIndex]=PioneerAttentionBits(high);
+   Words(L::Accumulate)[lowIndex]=PioneerAttentionBits(low);
+  }
+  }
+ }
+}
+#endif
 
 static void JobSeal(const uint32_t* j,unsigned sequence){
  for(unsigned i=0;i<16;i++)if(Words(L::Job)[i]!=j[i])scalar_fault_park();
@@ -155,7 +213,9 @@ static void LocalScores(const uint32_t* d,uint32_t* tracked,float* maximum,const
  for(unsigned h=0;h<6;h++)maximum[h]=-3.4028234663852886e38f;
  for(unsigned i=0;i<64;i++)Words(L::Local)[i]=0;
  if(d[49]){
+#ifndef PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT
   Setup();
+#endif
   for(unsigned first=0;first<d[49];first+=32){
    unsigned count=Chunk(0,first,d,tracked,job,nullptr);
    for(unsigned h=0;h<6;h++)Scores(first,count,h);
@@ -199,12 +259,16 @@ static void LocalValues(const uint32_t* d,const uint32_t* p,const float* global,
  }
  for(unsigned i=0;i<3072;i++)Words(L::Accumulate)[i]=0;
  if(d[49]){
+#ifndef PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT
   Setup();
+#endif
   for(unsigned first=0;first<d[49];first+=32){
    unsigned count=Chunk(1,first,d,tracked,job,p);
    for(unsigned h=0;h<6;h++)Values(first,count,h);
   }
+#ifndef PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT
   Drain();
+#endif
  }
  Seal(d);ParametersSeal(p);
  for(unsigned h=0;h<6;h++)for(unsigned dimension=0;dimension<256;dimension++){

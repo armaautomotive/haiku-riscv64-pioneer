@@ -23,6 +23,7 @@ struct NativeBfpMachine {
 	unsigned rwcA=0,rwcB=0,crA=0,crB=0,fidelity=0,unpackBank[2]={},matrixBank[2]={};
 	unsigned cycle=0,drains=0,unpacks[2]={},matrixOps=0,visits[4]={},outputReads=0;
 	unsigned delay[2]={},dropProducer=0,dropPhase=99;bool omitFlip=false,mathPending=false;
+	unsigned expectedWeight=0x90000,expectedInput=0x91000;
 	struct Source { float values[64][16];bool owner=false,pending=false;unsigned due=0; } source[2][2];
 	float destination[64][16]={};bool valid[64]={};
 	std::vector<uint8_t> l1;
@@ -85,7 +86,7 @@ struct NativeBfpMachine {
 		if(!z)z=1;if(!w)w=1;
 		const unsigned exponentBytes=format==5?0:((x*y*z*w+255)/256)*16;
 		unsigned address=(config[base+12]+1)*16,count=xEnd[which]+1-xStart[which];
-		assert(xStart[which]==0 && address==(which?0x91000U:0x90000U));
+		assert(xStart[which]==0 && address==(which?expectedInput:expectedWeight));
 		assert(count==(which?256U:1024U));
 		auto& s=source[which][unpackBank[which]];assert(!s.pending && !s.owner);
 		unsigned destinationBase=which?config[61]:config[49]+(config[84]&65535);
