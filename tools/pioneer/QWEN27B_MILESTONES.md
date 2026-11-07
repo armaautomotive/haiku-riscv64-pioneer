@@ -141,6 +141,14 @@ using the same SDK, excluding unrelated worktree edits; the SDK itself has not
 been independently reproduced. Neither build is approved for deployment.
 See the [tag126 build record](benchmarks/qwen38-hybrid126-build-offline-20261107.txt).
 
+A separate [fresh-epoch recovery helper](pioneer_hybrid125_fresh_recovery.sh)
+has been prepared and exercised only against fake endpoints. It preserves the
+failed trial, checks the original candidate and stable-driver hashes, requires
+a fresh idle generation and stops on any uncertain operation. It has not run
+on the Pioneer. Its attestation file is an operator reminder, not proof of a
+power cycle: independently verify the OFF/ON sequence, fresh boot and pinned
+SSH identity before creating it or attempting recovery.
+
 The QGW5 test configuration previously selected the older QGW4 startup
 grammar. It now selects the matching QGW5 grammar. A simulated held-memory
 journal has staged and verified the 1,344-word address table and restored
