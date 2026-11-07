@@ -65,7 +65,12 @@ public:
  // Pair fixed geometry with the compiled worker grammar before any native
  // memory staging. This checks the selected layout, not the uploaded bytes.
  static bool WorkerLayoutCompatible(const PioneerQ38CanonicalModelPlan& c){
+#ifdef PIONEER_Q38_QGW8_PROGRAMS_INSPECTION
+  static_assert(PioneerQ38SelectedGlobalWorker::Magic==0x38574751,"QGW8 layout requires the QGW8 worker grammar");
+  return c.Qgw8InspectionLayout();
+#else
   return PioneerQ38SelectedWorkerHybrid?c.HybridFormatLayout():c.OriginalFormatLayout();
+#endif
  }
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
  bool BindPreparedSource(const PioneerQ38PreparedNativeSource& source){

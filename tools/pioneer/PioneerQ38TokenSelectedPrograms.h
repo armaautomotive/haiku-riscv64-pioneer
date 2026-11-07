@@ -21,7 +21,10 @@
 #define PIONEER_Q38_TOKEN_SELECTED_PROGRAMS_H
 namespace PioneerQ38TokenPrograms=PioneerQ38HybridPrograms;
 #endif
-#ifdef PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION
+#ifdef PIONEER_Q38_QGW8_PROGRAMS_INSPECTION
+static_assert(PioneerQ38TokenPrograms::Family==0x38505451 && PioneerQ38TokenL1::Family==0x35505451,
+ "QGW8 inspection programs require their distinct identity and expanded hybrid journal geometry");
+#elif defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION)
 static_assert(PioneerQ38TokenPrograms::Family==0x37505451 && PioneerQ38TokenL1::Family==0x35505451,
  "QGW7 inspection programs require the expanded hybrid journal geometry");
 #else

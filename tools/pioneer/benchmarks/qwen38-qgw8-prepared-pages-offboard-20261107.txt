@@ -168,6 +168,20 @@ This is not QGW8 journal installation on the P100A, a complete coordinator
 run or a performance measurement; the matching QGW8 worker/owner remains
 unconnected to the actual driver.
 
+QGW8 program-pair inspection: the generator now accepts only the pinned
+QGW8 ROOT and worker images under a distinct non-loadable QTP8 profile.
+Independent saved builds generated identical DATA, SHA-256
+e1f239fd4965583249e855223711b4270d253f9a2015bace2abf3b717a7ac6ed;
+all 15 binary sections matched their respective ELF sections, and all
+3608293 code words across 120 simulated participants fit the existing
+snapshot footprint. Wrong images, missing selectors, incompatible program
+family and native/Work/reference roles were refused. The selected QGW8
+startup produced all 119 matching QGW8 worker boot frames from the sealed
+synthetic model layout; QGW5 and QGW7 regenerated their previous hashes,
+and the older startup regression passed. This is off-device DATA selection,
+not a loadable driver, full coordinator/worker lifecycle, actual model token
+or speed measurement. The existing storage-recovery guard remains intact.
+
 Unresolved before physical inference: qualify the output-head precision and
 the combined format numerically, integrate and validate model upload and
 driver ownership for the new layout, and resolve the post-failure file

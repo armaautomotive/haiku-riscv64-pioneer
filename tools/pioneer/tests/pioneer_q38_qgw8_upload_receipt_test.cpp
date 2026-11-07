@@ -8,6 +8,11 @@
 #define PIONEER_Q38_GDN_MUTABLE_STATE 1
 #define PIONEER_Q38_DECODER_RUNTIME 1
 #define PIONEER_BANKS_MOCK_ONLY 1
+#ifdef PIONEER_Q38_QGW8_PROGRAMS_INSPECTION
+#define PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC 1
+#include "../PioneerQ38TokenSelectedPrograms.h"
+static_assert(PioneerQ38TokenPrograms::Family==0x38505451,"QGW8 inspection must select its exact program family");
+#endif
 #include "../PioneerQ38TokenStartupPlan.h"
 #include "../PioneerQ38HybridHeadLayout.h"
 #include "../PioneerQ38Bf16RootPairs.h"
@@ -105,8 +110,15 @@ int main(int argc,char** argv){
   && bound->Count()==4678 && !receipt->DeriveBoundLayout(*bound,&context,&cookie,hashes.data(),ledger.data(),17,42));
  assert(receipt->DeriveBoundCanonical(*native,&context,&cookie,hashes.data(),ledger.data(),17,42)
   && native->Qgw8InspectionLayout() && !native->OriginalFormatLayout() && !native->HybridFormatLayout());
- assert(!PioneerQ38TokenStartupPlan::WorkerLayoutCompatible(*native)
-  && PioneerQ38TokenStartupPlan::CanonicalLearnedPagesPresent(*native,ledger.data(),ledger.size()));
+#ifdef PIONEER_Q38_QGW8_PROGRAMS_INSPECTION
+ assert(PioneerQ38TokenStartupPlan::WorkerLayoutCompatible(*native)
+  && !PioneerQ38TokenStartupPlan::WorkerLayoutCompatible(*canonical));
+ auto legacy=std::make_unique<PioneerQ38CanonicalModelPlan>();
+ assert(legacy->BuildHybridDiagnostic() && !PioneerQ38TokenStartupPlan::WorkerLayoutCompatible(*legacy));
+#else
+ assert(!PioneerQ38TokenStartupPlan::WorkerLayoutCompatible(*native));
+#endif
+ assert(PioneerQ38TokenStartupPlan::CanonicalLearnedPagesPresent(*native,ledger.data(),ledger.size()));
  unsigned recurrent=0;
  for(unsigned i=0;i<native->Count();i++){
   const auto* p=native->Part(i);const auto* old=canonical->Part(i);const auto& expected=host.parts[i];
@@ -164,6 +176,13 @@ int main(int argc,char** argv){
   auto startup=std::make_unique<PioneerQ38TokenStartupPlan>();
   assert(startup->Build(*native,bank,startupId,sources.data(),prompt,2,8192,true,248318,248317)
    && startup->Matches(*native) && startup->Workspace()==native->Base+native->Workspace(bank)->offset);
+#ifdef PIONEER_Q38_QGW8_PROGRAMS_INSPECTION
+  for(unsigned worker=1;worker<120;worker++){
+   std::array<uint32_t,64> peer={};
+   assert(startup->ReadBoot(worker,peer.data()) && PioneerQ38SelectedGlobalWorker::BootShape(peer.data())
+    && peer[0]==0x38574751 && peer[49]==0 && peer[50]==0x1ffc0000);
+  }
+#endif
   std::array<uint32_t,128> head={};
   assert(startup->ReadHead(0,reinterpret_cast<uint8_t*>(head.data()),sizeof(head))
    && PioneerQ38HybridHeadLayout::Shape(head.data(),startup->Boot(),bank,startup->Workspace()));
