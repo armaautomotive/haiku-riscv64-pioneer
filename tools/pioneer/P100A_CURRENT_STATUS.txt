@@ -40,6 +40,8 @@ Four compact goals
    A separate GDDR diagnostic driver now builds and passes simulated
    ownership and endpoint tests. It is NOT installed or tested on the card;
    the physical timing, accuracy and full-model impact remain unknown.
+   The source-authenticating client and guarded test parent also pass their
+   simulated failure checks. A CPU-only source check is running on Haiku.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 

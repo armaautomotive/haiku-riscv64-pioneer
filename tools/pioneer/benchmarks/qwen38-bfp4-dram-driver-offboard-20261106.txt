@@ -23,7 +23,16 @@ accurately. Three bands under one synthetic activation showed 8.6%-15.8%
 relative output error; broader model quality must be evaluated. Original Q4
 Work inference and the working driver remain unchanged.
 
-Next: implement and test a source-authenticated single-use diagnostic client
-and guarded physical-test orchestration before considering a card trial.
+Follow-up checkpoint:
+* Built a client that authenticates the same-open original and freshly
+  reproduces all three exact fixed samples before opening the device.
+* Actual client passed 689 injected ASan/UBSan fixture cases. Output gate
+  rejected 424 transcript faults; parent checks covered 19 failure
+  boundaries in the driver exchange, plus prior, one-shot and idle gates.
+* The parent tests exposed and fixed missing explicit shell failure checks
+  during the driver exchange. No physical driver action occurred.
+* A separate read-only, CPU-only source check was started on Haiku; do not
+  infer its result from this offboard report.
+
 Never retry or clean up device resources after an uncertain native failure.
 Only a successful physical run can provide actual GDDR-plus-compute timing.

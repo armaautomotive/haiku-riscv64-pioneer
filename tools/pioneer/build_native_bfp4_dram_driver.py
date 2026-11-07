@@ -111,7 +111,21 @@ for extra in cases:
                           stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True,cwd=args.output)
     assert result.returncode and ('Build only the exact BFP4 GDDR' in result.stderr or 'Diagnostic120 cannot alias' in result.stderr),(extra,result.stderr)
 assert hashlib.sha256((args.output/'tenstorrent_pci_probe-default43-control').read_bytes()).hexdigest()=='2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc'
+user_includes=['-I'+str(sdk/'headers'),'-idirafter',str(sdk/'headers/posix')]
+for path in [sdk/'headers/os',*sorted((sdk/'headers/os').iterdir())]:
+    if path.is_dir():user_includes+=['-isystem',str(path)]
+libs=['-L'+str(path) for path in sorted((build/'build_packages').glob('gcc_syslibs-*/lib'))]
+client=args.output/'pioneer-native-bfp4-dram-model-diagnostic'
+source_check=args.output/'pioneer-native-bfp4-dram-source-check'
+for source,binary_path in (('pioneer_native_bfp4_dram_model_diagnostic.cpp',client),('pioneer_native_bfp4_dram_source_check.cpp',source_check)):
+    run([cxx,'-std=c++17','-O2','-ffp-contract=off','-Wall','-Wextra','-Werror',*user_includes,'-I'+str(args.private),
+         '-I'+str(root/'headers/private/shared'),'-I'+str(root/'headers/private/libroot'),
+         '-B'+str(release/'system/glue'),'-L'+str(release/'system/libroot'),'-L'+str(release/'kits'),*libs,
+         str(here/source),str(here/'PioneerModelWeightCache.cpp'),
+         str(release/'kits/shared/libshared.a'),'-lbe','-o',str(binary_path)])
 unchanged()
 (args.output/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands)+'\n')
 print(hashlib.sha256(binary.read_bytes()).hexdigest(),binary.name)
-print('PASS BUILD_ONLY private BFP4 GDDR driver,',len(cases),'role refusals; NO install or device authorization')
+print(hashlib.sha256(client.read_bytes()).hexdigest(),client.name)
+print(hashlib.sha256(source_check.read_bytes()).hexdigest(),source_check.name)
+print('PASS BUILD_ONLY private BFP4 GDDR driver/client,',len(cases),'role refusals; NO install or device authorization')
