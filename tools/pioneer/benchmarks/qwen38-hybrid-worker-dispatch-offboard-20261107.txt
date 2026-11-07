@@ -1,0 +1,32 @@
+Qwen 27B hybrid worker dispatcher: OFFBOARD ONLY, November 7 2026
+=================================================================
+
+Result: experimental linked RV32 worker runs BFP4 and BFP8 calculations
+through its dispatcher in simulated NoC/FPU. Neither has run in the live
+model or on the P100A in this worker image. No model speed claim.
+
+Command:
+  python3 tools/pioneer/tests/run_pioneer_q38_hybrid_worker_tests.py /Volumes/HaikuBuildLocal/generated.riscv64
+
+Rebuilds separate experimental worker images and leaves; address/undefined
+sanitizer tests execute actual worker instructions. For each format, K5120
+on peers 1 and 119 and K17408 on peer 119 yielded 64 expected synthetic
+words per job, with simulated transfers/counters. Malformed format faults
+before transfer. The BFP8 image changes the mask to test layer zero: it is a
+test-only image, not the proposed layers 48..60 configuration. 22848
+relocated job records pass the new frame-shape checks.
+
+Important finding: the prior proposed GDN code location at 0xb8000 overlaps
+the BFP8 staging area even at K5120 and BFP4 staging at K17408. Simulation
+detected this when staged header verification read code instead of zero.
+The experimental linked image relocates GDN code to 0x170000; simulation
+refuses writes through code windows. Linker limits this code to 0x17ffc0.
+This establishes only the tested simulation layout, not full memory or peer
+ownership, safe native snapshots, immutable source/input lifetime or hardware
+execution. No experimental image is authorized for installation.
+
+Still required: audit all live peer-L1 windows and save/restore; implement
+ROOT canonical job coverage, producer lifetime, and completion receipts;
+authenticate and upload converted weights; validate full-model quality; then
+test on hardware under single-owner safeguards and measure real 27B speed.
+Existing full-model physical measurement remains 0.17290 tokens/sec.

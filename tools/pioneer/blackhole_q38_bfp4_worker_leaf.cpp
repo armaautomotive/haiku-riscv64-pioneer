@@ -7,6 +7,9 @@
 #error This isolated leaf requires RV32
 #endif
 extern "C" void native_dram_band_fault() __attribute__((noreturn));
+#ifdef PIONEER_Q38_HYBRID_WORKER_IMAGE
+extern "C" void q38_mixed_seal();
+#endif
 namespace {
 static volatile unsigned* Words(unsigned a){return reinterpret_cast<volatile unsigned*>(a);}
 struct IO {
@@ -29,6 +32,9 @@ struct Emitter {
 };
 struct Guard {
  bool Check(const PioneerQ38Bfp4WorkerJob::Job& job,unsigned band){
+#ifdef PIONEER_Q38_HYBRID_WORKER_IMAGE
+  q38_mixed_seal();
+#endif
   if(band>=job.words[4])return false;
   for(unsigned i=0;i<PioneerQ38Bfp4WorkerJob::Words;i++)if(Words(0x74000)[i]!=job.words[i])return false;
   return true; // FRAME consistency only, never source/owner/producer authority.

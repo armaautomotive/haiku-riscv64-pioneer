@@ -76,6 +76,7 @@ struct WorkerImage:Machine {
   return true;
  }
 };
+#ifndef PIONEER_BFP4_WORKER_IMAGE_ONLY
 int main(int argc,char** argv){
  assert(argc==2 || argc==3);
  if(argc==3){
@@ -102,3 +103,4 @@ int main(int argc,char** argv){
  {WorkerImage image(argv[1],1,5120);image.dropAckAt=1;assert(!image.Execute() && !image.stores);}
  puts("PASS actual OFFBOARD BFP4 worker RV32 frame/guard/FPU-failure controls; NO DEVICE OR WORK");
 }
+#endif

@@ -28,7 +28,16 @@
 #ifdef PIONEER_Q38_BF16_WORKER_IMAGE
 #include "PioneerQ38Bf16WorkerLayout.h"
 extern "C" void q38_bf16_persistent_producer(const uint32_t*,const uint32_t*,unsigned,unsigned);
+#ifdef PIONEER_Q38_HYBRID_WORKER_IMAGE
+#if PIONEER_Q38_HYBRID_WORKER_IMAGE != 1
+#error Exact experimental hybrid worker role required
+#endif
+#include "PioneerQ38HybridWorkerLayout.h"
+extern "C" unsigned q38_bfp4_worker_leaf();
+extern "C" unsigned q38_bfp8_worker_leaf();
+#else
 extern "C" unsigned q38_cached_fpu_matrix(const unsigned*);
+#endif
 #elif defined(PIONEER_Q38_PRECISE_WORKER_IMAGE)
 #include "PioneerQ38PreciseWorkerLayout.h"
 #ifdef PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE
@@ -51,7 +60,9 @@ extern "C" void q38_resident_persistent_gdn(const uint32_t*,const uint32_t*,unsi
 extern "C" void q38_resident_persistent_gdn_output(const uint32_t*,const uint32_t*,unsigned,unsigned);
 extern "C" void q38_mixed_dense_phase(const uint32_t*,unsigned,unsigned,float*,float*);
 namespace GlobalWorker {
-#ifdef PIONEER_Q38_BF16_WORKER_IMAGE
+#ifdef PIONEER_Q38_HYBRID_WORKER_IMAGE
+namespace M=PioneerQ38HybridWorkerLayout;
+#elif defined(PIONEER_Q38_BF16_WORKER_IMAGE)
 namespace M=PioneerQ38Bf16WorkerLayout;
 #elif defined(PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE)
 namespace M=PioneerQ38PushedWorkerLayout;
@@ -123,14 +134,30 @@ static void Matrix(const uint32_t* j,const uint32_t* source,unsigned worker,unsi
 #ifdef PIONEER_Q38_BF16_WORKER_IMAGE
 static void FpuMatrix(const uint32_t* j,const uint32_t* outer,const uint32_t* source,unsigned worker,unsigned self){
  q38_mixed_seal();uint32_t before[8];for(unsigned i=0;i<8;i++)before[i]=*Words(0xffb20000+Counter(i));
+#ifdef PIONEER_Q38_HYBRID_WORKER_IMAGE
+ const bool eight=j[0]==PioneerQ38Bfp8WorkerJob::Magic;
+ const unsigned count=eight?q38_bfp8_worker_leaf():q38_bfp4_worker_leaf();
+ const unsigned reads=j[4]*2*(j[2]/32),flits=j[4]*(eight?18U:10U)*(j[2]/32);
+ q38_mixed_seal();if(count!=j[4]*32 || !Quiet() || *Words(0xffb20014)!=self)block_fault_park();
+#else
  const unsigned count=q38_cached_fpu_matrix(j),pairs=j[4]/2,blocks=j[2]/256;
  q38_mixed_seal();if(count!=j[4]*(j[2]/16) || !Quiet() || *Words(0xffb20014)!=self)block_fault_park();
+#endif
  auto* p=Words(0x83f00);for(unsigned i=0;i<8;i++){
+#ifdef PIONEER_Q38_HYBRID_WORKER_IMAGE
+  const unsigned after=*Words(0xffb20000+Counter(i)),delta=i==1?flits:i==0 || i==2 || i==3 || i==6?reads:0;
+#else
   const unsigned after=*Words(0xffb20000+Counter(i)),delta=i==1?pairs*blocks*80:i==0 || i==2 || i==3 || i==6?pairs*blocks*26:0;
+#endif
   if(uint32_t(after-before[i])!=delta)block_fault_park();
   p[i]=before[i];p[8+i]=after;
  }
- p[16]=count;p[17]=outer[1];p[18]=worker;p[19]=PioneerQ38Q4FpuCachedLayout::Magic;
+ p[16]=count;p[17]=outer[1];p[18]=worker;
+#ifdef PIONEER_Q38_HYBRID_WORKER_IMAGE
+ p[19]=j[0];
+#else
+ p[19]=PioneerQ38Q4FpuCachedLayout::Magic;
+#endif
  for(unsigned i=0;i<10;i++)p[20+i]=Words(0xffb20000)[i];
  p[30]=source[0];p[31]=self;
  for(unsigned i=0;i<16;i++)p[32+i]=source[i];

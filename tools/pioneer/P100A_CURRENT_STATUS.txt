@@ -1,6 +1,6 @@
 P100A / Qwen 27B: current status
 ================================
-Updated November 6, 2026. Model: Qwen3.8-27B Q4_K_M.
+Updated November 7, 2026. Model: Qwen3.8-27B Q4_K_M.
 
 The target is fast self-hosted inference, ideally 20 tokens/sec. It has NOT
 been delivered, and 20 tokens/sec is unproven. A short 27B request runs all
@@ -81,6 +81,14 @@ Four compact goals
    A BFP8 worker image and relocated BFP4/BFP8 job mapping now pass offline
    RV32/synthetic/three-real-sample tests. They are not connected to the
    live dispatcher or proven on the card.
+   UPDATE Nov 7: a distinct experimental worker dispatcher is linked to both
+   BFP4/BFP8 leaves and passes synthetic RV32/NoC/FPU simulation for both
+   model widths. The BFP8 dispatch test uses a special layer-0 mask, not the
+   proposed model mask. A simulation exposed staging overlapping the old
+   GDN code location; the experimental image moves that code to 0x170000.
+   Full peer-memory ownership, input lifetime, ROOT coordination, cache
+   loading, on-card execution, model quality and speed are NOT established.
+   This is not connected to the live model or installed in Work/Assistant.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 
