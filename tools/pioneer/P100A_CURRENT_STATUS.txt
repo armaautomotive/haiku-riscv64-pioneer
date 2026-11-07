@@ -52,6 +52,9 @@ Four compact goals
    increasing their byte footprint and matches three card-tested bands.
    A real 7.2 MB fragment also passed a cold disk-cache conversion and a
    warm cache hit with zero source-row reads. This is not yet used by Work.
+   A distinct 32-row BFP4 worker leaf now compiles and passes simulated
+   RISC-V tests with inputs from ROOT L1 and converted weights from GDDR.
+   It is NOT installed or integrated into full-model inference.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 
@@ -76,4 +79,5 @@ GDDR diagnostic build and simulated safety checks: benchmarks/qwen38-bfp4-dram-d
 GDDR real-weight physical measurement: benchmarks/qwen38-bfp4-dram-real-band-physical-20261106.txt
 Real-prompt BFP4 accuracy probe: benchmarks/qwen38-bfp4-real-prompt-quality-20261106.txt
 Complete first FFN CPU accuracy result: benchmarks/qwen38-bfp4-first-ffn-quality-20261106.txt
+Returning BFP4 worker offboard checkpoint: benchmarks/qwen38-bfp4-worker-leaf-offboard-20261106.txt
 Long-term plan: P100A_WORK_PLAN.txt

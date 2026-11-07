@@ -74,9 +74,12 @@ and qwen38-bfp4-first-ffn-quality-20261106 in benchmarks/.
 Integration work: experimental Q4-to-BFP4 FFN fragment conversion preserves
 the original fragment byte footprint. A separate versioned disk cache passes
 synthetic cold/warm and corruption tests. CPU-only real-model checks passed
-all 1344 FFN fragment layouts and one cold/warm cache entry. Remaining requirements:
-qualify a distinct card-side consumer and job
-protocol across all needed widths, then measure full-model quality and speed.
+all 1344 FFN fragment layouts and one cold/warm cache entry. A distinct
+returning BFP4 leaf now passes actual RV32 simulation for K5120/K17408,
+including root-L1 inputs and three real-weight samples. Remaining: native
+ownership and cross-core producer/worker lifetimes, physical qualification,
+and integration into the actual root dispatcher, followed by full-model
+quality and speed measurements.
 Do not allow the original Q4 worker to interpret converted bytes, or expose
 the approximation in Work/Assistant before explicit qualification.
 

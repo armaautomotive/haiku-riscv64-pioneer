@@ -1,0 +1,37 @@
+Returning BFP4 FFN worker leaf: OFFBOARD checkpoint, 2026-11-06
+================================================================
+
+Purpose: bridge the validated native BFP4 tile/cache representation to the
+existing 119-peer paired FFN geometry, without copying activations to the
+host. The new, separate 16-word leaf job names a bounded BFP4 GDDR stripe,
+worker, sequence and existing root-L1 BF16 vector; its results are written
+to the existing worker output area. The enclosing job's layer/role/row/
+position and ALL owner, cache/upload and producer-lifetime proofs are still
+external. No current Work or driver role accepts the new job.
+
+Completed offline:
+* Canonical paired planner covers all 64 layers, 192 FFN tensors, 22,848
+  jobs and 79,872 32-row bands exactly once without crossing bank stripes.
+* Simulated loader exercises all 119 peers and K5120/K17408, with NoC GDDR
+  weight reads and ROOT-L1 BF16 input reads, exact guarded L1 payload and
+  queue/counter checks. Faults stop the one-shot object without retry.
+* Returning consumer tests both widths, 64 output words, job/producer guard
+  hooks, nonfinite/readback failures, and no action after error. Its generated
+  Tensix operations exactly match the prior validated BFP4 band stream.
+* The ACTUAL linked RV32I diagnostic image (6928 bytes, SHA256
+  04d43a4e5ad5b766fea07d0d3f9f48168557abda4772826d804f643db644faaf)
+  passed a strict shared-L1 NoC/unpack/FPU simulator for peer 1, 63 and 119
+  at both widths. Each case produced 64 expected rounded words; maximum
+  observed stack 624 bytes. Sixteen malformed frames, a frame mutation and
+  a dropped FPU acknowledgement were refused/parked without retry.
+* The same actual RV32 image reproduced 64 expected words for each of the
+  three private real-weight BFP4 samples. Private weights were not committed.
+* Reusing the already validated private job for packet geometry reduced the
+  simulator's RV32 steps for peer119 from 418514 to 206946 at K5120 and from
+  1403874 to 688910 at K17408. This is NOT a card-cycle or model-rate result.
+
+These are simulations, not physical multi-core execution, end-to-end model
+quality or tokens/sec. The leaf is NOT installed or selectable in Assistant.
+Required next: implement and qualify the actual outer sealed-job, concurrent
+root producer/worker lifetime, journal/ownership and completion binding;
+physically test before integrating a distinct experimental full-model mode.
