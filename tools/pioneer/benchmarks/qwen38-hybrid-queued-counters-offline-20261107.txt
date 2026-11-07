@@ -1,0 +1,55 @@
+Qwen3.8 27B / QGW7 hybrid queued-counter experiment, 2026-11-07
+
+Status: OFFLINE INSPECTION ONLY. This is not a driver, installed image, Work
+target, physical hardware run, real-model generation, or throughput result.
+Do not use this image on the P100A until separately qualified. The last valid
+full-model physical measurement remains 0.17287 token/s on an older path; it
+does not measure this experiment and is not an all-matrix implementation.
+
+Motivation: the earlier physical decode profile spent about 13.49% in its
+gather/wait category, and QGW7's BF producer/matrix completion paths submit
+eight independent 4-byte peer-counter reads serially. This inspection-only
+variant queues those same eight reads and waits for complete, sealed results.
+It does not remove any packets or prove any speedup. Results from the older
+profile cannot be used as a prediction of this different candidate.
+
+Safety: the role requires the exact returning recurrent QGW7 inspection profile
+and refuses native, kernel, Work, CPU-reference, fast-math, old counter-gather,
+and conflicting TID profiles. It requires FIFO mode already enabled, checks
+the initiators, 16 command slots and 32 TIDs for quiet, seals packet sources,
+checks all 10 words for each command, verifies receipt and peer-counter
+deltas, and publishes no gathered output/counter rebase on failure. FIFO mode
+is never modified. There are still eight reads; the test is queue overlap,
+not a larger atomic transfer. The default QGW7 path is unchanged and the old
+generator rejects the queued image instead of accepting it as tag127.
+
+Two independent builds were byte-identical:
+ boot.bin       4       32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text.bin       130296  6014d392b8103a5ac0d9bf5c15704dc75ebe0c0a43a22d58f041c05cc534ca9b
+ terminal.bin   8       6eb1d84addfac7202ad4f0d747c6e64d3b92c03025651c7dabe6c56c9cba95d5
+ conv.bin       21328   2b3baac417c2c672b516e863409b166b34413d0e5952798e24c17912c2916705
+ bf16.bin       34344   6ee1c1ac9cae9059933eb1938fabd6e9b471bdc67aab2497048d1f023c6ae756
+ program.elf    217268  567e04f17e465deb634d51d2469f732d40995acc8343399148b2f37629a56f5b
+The 131072-byte text-region limit leaves only 776 bytes of headroom.
+
+Tests, all off-device with simulated instructions/fabric and synthetic data:
+- Original QGW5 and QGW7 independent ROOT rebuilds match existing pins;
+  existing QGW7 coordinator, worker, attention, NoC, and producer tests pass.
+- New ROOT builds match independently; emitted code has exactly one queued
+  producer and one queued matrix gather callsite and isolated role checks pass.
+- Actual emitted queued helper: 1508 cases cover eight concurrently queued
+  reads and reverse-order delivery, bad FIFO/initiator/TID state, malformed
+  commands and packet sources, counter mismatches, missing responses and
+  fault parking with no premature publication.
+- Actual emitted BFP4 worker -> actual old and queued BfGatherMatrix code:
+  all 64 synthetic outputs match each other and the shared arithmetic golden;
+  the queued version issues the same total packet count. A bad peer counter
+  is refused before output/rebase. This direct-delivery test uses a synthetic
+  synchronous fabric; response reordering is tested separately above.
+
+These checks do not establish real-model quality, hardware correctness, card
+recovery safety, matrix utilization, or tokens per second. The card-side path
+still contains non-matrix stages. QGW7's BFP formats are lossy and require
+more model-quality validation. Before any physical trial, resolve Pioneer
+power and the recorded storage-integrity/recovery guard; then perform a
+separately authorized, guarded staged hardware test with a known-good fallback.

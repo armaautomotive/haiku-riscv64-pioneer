@@ -1,8 +1,9 @@
 /* SPDX-License-Identifier: MIT */
 #include "PioneerQ38CounterGatherRole.h"
+#include "PioneerQ38HybridQueuedCountersRole.h"
 #ifndef PIONEER_Q38_COUNTER_GATHER_H
 #define PIONEER_Q38_COUNTER_GATHER_H
-#ifdef PIONEER_Q38_COUNTER_GATHER_IMAGE
+#if defined(PIONEER_Q38_COUNTER_GATHER_IMAGE) || defined(PIONEER_Q38_HYBRID_QUEUED_COUNTERS_IMAGE)
 #include "PioneerQ38TidQuiet.h"
 #include "PioneerQ38MixedWorkerLayout.h"
 extern "C" void scalar_fault_park() __attribute__((noreturn));
@@ -17,9 +18,16 @@ static inline unsigned Offset(unsigned i){
  return offsets[i];
 }
 enum {Scratch=0x78000,Bytes=256};
-static __attribute__((noinline,optimize("Os"))) void Read(const uint32_t* frame,uint32_t* tracked,unsigned w,uint32_t* out){
+static __attribute__((noinline,optimize("Os")
+#ifdef PIONEER_Q38_HYBRID_QUEUED_COUNTERS_IMAGE
+ ,section(".bf16.queued_counters")
+#endif
+ )) void Read(const uint32_t* frame,uint32_t* tracked,unsigned w,uint32_t* out){
  if(w>=119 || !tracked || !out || tracked==out)scalar_fault_park();
  q38_mixed_root_packet_seal(frame);
+#ifdef PIONEER_Q38_HYBRID_QUEUED_COUNTERS_IMAGE
+ if(!(*Words(0xffb20100U)&0x10000U))scalar_fault_park();
+#endif
  // FIFO mode is a CURRENT sealed source, never enabled/changed here.
  // Full quiet proves all16 slots free BEFORE the bounded eight submits.
  if(!PioneerQ38TidFullQuiet())scalar_fault_park();

@@ -265,7 +265,7 @@ void Transfer(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned remote,uns
  scalar_fault_park(); // UNKNOWN: no later packet/retry/reset/cleanup grant
 }
 static uint32_t Register(const uint32_t* d,uint32_t* tracked,unsigned w,unsigned at){Transfer(d,tracked,w,at,4,false);return *Words(L::Scratch+(at&31));}
-#ifdef PIONEER_Q38_COUNTER_GATHER_IMAGE
+#if defined(PIONEER_Q38_COUNTER_GATHER_IMAGE) || defined(PIONEER_Q38_HYBRID_QUEUED_COUNTERS_IMAGE)
 static __attribute__((noinline,optimize("Os"))) void GatherCounters(const uint32_t* d,uint32_t* tracked,unsigned w,uint32_t* out){
  static_assert(unsigned(L::Scratch)==unsigned(PioneerQ38CounterGather::Scratch),"same owned scratch only");
  PioneerQ38CounterGather::Read(d,tracked,w,out);

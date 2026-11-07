@@ -133,7 +133,12 @@ static BF_ROOT_FN void BfGatherProducer(const uint32_t* d,uint32_t* tracked,unsi
  for(unsigned i=0;i<64;i++)if(Words(L::Scratch)[i]!=desc[i])scalar_fault_park();
  Transfer(d,tracked,w,0x74000,64,false);for(unsigned i=0;i<16;i++)job[i]=Words(L::Scratch)[i];
  Transfer(d,tracked,w,0x83f00,256,false);for(unsigned i=0;i<64;i++)proof[i]=Words(L::Scratch)[i];
+#ifdef PIONEER_Q38_HYBRID_QUEUED_COUNTERS_IMAGE
+ for(unsigned i=0;i<8;i++)before[i]=Words(L::Counters)[w*8+i];
+ BF_PAIR_SEAL(d,w);GatherCounters(d,tracked,w,after);BF_PAIR_SEAL(d,w);
+#else
  for(unsigned i=0;i<8;i++){before[i]=Words(L::Counters)[w*8+i];after[i]=Register(d,tracked,w,0xffb20000+Counter(i));}
+#endif
  if(!BFP::Proof(proof,job,desc,Boot(w)+16,w+1,M::Peer(w+1),before,after))scalar_fault_park();
  const auto* outer=Words(L::PeerJobs+w*256);
  for(unsigned i=0;i<10;i++)if(job[i]!=outer[16+i])scalar_fault_park();
@@ -231,9 +236,15 @@ static BF_ROOT_FN void BfGatherMatrix(const uint32_t* d,uint32_t* tracked,unsign
  BfMatrixJob(d,w,Words(L::Nonces)[w]);Copy(L::PeerJobs+w*256,L::Scratch,64);ClosedJob(d,tracked,w,false);
  const unsigned groups=Words(BFR::Parts+w*32)[2];
  Transfer(d,tracked,w,0x83f00,256+groups*64,false);uint32_t proof[64];for(unsigned i=0;i<64;i++)proof[i]=Words(L::Scratch)[i];
- uint32_t before[8],after[8];for(unsigned i=0;i<8;i++){
+ uint32_t before[8],after[8];
+#ifdef PIONEER_Q38_HYBRID_QUEUED_COUNTERS_IMAGE
+ for(unsigned i=0;i<8;i++)before[i]=Words(L::Counters)[w*8+i];
+ BF_PAIR_SEAL(d,w);GatherCounters(d,tracked,w,after);BF_PAIR_SEAL(d,w);
+#else
+ for(unsigned i=0;i<8;i++){
   before[i]=Words(L::Counters)[w*8+i];after[i]=Register(d,tracked,w,0xffb20000+Counter(i));
  }
+#endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
  if(!PioneerQ38HybridMatrixReceipt::Matrix(proof,reinterpret_cast<const uint32_t*>(L::PeerJobs+w*256),Boot(w),before,after))scalar_fault_park();
 #else

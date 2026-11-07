@@ -55,14 +55,14 @@ struct PacketRoot:ActualRoot {
   if(a==0xffb20040){assert(value==1);Submit();return;}
   ActualRoot::Store(a,value);
  }
- unsigned PeerRead(unsigned a){
+ virtual unsigned PeerRead(unsigned a){
   if(TransitionImage::DenseL1(a))return peer.WordRead(a);
   return peer.Get(a);
  }
  void PeerWrite(unsigned a,unsigned value){
   if(TransitionImage::DenseL1(a))peer.WordWrite(a,value);else peer.Put(a,value);
  }
- void Submit(){
+ virtual void Submit(){
   const bool write=command[7]==0x212;assert(write || !command[7]);
   const unsigned local=write?command[0]:command[3],remote=write?command[3]:command[0],bytes=command[8];
   assert(local==DR::Scratch+(remote&31) && bytes && !(bytes&3) && !command[1] && !command[4] && !command[6] && !command[9]);
@@ -77,7 +77,7 @@ struct PacketRoot:ActualRoot {
     || (remote==Dense::Job && bytes==64) || (remote==Dense::Local && bytes==256)
     || (remote==Dense::Header && bytes==256) || (remote==HW::Job && bytes==256)
     || (remote==Dense::Doorbell && bytes==4) || (remote==Dense::Parameters && bytes==64)
-    || (remote==Dense::Partial && bytes==12288))));
+    || (remote==Dense::Partial && bytes==12288) || (remote==0x83f00 && bytes==512))));
   packets++;
   if(write){
    for(unsigned i=0;i<bytes/4;i++)PeerWrite(remote+i*4,memory.at(local+i*4));writes++;
@@ -132,6 +132,7 @@ struct PacketRoot:ActualRoot {
   for(unsigned i=0;i<bytes/4;i++)assert(PeerRead(remote+i*4)==expected[i]);
  }
 };
+#ifndef PIONEER_Q38_HYBRID_MATRIX_NOC_MACHINE_ONLY
 int main(int argc,char** argv){
  assert(argc==4);auto peer=std::make_unique<TransitionImage>(argv[2],argv[3]);peer->Boot();
  for(unsigned layer=0;layer<3;layer++){
@@ -183,3 +184,4 @@ int main(int argc,char** argv){
  assert(!root->Transfer(HW::Status,64,false) && root->packets==sent);
  puts("PASS actual QGW7 ROOT NoC transfers and three Snapshot receipt/counter checks with one actual worker; corrupted receipt and counter refused; synthetic fabric/input, no device or TPS");
 }
+#endif

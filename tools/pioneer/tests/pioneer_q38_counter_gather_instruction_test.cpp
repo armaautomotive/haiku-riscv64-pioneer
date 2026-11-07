@@ -259,4 +259,5 @@ int main(int argc,char** argv){
   "actual CounterSeal all8x32 physical/receipt corruptions refused without rebase,"
   "no mode/counter/worker/host writes,no output/frontier publication before complete,2048 inert steps EACH;"
   "NO original-model,native,hardware,Work or TPS qualification\n",cases);
+ return 0;
 }
