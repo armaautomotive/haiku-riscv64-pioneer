@@ -35,7 +35,7 @@ Reproduce:
 
 Next: measure this operation on genuine P100A hardware with a bounded,
 recoverable diagnostic and compare representative actual-model inputs and
-quality. Integrate only after those checks, then time the real full model.
+quality. Promote into Work only after those checks, then time the real full model.
 The known full-model rate is still approximately 0.173 tokens/s; 20 is unmet.
 
 Additional real-input screening, November 7
@@ -61,3 +61,26 @@ or evidence of any full-model speedup.
 
 Reproduce using the existing private fixture (not stored in Git):
   python3 tools/pioneer/tests/run_pioneer_q38_fast_f32_hidden_rms_image_tests.py /ABSOLUTE/HAIKU/BUILD --prompt-fixture /ABSOLUTE/PRIVATE/prompt-input.bin --ffn-fixture /ABSOLUTE/PRIVATE/first-ffn-reference.bin
+
+Experimental linked ROOT integration
+------------------------------------
+An explicit --fast-rms option now selects this approximate function and its
+residual variant in the separate hybrid inspection build. The unchanged
+hybrid ROOT was independently rebuilt byte-for-byte against its existing pins.
+The candidate ROOT is a distinct image: SHA-256
+48841d0a9c320d3c449310787751c59b16e8b7c807316001f04d7a9994d5a380.
+Both recurrent and dense component objects have checked call relocations to
+the candidate RMS and residual-RMS functions; no Work or native role is
+enabled by this image.
+
+The actual linked ROOT's exported final-RMS entry was executed in the RV32
+simulator on the three pinned Qwen-derived vectors above, with unit weights.
+It agreed bit-for-bit with the standalone candidate on all outputs. The
+precise and candidate linked entries used 1604504 and 678177 instructions,
+respectively, across those three calls; 5120 of 15360 outputs differed from
+the precise entries, with worst relative L2 2.47886242e-7. This is not a
+full recurrent/dense layer, learned-weight test, P100A measurement or proof
+that the complete candidate can start, execute, stop or be installed.
+
+Reproduce (private fixtures are NOT committed):
+  python3 tools/pioneer/tests/run_pioneer_q38_fast_rms_linked_root_tests.py /ABSOLUTE/HAIKU/BUILD /ABSOLUTE/PRIVATE/prompt-input.bin /ABSOLUTE/PRIVATE/first-ffn-reference.bin

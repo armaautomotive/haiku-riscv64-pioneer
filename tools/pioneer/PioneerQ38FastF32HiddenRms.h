@@ -39,4 +39,20 @@ PioneerQ38FastF32HiddenRms(const float* input,const float* weight,float* output)
  }
  return true;
 }
+static __attribute__((noinline)) bool
+PioneerQ38FastF32HiddenResidualRms(const float* projected,const float* raw,const float* weight,float* residual,float* normalized){
+ using Address=__UINTPTR_TYPE__;
+ const Address spans[]={reinterpret_cast<Address>(projected),reinterpret_cast<Address>(raw),reinterpret_cast<Address>(weight),
+  reinterpret_cast<Address>(residual),reinterpret_cast<Address>(normalized)};
+ for(unsigned i=0;i<5;i++){
+  if(!spans[i] || (spans[i]&3) || spans[i]>~Address(0)-20480)return false;
+  for(unsigned j=0;j<i;j++)if(spans[i]<spans[j]+20480 && spans[j]<spans[i]+20480)return false;
+ }
+ for(unsigned i=0;i<5120;i++){
+  if(!PioneerQ38F32HiddenDomain(projected[i]) || !PioneerQ38F32HiddenDomain(raw[i]))return false;
+  const float value=raw[i]+projected[i];if(!PioneerQ38F32HiddenDomain(value))return false;
+  residual[i]=value;
+ }
+ return PioneerQ38FastF32HiddenRms(residual,weight,normalized);
+}
 #endif

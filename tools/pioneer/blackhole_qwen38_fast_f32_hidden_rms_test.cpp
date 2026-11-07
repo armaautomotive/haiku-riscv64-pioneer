@@ -14,5 +14,6 @@
 #undef PioneerQ38LearnedRms
 extern "C" unsigned scalar_main(){
  (void)&PioneerQ38LearnedRms;(void)&PioneerQ38F32HiddenRms;(void)&PioneerQ38F32HiddenResidualRms;
+ (void)&PioneerQ38FastF32HiddenResidualRms;
  return q38_fast_f32_hidden_rms_transport_main();
 }

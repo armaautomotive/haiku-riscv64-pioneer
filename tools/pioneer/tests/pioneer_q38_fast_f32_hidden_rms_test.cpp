@@ -39,6 +39,15 @@ int main(){
   const double relative=std::sqrt(error/(norm+1e-300));worstRelative=std::max(worstRelative,relative);
   assert(relative<0.00002);rows++;
  }
+ std::array<float,5120> projected={},preciseResidual={},fastResidual={};
+ for(unsigned i=0;i<5120;i++)projected[i]=float(int(i%97)-48)/128;
+ assert(PioneerQ38F32HiddenResidualRms(projected.data(),input.data(),weight.data(),preciseResidual.data(),precise.data()));
+ assert(PioneerQ38FastF32HiddenResidualRms(projected.data(),input.data(),weight.data(),fastResidual.data(),fast.data()));
+ assert(preciseResidual==fastResidual);
+ double residualError=0,residualNorm=0;
+ for(unsigned i=0;i<5120;i++){const double delta=double(precise[i])-fast[i];residualError+=delta*delta;residualNorm+=double(precise[i])*precise[i];}
+ assert(std::sqrt(residualError/(residualNorm+1e-300))<0.00002);
+ assert(!PioneerQ38FastF32HiddenResidualRms(projected.data(),input.data(),weight.data(),projected.data(),fast.data()));
  input.fill(1);weight.fill(1);fast.fill(42);const auto untouched=fast;
  for(unsigned index:{0U,5119U})for(uint32_t bad:{1U,0x267fffffU,0x4c800001U,0x7f800000U,0x7fc00000U}){
   input[index]=PioneerAttentionFloat(bad);

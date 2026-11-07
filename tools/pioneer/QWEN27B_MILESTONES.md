@@ -81,7 +81,9 @@ establish the achievable speed of this implementation or this card.
 
 A separate approximate RMS candidate has passed synthetic host and emitted
 RV32 simulations, plus three Qwen-derived vectors using unit rather than
-learned weights. It is not a real-card or model-quality test. See
+learned weights. It is selected by a separate hybrid inspection image and its
+linked final-RMS entry has been simulated; full layer execution and real-card
+or model-quality tests remain outstanding. See
 [`benchmarks/qwen38-fast-rms-synthetic-20261107.txt`](benchmarks/qwen38-fast-rms-synthetic-20261107.txt).
 
 ## Milestone 4: Assistant

@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=20 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp'}
+assert 3<=len(sys.argv)<=21 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp','--fast-rms'}
 inspect='--inspect-candidate' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or f32,'separate dense-unroll candidate requires explicit FP32-hidden components'
 assert not boundary or (f32 and unroll),'boundary candidate requires explicit FP32-hidden and unrolled components'
@@ -27,6 +27,8 @@ bf16='--bf16-fpu' in options
 assert not bf16 or (inspect and precise and worker_admission and not pushed),'QGW4 requires its separate inspect/precise/admission profile,not QGW3 receipts'
 hybrid='--hybrid-bfp' in options
 assert not hybrid or (inspect and bf16),'hybrid coordinator is an explicit BF16 inspection build only'
+fast_rms='--fast-rms' in options
+assert not fast_rms or (inspect and hybrid and f32),'approximate RMS requires the separate hybrid FP32 inspection build'
 bf16_profile='--bf16-profile' in options
 assert not bf16_profile or bf16,'BF16 timing requires the explicit BF16 inspect profile'
 deferred_audit='--deferred-prepare-audit' in options
@@ -50,6 +52,7 @@ flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exc
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
+ *(['-DPIONEER_Q38_FAST_RMS_DIAGNOSTIC=1','-DPIONEER_Q38_FAST_RMS_COMPONENT_DIAGNOSTIC=1'] if fast_rms else []),
  *(['-DPIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE=1'] if deferred_audit else []),
  *(['-DPIONEER_Q38_BF16_PROFILE_IMAGE=1'] if bf16_profile else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1'] if bf16 else []),
@@ -69,6 +72,7 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_
  '-DPIONEER_Q38_MIXED_RECURRENT_BLOCK_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_SEAL_UNROLL=1',
  '-DPIONEER_Q38_GLOBAL_CHAIN_CROSS_TOKEN_COMPONENT=1','-c',here/'blackhole_qwen38_return_recurrent_layer.cpp','-o',out/'recurrent.o')
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_Q38_SIGMOID_PRECISION_IMAGE=1',
+ *(['-DPIONEER_Q38_FAST_RMS_DIAGNOSTIC=1','-DPIONEER_Q38_FAST_RMS_COMPONENT_DIAGNOSTIC=1'] if fast_rms else []),
  *(['-DPIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE=1'] if deferred_audit else []),
  *(['-DPIONEER_Q38_BF16_PROFILE_IMAGE=1'] if bf16_profile else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1'] if bf16 else []),
@@ -100,8 +104,15 @@ for name in ('q38_return_recurrent_layer','q38_return_dense_layer','q38_global_c
  assert re.search(r' T '+name+r'$',symbols,re.M),name
 assert 'DensePartitionRoot::AdmitGlobalOutput(' in symbols,'the REAL returning admission path must retain the new code'
 assert 'Joined::AppendTokenKv(' in symbols,'the real dense body must retain current-row GDDR append/readback'
-assert ('PioneerQ38F32HiddenRms(' in symbols)==f32
-assert ('PioneerQ38F32HiddenResidualRms(' in symbols)==f32
+assert ('PioneerQ38F32HiddenRms(' in symbols)==(f32 and not fast_rms)
+assert ('PioneerQ38F32HiddenResidualRms(' in symbols)==(f32 and not fast_rms)
+assert ('PioneerQ38FastF32HiddenRms(' in symbols)==fast_rms
+assert ('PioneerQ38FastF32HiddenResidualRms(' in symbols)==fast_rms
+if fast_rms:
+ for component in ('recurrent.o','dense.o'):
+  relocations=subprocess.check_output([tool+'objdump','-r','-C',str(out/component)],text=True)
+  for name in ('PioneerQ38FastF32HiddenRms','PioneerQ38FastF32HiddenResidualRms'):
+   assert re.search(r'R_RISCV_CALL(?:_PLT)?\s+'+name+r'\(',relocations), (component,name)
 for name in (*dead,'mixed_recurrent_block_main','mixed_live_block_main','q38_global_chain_main','q38_run_final_dense_and_stop','_start','scalar_entry'):
  assert not re.search(r'\b'+name+r'\b',symbols),name
 assert not re.search(r'^[0-9a-f]+ [bBdDgGsS] ',symbols,re.M)

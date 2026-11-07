@@ -70,4 +70,5 @@ int main(int argc,char** argv){
    "SIMULATED ONLY, NOT learned RMS weights, full-model quality, P100A time or tokens/sec\n",
    labels[v],changed,relative,maxAbsolute,precise.steps,fast.steps);
  }
+ return 0;
 }
