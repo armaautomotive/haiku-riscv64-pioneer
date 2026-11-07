@@ -3,13 +3,13 @@
 // reload guard and read-only baseline machinery ONLY; none of its compute,
 // model,Work,arbitrary-data or automatic-close routes are published here.
 #include <Drivers.h>
-#if (!defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) || PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC != 1) && (!defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC) || PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC != 1)
+#if (!defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) || PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC != 1) && (!defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC) || PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC != 1) && (!defined(PIONEER_NATIVE_BFP4_TIMED_DIAGNOSTIC) || PIONEER_NATIVE_BFP4_TIMED_DIAGNOSTIC != 1)
 #error Build only through an explicit fixed native BFP band diagnostic role
 #endif
 #if defined(PIONEER_NATIVE_BFP_DIAGNOSTIC) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_DRAM_READ_SWEEP_NATIVE_CONTEXT)
 #error Native BFP fixed qualification never selects a model/Work/old native context
 #endif
-#if !defined(TT_PIONEER_DRIVER_RELOAD) || (defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) && (defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010079ULL)) || (defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC) && PIONEER_DRIVER_BUILD_TAG != 0x2026110600010118ULL)
+#if !defined(TT_PIONEER_DRIVER_RELOAD) || (defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) && (defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC) || defined(PIONEER_NATIVE_BFP4_TIMED_DIAGNOSTIC) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010079ULL)) || (defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC) && (defined(PIONEER_NATIVE_BFP4_TIMED_DIAGNOSTIC) || PIONEER_DRIVER_BUILD_TAG != 0x2026110600010118ULL)) || (defined(PIONEER_NATIVE_BFP4_TIMED_DIAGNOSTIC) && PIONEER_DRIVER_BUILD_TAG != 0x2026110600010119ULL)
 #error Distinct exact native-BFP band diagnostic identity required
 #endif
 #define PIONEER_NATIVE_BFP_DIAGNOSTIC 1 // PRIVATE inert-base hook gate only
@@ -18,7 +18,18 @@
 #undef find_device
 #undef PIONEER_NATIVE_BFP_DIAGNOSTIC
 #include "../../../../../tools/pioneer/PioneerNativeBfpBandLease.h"
-#if defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC)
+#if defined(PIONEER_NATIVE_BFP4_TIMED_DIAGNOSTIC)
+#include "PioneerNativeBfp4TimedProtocol.h"
+#include "PioneerNativeBfp4TimedGeneratedImage.h"
+#define PioneerNativeBfpBandLease PioneerNativeBfp4TimedLease
+#define PioneerNativeBfpBandTag PioneerNativeBfp4TimedTag
+#define PioneerNativeBfpBandRequest PioneerNativeBfp4TimedRequest
+#define PioneerNativeBfpBandRequestValid PioneerNativeBfp4TimedRequestValid
+#define PioneerNativeBfpBandGeneratedImage PioneerNativeBfp4TimedGeneratedImage
+#define PIONEER_NATIVE_BFP_BAND_SUPPORT PIONEER_NATIVE_BFP4_TIMED_SUPPORT
+#define PIONEER_NATIVE_BFP_BAND_RUN PIONEER_NATIVE_BFP4_TIMED_RUN
+#define PIONEER_NATIVE_BFP_BAND_END PIONEER_NATIVE_BFP4_TIMED_END
+#elif defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC)
 #include "PioneerNativeBfp4BandProtocol.h"
 #include "PioneerNativeBfp4BandGeneratedImage.h"
 // Reuse the fixed audited lifecycle with a distinct role, protocol, image,
@@ -117,6 +128,9 @@ static NativeOwner* owner=NULL; // under sLock; retained intact on UNKNOWN
 static void Fault(NativeOwner& o) { o.lease.Abandon();sColdRecoveryRequired=true; }
 static void Reply(PioneerNativeBfpBandRequest& r,const NativeOwner& o) {
 	r.result=o.lease.Result();r.nonce=1;
+#if defined(PIONEER_NATIVE_BFP4_TIMED_DIAGNOSTIC)
+	for(unsigned i=0;i<16;i++)r.timing[i]=o.lease.Timing()[i];
+#endif
 	if(sColdRecoveryRequired) {r.result.state=PIONEER_NATIVE_BFP_UNKNOWN;r.result.cold=1;}
 }
 static bool FinishMmio(NativeOwner& o) {

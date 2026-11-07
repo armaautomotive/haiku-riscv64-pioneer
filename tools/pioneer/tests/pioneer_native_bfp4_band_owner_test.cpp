@@ -68,6 +68,7 @@ template<unsigned K>static void Positive4(const char* path){
  NoMore4<K>(*lease,io,baseline);
  printf("PASS OFFBOARD BFP4 owner K%u: actual RV32 image, 64 predicted words, all snapshot L1/TLB restored; NO device/speed claim\n",K);
 }
+#ifndef PIONEER_NATIVE_BFP4_BAND_OWNER_ONLY
 int main(int argc,char** argv){
  assert(argc==4);Prepare4<5120>(argv[1]);Prepare4<6144>(argv[2]);Prepare4<17408>(argv[3]);
  Positive4<5120>(argv[1]);Positive4<6144>(argv[2]);Positive4<17408>(argv[3]);unsigned faults=0;
@@ -90,3 +91,4 @@ int main(int argc,char** argv){
  }
  printf("PASS OFFBOARD BFP4 owner %u failure/no-retry cases including old BFP8 marker, unknown completion and restoration; NO hardware authorization\n",faults);
 }
+#endif

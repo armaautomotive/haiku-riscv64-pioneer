@@ -9,7 +9,7 @@
 // Uses an ideal arithmetic observer: no silicon rounding or device claim.
 struct Band4RV32:Machine {
  Band4Machine native;std::vector<uint8_t> code;bool direct,awaiting=false,stackSeen=false;
- unsigned minSP=0x70000,minStore=0x70000,stores=0,acks=0,dropAckAt=0,portWrites=0,dropConfig=~0U;
+ unsigned minSP=0x70000,minStore=0x70000,stores=0,acks=0,dropAckAt=0,portWrites=0,dropConfig=~0U,expectedMarker=0x3442464e;
  Band4RV32(const char* folder,unsigned width,bool mode):native(width),direct(mode){
   std::string root=folder;code=Read((root+"/text.bin").c_str());auto boot=Read((root+"/boot.bin").c_str());
   assert(boot.size()==4 && !code.empty() && code.size()<=4096 && !(code.size()&3));
@@ -55,7 +55,7 @@ struct Band4RV32:Machine {
   while(pc!=0x70038 && pc!=0x70058){Step();if(regs[2])stackSeen=true;if(stackSeen){assert(regs[2]>=0x6e000 && regs[2]<=0x70000 && !(regs[2]&15));minSP=std::min(minSP,regs[2]);}}
   assert(l1[Index(pc)]==0x0000006f && minStore>=0x6e000);
   if(pc==0x70058){assert(l1[Index(0x17ffc8)]==0x4542464e && !stores && !native.outputReads);return false;}
-  assert(l1[Index(0x17ffc0)]==0x7000c && l1[Index(0x17ffc4)]==((2U<<24)|(native.tiles*32)) && l1[Index(0x17ffc8)]==0x3442464e);
+  assert(l1[Index(0x17ffc0)]==0x7000c && l1[Index(0x17ffc4)]==((2U<<24)|(native.tiles*32)) && l1[Index(0x17ffc8)]==expectedMarker);
   assert(native.Clean() && stores==64 && native.outputReads==64 && native.clears==2);
   assert(native.unpacks[0]==2*native.tiles && native.unpacks[1]==native.unpacks[0] && native.matrixOps==16*native.tiles);
   assert(native.visits[0]==8*native.tiles && native.visits[2]==8*native.tiles && !native.visits[1] && !native.visits[3]);return true;

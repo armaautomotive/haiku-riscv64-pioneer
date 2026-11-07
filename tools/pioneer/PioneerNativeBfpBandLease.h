@@ -1,19 +1,23 @@
 /* SPDX-License-Identifier: MIT */
 #ifndef PIONEER_NATIVE_BFP_BAND_LEASE_H
 #define PIONEER_NATIVE_BFP_BAND_LEASE_H
-#if defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || (defined(_KERNEL_MODE) && !defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) && !defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC))
+#if defined(PIONEER_Q38_WORK_INFERENCE) || defined(PIONEER_Q38_CPU_VALIDATION) || (defined(_KERNEL_MODE) && !defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) && !defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC) && !defined(PIONEER_NATIVE_BFP4_TIMED_DIAGNOSTIC))
 #error Full-K band lease is an offboard owner prototype,not an admitted driver/Work/validation path
 #endif
-#if defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010079ULL)
+#if defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110400010079ULL || defined(PIONEER_NATIVE_BFP4_TIMED_DIAGNOSTIC))
 #error Full-K kernel owner requires its explicit distinct diagnostic79 role
 #endif
-#if defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110600010118ULL || defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC))
+#if defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110600010118ULL || defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) || defined(PIONEER_NATIVE_BFP4_TIMED_DIAGNOSTIC))
 #error Full-K kernel owner requires its explicit distinct BFP4 diagnostic118 role
+#endif
+#if defined(PIONEER_NATIVE_BFP4_TIMED_DIAGNOSTIC) && (!defined(_KERNEL_MODE) || PIONEER_NATIVE_BFP4_TIMED_DIAGNOSTIC != 1 || !defined(TT_PIONEER_DRIVER_RELOAD) || PIONEER_DRIVER_BUILD_TAG != 0x2026110600010119ULL || defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC) || defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC))
+#error Full-K kernel owner requires its explicit distinct timed BFP4 diagnostic119 role
 #endif
 #include "../../src/add-ons/kernel/drivers/misc/BlackholeDramSamplesProbe.h"
 #include "../../src/add-ons/kernel/drivers/misc/PioneerNativeBfpProtocol.h"
 #include "PioneerNativeBfpBandFixture.h"
 #include "PioneerNativeBfp4BandFixture.h"
+#include "PioneerNativeBfp4BandTiming.h"
 // Separate fixed full-K/broadcast lifecycle. Each role accepts only its own
 // fidelity and marker, never old NFB1 or a runtime payload/code/address.
 // Kernel compilation is reserved for diagnostic79 or diagnostic118; neither
@@ -22,19 +26,25 @@
 // No destructor IO. UNKNOWN retains every saved span/TLB and never retries.
 template<unsigned Bits> struct PioneerNativeBfpBandPolicy;
 template<> struct PioneerNativeBfpBandPolicy<8> {
-	static constexpr unsigned Phases=4,Marker=0x3342464e;
+	static constexpr unsigned Phases=4,Marker=0x3342464e,Timed=0;
 	static uint32_t Word(unsigned k,unsigned address){return PioneerNativeBfpBandFixture::Word(k,address);}
 };
 template<> struct PioneerNativeBfpBandPolicy<4> {
-	static constexpr unsigned Phases=2,Marker=0x3442464e;
+	static constexpr unsigned Phases=2,Marker=0x3442464e,Timed=0;
+	static uint32_t Word(unsigned k,unsigned address){return PioneerNativeBfp4BandFixture::Word(k,address);}
+};
+template<> struct PioneerNativeBfpBandPolicy<44> {
+	static constexpr unsigned Phases=2,Marker=0x5442464e,Timed=1;
 	static uint32_t Word(unsigned k,unsigned address){return PioneerNativeBfp4BandFixture::Word(k,address);}
 };
 template<unsigned Bits> class PioneerNativeBfpBandLeaseFor {
-	static_assert(Bits==4 || Bits==8,"only distinct fixed synthetic BFP4/BFP8 leases");
+	static_assert(Bits==4 || Bits==8 || Bits==44,"only distinct fixed synthetic BFP4/BFP8 leases");
 #if defined(PIONEER_NATIVE_BFP_BAND_DIAGNOSTIC)
 	static_assert(Bits==8,"diagnostic79 must never admit BFP4");
 #elif defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC)
 	static_assert(Bits==4,"diagnostic118 must never admit BFP8");
+#elif defined(PIONEER_NATIVE_BFP4_TIMED_DIAGNOSTIC)
+	static_assert(Bits==44,"diagnostic119 must never admit an untimed image");
 #endif
 	using Policy=PioneerNativeBfpBandPolicy<Bits>;
 	using B=PioneerNativeBfpBandLayout;
@@ -42,6 +52,7 @@ template<unsigned Bits> class PioneerNativeBfpBandLeaseFor {
 	unsigned width=0;
 	bool attempted=false,owned=false,modified=false;
 	PioneerNativeBfpResult result={};
+	uint32_t timing[16]={};
 	bool Unknown(){result.state=PIONEER_NATIVE_BFP_UNKNOWN;result.cold=1;return false;}
 	template<class IO> bool Scope(IO& io,const tt_dram_samples_result& baseline,uint32_t reset) {
 		if(!io.BfpHealthy() || !BlackholeDramSourceStable(io,baseline))return false;
@@ -86,6 +97,7 @@ public:
 		return Policy::Word(k,a); // fixed synthetic data,headers/stack/status zero
 	}
 	const PioneerNativeBfpResult& Result()const{return result;}
+	const uint32_t* Timing()const{return timing;}
 	void Abandon(){if(owned)Unknown();} // CPU metadata only
 	template<class IO,class Image> bool Run(IO& io,tt_dram_samples_result& baseline,unsigned k) {
 		static_assert(B::Width(Image::Width) && Image::Phases==Policy::Phases,"fixed full-K and exact format fidelity only");
@@ -123,12 +135,18 @@ public:
 		}
 		if(!complete)return Unknown();
 		for(unsigned i=0;i<64;i++)result.output[i]=io.BfpRead(B::Output+i*4);
+		if(Policy::Timed){
+			for(unsigned i=0;i<16;i++)timing[i]=io.BfpRead(PioneerNativeBfp4BandTiming::Address+i*4);
+			if(PioneerNativeBfp4BandTiming::State(timing,k,0)!=1 || PioneerNativeBfp4BandTiming::State(timing+8,k,1)!=1
+				|| !PioneerNativeBfp4BandTiming::Later(timing+12,timing+6))return Unknown();
+		}
 		if(!Terminal(io,baseline))return Unknown();
 		result.completed=1;result.state=PIONEER_NATIVE_BFP_RESULT;return true;
 	}
 	template<class IO> bool End(IO& io,tt_dram_samples_result& baseline) {
 		if(!owned || !modified || result.state!=PIONEER_NATIVE_BFP_RESULT || !result.completed)return false;
 		if(!Terminal(io,baseline))return Unknown();
+		if(Policy::Timed)for(unsigned i=0;i<16;i++)if(io.BfpRead(PioneerNativeBfp4BandTiming::Address+i*4)!=timing[i])return Unknown();
 		io.BfpResetWrite(0x87ffff);io.Pause();if(!Scope(io,baseline,0x87ffff))return Unknown();
 		io.BfpResetWrite(0x47800);io.Pause();if(!Scope(io,baseline,0x47800))return Unknown();
 		result.held=1;
@@ -148,7 +166,10 @@ public:
 };
 using PioneerNativeBfpBandLease=PioneerNativeBfpBandLeaseFor<8>;
 using PioneerNativeBfp4BandLease=PioneerNativeBfpBandLeaseFor<4>;
-#if defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC)
+using PioneerNativeBfp4TimedLease=PioneerNativeBfpBandLeaseFor<44>;
+#if defined(PIONEER_NATIVE_BFP4_TIMED_DIAGNOSTIC)
+static_assert(PioneerNativeBfp4TimedLease::SavedWords(17408)==PioneerNativeBfp4TimedLease::MaxSavedWords,"exact bounded heap snapshot");
+#elif defined(PIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC)
 static_assert(PioneerNativeBfp4BandLease::SavedWords(17408)==PioneerNativeBfp4BandLease::MaxSavedWords,"exact bounded heap snapshot");
 #else
 static_assert(PioneerNativeBfpBandLease::SavedWords(17408)==PioneerNativeBfpBandLease::MaxSavedWords,"exact bounded heap snapshot");

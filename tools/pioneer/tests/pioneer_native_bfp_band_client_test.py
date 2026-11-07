@@ -10,7 +10,8 @@ import tempfile
 if not __debug__:
     raise SystemExit('Assertions required')
 here = pathlib.Path(__file__).resolve().parent
-assert sys.argv[1:] in ([], ['--bfp4'])
+assert sys.argv[1:] in ([], ['--bfp4'], ['--bfp4-timed'])
+timed = sys.argv[1:] == ['--bfp4-timed']
 bfp4 = bool(sys.argv[1:])
 if bfp4:
     golden = (here.parent / 'PioneerNativeBfp4BandGolden.h').read_text()
@@ -167,16 +168,35 @@ program = program.replace('CLIENT_SOURCE', str(here.parent / 'pioneer_native_bfp
 program = program.replace('ACTUAL_RELOAD_CONTROL', reload_control)
 program = program.replace('OBSERVED_WORDS', ','.join(f'0x{x:08x}' for x in observed))
 if bfp4:
-    program = program.replace('#define main CapturedDocumentedMain', '#define PIONEER_NATIVE_BFP4_BAND_CLIENT 1\n#define main CapturedDocumentedMain')
+    macro='PIONEER_NATIVE_BFP4_TIMED_CLIENT' if timed else 'PIONEER_NATIVE_BFP4_BAND_CLIENT'
+    program = program.replace('#define main CapturedDocumentedMain', '#define '+macro+' 1\n#define main CapturedDocumentedMain')
     program = program.replace('selectedWidth*8', 'selectedWidth*4')
     program = program.replace('0x04000000|selectedWidth', '0x02000000|selectedWidth')
     program = program.replace('v.marker=0x3342464e', 'v.marker=0x3442464e')
+if timed:
+    program=program.replace('v.marker=0x3442464e','v.marker=0x5442464e')
+    fill='''for(unsigned pass=0;pass<2;pass++){
+     unsigned* t=r.timing+pass*8;t[0]=0x34544d51;t[1]=0x10001;t[2]=selectedWidth;t[3]=pass;
+     t[4]=1000+pass*2000;t[5]=0;t[6]=2000+pass*2000;t[7]=0;
+    }'''
+    anchor='for(unsigned word=0;word<64;word++)v.output[word]=Observed[(selectedWidth==5120?0:selectedWidth==6144?32:64)+word%32];'
+    assert anchor in program
+    program=program.replace(anchor,anchor+'\n '+fill)
+    run_faults='''if(scenario==72)r.timing[0]^=1;if(scenario==73)r.timing[1]=0;
+     if(scenario==74)r.timing[2]++;if(scenario==75)r.timing[3]^=1;
+     if(scenario==76){r.timing[4]=0;r.timing[5]=0;}if(scenario==77){r.timing[6]=r.timing[4];r.timing[7]=r.timing[5];}
+     if(scenario==78)r.timing[12]=1500;if(scenario==79)r.timing[8]^=1;'''
+    program=program.replace('if(scenario==1)r.result.output[failedWord]^=1;',run_faults+'\n  if(scenario==1)r.result.output[failedWord]^=1;')
+    program=program.replace('if(scenario==49)r.result.output[failedWord]^=1;','if(scenario>=80 && scenario<=95)r.timing[scenario-80]^=1;\n if(scenario==49)r.result.output[failedWord]^=1;')
+    program=program.replace('scenario<=71 && failedWord<64','scenario<=95 && failedWord<64')
+    program=program.replace('scenario<67)', '(scenario<67 || scenario>=72))')
+    program=program.replace('scenario==65 || scenario==66)', 'scenario==65 || scenario==66 || scenario>=80)')
 (folder / 'test.cpp').write_text(program)
 compiler = os.environ.get('CXX', 'c++')
 subprocess.run([compiler, '-std=c++17', '-O1', '-g', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror',
                 '-fsanitize=address,undefined', '-I' + str(folder), str(folder / 'test.cpp'), '-o', str(folder / 'test')], check=True)
 cases = 0
-for scenario in range(72):
+for scenario in range(96 if timed else 72):
     for index in (range(64) if scenario in (1, 49) else (0,)):
         result = subprocess.run([str(folder / 'test'), str(scenario), str(index), '5120'], text=True, capture_output=True,
                                 env=dict(os.environ, ASAN_OPTIONS='quarantine_size_mb=32', UBSAN_OPTIONS='halt_on_error=1'))
@@ -184,7 +204,10 @@ for scenario in range(72):
         if scenario in (0, 65, 66):
             assert not result.stderr
             lines = result.stdout.splitlines()
-            assert len(lines) == 65 and lines[-1].startswith('PASS_NATIVE_BFP_FULL_K ')
+            assert len(lines) == (67 if timed else 65) and lines[-1].startswith('PASS_NATIVE_BFP_FULL_K ')
+            if timed:
+                assert lines[64]=='NATIVE_BFP4_BAND_TIMING width5120 pass0 start1000 end2000 cycles1000;CARD_CYCLES_ONLY_L1_INPUTS'
+                assert lines[65]=='NATIVE_BFP4_BAND_TIMING width5120 pass1 start3000 end4000 cycles1000;CARD_CYCLES_ONLY_L1_INPUTS'
             records = lines[:64]
         elif scenario == 1:
             assert not result.stdout
@@ -209,8 +232,8 @@ for width, offset in ((6144, 32), (17408, 64)):
     assert len(records) == 64 and [int(word, 16) for word in records] == observed[offset:offset + 32] * 2
     cases += 1
 for selection in ('_KERNEL_MODE', 'PIONEER_Q38_WORK_INFERENCE', 'PIONEER_Q38_CPU_VALIDATION'):
-    check = subprocess.run([compiler, '-std=c++17', '-D' + selection, *(['-DPIONEER_NATIVE_BFP4_BAND_CLIENT=1'] if bfp4 else []), '-I' + str(folder), '-c', str(here.parent / 'pioneer_native_bfp_band_diagnostic.cpp'),
+    check = subprocess.run([compiler, '-std=c++17', '-D' + selection, *(['-DPIONEER_NATIVE_BFP4_TIMED_CLIENT=1'] if timed else ['-DPIONEER_NATIVE_BFP4_BAND_CLIENT=1'] if bfp4 else []), '-I' + str(folder), '-c', str(here.parent / 'pioneer_native_bfp_band_diagnostic.cpp'),
                             '-o', str(folder / (selection + '.o'))], text=True, capture_output=True)
     assert check.returncode and 'Unqualified Blackhole arithmetic characterization is offboard only' in check.stderr
-print(f'PASS ACTUAL full-K {"BFP4" if bfp4 else "BFP8"} client:{cases} ASan/UBSan cases;ACTUAL driver metadata control clears request selectors,independent Fraction-qualified synthetic positives,all64 RUN/END word failures,pre-open spec/golden checks,protocol/owner/metadata/close/CLI failures,NO END/query/retry after failed RUN;3 runtime-role guards;NO device proof')
+print(f'PASS ACTUAL full-K {"timed BFP4" if timed else "BFP4" if bfp4 else "BFP8"} client:{cases} ASan/UBSan cases;ACTUAL driver metadata control clears request selectors,independent Fraction-qualified synthetic positives,all64 RUN/END word failures,pre-open spec/golden checks,protocol/owner/metadata/close/CLI failures,NO END/query/retry after failed RUN;3 runtime-role guards;NO device proof')
 print('CPU-only actual full-K client evidence:', folder)

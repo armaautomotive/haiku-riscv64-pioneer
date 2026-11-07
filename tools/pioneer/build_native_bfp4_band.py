@@ -13,6 +13,7 @@ parser.add_argument('haiku_build',type=Path)
 parser.add_argument('output',type=Path)
 parser.add_argument('width',type=int,choices=(5120,6144,17408))
 parser.add_argument('--direct',action='store_true')
+parser.add_argument('--timed',action='store_true',help='Separate read-only-cycle image, not the validated untimed identity')
 args=parser.parse_args()
 assert args.haiku_build.is_absolute() and args.haiku_build.is_dir()
 assert args.output.is_absolute() and not args.output.exists() and not args.output.is_symlink()
@@ -26,12 +27,15 @@ commands=[
   '-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
   '-msmall-data-limit=0','-mno-relax','-march=rv32i','-mabi=ilp32','-fstack-usage',
   '-DPIONEER_NATIVE_BFP4_BAND_K='+str(args.width),'-c',str(here/'blackhole_q38_native_bfp4_band.cpp'),'-o',str(args.output/'program.o')],
- [tool+'as','-march=rv32i','-mabi=ilp32','-mno-relax',str(here/'blackhole_q38_native_bfp4_band_start.S'),'-o',str(args.output/'start.o')],
+ [tool+'as','-march=rv32i','-mabi=ilp32','-mno-relax',str(here/('blackhole_q38_native_bfp4_timed_start.S' if args.timed else 'blackhole_q38_native_bfp4_band_start.S')),'-o',str(args.output/'start.o')],
  [tool+'ld','-m','elf32lriscv','--no-relax','--gc-sections','-T',str(here/'blackhole_q38_native_bfp_band.ld'),
   str(args.output/'start.o'),str(args.output/'program.o'),'-Map',str(args.output/'program.map'),'-o',str(args.output/'program.elf')],
 ]
 if args.direct:
     commands[0].insert(1,'-DPIONEER_NATIVE_BFP4_BAND_DIRECT=1')
+if args.timed:
+    commands[0].insert(1,'-DPIONEER_NATIVE_BFP4_BAND_TIMED=1')
+    commands[0][commands[0].index('-march=rv32i')]='-march=rv32i_zicsr'
 for section in ('boot','text'):
     commands.append([tool+'objcopy','-O','binary','-j','.'+section,str(args.output/'program.elf'),str(args.output/(section+'.bin'))])
 for command in commands:
@@ -44,4 +48,4 @@ for name in ('boot.bin','text.bin'):
     data=(args.output/name).read_bytes()
     assert len(data)==4 if name=='boot.bin' else 0<len(data)<=4096 and len(data)%4==0
     print(hashlib.sha256(data).hexdigest(),len(data),name)
-print('OFFBOARD BFP4 BUILD ONLY; NO device or Work authorization')
+print('OFFBOARD BFP4 BUILD ONLY; TIMED',int(args.timed),'; NO device or Work authorization')

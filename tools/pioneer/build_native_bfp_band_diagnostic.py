@@ -14,7 +14,9 @@ if not __debug__ or os.environ.get('PYTHONOPTIMIZE'):
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('haiku_build', type=pathlib.Path)
 parser.add_argument('output', type=pathlib.Path)
-parser.add_argument('--bfp4', action='store_true', help='Build separate BFP4 diagnostic118 only')
+group = parser.add_mutually_exclusive_group()
+group.add_argument('--bfp4', action='store_true', help='Build separate BFP4 diagnostic118 only')
+group.add_argument('--bfp4-timed', action='store_true', help='Build separate timed BFP4 diagnostic119 only')
 args = parser.parse_args()
 assert args.haiku_build.is_absolute() and args.haiku_build.is_dir()
 assert args.output.is_absolute() and not args.output.exists() and not args.output.is_symlink()
@@ -27,19 +29,25 @@ output.mkdir(mode=0o700)
 expected = {5120: 'f69c2803d854bbef87f37df7cb96536e1f5d940060ed98fec6cb3200d50a9ad5',
             6144: 'a6516a81cdb2e40b1850a0e51c3c2c2d706eaa2aa0207b29cbf5c2c3feb1a09e',
             17408: '902a07bf9cc67387d139bee4b18b3a454a1d90baa3b70d2c3f87e2b0f3939575'}
-if args.bfp4:
+if args.bfp4 or args.bfp4_timed:
     expected = {5120: 'a60b38559aca3f728bb64c83ece2afc76c7a6412881ec3a904056853e467ca38',
                 6144: '8b93889b11b7e949745a2e759a7f4c3aeeb31ca60a02167e88bff1c8be708cc7',
                 17408: '68442a24c2b547ea7dbc7fbf3ff72988797a4761600b12d3ae74c9f2fc23a29d'}
-image_name = 'PioneerNativeBfp4BandGeneratedImage' if args.bfp4 else 'PioneerNativeBfpBandGeneratedImage'
-driver_name = 'tenstorrent_pci_probe-native-bfp4-band118' if args.bfp4 else 'tenstorrent_pci_probe-native-bfp-band79'
-client_name = 'pioneer-native-bfp4-band-diagnostic' if args.bfp4 else 'pioneer-native-bfp-band-diagnostic'
-phases = 2 if args.bfp4 else 4
+if args.bfp4_timed:
+    expected = {5120:'67f8dcf0756715f6ab6efb5d320adab2d7cb4d155092b55ec1b1dd9f20dec005',
+                6144:'d4bdd2d32bee6b2e46d750e0c1622361b078a385c84b9d73002bc4060662825e',
+                17408:'b2a2dbe7244b629be316ee00c0220d7827a019cd79aec9009c3ed89099f15928'}
+image_name = 'PioneerNativeBfp4TimedGeneratedImage' if args.bfp4_timed else 'PioneerNativeBfp4BandGeneratedImage' if args.bfp4 else 'PioneerNativeBfpBandGeneratedImage'
+driver_name = 'tenstorrent_pci_probe-native-bfp4-timed119' if args.bfp4_timed else 'tenstorrent_pci_probe-native-bfp4-band118' if args.bfp4 else 'tenstorrent_pci_probe-native-bfp-band79'
+client_name = 'pioneer-native-bfp4-timed-diagnostic' if args.bfp4_timed else 'pioneer-native-bfp4-band-diagnostic' if args.bfp4 else 'pioneer-native-bfp-band-diagnostic'
+phases = 2 if args.bfp4 or args.bfp4_timed else 4
 images = {}
 for bits in (5120, 6144, 17408):
     folder = output / ('k' + str(bits))
-    command = ['python3', str(here / ('build_native_bfp4_band.py' if args.bfp4 else 'build_native_bfp_band.py')), str(build), str(folder), str(bits)]
-    if not args.bfp4:
+    command = ['python3', str(here / ('build_native_bfp4_band.py' if args.bfp4 or args.bfp4_timed else 'build_native_bfp_band.py')), str(build), str(folder), str(bits)]
+    if args.bfp4_timed:
+        command.append('--timed')
+    elif not args.bfp4:
         command.append('4')
     subprocess.run(command, check=True)
     boot = (folder / 'boot.bin').read_bytes()
@@ -86,7 +94,8 @@ common = [cxx, '-std=gnu++17', '-O2', '-Wall', '-Wextra', '-Werror', '-fno-excep
           '-fno-strict-aliasing', '-fno-delete-null-pointer-checks', '-mcmodel=medany', '-fpic', '-D_KERNEL_MODE']
 roles = ['BANKS', 'PANEL', 'AFFINE', 'BLOCK', 'STREAM', 'ROWS', 'COHORT', 'COHORT_SEALED', 'COHORT_PAYLOAD', 'DISPATCH', 'DISPATCH_VECTOR']
 native = ['-DTT_PIONEER_EXPERIMENTAL_Q38_' + name for name in roles]
-native += (['-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=0x2026110600010118ULL', '-DPIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC=1'] if args.bfp4
+native += (['-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=0x2026110600010119ULL', '-DPIONEER_NATIVE_BFP4_TIMED_DIAGNOSTIC=1'] if args.bfp4_timed
+           else ['-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=0x2026110600010118ULL', '-DPIONEER_NATIVE_BFP4_BAND_DIAGNOSTIC=1'] if args.bfp4
            else ['-DTT_PIONEER_DRIVER_RELOAD', '-DPIONEER_DRIVER_BUILD_TAG=0x2026110400010079ULL', '-DPIONEER_NATIVE_BFP_BAND_DIAGNOSTIC=1'])
 commands = []
 def run(command):
@@ -121,11 +130,11 @@ assert instructions == [('add', 'sp,sp,-16'), ('sd', 's0,8(sp)'), ('add', 's0,sp
 libs = []
 for path in sorted((build / 'build_packages').glob('gcc_syslibs-*/lib')):
     libs += ['-L' + str(path)]
-run([cxx, '-std=c++17', '-O2', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror', *(['-DPIONEER_NATIVE_BFP4_BAND_CLIENT=1'] if args.bfp4 else []), *user_includes,
+run([cxx, '-std=c++17', '-O2', '-ffp-contract=off', '-Wall', '-Wextra', '-Werror', *(['-DPIONEER_NATIVE_BFP4_TIMED_CLIENT=1'] if args.bfp4_timed else ['-DPIONEER_NATIVE_BFP4_BAND_CLIENT=1'] if args.bfp4 else []), *user_includes,
      '-B' + str(release / 'system/glue'), '-L' + str(release / 'system/libroot'), *libs,
      str(here / 'pioneer_native_bfp_band_diagnostic.cpp'), '-o', str(output / client_name)])
 assert hashlib.sha256((output / 'tenstorrent_pci_probe-default43-control').read_bytes()).hexdigest() == '2df0e0f845ba5847cbf519916d58e40e7827dbeaf1fef7c7d9ccc6ff432df9cc'
 (output / 'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in commands) + '\n')
 for name in (driver_name, 'tenstorrent_pci_probe-default43-control', client_name):
     print(hashlib.sha256((output / name).read_bytes()).hexdigest(), name)
-print('BUILD_ONLY separate full-K diagnostic', 'BFP4' if args.bfp4 else 'BFP8', ';NO installation,reload,physical test,model-quality or performance authority')
+print('BUILD_ONLY separate full-K diagnostic', 'TIMED BFP4' if args.bfp4_timed else 'BFP4' if args.bfp4 else 'BFP8', ';NO installation,reload,physical test,model-quality or performance authority')

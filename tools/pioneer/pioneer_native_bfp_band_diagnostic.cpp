@@ -1,7 +1,21 @@
 /* SPDX-License-Identifier: MIT */
 // Separate fixed full-K synthetic diagnostic. NEVER model/Work inference.
 #include <Drivers.h>
-#if defined(PIONEER_NATIVE_BFP4_BAND_CLIENT)
+#if defined(PIONEER_NATIVE_BFP4_TIMED_CLIENT)
+#include "../../src/add-ons/kernel/drivers/misc/PioneerNativeBfp4TimedProtocol.h"
+#include "PioneerNativeBfp4BandFixture.h"
+#include "PioneerNativeBfp4BandGolden.h"
+#include "PioneerNativeBfp4BandTiming.h"
+#define PioneerNativeBfpBandTag PioneerNativeBfp4TimedTag
+#define PioneerNativeBfpBandRequest PioneerNativeBfp4TimedRequest
+#define PioneerNativeBfpBandRequestValid PioneerNativeBfp4TimedRequestValid
+#define PioneerNativeBfpBandFixture PioneerNativeBfp4BandFixture
+#define PioneerNativeBfpBandGolden PioneerNativeBfp4BandGolden
+#define PIONEER_NATIVE_BFP_BAND_SUPPORT PIONEER_NATIVE_BFP4_TIMED_SUPPORT
+#define PIONEER_NATIVE_BFP_BAND_RUN PIONEER_NATIVE_BFP4_TIMED_RUN
+#define PIONEER_NATIVE_BFP_BAND_END PIONEER_NATIVE_BFP4_TIMED_END
+static constexpr unsigned kPhases=2,kMarker=0x5442464e;
+#elif defined(PIONEER_NATIVE_BFP4_BAND_CLIENT)
 #include "../../src/add-ons/kernel/drivers/misc/PioneerNativeBfp4BandProtocol.h"
 #include "PioneerNativeBfp4BandFixture.h"
 #include "PioneerNativeBfp4BandGolden.h"
@@ -29,7 +43,7 @@ static constexpr unsigned kPhases=4,kMarker=0x3342464e;
 #include <sys/ioctl.h>
 namespace {
 uint16_t Weight(unsigned tile,int n) {
-#if defined(PIONEER_NATIVE_BFP4_BAND_CLIENT)
+#if defined(PIONEER_NATIVE_BFP4_BAND_CLIENT) || defined(PIONEER_NATIVE_BFP4_TIMED_CLIENT)
 	const unsigned q=PioneerNativeBfp4BandFixture::QuantizedNibble(n),magnitude=q&7;
 	if(!magnitude)return 0;
 	unsigned top=0;for(unsigned scan=magnitude;scan>>=1;)top++;
@@ -67,6 +81,10 @@ bool Result(const PioneerNativeBfpBandRequest& r,unsigned width,uint64_t generat
 		|| !r.result.polls || r.result.polls>20000 || r.result.phase!=0x7000c
 		|| r.result.count!=((kPhases<<24)|width) || r.result.marker!=kMarker)return false;
 	for(unsigned pc:r.result.pc)if(pc!=0x70038 && pc!=0x7003c)return false;
+#if defined(PIONEER_NATIVE_BFP4_TIMED_CLIENT)
+	if(PioneerNativeBfp4BandTiming::State(r.timing,width,0)!=1 || PioneerNativeBfp4BandTiming::State(r.timing+8,width,1)!=1
+		|| !PioneerNativeBfp4BandTiming::Later(r.timing+12,r.timing+6))return false;
+#endif
 	const unsigned restored=unsigned(state==PIONEER_NATIVE_BFP_CLOSED);
 	return r.result.held==restored && r.result.l1_restored==restored && r.result.tlb_restored==restored;
 }
@@ -108,11 +126,23 @@ int main(int argc,char** argv) {
 	}
 	PioneerNativeBfpBandRequest end={};end.version=1;end.width=width;end.expected_tag=PioneerNativeBfpBandTag;end.expected_generation=metadata.generation;end.nonce=1;end.accept=1;
 	if(ioctl(fd,PIONEER_NATIVE_BFP_BAND_END,&end,sizeof(end)) || !Result(end,width,metadata.generation,PIONEER_NATIVE_BFP_CLOSED)
-		|| memcmp(end.result.output,r.result.output,sizeof(r.result.output))) {
+		|| memcmp(end.result.output,r.result.output,sizeof(r.result.output))
+#if defined(PIONEER_NATIVE_BFP4_TIMED_CLIENT)
+		|| memcmp(end.timing,r.timing,sizeof(r.timing))
+#endif
+		) {
 		fputs("NATIVE_BFP_BAND_END_UNPROVEN;CLOSE_ONLY_NO_RETRY\n",stderr);close(fd);return 1;
 	}
 	if(close(fd))return 1;
 	Dump(stdout,r,width);
+#if defined(PIONEER_NATIVE_BFP4_TIMED_CLIENT)
+	for(unsigned pass=0;pass<2;pass++) {
+		const uint32_t* t=r.timing+pass*8;
+		uint64_t start=uint64_t(t[4])|(uint64_t(t[5])<<32),finish=uint64_t(t[6])|(uint64_t(t[7])<<32);
+		printf("NATIVE_BFP4_BAND_TIMING width%u pass%u start%llu end%llu cycles%llu;CARD_CYCLES_ONLY_L1_INPUTS\n",width,pass,
+			(unsigned long long)start,(unsigned long long)finish,(unsigned long long)(finish-start));
+	}
+#endif
 	printf("PASS_NATIVE_BFP_FULL_K bits%u width%u rows32 dual_jobs2 phases%u exact_words64 polls%u generation%llu;EXPLICIT_END_L1_TLB_PCI_RESTORED;NO_MODEL_QUALITY_OR_SPEED_CLAIM\n",kPhases==2?4U:8U,width,kPhases,r.result.polls,(unsigned long long)metadata.generation);
 	if(fflush(stdout) || ferror(stdout))return 1;
 	return 0;

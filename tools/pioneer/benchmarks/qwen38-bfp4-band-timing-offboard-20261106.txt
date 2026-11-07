@@ -1,0 +1,43 @@
+Native BFP4 card-cycle timing: OFFBOARD preparation only
+=======================================================
+November 6, 2026. This is not a physical timing or model speed measurement.
+
+A distinct tag119 synthetic diagnostic adds two bounded high/low/high
+read-only mcycle samples around each complete K-width BFP4 band. Its 64-byte
+record occupies the bottom of the already snapshotted private 8KiB stack
+span; the interpreter verifies the actual linked stack remains above it.
+Two passes return all 64 normal mathematical outputs plus both timing
+records. The owner requires valid ordered clock samples and unchanged timing
+at END; unavailable or altered records, an old marker or an uncertain state
+leave ownership quarantined without a retry or automatic cleanup.
+
+Executed locally:
+* run_pioneer_native_bfp4_timed_image_tests.py: three widths, MMIO and
+  direct-issue variants, valid clock including low-word rollover and bounded
+  unavailable clock, actual RV32 instructions and ideal arithmetic observer.
+* run_pioneer_native_bfp4_timed_owner_tests.py: all three MMIO images,
+  rounded-arithmetic predictions, complete simulated restore, invalid and
+  altered clocks, wrong marker, bad PC and timed/untimed role separation.
+* pioneer_native_bfp_band_client_test.py --bfp4-timed: 224 fake-endpoint
+  cases including every RUN/END result word, invalid clock records and all
+  16 timing words modified at END. Existing BFP4 and BFP8 client suites
+  each passed 200 fake cases, and the untimed BFP4 owner tests passed.
+No hardware was opened by these checks.
+
+One uninstalled tag119 build produced driver SHA256
+587a2600574dd501417e1e036db21b2a3813d7ce115f7faffbf93f885655b990
+and client SHA256
+4d3f656eedc5962d9c8760293ab7f24260e1f268aac8fdb0f3b0bb8116ae860b.
+This build is NOT a launch authorization; a new single-use parent and output
+gate with independent timing checks must be tested before a physical trial.
+
+Comparison boundary
+-------------------
+The earlier K5120 Q4 diagnostic recorded 690318 and 690195 card cycles for
+32 outputs. It includes on-card GDDR loading/NoC, unpack and compute. The
+present BFP4 candidate's clock interval begins only after the diagnostic has
+staged the entire synthetic band in local L1: it includes BFP4 setup, per-tile
+unpack/compute and drains, but excludes GDDR/NoC loading and conversion. A
+timed result can be compared as a preliminary lower-scope component, not as
+an apples-to-apples inference speedup or a prediction of tokens/sec. Real
+model quality, resident GDDR integration and end-to-end timing remain open.
