@@ -17,8 +17,13 @@ full-model hybrid result.
 
 The experimental hybrid path converts some Q4_K_M weights to BFP4/BFP8;
 it is not numerically identical to the original. One matched 32-output band
-had 14.3% relative L2 difference, and full-model quality is not established.
-See [`benchmarks/qwen38-matched-band-physical-20261107.txt`](benchmarks/qwen38-matched-band-physical-20261107.txt).
+had 14.3% relative L2 difference. In a separate CPU-only comparison of one
+full-model token, the hybrid and original chose the same next token, but the
+logits differed by 26.8% relative L2 and their top-five choices overlapped
+four out of five. These are warning signs, not answer-quality scores; full
+model quality is not established. See the
+[physical band result](benchmarks/qwen38-matched-band-physical-20261107.txt)
+and [CPU-only hybrid comparison](benchmarks/qwen38-bfp-hybrid-cpu-quality-20261106.txt).
 
 ## Milestone 1: upload the prepared model
 
