@@ -10,6 +10,10 @@
 #undef scalar_main
 #include "PioneerQ38ProjectionInput.h"
 #include "PioneerQ38FastDecodeProfileBuildRole.h"
+#include "PioneerQ38EarlyJobSnapshotBuildRole.h"
+#ifdef PIONEER_Q38_EARLY_JOB_SNAPSHOT_IMAGE
+#include "PioneerQ38EarlyJobSnapshot.h"
+#endif
 #ifdef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE
 #include "PioneerQ38FastDecodeProfileScope.h"
 #endif
@@ -149,7 +153,14 @@ static void Gather(const uint32_t* d,uint32_t* tracked,unsigned w){
  MatrixWait(d,tracked,w);BootSeal(d,tracked,w);
  MatrixJob(d,w,Words(L::Nonces)[w]);Copy(L::PeerJobs+w*256,L::Scratch,64);ClosedJob(d,tracked,w,false);
 #else
+#ifndef PIONEER_Q38_EARLY_JOB_SNAPSHOT_IMAGE
  MatrixJob(d,w,Words(L::Nonces)[w]);Copy(L::PeerJobs+w*256,L::Scratch,64);
+#else
+ // The original reconstruction bound the receipt to current descriptor and
+ // partition fields. Preserve that check before consuming the receipt.
+ if(!PioneerQ38EarlyJobSnapshot::Matches(Words(L::PeerJobs+w*256),d,
+  Words(L::PartsShadow+w*32),w,Words(L::Nonces)[w],M::Magic,M::Peer(w+1),L::Tile(d[15])))scalar_fault_park();
+#endif
 #endif
  unsigned groups=Words(L::PartsShadow+w*32)[2],k=d[14],type=d[15],blocks=k>>(type==8?5:8);
  unsigned weightReadBlocks=blocks;
@@ -272,7 +283,15 @@ static unsigned Run(const uint32_t* d){
 #elif defined(PIONEER_Q38_BF16_PROFILE_IMAGE)
  timing.Next(PioneerQ38Bf16ProfileData::MatrixDispatch);
 #endif
- for(unsigned w=0;w<d[7];w++){MatrixJob(d,w,Words(L::Nonces)[w]+1);Transfer(d,tracked,w,M::Job,256,true);}
+ for(unsigned w=0;w<d[7];w++){
+  MatrixJob(d,w,Words(L::Nonces)[w]+1);
+#ifdef PIONEER_Q38_EARLY_JOB_SNAPSHOT_IMAGE
+  // All prior receipts were admitted before PushedBegin. Keep the exact
+  // descriptor sent to this worker, not a later reconstruction of it.
+  Copy(L::PeerJobs+w*256,L::Scratch,64);
+#endif
+  Transfer(d,tracked,w,M::Job,256,true);
+ }
  for(unsigned w=0;w<d[7];w++){*Words(L::Scratch)=Words(L::Nonces)[w]+1;Transfer(d,tracked,w,M::Doorbell,4,true);Words(L::Nonces)[w]++;}
 #ifdef PIONEER_Q38_FAST_DECODE_PROFILE_IMAGE
  timing.Next(PioneerQ38FastDecodeProfileData::MatrixGatherWait);

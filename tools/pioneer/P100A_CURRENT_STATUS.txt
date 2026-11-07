@@ -29,7 +29,8 @@ Four compact goals
 -------------------
 1. Identify the fastest engine's bottleneck: COMPLETE for one request.
 2. Remove one measured overhead: CURRENT. Test reusing a job descriptor
-   already constructed on card; no speedup is assumed.
+   already constructed on card; SDK build and synthetic DATA checks pass,
+   but actual GPU correctness and speed remain untested.
 3. Measure an accepted improvement on the complete 27B model: NOT STARTED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 
@@ -44,4 +45,5 @@ Evidence
 Actual profile and evidence: benchmarks/qwen38-fast-decode-profile-physical-20261106.txt
 Previous fast model: benchmarks/qwen38-vector-q4-full-card-20261104.txt
 Rejected slower Q4 candidate: benchmarks/qwen38-prepared-bf16-q4-physical-20261106.txt
+Snapshot experiment (build/data only): benchmarks/qwen38-early-job-snapshot-build-20261106.txt
 Long-term plan: P100A_WORK_PLAN.txt

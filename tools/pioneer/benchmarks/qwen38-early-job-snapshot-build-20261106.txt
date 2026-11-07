@@ -1,0 +1,53 @@
+Qwen 27B early job snapshot: BUILD/DATA ONLY, hardware result pending
+====================================================================
+November 6, 2026. Fast vector92 RAW returning projection candidate.
+The complete-model baseline remains 0.17287 tokens/sec. No candidate
+model speed, GPU speedup, usable Assistant or 20 tok/s claim is made here.
+
+Change
+------
+After all previous worker receipts are admitted and PushedBegin completes,
+retain each exact 64-word job when it is constructed for dispatch. Gather
+uses that job instead of reconstructing and copying it a second time. The
+new live-field check binds the retained job to the CURRENT descriptor,
+partition and nonce before the unchanged receipt grammar is consumed.
+Job/doorbell commands, worker math, receipt/counter checks and source
+guards stay in place. The selector is build-only, not a Work mode or a
+native/physical qualification; the original path stays available.
+
+Local evidence
+--------------
+Two independent output directories built through the actual RISC-V SDK.
+Each independently relinked the whole original full-EOG ELF and rebuilt
+the entire original recurrent, dense and token translation units byte-for-
+byte before building the changed components. The four candidate executable
+sections were byte-identical across the two output directories:
+ boot       4 bytes SHA256 32791432e2d260817d9007281f3719631163b7e9cd5c44dd4c059eaefca668ca
+ text  130316 bytes SHA256 6a7fe5c763e930a6b762a274b46746918a12d691e0cbe1c65cfe9a177b787033
+ terminal   8 bytes SHA256 468eb84a74c067cc328b3fb3e51b768a8440cd67d292add55eef6861c9b24de2
+ conv   32680 bytes SHA256 b3e45e700fb0e883a327616475e8af53a76383763aad0e937408bacccf681892
+Text has 756 bytes and conv has 88 bytes spare in their existing sections.
+Build checks also reject writable/unresolved executable content and excessive
+static stack frames. This is not an independent clean-source rebuild.
+
+The sanitizer-enabled host DATA test compiles MatrixJob extracted verbatim
+from the production source. It checks all 119 worker indices, types 8/12/14
+and sequences 1/13/0x7ffffffe: 1,071 combinations. In 85,680 injected
+individual job/descriptor/partition word changes, the new live check or the
+unchanged actual receipt grammar rejected each altered case. For every
+tested live descriptor/partition mutation, the original rebuilt job also
+failed receipt validation. This test uses synthetic inputs and does not
+execute the RV32 instruction stream or model arbitrary timing/concurrency.
+The actual SDK role test accepted 4 valid/unselected and rejected 122 invalid
+selections, including CPU, Work, native, BF16, prepared and late switches.
+
+Open gates and decision
+-----------------------
+No physical device has run this image. It remains EXPERIMENTAL, not accepted
+as faster or ready for Assistant. Still required: compare the actual old/new
+returning RV32 paths and their fault behavior, construct a separately pinned
+native diagnostic with safe ownership/END, then run a fresh bounded identical-
+input hardware comparison and restore/verify the stable driver. Reject if
+not faster or if safe fault behavior cannot be established. The live check
+costs instructions and may erase the expected gain; even a successful change
+addresses only an unmeasured subset of the 13.49% gather/wait profile bucket.
