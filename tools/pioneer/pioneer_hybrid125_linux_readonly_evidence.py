@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Read four exact BFS files from the unmounted Samsung; no disk writes."""
+"""Compare exact BFS files and a bounded aligned range; no disk writes."""
 import hashlib
 import os
 import stat
@@ -52,12 +52,31 @@ def read_exact(fd,size,offset):
     require(len(data)==size,'short raw read')
     return data
 
+def matching_runs(data,reference,block_size):
+    """Summarize equal aligned blocks without exposing the bytes compared."""
+    require(block_size>0 and len(data)==len(reference) and len(data)%block_size==0,
+            'invalid aligned comparison')
+    runs=[];start=None
+    for index in range(len(data)//block_size):
+        at=index*block_size
+        equal=data[at:at+block_size]==reference[at:at+block_size]
+        if equal and start is None:start=index
+        if not equal and start is not None:runs.append((start,index));start=None
+    if start is not None:runs.append((start,len(data)//block_size))
+    return runs
+
 def self_test():
     assert occurrences(b'ababa',b'aba')==[0,2]
     assert occurrences(b'ababa',b'xyz')==[]
     try:occurrences(b'ababa',b'')
     except RuntimeError:pass
     else:raise AssertionError('empty search pattern accepted')
+    assert matching_runs(b'aabbccdd',b'aabbXXdd',2)==[(0,2),(3,4)]
+    assert matching_runs(b'aa',b'bb',2)==[]
+    for data,reference,block_size in ((b'a',b'a',0),(b'aa',b'a',1),(b'aaa',b'aaa',2)):
+        try:matching_runs(data,reference,block_size)
+        except RuntimeError:continue
+        raise AssertionError('invalid aligned comparison accepted')
     for name,number,size,extents in FILES:
         raw=bytearray(BLOCK)
         struct.pack_into('<I',raw,0,INODE_MAGIC)
@@ -107,6 +126,8 @@ def main():
                 if amount:parts.append(read_exact(fd,amount,((group<<GROUP_SHIFT)+start)*BLOCK));left-=amount
             require(left==0,'incomplete data');files[name]=b''.join(parts)
             print(f'{name} inode={number} bytes={size} sha256={digest(files[name])} extents={extents}')
+        require(digest(files['stable.backup'])=='041fef189829c58791a7e4a86e2b15b182fa1a6c9cc9f03a91037ba15b353403',
+                'stable backup content changed')
         for name,offset in (('state',69632),('trial.stderr',65536),('trial.stdout',0)):
             matched=files[name]==files['stable.backup'][offset:offset+len(files[name])]
             print(f'{name} equals_backup_offset_{offset}={int(matched)}')
@@ -119,6 +140,17 @@ def main():
                     data=read_exact(fd,BLOCK,block*BLOCK)
                     offsets=occurrences(files['stable.backup'],data)
                     print(f'{name} allocation_block={block} whole_block_backup_offsets={offsets}')
+        # The three observed file blocks and their backup offsets have the
+        # same physical origin. Compare the intervening blocks too, without
+        # displaying their data or assuming anything about current ownership.
+        # These are raw reads only; a match does not prove prior allocation,
+        # write ordering, cause, or future power-loss durability.
+        origin=(118<<GROUP_SHIFT)+3660;count=len(files['stable.backup'])//BLOCK
+        require(origin+count<=total_blocks and count*BLOCK<=len(files['stable.backup']),
+                'aligned comparison outside verified volume or backup')
+        raw=read_exact(fd,count*BLOCK,origin*BLOCK)
+        matches=matching_runs(raw,files['stable.backup'][:count*BLOCK],BLOCK)
+        print(f'aligned_backup_comparison physical_origin={origin} blocks={count} matching_half_open_block_ranges={matches}')
         print('READ ONLY: unmounted raw partition and verified inode extents; no filesystem or GPU changes')
     finally:os.close(fd)
 

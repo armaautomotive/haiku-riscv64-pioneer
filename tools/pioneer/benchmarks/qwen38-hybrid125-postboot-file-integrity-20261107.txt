@@ -127,3 +127,26 @@ absent. Enumeration is not a card health, execution, recovery, numerical
 quality, or speed test. No accelerator command, relay action, filesystem
 write, repair, driver exchange or spent-trial retry was performed. The
 restoration guard and the unresolved storage-integrity issue remain unchanged.
+
+Aligned old-driver extent comparison
+------------------------------------
+The raw Linux evidence helper was extended with an explicit pinned hash for
+stable.backup and a bounded, read-only comparison. It rechecked the same disk,
+unmounted BFS partition, geometry and four recorded inode maps, then compared
+518 complete 2048-byte blocks starting at physical partition block 7736908
+against corresponding offsets in stable.backup. It printed only match ranges,
+not disk contents. Half-open ranges [0,35) and [36,160) matched exactly;
+the affected stdout blocks are indices 0-2, stderr index 32 and state index
+34. The single mismatching index 35 and remaining indices 160-517 did not
+match; no inference is made about their ownership or contents.
+
+This is substantially stronger evidence for a contiguous remnant of an old
+copy of the driver at these physical locations, not merely coincidental
+individual block matches. The trial did replace an installed driver whose
+content had the same pinned hash before creating the trial output files, so
+reallocation of blocks formerly holding that driver followed by loss of
+unflushed new file data is plausible. There is no pre-replacement allocation
+map to establish that history; misdirected writes, cache behavior, journal
+ordering and other causes are not excluded. This is not proof of a filesystem
+failure mode, power-loss safety, a fresh power epoch, or permission to relax
+the restoration guard. No block was modified and no GPU operation was issued.
