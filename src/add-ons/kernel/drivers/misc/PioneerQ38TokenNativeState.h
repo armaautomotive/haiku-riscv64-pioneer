@@ -129,6 +129,9 @@ class PioneerQ38TokenNativeState {
  PioneerQ38ProjectionZeroLease projectionZero;
  PioneerQ38TokenStartupPlan* startup=nullptr;
  PioneerQ38TokenMemory* memory=nullptr;
+#ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
+ PioneerQ38TokenMemoryResult hybridManifestReceipt; // same held journal,never a caller-supplied ready flag
+#endif
  PioneerQ38TokenNativeOwner* runtime=nullptr;
  PioneerQ38DispatchLease* participants=nullptr; // owned by SAME retained context;never a borrowed completed prefix
  uint32_t prompt[8192]={};unsigned prompts=0,limit=0,eos[2]={};bool stopEos=false;

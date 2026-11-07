@@ -10,7 +10,8 @@
 // an embedding producer,initialized state,model-source/clock/host permission,
 // a launched owner or a caller-supplied STOP/clean capability. Genuine native
 // IO must bind this SAME object+startup+source+FD+thread+generation lifetime.
-// No conventional driver route includes this header yet.
+// The existing token driver uses this owner; the hybrid selection remains
+// restricted to the separate non-loadable native test configuration.
 struct PioneerQ38TokenMemoryResult {
  uint32_t version=1,started=0,phase=0,worker=0,word=0,unsafe=0,installed=0,closed=0;
  uint32_t savedWords=0,verifiedOriginalWords=0,installedWords=0,restoredWords=0;
@@ -183,10 +184,10 @@ public:
   installed=true;result.installed=1;return true;
  }
 #ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
- // QGW5 diagnostic only: derive the table from the SAME relocated canonical
+ // QGW5 private path: derive the table from the SAME relocated canonical
  // model and initialized ledger, write only its snapshotted ROOT L1 range,
  // and verify every word while all workers are held. This does NOT permit
- // native/Work compilation, a launch, inference, or post-launch restoration.
+ // a loadable driver, a launch, inference, or post-launch restoration.
  template<class IO> bool InstallHybridManifestHeld(IO& io,PioneerQ38TokenMemoryResult& result){
   namespace L=PioneerQ38TokenL1;namespace P=PioneerQ38TokenPrograms;
   if(!Installed() || hybridManifestInstalled || !canonical || !startup || !ledger

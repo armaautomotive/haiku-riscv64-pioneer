@@ -134,6 +134,10 @@ void PioneerSessionIO::TokenMemoryRetainHostOwners(){
   okay=c.io.SelectRuntimeCore(0) && c.io.MapTokenMemory() && c.io.q38TokenViews.Bind(c.io)
    && s->hosts.Capture(c.io,c.host,c.bulkHost,c.wideHost,c.io.q38TokenViews)
    && memory->PrepareHeld(c.io,dram,c.banks,d,s->canonical,*startup,s->identity,c.initialized,PioneerResidentBanks::Pages,result);}
+#ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
+ if(okay)okay=memory->InstallHybridManifestHeld(c.io,result) && memory->VerifyHybridManifestHeld(c.io,result);
+ if(okay)s->hybridManifestReceipt=result;
+#endif
  if(okay)s->phase=PioneerQ38TokenNativeState::MemoryInstalled;
  else{tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);
   result.unsafe=1;result.installed=0;result.closed=0;}return okay;

@@ -8,7 +8,10 @@ import subprocess
 import sys
 import tempfile
 
-args=sys.argv[1:];journal='--journal' in args
+args=sys.argv[1:];journal='--journal' in args;native='--native-context' in args
+if native:
+    assert args.count('--native-context')==1
+    args.remove('--native-context')
 if journal:
     assert args.count('--journal')==1
     args.remove('--journal')
@@ -121,9 +124,32 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw5-programs-',dir='/private/t
     result=subprocess.run([compiler,'-std=c++17','-D_KERNEL_MODE=1','-DPIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY=1',
                            '-x','c++','-E','-'],input=late,capture_output=True,text=True)
     assert result.returncode and 'Hybrid kernel template inspection forbids a driver' in result.stderr
+    nativeflags=['-D_KERNEL_MODE=1','-DPIONEER_Q38_TOKEN_NATIVE_CONTEXT=1','-DPIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY=1',
+      '-DPIONEER_Q38_HYBRID_TRACKED_UPLOAD=1','-DPIONEER_Q38_TOKEN_BF16_PROGRAMS=1',
+      '-DPIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC=1','-DPIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC=1',
+      '-DPIONEER_DRIVER_BUILD_TAG=0x51544b4e4f445256ULL','-DPIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY=1']
+    for missing in range(len(nativeflags)-1):
+        result=subprocess.run([compiler,'-std=c++17',*(flag for i,flag in enumerate(nativeflags) if i!=missing),
+          '-E','-x','c++',str(compileOnly)],capture_output=True,text=True)
+        assert result.returncode and 'Hybrid native inspection requires the exact private tracked QGW5 context' in result.stderr,missing
+    for forbidden in ('PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_FULL_OFFLOAD_CLIENT',
+      'PIONEER_Q38_BF16_FULL_NATIVE','PIONEER_Q38_BF16_FULL_CLIENT','PIONEER_Q38_WORK_INFERENCE',
+      'TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE',
+      'PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY','PIONEER_Q38_HYBRID_TEST_BFP8_LAYER0','PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION'):
+        result=subprocess.run([compiler,'-std=c++17',*nativeflags,'-D'+forbidden+'=1',
+          '-E','-x','c++',str(compileOnly)],capture_output=True,text=True)
+        assert result.returncode and 'Hybrid native inspection requires the exact private tracked QGW5 context' in result.stderr,forbidden
+    result=subprocess.run([compiler,'-std=c++17',*nativeflags[:-1],'-DPIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY=0',
+      '-E','-x','c++',str(compileOnly)],capture_output=True,text=True)
+    assert result.returncode and 'Hybrid native inspection requires the exact private tracked QGW5 context' in result.stderr
+    late='#include "'+str(compileOnly)+'"\n#undef PIONEER_Q38_HYBRID_TRACKED_UPLOAD\n#include "'+str(compileOnly)+'"\n'
+    result=subprocess.run([compiler,'-std=c++17',*nativeflags,'-x','c++','-E','-'],input=late,capture_output=True,text=True)
+    assert result.returncode and 'Hybrid native inspection requires the exact private tracked QGW5 context' in result.stderr
     if journal:
         for mode in ('--positive','--hybrid-faults','--hybrid-manifest'):
             run(sys.executable,here/'run_pioneer_q38_token_memory_tests.py',
                 '--bf16-programs','--hybrid-journal','--hybrid-programs',out,mode,
                 *(['--sdk',sdk] if mode=='--hybrid-manifest' else []))
+    if native:
+        run(sys.executable,here/'run_pioneer_q38_hybrid_upload_control_tests.py','--qgw5-header',out,sdk)
 print('PASS complete QGW5 image section/ELF binding, immutable output, corruption refusals and role exclusions; NO DEVICE')

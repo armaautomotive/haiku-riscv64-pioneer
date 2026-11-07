@@ -87,8 +87,10 @@ quarantine; the actual native context also cross-compiles for Haiku RISC-V.
 The verified-model loader now sends the matching BEGIN and SEAL handshake;
 a complete synthetic upload passed through that loader and the kernel receipt.
 An uncertain FD close now retains the tracked owner instead of implicitly
-ending it. The tracked client accepts only the private non-loadable test tag;
-the matching QGW5 firmware is not yet wired into a runnable driver.
+ending it. The private native context now selects the matching pinned QGW5
+programs, stages the hybrid address table and rechecks it immediately before
+worker startup. The tracked client accepts only the private non-loadable test
+tag; this code is not yet a runnable driver or a physical inference result.
 Non-cryptographic page hashes do not prove the format or contents of card
 memory, and no full-model or hardware test is implied.
 

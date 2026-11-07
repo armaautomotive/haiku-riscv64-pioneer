@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "../../../../../tools/pioneer/PioneerQ38HybridKernelCompileOnly.h"
 #ifdef PIONEER_Q38_BF16_FULL_NATIVE
 #include "PioneerQ38Bf16FullNativeRole.h"
 #elif defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE)
@@ -61,7 +62,9 @@ static_assert(PioneerQ38TokenNativePhysicalSelection==0,"late physical-to-NODRV 
 #endif
 #ifndef PIONEER_Q38_TOKEN_NATIVE_PROFILE_BINDING_H
 #define PIONEER_Q38_TOKEN_NATIVE_PROFILE_BINDING_H
-#ifdef PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT
+#ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
+enum {PioneerQ38TokenNativeProfile=5};
+#elif defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
 enum {PioneerQ38TokenNativeProfile=3};
 #elif defined(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT)
 enum {PioneerQ38TokenNativeProfile=2};
@@ -69,7 +72,9 @@ enum {PioneerQ38TokenNativeProfile=2};
 enum {PioneerQ38TokenNativeProfile=1};
 #endif
 #endif
-#ifdef PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT
+#ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
+static_assert(PioneerQ38TokenNativeProfile==5,"late QGW5 private native profile change");
+#elif defined(PIONEER_Q38_TOKEN_PUSHED_NATIVE_CONTEXT)
 static_assert(PioneerQ38TokenNativeProfile==3,"late QTP3 native profile change");
 #elif defined(PIONEER_Q38_TOKEN_PRECISE_NATIVE_CONTEXT)
 static_assert(PioneerQ38TokenNativeProfile==2,"late QTP2 native profile change");

@@ -66,6 +66,13 @@ bool PioneerSessionIO::TokenRuntimeScope(const PioneerQ38TokenNativeOwner& runti
   if(!owned || owned>UINTPTR_MAX-sizes[i] || (out<owned+sizes[i] && owned<out+sizeof(result)))return false;
  }
  if(!s->runtime->DispatchOutput(&result,sizeof(result)))return false;
+#ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
+ // Runtime staging may have touched ROOT scratch. Reverify the SAME manifest
+ // with all participants held, immediately before the first worker ARM.
+ if(!s->memory->VerifyHybridManifestHeld(c.io,s->hybridManifestReceipt)){
+  tt_resident_session_result retained={};RetainQ38DispatchOwner(c,retained);result.unsafe=1;return false;
+ }
+#endif
  s->phase=PioneerQ38TokenNativeState::WorkersBootstrapping;
  bool okay=s->runtime->BootstrapWorkers(c.io,result);
  if(okay && s->runtime->WorkersReady())s->phase=PioneerQ38TokenNativeState::WorkersReady;

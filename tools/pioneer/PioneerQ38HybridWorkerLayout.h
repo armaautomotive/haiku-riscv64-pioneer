@@ -2,7 +2,7 @@
 #include "PioneerQ38HybridKernelCompileOnly.h"
 #ifndef PIONEER_Q38_HYBRID_WORKER_LAYOUT_H
 #define PIONEER_Q38_HYBRID_WORKER_LAYOUT_H
-#if (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY)) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
+#if (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY) && !defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY)) || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) \
  || defined(PIONEER_Q38_FULL_OFFLOAD_NATIVE) || defined(PIONEER_Q38_FULL_OFFLOAD_CLIENT) \
  || defined(PIONEER_Q38_CPU_VALIDATION) || defined(PIONEER_Q38_FULL_MODEL_CPU_REFERENCE)
 #error Experimental hybrid worker grammar cannot be used in Work, validation, or native driver roles
