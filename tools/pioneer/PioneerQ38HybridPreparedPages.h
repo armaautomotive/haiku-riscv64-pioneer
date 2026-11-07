@@ -94,8 +94,8 @@ public:
   if(part.layer<64 && part.role>=2 && part.role<=4){
    if(part.layer>=48 && part.layer<=60){
     if(dest.encoding!=8)return Lose(error,"BFP8 fragment encoding differs from the plan.");
-    for(unsigned i=0;i<count;i++)if(!bfp8->ReadStripePage(part.tensor,part.firstRow,part.rows,page+i,
-     stage.data()+i*4096,4096,error))return Lose(error,"Prepared BFP8 stripe is missing, changed or unreadable.");
+    if(!bfp8->ReadStripePages(part.tensor,part.firstRow,part.rows,page,count,stage.data(),unsigned(stage.size()),error))
+     return Lose(error,"Prepared BFP8 stripe is missing, changed or unreadable.");
    }else{
     if(dest.encoding!=0)return Lose(error,"BFP4 fragment encoding differs from the plan.");
     if(active!=fragment){

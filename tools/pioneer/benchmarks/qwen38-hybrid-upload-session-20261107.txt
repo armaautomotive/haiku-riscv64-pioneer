@@ -1,5 +1,5 @@
-Hybrid 27B cache upload/release session: NOT YET RUN ON CARD
-============================================================
+Hybrid 27B cache upload/release session: RUNNING, NOT YET COMPLETE
+================================================================
 November 7, 2026. An isolated userspace diagnostic now retains the SAME
 authenticated model and verified cache readers, checks the pinned stable
 driver/idle generation, reserves the existing seven-bank session, transfers
@@ -40,8 +40,10 @@ and records a permanent once-only marker before starting the client.
 After the real-model preflight actually exited 0, fresh idle driver/identity
 checks passed and the one-shot parent was started. The permanent .upload-once
 marker exists; parent PID 4258 and child PID 4282 were observed live. The
-child was still performing its own source/cache authentication at observation;
-the eventual upload result is NOT established. Poll only OS process state and
+child subsequently reported all 1344 preflight fragments and, at 11:08 UTC,
+537149440 of 21137039360 uploaded bytes. Both processes remained live, stderr
+was empty, and no terminal state or exit record existed at that observation.
+The eventual upload result and cleanup are NOT established. Poll only OS process state and
 the stage files while it runs; do not start another client or query the GPU.
 On any uncertain client outcome, the monitor issues no further GPU query, END,
 retry or reset. Upload success by itself would still not establish model

@@ -65,18 +65,22 @@ public:
 	// Preparation-only cache DATA, not a device uploader or ownership grant.
 	// Uses the already qualified all-BFP8 cache recipe; never converts,
 	// creates or repairs an entry. Last-page padding is generated as zeros.
-	bool ReadStripePage(unsigned tensor,unsigned first,unsigned rows,unsigned page,uint8_t* output,unsigned capacity,std::string& error){
+	bool ReadStripePages(unsigned tensor,unsigned first,unsigned rows,unsigned page,unsigned pages,uint8_t* output,unsigned capacity,std::string& error){
 		Cache::Key key;if(!KeyFor(tensor,key)){error="Native BFP8 stripe tensor/source unavailable.";return false;}
 		const auto t=model->Tensors()[tensor];
-		if(!rows || (first&31) || (rows&31) || first>t.outputs || rows>t.outputs-first || !output || capacity<4096
-			|| reinterpret_cast<uintptr_t>(output)>UINTPTR_MAX-4096){
+		if(!rows || (first&31) || (rows&31) || first>t.outputs || rows>t.outputs-first || !pages || pages>16 || !output || capacity<pages*4096
+			|| reinterpret_cast<uintptr_t>(output)>UINTPTR_MAX-pages*4096){
 			error="Invalid native BFP8 stripe geometry or output.";return false;
 		}
 		const uint64_t bytes=uint64_t(rows/32)*(t.inputs/32)*1088;
-		if(uint64_t(page)*4096>=((bytes+4095)&~uint64_t(4095))){error="Native BFP8 stripe page out of range.";return false;}
+		const uint64_t padded=(bytes+4095)&~uint64_t(4095),at=uint64_t(page)*4096;
+		if(at>=padded || uint64_t(pages)*4096>padded-at){error="Native BFP8 stripe page range out of range.";return false;}
 		if(!OpenTensor(tensor,key,error))return false;
-		return PioneerQ38NativeBfpBandData::ReadStripePage(*active,unsigned(t.inputs),unsigned(t.outputs),first,rows,page,
+		return PioneerQ38NativeBfpBandData::ReadStripePages(*active,unsigned(t.inputs),unsigned(t.outputs),first,rows,page,pages,
 			[this]{return Ready();},output,capacity,error);
+	}
+	bool ReadStripePage(unsigned tensor,unsigned first,unsigned rows,unsigned page,uint8_t* output,unsigned capacity,std::string& error){
+		return ReadStripePages(tensor,first,rows,page,1,output,capacity,error);
 	}
 	bool Stage(unsigned tensor,unsigned first,const uint16_t* input,unsigned count,unsigned phases,
 		PioneerQ38NativeBfpBandData::Packet& output,std::string& error) {

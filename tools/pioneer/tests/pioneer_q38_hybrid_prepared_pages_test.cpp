@@ -29,7 +29,7 @@ struct FakePlan {
  }
 };
 struct FakeBfp8 {
- const FakeSource* source=nullptr;bool live=true;unsigned reads=0,failAt=0;PioneerModelWeightCache::Digest digest={};
+ const FakeSource* source=nullptr;bool live=true;unsigned reads=0,failAt=0;PioneerModelWeightCache::Digest digest={};unsigned batches=0;
  bool MatchesSource(const FakeSource& s)const{return source==&s && live && s.live;}
  bool MatchesIdentity(const FakeSource& s,const PioneerModelWeightCache::Digest& hash)const{return MatchesSource(s) && digest==hash;}
  bool ReadStripePage(unsigned tensor,unsigned first,unsigned rows,unsigned page,uint8_t* out,unsigned cap,std::string&){
@@ -40,6 +40,12 @@ struct FakeBfp8 {
   const unsigned count=unsigned(std::min(uint64_t(4096),bytes>offset?bytes-offset:0));
   if(++reads==failAt)return false;
   std::memset(out,0,4096);std::memset(out,0x8b,count);return true;
+ }
+ bool ReadStripePages(unsigned tensor,unsigned first,unsigned rows,unsigned page,unsigned count,uint8_t* out,unsigned cap,std::string& error){
+  if(!count || count>16 || cap<count*4096)return false;
+  batches++;
+  for(unsigned i=0;i<count;i++)if(!ReadStripePage(tensor,first,rows,page+i,out+i*4096,4096,error))return false;
+  return true;
  }
 };
 template<class Source>struct FakeFour {

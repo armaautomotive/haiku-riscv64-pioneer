@@ -87,6 +87,19 @@ int main(int argc,char** argv) {
 			assert(!memcmp(page.data(),reader.raw.data()+uint64_t(first/32)*bandBytes+at,take));
 			for(unsigned i=take;i<4096;i++)assert(!page[i]);
 		}
+		// Actual multi-page path, including an unaligned tensor offset and
+		// zero padding in the last batch, must match individual pages.
+		std::vector<uint8_t> batch(16*4096,0xa5),expected(batch.size());
+		for(unsigned n=0;n<pages;){
+			const unsigned count=std::min(16U,pages-n);const unsigned before=reader.reads;
+			assert(Data::ReadStripePages(reader,width,64,first,32,n,count,[]{return true;},batch.data(),batch.size(),error));
+			assert(reader.reads==before+1);
+			for(unsigned i=0;i<count;i++)assert(Data::ReadStripePage(reader,width,64,first,32,n+i,[]{return true;},expected.data()+i*4096,4096,error));
+			assert(!memcmp(batch.data(),expected.data(),count*4096));n+=count;
+		}
+		const auto beforeBatch=batch;
+		assert(!Data::ReadStripePages(reader,width,64,first,32,pages-1,2,[]{return true;},batch.data(),batch.size(),error)
+			&& batch==beforeBatch);
 		page.fill(0xa5);const auto saved=page;const unsigned before=reader.reads;
 		assert(!Data::ReadStripePage(reader,width,64,first,32,pages,[]{return true;},page.data(),page.size(),error));
 		assert(page==saved && reader.reads==before);cases++;
@@ -100,6 +113,15 @@ int main(int argc,char** argv) {
 		if(bad==9)out=reinterpret_cast<uint8_t*>(UINTPTR_MAX-1);
 		assert(!Data::ReadStripePage(reader,width,64,first,rows,0,[&]{return ready;},out,capacity,error) && page==saved);
 		if(bad<5 || bad>=7)assert(!reader.reads);cases++;
+	}
+	for(unsigned bad=0;bad<4;bad++){
+		MemoryReader reader(5120,64);std::vector<uint8_t> output(16*4096,0xa5);const auto saved=output;bool ready=true;
+		unsigned count=16,capacity=unsigned(output.size());
+		if(bad==0)count=17;if(bad==1)capacity--;
+		if(bad==2)reader.failAt=1;if(bad==3)reader.onRead=[&]{ready=false;};
+		assert(!Data::ReadStripePages(reader,5120,64,0,32,0,count,[&]{return ready;},output.data(),capacity,error)
+		 && output==saved);
+		if(bad<2)assert(!reader.reads);cases++;
 	}
 	// Exact851-tensor SPARSE fixture;its declared pin/Ready is intentionally
 	// synthetic,NOT proof of full original SHA authentication or model quality.
@@ -133,6 +155,9 @@ int main(int argc,char** argv) {
 	const unsigned before=conversions;
 	{
 		std::array<uint8_t,4096> page;const unsigned last=unsigned((uint64_t(160)*1088-1)/4096);
+		std::vector<uint8_t> batched(16*4096,0);
+		assert(source.ReadStripePages(tensor,0,32,1,16,batched.data(),batched.size(),error)
+		 && !memcmp(batched.data(),data.raw.data()+4096,batched.size()));
 		assert(source.ReadStripePage(tensor,0,32,0,page.data(),page.size(),error) && !memcmp(page.data(),data.raw.data(),4096));
 		assert(source.ReadStripePage(tensor,0,32,last,page.data(),page.size(),error));
 		const unsigned take=160*1088-last*4096;assert(!memcmp(page.data(),data.raw.data()+last*4096,take));
