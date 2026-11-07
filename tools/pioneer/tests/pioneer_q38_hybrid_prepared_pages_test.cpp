@@ -19,10 +19,10 @@ struct FakeSource {
  }
 };
 struct FakePlan {
- const FakeSource* source=nullptr;std::vector<PioneerQ38PackedPart> parts;mutable unsigned reads=0;
+ const FakeSource* source=nullptr;std::vector<PioneerQ38PackedPart> parts;mutable unsigned reads=0,partQueries=0;
  bool MatchesSource(const FakeSource& s)const{return source==&s && s.live;}
  bool Tiled()const{return true;}unsigned DeltaSlots()const{return 2;}
- const std::vector<PioneerQ38PackedPart>& Parts()const{return parts;}
+ const std::vector<PioneerQ38PackedPart>& Parts()const{partQueries++;return parts;}
  bool ReadWeightPage(FakeSource& s,unsigned part,unsigned page,uint8_t* out,unsigned capacity)const{
   if(!MatchesSource(s) || part>=parts.size() || page>=parts[part].allocated/4096 || capacity<4096)return false;
   reads++;std::memset(out,0x5a,4096);return true;
@@ -140,10 +140,16 @@ int main(int argc,char** argv){
  Pages wrongIdentity;const auto otherDigest=PioneerModelWeightCache::Hash("different-source",16);
  assert(!wrongIdentity.Bind(source,packed,*canonical,bfp8,otherDigest,fingerprint,directory.c_str(),[]{return true;},error));
  FakeBfp8 allEight{&source};allEight.digest=digest;auto fullPlan=packed;MockPages complete;
- assert(complete.Bind(source,fullPlan,*canonical,allEight,digest,fingerprint,directory.c_str(),[]{return true;},error));
+ unsigned sourceChecks=0;bool revokeAtFinalCheck=false;
+ auto live=[&]{sourceChecks++;return !revokeAtFinalCheck || sourceChecks!=2;};
+ assert(complete.Bind(source,fullPlan,*canonical,allEight,digest,fingerprint,directory.c_str(),live,error));
  unsigned verified=0;assert(complete.VerifyAll(error,[&](unsigned done,unsigned total){assert(total==1344);verified=done;}));
  assert(complete.AllVerified() && verified==1344 && FakeFour<FakeSource>::opened==1071
   && FakeFour<FakeSource>::read==1071 && allEight.reads==273);
+ const unsigned queries=fullPlan.partQueries;sourceChecks=0;
+ assert(complete.AllVerified() && fullPlan.partQueries-queries==3 && sourceChecks==2);
+ sourceChecks=0;revokeAtFinalCheck=true;assert(!complete.AllVerified() && sourceChecks==2);
+ revokeAtFinalCheck=false;assert(complete.AllVerified());
  fullPlan.parts[four].bytes++;assert(!complete.AllVerified());
  auto duringPlan=packed;FakeBfp8 duringEight{&source};duringEight.digest=digest;MockPages during;
  assert(during.Bind(source,duringPlan,*canonical,duringEight,digest,fingerprint,directory.c_str(),[]{return true;},error));

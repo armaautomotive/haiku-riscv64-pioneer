@@ -32,7 +32,10 @@ A one-shot upload-and-release test was started on November 7. Its live process
 has reported verifying all 1,344 converted fragments and started uploading,
 but its upload and cleanup have not yet completed. The running binary predates the separate
 batched-read change, which has passed simulated tests and cross-compilation but
-has not been timed on the Pioneer. See
+has not been timed on the Pioneer. A subsequent source-plan check now fetches
+the plan three times instead of once per fragment while still comparing every
+fragment and rechecking source identity. It too is offline-tested, not yet
+timed on the Pioneer, and is not in the running binary. See
 [`benchmarks/qwen38-hybrid-upload-session-20261107.txt`](benchmarks/qwen38-hybrid-upload-session-20261107.txt)
 for its stage, safety constraints and observation details.
 

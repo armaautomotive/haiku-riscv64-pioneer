@@ -77,8 +77,15 @@ public:
  bool Ready()const{return Current();}
  bool AllVerified()const{
   if(!verified || !Current())return false;
-  for(unsigned i=0;i<sourceParts.size();i++)if(!Same(packed->Parts()[i],sourceParts[i]))return false;
-  return true; // preflight only; later cache reads still check integrity
+  // Parts() checks the model's file identity on every call. Capture the
+  // already-owned plan once, compare every fragment, then recheck the source
+  // and plan binding. Calling Parts() per element causes thousands of file
+  // identity checks on every upload checkpoint and can index an empty view if
+  // that identity is lost in the middle of the loop.
+  const auto& parts=packed->Parts();
+  if(parts.size()!=sourceParts.size())return false;
+  for(unsigned i=0;i<sourceParts.size();i++)if(!Same(parts[i],sourceParts[i]))return false;
+  return Current(); // preflight only; later cache reads still check integrity
  }
  const PioneerQ38HybridModelPlan::Part* Part(unsigned i)const{return Current() && i<proposal.parts.size()?&proposal.parts[i]:nullptr;}
  bool ReadPages(unsigned fragment,unsigned page,unsigned count,uint8_t* output,unsigned capacity,std::string& error){
