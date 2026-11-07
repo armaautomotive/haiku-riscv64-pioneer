@@ -7,6 +7,7 @@
 #include "PioneerQ38NativeWeightTiles.h"
 #include "PioneerModelWeightCache.h"
 #include "PioneerBlackholeBf16Arithmetic.h"
+#include "PioneerQ38Bfp4BandInput.h"
 #include <array>
 #include <cmath>
 #include <cstdio>
@@ -34,13 +35,15 @@ void Save(const std::string& path,const std::vector<uint8_t>& data){
  bool okay=!fsync(fd);okay=(!close(fd)) && okay;Require(okay,"private output sync or close failed");
 }
 int Run(int argc,char** argv){
- if(argc!=3){fputs("Use ORIGINAL_GGUF NEW_PRIVATE_OUTPUT_DIRECTORY;CPU-only.\n",stderr);return 2;}
+ if(argc!=3 && !(argc==4 && !strcmp(argv[3],"--matched-q4-input"))){fputs("Use ORIGINAL_GGUF NEW_PRIVATE_OUTPUT_DIRECTORY [--matched-q4-input];CPU-only.\n",stderr);return 2;}
+ const bool matchedQ4=argc==4;
  struct stat directory={};Require(!lstat(argv[2],&directory) && S_ISDIR(directory.st_mode) && directory.st_uid==geteuid()
   && (directory.st_mode&07777)==0700,"output directory must be private,owned and not a symlink");
  std::unique_ptr<FILE,decltype(&fclose)> file(fopen(argv[1],"rb"),&fclose);Require(bool(file),"cannot open original model");
  PioneerQwen38Gguf model;Require(model.Open(file.get()),"complete original model layout refused");auto epoch=model.Epoch();
  Cache::Digest digest{};std::string error;
  puts("AUTHENTICATING_SAME_OPEN_COMPLETE_ORIGINAL;CPU_ONLY_NO_GPU");fflush(stdout);
+ if(matchedQ4){puts("INPUT_PATTERN matches Q4 compact-stream diagnostic; SYNTHETIC_NOT_MODEL_PROMPT");fflush(stdout);}
  Require(Cache::HashFile(fileno(file.get()),PioneerQwen38Gguf::FullBytes,digest,error)
   && Cache::Hex(digest)=="c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747"
   && model.Stable() && model.Epoch()==epoch,"original model hash or identity changed");
@@ -64,7 +67,7 @@ int Run(int argc,char** argv){
     for(unsigned c=0;c<16;c++){
      unsigned column=half*16+c,position=row*32+column;uint32_t bits=0;memcpy(&bits,&decoded[position],4);
      Require(!(bits&65535),"converted weight is not exactly BF16");a[c]=uint16_t(bits>>16);
-     unsigned input=tile*32+column;b[c]=uint16_t(0x3f00+(input*13)%256+((input&3)==2?0x8000:0));
+     unsigned input=tile*32+column;b[c]=PioneerQ38Bfp4BandInput::Word(input,matchedQ4);
      const long double activation=Float(uint32_t(b[c])<<16),orig=original[position],converted=decoded[position];
      originalDot[row]+=orig*activation;convertedDot[row]+=converted*activation;
      originalEnergy+=orig*orig;const long double difference=converted-orig;errorEnergy+=difference*difference;
@@ -72,7 +75,7 @@ int Run(int argc,char** argv){
     for(unsigned phase:{0U,2U})Require(PioneerBlackholeBf16Arithmetic::Instruction(a,b,phase,golden[row],golden[row]),"documented arithmetic refused");
    }
   }
-  for(unsigned i=0;i<5120;i++){uint16_t b=uint16_t(0x3f00+(i*13)%256+((i&3)==2?0x8000:0));data.push_back(uint8_t(b));data.push_back(uint8_t(b>>8));}
+  for(unsigned i=0;i<5120;i++){uint16_t b=PioneerQ38Bfp4BandInput::Word(i,matchedQ4);data.push_back(uint8_t(b));data.push_back(uint8_t(b>>8));}
   for(auto word:golden)Append(data,word);
   Require(data.size()==102544 && model.Stable() && model.Epoch()==epoch,"source changed before private sample publication");
   long double dotEnergy=0,dotError=0;

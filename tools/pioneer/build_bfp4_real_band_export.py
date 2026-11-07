@@ -33,6 +33,10 @@ haiku=[cxx,*common,*includes,'-I'+str(root/'headers/private/shared'),'-I'+str(ro
        *sources,str(release/'kits/shared/libshared.a'),'-lbe','-o',str(args.output/'export-haiku')]
 for command in (native,haiku):
     subprocess.run(command,check=True)
+input_test=args.output/'input-test'
+subprocess.run([os.environ.get('CXX','c++'),*common,
+                str(here/'tests/pioneer_q38_bfp4_band_input_test.cpp'),'-o',str(input_test)],check=True)
+subprocess.run([str(input_test)],check=True)
 for macro in ('_KERNEL_MODE','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE','PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
     for value in ('0','1'):
         result=subprocess.run([os.environ.get('CXX','c++'),'-std=c++17','-fsyntax-only','-D'+macro+'='+value,sources[0]],capture_output=True,text=True)
@@ -43,6 +47,8 @@ empty=args.output/'private-test'
 empty.mkdir(mode=0o700)
 result=subprocess.run([str(args.output/'export-mac'),str(args.output/'nonexistent.gguf'),str(empty)],capture_output=True,text=True)
 assert result.returncode==1 and 'cannot open original model' in result.stderr and not list(empty.iterdir())
+result=subprocess.run([str(args.output/'export-mac'),str(args.output/'nonexistent.gguf'),str(empty),'--invalid'],capture_output=True,text=True)
+assert result.returncode==2 and not list(empty.iterdir())
 (args.output/'build-argv.txt').write_text('\n'.join('\t'.join(c) for c in (native,haiku))+'\n')
 for name in ('export-mac','export-haiku'):
     print(hashlib.sha256((args.output/name).read_bytes()).hexdigest(),name)

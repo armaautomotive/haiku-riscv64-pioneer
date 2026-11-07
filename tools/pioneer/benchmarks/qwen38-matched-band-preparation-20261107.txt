@@ -1,0 +1,39 @@
+Matched Q4/BFP4 first-band comparison: CPU preparation, 2026-11-07
+==================================================================
+
+The previous physical Q4 and physical BFP4 bands used different synthetic
+inputs and cannot be called a matched timing comparison. The BFP4 exporter
+now has an explicit --matched-q4-input option matching the original Q4
+compact-stream pattern. The old default remains the original pattern.
+
+CPU-only export completed exit 0 after authenticating the full original model
+from the same open file. The new sample 0 covers tensor7 blk.0.ffn_gate,
+rows 0..31, K5120. Its 10240 input bytes are byte-for-byte equal to the
+saved Q4 sample 0 input, SHA256
+5dbd04b0cd25a054d499db2bde60e55c5ecf345491350e9147016cf6d4527f99.
+The complete matched BFP4 sample SHA256 is
+916ef0df61974947e4eff96294bb4e306ec8aa1400f2db22699bd3a0e6482eb0.
+Model-derived samples remain private under
+/private/tmp/pioneer-bfp4-matched-real.MEnKkjef; do not commit them.
+
+The verifier compared the saved Q4 expectation with all 64 sample-0 words
+from the two passes of the archived Q4 physical run, and checked the pinned
+archived transcript SHA and the matched inputs. The 32 BFP4 output values
+are CPU predictions, NOT a new physical run. Against those Q4 card outputs,
+the BFP4 prediction had relative L2 difference 0.143424420 and maximum
+absolute difference 0.205818117. This is ONE 32-output synthetic-input band,
+not natural model answer quality, P100A BFP4 correctness, or model speed.
+The BFP4 exporter separately reported relative L2 0.143377432 versus its
+floating original-dot calculation; that uses a different reference and is
+not the Q4-card-output comparison above.
+
+The input test compared all 5120 BF16 words against the original Q4 formula
+and the existing default against its prior formula, and found the two
+patterns differ in 5096 words. The actual-data verifier also passed and
+refused four independently modified fixtures. A separate real-model run of
+the default exporter exited 0 and reproduced all three earlier sample SHA256
+pins exactly. Mac and Haiku exporter builds
+passed and the Haiku binary was not installed. This is not a paired P100A
+timing: matched-input BFP4 device ownership, source authentication, execution,
+restoration and timing still need their own validated, uniquely identified
+diagnostic before a hardware run can be considered.
