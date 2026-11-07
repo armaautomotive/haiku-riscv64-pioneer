@@ -38,12 +38,26 @@ existing ROOT/worker/layout and caches remain 50..60; changing them requires
 separately designed format identity and more quality evidence. Neither path
 has a new physical P100A inference or token-rate measurement.
 
-Follow-up started: three teacher-forced positions beginning with raw token
-3710, using the 48..58 placement, to compare against the earlier 50..60 run
-on the same prefix. The separately retained CPU states and original Q6 head
-are used; this remains a diagnostic, not generated-answer quality. Binary
-SHA-256 98153e7b3143d68badaefbf22ce5cc2a55eb9afe3201ed731487f23a693213af;
-temporary private capture /private/tmp/pioneer-q38-window11-early-what-20261107-a.log.
-The process was live after launch; a log alone is not proof of a live process
-or completed result. Check its handle and exit/completion markers before
-reporting any result, and do not restart merely because observation times out.
+Follow-up: three teacher-forced positions beginning with raw token 3710,
+using the 48..58 placement, compared with the earlier 50..60 run on the same
+prefix. Both retain separate CPU state and use the original Q6 head. The raw
+prefix baseline is not independently pinned; neither run is generated-answer
+quality. The 48..58 binary SHA-256 is
+98153e7b3143d68badaefbf22ce5cc2a55eb9afe3201ed731487f23a693213af.
+Its 87383-byte temporary private capture
+/private/tmp/pioneer-q38-window11-early-what-20261107-a.log has SHA-256
+45fcd5d7dfe02cf9331b904302dd9fca6de7a1d6e7a4ad80be17f44bcefaaabd.
+It completed with PASS and CAPTURE_EXIT 0 after 192 original layers, 192
+candidate layers, and 576 candidate FFN projections. The earlier 50..60
+capture is identified in qwen38-head-block-float-samples-20261107.txt.
+
+                               48..58 placement          50..60 placement
+ position  input  top token    KL           top-five     KL           top-five
+ 0         3710   369          0.002223650  5/5          0.001572013  5/5
+ 1         369    279          0.005414470  5/5          0.003432937  5/5
+ 2         279    7193         0.007063096  4/5          0.007015677  4/5
+
+Both alternatives matched the original top token at each tested position.
+The 50..60 placement had lower KL on this short prefix, whereas 48..58 had
+lower KL on the separate fixed-token test above. These are insufficient to
+select a broadly better layout, establish answer quality, or claim speed.
