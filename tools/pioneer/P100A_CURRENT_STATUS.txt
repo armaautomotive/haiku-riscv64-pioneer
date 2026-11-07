@@ -9,12 +9,12 @@ files, preparation, vocabulary/text and lifecycle, not inference or fallback.
 
 Latest real result
 ------------------
-* Generation: 0.17287 tokens/sec, about 5.8 seconds per committed position.
-* The previous fast run was 0.17281; these single runs do NOT prove a speedup.
+* Generation: 0.17290 tokens/sec, about 5.8 seconds per committed position.
+* The unchanged fast run was 0.17281; these single runs do NOT prove a speedup.
 * The answer counted from 1 through 14 before the 32-token output cap. This
   is one short response, not broad correctness or production qualification.
-* Setup took 25.65 minutes; answer-ready took 35.13 minutes after Generate.
-  Weights were released at END. A warm, persistent Assistant is unfinished.
+* Answer-ready took 35.11 minutes after Generate; this excludes prior source
+  authentication. Weights were released at END. Warm Assistant is unfinished.
 
 Measured generation bottlenecks
 -------------------------------
@@ -28,22 +28,22 @@ stayed unchanged. No supported 116x route is established.
 Four compact goals
 -------------------
 1. Identify the fastest engine's bottleneck: COMPLETE for one request.
-2. Remove one measured overhead: CURRENT. Test reusing a job descriptor
-   already constructed on card; SDK build, synthetic DATA and selected RV32
-   instruction checks pass. The distinct test driver/worker also build; paired
-   instruction slices are shorter, but GPU correctness and speed are untested.
-3. Measure an accepted improvement on the complete 27B model: NOT STARTED.
+2. Remove one measured overhead: TESTED/REJECTED as a meaningful gain.
+   Descriptor reuse ran the complete 27B request but measured essentially
+   the same speed. Next: identify a larger structural bottleneck/change.
+3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 
 Platform
 --------
-Stable041/gen10 restored and idle after independent postflight; 64 CPUs and
+Stable041/gen12 restored and idle after independent postflight; 64 CPUs and
 full137034936320B RAM. Assistant/runtime files unchanged. No reboot, power,
 SD or hardware connection changed. Pre-existing local work is preserved.
 
 Evidence
 --------
 Actual profile and evidence: benchmarks/qwen38-fast-decode-profile-physical-20261106.txt
+Snapshot real-model result: benchmarks/qwen38-early-job-snapshot-physical-20261106.txt
 Previous fast model: benchmarks/qwen38-vector-q4-full-card-20261104.txt
 Rejected slower Q4 candidate: benchmarks/qwen38-prepared-bf16-q4-physical-20261106.txt
 Snapshot experiment (build/data only): benchmarks/qwen38-early-job-snapshot-build-20261106.txt

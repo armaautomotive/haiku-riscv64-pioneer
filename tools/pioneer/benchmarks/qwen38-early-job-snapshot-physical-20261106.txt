@@ -1,0 +1,61 @@
+Early-job snapshot on the P100A: no demonstrated practical improvement
+======================================================================
+One real Qwen3.8-27B Q4_K_M counting request, November 6, 2026.
+The full 27B inference ran on the card, without CPU inference or fallback.
+The observed generation rate was 0.172895170..0.172898515 tokens/sec,
+approximately 0.173 tokens/sec, NOT the 20 tokens/sec goal.
+
+Comparison and decision
+-----------------------
+This test used the same public prompt (count 1 through 50), 31 prompt
+tokens, 32 maximum outputs and 62 committed positions as vector92.
+Its 31-step post-prompt window took 179295930..179299399 microseconds.
+The unmodified vector92 run measured 0.172813448..0.172816755 tok/s;
+the prior generation-profile run measured 0.172871238..0.172874445.
+These are single runs. The displayed ranges bound timestamp observations,
+NOT run-to-run variability or confidence intervals. The tiny differences
+do not establish a repeatable or practical speedup. Do not replace the
+stable engine, install this experiment in Assistant, or repeat the long
+test as a substitute for a stronger idea. The candidate is REJECTED as a
+meaningful performance improvement; its isolated code/evidence remain.
+
+The generated answer was exactly the same short 32-byte count from 1 to 14
+as the earlier vector92 request, truncated by the output limit. This is
+one answer only, NOT broad model-quality or fault-coverage qualification.
+The worker reported 359.066 seconds for prompt+generation and 2106.602
+seconds from Generate to answer-ready, including load and cleanup; the
+prior vocabulary/source authentication is outside that total. Weights were
+released at END; a warm persistent Assistant remains unfinished.
+
+Actual execution / recovery
+---------------------------
+One fresh stage /boot/home/pioneer-q38-job-snapshot-117-a is SPENT FOREVER.
+The actual primary SSH session 37037 exited 0; the child rate.exit is 0,
+stderr empty, and state FULL_CARD_RATE32_CLOSED_STABLE_RESTORED. Stable
+driver041/gen10 -> diagnostic117/gen11 -> stable041/gen12. A separate
+read-only postflight exited 0 and observed idle/cold0/owner0/open1/guard1,
+no remaining test processes or incoming exchange file, 64 CPUs and
+137034936320 bytes maximum RAM. Installed driver, three Assistant files,
+reload guard/admin and four runtime-library hashes match the old baseline;
+the original model's owner/link/mode/length metadata is unchanged.
+No reboot, power, SD, hardware-connection or installed-Assistant change.
+
+The full closed stdout SHA256 is
+f28e2a53cb812b83d9d8929208834059b480d22efe1fd8a27a72d82e68cb8bcf;
+the fetched copy matches the independent remote postflight hash. The actual
+complete-log parser exited 0 and reported the exact bounds and answer above.
+The sibling directory contains the fetched original stdout/stderr, one-shot
+parent, PID, exit and state; no model weights or firmware binary are in Git.
+Test driver SHA256 68803b259e93f0abcda40df71d216b200a7f0f8bda35589cf7c66d0835fdac2c.
+Worker SHA256 74adae678e1c2344e3c6f86bea6f8a30c80374de56cb85ac3cf090059f97cd29.
+Client SHA256 fa0d81296c9a130eaba9fefed03d38033b28087d5df92ca8e672a9eb16058c65.
+Parent SHA256 ad22b502f67bdaa8c29cc942cc74907208f929561b329872660125257909d65c.
+
+Next
+----
+Stop optimizing descriptor construction in isolation. Identify and test a
+structural improvement affecting a substantial portion of on-card work;
+preserve all tensors, outputs, worker/owner safety and distinct no-validation
+Work mode. The prior fast profile shows several major costs, and even free
+removal of all projection phases only gives about 1.95x in that scoped
+profile. There is currently NO demonstrated route from 0.173 to 20 tok/s.

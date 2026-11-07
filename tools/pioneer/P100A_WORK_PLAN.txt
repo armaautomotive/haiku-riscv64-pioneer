@@ -23,7 +23,7 @@ controller phases, not proof of the cost of any one instruction or resource.
 The one prompt is not repeatability or broad quality evidence.
 See benchmarks/qwen38-fast-decode-profile-physical-20261106.txt.
 
-2. Remove one measured overhead -- CURRENT
+2. Remove one measured overhead -- TESTED, NOT A PRACTICAL GAIN
 -------------------------------------------
 Candidate: on the RAW pushed fast engine, save each actual 64-word matrix
 job when it is constructed for dispatch and reuse it in Gather. The current
@@ -41,12 +41,24 @@ fault-injection tests. The complete returning paths, physical correctness
 and speed are NOT yet proven. See
 benchmarks/qwen38-early-job-snapshot-build-20261106.txt.
 
-Finish criteria: source/ISA tests establish exact job data and fault behavior;
+Initial finish criteria: source/ISA tests establish exact job data and fault behavior;
 one fresh old/new physical comparison uses identical real shapes/input and
 reports complete cycles, correctness and restoration. ACCEPT only a
 measured improvement; otherwise REJECT and choose a different measured
 hotspot. This is an unmeasured subset of13.49% gather/wait, not a predicted
 model rate and not a complete route to20tok/s.
+
+Result: one complete real-model request on the card measured 0.17290 tok/s,
+essentially unchanged from 0.17281 tok/s in the prior single control. The
+short answer matched; broad correctness/fault coverage was not established.
+Stable driver was restored and independently checked. REJECT this as a
+meaningful improvement rather than spend another upload on the same idea.
+See benchmarks/qwen38-early-job-snapshot-physical-20261106.txt.
+
+Current next checkpoint: use the measured fast-engine profile to identify a
+STRUCTURAL change affecting a substantial fraction of on-card time. State
+the evidence and expected scope before implementing; avoid further tiny
+descriptor-only experiments. Preserve full model, safety and Work separation.
 
 3. Prove an improvement on the full 27B model -- DEFERRED
 ----------------------------------------------------------
