@@ -41,11 +41,23 @@ execute the RV32 instruction stream or model arbitrary timing/concurrency.
 The actual SDK role test accepted 4 valid/unselected and rejected 122 invalid
 selections, including CPU, Work, native, BF16, prepared and late switches.
 
+Actual emitted RV32 slice checks, added after the initial DATA tests:
+the pinned candidate text from EACH independent output directory executed
+on the existing host instruction emulator under address/undefined-behavior
+sanitizers. Both returning component families were exercised across all
+119 workers and sequences 1/13/0x7ffffffe; recurrent types 8/12 and dense
+types 8/12/14. Each run produced 1,785 exact dispatch snapshots and passed
+1,785 valid Gather checks; 78,540 individual job/descriptor/partition/nonce
+mutations reached the actual emitted fault branch. Inputs, L1 and loop-entry
+registers were synthetic: admission, NoC, receipt, worker execution and the
+full Run function were not emulated. This tests emitted code at two bounded
+slices, NOT the full old/new path, physical correctness or timing.
+
 Open gates and decision
 -----------------------
 No physical device has run this image. It remains EXPERIMENTAL, not accepted
-as faster or ready for Assistant. Still required: compare the actual old/new
-returning RV32 paths and their fault behavior, construct a separately pinned
+as faster or ready for Assistant. Still required: compare the actual complete
+old/new returning RV32 paths and their fault behavior, construct a separately pinned
 native diagnostic with safe ownership/END, then run a fresh bounded identical-
 input hardware comparison and restore/verify the stable driver. Reject if
 not faster or if safe fault behavior cannot be established. The live check

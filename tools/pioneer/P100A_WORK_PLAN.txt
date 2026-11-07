@@ -35,9 +35,11 @@ results and safe END. Keep original path available as validation.
 Progress: original ELF and three source translation units reproduced exactly;
 the isolated candidate builds in two output directories, and synthetic DATA
 checks exercised all workers, three types and three boundary sequences. A
-live-field check preserves descriptor/partition binding before receipt. The
-real returning instructions, physical correctness and speed are NOT yet
-proven. See benchmarks/qwen38-early-job-snapshot-build-20261106.txt.
+live-field check preserves descriptor/partition binding before receipt.
+Both emitted component slices now pass synthetic RV32 dispatch/check and
+fault-injection tests. The complete returning paths, physical correctness
+and speed are NOT yet proven. See
+benchmarks/qwen38-early-job-snapshot-build-20261106.txt.
 
 Finish criteria: source/ISA tests establish exact job data and fault behavior;
 one fresh old/new physical comparison uses identical real shapes/input and
