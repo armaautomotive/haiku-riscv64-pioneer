@@ -26,5 +26,14 @@ The real-model layout probe actually exited 0: 64 layers, 192 FFN tensors,
 and converted lengths. Three actual bands exactly match the earlier
 card-tested sample bytes. This does NOT mean the old Q4 worker can use BFP4
 bytes, or that the new format has been installed, integrated or benchmarked
-end-to-end. The separate one-entry real-model disk-cache probe remains live;
-its result must not be inferred until its actual process exits.
+end-to-end. The separate real-model disk-cache probe also actually exited 0.
+It converted one 2496-row, 7,188,480-byte FFN fragment, verified its first
+92,160 bytes against the prior card-tested sample, then reopened it as a
+cache hit with ZERO source-row reads or reconversion. Its private, read-only
+entry is in /boot/home/pioneer-bfp4-cache-probe-20261106-a/cache; it is a
+test entry, not the working inference cache. No full-model cache was created.
+
+After both CPU-only probes, independent postcheck found stable041 driver
+tag2026102100010012/gen18, quiesced0/cold0/owner0/open1/guard1, 64 CPUs and
+137034936320 bytes RAM. No device execution, Work/Assistant change, GPU
+integration or full-model speedup is claimed.
