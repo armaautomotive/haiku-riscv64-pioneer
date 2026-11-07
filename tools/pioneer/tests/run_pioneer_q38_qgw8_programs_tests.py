@@ -103,4 +103,5 @@ with tempfile.TemporaryDirectory(prefix='pioneer-qgw8-programs-', dir='/private/
     run(selected, env=env)
     run(sys.executable, here / 'run_pioneer_q38_token_memory_tests.py', '--bf16-programs', '--hybrid-journal',
         '--hybrid-programs', first, '--qgw8-journal')
-print('PASS pinned QGW8 program pair, selected startup and held journal; synthetic only, no device/inference/TPS')
+    run(sys.executable, here / 'run_pioneer_q38_token_native_binding_tests.py', '--qgw8-inspection', first, '--sdk', sdk)
+print('PASS pinned QGW8 program pair, selected startup, held journal and fake-tag native bind; synthetic only, no device/inference/TPS')

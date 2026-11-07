@@ -194,6 +194,22 @@ also passed. The QGW8 test is user-space inspection only: the receipt's
 ledger was synthetic and not retained as a genuine native owner; no device
 code ran and there is no launched-worker stop/restore or inference result.
 
+The actual native bind/call-scope body now has a distinct fake-tag QGW8
+inspection branch. It accepts only a matching sealed QGW8 receipt and derives
+the relocated canonical plan before checking learned pages and reserving
+runtime state. A host simulation using the real bind body passed and refused
+an absent receipt, wrong hash-ledger pointer, stale generation and concurrent
+legacy receipt; a lost receipt also made the later scope check fail. The
+original and QGW7 bind regressions passed. Exact fake-tag, renamed-ABI and
+non-Work role requirements were tested, and the fake native bind fixture also
+cross-compiled to a RISC-V object without conventional driver ABI exports;
+both bind and scope static frames were <=2048 bytes. The updated QGW8 program
+DATA SHA-256 is 72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588;
+its device image bytes are unchanged, while its inspection-role guard changed.
+This does not add a loadable QGW8 driver or connect the real upload control,
+initializers, worker launch, cleanup or Assistant. Bank/OS endpoints and the
+receipt ledger were simulated; no real model inference or speed was measured.
+
 Unresolved before physical inference: qualify the output-head precision and
 the combined format numerically, integrate and validate model upload and
 driver ownership for the new layout, and resolve the post-failure file

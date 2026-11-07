@@ -7,6 +7,9 @@
 #ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38HybridUploadReceipt.h"
 #endif
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+#include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38Qgw8UploadReceipt.h"
+#endif
 struct PioneerHostPageIO{bool quarantined=false;void QuarantineHostPage(){quarantined=true;}};
 struct PioneerSessionIO:PioneerHostPageIO {
 #include "../../../src/add-ons/kernel/drivers/misc/PioneerQ38TokenPreparationAuditMember.inc"
@@ -41,6 +44,9 @@ struct PioneerStoreContext {
 #ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
  PioneerQ38SpanLease span;
  PioneerQ38HybridUploadReceipt* q38HybridReceipt=nullptr;
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+ PioneerQ38Qgw8UploadReceipt* q38Qgw8Receipt=nullptr;
+#endif
 #else
  MockLease span;
 #endif
@@ -55,6 +61,9 @@ struct PioneerStoreContext {
  ~PioneerStoreContext(){delete q38TokenNative;
 #ifdef PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY
   delete q38HybridReceipt;
+#endif
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+  delete q38Qgw8Receipt;
 #endif
  } // CPU-only fixture disposal; NO live device resources exist
 };

@@ -53,7 +53,7 @@ assert not hybrid_journal or (bf16 and not bf16_profile and not bf16_paired and 
 assert hybrid_header is None or hybrid_journal, 'QGW5 DATA requires its distinct offline hybrid journal'
 assert not qgw8 or (hybrid_journal and hybrid_header is not None and not args), 'QGW8 needs its isolated program and journal fixture'
 if qgw8:
-    assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest() == 'e1f239fd4965583249e855223711b4270d253f9a2015bace2abf3b717a7ac6ed', 'wrong QGW8 program DATA'
+    assert hashlib.sha256(hybrid_header.read_bytes()).hexdigest() == '72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588', 'wrong QGW8 program DATA'
 sdk = None
 if len(args) >= 2 and args[-2] == '--sdk':
     sdk = pathlib.Path(args[-1])

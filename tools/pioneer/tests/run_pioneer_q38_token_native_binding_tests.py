@@ -10,12 +10,18 @@ import tempfile
 
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 args = sys.argv[1:]
-assert not args or (len(args) == 2 and args[0] in ('--hybrid','--hybrid-matrix-inspection'))
-matrix = bool(args and args[0] == '--hybrid-matrix-inspection')
+sdk = None
+if len(args) >= 2 and args[-2] == '--sdk':
+    sdk = pathlib.Path(args[-1]);args = args[:-2]
+    assert sdk.is_absolute() and sdk.is_dir()
+assert not args or (len(args) == 2 and args[0] in ('--hybrid','--hybrid-matrix-inspection','--qgw8-inspection'))
+qgw8 = bool(args and args[0] == '--qgw8-inspection')
+assert sdk is None or qgw8, 'SDK witness is limited to QGW8 inspection'
+matrix = bool(args and args[0] == '--hybrid-matrix-inspection') or qgw8
 hybrid = pathlib.Path(args[1]) if args else None
 if hybrid:
     assert hybrid.is_absolute() and hybrid.is_file()
-    if matrix:assert hashlib.sha256(hybrid.read_bytes()).hexdigest()=='5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7'
+    if matrix:assert hashlib.sha256(hybrid.read_bytes()).hexdigest()==('72ec049c6905e37531b4fc21854991a8ddf513fc0944e8acde2ed73fc59a8588' if qgw8 else '5dd198d4676599329fd59626a8924ef2f8fbe4a905883a471f6294fa89efe7b7')
 here = pathlib.Path(__file__).resolve().parent
 kernel = here.parents[2]/'src/add-ons/kernel/drivers/misc'
 role = (kernel/'PioneerQ38TokenNativeRole.h').read_text()
@@ -31,6 +37,34 @@ if hybrid:
                    PIONEER_Q38_TOKEN_BF16_PROGRAMS='1', PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC='1',
                    PIONEER_Q38_HYBRID_PROGRAMS_DIAGNOSTIC='1', PIONEER_Q38_HYBRID_PROGRAMS_HEADER='"'+str(hybrid)+'"')
 if matrix:defines.update(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION='1',PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT='1')
+if qgw8:defines.update(PIONEER_Q38_QGW8_NATIVE_INSPECTION='1',PIONEER_Q38_QGW8_LAYOUT_INSPECTION='1',
+                         PIONEER_Q38_QGW8_PROGRAMS_INSPECTION='1',PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION='1')
+if qgw8:
+    role_probe = here/'pioneer_q38_qgw8_native_role_probe.cpp'
+    compiler = os.environ.get('CXX', 'c++')
+    def check_role(values):
+        return subprocess.run([compiler, '-std=c++17', *['-D'+k+'='+v for k,v in sorted(values.items())],
+                               '-fsyntax-only', str(role_probe)], capture_output=True, text=True)
+    assert check_role(defines).returncode == 0
+    required = ('_KERNEL_MODE', 'PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY', 'PIONEER_Q38_TOKEN_CONTEXT_COMPILE_ONLY',
+                'PIONEER_Q38_TOKEN_NATIVE_CONTEXT', 'PIONEER_Q38_HYBRID_TRACKED_UPLOAD',
+                'PIONEER_Q38_QGW8_LAYOUT_INSPECTION', 'PIONEER_Q38_QGW8_PROGRAMS_INSPECTION',
+                'PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION', 'PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION',
+                'PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT', 'PIONEER_DRIVER_BUILD_TAG',
+                'api_version', 'init_hardware', 'init_driver', 'uninit_driver', 'publish_devices', 'find_device')
+    for name in required:
+        altered=defines.copy();del altered[name];result=check_role(altered)
+        assert result.returncode and 'QGW8 native inspection requires the renamed fake-tag non-loadable profile' in result.stderr,name
+    for name in ('PIONEER_Q38_HYBRID_FULL_NATIVE','PIONEER_Q38_HYBRID_MATRIX_NATIVE_127','PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY',
+                 'PIONEER_Q38_FULL_OFFLOAD_NATIVE','PIONEER_Q38_FULL_OFFLOAD_CLIENT','PIONEER_Q38_BF16_FULL_NATIVE',
+                 'PIONEER_Q38_BF16_FULL_CLIENT','PIONEER_Q38_WORK_INFERENCE','TT_PIONEER_Q38_WORK_MODE',
+                 'PIONEER_Q38_CPU_VALIDATION','PIONEER_Q38_FULL_MODEL_CPU_REFERENCE'):
+        altered=defines.copy();altered[name]='1';result=check_role(altered)
+        assert result.returncode and 'QGW8 native inspection requires the renamed fake-tag non-loadable profile' in result.stderr,name
+    altered=defines.copy();altered['PIONEER_DRIVER_BUILD_TAG']='0x2026110700010127ULL';result=check_role(altered)
+    assert result.returncode and 'QGW8 native inspection requires the renamed fake-tag non-loadable profile' in result.stderr
+    altered=defines.copy();altered['PIONEER_Q38_QGW8_NATIVE_INSPECTION']='0';result=check_role(altered)
+    assert result.returncode and 'QGW8 native inspection requires the renamed fake-tag non-loadable profile' in result.stderr
 source = (kernel/'tenstorrent_pci_probe.cpp').read_text()
 with tempfile.TemporaryDirectory(prefix='pioneer-token-native-binding-', dir='/private/tmp') as tmp:
     base = pathlib.Path(tmp)
@@ -66,6 +100,24 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-native-binding-', dir='/p
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
                     '-fsanitize=address,undefined', *['-D'+k+'='+v for k, v in sorted(defines.items())],
                     '-I'+str(base), '-I'+str(kernel), '-I'+str(here.parent),
-                    str(here/('pioneer_q38_hybrid_native_binding_test.cpp' if hybrid else 'pioneer_q38_token_native_binding_test.cpp')),
+                    str(here/('pioneer_q38_qgw8_native_binding_test.cpp' if qgw8 else 'pioneer_q38_hybrid_native_binding_test.cpp' if hybrid else 'pioneer_q38_token_native_binding_test.cpp')),
                     '-o', str(binary)], check=True)
     subprocess.run([str(binary)], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})
+    if sdk is not None:
+        tool = sdk/'cross-tools-riscv64/bin/riscv64-unknown-haiku'
+        headers = sdk/'objects/haiku/riscv64/packaging/packages_build/regular/hpkg_-haiku_devel.hpkg/contents/develop/headers'
+        obj=base/'qgw8-bind-inspection.o'
+        subprocess.run([str(tool)+'-g++', '-std=gnu++17', '-O2', '-Wall', '-Wextra', '-Werror',
+                        '-Wno-misleading-indentation', '-Wno-unused-function', '-fno-exceptions', '-fno-rtti', '-fstack-usage',
+                        '-mcmodel=medany', '-fpic', *['-D'+k+'='+v for k,v in sorted(defines.items())],
+                        '-I'+str(base), '-I'+str(kernel), '-I'+str(here.parent), '-I'+str(headers), '-I'+str(headers/'os'),
+                        '-idirafter', str(headers/'posix'), '-c', str(here/'pioneer_q38_qgw8_native_binding_test.cpp'),
+                        '-o', str(obj)], check=True)
+        names=subprocess.check_output([str(tool)+'-nm', '--defined-only', str(obj)], text=True)
+        forbidden={'api_version','init_hardware','init_driver','uninit_driver','publish_devices','find_device'}
+        assert not any(line.split()[-1] in forbidden for line in names.splitlines() if line.split())
+        rows=[line.split('\t') for line in obj.with_suffix('.su').read_text().splitlines()]
+        for name in ('BindQ38TokenNative(', 'TokenModelSourceScope('):
+            actual=[row for row in rows if name in row[0]]
+            assert actual and all(len(row)==3 and row[2]=='static' and int(row[1])<=2048 for row in actual),(name,actual)
+        print('PASS QGW8 fake-native RISC-V bind object and bounded bind/scope frames; no conventional ABI/device')

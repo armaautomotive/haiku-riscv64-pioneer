@@ -53,9 +53,9 @@ if matrix:
         lines += [' || !defined(PIONEER_Q38_QGW8_PROGRAMS_INSPECTION) || PIONEER_Q38_QGW8_PROGRAMS_INSPECTION != 1 \\',
                   ' || !defined(PIONEER_Q38_QGW8_LAYOUT_INSPECTION) || PIONEER_Q38_QGW8_LAYOUT_INSPECTION != 1 \\',
                   ' || !defined(PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION) || PIONEER_Q38_HEAD_MATRIX_PLAN_INSPECTION != 1 \\',
-                  ' || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY)) \\',
-                  ' || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) \\',
-                  ' || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) || defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY) \\',
+                  ' || (defined(_KERNEL_MODE) && !defined(PIONEER_Q38_HYBRID_KERNEL_COMPILE_ONLY) && !defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)) \\',
+                  ' || ((defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_TOKEN_NATIVE_CONTEXT) || defined(PIONEER_Q38_HYBRID_NATIVE_COMPILE_ONLY)) && !defined(PIONEER_Q38_QGW8_NATIVE_INSPECTION)) \\',
+                  ' || defined(PIONEER_Q38_HYBRID_FULL_NATIVE) \\',
                   ' || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE)',
                   '#error QGW8 data requires the distinct non-loadable inspection role', '#endif']
     elif candidate:

@@ -1,4 +1,5 @@
 /* SPDX-License-Identifier: MIT */
+#include "PioneerQ38Qgw8NativeInspectionRole.h"
 // Rechecked on every include. The first selector is a kernel-SDK template
 // witness; the second permits only the renamed, non-loadable native test
 // context. Neither selector grants a physical driver, Work or execution.

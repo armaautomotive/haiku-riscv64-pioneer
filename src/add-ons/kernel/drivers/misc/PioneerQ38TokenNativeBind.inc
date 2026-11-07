@@ -84,7 +84,12 @@ bool PioneerSessionIO::TokenModelSourceScope(bool beginning){
   || state->phase<PioneerQ38TokenNativeState::Claiming || state->phase>PioneerQ38TokenNativeState::MemoryClosed
   || (!audit && state->phase!=PioneerQ38TokenNativeState::Claiming && !state->MatchesReservation(c->banks,dram)))return false;
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+ if(state && (c->q38HybridReceipt || !c->q38Qgw8Receipt
+  || !c->q38Qgw8Receipt->Matches(c,fd,c->hashes,c->initialized,fd->team,sReloadGeneration)))return false;
+#else
  if(state && (!c->q38HybridReceipt || !c->q38HybridReceipt->Matches(c,fd,c->hashes,c->initialized,fd->team,sReloadGeneration)))return false;
+#endif
 #endif
  if(cohort){
   const auto* d=c->q38Dispatch;
@@ -135,7 +140,12 @@ static uint64 sQ38TokenModelEpoch=0; // SAME global call lock;never wrap/reuse
 [[maybe_unused]] static bool BindQ38TokenNative(PioneerStoreContext& c,unsigned bank){
  if(bank>=7 || sQ38TokenModelEpoch==UINT64_MAX || !c.io.TokenModelSourceScope(true))return false;
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+ if(c.q38HybridReceipt || !c.q38Qgw8Receipt
+  || !c.q38Qgw8Receipt->Matches(&c,sRuntimeOwner,c.hashes,c.initialized,sRuntimeOwner->team,sReloadGeneration))return false;
+#else
  if(!c.q38HybridReceipt || !c.q38HybridReceipt->Matches(&c,sRuntimeOwner,c.hashes,c.initialized,sRuntimeOwner->team,sReloadGeneration))return false;
+#endif
 #endif
 #ifdef PIONEER_Q38_FULL_OFFLOAD_PREPARED_Q4
  if(!c.q38PreparedSource || !c.q38PreparedSource->Matches(&c,sRuntimeOwner,c.hashes,c.initialized,sRuntimeOwner->team,sReloadGeneration))return false;
@@ -150,7 +160,11 @@ static uint64 sQ38TokenModelEpoch=0; // SAME global call lock;never wrap/reuse
  // inventing120 NoC source identities to build a startup template early.
  if(
 #ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+#ifdef PIONEER_Q38_QGW8_NATIVE_INSPECTION
+  !c.q38Qgw8Receipt->DeriveBoundCanonical(state->canonical,&c,sRuntimeOwner,c.hashes,c.initialized,sRuntimeOwner->team,sReloadGeneration)
+#else
   !c.q38HybridReceipt->DeriveBoundLayout(state->canonical,&c,sRuntimeOwner,c.hashes,c.initialized,sRuntimeOwner->team,sReloadGeneration)
+#endif
 #else
   !state->canonical.Build()
 #endif

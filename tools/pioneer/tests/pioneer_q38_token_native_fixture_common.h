@@ -4,6 +4,7 @@
 #define PIONEER_Q38_TOKEN_PCI_RAW_TEST 1
 #include "pioneer_q38_token_pci_raw.h"
 #include "../../../src/add-ons/kernel/drivers/misc/BlackholeArcClockGuard.h"
+#include <cstdint>
 #define PIONEER_BANKS_MOCK_ONLY
 #include "pioneer_resident_banks_test.cpp"
 #include <memory>
