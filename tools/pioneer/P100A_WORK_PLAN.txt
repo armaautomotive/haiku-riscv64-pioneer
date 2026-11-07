@@ -62,15 +62,23 @@ STRUCTURAL change affecting a substantial fraction of on-card time. State
 the evidence and expected scope before implementing; avoid further tiny
 descriptor-only experiments. Preserve full model, safety and Work separation.
 
-Candidate under development: native BFP4 matrix tiles. The full-K prototype
-passes offboard instruction/linked-image tests for all three widths and a
-physical synthetic K5120 test. A preloaded-L1 timing is 24779/24803 cycles;
-GDDR loading and model integration remain unmeasured. It requantizes weights,
-so it must be a distinct, explicitly qualified mode, not a silent change to
-Q4_K_M. Existing single-sample BFP4 error does not establish model quality.
-First demonstrate full-K hardware correctness and compare matrix throughput
-against the current path, then test model quality and integrate only if the
-results justify it. See benchmarks/qwen38-bfp4-band-offboard-20261106.txt.
+Candidate under development: native BFP4 FFN matrix tiles. Three real-weight
+K5120 bands completed on the P100A including GDDR loading, taking about
+227k card cycles per band; a prior Q4 diagnostic took about 643k cycles, but
+the representations differ. One complete layer-0 FFN CPU approximation for
+one prompt token showed 1.81% relative L2 error at the residual output and
+10.72% at the intermediate activation. These are NOT model tokens/sec or
+full-model quality results; see qwen38-bfp4-dram-real-band-physical-20261106
+and qwen38-bfp4-first-ffn-quality-20261106 in benchmarks/.
+
+Integration work: experimental Q4-to-BFP4 FFN fragment conversion preserves
+the original fragment byte footprint. A separate versioned disk cache passes
+synthetic cold/warm and corruption tests. Real-model fragment/layout and
+single-entry cache probes are running CPU-only. Remaining requirements:
+complete real-model checks, qualify a distinct card-side consumer and job
+protocol across all needed widths, then measure full-model quality and speed.
+Do not allow the original Q4 worker to interpret converted bytes, or expose
+the approximation in Work/Assistant before explicit qualification.
 
 3. Prove an improvement on the full 27B model -- DEFERRED
 ----------------------------------------------------------

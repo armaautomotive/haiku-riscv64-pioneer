@@ -1,0 +1,30 @@
+BFP4 FFN conversion/cache preparation, 2026-11-06
+================================================
+
+Goal: prepare distinct converted FFN weights for an eventual card-side
+integration, without silently changing the existing Q4 consumer.
+
+For canonical Q4_K FFN tensors, 32 rows x 32 columns occupy 576 bytes both
+before and after conversion to a native BFP4_B tile. The representation and
+arithmetic change even though the byte count does not. The new diagnostic
+fragment converter produces the exact native tile order within a fragment,
+reads full 32-row bands once, and caches the last band while servicing 4 KiB
+pages. The original model must be independently authenticated. Geometry,
+source identity and epoch are checked; source failure permanently poisons
+the converter, and failed page requests do not publish partial output.
+
+A separate diagnostic disk cache identifies the original source, conversion
+recipe, implementation fingerprint and exact fragment. Synthetic tests
+passed cold conversion, a warm hit with zero source reads or reconversion,
+different-recipe isolation, cached-data tamper refusal, cross-band page
+boundaries, geometry errors and atomic source-failure handling. Work, driver
+and CPU-reference build roles are refused. No existing mode can consume the
+new representation, and no performance or model-quality claim follows.
+
+The real-model layout probe actually exited 0: 64 layers, 192 FFN tensors,
+1344 bank fragments and 9,625,927,680 total FFN bytes have matching original
+and converted lengths. Three actual bands exactly match the earlier
+card-tested sample bytes. This does NOT mean the old Q4 worker can use BFP4
+bytes, or that the new format has been installed, integrated or benchmarked
+end-to-end. The separate one-entry real-model disk-cache probe remains live;
+its result must not be inferred until its actual process exits.

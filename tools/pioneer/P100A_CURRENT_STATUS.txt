@@ -48,6 +48,9 @@ Four compact goals
    A CPU-only comparison of the complete first FFN block now shows 1.81%
    relative L2 error in the layer output for one prompt token. This is not
    a full-model quality result, a card measurement or a speed improvement.
+   A separate FFN converter matches all 192 real tensor layouts without
+   increasing their byte footprint and matches three card-tested bands.
+   The disk cache passes synthetic tests; a real one-entry check is running.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 
