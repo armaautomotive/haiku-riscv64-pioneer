@@ -30,7 +30,8 @@ Four compact goals
 1. Identify the fastest engine's bottleneck: COMPLETE for one request.
 2. Remove one measured overhead: TESTED/REJECTED as a meaningful gain.
    Descriptor reuse ran the complete 27B request but measured essentially
-   the same speed. Next: identify a larger structural bottleneck/change.
+   the same speed. A native BFP4 matrix prototype passes offboard tests but
+   has NOT been measured on hardware or integrated into the model.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 
@@ -47,4 +48,5 @@ Snapshot real-model result: benchmarks/qwen38-early-job-snapshot-physical-202611
 Previous fast model: benchmarks/qwen38-vector-q4-full-card-20261104.txt
 Rejected slower Q4 candidate: benchmarks/qwen38-prepared-bf16-q4-physical-20261106.txt
 Snapshot experiment (build/data only): benchmarks/qwen38-early-job-snapshot-build-20261106.txt
+Native BFP4 candidate (offboard only): benchmarks/qwen38-bfp4-band-offboard-20261106.txt
 Long-term plan: P100A_WORK_PLAN.txt

@@ -1,0 +1,44 @@
+Qwen native BFP4 band prototype: offboard evidence only
+======================================================
+November 6, 2026. This is NOT an inference or performance result.
+
+Purpose and boundary
+--------------------
+The physical full-model profile attributes approximately 48.85% of scoped
+generation-body cycles to projection-call phases, but that is NOT a direct
+measurement of Q4 decode or native matrix performance. This candidate tests
+using the matrix hardware with preconverted BFP4_B weights and BF16 inputs,
+instead of decoding the original Q4_K weights during every matrix operation.
+It does not yet read model weights, use GDDR, overlap transfer with compute,
+use multiple workers, or perform inference. Per-tile completion drains still
+exist. No speedup or route to the 20 tok/s target is established.
+
+BFP4_B is a lossy conversion, NOT the original Q4_K_M arithmetic. The prior
+sampled Q4-weight conversion had relative L2 error 0.112448567; this is one
+weight sample, not model quality. Any eventual use requires explicit mode
+selection, model-level quality testing and preservation of the current mode.
+
+Actual checks, completed locally
+--------------------------------
+python3 tools/pioneer/tests/run_pioneer_q38_native_bfp4_band_tests.py
+  Host ASan/UBSan producer and independent ideal-arithmetic observer passed
+  widths K5120, K6144, K17408, 32 outputs each; invalid widths, unsafe-role
+  refusals, missing producers, missing source-bank release and omitted
+  arithmetic terms were checked. No physical device was touched.
+
+python3 tools/pioneer/tests/run_pioneer_q38_native_bfp4_band_image_tests.py
+  Built RV32I images against the Haiku cross compiler, interpreted actual
+  linked instructions in a strict OFFBOARD observer, MMIO and direct issue,
+  all three widths, two launches and 32 ideal results/launch. The MMIO K5120
+  case also checked configuration, completion, producer and phase faults.
+  These tests model ideal phasewise arithmetic, not silicon rounding or
+  hardware timing. They do not establish model quality, speed or ownership.
+
+Decision and next gate
+----------------------
+Keep this separate, uninstalled and unavailable to Work/validation roles.
+Next establish a fresh, narrowly scoped physical full-K BFP4 diagnostic with
+independent silicon-arithmetic expectations and compare its throughput with
+the existing real Q4 path. A passing host simulation is not permission to
+install a production driver or run the model. If hardware performance or
+model quality is inadequate, reject this candidate and preserve evidence.

@@ -11,7 +11,9 @@ Baseline
 The full model runs on card, including attention/state. One short counting
 response measured 0.17287tok/s; this is not a usable service or broad quality
 test. Setup was 25.65 minutes and weights were released at END. Current
-stable041/gen10 is a rollback driver, not the experimental fast engine.
+stable041/gen12 was restored after that test; it is a rollback driver, not
+the experimental fast engine. This is the last recorded state, not a live
+assertion about the machine.
 
 1. Identify the actual generation bottleneck -- COMPLETE, narrow scope
 ----------------------------------------------------------------------
@@ -36,9 +38,9 @@ Progress: original ELF and three source translation units reproduced exactly;
 the isolated candidate builds in two output directories, and synthetic DATA
 checks exercised all workers, three types and three boundary sequences. A
 live-field check preserves descriptor/partition binding before receipt.
-Both emitted component slices now pass synthetic RV32 dispatch/check and
-fault-injection tests. The complete returning paths, physical correctness
-and speed are NOT yet proven. See
+Both emitted component slices passed synthetic RV32 dispatch/check and
+fault-injection tests. The later complete real-model run is reported below;
+broader correctness and repeatability remain unproven. See
 benchmarks/qwen38-early-job-snapshot-build-20261106.txt.
 
 Initial finish criteria: source/ISA tests establish exact job data and fault behavior;
@@ -59,6 +61,15 @@ Current next checkpoint: use the measured fast-engine profile to identify a
 STRUCTURAL change affecting a substantial fraction of on-card time. State
 the evidence and expected scope before implementing; avoid further tiny
 descriptor-only experiments. Preserve full model, safety and Work separation.
+
+Candidate under development: native BFP4 matrix tiles. The full-K prototype
+passes ideal offboard instruction/linked-image tests for all three widths;
+there is NO card benchmark or inference integration. It requantizes weights,
+so it must be a distinct, explicitly qualified mode, not a silent change to
+Q4_K_M. Existing single-sample BFP4 error does not establish model quality.
+First demonstrate full-K hardware correctness and compare matrix throughput
+against the current path, then test model quality and integrate only if the
+results justify it. See benchmarks/qwen38-bfp4-band-offboard-20261106.txt.
 
 3. Prove an improvement on the full 27B model -- DEFERRED
 ----------------------------------------------------------
