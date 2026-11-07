@@ -1,0 +1,41 @@
+BFP4 whole-token quality diagnostic: IN PROGRESS, 2026-11-06
+================================================================
+
+Purpose: test accumulated error from replacing ALL 192 FFN projections with
+the experimental BFP4/BF16 arithmetic, using the same authenticated original
+Qwen3.8-27B Q4_K_M model. This executes on the Mac CPU, not the P100A, and
+does not measure inference speed, exercise a card worker or qualify answers.
+
+The separate CPU reference now permits a one-shot diagnostic-only FFN callback.
+The original path is unchanged when the callback is absent. All other matrix,
+attention, recurrent, state, normalization and vocabulary computations use
+the original reference. The BFP4 callback checks every layer/role in order,
+converts original Q4 weights, and uses the previously card-sampled BFP4 math.
+Any callback refusal, non-finite value, wrong size or source mutation stops
+the diagnostic without fallback or publishing a partial token trace.
+
+Verified completed initial control: the original first-layer final hidden
+vector matches independent SHA 0fc71cc5a79d621c65b45aceb6bf705b1989d2b2385af99c8e2a2fbb5e0c064c.
+The BFP4 callback reports final-hidden relative L2 error 0.0180785026 and
+maximum absolute error 0.407314301, exactly reproducing the prior independently
+implemented first-FFN comparison. This is one layer of one token only.
+
+The full comparison's ORIGINAL first token completed all 64 layers and its
+entire hidden-plus-logits trace matches the previously pinned independent SHA
+9323e2451c41e241c9a0391d3905890b662fd73df8542103da229f9b910d6937.
+The converted comparison is RUNNING; no full-token result exists yet. Its
+single live process is observed through the original command handle, with
+its transcript at /private/tmp/pioneer-q38-bfp4-full-cpu-20261107-a.log.
+The executed comparator binary SHA256 is
+03bb594e474d062162c6a37ab2121bd4949491670f2b6acd07946d8d35768e4f.
+In that binary, generic CPU_REFERENCE log lines say original weights even
+during the callback phase; BFP4_CPU_BEGIN lines identify those substituted
+projections. A subsequent source-only logging correction distinguishes the
+two cases and changes no arithmetic or this running process.
+
+Synthetic tests pass for callback refusal/no fallback, wrong shape, nonfinite
+output, atomic trace publication, one-shot behavior, backend invalid inputs,
+and rejection of kernel, Work and reference-role macro mixing. The unchanged
+CPU reference math/state/binding suite and its 119 compile gates also pass.
+Full-token results, model-answer quality, card-side correctness and real
+tokens/sec remain UNPROVEN. Stable P100A Work and Assistant are untouched.

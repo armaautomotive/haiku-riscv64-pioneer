@@ -10,6 +10,9 @@ struct Q38CpuModelReference::Impl {
  struct LayerState{std::vector<float> history,state,key,value;};
  Q38OriginalRows* source=nullptr;uint64_t epoch=0;unsigned position=0;
  bool attempted=false,bound=false,failed=false;
+#if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC)
+ Q38CpuFfnDiagnostic ffnDiagnostic=nullptr;void* ffnContext=nullptr;
+#endif
  std::array<Q38OriginalTensor,851> tensors;
  std::array<std::array<unsigned,14>,65> index={};
  std::array<LayerState,64> state;
@@ -70,6 +73,15 @@ struct Q38CpuModelReference::Impl {
  }
  bool Project(unsigned layer,unsigned role,const std::vector<float>& input,std::vector<float>& output){
   unsigned i=index[layer][role];const auto& t=tensors[i];
+#if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC)
+  if(ffnDiagnostic && layer<64 && role>=2 && role<=4){
+   if(!Current() || input.size()!=t.inputs)return false;
+   std::vector<float> staged;
+   if(!ffnDiagnostic(ffnContext,layer,role,input,staged) || staged.size()!=t.outputs || !Current())return false;
+   for(float value:staged)if(!Bounded(value))return false;
+   output=std::move(staged);return true;
+  }
+#endif
   bool okay=Matrix(t.type,unsigned(t.inputs),unsigned(t.outputs),input,output,[&](uint64_t at,unsigned bytes,void* out){return Read(i,at,bytes,out);});
   if(!okay)fprintf(stderr,"CPU_REFERENCE_MATRIX_REFUSAL position%u/layer%u/role%u/type%u;NO trace publication or retry\n",position,layer,role,t.type);
   return okay;
@@ -151,6 +163,10 @@ struct Q38CpuModelReference::Impl {
   auto record=[&](){for(float x:hidden)stage.hidden.push_back(Bits(x));};record();
   for(unsigned layer=0;layer<64;layer++){
    if(!Current(true))return false;
+#if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC)
+   if(ffnDiagnostic)printf("CPU_BFP4_REFERENCE_BEGIN position%u/layer%u/original non-FFN and diagnostic FFN\n",position,layer);
+   else
+#endif
    printf("CPU_REFERENCE_BEGIN position%u/layer%u/independent ORIGINAL row-major forward\n",position,layer);
    std::vector<float> norm,post,normalized,projection,residual(5120),postNormalized,gate,up,activation(17408),down;
    if(!Weight(layer,0,norm) || !Weight(layer,1,post) || !Rms(hidden,norm,normalized))return false;
@@ -161,6 +177,10 @@ struct Q38CpuModelReference::Impl {
    if(!Project(layer,4,activation,down))return false;
    for(unsigned i=0;i<5120;i++){hidden[i]=residual[i]+down[i];if(!Bounded(hidden[i],0x4c800000))return false;}
    if(!Current(true))return false;record();
+#if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC)
+   if(ffnDiagnostic)printf("CPU_BFP4_REFERENCE position%u/layer%u/diagnostic FFN/independent retained state;CPU-private only\n",position,layer);
+   else
+#endif
    printf("CPU_REFERENCE position%u/layer%u/original row-major weights/independent retained state;CPU-private only\n",position,layer);
   }
   std::vector<float> norm,normalized,logits;if(!Weight(64,2,norm) || !Rms(hidden,norm,normalized) || !Project(64,1,normalized,logits) || logits.size()!=248320)return false;
@@ -204,6 +224,14 @@ bool Q38CpuModelReference::ObserveFirstFfnInput(unsigned token,std::vector<uint3
 }
 bool Q38CpuModelReference::ObserveFirstFfnTrace(unsigned token,Q38CpuFirstFfnTrace& trace){
  const bool okay=impl->ObserveFirstFfnTrace(token,trace);impl->failed=true;return okay;
+}
+bool Q38CpuModelReference::StepWithFfnDiagnostic(unsigned token,Q38CpuFfnDiagnostic fn,void* context,Q38CpuTokenTrace& trace){
+ if(!fn || !context || !impl->Current(true) || impl->position!=0){impl->failed=true;return false;}
+ impl->ffnDiagnostic=fn;impl->ffnContext=context;const bool okay=impl->Step(token,trace);impl->failed=true;return okay;
+}
+bool Q38CpuModelReference::ObserveFirstFfnWithDiagnostic(unsigned token,Q38CpuFfnDiagnostic fn,void* context,Q38CpuFirstFfnTrace& trace){
+ if(!fn || !context || !impl->Current(true) || impl->position!=0){impl->failed=true;return false;}
+ impl->ffnDiagnostic=fn;impl->ffnContext=context;const bool okay=impl->ObserveFirstFfnTrace(token,trace);impl->failed=true;return okay;
 }
 #endif
 bool Q38CpuModelReference::Snapshot(unsigned completed,unsigned layer,unsigned kind,std::vector<uint32_t>& out){return impl->Snapshot(completed,layer,kind,out);}

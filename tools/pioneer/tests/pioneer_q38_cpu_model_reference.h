@@ -37,6 +37,10 @@ struct Q38CpuTokenTrace {
 struct Q38CpuFirstFfnTrace {
  std::vector<uint32_t> input,residual,gate,up,activation,down,final;
 };
+// Diagnostic substitute for FFN projections only. It is never a device
+// product or a fallback, and a refusal must terminate the observation.
+using Q38CpuFfnDiagnostic = bool (*)(void*,unsigned,unsigned,
+ const std::vector<float>&,std::vector<float>&);
 #endif
 class Q38CpuModelReference {
  struct Impl;std::unique_ptr<Impl> impl;
@@ -50,6 +54,10 @@ public:
  // the resulting values are never eligible for card Work or upload.
  bool ObserveFirstFfnInput(unsigned token,std::vector<uint32_t>&,std::vector<uint32_t>&);
  bool ObserveFirstFfnTrace(unsigned token,Q38CpuFirstFfnTrace&);
+ // One token only, with every FFN projection routed through the caller.
+ // The caller owns its numerical method and must separately authenticate it.
+ bool StepWithFfnDiagnostic(unsigned token,Q38CpuFfnDiagnostic,void*,Q38CpuTokenTrace&);
+ bool ObserveFirstFfnWithDiagnostic(unsigned token,Q38CpuFfnDiagnostic,void*,Q38CpuFirstFfnTrace&);
 #endif
  // CPU-private COPY only,never a mutable view or device-product supplier.
  // kind0:GDN FP32 after2/3 steps;kind1:Conv FP32 after3;kind2/3:packed
