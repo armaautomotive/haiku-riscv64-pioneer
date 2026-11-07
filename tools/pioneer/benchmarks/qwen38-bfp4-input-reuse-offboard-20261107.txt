@@ -31,11 +31,31 @@ the staged input after band zero. The second output changed without the
 worker reporting a fault. Therefore a real implementation must establish
 that the same input was correctly produced and remains exclusively owned
 and unchanged through the entire job, and must qualify the actual hardware
-behavior. This leaf is compile-time forbidden in a hybrid worker image or
-driver and is NOT installed or selectable in Work/Assistant. It has no
+behavior. This leaf is compile-time forbidden in a driver or ordinary hybrid
+image. It may be linked only into the separately marked hybrid inspection
+image described below; neither is installed or selectable in Work/Assistant. It has no
 full-model or physical performance result. The earlier failed unpack-reuse
 experiment is not retried here; this experiment retains input L1 bytes,
 not unpack/source-bank ownership.
+
+Coordinator/worker inspection integration
+-----------------------------------------
+An explicitly selected ROOT and hybrid worker inspection build now share
+a distinct job/boot marker and account for the reduced BFP4 read count.
+For a multi-band BFP4 job, its final NoC command is the last weight read,
+so ROOT verifies that command rather than expecting an input read. BFP8
+retains its prior accounting. The actual emitted worker and the actual
+emitted ROOT receipt function were run in simulation for 1, 2, 3 and 8
+BFP4 bands; outputs, receipts and mutated-receipt refusals passed. The old
+ROOT rejected the new marker even for one band, and the new worker refused
+an old boot marker before any transfers. Three BFP8 worker cases also passed;
+they use the existing test-only layer-zero mask. The independently rebuilt
+original ROOT remained byte-identical to its pinned QGW5 image, and the
+candidate ROOT's compiled job translation passed 72 representative cases.
+This is not a complete ROOT/worker model run, format/source authentication,
+an input-lifetime guarantee, a driver, a hardware test or a speed result.
+In particular, the new marker matches coordinator to worker; it does not
+prove the bytes uploaded to memory have the expected representation.
 
 Separate checksum diagnostic
 ----------------------------

@@ -7,8 +7,9 @@
 #error BFP4 worker loader is an isolated offboard diagnostic, not Work or device authority
 #endif
 #if defined(PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT) && (PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT != 1 \
- || defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) || defined(PIONEER_DRIVER_BUILD_TAG))
-#error Input reuse requires its explicit isolated leaf experiment; no hybrid image or driver
+ || (defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) && (!defined(PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION) \
+ || PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION != 1)) || defined(PIONEER_DRIVER_BUILD_TAG))
+#error Input reuse requires an isolated leaf or explicitly selected hybrid inspection image; no driver
 #endif
 #include "PioneerQ38Bfp4WorkerJob.h"
 #include "PioneerDramCohortReadSweep.h"

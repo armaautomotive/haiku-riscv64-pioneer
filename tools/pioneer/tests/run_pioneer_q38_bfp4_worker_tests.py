@@ -66,7 +66,7 @@ with tempfile.TemporaryDirectory(prefix='pioneer-bfp4-worker-suite-',dir='/priva
   for selection in ('PIONEER_Q38_HYBRID_WORKER_IMAGE','PIONEER_DRIVER_BUILD_TAG'):
    result=subprocess.run([compiler,'-std=c++17','-DPIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT=1','-D'+selection,
                          '-E',str(here/'pioneer_q38_bfp4_worker_loader_test.cpp')],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)
-   assert result.returncode and 'Input reuse requires its explicit isolated leaf experiment' in result.stderr,selection
+   assert result.returncode and 'Input reuse requires an isolated leaf or explicitly selected hybrid inspection image' in result.stderr,selection
  if checksum:
   result=subprocess.run([compiler,'-std=c++17','-DPIONEER_Q38_BFP4_INPUT_REUSE_CHECKSUM_EXPERIMENT=1',
                         '-E',str(here/'pioneer_q38_bfp4_worker_consumer_test.cpp')],stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,text=True)

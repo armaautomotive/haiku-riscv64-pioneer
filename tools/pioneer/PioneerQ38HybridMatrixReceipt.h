@@ -2,6 +2,9 @@
 #ifndef PIONEER_Q38_HYBRID_MATRIX_RECEIPT_H
 #define PIONEER_Q38_HYBRID_MATRIX_RECEIPT_H
 #include "PioneerQ38HybridWorkerLayout.h"
+#ifdef PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION
+#include "PioneerQ38HybridInputReuseProfile.h"
+#endif
 
 // Experimental ROOT-side interpretation of the actual QGW5 worker proof.
 // The caller must independently authenticate the closed job, physical
@@ -21,13 +24,18 @@ struct PioneerQ38HybridMatrixReceipt {
    || !M::JobShape(j,b,j[1]-1,0) || before[2]!=before[6] || after[2]!=after[6])return false;
   const bool eight=j[16]==PioneerQ38Bfp8WorkerJob::Magic;
   const unsigned width=j[18],bands=j[20],tiles=width/32;
+#ifdef PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION
+  unsigned reads=0,flits=0;bool lastWeight=false;
+  if(!PioneerQ38HybridInputReuseProfile::Describe(width,bands,eight,reads,flits,lastWeight))return false;
+#endif
   if(p[16]!=bands*32 || p[17]!=j[1] || p[18]!=b[3] || p[19]!=j[16]
    || p[30]!=b[16] || p[31]!=b[4] || p[48]!=M::Producer::Format || p[49]!=width
    || p[50]!=bands || p[51]!=j[7] || p[52]!=j[5] || p[53]!=j[6]
    || p[54]!=j[32] || p[55]!=j[33] || p[56]!=j[34])return false;
   for(unsigned i=0;i<16;i++)if(p[32+i]!=b[16+i])return false;
   for(unsigned i=57;i<64;i++)if(p[i])return false;
-  // Both formats read the BF16 input as their final packet, not a weight.
+  // Original QGW5 finishes on input; the separate BFP4 reuse experiment
+  // finishes on the final weight when there is more than one band.
   // Derive its complete NIU command from the selected validated leaf.
   unsigned source=0,destination=0,route=0,bytes=0;
   if(eight){
@@ -38,7 +46,13 @@ struct PioneerQ38HybridMatrixReceipt {
   }else{
    PioneerQ38Bfp4WorkerJob::Job leaf;for(unsigned i=0;i<16;i++)leaf.words[i]=j[16+i];
    PioneerQ38Bfp4WorkerJob::Read last;
-   if(!PioneerQ38Bfp4WorkerJob::Packet(leaf,bands-1,1,tiles-1,last))return false;
+   if(!PioneerQ38Bfp4WorkerJob::Packet(leaf,bands-1,
+#ifdef PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION
+    lastWeight?0U:1U,
+#else
+    1U,
+#endif
+    tiles-1,last))return false;
    source=last.source;destination=last.destination;route=last.route;bytes=last.bytes;
   }
   for(unsigned i=0;i<10;i++){
@@ -46,8 +60,12 @@ struct PioneerQ38HybridMatrixReceipt {
    if(p[20+i]!=expected)return false;
   }
   for(unsigned i=0;i<8;i++){
-   const unsigned delta=i==1?bands*tiles*(eight?18U:10U):
-    i==0 || i==2 || i==3 || i==6?bands*tiles*2:0U;
+   const unsigned delta=i==1?
+#ifdef PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION
+    flits:i==0 || i==2 || i==3 || i==6?reads:0U;
+#else
+    bands*tiles*(eight?18U:10U):i==0 || i==2 || i==3 || i==6?bands*tiles*2:0U;
+#endif
    if(p[i]!=before[i] || p[8+i]!=after[i] || uint32_t(after[i]-before[i])!=delta)return false;
   }
   return true;

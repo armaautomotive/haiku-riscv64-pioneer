@@ -2,6 +2,10 @@
 // OFFBOARD build/fixture only. No driver, image owner or Work mode uses it.
 #define PIONEER_Q38_BFP4_WORKER_DIAGNOSTIC 1
 #define PIONEER_DRAM_SWEEP_FREESTANDING 1
+#if defined(PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION) && (!defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) \
+ || !defined(PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT) || PIONEER_Q38_BFP4_INPUT_REUSE_EXPERIMENT != 1)
+#error Hybrid input-reuse inspection requires the matching BFP4 leaf
+#endif
 #include "PioneerQ38Bfp4WorkerConsumer.h"
 #if !defined(__riscv) || __riscv_xlen!=32
 #error This isolated leaf requires RV32

@@ -12,6 +12,9 @@ static constexpr unsigned kBits=4;
 #endif
 #include "../PioneerQ38HybridWorkerLayout.h"
 #include "../PioneerQ38HybridMatrixReceipt.h"
+#ifdef PIONEER_Q38_TEST_LINKED_RECEIPT
+#include "pioneer_q38_hybrid_linked_receipt.h"
+#endif
 #define PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC 1
 #include "../PioneerQ38HybridTokenFootprint.h"
 #include <array>
@@ -20,7 +23,12 @@ struct HybridImage:WorkerImage {
  std::vector<std::pair<unsigned,std::vector<uint8_t>>> rom;
  std::array<uint32_t,64> boot={};std::array<uint32_t,16> source={};
  unsigned waitPC=0,faultPC=0,stopPC=0,seal=0,trace[32]={},traceIndex=0;
- HybridImage(const char* worker,const char* leaf,unsigned peer,unsigned width):WorkerImage(leaf,peer,width){
+ HybridImage(const char* worker,const char* leaf,unsigned peer,unsigned width,unsigned bands=2)
+#ifdef PIONEER_TEST_BFP8
+  :WorkerImage(leaf,peer,width){assert(bands==2);
+#else
+  :WorkerImage(leaf,peer,width,bands){
+#endif
   for(auto part:{std::make_pair("boot",0x6000U),{"globalworker",0x20000U},{"bf16producer",0x30000U},
    {"dense",0x40000U},{"cachedfpu",0x50000U},{"ffn",0x60000U},{"service",0x68000U},
    {"affine",0x70b00U},{"text",0x72000U},{"gdn",0x170000U}})
@@ -81,7 +89,8 @@ struct HybridImage:WorkerImage {
   Step();if(regs[27]){if(!seal)seal=regs[27];assert(regs[27]==seal);}
   if(regs[2]){assert(regs[2]>=0x6e000 && regs[2]<=0x70000 && !(regs[2]&15));minSP=std::min(minSP,regs[2]);}
  }
- void Boot(){while(pc!=waitPC && pc!=faultPC)StepWorker();assert(pc==waitPC && seal && Get(HW::Status+12)==HW::Magic);}
+ bool TryBoot(){while(pc!=waitPC && pc!=faultPC)StepWorker();return pc==waitPC && seal && Get(HW::Status+12)==HW::Magic;}
+ void Boot(){assert(TryBoot());}
  void Stage(unsigned layer,unsigned sequence,unsigned role,bool corrupt=false){
   auto& leaf=transfer.job;leaf.words[11]=sequence;
   uint32_t j[64]={};j[0]=HW::Magic;j[1]=sequence;j[2]=1;j[3]=boot[3];j[4]=boot[4];j[5]=layer;j[6]=0;j[7]=2025;
@@ -97,7 +106,12 @@ struct HybridImage:WorkerImage {
  }
 };
 int main(int argc,char** argv){
+#ifdef PIONEER_Q38_TEST_LINKED_RECEIPT
+ assert(argc==5);
+ auto linked=std::make_unique<HybridLinkedReceipt>(argv[3]),oldLinked=std::make_unique<HybridLinkedReceipt>(argv[4]);
+#else
  assert(argc==3);
+#endif
  for(unsigned width:{5120U,17408U})for(unsigned peer:{1U,119U}){
   if(width==17408 && peer<=68)continue; // requires prior real activation producer
   HybridImage image(argv[1],argv[2],peer,width);image.Boot();
@@ -115,22 +129,51 @@ int main(int argc,char** argv){
   uint32_t proof[64],job[64];for(unsigned i=0;i<64;i++){proof[i]=image.Get(0x83f00+i*4);job[i]=image.Get(HW::Job+i*4);}
   for(unsigned i=0;i<8;i++)after[i]=image.transfer.counters[indices[i]];
   assert(PioneerQ38HybridMatrixReceipt::Matrix(proof,job,image.boot.data(),before,after));
+#ifdef PIONEER_Q38_TEST_LINKED_RECEIPT
+  assert(linked->Run(proof,job,image.boot.data(),before,after));
+  assert(!oldLinked->Run(proof,job,image.boot.data(),before,after));
+  for(unsigned word:{0U,8U,19U,20U,22U,23U,28U,32U,48U,49U,50U,56U,57U}){
+   proof[word]^=1;assert(!linked->Run(proof,job,image.boot.data(),before,after));proof[word]^=1;
+  }
+  after[0]++;assert(!linked->Run(proof,job,image.boot.data(),before,after));after[0]--;
+#endif
   for(unsigned word=0;word<64;word++)for(unsigned bit=0;bit<32;bit++){
    proof[word]^=1U<<bit;assert(!PioneerQ38HybridMatrixReceipt::Matrix(proof,job,image.boot.data(),before,after));proof[word]^=1U<<bit;
   }
   for(unsigned i=0;i<8;i++){
    after[i]++;assert(!PioneerQ38HybridMatrixReceipt::Matrix(proof,job,image.boot.data(),before,after));after[i]--;
   }
-  // The last NIU command reads the input vector, not the weights: a receipt
-  // alone cannot prove which GDDR weight address the worker used. ROOT must
-  // independently compare its sealed closed job to the canonical placement.
+  // Original and BFP8 jobs finish on input; a multi-band BFP4 reuse job
+  // finishes on the final weight and must reject a changed weight address.
+  // Neither receipt alone authenticates the uploaded model or its owner.
   job[19]^=64;
-  assert(HW::JobShape(job,image.boot.data(),job[1]-1,0)
-   && PioneerQ38HybridMatrixReceipt::Matrix(proof,job,image.boot.data(),before,after));
+  assert(HW::JobShape(job,image.boot.data(),job[1]-1,0));
+#if defined(PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION) && !defined(PIONEER_TEST_BFP8)
+  assert(!PioneerQ38HybridMatrixReceipt::Matrix(proof,job,image.boot.data(),before,after));
+#else
+  assert(PioneerQ38HybridMatrixReceipt::Matrix(proof,job,image.boot.data(),before,after));
+#endif
   job[19]^=64;
   printf("PASS actual QGW5 dispatcher -> BFP%u leaf K%u peer%u, 64 exact synthetic words and receipt/2056 mutations, simulated NoC/FPU; NO DEVICE\n",
    kBits,width,peer);
  }
+#ifdef PIONEER_Q38_TEST_LINKED_RECEIPT
+ for(unsigned bands:{1U,3U,8U}){
+  HybridImage image(argv[1],argv[2],119,5120,bands);image.Boot();
+  const unsigned indices[]={2,3,4,5,1,8,4,10};uint32_t before[8],after[8];
+  for(unsigned i=0;i<8;i++)before[i]=image.transfer.counters[indices[i]];
+  image.Stage(0,1,2);assert(image.Finish(1) && image.stores==bands*32 && image.inputPreservationChecked);
+  const auto* expected=PioneerNativeBfp4BandGolden(5120);assert(expected);
+  for(unsigned band=0;band<bands;band++)for(unsigned row=0;row<32;row++)assert(image.Get(W::Output+(band*32+row)*4)==expected[row]);
+  uint32_t proof[64],job[64];for(unsigned i=0;i<64;i++){proof[i]=image.Get(0x83f00+i*4);job[i]=image.Get(HW::Job+i*4);}
+  for(unsigned i=0;i<8;i++)after[i]=image.transfer.counters[indices[i]];
+  assert(linked->Run(proof,job,image.boot.data(),before,after));
+  assert(!oldLinked->Run(proof,job,image.boot.data(),before,after));
+ }
+ puts("PASS emitted ROOT receipt accepts actual simulated reuse worker for 1/2/3/8 bands; old ROOT rejects the distinct protocol even for one band; corrupted proofs refused; NO DEVICE");
+ {HybridImage oldBoot(argv[1],argv[2],119,5120);oldBoot.Put(HW::Boot,0x35574751);
+  assert(!oldBoot.TryBoot() && !oldBoot.transfer.issues && !oldBoot.stores);}
+#endif
  HybridImage invalid(argv[1],argv[2],119,5120);invalid.Boot();invalid.Stage(0,1,2,true);
  assert(!invalid.Finish(1,true) && !invalid.transfer.issues && !invalid.stores);
  puts("PASS malformed QGW5 job faults before any transfers; NO DEVICE OR WORK");

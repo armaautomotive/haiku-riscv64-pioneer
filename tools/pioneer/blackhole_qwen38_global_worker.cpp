@@ -1,6 +1,10 @@
 /* SPDX-License-Identifier: MIT */
 // DISTINCT QGW1 whole-model/global-output front end. Fresh cohort required.
 // Reuses returning arithmetic ONLY; this is not an old live-cohort update.
+#if defined(PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION) && (!defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) \
+ || PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION != 1)
+#error Hybrid input-reuse accounting requires its distinct worker inspection image
+#endif
 #include "PioneerQ38TokenBatchedPrefetchRole.h"
 #ifdef PIONEER_Q38_INSTRUCTION_PREFETCH_WORKER_IMAGE
 #include "PioneerQ38InstructionPrefetchWorkerRole.h"
@@ -33,6 +37,9 @@ extern "C" void q38_bf16_persistent_producer(const uint32_t*,const uint32_t*,uns
 #error Exact experimental hybrid worker role required
 #endif
 #include "PioneerQ38HybridWorkerLayout.h"
+#ifdef PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION
+#include "PioneerQ38HybridInputReuseProfile.h"
+#endif
 extern "C" unsigned q38_bfp4_worker_leaf();
 extern "C" unsigned q38_bfp8_worker_leaf();
 #else
@@ -137,7 +144,12 @@ static void FpuMatrix(const uint32_t* j,const uint32_t* outer,const uint32_t* so
 #ifdef PIONEER_Q38_HYBRID_WORKER_IMAGE
  const bool eight=j[0]==PioneerQ38Bfp8WorkerJob::Magic;
  const unsigned count=eight?q38_bfp8_worker_leaf():q38_bfp4_worker_leaf();
+#ifdef PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION
+ unsigned reads=0,flits=0;bool lastWeight=false;
+ if(!PioneerQ38HybridInputReuseProfile::Describe(j[2],j[4],eight,reads,flits,lastWeight))block_fault_park();
+#else
  const unsigned reads=j[4]*2*(j[2]/32),flits=j[4]*(eight?18U:10U)*(j[2]/32);
+#endif
  q38_mixed_seal();if(count!=j[4]*32 || !Quiet() || *Words(0xffb20014)!=self)block_fault_park();
 #else
  const unsigned count=q38_cached_fpu_matrix(j),pairs=j[4]/2,blocks=j[2]/256;

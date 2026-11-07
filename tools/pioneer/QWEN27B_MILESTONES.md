@@ -107,7 +107,9 @@ or model-quality tests remain outstanding. See
 
 Another isolated worker experiment avoids refetching the same activation for
 each output band. Simulated worker output matched the existing BFP4 result,
-with fewer on-card network reads; there is no card timing or full-model rate.
+with fewer on-card network reads. A separately marked coordinator and worker
+inspection build now agree on its changed receipt in simulation; neither is
+connected to the native owner. There is no card timing or full-model rate.
 A corruption control showed that changing the retained input can silently
 change later output, so a real ownership/lifetime proof is required before
 integration. A separate on-card checksum diagnostic caught the tested

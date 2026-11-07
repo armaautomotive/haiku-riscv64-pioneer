@@ -9,6 +9,9 @@
 #if defined(PIONEER_Q38_HYBRID_TEST_BFP8_LAYER0) && PIONEER_Q38_HYBRID_TEST_BFP8_LAYER0 != 1
 #error Test-only layer-zero mask must be explicitly one
 #endif
+#if defined(PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION) && PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION != 1
+#error Input-reuse inspection must be explicitly selected
+#endif
 
 #include "PioneerQ38Bf16WorkerLayout.h"
 #include "PioneerQ38Bfp4WorkerJob.h"
@@ -25,7 +28,14 @@ using namespace PioneerQ38GlobalWorkerLayout;
 #else
 #define QGW5_GRAMMAR __attribute__((noinline,unused))
 #endif
-enum : unsigned {Magic=0x35574751, JobWitness=0x354f4751,
+enum : unsigned {
+#ifdef PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION
+ // Distinct inspection-only grammar: an old worker or ROOT must not accept
+ // the new completion protocol even when a one-band job happens to match.
+ Magic=0x36574751, JobWitness=0x364f4751,
+#else
+ Magic=0x35574751, JobWitness=0x354f4751,
+#endif
 #ifdef PIONEER_Q38_HYBRID_TEST_BFP8_LAYER0
  // Test-image-only: exercise the BFP8 dispatcher on the first layer without
  // fabricating a 48-layer worker history. Never a production configuration.
