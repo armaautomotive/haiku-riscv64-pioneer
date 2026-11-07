@@ -11,7 +11,7 @@ struct Q38CpuModelReference::Impl {
  Q38OriginalRows* source=nullptr;uint64_t epoch=0;unsigned position=0;
  bool attempted=false,bound=false,failed=false;
 #if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC)
- Q38CpuFfnDiagnostic ffnDiagnostic=nullptr;void* ffnContext=nullptr;
+ Q38CpuFfnDiagnostic ffnDiagnostic=nullptr;void* ffnContext=nullptr;uint64_t ffnLayers=~uint64_t(0);
 #endif
  std::array<Q38OriginalTensor,851> tensors;
  std::array<std::array<unsigned,14>,65> index={};
@@ -74,7 +74,7 @@ struct Q38CpuModelReference::Impl {
  bool Project(unsigned layer,unsigned role,const std::vector<float>& input,std::vector<float>& output){
   unsigned i=index[layer][role];const auto& t=tensors[i];
 #if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC)
-  if(ffnDiagnostic && layer<64 && role>=2 && role<=4){
+  if(ffnDiagnostic && layer<64 && (ffnLayers & (uint64_t(1)<<layer)) && role>=2 && role<=4){
    if(!Current() || input.size()!=t.inputs)return false;
    std::vector<float> staged;
    if(!ffnDiagnostic(ffnContext,layer,role,input,staged) || staged.size()!=t.outputs || !Current())return false;
@@ -164,7 +164,8 @@ struct Q38CpuModelReference::Impl {
   for(unsigned layer=0;layer<64;layer++){
    if(!Current(true))return false;
 #if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC)
-   if(ffnDiagnostic)printf("CPU_BFP4_REFERENCE_BEGIN position%u/layer%u/original non-FFN and diagnostic FFN\n",position,layer);
+   if(ffnDiagnostic)printf("CPU_BFP4_REFERENCE_BEGIN position%u/layer%u/%s FFN\n",position,layer,
+    ffnLayers & (uint64_t(1)<<layer)?"diagnostic":"original");
    else
 #endif
    printf("CPU_REFERENCE_BEGIN position%u/layer%u/independent ORIGINAL row-major forward\n",position,layer);
@@ -178,7 +179,8 @@ struct Q38CpuModelReference::Impl {
    for(unsigned i=0;i<5120;i++){hidden[i]=residual[i]+down[i];if(!Bounded(hidden[i],0x4c800000))return false;}
    if(!Current(true))return false;record();
 #if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC)
-   if(ffnDiagnostic)printf("CPU_BFP4_REFERENCE position%u/layer%u/diagnostic FFN/independent retained state;CPU-private only\n",position,layer);
+   if(ffnDiagnostic)printf("CPU_BFP4_REFERENCE position%u/layer%u/%s FFN/independent retained state;CPU-private only\n",position,layer,
+    ffnLayers & (uint64_t(1)<<layer)?"diagnostic":"original");
    else
 #endif
    printf("CPU_REFERENCE position%u/layer%u/original row-major weights/independent retained state;CPU-private only\n",position,layer);
@@ -226,8 +228,12 @@ bool Q38CpuModelReference::ObserveFirstFfnTrace(unsigned token,Q38CpuFirstFfnTra
  const bool okay=impl->ObserveFirstFfnTrace(token,trace);impl->failed=true;return okay;
 }
 bool Q38CpuModelReference::StepWithFfnDiagnostic(unsigned token,Q38CpuFfnDiagnostic fn,void* context,Q38CpuTokenTrace& trace){
- if(!fn || !context || !impl->Current(true) || impl->position!=0){impl->failed=true;return false;}
- impl->ffnDiagnostic=fn;impl->ffnContext=context;const bool okay=impl->Step(token,trace);impl->failed=true;return okay;
+ return StepWithSelectedFfnDiagnostic(token,~uint64_t(0),fn,context,trace);
+}
+bool Q38CpuModelReference::StepWithSelectedFfnDiagnostic(unsigned token,uint64_t layers,Q38CpuFfnDiagnostic fn,void* context,Q38CpuTokenTrace& trace){
+ if(!layers || !fn || !context || !impl->Current(true) || impl->position!=0){impl->failed=true;return false;}
+ impl->ffnDiagnostic=fn;impl->ffnContext=context;impl->ffnLayers=layers;
+ const bool okay=impl->Step(token,trace);impl->failed=true;return okay;
 }
 bool Q38CpuModelReference::ObserveFirstFfnWithDiagnostic(unsigned token,Q38CpuFfnDiagnostic fn,void* context,Q38CpuFirstFfnTrace& trace){
  if(!fn || !context || !impl->Current(true) || impl->position!=0){impl->failed=true;return false;}

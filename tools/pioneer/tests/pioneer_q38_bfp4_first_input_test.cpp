@@ -24,6 +24,9 @@ static bool WrongShape(void*,unsigned,unsigned,const std::vector<float>&,std::ve
 static bool NonFinite(void*,unsigned,unsigned,const std::vector<float>&,std::vector<float>& output){
  output.assign(17408,std::numeric_limits<float>::infinity());return true;
 }
+static bool SelectedSecondLayer(void* context,unsigned layer,unsigned role,const std::vector<float>&,std::vector<float>&){
+ auto& calls=*static_cast<FfnCalls*>(context);calls.count++;assert(layer==1 && role==2);return false;
+}
 int main(){
  {ReferenceRowsProbe source;Q38CpuModelReference observer;assert(observer.Bind(source));
   std::vector<uint32_t> input={123},final={456};assert(!observer.ObserveFirstFfnInput(17,input,final));
@@ -60,6 +63,13 @@ int main(){
   Q38CpuTokenTrace trace;trace.hidden={0xabcdef};
   assert(!observer.StepWithFfnDiagnostic(248319,Diagnostic,&calls,trace));
   assert(calls.count==1 && !observer.Ready() && trace.hidden==std::vector<uint32_t>{0xabcdef});}
+ {ReferenceRowsProbe source;Q38CpuModelReference observer;assert(observer.Bind(source));FfnCalls calls;
+  Q38CpuTokenTrace trace;trace.hidden={0xabcdef};
+  assert(!observer.StepWithSelectedFfnDiagnostic(248319,uint64_t(1)<<1,SelectedSecondLayer,&calls,trace));
+  assert(calls.count==1 && !observer.Ready() && trace.hidden==std::vector<uint32_t>{0xabcdef});}
+ {ReferenceRowsProbe source;Q38CpuModelReference observer;assert(observer.Bind(source));FfnCalls calls;
+  Q38CpuTokenTrace trace;assert(!observer.StepWithSelectedFfnDiagnostic(248319,0,Diagnostic,&calls,trace));
+  assert(!calls.count && !observer.Ready() && !source.reads);}
  {ReferenceRowsProbe source;Q38CpuModelReference observer;assert(observer.Bind(source));
   Q38CpuTokenTrace trace;assert(!observer.StepWithFfnDiagnostic(248319,nullptr,nullptr,trace));
   assert(!observer.Ready() && !source.reads);}

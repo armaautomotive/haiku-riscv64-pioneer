@@ -6,6 +6,8 @@ set -eu
 directory=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
 temporary=$(mktemp -d "${TMPDIR:-/tmp}/pioneer-bfp4-full-cpu.XXXXXXXX")
 common='-std=c++17 -O2 -Wall -Wextra -Werror -ffp-contract=off'
+${CXX:-c++} $common -fsanitize=address,undefined "$directory/pioneer_q38_distribution_compare_test.cpp" -o "$temporary/distribution-test"
+"$temporary/distribution-test"
 ${CXX:-c++} $common "$directory/pioneer_q38_bfp4_full_backend_test.cpp" \
  "$directory/pioneer_q38_bfp4_full_cpu_backend.cpp" "$directory/../PioneerModelWeightCache.cpp" -o "$temporary/backend-test"
 "$temporary/backend-test"

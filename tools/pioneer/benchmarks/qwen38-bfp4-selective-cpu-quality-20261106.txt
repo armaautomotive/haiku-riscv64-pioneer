@@ -1,0 +1,31 @@
+Selective BFP4 whole-token CPU diagnostic: IN PROGRESS, 2026-11-06
+==================================================================
+
+The all-64-layer BFP4 FFN experiment had a 35.9% relative L2 difference
+across final logits for one token. This experiment separates two cases:
+first48 layers BFP4/last16 original Q4, and first48 original Q4/last16
+BFP4. Each is a CPU-only first-position diagnostic with real, authenticated
+27B weights. Original Q4 in unselected layers is an explicit experiment
+choice, not a production fallback or permission to alter Work.
+
+The original baseline again completed all64 layers and matched pinned
+hidden-plus-logits SHA256
+9323e2451c41e241c9a0391d3905890b662fd73df8542103da229f9b910d6937.
+The two selective observations are RUNNING through one live process; no
+result is claimed yet. Log:
+/private/tmp/pioneer-q38-bfp4-split48-cpu-20261107-a.log.
+The executed binary has SHA256
+5886258312a7c36918d7aba9026e46f9c351de6859615794b3c22400094a9d40.
+
+The isolated evaluator enforces exact selected-layer/role order and checks
+that every selected projection was reached. Synthetic tests prove invalid
+masks, skipping an original layer before reaching the selected layer, atomic
+callback failure, numerical/domain refusals, and unchanged Work role guards.
+No P100A driver, Assistant, model or device is modified.
+
+After the running executable was built, source gained a CPU-only stable
+softmax/KL and top-five comparison with synthetic, shift-invariance and
+analytic KL tests. That added reporting is NOT present in the running
+executable; future builds can measure whether differences in raw logits
+materially alter next-token probabilities. These diagnostics are one-token
+quality evidence, not a P100A throughput measurement or answer-quality pass.

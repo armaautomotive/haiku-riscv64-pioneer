@@ -15,12 +15,13 @@
 
 namespace {
 struct Context {
- FILE* file=nullptr;PioneerQwen38Gguf model;unsigned next=0;
+ FILE* file=nullptr;PioneerQwen38Gguf model;unsigned next=0;uint64_t layers=0;
  ~Context(){if(file)fclose(file);}
+ void Skip(){while(next<192 && !(layers & (uint64_t(1)<<(next/3))))next+=3;}
 };
 }
-void* Q38Bfp4CpuOpen(const char* path){
- if(!path || path[0]!='/')return nullptr;
+void* Q38Bfp4CpuOpen(const char* path,uint64_t layers){
+ if(!path || path[0]!='/' || !layers)return nullptr;
  int fd=open(path,O_RDONLY|O_CLOEXEC|O_NOFOLLOW);if(fd<0)return nullptr;
  struct stat info={};if(fstat(fd,&info) || !S_ISREG(info.st_mode) || uint64_t(info.st_size)!=PioneerQwen38Gguf::FullBytes){close(fd);return nullptr;}
  auto context=std::unique_ptr<Context>(new Context);
@@ -29,9 +30,12 @@ void* Q38Bfp4CpuOpen(const char* path){
  if(!PioneerModelWeightCache::HashFile(fd,PioneerQwen38Gguf::FullBytes,digest,error)
   || PioneerModelWeightCache::Hex(digest)!="c600de0300ae8a0eb3a6c0b8b5561b8b96f16bd2c863c2a66c42de29d391a747"
   || !context->model.Open(context->file) || !context->model.Stable())return nullptr;
- return context.release();
+ context->layers=layers;context->Skip();return context.release();
 }
 void Q38Bfp4CpuClose(void* context){delete static_cast<Context*>(context);}
+bool Q38Bfp4CpuComplete(void* context){
+ auto* current=static_cast<Context*>(context);return current && current->next==192 && current->model.Stable();
+}
 bool Q38Bfp4CpuProject(void* opaque,unsigned layer,unsigned role,const std::vector<float>& input,std::vector<float>& output){
  if(!opaque || layer>=64 || role<2 || role>4)return false;
  auto& context=*static_cast<Context*>(opaque);
@@ -49,5 +53,5 @@ bool Q38Bfp4CpuProject(void* opaque,unsigned layer,unsigned role,const std::vect
  if(!PioneerBfp4FfnQuality::Project(context.model,index,bits,result) || !context.model.Stable() || result.size()!=tensor->outputs)return false;
  std::vector<float> values;values.reserve(result.size());
  for(uint32_t word:result){float value=PioneerBfp4FfnQuality::Float(word);if(!std::isfinite(value))return false;values.push_back(value);}
- output=std::move(values);context.next++;return true;
+ output=std::move(values);context.next++;if(context.next%3==0)context.Skip();return true;
 }
