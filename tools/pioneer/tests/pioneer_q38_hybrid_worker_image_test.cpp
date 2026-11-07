@@ -11,6 +11,9 @@ static constexpr unsigned kBits=8;
 static constexpr unsigned kBits=4;
 #endif
 #include "../PioneerQ38HybridWorkerLayout.h"
+#ifdef PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION
+#include "../PioneerQ38HybridHeadWorkerLayout.h"
+#endif
 #include "../PioneerQ38HybridMatrixReceipt.h"
 #ifdef PIONEER_Q38_TEST_LINKED_RECEIPT
 #include "pioneer_q38_hybrid_linked_receipt.h"
@@ -18,7 +21,11 @@ static constexpr unsigned kBits=4;
 #define PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC 1
 #include "../PioneerQ38HybridTokenFootprint.h"
 #include <array>
+#ifdef PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION
+namespace HW=PioneerQ38HybridHeadWorkerLayout;
+#else
 namespace HW=PioneerQ38HybridWorkerLayout;
+#endif
 struct HybridImage:WorkerImage {
  std::vector<std::pair<unsigned,std::vector<uint8_t>>> rom;
  std::array<uint32_t,64> boot={};std::array<uint32_t,16> source={};
@@ -66,6 +73,9 @@ struct HybridImage:WorkerImage {
   if(a==0x74100)return 2224;
   if(Range(a,0x83f00,256))return 2230+(a-0x83f00)/4;
   if(Range(a,W::Output,8*32*4))return 2300+(a-W::Output)/4;
+#ifdef PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION
+  if(Range(a,HW::Partial,256))return 2600+(a-HW::Partial)/4;
+#endif
   assert(false);return 0;
  }
  void Put(unsigned a,unsigned v){l1[Index(a)]=v;}
@@ -74,14 +84,22 @@ struct HybridImage:WorkerImage {
  unsigned Source(unsigned i)const{return !i?0x100:i<=6?0x118+(i-1)*4:i<=12?0x130+(i-7)*4:i==13?0x150:i==14?0x154:0x16c;}
  uint32_t Load(uint32_t a)override{
   unsigned base=0;if(auto* p=Rom(a,base))return Word(*p,a-base);
-  if(Range(a,HW::Boot,512)||a==HW::Doorbell||Range(a,HW::Status,64)||a==0x74100||Range(a,0x83f00,256))return Get(a);
+  if(Range(a,HW::Boot,512)||a==HW::Doorbell||Range(a,HW::Status,64)||a==0x74100||Range(a,0x83f00,256)
+#ifdef PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION
+   ||Range(a,HW::Partial,256)
+#endif
+  )return Get(a);
   for(unsigned i=0;i<16;i++)if(a==0xffb20000+Source(i))return source[i];
   return WorkerImage::Load(a);
  }
  void Store(uint32_t a,uint32_t value)override{
   assert(!CodeAddress(a)); // never write through a simulated immutable code view
   if(a<0x180000)assert(PioneerQ38HybridTokenL1::SnapshotContains(boot[3],a));
-  if(Range(a,HW::Status,64)||Range(a,0x74000,96)||a==0x74100||Range(a,0x83f00,256)){Put(a,value);return;}
+  if(Range(a,HW::Status,64)||Range(a,0x74000,96)||a==0x74100||Range(a,0x83f00,256)
+#ifdef PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION
+   ||Range(a,HW::Partial,256)
+#endif
+  ){Put(a,value);return;}
   WorkerImage::Store(a,value);
  }
  void StepWorker(){

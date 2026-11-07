@@ -1,0 +1,46 @@
+QGW8 BFP8 output-head matrix worker: OFFLINE INSPECTION ONLY
+===========================================================
+
+This new isolated worker frame and compiled worker route global output-head
+jobs through the existing BFP8 Tensix leaf instead of the old Q6 instruction
+path. It uses 5120-input rows, 1..8 bands of 32 output rows, the new BFP8
+prepared representation, and an 11-layer FFN BFP8 mask (50..60). Head
+partial results explicitly identify format 8. Its QGW8 boot/job identity
+differs from QGW7/tag127; old Q6 head frames and mixed image identities are
+refused. The source role forbids driver/native, Work, CPU-validation,
+test-layer0 and other incompatible role combinations.
+
+This is NOT a complete runtime. No corresponding ROOT, head-job planner,
+authenticated repacker/owner, cache upload, model-quality pass, driver,
+Assistant mode or physical test exists for QGW8. It must not be installed,
+combined with tag127, or used as permission to test the card. The earlier
+GPU/storage recovery guard remains in place. Code outside the large matrix
+projections, including on-card vector/scalar processing, is still present.
+
+Two independent compiled worker images matched exactly, using the same SDK:
+ program.elf d28edbd5cf25b8184d29ddf189b74efe843d934cd8ebb628976ed3331823897d
+ globalworker.bin 11948 bytes
+   5a663114c058168677938681baca39efc5f7e6a3177235c692f37d1d1a064685
+The build script also checks section bounds, no unsupported instructions,
+reserved register handling and stack-frame sizes. QGW7 and earlier parents
+rebuilt to their existing pinned hashes. The old tag127 program generator
+refuses the new worker image rather than relabeling it as the old one.
+
+Offline tests under ASan/UBSan:
+* Head/FFN grammar: 36 valid shapes, 49 explicit refusals and QGW7 identity
+  separation; exact parents, no alternative role, no native/Work selection.
+* The actual compiled QGW8 worker and actual BFP8 leaf ran against simulated
+  NoC/FPU and synthetic BFP8 inputs. They produced 64 words matching the
+  existing shared arithmetic golden and a matching partial argmax receipt.
+  A corrupted job was refused before matrix operations, reads or outputs.
+  The test INJECTS modelLayer=64 into the simulated worker's private stack
+  after boot: none of the 64 model layers or any complete lifecycle ran.
+  Its stack offset is tied to this exact compiled binary and checked against
+  its disassembly. No device, real learned weights or independent hardware
+  arithmetic is involved.
+
+The 11-layer FFN numerical comparison with original weights is still in
+progress, separately from this worker test; its log/limits are recorded in
+qwen38-head-block-float-samples-20261107.txt. It does not include the BFP8
+head. Physical 27B speed remains the previously recorded ~0.173 token/s on
+the older non-all-matrix path; this worker has no tokens/second measurement.

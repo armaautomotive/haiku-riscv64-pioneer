@@ -10,7 +10,8 @@ import sys
 
 assert __debug__ and len(sys.argv) in (3, 4) and not os.environ.get('PYTHONOPTIMIZE')
 test_layer0 = len(sys.argv) == 4 and sys.argv[3] == '--test-bfp8-layer0'
-assert len(sys.argv) == 3 or test_layer0
+head_matrix = len(sys.argv) == 4 and sys.argv[3] == '--head-matrix-inspection'
+assert len(sys.argv) == 3 or test_layer0 or head_matrix
 assert not any(k.startswith(('PIONEER_', 'TT_PIONEER_')) for k in os.environ)
 sdk, out = map(Path, sys.argv[1:3]); here = Path(__file__).resolve().parent
 assert sdk.is_absolute() and sdk.is_dir() and out.is_absolute() and not out.exists() and not out.is_symlink()
@@ -36,6 +37,8 @@ global_role = ['-DPIONEER_Q38_BF16_WORKER_IMAGE=1', '-DPIONEER_Q38_HYBRID_WORKER
                '-DPIONEER_DRAM_SWEEP_FREESTANDING=1']
 if test_layer0:
     global_role.append('-DPIONEER_Q38_HYBRID_TEST_BFP8_LAYER0=1')
+if head_matrix:
+    global_role.append('-DPIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION=1')
 run(tool+'g++', *flags, '-Os', '-ffixed-s11', *global_role, *inspection, '-c',
     here/'blackhole_qwen38_global_worker.cpp', '-o', out/'global.o')
 dense_role = ['-DPIONEER_Q38_MIXED_WORKER_IMAGE=1', '-DPIONEER_Q38_MIXED_DENSE_CAPSULE_IMAGE=1',
@@ -88,7 +91,8 @@ for section in sections:
         old_data = (out/'baseline'/(section+'.bin')).read_bytes()
         assert len(data) == len(old_data), section
         if section == 'boot': assert data == old_data
-    print('QGW7_BUILD', section, len(data), hashlib.sha256(data).hexdigest(), flush=True)
-print('BUILD ONLY QGW7/QDM2 inspection: NO ROOT/native owner/model/hardware/quality/speed authority')
+    print('QGW8_BUILD' if head_matrix else 'QGW7_BUILD', section, len(data), hashlib.sha256(data).hexdigest(), flush=True)
+print('BUILD ONLY QGW8 head-matrix worker inspection: NO ROOT/native owner/model/hardware/quality/speed authority' if head_matrix
+      else 'BUILD ONLY QGW7/QDM2 inspection: NO ROOT/native owner/model/hardware/quality/speed authority')
 if test_layer0:
     print('TEST ONLY BFP8 layer-zero mask; not a real-model worker')

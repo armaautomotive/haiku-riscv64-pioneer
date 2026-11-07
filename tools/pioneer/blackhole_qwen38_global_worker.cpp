@@ -1,6 +1,14 @@
 /* SPDX-License-Identifier: MIT */
 // DISTINCT QGW1 whole-model/global-output front end. Fresh cohort required.
 // Reuses returning arithmetic ONLY; this is not an old live-cohort update.
+#if defined(PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION) && (PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) || PIONEER_Q38_HYBRID_WORKER_IMAGE != 1 \
+ || !defined(PIONEER_Q38_BF16_WORKER_IMAGE) || PIONEER_Q38_BF16_WORKER_IMAGE != 1 \
+ || !defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) || PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION != 1 \
+ || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \
+ || defined(_KERNEL_MODE) || defined(PIONEER_DRIVER_BUILD_TAG) || defined(PIONEER_Q38_HYBRID_FULL_NATIVE))
+#error QGW8 output-head matrix requires its distinct worker inspection role
+#endif
 #if defined(PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION) && (PIONEER_Q38_HYBRID_MATRIX_ATTENTION_INSPECTION != 1 \
  || !defined(PIONEER_Q38_HYBRID_WORKER_IMAGE) || PIONEER_Q38_HYBRID_WORKER_IMAGE != 1 \
  || !defined(PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT) || PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT != 1 \
@@ -46,6 +54,9 @@ extern "C" void q38_bf16_persistent_producer(const uint32_t*,const uint32_t*,uns
 #error Exact experimental hybrid worker role required
 #endif
 #include "PioneerQ38HybridWorkerLayout.h"
+#ifdef PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION
+#include "PioneerQ38HybridHeadWorkerLayout.h"
+#endif
 #ifdef PIONEER_Q38_HYBRID_INPUT_REUSE_INSPECTION
 #include "PioneerQ38HybridInputReuseProfile.h"
 #endif
@@ -77,7 +88,11 @@ extern "C" void q38_resident_persistent_gdn_output(const uint32_t*,const uint32_
 extern "C" void q38_mixed_dense_phase(const uint32_t*,unsigned,unsigned,float*,float*);
 namespace GlobalWorker {
 #ifdef PIONEER_Q38_HYBRID_WORKER_IMAGE
+#ifdef PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION
+namespace M=PioneerQ38HybridHeadWorkerLayout;
+#else
 namespace M=PioneerQ38HybridWorkerLayout;
+#endif
 #elif defined(PIONEER_Q38_BF16_WORKER_IMAGE)
 namespace M=PioneerQ38Bf16WorkerLayout;
 #elif defined(PIONEER_Q38_PUSH_COMPLETION_WORKER_IMAGE)
@@ -189,6 +204,24 @@ static void FpuMatrix(const uint32_t* j,const uint32_t* outer,const uint32_t* so
 static void GlobalPartial(const uint32_t* j,const uint32_t* boot){
  // Read ALL freshly generated rows, never a host-supplied maximum. Only
  // finite logits; canonical +/-0 ties choose the smallest vocabulary row.
+#ifdef PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION
+ if(!M::HeadJob(j))block_fault_park();
+ const unsigned count=j[20]*32,first=j[32],wave=j[34],format=8;
+ unsigned best=0,bits=Words(0x84000)[0];
+ if((bits&0x7f800000)==0x7f800000)block_fault_park();
+ for(unsigned i=1;i<count;i++){
+  unsigned value=Words(0x84000)[i];if((value&0x7f800000)==0x7f800000)block_fault_park();
+  if(M::Better(value,first+i,bits,first+best)){bits=value;best=i;}
+ }
+ q38_mixed_seal();if(!Quiet())block_fault_park();
+ auto* p=Words(M::Partial);for(unsigned i=0;i<64;i++)p[i]=0;
+ const unsigned h[]={0,j[1],64,j[6],j[3],wave,first,count,first+best,bits,1,j[7],248320,5120,format,1};
+ for(unsigned i=0;i<16;i++)p[i]=h[i];
+ for(unsigned i=0;i<8;i++){p[16+i]=*Words(0xffb20000+Counter(i));p[50+i]=boot[8+i];}
+ for(unsigned i=0;i<10;i++)p[24+i]=Words(0xffb20000)[i];
+ for(unsigned i=0;i<16;i++)p[34+i]=boot[16+i];
+ Fence();p[0]=M::PartialMagic;Fence();q38_mixed_seal();
+#else
  unsigned count=j[23]*16,best=0,bits=Words(0x84000)[0];
  if((bits&0x7f800000)==0x7f800000)block_fault_park();
  for(unsigned i=1;i<count;i++){
@@ -203,6 +236,7 @@ static void GlobalPartial(const uint32_t* j,const uint32_t* boot){
  for(unsigned i=0;i<10;i++)p[24+i]=Words(0xffb20000)[i];
  for(unsigned i=0;i<16;i++)p[34+i]=boot[16+i];
  Fence();p[0]=M::PartialMagic;Fence();q38_mixed_seal();
+#endif
 }
 }
 extern "C" __attribute__((noinline)) void q38_mixed_seal(){
@@ -257,7 +291,11 @@ extern "C" void q38_global_worker_main(){
    if(modelLayer!=64 || globalWave!=finalWaves || seal.job[6]!=modelPosition)block_fault_park();
   }else if(op!=M::Stop){
    if(outputJob){
+#ifdef PIONEER_Q38_HEAD_MATRIX_WORKER_INSPECTION
+    if(modelLayer!=64 || !M::HeadJob(seal.job) || globalWave!=seal.job[34] || seal.job[6]!=modelPosition)block_fault_park();
+#else
     if(modelLayer!=64 || globalWave!=seal.job[27] || seal.job[6]!=modelPosition)block_fault_park();
+#endif
    }else{
     if(modelLayer==64){
      if(globalWave!=finalWaves || modelPosition>=8191 || op!=1 || seal.job[5] || seal.job[6]!=modelPosition+1)block_fault_park();
