@@ -44,18 +44,35 @@ device-path reads from absolute partition blocks 3867318, 3867319, 3867320
 and 3867323, truncated to the respective file lengths, gave the same four
 hashes. These are reads through the running OS and do not independently
 exclude caching, drive faults, incorrect device acknowledgments, or other
-file corruption. The checked ioctl returned success, but persistence across
-an actual reboot is NOT tested. A successful later check would establish only
-these four files in that one trial, not whole-volume or power-loss safety.
+file corruption. The checked ioctl returned success; at that point no
+post-reboot check had run. A later check can establish only these four files
+in that one trial, not whole-volume or power-loss safety.
 
-No reboot, power pulse, card operation, recovery guard bypass or repair was
-performed. CPU-only metadata still reported driver tag2026110700010125,
-generation1, cold0 and active_owner0. Verify on a separately observed future
-fresh boot using the same pinned Haiku identity and this exact stage:
+Follow-up: one normal Haiku `shutdown -rs` produced a fresh firmware/Linux
+boot; no relay pulse or physical power-off was used. On the pinned Linux
+connection, boot ID 04c4ac9a-71f1-483c-8ab4-573c5bb69333, disk serial
+S14CNSAD300075H, BFS UUID 020147de08752551 and partition start 64 matched
+the recorded system. The Haiku partition was unmounted. Linux read its
+four inode allocation records and the same four raw partition block ranges;
+all four SHA-256 hashes above matched the pre-reboot values. This is an
+independent OS after an ordinary restart, not a forced-off or mains-loss
+test. Haiku was then restored using the pinned 64-CPU, 128-GiB untimed
+SD-free helper, without a journal-recovery override, and its pinned SSH
+reported a successful file-level verify:
 
  /boot/home/pioneer-bfs-durability-probe-20261107-b --verify /boot/home/pioneer-bfs-durability-w9D6AH /dev/disk/scsi/0/3/0/0
 
-The probe does not attest that a reboot occurred. Do not interpret an
-immediate verify, successful flush or these four files as authorization to
-discard failed-trial evidence, weaken the restoration guard, install a new
-driver or run the spent accelerator trial.
+Haiku reported 64 CPUs and 137034936320 maximum memory bytes; app_server,
+Tracker, Deskbar and input_server were running (desktop visibility/input were
+not independently checked). The four previously altered failed-trial records
+had the same hashes as the preserved first post-failure copies, not the
+original pre-power hashes. CPU-only metadata still reported driver
+tag2026110700010125, generation1, cold0 and active_owner0. Haiku's shutdown
+serial included BFS index-lookup warnings; their cause is not established.
+
+This success covers four files and one orderly restart, not sudden power
+loss, the previous failure's cause, the filesystem as a whole, or later
+write durability. The probe does not attest that a reboot occurred. No card
+operation, recovery guard bypass or repair was performed. Do not interpret
+this result as authorization to discard failed-trial evidence, weaken the
+restoration guard, install a new driver or rerun the spent trial.
