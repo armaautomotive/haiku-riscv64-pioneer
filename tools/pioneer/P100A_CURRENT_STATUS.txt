@@ -45,8 +45,9 @@ Four compact goals
    A CPU comparison using the first prompt token's reconstructed layer-0 FFN input
    measured 5.7%-7.2% relative output error across those three bands versus
    the independent Q4 reference. This is not a full-model quality score.
-   A CPU-only comparison of the full first FFN block is running; its
-   numerical result and any full-model or speed implication are not yet known.
+   A CPU-only comparison of the complete first FFN block now shows 1.81%
+   relative L2 error in the layer output for one prompt token. This is not
+   a full-model quality result, a card measurement or a speed improvement.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 
@@ -70,4 +71,5 @@ Real-weight BFP4 sample and quality caveat: benchmarks/qwen38-bfp4-real-band-off
 GDDR diagnostic build and simulated safety checks: benchmarks/qwen38-bfp4-dram-driver-offboard-20261106.txt
 GDDR real-weight physical measurement: benchmarks/qwen38-bfp4-dram-real-band-physical-20261106.txt
 Real-prompt BFP4 accuracy probe: benchmarks/qwen38-bfp4-real-prompt-quality-20261106.txt
+Complete first FFN CPU accuracy result: benchmarks/qwen38-bfp4-first-ffn-quality-20261106.txt
 Long-term plan: P100A_WORK_PLAN.txt

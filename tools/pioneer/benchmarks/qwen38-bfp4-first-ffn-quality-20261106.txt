@@ -1,0 +1,40 @@
+BFP4 complete first-FFN comparison, 2026-11-06
+===========================================
+
+CPU-only diagnostic using the first token (248319) of the previously tested
+prompt. The original model's full layer-0 reference was reconstructed and
+the final hidden vector matched the independently pinned original CPU trace
+exactly. The BFP4 observer then evaluated every gate/up/down row, applying
+the converted gate and up results to the activation before computing down:
+
+  Stage              Values     Relative L2 error    Maximum absolute error
+  gate               17408          0.0677699973          0.163133562
+  up                 17408          0.0836293676          0.124635115
+  activation         17408          0.107186923           0.101851016
+  down                5120          0.0720253962          0.407312393
+  final hidden        5120          0.0180785026          0.407314301
+
+This is one token and one of 64 layers, not answer quality, perplexity,
+logits, actual card performance or a production acceptance test. Error at
+the layer output can propagate or accumulate later. The observer uses the
+documented BFP4 arithmetic model and CPU activation; it does not execute the
+complete block on the P100A. Q4 reference math uses Q8 activation quantizing;
+the BFP4 path uses BF16-rounded inputs, so differences include both changed
+weight format and arithmetic. An accuracy threshold remains unspecified.
+
+Both original-reference and BFP4-observer SSH processes actually exited 0.
+Each authenticated the original Q4 model from the same open file. Before the
+full calculation, re-packed BFP4 bytes for the earlier three real-weight
+bands matched the previously physically tested private samples exactly, and
+the separate observer matched all 96 saved synthetic-input predictions.
+Full intermediate reference vectors stay private on the Pioneer; aggregate
+numbers above were recorded from actual terminal output, not a saved full
+transcript. Reference SHA256:
+85d4ada0aa8cfa847bb06e7a4296dd9992829947e8c5bf03b7ed9dadfd39f523.
+
+Postcheck: stable041/tag2026102100010012 generation18, cold0/quiesced0/
+active_owner0, 64 CPUs and 137034936320 bytes RAM. No GPU, Work, Assistant,
+boot, SD or driver change. The full model still has no proven BFP4 speedup.
+Next: determine whether conversion can be made sufficiently accurate over
+multiple tokens/layers and integrate only under a separate experimental mode;
+then compare real full-model outputs and measured generation speed.
