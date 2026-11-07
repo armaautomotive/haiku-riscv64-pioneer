@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=19 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--bf16-fpu','--bf16-profile','--deferred-prepare-audit'}
+assert 3<=len(sys.argv)<=20 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp'}
 inspect='--inspect-candidate' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or f32,'separate dense-unroll candidate requires explicit FP32-hidden components'
 assert not boundary or (f32 and unroll),'boundary candidate requires explicit FP32-hidden and unrolled components'
@@ -25,6 +25,8 @@ pushed='--pushed-completion' in options
 assert not pushed or worker_admission,'QGW3 receiver requires the entire explicit returning worker-admission profile'
 bf16='--bf16-fpu' in options
 assert not bf16 or (inspect and precise and worker_admission and not pushed),'QGW4 requires its separate inspect/precise/admission profile,not QGW3 receipts'
+hybrid='--hybrid-bfp' in options
+assert not hybrid or (inspect and bf16),'hybrid coordinator is an explicit BF16 inspection build only'
 bf16_profile='--bf16-profile' in options
 assert not bf16_profile or bf16,'BF16 timing requires the explicit BF16 inspect profile'
 deferred_audit='--deferred-prepare-audit' in options
@@ -51,6 +53,7 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_
  *(['-DPIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE=1'] if deferred_audit else []),
  *(['-DPIONEER_Q38_BF16_PROFILE_IMAGE=1'] if bf16_profile else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1'] if bf16 else []),
+ *(['-DPIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP=1'] if hybrid else []),
  *(['-DPIONEER_Q38_JOB_BOOT_FOLD_IMAGE=1'] if fold_job_boot else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL=1'] if packet_unroll else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_PACKET_SEAL_UNROLL_EIGHT=1'] if packet_eight else []),
@@ -69,6 +72,7 @@ run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE=1','-DPIONEER_
  *(['-DPIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE=1'] if deferred_audit else []),
  *(['-DPIONEER_Q38_BF16_PROFILE_IMAGE=1'] if bf16_profile else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1'] if bf16 else []),
+ *(['-DPIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP=1'] if hybrid else []),
  *(['-DPIONEER_Q38_JOB_BOOT_FOLD_IMAGE=1'] if fold_job_boot else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_SINGLE_CLOSED_AUDIT=1'] if single_audit else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_WORKER_SEALED_ADMISSION=1'] if worker_admission else []),

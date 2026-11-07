@@ -14,7 +14,11 @@
 struct PioneerQ38HybridRootPairs {
  // Per-bank entry: original stripe address, relocated stripe address,
  // first output row, row count. The bank is the entry index.
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
+ template<class IO> static __attribute__((noinline,section(".bf16.root"))) bool Relocate(IO& io,unsigned layer,unsigned k,unsigned rows){
+#else
  template<class IO> static bool Relocate(IO& io,unsigned layer,unsigned k,unsigned rows){
+#endif
   if(layer>=64 || (k!=5120 && k!=17408) || rows!=(k==5120?17408U:5120U))return false;
   const bool eight=layer>=48 && layer<=60;
   const unsigned oldBand=k==5120?92160U:313344U;

@@ -44,6 +44,7 @@ class PioneerQ38HybridJobBinding {
   output=staged;return true;
  }
 public:
+ enum {RootManifestWords=64*3*7};
  bool Bind(const Canonical& canonical,uint64_t bfp8Layers){
   if(attempted)return false;
   attempted=true;PioneerQ38HybridModelPlan::Proposal next;
@@ -70,6 +71,27 @@ public:
  bool Matches8(const PioneerQ38PairedProjectionJobs& plan,unsigned layer,unsigned role,unsigned position,unsigned ordinal,unsigned sequence,const PioneerQ38Bfp8WorkerJob::Job& candidate)const{
   PioneerQ38Bfp8WorkerJob::Job expected={};if(!Build8(plan,layer,role,position,ordinal,sequence,expected))return false;
   for(unsigned i=0;i<PioneerQ38Bfp8WorkerJob::Words;i++)if(candidate.words[i]!=expected.words[i])return false;
+  return true;
+ }
+ // Model-wide table for the experimental ROOT. This only creates host-side
+ // metadata: the eventual owner must authenticate, upload and hold it fixed.
+ bool RootManifest(uint32_t* output,unsigned words)const{
+  if(!ready || !source || !output || words!=RootManifestWords || mask!=UINT64_C(0x1fff000000000000))return false;
+  uint32_t staged[RootManifestWords];
+  for(unsigned layer=0;layer<64;layer++)for(unsigned role=2;role<=4;role++){
+   unsigned seen=0;
+   for(unsigned stripe=0;stripe<7;stripe++){
+    const auto* part=source->ProjectionStripe(layer,role,stripe);
+    const unsigned index=stripeIndex[layer][role-2][stripe];
+    if(!part || part->bank>=7 || (seen&(1U<<part->bank)) || index>=proposal.parts.size() || source->Part(index)!=part)return false;
+    const auto& dest=proposal.parts[index];const bool eight=(mask&(UINT64_C(1)<<layer))!=0;
+    if(dest.original!=index || dest.bank!=part->bank || dest.encoding!=(eight?8U:0U)
+     || dest.offset>UINT32_MAX-Canonical::Base || (dest.offset&4095))return false;
+    staged[(layer*3+role-2)*7+part->bank]=Canonical::Base+dest.offset;seen|=1U<<part->bank;
+   }
+   if(seen!=127)return false;
+  }
+  for(unsigned i=0;i<RootManifestWords;i++)output[i]=staged[i];
   return true;
  }
  const PioneerQ38HybridModelPlan::Proposal* Plan()const{return ready?&proposal:nullptr;}

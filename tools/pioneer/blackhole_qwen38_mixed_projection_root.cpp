@@ -22,7 +22,12 @@
 #endif
 #ifdef PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU
 #include "PioneerQ38Bf16RootPairs.h"
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
+#include "PioneerQ38HybridRootPairs.h"
+#include "PioneerQ38HybridMatrixReceipt.h"
+#else
 #include "PioneerQ38Bf16MatrixReceipt.h"
+#endif
 #endif
 #ifdef PIONEER_Q38_BF16_DEFERRED_PREPARE_AUDIT_IMAGE
 #include "PioneerQ38Bf16DeferredAuditRole.h"

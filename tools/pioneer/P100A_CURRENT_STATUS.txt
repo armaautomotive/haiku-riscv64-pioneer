@@ -92,13 +92,15 @@ Four compact goals
    A reproducible audit confirms the old peer save/restore footprint omits
    most BFP8 staging and the relocated GDN code, so it cannot be reused.
    An experimental receipt checker passes tests against actual simulated
-   worker proofs; it cannot authenticate weight addresses by itself and is
-   not yet connected to a ROOT coordinator or hardware.
+   worker proofs; it cannot authenticate weight addresses by itself.
    A ROOT-compatible converted-address translation now matches the
    independently generated host plan for all 22848 jobs. A separately linked
-   RV32 helper matches 1190 jobs in simulation. It is NOT yet called by the
-   model's real ROOT, nor does it authenticate the destination table or
-   upload weights; old native ownership still cannot be reused.
+   RV32 helper matches 1190 jobs in simulation. An explicit experimental
+   build now connects it and the receipt checker to the real ROOT source;
+   direct compiled-ROOT function tests match 72 planned jobs in simulation.
+   The normal BF16 ROOT rebuild is byte-for-byte unchanged. This experimental
+   path is NOT installed or fully executed, authenticates neither its table
+   nor uploaded pages, and cannot reuse the old native owner/journal.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 

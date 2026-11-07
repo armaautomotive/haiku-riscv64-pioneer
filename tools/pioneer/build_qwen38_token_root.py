@@ -7,7 +7,7 @@ import re
 import subprocess
 import sys
 options=sys.argv[3:]
-assert 3<=len(sys.argv)<=21 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--token-frontier','--bf16-fpu','--bf16-profile','--deferred-prepare-audit'}
+assert 3<=len(sys.argv)<=22 and len(set(options))==len(options) and set(options)<={'--inspect-candidate','--cancel-boundary','--f32-hidden','--unroll-dense-seals','--boundary-seals','--unroll-quiet','--worker-local-source-guards','--precise-activation','--single-closed-audit','--worker-sealed-admission','--pushed-completion','--unroll-packet-seals','--unroll-packet-seals-eight','--fold-job-boot','--token-frontier','--bf16-fpu','--bf16-profile','--deferred-prepare-audit','--hybrid-bfp'}
 inspect='--inspect-candidate' in options;cancel='--cancel-boundary' in options;f32='--f32-hidden' in options;unroll='--unroll-dense-seals' in options;boundary='--boundary-seals' in options
 assert not unroll or (cancel and f32),'dense-unroll candidate requires explicit cancel+FP32 profile'
 assert not boundary or (cancel and f32 and unroll),'boundary candidate requires explicit cancel+FP32+unrolled profile'
@@ -25,6 +25,8 @@ pushed='--pushed-completion' in options
 assert not pushed or worker_admission,'QGW3 receiver requires the entire explicit worker-admission/cancel/FP32 profile'
 bf16='--bf16-fpu' in options
 assert not bf16 or (inspect and precise and worker_admission and not pushed),'QGW4 requires separate inspect/precise/admission and no old pushed receipts'
+hybrid='--hybrid-bfp' in options
+assert not hybrid or (inspect and bf16),'hybrid ROOT is an explicit BF16 inspection build only'
 bf16_profile='--bf16-profile' in options
 assert not bf16_profile or (bf16 and cancel and f32),'BF16 timing requires explicit BF16/cancel/FP32 inspect parents'
 deferred_audit='--deferred-prepare-audit' in options
@@ -47,13 +49,14 @@ def run(*args):subprocess.run([str(a) for a in args],check=True)
 # Reproduce the strict returning components and unchanged whole feedback
 # image FIRST. Neither an old native owner nor a component alone can launch.
 components=out/'qualified-components'
-run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []),*(['--pushed-completion'] if pushed else []),*(['--unroll-packet-seals'] if packet_unroll else []),*(['--unroll-packet-seals-eight'] if packet_eight else []),*(['--fold-job-boot'] if fold_job_boot else []),*(['--bf16-fpu'] if bf16 else []),*(['--bf16-profile'] if bf16_profile else []),*(['--deferred-prepare-audit'] if deferred_audit else []))
+run(sys.executable,here/'build_qwen38_global_token_components.py',sdk,components,*(['--inspect-candidate'] if inspect else []),*(['--f32-hidden'] if f32 else []),*(['--unroll-dense-seals'] if unroll else []),*(['--boundary-seals'] if boundary else []),*(['--unroll-quiet'] if quiet else []),*(['--worker-local-source-guards'] if local_sources else []),*(['--precise-activation'] if precise else []),*(['--single-closed-audit'] if single_audit else []),*(['--worker-sealed-admission'] if worker_admission else []),*(['--pushed-completion'] if pushed else []),*(['--unroll-packet-seals'] if packet_unroll else []),*(['--unroll-packet-seals-eight'] if packet_eight else []),*(['--fold-job-boot'] if fold_job_boot else []),*(['--bf16-fpu'] if bf16 else []),*(['--bf16-profile'] if bf16_profile else []),*(['--deferred-prepare-audit'] if deferred_audit else []),*(['--hybrid-bfp'] if hybrid else []))
 flags=['-std=c++11','-O2','-Wall','-Wextra','-Werror','-ffreestanding','-fno-exceptions','-fno-rtti','-fno-stack-protector',
  '-fno-pic','-fno-pie','-ffp-contract=off','-ffunction-sections','-fdata-sections','-fno-unwind-tables','-fno-asynchronous-unwind-tables',
  '-msmall-data-limit=0','-mno-relax','-march=rv32imf','-mabi=ilp32','-fstack-usage','-ffixed-s11']
 run(tool+'g++',*flags,'-DPIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE=1','-DPIONEER_Q38_GLOBAL_CHAIN_FEEDBACK=1',
  *(['-DPIONEER_Q38_BF16_PROFILE_IMAGE=1','-DPIONEER_Q38_TOKEN_PHASE_PROFILE_IMAGE=1'] if bf16_profile else []),
  *(['-DPIONEER_Q38_GLOBAL_CHAIN_BF16_FPU=1'] if bf16 else []),
+ *(['-DPIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP=1'] if hybrid else []),
  *(['-DPIONEER_Q38_FULL_OFFLOAD_ROOT_IMAGE=1'] if bf16 else []),
  *(['-DPIONEER_Q38_TOKEN_FRONTIER_IMAGE=1'] if frontier else []),
  *(['-DPIONEER_Q38_JOB_BOOT_FOLD_IMAGE=1'] if fold_job_boot else []),

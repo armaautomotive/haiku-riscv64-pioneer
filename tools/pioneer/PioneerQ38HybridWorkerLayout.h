@@ -20,6 +20,11 @@ namespace PioneerQ38HybridWorkerLayout {
 namespace Base=PioneerQ38Bf16WorkerLayout;
 namespace Producer=Base::Producer;
 using namespace PioneerQ38GlobalWorkerLayout;
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
+#define QGW5_GRAMMAR __attribute__((noinline,section(".bf16.root")))
+#else
+#define QGW5_GRAMMAR __attribute__((noinline))
+#endif
 enum : unsigned {Magic=0x35574751, JobWitness=0x354f4751,
 #ifdef PIONEER_Q38_HYBRID_TEST_BFP8_LAYER0
  // Test-image-only: exercise the BFP8 dispatcher on the first layer without
@@ -33,7 +38,7 @@ static inline unsigned BootWord(unsigned i){
  return i==40?unsigned(JobWitness):i==49?unsigned(Bfp8MaskLow):
   i==50?unsigned(Bfp8MaskHigh):Base::BootWord(i);
 }
-static __attribute__((noinline)) bool BootShape(const uint32_t* b){
+static QGW5_GRAMMAR bool BootShape(const uint32_t* b){
  if(!b || b[0]!=Magic || b[40]!=JobWitness || b[49]!=Bfp8MaskLow || b[50]!=Bfp8MaskHigh)return false;
  uint32_t old[64];for(unsigned i=0;i<64;i++)old[i]=b[i];
  old[0]=Base::Magic;old[40]=Base::JobWitness;old[49]=old[50]=0;
@@ -48,7 +53,7 @@ template<class W> static bool LeafShape(const uint32_t* j,const uint32_t* b){
   && j[33]==(leaf.words[2]==5120?17408U:5120U) && !(j[32]&31) && j[32]<j[33]
   && leaf.words[4]*32<=j[33]-j[32] && (leaf.words[2]==17408?j[34]==4:(j[34]==2 || j[34]==3));
 }
-static __attribute__((noinline)) bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
+static QGW5_GRAMMAR bool JobShape(const uint32_t* j,const uint32_t* b,unsigned previous,unsigned densePhase){
  if(!j || !BootShape(b) || j[0]!=Magic)return false;
  if(FpuJob(j)){
   if(densePhase || previous>=0x7ffffffe || j[1]!=previous+1 || !j[1] || j[1]>=0x7fffffff
@@ -67,5 +72,6 @@ static __attribute__((noinline)) bool JobShape(const uint32_t* j,const uint32_t*
  if(j[2]==GlobalMatrix){if(j[31]!=JobWitness)return false;oldJob[31]=Base::JobWitness;}
  return Base::JobShape(oldJob,oldBoot,previous,densePhase);
 }
+#undef QGW5_GRAMMAR
 }
 #endif

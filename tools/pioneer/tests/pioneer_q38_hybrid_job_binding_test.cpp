@@ -54,6 +54,9 @@ int main(){
  auto canonical=std::make_unique<PioneerQ38CanonicalModelPlan>();auto foreign=std::make_unique<PioneerQ38CanonicalModelPlan>();
  assert(canonical->Build() && foreign->Build());const uint64_t mask=UINT64_C(0x1fff000000000000);
  PioneerQ38HybridJobBinding binding;assert(binding.Bind(*canonical,mask) && !binding.Bind(*canonical,mask));
+ uint32_t manifest[PioneerQ38HybridJobBinding::RootManifestWords]={};
+ assert(binding.RootManifest(manifest,PioneerQ38HybridJobBinding::RootManifestWords));
+ uint32_t untouchedManifest=123;assert(!binding.RootManifest(&untouchedManifest,1) && untouchedManifest==123);
  const auto* relocation=binding.Plan();assert(relocation && relocation->parts.size()==canonical->Count());
  unsigned jobs4=0,jobs8=0,bands=0;
  for(unsigned layer=0;layer<64;layer++)for(unsigned role=2;role<=4;role++){
@@ -66,6 +69,7 @@ int main(){
    assert(index<relocation->parts.size());const auto& dest=relocation->parts[index];
    root->table[stripe->bank][0]=canonical->Base+stripe->offset;
    root->table[stripe->bank][1]=canonical->Base+dest.offset;
+   assert(manifest[(layer*3+role-2)*7+stripe->bank]==root->table[stripe->bank][1]);
    root->table[stripe->bank][2]=stripe->firstRow;root->table[stripe->bank][3]=stripe->rows;
   }
   assert(PioneerQ38Bf16RootPairs::Build(*root,paired.Inputs(),paired.Outputs()));
@@ -136,6 +140,8 @@ int main(){
   && !binding.Build8(valid,48,2,8191,0,0,untouched) && untouched.words[0]==123);
  PioneerQ38HybridJobBinding impossible;assert(!impossible.Bind(*canonical,UINT64_C(0xfffc000000000000)) && !impossible.Plan()
   && !impossible.Bind(*canonical,mask));
+ PioneerQ38HybridJobBinding wrongMask;assert(wrongMask.Bind(*canonical,0));
+ manifest[0]=123;assert(!wrongMask.RootManifest(manifest,PioneerQ38HybridJobBinding::RootManifestWords) && manifest[0]==123);
  printf("PASS relocated hybrid jobs and experimental QGW5 worker grammar: BFP4 %u/BFP8 %u, %u bands, all layers/119 peers, format, rows and bank bounds; NO DEVICE\n",jobs4,jobs8,bands);
 }
 #endif

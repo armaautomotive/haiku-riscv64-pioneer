@@ -32,23 +32,37 @@
 #endif
 #ifndef PIONEER_Q38_SELECTED_GLOBAL_WORKER_H
 #define PIONEER_Q38_SELECTED_GLOBAL_WORKER_H
-#if defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU) || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS)
+#if defined(PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP)
+#if PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP != 1 || !defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU) \
+ || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS)
+#error Hybrid ROOT requires a distinct experimental BF16 build, not an installed program selector
+#endif
+#define PIONEER_DRAM_SWEEP_FREESTANDING 1
+#include "PioneerQ38HybridWorkerLayout.h"
+namespace PioneerQ38SelectedGlobalWorker=PioneerQ38HybridWorkerLayout;
+enum {PioneerQ38SelectedWorkerBootEnd=51,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=0,PioneerQ38SelectedWorkerBf16=1,PioneerQ38SelectedWorkerHybrid=1};
+#elif defined(PIONEER_Q38_GLOBAL_CHAIN_BF16_FPU) || defined(PIONEER_Q38_TOKEN_BF16_PROGRAMS)
 #include "PioneerQ38Bf16WorkerLayout.h"
 namespace PioneerQ38SelectedGlobalWorker=PioneerQ38Bf16WorkerLayout;
-enum {PioneerQ38SelectedWorkerBootEnd=49,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=0,PioneerQ38SelectedWorkerBf16=1};
+enum {PioneerQ38SelectedWorkerBootEnd=49,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=0,PioneerQ38SelectedWorkerBf16=1,PioneerQ38SelectedWorkerHybrid=0};
 #elif defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
 #include "PioneerQ38PushedWorkerLayout.h"
 namespace PioneerQ38SelectedGlobalWorker=PioneerQ38PushedWorkerLayout;
-enum {PioneerQ38SelectedWorkerBootEnd=55,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=1,PioneerQ38SelectedWorkerBf16=0};
+enum {PioneerQ38SelectedWorkerBootEnd=55,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=1,PioneerQ38SelectedWorkerBf16=0,PioneerQ38SelectedWorkerHybrid=0};
 #elif defined(PIONEER_Q38_GLOBAL_CHAIN_PRECISE_ACTIVATION) || defined(PIONEER_Q38_TOKEN_PRECISE_PROGRAMS)
 #include "PioneerQ38PreciseWorkerLayout.h"
 namespace PioneerQ38SelectedGlobalWorker=PioneerQ38PreciseWorkerLayout;
-enum {PioneerQ38SelectedWorkerBootEnd=49,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=0,PioneerQ38SelectedWorkerBf16=0};
+enum {PioneerQ38SelectedWorkerBootEnd=49,PioneerQ38SelectedWorkerPrecise=1,PioneerQ38SelectedWorkerPushed=0,PioneerQ38SelectedWorkerBf16=0,PioneerQ38SelectedWorkerHybrid=0};
 #else
 #include "PioneerQ38GlobalWorkerLayout.h"
 namespace PioneerQ38SelectedGlobalWorker=PioneerQ38GlobalWorkerLayout;
-enum {PioneerQ38SelectedWorkerBootEnd=46,PioneerQ38SelectedWorkerPrecise=0,PioneerQ38SelectedWorkerPushed=0,PioneerQ38SelectedWorkerBf16=0};
+enum {PioneerQ38SelectedWorkerBootEnd=46,PioneerQ38SelectedWorkerPrecise=0,PioneerQ38SelectedWorkerPushed=0,PioneerQ38SelectedWorkerBf16=0,PioneerQ38SelectedWorkerHybrid=0};
 #endif
+#endif
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
+static_assert(PioneerQ38SelectedWorkerHybrid==1,"late hybrid ROOT selection");
+#else
+static_assert(PioneerQ38SelectedWorkerHybrid==0,"late hybrid ROOT removal");
 #endif
 #if defined(PIONEER_Q38_GLOBAL_CHAIN_PUSHED_COMPLETION) || defined(PIONEER_Q38_TOKEN_PUSHED_PROGRAMS)
 static_assert(PioneerQ38SelectedWorkerPushed==1,"late QGW3 DATA selection");

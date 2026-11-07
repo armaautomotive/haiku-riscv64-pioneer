@@ -15,17 +15,55 @@ struct BfPairIO {
  unsigned Source(unsigned w){return Part(w,5);}
  void Output(unsigned w,unsigned i,unsigned v){Words(BFR::Parts+w*32)[i]=v;Words(BFR::Shadow+w*32)[i]=v;}
  void OutputRow(unsigned w,unsigned v){Words(BFR::Rows)[w]=v;Words(BFR::RowShadow)[w]=v;}
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
+ // One model-wide 64*3*7 destination manifest, selected on-card per
+ // projection. Caller/owner must authenticate all addresses and pages.
+ enum {TableAddress=0x16c400,TableShadow=0x16da00,TableWords=64*3*7};
+ unsigned Table(unsigned bank,unsigned i){
+  if(i==1)return Words(TableShadow)[bank];
+  unsigned address=0,first=0,rows=0;bool found=false;
+  for(unsigned w=0;w<119;w++)if(Part(w,1)==bank){
+   if(!found){address=Part(w,0);first=Row(w);found=true;}
+   rows+=Part(w,2)*16;
+  }
+  return !found?0U:i==0?address:i==2?first:rows;
+ }
+ unsigned Result(unsigned w,unsigned i){return Words(BFR::Parts+w*32)[i];}
+ unsigned ResultRow(unsigned w){return Words(BFR::Rows)[w];}
+#endif
 };
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
+static BF_ROOT_FN void BfPairSeal(unsigned w,const uint32_t* d){
+#define BF_PAIR_SEAL(d,w) BfPairSeal(w,d)
+#else
 static BF_ROOT_FN void BfPairSeal(unsigned w){
+#define BF_PAIR_SEAL(d,w) BfPairSeal(w)
+#endif
  if(w>=119)scalar_fault_park();
  for(unsigned i=0;i<8;i++)if(Words(BFR::Parts+w*32)[i]!=Words(BFR::Shadow+w*32)[i])scalar_fault_park();
  if(Words(BFR::Rows)[w]!=Words(BFR::RowShadow)[w])scalar_fault_park();
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
+ if(!BfQ4(d) || d[42]>=64)scalar_fault_park();
+ const unsigned index=(d[42]*3+d[43]-2)*7;
+ for(unsigned i=0;i<7;i++)if(Words(BfPairIO::TableAddress)[index+i]!=Words(BfPairIO::TableShadow)[i])scalar_fault_park();
+#endif
 }
 static BF_ROOT_FN void BfBuildPairs(const uint32_t* d){
  static_assert(BFR::Parts>=0x167000 && BFR::Rows>=BFR::Parts+119*32 && BFR::Shadow>=BFR::Rows+119*4
   && BFR::RowShadow>=BFR::Shadow+119*32 && BFR::End>=BFR::RowShadow+119*4 && BFR::End<=unsigned(L::PeerBoots),
   "NEW paired metadata extents exclude retired cohort shadows,final hidden and live peer boot/job storage");
  BfPairIO io;if(!BfQ4(d) || !BFR::Build(io,d[14],d[11]))scalar_fault_park();Fence();
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
+ static_assert(unsigned(BfPairIO::TableAddress)>=unsigned(BFR::End)
+  && BfPairIO::TableShadow>=BfPairIO::TableAddress+BfPairIO::TableWords*4
+  && BfPairIO::TableShadow+7*4<=unsigned(L::PeerBoots),"experimental ROOT manifest/shadow geometry only");
+ if(d[42]>=64)scalar_fault_park();
+ const unsigned index=(d[42]*3+d[43]-2)*7;
+ for(unsigned i=0;i<7;i++)Words(BfPairIO::TableShadow)[i]=Words(BfPairIO::TableAddress)[index+i];
+ Fence();if(!PioneerQ38HybridRootPairs::Relocate(io,d[42],d[14],d[11]))scalar_fault_park();
+ for(unsigned w=0;w<119;w++)BF_PAIR_SEAL(d,w);
+ Fence();
+#endif
 }
 static BF_ROOT_FN void BfDescriptor(const uint32_t* d,unsigned w,uint32_t* out){
  const bool gated=d[43]==4;const unsigned chunks=gated?68:20;
@@ -150,13 +188,24 @@ static BF_ROOT_FN void BfInputsSeal(const uint32_t* d){
  for(unsigned i=0;i<d[14]/2;i++)if(Words(L::Native)[i]!=Words(L::NativeShadow)[i])scalar_fault_park();
 }
 static BF_ROOT_FN void BfMatrixJob(const uint32_t* d,unsigned w,unsigned n){
- BfPairSeal(w);if(!n || n>=0x7ffffffe)scalar_fault_park();const auto* p=Words(BFR::Parts+w*32);
+ BF_PAIR_SEAL(d,w);if(!n || n>=0x7ffffffe)scalar_fault_park();const auto* p=Words(BFR::Parts+w*32);
  for(unsigned i=0;i<64;i++)Words(L::Scratch)[i]=0;
  const unsigned h[]={M::Magic,n,1,w+1,M::Peer(w+1),d[42],d[40],d[6]};
  for(unsigned i=0;i<8;i++){Words(L::Scratch)[i]=h[i];Words(L::Scratch)[8+i]=d[32+i];}
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
+ const bool eight=d[42]>=48 && d[42]<=60;
+ const unsigned leaf[]={eight?unsigned(PioneerQ38Bfp8WorkerJob::Magic):unsigned(PioneerQ38Bfp4WorkerJob::Magic),
+  1,d[14],p[0],p[2]/2,p[4],w+1,M::Peer(w+1),BFP::Format,0xa0000,129,n,0x84000,0,0,0};
+#else
  const unsigned leaf[]={BFC::Magic,1,d[14],p[0],p[2],p[4],w+1,M::Peer(w+1),BFP::Format,0xa0000,129,n,0x84000,0,0,0};
+#endif
  for(unsigned i=0;i<16;i++)Words(L::Scratch)[16+i]=leaf[i];
- Words(L::Scratch)[32]=Words(BFR::Rows)[w];Words(L::Scratch)[33]=d[11];Words(L::Scratch)[34]=d[43];Words(L::Scratch)[35]=12;
+ Words(L::Scratch)[32]=Words(BFR::Rows)[w];Words(L::Scratch)[33]=d[11];Words(L::Scratch)[34]=d[43];
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
+ Words(L::Scratch)[35]=eight?8:4;
+#else
+ Words(L::Scratch)[35]=12;
+#endif
  if(!M::JobShape(const_cast<const uint32_t*>(Words(L::Scratch)),Boot(w),n-1,0))scalar_fault_park();
 }
 static BF_ROOT_FN bool BfAdmitPrevious(const uint32_t* d,uint32_t* tracked,unsigned w,const uint32_t* previous){
@@ -167,21 +216,29 @@ static BF_ROOT_FN bool BfAdmitPrevious(const uint32_t* d,uint32_t* tracked,unsig
   after[i]=Register(d,tracked,w,0xffb20000+Counter(i));
   if(after[i]!=Words(L::Counters)[w*8+i])scalar_fault_park();
  }
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
+ if(!PioneerQ38HybridMatrixReceipt::Matrix(proof,previous,Boot(w),proof,after))scalar_fault_park();
+#else
  if(!PioneerQ38Bf16MatrixReceipt::Matrix(proof,previous,Boot(w),proof,after))scalar_fault_park();
+#endif
  // No counter or nonce rebase. ClosedJob authenticated the SAME real
  // completed job before this helper;the next worker rechecks its private
  // source and retained frontier before its first request.
  return true;
 }
 static BF_ROOT_FN void BfGatherMatrix(const uint32_t* d,uint32_t* tracked,unsigned w){
- BfPairSeal(w);MatrixWait(d,tracked,w);BootSeal(d,tracked,w);
+ BF_PAIR_SEAL(d,w);MatrixWait(d,tracked,w);BootSeal(d,tracked,w);
  BfMatrixJob(d,w,Words(L::Nonces)[w]);Copy(L::PeerJobs+w*256,L::Scratch,64);ClosedJob(d,tracked,w,false);
  const unsigned groups=Words(BFR::Parts+w*32)[2];
  Transfer(d,tracked,w,0x83f00,256+groups*64,false);uint32_t proof[64];for(unsigned i=0;i<64;i++)proof[i]=Words(L::Scratch)[i];
  uint32_t before[8],after[8];for(unsigned i=0;i<8;i++){
   before[i]=Words(L::Counters)[w*8+i];after[i]=Register(d,tracked,w,0xffb20000+Counter(i));
  }
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
+ if(!PioneerQ38HybridMatrixReceipt::Matrix(proof,reinterpret_cast<const uint32_t*>(L::PeerJobs+w*256),Boot(w),before,after))scalar_fault_park();
+#else
  if(!PioneerQ38Bf16MatrixReceipt::Matrix(proof,reinterpret_cast<const uint32_t*>(L::PeerJobs+w*256),Boot(w),before,after))scalar_fault_park();
+#endif
  const unsigned first=Words(BFR::Rows)[w];
  for(unsigned i=0;i<groups*16;i++){
   const unsigned bits=Words(L::Scratch)[64+i];if((bits&0x7f800000)==0x7f800000)scalar_fault_park();Words(L::Projected)[first+i]=bits;
@@ -191,3 +248,4 @@ static BF_ROOT_FN void BfGatherMatrix(const uint32_t* d,uint32_t* tracked,unsign
  }
 }
 #undef BF_ROOT_FN
+#undef BF_PAIR_SEAL

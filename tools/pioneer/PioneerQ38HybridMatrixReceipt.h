@@ -7,7 +7,14 @@
 // The caller must independently authenticate the closed job, physical
 // counters, input lifetime, converted weights, and exclusive ownership.
 struct PioneerQ38HybridMatrixReceipt {
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
+ static __attribute__((noinline,section(".bf16.receipt")))
+#else
  static __attribute__((noinline)) bool Matrix(const uint32_t* p,const uint32_t* j,const uint32_t* b,
+#endif
+#ifdef PIONEER_Q38_GLOBAL_CHAIN_HYBRID_BFP
+ bool Matrix(const uint32_t* p,const uint32_t* j,const uint32_t* b,
+#endif
   const uint32_t* before,const uint32_t* after){
   namespace M=PioneerQ38HybridWorkerLayout;
   if(!p || !j || !b || !before || !after || !j[1] || !M::FpuJob(j)

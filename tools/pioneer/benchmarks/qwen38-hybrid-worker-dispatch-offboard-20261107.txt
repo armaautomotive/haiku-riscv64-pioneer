@@ -54,6 +54,20 @@ Host tests compare all 22848 jobs against the independent canonical planner,
 including both widths, all 64 layers and table/recipe fault controls. The
 separately compiled actual RV32 helper executes 1190 assignments in the
 simulator across both formats, both widths and BFP8 boundary layers; invalid
-table input returns without output writes. The actual model ROOT does not yet
-call it. An aligned but incorrect destination can pass geometry, so actual
+table input returns without output writes. An aligned but incorrect destination can pass geometry, so actual
 ownership, table authentication and initialized-page proof are still needed.
+
+Experimental coordinator integration: a separate --hybrid-bfp inspection
+build connects the actual ROOT's paired-plan translation, 4/8-bit worker job
+construction and receipt checks. The host proposal can form one 1344-word
+manifest, indexed on-card by layer/role/bank; no per-projection host update is
+required once a future owner has installed it. The actual linked ROOT's two
+component copies of the paired-plan and job-building functions were executed
+directly in the RV32 simulator: 72 jobs across both formats, both widths and
+boundary layers matched the independent plan; mutating the selected manifest
+caused a fault. This is a direct-function test, not a complete ROOT/worker or
+full-model run. The unchanged BF16 ROOT matches every old binary pin. The
+experimental image still requires manifest/page authentication, model-wide
+relocated addresses for non-FFN parts, save/restore coverage, input lifetime,
+actual producer and worker execution together, hardware safety, accuracy and
+end-to-end timing. It is not installable or a Work/Assistant capability.
