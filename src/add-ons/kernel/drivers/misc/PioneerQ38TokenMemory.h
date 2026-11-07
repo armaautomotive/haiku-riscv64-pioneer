@@ -26,6 +26,11 @@ class PioneerQ38TokenMemory {
  uint32_t saved[PioneerQ38TokenL1::SavedWords]; // ALL arbitrary originals;HEAP ONLY
  unsigned sampled=0;bool started=false,installed=false,closed=false,unsafe=false,launched=false,launchClosed=false;
 #ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
+ enum {HybridManifestAddress=0x16c400,HybridManifestWords=64*3*7};
+ // This owner is heap-only. Keep the 5,376-byte derivation workspace here,
+ // not on a future kernel caller's limited stack. It is private to the same
+ // one-shot owner and is rebuilt from the held model before each operation.
+ uint32_t hybridManifestScratch[HybridManifestWords]={};
  bool hybridManifestInstalled=false;
 #endif
  template<class IO> bool Fail(IO& io,PioneerQ38TokenMemoryResult& result){
@@ -69,7 +74,6 @@ class PioneerQ38TokenMemory {
   return true;
  }
 #ifdef PIONEER_Q38_HYBRID_JOURNAL_DIAGNOSTIC
- enum {HybridManifestAddress=0x16c400,HybridManifestWords=64*3*7};
  bool BuildHybridManifest(uint32_t* staged)const{
   namespace L=PioneerQ38TokenL1;namespace P=PioneerQ38TokenPrograms;
   if(!staged || !canonical || !startup || !ledger || canonical->Count()!=4678
@@ -188,7 +192,7 @@ public:
    || result.version!=1 || result.started!=1 || result.phase!=4 || result.installed!=1
    || result.closed || result.unsafe || result.restoredWords || result.savedWords!=L::SavedWords
    || result.verifiedOriginalWords!=L::SavedWords || result.installedWords!=P::CodeWords(0)+119*P::CodeWords(1))return false;
-  uint32_t staged[HybridManifestWords];if(!BuildHybridManifest(staged))return false;
+  uint32_t* const staged=hybridManifestScratch;if(!BuildHybridManifest(staged))return false;
   result.phase=8;result.worker=0;
   if(!Guard(io,0) || !VerifyImage(io,0,result) || !Guard(io,0))return Fail(io,result);
   for(unsigned i=0;i<HybridManifestWords;i++){
@@ -205,7 +209,7 @@ public:
  template<class IO> bool VerifyHybridManifestHeld(IO& io,PioneerQ38TokenMemoryResult& result){
   if(!Installed() || !hybridManifestInstalled || result.version!=1 || result.started!=1
    || (result.phase!=8 && result.phase!=9) || result.installed!=1 || result.closed || result.unsafe || result.restoredWords)return false;
-  uint32_t expected[HybridManifestWords];
+  uint32_t* const expected=hybridManifestScratch;
   if(!BuildHybridManifest(expected))return Fail(io,result);
   result.phase=9;result.worker=0;
   if(!Guard(io,0) || !VerifyImage(io,0,result) || !Guard(io,0))return Fail(io,result);

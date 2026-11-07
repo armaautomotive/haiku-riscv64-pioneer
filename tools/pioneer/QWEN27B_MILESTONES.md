@@ -56,7 +56,10 @@ The QGW5 test configuration previously selected the older QGW4 startup
 grammar. It now selects the matching QGW5 grammar. A simulated held-memory
 journal has staged and verified the 1,344-word address table and restored
 the original memory; a simulated late write failure was quarantined. Neither
-check is a hardware launch or proof of production-safe cleanup.
+check is a hardware launch or proof of production-safe cleanup. The table's
+5,376-byte temporary workspace now lives in the heap-only diagnostic owner;
+a host-build stack check passed, but the native kernel path is not built or
+qualified with this diagnostic.
 
 Pass requires a real 27B request using the held weights on the P100A, checked
 output, and safe cleanup. Report actual loading time and generation rate.

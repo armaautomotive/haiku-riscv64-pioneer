@@ -78,6 +78,21 @@ with tempfile.TemporaryDirectory(prefix='pioneer-token-memory-', dir='/private/t
     subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O1', '-g', '-Wall', '-Wextra', '-Werror',
                     '-fsanitize=address,undefined', *flags, *profile,
                     str(here/'pioneer_q38_token_memory_test.cpp'), '-o', str(binary)], check=True)
+    if args == ['--hybrid-manifest']:
+        # These methods stage a 1,344-word address table. Their scratch must
+        # stay in the heap-only owner, not silently return to a 5 KiB frame.
+        # Check an unsanitized no-inline HOST build separately: ASan marks
+        # frames dynamic and cannot establish this limited static property.
+        stack_binary=pathlib.Path(tmp)/'stack-check'
+        subprocess.run([os.environ.get('CXX', 'c++'), '-std=c++17', '-O2', '-fno-inline', '-fstack-usage',
+                        '-Wall', '-Wextra', '-Werror', *flags, *profile,
+                        str(here/'pioneer_q38_token_memory_test.cpp'), '-o', str(stack_binary)], check=True)
+        usage=list(pathlib.Path(tmp).glob('*.su'));assert len(usage)==1,usage
+        rows=[line.split('\t') for line in usage[0].read_text().splitlines()]
+        for name in ('InstallHybridManifestHeld', 'VerifyHybridManifestHeld'):
+            matching=[row for row in rows if name in row[0]]
+            assert len(matching)==1 and len(matching[0])==3 and matching[0][2]=='static' and int(matching[0][1])<=2048,(name,matching)
+        print('PASS hybrid manifest install and verification frames <=2048 bytes in host diagnostic build',flush=True)
     for extra in ([[]] if args == ['--positive'] else [args] if args in (['--faults'], ['--capsule-faults'], ['--hybrid-faults'], ['--hybrid-manifest']) else [[], ['--faults']]):
         subprocess.run([str(binary), *extra], check=True, env={**os.environ, 'ASAN_OPTIONS':'quarantine_size_mb=32', 'UBSAN_OPTIONS':'halt_on_error=1'})
     if sdk:
