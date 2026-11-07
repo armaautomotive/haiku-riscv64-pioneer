@@ -7,7 +7,12 @@
 
 struct Band4Machine : NativeBfpMachine {
  unsigned tiles, clears=0;
- explicit Band4Machine(unsigned k):tiles(k/32) { assert(PioneerQ38NativeBfp4Band::Width(k)); }
+ unsigned weightBase,inputBase,weightStride,inputStride,header,limit;
+ explicit Band4Machine(unsigned k,unsigned w=0x90000,unsigned b=0x124000,unsigned ws=592,unsigned bs=80,unsigned h=16,unsigned end=0x130000)
+  :tiles(k/32),weightBase(w),inputBase(b),weightStride(ws),inputStride(bs),header(h),limit(end) {
+  assert(PioneerQ38NativeBfp4Band::Width(k) && h>=16 && !(h&15) && ws==576+h && bs==64+h);
+  assert(w>=h && b>=h && w-h+tiles*ws<=b-h && b-h+tiles*bs<=end && end<=l1.size());
+ }
  void UnpackBand(unsigned which) {
   assert(which<2 && thread[0]==0 && thread[5]==4);
   const unsigned base=64+which*48,format=config[base]&15;
@@ -17,10 +22,10 @@ struct Band4Machine : NativeBfpMachine {
   assert(!(config[base+3]>>24) && (config[base+8]&~0x12fU)==0 && !(config[base+9]&0x1f0));
   assert((config[base+9]&1) && config[base+10]==0x17fff && !config[base+11] && !config[base+28]);
   const unsigned address=(config[base+12]+1)*16,tile=unpacks[which]%tiles;
-  assert(address==(which?0x124000+tile*80:0x90000+tile*592));
+  assert(address==(which?inputBase+tile*inputStride:weightBase+tile*weightStride));
   assert(xStart[which]==0 && xEnd[which]==(which?31U:1023U));
-  assert(address>=16 && address+(which?64U:576U)<=0x130000);
-  for(unsigned h=0;h<16;h++)assert(!l1[address-16+h]);
+  assert(address>=header && address+(which?64U:576U)<=limit);
+  for(unsigned h=0;h<header;h++)assert(!l1[address-header+h]);
   auto& s=source[which][unpackBank[which]];if(s.pending || s.owner)throw Unknown;
   unsigned dest=which?config[61]:config[49]+(config[84]&65535);
   if(which){assert(!(dest&1));dest/=2;}

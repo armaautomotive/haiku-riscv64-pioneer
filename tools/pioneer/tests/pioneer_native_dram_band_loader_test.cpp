@@ -8,21 +8,22 @@
 #include <cstring>
 #include <vector>
 using L=PioneerNativeDramBandLayout;
-struct IO {
+template<class Layout> struct LoaderIO {
+	using L=Layout;
 	unsigned width,route,events=0,issues=0,completions=0,headerWrites=0,headerReads=0,scalarPayloadReads=0;
 	unsigned fault=0,maxQueue=0,dropped=99;
 	std::array<unsigned,10> command;
 	std::array<uint32_t,16> counters;
-	std::vector<L::Read> pending;
+	std::vector<typename L::Read> pending;
 	std::vector<unsigned char> ownedL1,dram;
 	std::vector<unsigned char>& l1;
-	explicit IO(unsigned k,unsigned xy=17|(12<<6),std::vector<unsigned char>* shared=nullptr)
+	explicit LoaderIO(unsigned k,unsigned xy=17|(12<<6),std::vector<unsigned char>* shared=nullptr)
 		:width(k),route(xy),ownedL1(shared?0:0x180000,0xa7),dram(0x110000),l1(shared?*shared:ownedL1) {
 		assert(l1.size()==0x180000);
 		command.fill(0xcccccccc);counters.fill(UINT32_MAX-17);
 		for(unsigned i=0;i<dram.size();i++)dram[i]=uint8_t((i*17+i/1088*13)^0x8b);
 	}
-	IO(const IO&)=delete;IO& operator=(const IO&)=delete;
+	LoaderIO(const LoaderIO&)=delete;LoaderIO& operator=(const LoaderIO&)=delete;
 	bool Header(unsigned a)const {
 		for(unsigned operand=0;operand<2;operand++) {
 			const unsigned start=(operand?L::Input:L::Weight)-L::Header,stride=operand?L::InputStride:L::WeightStride;
@@ -75,7 +76,7 @@ struct IO {
 		}
 		if(a==0xffb20040) {
 			assert(v==1 && pending.size()<16);
-			L::Read expected={};assert(L::Packet(width,issues/L::Tiles(width),issues%L::Tiles(width),expected));
+			typename L::Read expected={};assert(L::Packet(width,(issues/L::Tiles(width))%2,issues%L::Tiles(width),expected));
 			assert(command[0]==expected.source && command[3]==expected.destination && command[8]==expected.bytes);
 			assert(!command[1] && command[2]==route && !command[4] && command[5]==129 && !command[6] && !command[7] && !command[9]);
 			pending.push_back(expected);issues++;return;
@@ -86,18 +87,19 @@ struct IO {
 		command[index]=v;
 	}
 	void Fence(){events++;}
-	void Exact()const {
-		assert(issues==2*L::Tiles(width) && completions==issues && maxQueue==16 && pending.empty());
-		assert(headerWrites==2*(L::Header/4)*L::Tiles(width) && headerReads==headerWrites && !scalarPayloadReads);
+	void Exact(unsigned passes=1)const {
+		assert(issues==passes*2*L::Tiles(width) && completions==issues && maxQueue==16 && pending.empty());
+		assert(headerWrites==passes*2*(L::Header/4)*L::Tiles(width) && headerReads==headerWrites && !scalarPayloadReads);
 		std::vector<uint8_t> expected(l1.size(),0xa7);
 		for(unsigned operand=0;operand<2;operand++)for(unsigned tile=0;tile<L::Tiles(width);tile++) {
-			L::Read p={};assert(L::Packet(width,operand,tile,p));
+			typename L::Read p={};assert(L::Packet(width,operand,tile,p));
 			memset(expected.data()+p.destination-L::Header,0,L::Header);
 			memcpy(expected.data()+p.destination,dram.data()+p.source-L::DramWeight,p.bytes);
 		}
 		assert(l1==expected); // whole L1,including every unowned byte/guard
 	}
 };
+using IO=LoaderIO<PioneerNativeDramBandLayout>;
 struct Events {
 	struct Event {unsigned kind,index,value;};std::vector<Event> all;
 	void Op(unsigned word){all.push_back({0,0,word});}

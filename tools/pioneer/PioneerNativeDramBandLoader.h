@@ -14,8 +14,8 @@
 // Caller owes SAME exclusive native PCI/NIU/L1/GDDR/source/clock/lifecycle
 // lease and source payload integrity BEFORE entry. Shape/Self/counters are
 // necessary checks,NOT that authority. No existing driver selects this leaf.
-class PioneerNativeDramBandLoader {
-	using L=PioneerNativeDramBandLayout;
+template<class Layout> class PioneerNativeDramBandLoaderFor {
+	using L=Layout;
 	using Q=PioneerDramQueuedReadSweep;
 	bool attempted=false;
 	uint32_t baseline[9]={};unsigned issued=0,flits=0;
@@ -52,9 +52,9 @@ class PioneerNativeDramBandLoader {
 		return false; // no subsequent packet,header write,math or cleanup
 	}
 public:
-	PioneerNativeDramBandLoader()=default;
-	PioneerNativeDramBandLoader(const PioneerNativeDramBandLoader&)=delete;
-	PioneerNativeDramBandLoader& operator=(const PioneerNativeDramBandLoader&)=delete;
+	PioneerNativeDramBandLoaderFor()=default;
+	PioneerNativeDramBandLoaderFor(const PioneerNativeDramBandLoaderFor&)=delete;
+	PioneerNativeDramBandLoaderFor& operator=(const PioneerNativeDramBandLoaderFor&)=delete;
 	static bool Route(unsigned route) {
 		const unsigned x=route&63,y=route>>6;
 		return (x==17 || x==18) && (y==12 || y==15 || y==18 || y==21);
@@ -70,20 +70,20 @@ public:
 			// unpacker header. Explicit83 uses64B,default82/81 uses32B.
 			// No packed-GDDR/cache padding or source conversion change.
 			for(unsigned tile=0;tile<L::Tiles(k);tile++) {
-				L::Read packet={};if(!L::Packet(k,operand,tile,packet))return false;
+				typename L::Read packet={};if(!L::Packet(k,operand,tile,packet))return false;
 				for(unsigned word=0;word<L::Header/4;word++) {
 					const unsigned address=packet.destination-L::Header+word*4;
 					io.Write(address,0);if(io.Read(address))return false;
 				}
 			}
 			io.Fence();
-			L::Read first={};if(!L::Packet(k,operand,0,first) || !Quiet(io))return false;
+			typename L::Read first={};if(!L::Packet(k,operand,0,first) || !Quiet(io))return false;
 			const uint32_t command[10]={first.source,0,firmwareBoundRoute,first.destination,0,129,0,0,first.bytes,0};
 			for(unsigned i=0;i<10;i++)io.Write(0xffb20000+i*4,command[i]);
 			for(unsigned i=0;i<10;i++)if(io.Read(0xffb20000+i*4)!=command[i])return false;
 			for(unsigned batch=0;batch<L::Tiles(k);batch+=16) {
 				for(unsigned slot=0;slot<16;slot++) {
-					L::Read packet={};if(!L::Packet(k,operand,batch+slot,packet) || !Q::Slot(io))return false;
+					typename L::Read packet={};if(!L::Packet(k,operand,batch+slot,packet) || !Q::Slot(io))return false;
 					io.Write(0xffb20000,packet.source);io.Write(0xffb2000c,packet.destination);
 					if(io.Read(0xffb20000)!=packet.source || io.Read(0xffb2000c)!=packet.destination)return false;
 					io.Fence();io.Write(0xffb20040,1);if(io.Read(0xffb20040)>1)return false;
@@ -92,7 +92,8 @@ public:
 				if(!Drain(io))return false;
 			}
 		}
-		return issued==2*L::Tiles(k) && flits==18*L::Tiles(k) && Quiet(io);
+		return issued==2*L::Tiles(k) && flits==((L::WeightPayload+L::InputPayload)/64)*L::Tiles(k) && Quiet(io);
 	}
 };
+using PioneerNativeDramBandLoader=PioneerNativeDramBandLoaderFor<PioneerNativeDramBandLayout>;
 #endif

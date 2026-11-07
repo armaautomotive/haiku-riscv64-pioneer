@@ -1,0 +1,41 @@
+Native BFP4 GDDR-load plus full-K compute: OFFBOARD preparation
+================================================================
+November 6, 2026. No new physical card execution, model generation or speed
+claim. The last measured full-model generation remains about 0.173 tok/s.
+
+The distinct fixed BFP4 prototype uses packed576-byte tiles and64-byte
+headers/640-byte L1 stride, with64-byte-aligned GDDR source and L1 destination.
+The existing queued-load implementation was parameterized for the new fixed
+layout; the old BFP8 alias and original observed C64 image remain intact.
+The device image issues a fresh complete weight/input load for EACH of two
+jobs, then runs the physically exercised BFP4 instructions. A separate mcycle
+interval includes each load and computation. This does not include model
+preparation, weight conversion, host/device setup or all-model execution.
+
+Locally executed checks:
+* run_pioneer_native_bfp4_dram_band_loader_tests.py: 27 valid / 36 refusal
+  cases across all three widths, eight route shapes, complete L1/headers and
+  guards, queued counter/transport faults and descriptor translation.
+* run_pioneer_bfp4_dram_band_image_tests.py: actual linked RV32I/Zicsr image,
+  shared simulated NoC/unpack L1, three widths, two independent loads and 64
+  rounded outputs per width, plus 18 frame/NIU/counter/completion faults.
+  The clock values are SYNTHETIC, not hardware performance.
+* The old BFP8 C64 integrated image suite still passed all three widths and
+  its20 failure cases; its K5120 text hash remains exactly 7b3ca669be8d9e0714f544bd0d74c045329b0490d8f2132187181a1a92be55cd.
+* The old BFP8 loader suite passed 27 valid / 36 refusal cases. Existing
+  BFP4 timed-L1 image suite also passed all six variants.
+
+K5120 new image SHA256 78bbf79aa2fa3353dc4f8958acda3b5613449fbd07b313e56d463d1d02792ade,
+K6144 b26bdfa8763e753c817f78431e1efcadbfd47509a312018933939545290a4d63,
+K17408 f9ef5793db7bb107dcdca9e7c45921ef74c47c24cb6e1f329e4d312ddb1686c2.
+These hashes are code identities, not hardware launch permission.
+
+An isolated CPU-only exporter was built to authenticate the complete same-open
+original GGUF and prepare three small, private BFP4 bands from tensor7. It
+has not yet run on the original source. Its sample weight/dot errors cannot
+establish language-model quality. The exported derived weights must stay out
+of Git. CPU diagnostic reference work is not selected by Work inference.
+
+Before a physical trial, real-weight checks and a separately tested owner,
+NIU/GDDR/L1 lifetime, protocol, admission and restore path are required.
+The current data layout and simulated NoC are not a physical access grant.
