@@ -78,6 +78,9 @@ Four compact goals
    3/5 and KL 0.37343, no improvement over all-BFP4 on this token. BFP8 in
    layers48..60 instead gave 4/5 and KL 0.20372, and has a fitting offline
    layout proposal. This is one token, not a quality or P100A speed pass.
+   A BFP8 worker image and relocated BFP4/BFP8 job mapping now pass offline
+   RV32/synthetic/three-real-sample tests. They are not connected to the
+   live dispatcher or proven on the card.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 
@@ -106,4 +109,5 @@ Returning BFP4 worker offboard checkpoint: benchmarks/qwen38-bfp4-worker-leaf-of
 Whole-token CPU quality diagnostic: benchmarks/qwen38-bfp4-full-cpu-quality-20261106.txt
 Selective FFN quality comparison: benchmarks/qwen38-bfp4-selective-cpu-quality-20261106.txt
 Hybrid precision and capacity study: benchmarks/qwen38-bfp-hybrid-cpu-quality-20261106.txt
+BFP8 worker and hybrid jobs: benchmarks/qwen38-bfp8-worker-hybrid-offboard-20261107.txt
 Long-term plan: P100A_WORK_PLAN.txt

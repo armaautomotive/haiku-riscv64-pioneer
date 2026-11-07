@@ -1,0 +1,39 @@
+/* SPDX-License-Identifier: MIT */
+// Isolated RV32 diagnostic; not an installed worker or device authority.
+#define PIONEER_Q38_BFP8_WORKER_DIAGNOSTIC 1
+#define PIONEER_DRAM_SWEEP_FREESTANDING 1
+#include "PioneerQ38Bfp8WorkerConsumer.h"
+#if !defined(__riscv) || __riscv_xlen!=32
+#error This isolated leaf requires RV32
+#endif
+extern "C" void native_dram_band_fault() __attribute__((noreturn));
+namespace {
+static volatile unsigned* Words(unsigned a){return reinterpret_cast<volatile unsigned*>(a);}
+struct IO {unsigned Read(unsigned a){return *Words(a);}void Write(unsigned a,unsigned v){*Words(a)=v;}void Fence(){asm volatile("fence":::"memory");}};
+struct Emitter {
+ unsigned okay=1;
+ void Op(unsigned word){if(okay)*Words(0xffe40000)=word;}
+ void Config(unsigned index,unsigned value){if(!okay)return;volatile unsigned* at=Words(0xffef0000+index*4);*at=value;if(*at!=value)okay=0;}
+ void Drain(){
+  if(!okay)return;
+  *Words(0xffe000fc)=0;(void)*Words(0xffe000fc);asm volatile("fence":::"memory");
+  Op(0xa2101816);Op(0x4500017e);
+  for(unsigned i=0;i<1000000;i++)if(*Words(0xffe000fc)){asm volatile("fence":::"memory");return;}
+  okay=0;
+ }
+ bool Healthy()const{return okay;}
+};
+struct Guard {
+ bool Check(const PioneerQ38Bfp8WorkerJob::Job& job,unsigned band){
+  if(band>=job.words[4])return false;
+  for(unsigned i=0;i<PioneerQ38Bfp8WorkerJob::Words;i++)if(Words(0x74000)[i]!=job.words[i])return false;
+  return true; // frame consistency only; not weight or producer ownership
+ }
+};
+}
+extern "C" unsigned native_dram_band_main(){
+ PioneerQ38Bfp8WorkerJob::Job job;for(unsigned i=0;i<PioneerQ38Bfp8WorkerJob::Words;i++)job.words[i]=Words(0x74000)[i];
+ IO io;Emitter emitter;Guard guard;PioneerQ38Bfp8WorkerConsumer consumer;
+ if(!consumer.Run(io,emitter,guard,job))native_dram_band_fault();
+ return job.words[4]*32;
+}

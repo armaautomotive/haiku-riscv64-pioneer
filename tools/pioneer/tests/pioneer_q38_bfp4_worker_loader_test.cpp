@@ -1,14 +1,21 @@
 /* SPDX-License-Identifier: MIT */
 // Explicit simulated NoC endpoints only. Never a GPU/runtime test.
+#if defined(PIONEER_TEST_BFP8)
+#define PIONEER_Q38_BFP8_WORKER_DIAGNOSTIC 1
+#include "../PioneerQ38Bfp8WorkerLoader.h"
+using W=PioneerQ38Bfp8WorkerJob;using WorkerLoader=PioneerQ38Bfp8WorkerLoader;
+#else
 #define PIONEER_Q38_BFP4_WORKER_DIAGNOSTIC 1
 #include "../PioneerQ38Bfp4WorkerLoader.h"
+using W=PioneerQ38Bfp4WorkerJob;using WorkerLoader=PioneerQ38Bfp4WorkerLoader;
+#endif
 #include <algorithm>
 #include <array>
 #include <cassert>
 #include <cstdio>
 #include <cstring>
 #include <vector>
-using W=PioneerQ38Bfp4WorkerJob;using L=W::L;
+using L=W::L;
 static W::Job Make(unsigned worker,unsigned width){
  W::Job j={{W::Magic,W::Version,width,0x04000000,2,786,worker,W::Existing::Peer(worker),PioneerQ38Bf16Wire::Magic,
   W::RootInput,W::RootRoute,7,W::Output,0,0,0}};
@@ -19,10 +26,10 @@ struct IO {
  std::array<uint32_t,10> command;std::array<uint32_t,16> counters;std::vector<W::Read> pending;
  std::vector<uint8_t> ownedL1,weights,root;std::vector<uint8_t>& l1;bool autoBand=false;
  IO(const W::Job& j,unsigned b,std::vector<uint8_t>* shared=nullptr):job(j),band(b),ownedL1(shared?0:0x180000,0xa7),
-  weights(size_t(j.words[4])*L::Tiles(j.words[2])*576),root(j.words[2]*2),l1(shared?*shared:ownedL1){
+  weights(size_t(j.words[4])*L::Tiles(j.words[2])*L::WeightPayload),root(j.words[2]*2),l1(shared?*shared:ownedL1){
   assert(l1.size()==0x180000);
   command.fill(0xcccccccc);counters.fill(UINT32_MAX-17);
-  for(size_t i=0;i<weights.size();i++)weights[i]=uint8_t((i*17+i/576*13)^0x8b);
+  for(size_t i=0;i<weights.size();i++)weights[i]=uint8_t((i*17+i/L::WeightPayload*13)^0x8b);
   for(size_t i=0;i<root.size();i++)root[i]=uint8_t((i*19+i/64*7)^0x31);
  }
  bool Header(unsigned a)const{
@@ -90,21 +97,21 @@ struct IO {
 int main(){
  unsigned valid=0,refused=0;
  for(unsigned worker=1;worker<120;worker++)for(unsigned width:{5120U,17408U}){
-  auto job=Make(worker,width);IO io(job,1);PioneerQ38Bfp4WorkerLoader loader;
+  auto job=Make(worker,width);IO io(job,1);WorkerLoader loader;
   assert(loader.Run(io,job,1));io.Exact();const auto before=io.events;assert(!loader.Run(io,job,1) && io.events==before);valid++;
  }
  for(unsigned fault=1;fault<=11;fault++){
-  auto job=Make(1,5120);IO io(job,0);io.fault=fault;PioneerQ38Bfp4WorkerLoader loader;assert(!loader.Run(io,job,0));
+  auto job=Make(1,5120);IO io(job,0);io.fault=fault;WorkerLoader loader;assert(!loader.Run(io,job,0));
   const auto before=io.events;assert(!loader.Run(io,job,0) && io.events==before && !io.scalar);refused++;
  }
  for(unsigned drop=0;drop<10;drop++){
-  auto job=Make(1,5120);IO io(job,0);io.drop=drop;PioneerQ38Bfp4WorkerLoader loader;assert(!loader.Run(io,job,0) && !io.issues);
+  auto job=Make(1,5120);IO io(job,0);io.drop=drop;WorkerLoader loader;assert(!loader.Run(io,job,0) && !io.issues);
   const auto before=io.events;assert(!loader.Run(io,job,0) && io.events==before);refused++;
  }
  for(unsigned word=0;word<W::Words;word++){
-  auto job=Make(1,5120);IO io(job,0);auto invalid=job;invalid.words[word]=UINT32_MAX;PioneerQ38Bfp4WorkerLoader loader;
+  auto job=Make(1,5120);IO io(job,0);auto invalid=job;invalid.words[word]=UINT32_MAX;WorkerLoader loader;
   assert(!loader.Run(io,invalid,0) && !io.events);refused++;
  }
- printf("PASS BFP4 paired-worker loader: %u valid/%u refused; all119 peers, two widths, GDDR weight/ROOT-L1 BF16 input, exact L1+guards/counters, failure stops IO; NO DEVICE OR WORK\n",valid,refused);
+ printf("PASS BFP%u paired-worker loader: %u valid/%u refused; all119 peers, two widths, GDDR weight/ROOT-L1 BF16 input, exact L1+guards/counters, failure stops IO; NO DEVICE OR WORK\n",L::WeightPayload==576?4U:8U,valid,refused);
 }
 #endif
