@@ -77,6 +77,15 @@ layout; it has been corrected. This check cannot identify the contents of a
 presence-only upload ledger: the actual session still needs a trusted format
 binding before it can prevent mislabeled bytes from being executed.
 
+An opt-in kernel receipt now tracks the fixed hybrid upload order, the same
+owner/FD/team/generation, the span lease and the existing page-hash ledger;
+it can derive the matching hybrid layout after a complete, closed upload.
+The span-service connection and changed-ledger refusals have passed simulated
+tests and an RISC-V kernel-object compile. It is **not wired into the real
+driver control path**, and its non-cryptographic page hashes do not prove
+the format or contents of card memory. The trusted loader, driver control,
+firmware and cleanup still need to be connected and tested together.
+
 The QGW5 test configuration previously selected the older QGW4 startup
 grammar. It now selects the matching QGW5 grammar. A simulated held-memory
 journal has staged and verified the 1,344-word address table and restored

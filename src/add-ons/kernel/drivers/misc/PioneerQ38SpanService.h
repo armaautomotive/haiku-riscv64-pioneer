@@ -3,6 +3,12 @@
 #define PIONEER_Q38_SPAN_SERVICE_H
 #include "PioneerQ38SpanProtocol.h"
 #include "PioneerQ38SpanController.h"
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+#if PIONEER_Q38_HYBRID_TRACKED_UPLOAD != 1 || !defined(PIONEER_Q38_GDN_MUTABLE_STATE)
+#error Hybrid tracked upload requires its exact distinct session and mutable-bank layout
+#endif
+#include "PioneerQ38HybridUploadReceipt.h"
+#endif
 // Native adapter's shared kernel-only core. Complete owner/fresh-page proof
 // BEFORE allocation/preparation IO, and publish ALL page authority only
 // after the existing exact transport/terminal/host-visibility proof passes.
@@ -26,24 +32,47 @@ template<class C> static bool PioneerQ38SpanPrepareService(C& c)
 	return ready && c.io.SelectRuntimeCore(0) && c.io.MapQ38Panel()
 		&& PioneerQ38SpanPrepare(c.io,dram,noc,c.banks,c.host,c.lease,c.bulk,c.bulkHost,c.wideHost,*c.q38Span);
 }
-template<class C,bool Work=false> static bool PioneerQ38SpanUploadService(C& c,tt_q38_span_upload& request)
+template<class C,bool Work=false> static bool PioneerQ38SpanUploadService(C& c,tt_q38_span_upload& request
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+ ,PioneerQ38HybridUploadReceipt* receipt
+#endif
+ )
 {
 	request.result={}; request.result.version=1; request.result.state=TT_RUNTIME_CONFIG_FAILED;
 	if (!PioneerQ38SpanOwner(c) || !PioneerQ38SpanPublicShape(request.version,request.bank,request.offset,request.bytes,request.reserved)) return false;
 	auto& dram=c.baseline.baseline.baseline.baseline.dram; auto& noc=c.baseline.baseline.baseline.noc;
 	PioneerQ38SpanExtent extent;
-	if (!PioneerQ38SpanAuthorize(c.banks,dram,c.initialized,uint32_t(c.bytes/4096),request.bank,request.offset,request.bytes,extent)
-		|| !PioneerQ38SpanPrepareService(c)) return false;
+	if (!PioneerQ38SpanAuthorize(c.banks,dram,c.initialized,uint32_t(c.bytes/4096),request.bank,request.offset,request.bytes,extent)) return false;
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+	if (!receipt || !receipt->Before(&c,c.hashes,c.initialized,c.q38Span,request.bank,request.offset,request.bytes)) return false;
+#endif
+	if (!PioneerQ38SpanPrepareService(c)) {
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+		if (receipt) receipt->Abort();
+#endif
+		return false;
+	}
 	PioneerQ38SpanResult result;
 	bool passed=PioneerQ38SpanUpload<decltype(c.io),Work>(c.io,dram,noc,c.banks,c.host,c.lease,c.bulk,c.bulkHost,c.wideHost,*c.q38Span,
 		c.initialized,uint32_t(c.bytes/4096),request.bank,request.offset,request.bytes,request.data,request.bytes/4,result);
 	request.result={result.version,result.state,result.bytes,result.pages,result.nonce,result.started,result.completed,
 		result.held,result.host_exact,result.matched_words,result.recovery_required,0};
-	if (!passed) return false;
+	if (!passed) {
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+		if (receipt) receipt->Abort();
+#endif
+		return false;
+	}
 	for (unsigned p=0;p<extent.pages;p++) {
 		c.hashes[extent.index+p]=PioneerResidentPageHash(request.data+p*1024);
 		c.initialized[extent.index+p]=1; c.uploadedPages++;
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+		if (receipt && !receipt->RecordPage(extent.index+p,c.hashes[extent.index+p])) return false;
+#endif
 	}
+#ifdef PIONEER_Q38_HYBRID_TRACKED_UPLOAD
+	if (receipt && !receipt->After()) return false;
+#endif
 	return true;
 }
 template<class C> static bool PioneerQ38SpanEndService(C& c)

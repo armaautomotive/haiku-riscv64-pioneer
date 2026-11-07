@@ -102,16 +102,16 @@ public:
   }
   layout=OriginalLayout;ready=true;return true;
  }
-#ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
- // Experimental full-layout repack for OFFLINE startup consumers only. Start
+private:
+ friend class PioneerQ38HybridUploadReceipt;
+ // Fixed full-layout repack for the distinct hybrid upload receipt. Start
  // from the fixed canonical order and banks; enlarge exactly the thirteen
  // BFP8 FFN layers and relocate every following part, including state and
  // workspace. Existing rowBytes/type retain the original logical Q4 job
  // geometry: these fields MUST NOT authorize a Q4 worker on converted bytes.
- // One-shot failure leaves the object unavailable. No native role may compile
- // this method; it does not authenticate or upload weights, select worker
+ // One-shot failure leaves the object unavailable. It does not authenticate or upload weights, select worker
  // firmware, initialize state, own memory, or launch inference.
- bool BuildHybridDiagnostic() {
+ bool BuildHybridLayout() {
   if(!Build())return false;
   ready=false;layout=UnbuiltLayout;
   uint64_t next[7]={};unsigned converted=0,region=0;
@@ -146,6 +146,9 @@ public:
   }
   layout=HybridLayout;ready=true;return true;
  }
+public:
+#ifdef PIONEER_Q38_HYBRID_LAYOUT_DIAGNOSTIC
+ bool BuildHybridDiagnostic() { return BuildHybridLayout(); }
 #endif
  bool Ready()const{return ready;}
  // Immutable geometry identity only: it does not authenticate uploaded bytes.
