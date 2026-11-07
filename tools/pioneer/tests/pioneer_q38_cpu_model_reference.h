@@ -4,6 +4,9 @@
  || !defined(PIONEER_Q38_CPU_VALIDATION) || PIONEER_Q38_CPU_VALIDATION != 1
 #error Exact separate whole-model CPU observer role required
 #endif
+#if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC) && PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC != 1
+#error The BFP4 quality observer must be explicitly enabled as 1
+#endif
 #if defined(_KERNEL_MODE) || defined(__FAST_MATH__) || defined(PIONEER_ATTENTION_FREESTANDING) \
  || defined(PIONEER_Q38_WORK_INFERENCE) || defined(TT_PIONEER_Q38_WORK_MODE) || defined(PIONEER_Q38_NATIVE_Q8_LAYOUT) \
  || defined(PIONEER_Q38_GLOBAL_TOKEN_ROOT_IMAGE) || defined(PIONEER_Q38_GLOBAL_WORKER_IMAGE) || defined(PIONEER_Q38_GLOBAL_CHAIN_COMPONENT_IMAGE) \
@@ -36,6 +39,11 @@ public:
  Q38CpuModelReference(const Q38CpuModelReference&)=delete;
  Q38CpuModelReference& operator=(const Q38CpuModelReference&)=delete;
  bool Bind(Q38OriginalRows&);bool Step(unsigned,Q38CpuTokenTrace&);
+#if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC)
+ // CPU-private first prompt position only. Consumes this reference object;
+ // the resulting values are never eligible for card Work or upload.
+ bool ObserveFirstFfnInput(unsigned token,std::vector<uint32_t>&,std::vector<uint32_t>&);
+#endif
  // CPU-private COPY only,never a mutable view or device-product supplier.
  // kind0:GDN FP32 after2/3 steps;kind1:Conv FP32 after3;kind2/3:packed
  // binary16 K/V after3. Invalid requests leave output and state unchanged.

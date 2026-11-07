@@ -122,6 +122,26 @@ struct Q38CpuModelReference::Impl {
   auto& s=state[layer];
   return Attention(qg,key,value,qnorm,knorm,position,s.key,s.value,attention) && Project(layer,10,attention,output);
  }
+#if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC)
+ bool ObserveFirstFfnInput(unsigned token,std::vector<uint32_t>& output,std::vector<uint32_t>& final){
+  if(&output==&final || token!=248319 || position!=0 || !Current(true))return false;
+  std::vector<float> hidden,norm,post,normalized,projection,residual(5120),input;
+  if(!Embedding(token,hidden) || !Weight(0,0,norm) || !Weight(0,1,post) || !Rms(hidden,norm,normalized)
+   || !Recurrent(0,normalized,projection))return false;
+  for(unsigned i=0;i<5120;i++){residual[i]=hidden[i]+projection[i];if(!Bounded(residual[i],0x4c800000))return false;}
+  std::vector<float> gate,up,activation(17408),down;
+  if(!Rms(residual,post,input) || input.size()!=5120 || !Project(0,2,input,gate) || !Project(0,3,input,up))return false;
+  for(unsigned i=0;i<17408;i++){
+   if(!Bounded(gate[i]) || !Bounded(up[i]))return false;
+   activation[i]=(gate[i]*Sigmoid(gate[i]))*up[i];if(!Bounded(activation[i]))return false;
+  }
+  if(!Project(0,4,activation,down) || !Current(true))return false;
+  std::vector<uint32_t> result;result.reserve(input.size());for(float value:input)result.push_back(Bits(value));
+  std::vector<uint32_t> completed;completed.reserve(5120);
+  for(unsigned i=0;i<5120;i++){float value=residual[i]+down[i];if(!Bounded(value,0x4c800000))return false;completed.push_back(Bits(value));}
+  output=std::move(result);final=std::move(completed);return true;
+ }
+#endif
  bool Step(unsigned token,Q38CpuTokenTrace& output){
   if(token>=248320 || position>=8192 || !Current(true))return false;
   Q38CpuTokenTrace stage;stage.position=position;stage.input=token;stage.hidden.reserve(65*5120);
@@ -175,5 +195,10 @@ bool Q38CpuModelReference::Ready()const{return impl->Current(true);}
 bool Q38CpuModelReference::Step(unsigned token,Q38CpuTokenTrace& out){
  if(!impl->Step(token,out)){impl->failed=true;return false;}return true;
 }
+#if defined(PIONEER_Q38_BFP4_QUALITY_DIAGNOSTIC)
+bool Q38CpuModelReference::ObserveFirstFfnInput(unsigned token,std::vector<uint32_t>& out,std::vector<uint32_t>& final){
+ const bool okay=impl->ObserveFirstFfnInput(token,out,final);impl->failed=true;return okay;
+}
+#endif
 bool Q38CpuModelReference::Snapshot(unsigned completed,unsigned layer,unsigned kind,std::vector<uint32_t>& out){return impl->Snapshot(completed,layer,kind,out);}
 bool Q38CpuModelReference::SnapshotEos(unsigned layer,unsigned kind,std::vector<uint32_t>& out){return impl->Snapshot(2,layer,kind,out,true);}

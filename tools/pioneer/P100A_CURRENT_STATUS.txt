@@ -42,6 +42,9 @@ Four compact goals
    job taking 227142-227285 card cycles. This is NOT an equivalent-Q4 or
    full-model speed result: the conversion is lossy, and the BFP4 path is
    not integrated. See the physical report for scope and quality limits.
+   A CPU comparison using the first prompt token's reconstructed layer-0 FFN input
+   measured 5.7%-7.2% relative output error across those three bands versus
+   the independent Q4 reference. This is not a full-model quality score.
 3. Measure an accepted improvement on the complete 27B model: NOT ACHIEVED.
 4. Keep the model loaded and deliver it through Assistant: NOT STARTED.
 
@@ -64,4 +67,5 @@ Native BFP4 K5120 physical timing: benchmarks/qwen38-bfp4-band-timing-physical-2
 Real-weight BFP4 sample and quality caveat: benchmarks/qwen38-bfp4-real-band-offboard-20261106.txt
 GDDR diagnostic build and simulated safety checks: benchmarks/qwen38-bfp4-dram-driver-offboard-20261106.txt
 GDDR real-weight physical measurement: benchmarks/qwen38-bfp4-dram-real-band-physical-20261106.txt
+Real-prompt BFP4 accuracy probe: benchmarks/qwen38-bfp4-real-prompt-quality-20261106.txt
 Long-term plan: P100A_WORK_PLAN.txt

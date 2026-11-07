@@ -1,0 +1,44 @@
+BFP4 real-prompt input comparison, 2026-11-06
+============================================
+
+Question: how different are the earlier three converted layer-0 FFN gate
+bands when given a prompt-derived input instead of a synthetic input?
+
+A CPU-only reference authenticated the same-open Qwen3.8-27B Q4_K_M model,
+processed the first token (248319) of the previously tested prompt through
+layer 0, and saved its post-attention-normalized 5120-value FFN input plus
+three corresponding 32-output Q4-reference bands. It independently checked
+that the complete layer-0 hidden output matched the previously pinned CPU
+trace EXACTLY before publishing that private input. The original reference
+object was consumed and cannot be reused as a model execution context.
+
+A separate CPU-only BFP4 arithmetic observer loaded the three previously
+authenticated/physically tested converted bands and that private input.
+Its original-Q4 comparison uses the CPU model's Q4/Q8-input reference, while
+BFP4 uses BF16-rounded input and the tested BFP4 arithmetic observer. Thus
+the comparison captures differences from both representation and arithmetic:
+
+  gate rows 0-31:        relative L2 0.0593488752, max absolute 0.0505311489
+  gate rows 8704-8735:   relative L2 0.0574433792, max absolute 0.0755784512
+  gate rows 17376-17407: relative L2 0.0717506619, max absolute 0.0631252825
+
+This is ONE token and 96 of 17408 gate outputs from ONE layer, not complete
+model logits, a perplexity/quality score, a P100A execution of this prompt,
+or a speed measurement. Prior physical BFP4 testing used different synthetic
+inputs. No acceptance threshold has been established; do not promote BFP4
+to Work or Assistant merely because this comparison completes.
+
+Actual producer and evaluator SSH processes independently exited 0. Both
+are CPU-only; they did not open a GPU or alter the existing driver. The
+private artifact is /boot/home/pioneer-bfp4-prompt-quality-20261106-a/
+prompt-input.bin, mode 0600, length 20880, SHA256
+75dfd208b58e224e0575e211a735f03b34b316a9e548bf63d1d48e10a261e594.
+Only its hash and aggregate errors are recorded here; prompt activations and
+model-derived output words are not published. Independent postcheck found
+the working driver tag2026102100010012/gen18, cold0, owner0 and quiesced0.
+
+Synthetic tests checked exact and known-error arithmetic, source hash and
+permission refusals, observer one-shot/alias handling, and role separation;
+the pre-existing CPU-model reference regression also passed. Next: a wider
+model-relevant accuracy test and integration are necessary before comparing
+complete generated output or tokens/sec.
