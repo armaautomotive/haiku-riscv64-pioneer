@@ -40,6 +40,8 @@ simulated instruction count, also without a hardware speed measurement.
 Reusing a converted value tile across six heads cut that fixture's simulated
 worker instruction count by another 48.2%; exclusive scratch lifetime and
 physical speed still need qualification.
+Converting each private key chunk once for all six heads cut another 14.5%
+from the same fixture's simulated worker count; card performance is unmeasured.
 A separate hybrid worker now links this attention code and passed a simulated
 projection/attention/projection transition. A matching experimental ROOT now
 builds reproducibly, and its projection job functions passed simulation;

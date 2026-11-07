@@ -139,7 +139,25 @@ fell from 29218517 to 15415420 (47.2%). Matrix operation counts were
 unchanged at 84480 and 65280; printed merged relative errors were unchanged.
 Those are simulated instructions, not physical time or model throughput.
 The standalone QDM2 image was independently rebuilt with SHA-256
-1eaf166599edaa1c96376e9f25cd393d9e751a9fa9b4de02ad452faf188871ee.
+1eaf166599edaa1c96376e9f25cd393d9e751a9fa9b4de02ad452faf188871ee before
+the subsequent key reuse change.
+
+Six-head K conversion: after each freshly filled private K chunk passes the
+existing finite-value check, the experimental path converts that chunk from
+FP16 to BF16 once in place; all six heads use the same converted words.
+This does not change the canonical KV cache or perform a host fallback, but
+it consumes the private chunk's FP16 representation. Correctness requires
+that nobody reuses that representation and that the next chunk is freshly
+filled. Host tests covered every finite FP16 input, refused invalid geometry
+and nonfinite values, and compared six heads' scores with the original
+per-head conversion. One actual-instruction worker per 1-, 33- and 65-token
+fixture had bit-identical scores, probabilities and partial outputs versus
+the previous QDM2 image. The 65-token/24-partition fixture fell from 20894373
+to 17860732 simulated RV32 worker steps (14.5%); the 33-token fixture fell
+from 15415420 to 13732789 (10.9%). Matrix operations and the printed merged
+relative errors were unchanged. These are software instruction counts, not
+P100A speed or real-model accuracy. The updated QDM2 image independently
+rebuilt as SHA-256 7442c2f01ad720ff21d62277e0b885ad3b73ff386b8883e0576c55ca2e58e95b.
 
 A separately identified experimental hybrid mixed-worker link and transition
 simulation are described in qwen38-hybrid-matrix-attention-20261107.txt.

@@ -165,7 +165,7 @@ struct MatrixEmitter {
 };
 static void Scores(unsigned first,unsigned count,unsigned head){
  MatrixIO io;MatrixEmitter e;
- PioneerQ38DenseBf16Stage<MatrixIO> stage(io,L::Chunk,L::PrivateQuery+head*1024,0xa5000,0xa6000,count);
+ PioneerQ38DenseBf16Stage<MatrixIO> stage(io,L::Chunk,L::PrivateQuery+head*1024,0xa5000,0xa6000,count,true);
  if(!PioneerQ38DenseBf16Matrix::Scores(e,stage,0xa5000,0xa6000))scalar_fault_park();
  for(unsigned row=0;row<count;row++){
   const unsigned bits=*Words(0xffbd8000+(row<16?32:40)*64+(row&15)*4);
@@ -224,6 +224,11 @@ static void LocalScores(const uint32_t* d,uint32_t* tracked,float* maximum,const
 #endif
   for(unsigned first=0;first<d[49];first+=32){
    unsigned count=Chunk(0,first,d,tracked,job,nullptr);
+#ifdef PIONEER_Q38_DENSE_BF16_MATRIX_EXPERIMENT
+   // This chunk is private and no later operation consumes its FP16 form.
+   // Convert once, after each fresh NoC/current-token fill, before six heads.
+   MatrixIO io;if(!PioneerQ38DenseBf16Stage<MatrixIO>::ConvertKeysInPlace(io,L::Chunk,count))scalar_fault_park();
+#endif
    for(unsigned h=0;h<6;h++)Scores(first,count,h);
   }
  }

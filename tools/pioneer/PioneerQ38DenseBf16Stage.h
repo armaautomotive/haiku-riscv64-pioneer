@@ -15,23 +15,36 @@
 // it may be a bottleneck. Source immutability and all L1 ranges, including
 // the 16-byte operand headers, remain the exclusive caller's responsibility.
 template<class IO> class PioneerQ38DenseBf16Stage {
- IO& io;unsigned keys,query,matrix,vector,count,next;
+ IO& io;unsigned keys,query,matrix,vector,count,next,convertedKeys;
 public:
  static bool EncodeHalf(unsigned half,unsigned& out){
   if((half&0x7c00)==0x7c00)return false;
   return PioneerQ38Bf16Input::Lane(PioneerAttentionBits(PioneerAttentionHalf(uint16_t(half))),out);
  }
- PioneerQ38DenseBf16Stage(IO& access,unsigned keyAddress,unsigned queryAddress,unsigned matrixAddress,unsigned vectorAddress,unsigned rows)
-  :io(access),keys(keyAddress),query(queryAddress),matrix(matrixAddress),vector(vectorAddress),count(rows),next(0){}
+ // Only a freshly loaded private K chunk may be converted in place. Its
+ // FP16 representation is consumed; all six heads use these same BF16 bits.
+ // A failure leaves the chunk unpublished and must terminate the caller.
+ static bool ConvertKeysInPlace(IO& io,unsigned address,unsigned rows){
+  if(address!=0xa0000 || !rows || rows>32)return false;
+  for(unsigned i=0;i<rows*128;i++){
+   const unsigned halves=io.Read(address+i*4);unsigned lo=0,hi=0;
+   if(!EncodeHalf(halves&65535,lo) || !EncodeHalf(halves>>16,hi))return false;
+   io.Write(address+i*4,lo|(hi<<16));
+  }
+  io.Fence();return true;
+ }
+ PioneerQ38DenseBf16Stage(IO& access,unsigned keyAddress,unsigned queryAddress,unsigned matrixAddress,unsigned vectorAddress,unsigned rows,unsigned keysConverted=0)
+  :io(access),keys(keyAddress),query(queryAddress),matrix(matrixAddress),vector(vectorAddress),count(rows),next(0),convertedKeys(keysConverted){}
  bool Tile(unsigned tile){
-  if(tile!=next || tile>=8 || !count || count>32 || (keys&3) || (query&3) || (matrix&15) || (vector&15))return false;
+  if(tile!=next || tile>=8 || convertedKeys>1 || !count || count>32 || (keys&3) || (query&3) || (matrix&15) || (vector&15))return false;
   for(unsigned i=1;i<=4;i++){io.Write(matrix-i*4,0);io.Write(vector-i*4,0);}
   for(unsigned face=0;face<4;face++)for(unsigned row=0;row<16;row++)for(unsigned pair=0;pair<8;pair++){
    const unsigned r=(face/2)*16+row,dimension=tile*32+(face%2)*16+pair*2;
    unsigned lo=0,hi=0;
    if(r<count){
     const unsigned halfs=io.Read(keys+r*512+dimension*2);
-    if(!EncodeHalf(halfs&65535,lo) || !EncodeHalf(halfs>>16,hi))return false;
+    if(convertedKeys){lo=halfs&65535;hi=halfs>>16;}
+    else if(!EncodeHalf(halfs&65535,lo) || !EncodeHalf(halfs>>16,hi))return false;
    }
    io.Write(matrix+(face*256+row*16+pair*2)*2,lo|(hi<<16));
   }

@@ -50,6 +50,8 @@ int main(){
  for(unsigned half=0;half<65536;half++){
   if((half&0x7c00)==0x7c00)continue;
   const float original=PioneerAttentionHalf(uint16_t(half));unsigned high=0,low=0;
+  unsigned encodedKey=0;assert(PioneerQ38DenseBf16Stage<L1IO>::EncodeHalf(half,encodedKey));
+  assert(PioneerQ38Bf16Input::Lane(PioneerAttentionBits(original),high) && encodedKey==high);
   assert(PioneerQ38DenseBf16ValuesStage<L1IO>::Split(PioneerAttentionBits(original),false,high));
   assert(PioneerQ38DenseBf16ValuesStage<L1IO>::Split(PioneerAttentionBits(original),true,low));
   assert(PioneerAttentionFloat(high<<16)+PioneerAttentionFloat(low<<16)==original);
@@ -149,6 +151,48 @@ int main(){
  assert(!PioneerQ38DenseBf16Matrix::Scores(invalid,invalidStage,0x90000,0x91000));
  assert(invalid.matrixOps==0 && io.fences==0);
  std::puts("nonfinite K refused before any matrix multiply");
+ // The production opt-in consumes one private FP16 K chunk, converts it in
+ // place once, then gives the six heads the same BF16 bits. Compare every
+ // score bit against independent original per-head conversion.
+ for(unsigned count:{1U,17U,32U}){
+  NativeBfpMachine oldCard,newCard;L1IO oldIO{oldCard},newIO{newCard};
+  const unsigned keys=0xa0000,query=0x85000,matrix=0x90000,vector=0x91000;
+  for(unsigned r=0;r<count;r++)for(unsigned i=0;i<256;i+=2){
+   unsigned lo=0x3000+((r*73+i*29)%0x1000),hi=0x3000+((r*73+(i+1)*29)%0x1000);
+   if((r+i)%3==0)lo|=0x8000;if((r+i)%5==0)hi|=0x8000;
+   oldIO.Write(keys+r*512+i*2,lo|(hi<<16));newIO.Write(keys+r*512+i*2,lo|(hi<<16));
+  }
+  for(unsigned h=0;h<6;h++)for(unsigned d=0;d<256;d++){
+   const unsigned half=0x3000+((h*71+d*37)%0x1000);
+   const unsigned bits=PioneerAttentionBits(PioneerAttentionHalf(uint16_t(half)));
+   oldIO.Write(query+(h*256+d)*4,bits);newIO.Write(query+(h*256+d)*4,bits);
+  }
+  const unsigned before=newIO.reads;
+  assert(PioneerQ38DenseBf16Stage<L1IO>::ConvertKeysInPlace(newIO,keys,count));
+  assert(newIO.reads-before==count*128 && newIO.fences==1);
+  for(unsigned i=0;i<count*128;i++){
+   const unsigned halves=oldIO.Read(keys+i*4);unsigned lo=0,hi=0;
+   assert(PioneerQ38DenseBf16Stage<L1IO>::EncodeHalf(halves&65535,lo));
+   assert(PioneerQ38DenseBf16Stage<L1IO>::EncodeHalf(halves>>16,hi));
+   assert(newIO.Read(keys+i*4)==(lo|(hi<<16)));
+  }
+  for(unsigned h=0;h<6;h++){
+   PioneerQ38DenseBf16Stage<L1IO> oldStage(oldIO,keys,query+h*1024,matrix,vector,count);
+   PioneerQ38DenseBf16Stage<L1IO> newStage(newIO,keys,query+h*1024,matrix,vector,count,true);
+   assert(PioneerQ38DenseBf16Matrix::Scores(oldCard,oldStage,matrix,vector));
+   assert(PioneerQ38DenseBf16Matrix::Scores(newCard,newStage,matrix,vector));
+   assert(oldCard.Results()==newCard.Results());
+  }
+ }
+ NativeBfpMachine badKeyPack;L1IO badKeyPackIO{badKeyPack};
+ badKeyPackIO.Write(0xa0000,0x7c000000);
+ assert(!PioneerQ38DenseBf16Stage<L1IO>::ConvertKeysInPlace(badKeyPackIO,0xa0000,1));
+ assert(!PioneerQ38DenseBf16Stage<L1IO>::ConvertKeysInPlace(badKeyPackIO,0xa0000,0));
+ assert(!PioneerQ38DenseBf16Stage<L1IO>::ConvertKeysInPlace(badKeyPackIO,0xa0001,1));
+ assert(!PioneerQ38DenseBf16Stage<L1IO>::ConvertKeysInPlace(badKeyPackIO,0xa0004,1));
+ assert(badKeyPackIO.fences==0 && badKeyPack.matrixOps==0);
+ PioneerQ38DenseBf16Stage<L1IO> invalidConvertedMode(badKeyPackIO,0xa0000,0x85000,0x90000,0x91000,1,2);
+ assert(!invalidConvertedMode.Tile(0) && badKeyPackIO.fences==0);
  NativeBfpMachine invalidQuery;L1IO badQueryIO{invalidQuery};
  for(unsigned i=0;i<16;i++)badQueryIO.Write(0xa0000+i*4,0);
  for(unsigned i=0;i<32;i++)badQueryIO.Write(0x85000+i*4,0);
